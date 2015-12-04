@@ -4,15 +4,19 @@ version 2015e, in progress
 - add exists() function, recommended as a replacment for the
   now-deprecated isnull()
 - "arima" command: allow ARIMA(0,1,0) without constant
+- "reset" command: add a --silent option
 - Improve handling of string-valued series across sub-sampling
+- Improve display of string-valued series in GUI
 - Fix bug 196, Help button for HCCME misaligned in case of a
   non-MPI enabled build
-- Fix bug 197, bad "xtics" specification for some weekly
-  time-series plots
+- Fix bug 197, invalid "xtics" specification for some weekly
+  time-series plots caused gnuplot to abort
 - Fix bug: failing to detect common "missing value" strings in
   spreadsheet data importation via the GUI
 - Fix for linearize() function: don't fail when tramo finds
   that the input doesn't need linearizing
+- Fix bug: incorrectly sized object in ODBC data importation
+  could cause a crash
 - Application of "catch" to user-defined functions: drop back
   from an error to a warning, for now
 - Appending daily data: don't fail when we have enough date

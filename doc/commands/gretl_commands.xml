@@ -44,7 +44,7 @@
 	Must be invoked after an estimation command. Performs a joint
 	test for the addition of the specified variables to the last
 	model, the results of which may be retrieved using the
-	accessors <lit>$test</lit> and <lit>$pvalue</lit>.
+	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>.
       </para>
       <para context="cli">
 	By default an augmented version of the original model is
@@ -380,11 +380,11 @@
 	variable.
       </para>
       <para context="cli">
-	Unless the <opt>--quiet</opt> option is given, this command prints a
-	table showing the sums of squares and mean squares along with an
-	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
-	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
-	respectively.  
+	Unless the <opt>--quiet</opt> option is given, this command
+	prints a table showing the sums of squares and mean squares
+	along with an <math>F</math>-test.  The <math>F</math>-test
+	and its P-value can be retrieved using the accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/> respectively.
       </para>
       <para>
 	The null hypothesis for the <math>F</math>-test is that the mean
@@ -1797,9 +1797,9 @@
 	key="doornik98" p="true">(Doornik, 1998)</cite>. Two sets of
 	p-values are shown for the trace test, straight asymptotic
 	values and values adjusted for the sample size. By default the
-	<lit>$pvalue</lit> accessor gets the adjusted variant, but the
-	<opt>--asy</opt> flag may be used to record the asymptotic
-	values instead.
+	<fncref targ="$pvalue"/> accessor gets the adjusted variant,
+	but the <opt>--asy</opt> flag may be used to record the
+	asymptotic values instead.
       </para>
 
       <para context="gui">
@@ -2161,12 +2161,12 @@
 	command.
       </para>
       <para context="cli">
-	Upon successful completion, the accessors <lit>$test</lit> and
-	<lit>$pvalue</lit> contain the corresponding figures of the
-	Ljung&ndash;Box test for the maximum order displayed. Note
-	that if you just want to compute the <math>Q</math> statistic,
-	you'll probably want to use the <fncref targ="ljungbox"/>
-	function instead.
+	Upon successful completion, the accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/> contain the
+	corresponding figures of the Ljung&ndash;Box test for the
+	maximum order displayed. Note that if you just want to compute
+	the <math>Q</math> statistic, you'll probably want to use the
+	<fncref targ="ljungbox"/> function instead.
       </para>
     </description>
 
@@ -3969,9 +3969,10 @@
 	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	The results can be retrieved using the accessors <lit>$test</lit>
-	and <lit>$pvalue</lit>. These values are based on the Local
-	Whittle Estimator unless the <opt>--gph</opt> option is given.
+	The results can be retrieved using the accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/>. These values are
+	based on the Local Whittle Estimator unless the
+	<opt>--gph</opt> option is given.
       </para>
     </description>
 
@@ -4078,11 +4079,11 @@
 	<lit>gretlcli</lit>.)
       </para>
       <para>
-	The <opt>--silent</opt> flag suppresses the usual output entirely.
-	This makes sense only in conjunction with one or other of the
-	distribution test options: the test statistic and its p-value are
-	recorded, and can be retrieved using the accessors
-	<lit>$test</lit> and <lit>$pvalue</lit>.
+	The <opt>--silent</opt> flag suppresses the usual output
+	entirely.  This makes sense only in conjunction with one or
+	other of the distribution test options: the test statistic and
+	its p-value are recorded, and can be retrieved using the
+	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>.
       </para>
     </description>
 
@@ -6516,7 +6517,7 @@
 	variables to the current data set.
       </para>
       <para context="tex">
-	After execution, the <lit>$test</lit> accessor returns the
+	After execution, the <fncref targ="$test"/> accessor returns the
 	cross-validation criterion, which is defined as 
         \[
 	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2 
@@ -6532,7 +6533,7 @@
         therein.
       </para>
       <para context="notex">
-	After execution, the <lit>$test</lit> accessor returns the
+	After execution, the <fncref targ="$test"/> accessor returns the
 	cross-validation criterion, which is defined as the sum of
 	squared deviations of the dependent variable from its forecast
 	value, the forecast for each observation being based on a
@@ -7650,8 +7651,8 @@
 	be suppressed by using the <opt>--quiet</opt> flag (minimal
 	printed output) or the <opt>--silent</opt> flag (no printed
 	output).  The test statistic and its p-value may be retrieved
-	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
-	respectively.
+	using the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/> respectively.
       </para>
       <para>
 	When a model has been estimated by two-stage least squares (see
@@ -8044,11 +8045,10 @@
 	account of their superior small-sample properties.
       </para>
       <para>
-	The test statistic and its p-value may be retrieved
-	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>.
-	Please note that if the <opt>--all</opt> option is given,
-	the result recorded is that from the Doornik&ndash;Hansen
-	test.
+	The test statistic and its p-value may be retrieved using the
+	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>.
+	Please note that if the <opt>--all</opt> option is given, the
+	result recorded is that from the Doornik&ndash;Hansen test.
       </para>
     </description>
 
@@ -8294,9 +8294,9 @@
 	This command must follow an estimation command.  It calculates
 	a Wald test for the joint significance of the variables in
 	<repl>varlist</repl>, which should be a subset of the
-	independent variables in the model last estimated. The
-	results of the test may be retrieved using the accessors
-	<lit>$test</lit> and <lit>$pvalue</lit>.
+	independent variables in the model last estimated. The results
+	of the test may be retrieved using the accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/>.
       </para>
       <para>
 	By default the restricted model is estimated and it replaces
@@ -9980,6 +9980,10 @@
 	  <effect>don't print the auxiliary regression</effect>
 	</option>
 	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+	</option>	
+	<option>
 	  <flag>--squares-only</flag>
 	  <effect>compute the test using only the squares</effect>
 	</option>
@@ -10002,6 +10006,11 @@
 	Both the square and the cube are added, unless one of the options
 	<opt>--squares-only</opt> or <opt>--cubes-only</opt> is given.
       </para>
+      <para context="cli">
+	The <opt>silent</opt> option may make sense if one plans to
+	make use of the <fncref targ="$test"/> and/or <fncref
+	targ="$pvalue"/> accessors to grab the results of the test.
+      </para>      
     </description>
 
     <gui-access>
@@ -10176,8 +10185,8 @@
       </code>
       <para>
 	On successful completion of the <lit>restrict</lit> command
-	the accessors <lit>$test</lit> and <lit>$pvalue</lit> give the
-	test statistic and its p-value.
+	the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/> give the test statistic and its p-value.
       </para>
       <para>
 	When testing restrictions on a single-equation model estimated
@@ -10325,32 +10334,35 @@
 
     <description>
       <para>
-	Range&ndash;mean plot: this command creates a simple graph to help in
-	deciding whether a time series, <math>y</math>(t), has constant
-	variance or not.  We take the full sample t=1,...,T and divide it into
-	small subsamples of arbitrary size <math>k</math>. The first subsample
-	is formed by <math>y</math>(1),...,<math>y</math>(k), the second is
-	<math>y</math>(k+1), ..., <math>y</math>(2k), and so on.  For each
-	subsample we calculate the sample mean and range (= maximum minus
-	minimum), and we construct a graph with the means on the horizontal
-	axis and the ranges on the vertical. So each subsample is represented
-	by a point in this plane.  If the variance of the series is constant
-	we would expect the subsample range to be independent of the subsample
-	mean; if we see the points approximate an upward-sloping line this
-	suggests the variance of the series is increasing in its mean; and if
-	the points approximate a downward sloping line this suggests the
-	variance is decreasing in the mean.
+	Range&ndash;mean plot: this command creates a simple graph to
+	help in deciding whether a time series, <math>y</math>(t), has
+	constant variance or not.  We take the full sample t=1,...,T
+	and divide it into small subsamples of arbitrary size
+	<math>k</math>. The first subsample is formed by
+	<math>y</math>(1),...,<math>y</math>(k), the second is
+	<math>y</math>(k+1), ..., <math>y</math>(2k), and so on.  For
+	each subsample we calculate the sample mean and range (=
+	maximum minus minimum), and we construct a graph with the
+	means on the horizontal axis and the ranges on the
+	vertical. So each subsample is represented by a point in this
+	plane.  If the variance of the series is constant we would
+	expect the subsample range to be independent of the subsample
+	mean; if we see the points approximate an upward-sloping line
+	this suggests the variance of the series is increasing in its
+	mean; and if the points approximate a downward sloping line
+	this suggests the variance is decreasing in the mean.
       </para>
       <para>
-	Besides the graph, gretl displays the means and ranges for each
-	subsample, along with the slope coefficient for an OLS regression of
-	the range on the mean and the p-value for the null hypothesis that
-	this slope is zero.  If the slope coefficient is significant at the 10
-	percent significance level then the fitted line from the regression of
-	range on mean is shown on the graph.  The <math>t</math>-statistic for
-	the null, and the corresponding p-value, are recorded and may be
-	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
-	respectively.
+	Besides the graph, gretl displays the means and ranges for
+	each subsample, along with the slope coefficient for an OLS
+	regression of the range on the mean and the p-value for the
+	null hypothesis that this slope is zero.  If the slope
+	coefficient is significant at the 10 percent significance
+	level then the fitted line from the regression of range on
+	mean is shown on the graph.  The <math>t</math>-statistic for
+	the null, and the corresponding p-value, are recorded and may
+	be retrieved using the accessors <fncref targ="$test"/> and
+	<fncref targ="$pvalue"/> respectively.
       </para>
       <para context="cli">
 	If the <opt>--trim</opt> option is given, the minimum and maximum
@@ -12893,7 +12905,7 @@
 	VARs of order 1 to the given maximum.  This is intended to help
 	with the selection of the optimal lag order.  The usual VAR output is
 	not presented. The table of information criteria may be retrieved
-	as a matrix via the <lit>$test</lit> accessor.
+	as a matrix via the <fncref targ="$test"/> accessor.
       </para>
 
     </description>

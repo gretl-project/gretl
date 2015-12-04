@@ -1725,6 +1725,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
  * @opt: if contains %OPT_S, save test results to model. %OPT_Q
  * suppresses the printout of the auxiliary regression. %OPT_R and
  * %OPT_C stand for "squares only" and "cubes only", respectively.
+ * %OPT_I produces silent operation.
  * @prn: gretl printing struct.
  *
  * Carries out and prints Ramsey's RESET test for model specification.
@@ -1834,28 +1835,33 @@ int reset_test (MODEL *pmod, DATASET *dset,
     } 
 
     if (!err) {
+	int silent = (opt & OPT_I);
 	double pval;
 
 	aux.aux = AUX_RESET;
 
-	if (!(opt & OPT_Q)) {
-	    printmodel(&aux, dset, OPT_NONE, prn);
-	} else {
-	    if (!(opt & OPT_G)) { 
-		/* GUI special; see gui2/library.c */
-		pputc(prn, '\n');
+	if (!silent) {
+	    if (!(opt & OPT_Q)) {
+		printmodel(&aux, dset, OPT_NONE, prn);
+	    } else {
+		if (!(opt & OPT_G)) { 
+		    /* GUI special; see gui2/library.c */
+		    pputc(prn, '\n');
+		}
+		pputs(prn, _("RESET test for specification"));
+		pprintf(prn, " (%s)\n", _(mode));
 	    }
-	    pputs(prn, _("RESET test for specification"));
-	    pprintf(prn, " (%s)\n", _(mode));
 	}
 
 	RF = ((pmod->ess - aux.ess) / addv) / (aux.ess / aux.dfd);
 	pval = snedecor_cdf_comp(addv, aux.dfd, RF);
 
-	pprintf(prn, "%s: F = %f,\n", _("Test statistic"), RF);
-	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		addv, aux.dfd, RF, pval);
-	pputc(prn, '\n');
+	if (!silent) {
+	    pprintf(prn, "%s: F = %f,\n", _("Test statistic"), RF);
+	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+		    addv, aux.dfd, RF, pval);
+	    pputc(prn, '\n');
+	}
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_RESET);
