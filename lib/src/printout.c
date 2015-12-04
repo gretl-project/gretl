@@ -1937,6 +1937,10 @@ static void bufprint_string (char *buf, const char *s, int width)
 	gretl_utf8_strncat(buf, s, width - 3);
 	strcat(buf, "..");
     }
+
+#if 0
+    fprintf(stderr, "bufprint_string: '%s' ->\n '%s'\n", s, buf);
+#endif    
 }
 
 #else

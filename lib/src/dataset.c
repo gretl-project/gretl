@@ -4198,7 +4198,7 @@ int series_get_string_width (const DATASET *dset, int i)
 	    
 	    S = series_table_get_strings(dset->varinfo[i]->st, &ns);
 	    for (j=0; j<ns; j++) {
-		m = strlen(S[j]);
+		m = g_utf8_strlen(S[j], -1);
 		if (m > n) {
 		    n = m;
 		}
