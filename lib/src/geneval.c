@@ -9860,9 +9860,12 @@ static NODE *stringify_series (NODE *l, NODE *r, parser *p)
 	if (S == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    /* FIXME flag an error or error? */
-	    ret->v.xval =
-		series_set_string_vals(p->dset, l->vnum, S, ns);
+	    /* flag an error on error? */
+	    ret->v.xval = series_set_string_vals(p->dset, l->vnum, S, ns);
+	    if (ret->v.xval != 0.0) {
+		/* for now, yes */
+		p->err = E_DATA;
+	    }
 	}
     }
 

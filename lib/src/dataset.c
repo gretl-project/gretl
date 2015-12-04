@@ -4287,7 +4287,8 @@ int series_set_string_vals (DATASET *dset, int i,
 			     "must be >= 1");
 	    err = E_DATA;
 	} else if (x1 > ns) {
-	    gretl_errmsg_sprintf("Too few strings: %d are needed", ns);
+	    gretl_errmsg_sprintf("Too few strings: %d given but %g needed",
+				 ns, floor(x1));
 	    err = E_DATA;
 	}
 

@@ -1917,6 +1917,30 @@ static int *get_pmax_array (const int *list, const DATASET *dset)
     return pmax;
 }
 
+/* revert to right-aligned for now -- try better spacing later? */
+
+#if 1
+
+static void bufprint_string (char *buf, const char *s, int width)
+{
+    int i, n = width - g_utf8_strlen(s, -1);
+
+    *buf = '\0';
+		    
+    if (n > 0) {
+	for (i=0; i<n; i++) {
+	    strcat(buf, " ");
+	}
+	strcat(buf, s);
+    } else {
+	strcat(buf, " ");
+	gretl_utf8_strncat(buf, s, width - 3);
+	strcat(buf, "..");
+    }
+}
+
+#else
+
 static void bufprint_string (char *buf, const char *s, int width)
 {
     int i, n = width - g_utf8_strlen(s, -1) - 1;
@@ -1933,6 +1957,8 @@ static void bufprint_string (char *buf, const char *s, int width)
 	strcat(buf, "..");
     }
 }
+
+#endif
 
 int column_width_from_list (const int *list, const DATASET *dset)
 {
