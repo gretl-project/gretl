@@ -58,6 +58,8 @@ static gint64 fseek64 (FILE *fp, gint64 offset, int whence)
 
 #endif
 
+#define STRDEBUG 0
+
 /* see http://www.stata.com/help.cgi?dta */
 
 /* Stata versions */
@@ -480,6 +482,10 @@ dta_make_string_table (int *types, int nvar, int ncols)
 	}
     }
 
+#if STRDEBUG
+    printlist(list, "dta_make_string_table");
+#endif    
+
     st = gretl_string_table_new(list);
 
     free(list);
@@ -490,18 +496,22 @@ dta_make_string_table (int *types, int nvar, int ncols)
 static gchar *recode_stata_string (const char *s)
 {
     const gchar *cset;
-    gchar *tr = NULL;
-    gsize bw;
+    gchar *tr;
+    gsize sz;
 
-    if (!g_get_charset(&cset)) {
-	/* try recoding from current locale */
-	tr = g_locale_to_utf8(s, -1, NULL, &bw, NULL);
+    /* most likely to be Windows CP 1252 */
+    tr = g_convert(s, -1, "UTF-8", "CP1252", NULL, &sz, NULL);
+
+    if (tr == NULL && !g_get_charset(&cset)) {
+	/* fallback: try recoding from current locale, if
+	   the locale is not UTF-8
+	*/
+	tr = g_locale_to_utf8(s, -1, NULL, &sz, NULL);
     }
 
-    if (tr == NULL) {
-	/* wild guess: try Windows CP 1252? */
-	tr = g_convert(s, -1, "UTF-8", "CP1252", NULL, &bw, NULL);
-    }
+#if STRDEBUG
+    fprintf(stderr, "recode_stata_string: '%s' ->\n '%s'\n", s, tr);
+#endif     
 
     return tr;
 }
@@ -734,6 +744,10 @@ static int dta_value_labels_setup (PRN **pprn, gretl_string_table **pst)
 	}
     }
 
+#if STRDEBUG
+    fprintf(stderr, "dta_value_labels_setup: err = %d\n", err);
+#endif    
+
     return err;
 }
 
@@ -790,6 +804,10 @@ static void stata_seek (FILE *fp, gint64 offset, int whence, int *err)
 	bin_error(err);
     }
 }
+
+/* The following pertains to numeric variables that have value
+   labels attached, as opposed to variables of string type.
+*/
 
 static int process_value_labels (FILE *fp, DATASET *dset, int j,
 				 int *lvars, char **lnames, int namelen,
@@ -962,12 +980,35 @@ static int process_stata_varlabel (char *label, DATASET *dset,
     return err;
 }
 
+/* The following pertains to a non-numeric variable whose
+   values are actually strings (as opposed to a numeric
+   variable with value labels attached). According to the
+   Stata 117 dta spec such string values (@buf) should be
+   ASCII but in practice this may not be the case.
+*/
+
 static void process_string_value (char *buf, gretl_string_table *st,
 				  DATASET *dset, int v, int t,
 				  PRN *prn)
 {
+#if STRDEBUG > 1
+    fprintf(stderr, "process_string_value: v=%d, t=%d, st=%p, buf='%s'\n",
+	    v, t, (void *) st, buf);
+#endif
+    
     if (st != NULL && strcmp(buf, ".")) {
-	int ix = gretl_string_table_index(st, buf, v, 0, prn);
+	int ix = 0;
+
+	if (g_utf8_validate(buf, -1, NULL)) {
+	    ix = gretl_string_table_index(st, buf, v, 0, prn);
+	} else {
+	    gchar *tr = recode_stata_string(buf);
+
+	    if (tr != NULL) {
+		ix = gretl_string_table_index(st, tr, v, 0, prn);
+		g_free(tr);
+	    }
+	}
 	
 	if (ix > 0) {
 	    dset->Z[v][t] = ix;
@@ -1016,7 +1057,7 @@ static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
 
 /* main reader for dta format 117 */
 
-static int read_new_dta_data (FILE *fp, DATASET *dset,
+static int read_dta_117_data (FILE *fp, DATASET *dset,
 			      gretl_string_table **pst, 
 			      dta_table *dtab, PRN *prn,
 			      PRN *vprn)
@@ -1150,7 +1191,7 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 		ix = stata_read_signed_byte(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (types[i] <= STATA_STRF_MAX) {
-		/* fixed length, allegedly  ASCII string */
+		/* fixed length, allegedly ASCII string */
 		*strbuf = '\0';
 		clen = types[i];
 		if (clen > 255) {
@@ -1161,9 +1202,6 @@ static int read_new_dta_data (FILE *fp, DATASET *dset,
 		    stata_read_string(fp, clen, strbuf, &err);
 		    strbuf[clen] = '\0';
 		}
-#if 0
-		fprintf(stderr, "Z[%d][%d] = '%s'\n", v, t, strbuf);
-#endif
 		if (!err && *strbuf != '\0') {
 		    process_string_value(strbuf, *pst, dset, v, t, prn);
 		}
@@ -1477,7 +1515,7 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
     return 0;
 }
 
-/* new-style dta header (format 117, Stata 13):
+/* dta header (format 117, Stata 13):
 
   file format id     <release>...</release>
   byteorder          <byteorder>...</byteorder>
@@ -1488,7 +1526,7 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
 
 */
 
-static int parse_new_dta_header (FILE *fp, dta_table *dtab,
+static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 				 PRN *prn, PRN *vprn)
 {
     int rel, clen = 0;
@@ -1688,7 +1726,7 @@ int dta_get_data (const char *fname, DATASET *dset,
     if (new_style_dta_file(fp)) {
 	dtab = dta_table_new(&err);
 	if (!err) {
-	    err = parse_new_dta_header(fp, dtab, prn, vprn);
+	    err = parse_dta_117_header(fp, dtab, prn, vprn);
 	}
 	if (!err) {
 	    nvar = dtab->nvar;
@@ -1735,7 +1773,7 @@ int dta_get_data (const char *fname, DATASET *dset,
     }
 
     if (stata_13) {
-	err = read_new_dta_data(fp, newset, &st, dtab, prn, vprn);
+	err = read_dta_117_data(fp, newset, &st, dtab, prn, vprn);
     } else {
 	err = read_dta_data(fp, newset, &st, namelen, prn, vprn);
     }
