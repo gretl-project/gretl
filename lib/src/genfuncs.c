@@ -2570,16 +2570,19 @@ static void
 seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
 		     char *vname, char *vlabel)
 {
+    int pd = dataset_is_panel(dset) ? dset->panel_pd : dset->pd;
+    int ts = dset->structure == TIME_SERIES || dset->panel_pd > 1;
+	
     if (opt & OPT_C) {
 	sprintf(vname, "S%d", k);
 	strcpy(vlabel, "centered periodic dummy");
     } else if (opt & OPT_S) {
 	sprintf(vname, "S%d", k);
 	strcpy(vlabel, "uncentered periodic dummy");
-    } else if (dset->pd == 4 && dset->structure == TIME_SERIES) {
+    } else if (pd == 4 && ts) {
 	sprintf(vname, "dq%d", k);
 	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), k);
-    } else if (dset->pd == 12 && dset->structure == TIME_SERIES) {
+    } else if (pd == 12 && ts) {
 	sprintf(vname, "dm%d", k);
 	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), k);
     } else {
@@ -2595,6 +2598,23 @@ seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
     }
 }
 
+static int get_first_panel_period (DATASET *dset)
+{
+    double x = date_as_double(0, dset->panel_pd, dset->panel_sd0);
+    int i, d = ceil(log10(dset->panel_pd));
+    int ret = 0;
+
+    x -= floor(x);
+    for (i=0; i<d; i++) {
+	x *= 10;
+    }
+
+    x = (x-floor(x) > 0.5)? ceil(x) : floor(x);
+    ret = x - 1;
+
+    return ret;
+}
+
 static int real_seasonals (DATASET *dset, int ref, int center,
 			   int snames, int **plist)
 {
@@ -2603,7 +2623,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
     gretlopt opt = 0;
     int *list = NULL;
     int i, vi, k, t, pp;
-    int ndums, nnew = 0;
+    int pd, ndums, nnew = 0;
     int nfix = 0;
     int err = 0;
 
@@ -2611,15 +2631,24 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	return E_NODATA;
     }
 
-    if (dset->pd < 2 || dset->pd > 99999) {
-	return E_PDWRONG;
+    if (dataset_is_panel(dset)) {
+	pd = dset->panel_pd;
+	if (pd != 4 && pd != 12 && pd != 24) {
+	    /* not handled yet */
+	    return E_PDWRONG;
+	}
+    } else {
+	pd = dset->pd;
+	if (pd < 2 || pd > 99999) {
+	    return E_PDWRONG;
+	}
     }
 
-    if (ref < 0 || ref > dset->pd) {
+    if (ref < 0 || ref > pd) {
 	return E_INVARG;
     }
 
-    ndums = dset->pd - (ref > 0);
+    ndums = pd - (ref > 0);
 
     list = gretl_list_new(ndums);
     if (list == NULL) {
@@ -2631,7 +2660,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 
     /* check for appropriate series already in place */
 
-    for (k=1, i=1; i<=dset->pd; i++) {
+    for (k=1, i=1; i<=pd; i++) {
 	if (i == ref) {
 	    /* dummy not wanted */
 	    continue;
@@ -2661,7 +2690,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	return E_ALLOC;
     }
 
-    for (k=1, i=1; i<=dset->pd; i++) {
+    for (k=1, i=1; i<=pd; i++) {
 	if (i == ref) {
 	    continue;
 	}
@@ -2675,7 +2704,26 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	k++;
     }
 
-    if (dated_daily_data(dset)) {
+    if (dataset_is_panel(dset)) {
+	int p0 = get_first_panel_period(dset);
+	int T = dset->pd;
+
+	pp = 0;
+
+	for (t=0; t<dset->n; t++) {
+	    if (t % T == 0) {
+		pp = p0;
+	    } else {
+		pp = (t + p0) % pd;
+	    }
+	    for (k=0, i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (k+1 == ref) k++;
+		dset->Z[vi][t] = (pp == k)? 1 : 0;
+		k++;
+	    }
+	}
+    } else if (dated_daily_data(dset)) {
 	char datestr[OBSLEN];
 	int wkday;
 
@@ -2694,7 +2742,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	int yy, mm = 10;
 	double xx;
 
-	pp = dset->pd;
+	pp = pd;
 	while ((pp = pp / 10)) {
 	    mm *= 10;
 	}
@@ -2703,7 +2751,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	    vi = list[i];
 	    if (k == ref) k++;
 	    for (t=0; t<dset->n; t++) {
-		xx = date_as_double(t, dset->pd, dset->sd0) + .1;
+		xx = date_as_double(t, pd, dset->sd0) + .1;
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
 		dset->Z[vi][t] = (pp == k)? 1 : 0;
@@ -2714,7 +2762,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	int p0 = get_subperiod(0, dset, NULL);
 
 	for (t=0; t<dset->n; t++) {
-	    pp = (t + p0) % dset->pd;
+	    pp = (t + p0) % pd;
 	    for (k=0, i=1; i<=list[0]; i++) {
 		vi = list[i];
 		if (k+1 == ref) k++;
@@ -2725,7 +2773,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
     }
 
     if (center) {
-	double cx = 1.0 / dset->pd;
+	double cx = 1.0 / pd;
 
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
@@ -5725,7 +5773,9 @@ static int regular_daily_or_weekly (const DATASET *dset, double *x)
 
     for (t=0; t<dset->n && !err; t++) {
 	ntodate(datestr, t, dset);
+#if 0	
 	fprintf(stderr, "regular: datestr = '%s'\n", datestr);
+#endif	
 	n = sscanf(datestr, "%d-%d-%d", &y, &m, &d);
 	if (n != 3) {
 	    err = E_DATA;

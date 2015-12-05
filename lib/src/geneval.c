@@ -4279,7 +4279,8 @@ static NODE *seasonals_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
     
-    if (!dataset_is_seasonal(p->dset)) {
+    if (!dataset_is_seasonal(p->dset) &&
+	!dataset_is_seasonal_panel(p->dset)) {
 	p->err = E_PDWRONG;
     } else {
 	int ref = 0, center = 0;

@@ -255,6 +255,17 @@ typedef struct _series_table series_table;
 #define dataset_is_panel(p) (p != NULL && p->structure == STACKED_TIME_SERIES)
 
 /**
+ * dataset_is_seasonal_panel:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a dataset contains panel
+ * data with a seasonal time-series dimension (1) or not (0).
+ */
+#define dataset_is_seasonal_panel(p) (p != NULL && \
+				      p->structure == STACKED_TIME_SERIES && \
+				      p->panel_pd > 1)
+
+/**
  * dataset_has_markers:
  * @p: pointer to data information struct.
  *
