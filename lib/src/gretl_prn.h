@@ -68,6 +68,8 @@ const char *gretl_print_get_tempfile_name (PRN *prn);
 
 PRN *gretl_print_new_with_buffer (char *buf);
 
+PRN *gretl_print_new_with_gchar_buffer (gchar *buf);
+
 PRN *gretl_print_new_with_stream (FILE *fp);
 
 void gretl_print_detach_stream (PRN *prn);

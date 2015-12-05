@@ -2119,7 +2119,7 @@ static int print_by_var (const int *list, const DATASET *dset,
  * Print the data for the variables in @list over the currently
  * defined sample range.
  *
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: 0 on successful completion, non-zero code on error.
  */
 
 int printdata (const int *list, const char *mstr, 

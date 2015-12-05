@@ -58,12 +58,17 @@ struct PRN_ {
     size_t blen;       /* string length of buffer */
     int savepos;       /* saved position in stream or buffer */
     PrnFormat format;  /* plain, TeX, RTF */
-    int fixed;         /* = 1 for fixed-size buffer */
+    int fixed;         /* non-zero for fixed-size buffer */
     char delim;        /* CSV field delimiter */
     char *fname;       /* temp file name, or NULL */
 };
 
 #define PRN_DEBUG 0
+
+enum {
+    BUF_FIXED = 1,
+    GBUF_FIXED = 2
+};
 
 /**
  * gretl_print_destroy:
@@ -110,7 +115,12 @@ void gretl_print_destroy (PRN *prn)
   	fprintf(stderr, "gretl_print_destroy: freeing buffer at %p\n", 
 		(void *) prn->buf); 
 #endif
-	free(prn->buf);
+	if (prn->fixed == GBUF_FIXED) {
+	    /* the buffer was obtained from GLib */
+	    g_free(prn->buf);
+	} else {
+	    free(prn->buf);
+	}
     }
 
     free(prn);
@@ -148,6 +158,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 				  const char *fname,
 				  char *buf,
 				  FILE *fp,
+				  int glib,
 				  int *perr)
 {
     PRN *prn = malloc(sizeof *prn);
@@ -195,7 +206,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     } else if (ptype == GRETL_PRINT_BUFFER) {
 	if (buf != NULL) {
 	    prn->buf = buf;
-	    prn->fixed = 1;
+	    prn->fixed = glib ? GBUF_FIXED : BUF_FIXED;
 #if PRN_DEBUG
 	    fprintf(stderr, "prn with fixed buffer\n");
 #endif
@@ -253,7 +264,7 @@ PRN *gretl_print_new (PrnType ptype, int *err)
     fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
 #endif
 
-    return real_gretl_print_new(ptype, NULL, NULL, NULL, err);
+    return real_gretl_print_new(ptype, NULL, NULL, NULL, 0, err);
 }
 
 /**
@@ -274,7 +285,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 	return NULL;
     }
 
-    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, NULL, err);
+    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, NULL, 0, err);
 }
 
 /**
@@ -290,7 +301,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 
 PRN *gretl_print_new_with_tempfile (int *err)
 {
-    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, NULL, err);
+    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, NULL, 0, err);
 }
 
 /**
@@ -346,7 +357,29 @@ PRN *gretl_print_new_with_buffer (char *buf)
     if (buf == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, NULL);
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, 0, NULL);
+    }
+}
+
+/**
+ * gretl_print_new_with_gchar_buffer:
+ * @buf: pre-allocated text buffer.
+ * 
+ * Just as gretl_print_new_with_buffer() except that the buffer is
+ * of pointer-to-gchar type, as obtained from one or other GLib
+ * function. This means that when the #PRN is detroyed the
+ * buffer will be freed using GLib's g_free function rather than
+ * the standard C library's free function.
+ *
+ * Returns: pointer to newly created struct, or NULL on failure.
+ */
+
+PRN *gretl_print_new_with_gchar_buffer (gchar *buf)
+{
+    if (buf == NULL) {
+	return NULL;
+    } else {
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, 1, NULL);
     }
 }
 
@@ -368,7 +401,7 @@ PRN *gretl_print_new_with_stream (FILE *fp)
     if (fp == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, NULL);
+	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, 0, NULL);
     }
 } 
  

@@ -6730,17 +6730,55 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
-/* max number of observations for which we use the buffer approach for
-   displaying data, as opposed to disk file 
+static PRN *data_prn_via_file (const int *list)
+{
+    PRN *prn = NULL;
+    char fname[MAXLEN];
+    gchar *buf = NULL;
+    gsize sz = 0;
+    int err = 0;
+
+    if (user_fopen("data_display_tmp", fname, &prn)) {
+	return NULL;
+    }
+    
+    err = printdata(list, NULL, dataset, OPT_O, prn);
+    gretl_print_destroy(prn);
+    prn = NULL;
+    
+    if (!err) {
+	err = gretl_file_get_contents(fname, &buf, &sz);
+    }
+    
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	prn = gretl_print_new_with_gchar_buffer(buf);
+    }
+    
+    remove(fname);
+
+    return prn;
+}
+
+/* Max number of observations for which we use the buffer approach for
+   displaying data, as opposed to disk file. (Note, 2015-12-05: the
+   number is now increased substantially; however, this limit may
+   now be pretty much redundant. It was introduced because printing
+   to memory via pprintf was much slower than printing to file, on
+   account of the need to track the size of the in-memory buffer.
+   However, pprintf() is now more efficient and computers are
+   faster.
 */
 
-#define MAXDISPLAY 8192
+#define MAXDISPLAY 65536 /* was 8192 */
 
 void display_selected (void)
 {
     int n = sample_size(dataset);
     PRN *prn = NULL;
     int *list = NULL;
+    int err = 0;
 
     list = main_window_selection_as_list();
     if (list == NULL) {
@@ -6753,31 +6791,29 @@ void display_selected (void)
 	goto display_exit;
     }
 
-    if (list[0] * n > MAXDISPLAY) { 
+    if (list[0] * n > MAXDISPLAY) {
 	/* use disk file */
-	char fname[MAXLEN];
-
-	if (user_fopen("data_display_tmp", fname, &prn)) {
-	    goto display_exit;
+	prn = data_prn_via_file(list);
+	if (prn == NULL) {
+	    err = 1;
 	}
-	printdata(list, NULL, dataset, OPT_O, prn);
-	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { 
 	/* use buffer */
-	series_view *sview = NULL;
-
 	if (bufopen(&prn)) {
 	    goto display_exit;
 	}
-	if (printdata(list, NULL, dataset, OPT_O, prn)) {
-	    nomem();
+	err = printdata(list, NULL, dataset, OPT_O, prn);
+	if (err) {
+	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
-	} else {
-	    sview = multi_series_view_new(list);
-	    view_buffer(prn, 78, 350, _("gretl: display data"), 
-			PRINT, sview);
 	}
+    }
+
+    if (!err) {
+	series_view *sview = multi_series_view_new(list);
+
+	view_buffer(prn, 78, 400, _("gretl: display data"), 
+		    PRINT, sview);
     }
 
  display_exit:
@@ -7511,48 +7547,43 @@ void display_var (void)
 {
     int list[2];
     PRN *prn;
-    windata_t *vwin;
-    int height = 400;
-    int n = sample_size(dataset);
-    int v = mdata_active_var();
-
-    list[0] = 1;
-    list[1] = v;
+    int n, v = mdata_active_var();
+    int err = 0;
 
     if (all_missing(v)) {
 	return;
     }
 
+    list[0] = 1;
+    list[1] = v;
+    n = sample_size(dataset);
+
     if (n > MAXDISPLAY) { 
 	/* use disk file */
-	char fname[MAXLEN];
-
-	if (user_fopen("data_display_tmp", fname, &prn)) {
-	    return;
-	}
-
-	printdata(list, NULL, dataset, OPT_O, prn);
-	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 28, height, VIEW_DATA);
+	prn = data_prn_via_file(list);
+	if (prn == NULL) {
+	    err = 1;
+	}	
     } else { 
 	/* use buffer */
-	int err;
-
 	if (bufopen(&prn)) {
 	    return;
 	}
-
 	err = printdata(list, NULL, dataset, OPT_O, prn);
-
 	if (err) {
-	    nomem();
+	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
-	    return;
 	}
-	vwin = view_buffer(prn, 36, height, dataset->varname[v], 
+    }
+
+    if (!err) {
+	windata_t *vwin;
+	
+	vwin = view_buffer(prn, 36, 400, dataset->varname[v], 
 			   VIEW_SERIES, NULL);
 	series_view_connect(vwin, v);
     }
+	
 }
 
 static int suppress_logo;
