@@ -81,6 +81,7 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 #endif
 
 #define STRDEBUG 0
+#define E_NOTYET E_MAX+1
 
 /* see http://www.stata.com/help.cgi?dta */
 
@@ -93,6 +94,7 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 #define VERSION_10   114
 #define VERSION_12   115
 #define VERSION_13   117
+#define VERSION_14   118
 
 /* Stata format constants */
 #define STATA_STRINGOFFSET 0x7f
@@ -205,6 +207,26 @@ static int stata_read_int64 (FILE *fp, int *err)
     }
 
     return i;
+}
+
+static guint64 stata_read_uint64 (FILE *fp, int *err)
+{
+    gint64 u;
+
+    if (fread(&u, sizeof u, 1, fp) != 1) {
+	bin_error(err, "stata_read_uint64");
+	return 0;
+    }
+
+    if (swapends) {
+	if (stata_endian == G_BIG_ENDIAN) {
+	    u = GUINT64_FROM_BE(u);
+	} else {
+	    u = GUINT64_FROM_LE(u);
+	}
+    }
+
+    return u;
 }
 
 /* 4-byte signed int */
@@ -1084,7 +1106,7 @@ static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
     }
 }
 
-/* main reader for dta format 117 */
+/* main reader for dta format 117+ */
 
 static int read_dta_117_data (FILE *fp, DATASET *dset,
 			      gretl_string_table **pst, 
@@ -1569,6 +1591,8 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
     return 0;
 }
 
+#define HDR_DEBUG 1
+
 /* dta header (format 117, Stata 13):
 
   file format id     <release>...</release>
@@ -1577,7 +1601,6 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
   # of observations  <N>...</N>
   dataset label      <label>...</label>
   datetime stamp     <timestamp>...</timestamp>
-
 */
 
 static int parse_dta_117_header (FILE *fp, dta_table *dtab,
@@ -1596,7 +1619,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	       "<byteorder>%3s</byteorder>", &rel, order) != 2) {
 	err = 1;
     } else {
-	if (rel != 117) {
+	if (rel != 117 && rel != 118) {
 	    err = 1;
 	} else if (!strcmp(order, "LSF")) {
 	    stata_endian = G_LITTLE_ENDIAN;
@@ -1612,23 +1635,48 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	swapends = stata_endian != HOST_ENDIAN;
 	err = stata_seek(fp, 70, SEEK_SET);
         if (!err) {
-	    dtab->nvar = stata_read_short(fp, 1, &err); /* K */
+	    /* read K = number of variables */
+	    dtab->nvar = stata_read_short(fp, 1, &err);
 	}
     }
+
+    /* FIXME */
+    if (rel > 117) {
+	pprintf(prn, "This dta version not yet supported\n");
+	return E_NOTYET;
+    }
+
+#if HDR_DEBUG
+    fprintf(stderr, "header step 1: err = %d\n", err);
+#endif    
 
     if (!err) {
 	/* skip "</K><N>" */
 	err = stata_seek(fp, 7, SEEK_CUR);
 	if (!err) {
-	    dtab->nobs = stata_read_int32(fp, 1, &err); /* N */
+	    /* read N = number of observations */
+	    if (rel == 118) {
+		/* FIXME */
+		dtab->nobs = (int) stata_read_uint64(fp, &err);
+	    } else {
+		dtab->nobs = stata_read_int32(fp, 1, &err);
+	    }
 	}
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "header step 2: err = %d\n", err);
+#endif     
 
     if (!err) {
 	/* skip "</N><label>" */
 	err = stata_seek(fp, 11, SEEK_CUR);
 	if (!err) {
-	    clen = stata_read_byte(fp, &err);
+	    if (rel == 118) {
+		clen = stata_read_uint16(fp, &err);;
+	    } else {
+		clen = stata_read_byte(fp, &err);
+	    }
 	    if (!err) {
 		if (clen > 0) {
 		    dtab->labellen = clen;
@@ -1638,6 +1686,10 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	    }
 	}
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "header step 3: err = %d\n", err);
+#endif      
 
     if (!err) {
 	/* skip "</label><timestamp>" */
@@ -1652,6 +1704,10 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	    }
 	}
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "header step 4: err = %d\n", err);
+#endif     
 
     if (!err) {
 	/* skip "</timestamp></header>" */
@@ -1675,14 +1731,22 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 		}
 	    }
 	}
-    }    
+    }
+
+#if HDR_DEBUG
+    fprintf(stderr, "header step 5: err = %d\n", err);
+#endif     
 
     if (!err && (dtab->nvar <= 0 || dtab->nobs <= 0)) {
 	err = 1;
     }
 
+#if HDR_DEBUG
+    fprintf(stderr, "header step 6: err = %d\n", err);
+#endif     
+
     if (!err) {
-	stata_version = 13;
+	stata_version = (rel == 117)? 13 : 14;
 	stata_13 = 1;
     }
     
@@ -1782,7 +1846,7 @@ int dta_get_data (const char *fname, DATASET *dset,
     }
     
     if (err) {
-	if (err != E_ALLOC) {
+	if (err != E_ALLOC && err != E_NOTYET) {
 	    pputs(prn, _("This file does not seem to be a valid Stata data file"));
 	    pputc(prn, '\n');
 	}
