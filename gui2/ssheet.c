@@ -594,15 +594,18 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
 
     colnum = get_treeview_column_number(col);
     path = gtk_tree_path_new_from_string(path_string);
-    gtk_tree_model_get_iter(model, &iter, path);
+    if (!gtk_tree_model_get_iter(model, &iter, path)) {
+	fprintf(stderr, "get_iter failed for path '%s'!\n", path_string);
+	return;
+    }
     gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
 
 #if CELLDEBUG
-    fprintf(stderr, "maybe_update_store: old='%s', new='%s'\n",
-	    old_text, new_text);
+    fprintf(stderr, "maybe_update_store: pathstr=%s, colnum=%d, old='%s', new='%s'\n",
+	    path_string, colnum, old_text, new_text);
 #endif    
 
-    if (old_text != NULL && strcmp(old_text, new_text)) {
+    if (old_text == NULL || strcmp(old_text, new_text)) {
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			   colnum, new_text, -1);
 
