@@ -1099,13 +1099,16 @@ int tramo_linearize_series (const double *x, double *y,
 #define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t])) 
 #define panel_obs_masked(m,t) (m != NULL && m[t] == 0)
 
+#define PXSUM_SKIP_NA 1
+
 /**
  * panel_statistic:
  * @x: source data.
  * @y: target into which to write.
  * @dset: data set information.
  * @k: code representing the desired statistic: F_PNOBS,
- * F_PMIN, F_PMAX, F_PSUM, F_PMEAN, F_PXSUM or F_PSD.
+ * F_PMIN, F_PMAX, F_PSUM, F_PMEAN, F_PXSUM, F_PSD, F_PXNOBS
+ * or F_PXSUM.
  * @mask: either NULL or a series with 0s for observations
  * to be excluded from the calculations, non-zero values
  * at other observations.
@@ -1264,31 +1267,52 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 	}
     } else if (k == F_PXSUM) {
 	/* the sum of cross-sectional values for each period */
-	double *yt = malloc(T * sizeof *yt);
+	double yt;
+	int nt;
 
-	if (yt == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (t=0; t<T; t++) {
-		yt[t] = 0.0;
-		for (i=u1; i<=u2; i++) {
-		    s = i*T + t;
-		    if (panel_obs_masked(mask, s)) {
-			continue;
-		    } else if (na(x[s])) {
-			yt[t] = NADBL;
-			break;
-		    } else {
-			yt[t] += x[s];
-		    }
+	for (t=0; t<T; t++) {
+	    yt = 0.0;
+	    nt = 0;
+	    for (i=u1; i<=u2; i++) {
+		s = i*T + t;
+		if (panel_obs_masked(mask, s)) {
+		    continue;
+		} else if (na(x[s])) {
+#if PXSUM_SKIP_NA
+		    continue;
+#else			
+		    yt = NADBL;
+		    break;
+#endif			
+		} else {
+		    yt += x[s];
+		    nt++;
+		}
+	    }
+	    if (nt == 0) {
+		yt = NADBL;
+	    }
+	    for (i=u1; i<=u2; i++) {
+		y[i*T + t] = yt;
+	    }
+	}
+    } else if (k == F_PXNOBS) {
+	/* number of valid x-sectional obs in each period */
+	int nt;
+
+	for (t=0; t<T; t++) {
+	    nt = 0;
+	    for (i=u1; i<=u2; i++) {
+		s = i*T + t;
+		if (panel_obs_masked(mask, s)) {
+		    continue;
+		} else if (!na(x[s])) {
+		    nt++;
 		}
 	    }
 	    for (i=u1; i<=u2; i++) {
-		for (t=0; t<T; t++) {
-		    y[i*T + t] = yt[t];
-		}
+		y[i*T + t] = nt;
 	    }
-	    free(yt);
 	}
     } else {
 	/* unsupported option */

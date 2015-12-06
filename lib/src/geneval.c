@@ -6237,6 +6237,7 @@ static int get_logtrans (const char *s)
 			  f == F_PSUM || \
 			  f == F_PMEAN || \
 			  f == F_PXSUM ||  \
+			  f == F_PXNOBS ||  \
 			  f == F_PSD)
 
 /* Functions taking a series as argument and returning a series.
@@ -6351,6 +6352,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_PSUM:
 	case F_PMEAN:
 	case F_PXSUM:
+	case F_PXNOBS:
 	case F_PSD:
 	    p->err = panel_statistic(x, y, p->dset, f, z); 
 	    break;
@@ -11496,6 +11498,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PSUM:
     case F_PMEAN:
     case F_PXSUM:
+    case F_PXNOBS:
     case F_PSD:
     case F_DESEAS:
     case F_TRAMOLIN:

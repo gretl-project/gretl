@@ -5807,7 +5807,7 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Returns a series holding the maxima of variable
 	  <argname>y</argname> for each cross-sectional unit (repeated
 	  for each time period).
@@ -5838,19 +5838,19 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the currentl dataset has a panel
 	  structure. Returns a series holding the time-mean of
 	  variable <argname>y</argname> for each cross-sectional unit,
 	  the values being repeated for each period. Missing
 	  observations are skipped in calculating the means.
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Computes the time-mean of variable
-	  <argname>y</argname> for each cross-sectional unit; that is, 
-	  \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\] 
-	  where $T_i$ is the number of valid
-	  observations for unit $i$.
+	  <argname>y</argname> for each cross-sectional unit; that is,
+	  \[ \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\]
+	  where $T_i$ is the number of valid observations for unit
+	  $i$.
 	</para>
 	<para>
 	  If the optional second argument is provided then
@@ -5878,7 +5878,7 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Returns a series holding the minima of variable
 	  <argname>y</argname> for each cross-sectional unit (repeated
 	  for each time period).
@@ -5908,7 +5908,7 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Returns a series holding the number of valid
 	  observations of variable <argname>y</argname> for each
 	  cross-sectional unit (repeated for each time period).
@@ -6061,7 +6061,7 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Returns a series holding the sample standard
 	  deviation of variable <math>y</math> for each
 	  cross-sectional unit (with the values repeated for each time
@@ -6071,14 +6071,14 @@
 	  which case <lit>NA</lit> is returned).
 	</para>
 	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Computes the per-unit sample standard deviation for
-	  variable <math>y</math>, that is 
-	  \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} 
-	  (y_{i,t} - \bar{y}_i)^2 } \]
-	  The above formula holds for $T_i \ge 2$, where $T_i$ is the
-	  number of valid observations for unit $i$; if $T_i = 0$,
-	  <lit>NA</lit> is returned; if $T_i = 1$, 0 is returned.
+	  Only applicable if the current dataset has a panel
+	  structure. Computes the per-unit sample standard deviation
+	  for variable <math>y</math>, that is \[ \sigma_i =
+	  \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} (y_{i,t} -
+	  \bar{y}_i)^2 } \] The above formula holds for $T_i \ge 2$,
+	  where $T_i$ is the number of valid observations for unit
+	  $i$; if $T_i = 0$, <lit>NA</lit> is returned; if $T_i = 1$,
+	  0 is returned.
 	</para>
 	<para>
 	  If the optional second argument is provided then
@@ -6132,7 +6132,7 @@
       </fnargs>
       <description>
 	<para>
-	  Only applicable if the currently open dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Returns a column vector holding the first valid
 	  observation for the series <argname>y</argname> for each
 	  cross-sectional unit in the panel, over the current sample
@@ -6228,6 +6228,30 @@
       </description>
     </function>
 
+    <function name="pxnobs" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Only applicable if the current dataset has a panel
+	  structure. Returns a series holding the number of valid
+	  observations of <argname>y</argname> in each time period
+	  (this count being repeated for each unit).
+	</para>
+	<para>
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
+	  Note that this function works in a different dimension from
+	  the <fncref targ="pnobs"/> function.
+	</para>
+      </description>
+    </function>    
+
     <function name="pxsum" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -6235,10 +6259,10 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns a series holding the sum of the values
-	  of <argname>y</argname> for each cross-sectional unit in
-	  each period (the values being repeated for each unit).
+	  Only applicable if the current dataset has a panel
+	  structure. Returns a series holding the sum of the values of
+	  <argname>y</argname> for each cross-sectional unit in each
+	  period (the values being repeated for each unit).
 	</para>
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
@@ -6254,7 +6278,7 @@
 	</para>
 	<para>
 	  Note that this function works in a different dimension from
-	  the <fncref targ="pmean"/> function.
+	  the <fncref targ="psum"/> function.
 	</para>
       </description>
     </function>
@@ -7751,7 +7775,8 @@
 	<para>
 	  Returns the sum of the observations of <argname>x</argname>
 	  over the current sample range, or <lit>NA</lit> if there are
-	  any missing values.
+	  any missing values. Use <fncref targ="sum"/> is you want
+	  missing values to be skipped.
 	</para>
       </description>
     </function>
