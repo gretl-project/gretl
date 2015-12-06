@@ -22,6 +22,10 @@
   2014 to handle format 117 files (Stata 13).
 */
 
+#if defined(__linux) || defined(linux)
+# define _FILE_OFFSET_BITS 64
+#endif
+
 #include "libgretl.h"
 #include "version.h"
 #include "gretl_string_table.h"
@@ -42,21 +46,36 @@
 #endif
 
 #if defined(WIN32) && !defined(WIN64)
-/* _ftelli64 missing in msvcrt.dll */
+/* 32-bit Windows: _ftelli64 missing in msvcrt.dll */
 
 #include <io.h>
 
+#define SAFETY_FIRST 1
+
 static gint64 ftell64 (FILE *fp)
 {
+#if SAFETY_FIRST    
     return (gint64) ftell(fp);
-    // return _telli64(_fileno(fp));
+#else    
+    return _telli64(_fileno(fp));
+#endif    
 }
 
 static int fseek64 (FILE *fp, gint64 offset, int whence)
 {
+#if SAFETY_FIRST     
+    if (offset > (gint64) LONG_MAX) {
+	return -1;
+    } else {
+	long loff = offset;
+	
+	return fseek(fp, loff, whence);
+    }
+#else    
     gint64 i = _lseeki64(_fileno(fp), offset, whence);
 
     return i < 0 ? -1 : 0;
+#endif    
 }
 
 #endif
