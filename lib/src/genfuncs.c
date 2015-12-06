@@ -1096,11 +1096,6 @@ int tramo_linearize_series (const double *x, double *y,
     return err;
 }
 
-static int new_unit (const DATASET *dset, int t)
-{
-    return t > 0 && (t / dset->pd != (t-1) / dset->pd);
-}
-
 #define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t])) 
 #define panel_obs_masked(m,t) (m != NULL && m[t] == 0)
 
@@ -1124,188 +1119,160 @@ static int new_unit (const DATASET *dset, int t)
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k, const double *mask)
 {
-    int smin = 0, Ti = 0;
-    int s, t;
+    int T, Ti;
+    int i, s, t, u1, u2;
     int err = 0;
 
     if (!dataset_is_panel(dset)) {
 	return E_DATA;
     }
 
+    T = dset->pd;
+    u1 = dset->t1 / T;
+    u2 = dset->t2 / T;
+
     if (k == F_PNOBS) {
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		for (s=smin; s<t; s++) {
-		    y[s] = Ti;
-		}
-		if (t == dset->n) {
-		    break;
-		} else {
-		    Ti = 0;
-		    smin = t;
+	for (i=u1; i<=u2; i++) {
+	    Ti = 0;
+	    for (t=0; t<T; t++) {
+		if (panel_obs_ok(x, i*T + t, mask)) {
+		    Ti++;
 		}
 	    }
-	    if (panel_obs_ok(x, t, mask)) {
-		Ti++;
+	    for (t=0; t<T; t++) {
+		y[i*T + t] = Ti;
 	    }
 	}
     } else if (k == F_PMIN || k == F_PMAX || k == F_PSUM) {
-	double res = NADBL;
+	double yi;
 
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		for (s=smin; s<t; s++) {
-		    y[s] = res;
-		}
-		if (t == dset->n) {
-		    break;
-		} else {
-		    res = NADBL;
-		    smin = t;
+	for (i=u1; i<=u2; i++) {
+	    yi = NADBL;
+	    for (t=0; t<T; t++) {
+		s = i*T + t;
+		if (panel_obs_ok(x, s, mask)) {
+		    if (na(yi)) {
+			yi = x[s];
+		    } else if (k == F_PMIN && x[s] < yi) {
+			yi = x[s];
+		    } else if (k == F_PMAX && x[s] > yi) {
+			yi = x[s];
+		    } else if (k == F_PSUM) {
+			yi += x[s];
+		    }
 		}
 	    }
-	    if (panel_obs_ok(x, t, mask)) {
-		if (na(res)) {
-		    res = x[t];
-		} else if (k == F_PMIN && x[t] < res) {
-		    res = x[t];
-		} else if (k == F_PMAX && x[t] > res) {
-		    res = x[t];
-		} else if (k == F_PSUM) {
-		    res += x[t];
-		}
+	    for (t=0; t<T; t++) {
+		y[i*T + t] = yi;
 	    }
 	}
     } else if (k == F_PMEAN || k == F_PSD) {
 	/* first check for presence of time-variance */
-	double xbak = NADBL;
 	int TV = 0;
 
-	for (t=0; t<dset->n && !TV; t++) {
-	    if (new_unit(dset, t)) {
-		/* reset */
-		xbak = NADBL;
-	    }
-	    if (panel_obs_ok(x, t, mask)) {
-		if (!na(xbak) && x[t] != xbak) {
-		    TV = 1;
+	for (i=u1; i<=u2 && !TV; i++) {
+	    for (t=1; t<T && !TV; t++) {
+		s = i*T + t;
+		if (panel_obs_ok(x, s, mask) &&
+		    panel_obs_ok(x, s-1, mask)) {
+		    if (x[s] != x[s-1]) {
+			TV = 1;
+		    }
 		}
-		xbak = x[t];
 	    }
 	}
-
 #if 0
 	fprintf(stderr, "panel_statistic: time-varying = %d\n", TV);
 #endif
+	if (k == F_PMEAN || TV) {
+	    double xbar;
 
-	if (k == F_PMEAN || TV != 0) {
-	    double xbar = NADBL;
-
-	    for (t=0; t<=dset->n; t++) {
-		if (t == dset->n || new_unit(dset, t)) {
-		    if (!na(xbar) && TV) {
-			xbar /= (double) Ti;
-		    }
-		    /* got a new unit (or reached the end): 
-		       record the current mean and reset
-		    */
-		    for (s=smin; s<t; s++) {
-			y[s] = xbar;
-		    }
-		    if (t == dset->n) {
-			break;
-		    } else {
-			/* reset */
-			Ti = 0;
-			xbar = NADBL;
-			smin = t;
+	    for (i=u1; i<=u2; i++) {
+		xbar = NADBL;
+		Ti = 0;
+		for (t=0; t<T; t++) {
+		    s = i*T + t;
+		    if (panel_obs_ok(x, s, mask)) {
+			if (na(xbar) || !TV) {
+			    xbar = x[s];
+			} else {
+			    xbar += x[s];
+			}
+			Ti++;
 		    }
 		}
-		if (panel_obs_ok(x, t, mask)) {
-		    if (na(xbar) || !TV) {
-			xbar = x[t];
-		    } else {
-			xbar += x[t];
-		    }
-		    Ti++;
+		if (!na(xbar) && TV) {
+		    xbar /= Ti;
 		}
+		for (t=0; t<T; t++) {
+		    y[i*T + t] = xbar;
+		}		
 	    }
 	}
 
 	if (k == F_PSD && !TV) {
+	    /* s.d. with no time variation! */
 	    double sd;
-
-	    smin = Ti = 0;
-	    for (t=0; t<=dset->n; t++) {
-		if (t == dset->n || new_unit(dset, t)) {
-		    sd = (Ti == 0)? NADBL : 0.0;
-		    for (s=smin; s<t; s++) {
-			y[s] = sd;
-		    }
-		    if (t == dset->n) {
+	    
+	    for (i=u1; i<=u2; i++) {
+		Ti = 0;
+		for (t=0; t<T; t++) {
+		    if (panel_obs_ok(x, i*T + t, mask)) {
+			Ti++;
 			break;
 		    }
-		    Ti = 0;
-		    smin = t;
 		}
-		if (panel_obs_ok(x, t, mask)) {
-		    Ti++;
-		}	
+		sd = Ti > 0 ? 0.0 : NADBL;
+		for (t=0; t<T; t++) {
+		    y[i*T + t] = sd;
+		}
 	    }
 	} else if (k == F_PSD) {
-	    /* the time-varying case */
-	    double sd, xbar = NADBL, ssx = NADBL;
-	
-	    smin = Ti = 0;
-	    for (t=0; t<=dset->n; t++) {
-		if (t < dset->n) {
-		    /* use the mean calculated above */
-		    xbar = y[t];
-		}
-		if (t == dset->n || new_unit(dset, t)) {
-		    if (na(ssx)) {
-			sd = NADBL;
-		    } else if (Ti == 1) {
-			sd = 0.0;
-		    } else {
-			sd = sqrt(ssx / (Ti-1));
-		    }
-		    for (s=smin; s<t; s++) {
-			y[s] = sd;
-		    }
-		    if (t == dset->n) {
-			break;
-		    } else {
-			/* reset */
-			Ti = 0;
-			ssx = NADBL;
-			smin = t;
-		    }
-		}
-		if (panel_obs_ok(x, t, mask) && !na(xbar)) {
-		    double dev = x[t] - xbar;
+	    /* the time-varying case: we use the mean
+	       calculated above */
+	    double sd, xbar, ssx, dev;
 
-		    if (na(ssx)) {
-			ssx = dev * dev;
-		    } else {
-			ssx += dev * dev;
+	    for (i=u1; i<=u2; i++) {
+		ssx = NADBL;
+		xbar = y[i*T];
+		Ti = 0;
+		if (!na(xbar)) {
+		    for (t=0; t<T; t++) {
+			s = i*T + t;
+			if (panel_obs_ok(x, s, mask)) {
+			    dev = x[s] - xbar;
+			    if (na(ssx)) {
+				ssx = dev * dev;
+			    } else {
+				ssx += dev * dev;
+			    }			
+			    Ti++;
+			}
 		    }
-		    Ti++;
 		}
-	    }
+		if (na(ssx)) {
+		    sd = NADBL;
+		} else if (Ti == 1) {
+		    sd = 0.0;
+		} else {
+		    sd = sqrt(ssx / (Ti-1));
+		}
+		for (t=0; t<T; t++) {
+		    y[i*T + t] = sd;
+		}
+	    }	    
 	}
     } else if (k == F_PXSUM) {
 	/* the sum of cross-sectional values for each period */
-	double *yt = malloc(dset->pd * sizeof *yt);
-	int i, N = dset->n / dset->pd;
+	double *yt = malloc(T * sizeof *yt);
 
 	if (yt == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (t=0; t<dset->pd; t++) {
+	    for (t=0; t<T; t++) {
 		yt[t] = 0.0;
-		for (i=0; i<N; i++) {
-		    s = t + i * dset->pd;
+		for (i=u1; i<=u2; i++) {
+		    s = i*T + t;
 		    if (panel_obs_masked(mask, s)) {
 			continue;
 		    } else if (na(x[s])) {
@@ -1316,12 +1283,11 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    }
 		}
 	    }
-	    s = 0;
-	    for (i=0; i<N; i++) {
-		for (t=0; t<dset->pd; t++) {
-		    y[s++] = yt[t];
+	    for (i=u1; i<=u2; i++) {
+		for (t=0; t<T; t++) {
+		    y[i*T + t] = yt[t];
 		}
-	    }	    
+	    }
 	    free(yt);
 	}
     } else {
