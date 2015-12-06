@@ -270,6 +270,12 @@ void ts_or_panel_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Add/pcdiff", s);
 
     s = dataset_is_seasonal(dataset);
+    if (!s && dataset_is_seasonal_panel(dataset)) {
+	s = dataset->panel_pd == 4 ||
+	    dataset->panel_pd == 12 ||
+	    dataset->panel_pd == 24;
+    }
+    
     flip(mdata->ui, "/menubar/Add/sdiff", s);
     flip(mdata->ui, "/menubar/Add/PeriodDums", s);
 }
