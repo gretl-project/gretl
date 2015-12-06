@@ -1824,7 +1824,12 @@ static char *precompute_mask (const char *s, const char *oldmask,
     }
 
     if (!*err) {
-	newmask = expand_mask(tmpmask, oldmask, err);
+	if (fullset != NULL) {
+	    newmask = expand_mask(tmpmask, oldmask, err);
+	} else {
+	    newmask = tmpmask;
+	    tmpmask = NULL;
+	}
     }
 
     free(tmpmask);
@@ -2100,40 +2105,56 @@ static int check_permanent_option (gretlopt opt,
 
 /* "Precomputing" a mask means computing a mask based on a
    current subsampled dataset (before restoring the full dataset,
-   which is a part of the subsampling process). This is worthwhile
-   only if we're cumulating (rather than replacing) sample
-   restrictions _and_ the present resampling parameter makes
-   reference to the built-in "obs" series. Given the last point,
-   the user might reasonably expect the "obs" values to refer to
-   the currently subsampled dataset rather than the full dataset.
+   which is a part of the subsampling process).
+*/
+
+#if 1 /* modified 2015-12-06 */
+
+/* Do this if we're cumulating a boolean restriction on top of
+   an existing restriction.
 */
 
 static int do_precompute (int mode, char *oldmask, const char *param)
 {
+    return oldmask != NULL && mode == SUBSAMPLE_BOOLEAN;
+}
+
+#else
+
+/* Do this only if we're cumulating (rather than replacing) sample
+   restrictions _and_ the present resampling parameter makes reference
+   to the built-in "obs" series. Given the last point, the user might
+   reasonably expect the "obs" values to refer to the currently
+   subsampled dataset rather than the full dataset.
+*/
+
+static int do_precompute (int mode, char *oldmask, const char *param)
+{
+    int ret = 0;
+    
     if (fullset == NULL) {
-	/* not subsampled: no */
-	return 0;
+	; /* not subsampled: no */
     } else if (oldmask == NULL) {
-	/* not cumulating restrictions: no */
-	return 0;
+	; /* not cumulating restrictions: no */
     } else if (mode != SUBSAMPLE_BOOLEAN) {
-	/* can't be keying off "obs" series: no */
-	return 0;
+	; /* can't be keying off "obs" series: no */
     } else {
 	/* look for "obs" as a "word" in itself */
 	const char *s = param;
 
-	while (strstr(s, "obs") != NULL) {
+	while (!ret && strstr(s, "obs") != NULL) {
 	    if (gretl_namechar_spn(s) == 3 &&
 		(s == param || !isalpha(*(s-1)))) {
-		return 1;
+		ret = 1;
 	    }
 	    s += 3;
 	}
     }
 
-    return 0;
+    return ret;
 }
+
+#endif /* new versus old */
 
 /* restrict_sample: 
  * @param: restriction string (or %NULL).
@@ -2260,7 +2281,7 @@ int restrict_sample (const char *param, const int *list,
     }
 
     if (do_precompute(mode, oldmask, param)) {
-	/* we come here only if cumulating restrictions */
+	/* we come in here only if cumulating restrictions */
 	mask = precompute_mask(param, oldmask, dset, prn, &err);
     }
 
