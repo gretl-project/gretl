@@ -988,7 +988,7 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 	    /* dta > 117: FIXME handling UTF-8 varnames! */
 	    if (strlen(buf) > 31) {
 		fprintf(stderr, "varname %d too big (%d bytes)\n",
-			v, strlen(buf));
+			v, (int) strlen(buf));
 	    }
 	}
     } else 
@@ -1140,7 +1140,6 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     char label[321]; /* dataset label */
     char aname[129]; /* variable names */
     char c60[60];    /* misc strings */
-    int namelen;
     int *types = NULL;
     int *lvars = NULL;
     char **lnames = NULL;
