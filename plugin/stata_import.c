@@ -985,10 +985,9 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 		err = try_fix_varname(buf);
 	    }
 	} else {
-	    /* dta > 117: FIXME handling UTF-8 varnames! */
+	    /* dta > 117: UTF-8 varnames of up to 128 bytes */
 	    if (strlen(buf) > 31) {
-		fprintf(stderr, "varname %d too big (%d bytes)\n",
-			v, (int) strlen(buf));
+		gretl_utf8_truncate_b(buf, 31);
 	    }
 	}
     }
@@ -1035,6 +1034,9 @@ static int process_stata_varlabel (char *label, DATASET *dset,
     pprintf(vprn, "variable %d: label = '%s'\n", v, label);
     
     if (g_utf8_validate(label, -1, NULL)) {
+	if (stata_version > 13) {
+	    gretl_utf8_truncate_b(label, MAXLABEL-1);
+	}
 	series_set_label(dset, v, label);
     } else {
 	gchar *tr = recode_stata_string(label);
@@ -1054,7 +1056,8 @@ static int process_stata_varlabel (char *label, DATASET *dset,
    values are actually strings (as opposed to a numeric
    variable with value labels attached). According to the
    Stata 117 dta spec such string values (@buf) should be
-   ASCII but in practice this may not be the case.
+   ASCII but in practice this may not be the case. It
+   seems that in dta 118 they may be UTF-8.
 */
 
 static void process_string_value (char *buf, gretl_string_table *st,
@@ -1454,7 +1457,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0' && !st_err) {
-	    pprintf(vprn, "variable %d: \"value label\" = '%s'\n", i+1, aname);
+	    pprintf(vprn, "variable %d: value-label name = '%s'\n", i+1, aname);
 	    st_err = push_label_info(&lvars, &lnames, i+1, aname);
 	}
     }
