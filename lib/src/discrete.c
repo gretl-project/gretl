@@ -412,11 +412,12 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 
 static int ordered_hessian (op_container *OC, gretl_matrix *H) 
 {
-    double smal = 1.0e-07;  /* "small" is some sort of macro on win32 */
-    double smal2 = 2.0 * smal;
+    double smal = 1.0e-09;  /* "small" is some sort of macro on win32 */
+    double dx, dx2;
     double ti, x, ll, *g0;
     int i, j, k = OC->k;
     int err = 0;
+
 
     g0 = malloc(k * sizeof *g0);
     if (g0 == NULL) {
@@ -425,7 +426,9 @@ static int ordered_hessian (op_container *OC, gretl_matrix *H)
 
     for (i=0; i<k; i++) {
 	ti = OC->theta[i];
-	OC->theta[i] -= smal;
+	dx = (fabs(ti) > 0.001) ? fabs(ti) * smal : smal;
+	dx2 = 2.0 * dx;
+	OC->theta[i] -= dx;
 	ll = op_loglik(OC->theta, OC);
 	if (na(ll)) {
 	    OC->theta[i] = ti;
@@ -435,7 +438,7 @@ static int ordered_hessian (op_container *OC, gretl_matrix *H)
 	for (j=0; j<k; j++) {
 	    g0[j] = OC->g[j];
 	}
-	OC->theta[i] += smal2;
+	OC->theta[i] += dx2;
 	ll = op_loglik(OC->theta, OC);
 	if (na(ll)) {
 	    OC->theta[i] = ti; 
@@ -443,7 +446,7 @@ static int ordered_hessian (op_container *OC, gretl_matrix *H)
 	    break;
 	}	
 	for (j=0; j<k; j++) {
-	    x = (OC->g[j] - g0[j]) / smal2;
+	    x = (OC->g[j] - g0[j]) / dx2;
 	    gretl_matrix_set(H, i, j, -x);
 	}
 	/* restore original theta */
