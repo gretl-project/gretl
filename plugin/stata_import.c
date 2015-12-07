@@ -167,20 +167,20 @@ static int swapends;
 typedef struct dta_table_ dta_table;
 
 struct dta_table_ {
-    int version;
-    int nvar;
-    int nobs;
-    int labelpos;
-    int labellen;
-    int timepos;
-    gint64 vtype_pos;
-    gint64 vname_pos;
-    gint64 vfmt_pos;
-    gint64 vallblnam_pos;
-    gint64 varlabel_pos;
-    gint64 data_pos;
-    gint64 strl_pos;
-    gint64 vallabel_pos;
+    int version;        /* 117 or higher */
+    int nvar;           /* number of variables */
+    int nobs;           /* number of observations */
+    int dlabelpos;      /* position of dataset label */
+    int dlabellen;      /* dataset label length, bytes */
+    int timepos;        /* position of time-stamp */
+    gint64 vtype_pos;   /* position of variable type info */
+    gint64 vname_pos;   /* position of variable names */
+    gint64 vfmt_pos;    /* position of variable formats */
+    gint64 vallblnam_pos; /* position of value label names */
+    gint64 varlabel_pos;  /* position of variable labels */
+    gint64 data_pos;      /* position of actual data */
+    gint64 strl_pos;      /* position of StrL variables */
+    gint64 vallabel_pos;  /* position of value labels */
 };
 
 static dta_table *dta_table_new (int *err)
@@ -499,9 +499,9 @@ static int check_new_variable_types (FILE *fp, int *types,
 	    pprintf(prn, "variable %d: string type\n", i+1);
 	    *nsv += 1;
 	} else if (u == STATA_13_STRL) {
-	    pprintf(prn, "variable %d: long string type (strL)\n", i+1);
-	    pprintf(prn, "*** this type is not yet handled ***\n");
-	    err = 1;
+	    pprintf(prn, "variable %d: long string type (strL) "
+		    "*** not handled ***\n", i+1);
+	    // err = 1;
 	} else {
 	    pputs(prn, _("unknown data type"));
 	    pputc(prn, '\n');
@@ -876,7 +876,7 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
     double *level = NULL;
     char *txt = NULL; 
     int *off = NULL;
-    char buf[33];
+    char buf[130];
     int nlabels, totlen;
     int i, err = 0;
     
@@ -887,7 +887,7 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
     }
 
     stata_read_string(fp, namelen + 1, buf, &err);
-    pprintf(vprn, "labels %d: name = '%s'\n", j, buf);
+    pprintf(vprn, "labels %d: (namelen=%d) name = '%s'\n", j, namelen, buf);
 
     /* padding */
     err = stata_seek(fp, 3, SEEK_CUR);
@@ -976,10 +976,10 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
     stata_read_string(fp, namelen + 1, buf, &err);
 
     if (!err) {
+	pprintf(vprn, "variable %d: 'raw' name = '%s'\n", v, buf);
 	if (namelen == 32) {
 	    /* dta 117: try to fix possible bad encoding */
 	    iso_to_ascii(buf);
-	    pprintf(vprn, "variable %d: name = '%s'\n", v, buf);
 	    err = check_varname(buf);
 	    if (err) {
 		err = try_fix_varname(buf);
@@ -991,7 +991,7 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 			v, (int) strlen(buf));
 	    }
 	}
-    } else 
+    }
     
     if (!err) {
 	strncat(dset->varname[v], buf, VNAMELEN - 1);
@@ -1135,6 +1135,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     int i, j, t, clen;
     int namelen = 32;
     int fmtlen = 49;
+    int vlabellen = 81;
     int nvar = dset->v - 1, nsv = 0;
     int pd = 0, tvar = -1;
     char label[321]; /* dataset label */
@@ -1150,18 +1151,19 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     if (dtab->version > 117) {
 	/* dta > 117 supports UTF-8 strings */
 	fmtlen = 57;
-	namelen = 129;
+	namelen = 128;
+	vlabellen = 321;
     }
 
     *label = *c60 = '\0';
 
-    if (dtab->labellen > 0) {
-	err = stata_seek(fp, dtab->labelpos, SEEK_SET);
+    if (dtab->dlabellen > 0) {
+	err = stata_seek(fp, dtab->dlabelpos, SEEK_SET);
 	if (!err) {
-	    stata_read_string(fp, dtab->labellen, label, &err);
+	    stata_read_string(fp, dtab->dlabellen, label, &err);
 	}
 	if (!err) {
-	    label[dtab->labellen] = '\0';
+	    label[dtab->dlabellen] = '\0';
 	    pprintf(vprn, "dataset label: '%s'\n", label);
 	}
     }
@@ -1235,13 +1237,13 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 
     err = stata_seek(fp, dtab->vallblnam_pos, SEEK_SET);
 
-    /* value-label names: the names of label formats, 
+    /* value-label names: the _names of label formats, 
        which are themselves stored later in the file 
     */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
 	if (!err && *aname != '\0' && !st_err) {
-	    pprintf(vprn, "variable %d: \"value label\" = '%s'\n", i+1, aname);
+	    pprintf(vprn, "variable %d: value-label name = '%s'\n", i+1, aname);
 	    st_err = push_label_info(&lvars, &lnames, i+1, aname);
 	}
     }
@@ -1255,7 +1257,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	/* variable descriptive labels */
 	err = stata_seek(fp, dtab->varlabel_pos, SEEK_SET);
 	for (i=0; i<nvar && !err; i++) {
-	    stata_read_string(fp, 81, label, &err);
+	    stata_read_string(fp, vlabellen, label, &err);
 	    if (*label != '\0') {
 		process_stata_varlabel(label, dset, i+1, vprn);
 	    }
@@ -1304,7 +1306,8 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 		    process_string_value(strbuf, *pst, dset, v, t, prn);
 		}
 	    } else if (types[i] == STATA_13_STRL) {
-		; /* OMG */
+		/* skip arbitrarly long strings */
+		err = stata_seek(fp, 8, SEEK_CUR);
 	    }
 	}
     }
@@ -1618,7 +1621,7 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
     return 0;
 }
 
-#define HDR_DEBUG 1
+#define HDR_DEBUG 0
 
 /* dta header (format 117, Stata 13):
 
@@ -1708,8 +1711,8 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	    }
 	    if (!err) {
 		if (clen > 0) {
-		    dtab->labellen = clen;
-		    dtab->labelpos = ftell64(fp);
+		    dtab->dlabellen = clen;
+		    dtab->dlabelpos = ftell64(fp);
 		    err = stata_seek(fp, clen, SEEK_CUR);
 		}
 	    }
