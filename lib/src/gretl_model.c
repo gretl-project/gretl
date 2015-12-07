@@ -871,7 +871,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATASET *dset,
 	    plain_ar_coeff_name(targ, pmod, i);
 	} else if (pmod->ci == ARCH && i >= pmod->ncoeff) {
 	    sprintf(targ, "alpha(%d)", i - pmod->ncoeff);
-	} else if (pmod->list == NULL || j > pmod->list[0]) {
+	} else if (pmod->list == NULL || j > pmod->list[0] ||
+		   pmod->list[j] >= dset->v) {
 	    k = i;
 	} else {
 	    strcpy(targ, dset->varname[pmod->list[j]]);

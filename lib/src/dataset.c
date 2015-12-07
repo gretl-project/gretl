@@ -1408,8 +1408,8 @@ static int shrink_dataset_to_size (DATASET *dset, int nv, int drop)
     double **newZ;
 
 #if DDEBUG
-    fprintf(stderr, "shrink_dataset_to_size: nv=%d, got pZ at %p, dset at %p\n"
-	    " drop = %s\n", nv, (void *) pZ, (void *) dset, 
+    fprintf(stderr, "shrink_dataset_to_size: dset at %p, dset->v=%d, nv=%d\n"
+	    " drop = %s\n", (void *) dset, dset->v, nv,
 	    (drop == DROP_NORMAL)? "DROP_NORMAL" : "DROP_SPECIAL");
 #endif
 

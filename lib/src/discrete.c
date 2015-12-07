@@ -764,10 +764,10 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
     return err;
 }
 
-static void fill_op_model (MODEL *pmod, const int *list,
-			   const DATASET *dset, 
-			   op_container *OC,
-			   int fncount, int grcount)
+static int fill_op_model (MODEL *pmod, const int *list,
+			  const DATASET *dset, 
+			  op_container *OC,
+			  int fncount, int grcount)
 {
     gretl_matrix *H = NULL;
     int npar = OC->k;
@@ -880,6 +880,8 @@ static void fill_op_model (MODEL *pmod, const int *list,
     if (err && !pmod->errcode) {
 	pmod->errcode = err;
     }
+
+    return pmod->errcode;
 }
 
 /* Main ordered estimation function */
@@ -959,7 +961,7 @@ static int do_ordered (int ci, int ndum,
     if (!err) {
 	/* transform back to 'real' theta */
 	op_get_real_theta(OC, theta);
-	fill_op_model(pmod, list, dset, OC, fncount, grcount);
+	err = fill_op_model(pmod, list, dset, OC, fncount, grcount);
     }
 
     free(theta);
