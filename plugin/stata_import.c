@@ -48,22 +48,17 @@
 #if defined(WIN32) && !defined(WIN64)
 /* 32-bit Windows: _ftelli64 missing in msvcrt.dll */
 
-#include <io.h>
+# define SAFETY_FIRST 1
 
-#define SAFETY_FIRST 1
+# if SAFETY_FIRST
 
 static gint64 ftell64 (FILE *fp)
 {
-#if SAFETY_FIRST    
     return (gint64) ftell(fp);
-#else    
-    return _telli64(_fileno(fp));
-#endif    
 }
 
 static int fseek64 (FILE *fp, gint64 offset, int whence)
 {
-#if SAFETY_FIRST     
     if (offset > (gint64) LONG_MAX) {
 	return -1;
     } else {
@@ -71,16 +66,31 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 	
 	return fseek(fp, loff, whence);
     }
-#else    
+}
+
+# else /* risky? we've had crash reports */
+
+#include <io.h>
+
+static gint64 ftell64 (FILE *fp)
+{
+    return _telli64(_fileno(fp));
+}
+
+static int fseek64 (FILE *fp, gint64 offset, int whence)
+{
     gint64 i = _lseeki64(_fileno(fp), offset, whence);
 
     return i < 0 ? -1 : 0;
-#endif    
 }
 
-#endif
+# endif /* SAFETY_FIRST */
+
+#endif /* 32-bit Windows */
 
 #define STRDEBUG 0
+
+/* extra error code for new dta version not yet supported */
 #define E_NOTYET E_MAX+1
 
 /* see http://www.stata.com/help.cgi?dta */
@@ -157,6 +167,7 @@ static int swapends;
 typedef struct dta_table_ dta_table;
 
 struct dta_table_ {
+    int version;
     int nvar;
     int nobs;
     int labelpos;
@@ -965,14 +976,22 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
     stata_read_string(fp, namelen + 1, buf, &err);
 
     if (!err) {
-	/* try to fix possible bad encoding */
-	iso_to_ascii(buf);
-	pprintf(vprn, "variable %d: name = '%s'\n", v, buf);
-	err = check_varname(buf);
-	if (err) {
-	    err = try_fix_varname(buf);
+	if (namelen == 32) {
+	    /* dta 117: try to fix possible bad encoding */
+	    iso_to_ascii(buf);
+	    pprintf(vprn, "variable %d: name = '%s'\n", v, buf);
+	    err = check_varname(buf);
+	    if (err) {
+		err = try_fix_varname(buf);
+	    }
+	} else {
+	    /* dta > 117: FIXME handling UTF-8 varnames! */
+	    if (strlen(buf) > 31) {
+		fprintf(stderr, "varname %d too big (%d bytes)\n",
+			v, strlen(buf));
+	    }
 	}
-    }
+    } else 
     
     if (!err) {
 	strncat(dset->varname[v], buf, VNAMELEN - 1);
@@ -1114,11 +1133,14 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 			      PRN *vprn)
 {
     int i, j, t, clen;
+    int namelen = 32;
     int fmtlen = 49;
     int nvar = dset->v - 1, nsv = 0;
     int pd = 0, tvar = -1;
-    char label[81], c50[50], aname[33];
-    int namelen = 32;
+    char label[321]; /* dataset label */
+    char aname[129]; /* variable names */
+    char c60[60];    /* misc strings */
+    int namelen;
     int *types = NULL;
     int *lvars = NULL;
     char **lnames = NULL;
@@ -1126,7 +1148,13 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     int st_err = 0;
     int err = 0;
 
-    *label = *c50 = '\0';
+    if (dtab->version > 117) {
+	/* dta > 117 supports UTF-8 strings */
+	fmtlen = 57;
+	namelen = 129;
+    }
+
+    *label = *c60 = '\0';
 
     if (dtab->labellen > 0) {
 	err = stata_seek(fp, dtab->labelpos, SEEK_SET);
@@ -1142,11 +1170,11 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     if (!err && dtab->timepos > 0) {
 	err = stata_seek(fp, dtab->timepos, SEEK_SET);
 	if (!err) {
-	    stata_read_string(fp, 17, c50, &err);
+	    stata_read_string(fp, 17, c60, &err);
 	}
 	if (!err) {
-	    c50[17] = '\0';
-	    pprintf(vprn, "timestamp: '%s'\n", c50);
+	    c60[17] = '\0';
+	    pprintf(vprn, "timestamp: '%s'\n", c60);
 	}
     }
 
@@ -1155,7 +1183,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     }
 
     if (*label != '\0') {
-	save_dataset_info(dset, label, c50);
+	save_dataset_info(dset, label, c60);
     }
   
     /** read variable descriptors **/
@@ -1195,9 +1223,9 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	/* format list (use it to extract time-series info?) */
 	err = stata_seek(fp, dtab->vfmt_pos, SEEK_SET);
 	for (i=0; i<nvar && !err; i++){
-	    stata_read_string(fp, fmtlen, c50, &err);
+	    stata_read_string(fp, fmtlen, c60, &err);
 	    if (!err && types[i] >= STATA_13_DOUBLE) {
-		process_stata_format(c50, i+1, &pd, &tvar, vprn);
+		process_stata_format(c60, i+1, &pd, &tvar, vprn);
 	    }
 	}
     }
@@ -1606,7 +1634,7 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
 static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 				 PRN *prn, PRN *vprn)
 {
-    int rel, clen = 0;
+    int clen = 0;
     char order[4];
     char buf[96];
     size_t b;
@@ -1616,10 +1644,11 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     buf[b] = '\0';
 
     if (sscanf(buf, "<header><release>%d</release>"
-	       "<byteorder>%3s</byteorder>", &rel, order) != 2) {
+	       "<byteorder>%3s</byteorder>",
+	       &dtab->version, order) != 2) {
 	err = 1;
     } else {
-	if (rel != 117 && rel != 118) {
+	if (dtab->version != 117 && dtab->version != 118) {
 	    err = 1;
 	} else if (!strcmp(order, "LSF")) {
 	    stata_endian = G_LITTLE_ENDIAN;
@@ -1631,7 +1660,8 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     }
 
     if (!err) {
-	pprintf(prn, "Stata dta version %d, byte-order %s\n", rel, order);
+	pprintf(prn, "Stata dta version %d, byte-order %s\n",
+		dtab->version, order);
 	swapends = stata_endian != HOST_ENDIAN;
 	err = stata_seek(fp, 70, SEEK_SET);
         if (!err) {
@@ -1641,7 +1671,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     }
 
     /* FIXME */
-    if (rel > 117) {
+    if (dtab->version > 117) {
 	pprintf(prn, "This dta version not yet supported\n");
 	return E_NOTYET;
     }
@@ -1655,7 +1685,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	err = stata_seek(fp, 7, SEEK_CUR);
 	if (!err) {
 	    /* read N = number of observations */
-	    if (rel == 118) {
+	    if (dtab->version == 118) {
 		/* FIXME */
 		dtab->nobs = (int) stata_read_uint64(fp, &err);
 	    } else {
@@ -1672,7 +1702,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	/* skip "</N><label>" */
 	err = stata_seek(fp, 11, SEEK_CUR);
 	if (!err) {
-	    if (rel == 118) {
+	    if (dtab->version == 118) {
 		clen = stata_read_uint16(fp, &err);;
 	    } else {
 		clen = stata_read_byte(fp, &err);
@@ -1746,14 +1776,14 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 #endif     
 
     if (!err) {
-	stata_version = (rel == 117)? 13 : 14;
+	stata_version = (dtab->version == 117)? 13 : 14;
 	stata_13 = 1;
     }
     
     return err;
 }
 
-/* for Stata data files versions < 117 */
+/* for dta versions < 117 */
 
 static int parse_dta_header (FILE *fp, int *namelen,
 			     int *nvar, int *nobs,
