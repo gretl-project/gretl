@@ -2128,6 +2128,96 @@
       </description>
     </function>
 
+    <function name="curl" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">&amp;b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione dà modo all'utente di riempire un buffer di
+	  testo con dati provenienti da un server di rete usando
+	  libcurl. Il bundle di input <argname>b</argname> deve
+	  contenere una stringa di nome <lit>URL</lit> con l'indirizzo
+	  completo dell'host da cui scaricare i dati. Seguono altri
+	  elementi, tutti opzionali.
+	</para>
+	<ilist>
+	  <li>
+	    <para> 
+	      <quote><lit>header</lit></quote>: una stringa contenente
+	      un header HTTP da mandare al server.
+	    </para>
+	  </li>
+	  <li>
+	    <para> 
+	      <quote><lit>postdata</lit></quote>: una stringa
+	      contenente dati da mandare al server.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  I campi <lit>header</lit> e <lit>postdata</lit> vengono
+	  usati in congiunzione con una richiesta HTTP
+	  <lit>POST</lit>; se <lit>postdata</lit> è presente, allora
+	  il metodo <lit>POST</lit>è implicito, altrimenti lo è il
+	  metodo <lit>GET</lit>. (Si noti però che per semplici
+	  richieste di tipo <lit>GET</lit>, la funzione <fncref
+	  targ="readfile"/> fornisce un'interfaccia più snella.)
+	</para>
+	<para>
+	  In più, è possibile includere nel bundle un altro elemento
+	  opzionale: uno scalare di nome <lit>include</lit>, che è
+	  interpretato, se non-zero, come una richiesta di includere
+	  lo header dal server insieme al corpo del messaggio.
+	</para>
+	<para>
+	  Se la richiesta va a buon fine, il testo ricevuto dal server
+	  è aggiunto al bundle sotto il nome
+	  <quote><lit>output</lit></quote>.
+	</para>
+	<para>
+	  Se si verifica un qualche errore (ad esempio la
+	  <lit>URL</lit> è irraggiungibile) la funzione ritorna un
+	  valore non-zero, nel qual caso il messaggio di errore di
+	  curl viene aggiunto al bundle sotto la chiave
+	  <quote><lit>errmsg</lit></quote>.  Si noti, tuttavia, che
+	  <quote>a buon fine</quote> in questo senso non implica che
+	  tutti i dati desiderati siano stati scaricati, ma solo che
+	  il server ha dato una qualche risposta. È reposnsabilità
+	  dell'utente controllare il contenuto del buffer di output
+	  (che per esempio potrebbe contenere semplicemente il testo
+	  <quote>Page not found</quote>).
+	</para>
+	<para>
+	  A seguire, un esempio, in cui scharicheremo dei dati dal
+	  sito dell'US Bureau of Labor Statistics; a tal fine, bisogna
+	  formulare una query JSON. Si noti l'uso di <cmdref
+	  targ="sprintf"/> per inserire il carattere <lit>"</lit> nei
+	  dati <lit>POST</lit>.
+	</para>
+	<code>
+	  bundle req
+	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
+	  req.include = 1
+	  req.header = "Content-Type: application/json"
+	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
+	  req.postdata = s
+	  err = curl(&amp;req)
+	  if err == 0
+	      s = req.output
+	      string line
+	      loop while getline(s, line) --quiet
+	          printf "%s\n", line
+	      endloop
+	  endif
+	</code>
+	<para>
+	  Vedi anche la funzione <fncref targ="jsonget"/> per poi
+	  elaborare i dati JSON in entrata.
+	</para>
+      </description>
+    </function>
+
     <function name="deseas" section="filters" output="series">
       <fnargs>
     <fnarg type="series">x</fnarg>
@@ -2501,6 +2591,20 @@
     </para>
       </description>
     </function>
+
+    <function name="exists" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna 1 se <argname>name</argname> è l'identificativo di
+	  un oggetto definito, che sia uno scalare, una serie, una
+	  matrice, lista, stringa, bundle o array; altrimenti, ritorna
+	  0.
+	</para>
+      </description>
+    </function>    
 
     <function name="exp" section="math" output="asinput">
       <fnargs>
@@ -3764,7 +3868,39 @@
       </description>
     </function>
 
-    <function name="kdensity" section="stats" output="matrix">
+    <function name="jsonget" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="string">path</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  L'argomento <argname>buf</argname> deve essere un buffer
+	  JSON, così come vien letto da un server attraverso la
+	  funzione <fncref targ="curl"/>, mentre l'argomento
+	  <argname>path</argname> dev'essere una specificazione
+	  JsonPath.
+	</para>
+	<para>
+	  Questa funzione restituisce una stringa con i dati trovati
+	  nel buffer al path specificato. Sono supportati i tipi di
+	  dato <quote>double</quote> (decimale), <quote>int</quote>
+	  (intero) and <quote>string</quote> (stringa). Nel caso di
+	  argomenti numerici, viene restituita la loro
+	  rappresentazione stringa (con le convenzioni
+	  <quote>C</quote> per i double).  Se l'oggetto a cui
+	  <argname>path</argname> fa riferimento è un array, i suoi
+	  membri vengono stampati uno per linea nella stringa
+	  risultato.
+	</para>
+	<para>
+	  Per maggiori dettagli sulla sintassi JsonPath, si veda ad
+	  esempio <url>http://goessner.net/articles/JsonPath/</url>.
+	</para>
+      </description>
+    </function>    
+
+   <function name="kdensity" section="stats" output="matrix">
       <fnargs>
     <fnarg type="series">x</fnarg>
     <fnarg type="scalar" optional="true">scale</fnarg>
@@ -5572,7 +5708,7 @@
 	</para>
 	<para>
 	  Se viene fornito il secondo argomento opzionale le osservazioni
-	  per le quali il valore di <argname>mask</argname> è nullo vengono 
+	  per le quali il valore di <argname>mask</argname> è 0 vengono 
 	  ignorate.
 	</para>
 	<para>
@@ -5821,23 +5957,25 @@
       <description>
     <para context="notex">
       Questa funzione è applicabile solo se il dataset corrente ha
-      struttura panel. Restituisce una variabile contenente la deviazione standard 
-      campionaria della variabile <math>y</math> per ciascuna
-      unità della cross-section (con valori ripetuti per ciascuna data). Il denominatore
-      utilizzato è la numerosità campionaria per ciascuna unità meno 1, a meno
-      che il numero di osservazioni valide per l'unità in questione sia 1
-      (nel qual caso viene restituito uno zero) o 0 (nel qual caso viene 
+      struttura panel. Restituisce una variabile contenente la
+      deviazione standard campionaria della variabile <math>y</math>
+      per ciascuna unità della cross-section (con valori ripetuti per
+      ciascuna data). Il denominatore utilizzato è la numerosità
+      campionaria per ciascuna unità meno 1, a meno che il numero di
+      osservazioni valide per l'unità in questione sia 1 (nel qual
+      caso viene restituito uno zero) o 0 (nel qual caso viene
       <lit>NA</lit>).
     </para>
     <para context="tex">
       Questa funzione è applicabile solo se il dataset corrente ha
-      struttura panel. Calcola la deviazione standard campionaria per ciascuna
-      unità della cross-section della variabile <math>y</math>; in altre parole, 
-      \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} 
-      (y_{i,t} - \bar{y}_i)^2 } \]. La formula precedente
-      vale per $T_i\ge 2$, dove $T_i$ è il numero di osservazioni
-      valide per l'unità $i$; se $T_i = 0$, la funzione restituisce 
-      <lit>NA</lit>; se $T_i = 1$, la funzione restituisce 0.
+      struttura panel. Calcola la deviazione standard campionaria per
+      ciascuna unità della cross-section della variabile
+      <math>y</math>; in altre parole, \[ \sigma_i =
+      \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} (y_{i,t} - \bar{y}_i)^2
+      } \]. La formula precedente vale per $T_i\ge 2$, dove $T_i$ è il
+      numero di osservazioni valide per l'unità $i$; se $T_i = 0$, la
+      funzione restituisce <lit>NA</lit>; se $T_i = 1$, la funzione
+      restituisce 0.
     </para>
     <para>
       Se viene fornito il secondo argomento opzionale le osservazioni 
@@ -5983,6 +6121,32 @@
     </para>
       </description>
     </function>
+
+    <function name="pxnobs" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione è applicabile solo se il dataset corrente ha
+	  struttura panel. Restituisce una variabile contenente il
+	  numero di valori validi per <argname>y</argname> rispetto
+	  alle unità della cross-section in ciascun periodo,
+	  replicando i valori così ottenuti per ciascuna unità.
+	</para>
+	<para>
+	  Se viene fornito il secondo argomento opzionale le osservazioni
+	  per le quali il valore di <argname>mask</argname> è 0 vengono 
+	  ignorate.
+	</para>
+	<para>
+	  Si noti che questa funzione lavora lungo
+	  una dimensione diversa da quella utilizzata dalla funzione 
+	  <fncref targ="pnobs"/>.
+	</para>
+      </description>
+    </function>    
 
     <function name="pxsum" section="stats" output="series">
       <fnargs>

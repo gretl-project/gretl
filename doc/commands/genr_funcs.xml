@@ -2221,8 +2221,7 @@
 	  req.URL = "http://api.bls.gov/publicAPI/v1/timeseries/data/"
 	  req.include = 1
 	  req.header = "Content-Type: application/json"
-	  string s
-	  sprintf s, "{\"seriesid\":[\"LEU0254555900\"]}"
+	  string s = sprintf("{\"seriesid\":[\"LEU0254555900\"]}")
 	  req.postdata = s
 	  err = curl(&amp;req)
 	  if err == 0
