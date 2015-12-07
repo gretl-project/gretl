@@ -477,6 +477,11 @@ static gretl_matrix *ordered_hessian_inverse (op_container *OC,
 	}
     }
 
+    if (H != NULL && *err) {
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
     return H;
 }
 
