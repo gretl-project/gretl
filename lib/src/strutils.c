@@ -2648,7 +2648,7 @@ char *gretl_utf8_strncat_trim (char *dest, const char *src, size_t n)
  * @s: string to process.
  * @nmax: maximum number of characters to retain.
  *
- * Truncates @s to a maximum length of @n UTF-8 characters,
+ * Truncates @s to a maximum length of @nmax UTF-8 characters,
  * ensuring that we don't end up with an incomplete UTF-8
  * character preceding the terminating NUL byte.
  *
@@ -2668,6 +2668,39 @@ char *gretl_utf8_truncate (char *s, size_t nmax)
 		break;
 	    }
 	}
+    }
+
+    return s;
+}
+
+/**
+ * gretl_utf8_truncate_b:
+ * @s: string to process.
+ * @bmax: maximum number of bytes to retain.
+ *
+ * Truncates @s to a maximum length of @bmax bytes,
+ * ensuring that we don't end up with an incomplete UTF-8
+ * character preceding the terminating NUL byte.
+ *
+ * Returns: the (possibly truncated) string.
+ */
+
+char *gretl_utf8_truncate_b (char *s, size_t bmax)
+{
+    char *p = s;
+    size_t b = 0;
+
+    while (p && *p) {
+	p = g_utf8_next_char(p);
+	b = p - s;
+	if (b == bmax) {
+	    *p = '\0';
+	    break;
+	} else if (b > bmax) {
+	    p = g_utf8_prev_char(p);
+	    *p = '\0';
+	    break;
+	}	    
     }
 
     return s;
