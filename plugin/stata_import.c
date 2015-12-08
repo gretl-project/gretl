@@ -986,8 +986,9 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 	    }
 	} else {
 	    /* dta > 117: UTF-8 varnames of up to 128 bytes */
-	    if (strlen(buf) > 31) {
-		gretl_utf8_truncate_b(buf, 31);
+	    u8_to_ascii(buf);
+	    if (*buf == '\0') {
+		sprintf(buf, "v%d", v);
 	    }
 	}
     }
@@ -1128,6 +1129,24 @@ static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
     }
 }
 
+static int handle_strf (char *buf, int len, FILE *fp)
+{
+    int err = 0;
+    
+    *buf = '\0';
+    
+    if (len > 255) {
+	stata_read_string(fp, 255, buf, &err);
+	buf[255] = '\0';
+	err = stata_seek(fp, len - 255, SEEK_CUR);
+    } else {
+	stata_read_string(fp, len, buf, &err);
+	buf[len] = '\0';
+    }
+
+    return err;
+}
+
 /* main reader for dta format 117+ */
 
 static int read_dta_117_data (FILE *fp, DATASET *dset,
@@ -1135,7 +1154,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 			      dta_table *dtab, PRN *prn,
 			      PRN *vprn)
 {
-    int i, j, t, clen;
+    int i, j, t;
     int namelen = 32;
     int fmtlen = 49;
     int vlabellen = 81;
@@ -1294,20 +1313,11 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 		ix = stata_read_signed_byte(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (types[i] <= STATA_STRF_MAX) {
-		/* fixed length, allegedly ASCII string */
-		*strbuf = '\0';
-		clen = types[i];
-		if (clen > 255) {
-		    stata_read_string(fp, 255, strbuf, &err);
-		    strbuf[255] = '\0';
-		    err = stata_seek(fp, clen - 255, SEEK_CUR);
-		} else {
-		    stata_read_string(fp, clen, strbuf, &err);
-		    strbuf[clen] = '\0';
-		}
+		/* fixed length string */
+		err = handle_strf(strbuf, types[i], fp);
 		if (!err && *strbuf != '\0') {
 		    process_string_value(strbuf, *pst, dset, v, t, prn);
-		}
+		}		
 	    } else if (types[i] == STATA_13_STRL) {
 		/* skip arbitrarly long strings */
 		err = stata_seek(fp, 8, SEEK_CUR);

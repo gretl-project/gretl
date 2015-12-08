@@ -1184,6 +1184,118 @@ iso_to_ascii_translate (char *targ, const char *src, int latin)
     *p = '\0';
 }
 
+/* For use in translating variable names from UTF-8 to ASCII:
+   we pass through ASCII letters, numbers and underscores;
+   convert consecutive spaces to a single underscore; and
+   convert UTF-8 representations of accented Roman letters
+   to their unaccented ASCII counterparts. Everything else
+   we just skip on conversion.
+*/
+
+static void u8_to_ascii_translate (char *targ, const char *src)
+{
+    int prevspace = 0;
+    const char *q = src;
+    char *p = targ;
+    gunichar u;
+    int c;
+
+    while (q && *q) {
+	c = *q;
+	if (c >= 0x0030 && c <= 0x0039) {
+	    /* digits 0-9 */
+	    *p++ = c;
+	    q++;
+	} else if (c >= 0x0041 && c <= 0x005A) {
+	    /* upper-case ASCII letters */
+	    *p++ = c;
+	    q++;
+	} else if (c >= 0x0061 && c <= 0x007A) {
+	    /* lower-case ASCII letters */
+	    *p++ = c;
+	    q++;
+	} else if (c == 0x005F) {
+	    /* underscore */
+	    *p++ = c;
+	    q++;
+	} else if (c == 0x0020) {
+	    if (!prevspace) {
+		prevspace = 1;
+		*p++ = '_';
+	    }
+	    q++;
+	} else {
+	    /* handle Latin-1 and Latin-2 */
+	    u = g_utf8_get_char(q);
+	    if ((u >= 0x00C0 && u <= 0x00C6) || u == 0x0102 || u == 0x0104) {
+		*p++ = 'A';
+	    } else if (u == 0x00C7 || u == 0x0106 || u == 0x010C) {
+		*p++ = 'C';
+	    } else if ((u >= 0x00C8 && u <= 0x00CB) || u == 0x0118 || u == 0x011A) {
+		*p++ = 'E';
+	    } else if (u >= 0x00CC && u <= 0x00CF) {
+		*p++ = 'I';
+	    } else if (u == 0x00D0 || u == 0x010E || u == 0x0110 || 0x010E) {
+		*p++ = 'D';
+	    } else if (u == 0x00D1 || u == 0x0143 || u == 0x0147) {
+		*p++ = 'N';
+	    } else if (u == 0x00D8 || (u >= 0x00D2 && u <= 0x00D6) || u == 0x0150) {
+		*p++ = 'O';
+	    } else if ((u >= 0x00D9 && u <= 0x00DC) || u == 0x016E || u == 0x0170) {
+		*p++ = 'U';
+	    } else if (u == 0x00DD) {
+		*p++ = 'Y';
+	    } else if (u == 0x00DE || u == 0x0164) {
+		*p++ = 'T';
+	    } else if (u == 0x00DF) {
+		*p++ = 's';
+	    } else if ((u >= 0x00E0 && u <= 0x00E6) || u == 0x0103) {
+		*p++ = 'a';
+	    } else if (u == 0x00E7 || u == 0x0107) {
+		*p++ = 'c';
+	    } else if ((u >= 0x00E8 && u <= 0x00EB) || u == 0x0119 || u == 0x011B) {
+		*p++ = 'e';
+	    } else if (u >= 0x00EC && u <= 0x00EF) {
+		*p++ = 'i';
+	    } else if (u == 0x00F0 || u == 0x0111 || u == 0x010F) {
+		*p++ = 'd';
+	    } else if (u == 0x00F1 || u == 0x0144 || u == 0x0148) {
+		*p++ = 'n';
+	    } else if (u == 0x00F8 || u == 0x0151 || (u >= 0x00F2 && u <= 0x00F6)) {
+		*p++ = 'o';
+	    } else if ((u >= 0x00F9 && u <= 0x00FC) || u == 0x016F || u == 0x0171) {
+		*p++ = 'u';
+	    } else if (u == 0x00FD || u == 0x00FF) {
+		*p++ = 'y';
+	    } else if (u == 0x00FE || u == 0x0163) {
+		*p++ = 't';
+	    } else if (u == 0x0141 || u == 0x013D || 0x0139) {
+		*p++ = 'L';
+	    } else if (u == 0x0142 || u == 0x013E || u == 0x013A) {
+		*p++ = 'l';
+	    } else if (u == 0x0154 || u == 0x0158) {
+		*p++ = 'R';
+	    } else if (u == 0x0155 || u == 0x0159) {
+		*p++ = 'r';
+	    } else if (u == 0x0160 || u == 0x015E) {
+		*p++ = 'S';
+	    } else if (u == 0x0161 || u == 0x015F) {
+		*p = 's';
+	    } else if (u == 0x0179 || u == 0x017D || u == 0x0178) {
+		*p = 'Z';
+	    } else if (u == 0x017A || u == 0x017E || u == 0x017C) {
+		*p = 'z';
+	    }
+	    q = g_utf8_next_char(q);
+	}
+	if (c != 0x0020) {
+	    prevspace = 0;
+	}
+    }
+
+    *p = '\0';
+}
+
 static char *real_iso_to_ascii (char *s, int latin)
 {
     char *tmp;
@@ -1216,6 +1328,23 @@ char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)
     iso_to_ascii_translate(targ, s, 2);
 
     return targ;
+}
+
+char *u8_to_ascii (char *s)
+{
+    char *tmp;
+
+    tmp = malloc(strlen(s) + 1);
+    if (tmp == NULL) {
+	return NULL;
+    }
+
+    u8_to_ascii_translate(tmp, s);
+
+    strcpy(s, tmp);
+    free(tmp);
+
+    return s;
 }
 
 enum {
