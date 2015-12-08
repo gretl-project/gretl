@@ -2017,14 +2017,6 @@ static int print_by_obs (int *list, const DATASET *dset,
     nrem = list[0];
     k = 1;
 
-#if 0
-    /* 2013-09-18: for now, force numeric print of "string-valued" vars,
-       unless we got just one */
-    if (list[0] > 1) {
-	opt |= OPT_U;
-    }
-#endif
-
     while (nrem > 0) {
 	/* fill the "block" list */
 	j0 = k;
