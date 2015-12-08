@@ -1179,7 +1179,6 @@ static int find_strl_value (char *buf, int bufsize,
     char test[4];
     guint32 v, len;
     guint64 o;
-    guint8 t;
     int err = 0;
 
     stata_read_string(fp, 3, test, &err);
@@ -1192,7 +1191,8 @@ static int find_strl_value (char *buf, int bufsize,
     while (!err) {
 	v = stata_read_uint32(fp, &err);
 	o = stata_read_uint64(fp, &err);
-	t = stata_read_byte(fp, &err);
+	/* next is 't': 'binary vs ASCII', not needed? */
+	stata_read_byte(fp, &err);
 	len = stata_read_uint32(fp, &err);
 	if (!err) {
 	    if (v == vnum && o == obs) {
@@ -1744,6 +1744,27 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
     return 0;
 }
 
+static int stata_get_nobs (FILE *fp, int *err)
+{
+    guint64 N;
+    int n = 0;
+
+    N = stata_read_uint64(fp, err);
+
+    /* current gretl can't handle more than INT_MAX
+       observations */
+    
+    if (!*err && N > INT_MAX) {
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	n = (int) N;
+    }
+    
+    return n;
+}
+
 #define HDR_DEBUG 0
 
 /* dta header (format 117, Stata 13):
@@ -1795,8 +1816,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	}
     }
 
-    /* FIXME */
-    if (0 && dtab->version > 117) {
+    if (dtab->version > 118) {
 	pprintf(prn, "This dta version not yet supported\n");
 	return E_NOTYET;
     }
@@ -1811,8 +1831,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	if (!err) {
 	    /* read N = number of observations */
 	    if (dtab->version == 118) {
-		/* FIXME */
-		dtab->nobs = (int) stata_read_uint64(fp, &err);
+		dtab->nobs = stata_get_nobs(fp, &err);
 	    } else {
 		dtab->nobs = stata_read_int32(fp, 1, &err);
 	    }
