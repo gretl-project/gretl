@@ -520,9 +520,8 @@ static int check_new_variable_types (FILE *fp, int *types,
 		    i+1, (int) u);
 	    *nsv += 1;
 	} else if (u == STATA_13_STRL) {
-	    pprintf(prn, "variable %d: long string type (strL) "
-		    "*** not handled ***\n", i+1);
-	    // err = 1;
+	    pprintf(prn, "variable %d: long string type\n", i+1);
+	    *nsv += 1;
 	} else {
 	    pputs(prn, _("unknown data type"));
 	    pputc(prn, '\n');
@@ -568,6 +567,8 @@ dta_make_string_table (int *types, int nvar, int ncols)
 
     return st;
 }
+
+/* for use with dta <= 117 */
 
 static gchar *recode_stata_string (const char *s)
 {
@@ -1076,6 +1077,40 @@ static int process_stata_varlabel (char *label, DATASET *dset,
     return err;
 }
 
+/* @buf must be of length @bufsize; if @len > @bufsize - 1 the read is
+   truncated to @bufsize - 1 bytes (and nul-termination is handled), but
+   regardless we move the read position to the end of the full-length
+   region of the stream as given by @len.
+*/
+
+static int stata_read_buffer (char *buf, int bufsize,
+			      int len, FILE *fp)
+{
+    int n = bufsize - 1;
+    int err = 0;
+    
+    *buf = '\0';
+
+    if (len > n) {
+	stata_read_string(fp, n, buf, &err);
+	buf[n] = '\0';
+	if (stata_version > 13) {
+	    /* beware broken UTF-8! */
+	    int pos = n - 1;
+
+	    while (!g_utf8_validate(buf, -1, NULL)) {
+		buf[pos--] = '\0';
+	    }
+	}	
+	err = stata_seek(fp, len - n, SEEK_CUR);
+    } else {
+	stata_read_string(fp, len, buf, &err);
+	buf[len] = '\0';
+    }
+
+    return err;
+}
+
 /* The following pertains to a non-numeric variable whose
    values are actually strings (as opposed to a numeric
    variable with value labels attached). According to the
@@ -1096,15 +1131,6 @@ static void process_string_value (char *buf, gretl_string_table *st,
     if (st != NULL && strcmp(buf, ".")) {
 	int ix = 0;
 
-	if (stata_version > 13 && strlen(buf) == 255) {
-	    /* beware broken (by truncation) UTF-8 */
-	    int pos = 254;
-
-	    while (!g_utf8_validate(buf, -1, NULL)) {
-		buf[pos--] = '\0';
-	    }
-	}
-
 	if (g_utf8_validate(buf, -1, NULL)) {
 	    ix = gretl_string_table_index(st, buf, v, 0, prn);
 	} else {
@@ -1123,52 +1149,6 @@ static void process_string_value (char *buf, gretl_string_table *st,
 	    }
 	}	
     }
-}
-
-static int process_strl_values (FILE *fp, int *err)
-{
-    char test[4];
-
-    stata_read_string(fp, 3, test, err);
-    test[3] = '\0';
-
-    if (*err) {
-	return 0; /* just for now */
-    }
-
-    if (strcmp(test, "GSO")) {
-	fprintf(stderr, "empty or bad strls block\n");
-    } else {
-	guint32 v, len;
-	guint64 o;
-	guint8 t;
-
-	while (!*err) {
-	    v = stata_read_uint32(fp, err);
-	    o = stata_read_uint64(fp, err);
-	    t = stata_read_byte(fp, err);
-	    len = stata_read_uint32(fp, err);
-	    if (!*err) {
-		printf("GSO: v=%d, o=%d, t=%d, len=%d\n",
-		       (int) v, (int) o, (int) t, (int) len);
-		if (len > 0) {
-		    char buf[32];
-
-		    len = (len > 31)? 31 : len;
-		    stata_read_string(fp, len, buf, err);
-		    buf[31] = '\0';
-		    printf(" '%s'\n", buf);
-		}
-		stata_read_string(fp, 3, test, err);
-		test[3] = '\0';
-		if (strcmp(test, "GSO")) {
-		    break;
-		}
-	    }
-	}
-    }
-
-    return 0;
 }
 
 static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
@@ -1193,31 +1173,57 @@ static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
     }
 }
 
-static int handle_strf (char *buf, int len, FILE *fp)
+static int find_strl_value (char *buf, int bufsize,
+			    int vnum, int obs, FILE *fp)
 {
+    char test[4];
+    guint32 v, len;
+    guint64 o;
+    guint8 t;
     int err = 0;
-    
-    *buf = '\0';
 
-    if (len > 255) {
-	stata_read_string(fp, 255, buf, &err);
-	buf[255] = '\0';
-	err = stata_seek(fp, len - 255, SEEK_CUR);
-    } else {
-	stata_read_string(fp, len, buf, &err);
-	buf[len] = '\0';
+    stata_read_string(fp, 3, test, &err);
+    test[3] = '\0';
+    if (!err && strcmp(test, "GSO")) {
+	fprintf(stderr, "empty or bad strls block\n");
+	err = E_DATA;
+    }
+
+    while (!err) {
+	v = stata_read_uint32(fp, &err);
+	o = stata_read_uint64(fp, &err);
+	t = stata_read_byte(fp, &err);
+	len = stata_read_uint32(fp, &err);
+	if (!err) {
+	    if (v == vnum && o == obs) {
+		/* found what we're looking for */
+		err = stata_read_buffer(buf, bufsize, len, fp);
+		break;
+	    } else {
+		err = stata_seek(fp, len, SEEK_CUR);
+		stata_read_string(fp, 3, test, &err);
+		test[3] = '\0';
+		if (strcmp(test, "GSO")) {
+		    if (strcmp(test, "</s")) {
+			fprintf(stderr, "broken strls zone?\n");
+		    }
+		    break;
+		}
+	    }		
+	}
     }
 
     return err;
 }
 
-static int peek_strL_data (FILE *fp, int i, int t)
+static int get_strl_data (char *buf, int bufsize,
+			  dta_table *dtab, FILE *fp)
 {
-    char buf[8];
+    char vobytes[8];
     int err = 0;
     
-    *buf = '\0';
-    stata_read_string(fp, 8, buf, &err);
+    *buf = *vobytes = '\0';
+    stata_read_string(fp, 8, vobytes, &err);
 
     if (!err) {
 	gint64 o = 0;
@@ -1228,21 +1234,25 @@ static int peek_strL_data (FILE *fp, int i, int t)
 	char *targ = (char *) &o;
 #endif
 
-	memcpy(&v, buf, 2);
-	memcpy(targ, buf + 2, 6);
+	memcpy(&v, vobytes, 2);
+	memcpy(targ, vobytes + 2, 6);
 	
 	if (o > INT_MAX) {
 	    fprintf(stderr, "strL: obs reference too big!\n");
 	    err = E_DATA;
+	} else if (v == 0 && o == 0) {
+	    ; /* empty string */
 	} else {
-	    printf("strL(v,o) = %d, %d:", v, (int) o);
-	    if (v == 0 && o == 0) {
-		printf(" empty string\n");
-	    } else if (v == i+i && o == t+1) {
-		printf(" no backref\n");
-	    } else {
-		printf(" is backref\n");
+	    gint64 thispos = ftell64(fp);
+
+	    err = stata_seek(fp, dtab->strl_pos, SEEK_SET);
+	    if (!err) {
+		err = find_strl_value(buf, bufsize, (int) v, (int) o, fp);
 	    }
+	    if (!err) {
+		/* get back in position */
+		err = stata_seek(fp, thispos, SEEK_SET);
+	    }	    
 	}
     }
 
@@ -1268,7 +1278,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     int *types = NULL;
     int *lvars = NULL;
     char **lnames = NULL;
-    char strbuf[256];
+    char buf[256];
     int st_err = 0;
     int err = 0;
 
@@ -1398,44 +1408,41 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     for (t=0; t<dset->n && !err; t++) {
 	for (i=0; i<nvar && !err; i++) {
 	    int ix, v = i + 1;
+	    int typ = types[i];
 
 	    dset->Z[v][t] = NADBL; 
 
-	    if (types[i] == STATA_13_FLOAT) {
+	    if (typ == STATA_13_FLOAT) {
 		dset->Z[v][t] = stata_read_float(fp, &err);
-	    } else if (types[i] == STATA_13_DOUBLE) {
+	    } else if (typ == STATA_13_DOUBLE) {
 		dset->Z[v][t] = stata_read_double(fp, &err);
-	    } else if (types[i] == STATA_13_LONG) {
+	    } else if (typ == STATA_13_LONG) {
 		ix = stata_read_int32(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
-	    } else if (types[i] == STATA_13_INT) {
+	    } else if (typ == STATA_13_INT) {
 		ix = stata_read_short(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
-	    } else if (types[i] == STATA_13_BYTE) {
+	    } else if (typ == STATA_13_BYTE) {
 		ix = stata_read_signed_byte(fp, 0, &err);
 		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
-	    } else if (types[i] <= STATA_STRF_MAX) {
+	    } else if (typ <= STATA_STRF_MAX) {
 		/* fixed length string */
-		err = handle_strf(strbuf, types[i], fp);
-		if (!err && *strbuf != '\0') {
-		    process_string_value(strbuf, *pst, dset, v, t, prn);
+		err = stata_read_buffer(buf, sizeof buf, typ, fp);
+		if (!err && *buf != '\0') {
+		    process_string_value(buf, *pst, dset, v, t, prn);
 		}		
-	    } else if (types[i] == STATA_13_STRL) {
-		/* skip arbitrarily long strings */
-		err = peek_strL_data(fp, i, t);
-		// err = stata_seek(fp, 8, SEEK_CUR);
+	    } else if (typ == STATA_13_STRL) {
+		/* arbitrarily long string */
+		err = get_strl_data(buf, sizeof buf, dtab, fp);
+		if (!err && *buf != '\0') {
+		    process_string_value(buf, *pst, dset, v, t, prn);
+		}		
 	    }
 	}
     }
 
     if (!err && tvar > 0) {
 	set_time_info(dset, tvar, pd);
-    }
-
-    if (!err && dtab->strl_pos > 0) {
-	/* strL: long strings: not handled at present */
-	err = stata_seek(fp, dtab->strl_pos, SEEK_SET);
-	process_strl_values(fp, &err);
     }
 
     if (!err) {
