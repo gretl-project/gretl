@@ -1191,7 +1191,7 @@ static int find_strl_value (char *buf, int bufsize,
     while (!err) {
 	v = stata_read_uint32(fp, &err);
 	o = stata_read_uint64(fp, &err);
-	/* next is 't': 'binary vs ASCII', not needed? */
+	/* next is 't', 'binary vs ASCII' -- not needed? */
 	stata_read_byte(fp, &err);
 	len = stata_read_uint32(fp, &err);
 	if (!err) {
@@ -1200,6 +1200,7 @@ static int find_strl_value (char *buf, int bufsize,
 		err = stata_read_buffer(buf, bufsize, len, fp);
 		break;
 	    } else {
+		/* try for the next GSO */
 		err = stata_seek(fp, len, SEEK_CUR);
 		stata_read_string(fp, 3, test, &err);
 		test[3] = '\0';
@@ -1432,7 +1433,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 		    process_string_value(buf, *pst, dset, v, t, prn);
 		}		
 	    } else if (typ == STATA_13_STRL) {
-		/* arbitrarily long string */
+		/* arbitrarily long string! */
 		err = get_strl_data(buf, sizeof buf, dtab, fp);
 		if (!err && *buf != '\0') {
 		    process_string_value(buf, *pst, dset, v, t, prn);
