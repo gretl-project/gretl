@@ -2990,6 +2990,52 @@
       </description>
     </function>
 
+    <function name="genseries" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">varname</fnarg>
+	<fnarg type="series">rhs</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Questa funzione è pensata principalmente per gli autori di
+	  script: fornisce un metodo per generare serie i cui nomi
+	  non siano noti a priori, e/o creare una serie ed aggiungerla
+	  ad una lista con un solo comando.
+	</para>
+	<para>
+	  Il primo argomento specifica l'identificativo della serie da
+	  creare (o modificare); questo può essere una stringa fissa,
+	  una variabile di tipo stringa, o un'espressione che risulta
+	  in una stringa.  Il secondo argomento,
+	  <argname>rhs</argname> (<quote>right-hand side</quote>),
+	  definisce la serie origine: l'identificativo di una serie
+	  pre-esistente o un'espressione che risulta in una serie,
+	  così come apparirebbe alla destra del segno di uguale quando
+	  si assegnano valori alle serie nel solito modo.
+	</para>
+	<para>
+	  Il valore ritornato da questa funzione è il numero ID della
+	  serie nel dataset, che può essere incluso in una lista (o
+	  &minus;1 in caso di errore).
+	</para>
+	<para>
+	  Per esempio, immaginiamo di voler aggiungere <math>n</math>
+	  serie casuali normali al dataset e raccoglierle tutte in una
+	  lista:
+	</para>
+	<code>
+	  list Normals = null
+	  loop i=1..n --quiet
+	      Normals += genseries(sprintf("norm%d", i), normal())
+	  endloop
+	</code>
+	<para>
+	  Alla fine del ciclo, <lit>Normals</lit> conterrà le serie
+	  <lit>norm1</lit>, <lit>norm2</lit> e così via.
+	</para>
+      </description>
+    </function>
+
     <function name="getenv" section="strings" output="string">
       <fnargs>
     <fnarg type="string">s</fnarg>
@@ -5314,6 +5360,27 @@
       </description>
     </function>
 
+    <function name="nlines" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Ritorna un conteggio delle linee di testo complete (ossia,
+	  linee che terminano con un carattere di <quote>a
+	  capo</quote>) nel buffer <argname>buf</argname>.
+	</para>
+    <para>
+        Ad esempio:
+    </para>
+    <code>
+        string web_page = readfile("http://gretl.sourceforge.net/")
+        scalar number = nlines(web_page)
+        print number
+    </code>
+      </description>
+    </function>
+
     <function name="nobs" section="stats" output="int">
       <fnargs>
     <fnarg type="series">y</fnarg>
@@ -5693,6 +5760,24 @@
       </description>
     </function>
 
+    <function name="pexpand" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione può essere applicata solo se il dataset
+	  corrente ha struttura panel.  Effettua l'operazione inversa
+	  di <fncref targ="pshrink"/>. Vale a dire, dato un vettore di
+	  lunghezza uguale al numero di individui nel campione panel
+	  vigente, restituisce una serie in cui gni valore è ripetuto
+	  <math>T</math> volte, dove <math>T</math> è la lunghezza
+	  temporale del panel. La serie risultaante è, di conseguenza,
+	  invariante nel tempo.
+	</para>
+      </description>
+    </function>    
+
     <function name="pmax" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -6032,11 +6117,12 @@
       <description>
 	<para>
 	  Questa funzione è applicabile solo se il dataset corrente ha
-	  struttura panel. Restituisce un vettore colonna 
-	  contenente la prima osservazione valide della serie <argname>y</argname> 
-	  per ciascuna unità in cross-section del panel all'interno
-	  dell'intervallo campionario corrente. Le unità che non hanno nessuna 
-	  osservazione valida per la serie in input vengono ignorate.
+	  struttura panel. Restituisce un vettore colonna contenente
+	  la prima osservazione valide della serie
+	  <argname>y</argname> per ciascuna unità in cross-section del
+	  panel all'interno dell'intervallo campionario corrente. Le
+	  unità che non hanno nessuna osservazione valida per la serie
+	  in input vengono ignorate.
 	</para>
 	<para>
 	  Questa funzione permette di compattare le variabili
@@ -6214,6 +6300,41 @@
 	  <argname>A</argname> non sono compatibili o se
 	  <argname>A</argname> non è simmetrica viene restituito un
 	  messaggio d'errore. </para>
+      </description>
+    </function>
+
+    <function name="qlrpval" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">X2</fnarg>
+	<fnarg type="int">df</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar">p2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  <math>P</math>-values per la statistica test QLR
+	  sup-Wald,usata per la ricerca di un break strutturale ad un
+	  punto ignoto (vedi <cmdref targ="qlrtest"/>), secondo <cite
+	  key="hansen97">Hansen (1997)</cite>.
+	</para>
+	<para>
+	  Il primo argomento, <argname>X2</argname>, denota la
+	  statistica del massimo Wald test (nella forma chi-quadro) e
+	  <argname>df</argname> denota i suoi gradi di libertà. Gli
+	  argomenti 3 e 4 rappresentano, come numeri fra 0 e 1, il
+	  punto iniziale e finale del sottocampione centrale delle
+	  osservazioni su cui la successione di test di Wald viene
+	  calcolata. Ad esempio, se viene adottato l'usuale approccio
+	  di partire dal 15 per cento e fermarsi all'85, si userebbero
+	  0.15 per <argname>p1</argname> e 0.85 per
+	  <argname>p2</argname>.
+	</para>
+	<para>
+	  <seelist> 
+            <fncref targ="pvalue"/>
+	    <fncref targ="urcpval"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -6972,6 +7093,36 @@
       </description>
     </function>
 
+    <function name="seasonals" section="data-utils" output="list">
+      <fnargs>
+	<fnarg optional="true" type="int">baseline</fnarg>
+	<fnarg optional="true" type="bool">center</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Questa funzione è applicabile solo se il dataset corrente è
+	  di tipo temporale ed ha una periodicità maggiore di
+	  1. ritorna una lista di variabili dummy per i sottoperiodi,
+	  chiamate <lit>S1</lit>, <lit>S2</lit> eccetera.
+	</para>
+	<para>
+	  L'argomento <argname>baseline</argname> (opzionale) serve ad
+	  escludere un sottoperiodo. Ad esempio, con
+	  <argname>baseline</argname> uguale ad 1 e dati trimestrali
+	  la lista risultato conterrà dummy per il 2°, 3° e 4°
+	  trimestre.  Se questo argomento è zero o omesso, verrò
+	  creata l'intera lista; se non-zero, dev'essere un intero
+	  compreso fra 1 e la periodicità dei dati.
+	</para>
+	<para>
+	  L'argomento <argname>center</argname>, se non-zero, fa sì
+	  che vengano generate dummy centrate. Per esempio, con dati
+	  trimestrali le dummy centrate assumono valori di &minus;0,25
+	  e 0,75 anziché 0 e 1.
+	</para>
+      </description>
+    </function>    
+
     <function name="selifc" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -7192,19 +7343,56 @@
       </description>
     </function>
 
+    <function name="sprintf" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">formato</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>     
+      <description>
+	<para>
+	  Ritorna una stringa contenente la stampa dei valori degli
+	  argomenti successivi, indicati dai puntini, sotto il
+	  controllo della stringa <argname>formato</argname>. Per
+	  maggiori dettagli, si veda l'help del comando <cmdref
+	  targ="printf"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="square" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg optional="true" type="bool">cross-products</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Ritorna una lista contenente le variabili nella lista
+	  <argname>L</argname> al quadrato, con nomi basati sul
+	  modello <lit>sq_</lit><repl>varname</repl>.  Se il secondo
+	  argomento (opzionale) è presente e ha valore non-zero,
+	  vengono inclusi anche i prodotti incrociati delle variabili
+	  in <argname>L</argname>; i nomi sono vasati sul modello
+	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  I nomi
+	  delle serie risultato potrebbero venir troncati se troppo
+	  lunghi, e aggiustati per evitare duplicazioni.
+	</para>
+      </description>
+    </function>    
+
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>     
       <description>
     <para>
-      Radice quadrata di <argname>x</argname>; genera
-      <lit>NA</lit> in caso di valori negativi.
+      Radice quadrata di <argname>x</argname>; genera <lit>NA</lit> in
+      caso di valori negativi.
     </para>
     <para>
-      Si noti che se l'argomento è una matrice l'operazione viene effettuata
-      elemento per elemento e dato che le matrici non possono contenere <lit>NA</lit>,
-      eventuali valori negativi generano un errore. Per la <quote>radice quadrata
+      Si noti che se l'argomento è una matrice l'operazione viene
+      effettuata elemento per elemento e dato che le matrici non
+      possono contenere <lit>NA</lit>, eventuali valori negativi
+      generano un errore. Per la <quote>radice quadrata
       matriciale</quote>, v. <fncref targ="cholesky"/>.
     </para>
       </description>
@@ -8312,25 +8500,6 @@
 	    <fncref targ="min"/>
 	  </seelist>
 	</para> 
-      </description>
-    </function>
-
-    <function name="xpx" section="transforms" output="list">
-      <fnargs>
-	<fnarg type="list">L</fnarg>
-      </fnargs>     
-      <description>
-    <para>
-      Fornisce una lista che contiene i quadrati e i prodotti
-      incrociati delle variabili elencate nella lista <argname>L</argname>.
-      Ai quadrati viene assegnato un nome secondo lo schema
-      <lit>sq_</lit><repl>varname</repl>, mentre per i prodotti
-      incrociati si utilizza
-      <repl>var1</repl><lit>_</lit><repl>var2</repl>. Se necessario i nomi
-      delle variabili in input possono essere troncati e il
-      nome delle variabili in output possono essere cambiati in
-      caso di duplicazione dei nomi nella lista fornita.
-    </para>
       </description>
     </function>
 
