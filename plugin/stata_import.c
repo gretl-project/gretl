@@ -123,8 +123,8 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 #define STATA_SE_BYTE     251
 
 /* Stata 13+ format constants */
-#define STATA_13_FLOAT    65527
 #define STATA_13_DOUBLE   65526
+#define STATA_13_FLOAT    65527
 #define STATA_13_LONG     65528
 #define STATA_13_INT      65529
 #define STATA_13_BYTE     65530
@@ -222,7 +222,7 @@ static int stata_read_int64 (FILE *fp, int *err)
 
 static guint64 stata_read_uint64 (FILE *fp, int *err)
 {
-    gint64 u;
+    guint64 u;
 
     if (fread(&u, sizeof u, 1, fp) != 1) {
 	bin_error(err, "stata_read_uint64");
@@ -240,11 +240,31 @@ static guint64 stata_read_uint64 (FILE *fp, int *err)
     return u;
 }
 
+static guint32 stata_read_uint32 (FILE *fp, int *err)
+{
+    guint32 u;
+
+    if (fread(&u, sizeof u, 1, fp) != 1) {
+	bin_error(err, "stata_read_uint32");
+	return 0;
+    }
+
+    if (swapends) {
+	if (stata_endian == G_BIG_ENDIAN) {
+	    u = GUINT32_FROM_BE(u);
+	} else {
+	    u = GUINT32_FROM_LE(u);
+	}
+    }
+
+    return u;
+}
+
 /* 4-byte signed int */
 
 static int stata_read_int32 (FILE *fp, int naok, int *err)
 {
-    int i;
+    gint32 i;
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
 	bin_error(err, "stata_read_int32");
@@ -496,7 +516,8 @@ static int check_new_variable_types (FILE *fp, int *types,
 	} else if (u == STATA_13_BYTE) {
 	    pprintf(prn, "variable %d: byte type\n", i+1);
 	} else if (u <= STATA_STRF_MAX) {
-	    pprintf(prn, "variable %d: string type\n", i+1);
+	    pprintf(prn, "variable %d: string type (fixed length %d)\n",
+		    i+1, (int) u);
 	    *nsv += 1;
 	} else if (u == STATA_13_STRL) {
 	    pprintf(prn, "variable %d: long string type (strL) "
@@ -980,15 +1001,17 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 	if (namelen == 32) {
 	    /* dta 117: try to fix possible bad encoding */
 	    iso_to_ascii(buf);
-	    err = check_varname(buf);
-	    if (err) {
-		err = try_fix_varname(buf);
-	    }
 	} else {
 	    /* dta > 117: UTF-8 varnames of up to 128 bytes */
 	    u8_to_ascii(buf);
-	    if (*buf == '\0') {
-		sprintf(buf, "v%d", v);
+	    gretl_trunc(buf, VNAMELEN - 1);
+	}
+	if (*buf == '\0') {
+	    sprintf(buf, "v%d", v);
+	} else {
+	    err = check_varname(buf);
+	    if (err) {
+		err = try_fix_varname(buf);
 	    }
 	}
     }
@@ -1073,6 +1096,15 @@ static void process_string_value (char *buf, gretl_string_table *st,
     if (st != NULL && strcmp(buf, ".")) {
 	int ix = 0;
 
+	if (stata_version > 13 && strlen(buf) == 255) {
+	    /* beware broken (by truncation) UTF-8 */
+	    int pos = 254;
+
+	    while (!g_utf8_validate(buf, -1, NULL)) {
+		buf[pos--] = '\0';
+	    }
+	}
+
 	if (g_utf8_validate(buf, -1, NULL)) {
 	    ix = gretl_string_table_index(st, buf, v, 0, prn);
 	} else {
@@ -1095,13 +1127,45 @@ static void process_string_value (char *buf, gretl_string_table *st,
 
 static int process_strl_values (FILE *fp, int *err)
 {
-    /* let's just take a peek at this stuff */
-    char test[9];
+    char test[4];
 
-    stata_read_string(fp, 8, test, err);
-    test[8] = '\0';
-    if (!strcmp(test, "</strls>")) {
-	fprintf(stderr, "dta import: got empty strls block\n");
+    stata_read_string(fp, 3, test, err);
+    test[3] = '\0';
+
+    if (*err) {
+	return 0; /* just for now */
+    }
+
+    if (strcmp(test, "GSO")) {
+	fprintf(stderr, "empty or bad strls block\n");
+    } else {
+	guint32 v, len;
+	guint64 o;
+	guint8 t;
+
+	while (!*err) {
+	    v = stata_read_uint32(fp, err);
+	    o = stata_read_uint64(fp, err);
+	    t = stata_read_byte(fp, err);
+	    len = stata_read_uint32(fp, err);
+	    if (!*err) {
+		printf("GSO: v=%d, o=%d, t=%d, len=%d\n",
+		       (int) v, (int) o, (int) t, (int) len);
+		if (len > 0) {
+		    char buf[32];
+
+		    len = (len > 31)? 31 : len;
+		    stata_read_string(fp, len, buf, err);
+		    buf[31] = '\0';
+		    printf(" '%s'\n", buf);
+		}
+		stata_read_string(fp, 3, test, err);
+		test[3] = '\0';
+		if (strcmp(test, "GSO")) {
+		    break;
+		}
+	    }
+	}
     }
 
     return 0;
@@ -1134,7 +1198,7 @@ static int handle_strf (char *buf, int len, FILE *fp)
     int err = 0;
     
     *buf = '\0';
-    
+
     if (len > 255) {
 	stata_read_string(fp, 255, buf, &err);
 	buf[255] = '\0';
@@ -1142,6 +1206,44 @@ static int handle_strf (char *buf, int len, FILE *fp)
     } else {
 	stata_read_string(fp, len, buf, &err);
 	buf[len] = '\0';
+    }
+
+    return err;
+}
+
+static int peek_strL_data (FILE *fp, int i, int t)
+{
+    char buf[8];
+    int err = 0;
+    
+    *buf = '\0';
+    stata_read_string(fp, 8, buf, &err);
+
+    if (!err) {
+	gint64 o = 0;
+	guint16 v;
+#if WORDS_BIGENDIAN
+	char *targ = (char *) &o + 2;
+#else	
+	char *targ = (char *) &o;
+#endif
+
+	memcpy(&v, buf, 2);
+	memcpy(targ, buf + 2, 6);
+	
+	if (o > INT_MAX) {
+	    fprintf(stderr, "strL: obs reference too big!\n");
+	    err = E_DATA;
+	} else {
+	    printf("strL(v,o) = %d, %d:", v, (int) o);
+	    if (v == 0 && o == 0) {
+		printf(" empty string\n");
+	    } else if (v == i+i && o == t+1) {
+		printf(" no backref\n");
+	    } else {
+		printf(" is backref\n");
+	    }
+	}
     }
 
     return err;
@@ -1319,8 +1421,9 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 		    process_string_value(strbuf, *pst, dset, v, t, prn);
 		}		
 	    } else if (types[i] == STATA_13_STRL) {
-		/* skip arbitrarly long strings */
-		err = stata_seek(fp, 8, SEEK_CUR);
+		/* skip arbitrarily long strings */
+		err = peek_strL_data(fp, i, t);
+		// err = stata_seek(fp, 8, SEEK_CUR);
 	    }
 	}
     }
@@ -1686,7 +1789,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     }
 
     /* FIXME */
-    if (dtab->version > 117) {
+    if (0 && dtab->version > 117) {
 	pprintf(prn, "This dta version not yet supported\n");
 	return E_NOTYET;
     }
