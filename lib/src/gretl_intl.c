@@ -1235,7 +1235,7 @@ static void u8_to_ascii_translate (char *targ, const char *src)
 		*p++ = 'E';
 	    } else if (u >= 0x00CC && u <= 0x00CF) {
 		*p++ = 'I';
-	    } else if (u == 0x00D0 || u == 0x010E || u == 0x0110 || 0x010E) {
+	    } else if (u == 0x00D0 || u == 0x010E || u == 0x0110 || u == 0x010E) {
 		*p++ = 'D';
 	    } else if (u == 0x00D1 || u == 0x0143 || u == 0x0147) {
 		*p++ = 'N';
