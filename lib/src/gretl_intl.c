@@ -1269,7 +1269,7 @@ static void u8_to_ascii_translate (char *targ, const char *src)
 		*p++ = 'y';
 	    } else if (u == 0x00FE || u == 0x0163) {
 		*p++ = 't';
-	    } else if (u == 0x0141 || u == 0x013D || 0x0139) {
+	    } else if (u == 0x0141 || u == 0x013D || u == 0x0139) {
 		*p++ = 'L';
 	    } else if (u == 0x0142 || u == 0x013E || u == 0x013A) {
 		*p++ = 'l';
