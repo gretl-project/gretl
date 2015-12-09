@@ -90,7 +90,8 @@ enum {
     P_BIPROBIT,
     P_REPROBIT,
     P_PANURC,
-    P_JSON_GET
+    P_JSON_GET,
+    P_STATA_EXPORT
 } plugin_codes;
 
 struct plugin_info {
@@ -147,7 +148,8 @@ struct plugin_info plugins[] = {
     { P_BIPROBIT,        "biprobit",        NULL },
     { P_REPROBIT,        "reprobit",        NULL },
     { P_PANURC,          "panurc",          NULL },
-    { P_JSON_GET,        "json_get",        NULL }
+    { P_JSON_GET,        "json_get",        NULL },
+    { P_STATA_EXPORT,    "stata_export",    NULL }
 };  
 
 struct plugin_function_info plugin_functions[] = { 
@@ -277,6 +279,9 @@ struct plugin_function_info plugin_functions[] = {
 
     /* parsing JSON data */
     { "json_get", P_JSON_GET},
+
+    /* exporting data in dta format */
+    { "stata_export", P_STATA_EXPORT},
 
     /* sentinel */
     { NULL, 0 }

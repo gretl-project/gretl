@@ -1225,9 +1225,11 @@ static void u8_to_ascii_translate (char *targ, const char *src)
 	    }
 	    q++;
 	} else {
-	    /* handle Latin-1 and Latin-2 */
+	    /* handle Latin-1 and Latin-2, only */
 	    u = g_utf8_get_char(q);
-	    if ((u >= 0x00C0 && u <= 0x00C6) || u == 0x0102 || u == 0x0104) {
+	    if (u >= 0x0180) {
+		; /* can't handle */
+	    } else if ((u >= 0x00C0 && u <= 0x00C6) || u == 0x0102 || u == 0x0104) {
 		*p++ = 'A';
 	    } else if (u == 0x00C7 || u == 0x0106 || u == 0x010C) {
 		*p++ = 'C';

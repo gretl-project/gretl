@@ -90,6 +90,7 @@ SRCS = excel_import.c \
 	ods_import.c \
 	xlsx_import.c \
 	import_common.c \
+	stata_export.c \
 	johansen.c \
 	jrestrict.c \
 	jalpha.c \
@@ -139,6 +140,7 @@ PLUGINS = arbond.la \
 	spss_import.la \
 	sas_import.la \
 	jmulti_import.la \
+	stata_export.la \
 	fractals.la \
 	garch.la \
 	johansen.la \
@@ -262,6 +264,9 @@ sas_import.la: sas_import.lo
 
 jmulti_import.la: jmulti_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
+
+stata_export.la: stata_export.lo
+	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 fractals.la: fractals.lo
 	$(LINK) -o $@ $< $(GRETLLIB)

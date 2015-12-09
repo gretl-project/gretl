@@ -149,7 +149,6 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 #define STATA_DOUBLE_NA(x) (x > STATA_DOUBLE_MAX)
 #define STATA_LONG_NA(i)   (i > STATA_LONG_MAX)
 #define STATA_INT_NA(i)    (i > STATA_INT_MAX)
-
 #define STATA_BYTE_NA(b,v) ((v<8 && b==127) || b>=101)
 
 /* Add this to Stata daily date values to get epoch days */
