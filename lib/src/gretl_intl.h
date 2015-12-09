@@ -32,7 +32,10 @@ int get_local_decpoint (void);
 
 char *iso_to_ascii (char *s);
 
-char *u8_to_ascii (char *s);
+char *u8_to_ascii_convert (char *targ, const char *src,
+			   int maxlen, char sub);
+
+char *asciify_utf8_varname (char *s);
 
 /* the following enumeration is organized by alphabetical order of
    English name of language: Albanian, Basque, Bulgarian, ...

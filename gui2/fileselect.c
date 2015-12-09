@@ -45,6 +45,7 @@
 			 a == EXPORT_R ||	\
 			 a == EXPORT_CSV ||	\
 			 a == EXPORT_DAT ||	\
+			 a == EXPORT_DTA ||	\
 			 a == EXPORT_JM)
 
 #define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR || \
@@ -78,6 +79,7 @@ static struct extmap action_map[] = {
     { EXPORT_R,          ".R" },
     { EXPORT_OCTAVE,     ".m" },
     { EXPORT_DAT,        ".dat" },
+    { EXPORT_DTA,        ".dta" },
     { SAVE_OUTPUT,       ".txt" },
     { SAVE_TEX,          ".tex" },
     { SAVE_RTF,          ".rtf" },
@@ -447,6 +449,9 @@ static char *suggested_exportname (const char *fname, int action)
 	case EXPORT_DAT:
 	case EXPORT_JM:
 	    test = ".dat";
+	    break;
+	case EXPORT_DTA:
+	    test = ".dta";
 	    break;
 	default:
 	    test = NULL;

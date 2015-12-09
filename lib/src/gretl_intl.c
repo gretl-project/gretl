@@ -1184,25 +1184,39 @@ iso_to_ascii_translate (char *targ, const char *src, int latin)
     *p = '\0';
 }
 
-/* For use in translating variable names from UTF-8 to ASCII:
-   we pass through ASCII letters, numbers and underscores;
-   convert consecutive spaces to a single underscore; and
-   convert UTF-8 representations of accented Roman letters
-   to their unaccented ASCII counterparts. Everything else
-   we just skip on conversion.
+/* If @maxlen > 0 we limit the write to @targ to at most
+   @maxlen bytes (excluding the terminating nul byte).
+   If @sub > 0 we write this byte to @targ in place of
+   UTF-8 characters that we can't represent in ASCII,
+   provided they are lower than 0x0180.
 */
 
-static void u8_to_ascii_translate (char *targ, const char *src)
+char *u8_to_ascii_convert (char *targ, const char *src,
+			   int maxlen, char sub)
 {
     int prevspace = 0;
     const char *q = src;
     char *p = targ;
     gunichar u;
-    int c;
+    int c, skip;
+    int len = 0;
+
+    *p = '\0';
+
+    /* If sub == 0 we assume we're doing varnames and
+       so we skip all characters that are not valid in
+       a gretl varname. But if sub > 0 we pass through
+       all printable ASCII characters.
+    */
 
     while (q && *q) {
+	skip = 0;
 	c = *q;
-	if (c >= 0x0030 && c <= 0x0039) {
+	if (sub > 0 && ((c >= 32 && c <= 126) || c == 9 || c == 10)) {
+	    /* ASCII printables */
+	    *p++ = c;
+	    q++;
+	} else if (c >= 0x0030 && c <= 0x0039) {
 	    /* digits 0-9 */
 	    *p++ = c;
 	    q++;
@@ -1222,13 +1236,15 @@ static void u8_to_ascii_translate (char *targ, const char *src)
 	    if (!prevspace) {
 		prevspace = 1;
 		*p++ = '_';
+	    } else {
+		skip = 1;
 	    }
 	    q++;
 	} else {
 	    /* handle Latin-1 and Latin-2, only */
 	    u = g_utf8_get_char(q);
 	    if (u >= 0x0180) {
-		; /* can't handle */
+		skip = 1; /* can't handle */
 	    } else if ((u >= 0x00C0 && u <= 0x00C6) || u == 0x0102 || u == 0x0104) {
 		*p++ = 'A';
 	    } else if (u == 0x00C7 || u == 0x0106 || u == 0x010C) {
@@ -1287,15 +1303,25 @@ static void u8_to_ascii_translate (char *targ, const char *src)
 		*p = 'Z';
 	    } else if (u == 0x017A || u == 0x017E || u == 0x017C) {
 		*p = 'z';
+	    } else if (sub > 0) {
+		*p = sub;
+	    } else {
+		skip = 1;
 	    }
 	    q = g_utf8_next_char(q);
 	}
 	if (c != 0x0020) {
 	    prevspace = 0;
 	}
+	if (!skip) len++;
+	if (maxlen > 0 && len == maxlen) {
+	    break;
+	}
     }
 
     *p = '\0';
+
+    return targ;
 }
 
 static char *real_iso_to_ascii (char *s, int latin)
@@ -1332,19 +1358,15 @@ char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)
     return targ;
 }
 
-char *u8_to_ascii (char *s)
+char *asciify_utf8_varname (char *s)
 {
-    char *tmp;
+    char *tmp = malloc(32);
 
-    tmp = malloc(strlen(s) + 1);
-    if (tmp == NULL) {
-	return NULL;
+    if (tmp != NULL) {
+	u8_to_ascii_convert(tmp, s, 31, 0);
+	strcpy(s, tmp);
+	free(tmp);
     }
-
-    u8_to_ascii_translate(tmp, s);
-
-    strcpy(s, tmp);
-    free(tmp);
 
     return s;
 }

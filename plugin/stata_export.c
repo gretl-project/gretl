@@ -32,9 +32,9 @@ enum {
     STATA_DOUBLE
 };
 
-/* check this! */
-#define STATA_DOUBLE_NA 9.0e+307
-#define STATA_LONG_NA   2147483625
+/* default missing-value codes (".") */
+#define STATA_DOUBLE_NA 0x1.0000000000000p+1023
+#define STATA_LONG_NA   2147483621
 #define STATA_BYTE_NA   101
 
 typedef struct dta_113_hdr dta_hdr;
@@ -69,25 +69,29 @@ struct dta_113_value_label {
 
 static void dta_hdr_write (dta_hdr *hdr, int fd)
 {
-    write(fd, &hdr->ds_format, 1);
-    write(fd, &hdr->byteorder, 1);
-    write(fd, &hdr->filetype, 1);
-    write(fd, &hdr->unused, 1);
-    write(fd, &hdr->nvar, 2);
-    write(fd, &hdr->nobs, 4);
-    write(fd, hdr->data_label, 81);
-    write(fd, hdr->time_stamp, 18);
+    ssize_t w = 0;
+    
+    w += write(fd, &hdr->ds_format, 1);
+    w += write(fd, &hdr->byteorder, 1);
+    w += write(fd, &hdr->filetype, 1);
+    w += write(fd, &hdr->unused, 1);
+    w += write(fd, &hdr->nvar, 2);
+    w += write(fd, &hdr->nobs, 4);
+    w += write(fd, hdr->data_label, 81);
+    w += write(fd, hdr->time_stamp, 18);
 }
 
 static void asciify_to_length (char *targ, const char *src, int len)
 {
     if (src != NULL && *src != '\0') {
-	// u8_to_ascii_translate(targ, src, len);
-	strncat(targ, src, len);
+	u8_to_ascii_convert(targ, src, len, '?');
+    } else {
+	*targ = '\0';
     }
 }
 
-static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset)
+static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
+			  int nvars)
 {
     time_t now = time(NULL);
     struct tm *local;
@@ -100,7 +104,7 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset)
 #endif    
     hdr->filetype = 0x01;
     hdr->unused = 0x01;
-    hdr->nvar = dset->v - 1; /* skip the const */
+    hdr->nvar = nvars;
     hdr->nobs = dset->n;
 
     memset(hdr->data_label, 0, 81);
@@ -113,22 +117,44 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset)
     strftime(hdr->time_stamp, 18, "%d %b %Y %I:%M", local);
 }
 
-static guint8 *make_types_array (const DATASET *dset)
+static int include_var (const int *list, int i)
 {
-    guint8 *t = malloc(dset->v - 1);
+    if (list == NULL) {
+	return 1;
+    } else {
+	return in_gretl_list(list, i);
+    }
+}
+
+static guint8 *make_types_array (const DATASET *dset,
+				 const int *list,
+				 int *nvars)
+{
+    guint8 *t;
+
+    if (list != NULL) {
+	*nvars = list[0];
+    } else {
+	*nvars = dset->v - 1;
+    }
+
+    t = malloc(*nvars);
 
     if (t != NULL) {
 	const double *x;
-	int i;
+	int i, j = 0;
 
 	for (i=1; i<dset->v; i++) {
-	    x = dset->Z[i];
-	    if (gretl_isdummy(dset->t1, dset->t2, x)) {
-		t[i-1] = STATA_BYTE;
-	    } else if (gretl_isint(dset->t1, dset->t2, x)) {
-		t[i-1] = STATA_LONG;
-	    } else {
-		t[i-1] = STATA_DOUBLE;
+	    if (include_var(list, i)) {
+		x = dset->Z[i];
+		if (gretl_isdummy(dset->t1, dset->t2, x)) {
+		    t[j] = STATA_BYTE;
+		} else if (gretl_isint(dset->t1, dset->t2, x)) {
+		    t[j] = STATA_LONG;
+		} else {
+		    t[j] = STATA_DOUBLE;
+		}
+		j++;
 	    }
 	}
     }
@@ -136,32 +162,36 @@ static guint8 *make_types_array (const DATASET *dset)
     return t;
 }
 
-int stata_export_data (const DATASET *dset, const char *fname)
+int stata_export (const char *fname,
+		  const int *list,
+		  gretlopt opt,      /* unused, for now */
+		  const DATASET *dset)
 {
     dta_hdr hdr;
     char buf[96];
+    ssize_t w = 0;
     guint8 *types;
     double xit;
     gint32 i32;
     gint16 i16;
     guint8 i8;
     int missing;
-    int i, t, fd;
+    int i, j, t, fd;
+    int nv = 0;
     int err = 0;
 
-    /* gretl_open? */
-    fd = open(fname, O_WRONLY | O_CREAT, S_IWUSR | S_IROTH);
+    fd = gretl_open(fname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0) {
 	return E_FOPEN;
     }
 
-    types = make_types_array(dset);
+    types = make_types_array(dset, list, &nv);
     if (types == NULL) {
 	close(fd);
 	return E_ALLOC;
     }
 
-    dta_hdr_init(&hdr, dset);
+    dta_hdr_init(&hdr, dset, nv);
     dta_hdr_write(&hdr, fd);
 
     /*
@@ -173,64 +203,74 @@ int stata_export_data (const DATASET *dset, const char *fname)
     */
 
     /* typlist */
-    for (i=1; i<dset->v; i++) {
-	write(fd, &types[i-1], 1);
+    for (j=0; j<nv; j++) {
+	w += write(fd, &types[j], 1);
     }
 
     /* varlist (names) */
     for (i=1; i<dset->v; i++) {
-	memset(buf, 0, 33);
-	strcat(buf, dset->varname[i]);
-	write(fd, buf, 33);
+	if (include_var(list, i)) {
+	    memset(buf, 0, 33);
+	    strcat(buf, dset->varname[i]);
+	    w += write(fd, buf, 33);
+	}
     }    
     
-    /* srtlist (??) */
+    /* srtlist */
     i16 = 0;
-    for (i=1; i<=dset->v; i++) {
-	write(fd, &i16, 2);
+    for (j=0; j<=nv; j++) {
+	w += write(fd, &i16, 2);
     }
 
     /* fmtlist */
-    for (i=1; i<dset->v; i++) {
+    for (j=0; j<nv; j++) {
 	memset(buf, 0, 12);
 	/* do something here? */
-	write(fd, buf, 12);
+	w += write(fd, buf, 12);
     }
 
     /* lbllist */
     for (i=1; i<dset->v; i++) {
-	memset(buf, 0, 33);
-	/* FIXME do something here if needed */
-	write(fd, buf, 33);
+	if (include_var(list, i)) {
+	    memset(buf, 0, 33);
+	    /* FIXME do something here if needed */
+	    w += write(fd, buf, 33);
+	}
     }
 
     /* Variable labels */
     for (i=1; i<dset->v; i++) {
-	memset(buf, 0, 33);
-	asciify_to_length(buf, series_get_label(dset, i), 32);
-	write(fd, buf, 33);
+	if (include_var(list, i)) {
+	    memset(buf, 0, 81);
+	    asciify_to_length(buf, series_get_label(dset, i), 80);
+	    w += write(fd, buf, 81);
+	}
     }
 
     /* Expansion fields */
     i8 = 0;
     for (i=0; i<5; i++) {
-	write(fd, &i8, 1);
+	w += write(fd, &i8, 1);
     }
 
     /* Data */
     for (t=dset->t1; t<=dset->t2; t++) {
+	j = 0;
 	for (i=1; i<dset->v; i++) {
-	    xit = dset->Z[i][t];
-	    missing = xna(xit);
-	    if (types[i-1] == STATA_BYTE) {
-		i8 = missing ? STATA_BYTE_NA : xit;
-		write(fd, &i8, 1);
-	    } else if (types[i-1] == STATA_LONG) {
-		i32 = missing ? STATA_LONG_NA : xit;
-		write(fd, &i32, 4);
-	    } else {
-		xit = missing ? STATA_DOUBLE_NA : xit;
-		write(fd, &xit, 8);
+	    if (include_var(list, i)) {
+		xit = dset->Z[i][t];
+		missing = xna(xit);
+		if (types[j] == STATA_BYTE) {
+		    i8 = missing ? STATA_BYTE_NA : xit;
+		    w += write(fd, &i8, 1);
+		} else if (types[j] == STATA_LONG) {
+		    i32 = missing ? STATA_LONG_NA : xit;
+		    w += write(fd, &i32, 4);
+		} else {
+		    xit = missing ? STATA_DOUBLE_NA : xit;
+		    w += write(fd, &xit, 8);
+		}
+		j++;
 	    }
 	}
     }
@@ -238,6 +278,10 @@ int stata_export_data (const DATASET *dset, const char *fname)
     /* Value labels */
 
     close(fd);
+
+    free(types);
+
+    // printf("wrote %d bytes\n", (int) w);
 
     return err;
 }

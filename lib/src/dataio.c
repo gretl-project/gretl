@@ -54,7 +54,8 @@ typedef enum {
     GRETL_FMT_R,         /* data in Gnu R format */
     GRETL_FMT_DAT,       /* data in PcGive format */
     GRETL_FMT_DB,        /* gretl native database format */
-    GRETL_FMT_JM         /* JMulti ascii data */
+    GRETL_FMT_JM,        /* JMulti ascii data */
+    GRETL_FMT_DTA        /* Stata .dta format */
 } GretlDataFormat;
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
@@ -782,7 +783,9 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 		   has_suffix(fname, ".asc")) {
 	    fmt = GRETL_FMT_CSV;
 	    *delim = ' ';
-	} 
+	} else if (has_suffix(fname, ".dta")) {
+	    fmt = GRETL_FMT_DTA;
+	}
     }
 
     if (fmt == GRETL_FMT_GDT) {
@@ -921,6 +924,24 @@ static void R_data_out (const DATASET *dset, const int *list,
     }
 }
 
+static int write_dta_data (const char *fname, const int *list,
+			   gretlopt opt, const DATASET *dset)
+{
+    int (*exporter) (const char *, const int *, gretlopt,
+		     const DATASET *);
+    int err = 0;
+
+    exporter = get_plugin_function("stata_export");
+
+    if (exporter == NULL) {
+        err = 1;
+    } else {
+	err = (*exporter)(fname, list, opt, dset);
+    }
+
+    return err;
+}
+
 #define DEFAULT_CSV_DIGITS 15
 
 static int real_write_data (const char *fname, int *list, const DATASET *dset, 
@@ -975,6 +996,12 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	err = write_db_data(fname, list, opt, dset);
 	goto write_exit;
     }
+
+    if (fmt == GRETL_FMT_DTA) {
+	/* Stata */
+	err = write_dta_data(fname, list, opt, dset);
+	goto write_exit;
+    }    
 
     strcpy(datfile, fname);
 

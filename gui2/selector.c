@@ -6196,6 +6196,7 @@ static void build_data_export_combo (selector *sr)
 	N_("gretl database (.bin)"),
 	N_("GNU R"),
 	N_("Octave"),
+	N_("Stata"),
 	N_("JMulTi"),
 	N_("PcGive"),
 	NULL
@@ -6207,6 +6208,7 @@ static void build_data_export_combo (selector *sr)
 	OPT_D, 
 	OPT_R, 
 	OPT_M,
+	OPT_S,
 	OPT_J,
 	OPT_G
     };    
@@ -7496,6 +7498,8 @@ static int data_export_selection_callback (selector *sr)
 	    ci = EXPORT_JM;
 	} else if (sr->opts & OPT_G) {
 	    ci = EXPORT_DAT;
+	} else if (sr->opts & OPT_S) {
+	    ci = EXPORT_DTA;
 	} else if (sr->opts & OPT_D) {
 	    ci = EXPORT_DB;
 	} else if (sr->opts & OPT_B) {

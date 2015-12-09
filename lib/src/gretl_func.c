@@ -3106,7 +3106,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	strcpy(dirname, fname);
 	p = strrchr(dirname, SLASH);
 	*p = '\0';
-	dfd = gretl_open(".", O_RDONLY);
+	dfd = gretl_open(".", O_RDONLY, 0);
 	err = gretl_chdir(dirname);
     }
 

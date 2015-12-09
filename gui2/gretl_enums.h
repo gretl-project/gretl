@@ -153,6 +153,7 @@ enum file_ops {
     EXPORT_R,
     EXPORT_CSV,
     EXPORT_DAT,
+    EXPORT_DTA,
     EXPORT_JM,
     EXPORT_DB,
     EXPORT_GDT,

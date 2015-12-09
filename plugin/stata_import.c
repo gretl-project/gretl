@@ -18,8 +18,9 @@
 
   The code here was fairly substantially modified for gretl by Allin
   Cottrell, July 2005; modified again in August 2009 to support format
-  114 dta files as written by Stata 10 and 11; and again in December
-  2014 to handle format 117 files (Stata 13).
+  114 dta files as written by Stata 10 and 11; again in December
+  2014 to handle format 117 files (Stata 13); again in December
+  2015 to handle format 118 files (Stata 14).
 */
 
 #if defined(__linux) || defined(linux)
@@ -1003,8 +1004,7 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 	    iso_to_ascii(buf);
 	} else {
 	    /* dta > 117: UTF-8 varnames of up to 128 bytes */
-	    u8_to_ascii(buf);
-	    gretl_trunc(buf, VNAMELEN - 1);
+	    asciify_utf8_varname(buf);
 	}
 	if (*buf == '\0') {
 	    sprintf(buf, "v%d", v);

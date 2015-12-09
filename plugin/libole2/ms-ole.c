@@ -90,9 +90,9 @@ struct _MsOle {
 static int open_wrap (const char *pathname, int flags)
 {
 #ifdef O_BINARY
-    return gretl_open(pathname, flags | O_BINARY);
+    return gretl_open(pathname, flags | O_BINARY, 0);
 #else
-    return gretl_open(pathname, flags);
+    return gretl_open(pathname, flags, 0);
 #endif
 }
 

@@ -481,6 +481,8 @@ static int win32_open_fchdir (int fd)
  * gretl_open:
  * @pathname: name of file to be opened.
  * @flags: flags to pass to the system open().
+ * @mode: ignored unless @flags contains O_CREAT
+ * or O_TMPFILE.
  *
  * A wrapper for the C library's open(), making allowance for
  * the possibility that @pathname has to be converted from
@@ -489,7 +491,7 @@ static int win32_open_fchdir (int fd)
  * Returns: new file descriptor, or -1 on error.
  */
 
-int gretl_open (const char *pathname, int flags)
+int gretl_open (const char *pathname, int flags, int mode)
 {
     gchar *pconv = NULL;
     int fd = -1;
@@ -506,11 +508,16 @@ int gretl_open (const char *pathname, int flags)
     err = maybe_recode_path(pathname, &pconv, -1);
 
     if (!err) {
+	mode_t m = 0;
+	
+	if (flags & (O_CREAT | O_TMPFILE)) {
+	    m = (mode_t) mode;
+	}
 	if (pconv != NULL) {
-	    fd = open(pconv, flags);
+	    fd = open(pconv, flags, m);
 	    g_free(pconv);
 	} else {
-	    fd = open(pathname, flags);
+	    fd = open(pathname, flags, m);
 	}
     }
 
@@ -520,6 +527,8 @@ int gretl_open (const char *pathname, int flags)
 
     return fd;
 }
+
+
 
 /* On MS Windows support cheap fakery of fchdir, otherwise
    call the real fchdir() */

@@ -100,7 +100,7 @@ FILE *gretl_read_user_file (const char *fname);
 
 FILE *gretl_mktemp (char *pattern, const char *mode);
 
-int gretl_open (const char *pathname, int flags);
+int gretl_open (const char *pathname, int flags, int mode);
 
 int gretl_fchdir (int fd);
 
