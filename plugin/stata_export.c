@@ -19,10 +19,11 @@
 
 #include "libgretl.h"
 
-/* for binary file writing */
+/* for binary file ops */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 enum {
     STATA_BYTE = 251,

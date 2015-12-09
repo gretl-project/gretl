@@ -510,7 +510,7 @@ int gretl_open (const char *pathname, int flags, int mode)
     if (!err) {
 	mode_t m = 0;
 	
-	if (flags & (O_CREAT | O_TMPFILE)) {
+	if (flags & O_CREAT) {
 	    m = (mode_t) mode;
 	}
 	if (pconv != NULL) {
