@@ -68,18 +68,17 @@ struct dta_113_value_label {
     vltable table;       /* the table itself */
 };
 
-static void dta_hdr_write (dta_hdr *hdr, int fd)
+static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
 {
-    ssize_t w = 0;
     
-    w += write(fd, &hdr->ds_format, 1);
-    w += write(fd, &hdr->byteorder, 1);
-    w += write(fd, &hdr->filetype, 1);
-    w += write(fd, &hdr->unused, 1);
-    w += write(fd, &hdr->nvar, 2);
-    w += write(fd, &hdr->nobs, 4);
-    w += write(fd, hdr->data_label, 81);
-    w += write(fd, hdr->time_stamp, 18);
+    *w += write(fd, &hdr->ds_format, 1);
+    *w += write(fd, &hdr->byteorder, 1);
+    *w += write(fd, &hdr->filetype, 1);
+    *w += write(fd, &hdr->unused, 1);
+    *w += write(fd, &hdr->nvar, 2);
+    *w += write(fd, &hdr->nobs, 4);
+    *w += write(fd, hdr->data_label, 81);
+    *w += write(fd, hdr->time_stamp, 18);
 }
 
 static void asciify_to_length (char *targ, const char *src, int len)
@@ -163,9 +162,24 @@ static guint8 *make_types_array (const DATASET *dset,
     return t;
 }
 
+gint32 get_stata_t0 (const DATASET *dset)
+{
+    gint32 t0 = -9999;
+    
+    if (dset->pd == 1) {
+	if (dset->sd0 > 999) {
+	    t0 = dset->sd0;
+	}
+    } else if (dset->pd == 4 || dset->pd == 12) {
+	; /* FIXME */
+    }
+
+    return t0;
+}
+
 int stata_export (const char *fname,
 		  const int *list,
-		  gretlopt opt,      /* unused, for now */
+		  gretlopt opt,
 		  const DATASET *dset)
 {
     dta_hdr hdr;
@@ -173,10 +187,11 @@ int stata_export (const char *fname,
     ssize_t w = 0;
     guint8 *types;
     double xit;
-    gint32 i32;
+    gint32 i32, t0;
     gint16 i16;
     guint8 i8;
     int missing;
+    int timevar;
     int i, j, t, fd;
     int nv = 0;
     int err = 0;
@@ -192,8 +207,16 @@ int stata_export (const char *fname,
 	return E_ALLOC;
     }
 
+    if (dataset_is_time_series(dset)) {
+	t0 = get_stata_t0(dset);
+    } else {
+	t0 = -9999;
+    }
+
+    timevar = (t0 != -9999);
+
     dta_hdr_init(&hdr, dset, nv);
-    dta_hdr_write(&hdr, fd);
+    dta_hdr_write(&hdr, fd, &w);
 
     /*
         typlist        nvar    byte array
@@ -234,7 +257,9 @@ int stata_export (const char *fname,
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
-	    /* FIXME do something here if needed */
+	    if (is_string_valued(dset, i)) {
+		; /* FIXME do something here! */
+	    }
 	    w += write(fd, buf, 33);
 	}
     }
@@ -248,7 +273,7 @@ int stata_export (const char *fname,
 	}
     }
 
-    /* Expansion fields */
+    /* "Expansion fields" (Stata-private mystery) */
     i8 = 0;
     for (i=0; i<5; i++) {
 	w += write(fd, &i8, 1);
@@ -276,13 +301,12 @@ int stata_export (const char *fname,
 	}
     }
 
-    /* Value labels */
+    /* FIXME Value labels */
 
     close(fd);
-
     free(types);
 
-    // printf("wrote %d bytes\n", (int) w);
+    fprintf(stderr, "stata_export: wrote %d bytes\n", (int) w);
 
     return err;
 }
