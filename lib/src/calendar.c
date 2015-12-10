@@ -399,10 +399,36 @@ static int t_to_epoch_day (int t, long start, int wkdays)
 }
 
 /**
+ * epoch_day_from_t:
+ * @t: 0-based observation index.
+ * @dset: pointer to dataset.
+ *
+ * Returns: the epoch day based on calendrical information
+ * in @dset. In case of error 0 is returned and an error
+ * code is written to @err.
+ */
+
+long epoch_day_from_t (int t, const DATASET *dset)
+{
+    long d0 = (long) dset->sd0;
+    long dfind = 0;
+
+    if (dset->pd == 52) {
+	dfind = d0 + 7 * t;
+    } else if (dset->pd == 7) {
+	dfind = d0 + t;
+    } else {
+	dfind = t_to_epoch_day(t, d0, dset->pd);
+    }    
+
+    return dfind;
+}
+
+/**
  * calendar_date_string:
  * @str: string to be filled out.
  * @t: zero-based index of observation.
- * @dset: pointer to dataset information.
+ * @dset: pointer to dataset.
  * 
  * Writes to @str the calendar representation of the date of
  * observation @t, in the form YY[YY]/MM/DD.

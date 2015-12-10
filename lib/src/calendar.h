@@ -43,6 +43,8 @@ int iso_basic_to_extended (const double *b, double *y, double *m,
 
 long get_epoch_day (const char *date);
 
+long epoch_day_from_t (int t, const DATASET *dset);
+
 int weekday_from_date (const char *date);
 
 int weekday_from_epoch_day (long ed);

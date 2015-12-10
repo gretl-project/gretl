@@ -33,10 +33,18 @@ enum {
     STATA_DOUBLE
 };
 
+enum {
+    TIME_AUTO = 1,
+    TIME_CAL
+};
+
 /* default missing-value codes (".") */
 #define STATA_DOUBLE_NA 0x1.0000000000000p+1023
 #define STATA_LONG_NA   2147483621
 #define STATA_BYTE_NA   101
+
+/* subtract this from epoch day to get Stata date */
+#define STATA_DAY_OFFSET 715523
 
 typedef struct dta_113_hdr dta_hdr;
 typedef struct dta_113_value_label_table vltable;
@@ -74,17 +82,30 @@ static void dta_value_labels_write (int fd, const DATASET *dset,
     vlabel lbl;
     vltable tab;
     char **S;
-    int i, ns, len = 0;
+    char *tmp;
+    int len, maxlen = 0;
+    int i, ns;
 
     S = series_get_string_vals(dset, v, &ns);
 
     for (i=0; i<ns; i++) {
-	len += strlen(S[i]) + 1; /* FIXME UTF-8 */
+	len = strlen(S[i]);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    tmp = malloc(maxlen + 1);
+
+    len = 0;
+    for (i=0; i<ns; i++) {
+	u8_to_ascii_convert(tmp, S[i], maxlen, '?');
+	len += strlen(tmp) + 1;
     }
 
     lbl.len = len + (ns + 1) * 8;
     memset(lbl.labname, 0, 33);
-    sprintf(lbl.labname, "S%s", dset->varname[v]);
+    sprintf(lbl.labname, "S%d", v);
     memset(lbl.padding, 0, 3);
 
     *w += write(fd, &lbl.len, 4);
@@ -111,8 +132,11 @@ static void dta_value_labels_write (int fd, const DATASET *dset,
     }
 
     for (i=0; i<tab.n; i++) {
-	*w += write(fd, S[i], strlen(S[i]) + 1);
+	u8_to_ascii_convert(tmp, S[i], maxlen, '?');
+	*w += write(fd, tmp, strlen(tmp) + 1);
     }
+
+    free(tmp);
 }
 
 static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
@@ -227,23 +251,21 @@ static guint8 *make_types_array (const DATASET *dset,
 */
 
 static gint32 get_stata_t0 (const DATASET *dset,
-			    char *timevar)
+			    char *timevar,
+			    int *add_time)
 {
-    gint32 t0 = -9999;
+    gint32 t0 = 0;
     char obs[OBSLEN];
 
     *timevar = '\0';
     ntodate(obs, dset->t1, dset);
 
-    if (dset->pd == 1) {
+    if (dset->pd == 1 && dset->sd0 > 999) {
 	/* we just want the year */
 	t0 = atoi(obs);
-	if (t0 > 999) {
-	    strcpy(timevar, "year");
-	} else {
-	    strcpy(timevar, "generic_t");
-	}
-    } else if (dset->pd == 4 || dset->pd == 12) {
+	strcpy(timevar, "year");
+	*add_time = TIME_AUTO;
+    } else if ((dset->pd == 4 || dset->pd == 12) && dset->sd0 > 999) {
 	/* quarters or months since the start of 1960 */
 	int y, p;
 	char c;
@@ -251,9 +273,15 @@ static gint32 get_stata_t0 (const DATASET *dset,
 	sscanf(obs, "%d%c%d", &y, &c, &p);
 	t0 = dset->pd * (y - 1960) + p - 1;
 	strcpy(timevar, dset->pd == 4 ? "quarter" : "month");
+	*add_time = TIME_AUTO;
+    } else if (calendar_data(dset)) {
+	strcpy(timevar, "date");
+	*add_time = TIME_CAL;
+    } else {
+	t0 = atoi(obs);
+	strcpy(timevar, "generic_t");
+	*add_time = TIME_AUTO;
     }
-
-    /* FIXME daily/calendar data */
 
     if (*timevar != '\0') {
 	/* don't collide with regular series */
@@ -275,7 +303,22 @@ static void make_timevar_label (char *buf, const char *tvar)
 	strcpy(buf, "months since 1960m1");
     } else if (*tvar == 'g') {
 	strcpy(buf, "period of observation");
+    } else if (*tvar == 'o') {
+	strcpy(buf, "date of observation");
     }
+}
+
+static gint32 stata_date (int t, const DATASET *dset)
+{
+    long ed = -1;
+    
+    if (dataset_has_markers(dset)) {
+	ed = get_epoch_day(dset->S[t]);
+    } else {
+	ed = epoch_day_from_t(t, dset);
+    }
+
+    return ed - STATA_DAY_OFFSET;
 }
 
 int stata_export (const char *fname,
@@ -289,12 +332,13 @@ int stata_export (const char *fname,
     ssize_t w = 0;
     guint8 *types;
     double xit;
-    gint32 i32, t0 = 0;
+    gint32 i32, t32 = 0;
     gint16 i16;
     guint8 i8;
     int missing;
-    int add_time;
+    int add_time = 0;
     int i, j, t, fd;
+    int strvars = 0;
     int nv = 0;
     int err = 0;
 
@@ -312,12 +356,10 @@ int stata_export (const char *fname,
     *timevar = '\0';
 
     if (dataset_is_time_series(dset)) {
-	t0 = get_stata_t0(dset, timevar);
+	t32 = get_stata_t0(dset, timevar, &add_time);
     }
 
-    add_time = (*timevar != '\0');
-
-    dta_hdr_init(&hdr, dset, nv + add_time);
+    dta_hdr_init(&hdr, dset, nv + (add_time > 0));
     dta_hdr_write(&hdr, fd, &w);
 
     /*
@@ -353,7 +395,10 @@ int stata_export (const char *fname,
     
     /* srtlist */
     i16 = 0;
-    for (j=0; j<=nv+add_time; j++) {
+    if (add_time) {
+	w += write(fd, &i16, 2);
+    }
+    for (j=0; j<=nv; j++) {
 	w += write(fd, &i16, 2);
     }
 
@@ -384,7 +429,8 @@ int stata_export (const char *fname,
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
 	    if (is_string_valued(dset, i)) {
-		; /* FIXME do something here! */
+		sprintf(buf, "S%d", i);
+		strvars++;
 	    }
 	    w += write(fd, buf, 33);
 	}
@@ -412,9 +458,12 @@ int stata_export (const char *fname,
 
     /* Data */
     for (t=dset->t1; t<=dset->t2; t++) {
-	if (add_time) {
-	    w += write(fd, &t0, 4);
-	    t0++;
+	if (add_time == TIME_AUTO) {
+	    w += write(fd, &t32, 4);
+	    t32++;
+	} else if (add_time == TIME_CAL) {
+	    t32 = stata_date(t, dset);
+	    w += write(fd, &t32, 4);
 	}
 	j = 0;
 	for (i=1; i<dset->v; i++) {
@@ -436,7 +485,15 @@ int stata_export (const char *fname,
 	}
     }
 
-    /* FIXME Value labels */
+    /* Value labels */
+    if (strvars > 0) {
+	for (i=1; i<dset->v; i++) {
+	    if (include_var(list, i) &&
+		is_string_valued(dset, i)) {
+		dta_value_labels_write(fd, dset, i, &w);
+	    }
+	}
+    }
 
     close(fd);
     free(types);
