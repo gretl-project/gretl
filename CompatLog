@@ -3,6 +3,13 @@ version 2015e, in progress
 The function isnull() is deprecated; the recommendation
 is to use (the negation of) exists() instead
 
+The function pxsum() (cross-sectional sum for panel data)
+now skips missing values. To get the original variant,
+where any missing values led to an NA result, the new
+pxnobs() function can be used, as in:
+
+series y = pxnobs(x)==max($unit) ? pxsum(x) : NA 
+
 Support for gnuplot versions older than 4.6.0 (of March
 2012) has been removed.
 

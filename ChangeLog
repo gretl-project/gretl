@@ -7,6 +7,10 @@ version 2015e, in progress
 - "reset" command: add a --silent option
 - Improve handling of string-valued series across sub-sampling
 - Improve display of string-valued series in GUI
+- seasonals() function: enable this for panel data when a
+  suitable imterpretation of the time dimension has been set
+  via "setobs"
+- pxsum() function: revise this to skip missing values
 - Fix bug 196, Help button for HCCME misaligned in case of a
   non-MPI enabled build
 - Fix bug 197, invalid "xtics" specification for some weekly
@@ -17,12 +21,15 @@ version 2015e, in progress
   that the input doesn't need linearizing
 - Fix bug: incorrectly sized object in ODBC data importation
   could cause a crash
+- Fix bug: possible crash on importing data from a Stata dta
+  file on 32-bit Windows
 - Application of "catch" to user-defined functions: drop back
   from an error to a warning, for now
 - Appending daily data: don't fail when we have enough date
   information to succeed
 - Improve handling of EPS plot output (including respecting
   the color/mono choice properly)
+- Stata dta importer: support dta format 118 (Stata 14)
 - GUI: some cosmetic fixes specific to gtk 3
 - Remove support for gnuplot < version 4.6.0
 
