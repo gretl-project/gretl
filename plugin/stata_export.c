@@ -84,6 +84,7 @@ static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
 static void asciify_to_length (char *targ, const char *src, int len)
 {
     if (src != NULL && *src != '\0') {
+	src += strspn(src, " \t\n");
 	u8_to_ascii_convert(targ, src, len, '?');
     } else {
 	*targ = '\0';
@@ -91,7 +92,7 @@ static void asciify_to_length (char *targ, const char *src, int len)
 }
 
 static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
-			  int nvars)
+			  int nvars, const char *timevar)
 {
     time_t now = time(NULL);
     struct tm *local;
@@ -104,16 +105,15 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
 #endif    
     hdr->filetype = 0x01;
     hdr->unused = 0x01;
-    hdr->nvar = nvars;
-    hdr->nobs = dset->n;
+    hdr->nvar = nvars + (*timevar != '\0');
+    hdr->nobs = dset->t2 - dset->t1 + 1;
 
     memset(hdr->data_label, 0, 81);
     asciify_to_length(hdr->data_label, dset->descrip, 80);
     
     memset(hdr->time_stamp, 0, 18);
-    /* dd Mon yyyy hh:mm */
     local = localtime(&now);
-    /* FIXME locale */
+    /* dd Mon yyyy hh:mm (FIXME locale) */
     strftime(hdr->time_stamp, 18, "%d %b %Y %I:%M", local);
 }
 
@@ -162,19 +162,61 @@ static guint8 *make_types_array (const DATASET *dset,
     return t;
 }
 
-gint32 get_stata_t0 (const DATASET *dset)
+/* For time series, get the starting observation in
+   the numerical form wanted by Stata; also get a
+   suitable name for the extra variable.
+*/
+
+static gint32 get_stata_t0 (const DATASET *dset,
+			    char *timevar)
 {
     gint32 t0 = -9999;
-    
+    char obs[OBSLEN];
+
+    *timevar = '\0';
+    ntodate(obs, dset->t1, dset);
+
     if (dset->pd == 1) {
-	if (dset->sd0 > 999) {
-	    t0 = dset->sd0;
+	/* we just want the year */
+	t0 = atoi(obs);
+	if (t0 > 999) {
+	    strcpy(timevar, "year");
+	} else {
+	    strcpy(timevar, "generic_t");
 	}
     } else if (dset->pd == 4 || dset->pd == 12) {
-	; /* FIXME */
+	/* quarters or months since the start of 1960 */
+	int y, p;
+	char c;
+
+	sscanf(obs, "%d%c%d", &y, &c, &p);
+	t0 = dset->pd * (y - 1960) + p - 1;
+	strcpy(timevar, dset->pd == 4 ? "quarter" : "month");
+    }
+
+    /* FIXME daily/calendar data */
+
+    if (*timevar != '\0') {
+	/* don't collide with regular series */
+	if (current_series_index(dset, timevar) > 0) {
+	    strncat(timevar, "_t", 2);
+	}
     }
 
     return t0;
+}
+
+static void make_timevar_label (char *buf, const char *tvar)
+{
+    if (*tvar == 'y') {
+	strcpy(buf, "years since 0 CE");
+    } else if (*tvar == 'q') {
+	strcpy(buf, "quarters since 1960q1");
+    } else if (*tvar == 'm') {
+	strcpy(buf, "months since 1960m1");
+    } else if (*tvar == 'g') {
+	strcpy(buf, "period of observation");
+    }
 }
 
 int stata_export (const char *fname,
@@ -184,6 +226,7 @@ int stata_export (const char *fname,
 {
     dta_hdr hdr;
     char buf[96];
+    char timevar[16];
     ssize_t w = 0;
     guint8 *types;
     double xit;
@@ -191,7 +234,6 @@ int stata_export (const char *fname,
     gint16 i16;
     guint8 i8;
     int missing;
-    int timevar;
     int i, j, t, fd;
     int nv = 0;
     int err = 0;
@@ -208,14 +250,13 @@ int stata_export (const char *fname,
     }
 
     if (dataset_is_time_series(dset)) {
-	t0 = get_stata_t0(dset);
+	t0 = get_stata_t0(dset, timevar);
     } else {
 	t0 = -9999;
+	*timevar = '\0';
     }
 
-    timevar = (t0 != -9999);
-
-    dta_hdr_init(&hdr, dset, nv);
+    dta_hdr_init(&hdr, dset, nv, timevar);
     dta_hdr_write(&hdr, fd, &w);
 
     /*
@@ -227,11 +268,21 @@ int stata_export (const char *fname,
     */
 
     /* typlist */
+    if (*timevar) {
+	gint8 tt = STATA_LONG;
+	
+	w += write(fd, &tt, 1);
+    }
     for (j=0; j<nv; j++) {
 	w += write(fd, &types[j], 1);
     }
 
     /* varlist (names) */
+    if (*timevar) {
+	memset(buf, 0, 33);
+	strcat(buf, timevar);
+	w += write(fd, buf, 33);
+    }
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
@@ -242,18 +293,36 @@ int stata_export (const char *fname,
     
     /* srtlist */
     i16 = 0;
+    if (*timevar) {
+	w += write(fd, &i16, 2);
+    }
     for (j=0; j<=nv; j++) {
 	w += write(fd, &i16, 2);
     }
 
     /* fmtlist */
+    if (*timevar) {
+	memset(buf, 0, 12);
+	sprintf(buf, "%%t%c", *timevar);
+	w += write(fd, buf, 12);
+    }    
     for (j=0; j<nv; j++) {
 	memset(buf, 0, 12);
-	/* do something here? */
+	if (types[j] == STATA_BYTE) {
+	    strcpy(buf, "%8.0g");
+	} else if (types[j] == STATA_LONG) {
+	    strcpy(buf, "%12.0g");
+	} else {
+	    strcpy(buf, "%9.0g");
+	}
 	w += write(fd, buf, 12);
     }
 
     /* lbllist */
+    if (*timevar) {
+	memset(buf, 0, 33);
+	w += write(fd, buf, 33);
+    }     
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
@@ -265,6 +334,11 @@ int stata_export (const char *fname,
     }
 
     /* Variable labels */
+    if (*timevar) {
+	memset(buf, 0, 81);
+	make_timevar_label(buf, timevar);
+	w += write(fd, buf, 81);
+    }     
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 81);
@@ -281,6 +355,10 @@ int stata_export (const char *fname,
 
     /* Data */
     for (t=dset->t1; t<=dset->t2; t++) {
+	if (*timevar) {
+	    w += write(fd, &t0, 4);
+	    t0++;
+	}
 	j = 0;
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i)) {
