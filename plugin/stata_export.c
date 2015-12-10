@@ -84,7 +84,9 @@ static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
 static void asciify_to_length (char *targ, const char *src, int len)
 {
     if (src != NULL && *src != '\0') {
+	/* skip leading white space */
 	src += strspn(src, " \t\n");
+	/* and do our best to replace UTF-8 with ASCII */
 	u8_to_ascii_convert(targ, src, len, '?');
     } else {
 	*targ = '\0';
@@ -94,6 +96,9 @@ static void asciify_to_length (char *targ, const char *src, int len)
 static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
 			  int nvars, const char *timevar)
 {
+#ifdef ENABLE_NLS
+    char *localt = NULL;
+#endif    
     time_t now = time(NULL);
     struct tm *local;
 
@@ -112,9 +117,16 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
     asciify_to_length(hdr->data_label, dset->descrip, 80);
     
     memset(hdr->time_stamp, 0, 18);
+#ifdef ENABLE_NLS
+    localt = setlocale(LC_TIME, NULL);
+    setlocale(LC_TIME, "C");
+#endif    
     local = localtime(&now);
-    /* dd Mon yyyy hh:mm (FIXME locale) */
+    /* dd Mon yyyy hh:mm (in C locale) */
     strftime(hdr->time_stamp, 18, "%d %b %Y %I:%M", local);
+#ifdef ENABLE_NLS    
+    setlocale(LC_TIME, localt);
+#endif    
 }
 
 static int include_var (const int *list, int i)
