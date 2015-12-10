@@ -56,8 +56,8 @@ struct dta_113_hdr {
 struct dta_113_value_label_table {
     gint32 n;       /* number of entries */
     gint32 txtlen;  /* length of txt[] */
-    gint32 *off;    /* txt[] offset table */
-    gint32 *val;    /* sorted value table */
+    gint32 off;     /* txt[] offset table (array) */
+    gint32 val;     /* sorted value table (array) */
     char *txt;      /* text table */
 };
 
@@ -67,6 +67,53 @@ struct dta_113_value_label {
     char padding[3];
     vltable table;       /* the table itself */
 };
+
+static void dta_value_labels_write (int fd, const DATASET *dset,
+				    int v, ssize_t *w)
+{
+    vlabel lbl;
+    vltable tab;
+    char **S;
+    int i, ns, len = 0;
+
+    S = series_get_string_vals(dset, v, &ns);
+
+    for (i=0; i<ns; i++) {
+	len += strlen(S[i]) + 1; /* FIXME UTF-8 */
+    }
+
+    lbl.len = len + (ns + 1) * 8;
+    memset(lbl.labname, 0, 33);
+    sprintf(lbl.labname, "S%s", dset->varname[v]);
+    memset(lbl.padding, 0, 3);
+
+    *w += write(fd, &lbl.len, 4);
+    *w += write(fd, lbl.labname, 33);
+    *w += write(fd, lbl.padding, 3);
+
+    tab = lbl.table;
+    tab.n = ns;
+    tab.txtlen = len;
+
+    *w += write(fd, &tab.n, 4);
+    *w += write(fd, &tab.txtlen, 4);
+
+    tab.off = 0;
+    for (i=0; i<tab.n; i++) {
+	*w += write(fd, &tab.off, 4);
+	tab.off += strlen(S[i]) + 1;
+    }
+
+    tab.val = 1;
+    for (i=0; i<tab.n; i++) {
+	*w += write(fd, &tab.val, 4);
+	tab.val++;
+    }
+
+    for (i=0; i<tab.n; i++) {
+	*w += write(fd, S[i], strlen(S[i]) + 1);
+    }
+}
 
 static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
 {
@@ -94,7 +141,7 @@ static void asciify_to_length (char *targ, const char *src, int len)
 }
 
 static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
-			  int nvars, const char *timevar)
+			  int nvars)
 {
 #ifdef ENABLE_NLS
     char *localt = NULL;
@@ -110,7 +157,7 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
 #endif    
     hdr->filetype = 0x01;
     hdr->unused = 0x01;
-    hdr->nvar = nvars + (*timevar != '\0');
+    hdr->nvar = nvars;
     hdr->nobs = dset->t2 - dset->t1 + 1;
 
     memset(hdr->data_label, 0, 81);
@@ -242,10 +289,11 @@ int stata_export (const char *fname,
     ssize_t w = 0;
     guint8 *types;
     double xit;
-    gint32 i32, t0;
+    gint32 i32, t0 = 0;
     gint16 i16;
     guint8 i8;
     int missing;
+    int add_time;
     int i, j, t, fd;
     int nv = 0;
     int err = 0;
@@ -261,14 +309,15 @@ int stata_export (const char *fname,
 	return E_ALLOC;
     }
 
+    *timevar = '\0';
+
     if (dataset_is_time_series(dset)) {
 	t0 = get_stata_t0(dset, timevar);
-    } else {
-	t0 = -9999;
-	*timevar = '\0';
     }
 
-    dta_hdr_init(&hdr, dset, nv, timevar);
+    add_time = (*timevar != '\0');
+
+    dta_hdr_init(&hdr, dset, nv + add_time);
     dta_hdr_write(&hdr, fd, &w);
 
     /*
@@ -280,17 +329,16 @@ int stata_export (const char *fname,
     */
 
     /* typlist */
-    if (*timevar) {
-	gint8 tt = STATA_LONG;
-	
-	w += write(fd, &tt, 1);
+    if (add_time) {
+	i8 = STATA_LONG;
+	w += write(fd, &i8, 1);
     }
     for (j=0; j<nv; j++) {
 	w += write(fd, &types[j], 1);
     }
 
     /* varlist (names) */
-    if (*timevar) {
+    if (add_time) {
 	memset(buf, 0, 33);
 	strcat(buf, timevar);
 	w += write(fd, buf, 33);
@@ -305,15 +353,12 @@ int stata_export (const char *fname,
     
     /* srtlist */
     i16 = 0;
-    if (*timevar) {
-	w += write(fd, &i16, 2);
-    }
-    for (j=0; j<=nv; j++) {
+    for (j=0; j<=nv+add_time; j++) {
 	w += write(fd, &i16, 2);
     }
 
     /* fmtlist */
-    if (*timevar) {
+    if (add_time) {
 	memset(buf, 0, 12);
 	sprintf(buf, "%%t%c", *timevar);
 	w += write(fd, buf, 12);
@@ -331,7 +376,7 @@ int stata_export (const char *fname,
     }
 
     /* lbllist */
-    if (*timevar) {
+    if (add_time) {
 	memset(buf, 0, 33);
 	w += write(fd, buf, 33);
     }     
@@ -346,7 +391,7 @@ int stata_export (const char *fname,
     }
 
     /* Variable labels */
-    if (*timevar) {
+    if (add_time) {
 	memset(buf, 0, 81);
 	make_timevar_label(buf, timevar);
 	w += write(fd, buf, 81);
@@ -359,7 +404,7 @@ int stata_export (const char *fname,
 	}
     }
 
-    /* "Expansion fields" (Stata-private mystery) */
+    /* "Expansion fields" (a Stata-private mystery) */
     i8 = 0;
     for (i=0; i<5; i++) {
 	w += write(fd, &i8, 1);
@@ -367,7 +412,7 @@ int stata_export (const char *fname,
 
     /* Data */
     for (t=dset->t1; t<=dset->t2; t++) {
-	if (*timevar) {
+	if (add_time) {
 	    w += write(fd, &t0, 4);
 	    t0++;
 	}
