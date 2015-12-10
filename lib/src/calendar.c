@@ -317,14 +317,15 @@ int weekday_from_epoch_day (long ed)
 
 long get_epoch_day (const char *date)
 {
-    int nf, year, month, day;
+    int year, month, day, nf = 0;
     long ret;
 
-    nf = sscanf(date, YMD_READ_FMT, &year, &month, &day);
-
-    if (nf != 3) {
-	/* backward compatibility: try slashes instead */
+    if (strchr(date, '-')) {
+	nf = sscanf(date, YMD_READ_FMT, &year, &month, &day);
+    } else if (strchr(date, '/')) {
 	nf = sscanf(date, "%d/%d/%d", &year, &month, &day);
+    } else if (strlen(date) == 8) {
+	nf = sscanf(date, "%4d%2d%2d", &year, &month, &day);
     }
 
     if (nf != 3 || year < 0 || month < 0 || day < 0) {

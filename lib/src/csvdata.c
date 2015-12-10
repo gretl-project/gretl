@@ -955,23 +955,29 @@ static void retransform_daily_dates (DATASET *dset)
     }
 }
 
-static int transform_daily_dates (DATASET *dset, int dorder)
+static int transform_daily_dates (DATASET *dset, int dorder,
+				  char sep)
 {
-    char *label;
+    char *label, fmt[16];
     int t, yr, mon, day;
-    char s1, s2;
     int n, err = 0;
+
+    if (sep > 0) {
+	sprintf(fmt, "%%d%c%%d%c%%d", sep, sep);
+    } else {
+	strcpy(fmt, "%4d%2d%2d");
+    }
 
     for (t=0; t<dset->n && !err; t++) {
 	label = dset->S[t];
 	if (dorder == YYYYMMDD) {
-	    n = sscanf(label, "%d%c%d%c%d", &yr, &s1, &mon, &s2, &day);
+	    n = sscanf(label, fmt, &yr, &mon, &day);
 	} else if (dorder == DDMMYYYY) {
-	    n = sscanf(label, "%d%c%d%c%d", &day, &s1, &mon, &s2, &yr);
+	    n = sscanf(label, fmt, &day, &mon, &yr);
 	} else {
-	    n = sscanf(label, "%d%c%d%c%d", &mon, &s1, &day, &s2, &yr);
+	    n = sscanf(label, fmt, &mon, &day, &yr);
 	}
-	if (n == 5) {
+	if (n == 3) {
 	    sprintf(label, YMD_WRITE_Y2_FMT, yr, mon, day);
 	} else {
 	    err = 1;
@@ -1009,14 +1015,16 @@ static int csv_daily_date_check (DATASET *dset, int *reversed,
 				 char *skipstr, PRN *prn)
 {
     int d1[3], d2[3];
-    char s1, s2;
+    char s1 = 0, s2 = 0;
     char *lbl1 = dset->S[0];
     char *lbl2 = dset->S[dset->n - 1];
     int dorder = 0;
 
-    if (sscanf(lbl1, "%d%c%d%c%d", &d1[0], &s1, &d1[1], &s2, &d1[2]) == 5 &&
-	sscanf(lbl2, "%d%c%d%c%d", &d2[0], &s1, &d2[1], &s2, &d2[2]) == 5 &&
-	s1 == s2 && ispunct(s1)) {
+    if ((sscanf(lbl1, "%d%c%d%c%d", &d1[0], &s1, &d1[1], &s2, &d1[2]) == 5 &&
+	 sscanf(lbl2, "%d%c%d%c%d", &d2[0], &s1, &d2[1], &s2, &d2[2]) == 5 &&
+	 s1 == s2 && ispunct(s1)) ||
+	(sscanf(lbl1, "%4d%2d%2d", &d1[0], &d1[1], &d1[2]) == 3 &&
+	 sscanf(lbl2, "%4d%2d%2d", &d2[0], &d2[1], &d2[2]) == 3)) {
 	int mon1, day1;
 	int mon2, day2;
 	int pd, ret = 0;
@@ -1043,17 +1051,21 @@ static int csv_daily_date_check (DATASET *dset, int *reversed,
 	    day1 = d1[1];
 	    mon2 = d2[0];
 	    day2 = d2[1];
-	}		
-	    
+	}
+
 	if (mon1 > 0 && mon1 < 13 &&
 	    mon2 > 0 && mon2 < 13 && 
 	    day1 > 0 && day1 < 32 &&
 	    day2 > 0 && day2 < 32) {
-	    /* looks promising for calendar dates */
-	    if (dorder != YYYYMMDD || s1 != '/' || s2 != '/') {
-		if (transform_daily_dates(dset, dorder)) {
+	    /* looks promising for calendar dates, but check
+	       further if we don't have the canonical order
+	       or separator 
+	    */
+	    if (dorder != YYYYMMDD || s1 != '-') {
+		if (transform_daily_dates(dset, dorder, s1)) {
 		    return -1;
 		}
+		s1 = '-';
 	    }
 	    pprintf(prn, A_("Could be %s - %s\n"), lbl1, lbl2);
 	    ret = check_daily_dates(dset, &pd, reversed, prn);
