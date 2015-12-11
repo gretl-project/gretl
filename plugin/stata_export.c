@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 
 /* for binary file ops */
 #include <sys/types.h>
@@ -185,7 +186,7 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
     hdr->nobs = dset->t2 - dset->t1 + 1;
 
     memset(hdr->data_label, 0, 81);
-    asciify_to_length(hdr->data_label, dset->descrip, 80);
+    sprintf(hdr->data_label, "Written by gretl %s", GRETL_VERSION);
     
     memset(hdr->time_stamp, 0, 18);
 #ifdef ENABLE_NLS
@@ -303,7 +304,7 @@ static void make_timevar_label (char *buf, const char *tvar)
 	strcpy(buf, "months since 1960m1");
     } else if (*tvar == 'g') {
 	strcpy(buf, "period of observation");
-    } else if (*tvar == 'o') {
+    } else if (*tvar == 'd') {
 	strcpy(buf, "date of observation");
     }
 }

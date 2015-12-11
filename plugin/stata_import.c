@@ -97,9 +97,9 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 /* see http://www.stata.com/help.cgi?dta */
 
 /* Stata versions */
-#define VERSION_5   0x69
-#define VERSION_6     'l'
-#define VERSION_7   0x6e
+#define VERSION_5    105
+#define VERSION_6    108
+#define VERSION_7    110
 #define VERSION_7SE  111
 #define VERSION_8    113
 #define VERSION_10   114
@@ -107,7 +107,7 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 #define VERSION_13   117
 #define VERSION_14   118
 
-/* Stata format constants */
+/* old Stata format constants */
 #define STATA_STRINGOFFSET 0x7f
 #define STATA_FLOAT    'f'
 #define STATA_DOUBLE   'd'
@@ -117,18 +117,24 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 
 /* Stata SE format constants */
 #define STATA_SE_STRINGOFFSET 0
-#define STATA_SE_FLOAT    254
-#define STATA_SE_DOUBLE   255
-#define STATA_SE_LONG     253
-#define STATA_SE_INT      252
-#define STATA_SE_BYTE     251
+
+enum {
+    STATA_SE_BYTE = 251,
+    STATA_SE_INT,
+    STATA_SE_LONG,
+    STATA_SE_FLOAT,
+    STATA_SE_DOUBLE
+};
+
+enum {
+    STATA_13_DOUBLE = 65526,
+    STATA_13_FLOAT,
+    STATA_13_LONG,
+    STATA_13_INT,
+    STATA_13_BYTE
+};
 
 /* Stata 13+ format constants */
-#define STATA_13_DOUBLE   65526
-#define STATA_13_FLOAT    65527
-#define STATA_13_LONG     65528
-#define STATA_13_INT      65529
-#define STATA_13_BYTE     65530
 #define STATA_13_STRL     32768
 #define STATA_STRF_MAX     2045
 
@@ -453,32 +459,29 @@ static int stata_get_endianness (FILE *fp, int *err)
     return (i == 0x01)? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
 }
 
-#define stata_type_float(t)  ((stata_13 && t == STATA_13_FLOAT) || \
-			      (stata_SE && t == STATA_SE_FLOAT) || \
+/* the following macros are _not_ to be used with dta >= 117 */
+
+#define stata_type_float(t)  ((stata_SE && t == STATA_SE_FLOAT) ||	\
 			      (stata_OLD && t == STATA_FLOAT))
 
-#define stata_type_double(t) ((stata_13 && t == STATA_13_DOUBLE) || \
-			      (stata_SE && t == STATA_SE_DOUBLE) || \
+#define stata_type_double(t) ((stata_SE && t == STATA_SE_DOUBLE) ||	\
 			      (stata_OLD && t == STATA_DOUBLE))
 
-#define stata_type_long(t)   ((stata_13 && t == STATA_13_LONG) || \
-			      (stata_SE && t == STATA_SE_LONG) || \
+#define stata_type_long(t)   ((stata_SE && t == STATA_SE_LONG) ||	\
 			      (stata_OLD && t == STATA_LONG))
 
-#define stata_type_int(t)    ((stata_13 && t == STATA_13_INT) || \
-			      (stata_SE && t == STATA_SE_INT) || \
+#define stata_type_int(t)    ((stata_SE && t == STATA_SE_INT) ||	\
 			      (stata_OLD && t == STATA_INT))
 
-#define stata_type_byte(t)   ((stata_13 && t == STATA_13_BYTE) || \
-			      (stata_SE && t == STATA_SE_BYTE) || \
+#define stata_type_byte(t)   ((stata_SE && t == STATA_SE_BYTE) ||	\
 			      (stata_OLD && t == STATA_BYTE))
 
-#define stata_type_string(t) ((stata_SE && t <= 244) || \
+#define stata_type_string(t) ((stata_SE && t <= 244) ||			\
 			      (stata_OLD && t >= STATA_STRINGOFFSET))
 
-static int check_variable_types (FILE *fp, int *types, 
-				 int nvar, int *nsv,
-				 PRN *prn)
+static int check_old_variable_types (FILE *fp, int *types, 
+				     int nvar, int *nsv,
+				     PRN *prn)
 {
     int i, err = 0;
 
@@ -561,13 +564,23 @@ dta_make_string_table (int *types, int nvar, int ncols)
     }
 
     j = 1;
-    for (i=0; i<nvar && j<=list[0]; i++) {
-	if (!stata_type_float(types[i]) &&
-	    !stata_type_double(types[i]) &&
-	    !stata_type_long(types[i]) &&
-	    !stata_type_int(types[i]) &&
-	    !stata_type_byte(types[i])) {
-	    list[j++] = i + 1;
+
+    if (stata_13) {
+	for (i=0; i<nvar && j<=list[0]; i++) {
+	    if (types[i] <= STATA_STRF_MAX ||
+		types[i] == STATA_13_STRL) {
+		list[j++] = i + 1;
+	    }
+	}	
+    } else {
+	for (i=0; i<nvar && j<=list[0]; i++) {
+	    if (!stata_type_float(types[i]) &&
+		!stata_type_double(types[i]) &&
+		!stata_type_long(types[i]) &&
+		!stata_type_int(types[i]) &&
+		!stata_type_byte(types[i])) {
+		list[j++] = i + 1;
+	    }
 	}
     }
 
@@ -676,15 +689,23 @@ static int try_fix_varname (char *name)
    frequency) or has some implicit missing values.
 */
 
-static int stata_daily_pd (const double *d, int n,
-			   int *complete)
+static int stata_daily_pd (DATASET *dset, int tv, int *complete)
 {
+    double *d = dset->Z[tv];
+    int T = dset->n;
     int dfreq[4] = {0};
+    int wdelta = 0;
+    int mdelta = 0;
+    int qdelta = 0;
     int t, delta;
     int pd = 0;
 
-    /* count the frequency of daily deltas */
-    for (t=1; t<n; t++) {
+    /* find frequency of daily deltas from 1 to 4 days;
+       but also check for possible weekly, monthly
+       or quarterly daily deltas
+    */
+    
+    for (t=1; t<T; t++) {
 	delta = (int) d[t] - (int) d[t-1];
 	if (delta <= 0) {
 	    /* not right! */
@@ -692,29 +713,60 @@ static int stata_daily_pd (const double *d, int n,
 	    break;
 	} else if (delta <= 4) {
 	    dfreq[delta-1] += 1;
+	} else if (delta == 7) {
+	    wdelta++;
+	} else if (delta >= 28 && delta <= 31) {
+	    mdelta++;
+	} else if (delta >= 90 && delta <= 92) {
+	    qdelta++;
 	}
     }
 
     if (pd == 0) {
-	if (dfreq[0] == n - 1) {
-	    /* all days represented */
+	if (wdelta == T - 1) {
+	    pd = 52;
 	    *complete = 1;
+	} else if (mdelta == T - 1) {
+	    pd = 12;
+	} else if (qdelta == T - 1) {
+	    pd = 4;
+	} else if (dfreq[0] == T - 1) {
+	    /* all days consecutive */
 	    pd = 7;
+	    *complete = 1;
 	} else {
-	    double T = n - 1;
-
-	    /* heuristic: "most" of the deltas should be 1 day */
-	    if (dfreq[0] / T > 0.6) {
+	    /* heuristic for 5- or 6-day daily data: "most" of
+	       the deltas should be 1 day 
+	    */ 
+	    if (dfreq[0] / (double) T > 0.6) {
 		if (dfreq[1] > dfreq[2]) {
 		    /* skipping one day per week, in general? */
-		    *complete = (dfreq[0] + dfreq[1] == n - 1);
+		    *complete = (dfreq[0] + dfreq[1] == T - 1);
 		    pd = 6;
 		} else if (dfreq[2] > dfreq[1]) {
 		    /* skipping two days per week, in general? */
-		    *complete = (dfreq[0] + dfreq[2] == n - 1);
+		    *complete = (dfreq[0] + dfreq[2] == T - 1);
 		    pd = 5;
 		}
 	    }
+	}
+    }
+
+    if (pd == 12 || pd == 4) {
+	long ed0 = (int) d[0] + STATA_DAY_OFFSET;
+	int yr = 0, mo = 0, day = 0;
+
+	ymd_bits_from_epoch_day(ed0, &yr, &mo, &day);
+	if (day != 1) {
+	    /* insist that months and quarters start on
+	       the first day? */
+	    pd = 0;
+	} else if (pd == 12) {
+	    sprintf(dset->stobs, "%d:%02d", yr, mo);
+	} else if (pd == 4) {
+	    int q = mo < 4 ? 1 : mo < 7 ? 2 : mo < 10 ? 3 : 4;
+	    
+	    sprintf(dset->stobs, "%d:%d", yr, q);
 	}
     }
 
@@ -772,13 +824,15 @@ static int set_time_info (DATASET *dset, int tv, int pd)
 	
 	sprintf(dset->stobs, "%d:%d", y, q);
     } else if (pd == 5) {
-	/* should be daily, but may not really be 5 */
+	/* daily dates present, but may not really be daily */
 	int complete = 0;
 	int err = 0;
 	
-	pd = stata_daily_pd(dset->Z[tv], dset->n, &complete);
-	
-	if (pd > 0) {
+	pd = stata_daily_pd(dset, tv, &complete);
+
+	if (pd == 12 || pd == 4) {
+	    ; /* got excess precision: handled above */
+	} else if (pd > 0) {
 	    long ed0 = t1 + STATA_DAY_OFFSET;
 	    char *ymd = ymd_extended_from_epoch_day(ed0, &err);
 
@@ -1555,7 +1609,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	return E_ALLOC;
     }
 
-    err = check_variable_types(fp, types, nvar, &nsv, vprn);
+    err = check_old_variable_types(fp, types, nvar, &nsv, vprn);
     if (err) {
 	free(types);
 	return err;
