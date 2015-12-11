@@ -570,6 +570,10 @@
 	  each observation (for example, the month).
 	</para>
 	<para>
+	  In the case of dated daily data, <lit>$obsminor</lit> gets
+	  the month of each observation.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="$obsmajor"/>
             <fncref targ="$obsmicro"/>
