@@ -159,6 +159,7 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 
 /* it's convenient to have these as file-scope globals */
 static int stata_version;
+static int stata_OLD;
 static int stata_SE;
 static int stata_13;
 static int stata_endian;
@@ -440,6 +441,8 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
         err = 1;
     }
 
+    stata_OLD = !stata_SE;
+
     return err;
 }
 
@@ -450,17 +453,28 @@ static int stata_get_endianness (FILE *fp, int *err)
     return (i == 0x01)? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
 }
 
-#define stata_type_float(t)  ((stata_SE && t == STATA_SE_FLOAT) || \
-			      t == STATA_FLOAT)
-#define stata_type_double(t) ((stata_SE && t == STATA_SE_DOUBLE) || \
-			      t == STATA_DOUBLE)
-#define stata_type_long(t)   ((stata_SE && t == STATA_SE_LONG) || \
-			      t == STATA_LONG)
-#define stata_type_int(t)    ((stata_SE && t == STATA_SE_INT) || \
-			      t == STATA_INT)
-#define stata_type_byte(t)   ((stata_SE && t == STATA_SE_BYTE) ||  \
-			      t == STATA_BYTE)
-#define stata_type_string(t) ((stata_SE && t <= 244) || t >= STATA_STRINGOFFSET)
+#define stata_type_float(t)  ((stata_13 && t == STATA_13_FLOAT) || \
+			      (stata_SE && t == STATA_SE_FLOAT) || \
+			      (stata_OLD && t == STATA_FLOAT))
+
+#define stata_type_double(t) ((stata_13 && t == STATA_13_DOUBLE) || \
+			      (stata_SE && t == STATA_SE_DOUBLE) || \
+			      (stata_OLD && t == STATA_DOUBLE))
+
+#define stata_type_long(t)   ((stata_13 && t == STATA_13_LONG) || \
+			      (stata_SE && t == STATA_SE_LONG) || \
+			      (stata_OLD && t == STATA_LONG))
+
+#define stata_type_int(t)    ((stata_13 && t == STATA_13_INT) || \
+			      (stata_SE && t == STATA_SE_INT) || \
+			      (stata_OLD && t == STATA_INT))
+
+#define stata_type_byte(t)   ((stata_13 && t == STATA_13_BYTE) || \
+			      (stata_SE && t == STATA_SE_BYTE) || \
+			      (stata_OLD && t == STATA_BYTE))
+
+#define stata_type_string(t) ((stata_SE && t <= 244) || \
+			      (stata_OLD && t >= STATA_STRINGOFFSET))
 
 static int check_variable_types (FILE *fp, int *types, 
 				 int nvar, int *nsv,
