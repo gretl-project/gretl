@@ -2614,6 +2614,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
     int *list = NULL;
     int i, vi, k, t, pp;
     int pd, ndums, nnew = 0;
+    int pantime = 0;
     int nfix = 0;
     int err = 0;
 
@@ -2621,13 +2622,17 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	return E_NODATA;
     }
 
-    if (dataset_is_panel(dset)) {
+    if (dataset_is_seasonal_panel(dset)) {
 	pd = dset->panel_pd;
 	if (pd != 4 && pd != 12 && pd != 24) {
 	    /* not handled yet */
 	    return E_PDWRONG;
+	} else {
+	    pantime = 1;
 	}
-    } else {
+    }
+
+    if (!pantime) {
 	pd = dset->pd;
 	if (pd < 2 || pd > 99999) {
 	    return E_PDWRONG;
@@ -2694,7 +2699,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	k++;
     }
 
-    if (dataset_is_panel(dset)) {
+    if (pantime) {
 	int p0 = get_first_panel_period(dset);
 	int T = dset->pd;
 
