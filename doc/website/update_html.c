@@ -632,7 +632,7 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     fout = fopen(targ, "a");
     fin = fopen(src, "r");
 
-    fputs("<table>\n", fout);
+    fputs("<table cellspacing=\"10\">\n", fout);
 
     fputs("<a name=\"top\">\n", fout);
     fputs("<tr>\n<td valign=\"top\">\n<pre>\n&nbsp;\n", fout);
