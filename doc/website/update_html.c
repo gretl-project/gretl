@@ -686,9 +686,20 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	    ret = sscanf(line, "%d-%d-%d version %d%c\n", 
 			 &year, &mon, &day, &M, &c);
 	    if (ret == 5) {
-		fprintf(fout, "<b><a name=\"v%d%c\">", M, c); 
-		fprintf(fout, " %d-%02d-%02d Version %d%c</a></b>", 
-			year, mon, day, M, c);
+		if (M == 0 && c == '.') {
+		    /* very old versions */
+		    char tail[8];
+		    
+		    sscanf(line, "%d-%d-%d version %s",
+			   &year, &mon, &day, tail);
+		    fprintf(fout, "<b><a name=\"v%s\">", tail); 
+		    fprintf(fout, " %d-%02d-%02d Version %s</a></b>", 
+			    year, mon, day, tail);
+		} else {
+		    fprintf(fout, "<b><a name=\"v%d%c\">", M, c); 
+		    fprintf(fout, " %d-%02d-%02d Version %d%c</a></b>", 
+			    year, mon, day, M, c);
+		}
 	    } else {
 		bug_print_line(line, fout);
 		err = 1;
