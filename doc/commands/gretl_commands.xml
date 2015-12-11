@@ -11426,6 +11426,10 @@
 	  <effect>interpret as time series</effect>
         </option>
         <option>
+	  <flag>--special-time-series</flag>
+	  <effect>see below</effect>
+        </option>	
+        <option>
 	  <flag>--stacked-cross-section</flag>
 	  <effect>interpret as panel data</effect>
         </option>
@@ -11480,6 +11484,15 @@
 	the case of cross-sectional data, as 1.  Starting observations
 	for daily or weekly data should be given in the form
 	YYYY-MM-DD (or simply as 1 for undated data).
+      </para>
+      <para>
+	Certain time-series periodicities have standard
+	interpretations&mdash;for example, 12 = monthly and 4 =
+	quarterly. If you have unusual time-series data to which the
+	standard interpretation does not apply, you can signal this by
+	giving the <opt>special-time-series</opt> option. In that case
+	gretl will not (for example) report your frequency-12 data as
+	being monthly.
       </para>
       <para>
 	If no explicit option flag is given to indicate the structure
