@@ -672,15 +672,15 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n", 
 		     &year, &mon, &day, &M, &m, &r);
 	if (ret == 6) {
-	    fprintf(fout, "<a name=\"v%d-%d-%d\">", M, m, r); 
-	    fprintf(fout, " %d-%02d-%02d Version %d.%d.%d</a>", 
+	    fprintf(fout, "<b><a name=\"v%d-%d-%d\">", M, m, r); 
+	    fprintf(fout, " %d-%02d-%02d Version %d.%d.%d</a></b>", 
 		    year, mon, day, M, m, r);
 	} else {
 	    ret = sscanf(line, "%d-%d-%d version %d%c\n", 
 			 &year, &mon, &day, &M, &c);
 	    if (ret == 5) {
-		fprintf(fout, "<a name=\"v%d%c\">", M, c); 
-		fprintf(fout, " %d-%02d-%02d Version %d%c</a>", 
+		fprintf(fout, "<b><a name=\"v%d%c\">", M, c); 
+		fprintf(fout, " %d-%02d-%02d Version %d%c</a></b>", 
 			year, mon, day, M, c);
 	    } else {
 		bug_print_line(line, fout);
