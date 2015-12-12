@@ -121,10 +121,25 @@ can do
 join foo.csv x --data="Some_name"
 \end{code}
 
+\subsection{No right-hand names?}
+\label{subsec:no-rhnames}
+
+Some data files have no column headings; they jump straight into the
+data (and you need to determine from accompanying documentation what
+the columns represent). Since gretl expects column headings, you have
+to take steps to get the importation right. It is generally a good
+idea to insert a suitable header row into the data file. However, if
+for some reason that's not practical, you should give the
+\option{no-header} option, in which case gretl will name the columns
+on the right as \texttt{col1}, \texttt{col2} and so on. If you do not
+do either of these things you will likely lose the first row of data,
+since gretl will attempt to make variable names out of it, as
+described above.
+
 \section{Filtering}
 \label{sec:join-filter}
 
-Rows from the outer dataset can be filtered using the \verb|--filter|
+Rows from the outer dataset can be filtered using the \option{filter}
 option. The required parameter for this option is a Boolean condition,
 that is, an expression which evaluates to non-zero (true, include the
 row) or zero (false, skip the row) for each of the outer rows. The
@@ -1167,6 +1182,8 @@ Basic syntax: \texttt{join} \textsl{filename} \textsl{varname(s)} [
                       numeric form (\ref{sec:join-tconvert}) \\
   \verb|--tconv-fmt| & Specify a format for use with \texttt{tconvert} 
                        (\ref{sec:join-tconvert}) \\
+  \verb|--no-header| & Treat the first row on the right as data
+                       (\ref{sec:join-syntax}) \\
   \verb|--verbose| & Report on progress in reading the outer data
 \end{tabular}
 \end{center}

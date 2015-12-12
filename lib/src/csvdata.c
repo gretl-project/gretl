@@ -52,7 +52,8 @@ enum {
     CSV_ALLCOLS  = 1 << 10,
     CSV_BOM      = 1 << 11,
     CSV_VERBOSE  = 1 << 12,
-    CSV_THOUSEP  = 1 << 13
+    CSV_THOUSEP  = 1 << 13,
+    CSV_NOHEADER = 1 << 14
 };
 
 enum {
@@ -118,6 +119,7 @@ struct csvdata_ {
 #define csv_has_bom(c)            (c->flags & CSV_BOM)
 #define csv_is_verbose(c)         (c->flags & CSV_VERBOSE)
 #define csv_scrub_thousep(c)      (c->flags & CSV_THOUSEP)
+#define csv_no_header(c)          (c->flags & CSV_NOHEADER)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -133,6 +135,7 @@ struct csvdata_ {
 #define csv_set_has_bom(c)          (c->flags |= CSV_BOM)
 #define csv_set_verbose(c)          (c->flags |= CSV_VERBOSE)
 #define csv_set_scrub_thousep(c)    (c->flags |= CSV_THOUSEP)
+#define csv_set_no_header(c)        (c->flags |= CSV_NOHEADER)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -2715,8 +2718,12 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	k++;
     }    
 
-    /* convert to valid gretl identifier */
-    normalize_join_colname(okname, c->str, k);
+    if (csv_no_header(c)) {
+	sprintf(okname, "col%d", k);
+    } else {
+	/* convert to valid gretl identifier */
+	normalize_join_colname(okname, c->str, k);
+    }
 
 #if CDEBUG
     fprintf(stderr, "handle_join_varname: looking at '%s' (%s)\n", c->str, okname);
@@ -2761,7 +2768,9 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     int i, j, k, numcount;
     int err = 0;
 
-    pputs(mprn, A_("scanning for variable names...\n"));
+    if (!csv_no_header(c)) {
+	pputs(mprn, A_("scanning for variable names...\n"));
+    }
 
     if (csv_has_bom(c)) {
 	fseek(fp, 3, SEEK_SET);
@@ -2833,12 +2842,14 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	return err;
     }
 
-    if (numcount == c->dset->v - 1 || 
+    if (csv_no_header(c) || numcount == c->dset->v - 1 || 
 	obs_labels_no_varnames(obscol, c->dset, numcount)) {
-	pputs(prn, A_("it seems there are no variable names\n"));
-	/* then we undercounted the observations by one? */
-	if (!rows_subset(c)) {
-	    err = add_single_obs(c->dset);
+	if (!csv_no_header(c)) {
+	    pputs(prn, A_("it seems there are no variable names\n"));
+	    /* then we undercounted the observations by one? */
+	    if (!rows_subset(c)) {
+		err = add_single_obs(c->dset);
+	    }
 	}
 	if (!err) {
 	    /* set up to handle the "no varnames" case */
@@ -3186,7 +3197,12 @@ static int csv_set_dataset_dimensions (csvdata *c)
 	int cols_wanted, cols_present;
 
 	if (c->dset->n == 0) {
-	    c->dset->n = c->nrows - 1; /* allow for varnames row */
+	    if (csv_no_header(c)) {
+		c->dset->n = c->nrows;
+	    } else {
+		/* allow for varnames row */
+		c->dset->n = c->nrows - 1;
+	    }
 	}
 
 	cols_present = csv_skip_column(c) ? (c->ncols - 1) : c->ncols;
@@ -3226,8 +3242,9 @@ static int csv_set_dataset_dimensions (csvdata *c)
  * @rows: row specification.
  * @join: specification pertaining to "join" command.
  * @opt: use OPT_N to force interpretation of data colums containing
- * strings as coded (non-numeric) values and not errors; for use of 
- * OPT_T see the help for "append".
+ * strings as coded (non-numeric) values and not errors; use OPT_H
+ * to indicate absence of a header row; for use of OPT_T see the help
+ * for the "append" command.
  * @prn: gretl printing struct (or NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
@@ -3297,6 +3314,10 @@ static int real_import_csv (const char *fname,
 	if (err) {
 	    goto csv_bailout;
 	} 
+    }
+
+    if (opt & OPT_H) {
+	csv_set_no_header(c);
     }
 
     if (join != NULL) {
@@ -5129,7 +5150,9 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
     char *s = auto_keys->timefmt;
     int i, err = 0;
 
+#if CDEBUG 
     fprintf(stderr, "check_for_quarterly_format: '%s'\n", s);
+#endif    
 
     for (i=0; s[i]; i++) {
 	if (s[i] == '%' &&

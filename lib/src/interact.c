@@ -1400,7 +1400,7 @@ static int lib_join_data (ExecState *s,
 	OPT_D, /* data: "payload" spec */
 	OPT_K, /* tkey: outer time-key name,format */
 	OPT_X, /* tconvert: date columns for conversion */
-	OPT_T, /* tconv-fmt: format for "tconvert" */ 
+	OPT_T, /* tconv-fmt: format for "tconvert" */
 	0 
     };
     char *okey = NULL, *filter = NULL;
