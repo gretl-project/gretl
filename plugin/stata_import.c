@@ -1066,7 +1066,11 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
     stata_read_string(fp, namelen + 1, buf, &err);
 
     if (!err) {
-	pprintf(vprn, "variable %d: raw name = '%s'\n", v, buf);
+	if (gretl_namechar_spn(buf) == strlen(buf)) {
+	    pprintf(vprn, "variable %d: name = '%s'\n", v, buf);
+	} else {
+	    pprintf(vprn, "variable %d: raw name = '%s'\n", v, buf);
+	}
 	if (namelen == 32) {
 	    /* dta 117: try to fix possible bad encoding */
 	    iso_to_ascii(buf);
