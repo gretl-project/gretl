@@ -3508,7 +3508,7 @@
 
   </command>
 
-  <command name="eval" section="Utilities">
+  <command name="eval" section="Utilities" context="cli">
     <usage>
       <arguments>
         <argument>expression</argument>
