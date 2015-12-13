@@ -529,16 +529,9 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    if (argc == 3) {
-	if (!strcmp(argv[1], "--genr")) {
-	    type = GRETL_FUNCTIONS;
-	    strcpy(reffile, argv[2]);
-	} else if (!strcmp(argv[2], "--genr")) {
-	    type = GRETL_FUNCTIONS;
-	    strcpy(reffile, argv[1]);
-	}
-    } else {
-	strcpy(reffile, argv[1]);
+    strcpy(reffile, argv[1]);
+    if (strstr(reffile, "genr_funcs")) {
+	type = GRETL_FUNCTIONS;
     }
 
     cmdlist_init(&clist, type);

@@ -176,7 +176,6 @@ struct str_table funcs[] = {
     { F_ACOSH,    "acosh" },
     { F_ATANH,    "atanh" },
     { F_LOG,      "log" },
-    { F_LOG,      "ln" },
     { F_LOG10,    "log10" },
     { F_LOG2,     "log2" },
     { F_EXP,      "exp" },
@@ -454,6 +453,7 @@ struct str_table func_alias[] = {
     { F_GAMMA,     "gammafunc" },
     { F_GAMMA,     "gamma" },
     { F_LOG,       "logs" },
+    { F_LOG,       "ln" },
     { F_SQUARE,    "xpx" },
     { F_BACKTICK,  "$" },
     { 0,           NULL }
@@ -757,6 +757,9 @@ int genr_function_word (const char *s)
     if (!ret) {
 	ret = mvar_lookup(s);
     }
+    if (!ret) {
+	ret = const_lookup(s);
+    }    
 
     return ret;
 }

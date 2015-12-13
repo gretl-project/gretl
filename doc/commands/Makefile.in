@@ -315,10 +315,18 @@ help-pt: $(PT_HLPSTAMP) $(PT_GENSTAMP)
 help-all: help-en help-it help-pt $(HELPREFS)
 
 # Validate the commands "master" XML files against libgretl
+# By default we check the English-language files
 check: validate 
 	-./validate $(EN_SRC)
+	-./validate $(EN_FNCSRC)
+
+check-it: validate 
 	-./validate $(IT_SRC)
+	-./validate $(IT_FNSRC)
+
+check-pt: validate 
 	-./validate $(PT_SRC)
+	-./validate $(PT_FNCSRC)
 
 docclean:
 	 rm -f *.txt
