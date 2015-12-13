@@ -226,7 +226,7 @@ static int check_plot_option (const char *s)
     int err = 0;
 
     if (!strncmp(s, "--", 2)) {
-	/* tolerate option dashes? */
+	/* tolerate (non-required) option dashes */
 	s += 2;
     }
 
@@ -352,7 +352,7 @@ get_plot_field_and_advance (const char *s, char *field,
 
 int gretl_plot_append_line (const char *s, const DATASET *dset)
 {
-    char field[128];
+    char field[256];
     int err = 0;
 
     if (!plot.in_progress) {
@@ -366,7 +366,7 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
     s = get_plot_field_and_advance(s, field, 16, 0, &err);
 
     if (!strcmp(field, "option")) {
-	s = get_plot_field_and_advance(s, field, 128, LAST_FIELD, &err);
+	s = get_plot_field_and_advance(s, field, sizeof field, LAST_FIELD, &err);
 	if (!err) {
 	    err = check_plot_option(field);
 	    if (err) {
@@ -377,7 +377,7 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 	int flag = 0;
 	
 	while (1) {
-	    s = get_plot_field_and_advance(s, field, 128, flag, &err);
+	    s = get_plot_field_and_advance(s, field, sizeof field, flag, &err);
 	    if (err || *field == '\0') {
 		break;
 	    } else {
