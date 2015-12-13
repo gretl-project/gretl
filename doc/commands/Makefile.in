@@ -302,10 +302,9 @@ topiclist_es: topiclist $(ES_SRC)
 topiclist_pt: topiclist $(PT_SRC)
 	LANG=pt_PT ./topiclist $(PT_SRC) > ../tex_pt/cmdtopics.tex && touch $@ 
 
-# test validity of skeleton.xml, and ability of xsltrans
-# to generate formatted output (text and XML)
-test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
-	xmllint --valid --noout $< && ./xsltrans --all skeleton.xml $(CMDSDIR)
+# test validity of skeleton.xml
+test: skeleton.xml
+	xmllint --valid --noout $<
 
 help-en: $(EN_HLPSTAMP) $(EN_GENSTAMP)
 
