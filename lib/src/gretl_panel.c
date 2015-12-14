@@ -5129,6 +5129,13 @@ static char **group_names_from_array (const char *aname,
     return S;
 }
 
+/* usable_groups_series: to be usable as the basis for panel
+   groups strings, a series must have values that are (a)
+   constant within-group and (b) unique across groups. Note
+   that we only get to this test if the series in question
+   has already been found to be string-valued.
+*/
+
 static int usable_groups_series (DATASET *dset, int v,
 				 const char *vname)
 {
@@ -5136,8 +5143,14 @@ static int usable_groups_series (DATASET *dset, int v,
     int i, j, g = 0;
     int ok = 1;
 
+    if (na(x[0])) {
+	return 0;
+    }
+
     for (i=1; i<dset->n && ok; i++) {
-	if (i % dset->pd == 0) {
+	if (na(x[i])) {
+	    ok = 0;
+	} else if (i % dset->pd == 0) {
 	    /* starting a new group: x-value must not repeat a
 	       prior group's value */
 	    for (j=0; j<=g; j++) {
@@ -5222,6 +5235,10 @@ int set_panel_group_strings (const char *vname,
     }
 
     if (grpnames == NULL || *grpnames == '\0') {
+	/* We just got the name of a series? That may be
+	   OK if it's string-valued and has a suitable
+	   set of values.
+	*/
 	return maybe_use_strval_series(dset, vname, ng);
     }
 
@@ -5238,20 +5255,20 @@ int set_panel_group_strings (const char *vname,
     
     if (namestr != NULL) {
 	/* we must obtain @S by splitting */
-	int ngtest = 0;
+	int ns = 0;
 
 	if (strchr(namestr, '"') != NULL) {
-	    S = gretl_string_split_quoted(namestr, &ngtest, NULL, &err);
+	    S = gretl_string_split_quoted(namestr, &ns, NULL, &err);
 	} else {
-	    S = gretl_string_split(namestr, &ngtest, " \n\t");
+	    S = gretl_string_split(namestr, &ns, " \n\t");
 	}
 	if (!err && S == NULL) {
 	    err = E_ALLOC;
 	}
-	if (!err && ngtest != ng) {
+	if (!err && ns != ng) {
 	    /* FIXME subsampled case? */
 	    fprintf(stderr, "Got %d strings but there are %d groups\n",
-		    ngtest, ng);
+		    ns, ng);
 	    err = E_DATA;
 	}
     }
