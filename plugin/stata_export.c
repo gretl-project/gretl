@@ -42,6 +42,7 @@ enum {
 /* default missing-value codes (".") */
 #define STATA_DOUBLE_NA 0x1.0000000000000p+1023
 #define STATA_LONG_NA   2147483621
+#define STATA_INT_NA    32741
 #define STATA_BYTE_NA   101
 
 /* subtract this from epoch day to get Stata date */
@@ -226,15 +227,26 @@ static guint8 *make_types_array (const DATASET *dset,
 
     if (t != NULL) {
 	const double *x;
-	int i, j = 0;
+	double xmin, xmax;
+	int i, n_ok, j = 0;
 
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i)) {
 		x = dset->Z[i];
-		if (gretl_isdummy(dset->t1, dset->t2, x)) {
+		n_ok = gretl_minmax(dset->t1, dset->t2, x, &xmin, &xmax);
+		if (n_ok == 0) {
+		    /* all missing, hmm */
+		    t[j] = STATA_BYTE;
+		} else if (gretl_isdummy(dset->t1, dset->t2, x)) {
 		    t[j] = STATA_BYTE;
 		} else if (gretl_isint(dset->t1, dset->t2, x)) {
-		    t[j] = STATA_LONG;
+		    if (xmin > -10000 && xmax < 10000) {
+			t[j] = STATA_INT;
+		    } else if (xmin > -200000000 && xmax < 200000000) {
+			t[j] = STATA_LONG;
+		    } else {
+			t[j] = STATA_DOUBLE;
+		    }
 		} else {
 		    t[j] = STATA_DOUBLE;
 		}
@@ -248,7 +260,7 @@ static guint8 *make_types_array (const DATASET *dset,
 
 /* For time series, get the starting observation in
    the numerical form wanted by Stata; also get a
-   suitable name for the extra variable.
+   suitable name for the added variable.
 */
 
 static gint32 get_stata_t0 (const DATASET *dset,
@@ -411,7 +423,7 @@ int stata_export (const char *fname,
     }    
     for (j=0; j<nv; j++) {
 	memset(buf, 0, 12);
-	if (types[j] == STATA_BYTE) {
+	if (types[j] == STATA_BYTE || types[j] == STATA_INT) {
 	    strcpy(buf, "%8.0g");
 	} else if (types[j] == STATA_LONG) {
 	    strcpy(buf, "%12.0g");
@@ -474,6 +486,9 @@ int stata_export (const char *fname,
 		if (types[j] == STATA_BYTE) {
 		    i8 = missing ? STATA_BYTE_NA : xit;
 		    w += write(fd, &i8, 1);
+		} else if (types[j] == STATA_INT) {
+		    i16 = missing ? STATA_INT_NA : xit;
+		    w += write(fd, &i16, 2);
 		} else if (types[j] == STATA_LONG) {
 		    i32 = missing ? STATA_LONG_NA : xit;
 		    w += write(fd, &i32, 4);
