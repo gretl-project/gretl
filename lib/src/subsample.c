@@ -1638,6 +1638,7 @@ static void finalize_panel_subset (DATASET *subset,
     ntodate(subset->endobs, subset->n - 1, subset);
 
     if (dset->pangrps != NULL && npad == 0) {
+	/* carry over panel group names from full dataset */
 	subset->pangrps = gretl_strdup(dset->pangrps);
     }
 }    

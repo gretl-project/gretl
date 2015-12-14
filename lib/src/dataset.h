@@ -39,7 +39,7 @@ typedef enum {
     VAR_GENERATED  = 1 << 2,
     VAR_LISTARG    = 1 << 3,
     VAR_TIMECOL    = 1 << 4
-} VarinfoFlags;
+} VarFlags;
 
 typedef enum {
     DS_NONE,
@@ -458,11 +458,11 @@ int series_is_generated (const DATASET *dset, int i);
 
 int series_is_listarg (const DATASET *dset, int i);
 
-int series_get_flags (DATASET *dset, int i);
+VarFlags series_get_flags (DATASET *dset, int i);
 
-void series_set_flag (DATASET *dset, int i, int flag);
+void series_set_flag (DATASET *dset, int i, VarFlags flag);
 
-void series_unset_flag (DATASET *dset, int i, int flag);
+void series_unset_flag (DATASET *dset, int i, VarFlags flag);
 
 void series_zero_flags (DATASET *dset, int i);
 

@@ -35,7 +35,7 @@ struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
     char parent[VNAMELEN];
-    int flags;
+    VarFlags flags;
     int transform;
     int lag;
     char compact_method;
@@ -3679,7 +3679,7 @@ int series_is_listarg (const DATASET *dset, int i)
  * Sets the given @flag on series @i.
  */
 
-void series_set_flag (DATASET *dset, int i, int flag)
+void series_set_flag (DATASET *dset, int i, VarFlags flag)
 {
     if (i > 0 && i < dset->v) {
 	dset->varinfo[i]->flags |= flag;
@@ -3695,7 +3695,7 @@ void series_set_flag (DATASET *dset, int i, int flag)
  * Unsets the given @flag on series @i.
  */
 
-void series_unset_flag (DATASET *dset, int i, int flag)
+void series_unset_flag (DATASET *dset, int i, VarFlags flag)
 {
     if (i > 0 && i < dset->v) {
 	dset->varinfo[i]->flags &= ~flag;
@@ -3710,7 +3710,7 @@ void series_unset_flag (DATASET *dset, int i, int flag)
  * Returns: the flags set series @i.
  */
 
-int series_get_flags (DATASET *dset, int i)
+VarFlags series_get_flags (DATASET *dset, int i)
 {
     if (i >= 0 && i < dset->v) {
 	return dset->varinfo[i]->flags;
@@ -4363,20 +4363,46 @@ const char *get_panel_group_name (const DATASET *dset, int obs)
 {
     const char *s = NULL;
 
-    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+    if (dataset_is_panel(dset) && dset->pangrps != NULL &&
+	obs >= 0 && obs < dset->n) {
 	int v = current_series_index(dset, dset->pangrps);
-	series_table *st = series_get_string_table(dset, v);
-	double x = dset->Z[v][obs];
+	series_table *st;
 
-	s = series_table_get_string(st, x);
+	if ((st = series_get_string_table(dset, v)) != NULL) {
+	    s = series_table_get_string(st, dset->Z[v][obs]);
+	}
     }
 
-    return s;
+    return (s != NULL)? s : "??";
 }
+
+#define GRPS_DEBUG 0
 
 int panel_group_names_ok (const DATASET *dset)
 {
-    int ret = 0;
+#if GRPS_DEBUG
+    int n, v;
+    
+    fputs("panel_group_names_ok ?\n", stderr);
+    if (!dataset_is_panel(dset)) {
+	fputs(" no, not a panel\n", stderr);
+    } else if (dset->pangrps == NULL) {
+	fputs(" no, dset->pangrps not set\n", stderr);
+    } else if ((v = current_series_index(dset, dset->pangrps)) < 0) {
+	fputs(" no, dset->pangrps not found\n", stderr);
+    } else {
+	char **S = series_get_string_vals(dset, v, &n);
+
+	if (S == NULL) {
+	    fputs(" no, stringvals not found\n", stderr);
+	} else if (n < dset->n / dset->pd) {
+	    fprintf(stderr, " no, n strings = %d < %d\n",
+		    n, dset->n / dset->pd);
+	} else {
+	    fprintf(stderr, " yes, using series %s\n", dset->pangrps);
+	}
+    }
+#endif
 
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
 	int ns, v = current_series_index(dset, dset->pangrps);
@@ -4387,16 +4413,12 @@ int panel_group_names_ok (const DATASET *dset)
 	    if (S != NULL) {
 		int ng = dset->n / dset->pd;
 
-		if (complex_subsampled()) {
-		    ret = (ns >= ng);
-		} else {
-		    ret = (ns == ng);
-		}
+		return ns >= ng;
 	    }
 	}
     }
 
-    return ret;
+    return 0;
 }
 
 const char *panel_group_names_varname (const DATASET *dset)
@@ -4410,9 +4432,7 @@ const char *panel_group_names_varname (const DATASET *dset)
 	    if (S != NULL) {
 		int ng = dset->n / dset->pd;
 
-		if (complex_subsampled() && ns >= ng) {
-		    return dset->pangrps;
-		} else if (ns == ng) {
+		if (ns >= ng) {
 		    return dset->pangrps;
 		}
 	    }

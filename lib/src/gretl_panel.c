@@ -5182,25 +5182,13 @@ static int maybe_use_strval_series (DATASET *dset,
 	gretl_errmsg_sprintf("The series %s holds %d strings but %d "
 			     "are needed", vname, ns, ng);
 	err = E_INVARG;
-    } else if (complex_subsampled()) {
-	/* don't mess with numerical values, just check them */
+    } else {
+	/* note: don't mess with numerical values, just check them */
 	if (usable_groups_series(dset, v, vname)) {
 	    set_panel_groups_name(dset, vname);
 	} else {
 	    err = E_INVARG;
 	}
-    } else {
-	/* ensure numerical values are suitable */
-	int i, g = 0;
-
-	for (i=0; i<dset->n; i++) {
-	    if (i % dset->pd == 0) {
-		g++;
-	    }	    
-	    dset->Z[v][i] = g;
-	}
-
-	set_panel_groups_name(dset, vname);
     }
 
     return err;
@@ -5213,9 +5201,9 @@ static int maybe_use_strval_series (DATASET *dset,
 
    @vname should contain the name of a series, either an existing one
    (which may be overwritten) or a new one to create; and @grpnames
-   should be either a string literal or the name of a string variable
+   should be (1) a string literal, or (2) the name of a string variable
    (which in either case should hold N space-separated strings, where N
-   is the number of panel groups), or the name of an array variable
+   is the number of panel groups), or (3) the name of an array variable
    holding N strings.
 */
 
