@@ -6175,7 +6175,7 @@
       <options>
         <option>
 	  <flag>--save</flag>
-	  <effect>salva le variabili</effect>
+	  <effect>salva le variabili risultato</effect>
 	</option>
       </options>
     </usage>
@@ -6205,12 +6205,12 @@
 	previsti, divisi per i propri errori standard) moltiplicati
 	per <equation status="inline" tex="$\sqrt{h/(1 - h)}$"
 	ascii="sqrt[h/(1 - h)]" graphic="dffit"/>. Per una discussione
-	dei residui studentizzati e dei valori DFFITS si veda <cite
-	key="maddala92">Maddala's Introduction to Econometrics</cite>,
+	dei residui studentizzati e dei valori DFFITS si veda Maddala,
+	<cite key="maddala92">Introduction to Econometrics</cite>,
 	cap. 12, oppure <cite key="belsley-etal80">Belsley, Kuh and
 	Welsch (1980)</cite>.
-        </para>
-        <para>
+      </para>
+      <para>
         In breve, i <quote>residui previsti</quote>
 	sono la differenza tra il valore osservato e il valore stimato 
         della variabile dipendente all'osservazione
@@ -6222,37 +6222,49 @@
       </para>
 
       <para context="cli">Se si usa l'opzione <opt>save</opt>, il
-      leverage, il valore di influenza e il valore DFFITS vengono aggiunti
-      al dataset in uso.</para>
+      leverage, il valore di influenza e il valore DFFITS vengono
+      aggiunti al dataset in uso. In questo contesto, l'opzione
+      <opt>quiet</opt> evita che i risultati vengano stampati. I nomi
+      di default delle serie prodotte sono rispettivamente
+      <lit>lever</lit>, <lit>influ</lit> and <lit>dffits</lit>. Se
+      però serie con questo nome già esistono, i nomi delle serie
+      prodotte sarano ritoccati per assicurarne l'unicità; se così
+      avvenisse, occuperanno i tre numeri di serie più alti nel
+      dataset.
+      </para>
 
       <para context="gui">
 	L'icona "+" in cima alla finestra del test di leverage apre una
         finestra di dialogo che permette di salvare nel dataset in uso
         una o più delle variabili del test.</para>
       <para context="tex">
-	Dopo l'esecuzione l'accessore <fncref targ="$test"/> restituisce il criterio di 
-	validazione incrociata, definito come
-        \[
-	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2 
-        \] 
-	dove $\hat{y}_{-i}$ è l'errore di previsione per la $i$-esima osservazione, 
-	dopo che quest'ultima è stata esclusa dal campione. Di conseguenza, il criterio
-	è la somma dei quadrati degli errori di previsione nella quale per prevedere
-	la $i$-esima osservazione vengono usate tutte le altre $n-1$ osservazioni
-	(il cosiddetto stimatore <emphasis>leave-one-out</emphasis>). Per una discussione più 
-	approfondita del criterio di validazione incrociata, v. Davidson e 
-	MacKinnon's <book>Econometric Theory and Methods</book>, pag. 685--686, 
-	e i riferimenti bibliografici ivi citati.
+	Dopo l'esecuzione l'accessore <fncref targ="$test"/>
+	restituisce il criterio di validazione incrociata, definito
+	come \[ \sum_{i=1}^n (y_i - \hat{y}_{-i})^2 \] dove
+	$\hat{y}_{-i}$ è l'errore di previsione per la $i$-esima
+	osservazione, dopo che quest'ultima è stata esclusa dal
+	campione. Di conseguenza, il criterio è la somma dei quadrati
+	degli errori di previsione nella quale per prevedere la
+	$i$-esima osservazione vengono usate tutte le altre $n-1$
+	osservazioni (il cosiddetto stimatore
+	<emphasis>leave-one-out</emphasis>). Per una discussione più
+	approfondita del criterio di validazione incrociata,
+	v. Davidson e MacKinnon's <book>Econometric Theory and
+	Methods</book>, pag. 685--686, e i riferimenti bibliografici
+	ivi citati.
       </para>
       <para context="notex">
-	Dopo l'esecuzione, l'accessore <fncref targ="$test"/> restituisce il criterio di 
-	validazione incrociata, definito come la somma dei quadrati degli scarti fra
-	la variabile dipendente e il suo valore previsto, calcolato a partire 
-	da un campione dal quale quell'osservazione è stata esclusa.  
-	(Questo stimatore è chiamato <emphasis>leave-one-out</emphasis>). 
-	Per una discussione più  approfondita del criterio di validazione incrociata, 
-	v. Davidson e  MacKinnon's <book>Econometric Theory and Methods</book>, 
-	pag. 685&ndash;686, e i riferimenti bibliografici ivi citati.
+	Dopo l'esecuzione, l'accessore <fncref targ="$test"/>
+	restituisce il criterio di validazione incrociata, definito
+	come la somma dei quadrati degli scarti fra la variabile
+	dipendente e il suo valore previsto, calcolato a partire da un
+	campione dal quale quell'osservazione è stata esclusa.
+	(Questo stimatore è chiamato
+	<emphasis>leave-one-out</emphasis>).  Per una discussione più
+	approfondita del criterio di validazione incrociata,
+	v. Davidson e MacKinnon's <book>Econometric Theory and
+	Methods</book>, pag. 685&ndash;686, e i riferimenti
+	bibliografici ivi citati.
       </para>
     </description>
 
