@@ -227,7 +227,7 @@
         secondo la raccomandazione di <cite key="schwert89">Schwert
         (1989)</cite>, ossia 12(<math>T</math>/100)<sup>0.25</sup>,
         dove <math>T</math> è l'ampiezza campionaria. In tutti e due i
-        casi, comunque, se si usa l'opzione <opt>--test-down</opt>,
+        casi, comunque, se si usa l'opzione <opt>test-down</opt>,
         <math>k</math> viene interpretato come ritardo massimo, mentre
         l'ordine di ritardo effettivamente usato viene ottenuto
         testando "all'indietro".  Il criterio per effettuare il test
@@ -284,8 +284,8 @@
       </para> 
 
       <para context="cli">
-        L'opzione <opt>--gls</opt> può essere usata insieme a una
-        delle altre due opzioni <opt>--c</opt> e <opt>--ct</opt> (il
+        L'opzione <opt>gls</opt> può essere usata insieme a una
+        delle altre due opzioni <opt>c</opt> e <opt>ct</opt> (il
         modello con costante o quello con costante e trend). L'effetto
         di questa opzione è di rimuovere la media o il trend della
         variabile da testare, usando la procedura GLS suggerita da
@@ -321,8 +321,8 @@
 	deterministici diventano mutualmente esclusive: è necessario
 	scegliere fra il caso senza costante, quello con solo la costante,
 	e quello che la costante e il trend; il default è il secondo.
-	L'opzione <opt>--seasonals</opt>, inoltre, non è disponibile.
-	Terzo, l'opzione  <opt>--verbose</opt> ha un significato diverso:
+	L'opzione <opt>seasonals</opt>, inoltre, non è disponibile.
+	Terzo, l'opzione  <opt>verbose</opt> ha un significato diverso:
 	produce un breve resoconto del test per ciascuna singola
 	serie storica (il default prevede di mostrare solo il risultato complessivo).
       </para>
@@ -369,7 +369,7 @@
 	identifica i valori di qualche variabile di controllo.
       </para>
       <para context="cli">
-	Se non è stata selezionata l'opzione <opt>--quiet</opt>,
+	Se non è stata selezionata l'opzione <opt>quiet</opt>,
 	questo comando stampa una tabella che mostra le somme e le
 	medie dei quadrati, nonché un test <math>F</math>.  Il test
 	<math>F</math> e il suo <emphasis>p-</emphasis>value possono
@@ -395,7 +395,7 @@
 	questo, regredite <repl>response</repl> su una costante e le
 	dummy usando <cmdref targ="ols"/>.  Per un'analisi a una via
 	la tabella ANOVA può essere creata ricorrendo all'opzione
-	<opt>--anova</opt> del comando <lit>ols</lit>.  Nel caso di
+	<opt>anova</opt> del comando <lit>ols</lit>.  Nel caso di
 	un'analisi a due vie il test <math>F</math> può essere
 	calcolato usando il comando <cmdref targ="omit"/>. Per
 	esempio, se assumiamo che <lit>y</lit> sia la risposta,
@@ -954,7 +954,7 @@
       </para>
 
       <para context="cli">
-	L'opzione <opt>--lbfgs</opt> è riservata alla stima basata su codice 
+	L'opzione <opt>lbfgs</opt> è riservata alla stima basata su codice 
 	ARMA nativo e MV esatta; quando viene indicata, la stima usa l'algoritmo 
 	L-BFGS a <quote>memoria limitata</quote> anziché l'ottimizzatore BFGS 
 	consueto. Questa variante può essere utile in alcune situazioni nelle quali 
@@ -962,7 +962,7 @@
       </para>
 
       <para context="cli">
-	L'opzione <opt>--y-diff-only</opt> è riservata alla stima di modelli
+	L'opzione <opt>y-diff-only</opt> è riservata alla stima di modelli
 	ARIMAX (modelli con ordine di integrazione non nullo e che includono
 	regressori esogeni), e si applica solo con la stima di MV esatta nativa 
 	di gretl. Per questi modelli il comportamento di default consiste nel
@@ -972,7 +972,7 @@
       </para>
 
       <para context="cli">
-	L'opzione <opt>--save-ehat</opt> è applicabile solo alla stima nativa di MV
+	L'opzione <opt>save-ehat</opt> è applicabile solo alla stima nativa di MV
 	esatta. Il suo effetto è quello di rendere disponibile un vettore
 	contenente la stima ottimale alla data <math>t</math> del disturbo
 	o innovazione alla stessa data: questo valore può essere recuperato
@@ -1140,9 +1140,9 @@
 	Per default, gli errori standard sono calcolati usando
 	un'approssimazione numerica dell'Hessiana calcolata in
 	corrispondenza delle stime dei parametri. L'opzione
-	<opt>--opg</opt> permette di stimare la matrice di covarianza
+	<opt>opg</opt> permette di stimare la matrice di covarianza
 	usando il prodotto esterno del gradiente (Outer Product of the
-	Gradient, OPG); l'opzione <opt>--robust</opt> permette di
+	Gradient, OPG); l'opzione <opt>robust</opt> permette di
 	calcolare gli standard error QML a partire dalla matrice di
 	covarianza <quote>sandwich</quote> che usa sia l'inversa
 	dell'Hessiana che la matrice OPG.
@@ -1158,7 +1158,7 @@
 	probabilità dei quattro possibili esiti congiunti per
 	(<math>y</math><sub>1</sub>, <math>y</math><sub>2</sub>),
 	nell'ordine (1,1), (1,0), (0,1), (0,0). In alternativa, se il
-	comando è seguito dall'opzione <opt>--save-xbeta</opt> ,
+	comando è seguito dall'opzione <opt>save-xbeta</opt> ,
 	<fncref targ="$yhat"/> ha due colonne contenenti i valori delle
 	funzioni indice delle rispettive equazioni.
       </para>
@@ -1326,7 +1326,7 @@
 	In generale l'argomento <repl>varlist</repl> è necessario e deve
 	indicare una o più variabili nel dataset corrente (usando il nome
 	o il numero di ID). Se viene fornita una matrice usando l'opzione 
-	<opt>--matrix</opt>, tuttavia, questo argomento diventa opzionale: di
+	<opt>matrix</opt>, tuttavia, questo argomento diventa opzionale: di
 	default viene mostrato un grafico per ciascuna delle colonne della
 	matrice specificata.
       </para>
@@ -1346,7 +1346,7 @@
 	I grafici veri e propri possono essere generati in seguito usando 
 	<program>gnuplot</program> (in MS Windows,
 	<program>wgnuplot</program>). Questo comportamento può essere modificato 
-	usando l'opzione <opt>--output=</opt><repl>filename</repl>. 
+	usando l'opzione <opt>output=</opt><repl>filename</repl>. 
 	Per ulteriori dettagli, si veda il comando <cmdref
 	targ="gnuplot"/>.
       </para>
@@ -1513,7 +1513,7 @@
 	<cmd>clear</cmd>.
       </para>
       <para>
-	Con l'opzione <opt>--dataset</opt> viene cancellato dalla
+	Con l'opzione <opt>dataset</opt> viene cancellato dalla
 	memoria solo il dataset; tutti gli altri oggetti, come matrici
 	e scalari salvati in precedenza, vengono conservati.
       </para>
@@ -1769,7 +1769,7 @@
         aggiustati per l'ampiezza campionaria. Di default, l'accessore
         <fncref targ="$pvalue"/> riporta la variante aggiustata, ma i valori
         asintotici possono essere ottenuti usando l'opzione
-        <opt>--asy</opt>
+        <opt>asy</opt>
       </para>
       <para context="gui">
         Esegue il test di Johansen per la cointegrazione tra le variabili
@@ -2025,8 +2025,8 @@
         mancanti.
       </para>
       <para>
-	Le opzioni (mutualmente esclusive) <opt>--spearman</opt> e
-	<opt>--kendall</opt> producono rispettivamente, la correlazione di rango
+	Le opzioni (mutualmente esclusive) <opt>spearman</opt> e
+	<opt>kendall</opt> producono rispettivamente, la correlazione di rango
         di Spearman (rho) e la correlazione di rango di Kendall (tau), invece
         del solito coefficiente di Pearson. Quando si usa una di queste opzioni,
         la <repl>lista-variabili</repl> deve contenere solo due variabili.
@@ -2531,7 +2531,7 @@
        <cmdref targ="open"/>.
       </para>
       <para>
-	Se viene indicata l'opzione <opt>--type</opt> è necessario accompagnarla
+	Se viene indicata l'opzione <opt>type</opt> è necessario accompagnarla
 	con uno dei nomi di tipi seguenti: <lit>matrix</lit>, <lit>bundle</lit>, 
 	<lit>string</lit>, 	<lit>list</lit> o <lit>scalar</lit>. L'effetto 
 	è quello di cancellare tutte le variabili di un certo tipo. Solo in questo caso
@@ -2920,17 +2920,17 @@
 	standard asintotici associati allo stimatore al secondo stadio
 	è considerata inaffidabile, ma se per qualche ragione
 	desiderate conoscere il loro valore potete usare l'opzione
-	<opt>--asymptotic</opt> per disattivare la correzione di
+	<opt>asymptotic</opt> per disattivare la correzione di
 	Windmeijer.
       </para>
       <para context="cli">
-	Se viene indicata l'opzione <opt>--time-dummies</opt> il
+	Se viene indicata l'opzione <opt>time-dummies</opt> il
 	comando aggiunge ai regressori specificati un insieme di
 	variabili dummy.  Il numero di queste ultime è pari al numero
 	massimo di periodi usati nella stima meno uno, allo scopo di
 	evitare di avere collinearità perfetta con la costante.  Le
 	dummy vengono incluse in differenza, a meno che non sia
-	indicata l'opzione <opt>--dpdstyle</opt>; in questo caso le
+	indicata l'opzione <opt>dpdstyle</opt>; in questo caso le
 	dummy sono incluse in livello.
       </para>
       <para>
@@ -3107,7 +3107,7 @@
 	Di default i valori stimati ottenuti mediante l'accessore
 	<fncref targ="$yhat"/> rappresentano le medie condizionali delle
 	durate; se tuttavia viene indicata l'opzione
-	<opt>--medians</opt>, <fncref targ="$yhat"/> fornisce le mediane
+	<opt>medians</opt>, <fncref targ="$yhat"/> fornisce le mediane
 	condizionali.
 	  </para>
       <para>
@@ -3603,7 +3603,7 @@
        </para>
  
       <para context="cli">
-	L'opzione <opt>--plot</opt> (disponibile solo nel caso della stima di un
+	L'opzione <opt>plot</opt> (disponibile solo nel caso della stima di un
 	modello uniequazionale) consente di ottenere un file con un grafico delle 
 	previsioni. L'estensione dell'argomento <repl>filename</repl> 
 	di questa opzione controlla il formato del grafico: <lit>.eps</lit>
@@ -3742,7 +3742,7 @@
        I nomi dei programmi esterni sono case-insensitive.
       </para>
       <para>
-	Con R, Octave e Stata l'opzione <opt>--send-data</opt> ha
+	Con R, Octave e Stata l'opzione <opt>send-data</opt> ha
 	l'effetto di rendere disponibile all'interno del programma di
 	destinazione l'intero dataset corrente.
       </para>
@@ -3783,10 +3783,10 @@
 	L'ipotesi nulla è che l'ordine di integrazione della variabile
 	sia zero. Di default viene utilizzato lo stimatore locale di 
 	Whittle <cite key="robinson95" p="true">(Robinson,
-	1995)</cite>, ma se si indica l'opzione <opt>--gph</opt> il comando 
+	1995)</cite>, ma se si indica l'opzione <opt>gph</opt> il comando 
 	usa il test GPH <cite key="GPH83" p="true">(Geweke and
 	Porter-Hudak, 1983)</cite>. L'opzione 
-	<opt>--all</opt> permette di ottenere i risultati di 
+	<opt>all</opt> permette di ottenere i risultati di 
 	entrambi i test.
       </para>
       <para>
@@ -3803,7 +3803,7 @@
 	I risultati possono essere recuperati usando gli accessori
 	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Questi valori sono
 	basati sullo stimatore locale di Whittle a meno che non sia
-	stata indicata l'opzione <opt>--gph</opt>.
+	stata indicata l'opzione <opt>gph</opt>.
       </para>
     </description>
 
@@ -3876,7 +3876,7 @@
         o il numero).
       </para>
       <para>
-	Se viene indicata l'opzione <opt>--matrix</opt>, <repl>var</repl>
+	Se viene indicata l'opzione <opt>matrix</opt>, <repl>var</repl>
 	(che deve essere un intero) viene invece interpretato come un indice
 	di base 1 che individua una colonna in una matrice indicata per nome.
       </para>
@@ -3885,7 +3885,7 @@
 	possibile specificare <emphasis>o</emphasis> il numero di
 	intervalli o il valore minimo più l'ampiezza degli intervalli,
 	come illustrato negli ultimi due esempi precedenti. L'opzione
-	<opt>--min</opt> fissa il limite inferiore dell'intervallo più
+	<opt>min</opt> fissa il limite inferiore dell'intervallo più
 	a sinistra.
       </para>
       <para>
@@ -3904,7 +3904,7 @@
         distribuzione, a meno che non si usi l'opzione
         <opt>quiet</opt>. Per converso, il grafico non viene
         mostrato quando il comando è invocato da script, a meno che
-        non venga usata l'opzione <opt>--show-plot</opt>. (Questo non
+        non venga usata l'opzione <opt>show-plot</opt>. (Questo non
         si applica alla versione di gretl a linea di comando,
         <lit>gretlcli</lit>.)
       </para>
@@ -4127,7 +4127,7 @@
         genr ht = $h
       </code>
       <para context="cli">
-	Con l'opzione <opt>--stdresid</opt>, i valori di <fncref targ="$uhat"/>
+	Con l'opzione <opt>stdresid</opt>, i valori di <fncref targ="$uhat"/>
 	vengono divisi per la radice di <math>h</math><sub>t</sub>.
       </para>
 
@@ -4719,8 +4719,8 @@
       <para>
 	Per default, i dati sono mostrati come punti; ma questa scelta
 	può essere modificata usando una delle opzioni
-	<opt>--with-lines</opt>, <opt>--with-lp</opt> or
-	<opt>--with-impulses</opt>. Se il grafico contiene più di una
+	<opt>with-lines</opt>, <opt>with-lp</opt> or
+	<opt>with-impulses</opt>. Se il grafico contiene più di una
 	serie, l'effetto di queste opzioni può essere limitato ad un
 	sottoinsieme delle variabili usando il parametro
 	<repl>varspec</repl>. Esso deve essere dato sotto forma di una
@@ -4745,11 +4745,11 @@
 	In generale è necessario specificare sia l'argomento <repl>yvars</repl> 
 	che quello <repl>xvar</repl>; entrambi devono indicare variabili
 	nel dataset corrente (per nome o numero identificativo). Se tuttavia 
-	viene specificata con l'opzione <opt>--matrix</opt> una matrice definita 
+	viene specificata con l'opzione <opt>matrix</opt> una matrice definita 
 	in precedenza questi argomenti diventano opzionali: se la matrice
 	specificata ha <math>k</math> colonne, di default le prime <math>k</math>
 	&minus; 1 sono considerate come <repl>yvars</repl>, e l'ultima come 
-	<repl>xvar</repl>. Se viene indicata l'opzione <opt>--time-series</opt>, 
+	<repl>xvar</repl>. Se viene indicata l'opzione <opt>time-series</opt>, 
 	tuttavia, il comando fornisce il grafico di tutte le <math>k</math> 
 	variabili rispetto al tempo. Se si desidera il grafico solo di alcune
 	colonne della matrice è necessario identificare 
@@ -4771,7 +4771,7 @@
 	usando il programma <program>gnuplot</program> (su MS Windows:
 	<program>wgnuplot</program>).  Questo comportamento può essere
 	modificato usando l'opzione
-	<opt>--output=</opt><repl>filename</repl>, che controlla il
+	<opt>output=</opt><repl>filename</repl>, che controlla il
 	nome del file utilizzato e contemporaneamente permette di
 	specificare un particolare formato di output usando
 	l'estensione del nome del file (le tre lettere che seguono il
@@ -5594,6 +5594,77 @@
 
   </command>
 
+  <command name="install" section="Utilities" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>nomepacchetto</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--local</flag>
+	  <effect>installa da file in locale</effect>
+        </option>
+        <option>
+	  <flag>--remove</flag>
+	  <effect>vedi sotto</effect>
+        </option>	
+        <option>
+	  <flag>--purge</flag>
+	  <effect>vedi sotto</effect>
+        </option>
+      </options>
+     <examples>
+        <example>install armax</example>
+        <example>install felogit.gfn</example>
+	<example>install /path/to/myfile.gfn --local</example>
+	<example>install http://foo.bar.net/gretl/myfile.gfn</example>
+     </examples>
+    </usage>    
+
+    <description>
+      <para>
+	Comendo per installare e disinstallare pacchetti di funzioni
+	(file <lit>gfn</lit> o <lit>zip</lit>).
+      </para>
+      <para>
+	Se a questo comando viene dato il nome di un pacchetto senza
+	opzioni (come nei primi due esempi), il pacchetto stesso verrà
+	scaricatodalò server di gretl e installato in locale. In
+	questo caso, indicare l'estensione è superfluo.
+      </para>
+      <para>
+	Se viene data l'opzione <opt>local</opt>, l'argomento
+	<repl>nomepacchetto</repl> deve essere il percorso completo di
+	un file di pacchetto sulla macchina locale, completo di
+	estensione. L'azione conseguente al comando è di copiarlo (se
+	<lit>gfn</lit>), o espanderlo (se <lit>zip</lit>) nel posto
+	giusto, ossia dove il comando <cmdref targ="include"/> sia in
+	grado poi di trovarlo.
+      </para>
+      <para>
+	In assenza di opzioni, se <repl>nomepacchetto</repl> comincia
+	con <lit>http://</lit>, l'effetto è di scaricare il pacchetto
+	da un server specificato e poi installarlo localmente.
+      </para>
+      <para>
+	L'operazione inversa (ossia, la disinstallazione) viene
+	effettuata con le opzioni <opt>remove</opt> o
+	<opt>purge</opt>. Con <opt>remove</opt> il pacchetto viene
+	scaricato dalla memoria ed è rimosso dal menu GUI
+	a cui sia eventualmente attaccato. L'opzione
+	<opt>purge</opt> agisce come <opt>remove</opt>, ma cancella
+	anche il file di pacchetto. (Se un pacchetto contiene una sua
+	propria sottocartella, essa stessa viene completamente cancellata.)
+      </para>      
+    </description>
+
+    <gui-access>
+      <menu-path>/Strumenti/Pacchetti/Sul server</menu-path>
+    </gui-access>
+
+  </command>  
+
   <command name="intreg" section="Estimation" label="Modello di regressione per intervalli">
 
     <usage>
@@ -5945,7 +6016,7 @@
 	diversi. Mentre nel caso di serie storiche regolari potete
 	fornire una lista di variabili da testare, con dati panel il
 	comando può testare solo una variabile alla volta. L'opzione
-	<opt>--verbose</opt>, inoltre, ha un isgnificato diverso:
+	<opt>verbose</opt>, inoltre, ha un isgnificato diverso:
 	produce un breve resoconto del test per ciascuna singola serie
 	storica (di default viene mostrato solo il risultato
 	complessivo).
@@ -6000,18 +6071,18 @@
 	se <repl>varlist</repl> non è specificata.
       </para>
       <para>
-	Con l'opzione <opt>--to-file</opt>, scrive nel file indicato le etichette di tutte
+	Con l'opzione <opt>to-file</opt>, scrive nel file indicato le etichette di tutte
 	le variabili nel dataset, una per linea. Se non sono presenti etichette viene
 	emesso un messaggio d'errore; se alcune variabili hanno etichette e altre no,
 	per le seconde viene mostrata una linea vuota.
       </para>
       <para>
-	Con l'opzione <opt>--from-file</opt>, legge il file specificato (che deve
+	Con l'opzione <opt>from-file</opt>, legge il file specificato (che deve
 	essere di testo) e assegna le etichette alle variabili nel dataset, leggendo
 	un'etichetta per linea e interpretando linee vuote come etichette vuote.
       </para>
       <para>
-	L'opzione <opt>--delete</opt> da quello che vi attendete:
+	L'opzione <opt>delete</opt> da quello che vi attendete:
 	rimuove dal dataset tutte le etichette di variabili.
       </para>      
     </description>
@@ -6316,8 +6387,8 @@
 	
       <para context="cli">
 	Di default le regressioni dei test ADF contengono una costante;
-	per eliminarla usate l'opzione <opt>--nc</opt>; per aggiungere 
-	un trend lineare usate l'opzione <opt>--ct</opt>. 
+	per eliminarla usate l'opzione <opt>nc</opt>; per aggiungere 
+	un trend lineare usate l'opzione <opt>ct</opt>. 
 	(V. il comando <cmdref targ="adf"/> per una spiegazione delle 
 	regressioni ADF.)
       </para>
@@ -6413,7 +6484,7 @@
         
       <para context="cli">
         È possibile indicare un valore diverso per il massimo, usando
-        l'opzione <opt>--ymax</opt>. Il valore fornito deve essere
+        l'opzione <opt>ymax</opt>. Il valore fornito deve essere
         maggiore di tutti i valori osservati della variabile
         dipendente.
       </para>
@@ -6519,7 +6590,7 @@
       <para>
         Se la variabile dipendente non è binaria, ma è discreta, si
         ottengono stime Logit ordinate. Tuttavia, se viene fornita
-        l'opzione <opt>--multinomial</opt>, la variabile dipendente è
+        l'opzione <opt>multinomial</opt>, la variabile dipendente è
         interpretata come non ordinale, e vengono prodotte stime Logit
         Multinomiali. (In ambo i casi, verrà dato un errore se la
         dipendente non è discreta.) Nel caso multinomiale, l'accessore
@@ -6763,12 +6834,12 @@
 
     <description>
       <para>
-	Con l'opzione <opt>--to-file</opt>, scrive nel file indicato le stringhe
+	Con l'opzione <opt>to-file</opt>, scrive nel file indicato le stringhe
 	marcatrici delle osservazioni presenti nel dataset corrente, una per ogni 
 	linea. Se il dataset non contiene stringhe viene emesso un messaggio d'errore.
       </para>
       <para>
-	Con l'opzione <opt>--from-file</opt>, legge dal file specificato (che deve essere
+	Con l'opzione <opt>from-file</opt>, legge dal file specificato (che deve essere
 	in formato testo) e assegna alle righe del dataset i marcatori di osservazione, 
 	leggendone uno per riga. In generale il file dovrebbe contenere tanti marcatori 
 	quante sono le osservazioni nel dataset, ma se quest'ultimo è un panel il 
@@ -6776,7 +6847,7 @@
 	in cross-section (nel qual caso i marcatori sono ripetuti a ogni data).
       </para>
       <para>
-	L'opzione <opt>--delete</opt> fa quello che vi aspettate: 
+	L'opzione <opt>delete</opt> fa quello che vi aspettate: 
 	cancella le stringhe marcatrici delle osservazioni dal dataset.
       </para>      
     </description>
@@ -7055,7 +7126,7 @@
 	essere errate e il comando si rifiuta di completare la stima. Per evitare
 	questa possibilità o per realizzare un piccolo guadagno in termini
 	di tempo è possibile ricorrere all'opzione 
-	<opt>--no-gradient-check</opt>. Naturalmente è opportuno ricorrere a questa opzione
+	<opt>no-gradient-check</opt>. Naturalmente è opportuno ricorrere a questa opzione
 	solo se si è convinti convinti della correttezza del gradiente specificato.
       </para>
       <para>
@@ -7288,7 +7359,7 @@
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
-        scelga l'opzione <opt>autocorr</opt> o l'opzione <opt>--arch</opt>.
+        scelga l'opzione <opt>autocorr</opt> o l'opzione <opt>arch</opt>.
         Per impostazione predefinita, questi test sono eseguiti usando un ordine
         di ritardo pari alla periodicità dei dati, ma è possibile anche
         impostare un ordine di ritardo specifico.
@@ -7307,7 +7378,7 @@
         fra le unità cross section).
       </para>
       <para>
-	L'opzione <opt>--comfac</opt> è disponibile solo quando il modello è stimato
+	L'opzione <opt>comfac</opt> è disponibile solo quando il modello è stimato
 	usando un metodo AR(1), come quello di Hildreth&ndash;Lu. La regressione ausiliaria
 	ha la struttura di un modello dinamico relativamente poco vincolato ed è usata
 	per verificare il vincolo di fattori comuni implicito nella specificazione AR(1).
@@ -7477,7 +7548,7 @@
 	distribuzione NegBin 2, in cui la varianza condizionale è data
 	da &mu;(1 + &alpha;&mu;), dove &mu; denota la media
 	condizionale.  Tuttavia, se vien data l'opzione
-	<opt>--model1</opt> allora la varianza condizionale sarà data
+	<opt>model1</opt> allora la varianza condizionale sarà data
 	da &mu;(1 + &alpha;).
       </para>
       <para>
@@ -7489,9 +7560,9 @@
       <para>
 	Di default, gli errori standard vengono calcolati unsando
 	un'approssimazione numerica dell'Hessiana sul punto di
-	massimo.  Con l'opzione <opt>--opg</opt> la matrice di
+	massimo.  Con l'opzione <opt>opg</opt> la matrice di
 	covarianze verrà invece calcolata tramite il prodotto esterno
-	dei gradienti (OPG), o via QML con l'opzione <opt>--robust</opt> usando un
+	dei gradienti (OPG), o via QML con l'opzione <opt>robust</opt> usando un
 	<quote>sandwich</quote> dell'hessiana inversa e dell'OPG.
       </para>
     </description>
@@ -8835,7 +8906,7 @@
         cap. 10.
       </para>
       <para>
-	Con l'opzione <opt>--random-effects</opt>, il termine di errore è
+	Con l'opzione <opt>random-effects</opt>, il termine di errore è
 	composto per ipotesi da due componenti gaussiane: una,
 	specifica per l'unità cross-sezionale e invariante nel tempo
 	(nota come <quote>effetto individuale</quote>) e l'altra
@@ -8847,7 +8918,7 @@
 	approssimare il valore di valori attesi di funzioni di
 	variabili casuali normali. Il numero di punti di quadratura
 	usati si può scegliere tramite l'opzione
-	<opt>--quadpoints</opt> (il default è 32). Un numero elevato
+	<opt>quadpoints</opt> (il default è 32). Un numero elevato
 	di questi aumenta l'accuratezza dei risultati, ma al costo di
 	tempi di calcolo più lunghi; in questo caso la stima può
 	richiedere molto tempo con dataset grandi.
@@ -9068,13 +9139,13 @@
 	quantili empirici vengono disegnati contro quelli della
 	normale avente media e varianza uguali a quelli campionari
 	della serie, ma sono disponibili due alternative: con
-	l'opzione <opt>--z-scores</opt>, i dati vengono standardizzati
-	prima, oppure, con l'opzione <opt>--raw</opt>, i quantili
+	l'opzione <opt>z-scores</opt>, i dati vengono standardizzati
+	prima, oppure, con l'opzione <opt>raw</opt>, i quantili
 	empirici possono essere disegnati contro quelli della normale
 	standardizzata.
       </para>
       <para>
-	Tramite l'opzione <opt>--output</opt> si invia il grafico al
+	Tramite l'opzione <opt>output</opt> si invia il grafico al
 	file desiderato; usare <quote>display</quote> per forzare l'output
 	allo schermo, ad esempio nel contesto di un loop.
       </para>
@@ -10151,7 +10222,7 @@
 	<li>
 	  <para><lit>gmm_maxiter</lit>: un intero, il numero massimo
 	  di iterazioni per il comando <cmdref targ="gmm"/> con
-	  l'opzione <opt>--iterate</opt>. Il default è 250.
+	  l'opzione <opt>iterate</opt>. Il default è 250.
 	  </para>
 	</li>
 	<li>
@@ -11045,11 +11116,11 @@
 	scarto quadratico medio, coefficiente di variazione (= scarto
 	quadratico medio / media), mediana, minimo, massimo,
 	coefficiente di asimmetria, curtosi in eccesso. Dando
-	l'opzione <opt>--simple</opt>, si avranno soltanto media,
+	l'opzione <opt>simple</opt>, si avranno soltanto media,
 	minimo, massimo e scarto quadratico medio.
       </para>
       <para>
-	L'opzione <opt>--by</opt> (dove il parametro
+	L'opzione <opt>by</opt> (dove il parametro
 	<repl>byvar</repl> dev'essere il nome di una variabile
 	discreta), provoca la stampa delle statistiche per
 	sottocampioni definiti dai diversi valori di
@@ -11058,7 +11129,7 @@
 	statistiche relative ai sottocampioni definitia dai due casi
 	<lit>byvar = 0</lit> e <lit>byvar = 1</lit>. Nota: al momento,
 	questa opzione è incompatibile con l'altra opzione
-	<opt>--weight</opt>.
+	<opt>weight</opt>.
       </para>
     </description>
 
@@ -11357,18 +11428,18 @@
     <description>
       <para>
 	Gafica ASCII nuda e cruda. Senza l'opzione
-	<opt>--time-series</opt>, <repl>varlist</repl> deve contenere
+	<opt>time-series</opt>, <repl>varlist</repl> deve contenere
 	almeno due serie, l'ultima delle quali va sull'asse delle
 	ascisse, e verrà prodotto un diagramma a dispersione. In
-	questo caso, si può usare l'opzione <opt>--tall</opt> per
+	questo caso, si può usare l'opzione <opt>tall</opt> per
 	produrre un grafico in cui l'asse <math>y</math> è
 	rappresentato da 40 righe di caratteri (il default è 20
 	righe).
       </para>
       <para>
-	Con l'opzione <opt>--time-series</opt>, viene prodotto un
+	Con l'opzione <opt>time-series</opt>, viene prodotto un
 	grafico per osservazione.  In questo caso, l'opzione
-	<opt>--one-scale</opt> forza l'uso di una scala singola;
+	<opt>one-scale</opt> forza l'uso di una scala singola;
 	altrimenti, se <repl>varlist</repl> contiene più di una serie
 	i dati potrebbero essere riscalati. Ogni riga rappresenta
 	un'osservazione, con i dati disegnati orizzontalmente.
