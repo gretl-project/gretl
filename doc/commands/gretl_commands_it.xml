@@ -10511,6 +10511,10 @@
 	  <effect>interpreta come serie storiche</effect>
         </option>
         <option>
+	  <flag>--special-time-series</flag>
+	  <effect>vedi sotto</effect>
+        </option>	
+        <option>
 	  <flag>--stacked-cross-section</flag>
 	  <effect>interpreta come panel</effect>
         </option>
@@ -10559,6 +10563,20 @@
 	AA/MM/GG o AAAA/MM/GG (oppure semplicemente 1 per i dati non datati).
       </para>
       <para>
+	Alcune periodicità temporali hanno interpretazioni
+	convenzionali; ad esempio, 12 = mensile e 4 = trimestrale. Se
+	questa interpretazione non si applica alle vostre serie
+	storiche,si può usare l'opzione
+	<opt>special-time-series</opt>. In tal caso, gretl
+	si asterrà dall'indicare come (ad esempio) mensile una
+	periodicità pari a 12.
+      </para>
+      <para>
+	Se non viene data alcuna opzione esplicita per indicare la
+	struttura dei dati, il programma tenterà di desumerla dalle
+	informazioni in suo possesso.
+      </para>
+     <para>
         La seconda forma del comando (che richiede l'uso dell'opzione
 	<lit>--panel-vars</lit>) può essere usata per imporre un'interpretazione
         panel dei dati, quando il dataset contiene variabili che identificano in
@@ -10566,11 +10584,58 @@
         ordinato come pila di serie storiche, per valori crescenti della
         variabile che rappresenta le unità, <repl>variabile-unità</repl>.
       </para>
+      <subhead>Opzioni specifiche per dati panel</subhead>
       <para>
-	Se non viene usata nessuna opzione per indicare esplicitamente
-        la struttura dei dati, il programma cercherà di riconoscerla automaticamente
-        a partire dalle informazioni indicate.
+	Le opzioni <opt>panel-time</opt> e <opt>panel-groups</opt>
+	possono essere usate solo con dataset già impostati come panel.
       </para>
+      <para>
+	La funzione di <opt>panel-time</opt> è di stabilire
+	informazioni extra sulla dimesnione temporale del panel. Essa
+	deve essere indicata sul modello della proma forma di 
+	<lit>setobs</lit> (vedi sopra). Ad esempio, il compando
+	seguente indica che la dimensione temporale del panel è
+	trimestrale, e comincia nel primo trimestre 1990.
+      </para>
+      <code>
+	setobs 4 1990:1 --panel-time
+      </code>
+      <para>
+	La funzione di <opt>panel-groups</opt> è di creare una serie
+	con valori stringa contentent i nomi delle unità longitudinal
+	inel panel. (Quest'informazione verrà, eventualmente, usata
+	nei grafici.) Con quest'opzione vanno indicati uno o due
+	argomenti, come segue.
+      </para>
+      <para>
+	Caso uno: l'unico argomento è il nome di una serie a valori
+	stringa. Se il numero di stringhe diverse eguaglia il numero
+	di unità nel panel, allora questi vengono usati come nomi dei
+	gruppi. Se necessario, il contenuto numerico della serie sarà
+	aggiustato per far sì che i valori siano tutti 1 per la prima
+	unità, 2 per la seconda eccetera. Se il numero di valori
+	stringa non corrisponde a quello delle unità, il programma
+	segnala un errore.
+      </para>
+      <para>
+	Caso due: il primo argomento è il nome di una serie e il
+	secondo è una stringa (o il nome di una variabile stringa) con
+	etichette per ciascuna unità. Se la serie non esiste, verrà
+	creata al momento. Nel secondo argomento, i nomi delle unità
+	vanno separati da spazi; se il nome stesso include degli
+	spazi, allora va racchiuso fra <lit>\"</lit>. Se no, il
+	secondo argomento può essere un array di stringhe.
+      </para>
+      <para>
+	Ad esempio, il codice seguente creerò una serie di nome
+	<lit>paese</lit> in cui i nomi <lit>npaesi</lit> sono ripetuti
+	ognuno <math>T</math> volte, dove <math>T</math> è l'ampiezza
+	temporale del panel.
+      </para>
+      <code>
+	string npaesi = sprintf("Francia Germania Italia \"Regno Unito\"")
+	setobs paese npaesi --panel-groups
+      </code>
     </description>
 
     <gui-access>
