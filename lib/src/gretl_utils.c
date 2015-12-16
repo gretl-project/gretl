@@ -401,7 +401,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 
 int gretl_isdiscrete (int t1, int t2, const double *x)
 {
-    int t, n = 0, d = 1;
+    int t, n = 0, disc = 1;
     int allints = 1;
     double r = 0;
 
@@ -411,42 +411,42 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 	}
 	n++;
 	if (!ok_int(x[t])) {
-	    d = 0;
+	    allints = disc = 0;
 	    break;
 	}
 	r = x[t] - floor(x[t]);
-	if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
-	    d = 0;
-	    break;
-	}
-	if (allints && r != 0.0) {
+	if (allints && r != 0) {
 	    allints = 0;
+	}
+	if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
+	    disc = 0;
+	    break;
 	}
     }
 
     if (n == 0) {
-	d = 0;
+	disc = 0;
     } else if (allints) {
 	return 1;
     }
 
-    if (d) {
+    if (disc) {
 	n = few_vals(t1, t2, x, &r);
 	if (n > FEWVALS) {
-	    d = 0;
+	    disc = 0;
 	} else if (r > 0.9 && n > 30) {
 	    /* somewhat arbitrary: but if r (= ratio of distinct
 	       values to number of cases) is "too high", and the
 	       number of observations is not tiny, perhaps we should
 	       not take the var as discrete
 	    */
-	    d = 0;
+	    disc = 0;
 	} else if (n < 5) {
-	    d = 2;
+	    disc = 2;
 	}
     }
 
-    return d;
+    return disc;
 }
 
  /**
