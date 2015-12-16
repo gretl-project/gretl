@@ -426,13 +426,13 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 
     if (n == 0) {
 	disc = 0;
-    } else if (allints) {
-	return 1;
     }
 
     if (disc) {
 	n = few_vals(t1, t2, x, &r);
-	if (n > FEWVALS) {
+	if (allints) {
+	    disc = (n < 7)? 2 : 1;
+	} else if (n > FEWVALS) {
 	    disc = 0;
 	} else if (r > 0.9 && n > 30) {
 	    /* somewhat arbitrary: but if r (= ratio of distinct
