@@ -1802,9 +1802,18 @@ get_discrete_freq (int v, const DATASET *dset,
     if (freq_add_arrays(freq, nv)) {
 	*err = E_ALLOC;
     } else {
+	int allints = 1;
+	
 	for (i=0; i<nv; i++) {
+	    if (allints && ivals[i] != floor(ivals[i])) {
+		allints = 0;
+	    }
 	    freq->midpt[i] = ivals[i];
 	    freq->f[i] = ifreq[i];
+	}
+
+	if (allints) {
+	    freq->discrete = 2;
 	}
     }
 
@@ -1857,7 +1866,7 @@ FreqDist *get_freq (int varno, const DATASET *dset,
 	return get_discrete_freq(varno, dset, opt, err);
     }
 
-    if (gretl_isdiscrete(dset->t1, dset->t2, dset->Z[varno])) {
+    if (gretl_isdiscrete(dset->t1, dset->t2, dset->Z[varno]) > 1) {
 	return get_discrete_freq(varno, dset, opt, err);
     }
 
@@ -2531,7 +2540,7 @@ int crosstab (const int *list, const DATASET *dset,
     for (i=1; i<=nrv; i++) {
 	k = list[i];
 	if (series_is_discrete(dset, k) ||
-	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k])) {
+	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k]) > 1) {
 	    rowvar[j++] = k;
 	} else {
 	    rowvar[0] -= 1;
@@ -2553,7 +2562,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (i=1; i<=ncv; i++) {
 		k = pos + i;
 		if (series_is_discrete(dset, list[k]) ||
-		    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[list[k]])) {
+		    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[list[k]]) > 1) {
 		    colvar[j++] = list[k];
 		} else {
 		    colvar[0] -= 1;

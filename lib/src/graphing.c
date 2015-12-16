@@ -4277,7 +4277,7 @@ static void maybe_set_yrange (FreqDist *freq, double lambda, FILE *fp)
     }	
 }
 
-static double minskip (FreqDist *freq)
+static double discrete_minskip (FreqDist *freq)
 {
     double s, ms = freq->midpt[1] - freq->midpt[0];
     int i;
@@ -4344,7 +4344,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     if (freq->discrete) {
 	endpt = freq->midpt;
-	barwidth = minskip(freq); 
+	barwidth = discrete_minskip(freq); 
 	use_boxes = 0;
     } else {
 	/* equally sized bins, width to be determined */
@@ -4424,6 +4424,13 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	fputs("set nokey\n", fp);
     }
 
+    if (isnan(lambda)) {
+	if (fp != NULL) {
+	    fclose(fp);
+	}
+	return 1;
+    }    
+
     fprintf(fp, "set xlabel '%s'\n", freq->varname);
     if (dist) {
 	fprintf(fp, "set ylabel '%s'\n", _("Density"));
@@ -4431,11 +4438,10 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	fprintf(fp, "set ylabel '%s'\n", _("Relative frequency"));
     }
 
-    if (isnan(lambda)) {
-	if (fp != NULL) {
-	    fclose(fp);
-	}
-	return 1;
+    if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
+	/* few values, all integers: force integer tic marks */
+	fprintf(fp, "set xtics %.0f, 1, %.0f\n", freq->midpt[0],
+		freq->midpt[K-1]);
     }
 
     /* plot instructions */

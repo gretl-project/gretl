@@ -5009,26 +5009,14 @@ int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
 		 double xmin, double xmax, int *dist, int *plot)
 {
-    const char *strs[] = {
-	N_("Number of bins:"),
-	N_("Minimum value, left bin:"),
-	N_("Bin width:")
-    };
-    const char *opts[] = {
-	N_("Show data only"),
-	N_("Test against normal distribution"),
-	N_("Test against gamma distribution")
-    };
     struct freqdist_info finfo;
-    GtkWidget *dialog, *rad;
+    GtkWidget *dialog, *rb;
     GtkWidget *vbox, *hbox;
-    GtkWidget *tmp, *okb, *tbl;
-    GtkAdjustment *adj;
+    GtkWidget *tmp, *okb;
     GSList *group = NULL;
-    double f0min, f0max, f0step;
-    double wmin, wmax, wstep;
-    int i, imax;
-    int ret = GRETL_CANCEL;
+    int show_bin_opts;
+    int show_dist_opts;
+    int i, ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
 	return ret;
@@ -5044,93 +5032,109 @@ int freq_dialog (const char *title, const char *blurb,
     finfo.xmax = xmax;
     finfo.xmin = xmin;
 
+    show_bin_opts = nbins != NULL;
+    show_dist_opts = nbmax > 15;
+
     /* upper label */
     tmp = dialog_blurb_box(blurb);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-    if (nbins == NULL) {
-	goto dist_only;
-    }
+    if (show_bin_opts) {
+	const char *strs[] = {
+	    N_("Number of bins:"),
+	    N_("Minimum value, left bin:"),
+	    N_("Bin width:")
+	};	
+	GtkWidget *tbl;
+	GtkAdjustment *adj;
+	double f0min, f0max, f0step;
+	double wmin, wmax, wstep;
 
-    tbl = gtk_table_new(3, 2, FALSE);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+	tbl = gtk_table_new(3, 2, FALSE);
+	gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+	gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
 
-    *f0 = xmin - 0.5 * (*fwid);
-    if (xmin >= 0.0 && *f0 < 0) {
-	*f0 = 0.0;
-    }
-
-    f0min = xmin - 0.2 * (xmax - xmin);
-    f0max = xmin - 0.01 * (*fwid);
-    f0step = .001; 
-
-    wmin = (xmax - xmin) / nbmax; 
-    wmax = (xmax - xmin) / 3.0; 
-    wstep = 0.001; 
-
-    for (i=0; i<3; i++) {
-	int dig = 3;
-
-	if (i < 2) {
-	    rad = gtk_radio_button_new_with_label(group, _(strs[i]));
-	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rad));
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), rad, 0, 1, i, i+1);
-	    g_object_set_data(G_OBJECT(rad), "snum", GINT_TO_POINTER(i));
-	    g_signal_connect(G_OBJECT(rad), "clicked",
-			     G_CALLBACK(freq_info_control), &finfo);
-	} else {
-	    tmp = gtk_label_new(_(strs[i]));
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+	*f0 = xmin - 0.5 * (*fwid);
+	if (xmin >= 0.0 && *f0 < 0) {
+	    *f0 = 0.0;
 	}
 
-	if (i == 0) {
-	    adj = (GtkAdjustment *) gtk_adjustment_new(*nbins, 3, nbmax, 
-						       2, 2, 0);
-	    dig = 0;
-	} else if (i == 1) {
-	    adj = (GtkAdjustment *) gtk_adjustment_new(*f0, f0min, f0max, 
-						       f0step, 10.0 * f0step, 0);
-	} else {
-	    adj = (GtkAdjustment *) gtk_adjustment_new(*fwid, wmin, wmax, 
-						       wstep, 10.0 * wstep, 0);
-	}
+	f0min = xmin - 0.2 * (xmax - xmin);
+	f0max = xmin - 0.01 * (*fwid);
+	f0step = .001; 
+
+	wmin = (xmax - xmin) / nbmax; 
+	wmax = (xmax - xmin) / 3.0; 
+	wstep = 0.001; 
+
+	for (i=0; i<3; i++) {
+	    int dig = (i == 0)? 0 : 3;
+
+	    if (i < 2) {
+		rb = gtk_radio_button_new_with_label(group, _(strs[i]));
+		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
+		gtk_table_attach_defaults(GTK_TABLE(tbl), rb, 0, 1, i, i+1);
+		g_object_set_data(G_OBJECT(rb), "snum", GINT_TO_POINTER(i));
+		g_signal_connect(G_OBJECT(rb), "clicked",
+				 G_CALLBACK(freq_info_control), &finfo);
+	    } else {
+		tmp = gtk_label_new(_(strs[i]));
+		gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+	    }
+
+	    if (i == 0) {
+		adj = (GtkAdjustment *) gtk_adjustment_new(*nbins, 3, nbmax, 
+							   2, 2, 0);
+	    } else if (i == 1) {
+		adj = (GtkAdjustment *) gtk_adjustment_new(*f0, f0min, f0max, 
+							   f0step, 10.0 * f0step, 0);
+	    } else {
+		adj = (GtkAdjustment *) gtk_adjustment_new(*fwid, wmin, wmax, 
+							   wstep, 10.0 * wstep, 0);
+	    }
 	
-	finfo.spin[i] = gtk_spin_button_new(adj, 1, dig);
-	gtk_entry_set_activates_default(GTK_ENTRY(finfo.spin[i]), TRUE);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), finfo.spin[i], 1, 2, i, i+1);
-	g_object_set_data(G_OBJECT(finfo.spin[i]), "snum",
-			  GINT_TO_POINTER(i));
-	g_signal_connect(G_OBJECT(finfo.spin[i]), "value-changed",
-			 G_CALLBACK(freq_info_set), &finfo);
-	if (i > 0) {
-	    gtk_widget_set_sensitive(finfo.spin[i], FALSE);
+	    finfo.spin[i] = gtk_spin_button_new(adj, 1, dig);
+	    gtk_entry_set_activates_default(GTK_ENTRY(finfo.spin[i]), TRUE);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), finfo.spin[i], 1, 2, i, i+1);
+	    g_object_set_data(G_OBJECT(finfo.spin[i]), "snum",
+			      GINT_TO_POINTER(i));
+	    g_signal_connect(G_OBJECT(finfo.spin[i]), "value-changed",
+			     G_CALLBACK(freq_info_set), &finfo);
+	    if (i > 0) {
+		gtk_widget_set_sensitive(finfo.spin[i], FALSE);
+	    }
+	}
+
+	gtk_container_add(GTK_CONTAINER(vbox), tbl);
+
+	if (show_dist_opts) {
+	    vbox_add_hsep(vbox);
+	    group = NULL;
 	}
     }
 
-    gtk_container_add(GTK_CONTAINER(vbox), tbl);
+    if (show_dist_opts) {
+	/* if var has negative values, don't show Gamma dist option */
+	const char *dist_opts[] = {
+	    N_("Show data only"),
+	    N_("Test against normal distribution"),
+	    N_("Test against gamma distribution")
+	};
+	int imax = (xmin < 0)? 2 : 3;
 
-    vbox_add_hsep(vbox);
-    group = NULL;
-
- dist_only:
-
-    /* if var has negative values, don't show Gamma dist option */
-    imax = (xmin < 0)? 2 : 3;
-
-    for (i=0; i<imax; i++) {
-	hbox = gtk_hbox_new(FALSE, 5);
-	rad = gtk_radio_button_new_with_label(group, _(opts[i]));
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rad));
-	g_object_set_data(G_OBJECT(rad), "fopt", GINT_TO_POINTER(i));
-	g_signal_connect(G_OBJECT(rad), "clicked",
-			 G_CALLBACK(freq_set_dist), dist);
-	gtk_container_add(GTK_CONTAINER(hbox), rad);
-	gtk_container_add(GTK_CONTAINER(vbox), hbox);
+	for (i=0; i<imax; i++) {
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    rb = gtk_radio_button_new_with_label(group, _(dist_opts[i]));
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
+	    g_object_set_data(G_OBJECT(rb), "fopt", GINT_TO_POINTER(i));
+	    g_signal_connect(G_OBJECT(rb), "clicked",
+			     G_CALLBACK(freq_set_dist), dist);
+	    gtk_container_add(GTK_CONTAINER(hbox), rb);
+	    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+	}
     }
 
     /* show plot option */
-
     vbox_add_hsep(vbox);
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_check_button_new_with_label(_("show plot"));

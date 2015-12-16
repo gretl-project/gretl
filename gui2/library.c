@@ -5151,7 +5151,7 @@ void do_freq_dist (void)
     if (gretl_isdummy(dataset->t1, dataset->t2, y)) {
 	nbins = 3;
     } else if (series_is_discrete(dataset, v) ||
-	       gretl_isdiscrete(dataset->t1, dataset->t2, y)) {
+	       gretl_isdiscrete(dataset->t1, dataset->t2, y) > 1) {
 	discrete = 1;
     }
 
@@ -5183,7 +5183,7 @@ void do_freq_dist (void)
 
 	if (discrete) {
 	    /* minimal dialog */
-	    resp = freq_dialog(tmp, bintxt, NULL, 0, NULL, NULL, 
+	    resp = freq_dialog(tmp, bintxt, NULL, n, NULL, NULL, 
 			       xmin, xmax, &dist, &plot);
 	} else {
 	    /* full dialog */
@@ -5873,9 +5873,6 @@ static int *get_discrete_list (void)
 	if (gretl_isdummy(dataset->t1, dataset->t2, Z[i])) {
 	    continue;
 	} else if (series_is_discrete(dataset, i)) {
-	    dlist = gretl_list_append_term(&dlist, i);
-	} else if (0 && gretl_isdiscrete(dataset->t1, dataset->t2, Z[i])) {
-	    /* FIXME? */
 	    dlist = gretl_list_append_term(&dlist, i);
 	}
     }

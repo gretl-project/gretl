@@ -394,8 +394,8 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
  * is > 32; else 1 if the number of distinct values is <= 32; else 2 if 
  * the number of distinct values is <= 4.  A return of 1 is supposed
  * to indicate that it's "reasonable" to treat @x as discrete, while
- * a return of 2 indicates that it's probably ureasonable _not_ to
- * treat @x as discrete, for the purpose of drawing up a frequency
+ * a return of 2 indicates that it's probably unreasonable _not_ to
+ * treat @x as discrete for the purpose of drawing up a frequency
  * distribution.
  */
 
@@ -438,10 +438,10 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 	    /* somewhat arbitrary: but if r (= ratio of distinct
 	       values to number of cases) is "too high", and the
 	       number of observations is not tiny, perhaps we should
-	       not take the var as discrete
+	       not automatically take the var as discrete
 	    */
 	    disc = 0;
-	} else if (n < 5) {
+	} else if (n < 7) {
 	    disc = 2;
 	}
     }
