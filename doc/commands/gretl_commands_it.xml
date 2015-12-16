@@ -415,7 +415,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Other linear models/ANOVA</menu-path>
+      <menu-path>/Modello/Altri modelli lineari/ANOVA</menu-path>
     </gui-access>
 
   </command>
@@ -4211,10 +4211,11 @@
       </para>
 
       <para>
-        Quando una formula produce una serie o un vettore come risultato,
-        l'intervallo su cui essi sono definiti dipende dall'impostazione attuale
-        del campione. È quindi possibile definire una serie a pezzi, alternando
-        l'uso dei comandi <lit>smpl</lit> e <lit>genr</lit>.
+        Quando una formula produce come risultato una serie,
+        l'intervallo su cui essi sono definiti dipende
+        dall'impostazione attuale del campione. È quindi possibile
+        definire una serie a pezzi, alternando l'uso dei comandi
+        <lit>smpl</lit> e <lit>genr</lit>.
       </para>
 
       <para>
@@ -4302,23 +4303,23 @@
       </para>
 
       <para>
-        La variabile speciale <lit>t</lit> serve da indice per le osservazioni
-        (<lit>obs</lit> è un sinonimo).  Ad esempio, <lit>genr dum =
-        (t=15)</lit> crea una variabile dummy che vale 1 per l'osservazione 15 e
-        0 altrove. È anche possibile usare questa variabile per selezionare
-        alcune osservazioni particolari secondo la data o il nome. Ad esempio
-	<lit>genr d = (obs&gt;1986:4)</lit>, <lit>genr d = (obs&gt;"2008/04/01")</lit>,
-        <lit>genr d = (obs="CA")</lit>.  Quando si usa una data o un nome
-        dell'osservazione, questi vanno racchiusi tra virgolette doppie, mentre
-        non è strettamente necessario farlo per le date trimestrali e mensili.
-      </para>
-
-      <para>
-	Nota: quando si usa <lit>t</lit> e <lit>obs</lit> con serie storiche
-        annuali, il valore corrisponde sempre all'anno dell'osservazione. Quindi
-        se si hanno dati annuali che iniziano nel 1970, l'osservazione per il
-        1980 corrisponde a <lit>t=1980</lit>, non a <lit>t=10</lit>. Con dati
-        trimestrali o mensili, invece, <lit>t=10</lit> corrisponde alla decima osservazione.
+        La variabile speciale <lit>obs</lit> serve da indice per le
+        osservazioni.  Ad esempio, <lit>genr dum = (obs=15)</lit> crea
+        una variabile dummy che vale 1 per l'osservazione 15 e 0
+        altrove. È anche possibile usare questa variabile per
+        selezionare alcune osservazioni particolari secondo la data o
+        il nome. Ad esempio <lit>genr d = (obs&gt;1986:4)</lit>,
+        <lit>genr d = (obs&gt;"2008/04/01")</lit>, <lit>genr d =
+        (obs="CA")</lit>.  Quando si usano in questo contesto date
+        giornaliere o etichette per le osservazioni, bisogna
+        racchiuderle fra virgolette.  Questo non è necessario per date
+	trimestrali o annuali. Si noti che, per serie storiche
+	annuali, l'anno non è sintatticmante distiguibile da un
+	sempilce intero; per cui, per confrontare un'osservazione con
+	<lit>obs</lit> per anno, bisogna usare la funzione
+	<lit>obsnum</lit> per convertire l'anno in un numero
+	progressivo, come ad esempio in in <lit>genr d =
+        (obs&gt;obsnum(1986))</lit>.
       </para>
 
       <para>
@@ -4340,19 +4341,6 @@
 	<lit>genr x[3] = 30</lit> o <lit>genr x[1950:04] =
 	303.7</lit>.
       </para>
-
-      <para>
-        Ecco un esempio di utilizzo delle variabili dummy: si supponga che
-        <lit>x</lit> abbia valori 1, 2, o 3 e si desiderino tre variabili dummy,
-        <lit>d1</lit> = 1 se <lit>x</lit> = 1, e 0 altrove, <lit>d2</lit> = 1 se
-        <lit>x</lit> = 2 e così via. Per crearle, basta usare i comandi:
-      </para>
-
-      <code>
-	    genr d1 = (x=1)
-	    genr d2 = (x=2)
-	    genr d3 = (x=3)
-      </code>
 
       <table id="tab-genr" title="Esempi di utilizzo del comando genr"
 	lhead="Formula" rhead="Commento"
@@ -5630,7 +5618,7 @@
       <para>
 	Se a questo comando viene dato il nome di un pacchetto senza
 	opzioni (come nei primi due esempi), il pacchetto stesso verrà
-	scaricatodalò server di gretl e installato in locale. In
+	scaricato dal server di gretl e installato in locale. In
 	questo caso, indicare l'estensione è superfluo.
       </para>
       <para>
