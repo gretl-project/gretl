@@ -191,18 +191,20 @@ void switch_uservar_hash (int level)
 	if (uvh1 != NULL) {
 	    g_hash_table_remove_all(uvh1);
 	}
+    } else {
+	uvars_hash = uvh1;
     }
 }
 
 static void uvar_hash_destroy (void)
 {
-#if HDEBUG	
+#if HDEBUG
     fprintf(stderr, "uvar_hash_destroy (uvh0=%p, uvh1=%p)\n",
 	    (void *) uvh0, (void *) uvh1);
 #endif
     
     if (uvh0 != NULL) {
-#if HDEBUG	
+#if HDEBUG
 	fprintf(stderr, " destroying uvh0\n");
 #endif
 	g_hash_table_destroy(uvh0);
@@ -210,7 +212,7 @@ static void uvar_hash_destroy (void)
     }
 
     if (uvh1 != NULL) {
-#if HDEBUG	
+#if HDEBUG
 	fprintf(stderr, " destroying uvh1\n");
 #endif	
 	g_hash_table_destroy(uvh1);
@@ -227,6 +229,10 @@ static void user_var_destroy (user_var *u)
 {
     int free_val = 1;
 
+#if HDEBUG
+    fprintf(stderr, "user_var_destroy: '%s' (level %d)\n", u->name, u->level);
+#endif
+
     if (uvars_hash != NULL) {
 # if HDEBUG
 	if (g_hash_table_remove(uvars_hash, u->name)) {
@@ -235,7 +241,7 @@ static void user_var_destroy (user_var *u)
 	}
 # else
 	g_hash_table_remove(uvars_hash, u->name);
-# endif	
+# endif
     }
 
     if (var_is_shell(u)) {
@@ -308,7 +314,8 @@ static int real_user_var_add (const char *name,
     */
 
 #if UVDEBUG
-    fprintf(stderr, "real_user_var_add: '%s', err = %d\n", name, err);
+    fprintf(stderr, "real_user_var_add: '%s', level %d, err = %d\n",
+	    name, u->level, err);
 #endif
 
     if (!err) {
@@ -495,10 +502,10 @@ user_var *get_user_var_of_type_by_name (const char *name,
 
 #if HDEBUG > 1
     int hfound = 0;
-    
+
     fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d, imin=%d)\n",
 	    name, gretl_type_get_name(type), n_vars, d, imin);
-# if HDEBUG > 2    
+# if HDEBUG > 2
     fputs("uvars list:\n", stderr);
     for (i=0; i<n_vars; i++) {
 	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i, 
@@ -584,7 +591,8 @@ user_var *get_user_var_of_type_by_name (const char *name,
 
 #if HDEBUG > 1
     if (hfound)
-	fprintf(stderr, "found at pos %d via hash\n\n", uvar_index(u));
+	fprintf(stderr, "found at pos %d via hash (%s)\n\n", uvar_index(u),
+		uvars_hash == uvh1 ? "uvh1" : "uvh0");
     else if (u != NULL)
 	fprintf(stderr, "found at pos %d via regular search\n\n", uvar_index(u));
     else 
@@ -1250,7 +1258,7 @@ static int real_destroy_user_vars_at_level (int level, int type,
     int i, j, nv = imin;
     int err = 0;
 
-#if HDEBUG    
+#if HDEBUG
     fprintf(stderr, "real_destroy_user_vars_at_level: level %d, "
 	    "type %d (%s)\n", level, type, gretl_type_get_name(type));
 #endif

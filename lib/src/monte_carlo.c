@@ -1307,7 +1307,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
     } else {
 	loop = gretl_loop_new(inloop);
 	*nested = 1;
-    } 
+    }
 
     if (loop == NULL) {
 	gretl_errmsg_set(_("Out of memory!"));

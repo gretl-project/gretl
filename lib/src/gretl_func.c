@@ -7153,6 +7153,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	    call->fun->name, g_list_length(callstack));
 #endif
 
+    switch_uservar_hash(fn_executing);
+
     record_obs_info(&call->obs, dset);
 
     if (gretl_debugging_on() || call->fun->debug) {
