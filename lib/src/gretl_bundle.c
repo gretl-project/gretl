@@ -1884,6 +1884,141 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     return b;
 }
 
+gretl_bundle *member_from_model_bundle (MODEL *pmod,
+					const char *key,
+					DATASET *dset,
+					int *err)
+{
+    gretl_bundle *b = NULL;
+    gretl_matrix *m;
+    double *x;
+    double val;
+    int *list;
+    const char *s;
+    const char *bkey;
+    int i, t, berr;
+    int done = 0;
+
+    if (pmod == NULL) {
+	/* get the "last model" */
+	GretlObjType type = 0;
+	void *p = get_last_model(&type);
+
+	if (p == NULL || type != GRETL_OBJ_EQN) {
+	    *err = E_DATA;
+	    return NULL;
+	} else {
+	    pmod = p;
+	}
+    }
+
+    x = malloc(dset->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	free(x);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=M_ESS; i<M_SCALAR_MAX && !done && !*err; i++) {
+	bkey = mvarname(i) + 1;
+	if (!strcmp(key, bkey)) {
+	    berr = 0;
+	    val = gretl_model_get_scalar(pmod, i, dset, &berr);
+	    if (!berr) {
+		*err = gretl_bundle_set_scalar(b, key, val);
+	    }
+	    done = 1;
+	}
+    }
+
+    for (i=M_SCALAR_MAX+1; i<M_SERIES_MAX && !done && !*err; i++) {
+	key = mvarname(i) + 1;
+	if (!strcmp(key, bkey)) {
+	    for (t=0; t<dset->n; t++) {
+		x[t] = NADBL;
+	    }
+	    berr = gretl_model_get_series(x, pmod, dset, i);
+	    if (!berr) {
+		*err = gretl_bundle_set_series(b, key, x, dset->n);
+	    }
+	    done = 1;
+	}	
+    }    
+
+    for (i=M_SERIES_MAX+1; i<M_MATRIX_MAX && !*err; i++) {
+	key = mvarname(i) + 1;
+	if (!strcmp(key, bkey)) {
+	    berr = 0;
+	    m = gretl_model_get_matrix(pmod, i, &berr);
+	    if (!berr) {
+		*err = gretl_bundle_donate_data(b, key, m,
+						GRETL_TYPE_MATRIX,
+						0);
+	    }
+	    done = 1;
+	}
+    }
+
+    for (i=M_MBUILD_MAX+1; i<M_LIST_MAX && !done && !*err; i++) {
+	key = mvarname(i) + 1;
+	if (!strcmp(key, bkey)) {
+	    list = NULL;
+	    if (i == M_XLIST) {
+		list = gretl_model_get_x_list(pmod);
+	    } else if (i == M_YLIST) {
+		list = gretl_model_get_y_list(pmod);
+	    }
+	    if (list != NULL) {
+		/* convert list to matrix for bundling */
+		m = matrix_from_list(list);
+		if (m != NULL) {
+		    *err = gretl_bundle_donate_data(b, key, m,
+						    GRETL_TYPE_MATRIX,
+						    0);
+		}
+		free(list);
+	    }
+	    done = 1;
+	}
+    }
+
+    for (i=M_LIST_MAX+1; i<M_STR_MAX && !*err; i++) {
+	key = mvarname(i) + 1;
+	if (!strcmp(key, bkey)) {
+	    s = NULL;
+	    if (i == M_DEPVAR) {
+		s = gretl_model_get_depvar_name(pmod, dset);
+	    } else if (i == M_COMMAND) {
+		s = gretl_command_word(pmod->ci);
+	    }
+	    if (s != NULL && *s != '\0') {
+		*err = gretl_bundle_set_string(b, key, s);
+	    }
+	    done = 1;
+	}	    
+    }
+
+    if (!*err) {
+	*err = bundlize_model_data_scalars(pmod, b);
+    }
+
+    free(x);
+
+    /* don't return a broken bundle */
+    if (*err && b != NULL) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }
+
+    return b;
+}
+
 void gretl_bundle_cleanup (void)
 {
     if (sysinfo_bundle != NULL) {

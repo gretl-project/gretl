@@ -46,11 +46,11 @@ struct str_table {
 };
 
 struct str_table consts[] = {
-    { CONST_PI,    "$pi" },
-    { CONST_NA,    "NA" },
-    { CONST_INF,   "$inf" },
-    { CONST_WIN32, "WIN32" },
-    { CONST_EPS,   "$macheps" },
+    { CONST_PI,       "$pi" },
+    { CONST_NA,       "NA" },
+    { CONST_INF,      "$inf" },
+    { CONST_WIN32,    "WIN32" },
+    { CONST_EPS,      "$macheps" },
     { CONST_HAVE_MPI, "$havempi" },
     { CONST_MPI_RANK, "$mpirank" },
     { CONST_MPI_SIZE, "$mpisize" },
@@ -1236,6 +1236,10 @@ static void word_check_next_char (parser *p)
 	    p->sym = LISTVAR;
 	} else if (p->sym == BUNDLE) {
 	    p->sym = BMEMB;
+	} else if (p->idnum == M_MODEL) {
+	    p->sym = BMEMB;
+	    p->idstr = gretl_strdup("$model");
+	    p->uval = NULL;
 	} else {
 	    p->err = E_PARSE;
 	}

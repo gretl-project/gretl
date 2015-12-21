@@ -7079,8 +7079,9 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", l->vname, key);
 #endif
 
-    if (!strcmp(l->vname, "$")) {
+    if (!strcmp(l->vname, "$") || !strcmp(l->vname, "$model")) {
 	/* special: treat the 'last model' as a bundle */
+	/* FIXME include regular accessors here */
 	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
 	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
