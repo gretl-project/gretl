@@ -73,6 +73,7 @@ struct panelmod_t_ {
     int Fdfn;             /* numerator df, F for differing intercepts */
     double Fdfd;          /* denominator df, F for differing intercepts */
     double theta;         /* quasi-demeaning coefficient */
+    double theta_bar;     /* mean of theta_i (unbalanced case) */
     double F;             /* joint significance of differing unit intercepts */
     double BP;            /* Breusch-Pagan test statistic */
     double H;             /* Hausman test statistic */
@@ -165,6 +166,7 @@ static void panelmod_init (panelmod_t *pan)
     pan->balanced = 1;
     pan->nbeta = 0;
     pan->theta = NADBL;
+    pan->theta_bar = NADBL;
 
     pan->F = NADBL;
     pan->Fdfn = 0;
@@ -1009,7 +1011,7 @@ static void print_panel_coeff (const MODEL *pmod,
 static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {
     pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->s2b);
+    pprintf(prn, " between = %g\n", pan->s2v);
     pprintf(prn, " within = %g\n", pan->s2e);
 
     if (pan->balanced) {
@@ -1230,6 +1232,7 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
     */    
 
     s = u = 0;
+    pan->theta_bar = 0.0;
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
@@ -1244,6 +1247,8 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
 	} else {
 	    theta_i = pan->theta;
 	}
+
+	pan->theta_bar += theta_i;
 
 	for (t=0; t<pan->T && got<Ti; t++) {
 	    bigt = panel_index(i, t);
@@ -1422,14 +1427,19 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
     bmod = lsq(blist, gset, OLS, bopt);
 
     if (bmod.errcode == 0) {
-	pan->s2b = bmod.sigma * bmod.sigma;
+	pan->s2b = bmod.ess / (bmod.nobs - bmod.ncoeff);
     } else {
 	err = bmod.errcode;
-#if PDEBUG
-	fprintf(stderr, "error %d in between_variance\n", err);
-#endif
     }
 
+#if PDEBUG
+    if (err) {
+	fprintf(stderr, "error %d in between_variance\n", err);
+    } else {
+	fprintf(stderr, "pan->s2b = %g\n", pan->s2b);
+    }
+#endif
+    
     if (!err && (pan->opt & OPT_B)) {
 	err = save_between_model(&bmod, blist, gset, pan);
     } else {
@@ -2422,11 +2432,14 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
     } else {
 	/* random effects */
 	pmod->opt |= OPT_U;
-	gretl_model_set_double(pmod, "within-variance", pan->s2e);
-	gretl_model_set_double(pmod, "between-variance", pan->s2b);
+	gretl_model_set_double(pmod, "s2v", pan->s2v);
+	gretl_model_set_double(pmod, "s2e", pan->s2e);
 	if (pan->balanced) {
-	    gretl_model_set_double(pmod, "gls-theta", pan->theta);
-	}
+	    gretl_model_set_double(pmod, "theta", pan->theta);
+	} else if (!na(pan->theta_bar)) {
+	    pan->theta_bar /= pan->effn;
+	    gretl_model_set_double(pmod, "theta_bar", pan->theta_bar);
+	} 
 	gretl_model_add_panel_varnames(pmod, dset, NULL);
 	fix_panel_hatvars(pmod, pan, Z);
 	fix_gls_stats(pmod, pan);
@@ -2623,7 +2636,7 @@ static int random_effects (panelmod_t *pan,
     pan->theta = 1.0 - sqrt(pan->s2e / (pan->s2e + pan->Tmax * pan->s2v));
 
 #if PDEBUG
-    fprintf(stderr, "s_v = %.8g, s_e = %.8g\n", sqrt(pan->s2v), sqrt(pan->s2e));
+    fprintf(stderr, "pan->s2v = %.8g, pan->s2e = %.8g\n", pan->s2v, pan->s2e);
     fprintf(stderr, "random_effects theta = %g\n", pan->theta);
 #endif
 
@@ -2661,6 +2674,12 @@ static int random_effects (panelmod_t *pan,
 	    print_re_model_top(pan, prn);
 	}
 
+#if PDEBUG
+	for (i=0; i<20 && i<remod.nobs; i++) {
+	    fprintf(stderr, "remod uhat[%d] = %g\n", i+1, remod.uhat[i]);
+	}
+#endif
+	
 	k = 0;
 	for (i=0; i<remod.ncoeff; i++) {
 	    int vi = pan->pooled->list[i+2];

@@ -660,22 +660,25 @@ static void maybe_print_hessian_warning (const MODEL *pmod, PRN *prn)
 
 static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 {
-    double ws2 = gretl_model_get_double(pmod, "within-variance");
-    double bs2 = gretl_model_get_double(pmod, "between-variance");
-    double theta = gretl_model_get_double(pmod, "gls-theta");
+    double s2v = gretl_model_get_double(pmod, "s2v");
+    double s2e = gretl_model_get_double(pmod, "s2e");
+    double theta = gretl_model_get_double(pmod, "theta");
+    double theta_bar = gretl_model_get_double(pmod, "theta_bar");
     double rsq = gretl_model_get_double(pmod, "corr-rsq");
 
-    if (na(ws2) || na(bs2)) {
+    if (na(s2v) || na(s2e)) {
 	return;
     }
 
     ensure_vsep(prn);
 
     if (plain_format(prn)) {
-	pprintf(prn, "%s = %g\n", _("'Within' variance"), ws2);
-	pprintf(prn, "%s = %g\n", _("'Between' variance"), bs2);
+	pprintf(prn, "%s = %g\n", _("'Between' variance"), s2v);
+	pprintf(prn, "%s = %g\n", _("'Within' variance"), s2e);
 	if (!na(theta)) {
 	    pprintf(prn, "%s = %g\n", _("theta used for quasi-demeaning"), theta);
+	} else if (!na(theta_bar)) {
+	    pprintf(prn, "%s = %g\n", _("mean theta"), theta_bar);
 	}
 	if (!na(rsq)) {
 	    pprintf(prn, "corr(y,yhat)^2 = %g\n", rsq);
@@ -684,29 +687,37 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char xstr[32];
 
-	tex_sprint_double(ws2, xstr);
+	tex_sprint_double(s2v, xstr);
+	pprintf(prn, "$\\hat{\\sigma}^2_v$ = %s \\\\\n", xstr);
+	tex_sprint_double(s2e, xstr);
 	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ = %s \\\\\n", xstr);
-	tex_sprint_double(bs2, xstr);
-	pprintf(prn, "$\\hat{\\sigma}^2_u$ = %s \\\\\n", xstr);
 	if (!na(theta)) {
 	    tex_sprint_double(theta, xstr);
 	    pprintf(prn, "$\\theta$ = %s \\\\\n", xstr);
-	}
+	} else if (!na(theta_bar)) {
+	    tex_sprint_double(theta_bar, xstr);
+	    pprintf(prn, "$\\bar{\\theta}$ = %s \\\\\n", xstr);
+	}	    
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g", A_("'Within' variance"), ws2);
-	pprintf(prn, RTFTAB "%s = %g", A_("'Between' variance"), bs2);
+	pprintf(prn, RTFTAB "%s = %g", A_("'Between' variance"), s2v);
+	pprintf(prn, RTFTAB "%s = %g", A_("'Within' variance"), s2e);
 	if (!na(theta)) {
 	    pprintf(prn, RTFTAB "%s = %g", A_("theta used for quasi-demeaning"), theta);
+	} else if (!na(theta_bar)) {
+	    pprintf(prn, RTFTAB "%s = %g", A_("mean theta"), theta_bar);
 	}
     } else if (csv_format(prn)) {
 	char d = prn_delim(prn);
 
-	pprintf(prn, "\"%s\"%c%.15g\n", A_("'Within' variance"), d, ws2);
-	pprintf(prn, "\"%s\"%c%.15g\n", A_("'Between' variance"), d, bs2);
+	pprintf(prn, "\"%s\"%c%.15g\n", A_("'Between' variance"), d, s2v);
+	pprintf(prn, "\"%s\"%c%.15g\n", A_("'Within' variance"), d, s2e);
 	if (!na(theta)) {
 	    pprintf(prn, "\"%s\"%c%.15g\n", A_("theta used for quasi-demeaning"), 
 		    d, theta);
-	}
+	} else if (!na(theta_bar)) {
+	    pprintf(prn, "\"%s\"%c%.15g\n", A_("mean theta"), 
+		    d, theta_bar);
+	}	    
     }	
 }
 
