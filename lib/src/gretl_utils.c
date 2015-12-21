@@ -2615,15 +2615,19 @@ enum {
     BLAS_VECLIB
 };
 
+#if !defined(OS_OSX)
+
+static char OB_core[32];
+static char OB_parallel[12];
+
+#endif
+
 #if !defined(WIN32) && !defined(OS_OSX)
 
 #include <dlfcn.h>
 
 static char *(*OB_get_corename) (void);
 static int (*OB_get_parallel) (void);
-
-static char OB_core[32];
-static char OB_parallel[12];
 
 static void register_openblas_details (void)
 {
@@ -2768,6 +2772,9 @@ static int detect_blas_variant (void)
 #else
 
 # if defined(WIN32) && defined(OPENBLAS_BUILD)
+
+char *openblas_get_corename (void);
+int openblas_get_parallel (void);
 
 int get_openblas_details (char **s1, char **s2)
 {
