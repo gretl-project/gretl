@@ -4573,9 +4573,9 @@ void print_summary (const Summary *summ,
 	/* the "simple" option */
 	const char *h[] = {
 	    N_("Mean"),
+	    N_("Std. Dev."),
 	    N_("Minimum"),
 	    N_("Maximum"),
-	    N_("Std. Dev.")
 	};
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
@@ -4588,9 +4588,9 @@ void print_summary (const Summary *summ,
 	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 	    printf15(summ->mean[i], prn);
+	    printf15(summ->sd[i], prn);
 	    printf15(summ->low[i], prn);
 	    printf15(summ->high[i], prn);
-	    printf15(summ->sd[i], prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
