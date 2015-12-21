@@ -2617,6 +2617,16 @@ enum {
 
 #if !defined(WIN32) && !defined(OS_OSX)
 
+#if 0
+
+/* get the CPU core name */
+char *openblas_get_corename(void);
+
+/* get the parallelization type used */
+int openblas_get_parallel(void);
+
+#endif
+
 static int real_detect_blas (const char *s)
 {
     char found[5] = "nnnn";
@@ -2669,6 +2679,13 @@ static int real_detect_blas (const char *s)
     } else {
 	fputs("detect blas: confused, found too many blas libs!\n", stderr);
     }
+
+#if 0    
+    if (ret == BLAS_OPENBLAS) {
+	fprintf(stderr, "openblas core: %s\n", openblas_get_corename());
+	fprintf(stderr, "openblas parallel: %d\n", openblas_get_parallel());
+    }
+#endif    
 
     return ret;
 }
