@@ -715,7 +715,7 @@ const char *dvarname (int t)
     return "unknown";
 }
 
-static int mvar_lookup (const char *s)
+int mvar_lookup (const char *s)
 {
     int i;
 

@@ -685,6 +685,7 @@ const char *dvarname (int t);
 const char *mvarname (int t);
 const char *dumname (int t);
 int is_gretl_accessor (const char *s);
+int mvar_lookup (const char *s);
 
 /* handling declarations of variables */
 int check_declarations (char ***pS, parser *p);

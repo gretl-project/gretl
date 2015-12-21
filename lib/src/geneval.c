@@ -128,6 +128,7 @@ static int node_is_true (NODE *n, parser *p);
 static gretl_matrix *list_to_matrix (const int *list, int *err);
 static gretl_matrix *series_to_matrix (const double *x, 
 				       parser *p);
+static NODE *object_var_node (NODE *t, parser *p);
 
 static const char *typestr (int t)
 {
@@ -7062,6 +7063,29 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
     return m;
 }
 
+static NODE *mvar_from_bundle (const char *key, parser *p)
+{
+    NODE *ret = NULL;
+    gchar *dkey;
+    int mv;
+
+    dkey = g_strdup_printf("$%s", key);
+
+    if ((mv = mvar_lookup(dkey)) > 0) {
+	/* OK: @key (with dollar-sign prepended) is a
+	   regular model-related accessor
+	*/
+	NODE tmp = {MVAR, 0, 0, NULL, {0}};
+
+	tmp.v.idnum = mv;
+	ret = object_var_node(&tmp, p);
+    }
+
+    g_free(dkey);
+
+    return ret;
+}
+
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content. 
@@ -7080,9 +7104,18 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 #endif
 
     if (!strcmp(l->vname, "$") || !strcmp(l->vname, "$model")) {
-	/* special: treat the 'last model' as a bundle */
-	/* FIXME include regular accessors here */
-	val = last_model_get_data(key, &type, &size, &p->err);
+	/* Treating the 'last model' as a bundle: we'll first
+	   try for a regular model-related accessor then,
+	   unless we already hit an error, for a "special" 
+	   (a named item of model data that's not represented
+	   by a regular accessor).
+	*/
+	ret = mvar_from_bundle(key, p);
+	if (ret != NULL || p->err) {
+	    return ret;
+	} else {
+	    val = last_model_get_data(key, &type, &size, &p->err);
+	}
     } else {
 	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
     }
