@@ -33,6 +33,10 @@
 #define UVDEBUG 0
 #define HDEBUG 0
 
+#if HDEBUG && defined(_OPENMP)
+# include <omp.h>
+#endif
+
 #define LEVEL_AUTO -1
 #define LEV_PRIVATE -1
 
@@ -186,6 +190,11 @@ static int previous_d = -1;    /* record of previous "function depth" */
 
 void switch_uservar_hash (int level)
 {
+#if HDEBUG && defined(_OPENMP)
+    fprintf(stderr, "switch_uservar_hash %d: nthreads = %d\n",
+	    level, omp_get_num_threads());
+#endif
+
     if (level == 0) {
 	uvars_hash = uvh0;
 	if (uvh1 != NULL) {
@@ -202,7 +211,7 @@ static void uvar_hash_destroy (void)
     fprintf(stderr, "uvar_hash_destroy (uvh0=%p, uvh1=%p)\n",
 	    (void *) uvh0, (void *) uvh1);
 #endif
-    
+
     if (uvh0 != NULL) {
 #if HDEBUG
 	fprintf(stderr, " destroying uvh0\n");
