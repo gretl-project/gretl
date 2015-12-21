@@ -96,11 +96,11 @@ ols y x du_*
 The $\hat{\alpha}_i$ estimates are not printed as part of the standard
 model output in gretl (there may be a large number of these, and
 typically they are not of much inherent interest).  However you can
-retrieve them after estimation of the fixed effects model if you
-wish.  In the graphical interface, go to the ``Save'' menu in the
-model window and select ``per-unit constants''.  In command-line mode,
-you can do \texttt{genr} \textsl{newname} = \dollar{ahat}, where
-\textsl{newname} is the name you want to give the series. 
+retrieve them after estimation of the fixed effects model if you wish.
+In the graphical interface, go to the ``Save'' menu in the model
+window and select ``per-unit constants''.  In command-line mode, you
+can do \texttt{series} \textsl{newname} = \dollar{ahat}, where
+\textsl{newname} is the name you want to give the series.
 
 For the \textsl{random effects} model we write $u_{it} = v_i +
 \varepsilon_{it}$, so the model becomes
@@ -434,8 +434,84 @@ from their per-unit means. In this case, the relevant measure of $R^2$
 is the so-called ``within'' $R^2$; this variant is printed by gretl
 for fixed-effects model in place of the adjusted $R^2$ (it being
 unclear in this case what exactly the ``adjustment'' should amount to
-anyway). 
+anyway).
 
+\subsection{Residuals in the fixed and random effect models}
+\label{panel-uhat}
+
+After estimation of most kinds of models in gretl, you can retrieve
+a series containing the residuals using the \dollar{uhat} accessor.
+This is true of the fixed and random effects models, but the exact
+meaning of gretl's \dollar{uhat} in these cases requires a little
+explanation.
+
+Consider first the fixed effects model:
+\[
+y_{it} = X_{it}\beta + \alpha_i + \varepsilon_{it}
+\]
+In this model gretl takes the ``fitted value'' (\dollar{yhat}) to be
+$\hat{\alpha}_i + X_{it}\hat{\beta}$, and the residual (\dollar{uhat})
+to be $y_{it}$ minus this fitted value. This makes sense because the
+fixed effects (the $\alpha_i$ terms) are taken as parameters to be
+estimated. However, it can be argued that the fixed effects are not
+really ``explanatory'' and if one defines the residual as the observed
+$y_{it}$ value minus its ``explained'' component one might prefer to
+see just $y_{it} - X_{it}\hat{\beta}$. You can get this after
+fixed-effects estimation as follows:
+%
+\begin{code}
+series ue_fe = $uhat + $ahat - $coeff[1]
+\end{code}
+%
+where \dollar{ahat} gives the unit-specific intercept (as it would be
+calculated if one included all
+$N$ unit dummies and omitted a common
+$y$-intercept), and \verb|$coeff[1]| gives the ``global''
+$y$-intercept.\footnote{For anyone used to Stata, gretl's
+  fixed-effects \dollar{uhat} corresponds to what you get from Stata's
+  ``\texttt{predict, e}'' after \texttt{xtreg}, while the second
+  variant corresponds to Stata's ``\texttt{predict, ue}''.}
+
+Now consider the random-effects model:
+\[
+y_{it} = X_{it}\beta + v_i + \varepsilon_{it}
+\]
+In this case gretl considers the error term to be
+$v_i + \varepsilon_{it}$ (since $v_i$ is conceived as a random
+drawing) and the \dollar{uhat} series is an estimate of this, namely
+\[
+y_{it} - X_{it}\hat{\beta}
+\]
+What if you want an estimate of just $v_i$ (or just
+$\varepsilon_{it}$) in this case? This poses a signal-extraction
+problem: given the composite residual, how to recover an estimate of
+its components? The solution is to ascribe to the individual effect,
+$\hat{v}_i$, a suitable fraction of the mean residual per individual,
+$\bar{\hat{u}}_i = \sum_{t=1}^{T_i} \hat{u}_{it}$. The ``suitable
+fraction'' is the proportion of the variance of the variance of
+$\bar{u}_i$ that is due to $v_i$, namely
+\[
+\frac{\sigma^2_v}{\sigma^2_v + \sigma^2_{\varepsilon}/T_i} =
+ 1 - (1-\theta_i)^2
+\]
+
+After random effects estimation in gretl you can construct a series
+containing the $\hat{v}_i$s as follows:
+%
+\begin{code}
+# case 1: balanced panel
+scalar theta = $["theta"]
+series vhat = (1 - (1 - theta)^2) * pmean($uhat)
+
+# case 2: unbalanced, Ti varies by individual
+scalar s2v = $["s2v"]
+scalar s2e = $["s2e"]
+series frac = s2v / (s2v + s2e/pnobs($uhat))
+series vhat = frac * pmean($uhat)
+\end{code}
+%
+Having found \texttt{vhat}, an estimate of $\varepsilon_{it}$ can then
+be obtained by subtraction from \dollar{uhat}.
 
 \section{Autoregressive panel models}
 \label{panel-auto}
