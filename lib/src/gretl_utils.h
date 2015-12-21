@@ -194,6 +194,8 @@ int check_for_program (const char *prog);
 
 const char *blas_variant_string (void);
 
+int get_openblas_details (char **s1, char **s2);
+
 gint64 gretl_monotonic_time (void);
 
 #endif /* GRETL_UTILS_H */

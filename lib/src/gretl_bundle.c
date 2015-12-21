@@ -1704,6 +1704,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	if (b == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    char *s1, *s2;
 	    int ival = 0;
 
 #if HAVE_MPI
@@ -1733,6 +1734,10 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 #endif
 	    gretl_bundle_set_string(b, "hostname", g_get_host_name());
 	    gretl_bundle_set_string(b, "blas", blas_variant_string());
+	    if (get_openblas_details(&s1, &s2)) {
+		gretl_bundle_set_string(b, "blascore", s1);
+		gretl_bundle_set_string(b, "blas_parallel", s2);
+	    }
 	}
 	sysinfo_bundle = b;
     }

@@ -2617,15 +2617,55 @@ enum {
 
 #if !defined(WIN32) && !defined(OS_OSX)
 
-#if 0
+#include <dlfcn.h>
 
-/* get the CPU core name */
-char *openblas_get_corename(void);
+static char *(*OB_get_corename) (void);
+static int (*OB_get_parallel) (void);
 
-/* get the parallelization type used */
-int openblas_get_parallel(void);
+static char OB_core[32];
+static char OB_parallel[12];
 
-#endif
+static void register_openblas_details (void)
+{
+    void *handle =  dlopen(NULL, RTLD_NOW);
+
+    if (handle != NULL) {
+	OB_get_corename = dlsym(handle, "openblas_get_corename");
+	OB_get_parallel = dlsym(handle, "openblas_get_parallel");
+    }
+
+    if (OB_get_corename != NULL) {
+	char *s = OB_get_corename();
+
+	if (s != NULL) {
+	    *OB_core = '\0';
+	    strncat(OB_core, s, 31);
+	}
+    }
+    
+    if (OB_get_parallel != NULL) {
+	int p = OB_get_parallel();
+
+	if (p == 0) {
+	    strcpy(OB_parallel, "none");
+	} else if (p == 1) {
+	    strcpy(OB_parallel, "pthreads");
+	} else if (p == 2) {
+	    strcpy(OB_parallel, "OpenMP");
+	}
+    }
+}
+
+int get_openblas_details (char **s1, char **s2)
+{
+    if (*OB_core == '\0' || *OB_parallel == '\0') {
+	return 0;
+    } else {
+	*s1 = OB_core;
+	*s2 = OB_parallel;
+	return 1;
+    }
+}
 
 static int real_detect_blas (const char *s)
 {
@@ -2680,12 +2720,9 @@ static int real_detect_blas (const char *s)
 	fputs("detect blas: confused, found too many blas libs!\n", stderr);
     }
 
-#if 0    
     if (ret == BLAS_OPENBLAS) {
-	fprintf(stderr, "openblas core: %s\n", openblas_get_corename());
-	fprintf(stderr, "openblas parallel: %d\n", openblas_get_parallel());
+	register_openblas_details();
     }
-#endif    
 
     return ret;
 }
@@ -2728,7 +2765,43 @@ static int detect_blas_variant (void)
     return variant;
 }
 
-#endif /* not Windows or Mac */
+#else
+
+# if defined(WIN32) && defined(OPENBLAS_BUILD)
+
+int get_openblas_details (char **s1, char **s2)
+{
+    char *s = openblas_get_corename();
+    int p = openblas_get_parallel();
+
+    if (s != NULL && p >= 0 && p <= 2) {
+	*OB_core = '\0';
+	strncat(OB_core, s, 31);
+	if (p == 0) {
+	    strcpy(OB_parallel, "none");
+	} else if (p == 1) {
+	    strcpy(OB_parallel, "pthreads");
+	} else {
+	    strcpy(OB_parallel, "OpenMP");
+	}
+	*s1 = OB_core;
+	*s2 = OB_parallel;
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+# else /* not *nix with OpenBLAS, nor Windows w OpenBLAS */
+
+int get_openblas_details (char **s1, char **s2)
+{
+    return 0;
+}
+
+# endif
+
+#endif /* *nix versus Windows versus Mac */
 
 static int blas_variant_code (void)
 {
