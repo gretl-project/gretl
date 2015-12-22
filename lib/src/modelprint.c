@@ -2651,7 +2651,7 @@ static char *print_eight (char *s, struct middletab *mt, int i)
 	return s;
     }    
 
-    if (na(x)) {
+    if (xna(x)) {
 	sprintf(s, "%9s", "NA");
 	return s;
     }

@@ -1715,19 +1715,26 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 
 static void regular_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 {
+    int k_pooled = pan->pooled->list[0];
+    int k_fe = pan->vlist[0];
+	
     pan->Fdfn = pan->effn - 1;
     pan->Fdfd = wmod->dfd;
 
-    if (na(pan->pooled->ess)) {
-	pan->Ffe = NADBL;
-    } else {
-	pan->Ffe = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
-	    (wmod->ess * pan->Fdfn);
-	if (xna(pan->Ffe)) {
+    if (k_pooled > k_fe) {
+	pan->Fdfn -= k_pooled - k_fe;
+	if (pan->Fdfn <= 0) {
 	    pan->Ffe = NADBL;
-	} else if (pan->Ffe < 0) {
-	    pan->Ffe = 0;
+	    return;
 	}
+    }
+
+    pan->Ffe = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
+	(wmod->ess * pan->Fdfn);
+    if (xna(pan->Ffe)) {
+	pan->Ffe = NADBL;
+    } else if (pan->Ffe < 0) {
+	pan->Ffe = 0;
     }
 }
 
@@ -1814,6 +1821,8 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     wrsq = fmod->rsq;
     if (wrsq < 0.0) {
 	wrsq = 0.0;
+    } else if (xna(wrsq)) {
+	wrsq = NADBL;
     }
 
     /* Should we differentiate "regular" regressors from
@@ -1836,7 +1845,7 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 	}
     }
     
-    if (!na(wfstt) && wfstt >= 0.0) {
+    if (!xna(wfstt) && wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
 
 	if (test != NULL) {
@@ -2339,7 +2348,7 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     int *dlist;
     int i, ndrop = 0;
 
-    /* regressors dropped at the stage of estmating the 
+    /* regressors dropped at the stage of estimating the 
        initial pooled model */
     pooldrop = gretl_model_get_list(pan->pooled, "droplist");
     if (pooldrop != NULL) {
@@ -3192,71 +3201,6 @@ static int add_dummies_to_list (const int *list, DATASET *dset,
     return err;
 }
 
-/* In copying the incoming @list, remove non-time varying
-   regressors if we're doing fixed effects. Otherwise the
-   pooled model will not be comparable with the fixed
-   effects model? (For now, no, basically stay with status
-   quo ante.)
-*/
-
-int *panel_copy_list (const int *list, const DATASET *dset,
-		      gretlopt opt, int *err)
-{
-    int prune = 0; /* = (opt & OPT_F) ? */
-    int *vlist = NULL;
-    int i, vi;
-
-    if (opt & OPT_F) {
-	vi = list[1];
-	if (!panel_varying(dset->Z[vi], dset, 0, NULL)) {
-	    gretl_errmsg_set("The dependent variable is not time-varying");
-	    *err = E_DATA;
-	    return NULL;
-	}
-    }
-
-    vlist = gretl_list_new(list[0]);
-    if (vlist == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    if (prune && list[0] == 2 && list[2] == 0) {
-	/* explicit constant-only model, maybe OK? */
-	vlist[1] = list[1];
-	vlist[2] = list[2];
-    } else if (prune) {
-	int nx = 0;
-	int j = 2;
-
-	vlist[0] = 1;
-	vlist[1] = list[1];
-
-	for (i=2; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi == 0 || panel_varying(dset->Z[vi], dset, 0, NULL)) {
-		vlist[j++] = vi;
-		vlist[0] += 1;
-		if (vi != 0) {
-		    nx++;
-		}
-	    }
-	}
-	if (nx == 0) {
-	    gretl_errmsg_set("No time-varying regressors were found");
-	    *err = E_DATA;
-	    free(vlist);
-	    vlist = NULL;
-	}	    
-    } else {
-	for (i=1; i<=list[0]; i++) {
-	    vlist[i] = list[i];
-	}
-    }
-
-    return vlist;
-}
-
 static int panel_check_for_const (const int *list)
 {
     int i;
@@ -3361,19 +3305,16 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	}
     }
 
-    olslist = panel_copy_list(list, dset, pan_opt, &err);
-
-    if (!err && (opt & OPT_D)) {
-	/* add time dummies */
-	int *biglist = NULL;
-	
+    if (opt & OPT_D) {
+	/* time dummies wanted */
 	err = gen_panel_dummies(dset, OPT_T, prn);
 	if (!err) {
-	    err = add_dummies_to_list(olslist, dset, &biglist);
-	}
-	if (!err) {
-	    free(olslist);
-	    olslist = biglist;
+	    err = add_dummies_to_list(list, dset, &olslist);
+	}  
+    } else {
+	olslist = gretl_list_copy(list);
+	if (olslist == NULL) {
+	    err = E_ALLOC;
 	}
     }
 

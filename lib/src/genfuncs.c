@@ -1325,54 +1325,6 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
     return err;
 }
 
-int panel_varying (const double *x, const DATASET *dset, 
-		   int xsect, const double *mask)
-{
-    int i, s, t, u1, u2, T;
-    double xref;
-    int ret = 0;
-
-    if (!dataset_is_panel(dset)) {
-	return E_DATA;
-    }
-
-    T = dset->pd;
-    u1 = dset->t1 / T;
-    u2 = dset->t2 / T;
-
-    if (xsect) {
-	for (t=1; t<T && !ret; t++) {
-	    xref = NADBL;
-	    for (i=u1; i<=u2 && !ret; i++) {
-		s = i*T + t;
-		if (panel_obs_ok(x, s, mask)) {
-		    if (na(xref)) {
-			xref = x[s];
-		    } else if (x[s] != xref) {
-			ret = 1;
-		    }
-		}
-	    }
-	}	
-    } else {
-	for (i=u1; i<=u2 && !ret; i++) {
-	    xref = NADBL;
-	    for (t=1; t<T && !ret; t++) {
-		s = i*T + t;
-		if (panel_obs_ok(x, s, mask)) {
-		    if (na(xref)) {
-			xref = x[s];
-		    } else if (x[s] != xref) {
-			ret = 1;
-		    }
-		}
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /**
  * panel_shrink:
  * @x: panel-data source series.
