@@ -30,7 +30,10 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 
-#define USE_HASH 0 /* should be OK, just checking for now */
+/* varname hashing: should be OK, but here's
+   where you can turn it off 
+*/
+#define USE_HASH 1
 
 #define UVDEBUG 0
 #define HDEBUG 0

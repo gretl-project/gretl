@@ -188,6 +188,37 @@ char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
+#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+
+static void gui_check_blas_threading (void)
+{
+    char *s1, *s2;
+
+    if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
+	const char *msg =
+	     "\n<b>WARNING!</b>\n\n"
+	     "gretl is built using OpenMP, but is linked against\n"
+	     "OpenBLAS parallelized via pthreads. This combination\n"
+	     "of threading mechanisms is not recommended. Ideally,\n"
+	     "OpenBLAS should also use OpenMP. Multi-threading in\n"
+	     "OpenBLAS will now be <i>disabled</i>.\n\n"
+	     "<b>WARNING!</b>";
+	GtkWidget *dlg;
+
+	dlg = gtk_message_dialog_new_with_markup(GTK_WINDOW(mdata->main), 0,
+						 GTK_MESSAGE_WARNING,
+						 GTK_BUTTONS_CLOSE,
+						 NULL);
+	gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dlg), msg);
+	gtk_dialog_run(GTK_DIALOG(dlg));
+	gtk_widget_destroy(dlg);
+	
+	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
+    }
+}
+
+#endif
+
 static void spreadsheet_edit (void) 
 {
     show_spreadsheet(SHEET_EDIT_VARLIST);
@@ -769,6 +800,10 @@ int main (int argc, char **argv)
 #if GUI_DEBUG
     fprintf(stderr, "calling gtk_main()\n");
 #endif
+
+#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+    gui_check_blas_threading();
+#endif    
 
     /* Enter the event loop */
     gtk_main();

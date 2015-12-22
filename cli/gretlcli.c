@@ -175,6 +175,26 @@ static void usage (int err)
     }
 }
 
+#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+
+static void check_blas_threading (void)
+{
+    char *s1, *s2;
+
+    if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
+	puts("\n*** WARNING! ***\n*\n"
+	     "* gretl is built using OpenMP, but is linked against\n"
+	     "* OpenBLAS parallelized via pthreads. This combination\n"
+	     "* of threading mechanisms is not recommended. Ideally,\n"
+	     "* OpenBLAS should also use OpenMP. Multi-threading in\n"
+	     "* OpenBLAS will now be disabled.\n*\n"
+	     "*** WARNING! ***");
+	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
+    }
+}
+
+#endif
+
 static void gretl_abort (char *line)
 {
     const char *tokline = get_parser_errline();
@@ -593,6 +613,10 @@ int main (int argc, char *argv[])
 	    session_time(NULL);
 	}
     }
+
+#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+    check_blas_threading();
+#endif    
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {
