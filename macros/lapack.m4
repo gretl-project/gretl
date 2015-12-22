@@ -47,32 +47,42 @@ dnl
 #include <stdlib.h>
 #include "gretl_f2c.h"
 
-int 
-main ()
+int main (void)
 {
   integer ispec;
   real zero = 0.0;
   real one = 1.0;
 
   ieeeck_(&ispec, &zero, &one);
-  system ("touch conf.lapacktest");
+  system("touch conf.lapacktest");
   return 0;
 }
 ],, no_lapack=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-  CFLAGS="$ac_save_CFLAGS"
-  LIBS="$ac_save_LIBS"
 
-  if test "x$no_lapack" = x ; then
+if test "x$no_lapack" = x ; then
      AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
+     ifelse([$2], , :, [$2])
+     rm -f conf.blastest
+     AC_TRY_RUN([
+     #include <stdlib.h>
+
+     int openblas_get_parallel(void);
+
+     int main (void)
+     {
+       if (openblas_get_parallel() != 1) {
+          exit(EXIT_FAILURE);
+       }
+       system("touch conf.blastest");
+       return 0;
+     }
+     ],blas_pthreads=yes,)
   else
      AC_MSG_RESULT(no)
      if test -f conf.lapacktest ; then
        :
      else
        echo "*** Could not run LAPACK test program, checking why..."
-       CFLAGS="$LAPACK_CFLAGS $CFLAGS $OPENMP_CFLAGS"
-       LIBS="$LIBS $LAPACK_LIBS"
        AC_TRY_LINK([
 #include <stdio.h>
 ],     [ return (1); ],
@@ -93,8 +103,12 @@ main ()
      LAPACK_LIBS=""
      ifelse([$3], , :, [$3])
   fi
+  dnl finalize
+  CFLAGS="$ac_save_CFLAGS"
+  LIBS="$ac_save_LIBS"
   AC_SUBST(LAPACK_CFLAGS)
   AC_SUBST(LAPACK_LIBS)
   AC_SUBST(FLIB)
   rm -f conf.lapacktest
+  rm -f conf.blastest
 ])

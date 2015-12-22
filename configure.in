@@ -1112,4 +1112,13 @@ Now type '$MAKE' to build gretl."
     echo "*** not be built, only the library and command-line program."
     echo
   fi
+
+  if test "$ac_openmp_result" = "yes" && test "x${blas_pthreads}" != "x"; then
+    echo "*** WARNING: you are building gretl with OpenMP, but linking"
+    echo "*** against an OpenBLAS library that uses pthreads. This mixture"
+    echo "*** is not recommended. Ideally, OpenBLAS should use OpenMP."
+    echo "*** Under the current configuration, gretl will force OpenBLAS"
+    echo "*** to run single-threaded in order to avoid errors."
+    echo
+  fi
 fi
