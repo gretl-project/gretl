@@ -74,7 +74,7 @@ struct panelmod_t_ {
     double Fdfd;          /* denominator df, F for differing intercepts */
     double theta;         /* quasi-demeaning coefficient */
     double theta_bar;     /* mean of theta_i (unbalanced case) */
-    double F;             /* joint significance of differing unit intercepts */
+    double Ffe;           /* joint significance of fixed effects */
     double BP;            /* Breusch-Pagan test statistic */
     double H;             /* Hausman test statistic */
     gretl_matrix *bdiff;  /* array of coefficient differences */
@@ -168,7 +168,7 @@ static void panelmod_init (panelmod_t *pan)
     pan->theta = NADBL;
     pan->theta_bar = NADBL;
 
-    pan->F = NADBL;
+    pan->Ffe = NADBL;
     pan->Fdfn = 0;
     pan->Fdfd = 0;
 
@@ -1599,13 +1599,16 @@ static int print_fe_results (panelmod_t *pan,
     pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
 	    pmod->ess, pmod->nobs, pan->vlist[0] - 1 + dfn, pan->s2e);
 
-    pprintf(prn, _("Joint significance of differing group means:\n"));
-    pprintf(prn, " F(%d, %g) = %g %s %g\n", pan->Fdfn, pan->Fdfd, pan->F, 
-	    _("with p-value"), snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->F));
-
-    pputs(prn, _("(A low p-value counts against the null hypothesis that "
-		 "the pooled OLS model\nis adequate, in favor of the fixed "
-		 "effects alternative.)\n\n"));
+    if (!na(pan->Ffe)) {
+	pprintf(prn, _("Joint significance of differing group means:\n"));
+	pprintf(prn, " F(%d, %g) = %g %s %g\n", pan->Fdfn, pan->Fdfd, pan->Ffe, 
+		_("with p-value"), snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe));
+	pputs(prn, _("(A low p-value counts against the null hypothesis that "
+		     "the pooled OLS model\nis adequate, in favor of the fixed "
+		     "effects alternative.)\n\n"));
+    } else {
+	pputc(prn, '\n');
+    }
 
     return 0;
 }
@@ -1690,6 +1693,10 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
     int robust = (pan->opt & OPT_R);
     ModelTest *test;
 
+    if (na(pan->Ffe)) {
+	return;
+    }
+
     test = model_test_new(robust ? GRETL_TEST_PANEL_WELCH :
 			  GRETL_TEST_PANEL_F);
 
@@ -1697,8 +1704,8 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 	model_test_set_teststat(test, robust ? GRETL_STAT_WF : GRETL_STAT_F);
 	model_test_set_dfn(test, pan->Fdfn);
 	model_test_set_dfd(test, pan->Fdfd);
-	model_test_set_value(test, pan->F);
-	model_test_set_pvalue(test, snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->F));
+	model_test_set_value(test, pan->Ffe);
+	model_test_set_pvalue(test, snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe));
 	maybe_add_test_to_model(wmod, test);
     }	    
 }
@@ -1711,13 +1718,16 @@ static void regular_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
     pan->Fdfn = pan->effn - 1;
     pan->Fdfd = wmod->dfd;
 
-    pan->F = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
-	(wmod->ess * pan->Fdfn);
-
-    if (xna(pan->F)) {
-	pan->F = NADBL;
-    } else if (pan->F < 0) {
-	pan->F = 0;
+    if (na(pan->pooled->ess)) {
+	pan->Ffe = NADBL;
+    } else {
+	pan->Ffe = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
+	    (wmod->ess * pan->Fdfn);
+	if (xna(pan->Ffe)) {
+	    pan->Ffe = NADBL;
+	} else if (pan->Ffe < 0) {
+	    pan->Ffe = 0;
+	}
     }
 }
 
@@ -1996,7 +2006,7 @@ static int robust_fixed_effects_F (panelmod_t *pan)
     A /= (k - 1);
     B = 1.0 + (2.0*(k-2.0)/(k * k - 1.0)) * sum_h;
 
-    pan->F = A / B;
+    pan->Ffe = A / B;
     pan->Fdfn = k - 1;
     pan->Fdfd = (k * k - 1.0)/(3 * sum_h);
 
@@ -3139,9 +3149,8 @@ process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
     return 0;
 }
 
-static int
-add_dummies_to_list (const int *list, DATASET *dset, 
-		     int **plist)
+static int add_dummies_to_list (const int *list, DATASET *dset, 
+				int **plist)
 {
     char dname[VNAMELEN];
     int *biglist = NULL;
@@ -3181,6 +3190,71 @@ add_dummies_to_list (const int *list, DATASET *dset,
     }
 
     return err;
+}
+
+/* In copying the incoming @list, remove non-time varying
+   regressors if we're doing fixed effects. Otherwise the
+   pooled model will not be comparable with the fixed
+   effects model? (For now, no, basically stay with status
+   quo ante.)
+*/
+
+int *panel_copy_list (const int *list, const DATASET *dset,
+		      gretlopt opt, int *err)
+{
+    int prune = 0; /* = (opt & OPT_F) ? */
+    int *vlist = NULL;
+    int i, vi;
+
+    if (opt & OPT_F) {
+	vi = list[1];
+	if (!panel_varying(dset->Z[vi], dset, 0, NULL)) {
+	    gretl_errmsg_set("The dependent variable is not time-varying");
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
+
+    vlist = gretl_list_new(list[0]);
+    if (vlist == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (prune && list[0] == 2 && list[2] == 0) {
+	/* explicit constant-only model, maybe OK? */
+	vlist[1] = list[1];
+	vlist[2] = list[2];
+    } else if (prune) {
+	int nx = 0;
+	int j = 2;
+
+	vlist[0] = 1;
+	vlist[1] = list[1];
+
+	for (i=2; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi == 0 || panel_varying(dset->Z[vi], dset, 0, NULL)) {
+		vlist[j++] = vi;
+		vlist[0] += 1;
+		if (vi != 0) {
+		    nx++;
+		}
+	    }
+	}
+	if (nx == 0) {
+	    gretl_errmsg_set("No time-varying regressors were found");
+	    *err = E_DATA;
+	    free(vlist);
+	    vlist = NULL;
+	}	    
+    } else {
+	for (i=1; i<=list[0]; i++) {
+	    vlist[i] = list[i];
+	}
+    }
+
+    return vlist;
 }
 
 static int panel_check_for_const (const int *list)
@@ -3268,6 +3342,11 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     gretl_model_init(&mod, dset);
     panelmod_init(&pan);
 
+    if (!estimator_specified(opt)) {
+	/* default: add OPT_F to save the fixed effects model */
+	pan_opt |= OPT_F;
+    }    
+
     if (opt & OPT_P) {
 	/* doing pooled OLS */
 	if (opt & OPT_C) {
@@ -3282,16 +3361,19 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	}
     }
 
-    /* add time dummies to list? */
-    if (opt & OPT_D) {
+    olslist = panel_copy_list(list, dset, pan_opt, &err);
+
+    if (!err && (opt & OPT_D)) {
+	/* add time dummies */
+	int *biglist = NULL;
+	
 	err = gen_panel_dummies(dset, OPT_T, prn);
 	if (!err) {
-	    err = add_dummies_to_list(list, dset, &olslist);
-	}  
-    } else {
-	olslist = gretl_list_copy(list);
-	if (olslist == NULL) {
-	    err = E_ALLOC;
+	    err = add_dummies_to_list(olslist, dset, &biglist);
+	}
+	if (!err) {
+	    free(olslist);
+	    olslist = biglist;
 	}
     }
 
@@ -3303,7 +3385,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     mod = lsq(olslist, dset, OLS, ols_opt);
     if (mod.errcode) {
 	err = mod.errcode;
-	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
+	fprintf(stderr, "real_panel_model: error %d in initial OLS\n", 
 		mod.errcode);
 	goto bailout;
     } 
@@ -3314,11 +3396,6 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     pprintf(prn, "*** initial baseline OLS\n");
     printmodel(&mod, dset, OPT_NONE, prn);
 #endif
-
-    if (!estimator_specified(opt)) {
-	/* default: add OPT_F to save the fixed effects model */
-	pan_opt |= OPT_F;
-    }
 
 #if PDEBUG
     if (pan_opt & OPT_F) {
@@ -3347,8 +3424,6 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	goto bailout;
     }	
 
-    calculate_Tbar(&pan);
-
     /* figure out which of the original regressors are time-varying,
        or unit-varying as the case may be 
     */
@@ -3360,7 +3435,9 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     err = panel_set_varying(&pan, &mod);
     if (err) {
 	goto bailout;
-    }  
+    }
+
+    calculate_Tbar(&pan);
 
     if (opt & OPT_U) {
 	/* trying to do random effects */
@@ -4391,7 +4468,7 @@ static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
 	    continue;
 	}
 
-	for (i=0; i<pan->nunits; i++) { 
+	for (i=0; i<pan->nunits && !varies; i++) { 
 	    int started = 0;
 	    double xval = NADBL;
 
@@ -4399,7 +4476,7 @@ static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
 		continue;
 	    }
 
-	    for (t=0; t<pan->T; t++) {
+	    for (t=0; t<pan->T && !varies; t++) {
 		bigt = panel_index(i, t);
 		if (panel_missing(pan, bigt)) {
 		    continue;
@@ -4409,10 +4486,8 @@ static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
 		    started = 1;
 		} else if (dset->Z[vj][bigt] != xval) {
 		    varies = 1;
-		    break;
 		}
 	    }
-	    if (varies) break;
 	}
 
 	if (varies) {
