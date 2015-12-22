@@ -177,18 +177,23 @@ static void usage (int err)
 
 #if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
 
-static void check_blas_threading (void)
+static void check_blas_threading (int tool, int quiet)
 {
     char *s1, *s2;
 
     if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
-	puts("\n*** WARNING! ***\n*\n"
-	     "* gretl is built using OpenMP, but is linked against\n"
-	     "* OpenBLAS parallelized via pthreads. This combination\n"
-	     "* of threading mechanisms is not recommended. Ideally,\n"
-	     "* OpenBLAS should also use OpenMP. Multi-threading in\n"
-	     "* OpenBLAS will now be disabled.\n*\n"
-	     "*** WARNING! ***");
+	if (tool || quiet) {
+	    fprintf(stderr, "Disabling OpenBLAS multi-threading "
+		    "(OpenMP/pthreads collision)\n");
+	} else {
+	    puts("\n*** WARNING! ***\n*\n"
+		 "* gretl is built using OpenMP, but is linked against\n"
+		 "* OpenBLAS parallelized via pthreads. This combination\n"
+		 "* of threading mechanisms is not recommended. Ideally,\n"
+		 "* OpenBLAS should also use OpenMP. Multi-threading in\n"
+		 "* OpenBLAS will be disabled in order to avoid errors.\n*\n"
+		 "*** WARNING! ***");
+	}
 	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
     }
 }
@@ -615,7 +620,7 @@ int main (int argc, char *argv[])
     }
 
 #if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
-    check_blas_threading();
+    check_blas_threading(tool, quiet);
 #endif    
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
