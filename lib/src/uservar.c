@@ -30,7 +30,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 
-#define USE_HASH 0
+#define USE_HASH 0 /* should be OK, just checking for now */
 
 #define UVDEBUG 0
 #define HDEBUG 0
@@ -511,7 +511,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
     if (type == GRETL_TYPE_DOUBLE) {
 	/* support "auxiliary scalars" mechanism */
 	imin = scalar_imin;
-    }    
+    }
 
 #if HDEBUG > 1
     int hfound = 0;
@@ -530,7 +530,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 
     if (d != previous_d) {
 	if (d == 0) {
-	    /* "main" level */
+	    /* we're now at "main" level */
 	    if (uvh0 == NULL) {
 		uvh0 = g_hash_table_new(g_str_hash, g_str_equal);
 #if HDEBUG
