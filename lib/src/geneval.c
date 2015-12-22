@@ -3203,7 +3203,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
 	    tmpmat = 1;
 	} else {
-	    tmpmat = is_tmp_node(n);
+	    /* the following may be dangerous? */
+	    // tmpmat = is_tmp_node(n);
 	    m = n->v.m;
 	}
 
