@@ -3204,7 +3204,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    tmpmat = 1;
 	} else {
 	    /* the following may be dangerous? */
-	    // tmpmat = is_tmp_node(n);
+	    tmpmat = is_tmp_node(n);
 	    m = n->v.m;
 	}
 
