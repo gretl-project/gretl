@@ -7355,6 +7355,23 @@ static int debug_command_loop (ExecState *state,
     return 1 + debug_next(state->cmd);
 }
 
+static const char *get_funcerr_message (ExecState *state)
+{
+    const char *p = state->cmd->param;
+
+    if (p != NULL && strlen(p) == gretl_namechar_spn(p)) {
+	const char *s = get_string_by_name(p);
+
+	if (s != NULL) {
+	    return s;
+	}
+    } else if (p == NULL) {
+	return "none";
+    }
+
+    return p;
+}
+
 static void set_function_error_message (int err, ufunc *u, 
 					ExecState *state,
 					const char *line,
@@ -7363,7 +7380,7 @@ static void set_function_error_message (int err, ufunc *u,
     if (err == E_FUNCERR) {
 	/* let the function writer set the message */
 	gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
-			     state->cmd->param);
+			     get_funcerr_message(state));
     } else if (err == E_STOP) {
 	; /* no-op */
     } else {
