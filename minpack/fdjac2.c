@@ -22,11 +22,11 @@
 /*
 c     fdjac2:
 c
-c     this subroutine computes a forward-difference approximation
+c     This subroutine computes a forward-difference approximation
 c     to the m by n jacobian matrix associated with a specified
 c     problem of m functions in n variables.
 c
-c     the subroutine statement is
+c     The subroutine statement is
 c
 c       subroutine fdjac2(fcn,m,n,x,fvec,fjac,ldfjac,iflag,epsfcn,wa)
 c
@@ -85,12 +85,12 @@ c         precision.
 c
 c       wa is a work array of length m.
 c
-c     subprograms called
+c     Subprograms called:
 c
 c       user-supplied ...... fcn
 c
-c     argonne national laboratory. minpack project. march 1980.
-c     burton s. garbow, kenneth e. hillstrom, jorge j. more
+c     Argonne National Laboratory. MINPACK Project. March, 1980.
+c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
 int fdjac2_(S_fp fcn, int m, int n, int quality, 
