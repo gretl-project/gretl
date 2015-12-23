@@ -1932,9 +1932,8 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 {
     umax *u;
     gretl_matrix *J = NULL;
-    int m, n;
+    int m, n, nnf = 0;
     int iflag = 0;
-    int quality = 0;
     double *wa = NULL;
     double *fvec = NULL;
     int i;
@@ -1983,12 +1982,21 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 
     for (i=0; i<m; i++) {
 	fvec[i] = u->fm_out->val[i];
+	if (xna(fvec[i])) {
+	    nnf++;
+	}
     }
 
-    quality = libset_get_int(FDJAC_QUAL);
-
-    fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val, 
-	    m, &iflag, 0.0, wa, u);
+    if (nnf > 0) {
+	gretl_errmsg_sprintf("fdjac: got %d non-finite value(s) on input",
+			     nnf);
+	*err = E_DATA;
+    } else {
+	int quality = libset_get_int(FDJAC_QUAL);
+	
+	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val, 
+		m, &iflag, 0.0, wa, u);
+    }
 
  bailout:
 
