@@ -12069,6 +12069,11 @@
 	  <para>
 	    <lit>.m</lit>: GNU Octave format.
 	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.dta</lit>: Stata dta format (version 113).
+	  </para>
 	</li>	
       </ilist>
       <para>
