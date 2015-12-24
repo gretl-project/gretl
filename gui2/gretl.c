@@ -200,7 +200,7 @@ static void gui_check_blas_threading (void)
     int problem = 0;
     char *s1, *s2;
 
-    if (get_openblas_details(&s1, &s2) && strcmp(s2, "pthreads")) {
+    if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
 	problem = 1;
     }
 

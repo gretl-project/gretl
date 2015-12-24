@@ -1,10 +1,12 @@
 version 2015e, in progress
 - syntax enhancement: allow specification of type when setting
   a bundle member
-- add exists() function, recommended as a replacment for the
+- add exists() function, recommended as a replacement for the
   now-deprecated isnull()
 - "arima" command: allow ARIMA(0,1,0) without constant
-- "reset" command: add a --silent option
+- "reset" command: add --silent option
+- "store" command and GUI "Export data" menu item: add option
+  to save data in Stata's binary format (dta version 113)
 - Improve handling of string-valued series across sub-sampling
 - Improve display of string-valued series in GUI
 - seasonals() function: enable this for panel data when a
@@ -32,6 +34,10 @@ version 2015e, in progress
 - Stata dta importer: support dta format 118 (Stata 14)
 - GUI: some cosmetic fixes specific to gtk 3
 - Remove support for gnuplot < version 4.6.0
+- MS Windows package: update to OpenBLAS 0.2.16.dev to avoid
+  bug in computing eigenvalues on 64-bit Windows
+- Add workaround to avoid OpenBLAS bug in matrix inversion
+  when the input matrix contains NaNs
 
 2015-10-19 version 2015d
 - add varnames() function: similar to varname() but returns
