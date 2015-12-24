@@ -7555,7 +7555,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     if (info != 0) {
 	free(ipiv);
-	fprintf(stderr, "dgetrf: matrix is singular\n");
+	fprintf(stderr, "dgetrf: matrix is singular (info=%d)\n", info);
 	return E_SINGULAR;
     }
 
