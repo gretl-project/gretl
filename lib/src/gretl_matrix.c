@@ -3279,6 +3279,31 @@ double gretl_vcv_log_determinant (const gretl_matrix *m, int *err)
     return det;
 }
 
+/* This is really only necessary when using OpenBLAS: 
+   when the matrix under analysis contains NaN values
+   the pivot values calculated by dgetrf() can go out
+   of bounds. We could flag an error here if we find
+   an out-of-bounds value, but the downside of that is
+   that we'd get different results when using OpenBLAS
+   versus netlib lapack/blas (since netlib returns a
+   NaN matrix rather than erroring out).
+
+   This check added 2015-12-24, required for OpenBLAS
+   0.2.16.dev and earlier.
+*/
+
+static void pivot_check (integer *ipiv, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (ipiv[i] > n) {
+	    /* clamp the bad value to avoid a crash */
+	    ipiv[i] = n;
+	}
+    }
+}
+
 /* calculate determinant using LU factorization.
    if logdet != 0, return the log of the determinant.
    if logdet != 0 and absval != 0, return the log of the
@@ -3340,8 +3365,10 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n", 
 		(int) info);
 	free(ipiv);
-	*err = 1;
+	*err = E_DATA;
 	return NADBL;
+    } else {
+	pivot_check(ipiv, n);
     }
 
     if (logdet) {
@@ -3691,6 +3718,8 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
 	fprintf(stderr, "gretl_LU_solve_invert: dgetrf gave info = %d\n", 
 		(int) info);
 	err = (info < 0)? E_DATA : E_SINGULAR;
+    } else {
+	pivot_check(ipiv, n);
     }
 
     if (!err) {
@@ -3787,6 +3816,8 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n", 
 		(int) info);
 	err = (info < 0)? E_DATA : E_SINGULAR;
+    } else {
+	pivot_check(ipiv, n);
     }
 
     if (!err) {
@@ -6901,13 +6932,18 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
 	fprintf(stderr, "gretl_general_matrix_rcond:\n"
 		" dgetrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	gretl_matrix_print(A, "A in rcond");
-	rcond = 0.0;
+	*err = E_DATA;
+	rcond = NADBL;
     } else {
+	pivot_check(ipiv, min(m, n));
+    }
+    
+    if (!*err) {
 	double anorm = gretl_matrix_one_norm(A);
 
 	dgecon_(&norm, &n, a->val, &lda, &anorm, &rcond, work, iwork, &info);
 	if (info != 0) {
-	    *err = 1;
+	    *err = E_DATA;
 	    rcond = NADBL;
 	}
     }
@@ -7428,13 +7464,8 @@ static double svd_smin (const gretl_matrix *a, double smax)
     const double macheps = 2.20e-16;
     int dmax = (a->rows > a->cols)? a->rows : a->cols;
 
-#if 1
     /* as per numpy, Matlab (2015-09-28) */
     return dmax * macheps * smax;
-#else
-    /* not sure where this version was from */
-    return 1.0e4 * macheps * gretl_matrix_infinity_norm(a);
-#endif    
 }
 
 /**
@@ -7557,6 +7588,8 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 	free(ipiv);
 	fprintf(stderr, "dgetrf: matrix is singular (info=%d)\n", info);
 	return E_SINGULAR;
+    } else {
+	pivot_check(ipiv, n);
     }
 
     lwork = -1;
@@ -8873,7 +8906,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 
     if (info != 0) {
 	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
-	err = 1;
+	err = E_DATA;
 	goto bailout;
     }
 
