@@ -3,16 +3,20 @@ version 2015e, in progress
   a bundle member
 - add exists() function, recommended as a replacement for the
   now-deprecated isnull()
+- add pxnobs() function: gives the number of valid cross-
+  sectional observations on a given series in each period
+- pxsum() function: revise this to skip missing values  
 - "arima" command: allow ARIMA(0,1,0) without constant
 - "reset" command: add --silent option
 - "store" command and GUI "Export data" menu item: add option
   to save data in Stata's binary format (dta version 113)
+- "funcerr" keyword: allow use of a string variable to provide
+  the message to be printed
 - Improve handling of string-valued series across sub-sampling
 - Improve display of string-valued series in GUI
 - seasonals() function: enable this for panel data when a
   suitable imterpretation of the time dimension has been set
   via "setobs"
-- pxsum() function: revise this to skip missing values
 - Fix bug 196, Help button for HCCME misaligned in case of a
   non-MPI enabled build
 - Fix bug 197, invalid "xtics" specification for some weekly

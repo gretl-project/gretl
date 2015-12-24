@@ -712,12 +712,14 @@ reached (in the case of a function with no return value), (b) a
 gretl error occurs, or (c) a \verb+funcerr+ statement is
 reached.
 
-The \verb+funcerr+ keyword, which may be followed by a string enclosed
-in double quotes, causes a function to exit with an error flagged.  If
-a string is provided, this is printed on exit, otherwise a generic
-error message is printed.  This mechanism enables the author of a
-function to pre-empt an ordinary execution error and/or offer a more
-specific and helpful error message.  For example,
+The \verb+funcerr+ keyword---which may be followed by a string
+enclosed in double quotes, or the name of a string variable, or
+nothing---causes a function to exit with an error flagged.  If a
+string is provided (either literally or via a variable), this is
+printed on exit, otherwise a generic error message is printed.  This
+mechanism enables the author of a function to pre-empt an ordinary
+execution error and/or offer a more specific and helpful error
+message.  For example,
 %
 \begin{code}
 if nelem(xlist) = 0
