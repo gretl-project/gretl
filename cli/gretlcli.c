@@ -186,13 +186,12 @@ static void check_blas_threading (int tool, int quiet)
 	    fprintf(stderr, "Disabling OpenBLAS multi-threading "
 		    "(OpenMP/pthreads collision)\n");
 	} else {
-	    puts("\n*** WARNING! ***\n*\n"
+	    puts("\n*** WARNING ***\n*\n"
 		 "* gretl is built using OpenMP, but is linked against\n"
 		 "* OpenBLAS parallelized via pthreads. This combination\n"
 		 "* of threading mechanisms is not recommended. Ideally,\n"
 		 "* OpenBLAS should also use OpenMP. Multi-threading in\n"
-		 "* OpenBLAS will be disabled in order to avoid errors.\n*\n"
-		 "*** WARNING! ***");
+		 "* OpenBLAS will be disabled in order to avoid errors.");
 	}
 	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
     }
