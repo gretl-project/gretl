@@ -206,12 +206,11 @@ static void gui_check_blas_threading (void)
 
     if (problem && get_thread_warn()) {
 	const char *msg =
-	    "<b>WARNING</b>\n\n"
+	    "<b>Warning</b>\n\n"
 	    "gretl is built using OpenMP, but is linked against\n"
 	    "OpenBLAS parallelized via pthreads. This combination\n"
 	    "of threading mechanisms is not recommended. Ideally,\n"
-	    "OpenBLAS should also use OpenMP. Multi-threading in\n"
-	    "OpenBLAS will be disabled in order to avoid errors.";
+	    "OpenBLAS should also use OpenMP.";
 	GtkWidget *dlg, *ca, *cb, *hb;
 
 	dlg = gtk_message_dialog_new_with_markup(GTK_WINDOW(mdata->main), 0,
@@ -232,7 +231,8 @@ static void gui_check_blas_threading (void)
 	gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
 	gtk_dialog_run(GTK_DIALOG(dlg));
 	gtk_widget_destroy(dlg);
-	
+
+	/* do we really need to do this? */
 	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
     } else if (problem) {
 	fprintf(stderr, "Disabling OpenBLAS multi-threading (OpenMP/pthreads collision)\n");
