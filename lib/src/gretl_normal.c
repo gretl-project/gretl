@@ -833,9 +833,10 @@ static double ghk_tj (const gretl_matrix *C,
 	for (i=inicol; i<=inicol+j-1; i++) {
 	    dm->val[i] = TT->val[k++];
 	}
-	gretl_matrix_multiply_mod(cj, GRETL_MOD_NONE,
-				  dTT, GRETL_MOD_TRANSPOSE,
-				  tmp, GRETL_MOD_NONE);
+	/* don't do threaded multiplication under an OMP thread */
+	gretl_matrix_multiply_mod_single(cj, GRETL_MOD_NONE,
+					 dTT, GRETL_MOD_TRANSPOSE,
+					 tmp, GRETL_MOD_NONE);
 	gretl_matrix_add_to(dm, tmp);
 
         den = gretl_matrix_get(C, j, j);

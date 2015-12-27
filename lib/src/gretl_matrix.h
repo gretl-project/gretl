@@ -395,8 +395,19 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
 			       gretl_matrix *c, GretlMatrixMod cmod);
 
+int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
+				      GretlMatrixMod amod,
+				      const gretl_matrix *b,
+				      GretlMatrixMod bmod,
+				      gretl_matrix *c,
+				      GretlMatrixMod cmod);    
+
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);
+
+int gretl_matrix_multiply_single (const gretl_matrix *a,
+				  const gretl_matrix *b,
+				  gretl_matrix *c);
 
 gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a, 
 					 const gretl_matrix *b,

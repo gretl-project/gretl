@@ -4529,6 +4529,64 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     return 0;
 }
 
+static int 
+matrix_multiply_self_transpose_single (const gretl_matrix *a,
+				       int atr,
+				       gretl_matrix *c,
+				       GretlMatrixMod cmod)
+{
+    register int i, j, k;
+    int nc = (atr)? a->cols : a->rows;
+    int nr = (atr)? a->rows : a->cols;
+    int idx1, idx2;
+    double x;
+
+    if (c->rows != nc) {
+	return E_NONCONF;
+    }
+
+    if (c->rows == 1) {
+	k = a->cols * a->rows;
+	if (cmod != GRETL_MOD_CUMULATE) {
+	    c->val[0] = 0.0;
+	}
+	for (i=0; i<k; i++) {
+	    c->val[0] += a->val[i] * a->val[i];
+	}
+	return 0;
+    }
+
+    if (atr) {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		idx1 = i * a->rows;
+		idx2 = j * a->rows;
+		x = 0.0;
+		for (k=0; k<nr; k++) {
+		    x += a->val[idx1++] * a->val[idx2++];
+		}
+		gretl_st_result(c,i,j,x,cmod);
+	    }
+	} 
+    } else {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		idx1 = i;
+		idx2 = j;
+		x = 0.0;
+		for (k=0; k<nr; k++) {
+		    x += a->val[idx1] * a->val[idx2];
+		    idx1 += a->rows;
+		    idx2 += a->rows;
+		}
+		gretl_st_result(c,i,j,x,cmod);
+	    }
+	} 
+    }    
+
+    return 0;
+}
+
 /**
  * gretl_matrix_XTX_new:
  * @X: matrix to process.
@@ -4844,6 +4902,108 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     }
 }
 
+/* non-threaded version of gretl_dgemm() */
+
+static void gretl_dgemm_single (const gretl_matrix *a, int atr,
+				const gretl_matrix *b, int btr,
+				gretl_matrix *c, GretlMatrixMod cmod,
+				int m, int n, int k)
+{
+    const double *A = a->val;
+    const double *B = b->val;
+    double *C = c->val;
+    double x, alpha = 1.0;
+    int beta = 0;
+    int ar = a->rows;
+    int br = b->rows;
+    int cr = c->rows;
+    int i, j, l;
+
+    if (cmod == GRETL_MOD_CUMULATE) {
+	beta = 1;
+    } else if (cmod == GRETL_MOD_DECREMENT) {
+	alpha = -1.0;
+	beta = 1;
+    }
+
+#if defined(USE_SIMD)
+    if (k <= simd_k_max && !atr && !btr && !cmod) {
+	gretl_matrix_simd_mul(a, b, c);
+	return;
+    }
+#endif
+
+    if (!btr) {
+	if (!atr) {
+	    /* C := alpha*A*B + beta*C */
+	    for (j=0; j<n; j++) {
+		if (beta == 0) {
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] = 0.0;
+		    }
+		} 
+		for (l=0; l<k; l++) {
+		    if (B[j*br+l] != 0.0) {
+			x = alpha * B[j*br+l];
+			for (i=0; i<m; i++) {
+			    C[j*cr+i] += x * A[l*ar+i];
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* C := alpha*A'*B + beta*C */
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    x = 0.0;
+		    for (l=0; l<k; l++) {
+			x += A[i*ar+l] * B[j*br+l];
+		    }
+		    if (beta == 0) {
+			C[j*cr+i] = alpha * x;
+		    } else {
+			C[j*cr+i] += alpha * x;
+		    }
+		}
+	    }
+	} 
+    } else {
+	if (!atr) {
+	    /* C := alpha*A*B' + beta*C */
+	    for (j=0; j<n; j++) {
+		if (beta == 0) {
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] = 0.0;
+		    }
+		} 
+		for (l=0; l<k; l++) {
+		    if (B[l*br+j] != 0.0) {
+			x = alpha * B[l*br+j];
+			for (i=0; i<m; i++) {
+			    C[j*cr+i] += x * A[l*ar+i];
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* C := alpha*A'*B' + beta*C */
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    x = 0.0;
+		    for (l=0; l<k; l++) {
+			x += A[i*ar+l] * B[l*br+j];
+		    }
+		    if (beta == 0) {
+			C[j*cr+i] = alpha * x;
+		    } else {
+			C[j*cr+i] += alpha * x;
+		    }
+		}
+	    }
+	}
+    }
+}
+
 static int 
 matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
 		     gretl_matrix *c, GretlMatrixMod cmod)
@@ -4965,6 +5125,66 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     } else {
 	gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
     }
+
+    return 0;
+}
+
+int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
+				      GretlMatrixMod amod,
+				      const gretl_matrix *b,
+				      GretlMatrixMod bmod,
+				      gretl_matrix *c,
+				      GretlMatrixMod cmod)
+{
+    const int atr = (amod == GRETL_MOD_TRANSPOSE);
+    const int btr = (bmod == GRETL_MOD_TRANSPOSE);
+    int lrows, lcols;
+    int rrows, rcols;
+
+    if (gretl_is_null_matrix(a) ||
+	gretl_is_null_matrix(b) ||
+	gretl_is_null_matrix(c)) {
+	return E_DATA;
+    }
+
+    if (a == c || b == c) {
+	fputs("gretl_matrix_multiply:\n product matrix must be "
+	      "distinct from both input matrices\n", stderr);
+	fprintf(stderr, "a = %p, b = %p, c = %p\n", 
+		(void *) a, (void *) b, (void *) c);
+	return 1;
+    }
+
+    if (a == b && atr != btr && c->rows == c->cols) {
+	return matrix_multiply_self_transpose_single(a, atr, c, cmod);
+    }
+
+    if (a->rows == 1 && a->cols == 1) {
+	return matmul_mod_w_scalar(a->val[0], b, btr, c, cmod);
+    } else if (b->rows == 1 && b->cols == 1) {
+	return matmul_mod_w_scalar(b->val[0], a, atr, c, cmod);
+    }
+
+    lrows = (atr)? a->cols : a->rows;
+    lcols = (atr)? a->rows : a->cols;
+    rrows = (btr)? b->cols : b->rows;
+    rcols = (btr)? b->rows : b->cols;
+
+    if (lcols != rrows) {
+	fputs("gretl_matrix_multiply_mod: matrices not conformable\n", stderr);
+	fprintf(stderr, " Requested (%d x %d) * (%d x %d) = (%d x %d)\n",
+		lrows, lcols, rrows, rcols, c->rows, c->cols);
+	return E_NONCONF;
+    }
+
+    if (c->rows != lrows || c->cols != rcols) {
+	fputs("gretl_matrix_multiply_mod: matrices not conformable\n", stderr);
+	fprintf(stderr, " Requested (%d x %d) * (%d x %d) = (%d x %d)\n",
+		lrows, lcols, rrows, rcols, c->rows, c->cols);
+	return E_NONCONF;
+    }
+
+    gretl_dgemm_single(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
 
     return 0;
 }
@@ -6714,6 +6934,37 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 	err = gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
 					b, GRETL_MOD_NONE,
 					c, GRETL_MOD_NONE);
+    }
+
+    return err;
+}
+
+int gretl_matrix_multiply_single (const gretl_matrix *a,
+				  const gretl_matrix *b,
+				  gretl_matrix *c)
+{
+    int err = 0;
+
+    if (gretl_is_null_matrix(a) || 
+	gretl_is_null_matrix(b) ||
+	gretl_is_null_matrix(c)) {
+	return E_DATA;
+    }
+
+    if (matrix_is_scalar(a)) {
+	err = gretl_matrix_copy_values(c, b);
+	if (!err) {
+	    gretl_matrix_multiply_by_scalar(c, a->val[0]);
+	}
+    } else if (matrix_is_scalar(b)) {
+	err = gretl_matrix_copy_values(c, a);
+	if (!err) {
+	    gretl_matrix_multiply_by_scalar(c, b->val[0]);
+	}
+    } else {
+	err = gretl_matrix_multiply_mod_single(a, GRETL_MOD_NONE,
+					       b, GRETL_MOD_NONE,
+					       c, GRETL_MOD_NONE);
     }
 
     return err;
