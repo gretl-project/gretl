@@ -29,6 +29,8 @@ version 2015e, in progress
   could cause a crash
 - Fix bug: possible crash on importing data from a Stata dta
   file on 32-bit Windows
+- Fix bug: in "hsk" the auxiliary regression should always
+  include a constant, even if the base specification doesn't
 - Application of "catch" to user-defined functions: drop back
   from an error to a warning, for now
 - Appending daily data: don't fail when we have enough date
@@ -37,11 +39,12 @@ version 2015e, in progress
   the color/mono choice properly)
 - Stata dta importer: support dta format 118 (Stata 14)
 - GUI: some cosmetic fixes specific to gtk 3
-- Remove support for gnuplot < version 4.6.0
+- GUI script editor: implement choice of gtksourceview style
 - MS Windows package: update to OpenBLAS 0.2.16.dev to avoid
   bug in computing eigenvalues on 64-bit Windows
-- Add workaround to avoid OpenBLAS bug in matrix inversion
+- Add workaround to avoid OpenBLAS crash on matrix inversion
   when the input matrix contains NaNs
+- Remove support for gnuplot < version 4.6.0
 
 2015-10-19 version 2015d
 - add varnames() function: similar to varname() but returns
