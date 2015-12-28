@@ -220,6 +220,10 @@ add_file ${SYSSV}/language-specs/python.lang gretl/gtksourceview/python.lang
 add_file ${SYSSV}/language-specs/def.lang gretl/gtksourceview/def.lang
 add_file ${SYSSV}/language-specs/language2.rng gretl/gtksourceview/language2.rng
 add_file ${SYSSV}/styles/classic.xml gretl/gtksourceview/classic.xml
+add_file ${SYSSV}/styles/cobalt.xml gretl/gtksourceview/cobalt.xml
+add_file ${SYSSV}/styles/kate.xml gretl/gtksourceview/kate.xml
+add_file ${SYSSV}/styles/oblivion.xml gretl/gtksourceview/oblivion.xml
+add_file ${SYSSV}/styles/tango.xml gretl/gtksourceview/tango.xml
 add_file ${SYSSV}/styles/styles.rng gretl/gtksourceview/styles.rng
   
 # release news file
