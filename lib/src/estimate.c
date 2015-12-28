@@ -2624,7 +2624,23 @@ static int observation_is_dummied (const MODEL *pmod,
     return ret;
 }
 
-/* get_hsk_weights: take the residuals from the model pmod, square
+static int *copy_ensure_const (const int *orig)
+{
+    int *list = gretl_list_new(orig[0] + 1);
+    int i;
+
+    if (list != NULL) {
+	list[1] = orig[1];
+	list[2] = 0;
+	for (i=3; i<=list[0]; i++) {
+	    list[i] = orig[i-1];
+	}
+    }
+
+    return list;
+}
+
+/* get_hsk_weights: take the residuals from the model @pmod, square
    them and take logs; find the fitted values for this series using an
    auxiliary regression including the original independent variables
    (and their squares, if not given OPT_N); exponentiate the fitted
@@ -2641,7 +2657,12 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset, gretlopt opt)
     double xx;
     MODEL aux;
 
-    lcpy = gretl_list_copy(pmod->list);
+    if (pmod->ifc) {
+	lcpy = gretl_list_copy(pmod->list);
+    } else {
+	lcpy = copy_ensure_const(pmod->list);
+    }
+
     if (lcpy == NULL) {
 	return E_ALLOC;
     }
