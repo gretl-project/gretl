@@ -33,12 +33,11 @@
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguagemanager.h>
 #include <gtksourceview/gtksourceprintcompositor.h>
-#ifdef PKGBUILD
-# include <gtksourceview/gtksourcestyleschememanager.h>
-#endif
+#include <gtksourceview/gtksourcestyleschememanager.h>
 
 #ifdef USE_GTKSOURCEVIEW_3
 # include <gtksourceview/gtksourcebuffer.h>
+# include <gtksourceview/gtksource.h>
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 #endif
 
@@ -692,6 +691,19 @@ static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
 
 #endif /* PKGBUILD */
 
+static void set_style_for_buffer (GtkSourceBuffer *sbuf,
+				  const char *id)
+{
+    GtkSourceStyleSchemeManager *mgr;
+    GtkSourceStyleScheme *scheme;
+
+    mgr = gtk_source_style_scheme_manager_get_default();
+    scheme = gtk_source_style_scheme_manager_get_scheme(mgr, id);
+    if (scheme != NULL) {
+	gtk_source_buffer_set_style_scheme(sbuf, scheme);
+    }
+}
+
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT || \
 			      r == EDIT_PKG_CODE || \
@@ -757,6 +769,14 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
 					  script_line_numbers);
+
+    if (lm != NULL) {
+	const char *sv_style = get_sourceview_style();
+
+	if (*sv_style != '\0') {
+	    set_style_for_buffer(sbuf, sv_style);
+	}
+    }
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -3000,6 +3020,106 @@ static void line_numbers_cb (GtkWidget *w, windata_t *vwin)
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), !s);
 }
 
+static void set_style_cb (GtkCheckMenuItem *item, GtkWidget *text)
+{
+    GtkSourceStyleSchemeManager *mgr;
+    GtkSourceStyleScheme *scheme;
+    GtkTextBuffer *tbuf;
+    const gchar *id;
+
+    if (!gtk_check_menu_item_get_active(item)) {
+	return;
+    }
+
+#if GTK_MAJOR_VERSION == 2 || GTK_MINOR_VERSION	< 16
+    id = g_object_get_data(G_OBJECT(item), "label");
+#else   
+    id = gtk_menu_item_get_label(GTK_MENU_ITEM(item));
+#endif    
+    mgr = gtk_source_style_scheme_manager_get_default();
+    scheme = gtk_source_style_scheme_manager_get_scheme(mgr, id);
+    if (scheme != NULL) {
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
+	gtk_source_buffer_set_style_scheme(GTK_SOURCE_BUFFER(tbuf), scheme);
+    }
+}
+
+static void set_style_default (GtkMenuItem *item, GtkWidget *text)
+{
+    GtkSourceStyleScheme *scheme;
+    GtkTextBuffer *tbuf;
+    const gchar *id;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
+    scheme = gtk_source_buffer_get_style_scheme(GTK_SOURCE_BUFFER(tbuf));
+    if (scheme != NULL) {
+	id = gtk_source_style_scheme_get_id(scheme);
+	set_sourceview_style(id);
+    }
+}
+
+static void add_sourceview_style_selection (GtkWidget *menu,
+					    GtkWidget *text)
+{
+    GtkSourceStyleSchemeManager *mgr;
+    GtkSourceStyleScheme *scheme;
+    GtkTextBuffer *tbuf;
+    const gchar * const *ids;
+    GtkWidget *submenu;
+    GtkWidget *item, *sitem;
+    GSList *group = NULL;
+    const gchar *id = NULL;
+    int i;
+
+    mgr = gtk_source_style_scheme_manager_get_default();
+    if (mgr == NULL) {
+	return;
+    }
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
+    scheme = gtk_source_buffer_get_style_scheme(GTK_SOURCE_BUFFER(tbuf));
+    if (scheme != NULL) {
+	id = gtk_source_style_scheme_get_id(scheme);
+    }
+
+    item = gtk_menu_item_new_with_label(_("style"));
+    submenu = gtk_menu_new();
+    ids = gtk_source_style_scheme_manager_get_scheme_ids(mgr);
+    
+    for (i=0; ids && ids[i]; i++) {
+	sitem = gtk_radio_menu_item_new_with_label(group, ids[i]);
+	if (id != NULL && !strcmp(ids[i], id)) {
+	    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(sitem), TRUE);
+	}
+	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(sitem));
+#if GTK_MAJOR_VERSION == 2 || GTK_MINOR_VERSION	< 16
+	/* gtk_menu_item_get_label() not available */
+	g_object_set_data_full(G_OBJECT(sitem), "label",
+			       g_strdup(ids[i]), g_free);
+#endif	
+	g_signal_connect(G_OBJECT(sitem), "toggled",
+			 G_CALLBACK(set_style_cb), text);
+	gtk_widget_show(sitem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), sitem);	    
+    }
+
+    if (i > 1) {
+	sitem = gtk_separator_menu_item_new();
+	gtk_widget_show(sitem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), sitem);
+	sitem = gtk_menu_item_new_with_label(_("set as default"));
+	g_signal_connect(G_OBJECT(sitem), "activate",
+			 G_CALLBACK(set_style_default), text);
+	gtk_widget_show(sitem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), sitem);
+    }
+
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+    gtk_widget_show(submenu);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    gtk_widget_show(item);
+}
+
 static GtkWidget *
 build_script_popup (windata_t *vwin, struct textbit **ptb)
 {
@@ -3107,6 +3227,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	add_sourceview_style_selection(pmenu, vwin->text);
     }
 
     if (window_is_undockable(vwin)) {

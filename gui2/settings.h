@@ -113,4 +113,9 @@ void set_author_mail (const char *s);
 
 const char *get_author_mail (void);
 
+void set_sourceview_style (const char *s);
+
+const char *get_sourceview_style (void);
+
+
 #endif /* SETTINGS_H */

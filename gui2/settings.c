@@ -115,6 +115,7 @@ char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];
+static char sview_style[24];
 
 static int hc_by_default;
 static char langpref[32];
@@ -348,6 +349,8 @@ RCVAR rc_vars[] = {
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "author_mail", "Package author email", NULL, &author_mail,
       INVISET | SKIPSET, sizeof author_mail, TAB_NONE, NULL },
+     { "sourceview_style", "Sourceview style", NULL, &sview_style,
+      INVISET | SKIPSET, sizeof sview_style, TAB_NONE, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
@@ -385,7 +388,7 @@ const char *get_scriptpage (void)
 
 void set_author_mail (const char *s)
 {
-    if (strlen(s) < sizeof author_mail) {
+    if (s != NULL && strlen(s) < sizeof author_mail) {
 	strcpy(author_mail, s);
     } else {
 	author_mail[0] = '\0';
@@ -395,6 +398,20 @@ void set_author_mail (const char *s)
 const char *get_author_mail (void)
 {
     return author_mail;
+}
+
+void set_sourceview_style (const char *s)
+{
+    if (s != NULL && strlen(s) < sizeof sview_style) {
+	strcpy(sview_style, s);
+    } else {
+	sview_style[0] = '\0';
+    }
+}
+
+const char *get_sourceview_style (void)
+{
+    return sview_style;
 }
 
 int autoicon_on (void)
