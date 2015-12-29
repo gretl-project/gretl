@@ -93,6 +93,8 @@ c     Argonne National Laboratory. MINPACK Project. March, 1980.
 c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
+#include <stdio.h>
+
 int fdjac2_(S_fp fcn, int m, int n, int quality, 
 	    double *x, double *fvec, 
 	    double *fjac, int ldfjac, int *iflag, 
@@ -123,6 +125,9 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
     } else {
 	int k, dim, d;
 	int a[4], b[4];
+#if 0 /* experimental */	
+	double r = 1.0e-4;
+#endif	
 	double y[m];
 
 	if (quality == 1) {
@@ -132,6 +137,7 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    a[0] = b[0] = -1;
 	    a[1] = b[1] = 1;
 	} else if (quality == 2) {
+	    eps *= 1000;
 	    dim = 4;
 	    d = 12;
 	    a[0] = -2; a[1] = -1; a[2] = 1; a[3] =  2;
@@ -143,7 +149,15 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 
 	for (j = 0; j < n; j++) {
 	    temp = x[j];
+#if 0 /* experimental */	    
+	    if (quality == 1) {
+		h = eps * fabs(temp);
+	    } else {
+		h = (fabs(temp) < 0.01)? r : fabs(r * temp);
+	    }
+#else /* as it was */
 	    h = eps * fabs(temp);
+#endif	    
 	    if (h == 0.0) {
 		h = eps;
 	    }
