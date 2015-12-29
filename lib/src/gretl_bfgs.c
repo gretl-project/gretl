@@ -296,6 +296,13 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
 
+    /* note: numDeriv has
+
+       h0 <- abs(d*x) + eps * (abs(x) < zero.tol)
+
+       where the defaults are eps = 1e-4, d = 0.0001,
+       and zero.tol = sqrt(double.eps/7e-7)
+    */
     for (i=0; i<n; i++) {
 	h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]);
     }
