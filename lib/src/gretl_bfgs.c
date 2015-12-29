@@ -297,7 +297,7 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
     D = Hd + n; /* D is of length dn */
 
     for (i=0; i<n; i++) {
-	h0[i] = (fabs(b[i]) < 0.01)? eps : d * b[i];
+	h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]);
     }
 
     f0 = func(b, data);
