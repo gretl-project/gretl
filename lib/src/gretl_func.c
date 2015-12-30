@@ -7256,9 +7256,11 @@ static int check_function_args (fncall *call, PRN *prn)
 	}
     }
 
+#if UDEBUG
     if (err) {
 	fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
     }
+#endif    
 
     return err;
 }
