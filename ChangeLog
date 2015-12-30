@@ -1,6 +1,8 @@
 version 2015e, in progress
 - syntax enhancement: allow specification of type when setting
   a bundle member
+- syntax enhancement: allow specification of a null default
+  value for a matrix argument to a user-defined function
 - add exists() function, recommended as a replacement for the
   now-deprecated isnull()
 - add pxnobs() function: gives the number of valid cross-
