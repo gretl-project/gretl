@@ -3151,7 +3151,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    print_loop_progress(loop, dset, prn);
 	}
 
-#if 1 /* experimental, 2014-12-05 */
 	if (gretl_in_gui_mode() && 
 	    loop->iter % 10 == 0 && 
 	    check_for_stop()) {
@@ -3160,7 +3159,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    err = E_STOP;
 	    break;
 	}
-#endif	
 
 	while (!err && loop_next_command(line, loop, &j)) {
 	    int ci = loop->cmds[j].ci;
@@ -3168,8 +3166,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    int subst = 0;
 
 #if LTRACE || (LOOP_DEBUG > 1)
-	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%s, compiled=%d\n",
-		    loop->iter, j, line, gretl_command_word(ci),
+	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%d (%s), compiled=%d\n",
+		    loop->iter, j, line, ci, gretl_command_word(ci),
 		    genr_compiled(loop, j) || conditional_compiled(loop, j) ||
 		    cmd_checked(loop, j));
 #endif
@@ -3292,7 +3290,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    continue;
 		}
 	    } else if (cmd->ci < 0) {
-		/* blocked */
+		/* blocked/masked */
 		if (conditional_line(loop, j)) {
 		    cmd_info_to_loop(loop, j, cmd, &subst);
 		}
@@ -3331,6 +3329,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    err = gretl_loop_exec(s, dset, NULL);
 		}
 	    } else if (cmd->ci == BREAK) {
+		loop->brk = 1;
+		break;
+	    } else if (cmd->ci == FUNCRET) {
+		err = set_function_should_return(line);
 		loop->brk = 1;
 		break;
 	    } else if (cmd->ci == ENDLOOP) {

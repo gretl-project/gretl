@@ -141,6 +141,8 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
 int attach_loop_to_function (void *ptr);
 
+int set_function_should_return (const char *line);
+
 int current_function_size (void);
 
 char *gretl_func_get_arg_name (const char *argvar, int *err);

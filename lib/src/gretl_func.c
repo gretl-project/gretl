@@ -7657,6 +7657,35 @@ int attach_loop_to_function (void *ptr)
 
 #endif
 
+static gchar *return_line;
+
+/* to be called when a "return" statement occurs within a
+   loop that's being called by a function
+*/
+
+int set_function_should_return (const char *line)
+{
+    if (gretl_function_depth() > 0) {
+	return_line = g_strdup(line);
+	return 0;
+    } else {
+	gretl_errmsg_set("return: can be used only in a function");
+	return E_PARSE;
+    }
+}
+
+static int get_return_line (ExecState *state)
+{
+    if (return_line == NULL) {
+	return 0;
+    } else {
+	strcpy(state->line, return_line);
+	g_free(return_line);
+	return_line = NULL;
+	return 1;
+    }
+}
+
 int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn)
 {
@@ -7815,9 +7844,9 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	}
 #else
 	err = maybe_exec_line(&state, dset, NULL);
-#endif	
+#endif /* LOOPSAVE or not */
 
-	if (!err && state.cmd->ci == FUNCRET) {
+	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
 	    err = handle_return_statement(call, &state, dset, i+1);
 	    if (i < u->n_lines - 1) {
 		retline = i;
@@ -7856,6 +7885,11 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	    if (err) {
 		set_function_error_message(err, u, &state, state.line, 
 					   u->lines[i].idx);
+	    }
+	    if (get_return_line(&state)) {
+		/* a "return" statement was encountered in the loop */
+		err = handle_return_statement(call, &state, dset, i+1);
+		break;
 	    }
 	}
     }

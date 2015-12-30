@@ -3156,7 +3156,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 	return 0;
     }
 
-    if (gretl_compiling_loop()) { 
+    if (gretl_compiling_loop()) {
 	err = get_command_index(s->line, s->cmd);
     } else {
 	/* FIXME last arg to parse_command_line() ? */
@@ -3183,7 +3183,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 	if (err) {
 	    errmsg(err, s->prn);
 	    return err;
-	} 
+	}
 	return 0;
     } 
 
