@@ -494,7 +494,7 @@ gretl_matrix *numerical_score_matrix (double *b, int T, int k,
     for (i=0; i<k; i++) {
 	bi0 = b[i];
 #if ALT_OPG
-	h = d * bi0 + d * (b[i] == 0.0);
+	h = d * bi0 + d * (floateq(b[i], 0.0));
 #endif
 	b[i] = bi0 - h;
 	x = lltfun(b, i, data);
@@ -548,7 +548,7 @@ static int richardson_gradient (double *b, double *g, int n,
 
     for (i=0; i<n; i++) {
 	bi0 = b[i];
-	h = fabs(d * b[i]) + eps * (b[i] == 0.0);
+	h = fabs(d * b[i]) + eps * (floateq(b[i], 0.0));
 	for (k=0; k<r; k++) {
 	    b[i] = bi0 - h;
 	    f1 = func(b, data);
