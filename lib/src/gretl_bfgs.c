@@ -541,7 +541,6 @@ static int richardson_gradient (double *b, double *g, int n,
     double df[RSTEPS];
     double eps = 1.0e-4;
     double d = 0.0001;
-    double v = 2.0;
     double h, p4m;
     double bi0, f1, f2;
     int r = RSTEPS;
@@ -549,7 +548,7 @@ static int richardson_gradient (double *b, double *g, int n,
 
     for (i=0; i<n; i++) {
 	bi0 = b[i];
-	h = d * b[i] + eps * (b[i] == 0.0);
+	h = fabs(d * b[i]) + eps * (b[i] == 0.0);
 	for (k=0; k<r; k++) {
 	    b[i] = bi0 - h;
 	    f1 = func(b, data);
@@ -559,8 +558,8 @@ static int richardson_gradient (double *b, double *g, int n,
 		b[i] = bi0;
 		return 1;
 	    }		    
-	    df[k] = (f2 - f1) / (2.0 * h); 
-	    h /= v;
+	    df[k] = (f2 - f1) / (2 * h); 
+	    h /= 2.0;
 	}
 	b[i] = bi0;
 	p4m = 4.0;
