@@ -855,7 +855,8 @@ int fn_param_optional (const ufunc *fun, int i)
 
     t = fun->params[i].type;
 
-    return ((gretl_ref_type(t) || 
+    return ((gretl_ref_type(t) ||
+	     t == GRETL_TYPE_MATRIX ||
 	     t == GRETL_TYPE_LIST ||
 	     t == GRETL_TYPE_STRING) && 
 	    (fun->params[i].flags & ARG_OPTIONAL));
@@ -5652,7 +5653,8 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (*s == '[') { 
 	if (gretl_scalar_type(type)) {
 	    err = read_min_max_deflt(&s, param, name, &nvals);
-	} else if (gretl_ref_type(type) || 
+	} else if (gretl_ref_type(type) ||
+		   type == GRETL_TYPE_MATRIX ||
 		   type == GRETL_TYPE_LIST ||
 		   type == GRETL_TYPE_STRING) {
 	    err = read_param_option(&s, param);
@@ -6421,10 +6423,12 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    if (fp->flags & ARG_CONST) {
-		err = localize_const_matrix(arg, fp);
-	    } else {
-		err = copy_as_arg(fp->name, fp->type, arg->val.m); 
+	    if (arg->type != GRETL_TYPE_NONE) {
+		if (fp->flags & ARG_CONST) {
+		    err = localize_const_matrix(arg, fp);
+		} else {
+		    err = copy_as_arg(fp->name, fp->type, arg->val.m);
+		}
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    err = copy_as_arg(fp->name, fp->type, arg->val.b);
@@ -7669,7 +7673,7 @@ int set_function_should_return (const char *line)
 	return_line = g_strdup(line);
 	return 0;
     } else {
-	gretl_errmsg_set("return: can be used only in a function");
+	gretl_errmsg_set("return: can only be used in a function");
 	return E_PARSE;
     }
 }
