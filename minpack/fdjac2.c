@@ -93,6 +93,13 @@ c     Argonne National Laboratory. MINPACK Project. March, 1980.
 c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
+#define BIGGER_H 1
+
+#if BIGGER_H
+# define XREF 128
+# define DEN sqrt(6.0)
+#endif
+
 int fdjac2_(S_fp fcn, int m, int n, int quality, 
 	    double *x, double *fvec, 
 	    double *fjac, int ldfjac, int *iflag, 
@@ -143,17 +150,21 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 
 	for (j = 0; j < n; j++) {
 	    temp = x[j];
+#if BIGGER_H	    
 	    if (quality == 2) {
-		if (fabs(temp) > 1000) {
-		    h = 1000 * sqrt(fabs(temp/1000)) * eps;
+		if (fabs(temp) > XREF) {
+		    h = XREF * sqrt(fabs(temp/XREF)) * eps / DEN;
 		} else {
-		    h = 1000 * eps;
+		    h = XREF * eps / DEN;
 		}
 	    } else {
 		h = eps * fabs(temp);
-		if (h == 0.0) {
-		    h = eps;
-		}
+	    }
+#else
+	    h = eps * fabs(temp);
+#endif	    
+	    if (h == 0.0) {
+		h = eps;
 	    }
 
 	    for (i = 0; i < m; i++) {
