@@ -228,43 +228,29 @@ void output_lang2_file (void)
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Scripts\">");
-    puts("<metadata>");
-    puts(" <property name=\"mimetypes\">application/x-gretlscript</property>");
-    puts(" <property name=\"globs\">*.inp</property>");
-    puts("</metadata>");
+    puts("  <metadata>");
+    puts("    <property name=\"mimetypes\">application/x-gretlscript</property>");
+    puts("    <property name=\"globs\">*.inp</property>");
+    puts("    <property name=\"line-comment-start\">#</property>");
+    puts("  </metadata>\n");
 
-    puts("<styles>");
-    puts(" <style id=\"comment\" _name=\"Comment\" map-to=\"def:comment\"/>");
-    puts(" <style id=\"function\" _name=\"Function\" map-to=\"def:function\"/>");
-    puts(" <style id=\"data-type\" _name=\"Data Type\" map-to=\"def:type\"/>");
-    puts(" <style id=\"string\" _name=\"String\" map-to=\"def:string\"/>");
-    puts(" <style id=\"keyword\" _name=\"Keyword\" map-to=\"def:keyword\"/>");
-    puts("</styles>");
+    puts("  <styles>");
+    puts("    <style id=\"comment\" _name=\"Comment\" map-to=\"def:comment\"/>");
+    puts("    <style id=\"function\" _name=\"Function\" map-to=\"def:function\"/>");
+    puts("    <style id=\"data-type\" _name=\"Data Type\" map-to=\"def:type\"/>");
+    puts("    <style id=\"keyword\" _name=\"Keyword\" map-to=\"def:keyword\"/>");
+    puts("  </styles>\n");
 
-    puts("<definitions>");
-    puts(" <context id=\"line-comment\" style-ref=\"comment\" end-at-line-end=\"true\">");
-    puts("  <start>#</start>");
-    puts("  <include>");
-    puts("   <context ref=\"def:escape\"/>");
-    puts("   <context ref=\"def:line-continue\"/>");
-    puts("  </include>");
-    puts(" </context>");
-    puts(" <context id=\"block-comment\" style-ref=\"comment\">");
-    puts("  <start>/\\*</start>");
-    puts("  <end>\\*/</end>");
-    puts("  <include>");
-    puts("   <context ref=\"def:escape\"/>");
-    puts("   <context ref=\"def:line-continue\"/>");
-    puts(" </include>");
-    puts(" </context>");
-    puts(" <context id=\"string\" style-ref=\"string\" end-at-line-end=\"true\">");
-    puts("  <start>\"</start>");
-    puts("  <end>\"</end>");
-    puts("  <include>");
-    puts("   <context ref=\"def:escape\"/>");
-    puts("   <context ref=\"def:line-continue\"/>");
-    puts("  </include>");
-    puts(" </context>");
+    puts("  <definitions>\n");
+    puts("    <context id=\"block-comment\" style-ref=\"comment\">");
+    puts("      <start>/\\*</start>");
+    puts("      <end>\\*/</end>");
+    puts("      <include>");
+    puts("        <context ref=\"def:escape\"/>");
+    puts("        <context ref=\"def:line-continue\"/>");
+    puts("      </include>");
+    puts("    </context>\n");
+    
 #if 0 /* not yet */
     puts(" <context id=\"foreign\" style-inside=\"true\" style-ref=\"comment\">");
     puts("  <start>(?&lt;=foreign language)</start>");
@@ -273,75 +259,73 @@ void output_lang2_file (void)
 #endif
 
     /* gretl data types */
-    puts(" <context id=\"gretl-types\" style-ref=\"data-type\">");
+    puts("    <context id=\"gretl-types\" style-ref=\"data-type\">");
     for (i=0; gretl_data_types[i] != NULL; i++) {
-	printf("  <keyword>%s</keyword>\n", gretl_data_types[i]);  
+	printf("      <keyword>%s</keyword>\n", gretl_data_types[i]);  
     }
-    puts(" </context>");
+    puts("    </context>\n");
 
     /* gretl functions */
-    puts(" <context id=\"genr-functions\" style-ref=\"function\">");
+    puts("    <context id=\"genr-functions\" style-ref=\"function\">");
     n = gen_func_count();
     for (i=0; i<n; i++) {
-	printf("  <keyword>%s</keyword>\n", gen_func_name(i));
+	printf("      <keyword>%s</keyword>\n", gen_func_name(i));
     }
-    printf("  <keyword>catch</keyword>\n");
-    puts(" </context>");
+    printf("      <keyword>catch</keyword>\n");
+    puts("    </context>\n");
 
     /* gretl commands */
-    puts(" <context id=\"commands\" style-ref=\"keyword\">");
-    puts("  <prefix>(^|\\040|\\011)</prefix>");
-    puts("  <suffix>(?![\\w\\-\\.\\(])</suffix>");
+    puts("    <context id=\"commands\" style-ref=\"keyword\">");
+    puts("      <prefix>(^|\\040|\\011)</prefix>");
+    puts("      <suffix>(?![\\w\\-\\.\\(])</suffix>");
     for (i=1; i<NC; i++) {
-	printf("  <keyword>%s</keyword>\n", gretl_command_word(i));
+	printf("      <keyword>%s</keyword>\n", gretl_command_word(i));
     }
     /* plus a few specials */
     for (i=0; special_keyword[i] != NULL; i++) {
-	printf("  <keyword>%s</keyword>\n", special_keyword[i]);
+	printf("      <keyword>%s</keyword>\n", special_keyword[i]);
     }
-    puts(" </context>");
+    puts("    </context>\n");
 
     /* command option strings */
     strs = get_all_option_strings(&nopts);
     qsort(strs, nopts, sizeof *strs, compare_options);
     if (strs != NULL) {
-	puts(" <context id=\"options\" style-ref=\"data-type\">");
-	puts(" <prefix>--</prefix>");
+	puts("    <context id=\"options\" style-ref=\"data-type\">");
+	puts("      <prefix>--</prefix>");
 	for (i=1; i<nopts; i++) {
-	    printf("  <keyword>%s</keyword>\n", strs[i]);
+	    printf("      <keyword>%s</keyword>\n", strs[i]);
 	}    
-	puts(" </context>");
+	puts("    </context>\n");
 	strings_array_free(strs, nopts);
     }
 
     /* dollar variables */
-    puts(" <context id=\"internalvars\" style-ref=\"data-type\">");
-    puts("  <prefix>\\$</prefix>");
-    puts("  <suffix></suffix>");
-
+    puts("    <context id=\"internalvars\" style-ref=\"data-type\">");
+    puts("      <prefix>\\$</prefix>");
+    puts("      <suffix></suffix>");
     strs = make_var_name_list(&n);
     if (strs != NULL) {
 	for (i=0; i<n; i++) {
-	   printf("  <keyword>%s</keyword>\n", strs[i]); 
+	   printf("      <keyword>%s</keyword>\n", strs[i]); 
 	}
 	strings_array_free(strs, n);
     }
-
-    puts(" </context>");	
+    puts("    </context>\n");	
     
-    puts(" <context id=\"gretl\">");
-    puts("  <include>");
-    puts("   <context ref=\"line-comment\"/>");
-    puts("   <context ref=\"block-comment\"/>");
-    puts("   <context ref=\"string\"/>");
-    puts("   <context ref=\"gretl-types\"/>");
-    puts("   <context ref=\"commands\"/>");
-    puts("   <context ref=\"genr-functions\"/>");
-    puts("   <context ref=\"options\"/>");
-    puts("   <context ref=\"internalvars\"/>");
-    puts("  </include>");
-    puts(" </context>");
-    puts("</definitions>");
+    puts("    <context id=\"gretl\">");
+    puts("      <include>");
+    puts("        <context ref=\"def:shell-like-comment\"/>");
+    puts("        <context ref=\"def:string\"/>");
+    puts("        <context ref=\"block-comment\"/>");
+    puts("        <context ref=\"gretl-types\"/>");
+    puts("        <context ref=\"commands\"/>");
+    puts("        <context ref=\"genr-functions\"/>");
+    puts("        <context ref=\"options\"/>");
+    puts("        <context ref=\"internalvars\"/>");
+    puts("      </include>");
+    puts("    </context>\n");
+    puts("  </definitions>");
 
     puts("</language>");
 }
