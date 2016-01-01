@@ -1891,6 +1891,10 @@ int *gretl_model_get_secondary_list (const MODEL *pmod)
 int *gretl_model_get_y_list (const MODEL *pmod)
 {
     int *list = NULL;
+
+    if (pmod->list == NULL) {
+	return NULL;
+    }
     
     if (pmod->ci == BIPROBIT) {
 	list = gretl_list_new(2);
