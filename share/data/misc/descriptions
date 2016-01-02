@@ -40,6 +40,7 @@
 "poisson","Test data for Poisson regression"
 "rac3d","Cameron-Trivedi doctor visits data"
 "recid","Wooldridge recidivism (duration) data"
+"rwm","German microdata with assorted socioeconomic variables"  
 "sw_ch12","International macro data (Stock and Watson)"
 "sw_ch14","Unemployment and inflation (Stock and Watson)"
 "theil","Henri Theil's textile consumption data"
