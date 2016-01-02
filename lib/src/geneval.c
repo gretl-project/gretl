@@ -8610,21 +8610,6 @@ static int check_array_element_type (NODE *n, GretlType t)
     return ok ? 0 : E_TYPES;
 }
 
-static gretl_array *new_array_from_count (NODE *e, GretlType gtype,
-					  parser *p)
-{
-    gretl_array *A = NULL;
-    int n = node_get_int(e, p);
-    
-    if (!p->err && n < 0) {
-	p->err = E_INVARG;
-    } else {
-	A = gretl_array_new(gtype, n, &p->err);
-    }
-
-    return A;
-}
-
 static void *node_get_ptr (NODE *n)
 {
     if (n->t == MAT)    return n->v.m;
@@ -9455,26 +9440,15 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_MKARRAY) {
 	GretlType gtype = lh_array_type(p);
 	gretl_array *A = NULL;
-	int done = 0;
 	void *ptr;
 
-	if (!p->err && k == 1) {
-	    e = eval(n->v.bn.n[0], p);
-	    if (!p->err && e->t == NUM) {
-		A = new_array_from_count(e, gtype, p);
-		done = 1;
-	    }
-	}
-
-	if (!p->err && !done) {
+	if (!p->err) {
 	    A = gretl_array_new(gtype, 0, &p->err);
 	}
 
-	if (!p->err && !done) {
+	if (!p->err) {
 	    for (i=0; i<k && !p->err; i++) {
-		if (k > 1) {
-		    e = eval(n->v.bn.n[i], p);
-		}
+		e = eval(n->v.bn.n[i], p);
 		if (!p->err) {
 		    p->err = check_array_element_type(e, gtype);
 		}
