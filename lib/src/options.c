@@ -271,6 +271,7 @@ struct gretl_option gretl_opts[] = {
     { GRAPHPG,  OPT_O, "output", 2 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_R, "robust", 0 },
+    { HECKIT,   OPT_C, "cluster", 2 },    
     { HECKIT,   OPT_T, "two-step", 0 },
     { HECKIT,   OPT_V, "verbose", 0 },
     { HELP,     OPT_F, "func", 0 },

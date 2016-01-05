@@ -71,6 +71,7 @@ struct h_container_ {
     char *fullmask;	     /* mask NAs */
     char *uncmask;	     /* mask NAs and (d==0) */
 
+    gretl_matrix *H;         /* analytical Hessian */
     gretl_matrix_block *BH;  /* workspace for the analytical Hessian */
     gretl_matrix *H11; 
     gretl_matrix *H12;
@@ -105,6 +106,7 @@ static void h_container_destroy (h_container *HC)
     free(HC->fullmask);
     free(HC->uncmask);
 
+    gretl_matrix_free(HC->H);
     gretl_matrix_block_destroy(HC->B);
     gretl_matrix_block_destroy(HC->BH);
 
@@ -143,6 +145,7 @@ static h_container *h_container_new (const int *list)
     HC->vcv = NULL;
     HC->VProbit = NULL;
 
+    HC->H = NULL;
     HC->B = NULL;
     HC->BH = NULL;
 
@@ -671,9 +674,6 @@ static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
-double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func, 
-			 h_container *HC, int *err);
-
 #define h(i,j) h[4*(i-1)+j-1]
 
 /* analytical Hessian */
@@ -874,80 +874,6 @@ static int heckit_hessian_inverse (double *theta, gretl_matrix *H,
 }
 
 #undef h
- 
-double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func, 
-			h_container *HC, int *err)
-{
-    double x, eps = 1.0e-05;
-    gretl_matrix *H = NULL;
-    gretl_matrix *splus = NULL;
-    gretl_matrix *sminus = NULL;
-    double *hess;
-    double *theta;
-    int m = n*(n+1)/2;
-    int i, j, k;
-
-    hess   = malloc(m * sizeof *hess);
-    theta  = malloc(n * sizeof *theta);
-    H      = gretl_matrix_alloc(n, n);
-    splus  = gretl_matrix_alloc(1, n);
-    sminus = gretl_matrix_alloc(1, n);
-    
-    if (hess == NULL || theta == NULL || H == NULL ||
-	splus == NULL || sminus == NULL) {
-	*err = E_ALLOC;
-	free(hess);
-	hess = NULL;
-	goto bailout;
-    }
-
-    for (i=0; i<n; i++) {
-	theta[i] = b[i];
-    }
-
-    for (i=0; i<n; i++) {
-	theta[i] += eps;
-	h_loglik(theta, HC);
-	for (j=0; j<n; j++) {
-	    x = gretl_vector_get(HC->sscore, j);
-	    gretl_vector_set(splus, j, x);
-	}
-
-	theta[i] -= 2*eps;
-	h_loglik(theta, HC);
-	for (j=0; j<n; j++) {
-	    x = gretl_vector_get(HC->sscore, j);
-	    gretl_vector_set(sminus, j, x);
-	}
-
-	theta[i] += eps;
-	for (j=0; j<n; j++) {
-	    x = gretl_vector_get(splus, j);
-	    x -= gretl_vector_get(sminus, j);
-	    gretl_matrix_set(H, i, j, -x/(2*eps));
-	}
-    }
-
-
-    gretl_matrix_xtr_symmetric(H);
-    gretl_invert_symmetric_matrix(H);
-
-    k = 0;
-    for (i=0; i<n; i++) {
-	for (j=i; j<n; j++) {
-	    hess[k++] = gretl_matrix_get(H, i, j);
-	}
-    }
-
- bailout:
-
-    gretl_matrix_free(splus);
-    gretl_matrix_free(sminus);
-    gretl_matrix_free(H);
-    free(theta);
-
-    return hess;
-}
 
 /*
    What we should do here is not entirely clear: we set yhat to the
@@ -1344,7 +1270,8 @@ static void heckit_trim_vcv (MODEL *pmod, int k,
     }    
 }
 
-int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
+int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
+	       PRN *prn)
 {
     gretl_matrix *H = NULL;
     gretl_matrix *init_H = NULL;
@@ -1417,43 +1344,31 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 	} 	
 	HC->lambda = HC->sigma * HC->rho;
 
-	H = gretl_matrix_alloc(np, np);
-	if (H == NULL) {
+	HC->H = gretl_matrix_alloc(np, np);
+	if (HC->H == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = heckit_hessian_inverse(theta, H, HC);
-	}
-#if 0
-	hess = heckit_nhessian(theta, np, h_loglik, HC, &err);
-#endif
-    }
-
-    if (!err) {
-	HC->vcv = gretl_matrix_alloc(np, np);
-	if (HC->vcv == NULL) {
-	    err = E_ALLOC;
+	    err = heckit_hessian_inverse(theta, HC->H, HC);
 	}
     }
 
     if (!err) {
-	gretl_matrix_copy_values(HC->vcv, H);
-
-	if (opt & OPT_R) {
-	    gretl_matrix *GG = gretl_matrix_XTX_new(HC->score);
-	    gretl_matrix *tmp = gretl_matrix_alloc(np, np);
-
-	    if (GG == NULL || tmp == NULL) {
+	if ((opt & OPT_R) || (opt & OPT_C)) {
+	    err = gretl_model_add_QML_vcv(hm, HECKIT, HC->H,
+					  HC->score, dset, opt);
+	    hm->ncoeff = HC->H->cols;
+	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
+	} else {
+	    /* Plain Hessian */
+	    HC->vcv = gretl_matrix_alloc(np, np);
+	    if (HC->vcv == NULL) {
 		err = E_ALLOC;
 	    } else {
-		gretl_matrix_qform(HC->vcv, GRETL_MOD_NONE, GG, tmp, GRETL_MOD_NONE);
-		gretl_matrix_copy_values(HC->vcv, tmp);
+		gretl_matrix_copy_values(HC->vcv, HC->H);
 	    }
-
-	    gretl_matrix_free(tmp);
-	    gretl_matrix_free(GG);
 	}
     }
-
+    
     if (!err) {
 	gretl_matrix *fV;
 	
@@ -1482,7 +1397,6 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 
     free(hess);
     free(theta);
-    gretl_matrix_free(H);
 
     return err;
 }
@@ -1636,7 +1550,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
 	err = heckit_2step_vcv(HC, &hm);
     } else {
 	/* use MLE */
-	err = heckit_ml(&hm, HC, opt, vprn);
+	err = heckit_ml(&hm, HC, opt, dset, vprn);
     } 
 
     if (err) {
