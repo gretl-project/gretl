@@ -1358,6 +1358,10 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 					  HC->score, dset, opt);
 	    hm->ncoeff = HC->H->cols;
 	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
+	} else	if (opt & OPT_G) {
+	    err = gretl_model_add_OPG_vcv(hm, HC->score);
+	    hm->ncoeff = HC->score->cols;
+	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
 	} else {
 	    /* Plain Hessian */
 	    HC->vcv = gretl_matrix_alloc(np, np);
