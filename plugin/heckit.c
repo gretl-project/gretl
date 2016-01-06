@@ -1273,7 +1273,6 @@ static void heckit_trim_vcv (MODEL *pmod, int k,
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	       PRN *prn)
 {
-    gretl_matrix *H = NULL;
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
     double rho, gradtol = 1.0e-06, toler = 1.0e-8;
