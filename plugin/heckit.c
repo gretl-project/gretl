@@ -1351,16 +1351,23 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	    err = heckit_hessian_inverse(theta, HC->H, HC);
 	}
     }
-
+    
     if (!err) {
+	/* here, we just use hc as a temporary intermediate container
+	   so as to be able to used the functions from gretl_model.c;
+	   what is really important at this point is to fill up HC->vcv
+	   correctly for later processing.
+	*/
 	if ((opt & OPT_R) || (opt & OPT_C)) {
+	    /* robust (includes clustering) */
 	    err = gretl_model_add_QML_vcv(hm, HECKIT, HC->H,
 					  HC->score, dset, opt);
-	    hm->ncoeff = HC->H->cols;
+	    hm->ncoeff = np;
 	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
-	} else	if (opt & OPT_G) {
+	} else if (opt & OPT_G) {
+	    /* OPG */
 	    err = gretl_model_add_OPG_vcv(hm, HC->score);
-	    hm->ncoeff = HC->score->cols;
+	    hm->ncoeff = np;
 	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
 	} else {
 	    /* Plain Hessian */
@@ -1372,7 +1379,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	    }
 	}
     }
-    
+
     if (!err) {
 	gretl_matrix *fV;
 	
