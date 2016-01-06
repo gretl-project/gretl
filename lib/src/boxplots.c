@@ -882,7 +882,7 @@ static int real_boxplots (const int *list,
 		gretl_strdup_printf(_("Regression residuals (= observed - fitted %s)"), 
 				    yname);
 	} else {
-	    grp->title = gretl_strdup(dset->varname[list[1]]);
+	    grp->title = gretl_strdup(series_get_graph_name(dset,list[1]));
 	}
     }
 
