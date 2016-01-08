@@ -42,6 +42,7 @@ struct h_container_ {
     int selvar;		     /* location of selection variable in array Z */
     int millsvar;            /* location of Mills ratios in array Z */
     int clustervar;          /* location of clustering variable in array Z */
+    int nclusters;           /* number of clusters (if any) */
     int *Xlist;		     /* regressor list for the main eq. */
     int *Zlist;		     /* regressor list for the selection eq. */
 
@@ -129,6 +130,7 @@ static h_container *h_container_new (const int *list)
     HC->t1 = HC->t2 = 0;
     HC->ll = NADBL;
     HC->clustervar = 0;
+    HC->nclusters = 0;
 
     HC->Xlist = NULL;
     HC->Zlist = NULL;
@@ -1349,10 +1351,11 @@ static gretl_matrix *clustered_GG (h_container *HC, int *err)
 	}
     }
 
-    GG = gretl_matrix_XTX_new(Gc); /* for now */
+    GG = gretl_matrix_XTX_new(Gc); 
     if (GG == NULL) {
 	*err = E_ALLOC;
     } else {
+	HC->nclusters = nc;
 	gretl_matrix_multiply_by_scalar(GG, nc/(nc-1.0));
     }
 
@@ -1505,22 +1508,20 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	}
     }
 
-#if 1
-    if (!err && (opt & OPT_C)) {
-	gretl_matrix *mH = gretl_matrix_copy(HC->H);
-	gretl_matrix *mG = gretl_matrix_copy(HC->score);
-	
-	if (mH != NULL) {
-	    gretl_model_set_matrix_as_data(hm, "iH", mH);
-	}
-	if (mG != NULL) {
-	    gretl_model_set_matrix_as_data(hm, "G", mG);
-	}
-    }
-#endif
-
     if (!err) {
 	HC->vcv = heckit_ml_vcv(HC, opt, dset, &err);
+    }
+
+    if (!err) {
+	if (opt & OPT_R) {
+	    hm->opt |= OPT_R;
+	} else if (opt & OPT_C) {
+	    gretl_model_set_int(hm, "n_clusters", HC->nclusters);
+	    gretl_model_set_vcv_info(hm, VCV_CLUSTER, HC->clustervar);
+	    hm->opt |= OPT_C;
+	} else if (opt & OPT_G) {
+	    hm->opt |= OPT_G;
+	} 
     }
 
     if (!err) {

@@ -5479,10 +5479,6 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
 	</option>
-	<option>
-	  <flag>--robust</flag>
-	  <effect>QML standard errors</effect>
-        </option>
         <option>
 	  <flag>--two-step</flag>
 	  <effect>perform two-step estimation</effect>
@@ -5490,6 +5486,19 @@
         <option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
+        </option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>OPG standard errors</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>QML standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>

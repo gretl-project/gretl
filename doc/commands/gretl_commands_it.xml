@@ -5290,10 +5290,6 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
 	</option>
-	<option>
-	  <flag>--robust</flag>
-	  <effect>errori standard QML</effect>
-        </option>
         <option>
 	  <flag>--two-step</flag>
 	  <effect>esegue la stima in due passi</effect>
@@ -5301,6 +5297,19 @@
         <option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+	<option>
+	  <flag>--opg</flag>
+	  <effect>errori standard OPG</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard QML</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>vedi <cmdref targ="logit"/> per una spiegazione</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>

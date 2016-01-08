@@ -9,6 +9,7 @@ version 2015e, in progress
   sectional observations on a given series in each period
 - pxsum() function: revise this to skip missing values  
 - "arima" command: allow ARIMA(0,1,0) without constant
+- "heckit" command: allow clustered standard errors
 - "reset" command: add --silent option
 - "store" command and GUI "Export data" menu item: add option
   to save data in Stata's binary format (dta version 113)
