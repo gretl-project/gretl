@@ -1357,12 +1357,33 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	   what is really important at this point is to fill up HC->vcv
 	   correctly for later processing.
 	*/
-	if ((opt & OPT_R) || (opt & OPT_C)) {
-	    /* robust (includes clustering) */
+
+	if (opt & OPT_R) {
+	    /* robust */
 	    err = gretl_model_add_QML_vcv(hm, HECKIT, HC->H,
 					  HC->score, dset, opt);
 	    hm->ncoeff = np;
 	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
+	}	    
+	else if (opt & OPT_C) {
+	    /* clustering */
+	    /* SOMETHING is necessary because, as things stand as of here, 
+	       hc->missmask would skip all censored obs
+	    */
+	    err = gretl_model_add_QML_vcv(hm, HECKIT, HC->H,
+					  HC->score, dset, opt);
+	    hm->ncoeff = np;
+	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
+
+#if 1
+	    gretl_matrix *mH, *mG;
+	    mH = gretl_matrix_copy(HC->H);
+	    mG = gretl_matrix_copy(HC->score);
+
+	    gretl_model_set_matrix_as_data(hm, "iH", mH);
+	    gretl_model_set_matrix_as_data(hm, "G", mG);
+#endif
+	    
 	} else if (opt & OPT_G) {
 	    /* OPG */
 	    err = gretl_model_add_OPG_vcv(hm, HC->score);
