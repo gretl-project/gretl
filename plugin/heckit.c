@@ -40,12 +40,14 @@ struct h_container_ {
     int depvar;		     /* location of y in array Z */
     int selvar;		     /* location of selection variable in array Z */
     int millsvar;            /* location of Mills ratios in array Z */
+    int clustervar;          /* location of clustering variable in array Z */
     int *Xlist;		     /* regressor list for the main eq. */
     int *Zlist;		     /* regressor list for the selection eq. */
 
     gretl_matrix *y;	     /* dependent var */
     gretl_matrix *reg;	     /* main eq. regressors */
     gretl_matrix *mills;     /* Mills ratios from selection eq */
+    gretl_matrix *clusvec;   /* clustering var if necessary */
     gretl_matrix *delta;     /* used in 2-step vcv calculations */
     gretl_matrix *d;	     /* selection dummy variable */
     gretl_matrix *selreg;    /* selection eq. regressors */ 
@@ -91,6 +93,7 @@ static void h_container_destroy (h_container *HC)
     gretl_matrix_free(HC->y);
     gretl_matrix_free(HC->reg);
     gretl_matrix_free(HC->mills);
+    gretl_matrix_free(HC->clusvec);
     gretl_matrix_free(HC->delta);
     gretl_matrix_free(HC->d);
     gretl_matrix_free(HC->selreg);
@@ -131,6 +134,7 @@ static h_container *h_container_new (const int *list)
     HC->y = NULL;
     HC->reg = NULL;
     HC->mills = NULL;
+    HC->clusvec = NULL;
     HC->delta = NULL;
     HC->d = NULL;
     HC->selreg = NULL;
@@ -166,7 +170,7 @@ static h_container *h_container_new (const int *list)
 
 static int 
 make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
-		     const DATASET *dset)
+		     int cvar, const DATASET *dset)
 {
     int T = sample_size(dset);
     int totmiss = 0;
@@ -192,8 +196,16 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		totmiss++;
 	    }
 	}
+
+	if ((cvar > 0) && ! miss) {
+	    /* we need to take care of the clustering variable too */
+	    if (na(dset->Z[cvar][t])) {
+		totmiss++;
+	    }
+	}
     }
 
+   
     if (totmiss == T) {
 	return E_MISSDATA;
     }
@@ -230,6 +242,13 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		    HC->fullmask[s] = 1;
 		    HC->probmask[t] = '1';
 		    miss = 1;
+		}
+	    }
+
+	    if ((cvar > 0) && ! miss) {
+		if (na(dset->Z[cvar][t])) {
+		    HC->fullmask[s] = 1;
+		    HC->probmask[t] = '1';
 		}
 	    }
 	}
@@ -450,6 +469,15 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
 					    t1, t2, 
 					    HC->uncmask, &err);
+    }
+
+    if (!err && HC->clustervar > 0) {
+	/* regressors in selection equation, uncensored sample */
+	tmplist[1] = HC->clustervar;
+	HC->clusvec = 
+	    gretl_matrix_data_subset_masked(tmplist, dset,
+					    t1, t2, 
+					    HC->fullmask, &err);
     }
 
     if (err) {
@@ -1270,6 +1298,104 @@ static void heckit_trim_vcv (MODEL *pmod, int k,
     }    
 }
 
+gretl_matrix *heckit_ml_vcv (h_container *HC, gretlopt opt, DATASET *dset,
+			    int *err)
+{
+
+    gretl_matrix *V = NULL;
+    gretl_matrix *iH = HC->H;
+    gretl_matrix *G  = HC->score;
+    gretl_matrix *GG = NULL;
+    gretl_matrix *cvals = NULL;
+
+    int need_opg = (opt & OPT_R) || (opt & OPT_G);
+    int k = iH->rows;
+    
+    if (need_opg) {
+	GG = gretl_matrix_XTX_new(G);
+	gretl_matrix_print(GG, "GG");
+	if (GG == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	} 
+    } else if (opt & OPT_C) {
+	/* clustering */
+	cvals = gretl_matrix_values(HC->clusvec->val, HC->clusvec->rows,
+				    OPT_S, err);
+	
+	int nc = gretl_vector_get_length(cvals);
+	int t, i, r, T = G->rows;
+	double x, s;
+
+#if 0
+	fprintf(stderr, "n = %d\n", nc);
+#endif
+	
+	int *link;
+	link = malloc(T * sizeof *link);
+	
+	for (t=0; t<T; t++) {
+	    x = gretl_vector_get(HC->clusvec,t);
+	    for (i=0; i<nc; i++) {
+		if (x == gretl_vector_get(cvals, i)) {
+		    link[t] = i;
+		    break;
+		}
+	    }
+	}
+
+	gretl_matrix *Gc = gretl_zero_matrix_new(nc, k);
+
+	for (t=0; t<T; t++) {
+	    r = link[t];
+	    
+	    for (i=0; i<k; i++) {
+		s = gretl_matrix_get(Gc, r, i);
+		x = gretl_matrix_get(G, t, i);
+		gretl_matrix_set(Gc, r, i, x+s);
+	    }
+	}
+
+	GG = gretl_matrix_XTX_new(Gc); /* for now */
+	gretl_matrix_multiply_by_scalar(GG, nc/(nc-1.0));
+	
+	gretl_matrix_print(Gc, "Gc");
+	gretl_matrix_print(Gc, "GG");
+	
+
+	gretl_matrix_free(Gc);
+	free(link);
+    } 
+
+    V = gretl_matrix_alloc(k, k);
+
+    if (V == NULL) {
+	*err = E_ALLOC;
+	return V;
+    }
+
+    if ((opt & OPT_R) || (opt & OPT_C)) {
+	/* sandwich */
+	gretl_matrix_qform(iH, GRETL_MOD_NONE, GG, V, GRETL_MOD_NONE);
+    } else if (opt & OPT_G) {
+	/* OPG */
+	*err = gretl_invert_symmetric_matrix(GG);
+	if (!*err) {
+	    gretl_matrix_copy_values(V, GG);
+	}
+    } else {
+	gretl_matrix_copy_values(V, iH);
+    }
+
+    bailout:
+
+    gretl_matrix_print(V, "V");
+    gretl_matrix_free(GG);
+    return V;
+    
+}
+
+
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	       PRN *prn)
 {
@@ -1299,8 +1425,8 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
     theta[np-2] = HC->sigma;
     rho = HC->rho;
 
-    if (fabs(rho) > 0.99) {
-	rho = (rho > 0)? 0.99 : -0.99;
+    if (fabs(rho) > 0.995) {
+	rho = (rho > 0)? 0.995 : -0.995;
     }
 
     theta[np-1] = atanh(rho);
@@ -1350,55 +1476,19 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	    err = heckit_hessian_inverse(theta, HC->H, HC);
 	}
     }
-    
-    if (!err) {
-	/* here, we just use hc as a temporary intermediate container
-	   so as to be able to used the functions from gretl_model.c;
-	   what is really important at this point is to fill up HC->vcv
-	   correctly for later processing.
-	*/
-
-	if (opt & OPT_R) {
-	    /* robust */
-	    err = gretl_model_add_QML_vcv(hm, HECKIT, HC->H,
-					  HC->score, dset, opt);
-	    hm->ncoeff = np;
-	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
-	}	    
-	else if (opt & OPT_C) {
-	    /* clustering */
-	    /* SOMETHING is necessary because, as things stand as of here, 
-	       hc->missmask would skip all censored obs
-	    */
-	    err = gretl_model_add_QML_vcv(hm, HECKIT, HC->H,
-					  HC->score, dset, opt);
-	    hm->ncoeff = np;
-	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
 
 #if 1
-	    gretl_matrix *mH, *mG;
-	    mH = gretl_matrix_copy(HC->H);
-	    mG = gretl_matrix_copy(HC->score);
+    if (opt & OPT_C) {
+	gretl_matrix *mH, *mG;
+	mH = gretl_matrix_copy(HC->H);
+	mG = gretl_matrix_copy(HC->score);
 
-	    gretl_model_set_matrix_as_data(hm, "iH", mH);
-	    gretl_model_set_matrix_as_data(hm, "G", mG);
-#endif
-	    
-	} else if (opt & OPT_G) {
-	    /* OPG */
-	    err = gretl_model_add_OPG_vcv(hm, HC->score);
-	    hm->ncoeff = np;
-	    HC->vcv = gretl_vcv_matrix_from_model(hm, NULL, &err);
-	} else {
-	    /* Plain Hessian */
-	    HC->vcv = gretl_matrix_alloc(np, np);
-	    if (HC->vcv == NULL) {
-		err = E_ALLOC;
-	    } else {
-		gretl_matrix_copy_values(HC->vcv, HC->H);
-	    }
-	}
+	gretl_model_set_matrix_as_data(hm, "iH", mH);
+	gretl_model_set_matrix_as_data(hm, "G", mG);
     }
+#endif
+	
+    HC->vcv = heckit_ml_vcv (HC, opt, dset, &err);
 
     if (!err) {
 	gretl_matrix *fV;
@@ -1445,7 +1535,7 @@ static int check_heckit_probit (MODEL *pmod, h_container *HC,
     return err;
 }
 
-static MODEL heckit_init (h_container *HC, DATASET *dset)
+static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
 {
 #if HDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
@@ -1464,12 +1554,33 @@ static MODEL heckit_init (h_container *HC, DATASET *dset)
 	err = E_ARGS;
     }
 
+    /* extract info on clustering var if necessary */
+
+    int cvar = -1;
+    const char *csname;
+    
+    if (opt & OPT_C) {
+	csname = get_optval_string(HECKIT, OPT_C); 
+	if (csname == NULL) {
+	    err = E_PARSE;
+	    goto bailout;
+	} else {
+	    cvar = current_series_index(dset, csname);
+	    if (cvar < 1 || cvar >= dset->v) {
+		err = E_UNKVAR;
+		goto bailout;
+	    }
+	}
+    }
+    
     if (!err) {
 	HC->depvar = reglist[1];
 	HC->selvar = sellist[1];
-	err = make_heckit_NA_mask(HC, reglist, sellist, dset);
+	HC->clustervar = cvar;
     }
 
+    err = make_heckit_NA_mask(HC, reglist, sellist, cvar, dset);
+    
     if (err) {
 	goto bailout;
     }
@@ -1570,7 +1681,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
 	return hm;
     }
 
-    hm = heckit_init(HC, dset);
+    hm = heckit_init(HC, dset, opt);
     if (hm.errcode) {
 	h_container_destroy(HC);
 	return hm;
