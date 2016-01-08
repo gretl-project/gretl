@@ -20,9 +20,15 @@
  <screenshots>
   <screenshot type="default">http://gretl.sourceforge.net/images/gretl_screen.png</screenshot>
  </screenshots>
- <updatecontact>gretl-devel@lists.wfu.edu</updatecontact>
+ <updatecontact>cottrell@wfu.edu</updatecontact>
  <kudos>
   <kudo>ModernToolkit</kudo>
   <kudo>UserDocs</kudo>
  </kudos>
+ <keywords>
+  <keyword>econometrics</keyword>
+  <keyword>statistics</keyword>
+  <keyword>data</keyword>
+  <keyword>analysis</keyword>
+ </keywords>
 </application>

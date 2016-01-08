@@ -1,10 +1,11 @@
 [Desktop Entry]
 Name=gretl
 Comment=Econometrics package
+Keywords=econometrics;statistics;data;analysis;
 Exec=@prefix@/bin/gretl %f
 Icon=gretl
 Terminal=false
 Type=Application
 MimeType=application/gretl.data;application/gretl.session;text/gretl.script
-Categories=Application;Science;Education;Econometrics;
+Categories=GTK;Education;Science;Economy;Math;
 
