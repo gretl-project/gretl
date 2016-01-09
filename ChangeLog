@@ -34,6 +34,8 @@ version 2015e, in progress
   file on 32-bit Windows
 - Fix bug: in "hsk" the auxiliary regression should always
   include a constant, even if the base specification doesn't
+- Fix bug: South-East element of intreg Hessian was buggy
+  (was affecting Tobit as well) 
 - Application of "catch" to user-defined functions: drop back
   from an error to a warning, for now
 - Appending daily data: don't fail when we have enough date

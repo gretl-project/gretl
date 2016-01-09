@@ -21,6 +21,7 @@
 #include "version.h"
 #include "libset.h"
 #include "gretl_bfgs.h"
+#include "gretl_normal.h"
 
 #define INTDEBUG 0
 
@@ -275,12 +276,12 @@ static void loglik_prelim (const double *theta, int_container *IC)
 	    z1 = (x1 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf(z1);
 	    IC->f0[t] = 0;
-	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
+	    IC->f1[t] = invmills(-z1);
 	    break;
 	case INT_HIGH:
 	    z0 = (x0 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf_comp(z0);
-	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
+	    IC->f0[t] = invmills(z0);
 	    IC->f1[t] = 0;
 	    break;
 	case INT_MID:
@@ -489,7 +490,7 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    Hss += x;
 	} else {
 	    x = lambda*sigma;
-	    Hss += x*(x+1) - (f0 * q0 * z0 - f1 * q1 *z1);
+	    Hss += x*x - (f0 * q0 * z0 - f1 * q1 * z1);
 	}
     }
 
