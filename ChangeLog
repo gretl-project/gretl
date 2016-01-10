@@ -1,4 +1,4 @@
-version 2015e, in progress
+version 2016a, in progress
 - syntax enhancement: allow specification of type when setting
   a bundle member
 - syntax enhancement: allow specification of a null default
