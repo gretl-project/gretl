@@ -1513,18 +1513,6 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
     }
 
     if (!err) {
-	if (opt & OPT_R) {
-	    hm->opt |= OPT_R;
-	} else if (opt & OPT_C) {
-	    gretl_model_set_int(hm, "n_clusters", HC->nclusters);
-	    gretl_model_set_vcv_info(hm, VCV_CLUSTER, HC->clustervar);
-	    hm->opt |= OPT_C;
-	} else if (opt & OPT_G) {
-	    hm->opt |= OPT_G;
-	} 
-    }
-
-    if (!err) {
 	gretl_matrix *fV;
 	
 	adjust_ml_vcv_hyperbolic(HC);
@@ -1547,6 +1535,19 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	if (!err) {
 	    np = HC->vcv->rows - 2;
 	    heckit_trim_vcv(hm, np, HC->vcv);
+	    if (opt & OPT_C) {
+		hm->opt |= OPT_C;
+		gretl_model_set_int(hm, "n_clusters", HC->nclusters);
+		gretl_model_set_vcv_info(hm, VCV_CLUSTER, HC->clustervar);
+	    } else if (opt & OPT_R) {
+		hm->opt |= OPT_R;
+		gretl_model_set_vcv_info(hm, VCV_ML, ML_QML);
+	    } else if (opt & OPT_G) {
+		hm->opt |= OPT_G;
+		gretl_model_set_vcv_info(hm, VCV_ML, ML_OP);
+	    } else {
+		gretl_model_set_vcv_info(hm, VCV_ML, ML_HESSIAN);
+	    }
 	}
     }
 
