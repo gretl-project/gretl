@@ -543,7 +543,6 @@ static int pkg_zipfile_add (const char *fname,
 	    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, fname);
 	}
 	err = gretl_copy_file(fname, dest);
-	fprintf(stderr, "branch 3, err = %d\n", err);
     }
     
     zip_report(err, nf, opt, prn);
