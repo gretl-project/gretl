@@ -1099,6 +1099,13 @@ int set_obs (const char *parm1, const char *parm2,
 	return E_DATA;
     }
 
+    /* prevent substantive reorganization of the dataset
+       within a function */
+    if ((opt & (OPT_P | OPT_C)) && gretl_function_depth() > 0) {
+	gretl_errmsg_set("You cannot do this within a function");
+	return E_DATA;
+    }
+
     gretl_error_clear();
 
     if (opt & OPT_R) {
@@ -1197,11 +1204,7 @@ int set_obs (const char *parm1, const char *parm2,
        stacked time series form
     */
     if (dset->structure == STACKED_CROSS_SECTION) {
-	if (dset->Z == NULL) {
-	    err = E_NODATA;
-	} else {
-	    err = switch_panel_orientation(dset);
-	}
+	err = switch_panel_orientation(dset);
     }
 
 #if 0
@@ -1280,6 +1283,10 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 
     ntodate(dset->stobs, 0, dset); 
     ntodate(dset->endobs, dset->n - 1, dset);
+
+    if (dset->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(dset);
+    }
 
     return err;
 }

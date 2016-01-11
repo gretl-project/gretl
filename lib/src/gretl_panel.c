@@ -4218,7 +4218,9 @@ int switch_panel_orientation (DATASET *dset)
     int T, n;
     int i, j, s, t;
 
-    if (oldmode != STACKED_TIME_SERIES &&
+    if (dset->Z == NULL) {
+	return E_NODATA;
+    } else if (oldmode != STACKED_TIME_SERIES &&
 	oldmode != STACKED_CROSS_SECTION) {
 	return E_DATA;
     }

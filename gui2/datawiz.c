@@ -328,7 +328,7 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	/* we don't offer a choice of "starting obs" */
 	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? 
 	    nperiods : nunits;
-	strcpy(dwinfo->stobs, "1.1");
+	strcpy(dwinfo->stobs, "1:1");
     } 
 
     /* handle conversion to cross-section */
