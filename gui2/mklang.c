@@ -220,6 +220,82 @@ static int compare_options (const void *a, const void *b)
     return ret == 0 ? ret : -ret;
 }
 
+#define TRY_FOREIGN 1
+
+#if TRY_FOREIGN
+
+static void output_octave_specials (void)
+{
+    puts("    <context id=\"octave-keyword\" style-ref=\"command\">");
+    puts("      <keyword>assert</keyword>");
+    puts("      <keyword>break</keyword>");
+    puts("      <keyword>case</keyword>");
+    puts("      <keyword>catch</keyword>");
+    puts("      <keyword>continue</keyword>");
+    puts("      <keyword>do</keyword>");
+    puts("      <keyword>elseif</keyword>");
+    puts("      <keyword>else</keyword>");
+    puts("      <keyword>endfor</keyword>");
+    puts("      <keyword>endfunction</keyword>");
+    puts("      <keyword>endif</keyword>");
+    /* here's the required modification */
+    puts("      <keyword>end(?! foreign)</keyword>");
+    puts("      <keyword>endswitch</keyword>");
+    puts("      <keyword>end_try_catch</keyword>");
+    puts("      <keyword>end_unwind_protect</keyword>");
+    puts("      <keyword>endwhile</keyword>");
+    puts("      <keyword>for</keyword>");
+    puts("      <keyword>function</keyword>");
+    puts("      <keyword>global</keyword>");
+    puts("      <keyword>if</keyword>");
+    puts("      <keyword>nargin</keyword>");
+    puts("      <keyword>nargout</keyword>");
+    puts("      <keyword>otherwise</keyword>");
+    puts("      <keyword>return</keyword>");
+    puts("      <keyword>switch</keyword>");
+    puts("      <keyword>try</keyword>");
+    puts("      <keyword>until</keyword>");
+    puts("      <keyword>unwind_protect_cleanup</keyword>");
+    puts("      <keyword>unwind_protect</keyword>");
+    puts("      <keyword>while</keyword>");
+    puts("    </context>\n");
+
+    puts("    <context id=\"gretl-octave\">");
+    puts("      <include>");
+    puts("        <context ref=\"octave:multiline-comment\"/>");
+    puts("        <context ref=\"octave:line-comment\"/>");
+    puts("        <context ref=\"octave:double-quoted-string\"/>");
+    puts("        <context ref=\"octave:single-quoted-string\"/>");
+    puts("        <context ref=\"octave:boolean\"/>");
+    puts("        <context ref=\"octave:reserved-constant\"/>");
+    /* note that here we use our modified keywords list */
+    puts("        <context ref=\"octave-keyword\"/>");
+    puts("        <context ref=\"octave:decimal\"/>");
+    puts("        <context ref=\"octave:floating-point-number\"/>");
+    puts("        <context ref=\"octave:octal-number\"/>");
+    puts("        <context ref=\"octave:hex-number\"/>");
+    puts("        <context ref=\"octave:function\"/>");
+    puts("      </include>");
+    puts("    </context>\n");   
+}
+
+static void output_foreign_context (const char *id, const char *ctxt)
+{
+    printf("    <context id=\"foreign-%s\" style-inside=\"true\">\n", id);
+    printf("      <start>^\\s*(foreign)\\s+language=\\%%{%s}\\%%{foreign-opt}</start>\n", id);
+    puts("      <end>^\\s*end\\s+foreign</end>");
+    puts("      <include>");
+    puts("        <context sub-pattern=\"1\" where=\"start\" style-ref=\"command\"/>");
+    puts("        <context sub-pattern=\"2\" where=\"start\" style-ref=\"option\"/>");
+    puts("        <context sub-pattern=\"3\" where=\"start\" style-ref=\"option\"/>");
+    puts("        <context sub-pattern=\"0\" where=\"end\" style-ref=\"command\"/>");
+    printf("        <context ref=\"%s\"/>\n", ctxt);
+    puts("      </include>");
+    puts("    </context>\n");
+}
+
+#endif
+
 void output_lang2_file (void)
 {
     char **strs;
@@ -227,7 +303,7 @@ void output_lang2_file (void)
     int i, n;
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Scripts\">");
+    puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Scientific\">");
     puts("  <metadata>");
     puts("    <property name=\"mimetypes\">application/x-gretlscript</property>");
     puts("    <property name=\"globs\">*.inp</property>");
@@ -238,10 +314,28 @@ void output_lang2_file (void)
     puts("    <style id=\"comment\" _name=\"Comment\" map-to=\"def:comment\"/>");
     puts("    <style id=\"function\" _name=\"Function\" map-to=\"def:function\"/>");
     puts("    <style id=\"data-type\" _name=\"Data Type\" map-to=\"def:type\"/>");
-    puts("    <style id=\"keyword\" _name=\"Keyword\" map-to=\"def:keyword\"/>");
+    puts("    <style id=\"command\" _name=\"Command\" map-to=\"def:keyword\"/>");
+    puts("    <style id=\"option\" _name=\"Option\" map-to=\"def:type\"/>");
     puts("  </styles>\n");
 
     puts("  <definitions>\n");
+
+#if TRY_FOREIGN
+    puts("    <define-regex id=\"R\">R|r</define-regex>");
+    puts("    <define-regex id=\"stata\">Stata|stata|STATA</define-regex>");
+    puts("    <define-regex id=\"python\">Python|python</define-regex>");
+    puts("    <define-regex id=\"ox\">Ox|ox</define-regex>");
+    puts("    <define-regex id=\"octave\">Octave|octave</define-regex>");
+    puts("    <define-regex id=\"foreign-opt\">(\\s+--(?:quiet|send-data))?"
+	 "(\\s+--(?:send-data|quiet))?</define-regex>\n");
+
+    output_foreign_context("R", "r:r");
+    output_foreign_context("stata", "stata:stata");
+    output_foreign_context("python", "python:python");
+    output_foreign_context("ox", "cpp:cpp");
+    output_foreign_context("octave", "gretl-octave");
+#endif    
+    
     puts("    <context id=\"block-comment\" style-ref=\"comment\">");
     puts("      <start>/\\*</start>");
     puts("      <end>\\*/</end>");
@@ -251,13 +345,6 @@ void output_lang2_file (void)
     puts("      </include>");
     puts("    </context>\n");
     
-#if 0 /* not yet */
-    puts(" <context id=\"foreign\" style-inside=\"true\" style-ref=\"comment\">");
-    puts("  <start>(?&lt;=foreign language)</start>");
-    puts("  <end>(?=end foreign)</end>");
-    puts(" </context>");
-#endif
-
     /* gretl data types */
     puts("    <context id=\"gretl-types\" style-ref=\"data-type\">");
     for (i=0; gretl_data_types[i] != NULL; i++) {
@@ -275,7 +362,7 @@ void output_lang2_file (void)
     puts("    </context>\n");
 
     /* gretl commands */
-    puts("    <context id=\"commands\" style-ref=\"keyword\">");
+    puts("    <context id=\"commands\" style-ref=\"command\">");
     puts("      <prefix>(^|\\040|\\011)</prefix>");
     puts("      <suffix>(?![\\w\\-\\.\\(])</suffix>");
     for (i=1; i<NC; i++) {
@@ -291,7 +378,7 @@ void output_lang2_file (void)
     strs = get_all_option_strings(&nopts);
     qsort(strs, nopts, sizeof *strs, compare_options);
     if (strs != NULL) {
-	puts("    <context id=\"options\" style-ref=\"data-type\">");
+	puts("    <context id=\"options\" style-ref=\"option\">");
 	puts("      <prefix>--</prefix>");
 	for (i=1; i<nopts; i++) {
 	    printf("      <keyword>%s</keyword>\n", strs[i]);
@@ -311,13 +398,25 @@ void output_lang2_file (void)
 	}
 	strings_array_free(strs, n);
     }
-    puts("    </context>\n");	
+    puts("    </context>\n");
+
+#if TRY_FOREIGN
+    /* octave special: prevent octave from eating "end foreign" */
+    output_octave_specials();
+#endif    
     
     puts("    <context id=\"gretl\">");
     puts("      <include>");
     puts("        <context ref=\"def:shell-like-comment\"/>");
     puts("        <context ref=\"def:string\"/>");
     puts("        <context ref=\"block-comment\"/>");
+#if TRY_FOREIGN
+    puts("        <context ref=\"foreign-R\"/>");
+    puts("        <context ref=\"foreign-stata\"/>");
+    puts("        <context ref=\"foreign-python\"/>");
+    puts("        <context ref=\"foreign-ox\"/>");
+    puts("        <context ref=\"foreign-octave\"/>");
+#endif    
     puts("        <context ref=\"gretl-types\"/>");
     puts("        <context ref=\"commands\"/>");
     puts("        <context ref=\"genr-functions\"/>");
