@@ -734,7 +734,7 @@ char *strip_unicode_minus (char *s)
 	    strcpy(s, tmp);
 	    free(tmp);
 	} 
-    } 
+    }
 
     return s;
 }

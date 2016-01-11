@@ -3017,7 +3017,7 @@ static void size_data_window (Spreadsheet *sheet, int hscroll)
 /* hack to avoid losing a not-yet-committed edit to a cell
    in the sheet, on choosing Save, Apply, OK, etc */
 
-gboolean 
+static gboolean 
 button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 {
     if (sheet->entry != NULL) {

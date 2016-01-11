@@ -2832,11 +2832,19 @@ static void session_delete_icon (gui_obj *obj)
 
 static void white_bg_style (GtkWidget *widget, gpointer data)
 {
-    GdkRGBA rgb = {1, 1, 1, 1};
+    static GdkRGBA rgbw = {1, 1, 1, 1};
+    static GdkRGBA rgbb;
+    static int done;
 
     gtk_widget_override_background_color(widget,
 					 GTK_STATE_NORMAL,
-					 &rgb);
+					 &rgbw);
+    if (!done) {
+	gdk_rgba_parse(&rgbb, "#4a90d9");
+    }
+    gtk_widget_override_background_color(widget,
+					 GTK_STATE_FLAG_PRELIGHT,
+					 &rgbb);
 }
 
 #else
@@ -3438,9 +3446,13 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,
 			      gui_obj *obj)
 {
+#if GTK_MAJOR_VERSION == 3
+    gtk_widget_set_state(icon, GTK_STATE_FLAG_PRELIGHT);
+#else    
     gtk_widget_set_state(icon, GTK_STATE_SELECTED);
+#endif    
     in_icon = 1;
-    
+
     return FALSE;
 }
 
