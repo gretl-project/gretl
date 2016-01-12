@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-18 19:50-0500\n"
-"PO-Revision-Date: 2016-01-12 10:02+0100\n"
+"PO-Revision-Date: 2016-01-12 10:15+0100\n"
 "Last-Translator: \n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -11992,7 +11992,7 @@ msgstr "Definir _nueva variable..."
 
 #: gui2/gretl.c:1705
 msgid "_Model"
-msgstr "M_odelizar"
+msgstr "M_odelo"
 
 #: gui2/gretl.c:1706
 msgid "_Ordinary Least Squares..."
