@@ -54,6 +54,12 @@ enum {
     RED_TEXT
 };
 
+#define COMPLETE_WORDS 1
+
+#if COMPLETE_WORDS
+#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
+#endif
+
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 #define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R || \
 				r == EDIT_OX || r == EDIT_OCTAVE || \
@@ -454,6 +460,25 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 }
 
+#if COMPLETE_WORDS
+
+static void set_sourceview_complete_words (windata_t *vwin)
+{
+    GtkSourceCompletionWords *prov_words;
+    GtkSourceCompletion *comp;
+	
+    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+    prov_words = gtk_source_completion_words_new(NULL, NULL);
+    gtk_source_completion_words_register(prov_words,
+					 gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
+    gtk_source_completion_add_provider(comp, 
+				       GTK_SOURCE_COMPLETION_PROVIDER(prov_words), 
+				       NULL);
+    g_object_set(prov_words, "priority", 1, NULL);
+}
+
+#endif
+
 static void begin_print (GtkPrintOperation *operation,
                          GtkPrintContext *context,
                          gpointer data)
@@ -777,6 +802,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	    set_style_for_buffer(sbuf, sv_style);
 	}
     }
+
+#if COMPLETE_WORDS
+    set_sourceview_complete_words(vwin);
+#endif    
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
