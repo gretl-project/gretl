@@ -1,14 +1,14 @@
 # translation of es.po to Spanish
-# Copyright (C) 2001--2015 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
+# Copyright (C) 2001--2016 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
 # This file is distributed under the same license as the gretl package.
 #
-# , 2015.
+# , 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-11-18 19:50-0500\n"
-"PO-Revision-Date: 2015-10-22 12:03+0200\n"
+"PO-Revision-Date: 2016-01-12 10:02+0100\n"
 "Last-Translator: \n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -2339,6 +2339,8 @@ msgstr ""
 #: lib/src/geneval.c:6747
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
+"\"catch\" no debería usarse en las llamadas a funciones definidas por el "
+"usuario"
 
 #: lib/src/geneval.c:9807
 msgid "array: no type was specified"
@@ -3275,9 +3277,8 @@ msgid "Execution aborted by request"
 msgstr "Se ha abortado la ejecución a petición del usuario"
 
 #: lib/src/gretl_errors.c:88
-#, fuzzy
 msgid "'catch' cannot be used in this context"
-msgstr "La instrucción '%s' no puede usarse en este contexto"
+msgstr "La instrucción 'catch' no puede usarse en este contexto"
 
 #: lib/src/gretl_errors.c:96
 msgid "gradient is not close to zero"
@@ -4282,14 +4283,14 @@ msgid "Number of variables does not match declaration"
 msgstr "El número de variables no coincide con el declarado"
 
 #: lib/src/gretl_xml.c:2702
-#, fuzzy, c-format
+#, c-format
 msgid "join: column '%s' was not found"
-msgstr "%s: no se ha encontrado la columna '%s'"
+msgstr "join: no se ha encontrado la columna '%s'"
 
 #: lib/src/gretl_xml.c:2895
-#, fuzzy, c-format
+#, c-format
 msgid "Data file contains %d subnormal values"
-msgstr "La variable de ponderaciones contiene valores negativos"
+msgstr "El fichero de datos contiene %d valores subnormales"
 
 #: lib/src/gretl_xml.c:2954
 #, c-format
@@ -6293,9 +6294,9 @@ msgstr ""
 "estimar el modelo de referencia\n"
 
 #: lib/src/options.c:1166 lib/src/options.c:1199
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: Argumento de tipo no válido %s"
+msgstr "%s: Argumento de opción no válido"
 
 #: lib/src/options.c:1205 lib/src/tokenize.c:1055
 #, c-format
@@ -16573,7 +16574,7 @@ msgstr "FEVD"
 
 #: plugin/addons-i18n.c:57
 msgid "Full"
-msgstr ""
+msgstr "Completo"
 
 #: plugin/addons-i18n.c:58
 msgid "Historical decomposition"
@@ -16612,9 +16613,8 @@ msgid "Optimization method"
 msgstr "Método de optimización"
 
 #: plugin/addons-i18n.c:68
-#, fuzzy
 msgid "Partial"
-msgstr "cuartiles"
+msgstr "Parcial"
 
 #: plugin/addons-i18n.c:70
 msgid "Restriction pattern (long-run C or A)"
@@ -17355,11 +17355,11 @@ msgstr "cola superior"
 
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
-msgstr "Modelo de series temporales + corrección estacional"
+msgstr "Modelo de series temporales (TRAMO) + corrección estacional (SEATS)"
 
 #: plugin/tramo_options.c:368
 msgid "Time-series model only"
-msgstr "Sólo modelo de series temporales"
+msgstr "Sólo modelo de series temporales (TRAMO)"
 
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
