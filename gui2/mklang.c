@@ -262,19 +262,15 @@ static void output_octave_specials (void)
 
     puts("    <context id=\"gretl-octave\">");
     puts("      <include>");
-    puts("        <context ref=\"octave:multiline-comment\"/>");
     puts("        <context ref=\"octave:line-comment\"/>");
-    puts("        <context ref=\"octave:double-quoted-string\"/>");
-    puts("        <context ref=\"octave:single-quoted-string\"/>");
+    puts("        <context ref=\"c:string\"/>");
     puts("        <context ref=\"octave:boolean\"/>");
     puts("        <context ref=\"octave:reserved-constant\"/>");
     /* note that here we use our modified keywords list */
     puts("        <context ref=\"octave-keyword\"/>");
-    puts("        <context ref=\"octave:decimal\"/>");
-    puts("        <context ref=\"octave:floating-point-number\"/>");
-    puts("        <context ref=\"octave:octal-number\"/>");
-    puts("        <context ref=\"octave:hex-number\"/>");
-    puts("        <context ref=\"octave:function\"/>");
+    puts("        <context ref=\"def:decimal\"/>");
+    puts("        <context ref=\"def:float\"/>");
+    puts("        <context ref=\"def:hexadecimal\"/>");
     puts("      </include>");
     puts("    </context>\n");   
 }
