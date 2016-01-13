@@ -217,8 +217,6 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "autoicon", N_("Show icon view automatically"), NULL, &autoicon, 
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor, 
-      BOOLSET, 0, TAB_MAIN, NULL },
     { "tabmodels", N_("Model viewer uses tabs"), NULL, &tabbed_models, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
@@ -310,6 +308,8 @@ RCVAR rc_vars[] = {
     { "smarttab", "\"Smart\" Tab and Enter", NULL, &smarttab, 
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "script_line_numbers", "Show line numbers", NULL, &script_line_numbers,
+      BOOLSET, 0, TAB_EDITOR, NULL },
+    { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor, 
       BOOLSET, 0, TAB_EDITOR, NULL },
 #if GTK_MAJOR_VERSION >= 3 || GTK_MINOR_VERSION >= 16    
     { "script_auto_complete", "Enable auto-completion", NULL, &script_auto_complete,
