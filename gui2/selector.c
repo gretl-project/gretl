@@ -5182,7 +5182,7 @@ static void hc_config (GtkWidget *w, selector *sr)
 	if (resp == 0) {
 	    /* regular HCCME */
 	    if (rconf) {
-		options_dialog(TAB_VCV, NULL, sr->dlg);
+		preferences_dialog(TAB_VCV, NULL, sr->dlg);
 	    } else {
 		gtk_button_set_label(GTK_BUTTON(sr->hccme_button), 
 				     get_default_hc_string(sr->ci));
@@ -5192,7 +5192,7 @@ static void hc_config (GtkWidget *w, selector *sr)
 	    gtk_button_set_label(GTK_BUTTON(sr->hccme_button), _("Cluster"));
 	}
     } else {
-	options_dialog(TAB_VCV, NULL, sr->dlg);
+	preferences_dialog(TAB_VCV, NULL, sr->dlg);
     }
 }
 

@@ -252,9 +252,9 @@ static void varinfo_callback (void)
     varinfo_dialog(mdata->active_var);
 }
 
-static void options_dialog_callback (void)
+static void prefs_dialog_callback (void)
 {
-    options_dialog(0, NULL, mdata->main);
+    preferences_dialog(0, NULL, mdata->main);
 }
 
 static void open_script_callback (void)
@@ -943,7 +943,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	} else if (k == GDK_comma) {
 	    /* comand-, = preferences */
-	    options_dialog_callback();
+	    prefs_dialog_callback();
 	    return TRUE;
 	}
     }
@@ -1628,7 +1628,7 @@ GtkActionEntry main_entries[] = {
     { "NistVVerbose", NULL, N_("V_ery verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },
     { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL, 
-      G_CALLBACK(options_dialog_callback) },
+      G_CALLBACK(prefs_dialog_callback) },
     { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL, 
       G_CALLBACK(font_selector) },
     { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL, 
@@ -2268,7 +2268,7 @@ int gretl_fork (const char *progvar, const char *arg)
 	errbox(err->message);
 	if (err->domain == G_SPAWN_ERROR &&
 	    err->code == G_SPAWN_ERROR_NOENT) {
-	    options_dialog(TAB_PROGS, progvar, mdata->main);
+	    preferences_dialog(TAB_PROGS, progvar, mdata->main);
 	}
 	g_error_free(err);
     }

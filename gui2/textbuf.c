@@ -41,6 +41,15 @@
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 #endif
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
+/* the gtksourceview 2.0 completion UI depends on gtk >= 2.16 */
+# define COMPLETION_OK 0
+#else
+# define COMPLETION_OK 1
+#endif
+
+#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
+
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
 #define GFR_PAGE    997
@@ -54,12 +63,6 @@ enum {
     RED_TEXT
 };
 
-#define COMPLETE_WORDS 1
-
-#if COMPLETE_WORDS
-#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
-#endif
-
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 #define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R || \
 				r == EDIT_OX || r == EDIT_OCTAVE || \
@@ -69,6 +72,7 @@ enum {
 int tabwidth = 4;
 int smarttab = 1;
 int script_line_numbers = 0;
+int script_auto_complete = 0;
 
 static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
@@ -79,6 +83,9 @@ static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
+#if COMPLETION_OK
+static void toggle_auto_complete (windata_t *vwin, gboolean s);
+#endif
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -460,7 +467,7 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 }
 
-#if COMPLETE_WORDS
+#if COMPLETION_OK
 
 static void set_sourceview_complete_words (windata_t *vwin)
 {
@@ -469,12 +476,16 @@ static void set_sourceview_complete_words (windata_t *vwin)
 	
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
     prov_words = gtk_source_completion_words_new(NULL, NULL);
+    g_object_set(prov_words, "priority", 1, NULL);
     gtk_source_completion_words_register(prov_words,
 					 gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
-    gtk_source_completion_add_provider(comp, 
-				       GTK_SOURCE_COMPLETION_PROVIDER(prov_words), 
-				       NULL);
-    g_object_set(prov_words, "priority", 1, NULL);
+    g_object_set_data(G_OBJECT(vwin->text), "prov_words", prov_words);
+    
+    if (script_auto_complete) {
+	gtk_source_completion_add_provider(comp, 
+					   GTK_SOURCE_COMPLETION_PROVIDER(prov_words), 
+					   NULL);
+    }
 }
 
 #endif
@@ -722,6 +733,10 @@ static void set_style_for_buffer (GtkSourceBuffer *sbuf,
     GtkSourceStyleSchemeManager *mgr;
     GtkSourceStyleScheme *scheme;
 
+    if (id == NULL || *id == '\0') {
+	return;
+    }
+
     mgr = gtk_source_style_scheme_manager_get_default();
     scheme = gtk_source_style_scheme_manager_get_scheme(mgr, id);
     if (scheme != NULL) {
@@ -796,14 +811,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 					  script_line_numbers);
 
     if (lm != NULL) {
-	const char *sv_style = get_sourceview_style();
-
-	if (*sv_style != '\0') {
-	    set_style_for_buffer(sbuf, sv_style);
-	}
+	set_style_for_buffer(sbuf, get_sourceview_style());
     }
 
-#if COMPLETE_WORDS
+#if COMPLETION_OK    
     set_sourceview_complete_words(vwin);
 #endif    
 
@@ -823,6 +834,19 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }	
+}
+
+/* callback after changes made in preferences dialog */
+
+void update_script_editor_options (windata_t *vwin)
+{
+    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
+					  script_line_numbers);
+#if COMPLETION_OK    
+    toggle_auto_complete(vwin, script_auto_complete);
+#endif    
+
+    set_style_for_buffer(vwin->sbuf, get_sourceview_style());
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -2560,27 +2584,6 @@ static void unindent_region (GtkWidget *w, gpointer p)
     bufgets_finalize(tb->chunk);
 }
 
-void script_tabs_dialog (GtkWidget *w, windata_t *vwin)
-{
-    const char *title = _("gretl: configure tabs");
-    const char *spintxt = _("Spaces per tab");
-    const char *opt = _("Use \"smart\" tabs");
-    int tsp = tabwidth;
-    int smt = smarttab;
-    int resp;
-
-    resp = checks_dialog(title, NULL, 
-			 &opt, 1, &smt, 0, 0,
-			 0, NULL, /* no radio buttons */
-			 &tsp, spintxt, 2, 8, 0,
-			 vwin_toplevel(vwin));
-
-    if (resp != GRETL_CANCEL) {
-	tabwidth = tsp;
-	smarttab = smt;
-    }
-}
-
 static void exec_script_text (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
@@ -3041,112 +3044,58 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     return ret;
 }
 
-static void line_numbers_cb (GtkWidget *w, windata_t *vwin)
+#if COMPLETION_OK
+
+static void toggle_auto_complete (windata_t *vwin, gboolean s)
 {
-    int s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(vwin->text));
+    GtkSourceCompletionWords *words;
+    GtkSourceCompletion *comp;
+    gboolean ok;
 
-    script_line_numbers = !script_line_numbers;
-    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), !s);
-}
+    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+    words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
 
-static void set_style_cb (GtkCheckMenuItem *item, GtkWidget *text)
-{
-    GtkSourceStyleSchemeManager *mgr;
-    GtkSourceStyleScheme *scheme;
-    GtkTextBuffer *tbuf;
-    const gchar *id;
-
-    if (!gtk_check_menu_item_get_active(item)) {
-	return;
+    if (s) {
+	ok = gtk_source_completion_add_provider(comp, 
+						GTK_SOURCE_COMPLETION_PROVIDER(words), 
+						NULL);
+    } else {
+	ok = gtk_source_completion_remove_provider(comp, 
+						   GTK_SOURCE_COMPLETION_PROVIDER(words), 
+						   NULL);
     }
 
-#if GTK_MAJOR_VERSION == 2 || GTK_MINOR_VERSION	< 16
-    id = g_object_get_data(G_OBJECT(item), "label");
-#else   
-    id = gtk_menu_item_get_label(GTK_MENU_ITEM(item));
+    if (ok) {
+	script_auto_complete = s;
+    }
+
+#if 0    
+    fprintf(stderr, "toggle_auto_complete: comp=%p, prov=%p, auto_complete=%d, ok=%d\n",
+	    (void *) comp, (void *) words, script_auto_complete, ok);
 #endif    
-    mgr = gtk_source_style_scheme_manager_get_default();
-    scheme = gtk_source_style_scheme_manager_get_scheme(mgr, id);
-    if (scheme != NULL) {
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
-	gtk_source_buffer_set_style_scheme(GTK_SOURCE_BUFFER(tbuf), scheme);
-    }
 }
 
-static void set_style_default (GtkMenuItem *item, GtkWidget *text)
-{
-    GtkSourceStyleScheme *scheme;
-    GtkTextBuffer *tbuf;
-    const gchar *id;
+#endif /* COMPLETION_OK */
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
-    scheme = gtk_source_buffer_get_style_scheme(GTK_SOURCE_BUFFER(tbuf));
-    if (scheme != NULL) {
-	id = gtk_source_style_scheme_get_id(scheme);
-	set_sourceview_style(id);
-    }
-}
-
-static void add_sourceview_style_selection (GtkWidget *menu,
-					    GtkWidget *text)
+const char **get_sourceview_style_ids (int *n)
 {
     GtkSourceStyleSchemeManager *mgr;
-    GtkSourceStyleScheme *scheme;
-    GtkTextBuffer *tbuf;
-    const gchar * const *ids;
-    GtkWidget *submenu;
-    GtkWidget *item, *sitem;
-    GSList *group = NULL;
-    const gchar *id = NULL;
-    int i;
+    const gchar * const *ids = NULL;
+
+    *n = 0;
 
     mgr = gtk_source_style_scheme_manager_get_default();
-    if (mgr == NULL) {
-	return;
-    }
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
-    scheme = gtk_source_buffer_get_style_scheme(GTK_SOURCE_BUFFER(tbuf));
-    if (scheme != NULL) {
-	id = gtk_source_style_scheme_get_id(scheme);
-    }
-
-    item = gtk_menu_item_new_with_label(_("style"));
-    submenu = gtk_menu_new();
-    ids = gtk_source_style_scheme_manager_get_scheme_ids(mgr);
-    
-    for (i=0; ids && ids[i]; i++) {
-	sitem = gtk_radio_menu_item_new_with_label(group, ids[i]);
-	if (id != NULL && !strcmp(ids[i], id)) {
-	    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(sitem), TRUE);
+    if (mgr != NULL) {
+	int i = 0;
+	
+	ids = gtk_source_style_scheme_manager_get_scheme_ids(mgr);
+	if (ids != NULL) {
+	    while (ids[i] != NULL) i++;
+	    *n = i;
 	}
-	group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(sitem));
-#if GTK_MAJOR_VERSION == 2 || GTK_MINOR_VERSION	< 16
-	/* gtk_menu_item_get_label() not available */
-	g_object_set_data_full(G_OBJECT(sitem), "label",
-			       g_strdup(ids[i]), g_free);
-#endif	
-	g_signal_connect(G_OBJECT(sitem), "toggled",
-			 G_CALLBACK(set_style_cb), text);
-	gtk_widget_show(sitem);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), sitem);	    
     }
 
-    if (i > 1) {
-	sitem = gtk_separator_menu_item_new();
-	gtk_widget_show(sitem);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), sitem);
-	sitem = gtk_menu_item_new_with_label(_("set as default"));
-	g_signal_connect(G_OBJECT(sitem), "activate",
-			 G_CALLBACK(set_style_default), text);
-	gtk_widget_show(sitem);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), sitem);
-    }
-
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
-    gtk_widget_show(submenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-    gtk_widget_show(item);
+    return (const char **) ids;
 }
 
 static GtkWidget *
@@ -3169,7 +3118,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     if (foreign_script_role(vwin->role)) {
 	*ptb = NULL;
-	goto line_nums;
+	goto dock_undock;
     }
 
     tb = vwin_get_textbit(vwin, AUTO_SELECT_LINE);
@@ -3184,7 +3133,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	g_free(tb->chunk);
 	free(tb);
 	*ptb = NULL;
-	goto line_nums;
+	goto dock_undock;
     }
 
     *ptb = tb;
@@ -3247,17 +3196,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
- line_nums:	
-
-    if (GTK_IS_SOURCE_VIEW(vwin->text)) {
-	item = gtk_menu_item_new_with_label(_("Toggle line numbers"));
-	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(line_numbers_cb),
-			 vwin);
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-	add_sourceview_style_selection(pmenu, vwin->text);
-    }
+ dock_undock:
 
     if (window_is_undockable(vwin)) {
 	add_undock_popup_item(pmenu, vwin);

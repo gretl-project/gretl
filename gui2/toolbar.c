@@ -646,6 +646,11 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
+{
+    preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+}
+
 static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin_content_changed(vwin)) {
@@ -731,7 +736,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_toggle_sort), SORT_ITEM },    
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(multi_series_view_sort_by), SORT_BY_ITEM },
-    { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, G_CALLBACK(script_tabs_dialog), EDIT_SCRIPT_ITEM },
+    { N_("Preferences..."), GTK_STOCK_PREFERENCES, G_CALLBACK(editor_prefs_callback), EDIT_SCRIPT_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },

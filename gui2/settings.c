@@ -29,6 +29,7 @@
 #include "ssheet.h"
 #include "selector.h"
 #include "gpt_control.h"
+#include "tabwin.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -74,7 +75,7 @@ static int use_proxy;
 static ConfigPaths paths;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
-static void apply_changes (GtkWidget *widget, gpointer data);
+static void apply_changes (GtkWidget *widget, GtkWidget *parent);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -115,7 +116,7 @@ char gpcolors[64];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];
-static char sview_style[24];
+static char sview_style[32] = "classic";
 
 static int hc_by_default;
 static char langpref[32];
@@ -163,18 +164,19 @@ typedef enum {
     FLOATSET = 1 << 3,  /* floating point value (user) */
     LISTSET  = 1 << 4,  /* user selection from fixed menu */
     RADIOSET = 1 << 5,  /* user int, from fixed menu */
-    INVISET  = 1 << 6,  /* not visible in Preferences dialog */
+    INVISET  = 1 << 6,  /* not visible in preferences dialog */
     FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
     MACHSET  = 1 << 8,  /* "local machine" setting */
     BROWSER  = 1 << 9,  /* wants "Browse" button */
     RESTART  = 1 << 10, /* needs program restart to take effect */
     GOTSET   = 1 << 11, /* dynamic: already found a setting */
-    SKIPSET  = 1 << 12  /* for string value, skip empty value */
+    SKIPSET  = 1 << 12, /* for string value, skip empty value */
+    SPINSET  = 1 << 13  /* integer value: represented by spin-button */
 } rcflags;
 
 typedef struct {
     char *key;         /* config file variable name */
-    char *description; /* How the field will show up in the options dialog */
+    char *description; /* string shown in the preferences dialog */
     char *link;        /* in case of radio button pair, alternate string */
     void *var;         /* pointer to variable */
     rcflags flags;     /* see above */
@@ -297,18 +299,24 @@ RCVAR rc_vars[] = {
       USERSET, sizeof appfontname, TAB_NONE, NULL },
     { "DataPage", "Default data page", NULL, datapage, 
       INVISET, sizeof datapage, TAB_NONE, NULL },
-    { "ScriptPage", "Default script page", NULL, scriptpage, 
+    { "ScriptPage", "Default script page", NULL, scriptpage,
       INVISET, sizeof scriptpage, TAB_NONE, NULL },    
     { "Png_font", N_("PNG graph font"), NULL, paths.pngfont, 
       INVISET, sizeof paths.pngfont, TAB_NONE, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
-    { "tabwidth", "spaces per tab", NULL, &tabwidth, 
-      INVISET | INTSET, 0, TAB_NONE, NULL },
+    { "tabwidth", "Number of spaces per tab", NULL, &tabwidth, 
+      INTSET | SPINSET, 0, TAB_EDITOR, NULL },
     { "smarttab", "\"Smart\" Tab and Enter", NULL, &smarttab, 
-      INVISET | BOOLSET, 0, TAB_NONE, NULL },
-    { "script_line_numbers", "script line numbers", NULL, &script_line_numbers, 
-      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+      BOOLSET, 0, TAB_EDITOR, NULL },
+    { "script_line_numbers", "Show line numbers", NULL, &script_line_numbers,
+      BOOLSET, 0, TAB_EDITOR, NULL },
+#if GTK_MAJOR_VERSION >= 3 || GTK_MINOR_VERSION >= 16    
+    { "script_auto_complete", "Enable auto-completion", NULL, &script_auto_complete,
+      BOOLSET, 0, TAB_EDITOR, NULL },
+#endif    
+    { "sview_style", "Highlighting style", NULL, &sview_style,
+      LISTSET, sizeof sview_style, TAB_EDITOR, NULL },
     { "main_width", "main window width", NULL, &mainwin_width, 
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_height", "main window height", NULL, &mainwin_height, 
@@ -332,7 +340,7 @@ RCVAR rc_vars[] = {
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
       LISTSET, 5, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
-      RADIOSET | INTSET, 0, TAB_MAN, NULL },
+      LISTSET | INTSET, 0, TAB_MAIN, NULL },
     { "modtab_colheads", "Model table column heads", NULL, &modtab_colheads, 
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "modtab_tstats", "Model table t-ratios", NULL, &modtab_tstats, 
@@ -349,8 +357,6 @@ RCVAR rc_vars[] = {
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "author_mail", "Package author email", NULL, &author_mail,
       INVISET | SKIPSET, sizeof author_mail, TAB_NONE, NULL },
-     { "sourceview_style", "Sourceview style", NULL, &sview_style,
-      INVISET | SKIPSET, sizeof sview_style, TAB_NONE, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
@@ -398,15 +404,6 @@ void set_author_mail (const char *s)
 const char *get_author_mail (void)
 {
     return author_mail;
-}
-
-void set_sourceview_style (const char *s)
-{
-    if (s != NULL && strlen(s) < sizeof sview_style) {
-	strcpy(sview_style, s);
-    } else {
-	sview_style[0] = '\0';
-    }
 }
 
 const char *get_sourceview_style (void)
@@ -878,7 +875,7 @@ int gretl_config_init (void)
 
 #endif /* !G_OS_WIN32 */
 
-static void highlight_options_entry (const char *vname)
+static void highlight_preferences_entry (const char *vname)
 {
     GtkWidget *w;
     int i;
@@ -895,7 +892,7 @@ static void highlight_options_entry (const char *vname)
     }
 }
 
-static void option_dialog_canceled (GtkWidget *w, int *c)
+static void preferences_dialog_canceled (GtkWidget *w, int *c)
 {
     *c = 1;
 }
@@ -908,7 +905,7 @@ static void sensitize_prefs_help (GtkNotebook *book,
     gtk_widget_set_sensitive(button, newpg == TAB_VCV - 1);
 } 
 
-int options_dialog (int page, const char *varname, GtkWidget *parent) 
+int preferences_dialog (int page, const char *varname, GtkWidget *parent) 
 {
     static GtkWidget *dialog;
     GtkWidget *notebook;
@@ -922,7 +919,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
 	return 0;
     }
 
-    dialog = gretl_dialog_new(_("gretl: options"), parent, 
+    dialog = gretl_dialog_new(_("gretl: preferences"), parent, 
 			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
@@ -939,27 +936,27 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     gtk_widget_show(notebook);
 
     make_prefs_tab(notebook, TAB_MAIN);
-    make_prefs_tab(notebook, TAB_NET);
     make_prefs_tab(notebook, TAB_PROGS);
+    make_prefs_tab(notebook, TAB_EDITOR);
+    make_prefs_tab(notebook, TAB_NET);
 #ifdef HAVE_MPI
     make_prefs_tab(notebook, TAB_MPI);
 #endif
     make_prefs_tab(notebook, TAB_VCV);
-    make_prefs_tab(notebook, TAB_MAN);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* Apply button */
     button = apply_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(apply_changes), NULL);
+		     G_CALLBACK(apply_changes), parent);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* Cancel button */
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(option_dialog_canceled), 
+		     G_CALLBACK(preferences_dialog_canceled), 
 		     &canceled);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
@@ -969,7 +966,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(apply_changes), NULL);
+		     G_CALLBACK(apply_changes), parent);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
@@ -988,7 +985,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     }
 
     if (varname != NULL) {
-	highlight_options_entry(varname);
+	highlight_preferences_entry(varname);
     }
 
     gtk_widget_show(dialog);
@@ -1077,31 +1074,6 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
     return FALSE;
 }
 
-#define HIDE_SPANISH_MANUAL 1
-
-static const char **get_radio_setting_strings (void *var, int *n)
-{
-    static const char *man_strs[] = {
-        N_("English (US letter paper)"),
-        N_("English (A4 paper)"),
-        N_("Italian"),
-	N_("Spanish")
-    };
-    const char **strs = NULL;
-
-    *n = 0;
-
-    if (var == &manpref) {
-	strs = man_strs;
-	*n = sizeof man_strs / sizeof man_strs[0];
-#if HIDE_SPANISH_MANUAL
-	*n -= 1;
-#endif
-    } 
-
-    return strs;
-}
-
 static const char *hc_strs[] = {
     "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
 };
@@ -1114,6 +1086,11 @@ static const char **get_list_setting_strings (void *var, int *n)
     static const char *garch_strs[] = {
 	"QML", "BW"
     };
+    static const char *manpref_strs[] = {
+        N_("English (US letter paper)"),
+        N_("English (A4 paper)"),
+        N_("Italian")	
+    };    
     const char **strs = NULL;
 
     *n = 0;
@@ -1128,7 +1105,12 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == hc_garch) {
 	strs = garch_strs;
 	*n = sizeof garch_strs / sizeof garch_strs[0];
-    } 
+    } else if (var == &manpref) {
+	strs = manpref_strs;
+	*n = sizeof manpref_strs / sizeof manpref_strs[0];
+    } else if (var == sview_style) {
+	strs = get_sourceview_style_ids(n);
+    }
 
 #ifdef HAVE_MPI
     else if (var == mpi_pref) {
@@ -1169,6 +1151,14 @@ static const char **get_list_setting_strings (void *var, int *n)
 #endif
 
     return strs;
+}
+
+static const char **get_radio_setting_strings (void *var, int *n)
+{
+    /* unused at present, but may be activated again at
+       some point? */
+    *n = 0;
+    return NULL;
 }
 
 const char *get_default_hc_string (int ci)
@@ -1213,6 +1203,8 @@ get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse,
 		*n_browse += 1;
 	    } else if (rc_vars[i].flags & LISTSET) {
 		*n_list += 1;
+	    } else if (rc_vars[i].flags & SPINSET) {
+		*n_list += 1;
 	    }
 	    if (rc_vars[i].flags & BOOLSET) {
 		*n_bool += 1;
@@ -1255,18 +1247,18 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
     if (tab == TAB_MAIN) {
 	w = gtk_label_new(_("General"));
-    } else if (tab == TAB_NET) {
-	w = gtk_label_new(_("Network"));
     } else if (tab == TAB_PROGS) {
 	w = gtk_label_new(_("Programs"));
+    } else if (tab == TAB_EDITOR) {
+	w = gtk_label_new(_("Editor"));
+    } else if (tab == TAB_NET) {
+	w = gtk_label_new(_("Network"));
 #ifdef HAVE_MPI	
     } else if (tab == TAB_MPI) {
 	w = gtk_label_new(_("MPI"));
 #endif	
     } else if (tab == TAB_VCV) {
 	w = gtk_label_new(_("HCCME"));
-    } else if (tab == TAB_MAN) {
-	w = gtk_label_new(_("Manuals"));
     }
     
     gtk_widget_show(w);
@@ -1529,14 +1521,23 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    }
 		}
 	    } else {
-		char *strvar = (char *) rc->var;
+		char *strvar = NULL;
+		int *intvar = NULL;
 		const char **strs;
 		int nopt;
+
+		if (rc->flags & INTSET) {
+		    intvar = (int *) rc->var;
+		} else {
+		    strvar = (char *) rc->var;
+		}
 		
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
 		    combo_box_append_text(rc->widget, strs[j]);
-		    if (!strcmp(strs[j], strvar)) {
+		    if (strvar != NULL && !strcmp(strs[j], strvar)) {
+			active = j;
+		    } else if (intvar != NULL && j == *intvar) {
 			active = j;
 		    }
 		}
@@ -1553,6 +1554,24 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				 G_CALLBACK(try_switch_locale), 
 				 NULL);
 	    }
+	} else if (rc->flags & SPINSET) {
+	    int *intvar = (int *) rc->var;
+
+	    l_len++;
+
+	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
+	    w = gtk_label_new(_(rc->description));
+	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
+	    gtk_table_attach_defaults(GTK_TABLE(l_table), 
+				      w, 0, 1, l_len - 1, l_len);
+	    gtk_widget_show(w);
+
+	    /* for now, this is specific to tab-spaces */
+	    rc->widget = gtk_spin_button_new_with_range(2, 8, 1);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rc->widget), *intvar);
+	    gtk_table_attach_defaults(GTK_TABLE(l_table), 
+				      rc->widget, 1, 2, l_len - 1, l_len);
+	    gtk_widget_show(rc->widget);
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1712,7 +1731,7 @@ static void rcvar_set_double (RCVAR *rcvar, const char *sval, int *changed)
 
 /* register and react to changes from Preferences dialog */
 
-static void apply_changes (GtkWidget *widget, gpointer data) 
+static void apply_changes (GtkWidget *widget, GtkWidget *parent) 
 {
     RCVAR *rcvar;
     GtkWidget *w;
@@ -1728,6 +1747,10 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	    int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
 	    rcvar_set_int(rcvar, bval, &changed);
+	} else if (rcvar->flags & SPINSET) {
+	    int ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
+
+	    rcvar_set_int(rcvar, ival, &changed);
 	} else if (rcvar->flags & (USERSET | MACHSET)) {
 	    gchar *sval = entry_box_get_trimmed_text(w);
 
@@ -1786,6 +1809,15 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_garch_robust_vcv(hc_garch);
 
     selector_register_hc_choice();
+
+    if (parent != NULL) {
+	windata_t *vwin = window_get_active_vwin(parent);
+
+	if (vwin != NULL && vwin_is_editing(vwin)) {
+	    /* called from script editor */
+	    update_script_editor_options(vwin);
+	}
+    }
 
     gretl_www_init(paths.dbhost, http_proxy, use_proxy);
 }

@@ -32,6 +32,7 @@
 extern int tabwidth;
 extern int smarttab;
 extern int script_line_numbers;
+extern int script_auto_complete;
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 
@@ -113,7 +114,9 @@ void sourceview_insert_buffer (windata_t *vwin, const char *buf);
 
 void sourceview_print (windata_t *vwin);
 
-void script_tabs_dialog (GtkWidget *w, windata_t *vwin);
+const char **get_sourceview_style_ids (int *n);
+
+void update_script_editor_options (windata_t *vwin);
 
 void viewer_split_pane (windata_t *vwin, int vertical);
 
