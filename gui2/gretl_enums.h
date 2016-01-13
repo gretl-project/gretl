@@ -225,10 +225,10 @@ enum pref_tabs {
     TAB_PROGS,
     TAB_EDITOR,
     TAB_NET,
+    TAB_VCV,
 #ifdef HAVE_MPI    
     TAB_MPI,
-#endif    
-    TAB_VCV,
+#endif     
     TAB_MAX
 };
 

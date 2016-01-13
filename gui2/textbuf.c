@@ -692,11 +692,15 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
    UTF-8 on Windows.
 */
 
-static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
+static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 {
     static int done;
 
-    if (lm != NULL && !done) {
+    if (!done && lm == NULL) {
+	lm = gtk_source_language_manager_get_default();
+    }
+
+    if (!done && lm != NULL) {
 	GtkSourceStyleSchemeManager *mgr;
 	gchar *dirs[2] = {NULL, NULL};
 
@@ -758,15 +762,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkTextView *view;
     int cw;
 
-    /* FIXME : do path stuff first, regardless of
-       whether or not we're doing highlighting
-       for this file?
-    */
-
     if (textview_use_highlighting(vwin->role)) {
 	lm = gtk_source_language_manager_get_default();
 #ifdef PKGBUILD
-	set_sourceview_data_path(lm);
+	ensure_sourceview_path(lm);
 #endif
     }
 
@@ -840,6 +839,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
 void update_script_editor_options (windata_t *vwin)
 {
+#ifdef PKGBUILD    
+    ensure_sourceview_path(NULL);
+#endif    
+    
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
 					  script_line_numbers);
 #if COMPLETION_OK    
@@ -3082,6 +3085,10 @@ const char **get_sourceview_style_ids (int *n)
     GtkSourceStyleSchemeManager *mgr;
     const gchar * const *ids = NULL;
 
+#ifdef PKGBUILD
+    ensure_sourceview_path(NULL);
+#endif    
+
     *n = 0;
 
     mgr = gtk_source_style_scheme_manager_get_default();
@@ -3096,6 +3103,11 @@ const char **get_sourceview_style_ids (int *n)
     }
 
     return (const char **) ids;
+}
+
+static void call_prefs_dialog (GtkWidget *w, windata_t *vwin)
+{
+    preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
 }
 
 static GtkWidget *
@@ -3154,7 +3166,8 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     if (script_editing(vwin->role) && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:
-	   allow comment/uncomment option */
+	   allow comment/uncomment option 
+	*/
 	int i = (tb->selected && !tb->commented)? 2 : 
 	    (tb->selected && tb->commented)? 3 :
 	    (!tb->selected && !tb->commented)? 0 : 1;
@@ -3197,6 +3210,15 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
     }
 
  dock_undock:
+
+    if (GTK_IS_SOURCE_VIEW(vwin->text)) {
+	item = gtk_menu_item_new_with_label(_("Preferences..."));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(call_prefs_dialog),
+			 vwin);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }
 
     if (window_is_undockable(vwin)) {
 	add_undock_popup_item(pmenu, vwin);

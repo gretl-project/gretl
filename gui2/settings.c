@@ -939,10 +939,10 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     make_prefs_tab(notebook, TAB_PROGS);
     make_prefs_tab(notebook, TAB_EDITOR);
     make_prefs_tab(notebook, TAB_NET);
+    make_prefs_tab(notebook, TAB_VCV);
 #ifdef HAVE_MPI
     make_prefs_tab(notebook, TAB_MPI);
 #endif
-    make_prefs_tab(notebook, TAB_VCV);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
@@ -1253,12 +1253,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	w = gtk_label_new(_("Editor"));
     } else if (tab == TAB_NET) {
 	w = gtk_label_new(_("Network"));
+    } else if (tab == TAB_VCV) {
+	w = gtk_label_new(_("HCCME"));
 #ifdef HAVE_MPI	
     } else if (tab == TAB_MPI) {
 	w = gtk_label_new(_("MPI"));
-#endif	
-    } else if (tab == TAB_VCV) {
-	w = gtk_label_new(_("HCCME"));
+#endif
     }
     
     gtk_widget_show(w);
