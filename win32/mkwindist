@@ -225,6 +225,9 @@ add_file ${SYSSV}/styles/kate.xml gretl/gtksourceview/kate.xml
 add_file ${SYSSV}/styles/oblivion.xml gretl/gtksourceview/oblivion.xml
 add_file ${SYSSV}/styles/tango.xml gretl/gtksourceview/tango.xml
 add_file ${SYSSV}/styles/styles.rng gretl/gtksourceview/styles.rng
+add_file ${TOPDIR}/share/styles/build.xml gretl/gtksourceview/build.xml
+add_file ${TOPDIR}/share/styles/darkslate.xml gretl/gtksourceview/darkslate.xml
+add_file ${TOPDIR}/share/styles/espresso.xml gretl/gtksourceview/espresso.xml
   
 # release news file
 add_file NEWS gretl/NEWS
