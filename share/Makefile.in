@@ -49,7 +49,7 @@ help:
 
 .PHONY :
 
-install: installdirs install_datafiles install_scripts install_functions install_help
+install: installdirs install_datafiles install_scripts install_functions install_help install_styles
 	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)/COPYING
 	$(MAKE) -C bcih install
 
