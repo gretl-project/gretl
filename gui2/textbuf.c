@@ -766,6 +766,20 @@ static void set_style_for_buffer (GtkSourceBuffer *sbuf,
     }
 }
 
+void set_style_for_textview (GtkWidget *text, const char *id)
+{
+    GtkSourceStyleSchemeManager *mgr;
+    GtkSourceStyleScheme *scheme;
+    GtkTextBuffer *tbuf;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
+    mgr = gtk_source_style_scheme_manager_get_default();
+    scheme = gtk_source_style_scheme_manager_get_scheme(mgr, id);
+    if (scheme != NULL) {
+	gtk_source_buffer_set_style_scheme(GTK_SOURCE_BUFFER(tbuf), scheme);
+    }
+}
+
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT || \
 			      r == EDIT_PKG_CODE || \
@@ -853,6 +867,53 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }	
+}
+
+GtkWidget *create_sample_source (const char *style)
+{
+    GtkSourceLanguageManager *lm;
+    GtkSourceLanguage *lang;
+    GtkSourceBuffer *sbuf;
+    GtkTextView *view;
+    GtkWidget *text;
+
+    const gchar *sample =
+	"# sample of highlighting style\n"
+	"open wages.gdt\n"
+	"series l_wage = log(wage)\n"
+	"ols l_wage 0 male school exper --robust\n";
+
+    lm = gtk_source_language_manager_get_default();
+    if (lm == NULL) {
+	return NULL;
+    }
+    
+#ifdef PKGBUILD
+    ensure_sourceview_path(lm);
+#else
+    ensure_gretl_style_path();
+#endif
+
+    lang = gtk_source_language_manager_get_language(lm, "gretl");
+    if (lang == NULL) {
+	return NULL;
+    }
+
+    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new_with_language(lang));
+    text = gtk_source_view_new_with_buffer(sbuf);
+    view = GTK_TEXT_VIEW(text);
+
+    gtk_text_view_set_left_margin(view, 4);
+    gtk_text_view_set_right_margin(view, 4);
+    gtk_widget_modify_font(text, fixed_font);
+    gtk_text_view_set_editable(view, FALSE);
+    gtk_text_view_set_cursor_visible(view, FALSE);
+
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), sample, -1);
+    gtk_source_buffer_set_highlight_syntax(sbuf, TRUE);
+    set_style_for_buffer(sbuf, style);
+
+    return text;
 }
 
 /* callback after changes made in preferences dialog */

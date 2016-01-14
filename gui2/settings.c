@@ -1095,6 +1095,29 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
     return FALSE;
 }
 
+static gboolean try_switch_style (GtkComboBox *box, GtkWidget *text)
+{
+    gchar *style = combo_box_get_active_text(box);
+
+    set_style_for_textview(text, style);
+    g_free(style);
+
+    return FALSE;
+}
+
+static GtkWidget *embed_style_sampler (GtkWidget *vbox)
+{
+    GtkWidget *hbox, *text;
+
+    hbox = gtk_hbox_new(TRUE, 5);
+    text = create_sample_source(sview_style);
+    gtk_box_pack_start(GTK_BOX(hbox), text, TRUE, FALSE, 0);
+    gtk_widget_show_all(hbox);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 15);
+
+    return text;
+}
+
 static const char *hc_strs[] = {
     "HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
 };
@@ -1574,6 +1597,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
 				 G_CALLBACK(try_switch_locale), 
 				 NULL);
+	    } else if (tab == TAB_EDITOR) {
+		GtkWidget *sampler;
+
+		sampler = embed_style_sampler(vbox);
+		g_signal_connect(G_OBJECT(rc->widget), "changed",
+				 G_CALLBACK(try_switch_style), 
+				 sampler);		
 	    }
 	} else if (rc->flags & SPINSET) {
 	    int *intvar = (int *) rc->var;

@@ -106,6 +106,10 @@ gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable);
 
+GtkWidget *create_sample_source (const char *style);
+
+void set_style_for_textview (GtkWidget *text, const char *id);
+
 void create_console (windata_t *vwin, int hsize, int vsize);
 
 void sourceview_insert_file (windata_t *vwin, const char *fname);
