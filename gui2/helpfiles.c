@@ -147,6 +147,7 @@ static struct gui_help_item gui_help_items[] = {
     { REPROBIT,       "reprobit" },
     { DAILY_PURGE,    "daily-purge" },
     { PKG_FILES,      "data-files" },
+    { EDITOR,         "script-editor" },
     { -1,             NULL },
 };
 

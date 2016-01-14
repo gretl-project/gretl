@@ -897,13 +897,31 @@ static void preferences_dialog_canceled (GtkWidget *w, int *c)
     *c = 1;
 }
 
+static int page_has_help (int p)
+{
+    return p == TAB_EDITOR || p == TAB_VCV;
+}
+
 static void sensitize_prefs_help (GtkNotebook *book,
 				  gpointer arg1,
 				  guint newpg,
 				  GtkWidget *button)
 {
-    gtk_widget_set_sensitive(button, newpg == TAB_VCV - 1);
-} 
+    gtk_widget_set_sensitive(button, page_has_help(newpg + 1));
+}
+
+static void show_prefs_help (GtkWidget *w, GtkWidget *notebook)
+{
+    gint page;
+
+    page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+    if (page + 1 == TAB_EDITOR) {
+	show_gui_help(EDITOR);
+    } else if (page + 1 == TAB_VCV) {
+	show_gui_help(HCCME);
+    }
+}
 
 int preferences_dialog (int page, const char *varname, GtkWidget *parent) 
 {
@@ -973,9 +991,12 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     gtk_widget_show(button);
 
     /* Help button */
-    button = context_help_button(hbox, HCCME);
+    button = context_help_button(hbox, -1);
     gtk_widget_show(button);
-    gtk_widget_set_sensitive(button, page == TAB_VCV);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(show_prefs_help),
+		     notebook);    
+    gtk_widget_set_sensitive(button, page_has_help(page));
     g_signal_connect(G_OBJECT(notebook), "switch-page",
 		     G_CALLBACK(sensitize_prefs_help),
 		     button);
@@ -1813,8 +1834,8 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     if (parent != NULL) {
 	windata_t *vwin = window_get_active_vwin(parent);
 
-	if (vwin != NULL && vwin_is_editing(vwin)) {
-	    /* called from script editor */
+	if (vwin != NULL && vwin->sbuf != NULL) {
+	    /* called from sourceview window or tab */
 	    update_script_editor_options(vwin);
 	}
     }

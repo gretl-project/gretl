@@ -10689,6 +10689,59 @@
 
   </command>
 
+  <command name="script-editor" section="Utilities" context="gui"
+    label="Script editor preferences">
+
+    <description>
+      <para>
+	Note that some of these preferences apply only when editing
+	native gretl scripts (Smart Tab and Enter, Script editor uses
+	tabs); some also apply when editing or viewing any script
+	(Show line numbers, Highlighting style).
+      </para>
+      <para>
+	<emphasis>Smart Tab and Enter</emphasis>: If
+	this is turned on, then when you press the <lit>Tab</lit> key
+	at the start of a line in a hansl script, instead of just
+	entering a tab stop the program will try to adjust the
+	indentation level of the line consistently with other lines
+	that have been entered. Simlarly, when you press the
+	<lit>Enter</lit> key the program will try to ensure that the
+	indentation of the completed line is correct.
+      </para>
+      <para>
+	<emphasis>Show line numbers</emphasis>: Display line numbers
+	in the left margin of the script editor.
+      </para>
+      <para>
+	<emphasis>Script editor uses tabs</emphasis>: Affects program
+	behavior when you are editing more than one script at a
+	time. If this is checked then each script is shown in a
+	<quote>tab</quote> in a notebook-style window; otherwise each
+	script has its own window.
+      </para>
+      <para>
+	<emphasis>Enable auto-completion</emphasis>: If this is
+	checked, you will be offered possible completions for the word
+	you are typing, based on the words already entered in the
+	editor tab or window. To select a completion, use the up/down
+	arrow keys and the <lit>Enter</lit> key; or just keep on
+	typing to dismiss the suggested completions.
+      </para>
+      <para>
+	<emphasis>Number of spaces per Tab</emphasis>: How wide do you
+	want a tab-stop or indentation level to be? An integer value
+	from 2 to 8.
+      </para>
+      <para>
+	<emphasis>Highlighting style</emphasis>: Provides a drop-down
+	list of syntax highlighting styles. Some of these are
+	dark-on-light and some light-on-dark.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="sdiff" section="Transformations" 
     label="Seasonal differencing" context="cli">
 

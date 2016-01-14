@@ -126,6 +126,7 @@ enum extra_cmds {
     DAILY_PURGE,
     BUILD_PKG,
     PKG_FILES,
+    EDITOR,
     GUI_CMD_MAX
 };
 

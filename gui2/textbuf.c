@@ -729,7 +729,25 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
     }
 }
 
-#endif /* PKGBUILD */
+#else /* !PKGBUILD */
+
+static void ensure_gretl_style_path (void)
+{
+    static int done;
+
+    if (!done) {
+	GtkSourceStyleSchemeManager *mgr;
+	gchar *dir;
+
+	dir = g_strdup_printf("%sstyles", gretl_home());
+	mgr = gtk_source_style_scheme_manager_get_default();
+	gtk_source_style_scheme_manager_append_search_path(mgr, dir);
+	g_free(dir);
+	done = 1;
+    }
+}
+
+#endif
 
 static void set_style_for_buffer (GtkSourceBuffer *sbuf,
 				  const char *id)
@@ -766,7 +784,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	lm = gtk_source_language_manager_get_default();
 #ifdef PKGBUILD
 	ensure_sourceview_path(lm);
-#endif
+#else
+	ensure_gretl_style_path();
+#endif	
     }
 
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
@@ -841,12 +861,16 @@ void update_script_editor_options (windata_t *vwin)
 {
 #ifdef PKGBUILD    
     ensure_sourceview_path(NULL);
+#else
+    ensure_gretl_style_path();
 #endif    
     
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
 					  script_line_numbers);
-#if COMPLETION_OK    
-    toggle_auto_complete(vwin, script_auto_complete);
+#if COMPLETION_OK
+    if (vwin_is_editing(vwin)) {
+	toggle_auto_complete(vwin, script_auto_complete);
+    }
 #endif    
 
     set_style_for_buffer(vwin->sbuf, get_sourceview_style());
@@ -3087,6 +3111,8 @@ const char **get_sourceview_style_ids (int *n)
 
 #ifdef PKGBUILD
     ensure_sourceview_path(NULL);
+#else
+    ensure_gretl_style_path();
 #endif    
 
     *n = 0;
