@@ -218,6 +218,8 @@ add_file ${SYSSV}/language-specs/cpp.lang gretl/gtksourceview/cpp.lang
 add_file ${SYSSV}/language-specs/octave.lang gretl/gtksourceview/octave.lang
 add_file ${SYSSV}/language-specs/python.lang gretl/gtksourceview/python.lang
 add_file ${SYSSV}/language-specs/def.lang gretl/gtksourceview/def.lang
+add_file ${SYSSV}/language-specs/c.lang gretl/gtksourceview/c.lang
+add_file ${SYSSV}/language-specs/gtk-doc.lang gretl/gtksourceview/gtk-doc.lang
 add_file ${SYSSV}/language-specs/language2.rng gretl/gtksourceview/language2.rng
 add_file ${SYSSV}/styles/classic.xml gretl/gtksourceview/classic.xml
 add_file ${SYSSV}/styles/cobalt.xml gretl/gtksourceview/cobalt.xml
