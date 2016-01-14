@@ -314,7 +314,9 @@ RCVAR rc_vars[] = {
 #if GTK_MAJOR_VERSION >= 3 || GTK_MINOR_VERSION >= 16    
     { "script_auto_complete", "Enable auto-completion", NULL, &script_auto_complete,
       BOOLSET, 0, TAB_EDITOR, NULL },
-#endif    
+#endif
+    { "script_auto_bracket", "Enable auto-brackets", NULL, &script_auto_bracket,
+      BOOLSET, 0, TAB_EDITOR, NULL },
     { "sview_style", "Highlighting style", NULL, &sview_style,
       LISTSET, sizeof sview_style, TAB_EDITOR, NULL },
     { "main_width", "main window width", NULL, &mainwin_width, 

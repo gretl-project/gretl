@@ -10729,6 +10729,13 @@
 	typing to dismiss the suggested completions.
       </para>
       <para>
+	<emphasis>Enable auto-brackets</emphasis>: If this is checked,
+	then when you type a left parenthesis, bracket or brace at the
+	end of a line the matching right-hand delimiter will be added
+	automatically, and the cursor moved between the two
+	delimiters.
+      </para>      
+      <para>
 	<emphasis>Number of spaces per Tab</emphasis>: How wide do you
 	want a tab-stop or indentation level to be? An integer value
 	from 2 to 8.

@@ -73,9 +73,11 @@ int tabwidth = 4;
 int smarttab = 1;
 int script_line_numbers = 0;
 int script_auto_complete = 0;
+int script_auto_bracket = 0;
 
 static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
+static gboolean script_bracket_handler (windata_t *vwin, guint keyval);
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
@@ -629,6 +631,10 @@ static void set_source_tabs (GtkWidget *w, int cw)
 		   k == GDK_ISO_Left_Tab || \
 		   k == GDK_KP_Tab)
 
+#define lbracket(k) (k == GDK_parenleft || \
+		     k == GDK_bracketleft || \
+		     k == GDK_braceleft)
+
 #define script_editing(r) (r == EDIT_SCRIPT || \
 			   r == EDIT_PKG_CODE || \
 			   r == EDIT_PKG_SAMPLE)
@@ -668,6 +674,8 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 		ret = script_electric_enter(vwin);
 	    } else if (tabkey(keyval)) {
 		ret = script_tab_handler(vwin, event->state);
+	    } else if (script_auto_bracket && lbracket(keyval)) {
+		ret = script_bracket_handler(vwin, keyval);
 	    }
 	}
     } 
@@ -2982,6 +2990,68 @@ static int maybe_insert_smart_tab (windata_t *vwin)
     return ret;
 }
 
+static char leftchar (guint k)
+{
+    return k == GDK_parenleft ? '(' :
+	k == GDK_bracketleft ? '[' : '{';
+}
+
+static char rightchar (guint k)
+{
+    return k == GDK_parenleft ? ')' :
+	k == GDK_bracketleft ? ']' : '}';
+}
+
+/* Is the insertion point at the end of a line? If so, we'll
+   insert a matching right bracket and move back into the
+   middle.
+*/
+
+static int maybe_insert_auto_bracket (windata_t *vwin,
+				      guint keyval)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextMark *mark;
+    GtkTextIter start;
+    gchar *chunk = NULL;
+    int ret = 0;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+    if (gtk_text_buffer_get_has_selection(tbuf)) {
+	return 0;
+    }
+
+    mark = gtk_text_buffer_get_insert(tbuf);
+    gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
+    
+    if (gtk_text_iter_ends_line(&start)) {
+	ret = 1;
+    } else {
+	GtkTextIter end = start;
+	
+	gtk_text_iter_forward_to_line_end(&end);
+	chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+	if (chunk != NULL) {
+	    ret = strspn(chunk, " \t\n") == strlen(chunk);
+	    g_free(chunk);
+	}
+    }
+
+    if (ret) {
+	char s[2] = {0};
+
+	s[0] = leftchar(keyval);
+	gtk_text_buffer_insert(tbuf, &start, s, -1);
+	s[0] = rightchar(keyval);
+	gtk_text_buffer_insert(tbuf, &start, s, -1);
+	gtk_text_iter_backward_char(&start);
+	gtk_text_buffer_place_cursor(tbuf, &start);
+    }
+
+    return ret;
+}
+
 /* On "Enter" in script editing, try to compute the correct indent
    level for the current line, and make an adjustment if it's not
    already right. It would also be nice if we can place the
@@ -3130,6 +3200,15 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     free(tb);
 
     return ret;
+}
+
+static gboolean script_bracket_handler (windata_t *vwin, guint keyval)
+{
+    if (maybe_insert_auto_bracket(vwin, keyval)) {
+	return TRUE;
+    } else {
+	return FALSE;
+    }
 }
 
 #if COMPLETION_OK
