@@ -10711,7 +10711,7 @@
       </para>
       <para>
 	<emphasis>Show line numbers</emphasis>: Display line numbers
-	in the left margin of the script editor.
+	in the left margin of the script editor or viewer.
       </para>
       <para>
 	<emphasis>Script editor uses tabs</emphasis>: Affects program
@@ -10724,7 +10724,7 @@
 	<emphasis>Enable auto-completion</emphasis>: If this is
 	checked, you will be offered possible completions for the word
 	you are typing, based on the words already entered in the
-	editor tab or window. To select a completion, use the up/down
+	editor window or tab. To select a completion, use the up/down
 	arrow keys and the <lit>Enter</lit> key; or just keep on
 	typing to dismiss the suggested completions.
       </para>
@@ -10743,7 +10743,8 @@
       <para>
 	<emphasis>Highlighting style</emphasis>: Provides a drop-down
 	list of syntax highlighting styles. Some of these are
-	dark-on-light and some light-on-dark.
+	dark-on-light and some light-on-dark: experiment and find what
+	you like.
       </para>
     </description>
 
