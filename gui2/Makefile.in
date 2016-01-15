@@ -44,9 +44,6 @@ GTKMAC_LIBS = @GTKMAC_LIBS@
 MKLANG = @MKLANG@
 MKNEWS = @MKNEWS@
 
-GRETL_LANG = gretl.lang
-GRETL_NEWS = NEWS
-
 ifeq ($(have_sourceview),3.0)
   svprefix = $(shell pkg-config --variable=prefix gtksourceview-3.0)
   langdir = $(svprefix)/share/gtksourceview-3.0/language-specs
@@ -55,11 +52,13 @@ endif
 ifeq ($(have_sourceview),2.0)
   svprefix = $(shell pkg-config --variable=prefix gtksourceview-2.0)
   langdir = $(svprefix)/share/gtksourceview-2.0/language-specs
+  JULIA_LANG = julia_sv2.lang
 endif
 
 # override for building Windows and OS X packages
 ifeq ($(pkg_build),yes)
   langdir = $(prefix)/share/gretl/gtksourceview
+  JULIA_LANG = julia_sv2.lang
 endif
 
 ifeq ($(CC),)
@@ -194,7 +193,7 @@ HACK_SRC = gtkfontselhack.c fontfilter.c
 HACK_HDR = gtkfontselhack.h fontfilter.h
 HACK_OBJ = gtkfontselhack.o fontfilter.o
 
-all: $(PROG) $(GRETL_LANG) $(GRETL_NEWS)
+all: $(PROG) gretl.lang NEWS
 
 %.o: %.c
 	$(CCECHO)
@@ -217,10 +216,10 @@ mklang: mklang.o $(GRETLLIB)
 mknews: mknews.c
 	$(AMP)$(CC) -o $@ $<
 
-$(GRETL_LANG): $(MKLANG)
+gretl.lang: $(MKLANG)
 	$(MKLANG) > $@
 
-$(GRETL_NEWS): $(MKNEWS) $(topsrc)/ChangeLog
+NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
 .deps:
@@ -249,14 +248,15 @@ install-script: installdirs
 install-exec: $(PROG) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
-install-lang: $(GRETL_LANG) installdirs
-	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
-	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(DESTDIR)$(langdir)/gnuplot.lang
-	$(INSTALL_DATA) $(topsrc)/gui2/stata.lang $(DESTDIR)$(langdir)/stata.lang
-	$(INSTALL_DATA) $(topsrc)/gui2/gfnspec.lang $(DESTDIR)$(langdir)/gfnspec.lang
+install-lang: gretl.lang installdirs
+	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(langdir)/gretl.lang
+	for f in gnuplot.lang stata.lang gfnspec.lang ; do \
+	$(INSTALL_DATA) $(topsrc)/gui2/$$f $(DESTDIR)$(langdir)/$$f ; done
+	if [ x$(JULIA_LANG) != x ] ; then \
+	$(INSTALL_DATA) $(topsrc)/gui2/$(JULIA_LANG) $(DESTDIR)$(langdir)/julia.lang ; fi
 
-install-news: $(GRETL_NEWS) installdirs
-	$(INSTALL_DATA) $(GRETL_NEWS) $(DESTDIR)$(gretldir)
+install-news: NEWS installdirs
+	$(INSTALL_DATA) NEWS $(DESTDIR)$(gretldir)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
@@ -266,7 +266,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:
-	rm -f *.o $(PROG) mklang mknews $(GRETL_LANG) $(GRETL_NEWS)
+	rm -f *.o $(PROG) mklang mknews gretl.lang NEWS
 	rm -rf .libs .deps
 
 distclean: clean
