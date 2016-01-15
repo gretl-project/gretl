@@ -25,6 +25,7 @@ typedef enum {
     LANG_OCTAVE,
     LANG_STATA,
     LANG_PYTHON,
+    LANG_JULIA,
     LANG_MPI
 } ForeignLangs;
 
@@ -45,6 +46,8 @@ void delete_gretl_R_files (void);
 int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname);
 
 int write_gretl_python_file (const char *buf, gretlopt opt, const char **pfname);
+
+int write_gretl_julia_file (const char *buf, gretlopt opt, const char **pfname);
 
 int write_gretl_octave_file (const char *buf, gretlopt opt, 
 			     const DATASET *dset,

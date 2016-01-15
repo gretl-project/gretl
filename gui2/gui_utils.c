@@ -1424,6 +1424,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_OCTAVE_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_PYTHON) {
 	    file_selector(SAVE_PYTHON_CMDS, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_JULIA) {
+	    file_selector(SAVE_JULIA_CODE, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_STATA) {
 	    file_selector(SAVE_STATA_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
@@ -1655,6 +1657,8 @@ gchar *title_from_filename (const char *fname, int role, gboolean prepend)
 	    title = g_strdup(_("gretl: edit Octave script"));
 	} else if (role == EDIT_PYTHON) {
 	    title = g_strdup(_("gretl: edit Python script"));
+	} else if (role == EDIT_JULIA) {
+	    title = g_strdup(_("gretl: edit Julia program"));
 	} else if (role == EDIT_STATA) {
 	    title = g_strdup(_("gretl: edit Stata program"));
 	} else if (role == EDIT_SPEC) {
@@ -1733,6 +1737,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_OX:
     case EDIT_OCTAVE:
     case EDIT_PYTHON:
+    case EDIT_JULIA:	
     case EDIT_STATA:
     case EDIT_SPEC:
 	title = title_from_filename(fname, role, TRUE);
@@ -5227,6 +5232,8 @@ void run_foreign_script (gchar *buf, int lang)
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
     } else if (lang == LANG_PYTHON) {
 	err = write_gretl_python_file(buf, OPT_G, &fname);
+    } else if (lang == LANG_JULIA) {
+	err = write_gretl_julia_file(buf, OPT_G, &fname);
     } else if (lang == LANG_STATA) {
 	err = write_gretl_stata_file(buf, OPT_G, dataset, &fname);
     } else if (lang == LANG_OCTAVE) {
@@ -5245,6 +5252,8 @@ void run_foreign_script (gchar *buf, int lang)
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
 	} else if (lang == LANG_PYTHON) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_python_path(), fname);
+	} else if (lang == LANG_JULIA) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_julia_path(), fname);
 	} else if (lang == LANG_STATA) {
 	    cmd = g_strdup_printf("\"%s\" /e do \"%s\"", gretl_stata_path(), fname);
 	} else if (lang == LANG_OCTAVE) {
@@ -5498,6 +5507,8 @@ void run_foreign_script (gchar *buf, int lang)
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
     } else if (lang == LANG_PYTHON) {
 	err = write_gretl_python_file(buf, OPT_G, &fname);
+    } else if (lang == LANG_JULIA) {
+	err = write_gretl_julia_file(buf, OPT_G, &fname);
     } else if (lang == LANG_STATA) {
 	err = write_gretl_stata_file(buf, OPT_G, dataset, &fname);
     } else if (lang == LANG_OCTAVE) {
@@ -5517,6 +5528,10 @@ void run_foreign_script (gchar *buf, int lang)
 	    argv[2] = NULL;
 	} else if (lang == LANG_PYTHON) {
 	    argv[0] = "python";
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_JULIA) {
+	    argv[0] = "julia";
 	    argv[1] = (gchar *) fname;
 	    argv[2] = NULL;
 	} else if (lang == LANG_STATA) {

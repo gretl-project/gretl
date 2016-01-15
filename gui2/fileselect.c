@@ -69,6 +69,7 @@ static struct extmap action_map[] = {
     { SAVE_OCTAVE_CMDS,  ".m" }, 
     { SAVE_PYTHON_CMDS,  ".py" },
     { SAVE_STATA_CMDS,   ".do" },
+    { SAVE_JULIA_CODE,   ".jl" },
     { SAVE_SPEC_FILE,    ".spec" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
@@ -289,7 +290,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	       action == SAVE_OX_CMDS ||
 	       action == SAVE_OCTAVE_CMDS ||
 	       action == SAVE_PYTHON_CMDS ||
-	       action == SAVE_STATA_CMDS) {
+	       action == SAVE_STATA_CMDS ||
+	       action == SAVE_JULIA_CODE) {
 	script_window_update(vwin, fname);
     } 
 }
@@ -341,6 +343,8 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	role = EDIT_PYTHON;
     } else if (has_suffix(fname, ".do")) {
 	role = EDIT_STATA;
+    } else if (has_suffix(fname, ".jl")) {
+	role = EDIT_JULIA;
     }
 
     if (role >= EDIT_GP && role < EDIT_MAX) {
@@ -867,6 +871,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt");
 	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m");
 	filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py");
+	filesel_add_filter(filesel, N_("Julia files (*.jl)"), "*.jl");
 	filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
 	filesel_add_filter(filesel, N_("Stata files (*.do)"), "*.do");
     } else if (action == OPEN_LABELS || action == OPEN_BARS) {

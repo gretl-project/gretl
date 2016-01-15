@@ -376,6 +376,8 @@ static int script_type (const char *fname)
 	return EDIT_OCTAVE;
     } else if (has_suffix(fname, ".py")) {
 	return EDIT_PYTHON;
+    } else if (has_suffix(fname, ".jl")) {
+	return EDIT_JULIA;
     } else if (has_suffix(fname, ".do")) {
 	return EDIT_STATA;
     } else {
@@ -1584,6 +1586,7 @@ GtkActionEntry main_entries[] = {
     { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "OctaveScript", NULL, N_("Octave script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "PyScript", NULL, N_("Python script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "JuliaScript", NULL, N_("Julia program"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "StataScript", NULL, N_("Stata program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 

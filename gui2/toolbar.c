@@ -243,6 +243,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_OCTAVE_CMDS;
     } else if (vwin->role == EDIT_PYTHON) {
         u = SAVE_PYTHON_CMDS;
+    } else if (vwin->role == EDIT_JULIA) {
+	u = SAVE_JULIA_CODE;
     } else if (vwin->role == EDIT_STATA) {
 	u = SAVE_STATA_CMDS;
     } else if (vwin->role == EDIT_SPEC) {

@@ -26,6 +26,7 @@
 	  <menuitem action="RScript"/>
           <menuitem action="OctaveScript"/>
           <menuitem action="PyScript"/>
+	  <menuitem action="JuliaScript"/>
 	  <menuitem action="OxScript"/>
 	  <menuitem action="StataScript"/>
 	</menu>

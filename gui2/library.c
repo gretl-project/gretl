@@ -8014,6 +8014,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	vwin->role == EDIT_OX ||
 	vwin->role == EDIT_OCTAVE ||
         vwin->role == EDIT_PYTHON ||
+	vwin->role == EDIT_JULIA ||
 	vwin->role == EDIT_STATA ||
 	vwin->role == EDIT_X12A) {
 	buf = textview_get_text(vwin->text);
@@ -8045,6 +8046,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	run_foreign_script(buf, LANG_OCTAVE);
     } else if (vwin->role == EDIT_PYTHON) {
 	run_foreign_script(buf, LANG_PYTHON);
+    } else if (vwin->role == EDIT_JULIA) {
+	run_foreign_script(buf, LANG_JULIA);
     } else if (vwin->role == EDIT_STATA) {
 	run_foreign_script(buf, LANG_STATA);
     } else if (vwin->role == EDIT_X12A) {
@@ -8143,6 +8146,8 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_PYTHON;
     } else if (!strcmp(s, "StataScript")) {
 	etype = EDIT_STATA;
+    } else if (!strcmp(s, "JuliaScript")) {
+	etype = EDIT_JULIA;
     }
 
     do_new_script(etype, NULL);

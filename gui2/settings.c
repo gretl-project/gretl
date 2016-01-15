@@ -276,7 +276,9 @@ RCVAR rc_vars[] = {
     { "stata", N_("Path to Stata executable"), NULL, paths.statapath, 
       MACHSET | BROWSER, sizeof paths.statapath, TAB_PROGS, NULL},
     { "python", N_("Path to Python executable"), NULL, paths.pypath, 
-      MACHSET | BROWSER, sizeof paths.statapath, TAB_PROGS, NULL},
+      MACHSET | BROWSER, sizeof paths.pypath, TAB_PROGS, NULL},
+    { "julia", N_("Path to Julia executable"), NULL, paths.jlpath, 
+      MACHSET | BROWSER, sizeof paths.jlpath, TAB_PROGS, NULL},
 #ifdef HAVE_MPI
     { "mpiexec", N_("Path to mpiexec"), NULL, paths.mpiexec, 
       MACHSET | BROWSER, sizeof paths.mpiexec, TAB_MPI, NULL},

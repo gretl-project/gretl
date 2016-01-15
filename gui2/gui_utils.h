@@ -27,6 +27,7 @@
                                 r == EDIT_OCTAVE || \
 				r == EDIT_PYTHON || \
 				r == EDIT_STATA ||  \
+				r == EDIT_JULIA ||  \
 				r == EDIT_X12A ||   \
 				r == EDIT_SPEC)
 

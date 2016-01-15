@@ -75,6 +75,7 @@ struct INTERNAL_PATHS {
     char octpath[MAXLEN];
     char statapath[MAXLEN];
     char pypath[MAXLEN];
+    char jlpath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
     char dbhost[32];
@@ -2576,6 +2577,11 @@ const char *gretl_python_path (void)
     return paths.pypath;
 }
 
+const char *gretl_julia_path (void)
+{
+    return paths.jlpath;
+}
+
 const char *gretl_mpi_hosts (void)
 {
     return paths.mpi_hosts;
@@ -2983,7 +2989,7 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
    gretldir
    gnuplot (but not on MS Windows)
    tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, statapath,
-     pypath, dbhost
+     pypath, jlpath, dbhost
 
    * paths.workdir is updated via the separate working directory
      dialog
@@ -3023,6 +3029,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.octpath, cpaths->octpath, 0);
     ndelta += maybe_transcribe_path(paths.statapath, cpaths->statapath, 0);
     ndelta += maybe_transcribe_path(paths.pypath, cpaths->pypath, 0);
+    ndelta += maybe_transcribe_path(paths.jlpath, cpaths->jlpath, 0);
 
 #ifdef HAVE_MPI
     ndelta += maybe_transcribe_path(paths.mpiexec, cpaths->mpiexec, 0);
@@ -3094,6 +3101,8 @@ static void load_default_path (char *targ)
 	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
     } else if (targ == paths.pypath) {
 	strcpy(targ, "python.exe"); /* ?? */
+    } else if (targ == paths.jlpath) {
+	strcpy(targ, "julia.exe"); 
     } else if (targ == paths.mpiexec) {
 	strcpy(targ, "mpiexec.exe");
     } else if (targ == paths.mpi_hosts) {
@@ -3196,6 +3205,8 @@ static void load_default_path (char *targ)
 	strcpy(paths.statapath, app_paths[2]);
     } else if (targ == paths.pypath) {
 	strcpy(paths.pypath, "python");
+    } else if (targ == paths.jlpath) {
+	strcpy(paths.jlpath, "julia");
     } else if (targ == paths.mpiexec) {
 	strcpy(paths.mpiexec, "mpiexec");
     } else if (targ == paths.mpi_hosts) {
@@ -3270,6 +3281,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.octpath, cpaths->octpath, 0);
     path_init(paths.statapath, cpaths->statapath, 0);
     path_init(paths.pypath, cpaths->pypath, 0);
+    path_init(paths.jlpath, cpaths->jlpath, 0);
     path_init(paths.mpiexec, cpaths->mpiexec, 0);
     path_init(paths.mpi_hosts, cpaths->mpi_hosts, 0);
 
@@ -3686,6 +3698,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    strncat(cpaths->statapath, val, MAXLEN - 1);
 	} else if (!strcmp(key, "python")) {
 	    strncat(cpaths->pypath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "julia")) {
+	    strncat(cpaths->jlpath, val, MAXLEN - 1);
 	} else if (!strcmp(key, "mpiexec")) {
 	    strncat(cpaths->mpiexec, val, MAXLEN - 1);
 	} else if (!strcmp(key, "mpi_hosts")) {
