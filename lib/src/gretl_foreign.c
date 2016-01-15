@@ -984,24 +984,25 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
     }
 
 #ifdef G_OS_WIN32
-    gchar *dotcpy;
-
-    if (lang == LANG_OX) {
-	dotcpy = win32_dotpath();
-	if (strchr(dotcpy, ' ')) {
-	    fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
-	} else {
-	    fprintf(fp, "#include <%sgretl_io.ox>\n", dotcpy);
+    if (lang == LANG_STATA) {
+	/* leave path with backslahes */
+	fprintf(fp, "quietly adopath + \"%s\"\n", gretl_dotdir());
+    } else {
+	/* convert to forward slashes */
+	gchar *dotcpy = win32_dotpath();
+	
+	if (lang == LANG_OX) {
+	    if (strchr(dotcpy, ' ')) {
+		fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
+	    } else {
+		fprintf(fp, "#include <%sgretl_io.ox>\n", dotcpy);
+	    }
+	} else if (lang == LANG_OCTAVE) {
+	    fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
+	} else if (lang == LANG_JULIA) {
+	    fprintf(fp, "include(\"%sgretl_io.jl\")\n", dotcpy);
 	}
 	g_free(dotcpy);
-    } else if (lang == LANG_OCTAVE) {
-	dotcpy = win32_dotpath();
-	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
-	g_free(dotcpy);
-    } else if (lang == LANG_STATA) {
-	fprintf(fp, "quietly adopath + \"%s\"\n", gretl_dotdir());
-    } else if (lang == LANG_JULIA) {
-	fprintf(fp, "include(\"%sgretl_io.jl\")\n", dotcpy);
     }
 #else
     const char *dotdir = gretl_dotdir();
