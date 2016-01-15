@@ -875,6 +875,63 @@ static int write_python_io_file (void)
     return 0;
 }
 
+static int write_julia_io_file (void)
+{
+    static int written;
+
+    if (!written) {
+	const char *dotdir = gretl_dotdir();
+	gchar *fname;
+	FILE *fp;
+
+	fname = g_strdup_printf("%sgretl_io.jl", dotdir);
+	fp = gretl_fopen(fname, "w");
+	g_free(fname);
+
+	if (fp == NULL) {
+	    return E_FOPEN;
+	} else {
+#ifdef G_OS_WIN32
+            gchar *dotcpy = win32_dotpath();
+
+	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotcpy);
+	    g_free(dotcpy);
+#else
+	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
+#endif	
+
+	    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
+	    fputs("  r = size(M)[1]\n", fp);
+	    fputs("  c = size(M)[2]\n", fp);
+	    fputs("  if autodot != 0\n", fp);
+	    fputs("    fname = gretl_dotdir * fname\n", fp);
+	    fputs("  end\n", fp);
+	    fputs("  f = open(fname, \"w\")\n", fp);
+	    fputs("  @printf(f, \"%d\\t%d\\n\", r, c)\n", fp);
+	    fputs("  for i = 1:r\n", fp);
+	    fputs("    for j = 1:c\n", fp);
+	    fputs("      @printf(f, \"%.18e \", M[i,j])\n", fp);
+	    fputs("    end\n", fp);
+	    fputs("    @printf(f, \"\\n\")\n", fp);
+	    fputs("  end\n", fp);
+	    fputs("  close(f)\n", fp);
+	    fputs("end\n\n", fp);
+
+	    fputs("function gretl_loadmat(fname, autodot=1)\n", fp);
+	    fputs("  if autodot != 0\n", fp);
+	    fputs("    fname = gretl_dotdir * fname\n", fp);
+	    fputs("  end\n", fp);
+	    fputs("  M = readdlm(fname, skipstart=1)\n", fp);
+	    fputs("end\n\n", fp);
+
+	    fclose(fp);
+	    written = 1;
+	}
+    }
+
+    return 0;
+}
+
 static int write_stata_io_file (void)
 {
     static int written;
@@ -943,6 +1000,8 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 	g_free(dotcpy);
     } else if (lang == LANG_STATA) {
 	fprintf(fp, "quietly adopath + \"%s\"\n", gretl_dotdir());
+    } else if (lang == LANG_JULIA) {
+	fprintf(fp, "include(\"%sgretl_io.jl\")\n", dotcpy);
     }
 #else
     const char *dotdir = gretl_dotdir();
@@ -955,6 +1014,8 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 	}
     } else if (lang == LANG_OCTAVE) {
 	fprintf(fp, "source(\"%sgretl_io.m\")\n", dotdir);
+    } else if (lang == LANG_JULIA) {
+	fprintf(fp, "include(\"%sgretl_io.jl\")\n", dotdir);
     } else if (lang == LANG_STATA) {
 	if (opt & OPT_Q) {
 	    fputs("set output error\n", fp);
@@ -1111,16 +1172,12 @@ int write_gretl_julia_file (const char *buf, gretlopt opt, const char **pfname)
     const gchar *fname = gretl_julia_filename();
     FILE *fp = gretl_fopen(fname, "w");
 
-#if 0    
     write_julia_io_file();
-#endif    
 
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
-#if 0	
 	add_gretl_include(LANG_JULIA, opt, fp);
-#endif	
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
 	    put_foreign_buffer(buf, fp);
