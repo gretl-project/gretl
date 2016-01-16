@@ -53,6 +53,8 @@ gchar *textview_get_text (GtkWidget *view);
 
 gchar *textview_get_trimmed_text (GtkWidget *view);
 
+gchar *textview_get_wrapped_text (GtkWidget *view);
+
 gchar *textview_get_selection_or_all (GtkWidget *view,
 				      gboolean *selection);
 

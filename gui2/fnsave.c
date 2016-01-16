@@ -1202,8 +1202,7 @@ void update_gfn_help_text (windata_t *vwin)
     finfo = g_object_get_data(G_OBJECT(vwin->main), "finfo");
 
     if (finfo != NULL) {
-	/* FIXME get trimmed text? */
-	gchar *text = textview_get_text(vwin->text);
+	gchar *text = textview_get_wrapped_text(vwin->text);
 
 	if (vwin->role == EDIT_PKG_GHLP) {
 	    g_free(finfo->gui_help);

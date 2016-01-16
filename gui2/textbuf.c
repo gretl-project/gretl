@@ -215,6 +215,45 @@ gchar *textview_get_trimmed_text (GtkWidget *view)
     return ret;
 }
 
+gchar *textview_get_wrapped_text (GtkWidget *view)
+{
+    GtkTextView *tview;
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+    GString *str;
+    gchar *line;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
+
+    tview = GTK_TEXT_VIEW(view);
+    tbuf = gtk_text_view_get_buffer(tview);
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    end = start;
+
+    str = g_string_new(NULL);
+    
+    while (gtk_text_view_forward_display_line(tview, &end)) {
+	line = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+	g_strchomp(line);
+	g_string_append(str, line);
+	g_string_append_c(str, '\n');
+	g_free(line);
+	start = end;
+    }
+
+    if (!gtk_text_iter_is_end(&start)) {
+	/* there's some residual text */
+	gtk_text_buffer_get_end_iter(tbuf, &end);
+	line = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+	g_strchomp(line);
+	g_string_append(str, line);
+	g_string_append_c(str, '\n');
+	g_free(line);
+    }
+
+    return g_string_free(str, FALSE);
+}
+
 gchar *textview_get_selection_or_all (GtkWidget *view,
 				      gboolean *selection)
 {
