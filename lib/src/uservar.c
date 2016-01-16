@@ -347,6 +347,9 @@ static int real_user_var_add (const char *name,
 		u->flags &= ~UV_MAIN;
 		u->level += 1;
 	    }
+	    if (opt & OPT_C) {
+		u->flags |= UV_NODECL;
+	    }	    
 	    uvars[n_vars] = u;
 	    set_nvars(n_vars + 1, "user_var_add");
 	}
@@ -739,6 +742,29 @@ int user_var_get_level (user_var *uvar)
 void *user_var_get_value (user_var *uvar)
 {
     return (uvar == NULL)? NULL : uvar->ptr;
+}
+
+/* the following really means: is this variable a scalar
+   that should be morphable to a matrix? */
+
+int user_var_is_mutable (user_var *uvar)
+{
+    if (uvar != NULL && (uvar->flags & UV_NODECL)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* eliminate morphability for a scalar variable
+   (we got an explicit specification of type from
+   the user) */
+
+void user_var_unset_mutable (user_var *uvar)
+{
+    if (uvar != NULL) {
+	uvar->flags &= ~UV_NODECL;
+    }
 }
 
 GretlType user_var_get_type (user_var *uvar)
@@ -1553,7 +1579,8 @@ void unset_auxiliary_scalars (void)
     scalar_imin = 0;
 }
 
-int gretl_scalar_add (const char *name, double val, int cast)
+static int real_scalar_add (const char *name, double val,
+			    gretlopt opt)
 {
     user_var *u = get_user_var_by_name(name);
     int level = gretl_function_depth();
@@ -1568,7 +1595,6 @@ int gretl_scalar_add (const char *name, double val, int cast)
 	return err;
     } else {
 	double *px = malloc(sizeof *px);
-	gretlopt opt = cast ? OPT_C : OPT_NONE;
 
 	if (px == NULL) {
 	    err = E_ALLOC;
@@ -1584,6 +1610,16 @@ int gretl_scalar_add (const char *name, double val, int cast)
     }
 
     return err;
+}
+
+int gretl_scalar_add (const char *name, double val)
+{
+    return real_scalar_add(name, val, OPT_NONE);
+}
+
+int gretl_scalar_add_mutable (const char *name, double val)
+{
+    return real_scalar_add(name, val, OPT_C);
 }
 
 int gretl_scalar_convert (const char *name, gretl_matrix **pm)
@@ -1613,9 +1649,11 @@ int gretl_scalar_convert (const char *name, gretl_matrix **pm)
 
     if (gretl_function_depth() == 0) {
 	if (scalar_edit_callback != NULL) {
-	    scalar_edit_callback();
+	    (*scalar_edit_callback)();
 	}
-	/* FIXME handle GUI matrix representation */
+	if (user_var_callback != NULL) {
+	    (*user_var_callback)(name, GRETL_TYPE_MATRIX, UVAR_ADD);
+	}
     }
 
     return 0;
@@ -2123,7 +2161,7 @@ static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)
 	    if (name == NULL || val == NULL) {
 		err = 1;
 	    } else {
-		err = gretl_scalar_add(name, dot_atof(val), 0);
+		err = gretl_scalar_add(name, dot_atof(val));
 	    }
 	    free(name);
 	    free(val);

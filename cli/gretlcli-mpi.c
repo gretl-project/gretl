@@ -407,7 +407,7 @@ int main (int argc, char *argv[])
     gretl_exec_state_init(&state, 0, line, &cmd, model, prn);
 
     if (!na(scriptval)) {
-	gretl_scalar_add("scriptopt", scriptval, 0);
+	gretl_scalar_add("scriptopt", scriptval);
     }
 
     runit = 0;

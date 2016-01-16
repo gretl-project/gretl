@@ -69,6 +69,10 @@ void *user_var_get_value_by_name (const char *name);
 void *user_var_get_value_and_type (const char *name,
 				   GretlType *type);
 
+int user_var_is_mutable (user_var *uvar);
+
+void user_var_unset_mutable (user_var *uvar);
+
 char *user_string_resize (const char *name, size_t len, int *err);
 
 void *user_var_steal_value (user_var *uvar);
@@ -147,7 +151,9 @@ int gretl_scalar_set_value (const char *name, double val);
 
 int gretl_scalar_set_value_authorized (const char *name, double val);
 
-int gretl_scalar_add (const char *name, double val, int cast);
+int gretl_scalar_add (const char *name, double val);
+
+int gretl_scalar_add_mutable (const char *name, double val);
 
 int gretl_scalar_convert (const char *name, gretl_matrix **pm);
 

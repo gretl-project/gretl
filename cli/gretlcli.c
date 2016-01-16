@@ -669,7 +669,7 @@ int main (int argc, char *argv[])
 
     if (!na(scriptval)) {
 	/* define "scriptopt" */
-	gretl_scalar_add("scriptopt", scriptval, 0);
+	gretl_scalar_add("scriptopt", scriptval);
     }
 
     /* misc. interactive-mode setup */

@@ -13219,6 +13219,13 @@ static void pre_process (parser *p, int flags)
 		p->lh.m0 = uval;
 		p->lh.t = MAT;
 	    } else if (vtype == GRETL_TYPE_DOUBLE) {
+		if (user_var_is_mutable(uvar)) {
+		    if (p->targ == UNK) {
+			p->flags |= P_NODECL;
+		    } else {
+			user_var_unset_mutable(uvar);
+		    }
+		}
 		p->lh.t = NUM;
 	    } else if (vtype == GRETL_TYPE_LIST) {
 		p->lh.t = LIST;
@@ -14206,6 +14213,8 @@ static int gen_check_return_type (parser *p)
 	    ; /* scalar or 1 x 1 matrix: OK */
 	} else if (r->t == STR && p->lh.obs >= 0) {
 	    ; /* a string value might be acceptable */
+	} else if (r->t == MAT && (p->flags & P_NODECL)) {
+	    ; /* morphing to matrix may be OK */
 	} else {
 	    err = E_TYPES;
 	}
@@ -14503,7 +14512,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 #endif
 	    if (!p->err) {
-		p->err = gretl_scalar_add(p->lh.name, x, no_decl);
+		if (no_decl) {
+		    p->err = gretl_scalar_add_mutable(p->lh.name, x);
+		} else {
+		    p->err = gretl_scalar_add(p->lh.name, x);
+		}
 	    }
 	}
     } else if (p->targ == SERIES) {

@@ -703,7 +703,7 @@ static int nlspec_add_scalar_params (nlspec *spec, int np,
 	    /* doing internal auxiliary NLS (e.g. arma init) */
 	    err = add_auxiliary_scalar(names[i], vals[i]);
 	} else {
-	    err = gretl_scalar_add(names[i], vals[i], 0);
+	    err = gretl_scalar_add(names[i], vals[i]);
 	}
 	if (!err) {
 	    err = nlspec_push_param(spec, names[i], GRETL_TYPE_DOUBLE, NULL);
