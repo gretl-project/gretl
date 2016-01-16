@@ -190,29 +190,9 @@ gchar *textview_get_text (GtkWidget *view)
 
 gchar *textview_get_trimmed_text (GtkWidget *view)
 {
-    gchar *s = textview_get_text(view);
-    gchar *p = s;
-    gchar *ret = NULL;
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
 
-    if (p != NULL && *p != '\0') {
-	while (isspace(*p)) p++;
-	if (*p != '\0') {
-	    int i, len = strlen(p);
-
-	    for (i=len-1; i>0; i--) {
-		if (!isspace(p[i])) break;
-		len--;
-	    }
-
-	    if (len > 0) {
-		ret = g_strndup(p, len);
-	    }
-	}
-    }
-
-    g_free(s);
-
-    return ret;
+    return g_strchug(g_strchomp(textview_get_text(view)));
 }
 
 /* Special: handle the case where text has been line-wrapped
@@ -292,8 +272,9 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
-int real_textview_set_text (GtkWidget *view, const gchar *text,
-			    int select)
+static int real_textview_set_text (GtkWidget *view,
+				   const gchar *text,
+				   gboolean select)
 {
     GtkTextBuffer *tbuf;
 
@@ -320,12 +301,12 @@ int real_textview_set_text (GtkWidget *view, const gchar *text,
 
 int textview_set_text (GtkWidget *view, const gchar *text)
 {
-    return real_textview_set_text(view, text, 0);
+    return real_textview_set_text(view, text, FALSE);
 }
 
 int textview_set_text_selected (GtkWidget *view, const gchar *text)
 {
-    return real_textview_set_text(view, text, 1);
+    return real_textview_set_text(view, text, TRUE);
 }
 
 int textview_set_cursor_at_line (GtkWidget *view, int line)
@@ -746,17 +727,12 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 
 /* Packages for Windows and OS X: gtksourceview needs to
    be told where to find its language-specs and style
-   files. Note that we can perhaps avoid doing this if
-   we revise the directory structure inside these packages
-   in line with the "canonical" form, so that the
-   gtksourceview files are in ../share relative to the
-   executables (in ./bin).
+   files.
 
-   Anyway, given that we're doing it for now, on Windows
-   we need to ensure that the "set_search_path" functions
-   are fed a UTF-8 pathname, since gtksourceview uses
+   On Windows we need to ensure that the "set_search_path"
+   functions are fed a UTF-8 path, since gtksourceview uses
    g_open() internally and the Glib filename encoding is 
-   UTF-8 on Windows.
+   always UTF-8 on Windows.
 */
 
 static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
@@ -935,6 +911,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 G_CALLBACK(interactive_script_help), vwin);
     }	
 }
+
+/* Manufacture a little sampler sourceview for use in the
+   Editor tab of the gretl preferences dialog
+*/
 
 GtkWidget *create_sample_source (const char *style)
 {
@@ -2663,9 +2643,9 @@ static int in_foreign_land (GtkWidget *text_widget)
 
     while (bufgets(line, sizeof line, buf)) {
 	s = line + strspn(line, " \t");
-	if (!strncmp(s, "foreign", 7)) {
+	if (!strncmp(s, "foreign ", 8)) {
 	    inforeign = 1;
-	} else if (!strncmp(s, "end foreign", 7)) {
+	} else if (!strncmp(s, "end foreign", 11)) {
 	    inforeign = 0;
 	}
     }
@@ -3062,8 +3042,8 @@ static char rightchar (guint k)
 }
 
 /* Is the insertion point at the end of a line? If so, we'll
-   insert a matching right bracket and move back into the
-   middle.
+   auto-insert a matching right bracket and move the cursor
+   back before it.
 */
 
 static int maybe_insert_auto_bracket (windata_t *vwin,
@@ -3303,6 +3283,11 @@ static void toggle_auto_complete (windata_t *vwin, gboolean s)
 
 #endif /* COMPLETION_OK */
 
+
+/* Return a listing of the available gtksourceview style
+   ids for use in the gretl preferences dialog.
+*/
+
 const char **get_sourceview_style_ids (int *n)
 {
     GtkSourceStyleSchemeManager *mgr;
@@ -3538,22 +3523,23 @@ static void insert_math_content (GtkTextBuffer *tbuf, GtkTextIter *iter,
     static char minus[4];
 
     if (*minus == '\0') {
+	/* find the best representation of minus */
 	PangoFontDescription *pfd;
 
 	pfd = pango_font_description_from_string(helpfont);
 	
 	if (font_has_symbol(pfd, 0x2212)) {
-	    /* unicode minus */
+	    /* preferred: unicode minus */
 	    minus[0] = 0xE2;
 	    minus[1] = 0x88;
 	    minus[2] = 0x92;
 	} else if (font_has_symbol(pfd, 0x2013)) {
-	    /* unicode endash */
+	    /* fallback: unicode endash */
 	    minus[0] = 0xE2;
 	    minus[1] = 0x80;
 	    minus[2] = 0x93;
 	} else {
-	    /* plain old dash */
+	    /* otherwise: plain old dash */
 	    minus[0] = '-';
 	}
 	pango_font_description_free(pfd);
