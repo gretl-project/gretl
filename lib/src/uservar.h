@@ -147,7 +147,9 @@ int gretl_scalar_set_value (const char *name, double val);
 
 int gretl_scalar_set_value_authorized (const char *name, double val);
 
-int gretl_scalar_add (const char *name, double val);
+int gretl_scalar_add (const char *name, double val, int cast);
+
+int gretl_scalar_convert (const char *name, gretl_matrix **pm);
 
 int add_auxiliary_scalar (const char *name, double val);
 

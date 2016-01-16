@@ -14376,12 +14376,14 @@ static int save_generated_var (parser *p, PRN *prn)
     NODE *r = p->ret;
     double **Z = NULL;
     double x;
+    int no_decl = 0;
     int t, v = 0;
 
 #if EDEBUG
-    fprintf(stderr, "save_generated_var:\n"
-	    "callcount=%d, lh.t=%s, targ=%s, r->t=%s\n",
-	    p->callcount, getsymb(p->lh.t, NULL), getsymb(p->targ, NULL),
+    fprintf(stderr, "save_generated_var: '%s'\n"
+	    "callcount=%d, lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
+	    p->lh.name, p->callcount, getsymb(p->lh.t, NULL),
+	    getsymb(p->targ, NULL), (p->flags & P_NODECL)? 1 : 0,
 	    getsymb(r->t, NULL));
 #endif    
 
@@ -14397,9 +14399,26 @@ static int save_generated_var (parser *p, PRN *prn)
     if (p->targ == UNK) {
 	/* "cast" 1 x 1 matrix to scalar */
 	if (scalar_matrix_node(r)) {
+	    no_decl = 1;
 	    p->targ = NUM;
+	    p->flags |= P_NODECL;
 	} else {
 	    p->targ = r->t;
+	}
+    } else if (p->targ == NUM && r->t == MAT && (p->flags & P_NODECL)) {
+	/* we're looking at a @targ that was previously
+	   set to NUM by the "auto-cast" mechanism: allow
+	   it to morph to matrix
+	*/
+	if (p->lh.t == 0) {
+	    /* no pre-existing scalar var */
+	    p->targ = MAT;
+	} else if (p->lh.t == NUM) {
+	    /* type-convert existing scalar */
+	    p->err = gretl_scalar_convert(p->lh.name, &p->lh.m0);
+	    if (!p->err) {
+		p->targ = MAT;
+	    }
 	}
     }
 #else
@@ -14484,7 +14503,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 #endif
 	    if (!p->err) {
-		p->err = gretl_scalar_add(p->lh.name, x);
+		p->err = gretl_scalar_add(p->lh.name, x, no_decl);
 	    }
 	}
     } else if (p->targ == SERIES) {
@@ -14715,7 +14734,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     int saveflags[] = { 
 	P_PRINT, P_NATEST, P_AUTOREG,
 	P_SLAVE, P_LHPTR, P_DISCARD, 
-	P_LHBKVAR, P_AUXDONE, 0
+	P_LHBKVAR, P_AUXDONE, P_NODECL, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;

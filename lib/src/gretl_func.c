@@ -43,7 +43,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define LOOPSAVE 0
+#define LOOPSAVE 1
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */

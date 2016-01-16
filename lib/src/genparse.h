@@ -601,7 +601,8 @@ enum parser_flags {
     P_DELTAN  = 1 << 19, /* flag for change in series length */
     P_LHBKVAR = 1 << 20, /* LHS bundle key is string variable */
     P_ALIASED = 1 << 21, /* the given function name is an alias */
-    P_CATCH   = 1 << 22  /* "catch" is in force */
+    P_CATCH   = 1 << 22, /* "catch" is in force */
+    P_NODECL  = 1 << 23  /* type of result was not declared */
 };
 
 struct lhinfo {

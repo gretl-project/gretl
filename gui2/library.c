@@ -6459,7 +6459,7 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
     g_free(blurb);
 
     if (!cancel) {
-	int err = gretl_scalar_add(vname, val);
+	int err = gretl_scalar_add(vname, val, 0);
 
 	if (!err) {
 	    lib_command_sprintf("scalar %s = %s", vname, statname);

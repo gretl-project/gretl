@@ -1452,7 +1452,7 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 		    sheet_set_modified(sheet, TRUE);
 		}
 	    } else {
-		err = gretl_scalar_add(vname, x);
+		err = gretl_scalar_add(vname, x, 0);
 		if (!err) {
 		    sheet_set_modified(sheet, TRUE);
 		}

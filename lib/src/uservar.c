@@ -48,7 +48,8 @@
 typedef enum {
     UV_PRIVATE = 1 << 0,
     UV_SHELL   = 1 << 1,
-    UV_MAIN    = 1 << 2
+    UV_MAIN    = 1 << 2,
+    UV_NODECL  = 1 << 3
 } UVFlags;
 
 struct user_var_ {
@@ -324,7 +325,9 @@ static int real_user_var_add (const char *name,
 
     /* We use OPT_P for a private variable, OPT_A
        when adding as a function argument, OPT_S
-       when adding as a "shell" variable.
+       when adding as a "shell" variable, OPT_C
+       when we're auto-casting a 1 x 1 matrix result
+       to a scalar.
     */
 
 #if UVDEBUG
@@ -1550,13 +1553,11 @@ void unset_auxiliary_scalars (void)
     scalar_imin = 0;
 }
 
-int gretl_scalar_add (const char *name, double val)
+int gretl_scalar_add (const char *name, double val, int cast)
 {
-    user_var *u;
+    user_var *u = get_user_var_by_name(name);
     int level = gretl_function_depth();
     int err = 0;
-
-    u = get_user_var_by_name(name);
 
     if (u != NULL) {
 	if (u->type == GRETL_TYPE_DOUBLE) {
@@ -1567,21 +1568,57 @@ int gretl_scalar_add (const char *name, double val)
 	return err;
     } else {
 	double *px = malloc(sizeof *px);
+	gretlopt opt = cast ? OPT_C : OPT_NONE;
 
 	if (px == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    *px = val;
 	    err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
-				    px, OPT_NONE);
+				    px, opt);
 	}
 
 	if (!err && level == 0 && scalar_edit_callback != NULL) {
 	    scalar_edit_callback();
-	}	
+	}
     }
 
     return err;
+}
+
+int gretl_scalar_convert (const char *name, gretl_matrix **pm)
+{
+    user_var *u = get_user_var_by_name(name);
+    gretl_matrix *m = NULL;
+
+    if (u == NULL) {
+	return E_UNKVAR;
+    } else if (u->type != GRETL_TYPE_DOUBLE) {
+	return E_TYPES;
+    }
+
+    m = gretl_matrix_alloc(1, 1);
+    if (m == NULL) {
+	return E_ALLOC;
+    }
+
+    m->val[0] = *(double *) u->ptr;
+    free(u->ptr);
+    u->ptr = m;
+    u->type = GRETL_TYPE_MATRIX;
+
+    if (pm != NULL) {
+	*pm = m;
+    }
+
+    if (gretl_function_depth() == 0) {
+	if (scalar_edit_callback != NULL) {
+	    scalar_edit_callback();
+	}
+	/* FIXME handle GUI matrix representation */
+    }
+
+    return 0;
 }
 
 int add_auxiliary_scalar (const char *name, double val)
@@ -2086,7 +2123,7 @@ static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)
 	    if (name == NULL || val == NULL) {
 		err = 1;
 	    } else {
-		err = gretl_scalar_add(name, dot_atof(val));
+		err = gretl_scalar_add(name, dot_atof(val), 0);
 	    }
 	    free(name);
 	    free(val);
