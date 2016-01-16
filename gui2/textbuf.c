@@ -215,6 +215,12 @@ gchar *textview_get_trimmed_text (GtkWidget *view)
     return ret;
 }
 
+/* Special: handle the case where text has been line-wrapped
+   in an editor window and we want to save the text as
+   wrapped -- that is, forcibly to truncate excessively
+   long lines. We use this for function-package help text.
+*/
+
 gchar *textview_get_wrapped_text (GtkWidget *view)
 {
     GtkTextView *tview;
@@ -230,8 +236,16 @@ gchar *textview_get_wrapped_text (GtkWidget *view)
     gtk_text_buffer_get_start_iter(tbuf, &start);
     end = start;
 
+    /* first detect and handle the case where no wrapping has
+       occurred */
+    if (!gtk_text_view_forward_display_line(tview, &end)) {
+	gtk_text_buffer_get_end_iter(tbuf, &end);
+	return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    }
+
     str = g_string_new(NULL);
-    
+
+    end = start;
     while (gtk_text_view_forward_display_line(tview, &end)) {
 	line = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 	g_strchomp(line);
