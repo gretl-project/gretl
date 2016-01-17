@@ -844,6 +844,11 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     }
 
+    if (r == EDIT_PKG_CODE && f == FIND_ITEM) {
+	/* use an "inline" search box */
+	return NULL;
+    }
+
     if (copy_script_ok(r)) {
 	if (f == FIND_ITEM || f == SAVE_AS_ITEM) {
 	    return NULL;

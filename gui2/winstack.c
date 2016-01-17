@@ -1328,6 +1328,7 @@ static int want_finder (windata_t *vwin)
 {
     return vwin->role == VIEW_PKG_SAMPLE ||
 	vwin->role == VIEW_PKG_CODE ||
+	vwin->role == EDIT_PKG_CODE ||
 	vwin->role == VIEW_SCRIPT ||
 	vwin->role == VIEW_LOG;
 }
