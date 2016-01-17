@@ -3,7 +3,7 @@
 
  Modified version of julia.lang for use with gtksourceview 2.0
  (the original file depends on material specific to version 3.0)
- by Allin Cottrell, 2015-01-16. The original notice follows.
+ by Allin Cottrell, 2016-01-16. The original notice follows.
 
  This file is part of GtkSourceView
 
