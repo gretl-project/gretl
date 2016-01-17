@@ -20,9 +20,6 @@
 #include "gretl.h"
 #include "obsbutton.h"
 
-/* in dialogs.c */
-extern gboolean update_obs_label (GtkComboBox *box, gpointer data);
-
 static gboolean obs_button_input (GtkSpinButton *spin, 
 				  gdouble *new_val,
 				  gpointer p)

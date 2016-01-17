@@ -208,7 +208,7 @@ static gint console_paste_text (GtkWidget *cview, GdkAtom atom)
 
 static void console_paste_handler (GtkWidget *w, gpointer p)
 {
-    /* we don't accept pasted material, other than via 
+    /* we don't accept pasted material other than via 
        the X selection */
     return;
 }

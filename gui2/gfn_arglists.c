@@ -20,6 +20,10 @@
 #include "gretl.h"
 #include "gfn_arglists.h"
 
+/* apparatus for remembering the list of arguments given to
+   packaged functions (gfn)
+*/
+
 struct arglist_ {
     char pkgname[32];
     int argc;

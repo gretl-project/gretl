@@ -1324,15 +1324,6 @@ static int want_winlist (windata_t *vwin)
     return g_object_get_data(G_OBJECT(hbox), "winlist") == NULL;
 }
 
-static int want_finder (windata_t *vwin)
-{
-    return vwin->role == VIEW_PKG_SAMPLE ||
-	vwin->role == VIEW_PKG_CODE ||
-	vwin->role == EDIT_PKG_CODE ||
-	vwin->role == VIEW_SCRIPT ||
-	vwin->role == VIEW_LOG;
-}
-
 void vwin_pack_toolbar (windata_t *vwin)
 {
     if (vwin->topmain != NULL) {
@@ -1376,7 +1367,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    if (want_winlist(vwin)) {
 		vwin_add_winlist(vwin);
 	    }	    
-	    if (want_finder(vwin)) {
+	    if (use_toolbar_search_box(vwin->role)) {
 		vwin_add_finder(vwin);
 	    }
 	    gtk_widget_show_all(hbox);

@@ -799,6 +799,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_SCRIPT || \
 			r == VIEW_LOG)
 
+/* for a non-editable script: can offer option to copy
+   content into an editor window */
 #define copy_script_ok(r) (r == VIEW_PKG_SAMPLE || \
 			   r == VIEW_PKG_CODE || \
 			   r == VIEW_SCRIPT || \
@@ -844,13 +846,14 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     }
 
-    if (r == EDIT_PKG_CODE && f == FIND_ITEM) {
-	/* use an "inline" search box */
+    if (use_toolbar_search_box(r) && f == FIND_ITEM) {
+	/* using an "inline" search box: skip the
+	   "Find" button */
 	return NULL;
     }
 
     if (copy_script_ok(r)) {
-	if (f == FIND_ITEM || f == SAVE_AS_ITEM) {
+	if (f == SAVE_AS_ITEM) {
 	    return NULL;
 	}
     } else if (f == COPY_SCRIPT_ITEM) {

@@ -675,9 +675,9 @@ static void set_source_tabs (GtkWidget *w, int cw)
 		     k == GDK_bracketleft || \
 		     k == GDK_braceleft)
 
-#define script_editing(r) (r == EDIT_SCRIPT || \
-			   r == EDIT_PKG_CODE || \
-			   r == EDIT_PKG_SAMPLE)
+#define editing_hansl(r) (r == EDIT_SCRIPT || \
+			  r == EDIT_PKG_CODE ||	\
+			  r == EDIT_PKG_SAMPLE)
 
 /* Special keystrokes in script window: Ctrl-Return sends the current
    line for execution; Ctrl-R sends the whole script for execution
@@ -709,7 +709,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 	if (keyval == GDK_F1) {
 	    set_window_help_active(vwin);
 	    interactive_script_help(NULL, NULL, vwin);
-	} else if (script_editing(vwin->role)) {    
+	} else if (editing_hansl(vwin->role)) {    
 	    if (keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
 	    } else if (tabkey(keyval)) {
@@ -3351,7 +3351,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     tb->commented = text_is_commented(tb->chunk);
 
-    if (tb->commented > 0 && !script_editing(vwin->role)) {
+    if (tb->commented > 0 && !editing_hansl(vwin->role)) {
 	g_free(tb->chunk);
 	free(tb);
 	*ptb = NULL;
@@ -3374,7 +3374,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
-    if (script_editing(vwin->role) && tb->commented >= 0) {
+    if (editing_hansl(vwin->role) && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:
 	   allow comment/uncomment option 
 	*/
@@ -3390,7 +3390,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
-    if (script_editing(vwin->role)) {
+    if (editing_hansl(vwin->role)) {
 	if (tb->selected) {
 	    item = gtk_menu_item_new_with_label(smarttab? 
 						_("Auto-indent region") :

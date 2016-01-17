@@ -27,6 +27,12 @@ typedef enum {
 
 #define winlist_item(i) (strcmp(i->icon, GRETL_STOCK_WINLIST) == 0)
 
+#define use_toolbar_search_box(r) (r == VIEW_PKG_SAMPLE || \
+				   r == VIEW_PKG_CODE || \
+				   r == EDIT_PKG_CODE || \
+				   r == VIEW_SCRIPT || \
+				   r == VIEW_LOG)
+
 void gretl_stock_icons_init (void);
 
 void add_mainwin_toolbar (GtkWidget *vbox);

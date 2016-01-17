@@ -26,6 +26,12 @@ typedef enum {
     OBS_BUTTON_T2
 } ObsButtonRole;
 
+/* related function in dialogs.c */
+
+gboolean update_obs_label (GtkComboBox *box, gpointer data);
+
+/* public functions in obsbutton.c */    
+
 GtkWidget *obs_button_new (GtkAdjustment *adjustment, DATASET *dset,
 			   ObsButtonRole role);
 
