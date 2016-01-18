@@ -58,6 +58,7 @@
 #endif
 
 #define MATRIX_NA_CHECK 1
+#define ONE_BY_ONE_CAST 1
 
 /* 2014-07-29: I think this is OK now, but it was disabled for
    the 1.9.91 release. AC.
@@ -8104,9 +8105,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     } else if (f == F_SUBSTR) {
 	if (l->t != STR) {
 	    node_type_error(f, 1, STR, l, p);
-	} else if (m->t != NUM) {
+	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM) {
+	} else if (!scalar_node(r)) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    post_process = 0;
@@ -10894,6 +10895,14 @@ static void reattach_series (NODE *n, parser *p)
     }
 }
 
+static void reattach_data_error (NODE *n, parser *p, GretlType type)
+{
+    fprintf(stderr, "node_reattach_data (vname = '%s'): "
+	    "expected type %d (%s) but found %s\n", n->vname,
+	    n->t, getsymb(n->t, p), gretl_type_get_name(type));
+    p->err = E_TYPES;
+}
+
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
@@ -10909,8 +10918,19 @@ static void node_reattach_data (NODE *n, parser *p)
 
 	if (data == NULL) {
 	    p->err = E_DATA;
-	} else if (uscalar_node(n) && type == GRETL_TYPE_DOUBLE) {
-	    n->v.xval = *(double *) data;
+	} else if (uscalar_node(n)) {
+	    if (type == GRETL_TYPE_DOUBLE) {
+		n->v.xval = *(double *) data;
+#if ONE_BY_ONE_CAST
+	    } else if (type == GRETL_TYPE_MATRIX) {
+		/* allow type-mutation */
+		n->t = MAT;
+		n->v.m = (gretl_matrix *) data;
+#endif
+	    } else {
+		reattach_data_error(n, p, type);
+		return;
+	    }
 	} else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
 	    n->v.m = data;
 	} else if (n->t == LIST && type == GRETL_TYPE_LIST) {
@@ -10922,10 +10942,7 @@ static void node_reattach_data (NODE *n, parser *p)
 	} else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
 	    n->v.a = data;
 	} else {
-	    fprintf(stderr, "node_reattach_data (vname = '%s'): "
-		    "expected type %d (%s) but found %s\n", n->vname,
-		    n->t, getsymb(n->t, p), gretl_type_get_name(type));
-	    p->err = E_TYPES;
+	    reattach_data_error(n, p, type);
 	    return;
 	}
     }
@@ -14375,10 +14392,6 @@ static int assign_null_to_array (parser *p)
 
     return err;
 }
-
-/* this behavior is "traditional": keep it for the
-   1.10.0 release and reconsider thereafter? */
-#define ONE_BY_ONE_CAST 1
 
 static int save_generated_var (parser *p, PRN *prn)
 {

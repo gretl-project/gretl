@@ -3103,9 +3103,8 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    err = push_string_token(cmd, tok, s, pos);	    
 	} else if (isalpha(*s) || *s == '$' || (at_ok && *s == '@')) {
 	    /* regular or accessor identifier */
-	    if (*s == '@') {
-		fprintf(stderr, "tokenize: found '@' (idx_only=%d):\n '%s'\n",
-			idx_only, line);
+	    if (*s == '@' && !idx_only) {
+		fprintf(stderr, "tokenize: found '@':\n '%s'\n", line);
 	    }
 	    n = 1 + namechar_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
