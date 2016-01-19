@@ -14419,8 +14419,8 @@ static int save_generated_var (parser *p, PRN *prn)
 
 #if ONE_BY_ONE_CAST   
     if (p->targ == UNK) {
-	/* "cast" 1 x 1 matrix to scalar */
 	if (scalar_matrix_node(r)) {
+	    /* "cast" 1 x 1 matrix to scalar */
 	    no_decl = 1;
 	    p->targ = NUM;
 	    p->flags |= P_NODECL;
@@ -14428,11 +14428,13 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->targ = r->t;
 	}
     } else if (p->targ == NUM && r->t == MAT && (p->flags & P_NODECL)) {
-	/* we're looking at a @targ that was previously
+	/* We're looking at a @targ that was previously
 	   set to NUM by the "auto-cast" mechanism: allow
-	   it to morph to matrix
+	   it to morph to matrix if need be.
 	*/
-	if (p->lh.t == 0) {
+	if (scalar_matrix_node(r)) {
+	    ; /* not a problem */
+	} else if (p->lh.t == 0) {
 	    /* no pre-existing scalar var */
 	    p->targ = MAT;
 	} else if (p->lh.t == NUM) {

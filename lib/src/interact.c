@@ -2194,6 +2194,13 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 	opt |= OPT_G;
     }
 
+#if 1
+    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")
+	&& cmd->ci != END) {
+	return 0;
+    }
+#endif
+    
     if (cmd->ci == END) {
 	/* end of a "plot" block */
 	err = gretl_plot_finalize(line, dset, opt);
