@@ -264,12 +264,14 @@ static char *get_next_arg (const char *s, int *len, int *err)
     return arg;
 }
 
+#define l_ok(c) (c == 'd' || c == 'u' || c == 'x')
+
 /* dup format string up to the end of the current conversion:
    e.g. "%10.4f", "%6g", "%.8g", %3s", "%.*s", "%#12.4g"
 */
 
 static char *
-get_printf_format_chunk (const char *s, int *fc, 
+get_printf_format_chunk (const char *s, char *conv,
 			 int *len, int *wstar, int *pstar,
 			 int *err)
 {
@@ -336,12 +338,21 @@ get_printf_format_chunk (const char *s, int *fc,
 
     /* now we should have a conversion character */
     if (*p == '\0' || strchr(cnvchars, *p) == NULL) {
-	fprintf(stderr, "bad conversion '%c'\n", *p);
-	*err = E_PARSE;
-	return NULL;
+	if (*p == 'l' && l_ok(*(p+1))) {
+	    conv[0] = *p;
+	    conv[1] = *(p+1);
+	    p++;
+	} else {
+	    fprintf(stderr, "bad conversion '%c'\n", *p);
+	    *err = E_PARSE;
+	    return NULL;
+	}
     }
 
-    *fc = *p++;
+    if (!conv[0]) {
+	conv[0] = *p;
+    }
+    p++;
     *len = n = p - s;
     
     if (n > 0) {
@@ -360,6 +371,65 @@ get_printf_format_chunk (const char *s, int *fc,
     return chunk;
 }
 
+static int printf_as_int (double x, int fc,
+			  int lflag, char *fmt,
+			  int wstar, int pstar,
+			  int wid, int prec,
+			  PRN *prn)
+{
+    if ((fc == 'u' || fc == 'x') && lflag) {
+	if (x < 0 || x > ULONG_MAX) {
+	    return E_INVARG;
+	}
+	if (wstar && pstar) {
+	    pprintf(prn, fmt, wid, prec, (unsigned long) x);
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
+	    pprintf(prn, fmt, wid, (unsigned long) x);
+	} else {
+	    pprintf(prn, fmt, (unsigned long) x);
+	}
+    } else if (fc == 'u' || fc == 'x') {
+	if (x < 0 || x > UINT_MAX) {
+	    return E_INVARG;
+	}	
+	if (wstar && pstar) {
+	    pprintf(prn, fmt, wid, prec, (unsigned) x);
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
+	    pprintf(prn, fmt, wid, (unsigned) x);
+	} else {
+	    pprintf(prn, fmt, (unsigned) x);
+	}	    
+    } else if (fc == 'd' && lflag) {
+	if (x < LONG_MIN || x > LONG_MAX) {
+	    return E_INVARG;
+	}
+	if (wstar && pstar) {
+	    pprintf(prn, fmt, wid, prec, (long) x);
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
+	    pprintf(prn, fmt, wid, (long) x);
+	} else {
+	    pprintf(prn, fmt, (long) x);
+	}
+    } else {
+	if (x < INT_MIN || x > INT_MAX) {
+	    return E_INVARG;
+	}
+	if (wstar && pstar) {
+	    pprintf(prn, fmt, wid, prec, (int) x);
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
+	    pprintf(prn, fmt, wid, (int) x);
+	} else {
+	    pprintf(prn, fmt, (int) x);
+	}
+    }
+
+    return 0;
+}
+
 /* Extract the next conversion spec from *pfmt, find and evaluate the
    corresponding elements in *pargs, and print the result. Note
    that @t should be negative (and therefore ignored) unless
@@ -373,6 +443,7 @@ static int print_arg (const char **pfmt, const char **pargs,
     char *fmt = NULL;
     char *arg = NULL;
     char *str = NULL;
+    char conv[3] = {0};
     gretl_matrix *m = NULL;
     int free_m = 0;
     int series_v = -1;
@@ -391,12 +462,19 @@ static int print_arg (const char **pfmt, const char **pargs,
 #endif
 
     /* select current conversion format */
-    fmt = get_printf_format_chunk(*pfmt, &fc, &flen, &wstar, &pstar, &err);
+    fmt = get_printf_format_chunk(*pfmt, conv, &flen, &wstar, &pstar, &err);
     if (err) {
 	return err;
     }
 
     *pfmt += flen;
+
+    if (conv[0] == 'l' && l_ok(conv[1])) {
+	/* e.g. "ld", "lx" */
+	fc = conv[1];
+    } else {
+	fc = conv[0];
+    }
 
     if (wstar) {
 	/* evaluate field width specifier */
@@ -513,14 +591,10 @@ static int print_arg (const char **pfmt, const char **pargs,
 	}
     } else if (strchr(intconv, fc)) {
 	/* printing a scalar as int */
-	if (wstar && pstar) {
-	    pprintf(prn, fmt, wid, prec, (int) x);
-	} else if (wstar || pstar) {
-	    wid = (wstar)? wid : prec;
-	    pprintf(prn, fmt, wid, (int) x);
-	} else {
-	    pprintf(prn, fmt, (int) x);
-	}
+	int lflag = conv[0] == 'l';
+
+	err = printf_as_int(x, fc, lflag, fmt, wstar, pstar,
+			    wid, prec, prn);
     } else if (got_scalar) {
 	/* printing a (non-missing) scalar value */
 	if (!isnan(x) && !isinf(x)) {
@@ -822,7 +896,7 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
 			struct bracket_scan *bscan,
 			int *err)
 {
-    const char *cnvchars = "dfgsm";
+    const char *cnvchars = "dfgsmx";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;
@@ -941,16 +1015,18 @@ static int scan_scalar (char *targ, const char **psrc,
 			int fc, int width, DATASET *dset, 
 			int *ns)
 {
-    int intscan = (fc == 'd');
     char *endp = NULL;
     long k = 0;
+    unsigned long u = 0;
     double x = 0;
     int err = 0;
 
     errno = 0;
 
-    if (intscan) {
+    if (fc == 'd') {
 	k = strtol(*psrc, &endp, 10);
+    } else if (fc == 'x') {
+	u = strtoul(*psrc, &endp, 16);
     } else {
 	x = strtod(*psrc, &endp);
     }
@@ -966,6 +1042,8 @@ static int scan_scalar (char *targ, const char **psrc,
 	    }
 	    if (fc == 'd') {
 		k = strtol(tmp, &endp, 10);
+	    } else if (fc == 'x') {
+		u = strtoul(tmp, &endp, 16);
 	    } else {
 		x = strtod(tmp, &endp);
 	    }
@@ -980,8 +1058,10 @@ static int scan_scalar (char *targ, const char **psrc,
     if (!errno && endp != *psrc) {
 	char *genline;
 
-	if (intscan) {
+	if (fc == 'd') {
 	    genline = gretl_strdup_printf("%s=%ld", targ, k);
+	} else if (fc == 'x') {
+	    genline = gretl_strdup_printf("%s=%lu", targ, u);
 	} else {
 	    genline = gretl_strdup_printf("%s=%.16g", targ, x);
 	}
