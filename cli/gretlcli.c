@@ -1175,7 +1175,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    fclose(fb);
 	    fb = pop_input_file();
 	    if (fb == NULL) {
-		pputs(prn, _("Done\n"));
+		if (!quiet) {
+		    pputs(prn, _("Done\n"));
+		}
 	    } else {
 		cmd->ci = ENDRUN;
 	    }
