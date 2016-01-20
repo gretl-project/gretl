@@ -1175,7 +1175,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    fclose(fb);
 	    fb = pop_input_file();
 	    if (fb == NULL) {
-		if (!quiet) {
+		if (gretl_messages_on()) {
 		    pputs(prn, _("Done\n"));
 		}
 	    } else {
