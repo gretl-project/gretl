@@ -901,8 +901,7 @@ static int write_julia_io_file (void)
 #endif	
 
 	    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
-	    fputs("  r = size(M)[1]\n", fp);
-	    fputs("  c = size(M)[2]\n", fp);
+	    fputs("  r,c = size(M)\n", fp);
 	    fputs("  if autodot != 0\n", fp);
 	    fputs("    fname = gretl_dotdir * fname\n", fp);
 	    fputs("  end\n", fp);
