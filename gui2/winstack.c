@@ -1344,7 +1344,6 @@ void vwin_pack_toolbar (windata_t *vwin)
 	if (hbox != NULL) {
 	    gtk_container_foreach(GTK_CONTAINER(hbox), destroy_hbox_child, NULL);
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
-	    gtk_widget_show_all(hbox);
 	} else {
 	    hbox = gtk_hbox_new(FALSE, 0);
 	    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
@@ -1364,14 +1363,14 @@ void vwin_pack_toolbar (windata_t *vwin)
 		/* here we're re-packing vwin->mbar: move it up top */
 		gtk_box_reorder_child(GTK_BOX(vwin->vbox), hbox, 0);
 	    }
-	    if (want_winlist(vwin)) {
-		vwin_add_winlist(vwin);
-	    }	    
-	    if (use_toolbar_search_box(vwin->role)) {
-		vwin_add_finder(vwin);
-	    }
-	    gtk_widget_show_all(hbox);
 	}
+	if (want_winlist(vwin)) {
+	    vwin_add_winlist(vwin);
+	}
+	if (use_toolbar_search_box(vwin->role)) {
+	    vwin_add_finder(vwin);
+	}
+	gtk_widget_show_all(hbox);
     }
 }
 

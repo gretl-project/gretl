@@ -31,6 +31,7 @@ typedef enum {
 				   r == VIEW_PKG_CODE || \
 				   r == EDIT_PKG_CODE || \
 				   r == VIEW_SCRIPT || \
+				   r == SCRIPT_OUT || \
 				   r == VIEW_LOG)
 
 void gretl_stock_icons_init (void);
