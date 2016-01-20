@@ -3241,7 +3241,7 @@ int get_command_index (char *line, CMD *cmd)
 	const char *s = cmd->toks[0].s;
 
 	if (s != NULL) {
-	    if (*s == '$') s++;
+	    if (*s == '$' || *s == '@') s++;
 	    if (strlen(s) == gretl_namechar_spn(s)) {
 		cmd->ci = GENR;
 	    }
