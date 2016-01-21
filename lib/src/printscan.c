@@ -264,6 +264,7 @@ static char *get_next_arg (const char *s, int *len, int *err)
     return arg;
 }
 
+/* conversion characters that may be preceded by 'l' */
 #define l_ok(c) (c == 'd' || c == 'u' || c == 'x')
 
 /* dup format string up to the end of the current conversion:
@@ -439,7 +440,7 @@ static int printf_as_int (double x, int fc,
 static int print_arg (const char **pfmt, const char **pargs, 
 		      DATASET *dset, int t, PRN *prn)
 {
-    const char *intconv = "dxul";
+    const char *intconv = "dxu";
     char *fmt = NULL;
     char *arg = NULL;
     char *str = NULL;
@@ -591,7 +592,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 	}
     } else if (strchr(intconv, fc)) {
 	/* printing a scalar as int */
-	int lflag = conv[0] == 'l';
+	int lflag = (conv[0] == 'l');
 
 	err = printf_as_int(x, fc, lflag, fmt, wstar, pstar,
 			    wid, prec, prn);
