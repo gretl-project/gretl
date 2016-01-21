@@ -13691,8 +13691,13 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
 
 static int LHS_matrix_reusable (parser *p)
 {
-    gretl_matrix *m = p->lh.m0;
+    gretl_matrix *m = get_matrix_by_name(p->lh.name);
     int ok = 0;
+
+    p->lh.m0 = m;
+    if (m == NULL) {
+	return 0;
+    }
 
     if (p->ret->t == NUM) {
 	ok = (m->rows == 1 && m->cols == 1);
