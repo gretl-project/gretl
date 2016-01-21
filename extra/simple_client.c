@@ -51,7 +51,6 @@ int main (void)
     /* basic initialization of library */
     libgretl_init();
 
-    logo(0); /* print version info and session time */
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); /* simple printing */
 
     /* allocate the dataset struct: the parameters are the number of
