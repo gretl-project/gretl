@@ -43,7 +43,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define LOOPSAVE 0
+#define LOOPSAVE 1
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
@@ -6875,7 +6875,7 @@ static int is_pointer_arg (fncall *call, int rtype)
 	int i;
 
 	for (i=0; i<call->argc; i++) {
-	    if (rtype == gretl_type_get_ref_type(u->params[i].type) &&
+	    if (u->params[i].type == gretl_type_get_ref_type(rtype) &&
 		!strcmp(u->params[i].name, call->retname)) {
 		return 1;
 	    }
@@ -7672,6 +7672,7 @@ static gchar *return_line;
 int set_function_should_return (const char *line)
 {
     if (gretl_function_depth() > 0) {
+	g_free(return_line);
 	return_line = g_strdup(line);
 	return 0;
     } else {
@@ -7827,20 +7828,21 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 		    (void *) u->lines[i].loop, i, line);
 # endif	    
 	    if (!gretl_if_state_false()) {
+		/* not blocked, so execute the loop code */
 		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
 		if (err) {
 		    set_function_error_message(err, u, &state, state.line, 
 					       u->lines[i].idx);
+		    break;
+		} else if (get_return_line(&state)) {
+		    /* a "return" statement was encountered in the loop */
+		    err = handle_return_statement(call, &state, dset, i+1);
+		    break;
 		}
 	    }
 	    /* skip to the matching 'endloop' */
-	    if (err) {
-		fprintf(stderr, "%s: breaking on err = %d\n", u->name, err);
-		break;
-	    } else {
-		i = u->lines[i].next_idx;
-		continue;
-	    }
+	    i = u->lines[i].next_idx;
+	    continue;
 	} else {
 	    err = maybe_exec_line(&state, dset, &loopstart);
 	    if (loopstart) {
