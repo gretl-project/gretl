@@ -3,14 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
-# Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010, 2013, 2014, 2015.
+# Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010, 2013, 2014, 2015, 2016.
 # Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-14 20:34-0500\n"
-"PO-Revision-Date: 2015-11-22 19:19+0100\n"
+"PO-Revision-Date: 2016-01-21 11:22+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -4720,9 +4720,8 @@ msgid "theta used for quasi-demeaning"
 msgstr "teta utilizado para quasi-desmediação"
 
 #: lib/src/modelprint.c:681 lib/src/modelprint.c:707 lib/src/modelprint.c:718
-#, fuzzy
 msgid "mean theta"
-msgstr "teste amplitude-média"
+msgstr "teta média"
 
 #: lib/src/modelprint.c:782
 #, c-format
@@ -7659,7 +7658,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 22 de novembro de 2015."
+"Tradução de 21 de janeiro de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -15052,9 +15051,8 @@ msgid "Octave"
 msgstr "Octave"
 
 #: gui2/selector.c:6199
-#, fuzzy
 msgid "Stata"
-msgstr "_Stata..."
+msgstr "Stata"
 
 #: gui2/selector.c:6200
 msgid "JMulTi"
@@ -15695,9 +15693,8 @@ msgstr ""
 "fazer isso?"
 
 #: gui2/settings.c:942
-#, fuzzy
 msgid "gretl: preferences"
-msgstr "gretl: referência de comando"
+msgstr "gretl: preferências"
 
 #: gui2/settings.c:1067 gui2/settings.c:2729
 msgid "Browse..."
@@ -15724,9 +15721,8 @@ msgid "Programs"
 msgstr "Programas"
 
 #: gui2/settings.c:1299
-#, fuzzy
 msgid "Editor"
-msgstr "Editar"
+msgstr "Editor"
 
 #: gui2/settings.c:1301
 msgid "Network"
@@ -16069,9 +16065,8 @@ msgid "Auto-indent script"
 msgstr "Auto-indentar sequência de comandos"
 
 #: gui2/textbuf.c:3381 gui2/toolbar.c:739
-#, fuzzy
 msgid "Preferences..."
-msgstr "_Preferências"
+msgstr "Preferências..."
 
 #: gui2/textutil.c:280
 msgid "gretl: replace"
