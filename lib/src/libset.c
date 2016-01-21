@@ -2600,6 +2600,8 @@ static int tool_mode;
 
 void gretl_set_tool_mode (void)
 {
+    set_gretl_echo(0);
+    set_gretl_messages(0);
     tool_mode = 1;
 }
 
