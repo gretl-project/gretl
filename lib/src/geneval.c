@@ -729,7 +729,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	fprintf(stderr, "get_aux_node FAILED: p->aux = NULL\n");
 	p->err = E_DATA;
     } else if (p->aux_i >= p->n_aux) {
-	fprintf(stderr, "get_aux_node FAILED: index out of bounds!\n");
+	fprintf(stderr, "get_aux_node FAILED: index %d out of bounds!\n", p->aux_i);
 	p->err = E_DATA;
     } else {
 	ret = p->aux[p->aux_i];
