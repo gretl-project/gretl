@@ -1230,6 +1230,31 @@
       </description>
     </function>
 
+    <function name="array" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The basic <quote>constructor</quote> function for a new
+	  array variable. In using this function you must specify a
+	  type (in plural form) for the array: <lit>strings</lit>,
+	  <lit>matrices</lit>, <lit>bundles</lit> or <lit>lists</lit>.
+	  The return value is an array of the specified type with
+	  <argname>n</argname> elements, each of which is initialized
+	  as <quote>empty</quote> (&eg; zero-length string, null
+	  matrix). Examples of usage:
+	</para>
+	<code>
+	  strings S = array(5)
+	  matrices M = array(3)
+	</code>
+	<para>
+	  See also <fncref targ="defarray"/>.
+	</para>
+      </description>
+    </function>    
+
     <function name="asin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -2242,6 +2267,32 @@
 	</para>
       </description>
     </function>
+
+    <function name="defarray" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Enables the definition of an array variable <emphasis>in
+	  extenso</emphasis>, by providing one or more elements.  In
+	  using this function you must specify a type (in plural form)
+	  for the array: <lit>strings</lit>, <lit>matrices</lit>,
+	  <lit>bundles</lit> or <lit>lists</lit>. Each of the
+	  arguments must evaluate to an object of the specified
+	  type. On successful completion, the return value is an array
+	  of <math>n</math> elements, where <math>n</math> is the
+	  number of arguments.
+	</para>
+	<code>
+	  strings S = defarray("foo", "bar", "baz")
+	  matrices M = defarray(I(3), X'X, A*B, P[1:])
+	</code>
+	<para>
+	  See also <fncref targ="array"/>.
+	</para>
+      </description>
+    </function>        
 
     <function name="deseas" section="filters" output="series">
       <fnargs>

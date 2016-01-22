@@ -422,7 +422,7 @@ enum {
     F_BOOTCI,
     F_BOOTPVAL,
     F_MOVAVG,
-    F_MKARRAY,
+    F_DEFARRAY,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

@@ -9438,7 +9438,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    ret->v.xval = clogit_fi(T, K, z, dfname, &p->err);
 	} 
-    } else if (t->t == F_MKARRAY) {
+    } else if (t->t == F_DEFARRAY) {
 	GretlType gtype = lh_array_type(p);
 	gretl_array *A = NULL;
 	void *ptr;
@@ -11992,7 +11992,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTCI:
     case F_BOOTPVAL:
     case F_MOVAVG:
-    case F_MKARRAY:
+    case F_DEFARRAY:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
