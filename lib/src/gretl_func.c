@@ -7712,6 +7712,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     int debugging = u->debug;
 #if LOOPSAVE
     int loopstart = 0;
+    int recursing = 0;
 #endif
     int i, err = 0;
 
@@ -7808,6 +7809,10 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	}
     }
 
+#if LOOPSAVE
+    recursing = function_recursing(call);
+#endif
+
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
@@ -7822,7 +7827,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	}
 
 #if LOOPSAVE
-	if (u->lines[i].loop != NULL) {
+	if (u->lines[i].loop != NULL && !recursing) {
 # if LSDEBUG	    
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
