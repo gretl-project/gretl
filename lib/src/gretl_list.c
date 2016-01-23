@@ -2687,7 +2687,8 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
  * @dset: dataset information.
  * @prn: gretl printing struct.
  * 
- * Prints to @prn the given @list of variables, by name.
+ * Prints to @prn the given @list of variables, by name
+ * if @dset is non-NULL otherwise by ID number.
  */
 
 void gretl_list_print (const int *list, const DATASET *dset,
@@ -2703,6 +2704,8 @@ void gretl_list_print (const int *list, const DATASET *dset,
 	    li = list[i];
 	    if (li == LISTSEP) {
 		len += pputs(prn, "; ");
+	    } else if (dset == NULL) {
+		len += pprintf(prn, "%d ", li);
 	    } else if (li < 0 || li >= dset->v) {
 		len += pputs(prn, "?? ");
 	    } else {
