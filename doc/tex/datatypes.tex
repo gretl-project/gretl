@@ -368,19 +368,22 @@ functions as a sort of array for subsets of the series in a dataset.
 
 \subsection{Creating an array}
 
-An array can be brought into existence in any of three ways: bare
-declaration, assignment from \texttt{null}, or using the new
-\texttt{array()} function. In each case one of the specific type-words
-\texttt{strings}, \texttt{matrices}, \texttt{bundles} or
-\texttt{lists} must be used. Here are some examples:
+An array can be brought into existence in any of four ways: bare
+declaration, assignment from \texttt{null}, or using one of the
+functions \texttt{array()} or \texttt{defarray()}.  In each case one
+of the specific type-words \texttt{strings}, \texttt{matrices},
+\texttt{bundles} or \texttt{lists} must be used. Here are some
+examples:
 
 \begin{code}
 # make an empty array of strings
 strings S
 # make an empty array of matrices
 matrices M = null
-# make an array with space for 4 bundles
+# make an array with space for four bundles
 bundles B = array(4)
+# make an array with three specified strings
+strings P = defarray("foo", "bar", "baz")
 \end{code}
 
 The ``bare declaration'' form and the ``\texttt{= null}'' form have
@@ -390,7 +393,10 @@ used to destroy the content of an existing array and reduce it to size
 zero). The \texttt{array()} function expects a positive integer
 argument and can be used to create an array of pre-given size; in this
 case the elements are initialized appropriately as empty strings, null
-matrices, or empty bundles or lists.
+matrices, or empty bundles or lists. The \texttt{defarray()} function
+takes a variable number of arguments (one or more), each of which
+may be the name of a variable of the appropriate type or an expression
+which evaluates to an object of the appropriate type.
 
 \subsection{Setting and getting elements}
 
