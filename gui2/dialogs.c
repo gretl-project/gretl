@@ -2663,7 +2663,7 @@ int panel_graph_dialog (int *t1, int *t2)
 	if (i == 4 && nunits > 6) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	}	    
-	if (i == 5 && nunits > 150) {
+	if (i == 5 && (nunits > 150 || dataset->pd < 4)) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	} 
 	if (i == 4) {
