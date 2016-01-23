@@ -515,7 +515,7 @@ static GHashTable *gretl_function_hash_init (void)
     return ht;
 }
 
-static int real_function_lookup (const char *s, int *aliased)
+static int real_function_lookup (const char *s, int aliases)
 {
     static GHashTable *fht;
     gpointer p;
@@ -538,12 +538,11 @@ static int real_function_lookup (const char *s, int *aliased)
 	return GPOINTER_TO_INT(p);
     }
 
-    if (aliased != NULL) {
+    if (aliases) {
 	int i;
 
 	for (i=0; func_alias[i].id != 0; i++) {
 	    if (!strcmp(s, func_alias[i].str)) {
-		*aliased = 1;
 		return func_alias[i].id;
 	    }
 	} 
@@ -554,25 +553,17 @@ static int real_function_lookup (const char *s, int *aliased)
 
 void gretl_function_hash_cleanup (void)
 {
-    real_function_lookup(NULL, NULL);
+    real_function_lookup(NULL, 0);
 }
 
 int function_lookup (const char *s)
 {
-    return real_function_lookup(s, NULL);
+    return real_function_lookup(s, 0);
 }
 
-static int function_lookup_with_alias (const char *s,
-				       parser *p)
+static int function_lookup_with_alias (const char *s)
 {
-    int f, aliased = 0;
-    
-    f = real_function_lookup(s, &aliased);
-    if (aliased) {
-	p->flags |= P_ALIASED;
-    }
-
-    return f;
+    return real_function_lookup(s, 1);
 }
 
 static const char *funname (int t)
@@ -750,7 +741,7 @@ int genr_function_word (const char *s)
 {
     int ret = 0;
 
-    ret = real_function_lookup(s, NULL);
+    ret = real_function_lookup(s, 0);
     if (!ret) {
 	ret = dvar_lookup(s);
     }
@@ -1058,7 +1049,7 @@ static void look_up_word (const char *s, parser *p)
 {
     int fsym, err = 0;
 
-    fsym = p->sym = function_lookup_with_alias(s, p);
+    fsym = p->sym = function_lookup_with_alias(s);
 
     if (p->sym == 0 || p->ch != '(') {
 	p->idnum = const_lookup(s);

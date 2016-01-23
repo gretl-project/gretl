@@ -74,7 +74,6 @@
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
-#define aliased_node(n) (n != NULL && (n->flags & ALS_NODE))
 
 #define mark_node_fragile(n) (n->flags &= ~TMP_NODE)
 
@@ -4193,9 +4192,6 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 
 	if (f == F_SQUARE) {
 	    if (r != NULL && node_is_true(r, p)) {
-		opt = OPT_O;
-	    } else if (aliased_node(n)) {
-		/* the user gave "xpx" */
 		opt = OPT_O;
 	    }
 	}

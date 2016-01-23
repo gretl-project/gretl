@@ -564,8 +564,7 @@ enum {
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
-    CPY_NODE = 1 << 4, /* node derives from lhs_copy_node() */
-    ALS_NODE = 1 << 5  /* node holds aliased function */
+    CPY_NODE = 1 << 4  /* node derives from lhs_copy_node() */
 };
 
 struct node {
@@ -598,10 +597,9 @@ enum parser_flags {
     P_AUXDONE = 1 << 18, /* indicates aux nodes compiled */
     P_DELTAN  = 1 << 19, /* flag for change in series length */
     P_LHBKVAR = 1 << 20, /* LHS bundle key is string variable */
-    P_ALIASED = 1 << 21, /* the given function name is an alias */
-    P_CATCH   = 1 << 22, /* "catch" is in force */
-    P_NODECL  = 1 << 23, /* type of result was not declared */
-    P_LISTDEF = 1 << 24  /* defining a list on RHS */
+    P_CATCH   = 1 << 21, /* "catch" is in force */
+    P_NODECL  = 1 << 22, /* type of result was not declared */
+    P_LISTDEF = 1 << 23  /* defining a list on RHS */
 };
 
 struct lhinfo {

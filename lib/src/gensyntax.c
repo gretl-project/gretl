@@ -1338,12 +1338,6 @@ static NODE *powterm (parser *p)
 	}	
     }
 
-    if (p->flags & P_ALIASED) {
-	/* transfer info from parser to node */
-	t->flags |= ALS_NODE;
-	p->flags ^= P_ALIASED;
-    }
-
 #if SDEBUG
     notify("powterm", t, p);
 #endif
