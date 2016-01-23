@@ -4543,30 +4543,6 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *output_array_node (NODE *n, parser *p, int f)
-{
-    NODE *ret = NULL;
-
-    if (f == F_DOTWRITE) {
-	ret = aux_string_node(p);
-	if (!p->err) {
-	    ret->v.str = 
-		gretl_array_print_to_dotdir(n->v.a, 
-					    p->dset, 
-					    &p->err);
-	}
-    } else {
-	ret = aux_scalar_node(p);
-	if (!p->err) {
-	    ret->v.xval = gretl_array_print_full(n->v.a, 
-						 p->dset,
-						 p->prn);
-	}
-    }
-
-    return ret;
-} 
-
 /* Binary operator applied to two bundles: at present only '+'
    (for union) is supported.
 */
@@ -12268,14 +12244,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = stringify_series(l, r, p);
 	}
 	break;
-    case F_PUTARRAY:
-    case F_DOTWRITE:
-	if (l->t == ARRAY) {
-	    ret = output_array_node(l, p, t->t);
-	} else {
-	    node_type_error(t->t, 0, ARRAY, l, p);
-	}
-	break;
     default: 
 	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);
@@ -13410,6 +13378,13 @@ static void pre_process (parser *p, int flags)
        is wrapped in '{' and '}', make the target a matrix */
     if (p->targ == UNK && *p->rhs == '{') {
 	maybe_set_matrix_target(p);
+    }
+
+    /* Set a flag if the RHS should define a list */
+    if (p->targ == LIST || (p->targ == ARRAY &&
+			    p->lh.gtype == GRETL_TYPE_LISTS &&
+			    p->lh.substr != NULL)) {
+	p->flags |= P_LISTDEF;
     }
 
     /* unary increment/decrement operators */
@@ -14767,7 +14742,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     int saveflags[] = { 
 	P_PRINT, P_NATEST, P_AUTOREG,
 	P_SLAVE, P_LHPTR, P_DISCARD, 
-	P_LHBKVAR, P_AUXDONE, P_NODECL, 0
+	P_LHBKVAR, P_AUXDONE, P_NODECL,
+	P_LISTDEF, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
@@ -14917,6 +14893,8 @@ static void parser_init (parser *p, const char *str,
 
     if (p->targ == UNK) {
 	pre_process(p, flags);
+    } else if (p->targ == LIST) {
+	p->flags |= P_LISTDEF;
     }
 
     if (!p->err) {

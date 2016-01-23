@@ -284,7 +284,6 @@ enum {
     F_NLINES,
     F_ARRAY,
     F_STRVALS,
-    F_DOTWRITE,
     F_TRAMOLIN,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
@@ -363,7 +362,6 @@ enum {
     F_JSONGET,
     F_KPSSCRIT,
     F_STRINGIFY,
-    F_PUTARRAY,
     F_SQUARE,
     F_SEASONALS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
@@ -602,7 +600,8 @@ enum parser_flags {
     P_LHBKVAR = 1 << 20, /* LHS bundle key is string variable */
     P_ALIASED = 1 << 21, /* the given function name is an alias */
     P_CATCH   = 1 << 22, /* "catch" is in force */
-    P_NODECL  = 1 << 23  /* type of result was not declared */
+    P_NODECL  = 1 << 23, /* type of result was not declared */
+    P_LISTDEF = 1 << 24  /* defining a list on RHS */
 };
 
 struct lhinfo {

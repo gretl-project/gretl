@@ -728,99 +728,59 @@ gretl_array *gretl_array_pull_from_stack (const char *name,
     return a;
 }
 
+static void print_array_string (const char *s, PRN *prn)
+{
+    int n = strcspn(s, "\r\n");
+    int m = strlen(s);
+
+    if (n > 72) {
+	pprintf(prn, "\"%.69s...\"\n", s);
+    } else if (n < m) {
+	pprintf(prn, "\"%.*s...\"\n", n, s);
+    } else {
+	pprintf(prn, "\"%s\"\n", s);
+    }
+}
+
+static void print_array_elements (gretl_array *A, PRN *prn)
+{
+    int i;
+
+    for (i=0; i<A->n; i++) {
+	pprintf(prn, "[%d] ", i+1);
+	if (A->data[i] == NULL) {
+	    pputs(prn, "null\n");
+	} else if (A->type == GRETL_TYPE_STRINGS) {
+	    const char *s = A->data[i];
+	    
+	    print_array_string(s, prn);
+	} else if (A->type == GRETL_TYPE_MATRICES) {
+	    const gretl_matrix *m = A->data[i];
+
+	    pprintf(prn, "%d x %d\n", m->rows, m->cols);
+	} else if (A->type == GRETL_TYPE_LISTS) {
+	    const int *list = A->data[i];
+
+	    gretl_list_print(list, NULL, prn);
+	}
+    }
+    
+    pputc(prn, '\n');
+}
+
 int gretl_array_print (gretl_array *A, PRN *prn)
 {
     if (A != NULL) {
 	const char *s = gretl_type_get_name(A->type);
 
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
-    }
 
-    return 0;
-}
-
-static void real_array_print_full (gretl_array *A, 
-				   const DATASET *dset,
-				   PRN *prn)
-{
-    int i;
-
-    /* FIXME what exactly this does may be debatable */
-
-    for (i=0; i<A->n; i++) {
-	void *data = A->data[i];
-
-	if (data == NULL) {
-	    pprintf(prn, "%d: null\n", i + 1);
-	} else if (A->type == GRETL_TYPE_STRINGS) {
-	    pprintf(prn, "%s\n", (char *) data);
-	} else if (A->type == GRETL_TYPE_MATRICES) {
-	    char numstr[16];
-
-	    sprintf(numstr, "%d", i + 1);
-	    gretl_matrix_print_to_prn(data, numstr, prn);
-	} else if (A->type == GRETL_TYPE_BUNDLES) {
-	    gretl_bundle_print(data, prn);
-	} else if (A->type == GRETL_TYPE_LISTS) {
-	    gretl_list_print(data, dset, prn);
-	}
-    }
-}
-
-int gretl_array_print_full (gretl_array *A, const DATASET *dset,
-			    PRN *prn)
-{
-    if (A != NULL) {
-	real_array_print_full(A, dset, prn);
-    }
-
-    return 0;
-}
-
-static PRN *get_dotdir_printer (char **pfname, int *err)
-{
-    const char *dotdir = gretl_dotdir();
-    char *fname = NULL;
-    FILE *fp = NULL;
-    PRN *prn = NULL;
-
-    fname = malloc(strlen(dotdir) + 16);
-
-    if (fname == NULL) {
-	*err = E_ALLOC;
-    } else {
-	sprintf(fname, "%sprntmp.XXXXXX", dotdir);
-	fp = gretl_mktemp(fname, "w");
-	if (fp == NULL) {
-	    *err = E_FOPEN;
-	    free(fname);
-	    fname = NULL;
+	if (A->n > 0 && A->n < 10 && A->type != GRETL_TYPE_BUNDLES) {
+	    print_array_elements(A, prn);
 	}
     }
 
-    if (fp != NULL) {
-	prn = gretl_print_new_with_stream(fp);
-	*pfname = fname;
-    }
-
-    return prn;
-}
-
-char *gretl_array_print_to_dotdir (gretl_array *A, 
-				   const DATASET *dset,
-				   int *err)
-{
-    char *fname = NULL;
-    PRN *prn;
-
-    prn = get_dotdir_printer(&fname, err);
-
-    if (prn != NULL) {
-	real_array_print_full(A, dset, prn);
-	gretl_print_destroy(prn);
-    }
-
-    return fname;
+    return 0;
 }
 
 /* Called from gretl_bundle.c when serializing a bundle

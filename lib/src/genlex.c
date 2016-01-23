@@ -36,6 +36,8 @@
 # define LDEBUG 0
 #endif
 
+#define defining_list(p) (p->flags & P_LISTDEF)
+
 const char *wordchars = "abcdefghijklmnopqrstuvwxyz"
                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         "0123456789_";
@@ -440,8 +442,6 @@ struct str_table funcs[] = {
     { F_ARRAY,     "array" },
     { F_STRVALS,   "strvals" },
     { F_STRINGIFY, "stringify" },
-    { F_PUTARRAY,  "putarray" },
-    { F_DOTWRITE,  "dotwrite" },
     { F_BOOTCI,    "bootci" },
     { F_BOOTPVAL,  "bootpval" },
     { F_SEASONALS, "seasonals" },
@@ -1100,7 +1100,7 @@ static void look_up_word (const char *s, parser *p)
 		} else if (get_user_function_by_name(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
-		} else if (p->targ == LIST && varname_match_any(p->dset, s)) {
+		} else if (defining_list(p) && varname_match_any(p->dset, s)) {
 		    p->sym = WLIST;
 		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "t")) {
@@ -1258,7 +1258,7 @@ static int is_word_char (parser *p)
 {
     if (strchr(wordchars, p->ch) != NULL) {
 	return 1;
-    } else if (p->targ == LIST && !doing_genseries && p->ch == '*') {
+    } else if (defining_list(p) && !doing_genseries && p->ch == '*') {
 	return 1;
     } 
 
@@ -1471,7 +1471,7 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '*':
-	    if (p->targ == LIST && !doing_genseries) {
+	    if (defining_list(p) && !doing_genseries) {
 		/* allow for '*' as wildcard */
 		if (*(p->point - 2) == ' ' &&
 		    (bare_data_type(p->sym) || closing_sym(p->sym) ||
@@ -1599,7 +1599,7 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case ';': 
-	    if (p->targ == LIST) {
+	    if (defining_list(p)) {
 		p->sym = B_JOIN;
 	    } else {
 		/* used in matrix definition */
@@ -1676,13 +1676,13 @@ void lex (parser *p)
 		parser_ungetc(p);
 	    }
         default: 
-	    if (p->targ == LIST && lag_range_sym(p)) {
+	    if (defining_list(p) && lag_range_sym(p)) {
 		p->sym = B_RANGE;
 		parser_getc(p);
 		parser_getc(p);
 		return;
 	    }
-	    if (p->targ == LIST && !doing_genseries && 
+	    if (defining_list(p) && !doing_genseries && 
 		(bare_data_type(p->sym) || closing_sym(p->sym) ||
 		 p->sym == LAG) && *(p->point - 2) == ' ') {
 		/* may be forming a list, but only if there are 
