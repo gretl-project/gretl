@@ -3100,7 +3100,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.statapath) {
 	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
     } else if (targ == paths.pypath) {
-	strcpy(targ, "python.exe"); /* ?? */
+	strcpy(targ, "python.exe");
     } else if (targ == paths.jlpath) {
 	strcpy(targ, "julia.exe"); 
     } else if (targ == paths.mpiexec) {

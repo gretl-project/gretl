@@ -5527,11 +5527,11 @@ void run_foreign_script (gchar *buf, int lang)
 	    argv[1] = (gchar *) fname;
 	    argv[2] = NULL;
 	} else if (lang == LANG_PYTHON) {
-	    argv[0] = "python";
+	    argv[0] = (gchar *) gretl_python_path();
 	    argv[1] = (gchar *) fname;
 	    argv[2] = NULL;
 	} else if (lang == LANG_JULIA) {
-	    argv[0] = "julia";
+	    argv[0] = (gchar *) gretl_julia_path();
 	    argv[1] = (gchar *) fname;
 	    argv[2] = NULL;
 	} else if (lang == LANG_STATA) {
