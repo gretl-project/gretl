@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-14 20:34-0500\n"
-"PO-Revision-Date: 2015-10-30 21:10-0200\n"
+"POT-Creation-Date: 2016-01-25 21:39-0200\n"
+"PO-Revision-Date: 2016-01-25 21:39-0200\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -2342,6 +2342,8 @@ msgstr ""
 #: lib/src/geneval.c:6752
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
+"\"catch\" não deve ser utilizado em chamadas de funções definidas pelo "
+"usuário"
 
 # I'm not sure about translating the term "array" to Portuguese.
 #: lib/src/geneval.c:9846
@@ -4266,9 +4268,9 @@ msgid "Number of variables does not match declaration"
 msgstr "O número de variáveis não corresponde à declaração"
 
 #: lib/src/gretl_xml.c:2702
-#, fuzzy, c-format
+#, c-format
 msgid "join: column '%s' was not found"
-msgstr "%s: coluna '%s' não foi encontrada"
+msgstr "join: coluna '%s' não foi encontrada"
 
 #: lib/src/gretl_xml.c:2895
 #, c-format
@@ -4721,9 +4723,8 @@ msgid "theta used for quasi-demeaning"
 msgstr "teta utilizado para quasi-desmediação"
 
 #: lib/src/modelprint.c:681 lib/src/modelprint.c:707 lib/src/modelprint.c:718
-#, fuzzy
 msgid "mean theta"
-msgstr "teste amplitude-média"
+msgstr "teta médio"
 
 #: lib/src/modelprint.c:782
 #, c-format
@@ -6270,9 +6271,9 @@ msgstr ""
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/options.c:1171 lib/src/options.c:1204
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: tipo de argumento inválido %s"
+msgstr "%s: opção de argumento inválida"
 
 #: lib/src/options.c:1210 lib/src/tokenize.c:1055
 #, c-format
@@ -7662,7 +7663,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 29 de outubro de 2015."
+"Tradução de 25 de janeiro de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -15053,9 +15054,8 @@ msgid "Octave"
 msgstr "Octave"
 
 #: gui2/selector.c:6199
-#, fuzzy
 msgid "Stata"
-msgstr "_Stata..."
+msgstr "Stata"
 
 #: gui2/selector.c:6200
 msgid "JMulTi"
@@ -15696,9 +15696,8 @@ msgstr ""
 "fazer isso?"
 
 #: gui2/settings.c:942
-#, fuzzy
 msgid "gretl: preferences"
-msgstr "gretl: manual de referência de comandos"
+msgstr "gretl: preferências"
 
 #: gui2/settings.c:1067 gui2/settings.c:2729
 msgid "Browse..."
@@ -15725,9 +15724,8 @@ msgid "Programs"
 msgstr "Programas"
 
 #: gui2/settings.c:1299
-#, fuzzy
 msgid "Editor"
-msgstr "Editar"
+msgstr "Editor"
 
 #: gui2/settings.c:1301
 msgid "Network"
@@ -16070,9 +16068,8 @@ msgid "Auto-indent script"
 msgstr "Auto-indentar script"
 
 #: gui2/textbuf.c:3381 gui2/toolbar.c:739
-#, fuzzy
 msgid "Preferences..."
-msgstr "_Preferências"
+msgstr "Preferências..."
 
 #: gui2/textutil.c:280
 msgid "gretl: replace"
@@ -16525,7 +16522,7 @@ msgstr "Decomp. do erro de previsão"
 
 #: plugin/addons-i18n.c:57
 msgid "Full"
-msgstr ""
+msgstr "Completo"
 
 #: plugin/addons-i18n.c:58
 msgid "Historical decomposition"
@@ -16564,9 +16561,8 @@ msgid "Optimization method"
 msgstr "Método de otimização"
 
 #: plugin/addons-i18n.c:68
-#, fuzzy
 msgid "Partial"
-msgstr "quartis"
+msgstr "Parcial"
 
 #: plugin/addons-i18n.c:70
 msgid "Restriction pattern (long-run C or A)"
