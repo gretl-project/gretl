@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-14 20:34-0500\n"
-"PO-Revision-Date: 2015-11-20 08:10+0100\n"
+"PO-Revision-Date: 2016-01-26 21:24+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -4718,9 +4718,8 @@ msgid "theta used for quasi-demeaning"
 msgstr "Theta usato per la trasformazione"
 
 #: lib/src/modelprint.c:681 lib/src/modelprint.c:707 lib/src/modelprint.c:718
-#, fuzzy
 msgid "mean theta"
-msgstr "test intervallo-media"
+msgstr "theta medio"
 
 #: lib/src/modelprint.c:782
 #, c-format
@@ -15072,9 +15071,8 @@ msgid "Octave"
 msgstr "Octave"
 
 #: gui2/selector.c:6199
-#, fuzzy
 msgid "Stata"
-msgstr "_Stata..."
+msgstr "Stata"
 
 #: gui2/selector.c:6200
 msgid "JMulTi"
@@ -15713,9 +15711,8 @@ msgid "You seem to be running gretl as root.  Do you really want to do this?"
 msgstr "Si intende davvero eseguire gretl come utente root?"
 
 #: gui2/settings.c:942
-#, fuzzy
 msgid "gretl: preferences"
-msgstr "gretl: guida ai comandi"
+msgstr "gretl: preferenze"
 
 #: gui2/settings.c:1067 gui2/settings.c:2729
 msgid "Browse..."
@@ -15742,9 +15739,8 @@ msgid "Programs"
 msgstr "Programmi"
 
 #: gui2/settings.c:1299
-#, fuzzy
 msgid "Editor"
-msgstr "Modifica"
+msgstr "Editor"
 
 #: gui2/settings.c:1301
 msgid "Network"
@@ -16087,9 +16083,8 @@ msgid "Auto-indent script"
 msgstr "Indenta automaticamente lo script"
 
 #: gui2/textbuf.c:3381 gui2/toolbar.c:739
-#, fuzzy
 msgid "Preferences..."
-msgstr "Preferen_ze"
+msgstr "Preferenze..."
 
 #: gui2/textutil.c:280
 msgid "gretl: replace"
