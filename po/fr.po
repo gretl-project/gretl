@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-26 15:49-0500\n"
-"PO-Revision-Date: 2015-02-11 21:56+0100\n"
+"PO-Revision-Date: 2016-01-26 16:15-0500\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -4265,9 +4265,9 @@ msgid "File of the wrong type, root node not %s"
 msgstr "Mauvais type de fichier, le noeud de la racine n'est pas %s"
 
 #: lib/src/gretl_xml.c:1692 lib/src/gretl_xml.c:2148
-#, fuzzy, c-format
+#, c-format
 msgid "Writing %.0f Kbytes of data\n"
-msgstr "Écriture de %ld Koctets de données\n"
+msgstr "Écriture de %.0f Koctets de données\n"
 
 #: lib/src/gretl_xml.c:2567
 msgid "Failed to parse count of variables"
@@ -4287,9 +4287,9 @@ msgid "Number of variables does not match declaration"
 msgstr "Le nombre de variables ne concorde pas avec la déclaration"
 
 #: lib/src/gretl_xml.c:2702
-#, fuzzy, c-format
+#, c-format
 msgid "join: column '%s' was not found"
-msgstr "%s : colonne '%s' introuvable"
+msgstr "join : colonne '%s' introuvable"
 
 #: lib/src/gretl_xml.c:2895
 #, fuzzy, c-format
@@ -4586,14 +4586,14 @@ msgid "matrix is NULL"
 msgstr ""
 
 #: lib/src/matrix_extra.c:1572
-#, fuzzy, c-format
+#, c-format
 msgid "%s: matrix is empty (%d x %d)"
-msgstr "Matrice nulle, %d x %d\n"
+msgstr "%s: matrice nulle (%d x %d)"
 
 #: lib/src/matrix_extra.c:1575
-#, fuzzy, c-format
+#, c-format
 msgid "matrix is empty (%d x %d)"
-msgstr "Matrice nulle, %d x %d\n"
+msgstr "Matrice nulle (%d x %d)"
 
 #: lib/src/missing.c:551
 #, c-format
