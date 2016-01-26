@@ -6412,7 +6412,7 @@ fi
 if test "${enable_build_doc+set}" = set; then :
   enableval=$enable_build_doc; if test "$enableval" = "yes"
 then
-  if ! echo $VERSION | grep git ; then
+  if ! test -d $srcdir/.git ; then
     echo "The --enable-build-doc option is valid only when building from git"
     exit 1
   else
