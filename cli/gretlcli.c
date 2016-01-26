@@ -115,6 +115,8 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    opt |= OPT_QUIET;
 	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
 	    opt |= OPT_MAKEPKG;
+	} else if (!strcmp(s, "-i") || !strcmp(s, "--instpkg")) { 
+	    opt |= OPT_INSTPKG;
 	} else if (!strcmp(s, "-t") || !strcmp(s, "--tool")) {
 	    opt |= (OPT_TOOL | OPT_BATCH);
 	} else if (!strncmp(s, "--scriptopt=", 12)) {
@@ -137,6 +139,9 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	if (!err) {
 	    err = incompatible_options(opt, OPT_ENGLISH | OPT_BASQUE);
 	}
+	if (!err) {
+	    err = incompatible_options(opt, OPT_MAKEPKG | OPT_INSTPKG);
+	}	
     }
 
     *pargc = argc;
@@ -519,6 +524,7 @@ int main (int argc, char *argv[])
     int quiet = 0;
     int tool = 0;
     int makepkg = 0;
+    int instpkg = 0;
     int load_datafile = 1;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
@@ -569,7 +575,7 @@ int main (int argc, char *argv[])
 	    }
 	}
 	    
-	if (opt & (OPT_BATCH | OPT_RUNIT | OPT_MAKEPKG)) {
+	if (opt & (OPT_BATCH | OPT_RUNIT | OPT_MAKEPKG | OPT_INSTPKG)) {
 	    if (*filearg == '\0') {
 		/* we're missing a filename argument */
 		usage(1);
@@ -587,6 +593,9 @@ int main (int argc, char *argv[])
 		} else if (opt & OPT_MAKEPKG) {
 		    quiet = batch = 1;
 		    makepkg = 1;
+		} else if (opt & OPT_INSTPKG) {
+		    quiet = batch = 1;
+		    instpkg = 1;
 		} else {
 		    runit = 1;
 		}
@@ -692,10 +701,10 @@ int main (int argc, char *argv[])
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
-	if (makepkg || tool) {
+	if (makepkg || instpkg || tool) {
 	    set_gretl_echo(0);
 	}
-	if (*runfile != '\0') {
+	if (*runfile != '\0' && !instpkg) {
 	    if (strchr(runfile, ' ')) {
 		sprintf(line, "run \"%s\"", runfile);
 	    } else {
@@ -753,9 +762,13 @@ int main (int argc, char *argv[])
 	}
     }
 
-    if (makepkg && !err) {
-	switch_ext(filearg, runfile, "gfn");
-	sprintf(line, "makepkg %s\n", filearg);
+    if (!err && (makepkg || instpkg)) {
+	if (makepkg) {
+	    switch_ext(filearg, runfile, "gfn");
+	    sprintf(line, "makepkg %s\n", filearg);
+	} else {
+	    sprintf(line, "install %s --local\n", filearg);
+	}
 	cli_exec_line(&state, dset, cmdprn);
     }
 
