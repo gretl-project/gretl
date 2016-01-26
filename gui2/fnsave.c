@@ -2104,13 +2104,19 @@ static void add_minver_selector (GtkWidget *tbl, int i,
 				 function_info *finfo)
 {
     GtkWidget *label, *spin, *hbox;
-    int minminver = 20110; /* gretl 1.9.4 */
+    int minminver = 20110; /* gretl 1.9.4, new-style */
     int maxminver;
     int lwidth;
 
     /* max version requirement: the highest possible release
        in the build year */
     maxminver = 10 * atoi(GRETL_VERSION) + 9;
+
+    if (finfo->minver < 20000) {
+	/* update an old-style "minver" value */
+	finfo->minver =
+	    translate_program_version(finfo->minver, OLD_TO_NEW);
+    }
 
     /* fix out-of-bounds minver */
     if (finfo->minver < minminver) {

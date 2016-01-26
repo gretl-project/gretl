@@ -1430,18 +1430,22 @@ static int letter_to_int (char c)
 
 int gretl_version_number (const char *version)
 {
+    int vnum = 0;
+    
     if (atoi(version) >= 2015) {
 	int Y;
 	char c;
 
 	sscanf(version, "%d%c", &Y, &c);
-	return 10 * Y + letter_to_int(c);
+	vnum = 10 * Y + letter_to_int(c);
     } else {
 	int x, y, z;
 
 	sscanf(version, "%d.%d.%d", &x, &y, &z);
-	return 10000 * x + 100 * y + z;
+	vnum = 10000 * x + 100 * y + z;
     }
+
+    return vnum;
 }
 
 /**
