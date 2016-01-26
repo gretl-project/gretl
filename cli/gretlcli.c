@@ -523,8 +523,7 @@ int main (int argc, char *argv[])
     char *line = NULL;
     int quiet = 0;
     int tool = 0;
-    int makepkg = 0;
-    int instpkg = 0;
+    int pkgmode = 0;
     int load_datafile = 1;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
@@ -591,11 +590,11 @@ int main (int argc, char *argv[])
 		if (opt & OPT_BATCH) {
 		    batch = 1;
 		} else if (opt & OPT_MAKEPKG) {
-		    quiet = batch = 1;
-		    makepkg = 1;
+		    tool = quiet = batch = 1;
+		    pkgmode = OPT_MAKEPKG;
 		} else if (opt & OPT_INSTPKG) {
-		    quiet = batch = 1;
-		    instpkg = 1;
+		    tool = quiet = batch = 1;
+		    pkgmode = OPT_INSTPKG;
 		} else {
 		    runit = 1;
 		}
@@ -701,10 +700,10 @@ int main (int argc, char *argv[])
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
-	if (makepkg || instpkg || tool) {
+	if (tool) {
 	    set_gretl_echo(0);
 	}
-	if (*runfile != '\0' && !instpkg) {
+	if (*runfile != '\0' && pkgmode != OPT_INSTPKG) {
 	    if (strchr(runfile, ' ')) {
 		sprintf(line, "run \"%s\"", runfile);
 	    } else {
@@ -762,12 +761,18 @@ int main (int argc, char *argv[])
 	}
     }
 
-    if (!err && (makepkg || instpkg)) {
-	if (makepkg) {
+    if (!err && pkgmode) {
+	if (pkgmode == OPT_MAKEPKG) {
 	    switch_ext(filearg, runfile, "gfn");
 	    sprintf(line, "makepkg %s\n", filearg);
 	} else {
-	    sprintf(line, "install %s --local\n", filearg);
+	    if (!isalpha(filearg[0]) || filearg[1] == ':') {
+		/* some sort of path: install local file */
+		sprintf(line, "install %s --local\n", filearg);
+	    } else {
+		/* plain filename or http: install from server */
+		sprintf(line, "install %s\n", filearg);
+	    }
 	}
 	cli_exec_line(&state, dset, cmdprn);
     }
