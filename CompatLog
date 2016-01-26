@@ -1,4 +1,4 @@
-version 2015e, in progress
+2016-01-26 version 2016a
 
 The function isnull() is deprecated; the recommendation
 is to use (the negation of) exists() instead
