@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-26 15:49-0500\n"
-"PO-Revision-Date: 2016-01-26 21:24+0100\n"
+"PO-Revision-Date: 2016-01-26 22:28+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -9940,9 +9940,8 @@ msgid "Python files (*.py)"
 msgstr "file Python (*.py)"
 
 #: gui2/fileselect.c:874
-#, fuzzy
 msgid "Julia files (*.jl)"
-msgstr "file JMulTi (*.dat)"
+msgstr "file Julia (*.jl)"
 
 #: gui2/fileselect.c:875
 msgid "Ox files (*.ox)"
@@ -11415,9 +11414,8 @@ msgid "Python script"
 msgstr "Script di Python"
 
 #: gui2/gretl.c:1589
-#, fuzzy
 msgid "Julia program"
-msgstr "Programma Ox"
+msgstr "Programma Julia"
 
 #: gui2/gretl.c:1590
 msgid "Ox program"
@@ -12793,9 +12791,8 @@ msgid "gretl: edit Python script"
 msgstr "gretl: modifica script Python"
 
 #: gui2/gui_utils.c:1661
-#, fuzzy
 msgid "gretl: edit Julia program"
-msgstr "gretl: modifica programma Ox"
+msgstr "gretl: modifica programma Julia"
 
 #: gui2/gui_utils.c:1663
 msgid "gretl: edit Stata program"
@@ -15646,9 +15643,8 @@ msgid "Path to Python executable"
 msgstr "Percorso per l'eseguibile python"
 
 #: gui2/settings.c:280
-#, fuzzy
 msgid "Path to Julia executable"
-msgstr "Percorso per l'eseguibile oxl"
+msgstr "Percorso per l'eseguibile Julia"
 
 #: gui2/settings.c:283
 msgid "Path to mpiexec"
@@ -15691,16 +15687,14 @@ msgid "Gnuplot colors"
 msgstr "Colori Gnuplot"
 
 #: gui2/settings.c:308
-#, fuzzy
 msgid "Number of spaces per tab"
-msgstr "Spazi per tab"
+msgstr "Numero di spazi per tab"
 
 #: gui2/settings.c:310
 msgid "\"Smart\" Tab and Enter"
-msgstr ""
+msgstr "Tab e invio intelligenti"
 
 #: gui2/settings.c:312
-#, fuzzy
 msgid "Show line numbers"
 msgstr "Attiva i numeri di linea"
 
@@ -15709,18 +15703,16 @@ msgid "Script editor uses tabs"
 msgstr "Usa i tab nell'editor"
 
 #: gui2/settings.c:317
-#, fuzzy
 msgid "Enable auto-completion"
-msgstr "Non c'è autocorrelazione"
+msgstr "Attiva l'auto-completamento"
 
 #: gui2/settings.c:320
-#, fuzzy
 msgid "Enable auto-brackets"
-msgstr "p-value tra parentesi"
+msgstr "Attiva le parentesi automatiche"
 
 #: gui2/settings.c:322
 msgid "Highlighting style"
-msgstr ""
+msgstr "Stile grafico"
 
 #: gui2/settings.c:334
 msgid "Use robust covariance matrix by default"
