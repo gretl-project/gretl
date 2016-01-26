@@ -3,11 +3,15 @@ version 2016a, in progress
   a bundle member
 - syntax enhancement: allow specification of a null default
   value for a matrix argument to a user-defined function
+- script execution: save "compiled" loops in functions that
+  are called repeatedly, for greater efficiency
 - add exists() function, recommended as a replacement for the
   now-deprecated isnull()
 - add pxnobs() function: gives the number of valid cross-
   sectional observations on a given series in each period
-- pxsum() function: revise this to skip missing values  
+- pxsum() function: revise this to skip missing values
+- the gretl array type: document the array() and defarray()
+  functions
 - "arima" command: allow ARIMA(0,1,0) without constant
 - "heckit" command: allow clustered standard errors
 - "reset" command: add --silent option
@@ -47,6 +51,9 @@ version 2016a, in progress
 - Stata dta importer: support dta format 118 (Stata 14)
 - GUI: some cosmetic fixes specific to gtk 3
 - GUI script editor: implement choice of gtksourceview style
+- GUI function package editor: ensure that old-style "minimum
+  version" specification is read correctly; also ensure that
+  appropriate line-breaks are set by the help-text editor 
 - MS Windows package: update to OpenBLAS 0.2.16.dev to avoid
   bug in computing eigenvalues on 64-bit Windows
 - Add workaround to avoid OpenBLAS crash on matrix inversion
