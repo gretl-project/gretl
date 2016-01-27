@@ -1299,6 +1299,11 @@ static void getword (parser *p)
 
     if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
+	if (p->idnum == M_MODEL) {
+	    p->idnum = 0;
+	    p->sym = BUNDLE;
+	    p->idstr = gretl_strdup("$model");
+	}
     } else if (*word == '@') {
 	/* do we actually want to do this? */
 	look_up_string_variable(word, p);
