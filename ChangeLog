@@ -1,3 +1,7 @@
+version 2016b, in progress
+- GUI "view code" option for function packages: avoid slow
+  loading of code
+
 2016-01-26 version 2016a
 - syntax enhancement: allow specification of type when setting
   a bundle member
