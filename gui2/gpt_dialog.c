@@ -91,6 +91,7 @@ struct plot_editor_ {
     GtkWidget **yaxiscombo;
     GtkWidget **linescale;
     GtkWidget **linewidth;
+    GtkWidget **pointsize;
     GtkWidget **colorsel;
 
     GtkWidget *fitformula;
@@ -652,6 +653,11 @@ static void dot_callback (GtkComboBox *box, GPT_SPEC *spec)
     }
 }
 
+static float spinner_get_float (GtkWidget *b)
+{
+    return (float) gtk_spin_button_get_value(GTK_SPIN_BUTTON(b));
+}
+
 /* take a double (which might be NA) and format it for
    a gtkentry widget */
 
@@ -1067,11 +1073,14 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    entry_to_gp_double(ed->linescale[i], &line->scale);
 	}
 	if (ed->linewidth[i] != NULL) {
-	    line->width = spinner_get_int(ed->linewidth[i]);
+	    line->width = spinner_get_float(ed->linewidth[i]);
 	}
 	if (ed->colorsel[i] != NULL) {
 	    apply_line_color(ed->colorsel[i], spec, i);
 	}
+	if (ed->pointsize[i] != NULL) {
+	    line->pscale = spinner_get_float(ed->pointsize[i]);
+	}	
     }
 
     for (i=0; i<ed->gui_nlabels && !err; i++) {
@@ -2536,11 +2545,13 @@ static int line_get_point_type (GPT_LINE *line, int i)
 static void flip_pointsel (GtkWidget *box, GtkWidget *targ)
 {
     GtkWidget *label = g_object_get_data(G_OBJECT(targ), "label");
+    GtkWidget *psize = g_object_get_data(G_OBJECT(targ), "psize");
     gchar *s = combo_box_get_active_text(box);
     int hp = has_point(gp_style_index_from_display_name(s));
 
     gtk_widget_set_sensitive(targ, hp);
     gtk_widget_set_sensitive(label, hp);
+    gtk_widget_set_sensitive(psize, hp);
 }
 
 static GtkWidget *scroller_page (GtkWidget *vbox)
@@ -2676,6 +2687,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
    
     for (i=0; i<ed->gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
+	GtkWidget *ptsel = NULL;
 	int label_done = 0;
 
 	hbox = NULL;
@@ -2767,10 +2779,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				     gp_style_index(line->style, altsty));
 	    g_list_free(altsty);
 	} else {
-	    GtkWidget *ptsel = point_types_combo();
 	    int lt = gp_style_index(line->style, stylist);
 	    int hp, pt = line_get_point_type(line, i);
 
+	    ptsel = point_types_combo();
 	    set_combo_box_strings_from_stylist(ed->stylecombo[i], stylist);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), lt);
 	    hp = has_point(line->style);
@@ -2799,7 +2811,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    /* scale factor for data? */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	    print_field_label(tbl, tbl_len, _("scale"));
+	    print_field_label(tbl, tbl_len, _("data scale"));
 
 	    ed->linescale[i] = gtk_entry_new();
 	    gtk_entry_set_max_length(GTK_ENTRY(ed->linescale[i]), 6);
@@ -2835,11 +2847,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	print_field_label(tbl, tbl_len, _("line width"));
 
 	hbox = gtk_hbox_new(FALSE, 5);
-	ed->linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
-	if (line->width > 1) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
-				      line->width);
-	}
+	ed->linewidth[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
+				  line->width);
 	gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
 	gtk_widget_show(ed->linewidth[i]);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
@@ -2889,7 +2899,32 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	if (hbox != NULL) {
 	    gtk_widget_show(hbox);
+	    hbox = NULL;
 	}
+
+	if (ptsel != NULL) {
+	    /* point size adjustment */
+	    gboolean sens;
+	    
+	    tbl_len++;
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	    print_field_label(tbl, tbl_len, _("point size"));
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    ed->pointsize[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->pointsize[i]),
+				      line->width);
+	    gtk_box_pack_start(GTK_BOX(hbox), ed->pointsize[i], FALSE, FALSE, 0);
+	    gtk_widget_show(ed->pointsize[i]);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
+				      tbl_len-1, tbl_len);
+	    g_signal_connect(G_OBJECT(ed->pointsize[i]), "activate", 
+			     G_CALLBACK(apply_gpt_changes), 
+			     ed);
+	    sens = gtk_widget_get_sensitive(ptsel);
+	    gtk_widget_set_sensitive(ed->pointsize[i], sens);
+	    g_object_set_data(G_OBJECT(ptsel), "psize", ed->pointsize[i]);
+	    gtk_widget_show(hbox);
+	}	
 
 	/* separator */
 	tbl_len++;
@@ -3453,6 +3488,7 @@ static void plot_editor_destroy (plot_editor *ed)
     free(ed->linescale);
     free(ed->linewidth);
     free(ed->colorsel);
+    free(ed->pointsize);
 
     free(ed->labeltext);
     free(ed->labelpos);
@@ -3510,6 +3546,7 @@ static int add_line_widget (plot_editor *ed)
     ed->linescale   = widget_array_expand(&ed->linescale, n, &err);
     ed->linewidth   = widget_array_expand(&ed->linewidth, n, &err);
     ed->colorsel    = widget_array_expand(&ed->colorsel, n, &err);
+    ed->pointsize   = widget_array_expand(&ed->pointsize, n, &err);
     
     if (!err) {
 	ed->gui_nlines = n;
@@ -3530,6 +3567,7 @@ static int allocate_line_widgets (plot_editor *ed, int n)
 	ed->linescale   = widget_array_new(n, &err);
 	ed->linewidth   = widget_array_new(n, &err);
 	ed->colorsel    = widget_array_new(n, &err);
+	ed->pointsize   = widget_array_new(n, &err);
 	if (!err) {
 	    ed->gui_nlines = n;
 	}
@@ -3621,6 +3659,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->linescale = NULL;
     ed->linewidth = NULL;
     ed->colorsel = NULL;
+    ed->pointsize = NULL;
 
     ed->labeltext = NULL;
     ed->labelpos = NULL;

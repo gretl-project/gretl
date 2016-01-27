@@ -87,12 +87,12 @@ typedef struct {
     char title[MAXTITLE];          /* key or legend title */
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
     double scale;                  /* scale factor for data */
-    double pscale;                 /* scale factor for points */
+    float pscale;                  /* scale factor for points */
     char rgb[8];                   /* rgb color specification */
     char yaxis;                    /* 1 for left, 2 for right */
     int type;                      /* 1, 2, ... (style) */
     int ptype;                     /* point type */
-    int width;                     /* default 1, could be bigger */
+    float width;                   /* line width, default 1.0 */
     char ncols;                    /* number of data columns (0 for formula) */
     float whiskwidth;              /* whiskerbar width (boxplots) */
     char flags;                    /* additional options */

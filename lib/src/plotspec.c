@@ -398,7 +398,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].yaxis = 1;
     lines[n].type = LT_AUTO;
     lines[n].ptype = 0;
-    lines[n].width = 1;
+    lines[n].width = 1.0;
     lines[n].ncols = 0;
     lines[n].whiskwidth = 0;
     lines[n].flags = 0;
@@ -1010,7 +1010,7 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     }
 }
 
-static int print_point_type (GPT_LINE *line)
+static int print_point_info (GPT_LINE *line)
 {
     return line->ptype != 0 && 
 	(line->style == GP_STYLE_POINTS ||
@@ -1349,21 +1349,21 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, " lt %d", i + 1);
 	}
 
-	if (print_point_type(line)) {
+	if (print_point_info(line)) {
 	    fprintf(fp, " pt %d", line->ptype);
-	    if (!na(line->pscale) && line->pscale != 1.0) {
-		fprintf(fp, " ps %g", line->pscale);
+	    if (line->pscale != 1.0) {
+		fprintf(fp, " ps %g", (double) line->pscale);
 	    }
 	}
 
-	if (line->width == 1 && spec->scale > 1.0) {
+	if (line->width == 1.0 && spec->scale > 1.0) {
 	    fprintf(fp, " lw 2");
 	} else if (line->width != 1) {
-	    fprintf(fp, " lw %d", line->width);
+	    fprintf(fp, " lw %g", (double) line->width);
 	}
 
 	if (line->whiskwidth > 0) {
-	    fprintf(fp, " whiskerbars %g", line->whiskwidth);
+	    fprintf(fp, " whiskerbars %g", (double) line->whiskwidth);
 	}
 
     end_print_line:
@@ -1509,7 +1509,7 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
 
     sprintf(spec->lines[1].title, _("loess fit, d = %d, q = %g"), d, q);
     spec->lines[1].scale = 1.0;
-    spec->lines[1].pscale = NADBL;
+    spec->lines[1].pscale = 1.0;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 2;
 
@@ -1635,7 +1635,7 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
 
     spec->fit = f;
     spec->lines[1].scale = NADBL;
-    spec->lines[1].pscale = NADBL;
+    spec->lines[1].pscale = 1.0;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 0;
 }

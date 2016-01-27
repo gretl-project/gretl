@@ -2282,7 +2282,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     }
 
     if ((p = strstr(s, " ps "))) {
-	sscanf(p + 4, "%lf", &line->pscale);
+	sscanf(p + 4, "%f", &line->pscale);
     }
 
     if ((p = strstr(s, " pt "))) {
@@ -2290,7 +2290,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     }
 
     if (!auto_linewidth && (p = strstr(s, " lw "))) {
-	sscanf(p + 4, "%d", &line->width);
+	sscanf(p + 4, "%f", &line->width);
     } 
 
     if ((p = strstr(s, " whiskerbars "))) {
