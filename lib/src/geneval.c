@@ -7049,8 +7049,10 @@ static NODE *mvar_from_bundle (const char *key, parser *p)
 	/* OK: @key (with dollar-sign prepended) is a
 	   regular model-related accessor
 	*/
-	NODE tmp = {MVAR, 0, 0, NULL, {0}};
+	NODE tmp;
 
+	memset(&tmp, 0, sizeof tmp);
+	tmp.t = MVAR;
 	tmp.v.idnum = mv;
 	ret = object_var_node(&tmp, p);
     }
