@@ -160,12 +160,14 @@ static void usage (int err)
 	     " -b or --batch     Process a command script and exit.\n"
 	     " -r or --run       Run a script then hand control to command line.\n"
 	     " -m or --makepkg   Run a script and create a package from it.\n"
+	     " -i or --instpkg   Install a specified function package.\n"
 	     " -h or --help      Print this info and exit.\n"
 	     " -v or --version   Print version info and exit.\n"
 	     " -e or --english   Force use of English rather than translation.\n"
 	     " -q or --quiet     Print less verbose program information.\n"
+	     " -t or --tool      Operate silently.\n"
 	     "Example of batch mode usage:\n"
-	     " gretlcli -b myfile.inp >myfile.out\n"
+	     " gretlcli -b myfile.inp > myfile.out\n"
 	     "Example of run mode usage:\n"
 	     " gretlcli -r myfile.inp\n"));
 
