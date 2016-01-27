@@ -1,0 +1,59 @@
+\chapter{Gretl and Julia}
+\label{chap:gretlJulia}
+
+\section{Introduction}
+\label{Julia-intro}
+
+According to \url{julialang.org}, \app{Julia} is ``a high-level,
+high-performance dynamic programming language for technical computing,
+with syntax that is familiar to users of other technical computing
+environments. It provides a sophisticated compiler, distributed
+parallel execution, numerical accuracy, and an extensive mathematical
+function library.'' Julia is well known for being very fast.
+
+\section{Julia support in gretl}
+\label{sec:Julia-support}
+
+The support offered for \app{Julia} in gretl is similar to that
+offered for \app{Octave} (chapter~\ref{chap:gretlOctave}). You can
+open and edit \app{Julia} scripts in the gretl GUI.  Clicking
+the ``execute'' icon in the editor window will send your code to
+\app{Julia} for execution. In addition you can embed \app{Julia}
+code within a gretl script using a \texttt{foreign} block, as
+described in connection with \app{R}.
+
+When you launch \app{Julia} from within gretl one variable and
+two convenience functions are pre-defined, as follows.
+\begin{code}
+gretl_dotdir
+gretl_loadmat(filename, autodot=true)
+gretl_export(M, filename, autodot=true)
+\end{code}
+The variable \verb|gretl_dotdir| holds the path to the user's ``dot
+directory.''  The first function loads a matrix of the given
+\texttt{filename} as written by gretl's \texttt{mwrite}
+function, and the second writes matrix \texttt{M}, under the given
+\texttt{filename}, in the format wanted by gretl.
+
+By default the traffic in matrices goes via the dot directory on the
+\app{Julia} side; that is, the name of this directory is prepended to
+\texttt{filename} for both reading and writing. (This is complementary
+to use of the \textsl{export} and \textsl{import} parameters with
+gretl's \texttt{mwrite} and \texttt{mread} functions,
+respectively.) However, if you wish to take control over the reading
+and writing locations you can supply a zero value for
+\texttt{autodot} when calling \verb|gretl_loadmat| and
+\verb|gretl_export|: in that case the \texttt{filename} argument is
+used as is.
+
+\section{Illustration}
+
+TO BE WRITTEN!
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

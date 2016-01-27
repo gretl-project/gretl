@@ -3899,10 +3899,9 @@
       </para>
       <para>
 	At present the <quote>foreign</quote> programs supported in
-	this way are GNU R (<lit>language=R</lit>), Jurgen Doornik's
-	Ox (<lit>language=Ox</lit>), GNU Octave
-	(<lit>language=Octave</lit>), Python and, to a lesser extent,
-	Stata.  Language names are recognized on a case-insensitive
+	this way are GNU R (<lit>language=R</lit>), Python, Julia, GNU
+	Octave (<lit>language=Octave</lit>), Jurgen Doornik's Ox and
+	Stata. Language names are recognized on a case-insensitive
 	basis.
       </para>
       <para>
