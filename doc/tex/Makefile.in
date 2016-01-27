@@ -61,6 +61,7 @@ TEXSRC = cli.tex \
 	gretlOctave.tex \
 	gretlStata.tex \
 	gretlPython.tex \
+	gretlJulia.tex \
 	datatypes.tex \
 	df.tex \
 	var.tex \
