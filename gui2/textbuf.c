@@ -432,21 +432,10 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
 {
     GtkTextBuffer *tbuf = GTK_TEXT_BUFFER(sbuf);
-    char line[MAXLINE];
-    GtkTextIter iter;   
+    GtkTextIter iter;
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
-    gtk_text_buffer_set_text(tbuf, "", -1);
-    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
-
-    bufgets_init(buf);
-
-    while (bufgets(line, sizeof line, buf)) {
-	gtk_text_buffer_insert(tbuf, &iter, line, -1);
-    }
-
-    bufgets_finalize(buf);
-
+    gtk_text_buffer_set_text(tbuf, buf, -1);
     gtk_source_buffer_end_not_undoable_action(sbuf);
     gtk_text_buffer_set_modified(tbuf, FALSE);
 
