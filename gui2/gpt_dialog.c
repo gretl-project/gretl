@@ -2920,7 +2920,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    g_signal_connect(G_OBJECT(ed->pointsize[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     ed);
-	    sens = gtk_widget_get_sensitive(ptsel);
+	    sens = gtk_widget_is_sensitive(ptsel);
 	    gtk_widget_set_sensitive(ed->pointsize[i], sens);
 	    g_object_set_data(G_OBJECT(ptsel), "psize", ed->pointsize[i]);
 	    gtk_widget_show(hbox);
