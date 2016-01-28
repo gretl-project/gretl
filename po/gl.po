@@ -5,11 +5,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Gretl (2015)\n"
+"Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-26 15:49-0500\n"
-"PO-Revision-Date: 2016-01-28 13:08+0100\n"
-"Last-Translator: J.C.E.N <ecadrian.estevez@usc.es>\n"
+"PO-Revision-Date: 2016-01-28 18:25+0100\n"
+"Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
@@ -14742,7 +14742,7 @@ msgstr "Todo ->"
 
 #: gui2/selector.c:4479 gui2/selector.c:6293
 msgid "lags..."
-msgstr "retardos..."
+msgstr "Retardos..."
 
 #: gui2/selector.c:4502 plugin/addons-i18n.c:84
 msgid "Exogenous variables"
@@ -15551,7 +15551,7 @@ msgstr "Usar lapelas no visor de modelos"
 
 #: gui2/settings.c:222
 msgid "Prompt to save session"
-msgstr "Preguntar si se desexa gardar sesión"
+msgstr "Preguntar se desexa gardar sesión"
 
 #: gui2/settings.c:224
 msgid "Set working directory from shell"
@@ -15656,7 +15656,7 @@ msgstr "Nome do servidor de bases de datos"
 
 #: gui2/settings.c:292
 msgid "HTTP proxy"
-msgstr "proxy HTTP"
+msgstr "Proxy HTTP"
 
 #: gui2/settings.c:294
 msgid "Use HTTP proxy"
@@ -15684,7 +15684,7 @@ msgstr "Nº de espazos por tabulador"
 
 #: gui2/settings.c:310
 msgid "\"Smart\" Tab and Enter"
-msgstr "\"Smart\" Tab e Intro"
+msgstr " Tabulador e Intro \"espelidos\""
 
 #: gui2/settings.c:312
 msgid "Show line numbers"
