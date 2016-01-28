@@ -79,32 +79,27 @@ period regardless.  Checking ``Allow shell commands'' makes it
 possible to invoke shell commands in scripts and in the \app{gretl}
 console (this facility is disabled by default for security reasons).
       
-\textbf{Databases} tab: You can select the directory in which to start
-looking for native \app{gretl} databases; the directory in which to
-start looking for RATS databases; the host name of the \app{gretl}
-database server to access; and the IP number and port number of the
-HTTP proxy server to use when contacting the database server (if
-you're behind a firewall).
-      
 \textbf{Programs} tab: You can specify the names or paths to various
 third-party programs that may called by \app{gretl} under certain
 conditions. Note that the item ``Command to compile {\TeX} files'' can
 be set to either latex or pdflatex; if latex is selected, {\TeX}
 output will be previewed in DVI format; if pdflatex is selected, the
 preview will be in PDF format.
+
+\textbf{Editor} tab: Set preferences pertaining to the \app{gretl}
+script editor.
+
+\textbf{Network} tab: Set the server on which to look for \app{gretl}
+databases, and also whether or not you use an HTTP proxy.
       
 \textbf{HCCME} tab: Set preferences regarding robust covariance matrix
 estimation.  See the \emph{Gretl User's Guide} for details.
       
-\textbf{Manuals} tab: Select your preferred language for the full
-\app{gretl} documentation in PDF format (currently only English and
-Italian are supported).  When using the English documentation you can
-also choose between US letter paper and A4 paper.
+\textbf{MPI} tab: This is shown only if gretl is built with support
+for MPI (Message Passing Interface).
       
 Settings chosen via the Preferences dialog are stored from one gretl
-session to the next.  Under MS Windows they are stored in the Windows
-registry; on other platforms they are stored in a plain text file
-named \texttt{.gretl2rc} in the user's home directory.
+session to the next.
       
 \section{Invoking gretlcli}
 \label{optarg2}
