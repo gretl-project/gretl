@@ -1010,11 +1010,17 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     }
 }
 
-static int print_point_info (GPT_LINE *line)
+static void maybe_print_point_info (const GPT_LINE *line, FILE *fp)
 {
-    return line->ptype != 0 && 
-	(line->style == GP_STYLE_POINTS ||
-	 line->style == GP_STYLE_LINESPOINTS);
+    if (line->style == GP_STYLE_POINTS ||
+	line->style == GP_STYLE_LINESPOINTS) {
+	if (line->ptype != 0) {
+	    fprintf(fp, " pt %d", line->ptype);
+	}
+	if (line->pscale != 1.0) {
+	    fprintf(fp, " ps %g", (double) line->pscale);
+	}
+    }
 }
 
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
@@ -1349,12 +1355,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, " lt %d", i + 1);
 	}
 
-	if (print_point_info(line)) {
-	    fprintf(fp, " pt %d", line->ptype);
-	    if (line->pscale != 1.0) {
-		fprintf(fp, " ps %g", (double) line->pscale);
-	    }
-	}
+	maybe_print_point_info(line, fp);
 
 	if (line->width == 1.0 && spec->scale > 1.0) {
 	    fprintf(fp, " lw 2");
