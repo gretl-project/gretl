@@ -4994,42 +4994,61 @@
 
     <description>
 
-      <para>Gretl calls a separate program, namely gnuplot, to
-	generate graphs.  Gnuplot is a very full-featured graphing
-	program with myriad options.  Gretl gives you direct access,
-	via a graphical interface, to a subset of these options and it
-	tries to choose sensible values for you; it also allows you to
-	take complete control over graph details if you wish.</para>
+      <para>
+	Gretl calls a separate program, namely gnuplot, to generate
+	graphs.  Gnuplot is a very full-featured graphing program with
+	myriad options.  Gretl gives you direct access, via a
+	graphical interface, to a subset of these options and it tries
+	to choose sensible values for you; it also allows you to take
+	complete control over graph details if you wish.
+      </para>
 
-      <para>With a graph displayed, you can click on the graph window
-	for a pop-up menu with the following options:</para>
+      <para>
+	With a graph displayed, you can click on the graph window for
+	a pop-up menu with several options, including these:
+      </para>
 
       <ilist>
-	<li><para>Save as postscript: save the graph in encapsulated
-	    postscript (EPS) format</para>
+	<li>
+	  <para>
+	    Save as PNG: save in Portable Network Graphics format
+	  </para>
 	</li>
-	<li><para>Save as PNG: save in Portable Network Graphics
-	    format</para>
+	<li>
+	  <para>
+	    Save as postscript: save the graph in encapsulated
+	    postscript (EPS) format
+	  </para>
 	</li>
-	<li><para>Save to session as icon: the graph will appear in
-	    iconic form when you select <quote>Icon view</quote> from
-	    the Session menu</para>
+	<li>
+	  <para>
+	    Save to session as icon: the graph will appear in iconic
+	    form when you select <quote>Icon view</quote> from the
+	    Session menu
+	  </para>
 	</li>
-	<li><para>Zoom: lets you select an area within the graph for
-	    closer inspection</para>
+	<li>
+	  <para>
+	    Zoom: lets you select an area within the graph for closer
+	    inspection
+	  </para>
 	</li>
-	<li><para>Print: (not available on all systems) lets you print
-	the graph directly
-         </para>
+	<li>
+	  <para>
+	    Copy to clipboard: lets you paste the graph into
+	    applications such as word processors
+	  </para>
 	</li>
-	<li><para>Copy to clipboard: (MS Windows only) lets you paste
-	    the graph into Windows applications such as MS
-	    Word</para>
+	<li>
+	  <para>
+	    Edit: opens a controller for the plot which lets you
+	    adjust various aspects of its appearance
+	  </para>
 	</li>
-	<li><para>Edit: opens a controller for the plot which lets you
-	    adjust various aspects of its appearance</para>
-	</li>
-	<li><para>Close: closes the graph window</para>
+	<li>
+	  <para>
+	    Close: closes the graph window
+	  </para>
 	</li>
       </ilist>
 
@@ -5037,30 +5056,19 @@
 	If you know something about gnuplot and wish to get finer
 	control over the appearance of a graph than is available via
 	the graphical controller (<quote>Edit</quote> option), you
-	have two further options:
+	have a further option:
       </para>
 
       <ilist>
 	<li>
 	  <para>
-	    Once the graph is saved as a session icon, you can
-	    right-click on its icon for a further pop-up menu.  One of the
-	    options here is <quote>Edit plot commands</quote>, which opens
-	    an editing window with the actual gnuplot commands displayed.
-	    You can edit these commands and either save them for future
-	    processing or send them to gnuplot (with the execute toolbar
-	    icon in the plot commands editing window).
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    Another way to save the plot commands (or to save
-	    the displayed plot in formats other than EPS or PNG) is to
-	    use <quote>Edit</quote> item on a graph's pop-up menu to
-	    invoke the graphical controller, then click on the
-	    <quote>Output to file</quote> tab in the controller.  You
-	    are then presented with a drop-down menu of formats in
-	    which to save the graph.
+	    Once the graph is saved as a session icon, right-click on
+	    its icon for a further pop-up menu.  One of the options
+	    here is <quote>Edit plot commands</quote>: this opens an
+	    editing window with the actual gnuplot commands displayed.
+	    You can edit these commands and either save them for
+	    future processing or send them to gnuplot (with the
+	    execute toolbar icon in the plot commands window).
 	  </para>
 	</li>
       </ilist>
