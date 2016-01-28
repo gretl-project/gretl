@@ -109,8 +109,6 @@ struct plot_editor_ {
     GtkWidget *grid_combo;
     GtkWidget *y2_check;
     GtkWidget *bars_check;
-    GtkWidget *ttfcombo;
-    GtkWidget *ttfspin;
     GtkWidget *fontcheck;
     GtkWidget *barscombo;
 
@@ -150,7 +148,6 @@ enum {
     GUI_ARROW
 };
 
-static const char *get_font_filename (const char *showname);
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins);
 static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins);
 static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins);
@@ -859,24 +856,6 @@ static void plot_editor_sync (plot_editor *ed)
     old_arrows_init(ed);
 }
 
-static void set_graph_font_from_widgets (plot_editor *ed)
-{
-    gchar *tmp = combo_box_get_active_text(ed->ttfcombo);
-    int ptsize = spinner_get_int(ed->ttfspin);
-
-    if (tmp != NULL && *tmp != '\0') {
-	const char *fname = get_font_filename(tmp);
-	char pngfont[128];
-
-	if (fname != NULL && ptsize >= 4 && ptsize < 25) {
-	    sprintf(pngfont, "%s %d", fname, ptsize);
-	    plot_editor_set_fontname(ed, pngfont);
-	} 
-    }
-
-    g_free(tmp);
-}
-
 static char *default_bars_filename (void)
 {
     static char barsname[FILENAME_MAX];
@@ -1128,9 +1107,6 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     if (!err) {
-	if (ed->ttfcombo != NULL && ed->ttfspin != NULL) {
-	    set_graph_font_from_widgets(ed);
-	}
 	if (ed->fontcheck != NULL && button_is_active(ed->fontcheck)) {
 	    if (ed->spec->fontstr != NULL && *ed->spec->fontstr != '\0') {
 		set_gretl_png_font(ed->spec->fontstr);
@@ -1182,38 +1158,6 @@ static void set_keyspec_sensitivity (plot_editor *ed)
 }
 
 #define TAB_MAIN_COLS 3
-
-struct font_info {
-    const char *fname;
-    const char *showname;
-};
-
-static struct font_info ttf_fonts[] = {
-    { "arial", "Arial", },
-    { "georgia", "Georgia", },
-#ifndef G_OS_WIN32
-    { "luxirr", "Luxi Serif" },
-    { "luxisr", "Luxi Sans" },
-    { "Vera", "Vera" },
-    { "FreeSans", "Free Sans" },
-    { "DejaVu", "DejaVu Sans" },
-#endif
-    { "tahoma", "Tahoma" },
-    { "trebuc", "Trebuchet" },
-    { "verdana", "Verdana" }
-};
-
-static const char *get_font_filename (const char *showname)
-{
-    int i, nfonts = sizeof ttf_fonts / sizeof ttf_fonts[0];
-
-    for (i=0; i<nfonts; i++) {
-	if (!strcmp(ttf_fonts[i].showname, showname)) {
-	    return ttf_fonts[i].fname;
-	}
-    }
-    return NULL;
-}
 
 static void plot_editor_set_fontname (plot_editor *ed, const char *name)
 {
@@ -3677,8 +3621,6 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->grid_combo = NULL;
     ed->y2_check = NULL;
     ed->bars_check = NULL;
-    ed->ttfcombo = NULL;
-    ed->ttfspin = NULL;
     ed->fontcheck = NULL;
     ed->barscombo = NULL;
 
