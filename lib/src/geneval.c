@@ -60,13 +60,9 @@
 #define MATRIX_NA_CHECK 1
 #define ONE_BY_ONE_CAST 1
 
-/* 2014-07-29: I think this is OK now, but it was disabled for
-   the 1.9.91 release. AC.
-*/
-#define TRY_SAVE_AUX 1
-
 /* it seems the following may now be redundant,
-   but more checking is needed */
+   but more checking may be wanted
+*/
 #define DUP_TERNARY_CHILD 0
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
@@ -7778,9 +7774,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (!scalar_node(r) && r->t != EMPTY) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    int start = node_get_int(l, p);
-	    int end = node_get_int(m, p);
-	    int step = (r->t != EMPTY)? node_get_int(r, p) : 1;
+	    double start = node_get_scalar(l, p);
+	    double end = node_get_scalar(m, p);
+	    double step = (r->t != EMPTY)? node_get_scalar(r, p) : 1.0;
 
 	    if (!p->err) {
 		A = gretl_matrix_seq(start, end, step, &p->err);
@@ -14760,7 +14756,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	}
     }
 
-#if TRY_SAVE_AUX
+#if 1 /* was experimental: now OK? */
     if (prevflags & P_COMPILE) {
 	p->flags |= P_SAVEAUX;
     }

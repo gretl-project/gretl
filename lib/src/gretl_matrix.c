@@ -804,28 +804,46 @@ gretl_matrix *gretl_null_matrix_new (void)
  * gretl_matrix_seq:
  * @start: first element.
  * @end: last element.
- * @step: positive integer step.
+ * @step: positive step.
  * @err: location to recieve error code.
  *
- * Returns: pointer to a row vector, containing the numbers from
+ * Returns: pointer to a row vector, containing values from
  * @start to @end, in decreasing order if @start > @end --
  * or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_seq (int start, int end, int step,
-				int *err)
+gretl_matrix *gretl_matrix_seq (double start, double end,
+				double step, int *err)
 {
     gretl_matrix *v;
     int reverse = (start > end);
-    int range = reverse ? (start-end) : (end-start);
-    int i, k, n;
+    double range = reverse ? (start-end) : (end-start);
+    double k = start;
+    int i, n = 0;
 
     if (step <= 0) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    n = 1 + range / step;
+    if (reverse) {
+	k = end;
+	while (k >= start) {
+	    n++;
+	    k -= step;
+	}
+    } else {
+	k = start;
+	while (k <= end) {
+	    n++;
+	    k += step;
+	}
+    }
+
+    if (n == 0) {
+	*err = E_DATA;
+	return NULL;
+    }	
 
     v = gretl_vector_alloc(n);
 

@@ -7242,27 +7242,27 @@
 
     <function name="seq" section="matbuild" output="rvec">
       <fnargs>
-	<fnarg type="int">a</fnarg>
-	<fnarg type="int">b</fnarg>
-	<fnarg optional="true" type="int">k</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg optional="true" type="scalar">k</fnarg>
       </fnargs>   
       <description>
 	<para>
 	  Given only two arguments, returns a row vector filled with
-	  consecutive integers, with <argname>a</argname> as first element
-	  and <argname>b</argname> last. If <argname>a</argname> is
-	  greater than <argname>b</argname> the sequence will be
-	  decreasing.
+	  values from <argname>a</argname> to <argname>b</argname>
+	  with an increment of 1, or a decrement of 1 if
+	  <argname>a</argname> is greater than <argname>b</argname>.
 	</para>
 	<para>
-	  If the third argument is given, returns a row vector containing
-	  a sequence of integers starting with <argname>a</argname> and
-	  incremented (or decremented, if <argname>a</argname> is greater
-	  than <argname>b</argname>) by <argname>k</argname> at each step.
-	  The final value is the largest member of the sequence that is
-	  less than or equal to <argname>b</argname> (or mutatis mutandis
-	  for <argname>a</argname> greater than <argname>b</argname>).
-	  The argument <argname>k</argname> must be a positive integer.
+	  If the third argument is given, returns a row vector
+	  containing a sequence of values starting with
+	  <argname>a</argname> and incremented (or decremented, if
+	  <argname>a</argname> is greater than <argname>b</argname>)
+	  by <argname>k</argname> at each step.  The final value is
+	  the largest member of the sequence that is less than or
+	  equal to <argname>b</argname> (or mutatis mutandis for
+	  <argname>a</argname> greater than <argname>b</argname>).
+	  The argument <argname>k</argname> must be a positive.
 	</para>
 	<para>
 	  <seelist>
