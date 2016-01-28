@@ -2262,9 +2262,7 @@ static void add_line_callback (GtkWidget *w, plot_editor *ed)
     }
 
     nlinfo->editor = ed;
-
     nlinfo->dlg = gretl_dialog_new(NULL, ed->dialog, GRETL_DLG_BLOCK);
-
     gpt_tab_new_line(ed, nlinfo);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(nlinfo->dlg));
