@@ -1365,7 +1365,11 @@ blocking_edit_dialog (int ci, const char *title,
     /* "Help" button, if wanted */
     if (helpcode > 0) {
 	context_help_button(d->bbox, helpcode);
-    } 
+    }
+
+    if (ci == GENR) {
+	gtk_widget_set_size_request(GTK_WIDGET(d->dialog), 400, -1);
+    }
 
     gtk_widget_show_all(d->dialog); 
 }
