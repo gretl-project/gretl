@@ -572,6 +572,7 @@ struct node {
     char flags;    /* AUX_NODE etc., see above */
     int vnum;      /* associated series ID number */
     char *vname;   /* associated variable name */
+    user_var *uv;  /* associated named variable */
     union val v;   /* value (of whatever type) */
 };
 
@@ -607,6 +608,7 @@ struct lhinfo {
     char name[VNAMELEN];   /* name of LHS variable */   
     char label[MAXLABEL];  /* descriptive string for series */
     int v;                 /* ID number of pre-existing LHS series */
+    user_var *uv;          /* address of LHS variable */
     int obs;               /* specific obs number in series */
     gretl_matrix *m0;      /* original LHS matrix (or NULL) */
     gretl_matrix *m1;      /* computed LHS matrix (or NULL) */

@@ -69,10 +69,6 @@ void *user_var_get_value_by_name (const char *name);
 void *user_var_get_value_and_type (const char *name,
 				   GretlType *type);
 
-int user_var_is_mutable (user_var *uvar);
-
-void user_var_unset_mutable (user_var *uvar);
-
 char *user_string_resize (const char *name, size_t len, int *err);
 
 void *user_var_steal_value (user_var *uvar);

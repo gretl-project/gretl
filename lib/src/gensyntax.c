@@ -57,7 +57,8 @@ NODE *new_node (int t)
 	n->t = t;
 	n->flags = 0;
 	n->vnum = NO_VNUM;
-	n->vname = NULL;	
+	n->vname = NULL;
+	n->uv = NULL;
     }
 
     return n;

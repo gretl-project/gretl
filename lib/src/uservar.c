@@ -29,6 +29,7 @@
 #include "monte_carlo.h"
 #include "gretl_typemap.h"
 #include "uservar.h"
+#include "uservar_priv.h"
 
 /* varname hashing: should be OK, but here's
    where you can turn it off 
@@ -44,21 +45,6 @@
 
 #define LEVEL_AUTO -1
 #define LEV_PRIVATE -1
-
-typedef enum {
-    UV_PRIVATE = 1 << 0,
-    UV_SHELL   = 1 << 1,
-    UV_MAIN    = 1 << 2,
-    UV_NODECL  = 1 << 3
-} UVFlags;
-
-struct user_var_ {
-    GretlType type;
-    int level;
-    UVFlags flags;
-    char name[VNAMELEN];
-    void *ptr;
-};
 
 static user_var **uvars;
 static int n_vars;
@@ -742,29 +728,6 @@ int user_var_get_level (user_var *uvar)
 void *user_var_get_value (user_var *uvar)
 {
     return (uvar == NULL)? NULL : uvar->ptr;
-}
-
-/* the following really means: is this variable a scalar
-   that should be morphable to a matrix? */
-
-int user_var_is_mutable (user_var *uvar)
-{
-    if (uvar != NULL && (uvar->flags & UV_NODECL)) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-/* eliminate morphability for a scalar variable
-   (we got an explicit specification of type from
-   the user) */
-
-void user_var_unset_mutable (user_var *uvar)
-{
-    if (uvar != NULL) {
-	uvar->flags &= ~UV_NODECL;
-    }
 }
 
 GretlType user_var_get_type (user_var *uvar)

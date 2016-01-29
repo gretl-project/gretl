@@ -34,6 +34,7 @@
 #include "libset.h"
 #include "version.h"
 #include "csvdata.h"
+#include "uservar_priv.h"
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -10873,6 +10874,69 @@ static void reattach_data_error (NODE *n, parser *p, GretlType type)
     p->err = E_TYPES;
 }
 
+#define ALT_UVAR_HANDLING 0
+
+#if ALT_UVAR_HANDLING
+
+static void node_reattach_data (NODE *n, parser *p)
+{
+    if (n->t == SERIES) {
+	reattach_series(n, p);
+    } else if (n->t == BUNDLE && n->vname[0] == '$') {
+	/* built-in bundle */
+	return;
+    } else {
+	GretlType type = 0;
+	void *data = NULL;
+
+	if (n->uv == NULL) {
+	    n->uv = get_user_var_by_name(n->vname);
+	}
+
+	if (n->uv != NULL) {
+	    data = n->uv->ptr;
+	    type = n->uv->type;
+	}
+
+	if (data == NULL) {
+	    p->err = E_DATA;
+	} else if (uscalar_node(n)) {
+	    if (type == GRETL_TYPE_DOUBLE) {
+		n->v.xval = *(double *) data;
+#if ONE_BY_ONE_CAST
+	    } else if (type == GRETL_TYPE_MATRIX) {
+		/* allow type-mutation */
+		n->t = MAT;
+		n->v.m = (gretl_matrix *) data;
+#endif
+	    } else {
+		reattach_data_error(n, p, type);
+		return;
+	    }
+	} else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
+	    n->v.m = data;
+	} else if (n->t == LIST && type == GRETL_TYPE_LIST) {
+	    n->v.ivec = data;
+	} else if (n->t == BUNDLE && type == GRETL_TYPE_BUNDLE) {
+	    n->v.b = data;
+	} else if (n->t == STR && type == GRETL_TYPE_STRING) {
+	    n->v.str = data;
+	} else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
+	    n->v.a = data;
+	} else {
+	    reattach_data_error(n, p, type);
+	    return;
+	}
+    }
+
+    if (p->err) {
+	fprintf(stderr, "node_reattach_data (vname = %s): err = %d\n",
+		n->vname, p->err);
+    }
+}
+
+#else
+
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
@@ -10922,6 +10986,8 @@ static void node_reattach_data (NODE *n, parser *p)
 		n->vname, p->err);
     }
 }
+
+#endif
 
 static void node_type_error (int ntype, int argnum, int goodt, 
 			     NODE *bad, parser *p)
@@ -13198,11 +13264,11 @@ static void pre_process (parser *p, int flags)
 		p->lh.m0 = uval;
 		p->lh.t = MAT;
 	    } else if (vtype == GRETL_TYPE_DOUBLE) {
-		if (user_var_is_mutable(uvar)) {
+		if (uvar->flags & UV_NODECL) {
 		    if (p->targ == UNK) {
 			p->flags |= P_NODECL;
 		    } else {
-			user_var_unset_mutable(uvar);
+			uvar->flags &= ~UV_NODECL;
 		    }
 		}
 		p->lh.t = NUM;
@@ -14687,6 +14753,53 @@ static int save_generated_var (parser *p, PRN *prn)
     return p->err;
 }
 
+#if ALT_UVAR_HANDLING
+
+static void maybe_update_lhs_uvar (parser *p, GretlType *type)
+{
+    void *data = NULL;
+
+    if (p->lh.uv == NULL) {
+	p->lh.uv = get_user_var_by_name(p->lh.name);
+    }
+
+    if (p->lh.uv != NULL) {
+	data = p->lh.uv->ptr;
+	*type = p->lh.uv->type;
+    }
+	
+    switch (*type) {
+    case GRETL_TYPE_DOUBLE:
+	p->lh.t = NUM;
+	break;
+    case GRETL_TYPE_MATRIX:
+	p->lh.t = MAT;
+	p->lh.m0 = data;
+	if (p->targ == NUM) {
+	    p->targ = MAT;
+	}
+	break;
+    case GRETL_TYPE_LIST:
+	p->lh.t = LIST;
+	break;
+    case GRETL_TYPE_STRING:
+	p->lh.t = STR;
+	break;
+    case GRETL_TYPE_BUNDLE:
+	p->lh.t = BUNDLE;
+	break;
+    case GRETL_TYPE_ARRAY:
+	p->lh.t = ARRAY;
+	break;
+    default:
+	p->lh.t = 0;
+	p->lh.m0 = NULL;
+	break;
+    }
+}
+
+#else
+
 static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data;
@@ -14727,6 +14840,8 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	    gretl_type_get_name(*type), getsymb(p->targ, p));
 #endif     
 }
+
+#endif
 
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn) 
 {
@@ -14856,6 +14971,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.label[0] = '\0';
     p->lh.v = 0;
     p->lh.obs = -1;
+    p->lh.uv = NULL;
     p->lh.m0 = NULL;
     p->lh.m1 = NULL;
     p->lh.substr = NULL;

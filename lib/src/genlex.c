@@ -931,23 +931,6 @@ NODE *obs_node (parser *p)
     return ret;
 }
 
-static void look_up_string_variable (const char *s, parser *p)
-{
-    char *val = get_string_by_name(s + 1);
-
-    if (val != NULL) {
-	p->idstr = gretl_strdup(s + 1);
-	if (p->idstr == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    p->uval = val;
-	    p->sym = USTR;
-	}
-    } else {
-	undefined_symbol_error(s, p);
-    }
-}
-
 int is_gretl_accessor (const char *s)
 {
     int i, n;
@@ -1047,6 +1030,7 @@ void set_doing_genseries (int s)
 
 static void look_up_word (const char *s, parser *p)
 {
+    int have_dset = (p->dset != NULL && p->dset->v > 0);
     int fsym, err = 0;
 
     fsym = p->sym = function_lookup_with_alias(s);
@@ -1062,10 +1046,11 @@ static void look_up_word (const char *s, parser *p)
 	    } else {
 		GretlType vtype = 0;
 
-		if ((p->idnum = current_series_index(p->dset, s)) >= 0) {
+		if (have_dset &&
+		    (p->idnum = current_series_index(p->dset, s)) >= 0) {
 		    p->sym = USERIES;
 		    p->idstr = gretl_strdup(s);
-		} else if (!strcmp(s, "time")) {
+		} else if (have_dset && !strcmp(s, "time")) {
 		    p->sym = DUM;
 		    p->idnum = DUM_TREND;
 		} else if ((p->uval = user_var_get_value_and_type(s, &vtype)) != NULL) {
@@ -1094,7 +1079,7 @@ static void look_up_word (const char *s, parser *p)
 		} else if (defining_list(p) && varname_match_any(p->dset, s)) {
 		    p->sym = WLIST;
 		    p->idstr = gretl_strdup(s);
-		} else if (!strcmp(s, "t")) {
+		} else if (have_dset && !strcmp(s, "t")) {
 		    /* if "t" has not been otherwise defined, treat it
 		       as an alias for "obs"
 		    */
@@ -1261,7 +1246,7 @@ static void getword (parser *p)
     char word[32];
     int i = 0;
 
-    /* we know the first char is acceptable (and might be '$' or '@') */
+    /* we know the first char is acceptable (and might be '$') */
     word[i++] = p->ch;
     parser_getc(p);
 
@@ -1304,9 +1289,6 @@ static void getword (parser *p)
 	    p->sym = BUNDLE;
 	    p->idstr = gretl_strdup("$model");
 	}
-    } else if (*word == '@') {
-	/* do we actually want to do this? */
-	look_up_string_variable(word, p);
     } else if (*word == '$' && word[1] == '\0' && p->ch == '[') {
 	p->sym = BUNDLE;
 	p->idstr = gretl_strdup("$");
@@ -1314,7 +1296,7 @@ static void getword (parser *p)
 	look_up_word(word, p);
     }
 
-    if (!p->err && *word != '@') {
+    if (!p->err) {
 	word_check_next_char(p);
     }
 
@@ -1432,7 +1414,7 @@ static void parse_number (parser *p)
     }
 }
 
-#define word_start_special(c) (c == '$' || c == '@' || c == '_')
+#define word_start_special(c) (c == '$' || c == '_')
 
 #define lag_range_sym(p) ((p->flags & P_LAGPRSE) && p->ch == 't' && \
                           *p->point == 'o' && \
