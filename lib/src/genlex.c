@@ -57,7 +57,6 @@ struct str_table consts[] = {
     { CONST_MPI_RANK, "$mpirank" },
     { CONST_MPI_SIZE, "$mpisize" },
     { CONST_N_PROC,   "$nproc" },
-    { CONST_SYSINFO,  "$sysinfo" },
     { 0,        NULL }
 };
 
@@ -159,7 +158,14 @@ struct str_table mvars[] = {
     { M_YLIST,   "$ylist" },
     { M_COMMAND, "$command" },
     { M_DEPVAR,  "$depvar" },
-    { M_MODEL,   "$model" },
+    { 0,         NULL }
+};
+
+/* bvars: bundle accessors */
+
+struct str_table bvars[] = {
+    { B_MODEL,   "$model" },
+    { B_SYSINFO, "$sysinfo" },
     { 0,         NULL }
 };
 
@@ -607,6 +613,19 @@ const char *model_var_name (int i)
     return mvars[i].str;
 }
 
+int bundle_var_count (void)
+{
+    int i;
+
+    for (i=0; bvars[i].id != 0; i++) ;
+    return i;
+}
+
+const char *bundle_var_name (int i)
+{
+    return bvars[i].str;
+}
+
 int data_var_count (void)
 {
     int i, n = 0;
@@ -737,6 +756,32 @@ const char *mvarname (int t)
     return "unknown";
 }
 
+int bvar_lookup (const char *s)
+{
+    int i;
+
+    for (i=0; bvars[i].id != 0; i++) {
+	if (!strcmp(s, bvars[i].str)) {
+	    return bvars[i].id;
+	}
+    }
+
+    return 0;
+}
+
+const char *bvarname (int t)
+{
+    int i;
+
+    for (i=0; bvars[i].id != 0; i++) {
+	if (t == bvars[i].id) {
+	    return bvars[i].str;
+	}
+    }
+
+    return "unknown";
+}
+
 int genr_function_word (const char *s)
 {
     int ret = 0;
@@ -748,6 +793,9 @@ int genr_function_word (const char *s)
     if (!ret) {
 	ret = mvar_lookup(s);
     }
+    if (!ret) {
+	ret = bvar_lookup(s);
+    }    
     if (!ret) {
 	ret = const_lookup(s);
     }    
@@ -949,6 +997,13 @@ int is_gretl_accessor (const char *s)
 	}
     }
 
+    for (i=0; bvars[i].id != 0; i++) {
+	n = strlen(bvars[i].str);
+	if (!strncmp(s, bvars[i].str, n)) {
+	    return !isalpha(s[n]);
+	}
+    }    
+
     return 0;
 }
 
@@ -959,15 +1014,11 @@ static void look_up_dollar_word (const char *s, parser *p)
     if ((p->idnum = dvar_lookup(s)) > 0) {
 	p->sym = DVAR;
     } else if ((p->idnum = const_lookup(s)) > 0) {
-	if (p->idnum == CONST_SYSINFO) {
-	    p->sym = BUNDLE;
-	    p->idstr = gretl_strdup("$sysinfo");
-	    p->uval = get_sysinfo_bundle(&p->err);
-	} else {
-	    p->sym = CON;
-	}
+	p->sym = CON;
     } else if ((p->idnum = mvar_lookup(s)) > 0) {
 	p->sym = MVAR;
+    } else if ((p->idnum = bvar_lookup(s)) > 0) {
+	p->sym = DBUNDLE;
     } else if ((bstr = get_built_in_string_by_name(s+1))) {
 	p->sym = STR;
 	p->idstr = gretl_strdup(bstr);
@@ -1193,6 +1244,9 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == BUNDLE) {
 	    /* member from bundle */
 	    p->sym = BMEMB;
+	} else if (p->sym == DBUNDLE) {
+	    /* member from $ bundle */
+	    p->sym = DBMEMB;
 	} else {
 	    p->err = E_PARSE;
 	} 
@@ -1212,10 +1266,8 @@ static void word_check_next_char (parser *p)
 	    p->sym = LISTVAR;
 	} else if (p->sym == BUNDLE) {
 	    p->sym = BMEMB;
-	} else if (p->idnum == M_MODEL) {
-	    p->sym = BMEMB;
-	    p->idstr = gretl_strdup("$model");
-	    p->uval = NULL;
+	} else if (p->sym == DBUNDLE) {
+	    p->sym = DBMEMB;
 	} else {
 	    p->err = E_PARSE;
 	}
@@ -1284,14 +1336,9 @@ static void getword (parser *p)
 
     if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
-	if (p->idnum == M_MODEL) {
-	    p->idnum = 0;
-	    p->sym = BUNDLE;
-	    p->idstr = gretl_strdup("$model");
-	}
-    } else if (*word == '$' && word[1] == '\0' && p->ch == '[') {
-	p->sym = BUNDLE;
-	p->idstr = gretl_strdup("$");
+    } else if (*word == '$' && word[1] == '\0' && (p->ch == '[' || p->ch == '.')) {
+	p->sym = DBUNDLE;
+	p->idnum = B_MODEL;
     } else {
 	look_up_word(word, p);
     }
@@ -1752,6 +1799,10 @@ const char *getsymb (int t, const parser *p)
 	return "UNUM_P";
     } else if (t == UNUM_M) {
 	return "UNUM_M";
+    } else if (t == DBUNDLE) {
+	return "DBUNDLE";
+    } else if (t == DBMEMB) {
+	return "DBMEMB";
     }
 
     if (p != NULL) {

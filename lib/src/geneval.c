@@ -149,6 +149,8 @@ static const char *typestr (int t)
 	return "list";
     case BUNDLE:
 	return "bundle";
+    case DBUNDLE:
+	return "$-bundle";
     case ARRAY:
 	return "array";
     case EMPTY:
@@ -7065,7 +7067,7 @@ static NODE *mvar_from_bundle (const char *key, parser *p)
    key to look up to get content. 
 */
 
-static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
+static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
     GretlType type;
@@ -7074,21 +7076,29 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", l->vname, key);
+    if (l->t == DBUNDLE) {
+	fprintf(stderr, "get_bundle_value: %s[\"%s\"]\n", bvarname(l->v.idnum), key);
+    } else {
+	fprintf(stderr, "get_bundle_value: %s[\"%s\"]\n", l->vname, key);
+    }
 #endif
 
-    if (!strcmp(l->vname, "$") || !strcmp(l->vname, "$model")) {
-	/* Treating the 'last model' as a bundle: we'll first
-	   try for a regular model-related accessor then,
-	   unless we already hit an error, for a "special" 
-	   (a named item of model data that's not represented
-	   by a regular accessor).
-	*/
-	ret = mvar_from_bundle(key, p);
-	if (ret != NULL || p->err) {
-	    return ret;
-	} else {
-	    val = last_model_get_data(key, &type, &size, &p->err);
+    if (l->t == DBUNDLE) {
+	if (l->v.idnum == B_MODEL) {
+	    /* Treating the 'last model' as a bundle: we'll first
+	       try for a regular model-related accessor then,
+	       unless we already hit an error, for a "special" 
+	       (a named item of model data that's not represented
+	       by a regular accessor).
+	    */
+	    ret = mvar_from_bundle(key, p);
+	    if (ret != NULL || p->err) {
+		return ret;
+	    } else {
+		val = last_model_get_data(key, &type, &size, &p->err);
+	    }
+	} else if (l->v.idnum == B_SYSINFO) {
+	    val = sysinfo_bundle_get_data(key, &type, &p->err);
 	}
     } else {
 	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
@@ -7278,6 +7288,25 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
 #endif /* curl supported in libgretl */
 
     return ret;
+}
+
+static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
+{
+    gretl_bundle *b = NULL;
+    
+    if (n->v.idnum == B_MODEL) {
+	b = bundle_from_model(NULL, p->dset, &p->err);
+    } else if (n->v.idnum == B_SYSINFO) {
+	gretl_bundle *tmp = get_sysinfo_bundle(&p->err);
+
+	if (!p->err) {
+	    b = gretl_bundle_copy(tmp, &p->err);
+	}
+    } else {
+	p->err = E_DATA;
+    }
+
+    return b;
 }
 
 static NODE *type_string_node (NODE *n, parser *p)
@@ -10534,7 +10563,7 @@ static GretlType object_var_type (int idx, const char *oname,
 	vtype = GRETL_TYPE_LIST;
     } else if (model_data_string(idx)) {
 	vtype = GRETL_TYPE_STRING;
-    } else if (idx == M_MODEL) {
+    } else if (idx == B_MODEL) {
 	vtype = GRETL_TYPE_BUNDLE;
     }
 
@@ -11160,6 +11189,7 @@ static NODE *eval (NODE *t, parser *p)
     case STR:
     case LIST:
     case BUNDLE:
+    case DBUNDLE:
     case ARRAY:
 	if (compiled(p) && starting(p) && uvar_node(t)) {
 	    node_reattach_data(t, p);
@@ -11539,7 +11569,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* name of bundle plus string */
 	if (l->t == BUNDLE && r->t == STR) {
 	    if (t->t == BMEMB) {
-		ret = get_named_bundle_value(l, r, p);
+		ret = get_bundle_value(l, r, p);
 	    } else {
 		ret = test_bundle_key(l, r, p);
 	    }
@@ -11549,6 +11579,16 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, BUNDLE, l, p);
 	}	    
 	break;
+    case DBMEMB:
+	/* name of $ bundle plus string */
+	if (l->t == DBUNDLE && r->t == STR) {
+	    ret = get_bundle_value(l, r, p);
+	} else if (l->t == DBUNDLE) {
+	    node_type_error(t->t, 1, STR, r, p);
+	} else {
+	    node_type_error(t->t, 0, DBUNDLE, l, p);
+	}	    
+	break;	
     case F_CURL:
 	ret = curl_bundle_node(l, p);
 	break;
@@ -14235,7 +14275,7 @@ static int edit_list (parser *p)
 #define ok_return_type(t) (t == NUM || t == SERIES || t == MAT || \
 			   t == LIST || t == DUM || t == EMPTY || \
                            t == STR || t == BUNDLE || t == ARRAY || \
-			   t == U_ADDR)
+			   t == U_ADDR || t == DBUNDLE)
 
 static int gen_check_return_type (parser *p)
 {
@@ -14293,7 +14333,7 @@ static int gen_check_return_type (parser *p)
 	    err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
-	if (r->t != BUNDLE && r->t != EMPTY) {
+	if (r->t != BUNDLE && r->t != DBUNDLE && r->t != EMPTY) {
 	    err = E_TYPES;
 	}
     } else if (p->targ == BMEMB) {
@@ -14679,8 +14719,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else {
 	    /* full assignment of RHS bundle */
 	    gretl_bundle *b;
-	    
-	    if (is_tmp_node(r) || (p->flags & P_UFRET)) {
+
+	    if (r->t == DBUNDLE) {
+		b = bvar_get_bundle(r, p);
+	    } else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 		/* grabbing r->v.b is OK */
 		b = r->v.b;
 	    } else {

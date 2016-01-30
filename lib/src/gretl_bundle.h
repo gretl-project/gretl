@@ -151,6 +151,10 @@ int bundle_contains_data (gretl_bundle *b, void *data);
 
 gretl_bundle *get_sysinfo_bundle (int *err);
 
+void *sysinfo_bundle_get_data (const char *key,
+			       GretlType *type, 
+			       int *err);
+
 gretl_bundle *bundle_from_model (MODEL *pmod,
 				 DATASET *dset,
 				 int *err);

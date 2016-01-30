@@ -112,14 +112,16 @@ enum {
   /* 80 */    ELEMENT,    /* element of list or array, [...] syntax) */
 	      STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
+	      DBUNDLE,    /* $ bundle accessor */
 	      BMEMB,      /* member of bundle */
+	      DBMEMB,     /* member of $ bundle */
 	      ARRAY,      /* generic array object */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
-              DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
+  /* 90 */    DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
-  /* 90 */    UFUN,	  /* user-defined function */
+	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
 	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
@@ -127,8 +129,8 @@ enum {
               INC,        /* increment */
               DEC,        /* decrement */
               QUERY,      /* ternary "?" expression */
-              UNDEF,      /* undefined (in "query" context only) */
-              EOT,	  /* end of transmission */
+ /* 100 */    UNDEF,      /* undefined (allowed in "query" context only) */
+	      EOT,	  /* end of transmission */
 	      UNK 
 };
 
@@ -488,7 +490,8 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSLRAW || s == SUBSL || s == LAG || \
-                   s == OBS || s == BMEMB || s == ELEMENT || s == OSL)
+                   s == OBS || s == BMEMB || s == DBMEMB || \
+		   s == ELEMENT || s == OSL)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
@@ -683,6 +686,7 @@ void parser_free_aux_nodes (parser *p);
 const char *constname (int c);
 const char *dvarname (int t);
 const char *mvarname (int t);
+const char *bvarname (int t);
 const char *dumname (int t);
 int is_gretl_accessor (const char *s);
 int mvar_lookup (const char *s);
@@ -711,5 +715,7 @@ int model_var_count (void);
 const char *model_var_name (int i);
 int data_var_count (void);
 const char *data_var_name (int i);
+int bundle_var_count (void);
+const char *bundle_var_name (int i);
 int gretl_const_count (void);
 const char *gretl_const_name (int i);

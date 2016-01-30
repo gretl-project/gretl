@@ -1745,6 +1745,19 @@ gretl_bundle *get_sysinfo_bundle (int *err)
     return sysinfo_bundle;
 }
 
+void *sysinfo_bundle_get_data (const char *key, GretlType *type, 
+			       int *err)
+{
+    gretl_bundle *b = get_sysinfo_bundle(err);
+    void *ret = NULL;
+
+    if (b != NULL) {
+	ret = gretl_bundle_get_data(b, key, type, NULL, err);
+    }
+
+    return ret;
+}
+
 static gretl_matrix *matrix_from_list (const int *list)
 {
     gretl_matrix *m = NULL;
@@ -1856,7 +1869,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	}
     }
 
-    for (i=M_LIST_MAX+1; i<M_STR_MAX && !*err; i++) {
+    for (i=M_LIST_MAX+1; i<M_MAX && !*err; i++) {
 	s = NULL;
 	if (i == M_DEPVAR) {
 	    s = gretl_model_get_depvar_name(pmod, dset);

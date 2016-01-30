@@ -103,6 +103,8 @@ static NODE *newref (parser *p, int t)
 	} else if (t == BUNDLE) {
 	    n->vname = p->idstr;
 	    n->v.b = p->uval;
+	} else if (t == DBUNDLE) {
+	    n->v.idnum = p->idnum;
 	} else if (t == ARRAY) {
 	    n->vname = p->idstr;
 	    n->v.a = p->uval;
@@ -296,6 +298,7 @@ static NODE *base (parser *p, NODE *up)
     case ULIST:
     case WLIST:
     case BUNDLE:
+    case DBUNDLE:
     case ARRAY:
     case USTR:
     case UNUM_P:
@@ -1236,6 +1239,12 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, BUNDLE);
 	    t->v.b2.r = get_bundle_member_name(p);
 	}
+    } else if (sym == DBMEMB) {
+	t = newb2(sym, NULL, NULL);
+	if (t != NULL) {
+	    t->v.b2.l = newref(p, DBUNDLE);
+	    t->v.b2.r = get_bundle_member_name(p);
+	}	
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
@@ -1307,7 +1316,7 @@ static NODE *powterm (parser *p)
 	t = base(p, NULL);
     }
 
-    if (t != NULL && (sym == ELEMENT || sym == BMEMB)) {
+    if (t != NULL && (sym == ELEMENT || sym == BMEMB || sym == DBMEMB)) {
 	if (p->sym == G_LBR) {
 	    /* followed by subspec */
 	    t = newb2(OSL, t, NULL);
@@ -1317,7 +1326,7 @@ static NODE *powterm (parser *p)
 		    get_slice_parts(t->v.b2.r, p);
 		}
 	    }
-	    if (sym == BMEMB && p->sym == G_LBR) {
+	    if ((sym == BMEMB || sym == DBMEMB) && p->sym == G_LBR) {
 		/* followed by another subspec */
 		t = newb2(OSL, t, NULL);
 		if (t != NULL) {
