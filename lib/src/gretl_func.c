@@ -35,6 +35,7 @@
 #include "flow_control.h"
 #include "kalman.h"
 #include "system.h"
+#include "genr_optim.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -43,7 +44,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define LOOPSAVE 1
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */

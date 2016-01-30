@@ -35,6 +35,7 @@
 #include "version.h"
 #include "csvdata.h"
 #include "uservar_priv.h"
+#include "genr_optim.h"
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -10873,8 +10874,6 @@ static void reattach_data_error (NODE *n, parser *p, GretlType type)
 	    n->t, getsymb(n->t, p), gretl_type_get_name(type));
     p->err = E_TYPES;
 }
-
-#define ALT_UVAR_HANDLING 0
 
 #if ALT_UVAR_HANDLING
 

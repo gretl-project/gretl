@@ -32,14 +32,13 @@
 #include "system.h"
 #include "genparse.h"
 #include "gretl_string_table.h"
+#include "genr_optim.h"
 
 #include <time.h>
 #include <unistd.h>
 
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
-
-#define LOOPSAVE 1
 
 #include <gmp.h>
 
