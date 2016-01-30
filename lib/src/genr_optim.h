@@ -25,7 +25,7 @@
    gretl_func.c and geneval.c
 */
 
-#define LOOPSAVE 0           /* not yet fully safe */
+#define LOOPSAVE 1           /* keep an eye on this! */
 #define ALT_UVAR_HANDLING 0  /* just experimental */
 
 #endif /* GENR_OPTIM_H_ */

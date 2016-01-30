@@ -9510,9 +9510,6 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 		Z[k++] = p->dset->Z[list[j]];
 	    }	    
 	} else if (n->t == SERIES) {
-	    if (useries_node(n) && compiled(p)) {
-		reattach_series(n, p);
-	    } 
 	    Z[k++] = n->v.xvec;
 	}
     }
@@ -10857,13 +10854,13 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 
 static void reattach_series (NODE *n, parser *p)
 {
-    int v = n->vnum;
+    n->vnum = current_series_index(p->dset, n->vname);
 
-    if (v >= p->dset->v) {
-	fprintf(stderr, "SERIES node, ID = %d but p->dset->v = %d\n", v, p->dset->v);
+    if (n->vnum < 0) {
+	fprintf(stderr, "SERIES node: %s is not a valid series\n", n->vname);
 	p->err = E_DATA;
     } else {
-	n->v.xvec = p->dset->Z[v];
+	n->v.xvec = p->dset->Z[n->vnum];
     }
 }
 
@@ -14900,8 +14897,10 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     }
 
 #if EDEBUG
-    fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', callcount=%d\n", 
-	    getsymb(p->targ, NULL), p->lh.name, getsymb(p->op, NULL), p->callcount);
+    fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
+	    "callcount=%d, compiled=%d\n", 
+	    getsymb(p->targ, NULL), p->lh.name, getsymb(p->op, NULL),
+	    p->callcount, compiled(p));
 #endif
 
     if (p->targ == SERIES) {
