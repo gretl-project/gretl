@@ -73,8 +73,6 @@
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
 
-#define mark_node_fragile(n) (n->flags &= ~TMP_NODE)
-
 #define nullmat_ok(f) (f == F_ROWS || f == F_COLS || f == F_DET || \
 		       f == F_LDET || f == F_DIAG || f == F_TRANSP || \
 		       f == F_VEC || f == F_VECH || f == F_UNVECH || \
@@ -381,49 +379,6 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 
     free(t);
 }
-
-#if ALT_UVAR_HANDLING
-
-static void reset_tree (NODE *t, parser *p, const char *msg)
-{
-    if (t == NULL) {
-	return;
-    }
-
-#if EDEBUG
-    fprintf(stderr, "reset %-8s: starting with t at %p (type %03d, %s)\n", msg, 
-	    (void *) t, t->t, getsymb(t->t, NULL));
-#endif
-
-    if (bnsym(t->t)) {
-	int i;
-
-	for (i=0; i<t->v.bn.n_nodes; i++) {
-	    reset_tree(t->v.bn.n[i], p, msg);
-	}
-    } else if (b3sym(t->t)) {
-	reset_tree(t->v.b3.l, p, msg);
-	reset_tree(t->v.b3.m, p, msg);
-	reset_tree(t->v.b3.r, p, msg);
-    } else if (b2sym(t->t)) {
-	reset_tree(t->v.b2.l, p, msg);
-	reset_tree(t->v.b2.r, p, msg);
-    } else if (b1sym(t->t)) {
-	reset_tree(t->v.b1.b, p, msg);
-    } 
-
-#if 1 || EDEBUG
-    fprintf(stderr, "%-8s: reset node at %p (type %03d, %s), uv=%p\n", msg, 
-	    (void *) t, t->t, getsymb(t->t, NULL), (void *) t->uv);
-#endif
-
-    if (t->uv != NULL) {
-	/* the actual reset action */
-	t->uv = NULL;
-    }
-}
-
-#endif
 
 void parser_free_aux_nodes (parser *p)
 {
@@ -4307,10 +4262,11 @@ static NODE *trend_node (parser *p)
 	    p->err = gen_time(p->dset, 1);
 	}
 	if (!p->err) {
-	    ret->vname = gretl_strdup("time");
-	    ret->vnum = series_index(p->dset, "time");
-	    ret->v.xvec = p->dset->Z[ret->vnum];
-	    mark_node_fragile(ret);
+	    int vnum = series_index(p->dset, "time");
+	    
+	    ret->v.xvec = p->dset->Z[vnum];
+	    /* not TMP_NODE because we're borrowing a Z column */
+	    ret->flags &= ~TMP_NODE;
 	}
     }
 
@@ -4551,10 +4507,9 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
 		    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
 		    p->err = E_DATA;
 		} else {
-		    ret->flags = AUX_NODE; /* not TMP_NODE! */
+		    /* not TMP_NODE, because using dset->Z member! */
+		    ret->flags = AUX_NODE;
 		    ret->v.xvec = p->dset->Z[v];
-		    ret->vnum = v;
-		    ret->vname = gretl_strdup(p->dset->varname[v]);
 		}
 	    }
 	}
@@ -10950,18 +10905,12 @@ static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
 	reattach_series(n, p);
-    } else if (n->t == DBUNDLE) {
-	/* built-in bundle */
-	return;
     } else {
 	GretlType type = 0;
 	void *data = NULL;
 
-	fprintf(stderr, "reattach: %s, uv=%p\n", n->vname, n->uv);
-
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
-	    fprintf(stderr, " uvar_by_name: %p\n", n->uv);
 	    p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	}
 
@@ -10982,7 +10931,6 @@ static void node_reattach_data (NODE *n, parser *p)
 		n->v.m = (gretl_matrix *) data;
 #endif
 	    } else {
-		fprintf(stderr, " here: type=%d\n", type);
 		reattach_data_error(n, p, type);
 		return;
 	    }
@@ -11014,9 +10962,6 @@ static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
 	reattach_series(n, p);
-    } else if (n->t == DBUNDLE) {
-	/* built-in bundle */
-	return;
     } else {
 	GretlType type = 0;
 	void *data;
@@ -11227,6 +11172,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     switch (t->t) {
+    case DBUNDLE:
     case MSPEC:
     case EMPTY:
 	ret = t;
@@ -11237,7 +11183,6 @@ static NODE *eval (NODE *t, parser *p)
     case STR:
     case LIST:
     case BUNDLE:
-    case DBUNDLE:
     case ARRAY:
 	if (compiled(p) && starting(p) && uvar_node(t)) {
 	    node_reattach_data(t, p);
@@ -13813,6 +13758,11 @@ static int LHS_matrix_reusable (parser *p)
     gretl_matrix *m = get_matrix_by_name(p->lh.name);
     int ok = 0;
 
+#if 0
+    fprintf(stderr, "LHS_matrix_reusable: m=%p, m0=%p\n",
+	    (void *) m, (void *) p->lh.m0);
+#endif
+
     p->lh.m0 = m;
     if (m == NULL) {
 	return 0;
@@ -15222,58 +15172,53 @@ void gen_cleanup (parser *p)
 
 #if ALT_UVAR_HANDLING
 
+#define ALT_DEBUG 0
+
 static void uvnode_reset (void *p1, void *p2)
 {
-    NODE *t = p1;
-    
-    fprintf(stderr, "uvnode reset: %p (type %03d, %s)\n", 
-	    (void *) t, t->t, getsymb(t->t, NULL));
-    t->uv = NULL;
+    NODE *n = p1;
+
+#if ALT_DEBUG
+    fprintf(stderr, " reset %p (type %03d, %s)\n", 
+	    (void *) n, n->t, getsymb(n->t, NULL));
+#endif
+    n->uv = NULL;
 }
 
-void genr_reset_uvars (parser *p)
+static void real_reset_uvars (parser *p, int level)
 {
-    fprintf(stderr, "*** genr_reset_uvars, %p ***\n", (void *) p);
-
     if (p->err) {
 	return;
     }
 
-    if (p->uvnodes == NULL) {
-	fprintf(stderr, " no uvnodes\n");
+#if ALT_DEBUG
+    if (level == 0) {
+	fprintf(stderr, "*** genr_reset_uvars, %p (main: %s '%s') ***\n", (void *) p,
+		getsymb(p->targ, p), p->lh.name);
     } else {
-	fprintf(stderr, "number of uvnodes: %d\n", (int) g_slist_length(p->uvnodes));
+	fprintf(stderr, "*** genr_reset_uvars, %p (child) ***\n", (void *) p);
+    }	
+#endif
+
+    if (p->uvnodes != NULL) {
+#if ALT_DEBUG
+	fprintf(stderr, " number of uvar nodes: %d\n", (int) g_slist_length(p->uvnodes));
+#endif
 	g_slist_foreach(p->uvnodes, uvnode_reset, NULL);
 	g_slist_free(p->uvnodes);
 	p->uvnodes = NULL;
     }
 
-    /* The above should be sufficient, I think, but for testing
-       I'm temporarily retaining the following, which should expose
-       failure to reset any relevant nodes.
-    */
-
     if (p->subp != NULL) {
-	genr_reset_uvars(p->subp);
-    }
-
-    if (p->tree != p->ret) {
-	reset_tree(p->tree, p, "p->tree");
-    }
-
-    reset_tree(p->ret, p, "p->ret");
-
-    if (p->aux != NULL) {
-	int i;
-	
-	for (i=0; i<p->n_aux; i++) {
-	    if (p->aux[i] != p->ret) {
-		reset_tree(p->aux[i], p, "Aux");
-	    }
-	}
+	real_reset_uvars(p->subp, 1);
     }
 
     p->lh.uv = NULL;
+}
+
+void genr_reset_uvars (parser *p)
+{
+    real_reset_uvars(p, 0);
 }
 
 #else

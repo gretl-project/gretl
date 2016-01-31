@@ -26,6 +26,6 @@
 */
 
 #define LOOPSAVE 1           /* keep an eye on this! */
-#define ALT_UVAR_HANDLING 0  /* just experimental */
+#define ALT_UVAR_HANDLING 0  /* experimental, for now */
 
 #endif /* GENR_OPTIM_H_ */
