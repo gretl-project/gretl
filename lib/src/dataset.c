@@ -3256,7 +3256,7 @@ int renumber_series_with_checks (const char *s, int fixmax,
     if (!err && gretl_messages_on()) {
 	pprintf(prn, _("Renumbered %s as variable %d\n"),
 		vname, v_new);
-	maybe_list_vars(dset, prn);
+	maybe_list_series(dset, prn);
     }
 
     return err;

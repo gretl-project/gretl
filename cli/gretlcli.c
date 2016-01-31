@@ -674,7 +674,7 @@ int main (int argc, char *argv[])
 
     /* print list of variables */
     if (data_status) {
-	varlist(dset, prn);
+	list_series(dset, prn);
     }
 
     if (!na(scriptval)) {
@@ -974,7 +974,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     data_status = 1;
 
     if (dset->v > 0 && !dbdata && !(opt & OPT_Q)) {
-	varlist(dset, prn);
+	list_series(dset, prn);
     }
 
     if (http) {
@@ -1159,7 +1159,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	} else if (renumber && !batch) {
 	    pputs(prn, _("Take note: variables have been renumbered"));
 	    pputc(prn, '\n');
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	}
 	break;
 

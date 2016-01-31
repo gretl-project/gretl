@@ -1648,7 +1648,7 @@ static int lib_open_append (ExecState *s,
     }
 
     if (dset->v > 0 && !dbdata && !quiet) {
-	varlist(dset, prn);
+	list_series(dset, prn);
     }
 
     if (http) {
@@ -2457,7 +2457,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SDIFF:
 	err = list_diffgenr(listcpy, cmd->ci, dset);
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
@@ -2465,7 +2465,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case ORTHDEV:
 	err = list_orthdev(listcpy, dset);
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
@@ -2473,7 +2473,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case DUMMIFY:
 	err = list_dumgenr(&listcpy, dset, cmd->opt);
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
@@ -2481,7 +2481,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case LAGS:
 	err = list_laggenr(&listcpy, cmd->order, dset, OPT_NONE); 
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
@@ -2489,7 +2489,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case LOGS:
 	err = list_loggenr(listcpy, dset);
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
@@ -2497,7 +2497,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SQUARE:
 	err = list_xpxgenr(&listcpy, dset, cmd->opt);
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
@@ -2531,7 +2531,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case RENAME:
 	err = dataset_rename_series(dset, cmd->auxint, cmd->parm2);
 	if (!err) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	}
 	break;
 
@@ -2576,7 +2576,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->opt & OPT_A) {
 	    list_ok_dollar_vars(dset, prn);
 	} else {
-	    varlist(dset, prn);
+	    list_series(dset, prn);
 	}
 	break;
 
@@ -2932,7 +2932,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case LEVERAGE:
 	err = leverage_test(model, dset, cmd->opt, prn);
 	if (!err && (cmd->opt & OPT_S) && !(cmd->opt & OPT_Q)) {
-	    maybe_list_vars(dset, prn);
+	    maybe_list_series(dset, prn);
 	}
 	break;
 

@@ -60,9 +60,9 @@ char *maybe_trim_varname (char *targ, const char *src);
 
 int max_namelen_in_list (const int *list, const DATASET *dset);
 
-void varlist (const DATASET *dset, PRN *prn);
+void list_series (const DATASET *dset, PRN *prn);
 
-void maybe_list_vars (const DATASET *dset, PRN *prn);
+void maybe_list_series (const DATASET *dset, PRN *prn);
 
 int printdata (const int *list, const char *mstr,
 	       const DATASET *dset, 

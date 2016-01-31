@@ -1741,14 +1741,14 @@ int max_namelen_in_list (const int *list, const DATASET *dset)
 }
 
 /**
- * varlist:
+ * list_series:
  * @dset: data information struct.
  * @prn: gretl printing struct
  *
- * Prints a list of the names of the variables currently defined.
+ * Prints a list of the names of the series currently defined.
  */
 
-void varlist (const DATASET *dset, PRN *prn)
+void list_series (const DATASET *dset, PRN *prn)
 {
     int fd = gretl_function_depth();
     const char *name;
@@ -1810,18 +1810,18 @@ void varlist (const DATASET *dset, PRN *prn)
 }
 
 /**
- * maybe_list_vars:
+ * maybe_list_series:
  * @dset: data information struct.
  * @prn: gretl printing struct
  *
- * Prints a list of the names of the variables currently defined,
+ * Prints a list of the names of the series currently defined,
  * unless gretl messaging is turned off.
  */
 
-void maybe_list_vars (const DATASET *dset, PRN *prn)
+void maybe_list_series (const DATASET *dset, PRN *prn)
 {
     if (gretl_messages_on() && !gretl_looping_quietly()) {
-	varlist(dset, prn);
+	list_series(dset, prn);
     }
 }
 

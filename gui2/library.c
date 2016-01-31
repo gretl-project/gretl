@@ -9462,7 +9462,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    register_data(OPENED_VIA_CLI);
 	}
 	if (!(cmd->opt & OPT_Q)) { 
-	    varlist(dset, prn);
+	    list_series(dset, prn);
 	}
     }
 
@@ -9598,7 +9598,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         if (!err) { 
 	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
-            varlist(dset, prn);
+            list_series(dset, prn);
         }
 	break;
 
@@ -9630,7 +9630,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 		if (renumber) {
 		    pputs(prn, _("Take note: variables have been renumbered"));
 		    pputc(prn, '\n');
-		    maybe_list_vars(dset, prn);
+		    maybe_list_series(dset, prn);
 		} else if (cmd->opt & OPT_D) {
 		    sync_db_windows();
 		}
