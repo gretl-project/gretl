@@ -2637,12 +2637,15 @@ static char OB_parallel[12];
 
 #include <dlfcn.h>
 
-static char *(*OB_get_corename) (void);
-static int (*OB_get_parallel) (void);
-
 static void register_openblas_details (void)
 {
-    void *handle =  dlopen(NULL, RTLD_NOW);
+    static char *(*OB_get_corename) (void);
+    static int (*OB_get_parallel) (void);
+    static void *handle;
+
+    if (handle == NULL) {
+	handle = dlopen(NULL, RTLD_NOW);
+    }
 
     if (handle != NULL) {
 	OB_get_corename = dlsym(handle, "openblas_get_corename");
