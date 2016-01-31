@@ -207,6 +207,8 @@ void genr_unset_na_check (GENERATOR *genr);
 
 int genr_get_series_max (GENERATOR *genr);
 
+void genr_reset_uvars (GENERATOR *genr);
+
 int function_from_string (const char *s);
 
 int function_lookup (const char *s);

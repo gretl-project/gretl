@@ -291,7 +291,7 @@ static int data_in_tree (NODE *t, short type, void *ptr)
    assignment, and if it's not passed on it should be freed
    on completion of "genr". (So nota bene: if it's assigned 
    elsewhere, the pointer on the aux node itself must then 
-   be set to NULL.)
+   be set to NULL to avoid double-freeing.)
 
    A fragile node is one whose data pointer is not
    independently allocated; it actually "belongs to someone
@@ -381,6 +381,49 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 
     free(t);
 }
+
+#if ALT_UVAR_HANDLING
+
+static void reset_tree (NODE *t, parser *p, const char *msg)
+{
+    if (t == NULL) {
+	return;
+    }
+
+#if EDEBUG
+    fprintf(stderr, "reset %-8s: starting with t at %p (type %03d, %s)\n", msg, 
+	    (void *) t, t->t, getsymb(t->t, NULL));
+#endif
+
+    if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    reset_tree(t->v.bn.n[i], p, msg);
+	}
+    } else if (b3sym(t->t)) {
+	reset_tree(t->v.b3.l, p, msg);
+	reset_tree(t->v.b3.m, p, msg);
+	reset_tree(t->v.b3.r, p, msg);
+    } else if (b2sym(t->t)) {
+	reset_tree(t->v.b2.l, p, msg);
+	reset_tree(t->v.b2.r, p, msg);
+    } else if (b1sym(t->t)) {
+	reset_tree(t->v.b1.b, p, msg);
+    } 
+
+#if 1 || EDEBUG
+    fprintf(stderr, "%-8s: reset node at %p (type %03d, %s), uv=%p\n", msg, 
+	    (void *) t, t->t, getsymb(t->t, NULL), (void *) t->uv);
+#endif
+
+    if (t->uv != NULL) {
+	/* the actual reset action */
+	t->uv = NULL;
+    }
+}
+
+#endif
 
 void parser_free_aux_nodes (parser *p)
 {
@@ -10907,15 +10950,19 @@ static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
 	reattach_series(n, p);
-    } else if (n->t == BUNDLE && n->vname[0] == '$') {
+    } else if (n->t == DBUNDLE) {
 	/* built-in bundle */
 	return;
     } else {
 	GretlType type = 0;
 	void *data = NULL;
 
+	fprintf(stderr, "reattach: %s, uv=%p\n", n->vname, n->uv);
+
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
+	    fprintf(stderr, " uvar_by_name: %p\n", n->uv);
+	    p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	}
 
 	if (n->uv != NULL) {
@@ -10935,6 +10982,7 @@ static void node_reattach_data (NODE *n, parser *p)
 		n->v.m = (gretl_matrix *) data;
 #endif
 	    } else {
+		fprintf(stderr, " here: type=%d\n", type);
 		reattach_data_error(n, p, type);
 		return;
 	    }
@@ -10966,7 +11014,7 @@ static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
 	reattach_series(n, p);
-    } else if (n->t == BUNDLE && n->vname[0] == '$') {
+    } else if (n->t == DBUNDLE) {
 	/* built-in bundle */
 	return;
     } else {
@@ -14797,6 +14845,14 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data = NULL;
 
+    if (p->targ == SERIES) {
+	p->lh.v = current_series_index(p->dset, p->lh.name);
+	if (p->lh.v < 0) {
+	    p->lh.v = 0;
+	}
+	return;
+    }    
+
     if (p->lh.uv == NULL) {
 	p->lh.uv = get_user_var_by_name(p->lh.name);
     }
@@ -14841,6 +14897,14 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data;
+
+    if (p->targ == SERIES) {
+	p->lh.v = current_series_index(p->dset, p->lh.name);
+	if (p->lh.v < 0) {
+	    p->lh.v = 0;
+	}
+	return;
+    }
 	
     data = user_var_get_value_and_type(p->lh.name, type);
 
@@ -14945,12 +15009,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	    p->callcount, compiled(p));
 #endif
 
-    if (p->targ == SERIES) {
-	if (p->lh.v >= p->dset->v) {
-	    /* recorded series ID is no longer valid */
-	    p->lh.v = 0;
-	}
-    } else if (*p->lh.name != '\0') {
+    if (*p->lh.name != '\0') {
 	maybe_update_lhs_uvar(p, &lhtype);
     }
 
@@ -15024,6 +15083,7 @@ static void parser_init (parser *p, const char *str,
     p->n_aux = 0;
     p->aux_i = 0;
 
+    p->uvnodes = NULL;
     p->subp = NULL;
 
     p->callcount = 0;
@@ -15160,6 +15220,71 @@ void gen_cleanup (parser *p)
     }
 }
 
+#if ALT_UVAR_HANDLING
+
+static void uvnode_reset (void *p1, void *p2)
+{
+    NODE *t = p1;
+    
+    fprintf(stderr, "uvnode reset: %p (type %03d, %s)\n", 
+	    (void *) t, t->t, getsymb(t->t, NULL));
+    t->uv = NULL;
+}
+
+void genr_reset_uvars (parser *p)
+{
+    fprintf(stderr, "*** genr_reset_uvars, %p ***\n", (void *) p);
+
+    if (p->err) {
+	return;
+    }
+
+    if (p->uvnodes == NULL) {
+	fprintf(stderr, " no uvnodes\n");
+    } else {
+	fprintf(stderr, "number of uvnodes: %d\n", (int) g_slist_length(p->uvnodes));
+	g_slist_foreach(p->uvnodes, uvnode_reset, NULL);
+	g_slist_free(p->uvnodes);
+	p->uvnodes = NULL;
+    }
+
+    /* The above should be sufficient, I think, but for testing
+       I'm temporarily retaining the following, which should expose
+       failure to reset any relevant nodes.
+    */
+
+    if (p->subp != NULL) {
+	genr_reset_uvars(p->subp);
+    }
+
+    if (p->tree != p->ret) {
+	reset_tree(p->tree, p, "p->tree");
+    }
+
+    reset_tree(p->ret, p, "p->ret");
+
+    if (p->aux != NULL) {
+	int i;
+	
+	for (i=0; i<p->n_aux; i++) {
+	    if (p->aux[i] != p->ret) {
+		reset_tree(p->aux[i], p, "Aux");
+	    }
+	}
+    }
+
+    p->lh.uv = NULL;
+}
+
+#else
+
+void genr_reset_uvars (parser *p)
+{
+    return;
+}
+
+#endif
+
 static void maybe_set_return_flags (parser *p)
 {
     NODE *t = p->tree;
@@ -15255,7 +15380,8 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     lex(p);
     if (p->err) {
-	fprintf(stderr, "realgen: exiting on lex() error %d\n", p->err);
+	fprintf(stderr, "realgen %p ('%s'): exiting on lex() error %d\n",
+		(void *) p, s, p->err);
 	return p->err;
     }
 

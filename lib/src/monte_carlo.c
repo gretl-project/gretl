@@ -3068,6 +3068,39 @@ static int maybe_preserve_loop (LOOPSET *loop)
     return loop_is_attached(loop);
 }
 
+#endif /* LOOPSAVE */
+
+#if LOOPSAVE && ALT_UVAR_HANDLING
+
+/* loop_reset_genrs(): may be called on exit from a function
+   onto which one or more "compiled" loops have been attached.
+   The point is to reset the stored addresses of all "uservars"
+   to NULL, since in general on a subsequent invocation of
+   the function a variable of a given name will occupy a
+   different memory address. A reset to NULL will force a new
+   lookup of these variables by name within "genr".
+*/
+
+void loop_reset_genrs (LOOPSET *loop)
+{
+    if (loop->cmds != NULL) {
+	int i;
+	
+	for (i=0; i<loop->n_cmds; i++) {
+	    if (loop->cmds[i].genr != NULL) {
+		genr_reset_uvars(loop->cmds[i].genr);
+	    }	    
+	}
+    }
+}
+
+#else /* !(LOOPSAVE && ALT_UVAR_HANDLING) */
+
+void loop_reset_genrs (LOOPSET *loop)
+{
+    return;
+}
+
 #endif
 
 static void abort_loop_execution (ExecState *s)

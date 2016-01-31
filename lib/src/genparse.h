@@ -640,6 +640,7 @@ struct parser_ {
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
+    GSList *uvnodes;   
     /* below: parser state variables */
     int callcount;
     int dset_n;

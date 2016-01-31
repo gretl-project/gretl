@@ -7133,6 +7133,23 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     return err;
 }
 
+#if LOOPSAVE && ALT_UVAR_HANDLING
+
+/* reset any saved "genr" structs in context of saved loops */
+
+static void reset_saved_loops (ufunc *u)
+{
+    int i;
+
+    for (i=0; i<u->n_lines; i++) {
+	if (u->lines[i].loop != NULL) {
+	    loop_reset_genrs(u->lines[i].loop);
+	}
+    }
+}
+
+#endif 
+
 static void set_pkgdir (fnpkg *pkg)
 {
     const char *p = strrchr(pkg->fname, SLASH);
@@ -7831,7 +7848,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 # if LSDEBUG	    
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
-# endif	    
+# endif
 	    if (!gretl_if_state_false()) {
 		/* not blocked, so execute the loop code */
 		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
@@ -7952,6 +7969,12 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
     function_assign_returns(call, rtype, dset, ret, 
 			    descrip, prn, &err);
+
+#if LOOPSAVE && ALT_UVAR_HANDLING
+    if (!err) {
+	reset_saved_loops(call->fun);
+    }
+#endif    
 
     gretl_exec_state_clear(&state);
 

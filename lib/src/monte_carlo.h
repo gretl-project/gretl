@@ -40,4 +40,6 @@ int model_is_in_loop (const MODEL *pmod);
 
 int scalar_is_read_only_index (const char *name);
 
+void loop_reset_genrs (LOOPSET *loop);
+
 #endif /* MONTE_CARLO_H */
