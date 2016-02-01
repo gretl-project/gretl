@@ -346,10 +346,12 @@ int chinese_locale (void)
 {
 #ifdef WIN32
     return (gretl_cpage == 950);
-#else
+#elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
     return (loc != NULL && !strncmp(loc, "zh", 2));
+#else
+    return 0;
 #endif
 }
 
@@ -357,10 +359,12 @@ int japanese_locale (void)
 {
 #ifdef WIN32
     return (gretl_cpage == 932);
-#else
+#elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
     return (loc != NULL && !strncmp(loc, "ja", 2));
+#else
+    return 0;
 #endif
 }
 
@@ -368,11 +372,13 @@ int east_asian_locale (void)
 {
 #ifdef WIN32
     return (gretl_cpage == 950 || gretl_cpage == 932);
-#else
+#elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
     return (loc != NULL && (!strncmp(loc, "zh", 2) ||
 			    !strncmp(loc, "ja", 2)));
+#else
+    return 0;
 #endif    
 }
 
