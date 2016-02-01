@@ -96,6 +96,14 @@ int gretl_recode_file (const char *path1,
 		       const char *to_set,
 		       PRN *prn);
 
+int chinese_locale (void);
+
+int japanese_locale (void);
+
+int east_asian_locale (void);
+
+int get_utf_width (const char *str, int width);
+
 #ifdef ENABLE_NLS
 
 char *iso_gettext (const char *msgid);
@@ -108,15 +116,7 @@ void set_native_utf8 (int s);
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 
-int get_utf_width (const char *str, int width);
-
 int get_translated_width (const char *str);
-
-int chinese_locale (void);
-
-int japanese_locale (void);
-
-int east_asian_locale (void);
 
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)

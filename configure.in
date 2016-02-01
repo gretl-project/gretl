@@ -333,7 +333,6 @@ have_audio=no)
 
 AC_PROG_CC
 
-dnl AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
 AC_CANONICAL_HOST
 AC_PROG_INSTALL
 
