@@ -372,9 +372,10 @@ leading double-dash in an "option" (or "options") line. Besides that,
 As with \cmd{gnuplot}, the default is to show a linear fit in an X-Y
 scatter if it's significant at the 10 percent level.
 
-Here's a simple example, the plot spec from the "bandplot" package,
-which shows how to achieve the same result via the \cmd{command} and
-the \cmd{plot} block, respectively:
+Here's a simple example, the plot specification from the ``bandplot''
+package, which shows how to achieve the same result via the
+\cmd{gnuplot} command and a \cmd{plot} block, respectively---the
+latter occupies a few more lines but is clearer
 
 \begin{code}
    gnuplot 1 2 3 4 --with-lines --matrix=plotmat \

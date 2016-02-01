@@ -607,9 +607,11 @@ the newly created variables governed by the string argument.
 %
 \begin{code}
 function list mavg (series y, string vname)
-   series @vname_2 = (y+y(-1)) / 2
-   series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
-   list retlist = @vname_2 @vname_4
+   list retlist = null
+   string newname = sprintf("%s_2", vname)
+   retlist += genseries(newname, (y+y(-1)) / 2)
+   newname = sprintf("%s_4", vname)
+   retlist += genseries(newname, (y+y(-1)+y(-2)+y(-3)) / 4)
    return retlist
 end function
 
