@@ -536,6 +536,7 @@ static int gen_special (const char *s, const char *line,
     const char *msg = NULL;
     int orig_v = dset->v;
     int write_label = 0;
+    int vnum = -1;
     int err = 0;
 
     if (dset == NULL || dset->n == 0) {
@@ -560,16 +561,16 @@ static int gen_special (const char *s, const char *line,
 	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "time")) {
-	err = gen_time(dset, 1);
+	err = gen_time(dset, 1, &vnum);
 	write_label = 1;
     } else if (!strcmp(s, "index")) {
-	err = gen_time(dset, 0);
+	err = gen_time(dset, 0, &vnum);
 	write_label = 1;
     } else if (!strcmp(s, "unit")) {
-	err = gen_unit(dset);
+	err = gen_unit(dset, &vnum);
 	write_label = 1;
     } else if (!strcmp(s, "weekday")) {
-	err = gen_wkday(dset);
+	err = gen_wkday(dset, &vnum);
 	write_label = 1;
     } 
 
@@ -579,7 +580,7 @@ static int gen_special (const char *s, const char *line,
 
     if (!err && write_label) {
 	strcpy(p->lh.name, s);
-	p->lh.v = series_index(dset, s);
+	p->lh.v = vnum;
 	p->dset = dset;
 	p->targ = SERIES;
 	p->flags = 0;
@@ -633,7 +634,7 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
     return ret;
 }
 
-static int is_gen_special (const char *s, char *spec, const char **rem)
+static int is_genr_special (const char *s, char *spec, const char **rem)
 {
     if (strncmp(s, "genr ", 5)) {
 	return 0;
@@ -643,16 +644,24 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
     while (*s == ' ') s++;
 
     if (genr_special_word(s)) {
-	strcpy(spec, s);
-	*rem = s;
+	if (spec != NULL) {
+	    strcpy(spec, s);
+	}
+	if (rem != NULL) {
+	    *rem = s;
+	}
 	return 1;
     }
 
     if (!strncmp(s, "markers", 7) && strchr(s, '=')) {
-	strcpy(spec, "markers");
-	s = strchr(s, '=') + 1;
-	while (*s == ' ') s++;
-	*rem = s;
+	if (spec != NULL) {
+	    strcpy(spec, "markers");
+	}
+	if (rem != NULL) {
+	    s = strchr(s, '=') + 1;
+	    while (*s == ' ') s++;
+	    *rem = s;
+	}
 	return 1;
     }
 
@@ -698,7 +707,7 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
 #endif
 
-    if (is_gen_special(line, vname, &subline)) {
+    if (is_genr_special(line, vname, &subline)) {
 	return gen_special(vname, subline, dset, prn, &p);
     } else if (do_stack_vars(line, vname, &subline)) {
 	return dataset_stack_variables(vname, subline, dset, prn);
@@ -922,13 +931,20 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 parser *genr_compile (const char *s, DATASET *dset, 
 		      gretlopt opt, int *err)
 {
-    parser *p = malloc(sizeof *p);
+    parser *p;
     int flags = P_COMPILE;
     int targtype = UNK;
 
 #if GDEBUG
     fprintf(stderr, "\n*** genr_compile: s = '%s'\n", s);
 #endif
+
+    if (is_genr_special(s, NULL, NULL)) {
+	*err = E_EQN;
+	return NULL;
+    }
+
+    p = malloc(sizeof *p);
 
     if (p == NULL) {
 	*err = E_ALLOC;

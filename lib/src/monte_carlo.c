@@ -124,7 +124,8 @@ typedef enum {
     LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
     LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
     LOOP_CMD_DONE    = 1 << 6, /* progressive loop command parsed */
-    LOOP_CMD_OK      = 1 << 7  /* command has been run without error */
+    LOOP_CMD_OK      = 1 << 7, /* command has been run without error */
+    LOOP_CMD_NOEQ    = 1 << 8  /* "genr" with no formula */
 } LoopCmdFlags;
 
 struct loop_command_ {
@@ -2771,6 +2772,9 @@ static int add_loop_genr (LOOPSET *loop, int lno,
     loop->cmds[lno].genr = genr_compile(line, dset, OPT_NONE, &err);
     if (!err) {
 	loop->cmds[lno].flags |= LOOP_CMD_GENR;
+    } else if (err == E_EQN) {
+	/* may be a non-compilable "special" */
+	err = 0;
     }
 
     return err;
@@ -3405,7 +3409,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 				     gretl_command_word(cmd->ci));
 		err = 1;
 	    } else if (cmd->ci == GENR) {
-		if (subst || (cmd->opt & OPT_O)) {
+		if (subst || (cmd->opt & OPT_O) ||
+		    (loop->cmds[j].flags & LOOP_CMD_NOEQ)) {
 		    /* can't use a "compiled" genr if string substitution
 		       has been done, since the genr expression will not
 		       be constant 
@@ -3416,8 +3421,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    err = generate(cmd->vstart, dset, cmd->opt, prn);
 		} else {
 		    err = add_loop_genr(loop, j, cmd->vstart, dset);
-		    if (!err) {
+		    if (loop->cmds[j].genr != NULL) {
 			err = execute_genr(loop->cmds[j].genr, dset, prn);
+		    } else if (!err) {
+			loop->cmds[j].flags |= LOOP_CMD_NOEQ;
+			err = generate(cmd->vstart, dset, cmd->opt, prn);
 		    }
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
