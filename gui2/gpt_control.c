@@ -3788,9 +3788,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	zoom_replaces_plot(plot);
     }
 #ifndef G_OS_WIN32
-    else if (!strcmp(item_string, _("Print..."))) { 
-	gtk_print_graph(plot->spec->fname, plot->shell);
-    } else if (!strcmp(item_string, _("Copy to clipboard"))) {
+    else if (!strcmp(item_string, _("Copy to clipboard"))) {
 	set_plot_for_copy(plot);
     }
 #endif 
@@ -3984,8 +3982,8 @@ static void build_plot_menu (png_plot *plot)
 	    colorpop = 1;
 	}
 #else
-	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
-	    !strcmp(plot_items[i], "Print")) {
+	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...")) {
+	    /* FIXME clipboard */
 	    colorpop = 1;
 	}
 #endif
