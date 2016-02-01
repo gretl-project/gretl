@@ -2195,7 +2195,7 @@ static int check_list_sepcount (int ci, int nsep)
 /* Determine if the command-line is a "genr"-type expression,
    which will be directed to a separate parser -- this gets
    invoked if we haven't been able to find a recognizable
-   comand-word.
+   command-word.
 */
 
 static int test_for_genr (CMD *c, int i, DATASET *dset)
@@ -3189,8 +3189,13 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    if (cmd->ntoks > imin) {
 		try_for_command_index(cmd, imin, dset, idx_only);
 #if TDEBUG
-		fprintf(stderr, "ntoks=%d, imin=%d, try_for_command_index gave %d\n",
-			cmd->ntoks, imin, cmd->ci);
+		if (cmd->ci > 0) {
+		    fprintf(stderr, "ntoks=%d, imin=%d, ci=%d (%s)\n",
+			    cmd->ntoks, imin, cmd->ci, gretl_command_word(cmd->ci));
+		} else {
+		    fprintf(stderr, "ntoks=%d, imin=%d, ci not known yet\n",
+			    cmd->ntoks, imin);
+		}
 #endif
 		if (cmd->ci == PRINT && peek_next_char(cmd, imin) != '"') {
 		    cmd->ciflags |= CI_LIST;
