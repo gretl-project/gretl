@@ -8,7 +8,6 @@ ols d_yt const yt(-1)
 ols d_yt const time yt(-1) d_yt(-1)
 genr r2u = $rsq
 genr dfu = $df
-genr time
 ols d_yt const d_yt(-1)
 genr r2r = $rsq
 genr Fsamp = ((r2u - r2r)/2) / ((1.0 - r2u)/dfu)
