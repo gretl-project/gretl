@@ -2875,10 +2875,9 @@ const char *blas_variant_string (void)
     }
 }
 
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
-# ifdef OS_OSX
-#  include <mach/mach_time.h>
-# else
+#ifdef __MACH__
+# include <mach/mach_time.h>
+#elif GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
 
 #include <time.h>
 #include <unistd.h>
@@ -2904,17 +2903,14 @@ static gint64 posix_monotonic_time (void)
     return (((gint64) ts.tv_sec) * 1000000) + (ts.tv_nsec / 1000);
 }
 
-# endif
-#endif
+#endif  /* OS X || GLib <= 2.28 */
 
 gint64 gretl_monotonic_time (void)
 {
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
-# ifdef OS_OSX
+#ifdef __MACH__
     return (gint64) mach_absolute_time();
-# else
+#elif GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
     return posix_monotonic_time();
-# endif
 #else
     return g_get_monotonic_time();
 #endif
