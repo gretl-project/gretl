@@ -673,7 +673,6 @@ static built_in_string built_ins[] = {
     { "tramodir", NULL },
     { "seats",    NULL },
     { "pkgdir",   NULL },
-    { "pstmp",    NULL },
     { "lang",     NULL }
 };
 
@@ -704,8 +703,6 @@ void gretl_insert_builtin_string (const char *name, const char *s)
 	    free(built_ins[i].s);
 	    if (s == NULL) {
 		built_ins[i].s = NULL;
-	    } else if (!strcmp(name, "pstmp")) {
-		built_ins[i].s = gretl_strdup(s);
 	    } else {
 		int m = strlen(s);
 

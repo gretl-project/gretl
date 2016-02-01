@@ -633,27 +633,70 @@ static int print_arg (const char **pfmt, const char **pargs,
     return err;
 }
 
+/* ugh, command-form of sprintf */
+
+static char *escape_quotes_special (const char *targ,
+				    const char *buf)
+{
+    const char *s = buf;
+    char *tmp;
+    int i, n;
+
+    n = strlen(targ) + strlen(buf) + 20;
+
+    while (*s) {
+	if (*s == '"') n++;
+	s++;
+    }
+
+    tmp = malloc(n);
+
+    sprintf(tmp, "string %s=sprintf(\"", targ);
+    s = buf;
+    i = strlen(tmp);
+
+    while (*s) {
+	if (*s == '"') {
+	    tmp[i++] = '\\';
+	}
+	tmp[i++] = *s;
+	s++;
+    }
+
+    tmp[i++] = '"';
+    tmp[i++] = ')';
+    tmp[i] = '\0';
+
+    return tmp;
+}
+
+/* this is needed only for the (deprecated) command-
+   form of "sprintf"
+*/
+
 static int handle_sprintf_output (const char *targ,
 				  const char *buf,
 				  PRN *prn)
 {
-    char *tmp = malloc(strlen(targ) + 15);
-    int err = 0;
+    int err;
 
-    if (tmp == NULL) {
-	err = E_ALLOC;
+    if (strchr(buf, '"')) {
+	char *esc = escape_quotes_special(targ, buf);
+
+	err = generate(esc, NULL, OPT_NONE, prn);
+	free(esc);
     } else {
-	gretl_insert_builtin_string("pstmp", buf);
-	sprintf(tmp, "string %s=$pstmp", targ);
+	gchar *tmp;
+	
+	tmp = g_strdup_printf("string %s=\"%s\"", targ, buf);
 	err = generate(tmp, NULL, OPT_NONE, prn);
-	free(tmp);
-	gretl_insert_builtin_string("pstmp", NULL);
-    }    
+	g_free(tmp);
+    }
 
     return err;
 }
 
-/* supports both printf and sprintf */
+/* supports both printf and (command-form) sprintf */
 
 static int real_do_printf (const char *targ, const char *format,
 			   const char *args, DATASET *dset, 
