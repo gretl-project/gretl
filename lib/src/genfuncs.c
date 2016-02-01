@@ -2962,6 +2962,7 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 /**
  * gen_unit:
  * @dset: dataset struct.
+ * @vnum: location to receive ID number of series, or NULL.
  *
  * (For panel data only) adds to the data set an index variable 
  * that uniquely identifies the cross-sectional units.
@@ -2969,7 +2970,7 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int gen_unit (DATASET *dset)
+int gen_unit (DATASET *dset, int *vnum)
 {
     int xt = 0;
     int i, t;
@@ -2977,7 +2978,7 @@ int gen_unit (DATASET *dset)
     if (dset->structure != STACKED_TIME_SERIES) {
 	gretl_errmsg_set("'genr unit' can be used only with "
 			 "panel data");
-	return 1;
+	return E_DATA;
     }
 
     i = series_index(dset, "unit");
@@ -2994,6 +2995,10 @@ int gen_unit (DATASET *dset)
 	    xt++;
 	}
 	dset->Z[i][t] = (double) xt;
+    }
+
+    if (vnum != NULL) {
+	*vnum = i;
     }
 
     return 0;
@@ -3042,6 +3047,8 @@ static void make_panel_time_var (double *x, const DATASET *dset)
  * @dset: dataset struct.
  * @tm: if non-zero, an actual time trend is wanted,
  * otherwise just an index of observations.
+ * @vnum: location to receive ID number of series,
+ * or NULL.
  *
  * Generates (and adds to the dataset, if it's not already
  * present) a time-trend or index variable.  This function
@@ -3054,7 +3061,7 @@ static void make_panel_time_var (double *x, const DATASET *dset)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gen_time (DATASET *dset, int tm)
+int gen_time (DATASET *dset, int tm, int *vnum)
 {
     int v, t;
 
@@ -3080,12 +3087,17 @@ int gen_time (DATASET *dset, int tm)
 	}
     }
 
+    if (vnum != NULL) {
+	*vnum = v;
+    }
+
     return 0;
 }
 
 /**
  * genr_wkday:
  * @dset: dataset struct.
+ * @vnum: location to receive ID number of series, or NULL.
  *
  * Generates (and adds to the dataset, if it's not already
  * present) an index representing the day of the week for
@@ -3096,7 +3108,7 @@ int gen_time (DATASET *dset, int tm)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gen_wkday (DATASET *dset)
+int gen_wkday (DATASET *dset, int *vnum)
 {
     char datestr[OBSLEN];
     int i, t;
@@ -3117,6 +3129,10 @@ int gen_wkday (DATASET *dset)
     for (t=0; t<dset->n; t++) {
 	ntodate(datestr, t, dset);
 	dset->Z[i][t] = weekday_from_date(datestr);
+    }
+
+    if (vnum != NULL) {
+	*vnum = i;
     }
 
     return 0;

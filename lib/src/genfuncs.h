@@ -109,13 +109,13 @@ int *seasonals_list (DATASET *dset, int ref, int center, int *err);
 
 int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn);
 
-int gen_unit (DATASET *dset);
+int gen_unit (DATASET *dset, int *vnum);
 
 int panel_unit_first_obs (int t, const DATASET *dset);
 
-int gen_time (DATASET *dset, int tm);
+int gen_time (DATASET *dset, int tm, int *vnum);
 
-int gen_wkday (DATASET *dset);
+int gen_wkday (DATASET *dset, int *vnum);
 
 const double *gretl_plotx (const DATASET *dset, gretlopt opt);
 

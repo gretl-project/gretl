@@ -6048,10 +6048,10 @@ void add_index (GtkAction *action)
     int err, tm = 0;
 
     if (pu) {
-	err = gen_unit(dataset);
+	err = gen_unit(dataset, NULL);
     } else {
 	tm = !strcmp(s, "AddTime");
-	err = gen_time(dataset, tm);
+	err = gen_time(dataset, tm, NULL);
     }
 
     if (err) {
