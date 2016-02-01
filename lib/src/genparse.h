@@ -128,7 +128,7 @@ enum {
 	      OSL,        /* "slice" of object other than matrix */
               INC,        /* increment */
               DEC,        /* decrement */
-              QUERY,      /* ternary "?" expression */
+	      QUERY,      /* ternary "?" expression */
  /* 100 */    UNDEF,      /* undefined (allowed in "query" context only) */
 	      EOT,	  /* end of transmission */
 	      UNK 
@@ -651,7 +651,7 @@ struct parser_ {
     double xval;
     int idnum;
     char *idstr;
-    void *uval;
+    user_var *uvar;
     int err;
 };
 

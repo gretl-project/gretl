@@ -20,6 +20,8 @@
 /* parser module for 'genr' and related commands */
 
 #include "genparse.h"
+#include "uservar_priv.h"
+#include "gretl_string_table.h"
 
 #if GENDEBUG
 # define SDEBUG GENDEBUG
@@ -91,27 +93,33 @@ static NODE *newref (parser *p, int t)
 	} else if (t == UNUM || t == UNUM_P || t == UNUM_M) {
 	    n->t = t == UNUM ? NUM : t;
 	    n->vname = p->idstr;
-	    n->v.xval = *(double *) p->uval;
+	    n->v.xval = *(double *) p->uvar->ptr;
+	    n->uv = p->uvar;
 	} else if (t == UMAT) {
 	    n->t = MAT;
 	    n->vname = p->idstr;
-	    n->v.m = p->uval;
+	    n->v.m = p->uvar->ptr;
+	    n->uv = p->uvar;
 	} else if (t == ULIST) {
 	    n->t = LIST;
 	    n->vname = p->idstr;
-	    n->v.ivec = p->uval;
+	    n->v.ivec = p->uvar->ptr;
+	    n->uv = p->uvar;
 	} else if (t == BUNDLE) {
 	    n->vname = p->idstr;
-	    n->v.b = p->uval;
+	    n->v.b = p->uvar->ptr;
+	    n->uv = p->uvar;
 	} else if (t == DBUNDLE) {
 	    n->v.idnum = p->idnum;
 	} else if (t == ARRAY) {
 	    n->vname = p->idstr;
-	    n->v.a = p->uval;
+	    n->v.a = p->uvar->ptr;
+	    n->uv = p->uvar;
 	} else if (t == USTR) {
 	    n->t = STR;
 	    n->vname = p->idstr;
-	    n->v.str = p->uval;
+	    n->v.str = p->uvar->ptr;
+	    n->uv = p->uvar;
 	} else if (t == UNDEF) {
 	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
@@ -589,9 +597,17 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	       unless we need the _names_ of string variables 
 	       rather then their content
 	    */
-	    p->uval = get_string_by_name(p->idstr);
-	    if (p->uval != NULL) {
+	    p->uvar = get_user_var_of_type_by_name(p->idstr,
+						   GRETL_TYPE_STRING);
+	    if (p->uvar != NULL) {
 		strvar = 1;
+	    } else {
+		char *s = get_built_in_string_by_name(p->idstr);
+
+		if (s != NULL) {
+		    free(p->idstr);
+		    p->idstr = gretl_strdup(s);
+		}
 	    }
 	}
     }
@@ -602,7 +618,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 
     if (p->err) {
 	return NULL;
-    } else if (strvar) {
+    } else if (strvar == 1) {
 	return newref(p, USTR);
     } else {
 	return newstr(p->idstr);
@@ -781,8 +797,8 @@ static NODE *get_bundle_member_name (parser *p)
     
     if (!p->err) {
 	if (strvar) {
-	    p->uval = get_string_by_name(p->idstr);
-	    if (p->uval == NULL) {
+	    p->uvar = get_user_var_of_type_by_name(p->idstr, GRETL_TYPE_STRING);
+	    if (p->uvar == NULL) {
 		gretl_errmsg_sprintf(_("%s: not a string variable"), p->idstr);
 		p->err = E_DATA;
 	    } else {

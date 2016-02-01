@@ -440,7 +440,7 @@ int do_modprint (const char *mname, const char *names,
 	return E_ARGS;
     }
 
-    /* first, name of k x 2 matrix */
+    /* first: name of k x 2 matrix */
     coef_se = get_matrix_by_name(mname);
     if (coef_se == NULL) {
 	err = E_UNKVAR;
@@ -450,14 +450,16 @@ int do_modprint (const char *mname, const char *names,
     }
  
     if (!err) {
-	/* second, string containing names */
+	/* second: string containing names */
 	if (opt & OPT_L) {
 	    /* treat as string _L_iteral */
 	    parnames = names;
-	} else if (get_string_by_name(names)) {
-	    parnames = get_string_by_name(names);
 	} else {
-	    err = E_PARSE;
+	    /* FIXME accept array of strings */
+	    parnames = get_string_by_name(names);
+	    if (parnames == NULL) {
+		err = E_PARSE;
+	    }
 	}
     }
 

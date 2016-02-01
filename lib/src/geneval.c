@@ -14,7 +14,7 @@
  * 
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* syntax tree evaluator for "genr" */
@@ -4259,14 +4259,12 @@ static NODE *trend_node (parser *p)
     if (starting(p)) {
 	ret = aux_empty_series_node(p);
 	if (!p->err) {
-	    p->err = gen_time(p->dset, 1);
-	}
-	if (!p->err) {
-	    int vnum = series_index(p->dset, "time");
-	    
-	    ret->v.xvec = p->dset->Z[vnum];
-	    /* not TMP_NODE because we're borrowing a Z column */
-	    ret->flags &= ~TMP_NODE;
+	    p->err = gen_time(p->dset, 1, &ret->vnum);
+	    if (!p->err) {
+		ret->v.xvec = p->dset->Z[ret->vnum];
+		/* not TMP_NODE because we're borrowing a Z column */
+		ret->flags &= ~TMP_NODE;
+	    }
 	}
     }
 
@@ -4509,6 +4507,7 @@ static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
 		} else {
 		    /* not TMP_NODE, because using dset->Z member! */
 		    ret->flags = AUX_NODE;
+		    ret->vnum = v;
 		    ret->v.xvec = p->dset->Z[v];
 		}
 	    }
@@ -6429,30 +6428,6 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
 	    /* FIXME error handling? */ 
 	    x = real_apply_func(m->val[i], f, p);
 	    ret->v.m->val[i] = x;
-	}
-    }
-
-    return ret;
-}
-
-/* node holding a cashed-out string variable */
-
-static NODE *string_var_node (NODE *t, parser *p)
-{
-    NODE *ret = aux_string_node(p);
-
-    if (ret != NULL && starting(p)) {
-	const char *sval, *sname = t->v.str;
-
-	if (*sname == '@') sname++;
-	sval = get_string_by_name(sname);
-	if (sval == NULL) {
-	    p->err = E_UNKVAR;
-	} else {
-	    ret->v.str = gretl_strdup(sval);
-	    if (ret->v.str == NULL) {
-		p->err = E_ALLOC;
-	    }
 	}
     }
 
@@ -12065,10 +12040,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOCONV:
 	ret = isoconv_node(t, p);
 	break;
-    case USTR:
-	/* string variable */
-	ret = string_var_node(t, p);
-	break;
     case OVAR:
     case MVAR:
     case DMSL:
@@ -12567,7 +12538,7 @@ static void printnode (NODE *t, parser *p, int value)
 	}
 	printnode(t->v.b2.r, p, 0);
 	pputc(p->prn, ')');
-    } else if (t->t == STR || t->t == USTR) {
+    } else if (t->t == STR) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == MDEF) {
 	pprintf(p->prn, "{ MDEF }");
@@ -12957,6 +12928,7 @@ static NODE *lhs_copy_node (parser *p)
 	} else if (p->targ == SERIES) {
 	    n->v.xvec = p->dset->Z[p->lh.v];
 	} else if (p->targ == STR) {
+	    /* FIXME? */
 	    n->v.str = gretl_strdup(get_string_by_name(p->lh.name));
 	} else {
 	    n->v.m = p->lh.m0;
@@ -13284,8 +13256,8 @@ static void pre_process (parser *p, int flags)
 	user_var *uvar = get_user_var_by_name(test);
 
 	if (uvar != NULL) {
-	    GretlType vtype = user_var_get_type(uvar);
-	    void *uval = user_var_get_value(uvar);
+	    GretlType vtype = uvar->type;
+	    void *uval = uvar->ptr;
 	    
 	    newvar = 0;
 
@@ -14938,7 +14910,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     p->xval = 0.0;
     p->idnum = 0;
     p->idstr = NULL;
-    p->uval = NULL;
+    p->uvar = NULL;
 
     p->ret = NULL;
     p->err = 0;

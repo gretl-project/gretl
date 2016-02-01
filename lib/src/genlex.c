@@ -24,8 +24,9 @@
 #include "uservar.h"
 #include "gretl_string_table.h"
 #include "gretl_bundle.h"
+#include "uservar_priv.h"
 
-#include <glib.h>
+// #include <glib.h>
 
 #define NUMLEN 32
 #define MAXQUOTE 64
@@ -1094,62 +1095,58 @@ static void look_up_word (const char *s, parser *p)
 	    p->idnum = dummy_lookup(s);
 	    if (p->idnum > 0) {
 		p->sym = DUM;
-	    } else {
-		GretlType vtype = 0;
-
-		if (have_dset &&
-		    (p->idnum = current_series_index(p->dset, s)) >= 0) {
-		    p->sym = USERIES;
-		    p->idstr = gretl_strdup(s);
-		} else if (have_dset && !strcmp(s, "time")) {
-		    p->sym = DUM;
-		    p->idnum = DUM_TREND;
-		} else if ((p->uval = user_var_get_value_and_type(s, &vtype)) != NULL) {
-		    if (vtype == GRETL_TYPE_DOUBLE) {
-			p->sym = UNUM;
-		    } else if (vtype == GRETL_TYPE_MATRIX) {
-			p->sym = UMAT;
-		    } else if (vtype == GRETL_TYPE_BUNDLE) {
-			p->sym = BUNDLE;
-		    } else if (vtype == GRETL_TYPE_ARRAY) {
-			p->sym = ARRAY;
-		    } else if (vtype == GRETL_TYPE_STRING) {
-			p->sym = USTR;
-		    } else if (vtype == GRETL_TYPE_LIST) {
-			p->sym = ULIST;
-		    } else if (vtype == GRETL_TYPE_STRING) {
-			p->sym = USTR;
-		    }
-		    p->idstr = gretl_strdup(s);
-		} else if (gretl_get_object_by_name(s)) {
-		    p->sym = UOBJ;
-		    p->idstr = gretl_strdup(s);
-		} else if (get_user_function_by_name(s)) {
-		    p->sym = UFUN;
-		    p->idstr = gretl_strdup(s);
-		} else if (defining_list(p) && varname_match_any(p->dset, s)) {
-		    p->sym = WLIST;
-		    p->idstr = gretl_strdup(s);
-		} else if (have_dset && !strcmp(s, "t")) {
-		    /* if "t" has not been otherwise defined, treat it
-		       as an alias for "obs"
-		    */
-		    p->sym = DVAR;
-		    p->idnum = R_INDEX;
-		} else if (maybe_get_R_function(s)) {
-		    /* note: all "native" types take precedence over this */
-		    p->sym = RFUN;
-		    p->idstr = gretl_strdup(s + 2);
-		} else if (!strcmp(s, "pi")) {
-		    /* backward compat (get rid of this) */
-		    p->idnum = CONST_PI;
-		    p->sym = CON;
-		} else if (parsing_query) {
-		    p->sym = UNDEF;
-		    p->idstr = gretl_strdup(s);
-		} else {
-		    err = E_UNKVAR;
+	    } else if (have_dset &&
+		       (p->idnum = current_series_index(p->dset, s)) >= 0) {
+		p->sym = USERIES;
+		p->idstr = gretl_strdup(s);
+	    } else if (have_dset && !strcmp(s, "time")) {
+		p->sym = DUM;
+		p->idnum = DUM_TREND;
+	    } else if ((p->uvar = get_user_var_by_name(s)) != NULL) {
+		GretlType vtype = p->uvar->type;
+		    
+		if (vtype == GRETL_TYPE_DOUBLE) {
+		    p->sym = UNUM;
+		} else if (vtype == GRETL_TYPE_MATRIX) {
+		    p->sym = UMAT;
+		} else if (vtype == GRETL_TYPE_BUNDLE) {
+		    p->sym = BUNDLE;
+		} else if (vtype == GRETL_TYPE_ARRAY) {
+		    p->sym = ARRAY;
+		} else if (vtype == GRETL_TYPE_STRING) {
+		    p->sym = USTR;
+		} else if (vtype == GRETL_TYPE_LIST) {
+		    p->sym = ULIST;
 		}
+		p->idstr = gretl_strdup(s);
+	    } else if (gretl_get_object_by_name(s)) {
+		p->sym = UOBJ;
+		p->idstr = gretl_strdup(s);
+	    } else if (get_user_function_by_name(s)) {
+		p->sym = UFUN;
+		p->idstr = gretl_strdup(s);
+	    } else if (defining_list(p) && varname_match_any(p->dset, s)) {
+		p->sym = WLIST;
+		p->idstr = gretl_strdup(s);
+	    } else if (have_dset && !strcmp(s, "t")) {
+		/* if "t" has not been otherwise defined, treat it
+		   as an alias for "obs"
+		*/
+		p->sym = DVAR;
+		p->idnum = R_INDEX;
+	    } else if (maybe_get_R_function(s)) {
+		/* note: all "native" types take precedence over this */
+		p->sym = RFUN;
+		p->idstr = gretl_strdup(s + 2);
+	    } else if (!strcmp(s, "pi")) {
+		/* backward compat (get rid of this) */
+		p->idnum = CONST_PI;
+		p->sym = CON;
+	    } else if (parsing_query) {
+		p->sym = UNDEF;
+		p->idstr = gretl_strdup(s);
+	    } else {
+		err = E_UNKVAR;
 	    }
 	}
     }
