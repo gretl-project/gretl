@@ -2943,6 +2943,10 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
 	/* could delete loop index */
 	pputs(prn, _("You cannot delete scalars in this context\n"));
 	err = 1;
+    } else if (loop->parent != NULL || loop->n_children > 0) {
+	/* not a "singleton" loop */
+	pprintf(prn, _("delete %s: not allowed\n"), cmd->param);
+	err = 1;
     } else {
 	/* check for compiled genrs on board: don't let these
 	   get screwed up by deletion of variables of any kind
@@ -3105,13 +3109,17 @@ static int maybe_preserve_loop (LOOPSET *loop)
 
 void loop_reset_genrs (LOOPSET *loop)
 {
+    int i;
+    
+    for (i=0; i<loop->n_children; i++) {
+	loop_reset_genrs(loop->children[i]);
+    }
+
     if (loop->cmds != NULL) {
-	int i;
-	
 	for (i=0; i<loop->n_cmds; i++) {
 	    if (loop->cmds[i].genr != NULL) {
 		genr_reset_uvars(loop->cmds[i].genr);
-	    }	    
+	    }
 	}
     }
 }

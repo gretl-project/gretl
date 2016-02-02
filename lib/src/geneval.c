@@ -10885,7 +10885,9 @@ static void node_reattach_data (NODE *n, parser *p)
 
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
-	    p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    if (gretl_function_depth() > 0) {
+		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    }
 	}
 
 	if (n->uv != NULL) {
@@ -15150,8 +15152,8 @@ static void uvnode_reset (void *p1, void *p2)
     NODE *n = p1;
 
 #if ALT_DEBUG
-    fprintf(stderr, " reset %p (type %03d, %s)\n", 
-	    (void *) n, n->t, getsymb(n->t, NULL));
+    fprintf(stderr, " reset node type %03d, %s, old ptr %p\n", 
+	    n->t, getsymb(n->t, NULL), (void *) n->uv);
 #endif
     n->uv = NULL;
 }
@@ -15164,10 +15166,10 @@ static void real_reset_uvars (parser *p, int level)
 
 #if ALT_DEBUG
     if (level == 0) {
-	fprintf(stderr, "*** genr_reset_uvars, %p (main: %s '%s') ***\n", (void *) p,
+	fprintf(stderr, "* genr_reset_uvars (%s '%s') *\n",
 		getsymb(p->targ, p), p->lh.name);
     } else {
-	fprintf(stderr, "*** genr_reset_uvars, %p (child) ***\n", (void *) p);
+	fprintf(stderr, "  reset subp child\n");
     }	
 #endif
 

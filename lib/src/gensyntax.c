@@ -22,6 +22,7 @@
 #include "genparse.h"
 #include "uservar_priv.h"
 #include "gretl_string_table.h"
+#include "genr_optim.h"
 
 #if GENDEBUG
 # define SDEBUG GENDEBUG
@@ -78,7 +79,10 @@ NODE *newempty (void)
 }
 
 static NODE *newref (parser *p, int t)
-{  
+{
+#if ALT_UVAR_HANDLING
+    int fd = gretl_function_depth();
+#endif
     NODE *n = new_node(t);
 
     if (n != NULL) {
@@ -93,11 +97,21 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) p->uvar->ptr;
 	    n->uv = p->uvar;
+#if ALT_UVAR_HANDLING
+	    if (fd > 0) {
+		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    }
+#endif
 	} else if (t == MAT || t == LIST || t == BUNDLE ||
 		   t == ARRAY || t == STR) {
 	    n->vname = p->idstr;
 	    n->v.ptr = p->uvar->ptr;
 	    n->uv = p->uvar;
+#if ALT_UVAR_HANDLING
+	    if (fd > 0) {
+		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    }
+#endif
 	} else if (t == DBUNDLE) {
 	    n->v.idnum = p->idnum;
 	} else if (t == UNDEF) {
