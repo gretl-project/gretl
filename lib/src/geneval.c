@@ -8140,7 +8140,7 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    } else if (f == F_SPRINTF) {
 		ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
 	    } else {
-		p->err = do_printf(NULL, fmt, args, p->dset, p->prn, &n);
+		p->err = do_printf(fmt, args, p->dset, p->prn, &n);
 	    }
 	    if (f != F_SPRINTF && !p->err) {
 		ret->v.xval = n;

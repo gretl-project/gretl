@@ -20,7 +20,7 @@
 #ifndef PRINTSCAN_H
 #define PRINTSCAN_H
 
-int do_printf (const char *targ, const char *format, const char *args,
+int do_printf (const char *format, const char *args,
 	       DATASET *dset, PRN *prn, int *nchars);
 
 char *do_sprintf_function (const char *format, const char *args,

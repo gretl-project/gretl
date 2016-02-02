@@ -508,6 +508,12 @@ static int print_arg (const char **pfmt, const char **pargs,
     /* get next substantive arg */
     arg = get_next_arg(*pargs, &alen, &err);
 
+    if (!err && !strcmp(arg, "time") &&
+	current_series_index(dset, arg) < 0) {
+	/* pre-generate "time" if needed */
+	err = gen_time(dset, 1, NULL);
+    }
+
     if (!err) {
 	int v = -1;
 
@@ -633,76 +639,13 @@ static int print_arg (const char **pfmt, const char **pargs,
     return err;
 }
 
-/* ugh, command-form of sprintf */
+/* supports both regular printf and generation of obs markers */
 
-static char *escape_quotes_special (const char *targ,
-				    const char *buf)
+static int real_do_printf (const char *format,
+			   const char *args,
+			   DATASET *dset, PRN *inprn,
+			   int *nchars, int t)
 {
-    const char *s = buf;
-    char *tmp;
-    int i, n;
-
-    n = strlen(targ) + strlen(buf) + 20;
-
-    while (*s) {
-	if (*s == '"') n++;
-	s++;
-    }
-
-    tmp = malloc(n);
-
-    sprintf(tmp, "string %s=sprintf(\"", targ);
-    s = buf;
-    i = strlen(tmp);
-
-    while (*s) {
-	if (*s == '"') {
-	    tmp[i++] = '\\';
-	}
-	tmp[i++] = *s;
-	s++;
-    }
-
-    tmp[i++] = '"';
-    tmp[i++] = ')';
-    tmp[i] = '\0';
-
-    return tmp;
-}
-
-/* this is needed only for the (deprecated) command-
-   form of "sprintf"
-*/
-
-static int handle_sprintf_output (const char *targ,
-				  const char *buf,
-				  PRN *prn)
-{
-    int err;
-
-    if (strchr(buf, '"')) {
-	char *esc = escape_quotes_special(targ, buf);
-
-	err = generate(esc, NULL, OPT_NONE, prn);
-	free(esc);
-    } else {
-	gchar *tmp;
-	
-	tmp = g_strdup_printf("string %s=\"%s\"", targ, buf);
-	err = generate(tmp, NULL, OPT_NONE, prn);
-	g_free(tmp);
-    }
-
-    return err;
-}
-
-/* supports both printf and (command-form) sprintf */
-
-static int real_do_printf (const char *targ, const char *format,
-			   const char *args, DATASET *dset, 
-			   PRN *inprn, int *nchars, int t)
-{
-    int ci = (targ != NULL) ? SPRINTF : PRINTF;
     PRN *prn = NULL;
     int err = 0;
 
@@ -715,9 +658,8 @@ static int real_do_printf (const char *targ, const char *format,
     fprintf(stderr, " args = '%s'\n", args);
 #endif
 
-    /* Even when doing printf, we'll buffer the output
-       locally in case there's an error part-way through
-       the printing.
+    /* We'll buffer the output locally in case there's an
+       error part-way through the printing.
     */
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
@@ -744,29 +686,22 @@ static int real_do_printf (const char *targ, const char *format,
 	}
 
 	if (!err && q != NULL && *q != '\0') {
-	    pprintf(inprn, "\n%s: ", gretl_command_word(ci));
+	    pputs(inprn, "\nprintf: ");
 	    pprintf(inprn, _("unprocessed argument(s): '%s'"), q);
 	    pputc(prn, '\n');
 	    err = E_PARSE;
 	}
     }
 
-    if (!err) {
+    if (err) {
+	pputc(inprn, '\n');
+    } else {
 	const char *buf = gretl_print_get_buffer(prn);
 
 	if (nchars != NULL) {
 	    *nchars = strlen(buf);
 	}
-
-	if (ci == SPRINTF) {
-	    /* sprintf: output to a string variable */
-	    err = handle_sprintf_output(targ, buf, inprn);
-	} else {
-	    /* plain printf: output to @inprn */
-	    pputs(inprn, buf);
-	}
-    } else if (ci == PRINTF) {
-	pputc(inprn, '\n');
+	pputs(inprn, buf);
     }
 
     gretl_print_destroy(prn);
@@ -776,23 +711,22 @@ static int real_do_printf (const char *targ, const char *format,
 
 /**
  * do_printf:
- * @targ: target string (for sprintf); should be NULL for printf.
  * @format: format string.
  * @args: list of arguments as string.
  * @dset: dataset struct.
  * @prn: printing struct.
  * @nchars: location to receive number of characters printed.
  *
- * Implements a somewhat limited version of C's sprintf()
- * and printf() for use in gretl scripts.
+ * Implements a somewhat limited version of C's printf()
+ * for use in gretl scripts.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int do_printf (const char *targ, const char *format, const char *args,
+int do_printf (const char *format, const char *args,
 	       DATASET *dset, PRN *prn, int *nchars)
 {
-    return real_do_printf(targ, format, args, dset, prn, nchars, -1);
+    return real_do_printf(format, args, dset, prn, nchars, -1);
 }
 
 /**
@@ -1357,6 +1291,33 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
     return err;
 }
 
+/* Supporting the old, deprecated command-form of sprintf:
+   we'll just repackage this as a function call.
+*/
+
+static int do_sprintf_command (const char *targ,
+			       const char *format,
+			       const char *args,
+			       DATASET *dset,
+			       PRN *prn)
+{
+    gchar *tmp;
+    int err;
+
+    if (args != NULL) {
+	tmp = g_strdup_printf("string %s=sprintf(\"%s\",%s)",
+			      targ, format, args);
+    } else {
+	tmp = g_strdup_printf("string %s=sprintf(\"%s\")",
+			      targ, format);
+    }
+    
+    err = generate(tmp, dset, 0, prn);
+    g_free(tmp);
+    
+    return err;
+}
+
 /* apparatus to support the command-forms of printf, sprintf 
    and sscanf */
 
@@ -1366,9 +1327,9 @@ int do_printscan_command (int ci, const char *parm1, const char *parm2,
     int err;
 
     if (ci == PRINTF) {
-	err = do_printf(NULL, parm1, vargs, dset, prn, NULL);
+	err = do_printf(parm1, vargs, dset, prn, NULL);
     } else if (ci == SPRINTF) {
-	err = do_printf(parm1, parm2, vargs, dset, prn, NULL);
+	err = do_sprintf_command(parm1, parm2, vargs, dset, prn);
     } else {
 	err = sscanf_driver(vargs, dset, prn);
     }
@@ -1410,7 +1371,7 @@ int generate_obs_markers (const char *s, DATASET *dset)
 
 	for (t=0; t<dset->n && !err; t++) {
 	    gretl_print_reset_buffer(prn);
-	    err = real_do_printf(NULL, format, args, dset, prn, NULL, t);
+	    err = real_do_printf(format, args, dset, prn, NULL, t);
 	    if (!err) {
 		buf = gretl_print_get_buffer(prn);
 		dset->S[t][0] = '\0';
