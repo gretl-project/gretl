@@ -423,6 +423,7 @@ static void open_file_from_filelist (GtkAction *action)
 
     if (!strcmp(ftype, "Data")) {
 	strcpy(tryfile, datap[i]);
+#if 0 /* probably not a good idea */
 	if (strstr(tryfile, ".csv")) {
 	    int resp = csv_options_dialog(OPEN_DATA, GRETL_OBJ_DSET, NULL);
 
@@ -430,6 +431,7 @@ static void open_file_from_filelist (GtkAction *action)
 		return;
 	    }
 	}
+#endif
 	verify_open_data(NULL, 0);
     } else if (!strcmp(ftype, "Script")) {
 	strcpy(tryfile, scriptp[i]);
