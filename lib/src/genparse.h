@@ -83,23 +83,25 @@ enum {
 	      P_SEMI,	  /* semi-colon */
 	      P_COL,	  /* colon */
               PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
-	      CON,	  /* named constant */
+	      NUM,        /* scalar */
+	      SERIES,	  /* series */
+	      LIST,       /* list of series */
+	      MAT,	  /* matrix */
+	      BUNDLE,     /* gretl bundle (hash table) */
+	      ARRAY,      /* generic array object */
+  /* 60 */    STR,	  /* string */
+	      CNUM,	  /* constant (literal) numeric value */
+	      CSTR,       /* constant (literal) string */
+	      CON,	  /* named numeric constant */
 	      DUM,	  /* dummy variable */
-              UNUM,	  /* user variable, named scalar */
-              USERIES,    /* user variable, named series */
-	      UMAT,	  /* user variable, named matrix */
-	      ULIST,      /* user variable, named list */
-  /* 60 */    UOBJ,	  /* user-defined object (e.g. model) */
-	      UNUM_P,     /* user scalar++ */
-	      UNUM_M,     /* user scalar-- */
-	      NUM,	  /* scalar, evaluated */
-	      SERIES,	  /* series, evaluated */
-	      MAT,	  /* matrix, evaluated */
+	      UOBJ,	  /* user-defined object (e.g. model) */
+	      NUM_P,      /* user scalar++ */
+	      NUM_M,      /* user scalar-- */
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
-              DMSL,	  /* "dollar" matrix plus subspec */
+  /* 70 */    DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus string subspec */
-  /* 70 */    MSLRAW,	  /* unevaluated matrix subspec */
+	      MSLRAW,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
@@ -107,29 +109,25 @@ enum {
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
-              LIST,	  /* list, evaluated */
-	      LISTVAR,    /* variable in list, dot syntax */
-  /* 80 */    ELEMENT,    /* element of list or array, [...] syntax) */
-	      STR,	  /* string */
-	      BUNDLE,     /* gretl bundle (hash table) */
+  /* 80 */    LISTVAR,    /* variable in list, dot syntax */
+	      ELEMENT,    /* element of list or array, [...] syntax) */
 	      DBUNDLE,    /* $ bundle accessor */
 	      BMEMB,      /* member of bundle */
 	      DBMEMB,     /* member of $ bundle */
-	      ARRAY,      /* generic array object */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
-  /* 90 */    DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
+	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
-	      UFUN,	  /* user-defined function */
+  /* 90 */    UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-	      USTR,       /* string variable */
 	      IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
+	      USERIES,    /* named series (defined ont for error reporting) */
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
- /* 100 */    UNDEF,      /* undefined (allowed in "query" context only) */
+	      UNDEF,      /* undefined (allowed in "query" context only) */
 	      EOT,	  /* end of transmission */
 	      UNK 
 };

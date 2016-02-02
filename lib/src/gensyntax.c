@@ -82,44 +82,24 @@ static NODE *newref (parser *p, int t)
     NODE *n = new_node(t);
 
     if (n != NULL) {
-	if (t == USERIES) {
-	    n->t = SERIES;
+	if (t == SERIES) {
 	    n->vnum = p->idnum;
 	    n->v.xvec = p->dset->Z[n->vnum];
 	    n->vname = p->idstr;
 	    if (is_string_valued(p->dset, n->vnum)) {
 		n->flags |= SVL_NODE;
 	    }
-	} else if (t == UNUM || t == UNUM_P || t == UNUM_M) {
-	    n->t = t == UNUM ? NUM : t;
+	} else if (t == NUM || t == NUM_P || t == NUM_M) {
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) p->uvar->ptr;
 	    n->uv = p->uvar;
-	} else if (t == UMAT) {
-	    n->t = MAT;
+	} else if (t == MAT || t == LIST || t == BUNDLE ||
+		   t == ARRAY || t == STR) {
 	    n->vname = p->idstr;
-	    n->v.m = p->uvar->ptr;
-	    n->uv = p->uvar;
-	} else if (t == ULIST) {
-	    n->t = LIST;
-	    n->vname = p->idstr;
-	    n->v.ivec = p->uvar->ptr;
-	    n->uv = p->uvar;
-	} else if (t == BUNDLE) {
-	    n->vname = p->idstr;
-	    n->v.b = p->uvar->ptr;
+	    n->v.ptr = p->uvar->ptr;
 	    n->uv = p->uvar;
 	} else if (t == DBUNDLE) {
 	    n->v.idnum = p->idnum;
-	} else if (t == ARRAY) {
-	    n->vname = p->idstr;
-	    n->v.a = p->uvar->ptr;
-	    n->uv = p->uvar;
-	} else if (t == USTR) {
-	    n->t = STR;
-	    n->vname = p->idstr;
-	    n->v.str = p->uvar->ptr;
-	    n->uv = p->uvar;
 	} else if (t == UNDEF) {
 	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
@@ -287,30 +267,30 @@ static NODE *base (parser *p, NODE *up)
 #endif
 
     switch (p->sym) {
-    case NUM: 
+    case CNUM: 
 	t = newdbl(p->xval);
 	lex(p);
 	break;
-    case STR:
+    case CSTR:
 	t = newstr(p->idstr);
 	lex(p);
 	break;
-    case UNUM: 
-    case USERIES:
-    case UMAT:
+    case NUM: 
+    case SERIES:
+    case MAT:
+    case BUNDLE:
+    case ARRAY:
+    case STR:
     case UOBJ:
     case CON: 
     case DVAR:
     case MVAR:
     case OBS:
-    case ULIST:
+    case LIST:
     case WLIST:
-    case BUNDLE:
     case DBUNDLE:
-    case ARRAY:
-    case USTR:
-    case UNUM_P:
-    case UNUM_M:
+    case NUM_P:
+    case NUM_M:
     case UNDEF:
 	if (p->sym == OBS) {
 	    fprintf(stderr, "*** gensyntax: base: sym = OBS\n");
@@ -428,7 +408,7 @@ static NODE *listvar_node (parser *p)
 	    free(p->idstr);
 	    p->idstr = NULL;
 	    p->idnum = v;
-	    ret = newref(p, USERIES);
+	    ret = newref(p, SERIES);
 	    if (ret == NULL) {
 		p->err = E_ALLOC;
 	    } else {
@@ -619,7 +599,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     if (p->err) {
 	return NULL;
     } else if (strvar == 1) {
-	return newref(p, USTR);
+	return newref(p, STR);
     } else {
 	return newstr(p->idstr);
     }
@@ -802,7 +782,7 @@ static NODE *get_bundle_member_name (parser *p)
 		gretl_errmsg_sprintf(_("%s: not a string variable"), p->idstr);
 		p->err = E_DATA;
 	    } else {
-		ret = newref(p, USTR);
+		ret = newref(p, STR);
 	    }
 	} else {
 	    ret = newstr(p->idstr);

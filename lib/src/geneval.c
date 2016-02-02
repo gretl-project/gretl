@@ -80,7 +80,7 @@
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
-#define postfix_node(n) (n->t == UNUM_P || n->t == UNUM_M)
+#define postfix_node(n) (n->t == NUM_P || n->t == NUM_M)
 
 #define ok_list_node(n) (n->t == LIST || n->t == WLIST || n->t == NUM || \
 			 n->t == MAT || n->t == EMPTY || \
@@ -133,12 +133,8 @@ static const char *typestr (int t)
 	return "scalar";
     case SERIES:
 	return "series";
-    case USERIES:
-	return "named series";
     case MAT:
 	return "matrix";
-    case UMAT:
-	return "user matrix";
     case STR:
 	return "string";
     case U_ADDR:
@@ -151,6 +147,8 @@ static const char *typestr (int t)
 	return "$-bundle";
     case ARRAY:
 	return "array";
+    case USERIES:
+	return "named series";
     case EMPTY:
 	return "empty";
     default:
@@ -6584,6 +6582,7 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
 	    *type = GRETL_TYPE_SERIES_REF;
 	    data = &n->vnum;
 	} else if (n->vname != NULL) {
+	    /* FIXME conditionality here? */
 	    *type = GRETL_TYPE_USERIES;
 	    data = &n->vnum;
 	} else {
@@ -10820,7 +10819,7 @@ static NODE *scalar_postfix_node (NODE *n, parser *p)
 	double x = n->v.xval;
 
 	ret->v.xval = x;
-	if (n->t == UNUM_P) {
+	if (n->t == NUM_P) {
 	    p->err = gretl_scalar_set_value(n->vname, x + 1.0);
 	} else {
 	    p->err = gretl_scalar_set_value(n->vname, x - 1.0);
@@ -11187,8 +11186,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = t;
 	}
 	break;
-    case UNUM_P:
-    case UNUM_M:
+    case NUM_P:
+    case NUM_M:
 	if (compiled(p) && starting(p)) {
 	    node_reattach_data(t, p);
 	}
@@ -13038,7 +13037,7 @@ static void maybe_do_type_errmsg (const char *name, int t)
 
 	if (t == NUM) {
 	    tstr = "scalar";
-	} else if (t == SERIES || t == USERIES) {
+	} else if (t == SERIES) {
 	    tstr = "series";
 	} else if (t == MAT) {
 	    tstr = "matrix";
