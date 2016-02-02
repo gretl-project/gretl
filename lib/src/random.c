@@ -160,8 +160,6 @@ static void sfmt_array_cleanup (void)
     }
 }
 
-/* gcc 4.8.2 doesn't want to inline this */
-
 static guint32 sfmt_rand32 (void)
 {
     if (r_i == RSIZE) {
@@ -296,7 +294,14 @@ inline static uint32_t dcmt_rand32 (void)
 
 void gretl_rand_init (void)
 {
-    sfmt_seed = time(NULL);
+    char *fseed = getenv("GRETL_FORCE_SEED");
+
+    if (fseed != NULL) {
+	sfmt_seed = atoi(fseed);
+    } else {
+	sfmt_seed = time(NULL);
+    }
+    
     init_gen_rand(sfmt_seed);
 
 #if USE_RAND_ARRAY
