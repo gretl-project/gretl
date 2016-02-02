@@ -653,7 +653,6 @@ static int real_do_printf (const char *format,
 
 #if PSDEBUG
     fprintf(stderr, "real_do_printf:\n");
-    fprintf(stderr, " targ = '%s'\n", targ);
     fprintf(stderr, " format = '%s'\n", format);
     fprintf(stderr, " args = '%s'\n", args);
 #endif
