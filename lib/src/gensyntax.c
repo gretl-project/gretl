@@ -522,19 +522,25 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	int close = -1, started = 0;
 	const char *s = p->point;
 
+	if (p->ch == p0) paren++;
+
 	/* find length of string to closing paren */
 	i = 0;
 	while (*s) {
-	    if (!quoted && *s == p1) paren--;
+	    if (!quoted) {
+		if (*s == p0) {
+		    paren++;
+		} else if (*s == p1) {
+		    paren--;
+		}
+	    }
 	    if (paren == 0) {
 		close = i;
 		break;
 	    }
 	    if (*s == '"') {
 		quoted = !quoted;
-	    } else if (!quoted && *s == p0) {
-		paren++;
-	    } 
+	    }
 	    s++;
 	    i++;
 	}
