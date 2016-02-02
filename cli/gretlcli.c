@@ -258,9 +258,10 @@ static int file_get_line (ExecState *s)
     return 0;
 }
 
+#ifdef ENABLE_NLS
+
 static void nls_init (void)
 {
-#ifdef ENABLE_NLS
 # ifdef WIN32
     char LOCALEDIR[MAXLEN];
 
@@ -277,8 +278,9 @@ static void nls_init (void)
 # ifdef WIN32
     cli_set_win32_charset(PACKAGE);
 # endif
-#endif /* ENABLE_NLS */
 }
+
+#endif /* ENABLE_NLS */
 
 static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
 {
@@ -539,7 +541,9 @@ int main (int argc, char *argv[])
     win32_set_gretldir(callname);
 #endif
 
+#ifdef ENABLE_NLS
     nls_init();
+#endif
 
 #ifdef HAVE_READLINE
     rl_bind_key(0x18, ctrl_x);
