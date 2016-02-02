@@ -2299,7 +2299,6 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	*/
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
-	gretl_charsub(clean, ',', '.');
 	s = clean;
     }
 
@@ -2313,7 +2312,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
 	    return x; /* handled */
 	}
     } else if (csv_do_dotsub(c)) {
-	/* substitute dot for comma */
+	/* in C numeric locale: substitute dot for comma */
 	strcpy(tmp, s);
 	gretl_charsub(tmp, ',', '.');
 	errno = 0;
@@ -3461,8 +3460,13 @@ static int real_import_csv (const char *fname,
 	    pprintf(mprn, A_("WARNING: it seems '%c' is being used "
 			     "as thousands separator\n"), c->thousep);
 	    c->decpoint = (c->thousep == '.')? ',' : '.';
-	    if (c->decpoint == ',' && get_local_decpoint() == '.') {
-		csv_set_dotsub(c);
+	    if (c->decpoint == ',') {
+		if (get_local_decpoint() == '.') {
+		    csv_set_dotsub(c);
+		} else if (popit) {
+		    gretl_pop_c_numeric_locale();
+		    popit = 0;
+		}
 	    }
 	    revise_non_numeric_values(c);
 	    csv_set_scrub_thousep(c);
