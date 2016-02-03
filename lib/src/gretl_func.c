@@ -1532,12 +1532,14 @@ static int push_function_line (ufunc *fun, const char *s)
 	if (lines == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    int i = n - 1;
+	    
 	    fun->lines = lines;
-	    lines[n-1].idx = fun->line_idx;
-	    lines[n-1].s = gretl_strdup(s);
-	    lines[n-1].loop = NULL;
-	    lines[n-1].next_idx = -1;
-	    if (lines[n-1].s == NULL) {
+	    lines[i].idx = fun->line_idx;
+	    lines[i].s = gretl_strdup(s);
+	    lines[i].loop = NULL;
+	    lines[i].next_idx = -1;
+	    if (lines[i].s == NULL) {
 		err = E_ALLOC;
 	    } else {
 		fun->n_lines = n;
