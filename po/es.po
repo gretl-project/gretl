@@ -2,14 +2,14 @@
 # Copyright (C) 2001--2016 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
 # This file is distributed under the same license as the gretl package.
 #
-# , 2016.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-26 15:49-0500\n"
-"PO-Revision-Date: 2016-01-12 10:15+0100\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2016-02-03 15:40+0100\n"
+"Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -4734,9 +4734,8 @@ msgid "theta used for quasi-demeaning"
 msgstr "theta usado para quasi-demeaning (cuasi-centrado de los datos)"
 
 #: lib/src/modelprint.c:681 lib/src/modelprint.c:707 lib/src/modelprint.c:718
-#, fuzzy
 msgid "mean theta"
-msgstr "contraste rango-media "
+msgstr "theta medio"
 
 #: lib/src/modelprint.c:782
 #, c-format
@@ -9972,9 +9971,8 @@ msgid "Python files (*.py)"
 msgstr "ficheros Python (*.py)"
 
 #: gui2/fileselect.c:874
-#, fuzzy
 msgid "Julia files (*.jl)"
-msgstr "ficheros JMulTi (*.dat)"
+msgstr "ficheros de Julia (*.jl)"
 
 #: gui2/fileselect.c:875
 msgid "Ox files (*.ox)"
@@ -11449,9 +11447,8 @@ msgid "Python script"
 msgstr "guion de Python"
 
 #: gui2/gretl.c:1589
-#, fuzzy
 msgid "Julia program"
-msgstr "Programa Ox"
+msgstr "Programa de Julia"
 
 #: gui2/gretl.c:1590
 msgid "Ox program"
@@ -12822,9 +12819,8 @@ msgid "gretl: edit Python script"
 msgstr "gretl: editar un guion de Python"
 
 #: gui2/gui_utils.c:1661
-#, fuzzy
 msgid "gretl: edit Julia program"
-msgstr "gretl: editar programa Ox"
+msgstr "gretl: editar un programa de Julia"
 
 #: gui2/gui_utils.c:1663
 msgid "gretl: edit Stata program"
@@ -15101,9 +15097,8 @@ msgid "Octave"
 msgstr "Octave"
 
 #: gui2/selector.c:6199
-#, fuzzy
 msgid "Stata"
-msgstr "_Stata..."
+msgstr "Stata"
 
 #: gui2/selector.c:6200
 msgid "JMulTi"
@@ -15664,9 +15659,8 @@ msgid "Path to Python executable"
 msgstr "Camino al ejecutable de Python"
 
 #: gui2/settings.c:280
-#, fuzzy
 msgid "Path to Julia executable"
-msgstr "Camino al ejecutable de oxl"
+msgstr "Camino al ejecutable de Julia"
 
 #: gui2/settings.c:283
 msgid "Path to mpiexec"
@@ -15709,36 +15703,32 @@ msgid "Gnuplot colors"
 msgstr "Colores de Gnuplot"
 
 #: gui2/settings.c:308
-#, fuzzy
 msgid "Number of spaces per tab"
-msgstr "Espacios por tabulador"
+msgstr "Número de espacios por tabulador"
 
 #: gui2/settings.c:310
 msgid "\"Smart\" Tab and Enter"
-msgstr ""
+msgstr "Tabulador y Enter \"Elegantes\""
 
 #: gui2/settings.c:312
-#, fuzzy
 msgid "Show line numbers"
-msgstr "Cambiar los números de linea"
+msgstr "Mostrar los números de linea"
 
 #: gui2/settings.c:314
 msgid "Script editor uses tabs"
 msgstr "Usar pestañas en el editor de guiones"
 
 #: gui2/settings.c:317
-#, fuzzy
 msgid "Enable auto-completion"
-msgstr "no hay autocorrelación"
+msgstr "Activar autocompletado"
 
 #: gui2/settings.c:320
-#, fuzzy
 msgid "Enable auto-brackets"
-msgstr "valores p entre corchetes"
+msgstr "Activar paréntesis automáticos"
 
 #: gui2/settings.c:322
 msgid "Highlighting style"
-msgstr ""
+msgstr "Estilo de resaltado"
 
 #: gui2/settings.c:334
 msgid "Use robust covariance matrix by default"
@@ -15778,9 +15768,8 @@ msgstr ""
 "Parece que está Vd. ejecutando gretl como root.  ¿Desea realmente hacer esto?"
 
 #: gui2/settings.c:944
-#, fuzzy
 msgid "gretl: preferences"
-msgstr "gretl: Guía de Instrucciones"
+msgstr "gretl: preferencias"
 
 #: gui2/settings.c:1069 gui2/settings.c:2731
 msgid "Browse..."
@@ -15807,9 +15796,8 @@ msgid "Programs"
 msgstr "Programas"
 
 #: gui2/settings.c:1301
-#, fuzzy
 msgid "Editor"
-msgstr "Editar"
+msgstr "Editor"
 
 #: gui2/settings.c:1303
 msgid "Network"
@@ -16153,9 +16141,8 @@ msgid "Auto-indent script"
 msgstr "Sangrar automáticamente el guion"
 
 #: gui2/textbuf.c:3425 gui2/toolbar.c:741
-#, fuzzy
 msgid "Preferences..."
-msgstr "_Preferencias"
+msgstr "Preferencias..."
 
 #: gui2/textutil.c:280
 msgid "gretl: replace"
