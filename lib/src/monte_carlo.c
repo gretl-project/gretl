@@ -2770,10 +2770,11 @@ static int add_loop_genr (LOOPSET *loop, int lno,
     int err = 0;
 
     loop->cmds[lno].genr = genr_compile(line, dset, OPT_NONE, &err);
+    
     if (!err) {
 	loop->cmds[lno].flags |= LOOP_CMD_GENR;
     } else if (err == E_EQN) {
-	/* may be a non-compilable "special" */
+	/* may be a non-compilable special such as "genr time" */
 	err = 0;
     }
 
