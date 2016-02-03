@@ -26,6 +26,12 @@
 */
 
 #define LOOPSAVE 1           /* keep an eye on this! */
-#define ALT_UVAR_HANDLING 0  /* experimental, for now */
+#define GEN_STORE_UVARS 0    /* experimental, for now */
+
+#if LOOPSAVE && GEN_STORE_UVARS
+# define LOOPSAVE_PLUS 1
+#else
+# define LOOPSAVE_PLUS 0
+#endif
 
 #endif /* GENR_OPTIM_H_ */

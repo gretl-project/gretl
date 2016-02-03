@@ -10873,8 +10873,6 @@ static void reattach_data_error (NODE *n, parser *p, GretlType type)
     p->err = E_TYPES;
 }
 
-#if ALT_UVAR_HANDLING
-
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
@@ -10883,66 +10881,23 @@ static void node_reattach_data (NODE *n, parser *p)
 	GretlType type = 0;
 	void *data = NULL;
 
+#if GEN_STORE_UVARS
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
+# if LOOPSAVE
 	    if (gretl_function_depth() > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }
+# endif
 	}
 
 	if (n->uv != NULL) {
 	    data = n->uv->ptr;
 	    type = n->uv->type;
 	}
-
-	if (data == NULL) {
-	    p->err = E_DATA;
-	} else if (uscalar_node(n)) {
-	    if (type == GRETL_TYPE_DOUBLE) {
-		n->v.xval = *(double *) data;
-#if ONE_BY_ONE_CAST
-	    } else if (type == GRETL_TYPE_MATRIX) {
-		/* allow type-mutation */
-		n->t = MAT;
-		n->v.m = (gretl_matrix *) data;
-#endif
-	    } else {
-		reattach_data_error(n, p, type);
-		return;
-	    }
-	} else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
-	    n->v.m = data;
-	} else if (n->t == LIST && type == GRETL_TYPE_LIST) {
-	    n->v.ivec = data;
-	} else if (n->t == BUNDLE && type == GRETL_TYPE_BUNDLE) {
-	    n->v.b = data;
-	} else if (n->t == STR && type == GRETL_TYPE_STRING) {
-	    n->v.str = data;
-	} else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
-	    n->v.a = data;
-	} else {
-	    reattach_data_error(n, p, type);
-	    return;
-	}
-    }
-
-    if (p->err) {
-	fprintf(stderr, "node_reattach_data (vname = %s): err = %d\n",
-		n->vname, p->err);
-    }
-}
-
 #else
-
-static void node_reattach_data (NODE *n, parser *p)
-{
-    if (n->t == SERIES) {
-	reattach_series(n, p);
-    } else {
-	GretlType type = 0;
-	void *data;
-
 	data = user_var_get_value_and_type(n->vname, &type);
+#endif
 
 	if (data == NULL) {
 	    p->err = E_DATA;
@@ -10980,8 +10935,6 @@ static void node_reattach_data (NODE *n, parser *p)
 		n->vname, p->err);
     }
 }
-
-#endif
 
 static void node_type_error (int ntype, int argnum, int goodt, 
 			     NODE *bad, parser *p)
@@ -14762,7 +14715,7 @@ static int save_generated_var (parser *p, PRN *prn)
     return p->err;
 }
 
-#if ALT_UVAR_HANDLING
+#if GEN_STORE_UVARS
 
 static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
@@ -15143,15 +15096,15 @@ void gen_cleanup (parser *p)
     }
 }
 
-#if ALT_UVAR_HANDLING
+#if LOOPSAVE_PLUS
 
-#define ALT_DEBUG 0
+#define LSPLUS_DEBUG 0
 
 static void uvnode_reset (void *p1, void *p2)
 {
     NODE *n = p1;
 
-#if ALT_DEBUG
+#if LSPLUS_DEBUG
     fprintf(stderr, " reset node type %03d, %s, old ptr %p\n", 
 	    n->t, getsymb(n->t, NULL), (void *) n->uv);
 #endif
@@ -15164,7 +15117,7 @@ static void real_reset_uvars (parser *p, int level)
 	return;
     }
 
-#if ALT_DEBUG
+#if LSPLUS_DEBUG
     if (level == 0) {
 	fprintf(stderr, "* genr_reset_uvars (%s '%s') *\n",
 		getsymb(p->targ, p), p->lh.name);
@@ -15174,7 +15127,7 @@ static void real_reset_uvars (parser *p, int level)
 #endif
 
     if (p->uvnodes != NULL) {
-#if ALT_DEBUG
+#if LSPLUS_DEBUG
 	fprintf(stderr, " number of uvar nodes: %d\n", (int) g_slist_length(p->uvnodes));
 #endif
 	g_slist_foreach(p->uvnodes, uvnode_reset, NULL);
@@ -15201,7 +15154,7 @@ void genr_reset_uvars (parser *p)
     return;
 }
 
-#endif
+#endif /* LOOPSAVE_PLUS or not */
 
 static void maybe_set_return_flags (parser *p)
 {

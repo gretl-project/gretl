@@ -80,7 +80,7 @@ NODE *newempty (void)
 
 static NODE *newref (parser *p, int t)
 {
-#if ALT_UVAR_HANDLING
+#if LOOPSAVE_PLUS
     int fd = gretl_function_depth();
 #endif
     NODE *n = new_node(t);
@@ -97,7 +97,7 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) p->uvar->ptr;
 	    n->uv = p->uvar;
-#if ALT_UVAR_HANDLING
+#if LOOPSAVE_PLUS
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }
@@ -107,7 +107,7 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = p->uvar->ptr;
 	    n->uv = p->uvar;
-#if ALT_UVAR_HANDLING
+#if LOOPSAVE_PLUS
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }
