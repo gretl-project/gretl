@@ -15258,7 +15258,6 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     p->tree = expr(p);
     if (p->err) {
-	fprintf(stderr, "realgen: exiting on expr() error %d\n", p->err);
 	return p->err;
     }
 

@@ -7395,10 +7395,10 @@ static const char *get_funcerr_message (ExecState *state)
     return p;
 }
 
-static void set_function_error_message (int err, ufunc *u, 
-					ExecState *state,
-					const char *line,
-					int lineno)
+static void set_func_error_message (int err, ufunc *u, 
+				    ExecState *state,
+				    const char *line,
+				    int lineno)
 {
     if (err == E_FUNCERR) {
 	/* let the function writer set the message */
@@ -7413,14 +7413,27 @@ static void set_function_error_message (int err, ufunc *u,
 	if (*msg == '\0') {
 	    msg = errmsg_get_with_default(err);
 	    gretl_errmsg_set(msg);
-	} 
+	}
 
-	if (*line != '\0' && err != E_FNEST) {
-	    gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s", 
-				 u->name, lineno, line);
+	if (lineno < 0) {
+	    /* indicates that we don't have a real line number
+	       available (the error occurred inside a loop)
+	    */
+	    if (*line != '\0' && err != E_FNEST) {
+		gretl_errmsg_sprintf("*** error within loop in function %s\n> %s", 
+				     u->name, line);
+	    } else {
+		gretl_errmsg_sprintf("*** error within loop in function %s\n", 
+				     u->name, lineno);
+	    }
 	} else {
-	    gretl_errmsg_sprintf("*** error in function %s, line %d\n", 
-				 u->name, lineno);
+	    if (*line != '\0' && err != E_FNEST) {
+		gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s", 
+				     u->name, lineno, line);
+	    } else {
+		gretl_errmsg_sprintf("*** error in function %s, line %d\n", 
+				     u->name, lineno);
+	    }
 	}
 
 	if (gretl_function_depth() > 1) {
@@ -7456,6 +7469,10 @@ static int handle_return_statement (fncall *call,
     if (fun->rettype == GRETL_TYPE_VOID) {
 	if (*s == '\0') {
 	    ; /* plain "return" from void function: OK */
+	} else if (lineno < 0) {
+	    gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid", 
+				 fun->name, s);
+	    err = E_TYPES;
 	} else {
 	    gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid", 
 				 fun->name, lineno, s);
@@ -7465,8 +7482,12 @@ static int handle_return_statement (fncall *call,
     }
 
     if (*s == '\0') {
-	gretl_errmsg_sprintf("%s, line %d: return value is missing", fun->name, 
-			     lineno);
+	if (lineno < 0) {
+	    gretl_errmsg_sprintf("%s: return value is missing", fun->name);
+	} else {
+	    gretl_errmsg_sprintf("%s, line %d: return value is missing",
+				 fun->name, lineno);
+	}	    
 	err = E_TYPES;
     } else {
 	int len = gretl_namechar_spn(s);
@@ -7481,7 +7502,7 @@ static int handle_return_statement (fncall *call,
 	    sprintf(formula, "%s $retval=%s", typestr, s);
 	    err = generate(formula, dset, OPT_P, NULL);
 	    if (err) {
-		set_function_error_message(err, fun, state, s, lineno);
+		set_func_error_message(err, fun, state, s, lineno);
 	    } else {
 		call->retname = gretl_strdup("$retval");
 	    }
@@ -7833,7 +7854,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
-	int line_idx = u->lines[i].idx;
+	int lineno = u->lines[i].idx;
 
 	strcpy(line, u->lines[i].s);
 
@@ -7853,12 +7874,11 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 		/* not blocked, so execute the loop code */
 		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
 		if (err) {
-		    set_function_error_message(err, u, &state, state.line, 
-					       u->lines[i].idx);
+		    set_func_error_message(err, u, &state, state.line, -1);
 		    break;
 		} else if (get_return_line(&state)) {
 		    /* a "return" statement was encountered in the loop */
-		    err = handle_return_statement(call, &state, dset, i+1);
+		    err = handle_return_statement(call, &state, dset, -1);
 		    break;
 		}
 	    }
@@ -7877,7 +7897,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 #endif /* LOOPSAVE or not */
 
 	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(call, &state, dset, i+1);
+	    err = handle_return_statement(call, &state, dset, lineno);
 	    if (i < u->n_lines - 1) {
 		retline = i;
 	    }
@@ -7886,10 +7906,10 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
 	if (debugging > 1 && do_debugging(&state)) {
 	    if (put_func != NULL) {
-		pprintf(prn, "-- debugging %s, line %d --\n", u->name, line_idx);
+		pprintf(prn, "-- debugging %s, line %d --\n", u->name, lineno);
 		(*put_func)(&state);
 	    } else {
-		pprintf(prn, "-- debugging %s, line %d --\n", u->name, line_idx);
+		pprintf(prn, "-- debugging %s, line %d --\n", u->name, lineno);
 	    }
 	    debugging = debug_command_loop(&state, dset,
 					   get_line, put_func, 
@@ -7897,7 +7917,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	}
 
 	if (err) {
-	    set_function_error_message(err, u, &state, line, line_idx);
+	    set_func_error_message(err, u, &state, line, lineno);
 	    break;
 	}
 
@@ -7913,12 +7933,12 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 #endif
 	    err = gretl_loop_exec(&state, dset, NULL);
 	    if (err) {
-		set_function_error_message(err, u, &state, state.line, 
-					   u->lines[i].idx);
+		/* note that @lineno will point at the end of a loop here */
+		set_func_error_message(err, u, &state, state.line, -1);
 	    }
 	    if (get_return_line(&state)) {
 		/* a "return" statement was encountered in the loop */
-		err = handle_return_statement(call, &state, dset, i+1);
+		err = handle_return_statement(call, &state, dset, -1);
 		break;
 	    }
 	}

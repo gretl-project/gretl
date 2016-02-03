@@ -2971,12 +2971,18 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
     return err;
 }
 
+static char *inner_errline;
+
 static int loop_report_error (LOOPSET *loop, int err, 
 			      const char *errline,
 			      ExecState *state,
 			      PRN *prn)
 {
     int fd = gretl_function_depth();
+
+    if (fd > 0 && inner_errline != NULL) {
+	errline = inner_errline;
+    }
 
     if (err) {
 	if (fd == 0) {
@@ -2997,6 +3003,14 @@ static int loop_report_error (LOOPSET *loop, int err,
     }
 
     return err;
+}
+
+static void loop_reset_error (void)
+{
+    if (inner_errline != NULL) {
+	free(inner_errline);
+	inner_errline = NULL;
+    }
 }
 
 static int conditional_line (LOOPSET *loop, int j)
@@ -3205,6 +3219,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     show_activity = show_activity_func_installed();
     
     while (!err && loop_condition(loop, dset, &err)) {
+	/* respective iterations of a given loop */
 #if LOOP_DEBUG > 1
 	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
@@ -3224,6 +3239,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	}
 
 	while (!err && loop_next_command(line, loop, &j)) {
+	    /* exec commands on this iteration */
 	    int ci = loop->cmds[j].ci;
 	    int parse = 1;
 	    int subst = 0;
@@ -3328,10 +3344,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 	do_parsing:
-
-#if LTRACE
-	    fprintf(stderr, "HERE, err = %d, parse = %d\n", err, parse);
-#endif	    
 
 	    if (parse && !err) {
 		err = parse_command_line(line, cmd, dset, NULL);
@@ -3476,6 +3488,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    if (show_activity && (loop->iter % 10 == 0)) {
 		show_activity_callback();
 	    }
+	} /* end handling commands for a given iteration */
+
+	if (err && inner_errline == NULL) {
+	    inner_errline = gretl_strdup(errline);
 	}
 
     } /* end iterations of loop */
@@ -3527,6 +3543,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	/* reached top of stack: clean up */
 	currloop = NULL;
 	set_loop_off();
+	loop_reset_error();
 #if LOOPSAVE
 	if (!err && maybe_preserve_loop(loop)) {
 	    /* prevent destruction of saved loop */
