@@ -3096,7 +3096,7 @@ static int maybe_preserve_loop (LOOPSET *loop)
 
 #endif /* LOOPSAVE */
 
-#if LOOPSAVE && ALT_UVAR_HANDLING
+#if LOOPSAVE_PLUS
 
 /* loop_reset_genrs(): may be called on exit from a function
    onto which one or more "compiled" loops have been attached.
@@ -3124,7 +3124,7 @@ void loop_reset_genrs (LOOPSET *loop)
     }
 }
 
-#else /* !(LOOPSAVE && ALT_UVAR_HANDLING) */
+#else /* !LOOPSAVE_PLUS */
 
 void loop_reset_genrs (LOOPSET *loop)
 {
