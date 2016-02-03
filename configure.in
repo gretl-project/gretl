@@ -488,6 +488,12 @@ dnl Check for LAPACK
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
+  *arwin15*) 
+    LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
+    have_lapack="yes"
+    darwin_build="yes"
+    AC_DEFINE(OS_OSX)
+  ;;   
   *arwin*) 
     LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
     have_lapack="yes"
