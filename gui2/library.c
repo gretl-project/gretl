@@ -9529,7 +9529,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     if (gretl_compiling_loop()) { 
 	/* when stacking commands for a loop, parse "lightly" */
-	err = get_command_index(line, cmd);
+	err = get_command_index(line, LOOP, cmd);
     } else {
 	err = parse_command_line(line, cmd, dset, NULL);
     }
