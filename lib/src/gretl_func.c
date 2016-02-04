@@ -83,6 +83,7 @@ struct fn_line_ {
     char *s;        /* text of command line */
     LOOPSET *loop;  /* attached "compiled" loop */
     int next_idx;   /* line index to skip to after loop */
+    int ignore;     /* flag for comment lines */
 };
 
 #define UNSET_VALUE (-1.0e200)
@@ -1539,6 +1540,7 @@ static int push_function_line (ufunc *fun, const char *s)
 	    lines[i].s = gretl_strdup(s);
 	    lines[i].loop = NULL;
 	    lines[i].next_idx = -1;
+	    lines[i].ignore = 0;
 	    if (lines[i].s == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -5956,117 +5958,14 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     return err;
 }
 
-static int end_of_function (const char *s)
-{
-    int ret = 0;
-
-    if (!strncmp(s, "end ", 4)) {
-	char word[9];
-
-	if (sscanf(s + 4, "%8s", word) && !strcmp(word, "function")) {
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
-#define function_return_line(s) (strncmp(s, "return", 6) == 0 && \
-	                         (*(s + 6) == ' ' || *(s + 6) == '\0'))
-
-#define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
-#define starts_comment(p) (*p == '/' && *(p+1) == '*')
-#define ends_comment(p)   (*p == '*' && *(p+1) == '/')
-
-static int ignore_line (ufunc *fun)
-{
-    int i, quoted = 0, ignore = 0;
-    char *s, *p;
-
-    for (i=0; i<fun->n_lines; i++) {
-	s = p = fun->lines[i].s;
-	while (*p) {
-	    if (!quoted && !ignore && *p == '#') {
-		break;
-	    }
-	    if (!ignore && bare_quote(p, s)) {
-		quoted = !quoted;
-	    }
-	    if (!quoted) {
-		if (starts_comment(p)) {
-		    ignore = 1;
-		    p += 2;
-		} else if (ends_comment(p)) {
-		    ignore = 0;
-		    p += 2;
-		    p += strspn(p, " ");
-		}
-	    }
-	    if (*p) {
-		p++;
-	    }
-	}
-    }
-
-    return ignore;
-}
-
 #define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
-
-/* Rather minimal check for syntactic validity of "compiled" function.
-   FIXME: it would be good to check here for messed up block structure
-   too (e.g. "system" without "end system").
-*/
-
-static int check_function_structure (ufunc *fun)
-{
-    char line[MAXLINE];
-    CMD cmd;
-    int ifdepth = 0;
-    int i, err = 0;
-
-    gretl_cmd_init(&cmd);
-
-#if 0
-    fprintf(stderr, "checking function '%s'\n", fun->name);
-#endif
-
-    for (i=0; i<fun->n_lines && !err; i++) {
-#if defined(SHOW_STRUCTURE)
-	fprintf(stderr, "line[%d] = '%s'\n", i, fun->lines[i].s);
-#endif
-	/* avoid losing comment lines */
-	strcpy(line, fun->lines[i].s);
-	get_command_index(line, &cmd);
-	if (cmd.ci == FUNC) {
-	    err = E_FNEST;
-	} else if (cmd.ci == IF) {
-	    ifdepth++;
-	} else if (NEEDS_IF(cmd.ci) && ifdepth == 0) {
-	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-	    err = E_PARSE;
-	} else if (cmd.ci == ENDIF) {
-	    ifdepth--;
-	} 
-    }
-
-    if (!err && ifdepth != 0) {
-	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-	fprintf(stderr, "After reading, ifdepth = %d\n", ifdepth);
-	err = E_PARSE;
-    }
-
-    gretl_cmd_free(&cmd);
-
-    return err;
-}
 
 static void python_check (const char *line)
 {
     char s1[8], s2[16];
 
     if (sscanf(line, "%7s %15s", s1, s2) == 2) {
-	if (!strcmp(s1, "foreign") && strstr(s2, "ython")) {
+	if (!strcmp(s1, "foreign") && strstr(s2, "ytho")) {
 	    compiling_python = 1;
 	} else if (!strcmp(s1, "end") && !strcmp(s2, "foreign")) {
 	    compiling_python = 0;
@@ -6085,8 +5984,13 @@ static void python_check (const char *line)
 
 int gretl_function_append_line (const char *line)
 {
+    static CMD *cmd;
+    static int ifdepth;
+    char tmpline[MAXLINE];
     ufunc *fun = current_fdef;
-    int editing = 0;
+    int blank = 0;
+    int abort = 0;
+    int ignore = 0;
     int err = 0;
 
     if (fun == NULL) {
@@ -6099,46 +6003,76 @@ int gretl_function_append_line (const char *line)
 	    line, fun->line_idx);
 #endif
 
-    if (string_is_blank(line)) {
-	/* note: preserve line numbering */
-	fun->line_idx += 1;
-    } else if (end_of_function(line) && !ignore_line(fun)) {
-	if (fun->n_lines == 0) {
-	    gretl_errmsg_sprintf("%s: empty function", fun->name);
-	    err = 1;
+    if (cmd == NULL) {
+	cmd = gretl_cmd_new();
+	if (cmd == NULL) {
+	    return E_ALLOC;
 	}
-	set_compiling_off();
-    } else if (!strncmp(line, "quit", 4)) {
-	/* abort compilation */
-	if (!editing) {
-	    ufunc_unload(fun);
+    }
+
+    blank = string_is_blank(line);
+
+    /* below: append line to function, carrying out some
+       basic structural checks as we go 
+    */
+
+    if (!blank) {
+	/* note: avoid losing comment lines */
+	strcpy(tmpline, line);
+	err = get_command_index(tmpline, FUNC, cmd);
+	if (!err) {
+	    if (cmd->ci == QUIT) {
+		abort = 1;
+	    } else if (cmd->flags & CMD_ENDFUN) {
+		if (fun->n_lines == 0) {
+		    gretl_errmsg_sprintf("%s: empty function", fun->name);
+		    err = 1;
+		}
+		set_compiling_off();
+	    } else if (cmd->ci == FUNC) {
+		err = E_FNEST;
+	    } else if (cmd->ci == IF) {
+		ifdepth++;
+	    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
+		gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+		err = E_PARSE;
+	    } else if (cmd->ci == ENDIF) {
+		ifdepth--;
+	    } else if (cmd->ci < 0) {
+		ignore = 1;
+	    }
 	}
+    }
+
+    if (abort || err) {
 	set_compiling_off();
-	return 0; /* handled */
-    } else {
+    }    
+
+    if (compiling) {
+	/* actually add the line */
+	int i = fun->n_lines;
+	
 	err = push_function_line(fun, line);
 	if (!err) {
-	    python_check(line);
+	    if (ignore) {
+		fun->lines[i].ignore = 1;
+	    } else if (!blank) {
+		python_check(line);
+	    }
 	}
+    } else {
+	/* finished compilation */
+	if (!abort && !err && ifdepth != 0) {
+	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    err = E_PARSE;
+	}
+	/* reset static vars */
+	gretl_cmd_destroy(cmd);
+	cmd = NULL;
+	ifdepth = 0;
     }
 
-    if (err && !editing) {
-	set_compiling_off();
-    }	
-
-    if (!err && !compiling && !editing) {
-	/* finished composing function */
-	err = check_function_structure(fun);
-    }
-
-#ifdef SHOW_STRUCTURE
-    if (!compiling) {
-	fprintf(stderr, "function '%s': finished compiling, err = %d\n",
-		fun->name, err);
-    }
-#endif
-
-    if (err && !editing) {
+    if (abort || err) {
 	ufunc_unload(fun);
     }	
 
@@ -7864,6 +7798,10 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	    pprintf(prn, "%s> %s\n", u->name, line);
 	} else if (gretl_echo_on()) {
 	    pprintf(prn, "? %s\n", line);
+	}
+
+	if (u->lines[i].ignore) {
+	    continue;
 	}
 
 #if LOOPSAVE

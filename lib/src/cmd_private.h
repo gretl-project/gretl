@@ -11,10 +11,10 @@ typedef enum {
     CMD_SUBST   = 1 << 1, /* string substitution has been done on command */
     CMD_PROG    = 1 << 2, /* command is in context of progressive loop */
     CMD_CATCH   = 1 << 3, /* error from command should be "caught" */
-    CMD_NOSUB   = 1 << 4  /* no @-substitution called for (pre-checked) */
+    CMD_NOSUB   = 1 << 4, /* no @-substitution called for (pre-checked) */
+    CMD_ENDFUN  = 1 << 5  /* line terminates a function definition */
 } CmdFlags;
 
-#define cmd_nolist(c)  (c->flags & CMD_NOLIST)
 #define cmd_ignore(c)  (c->flags & CMD_IGNORE)
 #define cmd_subst(c)   (c->flags & CMD_SUBST)
 #define cmd_nosub(c)   (c->flags & CMD_NOSUB)
@@ -25,9 +25,9 @@ struct CMD_ {
     int ci;          /* current command index */
     int err;         /* error code */
     int context;     /* for block commands, index of current context */
-    int ciflags;     /* status flags pertaining to @ci */
+    int ciflags;     /* see CIFlags in tokenizer.c */
     gretlopt opt;    /* option(s) for command */
-    int flags;       /* status flags for command invocation */
+    CmdFlags flags;  /* status flags for command invocation */
     int order;       /* lag order, where appropriate */
     int auxint;      /* auxiliary int (e.g. VECM rank) */
     int cstart;      /* token index of start of 'real' command */

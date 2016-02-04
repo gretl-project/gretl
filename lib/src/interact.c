@@ -3253,7 +3253,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
     }
 
     if (gretl_compiling_loop()) {
-	err = get_command_index(s->line, s->cmd);
+	err = get_command_index(s->line, LOOP, s->cmd);
     } else {
 	/* FIXME last arg to parse_command_line() ? */
 	err = parse_command_line(s->line, s->cmd, dset, NULL);
@@ -3298,6 +3298,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 /**
  * get_command_index:
  * @line: command line.
+ * @cmode: compilation mode: LOOP or FUNC
  * @cmd: pointer to gretl command struct.
  *
  * Parse @line and assign to the %ci field of @cmd the index number of
@@ -3309,7 +3310,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
  * Returns: 1 on error, otherwise 0.
  */
 
-int get_command_index (char *line, CMD *cmd)
+int get_command_index (char *line, int cmode, CMD *cmd)
 {
     int err = 0;
 
@@ -3323,7 +3324,7 @@ int get_command_index (char *line, CMD *cmd)
 	return 0;
     }
 
-    err = real_parse_command(line, cmd, NULL, 1, NULL);
+    err = real_parse_command(line, cmd, NULL, cmode, NULL);
 
     if (!err && cmd->ci == 0) {
 	/* maybe genr via series name? */

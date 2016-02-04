@@ -806,7 +806,7 @@ static int closing_delimiter_pos (const char *s)
    "catch" or assignment to an object.
 */
 
-static int min_token_index (CMD *c, int idx_only)
+static int min_token_index (CMD *c, int compmode)
 {
     int pos = 0, apos = 1;
 
@@ -819,7 +819,7 @@ static int min_token_index (CMD *c, int idx_only)
     if (c->ntoks > apos && c->toks[apos].type == TOK_ASSIGN) {
 	/* advance by assignment target and operator */
 	pos += 2;
-    } else if (idx_only && c->ntoks == 2 && c->toks[0].s[0] == '@') {
+    } else if (compmode && c->ntoks == 2 && c->toks[0].s[0] == '@') {
 	/* got a @-term in pos 0, not a command word */
 	pos = 1;
     }
@@ -2291,14 +2291,20 @@ static char peek_next_char (CMD *cmd, int i)
     return *s;
 }
 
-static int peek_loop_param (CMD *cmd, int i)
+static int peek_end_param (CMD *cmd, int i)
 {
     const char *s;
 
     s = cmd->toks[i].lp + strlen(cmd->toks[i].s);
     s += strspn(s, " ");
 
-    return !strncmp(s, "loop", 4);
+    if (!strncmp(s, "loop", 4)) {
+	return LOOP;
+    } else if (!strncmp(s, "function", 8)) {
+	return FUNC;
+    } else {
+	return 0;
+    }
 }
 
 #if CDEBUG > 1
@@ -2325,7 +2331,7 @@ static void maybe_report_command_index (CMD *cmd, const char *s)
 
 static int try_for_command_index (CMD *cmd, int i,
 				  DATASET *dset,
-				  int idx_only)
+				  int compmode)
 {
     cmd_token *toks = cmd->toks;
     const char *test = toks[i].s;
@@ -2403,9 +2409,15 @@ static int try_for_command_index (CMD *cmd, int i,
 		    cmd->ciflags |= CI_LCHK;
 		}
 	    }
-	    if (idx_only && cmd->ci == END && peek_loop_param(cmd, i)) {
-		deprecate_alias("end loop", "endloop", 0);
-		cmd->ci = ENDLOOP;
+	    if (compmode && cmd->ci == END) {
+		int endci = peek_end_param(cmd, i);
+
+		if (compmode == LOOP && endci == LOOP) {
+		    deprecate_alias("end loop", "endloop", 0);
+		    cmd->ci = ENDLOOP;
+		} else if (compmode == FUNC && endci == FUNC) {
+		    cmd->flags |= CMD_ENDFUN;
+		}
 	    }
 	}
     }
@@ -3053,20 +3065,20 @@ static int scrub_list_check (CMD *cmd)
 */
 
 static int tokenize_line (CMD *cmd, const char *line,
-			  DATASET *dset, int idx_only)
+			  DATASET *dset, int compmode)
 {
     char tok[FN_NAMELEN];
     const char *s = line;
     char *vtok;
     int n, m, pos = 0;
     int wild_ok = 0;
-    int at_ok = idx_only;
+    int at_ok = compmode;
     int want_fname = 0;
     int err = 0;
 
 #if CDEBUG || TDEBUG
     fprintf(stderr, "*** %s: line = '%s'\n", 
-	    idx_only ? "get_command_index" : "parse_command_line", line);
+	    compmode ? "get_command_index" : "parse_command_line", line);
 #endif
 
     gretl_push_c_numeric_locale();
@@ -3103,7 +3115,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    err = push_string_token(cmd, tok, s, pos);	    
 	} else if (isalpha(*s) || *s == '$' || (at_ok && *s == '@')) {
 	    /* regular or accessor identifier */
-	    if (*s == '@' && !idx_only) {
+	    if (*s == '@' && !compmode) {
 		fprintf(stderr, "tokenize: found '@':\n '%s'\n", line);
 	    }
 	    n = 1 + namechar_spn(s+1);
@@ -3165,7 +3177,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    /* handle stupid "non-breaking space" here too */
 	    n = 1;
 	    skipped = 1;
-	} else if (*s == '@' && (idx_only || gretl_if_state_false())) {
+	} else if (*s == '@' && (compmode || gretl_if_state_false())) {
 	    /* string substitution not yet done */
 	    n = 1;
 	    skipped = 1;
@@ -3184,10 +3196,10 @@ static int tokenize_line (CMD *cmd, const char *line,
 
 	if (!skipped && cmd->ci == 0 && cmd->ntoks > 0) {
 	    /* use current info to determine command index? */
-	    int imin = min_token_index(cmd, idx_only);
+	    int imin = min_token_index(cmd, compmode);
 
 	    if (cmd->ntoks > imin) {
-		try_for_command_index(cmd, imin, dset, idx_only);
+		try_for_command_index(cmd, imin, dset, compmode);
 #if TDEBUG
 		if (cmd->ci > 0) {
 		    fprintf(stderr, "ntoks=%d, imin=%d, ci=%d (%s)\n",
@@ -3203,13 +3215,14 @@ static int tokenize_line (CMD *cmd, const char *line,
 		if (cmd->ciflags & CI_FNAME) {
 		    want_fname = 1;
 		}
-		if (cmd->ci == LOOP) {
-		    idx_only = 0;
+		if (cmd->ci == LOOP && compmode == LOOP) {
+		    /* we need to pick up the specifics of the loop */
+		    compmode = 0;
 		}
 	    }
 	}
 
-	if (idx_only && (cmd->ci > 0 || cmd->ntoks == 3)) {
+	if (compmode && (cmd->ci > 0 || cmd->ntoks == 3)) {
 	    /* we just wanted the command index, and either we've got it
 	       or it seems we're not going to get it */
 	    break;
@@ -3595,7 +3608,7 @@ const char *get_parser_errline (void)
 }
 
 static int real_parse_command (const char *line, CMD *cmd, 
-			       DATASET *dset, int idx_only,
+			       DATASET *dset, int compmode,
 			       void *ptr)
 {
     int err = 0;
@@ -3603,17 +3616,17 @@ static int real_parse_command (const char *line, CMD *cmd,
     maybe_init_shadow();
 
     if (*line != '\0') {
-	err = tokenize_line(cmd, line, dset, idx_only);
+	err = tokenize_line(cmd, line, dset, compmode);
 
-	if (idx_only) {
-	    /* Are we doing get_command_index(), for loop compilation?
+	if (compmode) {
+	    /* Are we doing get_command_index(), for compilation?
 	       In that case we shouldn't do any further processing
 	       unless we got a nested loop command (in which case we
 	       want to extract the options).
-	    */	    
-	    if (!err && cmd->ci == LOOP) {
+	    */
+	    if (!err && cmd->ci == LOOP && compmode == LOOP) {
 		err = assemble_command(cmd, dset);
-		idx_only = 0;
+		compmode = 0;
 	    }
 	    goto parse_exit;
 	}
@@ -3651,7 +3664,7 @@ static int real_parse_command (const char *line, CMD *cmd,
     if (cmd->ci == CMD_MASKED) {
 	fprintf(stderr, "breaking on flow control, current state = %s\n\n",
 		gretl_if_state_false() ? "false" : "true");
-    } else if (idx_only) {
+    } else if (compmode) {
 	fputc('\n', stderr);
     }
 #endif
