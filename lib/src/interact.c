@@ -2031,6 +2031,8 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     return err;
 }
 
+#ifdef USE_CURL
+
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
 				     PRN *prn)
@@ -2138,6 +2140,93 @@ static int install_function_package (const char *pkgname,
     
     return err;
 }
+
+#else /* !USE_CURL */
+
+/* in this case we can only install from a local file */
+
+static int install_function_package (const char *pkgname,
+				     gretlopt opt,
+				     PRN *prn)
+{
+    char *fname = NULL;
+    char *homefile = NULL;
+    int filetype = 0;
+    int err = 0;
+
+    if (!strncmp(pkgname, "http://", 7) ||
+	!strncmp(pkgname, "https://", 8)) {
+	gretl_errmsg_set(_("Internet access not supported"));
+	return E_DATA;
+    }
+
+    if (strstr(pkgname, ".gfn")) {
+	filetype = 1;
+    } else if (strstr(pkgname, ".zip")) {
+	filetype = 2;
+    } else {
+	/* must have suitable suffix */
+	err = E_DATA;
+    }
+
+    if (!err) {
+	/* get last portion of local filename */
+	const char *p = NULL;
+	    
+	if (!strncmp(pkgname, "~/", 2)) {
+	    homefile = gretl_prepend_homedir(pkgname, &err);
+	    if (!err) {
+		p = strrchr(homefile, SLASH);
+	    }
+	} else {
+	    p = strrchr(pkgname, SLASH);
+	}
+	if (p != NULL) {
+	    fname = gretl_strdup(p + 1);
+	}
+    }
+
+    if (!err && filetype) {
+	const char *basename = fname != NULL ? fname : pkgname;
+	const char *path = gretl_function_package_path();
+	const char *lpath = homefile != NULL ? homefile : pkgname;
+	gchar *fullname;
+	int preserve = 0;
+
+	fullname = g_strdup_printf("%s%s", path, basename);
+
+	/* copy file into place if need be */
+	if (strcmp(fullname, lpath)) {
+	    err = gretl_copy_file(lpath, fullname);
+	} else if (filetype == 2) {
+	    /* local zip file already in the right place:
+	       if we're not copying it, don't delete it
+	    */
+	    preserve = 1;
+	}
+	
+	if (!err && filetype == 2) {
+	    err = gretl_unzip_into(fullname, path);
+	    if (!preserve) {
+		/* delete the zipfile */
+		gretl_remove(fullname);
+	    }
+	}
+	
+	g_free(fullname);
+
+	if (!err && gretl_messages_on()) {
+	    pprintf(prn, "Installed %s\n", basename);
+	}
+    }
+
+    free(fname);
+    free(homefile);
+    
+    return err;
+}
+
+#endif
 
 static void abort_execution (ExecState *s)
 {
