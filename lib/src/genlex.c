@@ -1100,27 +1100,27 @@ static void look_up_word (const char *s, parser *p)
 	    } else if (have_dset && !strcmp(s, "time")) {
 		p->sym = DUM;
 		p->idnum = DUM_TREND;
-	    } else if ((p->uvar = get_user_var_by_name(s)) != NULL) {
-		GretlType vtype = p->uvar->type;
+	    } else if ((p->data = get_user_var_by_name(s)) != NULL) {
+		user_var *u = p->data;
 		    
-		if (vtype == GRETL_TYPE_DOUBLE) {
+		if (u->type == GRETL_TYPE_DOUBLE) {
 		    p->sym = NUM;
-		} else if (vtype == GRETL_TYPE_MATRIX) {
+		} else if (u->type == GRETL_TYPE_MATRIX) {
 		    p->sym = MAT;
-		} else if (vtype == GRETL_TYPE_BUNDLE) {
+		} else if (u->type == GRETL_TYPE_BUNDLE) {
 		    p->sym = BUNDLE;
-		} else if (vtype == GRETL_TYPE_ARRAY) {
+		} else if (u->type == GRETL_TYPE_ARRAY) {
 		    p->sym = ARRAY;
-		} else if (vtype == GRETL_TYPE_STRING) {
+		} else if (u->type == GRETL_TYPE_STRING) {
 		    p->sym = STR;
-		} else if (vtype == GRETL_TYPE_LIST) {
+		} else if (u->type == GRETL_TYPE_LIST) {
 		    p->sym = LIST;
 		}
 		p->idstr = gretl_strdup(s);
 	    } else if (gretl_get_object_by_name(s)) {
 		p->sym = UOBJ;
 		p->idstr = gretl_strdup(s);
-	    } else if (get_user_function_by_name(s)) {
+	    } else if ((p->data = get_user_function_by_name(s))) {
 		p->sym = UFUN;
 		p->idstr = gretl_strdup(s);
 	    } else if (defining_list(p) && varname_match_any(p->dset, s)) {
@@ -1193,7 +1193,7 @@ static void word_check_next_char (parser *p)
     if (p->ch == '(') {
 	/* series (lag) or function */
 	if (p->sym == SERIES) {
-	    if (p->idnum > 0 && p->idnum == p->lh.v) {
+	    if (p->idnum > 0 && p->idnum == p->lh.vnum) {
 		p->flags |= P_AUTOREG;
 	    }
 	    p->upsym = p->sym;

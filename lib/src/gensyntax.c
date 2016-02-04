@@ -93,10 +93,17 @@ static NODE *newref (parser *p, int t)
 	    if (is_string_valued(p->dset, n->vnum)) {
 		n->flags |= SVL_NODE;
 	    }
+#if LOOPSAVE_PLUS
+	    if (fd > 0) {
+		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    }
+#endif	    
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
+	    user_var *u = p->data;
+	    
 	    n->vname = p->idstr;
-	    n->v.xval = *(double *) p->uvar->ptr;
-	    n->uv = p->uvar;
+	    n->v.xval = *(double *) u->ptr;
+	    n->uv = u;
 #if LOOPSAVE_PLUS
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
@@ -104,20 +111,24 @@ static NODE *newref (parser *p, int t)
 #endif
 	} else if (t == MAT || t == LIST || t == BUNDLE ||
 		   t == ARRAY || t == STR) {
+	    user_var *u = p->data;
+	    
 	    n->vname = p->idstr;
-	    n->v.ptr = p->uvar->ptr;
-	    n->uv = p->uvar;
+	    n->v.ptr = u->ptr;
+	    n->uv = u;
 #if LOOPSAVE_PLUS
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }
 #endif
+	} else if (t == PTR) {
+	    n->vname = p->idstr;
+	    n->v.ptr = p->data;
 	} else if (t == DBUNDLE) {
 	    n->v.idnum = p->idnum;
 	} else if (t == UNDEF) {
 	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
-	    /* FIXME ? */
 	    n->v.str = p->idstr;
 	} else {
 	    n->v.idnum = p->idnum;
@@ -597,9 +608,9 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	       unless we need the _names_ of string variables 
 	       rather then their content
 	    */
-	    p->uvar = get_user_var_of_type_by_name(p->idstr,
+	    p->data = get_user_var_of_type_by_name(p->idstr,
 						   GRETL_TYPE_STRING);
-	    if (p->uvar != NULL) {
+	    if (p->data != NULL) {
 		strvar = 1;
 	    } else {
 		char *s = get_built_in_string_by_name(p->idstr);
@@ -797,8 +808,8 @@ static NODE *get_bundle_member_name (parser *p)
     
     if (!p->err) {
 	if (strvar) {
-	    p->uvar = get_user_var_of_type_by_name(p->idstr, GRETL_TYPE_STRING);
-	    if (p->uvar == NULL) {
+	    p->data = get_user_var_of_type_by_name(p->idstr, GRETL_TYPE_STRING);
+	    if (p->data == NULL) {
 		gretl_errmsg_sprintf(_("%s: not a string variable"), p->idstr);
 		p->err = E_DATA;
 	    } else {
@@ -1310,7 +1321,11 @@ static NODE *powterm (parser *p)
     } else if (sym == UFUN || sym == RFUN) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr);
+	    if (sym == UFUN) {
+		t->v.b2.l = newref(p, PTR);
+	    } else {
+		t->v.b2.l = newstr(p->idstr);
+	    }
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {

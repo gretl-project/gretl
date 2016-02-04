@@ -123,12 +123,13 @@ enum {
 	      RFUN,       /* GNU R function */
 	      IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
-	      USERIES,    /* named series (defined ont for error reporting) */
+	      USERIES,    /* named series (defined only for error reporting) */
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
 	      UNDEF,      /* undefined (allowed in "query" context only) */
-	      EOT,	  /* end of transmission */
+	      PTR,        /* miscellaneous pointer */
+ /* 100 */    EOT,	  /* end of transmission */
 	      UNK 
 };
 
@@ -608,11 +609,10 @@ struct lhinfo {
     int t;                 /* type of pre-existing LHS variable, if any */
     char name[VNAMELEN];   /* name of LHS variable */   
     char label[MAXLABEL];  /* descriptive string for series */
-    int v;                 /* ID number of pre-existing LHS series */
+    int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of LHS variable */
     int obs;               /* specific obs number in series */
-    gretl_matrix *m0;      /* original LHS matrix (or NULL) */
-    gretl_matrix *m1;      /* computed LHS matrix (or NULL) */
+    gretl_matrix *m;       /* LHS matrix (or NULL) */
     char *substr;          /* obs or matrix/array selection string */
     char *subvar;          /* name of targetted bundle member */
     matrix_subspec *mspec; /* evaluated submatrix spec */
@@ -649,7 +649,7 @@ struct parser_ {
     double xval;
     int idnum;
     char *idstr;
-    user_var *uvar;
+    void *data;
     int err;
 };
 

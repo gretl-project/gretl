@@ -60,17 +60,17 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	if (settings_obs_value(p)) {
 	    /* set specific observation in series */
 	    pprintf(prn, _("Modified series %s (ID %d)"),
-		    p->lh.name, p->lh.v);
+		    p->lh.name, p->lh.vnum);
 	} else {
 	    write_scalar_message(p, prn);
 	}
     } else if (p->targ == SERIES) {
-	if (p->lh.v < oldv) {
+	if (p->lh.vnum < oldv) {
 	    pprintf(prn, _("Replaced series %s (ID %d)"),
-		    p->lh.name, p->lh.v);
+		    p->lh.name, p->lh.vnum);
 	} else {
 	    pprintf(prn, _("Generated series %s (ID %d)"),
-		    p->lh.name, p->lh.v);
+		    p->lh.name, p->lh.vnum);
 	}
     } else if (p->targ == MAT) {
 	gretl_matrix *m = get_matrix_by_name(p->lh.name);
@@ -136,9 +136,9 @@ static int maybe_record_lag_info (parser *p)
 	    int pv = series_index(p->dset, vname);
 
 	    if (pv < p->dset->v) {
-		series_set_parent(p->dset, p->lh.v, p->dset->varname[pv]);
-		series_set_transform(p->dset, p->lh.v, LAGS);
-		series_set_lag(p->dset, p->lh.v, -lag);
+		series_set_parent(p->dset, p->lh.vnum, p->dset->varname[pv]);
+		series_set_transform(p->dset, p->lh.vnum, LAGS);
+		series_set_lag(p->dset, p->lh.vnum, -lag);
 	    }
 	}
     }
@@ -164,8 +164,8 @@ static void gen_write_label (parser *p, int oldv)
 
     maybe_record_lag_info(p);
 
-    if (p->lh.v < oldv && p->targ == SERIES) {
-	series_set_mtime(p->dset, p->lh.v);
+    if (p->lh.vnum < oldv && p->targ == SERIES) {
+	series_set_mtime(p->dset, p->lh.vnum);
     }
 
     if (*p->lh.label != '\0' && (p->flags & P_UFRET)) {
@@ -185,11 +185,11 @@ static void gen_write_label (parser *p, int oldv)
 	strncat(tmp, src, MAXLABEL - 1);
     }
 
-    series_set_label(p->dset, p->lh.v, tmp);
-    series_set_flag(p->dset, p->lh.v, VAR_GENERATED);
+    series_set_label(p->dset, p->lh.vnum, tmp);
+    series_set_flag(p->dset, p->lh.vnum, VAR_GENERATED);
 
 #if GDEBUG
-    fprintf(stderr, "varlabel: '%s'\n", series_get_label(p->dset, p->lh.v));
+    fprintf(stderr, "varlabel: '%s'\n", series_get_label(p->dset, p->lh.vnum));
 #endif
 }
 
@@ -580,7 +580,7 @@ static int gen_special (const char *s, const char *line,
 
     if (!err && write_label) {
 	strcpy(p->lh.name, s);
-	p->lh.v = vnum;
+	p->lh.vnum = vnum;
 	p->dset = dset;
 	p->targ = SERIES;
 	p->flags = 0;
@@ -1071,13 +1071,13 @@ int genr_get_output_type (const parser *p)
 
 int genr_get_output_varnum (const parser *p)
 {
-    return p->lh.v;
+    return p->lh.vnum;
 }
 
 gretl_matrix *genr_get_output_matrix (const parser *p)
 {
     if (p->targ == MAT) {
-	return p->lh.m1;
+	return p->lh.m;
     } else {
 	return NULL;
     }
