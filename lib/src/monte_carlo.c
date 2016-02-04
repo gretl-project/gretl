@@ -389,6 +389,7 @@ int ok_in_loop (int c)
 	c == RMPLOT ||
 	c == RUN ||
 	c == SETMISS ||
+	c == RENAME ||
 	c == VIF)  {
 	return 0;
     }
