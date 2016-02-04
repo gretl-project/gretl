@@ -17530,8 +17530,10 @@ esac
 if test "$darwin_build" = "yes" ; then
   CARBONLIB="-Wl,-framework -Wl,Carbon"
 
-  DARWIN_RPATH="@executable_path/../lib"
+  if test "$pkg_build" = "yes" ; then
+    DARWIN_RPATH="@executable_path/../lib"
 
+  fi
 fi
 
 if test "$have_audio" = "yes" ; then

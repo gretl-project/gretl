@@ -521,8 +521,10 @@ dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
   CARBONLIB="-Wl,-framework -Wl,Carbon"
   AC_SUBST(CARBONLIB)
-  DARWIN_RPATH="@executable_path/../lib"
-  AC_SUBST(DARWIN_RPATH)
+  if test "$pkg_build" = "yes" ; then
+    DARWIN_RPATH="@executable_path/../lib"
+    AC_SUBST(DARWIN_RPATH)
+  fi
 fi
 
 dnl
