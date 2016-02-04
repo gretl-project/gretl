@@ -13224,7 +13224,7 @@ static void pre_process (parser *p, int flags)
 		}
 		p->lh.t = BUNDLE;
 	    } else if (vtype == GRETL_TYPE_ARRAY) {
-		p->lh.gtype = gretl_array_get_type(uval);
+		p->lh.gtype = gretl_array_get_type(uvar->ptr);
 		p->lh.t = ARRAY;
 	    }
 	}
