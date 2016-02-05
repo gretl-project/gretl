@@ -12982,7 +12982,7 @@ static void process_lhs_substr (const char *lname,
 	    }
 	}
 	p->targ = BMEMB;
-    } else if (p->lh.t == UNK) {
+    } else if (p->lh.t == 0) {
 	if (lname != NULL) {
 	    undefined_symbol_error(lname, p);
 	}
@@ -13076,7 +13076,7 @@ static NODE *lhs_copy_node (parser *p)
 
 static void parser_try_print (parser *p)
 {
-    if (p->lh.t != UNK && p->lh.substr == NULL) {
+    if (p->lh.t != 0 && p->lh.substr == NULL) {
 	p->flags |= (P_PRINT | P_DISCARD);
     } else {
 	p->err = E_EQN;
@@ -13448,7 +13448,7 @@ static void pre_process (parser *p, int flags)
 
     strcpy(p->lh.name, test);
 
-    if (p->lh.t != UNK) {
+    if (p->lh.t != 0) {
 	if (p->targ == UNK) {
 	    /* when a result type is not specified, set this 
 	       from existing LHS variable, if present 
@@ -14437,13 +14437,13 @@ static int gen_check_return_type (parser *p)
 }
 
 /* allocate storage if saving a series to the dataset: 
-   lh.vnum == 0 means that the LHS series does not already 
+   lh.vnum <= 0 means that the LHS series does not already 
    exist
 */
 
 static int gen_allocate_storage (parser *p)
 {
-    if (p->lh.vnum == 0) {
+    if (p->lh.vnum <= 0) {
 	if (p->dset == NULL || p->dset->Z == NULL) {
 	    p->err = E_DATA;
 	} else {
@@ -14991,26 +14991,6 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	    p->flags |= P_DELTAN;
 	}
     }   
-
-    if (p->callcount > 2) {
-	return;
-    }
-
-    /* FIXME are the following tests redundant? */
-
-    if (p->targ == NUM) {
-	if (lhtype == GRETL_TYPE_DOUBLE) {
-	    p->lh.t = NUM;
-	}
-    } else if (p->targ == LIST) {
-	if (lhtype == GRETL_TYPE_LIST) {
-	    p->lh.t = LIST;
-	}
-    } else if (p->targ == STR) {
-	if (lhtype == GRETL_TYPE_STRING) {
-	    p->lh.t = STR;
-	}
-    }	
 }
 
 static void parser_init (parser *p, const char *str, 
@@ -15029,7 +15009,7 @@ static void parser_init (parser *p, const char *str,
     p->ret = NULL;
 
     /* left-hand side info */
-    p->lh.t = UNK;
+    p->lh.t = 0;
     p->lh.name[0] = '\0';
     p->lh.label[0] = '\0';
     p->lh.vnum = 0;
@@ -15180,6 +15160,10 @@ void gen_cleanup (parser *p)
 	if (p->lh.mspec != NULL) {
 	    free_mspec(p->lh.mspec, p);
 	}
+
+	if (p->uvnodes != NULL) {
+	    g_slist_free(p->uvnodes);
+	}
     }
 }
 
@@ -15191,7 +15175,7 @@ static void uvnode_reset (void *p1, void *p2)
 {
     NODE *n = p1;
 
-#if LS_DEBUG
+#if LS_DEBUG || GLOBAL_TRACE
     fprintf(stderr, " reset node type %03d, %s\n", 
 	    n->t, getsymb(n->t, NULL));
 #endif

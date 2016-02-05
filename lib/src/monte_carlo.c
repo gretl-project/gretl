@@ -508,7 +508,7 @@ void gretl_loop_destroy (LOOPSET *loop)
 	return;
     }
 
-#if LOOP_DEBUG || defined(SHOW_STRUCTURE)
+#if GLOBAL_TRACE || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
 
@@ -1298,7 +1298,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 
     gretl_error_clear();
 
-#if LOOP_DEBUG || defined(SHOW_STRUCTURE)
+#if LOOP_DEBUG
     fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
 	    (void *) inloop, s);
 #endif
@@ -1316,7 +1316,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 	return NULL;
     }
 
-#if LOOP_DEBUG || defined(SHOW_STRUCTURE)
+#if LOOP_DEBUG
     fprintf(stderr, " added loop at %p (%s)\n", (void *) loop,
 	    (*nested)? "nested" : "independent");
 #endif
@@ -2180,7 +2180,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 	if (!err) {
 	    newloop = start_new_loop(spec, loop, dset, opt, 
 				     &nested, &err);
-#if LOOP_DEBUG
+#if GLOBAL_TRACE || LOOP_DEBUG
 	    fprintf(stderr, "got LOOP: newloop at %p (err = %d)\n", 
 		    (void *) newloop, err);
 #endif
@@ -2198,7 +2198,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     } else if (s->cmd->ci == ENDLOOP) {
 	/* got to the end */
 	compile_level--;
-#if LOOP_DEBUG
+#if GLOBAL_TRACE || LOOP_DEBUG
 	fprintf(stderr, "got ENDLOOP, compile_level now %d\n",
 		compile_level);
 #endif
@@ -3103,6 +3103,10 @@ static int maybe_preserve_loop (LOOPSET *loop)
 
 	    if (!err) {
 		loop_set_attached(loop);
+# if GLOBAL_TRACE
+		fprintf(stderr, "loop %p attached to function\n",
+			(void *) loop);
+# endif		
 	    }
 	}
     }

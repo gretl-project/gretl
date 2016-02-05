@@ -118,7 +118,7 @@ struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
     int pkg_role;          /* printer, plotter, etc. */
-    int flags;             /* private, plugin, etc. */
+    UfunAttrs flags;       /* private, plugin, etc. */
     int line_idx;          /* current line index (compiling) */
     int n_lines;           /* number of lines of code */
     fn_line *lines;        /* array of lines of code */
@@ -5939,8 +5939,8 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	}
     }
 
-#ifdef SHOW_STRUCTURE
-    fprintf(stderr, "started compiling function '%s' (err = %d)\n",
+#if GLOBAL_TRACE
+    fprintf(stderr, "started compiling function %s (err = %d)\n",
 	    fname, err);
 #endif
 
@@ -6066,6 +6066,9 @@ int gretl_function_append_line (const char *line)
 	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
 	    err = E_PARSE;
 	}
+#if GLOBAL_TRACE	
+	fprintf(stderr, "finished compiling function %s\n", fun->name);
+#endif	
 	/* reset static vars */
 	gretl_cmd_destroy(cmd);
 	cmd = NULL;
@@ -7080,6 +7083,10 @@ static void reset_saved_loops (ufunc *u)
     for (i=0; i<u->n_lines; i++) {
 	if (u->lines[i].loop != NULL) {
 	    loop_reset_genrs(u->lines[i].loop);
+# if GLOBAL_TRACE
+	    fprintf(stderr, "at exit from %s, reset_saved_loop\n",
+		    u->name);
+# endif    
 	}
     }
 }
@@ -7105,7 +7112,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 
     callstack = g_list_append(callstack, call);
 
-#if EXEC_DEBUG || defined(SHOW_STRUCTURE)
+#if EXEC_DEBUG
     fprintf(stderr, "start_fncall: added call to %s, depth now %d\n", 
 	    call->fun->name, g_list_length(callstack));
 #endif
@@ -7625,7 +7632,7 @@ int attach_loop_to_function (void *ptr)
 	} else {
 	    /* OK, attach it */
 	    u->lines[u->line_idx].loop = ptr;
-#if LSDEBUG	    
+#if LSDEBUG || GLOBAL_TRACE	    
 	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
 		    ptr, u->name, u->line_idx);
 #endif	    
