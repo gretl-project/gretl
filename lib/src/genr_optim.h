@@ -25,13 +25,6 @@
    gretl_func.c and geneval.c
 */
 
-#define LOOPSAVE 1           /* keep an eye on this! */
-#define GEN_STORE_UVARS 1    /* this too! */
-
-#if LOOPSAVE && GEN_STORE_UVARS
-# define LOOPSAVE_PLUS 1
-#else
-# define LOOPSAVE_PLUS 0
-#endif
+#define LOOPSAVE 1   /* keep an eye on this! */
 
 #endif /* GENR_OPTIM_H_ */

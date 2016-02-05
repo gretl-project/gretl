@@ -7069,7 +7069,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     return err;
 }
 
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
 
 /* reset any saved "genr" structs in context of saved loops */
 
@@ -7930,7 +7930,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret, 
 			    descrip, prn, &err);
 
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
     if (!err) {
 	reset_saved_loops(call->fun);
     }

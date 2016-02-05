@@ -15179,15 +15179,15 @@ void gen_cleanup (parser *p)
     }
 }
 
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
 
-#define LSPLUS_DEBUG 0
+#define LS_DEBUG 0
 
 static void uvnode_reset (void *p1, void *p2)
 {
     NODE *n = p1;
 
-#if LSPLUS_DEBUG
+#if LS_DEBUG
     fprintf(stderr, " reset node type %03d, %s\n", 
 	    n->t, getsymb(n->t, NULL));
 #endif
@@ -15204,7 +15204,7 @@ static void real_reset_uvars (parser *p, int level)
 	return;
     }
 
-#if LSPLUS_DEBUG
+#if LS_DEBUG
     if (level == 0) {
 	fprintf(stderr, "* genr_reset_uvars (%s '%s') *\n",
 		getsymb(p->targ, p), p->lh.name);
@@ -15214,7 +15214,7 @@ static void real_reset_uvars (parser *p, int level)
 #endif
 
     if (p->uvnodes != NULL) {
-#if LSPLUS_DEBUG
+#if LS_DEBUG
 	fprintf(stderr, " number of uvar nodes: %d\n", (int) g_slist_length(p->uvnodes));
 #endif
 	g_slist_foreach(p->uvnodes, uvnode_reset, NULL);
@@ -15242,7 +15242,7 @@ void genr_reset_uvars (parser *p)
     return;
 }
 
-#endif /* LOOPSAVE_PLUS or not */
+#endif /* LOOPSAVE or not */
 
 static void maybe_set_return_flags (parser *p)
 {

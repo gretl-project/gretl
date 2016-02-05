@@ -78,9 +78,18 @@ NODE *newempty (void)
     return n;
 }
 
+/* Below: in the LOOPSAVE case (saving loops that are
+   called within a function onto the function) we need
+   to keep a record of nodes that hold pointers-to-
+   variables that will lose their validity across
+   calls to the function, so that these can be reset
+   on exit from the function -- see real_reset_uvars()
+   in geneval.c.
+*/
+
 static NODE *newref (parser *p, int t)
 {
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
     int fd = gretl_function_depth();
 #endif
     NODE *n = new_node(t);
@@ -93,7 +102,7 @@ static NODE *newref (parser *p, int t)
 	    if (is_string_valued(p->dset, n->vnum)) {
 		n->flags |= SVL_NODE;
 	    }
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }
@@ -104,7 +113,7 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) u->ptr;
 	    n->uv = u;
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }
@@ -116,7 +125,7 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
-#if LOOPSAVE_PLUS
+#if LOOPSAVE
 	    if (fd > 0) {
 		p->uvnodes = g_slist_prepend(p->uvnodes, n);
 	    }

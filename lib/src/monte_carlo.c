@@ -3110,10 +3110,6 @@ static int maybe_preserve_loop (LOOPSET *loop)
     return loop_is_attached(loop);
 }
 
-#endif /* LOOPSAVE */
-
-#if LOOPSAVE_PLUS
-
 /* loop_reset_genrs(): may be called on exit from a function
    onto which one or more "compiled" loops have been attached.
    The point is to reset the stored addresses of all "uservars"
@@ -3140,7 +3136,7 @@ void loop_reset_genrs (LOOPSET *loop)
     }
 }
 
-#else /* !LOOPSAVE_PLUS */
+#else /* !LOOPSAVE */
 
 void loop_reset_genrs (LOOPSET *loop)
 {

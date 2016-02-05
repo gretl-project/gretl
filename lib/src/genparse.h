@@ -610,7 +610,7 @@ struct lhinfo {
     char name[VNAMELEN];   /* name of LHS variable */   
     char label[MAXLABEL];  /* descriptive string for series */
     int vnum;              /* ID number of pre-existing LHS series */
-    user_var *uv;          /* address of LHS variable */
+    user_var *uv;          /* address of LHS pre-existing variable */
     int obs;               /* specific obs number in series */
     gretl_matrix *m;       /* LHS matrix (or NULL) */
     char *substr;          /* obs or matrix/array selection string */
