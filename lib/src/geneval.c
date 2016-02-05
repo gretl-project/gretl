@@ -982,7 +982,9 @@ static int gen_edit_list (parser *p, int *list, int op)
     }
 
     return err;
-} 
+}
+
+#ifdef HAVE_MPI
 
 static int node_replace_matrix (NODE *n, gretl_matrix *m)
 {
@@ -1001,6 +1003,8 @@ static int node_replace_matrix (NODE *n, gretl_matrix *m)
 
     return err;
 }
+
+#endif
 
 static int node_replace_scalar (NODE *n, double x)
 {
