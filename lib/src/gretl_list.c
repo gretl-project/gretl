@@ -109,24 +109,22 @@ int gretl_is_list (const char *name)
 }
 
 /**
- * append_to_list_by_name:
- * @targ: the name of the target list.
+ * append_to_list_by_data:
+ * @ptr: pointer to a user_var.
  * @add: list to add.
  *
- * If @targ is the name of a saved list, append the list
+ * If @ptr holds a saved list, append the list
  * @add to it.
  *
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int append_to_list_by_name (const char *targ, const int *add)
+int append_to_list_by_data (void *ptr, const int *add)
 {
-    user_var *u;
+    user_var *u = ptr;
     int err = 0;
 
-    u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
-
-    if (u == NULL) {
+    if (u == NULL || user_var_get_type(u) != GRETL_TYPE_LIST) {
 	err = E_DATA;
     } else {
 	const int *list = user_var_get_value(u);
@@ -146,24 +144,22 @@ int append_to_list_by_name (const char *targ, const int *add)
 }
 
 /**
- * subtract_from_list_by_name:
- * @targ: the name of the target list.
+ * subtract_from_list_by_data:
+ * @ptr: pointer to a user_var.
  * @sub: sub-list to remove.
  *
- * If @targ is the name of a saved list, remove from @targ
+ * If @ptr holds a saved list, remove from @targ
  * any elements of @sub that it contains.
  *
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int subtract_from_list_by_name (const char *targ, const int *sub)
+int subtract_from_list_by_data (void *ptr, const int *sub)
 {
-    user_var *u;
+    user_var *u = ptr;
     int err = 0;
 
-    u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
-
-    if (u == NULL) {
+    if (u == NULL || user_var_get_type(u) != GRETL_TYPE_LIST) {
 	err = E_DATA;
     } else {
 	const int *list = user_var_get_value(u);
@@ -178,24 +174,22 @@ int subtract_from_list_by_name (const char *targ, const int *sub)
 }
 
 /**
- * replace_list_by_name:
- * @targ: the name of the target list.
+ * replace_list_by_data:
+ * @ptr: pointer to a user_var.
  * @src: replacement list
  *
- * If @targ is the name of a saved list, replace the
+ * If @ptr holds saved list, replace the
  * list of that name with @src.
  *
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int replace_list_by_name (const char *targ, const int *src)
+int replace_list_by_data (void *ptr, const int *src)
 {
-    user_var *u;
+    user_var *u = ptr;
     int err = 0;
 
-    u = get_user_var_of_type_by_name(targ, GRETL_TYPE_LIST);
-
-    if (u == NULL) {
+    if (u == NULL || user_var_get_type(u) != GRETL_TYPE_LIST) {
 	err = E_DATA;
     } else {
 	int *tmp = gretl_list_copy(src);

@@ -133,11 +133,11 @@ int *get_list_by_name (const char *name);
 
 int gretl_is_list (const char *name);
 
-int append_to_list_by_name (const char *targ, const int *add);
+int append_to_list_by_data (void *ptr, const int *add);
 
-int subtract_from_list_by_name (const char *targ, const int *sub);
+int subtract_from_list_by_data (void *ptr, const int *sub);
 
-int replace_list_by_name (const char *targ, const int *src);
+int replace_list_by_data (void *ptr, const int *src);
 
 int remember_list (const int *list, const char *name, PRN *prn);
 

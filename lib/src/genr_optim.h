@@ -26,7 +26,7 @@
 */
 
 #define LOOPSAVE 1           /* keep an eye on this! */
-#define GEN_STORE_UVARS 0    /* experimental, for now */
+#define GEN_STORE_UVARS 1    /* this too! */
 
 #if LOOPSAVE && GEN_STORE_UVARS
 # define LOOPSAVE_PLUS 1

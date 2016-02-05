@@ -848,6 +848,198 @@ static NODE *aux_empty_node (parser *p)
 
 #endif
 
+/* Start of functions that probably should not be needed in
+   their present full form, but testing is required before
+   they're slimmed down. The general idea is that we should
+   already have the user_var pointer we're in need of without
+   having to look up it by name, again. However, we'll fall
+   back to name look-up (and squawk about it on stderr) if
+   need be.
+*/
+
+static void *gen_get_lhs_var (parser *p, GretlType type)
+{
+    void *data = NULL;
+    
+    if (p->lh.uv != NULL && p->lh.uv->type == type) {
+	data = p->lh.uv->ptr;
+    } else {
+	if (p->lh.uv == NULL) {
+	    fprintf(stderr, "*** get: LHS %s '%s' is NULL!\n",
+		    gretl_type_get_name(type), p->lh.name);
+	} else {
+	    fprintf(stderr, "*** get: LHS uv '%s' of wrong type!\n",
+		    p->lh.name);
+	}
+	if (type == GRETL_TYPE_BUNDLE) {
+	    data = get_bundle_by_name(p->lh.name);
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    data = get_array_by_name(p->lh.name);
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    data = get_matrix_by_name(p->lh.name);
+	} else if (type == GRETL_TYPE_STRING) {
+	    data = get_string_by_name(p->lh.name);
+	} else if (type == GRETL_TYPE_LIST) {
+	    data = get_list_by_name(p->lh.name);
+	}
+    }
+
+    return data;
+}
+
+static user_var *gen_get_lhs_uvar (parser *p, GretlType type)
+{
+    user_var *uv = NULL;
+    
+    if (p->lh.uv != NULL && p->lh.uv->type == type) {
+	uv = p->lh.uv;
+    } else {
+	if (p->lh.uv == NULL) {
+	    fprintf(stderr, "*** get: LHS %s '%s': uvar is NULL!\n",
+		    gretl_type_get_name(type), p->lh.name);
+	} else {
+	    fprintf(stderr, "*** get: LHS uvar of wrong type!\n");
+	}
+	uv = get_user_var_of_type_by_name(p->lh.name, type);
+    }
+
+    return uv;
+}
+
+static int gen_add_or_replace (parser *p, GretlType type, void *data)
+{
+    int err = 0, done = 0;
+
+    /* In this case we may be adding a new user_var, so it's
+       not too exciting if p->lh.uv is NULL.
+    */
+
+    if (p->lh.uv != NULL) {
+	if (p->lh.uv->type == GRETL_TYPE_ARRAY &&
+	    gretl_array_get_type(p->lh.uv->ptr) == type) {
+	    err = user_var_replace_value(p->lh.uv, data);
+	    done = 1;
+	} else if (p->lh.uv->type == type) {
+	    err = user_var_replace_value(p->lh.uv, data);
+	    done = 1;
+	} else {
+	    fprintf(stderr, "*** set: LHS uv '%s' is of wrong type: "
+		    "expected %s, got %s\n", p->lh.name,
+		    gretl_type_get_name(type),
+		    gretl_type_get_name(p->lh.uv->type));
+	}
+    }
+
+    if (!done) {
+	err = user_var_add_or_replace(p->lh.name, type, data);
+    }
+
+    return err;
+}
+
+static int gen_replace_matrix (parser *p, gretl_matrix *m)
+{
+    int err;
+
+    if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_MATRIX) {
+	err = user_var_replace_value(p->lh.uv, m);
+    } else {
+	if (p->lh.uv == NULL) {
+	    fprintf(stderr, "*** replace matrix: LHS uv '%s' is NULL!\n",
+		    p->lh.name);
+	} else {
+	    fprintf(stderr, "*** replace matrix: LHS uv '%s' of wrong type!\n",
+		    p->lh.name);
+	}
+	err = user_matrix_replace_matrix_by_name(p->lh.name, m);
+    }
+
+    return err;
+}
+
+static int gen_edit_list (parser *p, int *list, int op)
+{
+    user_var *u;
+    int err;
+
+    if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_LIST) {
+	u = p->lh.uv;
+    } else {
+	if (p->lh.uv == NULL) {
+	    fprintf(stderr, "*** replace list: LHS uv is NULL!\n");
+	} else {
+	    fprintf(stderr, "*** replace list: LHS uv of wrong type!\n");
+	}
+	u = get_user_var_of_type_by_name(p->lh.name, GRETL_TYPE_LIST);
+    }
+
+    if (op == B_ASN) {
+	err = replace_list_by_data(u, list);
+    } else if (op == B_ADD) {
+	err = append_to_list_by_data(u, list);
+    } else { /* B_SUB */
+	err = subtract_from_list_by_data(u, list);
+    }
+
+    return err;
+} 
+
+static int node_replace_matrix (NODE *n, gretl_matrix *m)
+{
+    int err;
+
+    if (n->uv != NULL && n->uv->type == GRETL_TYPE_MATRIX) {
+	err = user_var_replace_value(n->uv, m);
+    } else {
+	if (n->uv == NULL) {
+	    fprintf(stderr, "*** replace matrix: node uv is NULL!\n");
+	} else {
+	    fprintf(stderr, "*** replace matrix: node uv of wrong type!\n");
+	}
+	err = user_matrix_replace_matrix_by_name(n->vname, m);
+    }
+
+    return err;
+}
+
+static int node_replace_scalar (NODE *n, double x)
+{
+    int err;
+
+    if (n->uv != NULL && n->uv->type == GRETL_TYPE_DOUBLE) {
+	err = user_var_set_scalar_value(n->uv, x);
+    } else {
+	if (n->uv == NULL) {
+	    fprintf(stderr, "*** replace scalar: node uv is NULL!\n");
+	} else {
+	    fprintf(stderr, "*** replace scalar: node uv of wrong type!\n");
+	}
+	err = gretl_scalar_set_value(n->vname, x);
+    }
+
+    return err;
+}
+
+static int gen_replace_scalar (parser *p, double x)
+{
+    int err;
+
+    if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_DOUBLE) {
+	err = user_var_set_scalar_value(p->lh.uv, x);
+    } else {
+	if (p->lh.uv == NULL) {
+	    fprintf(stderr, "*** replace scalar: LHS uv is NULL!\n");
+	} else {
+	    fprintf(stderr, "*** replace scalar: LHS uv of wrong type!\n");
+	}
+	err = gretl_scalar_set_value(p->lh.name, x);
+    }
+
+    return err;
+}
+
+/* end of functions that can probably be slimmed down */
+
 static void eval_warning (parser *p, int op, int errnum)
 {
     if (!check_gretl_warning()) {
@@ -1820,9 +2012,9 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    p->err = gretl_mpi_bcast(bcastp, type, root);
 	    if (!p->err && id != root) {
 		if (type == GRETL_TYPE_MATRIX) {
-		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
+		    p->err = node_replace_matrix(l, m);
 		} else {
-		    p->err = gretl_scalar_set_value(l->vname, x);
+		    p->err = node_replace_scalar(l, x);
 		}
 	    }
 	    ret->v.xval = p->err;
@@ -1842,9 +2034,9 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    }
 	    if (!p->err && (id == root || f == F_ALLREDUCE)) {
 		if (type == GRETL_TYPE_MATRIX) {
-		    p->err = user_matrix_replace_matrix_by_name(l->vname, m);
+		    p->err = node_replace_matrix(l, m);
 		} else {
-		    p->err = gretl_scalar_set_value(l->vname, x);
+		    p->err = node_replace_scalar(l, x);
 		}
 	    }
 	    ret->v.xval = p->err;
@@ -1858,7 +2050,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    p->err = ret->v.xval = gretl_matrix_mpi_scatter(l->v.m, &m, 
 							    op, root);
 	    if (!p->err) {
-		p->err = user_matrix_replace_matrix_by_name(l->vname, m);
+		p->err = node_replace_matrix(l, m);
 	    }
 	}	
     } else {
@@ -7340,9 +7532,8 @@ static double *scalar_to_series (NODE *n, parser *p)
    next.
 */
 
-static int set_named_bundle_value (const char *name, NODE *n, parser *p)
+static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 {
-    gretl_bundle *bundle;
     GretlType lhtype = 0;
     GretlType type = 0;
     void *ptr = NULL;
@@ -7350,8 +7541,6 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     int size = 0;
     int donate = 0;
     int err = 0;
-
-    bundle = get_bundle_by_name(name);
 
     if (p->flags & P_LHBKVAR) {
 	/* substr is the name of a string variable in [] */
@@ -7366,7 +7555,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "set_named_bundle_value: target %s.%s\n", name, key);
+    fprintf(stderr, "set_bundle_value: target %s.%s\n", name, key);
 #endif
 
 #if 0
@@ -7482,10 +7671,8 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     return err;
 }
 
-static int edit_named_bundle_value (const char *name, NODE *n,
-				    parser *p)
+static int edit_bundle_value (gretl_bundle *b, NODE *n, parser *p)
 {
-    gretl_bundle *b = get_bundle_by_name(name);
     char *key = p->lh.subvar;
     GretlType type = 0;
 
@@ -7511,17 +7698,15 @@ static int edit_named_bundle_value (const char *name, NODE *n,
     return p->err;
 }
 
-static int set_named_bundle_note (const char *name, const char *key,
-				  const char *note, parser *p)
+static int set_bundle_note (gretl_bundle *b, const char *key,
+			    const char *note, parser *p)
 {
-    gretl_bundle *bundle;
     int err = 0;
 
-    bundle = get_bundle_by_name(name);
-    if (bundle == NULL) {
+    if (b == NULL) {
 	p->err = E_UNKVAR;
     } else {
-	err = gretl_bundle_set_note(bundle, key, note);
+	err = gretl_bundle_set_note(b, key, note);
     }
 
     return err;
@@ -7867,8 +8052,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = set_named_bundle_note(l->vname, m->v.str, 
-						    r->v.str, p);
+		ret->v.xval = set_bundle_note(l->v.b, m->v.str, 
+					      r->v.str, p);
 	    }
 	}
     } else if (f == F_BWFILT) {
@@ -8542,7 +8727,7 @@ static GretlType lh_array_type (parser *p)
     if (gtype == GRETL_TYPE_NONE) {
 	/* shouldn't happen? */
 	if (p->lh.t == ARRAY) {
-	    gretl_array *a = get_array_by_name(p->lh.name);
+	    gretl_array *a = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
 
 	    gtype = gretl_array_get_type(a);
 	}
@@ -10811,9 +10996,9 @@ static NODE *scalar_postfix_node (NODE *n, parser *p)
 
 	ret->v.xval = x;
 	if (n->t == NUM_P) {
-	    p->err = gretl_scalar_set_value(n->vname, x + 1.0);
+	    p->err = node_replace_scalar(n, x + 1.0);
 	} else {
-	    p->err = gretl_scalar_set_value(n->vname, x - 1.0);
+	    p->err = node_replace_scalar(n, x - 1.0);
 	}
     }
 
@@ -10847,6 +11032,7 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 static void reattach_series (NODE *n, parser *p)
 {
     if (n->v.xvec == NULL) {
+	/* trigger for full reset */
 	n->vnum = current_series_index(p->dset, n->vname);
 	if (n->vnum < 0) {
 	    fprintf(stderr, "SERIES node: %s is not a valid series\n", n->vname);
@@ -10859,6 +11045,8 @@ static void reattach_series (NODE *n, parser *p)
 	    }
 #endif	    
 	}
+    } else if (n->vnum >= 0 && n->vnum < p->dset->v) {
+ 	n->v.xvec = p->dset->Z[n->vnum];
     }
 }
 
@@ -12867,7 +13055,7 @@ static NODE *lhs_copy_node (parser *p)
 	    n->v.xvec = p->dset->Z[p->lh.vnum];
 	} else if (p->targ == STR) {
 	    /* FIXME? */
-	    n->v.str = gretl_strdup(get_string_by_name(p->lh.name));
+	    n->v.str = gretl_strdup(gen_get_lhs_var(p, GRETL_TYPE_STRING));
 	} else {
 	    n->v.m = p->lh.m;
 	}
@@ -13658,11 +13846,11 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
 
 static int LHS_matrix_reusable (parser *p)
 {
-    gretl_matrix *m = get_matrix_by_name(p->lh.name);
+    gretl_matrix *m = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
     int ok = 0;
 
 #if 0
-    fprintf(stderr, "LHS_matrix_reusable: m=%p, m0=%p\n",
+    fprintf(stderr, "LHS_matrix_reusable: m=%p, p->lh.m=%p\n",
 	    (void *) m, (void *) p->lh.m);
 #endif
 
@@ -13725,7 +13913,7 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 #endif
 	m = grab_or_copy_matrix_result(p, prechecked);
 	if (!p->err) {
-	    p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
+	    p->err = gen_replace_matrix(p, m);
 	}
     }
 
@@ -13741,9 +13929,9 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
     user_var *uvar;
     gretl_matrix *a;
 
-    uvar = get_user_var_of_type_by_name(p->lh.name, GRETL_TYPE_MATRIX);
+    uvar = gen_get_lhs_uvar(p, GRETL_TYPE_MATRIX);
 
-    if (uvar == NULL || (a = user_var_get_value(uvar)) == NULL) {
+    if (uvar == NULL || (a = uvar->ptr) == NULL) {
 	p->err = E_DATA;
     }
 
@@ -13933,13 +14121,13 @@ static void edit_array (parser *p)
     /* preliminary checks */
 
     if (p->lh.t == BUNDLE) {
-	gretl_bundle *b = get_bundle_by_name(p->lh.name);
+	gretl_bundle *b = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
 
 	if (b != NULL) {
 	    A = gretl_bundle_get_array(b, p->lh.subvar, &p->err);
 	}
     } else {
-	A = get_array_by_name(p->lh.name);
+	A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
     }
     
     if (A == NULL) {
@@ -13999,7 +14187,7 @@ static void edit_array (parser *p)
     }
 }
 
-static int edit_string (parser *p)
+static int create_or_edit_string (parser *p)
 {
     const char *src = NULL;
     const char *orig = NULL;
@@ -14021,10 +14209,10 @@ static int edit_string (parser *p)
     fprintf(stderr, "edit_string: src='%s'\n", src);
 #endif
 
-    uvar = get_user_var_of_type_by_name(p->lh.name, GRETL_TYPE_STRING);
+    uvar = p->lh.uv;
 
     if (uvar != NULL) {
-	orig = user_var_get_value(uvar);
+	orig = uvar->ptr;
     } else if (p->op != B_ASN) {
 	/* without a left-hand string we can only assign */
 	p->err = E_DATA;
@@ -14096,7 +14284,7 @@ static int edit_string (parser *p)
     return p->err;
 }
 
-static int edit_list (parser *p)
+static int create_or_edit_list (parser *p)
 {
     int *list = node_get_list(p->ret, p); /* note: copied */
     matrix_subspec *spec = p->lh.mspec;
@@ -14113,7 +14301,7 @@ static int edit_list (parser *p)
 	    /* at present we'll replace only one list member */
 	    p->err = E_TYPES;
 	} else {
-	    int *orig = get_list_by_name(p->lh.name);
+	    int *orig = gen_get_lhs_var(p, GRETL_TYPE_LIST);
 	    int idx = get_array_index(spec, &p->err) + 1;
 	    
 	    if (!p->err && (idx < 1 || idx > orig[0])) {
@@ -14127,7 +14315,7 @@ static int edit_list (parser *p)
 		free(list);
 		list = gretl_list_copy(orig);
 		list[idx] = repl;
-		p->err = replace_list_by_name(p->lh.name, list);
+		p->err = gen_edit_list(p, list, B_ASN);
 	    }
 	}
     }
@@ -14136,15 +14324,9 @@ static int edit_list (parser *p)
 	if (p->lh.t != LIST) {
 	    /* no pre-existing LHS list: must be simple assignment */
 	    p->err = remember_list(list, p->lh.name, NULL);
-	} else if (p->op == B_ASN) {
-	    /* assign to (i.e. replace) existing LHS list */
-	    p->err = replace_list_by_name(p->lh.name, list);
-	} else if (p->op == B_ADD) {
-	    /* add to existing LHS list */
-	    p->err = append_to_list_by_name(p->lh.name, list);
-	} else if (p->op == B_SUB) {
-	    /* remove elements from existing LHS list */
-	    p->err = subtract_from_list_by_name(p->lh.name, list);
+	} else if (p->op == B_ASN || p->op == B_ADD || p->op == B_SUB) {
+	    /* replace, append or subtract list members */
+	    p->err = gen_edit_list(p, list, p->op);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -14319,16 +14501,14 @@ static int assign_null_to_bundle (parser *p)
     int err = 0;
 
     if (p->lh.t == BUNDLE) {
-	b = get_bundle_by_name(p->lh.name);
+	b = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
 	gretl_bundle_void_content(b);
     } else {
 	b = gretl_bundle_new();
 	if (b == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = user_var_add_or_replace(p->lh.name,
-					  GRETL_TYPE_BUNDLE,
-					  b);
+	    err = user_var_add(p->lh.name, GRETL_TYPE_BUNDLE, b);
 	}
     }
 
@@ -14341,14 +14521,12 @@ static int assign_null_to_array (parser *p)
     int err = 0;
 
     if (p->lh.t == ARRAY) {
-	a = get_array_by_name(p->lh.name);
+	a = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
 	gretl_array_void_content(a);
     } else {
 	a = gretl_array_new(p->lh.gtype, 0, &err);
 	if (!err) {
-	    err = user_var_add_or_replace(p->lh.name,
-					  p->lh.gtype,
-					  a);
+	    err = user_var_add(p->lh.name, p->lh.gtype, a);
 	}
     }
 
@@ -14472,7 +14650,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		p->err = E_TYPES;
 	    }
 	    if (!p->err) {
-		p->err = gretl_scalar_set_value(p->lh.name, x);
+		p->err = gen_replace_scalar(p, x);
 	    }
 	} else {
 	    /* a new scalar */
@@ -14596,9 +14774,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
 #endif	
     } else if (p->targ == LIST) {
-	edit_list(p);
+	create_or_edit_list(p);
     } else if (p->targ == STR) {
-	edit_string(p);
+	create_or_edit_string(p);
     } else if (p->targ == BUNDLE) {
 	if (r->t == EMPTY) {
 	    /* as in "bundle b = null" */
@@ -14618,9 +14796,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 
 	    if (!p->err) {
-		p->err = user_var_add_or_replace(p->lh.name,
-						 GRETL_TYPE_BUNDLE,
-						 b);
+		p->err = gen_add_or_replace(p, GRETL_TYPE_BUNDLE, b);
 		if (!p->err && b == r->v.b) {
 		    /* avoid destroying the assigned bundle */
 		    r->v.b = NULL;
@@ -14629,10 +14805,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } else if (p->targ == BMEMB) {
 	/* saving an object into a bundle */
+	gretl_bundle *b = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
+	    
 	if (p->lh.subvar != NULL) {
-	    p->err = edit_named_bundle_value(p->lh.name, r, p);
+	    p->err = edit_bundle_value(b, r, p);
 	} else {
-	    p->err = set_named_bundle_value(p->lh.name, r, p);
+	    p->err = set_bundle_value(b, r, p);
 	}
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr != NULL || p->op != B_ASN) {
@@ -14655,9 +14833,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 
 	    if (!p->err) {
-		p->err = user_var_add_or_replace(p->lh.name,
-						 atype,
-						 a);
+		p->err = gen_add_or_replace(p, atype, a);
 		if (!p->err && a == r->v.a) {
 		    /* avoid destroying the assigned array */
 		    r->v.a = NULL;
@@ -14674,14 +14850,16 @@ static int save_generated_var (parser *p, PRN *prn)
     return p->err;
 }
 
-#if GEN_STORE_UVARS
-
 static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data = NULL;
 
-    if (p->targ == SERIES && p->lh.vnum == 0) {
-	p->lh.vnum = current_series_index(p->dset, p->lh.name);
+    if (p->targ == SERIES) {
+	int v = p->lh.vnum;
+
+	if (v <= 0 || v >= p->dset->v) {
+	    p->lh.vnum = current_series_index(p->dset, p->lh.name);
+	}
 	if (p->lh.vnum < 0) {
 	    p->lh.vnum = 0;
 	}
@@ -14726,59 +14904,6 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	break;
     }
 }
-
-#else
-
-static void maybe_update_lhs_uvar (parser *p, GretlType *type)
-{
-    void *data;
-
-    if (p->targ == SERIES) {
-	p->lh.vnum = current_series_index(p->dset, p->lh.name);
-	if (p->lh.vnum < 0) {
-	    p->lh.vnum = 0;
-	}
-	return;
-    }
-	
-    data = user_var_get_value_and_type(p->lh.name, type);
-
-    switch (*type) {
-    case GRETL_TYPE_DOUBLE:
-	p->lh.t = NUM;
-	break;
-    case GRETL_TYPE_MATRIX:
-	p->lh.t = MAT;
-	p->lh.m = data;
-	if (p->targ == NUM) {
-	    p->targ = MAT;
-	}
-	break;
-    case GRETL_TYPE_LIST:
-	p->lh.t = LIST;
-	break;
-    case GRETL_TYPE_STRING:
-	p->lh.t = STR;
-	break;
-    case GRETL_TYPE_BUNDLE:
-	p->lh.t = BUNDLE;
-	break;
-    case GRETL_TYPE_ARRAY:
-	p->lh.t = ARRAY;
-	break;
-    default:
-	p->lh.t = 0;
-	p->lh.m = NULL;
-	break;
-    }
-
-#if 0   
-    fprintf(stderr, "lhs_uvar: %s -> %s (targ = %s)\n", p->lh.name,
-	    gretl_type_get_name(*type), getsymb(p->targ, p));
-#endif     
-}
-
-#endif
 
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn) 
 {
@@ -14962,14 +15087,14 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    }
 	} else if (p->ret->t == STR) {
 	    if (p->lh.name[0] != '\0') {
-		pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
+		pprintf(p->prn, "%s\n", gen_get_lhs_var(p, GRETL_TYPE_STRING));
 	    } else {
 		pprintf(p->prn, "%s\n", p->ret->v.str);
 	    }
 	} else if (p->ret->t == BUNDLE) {
-	    gretl_bundle_print(get_bundle_by_name(p->lh.name), prn);
+	    gretl_bundle_print(gen_get_lhs_var(p, GRETL_TYPE_BUNDLE), prn);
 	} else if (p->ret->t == ARRAY) {
-	    gretl_array_print(get_array_by_name(p->lh.name), prn);
+	    gretl_array_print(gen_get_lhs_var(p, GRETL_TYPE_ARRAY), prn);
 	} else {
 	    /* scalar, series */
 	    printnode(p->ret, p, 1);
