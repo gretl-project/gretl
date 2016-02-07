@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-26 15:49-0500\n"
-"PO-Revision-Date: 2016-01-25 21:39-0200\n"
+"POT-Creation-Date: 2016-02-04 17:13-0200\n"
+"PO-Revision-Date: 2016-02-04 17:16-0200\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -293,7 +293,7 @@ msgstr "Estatística de teste"
 
 #: lib/src/adf_kpss.c:2151 lib/src/adf_kpss.c:2153 gui2/dialogs.c:1142
 msgid "P-value"
-msgstr "Valor p"
+msgstr "P-valor"
 
 #: lib/src/adf_kpss.c:2155
 msgid "Interpolated p-value"
@@ -7663,7 +7663,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 25 de janeiro de 2016."
+"Tradução de 4 de fevereiro de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -9946,9 +9946,8 @@ msgid "Python files (*.py)"
 msgstr "Arquivos Python (*.py)"
 
 #: gui2/fileselect.c:874
-#, fuzzy
 msgid "Julia files (*.jl)"
-msgstr "Arquivos JMulTi (*.dat)"
+msgstr "Arquivos Julia (*.jl)"
 
 #: gui2/fileselect.c:875
 msgid "Ox files (*.ox)"
@@ -11423,9 +11422,8 @@ msgid "Python script"
 msgstr "Script Python"
 
 #: gui2/gretl.c:1589
-#, fuzzy
 msgid "Julia program"
-msgstr "Programa Ox"
+msgstr "Programa Julia"
 
 #: gui2/gretl.c:1590
 msgid "Ox program"
@@ -12793,9 +12791,8 @@ msgid "gretl: edit Python script"
 msgstr "gretl: editar script Python"
 
 #: gui2/gui_utils.c:1661
-#, fuzzy
 msgid "gretl: edit Julia program"
-msgstr "gretl: editar programa Ox"
+msgstr "gretl: editar programa Julia"
 
 #: gui2/gui_utils.c:1663
 msgid "gretl: edit Stata program"
@@ -15629,9 +15626,8 @@ msgid "Path to Python executable"
 msgstr "Caminho para executável Python"
 
 #: gui2/settings.c:280
-#, fuzzy
 msgid "Path to Julia executable"
-msgstr "Caminho para executável oxl"
+msgstr "Caminho para executável Julia"
 
 #: gui2/settings.c:283
 msgid "Path to mpiexec"
@@ -15674,36 +15670,32 @@ msgid "Gnuplot colors"
 msgstr "Cores do Gnuplot"
 
 #: gui2/settings.c:308
-#, fuzzy
 msgid "Number of spaces per tab"
-msgstr "Espaços por tabulação"
+msgstr "Número de espaços por tab"
 
 #: gui2/settings.c:310
 msgid "\"Smart\" Tab and Enter"
-msgstr ""
+msgstr "Tab e Enter \"inteligentes\""
 
 #: gui2/settings.c:312
-#, fuzzy
 msgid "Show line numbers"
-msgstr "Ligar/desligar numeração de linhas"
+msgstr "Mostrar numeração de linhas"
 
 #: gui2/settings.c:314
 msgid "Script editor uses tabs"
 msgstr "Usar abas no editor de script"
 
 #: gui2/settings.c:317
-#, fuzzy
 msgid "Enable auto-completion"
-msgstr "sem autocorrelação"
+msgstr "Ativar auto-completar"
 
 #: gui2/settings.c:320
-#, fuzzy
 msgid "Enable auto-brackets"
-msgstr "p-valores entre colchetes"
+msgstr "Ativar parênteses automáticos"
 
 #: gui2/settings.c:322
 msgid "Highlighting style"
-msgstr ""
+msgstr "Estilo do realce de sintaxe"
 
 #: gui2/settings.c:334
 msgid "Use robust covariance matrix by default"
