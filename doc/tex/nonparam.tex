@@ -149,7 +149,7 @@ open mroz87.gdt
 
 # initial value for the bandwidth
 scalar h = $nobs^(-0.2)
-# three increasingly smoother estimates
+# three increasingly smooth estimates
 series m0 = nadarwat(HA, WA, h)
 series m1 = nadarwat(HA, WA, h * 5)
 series m2 = nadarwat(HA, WA, h * 10)
