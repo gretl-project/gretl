@@ -156,7 +156,7 @@ series m2 = nadarwat(HA, WA, h * 10)
 
 # produce the graph
 dataset sortby WA
-gnuplot m0 m1 m2 HA WA --output=display --with-lines
+gnuplot HA m0 m1 m2 WA --output=display --with-lines=m0,m1,m2
 \end{scode}
 %$
 \end{script}
