@@ -6381,6 +6381,13 @@ static int list_show_var (int v, int ci, int show_lags)
 {
     int ret = 1;
 
+    if (ci == LOESS || ci == NADARWAT) {
+	/* special: for nonparam models we should show 
+	   lagged vars, since we don't display the full
+	   lag-selection mechanism */
+	show_lags = 1;
+    }
+
     lags_hidden = 0;
 
     if (v == 0 && (ci == DEFINE_LIST || ci == DEFINE_MATRIX)) {

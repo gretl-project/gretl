@@ -787,7 +787,8 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
     int obslen = max_obs_marker_length(dset);
     int t1 = dset->t1;
     int t2 = dset->t2;
-    int t, pmax, err = 0;
+    int t, pmaxx, pmaxy;
+    int err = 0;
 
     for (t=t1; t<=dset->t2; t++) {
 	if (na(x[t])) {
@@ -808,7 +809,7 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
     ntodate(obs1, t1, dset);
     ntodate(obs2, t2, dset);
     pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
-    pputc(prn, '\n');
+    pputs(prn, "\n\n");
     bufspace(obslen, prn);
 
     for (t=0; t<3; t++) {
@@ -820,7 +821,8 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
 
     pputs(prn, "\n\n");
 
-    pmax = get_precision(y, dset->n, 6);
+    pmaxx = get_precision(x, dset->n, 6);
+    pmaxy = get_precision(y, dset->n, 6);
 
     for (t=t1; t<=t2; t++) {
 	print_obs_marker(t, dset, obslen, prn);
@@ -829,18 +831,18 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
 	    pputc(prn, '\n');
 	} else if (na(y[t])) {
 	    /* y missing but x and fitted should be OK */
-	    if (pmax != PMAX_NOT_AVAILABLE) {
-		pprintf(prn, "%13.*f%13s%13.*f\n", pmax, x[t], "NA", pmax, f[t]);
-	    } else {
+	    if (pmaxx == PMAX_NOT_AVAILABLE || pmaxy == PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13g%13s%13g\n", x[t], "NA", f[t]);
+	    } else {
+		pprintf(prn, "%13.*f%13s%13.*f\n", pmaxx, x[t], "NA", pmaxy, f[t]);
 	    }
 	} else {
 	    /* got all values */
-	    if (pmax != PMAX_NOT_AVAILABLE) {
-		pprintf(prn, "%13.*f%13.*f%13.*f\n", 
-			pmax, x[t], pmax, y[t], pmax, f[t]);
-	    } else {
+	    if (pmaxx == PMAX_NOT_AVAILABLE || pmaxy == PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13g%13g%13g\n", x[t], y[t], f[t]);
+	    } else {
+		pprintf(prn, "%13.*f%13.*f%13.*f\n", 
+			pmaxx, x[t], pmaxy, y[t], pmaxy, f[t]);
 	    }
 	}
     }
