@@ -11044,10 +11044,10 @@ static void reattach_series (NODE *n, parser *p)
 	} else {
 	    n->v.xvec = p->dset->Z[n->vnum];
 #if LOOPSAVE
-	    if (gretl_function_depth() > 0) {
-		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    if (p->uvnodes != NULL) {
+		g_ptr_array_add(p->uvnodes, n);
 	    }
-#endif	    
+#endif
 	}
     } else if (n->vnum >= 0 && n->vnum < p->dset->v) {
  	n->v.xvec = p->dset->Z[n->vnum];
@@ -11062,6 +11062,25 @@ static void reattach_data_error (NODE *n, parser *p, GretlType type)
     p->err = E_TYPES;
 }
 
+#if LOOPSAVE
+
+static void maybe_add_to_uvnodes_array (NODE *n, parser *p)
+{
+    int i;
+
+    for (i=0; i<p->uvnodes->len; i++) {
+	if (p->uvnodes->pdata[i] == n) {
+	    /* already present, OK */
+	    return;
+	}
+    }
+
+    g_ptr_array_add(p->uvnodes, n);
+}
+
+#endif
+
+
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
@@ -11070,23 +11089,19 @@ static void node_reattach_data (NODE *n, parser *p)
 	GretlType type = 0;
 	void *data = NULL;
 
-#if GEN_STORE_UVARS
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
-# if LOOPSAVE
-	    if (gretl_function_depth() > 0) {
-		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+#if LOOPSAVE
+	    if (p->uvnodes != NULL) {
+		maybe_add_to_uvnodes_array(n, p);
 	    }
-# endif
+#endif
 	}
 
 	if (n->uv != NULL) {
 	    data = n->uv->ptr;
 	    type = n->uv->type;
 	}
-#else
-	data = user_var_get_value_and_type(n->vname, &type);
-#endif /* GEN_STORE_UVARS or not */
 
 	if (data == NULL) {
 	    p->err = E_DATA;
@@ -13134,9 +13149,9 @@ static void extract_LHS_string (const char *s, char *lhs, parser *p)
     }
 }
 
-/* in the case of a "private" genr we allow ourselves some
+/* In the case of a "private" genr we allow ourselves some
    more latitude in variable names, so as not to collide
-   with userspace names: specifically, we can use '$'
+   with userspace names: specifically, we can use '$'.
 */
 
 static int check_private_varname (const char *s)
@@ -15026,7 +15041,18 @@ static void parser_init (parser *p, const char *str,
     p->n_aux = 0;
     p->aux_i = 0;
 
+#if LOOPSAVE
+    /* storing user_var pointers across function calls? */
+    if (gretl_function_depth() > 0 && !gretl_function_recursing()) {
+	/* FIXME conditionality? */
+	p->uvnodes = g_ptr_array_new();
+    } else {
+	p->uvnodes = NULL;
+    }
+#else
     p->uvnodes = NULL;
+#endif
+
     p->subp = NULL;
 
     p->callcount = 0;
@@ -15162,7 +15188,7 @@ void gen_cleanup (parser *p)
 	}
 
 	if (p->uvnodes != NULL) {
-	    g_slist_free(p->uvnodes);
+	    g_ptr_array_free(p->uvnodes, TRUE);
 	}
     }
 }
@@ -15176,8 +15202,8 @@ static void uvnode_reset (void *p1, void *p2)
     NODE *n = p1;
 
 #if LS_DEBUG || GLOBAL_TRACE
-    fprintf(stderr, " reset node type %03d, %s\n", 
-	    n->t, getsymb(n->t, NULL));
+    fprintf(stderr, " reset node type %03d, %s, '%s'\n", 
+	    n->t, getsymb(n->t, NULL), n->vname);
 #endif
     if (n->t == SERIES) {
 	n->v.xvec = NULL;
@@ -15203,11 +15229,9 @@ static void real_reset_uvars (parser *p, int level)
 
     if (p->uvnodes != NULL) {
 #if LS_DEBUG
-	fprintf(stderr, " number of uvar nodes: %d\n", (int) g_slist_length(p->uvnodes));
+	fprintf(stderr, " number of uvar nodes: %d\n", (int) p->uvnodes->len);
 #endif
-	g_slist_foreach(p->uvnodes, uvnode_reset, NULL);
-	g_slist_free(p->uvnodes);
-	p->uvnodes = NULL;
+	g_ptr_array_foreach(p->uvnodes, uvnode_reset, p);
     }
 
     if (p->subp != NULL) {

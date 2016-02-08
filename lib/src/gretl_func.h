@@ -127,6 +127,8 @@ int gretl_compiling_python (const char *line);
 
 int gretl_function_depth (void);
 
+int gretl_function_recursing (void);
+
 void current_function_info (char const **funcname,
 			    char const **pkgname);
 

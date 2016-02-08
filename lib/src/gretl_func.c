@@ -109,6 +109,7 @@ struct fncall_ {
     int *ptrvars;  /* list of pointer arguments */
     int *listvars; /* list of series included in a list argument */
     char *retname; /* name of return value (or dummy string) */
+    int recursing; /* indicator for recursive call */
     obsinfo obs;   /* sample info */
 };
 
@@ -219,7 +220,6 @@ static fnpkg *current_pkg;  /* pointer to package currently being edited */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
-static int function_recursing (fncall *refcall);
 static void free_args_array (fn_arg *args, int n);
 
 /* record of state, and communication of state with outside world */
@@ -472,6 +472,7 @@ static fncall *fncall_new (ufunc *fun)
 	*/
 	call->argc = fun->argc;
 	call->args = fun->args;
+	call->recursing = 0;
 	fun->args = NULL;
 	fun->argc = 0;
     }
@@ -483,7 +484,7 @@ static void fncall_free (fncall *call)
 {
     if (call != NULL) {
 	if (call->fun != NULL && call->args != NULL) {
-	    if (function_recursing(call)) {
+	    if (call->recursing) {
 		/* free (duplicate) args array */
 		free_args_array(call->args, call->argc);
 	    } else {
@@ -1073,20 +1074,16 @@ static int function_in_use (ufunc *fun)
     return 0;
 }
 
-static int function_recursing (fncall *refcall)
+int gretl_function_recursing (void)
 {
-    GList *tmp = callstack;
-    fncall *call;
+    if (callstack != NULL) {
+	GList *tmp = g_list_last(callstack);
+	fncall *call = tmp->data;
 
-    while (tmp != NULL) {
-	call = tmp->data;
-	if (call != refcall && call->fun == refcall->fun) {
-	    return 1;
-	}
-	tmp = tmp->next;
+	return call->recursing;
+    } else {
+	return 0;
     }
-
-    return 0;
 }
 
 /**
@@ -7084,8 +7081,8 @@ static void reset_saved_loops (ufunc *u)
 	if (u->lines[i].loop != NULL) {
 	    loop_reset_genrs(u->lines[i].loop);
 # if GLOBAL_TRACE
-	    fprintf(stderr, "at exit from %s, reset_saved_loop\n",
-		    u->name);
+	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
+		    u->name, (void *) u->lines[i].loop);
 # endif    
 	}
     }
@@ -7107,6 +7104,18 @@ static void set_pkgdir (fnpkg *pkg)
 
 static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 {
+    GList *tmp = callstack;
+    fncall *prevcall;
+
+    while (tmp != NULL) {
+	prevcall = tmp->data;
+	if (prevcall->fun == call->fun) {
+	    call->recursing = 1;
+	    break;
+	}
+	tmp = tmp->next;
+    }    
+    
     fn_executing++;
     push_program_state();
 
@@ -7620,11 +7629,16 @@ int current_function_size (void)
 
 int attach_loop_to_function (void *ptr)
 {
-    ufunc *u = currently_called_function();
+    fncall *call = current_function_call();
+    ufunc *u = NULL;
     int err = 0;
 
+    if (call != NULL && !call->recursing) {
+	u = call->fun;
+    }
+
     if (u == NULL) {
-	err = E_DATA;
+	return E_DATA;
     } else {
 	if (u->lines[u->line_idx].loop != NULL) {
 	    /* there should not already be a loop attached */
@@ -7693,11 +7707,10 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     int debugging = u->debug;
 #if LOOPSAVE
     int loopstart = 0;
-    int recursing = 0;
 #endif
     int i, err = 0;
 
-#if EXEC_DEBUG
+#if EXEC_DEBUG || GLOBAL_TRACE
     fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
 #endif
 
@@ -7790,10 +7803,6 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	}
     }
 
-#if LOOPSAVE
-    recursing = function_recursing(call);
-#endif
-
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
@@ -7812,7 +7821,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	}
 
 #if LOOPSAVE
-	if (u->lines[i].loop != NULL && !recursing) {
+	if (u->lines[i].loop != NULL && !call->recursing) {
 # if LSDEBUG	    
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
@@ -7938,7 +7947,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 			    descrip, prn, &err);
 
 #if LOOPSAVE
-    if (!err) {
+    if (!err && !call->recursing) {
 	reset_saved_loops(call->fun);
     }
 #endif    
@@ -7956,8 +7965,9 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	fncall_free(call);
     }
 
-#if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: err = %d\n", err);
+#if EXEC_DEBUG || GLOBAL_TRACE
+    fprintf(stderr, "gretl_function_exec (%s) finished: err = %d\n",
+	    u->name, err);
 #endif
 
     return err;    

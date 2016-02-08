@@ -89,9 +89,6 @@ NODE *newempty (void)
 
 static NODE *newref (parser *p, int t)
 {
-#if LOOPSAVE
-    int fd = gretl_function_depth();
-#endif
     NODE *n = new_node(t);
 
     if (n != NULL) {
@@ -103,8 +100,8 @@ static NODE *newref (parser *p, int t)
 		n->flags |= SVL_NODE;
 	    }
 #if LOOPSAVE
-	    if (fd > 0) {
-		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    if (p->uvnodes != NULL) {
+		g_ptr_array_add(p->uvnodes, n);
 	    }
 #endif	    
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
@@ -114,8 +111,8 @@ static NODE *newref (parser *p, int t)
 	    n->v.xval = *(double *) u->ptr;
 	    n->uv = u;
 #if LOOPSAVE
-	    if (fd > 0) {
-		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    if (p->uvnodes != NULL) {
+		g_ptr_array_add(p->uvnodes, n);
 	    }
 #endif
 	} else if (t == MAT || t == LIST || t == BUNDLE ||
@@ -126,8 +123,8 @@ static NODE *newref (parser *p, int t)
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
 #if LOOPSAVE
-	    if (fd > 0) {
-		p->uvnodes = g_slist_prepend(p->uvnodes, n);
+	    if (p->uvnodes != NULL) {
+		g_ptr_array_add(p->uvnodes, n);
 	    }
 #endif
 	} else if (t == PTR) {
