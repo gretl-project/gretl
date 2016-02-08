@@ -4190,7 +4190,8 @@ int do_nonparam_model (selector *sr)
     gretl_bundle *bundle = NULL;
     double *m = NULL;
     const char *s, *buf;
-    const char *yname, *xname;
+    char yname[VNAMELEN];
+    char xname[VNAMELEN];
     const double *y, *x;
     gretlopt opt;
     int ci, vy, vx;
@@ -4201,15 +4202,15 @@ int do_nonparam_model (selector *sr)
     }
 
     buf = selector_list(sr);
-    if (buf == NULL || sscanf(buf, "%d %d", &vy, &vx) != 2) {
+    if (buf == NULL || sscanf(buf, "%31s %31s", yname, xname) != 2) {
 	return 1;
     }
 
     ci = selector_code(sr);
     opt = selector_get_opts(sr);
 
-    yname = dataset->varname[vy];
-    xname = dataset->varname[vx];
+    vy = current_series_index(dataset, yname);
+    vx = current_series_index(dataset, xname);
     y = dataset->Z[vy];
     x = dataset->Z[vx];
 
