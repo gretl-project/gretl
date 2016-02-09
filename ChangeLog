@@ -7,6 +7,8 @@ version 2016b, in progress
   comma when file uses decimal comma and also '.' as thousands
   marker
 - Fix bug: GUI access to nonparametric models was broken
+- Fix bug: not flagging an error when given a broken right-
+  hand side specification in the "restrict" command
 
 2016-01-26 version 2016a
 - syntax enhancement: allow specification of type when setting

@@ -612,6 +612,7 @@ static int test_user_matrices (gretl_restriction *rset)
 
     if (R->rows > rset->gmax) {
 	/* too many restrictions */
+	fprintf(stderr, "R->rows = %d: too many restrictions\n", R->rows);
 	return E_NONCONF;
     }    
 
@@ -622,9 +623,12 @@ static int test_user_matrices (gretl_restriction *rset)
     if (R->cols != rset->gmax) {
 	if (rset->vecm) {
 	    int nb = gretl_VECM_n_beta(rset->obj);
+	    int nbr = nb * gretl_VECM_rank(rset->obj);
 
 	    if (R->cols == nb && R->rows <= nb) {
 		rset->bmulti = 0;
+	    } else if (R->cols == nbr && R->rows <= nbr) {
+		; /* OK */
 	    } else {
 		return E_NONCONF;
 	    }
