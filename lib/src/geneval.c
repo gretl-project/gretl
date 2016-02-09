@@ -12958,9 +12958,8 @@ static void do_declaration (parser *p)
     strings_array_free(S, n);
 }
 
-/* create a dummy node to facilitate (a) printing an
-   existing variable, or (b) incrementing or decrementing
-   that variable
+/* create a dummy node to facilitate incrementing or 
+   decrementing that variable
 */
 
 static NODE *lhs_copy_node (parser *p)
@@ -12970,13 +12969,10 @@ static NODE *lhs_copy_node (parser *p)
     if (n != NULL) {
 	if (p->targ == NUM) {
 	    n->v.xval = gretl_scalar_get_value(p->lh.name, NULL);
-	} else if (p->targ == SERIES) {
-	    n->v.xvec = p->dset->Z[p->lh.vnum];
 	} else if (p->targ == STR) {
-	    /* FIXME? */
 	    n->v.str = gretl_strdup(gen_get_lhs_var(p, GRETL_TYPE_STRING));
 	} else {
-	    n->v.m = p->lh.m;
+	    p->err = E_TYPES;
 	}
 	n->flags |= CPY_NODE;
     }
@@ -12989,10 +12985,11 @@ static NODE *lhs_copy_node (parser *p)
    of an existing variable?
 */
 
-static void parser_try_print (parser *p)
+static void parser_try_print (parser *p, const char *s)
 {
     if (p->lh.t != 0 && p->lh.substr == NULL) {
-	p->flags |= (P_PRINT | P_DISCARD);
+	p->flags |= P_DISCARD;
+	p->point = s;
     } else {
 	p->err = E_EQN;
     }
@@ -13187,6 +13184,7 @@ static GretlType bundle_type_from_gentype (parser *p)
 static void pre_process (parser *p, int flags)
 {
     const char *s = p->input;
+    const char *savep;
     char test[GENSTRLEN];
     char *lhsub = NULL;
     char subchar = 0;
@@ -13201,9 +13199,6 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "eval ", 5)) {
 	p->flags |= P_DISCARD;
 	s += 5;
-    } else if (!strncmp(s, "print ", 6)) {
-	p->flags |= P_PRINT;
-	s += 6;
     }
 
     while (isspace(*s)) s++;
@@ -13247,6 +13242,8 @@ static void pre_process (parser *p, int flags)
 	/* doing a simple "eval" */
 	p->point = s;
 	return;
+    } else {
+	savep = s;
     }
 
     /* extract LHS varname (possibly with substring)
@@ -13391,8 +13388,8 @@ static void pre_process (parser *p, int flags)
     while (isspace(*s)) s++;
 
     /* expression ends here with no operator: a call to print? */
-    if (*s == '\0' || !strcmp(s, "print")) {
-	parser_try_print(p);
+    if (*s == '\0') {
+	parser_try_print(p, savep);
 	return;
     }
 
@@ -14830,7 +14827,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
        set at compile time, or in previous execution 
     */
     int saveflags[] = { 
-	P_PRINT, P_NATEST, P_AUTOREG,
+	P_NATEST, P_AUTOREG,
 	P_SLAVE, P_LHPTR, P_DISCARD, 
 	P_LHBKVAR, P_AUXDONE, P_NODECL,
 	P_LISTDEF, 0
@@ -14985,7 +14982,7 @@ static void parser_init (parser *p, const char *str,
 
 void gen_save_or_print (parser *p, PRN *prn)
 {
-    if (p->flags & (P_DISCARD | P_PRINT)) {
+    if (p->flags & P_DISCARD) {
 	if (p->ret->t == MAT) {
 	    gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	} else if (p->ret->t == LIST) {
@@ -15002,9 +14999,9 @@ void gen_save_or_print (parser *p, PRN *prn)
 		pprintf(p->prn, "%s\n", p->ret->v.str);
 	    }
 	} else if (p->ret->t == BUNDLE) {
-	    gretl_bundle_print(gen_get_lhs_var(p, GRETL_TYPE_BUNDLE), prn);
+	    gretl_bundle_print(p->ret->v.b, prn);
 	} else if (p->ret->t == ARRAY) {
-	    gretl_array_print(gen_get_lhs_var(p, GRETL_TYPE_ARRAY), prn);
+	    gretl_array_print(p->ret->v.a, prn);
 	} else {
 	    /* scalar, series */
 	    printnode(p->ret, p, 1);
@@ -15216,7 +15213,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	if (p->err) {
 	    fprintf(stderr, "error in parser_reinit\n");
 	    return p->err;
-	} else if (p->op == INC || p->op == DEC || (p->flags & P_PRINT)) {
+	} else if (p->op == INC || p->op == DEC) {
 	    p->ret = lhs_copy_node(p);
 	    return p->err;
 	} else {
@@ -15242,7 +15239,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	return p->err;
     }
 
-    if (p->op == INC || p->op == DEC || (p->flags & P_PRINT)) {
+    if (p->op == INC || p->op == DEC) {
 	if (!(p->flags & P_COMPILE)) {
 	    p->ret = lhs_copy_node(p);
 	}
