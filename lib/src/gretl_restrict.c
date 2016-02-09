@@ -1441,6 +1441,20 @@ gretl_restriction *rset_from_VECM (GRETL_VAR *var, int *err)
     return rset;
 }
 
+static int list_get_jmax (const int *list)
+{
+    int i, jmax = 0;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    break;
+	}
+	jmax++;
+    }
+
+    return jmax;
+}
+
 /* check that the coefficients referenced in a restriction are
    within bounds, relative to the equation or system that is
    to be restricted */
@@ -1470,18 +1484,22 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	if (list == NULL) {
 	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
 				 i + 1);
-	} else if (j >= list[0] - 1) {
-	    gretl_errmsg_sprintf(_("Coefficient number (%d) out of range "
-				   "for equation %d"), j + 1, i + 1);
 	} else {
-	    ret = 0;
+	    int jmax = list_get_jmax(list);
+	    
+	    if (j >= jmax) {
+		gretl_errmsg_sprintf(_("Coefficient number (%d) out of range "
+				       "for equation %d"), j + 1, i + 1);
+	    } else {
+		ret = 0;
+	    }
 	}
     } else {
 	MODEL *pmod = rset->obj;
 
 	if (i > 0) {
 	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
-		    i + 1);
+				 i + 1);
 	} else if (j >= pmod->ncoeff || j < 0) {
 	    if (!gretl_errmsg_is_set()) {
 		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
@@ -1626,6 +1644,7 @@ static int parse_restriction_row (gretl_restriction *rset,
     j = 0;
 
     for (i=0; i<nt; i++) {
+	/* work on the left-hand side */
 	char chunk[32];
 	int len, bnum = 1, eq = 1;
 	int numeric = 0;
@@ -1677,7 +1696,7 @@ static int parse_restriction_row (gretl_restriction *rset,
     }
 
     if (!err) {
-	char rhstr[32];
+	/* work on the right-hand side */
 	double rhs = 0.0;
 
 	s += strspn(s, " ");
@@ -1685,14 +1704,11 @@ static int parse_restriction_row (gretl_restriction *rset,
 	if (*s != '=') {
 	    err = E_PARSE;
 	} else {
-	    s++;
-	    if (!sscanf(s, "%31s", rhstr)) {
-		err = E_PARSE;
-	    } else if (sscanf(s, "%lf", &rhs) == 1) {
-		row->rhs += rhs;
-	    } else if (gretl_is_scalar(rhstr)) {
-		rhs = gretl_scalar_get_value(rhstr, NULL);
-		if (na(rhs)) {
+	    /* we should find here a scalar constant or a
+	       variable of scalar type */
+	    rhs = generate_scalar(s+1, NULL, &err);
+	    if (!err) {
+		if (xna(rhs)) {
 		    err = E_DATA;
 		} else {
 		    row->rhs += rhs;
