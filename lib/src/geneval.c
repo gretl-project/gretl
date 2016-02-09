@@ -62,11 +62,6 @@
 #define MATRIX_NA_CHECK 1
 #define ONE_BY_ONE_CAST 1
 
-/* it seems the following may now be redundant,
-   but more checking may be wanted
-*/
-#define DUP_TERNARY_CHILD 0
-
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
 
@@ -838,15 +833,6 @@ static NODE *aux_any_node (parser *p)
 {
     return get_aux_node(p, 0, 0, 0);
 }
-
-#if DUP_TERNARY_CHILD
-
-static NODE *aux_empty_node (parser *p)
-{
-    return get_aux_node(p, EMPTY, 0, 0);
-}
-
-#endif
 
 /* Start of functions that probably should not be needed in
    their present full form, but testing is required before
@@ -10277,80 +10263,6 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     return ret;
 }
 
-#if DUP_TERNARY_CHILD
-
-/* Handle the case where a ternary "query" expression has produced one
-   of its own child nodes as output: we duplicate the information in an
-   auxiliary node so as to avoid double-freeing of the result.
-*/
-
-static NODE *ternary_return_node (NODE *n, parser *p)
-{
-    NODE *ret = NULL;
-
-    if (n->t == NUM) {
-	ret = aux_scalar_node(p);
-	if (ret != NULL) {
-	    ret->v.xval = n->v.xval;
-	}
-    } else if (n->t == SERIES) {
-	int t, T = p->dset->n;
-
-	ret = aux_series_node(p);
-	if (ret != NULL) {
-	    for (t=0; t<T; t++) {
-		ret->v.xvec[t] = n->v.xvec[t];
-	    }
-	}
-    } else if (n->t == MAT) {
-	ret = aux_matrix_node(p);
-	if (ret != NULL) {
-	    if (is_tmp_node(ret)) {
-		gretl_matrix_free(ret->v.m);
-	    }
-	    ret->v.m = gretl_matrix_copy(n->v.m);
-	    if (ret->v.m == NULL) {
-		p->err = E_ALLOC;
-	    }
-	}
-    } else if (n->t == STR) {
-	ret = aux_string_node(p);
-	if (ret != NULL) {
-	    if (is_tmp_node(ret)) {
-		free(ret->v.str);
-	    }
-	    ret->v.str = gretl_strdup(n->v.str);
-	    if (ret->v.str == NULL) {
-		p->err = E_ALLOC;
-	    }	    
-	}
-    } else if (n->t == LIST) {
-	ret = aux_list_node(p);
-	if (ret != NULL) {
-	    if (is_tmp_node(ret)) {
-		free(ret->v.ivec);
-	    }
-	    ret->v.ivec = gretl_list_copy(n->v.ivec);
-	    if (ret->v.ivec == NULL) {
-		p->err = E_ALLOC;
-	    }	    
-	}
-    } else if (n->t == EMPTY) {
-	ret = aux_empty_node(p);
-	if (ret == NULL) {
-	    p->err = E_ALLOC;
-	}	
-    } else {
-	fprintf(stderr, "ternary_return_node: unhandled type '%s'\n", 
-		getsymb(n->t, p));
-	p->err = E_TYPES;
-    }
-
-    return ret;
-}
-
-#endif
-
 /* Evaluate a ternary "query" expression: (C)? X : Y.  The condition C
    may be a scalar, series or matrix.  The relevant sub-nodes of @t
    are named "l" (left, the condition), "m" and "r" (middle and right
@@ -10396,13 +10308,6 @@ static NODE *eval_query (NODE *t, parser *p)
 	return NULL;
     }
 
-#if DUP_TERNARY_CHILD 
-    if (ret != NULL && (ret == t->v.b3.m || ret == t->v.b3.r)) {
-	/* forestall double-freeing */
-	ret = ternary_return_node(ret, p);
-    }
-#endif    
-    
     return ret;
 }
 
@@ -12263,9 +12168,6 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in constant */
 	ret = retrieve_const(t, p);
 	break;
-    case EROOT:
-	ret = eval(t->v.b1.b, p);
-	break;
     case UFUN:
 	ret = eval_ufunc(t, p);
 	break;
@@ -12684,8 +12586,6 @@ static void printnode (NODE *t, parser *p, int value)
 	pputc(p->prn, ')');
     } else if (unary_op(t->t)) {
 	printsymb(t->t, p);
-	printnode(t->v.b1.b, p, 0);
-    } else if (t->t == EROOT) {
 	printnode(t->v.b1.b, p, 0);
     } else if (func2_symb(t->t)) {
 	printsymb(t->t, p);

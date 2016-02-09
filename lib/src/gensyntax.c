@@ -62,6 +62,10 @@ NODE *new_node (int t)
 	n->vnum = NO_VNUM;
 	n->vname = NULL;
 	n->uv = NULL;
+#if 0 /* not yet */
+	n->res = NULL;
+	n->refcount = 0;
+#endif
     }
 
     return n;
@@ -1299,12 +1303,8 @@ static NODE *powterm (parser *p)
 	    }
 	}
     } else if (sym == G_LPR) {
-	/* dummy root for parenthesized expressions, to facilitate
-	   taking the transpose of matrix stuff, e.g. (A*B)' */
-	t = newb1(EROOT, NULL);
-	if (t != NULL) {
-	    t->v.b1.b = base(p, t);
-	}
+	/* parenthesized expression */
+	t = base(p, NULL);
     } else if (sym == G_LCB) {
 	/* explicit matrix definition, possibly followed by
 	   a "subslice" specification */

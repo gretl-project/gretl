@@ -1780,8 +1780,6 @@ const char *getsymb (int t, const parser *p)
 	return "SERIES";
     } else if (t == MAT) {
 	return "MAT";
-    } else if (t == EROOT) {
-	return "EROOT";
     } else if (t == UNDEF) {
 	return "UNDEF";
     } else if (t == NUM) {
@@ -1868,7 +1866,7 @@ const char *getsymb (int t, const parser *p)
     case B_POW: 
 	return "^";
     case B_EQ: 
-	return "=";
+	return "==";
     case B_NEQ: 
 	return "!=";
     case B_GT: 

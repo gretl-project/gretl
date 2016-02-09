@@ -118,9 +118,8 @@ enum {
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
-	      EROOT,	  /* dummy root for (...) expression */
-  /* 90 */    UFUN,	  /* user-defined function */
-	      RFUN,       /* GNU R function */
+	      UFUN,	  /* user-defined function */
+  /* 90 */    RFUN,       /* GNU R function */
 	      IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
@@ -129,8 +128,8 @@ enum {
 	      QUERY,      /* ternary "?" expression */
 	      UNDEF,      /* undefined (allowed in "query" context only) */
 	      PTR,        /* miscellaneous pointer */
- /* 100 */    EOT,	  /* end of transmission */
-	      UNK 
+	      EOT,	  /* end of transmission */
+ /* 100 */    UNK 
 };
 
 /* functions: don't collide with the enumeration above */
@@ -493,10 +492,10 @@ enum {
 		   s == ELEMENT || s == OSL)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
-                  s == G_LPR || s == EROOT)
+                  s == G_LPR)
 
 #define evalb1(s) (b1sym(s) && !(str0_func(s)) && s != U_ADDR && \
-                   !func2_symb(s) && s != EROOT)
+                   !func2_symb(s))
 
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
                   s == OVAR || s == UFUN || s == RFUN || \
@@ -570,12 +569,16 @@ enum {
 };
 
 struct node {
-    short t;       /* type indentifier */
+    short t;       /* type identifier */
     char flags;    /* AUX_NODE etc., see above */
     int vnum;      /* associated series ID number */
     char *vname;   /* associated variable name */
     user_var *uv;  /* associated named variable */
     union val v;   /* value (of whatever type) */
+#if 0 /* not yet */
+    NODE *res;
+    int refcount;
+#endif
 };
 
 enum parser_flags {
@@ -638,6 +641,7 @@ struct parser_ {
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
+    NODE *res;
     GPtrArray *uvnodes;   
     /* below: parser state variables */
     int callcount;
