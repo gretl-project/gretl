@@ -6839,10 +6839,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     rtype = user_func_get_return_type(uf);
 
     if (!p->err && rtype == GRETL_TYPE_VOID) {
-	if (p->targ == UNK) {
+	if (p->targ == UNK && p->lh.name[0] == '\0') {
+	    /* can we ever get here? */
 	    p->targ = EMPTY;
 	} else if (p->targ != EMPTY) {
-	    gretl_errmsg_sprintf(_("The function %s does not return anything"),
+	    gretl_errmsg_sprintf(_("The function %s does not return any value"),
 				 funname);
 	    p->err = E_TYPES;
 	}
@@ -13242,7 +13243,11 @@ static void pre_process (parser *p, int flags)
     } else if (gretl_array_type(p->targ)) {
 	p->lh.gtype = p->targ;
 	p->targ = ARRAY;
-    }	
+    } else if (p->targ == MAT && *s == '*') {
+	/* this is on crack? */
+	p->flags |= P_LHPTR;
+	s++;
+    }
 
     if ((p->targ == SERIES || p->targ == LIST) &&
 	(p->dset == NULL || p->dset_n == 0)) {
