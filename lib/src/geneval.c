@@ -1145,10 +1145,6 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return x >= y;
     case B_LTE:
 	return x <= y;
-    case INC:
-	return x + 1.0;
-    case DEC:
-	return x - 1.0;
     case B_POW:
 	z = pow(x, y);
 	if (errno) {
@@ -12991,28 +12987,6 @@ static void do_declaration (parser *p)
     strings_array_free(S, n);
 }
 
-/* create a dummy node to facilitate incrementing or 
-   decrementing that variable
-*/
-
-static NODE *lhs_copy_node (parser *p)
-{
-    NODE *n = new_node(p->targ);
-
-    if (n != NULL) {
-	if (p->targ == NUM) {
-	    n->v.xval = gretl_scalar_get_value(p->lh.name, NULL);
-	} else if (p->targ == STR) {
-	    n->v.str = gretl_strdup(gen_get_lhs_var(p, GRETL_TYPE_STRING));
-	} else {
-	    p->err = E_TYPES;
-	}
-	n->flags |= CPY_NODE;
-    }
-
-    return n;
-}
-
 /* The expression supplied for evaluation does not contain an '=': 
    can we interpret it as an implicit request to print the value 
    of an existing variable?
@@ -14216,22 +14190,6 @@ static int create_or_edit_string (parser *p)
 		user_var_replace_value(uvar, newstr);
 	    }
 	}
-    } else if (p->op == INC) {
-	/* string++ */
-	size_t len = strlen(orig);
-
-	if (len < 2) {
-	    newstr = gretl_strdup("");
-	} else {
-	    newstr = malloc(len);
-	}
-	if (newstr == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    *newstr = '\0';
-	    strncat(newstr, orig + 1, len - 1);
-	    user_var_replace_value(uvar, newstr); 
-	}
     }
 
     return p->err;
@@ -14486,6 +14444,34 @@ static int assign_null_to_array (parser *p)
     return err;
 }
 
+static int do_incr_decr (parser *p)
+{
+    if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_DOUBLE) {
+	double x = *(double *) p->lh.uv->ptr;
+	
+	if (!na(x)) {
+	    x += (p->op == INC)? 1 : -1;
+	    *(double *) p->lh.uv->ptr = x;
+	}
+    } else if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_STRING) {
+	if (p->op == DEC) {
+	    p->err = E_TYPES;
+	} else {
+	    char *s = p->lh.uv->ptr;
+
+	    if (*s != '\0') {
+		char *smod = gretl_strdup(s + 1);
+		
+		user_var_replace_value(p->lh.uv, smod);
+	    }
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+    
+    return p->err;
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -14500,7 +14486,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->lh.name, p->callcount, getsymb(p->lh.t, NULL),
 	    getsymb(p->targ, NULL), (p->flags & P_NODECL)? 1 : 0,
 	    getsymb(r->t, NULL));
-#endif    
+#endif
+
+    if (p->op == INC || p->op == DEC) {
+	return do_incr_decr(p);
+    }
 
     if (p->callcount < 2) {
 	/* first exec: test for type mismatch errors */
@@ -15253,7 +15243,6 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    fprintf(stderr, "error in parser_reinit\n");
 	    return p->err;
 	} else if (p->op == INC || p->op == DEC) {
-	    p->ret = lhs_copy_node(p);
 	    return p->err;
 	} else {
 	    goto starteval;
@@ -15279,9 +15268,6 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }
 
     if (p->op == INC || p->op == DEC) {
-	if (!(p->flags & P_COMPILE)) {
-	    p->ret = lhs_copy_node(p);
-	}
 	return p->err;
     }
 
