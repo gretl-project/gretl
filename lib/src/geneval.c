@@ -102,7 +102,7 @@
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
 			    t == SERIES || t == BUNDLE || t == U_ADDR || \
-			    t == ARRAY) 
+			    t == ARRAY)
 
 #define compiled(p) (p->flags & P_EXEC)
 
@@ -329,7 +329,13 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	free_tree(t->v.b2.r, p, msg);
     } else if (b1sym(t->t)) {
 	free_tree(t->v.b1.b, p, msg);
-    } 
+    }
+
+#if RES_NODES
+    if (t->res != NULL && t->res != p->ret) {
+	fprintf(stderr, "should free res at %p?\n", (void *) t->res);
+    }
+#endif    
 
 #if EDEBUG
     fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n", msg, 
@@ -11212,6 +11218,10 @@ static NODE *eval (NODE *t, parser *p)
 	goto bailout;
     }
 
+#if RES_NODES
+    p->res = t->res;
+#endif
+
     switch (t->t) {
     case DBUNDLE:
     case MSPEC:
@@ -12373,6 +12383,26 @@ static NODE *eval (NODE *t, parser *p)
 	p->err = E_PARSE;
 	break;
     }
+
+#if RES_NODES
+    /* just for testing at present */
+    if (ret != NULL && ret != t) {
+	if (t->t == QUERY && (ret == t->v.b3.m || ret == t->v.b3.r)) {
+	    fprintf(stderr, "query returned own child, skip it\n");
+	} else if (t->res == NULL) {
+	    fprintf(stderr, "+++ attach node %p (%s) to node %p (%s) as 'res' +++\n",
+		    ret, getsymb(ret->t, NULL), t, getsymb(t->t, NULL));
+	    if (ret->refcount > 0) {
+		fprintf(stderr, "WARNING, refcount = %d\n", ret->refcount);
+	    }
+	    t->res = ret;
+	    ret->refcount += 1;
+	} else if (t->res != ret) {
+	    fprintf(stderr, "ERROR conflicting attachment to %p (%s)\n",
+		    t, getsymb(ret->t, NULL));
+	}	    
+    }    
+#endif    
 
  bailout:
 

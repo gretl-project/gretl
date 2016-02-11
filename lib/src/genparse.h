@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_bundle.h"
 #include "gretl_array.h"
+#include "genr_optim.h"
 
 #define GENDEBUG 0
 
@@ -575,7 +576,7 @@ struct node {
     char *vname;   /* associated variable name */
     user_var *uv;  /* associated named variable */
     union val v;   /* value (of whatever type) */
-#if 0 /* not yet */
+#if RES_NODES
     NODE *res;
     int refcount;
 #endif
