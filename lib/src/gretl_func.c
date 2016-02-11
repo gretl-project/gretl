@@ -7448,11 +7448,10 @@ static int handle_return_statement (fncall *call,
 	    /* returning a named variable */
 	    call->retname = gretl_strndup(s, len);
 	} else {
-	    const char *typestr = gretl_type_get_name(fun->rettype);
 	    char formula[MAXLINE];
 	    
-	    sprintf(formula, "%s $retval=%s", typestr, s);
-	    err = generate(formula, dset, OPT_P, NULL);
+	    sprintf(formula, "$retval=%s", s);
+	    err = generate(formula, dset, fun->rettype, OPT_P, NULL);
 	    if (err) {
 		set_func_error_message(err, fun, state, s, lineno);
 	    } else {

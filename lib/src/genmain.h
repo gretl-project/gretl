@@ -143,10 +143,12 @@ typedef enum {
 typedef struct parser_ GENERATOR;
 
 int generate (const char *line, DATASET *dset, 
-	      gretlopt opt, PRN *prn);
+	      GretlType gtype, gretlopt opt,
+	      PRN *prn);
 
 GENERATOR *genr_compile (const char *s, DATASET *dset, 
-			 gretlopt opt, int *err);
+			 GretlType gtype, gretlopt opt,
+			 int *err);
 
 int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 

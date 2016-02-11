@@ -6838,11 +6838,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
     rtype = user_func_get_return_type(uf);
 
-    if (!p->err && p->targ != EMPTY) {
-	/* check that the function returns something suitable */
-	if (!ok_function_return_type(rtype) || rtype == GRETL_TYPE_VOID) {
-	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
-		    funname, rtype);
+    if (!p->err && rtype == GRETL_TYPE_VOID) {
+	if (p->targ == UNK) {
+	    p->targ = EMPTY;
+	} else if (p->targ != EMPTY) {
+	    gretl_errmsg_sprintf(_("The function %s does not return anything"),
+				 funname);
 	    p->err = E_TYPES;
 	}
     } 
@@ -7545,7 +7546,7 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "set_bundle_value: target %s.%s\n", name, key);
+    fprintf(stderr, "set_bundle_value: key = '%s'\n", key);
 #endif
 
 #if 0
@@ -9862,8 +9863,9 @@ static NODE *gen_series_from_string (NODE *l, NODE *r, parser *p)
     int vnum = -1;
     int err = 0;
 
-    line = g_strdup_printf("series %s=%s", l->v.str, r->v.str);
-    err = generate(line, p->dset, OPT_NONE, p->prn);
+    line = g_strdup_printf("%s=%s", l->v.str, r->v.str);
+    err = generate(line, p->dset, GRETL_TYPE_SERIES,
+		   OPT_NONE, p->prn);
     
     if (!err) {
 	vnum = current_series_index(p->dset, l->v.str);
@@ -13197,40 +13199,50 @@ static void pre_process (parser *p, int flags)
     if (!strncmp(s, "genr ", 5)) {
 	s += 5;
     } else if (!strncmp(s, "eval ", 5)) {
+	/* allow within (e.g.) mle block */
 	p->flags |= P_DISCARD;
 	s += 5;
     }
 
     while (isspace(*s)) s++;
 
-    /* do we have a type specification? */
-    if (!strncmp(s, "scalar ", 7)) {
-	p->targ = NUM;
-	s += 7;
-    } else if (!strncmp(s, "series ", 7)) {
-	p->targ = SERIES;
-	s += 7;
-    } else if (!strncmp(s, "matrix *", 8)) {
-	p->targ = MAT;
-	p->flags |= P_LHPTR;
-	s += 8;
-	s += strspn(s, " ");
-    } else if (!strncmp(s, "matrix ", 7)) {
-	p->targ = MAT;
-	s += 7;
-    } else if (!strncmp(s, "list ", 5)) {
-	p->targ = LIST;
-	s += 5;
-    } else if (!strncmp(s, "string ", 7)) {
-	p->targ = STR;
-	s += 7;
-    } else if (!strncmp(s, "bundle ", 7)) {
-	p->targ = BUNDLE;
-	s += 7;
-    } else if (ok_array_decl(p, s)) {
+    if (p->targ == UNK) {
+	/* Do we have an inline type specification? In most
+	   cases we shouldn't, but allow for this in case of
+	   GUI usage that bypasses the tokenizer? 
+	*/
+	if (!strncmp(s, "scalar ", 7)) {
+	    p->targ = NUM;
+	    s += 7;
+	} else if (!strncmp(s, "series ", 7)) {
+	    p->targ = SERIES;
+	    s += 7;
+	} else if (!strncmp(s, "matrix *", 8)) {
+	    /* FIXME? */
+	    p->targ = MAT;
+	    p->flags |= P_LHPTR;
+	    s += 8;
+	    s += strspn(s, " ");
+	} else if (!strncmp(s, "matrix ", 7)) {
+	    p->targ = MAT;
+	    s += 7;
+	} else if (!strncmp(s, "list ", 5)) {
+	    p->targ = LIST;
+	    s += 5;
+	} else if (!strncmp(s, "string ", 7)) {
+	    p->targ = STR;
+	    s += 7;
+	} else if (!strncmp(s, "bundle ", 7)) {
+	    p->targ = BUNDLE;
+	    s += 7;
+	} else if (ok_array_decl(p, s)) {
+	    p->targ = ARRAY;
+	    s += strcspn(s, " ") + 1;
+	}
+    } else if (gretl_array_type(p->targ)) {
+	p->lh.gtype = p->targ;
 	p->targ = ARRAY;
-	s += strcspn(s, " ") + 1;
-    }
+    }	
 
     if ((p->targ == SERIES || p->targ == LIST) &&
 	(p->dset == NULL || p->dset_n == 0)) {
@@ -13341,7 +13353,7 @@ static void pre_process (parser *p, int flags)
 
     /* if new variable, check name for legality */
     if (newvar) {
-	if (flags & P_PRIVATE) {
+	if (flags & P_PRIV) {
 	    p->err = check_private_varname(test);
 	} else {
 	    p->err = check_varname(test);
@@ -13372,16 +13384,6 @@ static void pre_process (parser *p, int flags)
 	    return;
 	}
     }
-
-#if 0 /* not yet */
-    if (p->targ == UNK &&
-	gretl_looping() && gretl_function_depth() > 0) {
-	gretl_errmsg_sprintf("The variable '%s' has no type specified",
-			     test);
-	p->err = E_DATA;
-	return;
-    }
-#endif
 
     /* advance past varname */
     s = p->point;
@@ -14840,7 +14842,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	p->flags |= P_START;
 	p->flags &= ~P_DELTAN;
     } else {
-	p->flags = (P_START | P_PRIVATE | P_EXEC);
+	p->flags = (P_START | P_PRIV | P_EXEC);
 
 	for (i=0; saveflags[i] > 0; i++) {
 	    if (prevflags & saveflags[i]) {
@@ -14967,7 +14969,9 @@ static void parser_init (parser *p, const char *str,
 	return;
     }
 
-    if (p->targ == UNK) {
+    if (p->flags & P_VOID) {
+        p->flags |= P_DISCARD;
+    } else if (p->targ == UNK || !(p->flags & P_ANON)) {
 	pre_process(p, flags);
     } else if (p->targ == LIST) {
 	p->flags |= P_LISTDEF;
@@ -15200,7 +15204,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
-	fprintf(stderr, "input = '%s'\n", s);
+	fprintf(stderr, "targ=%s, input='%s'\n", getsymb(targtype, NULL), s);
     }
 #endif
 

@@ -400,6 +400,7 @@ int gretl_cmd_init (CMD *c)
     c->auxlist = NULL;
 
     *c->savename = '\0';
+    c->gtype = GRETL_TYPE_ANY;
 
     c->toks = malloc(n * sizeof *c->toks);
     if (c->toks == NULL) {
@@ -465,6 +466,7 @@ static void gretl_cmd_clear (CMD *c)
     c->cstart = 0;
     c->ntoks = 0;
     c->vstart = NULL;
+    c->gtype = GRETL_TYPE_ANY;
 
     /* Note: c->context, c->savename and the flag CMD_CATCH should
        persist across in-block commands until end-of-block is
@@ -2340,8 +2342,9 @@ static int try_for_command_index (CMD *cmd, int i,
 
     if (cmd->context && cmd->ci != END) {
 	if (cmd->context == FOREIGN || cmd->context == MPI) {
-	    /* Do not attempt to parse! But FIXME: I
-	       don't think we should ever get here.
+	    /* Do not attempt to parse! Note: we get here only
+	       when "compiling" a foreign block into a loop or
+	       function.
 	    */
 	    cmd->ciflags = CI_EXPR;
 	    cmd->ci = cmd->context;
@@ -2399,14 +2402,21 @@ static int try_for_command_index (CMD *cmd, int i,
 		cmd->ciflags ^= CI_DOALL;
 		cmd->ciflags |= CI_EXTRA;
 	    }
-	    if (cmd->ci == GENR && !strcmp(test, "list")) {
-		if (peek_next_char(cmd, i) == '\0') {
-		    /* just "list" by itself */
-		    cmd->ci = VARLIST;
-		    cmd->ciflags = 0;
-		} else {
-		    /* probably "genr" but might be a special */
-		    cmd->ciflags |= CI_LCHK;
+	    if (cmd->ci == GENR) {
+		GretlType gtype;
+		
+		if (!strcmp(test, "list")) {
+		    if (peek_next_char(cmd, i) == '\0') {
+			/* just "list" by itself */
+			cmd->ci = VARLIST;
+			cmd->ciflags = 0;
+		    } else {
+			/* probably "genr" but might be a special */
+			cmd->gtype = GRETL_TYPE_LIST;
+			cmd->ciflags |= CI_LCHK;
+		    }
+		} else if ((gtype = gretl_get_gen_type(test)) > 0) {
+		    cmd->gtype = gtype;
 		}
 	    }
 	    if (compmode && cmd->ci == END) {
@@ -2921,8 +2931,13 @@ static void set_command_vstart (CMD *cmd)
 	s = tok->lp;
 	if (!cmd->context && expr_keep_cmdword(cmd->ci)) {
 	    ; /* leave it alone */
-	} else if (cmd->ci != GENR && cmd->ci != EVAL &&
-		   cmd->ci != cmd->context) {
+	} else if (cmd->ci == EVAL) {
+	    cmd->gtype = GRETL_TYPE_NONE;
+	    s += 4;
+	} else if (cmd->ci == GENR && cmd->gtype != GRETL_TYPE_ANY) {
+	    /* skip initial command word */
+	    s += strlen(tok->s);
+	} else if (cmd->ci != GENR && cmd->ci != cmd->context) {
 	    /* skip initial command word */
 	    s += strlen(tok->s);
 	}

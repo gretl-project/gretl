@@ -299,7 +299,7 @@ forloop_init (LOOPSET *loop, DATASET *dset, int *err)
     const char *expr = loop->init.expr;
 
     if (expr != NULL) {
-	*err = generate(expr, dset, OPT_Q, NULL);
+	*err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
 	if (*err) {
 	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
 				 expr);
@@ -341,7 +341,7 @@ loop_delta (LOOPSET *loop, DATASET *dset, int *err)
     const char *expr = loop->delta.expr;
 
     if (expr != NULL) {
-	*err = generate(expr, dset, OPT_Q, NULL);
+	*err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
 	if (*err) {
 	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
 				 expr);
@@ -644,13 +644,13 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	char genline[64];
 	
 	if (na(loop->init.val)) {
-	    sprintf(genline, "scalar %s = NA", vname);
+	    sprintf(genline, "%s = NA", vname);
 	} else {
 	    gretl_push_c_numeric_locale();
-	    sprintf(genline, "scalar %s = %g", vname, loop->init.val);
+	    sprintf(genline, "%s = %g", vname, loop->init.val);
 	    gretl_pop_c_numeric_locale();
 	}
-	err = generate(genline, dset, OPT_Q, NULL);
+	err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
 	if (!err) {
 	    strcpy(loop->idxname, vname);
 	    loop->flags |= LOOP_DELVAR;
@@ -2116,8 +2116,8 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     if (loop->cmds[n].line == NULL) {
 	err = E_ALLOC;
     } else {
-	/* FIXME: is this (still) wanted */
-	compress_spaces(loop->cmds[n].line);
+	/* FIXME is this (still) wanted? (it messes up python in loops) */
+	/* compress_spaces(loop->cmds[n].line); */
 	if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
 	    /* printing a literal string, not a variable's value */
 	    loop->cmds[n].flags |= LOOP_CMD_LIT;
@@ -2765,12 +2765,14 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
 }
 
 static int add_loop_genr (LOOPSET *loop, int lno, 
+                          GretlType gtype,
 			  const char *line, 
 			  DATASET *dset)
 {
     int err = 0;
 
-    loop->cmds[lno].genr = genr_compile(line, dset, OPT_NONE, &err);
+    loop->cmds[lno].genr = genr_compile(line, dset, gtype,
+					OPT_NONE, &err);
     
     if (!err) {
 	loop->cmds[lno].flags |= LOOP_CMD_GENR;
@@ -3083,13 +3085,13 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
 	char genline[64];
 	
 	if (na(loop->init.val)) {
-	    sprintf(genline, "scalar %s = NA", loop->idxname);
+	    sprintf(genline, "%s = NA", loop->idxname);
 	} else {
 	    gretl_push_c_numeric_locale();
-	    sprintf(genline, "scalar %s = %g", loop->idxname, loop->init.val);
+	    sprintf(genline, "%s = %g", loop->idxname, loop->init.val);
 	    gretl_pop_c_numeric_locale();
 	}
-	err = generate(genline, dset, OPT_Q, NULL);
+	err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
     } 
 
     return err;
@@ -3440,14 +3442,15 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    if (!loop_is_verbose(loop)) {
 			cmd->opt |= OPT_Q;
 		    }
-		    err = generate(cmd->vstart, dset, cmd->opt, prn);
+		    err = generate(cmd->vstart, dset, cmd->gtype, cmd->opt, prn);
 		} else {
-		    err = add_loop_genr(loop, j, cmd->vstart, dset);
+		    err = add_loop_genr(loop, j, cmd->gtype, cmd->vstart, dset);
 		    if (loop->cmds[j].genr != NULL) {
 			err = execute_genr(loop->cmds[j].genr, dset, prn);
 		    } else if (!err) {
 			loop->cmds[j].flags |= LOOP_CMD_NOEQ;
-			err = generate(cmd->vstart, dset, cmd->opt, prn);
+			err = generate(cmd->vstart, dset, cmd->gtype,
+				       cmd->opt, prn);
 		    }
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {

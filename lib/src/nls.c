@@ -172,7 +172,8 @@ static int nls_dynamic_check (nlspec *s, char *formula)
     strcpy(formula, s->nlfunc);
     adjust_saved_nlfunc(formula);
 
-    genr = genr_compile(formula, s->dset, OPT_P, &err);
+    genr = genr_compile(formula, s->dset, GRETL_TYPE_SERIES,
+			OPT_P, &err);
 
     if (!err && genr_is_autoregressive(genr)) {
 	s->flags |= NL_AUTOREG;
@@ -249,8 +250,9 @@ static int nls_genr_setup (nlspec *s)
     j = -1; /* index for derivatives */
 
     for (i=0; i<s->ngenrs && !err; i++) {
+	GretlType gentype = GRETL_TYPE_ANY;
+	GretlType result = 0;
 	char *dname = NULL;
-	int gentype = 0;
 
 	if (i < s->naux) {
 	    /* auxiliary variables first */
@@ -272,14 +274,17 @@ static int nls_genr_setup (nlspec *s)
 		sprintf(formula, "%s = %s", s->params[j].dname, 
 			s->params[j].deriv);
 	    } else {
-		sprintf(formula, "matrix %s = %s",  s->params[j].dname,
+		sprintf(formula, "%s = %s",  s->params[j].dname,
 			s->params[j].deriv);
+		gentype = GRETL_TYPE_MATRIX;
+		
 	    }
 	    dname = s->params[j].dname;
 	}
 
 	if (!err) {
-	    s->genrs[i] = genr_compile(formula, s->dset, OPT_P, &err);
+	    s->genrs[i] = genr_compile(formula, s->dset, gentype,
+				       OPT_P, &err);
 	}
 
 	if (err) {
@@ -312,9 +317,9 @@ static int nls_genr_setup (nlspec *s)
 		continue;
 	    }
 	    /* not a series, not a matrix: should be scalar */
-	    gentype = genr_get_output_type(s->genrs[i]);
-	    if (gentype != GRETL_TYPE_DOUBLE) {
-		fprintf(stderr, "got bad gentype %d\n", gentype);
+	    result = genr_get_output_type(s->genrs[i]);
+	    if (result != GRETL_TYPE_DOUBLE) {
+		fprintf(stderr, "got bad gentype %d\n", result);
 		fprintf(stderr, "formula: '%s'\n", formula);
 		err = E_TYPES;
 		break;
@@ -369,7 +374,7 @@ static int nls_genr_setup (nlspec *s)
     }
 
     if (!err && s->hesscall != NULL) {
-	s->hgen = genr_compile(s->hesscall, s->dset, 
+	s->hgen = genr_compile(s->hesscall, s->dset, GRETL_TYPE_ANY,
 			       OPT_P | OPT_O, &err);
 	if (!err) {
 	    err = execute_genr(s->hgen, s->dset, s->prn);
@@ -2766,9 +2771,10 @@ nlspec_set_regression_function (nlspec *spec, const char *fnstr,
 	gretl_errmsg_sprintf(_("parse error in '%s'\n"), fnstr);
 	err =  E_PARSE;
     } else if (spec->ci == NLS) {
+	/* the dependent variable must be a series */
 	spec->dv = series_index(dset, vname);
 	if (spec->dv == dset->v) {
-	    gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
+	    gretl_errmsg_sprintf(_("'%s' is not a known series"), vname);
 	    err = E_UNKVAR;
 	}
     } else {
@@ -3806,8 +3812,9 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 	}
 
 	if (!err) {
-	    /* generate and record the forecast */
-	    err = generate(pmod->depvar, dset, OPT_P, NULL);
+	    /* generate and record the forecast (FIXME genr expr?) */
+	    err = generate(pmod->depvar, dset, GRETL_TYPE_SERIES,
+			   OPT_P, NULL);
 	    for (t=ft1, s=0; t<=ft2; t++, s++) {
 		gretl_matrix_set(fcmat, i, s, dset->Z[yno][t]);
 	    }

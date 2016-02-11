@@ -242,3 +242,59 @@ GretlType gretl_type_from_string (const char *s)
     return GRETL_TYPE_NONE;
 }
 
+struct lookup {
+    const char *word;
+    GretlType type;
+};
+
+static const struct lookup gentypes[] = {
+    { "series",   GRETL_TYPE_SERIES },
+    { "scalar",   GRETL_TYPE_DOUBLE },
+    { "matrix",   GRETL_TYPE_MATRIX },
+    { "string",   GRETL_TYPE_STRING },
+    { "list",     GRETL_TYPE_LIST },
+    { "bundle",   GRETL_TYPE_BUNDLE },
+    { "strings",  GRETL_TYPE_STRINGS },
+    { "matrices", GRETL_TYPE_MATRICES },
+    { "bundles",  GRETL_TYPE_BUNDLES },
+    { "lists",    GRETL_TYPE_LISTS }
+};
+
+GretlType gretl_get_gen_type (const char *s)
+{
+    static GHashTable *ht;
+    gpointer p;
+    GretlType t = 0;
+
+    if (s == NULL) {
+	/* the clean-up signal */
+	if (ht != NULL) {
+	    g_hash_table_destroy(ht);
+	    ht = NULL;
+	}
+	return 0;
+    }
+
+    if (ht == NULL) {
+	int i, n = G_N_ELEMENTS(gentypes);
+
+	ht = g_hash_table_new(g_str_hash, g_str_equal);
+	
+	for (i=0; i<n; i++) {
+	    g_hash_table_insert(ht, (gpointer) gentypes[i].word, 
+				GINT_TO_POINTER(gentypes[i].type));
+	}	
+    }
+
+    p = g_hash_table_lookup(ht, s);
+    if (p != NULL) {
+	t = GPOINTER_TO_INT(p);
+    }    
+
+    return t;
+}
+
+void gretl_typemap_cleanup (void)
+{
+    gretl_get_gen_type(NULL);
+}

@@ -28,6 +28,7 @@ struct CMD_ {
     int ciflags;     /* see CIFlags in tokenizer.c */
     gretlopt opt;    /* option(s) for command */
     CmdFlags flags;  /* status flags for command invocation */
+    GretlType gtype; /* specified type for "genr" */
     int order;       /* lag order, where appropriate */
     int auxint;      /* auxiliary int (e.g. VECM rank) */
     int cstart;      /* token index of start of 'real' command */

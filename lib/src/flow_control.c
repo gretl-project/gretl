@@ -86,7 +86,8 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 	    */
 	    GENERATOR **pgen = (GENERATOR **) ptr;
 
-	    *pgen = ifgen = genr_compile(s, dset, OPT_P | OPT_S, err);
+	    *pgen = ifgen = genr_compile(s, dset, GRETL_TYPE_BOOL,
+					 OPT_P, err);
 	}
     }
 

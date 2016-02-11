@@ -2516,12 +2516,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case GENR:
     case EVAL:
 	if (cmd->flags & CMD_CATCH) {
-	    err = generate(cmd->vstart, dset, cmd->opt | OPT_C, prn);
+	    err = generate(cmd->vstart, dset, cmd->gtype,
+			   cmd->opt | OPT_C, prn);
 	    if (err == E_BADCATCH) {
 		cmd->flags ^= CMD_CATCH;
 	    }
 	} else {
-	    err = generate(cmd->vstart, dset, cmd->opt, prn);
+	    err = generate(cmd->vstart, dset, cmd->gtype,
+			   cmd->opt, prn);
 	}
 	break;
 

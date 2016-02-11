@@ -181,7 +181,7 @@ static int gen_arg_val (const char *s, DATASET *dset,
 	return E_ALLOC;
     }
 
-    err = generate(genstr, dset, OPT_P, NULL);
+    err = generate(genstr, dset, GRETL_TYPE_ANY, OPT_P, NULL);
 
     if (!err) {
 	int type = genr_get_last_output_type();
@@ -1042,7 +1042,10 @@ static int scan_scalar (char *targ, const char **psrc,
 	} else {
 	    genline = gretl_strdup_printf("%s=%.16g", targ, x);
 	}
-	err = generate(genline, dset, OPT_P, NULL);
+	/* we use GRETL_TYPE_ANY below to allow for the possibility
+	   that we're assigning to, e.g., an element of a matrix
+	*/
+	err = generate(genline, dset, GRETL_TYPE_ANY, OPT_P, NULL);
 #if PSDEBUG
 	fprintf(stderr, "genline '%s', err=%d\n", genline, err);
 #endif
@@ -1052,7 +1055,7 @@ static int scan_scalar (char *targ, const char **psrc,
 	free(genline);
     }
 
-    /* match the above call */
+    /* match the push above */
     gretl_pop_c_numeric_locale();
 
     *psrc = endp;
@@ -1283,7 +1286,7 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
 	err = E_ALLOC;
     } else {
 	sprintf(tmp, "sscanf(%s)", args);
-	err = generate(tmp, dset, OPT_O, prn);
+	err = generate(tmp, dset, GRETL_TYPE_NONE, OPT_O, prn);
 	free(tmp);
     }
 
@@ -1304,14 +1307,14 @@ static int do_sprintf_command (const char *targ,
     int err;
 
     if (args != NULL) {
-	tmp = g_strdup_printf("string %s=sprintf(\"%s\",%s)",
+	tmp = g_strdup_printf("%s=sprintf(\"%s\",%s)",
 			      targ, format, args);
     } else {
-	tmp = g_strdup_printf("string %s=sprintf(\"%s\")",
+	tmp = g_strdup_printf("%s=sprintf(\"%s\")",
 			      targ, format);
     }
     
-    err = generate(tmp, dset, 0, prn);
+    err = generate(tmp, dset, GRETL_TYPE_STRING, 0, prn);
     g_free(tmp);
     
     return err;

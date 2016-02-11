@@ -3964,11 +3964,12 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
     char *line;
     int i, err = 0;
 
-    line = gretl_strdup_printf("series filtered__=%s", filter->expr);
+    line = gretl_strdup_printf("filtered__=%s", filter->expr);
     if (line == NULL) {
 	err = E_ALLOC;
     } else {
-	err = generate(line, r_dset, OPT_P | OPT_Q, NULL);
+	err = generate(line, r_dset, GRETL_TYPE_SERIES,
+		       OPT_P | OPT_Q, NULL);
     }
 
     if (!err) {

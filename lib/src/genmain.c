@@ -668,13 +668,13 @@ static int is_genr_special (const char *s, char *spec, const char **rem)
     return 0;
 }
 
-#define gen_verbose(f) (!(f & P_PRINT) && \
-                        !(f & P_DISCARD) && \
-                        !(f & P_PRIVATE) && \
+#define gen_verbose(f) (!(f & P_DISCARD) && \
+                        !(f & P_PRIV) && \
                         !(f & P_QUIET) && \
                         !(f & P_DECL))
 
-int generate (const char *line, DATASET *dset, gretlopt opt, 
+int generate (const char *line, DATASET *dset,
+	      GretlType gtype, gretlopt opt, 
 	      PRN *prn)
 {
     char vname[VNAMELEN];
@@ -683,14 +683,30 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
     int targtype = UNK;
     parser p;
 
-    if (opt & OPT_P) {
-	/* internal use of generate() */
-	flags |= P_PRIVATE;
+    if (gtype == GRETL_TYPE_NONE) {
+	flags |= P_DISCARD;
+    } else if (gtype == GRETL_TYPE_DOUBLE) {
+	targtype = NUM;
+    } else if (gtype == GRETL_TYPE_SERIES) {
+	targtype = SERIES;
+    } else if (gtype == GRETL_TYPE_MATRIX) {
+	targtype = MAT;
+    } else if (gtype == GRETL_TYPE_STRING) {
+	targtype = STR;
+    } else if (gtype == GRETL_TYPE_BUNDLE) {
+	targtype = BUNDLE;
+    } else if (gtype == GRETL_TYPE_LIST) {
+	targtype = LIST;
+    } else if (gtype == GRETL_TYPE_BOOL) {
+        targtype = NUM;
+        flags |= P_ANON;
+    } else if (gretl_array_type(gtype)) {
+	targtype = gtype;
     }
 
-    if (opt & OPT_O) {
-	/* no assignment */
-	targtype = EMPTY;
+    if (opt & OPT_P) {
+	/* internal use of generate() */
+	flags |= P_PRIV;
     }
 
     if (opt & OPT_Q) {
@@ -699,7 +715,13 @@ int generate (const char *line, DATASET *dset, gretlopt opt,
 
     if (opt & OPT_C) {
 	flags |= P_CATCH;
-    }    
+    }
+
+    if (opt & OPT_O) {
+	/* special for function call, no assignment */
+	targtype = EMPTY;
+        flags |= P_VOID;
+    }
 
     oldv = (dset != NULL)? dset->v : 0;
 
@@ -748,7 +770,7 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     parser p;
     double x = NADBL;
 
-    *err = realgen(s, &p, dset, NULL, P_PRIVATE, NUM);
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, NUM);
 
     if (!*err) {
 	if (p.ret->t == MAT) {
@@ -797,7 +819,7 @@ double *generate_series (const char *s, DATASET *dset, PRN *prn,
     parser p;
     double *x = NULL;
 
-    *err = realgen(s, &p, dset, prn, P_PRIVATE, SERIES);
+    *err = realgen(s, &p, dset, prn, P_PRIV | P_ANON, SERIES);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -830,7 +852,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
     gretl_matrix *m = NULL;
     parser p;
 
-    *err = realgen(s, &p, dset, NULL, P_PRIVATE, MAT);
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, MAT);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -876,7 +898,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
     parser p;
     char *ret = NULL;
 
-    *err = realgen(s, &p, dset, NULL, P_PRIVATE, STR);
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, STR);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -913,7 +935,7 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	return NULL;
     }
 
-    *err = realgen(s, &p, dset, NULL, P_PRIVATE, LIST);
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, LIST);
 
     if (!*err) {
 	ret = node_get_list(p.ret, &p);
@@ -929,7 +951,8 @@ int *generate_list (const char *s, DATASET *dset, int *err)
    probably multiple times */
 
 parser *genr_compile (const char *s, DATASET *dset, 
-		      gretlopt opt, int *err)
+		      GretlType gtype, gretlopt opt,
+		      int *err)
 {
     parser *p;
     int flags = P_COMPILE;
@@ -951,15 +974,37 @@ parser *genr_compile (const char *s, DATASET *dset,
 	return NULL;
     }
 
+    if (gtype == GRETL_TYPE_NONE) {
+	flags |= P_DISCARD;
+    } else if (gtype == GRETL_TYPE_DOUBLE) {
+	targtype = NUM;
+    } else if (gtype == GRETL_TYPE_SERIES) {
+	targtype = SERIES;
+    } else if (gtype == GRETL_TYPE_MATRIX) {
+	targtype = MAT;
+    } else if (gtype == GRETL_TYPE_STRING) {
+	targtype = STR;
+    } else if (gtype == GRETL_TYPE_BUNDLE) {
+	targtype = BUNDLE;
+    } else if (gtype == GRETL_TYPE_LIST) {
+	targtype = LIST;
+    } else if (gtype == GRETL_TYPE_BOOL) {
+        targtype = NUM;
+        flags |= P_ANON;
+    } else if (gretl_array_type(gtype)) {
+	targtype = gtype;
+    }    
+
     if (opt & OPT_P) {
-	flags |= P_PRIVATE;
+	/* internal use of generate() */
+	flags |= P_PRIV;
     }
 
     if (opt & OPT_O) {
+	/* special for function call, no assignment */
 	targtype = EMPTY;
-    } else if (opt & OPT_S) {
-	targtype = NUM;
-    }
+        flags |= P_VOID;
+    }    
 
     *err = realgen(s, p, dset, NULL, flags, targtype);
 
@@ -1005,7 +1050,8 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 {
     double x = NADBL;
 
-    *err = realgen(NULL, p, dset, NULL,  P_EXEC | P_PRIVATE, 
+    *err = realgen(NULL, p, dset, NULL,
+		   P_EXEC | P_PRIV | P_ANON, 
 		   NUM);
 
     if (!*err) {
@@ -1094,7 +1140,7 @@ double genr_get_output_scalar (const parser *p)
 
 int genr_is_print (const parser *p)
 {
-    return (p->flags & P_PRINT);
+    return (p->flags & P_DISCARD);
 }
 
 int genr_is_autoregressive (const parser *p)

@@ -196,9 +196,8 @@ int word_is_genr_alias (const char *s)
 {
     int i;
 
-    for (i=0; gretl_cmd_aliases[i].cword != NULL; i++) {
-	if (!strcmp(s, gretl_cmd_aliases[i].cword) &&
-	    gretl_cmd_aliases[i].cnum == GENR) {
+    for (i=0; gretl_cmd_aliases[i].cnum == GENR; i++) {
+	if (!strcmp(s, gretl_cmd_aliases[i].cword)) {
 	    return 1;
 	}
     }

@@ -5318,9 +5318,9 @@ int set_panel_group_strings (const char *vname,
 	v = current_series_index(dset, vname);
 	if (v < 0) {
 	    /* we need to add a series */
-	    char *gen = gretl_strdup_printf("series %s", vname);
+	    char *gen = gretl_strdup_printf("%s", vname);
 
-	    err = generate(gen, dset, OPT_Q, NULL);
+	    err = generate(gen, dset, GRETL_TYPE_SERIES, OPT_Q, NULL);
 	    if (!err) {
 		v = dset->v - 1;
 	    }

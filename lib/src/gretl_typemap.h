@@ -32,4 +32,8 @@ const char *gretl_type_get_name (GretlType type);
 
 GretlType gretl_type_from_string (const char *s);
 
+GretlType gretl_get_gen_type (const char *s);
+
+void gretl_typemap_cleanup (void);
+
 #endif /* GRETL_TYPEMAP_H_ */

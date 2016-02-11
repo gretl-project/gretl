@@ -29,6 +29,7 @@
 #include "gretl_xml.h"
 #include "forecast.h"
 #include "kalman.h"
+#include "gretl_typemap.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -2220,6 +2221,7 @@ void libgretl_cleanup (void)
     bufgets_cleanup();
     plugins_cleanup();
     gretl_bundle_cleanup();
+    gretl_typemap_cleanup();
 #ifdef USE_CURL
     gretl_www_cleanup();
 #endif

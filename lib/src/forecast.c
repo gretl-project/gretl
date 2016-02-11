@@ -752,7 +752,8 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    dset->t1 = fc->t1;
 	    dset->t2 = t2;
 	    sprintf(formula, "$nl_y = %s", nlfunc);
-	    err = generate(formula, dset, OPT_P, NULL);
+	    err = generate(formula, dset, GRETL_TYPE_SERIES,
+			   OPT_P, NULL);
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[fcv][t];
@@ -761,11 +762,15 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	}
 
 	if (!err && fc->method == FC_AUTO && fc->t2 > pmod->t2) {
-	    /* dynamic forecast out of sample */
+	    /* dynamic forecast out of sample: in this context
+	       pmod->depvar is actually the expression to generate
+	       the series in question 
+	    */
 	    dset->t1 = pmod->t2 + 1;
 	    dset->t2 = fc->t2;
 	    strcpy(formula, pmod->depvar);
-	    err = generate(formula, dset, OPT_P, NULL);
+	    err = generate(formula, dset, GRETL_TYPE_SERIES,
+			   OPT_P, NULL);
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[yno][t];
