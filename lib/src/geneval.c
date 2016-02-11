@@ -7545,7 +7545,7 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "set_bundle_value: target %s.%s\n", name, key);
+    fprintf(stderr, "set_bundle_value: key = '%s'\n", key);
 #endif
 
 #if 0
@@ -14827,10 +14827,10 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
        set at compile time, or in previous execution 
     */
     int saveflags[] = { 
-	P_NATEST, P_AUTOREG,
-	P_SLAVE, P_LHPTR, P_DISCARD, 
-	P_LHBKVAR, P_AUXDONE, P_NODECL,
-	P_LISTDEF, 0
+	P_NATEST, P_AUTOREG, P_SLAVE,
+	P_LHPTR, P_DISCARD, P_LHBKVAR,
+	P_AUXDONE, P_NODECL, P_LISTDEF,
+	0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
@@ -15200,7 +15200,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
-	fprintf(stderr, "input = '%s'\n", s);
+	fprintf(stderr, "targ=%s, input='%s'\n", getsymb(targtype, NULL), s);
     }
 #endif
 
