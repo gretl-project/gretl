@@ -51,6 +51,7 @@
 #include "uservar.h"
 #include "csvdata.h"
 #include "matrix_extra.h"
+#include "gretl_typemap.h"
 #include "gretl_www.h"
 #include "texprint.h"
 #include "bootstrap.h"
@@ -3711,6 +3712,34 @@ void errmsg_plus (int err, const char *plus)
     }
 }
 
+/* The point of the following is to take a line such as
+   "matrix M = I(5)", with leading type specification,
+   and to pre-process it as the tokenizer does for "genr"
+   expressions entered via script or command line. That is,
+   strip out the type-word (if present) but use the
+   information it carries to fill out the type argument to
+   the generate() function in libgretl.
+*/
+
+int gui_run_genr (const char *line, DATASET *dset,
+		  gretlopt opt, PRN *prn)
+{
+    GretlType gtype = GRETL_TYPE_ANY;
+    char word[32];
+
+    if (sscanf(line, "%31s", word)) {
+	GretlType t = gretl_get_gen_type(word);
+	
+	if (t > 0) {
+	    gtype = t;
+	    line += strlen(word);
+	    line += strspn(line, " ");
+	}
+    }
+	
+    return generate(line, dset, gtype, opt, prn);
+}
+
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     PRN *prn;
@@ -3725,7 +3754,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	set_genr_model(pmod, GRETL_OBJ_EQN);
     }
 
-    err = generate(libline, dataset, OPT_NONE, prn); 
+    err = gui_run_genr(libline, dataset, OPT_NONE, prn);
 
     unset_genr_model();
 

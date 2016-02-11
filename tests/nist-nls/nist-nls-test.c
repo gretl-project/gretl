@@ -656,11 +656,11 @@ static int generate_params (char *line, int round, PRN *prn)
 
     for (i=0; i<tester.nparam && !err; i++) {
 	x = (round == 1)? tester.coeffs[i].s1 : tester.coeffs[i].s2;
-	sprintf(line, "genr %s = %g", tester.coeffs[i].name, x);
+	sprintf(line, "%s = %g", tester.coeffs[i].name, x);
 	if (verbose) {
 	    printf("%s\n", line);
 	}
-	err = generate(line, &Z, datainfo, OPT_NONE, NULL);
+	err = generate(line, &Z, datainfo, GRETL_TYPE_DOUBLE, OPT_NONE, NULL);
 	if (err) {
 	    fprintf(stderr, "%s: ERROR: genr failed in round %d\n '%s'\n", 
 		    tester.datname, round, line);

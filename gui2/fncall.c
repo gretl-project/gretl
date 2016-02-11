@@ -1607,7 +1607,7 @@ static int should_addressify_var (call_info *cinfo, int i)
 static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 {
     int t = fn_param_type(cinfo->func, i);
-    gchar *s = cinfo->args[i];
+    gchar *name = cinfo->args[i];
     int err = 0;
 
     *add = 0;
@@ -1616,36 +1616,35 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	return 0;
     }
 
-    if (*s == '&' || !strcmp(s, "null")) {
+    if (*name == '&' || !strcmp(name, "null")) {
 	return 0;
     }
 
-    /* handle cases where an "indirect return" variable 
-       does not yet exist */
+    /* Handle cases where an "indirect return" variable 
+       does not yet exist: we need to declare it.
+    */
 
     if (t == GRETL_TYPE_MATRIX_REF) {
-	if (get_matrix_by_name(s) == NULL) {
+	if (get_matrix_by_name(name) == NULL) {
 	    gretl_matrix *m = gretl_null_matrix_new();
 
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = user_var_add_or_replace(s,
+		err = user_var_add_or_replace(name,
 					      GRETL_TYPE_MATRIX,
 					      m);
 	    }
 	    if (!err) {
-		pprintf(prn, "? matrix %s\n", s);
+		pprintf(prn, "? matrix %s\n", name);
 	    }
 	}
     } else if (t == GRETL_TYPE_SERIES_REF) {
-	if (current_series_index(dataset, s) < 0) {
-	    char cmd[32];
-
-	    sprintf(cmd, "series %s", s);
-	    err = generate(cmd, dataset, OPT_Q, NULL);
+	if (current_series_index(dataset, name) < 0) {
+	    err = generate(name, dataset, GRETL_TYPE_SERIES,
+			   OPT_Q, NULL);
 	    if (!err) {
-		pprintf(prn, "? %s\n", cmd);
+		pprintf(prn, "? series %s\n", name);
 	    }
 	}
     }	
@@ -1678,15 +1677,18 @@ static int pre_process_args (call_info *cinfo, int *autolist,
     for (i=0; i<cinfo->n_params && !err; i++) {
 	if (should_addressify_var(cinfo, i)) {
 	    sprintf(auxname, "FNARG%d", i + 1);
-	    sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
-	    err = generate(auxline, dataset, OPT_NONE, NULL);
+	    sprintf(auxline, "%s=%s", auxname, cinfo->args[i]);
+	    err = generate(auxline, dataset, GRETL_TYPE_ANY,
+			   OPT_NONE, NULL);
 	    if (!err) {
 		g_free(cinfo->args[i]);
 		cinfo->args[i] = g_strdup(auxname);
 		pprintf(prn, "? %s\n", auxline);
 	    } 
-	} 
+	}
+	
 	err = maybe_add_amp(cinfo, i, prn, &add);
+	
 	if (add) {
 	    strcpy(auxname, "&");
 	    strncat(auxname, cinfo->args[i], VNAMELEN);
@@ -1697,14 +1699,14 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
 	}
+	
 	if (fn_param_type(cinfo->func, i) == GRETL_TYPE_OBS) {
 	    /* convert integer value from 0- to 1-based */
 	    int val = atoi(cinfo->args[i]) + 1;
 
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup_printf("%d", val);
-	}
-	if (fn_param_type(cinfo->func, i) == GRETL_TYPE_LIST) {
+	} else if (fn_param_type(cinfo->func, i) == GRETL_TYPE_LIST) {
 	    /* do we have an automatic list arg? */
 	    if (!strcmp(cinfo->args[i], SELNAME)) {
 		user_var_add(AUTOLIST, GRETL_TYPE_LIST,

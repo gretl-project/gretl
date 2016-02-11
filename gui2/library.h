@@ -57,6 +57,9 @@ int record_model_command_verbatim (int model_ID);
 
 int *command_list_from_string (const char *s, int *err);
 
+int gui_run_genr (const char *line, DATASET *dset,
+		  gretlopt opt, PRN *prn);
+
 int execute_script (char *runfile, const char *buf,
 		    PRN *prn, int exec_code,
 		    GtkWidget *parent);

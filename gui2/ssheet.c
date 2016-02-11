@@ -3791,11 +3791,11 @@ static int gui_matrix_from_list (selector *sr)
 
 static int matrix_from_formula (struct gui_matrix_spec *s)
 {
-    gchar *genline = g_strdup_printf("matrix %s = %s", 
-				     s->name, s->formula);
+    gchar *genline = g_strdup_printf("matrix %s = %s", s->name,
+				     s->formula);
     int err;
 
-    err = generate(genline, dataset, OPT_NONE, NULL); 
+    err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
 
     if (err) {
 	gui_errmsg(err);
@@ -3826,7 +3826,7 @@ static int matrix_from_spec (struct gui_matrix_spec *s)
 				  s->name, s->rows, s->cols, s->fill);
     }
 
-    err = generate(genline, dataset, OPT_NONE, NULL); 
+    err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
 
     if (err) {
 	gui_errmsg(err);

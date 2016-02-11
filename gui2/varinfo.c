@@ -218,7 +218,8 @@ static int try_regenerate_var (int v, const char *s)
 
     if (*s == '=') s++;
     sprintf(line, "%s=%s", dataset->varname[v], s);
-    err = generate(line, dataset, OPT_NONE, prn);
+    err = generate(line, dataset, GRETL_TYPE_SERIES,
+		   OPT_NONE, prn);
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));

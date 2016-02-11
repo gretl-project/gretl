@@ -6161,7 +6161,8 @@ static void pc_change_callback (GtkWidget *w,
 				      dataset->pd);
 	}
 
-	err = generate(genline, dataset, OPT_NONE, NULL);
+	err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
+
 	if (err) {
 	    gui_errmsg(err);
 	} else {

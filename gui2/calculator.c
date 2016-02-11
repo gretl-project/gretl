@@ -1337,7 +1337,7 @@ static int calc_finish_genr (void)
 	return 1;
     }
 
-    err = generate(get_lib_cmdline(), dataset, OPT_NONE, prn); 
+    err = gui_run_genr(get_lib_cmdline(), dataset, OPT_NONE, prn);
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));
