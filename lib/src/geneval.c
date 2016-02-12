@@ -59,25 +59,6 @@
 # define LHDEBUG 0
 #endif
 
-#if RES_NODES
-# if 0
-# include <stdarg.h>
-static void rndebug (const char *format, ...)
-{
-    va_list args;
-    
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
-# else
-static void rndebug (const char *format, ...)
-{
-    return;
-}
-# endif
-#endif
-
 #define MATRIX_NA_CHECK 1
 #define ONE_BY_ONE_CAST 1
 
@@ -387,15 +368,6 @@ static void free_tree (NODE *t, parser *p, int code)
 	free_tree(t->v.b1.b, p, code);
     }
 
-#if RES_NODES
-    if (t->res != NULL && t->res != p->ret) {
-	rndebug("should free res at %p?\n", (void *) t->res);
-	free_tree(t->res, p, FR_RES);
-    } else if (t->res != NULL) {
-	rndebug("don't free res at %p (= p->ret)\n", (void *) t->res);
-    }
-#endif    
-
 #if EDEBUG
     fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n",
 	    free_tree_tag(code), (void *) t, t->t, getsymb(t->t, NULL),
@@ -413,7 +385,6 @@ static void free_tree (NODE *t, parser *p, int code)
 	} else if (t->t == MAT) {
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
-	    /* FIXME RES_NODES */
 	    free_mspec(t->v.mspec, p);
 	} else if (t->t == BUNDLE) {
 	    gretl_bundle_destroy(t->v.b);
@@ -439,8 +410,6 @@ static void free_tree (NODE *t, parser *p, int code)
     free(t);
 }
 
-#if !RES_NODES
-
 void parser_free_aux_nodes (parser *p)
 {
     int i;
@@ -456,8 +425,6 @@ void parser_free_aux_nodes (parser *p)
 	p->n_aux = 0;
     }
 }
-
-#endif
 
 static NODE *newmdef (int k)
 {  
@@ -711,8 +678,6 @@ static void maybe_switch_node_type (NODE *n, int type,
     }
 }
 
-#if !RES_NODES
-
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
@@ -735,71 +700,8 @@ static int add_aux_node (parser *p, NODE *t)
     return p->err;
 }
 
-#endif
-
 /* get an auxiliary node: if starting from scratch we allocate
    a new node, otherwise we look up an existing one */
-
-#if RES_NODES
-
-static NODE *get_aux_node (parser *p, int t, int n, int tmp)
-{
-    NODE *ret = NULL;
-
-#if EDEBUG
-    fprintf(stderr, "get_aux_node: p=%p, t=%s, tmp=%d, starting=%d, "
-	    "auxdone=%d, n_aux=%d\n", (void *) p, getsymb(t, NULL), tmp,
-	    starting(p) ? 1 : 0, (p->flags & P_AUXDONE)? 1 : 0,
-	    p->n_aux);
-#endif
-
-    if (p->res == NULL) {
-	if (t == NUM) {
-	    ret = newdbl(NADBL);
-	} else if (t == SERIES) {
-	    ret = newseries(n, tmp);
-	} else if (t == IVEC) {
-	    ret = newivec(n, IVEC);
-	} else if (t == LIST) {
-	    ret = newivec(n, LIST);
-	} else if (t == MAT) {
-	    ret = newmat(tmp);
-	} else if (t == MSPEC) {
-	    ret = newmspec();
-	} else if (t == MDEF) {
-	    ret = newmdef(n);
-	} else if (t == LIST) {
-	    ret = newlist();
-	} else if (t == STR) {
-	    ret = newstring();
-	} else if (t == BUNDLE) {
-	    ret = newbundle(tmp);
-	} else if (t == ARRAY) {
-	    ret = newarray(tmp);
-	} else if (t == EMPTY) {
-	    ret = newempty();
-	} else {
-	    p->err = E_DATA;
-	}
-
-	if (!p->err && ret == NULL) {
-	    p->err = E_ALLOC;
-	} 
-    } else {
-	ret = p->res;
-	if (starting(p)) {
-	    if (ret->t != t) {
-		maybe_switch_node_type(ret, t, tmp, p);
-	    } else if (is_tmp_node(ret)) {
-		clear_tmp_node_data(ret, p);
-	    }
-	}
-    }
-
-    return ret;
-}
-
-#else
 
 static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
@@ -873,8 +775,6 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 
     return ret;
 }
-
-#endif
 
 static NODE *aux_scalar_node (parser *p)
 {
@@ -10410,12 +10310,10 @@ static NODE *eval_query (NODE *t, parser *p)
 {
     NODE *e, *ret = NULL;
 
-#if !RES_NODES
     if (p->flags & P_SAVEAUX) {
 	/* cancel */
 	p->flags &= ~P_SAVEAUX;
     }
-#endif
 
     /* evaluate and check the condition */
     e = eval(t->v.b3.l, p);
@@ -11333,12 +11231,10 @@ static NODE *eval (NODE *t, parser *p)
 			r = bool_node(1, p);
 		    }
 		}
-#if !RES_NODES
 		if (p->flags & P_SAVEAUX) {
 		    /* cancel this */
 		    p->flags &= ~P_SAVEAUX;
 		}
-#endif
 	    }
 	    if (r == NULL && !p->err) {
 		r = eval(raw_node(t, 2), p);
@@ -11349,10 +11245,6 @@ static NODE *eval (NODE *t, parser *p)
     if (p->err) {
 	goto bailout;
     }
-
-#if RES_NODES
-    p->res = t->res;
-#endif
 
     switch (t->t) {
     case DBUNDLE:
@@ -12516,26 +12408,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     }
 
-#if RES_NODES
-    /* just for testing at present */
-    if (ret != NULL && ret != t) {
-	if (t->t == QUERY && (ret == t->v.b3.m || ret == t->v.b3.r)) {
-	    rndebug("query returned own child, skip res attachment\n");
-	} else if (t->res == NULL) {
-	    rndebug("+++ attach res node %p (%s) to node %p (%s) as 'res'\n",
-		    ret, getsymb(ret->t, NULL), t, getsymb(t->t, NULL));
-	    if (ret->refcount > 0) {
-		fprintf(stderr, "WARNING, refcount = %d\n", ret->refcount);
-	    }
-	    t->res = ret;
-	    ret->refcount += 1;
-	} else if (t->res != ret) {
-	    fprintf(stderr, "ERROR conflicting res-node attachment to %p (%s)\n",
-		    t, getsymb(ret->t, NULL));
-	}	    
-    }    
-#endif    
-
  bailout:
 
 #if EDEBUG
@@ -12878,18 +12750,6 @@ static void get_lhs_substr (char *src, parser *p)
     *src = '\0';
 }
 
-#if RES_NODES
-
-/* FIXME there has to be a better way of handling
-   this */
-
-static void nullify_aux_return (parser *p)
-{
-    ;
-}
-
-#else
-
 static void nullify_aux_return (parser *p)
 {
     int i;
@@ -12903,8 +12763,6 @@ static void nullify_aux_return (parser *p)
 	}
     }
 }
-
-#endif
 
 static void add_child_parser (parser *p)
 {
@@ -15046,7 +14904,6 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     p->ret = NULL;
     p->err = 0;
 
-#if !RES_NODES
     if (p->flags & P_AUXDONE) {
 	/* just reset counter */
 	p->aux_i = 0;
@@ -15055,7 +14912,6 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	p->n_aux = 0;
 	p->aux_i = 0;
     }
-#endif
 
 #if EDEBUG
     fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
@@ -15218,11 +15074,9 @@ void gen_cleanup (parser *p, int level)
 	save_aux = save_tree = 0;
     }
 
-#if !RES_NODES
     if (!save_aux) {
 	parser_free_aux_nodes(p);
     }
-#endif    
 
     if (save_aux) {
 	; /* implies save_tree: no-op */
@@ -15374,7 +15228,7 @@ static void autoreg_error (parser *p, int t)
 int realgen (const char *s, parser *p, DATASET *dset, PRN *prn, 
 	     int flags, int targtype)
 {
-#if LHDEBUG || EDEBUG || RES_NODES_DEBUG
+#if LHDEBUG || EDEBUG
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
