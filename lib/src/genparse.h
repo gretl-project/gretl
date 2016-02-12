@@ -565,8 +565,7 @@ enum {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
-    SVL_NODE = 1 << 3, /* holds string-valued series */
-    CPY_NODE = 1 << 4  /* node derives from lhs_copy_node() */
+    SVL_NODE = 1 << 3  /* holds string-valued series */
 };
 
 struct node {
@@ -684,7 +683,7 @@ void set_doing_genseries (int s);
 int realgen (const char *s, parser *p, DATASET *dset, 
 	     PRN *prn, int flags, int targtype);
 void gen_save_or_print (parser *p, PRN *prn);
-void gen_cleanup (parser *p);
+void gen_cleanup (parser *p, int level);
 void parser_free_aux_nodes (parser *p);
 
 /* name lookup functions */

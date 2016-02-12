@@ -59,11 +59,41 @@
 # define LHDEBUG 0
 #endif
 
+#if RES_NODES
+# if 0
+# include <stdarg.h>
+static void rndebug (const char *format, ...)
+{
+    va_list args;
+    
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
+# else
+static void rndebug (const char *format, ...)
+{
+    return;
+}
+# endif
+#endif
+
 #define MATRIX_NA_CHECK 1
 #define ONE_BY_ONE_CAST 1
 
 #define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
+
+enum {
+    FR_SUB   = 1 << 0,
+    FR_TREE  = 1 << 1,
+    FR_RET   = 1 << 2,
+    FR_AUX   = 1 << 3,
+    FR_RES   = 1 << 4,
+    FR_MDEF  = 1 << 5,
+    FR_PDIST = 1 << 6,
+    FR_ERR   = 1 << 7
+};
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
@@ -272,6 +302,31 @@ static int data_in_tree (NODE *t, short type, void *ptr)
     return 0;
 }
 
+#if EDEBUG
+
+static const char *free_tree_tag (int t)
+{
+    if (t & FR_TREE) {
+	return (t & FR_SUB)? "sub->tree" : "p->tree";
+    } else if (t & FR_RET) {
+	return (t & FR_SUB)? "sub->ret" : "p->ret";
+    } else if (t & FR_AUX) {
+	return (t & FR_SUB)? "sub->aux" : "p->aux";
+    } else if (t & FR_RES) {
+	return (t & FR_SUB)? "sub->res" : "p->res";
+    } else if (t == FR_MDEF) {
+	return "Matdef";
+    } else if (t == FR_PDIST) {
+	return "Pdist";
+    } else if (t == FR_ERR) {
+	return "On error";
+    } else {
+	return "??";
+    }
+}
+
+#endif
+
 /* A word on "aux" nodes. These come in two "flavors" which
    might be described as "robust" and "fragile" respectively.
 
@@ -301,15 +356,16 @@ static int data_in_tree (NODE *t, short type, void *ptr)
    on an aux string node.
 */
 
-static void free_tree (NODE *t, parser *p, const char *msg)
+static void free_tree (NODE *t, parser *p, int code)
 {
     if (t == NULL) {
 	return;
     }
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: starting with t at %p (type %03d, %s)\n", msg, 
-	    (void *) t, t->t, getsymb(t->t, NULL));
+    fprintf(stderr, "%-8s: starting with t at %p (type %03d, %s)\n",
+	    free_tree_tag(code), (void *) t, t->t,
+	    getsymb(t->t, NULL));
 #endif
 
     /* free recursively */
@@ -317,29 +373,33 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	int i;
 
 	for (i=0; i<t->v.bn.n_nodes; i++) {
-	    free_tree(t->v.bn.n[i], p, msg);
+	    free_tree(t->v.bn.n[i], p, code);
 	}
 	free(t->v.bn.n);
     } else if (b3sym(t->t)) {
-	free_tree(t->v.b3.l, p, msg);
-	free_tree(t->v.b3.m, p, msg);
-	free_tree(t->v.b3.r, p, msg);
+	free_tree(t->v.b3.l, p, code);
+	free_tree(t->v.b3.m, p, code);
+	free_tree(t->v.b3.r, p, code);
     } else if (b2sym(t->t)) {
-	free_tree(t->v.b2.l, p, msg);
-	free_tree(t->v.b2.r, p, msg);
+	free_tree(t->v.b2.l, p, code);
+	free_tree(t->v.b2.r, p, code);
     } else if (b1sym(t->t)) {
-	free_tree(t->v.b1.b, p, msg);
+	free_tree(t->v.b1.b, p, code);
     }
 
 #if RES_NODES
     if (t->res != NULL && t->res != p->ret) {
-	fprintf(stderr, "should free res at %p?\n", (void *) t->res);
+	rndebug("should free res at %p?\n", (void *) t->res);
+	free_tree(t->res, p, FR_RES);
+    } else if (t->res != NULL) {
+	rndebug("don't free res at %p (= p->ret)\n", (void *) t->res);
     }
 #endif    
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n", msg, 
-	    (void *) t, t->t, getsymb(t->t, NULL), t->flags);
+    fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n",
+	    free_tree_tag(code), (void *) t, t->t, getsymb(t->t, NULL),
+	    t->flags);
 #endif
 
     if (is_tmp_node(t)) {
@@ -353,6 +413,7 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	} else if (t->t == MAT) {
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
+	    /* FIXME RES_NODES */
 	    free_mspec(t->v.mspec, p);
 	} else if (t->t == BUNDLE) {
 	    gretl_bundle_destroy(t->v.b);
@@ -378,6 +439,8 @@ static void free_tree (NODE *t, parser *p, const char *msg)
     free(t);
 }
 
+#if !RES_NODES
+
 void parser_free_aux_nodes (parser *p)
 {
     int i;
@@ -385,7 +448,7 @@ void parser_free_aux_nodes (parser *p)
     if (p->aux != NULL) {
 	for (i=0; i<p->n_aux; i++) {
 	    if (p->aux[i] != p->ret) {
-		free_tree(p->aux[i], p, "Aux");
+		free_tree(p->aux[i], p, FR_AUX);
 	    }
 	}
 	free(p->aux);
@@ -393,6 +456,8 @@ void parser_free_aux_nodes (parser *p)
 	p->n_aux = 0;
     }
 }
+
+#endif
 
 static NODE *newmdef (int k)
 {  
@@ -646,6 +711,8 @@ static void maybe_switch_node_type (NODE *n, int type,
     }
 }
 
+#if !RES_NODES
+
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
@@ -668,8 +735,71 @@ static int add_aux_node (parser *p, NODE *t)
     return p->err;
 }
 
+#endif
+
 /* get an auxiliary node: if starting from scratch we allocate
    a new node, otherwise we look up an existing one */
+
+#if RES_NODES
+
+static NODE *get_aux_node (parser *p, int t, int n, int tmp)
+{
+    NODE *ret = NULL;
+
+#if EDEBUG
+    fprintf(stderr, "get_aux_node: p=%p, t=%s, tmp=%d, starting=%d, "
+	    "auxdone=%d, n_aux=%d\n", (void *) p, getsymb(t, NULL), tmp,
+	    starting(p) ? 1 : 0, (p->flags & P_AUXDONE)? 1 : 0,
+	    p->n_aux);
+#endif
+
+    if (p->res == NULL) {
+	if (t == NUM) {
+	    ret = newdbl(NADBL);
+	} else if (t == SERIES) {
+	    ret = newseries(n, tmp);
+	} else if (t == IVEC) {
+	    ret = newivec(n, IVEC);
+	} else if (t == LIST) {
+	    ret = newivec(n, LIST);
+	} else if (t == MAT) {
+	    ret = newmat(tmp);
+	} else if (t == MSPEC) {
+	    ret = newmspec();
+	} else if (t == MDEF) {
+	    ret = newmdef(n);
+	} else if (t == LIST) {
+	    ret = newlist();
+	} else if (t == STR) {
+	    ret = newstring();
+	} else if (t == BUNDLE) {
+	    ret = newbundle(tmp);
+	} else if (t == ARRAY) {
+	    ret = newarray(tmp);
+	} else if (t == EMPTY) {
+	    ret = newempty();
+	} else {
+	    p->err = E_DATA;
+	}
+
+	if (!p->err && ret == NULL) {
+	    p->err = E_ALLOC;
+	} 
+    } else {
+	ret = p->res;
+	if (starting(p)) {
+	    if (ret->t != t) {
+		maybe_switch_node_type(ret, t, tmp, p);
+	    } else if (is_tmp_node(ret)) {
+		clear_tmp_node_data(ret, p);
+	    }
+	}
+    }
+
+    return ret;
+}
+
+#else
 
 static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
@@ -715,7 +845,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    if (ret == NULL) {
 		p->err = E_ALLOC;
 	    } else if (add_aux_node(p, ret)) {
-		free_tree(ret, p, "On error");
+		free_tree(ret, p, FR_ERR);
 		ret = NULL;
 	    }
 	} 
@@ -743,6 +873,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 
     return ret;
 }
+
+#endif
 
 static NODE *aux_scalar_node (parser *p)
 {
@@ -1453,7 +1585,7 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 		    p->err = E_TYPES;
 		}
 		if (!reusable(p)) {
-		    free_tree(s, p, "Pdist");
+		    free_tree(s, p, FR_PDIST);
 		    r->v.bn.n[i] = NULL;
 		}		    
 	    }
@@ -1729,7 +1861,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    }
 
 	    if (!reusable(p)) { 
-		free_tree(s, p, "Pdist");
+		free_tree(s, p, FR_PDIST);
 		r->v.bn.n[i] = NULL;
 	    }		    
 	}
@@ -9774,7 +9906,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 		break;
 	    } else if (n != ni) {
 		if (nntmp == NULL) {
-		    free_tree(nn->v.bn.n[i], p, "MatDef");
+		    free_tree(nn->v.bn.n[i], p, FR_MDEF);
 		}
 		nn->v.bn.n[i] = n;
 	    }
@@ -10278,10 +10410,12 @@ static NODE *eval_query (NODE *t, parser *p)
 {
     NODE *e, *ret = NULL;
 
+#if !RES_NODES
     if (p->flags & P_SAVEAUX) {
 	/* cancel */
 	p->flags &= ~P_SAVEAUX;
     }
+#endif
 
     /* evaluate and check the condition */
     e = eval(t->v.b3.l, p);
@@ -11199,10 +11333,12 @@ static NODE *eval (NODE *t, parser *p)
 			r = bool_node(1, p);
 		    }
 		}
+#if !RES_NODES
 		if (p->flags & P_SAVEAUX) {
 		    /* cancel this */
 		    p->flags &= ~P_SAVEAUX;
 		}
+#endif
 	    }
 	    if (r == NULL && !p->err) {
 		r = eval(raw_node(t, 2), p);
@@ -12384,9 +12520,9 @@ static NODE *eval (NODE *t, parser *p)
     /* just for testing at present */
     if (ret != NULL && ret != t) {
 	if (t->t == QUERY && (ret == t->v.b3.m || ret == t->v.b3.r)) {
-	    fprintf(stderr, "query returned own child, skip it\n");
+	    rndebug("query returned own child, skip res attachment\n");
 	} else if (t->res == NULL) {
-	    fprintf(stderr, "+++ attach node %p (%s) to node %p (%s) as 'res' +++\n",
+	    rndebug("+++ attach res node %p (%s) to node %p (%s) as 'res'\n",
 		    ret, getsymb(ret->t, NULL), t, getsymb(t->t, NULL));
 	    if (ret->refcount > 0) {
 		fprintf(stderr, "WARNING, refcount = %d\n", ret->refcount);
@@ -12394,7 +12530,7 @@ static NODE *eval (NODE *t, parser *p)
 	    t->res = ret;
 	    ret->refcount += 1;
 	} else if (t->res != ret) {
-	    fprintf(stderr, "ERROR conflicting attachment to %p (%s)\n",
+	    fprintf(stderr, "ERROR conflicting res-node attachment to %p (%s)\n",
 		    t, getsymb(ret->t, NULL));
 	}	    
     }    
@@ -12742,6 +12878,18 @@ static void get_lhs_substr (char *src, parser *p)
     *src = '\0';
 }
 
+#if RES_NODES
+
+/* FIXME there has to be a better way of handling
+   this */
+
+static void nullify_aux_return (parser *p)
+{
+    ;
+}
+
+#else
+
 static void nullify_aux_return (parser *p)
 {
     int i;
@@ -12755,6 +12903,8 @@ static void nullify_aux_return (parser *p)
 	}
     }
 }
+
+#endif
 
 static void add_child_parser (parser *p)
 {
@@ -14896,6 +15046,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     p->ret = NULL;
     p->err = 0;
 
+#if !RES_NODES
     if (p->flags & P_AUXDONE) {
 	/* just reset counter */
 	p->aux_i = 0;
@@ -14904,6 +15055,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	p->n_aux = 0;
 	p->aux_i = 0;
     }
+#endif
 
 #if EDEBUG
     fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
@@ -15046,15 +15198,16 @@ void gen_save_or_print (parser *p, PRN *prn)
 static void parser_destroy_child (parser *p)
 {
     p->subp->flags = 0;
-    gen_cleanup(p->subp);
+    gen_cleanup(p->subp, 1);
     free(p->subp);
     p->subp = NULL;
 }
 
-void gen_cleanup (parser *p)
+void gen_cleanup (parser *p, int level)
 {
     int save_aux = (p->flags & P_AUXDONE);
     int save_tree = reusable(p);
+    int tag = level > 0 ? FR_SUB : 0;
 
 #if EDEBUG
     fprintf(stderr, "gen cleanup on %p: save_aux=%d, save_tree=%d\n", 
@@ -15065,26 +15218,22 @@ void gen_cleanup (parser *p)
 	save_aux = save_tree = 0;
     }
 
+#if !RES_NODES
     if (!save_aux) {
 	parser_free_aux_nodes(p);
     }
+#endif    
 
     if (save_aux) {
-	/* implies save_tree: do minimal clean-up */
-	if (p->ret != NULL && (p->ret->flags & CPY_NODE)) {
-	    free_tree(p->ret, p, "p->ret");
-	    p->ret = NULL;
-	}
+	; /* implies save_tree: no-op */
     } else if (save_tree) {
 	/* do limited cleanup */
-	if (p->ret != NULL) {
-	    if ((p->ret->flags & CPY_NODE) || !in_tree(p->tree, p->ret)) {
-		free_tree(p->ret, p, "p->ret");
-		p->ret = NULL;
-	    }
+	if (p->ret != NULL && !in_tree(p->tree, p->ret)) {
+	    free_tree(p->ret, p, tag | FR_RET);
+	    p->ret = NULL;
 	}
 	if (p->subp != NULL) {
-	    gen_cleanup(p->subp);
+	    gen_cleanup(p->subp, 1);
 	}
     } else {
 	/* do full clean-up */
@@ -15102,10 +15251,10 @@ void gen_cleanup (parser *p)
 	}
 
 	if (p->ret != p->tree) {
-	    free_tree(p->tree, p, "p->tree");
+	    free_tree(p->tree, p, tag | FR_TREE);
 	}
 
-	free_tree(p->ret, p, "p->ret");
+	free_tree(p->ret, p, tag | FR_RET);
 	free(p->lh.substr);
 	free(p->lh.subvar);
 
@@ -15225,7 +15374,7 @@ static void autoreg_error (parser *p, int t)
 int realgen (const char *s, parser *p, DATASET *dset, PRN *prn, 
 	     int flags, int targtype)
 {
-#if LHDEBUG || EDEBUG
+#if LHDEBUG || EDEBUG || RES_NODES_DEBUG
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {

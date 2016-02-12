@@ -754,7 +754,7 @@ int generate (const char *line, DATASET *dset,
 	p.err = E_PARSE;
     }
 
-    gen_cleanup(&p);
+    gen_cleanup(&p, 0);
 
 #if GDEBUG
     fprintf(stderr, "generate: returning %d\n", p.err);
@@ -792,7 +792,7 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p);
+    gen_cleanup(&p, 0);
 
     return x;
 }
@@ -839,7 +839,7 @@ double *generate_series (const char *s, DATASET *dset, PRN *prn,
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p);
+    gen_cleanup(&p, 0);
 
     return x;
 }
@@ -886,7 +886,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p);
+    gen_cleanup(&p, 0);
 
     return m;
 }
@@ -918,7 +918,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p);
+    gen_cleanup(&p, 0);
 
     return ret;
 }
@@ -942,7 +942,7 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	*err = p.err;
     }
 
-    gen_cleanup(&p);
+    gen_cleanup(&p, 0);
 
     return ret;
 }
@@ -1010,7 +1010,7 @@ parser *genr_compile (const char *s, DATASET *dset,
 
     if (*err) {
 	p->flags = 0;
-	gen_cleanup(p);
+	gen_cleanup(p, 0);
 	free(p);
 	p = NULL;
     }
@@ -1037,7 +1037,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 	gen_save_or_print(p, prn);
     } 
 
-    gen_cleanup(p);
+    gen_cleanup(p, 0);
 
 #if GDEBUG
     fprintf(stderr, "execute_genr: returning %d\n", p->err);
@@ -1074,7 +1074,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 	*err = E_PARSE;
     }
 
-    gen_cleanup(p);
+    gen_cleanup(p, 0);
 
     return x;
 }
@@ -1093,7 +1093,7 @@ void destroy_genr (parser *p)
 	    p->lh.mspec = NULL;
 	}
 	p->flags = 0;
-	gen_cleanup(p);
+	gen_cleanup(p, 0);
 	free(p);
     }
 }
