@@ -4200,6 +4200,10 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	    }
 	}
 
+	if (pkg->datafiles != NULL && pkg->n_files > 0) {
+	    strings_array_free(pkg->datafiles, pkg->n_files);
+	}
+
 	free(pkg->pub);
 	free(pkg->priv);
 	free(pkg->fname);
