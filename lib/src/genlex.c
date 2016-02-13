@@ -1796,6 +1796,8 @@ const char *getsymb (int t, const parser *p)
 	return "DBUNDLE";
     } else if (t == DBMEMB) {
 	return "DBMEMB";
+    } else if (t == PTR) {
+	return "PTR";
     }
 
     if (p != NULL) {
