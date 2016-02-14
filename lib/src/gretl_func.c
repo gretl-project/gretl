@@ -1050,7 +1050,7 @@ void current_function_info (char const **funcname,
 
     if (u != NULL) {
 	*funcname = u->name;
-	if (u->pkg != NULL) {
+	if (pkgname != NULL && u->pkg != NULL) {
 	    *pkgname = u->pkg->name;
 	}
     }
