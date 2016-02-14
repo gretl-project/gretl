@@ -62,10 +62,8 @@ NODE *new_node (int t)
 	n->vnum = NO_VNUM;
 	n->vname = NULL;
 	n->uv = NULL;
-#if RES_NODES
-	n->res = NULL;
+	n->aux = NULL;
 	n->refcount = 0;
-#endif
     }
 
     return n;

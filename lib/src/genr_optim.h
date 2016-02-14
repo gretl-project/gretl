@@ -26,7 +26,6 @@
 */
 
 #define LOOPSAVE  1   /* keep an eye on this! */
-#define RES_NODES 0   /* not ready */
 #define GLOBAL_TRACE 0
 
 #endif /* GENR_OPTIM_H_ */

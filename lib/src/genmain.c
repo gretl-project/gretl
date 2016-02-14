@@ -22,6 +22,7 @@
 #include "genparse.h"
 #include "libset.h"
 #include "gretl_func.h"
+#include "genr_optim.h"
 
 #include <errno.h>
 
@@ -1088,10 +1089,6 @@ void destroy_genr (parser *p)
 #endif
 
     if (p != NULL) {
-	if (p->flags & P_AUXDONE) {
-	    /* avoid double-freeing */
-	    p->lh.mspec = NULL;
-	}
 	p->flags = 0;
 	gen_cleanup(p, 0);
 	free(p);
@@ -1158,11 +1155,6 @@ void genr_unset_na_check (parser *p)
     p->flags &= ~P_NATEST;
 }
 
-int genr_get_series_max (parser *p)
-{
-    /* dummy: to be added later */
-    return 0;
-}
 
 
 
