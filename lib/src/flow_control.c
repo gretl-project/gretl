@@ -81,13 +81,13 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 
 	if (ifgen == NULL && s != NULL) {
 	    /* Generator not compiled yet: do it now. The
-	       flags OPT_P and OPT_S indicate that we're
-	       generating a "private" scalar.
+	       flag OPT_P indicates that we're generating
+	       a "private" scalar.
 	    */
 	    GENERATOR **pgen = (GENERATOR **) ptr;
 
 	    *pgen = ifgen = genr_compile(s, dset, GRETL_TYPE_BOOL,
-					 OPT_P, err);
+					 OPT_P | OPT_N, NULL, err);
 	}
     }
 

@@ -953,7 +953,7 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 
 parser *genr_compile (const char *s, DATASET *dset, 
 		      GretlType gtype, gretlopt opt,
-		      int *err)
+		      PRN *prn, int *err)
 {
     parser *p;
     int flags = P_COMPILE;
@@ -1005,15 +1005,25 @@ parser *genr_compile (const char *s, DATASET *dset,
 	/* special for function call, no assignment */
 	targtype = EMPTY;
         flags |= P_VOID;
+    }
+
+    if (opt & OPT_N) {
+	/* no exec: compile but don't run */
+	flags |= P_NOEXEC;
     }    
 
-    *err = realgen(s, p, dset, NULL, flags, targtype);
+    *err = realgen(s, p, dset, prn, flags, targtype);
 
     if (*err) {
 	p->flags = 0;
 	gen_cleanup(p, 0);
 	free(p);
 	p = NULL;
+    }
+
+    if (p != NULL && !(opt & OPT_N) && p->targ != EMPTY) {
+	gen_save_or_print(p, prn);
+	gen_cleanup(p, 0);
     }
 
 #if GDEBUG
@@ -1051,8 +1061,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 {
     double x = NADBL;
 
-    *err = realgen(NULL, p, dset, NULL,
-		   P_EXEC | P_PRIV | P_ANON, 
+    *err = realgen(NULL, p, dset, NULL, P_EXEC | P_PRIV | P_ANON, 
 		   NUM);
 
     if (!*err) {

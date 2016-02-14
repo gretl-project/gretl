@@ -174,7 +174,7 @@ static int nls_dynamic_check (nlspec *s, char *formula)
     adjust_saved_nlfunc(formula);
 
     genr = genr_compile(formula, s->dset, GRETL_TYPE_SERIES,
-			OPT_P, &err);
+			OPT_P | OPT_N, NULL, &err);
 
     if (!err && genr_is_autoregressive(genr)) {
 	s->flags |= NL_AUTOREG;
@@ -285,7 +285,7 @@ static int nls_genr_setup (nlspec *s)
 
 	if (!err) {
 	    s->genrs[i] = genr_compile(formula, s->dset, gentype,
-				       OPT_P, &err);
+				       OPT_P | OPT_N, NULL, &err);
 	}
 
 	if (err) {
@@ -376,10 +376,7 @@ static int nls_genr_setup (nlspec *s)
 
     if (!err && s->hesscall != NULL) {
 	s->hgen = genr_compile(s->hesscall, s->dset, GRETL_TYPE_ANY,
-			       OPT_P | OPT_O, &err);
-	if (!err) {
-	    err = execute_genr(s->hgen, s->dset, s->prn);
-	} 
+			       OPT_P | OPT_O, s->prn, &err);
     }	
 
     if (err) {

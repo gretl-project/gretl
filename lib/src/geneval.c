@@ -12826,7 +12826,7 @@ static void get_lh_mspec (parser *p)
 	add_child_parser(p);
     }
 
-    if (!p->err && !(p->flags & P_COMPILE)) {
+    if (!p->err && !(p->flags & P_NOEXEC)) {
 	/* evaluate child parser to get a matrix subspec */
 	parser *ps = p->subp;
 
@@ -15267,7 +15267,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	return p->err;
     }    
 
-    if (flags & P_COMPILE) {
+    if (flags & P_NOEXEC) {
 	/* we're done at this point */
 	return p->err;
     }

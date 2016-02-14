@@ -2767,12 +2767,13 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
 static int add_loop_genr (LOOPSET *loop, int lno, 
                           GretlType gtype,
 			  const char *line, 
-			  DATASET *dset)
+			  DATASET *dset,
+			  PRN *prn)
 {
     int err = 0;
 
     loop->cmds[lno].genr = genr_compile(line, dset, gtype,
-					OPT_NONE, &err);
+					OPT_NONE, prn, &err);
     
     if (!err) {
 	loop->cmds[lno].flags |= LOOP_CMD_GENR;
@@ -3444,14 +3445,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    }
 		    err = generate(cmd->vstart, dset, cmd->gtype, cmd->opt, prn);
 		} else {
-		    err = add_loop_genr(loop, j, cmd->gtype, cmd->vstart, dset);
-		    if (loop->cmds[j].genr != NULL) {
-			err = execute_genr(loop->cmds[j].genr, dset, prn);
-		    } else if (!err) {
+		    err = add_loop_genr(loop, j, cmd->gtype, cmd->vstart, dset, prn);
+		    if (loop->cmds[j].genr == NULL && !err) {
+			/* fallback */
 			loop->cmds[j].flags |= LOOP_CMD_NOEQ;
 			err = generate(cmd->vstart, dset, cmd->gtype,
 				       cmd->opt, prn);
-		    }
+		    }			
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
 		err = loop_delete_object(loop, cmd, prn);

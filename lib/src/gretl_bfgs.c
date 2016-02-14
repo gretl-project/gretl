@@ -1655,22 +1655,15 @@ static int user_gen_setup (umax *u,
 	sprintf(formula, "$umax=%s", fncall);
     }
 
-    u->gf = genr_compile(formula, dset, u->gentype, OPT_P, &err);
-
-    if (!err) {
-	/* see if the formula actually works */
-	err = execute_genr(u->gf, dset, u->prn);
-    }
+    u->gf = genr_compile(formula, dset, u->gentype, OPT_P,
+			 u->prn, &err);
 
     if (!err && gradcall != NULL) {
 	/* process gradient formula */
 	err = optimizer_get_matrix_name(gradcall, u->gmname);
 	if (!err) {
 	    u->gg = genr_compile(gradcall, dset, GRETL_TYPE_ANY,
-				 OPT_P | OPT_O,  &err);
-	    if (!err) {
-		err = execute_genr(u->gg, dset, u->prn);
-	    } 
+				 OPT_P | OPT_O, u->prn, &err);
 	}
     }
 
@@ -1679,10 +1672,7 @@ static int user_gen_setup (umax *u,
 	err = optimizer_get_matrix_name(hesscall, u->hmname);
 	if (!err) {
 	    u->gh = genr_compile(hesscall, dset, GRETL_TYPE_ANY,
-				 OPT_P | OPT_O, &err);
-	    if (!err) {
-		err = execute_genr(u->gg, dset, u->prn);
-	    } 
+				 OPT_P | OPT_O, u->prn, &err);
 	}
     }
 

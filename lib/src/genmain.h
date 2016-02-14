@@ -148,7 +148,7 @@ int generate (const char *line, DATASET *dset,
 
 GENERATOR *genr_compile (const char *s, DATASET *dset, 
 			 GretlType gtype, gretlopt opt,
-			 int *err);
+			 PRN *prn, int *err);
 
 int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 
