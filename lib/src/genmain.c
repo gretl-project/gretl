@@ -1023,7 +1023,9 @@ parser *genr_compile (const char *s, DATASET *dset,
 
     if (p != NULL && !(opt & OPT_N) && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);
-	gen_cleanup(p, 0);
+	if (p->err) {
+	    gen_cleanup(p, 0);
+	}
     }
 
 #if GDEBUG
@@ -1048,7 +1050,9 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 	gen_save_or_print(p, prn);
     } 
 
-    gen_cleanup(p, 0);
+    if (p->err) {
+	gen_cleanup(p, 0);
+    }
 
 #if GDEBUG
     fprintf(stderr, "execute_genr: returning %d\n", p->err);

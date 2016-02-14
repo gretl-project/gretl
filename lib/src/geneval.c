@@ -145,7 +145,7 @@ static gretl_matrix *series_to_matrix (const double *x,
 				       parser *p);
 static NODE *object_var_node (NODE *t, parser *p);
 static void printnode (NODE *t, parser *p, int value);
-static inline int attach_as_aux (NODE *t, NODE *ret, parser *p);
+static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 
 static const char *typestr (int t)
 {
@@ -10948,11 +10948,9 @@ static void reattach_series (NODE *n, parser *p)
 	    p->err = E_DATA;
 	} else {
 	    n->v.xvec = p->dset->Z[n->vnum];
-#if LOOPSAVE
 	    if (p->uvnodes != NULL) {
 		g_ptr_array_add(p->uvnodes, n);
 	    }
-#endif
 	}
     } else if (n->vnum >= 0 && n->vnum < p->dset->v) {
  	n->v.xvec = p->dset->Z[n->vnum];
@@ -10978,8 +10976,6 @@ static void reattach_data_error (NODE *n, parser *p)
     }
 }
 
-#if LOOPSAVE
-
 static void maybe_add_to_uvnodes_array (NODE *n, parser *p)
 {
     int i;
@@ -10994,8 +10990,6 @@ static void maybe_add_to_uvnodes_array (NODE *n, parser *p)
     g_ptr_array_add(p->uvnodes, n);
 }
 
-#endif
-
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
@@ -11006,11 +11000,9 @@ static void node_reattach_data (NODE *n, parser *p)
 
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
-#if LOOPSAVE
 	    if (p->uvnodes != NULL) {
 		maybe_add_to_uvnodes_array(n, p);
 	    }
-#endif
 	}
 
 	if (n->uv != NULL) {
@@ -12371,7 +12363,7 @@ static NODE *eval (NODE *t, parser *p)
  finish:
 
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
-	p->err = attach_as_aux(t, ret, p);
+	p->err = attach_aux_node(t, ret, p);
     }	    
 
  bailout:
@@ -12391,7 +12383,7 @@ static NODE *eval (NODE *t, parser *p)
 
 /* non-debugging variant: easier to see what's going on */
 
-static inline int attach_as_aux (NODE *t, NODE *ret, parser *p)
+static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
 {
     if (t->aux == NULL) {
 	t->aux = ret;
@@ -12403,8 +12395,9 @@ static inline int attach_as_aux (NODE *t, NODE *ret, parser *p)
 	    t->aux = ret;
 	    ret->refcount += 1;
 	} else {
-	    /* If we're trying to switch aux node, something has
-	       gone wrong */
+	    /* otherwise if we're trying to switch aux node, 
+	       something must have gone wrong 
+	    */
 	    fprintf(stderr, "! node %s already has aux node %s attached\n",
 		    getsymb(t->t), getsymb(t->aux->t));
 	    return E_DATA;
@@ -12418,7 +12411,7 @@ static inline int attach_as_aux (NODE *t, NODE *ret, parser *p)
 
 /* variant with lots of debugging spew */
 
-static inline int attach_as_aux (NODE *t, NODE *ret, parser *p)
+static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
 {
     if (t->aux == NULL) {
 	fprintf(stderr, "++ attach aux node %p (%s) to node %p (%s)\n",
@@ -14958,17 +14951,17 @@ static void parser_init (parser *p, const char *str,
     /* auxiliary node apparatus */
     p->aux = NULL;
 
-#if LOOPSAVE
+#if LOOPSAVE    
     /* storing user_var pointers across function calls? */
-    if (gretl_function_depth() > 0 && !gretl_function_recursing()) {
-	/* FIXME conditionality? */
+    if (gretl_function_depth() > 0 && !gretl_function_recursing() &&
+	(gretl_iteration_depth() > 0 || gretl_looping())) {
 	p->uvnodes = g_ptr_array_new();
     } else {
 	p->uvnodes = NULL;
     }
 #else
     p->uvnodes = NULL;
-#endif
+#endif    
 
     p->subp = NULL;
 
@@ -15080,8 +15073,6 @@ void gen_cleanup (parser *p, int level)
     }
 }
 
-#if LOOPSAVE
-
 #define LS_DEBUG 0
 
 static void uvnode_reset (void *p1, void *p2)
@@ -15114,14 +15105,12 @@ static void real_reset_uvars (parser *p, int level)
     }	
 #endif
 
-    if (p->uvnodes != NULL) {
 #if LS_DEBUG
-	fprintf(stderr, " number of uvar nodes: %d\n", (int) p->uvnodes->len);
+    fprintf(stderr, " number of uvar nodes: %d\n", (int) p->uvnodes->len);
 #endif
-	g_ptr_array_foreach(p->uvnodes, uvnode_reset, p);
-    }
+    g_ptr_array_foreach(p->uvnodes, uvnode_reset, p);
 
-    if (p->subp != NULL) {
+    if (p->subp != NULL && p->subp->uvnodes != NULL) {
 	real_reset_uvars(p->subp, 1);
     }
 
@@ -15131,17 +15120,10 @@ static void real_reset_uvars (parser *p, int level)
 
 void genr_reset_uvars (parser *p)
 {
-    real_reset_uvars(p, 0);
+    if (p->uvnodes != NULL) {
+	real_reset_uvars(p, 0);
+    }
 }
-
-#else
-
-void genr_reset_uvars (parser *p)
-{
-    return;
-}
-
-#endif /* LOOPSAVE or not */
 
 static void maybe_set_return_flags (parser *p)
 {
@@ -15204,6 +15186,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    fprintf(stderr, "error in parser_reinit\n");
 	    return p->err;
 	} else if (p->op == INC || p->op == DEC) {
+	    /* more or less a no-op */
 	    return p->err;
 	} else {
 	    goto starteval;

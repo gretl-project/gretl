@@ -80,9 +80,9 @@ NODE *newempty (void)
     return n;
 }
 
-/* Below: in the LOOPSAVE case (saving loops that are
-   called within a function onto the function) we need
-   to keep a record of nodes that hold pointers-to-
+/* Below: if p->uvnodes != NULL, we're saving loops that
+   are called within a function onto the function, and we
+   need to keep a record of nodes that hold pointers-to-
    variables that will lose their validity across
    calls to the function, so that these can be reset
    on exit from the function -- see real_reset_uvars()
@@ -101,22 +101,18 @@ static NODE *newref (parser *p, int t)
 	    if (is_string_valued(p->dset, n->vnum)) {
 		n->flags |= SVL_NODE;
 	    }
-#if LOOPSAVE
 	    if (p->uvnodes != NULL) {
 		g_ptr_array_add(p->uvnodes, n);
 	    }
-#endif	    
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
 	    user_var *u = p->data;
 	    
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) u->ptr;
 	    n->uv = u;
-#if LOOPSAVE
 	    if (p->uvnodes != NULL) {
 		g_ptr_array_add(p->uvnodes, n);
 	    }
-#endif
 	} else if (t == MAT || t == LIST || t == BUNDLE ||
 		   t == ARRAY || t == STR) {
 	    user_var *u = p->data;
@@ -124,11 +120,9 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
-#if LOOPSAVE
 	    if (p->uvnodes != NULL) {
 		g_ptr_array_add(p->uvnodes, n);
 	    }
-#endif
 	} else if (t == PTR) {
 	    n->vname = p->idstr;
 	    n->v.ptr = p->data;

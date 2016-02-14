@@ -635,7 +635,7 @@ struct parser_ {
     parser *subp;      /* left-hand side subslice tree */
     NODE *tree;        /* parsed syntax tree */
     NODE *ret;         /* evaluated result node */
-    GPtrArray *uvnodes;   
+    GPtrArray *uvnodes; /* needed when saving loops onto a function */
     /* below: parser state variables */
     NODE *aux;         /* convenience pointer to current auxiliary node */
     int callcount;
