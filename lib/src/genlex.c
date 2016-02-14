@@ -839,11 +839,11 @@ void context_error (int c, parser *p)
 	    p->err = E_PARSE;
 	}
     } else {
-	const char *s = getsymb(p->sym, p);
+	const char *s = getsymb_full(p->sym, p);
 
 	if (s != NULL && *s != '\0' && strcmp(s, "unknown")) {
 	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
-		    getsymb(p->sym, p));
+		    getsymb_full(p->sym, p));
 	} else {
 	    pprintf(p->prn, "The symbol %d is not valid in this context\n", 
 		    p->sym);
@@ -1731,7 +1731,7 @@ void lex (parser *p)
     } /* end while ch != 0 */
 }
 
-const char *getsymb (int t, const parser *p)
+const char *getsymb_full (int t, const parser *p)
 {  
     if ((t > F1_MIN && t < F1_MAX) ||
 	(t > F1_MAX && t < F2_MAX) ||
@@ -1950,4 +1950,9 @@ const char *getsymb (int t, const parser *p)
     }
 
     return "unknown";
+}
+
+const char *getsymb (int t)
+{
+    return getsymb_full(t, NULL);
 }

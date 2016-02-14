@@ -42,7 +42,7 @@ static void notify (const char *s, NODE *n, parser *p)
 		s, p->err);
     } else {
 	fprintf(stderr, "%-8s: returning node of type %d (%s) at %p, err = %d\n", 
-		s, n->t, getsymb(n->t, NULL), (void *) n, p->err);
+		s, n->t, getsymb(n->t), (void *) n, p->err);
     }
 }
 #endif
@@ -53,7 +53,7 @@ NODE *new_node (int t)
 
 #if MDEBUG
     fprintf(stderr, "new_node: allocated node of type %d (%s) at %p\n", 
-	    t, getsymb(t, NULL), (void *) n);
+	    t, getsymb(t), (void *) n);
 #endif
 
     if (n != NULL) {
@@ -260,7 +260,7 @@ static int push_bn_node (NODE *t, NODE *n)
 
 static void expected_symbol_error (int c, parser *p)
 {
-    const char *found = getsymb(p->sym, p);
+    const char *found = getsymb_full(p->sym, p);
 
     parser_print_input(p);
 
@@ -298,7 +298,7 @@ static NODE *base (parser *p, NODE *up)
 
 #if SDEBUG
     fprintf(stderr, "base(): on input sym = %d ('%s'), ch = '%c'\n", 
-	    p->sym, getsymb(p->sym, p), p->ch? p->ch : '0');
+	    p->sym, getsymb_full(p->sym, p), p->ch? p->ch : '0');
 #endif
 
     switch (p->sym) {
@@ -840,7 +840,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 
 #if SDEBUG
     fprintf(stderr, "get_matrix_def, p->sym = %d ('%s')\n",
-	    p->sym, getsymb(p->sym, NULL));
+	    p->sym, getsymb(p->sym));
 #endif    
 
     if (p->sym == G_LCB) {
@@ -1059,7 +1059,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	if (k > 0 && i == k) {
-	    gretl_errmsg_sprintf("%s: %s", getsymb(f, p), _("too many arguments"));
+	    gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
+				 _("too many arguments"));
 	    p->err = E_ARGS;
 	    break;
 	}
@@ -1151,7 +1152,7 @@ static NODE *powterm (parser *p)
 
 #if SDEBUG
     fprintf(stderr, "powterm: p->sym = %d ('%s'), p->ch = '%c' (%d)\n",
-	    p->sym, getsymb(p->sym, NULL), p->ch? p->ch : '0', p->ch);
+	    p->sym, getsymb(p->sym), p->ch? p->ch : '0', p->ch);
 #endif
 
     if (string_last_func(sym)) {

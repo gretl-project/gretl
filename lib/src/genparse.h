@@ -642,7 +642,9 @@ struct parser_ {
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
-    NODE *res;
+#if RES_NODES
+    NODE *res;         /* pointer to convey result node */
+#endif
     GPtrArray *uvnodes;   
     /* below: parser state variables */
     int callcount;
@@ -676,7 +678,8 @@ NODE *obs_node (parser *p);
 NODE *slice_node_direct (parser *p);
 void context_error (int c, parser *p);
 void undefined_symbol_error (const char *s, parser *p);
-const char *getsymb (int t, const parser *p);
+const char *getsymb (int t);
+const char *getsymb_full (int t, const parser *p);
 void set_parsing_query (int s);
 void set_doing_genseries (int s);
 
