@@ -205,10 +205,10 @@ static void print_tree (NODE *t, parser *p, int level)
 
     if (t->vname != NULL) {
 	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d), vname='%s'\n",
-		level, (void *) t, t->t, getsymb(t->t, NULL), t->flags, t->vname);
+		level, (void *) t, t->t, getsymb(t->t), t->flags, t->vname);
     } else {
 	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d)\n",
-		level, (void *) t, t->t, getsymb(t->t, NULL), t->flags);
+		level, (void *) t, t->t, getsymb(t->t), t->flags);
     }	
 }
 
@@ -346,7 +346,7 @@ static void free_tree (NODE *t, parser *p, int code)
 #if EDEBUG
     fprintf(stderr, "%-8s: starting with t at %p (type %03d, %s)\n",
 	    free_tree_tag(code), (void *) t, t->t,
-	    getsymb(t->t, NULL));
+	    getsymb(t->t));
 #endif
 
     /* free recursively */
@@ -370,7 +370,7 @@ static void free_tree (NODE *t, parser *p, int code)
 
 #if EDEBUG
     fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n",
-	    free_tree_tag(code), (void *) t, t->t, getsymb(t->t, NULL),
+	    free_tree_tag(code), (void *) t, t->t, getsymb(t->t),
 	    t->flags);
 #endif
 
@@ -672,7 +672,7 @@ static void maybe_switch_node_type (NODE *n, int type,
 	   things have gone badly wrong
 	*/
 	fprintf(stderr, "aux node mismatch: n->t = %d (%s), type = %d (%s), tmp = %d\n",
-		n->t, getsymb(n->t, NULL), type, getsymb(type, NULL), tmp);
+		n->t, getsymb(n->t), type, getsymb(type), tmp);
 	gretl_errmsg_set("internal genr error: aux node mismatch");
 	p->err = E_DATA;
     }
@@ -709,7 +709,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 
 #if EDEBUG
     fprintf(stderr, "get_aux_node: p=%p, t=%s, tmp=%d, starting=%d, "
-	    "auxdone=%d, n_aux=%d\n", (void *) p, getsymb(t, NULL), tmp,
+	    "auxdone=%d, n_aux=%d\n", (void *) p, getsymb(t), tmp,
 	    starting(p) ? 1 : 0, (p->flags & P_AUXDONE)? 1 : 0,
 	    p->n_aux);
 #endif
@@ -1112,7 +1112,7 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 
 #if EDEBUG > 1
     fprintf(stderr, "xy_calc: x = %g, y = %g, op = %d ('%s')\n",
-	    x, y, op, getsymb(op, NULL));
+	    x, y, op, getsymb(op));
 #endif
 
 #if SERIES_ENSURE_FINITE
@@ -3782,12 +3782,11 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, parser *p)
     }
 
 #if EDEBUG > 1
-    fprintf(stderr, "build_mspec: l->t=%d (%s)\n", l->t, 
-	    getsymb(l->t, p));
+    fprintf(stderr, "build_mspec: l->t=%d (%s)\n", l->t, getsymb(l->t));
     if (r == NULL) {
 	fprintf(stderr, " r = NULL\n");
     } else {
-	fprintf(stderr, " r->t=%d (%s)\n", r->t, getsymb(r->t, p));
+	fprintf(stderr, " r->t=%d (%s)\n", r->t, getsymb(r->t));
     }	
 #endif
 
@@ -4009,7 +4008,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    }	    
 	} else {
 	    fprintf(stderr, "subobject_node: l='%s', r='%s'\n",
-		    getsymb(l->t, NULL), getsymb(r->t, NULL));
+		    getsymb(l->t), getsymb(r->t));
 	    p->err = E_TYPES;
 	}
     } else {
@@ -8687,7 +8686,7 @@ static void n_args_error (int k, int n, int f, parser *p)
 {
     gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
 			    "match the number of\nparameters for "
-			    "function %s (%d)"), k, getsymb(f, p), n);
+			    "function %s (%d)"), k, getsymb(f), n);
     p->err = 1;
 }
 
@@ -10322,7 +10321,7 @@ static NODE *eval_query (NODE *t, parser *p)
     fprintf(stderr, "eval_query: t=%p, l=%p, m=%p, r=%p\n", 
 	    (void *) t, (void *) t->v.b3.l, (void *) t->v.b3.m,
 	    (void *) t->v.b3.r);    
-    fprintf(stderr, " result type=%d (%s)\n", e->t, getsymb(e->t, p));
+    fprintf(stderr, " result type=%d (%s)\n", e->t, getsymb(e->t));
 #endif     
 
     if (!p->err) {
@@ -10789,7 +10788,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 
 #if EDEBUG
 	fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n", 
-		t->t, getsymb(t->t, NULL), r->t, getsymb(r->t, NULL));
+		t->t, getsymb(t->t), r->t, getsymb(r->t));
 	fprintf(stderr, "idx = %d, vtype = %d, mslice = %d\n", 
 		idx, vtype, mslice);
 #endif
@@ -11000,7 +10999,7 @@ static void reattach_data_error (NODE *n, parser *p, GretlType type)
 {
     fprintf(stderr, "node_reattach_data (vname = '%s'): "
 	    "expected type %d (%s) but found %s\n", n->vname,
-	    n->t, getsymb(n->t, p), gretl_type_get_name(type));
+	    n->t, getsymb(n->t), gretl_type_get_name(type));
     p->err = E_TYPES;
 }
 
@@ -11090,7 +11089,7 @@ static void node_type_error (int ntype, int argnum, int goodt,
     if (ntype == LAG) {
 	nstr = (goodt == NUM)? "lag order" : "lag variable";
     } else {
-	nstr = getsymb(ntype, NULL);
+	nstr = getsymb(ntype);
     }
 
     if (goodt == 0 && bad != NULL) {
@@ -11193,10 +11192,10 @@ static NODE *eval (NODE *t, parser *p)
 #if EDEBUG
     if (t->vname != NULL) {
 	fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n", 
-		(void *) t, getsymb(t->t, p), t->vname);
+		(void *) t, getsymb(t->t), t->vname);
     } else {
 	fprintf(stderr, "eval: incoming node %p ('%s')\n", 
-		(void *) t, getsymb(t->t, p));
+		(void *) t, getsymb(t->t));
     }	
 #endif
 
@@ -12402,7 +12401,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     default: 
-	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
+	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t),
 	       t->t);
 	p->err = E_PARSE;
 	break;
@@ -12412,7 +12411,7 @@ static NODE *eval (NODE *t, parser *p)
 
 #if EDEBUG
     fprintf(stderr, "eval (t->t = %03d, %s): returning NODE at %p\n", 
-	    t->t, getsymb(t->t, NULL), (void *) ret);
+	    t->t, getsymb(t->t), (void *) ret);
     if (t->t == SERIES) 
 	fprintf(stderr, " (SERIES node, xvec at %p, vnum = %d)\n", 
 		(void *) t->v.xvec, t->vnum);
@@ -12540,7 +12539,7 @@ void parser_print_input (parser *p)
 
 static void printsymb (int symb, const parser *p)
 {
-    pputs(p->prn, getsymb(symb, NULL));
+    pputs(p->prn, getsymb(symb));
 }
 
 static void printnode (NODE *t, parser *p, int value)
@@ -14276,7 +14275,7 @@ static int gen_check_return_type (parser *p)
 
 #if EDEBUG
     fprintf(stderr, "gen_check_return_type: targ=%s; ret at %p, type %s\n", 
-	    getsymb(p->targ, NULL), (void *) r, getsymb(r->t, NULL));
+	    getsymb(p->targ), (void *) r, getsymb(r->t));
 #endif
 
     if (!ok_return_type(r->t)) {
@@ -14491,9 +14490,9 @@ static int save_generated_var (parser *p, PRN *prn)
 #if EDEBUG
     fprintf(stderr, "save_generated_var: '%s'\n"
 	    "callcount=%d, lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
-	    p->lh.name, p->callcount, getsymb(p->lh.t, NULL),
-	    getsymb(p->targ, NULL), (p->flags & P_NODECL)? 1 : 0,
-	    getsymb(r->t, NULL));
+	    p->lh.name, p->callcount, getsymb(p->lh.t),
+	    getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
+	    getsymb(r->t));
 #endif
 
     if (p->op == INC || p->op == DEC) {
@@ -14544,7 +14543,7 @@ static int save_generated_var (parser *p, PRN *prn)
 
 #if EDEBUG
     fprintf(stderr, "after preliminaries: targ=%s, op='%s'\n",
-	    getsymb(p->targ, NULL), getsymb(p->op, NULL));
+	    getsymb(p->targ), getsymb(p->op));
 #endif
 
     /* allocate dataset storage, if needed */
@@ -14916,7 +14915,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 #if EDEBUG
     fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
 	    "callcount=%d, compiled=%d\n", 
-	    getsymb(p->targ, NULL), p->lh.name, getsymb(p->op, NULL),
+	    getsymb(p->targ), p->lh.name, getsymb(p->op),
 	    p->callcount, compiled(p));
 #endif
 
@@ -15132,7 +15131,7 @@ static void uvnode_reset (void *p1, void *p2)
 
 #if LS_DEBUG || GLOBAL_TRACE
     fprintf(stderr, " reset node type %03d, %s, '%s'\n", 
-	    n->t, getsymb(n->t, NULL), n->vname);
+	    n->t, getsymb(n->t), n->vname);
 #endif
     if (n->t == SERIES) {
 	n->v.xvec = NULL;
@@ -15150,7 +15149,7 @@ static void real_reset_uvars (parser *p, int level)
 #if LS_DEBUG
     if (level == 0) {
 	fprintf(stderr, "* genr_reset_uvars (%s '%s') *\n",
-		getsymb(p->targ, p), p->lh.name);
+		getsymb(p->targ), p->lh.name);
     } else {
 	fprintf(stderr, "  reset subp child\n");
     }	
@@ -15232,7 +15231,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
-	fprintf(stderr, "targ=%s, input='%s'\n", getsymb(targtype, NULL), s);
+	fprintf(stderr, "targ=%s, input='%s'\n", getsymb(targtype), s);
     }
 #endif
 
@@ -15288,7 +15287,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
 #if EDEBUG
     fprintf(stderr, "realgen: p->tree at %p, type %d (%s)\n", (void *) p->tree, 
-	    p->tree->t, getsymb(p->tree->t, p));
+	    p->tree->t, getsymb(p->tree->t));
     if (p->ch == '\0') {
 	fprintf(stderr, " p->ch = NUL, p->sym = %d\n", p->sym);
     } else {
