@@ -124,6 +124,7 @@ static gretl_matrix *get_derivative_matrix (nlspec *s, int i, int *err)
     gretl_matrix *m = genr_get_output_matrix(s->params[i].dgenr);
 
     if (m == NULL) {
+	fprintf(stderr, "get_derivative_matrix: got NULL result\n");
 	*err = E_DATA;
     }
 
@@ -413,7 +414,8 @@ static int nls_auto_genr (nlspec *s, int i)
 
     for (j=0; j<s->naux; j++) {
 #if NLS_DEBUG
-	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
+	fprintf(stderr, " generating aux var %d (%p):\n %s\n",
+		j, (void *) s->genrs[j], s->aux[j]);
 #endif
 	s->generr = execute_genr(s->genrs[j], s->dset, s->prn);
 	if (s->generr) {
@@ -428,12 +430,12 @@ static int nls_auto_genr (nlspec *s, int i)
 
     j = s->naux + i;
 #if NLS_DEBUG
-    fprintf(stderr, " j = naux+i = %d+%d = %d: executing genr[%d] at %p:\n", 
-	    s->naux, i, j, j, (void *) s->genrs[j]);
-    fprintf(stderr, " Z[%d] = %p\n", s->dset->v-1, 
-	    (void *) s->dset->Z[s->dset->v-1]);
-#endif
+    fprintf(stderr, " running genr %d (%p)\n", j, (void *) s->genrs[j]);
+#endif    
     s->generr = execute_genr(s->genrs[j], s->dset, s->prn);
+#if NLS_DEBUG
+    fprintf(stderr, "  err = %d\n", s->generr);
+#endif
 
     /* make sure we have a correct pointer to matrix deriv */
     if (!s->generr && i > 0 && matrix_deriv(s, i-1)) {
@@ -1794,7 +1796,6 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     fprintf(stderr, "GNR: T = %d\n", T);
     v = dset->v;
     fprintf(stderr, "dinfo->v = %d\n", v);
-    fprintf(stderr, "Z = %p\n", (void *) Z);
     fprintf(stderr, "Z[%d] = %p\n", v-1, (void *) dset->Z[v-1]);
 #endif
 
@@ -1863,7 +1864,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	}
 #if NLS_DEBUG
 	fprintf(stderr, "GNR: calling get_nls_derivs\n");
-	fprintf(stderr, "Z[%d] = %p\n", dset->v-1, (void *) Z[dset->v-1]);
+	fprintf(stderr, "Z[%d] = %p\n", dset->v-1, (void *) dset->Z[dset->v-1]);
 #endif
 	get_nls_derivs(T, spec->t1, NULL, gdset->Z + 2, spec);
     } else {
