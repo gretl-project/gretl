@@ -228,10 +228,6 @@ static void print_tree (NODE *t, parser *p, int level)
     }	
 }
 
-#endif
-
-#if EDEBUG
-
 static const char *free_tree_tag (int t)
 {
     if (t & FR_TREE) {
@@ -247,7 +243,7 @@ static const char *free_tree_tag (int t)
     }
 }
 
-#endif
+#endif /* EDEBUG */
 
 /* used when we know that @t is a terminal node: skip
    the tests for attached tree */
@@ -413,11 +409,15 @@ static int in_tree (NODE *t, NODE *n)
 
 #endif
 
+#if AUX_NODES_DEBUG
 static void reset_p_aux (parser *p, NODE *n)
 {
-    rndebug(("resetting p->aux = %p\n", (void *) n));
+    fprintf(stderr, "resetting p->aux = %p\n", (void *) n);
     p->aux = n;
 }
+#else
+# define reset_p_aux(p, n) (p->aux = n)
+#endif
 
 static NODE *newmdef (int k)
 {  
@@ -463,12 +463,12 @@ static double *na_array (int n)
 
 /* new node to hold array of doubles */
 
-static NODE *newseries (int n, int tmp)
+static NODE *newseries (int n, int flags)
 {  
     NODE *b = new_node(SERIES);
 
     if (b != NULL) {
-	b->flags = (tmp)? TMP_NODE : 0;
+	b->flags = flags;
 	if (n > 0) {
 	    b->v.xvec = na_array(n);
 	    if (b->v.xvec == NULL) {
@@ -507,12 +507,12 @@ static NODE *newivec (int n, int type)
 
 /* new node to hold a gretl_matrix */
 
-static NODE *newmat (int tmp)
+static NODE *newmat (int flags)
 {  
     NODE *n = new_node(MAT);
 
     if (n != NULL) {
-	n->flags = tmp ? TMP_NODE : 0;
+	n->flags = flags;
 	n->v.m = NULL;
     }
 
@@ -583,24 +583,24 @@ static NODE *newstring (void)
     return n;
 }
 
-static NODE *newbundle (int tmp)
+static NODE *newbundle (int flags)
 {  
     NODE *n = new_node(BUNDLE);
 
     if (n != NULL) {
-	n->flags = (tmp)? TMP_NODE : 0;
+	n->flags = flags;
 	n->v.b = NULL;
     }
 
     return n;
 }
 
-static NODE *newarray (int tmp)
+static NODE *newarray (int flags)
 {  
     NODE *n = new_node(ARRAY);
 
     if (n != NULL) {
-	n->flags = (tmp)? TMP_NODE : 0;
+	n->flags = flags;
 	n->v.a = NULL;
     }
 
@@ -653,7 +653,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 */
 
 static void maybe_switch_node_type (NODE *n, int type, 
-				    int tmp, parser *p)
+				    int flags, parser *p)
 {
     if (n->t == MAT && type == NUM) {
 	/* switch aux node @n from matrix to scalar */
@@ -669,13 +669,13 @@ static void maybe_switch_node_type (NODE *n, int type,
 	/* switch @n from scalar to matrix */
 	n->t = MAT;
 	n->v.m = NULL;
-	n->flags = tmp ? TMP_NODE : 0;
+	n->flags = flags;
     } else {
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
 	*/
 	fprintf(stderr, "aux node mismatch: n->t = %d (%s), type = %d (%s), tmp = %d\n",
-		n->t, getsymb(n->t), type, getsymb(type), tmp);
+		n->t, getsymb(n->t), type, getsymb(type), (flags == TMP_NODE));
 	gretl_errmsg_set("internal genr error: aux node mismatch");
 	p->err = E_DATA;
     }
@@ -684,23 +684,23 @@ static void maybe_switch_node_type (NODE *n, int type,
 /* get an auxiliary node: if starting from scratch we allocate
    a new node, otherwise we look up an existing one */
 
-static NODE *get_aux_node (parser *p, int t, int n, int tmp)
+static NODE *get_aux_node (parser *p, int t, int n, int flags)
 {
     NODE *ret = p->aux;
 
 #if EDEBUG
     fprintf(stderr, "get_aux_node: p=%p, t=%s, tmp=%d, starting=%d, "
-	    "p->aux=%p\n", (void *) p, getsymb(t), tmp,
-	    starting(p) ? 1 : 0, (void *) p->aux);
+	    "p->aux=%p\n", (void *) p, getsymb(t), 
+	    (flags & TMP_NODE)? 1 : 0, starting(p) ? 1 : 0, 
+	    (void *) p->aux);
 #endif
 
     if (ret != NULL) {
 	/* got a pre-existing aux node, OK */
-	// fprintf(stderr, "get_aux_node: accessing p->aux at %p\n", (void *) p->aux);
 	if (starting(p)) {
 	    if (ret->t != t) {
-		maybe_switch_node_type(ret, t, tmp, p);
-	    } else if (is_tmp_node(ret)) {
+		maybe_switch_node_type(ret, t, flags, p);
+	    } else if (is_tmp_node(ret) && !(p->flags & P_MSAVE)) {
 		clear_tmp_node_data(ret, p);
 	    }
 	}
@@ -709,13 +709,13 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	if (t == NUM) {
 	    ret = newdbl(NADBL);
 	} else if (t == SERIES) {
-	    ret = newseries(n, tmp);
+	    ret = newseries(n, flags);
 	} else if (t == IVEC) {
 	    ret = newivec(n, IVEC);
 	} else if (t == LIST) {
 	    ret = newivec(n, LIST);
 	} else if (t == MAT) {
-	    ret = newmat(tmp);
+	    ret = newmat(flags);
 	} else if (t == MSPEC) {
 	    ret = newmspec();
 	} else if (t == MDEF) {
@@ -725,9 +725,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	} else if (t == STR) {
 	    ret = newstring();
 	} else if (t == BUNDLE) {
-	    ret = newbundle(tmp);
+	    ret = newbundle(flags);
 	} else if (t == ARRAY) {
-	    ret = newarray(tmp);
+	    ret = newarray(flags);
 	} else if (t == EMPTY) {
 	    ret = newempty();
 	} else {
@@ -764,7 +764,7 @@ static NODE *aux_series_node (parser *p)
 	no_data_error(p);
 	return NULL;
     } else {
-	return get_aux_node(p, SERIES, p->dset->n, 1);
+	return get_aux_node(p, SERIES, p->dset->n, TMP_NODE);
     }
 }
 
@@ -774,13 +774,13 @@ static NODE *aux_empty_series_node (parser *p)
 	no_data_error(p);
 	return NULL;
     } else {
-	return get_aux_node(p, SERIES, 0, 1);
+	return get_aux_node(p, SERIES, 0, TMP_NODE);
     }
 }
 
 static NODE *aux_ivec_node (parser *p, int n)
 {
-    return get_aux_node(p, IVEC, n, 1);
+    return get_aux_node(p, IVEC, n, TMP_NODE);
 }
 
 static NODE *aux_list_node (parser *p)
@@ -789,13 +789,13 @@ static NODE *aux_list_node (parser *p)
 	no_data_error(p);
 	return NULL;
     } else {
-	return get_aux_node(p, LIST, 0, 1);
+	return get_aux_node(p, LIST, 0, TMP_NODE);
     }
 }
 
 static NODE *aux_matrix_node (parser *p)
 {
-    return get_aux_node(p, MAT, 0, 1);
+    return get_aux_node(p, MAT, 0, TMP_NODE);
 }
 
 static NODE *matrix_pointer_node (parser *p)
@@ -815,12 +815,12 @@ static NODE *aux_mspec_node (parser *p)
 
 static NODE *aux_string_node (parser *p)
 {
-    return get_aux_node(p, STR, 0, 1);
+    return get_aux_node(p, STR, 0, TMP_NODE);
 }
 
 static NODE *aux_bundle_node (parser *p)
 {
-    return get_aux_node(p, BUNDLE, 0, 1);
+    return get_aux_node(p, BUNDLE, 0, TMP_NODE);
 }
 
 static NODE *bundle_pointer_node (parser *p)
@@ -830,7 +830,7 @@ static NODE *bundle_pointer_node (parser *p)
 
 static NODE *aux_array_node (parser *p)
 {
-    return get_aux_node(p, ARRAY, 0, 1);
+    return get_aux_node(p, ARRAY, 0, TMP_NODE);
 }
 
 static NODE *array_pointer_node (parser *p)
@@ -2354,27 +2354,55 @@ matrix_add_sub_scalar (const gretl_matrix *A,
     return C;
 }
 
+/* See if we can reuse an existing matrix on an
+   auxiliary node. If so, return it; otherwise
+   free it and return a newly allocated matrix.
+*/
+
+static gretl_matrix *calc_get_matrix (gretl_matrix **pM, 
+				      int r, int c)
+{
+    if (*pM == NULL) {
+	/* just get on with the allocation */
+	return gretl_matrix_alloc(r, c);
+    } else if ((*pM)->rows == r && (*pM)->cols == c) {
+	/* reusable as-is */
+	return *pM;
+    } else if ((*pM)->rows == c && (*pM)->cols == r) {
+	/* reusable if reoriented */
+	(*pM)->rows = r;
+	(*pM)->cols = c;
+	return *pM;
+    } else {
+	/* new matrix needed */
+	gretl_matrix_free(*pM);
+	*pM = NULL;
+	return gretl_matrix_alloc(r, c);
+    }
+}
+
 /* return allocated result of binary operation performed on
    two matrices */
 
-static gretl_matrix *real_matrix_calc (const gretl_matrix *A, 
-				       const gretl_matrix *B, 
-				       int op, int *err) 
+static int real_matrix_calc (const gretl_matrix *A,
+			     const gretl_matrix *B,
+			     int op, gretl_matrix **pM)
 {
     gretl_matrix *C = NULL;
     int ra, ca;
     int rb, cb;
     int r, c;
+    int err = 0;
 
     if (gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(B)) {
 	if (op != B_HCAT && op != B_VCAT && op != F_DSUM &&
 	    op != B_MUL && op != B_TRMUL) {
-	    *err = E_NONCONF;
-	    return NULL;
+	    return E_NONCONF;
 	}
 	if (op == B_MUL || op == B_TRMUL) {
-	    return nullmat_multiply(A, B, op, err);
+	    *pM = nullmat_multiply(A, B, op, &err);
+	    return err;
 	}
     }
 
@@ -2385,27 +2413,27 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    gretl_matrix_is_scalar(B)) {
 	    C = matrix_add_sub_scalar(A, B, op);
 	    if (C == NULL) {
-		*err = E_ALLOC;
+		err = E_ALLOC;
 	    }
 	} else {
-	    C = gretl_matrix_alloc(A->rows, A->cols);
+	    C = calc_get_matrix(pM, A->rows, A->cols);
 	    if (C == NULL) {
-		*err = E_ALLOC;
+		err = E_ALLOC;
 	    } else if (op == B_ADD) {
-		*err = gretl_matrix_add(A, B, C);
+		err = gretl_matrix_add(A, B, C);
 	    } else {
-		*err = gretl_matrix_subtract(A, B, C);
+		err = gretl_matrix_subtract(A, B, C);
 	    }
 	}
 	break;
     case B_HCAT:
-	C = gretl_matrix_col_concat(A, B, err);
+	C = gretl_matrix_col_concat(A, B, &err);
 	break;
     case B_VCAT:
-	C = gretl_matrix_row_concat(A, B, err);
+	C = gretl_matrix_row_concat(A, B, &err);
 	break;
     case F_DSUM:
-	C = gretl_matrix_direct_sum(A, B, err);
+	C = gretl_matrix_direct_sum(A, B, &err);
 	break;
     case B_MUL:
 	ra = gretl_matrix_rows(A);
@@ -2416,12 +2444,12 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	r = (ra == 1 && ca == 1)? rb : ra;
 	c = (rb == 1 && cb == 1)? ca : cb;
 
-	C = gretl_matrix_alloc(r, c);
+	C = calc_get_matrix(pM, r, c);
 	if (C == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	} else {
-	    *err = gretl_matrix_multiply(A, B, C);
-	    if (!*err) {
+	    err = gretl_matrix_multiply(A, B, C);
+	    if (!err) {
 		gretl_matrix_transcribe_obs_info(C, A);
 	    }
 	}	
@@ -2435,13 +2463,13 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	r = (ra == 1 && ca == 1)? rb : ra;
 	c = (rb == 1 && cb == 1)? ca : cb;
 
-	C = gretl_matrix_alloc(r, c);
+	C = calc_get_matrix(pM, r, c);
 	if (C == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	} else {
-	    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-					     B, GRETL_MOD_NONE,
-					     C, GRETL_MOD_NONE);
+	    err = gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+					    B, GRETL_MOD_NONE,
+					    C, GRETL_MOD_NONE);
 	}	
 	break;
     case F_QFORM:
@@ -2452,16 +2480,16 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	cb = gretl_matrix_cols(B);
 
 	if (ca != rb || cb != rb) {
-	    *err = E_NONCONF;
+	    err = E_NONCONF;
 	} else if (!gretl_matrix_is_symmetric(B)) {
-	    *err = E_NONCONF;
+	    err = E_NONCONF;
 	} else {
-	    C = gretl_matrix_alloc(ra, ra);
+	    C = calc_get_matrix(pM, ra, ra);
 	    if (C == NULL) {
-		*err = E_ALLOC;
+		err = E_ALLOC;
 	    } else {
-		*err = gretl_matrix_qform(A, GRETL_MOD_NONE, B,
-					  C, GRETL_MOD_NONE);
+		err = gretl_matrix_qform(A, GRETL_MOD_NONE, B,
+					 C, GRETL_MOD_NONE);
 	    }
 	}
 	break;
@@ -2469,10 +2497,10 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case B_LDIV:
 	/* matrix right or left "division" */
 	if (op == B_LDIV) {
-	    C = gretl_matrix_divide(A, B, GRETL_MOD_NONE, err);
+	    C = gretl_matrix_divide(A, B, GRETL_MOD_NONE, &err);
 	} else {
 	    /* A/B = (B'\A')' */
-	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, err);
+	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, &err);
 	}
 	break;
     case B_DOTMULT:
@@ -2487,33 +2515,33 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case B_DOTLTE:
     case B_DOTNEQ:
 	/* apply operator element-wise */
-	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
+	C = gretl_matrix_dot_op(A, B, op_symbol(op), &err);
 	break;
     case B_KRON:
 	/* Kronecker product */
-	C = gretl_matrix_kronecker_product_new(A, B, err);
+	C = gretl_matrix_kronecker_product_new(A, B, &err);
 	break;
     case F_HDPROD:
-	C = gretl_matrix_hdproduct_new(A, B, err);
+	C = gretl_matrix_hdproduct_new(A, B, &err);
 	break;    
     case F_CMULT:
-	C = gretl_matrix_complex_multiply(A, B, err);
+	C = gretl_matrix_complex_multiply(A, B, &err);
 	break;
     case F_CDIV:
-	C = gretl_matrix_complex_divide(A, B, err);
+	C = gretl_matrix_complex_divide(A, B, &err);
 	break;
     case F_MRSEL:
-	C = gretl_matrix_bool_sel(A, B, 1, err);
+	C = gretl_matrix_bool_sel(A, B, 1, &err);
 	break;
     case F_MCSEL:
-	C = gretl_matrix_bool_sel(A, B, 0, err);
+	C = gretl_matrix_bool_sel(A, B, 0, &err);
 	break;
     default:
-	*err = E_TYPES;
+	err = E_TYPES;
 	break;
     } 
 
-    if (!*err) {
+    if (!err) {
 	/* preserve data-row info? */
 	int At1 = gretl_matrix_get_t1(A);
 	int At2 = gretl_matrix_get_t2(A);
@@ -2527,14 +2555,19 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    gretl_matrix_set_t1(C, Bt1);
 	    gretl_matrix_set_t2(C, Bt2);
 	}
-    }
-
-    if (*err && C != NULL) {
+    } else if (C != NULL) {
 	gretl_matrix_free(C);
 	C = NULL;
     }
 
-    return C;
+    if (*pM != NULL && *pM != C) {
+	/* we neither freed nor reused *pM */
+	gretl_matrix_free(*pM);
+    }
+
+    *pM = C;
+
+    return err;
 }
 
 static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
@@ -2599,7 +2632,7 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.m = real_matrix_calc(a, b, op, &p->err);
+	    p->err = real_matrix_calc(a, b, op, &ret->v.m);
 	}
 
 	gretl_matrix_free(tmp);
@@ -3083,7 +3116,16 @@ static gretl_matrix *make_scalar_matrix (double x)
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
     gretl_matrix *ml = NULL, *mr = NULL;
-    NODE *ret = aux_matrix_node(p);
+    NODE *ret;
+
+    if (op == B_DOTPOW || op == B_POW) {
+	ret = aux_matrix_node(p);
+    } else {
+	/* experiment: try reusing aux matrix */
+	p->flags |= P_MSAVE;
+	ret = get_aux_node(p, MAT, 0, TMP_NODE);
+	p->flags ^= P_MSAVE;
+    }
 
 #if EDEBUG
     fprintf(stderr, "matrix_matrix_calc: l=%p, r=%p, ret=%p\n",
@@ -3123,7 +3165,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 		ret->v.m = gretl_matrix_pow(ml, s, &p->err);
 	    }
 	} else {
-	    ret->v.m = real_matrix_calc(ml, mr, op, &p->err);
+	    p->err = real_matrix_calc(ml, mr, op, &ret->v.m);
 	}
     }
 
@@ -13205,22 +13247,19 @@ static void pre_process (parser *p, int flags)
     /* skip leading command word, if any */
     if (!strncmp(s, "genr ", 5)) {
 	s += 5;
-    } else if (!strncmp(s, "eval ", 5)) {
-	/* allow within (e.g.) mle block */
-	p->flags |= P_DISCARD;
-	s += 5;
     } else if (!strncmp(s, "print ", 6)) {
-	/* allow within (e.g.) mle block */
+	/* allow this within (e.g.) mle block */
 	p->flags |= P_DISCARD;
 	s += 6;
-    }	
+    }
 
     while (isspace(*s)) s++;
 
     if (p->targ == UNK) {
 	/* Do we have an inline type specification? In most
 	   cases we shouldn't, but allow for this in case of
-	   GUI usage that bypasses the tokenizer? 
+	   "genrs" within nls/mle/gmm blocks, where the
+	   statement bypasses the tokenizer. (FIXME?)
 	*/
 	if (!strncmp(s, "scalar ", 7)) {
 	    p->targ = NUM;
@@ -13888,7 +13927,7 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 	    
 	    tmp = matrix_from_scratch(p, 1, NULL);
 	    if (tmp != NULL) {
-		m = real_matrix_calc(a, tmp, p->op, &p->err);
+		p->err = real_matrix_calc(a, tmp, p->op, &m);
 		gretl_matrix_free(tmp);
 	    }
 	    if (!p->err) {
@@ -13931,15 +13970,19 @@ static void edit_matrix (parser *p)
     }
 
     if (p->ret->t == NUM && spec->type[0] == SEL_ELEMENT) {
-	/* Assignment (possibly "inflected") of a scalar value 
-	   to a single element of an existing matrix
+	/* Assignment of a scalar value to a single element
+	   of an existing matrix
 	*/
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
 	double x = matrix_get_element(p->lh.m, i, j, &p->err);
 
 	if (!p->err) {
-	    x = xy_calc(x, p->ret->v.xval, p->op, MAT, p);
+	    if (p->op == B_ASN) {
+		x = p->ret->v.xval;
+	    } else {
+		x = xy_calc(x, p->ret->v.xval, p->op, MAT, p);
+	    }
 	    if (xna(x)) {
 		if (na(x)) {
 		    x = M_NA;
@@ -13986,8 +14029,9 @@ static void edit_matrix (parser *p)
 		/* assign computed matrix to m */
 		m = a;
 	    } else {
-		gretl_matrix *b = real_matrix_calc(a, m, p->op, &p->err);
+		gretl_matrix *b = NULL;
 
+		p->err = real_matrix_calc(a, m, p->op, &b);
 		gretl_matrix_free(a);
 		/* replace existing m with computed result */
 		gretl_matrix_free(m);
