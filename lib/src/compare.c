@@ -1341,14 +1341,21 @@ static int auto_drop_var (const MODEL *pmod,
 			  PRN *prn)
 {
     double tstat, pv = 0.0, tmin = 4.0;
+    int imax = pmod->ncoeff;
     int i, k = -1;
     int ret = 0;
 
     if (pmod->ncoeff == 1) {
 	return 0;
     }
-    
-    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
+
+    if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
+	gretl_model_get_int(pmod, "ordered")) {
+	/* FIXME other problematic cases? */
+	imax = pmod->list[0] - 1;
+    }
+
+    for (i=pmod->ifc; i<imax; i++) {
 	if (coeff_is_removable(cands, pmod, dset, i)) {
 	    tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (tstat < tmin) {
