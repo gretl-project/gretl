@@ -9797,7 +9797,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    p->err = E_TYPES;
 	}
 	if (!p->err) {
-	    g_ptr_array_insert(a, i, n);
+	    g_ptr_array_add(a, n);
 	}
     }
 
