@@ -219,10 +219,10 @@ static int *mspec_make_list (int type, union msel *sel, int n,
     return slice;
 }
 
-/* catch the case of an implicit column or row specification for
+/* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
-   more than one row and more than one column
+   more than one row and more than one column.
 */
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
