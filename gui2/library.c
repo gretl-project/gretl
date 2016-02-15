@@ -3717,8 +3717,8 @@ void errmsg_plus (int err, const char *plus)
    and to pre-process it as the tokenizer does for "genr"
    expressions entered via script or command line. That is,
    strip out the type-word (if present) but use the
-   information it carries to fill out the type argument to
-   the generate() function in libgretl.
+   information it carries to fill out the @gtype argument to
+   the libgretl generate() function.
 */
 
 int gui_run_genr (const char *line, DATASET *dset,
@@ -3799,6 +3799,9 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 
     return err;
 }
+
+/* identify "genr" lines within a block command such
+   as nls, mle, gmm */
 
 static int is_genr_line (char *s)
 {
@@ -4925,7 +4928,7 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
     MODEL *pmod = vwin->data;
 
     if (s != NULL) {
-	lib_command_sprintf("genr %s", s);
+	lib_command_sprintf("%s", s);
 	finish_genr(pmod, dlg);
 	g_free(s);
     }
