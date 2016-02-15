@@ -112,6 +112,8 @@ struct controller_ {
     char vname[VNAMELEN];  /* name of (scalar) variable, if used */
     int vsign;             /* 1 or -1, if vname is used */
     char *expr;            /* expression to pass to genr, if used */
+    GENERATOR *genr;       /* compiled generator */
+    int subst;             /* expression uses string substitution? */
 };
 
 typedef struct controller_ controller;
@@ -229,6 +231,28 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
+/* test for a "while" condition */
+
+static int does_string_sub (const char *s,
+			    LOOPSET *loop,
+			    DATASET *dset)
+{
+    int subst = 0;
+
+    if (strchr(s, '@')) {
+	subst = 1;
+    } else if (strchr(s, '$')) {
+	char test[64];
+
+	*test = '\0';
+	strncat(test, s, 63);
+	make_dollar_substitutions(test, 63, loop, dset,
+				  &subst, OPT_T);
+    }
+
+    return subst;
+}
+
 /* For indexed loops: get a value from a loop "limit" element (lower
    or upper).  If we got the name of a scalar variable at setup time,
    look up its current value (and modify the sign if wanted).  Or if
@@ -254,10 +278,10 @@ static double controller_get_val (controller *clr,
 	if (strchr(clr->expr, '@')) {
 	    /* the expression needs string substitution? */
 	    int subst = 0;
-	    char expr[32];
+	    char expr[64];
 
 	    *expr = '\0';
-	    strncat(expr, clr->expr, 31);
+	    strncat(expr, clr->expr, 63);
 	    *err = substitute_named_strings(expr, &subst);
 	    if (!*err && subst) {
 		clr->val = generate_scalar(expr, dset, err);
@@ -267,11 +291,11 @@ static double controller_get_val (controller *clr,
 	if (!done && !*err && strchr(clr->expr, '$')) {
 	    /* the expression needs dollar substitution? */
 	    int subst = 0;
-	    char expr[32];
+	    char expr[64];
 
 	    *expr = '\0';
-	    strncat(expr, clr->expr, 31);
-	    *err = make_dollar_substitutions(expr, 31, loop, dset, 
+	    strncat(expr, clr->expr, 63);
+	    *err = make_dollar_substitutions(expr, 63, loop, dset, 
 					     &subst, OPT_T);
 	    if (!*err && subst) {
 		clr->val = generate_scalar(expr, dset, err);
@@ -316,7 +340,25 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
     int ret = 1;
 
     if (expr != NULL) {
-	double x = generate_scalar(expr, dset, err);
+	double x = NADBL;
+
+	if (loop->test.subst < 0) {
+	    /* not checked yet */
+	    loop->test.subst = does_string_sub(expr, loop, dset);
+	}
+
+	if (!loop->test.subst && loop->test.genr == NULL) {
+	    loop->test.genr = genr_compile(loop->test.expr,
+					   dset, GRETL_TYPE_BOOL,
+					   OPT_P | OPT_N,
+					   NULL, err);
+	}
+
+	if (loop->test.genr != NULL) {
+	    x = evaluate_if_cond(loop->test.genr, dset, err);
+	} else if (!*err) {
+	    x = generate_scalar(expr, dset, err);
+	}
 
 	if (!*err && na(x)) {
 	    *err = E_DATA;
@@ -1418,6 +1460,8 @@ static void controller_init (controller *clr)
     clr->vname[0] = 0;
     clr->vsign = 1;
     clr->expr = NULL;
+    clr->genr = NULL;
+    clr->subst = -1;
 }
 
 static void controller_free (controller *clr)
@@ -1425,6 +1469,11 @@ static void controller_free (controller *clr)
     if (clr->expr != NULL) {
 	free(clr->expr);
 	clr->expr = NULL;
+    }
+
+    if (clr->genr != NULL) {
+	destroy_genr(clr->genr);
+	clr->genr = NULL;
     }
 }
 
