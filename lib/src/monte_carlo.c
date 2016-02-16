@@ -53,6 +53,12 @@ enum loop_types {
     EACH_LOOP
 };
 
+/* Define SAVE_TOPGEN to compile the test conditions
+   for "while" and "for" loops, and also the "delta"
+   expression for the latter, if present.
+*/
+#define SAVE_TOPGEN 1
+
 #define DEFAULT_NOBS 512
 
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
@@ -112,8 +118,10 @@ struct controller_ {
     char vname[VNAMELEN];  /* name of (scalar) variable, if used */
     int vsign;             /* 1 or -1, if vname is used */
     char *expr;            /* expression to pass to genr, if used */
+#if SAVE_TOPGEN
     GENERATOR *genr;       /* compiled generator */
     int subst;             /* expression uses string substitution? */
+#endif
 };
 
 typedef struct controller_ controller;
@@ -231,14 +239,11 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
-/* we need to diagnose (rare) cases of failure before
-   activating this */
+#if SAVE_TOPGEN
 
-#define SAVE_TESTGEN 0
-
-#if SAVE_TESTGEN
-
-/* test for a "while" condition */
+/* Test for a "while" or "for" expression: if it
+   involves string substitution we can't compile.
+*/
 
 static int does_string_sub (const char *s,
 			    LOOPSET *loop,
@@ -351,15 +356,15 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
     if (expr != NULL) {
 	double x = NADBL;
 
-#if SAVE_TESTGEN /* fails in some cases: needs investigation */
+#if SAVE_TOPGEN
 	if (loop->test.subst < 0) {
 	    /* not checked yet */
 	    loop->test.subst = does_string_sub(expr, loop, dset);
 	}
 
 	if (!loop->test.subst && loop->test.genr == NULL) {
-	    loop->test.genr = genr_compile(loop->test.expr,
-					   dset, GRETL_TYPE_BOOL,
+	    loop->test.genr = genr_compile(expr, dset,
+					   GRETL_TYPE_BOOL,
 					   OPT_P | OPT_N,
 					   NULL, err);
 	}
@@ -396,7 +401,27 @@ loop_delta (LOOPSET *loop, DATASET *dset, int *err)
     const char *expr = loop->delta.expr;
 
     if (expr != NULL) {
+#if SAVE_TOPGEN
+	if (loop->delta.subst < 0) {
+	    /* not checked yet */
+	    loop->delta.subst = does_string_sub(expr, loop, dset);
+	}
+
+	if (!loop->delta.subst && loop->delta.genr == NULL) {
+	    loop->delta.genr = genr_compile(expr, dset,
+					    GRETL_TYPE_ANY,
+					    OPT_N,
+					    NULL, err);
+	}
+
+	if (loop->delta.genr != NULL) {
+	    *err = execute_genr(loop->delta.genr, dset, NULL);
+	} else if (!*err) {
+	    *err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
+	}
+#else
 	*err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
+#endif
 	if (*err) {
 	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
 				 expr);
@@ -1470,11 +1495,13 @@ loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 static void controller_init (controller *clr)
 {
     clr->val = NADBL;
-    clr->vname[0] = 0;
+    clr->vname[0] = '\0';
     clr->vsign = 1;
     clr->expr = NULL;
+#if SAVE_TOPGEN
     clr->genr = NULL;
     clr->subst = -1;
+#endif
 }
 
 static void controller_free (controller *clr)
@@ -1483,12 +1510,27 @@ static void controller_free (controller *clr)
 	free(clr->expr);
 	clr->expr = NULL;
     }
-
+#if SAVE_TOPGEN
     if (clr->genr != NULL) {
 	destroy_genr(clr->genr);
 	clr->genr = NULL;
     }
+#endif
 }
+
+#if SAVE_TOPGEN
+
+static void reset_top_genrs (LOOPSET *loop)
+{
+    if (loop->test.genr != NULL) {
+	genr_reset_uvars(loop->test.genr);
+    }
+    if (loop->delta.genr != NULL) {
+	genr_reset_uvars(loop->delta.genr);
+    }
+}
+
+#endif
 
 static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
 {
@@ -2705,6 +2747,10 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 
     loop->iter = 0;
 
+#if SAVE_TOPGEN
+    reset_top_genrs(loop);
+#endif
+
     if (loop->eachname[0] != '\0') {
 	err = loop_list_refresh(loop, dset);
     } else if (loop->type == INDEX_LOOP) {
@@ -3554,7 +3600,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    if (show_activity && (loop->iter % 10 == 0)) {
 		show_activity_callback();
 	    }
-	} /* end handling commands for a given iteration */
+	}
 
 	if (err && inner_errline == NULL) {
 	    inner_errline = gretl_strdup(errline);
