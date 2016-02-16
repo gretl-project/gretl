@@ -80,15 +80,6 @@ NODE *newempty (void)
     return n;
 }
 
-/* Below: if p->uvnodes != NULL, we're saving loops that
-   are called within a function onto the function, and we
-   need to keep a record of nodes that hold pointers-to-
-   variables that will lose their validity across
-   calls to the function, so that these can be reset
-   on exit from the function -- see real_reset_uvars()
-   in geneval.c.
-*/
-
 static NODE *newref (parser *p, int t)
 {
     NODE *n = new_node(t);
@@ -101,18 +92,12 @@ static NODE *newref (parser *p, int t)
 	    if (is_string_valued(p->dset, n->vnum)) {
 		n->flags |= SVL_NODE;
 	    }
-	    if (p->uvnodes != NULL) {
-		g_ptr_array_add(p->uvnodes, n);
-	    }
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
 	    user_var *u = p->data;
 	    
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) u->ptr;
 	    n->uv = u;
-	    if (p->uvnodes != NULL) {
-		g_ptr_array_add(p->uvnodes, n);
-	    }
 	} else if (t == MAT || t == LIST || t == BUNDLE ||
 		   t == ARRAY || t == STR) {
 	    user_var *u = p->data;
@@ -120,9 +105,6 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
-	    if (p->uvnodes != NULL) {
-		g_ptr_array_add(p->uvnodes, n);
-	    }
 	} else if (t == PTR) {
 	    n->vname = p->idstr;
 	    n->v.ptr = p->data;
@@ -394,6 +376,45 @@ static NODE *base (parser *p, NODE *up)
     fprintf(stderr, "on exit from base, p->sym = %d (p->err = %d)\n", 
 	    p->sym, p->err);
 #endif    
+
+    return t;
+}
+
+/* Special for the unary '&' operator: the operand must
+   be a named series or "user_var", with an additional
+   restriction on the type.
+*/
+
+static NODE *u_addr_base (parser *p)
+{
+    NODE *t = base(p, NULL);
+
+    if (t != NULL && !p->err) {
+	switch (t->t) {
+	case SERIES:
+	    if (t->v.xvec == NULL) {
+		p->err = E_TYPES;
+	    }
+	    break;
+	case NUM: 
+	case MAT:
+	case BUNDLE:
+	case ARRAY:
+	    if (t->uv == NULL) {
+		p->err = E_TYPES;
+	    }
+	    break;
+	case UNDEF:
+	    break;
+	default:
+	    p->err = E_TYPES;
+	}
+
+	if (p->err) {
+	    pputs(p->prn, _("Wrong type of operand for unary '&'"));
+	    pputc(p->prn, '\n');
+	}
+    }
 
     return t;
 }
@@ -1165,7 +1186,11 @@ static NODE *powterm (parser *p)
         t = newb1(sym, NULL);
         if (t != NULL) {
             lex(p);
-            t->v.b1.b = powterm(p);
+	    if (sym == U_ADDR) {
+		t->v.b1.b = u_addr_base(p);
+	    } else {
+		t->v.b1.b = powterm(p);
+	    }
         }
     } else if (func2_symb(sym)) {
 	int unset = 0;
@@ -1439,7 +1464,7 @@ static NODE *factor (parser *p)
 	return NULL;
     }
 
-    if (unary_op(sym)) {
+    if (unary_op(sym) && sym != U_ADDR) {
 	if (p->ch == 0) {
 	    context_error(0, p);
 	    return NULL;

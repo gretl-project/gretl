@@ -370,6 +370,44 @@ static void free_tree (NODE *t, parser *p, int code)
     free_node(t, p);
 }
 
+static void clear_uvnodes (NODE *t)
+{
+    if (t == NULL) {
+	return;
+    }
+
+    if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    clear_uvnodes(t->v.bn.n[i]);
+	}
+    } else if (b3sym(t->t)) {
+	clear_uvnodes(t->v.b3.l);
+	clear_uvnodes(t->v.b3.m);
+	clear_uvnodes(t->v.b3.r);
+    } else if (b2sym(t->t)) {
+	clear_uvnodes(t->v.b2.l);
+	clear_uvnodes(t->v.b2.r);
+    } else if (b1sym(t->t)) {
+	clear_uvnodes(t->v.b1.b);
+    }
+
+    if (t->t == SERIES) {
+	if (t->vnum >= 0 || t->vname != NULL) {
+#if EDEBUG
+	    fprintf(stderr, " clear_uvnode: series at %p\n", (void *) t);
+#endif
+	    t->v.xvec = NULL;
+	}
+    } else if (t->uv != NULL) {
+#if EDEBUG
+	fprintf(stderr, " clear_uvnode: uvar at %p\n", (void *) t);
+#endif
+	t->uv = NULL;
+    }
+}
+
 #if 0 /* may still be useful for debugging */
 
 static int in_tree (NODE *t, NODE *n)
@@ -3215,11 +3253,13 @@ static NODE *matrix_and_or (NODE *l, NODE *r, int op, parser *p)
 
 static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret;
 
     if (op == B_OR || op == B_AND) {
 	return matrix_and_or(l, r, op, p);
     }
+
+    ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *a = l->v.m;
@@ -6824,30 +6864,6 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
     }
 
     return data;
-}
-
-static int check_uaddr_type (NODE *u, parser *p)
-{
-    NODE *n = u->v.b1.b;
-    int err = 0;
-
-    if (uscalar_node(n)) {
-	; /* OK */
-    } else if (useries_node(n)) {
-	; /* OK */
-    } else if (umatrix_node(n)) {
-	; /* OK */
-    } else if (ubundle_node(n)) {
-	; /* OK */
-    } else if (uarray_node(n)) {
-	; /* OK */
-    } else {
-	pputs(p->prn, _("Wrong type of operand for unary '&'"));
-	pputc(p->prn, '\n');
-	err = E_TYPES;
-    }
-
-    return err;
 }
 
 static NODE *suitable_ufunc_ret_node (parser *p,
@@ -10990,9 +11006,6 @@ static void reattach_series (NODE *n, parser *p)
 	    p->err = E_DATA;
 	} else {
 	    n->v.xvec = p->dset->Z[n->vnum];
-	    if (p->uvnodes != NULL) {
-		g_ptr_array_add(p->uvnodes, n);
-	    }
 	}
     } else if (n->vnum >= 0 && n->vnum < p->dset->v) {
  	n->v.xvec = p->dset->Z[n->vnum];
@@ -11018,20 +11031,6 @@ static void reattach_data_error (NODE *n, parser *p)
     }
 }
 
-static void maybe_add_to_uvnodes_array (NODE *n, parser *p)
-{
-    int i;
-
-    for (i=0; i<p->uvnodes->len; i++) {
-	if (p->uvnodes->pdata[i] == n) {
-	    /* already present, OK */
-	    return;
-	}
-    }
-
-    g_ptr_array_add(p->uvnodes, n);
-}
-
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
@@ -11042,9 +11041,6 @@ static void node_reattach_data (NODE *n, parser *p)
 
 	if (n->uv == NULL) {
 	    n->uv = get_user_var_by_name(n->vname);
-	    if (p->uvnodes != NULL) {
-		maybe_add_to_uvnodes_array(n, p);
-	    }
 	}
 
 	if (n->uv != NULL) {
@@ -11262,8 +11258,7 @@ static NODE *eval (NODE *t, parser *p)
 	undefined_symbol_error(t->vname, p);
 	break;
     case U_ADDR:
-	p->err = check_uaddr_type(t, p);
-	if (!p->err && compiled(p) && starting(p)) {
+	if (compiled(p) && starting(p)) {
 	    node_reattach_data(t->v.b1.b, p);
 	}
 	ret = t;
@@ -13268,7 +13263,6 @@ static void pre_process (parser *p, int flags)
 	    p->targ = SERIES;
 	    s += 7;
 	} else if (!strncmp(s, "matrix *", 8)) {
-	    /* FIXME? */
 	    p->targ = MAT;
 	    p->flags |= P_LHPTR;
 	    s += 8;
@@ -14992,21 +14986,8 @@ static void parser_init (parser *p, const char *str,
     p->lh.mspec = NULL;
     p->lh.gtype = 0;
 
-    /* auxiliary node apparatus */
+    /* auxiliary apparatus */
     p->aux = NULL;
-
-#if LOOPSAVE    
-    /* storing user_var pointers across function calls? */
-    if (gretl_function_depth() > 0 && !gretl_function_recursing() &&
-	(gretl_iteration_depth() > 0 || gretl_looping())) {
-	p->uvnodes = g_ptr_array_new();
-    } else {
-	p->uvnodes = NULL;
-    }
-#else
-    p->uvnodes = NULL;
-#endif    
-
     p->subp = NULL;
 
     p->callcount = 0;
@@ -15110,29 +15091,10 @@ void gen_cleanup (parser *p, int level)
 
 	free(p->lh.substr);
 	free(p->lh.subvar);
-
-	if (p->uvnodes != NULL) {
-	    g_ptr_array_free(p->uvnodes, TRUE);
-	}
     }
 }
 
 #define LS_DEBUG 0
-
-static void uvnode_reset (void *p1, void *p2)
-{
-    NODE *n = p1;
-
-#if LS_DEBUG || GLOBAL_TRACE
-    fprintf(stderr, " reset node type %03d, %s, '%s'\n", 
-	    n->t, getsymb(n->t), n->vname);
-#endif
-    if (n->t == SERIES) {
-	n->v.xvec = NULL;
-    } else {
-	n->uv = NULL;
-    }
-}
 
 static void real_reset_uvars (parser *p, int level)
 {
@@ -15142,19 +15104,16 @@ static void real_reset_uvars (parser *p, int level)
 
 #if LS_DEBUG
     if (level == 0) {
-	fprintf(stderr, "* genr_reset_uvars (%s '%s') *\n",
+	fprintf(stderr, "\nreal_reset_uvars (%s '%s') *\n",
 		getsymb(p->targ), p->lh.name);
     } else {
 	fprintf(stderr, "  reset subp child\n");
     }	
 #endif
 
-#if LS_DEBUG
-    fprintf(stderr, " number of uvar nodes: %d\n", (int) p->uvnodes->len);
-#endif
-    g_ptr_array_foreach(p->uvnodes, uvnode_reset, p);
+    clear_uvnodes(p->tree);
 
-    if (p->subp != NULL && p->subp->uvnodes != NULL) {
+    if (p->subp != NULL) {
 	real_reset_uvars(p->subp, 1);
     }
 
@@ -15164,9 +15123,7 @@ static void real_reset_uvars (parser *p, int level)
 
 void genr_reset_uvars (parser *p)
 {
-    if (p->uvnodes != NULL) {
-	real_reset_uvars(p, 0);
-    }
+    real_reset_uvars(p, 0);
 }
 
 static void maybe_set_return_flags (parser *p)
