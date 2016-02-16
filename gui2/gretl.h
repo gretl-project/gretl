@@ -80,7 +80,9 @@
 #include "helpfiles.h"
 #include "gui_recode.h"
 
-#include "locale.h"
+#ifdef ENABLE_NLS
+# include "locale.h"
+#endif
 
 #define GRETL_BUFSIZE 8192
 #define MAXSTR FILENAME_MAX
