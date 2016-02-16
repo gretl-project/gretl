@@ -231,6 +231,13 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
+/* we need to diagnose (rare) cases of failure before
+   activating this */
+
+#define SAVE_TESTGEN 0
+
+#if SAVE_TESTGEN
+
 /* test for a "while" condition */
 
 static int does_string_sub (const char *s,
@@ -252,6 +259,8 @@ static int does_string_sub (const char *s,
 
     return subst;
 }
+
+#endif
 
 /* For indexed loops: get a value from a loop "limit" element (lower
    or upper).  If we got the name of a scalar variable at setup time,
@@ -342,6 +351,7 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
     if (expr != NULL) {
 	double x = NADBL;
 
+#if SAVE_TESTGEN /* fails in some cases: needs investigation */
 	if (loop->test.subst < 0) {
 	    /* not checked yet */
 	    loop->test.subst = does_string_sub(expr, loop, dset);
@@ -359,6 +369,9 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 	} else if (!*err) {
 	    x = generate_scalar(expr, dset, err);
 	}
+#else
+	x = generate_scalar(expr, dset, err);
+#endif
 
 	if (!*err && na(x)) {
 	    *err = E_DATA;

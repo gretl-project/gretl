@@ -11012,7 +11012,7 @@ static void reattach_data_error (NODE *n, parser *p)
 		gretl_type_get_name(n->uv->type));
 	p->err = E_DATA;
     } else {
-	fprintf(stderr, "but found %s\n",
+	fprintf(stderr, " but found %s\n",
 		gretl_type_get_name(n->uv->type));
 	p->err = E_TYPES;
     }
