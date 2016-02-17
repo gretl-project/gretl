@@ -7649,17 +7649,47 @@ int attach_loop_to_function (void *ptr)
 	} else {
 	    /* OK, attach it */
 	    u->lines[u->line_idx].loop = ptr;
-#if LSDEBUG || GLOBAL_TRACE	    
+#if LSDEBUG || GLOBAL_TRACE
 	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
 		    ptr, u->name, u->line_idx);
-#endif	    
+#endif
 	}
     }
 
     return err;
 }
 
+int detach_loop_from_function (void *ptr)
+{
+    fncall *call = current_function_call();
+    ufunc *u = NULL;
+    int err = 0;
+
+    if (call != NULL) {
+	u = call->fun;
+    }
+
+    if (u == NULL) {
+	return E_DATA;
+    } else {
+	int i;
+
+	for (i=0; i<u->n_lines; i++) {
+	    if (u->lines[i].loop == ptr) {
+#if LSDEBUG || GLOBAL_TRACE
+		fprintf(stderr, "detaching loop at %p from function %s\n",
+			ptr, u->name);
 #endif
+		u->lines[i].loop = NULL;
+		break;
+	    }
+	}
+    }
+
+    return err;
+}
+
+#endif /* LOOPSAVE */
 
 static gchar *return_line;
 

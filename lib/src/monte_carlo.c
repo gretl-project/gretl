@@ -588,6 +588,12 @@ void gretl_loop_destroy (LOOPSET *loop)
 	return;
     }
 
+#if LOOPSAVE
+    if (loop_is_attached(loop)) {
+	detach_loop_from_function(loop);
+    }
+#endif
+
 #if GLOBAL_TRACE || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
@@ -3309,18 +3315,18 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	return 1;
     }
 
-#if LOOPSAVE
-    if (loop_is_attached(loop) && *loop->idxname != '\0') {
-	loop_reattach_index_var(loop, dset);
-    }
-#endif
-    
     indent0 = gretl_if_state_record();
     progressive = loop_is_progressive(loop);
     set_loop_on(loop_is_quiet(loop));
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
+#endif
+
+ #if LOOPSAVE
+    if (loop_is_attached(loop) && *loop->idxname != '\0') {
+	loop_reattach_index_var(loop, dset);
+    }
 #endif
 
     err = top_of_loop(loop, dset);
