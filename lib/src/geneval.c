@@ -2520,6 +2520,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 	if (ca != rb || cb != rb) {
 	    err = E_NONCONF;
 	} else if (!gretl_matrix_is_symmetric(B)) {
+	    gretl_errmsg_set(_("Matrix is not symmetric"));
 	    err = E_NONCONF;
 	} else {
 	    C = calc_get_matrix(pM, ra, ra);
