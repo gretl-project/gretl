@@ -3068,27 +3068,27 @@ void gretl_matrix_unset_equals_tolerance (void)
     eq_tol = DEFAULT_EQTOL;
 }
 
-static int sneq (double x, double y)
+static double sneq_reldiff (double x, double y)
 {
-    double reldiff;
+    double rd;
 
     if (x == 0.0) {
-	reldiff = fabs(y);
+	rd = fabs(y);
     } else if (y == 0.0) {
-	reldiff = fabs(x);
+	rd = fabs(x);
     } else if (x > y) {
-	reldiff = fabs((x - y) / y);
+	rd = fabs((x - y) / y);
     } else {
-	reldiff = fabs((y - x) / x);
+	rd = fabs((y - x) / x);
     }
 
-    return reldiff > eq_tol;
+    return rd;
 }
 
 static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
 					   int verbose)
 {
-    double x, y;
+    double x, y, rd;
     int i, j;
 
     if (gretl_is_null_matrix(m)) {
@@ -3099,10 +3099,10 @@ static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
 	for (j=0; j<i; j++) {
 	    x = gretl_matrix_get(m, i, j);
 	    y = gretl_matrix_get(m, j, i);
-	    if (sneq(x, y)) {
+	    if ((rd = sneq_reldiff(x, y)) > eq_tol) {
 		if (verbose) {
-		    fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
-			    i, j, x, j, i, y);
+		    fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n"
+			    " reldiff = %g\n", i, j, x, j, i, y, rd);
 		    if (m->rows < 100) {
 			gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
 		    }
