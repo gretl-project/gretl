@@ -724,13 +724,15 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	char genline[64];
 	
 	if (na(loop->init.val)) {
-	    sprintf(genline, "%s = NA", vname);
+	    sprintf(genline, "%s=NA", vname);
 	} else {
 	    gretl_push_c_numeric_locale();
-	    sprintf(genline, "%s = %g", vname, loop->init.val);
+	    sprintf(genline, "%s=%g", vname, loop->init.val);
 	    gretl_pop_c_numeric_locale();
 	}
+	
 	err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
+	
 	if (!err) {
 	    strcpy(loop->idxname, vname);
 	    loop->flags |= LOOP_DELVAR;
@@ -2882,7 +2884,7 @@ static int add_loop_genr (LOOPSET *loop, int lno,
 
     loop->cmds[lno].genr = genr_compile(line, dset, gtype,
 					OPT_NONE, prn, &err);
-    
+
     if (!err) {
 	loop->cmds[lno].flags |= LOOP_CMD_GENR;
     } else if (err == E_EQN) {
@@ -3192,10 +3194,10 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
     int err = 0;
 
     if (na(loop->init.val)) {
-	sprintf(genline, "%s = NA", loop->idxname);
+	sprintf(genline, "%s=NA", loop->idxname);
     } else {
 	gretl_push_c_numeric_locale();
-	sprintf(genline, "%s = %g", loop->idxname, loop->init.val);
+	sprintf(genline, "%s=%g", loop->idxname, loop->init.val);
 	gretl_pop_c_numeric_locale();
     }
 

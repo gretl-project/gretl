@@ -1024,6 +1024,7 @@ parser *genr_compile (const char *s, DATASET *dset,
     if (p != NULL && !(opt & OPT_N) && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);
 	if (p->err) {
+	    *err = p->err;
 	    gen_cleanup(p, 0);
 	}
     }
