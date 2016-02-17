@@ -3188,20 +3188,18 @@ static int model_command_post_process (ExecState *s,
 
 static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
 {
+    char genline[64];
     int err = 0;
 
-    if (!gretl_is_scalar(loop->idxname)) {
-	char genline[64];
-	
-	if (na(loop->init.val)) {
-	    sprintf(genline, "%s = NA", loop->idxname);
-	} else {
-	    gretl_push_c_numeric_locale();
-	    sprintf(genline, "%s = %g", loop->idxname, loop->init.val);
-	    gretl_pop_c_numeric_locale();
-	}
-	err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
-    } 
+    if (na(loop->init.val)) {
+	sprintf(genline, "%s = NA", loop->idxname);
+    } else {
+	gretl_push_c_numeric_locale();
+	sprintf(genline, "%s = %g", loop->idxname, loop->init.val);
+	gretl_pop_c_numeric_locale();
+    }
+
+    err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
 
     return err;
 }
