@@ -276,6 +276,10 @@ static int get_slices (matrix_subspec *spec,
 				       M->cols, &err);
     }
 
+#if MDEBUG
+    fprintf(stderr, "matrix: get_slices, err=%d\n", err);
+#endif 
+
     return err;
 }
 

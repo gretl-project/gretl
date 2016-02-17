@@ -190,6 +190,21 @@ static void free_mspec (matrix_subspec *spec, parser *p)
     }
 }
 
+static void clear_mspec (matrix_subspec *spec, parser *p)
+{
+    if (spec != NULL) {
+	/* the slice elements may not be reusable as is */
+	if (spec->rslice != NULL) {
+	    free(spec->rslice);
+	    spec->rslice = NULL;
+	}
+	if (spec->cslice != NULL) {
+	    free(spec->cslice);
+	    spec->cslice = NULL;
+	}
+    }
+}
+
 #if EDEBUG
 
 static void print_tree (NODE *t, parser *p, int level)
@@ -654,7 +669,8 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     } else if (n->t == MAT) {
 	gretl_matrix_free(n->v.m);
     } else if (n->t == MSPEC) {
-	free_mspec(n->v.mspec, p);
+	clear_mspec(n->v.mspec, p);
+	nullify = 0;
     } else if (n->t == BUNDLE) {
 	gretl_bundle_destroy(n->v.b);
     } else if (n->t == ARRAY) {
@@ -3811,13 +3827,16 @@ static void print_mspec (matrix_subspec *mspec)
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
 
-static matrix_subspec *build_mspec (NODE *l, NODE *r, parser *p)
+static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 {
-    matrix_subspec *spec = matrix_subspec_new();
+    matrix_subspec *spec = targ->v.mspec;
 
     if (spec == NULL) {
-	p->err = E_ALLOC;
-	return NULL;
+	spec = matrix_subspec_new();
+	if (spec == NULL) {
+	    p->err = E_ALLOC;
+	    return;
+	}
     }
 
 #if EDEBUG > 1
@@ -3890,7 +3909,7 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, parser *p)
 	spec = NULL;
     }
 
-    return spec;
+    targ->v.mspec = spec;
 }
 
 /* node holding evaluated result of matrix specification */
@@ -3900,7 +3919,7 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_mspec_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.mspec = build_mspec(l, r, p);
+	build_mspec(ret, l, r, p);
     }
 
     return ret;
@@ -13943,8 +13962,13 @@ static void edit_matrix (parser *p)
 {
     matrix_subspec *spec;
     gretl_matrix *m = NULL;
+    int rhs_scalar = 0;
+    double y = 0;
 
-    if (p->ret->t != NUM) {
+    if (scalar_node(p->ret)) {
+	y = (p->ret->t == NUM)? p->ret->v.xval: p->ret->v.m->val[0];
+	rhs_scalar = 1;
+    } else {
 	/* not a scalar: get the replacement matrix */
 	m = grab_or_copy_matrix_result(p, NULL);
 	if (m == NULL) {
@@ -13964,7 +13988,7 @@ static void edit_matrix (parser *p)
 	return;
     }
 
-    if (p->ret->t == NUM && spec->type[0] == SEL_ELEMENT) {
+    if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
 	/* Assignment of a scalar value to a single element
 	   of an existing matrix
 	*/
@@ -13974,9 +13998,9 @@ static void edit_matrix (parser *p)
 
 	if (!p->err) {
 	    if (p->op == B_ASN) {
-		x = p->ret->v.xval;
+		x = y;
 	    } else {
-		x = xy_calc(x, p->ret->v.xval, p->op, MAT, p);
+		x = xy_calc(x, y, p->op, MAT, p);
 	    }
 	    if (xna(x)) {
 		if (na(x)) {
@@ -13989,18 +14013,16 @@ static void edit_matrix (parser *p)
 	return; /* note, we're done */
     } 
 
-    if (p->ret->t == NUM && p->op == B_ASN) {
+    if (rhs_scalar && p->op == B_ASN) {
 	/* Straight assignment of a scalar value to non-scalar
 	   submatrix */
-	double x = p->ret->v.xval;
-
-	if (xna(x)) {
-	    if (na(x)) {
-		x = M_NA;
+	if (xna(y)) {
+	    if (na(y)) {
+		y = M_NA;
 	    }
 	    set_gretl_warning(W_GENNAN);
 	}
-	p->err = assign_scalar_to_submatrix(p->lh.m, x, spec);
+	p->err = assign_scalar_to_submatrix(p->lh.m, y, spec);
 	return; /* note, we're done */
     }
 
@@ -14014,12 +14036,11 @@ static void edit_matrix (parser *p)
 					       1, &p->err);
 
 	if (!p->err) {
-	    if (p->ret->t == NUM) {
+	    if (rhs_scalar) {
 		int i, n = a->rows * a->cols;
-		double x = p->ret->v.xval;
 
 		for (i=0; i<n; i++) {
-		    a->val[i] = xy_calc(a->val[i], x, p->op, MAT, p);
+		    a->val[i] = xy_calc(a->val[i], y, p->op, MAT, p);
 		}
 		/* assign computed matrix to m */
 		m = a;
