@@ -9,6 +9,8 @@ version 2016b, in progress
 - Fix bug: GUI access to nonparametric models was broken
 - Fix bug: not flagging an error when given a broken right-
   hand side specification in the "restrict" command
+- Fix bugs: some subtle fail conditions for saving compiled
+  loops onto functions
 - OS X (quartz) build: update to GTK 2.24.29
 
 2016-01-26 version 2016a
