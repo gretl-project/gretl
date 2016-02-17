@@ -2535,10 +2535,15 @@ static int real_matrix_calc (const gretl_matrix *A,
 
 	if (ca != rb || cb != rb) {
 	    err = E_NONCONF;
-	} else if (!gretl_matrix_is_symmetric(B)) {
-	    gretl_errmsg_set(_("Matrix is not symmetric"));
-	    err = E_NONCONF;
 	} else {
+	    gretl_matrix_set_equals_tolerance(1.0e-7);
+	    if (!gretl_matrix_is_symmetric(B)) {
+		gretl_errmsg_set(_("Matrix is not symmetric"));
+		err = E_NONCONF;
+	    }
+	    gretl_matrix_unset_equals_tolerance();
+	}
+	if (!err) {
 	    C = calc_get_matrix(pM, ra, ra);
 	    if (C == NULL) {
 		err = E_ALLOC;
