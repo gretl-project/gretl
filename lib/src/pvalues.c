@@ -496,7 +496,7 @@ double student_pvalue_1 (double df, double x)
 	if (get_cephes_errno()) {
 	    p = NADBL;
 	} else {
-	    p = 1 - p;
+	    p = (p >= 1.0)? 0.0 : 1 - p;
 	}
     }
 

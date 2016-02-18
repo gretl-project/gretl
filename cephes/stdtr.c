@@ -170,7 +170,7 @@ double stdtr (double rk, double t)
 	z = rk / (rk + t * t);
 	p = 0.5 * incbet(0.5*rk, 0.5, z);
 	if (t > 0) {
-	    p = 1-p;
+	    p = 1 - p;
 	} 
     }
 
