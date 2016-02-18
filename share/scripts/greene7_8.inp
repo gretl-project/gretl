@@ -1,8 +1,8 @@
 open greene7_8.gdt
-genr Gpop = G/Pop
+series Gpop = G/Pop
 logs Gpop Y Pg Pnc Puc
 genr time
-genr year = time + 1959
+series year = time + 1959
 smpl 1960 1995
 ols l_Gpop const l_Y l_Pg l_Pnc l_Puc year
 smpl 1960 1973

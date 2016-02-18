@@ -33,10 +33,6 @@ loop while crit > 1.0e-9 --quiet
    series sc_a = -de_a * e
    series sc_m = -de_m * e
    
-   smpl 1 12
-   print e sc_c sc_a sc_m -o
-   smpl full
-   
    # OPG regression
    ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
@@ -67,6 +63,5 @@ printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
 
 # compare with the built-in arma command (conditional ML)
-set bhhh_toler 1.0e-9
 arima 1 0 1 ; y --conditional
 

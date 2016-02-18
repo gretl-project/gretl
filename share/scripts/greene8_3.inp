@@ -1,13 +1,13 @@
 open greene8_3.gdt
-genr q_A = q/A
-genr kinv = -1.0/k
+series q_A = q/A
+series kinv = -1.0/k
 logs q_A k
 ols q_A const l_k
 ols q_A const kinv
 ols l_q_A const l_k
 ols l_q_A const kinv
 gnuplot q_A k
-genr dum = year > 1942
+series dum = year > 1942
 ols q_A const l_k dum
 ols q_A const kinv dum
 ols l_q_A const l_k dum
