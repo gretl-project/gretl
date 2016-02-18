@@ -301,6 +301,10 @@ int bhhh_max (double *theta, int k,
 	double s2 = 0.0;
 
 	err = gretl_matrix_ols(c, G, g, V, NULL, &s2);
+	if (!err) {
+	    /* undo the default df correction */
+	    gretl_matrix_multiply_by_scalar(V, (T-k) / (double) T);
+	}
     }
 
  bailout:
