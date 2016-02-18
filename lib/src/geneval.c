@@ -2930,25 +2930,29 @@ static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static gretl_matrix *node_get_matrix (NODE *n, parser *p)
+{
+    if (n->t == U_ADDR) {
+	n = n->v.b1.b;
+	if (n->t != MAT) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
+    }
+
+    return n->v.m;
+}
+
 static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *b = NULL;
+	gretl_matrix *b;
 	const char *sf = m->v.str;
 	const char *sg = NULL;
 
-	if (l->t == U_ADDR) {
-	    l = l->v.b1.b;
-	    if (l->t != MAT) {
-		p->err = E_TYPES;
-	    } else {
-		b = l->v.m;
-	    }
-	} else {
-	    b = l->v.m;
-	}
+	b = node_get_matrix(l, p);
 
 	if (!p->err) {
 	    if (r->t == STR) {
@@ -2993,20 +2997,11 @@ static NODE *simann_node (NODE *l, NODE *m, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *b = NULL;
+	gretl_matrix *b;
 	const char *sf = m->v.str;
 	int maxit = 0;
 
-	if (l->t == U_ADDR) {
-	    l = l->v.b1.b;
-	    if (l->t != MAT) {
-		p->err = E_TYPES;
-	    } else {
-		b = l->v.m;
-	    }
-	} else {
-	    b = l->v.m;
-	}
+	b = node_get_matrix(l, p);
 
 	if (!p->err) {
 	    if (gretl_is_null_matrix(b)) {
@@ -11283,7 +11278,9 @@ static NODE *eval (NODE *t, parser *p)
 	undefined_symbol_error(t->vname, p);
 	break;
     case U_ADDR:
-	if (compiled(p) && starting(p)) {
+	if (!uvar_node(t->v.b1.b)) {
+	    p->err = E_DATA;
+	} else if (compiled(p) && starting(p)) {
 	    node_reattach_data(t->v.b1.b, p);
 	}
 	ret = t;
