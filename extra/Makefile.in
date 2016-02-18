@@ -1,13 +1,26 @@
 topsrc = @top_srcdir@
 
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 VPATH = $(topsrc)/extra
 
 PREFIX = $(shell pkg-config --variable=prefix gretl)
 GRETL_CFLAGS = $(shell pkg-config --cflags gretl)
-CFLAGS = -g -O2 -Wall $(GRETL_CFLAGS) -DPREFIX=\"$(PREFIX)\"
-LDFLAGS = $(shell pkg-config --libs gretl)
+LIBS = $(shell pkg-config --libs gretl)
+
+override CFLAGS += $(GRETL_CFLAGS) -DPREFIX=\"$(PREFIX)\"
 
 all: simple_client arma_example nls_example
+
+simple_client: simple_client.c
+	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
+
+arma_example: arma_example.c
+	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
+
+nls_example: nls_example.c
+	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
 
 clean:
 	rm -f simple_client arma_example nls_example 
