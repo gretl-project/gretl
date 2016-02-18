@@ -7,7 +7,7 @@ scalar c = 0
 scalar a = 0.1
 scalar m = 0.1
 
-series e = 0.0
+series e = 0
 series de_c = e
 series de_a = e
 series de_m = e
@@ -23,27 +23,32 @@ loop while crit > 1.0e-9 --quiet
    scalar loglik = -0.5 * sum(e^2)
    print loglik
 
-   # partials of e wrt c, a, and m
+   # partials of e with respect to c, a, and m
    de_c = -1 - m * de_c(-1) 
    de_a = -y(-1) -m * de_a(-1)
    de_m = -e(-1) -m * de_m(-1)
    
-   # partials of l wrt c, a and m
+   # partials of l with respect to c, a and m
    series sc_c = -de_c * e
    series sc_a = -de_a * e
    series sc_m = -de_m * e
+   
+   smpl 1 12
+   print e sc_c sc_a sc_m -o
+   smpl full
    
    # OPG regression
    ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
    # Update the parameters
-   dc = $coeff(sc_c) 
+   dc = $coeff[1]
+   da = $coeff[2]
+   dm = $coeff[3]
    c += dc
-   da = $coeff(sc_a) 
    a += da
-   dm = $coeff(sc_m) 
    m += dm
 
+   # show progress
    printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
    printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
    printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
@@ -52,16 +57,16 @@ loop while crit > 1.0e-9 --quiet
    print crit
 endloop
 
-scalar se_c = $stderr(sc_c)
-scalar se_a = $stderr(sc_a)
-scalar se_m = $stderr(sc_m)
+scalar se_c = $stderr[1]
+scalar se_a = $stderr[2]
+scalar se_m = $stderr[3]
 
-set echo off
-print ""
+printf "\n"
 printf "constant        = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
 printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
 
 # compare with the built-in arma command (conditional ML)
+set bhhh_toler 1.0e-9
 arima 1 0 1 ; y --conditional
 
