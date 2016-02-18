@@ -1,28 +1,29 @@
 # script to replicate Example 11.3 in Greene
+
 open greene11_3.gdt
 # run initial OLS
 ols C 0 Y
-genr essbak = $ess
-genr essdiff = 1
-genr b = $coeff(Y)
-genr g = 1
+scalar essbak = $ess
+scalar essdiff = 1
+scalar beta = $coeff(Y)
+scalar gamma = 1
+
 # iterate OLS till the error sum of squares converges
-loop while essdiff > .00001 --quiet
+loop while essdiff > .00001
    # form the linearized variables
-   genr C0 = C + g * b * Y^g * log(Y)
-   genr x1 = Y^g
-   genr x2 = b * Y^g * log(Y)
+   series C0 = C + gamma * beta * Y^gamma * log(Y)
+   series x1 = Y^gamma
+   series x2 = beta * Y^gamma * log(Y)
    # run OLS 
    ols C0 0 x1 x2 --print-final --no-df-corr --vcv
-   genr b = $coeff(x1)
-   genr g = $coeff(x2)
-   genr ess = $ess
-   genr essdiff = abs(ess - essbak)/essbak
-   genr essbak = ess
+   beta = $coeff[2]
+   gamma = $coeff[3]
+   ess = $ess
+   essdiff = abs(ess - essbak)/essbak
+   essbak = ess
 endloop 
-# print parameter estimates using their "proper names"
-set echo off
-printf "alpha = %g\n", $coeff(0)
-printf "beta  = %g\n", b
-printf "gamma = %g\n", g
 
+# print parameter estimates using their "proper names"
+printf "alpha = %g\n", $coeff[1]
+printf "beta  = %g\n", beta
+printf "gamma = %g\n", gamma
