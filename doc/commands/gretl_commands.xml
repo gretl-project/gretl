@@ -4387,9 +4387,10 @@
 
       <para context="cli">
 	When a formula yields a series result, the range over which
-	the result is written to the target variable depends on the current
-	sample setting.  It is possible, therefore, to define a series piecewise
-	using the <lit>smpl</lit> command in conjunction with <lit>genr</lit>.
+	the result is written to the target variable depends on the
+	current sample setting.  It is possible, therefore, to define
+	a series piecewise using the <lit>smpl</lit> command in
+	conjunction with <lit>genr</lit>.
       </para>
 
       <para>
@@ -4411,9 +4412,9 @@
       </para>
 
       <para>
-	Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The latter
-	is the missing value code: you can initialize a variable to the missing
-	value with <lit>scalar x = NA</lit>.
+	Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The
+	latter is the missing value code: you can initialize a
+	variable to the missing value with <lit>scalar x = NA</lit>.
       </para>
 
       <para>
@@ -4468,33 +4469,35 @@
       </ilist>
 
       <para>
-	<emphasis>Note</emphasis>: In the command-line program, <cmd>genr</cmd>
-	commands that retrieve model-related data always reference the model
-	that was estimated most recently. This is also true in the GUI program,
-	if one uses <cmd>genr</cmd> in the <quote>gretl console</quote> or
-	enters a formula using the <quote>Define new variable</quote> option
-	under the Add menu in the main window.  With the GUI, however, you
-	have the option of retrieving data from any model currently displayed in
-	a window (whether or not it's the most recent model).  You do this under
-	the <quote>Save</quote> menu in the model's window.
+	<emphasis>Note</emphasis>: In the command-line program,
+	<cmd>genr</cmd> commands that retrieve model-related data
+	always reference the model that was estimated most
+	recently. This is also true in the GUI program, if one uses
+	<cmd>genr</cmd> in the <quote>gretl console</quote> or enters
+	a formula using the <quote>Define new variable</quote> option
+	under the Add menu in the main window.  With the GUI, however,
+	you have the option of retrieving data from any model
+	currently displayed in a window (whether or not it's the most
+	recent model).  You do this under the <quote>Save</quote> menu
+	in the model's window.
       </para>
 
       <para>
 	The special variable <lit>obs</lit> serves as an index of the
-	observations.  For instance <lit>genr dum = (obs=15)</lit> will
+	observations.  For instance <lit>series dum = (obs=15)</lit> will
 	generate a dummy variable that has value 1 for observation 15, 0
 	otherwise.  You can also use this variable to pick out particular
 	observations by date or name.  For example, 
-	<lit>genr d = (obs&gt;1986:4)</lit>, 
-	<lit>genr d = (obs&gt;"2008-04-01")</lit>, or
-	<lit>genr d = (obs="CA")</lit>.  If daily dates or observation labels
+	<lit>series d = (obs&gt;1986:4)</lit>, 
+	<lit>series d = (obs&gt;"2008-04-01")</lit>, or
+	<lit>series d = (obs="CA")</lit>.  If daily dates or observation labels
 	are used in this context, they should be enclosed in double quotes.
 	Quarterly and monthly dates (with a colon) may be used unquoted. Note
 	that in the case of annual time series data, the year is not
 	distinguishable syntactically from a plain integer; therefore if you
 	wish to compare observations against <lit>obs</lit> by year you must
 	use the function <lit>obsnum</lit> to convert the year to a 1-based
-	index value, as in <lit>genr d = (obs&gt;obsnum(1986))</lit>.
+	index value, as in <lit>series d = (obs&gt;obsnum(1986))</lit>.
       </para>
 
       <para>
@@ -7322,11 +7325,11 @@
 	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm or
 	Newton's method. The user must specify the log-likelihood
 	function.  The parameters of this function must be declared
-	and given starting values (using the <cmd>genr</cmd> command)
-	prior to estimation.  Optionally, the user may specify the
-	derivatives of the log-likelihood function with respect to
-	each of the parameters; if analytical derivatives are not
-	supplied, a numerical approximation is computed.
+	and given starting values prior to estimation.  Optionally,
+	the user may specify the derivatives of the log-likelihood
+	function with respect to each of the parameters; if analytical
+	derivatives are not supplied, a numerical approximation is
+	computed.
       </para>
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with
@@ -7936,17 +7939,17 @@
 
     <description context="cli">
       <para>
-	Performs Nonlinear Least Squares (NLS) estimation using a modified
-	version of the Levenberg&ndash;Marquardt algorithm.  You must
-	supply a function specification.  The parameters of this function
-	must be declared and given starting values (using the
-	<cmd>genr</cmd> command) prior to estimation.  Optionally, you may
-	specify the derivatives of the regression function with respect to
-	each of the parameters.  If you do not supply derivatives you
-	should instead give a list of the parameters to be estimated
+	Performs Nonlinear Least Squares (NLS) estimation using a
+	modified version of the Levenberg&ndash;Marquardt algorithm.
+	You must supply a function specification.  The parameters of
+	this function must be declared and given starting values prior
+	to estimation.  Optionally, you may specify the derivatives of
+	the regression function with respect to each of the
+	parameters.  If you do not supply derivatives you should
+	instead give a list of the parameters to be estimated
 	(separated by spaces or commas), preceded by the keyword
-	<lit>params</lit>.  In the latter case a numerical approximation
-	to the Jacobian is computed.
+	<lit>params</lit>.  In the latter case a numerical
+	approximation to the Jacobian is computed.
       </para>
       <para>
 	It is easiest to show what is required by example.  The
@@ -7989,8 +7992,7 @@
 	with respect to each of the parameters in turn.  Each line
 	begins with the keyword <cmd>deriv</cmd>, gives the name of a
 	parameter, an equals sign, and an expression whereby the
-	derivative can be calculated (again, the syntax here is the
-	same as for <cmd>genr</cmd>). As an alternative to supplying
+	derivative can be calculated. As an alternative to supplying
 	numerical derivatives, you could substitute the following for
 	lines 7 to 9:
       </para>
@@ -8093,12 +8095,12 @@
 	Establishes a <quote>blank</quote> data set, containing only a
 	constant and an index variable, with periodicity 1 and the
 	specified number of observations. This may be used for
-	simulation purposes: some of the <cmd>genr</cmd> commands
-	(&eg; <cmd>genr uniform()</cmd>, <cmd>genr normal()</cmd>)
-	will generate dummy data from scratch to fill out the data
-	set. This command may be useful in conjunction with
-	<cmd>loop</cmd>.  See also the <quote>seed</quote> option to
-	the <cmdref targ="set"/> command.
+	simulation purposes: functions such as <cmd>uniform()</cmd>
+	and <cmd>normal()</cmd> will generate artificial series from
+	scratch to fill out the data set. This command may be useful
+	in conjunction with <cmd>loop</cmd>.  See also the
+	<quote>seed</quote> option to the <cmdref targ="set"/>
+	command.
       </para>
       <para>
 	By default, this command cleans out all data in gretl's current

@@ -106,9 +106,8 @@ case, the variable is created automatically and is destroyed on exit
 from the loop.
 
 The index may be used within the loop body in either of two ways: you
-can access the integer value of \verb+i+ (see Example
-\ref{loop-panel-script}) or you can use its string representation,
-\dollar{i} (see Example \ref{loop-string-script}).
+can access the integer value of \verb+i+ or you can use its string
+representation, \dollar{i}.
 
 The starting and ending values for the index can be given in numerical
 form, by reference to predefined scalar variables, or as expressions
@@ -311,18 +310,18 @@ shown in Example~\ref{monte-carlo-loop}.
 \begin{scode}
 nulldata 50
 set seed 547
-genr x = 100 * uniform()
+series x = 100 * uniform()
 # open a "progressive" loop, to be repeated 100 times
 loop 100 --progressive
-   genr u = 10 * normal()
+   series u = 10 * normal()
    # construct the dependent variable
-   genr y = 10*x + u
+   series y = 10*x + u
    # run OLS regression
    ols y const x
    # grab the coefficient estimates and R-squared
-   genr a = $coeff(const)
-   genr b = $coeff(x)
-   genr r2 = $rsq
+   scalar a = $coeff(const)
+   scalar b = $coeff(x)
+   scalar r2 = $rsq
    # arrange for printing of stats on these
    print a b r2
    # and save the coefficients to file
@@ -340,9 +339,9 @@ the frequency distribution of the estimates in detail.
 The command \cmd{nulldata} is useful for Monte Carlo work.  Instead of
 opening a ``real'' data set, \cmd{nulldata 50} (for instance) opens a
 dummy data set, containing just a constant and an index variable, with
-a series length of 50. Constructed variables can then be added using
-the \cmd{genr} command.  See the \cmd{set} command for information on
-generating repeatable pseudo-random series.
+a series length of 50. Constructed variables can then be added.  See
+the \cmd{set} command for information on generating repeatable
+pseudo-random series.
 
 \subsection{Iterated least squares}
 \label{loop-ils-examples}
@@ -369,149 +368,104 @@ iteration will be printed when the loop terminates.
 open greene11_3.gdt
 # run initial OLS
 ols C 0 Y
-genr essbak = $ess
-genr essdiff = 1
-genr beta = $coeff(Y)
-genr gamma = 1
+scalar essbak = $ess
+scalar essdiff = 1
+scalar beta = $coeff(Y)
+scalar gamma = 1
+
 # iterate OLS till the error sum of squares converges
 loop while essdiff > .00001
    # form the linearized variables
-   genr C0 = C + gamma * beta * Y^gamma * log(Y)
-   genr x1 = Y^gamma
-   genr x2 = beta * Y^gamma * log(Y)
+   series C0 = C + gamma * beta * Y^gamma * log(Y)
+   series x1 = Y^gamma
+   series x2 = beta * Y^gamma * log(Y)
    # run OLS 
    ols C0 0 x1 x2 --print-final --no-df-corr --vcv
-   genr beta = $coeff(x1)
-   genr gamma = $coeff(x2)
-   genr ess = $ess
-   genr essdiff = abs(ess - essbak)/essbak
-   genr essbak = ess
+   beta = $coeff[2]
+   gamma = $coeff[3]
+   ess = $ess
+   essdiff = abs(ess - essbak)/essbak
+   essbak = ess
 endloop 
+
 # print parameter estimates using their "proper names"
-set echo off
-printf "alpha = %g\n", $coeff(0)
+printf "alpha = %g\n", $coeff[1]
 printf "beta  = %g\n", beta
 printf "gamma = %g\n", gamma
 \end{scode}
 \end{script}
 
-Example~\ref{jack-arma} shows how a loop can be used to
-estimate an ARMA model, exploiting the ``outer product of the
-gradient'' (OPG) regression discussed by Davidson and MacKinnon in
-their \emph{Estimation and Inference in Econometrics}.
+Example~\ref{jack-arma} shows how a loop can be used to estimate an
+ARMA model, exploiting the ``outer product of the gradient'' (OPG)
+regression discussed by \cite{davidson-mackinnon93}.
 
 \begin{script}[htbp]
   \caption{ARMA 1, 1}
   \label{jack-arma}
 \begin{scode}
-open armaloop.gdt
+# Estimation of an ARMA(1,1) model "manually", using a loop
 
-genr c = 0
-genr a = 0.1
-genr m = 0.1
+open arma.gdt
 
-series e = 1.0
-genr de_c = e
-genr de_a = e
-genr de_m = e
+scalar c = 0
+scalar a = 0.1
+scalar m = 0.1
 
-genr crit = 1
-loop while crit > 1.0e-9
+series e = 0.0
+series de_c = e
+series de_a = e
+series de_m = e
 
+scalar crit = 1
+
+loop while crit > 1.0e-9 --quiet
    # one-step forecast errors
-   genr e = y - c - a*y(-1) - m*e(-1)  
+   e = y - c - a*y(-1) - m*e(-1)  
 
    # log-likelihood 
-   genr loglik = -0.5 * sum(e^2)
+   scalar loglik = -0.5 * sum(e^2)
    print loglik
 
-   # partials of forecast errors wrt c, a, and m
-   genr de_c = -1 - m * de_c(-1) 
-   genr de_a = -y(-1) -m * de_a(-1)
-   genr de_m = -e(-1) -m * de_m(-1)
-
-   # partials of l wrt c, a and m
-   genr sc_c = -de_c * e
-   genr sc_a = -de_a * e
-   genr sc_m = -de_m * e
-
+   # partials of e with respect to c, a, and m
+   de_c = -1 - m * de_c(-1) 
+   de_a = -y(-1) -m * de_a(-1)
+   de_m = -e(-1) -m * de_m(-1)
+   
+   # partials of l with respect to c, a and m
+   series sc_c = -de_c * e
+   series sc_a = -de_a * e
+   series sc_m = -de_m * e
+   
    # OPG regression
    ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
    # Update the parameters
-   genr dc = $coeff(sc_c) 
-   genr c = c + dc
-   genr da = $coeff(sc_a) 
-   genr a = a + da
-   genr dm = $coeff(sc_m) 
-   genr m = m + dm
+   c += $coeff[1]
+   a += $coeff[2]
+   m += $coeff[3]
 
-   printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
-   printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
-   printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
+   # show progress
+   printf "  constant        = %.8g (gradient %#.6g)\n", c, $coeff[1]
+   printf "  ar1 coefficient = %.8g (gradient %#.6g)\n", a, $coeff[2]
+   printf "  ma1 coefficient = %.8g (gradient %#.6g)\n", m, $coeff[3]
 
-   genr crit = $T - $ess
+   crit = $T - $ess
    print crit
 endloop
 
-genr se_c = $stderr(sc_c)
-genr se_a = $stderr(sc_a)
-genr se_m = $stderr(sc_m)
+scalar se_c = $stderr[1]
+scalar se_a = $stderr[2]
+scalar se_m = $stderr[3]
 
-set echo off
 printf "\n"
-printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
-printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
-printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+printf "constant        = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
+printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
+printf "ma1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
 \end{scode}
 \end{script}
 
-
-\subsection{Indexed loop examples}
-
-Example \ref{loop-panel-script} shows an indexed loop in which the
-\cmd{smpl} is keyed to the index variable \texttt{t}.  Suppose we have
-a panel dataset with observations on a number of hospitals for the
-years 1991 to 2000 (where the year of the observation is indicated by
-a variable named \texttt{year}).  We restrict the sample to each of
-these years in turn and print cross-sectional summary statistics for
-variables 1 through 4.
-
-\begin{script}[htbp]
-  \caption{Panel statistics}
-  \label{loop-panel-script}
-\begin{scode}
-open hospitals.gdt
-loop t=1991..2000
-  smpl year==t --restrict --replace
-  summary 1 2 3 4
-endloop
-\end{scode}
-\end{script}
-
-
-Example \ref{loop-string-script} illustrates string substitution in an
-indexed loop.
-
-\begin{script}[htbp]
-  \caption{String substitution}
-  \label{loop-string-script}
-\begin{scode}
-open bea.dat
-loop i=1987..2001
-  genr V = COMP$i
-  genr TC = GOC$i - PBT$i
-  genr C = TC - V
-  ols PBT$i const TC V
-endloop
-\end{scode}
-\end{script}
-
-The first time round this loop the variable \verb+V+ will be set to
-equal \verb+COMP1987+ and the dependent variable for the \cmd{ols}
-will be \verb+PBT1987+. The next time round \verb+V+ will be redefined
-as equal to \verb+COMP1988+ and the dependent variable in the
-regression will be \verb+PBT1988+.  And so on.
+Further examples of \cmd{loop} usage that may be of interest can be
+found in chapter~\ref{chap:cheatsheet}.
 
 %%% Local Variables: 
 %%% mode: latex
