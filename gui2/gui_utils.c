@@ -1533,7 +1533,7 @@ void free_windata (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-#if 1
+#if 0
     fprintf(stderr, "free_windata: vwin %p, gtk_window %p, role %d\n",
 	    data, (void *) vwin->main, vwin->role);
 #endif

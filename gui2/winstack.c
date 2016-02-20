@@ -1216,10 +1216,12 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     if (parent != NULL) {
 	vwin_add_child(parent, vwin);
     }
-#if 1
+
+#if 0
     fprintf(stderr, "viewer_new: vwin %p, gtk window %p, role %d\n", (void *) vwin,
 	    (void *) vwin->main, role);
 #endif
+
     if (role != MAINWIN) {
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(free_windata), vwin);
@@ -1415,10 +1417,12 @@ windata_t *gretl_browser_new (int role, const gchar *title)
 
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(free_windata), vwin);
-#if 1
+
+#if 0
     fprintf(stderr, "browser_new: vwin %p, gtk window %p, role %d\n",
 	    (void *) vwin, (void *) vwin->main, role);
 #endif
+
     window_list_add(vwin->main, role);
 #ifndef G_OS_WIN32
     set_wm_icon(vwin->main);
