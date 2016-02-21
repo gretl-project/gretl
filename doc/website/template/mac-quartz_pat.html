@@ -32,13 +32,13 @@ what's new in the snapshot, take a look at the gretl
 <tr>
 <td><p>OR current snapshot</p></td>
 <td><p>
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-quartz.dmg.gz/download">gretl-quartz.dmg.gz</a>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-quartz.pkg/download">gretl-quartz.dmg.gz</a>
 </p></td>
 </tr>
 </table>
 
-<p><b>Tip</b>: If you're updating your gretl installation it's
-  probably a good idea to delete the old version of gretl before
+<p><b>Tip</b>: If you're updating your gretl installation it may
+  be advisable to delete the old version of gretl before
   installing the new one.</p>
 
 <h2>Installing gretl</h2> 
@@ -51,31 +51,20 @@ you can see what's happening on your computer.
 </p>
 
 <p>
-2. Double-click on the gretl file in Downloads to open the gretl "disk
-image".  If you don't see a gretl disk-image window after
-double-clicking, open the Finder and look at the foot of the left-hand
-pane. The names of any currently available disk images should be shown
-there. Double click on "gretl" to make it appear.
+2. Double-click on the gretl file in Downloads to open the installer.
+You should then be walked through the installation process.
 </p>
 
 <p>
-3. Once you've got the gretl disk-image window in view, you should see a
-gretl icon and a folder labeled "Applications". Drag the gretl icon
-onto Applications to install the program.
-</p>
-
-<p>
-4. Navigate to Applications in the Finder and you should now see a gretl
+3. Navigate to Applications in the Finder and you should now see a gretl
 icon there. Double-clicking should start gretl. On its first run gretl
 may take a while to start, as it scans the fonts available on your
 system. If gretl starts OK, you can drag its icon from Applications
 onto the dock to get a quick-launcher.
 </p>
 
-<p>5. Finally, clean up. Open the finder and go to the bottom of the
-left-hand pane. If you see an item there for gretl, use the little
-up-arrow button to eject it. Then go to your Downloads: you can move
-the original gretl <kbd>dmg</kbd> file to the trash.</p>
+<p>5. Finally, clean up. The installer (<kbd>pkg</kbd>) file can
+be moved to the Trash once installation is completed.</p>
 
 <p><b>Note on OS X 10.9 (Mavericks) and higher</b>: You may
   find that the OS rejects the installation, or
@@ -98,16 +87,11 @@ the original gretl <kbd>dmg</kbd> file to the trash.</p>
 
 <h2>Trouble?</h2>
 
-<p>The gretl disk image is documented in 
-<a href="./README-quartz.pdf">README-quartz.pdf</a>, which contains some suggestions for 
-trouble-shooting.  Briefly, if you want to debug a non-functioning
-gretl on OS X, please try this: open a Terminal window and run the following
-commands (change the first line if you installed gretl somewhere other than 
-<kbd>/Applications</kbd>):
+<p>Briefly, if you want to debug a non-functioning gretl on OS X, please try
+this: open a Terminal window and run the following command:</p>
 
 <pre>
-cd /Applications/Gretl.app/Contents/MacOS
-./gretl.sh
+/Applications/Gretl.app/Contents/MacOS/gretl.sh
 </pre>
 
 <p>This should give you some feedback on what is going wrong.</p>
