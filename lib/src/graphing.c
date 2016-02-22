@@ -4134,7 +4134,7 @@ int gnuplot_3d (int *list, const char *literal,
 	   terminal for interactive 3-D display.
 	*/
 	if (gnuplot_has_wxt()) {
-	    term = "wxt";
+	    term = "wxt size 640,420 noenhanced";
 	} else if (gnuplot_has_x11()) {
 	    term = "x11";
 	} else if (gnuplot_has_qt()) {
