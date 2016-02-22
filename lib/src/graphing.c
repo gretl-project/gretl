@@ -599,23 +599,23 @@ static int factor_check (gnuplot_info *gi, const DATASET *dset)
 
 #ifndef WIN32
 
+int gnuplot_has_wxt (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term wxt");
+    }
+
+    return !err;
+}
+
 static int gnuplot_has_x11 (void)
 {
     static int err = -1; 
 
     if (err == -1) {
 	err = gnuplot_test_command("set term x11");
-    }
-
-    return !err;
-}
-
-static int gnuplot_has_wxt (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set term wxt");
     }
 
     return !err;
@@ -644,6 +644,14 @@ static int gnuplot_has_tikz (void)
 }
 
 #else
+
+int gnuplot_has_wxt (void)
+{
+    /* There's no WxWidgets support in the current
+       Windows build of gnuplot 5 
+    */
+    return 0;
+}
 
 static int gnuplot_has_tikz (void)
 {

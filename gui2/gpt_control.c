@@ -975,9 +975,9 @@ int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
     return err;
 }
 
-/* we're looking for an uncommented "set term png" or some such */
+/* we're looking for an uncommented "set term ..." */
 
-static int is_batch_term_line (const char *s)
+static int is_term_line (const char *s, int *batch)
 {
     int ret = 0;
 
@@ -986,7 +986,7 @@ static int is_batch_term_line (const char *s)
     if (*s != '#') {
 	s = strstr(s, "set term");
 	if (s != NULL) {
-	    ret = 1;
+	    *batch = ret = 1;
 	    s += 8;
 	    s += strcspn(s, " "); /* skip "inal"? */
 	    s += strspn(s, " ");  /* skip space */
@@ -995,7 +995,7 @@ static int is_batch_term_line (const char *s)
 		!strncmp(s, "wxt", 3) ||
 		!strncmp(s, "qt", 2)) {
 		/* these are all interactive */
-		ret = 0;
+		*batch = 0;
 	    }
 	}
     }
@@ -1003,10 +1003,40 @@ static int is_batch_term_line (const char *s)
     return ret;
 }
 
+/* Check whether (a) we might want to prepend a "set
+   term" statement (not if the user has already given
+   one) and (b) whether we might want to append
+   "pause mouse close" (not if a batch-type terminal
+   has been specified).
+*/
+
+static void pre_test_plot_buffer (const char *buf,
+				  int *addpause,
+				  int *putterm)
+{
+    char bufline[512];
+    int batch = 0;
+
+    bufgets_init(buf);
+
+    while (bufgets(bufline, sizeof bufline, buf)) {
+	if (is_term_line(bufline, &batch)) {
+	    *putterm = 0;
+	    if (*addpause && batch) {
+		*addpause = 0;
+	    }
+	} else if (*addpause && strstr(bufline, "pause ")) {
+	    *addpause = 0;
+	}
+    }
+
+    bufgets_finalize(buf);
+}
+
 /* dump_plot_buffer: this is used when we're taking the material from
    an editor window containing gnuplot commands, and either (a)
    sending it to gnuplot for execution, or (b) saving it to a "user
-   file".  
+   file".  In the saving-to-file case @addpause will be 0.
 
    This function handles the addition of "pause mouse close",
    if @addpause is non-zero.
@@ -1016,45 +1046,33 @@ int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause)
 {
     FILE *fp = gretl_fopen(fname, "w");
+    int putterm = addpause;
+    int wxt_ok = 0;
 
     if (fp == NULL) {
 	file_write_errbox(fname);
 	return E_FOPEN;
     }
 
-#ifndef G_OS_WIN32
-    /* we might have a broken qt terminal (4.6.5) */
-    addpause = 0;
+    if (addpause) {
+	wxt_ok = gnuplot_has_wxt();
+	pre_test_plot_buffer(buf, &addpause, &putterm);
+	if (putterm && wxt_ok) {
+	    fputs("set term wxt size 640,420 noenhanced\n", fp);
+	}
+    }
+
+#ifndef PKGBUILD
+    if (addpause && gnuplot_version() <= 4.65 && !wxt_ok) {
+	/* we might have a broken qt terminal? (4.6.5) */
+	addpause = 0;
+    }
 #endif
 
-    if (!addpause) {
-	/* nice and simple! */
-	fputs(buf, fp);
-    } else {
-	/* We should add a "pause" command unless (a) the
-	   script already has one, or (b) the "terminal"
-	   type is "batch" rather than interactive.
-	*/
-	int gotpause = 0;
-	char bufline[512];
+    fputs(buf, fp);
 
-	bufgets_init(buf);
-
-	while (bufgets(bufline, sizeof bufline, buf)) {
-	    if (addpause && is_batch_term_line(bufline)) {
-		addpause = 0;
-	    }
-	    fputs(bufline, fp);
-	    if (addpause && strstr(bufline, "pause ")) {
-		gotpause = 1;
-	    }
-	}
-
-	bufgets_finalize(buf);
-
-	if (addpause && !gotpause) {
-	    fputs("pause mouse close\n", fp);
-	}
+    if (addpause) {
+	fputs("pause mouse close\n", fp);
     }
 
     fclose(fp);
@@ -1086,7 +1104,7 @@ static void gnuplot_done (GPid pid, gint status, gpointer p)
 {
     if (p != NULL) {
 	gint err_fd = GPOINTER_TO_INT(p);
-    
+
 	if (err_fd > 0) {
 	    if (status != 0) {
 		char buf[128] = {0};

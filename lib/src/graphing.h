@@ -321,5 +321,7 @@ double gnuplot_time_from_date (const char *s,
 
 double gnuplot_version (void);
 
+int gnuplot_has_wxt (void);
+
 #endif /* GRAPHING_H */
 
