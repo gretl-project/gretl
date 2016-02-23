@@ -3,18 +3,28 @@ version 2016b, in progress
   loading of big code buffers
 - GUI plot editor: enable selection of point size for graph
   styles that use points
-- Internal code: introduce some optimizations which may speed
-  up execution of complex scripts
+- Internal code: introduce several optimizations to speed up
+  execution of complex scripts
+- "foreign" language mechanism: add basic support for Julia
+  (including editing and execution of Julia programs)
+- build: try harder to respect --disable-nls (though this is
+  very difficult nowadays)
 - Fix bug: CSV import failing in locales that use decimal
   comma when file uses decimal comma and also '.' as thousands
   marker
+- Fix bug: "omit" command with --auto option failing for 
+  ordered logit/probit models
 - Fix bug: GUI access to nonparametric models was broken
 - Fix bug: not flagging an error when given a broken right-
   hand side specification in the "restrict" command
+- Fix bug: matrix-form restrictions on VECM model not being
+  accepted even when valid, in some cases
 - Fix bugs: some subtle fail conditions for saving compiled
   loops onto functions
 - OS X (quartz) build: update to GTK 2.24.29, and fix a GTK
   issue which led to crashes on OS X 10.11 (El Capitan)
+- OS X (quartz) build: fix problem with gnuplot wxt window,
+  add Adwaita theme, and make Adwaita the default
 
 2016-01-26 version 2016a
 - syntax enhancement: allow specification of type when setting
