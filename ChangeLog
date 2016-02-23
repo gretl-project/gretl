@@ -14,6 +14,8 @@ version 2016b, in progress
   marker
 - Fix bug: "omit" command with --auto option failing for 
   ordered logit/probit models
+- Fix bug: potential crash in printing the results of a
+  random-effects probit model with small RE variance
 - Fix bug: GUI access to nonparametric models was broken
 - Fix bug: not flagging an error when given a broken right-
   hand side specification in the "restrict" command

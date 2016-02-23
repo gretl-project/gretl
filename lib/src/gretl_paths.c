@@ -1757,6 +1757,15 @@ int get_package_data_path (const char *fname, char *fullname)
 		strcpy(fullname, fname);
 	    }
 	    free(gfnpath);
+#if 0
+	    FILE *fp = gretl_fopen(fullname, "r");
+	    
+	    if (fp == NULL) {
+		fprintf(stderr, "package_data_path: %s not found\n", fullname);
+	    } else {
+		fclose(fp);
+	    }
+#endif
 	}
     }
 
