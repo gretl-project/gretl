@@ -744,13 +744,20 @@ static double durbins_h (const MODEL *pmod)
 static int least_significant_coeff (const MODEL *pmod)
 {
     double x, tmin = 3.2;
-    int i, k = 0;
+    int i, imax, k = 0;
 
-    if (gretl_list_separator_position(pmod->list) > 0) {
+    if (pmod->list == NULL ||
+	gretl_list_separator_position(pmod->list) > 0) {
 	return 0;
     }
-    
-    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
+
+    /* Don't go beyond the last _listed_ regressor: some
+       models have "extra" coefficients that should be
+       ignored here.
+    */
+    imax = pmod->list[0] - 1 - pmod->ifc;
+
+    for (i=pmod->ifc; i<=imax; i++) {
 	if (pmod->sderr[i] > 0) {
 	    x = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (x < tmin) {
@@ -760,7 +767,7 @@ static int least_significant_coeff (const MODEL *pmod)
 	}
     }
 
-    if (tmin < 3.2) {
+    if (tmin < 3.0) {
 	x = model_coeff_pval(pmod, tmin);
 	if (!na(x) && x > .10) {
 	    return pmod->list[k+2];
@@ -777,7 +784,9 @@ static void pval_max_line (const MODEL *pmod, const DATASET *dset,
 
     if (k < 3) return;
 
-    if ((k = least_significant_coeff(pmod))) {
+    k = least_significant_coeff(pmod);
+
+    if (k > 0 && k < dset->v) {
 	if (pmod->ifc) {
 	    pprintf(prn, _("Excluding the constant, p-value was highest "
 			   "for variable %d (%s)"), k, dset->varname[k]);
