@@ -137,7 +137,7 @@ static int lcnumeric = 1;
 static double graph_scale = 1.0;
 
 #if defined(MAC_THEMING)
-static char themepref[12] = "Clearlooks";
+static char themepref[12] = "Adwaita";
 #elif defined(G_OS_WIN32)
 static char themepref[12] = "MS-Windows";
 #endif
@@ -1180,7 +1180,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #if defined(MAC_THEMING)
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-	    "Clearlooks", "Lion-like", "Adwaita", "Plain"
+	    "Adwaita", "Clearlooks", "Lion-like", "Plain"
 	};	
 
 	strs = theme_strs;
@@ -2864,9 +2864,9 @@ void working_dir_dialog (void)
 
 void set_up_mac_look (void)
 {
-    if (!strcmp(themepref, "Clearlooks") ||
-	!strcmp(themepref, "Lion-like") ||
-	!strcmp(themepref, "Adwaita")) {
+    if (!strcmp(themepref, "Adwaita") ||
+	!strcmp(themepref, "Clearlooks") ||
+	!strcmp(themepref, "Lion-like")) {
 	char *topdir = getenv("GTK_DATA_PREFIX");
 	gchar *gtkrc;
 
