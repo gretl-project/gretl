@@ -1180,7 +1180,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 #if defined(MAC_THEMING)
     else if (var == themepref) {
 	static const char *theme_strs[] = {
-	    "Clearlooks", "Lion-like", "Plain"
+	    "Clearlooks", "Lion-like", "Adwaita", "Plain"
 	};	
 
 	strs = theme_strs;
@@ -2865,7 +2865,8 @@ void working_dir_dialog (void)
 void set_up_mac_look (void)
 {
     if (!strcmp(themepref, "Clearlooks") ||
-	!strcmp(themepref, "Lion-like")) {
+	!strcmp(themepref, "Lion-like") ||
+	!strcmp(themepref, "Adwaita")) {
 	char *topdir = getenv("GTK_DATA_PREFIX");
 	gchar *gtkrc;
 
