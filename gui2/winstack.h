@@ -66,7 +66,7 @@ void vwin_add_winlist (windata_t *vwin);
 
 void window_add_winlist (GtkWidget *window, GtkWidget *hbox);
 
-windata_t *vwin_new (int role, gpointer data);
+windata_t *vwin_new (int role, gpointer data, const gchar *title);
 
 int highest_numbered_variable_in_winstack (void);
 

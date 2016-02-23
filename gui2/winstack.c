@@ -1181,7 +1181,7 @@ GList *windowed_model_list (void)
 
 /* end of window-list apparatus */
 
-windata_t *vwin_new (int role, gpointer data)
+windata_t *vwin_new (int role, gpointer data, const gchar *title)
 {
     windata_t *vwin = mymalloc(sizeof *vwin);
 
@@ -1189,6 +1189,11 @@ windata_t *vwin_new (int role, gpointer data)
 	memset(vwin, 0, sizeof *vwin);
 	vwin->role = role;
 	vwin->data = data;
+	if (title != NULL) {
+	    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+	    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+	}
     }
 
     return vwin;
@@ -1199,15 +1204,11 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      const gchar *title, 
 			      gpointer data)
 {
-    windata_t *vwin = vwin_new(role, data);
+    windata_t *vwin = vwin_new(role, data, title);
 
     if (vwin == NULL) {
 	return NULL;
     }
-
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     vwin->vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
@@ -1222,9 +1223,14 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	    (void *) vwin->main, role);
 #endif
 
-    if (role != MAINWIN) {
+    if (role == MAINWIN) {
+	gtk_window_set_position(GTK_WINDOW(vwin->main),
+				GTK_WIN_POS_CENTER);
+    } else {
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(free_windata), vwin);
+	gtk_window_set_position(GTK_WINDOW(vwin->main),
+				GTK_WIN_POS_MOUSE);
     }
 
     if (title != NULL) {
@@ -1405,18 +1411,16 @@ void vwin_reinstate_toolbar (windata_t *vwin)
 
 windata_t *gretl_browser_new (int role, const gchar *title)
 {
-    windata_t *vwin = vwin_new(role, NULL);
+    windata_t *vwin = vwin_new(role, NULL, title);
 
     if (vwin == NULL) {
 	return NULL;
     }
 
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(free_windata), vwin);
+    gtk_window_set_position(GTK_WINDOW(vwin->main),
+			    GTK_WIN_POS_MOUSE);
 
 #if 0
     fprintf(stderr, "browser_new: vwin %p, gtk window %p, role %d\n",

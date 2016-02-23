@@ -646,7 +646,7 @@ windata_t *viewer_tab_new (int role, const char *info,
 	return NULL;
     }
 
-    vwin = vwin_new(role, data);
+    vwin = vwin_new(role, data, NULL);
     if (vwin == NULL) {
 	return NULL;
     }
