@@ -4485,12 +4485,12 @@ int save_function_package_spec (const char *fname, gpointer p)
 	GUI_PRECHECK,
 	NULL
     };
+    const char *reqstr = NULL;
     const char *gui_help;
     const char *sample;
     gchar *strval;
     function_info *finfo = p;
     PRN *prn;
-    const char *reqstr = NULL;
     char vstr[10];
     int nnp = 0, nmo = 0;
     int i, len;
@@ -4637,6 +4637,15 @@ int save_function_package_spec (const char *fname, gpointer p)
     maybe_write_aux_file(finfo, fname, "sample-script",
 			 sample, prn);
     pputc(prn, '\n');
+
+    /* write out data-files listing? */
+    if (finfo->datafiles != NULL) {
+	pputs(prn, "data-files = ");
+	for (i=0; i<finfo->n_files; i++) {
+	    pputs(prn, finfo->datafiles[i]);
+	    pputc(prn, (i == finfo->n_files - 1)? '\n' : ' ');
+	}
+    }
 
     gretl_print_destroy(prn);
 
