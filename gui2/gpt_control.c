@@ -3299,6 +3299,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 		    sprintf(label, xfmt, data_x);
 		}
 	    } else {
+		/* FIXME annual data */
 		sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
 			"%#7.4g", data_x);
 	    }
