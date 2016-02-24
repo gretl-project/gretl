@@ -1728,6 +1728,71 @@ char *gretl_function_package_get_path (const char *name,
     return ret;
 }
 
+/* Search for file with basename @fname in directory
+   @dirname, or in any subdirectory of same up to
+   depth @maxdepth. If the file is found, write its
+   path into @fullname and return 1, otherwise
+   return 0 (= not found).
+*/
+
+static int find_file_in_dir (const char *fname,
+			     const char *dirname, 
+			     char *fullname,
+			     int maxdepth,
+			     int depth)
+{
+    char tmp[FILENAME_MAX];
+    struct dirent *entry;
+    struct stat sbuf;
+    DIR *dir;
+    int found = 0;
+
+    dir = gretl_opendir(dirname);
+
+    if (dir == NULL) {
+	return 0;
+    }
+
+    /* look for top-level plain file first */
+    while (!found && (entry = readdir(dir))) {
+	if (!strcmp(entry->d_name, ".") ||
+	    !strcmp(entry->d_name, "..")) {
+	    continue;
+	}
+	sprintf(tmp, "%s%c%s", dirname, SLASH, entry->d_name);
+	if (gretl_stat(tmp, &sbuf) < 0) {
+	    continue;
+	} else if ((sbuf.st_mode & S_IFREG) &&
+		   !strcmp(entry->d_name, fname)) {
+	    strcpy(fullname, tmp);
+	    found = 1;
+	}
+    }
+
+    if (!found && depth < maxdepth) {
+	/* then look in subdirs */
+	rewinddir(dir);
+	depth++;
+	while (!found && (entry = readdir(dir))) {
+	    if (!strcmp(entry->d_name, ".") ||
+		!strcmp(entry->d_name, "..")) {
+		continue;
+	    }	    
+	    sprintf(tmp, "%s%c%s", dirname, SLASH, entry->d_name);
+	    if (gretl_stat(tmp, &sbuf) < 0) {
+		continue;
+	    } else if (sbuf.st_mode & S_IFDIR) {
+		found = find_file_in_dir(fname, tmp, fullname,
+					 maxdepth, depth);
+	    }
+	}
+    }
+
+    closedir(dir);
+
+    return found;
+}
+
 /**
  * get_package_data_path:
  * @fname: the basename of the file whose full path is wanted.
@@ -1760,22 +1825,14 @@ int get_package_data_path (const char *fname, char *fullname)
 	    char *p = strrchr(gfnpath, SLASH);
 
 	    if (p != NULL) {
-		*(p + 1) = '\0';
-		strcat(fullname, gfnpath);
-		strcat(fullname, fname);
-	    } else {
-		strcpy(fullname, fname);
+		*p = '\0';
+	    }	    
+	    if (!find_file_in_dir(fname, gfnpath,
+				  fullname, 1, 0)) {
+		*fullname = '\0';
+		err = E_FOPEN;
 	    }
 	    free(gfnpath);
-#if 0
-	    FILE *fp = gretl_fopen(fullname, "r");
-	    
-	    if (fp == NULL) {
-		fprintf(stderr, "package_data_path: %s not found\n", fullname);
-	    } else {
-		fclose(fp);
-	    }
-#endif
 	}
     }
 
