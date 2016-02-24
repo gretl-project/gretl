@@ -100,9 +100,19 @@ const char *helpfile_path (int id)
     }
 }
 
+/* If @fname does not already have suffix @sfx, add it. 
+   With the qualification that if the @fname bears either of
+   the standard gretl data-file suffixes, ".gdt" or ".gdtb",
+   we won't stick the other one onto the end.
+*/
+
 static int maybe_add_suffix (char *fname, const char *sfx)
 {
-    if (!has_suffix(fname, sfx)) {
+    if (has_suffix(fname, ".gdtb") && !strcmp(sfx, ".gdt")) {
+	return 0;
+    } else if (has_suffix(fname, ".gdt") && !strcmp(sfx, ".gdtb")) {
+	return 0;
+    } else if (!has_suffix(fname, sfx)) {
 	strcat(fname, sfx);
 	return 1;
     }
