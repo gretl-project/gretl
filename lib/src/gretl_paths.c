@@ -1820,6 +1820,8 @@ int get_package_data_path (const char *fname, char *fullname)
 	char *gfnpath = gretl_addon_get_path(pkgname);
 
 	if (gfnpath == NULL) {
+	    gretl_errmsg_sprintf(_("Couldn't find package %s"),
+				 pkgname);
 	    err = E_DATA;
 	} else {
 	    char *p = strrchr(gfnpath, SLASH);
@@ -1829,6 +1831,8 @@ int get_package_data_path (const char *fname, char *fullname)
 	    }	    
 	    if (!find_file_in_dir(fname, gfnpath,
 				  fullname, 1, 0)) {
+		gretl_errmsg_sprintf(_("Couldn't find file %s for package %s"),
+				     fname, pkgname);
 		*fullname = '\0';
 		err = E_FOPEN;
 	    }
