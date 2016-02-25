@@ -3238,7 +3238,10 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     return TRUE;
 }
 
-#define float_fmt(i,x) ((i) && fabs(x) < 1.0e7)
+static inline int use_integer_format (int xint, double xdata)
+{
+    return (xint && fabs(xdata) < 1.0e7);
+}
 
 static gint
 plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
@@ -3298,10 +3301,10 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 		} else {
 		    sprintf(label, xfmt, data_x);
 		}
+	    } else if (use_integer_format(plot->xint, data_x)) {
+		sprintf(label, "%7d", (int) data_x);
 	    } else {
-		/* FIXME annual data */
-		sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
-			"%#7.4g", data_x);
+		sprintf(label, "%#7.4g", data_x);
 	    }
 	}
 
@@ -3309,14 +3312,15 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	    if (plot_has_png_coords(plot)) {
 		if (yfmt != NULL) {
 		    sprintf(label_y, yfmt, data_y);
+		} else if (use_integer_format(plot->yint, data_y)) {
+		    sprintf(label_y, " %-7d", (int) data_y);
 		} else {
-		    sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
-			    " %#-7.4g", data_y);
+		    sprintf(label_y, " %#-7.4g", data_y);
 		}
+	    } else if (use_integer_format(plot->yint, data_y)) {
+		sprintf(label_y, " %-7d", (int) data_y);
 	    } else {
-		/* pretty much guessing at y coordinate here */
-		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
-				  " %#-6.3g", data_y);
+		sprintf(label_y, " %#-6.3g", data_y);
 	    }
 	    if (strlen(label) + strlen(label_y) < sizeof label) {
 		strcat(label, label_y);
@@ -4556,6 +4560,7 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
     char line[MAXLEN];
     int got_x = 0;
     int got_y = 0;
+    int annual = 0;
     png_bounds b;
     int err = 0;
 
@@ -4585,7 +4590,9 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 	if (sscanf(line, "set xrange [%lf:%lf]", 
 		   &plot->xmin, &plot->xmax) == 2) { 
 	    got_x = 1;
-	} 
+	} else if (!strncmp(line, "# timeseries 1", 13)) {
+	    annual = 1;
+	}
     }
 
     gretl_pop_c_numeric_locale();
@@ -4630,12 +4637,17 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 	if (ptype != PLOT_ROOTS && ptype != PLOT_QQ) {
 	    plot->status |= PLOT_CURSOR_LABEL;
 	}
-	if ((plot->xmax - plot->xmin) / 
+	if (annual) {
+	    /* years on x-axis: show as integer */
+	    plot->xint = 1;
+	} else if ((plot->xmax - plot->xmin) / 
 	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
+	    /* show x-axis variable as integer */
 	    plot->xint = 1;
 	}
 	if ((plot->ymax - plot->ymin) / 
 	    (plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
+	    /* show y-axis variable as integer */
 	    plot->yint = 1;
 	}
     } else {
