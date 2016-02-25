@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-02-24 14:00-0500\n"
-"PO-Revision-Date: 2016-01-28 18:25+0100\n"
+"PO-Revision-Date: 2016-02-25 15:42+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -465,9 +465,9 @@ msgstr "Hipótese nula:[O parámetro de regresión para *%s* é cero]"
 
 #: lib/src/compare.c:278 lib/src/compare.c:281 lib/src/compare.c:284
 #: lib/src/describe.c:5942 lib/src/gretl_model.c:3794
-#: lib/src/gretl_model.c:3797 lib/src/gretl_model.c:3804 lib/src/nonparam.c:980
-#: lib/src/nonparam.c:1117 lib/src/varprint.c:1249 lib/src/varprint.c:1255
-#: lib/src/varprint.c:1263
+#: lib/src/gretl_model.c:3797 lib/src/gretl_model.c:3804
+#: lib/src/nonparam.c:980 lib/src/nonparam.c:1117 lib/src/varprint.c:1249
+#: lib/src/varprint.c:1255 lib/src/varprint.c:1263
 msgid "Null hypothesis"
 msgstr "Hipótese nula"
 
@@ -511,18 +511,19 @@ msgstr "Proba de Wald"
 #: lib/src/graphing.c:4232 lib/src/gretl_model.c:3860
 #: lib/src/gretl_model.c:3874 lib/src/gretl_model.c:3877
 #: lib/src/gretl_model.c:3902 lib/src/gretl_panel.c:3914
-#: lib/src/gretl_panel.c:4172 lib/src/modelprint.c:197 lib/src/modelprint.c:375
-#: lib/src/modelprint.c:379 lib/src/modelprint.c:469 lib/src/modelprint.c:472
-#: lib/src/modelprint.c:493 lib/src/modelprint.c:496 lib/src/modelprint.c:2446
-#: lib/src/modelprint.c:2451 lib/src/modelprint.c:2473
-#: lib/src/modelprint.c:2478 lib/src/modelprint.c:2970
-#: lib/src/modelprint.c:5143 lib/src/modelprint.c:5166 lib/src/printout.c:326
-#: lib/src/pvalues.c:2636 lib/src/pvalues.c:3301 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3389 lib/src/system.c:3411
-#: lib/src/system.c:3483 lib/src/system.c:3501 lib/src/system.c:4612
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:78 lib/src/vartest.c:820
-#: lib/src/vartest.c:1107 plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4172 lib/src/modelprint.c:197
+#: lib/src/modelprint.c:375 lib/src/modelprint.c:379 lib/src/modelprint.c:469
+#: lib/src/modelprint.c:472 lib/src/modelprint.c:493 lib/src/modelprint.c:496
+#: lib/src/modelprint.c:2446 lib/src/modelprint.c:2451
+#: lib/src/modelprint.c:2473 lib/src/modelprint.c:2478
+#: lib/src/modelprint.c:2970 lib/src/modelprint.c:5143
+#: lib/src/modelprint.c:5166 lib/src/printout.c:326 lib/src/pvalues.c:2636
+#: lib/src/pvalues.c:3301 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3389 lib/src/system.c:3411 lib/src/system.c:3483
+#: lib/src/system.c:3501 lib/src/system.c:4612 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:78 lib/src/vartest.c:820 lib/src/vartest.c:1107
+#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Chi-cadrado"
 
@@ -1140,19 +1141,20 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Fallo ao interpretar os datos como numéricos\n"
 
-#: lib/src/csvdata.c:3554 plugin/eviews_import.c:554 plugin/excel_import.c:1741
-#: plugin/gnumeric_import.c:832 plugin/jmulti_import.c:379
-#: plugin/sas_import.c:686 plugin/spss_import.c:1942 plugin/stata_import.c:2145
+#: lib/src/csvdata.c:3554 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
+#: plugin/jmulti_import.c:379 plugin/sas_import.c:686
+#: plugin/spss_import.c:1942 plugin/stata_import.c:2145
 #: plugin/xlsx_import.c:1385
 msgid "warning: some variable names were duplicated\n"
 msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
 
-#: lib/src/csvdata.c:3592 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1575 plugin/gnumeric_import.c:653
-#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
-#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1847
-#: plugin/spss_import.c:1868 plugin/stata_import.c:2113
-#: plugin/stata_import.c:2124
+#: lib/src/csvdata.c:3592 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1575
+#: plugin/gnumeric_import.c:653 plugin/jmulti_import.c:350
+#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
+#: plugin/spss_import.c:1847 plugin/spss_import.c:1868
+#: plugin/stata_import.c:2113 plugin/stata_import.c:2124
 msgid "Out of memory\n"
 msgstr "Fóra de memoria\n"
 
@@ -2323,9 +2325,9 @@ msgid "Matrix specification is not coherent"
 msgstr "A especificación da matriz non é coherente"
 
 #: lib/src/geneval.c:6937
-#, fuzzy, c-format
+#, c-format
 msgid "The function %s does not return any value"
-msgstr "A matriz *%s* non representa unha táboa de continxencia"
+msgstr "A función %s non devolve ningún valor"
 
 #: lib/src/geneval.c:6948 lib/src/geneval.c:8738
 #, c-format
@@ -3308,8 +3310,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2455 lib/src/gretl_func.c:2515
-#: lib/src/gretl_func.c:2595 lib/src/gretl_utils.c:1889 lib/src/interact.c:1087
-#: gui2/dialogs.c:5527 gui2/fnsave.c:4997 plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2595 lib/src/gretl_utils.c:1889
+#: lib/src/interact.c:1087 gui2/dialogs.c:5527 gui2/fnsave.c:4997
+#: plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Non se puido abrir *%s*"
@@ -3715,7 +3718,8 @@ msgstr "Graos de liberdade denominador"
 #: lib/src/gretl_model.c:3986 lib/src/modelprint.c:5212
 #: lib/src/modelprint.c:5223 lib/src/modelprint.c:5225 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2007
-#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
+#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96
+#: plugin/anova.c:98
 msgid "df"
 msgstr "Graos de liberdade"
 
@@ -3942,14 +3946,14 @@ msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "Non pode facerse isto cunha submostra dun conxunto de datos"
 
 #: lib/src/gretl_paths.c:1823
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find package %s"
-msgstr "Non se puido atopar *%s*"
+msgstr "Non puido atoparse o paquete %s"
 
 #: lib/src/gretl_paths.c:1834
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "Non puido atoparse o guión '%s'\n"
+msgstr "Non puido atoparse o ficheiro %s para o paquete %s"
 
 #: lib/src/gretl_paths.c:2500
 msgid "User directory is not set"
@@ -4079,7 +4083,8 @@ msgstr "Desviación típica da regresión"
 msgid "Robust chi^2"
 msgstr "Chi^2 robusto"
 
-#: lib/src/gretl_restrict.c:2266 lib/src/subsample.c:3026 lib/src/system.c:1245
+#: lib/src/gretl_restrict.c:2266 lib/src/subsample.c:3026
+#: lib/src/system.c:1245
 msgid "restriction"
 msgstr "restrición"
 
@@ -5757,8 +5762,8 @@ msgstr "Imaxinaria"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:4927 lib/src/modelprint.c:4935 lib/src/subsample.c:3014
-#: lib/src/subsample.c:3036 lib/src/subsample.c:3091
+#: lib/src/modelprint.c:4927 lib/src/modelprint.c:4935
+#: lib/src/subsample.c:3014 lib/src/subsample.c:3036 lib/src/subsample.c:3091
 msgid "Frequency"
 msgstr "Frecuencia"
 
@@ -5854,7 +5859,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: Agardábanse %d nomes."
 
 #: lib/src/monte_carlo.c:287 lib/src/monte_carlo.c:776
-#: lib/src/monte_carlo.c:1753 lib/src/monte_carlo.c:1916 lib/src/uservar.c:1761
+#: lib/src/monte_carlo.c:1753 lib/src/monte_carlo.c:1916
+#: lib/src/uservar.c:1761
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': non é un escalar"
@@ -5953,7 +5959,7 @@ msgstr "Neste contexto non poden borrarse escalares\n"
 #: lib/src/monte_carlo.c:3069 lib/src/monte_carlo.c:3086
 #, c-format
 msgid "delete %s: not allowed\n"
-msgstr ""
+msgstr "Borrar %s: Non permitido\n"
 
 #: lib/src/monte_carlo.c:3547
 #, c-format
@@ -7506,7 +7512,7 @@ msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
 #: cli/gretlcli.c:158
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -7532,10 +7538,12 @@ msgstr ""
 " -r ou --run    Executar un guión e logo tomar o control da liña de "
 "instrucións.\n"
 " -m ou --makepkg    Executar un guión e crear un paquete a partir del.\n"
+" -i ou --instpkg    Instalar un paquete de función específico.\n"
 " -h ou --help    Amosar esta información e saír.\n"
 " -v ou --version    Amosar a información da versión e saír.\n"
 " -e ou --english    Forzar o uso do inglés en lugar da tradución.\n"
 " -q ou --quiet    Amosar información do programa menos cumprida.\n"
+" -t ou --tool    Funcionar en silenzo.\n"
 "Exemplo de utilización do modo 'batch':\n"
 " gretlcli -b myfile.inp >myfile.out\n"
 "Exemplo de utilización do modo 'run':\n"
@@ -8544,8 +8552,9 @@ msgstr "Aviso: A serie ten observacións perdidas"
 msgid "Couldn't access binary datafile"
 msgstr "Non puido accederse ao ficheiro de datos binario"
 
-#: gui2/database.c:796 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3373
+#: gui2/database.c:796 gui2/session.c:156 gui2/session.c:163
+#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
+#: gui2/session.c:3373
 msgid "Display"
 msgstr "Amosar"
 
@@ -8723,8 +8732,8 @@ msgstr "Engadir ao menú"
 
 #: gui2/datafiles.c:1400 gui2/datafiles.c:1602 gui2/gpt_control.c:3790
 #: gui2/gpt_control.c:3792 gui2/gpt_control.c:3902 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756 gui2/toolbar.c:757
-#: gui2/toolbar.c:758
+#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756
+#: gui2/toolbar.c:757 gui2/toolbar.c:758
 msgid "Help"
 msgstr "Axuda"
 
@@ -11134,9 +11143,8 @@ msgid "point"
 msgstr "Símbolo"
 
 #: gui2/gpt_dialog.c:2853
-#, fuzzy
 msgid "data scale"
-msgstr "Escala"
+msgstr "Escala de datos"
 
 #: gui2/gpt_dialog.c:2867
 msgid "y axis"
@@ -15326,13 +15334,13 @@ msgstr "Editar as ordes de gráfica"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3303
-#: gui2/session.c:3341 gui2/session.c:3352
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
+#: gui2/session.c:3303 gui2/session.c:3341 gui2/session.c:3352
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3290
-#: gui2/session.c:3324 gui2/textutil.c:478
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
+#: gui2/session.c:3290 gui2/session.c:3324 gui2/textutil.c:478
 msgid "View"
 msgstr "Ver"
 
@@ -16783,7 +16791,8 @@ msgid "No worksheets found"
 msgstr "Non se atoparon follas de traballo"
 
 #: plugin/excel_import.c:1608 plugin/gnumeric_import.c:686
-#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140 plugin/xlsx_import.c:1200
+#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140
+#: plugin/xlsx_import.c:1200
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento incorrecto para a importación dunha folla de cálculo"
 
