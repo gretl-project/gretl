@@ -136,12 +136,12 @@ static void joiner_doit (GtkWidget *w, join_info *jinfo)
     import = gtk_entry_get_text(GTK_ENTRY(jinfo->import));
     target = gtk_entry_get_text(GTK_ENTRY(jinfo->target));
     
-    if (import == NULL || *import = '\0') {
+    if (import == NULL || *import == '\0') {
 	return; /* respond to error! */
     }
 
     if (target != NULL &&
-	(*target = '\0' || !strncmp(target, "same as", 7))) {
+	(*target == '\0' || !strncmp(target, "same as", 7))) {
 	target = NULL;
     }    
 	
