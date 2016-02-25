@@ -1271,6 +1271,15 @@ gboolean do_open_data (windata_t *fwin, int code)
 	close_session(OPT_NONE); /* FIXME opt? */
     }
 
+#if 0 /* Just testing ! */
+#include "join-gui.h"
+    
+    if (append) {
+	test_join_gui(tryfile);
+	return 0;
+    }
+#endif
+
     if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
 	err = get_csv_data(tryfile, ftype, append);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
