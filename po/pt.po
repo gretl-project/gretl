@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-02-24 14:00-0500\n"
-"PO-Revision-Date: 2016-01-27 17:12+0100\n"
+"PO-Revision-Date: 2016-02-25 10:52+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -2326,9 +2326,9 @@ msgid "Matrix specification is not coherent"
 msgstr "A especificação da matriz não é coerente"
 
 #: lib/src/geneval.c:6937
-#, fuzzy, c-format
+#, c-format
 msgid "The function %s does not return any value"
-msgstr "A matriz %s não representa uma tabela de contigência"
+msgstr "A função %s não retorna nenhum valor"
 
 #: lib/src/geneval.c:6948 lib/src/geneval.c:8738
 #, c-format
@@ -3945,14 +3945,14 @@ msgstr ""
 "Desculpe, isto não pode ser feito com um conjunto de dados sub-amostrado"
 
 #: lib/src/gretl_paths.c:1823
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find package %s"
-msgstr "Não se encontrou %s"
+msgstr "Não se encontrou o pacote %s"
 
 #: lib/src/gretl_paths.c:1834
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "Não se conseguiu encontrar um controlador de rede utilizável\n"
+msgstr "Não se conseguiu encontrar o ficheiro %s para o pacote %s"
 
 #: lib/src/gretl_paths.c:2500
 msgid "User directory is not set"
@@ -5961,12 +5961,12 @@ msgstr "Você não pode apagar escalares neste contexto\n"
 #: lib/src/monte_carlo.c:3069 lib/src/monte_carlo.c:3086
 #, c-format
 msgid "delete %s: not allowed\n"
-msgstr ""
+msgstr "apagar %s: não é permitido\n"
 
 #: lib/src/monte_carlo.c:3547
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
-msgstr "'%s' : não está implementado em ciclos 'progressivos'"
+msgstr "%s: não está implementado em ciclos 'progressivos'"
 
 #: lib/src/nls.c:328
 #, c-format
@@ -5975,12 +5975,12 @@ msgid ""
 " produced a scalar result"
 msgstr ""
 "A fórmula '%s'\n"
-" produziu um escalar"
+" produziu um resultado escalar"
 
 #: lib/src/nls.c:605
 #, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "%s: é esperado um escalar ou um vector"
+msgstr "'%s': é esperado um escalar ou um vector"
 
 #: lib/src/nls.c:1063
 #, c-format
@@ -5997,7 +5997,7 @@ msgstr "Na Regressão Gauss-Newton:\n"
 
 #: lib/src/nls.c:2298
 msgid "NLS: The supplied derivatives seem to be incorrect"
-msgstr "NLS: A derivadas fornecidas parecem estar incorrectas"
+msgstr "NLS: A derivadas fornecidas parecem estar incorretas"
 
 #: lib/src/nls.c:2299
 #, c-format
@@ -7514,7 +7514,7 @@ msgid "Freed %s\n"
 msgstr "Libertado %s\n"
 
 #: cli/gretlcli.c:158
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -7685,7 +7685,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 27 de janeiro de 2016."
+"Tradução de 25 de fevereiro de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -11131,9 +11131,8 @@ msgid "point"
 msgstr "ponto"
 
 #: gui2/gpt_dialog.c:2853
-#, fuzzy
 msgid "data scale"
-msgstr "escala"
+msgstr "escala dos dados"
 
 #: gui2/gpt_dialog.c:2867
 msgid "y axis"
