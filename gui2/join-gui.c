@@ -20,6 +20,9 @@
 #include "gretl.h"
 #include "dlgutils.h"
 #include "arrows.h"
+#include "csvdata.h"
+#include "cmd_private.h"
+#include "gretl_xml.h"
 
 #define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
 
@@ -39,6 +42,8 @@ struct join_info_ {
     GtkWidget *rkey[2];
     GtkWidget *filter;
     GtkWidget *aggr;
+    char **r_vnames;
+    int r_nvars;
     const char *fname;
 };
 
@@ -48,6 +53,8 @@ enum {
     INNER,
     OUTER
 };
+
+static void do_join_command (GtkWidget *w, join_info *jinfo);
 
 static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo, int locus) 
 {
@@ -149,90 +156,6 @@ static const char *join_entry_text (GtkWidget *w)
     }
 }
 
-static void joiner_doit (GtkWidget *w, join_info *jinfo)
-{
-    const char *import, *target;
-    const char *ikey1, *ikey2;
-    const char *okey1, *okey2;
-    const char *filter;
-    gchar *aggr;
-
-    fprintf(stderr, "joiner_doit, gathering info...\n");
-
-    import = join_entry_text(jinfo->import);
-    target = join_entry_text(jinfo->target);
-
-    ikey1 = join_entry_text(jinfo->lkey[0]);
-    ikey2 = join_entry_text(jinfo->lkey[1]);
-
-    okey1 = join_entry_text(jinfo->rkey[0]);
-    okey2 = join_entry_text(jinfo->rkey[0]);
-
-    filter = join_entry_text(jinfo->filter);
-
-    /* check for missing specs */
-
-    fprintf(stderr, "joiner_doit, check for missing info...\n");
-
-    if (import == NULL) {
-	gtk_widget_grab_focus(jinfo->import);
-	return;
-    } else if (ikey1 == NULL && okey1 != NULL) {
-	gtk_widget_grab_focus(jinfo->lkey[0]);
-	return;
-    } else if (ikey2 == NULL && okey2 != NULL) {
-	gtk_widget_grab_focus(jinfo->lkey[1]);
-	return;
-    }
-
-    /* OK, go ahead */
-
-    fprintf(stderr, "joiner_doit, proceeding...\n");
-
-    if (target == NULL) {
-	fprintf(stderr, "join %s %s", jinfo->fname, import);
-    } else {  
-	fprintf(stderr, "join %s %s --data=%s", jinfo->fname, target, import);
-    }
-
-    if (ikey1 != NULL) {
-	fprintf(stderr, " --ikey=%s", ikey1);
-	if (ikey2 != NULL) {
-	    fprintf(stderr, ",%s", ikey2);
-	}
-    }
-
-    if (okey1 != NULL || okey2 != NULL) {
-	fputs(" --okey=", stderr);
-	if (okey1 != NULL) {
-	    fprintf(stderr, "%s", okey1);
-	}
-	if (okey2 != NULL) {
-	    fprintf(stderr, ",%s", okey2);
-	} else if (ikey2 != NULL) {
-	    fputc(',', stderr);
-	}
-    }
-
-    if (filter != NULL) {
-	fprintf(stderr, " --filter=\"%s\"", filter);
-    }
-
-    aggr = combo_box_get_active_text(jinfo->aggr);
-    if (aggr != NULL) {
-	if (*aggr != '\0' && strcmp(aggr, "none")) {
-	    fprintf(stderr, " --aggr=%s", aggr);
-	}
-	g_free(aggr);
-    }
-
-    fputc('\n', stderr);
-
-    /* FIXME actually implement the request! */
-    
-    gtk_widget_destroy(jinfo->dlg);
-}
-
 static void build_joiner_buttons (join_info *jinfo)
 {
     GtkWidget *b;
@@ -254,7 +177,7 @@ static void build_joiner_buttons (join_info *jinfo)
     gtk_widget_set_can_default(b, TRUE);
     gtk_container_add(GTK_CONTAINER(jinfo->action_area), b);
     g_signal_connect(G_OBJECT(b), "clicked", 
-		     G_CALLBACK(joiner_doit), jinfo);
+		     G_CALLBACK(do_join_command), jinfo);
     gtk_widget_grab_default(b);
 }
 
@@ -283,11 +206,6 @@ static void set_join_top_label (join_info *jinfo,
 		       FALSE, FALSE, 5);
 }
 
-static void joiner_destroy (GtkWidget *w, join_info *jinfo) 
-{
-    fprintf(stderr, "joiner_destroy\n");
-}
-
 static void joiner_deleted (GtkWidget *w, GdkEvent *event,
 			    join_info *jinfo)
 {
@@ -302,8 +220,6 @@ static GtkWidget *join_dialog_new (join_info *jinfo,
 
     g_signal_connect(G_OBJECT(d), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
-    g_signal_connect(G_OBJECT(d), "destroy", 
-		     G_CALLBACK(joiner_destroy), jinfo);
     g_signal_connect(G_OBJECT(d), "delete-event",
     		     G_CALLBACK(joiner_deleted), jinfo);
     
@@ -556,19 +472,16 @@ static void join_dialog_setup (join_info *jinfo)
     /* pull from right to middle */
     joiner_add_arrows_column(jinfo, OUTER);
     
-    /* holds list of outer series (FIXME just a mock-up!) */
+    /* holds list of outer series */
     vbox = gtk_vbox_new(FALSE, 5);
     jinfo->rvars = series_list_box(GTK_BOX(vbox), jinfo, OUTER);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(jinfo->rvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    /* get real RHS names!! */
-    for (i=1; i<dataset->v; i++) {
-	if (!series_is_hidden(dataset, i)) {
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 0, dataset->varname[i], -1);
-	}
+    for (i=1; i<jinfo->r_nvars; i++) {
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, jinfo->r_vnames[i], -1);
     }
 
     joiner_table_insert(jinfo, vbox, 5, 6, 0, 7);
@@ -578,10 +491,128 @@ static void join_dialog_setup (join_info *jinfo)
     build_joiner_buttons(jinfo);
 }
 
-int test_join_gui (const char *fname)
+static void do_join_command (GtkWidget *w, join_info *jinfo)
+{
+    const char *import, *target;
+    const char *ikey1, *ikey2;
+    const char *okey1, *okey2;
+    const char *filter;
+    gchar *aggr;
+    char *buf = NULL;
+    PRN *prn;
+    int err = 0;
+
+    import = join_entry_text(jinfo->import);
+    target = join_entry_text(jinfo->target);
+
+    ikey1 = join_entry_text(jinfo->lkey[0]);
+    ikey2 = join_entry_text(jinfo->lkey[1]);
+
+    okey1 = join_entry_text(jinfo->rkey[0]);
+    okey2 = join_entry_text(jinfo->rkey[1]);
+
+    filter = join_entry_text(jinfo->filter);
+
+    /* check for missing specs */
+
+    if (import == NULL) {
+	gtk_widget_grab_focus(jinfo->import);
+	return;
+    } else if (ikey1 == NULL && okey1 != NULL) {
+	gtk_widget_grab_focus(jinfo->lkey[0]);
+	return;
+    } else if (ikey2 == NULL && okey2 != NULL) {
+	gtk_widget_grab_focus(jinfo->lkey[1]);
+	return;
+    }
+
+    /* get a buffer for writing */
+    
+    if (bufopen(&prn)) {
+	return;
+    }    
+
+    /* OK, let's go ahead */
+
+    if (target == NULL) {
+	pprintf(prn, "join %s %s", jinfo->fname, import);
+    } else {  
+	pprintf(prn, "join %s %s --data=%s", jinfo->fname, target, import);
+    }
+
+    if (ikey1 != NULL) {
+	pprintf(prn, " --ikey=%s", ikey1);
+	if (ikey2 != NULL) {
+	    pprintf(prn, ",%s", ikey2);
+	}
+    }
+
+    if (okey1 != NULL || okey2 != NULL) {
+	pputs(prn, " --okey=");
+	if (okey1 != NULL) {
+	    pprintf(prn, "%s", okey1);
+	}
+	if (okey2 != NULL) {
+	    pprintf(prn, ",%s", okey2);
+	} else if (ikey2 != NULL) {
+	    pputc(prn, ',');
+	}
+    }
+
+    if (filter != NULL) {
+	pprintf(prn, " --filter=\"%s\"", filter);
+    }
+
+    aggr = combo_box_get_active_text(jinfo->aggr);
+    if (aggr != NULL) {
+	if (*aggr != '\0' && strcmp(aggr, "none")) {
+	    pprintf(prn, " --aggr=%s", aggr);
+	}
+	g_free(aggr);
+    }
+
+    buf = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+#if 0
+    fprintf(stderr, "\n === join command from GUI ===\n%s\n\n", buf);
+#endif
+
+    if (!err) {
+	ExecState state;
+
+	gretl_exec_state_init(&state, CONSOLE_EXEC, NULL,
+			      get_lib_cmd(), NULL, NULL);
+	state.line = buf;
+	err = gui_exec_line(&state, dataset, jinfo->dlg);
+    }
+
+    free(buf);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	infobox(_("Data appended OK\n"));
+	gtk_widget_destroy(jinfo->dlg);
+    }
+}
+
+int gui_join_data (const char *fname, GretlFileType ftype)
 {
     join_info jinfo = {0};
     int err = 0;
+
+    if (ftype == GRETL_CSV) {
+	err = probe_csv(fname, &jinfo.r_vnames, &jinfo.r_nvars);
+    } else {
+	err = gretl_read_gdt_varnames(fname, &jinfo.r_vnames,
+				      &jinfo.r_nvars);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }
 
     jinfo.dlg = join_dialog_new(&jinfo, fname);
     join_dialog_setup(&jinfo);
@@ -590,6 +621,8 @@ int test_join_gui (const char *fname)
     gtk_widget_show_all(jinfo.action_area);
     
     gtk_dialog_run(GTK_DIALOG(jinfo.dlg));
+
+    strings_array_free(jinfo.r_vnames, jinfo.r_nvars);
 
     return err;
 }

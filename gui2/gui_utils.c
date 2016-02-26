@@ -58,6 +58,7 @@
 #include "guiprint.h"
 #include "fncall.h"
 #include "tabwin.h"
+#include "join-gui.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -1250,10 +1251,22 @@ static int get_native_data (char *fname, int ftype, int append,
     return err;
 }
 
+static int maybe_use_join (void)
+{
+    const char *opts[] = {
+	N_("simple append"),
+	N_("\"join\" (advanced)")
+    };
+
+    return radio_dialog(_("gretl: append data"), NULL,
+		        opts, 2, 0, 0, NULL);
+}
+
 gboolean do_open_data (windata_t *fwin, int code)
 {
     int append = (code == APPEND_DATA);
     GretlFileType ftype;
+    int use_join = 0;
     int err = 0;
 
     /* the global variable @tryfile will contain the name
@@ -1271,16 +1284,19 @@ gboolean do_open_data (windata_t *fwin, int code)
 	close_session(OPT_NONE); /* FIXME opt? */
     }
 
-#if 0 /* Just testing ! */
-#include "join-gui.h"
-    
     if (append && (ftype == GRETL_CSV || ftype == GRETL_XML_DATA ||
 		   ftype == GRETL_BINARY_DATA)) {
-	err = test_join_gui(tryfile);
-    } else
-#endif
+	use_join = maybe_use_join();
+	if (use_join < 0) {
+	    /* canceled */
+	    *tryfile = '\0';
+	    return 0;
+	}
+    }
 
-    if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
+    if (use_join) {
+	err = gui_join_data(tryfile, ftype);
+    } else if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
 	err = get_csv_data(tryfile, ftype, append);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
 	err = get_imported_data(tryfile, ftype, append);

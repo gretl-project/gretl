@@ -20,6 +20,6 @@
 #ifndef JOIN_GUI_H
 #define JOIN_GUI_H
 
-int test_join_gui (const char *fname);
+int gui_join_data (const char *fname, GretlFileType ftype);
 
 #endif /* JOIN_GUI_H */

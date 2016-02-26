@@ -2554,7 +2554,13 @@ static void transcribe_string (char *targ, const char *src, int maxlen)
     strncat(targ, src, maxlen - 1);
 }
 
-static int process_varlist (xmlNodePtr node, DATASET *dset)
+/* Note: if @probe is non-zero, this means that we're really just
+   scraping series names from the data file, and so we should not
+   start allocating memory for dset->Z based on the number of
+   series we find.
+*/
+
+static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 {
     xmlNodePtr cur;
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
@@ -2570,7 +2576,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset)
 	if (!err && dataset_allocate_varnames(dset)) {
 	    err = E_ALLOC;
 	}
-	if (!err) {
+	if (!err && !probe) {
 	    dset->Z = malloc(dset->v * sizeof *dset->Z);
 	    if (dset->Z == NULL) {
 		err = E_ALLOC;
@@ -3752,7 +3758,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	    tmpset->descrip = (char *) 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
-	    if (process_varlist(cur, tmpset)) {
+	    if (process_varlist(cur, tmpset, 0)) {
 		err = 1;
 	    } else {
 		gotvars = 1;
@@ -4009,6 +4015,101 @@ static int real_read_gdt_subset (const char *fname,
     return err;
 }
 
+static int real_read_gdt_varnames (const char *fname,
+				   char ***vnames,
+				   int *nvars)
+{
+    DATASET *tmpset;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur;
+    int gotvars = 0;
+    int caldata = 0;
+    int in_c_locale = 0;
+    int err = 0;
+
+    gretl_error_clear();
+
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    err = gretl_xml_open_doc_root(fname, "gretldata", &doc, &cur);
+    if (err) {
+	goto bailout;
+    }
+
+    /* set some datainfo parameters */
+
+    err = xml_get_data_structure(cur, &tmpset->structure);
+    if (err) {
+	goto bailout;
+    } 
+
+    err = xml_get_data_frequency(cur, &tmpset->pd, &tmpset->structure);
+    if (err) {
+	goto bailout;
+    }   
+
+    gretl_push_c_numeric_locale();
+    in_c_locale = 1;
+
+    strcpy(tmpset->stobs, "1");
+    caldata = dataset_is_daily(tmpset) || dataset_is_weekly(tmpset);
+
+    err = xml_get_startobs(cur, &tmpset->sd0, tmpset->stobs, caldata);
+    if (err) {
+	goto bailout;
+    }     
+
+    *tmpset->endobs = '\0';
+    caldata = calendar_data(tmpset);
+
+    err = xml_get_endobs(cur, tmpset->endobs, caldata);
+    if (err) {
+	goto bailout;
+    }
+
+    /* Now walk the tree */
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "variables")) {
+	    err = process_varlist(cur, tmpset, 1);
+	    if (!err) {
+		gotvars = 1;
+	    }
+	    break;
+	}
+	cur = cur->next;
+    }
+
+    if (!err && !gotvars) {
+	gretl_errmsg_set(_("Variables information is missing"));
+	err = 1;
+    }
+
+ bailout:
+
+    if (in_c_locale) {
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    if (!err) {
+	*vnames = tmpset->varname;
+	*nvars = tmpset->v;
+	tmpset->varname = NULL;
+    }
+
+    destroy_dataset(tmpset);
+
+    return err;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to open for reading.
@@ -4074,6 +4175,8 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 			   const char **vnames, int nv,
 			   gretlopt opt)
 {
+    int err = 0;
+    
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
@@ -4097,11 +4200,60 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 	}
 
 	g_free(zdir);
-	return err;
     } else {
 	/* plain XML file */
-	return real_read_gdt_subset(fname, dset, vnames, nv, opt);
+	err = real_read_gdt_subset(fname, dset, vnames, nv, opt);
     }
+
+    return err;
+}
+
+/**
+ * gretl_read_gdt_varnames:
+ * @fname: name of file to open for reading.
+ * @vnames: location to receive array of series names.
+ * @nvars: location to receive the number of series.
+ * 
+ * Read the array of series names from the specified file.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int gretl_read_gdt_varnames (const char *fname, 
+			     char ***vnames,
+			     int *nvars)
+{
+    int err = 0;
+    
+    if (has_suffix(fname, ".gdtb")) {
+	/* zipfile with gdt + binary */
+	gchar *zdir;
+	int err;
+
+	zdir = g_strdup_printf("%stmp-unzip", gretl_dotdir());
+	err = gretl_mkdir(zdir);
+
+	if (!err) {
+	    err = gretl_unzip_into(fname, zdir);
+	    if (err) {
+		gretl_errmsg_ensure("Problem opening data file");
+	    } else {
+		char xmlfile[FILENAME_MAX];
+
+		build_path(xmlfile, zdir, "data.xml", NULL);
+		err = real_read_gdt_varnames(xmlfile, vnames,
+					     nvars);
+	    }
+	    gretl_deltree(zdir);
+	}
+
+	g_free(zdir);
+    } else {
+	/* plain XML file */
+	err = real_read_gdt_varnames(fname, vnames, nvars);
+    }
+
+    return err;
 }
 
 /**

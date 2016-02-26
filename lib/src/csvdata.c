@@ -68,6 +68,7 @@ enum {
 };
 
 typedef struct joinspec_ joinspec;
+typedef struct csvprobe_ csvprobe;
 typedef struct csvdata_ csvdata;
 
 struct joinspec_ {
@@ -77,7 +78,11 @@ struct joinspec_ {
     int *timecols;
     csvdata *c;
     DATASET *dset;
-};    
+};
+
+struct csvprobe_ {
+    DATASET *dset; /* more info might be wanted */
+};
 
 struct csvdata_ {
     int flags;
@@ -102,6 +107,7 @@ struct csvdata_ {
     const gretl_matrix *rowmask;
     int masklen;
     joinspec *jspec; /* info used for "join" command */
+    csvprobe *probe; /* used in connection with "join" */
 };
 
 #define csv_has_trailing_comma(c) (c->flags & CSV_TRAIL)
@@ -145,6 +151,7 @@ struct csvdata_ {
 #define rows_subset(c) (c->rowmask != NULL)
 
 #define joining(c) (c->jspec != NULL)
+#define probing(c) (c->probe != NULL)
 
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, 
@@ -317,6 +324,7 @@ static csvdata *csvdata_new (DATASET *dset)
     }
 
     c->jspec = NULL;
+    c->probe = NULL;
 
     c->dset = datainfo_new();
 
@@ -3223,6 +3231,12 @@ static int csv_set_dataset_dimensions (csvdata *c)
 	}
     }
 
+    if (probing(c)) {
+	/* don't allocate tons of space for data that
+	   we won't read right now */
+	c->dset->n = 1;
+    }
+
 #if CDEBUG
     if (joining(c)) {
 	fprintf(stderr, "csv dataset dimensions: v=%d, n=%d\n",
@@ -3240,6 +3254,7 @@ static int csv_set_dataset_dimensions (csvdata *c)
  * @cols: column specification.
  * @rows: row specification.
  * @join: specification pertaining to "join" command.
+ * @probe: also pertains to "join" (via GUI).
  * @opt: use OPT_N to force interpretation of data colums containing
  * strings as coded (non-numeric) values and not errors; use OPT_H
  * to indicate absence of a header row; for use of OPT_T see the help
@@ -3257,6 +3272,7 @@ static int real_import_csv (const char *fname,
 			    const char *cols, 
 			    const char *rows,
 			    joinspec *join,
+			    csvprobe *probe,
 			    gretlopt opt,
 			    PRN *prn)
 {
@@ -3321,6 +3337,9 @@ static int real_import_csv (const char *fname,
 
     if (join != NULL) {
 	c->jspec = join;
+	c->flags |= CSV_HAVEDATA;
+    } else if (probe != NULL) {
+	c->probe = probe;
 	c->flags |= CSV_HAVEDATA;
     } else {
         if (opt & OPT_A) {
@@ -3433,7 +3452,7 @@ static int real_import_csv (const char *fname,
     }
 
     err = csv_varname_scan(c, fp, prn, mprn);
-    if (err) {
+    if (err || probing(c)) {
 	goto csv_bailout;
     }
 
@@ -3474,7 +3493,7 @@ static int real_import_csv (const char *fname,
 	}
     }
 
-    if (!err) {
+    if (!err && !probing(c)) {
 	err = non_numeric_check(c, prn);
 	if (!err && csv_has_non_numeric(c)) {
 	    /* try once more */
@@ -3555,7 +3574,7 @@ static int real_import_csv (const char *fname,
 	}
     }
 
-    if (!joining(c)) {
+    if (!joining(c) && !probing(c)) {
 	int newdata = (dset->Z == NULL);
 
 	/* not doing a special "join" operation */
@@ -3579,6 +3598,9 @@ static int real_import_csv (const char *fname,
 
     if (!err && c->jspec != NULL) {
 	c->jspec->c = c;
+    } else if (!err && c->probe != NULL) {
+	c->probe->dset = c->dset;
+	c->dset = NULL;
     } else {
 	csvdata_free(c);
     }
@@ -3648,7 +3670,37 @@ int import_csv (const char *fname, DATASET *dset,
     }	
 
     return real_import_csv(fname, dset, cols, rows, 
-			   NULL, opt, prn);
+			   NULL, NULL, opt, prn);
+}
+
+/**
+ * probe_csv:
+ * @fname: name of CSV file.
+ * @varnames: location to receive variable names.
+ * @nvars: location to receive number of variables (columns).
+ * 
+ * Open a Comma-Separated Values data file and read enough to
+ * determine the variable names.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int probe_csv (const char *fname, char ***varnames, int *nvars)
+{
+    csvprobe probe = {0};
+    int err;
+    
+    err = real_import_csv(fname, NULL, NULL, NULL, 
+			  NULL, &probe, OPT_NONE, NULL);
+
+    if (!err) {
+	*varnames = probe.dset->varname;
+	*nvars = probe.dset->v;
+	probe.dset->varname = NULL;
+	destroy_dataset(probe.dset);
+    }
+
+    return err;
 }
 
 int csv_open_needs_matrix (gretlopt opt)
@@ -5942,7 +5994,8 @@ int gretl_join_data (const char *fname,
 	    err = join_import_gdt(fname, &jspec, OPT_NONE);
 	} else {
 	    err = real_import_csv(fname, NULL, NULL, NULL,
-				  &jspec, opt, verbose ? prn : NULL);
+				  &jspec, NULL, opt,
+				  verbose ? prn : NULL);
 	}
 	if (!err) {
 	    outer_dset = outer_dataset(&jspec);
