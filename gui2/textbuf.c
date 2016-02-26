@@ -3947,8 +3947,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
     vwin->text = w;
 
-    if (vwin->role == PRINT ||
-	vwin->role == SCRIPT_OUT ||
+    if (vwin->role == SCRIPT_OUT ||
 	vwin->role == VIEW_MODELTABLE ||
 	vwin->role == VIEW_SERIES) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
