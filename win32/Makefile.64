@@ -295,6 +295,7 @@ GUISRC = about.c \
 	gui_recode.c \
 	gui_utils.c \
 	helpfiles.c \
+	join-gui.c \
 	lagpref.c \
 	library.c \
 	menustate.c \
