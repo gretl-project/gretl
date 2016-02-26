@@ -21,6 +21,8 @@
 #include "dlgutils.h"
 #include "arrows.h"
 
+#define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
+
 struct join_info_ {
     GtkWidget *dlg;
     GtkWidget *vbox;
@@ -101,29 +103,50 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo, int locus)
     return view;
 }
 
+static void set_placeholder_text (GtkWidget *w, const char *s)
+{
+#if HAVE_PLACEHOLDER
+    gtk_entry_set_placeholder_text(GTK_ENTRY(w), s);
+#else
+    gtk_entry_set_text(GTK_ENTRY(w), s);
+#endif
+}
+
 /* action button callbacks */
 
 static void clear_joiner (GtkWidget *w, join_info *jinfo)
 {
+    GtkWidget *entry;
     int i;
     
     gtk_entry_set_text(GTK_ENTRY(jinfo->import), "");
-    gtk_entry_set_text(GTK_ENTRY(jinfo->target), "same as outer");
+    set_placeholder_text(jinfo->target, "same as outer");
 
     for (i=0; i<2; i++) {
 	gtk_entry_set_text(GTK_ENTRY(jinfo->lkey[i]), "");
-	gtk_entry_set_text(GTK_ENTRY(jinfo->rkey[i]), "same as inner");
+	set_placeholder_text(jinfo->rkey[i], "same as inner");
     }
 
-    gtk_entry_set_text(GTK_ENTRY(jinfo->filter), "");
+    set_placeholder_text(jinfo->filter, "none");
 
-    /* also reset "aggr" */
+    entry = gtk_bin_get_child(GTK_BIN(jinfo->aggr));
+    set_placeholder_text(entry, "none");
 }
 
 static void cancel_joiner (GtkWidget *w, join_info *jinfo)
 {
-    fprintf(stderr, "cancel joiner\n");
     gtk_widget_destroy(jinfo->dlg);
+}
+
+static const char *join_entry_text (GtkWidget *w)
+{
+    const char *s = gtk_entry_get_text(GTK_ENTRY(w));
+
+    if (*s == '\0' || !strncmp(s, "same as", 7)) {
+	return NULL;
+    } else {
+	return s;
+    }
 }
 
 static void joiner_doit (GtkWidget *w, join_info *jinfo)
@@ -132,26 +155,80 @@ static void joiner_doit (GtkWidget *w, join_info *jinfo)
     const char *ikey1, *ikey2;
     const char *okey1, *okey2;
     const char *filter;
+    gchar *aggr;
 
-    import = gtk_entry_get_text(GTK_ENTRY(jinfo->import));
-    target = gtk_entry_get_text(GTK_ENTRY(jinfo->target));
-    
-    if (import == NULL || *import == '\0') {
-	return; /* respond to error! */
+    fprintf(stderr, "joiner_doit, gathering info...\n");
+
+    import = join_entry_text(jinfo->import);
+    target = join_entry_text(jinfo->target);
+
+    ikey1 = join_entry_text(jinfo->lkey[0]);
+    ikey2 = join_entry_text(jinfo->lkey[1]);
+
+    okey1 = join_entry_text(jinfo->rkey[0]);
+    okey2 = join_entry_text(jinfo->rkey[0]);
+
+    filter = join_entry_text(jinfo->filter);
+
+    /* check for missing specs */
+
+    fprintf(stderr, "joiner_doit, check for missing info...\n");
+
+    if (import == NULL) {
+	gtk_widget_grab_focus(jinfo->import);
+	return;
+    } else if (ikey1 == NULL && okey1 != NULL) {
+	gtk_widget_grab_focus(jinfo->lkey[0]);
+	return;
+    } else if (ikey2 == NULL && okey2 != NULL) {
+	gtk_widget_grab_focus(jinfo->lkey[1]);
+	return;
     }
 
-    if (target != NULL &&
-	(*target == '\0' || !strncmp(target, "same as", 7))) {
-	target = NULL;
-    }    
-	
-    fprintf(stderr, "join %s %s", jinfo->fname, import);
+    /* OK, go ahead */
 
-    if (0) {
-	/* more info! (keys, etc.) */
-    } else {
-	fputc('\n', stderr);
+    fprintf(stderr, "joiner_doit, proceeding...\n");
+
+    if (target == NULL) {
+	fprintf(stderr, "join %s %s", jinfo->fname, import);
+    } else {  
+	fprintf(stderr, "join %s %s --data=%s", jinfo->fname, target, import);
     }
+
+    if (ikey1 != NULL) {
+	fprintf(stderr, " --ikey=%s", ikey1);
+	if (ikey2 != NULL) {
+	    fprintf(stderr, ",%s", ikey2);
+	}
+    }
+
+    if (okey1 != NULL || okey2 != NULL) {
+	fputs(" --okey=", stderr);
+	if (okey1 != NULL) {
+	    fprintf(stderr, "%s", okey1);
+	}
+	if (okey2 != NULL) {
+	    fprintf(stderr, ",%s", okey2);
+	} else if (ikey2 != NULL) {
+	    fputc(',', stderr);
+	}
+    }
+
+    if (filter != NULL) {
+	fprintf(stderr, " --filter=\"%s\"", filter);
+    }
+
+    aggr = combo_box_get_active_text(jinfo->aggr);
+    if (aggr != NULL) {
+	if (*aggr != '\0' && strcmp(aggr, "none")) {
+	    fprintf(stderr, " --aggr=%s", aggr);
+	}
+	g_free(aggr);
+    }
+
+    fputc('\n', stderr);
+
+    /* FIXME actually implement the request! */
     
     gtk_widget_destroy(jinfo->dlg);
 }
@@ -160,7 +237,8 @@ static void build_joiner_buttons (join_info *jinfo)
 {
     GtkWidget *b;
 
-    context_help_button(jinfo->action_area, 0); /* FIXME */
+    /* FIXME add Help text */
+    context_help_button(jinfo->action_area, 0);
 
     b = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
     gtk_container_add(GTK_CONTAINER(jinfo->action_area), b);
@@ -257,16 +335,12 @@ static GtkWidget *join_dialog_new (join_info *jinfo,
     return d;
 }
 
-static GtkWidget *joiner_entry_box (const char *text)
+static GtkWidget *joiner_entry_box (void)
 {
     GtkWidget *w = gtk_entry_new();
 
     gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(w), 20);
-
-    if (text != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(w), text);
-    }
 
     return w;
 }
@@ -281,6 +355,30 @@ static void joiner_table_insert (join_info *jinfo, GtkWidget *w,
 		     4, 2);
 }
 
+static GtkWidget *aggregation_combo (void)
+{
+    const char *as[] = {
+	"count",
+	"avg",
+	"sum",
+	"min",
+	"max"
+    };
+    GtkWidget *ac, *entry;
+    int i, n = G_N_ELEMENTS(as);
+
+    ac = gtk_combo_box_text_new_with_entry();
+
+    for (i=0; i<n; i++) {
+	combo_box_append_text(ac, as[i]);
+    }
+
+    entry = gtk_bin_get_child(GTK_BIN(ac));
+    set_placeholder_text(entry, "none");
+
+    return ac;
+}
+
 static void joiner_add_controls (join_info *jinfo)
 {
     GtkWidget *w;
@@ -290,12 +388,12 @@ static void joiner_add_controls (join_info *jinfo)
     for (i=0; i<2; i++) {
 	w = gtk_label_new(i == 0 ? "import series" : "named as");
 	joiner_table_insert(jinfo, w, 2, 3, i, i+1);
-	w = joiner_entry_box(NULL);
+	w = joiner_entry_box();
 	joiner_table_insert(jinfo, w, 3, 4, i, i+1);
 	if (i == 0) {
 	    jinfo->import = w;
 	} else {
-	    gtk_entry_set_text(GTK_ENTRY(w), "same as outer");
+	    set_placeholder_text(w, "same as outer");
 	    jinfo->target = w;
 	}
     }
@@ -308,17 +406,25 @@ static void joiner_add_controls (join_info *jinfo)
 
     for (i=0; i<2; i++) {
 	/* key slots, 2 x 2 */
-	jinfo->lkey[i] = joiner_entry_box(NULL);
+	jinfo->lkey[i] = joiner_entry_box();
 	joiner_table_insert(jinfo, jinfo->lkey[i], 2, 3, i+3, i+4);
-	jinfo->rkey[i] = joiner_entry_box("same as inner");
+	jinfo->rkey[i] = joiner_entry_box();
+	set_placeholder_text(jinfo->rkey[i], "same as inner");
 	joiner_table_insert(jinfo, jinfo->rkey[i], 3, 4, i+3, i+4);
     }
 
     /* filter */
     w = gtk_label_new("filter");
     joiner_table_insert(jinfo, w, 2, 3, 5, 6);
-    jinfo->filter = joiner_entry_box(NULL);
+    jinfo->filter = joiner_entry_box();
+    set_placeholder_text(jinfo->filter, "none");
     joiner_table_insert(jinfo, jinfo->filter, 3, 4, 5, 6);
+
+    /* aggregation */
+    w = gtk_label_new("aggregation");
+    joiner_table_insert(jinfo, w, 2, 3, 6, 7);
+    jinfo->aggr = aggregation_combo();
+    joiner_table_insert(jinfo, jinfo->aggr, 3, 4, 6, 7);    
 }
 
 static GtkWidget *joiner_arrow_button (const guint8 *src)
@@ -329,7 +435,7 @@ static GtkWidget *joiner_arrow_button (const guint8 *src)
     pbuf = gdk_pixbuf_new_from_inline(-1, src, FALSE, NULL);
     img = gtk_image_new_from_pixbuf(pbuf);
     button = gtk_button_new();
-    gtk_widget_set_size_request(button, 48, -1);
+    gtk_widget_set_size_request(button, 32, -1);
     gtk_container_add(GTK_CONTAINER(button), img);
     g_object_unref(pbuf);
 
@@ -418,13 +524,12 @@ static void joiner_add_arrows_column (join_info *jinfo, int locus)
 
 static void join_dialog_setup (join_info *jinfo)
 {
-    guint xpad = 4, ypad = 2;
     GtkListStore *store;
     GtkTreeIter iter;
     GtkWidget *vbox;
     int i;
 
-    jinfo->table = gtk_table_new(6, 6, FALSE);
+    jinfo->table = gtk_table_new(7, 6, FALSE);
 
     /* holds list of inner series available for selection */
     vbox = gtk_vbox_new(FALSE, 5);
@@ -440,7 +545,7 @@ static void join_dialog_setup (join_info *jinfo)
 	}
     }
 
-    joiner_table_insert(jinfo, vbox, 0, 1, 0, 6);
+    joiner_table_insert(jinfo, vbox, 0, 1, 0, 7);
 
     /* push from left to middle */
     joiner_add_arrows_column(jinfo, INNER);
@@ -458,7 +563,7 @@ static void join_dialog_setup (join_info *jinfo)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    /* get RHS names!! */
+    /* get real RHS names!! */
     for (i=1; i<dataset->v; i++) {
 	if (!series_is_hidden(dataset, i)) {
 	    gtk_list_store_append(store, &iter);
@@ -466,7 +571,7 @@ static void join_dialog_setup (join_info *jinfo)
 	}
     }
 
-    joiner_table_insert(jinfo, vbox, 5, 6, 0, 6);
+    joiner_table_insert(jinfo, vbox, 5, 6, 0, 7);
 
     gtk_box_pack_start(GTK_BOX(jinfo->vbox), jinfo->table, TRUE, TRUE, 0);
 

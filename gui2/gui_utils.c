@@ -1274,10 +1274,10 @@ gboolean do_open_data (windata_t *fwin, int code)
 #if 0 /* Just testing ! */
 #include "join-gui.h"
     
-    if (append) {
-	test_join_gui(tryfile);
-	return 0;
-    }
+    if (append && (ftype == GRETL_CSV || ftype == GRETL_XML_DATA ||
+		   ftype == GRETL_BINARY_DATA)) {
+	err = test_join_gui(tryfile);
+    } else
 #endif
 
     if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
