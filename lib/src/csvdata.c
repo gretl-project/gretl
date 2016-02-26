@@ -2458,6 +2458,10 @@ csv_msg = N_("\nPlease note:\n"
 	     "- The remainder of the file must be a rectangular "
 	     "array of data.\n");
 
+/* Here we check whether we get a consistent reading on
+   the number of fields per line in the CSV file
+*/
+
 static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 {
     int gotdata = 0;
@@ -3369,11 +3373,12 @@ static int real_import_csv (const char *fname,
 
  alt_delim:
 
-    if (!fixed_format(c)) {
-	pprintf(mprn, A_("using delimiter '%c'\n"), c->delim);
+    if (mprn != NULL) {
+	if (!fixed_format(c)) {
+	    pprintf(mprn, A_("using delimiter '%c'\n"), c->delim);
+	}
+	pprintf(mprn, A_("   longest line: %d characters\n"), c->maxlinelen - 1);
     }
-
-    pprintf(mprn, A_("   longest line: %d characters\n"), c->maxlinelen - 1);
 
     if (csv_has_trailing_comma(c) && c->delim != ',') {
 	csv_unset_trailing_comma(c);
