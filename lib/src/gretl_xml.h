@@ -150,6 +150,10 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 			   const char **vnames, int nv,
 			   gretlopt opt);
 
+int gretl_read_gdt_varnames (const char *fname,
+			     char ***vnames,
+			     int *nvars);
+
 char *gretl_get_gdt_description (const char *fname, int *err);
 
 int load_user_XML_file (const char *fname, PRN *prn);

@@ -2375,7 +2375,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     }
 
 #if 0
-    fprintf(stderr, "gretl_cmd_exec: '%s'\n", line);
+    fprintf(stderr, "gretl_cmd_exec: '%s' (ci %d) \n", line, cmd->ci);
 #endif
 
     switch (cmd->ci) {
@@ -3239,6 +3239,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	/* this is a no-op if there's no warning */
 	warnmsg(prn);
     }
+
+    fprintf(stderr, "gretl_cmd_exec, returning %d\n", err);
 
     return err;
 }
