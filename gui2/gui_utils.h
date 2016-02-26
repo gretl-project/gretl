@@ -99,7 +99,8 @@ view_file_with_title (const char *filename, int editable, int del_file,
 
 windata_t *view_formatted_text_buffer (const gchar *title, 
 				       const char *buf, 
-				       int hsize, int vsize);
+				       int hsize, int vsize,
+				       int role);
 
 windata_t *hansl_output_viewer_new (PRN *prn, int mode,
 				    const char *title);

@@ -472,7 +472,7 @@ static windata_t *make_help_viewer (const char *fnname,
 
     buf = gretl_print_steal_buffer(prn);
     title = g_strdup_printf(_("help on %s"), fnname);
-    vwin = view_formatted_text_buffer(title, buf, 76, 350);
+    vwin = view_formatted_text_buffer(title, buf, 76, 350, VIEW_PKG_INFO);
     g_free(title);
     free(buf);
 

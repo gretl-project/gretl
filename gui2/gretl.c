@@ -2202,17 +2202,19 @@ static void restore_sample_callback (void)
 
 static void show_sample_callback (void)
 {
-    gchar *title;
+    char *buf;
     PRN *prn;
 
     if (bufopen(&prn)) {
 	return;
     }
 
+    pprintf(prn, "%s\n\n", _("sample status"));
     print_sample_status(dataset, prn);
-    title = g_strdup_printf("gretl: %s", _("sample status"));
-    view_buffer(prn, 78, 360, title, PRINT, NULL);
-    g_free(title);
+    buf = gretl_print_steal_buffer(prn);
+    infobox(buf);
+    free(buf);
+    gretl_print_destroy(prn);
 }
 
 static void start_R_callback (void)

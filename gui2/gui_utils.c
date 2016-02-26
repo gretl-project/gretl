@@ -1948,9 +1948,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
-	create_text(vwin, hsize, vsize, nlines, TRUE, TRUE);
+	create_text(vwin, hsize, vsize, nlines, TRUE);
     } else {
-	create_text(vwin, hsize, vsize, nlines, FALSE, FALSE);
+	create_text(vwin, hsize, vsize, nlines, FALSE);
     }
 
     text_table_setup(vwin->vbox, vwin->text);
@@ -2013,19 +2013,19 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
    may be operating to produce incremental display.
 */
 
-windata_t *hansl_output_viewer_new (PRN *prn, int mode,
+windata_t *hansl_output_viewer_new (PRN *prn, int role,
 				    const char *title)
 {
     windata_t *vwin;
     const char *buf;
 
     if (title != NULL) {
-	vwin = gretl_viewer_new_with_parent(NULL, mode,
+	vwin = gretl_viewer_new_with_parent(NULL, role,
 					    title, NULL);
     } else {
-	gchar *tmp = make_viewer_title(mode, NULL);
+	gchar *tmp = make_viewer_title(role, NULL);
 
-	vwin = gretl_viewer_new_with_parent(NULL, mode,
+	vwin = gretl_viewer_new_with_parent(NULL, role,
 					    tmp, NULL);
 	g_free(tmp);
     }
@@ -2035,8 +2035,7 @@ windata_t *hansl_output_viewer_new (PRN *prn, int mode,
     }
 
     vwin_add_tmpbar(vwin);
-    create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE, FALSE);
-    text_set_word_wrap(vwin->text, 0);
+    create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert the text buffer from @prn */
@@ -2111,7 +2110,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);
     } else {
-	create_text(vwin, hsize, vsize, 0, editable, FALSE);
+	create_text(vwin, hsize, vsize, 0, editable);
     }
 
     text_table_setup(vwin->vbox, vwin->text);
@@ -2259,7 +2258,7 @@ windata_t *view_help_file (const char *filename, int role)
 	vsize = 500;
     }
 
-    create_text(vwin, hsize, vsize, 0, FALSE, FALSE);
+    create_text(vwin, hsize, vsize, 0, FALSE);
 
     if (role == GUI_HELP || role == GUI_HELP_EN) {
 	text_table_setup(vwin->vbox, vwin->text);
@@ -2364,26 +2363,26 @@ static void add_text_closer (windata_t *vwin)
 /* For use when we want to display a piece of formatted text -- such
    as help for a gretl function package or a help bibliography entry
    -- in a window of its own, without any menu apparatus on the
-   window. Note that if the @title is NULL we assume that this should
-   be a minimal window with no decorations and a simple "closer"
-   button embedded in the GtkTextView; we use this for bibliographical
-   popups.
+   window. In the case of VIEW_BIBITEM, this should be a minimal window
+   with no decorations and a simple "closer" button embedded in the
+   GtkTextView (bibliographical popup).
 */
 
 windata_t *view_formatted_text_buffer (const gchar *title, 
 				       const char *buf, 
-				       int hsize, int vsize)
+				       int hsize, int vsize,
+				       int role)
 {
-    int minimal = (title == NULL);
     windata_t *vwin;
 
-    vwin = gretl_viewer_new_with_parent(NULL, PRINT, title,
+    vwin = gretl_viewer_new_with_parent(NULL, role, title,
 					NULL);
     if (vwin == NULL) return NULL;
 
-    create_text(vwin, hsize, vsize, 0, FALSE, FALSE);
+    /* non-editable text */
+    create_text(vwin, hsize, vsize, 0, FALSE);
 
-    if (minimal) {
+    if (role == VIEW_BIBITEM) {
 	/* no scrolling apparatus */
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
@@ -2394,13 +2393,13 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 
     gretl_viewer_set_formatted_buffer(vwin, buf);
 
-    if (minimal) {
+    if (role == VIEW_BIBITEM) {
 	add_text_closer(vwin);
     }
 
     gtk_widget_show(vwin->vbox);
 
-    if (!minimal) {
+    if (role != VIEW_BIBITEM) {
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
     }
@@ -2512,7 +2511,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
 	hsize = width + 2;
     }
 
-    create_text(vwin, hsize, vsize, nlines, FALSE, FALSE);
+    create_text(vwin, hsize, vsize, nlines, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert and then free the model results buffer */

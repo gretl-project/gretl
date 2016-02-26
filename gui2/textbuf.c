@@ -1536,7 +1536,7 @@ static void make_bibitem_window (const char *buf,
     windata_t *vwin;
     GtkWidget *top, *vmain;
 
-    vwin = view_formatted_text_buffer(NULL, buf, 64, 100);
+    vwin = view_formatted_text_buffer(NULL, buf, 64, 100, VIEW_BIBITEM);
     vmain = vwin_toplevel(vwin);
     top = gtk_widget_get_toplevel(tview);
     gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
@@ -3939,20 +3939,19 @@ static void set_max_text_width (windata_t *vwin,
 #define HDEBUG 0
 
 void create_text (windata_t *vwin, int hsize, int vsize, 
-		  int nlines, gboolean editable,
-		  gboolean fixed_width)
+		  int nlines, gboolean editable)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
+    int role = vwin->role;
 
     vwin->text = w;
 
-    if (vwin->role == SCRIPT_OUT ||
-	vwin->role == VIEW_MODELTABLE ||
-	vwin->role == VIEW_SERIES) {
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
-    } else {
+    /* in which cases should we do text wrapping? */
+    if (help_role(role) || role == VIEW_PKG_INFO || role == VIEW_BIBITEM) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
+    } else {
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
     }
     
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
@@ -3976,10 +3975,11 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	fprintf(stderr, " px = %d, hsize now = %d\n", px, hsize);
 #endif
 	if (nlines > 0) {
+	    /* Perhaps adjust how tall the window is? */
 	    double v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
 
-	    if (v1 > vsize / 1.2 && v1 < vsize * 1.2 && v1 <= .9 * sv) {
+	    if (v1 > 0.8 * vsize && v1 < 1.2 * vsize && v1 <= .9 * sv) {
 		vsize = v1;
 	    }
 	}
@@ -3995,7 +3995,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	fprintf(stderr, " setting default size (%d, %d)\n", hsize, vsize);
 #endif
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
-	if (fixed_width) {
+	if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	    /* for editing help files: limit the width of the window
 	       to discourage use of excessively long lines
 	    */

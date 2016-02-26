@@ -7767,7 +7767,7 @@ int vwin_is_busy (windata_t *vwin)
     return vwin != NULL && vwin == oh.vwin;
 }
 
-static int start_script_output_handler (PRN *prn, int mode,
+static int start_script_output_handler (PRN *prn, int role,
 					const char *title,
 					windata_t **outwin)
 {
@@ -7787,7 +7787,7 @@ static int start_script_output_handler (PRN *prn, int mode,
 	    vwin_add_tmpbar(vwin);
 	} else {
 	    /* new viewer needed */
-	    vwin = hansl_output_viewer_new(prn, mode, title);
+	    vwin = hansl_output_viewer_new(prn, role, title);
 	    if (vwin == NULL) {
 		err = E_ALLOC;
 	    }
