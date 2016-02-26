@@ -283,7 +283,7 @@ static GtkWidget *aggregation_combo (void)
     GtkWidget *ac, *entry;
     int i, n = G_N_ELEMENTS(as);
 
-    ac = gtk_combo_box_text_new_with_entry();
+    ac = combo_box_text_new_with_entry();
 
     for (i=0; i<n; i++) {
 	combo_box_append_text(ac, as[i]);
