@@ -3240,8 +3240,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	warnmsg(prn);
     }
 
-    fprintf(stderr, "gretl_cmd_exec, returning %d\n", err);
-
     return err;
 }
 
