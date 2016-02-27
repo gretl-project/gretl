@@ -2866,10 +2866,12 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	    /* set up to handle the "no varnames" case */
 	    csv_set_autoname(c);
 	    c->datapos = csv_has_bom(c) ? 3 : 0;
-	    if (obs_labels_no_varnames(obscol, c->dset, numcount)) {
-		err = csv_reconfigure_for_markers(c->dset);
-		if (!err) {
-		    csv_set_obs_column(c);
+	    if (!csv_all_cols(c)) {
+		if (obs_labels_no_varnames(obscol, c->dset, numcount)) {
+		    err = csv_reconfigure_for_markers(c->dset);
+		    if (!err) {
+			csv_set_obs_column(c);
+		    }
 		}
 	    }
 	}
@@ -3130,7 +3132,11 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     int err;
     
     if (mprn != NULL) {
-	pputs(mprn, A_("scanning for row labels and data...\n"));
+	if (csv_all_cols(c)) {
+	    pputs(mprn, A_("scanning for data...\n"));
+	} else {
+	    pputs(mprn, A_("scanning for row labels and data...\n"));
+	}
     }
 
     fseek(fp, c->datapos, SEEK_SET);
@@ -3261,8 +3267,10 @@ static int csv_set_dataset_dimensions (csvdata *c)
  * @probe: also pertains to "join" (via GUI).
  * @opt: use OPT_N to force interpretation of data colums containing
  * strings as coded (non-numeric) values and not errors; use OPT_H
- * to indicate absence of a header row; for use of OPT_T see the help
- * for the "append" command.
+ * to indicate absence of a header row; use OPT_A to indicate that
+ * all columns should be read as data series (i.e. do not try to
+ * interpret the first column as observation labels); for use of
+ * OPT_T see the help text for the "append" command.
  * @prn: gretl printing struct (or NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
