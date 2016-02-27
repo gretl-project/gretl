@@ -633,7 +633,8 @@ int gui_join_data (const char *fname, GretlFileType ftype)
     int err = 0;
 
     if (ftype == GRETL_CSV) {
-	err = probe_csv(fname, &jinfo.r_vnames, &jinfo.r_nvars);
+	err = probe_csv(fname, OPT_NONE, &jinfo.r_vnames,
+			&jinfo.r_nvars);
     } else {
 	err = gretl_read_gdt_varnames(fname, &jinfo.r_vnames,
 				      &jinfo.r_nvars);

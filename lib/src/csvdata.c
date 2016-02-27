@@ -117,7 +117,7 @@ struct csvdata_ {
 #define csv_got_semi(c)           (c->flags & CSV_GOTSEMI)
 #define csv_got_delim(c)          (c->flags & CSV_GOTDELIM)
 #define csv_autoname(c)           (c->flags & CSV_AUTONAME)
-#define csv_skip_column(c)        (c->flags & (CSV_OBS1 | CSV_BLANK1))
+#define csv_skip_col_1(c)         (c->flags & (CSV_OBS1 | CSV_BLANK1))
 #define csv_have_data(c)          (c->flags & CSV_HAVEDATA)
 #define csv_data_reversed(c)      (c->flags & CSV_REVERSED)
 #define csv_do_dotsub(c)          (c->flags & CSV_DOTSUB)
@@ -2533,7 +2533,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 		    c->nrows, chkcols);
 	    err = E_DATA;
 	} else if (cols_subset(c)) {
-	    int datacols = csv_skip_column(c) ? (c->ncols - 1) : c->ncols;
+	    int datacols = csv_skip_col_1(c) ? (c->ncols - 1) : c->ncols;
 
 	    if (c->cols_list[c->cols_list[0]] > datacols) {
 		gretl_errmsg_set(_("Invalid column specification"));
@@ -2630,7 +2630,7 @@ static int csv_reconfigure_for_markers (DATASET *dset)
 
 static int skip_data_column (csvdata *c, int k)
 {
-    int col = csv_skip_column(c) ? k : k + 1;
+    int col = csv_skip_col_1(c) ? k : k + 1;
 
     if (!in_gretl_list(c->cols_list, col)) {
 	return 1;
@@ -2725,7 +2725,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
     int matched = 0;
     int i, j = *pj;
 
-    if (!csv_skip_column(c)) {
+    if (!csv_skip_col_1(c)) {
 	k++;
     }    
 
@@ -2823,13 +2823,16 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	c->str[i] = '\0';
 	if (*p == c->delim) p++;
 
-	if (k == 0 && csv_skip_column(c)) {
+	if (k == 0 && csv_skip_col_1(c)) {
 	    ; /* no-op */
 	} else if (!joining(c) && cols_subset(c) && skip_data_column(c, k)) {
 	    ; /* no-op */
 	} else {
 	    if (joining(c)) {
 		handle_join_varname(c, k, &j);
+	    } else if (probing(c) && csv_no_header(c)) {
+		sprintf(c->dset->varname[j], "col%d", j);
+		j++;
 	    } else {
 		err = process_csv_varname(c->dset->varname[j], c->str, j,
 					  &numcount, prn);
@@ -3088,7 +3091,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	    c->str[i] = '\0';
 	    err = maybe_fix_csv_string(c->str);
 	    if (!err) {
-		if (k == 0 && csv_skip_column(c) && c->dset->S != NULL) {
+		if (k == 0 && csv_skip_col_1(c) && c->dset->S != NULL) {
 		    transcribe_obs_label(c, t);
 		} else if (cols_subset(c) && skip_data_column(c, k)) {
 		    ; /* no-op */
@@ -3143,7 +3146,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 
     err = real_read_labels_and_data(c, fp, prn);
 
-    if (!err && csv_skip_column(c) && !rows_subset(c) && !joining(c)) {
+    if (!err && csv_skip_col_1(c) && !rows_subset(c) && !joining(c)) {
 	c->markerpd = test_markers_for_dates(c->dset, &reversed,
 					     c->skipstr, prn);
 	if (reversed) {
@@ -3222,7 +3225,7 @@ static int csv_set_dataset_dimensions (csvdata *c)
 	    }
 	}
 
-	cols_present = csv_skip_column(c) ? (c->ncols - 1) : c->ncols;
+	cols_present = csv_skip_col_1(c) ? (c->ncols - 1) : c->ncols;
 
 	if (joining(c)) {
 	    cols_wanted = join_unique_columns(c);
@@ -3442,7 +3445,7 @@ static int real_import_csv (const char *fname,
 
     /* initialize CSV dataset */
     err = start_new_Z(c->dset, 0);
-    if (!err && csv_skip_column(c)) {
+    if (!err && csv_skip_col_1(c)) {
 	err = dataset_allocate_obs_markers(c->dset);
     }
 
@@ -3686,9 +3689,35 @@ int import_csv (const char *fname, DATASET *dset,
 			   NULL, NULL, opt, prn);
 }
 
+static int probe_varnames_check (DATASET *dset, gretlopt opt,
+				 int *rerun)
+{
+    int missnames = 0;
+    int i, err = 0;
+
+    for (i=1; i<dset->v; i++) {
+	if (dset->varname[i][0] == '\0') {
+	    missnames = 1;
+	    break;
+	}
+    }
+
+    if (missnames) {
+	if (opt & OPT_H) {
+	    gretl_errmsg_set("Couldn't find all variable names");
+	    err = E_DATA;
+	} else {
+	    *rerun = 1;
+	}
+    }
+	   
+    return err;
+}
+
 /**
  * probe_csv:
  * @fname: name of CSV file.
+ * @opt: may include OPT_H for assume no header.
  * @varnames: location to receive variable names.
  * @nvars: location to receive number of variables (columns).
  * 
@@ -3698,18 +3727,36 @@ int import_csv (const char *fname, DATASET *dset,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int probe_csv (const char *fname, char ***varnames, int *nvars)
+int probe_csv (const char *fname, gretlopt opt,
+	       char ***varnames, int *nvars)
 {
     csvprobe probe = {0};
     int err;
     
     err = real_import_csv(fname, NULL, NULL, NULL, 
-			  NULL, &probe, OPT_NONE, NULL);
+			  NULL, &probe, opt, NULL);
 
     if (!err) {
-	*varnames = probe.dset->varname;
-	*nvars = probe.dset->v;
-	probe.dset->varname = NULL;
+	int rerun = 0;
+	
+	err = probe_varnames_check(probe.dset, opt, &rerun);
+
+	if (err) {
+	    destroy_dataset(probe.dset);
+	    probe.dset = NULL;
+	} else if (rerun) {
+	    /* try again with --no-header */
+	    destroy_dataset(probe.dset);
+	    probe.dset = NULL;
+	    opt |= OPT_H;
+	    err = real_import_csv(fname, NULL, NULL, NULL,
+				  NULL, &probe, opt, NULL);
+	}
+	if (!err) {
+	    *varnames = probe.dset->varname;
+	    *nvars = probe.dset->v;
+	    probe.dset->varname = NULL;
+	}
 	destroy_dataset(probe.dset);
     }
 
@@ -5812,7 +5859,8 @@ static void maybe_transfer_string_table (DATASET *l_dset,
  * or NULL.
  * @tconvstr: string specifying date columns for conversion, or NULL.
  * @tconvfmt: string giving format(s) for "timeconv" columns, or NULL.
- * @opt: may contain OPT_V for verbose operation.
+ * @opt: may contain OPT_V for verbose operation, OPT_H to assume
+ * no header row.
  * @prn: gretl printing struct (or NULL).
  * 
  * Opens a delimited text data file or gdt file and carries out a 
