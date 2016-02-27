@@ -6075,6 +6075,37 @@
 
   </command>
 
+  <command name="join" section="Dataset" label="Append data with controls" 
+	   context="gui">
+    <para>
+      This dialog gives you access to some, but not all, of the
+      functionality of the <lit>join</lit> command. For full
+      details see <guideref targ="chap-join"/>.
+    </para>
+    <para>
+      On the left you should see a listing of series in the current
+      dataset. You can select a series here and use the arrow buttons
+      to specify it as one or other of the (optional) <quote>inner
+      keys</quote>. Keys work to match rows between the current
+      dataset and the file from which you are importing data.
+    </para>
+    <para>
+      On the right should be listed the series in the data file you
+      selected. The arrow buttons can be used to select from that
+      list the name of the series to import, and (if required) the
+      names of series that correspond to the <quote>inner</quote>
+      keys. (By default they are presumed to have the same name.)
+    </para>
+    <para>
+      In the middle panel of the dialog you can specify a name under
+      which the imported series should be known. (By default this is
+      the same as the <quote>import</quote> name). You can also select
+      an <quote>aggregation</quote> method. This is required only if
+      matching by keys selects more than one <quote>outer</quote>
+      value per <quote>inner</quote> observation.
+    </para>
+  </command>
+
   <command name="kalman" section="Estimation" label="Kalman filter">
 
     <usage>

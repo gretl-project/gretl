@@ -228,8 +228,7 @@ static void build_joiner_buttons (join_info *jinfo)
 {
     GtkWidget *b;
 
-    /* FIXME add Help text */
-    context_help_button(jinfo->action_area, 0);
+    context_help_button(jinfo->action_area, JOIN);
 
     b = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
     gtk_container_add(GTK_CONTAINER(jinfo->action_area), b);
@@ -371,6 +370,7 @@ static void joiner_add_controls (join_info *jinfo)
     /* series to import plus LHS name */
     for (i=0; i<2; i++) {
 	w = gtk_label_new(i == 0 ? "import series" : "named as");
+	gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
 	joiner_table_insert(jinfo, w, 2, 3, i, i+1);
 	w = joiner_entry_box();
 	joiner_table_insert(jinfo, w, 3, 4, i, i+1);
@@ -399,6 +399,7 @@ static void joiner_add_controls (join_info *jinfo)
 
     /* filter */
     w = gtk_label_new("filter");
+    gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
     joiner_table_insert(jinfo, w, 2, 3, 5, 6);
     jinfo->filter = joiner_entry_box();
     set_placeholder_text(jinfo->filter, "none");
@@ -406,6 +407,7 @@ static void joiner_add_controls (join_info *jinfo)
 
     /* aggregation */
     w = gtk_label_new("aggregation");
+    gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
     joiner_table_insert(jinfo, w, 2, 3, 6, 7);
     jinfo->aggr = aggregation_combo();
     joiner_table_insert(jinfo, jinfo->aggr, 3, 4, 6, 7);
