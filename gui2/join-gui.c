@@ -56,6 +56,35 @@ enum {
 
 static void do_join_command (GtkWidget *w, join_info *jinfo);
 
+static gint dblclick_series_row (GtkWidget *w,
+				 GdkEventButton *event,
+				 join_info *jinfo) 
+{
+    if (event != NULL && event->type == GDK_2BUTTON_PRESS) {
+	GtkTreeSelection *sel;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	gchar *text = NULL;
+
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(w));
+
+	if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	    gtk_tree_model_get(model, &iter, 0, &text, -1);
+	}
+
+	if (text != NULL) {
+	    if (w == jinfo->lvars) {
+		gtk_entry_set_text(GTK_ENTRY(jinfo->lkey[0]), text);
+	    } else {
+		gtk_entry_set_text(GTK_ENTRY(jinfo->import), text);
+	    }
+	    g_free(text);
+	}	
+    }
+
+    return FALSE;
+}
+
 static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo, int locus) 
 {
     GtkListStore *store; 
@@ -85,7 +114,8 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo, int locus)
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
 
-    /* click callbacks? */
+    g_signal_connect(G_OBJECT(view), "button-press-event",
+		     G_CALLBACK(dblclick_series_row), jinfo);
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
