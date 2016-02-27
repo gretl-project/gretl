@@ -140,12 +140,50 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo, int locus)
     return view;
 }
 
+#if !HAVE_PLACEHOLDER
+
+/* For gtk2, emulate gtk3's place-holder text apparatus:
+   make the dummy text gray, and make it disappear when 
+   the GtkEntry receives focus.
+*/
+
+static gboolean focus_entry (GtkWidget *w,
+			     GtkDirectionType dir,
+			     gpointer p)
+{
+    if (widget_get_int(w, "go-away")) {
+	gtk_entry_set_text(GTK_ENTRY(w), "");
+	gtk_widget_modify_text(w, GTK_STATE_NORMAL, NULL);
+	widget_set_int(w, "go-away", 0);
+    }
+
+    return FALSE;
+}
+
+static void make_text_gray (GtkWidget *entry)
+{
+    GdkColor gray = {
+	0, 32767, 32767, 32767
+    };
+
+    gtk_widget_modify_text(entry, GTK_STATE_NORMAL, &gray);
+}
+
+#endif
+
 static void set_placeholder_text (GtkWidget *w, const char *s)
 {
 #if HAVE_PLACEHOLDER
     gtk_entry_set_placeholder_text(GTK_ENTRY(w), s);
 #else
     gtk_entry_set_text(GTK_ENTRY(w), s);
+    make_text_gray(w);
+    widget_set_int(w, "go-away", 1);
+    if (!widget_get_int(w, "signal-set")) {
+	g_signal_connect(G_OBJECT(w), "grab-focus",
+			 G_CALLBACK(focus_entry), NULL);
+	widget_set_int(w, "signal-set", 1);
+    }
 #endif
 }
 
@@ -370,7 +408,9 @@ static void joiner_add_controls (join_info *jinfo)
     w = gtk_label_new("aggregation");
     joiner_table_insert(jinfo, w, 2, 3, 6, 7);
     jinfo->aggr = aggregation_combo();
-    joiner_table_insert(jinfo, jinfo->aggr, 3, 4, 6, 7);    
+    joiner_table_insert(jinfo, jinfo->aggr, 3, 4, 6, 7);
+
+    gtk_widget_grab_focus(jinfo->import);
 }
 
 static GtkWidget *joiner_arrow_button (const guint8 *src)
