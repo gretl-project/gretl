@@ -42,8 +42,11 @@ struct join_info_ {
     GtkWidget *rkey[2];
     GtkWidget *filter;
     GtkWidget *aggr;
+    GtkWidget *verbose;
+    char **l_vnames;
     char **r_vnames;
-    int r_nvars;
+    int n_lvars;
+    int n_rvars;
     const char *fname;
     gretlopt opt;
 };
@@ -55,7 +58,15 @@ enum {
     OUTER
 };
 
+/* max number of series names to show at once */
+#define NSHOW 50
+
 static void do_join_command (GtkWidget *w, join_info *jinfo);
+
+/* Define double-click action for a varname on the left (insert
+   into first inner key slot) and on the right (insert into the
+   "import" slot).
+*/
 
 static gint dblclick_series_row (GtkWidget *w,
 				 GdkEventButton *event,
@@ -86,7 +97,10 @@ static gint dblclick_series_row (GtkWidget *w,
     return FALSE;
 }
 
-static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo, int locus) 
+/* Construct a list box to hold left- or right-hand series names */
+
+static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo,
+				   int locus) 
 {
     GtkListStore *store; 
     GtkWidget *view, *scroller;
@@ -188,7 +202,7 @@ static void set_placeholder_text (GtkWidget *w, const char *s)
 #endif
 }
 
-/* action button callbacks */
+/* Callback for "Clear" button */
 
 static void clear_joiner (GtkWidget *w, join_info *jinfo)
 {
@@ -207,12 +221,21 @@ static void clear_joiner (GtkWidget *w, join_info *jinfo)
 
     entry = gtk_bin_get_child(GTK_BIN(jinfo->aggr));
     set_placeholder_text(entry, "none");
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(jinfo->verbose),
+				 FALSE);
 }
+
+/* Callback for "Cancel" button */
 
 static void cancel_joiner (GtkWidget *w, join_info *jinfo)
 {
     gtk_widget_destroy(jinfo->dlg);
 }
+
+/* Get the text from an entry box, or NULL if it's
+   of zero length or just a placeholder.
+*/
 
 static const char *join_entry_text (GtkWidget *w)
 {
@@ -224,6 +247,8 @@ static const char *join_entry_text (GtkWidget *w)
 	return s;
     }
 }
+
+/* The buttons for the dialog's "action area" */
 
 static void build_joiner_buttons (join_info *jinfo)
 {
@@ -280,6 +305,9 @@ static void joiner_deleted (GtkWidget *w, GdkEvent *event,
     gtk_widget_destroy(jinfo->dlg);
 }
 
+/* Allocate the dialog box and establish its basic
+   structure */
+
 static GtkWidget *join_dialog_new (join_info *jinfo,
 				   const char *fname)
 {
@@ -319,6 +347,8 @@ static GtkWidget *join_dialog_new (join_info *jinfo,
     return d;
 }
 
+/* convenience function to avoid excessive repetition */
+
 static GtkWidget *joiner_entry_box (void)
 {
     GtkWidget *w = gtk_entry_new();
@@ -328,6 +358,8 @@ static GtkWidget *joiner_entry_box (void)
 
     return w;
 }
+
+/* another convenience function */
 
 static void joiner_table_insert (join_info *jinfo, GtkWidget *w,
 				 guint x1, guint x2,
@@ -424,15 +456,18 @@ static void joiner_add_controls (join_info *jinfo)
     jinfo->aggr = aggregation_combo();
     joiner_table_insert(jinfo, jinfo->aggr, 3, 4, 6, 7);
 
-    /* verbosity */
+    /* verbosity check-button */
     w = gtk_check_button_new_with_label(_("show details "
 					  "of importation"));
     g_signal_connect(G_OBJECT(w), "toggled",
     		     G_CALLBACK(joiner_set_verbosity), jinfo);
     joiner_table_insert(jinfo, w, 2, 4, 7, 8);
+    jinfo->verbose = w;
 
     gtk_widget_grab_focus(jinfo->import);
 }
+
+/* blue arrow button pointing right or left */
 
 static GtkWidget *joiner_arrow_button (const guint8 *src)
 {
@@ -448,6 +483,9 @@ static GtkWidget *joiner_arrow_button (const guint8 *src)
 
     return button;
 }
+
+/* callback for sending a series name somewhere or other
+   when an arrow button is clicked */
 
 static void arrow_clicked (GtkWidget *button, join_info *jinfo)
 {
@@ -529,53 +567,191 @@ static void joiner_add_arrows_column (join_info *jinfo, int locus)
 		     G_CALLBACK(arrow_clicked), jinfo);
 }
 
+/* Apparatus for showing next or previous range of series
+   names on left or right, in case the number of names is
+   too great to display at once.
+*/
+
+static void next_prev_clicked (GtkButton *b, join_info *jinfo)
+{
+    const gchar *s = gtk_button_get_label(b);
+    GtkWidget *target;
+    GtkWidget *bprev, *bnext;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    char **vnames;
+    int vmin, vmax;
+    int i, nvars;
+
+    /* the list box to which button @b is linked */
+    target = g_object_get_data(G_OBJECT(b), "target");
+
+    /* get the range currently shown */
+    vmin = widget_get_int(target, "vmin");
+    vmax = widget_get_int(target, "vmax");
+
+    /* clear the current list */
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(target)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    if (target == jinfo->lvars) {
+	vnames = jinfo->l_vnames;
+	nvars = jinfo->n_lvars;
+    } else {
+	vnames = jinfo->r_vnames;
+	nvars = jinfo->n_rvars;
+    }
+
+    if (*s == '<') {
+	/* previous range wanted */
+	bprev = GTK_WIDGET(b);
+	bnext = g_object_get_data(G_OBJECT(b), "sibling");
+	vmax = vmin - 1;
+	vmin = vmax - NSHOW + 1;
+	if (vmin < 1) vmin = 1;
+    } else {
+	/* next range wanted */
+	bnext = GTK_WIDGET(b);
+	bprev = g_object_get_data(G_OBJECT(b), "sibling");
+	vmin = vmax + 1;
+	vmax = vmin + NSHOW - 1;
+	if (vmax > nvars) vmax = nvars;
+    }    
+
+    /* insert revised range of series names */
+    for (i=vmin; i<=vmax; i++) {
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, vnames[i], -1);
+    }
+
+    /* record new status on list box */
+    widget_set_int(target, "vmin", vmin);
+    widget_set_int(target, "vmax", vmax);
+
+    /* adjust sensitivity of buttons */
+    gtk_widget_set_sensitive(bprev, vmin > 1);
+    gtk_widget_set_sensitive(bnext, vmax < nvars);
+}
+
+static void add_next_prev_buttons (join_info *jinfo,
+				   GtkWidget *target,
+				   int x)
+{
+    GtkWidget *hbox, *b[2];
+    guint nrows, ncols;
+    int i, active;
+
+    if (target == jinfo->lvars) {
+	active = jinfo->n_lvars > NSHOW;
+    } else {
+	active = jinfo->n_rvars > NSHOW;
+    }
+
+    gtk_table_get_size(GTK_TABLE(jinfo->table), &nrows, &ncols);
+    if (nrows == 8) {
+	gtk_table_resize(GTK_TABLE(jinfo->table), 9, ncols);
+    }
+
+    hbox = gtk_hbox_new(TRUE, 5);
+
+    for (i=0; i<2; i++) {
+	b[i] = gtk_button_new_with_label(i == 0 ? "<<" : ">>");
+	gtk_widget_set_size_request(b[i], -1, 16);
+	if (active) {
+	    g_object_set_data(G_OBJECT(b[i]), "target", target);
+	    g_signal_connect(G_OBJECT(b[i]), "clicked", 
+			     G_CALLBACK(next_prev_clicked), jinfo);
+	    if (i == 0) {
+		/* "previous" is not applicable at this point */
+		gtk_widget_set_sensitive(b[i], FALSE);
+	    }
+	} else {
+	    /* grayed-out buttons, just for symmetry */
+	    gtk_widget_set_sensitive(b[i], FALSE);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), b[i], TRUE, TRUE, 5);
+    }
+
+    if (active) {
+	g_object_set_data(G_OBJECT(b[0]), "sibling", b[1]);
+	g_object_set_data(G_OBJECT(b[1]), "sibling", b[0]);
+    }
+
+    joiner_table_insert(jinfo, hbox, x, x+1, 8, 9);
+}
+
 static void join_dialog_setup (join_info *jinfo)
 {
     GtkListStore *store;
     GtkTreeIter iter;
     GtkWidget *vbox;
+    int vmax, buttons = 0;
     int i;
 
     jinfo->table = gtk_table_new(8, 6, FALSE);
 
-    /* holds list of inner series available for selection */
+    /* holder for list of inner series */
     vbox = gtk_vbox_new(FALSE, 5);
     jinfo->lvars = series_list_box(GTK_BOX(vbox), jinfo, INNER);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(jinfo->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=1; i<dataset->v; i++) {
-	if (!series_is_hidden(dataset, i)) {
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 0, dataset->varname[i], -1);
-	}
+    /* we'll show previous/next buttons if either of the series
+       lists is bigger than NSHOW */
+    buttons = (jinfo->n_lvars > NSHOW || jinfo->n_rvars > NSHOW);
+    vmax = (jinfo->n_lvars > NSHOW)? NSHOW : jinfo->n_lvars;
+
+    /* insert inner series names */
+    for (i=1; i<=vmax; i++) {
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, jinfo->l_vnames[i], -1);
+    }
+
+    if (jinfo->n_lvars > NSHOW) {
+	widget_set_int(jinfo->lvars, "vmin", 1);
+	widget_set_int(jinfo->lvars, "vmax", vmax);
     }
 
     joiner_table_insert(jinfo, vbox, 0, 1, 0, 8);
+    if (buttons) {
+	add_next_prev_buttons(jinfo, jinfo->lvars, 0);
+    }
 
     /* push from left to middle */
     joiner_add_arrows_column(jinfo, INNER);
 
-    /* central bit */
+    /* central box */
     joiner_add_controls(jinfo);
 
     /* pull from right to middle */
     joiner_add_arrows_column(jinfo, OUTER);
     
-    /* holds list of outer series */
+    /* holder for list of outer series */
     vbox = gtk_vbox_new(FALSE, 5);
     jinfo->rvars = series_list_box(GTK_BOX(vbox), jinfo, OUTER);
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(jinfo->rvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=1; i<jinfo->r_nvars; i++) {
+    vmax = (jinfo->n_rvars > NSHOW)? NSHOW : jinfo->n_rvars;
+
+    /* insert outer series names */
+    for (i=1; i<=vmax; i++) {
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, jinfo->r_vnames[i], -1);
     }
 
+    if (jinfo->n_rvars > NSHOW) {
+	widget_set_int(jinfo->rvars, "vmin", 1);
+	widget_set_int(jinfo->rvars, "vmax", vmax);
+    }    
+
     joiner_table_insert(jinfo, vbox, 5, 6, 0, 8);
+    if (buttons) {
+	add_next_prev_buttons(jinfo, jinfo->rvars, 5);
+    }    
 
     gtk_box_pack_start(GTK_BOX(jinfo->vbox), jinfo->table, TRUE, TRUE, 0);
 
@@ -608,6 +784,8 @@ static gchar *get_aggr_string (GtkWidget *cbox,
     return s;
 }
 
+/* respond to the "OK" button */
+
 static void do_join_command (GtkWidget *w, join_info *jinfo)
 {
     const char *import, *target;
@@ -638,7 +816,6 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     }
 
     /* check for missing specs */
-
     if (import == NULL) {
 	gtk_widget_grab_focus(jinfo->import);
 	return;
@@ -650,13 +827,12 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
 	return;
     }
 
-    /* get a buffer for writing */
-    
+    /* get a buffer for writing the command */
     if (bufopen(&prn)) {
 	return;
     }    
 
-    /* OK, let's go ahead */
+    /* construct the "join" command line */
 
     if (target == NULL) {
 	pprintf(prn, "join %s %s", jinfo->fname, import);
@@ -740,17 +916,23 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     }
 }
 
+/* Driver function, called from do_open_data() in gui_utils.c.
+   We come here only if the data file in question has been
+   determined to be delimited text or native gretl.
+*/
+
 int gui_join_data (const char *fname, GretlFileType ftype)
 {
     join_info jinfo = {0};
+    int full_nr;
     int err = 0;
 
     if (ftype == GRETL_CSV) {
 	err = probe_csv(fname, &jinfo.r_vnames,
-			&jinfo.r_nvars, &jinfo.opt);
+			&full_nr, &jinfo.opt);
     } else {
 	err = gretl_read_gdt_varnames(fname, &jinfo.r_vnames,
-				      &jinfo.r_nvars);
+				      &full_nr);
     }
 
     if (err) {
@@ -758,15 +940,21 @@ int gui_join_data (const char *fname, GretlFileType ftype)
 	return err;
     }
 
+    /* exclude the constant (ID 0) */
+    jinfo.n_lvars = dataset->v - 1;
+    jinfo.n_rvars = full_nr - 1;
+
+    /* convenience pointer: don't modify! */
+    jinfo.l_vnames = dataset->varname;
+
     jinfo.dlg = join_dialog_new(&jinfo, fname);
     join_dialog_setup(&jinfo);
     
     gtk_widget_show_all(jinfo.vbox);
     gtk_widget_show_all(jinfo.action_area);
-    
     gtk_dialog_run(GTK_DIALOG(jinfo.dlg));
 
-    strings_array_free(jinfo.r_vnames, jinfo.r_nvars);
+    strings_array_free(jinfo.r_vnames, full_nr);
 
     return err;
 }
