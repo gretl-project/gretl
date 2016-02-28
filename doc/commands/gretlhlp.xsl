@@ -500,9 +500,9 @@
 </xsl:template>
 
 <xsl:template match="quote">
-  <xsl:text>"</xsl:text>
+  <xsl:text>&#x201c;</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>"</xsl:text>
+  <xsl:text>&#x201d;</xsl:text>
 </xsl:template>
 
 <xsl:template match="url">
