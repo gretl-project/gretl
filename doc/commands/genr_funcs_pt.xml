@@ -1383,7 +1383,7 @@
 	<para>
 	  Inspecting the periodogram of the target series is a
 	  useful preliminary when you wish to apply this function.
-	  See <guideref targ="chap:filters"/> for details.
+	  See <guideref targ="chap:tsfilter"/> for details.
 	  <seelist>
 	    <fncref targ="bkfilt"/>
 	    <fncref targ="hpfilt"/>

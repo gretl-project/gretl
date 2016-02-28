@@ -3248,7 +3248,7 @@
 	provides the conditional medians instead.
       </para>
       <para>
-	Please see <guideref targ="chap:discr-models"/> for details.
+	Please see <guideref targ="chap:probit"/> for details.
       </para>
     </description>
 
@@ -6850,7 +6850,7 @@
 	chapter 10 of <cite key="davidson-mackinnon04">Davidson and
 	MacKinnon (2004)</cite>.  But if the <opt>cluster</opt> option
 	is given, then <quote>cluster-robust</quote> standard errors
-	are produced; see <guideref targ="chap:robust-vcv"/> for
+	are produced; see <guideref targ="chap:robust_vcv"/> for
 	details.
       </para>
       <para context="gui">
@@ -8280,7 +8280,7 @@
 	<opt>cluster</opt> overrides the selection of HC version, and
 	produces robust standard errors by grouping the observations
 	by the distinct values of <repl>clustvar</repl>; see <guideref
-	targ="chap:robust-vcv"/> for details.
+	targ="chap:robust_vcv"/> for details.
       </para>
     </description>
 

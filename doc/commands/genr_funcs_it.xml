@@ -1491,7 +1491,7 @@
     <para>
       L'esame del periodogramma della variabile target è un passo 
       preliminare utile quando si vuole applicare questa 
-      funzione. Si veda <guideref targ="chap:filters"/> per i
+      funzione. Si veda <guideref targ="chap:tsfilter"/> per i
       dettagli.
       <seelist>
         <fncref targ="bkfilt"/>
