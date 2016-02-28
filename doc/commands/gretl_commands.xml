@@ -6091,19 +6091,38 @@
     </para>
     <para>
       On the right should be listed the series in the data file you
-      selected. The arrow buttons can be used to select from that
-      list the name of the series to import, and (if required) the
-      names of series that correspond to the <quote>inner</quote>
-      keys. (By default they are presumed to have the same name.)
+      selected. The arrow buttons can be used to select from that list
+      the name of the series to import, and (if required) the names of
+      series that correspond to the <quote>inner</quote> keys. (By
+      default the inner and outer keys are presumed to have the same
+      name.)
     </para>
     <para>
-      In the middle panel of the dialog you can specify a name under
-      which the imported series should be known. (By default this is
-      the same as the <quote>import</quote> name). You can also select
-      an <quote>aggregation</quote> method. This is required only if
-      matching by keys selects more than one <quote>outer</quote>
-      value per <quote>inner</quote> observation.
+      In the middle panel of the dialog you can specify additional
+      parameters for the <quote>join</quote> operation:
     </para>
+    <ilist>
+      <li>
+	<para>
+	  A name under which the imported series should be known.  (By
+	  default this is the same as the <quote>import</quote> name).
+	</para>
+      </li>
+      <li>
+	<para>
+	  A filter expression. This will be evaluated for each row
+	  in the outer dataset, and only rows for which the
+	  expression yields a non-zero value will be imported.
+	</para>
+      </li>
+      <li>
+	<para>
+	  An aggregation method. This is required only if matching by
+	  keys selects more than one outer value per inner
+	  observation.
+	</para>
+      </li>
+    </ilist>
   </command>
 
   <command name="kalman" section="Estimation" label="Kalman filter">

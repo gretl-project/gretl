@@ -3717,9 +3717,11 @@ static int probe_varnames_check (DATASET *dset, gretlopt opt,
 /**
  * probe_csv:
  * @fname: name of CSV file.
- * @opt: may include OPT_H for assume no header.
  * @varnames: location to receive variable names.
  * @nvars: location to receive number of variables (columns).
+ * @opt: on input, may contain any extra options to pass to
+ * real_import_csv(); on return, OPT_H may be added if it
+ * seems to be required (no header).
  * 
  * Open a Comma-Separated Values data file and read enough to
  * determine the variable names.
@@ -3727,19 +3729,19 @@ static int probe_varnames_check (DATASET *dset, gretlopt opt,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int probe_csv (const char *fname, gretlopt opt,
-	       char ***varnames, int *nvars)
+int probe_csv (const char *fname, char ***varnames,
+	       int *nvars, gretlopt *opt)
 {
     csvprobe probe = {0};
     int err;
     
     err = real_import_csv(fname, NULL, NULL, NULL, 
-			  NULL, &probe, opt, NULL);
+			  NULL, &probe, *opt, NULL);
 
     if (!err) {
 	int rerun = 0;
 	
-	err = probe_varnames_check(probe.dset, opt, &rerun);
+	err = probe_varnames_check(probe.dset, *opt, &rerun);
 
 	if (err) {
 	    destroy_dataset(probe.dset);
@@ -3748,9 +3750,9 @@ int probe_csv (const char *fname, gretlopt opt,
 	    /* try again with --no-header */
 	    destroy_dataset(probe.dset);
 	    probe.dset = NULL;
-	    opt |= OPT_H;
+	    *opt |= OPT_H;
 	    err = real_import_csv(fname, NULL, NULL, NULL,
-				  NULL, &probe, opt, NULL);
+				  NULL, &probe, *opt, NULL);
 	}
 	if (!err) {
 	    *varnames = probe.dset->varname;

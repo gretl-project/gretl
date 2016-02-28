@@ -45,6 +45,7 @@ struct join_info_ {
     char **r_vnames;
     int r_nvars;
     const char *fname;
+    gretlopt opt;
 };
 
 typedef struct join_info_ join_info;
@@ -345,7 +346,8 @@ static GtkWidget *aggregation_combo (void)
 	"avg",
 	"sum",
 	"min",
-	"max"
+	"max",
+	"seq:",
     };
     GtkWidget *ac, *entry;
     int i, n = G_N_ELEMENTS(as);
@@ -360,6 +362,16 @@ static GtkWidget *aggregation_combo (void)
     set_placeholder_text(entry, "none");
 
     return ac;
+}
+
+static void joiner_set_verbosity (GtkToggleButton *b,
+				  join_info *jinfo)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	jinfo->opt |= OPT_V;
+    } else {
+	jinfo->opt &= ~OPT_V;
+    }
 }
 
 static void joiner_add_controls (join_info *jinfo)
@@ -411,6 +423,13 @@ static void joiner_add_controls (join_info *jinfo)
     joiner_table_insert(jinfo, w, 2, 3, 6, 7);
     jinfo->aggr = aggregation_combo();
     joiner_table_insert(jinfo, jinfo->aggr, 3, 4, 6, 7);
+
+    /* verbosity */
+    w = gtk_check_button_new_with_label(_("show details "
+					  "of importation"));
+    g_signal_connect(G_OBJECT(w), "toggled",
+    		     G_CALLBACK(joiner_set_verbosity), jinfo);
+    joiner_table_insert(jinfo, w, 2, 4, 7, 8);
 
     gtk_widget_grab_focus(jinfo->import);
 }
@@ -517,7 +536,7 @@ static void join_dialog_setup (join_info *jinfo)
     GtkWidget *vbox;
     int i;
 
-    jinfo->table = gtk_table_new(7, 6, FALSE);
+    jinfo->table = gtk_table_new(8, 6, FALSE);
 
     /* holds list of inner series available for selection */
     vbox = gtk_vbox_new(FALSE, 5);
@@ -533,7 +552,7 @@ static void join_dialog_setup (join_info *jinfo)
 	}
     }
 
-    joiner_table_insert(jinfo, vbox, 0, 1, 0, 7);
+    joiner_table_insert(jinfo, vbox, 0, 1, 0, 8);
 
     /* push from left to middle */
     joiner_add_arrows_column(jinfo, INNER);
@@ -556,11 +575,37 @@ static void join_dialog_setup (join_info *jinfo)
 	gtk_list_store_set(store, &iter, 0, jinfo->r_vnames[i], -1);
     }
 
-    joiner_table_insert(jinfo, vbox, 5, 6, 0, 7);
+    joiner_table_insert(jinfo, vbox, 5, 6, 0, 8);
 
     gtk_box_pack_start(GTK_BOX(jinfo->vbox), jinfo->table, TRUE, TRUE, 0);
 
     build_joiner_buttons(jinfo);
+}
+
+static gchar *get_aggr_string (GtkWidget *cbox,
+			       int *err)
+{
+    gchar *s;
+    
+    s = combo_box_get_active_text(cbox);
+    
+    if (s != NULL) {
+	if (*s == '\0' || !strcmp(s, "none")) {
+	    /* nothing there, OK */
+	    g_free(s);
+	    s = NULL;
+	} else if (!strncmp(s, "seq:", 4)) {
+	    if (!integer_string(s + 4)) {
+		errbox(_("The 'seq' aggregator requires an "
+			 "integer parameter, as in seq:1"));
+		*err = 1;
+		g_free(s);
+		s = NULL;
+	    }
+	}
+    }
+
+    return s;
 }
 
 static void do_join_command (GtkWidget *w, join_info *jinfo)
@@ -584,6 +629,13 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     okey2 = join_entry_text(jinfo->rkey[1]);
 
     filter = join_entry_text(jinfo->filter);
+
+    /* aggregation: check validity */
+    aggr = get_aggr_string(jinfo->aggr, &err);
+    if (err) {
+	gtk_widget_grab_focus(jinfo->aggr);
+	return;
+    }
 
     /* check for missing specs */
 
@@ -635,16 +687,22 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
 	pprintf(prn, " --filter=\"%s\"", filter);
     }
 
-    aggr = combo_box_get_active_text(jinfo->aggr);
     if (aggr != NULL) {
-	if (*aggr != '\0' && strcmp(aggr, "none")) {
-	    pprintf(prn, " --aggr=%s", aggr);
-	}
+	pprintf(prn, " --aggr=%s", aggr);
 	g_free(aggr);
     }
 
+    if (jinfo->opt & OPT_H) {
+	pputs(prn, " --no-header");
+    }
+
+    if (jinfo->opt & OPT_V) {
+	pputs(prn, " --verbose");
+    }    
+
     buf = gretl_print_steal_buffer(prn);
     gretl_print_destroy(prn);
+    prn = NULL;
 
 #if 0
     fprintf(stderr, "\n === join command from GUI ===\n%s\n\n", buf);
@@ -653,10 +711,23 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     if (!err) {
 	ExecState state;
 
+	if (jinfo->opt & OPT_V) {
+	    bufopen(&prn);
+	}
+
 	gretl_exec_state_init(&state, CONSOLE_EXEC, NULL,
-			      get_lib_cmd(), NULL, NULL);
+			      get_lib_cmd(), NULL, prn);
 	state.line = buf;
 	err = gui_exec_line(&state, dataset, jinfo->dlg);
+	
+	if (prn != NULL) {
+	    windata_t *vwin;
+	    
+	    vwin = view_buffer(prn, 78, 350, "gretl: join",
+			       IMPORT, NULL);
+	    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+					 GTK_WINDOW(mdata->main));
+	}
     }
 
     free(buf);
@@ -675,8 +746,8 @@ int gui_join_data (const char *fname, GretlFileType ftype)
     int err = 0;
 
     if (ftype == GRETL_CSV) {
-	err = probe_csv(fname, OPT_NONE, &jinfo.r_vnames,
-			&jinfo.r_nvars);
+	err = probe_csv(fname, &jinfo.r_vnames,
+			&jinfo.r_nvars, &jinfo.opt);
     } else {
 	err = gretl_read_gdt_varnames(fname, &jinfo.r_vnames,
 				      &jinfo.r_nvars);
