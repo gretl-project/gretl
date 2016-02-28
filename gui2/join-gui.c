@@ -27,28 +27,28 @@
 #define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
 
 struct join_info_ {
-    GtkWidget *dlg;
-    GtkWidget *vbox;
-    GtkWidget *action_area;
-    GtkWidget *table;
-    GtkWidget *import;
-    GtkWidget *target;
-    GtkWidget *lvars;
-    GtkWidget *rvars;
-    GtkWidget *iarrow;
-    GtkWidget *larrow[2];
-    GtkWidget *rarrow[2];
-    GtkWidget *lkey[2];
-    GtkWidget *rkey[2];
-    GtkWidget *filter;
-    GtkWidget *aggr;
-    GtkWidget *verbose;
-    char **l_vnames;
-    char **r_vnames;
-    int n_lvars;
-    int n_rvars;
-    const char *fname;
-    gretlopt opt;
+    GtkWidget *dlg;         /* dialog box */
+    GtkWidget *vbox;        /* holder for content */
+    GtkWidget *bbox;        /* box for action buttons */
+    GtkWidget *table;       /* for structuring content */
+    GtkWidget *import;      /* entry box for name of series */
+    GtkWidget *target;      /* entry for LHS name, if different */
+    GtkWidget *lvars;       /* list box, inner series names */
+    GtkWidget *rvars;       /* list box, outer series names */
+    GtkWidget *iarrow;      /* arrow button for setting import */
+    GtkWidget *larrow[2];   /* arrow buttons for setting ikey(s) */
+    GtkWidget *rarrow[2];   /* arrow buttons for setting okey(s) */
+    GtkWidget *ikey[2];     /* entry boxes, ikeys */
+    GtkWidget *okey[2];     /* entry boxes, okeys */
+    GtkWidget *filter;      /* entry box, filter expression */
+    GtkWidget *aggr;        /* selector for aggregation method */
+    GtkWidget *verbose;     /* check-button for verbosity */
+    char **l_vnames;        /* inner series names */
+    char **r_vnames;        /* outer series names */
+    int n_lvars;            /* number of inner series */
+    int n_rvars;            /* number of outer series */
+    const char *fname;      /* import filename */
+    gretlopt opt;           /* holder for extra "join" options */
 };
 
 typedef struct join_info_ join_info;
@@ -86,7 +86,7 @@ static gint dblclick_series_row (GtkWidget *w,
 
 	if (text != NULL) {
 	    if (w == jinfo->lvars) {
-		gtk_entry_set_text(GTK_ENTRY(jinfo->lkey[0]), text);
+		gtk_entry_set_text(GTK_ENTRY(jinfo->ikey[0]), text);
 	    } else {
 		gtk_entry_set_text(GTK_ENTRY(jinfo->import), text);
 	    }
@@ -210,11 +210,11 @@ static void clear_joiner (GtkWidget *w, join_info *jinfo)
     int i;
     
     gtk_entry_set_text(GTK_ENTRY(jinfo->import), "");
-    set_placeholder_text(jinfo->target, "same as outer");
+    set_placeholder_text(jinfo->target, "same as above");
 
     for (i=0; i<2; i++) {
-	gtk_entry_set_text(GTK_ENTRY(jinfo->lkey[i]), "");
-	set_placeholder_text(jinfo->rkey[i], "same as inner");
+	gtk_entry_set_text(GTK_ENTRY(jinfo->ikey[i]), "");
+	set_placeholder_text(jinfo->okey[i], "same as inner");
     }
 
     set_placeholder_text(jinfo->filter, "none");
@@ -254,21 +254,21 @@ static void build_joiner_buttons (join_info *jinfo)
 {
     GtkWidget *b;
 
-    context_help_button(jinfo->action_area, JOIN);
+    context_help_button(jinfo->bbox, JOIN);
 
     b = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-    gtk_container_add(GTK_CONTAINER(jinfo->action_area), b);
+    gtk_container_add(GTK_CONTAINER(jinfo->bbox), b);
     g_signal_connect(G_OBJECT(b), "clicked", 
 		     G_CALLBACK(clear_joiner), jinfo);
 
     b = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_container_add(GTK_CONTAINER(jinfo->action_area), b);
+    gtk_container_add(GTK_CONTAINER(jinfo->bbox), b);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(cancel_joiner), jinfo);
 
     b = gtk_button_new_from_stock(GTK_STOCK_OK);
     gtk_widget_set_can_default(b, TRUE);
-    gtk_container_add(GTK_CONTAINER(jinfo->action_area), b);
+    gtk_container_add(GTK_CONTAINER(jinfo->bbox), b);
     g_signal_connect(G_OBJECT(b), "clicked", 
 		     G_CALLBACK(do_join_command), jinfo);
     gtk_widget_grab_default(b);
@@ -339,7 +339,7 @@ static GtkWidget *join_dialog_new (join_info *jinfo,
     gtk_container_set_border_width(GTK_CONTAINER(aa), 5);
 
     jinfo->vbox = ca;
-    jinfo->action_area = aa;
+    jinfo->bbox = aa;
 
     set_join_top_label(jinfo, fname);
     jinfo->fname = fname;
@@ -421,7 +421,7 @@ static void joiner_add_controls (join_info *jinfo)
 	if (i == 0) {
 	    jinfo->import = w;
 	} else {
-	    set_placeholder_text(w, "same as outer");
+	    set_placeholder_text(w, "same as above");
 	    jinfo->target = w;
 	}
     }
@@ -434,11 +434,11 @@ static void joiner_add_controls (join_info *jinfo)
 
     for (i=0; i<2; i++) {
 	/* key slots, 2 x 2 */
-	jinfo->lkey[i] = joiner_entry_box();
-	joiner_table_insert(jinfo, jinfo->lkey[i], 2, 3, i+3, i+4);
-	jinfo->rkey[i] = joiner_entry_box();
-	set_placeholder_text(jinfo->rkey[i], "same as inner");
-	joiner_table_insert(jinfo, jinfo->rkey[i], 3, 4, i+3, i+4);
+	jinfo->ikey[i] = joiner_entry_box();
+	joiner_table_insert(jinfo, jinfo->ikey[i], 2, 3, i+3, i+4);
+	jinfo->okey[i] = joiner_entry_box();
+	set_placeholder_text(jinfo->okey[i], "same as inner");
+	joiner_table_insert(jinfo, jinfo->okey[i], 3, 4, i+3, i+4);
     }
 
     /* filter */
@@ -496,16 +496,16 @@ static void arrow_clicked (GtkWidget *button, join_info *jinfo)
 	targ = jinfo->import;
     } else if (button == jinfo->larrow[0]) {
 	src = jinfo->lvars;
-	targ = jinfo->lkey[0];
+	targ = jinfo->ikey[0];
     } else if (button == jinfo->larrow[1]) {
 	src = jinfo->lvars;
-	targ = jinfo->lkey[1];
+	targ = jinfo->ikey[1];
     } else if (button == jinfo->rarrow[0]) {
 	src = jinfo->rvars;
-	targ = jinfo->rkey[0];
+	targ = jinfo->okey[0];
     } else if (button == jinfo->rarrow[1]) {
 	src = jinfo->rvars;
-	targ = jinfo->rkey[1];
+	targ = jinfo->okey[1];
     }
 
     if (src != NULL && targ != NULL) {
@@ -800,11 +800,11 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     import = join_entry_text(jinfo->import);
     target = join_entry_text(jinfo->target);
 
-    ikey1 = join_entry_text(jinfo->lkey[0]);
-    ikey2 = join_entry_text(jinfo->lkey[1]);
+    ikey1 = join_entry_text(jinfo->ikey[0]);
+    ikey2 = join_entry_text(jinfo->ikey[1]);
 
-    okey1 = join_entry_text(jinfo->rkey[0]);
-    okey2 = join_entry_text(jinfo->rkey[1]);
+    okey1 = join_entry_text(jinfo->okey[0]);
+    okey2 = join_entry_text(jinfo->okey[1]);
 
     filter = join_entry_text(jinfo->filter);
 
@@ -820,10 +820,10 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
 	gtk_widget_grab_focus(jinfo->import);
 	return;
     } else if (ikey1 == NULL && okey1 != NULL) {
-	gtk_widget_grab_focus(jinfo->lkey[0]);
+	gtk_widget_grab_focus(jinfo->ikey[0]);
 	return;
     } else if (ikey2 == NULL && okey2 != NULL) {
-	gtk_widget_grab_focus(jinfo->lkey[1]);
+	gtk_widget_grab_focus(jinfo->ikey[1]);
 	return;
     }
 
@@ -951,7 +951,7 @@ int gui_join_data (const char *fname, GretlFileType ftype)
     join_dialog_setup(&jinfo);
     
     gtk_widget_show_all(jinfo.vbox);
-    gtk_widget_show_all(jinfo.action_area);
+    gtk_widget_show_all(jinfo.bbox);
     gtk_dialog_run(GTK_DIALOG(jinfo.dlg));
 
     strings_array_free(jinfo.r_vnames, full_nr);
