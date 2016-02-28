@@ -86,7 +86,11 @@ void print_item (char *s, const char *key, int html)
 	} else if (!strncmp(s, "\\enquote{", 9)) {
 	    quoted = 1;
 	    putit = 0;
-	    printf("\"");
+	    if (html) {
+		printf("\"");
+	    } else {
+		printf("\u201C");
+	    }
 	    s += 8;
 	} else if (!strncmp(s, "\\emph{", 6)) {
 	    ital = 1;
@@ -125,7 +129,11 @@ void print_item (char *s, const char *key, int html)
 		quoted = 0;
 	    } else if (quoted) {
 		putit = 0;
-		printf("\"");
+		if (html) {
+		    printf("\"");
+		} else {
+		    printf("\u201D");
+		}
 		quoted = 0;
 	    } 
 	} else if (*s == '-') {
