@@ -2875,7 +2875,7 @@
       </code>
 
       <para>Para más detalles sobre la estimación por MC. no lineales ver
-	<guideref targ="chap-nls"/>.</para>
+	<guideref targ="chap:nls"/>.</para>
 
     </description>
 
@@ -2941,7 +2941,7 @@
 	completa la instrucción e invoca la estimación.</para>
 
       <para>Para más detalles sobre la estimación por MC. no lineales ver
-	<guideref targ="chap-nls"/>.</para>
+	<guideref targ="chap:nls"/>.</para>
 
     </description>
 

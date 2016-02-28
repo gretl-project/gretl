@@ -1370,7 +1370,7 @@
       <para>
 	Observar o periodograma da série em estudo é uma análise preliminar que é
 	útil quando se pretende aplicar este filtro.  Para mais detalhes ver
-	<guideref targ="chap-genr"/>.
+	<guideref targ="chap:genr"/>.
       </para>
     </description>
 
@@ -2992,7 +2992,7 @@
       </para>
       <para>
 	Para mais detalhes e exemplos, ver o <guideref
-	targ="chap-dpanel"/>.
+	targ="chap:dpanel"/>.
       </para>
     </description>
 
@@ -4253,7 +4253,7 @@
 	NOTE: this command has undergone numerous changes and
 	enhancements since the following help text was written, so for
 	comprehensive and updated info on this command you'll want to
-	refer to <guideref targ="chap-genr"/>. On the other hand, this
+	refer to <guideref targ="chap:genr"/>. On the other hand, this
 	help does not contain anything actually erroneous, so take the
 	following as <quote>you have this, plus more</quote>.
       </para>
@@ -4272,7 +4272,7 @@
 	referenciadas por nome e não por número ID.  A expressão deve ser uma 
 	combinação bem construída de nomes de variáveis, constantes, operadores
 	e funções (descrito adiante).  Note que detalhes adicionais sobre alguns
-	aspetos deste comando podem ser encontrados em <guideref targ="chap-genr"/>.
+	aspetos deste comando podem ser encontrados em <guideref targ="chap:genr"/>.
       </para>
 
       <para context="gui">
@@ -6743,7 +6743,7 @@
 	chapter 10 of <cite key="davidson-mackinnon04">Davidson and
 	MacKinnon (2004)</cite>.  But if the <opt>cluster</opt> option
 	is given, then <quote>cluster-robust</quote> standard errors
-	are produced; see <guideref targ="chap-robust-vcv"/> for
+	are produced; see <guideref targ="chap:robust-vcv"/> for
 	details.
       </para>
       <para context="gui">
@@ -7876,7 +7876,7 @@
 	scalar gamma = 1
       </code>
       <para>For further details on NLS estimation please see 
-	<guideref targ="chap-nls"/>.
+	<guideref targ="chap:nls"/>.
       </para>
     </description>
 
@@ -7949,7 +7949,7 @@
       </para>
       <para>
 	For further details on NLS estimation please see
-	<guideref targ="chap-nls"/>.
+	<guideref targ="chap:nls"/>.
       </para>
     </description>
 
@@ -8175,7 +8175,7 @@
 	<opt>cluster</opt> overrides the selection of HC version, and
 	produces robust standard errors by grouping the observations
 	by the distinct values of <repl>clustvar</repl>; see <guideref
-	targ="chap-robust-vcv"/> for details.
+	targ="chap:robust-vcv"/> for details.
       </para>
     </description>
 
@@ -8698,7 +8698,7 @@
       </para>
       <para>
 	For more details on panel estimation, please see <guideref
-	  targ="chap-panel"/>.
+	  targ="chap:panel"/>.
       </para>
     </description>
 

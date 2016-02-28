@@ -1418,7 +1418,7 @@
 	</para>
 	<para>
 	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  methods in <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="NRmax"/>
             <fncref targ="fdjac"/>
@@ -1555,7 +1555,7 @@
 	<para>
 	  Inspecting the periodogram of the target series is a
 	  useful preliminary when you wish to apply this function.
-	  See <guideref targ="chap-filters"/> for details.
+	  See <guideref targ="chap:filters"/> for details.
 	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="hpfilt"/>
@@ -2721,7 +2721,7 @@
 	<para>
 	  For details on the calculation of these statistics, and the
 	  interpretation of the <math>U</math> values, please see 
-	  <guideref targ="chap-forecast"/>.
+	  <guideref targ="chap:forecast"/>.
 	</para>
       </description>
     </function>
@@ -2779,7 +2779,7 @@
 	</para>
 	<para>
 	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  methods in <guideref targ="chap:numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4413,7 +4413,7 @@
 	</para>
 	<para>
 	  See also <fncref targ="nadarwat"/>, and in addition see
-	  <guideref targ="chap-nonparam"/> for details on
+	  <guideref targ="chap:nonparam"/> for details on
 	  nonparametric methods.
 	</para>
       </description>
@@ -5569,7 +5569,7 @@
 	</para>
 	<para>
 	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  methods in <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="fdjac"/>
@@ -7316,7 +7316,7 @@
 	</para>
 	<para>
 	  For more details and an example see the chapter on numerical
-	  methods in <guideref targ="chap-numerical"/>.
+	  methods in <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>

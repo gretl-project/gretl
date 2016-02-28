@@ -1398,7 +1398,7 @@
       <para>
 	Se si desidera applicare questo filtro è opportuno esaminare 
 	prima il periodogramma della serie storica considerata. V. 
-	<guideref targ="chap-genr"/> per maggiori dettagli.
+	<guideref targ="chap:genr"/> per maggiori dettagli.
       </para>
     </description>
 
@@ -2935,7 +2935,7 @@
       </para>
       <para>
 	Per ulteriori dettagli ed esempi, si veda <guideref
-	targ="chap-dpanel"/>.
+	targ="chap:dpanel"/>.
       </para>
     </description>
 
@@ -4154,7 +4154,7 @@
 	NOTA: questo comando ha subito molti cambiamenti e migliorie
 	da quando l'help seguente è stato scritto, per cui per
 	informazioni complete e aggornate consigliamo di far
-	riferimento alla <guideref targ="chap-genr"/>. D'altro canto,
+	riferimento alla <guideref targ="chap:genr"/>. D'altro canto,
 	il testo che segue non contiene informazioni erronee, per cui
 	può essere interpretato come <quote>questo ed altro</quote>.
       </para>
@@ -4174,7 +4174,7 @@
 	formula dev'essere una combinazione ben definita di nomi di
 	variabile, costanti, operatori e funzioni (descritte
 	oltre). Ulteriori dettagli su alcuni aspetti di questo comando
-	si possono trovare nella <guideref targ="chap-genr"/>.
+	si possono trovare nella <guideref targ="chap:genr"/>.
       </para>
 
       <para context="gui">
@@ -7646,7 +7646,7 @@
       </code>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda la
-	<guideref targ="chap-nls"/>.</para>
+	<guideref targ="chap:nls"/>.</para>
 
     </description>
 
@@ -7720,7 +7720,7 @@
       </para>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda la
-	<guideref targ="chap-nls"/>.</para>
+	<guideref targ="chap:nls"/>.</para>
 
     </description>
 
@@ -8348,7 +8348,7 @@
         effetti casuali, usando il metodo di Swamy e Arora.
       </para>
       <para>
-	Per maggiori dettagli sulla stima panel, si veda la <guideref targ="chap-panel"/>.
+	Per maggiori dettagli sulla stima panel, si veda la <guideref targ="chap:panel"/>.
       </para>
     </description>
 

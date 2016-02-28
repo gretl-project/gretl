@@ -1353,7 +1353,7 @@
     </para>
     <para>
       Per maggiori dettagli ed esempi, si veda il capitolo sui metodi 
-      numerici in <guideref targ="sec:chap-numerical"/>.
+      numerici in <guideref targ="sec:chap:numerical"/>.
       <seelist>
         <fncref targ="NRmax"/>
         <fncref targ="fdjac"/>
@@ -1491,7 +1491,7 @@
     <para>
       L'esame del periodogramma della variabile target è un passo 
       preliminare utile quando si vuole applicare questa 
-      funzione. Si veda <guideref targ="chap-filters"/> per i
+      funzione. Si veda <guideref targ="chap:filters"/> per i
       dettagli.
       <seelist>
         <fncref targ="bkfilt"/>
@@ -2652,7 +2652,7 @@
     <para>
       Per maggiori dettagli sul calcolo di queste statistiche e
       l'interpretazione dei valori del coefficiente
-      <math>U</math>, si veda <guideref targ="chap-forecast"/>.
+      <math>U</math>, si veda <guideref targ="chap:forecast"/>.
     </para>
       </description>
     </function>
@@ -4364,7 +4364,7 @@
     </para>
     <para>
       Si vedano anche <fncref targ="nadarwat"/> e <guideref
-      targ="chap-nonparam"/> per maggiori dettagli sui metodi
+      targ="chap:nonparam"/> per maggiori dettagli sui metodi
       nonparametrici.
     </para>
       </description>
@@ -5485,7 +5485,7 @@
     </para>
     <para>
       Per maggiori dettagli ed esempi si veda il capitolo
-      relativo ai metodi numerici in <guideref targ="chap-numerical"/>.
+      relativo ai metodi numerici in <guideref targ="chap:numerical"/>.
       <seelist>
         <fncref targ="BFGSmax"/>
         <fncref targ="fdjac"/>
@@ -7247,7 +7247,7 @@
 	</para>
 	<para>
 	  Per maggiori dettagli ed esempi si veda il capitolo sui
-	  metodi numerici in <guideref targ="chap-numerical"/>.
+	  metodi numerici in <guideref targ="chap:numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
 	    <fncref targ="NRmax"/>
