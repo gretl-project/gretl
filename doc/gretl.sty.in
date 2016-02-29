@@ -26,6 +26,11 @@
    \vspace{.5in}
 }
 
+\newcommand{\guidechap}[1]{%
+   \hypertarget{chap:#1}{}%
+   \include{#1}
+}
+
 \ifcsname c@chapter\endcsname
   \setcounter{secnumdepth}{1}
   \setcounter{chapter}{-1}
