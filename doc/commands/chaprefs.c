@@ -9,7 +9,7 @@
 
    \newlabel{chap:timeseries}{{25}{216}{Univariate time series models}{chapter.25}{}}
 
-   We want to extract the chapter title (or maybe the chapter number?)
+   We want to extract the chapter number (and/or maybe the title?)
    given the label (e.g. "chap:timeseries").
 */
 
@@ -79,6 +79,18 @@ int main (int argc, char **argv)
 
     puts("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
     puts("<refset id=\"guide-chapters\">");
+
+    /* We search in gretl-guide.tex for \include{} lines
+       that give the names of chapter files: having found
+       one, we look for the corresponding .aux file and
+       find the chapter number (could also grab the title)
+       and write the info into an XML file for use with
+       the XSL transformation of the "online" help files.
+       
+       In this way we're able to give a chapter number
+       instead of just saying "see the Gretl User's
+       Guide".
+    */
 
     while (fgets(line, sizeof line, fp)) {
 	s = line;

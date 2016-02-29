@@ -648,7 +648,8 @@ static void add_next_prev_buttons (join_info *jinfo,
 	active = jinfo->n_rvars > NSHOW;
     }
 
-    gtk_table_get_size(GTK_TABLE(jinfo->table), &nrows, &ncols);
+    g_object_get(jinfo->table, "n-rows", &nrows,
+		 "n-columns", &ncols, NULL);
     if (nrows == 8) {
 	gtk_table_resize(GTK_TABLE(jinfo->table), 9, ncols);
     }
