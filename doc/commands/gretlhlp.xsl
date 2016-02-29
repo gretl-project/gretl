@@ -13,6 +13,9 @@
 
 <xsl:variable name="intl"
   select="document('hlp_l10n.xml')/internationalization"/>
+  
+<xsl:variable name="docref"
+  select="document('docref.xml')/refsets"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
@@ -49,6 +52,24 @@
         <xsl:text>' found for lang '</xsl:text>
         <xsl:value-of select="$lang"/>
         <xsl:text>'.</xsl:text>
+      </xsl:message>
+    </xsl:otherwise>
+  </xsl:choose>  
+</xsl:template>
+
+<xsl:template name="getref">
+  <xsl:param name="key"/>
+  <xsl:variable name="chap"
+    select="normalize-space($docref/refset[@id='guide-chapters']/ref[@key=$key]/@chapter)"/>
+  <xsl:choose>
+    <xsl:when test="$chap">
+      <xsl:value-of select="$chap"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:message terminate="yes">
+        <xsl:text>** Error: no phrase with key = '</xsl:text>
+        <xsl:value-of select="$key"/>
+        <xsl:text>' found.'</xsl:text>
       </xsl:message>
     </xsl:otherwise>
   </xsl:choose>  
@@ -665,11 +686,22 @@
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:text>&lt;@pdf="</xsl:text>
-  <xsl:call-template name="gettext-nospace">
-    <xsl:with-param name="key" select="'guidebook'"/>
+  <xsl:variable name='guidename'>
+    <xsl:call-template name="gettext-nospace">
+      <xsl:with-param name="key" select="'guidebook'"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:value-of select="substring-before($guidename, ' ')"/>
+  <xsl:text> &lt;@pdf="</xsl:text>
+  <xsl:value-of select="substring-after($guidename, ' ')"/>
+  <xsl:text>"&gt; (</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'chapter'"/>
   </xsl:call-template>
-  <xsl:text>"&gt;</xsl:text>
+  <xsl:call-template name="getref">
+    <xsl:with-param name="key" select="@targ"/>
+  </xsl:call-template>
+  <xsl:text>)</xsl:text>
 </xsl:template>
 
 <xsl:template match="menu-path">

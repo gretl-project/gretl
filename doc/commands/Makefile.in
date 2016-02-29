@@ -73,7 +73,7 @@ PT_GENSTAMP = $(SHAREDIR)/gen_pt.stamp
 
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
-CHAPREFS = chaprefs.xml
+CHAPREFS = $(CMDSDIR)/chaprefs.xml
 
 GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
 	$(topsrc)/lib/src/gretl_commands.h \
@@ -321,7 +321,7 @@ help-it: $(IT_HLPSTAMP) $(IT_GENSTAMP)
 
 help-pt: $(PT_HLPSTAMP) $(PT_GENSTAMP)
 
-help-all: help-en help-it help-pt $(HELPREFS) $(CHAPREFS)
+help-all: $(CHAPREFS) help-en help-it help-pt $(HELPREFS)
 
 # Validate the commands "master" XML files against libgretl
 # By default we check the English-language files

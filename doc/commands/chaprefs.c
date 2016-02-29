@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define VERBOSE 0
+
 /* 
    Example aux file line:
 
@@ -25,6 +27,7 @@ void get_auxfile_info (const char *path, const char *src)
     sprintf(tmp, "%s%s.aux", path, src);
     fp = fopen(tmp, "r");
     if (fp == NULL) {
+	fprintf(stderr, "no aux file for %s\n", src);
 	return;
     }
 
@@ -36,8 +39,8 @@ void get_auxfile_info (const char *path, const char *src)
 	    s = strchr(s, '}') + 1;
 	    n = sscanf(s, "{{%d}{%d}{%79[^}]}{chapter.%d}", &ch, &pg, title, &ch2);
 	    if (n == 4) {
-		printf(" <chapref key=\"chap:%s\" title=\"%s\" ch=\"%d\" />\n",
-		       src, title, ch2);
+		/* could output either title or number here */
+		printf(" <ref key=\"chap:%s\" chapter=\"%d\"/>\n", src, ch2);
 	    }
 	    break;
 	}
@@ -75,7 +78,7 @@ int main (int argc, char **argv)
     }    
 
     puts("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
-    puts("<localization language=\"en\">");
+    puts("<refset id=\"guide-chapters\">");
 
     while (fgets(line, sizeof line, fp)) {
 	s = line;
@@ -83,11 +86,14 @@ int main (int argc, char **argv)
 	if (!strncmp(s, "\\include{", 9)) {
 	    /* get info for an included chapter file */
 	    sscanf(s + 9, "%31[^}]", chap);
+#if VERBOSE
+	    fprintf(stderr, "got include of '%s'\n", chap);
+#endif
 	    get_auxfile_info(path, chap);
 	}
     }
 
-    puts("</localization>");
+    puts("</refset>");
 
     fclose(fp);
 
