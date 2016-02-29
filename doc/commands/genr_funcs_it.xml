@@ -19,7 +19,7 @@
       <description>
     <para>
       Produce il criterio di informazione di Akaike per l'ultimo modello
-          stimato. Si veda <guideref targ="select-criteria"/> per dettagli.
+          stimato. Si veda <guideref targ="chap:criteria"/> per dettagli.
     </para>
       </description>
     </function>
@@ -28,7 +28,7 @@
       <description>
     <para>
       Produce il criterio di informazione bayesiana di Schwarz per l'ultimo
-          modello stimato. Si veda <guideref targ="select-criteria"/> per dettagli.
+          modello stimato. Si veda <guideref targ="chap:criteria"/> per dettagli.
     </para>
       </description>
     </function>
@@ -294,7 +294,7 @@
       Produce il criterio di informazione di Hannan-Quinn per l'ultimo
           modello stimato, se disponibile. Per maggiori dettagli sulla
           metodologia di calcolo, v. <guideref
-          targ="select-criteria"/>.
+          targ="chap:criteria"/>.
     </para>
       </description>
     </function>
@@ -555,7 +555,7 @@
       Produce il p-value della statistica test generata
       dall'ultimo comando esplicito di test di ipotesi (es.
       <lit>chow</lit>).  Si veda <guideref
-      targ="sec:genr-internal"/> per ulteriori dettagli. 
+      targ="chap:genr"/> per ulteriori dettagli. 
     </para>
     <para>
       Nella maggior parte dei casi il valore prodotto è scalare ma talvolta 
@@ -825,7 +825,7 @@
       Restituisce il valore della statistica test generata
       dall'ultimo comando esplicitamente volto al test di ipotesi
       (p. es: <lit>chow</lit>), se presente. Si veda <guideref
-      targ="sec:genr-internal"/> per maggiori dettagli.
+      targ="chap:genr"/> per maggiori dettagli.
     </para>
     <para>
       Nella maggior parte dei casi il valore restituito è uno scalare
@@ -939,7 +939,7 @@
       una matrice contenente la rappresentazione VMA fino
       all'ordine specificato tramite il comando <lit>set
       horizon</lit>. Per maggiori dettagli, si veda <guideref
-      targ="sec:var-estim"/>.
+      targ="chap:var"/>.
     </para>
       </description>
     </function>
@@ -1353,7 +1353,7 @@
     </para>
     <para>
       Per maggiori dettagli ed esempi, si veda il capitolo sui metodi 
-      numerici in <guideref targ="sec:chap:numerical"/>.
+      numerici in <guideref targ="chap:numerical"/>.
       <seelist>
         <fncref targ="NRmax"/>
         <fncref targ="fdjac"/>
@@ -2712,7 +2712,7 @@
     <para>
       Per maggiori dettagli ed esempi si veda il capitolo sulle
       funzioni speciali in <lit>genr</lit> in <guideref
-      targ="sec:genr-numerical"/>.
+      targ="chap:genr"/>.
     </para>
     <para>
       <seelist>
@@ -3518,7 +3518,7 @@
       <math>A</math><sup>-1</sup><math>B</math> conviene decisamente
       utilizzare gli operatori di <quote>divisione matriciale</quote>,
       <lit>\</lit> e <lit>/</lit>. Per ulteriori dettagli vedere
-      <guideref targ="matrix-op"/>.
+      <guideref targ="chap:matrices"/>.
     </para>
     <para>
       <seelist>
@@ -5282,7 +5282,7 @@
       dall'utente. Normalmente, è un numero piccolo: valori grandi
       di $h$ rendono $m(x)$ più liscia; una scelta molto comune è
       $n^{-0.2}$. Per maggiori dettagli, si veda <guideref
-      targ="sec:nadarwat"/>.
+      targ="chap:nonparam"/>.
     </para>
     <para context="notex">
       L'argomento <argname>h</argname>, noto come ampiezza di
@@ -5291,7 +5291,7 @@
       di <argname>h</argname> rendono <math>m(x)</math> più
       liscia; una scelta molto comune è
       <math>n</math><sup>-0.2</sup>. Per maggiori dettagli, si veda
-      <guideref targ="sec:nadarwat"/>.
+      <guideref targ="chap:nonparam"/>.
     </para>
     <para context="tex">
       Lo scalare $\tau$ viene usato per prevenire problemi

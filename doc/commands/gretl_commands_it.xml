@@ -937,7 +937,7 @@
         condizionale.  Se è stato installato il programma
         <program>X-12-ARIMA</program> è possibile usare questo al
         posto del codice interno di gretl.  Per i dettagli su queste
-        opzioni si veda la <guideref targ="arma-estimation"/>.
+        opzioni si veda la <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
@@ -7204,7 +7204,7 @@
 
     <description context="cli">
       <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda la
-      	<guideref targ="modes"/> per i dettagli. Le opzioni hanno i
+      	<guideref targ="chap:modes"/> per i dettagli. Le opzioni hanno i
         seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo modello
         stimato alla tabella modelli, se possibile; <cmd>show</cmd>
 	mostra la tabella modelli in una finestra; <cmd>free</cmd>
@@ -7911,7 +7911,7 @@
       <para context="cli">L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
 	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
         regressione in modo silenzioso per tutte le iterazioni del loop
-        tranne l'ultima. Si veda la <guideref targ="loop-examples"/> per i dettagli.
+        tranne l'ultima. Si veda la <guideref targ="chap:looping"/> per i dettagli.
       </para>
 
       <para context="cli">È possibile salvare alcune variabili
@@ -9812,7 +9812,7 @@
       dei dati) vengono perse. È possibile reimpostare la struttura
       originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
-      <para>Si veda la <guideref targ="sampling"/> per maggiori dettagli.</para>
+      <para>Si veda la <guideref targ="chap:sampling"/> per maggiori dettagli.</para>
 
     </description>
   </command>
@@ -10171,7 +10171,7 @@
 	<li>	  
           <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
             impostare manualmente le stime dei parametri ARMA. Per i dettagli,
-            si veda la <guideref targ="arma-estimation"/>.
+            si veda la <guideref targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
@@ -10837,7 +10837,7 @@
       struttura originale con il comando <cmdref targ="setobs"/>.
       </para>
 
-      <para>Si veda la <guideref targ="sampling"/> per ulteriori dettagli.</para>
+      <para>Si veda la <guideref targ="chap:sampling"/> per ulteriori dettagli.</para>
     
     </description>
 
@@ -11025,7 +11025,7 @@
         <program>Octave</program>, <program>R</program> e
         <program>PcGive</program> sono destinati ad essere usati con i
         rispettivi programmi. La compressione con gzip può essere utile per
-        grandi dataset. Si veda la <guideref targ="datafiles"/> per i dettagli sui
+        grandi dataset. Si veda la <guideref targ="chap:datafiles"/> per i dettagli sui
         vari formati.</para>
 
       <para>

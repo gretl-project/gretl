@@ -956,11 +956,11 @@
       <para>
 	The default is to use the <quote>native</quote> gretl ARMA
 	functionality, with estimation by exact ML using the Kalman
-	filter; estimation via conditional ML is available as an option.
-	(If <program>X-12-ARIMA</program> is installed you have the option
-	of using it instead of native code.)  For details regarding these
-	options, please see <guideref
-	targ="arma-estimation"/>.
+	filter; estimation via conditional ML is available as an
+	option.  (If <program>X-12-ARIMA</program> is installed you
+	have the option of using it instead of native code.)  For
+	details regarding these options, please see <guideref
+	targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
@@ -7534,9 +7534,9 @@
 
     <description context="cli">
       <para>
-	Manipulates the gretl <quote>model table</quote>. See 
-	<guideref targ="modes"/> for details. The sub-commands have
-	the following effects: <cmd>add</cmd> adds the last model
+	Manipulates the gretl <quote>model table</quote>. See
+	<guideref targ="chap:modes"/> for details. The sub-commands
+	have the following effects: <cmd>add</cmd> adds the last model
 	estimated to the model table, if possible; <cmd>show</cmd>
 	displays the model table in a window; and <cmd>free</cmd>
 	clears the table.
@@ -8255,7 +8255,7 @@
 	The option <opt>print-final</opt> is applicable only in the
 	context of a <cmdref targ="loop"/>.  It arranges for the
 	regression to be run silently on all but the final iteration
-	of the loop. See <guideref targ="loop-examples"/> for details.
+	of the loop. See <guideref targ="chap:looping"/> for details.
       </para>
 
       <para context="cli">
@@ -10575,7 +10575,7 @@
 	  startobs...</quote>.
       </para>
       <para>
-	Please see <guideref targ="sampling"/> for further details.
+	Please see <guideref targ="chap:sampling"/> for further details.
       </para>
     </description>
   </command>
@@ -11137,7 +11137,7 @@
 	  manual setting of the initial parameter estimates for
 	  numerical optimization problems (such as ARMA
 	  estimation). For details see <guideref
-	  targ="arma-estimation"/>.
+	  targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
@@ -11968,7 +11968,7 @@
       </para>
 
       <para>
-	Please see <guideref targ="sampling"/> for further details.
+	Please see <guideref targ="chap:sampling"/> for further details.
       </para>
 
     </description>
@@ -13267,17 +13267,19 @@
       </para>
 
       <para context="cli">
-	<repl>ylist</repl> supplies the list of endogenous variables, in
-	levels. The inclusion of deterministic terms in the model is controlled
-	by the option flags.  The default if no option is specified is to
-	include an <quote>unrestricted constant</quote>, which allows for the
-	presence of a non-zero intercept in the cointegrating relations as well
-	as a trend in the levels of the endogenous variables.  In the literature
-	stemming from the work of Johansen (see for example his 1995 book) this
-	is often referred to as <quote>case 3</quote>.  The first four options
-	given above, which are mutually exclusive, produce cases 1, 2, 4 and 5
-	respectively.  The meaning of these cases and the criteria for selecting
-	a case are explained in <guideref targ="chap:vecm"/>.
+	<repl>ylist</repl> supplies the list of endogenous variables,
+	in levels. The inclusion of deterministic terms in the model
+	is controlled by the option flags.  The default if no option
+	is specified is to include an <quote>unrestricted
+	constant</quote>, which allows for the presence of a non-zero
+	intercept in the cointegrating relations as well as a trend in
+	the levels of the endogenous variables.  In the literature
+	stemming from the work of Johansen (see for example his 1995
+	book) this is often referred to as <quote>case 3</quote>.  The
+	first four options given above, which are mutually exclusive,
+	produce cases 1, 2, 4 and 5 respectively.  The meaning of
+	these cases and the criteria for selecting a case are
+	explained in <guideref targ="chap:vecm"/>.
       </para>
 
       <para context="cli">
@@ -13295,13 +13297,13 @@
 	deterministic terms in the model is controlled by the option
 	buttons.  The default is to include an <quote>unrestricted
 	constant</quote>, which allows for the presence of a non-zero
-	intercept in the cointegrating relations as well as a trend in the
-	levels of the endogenous variables.  In the literature stemming
-	from the work of Johansen (see for example his 1995 book) this is
-	often referred to as <quote>case 3</quote>.  The other four
-	options produce cases 1, 2, 4 and 5 respectively.  The meaning of
-	these cases and the criteria for selecting a case are explained in
-	<guideref targ="chap:vecm"/>.
+	intercept in the cointegrating relations as well as a trend in
+	the levels of the endogenous variables.  In the literature
+	stemming from the work of Johansen (see for example his 1995
+	book) this is often referred to as <quote>case 3</quote>.  The
+	other four options produce cases 1, 2, 4 and 5 respectively.
+	The meaning of these cases and the criteria for selecting a
+	case are explained in <guideref targ="chap:vecm"/>.
       </para>
 
       <para context="gui">

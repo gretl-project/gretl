@@ -304,7 +304,7 @@
        procedimiento de máxima verosimilitud condicional, implementado
        por medio de la estimación por mínimos cuadrados iterativos de la 
        regresión del producto externo del gradiente (OPG, outer product 
-       of the gradient regression).  Ver <guideref targ="jack-arma"/> para 
+       of the gradient regression).  Ver <guideref targ="chap:timeseries"/> para 
        entender la lógica de este procedimiento. Los coeficientes AR
        (y los de cualquier regresor adicional) se inicializan por medio 
        de la estimación por MCO de un AR, y los coeficientes MA se 
@@ -393,7 +393,7 @@
       <para>Algunos detalles de los gráficos de caja de gretl pueden 
       controlarse por medio de un fichero (de texto plano) llamado 
       <filename>.boxplotrc</filename>.  Para más detalles sobre esto ver
-	<guideref targ="sect-boxplots"/>.</para>
+	<guideref targ="chap:graphs"/>.</para>
 
     </description>
 
@@ -2594,7 +2594,7 @@
 	ejecutan todas las instrucciones que están en la cola del bucle.  
 	</para>
 
-      <para>Ver <guideref targ="looping"/> para más detalles y ejemplos.
+      <para>Ver <guideref targ="chap:looping"/> para más detalles y ejemplos.
       El efecto de la opción <lit>--progressive</lit> (que está diseñada
       para su uso en simulaciones de Monte Carlo) se explica allí.
       </para>
@@ -2756,7 +2756,7 @@
 
     <description context="cli">
       <para>Sirve para manipular la <quote>tabla de modelos</quote> de gretl. Ver
-	<guideref targ="modes"/> para más detalles. Las sub-instrucciones 
+	<guideref targ="chap:modes"/> para más detalles. Las sub-instrucciones 
 	tienen los isguientes efectos: <cmd>add</cmd> añade el último modelo estimado
 	a la tabla de modelos, si es posible; <cmd>show</cmd> presenta la tabla de modelos
 	en una ventana; y <cmd>free</cmd> vacía la tabla.</para>
@@ -3052,7 +3052,7 @@
       <para>La opción <lit>--print-final</lit> es aplicable sólo en el 
         contexto de un bucle (ver <cmdref targ="loop"/>).  Se encarga de que
 	las regresiones se ejecuten "silenciosamente" en todas las iteraciones
-	excepto la iteración final del bucle. Ver <guideref targ="loop-examples"/> 
+	excepto la iteración final del bucle. Ver <guideref targ="chap:looping"/> 
 	para más detalles.
       </para>
 	
@@ -3969,7 +3969,7 @@
 	usando el menú <quote>Muestra/Establecer frecuencia, observación
 	  inicial...</quote>.</para>
 
-      <para>Véase <guideref targ="sampling"/> para más detalles.</para>
+      <para>Véase <guideref targ="chap:sampling"/> para más detalles.</para>
     </description>
   </command>
 
@@ -4349,7 +4349,7 @@
 	<cmdref targ="setobs"/>.
       </para>
       
-      <para>Véase <guideref targ="sampling"/> para más detalles.</para>
+      <para>Véase <guideref targ="chap:sampling"/> para más detalles.</para>
     </description>
 
     <gui-access>
@@ -4486,7 +4486,7 @@
 	<program>R</program> y <program>PcGive</program> están diseñados para el
 	uso con estos respectivos programas.  La compresión mediante Gzip puede
 	ser útil para grandes conjuntos de datos. Ver 
-	<guideref targ="datafiles"/> para detalles sobre los distintos formatos.
+	<guideref targ="chap:datafiles"/> para detalles sobre los distintos formatos.
 	</para>
 
       <para>

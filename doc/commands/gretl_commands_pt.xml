@@ -949,7 +949,7 @@
 	<program>X-12-ARIMA</program>, ML condicional.  (As últimas
         duas opções estão disponíveis apenas se o programa
 	<program>X-12-ARIMA</program> estiver instalado.)  Para detalhes
-        sobre estas opções, veja por favor <guideref targ="arma-estimation"/>.
+        sobre estas opções, veja por favor <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
@@ -7428,7 +7428,7 @@
     <description context="cli">
       <para>
 	Manipulates the gretl <quote>model table</quote>. See 
-	<guideref targ="modes"/> for details. The sub-commands have
+	<guideref targ="chap:modes"/> for details. The sub-commands have
 	the following effects: <cmd>add</cmd> adds the last model
 	estimated to the model table, if possible; <cmd>show</cmd>
 	displays the model table in a window; and <cmd>free</cmd>
@@ -8150,7 +8150,7 @@
 	The option <opt>--print-final</opt> is applicable only in the
 	context of a <cmdref targ="loop"/>.  It arranges for the
 	regression to be run silently on all but the final iteration
-	of the loop. See <guideref targ="loop-examples"/> for details.
+	of the loop. See <guideref targ="chap:looping"/> for details.
       </para>
 
       <para context="cli">
@@ -10458,7 +10458,7 @@
 	  startobs...</quote>.
       </para>
       <para>
-	Please see <guideref targ="sampling"/> for further details.
+	Please see <guideref targ="chap:sampling"/> for further details.
       </para>
     </description>
   </command>
@@ -10959,7 +10959,7 @@
 	  manual setting of the initial parameter estimates for
 	  numerical optimization problems (such as ARMA
 	  estimation). For details see <guideref
-	  targ="arma-estimation"/>.
+	  targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
@@ -11777,7 +11777,7 @@
       </para>
 
       <para>
-	Please see <guideref targ="sampling"/> for further details.
+	Please see <guideref targ="chap:sampling"/> for further details.
       </para>
 
     </description>

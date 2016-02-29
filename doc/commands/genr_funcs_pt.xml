@@ -20,7 +20,7 @@
       <description>
 	<para>
 	  Retorna o Critério de Informação de Akaike para o último modelo
-	  estimado, se disponível. Consultar <guideref targ="select-criteria"/> para
+	  estimado, se disponível. Consultar <guideref targ="chap:criteria"/> para
 	  detalhes sobre o cálculo.
 	</para>
       </description>
@@ -30,7 +30,7 @@
       <description>
 	<para>
 	  Retorna o Critério de Informação Bayesiano de Schwarz para o último modelo
-	  estimado, se disponível. Consultar <guideref targ="select-criteria"/>
+	  estimado, se disponível. Consultar <guideref targ="chap:criteria"/>
 	  para  detalhes sobre o cálculo.
 	</para>
       </description>
@@ -284,7 +284,7 @@
 	<para>
 	  Retorna o Critério de Informação de Hannan-Quinn para o último modelo
 	  estimado, se disponível. Consultar <guideref
-	  targ="select-criteria"/> para  detalhes sobre o cálculo.
+	  targ="chap:criteria"/> para  detalhes sobre o cálculo.
 	</para>
       </description>
     </function>
@@ -543,7 +543,7 @@
 	  Retorna o valor p da estatística de teste que foi determinada
 	  pelo último comando com testes de hipóteses explícito (por
 	  exemplo, <lit>chow</lit>). Consultar <guideref
-	  targ="sec:genr-internal"/> para detalhes.
+	  targ="chap:genr"/> para detalhes.
 	</para>
 	<para>
 	  Na maior parte dos casos, o valor retornado é um escalar, mas 
@@ -808,7 +808,7 @@
 	<para>
 	  Retorna o valor da estatística de teste que foi determinado pelo
 	  último comando com testes de hipóteses explícito, se algum (por
-          exemplo, <lit>chow</lit>). Consultar <guideref targ="sec:genr-internal"/> 
+          exemplo, <lit>chow</lit>). Consultar <guideref targ="chap:genr"/> 
 	  para detalhes.
 	</para>
 	<para>
@@ -920,7 +920,7 @@
 	  Tem que ser acedido após a estimação de VAR ou VECM; retorna a
 	  matriz contendo a representação VMA até um grau definido com
 	  o comando <lit>set horizon</lit>. Consultar
-	  <guideref targ="sec:var-estim"/> para detalhes.
+	  <guideref targ="chap:var"/> para detalhes.
 	</para>
       </description>
     </function>
@@ -4715,7 +4715,7 @@
 	  given by the user. This is usually a small number: larger
 	  values of $h$ make $m(x)$ smoother; a popular choice is
 	  $n^{-0.2}$. More details are given in
-	  <guideref targ="sec:nadarwat"/>.
+	  <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="notex">
 	  The argument <argname>h</argname>, known as the bandwidth,
@@ -4723,7 +4723,7 @@
 	  user. This is usually a small number: larger values
 	  of <argname>h</argname> make <math>m(x)</math> smoother; a
 	  popular choice is <math>n</math><sup>-0.2</sup>. More
-	  details are given in <guideref targ="sec:nadarwat"/>.
+	  details are given in <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="tex">
 	  The scalar $\tau$ is used to prevent numerical problems when
