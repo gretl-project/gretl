@@ -36,7 +36,8 @@ void get_auxfile_info (const char *path, const char *src)
 	    s = strchr(s, '}') + 1;
 	    n = sscanf(s, "{{%d}{%d}{%79[^}]}{chapter.%d}", &ch, &pg, title, &ch2);
 	    if (n == 4) {
-		printf(" <chapref key=\"chap:%s\" title=\"%s\" />\n", src, title);
+		printf(" <chapref key=\"chap:%s\" title=\"%s\" ch=\"%d\" />\n",
+		       src, title, ch2);
 	    }
 	    break;
 	}
