@@ -7,7 +7,10 @@
 <xsl:output method="text" encoding="iso-8859-1"/>
 
 <xsl:variable name="intl"
-  select="document('hlp_l10n.xml')/internationalization"/>
+	      select="document('hlp_l10n.xml')/internationalization"/>
+
+<xsl:variable name="docref"
+	      select="document('docref.xml')/refsets"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
@@ -24,6 +27,24 @@
         <xsl:text>' found for lang '</xsl:text>
         <xsl:value-of select="$lang"/>
         <xsl:text>'.</xsl:text>
+      </xsl:message>
+    </xsl:otherwise>
+  </xsl:choose>  
+</xsl:template>
+
+<xsl:template name="getref">
+  <xsl:param name="key"/>
+  <xsl:variable name="chap"
+    select="normalize-space($docref/refset[@id='guide-chapters']/ref[@key=$key]/@chapter)"/>
+  <xsl:choose>
+    <xsl:when test="$chap">
+      <xsl:value-of select="$chap"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:message terminate="yes">
+        <xsl:text>** Error: no phrase with key = '</xsl:text>
+        <xsl:value-of select="$key"/>
+        <xsl:text>' found.'</xsl:text>
       </xsl:message>
     </xsl:otherwise>
   </xsl:choose>  
@@ -684,7 +705,26 @@
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:text>\GUG{}</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$lang = 'en'">
+      <xsl:text>chapter </xsl:text>
+      <xsl:call-template name="getref">
+	<xsl:with-param name="key" select="@targ"/>
+      </xsl:call-template>
+      <xsl:text> of \GUG{}</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\GUG{} (</xsl:text>
+      <xsl:call-template name="gettext">
+	<xsl:with-param name="key" select="'chapter'"/>
+      </xsl:call-template>
+      <xsl:text> </xsl:text>
+      <xsl:call-template name="getref">
+	<xsl:with-param name="key" select="@targ"/>
+      </xsl:call-template>
+      <xsl:text>)</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template name="dnl">

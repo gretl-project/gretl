@@ -12,10 +12,10 @@
 <xsl:output method="text" encoding="utf-8"/>
 
 <xsl:variable name="intl"
-  select="document('hlp_l10n.xml')/internationalization"/>
+	      select="document('hlp_l10n.xml')/internationalization"/>
   
 <xsl:variable name="docref"
-  select="document('docref.xml')/refsets"/>
+	      select="document('docref.xml')/refsets"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
@@ -686,22 +686,33 @@
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:variable name='guidename'>
-    <xsl:call-template name="gettext-nospace">
-      <xsl:with-param name="key" select="'guidebook'"/>
-    </xsl:call-template>
-  </xsl:variable>
-  <xsl:value-of select="substring-before($guidename, ' ')"/>
-  <xsl:text> &lt;@pdf="</xsl:text>
-  <xsl:value-of select="substring-after($guidename, ' ')"/>
-  <xsl:text>"&gt; (</xsl:text>
-  <xsl:call-template name="gettext">
-    <xsl:with-param name="key" select="'chapter'"/>
-  </xsl:call-template>
-  <xsl:call-template name="getref">
-    <xsl:with-param name="key" select="@targ"/>
-  </xsl:call-template>
-  <xsl:text>)</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$lang = 'en'">
+      <xsl:text>chapter </xsl:text>
+      <xsl:call-template name="getref">
+	<xsl:with-param name="key" select="@targ"/>
+      </xsl:call-template>
+      <xsl:text> of the &lt;@pdf="Gretl User's Guide"&gt;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:variable name='guidename'>
+	<xsl:call-template name="gettext-nospace">
+	  <xsl:with-param name="key" select="'guidebook'"/>
+	</xsl:call-template>
+      </xsl:variable>
+      <xsl:value-of select="substring-before($guidename, ' ')"/>
+      <xsl:text> &lt;@pdf="</xsl:text>
+      <xsl:value-of select="substring-after($guidename, ' ')"/>
+      <xsl:text>"&gt; (</xsl:text>
+      <xsl:call-template name="gettext">
+	<xsl:with-param name="key" select="'chapter'"/>
+      </xsl:call-template>
+      <xsl:call-template name="getref">
+	<xsl:with-param name="key" select="@targ"/>
+      </xsl:call-template>
+      <xsl:text>)</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="menu-path">
