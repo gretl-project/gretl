@@ -4,44 +4,30 @@
 
 #define VERBOSE 0
 
-/* 
-   Example aux file line:
-
-   \newlabel{chap:timeseries}{{25}{216}{Univariate time series models}{chapter.25}{}}
-
-   We want to extract the chapter number (and/or maybe the title?)
-   given the label (e.g. "chap:timeseries").
-*/
-
-void get_auxfile_info (const char *path, const char *src)
+void write_chapter_info (const char *path, const char *src,
+			 int *chapnum)
 {
     char targ[64];
     char tmp[512];
     char title[80];
     FILE *fp;
     char *s;
-    int ch, pg, ch2;
-    int n;
 
-    /* try opening @src.aux */
-    sprintf(tmp, "%s%s.aux", path, src);
+    /* try opening @src.tex */
+    sprintf(tmp, "%s%s.tex", path, src);
     fp = fopen(tmp, "r");
     if (fp == NULL) {
-	fprintf(stderr, "no aux file for %s\n", src);
+	fprintf(stderr, "no tex file for %s (?)\n", src);
 	return;
     }
 
     /* the string we're looking for */
-    sprintf(targ, "newlabel{chap:%s}", src);
+    sprintf(targ, "label{chap:%s}", src);
 
     while (fgets(tmp, sizeof tmp, fp)) {
 	if ((s = strstr(tmp, targ)) != NULL) {
-	    s = strchr(s, '}') + 1;
-	    n = sscanf(s, "{{%d}{%d}{%79[^}]}{chapter.%d}", &ch, &pg, title, &ch2);
-	    if (n == 4) {
-		/* could output either title or number here */
-		printf(" <ref key=\"chap:%s\" chapter=\"%d\"/>\n", src, ch2);
-	    }
+	    printf(" <ref key=\"chap:%s\" chapter=\"%d\"/>\n", src, *chapnum);
+	    *chapnum += 1;
 	    break;
 	}
     }
@@ -57,6 +43,7 @@ int main (int argc, char **argv)
     char chap[32];
     char *guide;
     char *s;
+    int chapnum = 1;
 
     if (argc < 2) {
 	fprintf(stderr, "Give the path to gretl-guide.tex\n");
@@ -82,14 +69,16 @@ int main (int argc, char **argv)
 
     /* We search in gretl-guide.tex for \include{} lines
        that give the names of chapter files: having found
-       one, we look for the corresponding .aux file and
-       find the chapter number (could also grab the title)
+       one, we look for the corresponding .tex file and
+       check that it has a chap:foo label; if so, we write
+       the chapter number (could also grab the title)
        and write the info into an XML file for use with
        the XSL transformation of the "online" help files.
        
        In this way we're able to give a chapter number
-       instead of just saying "see the Gretl User's
-       Guide".
+       instead of just saying "see the Gretl User's Guide".
+       This does depend on having well-regimented labels
+       in the TeX chapter sources.
     */
 
     while (fgets(line, sizeof line, fp)) {
@@ -101,7 +90,7 @@ int main (int argc, char **argv)
 #if VERBOSE
 	    fprintf(stderr, "got include of '%s'\n", chap);
 #endif
-	    get_auxfile_info(path, chap);
+	    write_chapter_info(path, chap, &chapnum);
 	}
     }
 
