@@ -73,6 +73,7 @@ PT_GENSTAMP = $(SHAREDIR)/gen_pt.stamp
 
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
+CHAPREFS = $(SHAREDIR)/chaprefs.xml
 
 GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
 	$(topsrc)/lib/src/gretl_commands.h \
@@ -83,7 +84,8 @@ GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
-CPROGS = xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs us2a4
+CPROGS = xsltrans skeleton reflow bbl2txt chaprefs validate topiclist tables \
+	matfuncs us2a4
 
 progs: $(CPROGS)
 
@@ -91,13 +93,16 @@ xsltrans: xsltrans.c
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
 
 reflow: reflow.c
-	$(CC) $(CFLAGS) -o $@ $< 
+	$(CC) $(CFLAGS) -o $@ $<
 
 bbl2txt: bbl2txt.c
-	$(CC) $(CFLAGS) -o $@ $< 
+	$(CC) $(CFLAGS) -o $@ $<
+
+chaprefs: chaprefs.c
+	$(CC) $(CFLAGS) -o $@ $<
 
 us2a4: us2a4.c
-	$(CC) $(CFLAGS) -o $@ $< 
+	$(CC) $(CFLAGS) -o $@ $<
 
 skeleton: skeleton.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
@@ -206,11 +211,18 @@ biblio.html: bbl2txt ../tex/gretl-ref.bbl
 $(HELPREFS): bbl2txt $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@
 
+# Guide chapter titles
+$(CHAPREFS): chaprefs $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-guide.aux
+	./chaprefs ../tex/gretl-guide.tex > $@
+
 $(GRETLLIB):
 	$(MAKE) -C ../../lib
 
 ../tex/gretl-ref.bbl:
 	$(MAKE) -C ../tex gretl-ref.pdf
+
+../tex/gretl-guide.aux:
+	$(MAKE) -C ../tex gretl-guide.pdf
 
 .PHONY: test
 
@@ -312,7 +324,7 @@ help-it: $(IT_HLPSTAMP) $(IT_GENSTAMP)
 
 help-pt: $(PT_HLPSTAMP) $(PT_GENSTAMP)
 
-help-all: help-en help-it help-pt $(HELPREFS)
+help-all: help-en help-it help-pt $(HELPREFS) $(CHAPREFS)
 
 # Validate the commands "master" XML files against libgretl
 # By default we check the English-language files

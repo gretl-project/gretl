@@ -11,7 +11,7 @@
    given the label (e.g. "chap:timeseries").
 */
 
-void get_auxfile_info (const char *src)
+void get_auxfile_info (const char *path, const char *src)
 {
     char targ[64];
     char tmp[512];
@@ -22,7 +22,7 @@ void get_auxfile_info (const char *src)
     int n;
 
     /* try opening @src.aux */
-    sprintf(tmp, "%s.aux", src);
+    sprintf(tmp, "%s%s.aux", path, src);
     fp = fopen(tmp, "r");
     if (fp == NULL) {
 	return;
@@ -45,18 +45,33 @@ void get_auxfile_info (const char *src)
     fclose(fp);
 }
 
-int main (void)
+int main (int argc, char **argv)
 {
     FILE *fp;
+    char path[FILENAME_MAX];
     char line[512];
     char chap[32];
+    char *guide;
     char *s;
 
-    fp = fopen("gretl-guide.tex", "r");
-
-    if (fp == NULL) {
+    if (argc < 2) {
+	fprintf(stderr, "Give the path to gretl-guide.tex\n");
 	exit(EXIT_FAILURE);
     }
+
+    guide = argv[1];
+
+    *path = '\0';
+    s = strrchr(guide, '/');
+    if (s != NULL) {
+	strncat(path, guide, s - guide + 1);
+    }
+
+    fp = fopen(guide, "r");
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't open %s\n", guide);
+	exit(EXIT_FAILURE);
+    }    
 
     puts("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
     puts("<localization language=\"en\">");
@@ -67,7 +82,7 @@ int main (void)
 	if (!strncmp(s, "\\include{", 9)) {
 	    /* get info for an included chapter file */
 	    sscanf(s + 9, "%31[^}]", chap);
-	    get_auxfile_info(chap);
+	    get_auxfile_info(path, chap);
 	}
     }
 
