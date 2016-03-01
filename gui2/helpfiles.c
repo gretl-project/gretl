@@ -2199,8 +2199,11 @@ void display_guide_chapter (const char *dest)
 	} else if (strstr(viewpdf, "evince")) {
 	    opt = g_strdup_printf("--named-dest=%s", dest);
 	} else if (strstr(viewpdf, "okular")) {
-	    strncat(fname, "#", 1);
-	    strncat(fname, dest, strlen(dest));
+	    /* special case */
+	    opt = g_strdup_printf("%s#%s", fname, dest);
+	    gretl_show_pdf(opt, NULL);
+	    g_free(opt);
+	    return;
 	}
 #endif	
 	gretl_show_pdf(fname, opt);
