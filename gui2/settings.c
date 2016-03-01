@@ -243,8 +243,6 @@ RCVAR rc_vars[] = {
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
-    { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
     { "viewps", N_("Command to view postscript files"), NULL, viewps, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },

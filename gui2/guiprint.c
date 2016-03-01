@@ -2307,7 +2307,6 @@ static int check_for_rerun (const char *texbase)
 static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
-    int use_pdf = get_tex_use_pdf();
     int dot, err = LATEX_OK;
     char *texshort = NULL;
     const char *buf;
@@ -2362,32 +2361,16 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 
     if (err == LATEX_OK) {
 #if defined(G_OS_WIN32)
-	if (use_pdf) {
-	    sprintf(tmp, "%s.pdf", texbase);
-	    win32_open_file(tmp);
-	} else {
-	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
-	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
-		win_show_last_error();
-	    }
-	}
+	sprintf(tmp, "%s.pdf", texbase);
+	win32_open_file(tmp);
 #elif defined(OS_OSX)
-	if (use_pdf) {
-	    sprintf(tmp, "%s.pdf", texbase);
-	} else {
-	    sprintf(tmp, "%s.dvi", texbase);
-	}
+	sprintf(tmp, "%s.pdf", texbase);
 	if (osx_open_file(tmp)) {
 	    file_read_errbox(tmp);
 	}
 #else
-	if (use_pdf) {
-	    sprintf(tmp, "%s.pdf", texbase);
-	    gretl_fork("viewpdf", tmp, NULL);
-	} else {
-	    sprintf(tmp, "%s.dvi", texbase);
-	    gretl_fork("viewdvi", tmp, NULL);
-	}
+	sprintf(tmp, "%s.pdf", texbase);
+	gretl_fork("viewpdf", tmp, NULL);
 #endif
     }
 

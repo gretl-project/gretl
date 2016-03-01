@@ -167,12 +167,10 @@ int mainwin_height = 420;
 #if defined(G_OS_WIN32)
 char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
-char viewdvi[MAXSTR] = "windvi.exe";
 char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OS_OSX)
 char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
-char viewdvi[MAXSTR] = "xdvi";
 # ifdef MAC_NATIVE
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
 # else
@@ -182,7 +180,6 @@ char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";
 char Browser[MAXSTR] = "mozilla";
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "pdflatex";
-char viewdvi[MAXSTR] = "xdvi";
 char viewpdf[MAXSTR] = "acroread";
 char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
@@ -2235,16 +2232,12 @@ int gretl_fork (const char *progvar, const char *arg,
 #ifdef OS_OSX
     if (!strcmp(progvar, "calculator")) {
 	prog = calculator;
-    } else if (!strcmp(progvar, "viewdvi")) {
-	prog = viewdvi;
     }
 #else
     if (!strcmp(progvar, "Browser")) {
 	prog = Browser;
     } else if (!strcmp(progvar, "calculator")) {
 	prog = calculator;
-    } else if (!strcmp(progvar, "viewdvi")) {
-	prog = viewdvi;
     } else if (!strcmp(progvar, "viewpdf")) {
 	prog = viewpdf;
     } else if (!strcmp(progvar, "viewps")) {

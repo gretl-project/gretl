@@ -32,36 +32,19 @@ The first step is the creation of a plain text ``source'' file,
 containing the text or mathematics to be typset, interspersed with
 mark-up that defines how it should be formatted.  The second step is
 to run the source through a processing engine that does the actual
-formatting.  Typically this is either:
-\begin{itemize}
-\item a program called \app{latex} that generates so-called DVI
-  (device-independent) output, or
-\item (more commonly nowadays) a program called \app{pdflatex} that
-  generates PDF output.\footnote{Experts will be aware of something
-    called ``plain \TeX'', which is processed using the program
-    \app{tex}.  The great majority of \TeX\ users, however, use the
-    \LaTeX\ macros, initially developed by Leslie Lamport.
-    gretl does not support plain \TeX.}
-\end{itemize}
+formatting.  Typically this a program called \app{pdflatex} that
+generates PDF output.\footnote{Experts will be aware of something
+  called ``plain \TeX'', which is processed using the program
+  \app{tex}.  The great majority of \TeX\ users, however, use the
+  \LaTeX\ macros, initially developed by Leslie Lamport.  gretl does
+  not support plain \TeX.} (In times gone by it was a program called
+\app{latex} that generated so-called DVI (device-independent) output.)
 
-For previewing, one uses either a DVI viewer (typically \app{xdvi} on
-GNU/Linux systems) or a PDF viewer (for example, Adobe's Acrobat
-Reader or \app{xpdf}), depending on how the source was processed.  If
-the DVI route is taken, there's then a third step to produce printable
-output, typically using the program \app{dvips} to generate a
-PostScript file.  If the PDF route is taken, the output is ready for
-printing without any further processing.
-
-On MS Windows and Mac OS X, gretl calls \app{pdflatex} to
-process the source file, and expects the operating system to be able
-to find the default viewer for PDF output; DVI is not supported.  On
-GNU/Linux the default is also to produce PDF, but if you prefer the
-DVI/PostScript route you can do the following: select the menu item
-``Tools, Preferences, General'' then the ``Programs'' tab.  Find the
-item titled ``Command to compile TeX files'', and set this to
-\texttt{latex}.  In the same window, Make sure the commands to view
-DVI and PostScript files are set to something appropriate for your
-system.
+So gretl calls \app{pdflatex} to process the source file. On MS
+Windows and Mac OS X, gretl expects the operating system to find the
+default viewer for PDF output. On GNU/Linux you can specify your
+preferred PDF viewer via the menu item ``Tools, Preferences,
+General,'' under the ``Programs'' tab.
 
 \section{\TeX-related menu items}
 \label{tex-menus}
