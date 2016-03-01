@@ -697,14 +697,10 @@
       <xsl:text>"&gt;</xsl:text>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:variable name='guidename'>
-	<xsl:call-template name="gettext-nospace">
-	  <xsl:with-param name="key" select="'guidebook'"/>
-	</xsl:call-template>
-      </xsl:variable>
-      <xsl:value-of select="substring-before($guidename, ' ')"/>
-      <xsl:text> &lt;@pdf="</xsl:text>
-      <xsl:value-of select="substring-after($guidename, ' ')"/>
+      <xsl:text>&lt;@pdf="</xsl:text>
+      <xsl:call-template name="gettext-nospace">
+	<xsl:with-param name="key" select="'guidebook'"/>
+      </xsl:call-template>
       <xsl:text>#</xsl:text>
       <xsl:value-of select="@targ"/>
       <xsl:text>"&gt; (</xsl:text>
