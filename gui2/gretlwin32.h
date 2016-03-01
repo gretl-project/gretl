@@ -50,6 +50,8 @@ int browser_open (const char *url);
 
 int win32_open_file (const char *fname);
 
+int win32_open_pdf (const char *fname, const char *dest);
+
 void win32_font_selector (char *fontname, int flag);
 
 int win32_rename_dir (const char *oldname, const char *newname);

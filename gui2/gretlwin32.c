@@ -541,14 +541,13 @@ static int win32_open_arg (const char *arg, char *ext)
 
     if ((ptrcast) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
 	/* if the above fails, get the appropriate fileext regkey and 
-	   look up the program 
+	   look up the corresponding program 
 	*/
 	if (*ext && GetRegKey(HKEY_CLASSES_ROOT, ext, key) == ERROR_SUCCESS) {
 	    lstrcat(key,"\\shell\\open\\command");
 	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
-		char *p;
+		char *p = strstr(key, "\"%1\"");
 
-		p = strstr(key, "\"%1\"");
 		if (p == NULL) {    
 		    /* so check for %1 without the quotes */
 		    p = strstr(key, "%1");
@@ -568,6 +567,49 @@ static int win32_open_arg (const char *arg, char *ext)
 		    err = 1;
 		}
 	    }
+	}
+    }
+
+    return err;
+}
+
+int win32_open_pdf (const char *fname, const char *dest)
+{
+    char key[MAX_PATH + MAX_PATH];
+    int err = 0;
+
+    if (dest == NULL) {
+	return win32_open_arg(fname, ".pdf");
+    }
+
+    if (GetRegKey(HKEY_CLASSES_ROOT, ".pdf", key) == ERROR_SUCCESS) {
+	lstrcat(key,"\\shell\\open\\command");
+	if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS &&
+	    strstr(key, "Acro") != NULL) {
+	    char *p = strstr(key, "\"%1\"");
+
+	    if (p == NULL) {    
+		/* check for %1 without the quotes */
+		p = strstr(key, "%1");
+		if (p == NULL) {
+		    /* if no parameter */
+		    p = key + lstrlen(key) - 1;
+		} else {
+		    *p = '\0'; /* remove the param */
+		}
+	    } else {
+		*p = '\0'; /* remove the param */
+	    }
+	    lstrcat(p, " /A ");
+	    lstrcat(p, "\"nameddest=");
+	    lstrcat(p, dest);
+	    lstrcat(p, "\" ");
+	    lstrcat(p, fname);
+	    if (WinExec(key, SW_SHOW) < 32) {
+		err = 1;
+	    }
+	} else {
+	    return win32_open_arg(fname, ".pdf");
 	}
     }
 

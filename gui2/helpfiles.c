@@ -2152,7 +2152,11 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 void gretl_show_pdf (const char *fname, const char *option)
 {
 #if defined(G_OS_WIN32)
-    win32_open_file(fname);
+    if (option != NULL) {
+	win32_open_pdf(fname, option);
+    } else {
+	win32_open_file(fname);
+    }
 #elif defined(OS_OSX)
     osx_open_file(fname);
 #else
@@ -2187,28 +2191,38 @@ void display_pdf_help (GtkAction *action)
 void display_guide_chapter (const char *dest)
 {
     char fname[FILENAME_MAX];
-    gchar *opt = NULL;
     int err;
 
     err = find_or_download_pdf(GRETL_GUIDE, get_manpref(), fname);
 
+#ifdef G_OS_WIN32
     if (!err) {
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
-	if (strstr(viewpdf, "xpdf")) {
-	    opt = g_strdup_printf("+%s", dest);
-	} else if (strstr(viewpdf, "evince")) {
-	    opt = g_strdup_printf("--named-dest=%s", dest);
-	} else if (strstr(viewpdf, "okular")) {
-	    /* special case */
-	    opt = g_strdup_printf("%s#%s", fname, dest);
-	    gretl_show_pdf(opt, NULL);
-	    g_free(opt);
-	    return;
-	}
-#endif	
-	gretl_show_pdf(fname, opt);
-	g_free(opt);
+	gretl_show_pdf(fname, dest);
     }
+#elif defined(OS_OSX)
+    if (!err) {
+	/* FIXME */
+	gretl_show_pdf(fname, NULL);
+    }
+#else /* Linux */    
+    if (!err) {
+	gchar *tmp = NULL;
+
+	if (strstr(viewpdf, "okular")) {
+	    /* special case: option stuck onto fname */
+	    tmp = g_strdup_printf("%s#%s", fname, dest);
+	    gretl_show_pdf(tmp, NULL);
+	} else {
+	    if (strstr(viewpdf, "xpdf")) {
+		tmp = g_strdup_printf("+%s", dest);
+	    } else if (strstr(viewpdf, "evince")) {
+		tmp = g_strdup_printf("--named-dest=%s", dest);
+	    }
+	    gretl_show_pdf(fname, tmp);
+	}
+	g_free(tmp);
+    }
+#endif    
 }
 
 void display_gnuplot_help (void)
