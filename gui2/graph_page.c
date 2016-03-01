@@ -597,9 +597,9 @@ static int real_display_gpage (void)
     err = osx_open_file(fname);
 #else
     if (gpage.term == GP_TERM_PDF) {
-	err = gretl_fork("viewpdf", fname);
+	err = gretl_fork("viewpdf", fname, NULL);
     } else {
-	err = gretl_fork("viewps", fname);
+	err = gretl_fork("viewps", fname, NULL);
     }
 #endif
 

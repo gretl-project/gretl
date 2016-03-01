@@ -84,9 +84,9 @@ int main (int argc, char **argv)
     while (fgets(line, sizeof line, fp)) {
 	s = line;
 	s += strspn(s, " ");
-	if (!strncmp(s, "\\include{", 9)) {
+	if (!strncmp(s, "\\guidechap{", 11)) {
 	    /* get info for an included chapter file */
-	    sscanf(s + 9, "%31[^}]", chap);
+	    sscanf(s + 11, "%31[^}]", chap);
 #if VERBOSE
 	    fprintf(stderr, "got include of '%s'\n", chap);
 #endif

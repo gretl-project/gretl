@@ -1087,7 +1087,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == VIEW_PKG_RESOURCES) {
 	file_selector_with_startdir(OPEN_ANY, path, vwin_toplevel(vwin));
     } else if (task == VIEW_PKG_DOC) {
-	gretl_show_pdf(path);
+	gretl_show_pdf(path, NULL);
     } else if (task == CALL_FN_PKG) {
 	/* note: this is the double-click default */
 	open_function_package(pkgname, path, vwin);

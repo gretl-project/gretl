@@ -692,7 +692,9 @@
       <xsl:call-template name="getref">
 	<xsl:with-param name="key" select="@targ"/>
       </xsl:call-template>
-      <xsl:text> of the &lt;@pdf="Gretl User's Guide"&gt;</xsl:text>
+      <xsl:text> of the &lt;@pdf="Gretl User's Guide#</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>"&gt;</xsl:text>
     </xsl:when>
     <xsl:otherwise>
       <xsl:variable name='guidename'>
@@ -703,6 +705,8 @@
       <xsl:value-of select="substring-before($guidename, ' ')"/>
       <xsl:text> &lt;@pdf="</xsl:text>
       <xsl:value-of select="substring-after($guidename, ' ')"/>
+      <xsl:text>#</xsl:text>
+      <xsl:value-of select="@targ"/>
       <xsl:text>"&gt; (</xsl:text>
       <xsl:call-template name="gettext">
 	<xsl:with-param name="key" select="'chapter'"/>

@@ -901,7 +901,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 #elif defined(OS_OSX)
     osx_open_file(pdfname);
 #else
-    gretl_fork("viewpdf", pdfname);
+    gretl_fork("viewpdf", pdfname, NULL);
 #endif
 }
 
@@ -942,9 +942,9 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
     osx_open_file(grfname);
 #else
     if (spec->termtype == GP_TERM_EPS) {
-	gretl_fork("viewps", grfname);
+	gretl_fork("viewps", grfname, NULL);
     } else {
-	gretl_fork("viewpdf", grfname);
+	gretl_fork("viewpdf", grfname, NULL);
     }
 #endif
 }

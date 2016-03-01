@@ -2224,10 +2224,11 @@ static void start_R_callback (void)
 
 #ifndef G_OS_WIN32
 
-int gretl_fork (const char *progvar, const char *arg)
+int gretl_fork (const char *progvar, const char *arg,
+		const char *opt)
 {
     const char *prog = NULL;
-    gchar *argv[3];
+    gchar *argv[4] = {NULL, NULL, NULL, NULL};
     GError *err = NULL;
     gboolean run;
 
@@ -2259,11 +2260,12 @@ int gretl_fork (const char *progvar, const char *arg)
     }
     
     argv[0] = g_strdup(prog);
-    if (arg != NULL) {
+    
+    if (opt != NULL) {
 	argv[1] = g_strdup(arg);
-	argv[2] = NULL;
-    } else {
-	argv[1] = NULL;
+	argv[2] = g_strdup(opt);
+    } else if (arg != NULL) {
+	argv[1] = g_strdup(arg);
     }
     
     run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
@@ -2280,6 +2282,7 @@ int gretl_fork (const char *progvar, const char *arg)
 
     g_free(argv[0]);
     g_free(argv[1]);
+    g_free(argv[2]);
 
     return !run;
 }

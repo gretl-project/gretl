@@ -498,7 +498,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 
 	if (fp != NULL) {
 	    fclose(fp);
-	    gretl_show_pdf(pdfname);
+	    gretl_show_pdf(pdfname, NULL);
 	} else {
 	    gui_errmsg(E_FOPEN);
 	}

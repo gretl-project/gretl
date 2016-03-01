@@ -1413,7 +1413,14 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     gchar tagname[TAGLEN];
 
     if (page == GUIDE_PAGE) {
-	strcpy(tagname, "tag:guide");
+	char *p = strrchr(text, '#');
+
+	if (p != NULL) {
+	    show = g_strndup(text, p - text);
+	    strcpy(tagname, p + 1);
+	} else {
+	    strcpy(tagname, "tag:guide");
+	}
     } else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	*tagname = '\0';
 	strncat(tagname, text, TAGLEN-1);
@@ -1610,7 +1617,7 @@ static void open_pdf_file (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
-	gretl_show_pdf(name);
+	gretl_show_pdf(name, NULL);
 	g_free(name);
     }
 }
@@ -1630,7 +1637,15 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 
 	if (page != 0 || xref != 0) {
 	    if (page == GUIDE_PAGE) {
-		display_pdf_help(NULL);
+		gchar *name = NULL;
+		
+		g_object_get(tag, "name", &name, NULL);
+		if (name != NULL && strstr(name, "chap:")) {
+		    display_guide_chapter(name);
+		} else {
+		    display_pdf_help(NULL);
+		}
+		g_free(name);
 	    } else if (page == SCRIPT_PAGE) {
 		open_script_link(tag);
 	    } else if (page == BIB_PAGE) {

@@ -316,11 +316,11 @@ topiclist_pt: topiclist $(PT_SRC)
 test: skeleton.xml
 	xmllint --valid --noout $<
 
-help-en: $(EN_HLPSTAMP) $(EN_GENSTAMP)
+help-en: $(CHAPREFS) $(EN_HLPSTAMP) $(EN_GENSTAMP)
 
-help-it: $(IT_HLPSTAMP) $(IT_GENSTAMP)
+help-it: $(CHAPREFS) $(IT_HLPSTAMP) $(IT_GENSTAMP)
 
-help-pt: $(PT_HLPSTAMP) $(PT_GENSTAMP)
+help-pt: $(CHAPREFS) $(PT_HLPSTAMP) $(PT_GENSTAMP)
 
 help-all: help-en help-it help-pt $(HELPREFS)
 

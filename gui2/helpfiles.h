@@ -37,9 +37,11 @@ void genr_funcs_ref (GtkAction *action);
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin);
 
-void gretl_show_pdf (const char *fname);
+void gretl_show_pdf (const char *fname, const char *option);
 
 void display_pdf_help (GtkAction *action);
+
+void display_guide_chapter (const char *dest);
 
 void display_gnuplot_help (void);
 

@@ -5369,7 +5369,7 @@ int browser_open (const char *url)
     g_free(urlcmd);
 
     if (err) {
-	gretl_fork("Browser", url);
+	gretl_fork("Browser", url, NULL);
     }
 
     return 0;

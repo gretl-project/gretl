@@ -2149,14 +2149,14 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     return err;
 }
 
-void gretl_show_pdf (const char *fname)
+void gretl_show_pdf (const char *fname, const char *option)
 {
 #if defined(G_OS_WIN32)
     win32_open_file(fname);
 #elif defined(OS_OSX)
     osx_open_file(fname);
 #else
-    gretl_fork("viewpdf", fname);
+    gretl_fork("viewpdf", fname, option);
 #endif
 }
 
@@ -2180,7 +2180,31 @@ void display_pdf_help (GtkAction *action)
     err = find_or_download_pdf(code, get_manpref(), fname);
 
     if (!err) {
-	gretl_show_pdf(fname);
+	gretl_show_pdf(fname, NULL);
+    }
+}
+
+void display_guide_chapter (const char *dest)
+{
+    char fname[FILENAME_MAX];
+    gchar *opt = NULL;
+    int err;
+
+    err = find_or_download_pdf(GRETL_GUIDE, get_manpref(), fname);
+
+    if (!err) {
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+	if (strstr(viewpdf, "xpdf")) {
+	    opt = g_strdup_printf("+%s", dest);
+	} else if (strstr(viewpdf, "evince")) {
+	    opt = g_strdup_printf("--named-dest=%s", dest);
+	} else if (strstr(viewpdf, "okular")) {
+	    strncat(fname, "#", 1);
+	    strncat(fname, dest, strlen(dest));
+	}
+#endif	
+	gretl_show_pdf(fname, opt);
+	g_free(opt);
     }
 }
 
@@ -2192,7 +2216,7 @@ void display_gnuplot_help (void)
     err = find_or_download_pdf(GNUPLOT_REF, 0, fname);
 
     if (!err) {
-	gretl_show_pdf(fname);
+	gretl_show_pdf(fname, NULL);
     }
 }
 
@@ -2204,7 +2228,7 @@ void display_x12a_help (void)
     err = find_or_download_pdf(X12A_REF, 0, fname);
 
     if (!err) {
-	gretl_show_pdf(fname);
+	gretl_show_pdf(fname, NULL);
     }
 }
 

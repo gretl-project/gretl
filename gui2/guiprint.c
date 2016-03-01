@@ -2383,10 +2383,10 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 #else
 	if (use_pdf) {
 	    sprintf(tmp, "%s.pdf", texbase);
-	    gretl_fork("viewpdf", tmp);
+	    gretl_fork("viewpdf", tmp, NULL);
 	} else {
 	    sprintf(tmp, "%s.dvi", texbase);
-	    gretl_fork("viewdvi", tmp);
+	    gretl_fork("viewdvi", tmp, NULL);
 	}
 #endif
     }

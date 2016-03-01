@@ -497,7 +497,7 @@ static void os_open_other (const char *fname)
 #elif defined(OS_OSX)
     osx_open_file(fname);
 #else
-    gretl_fork("xdg-open", fname);
+    gretl_fork("xdg-open", fname, NULL);
 #endif
 }
 
