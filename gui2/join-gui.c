@@ -311,8 +311,10 @@ static void joiner_deleted (GtkWidget *w, GdkEvent *event,
 static GtkWidget *join_dialog_new (join_info *jinfo,
 				   const char *fname)
 {
-    GtkWidget *d = gtk_dialog_new();
-    GtkWidget *base, *ca, *aa;
+    GtkWidget *d, *base, *ca, *aa;
+
+    d = gretl_dialog_new("gretl: join data", mdata->main,
+			 GRETL_DLG_BLOCK);
 
     g_signal_connect(G_OBJECT(d), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
@@ -950,10 +952,8 @@ int gui_join_data (const char *fname, GretlFileType ftype)
 
     jinfo.dlg = join_dialog_new(&jinfo, fname);
     join_dialog_setup(&jinfo);
-    
-    gtk_widget_show_all(jinfo.vbox);
-    gtk_widget_show_all(jinfo.bbox);
-    gtk_dialog_run(GTK_DIALOG(jinfo.dlg));
+
+    gtk_widget_show_all(jinfo.dlg);
 
     strings_array_free(jinfo.r_vnames, full_nr);
 
