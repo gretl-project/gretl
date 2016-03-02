@@ -29,7 +29,7 @@ GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
 JSON_LIB = $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs json-glib-1.0)
 RL_LIBS = -lreadline -lhistory
-GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2.dll -L$(imports)
+GUI_LIBS = -lwsock32 -lole32 -lshlwapi $(GTKLIBS) -lgtksourceview-2.0 -lxml2.dll -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 FFTW_LIBS = -lfftw3

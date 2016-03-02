@@ -36,6 +36,7 @@
 #include <mapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <shlwapi.h>
 #include <fcntl.h>
 
 #define MAX_CONSOLE_LINES 500
@@ -514,7 +515,9 @@ int emf_to_clipboard (char *emfname)
     return 0;
 }
 
-static long GetRegKey (HKEY key, char *subkey, char *retdata)
+#if 0 /* unused, but may have use again */
+
+static long get_reg_key (HKEY key, char *subkey, char *retdata)
 {
     long err;
     HKEY hkey;
@@ -534,39 +537,49 @@ static long GetRegKey (HKEY key, char *subkey, char *retdata)
     return err;
 }
 
+#endif
+
+static char *get_exe_for_type (const char *ext)
+{
+    char *exe = NULL;
+    HRESULT ret;
+    DWORD len = 0;
+	
+    ret = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE,
+			   ext, NULL, NULL, &len);
+    if (ret == S_FALSE) {
+	exe = calloc(len + 1, 1);
+	ret = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
+			       ext, NULL, exe, &len);
+	if (ret != S_OK) {
+	    fprintf(stderr, "couldn't determine exe for type %s\n", ext);
+	    free(exe);
+	    exe = NULL;
+	}
+    }
+
+    return exe;
+}
+
 static int win32_open_arg (const char *arg, char *ext)
 {
-    char key[MAX_PATH + MAX_PATH];
     int err = 0;
 
     if ((ptrcast) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
-	/* if the above fails, get the appropriate fileext regkey and 
-	   look up the corresponding program 
-	*/
-	if (*ext && GetRegKey(HKEY_CLASSES_ROOT, ext, key) == ERROR_SUCCESS) {
-	    lstrcat(key,"\\shell\\open\\command");
-	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
-		char *p = strstr(key, "\"%1\"");
+	/* if the above fails, try via the registry */
+	char *exe = get_exe_for_type(ext);
 
-		if (p == NULL) {    
-		    /* so check for %1 without the quotes */
-		    p = strstr(key, "%1");
-		    if (p == NULL) {
-			/* if no parameter */
-			p = key + lstrlen(key) - 1;
-		    } else {
-			*p = '\0'; /* remove the param */
-		    }
-		} else {
-		    *p = '\0'; /* remove the param */
-		}
+	if (exe == NULL) {
+	    err = 1;
+	} else {
+	    gchar *cmd;
 
-		lstrcat(p, " ");
-		lstrcat(p, arg);
-		if (WinExec(key, SW_SHOW) < 32) {
-		    err = 1;
-		}
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", exe, arg);
+	    if (WinExec(cmd, SW_SHOW) < 32) {
+		err = 1;
 	    }
+	    g_free(cmd);
+	    free(exe);
 	}
     }
 
@@ -575,43 +588,24 @@ static int win32_open_arg (const char *arg, char *ext)
 
 int win32_open_pdf (const char *fname, const char *dest)
 {
-    char key[MAX_PATH + MAX_PATH];
+    char *exe = get_exe_for_type(".pdf");
     int err = 0;
 
-    if (dest == NULL) {
-	return win32_open_arg(fname, ".pdf");
-    }
+    if (exe == NULL || strstr(exe, "Acro") == NULL) {
+	err = win32_open_arg(fname, ".pdf");
+    } else {
+	/* Acrobat Reader: can handle named destimation */
+	gchar *cmd;
 
-    if (GetRegKey(HKEY_CLASSES_ROOT, ".pdf", key) == ERROR_SUCCESS) {
-	lstrcat(key,"\\shell\\open\\command");
-	if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS &&
-	    strstr(key, "Acro") != NULL) {
-	    char *p = strstr(key, "\"%1\"");
-
-	    if (p == NULL) {    
-		/* check for %1 without the quotes */
-		p = strstr(key, "%1");
-		if (p == NULL) {
-		    /* if no parameter */
-		    p = key + lstrlen(key) - 1;
-		} else {
-		    *p = '\0'; /* remove the param */
-		}
-	    } else {
-		*p = '\0'; /* remove the param */
-	    }
-	    lstrcat(p, " /A ");
-	    lstrcat(p, "\"nameddest=");
-	    lstrcat(p, dest);
-	    lstrcat(p, "\" ");
-	    lstrcat(p, fname);
-	    if (WinExec(key, SW_SHOW) < 32) {
-		err = 1;
-	    }
-	} else {
-	    return win32_open_arg(fname, ".pdf");
+	cmd = g_strdup_printf("\"%s\" /A \"nameddest=%s\" \"%s\"",
+			      exe, dest, fname);
+	if (WinExec(cmd, SW_SHOW) < 32) {
+	    err = 1;
 	}
+	g_free(cmd);
     }
+
+    free(exe);
 
     return err;
 }
