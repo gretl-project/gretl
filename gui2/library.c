@@ -8662,7 +8662,7 @@ int osx_open_file (const char *path)
 #if 1
     if (!err) {
 	/* get info on the program called */
-	char path[PATH_MAX] = {0};
+	guint8 path[PATH_MAX] = {0};
 	FSRef appref;
 	int err2;
 
@@ -8670,7 +8670,7 @@ int osx_open_file (const char *path)
 				       &appref, NULL);
 	if (!err2) {
 	    FSRefMakePath(&appref, path, PATH_MAX);
-	    fprintf(stderr, "application: '%s'\n" path);
+	    fprintf(stderr, "application: '%s'\n", path);
 	}
     }
 #endif
