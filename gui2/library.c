@@ -8651,13 +8651,29 @@ int do_store (char *filename, int action, gpointer data)
 
 int osx_open_file (const char *path)
 {
-    FSRef r;
+    FSRef ref;
     int err;
     
-    err = FSPathMakeRef((const UInt8 *) path, &r, NULL);
+    err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
     if (!err) {
-	err = LSOpenFSRef(&r, NULL);
+	err = LSOpenFSRef(&ref, NULL);
     }
+
+#if 1
+    if (!err) {
+	/* get info on the program called */
+	char path[PATH_MAX] = {0};
+	FSRef appref;
+	int err2;
+
+	err2 = LSGetApplicationForItem(&ref, kLSRolesViewer | kLSRolesEditor,
+				       &appref, NULL);
+	if (!err2) {
+	    FSRefMakePath(&appref, path, PATH_MAX);
+	    fprintf(stderr, "application: '%s'\n" path);
+	}
+    }
+#endif
 
     return err;
 }
