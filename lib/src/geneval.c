@@ -14732,6 +14732,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    } else if (k == sample_size(p->dset) && mt1 == 0) {
 		/* treat as series of current sample length */
+		/* FIXME ignore mt1? */
 		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, SERIES, p);
 		}
