@@ -8649,6 +8649,8 @@ int do_store (char *filename, int action, gpointer data)
 
 #include <Carbon/Carbon.h>
 
+#if 1 /* deprecated in OS X >= 10.10 */
+
 int osx_open_file (const char *path)
 {
     FSRef ref;
@@ -8661,6 +8663,29 @@ int osx_open_file (const char *path)
 
     return err;
 }
+
+#else /* OK? */
+
+int osx_open_file (const char *path)
+{
+    CFURLRef u;
+    int err = 0;
+    
+    u = CFURLCreateFromFileSystemRepresentation(NULL,
+						(const UInt8 *) path,
+						strlen(path),
+						false);
+    if (u != NULL) {
+	err = LSOpenCFURLRef(u, NULL);
+	CFRelease(u);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+#endif
 
 int osx_open_pdf (const char *path, const char *dest)
 {
@@ -8682,22 +8707,36 @@ int osx_open_pdf (const char *path, const char *dest)
     
 	if (!err && strstr(exe, "Adobe") != NULL) {
 	    char *opt = "/A \"nameddest=chap:dpanel\"";
-	    LSLaunchFSRefSpec foo;
+	    LSLaunchFSRefSpec rspec;
 	    AEDesc desc;
 	    int oerr;
+
+	    /* Testing ideas (try in Terminal):
+
+	       1) via URL:
+
+	       open file://..../myfile.pdf#nameddest=whatever
+
+	       2) using command line args:
+
+	       /path/to/MacOS/Acroread /A "nameddest=whatever"
+
+	    */
 	    
 	    oerr = AECreateDesc(typeChar,
 				opt, strlen(opt),
 				&desc);
 
-	    foo.appRef = appref;
-	    foo.numDocs = 1;
-	    foo.itemRefs = ref; /* should be list? */
-	    foo.passThruParams = desc;
-	    foo.launchFlags = kLSLaunchAsync;
-	    foo.asyncRefCon = NULL;
+	    rspec.appRef = appref;
+	    rspec.numDocs = 1;
+	    rspec.itemRefs = ref; /* should be list? */
+	    rspec.passThruParams = desc;
+	    rspec.launchFlags = kLSLaunchAsync;
+	    rspec.asyncRefCon = NULL;
 
-	    err = LSOpenFromRefSpec(&foo, NULL);
+	    err = LSOpenFromRefSpec(&rspec, NULL);
+
+	    AEDisposeDesc(desc);
 	}
     }
 #endif
