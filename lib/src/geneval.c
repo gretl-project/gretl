@@ -14730,13 +14730,14 @@ static int save_generated_var (parser *p, PRN *prn)
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, SERIES, p);
 		}
-	    } else if (k == sample_size(p->dset) && mt1 == 0) {
-		/* treat as series of current sample length */
-		/* FIXME ignore mt1? */
+	    } else if (k == sample_size(p->dset)) {
+		/* treat as series of current sample length
+		   2016-03-03: removed clause "&& mt1 == 0"
+		*/
 		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, SERIES, p);
 		}
-	    } else {
+	    } else if (mt1 > 0) {
 		/* align using matrix "t1" value */
 		for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
 		    if (t >= p->dset->t1) {
