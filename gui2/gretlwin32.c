@@ -128,7 +128,6 @@ static int Rgui_path_from_registry (void)
 {
     char tmp[MAX_PATH];
     int err;
-
     err = R_path_from_registry(tmp, RGUI);
 
     if (!err) {
@@ -539,6 +538,10 @@ static long get_reg_key (HKEY key, char *subkey, char *retdata)
 
 #endif
 
+static int dde_open_pdf (const char *exename,
+			 const char *fname,
+			 const char *dest);
+
 static char *get_exe_for_type (const char *ext)
 {
     char *exe = NULL;
@@ -559,6 +562,26 @@ static char *get_exe_for_type (const char *ext)
     }
 
     return exe;
+}
+
+static char *get_dde_app_for_pdf (void)
+{
+    char *dde_app = NULL;
+    HRESULT ret;
+    DWORD len = 32;
+
+    dde_app = calloc(32, 1);
+    ret = AssocQueryString(0, ASSOCSTR_DDEAPPLICATION,
+			   ".pdf", NULL, dde_app, &len);
+    
+    if (ret != S_OK || *dde_app == '\0' ||
+	!strcmp(dde_app, "AcroRd32")) {
+	/* the last may be served up but it's definitely wrong */
+	free(dde_app);
+	dde_app = NULL;
+    }
+
+    return dde_app;
 }
 
 static int win32_open_arg (const char *arg, char *ext)
@@ -594,15 +617,21 @@ int win32_open_pdf (const char *fname, const char *dest)
     if (exe == NULL || strstr(exe, "Acro") == NULL) {
 	err = win32_open_arg(fname, ".pdf");
     } else {
-	/* Acrobat Reader: can handle named destimation */
-	gchar *cmd;
+	/* give DDE a whirl */
+	err = dde_open_pdf(exe, fname, dest);
+	if (err) {
+	    /* but if it fails, try something a bit
+	       less ambitious */
+	    gchar *cmd;
 
-	cmd = g_strdup_printf("\"%s\" /A \"nameddest=%s\" \"%s\"",
-			      exe, dest, fname);
-	if (WinExec(cmd, SW_SHOW) < 32) {
-	    err = 1;
+	    err = 0;
+	    cmd = g_strdup_printf("\"%s\" /A \"nameddest=%s\" \"%s\"",
+				  exe, dest, fname);
+	    if (WinExec(cmd, SW_SHOW) < 32) {
+		err = 1;
+	    }
+	    g_free(cmd);
 	}
-	g_free(cmd);
     }
 
     free(exe);
@@ -734,3 +763,190 @@ int win32_rename_dir (const char *oldname, const char *newname)
     return err;
 }
 
+/* experimental: use DDE */
+
+#include <ddeml.h>
+#include <dde.h>
+#include <malloc.h>
+
+#define CONNECT_DELAY            500 /* ms */
+#define TRANSACTION_TIMEOUT     5000 /* ms */
+#define MAX_INPUT_IDLE_WAIT INFINITE /* ms */
+
+HDDEDATA CALLBACK init_callback (UINT uType, UINT uFmt, HCONV hconv,
+				 HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
+				 DWORD dwData1, DWORD dwData2)
+{
+    if (uType == XTYP_ADVDATA) {
+	DWORD len = DdeGetData(hdata, NULL, 0, 0);
+	char *buf = (char *)_alloca(len + 1);
+	
+	DdeGetData(hdata, (LPBYTE) buf, len + 1, 0);
+	return (HDDEDATA) DDE_FACK;
+    }
+    
+    return (HDDEDATA) NULL;
+}
+
+static int start_dde_server (LPCTSTR prog)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si;
+    
+    ZeroMemory(&si, sizeof si);
+    si.cb = sizeof si;
+    
+    if (!CreateProcess(NULL, (LPTSTR) prog, NULL, NULL, FALSE, 0,
+		       NULL, NULL, &si, &pi)) {
+	fprintf(stderr, "DDE: couldn't start process %s\n", prog);
+	return 1;
+    }
+
+    WaitForInputIdle(pi.hProcess, MAX_INPUT_IDLE_WAIT);
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    
+    return 0;
+}
+
+static DWORD open_dde_conversation (LPCTSTR topic_name,
+				    const char *exename,
+				    const char *ddename,
+				    HCONV *convp)
+{
+    DWORD session = 0;
+    HCONV conversation = NULL;
+    HSZ service, topic;
+    UINT ret;
+    int i, err = 0;
+    
+    ret = DdeInitialize(&session, (PFNCALLBACK) init_callback,
+			APPCLASS_STANDARD | APPCMD_CLIENTONLY, 0);
+    
+    if (ret != DMLERR_NO_ERROR) {
+	fprintf(stderr, "DDE: couldn't initialize session\n");
+	return 0;
+    }
+
+    service = DdeCreateStringHandle(session, ddename, CP_WINANSI);
+    topic   = DdeCreateStringHandle(session, topic_name, CP_WINANSI);
+
+    if (!service || !topic) {
+	fprintf(stderr, "DDE: string creation failed\n");
+	DdeUninitialize(session);
+	return 0;
+    }
+    
+    conversation = DdeConnect(session, service, topic, 0);
+
+    if (conversation == NULL) {
+	err = start_dde_server(exename);
+	if (!err) {
+	    /* try to connect */
+	    for (i=0; i<5 && !conversation; i++) {
+		Sleep(CONNECT_DELAY);
+		conversation = DdeConnect(session, service, topic, 0);
+	    }
+	}
+	if (conversation == NULL && !err) {
+	    fprintf(stderr, "DDE: couldn't contact server %s\n", ddename);
+	    err = 1;
+	}	
+    }
+
+    DdeFreeStringHandle(session, service);
+    DdeFreeStringHandle(session, topic);
+
+    if (err) {
+	DdeUninitialize(session);
+	session = 0;
+    } else {
+	*convp = conversation;
+    }
+
+    return session;
+}
+
+static int exec_dde_command (const char *buf, HCONV conversation,
+			     DWORD session)
+{
+    HDDEDATA ret;
+    int err;
+    
+    ret = DdeClientTransaction((LPBYTE) buf, strlen(buf) + 1,
+			       conversation, 0, 0, XTYP_EXECUTE,
+			       TRANSACTION_TIMEOUT, 0);
+
+    /* MSDN: "The return value is zero for all unsuccessful
+       transactions" 
+    */
+    err = (ret == 0);
+
+    return err;
+}
+
+static int dde_open_pdf (const char *exename,
+			 const char *fname,
+			 const char *dest)
+{
+    DWORD session = 0;
+    HCONV conversation = NULL;
+    char *ddename = NULL;
+    char *buf = NULL;
+    int err = 0;
+
+    ddename = get_dde_app_for_pdf();
+    if (ddename == NULL) {
+	if (strstr(exename, "Reader DC")) {
+	    ddename = strdup("AcroViewR15");
+	} else if (strstr(exename, "DC")) {
+	    ddename = strdup("AcroViewA15");
+	} else {
+	    /* who knows? it's a big Adobe mess */
+	    return 1;
+	}
+    }    
+
+    buf = calloc(strlen(fname) + strlen(dest) + 32, 1);
+
+    session = open_dde_conversation("control", exename, ddename,
+				    &conversation);
+    if (session == 0) {
+	free(buf);
+	free(ddename);
+	return 1;
+    }
+
+    /* Adobe DDE commands only work on documents opened
+       by DDE. It's therefore necessary to close the document
+       first (if it's already open) then reopen it.
+    */    
+
+    sprintf(buf, "[DocClose(\"%s\")]", fname);
+    exec_dde_command(buf, conversation, session);
+    sprintf(buf, "[DocOpen(\"%s\")]", fname);
+    exec_dde_command(buf, conversation, session);
+    if (strstr(ddename, "wR") == NULL) {
+	/* specific to acrord32 version 8 bug */
+	sprintf(buf, "[DocOpen(\"%s\")]", fname);
+	exec_dde_command(buf, conversation, session);
+    }
+    sprintf(buf, "[FileOpen(\"%s\")]", fname);
+    exec_dde_command(buf, conversation, session);
+
+    sprintf(buf, "[DocGoToNameDest(\"%s\", %s)]", fname, dest);
+    err = exec_dde_command(buf, conversation, session);
+
+    free(buf);
+    free(ddename);
+
+    if (conversation) {
+	DdeDisconnect(conversation);
+    }
+    if (session) {
+	DdeUninitialize(session);
+    }
+
+    return err;
+}
