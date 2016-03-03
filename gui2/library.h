@@ -35,6 +35,8 @@ int winfork (char *cmdline, const char *dir, int wshow,
 int osx_open_file (const char *path);
 
 int osx_open_url (const char *url);
+
+int osx_open_pdf (const char *path, const char *dest);
 #endif
 
 typedef struct _selector selector;

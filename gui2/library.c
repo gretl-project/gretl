@@ -8659,21 +8659,52 @@ int osx_open_file (const char *path)
 	err = LSOpenFSRef(&ref, NULL);
     }
 
-#if 1
-    if (!err) {
-	/* get info on the program called */
-	guint8 path[PATH_MAX] = {0};
-	FSRef appref;
-	int err2;
+    return err;
+}
 
-	err2 = LSGetApplicationForItem(&ref, kLSRolesViewer | kLSRolesEditor,
-				       &appref, NULL);
-	if (!err2) {
-	    FSRefMakePath(&appref, path, PATH_MAX);
-	    fprintf(stderr, "application: '%s'\n", path);
+int osx_open_pdf (const char *path, const char *dest)
+{
+    FSRef ref;
+    int err;
+
+    err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
+
+#if 0
+    if (!err) {
+	guint8 exe[PATH_MAX] = {0};
+	FSRef appref;
+    
+	err = LSGetApplicationForItem(&ref, kLSRolesViewer | kLSRolesEditor,
+				      &appref, NULL);
+
+	FSRefMakePath(&appref, exe, PATH_MAX);
+	fprintf(stderr, "application: '%s'\n", exe);
+    
+	if (!err && strstr(exe, "Adobe") != NULL) {
+	    char *opt = "/A \"nameddest=chap:dpanel\"";
+	    LSLaunchFSRefSpec foo;
+	    AEDesc desc;
+	    int oerr;
+	    
+	    oerr = AECreateDesc(typeChar,
+				opt, strlen(opt),
+				&desc);
+
+	    foo.appRef = appref;
+	    foo.numDocs = 1;
+	    foo.itemRefs = ref; /* should be list? */
+	    foo.passThruParams = desc;
+	    foo.launchFlags = kLSLaunchAsync;
+	    foo.asyncRefCon = NULL;
+
+	    err = LSOpenFromRefSpec(&foo, NULL);
 	}
     }
 #endif
+
+    if (!err) {
+	err = LSOpenFSRef(&ref, NULL);
+    }    
 
     return err;
 }

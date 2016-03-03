@@ -2158,7 +2158,11 @@ void gretl_show_pdf (const char *fname, const char *option)
 	win32_open_file(fname);
     }
 #elif defined(OS_OSX)
-    osx_open_file(fname);
+    if (option != NULL) {
+	osx_open_pdf(fname, option);
+    } else {
+	osx_open_file(fname);
+    }
 #else
     gretl_fork("viewpdf", fname, option);
 #endif
