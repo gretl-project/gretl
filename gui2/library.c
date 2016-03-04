@@ -8705,7 +8705,7 @@ int osx_open_pdf (const char *path, const char *dest)
 	FSRefMakePath(&appref, exe, PATH_MAX);
 	fprintf(stderr, "application: '%s'\n", (const char *) exe);
     
-	if (!err && strstr(exe, "Adobe") != NULL) {
+	if (!err && strstr((const char *) exe, "Adobe") != NULL) {
 	    char *opt = "/A \"nameddest=chap:dpanel\"";
 	    LSLaunchFSRefSpec rspec;
 	    AEDesc desc;
@@ -8730,7 +8730,7 @@ int osx_open_pdf (const char *path, const char *dest)
 	    rspec.appRef = &appref;
 	    rspec.numDocs = 1;
 	    rspec.itemRefs = &ref; /* should be list? */
-	    rspec.passThruParams = desc;
+	    rspec.passThruParams = &desc;
 	    rspec.launchFlags = kLSLaunchAsync;
 	    rspec.asyncRefCon = NULL;
 
