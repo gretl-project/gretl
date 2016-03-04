@@ -8731,6 +8731,7 @@ int osx_open_pdf (const char *path, const char *dest)
 	    oerr = AECreateDesc(typeChar,
 				opt, strlen(opt),
 				&desc);
+	    fprintf(stderr, "oerr = %d\n", oerr);
 
 	    rspec.appRef = &appref;
 	    rspec.numDocs = 1;
@@ -8740,6 +8741,7 @@ int osx_open_pdf (const char *path, const char *dest)
 	    rspec.asyncRefCon = NULL;
 
 	    err = LSOpenFromRefSpec(&rspec, NULL);
+	    fprintf(stderr, "LSOpenFromRefSpec, err = %d\n", err);
 
 	    AEDisposeDesc(&desc);
 	}
