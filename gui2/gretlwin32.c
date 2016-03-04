@@ -564,24 +564,68 @@ static char *get_exe_for_type (const char *ext)
     return exe;
 }
 
-static char *get_dde_app_for_pdf (void)
+static int get_pdf_service_name (char *service, const char *exe)
 {
-    char *dde_app = NULL;
-    HRESULT ret;
-    DWORD len = 32;
+    const char *s;
+    char ver[4] = {0};
+    int n, err = 0;
 
-    dde_app = calloc(32, 1);
-    ret = AssocQueryString(0, ASSOCSTR_DDEAPPLICATION,
-			   ".pdf", NULL, dde_app, &len);
-    
-    if (ret != S_OK || *dde_app == '\0' ||
-	!strcmp(dde_app, "AcroRd32")) {
-	/* the last may be served up but it's definitely wrong */
-	free(dde_app);
-	dde_app = NULL;
+    *service = '\0';
+
+    /* cases include:
+         $pf\Adobe\Acrobat Reader DC\...
+         $pf\Adobe\Acrobat 10.0\...
+    */
+
+    s = strstr(exe, "obe\\Acrobat");
+    if (s == NULL) {
+	/* huh? */
+	return 1;
     }
 
-    return dde_app;
+    /* get in place to read "Reader <version>" or
+       just "<version>" for Acrobat */
+    s += 11;
+    s += strspn(s, " ");
+
+    if (!strncmp(s, "Reader ", 7)) {
+	s += 7;
+	if (sscanf(s, "%3[^\\]", ver) == 1) {
+	    if (!strcmp(ver, "DC")) {
+		strcpy(service, "AcroViewR15");
+	    } else if (isdigit(*ver)) {
+		n = atoi(ver);
+		if (n >= 10) {
+		    sprintf(service, "AcroViewR%d", n);
+		} else {
+		    strcpy(service, "AcroView");
+		}
+	    }
+	}
+    } else {
+	/* Acrobat as such */
+	if (sscanf(s, "%3[^\\]", ver) == 1) {
+	    if (!strcmp(ver, "DC")) {
+		strcpy(service, "AcroViewA15");
+	    } else if (*ver == 'X') {
+		strcpy(service, "AcroViewA10");
+	    } else if (isdigit(*ver)) {
+		n = atoi(ver);
+		if (n >= 10) {
+		    sprintf(service, "AcroViewA%d", n);
+		} else {
+		    strcpy(service, "AcroView");
+		}
+	    }
+	}
+    }
+
+    if (*service == '\0') {
+	fprintf(stderr, "pdf_service_name: no service!\n");
+	err = 1;
+    }
+
+    return err;
 }
 
 static int win32_open_arg (const char *arg, char *ext)
@@ -620,7 +664,7 @@ int win32_open_pdf (const char *fname, const char *dest)
 	/* give DDE a whirl */
 	err = dde_open_pdf(exe, fname, dest);
 	if (err) {
-	    /* but if it fails, try something a bit
+	    /* but if that fails, try something a bit
 	       less ambitious */
 	    gchar *cmd;
 
@@ -892,21 +936,17 @@ static int dde_open_pdf (const char *exename,
 {
     DWORD session = 0;
     HCONV conversation = NULL;
-    char *ddename = NULL;
+    char ddename[32];
     char *buf = NULL;
     int err = 0;
 
-    ddename = get_dde_app_for_pdf();
-    if (ddename == NULL) {
-	if (strstr(exename, "Reader DC")) {
-	    ddename = strdup("AcroViewR15");
-	} else if (strstr(exename, "DC")) {
-	    ddename = strdup("AcroViewA15");
-	} else {
-	    /* who knows? it's a big Adobe mess */
-	    return 1;
-	}
-    }    
+    /* Try to figure out the name of the DDE service
+       provided by Acrobat Reader or Acrobat (oh, Adobe!)
+    */
+    err = get_pdf_service_name(ddename, exename);
+    if (err) {
+	return err;
+    }
 
     buf = calloc(strlen(fname) + strlen(dest) + 32, 1);
 
@@ -914,7 +954,6 @@ static int dde_open_pdf (const char *exename,
 				    &conversation);
     if (session == 0) {
 	free(buf);
-	free(ddename);
 	return 1;
     }
 
@@ -939,7 +978,6 @@ static int dde_open_pdf (const char *exename,
     err = exec_dde_command(buf, conversation, session);
 
     free(buf);
-    free(ddename);
 
     if (conversation) {
 	DdeDisconnect(conversation);
