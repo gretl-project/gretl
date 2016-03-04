@@ -8692,7 +8692,12 @@ int osx_open_pdf (const char *path, const char *dest)
     FSRef ref;
     int err;
 
+    fprintf(stderr, "osx_open_pdf: path: '%s'\n", path);
+    fprintf(stderr, "osx_open_pdf: dest: '%s'\n", dest);
+
     err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
+
+    fprintf(stderr, "FSPathMakeRef: err = %d\n", err);
 
 #if 1
     if (!err) {

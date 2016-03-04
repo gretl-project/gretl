@@ -2205,8 +2205,7 @@ void display_guide_chapter (const char *dest)
     }
 #elif defined(OS_OSX)
     if (!err) {
-	/* FIXME */
-	gretl_show_pdf(fname, NULL);
+	gretl_show_pdf(fname, dest);
     }
 #else /* Linux */    
     if (!err) {
