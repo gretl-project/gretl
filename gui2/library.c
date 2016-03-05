@@ -8692,12 +8692,7 @@ int osx_open_pdf (const char *path, const char *dest)
     FSRef ref;
     int err;
 
-    fprintf(stderr, "osx_open_pdf: path: '%s'\n", path);
-    fprintf(stderr, "osx_open_pdf: dest: '%s'\n", dest);
-
     err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
-
-    fprintf(stderr, "FSPathMakeRef: err = %d\n", err);
 
 #if 1
     if (!err) {
@@ -8731,11 +8726,10 @@ int osx_open_pdf (const char *path, const char *dest)
 	    oerr = AECreateDesc(typeChar,
 				opt, strlen(opt),
 				&desc);
-	    fprintf(stderr, "oerr = %d\n", oerr);
 
 	    rspec.appRef = &appref;
 	    rspec.numDocs = 1;
-	    rspec.itemRefs = &ref; /* should be list? */
+	    rspec.itemRefs = &ref;
 	    rspec.passThruParams = &desc;
 	    rspec.launchFlags = kLSLaunchAsync;
 	    rspec.asyncRefCon = NULL;
@@ -8746,11 +8740,11 @@ int osx_open_pdf (const char *path, const char *dest)
 	    AEDisposeDesc(&desc);
 	}
     }
-#endif
-
+#else
     if (!err) {
 	err = LSOpenFSRef(&ref, NULL);
-    }    
+    }
+#endif    
 
     return err;
 }
