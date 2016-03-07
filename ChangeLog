@@ -17,6 +17,8 @@ version 2016b, in progress
 - Fix bug: CSV import failing in locales that use decimal
   comma when file uses decimal comma and also '.' as thousands
   marker
+- Fix bug: handling of "missingness" in imported daily data
+  not working quite right
 - Fix bug: "omit" command with --auto option failing for 
   ordered logit/probit models
 - Fix bug: potential crash in printing the results of a
