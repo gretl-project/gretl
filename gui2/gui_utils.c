@@ -963,7 +963,18 @@ static void maybe_offer_daily_options (void)
 	    buf = gretl_print_get_buffer(prn);
 	}
 
-	if (chk == 3) {
+	if (chk == 1) {
+	    const char *opts[] = {
+		N_("Leave the dataset as it is"),
+		N_("Delete the weekend rows")
+	    };
+
+	    resp = radio_dialog("gretl", _(buf), opts, 2, 
+				1, DAILY_PURGE, NULL);
+	    if (resp == 1) {
+		purge_opt = OPT_W;
+	    }
+	} else if (chk == 2) {
 	    const char *opts[] = {
 		N_("Leave the dataset as it is"),
 		N_("Delete the weekend rows"),
@@ -977,24 +988,24 @@ static void maybe_offer_daily_options (void)
 	    } else if (resp == 2) {
 		purge_opt = OPT_A;
 	    }
-	} else if (chk > 0) {
-	    const char *wkend_opt = N_("Delete the weekend rows");
-	    const char *wkday_opt = N_("Delete blank weekday rows");
-	    const char *opts[1] = {NULL};
-	    int purge = 1;
+	} else if (chk == 3) {
+	    const char *opts[] = {
+		N_("Leave the dataset as it is"),
+		N_("Delete all blank rows")
+	    };
 
-	    opts[0] = chk == 1 ? wkend_opt : wkday_opt;
-	    resp = checks_only_dialog("gretl", _(buf), opts, 1,
-				      &purge, DAILY_PURGE, NULL);
-
-	    if (!canceled(resp) && purge) {
-		purge_opt = chk == 1 ? OPT_W : OPT_A;
+	    resp = radio_dialog("gretl", _(buf), opts, 2, 
+				1, DAILY_PURGE, NULL);
+	    if (resp == 1) {
+		purge_opt = OPT_A;
 	    }
 	}
+	
 	gretl_print_destroy(prn);
     }
 
     if (purge_opt) {
+	purge_opt |= OPT_T;
 	bool_subsample(NULL, purge_opt, NULL);
     }
 }

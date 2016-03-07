@@ -3195,61 +3195,77 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
     }
 }
 
-static int is_weekend (int t, int pd, int sa0, int su0)
+static int is_weekend (int t, int pd, int sat0, int sun0)
 {
     int sat = 0, sun = 0;
 
     /* this is intended to identify weekend days for
        both 7- and 6-day data */
 
-    if (sa0 >= 0) {
-	sat = (t - sa0) % pd == 0;
+    if (sat0 >= 0) {
+	sat = (t - sat0) % pd == 0;
     }
 
-    if (!sat && su0 >= 0) {
-	sun = (t - su0) % pd == 0;
+    if (!sat && sun0 >= 0) {
+	sun = (t - sun0) % pd == 0;
     }
 
     return sat || sun;
 }
 
+/* Scan imported daily data for missing values, so as to
+   be able to offer the user some options.
+   
+   Return values:
+
+   0 : no missing values
+   1 : all weekend data are missing (or possibly just all
+       Saturdays, or just all Sundays), but no weekday
+       data missing
+   2 : as with 1, but also some weekdays missing
+   3 : scattering of weekend and/or weekday data missing
+*/
+
 int analyse_daily_import (const DATASET *dset, PRN *prn)
 {
+    int all_weekends_blank = 0;
     int blank_weekends = 0;
     int blank_weekdays = 0;
     int n_weekdays = 0;
-    int sa0 = -1, su0 = -1;
+    int n_weekend_days = 0;
+    int sat0 = -1, sun0 = -1;
     int i, t, pd = dset->pd;
     int all_missing, weekend;
     int ret = 0;
 
     if (pd > 5) {
 	char datestr[OBSLEN];
-	int wd;
+	int wkday;
 
 	/* start by finding first Sat and/or Sun */
 	for (t=0; t<dset->n; t++) {
 	    ntodate(datestr, t, dset);
-	    wd = weekday_from_date(datestr);
-	    if (wd == 6 && sa0 < 0) {
-		sa0 = t;
-	    } else if (wd == 0 && su0 < 0) {
-		su0 = t;
+	    wkday = weekday_from_date(datestr);
+	    if (wkday == 6 && sat0 < 0) {
+		sat0 = t;
+	    } else if (wkday == 0 && sun0 < 0) {
+		sun0 = t;
 	    }
-	    if (sa0 >= 0 && su0 >= 0) {
+	    if (sat0 >= 0 && sun0 >= 0) {
 		break;
-	    } else if (dset->pd == 6 && (sa0 >= 0 || su0 >= 0)) {
+	    } else if (dset->pd == 6 && (sat0 >= 0 || sun0 >= 0)) {
 		break;
 	    }
 	}
-	blank_weekends = 1;
+	all_weekends_blank = 1; /* may be revised below */
     } else {
+	/* there are no weekend days in 5-day data */
 	weekend = 0;
     }
 
     for (t=0; t<dset->n; t++) {
 	if (pd > 5) {
-	    weekend = is_weekend(t, pd, sa0, su0);
+	    weekend = is_weekend(t, pd, sat0, sun0);
 	}
 	all_missing = 1;
 	for (i=1; i<dset->v; i++) {
@@ -3258,41 +3274,63 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 		break;
 	    }
 	}
-	n_weekdays += !weekend;
-	if (weekend && !all_missing) {
-	    blank_weekends = 0;
-	} else if (!weekend && all_missing) {
-	    blank_weekdays++;
+	if (weekend) {
+	    n_weekend_days++;
+	    if (!all_missing) {
+		/* not all weekend data are missing */
+		all_weekends_blank = 0;
+	    }	    
+	} else {
+	    n_weekdays++;
+	}
+	if (all_missing) {
+	    if (weekend) {
+		blank_weekends++;
+	    } else {
+		blank_weekdays++;
+	    }
 	}
     }
 
-    if (blank_weekends) {
+    if (all_weekends_blank) {
+	double misspc = 100.0 * blank_weekdays / (double) n_weekdays;
+	    
 	if (pd == 7) {
 	    pputs(prn, "This dataset is on 7-day calendar, but weekends are blank.");
 	} else {
 	    pprintf(prn, "This dataset is on 6-day calendar, but %s are blank.",
-		    sa0 >= 0 ? "Sundays" : "Saturdays");
+		    sat0 >= 0 ? "Sundays" : "Saturdays");
 	}
 	ret = 1;
-    }
-
-    if (blank_weekdays) {
-	double misspc = 100.0 * blank_weekdays / (double) n_weekdays;
-
-	if (blank_weekends) {
+	if (misspc > 0.0) {
 	    pputc(prn, '\n');
 	    pputs(prn, "In addition, ");
+	    if (misspc >= 0.01) {
+		pprintf(prn, "%.2f percent of weekday observations are missing.",
+			misspc);
+	    } else {
+		pprintf(prn, "%g percent of weekday observations are missing.",
+			misspc);
+	    }	    
+	    if (misspc < 10.0) {
+		ret = 2;
+	    }
 	}
+    } else if (blank_weekdays || blank_weekends) {
+	int ndays = n_weekdays + n_weekend_days;
+	int nmiss = blank_weekdays + blank_weekends;
+	double misspc = 100.0 * nmiss / (double) ndays;
+
 	if (misspc >= 0.01) {
-	    pprintf(prn, "%.2f percent of weekday observations are missing.",
+	    pprintf(prn, "%.2f percent of daily observations are missing.",
 		    misspc);
 	} else {
-	    pprintf(prn, "%g percent of weekday observations are missing.",
+	    pprintf(prn, "%g percent of daily observations are missing.",
 		    misspc);
 	}
 	if (misspc < 10) {
-	    ret += 2;
-	}
+	    ret = 3;
+	}	
     }
 
     return ret;

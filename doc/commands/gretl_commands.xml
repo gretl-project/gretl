@@ -2312,8 +2312,9 @@
       <para>
 	Note that if you take either of these options gretl will
 	nonetheless preserve the date information, and it will be
-	possible to reconstruct the full calendar dataset later
-	if that's required.
+	possible to reconstruct the full calendar dataset later if
+	that is required. This can be done using the <cmdref
+	targ="dataset"/> command with the <lit>pad-daily</lit> option.
       </para>
     </description>
   </command>
@@ -2478,6 +2479,7 @@
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
 	<example>dataset renumber x 4</example>
+	<example>dataset pad-daily 7</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
@@ -2488,11 +2490,11 @@
 	depending on the given <repl>keyword</repl>, which must be
 	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
-	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit> or
-	<lit>renumber</lit>. Note: with the exception of
-	<lit>clear</lit>, these actions are not available when the
-	dataset is currently subsampled by selection of cases on some
-	Boolean criterion.
+	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
+	<lit>renumber</lit> or <lit>pad-daily</lit>. Note: with the
+	exception of <lit>clear</lit>, these actions are not available
+	when the dataset is currently subsampled by selection of cases
+	on some Boolean criterion.
       </para>
       <para>
 	<lit>addobs</lit>: Must be followed by a positive integer.  Adds
@@ -2550,14 +2552,15 @@
 	of the data table represent variables.
       </para>
       <para>
-	<lit>sortby</lit>: The name of a single series or list is required. If
-	one series is given, the observations on all variables in the dataset
-	are re-ordered by increasing value of the specified series. If a list
-	is given, the sort proceeds hierarchically: if the observations are
-	tied in sort order with respect to the first key variable then the
-	second key is used to break the tie, and so on until the tie is broken
-	or the keys are exhausted. Note that this command is available only
-	for undated data.
+	<lit>sortby</lit>: The name of a single series or list is
+	required. If one series is given, the observations on all
+	variables in the dataset are re-ordered by increasing value of
+	the specified series. If a list is given, the sort proceeds
+	hierarchically: if the observations are tied in sort order
+	with respect to the first key variable then the second key is
+	used to break the tie, and so on until the tie is broken or
+	the keys are exhausted. Note that this command is available
+	only for undated data.
       </para>
       <para>
 	<lit>dsortby</lit>: Works as <lit>sortby</lit> except that
@@ -2580,6 +2583,19 @@
 	accordingly. (Position 0 is occupied by the constant, which
 	cannot be moved.)
       </para>
+      <para>
+	<lit>pad-daily</lit>: Valid only if the current dataset
+	contains dated daily data with an incomplete calendar. The
+	effect is to pad the data out to a complete calendar by
+	inserting blank rows (that is, rows containing nothing but
+	<lit>NA</lit>s). This option requires an integer parameter,
+	namely the number of days per week, which must be 5, 6 or 7,
+	and must be greater than or equal to the current data
+	frequency. On successful completion, the data calendar will be
+	<quote>complete</quote> relative to this value. For example if
+	days-per-week is 5 then all weekdays will be represented,
+	whether or not any data are available for those days.
+      </para>      
     </description>
 
     <gui-access>

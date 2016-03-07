@@ -1414,6 +1414,7 @@ static int try_for_daily_subset (char *selected,
 	/* first pass: look at weekend status of included obs */
 	for (t=0; t<dset->n; t++) {
 	    if (selected[t]) {
+		ntodate(datestr, t, dset);
 		wd = weekday_from_date(datestr);
 		if (wd == 0) {
 		    /* got a Sunday: result must be 7-day */
@@ -1430,6 +1431,10 @@ static int try_for_daily_subset (char *selected,
 	    newpd = 6;
 	}
     }
+
+#if SUBDEBUG
+    fprintf(stderr, "try_for_daily_subset: newpd = %d\n", newpd);
+#endif
 
     /* determine expected "delta days" for Mondays */
     mon_delta = (newpd == 7) ? 1 : (newpd == 6)? 2 : 3;
@@ -1466,8 +1471,8 @@ static int try_for_daily_subset (char *selected,
 	double keepmin = 0.9 * newpd / (double) dset->pd;
 
 #if SUBDEBUG
-	fprintf(stderr, "*** daily: delta_max=%d, keepfrac=%.4f\n"
-		"keepmin=%.4f, ngaps=%d, newpd=%d\n", delta_max, keepfrac,
+	fprintf(stderr, " daily: delta_max=%d, keepfrac=%.4f\n"
+		" keepmin=%.4f, ngaps=%d, newpd=%d\n", delta_max, keepfrac,
 		keepmin, ngaps, newpd);
 #endif
 
@@ -2328,7 +2333,8 @@ int restrict_sample (const char *param, const int *list,
 	}
 
 #if SUBDEBUG
-	fprintf(stderr, "restrict sample: got contiguous range\n");
+	fprintf(stderr, "restrict sample: contiguous range? %s\n",
+		contiguous ? "yes" : "no");
 #endif
 
 	if (contiguous) {
