@@ -8694,7 +8694,7 @@ int osx_open_pdf (const char *path, const char *dest)
 
     err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
 
-#if 1
+#if 0 /* sadly, the following does not work at all */
     if (!err) {
 	guint8 exe[PATH_MAX] = {0};
 	FSRef appref;
