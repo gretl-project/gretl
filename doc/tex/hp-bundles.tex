@@ -1,4 +1,13 @@
-\chapter{Bundles}
+\chapter{Structured data types}
+\label{chap:structypes}
+
+Hansl possesses two kinds of ``structured data type'': associative
+arrays, called \emph{bundles} and arrays ind the proper sense of the
+word. Loosely speaking, the main difference between the two is that in
+a bundle you can pack together variables of different types, while
+arrays can hold one type of variable only.
+
+\section{Bundles}
 \label{chap:bundles}
 
 Bundles are \emph{associative arrays}, that is, generic containers for
@@ -123,7 +132,7 @@ bundle b:
  inside (bundle)
 \end{code}
 
-\section{Bundle usage}
+\subsection{Bundle usage}
 \label{sec:bundle-usage}
 
 To illustrate the way a bundle can hold information, we will use the
@@ -173,6 +182,59 @@ above formulae translate into
   matrix CI_95    = ypred + {-1, 1} .* (1.96*sepred)
   print ypred CI_95
 \end{code}
+
+\section{Arrays}
+\label{sec:arrays}
+
+A gretl array is a container which can hold zero or more objects of a
+certain type, indexed by consecutive integers starting at 1. It is
+one-dimensional. This type is implemented by a quite ``generic''
+back-end. The types of object that can be put into arrays are strings,
+matrices, bundles and lists; a given array can hold only one of these
+types.
+
+\subsection{Array operations}
+
+The following is, we believe, rather self-explanatory:
+
+\begin{code}
+strings S1 = array(3)
+matrices M = array(4)
+strings S2 = defarray("fish", "chips")
+S1[1] = ":)"
+S1[3] = ":("
+M[2] = mnormal(2,2)
+print S1
+eval inv(M[2])
+S = S1 + S2
+print S
+\end{code}
+
+The \texttt{array()} takes an integer argument for the array size; the
+\texttt{defarray()} function takes a variable number of arguments (one
+or more), each of which may be the name of a variable of the given
+type or an expression which evaluates to an object of that type.  The
+corresponding output is
+
+\begin{code}
+Array of strings, length 3
+[1] ":)"
+[2] null
+[3] ":("
+
+     0.52696      0.28883 
+    -0.15332     -0.68140 
+
+Array of strings, length 5
+[1] ":)"
+[2] null
+[3] ":("
+[4] "fish"
+[5] "chips"
+\end{code}
+
+In order to find the number of elements in an array, you can use the
+\texttt{nelem()} function.
 
 %%% Local Variables: 
 %%% mode: latex
