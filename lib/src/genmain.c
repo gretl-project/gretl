@@ -1026,6 +1026,8 @@ parser *genr_compile (const char *s, DATASET *dset,
 	if (p->err) {
 	    *err = p->err;
 	    gen_cleanup(p, 0);
+	    free(p);
+	    p = NULL;
 	}
     }
 
