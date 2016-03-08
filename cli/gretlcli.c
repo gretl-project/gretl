@@ -171,9 +171,9 @@ static void usage (int err)
 	     "Example of run mode usage:\n"
 	     " gretlcli -r myfile.inp\n"));
 
-    printf("\nSpecial batch-mode option:\n"
-	   " --scriptopt=<value> sets a scalar value, accessible to a script\n"
-	   " under the name \"scriptopt\"\n\n");
+    printf(_("\nSpecial batch-mode option:\n"
+	     " --scriptopt=<value> sets a scalar value, accessible to a script\n"
+	     " under the name \"scriptopt\"\n\n"));
 
     if (err) {
 	exit(EXIT_FAILURE);
