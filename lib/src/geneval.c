@@ -2599,9 +2599,17 @@ static int real_matrix_calc (const gretl_matrix *A,
     default:
 	err = E_TYPES;
 	break;
-    } 
+    }
 
-    if (!err) {
+    if (err) {
+	if (C != NULL) {
+	    if (pM != NULL && *pM == C) {
+		*pM = NULL;
+	    }
+	    gretl_matrix_free(C);
+	    C = NULL;
+	}
+    } else {
 	/* preserve data-row info? */
 	int At1 = gretl_matrix_get_t1(A);
 	int At2 = gretl_matrix_get_t2(A);
@@ -2615,9 +2623,6 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    gretl_matrix_set_t1(C, Bt1);
 	    gretl_matrix_set_t2(C, Bt2);
 	}
-    } else if (C != NULL) {
-	gretl_matrix_free(C);
-	C = NULL;
     }
 
     if (*pM != NULL && *pM != C) {

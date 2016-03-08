@@ -2,7 +2,7 @@ version 2016b, in progress
 - "dataset" command: expose and document the "pad-daily" 
   option
 - GUI help text: make references to the Gretl User's Guide
-  chapter-specific, and make the PDF open at the specified
+  chapter-specific, and make the file open at the specified
   chapter if the PDF viewer supports that functionality
 - GUI "view code" option for function packages: avoid slow
   loading of big code buffers
