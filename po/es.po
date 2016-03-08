@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-02-24 14:00-0500\n"
-"PO-Revision-Date: 2016-02-03 15:40+0100\n"
+"PO-Revision-Date: 2016-03-08 13:54+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -2326,9 +2326,9 @@ msgid "Matrix specification is not coherent"
 msgstr "La especificación de la matriz no es coherente"
 
 #: lib/src/geneval.c:6937
-#, fuzzy, c-format
+#, c-format
 msgid "The function %s does not return any value"
-msgstr "La matriz %s no representa una tabla de contingencia"
+msgstr "La función %s no devuelve ningún valor"
 
 #: lib/src/geneval.c:6948 lib/src/geneval.c:8738
 #, c-format
@@ -3959,14 +3959,14 @@ msgstr ""
 "Lo siento, no puede hacer esto con una submuestra de un conjunto de datos"
 
 #: lib/src/gretl_paths.c:1823
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find package %s"
-msgstr "No se pudo encontrar %s"
+msgstr "No se pudo encontrar el paquete %s"
 
 #: lib/src/gretl_paths.c:1834
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "No se pudo encontrar un manejador de 'socket' utilizable\n"
+msgstr "No se pudo encontrar el fichero %s para el paquete %s"
 
 #: lib/src/gretl_paths.c:2500
 msgid "User directory is not set"
@@ -5981,7 +5981,7 @@ msgstr "En este contexto no se pueden borrar escalares\n"
 #: lib/src/monte_carlo.c:3069 lib/src/monte_carlo.c:3086
 #, c-format
 msgid "delete %s: not allowed\n"
-msgstr ""
+msgstr "borrar %s: no está permitido\n"
 
 #: lib/src/monte_carlo.c:3547
 #, c-format
@@ -7540,7 +7540,7 @@ msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
 #: cli/gretlcli.c:158
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -7561,15 +7561,16 @@ msgid ""
 msgstr ""
 "\n"
 "Se puede indicar el nombre de un fichero de datos en la línea de "
-"instrucciones.\n"
+"comandos.\n"
 "Opciones:\n"
 " -b o --batch     Procesa un lote de instrucciones y sale.\n"
 " -r o --run       Ejecuta un lote de instrucciones y después pasa a control\n"
-" manual en línea de instrucciones.\n"
+" manual en línea de comandos.\n"
+" -m o --makepkg   Ejecuta un guion y crea un paquete a partir de el.\n"
+" -i o --instpkg   Instala el paquete de funciones que se especifique.\n"
 " -h o --help      Muestra esta información y sale.\n"
 " -v o --version   Muestra la información de versión y sale.\n"
-" -e o --english   Fuerza al uso del idioma Inglés en lugar de la "
-"traducción.\n"
+" -e o --english   Fuerza al uso del idioma Inglés en lugar de la traducción.\n"
 " -q o --quiet      Muestra menos información al ejecutar el programa.\n"
 "Ejemplo de uso en modo 'batch':\n"
 " gretlcli -b mifichero.inp >mifichero.out\n"
@@ -11161,9 +11162,8 @@ msgid "point"
 msgstr "punto"
 
 #: gui2/gpt_dialog.c:2853
-#, fuzzy
 msgid "data scale"
-msgstr "Escala"
+msgstr "Escala de los datos"
 
 #: gui2/gpt_dialog.c:2867
 msgid "y axis"
