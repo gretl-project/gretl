@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-08 11:13-0500\n"
-"PO-Revision-Date: 2016-02-25 10:52+0100\n"
+"PO-Revision-Date: 2016-03-09 16:20+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -1079,9 +1079,8 @@ msgid "warning: %d labels were truncated.\n"
 msgstr "aviso: %d etiquetas foram truncadas.\n"
 
 #: lib/src/csvdata.c:3139
-#, fuzzy
 msgid "scanning for data...\n"
-msgstr "procurando etiquetas de linhas e dados...\n"
+msgstr "procurando dados...\n"
 
 #: lib/src/csvdata.c:3141
 msgid "scanning for row labels and data...\n"
@@ -7563,6 +7562,11 @@ msgid ""
 " under the name \"scriptopt\"\n"
 "\n"
 msgstr ""
+"\n"
+"Opção especial em modo sequência de comandos:\n"
+" --scriptopt=<value> define um valor escalar, com o nome \"scriptopt\",\n"
+" ficando acessível na sequência de comandos\n"
+"\n"
 
 #: cli/gretlcli.c:213
 #, c-format
@@ -7700,7 +7704,8 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 25 de fevereiro de 2016."
+"Tradução de 9 de março de 2016.\n"
+"(100 anos, participação de Portugal na I Grande Guerra)"
 
 #: gui2/about.c:203
 msgid "News"
@@ -12773,16 +12778,15 @@ msgstr "gretl: importar dados %s"
 #: gui2/gui_utils.c:1268
 #, fuzzy
 msgid "simple append"
-msgstr "média amostral"
+msgstr "acrescentar simples"
 
 #: gui2/gui_utils.c:1269
 msgid "\"join\" (advanced)"
-msgstr ""
+msgstr "\"join\" (avançado)"
 
 #: gui2/gui_utils.c:1272
-#, fuzzy
 msgid "gretl: append data"
-msgstr "gretl: abrir dados"
+msgstr "gretl: acrescentar dados"
 
 #: gui2/gui_utils.c:1333 gui2/library.c:7847
 msgid ""
