@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-08 11:13-0500\n"
-"PO-Revision-Date: 2016-03-09 13:31+0100\n"
+"PO-Revision-Date: 2016-03-09 13:34+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -5971,7 +5971,7 @@ msgstr "Non è possibile cancellare scalari in questo contesto\n"
 #: lib/src/monte_carlo.c:3069 lib/src/monte_carlo.c:3086
 #, c-format
 msgid "delete %s: not allowed\n"
-msgstr "la cancellazione di %s non è consentita"
+msgstr "la cancellazione di %s non è consentita\n"
 
 #: lib/src/monte_carlo.c:3547
 #, c-format
@@ -7516,7 +7516,7 @@ msgid "Freed %s\n"
 msgstr "Liberato %s\n"
 
 #: cli/gretlcli.c:158
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
