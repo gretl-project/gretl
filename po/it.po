@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-08 11:13-0500\n"
-"PO-Revision-Date: 2016-01-26 22:28+0100\n"
+"PO-Revision-Date: 2016-03-09 13:31+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1084,9 +1084,8 @@ msgid "warning: %d labels were truncated.\n"
 msgstr "attenzione: %d etichette sono state troncate\n"
 
 #: lib/src/csvdata.c:3139
-#, fuzzy
 msgid "scanning for data...\n"
-msgstr "Ricerca di etichette di riga e dati...\n"
+msgstr "Ricerca di dati...\n"
 
 #: lib/src/csvdata.c:3141
 msgid "scanning for row labels and data...\n"
@@ -2337,9 +2336,9 @@ msgid "Matrix specification is not coherent"
 msgstr "La specificazione della matrice non è coerente"
 
 #: lib/src/geneval.c:6937
-#, fuzzy, c-format
+#, c-format
 msgid "The function %s does not return any value"
-msgstr "La matrice %s non rappresenta una tabella di contingenza"
+msgstr "La funzione %s non ritorna alcun valore"
 
 #: lib/src/geneval.c:6948 lib/src/geneval.c:8738
 #, c-format
@@ -3954,14 +3953,14 @@ msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "Impossibile eseguire l'operazione su un dataset sotto-campionato"
 
 #: lib/src/gretl_paths.c:1823
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find package %s"
-msgstr "Non trovo %s"
+msgstr "Non trovo il pacchetto %s"
 
 #: lib/src/gretl_paths.c:1834
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "Impossibile trovare un driver socket utilizzabile\n"
+msgstr "Impossibile trovare il file %s per il pacchetto %s"
 
 #: lib/src/gretl_paths.c:2500
 msgid "User directory is not set"
@@ -5972,12 +5971,12 @@ msgstr "Non è possibile cancellare scalari in questo contesto\n"
 #: lib/src/monte_carlo.c:3069 lib/src/monte_carlo.c:3086
 #, c-format
 msgid "delete %s: not allowed\n"
-msgstr ""
+msgstr "la cancellazione di %s non è consentita"
 
 #: lib/src/monte_carlo.c:3547
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
-msgstr "%s: non implementato pea i loop di tipo 'progressive'"
+msgstr "%s: non implementato per i loop di tipo 'progressive'"
 
 #: lib/src/nls.c:328
 #, c-format
@@ -7542,12 +7541,14 @@ msgstr ""
 "  -b o --batch     Processa un file di comandi ed esce.\n"
 "  -r o --run       Esegue un file di comandi e attende nuovi comandi.\n"
 "  -m o --makepkg   Esegue un file di comandi e crea un pacchetto da esso.\n"
+"  -i o --instpkg   Installa il pacchetto di funzioni specificato.\n"
 "  -h o --help      Mostra queste informazioni ed esce.\n"
 "  -v o --version   Mostra informazioni sulla versione ed esce.\n"
 "  -e o --english   Forza l'uso della lingua inglese.\n"
 "  -q o --quiet     Mostra meno informazioni sul programma.\n"
+"  -t o --tool      Esegui senza output.\n"
 "Esempio di uso della modalità \"batch\":\n"
-" gretlcli -b miofile.inp >miofile.out\n"
+" gretlcli -b miofile.inp > miofile.out\n"
 "Esempio di uso della modalità \"run\":\n"
 " gretlcli -r miofile.inp\n"
 
@@ -7560,6 +7561,11 @@ msgid ""
 " under the name \"scriptopt\"\n"
 "\n"
 msgstr ""
+"\n"
+"Opzione speciale per la modalità batch:\n"
+"--scriptopt=<valore> fissa uno scalare, accessibile ad uno script\n"
+"col nome \"scriptopt\"\n"
+"\n"
 
 #: cli/gretlcli.c:213
 #, c-format
@@ -11143,9 +11149,8 @@ msgid "point"
 msgstr "punto"
 
 #: gui2/gpt_dialog.c:2853
-#, fuzzy
 msgid "data scale"
-msgstr "dati aggiunti"
+msgstr "scala dei dati"
 
 #: gui2/gpt_dialog.c:2867
 msgid "y axis"
@@ -12777,18 +12782,16 @@ msgid "gretl: import %s data"
 msgstr "gretl: importazione di dati %s"
 
 #: gui2/gui_utils.c:1268
-#, fuzzy
 msgid "simple append"
-msgstr "Media campionaria"
+msgstr "aggiunta semplice"
 
 #: gui2/gui_utils.c:1269
 msgid "\"join\" (advanced)"
-msgstr ""
+msgstr "\"join\" (avanzato)"
 
 #: gui2/gui_utils.c:1272
-#, fuzzy
 msgid "gretl: append data"
-msgstr "gretl: apri dati"
+msgstr "gretl: aggiungi dati"
 
 #: gui2/gui_utils.c:1333 gui2/library.c:7847
 msgid ""
