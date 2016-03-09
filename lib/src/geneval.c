@@ -15054,7 +15054,9 @@ static void parser_init (parser *p, const char *str,
 void gen_save_or_print (parser *p, PRN *prn)
 {
     if (p->flags & P_DISCARD) {
-	if (p->ret->t == MAT) {
+	if (p->ret == NULL) {
+	    return;
+	} else if (p->ret->t == MAT) {
 	    gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	} else if (p->ret->t == LIST) {
 	    if (p->lh.name[0] != '\0') {
