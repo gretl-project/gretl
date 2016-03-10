@@ -5127,6 +5127,11 @@ static int get_terminal (char *s)
 	}
     }
 
+#ifdef OS_OSX
+    /* fallback for XQuartz */
+    strcpy(s, "/opt/X11/bin/xterm");
+#endif    
+
     errbox(_("Couldn't find a usable terminal program"));
 
     return 1;
@@ -5165,7 +5170,7 @@ void launch_gnuplot_interactive (void)
     system(gpline);
     g_free(gpline);    
 #else 
-    char term[16];
+    char term[32];
     int err;
 
     err = get_terminal(term);
@@ -5174,6 +5179,11 @@ void launch_gnuplot_interactive (void)
 	const char *gp = gretl_gnuplot_path();
 	GError *error = NULL;
 	gchar *argv[6];
+
+# ifdef OS_OSX
+	char *altgp = g_strdup_printf("%s.sh", gp);
+	gp = altgp;
+# endif	
 
 	if (strstr(term, "gnome")) {
 	    /* gnome-terminal */
@@ -5204,7 +5214,11 @@ void launch_gnuplot_interactive (void)
 	if (error != NULL) {
 	    errbox(error->message);
 	    g_error_free(error);
-	} 
+	}
+
+# ifdef OS_OSX
+	g_free(altgp);
+# endif	
     }
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
