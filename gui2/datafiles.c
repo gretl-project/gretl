@@ -2392,12 +2392,11 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	    if (gretl_isdir(fullname)) {
 		/* construct functions/foo/foo.gfn */
 		gchar *realbase, *realpath;
-		struct stat buf;
 
 		strcat(fullname, SLASHSTR);
 		strcat(fullname, basename);
 		strcat(fullname, ".gfn");
-		if (gretl_stat(fullname, &buf) == 0) {
+		if (gretl_file_exists(fullname)) {
 		    realbase = g_strdup_printf("%s.gfn", basename);
 		    realpath = g_strdup_printf("%s%c%s", path, SLASH, basename);
 		    *nfn += ok_gfn_path(fullname, realbase, realpath,

@@ -8412,7 +8412,6 @@ int uninstall_function_package (const char *package, gretlopt opt,
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
     char *p, fname[MAXLEN];
-    struct stat buf;
     int err;
 
     if (has_suffix(package, ".gfn")) {
@@ -8428,7 +8427,7 @@ int uninstall_function_package (const char *package, gretlopt opt,
     *fname = '\0';
     err = get_full_filename(gfnname, fname, OPT_I);
 
-    if (!err && gretl_stat(fname, &buf) != 0) {
+    if (!err && !gretl_file_exists(fname)) {
 	gretl_errmsg_sprintf("Couldn't find %s", gfnname);
 	err = E_FOPEN;
     }

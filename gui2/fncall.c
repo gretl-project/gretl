@@ -3276,10 +3276,8 @@ static int gui_package_info_init (void)
 
     if (!err) {
 	/* then read the per-user packages.xml, if present */
-	struct stat buf;
-
 	fname = packages_xml_path(USER_PACKAGES);
-	if (gretl_stat(fname, &buf) == 0) {
+	if (gretl_file_exists(fname)) {
 	    err = read_packages_file(fname, &n, USER_PACKAGES);
 	}
 	g_free(fname);

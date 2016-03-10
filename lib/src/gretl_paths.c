@@ -590,6 +590,43 @@ int gretl_stat (const char *fname, struct stat *buf)
 }
 
 /**
+ * gretl_file_exists:
+ * @fname: name of file to be examined.
+ *
+ * Uses the C library's stat() function, making allowance for
+ * the possibility that @fname has to be converted from UTF-8 
+ * to the locale encoding or vice versa.
+ *
+ * Returns: 1 if @fname is the name of an existing file,
+ * otherwise 0.
+ */
+
+int gretl_file_exists (const char *fname)
+{
+    struct stat buf;
+    gchar *pconv = NULL;
+    int err;
+
+    gretl_error_clear();
+
+    err = maybe_recode_path(fname, &pconv, -1);
+    
+    if (err) {
+	/* emulate 'stat' */
+	err = -1;
+    } else {
+	if (pconv != NULL) {
+            err = stat(pconv, &buf);
+ 	    g_free(pconv);
+	} else {
+            err = stat(fname, &buf);
+ 	}
+    }
+
+    return err == 0;
+}
+
+/**
  * gretl_rename:
  * @oldpath: name of file to be opened.
  * @newpath: new name to give the file.
@@ -2758,14 +2795,12 @@ void win32_set_gretldir (const char *progname)
 	    int m = strlen(progname);
 
 	    if (n + m + 1 < MAXLEN) {
-		struct stat buf;
-		
 		if (paths.gretldir[n-1] != '\\' &&
 		    paths.gretldir[n-1] != '/') {
 		    strncat(paths.gretldir, "\\", 1);
 		}
 		strncat(paths.gretldir, progname, m);
-		if (gretl_stat(paths.gretldir, &buf) != 0) {
+		if (!gretl_file_exists(paths.gretldir)) {
 		    /* can't be right! */
 		    *paths.gretldir = '\0';
 		}

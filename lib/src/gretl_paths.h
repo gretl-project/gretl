@@ -113,6 +113,8 @@ gzFile gretl_gzopen (const char *fname, const char *mode);
 
 int gretl_stat (const char *fname, struct stat *buf);
 
+int gretl_file_exists (const char *fname);
+
 int gretl_mkdir (const char *path);
 
 int gretl_chdir (const char *path);

@@ -5182,7 +5182,13 @@ void launch_gnuplot_interactive (void)
 
 # ifdef OS_OSX
 	char *altgp = g_strdup_printf("%s.sh", gp);
-	gp = altgp;
+
+	if (gretl_file_exists(altgp)) {
+	    gp = altgp;
+	} else {
+	    g_free(altgp);
+	    altgp = NULL;
+	}
 # endif	
 
 	if (strstr(term, "gnome")) {

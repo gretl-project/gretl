@@ -508,9 +508,7 @@ void get_default_package_name (char *fname, gpointer p, int mode)
 	}
 	if (*fname != '\0') {
 	    /* should be an existing file, or scrub it */
-	    struct stat sbuf = {0};
-
-	    if (gretl_stat(fname, &sbuf) != 0) {
+	    if (!gretl_file_exists(fname)) {
 		*fname = '\0';
 	    }
 	}
@@ -674,10 +672,9 @@ static int overwrite_gfn_check (const char *fname,
 				GtkWidget *parent,
 				int *notified)
 {
-    struct stat sbuf = {0};
     int resp = GRETL_YES;
 
-    if (gretl_stat(fname, &sbuf) == 0) {
+    if (gretl_file_exists(fname)) {
 	gchar *msg;
 	
 	msg = g_strdup_printf("%s\n\n%s\n%s", fname,
@@ -3009,7 +3006,6 @@ static int data_file_check_existence (function_info *finfo,
 				      const char *fname)
 {
     char *p, test[FILENAME_MAX];
-    struct stat buf = {0};
 
     strcpy(test, finfo->fname);
     p = strrchr(test, SLASH);
@@ -3020,7 +3016,7 @@ static int data_file_check_existence (function_info *finfo,
 	strcpy(test, fname);
     }
 
-    if (gretl_stat(test, &buf) != 0) {
+    if (!gretl_file_exists(test)) {
 	gchar *msg;
 
 	msg = g_strdup_printf(_("Couldn't find %s"), test);

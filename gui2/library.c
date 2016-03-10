@@ -9238,7 +9238,6 @@ static int script_delete_function_package (const char *param,
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
     char *p, fname[MAXLEN];
-    struct stat buf;
     int err;
 
     if (has_suffix(param, ".gfn")) {
@@ -9254,7 +9253,7 @@ static int script_delete_function_package (const char *param,
     *fname = '\0';
     err = get_full_filename(gfnname, fname, OPT_I);
 
-    if (!err && gretl_stat(fname, &buf) != 0) {
+    if (!err && !gretl_file_exists(fname)) {
 	pprintf(prn, "Couldn't find %s\n", gfnname);
 	err = E_FOPEN;
     }
