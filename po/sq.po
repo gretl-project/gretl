@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-08 11:13-0500\n"
+"POT-Creation-Date: 2016-03-10 11:41-0500\n"
 "PO-Revision-Date: 2015-02-11 21:49+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -1528,7 +1528,7 @@ msgstr "Asnjë seri e vlefshme nuk u gjet"
 msgid "Out of memory!"
 msgstr "Kujtesë e pamjaftueshme!"
 
-#: lib/src/dbread.c:1760 lib/src/geneval.c:7461
+#: lib/src/dbread.c:1760 lib/src/geneval.c:7466
 #: lib/src/gretl_string_table.c:906 lib/src/interact.c:1136
 #: lib/src/interact.c:2159 cli/gretlcli.c:858 cli/gretlcli-mpi.c:552
 msgid "Internet access not supported"
@@ -1636,7 +1636,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "Matrica %s nuk është tabelë e kryqëzuar"
 
 #: lib/src/describe.c:2833 lib/src/describe.c:3018 lib/src/describe.c:3566
-#: lib/src/geneval.c:6277 lib/src/transforms.c:759 lib/src/transforms.c:1210
+#: lib/src/geneval.c:6282 lib/src/transforms.c:759 lib/src/transforms.c:1210
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -2091,7 +2091,7 @@ msgstr "Testi Lilliefors"
 msgid "Test for normality of %s:"
 msgstr "Testi i normalitetit për %s:"
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:7911 lib/src/gretl_list.c:1589
+#: lib/src/discrete.c:1191 lib/src/geneval.c:7916 lib/src/gretl_list.c:1589
 #: lib/src/interact.c:1804
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2321,12 +2321,12 @@ msgstr "rubrika \"%s\" është e pavlefshme"
 msgid "Matrix is not symmetric"
 msgstr "Matrica s'është simetrike"
 
-#: lib/src/geneval.c:4701 lib/src/geneval.c:4775
+#: lib/src/geneval.c:4706 lib/src/geneval.c:4780
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Numri i ndryshores %d është jashtë kufijve të lejuar"
 
-#: lib/src/geneval.c:4769 lib/src/geneval.c:14286 lib/src/gretl_array.c:341
+#: lib/src/geneval.c:4774 lib/src/geneval.c:14301 lib/src/gretl_array.c:341
 #: lib/src/gretl_array.c:386 lib/src/gretl_array.c:431
 #: lib/src/gretl_array.c:475 lib/src/usermat.c:122 lib/src/usermat.c:208
 #: lib/src/usermat.c:541
@@ -2334,16 +2334,16 @@ msgstr "Numri i ndryshores %d është jashtë kufijve të lejuar"
 msgid "Index value %d is out of bounds"
 msgstr "Treguesi %d është jashtë kufijve"
 
-#: lib/src/geneval.c:6738
+#: lib/src/geneval.c:6743
 msgid "Matrix specification is not coherent"
 msgstr "Pëcaktimi i matricës nuk është i vlefshëm"
 
-#: lib/src/geneval.c:6937
+#: lib/src/geneval.c:6942
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "Matrica %s nuk është tabelë e kryqëzuar"
 
-#: lib/src/geneval.c:6948 lib/src/geneval.c:8738
+#: lib/src/geneval.c:6953 lib/src/geneval.c:8743
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2352,117 +2352,117 @@ msgstr ""
 "Numri i argumentave (%d) nuk përputhet me numrin\n"
 "e parametrave të funksionit %s (%d)"
 
-#: lib/src/geneval.c:6963
+#: lib/src/geneval.c:6968
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10050
+#: lib/src/geneval.c:10055
 msgid "array: no type was specified"
 msgstr "tabela: s'është përcaktuar lloji"
 
-#: lib/src/geneval.c:10745
+#: lib/src/geneval.c:10750
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': argument i pasaktë për %s()\n"
 
-#: lib/src/geneval.c:10796 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:10801 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: objekti në fjalë nuk ekziston\n"
 
-#: lib/src/geneval.c:11114
+#: lib/src/geneval.c:11119
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: argumentë të pamjaftueshëm"
 
-#: lib/src/geneval.c:11116
+#: lib/src/geneval.c:11121
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "'%s': lloj argumenti i pasaktë për %s"
 
-#: lib/src/geneval.c:11119
+#: lib/src/geneval.c:11124
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argumenti %d: lloj i pavlefshëm %s"
 
-#: lib/src/geneval.c:11129
+#: lib/src/geneval.c:11134
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: operatori duhej të ishte %s"
 
-#: lib/src/geneval.c:11132
+#: lib/src/geneval.c:11137
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s:  operatori %d duhej të ishte  %s"
 
-#: lib/src/geneval.c:11137
+#: lib/src/geneval.c:11142
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: argumenti duhej të ishte %s"
 
-#: lib/src/geneval.c:11140
+#: lib/src/geneval.c:11145
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: argumenti %d duhej të ishte %s"
 
-#: lib/src/geneval.c:11146
+#: lib/src/geneval.c:11151
 #, c-format
 msgid ", is %s"
 msgstr ", është %s"
 
-#: lib/src/geneval.c:12996 lib/src/genlex.c:833
+#: lib/src/geneval.c:13011 lib/src/genlex.c:833
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Simboli '%c' nuk është i vlefshëm në këtë kontekst \n"
 
-#: lib/src/geneval.c:13105 lib/src/genlex.c:876 lib/src/genlex.c:946
+#: lib/src/geneval.c:13120 lib/src/genlex.c:876 lib/src/genlex.c:946
 #: lib/src/gensyntax.c:261 lib/src/tokenize.c:3144 lib/src/tokenize.c:3162
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c': i papërshtatshëm\n"
 
-#: lib/src/geneval.c:13166
+#: lib/src/geneval.c:13181
 #, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr ""
 "Ndryshorja %s është e llojit %s çka është e papranueshme në këtë kontekst"
 
-#: lib/src/geneval.c:13367
+#: lib/src/geneval.c:13382
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': emër shumë i gjatë (maks. %d karaktere)\n"
 
-#: lib/src/geneval.c:13489
+#: lib/src/geneval.c:13504
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s': nuk vlen për matricat"
 
-#: lib/src/geneval.c:13496
+#: lib/src/geneval.c:13511
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s': nuk vlen për listat"
 
-#: lib/src/geneval.c:13503
+#: lib/src/geneval.c:13518
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s': nuk vlen për tekstet"
 
-#: lib/src/geneval.c:13510
+#: lib/src/geneval.c:13525
 #, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : nuk vlen për tabelat"
 
-#: lib/src/geneval.c:13517 lib/src/geneval.c:13531
+#: lib/src/geneval.c:13532 lib/src/geneval.c:13546
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s': nuk vlen për këtë lloj"
 
-#: lib/src/geneval.c:13524
+#: lib/src/geneval.c:13539
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s': vlen vetëm për matricat"
 
-#: lib/src/geneval.c:15169
+#: lib/src/geneval.c:15186
 msgid "Bare declarations are not allowed here"
 msgstr "Deklarime të tepërta nuk lejohen"
 
@@ -2613,10 +2613,15 @@ msgstr "Simboli '%s' nuk është i vlefshëm në këtë kontekst \n"
 msgid "Empty observation []\n"
 msgstr "Vrojtim bosh []\n"
 
-#: lib/src/genlex.c:1726
+#: lib/src/genlex.c:1727
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Karakter i pavlefshëm '%c'\n"
+
+#: lib/src/genlex.c:1729
+#, fuzzy, c-format
+msgid "Unexpected byte 0x%x\n"
+msgstr "Simboli '%c' është i panjohur"
 
 #: lib/src/genmain.c:42
 #, c-format

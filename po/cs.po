@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-08 11:13-0500\n"
+"POT-Creation-Date: 2016-03-10 11:41-0500\n"
 "PO-Revision-Date: 2014-04-28 09:53+0100\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -1528,7 +1528,7 @@ msgstr "Nebyla nalezena platná řada"
 msgid "Out of memory!"
 msgstr "Nedostatek paměti!"
 
-#: lib/src/dbread.c:1760 lib/src/geneval.c:7461
+#: lib/src/dbread.c:1760 lib/src/geneval.c:7466
 #: lib/src/gretl_string_table.c:906 lib/src/interact.c:1136
 #: lib/src/interact.c:2159 cli/gretlcli.c:858 cli/gretlcli-mpi.c:552
 #, fuzzy
@@ -1634,7 +1634,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "Matice %s nepředstavuje kontingenční tabulku"
 
 #: lib/src/describe.c:2833 lib/src/describe.c:3018 lib/src/describe.c:3566
-#: lib/src/geneval.c:6277 lib/src/transforms.c:759 lib/src/transforms.c:1210
+#: lib/src/geneval.c:6282 lib/src/transforms.c:759 lib/src/transforms.c:1210
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -2092,7 +2092,7 @@ msgstr "Lillieforsův test"
 msgid "Test for normality of %s:"
 msgstr "Test normality %s"
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:7911 lib/src/gretl_list.c:1589
+#: lib/src/discrete.c:1191 lib/src/geneval.c:7916 lib/src/gretl_list.c:1589
 #: lib/src/interact.c:1804
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2324,12 +2324,12 @@ msgstr "neplatné pole '%s'"
 msgid "Matrix is not symmetric"
 msgstr "Matice není pozitivně definitní"
 
-#: lib/src/geneval.c:4701 lib/src/geneval.c:4775
+#: lib/src/geneval.c:4706 lib/src/geneval.c:4780
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Proměnná číslo %d je mimo meze"
 
-#: lib/src/geneval.c:4769 lib/src/geneval.c:14286 lib/src/gretl_array.c:341
+#: lib/src/geneval.c:4774 lib/src/geneval.c:14301 lib/src/gretl_array.c:341
 #: lib/src/gretl_array.c:386 lib/src/gretl_array.c:431
 #: lib/src/gretl_array.c:475 lib/src/usermat.c:122 lib/src/usermat.c:208
 #: lib/src/usermat.c:541
@@ -2337,16 +2337,16 @@ msgstr "Proměnná číslo %d je mimo meze"
 msgid "Index value %d is out of bounds"
 msgstr "Hodnota indexu %d je mimo meze"
 
-#: lib/src/geneval.c:6738
+#: lib/src/geneval.c:6743
 msgid "Matrix specification is not coherent"
 msgstr "Specifikace matice není koherentní"
 
-#: lib/src/geneval.c:6937
+#: lib/src/geneval.c:6942
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "Matice %s nepředstavuje kontingenční tabulku"
 
-#: lib/src/geneval.c:6948 lib/src/geneval.c:8738
+#: lib/src/geneval.c:6953 lib/src/geneval.c:8743
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2355,117 +2355,117 @@ msgstr ""
 "Počet argumentů (%d) neodpovídá počtu\n"
 "parametrů funkce %s (%d)"
 
-#: lib/src/geneval.c:6963
+#: lib/src/geneval.c:6968
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10050
+#: lib/src/geneval.c:10055
 #, fuzzy
 msgid "array: no type was specified"
 msgstr "%s: žádný systém nebyl specifikován"
 
-#: lib/src/geneval.c:10745
+#: lib/src/geneval.c:10750
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': neplatný argument pro %s()\n"
 
-#: lib/src/geneval.c:10796 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:10801 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: takový objekt neexistuje\n"
 
-#: lib/src/geneval.c:11114
+#: lib/src/geneval.c:11119
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: nedostatečné argumenty"
 
-#: lib/src/geneval.c:11116
+#: lib/src/geneval.c:11121
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: neplatný typ argumentu %s"
 
-#: lib/src/geneval.c:11119
+#: lib/src/geneval.c:11124
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argument %d: neplatný typ %s"
 
-#: lib/src/geneval.c:11129
+#: lib/src/geneval.c:11134
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: operand by měl být %s"
 
-#: lib/src/geneval.c:11132
+#: lib/src/geneval.c:11137
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: operand %d by měl být %s"
 
-#: lib/src/geneval.c:11137
+#: lib/src/geneval.c:11142
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: argument by měl být %s"
 
-#: lib/src/geneval.c:11140
+#: lib/src/geneval.c:11145
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: argument %d by měl být %s"
 
-#: lib/src/geneval.c:11146
+#: lib/src/geneval.c:11151
 #, fuzzy, c-format
 msgid ", is %s"
 msgstr "= %s krát %s"
 
-#: lib/src/geneval.c:12996 lib/src/genlex.c:833
+#: lib/src/geneval.c:13011 lib/src/genlex.c:833
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Symbol '%c' je v tomto kontextu neplatný\n"
 
-#: lib/src/geneval.c:13105 lib/src/genlex.c:876 lib/src/genlex.c:946
+#: lib/src/geneval.c:13120 lib/src/genlex.c:876 lib/src/genlex.c:946
 #: lib/src/gensyntax.c:261 lib/src/tokenize.c:3144 lib/src/tokenize.c:3162
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Neshodující se '%c'\n"
 
-#: lib/src/geneval.c:13166
+#: lib/src/geneval.c:13181
 #, fuzzy, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "Proměnná %s je typu %s"
 
-#: lib/src/geneval.c:13367
+#: lib/src/geneval.c:13382
 #, fuzzy, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': jméno je příliš dlouhé (maximálně 15 znaků)\n"
 
-#: lib/src/geneval.c:13489
+#: lib/src/geneval.c:13504
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : není implementováno pro matice"
 
-#: lib/src/geneval.c:13496
+#: lib/src/geneval.c:13511
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : není implementováno pro seznamy"
 
-#: lib/src/geneval.c:13503
+#: lib/src/geneval.c:13518
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : není implementováno pro řetězce"
 
-#: lib/src/geneval.c:13510
+#: lib/src/geneval.c:13525
 #, fuzzy, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : není implementováno pro matice"
 
-#: lib/src/geneval.c:13517 lib/src/geneval.c:13531
+#: lib/src/geneval.c:13532 lib/src/geneval.c:13546
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : není implementováno pro tento typ"
 
-#: lib/src/geneval.c:13524
+#: lib/src/geneval.c:13539
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : definováno pouze pro matice"
 
-#: lib/src/geneval.c:15169
+#: lib/src/geneval.c:15186
 #, fuzzy
 msgid "Bare declarations are not allowed here"
 msgstr "%s: zde není povolené dělení"
@@ -2617,10 +2617,15 @@ msgstr "Symbol '%s' je v tomto kontextu neplatný\n"
 msgid "Empty observation []\n"
 msgstr "Prázdné pozorování []\n"
 
-#: lib/src/genlex.c:1726
+#: lib/src/genlex.c:1727
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Neplatný znak '%c'\n"
+
+#: lib/src/genlex.c:1729
+#, fuzzy, c-format
+msgid "Unexpected byte 0x%x\n"
+msgstr "očekáváno %s ale nalezeno %s"
 
 #: lib/src/genmain.c:42
 #, c-format

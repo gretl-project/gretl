@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-08 11:13-0500\n"
+"POT-Creation-Date: 2016-03-10 11:41-0500\n"
 "PO-Revision-Date: 2014-11-15 01:25+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
@@ -1557,7 +1557,7 @@ msgstr "無符合規則之資料變數"
 msgid "Out of memory!"
 msgstr "記憶體不足! "
 
-#: lib/src/dbread.c:1760 lib/src/geneval.c:7461
+#: lib/src/dbread.c:1760 lib/src/geneval.c:7466
 #: lib/src/gretl_string_table.c:906 lib/src/interact.c:1136
 #: lib/src/interact.c:2159 cli/gretlcli.c:858 cli/gretlcli-mpi.c:552
 #, fuzzy
@@ -1665,7 +1665,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "矩陣 %s 並不是一個 contingency table"
 
 #: lib/src/describe.c:2833 lib/src/describe.c:3018 lib/src/describe.c:3566
-#: lib/src/geneval.c:6277 lib/src/transforms.c:759 lib/src/transforms.c:1210
+#: lib/src/geneval.c:6282 lib/src/transforms.c:759 lib/src/transforms.c:1210
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -2128,7 +2128,7 @@ msgstr "Lilliefors 檢定"
 msgid "Test for normality of %s:"
 msgstr " %s 變數之常態性 (normality) 檢定"
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:7911 lib/src/gretl_list.c:1589
+#: lib/src/discrete.c:1191 lib/src/geneval.c:7916 lib/src/gretl_list.c:1589
 #: lib/src/interact.c:1804
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2359,12 +2359,12 @@ msgstr "欄位 field 錯誤 '%s'"
 msgid "Matrix is not symmetric"
 msgstr "矩陣並非正定 (is not positive definite)"
 
-#: lib/src/geneval.c:4701 lib/src/geneval.c:4775
+#: lib/src/geneval.c:4706 lib/src/geneval.c:4780
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "變數代碼 %d 超過範圍"
 
-#: lib/src/geneval.c:4769 lib/src/geneval.c:14286 lib/src/gretl_array.c:341
+#: lib/src/geneval.c:4774 lib/src/geneval.c:14301 lib/src/gretl_array.c:341
 #: lib/src/gretl_array.c:386 lib/src/gretl_array.c:431
 #: lib/src/gretl_array.c:475 lib/src/usermat.c:122 lib/src/usermat.c:208
 #: lib/src/usermat.c:541
@@ -2372,16 +2372,16 @@ msgstr "變數代碼 %d 超過範圍"
 msgid "Index value %d is out of bounds"
 msgstr "Index value %d 超出範圍 (out of bounds)"
 
-#: lib/src/geneval.c:6738
+#: lib/src/geneval.c:6743
 msgid "Matrix specification is not coherent"
 msgstr ""
 
-#: lib/src/geneval.c:6937
+#: lib/src/geneval.c:6942
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "矩陣 %s 並不是一個 contingency table"
 
-#: lib/src/geneval.c:6948 lib/src/geneval.c:8738
+#: lib/src/geneval.c:6953 lib/src/geneval.c:8743
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2390,119 +2390,119 @@ msgstr ""
 "所給的參數數目有 %d 個，並不符合\n"
 "函數 %s 所需要的 %d 個參數之數目"
 
-#: lib/src/geneval.c:6963
+#: lib/src/geneval.c:6968
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10050
+#: lib/src/geneval.c:10055
 #, fuzzy
 msgid "array: no type was specified"
 msgstr "%s: 未設定任何參數"
 
-#: lib/src/geneval.c:10745
+#: lib/src/geneval.c:10750
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': 錯誤的參數 for %s()\n"
 
-#: lib/src/geneval.c:10796 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:10801 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: 沒有這種物件 (object)\n"
 
-#: lib/src/geneval.c:11114
+#: lib/src/geneval.c:11119
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: 參數數目不足"
 
-#: lib/src/geneval.c:11116
+#: lib/src/geneval.c:11121
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: 引數型態錯誤 %s"
 
-#: lib/src/geneval.c:11119
+#: lib/src/geneval.c:11124
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: 引數 %d: 型態錯誤 %s"
 
-#: lib/src/geneval.c:11129
+#: lib/src/geneval.c:11134
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: 運算域應該是 %s"
 
-#: lib/src/geneval.c:11132
+#: lib/src/geneval.c:11137
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: 運算域 %d 應該是 %s"
 
-#: lib/src/geneval.c:11137
+#: lib/src/geneval.c:11142
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: 參數應該是 %s"
 
-#: lib/src/geneval.c:11140
+#: lib/src/geneval.c:11145
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: 參數 %d 應該是 %s"
 
-#: lib/src/geneval.c:11146
+#: lib/src/geneval.c:11151
 #, c-format
 msgid ", is %s"
 msgstr ", is %s"
 
-#: lib/src/geneval.c:12996 lib/src/genlex.c:833
+#: lib/src/geneval.c:13011 lib/src/genlex.c:833
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "符號 '%c' 不能用在此處\n"
 
-#: lib/src/geneval.c:13105 lib/src/genlex.c:876 lib/src/genlex.c:946
+#: lib/src/geneval.c:13120 lib/src/genlex.c:876 lib/src/genlex.c:946
 #: lib/src/gensyntax.c:261 lib/src/tokenize.c:3144 lib/src/tokenize.c:3162
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c' 應成對出現\n"
 
-#: lib/src/geneval.c:13166
+#: lib/src/geneval.c:13181
 #, fuzzy, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "產生新變數(_n)"
 
-#: lib/src/geneval.c:13367
+#: lib/src/geneval.c:13382
 #, fuzzy, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr ""
 "變數名稱 %s... 太長\n"
 "(變數名稱最長允計 %d characters)"
 
-#: lib/src/geneval.c:13489
+#: lib/src/geneval.c:13504
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : 尚不能用在矩陣運算"
 
-#: lib/src/geneval.c:13496
+#: lib/src/geneval.c:13511
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : 尚不能用在變數集 (lists)"
 
-#: lib/src/geneval.c:13503
+#: lib/src/geneval.c:13518
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : 尚不能用在字串 (strings)"
 
-#: lib/src/geneval.c:13510
+#: lib/src/geneval.c:13525
 #, fuzzy, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : 尚不能用在矩陣運算"
 
-#: lib/src/geneval.c:13517 lib/src/geneval.c:13531
+#: lib/src/geneval.c:13532 lib/src/geneval.c:13546
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : 尚不能用在此變數形態 (type)"
 
-#: lib/src/geneval.c:13524
+#: lib/src/geneval.c:13539
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : only defined for matrices"
 
-#: lib/src/geneval.c:15169
+#: lib/src/geneval.c:15186
 msgid "Bare declarations are not allowed here"
 msgstr ""
 
@@ -2656,10 +2656,15 @@ msgstr "符號 '%s' 在此並不符合規則\n"
 msgid "Empty observation []\n"
 msgstr "空的樣本 []\n"
 
-#: lib/src/genlex.c:1726
+#: lib/src/genlex.c:1727
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "錯誤的字元 '%c'\n"
+
+#: lib/src/genlex.c:1729
+#, c-format
+msgid "Unexpected byte 0x%x\n"
+msgstr ""
 
 #: lib/src/genmain.c:42
 #, c-format

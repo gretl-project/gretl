@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-08 11:13-0500\n"
+"POT-Creation-Date: 2016-03-10 11:41-0500\n"
 "PO-Revision-Date: 2016-02-04 17:16-0200\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
@@ -1524,7 +1524,7 @@ msgstr "Não foram encontradas séries válidas"
 msgid "Out of memory!"
 msgstr "Memória esgotada!"
 
-#: lib/src/dbread.c:1760 lib/src/geneval.c:7461
+#: lib/src/dbread.c:1760 lib/src/geneval.c:7466
 #: lib/src/gretl_string_table.c:906 lib/src/interact.c:1136
 #: lib/src/interact.c:2159 cli/gretlcli.c:858 cli/gretlcli-mpi.c:552
 msgid "Internet access not supported"
@@ -1632,7 +1632,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "A matriz %s não representa uma tabela de contingência"
 
 #: lib/src/describe.c:2833 lib/src/describe.c:3018 lib/src/describe.c:3566
-#: lib/src/geneval.c:6277 lib/src/transforms.c:759 lib/src/transforms.c:1210
+#: lib/src/geneval.c:6282 lib/src/transforms.c:759 lib/src/transforms.c:1210
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -2088,7 +2088,7 @@ msgstr "Teste de Lilliefors"
 msgid "Test for normality of %s:"
 msgstr "Teste da normalidade de %s:"
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:7911 lib/src/gretl_list.c:1589
+#: lib/src/discrete.c:1191 lib/src/geneval.c:7916 lib/src/gretl_list.c:1589
 #: lib/src/interact.c:1804
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2318,12 +2318,12 @@ msgstr "encontrado campo inválido '%s'"
 msgid "Matrix is not symmetric"
 msgstr "A matriz não é simétrica"
 
-#: lib/src/geneval.c:4701 lib/src/geneval.c:4775
+#: lib/src/geneval.c:4706 lib/src/geneval.c:4780
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "A variável número %d está fora dos limites"
 
-#: lib/src/geneval.c:4769 lib/src/geneval.c:14286 lib/src/gretl_array.c:341
+#: lib/src/geneval.c:4774 lib/src/geneval.c:14301 lib/src/gretl_array.c:341
 #: lib/src/gretl_array.c:386 lib/src/gretl_array.c:431
 #: lib/src/gretl_array.c:475 lib/src/usermat.c:122 lib/src/usermat.c:208
 #: lib/src/usermat.c:541
@@ -2331,16 +2331,16 @@ msgstr "A variável número %d está fora dos limites"
 msgid "Index value %d is out of bounds"
 msgstr "O valor índice %d está fora do limite"
 
-#: lib/src/geneval.c:6738
+#: lib/src/geneval.c:6743
 msgid "Matrix specification is not coherent"
 msgstr "A especificação da matriz é incoerente"
 
-#: lib/src/geneval.c:6937
+#: lib/src/geneval.c:6942
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "A matriz %s não representa uma tabela de contingência"
 
-#: lib/src/geneval.c:6948 lib/src/geneval.c:8738
+#: lib/src/geneval.c:6953 lib/src/geneval.c:8743
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2349,120 +2349,120 @@ msgstr ""
 "O número de argumentos (%d) não corresponde ao número de\n"
 "parâmetros para a função %s (%d)"
 
-#: lib/src/geneval.c:6963
+#: lib/src/geneval.c:6968
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 "\"catch\" não deve ser utilizado em chamadas de funções definidas pelo "
 "usuário"
 
 # I'm not sure about translating the term "array" to Portuguese.
-#: lib/src/geneval.c:10050
+#: lib/src/geneval.c:10055
 msgid "array: no type was specified"
 msgstr "\"array\": nenhum tipo foi especificado"
 
-#: lib/src/geneval.c:10745
+#: lib/src/geneval.c:10750
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': argumento inválido para %s()\n"
 
-#: lib/src/geneval.c:10796 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:10801 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: esse objeto não existe\n"
 
-#: lib/src/geneval.c:11114
+#: lib/src/geneval.c:11119
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: argumentos insuficientes"
 
-#: lib/src/geneval.c:11116
+#: lib/src/geneval.c:11121
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: tipo de argumento inválido %s"
 
-#: lib/src/geneval.c:11119
+#: lib/src/geneval.c:11124
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argumento %d: tipo inválido %s"
 
-#: lib/src/geneval.c:11129
+#: lib/src/geneval.c:11134
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: o operando deve ser %s"
 
-#: lib/src/geneval.c:11132
+#: lib/src/geneval.c:11137
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: o operando %d deve ser %s"
 
-#: lib/src/geneval.c:11137
+#: lib/src/geneval.c:11142
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: o argumento deve ser %s"
 
-#: lib/src/geneval.c:11140
+#: lib/src/geneval.c:11145
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: o argumento %d deve ser %s"
 
-#: lib/src/geneval.c:11146
+#: lib/src/geneval.c:11151
 #, c-format
 msgid ", is %s"
 msgstr ", é %s"
 
-#: lib/src/geneval.c:12996 lib/src/genlex.c:833
+#: lib/src/geneval.c:13011 lib/src/genlex.c:833
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "O símbolo '%c' não é válido neste contexto\n"
 
-#: lib/src/geneval.c:13105 lib/src/genlex.c:876 lib/src/genlex.c:946
+#: lib/src/geneval.c:13120 lib/src/genlex.c:876 lib/src/genlex.c:946
 #: lib/src/gensyntax.c:261 lib/src/tokenize.c:3144 lib/src/tokenize.c:3162
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c' sem par\n"
 
-#: lib/src/geneval.c:13166
+#: lib/src/geneval.c:13181
 #, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "A variável %s é do tipo %s, não aceitável no contexto"
 
-#: lib/src/geneval.c:13367
+#: lib/src/geneval.c:13382
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "O nome da variável '%s' é muito grande (o máximo são %d caracteres)\n"
 
-#: lib/src/geneval.c:13489
+#: lib/src/geneval.c:13504
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : não está implementado para matrizes"
 
-#: lib/src/geneval.c:13496
+#: lib/src/geneval.c:13511
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : não está implementado para listas"
 
-#: lib/src/geneval.c:13503
+#: lib/src/geneval.c:13518
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : não está implementado para cadeias de texto"
 
 # I'm not sure about translating the term "array" to Portuguese.
-#: lib/src/geneval.c:13510
+#: lib/src/geneval.c:13525
 #, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : não está implementado para \"arrays\""
 
-#: lib/src/geneval.c:13517 lib/src/geneval.c:13531
+#: lib/src/geneval.c:13532 lib/src/geneval.c:13546
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : não está implementado para este tipo"
 
-#: lib/src/geneval.c:13524
+#: lib/src/geneval.c:13539
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : apenas definido para matrizes"
 
-#: lib/src/geneval.c:15169
+#: lib/src/geneval.c:15186
 msgid "Bare declarations are not allowed here"
 msgstr "Declarações vazias não são permitidas aqui"
 
@@ -2613,10 +2613,15 @@ msgstr "O símbolo '%s' não é válido neste contexto\n"
 msgid "Empty observation []\n"
 msgstr "Observação vazia []\n"
 
-#: lib/src/genlex.c:1726
+#: lib/src/genlex.c:1727
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Caractere '%c' inválido\n"
+
+#: lib/src/genlex.c:1729
+#, fuzzy, c-format
+msgid "Unexpected byte 0x%x\n"
+msgstr "Símbolo '%c' não esperado"
 
 #: lib/src/genmain.c:42
 #, c-format
