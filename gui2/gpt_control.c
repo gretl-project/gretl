@@ -5128,8 +5128,13 @@ static int get_terminal (char *s)
     }
 
 #ifdef OS_OSX
-    /* fallback for XQuartz */
+    /* fallback for XQuartz: may not be in PATH */
     strcpy(s, "/opt/X11/bin/xterm");
+    if (gretl_file_exists(s)) {
+	return 0;
+    } else {
+	*s = '\0';
+    }
 #endif    
 
     errbox(_("Couldn't find a usable terminal program"));
