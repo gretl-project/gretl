@@ -1723,7 +1723,11 @@ void lex (parser *p)
 		return;
 	    } else {
 		parser_print_input(p);
-		pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
+		if (isprint(p->ch)) {
+		    pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
+		} else {
+		    pprintf(p->prn, _("Unexpected byte 0x%x\n"), (int) p->ch);
+		}
 		p->err = E_PARSE;
 		return;
 	    }

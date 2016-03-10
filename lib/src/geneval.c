@@ -12607,19 +12607,29 @@ int parser_next_char (parser *p)
     return p->point[0];
 }
 
-/* for error reporting: print the input up to the current
-   parse point */
+/* For error reporting: print the input up to the current
+   parse point, unless it's not valid UTF-8. Return 0
+   if the input is printed OK, otherwise non-zero.
+*/
 
-void parser_print_input (parser *p)
+int parser_print_input (parser *p)
 {
-    int pos = p->point - p->input;
-    char *s;
+    int len = p->point - p->input;
+    char *s = gretl_strndup(p->input, len);
+    int err = 0;
 
-    s = gretl_strndup(p->input, pos);
     if (s != NULL) {
-	pprintf(p->prn, "> %s\n", s);
+	if (g_utf8_validate(s, -1, NULL)) {
+	    pprintf(p->prn, "> %s\n", s);
+	} else {
+	    err = 1;
+	}
 	free(s);
+    } else {
+	err = 1;
     }
+
+    return err;
 }
 
 /* "pretty print" syntactic nodes and symbols */
