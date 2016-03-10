@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-08 11:13-0500\n"
-"PO-Revision-Date: 2016-03-08 13:54+0100\n"
+"PO-Revision-Date: 2016-03-10 10:20+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -1078,9 +1078,8 @@ msgid "warning: %d labels were truncated.\n"
 msgstr "atención: se han truncado %d etiquetas.\n"
 
 #: lib/src/csvdata.c:3139
-#, fuzzy
 msgid "scanning for data...\n"
-msgstr "escaneando para las etiquetas de fila y los datos...\n"
+msgstr "escaneando datos...\n"
 
 #: lib/src/csvdata.c:3141
 msgid "scanning for row labels and data...\n"
@@ -7591,6 +7590,12 @@ msgid ""
 " under the name \"scriptopt\"\n"
 "\n"
 msgstr ""
+"\n"
+"Opción especial para el modo 'batch':\n"
+" --scriptopt=<value> establecer un valor escalar, que estará accesible para "
+"un guión\n"
+" bajo el nombre \"scriptopt\"\n"
+"\n"
 
 #: cli/gretlcli.c:213
 #, c-format
@@ -12805,18 +12810,16 @@ msgid "gretl: import %s data"
 msgstr "gretl: importar datos %s"
 
 #: gui2/gui_utils.c:1268
-#, fuzzy
 msgid "simple append"
-msgstr "media muestral"
+msgstr "añadir simple"
 
 #: gui2/gui_utils.c:1269
 msgid "\"join\" (advanced)"
-msgstr ""
+msgstr "\"join\" (avanzado)"
 
 #: gui2/gui_utils.c:1272
-#, fuzzy
 msgid "gretl: append data"
-msgstr "gretl: abrir datos"
+msgstr "gretl: añadir datos"
 
 #: gui2/gui_utils.c:1333 gui2/library.c:7847
 msgid ""
