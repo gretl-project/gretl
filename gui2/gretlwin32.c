@@ -600,6 +600,12 @@ static int get_pdf_service_name (char *service, const char *exe)
 		} else {
 		    strcpy(service, "AcroView");
 		}
+	    } else if (*ver == 'X') {
+		if (ver[1] == 'I') {
+		    strcpy(service, "AcroViewR11");
+		} else {
+		    strcpy(service, "AcroViewR10");
+		}
 	    }
 	}
     } else {
@@ -608,7 +614,11 @@ static int get_pdf_service_name (char *service, const char *exe)
 	    if (!strcmp(ver, "DC")) {
 		strcpy(service, "AcroViewA15");
 	    } else if (*ver == 'X') {
-		strcpy(service, "AcroViewA10");
+		if (ver[1] == 'I') {
+		    strcpy(service, "AcroViewA11");
+		} else {
+		    strcpy(service, "AcroViewA10");
+		}
 	    } else if (isdigit(*ver)) {
 		n = atoi(ver);
 		if (n >= 10) {
