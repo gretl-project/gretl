@@ -8694,7 +8694,7 @@ int osx_open_pdf (const char *path, const char *dest)
 
     err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
 
-#if 0 /* sadly, the following does not work at all */
+#if 1 /* sadly, the following does not work at all */
     if (!err) {
 	guint8 exe[PATH_MAX] = {0};
 	FSRef appref;
@@ -8706,9 +8706,9 @@ int osx_open_pdf (const char *path, const char *dest)
 	fprintf(stderr, "application: '%s'\n", (const char *) exe);
     
 	if (!err && strstr((const char *) exe, "Adobe") != NULL) {
-	    char *opt = "/A \"nameddest=chap:dpanel\"";
 	    LSLaunchFSRefSpec rspec;
 	    AEDesc desc;
+	    gchar *opt;
 	    int oerr;
 
 	    /* Testing ideas (try in Terminal):
@@ -8722,6 +8722,8 @@ int osx_open_pdf (const char *path, const char *dest)
 	       /path/to/MacOS/Acroread /A "nameddest=whatever"
 
 	    */
+
+	    opt = g_strdup_printf("nameddest=%s", dest);
 	    
 	    oerr = AECreateDesc(typeChar,
 				opt, strlen(opt),
@@ -8738,6 +8740,7 @@ int osx_open_pdf (const char *path, const char *dest)
 	    fprintf(stderr, "LSOpenFromRefSpec, err = %d\n", err);
 
 	    AEDisposeDesc(&desc);
+	    g_free(opt);
 	}
     }
 #else
