@@ -658,9 +658,7 @@ int win32_open_pdf (const char *fname, const char *dest)
     char *exe = get_exe_for_type(".pdf");
     int err = 0;
 
-    if (exe == NULL || strstr(exe, "Acro") == NULL) {
-	err = win32_open_arg(fname, ".pdf");
-    } else {
+    if (exe != NULL && strstr(exe, "Acro") != NULL) {
 	/* give DDE a whirl */
 	err = dde_open_pdf(exe, fname, dest);
 	if (err) {
@@ -676,6 +674,17 @@ int win32_open_pdf (const char *fname, const char *dest)
 	    }
 	    g_free(cmd);
 	}
+    } else if (exe != NULL && strstr(exe, "umatra") != NULL) {
+	gchar *cmd;
+
+	cmd = g_strdup_printf("\"%s\" -named-dest %s \"%s\"",
+			      exe, dest, fname);
+	if (WinExec(cmd, SW_SHOW) < 32) {
+	    err = 1;
+	}
+	g_free(cmd);
+    } else {
+	err = win32_open_arg(fname, ".pdf");
     }
 
     free(exe);
