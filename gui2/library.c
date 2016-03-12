@@ -8734,7 +8734,7 @@ int osx_open_pdf (const char *path, const char *dest)
 	} else if (!err && strstr((const char *) exe, "Preview") != NULL) {
 	    err = LSOpenFSRef(&ref, NULL);
 	    if (!err) {
-		FTLE *fp = popen("/usr/bin/osascript", "w");
+		FILE *fp = popen("/usr/bin/osascript", "w");
 
 		if (fp != NULL) {
 		    /* try to get the table of contents shown */
