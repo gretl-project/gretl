@@ -8707,6 +8707,9 @@ int osx_open_pdf (const char *path, const char *dest)
 	}
     
 	if (!err && strstr((const char *) exe, "Adobe") != NULL) {
+	    /* Adobe Acrobat or Acrobat Reader: try passing an 
+	       option to open at the specified chapter.
+	    */
 	    LSLaunchFSRefSpec rspec;
 	    AEDesc desc;
 	    gchar *opt;
@@ -8732,6 +8735,10 @@ int osx_open_pdf (const char *path, const char *dest)
 	    AEDisposeDesc(&desc);
 	    g_free(opt);
 	} else if (!err && strstr((const char *) exe, "Preview") != NULL) {
+	    /* The default Apple Preview.app: there's no option
+	       as per Adobe, but we can at least try to open the
+	       Table-of-Contents pane (Option-Control-3).
+	    */
 	    err = LSOpenFSRef(&ref, NULL);
 	    if (!err) {
 		FILE *fp = popen("/usr/bin/osascript", "w");
