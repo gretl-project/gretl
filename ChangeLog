@@ -34,6 +34,7 @@ version 2016b, in progress
   issue which led to crashes on OS X 10.11 (El Capitan)
 - OS X (quartz) build: fix problem with gnuplot wxt window,
   add Adwaita theme, and make Adwaita the default
+- Bundled gnuplot: update to 5.1 cvs as of March 2016
 
 2016-01-26 version 2016a
 - syntax enhancement: allow specification of type when setting
