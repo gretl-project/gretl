@@ -8731,6 +8731,21 @@ int osx_open_pdf (const char *path, const char *dest)
 
 	    AEDisposeDesc(&desc);
 	    g_free(opt);
+	} else if (!err && strstr((const char *) exe, "Preview") != NULL) {
+	    err = LSOpenFSRef(&ref, NULL);
+	    if (!err) {
+		FTLE *fp = popen("/usr/bin/osascript", "w");
+
+		if (fp != NULL) {
+		    /* try to get the table of contents shown */
+		    fputs("activate application \"Preview\"\n", fp);
+		    fputs("tell application \"System Events\"\n", fp);
+		    fputs(" keystroke \"3\" using {option down, command down}\n", fp);
+		    fputs("end tell\n", fp);
+		    pclose(fp);
+		}
+		done = 1;
+	    }
 	}
     }
 
