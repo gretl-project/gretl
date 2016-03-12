@@ -8690,11 +8690,11 @@ int osx_open_file (const char *path)
 int osx_open_pdf (const char *path, const char *dest)
 {
     FSRef ref;
+    int done = 0;
     int err;
 
     err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
 
-#if 1 /* sadly, the following does not work at all */
     if (!err) {
 	guint8 exe[PATH_MAX] = {0};
 	FSRef appref;
@@ -8702,32 +8702,18 @@ int osx_open_pdf (const char *path, const char *dest)
 	err = LSGetApplicationForItem(&ref, kLSRolesViewer | kLSRolesEditor,
 				      &appref, NULL);
 
-	FSRefMakePath(&appref, exe, PATH_MAX);
-	fprintf(stderr, "application: '%s'\n", (const char *) exe);
+	if (!err) {
+	    FSRefMakePath(&appref, exe, PATH_MAX);
+	}
     
 	if (!err && strstr((const char *) exe, "Adobe") != NULL) {
 	    LSLaunchFSRefSpec rspec;
 	    AEDesc desc;
 	    gchar *opt;
-	    int oerr;
-
-	    /* Testing ideas (try in Terminal):
-
-	       1) via URL:
-
-	       open file://..../myfile.pdf#nameddest=whatever
-
-	       2) using command line args:
-
-	       /path/to/MacOS/Acroread /A "nameddest=whatever"
-
-	    */
+	    int lserr;
 
 	    opt = g_strdup_printf("nameddest=%s", dest);
-	    
-	    oerr = AECreateDesc(typeChar,
-				opt, strlen(opt),
-				&desc);
+	    AECreateDesc(typeChar, opt, strlen(opt), &desc);
 
 	    rspec.appRef = &appref;
 	    rspec.numDocs = 1;
@@ -8736,18 +8722,21 @@ int osx_open_pdf (const char *path, const char *dest)
 	    rspec.launchFlags = kLSLaunchAsync;
 	    rspec.asyncRefCon = NULL;
 
-	    err = LSOpenFromRefSpec(&rspec, NULL);
-	    fprintf(stderr, "LSOpenFromRefSpec, err = %d\n", err);
+	    lserr = LSOpenFromRefSpec(&rspec, NULL);
+	    if (lserr) {
+		fprintf(stderr, "LSOpenFromRefSpec, err = %d\n", lserr);
+	    } else {
+		done = 1;
+	    }
 
 	    AEDisposeDesc(&desc);
 	    g_free(opt);
 	}
     }
-#else
-    if (!err) {
+
+    if (!err && !done) {
 	err = LSOpenFSRef(&ref, NULL);
     }
-#endif    
 
     return err;
 }
