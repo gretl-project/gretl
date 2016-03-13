@@ -11023,7 +11023,7 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 
 static void reattach_series (NODE *n, parser *p)
 {
-    if (n->v.xvec == NULL) {
+    if (1 || n->v.xvec == NULL) {
 	/* trigger for full reset */
 	n->vnum = current_series_index(p->dset, n->vname);
 	if (n->vnum < 0) {
@@ -14661,7 +14661,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
 	    }
 	    if (p->err == 0) {
-		strcpy(p->dset->varname[v], p->lh.name);
+		strcpy(p->dset->varname[v], p->lh.name); /* ?? */
 		set_dataset_is_changed();
 	    }
 	} else if (p->lh.t == NUM) {
@@ -14881,7 +14881,8 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data = NULL;
 
-    if (p->targ == SERIES) {
+    if (p->targ == SERIES || p->lh.obs >= 0) {
+	/* targetting a series or an observation in a series */
 	int v = p->lh.vnum;
 
 	if (v <= 0 || v >= p->dset->v) {
