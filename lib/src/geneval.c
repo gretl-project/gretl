@@ -12920,25 +12920,26 @@ static void get_lh_obsnum (parser *p)
     if (p->lh.substr[0] != '"') {
 	int err = 0;
 
-	p->lh.obs = generate_scalar(p->lh.substr, p->dset, &err);
+	p->lh.obsnum = generate_scalar(p->lh.substr, p->dset, &err);
 	if (!err) {
-	    p->lh.obs -= 1; /* convert to 0-based for internal use */
+	    p->lh.obsnum -= 1; /* convert to 0-based for internal use */
 	    done = 1;
 	}
     }
 
     if (!done) {
-	p->lh.obs = get_t_from_obs_string(p->lh.substr, p->dset);
+	p->lh.obsnum = get_t_from_obs_string(p->lh.substr, p->dset);
     }
     
-    if (p->lh.obs < 0 || p->lh.obs >= p->dset->n) {
+    if (p->lh.obsnum < 0 || p->lh.obsnum >= p->dset->n) {
 	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
 	fprintf(stderr, "obs index = %d and dataset n = %d\n",
-		p->lh.obs, p->dset->n);
+		p->lh.obsnum, p->dset->n);
 	p->err = E_DATA;
     } else {
 	gretl_error_clear();
 	p->targ = NUM;
+	p->flags |= P_OBSVAL;
     }
 }
 
@@ -13189,9 +13190,9 @@ static int overwrite_type_check (parser *p)
 {
     int err = 0;
 
-    if (p->targ == NUM && p->lh.t == SERIES && p->lh.obs >= 0) {
+    if (p->lh.t == SERIES && setting_obsval(p)) {
 	; /* OK */
-    } else if (p->targ == BMEMB && p->lh.t == BUNDLE) {
+    } else if (p->lh.t == BUNDLE && p->targ == BMEMB) {
 	; /* OK */
     } else if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
@@ -13549,7 +13550,7 @@ static void pre_process (parser *p, int flags)
     }
 
     /* string-valued series: do not overwrite wholesale */
-    if (p->lh.t == SERIES && p->lh.obs < 0 && 
+    if (p->lh.t == SERIES && !setting_obsval(p) && 
 	is_string_valued(p->dset, p->lh.vnum)) {
 	gretl_errmsg_set("Cannot overwrite entire string-valued series");
 	p->err = E_TYPES;
@@ -14365,7 +14366,7 @@ static int gen_check_return_type (parser *p)
     if (p->targ == NUM) {
 	if (r->t == NUM || scalar_matrix_node(r)) {
 	    ; /* scalar or 1 x 1 matrix: OK */
-	} else if (r->t == STR && p->lh.obs >= 0) {
+	} else if (r->t == STR && setting_obsval(p)) {
 	    ; /* a string value might be acceptable */
 	} else if (r->t == MAT && (p->flags & P_NODECL)) {
 	    ; /* morphing to matrix may be OK */
@@ -14564,10 +14565,10 @@ static int save_generated_var (parser *p, PRN *prn)
 
 #if EDEBUG
     fprintf(stderr, "save_generated_var: '%s'\n"
-	    "callcount=%d, lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
+	    "  callcount=%d, lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
 	    p->lh.name, p->callcount, getsymb(p->lh.t),
 	    getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
-	    getsymb(r->t));
+	    (r == NULL)? "none" : getsymb(r->t));
 #endif
 
     if (p->op == INC || p->op == DEC) {
@@ -14635,12 +14636,16 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
     /* put the generated data into place */
-    
-    if (p->targ == NUM) {
-	/* writing a scalar */
-	if (p->lh.obs >= 0) {
-	    /* target is actually a specific observation in a series */
-	    t = p->lh.obs;
+
+    if (p->targ == NUM && setting_obsval(p)) {
+	if (v <= 0) {
+	    gretl_errmsg_sprintf("Invalid series ID %d", v);
+	    p->err = E_DATA;
+	} else if (p->lh.obsnum < 0) {
+	    gretl_errmsg_sprintf("Invalid observation index ID %d", p->lh.obsnum);
+	    p->err = E_DATA;
+	} else {
+	    t = p->lh.obsnum;
 	    if (is_string_valued(p->dset, v)) {
 		if (r->t == STR) {
 		    if (p->op != B_ASN) {
@@ -14661,10 +14666,11 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
 	    }
 	    if (p->err == 0) {
-		strcpy(p->dset->varname[v], p->lh.name); /* ?? */
 		set_dataset_is_changed();
 	    }
-	} else if (p->lh.t == NUM) {
+	}
+    } else if (p->targ == NUM) {
+	if (p->lh.t == NUM) {
 	    /* modifying existing scalar */
 	    x = gretl_scalar_get_value(p->lh.name, NULL);
 	    if (r->t == NUM) {
@@ -14881,8 +14887,8 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data = NULL;
 
-    if (p->targ == SERIES || p->lh.obs >= 0) {
-	/* targetting a series or an observation in a series */
+    if (p->targ == SERIES || setting_obsval(p)) {
+	/* targetting a series, or an observation in a series */
 	int v = p->lh.vnum;
 
 	if (v <= 0 || v >= p->dset->v) {
@@ -14941,7 +14947,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     int saveflags[] = { 
 	P_NATEST, P_AUTOREG, P_SLAVE,
 	P_LHPTR, P_DISCARD, P_LHBKVAR,
-	P_NODECL, P_LISTDEF, 0
+	P_NODECL, P_LISTDEF, P_OBSVAL,
+	0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
@@ -14988,7 +14995,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 
     if (p->subp != NULL) {
 	get_lh_mspec(p);
-    } else if (p->lh.obs >= 0) {
+    } else if (setting_obsval(p)) {
 	get_lh_obsnum(p);
     }
 
@@ -15020,7 +15027,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.name[0] = '\0';
     p->lh.label[0] = '\0';
     p->lh.vnum = 0;
-    p->lh.obs = -1;
+    p->lh.obsnum = -1;
     p->lh.uv = NULL;
     p->lh.m = NULL;
     p->lh.substr = NULL;

@@ -603,7 +603,8 @@ enum parser_flags {
     P_ANON    = 1 << 21, /* generating an anonymous object */
     P_VOID    = 1 << 22, /* function call, no assignment */
     P_NOEXEC  = 1 << 23, /* just compile, don't evaluate */
-    P_MSAVE   = 1 << 24  /* trying for reuse of an aux matrix */
+    P_MSAVE   = 1 << 24, /* trying for reuse of an aux matrix */
+    P_OBSVAL  = 1 << 25  /* generating value of observation in series */
 };
 
 struct lhinfo {
@@ -612,7 +613,7 @@ struct lhinfo {
     char label[MAXLABEL];  /* descriptive string for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
-    int obs;               /* specific observation number in series */
+    int obsnum;            /* specific observation number in series */
     gretl_matrix *m;       /* LHS matrix (or NULL) */
     char *substr;          /* obs or matrix/array selection string */
     char *subvar;          /* name of targetted bundle member */
@@ -653,6 +654,7 @@ struct parser_ {
 
 #define starting(p) (p->flags & P_START)
 #define autoreg(p) (p->flags & P_AUTOREG)
+#define setting_obsval(p) (p->flags & P_OBSVAL)
 
 int parser_getc (parser *p);
 void parser_ungetc (parser *p);

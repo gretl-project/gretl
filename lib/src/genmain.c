@@ -32,8 +32,6 @@
 # define GDEBUG 0
 #endif
 
-# define settings_obs_value(p) (p->lh.obs >= 0)
-
 static void write_scalar_message (const parser *p, PRN *prn)
 {
     double x = gretl_scalar_get_value(p->lh.name, NULL);
@@ -58,8 +56,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     }
 
     if (p->targ == NUM) {
-	if (settings_obs_value(p)) {
-	    /* set specific observation in series */
+	if (setting_obsval(p)) {
+	    /* setting specific observation in series */
 	    pprintf(prn, _("Modified series %s (ID %d)"),
 		    p->lh.name, p->lh.vnum);
 	} else {
