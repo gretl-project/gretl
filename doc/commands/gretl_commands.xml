@@ -5676,6 +5676,13 @@
       <arguments>
         <argument>series</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
@@ -5685,19 +5692,18 @@
 	observations.
       </para>
       <para>
-	The Hurst exponent is discussed by Mandelbrot.  In theoretical
-	terms it is the exponent, <math>H</math>, in the
-	relationship 
-	<equation status="display" 
-	  tex="\[\mathrm{RS}(x) = an^H\]" 
-	  ascii="RS(x) = an^H" 
-	  graphic="hurst"/>where RS is the <quote>rescaled
-	  range</quote> of the variable <math>x</math> in
-	samples of size <math>n</math> and <math>a</math>
-	is a constant. The rescaled range is the range (maximum minus
+	The Hurst exponent is discussed by <cite
+	key="mandelbrot83">Mandelbrot (1983)</cite>.  In theoretical
+	terms it is the exponent, <math>H</math>, in the relationship
+	<equation status="display"
+		  tex="\[\mathrm{RS}(x) = an^H\]"
+		  ascii="RS(x) = an^H" graphic="hurst"/> where RS is the
+	<quote>rescaled range</quote> of the variable <math>x</math>
+	in samples of size <math>n</math> and <math>a</math> is a
+	constant. The rescaled range is the range (maximum minus
 	minimum) of the cumulated value or partial sum of
-	<math>x</math> over the sample period (after subtraction
-	of the sample mean), divided by the sample standard deviation.
+	<math>x</math> over the sample period (after subtraction of
+	the sample mean), divided by the sample standard deviation.
       </para>
       <para>
 	As a reference point, if <math>x</math> is white noise
@@ -5720,6 +5726,16 @@
 	as the slope coefficient in a regression of the log of RS on
 	the log of sample size.
       </para>
+      <para>
+	By default, if the program is not in batch mode a plot of the
+	rescaled range is shown.  This can be adjusted via the
+	<opt>plot</opt> option. The acceptable parameters to this
+	option are <lit>none</lit> (to suppress the plot);
+	<lit>display</lit> (to display a plot even when in batch
+	mode); or a file name. The effect of providing a file name is
+	as described for the <opt>output</opt> option of the <cmdref
+	targ="gnuplot"/> command.
+      </para>      
     </description>
 
     <gui-access>
@@ -6539,6 +6555,11 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print results</effect>
 	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>	
       </options>
     </usage>
 
@@ -6623,6 +6644,16 @@
 	For a broader discussion of the cross-validation criterion,
 	see Davidson and MacKinnon's <book>Econometric Theory and
 	Methods</book>, pages 685&ndash;686, and the references therein.
+      </para>
+      <para context="cli">
+	By default, if the program is not in batch mode a plot of the
+	leverage and influence values is shown.  This can be adjusted
+	via the <opt>plot</opt> option. The acceptable parameters to
+	this option are <lit>none</lit> (to suppress the plot);
+	<lit>display</lit> (to display a plot even when in batch
+	mode); or a file name. The effect of providing a file name is
+	as described for the <opt>output</opt> option of the <cmdref
+	targ="gnuplot"/> command.
       </para>
     </description>
 
@@ -10409,6 +10440,11 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printed output</effect>
 	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>see below</effect>
+        </option>	
       </options>
     </usage>
 
@@ -10453,7 +10489,9 @@
       <para context="cli">
 	If the <opt>quiet</opt> option is given, no graph is shown and no
 	output is printed; only the <math>t</math>-statistic and p-value
-	are recorded.
+	are recorded. Otherwise the form of the plot can be controlled
+	via the <opt>output</opt> option; this works as described in
+	connection with the <cmdref targ="gnuplot"/> command.
       </para>
     </description>
 
