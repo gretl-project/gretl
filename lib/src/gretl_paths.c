@@ -1862,13 +1862,23 @@ int get_package_data_path (const char *fname, char *fullname)
 	    err = E_DATA;
 	} else {
 	    char *p = strrchr(gfnpath, SLASH);
+	    const char *needle;
 
 	    if (p != NULL) {
 		*p = '\0';
-	    }	    
-	    if (!find_file_in_dir(fname, gfnpath, fullname, 1, 0)) {
+	    }
+
+	    /* trim path from @fname if present */
+	    needle = strrchr(fname, SLASH);
+	    if (needle != NULL) {
+		needle++;
+	    } else {
+		needle = fname;
+	    }
+	    
+	    if (!find_file_in_dir(needle, gfnpath, fullname, 1, 0)) {
 		gretl_errmsg_sprintf(_("Couldn't find file %s for package %s"),
-				     fname, pkgname);
+				     needle, pkgname);
 		*fullname = '\0';
 		err = E_FOPEN;
 	    }
