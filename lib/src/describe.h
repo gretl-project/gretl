@@ -150,7 +150,7 @@ FreqDist *get_discrete_freq (int v, const DATASET *dset,
 			     gretlopt opt, int *err);
 
 int freqdist (int varno, const DATASET *dset,
-	      int *graph, gretlopt opt, PRN *prn);
+	      gretlopt opt, PRN *prn);
 
 gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, 
 			       int *err);

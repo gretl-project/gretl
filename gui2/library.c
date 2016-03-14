@@ -5147,7 +5147,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 				    _("gretl: residual dist."), 
 				    MODTEST, NULL);
 	    /* show the graph too */
-	    if (plot_freq(freq, D_NORMAL) == 0) {
+	    if (plot_freq(freq, D_NORMAL, OPT_NONE) == 0) {
 		register_graph();
 	    }
 	}
@@ -5274,7 +5274,7 @@ void do_freq_dist (void)
 	}
 
 	if (plot) {
-	    err = plot_freq(freq, dist);
+	    err = plot_freq(freq, dist, OPT_NONE);
 	    gui_graph_handler(err);
 	}
     }

@@ -4020,10 +4020,6 @@
 	  <effect>specify bin width, see below</effect>
         </option>
         <option>
-	  <flag>--quiet</flag>
-	  <effect>suppress printing of graph</effect>
-        </option>
-        <option>
 	  <flag>--normal</flag>
 	  <effect>test for the normal distribution</effect>
         </option>
@@ -4036,14 +4032,15 @@
 	  <effect>don't print anything</effect>
         </option>
         <option>
-	  <flag>--show-plot</flag>
-	  <effect>see below</effect>
-        </option>
-        <option>
 	  <flag>--matrix</flag>
 	  <optparm>name</optparm>
 	  <effect>use column of named matrix</effect>
         </option>
+        <option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>	
       </options>
       <examples>
         <example>freq x</example>
@@ -4085,13 +4082,14 @@
 	(shape, scale).
       </para>
       <para>
-	In interactive mode a graph of the distribution is displayed by
-	default. The <opt>quiet</opt> flag can be used to suppress
-	this. Conversely, the graph is not usually shown when the
-	<cmd>freq</cmd> is used in a script, but you can force its
-	display by giving the <opt>show-plot</opt> option. (This does
-	not apply when using the command-line program,
-	<lit>gretlcli</lit>.)
+	By default, if the program is not in batch mode a plot of the
+	distribution is shown.  This can be adjusted via the
+	<opt>plot</opt> option. The acceptable parameters to this
+	option are <lit>none</lit> (to suppress the plot);
+	<lit>display</lit> (to display a plot even when in batch
+	mode); or a file name. The effect of providing a file name is
+	as described for the <opt>output</opt> option of the <cmdref
+	targ="gnuplot"/> command.
       </para>
       <para>
 	The <opt>silent</opt> flag suppresses the usual output
@@ -9798,7 +9796,7 @@
         <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
-	  <effect>send output to specified file</effect>
+	  <effect>send plot to specified file</effect>
         </option>
       </options>
     </usage>
@@ -9829,9 +9827,10 @@
 	quantiles of the standard normal distribution. 
       </para>
       <para>
-	The option <opt>output</opt> has the effect to send the
-	output to the desiderd filename; use <quote>display</quote> to
-	force output to the screen, for example during a loop.
+	The option <opt>output</opt> has the effect of sending the
+	output to the specified file; use <quote>display</quote> to
+	force output to the screen. See the <cmdref targ="gnuplot"/>
+	command for more detail on this option.
       </para>
       <para>
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,

@@ -1262,7 +1262,7 @@ static void print_term_string (int ttype, PlotType ptype,
     if (tstr != NULL) {
 	fprintf(fp, "%s\n", tstr);
 	if (!(flags & GPT_MONO)) {
-	    write_plot_line_styles(PLOT_REGULAR, fp);
+	    write_plot_line_styles(ptype, fp);
 	}
     }
 }
@@ -1374,7 +1374,7 @@ static FILE *gp_set_up_batch (char *fname,
 	    write_plot_output_line(gnuplot_outname, fp);
 	} else {
 	    /* just write style lines */
-	    write_plot_line_styles(PLOT_REGULAR, fp);
+	    write_plot_line_styles(ptype, fp);
 	}
 	if (get_local_decpoint() == ',') {
 	    fputs("set decimalsign ','\n", fp);
@@ -1552,8 +1552,8 @@ static FILE *open_gp_stream (PlotType ptype, GptFlags flags,
     /* check for --output=whatever option */
     optname = plot_output_option(ptype, &ci);
 
-    if (ci == FREQ || got_display_option(optname)) {
-	/* --output=display specified (or FREQ, a special) */
+    if (got_display_option(optname)) {
+	/* --output=display specified */
 	interactive = 1;
     } else if (optname != NULL) {
 	/* --output=filename specified */
@@ -4311,7 +4311,7 @@ static double discrete_minskip (FreqDist *freq)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_freq (FreqDist *freq, DistCode dist)
+int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;

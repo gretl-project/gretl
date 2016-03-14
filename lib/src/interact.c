@@ -2483,20 +2483,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case FREQ:
-	{
-	    int graph = (s->flags == CONSOLE_EXEC ||
-			 (cmd->opt & OPT_G));
-
-	    if (cmd->opt & OPT_X) {
-		err = matrix_freq_driver(cmd->list, &graph, 
-					 cmd->opt, prn);
-	    } else {
-		err = freqdist(cmd->list[1], dset, &graph, 
-			       cmd->opt, prn);
-	    }
-	    if (!err && graph) {
-		maybe_schedule_graph_callback(s);
-	    }
+	if (cmd->opt & OPT_X) {
+	    err = matrix_freq_driver(cmd->list, cmd->opt, prn);
+	} else {
+	    err = freqdist(cmd->list[1], dset, cmd->opt, prn);
 	}
 	break;
 
@@ -2599,15 +2589,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case RMPLOT:
     case HURST:
-	if (cmd->list[0] != 1) {
-	    pputs(prn, _("This command requires one variable.\n"));
-	    err = E_DATA;
+	if (cmd->ci == RMPLOT) {
+	    err = rmplot(cmd->list, dset, cmd->opt, prn);
 	} else {
-	    if (cmd->ci == RMPLOT) {
-		err = rmplot(cmd->list, dset, cmd->opt, prn);
-	    } else {
-		err = hurstplot(cmd->list, dset, cmd->opt, prn);
-	    }
+	    err = hurstplot(cmd->list, dset, cmd->opt, prn);
 	}
 	break;
 

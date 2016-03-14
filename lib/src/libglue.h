@@ -49,7 +49,6 @@ int matrix_command_driver (int ci,
 			   PRN *prn);
 
 int matrix_freq_driver (const int *list,
-			int *graph,
 			gretlopt opt,
 			PRN *prn);
 

@@ -2057,29 +2057,35 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 */
 
 int freqdist (int varno, const DATASET *dset,
-	      int *graph, gretlopt opt, PRN *prn)
+	      gretlopt opt, PRN *prn)
 {
     FreqDist *freq = NULL;
     DistCode dist = D_NONE;
+    PlotType ptype = 0;
     double fmin = NADBL;
     double fwid = NADBL;
     int n_bins = 0;
     int do_graph = 0;
     int err;
 
-    if (graph != NULL) {
-	do_graph = *graph;
-    }
-
-    if (opt & (OPT_Q | OPT_S)) {
-	/* --quiet or --silent trump other settings */
-	do_graph = 0;
-    }
-
     if (opt & OPT_O) {
-	dist = D_GAMMA; 
+	dist = D_GAMMA;
+	ptype = PLOT_FREQ_GAMMA;
     } else if (opt & OPT_Z) {
 	dist = D_NORMAL;
+	ptype = PLOT_FREQ_NORMAL;
+    } else {
+	ptype = PLOT_FREQ_SIMPLE;
+    }
+
+    if (!(opt & (OPT_Q | OPT_S))) {
+	if (opt & OPT_G) {
+	    /* it's a legacy thing */
+	    opt |= OPT_U;
+	    opt &= ~OPT_G;
+	    set_optval_string(FREQ, OPT_U, "display");
+	}	    
+	do_graph = gnuplot_graph_wanted(ptype, opt);
     }
 
     err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
@@ -2100,7 +2106,7 @@ int freqdist (int varno, const DATASET *dset,
 	}
 
 	if (do_graph) {
-	    int gerr = plot_freq(freq, dist);
+	    int gerr = plot_freq(freq, dist, opt);
 
 	    if (gerr) {
 		pputs(prn, _("gnuplot command failed\n"));
@@ -2109,10 +2115,6 @@ int freqdist (int varno, const DATASET *dset,
 	}
 
 	free_freq(freq);
-    }
-
-    if (graph != NULL) {
-	*graph = do_graph;
     }
 
     return err;

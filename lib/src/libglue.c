@@ -559,7 +559,6 @@ int matrix_command_driver (int ci,
 }
 
 int matrix_freq_driver (const int *list,
-			int *graph,
 			gretlopt opt,
 			PRN *prn)
 {
@@ -596,7 +595,7 @@ int matrix_freq_driver (const int *list,
     }
 
     if (!err) {
-	err = freqdist(1, mdset, graph, opt, prn);
+	err = freqdist(1, mdset, opt, prn);
     }
 
     destroy_dataset(mdset);   

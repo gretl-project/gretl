@@ -215,7 +215,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 int gnuplot_3d (int *list, const char *literal,
 		DATASET *dset, gretlopt *opt);
 
-int plot_freq (FreqDist *freq, DistCode dist);
+int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt);
 
 int garch_resid_plot (const MODEL *pmod, const DATASET *dset); 
 
