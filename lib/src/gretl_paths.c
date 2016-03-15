@@ -1891,23 +1891,26 @@ int get_package_data_path (const char *fname, char *fullname)
 
 /**
  * gretl_addpath:
- * @fname: the initially given file name.
- * @script: if non-zero, suppose the file we're looking for
+ * @fname: on input, the initially given file name; on output
+ * a path may be prepended and/or a suffix may be appended.
+ * This variable must be of size at least #MAXLEN bytes to allow
+ * for possible additions.
+ * @script: if non-zero, assume the file we're looking for
  * is a hansl script.
  * 
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened. Usually called by get_full_filename().
- * If @fname does not have a dot-extension we may also try adding
+ * If @fname does not already have a dot-extension we may also try adding
  * an appropriate gretl extension in case no file is found.
  *
- * Returns: the full name of the file that was found, or NULL if no
- * file could be found.
+ * Returns: the path to the file that was found (in @fname), or
+ * NULL if no file could be found even allowing for prepending
+ * a path and/or adding a suffix.
  */
 
 char *gretl_addpath (char *fname, int script)
 {
     char orig[MAXLEN];
-    char *tmp = fname;
     char *test;
     int err;
 
@@ -1916,7 +1919,7 @@ char *gretl_addpath (char *fname, int script)
 	    fname, script);
 #endif
 
-    /* keep a backup */
+    /* keep a backup of the input */
     strcpy(orig, fname);
 
     if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
@@ -1955,7 +1958,6 @@ char *gretl_addpath (char *fname, int script)
 	    }
 	}
 
-	fname = tmp;
 	strcpy(fname, orig);
 
 	/* now try gretl installation dir */
@@ -1969,7 +1971,6 @@ char *gretl_addpath (char *fname, int script)
 		if (test != NULL) { 
 		    return fname;
 		} else {
-		    fname = tmp;
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
 		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
@@ -1994,7 +1995,6 @@ char *gretl_addpath (char *fname, int script)
 	    } 
 	}
 
-	fname = tmp;
 	strcpy(fname, orig);
 
 	/* now try user's personal filespace */
@@ -2012,7 +2012,6 @@ char *gretl_addpath (char *fname, int script)
 		if (test != NULL) { 
 		    return fname;
 		} else {
-		    fname = tmp;
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
 		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
@@ -2028,7 +2027,7 @@ char *gretl_addpath (char *fname, int script)
 		    return fname;
 		}		
 	    } else {
-		/* data file */
+		/* data file? */
 		sprintf(trydir, "%sdata", gpath);
 		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
 		if (test != NULL) { 
@@ -2036,8 +2035,7 @@ char *gretl_addpath (char *fname, int script)
 		}
 	    } 
 	}	
-    
-	fname = tmp;
+
 	strcpy(fname, orig);
 	gpath = gretl_workdir();
 
@@ -2049,7 +2047,6 @@ char *gretl_addpath (char *fname, int script)
 	    }
 	}
 
-	fname = tmp;
 	strcpy(fname, orig);
 	gpath = maybe_get_default_workdir();
 
@@ -2061,7 +2058,6 @@ char *gretl_addpath (char *fname, int script)
 	    }
 	}
 
-	fname = tmp;
 	strcpy(fname, orig);
 	gpath = get_shelldir();
 
@@ -2092,7 +2088,6 @@ char *gretl_addpath (char *fname, int script)
     }	    
 #endif
 
-    fname = tmp;
     strcpy(fname, orig);
 
     gretl_error_clear();

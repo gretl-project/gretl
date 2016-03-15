@@ -9581,11 +9581,9 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }
 
     if (ftype == GRETL_CSV || SPREADSHEET_IMPORT(ftype) || 
-	OTHER_IMPORT(ftype) || dbdata) {
+	OTHER_IMPORT(ftype)) {
 	data_status |= IMPORT_DATA;
-	if (!dbdata) {
-	    maybe_display_string_table();
-	}
+	maybe_display_string_table();
     }
 
     if (dset->v > 0 && !dbdata) {
