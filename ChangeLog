@@ -1,6 +1,8 @@
 version 2016b, in progress
 - "dataset" command: expose and document the "pad-daily" 
   option
+- Commands that produce both textual output and plots: add
+  a --plot option to control the format of the plot
 - GUI help text: make references to the Gretl User's Guide
   chapter-specific, and make the file open at the specified
   chapter if the PDF viewer supports that functionality
