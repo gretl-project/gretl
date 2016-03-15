@@ -1,3 +1,10 @@
+version 2016b, in progress
+
+The options --quiet and --show-plot for the "freq" command
+are deprecated in favor of the new --plot=arg option. To
+emulate --quiet use --plot=none, and use --plot=display
+in place of --show-plot.
+
 2016-01-26 version 2016a
 
 The function isnull() is deprecated; the recommendation
