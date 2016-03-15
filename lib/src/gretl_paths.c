@@ -1957,6 +1957,8 @@ char *gretl_addpath (char *fname, int script)
 
 	fname = tmp;
 	strcpy(fname, orig);
+
+	/* now try gretl installation dir */
 	gpath = gretl_home();
 
 	if (*gpath != '\0') {
@@ -1975,6 +1977,13 @@ char *gretl_addpath (char *fname, int script)
 			return fname;
 		    }
 		}
+	    } else if (has_suffix(fname, ".bin")) {
+		/* database? */
+		sprintf(trydir, "%sdb", gpath);
+		test = search_dir(fname, trydir, 0);
+		if (test != NULL) { 
+		    return fname;
+		}		
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
@@ -1987,6 +1996,8 @@ char *gretl_addpath (char *fname, int script)
 
 	fname = tmp;
 	strcpy(fname, orig);
+
+	/* now try user's personal filespace */
 #ifdef OS_OSX
 	gpath = gretl_app_support_dir();
 #else
@@ -2009,6 +2020,13 @@ char *gretl_addpath (char *fname, int script)
 			return fname;
 		    }
 		}
+	    } else if (has_suffix(fname, ".bin")) {
+		/* database? */
+		sprintf(trydir, "%sdb", gpath);
+		test = search_dir(fname, trydir, 0);
+		if (test != NULL) { 
+		    return fname;
+		}		
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
