@@ -2078,7 +2078,7 @@ int freqdist (int varno, const DATASET *dset,
 	ptype = PLOT_FREQ_SIMPLE;
     }
 
-    if (!(opt & (OPT_Q | OPT_S))) {
+    if (!(opt & OPT_Q)) {
 	if (opt & OPT_G) {
 	    /* it's a legacy thing */
 	    opt |= OPT_U;

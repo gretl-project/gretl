@@ -235,7 +235,10 @@ typedef enum {
 			     c == HURST || \
 			     c == LEVERAGE || \
 			     c == QLRTEST ||  \
-			     c == QQPLOT)
+			     c == QQPLOT || \
+			     c == FREQ || \
+			     c == FCAST || \
+			     c == QLRTEST)
 	
 int gretl_command_number (const char *s);
 
