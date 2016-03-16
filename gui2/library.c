@@ -9087,6 +9087,9 @@ int execute_script (char *runfile, const char *buf,
 	gretl_if_state_clear();
     } else {
 	exec_err = gretl_if_state_check(indent0);
+	if (exec_err) {
+	    warnbox(_("Unmatched \"if\" in script (fixed)"));
+	}
     }
 
     if (state.in_comment || (state.cmd->flags & CMD_IGNORE)) {
