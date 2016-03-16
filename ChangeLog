@@ -30,6 +30,8 @@ version 2016b, in progress
   hand side specification in the "restrict" command
 - Fix bug: matrix-form restrictions on VECM model not being
   accepted even when valid, in some cases
+- Fix bug: partial parsing of command line when blocked by a
+  false if-condition could give rise to spurious errors
 - Fix bugs: some subtle fail conditions for saving compiled
   loops onto functions
 - OS X (quartz) build: update to GTK 2.24.29, and fix a GTK
