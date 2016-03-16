@@ -4,7 +4,7 @@
 */
 
 #define CDEBUG 0
-#define TDEBUG 1
+#define TDEBUG 0
 
 /* allow deprecated "addobs" for "dataset addobs"? */
 #define ALLOW_ADDOBS 1
