@@ -153,10 +153,13 @@ static void gretl_mpi_abort (char *line)
     
     fprintf(stderr, _("\ngretlmpi: error executing script: halting\n"));
 
-    if (tokline != NULL && strcmp(tokline, line)) {
+    if (tokline != NULL && *tokline != '\0' && strcmp(tokline, line)) {
 	fprintf(stderr, "> %s\n", tokline);
-    }    
-    fprintf(stderr, "> %s\n", line);
+    }
+
+    if (*line != '\0') {
+	fprintf(stderr, "> %s\n", line);
+    }
 
     mpi_exit(1);
 }
@@ -183,6 +186,7 @@ static int file_get_line (ExecState *s)
 
     if (*line == '\0') {
 	strcpy(line, "quit");
+	s->cmd->ci = QUIT;
     } else if (len == MAXLINE - 1 && line[len-1] != '\n') {
 	return E_TOOLONG;
     } else {
@@ -442,6 +446,14 @@ int main (int argc, char *argv[])
 	    if (err) {
 		errmsg(err, prn);
 		break;
+	    } else if (cmd.ci == QUIT) {
+		/* no more input available */
+		cli_exec_line(&state, id, dset, progopt, cmdprn);
+		err = gretl_if_state_check(0);
+		if (err) {
+		    errmsg(err, prn);
+		}		
+		continue;
 	    }
 	}
 
@@ -497,10 +509,12 @@ int main (int argc, char *argv[])
 
 static void printline (const char *s)
 {
-    if (gretl_compiling_loop()) {
-	printf("> %s\n", s);
-    } else {
-	printf("%s\n", s);
+    if (*s != '\0') {
+	if (gretl_compiling_loop()) {
+	    printf("> %s\n", s);
+	} else {
+	    printf("%s\n", s);
+	}
     }
 }
 

@@ -2075,9 +2075,7 @@ char *gretl_addpath (char *fname, int script)
     if (1) {
 	char *dtdir = desktop_path();
 
-	fname = tmp;
 	strcpy(fname, orig);
-
 	if (dtdir != NULL) {
 	    test = search_dir(fname, dtdir, 0);
 	    free(dtdir);

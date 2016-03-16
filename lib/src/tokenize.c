@@ -4,7 +4,7 @@
 */
 
 #define CDEBUG 0
-#define TDEBUG 0
+#define TDEBUG 1
 
 /* allow deprecated "addobs" for "dataset addobs"? */
 #define ALLOW_ADDOBS 1
@@ -3093,8 +3093,7 @@ static int unexpected_symbol_error (char c)
 */
 
 static int tokenize_line (CMD *cmd, const char *line,
-			  DATASET *dset, int compmode,
-			  int masked)
+			  DATASET *dset, int compmode)
 {
     char tok[FN_NAMELEN];
     const char *s = line;
@@ -3249,7 +3248,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    }
 	}
 
-	if ((compmode || masked) && (cmd->ci > 0 || cmd->ntoks == 3)) {
+	if (compmode && (cmd->ci > 0 || cmd->ntoks == 3)) {
 	    /* we just wanted the command index, and either we've got it
 	       or it seems we're not going to get it */
 	    break;
@@ -3634,6 +3633,41 @@ const char *get_parser_errline (void)
     return get_or_set_errline(NULL, 0);
 }
 
+/* When the current "if-state" is FALSE, and we're scanning
+   the current command/statement, it should be sufficient to
+   determine if we have a command which potentially modifies
+   the if-state.
+*/
+
+static int get_flow_control_ci (const char *s)
+{
+    char word[6];
+    int ci = 0;
+
+    if (sscanf(s, "%5s", word) == 1) {
+	int n = 0;
+
+	if (!strcmp(word, "if")) {
+	    ci = IF;
+	    n = 2;
+	} else if (!strcmp(word, "else")) {
+	    ci = ELSE;
+	    n = 4;
+	} else if (!strcmp(word, "elif")) {
+	    ci = ELIF;
+	    n = 4;
+	} else if (!strcmp(word, "endif")) {
+	    ci = ENDIF;
+	    n = 5;
+	}
+	if (ci > 0 && s[n] != '\0' && !isspace(s[n])) {
+	    ci = 0;
+	}
+    }
+
+    return ci;
+}
+
 static int real_parse_command (const char *line, CMD *cmd, 
 			       DATASET *dset, int compmode,
 			       void *ptr)
@@ -3643,9 +3677,11 @@ static int real_parse_command (const char *line, CMD *cmd,
     maybe_init_shadow();
 
     if (*line != '\0') {
-	int masked = gretl_if_state_false();
-
-	err = tokenize_line(cmd, line, dset, compmode, masked);
+	if (!compmode && gretl_if_state_false()) {
+	    cmd->ci = get_flow_control_ci(line);
+	} else {
+	    err = tokenize_line(cmd, line, dset, compmode);
+	}
 
 	if (compmode) {
 	    /* Are we doing get_command_index(), for compilation?
@@ -3726,7 +3762,7 @@ int parse_gui_command (const char *line, CMD *cmd, DATASET *dset)
     gretl_error_clear();
 
     if (*line != '\0') {
-	err = tokenize_line(cmd, line, dset, 0, 0);
+	err = tokenize_line(cmd, line, dset, 0);
 	if (!err) {
 	    err = assemble_command(cmd, dset);
 	}

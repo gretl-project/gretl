@@ -212,10 +212,13 @@ static void gretl_abort (char *line)
     
     fprintf(stderr, _("\ngretlcli: error executing script: halting\n"));
 
-    if (tokline != NULL && strcmp(tokline, line)) {
+    if (tokline != NULL && *tokline != '\0' && strcmp(tokline, line)) {
 	fprintf(stderr, "> %s\n", tokline);
     }
-    fprintf(stderr, "> %s\n", line);
+    
+    if (*line != '\0') {
+	fprintf(stderr, "> %s\n", line);
+    }
     
     exit(EXIT_FAILURE);
 }
@@ -242,6 +245,7 @@ static int file_get_line (ExecState *s)
 
     if (*line == '\0') {
 	strcpy(line, "quit");
+	s->cmd->ci = QUIT;
     } else if (len == MAXLINE - 1 && line[len-1] != '\n') {
 	return E_TOOLONG;
     } else {
@@ -724,7 +728,8 @@ int main (int argc, char *argv[])
 
     *linecopy = '\0';
 
-    /* main command loop */
+    /* enter main command loop */
+    
     while (cmd.ci != QUIT && fb != NULL && !xout) {
 	if (err && gretl_error_is_fatal()) {
 	    gretl_abort(linecopy);
@@ -739,6 +744,14 @@ int main (int argc, char *argv[])
 	    if (err) {
 		errmsg(err, prn);
 		break;
+	    } else if (cmd.ci == QUIT) {
+		/* no more input available */
+		cli_exec_line(&state, dset, cmdprn);
+		err = gretl_if_state_check(0);
+		if (err) {
+		    errmsg(err, prn);
+		}		
+		continue;
 	    }
 	}
 
@@ -758,7 +771,9 @@ int main (int argc, char *argv[])
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
 	err = cli_exec_line(&state, dset, cmdprn);
-    } /* end of get commands loop */
+    }
+
+    /* finished main command loop */
 
     if (!err) {
 	err = gretl_if_state_check(0);
@@ -803,10 +818,12 @@ int main (int argc, char *argv[])
 
 static void printline (const char *s)
 {
-    if (gretl_compiling_loop()) {
-	printf("> %s\n", s);
-    } else {
-	printf("%s\n", s);
+    if (*s != '\0') {
+	if (gretl_compiling_loop()) {
+	    printf("> %s\n", s);
+	} else {
+	    printf("%s\n", s);
+	}
     }
 }
 
