@@ -2204,8 +2204,11 @@ static int test_for_genr (CMD *c, int i, DATASET *dset)
 {
     cmd_token *toks = c->toks;
     char *s = toks[i].s;
+    int j = c->ntoks - 1;
 
-    if (dset != NULL && current_series_index(dset, s) >= 0) {
+    if (j > i && (toks[j].type == TOK_EQUALS || toks[j].type == TOK_EQMOD)) {
+	c->ci = GENR;
+    } else if (dset != NULL && current_series_index(dset, s) >= 0) {
 	c->ci = GENR;
     } else if (gretl_is_user_var(s)) {
 	c->ci = GENR;
@@ -2383,7 +2386,7 @@ static int try_for_command_index (CMD *cmd, int i,
 
  gentest:
 
-    if (cmd->ci <= 0 && cmd->ntoks < 4) {
+    if (cmd->ci <= 0 && cmd->ntoks < 5) {
 	cmd->ci = test_for_genr(cmd, i, dset);
     }
 
@@ -3068,6 +3071,16 @@ static int scrub_list_check (CMD *cmd)
     return ret;
 }
 
+static int unexpected_symbol_error (char c)
+{
+    if (c == '\'') {
+	gretl_errmsg_sprintf(_("Unexpected symbol %c"), c);
+    } else {
+	gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), c);
+    }
+    return E_PARSE;
+}
+
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
 /* tokenize_line: parse @line into a set of tokens on a
@@ -3080,7 +3093,8 @@ static int scrub_list_check (CMD *cmd)
 */
 
 static int tokenize_line (CMD *cmd, const char *line,
-			  DATASET *dset, int compmode)
+			  DATASET *dset, int compmode,
+			  int masked)
 {
     char tok[FN_NAMELEN];
     const char *s = line;
@@ -3169,8 +3183,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    if (n == 1 && MAY_START_NUMBER(*s) && isdigit(*(s+1))) {
 		n = numeric_spn(s, 0);
 		if (n == 0) {
-		    gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *s);
-		    err = E_PARSE;
+		    err = unexpected_symbol_error(*s);
 		} else {
 		    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 		    strncat(tok, s, m);
@@ -3197,8 +3210,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    n = 1;
 	    skipped = 1;
 	} else {
-	    gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *s);
-	    err = E_PARSE;
+	    err = unexpected_symbol_error(*s);
 	}
 
 	if (err) {
@@ -3220,7 +3232,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 		    fprintf(stderr, "ntoks=%d, imin=%d, ci=%d (%s)\n",
 			    cmd->ntoks, imin, cmd->ci, gretl_command_word(cmd->ci));
 		} else {
-		    fprintf(stderr, "ntoks=%d, imin=%d, ci not known yet\n",
+		    fprintf(stderr, "ntoks=%d, imin=%d, ci not yet known\n",
 			    cmd->ntoks, imin);
 		}
 #endif
@@ -3237,7 +3249,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    }
 	}
 
-	if (compmode && (cmd->ci > 0 || cmd->ntoks == 3)) {
+	if ((compmode || masked) && (cmd->ci > 0 || cmd->ntoks == 3)) {
 	    /* we just wanted the command index, and either we've got it
 	       or it seems we're not going to get it */
 	    break;
@@ -3631,7 +3643,9 @@ static int real_parse_command (const char *line, CMD *cmd,
     maybe_init_shadow();
 
     if (*line != '\0') {
-	err = tokenize_line(cmd, line, dset, compmode);
+	int masked = gretl_if_state_false();
+
+	err = tokenize_line(cmd, line, dset, compmode, masked);
 
 	if (compmode) {
 	    /* Are we doing get_command_index(), for compilation?
@@ -3712,7 +3726,7 @@ int parse_gui_command (const char *line, CMD *cmd, DATASET *dset)
     gretl_error_clear();
 
     if (*line != '\0') {
-	err = tokenize_line(cmd, line, dset, 0);
+	err = tokenize_line(cmd, line, dset, 0, 0);
 	if (!err) {
 	    err = assemble_command(cmd, dset);
 	}
