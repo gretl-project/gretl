@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-10 11:41-0500\n"
-"PO-Revision-Date: 2016-03-10 10:20+0100\n"
+"PO-Revision-Date: 2016-03-17 16:56+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -2613,9 +2613,9 @@ msgid "Invalid character '%c'\n"
 msgstr "Carácter no válido '%c'\n"
 
 #: lib/src/genlex.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected byte 0x%x\n"
-msgstr "Símbolo no esperado '%c'"
+msgstr "Byte no esperado 0x%x\n"
 
 #: lib/src/genmain.c:42
 #, c-format
@@ -3701,7 +3701,7 @@ msgstr "Contraste LR para rho = 0"
 
 #: lib/src/gretl_model.c:3627
 msgid "Joint test on named regressors"
-msgstr "Contraste conjunto de los regresores nombrados"
+msgstr "Contraste conjunto de los regresores (excepto la constante)"
 
 #: lib/src/gretl_model.c:3630
 msgid "Robust test for differing group intercepts"
