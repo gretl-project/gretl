@@ -618,22 +618,15 @@ static int test_user_matrices (gretl_restriction *rset)
 	int nbr = nb * gretl_VECM_rank(rset->obj);
 
 	if (R->cols == nb && R->rows <= nb) {
-	    /* FIXME: supported but not yet documented */
+	    /* common restriction on columns of beta */
 	    rset->bmulti = 0;
-	} else if (R->rows > nbr) {
-	    gretl_errmsg_sprintf(_("Too many restrictions: the maximum "
-				   "number is %d"), nbr);
-	    err = E_NONCONF;
-	} else if (R->cols != nbr) {
-	    gretl_errmsg_sprintf(_("The R matrix must have %d columns"),
-				 nbr);
+	} else if (R->cols == nbr && R->rows <= nbr) {
+	    ; /* OK, full restriction on beta */
+	} else {
+	    gretl_errmsg_set(_("Invalid restriction on beta"));
 	    err = E_NONCONF;
 	}
 	if (!err) {
-	    /* required only if we accept the undoc'd case where
-	       the restrictions are in common across the columns
-	       of beta 
-	    */
 	    rset->bcols = R->cols;
 	}
     } else {
