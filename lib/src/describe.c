@@ -1715,9 +1715,8 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
     } 
 }
 
-FreqDist *
-get_discrete_freq (int v, const DATASET *dset, 
-		   gretlopt opt, int *err)
+FreqDist *get_discrete_freq (int v, const DATASET *dset, 
+			     gretlopt opt, int *err)
 {
     FreqDist *freq;
     const double *x = dset->Z[v];
@@ -1842,9 +1841,11 @@ get_discrete_freq (int v, const DATASET *dset,
  * with the residual from a regression).
  * @opt: if includes %OPT_Z, set up for comparison with normal dist; 
  * if includes %OPT_O, compare with gamma distribution;
- * if includes %OPT_Q, do not show a graph; if includes %OPT_D,
+ * if includes %OPT_S we're not printing results; if includes %OPT_D,
  * treat the variable as discrete; %OPT_X indicates that this function
- * is called as part of a cross-tabulation.
+ * is called as part of a cross-tabulation; if includes %OPT_G, 
+ * add the arrays that are needed for a plot even when we're not
+ * printing (%OPT_S).
  * @err: location to receive error code.
  *
  * Calculates the frequency distribution for the specified variable.
@@ -1853,7 +1854,8 @@ get_discrete_freq (int v, const DATASET *dset,
  */
 
 FreqDist *get_freq (int varno, const DATASET *dset, 
-		    double fmin, double fwid, int nbins, int params, 
+		    double fmin, double fwid,
+		    int nbins, int params, 
 		    gretlopt opt, int *err)
 {
     FreqDist *freq;
@@ -1902,8 +1904,8 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     x = dset->Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
-    if (opt & OPT_S) {
-	/* silent operation */
+    if ((opt & OPT_S) && !(opt & OPT_G)) {
+	/* silent operation, no plot */
 	return freq;
     }
 
@@ -2050,10 +2052,8 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
     return 0;
 }
 
-/* Wrapper function: get the distribution, print it, graph it
-   if wanted, then free stuff.  OPT_Q = quiet; OPT_S =
-   silent. We report back in @graph whether or not we
-   actually ended up producing a graph.
+/* Wrapper function: get the distribution, print it if 
+   wanted, graph it if wanted, then free stuff.
 */
 
 int freqdist (int varno, const DATASET *dset,
@@ -2091,7 +2091,12 @@ int freqdist (int varno, const DATASET *dset,
     err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
     
     if (!err) {
-	freq = get_freq(varno, dset, fmin, fwid, n_bins, 1, opt, &err); 
+	gretlopt fopt = opt;
+
+	if (do_graph) {
+	    fopt |= OPT_G;
+	}
+	freq = get_freq(varno, dset, fmin, fwid, n_bins, 1, fopt, &err); 
     }
 
     if (!err) {
