@@ -477,7 +477,7 @@ writing $\beta$ in partitioned form as in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
-    \right] ,
+    \right]
 \]
 where $\beta_1$ is an $r \times r$ matrix and  $\beta_2$ is $(n-r)
 \times r$. Assuming that $\beta_1$ has full rank, $\beta$ can be
@@ -488,7 +488,7 @@ post-multiplied by $\beta_1^{-1}$, giving
     \right] =
     \left[
     \begin{array}{c} I \\ -B \end{array}
-  \right]  ,
+  \right].
 \]
 
 The coefficients that gretl produces are $\hat{\beta}$, with
@@ -633,10 +633,10 @@ R_a \vec{\alpha} = 0
 Note that the $\beta$ restriction may be non-homogeneous ($q \neq 0$)
 but the $\alpha$ restriction must be homogeneous.  Nonlinear
 restrictions are not supported, and neither are restrictions that
-cross between $\beta$ and $\alpha$.  In the case where $r > 1$ such
-restrictions may be in common across all the columns of $\beta$ (or
-$\alpha$) or may be specific to certain columns of these matrices.
-This is the case discussed in \cite{boswijk95} and
+cross between $\beta$ and $\alpha$.  When $r > 1$, such restrictions
+may be in common across all the columns of $\beta$ (or $\alpha$) or
+may be specific to certain columns of these matrices. For useful
+discussions of this point see \cite{boswijk95} and
 \cite{boswijk-doornik04}, section 4.4.
 
 The restrictions (\ref{eq:Rb}) and (\ref{eq:Ra}) may be written in
@@ -658,10 +658,10 @@ representation internally when testing the restrictions.
 
 If the list of restrictions that is passed to the \texttt{restrict}
 command contains more constraints than necessary to achieve
-identification, then an LR test is performed; moreover, the
+identification, then an LR test is performed. In addition, the
 \texttt{restrict} command can be given the \option{full} switch, in
 which case full estimates for the restricted system are printed
-(including the $\Gamma_i$ terms), and the system thus restricted
+(including the $\Gamma_i$ terms) and the system thus restricted
 becomes the ``current model'' for the purposes of further tests.  Thus
 you are able to carry out cumulative tests, as in Chapter 7 of
 \cite{johansen95}.
@@ -710,7 +710,7 @@ corresponds to
 \right]
 \]
 The same convention is used for $\alpha$: when only one index is given
-for an \texttt{a} term the restriction is presumed to apply to all
+for an ``\texttt{a}'' term the restriction is presumed to apply to all
 $r$ columns of $\alpha$, or in other words the variable associated
 with the given row of $\alpha$ is weakly exogenous. For instance, the
 formulation
@@ -777,7 +777,7 @@ interest rates, $y$ is output and $\pi$ is inflation.\footnote{A
   of interest rates implies that the third equilibrium relationship
   should include a constant for the liquidity premium. However, since
   in this example the system is estimated with the constant term
-  unrestricted, the liquidity premium gets merged in the system
+  unrestricted, the liquidity premium gets absorbed into the system
   intercept and disappears from $z_t$.}  (The names for these
 variables in the gretl data file are \verb|m_p|, \texttt{rl},
 \texttt{rs}, \texttt{y} and \texttt{infl}, respectively.)
@@ -947,16 +947,16 @@ end restrict
 ts_y = 2*(ll0 - $rlnl)
 
 loop foreach i m p l s y --quiet
-  printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
+  printf "Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 endloop
 \end{scodebit}
 Output (variable, LR test, p-value):
 \begin{scodebit}
-\Delta m	18.111 [0.0060]
-\Delta p	21.067 [0.0018]
-\Delta l	11.819 [0.0661]
-\Delta s	16.000 [0.0138]
-\Delta y	11.335 [0.0786]
+Delta m	18.111 [0.0060]
+Delta p	21.067 [0.0018]
+Delta l	11.819 [0.0661]
+Delta s	16.000 [0.0138]
+Delta y	11.335 [0.0786]
 \end{scodebit}
 %$
 \end{script}
@@ -1009,7 +1009,7 @@ met.\footnote{See \cite{boswijk-doornik04}, pp.\ 447--8 for
 \label{sec:vecm-opt}
 
 In general, the ML estimator for the restricted VECM problem has no
-closed form solution, hence the maximum must be found via numerical
+closed-form solution, hence the maximum must be found via numerical
 methods.\footnote{The exception is restrictions that are homogeneous,
   common to all $\beta$ or all $\alpha$ (in case $r>1$), and involve
   either $\beta$ only or $\alpha$ only.  Such restrictions are handled
@@ -1116,7 +1116,7 @@ based on simulated annealing is this: use $\theta^*$ if $\theta^* >
 improvement in the likelihood via annealing, we make full use of this;
 on the other hand, if we fail to get an improvement we nonetheless
 allow the annealing to randomize the starting point.  Experiments
-indicated that the latter effect can be helpful.
+indicate that the latter effect can be helpful.
 
 Besides annealing, a further alternative is \textbf{manual
   initialization}.  This is done by passing a predefined vector to the
@@ -1207,7 +1207,7 @@ remove it for the purpose of maximizing the likelihood, then reimpose
 it by scaling the result.
 
 Unfortunately it is not possible to say in advance whether ``scale
-removal'' of this sort will give better results, for any particular
+removal'' of this sort will give better results for any particular
 estimation problem.  However, this does seem to be the case more often
 than not.  Gretl therefore performs scale removal where feasible,
 unless you
