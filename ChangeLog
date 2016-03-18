@@ -1,6 +1,8 @@
 version 2016b, in progress
 - "dataset" command: expose and document the "pad-daily" 
   option
+- "vecm" command: clarify the options available when specify-
+  ing a restriction on beta via matrices R and q
 - Commands that produce both textual output and plots: add
   a --plot option to control the format of the plot
 - GUI help text: make references to the Gretl User's Guide
