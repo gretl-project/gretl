@@ -735,10 +735,10 @@ with the name of the corresponding variable, in square brackets. For
 example, instead of \texttt{a3 = 0} one could write \texttt{a[cpr] =
   0}, if the third variable in the system is named \texttt{cpr}.
 
-Finally, a short-cut is available for setting up complex restrictions (but
-currently only in relation to $\beta$): you can specify $R_b$ and $q$,
-as in $R_b \vec{\beta} = q$, by giving the names of previously
-defined matrices.  For example,
+Finally, a shortcut (or anyway an alternative) is available for
+setting up complex restrictions (but currently only in relation to
+$\beta$): you can specify $R_b$ and $q$, as in $R_b \vec{\beta} = q$,
+by giving the names of previously defined matrices.  For example,
 %
 \begin{code}
 matrix I4 = I(4)
@@ -751,7 +751,16 @@ end restrict
 \end{code}
 %
 which manually imposes Phillips normalization on the $\beta$ estimates
-for a system with cointegrating rank 4.
+for a system with cointegrating rank 4. 
+
+There are two points to note in relation to this option. First,
+$\vec{\beta}$ is taken to include the coefficients on all terms within
+the cointegration space, including the restricted constant or trend,
+if any, as well as any restricted exogenous variables. Second, it is
+acceptable to give an \texttt{R} matrix with a number of columns equal
+to the number of \textit{rows} of $\beta$; this variant is taken to
+specify a restriction that is in common across all the columns of
+$\beta$.
  
 \subsection{An example}
 \label{sec:vecm-overid-ex}
@@ -872,12 +881,12 @@ Input:
 restrict
   b[1,5] = -1
 end restrict
-genr ll_uie = $rlnl
+ll_uie = $rlnl
 
 restrict
   b[2,3] = -1
 end restrict
-genr ll_hfh = $rlnl
+ll_hfh = $rlnl
 
 # replicate table 5, page 824
 printf "Testing zero restrictions in cointegration space:\n"
