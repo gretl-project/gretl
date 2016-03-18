@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-10 11:41-0500\n"
-"PO-Revision-Date: 2016-03-10 19:14+0100\n"
+"PO-Revision-Date: 2016-03-18 13:44+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -38,7 +38,7 @@ msgstr "criterio de inf. de Bayes modificado"
 #: lib/src/adf_kpss.c:514 lib/src/modelprint.c:3167 lib/src/texprint.c:1092
 #: lib/src/varprint.c:1098 lib/src/varprint.c:1106 gui2/library.c:962
 msgid "BIC"
-msgstr "BIC"
+msgstr "criterio de inf. de Bayes"
 
 #: lib/src/adf_kpss.c:516 gui2/library.c:963
 msgid "t-statistic"
@@ -51,7 +51,7 @@ msgstr "criterio de inf. de Akaike modificado"
 #: lib/src/adf_kpss.c:519 lib/src/modelprint.c:3167 lib/src/texprint.c:1091
 #: lib/src/varprint.c:1097 lib/src/varprint.c:1105 gui2/library.c:961
 msgid "AIC"
-msgstr "AIC"
+msgstr "criterio de inf. de Akaike "
 
 #: lib/src/adf_kpss.c:532
 #, c-format
@@ -76,7 +76,7 @@ msgstr "Proba incrementada de Dickey-Fuller para *%s*\n"
 #: lib/src/adf_kpss.c:543 plugin/panurc.c:577
 #, c-format
 msgid "including one lag of (1-L)%s"
-msgstr "con un retardo de (1-L)%s"
+msgstr "con 1 retardo de (1-L)%s"
 
 #: lib/src/adf_kpss.c:545 plugin/panurc.c:579
 #, c-format
@@ -86,7 +86,7 @@ msgstr "con %d retardos de (1-L)%s"
 #: lib/src/adf_kpss.c:551
 #, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(n=%d, %s)"
+msgstr "(o máximo foi=%d, o criterio %s)"
 
 #: lib/src/adf_kpss.c:593 gui2/library.c:980 gui2/library.c:1220
 #: gui2/selector.c:6128 plugin/panurc.c:234
@@ -722,7 +722,7 @@ msgstr "Observación"
 #: lib/src/compare.c:3192
 #, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
-msgstr "Gráfica CUSUMSQ con interv. de confianza do 95%"
+msgstr "Gráfica CUSUM ao cadrado con interv. de confianza do 95%"
 
 #: lib/src/compare.c:3200
 #, no-c-format
@@ -742,7 +742,7 @@ msgstr ""
 
 #: lib/src/compare.c:3314
 msgid "CUSUMSQ test for stability of parameters"
-msgstr "Proba CUSUMSQ de estabilidade dos parámetros"
+msgstr "Proba CUSUM ao cadrado de estabilidade dos parámetros"
 
 #: lib/src/compare.c:3331
 msgid "Cumulated sum of squared residuals"
@@ -2612,7 +2612,7 @@ msgstr "Carácter incorrecto '%c'\n"
 #: lib/src/genlex.c:1729
 #, c-format
 msgid "Unexpected byte 0x%x\n"
-msgstr "Inesperado byte 0x%x\n"
+msgstr "Byte inesperado 0x%x\n"
 
 #: lib/src/genmain.c:42
 #, c-format
@@ -3689,7 +3689,7 @@ msgstr "Proba RV para rho = 0"
 
 #: lib/src/gretl_model.c:3627
 msgid "Joint test on named regressors"
-msgstr "Proba conxunta dos regresores nomeados"
+msgstr "Proba conxunta dos regresores (agás a constante)"
 
 #: lib/src/gretl_model.c:3630
 msgid "Robust test for differing group intercepts"
