@@ -4092,11 +4092,13 @@
 	targ="gnuplot"/> command.
       </para>
       <para>
-	The <opt>silent</opt> flag suppresses the usual output
-	entirely.  This makes sense only in conjunction with one or
-	other of the distribution test options: the test statistic and
-	its p-value are recorded, and can be retrieved using the
-	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>.
+	The <opt>silent</opt> flag suppresses the usual text output.
+	This might be used in conjunction with one or other of the
+	distribution test options: the test statistic and its p-value
+	are recorded, and can be retrieved using the accessors <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/>. It might also be
+	used along with the <opt>plot</opt> option if you just want a
+	histogram and don't care to see the accompanying text.
       </para>
     </description>
 
