@@ -805,7 +805,7 @@ rl = rl/4
 
 # replicate table 4, page 824
 vecm 2 3 m_p infl rl rs y -q
-genr ll0 = $lnl
+ll0 = $lnl
 
 restrict --full
   b[1,1] = 1
@@ -821,7 +821,7 @@ restrict --full
   b[3,4] = -1
   b[3,5] = 0
 end restrict
-genr ll1 = $rlnl
+ll1 = $rlnl
 \end{scodebit}
 Partial output:
 \begin{scodebit}

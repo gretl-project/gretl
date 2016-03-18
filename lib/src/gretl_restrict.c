@@ -599,6 +599,7 @@ static int test_user_matrices (gretl_restriction *rset)
 {
     gretl_matrix *R = rset->R;
     gretl_matrix *q = rset->q;
+    int err = 0;
 
     if (R == NULL || q == NULL) {
 	/* we didn't get both parts */
@@ -610,38 +611,45 @@ static int test_user_matrices (gretl_restriction *rset)
 	return E_NONCONF;
     }
 
-    /* FIXME the VECM case is kinda special
-       and should probabl be handed off to
-       a separate function here */
-
-    if (R->rows > rset->gmax) {
-	/* too many restrictions */
-	fprintf(stderr, "R->rows = %d: too many restrictions\n", R->rows);
-	return E_NONCONF;
-    }    
-
     if (rset->vecm) {
-	rset->bcols = R->cols;
-    }
+	/* this is supposed to be a restriction on beta:
+	   test it as such */
+	int nb = gretl_VECM_n_beta(rset->obj);
+	int nbr = nb * gretl_VECM_rank(rset->obj);
 
-    if (R->cols != rset->gmax) {
-	if (rset->vecm) {
-	    int nb = gretl_VECM_n_beta(rset->obj);
-	    int nbr = nb * gretl_VECM_rank(rset->obj);
-
-	    if (R->cols == nb && R->rows <= nb) {
-		rset->bmulti = 0;
-	    } else if (R->cols == nbr && R->rows <= nbr) {
-		; /* OK */
-	    } else {
-		return E_NONCONF;
-	    }
-	} else {
-	    return E_NONCONF;
+	if (R->cols == nb && R->rows <= nb) {
+	    /* FIXME: supported but not yet documented */
+	    rset->bmulti = 0;
+	} else if (R->rows > nbr) {
+	    gretl_errmsg_sprintf(_("Too many restrictions: the maximum "
+				   "number is %d"), nbr);
+	    err = E_NONCONF;
+	} else if (R->cols != nbr) {
+	    gretl_errmsg_sprintf(_("The R matrix must have %d columns"),
+				 nbr);
+	    err = E_NONCONF;
+	}
+	if (!err) {
+	    /* required only if we accept the undoc'd case where
+	       the restrictions are in common across the columns
+	       of beta 
+	    */
+	    rset->bcols = R->cols;
+	}
+    } else {
+	/* the non-VECM case */
+	if (R->rows > rset->gmax) {
+	    gretl_errmsg_sprintf(_("Too many restrictions: the maximum "
+				   "number is %d"), rset->gmax);
+	    err = E_NONCONF;
+	} else if (R->cols != rset->gmax) {
+	    gretl_errmsg_sprintf(_("The R matrix must have %d columns"),
+				 rset->gmax);
+	    err = E_NONCONF;
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* Set up the matrices needed for testing a set of restrictions:
