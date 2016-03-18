@@ -610,6 +610,10 @@ static int test_user_matrices (gretl_restriction *rset)
 	return E_NONCONF;
     }
 
+    /* FIXME the VECM case is kinda special
+       and should probabl be handed off to
+       a separate function here */
+
     if (R->rows > rset->gmax) {
 	/* too many restrictions */
 	fprintf(stderr, "R->rows = %d: too many restrictions\n", R->rows);
