@@ -30,6 +30,8 @@
 #include "gretl_panel.h"
 #include "missing_private.h"
 #include "gretl_string_table.h"
+#include "gretl_array.h"
+#include "uservar.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -1858,13 +1860,10 @@ static void line_out (const char *s, int len, FILE *fp)
     }
 }
 
-void print_gnuplot_literal_lines (const char *s, FILE *fp)
+static void gnuplot_literal_from_string (const char *s,
+					 FILE *fp)
 {
     const char *p;
-
-    if (s == NULL || *s == '\0') {
-	return;
-    }
 
     p = s = front_strip(s);
 
@@ -1879,6 +1878,77 @@ void print_gnuplot_literal_lines (const char *s, FILE *fp)
     }
 
     fputs("# end literal lines\n", fp);
+}
+
+static char **literal_strings_from_opt (int ci, int *ns)
+{
+    const char *aname = get_optval_string(ci, OPT_K);
+    char **S = NULL;
+
+    if (aname != NULL) {
+	GretlType type;
+	gretl_array *A;
+
+	A = user_var_get_value_and_type(aname, &type);
+	
+	if (A != NULL && type == GRETL_TYPE_ARRAY) {
+	    S = gretl_array_get_strings(A, ns);
+	}
+    }
+
+    return S;
+}
+
+static void gnuplot_literal_from_opt (int ci, FILE *fp)
+{
+    char **S;
+    int ns;
+
+    S = literal_strings_from_opt(ci, &ns);
+
+    if (ns > 0) {
+	int i, n;
+	
+	fputs("# start literal lines\n", fp);
+	for (i=0; i<ns; i++) {
+	    n = strlen(S[i]);
+	    if (n > 0) {
+		fputs(S[i], fp);
+		if (S[i][n-1] != '\n') {
+		    fputc('\n', fp);
+		}
+	    }
+	}
+	fputs("# end literal lines\n", fp);
+    }
+}
+
+void print_gnuplot_literal_lines (const char *s,
+				  int ci, gretlopt opt,
+				  FILE *fp)
+{
+    if (s != NULL && *s != '\0') {
+	gnuplot_literal_from_string(s, fp);
+    } else if (opt & OPT_K) {
+	gnuplot_literal_from_opt(ci, fp);
+    }
+}
+
+static void print_extra_literal_lines (char **S,
+				       int ns,
+				       FILE *fp)
+{
+    int i, n;
+
+    for (i=0; i<ns; i++) {
+	n = strlen(S[i]);
+	if (n > 0) {
+	    fputs(S[i], fp);
+	    if (S[i][n-1] != '\n') {
+		fputc('\n', fp);
+	    }
+	}
+    }    
 }
 
 static int loess_plot (gnuplot_info *gi, const char *literal,
@@ -1949,9 +2019,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
 
-    if (literal != NULL && *literal != '\0') {
-	print_gnuplot_literal_lines(literal, fp);
-    }
+    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 title '' w points, \\\n", fp);
@@ -2134,9 +2202,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     print_auto_fit_string(gi->fit, fp);
 
-    if (literal != NULL && *literal != '\0') {
-	print_gnuplot_literal_lines(literal, fp);
-    }
+    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 title '' w lines, \\\n", fp);
@@ -3429,8 +3495,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	list[1] = list[2];
 	list[2] = list[3];
 	list[0] = 2;
-    } else if (literal != NULL && *literal != '\0') {
-	print_gnuplot_literal_lines(literal, fp);
+    } else {
+	print_gnuplot_literal_lines(literal, GNUPLOT, opt, fp);
     }
 
     /* now print the 'plot' lines */
@@ -4179,9 +4245,7 @@ int gnuplot_3d (int *list, const char *literal,
 
     gnuplot_missval_string(fp);
 
-    if (literal != NULL && *literal != 0) {
-	print_gnuplot_literal_lines(literal, fp);
-    }
+    print_gnuplot_literal_lines(literal, GNUPLOT, *opt, fp);
 
     surface = maybe_get_surface(list, dset, *opt);
 
@@ -4322,6 +4386,8 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     double barwidth;
     const double *endpt;
     int plottype, use_boxes = 1;
+    char **S = NULL;
+    int ns = 0;
     int err = 0;
 
     if (K == 0) {
@@ -4360,13 +4426,17 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     }
 
+    S = literal_strings_from_opt(FREQ, &ns);
+
     gretl_push_c_numeric_locale();
 
     if (dist) {
+	int nlit = 2 + 2 * (!na(freq->test)) + ns;
+	
 	lambda = 1.0 / (freq->n * barwidth);
 
 	if (dist == D_NORMAL) {
-	    fputs("# literal lines = 4\n", fp);
+	    fprintf(fp, "# literal lines = %d\n", nlit);
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
 
@@ -4387,7 +4457,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 				      chisq_cdf_comp(2, freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n", 
 			label);
-	    }	
+	    }
+
+	    if (ns > 0) {
+		print_extra_literal_lines(S, ns, fp);
+	    }
 	} else if (dist == D_GAMMA) {
 	    double var = freq->sdx * freq->sdx;
 
@@ -4396,7 +4470,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	    /* shape param = mean/scale */
 	    alpha = freq->xbar / beta;
 
-	    fputs("# literal lines = 4\n", fp);
+	    fprintf(fp, "# literal lines = %d\n", nlit);
 	    fprintf(fp, "beta = %g\n", beta);
 	    fprintf(fp, "alpha = %g\n", alpha);
 	    plotmin = 0.0;
@@ -4409,7 +4483,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 				      normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n", 
 			label);
-	    }	
+	    }
+
+	    if (ns > 0) {
+		print_extra_literal_lines(S, ns, fp);
+	    }
 	}
 
 	/* adjust min, max if needed */
@@ -4430,6 +4508,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	fprintf(fp, "set xrange [%.10g:%.10g]\n", plotmin, plotmax);
 	maybe_set_yrange(freq, lambda, fp);
 	fputs("set nokey\n", fp);
+
+	if (ns > 0) {
+	    fprintf(fp, "# literal lines = %d\n", ns);
+	    print_extra_literal_lines(S, ns, fp);
+	}
     }
 
     if (isnan(lambda)) {

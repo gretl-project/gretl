@@ -137,6 +137,7 @@ struct gretl_option gretl_opts[] = {
     { BIPROBIT, OPT_C, "cluster", 2 },    
     { BIPROBIT, OPT_X, "save-xbeta", 0 },
     { BXPLOT,   OPT_O, "notches", 0 },
+    { BXPLOT,   OPT_K, "tweaks", 2 },
     { BXPLOT,   OPT_L, "outliers", 2 },
     { BXPLOT,   OPT_P, "panel", 0 },
     { BXPLOT,   OPT_U, "output", 2 },
@@ -234,6 +235,7 @@ struct gretl_option gretl_opts[] = {
     { FREQ,     OPT_W, "binwidth", 2 },
     { FREQ,     OPT_X, "matrix", 2 },
     { FREQ,     OPT_U, "plot", 2 },
+    { FREQ,     OPT_K, "tweaks", 2 },
     { FUNDEBUG, OPT_C, "continue", 0 },
     { FUNDEBUG, OPT_N, "next", 0 },
     { FUNDEBUG, OPT_Q, "quit", 0 },
@@ -259,6 +261,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_E, "semilog-fit", 0 },
     { GNUPLOT,  OPT_S, "suppress-fitted", 0 },
     /* end legacy plot fit options */
+    { GNUPLOT,  OPT_K, "tweaks", 2 },
     { GNUPLOT,  OPT_M, "with-impulses", 1 },
     { GNUPLOT,  OPT_P, "with-lp", 1 },
     { GNUPLOT,  OPT_B, "with-boxes", 1 },
