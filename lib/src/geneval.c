@@ -11024,10 +11024,10 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 static void reattach_series (NODE *n, parser *p)
 {
     if (1 || n->v.xvec == NULL) {
-	/* trigger for full reset */
+	/* trigger for full reset (FIXME?) */
 	n->vnum = current_series_index(p->dset, n->vname);
 	if (n->vnum < 0) {
-	    fprintf(stderr, "SERIES node: %s is not a valid series\n", n->vname);
+	    gretl_errmsg_sprintf("'%s': not a series", n->vname);
 	    p->err = E_DATA;
 	} else {
 	    n->v.xvec = p->dset->Z[n->vnum];
@@ -11039,20 +11039,27 @@ static void reattach_series (NODE *n, parser *p)
 
 static void reattach_data_error (NODE *n, parser *p)
 {
-    fprintf(stderr, "node_reattach_data (vname '%s'): "
-	    "expected %s", n->vname, getsymb(n->t));
+    char msg[256];
+
+    sprintf(msg, "'%s': expected %s", n->vname, getsymb(n->t));
     
     if (n->uv == NULL) {
-	fputs(" but name look-up failed\n", stderr);
-	p->err = E_DATA;
-    } else if (n->uv->ptr == NULL) {
-	fprintf(stderr, ", found %s with NULL data\n",
-		gretl_type_get_name(n->uv->type));
+	strcat(msg, " but name look-up failed");
 	p->err = E_DATA;
     } else {
-	fprintf(stderr, " but found %s\n",
-		gretl_type_get_name(n->uv->type));
-	p->err = E_TYPES;
+	const char *s = gretl_type_get_name(n->uv->type);
+	gchar *add;
+
+	if (n->uv->ptr == NULL) {
+	    add = g_strdup_printf(", found %s with NULL data", s);
+	    p->err = E_DATA;
+	} else {
+	    add = g_strdup_printf(" but found %s", s);
+	    p->err = E_TYPES;
+	}
+	strcat(msg, add);
+	gretl_errmsg_set(msg);
+	g_free(add);
     }
 }
 
