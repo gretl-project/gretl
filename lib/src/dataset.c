@@ -1506,10 +1506,31 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
 
     if (v <= 0 || v >= dset->v || name == NULL) {
 	err = E_DATA;
-    } else if (object_is_const(dset->varname[v]) ||
-	series_is_parent(dset, v)) {
+    } else {
+	err = check_varname(name);
+    }
+
+    if (!err) {
+	GretlType type;
+
+	type = user_var_get_type_by_name(name);
+	if (type != GRETL_TYPE_NONE) {
+	    gretl_errmsg_set("There is already an object of this name");
+	    err = E_DATA;
+	}
+    }
+
+    if (!err && current_series_index(dset, name) >= 0) {
+	gretl_errmsg_set("There is already a series of this name");
+	err = E_DATA;
+    }
+
+    if (!err && (object_is_const(dset->varname[v]) ||
+		 series_is_parent(dset, v))) {
 	err = overwrite_err(dset->varname[v]);
-    } else if (strcmp(dset->varname[v], name)) {
+    }
+
+    if (!err && strcmp(dset->varname[v], name)) {
 	dset->varname[v][0] = '\0';
 	strncat(dset->varname[v], name, VNAMELEN-1);
 	set_dataset_is_changed();
