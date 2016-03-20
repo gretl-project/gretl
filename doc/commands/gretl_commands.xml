@@ -10006,7 +10006,9 @@
 	Changes the name of <repl>series</repl> (identified by name or ID
 	number) to <repl>newname</repl>.  The new name must be of 31
 	characters maximum, must start with a letter, and must be composed of
-	only letters, digits, and the underscore character.
+	only letters, digits, and the underscore character. In
+	addition, it must not be the name of an existing object of any
+	kind.
       </para>
     </description>
 
