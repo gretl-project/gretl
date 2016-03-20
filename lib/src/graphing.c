@@ -1835,27 +1835,17 @@ static void print_axis_label (char axis, const char *s, FILE *fp)
     }
 }
 
-static const char *front_strip (const char *s)
+static void literal_line_out (const char *s, int len, FILE *fp)
 {
-    while (*s) {
-	if (isspace(*s) || *s == '{') {
-	    s++;
-	} else {
-	    break;
-	}
-    }
-	
-    return s;
-}
-
-static void line_out (const char *s, int len, FILE *fp)
-{
-    char *p = malloc(len + 1);
+    char *q, *p = malloc(len + 1);
 
     if (p != NULL) {
 	*p = '\0';
 	strncat(p, s, len);
-	fprintf(fp, "%s\n", front_strip(p));
+	q = p + strspn(p, " \t");
+	if (*q != '\0') {
+	    fprintf(fp, "%s\n", q);
+	}
 	free(p);
     }
 }
@@ -1865,13 +1855,14 @@ static void gnuplot_literal_from_string (const char *s,
 {
     const char *p;
 
-    p = s = front_strip(s);
+    s += strspn(s, " \t{");
+    p = s;
 
     fputs("# start literal lines\n", fp);
 
     while (*s && *s != '}') {
 	if (*s == ';') {
-	    line_out(p, s - p, fp);
+	    literal_line_out(p, s - p, fp);
 	    p = s + 1;
 	}
 	s++;
@@ -1880,19 +1871,30 @@ static void gnuplot_literal_from_string (const char *s,
     fputs("# end literal lines\n", fp);
 }
 
-static char **literal_strings_from_opt (int ci, int *ns)
+static char **literal_strings_from_opt (int ci, int *ns,
+					int *real_ns)
 {
     const char *aname = get_optval_string(ci, OPT_K);
     char **S = NULL;
 
+    *ns = *real_ns = 0;
+
     if (aname != NULL) {
 	GretlType type;
 	gretl_array *A;
+	int i;
 
 	A = user_var_get_value_and_type(aname, &type);
 	
 	if (A != NULL && type == GRETL_TYPE_ARRAY) {
 	    S = gretl_array_get_strings(A, ns);
+	    if (*ns > 0) {
+		for (i=0; i<*ns; i++) {
+		    if (S[i] != NULL && S[i][0] != '\0') {
+			*real_ns += 1;
+		    }
+		}
+	    }
 	}
     }
 
@@ -1902,20 +1904,22 @@ static char **literal_strings_from_opt (int ci, int *ns)
 static void gnuplot_literal_from_opt (int ci, FILE *fp)
 {
     char **S;
-    int ns;
+    int ns, real_ns;
 
-    S = literal_strings_from_opt(ci, &ns);
+    S = literal_strings_from_opt(ci, &ns, &real_ns);
 
-    if (ns > 0) {
+    if (real_ns > 0) {
 	int i, n;
 	
 	fputs("# start literal lines\n", fp);
 	for (i=0; i<ns; i++) {
-	    n = strlen(S[i]);
-	    if (n > 0) {
-		fputs(S[i], fp);
-		if (S[i][n-1] != '\n') {
-		    fputc('\n', fp);
+	    if (S[i] != NULL) {
+		n = strlen(S[i]);
+		if (n > 0) {
+		    fputs(S[i], fp);
+		    if (S[i][n-1] != '\n') {
+			fputc('\n', fp);
+		    }
 		}
 	    }
 	}
@@ -1941,11 +1945,13 @@ static void print_extra_literal_lines (char **S,
     int i, n;
 
     for (i=0; i<ns; i++) {
-	n = strlen(S[i]);
-	if (n > 0) {
-	    fputs(S[i], fp);
-	    if (S[i][n-1] != '\n') {
-		fputc('\n', fp);
+	if (S[i] != NULL) {
+	    n = strlen(S[i]);
+	    if (n > 0) {
+		fputs(S[i], fp);
+		if (S[i][n-1] != '\n') {
+		    fputc('\n', fp);
+		}
 	    }
 	}
     }    
@@ -3760,6 +3766,11 @@ int multi_scatters (const int *list, const DATASET *dset,
     fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
     fputs("set nokey\n", fp);
 
+    if (opt & OPT_K) {
+	/* --tweaks=foo */
+	print_gnuplot_literal_lines(NULL, SCATTERS, opt, fp);
+    }    
+
     gretl_push_c_numeric_locale();
 
     if (obs != NULL) {
@@ -4387,7 +4398,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     const double *endpt;
     int plottype, use_boxes = 1;
     char **S = NULL;
-    int ns = 0;
+    int ns = 0, real_ns = 0;
     int err = 0;
 
     if (K == 0) {
@@ -4426,12 +4437,12 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     }
 
-    S = literal_strings_from_opt(FREQ, &ns);
+    S = literal_strings_from_opt(FREQ, &ns, &real_ns);
 
     gretl_push_c_numeric_locale();
 
     if (dist) {
-	int nlit = 2 + 2 * (!na(freq->test)) + ns;
+	int nlit = 2 + 2 * (!na(freq->test)) + real_ns;
 	
 	lambda = 1.0 / (freq->n * barwidth);
 
@@ -4459,7 +4470,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 			label);
 	    }
 
-	    if (ns > 0) {
+	    if (real_ns > 0) {
 		print_extra_literal_lines(S, ns, fp);
 	    }
 	} else if (dist == D_GAMMA) {
@@ -4485,7 +4496,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 			label);
 	    }
 
-	    if (ns > 0) {
+	    if (real_ns > 0) {
 		print_extra_literal_lines(S, ns, fp);
 	    }
 	}
@@ -4509,8 +4520,8 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	maybe_set_yrange(freq, lambda, fp);
 	fputs("set nokey\n", fp);
 
-	if (ns > 0) {
-	    fprintf(fp, "# literal lines = %d\n", ns);
+	if (real_ns > 0) {
+	    fprintf(fp, "# literal lines = %d\n", real_ns);
 	    print_extra_literal_lines(S, ns, fp);
 	}
     }

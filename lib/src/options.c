@@ -495,6 +495,7 @@ struct gretl_option gretl_opts[] = {
     { SCATTERS, OPT_T, "time-series", 0 },
     { SCATTERS, OPT_U, "output", 2 },
     { SCATTERS, OPT_X, "matrix", 2 },
+    { SCATTERS, OPT_K, "tweaks", 2 },
     { SET,      OPT_F, "from-file", 2 },
     { SET,      OPT_T, "to-file", 2 },
     { SETINFO,  OPT_C, "continuous", 0 },
