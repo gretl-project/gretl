@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "missing_private.h"
+#include "gretl_func.h"
 
 typedef struct MISSOBS_ MISSOBS;
 
@@ -529,38 +530,49 @@ static int real_setmiss (double missval, int varno,
  * Set to "missing" each observation of each series in @list that
  * has the value represented by @param.
  *
- * Returns: 1 if at least one observation was set as missing,
- * otherwise 0.
+ * Returns: 0 on success, non-zero code on failure.
  */
 
 int set_miss (const int *list, const char *param, 
 	      DATASET *dset, PRN *prn)
 {
-    int i, vi, count, ret = 0;
+    int i, vi, count;
     double missval;
+    int err = 0;
 
     if (param == NULL) {
-	return 0;
+	return E_ARGS;
     }
 
-    missval = atof(param);
+    if (dset == NULL || dset->n == 0) {
+	return E_NODATA;
+    }
+
+    missval = gretl_double_from_string(param, &err);
+    if (err) {
+	return err;
+    }
 
     if (list == NULL || list[0] == 0) {
 	count = real_setmiss(missval, 0, dset);
 	if (count) { 
 	    pprintf(prn, _("Set %d values to \"missing\"\n"), count);
-	    ret = 1;
 	} else {
 	    pputs(prn, _("Didn't find any matching observations\n"));
 	}
     } else {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
+	    if (vi == 0 || object_is_const(dset->varname[vi])) {
+		gretl_errmsg_sprintf(_("The variable %s is read-only"),
+				     dset->varname[vi]);
+		err = E_DATA;
+		break;
+	    }
 	    count = real_setmiss(missval, vi, dset);
 	    if (count) { 
 		pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
 			dset->varname[vi], count);
-		ret = 1;
 	    } else { 
 		pprintf(prn, _("%s: Didn't find any matching observations\n"),
 			dset->varname[vi]);
@@ -568,7 +580,7 @@ int set_miss (const int *list, const char *param,
 	}
     }
 
-    return ret;
+    return err;
 }
 
 /**

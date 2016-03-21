@@ -2621,11 +2621,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETMISS:
-	if (dset == NULL || dset->Z == NULL) {
-	    err = E_DATA;
-	} else {
-	    set_miss(cmd->list, cmd->param, dset, prn);
-	}
+	err = set_miss(cmd->list, cmd->param, dset, prn);
         break;
 
     case LABELS:
@@ -2988,7 +2984,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = chow_test_driver(cmd->param, model, dset, cmd->opt, prn);
 	} else if (cmd->ci == QLRTEST) {
 	    err = QLR_test(model, dset, cmd->opt, prn);
-	} else if (cmd->ci == VIF) { 
+	} else if (cmd->ci == VIF) {
 	    err = vif_test(model, dset, prn);
 	} 
 	break;
