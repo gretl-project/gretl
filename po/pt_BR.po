@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-10 11:41-0500\n"
-"PO-Revision-Date: 2016-02-04 17:16-0200\n"
+"POT-Creation-Date: 2016-03-21 10:23-0300\n"
+"PO-Revision-Date: 2016-03-21 10:30-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1079,9 +1079,8 @@ msgid "warning: %d labels were truncated.\n"
 msgstr "aviso: %d nomes de variáveis foram truncados.\n"
 
 #: lib/src/csvdata.c:3139
-#, fuzzy
 msgid "scanning for data...\n"
-msgstr "procurando rótulos de linhas e dados…\n"
+msgstr "procurando dados...\n"
 
 #: lib/src/csvdata.c:3141
 msgid "scanning for row labels and data...\n"
@@ -1464,7 +1463,7 @@ msgstr "Renumerou-se %s como variável %d\n"
 
 #: lib/src/dataset.c:3310
 msgid "The 'dataset' command is not available within functions"
-msgstr "O comando 'dataset' não está disponível dentro de funções"
+msgstr "O comando 'dataset' não pode ser utilizado dentro de funções"
 
 #: lib/src/dataset.c:3317
 msgid "Sorry, this command is not available in loop mode\n"
@@ -2336,9 +2335,9 @@ msgid "Matrix specification is not coherent"
 msgstr "A especificação da matriz é incoerente"
 
 #: lib/src/geneval.c:6942
-#, fuzzy, c-format
+#, c-format
 msgid "The function %s does not return any value"
-msgstr "A matriz %s não representa uma tabela de contingência"
+msgstr "A função %s não retorna nenhum valor"
 
 #: lib/src/geneval.c:6953 lib/src/geneval.c:8743
 #, c-format
@@ -2619,9 +2618,9 @@ msgid "Invalid character '%c'\n"
 msgstr "Caractere '%c' inválido\n"
 
 #: lib/src/genlex.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected byte 0x%x\n"
-msgstr "Símbolo '%c' não esperado"
+msgstr "Byte inesperado 0x%x\n"
 
 #: lib/src/genmain.c:42
 #, c-format
@@ -3963,14 +3962,14 @@ msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "Não é possível fazer isto com um conjunto de dados subamostrado"
 
 #: lib/src/gretl_paths.c:1823
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find package %s"
-msgstr "Não foi possível encontrar %s"
+msgstr "Não foi possível encontrar o pacote %s"
 
 #: lib/src/gretl_paths.c:1834
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "Não foi possível encontrar um controlador de rede utilizável\n"
+msgstr "Não foi possível encontrar o arquivo %s para o pacote %s"
 
 #: lib/src/gretl_paths.c:2500
 msgid "User directory is not set"
@@ -5975,7 +5974,7 @@ msgstr "Você não pode apagar escalares neste contexto\n"
 #: lib/src/monte_carlo.c:3069 lib/src/monte_carlo.c:3086
 #, c-format
 msgid "delete %s: not allowed\n"
-msgstr ""
+msgstr "deletar %s: não permitido\n"
 
 #: lib/src/monte_carlo.c:3547
 #, c-format
@@ -7526,7 +7525,7 @@ msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
 #: cli/gretlcli.c:158
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -7556,6 +7555,7 @@ msgstr ""
 " -v ou --version   Mostrar informação sobre a versão e sair.\n"
 " -e ou --english   Forçar o uso do inglês em vez da tradução.\n"
 " -q ou --quiet      Mostrar informações do programa com menor detalhamento.\n"
+" -t ou --tool      Operar silenciosamente.\n"
 "Exemplo de uso do modo 'batch':\n"
 " gretlcli -b meuarquivo.inp >meuarquivo.out\n"
 "Exemplo de uso do modo 'run':\n"
@@ -7570,6 +7570,11 @@ msgid ""
 " under the name \"scriptopt\"\n"
 "\n"
 msgstr ""
+"\n"
+"Opção especial em modo 'batch':\n"
+" --scriptopt=<valor> define um escalar, chamado \"scriptopt\", que\n"
+" pode ser acessado por um script\n"
+"\n"
 
 #: cli/gretlcli.c:213
 #, c-format
@@ -7710,7 +7715,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 4 de fevereiro de 2016."
+"Tradução de 21 de março de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -11157,9 +11162,8 @@ msgid "point"
 msgstr "ponto"
 
 #: gui2/gpt_dialog.c:2853
-#, fuzzy
 msgid "data scale"
-msgstr "escala"
+msgstr "escala dos dados"
 
 #: gui2/gpt_dialog.c:2867
 msgid "y axis"
@@ -12782,18 +12786,16 @@ msgid "gretl: import %s data"
 msgstr "gretl: importar dados %s"
 
 #: gui2/gui_utils.c:1268
-#, fuzzy
 msgid "simple append"
-msgstr "média amostral"
+msgstr "acréscimo simples"
 
 #: gui2/gui_utils.c:1269
 msgid "\"join\" (advanced)"
-msgstr ""
+msgstr "\"join\" (avançado)"
 
 #: gui2/gui_utils.c:1272
-#, fuzzy
 msgid "gretl: append data"
-msgstr "gretl: abrir dados"
+msgstr "gretl: acrescentar dados"
 
 #: gui2/gui_utils.c:1333 gui2/library.c:7847
 msgid ""
