@@ -110,7 +110,8 @@ typedef enum {
     LOOP_VERBOSE     = 1 << 1,
     LOOP_QUIET       = 1 << 2,
     LOOP_DELVAR      = 1 << 3,
-    LOOP_ATTACHED    = 1 << 4
+    LOOP_ATTACHED    = 1 << 4,
+    LOOP_RENAMING    = 1 << 5
 } LoopFlags;
 
 struct controller_ {
@@ -202,6 +203,8 @@ struct LOOPSET_ {
 #define loop_set_quiet(l)       (l->flags |= LOOP_QUIET)
 #define loop_is_attached(l)     (l->flags & LOOP_ATTACHED)
 #define loop_set_attached(l)    (l->flags |= LOOP_ATTACHED)
+#define loop_is_renaming(l)     (l->flags & LOOP_RENAMING)
+#define loop_set_renaming(l)    (l->flags |= LOOP_RENAMING)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -228,6 +231,7 @@ static LOOPSET *currloop;
 
 static int compile_level;
 static int loop_execute;
+static int loop_renaming;
 
 int gretl_compiling_loop (void)
 {
@@ -237,6 +241,11 @@ int gretl_compiling_loop (void)
 int gretl_execute_loop (void)
 {
     return loop_execute;
+}
+
+int get_loop_renaming (void)
+{
+    return loop_renaming;
 }
 
 #if SAVE_TOPGEN
@@ -459,17 +468,11 @@ int ok_in_loop (int c)
 {
     /* here are the commands we _don't_ currently allow */
 
-    if (c == CORRGM ||
-	c == CUSUM ||
-	c == FUNC ||
-	c == HURST ||
+    if (c == FUNC ||
 	c == INCLUDE ||
-	c == LEVERAGE ||
 	c == NULLDATA ||
-	c == RMPLOT ||
 	c == RUN ||
-	c == SETMISS ||
-	c == VIF)  {
+	c == SETMISS) {
 	return 0;
     }
 
@@ -673,6 +676,7 @@ static void destroy_loop_stack (LOOPSET *loop)
     gretl_loop_destroy(loop);
 
     compile_level = 0;
+    loop_renaming = 0;
     set_loop_off();
     currloop = NULL;
 }
@@ -2233,10 +2237,14 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     } else {
 	/* FIXME is this (still) wanted? (it messes up python in loops) */
 	/* compress_spaces(loop->cmds[n].line); */
-	if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
-	    /* printing a literal string, not a variable's value */
-	    loop->cmds[n].flags |= LOOP_CMD_LIT;
-	} 
+	if (s->cmd->ci == PRINT) {
+	    if (!loop_is_progressive(loop) || strchr(s->line, '"')) {
+		/* printing a literal string, not a variable's value */
+		loop->cmds[n].flags |= LOOP_CMD_LIT;
+	    }
+	} else if (s->cmd->ci == RENAME) {
+	    loop_set_renaming(loop);
+	}
 	loop->cmds[n].ci = s->cmd->ci;
 	loop->n_cmds += 1;
     }
@@ -3332,6 +3340,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 #endif
 
+    if (loop_is_renaming(loop)) {
+	loop_renaming = 1;
+    }
+
     err = top_of_loop(loop, dset);
     if (err) {
 	*errline = '\0';
@@ -3663,6 +3675,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
 	currloop = NULL;
+	loop_renaming = 0;
 	set_loop_off();
 	loop_reset_error();
 #if LOOPSAVE

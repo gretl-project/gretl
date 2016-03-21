@@ -42,4 +42,6 @@ int scalar_is_read_only_index (const char *name);
 
 void loop_reset_genrs (LOOPSET *loop);
 
+int get_loop_renaming (void);
+
 #endif /* MONTE_CARLO_H */
