@@ -11021,6 +11021,32 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
     }
 }
 
+/* reattach_series: on successive exec's of a given
+   compiled genr, the "xvec" pointer recorded on a
+   SERIES node will have become invalid if:
+
+   (1) the series has been renamed,
+   (2) the dataset has been differently sub-sampled, or
+   (3) the series has been deleted (should be impossible).
+   
+   In case (2) the ID number of the series should still
+   be valid, so it ought to be sufficient to reconnect the
+   xvec pointer as in the second branch below. In case (1),
+   however, it's necessary to look up the ID number by name
+   again (as things stand).
+
+   Note that n->v.xvec will be NULL when this function is
+   reached only in case a genr is attached to a loop that
+   is saved across function calls (then the pointer is 
+   reset to NULL on each call to the function).
+   
+   The "1" below, in the first condition, is a safety-first
+   measure that should be removable if the renaming case
+   is handled somehow (e.g. by banning "rename" within
+   loops, or by arranging to set the relevant xvec pointer
+   to NULL when a series is renamed).
+*/
+
 static void reattach_series (NODE *n, parser *p)
 {
     if (1 || n->v.xvec == NULL) {
@@ -11033,6 +11059,10 @@ static void reattach_series (NODE *n, parser *p)
 	    n->v.xvec = p->dset->Z[n->vnum];
 	}
     } else if (n->vnum >= 0 && n->vnum < p->dset->v) {
+	/* handles the case of the dataset moving due to
+	   sub-sampling, provided that no series are deleted
+	   (the name -> ID mapping remains unchanged)
+	*/
  	n->v.xvec = p->dset->Z[n->vnum];
     }
 }
