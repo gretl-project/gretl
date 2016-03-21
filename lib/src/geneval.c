@@ -11049,8 +11049,9 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 
 static void reattach_series (NODE *n, parser *p)
 {
-    if (1 || n->v.xvec == NULL) {
-	/* trigger for full reset (FIXME?) */
+    if (n->v.xvec == NULL || get_loop_renaming()) {
+	/* trigger for full reset */
+	// fprintf(stderr, "series: full reset\n");
 	n->vnum = current_series_index(p->dset, n->vname);
 	if (n->vnum < 0) {
 	    gretl_errmsg_sprintf("'%s': not a series", n->vname);
@@ -11063,6 +11064,7 @@ static void reattach_series (NODE *n, parser *p)
 	   sub-sampling, provided that no series are deleted
 	   (the name -> ID mapping remains unchanged)
 	*/
+	// fprintf(stderr, "series: reconnect by ID\n");
  	n->v.xvec = p->dset->Z[n->vnum];
     }
 }

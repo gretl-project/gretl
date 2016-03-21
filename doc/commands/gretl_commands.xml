@@ -11575,7 +11575,8 @@
 	-1 indicates "not applicable", you can select "Set missing
 	value code" under the Variable menu and type in the value "-1"
 	(without the quotes).  Gretl will then read the -1s as missing
-	observations.</para>
+	observations.
+      </para>
 
     </description>
 
