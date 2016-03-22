@@ -3790,6 +3790,8 @@ int multi_scatters (const int *list, const DATASET *dset,
 	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
 	}
     } else {
+	/* avoid having points sticking to the axes */
+	fputs("set offsets graph 0.02, graph 0.02, graph 0.02, graph 0.02\n", fp);
 	fputs("set noxtics\nset noytics\n", fp);
     }
 
