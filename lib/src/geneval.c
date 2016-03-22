@@ -11021,8 +11021,8 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
     }
 }
 
-/* reattach_series: on successive exec's of a given
-   compiled genr, the "xvec" pointer recorded on a
+/* reattach_series: on successive executions of a given
+   compiled "genr", the "xvec" pointer recorded on a
    SERIES node will have become invalid if:
 
    (1) the series has been renamed,
@@ -11037,21 +11037,21 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 
    Note that n->v.xvec will be NULL when this function is
    reached only in case a genr is attached to a loop that
-   is saved across function calls (then the pointer is 
-   reset to NULL on each call to the function).
+   is saved across function calls -- then the pointer is 
+   reset to NULL on each call to the function (but not
+   on each iteration of the loop itself).
    
    The "1" below, in the first condition, is a safety-first
    measure that should be removable if the renaming case
-   is handled somehow (e.g. by banning "rename" within
-   loops, or by arranging to set the relevant xvec pointer
-   to NULL when a series is renamed).
+   is handled effectively by calling get_loop_renaming():
+   this returns non-zero if there's any renaming of series
+   going on within a loop on the current execution stack.
 */
 
 static void reattach_series (NODE *n, parser *p)
 {
-    if (n->v.xvec == NULL || get_loop_renaming()) {
-	/* trigger for full reset */
-	// fprintf(stderr, "series: full reset\n");
+    if (/* 1 || */ n->v.xvec == NULL || get_loop_renaming()) {
+	/* do a full reset */
 	n->vnum = current_series_index(p->dset, n->vname);
 	if (n->vnum < 0) {
 	    gretl_errmsg_sprintf("'%s': not a series", n->vname);
@@ -11064,7 +11064,6 @@ static void reattach_series (NODE *n, parser *p)
 	   sub-sampling, provided that no series are deleted
 	   (the name -> ID mapping remains unchanged)
 	*/
-	// fprintf(stderr, "series: reconnect by ID\n");
  	n->v.xvec = p->dset->Z[n->vnum];
     }
 }
