@@ -124,7 +124,7 @@ struct kalman_ {
     /* structure needed only for cross-correlated case */
     crossinfo *cross;
 
-    /* structure need only when smoothing in the time-varying case */
+    /* structure needed only when smoothing in the time-varying case */
     stepinfo *step;
     
     /* workspace matrices */
