@@ -2519,7 +2519,7 @@ static int show_axis_chooser (GPT_SPEC *spec)
 {
     int i, s = 0;
 
-    if (spec->code == PLOT_REGULAR && (spec->flags & GPT_TS)) {
+    if (spec->code == PLOT_REGULAR && spec->n_lines > 1) {
 	s = 1;
     } else {
 	for (i=0; i<spec->n_lines; i++) {
