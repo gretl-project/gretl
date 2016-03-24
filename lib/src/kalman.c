@@ -2952,8 +2952,9 @@ static int retrieve_Ht (kalman *K, int t)
 }
 
 /* Anderson-Moore Kalman smoothing: see Iskander Karibzhanov's
-   exposition at http://www.econ.umn.edu/~karib003/help/kalcvs.htm
-   This is much the clearest account I have seen (AC 2009-04-14).
+   exposition at http://karibzhanov.com/help/kalcvs.htm
+   This is much the clearest account I have seen (AC 2009-04-14,
+   URL updated 2016-03-24).
 
    This method uses S_{t|t-1} and P_{t|t-1} for all t, but we can
    overwrite these with the smoothed values as we go. We also need
@@ -3051,8 +3052,8 @@ static int anderson_moore_smooth (kalman *K)
 
 /* If we're doing smoothing for a system that has time-varying
    coefficients in K->F or K->H we'll record the vec of the
-   coefficient matrices for each time-step on the forward pass.  Here
-   we allocate the required storage.
+   coefficient matrices for each time-step on the forward pass.
+   Here we allocate the required storage.
 */
 
 static int kalman_add_stepinfo (kalman *K)
