@@ -95,6 +95,8 @@ int user_kalman_run (const char *E, const char *V, const char *S,
 		     const char *P, const char *G, const DATASET *dset, 
 		     PRN *prn, int *errp);
 
+int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp);
+
 gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
 				  int *err);
 

@@ -2835,6 +2835,8 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     kalman *K = gretl_bundle_get_private_data(b);
     int err = 0;
 
+    /* FIXME this needs a lot of work!! */
+
     if (!err) {
 	/* forecast errors */
 	err = attach_export_matrix(K, E, dset, smat, K_E);
