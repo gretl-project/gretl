@@ -780,9 +780,12 @@ static int kalman_init (kalman *K)
 static void kalman_set_dimensions (kalman *K, gretlopt opt)
 {
     K->r = gretl_matrix_rows(K->F); /* F->rows defines r */
-    K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
     K->T = gretl_matrix_rows(K->y); /* y->rows defines T */
     K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
+
+    if (K->A != NULL) {
+	K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
+    }
 
     K->okT = K->T;
 
@@ -862,6 +865,82 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 
     /* non-const, but again use external pointer */
     K->E = E;
+
+    kalman_set_dimensions(K, OPT_NONE);
+
+    *err = kalman_check_dimensions(K);
+    if (*err) {
+	fprintf(stderr, "failed on kalman_check_dimensions\n");
+	free(K);
+	return NULL;
+    }
+
+    *err = kalman_init(K);
+
+    if (*err) {
+	kalman_free(K);
+	K = NULL;
+    } else {
+	gretl_matrix_zero(K->e);
+    }
+
+    return K;
+}
+
+kalman *kalman_new_minimal (gretl_matrix *M[],
+			    int ptr[], int *err)
+{
+    int ids[4] = {K_y, K->H, K_F, K_Q};
+    const gretl_matrix **targ[4];
+    kalman *K;
+    int i;
+
+    *err = 0;
+
+    if (M[0] == NULL || M[1] == NULL || M[2] == NULL || M[3] == NULL) {
+	*err = missing_matrix_error(NULL);
+	return NULL;
+    }
+
+    K = kalman_new_empty(0);
+    if (K == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    K->mnames = strings_array_new_with_length(K_MMAX, VNAMELEN+1);
+    if (K->mnames == NULL) {
+	*err = E_ALLOC;
+	free(K);
+	return NULL;
+    }
+
+    K->flags |= KALMAN_USER;
+
+    targ[0] = &K->y;
+    targ[1] = &K->H;
+    targ[2] = &K->F;
+    targ[3] = &K->Q;
+
+    for (i=0; i<4; i++) {
+	if (ptr[i]) {
+	    const char *name;
+	    
+	    *targ[i] = M[i];
+	    name = user_var_get_name_by_data(M[i]);
+	    strcpy(K->mnames[ids[i]], name);
+	} else {
+	    *targ[i] = gretl_matrix_copy(M[i]);
+	    strcpy(K->mnames[ids[i]], GENERIC_MATNAME);
+	}
+    }
+
+#if 0
+    gretl_matrix_print(K->y, "K->y");
+    gretl_matrix_print(K->H, "K->H");
+    gretl_matrix_print(K->F, "K->F");
+    gretl_matrix_print(K->Q, "K->Q");
+#endif
 
     kalman_set_dimensions(K, OPT_NONE);
 
@@ -2239,6 +2318,73 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
     return err;
 }
 
+static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
+{
+    int cfd = gretl_function_depth();
+    const gretl_matrix **cptr[] = {
+	&K->F, &K->A, &K->H, &K->Q, &K->R,
+	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
+    };
+    int i, err = 0;
+
+    for (i=0; i<K_MMAX; i++) {
+	if (!kalman_owns_matrix(K, i)) {
+	    /* pointer may be invalid, needs refreshing */
+	    *cptr[i] = NULL;
+	}
+    }
+
+    K->flags |= KALMAN_CHECK;
+
+    for (i=0; i<K_MMAX && !err; i++) {
+	if (i <= K_m && matrix_is_varying(K, i)) {
+	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
+	} else if (kalman_owns_matrix(K, i)) {
+	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
+	} else {
+	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
+	}
+    }
+
+    K->flags ^= KALMAN_CHECK;
+
+    if (err) {
+	return err;
+    }
+
+    if (K->F == NULL || K->H == NULL || K->Q == NULL) {
+	err = missing_matrix_error(NULL);
+    } else if (gretl_matrix_rows(K->F) != K->r ||
+	       gretl_matrix_rows(K->A) != K->k) {
+	err = E_NONCONF;
+    } else if (!kalman_simulating(K)) {
+	err = obsy_error(K);
+    }
+
+    if (!err && K->p > 0) {
+	err = kalman_revise_variance(K);
+    }
+
+    if (!err) {
+	err = kalman_check_dimensions(K);
+    }
+
+    if (!err) {
+	if (K->Sini != NULL) {
+	    gretl_matrix_copy_values(K->S0, K->Sini);
+	} else {
+	    gretl_matrix_zero(K->S0);
+	}
+	if (K->Pini != NULL) {
+	    gretl_matrix_copy_values(K->P0, K->Pini);
+	} else {
+	    err = construct_Pini(K);
+	}
+    }
+    
+    return err;
+}
+
 /* Try to find a user-defined Kalman filter at the current level of
    function execution.  Failing that, if @level is given as -1, we
    also try looking for a filter available at parent levels of 
@@ -2680,6 +2826,63 @@ int user_kalman_run (const char *E, const char *V,
     /* detach matrices */
     K->E = K->V = K->S = NULL;
     K->P = K->K = NULL;
+
+    return err;    
+}
+
+int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+    int err = 0;
+
+    if (!err) {
+	/* forecast errors */
+	err = attach_export_matrix(K, E, dset, smat, K_E);
+    }
+
+    if (!err) {
+	/* MSE for observables */
+	err = attach_export_matrix(K, V, dset, smat, K_V);
+    } 
+
+    if (!err) {
+	/* estimate of state */
+	err = attach_export_matrix(K, S, dset, smat, K_BIG_S);
+    }
+
+    if (!err) {
+	/* MSE of estimate of state */
+	err = attach_export_matrix(K, P, dset, smat, K_BIG_P);
+    } 
+
+    if (!err) {
+	/* Kalman gain */
+	err = attach_export_matrix(K, G, dset, smat, K_K);
+    } 
+
+    if (!err && K->LL == NULL) {
+	/* log-likelihood: available via accessor */
+	K->LL = gretl_matrix_alloc(K->T, 1);
+	if (K->LL == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = user_kalman_recheck_matrices(u, prn);
+    }
+
+    if (!err) {
+	err = kalman_forecast(K, prn);
+    }
+
+    if (err != E_NAN) {
+	*errp = err;
+    } else {
+	/* we'll flag E_NAN with a return value of 1 but 
+	   won't count it as a 'true' error */
+	*errp = 0;
+    }
 
     return err;    
 }
@@ -3797,6 +4000,12 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m, int i, int copy)
 	targ = &K->Pini;
     }
 
+    /* FIXME when adding or replacing a matrix we need to
+       check for its conformability with matrices already
+       in place: or is that covered on calling kfilter()
+       or similar?
+    */
+
     if (targ != NULL) {
 	add_or_replace_k_matrix((gretl_matrix **) targ, m, copy);
 	if (mname != NULL) {
@@ -3870,7 +4079,7 @@ int maybe_set_kalman_element (void *kptr,
     kalman *K = kptr;
     int fncall = 0;
     int i, id = -1;
-    int ret = 0;
+    int done = 0;
 
     if (K == NULL) {
 	*err = E_DATA;
@@ -3913,9 +4122,10 @@ int maybe_set_kalman_element (void *kptr,
 	    *err = attach_input_matrix_2(K, (gretl_matrix *) vptr,
 					 id, copy);
 	}
+	done = (*err == 0);
     }
 
-    return ret;
+    return done;
 }
 
 void *maybe_retrieve_kalman_element (void *kptr,
@@ -3983,10 +4193,10 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	const gretl_matrix *m;
 	int i;
 
-	pputs(prn, "Kalman input matrices\n");
+	pputs(prn, "\nKalman input matrices\n\n");
 	
 	for (i=0; i<K_MMAX; i++) {
-	    pprintf(prn, "%s: ", K_input_mats[i].name);
+	    pprintf(prn, "  %s: ", K_input_mats[i].name);
 	    m = get_k_matrix_by_id(K, i);
 	    if (m == NULL) {
 		pputs(prn, "null\n");
@@ -3994,6 +4204,7 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 		pprintf(prn, "%d x %d\n", m->rows, m->cols);
 	    }
 	}
+	pputc(prn, '\n');
     }
 
     return err;

@@ -1941,28 +1941,16 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     return b;
 }
 
-gretl_bundle *kalman_bundle_new (gretl_matrix *y,
-				 gretl_matrix *H,
-				 gretl_matrix *F,
-				 gretl_matrix *Q,
-				 int *err)
+gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
+				 int ptr[], int *err)
 {
-    gretl_bundle *b = NULL;
+    gretl_bundle *b = gretl_bundle_new();
 
-    if (y == NULL || H == NULL || F == NULL || Q == NULL) {
-	*err = E_DATA;
+    if (b == NULL) {
+	*err = E_ALLOC;
     } else {
-	b = gretl_bundle_new();
-	if (b == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (b != NULL) {
 	b->type = BUNDLE_KALMAN;
-	b->data = kalman_new(NULL, NULL, F, NULL,
-			     H, Q, NULL, y,
-			     NULL, NULL, NULL, err);
+	b->data = kalman_new_minimal(M, ptr, err);
     }
 
     /* don't return a broken bundle */

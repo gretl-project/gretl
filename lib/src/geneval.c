@@ -9040,7 +9040,15 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }	    
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
-	} 
+	}
+    } else if (t->t == F_KFILTER && k == 1 && n->v.bn.n[0]->t == BUNDLE) {
+	/* experimental !! */
+	e = n->v.bn.n[0];
+	reset_p_aux(p, save_aux);
+	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    ret->v.xval = kalman_bundle_run(e->v.b, p->prn, &p->err);
+	} 	
     } else if (t->t == F_KFILTER) {
 	const char *E = NULL;
 	const char *V = NULL;
@@ -9730,6 +9738,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
     } else if (t->t == F_KBUNDLE) {
 	gretl_matrix *M[4] = {NULL};
+	int ptr[4] = {0};
 	
 	if (k != 4) {
 	    n_args_error(k, 4, t->t, p);
@@ -9737,17 +9746,21 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	
 	for (i=0; i<4 && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
-	    if (!p->err && e->t != MAT) {
-		p->err = E_TYPES;
-	    }
 	    if (!p->err) {
-		M[i] = e->v.m;
+		if (e->t == U_ADDR) {
+		    e = e->v.b1.b;
+		    ptr[i] = 1;
+		}
+		if (e->t == MAT) {
+		    M[i] = e->v.m;
+		} else {
+		    p->err = E_TYPES;
+		}
 	    }
 	}
 
 	if (!p->err) {
-	    gretl_bundle *b = kalman_bundle_new(M[0], M[1], M[2], M[3],
-						&p->err);
+	    gretl_bundle *b = kalman_bundle_new(M, ptr, &p->err);
 
 	    if (!p->err) {
 		ret = aux_bundle_node(p);

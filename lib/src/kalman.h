@@ -42,6 +42,9 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *x, const gretl_matrix *m,
 		    gretl_matrix *E, int *err);
 
+kalman *kalman_new_minimal (gretl_matrix *M[],
+			    int ptr[], int *err);
+
 void kalman_free (kalman *K);
 
 int kalman_forecast (kalman *K, PRN *prn);
