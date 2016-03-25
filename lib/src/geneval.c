@@ -7424,9 +7424,13 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
 	gretl_bundle *bundle = l->v.b;
 	const char *key = r->v.str;
 	GretlType type = 0;
+	int err = 0;
 
-	gretl_bundle_get_data(bundle, key, &type, NULL, NULL);
+	gretl_bundle_get_data(bundle, key, &type, NULL, &err);
 	ret->v.xval = type_translate_to_int(type);
+	if (err) {
+	    gretl_error_clear();
+	}
     }
 
     return ret;
@@ -9722,6 +9726,34 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_array_node(p);
 	    if (ret != NULL) {
 		ret->v.a = A;
+	    }
+	}
+    } else if (t->t == F_KBUNDLE) {
+	gretl_matrix *M[4] = {NULL};
+	
+	if (k != 4) {
+	    n_args_error(k, 4, t->t, p);
+	} 
+	
+	for (i=0; i<4 && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (!p->err && e->t != MAT) {
+		p->err = E_TYPES;
+	    }
+	    if (!p->err) {
+		M[i] = e->v.m;
+	    }
+	}
+
+	if (!p->err) {
+	    gretl_bundle *b = kalman_bundle_new(M[0], M[1], M[2], M[3],
+						&p->err);
+
+	    if (!p->err) {
+		ret = aux_bundle_node(p);
+		if (ret != NULL) {
+		    ret->v.b = b;
+		}
 	    }
 	}
     }

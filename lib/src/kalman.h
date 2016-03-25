@@ -104,6 +104,22 @@ void kalman_cleanup (void);
 
 int delete_kalman (PRN *prn);
 
+/* for interfacing with gretl bundle mechanism */
+
+int maybe_set_kalman_element (void *kptr,
+			      const char *key,
+			      void *vptr,
+			      GretlType vtype,
+			      int copy,
+			      int *err);
+
+void *maybe_retrieve_kalman_element (void *kptr,
+				     const char *key,
+				     GretlType *type,
+				     int *err);
+
+int print_kalman_matrix_info (void *kptr, PRN *prn);
+
 #endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* KALMAN_H_ */

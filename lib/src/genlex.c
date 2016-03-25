@@ -451,6 +451,7 @@ struct str_table funcs[] = {
     { F_BOOTPVAL,  "bootpval" },
     { F_SEASONALS, "seasonals" },
     { F_DEFARRAY,  "defarray" },
+    { F_KBUNDLE,   "kbundle" },
     { 0,           NULL }
 };
 

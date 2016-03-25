@@ -28,6 +28,7 @@
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"
 #include "genparse.h"
+#include "kalman.h"
 #include "gretl_bundle.h"
 
 #define BDEBUG 0
@@ -38,9 +39,16 @@
  * An opaque type; use the relevant accessor functions.
  */
 
+typedef enum {
+    BUNDLE_PLAIN,
+    BUNDLE_KALMAN
+} BundleType;
+
 struct gretl_bundle_ {
+    BundleType type; /* see enum above */
     GHashTable *ht;  /* holds key/value pairs */
-    char *creator;   /* name of function that built the bundle */   
+    char *creator;   /* name of function that built the bundle */
+    void *data;      /* holds pointer to struct for some uses */
 };
 
 /**
@@ -337,6 +345,9 @@ void gretl_bundle_destroy (gretl_bundle *bundle)
 	    g_hash_table_destroy(bundle->ht);
 	}
 	free(bundle->creator);
+	if (bundle->type == BUNDLE_KALMAN) {
+	    kalman_free(bundle->data);
+	}
 	free(bundle);
     }
 }
@@ -365,6 +376,12 @@ void gretl_bundle_void_content (gretl_bundle *bundle)
 					   bundle_key_destroy, 
 					   bundled_item_destroy);
     }
+
+    if (bundle->type == BUNDLE_KALMAN) {
+	kalman_free(bundle->data);
+	bundle->data = NULL;
+	bundle->type = BUNDLE_PLAIN;
+    }
 }
 
 /**
@@ -378,10 +395,12 @@ gretl_bundle *gretl_bundle_new (void)
     gretl_bundle *b = malloc(sizeof *b);
 
     if (b != NULL) {
+	b->type = BUNDLE_PLAIN;
 	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
 				      bundle_key_destroy, 
 				      bundled_item_destroy);
 	b->creator = NULL;
+	b->data = NULL;
     }
 
     return b;
@@ -430,7 +449,7 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * @type: location to receive data type, or NULL.
  * @size: location to receive size of data (= series
  * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
- * @err: location to receive error code, or NULL.
+ * @err: location to receive error code.
  *
  * Returns: the item pointer associated with @key in the
  * specified @bundle, or NULL if there is no such item.
@@ -451,11 +470,19 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 {
     void *ret = NULL;
 
+    *err = 0;
+
     if (bundle == NULL) {
-	if (err != NULL) {
-	    *err = E_DATA;
-	}
-    } else {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (bundle->type == BUNDLE_KALMAN) {
+	ret = maybe_retrieve_kalman_element(bundle->data,
+					    key, type, err);
+    }
+
+    if (!*err && ret == NULL) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
@@ -468,7 +495,7 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 	    if (size != NULL) {
 		*size = item->size;
 	    }
-	} else if (err != NULL) {
+	} else {
 	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
 	    *err = E_DATA;
 	}
@@ -823,15 +850,25 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 int size, int copy, 
 				 const char *note)
 {
-    bundled_item *item = NULL;
-    int err, replace = 0;
+    int err, done = 0;
 
     err = strlen(key) >= VNAMELEN ? E_DATA : 0;
 
     if (err) {
 	gretl_errmsg_sprintf("'%s': invalid key string", key);
-    } else {
-	item = g_hash_table_lookup(b->ht, key);
+	return err;
+    }
+
+    if (b->type == BUNDLE_KALMAN) {
+	done = maybe_set_kalman_element(b->data, key,
+					ptr, type, copy,
+					&err);
+    }
+
+    if (!done && !err) {
+	bundled_item *item = g_hash_table_lookup(b->ht, key);
+	int replace = 0;
+	
 	if (item != NULL) {
 	    replace = 1;
 	    if (item->type == type) {
@@ -839,16 +876,17 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 						 size, copy);
 	    }
 	}
+	
 	item = bundled_item_new(type, ptr, size, copy, note, &err);
-    }
 
-    if (!err) {
-	gchar *k = g_strdup(key);
+	if (!err) {
+	    gchar *k = g_strdup(key);
 
-	if (replace) {
-	    g_hash_table_replace(b->ht, k, item);
-	} else {
-	    g_hash_table_insert(b->ht, k, item);
+	    if (replace) {
+		g_hash_table_replace(b->ht, k, item);
+	    } else {
+		g_hash_table_insert(b->ht, k, item);
+	    }
 	}
     }
 
@@ -869,7 +907,7 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
  * the bundle's hash table the original value is replaced
  * and destroyed. The value of @ptr is transcribed into the
  * bundle, which therefore "takes ownership" of the data;
- * compare gretl_bundle_set_data;
+ * compare gretl_bundle_set_data().
  *
  * Returns: 0 on success, error code on error.
  */
@@ -1320,7 +1358,7 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 	    name = "anonymous";
 	}
 
-	if (n_items == 0) {
+	if (bundle->type == BUNDLE_PLAIN && n_items == 0) {
 	    pprintf(prn, "bundle %s: empty\n", name);
 	} else {
 	    if (bundle->creator != NULL) {
@@ -1329,9 +1367,15 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 	    } else {
 		pprintf(prn, "bundle %s:\n", name);
 	    }
-	    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+	    if (bundle->type == BUNDLE_KALMAN) {
+		print_kalman_matrix_info(bundle->data, prn);
+	    }
+	    if (n_items > 0) {
+		g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+	    }
 	    pputc(prn, '\n');
 	}
+	
 	return 0;
     }
 }
@@ -1887,6 +1931,39 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     free(x);
+
+    /* don't return a broken bundle */
+    if (*err && b != NULL) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }
+
+    return b;
+}
+
+gretl_bundle *kalman_bundle_new (gretl_matrix *y,
+				 gretl_matrix *H,
+				 gretl_matrix *F,
+				 gretl_matrix *Q,
+				 int *err)
+{
+    gretl_bundle *b = NULL;
+
+    if (y == NULL || H == NULL || F == NULL || Q == NULL) {
+	*err = E_DATA;
+    } else {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (b != NULL) {
+	b->type = BUNDLE_KALMAN;
+	b->data = kalman_new(NULL, NULL, F, NULL,
+			     H, Q, NULL, y,
+			     NULL, NULL, NULL, err);
+    }
 
     /* don't return a broken bundle */
     if (*err && b != NULL) {

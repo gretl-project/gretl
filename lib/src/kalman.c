@@ -3733,39 +3733,268 @@ int user_kalman_get_time_step (void)
     }
 }
 
-#if 0 /* not yet */
+/* below: functions to support the "wrapping" of a Kalman
+   struct in a gretl bundle */
 
-kalman *kalman_from_bundle (gretl_bundle *b, const DATASET *dset,
-			    gretlopt opt, int *err)
+static int add_or_replace_k_matrix (gretl_matrix **targ,
+				    gretl_matrix *src,
+				    int copy)
 {
-    kalman *K;
-    GretlType type;
-    int i;
-
-    K = kalman_new_empty(KALMAN_USER);
-    if (K == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (i=0; i<K_MMAX && !*err; i++) {
-	key = K_input_mats[i].name;
-	type = gretl_bundle_get_type(b, key, err);
-	if (!*err && type != 0) {
-	    *err = attach_input_matrix(K, key, i, dset);
+    int err = 0;
+    
+    if (*targ != src) {
+	if (*targ != NULL) {
+	    gretl_matrix_free(*targ);
+	}
+	if (copy) {
+	    *targ = gretl_matrix_copy(src);
+	    if (*targ == NULL) {
+		err = E_ALLOC;
+	    }
+	} else {
+	    *targ = src;
 	}
     }
 
-    if (!*err) {
-	*err = user_kalman_setup(K, opt);
-    }
-
-    if (*err) {
-	kalman_free(K);
-	K = NULL;
-    }
-
-    return K;
+    return err;
 }
 
-#endif
+static int 
+attach_input_matrix_2 (kalman *K, gretl_matrix *m, int i, int copy)
+{
+    const gretl_matrix **targ = NULL;
+    const char *mname;
+    int err = 0;
+    
+    if (K->mnames == NULL) {
+	K->mnames = strings_array_new_with_length(K_MMAX, VNAMELEN+1);
+	if (K->mnames == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    mname = user_var_get_name_by_data((const void *) m);
+
+    if (i == K_F) {
+	targ = &K->F;
+    } else if (i == K_A) {
+	targ = &K->A;
+    } else if (i == K_H) {
+	targ = &K->H;
+    } else if (i == K_Q) {
+	targ = &K->Q;
+    } else if (i == K_R) {
+	targ = &K->R;
+    } else if (i == K_m) {
+	targ = &K->mu;
+    } else if (i == K_y) {
+	targ = &K->y;
+    } else if (i == K_x) {
+	targ = &K->x;
+    } else if (i == K_S) {
+	targ = &K->Sini;
+    } else if (i == K_P) {
+	targ = &K->Pini;
+    }
+
+    if (targ != NULL) {
+	add_or_replace_k_matrix((gretl_matrix **) targ, m, copy);
+	if (mname != NULL) {
+	    strcpy(K->mnames[i], mname);
+	} else {
+	    strcpy(K->mnames[i], GENERIC_MATNAME);
+	}	
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static const gretl_matrix *get_k_matrix_by_id (kalman *K, int i)
+{
+    const gretl_matrix *m = NULL;
+    
+    if (i == K_F) {
+	m = K->F;
+    } else if (i == K_A) {
+	m = K->A;
+    } else if (i == K_H) {
+	m = K->H;
+    } else if (i == K_Q) {
+	m = K->Q;
+    } else if (i == K_R) {
+	m = K->R;
+    } else if (i == K_m) {
+	m = K->mu;
+    } else if (i == K_y) {
+	m = K->y;
+    } else if (i == K_x) {
+	m = K->x;
+    } else if (i == K_S) {
+	m = K->Sini;
+    } else if (i == K_P) {
+	m = K->Pini;
+    }
+
+    return m;
+}
+
+static gretl_matrix *copy_k_matrix_by_id (kalman *K, int i,
+					  int *err)
+{
+    const gretl_matrix *src;
+    gretl_matrix *m = NULL;
+
+    src = get_k_matrix_by_id(K, i);
+    
+    if (src == NULL) {
+	*err = E_DATA;
+    } else {
+	m = gretl_matrix_copy(src);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return m;
+}
+
+int maybe_set_kalman_element (void *kptr,
+			      const char *key,
+			      void *vptr,
+			      GretlType vtype,
+			      int copy,
+			      int *err)
+{
+    kalman *K = kptr;
+    int fncall = 0;
+    int i, id = -1;
+    int ret = 0;
+
+    if (K == NULL) {
+	*err = E_DATA;
+	return 0;
+    }
+
+    if (vtype == GRETL_TYPE_STRING) {
+	if (strchr(key, '_') != NULL) {
+	    /* try for a function call specifier */
+	    char test[16];
+	
+	    for (i=0; i<K_m; i++) {
+		sprintf(test, "%s_call", K_input_mats[i].name);
+		if (!strcmp(key, test)) {
+		    id = i;
+		    fncall = 1;
+		    break;
+		}
+	    }
+	}
+    } else if (vtype == GRETL_TYPE_MATRIX) {
+	/* try for a matrix specifier */
+	for (i=0; i<K_MMAX; i++) {
+	    if (!strcmp(key, K_input_mats[i].name)) {
+		id = i;
+		break;
+	    }
+	}
+    }
+
+    if (id >= 0) {
+	if (fncall) {
+	    if (K->matcalls == NULL) {
+		*err = kalman_add_matcalls(K);
+	    }
+	    if (!*err) {
+		K->matcalls[id] = gretl_strdup((char *) vptr);
+	    }
+	} else {
+	    *err = attach_input_matrix_2(K, (gretl_matrix *) vptr,
+					 id, copy);
+	}
+    }
+
+    return ret;
+}
+
+void *maybe_retrieve_kalman_element (void *kptr,
+				     const char *key,
+				     GretlType *type,
+				     int *err)
+{
+    kalman *K = kptr;
+    void *ret = NULL;
+    int i, id = -1;
+
+    *type = GRETL_TYPE_NONE;
+
+    if (K == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (strchr(key, '_') != NULL) {
+	/* try for a function call specifier */
+	char test[16];
+	
+	for (i=0; i<K_m; i++) {
+	    sprintf(test, "%s_call", K_input_mats[i].name);
+	    if (!strcmp(key, test)) {
+		id = i;
+		if (K->matcalls != NULL) {
+		    ret = gretl_strdup(K->matcalls[id]);
+		    *type = GRETL_TYPE_STRING;
+		}
+		break;
+	    }
+	}
+    } else {
+	/* try for a matrix specifier */
+	for (i=0; i<K_MMAX; i++) {
+	    if (!strcmp(key, K_input_mats[i].name)) {
+		id = i;
+		ret = copy_k_matrix_by_id(K, id, err);
+		*type = GRETL_TYPE_MATRIX;
+		break;
+	    }
+	}
+    }
+
+    if (id >= 0 && ret == NULL && !*err) {
+	/* id >= 0 means that @key is a reserved element
+	   name: so if not found here, flag an error
+	*/
+	*err = E_DATA;
+    }
+
+    return ret;
+}
+
+int print_kalman_matrix_info (void *kptr, PRN *prn)
+{
+    kalman *K = kptr;
+    int err = 0;
+
+    if (K == NULL) {
+	pputs(prn, "Kalman struct: empty\n");
+	err = E_DATA;
+    } else {
+	const gretl_matrix *m;
+	int i;
+
+	pputs(prn, "Kalman input matrices\n");
+	
+	for (i=0; i<K_MMAX; i++) {
+	    pprintf(prn, "%s: ", K_input_mats[i].name);
+	    m = get_k_matrix_by_id(K, i);
+	    if (m == NULL) {
+		pputs(prn, "null\n");
+	    } else {
+		pprintf(prn, "%d x %d\n", m->rows, m->cols);
+	    }
+	}
+    }
+
+    return err;
+}

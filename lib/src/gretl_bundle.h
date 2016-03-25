@@ -159,6 +159,12 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 				 DATASET *dset,
 				 int *err);
 
+gretl_bundle *kalman_bundle_new (gretl_matrix *y,
+				 gretl_matrix *H,
+				 gretl_matrix *F,
+				 gretl_matrix *Q,
+				 int *err);
+
 void gretl_bundle_cleanup (void);
 
 #endif /* GRETL_BUNDLE_H_ */
