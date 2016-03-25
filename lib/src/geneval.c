@@ -12219,6 +12219,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTPVAL:
     case F_MOVAVG:
     case F_DEFARRAY:
+    case F_KBUNDLE:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
