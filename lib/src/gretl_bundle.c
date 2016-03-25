@@ -569,6 +569,11 @@ void *gretl_bundle_steal_data (gretl_bundle *bundle, const char *key,
     return ret;
 }
 
+void *gretl_bundle_get_private_data (gretl_bundle *bundle)
+{
+    return bundle->data;
+}
+
 /**
  * gretl_bundle_get_type:
  * @bundle: bundle to access.

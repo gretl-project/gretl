@@ -890,7 +890,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 kalman *kalman_new_minimal (gretl_matrix *M[],
 			    int ptr[], int *err)
 {
-    int ids[4] = {K_y, K->H, K_F, K_Q};
+    int ids[4] = {K_y, K_H, K_F, K_Q};
     const gretl_matrix **targ[4];
     kalman *K;
     int i;
@@ -2342,7 +2342,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
 	} else {
-	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
+	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], cfd, cfd);
 	}
     }
 
@@ -2837,6 +2837,8 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 
     /* FIXME this needs a lot of work!! */
 
+#if 0    
+
     if (!err) {
 	/* forecast errors */
 	err = attach_export_matrix(K, E, dset, smat, K_E);
@@ -2871,8 +2873,10 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     }
 
     if (!err) {
-	err = user_kalman_recheck_matrices(u, prn);
+	err = kalman_bundle_recheck_matrices(u, prn);
     }
+
+#endif /* FIXME! */        
 
     if (!err) {
 	err = kalman_forecast(K, prn);
