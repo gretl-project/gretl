@@ -1772,7 +1772,7 @@ static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 
 /* compute F-stat for the regular regressors, skipping
    @nskip trailing coefficients (which can be used to
-   skip time dummies
+   skip time dummies)
 */
 
 static double panel_F (MODEL *pmod, panelmod_t *pan, int nskip)
@@ -1847,13 +1847,18 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     
     if (!xna(wfstt) && wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
+	int wdfd = fmod->dfd;
+
+	if (pan->opt & OPT_R) {
+	    fmod->dfd = wdfd = pan->effn - 1;
+	}
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_F);
 	    model_test_set_dfn(test, wdfn);
-	    model_test_set_dfd(test, fmod->dfd);
+	    model_test_set_dfd(test, wdfd);
 	    model_test_set_value(test, wfstt);
-	    model_test_set_pvalue(test, snedecor_cdf_comp(wdfn, fmod->dfd, wfstt));
+	    model_test_set_pvalue(test, snedecor_cdf_comp(wdfn, wdfd, wfstt));
 	    maybe_add_test_to_model(fmod, test);
 	}
     }
@@ -3241,6 +3246,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 	panel_robust_vcv(pmod, pan, Z);
 	pmod->opt |= OPT_R;
 	pmod->fstt = panel_F(pmod, pan, 0);
+	pmod->dfd = pan->effn - 1;
     }
 
     panel_dwstat(pmod, pan);
