@@ -469,6 +469,7 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size, int *err)
 {
     void *ret = NULL;
+    int reserved = 0;
 
     *err = 0;
 
@@ -478,11 +479,12 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
     }
 
     if (bundle->type == BUNDLE_KALMAN) {
-	ret = maybe_retrieve_kalman_element(bundle->data,
-					    key, type, err);
+	ret = maybe_retrieve_kalman_element(bundle->data, key,
+					    type, &reserved,
+					    err);
     }
 
-    if (!*err && ret == NULL) {
+    if (!*err && ret == NULL && !reserved) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {

@@ -9048,7 +9048,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    ret->v.xval = kalman_bundle_run(e->v.b, p->prn, &p->err);
-	} 	
+	}
     } else if (t->t == F_KFILTER) {
 	const char *E = NULL;
 	const char *V = NULL;

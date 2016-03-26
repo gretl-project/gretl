@@ -121,6 +121,7 @@ int maybe_set_kalman_element (void *kptr,
 void *maybe_retrieve_kalman_element (void *kptr,
 				     const char *key,
 				     GretlType *type,
+				     int *reserved,
 				     int *err);
 
 int print_kalman_matrix_info (void *kptr, PRN *prn);
