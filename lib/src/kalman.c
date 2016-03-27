@@ -2340,14 +2340,18 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     K->flags ^= KALMAN_CHECK;
 
+    if (!err && (K->F == NULL || K->H == NULL || K->Q == NULL)) {
+	err = missing_matrix_error(NULL);
+    }
+
     if (err) {
 	return err;
     }
 
-    if (K->F == NULL || K->H == NULL || K->Q == NULL) {
-	err = missing_matrix_error(NULL);
-    } else if (gretl_matrix_rows(K->F) != K->r ||
-	       gretl_matrix_rows(K->A) != K->k) {
+    kalman_set_dimensions(K, OPT_NONE); /* FIXME opt */
+
+    if (gretl_matrix_rows(K->F) != K->r ||
+	gretl_matrix_rows(K->A) != K->k) {
 	err = E_NONCONF;
     } else if (!kalman_simulating(K)) {
 	err = obsy_check(K);
@@ -2825,43 +2829,16 @@ int user_kalman_run (const char *E, const char *V,
 int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 {
     kalman *K = gretl_bundle_get_private_data(b);
-    int err = 0;
+    int err;
 
-#if 0
-    gretl_matrix_print(K->y, "K->y");
-    gretl_matrix_print(K->H, "K->H");
-    gretl_matrix_print(K->F, "K->F");
-    gretl_matrix_print(K->Q, "K->Q");
-#endif    
-
-    /* FIXME not working yet */
-
-    if (K->E == NULL) {
-	K->E = gretl_null_matrix_new();
-    }
-    if (K->V == NULL) {
-	K->V = gretl_null_matrix_new();
-    }   
-    if (K->S == NULL) {
-	K->S = gretl_null_matrix_new();
-    }
-    if (K->P == NULL) {
-	K->P = gretl_null_matrix_new();
-    }
-    if (K->K == NULL) {
-	K->K = gretl_null_matrix_new();
-    }
+    err = kalman_bundle_recheck_matrices(K, prn);
 
     if (!err && K->LL == NULL) {
 	K->LL = gretl_matrix_alloc(K->T, 1);
 	if (K->LL == NULL) {
 	    err = E_ALLOC;
 	}
-    }
-
-    if (!err) {
-	err = kalman_bundle_recheck_matrices(K, prn);
-    }
+    }    
 
     if (!err) {
 	err = kalman_forecast(K, prn);
@@ -3933,7 +3910,8 @@ int user_kalman_get_time_step (void)
 static int add_or_replace_k_matrix (gretl_matrix **targ,
 				    char *targname,
 				    gretl_matrix *src,
-				    const char *srcname)
+				    const char *srcname,
+				    int copy)
 {
     int err = 0;
     
@@ -3943,15 +3921,20 @@ static int add_or_replace_k_matrix (gretl_matrix **targ,
 	    gretl_matrix_free(*targ);
 	}
 	if (srcname != NULL) {
-	    /* attaching a pointer */
+	    /* attaching a named matrix pointer */
 	    strcpy(targname, srcname);
 	    *targ = src;
 	} else {
-	    /* copying matrix in */
+	    /* copying matrix in, or accepting "donation"
+	       of an anonymous matrix */
 	    *targname = '\0';
-	    *targ = gretl_matrix_copy(src);
-	    if (*targ == NULL) {
-		err = E_ALLOC;
+	    if (copy) { 
+		*targ = gretl_matrix_copy(src);
+		if (*targ == NULL) {
+		    err = E_ALLOC;
+		}
+	    } else {
+		*targ = src;
 	    }
 	}
     }
@@ -3961,7 +3944,8 @@ static int add_or_replace_k_matrix (gretl_matrix **targ,
 
 static int 
 attach_input_matrix_2 (kalman *K, gretl_matrix *m,
-		       GretlType vtype, int i)
+		       GretlType vtype, int i,
+		       int copy)
 {
     const gretl_matrix **targ = NULL;
     const char *mname = NULL;
@@ -4008,7 +3992,7 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
 
     if (targ != NULL) {
 	add_or_replace_k_matrix((gretl_matrix **) targ, K->mnames[i],
-				m, mname);
+				m, mname, copy);
     } else {
 	err = E_DATA;
     }
@@ -4157,11 +4141,15 @@ int maybe_set_kalman_element (void *kptr,
 		*err = kalman_add_matcalls(K);
 	    }
 	    if (!*err) {
-		K->matcalls[id] = gretl_strdup((char *) vptr);
+		if (copy) {
+		    K->matcalls[id] = gretl_strdup((char *) vptr);
+		} else {
+		    K->matcalls[id] = (char *) vptr;
+		}
 	    }
 	} else {
 	    *err = attach_input_matrix_2(K, (gretl_matrix *) vptr,
-					 vtype, id);
+					 vtype, id, copy);
 	}
 	done = (*err == 0);
     }
@@ -4218,7 +4206,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	    if (pm != NULL) {
 		*reserved = 1;
 		if (*pm != NULL) {
-		    ret = gretl_matrix_copy(*pm);
+		    ret = *pm;
 		    *type = GRETL_TYPE_MATRIX;
 		}
 	    }
