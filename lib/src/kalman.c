@@ -3931,19 +3931,24 @@ int user_kalman_get_time_step (void)
    struct in a gretl bundle */
 
 static int add_or_replace_k_matrix (gretl_matrix **targ,
+				    char *targname,
 				    gretl_matrix *src,
-				    const char *name)
+				    const char *srcname)
 {
     int err = 0;
     
     if (*targ != src) {
-	if (*targ != NULL) {
+	if (*targ != NULL && *targname == '\0') {
+	    /* destroy old Kalman-owned matrix */
 	    gretl_matrix_free(*targ);
 	}
-	if (name != NULL) {
+	if (srcname != NULL) {
 	    /* attaching a pointer */
+	    strcpy(targname, srcname);
 	    *targ = src;
 	} else {
+	    /* copying matrix in */
+	    *targname = '\0';
 	    *targ = gretl_matrix_copy(src);
 	    if (*targ == NULL) {
 		err = E_ALLOC;
@@ -4002,12 +4007,8 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
     */
 
     if (targ != NULL) {
-	add_or_replace_k_matrix((gretl_matrix **) targ, m, mname);
-	if (mname != NULL) {
-	    strcpy(K->mnames[i], mname);
-	} else {
-	    K->mnames[i][0] = '\0';
-	}	
+	add_or_replace_k_matrix((gretl_matrix **) targ, K->mnames[i],
+				m, mname);
     } else {
 	err = E_DATA;
     }
@@ -4034,7 +4035,22 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 	pm = &K->LL;
     }
 
+    /* FIXME smstate, smstvar */
+
     return pm;
+}
+
+static const char *kalman_output_matrix_name (int i)
+{
+    switch (i) {
+    case 0: return "prederr";
+    case 1: return "pevar";
+    case 2: return "flstate";
+    case 3: return "flstvar";
+    case 4: return "gain";
+    case 5: return "llt";
+    default: return NULL;
+    }
 }
 
 static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
@@ -4228,6 +4244,8 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	err = E_DATA;
     } else {
 	const gretl_matrix *m;
+	gretl_matrix **pm;
+	const char *omname;
 	int i, id;
 
 	pputs(prn, "\nKalman input matrices\n");
@@ -4243,6 +4261,24 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	    } else {
 		pprintf(prn, "%d x %d (link: %s)\n", m->rows, m->cols,
 			K->mnames[i]);
+	    }
+	}
+
+	pputs(prn, "\nKalman output matrices\n");
+
+	for (i=0; ; i++) {
+	    omname = kalman_output_matrix_name(i);
+	    if (omname == NULL) {
+		break;
+	    } else {
+		pprintf(prn, "  %s: ", omname);
+		pm = kalman_output_matrix(K, omname);
+		if (pm == NULL || *pm == NULL) {
+		    pputs(prn, "null\n");
+		} else {
+		    m = *pm;
+		    pprintf(prn, "%d x %d\n", m->rows, m->cols);
+		}
 	    }
 	}
     }
