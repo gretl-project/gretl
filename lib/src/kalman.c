@@ -258,7 +258,16 @@ void kalman_free (kalman *K)
 	}
 
 	strings_array_free(K->mnames, K_MMAX);
-    }    
+    }
+
+    if (K->flags & KALMAN_BUNDLE) {
+	/* we own these "export" matrices */
+	gretl_matrix_free(K->E);
+	gretl_matrix_free(K->V);
+	gretl_matrix_free(K->S);
+	gretl_matrix_free(K->P);
+	gretl_matrix_free(K->K);
+    }
 
     if (K->matcalls != NULL) {
 	strings_array_free(K->matcalls, NMATCALLS);
@@ -914,7 +923,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 	return NULL;
     }
 
-    K->flags |= KALMAN_USER;
+    K->flags |= (KALMAN_USER | KALMAN_BUNDLE);
 
     targ[0] = &K->y;
     targ[1] = &K->H;
@@ -2831,6 +2840,24 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     kalman *K = gretl_bundle_get_private_data(b);
     int err;
 
+#if 1
+    if (K->E == NULL) {
+	K->E = gretl_null_matrix_new();
+    }
+    if (K->V == NULL) {
+	K->V = gretl_null_matrix_new();
+    }   
+    if (K->S == NULL) {
+	K->S = gretl_null_matrix_new();
+    }
+    if (K->P == NULL) {
+	K->P = gretl_null_matrix_new();
+    }
+    if (K->K == NULL) {
+	K->K = gretl_null_matrix_new();
+    }
+#endif
+
     err = kalman_bundle_recheck_matrices(K, prn);
 
     if (!err && K->LL == NULL) {
@@ -4004,7 +4031,7 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 					    const char *key)
 {
     gretl_matrix **pm = NULL;
-    
+
     if (!strcmp(key, "prederr")) {
 	pm = &K->E;
     } else if (!strcmp(key, "pevar")) {
@@ -4019,9 +4046,29 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 	pm = &K->LL;
     }
 
-    /* FIXME smstate, smstvar */
-
     return pm;
+}
+
+static double *kalman_output_scalar (kalman *K,
+				     const char *key)
+{
+    static double Kt;
+    double *s = NULL;
+
+    if (!strcmp(key, "s2")) {
+	s = &K->s2;
+    } else if (!strcmp(key, "lnl")) {
+	s = &K->loglik;
+    } else if (!strcmp(key, "t")) {
+	if (kalman_is_running(K)) {
+	    Kt = K->t + 1;
+	} else {
+	    Kt = kalman_checking(K) ? 1 : 0;
+	} 
+	s = &Kt;
+    }
+
+    return s;
 }
 
 static const char *kalman_output_matrix_name (int i)
@@ -4129,9 +4176,8 @@ int maybe_set_kalman_element (void *kptr,
     }
 
     if (id < 0) {
-	gretl_matrix **pm = kalman_output_matrix(K, key);
-
-	if (pm != NULL) {
+	if (kalman_output_matrix(K, key) != NULL ||
+	    kalman_output_scalar(K, key) != NULL) {
 	    *err = E_DATA;
 	    gretl_errmsg_sprintf("The member %s is read-only", key);
 	}
@@ -4194,7 +4240,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	for (i=0; i<K_MMAX; i++) {
 	    if (!strcmp(key, K_input_mats[i].name)) {
 		id = K_input_mats[i].sym;
-		ret = copy_k_matrix_by_id(K, id, err);
+		ret = copy_k_matrix_by_id(K, id, err); /* copy? */
 		*type = GRETL_TYPE_MATRIX;
 		break;
 	    }
@@ -4209,6 +4255,13 @@ void *maybe_retrieve_kalman_element (void *kptr,
 		    ret = *pm;
 		    *type = GRETL_TYPE_MATRIX;
 		}
+	    }
+	}
+	if (id < 0 && *reserved == 0) {
+	    /* nothing matched yet: try scalar member */
+	    ret = kalman_output_scalar(K, key);
+	    if (ret != NULL) {
+		*type = GRETL_TYPE_DOUBLE;
 	    }
 	}
     }

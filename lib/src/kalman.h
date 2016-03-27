@@ -30,7 +30,8 @@ enum {
     KALMAN_SIM     = 1 << 6, /* running simulation */
     KALMAN_CROSS   = 1 << 7, /* cross-correlated disturbances */
     KALMAN_ETT     = 1 << 8, /* ARMA: producing \epsilon{t|t} estimates */
-    KALMAN_CHECK   = 1 << 9  /* checking user-defined matrices */
+    KALMAN_CHECK   = 1 << 9, /* checking user-defined matrices */
+    KALMAN_BUNDLE  = 1 << 10, /* kalman is inside a bundle */
 };
 
 typedef struct kalman_ kalman;
