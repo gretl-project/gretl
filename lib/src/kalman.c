@@ -4052,7 +4052,7 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 static double *kalman_output_scalar (kalman *K,
 				     const char *key)
 {
-    static double Kt;
+    static double retval;
     double *s = NULL;
 
     if (!strcmp(key, "s2")) {
@@ -4061,12 +4061,15 @@ static double *kalman_output_scalar (kalman *K,
 	s = &K->loglik;
     } else if (!strcmp(key, "t")) {
 	if (kalman_is_running(K)) {
-	    Kt = K->t + 1;
+	    retval = K->t + 1;
 	} else {
-	    Kt = kalman_checking(K) ? 1 : 0;
+	    retval = kalman_checking(K) ? 1 : 0;
 	} 
-	s = &Kt;
-    }
+	s = &retval;
+    } else if (!strcmp(key, "diffuse")) {
+	retval = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
+	s = &retval;
+    }	
 
     return s;
 }
@@ -4153,6 +4156,22 @@ int maybe_set_kalman_element (void *kptr,
     if (K == NULL) {
 	*err = E_DATA;
 	return 0;
+    }
+
+    if (vtype == GRETL_TYPE_DOUBLE) {
+	if (!strcmp(key, "diffuse")) {
+	    double x = *(double *) vptr;
+
+	    if (na(x)) {
+		*err = E_DATA;
+		return 0;
+	    } else if (x == 0) {
+		K->flags &= ~KALMAN_DIFFUSE;
+	    } else {
+		K->flags |= KALMAN_DIFFUSE;
+	    }
+	    return 1;
+	}
     }
 
     if (vtype == GRETL_TYPE_STRING) {
