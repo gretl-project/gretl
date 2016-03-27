@@ -3883,6 +3883,93 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     return Y;
 }
 
+gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
+				      const gretl_matrix *V, 
+				      const gretl_matrix *W,
+				      PRN *prn, int *err)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+    gretl_matrix *Y = NULL, *S = NULL;
+    int T, saveT;
+
+    if (V == NULL) {
+	*err = missing_matrix_error("V");
+	return NULL;
+    }
+
+    if (K->p > 0) {
+	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
+	   @V as the underlying disturbance matrix (and ignore @W).
+	*/
+	if (V->cols != K->p) {
+	    *err = E_NONCONF;
+	}
+    } else {	
+	/* Otherwise @V must have r columns, and @W must be given if
+	   K->R is non-null.
+	*/
+	if (V->cols != K->r) {
+	    *err = E_NONCONF;
+	} else if (K->R != NULL) {
+	    if (W == NULL) {
+		*err = missing_matrix_error("W");
+	    } else if (W->rows != V->rows || W->cols != K->n) {
+		*err = E_NONCONF;
+	    }
+	}	    
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    /* we let V provisionally define the sample length */
+    saveT = K->T;
+    T = V->rows;
+
+    /* now, are the other needed matrices in place? */
+    K->flags |= KALMAN_SIM;
+    K->T = T;
+    *err = user_kalman_recheck_matrices(u, prn);
+
+#if 0 /* FIXME: maybe allocate S and on success, stick
+	 into the Kalman bundle as a regular member?
+      */
+    /* optional accessor for simulated state */
+    if (!*err && Sname != NULL && strcmp(Sname, "null")) {
+	S = get_matrix_by_name(Sname);
+	if (S == NULL) {
+	    *err = E_UNKVAR;
+	} else if (S->rows != K->T || S->cols != K->r) {
+	    *err = gretl_matrix_realloc(S, K->T, K->r);
+	}
+    }
+#endif    
+
+    /* return matrix to hold simulated observables */
+    if (!*err) {
+	Y = gretl_matrix_alloc(K->T, K->n);
+	if (Y == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	*err = kalman_simulate(K, V, W, Y, S, prn);
+    }
+
+    if (*err) {
+	gretl_matrix_free(Y);
+	Y = NULL;
+    }
+
+    /* restore state */
+    K->flags &= ~KALMAN_SIM;
+    K->T = saveT;
+
+    return Y;
+}
+
 /*
  * user_kalman_get_loglik:
  * 
