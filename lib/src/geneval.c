@@ -9736,7 +9736,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.a = A;
 	    }
 	}
-    } else if (t->t == F_KBUNDLE) {
+    } else if (t->t == F_KSETUP) {
 	gretl_matrix *M[4] = {NULL};
 	int ptr[4] = {0};
 	
@@ -12232,7 +12232,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTPVAL:
     case F_MOVAVG:
     case F_DEFARRAY:
-    case F_KBUNDLE:
+    case F_KSETUP:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

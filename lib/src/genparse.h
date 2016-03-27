@@ -421,7 +421,7 @@ enum {
     F_BOOTPVAL,
     F_MOVAVG,
     F_DEFARRAY,
-    F_KBUNDLE,
+    F_KSETUP,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

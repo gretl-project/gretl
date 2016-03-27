@@ -4087,6 +4087,11 @@ static const char *kalman_output_matrix_name (int i)
 static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 {
     const gretl_matrix *m = NULL;
+    const char *name = K->mnames[i];
+
+    if (*name != '\0') {
+	return get_matrix_by_name(name);
+    }    
     
     if (i == K_F) {
 	m = K->F;
