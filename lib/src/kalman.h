@@ -101,6 +101,8 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp);
 gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
 				  int *err);
 
+int kalman_bundle_smooth (gretl_bundle *b, PRN *prn);
+
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
 				    const gretl_matrix *W,
 				    const char *Sname, 

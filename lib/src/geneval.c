@@ -9042,7 +9042,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	}
     } else if (t->t == F_KFILTER && k == 1 && n->v.bn.n[0]->t == BUNDLE) {
-	/* experimental !! */
 	e = n->v.bn.n[0];
 	reset_p_aux(p, save_aux);
 	ret = aux_scalar_node(p);
@@ -9088,7 +9087,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret->v.xval = user_kalman_run(E, V, S, P, G, 
 					  p->dset, p->prn, 
 					  &p->err);
-	} 
+	}
+    } else if (t->t == F_KSMOOTH && k == 1 && n->v.bn.n[0]->t == BUNDLE) {
+	e = n->v.bn.n[0];
+	reset_p_aux(p, save_aux);
+	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    ret->v.xval = kalman_bundle_smooth(e->v.b, p->prn);
+	}	
     } else if (t->t == F_KSMOOTH) {
 	const char *P = NULL;
 	const char *U = NULL;

@@ -2835,12 +2835,10 @@ int user_kalman_run (const char *E, const char *V,
     return err;    
 }
 
-int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
+static int kalman_ensure_output_matrices (kalman *K)
 {
-    kalman *K = gretl_bundle_get_private_data(b);
-    int err;
-
-#if 1
+    int err = 0;
+    
     if (K->E == NULL) {
 	K->E = gretl_null_matrix_new();
     }
@@ -2856,9 +2854,25 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     if (K->K == NULL) {
 	K->K = gretl_null_matrix_new();
     }
-#endif
 
-    err = kalman_bundle_recheck_matrices(K, prn);
+    if (K->E == NULL || K->V == NULL || K->S == NULL ||
+	K->P == NULL || K->K == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
+int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+    int err;
+
+    err = kalman_ensure_output_matrices(K);
+
+    if (!err) {
+	err = kalman_bundle_recheck_matrices(K, prn);
+    }
 
     if (!err && K->LL == NULL) {
 	K->LL = gretl_matrix_alloc(K->T, 1);
@@ -3575,6 +3589,46 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
     return S;
 }
 
+int kalman_bundle_smooth (gretl_bundle *b, PRN *prn)
+{
+    kalman *K = gretl_bundle_get_private_data(b);    
+    int err;
+
+    err = kalman_ensure_output_matrices(K);
+
+    if (matrix_is_varying(K, K_F) || matrix_is_varying(K, K_H)) {
+	/* add recorder for F_t and/or H_t */
+	err = kalman_add_stepinfo(K);
+	if (err) {
+	    goto bailout;
+	}
+    }
+
+    if (!err) {
+	err = kalman_bundle_recheck_matrices(K, prn);
+    }
+
+    if (!err) {
+	/* forward pass */
+	K->flags |= KALMAN_SMOOTH;
+	err = kalman_forecast(K, NULL);
+	K->flags &= ~KALMAN_SMOOTH;	
+    }
+
+    K->t = 0;
+
+    if (!err) {
+	err = anderson_moore_smooth(K);
+    }
+
+ bailout:    
+
+    /* trash the "stepinfo" storage */
+    free_stepinfo(K);
+
+    return err;
+}
+
 /* See the account in Koopman, Shephard and Doornik, Econometrics
    Journal, 1999 (volume 2, pp. 113-166), section 4.2, regarding
    the initialization of the state under simulation.
@@ -4036,9 +4090,9 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 	pm = &K->E;
     } else if (!strcmp(key, "pevar")) {
 	pm = &K->V;
-    } else if (!strcmp(key, "flstate")) {
+    } else if (!strcmp(key, "state")) {
 	pm = &K->S;
-    } else if (!strcmp(key, "flstvar")) {
+    } else if (!strcmp(key, "stvar")) {
 	pm = &K->P;
     } else if (!strcmp(key, "gain")) {
 	pm = &K->K;
@@ -4079,10 +4133,21 @@ static const char *kalman_output_matrix_name (int i)
     switch (i) {
     case 0: return "prederr";
     case 1: return "pevar";
-    case 2: return "flstate";
-    case 3: return "flstvar";
+    case 2: return "state";
+    case 3: return "stvar";
     case 4: return "gain";
     case 5: return "llt";
+    default: return NULL;
+    }
+}
+
+static const char *kalman_output_scalar_name (int i)
+{
+    switch (i) {
+    case 0: return "diffuse";
+    case 1: return "lnl";
+    case 2: return "s2";
+    case 3: return "t";
     default: return NULL;
     }
 }
@@ -4310,7 +4375,8 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
     } else {
 	const gretl_matrix *m;
 	gretl_matrix **pm;
-	const char *omname;
+	double *px;
+	const char *name;
 	int i, id;
 
 	pputs(prn, "\nKalman input matrices\n");
@@ -4332,12 +4398,12 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	pputs(prn, "\nKalman output matrices\n");
 
 	for (i=0; ; i++) {
-	    omname = kalman_output_matrix_name(i);
-	    if (omname == NULL) {
+	    name = kalman_output_matrix_name(i);
+	    if (name == NULL) {
 		break;
 	    } else {
-		pprintf(prn, "  %s: ", omname);
-		pm = kalman_output_matrix(K, omname);
+		pprintf(prn, "  %s: ", name);
+		pm = kalman_output_matrix(K, name);
 		if (pm == NULL || *pm == NULL) {
 		    pputs(prn, "null\n");
 		} else {
@@ -4346,6 +4412,23 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 		}
 	    }
 	}
+
+	pputs(prn, "\nKalman scalars\n");
+
+	for (i=0; ; i++) {
+	    name = kalman_output_scalar_name(i);
+	    if (name == NULL) {
+		break;
+	    } else {
+		pprintf(prn, "  %s: ", name);
+		px = kalman_output_scalar(K, name);
+		if (px == NULL || na(*px)) {
+		    pputs(prn, "NA\n");
+		} else {
+		    pprintf(prn, "%g\n", *px);
+		}
+	    }
+	}	
     }
 
     return err;
