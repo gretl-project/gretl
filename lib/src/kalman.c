@@ -160,15 +160,15 @@ struct kalman_ {
 
 /* the matrix in question is not an external named user-matrix,
    and is "owned" by the Kalman struct */
-#define kalman_owns_matrix(K,i) (K->mnames != NULL && K->mnames[i][0] == '$')
+#define kalman_owns_matrix(K,i) (K->mnames != NULL && \
+				 (K->mnames[i][0] == '$' || \
+				  K->mnames[i][0] == '\0'))
 
 /* the matrix in question is time-varying (it has an associated 
    function call) */
 #define matrix_is_varying(K,i) (K->matcalls != NULL && K->matcalls[i] != NULL)
 
 #define filter_is_varying(K) (K->matcalls != NULL)
-
-#define GENERIC_MATNAME "$Kmat"
 
 static const char *kalman_matrix_name (int sym);
 
@@ -884,6 +884,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
+/* supports hansl function for creating a named Kalman bundle */
+
 kalman *kalman_new_minimal (gretl_matrix *M[],
 			    int ptr[], int *err)
 {
@@ -918,10 +920,6 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
     targ[1] = &K->H;
     targ[2] = &K->F;
     targ[3] = &K->Q;
-
-    for (i=0; i<K_MMAX; i++) {
-	strcpy(K->mnames[i], GENERIC_MATNAME);
-    }
 
     for (i=0; i<4; i++) {
 	if (ptr[i]) {
@@ -2018,8 +2016,7 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
 
 /* We didn't find a matrix of the name @s: here we try for a series
    or a named list, and if found, make a matrix out of it.  This
-   matrix will be "hard-wired" -- we don't do any further look-up
-   of values -- and it will be owned by the Kalman struct.
+   matrix will be "hard-wired", and owned by the Kalman struct.
 */
 
 static gretl_matrix *k_matrix_from_dataset (char *s,
@@ -2045,7 +2042,7 @@ static gretl_matrix *k_matrix_from_dataset (char *s,
     }
 
     if (m != NULL) {
-	strcpy(s, GENERIC_MATNAME);
+	*s = '\0';
     }
 
     return m;
@@ -2084,7 +2081,7 @@ static gretl_matrix *k_matrix_from_scalar (char *s, int *errp)
 	    strcpy(tmp, s);
 	    sprintf(s, "$%s", tmp);
 	} else {
-	    strcpy(s, GENERIC_MATNAME);
+	    *s = '\0';
 	}
     }
 
@@ -2228,13 +2225,14 @@ static int obsy_check (kalman *K)
 
 /* Did the user give the name of a scalar variable in place of a
    1 x 1 Kalman input matrix?  If so, re-read the value of that 
-   scalar */
+   scalar, whose name will have been recorded with a leading '$'.
+*/
 
 static int update_scalar_matrix (gretl_matrix *m, const char *name)
 {
     int err = 0;
 
-    if (gretl_matrix_is_scalar(m) && strcmp(name, GENERIC_MATNAME)) {
+    if (gretl_matrix_is_scalar(m) && *name == '$') {
 	double x = gretl_scalar_get_value(name + 1, NULL);
 
 	if (na(x)) {
@@ -2334,11 +2332,8 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
-	    fprintf(stderr, " kalman_update_matrix\n");
 	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
 	} else if (!kalman_owns_matrix(K, i)) {
-	    fprintf(stderr, " kalman_retrieve_matrix: %d (%s)\n",
-		    i, K->mnames[i]);
 	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], cfd, cfd);
 	}
     }
@@ -4011,7 +4006,7 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
 	if (mname != NULL) {
 	    strcpy(K->mnames[i], mname);
 	} else {
-	    strcpy(K->mnames[i], GENERIC_MATNAME);
+	    K->mnames[i][0] = '\0';
 	}	
     } else {
 	err = E_DATA;
@@ -4020,7 +4015,29 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
     return err;
 }
 
-static const gretl_matrix *get_k_matrix_by_id (kalman *K, int i)
+static gretl_matrix **kalman_output_matrix (kalman *K,
+					    const char *key)
+{
+    gretl_matrix **pm = NULL;
+    
+    if (!strcmp(key, "prederr")) {
+	pm = &K->E;
+    } else if (!strcmp(key, "pevar")) {
+	pm = &K->V;
+    } else if (!strcmp(key, "flstate")) {
+	pm = &K->S;
+    } else if (!strcmp(key, "flstvar")) {
+	pm = &K->P;
+    } else if (!strcmp(key, "gain")) {
+	pm = &K->K;
+    } else if (!strcmp(key, "llt")) {
+	pm = &K->LL;
+    }
+
+    return pm;
+}
+
+static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 {
     const gretl_matrix *m = NULL;
     
@@ -4055,7 +4072,7 @@ static gretl_matrix *copy_k_matrix_by_id (kalman *K, int i,
     const gretl_matrix *src;
     gretl_matrix *m = NULL;
 
-    src = get_k_matrix_by_id(K, i);
+    src = k_input_matrix_by_id(K, i);
     
     if (src == NULL) {
 	*err = E_DATA;
@@ -4111,7 +4128,14 @@ int maybe_set_kalman_element (void *kptr,
 	}
     }
 
-    if (id >= 0) {
+    if (id < 0) {
+	gretl_matrix **pm = kalman_output_matrix(K, key);
+
+	if (pm != NULL) {
+	    *err = E_DATA;
+	    gretl_errmsg_sprintf("The member %s is read-only", key);
+	}
+    } else {
 	if (fncall) {
 	    if (K->matcalls == NULL) {
 		*err = kalman_add_matcalls(K);
@@ -4172,29 +4196,15 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	    }
 	}
 	if (id < 0) {
-	    /* try for an output matrix (for now just
-	       using short identifiers) */
-	    if (!strcmp(key, "E")) {
+	    /* try for an output matrix */
+	    gretl_matrix **pm = kalman_output_matrix(K, key);
+
+	    if (pm != NULL) {
 		*reserved = 1;
-		ret = K->E;
-	    } else if (!strcmp(key, "V")) {
-		*reserved = 1;
-		ret = K->V;
-	    } else if (!strcmp(key, "S")) {
-		*reserved = 1;
-		ret = K->S;
-	    } else if (!strcmp(key, "P")) {
-		*reserved = 1;
-		ret = K->P;
-	    } else if (!strcmp(key, "G")) {
-		*reserved = 1;
-		ret = K->K;
-	    } else if (!strcmp(key, "llt")) {
-		*reserved = 1;
-		ret = K->LL;
-	    }
-	    if (ret != NULL) {
-		*type = GRETL_TYPE_MATRIX_REF;
+		if (*pm != NULL) {
+		    ret = gretl_matrix_copy(*pm);
+		    *type = GRETL_TYPE_MATRIX;
+		}
 	    }
 	}
     }
@@ -4225,13 +4235,13 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	for (i=0; i<K_MMAX; i++) {
 	    id = K_input_mats[i].sym;
 	    pprintf(prn, "  %s: ", K_input_mats[i].name);
-	    m = get_k_matrix_by_id(K, id);
+	    m = k_input_matrix_by_id(K, id);
 	    if (m == NULL) {
 		pputs(prn, "null\n");
 	    } else if (kalman_owns_matrix(K, id)) {
-		pprintf(prn, "%d x %d (anonymous)\n", m->rows, m->cols);
+		pprintf(prn, "%d x %d\n", m->rows, m->cols);
 	    } else {
-		pprintf(prn, "%d x %d (%s)\n", m->rows, m->cols,
+		pprintf(prn, "%d x %d (link: %s)\n", m->rows, m->cols,
 			K->mnames[i]);
 	    }
 	}
