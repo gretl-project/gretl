@@ -3930,8 +3930,11 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     /* now, are the other needed matrices in place? */
     K->flags |= KALMAN_SIM;
     K->T = T;
+#if 0
+    /* copy-n-paste bug, I presume? */
     *err = user_kalman_recheck_matrices(u, prn);
-
+#endif
+    
 #if 0 /* FIXME: maybe allocate S and on success, stick
 	 into the Kalman bundle as a regular member?
       */
