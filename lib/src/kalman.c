@@ -3595,6 +3595,9 @@ int kalman_bundle_smooth (gretl_bundle *b, PRN *prn)
     int err;
 
     err = kalman_ensure_output_matrices(K);
+    if (err) {
+	return err;
+    }
 
     if (matrix_is_varying(K, K_F) || matrix_is_varying(K, K_H)) {
 	/* add recorder for F_t and/or H_t */
