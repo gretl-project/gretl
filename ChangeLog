@@ -1,4 +1,6 @@
 version 2016b, in progress
+- "panel" command, random-effects version: show an overall
+  Wald chi-square test on the named regressors
 - "dataset" command: expose and document the "pad-daily" 
   option
 - "vecm" command: clarify the options available when specify-

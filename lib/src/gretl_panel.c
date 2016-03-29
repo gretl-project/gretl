@@ -2417,7 +2417,7 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 
 static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
 {
-    double chisq;
+    double chisq = NADBL;
     int nc, df = 0;
 
     fix_panelmod_list(pmod, pan);
