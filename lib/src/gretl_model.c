@@ -133,6 +133,8 @@ static const char *test_type_key (ModelTestType t)
 	return "rho_test";	
     } else if (t == GRETL_TEST_WITHIN_F) {
 	return "within_F";
+    } else if (t == GRETL_TEST_RE_WALD) {
+	return "re_wald_test";
     } else {
 	return NULL;
     }
@@ -3626,6 +3628,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_WITHIN_F,
       N_("Joint test on named regressors"),
       NULL },
+    { GRETL_TEST_RE_WALD,
+      N_("Joint test on named regressors"),
+      NULL },
     { GRETL_TEST_PANEL_WELCH,
       N_("Robust test for differing group intercepts"),
       N_("The groups have a common intercept") },
@@ -3775,7 +3780,8 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	}
     }
 
-    if (H0 == NULL && test->type != GRETL_TEST_WITHIN_F) {
+    if (H0 == NULL && test->type != GRETL_TEST_WITHIN_F &&
+	test->type != GRETL_TEST_RE_WALD) {
 	return;
     }    
 

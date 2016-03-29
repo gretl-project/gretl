@@ -1164,8 +1164,10 @@ static DATASET *within_groups_dataset (const DATASET *dset,
 */
 
 static DATASET *
-random_effects_dataset (const DATASET *dset, const DATASET *gset,
-			int *relist, int *hlist, 
+random_effects_dataset (const DATASET *dset,
+			const DATASET *gset,
+			int *relist,
+			int *hlist, 
 			panelmod_t *pan)
 {
     DATASET *rset;
@@ -1178,8 +1180,14 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
     int err = 0;
 
     if (hreg) {
-	/* apparatus for regression version of Hausman test */
-	for (i=1; i<pan->vlist[0]; i++) {
+	/* Apparatus for regression version of Hausman test:
+	   note that we shouldn't include time dummies here
+	   since the de-meaned versions would be perfectly
+	   collinear with the quasi-demaned ones.
+	*/
+	int hmax = pan->vlist[0] - pan->ntdum;
+	    
+	for (i=1; i<hmax; i++) {
 	    if (pan->vlist[i+1] != 0) {
 		hlist[0] = ++v2;
 		hlist[i-1] = v1 + i - 2;
@@ -1205,7 +1213,8 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
     }
 
     /* build GLS regression list, and process varnames for regression
-       version of Hausman test if wanted */
+       version of Hausman test if wanted 
+    */
 
     k = 0;
     k2 = v1 - 1;
@@ -1216,7 +1225,8 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
 	} else {
 	    relist[j] = ++k;
 	    strcpy(rset->varname[k], dset->varname[vj]);
-	    if (hreg && j > 1 && var_is_varying(pan, vj)) {
+	    if (hreg && k2 < rset->v - 1 && j > 1 && var_is_varying(pan, vj)) {
+		/* hausman-related term */
 		k2++;
 		strcpy(rset->varname[k2], "_");
 		strncat(rset->varname[k2], dset->varname[vj],
@@ -1263,7 +1273,8 @@ random_effects_dataset (const DATASET *dset, const DATASET *gset,
 			k++;
 			xbar = (k < gset->v)? gset->Z[k][u] : 1.0 / pan->Tmax;
 			rset->Z[k][s] = dset->Z[vj][bigt] - theta_i * xbar;
-			if (hreg && var_is_varying(pan, vj)) {
+			if (hreg && k2 < rset->v - 1 && var_is_varying(pan, vj)) {
+			    /* hausman-related term */
 			    rset->Z[++k2][s] = dset->Z[vj][bigt] - xbar;
 			}
 		    }
@@ -1770,31 +1781,35 @@ static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
     return 0;
 }
 
-/* compute F-stat for the regular regressors, skipping
-   @nskip trailing coefficients (which can be used to
-   skip time dummies)
+/* Compute F-test or chi-square test for the regular
+   regressors, skipping @nskip trailing coefficients
+   (which can be used to skip time dummies)
 */
 
-static double panel_F (MODEL *pmod, panelmod_t *pan, int nskip)
+static double panel_overall_test (MODEL *pmod, panelmod_t *pan,
+				  int nskip, gretlopt opt)
 {
-    double F = NADBL;
+    double test = NADBL;
+    int *omitlist = NULL;
 
     if (nskip > 0) {
 	int i, k = pmod->list[0] - nskip - 2;
-	int *omitlist;
 
 	omitlist = gretl_list_new(k);
 	for (i=1; i<=k; i++) {
 	    omitlist[i] = pmod->list[i+2];
 	}
-
-	F = wald_omit_F(omitlist, pmod);
-	free(omitlist);
-    } else {
-	F = wald_omit_F(NULL, pmod);
     }
 
-    return F;
+    if (opt & OPT_X) {
+	test = wald_omit_chisq(omitlist, pmod);
+    } else {
+	test = wald_omit_F(omitlist, pmod);
+    }
+
+    free(omitlist);
+
+    return test;
 }
 
 /* Correct various model statistics, in the case where we estimated
@@ -1832,13 +1847,14 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     if (pan->ntdum > 0) {
 	wdfn = fmod->ncoeff - 1 - pan->ntdum;
 	if (wdfn > 0) {
-	    wfstt = panel_F(fmod, pan, pan->ntdum);
+	    wfstt = panel_overall_test(fmod, pan, pan->ntdum,
+				       OPT_NONE);
 	}
     } else {
 	wdfn = fmod->ncoeff - 1;
 	if (wdfn > 0) {
 	    if (pan->opt & OPT_R) {
-		wfstt = panel_F(fmod, pan, 0);
+		wfstt = panel_overall_test(fmod, pan, 0, OPT_NONE);
 	    } else {
 		wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
 	    }
@@ -2401,7 +2417,8 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 
 static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
 {
-    int nc;
+    double chisq;
+    int nc, df = 0;
 
     fix_panelmod_list(pmod, pan);
 
@@ -2419,6 +2436,33 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
     pmod->ncoeff = pmod->dfn + 1;
     ls_criteria(pmod);
     pmod->ncoeff = nc;
+
+    /* add joint chi-square test on regressors */
+
+    if (pan->ntdum > 0) {
+	df = pmod->ncoeff - 1 - pan->ntdum;
+	if (df > 0) {
+	    chisq = panel_overall_test(pmod, pan, pan->ntdum,
+				       OPT_X);
+	}
+    } else {
+	df = pmod->ncoeff - 1;
+	if (df > 0) {
+	    chisq = panel_overall_test(pmod, pan, 0, OPT_X);
+	}
+    }
+
+    if (!xna(chisq) && chisq >= 0.0) {
+	ModelTest *test = model_test_new(GRETL_TEST_RE_WALD);
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+	    model_test_set_dfn(test, df);
+	    model_test_set_value(test, chisq);
+	    model_test_set_pvalue(test, chisq_cdf_comp(df, chisq));
+	    maybe_add_test_to_model(pmod, test);
+	}
+    }    
 }
 
 static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
@@ -2677,6 +2721,9 @@ static int random_effects (panelmod_t *pan,
 	int *biglist = gretl_list_add(relist, hlist, &err);
 
 	if (!err) {
+#if PDEBUG
+	    fprintf(stderr, "estimate augmented GLS model\n");
+#endif	    
 	    remod = lsq(biglist, rset, OLS, OPT_A);
 	    if (remod.errcode == 0) {
 		/* record unrestricted SSR */
@@ -2688,6 +2735,9 @@ static int random_effects (panelmod_t *pan,
     }	
 
     /* regular random-effects model */
+#if PDEBUG
+    fprintf(stderr, "estimate regular GLS model\n");
+#endif    
     remod = lsq(relist, rset, OLS, lsqopt);
 
     if ((err = remod.errcode)) {
@@ -3245,7 +3295,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     if (pan->opt & OPT_R) {
 	panel_robust_vcv(pmod, pan, Z);
 	pmod->opt |= OPT_R;
-	pmod->fstt = panel_F(pmod, pan, 0);
+	pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_NONE);
 	pmod->dfd = pan->effn - 1;
     }
 
@@ -3388,12 +3438,10 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 
     if (opt & OPT_U) {
 	/* trying to do random effects */
-	int xdf = pan.effn - mod.ncoeff;
+	int xdf = pan.effn - (mod.ncoeff - pan.ntdum);
 
 	if (xdf <= 0) {
-#if PDEBUG
-	    fprintf(stderr, "xdf = %d - %d = %d\n", pan.effn, mod.ncoeff, xdf);
-#endif
+	    gretl_errmsg_set(_("Couldn't estimate group means regression"));
 	    err = mod.errcode = E_DF;
 	    goto bailout;
 	} else {
