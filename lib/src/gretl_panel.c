@@ -479,8 +479,9 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     }
 
     /* Small N adjustment factor: "reduce downward bias in
-       case of finite N" (Cameron and Miller, Journal of 
-       Human Resources, Spring 2015)
+       case of finite N" (Cameron and Miller, "A Practitioner's
+       Guide to Cluster-Robust Inference", Journal of Human
+       Resources, Spring 2015).
     */
     Nfac = sqrt(pan->effn / (double) (pan->effn - 1));
     s = 0;
