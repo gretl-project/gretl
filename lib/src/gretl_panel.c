@@ -2783,6 +2783,9 @@ static int random_effects (panelmod_t *pan,
 #endif	
 
     if (!err && (pan->opt & OPT_U)) {
+	if (pan->opt & OPT_R) {
+	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
+	}
 	save_panel_model(&remod, pan, (const double **) dset->Z, rset);
     } else {
 	clear_model(&remod);
