@@ -7739,10 +7739,16 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 	} else if (donate) {
 	    /* it's OK to hand over the data pointer */
 	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
+	    if (!err && type == GRETL_TYPE_MATRIX) {
+		p->lh.m = ptr;
+	    }
 	    n->v.ptr = NULL;
 	} else {
 	    /* the data must be copied into the bundle */
 	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+	    if (!err && type == GRETL_TYPE_MATRIX) {
+		p->lh.m = ptr;
+	    }	    
 	}
     }
 
@@ -14185,7 +14191,7 @@ static void edit_matrix (parser *p)
 #endif	
 	gretl_matrix_free(m);
 	if (p->ret->t == MAT) {
-	    p->ret->v.m = NULL; /* ?? */
+	    p->ret->v.m = NULL; /* avoid double-freeing */
 	}
     }
 }
@@ -14929,7 +14935,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == BMEMB) {
 	/* saving an object into a bundle */
 	gretl_bundle *b = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
-	    
+
 	if (p->lh.subvar != NULL) {
 	    p->err = edit_bundle_value(b, r, p);
 	} else {
@@ -14966,8 +14972,8 @@ static int save_generated_var (parser *p, PRN *prn)
     }	
 
 #if EDEBUG
-    fprintf(stderr, "save_generated_var: returning p->err = %d\n",
-	    p->err);
+    fprintf(stderr, "save_generated_var: lh.m = %p, returning p->err = %d\n",
+	    (void *) p->lh.m, p->err);
 #endif
 
     return p->err;

@@ -1127,13 +1127,19 @@ int genr_get_output_varnum (const parser *p)
     return p->lh.vnum;
 }
 
-gretl_matrix *genr_get_output_matrix (const parser *p)
+gretl_matrix *genr_get_output_matrix (parser *p)
 {
     if (p->targ == MAT) {
 	return p->lh.m;
-    } else {
-	return NULL;
+    } else if (p->targ == BMEMB) {
+	gretl_matrix *m = p->lh.m;
+
+	/* in case the member-type changes */
+	p->lh.m = NULL;
+	return m;
     }
+
+    return NULL;
 }
 
 double genr_get_output_scalar (const parser *p)

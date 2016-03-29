@@ -4279,6 +4279,8 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
     return m;
 }
 
+#if 0
+
 static gretl_matrix *copy_k_matrix_by_id (kalman *K, int i,
 					  int *err)
 {
@@ -4298,6 +4300,8 @@ static gretl_matrix *copy_k_matrix_by_id (kalman *K, int i,
 
     return m;
 }
+
+#endif
 
 int maybe_set_kalman_element (void *kptr,
 			      const char *key,
@@ -4422,7 +4426,12 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	for (i=0; i<K_MMAX; i++) {
 	    if (!strcmp(key, K_input_mats[i].name)) {
 		id = K_input_mats[i].sym;
-		ret = copy_k_matrix_by_id(K, id, err); /* copy? */
+#if 0
+		/* copying here produces a memory leak */
+		ret = copy_k_matrix_by_id(K, id, err);
+#else		
+		ret = (gretl_matrix *) k_input_matrix_by_id(K, id);
+#endif		
 		*type = GRETL_TYPE_MATRIX;
 		break;
 	    }

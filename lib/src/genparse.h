@@ -639,7 +639,7 @@ struct parser_ {
     NODE *tree;        /* parsed syntax tree */
     NODE *ret;         /* evaluated result node */
     /* below: parser state variables */
-    NODE *aux;         /* convenience pointer to current auxiliary node */
+    NODE *aux;          /* convenience pointer to current auxiliary node */
     int callcount;
     int dset_n;
     int obs;

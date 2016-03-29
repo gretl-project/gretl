@@ -162,7 +162,7 @@ double genr_get_output_scalar (const GENERATOR *genr);
 
 int genr_get_last_output_type (void);
 
-gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
+gretl_matrix *genr_get_output_matrix (GENERATOR *genr);
 
 int series_index (const DATASET *dset, const char *varname);
 
