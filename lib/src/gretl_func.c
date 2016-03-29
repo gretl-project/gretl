@@ -4869,7 +4869,7 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
 
 /** 
  * get_function_package_by_name:
- * @pkgname: make of function package.
+ * @pkgname: name of function package.
  *
  * Returns: pointer to function package if a package named
  * @pkgname is already in memory, otherwise NULL.
@@ -4890,10 +4890,10 @@ fnpkg *get_function_package_by_name (const char *pkgname)
 
 /** 
  * get_function_package_path_by_name:
- * @pkgname: make of function package.
+ * @pkgname: name of function package.
  *
- * Returns: pointer to function package if a package named
- * @pkgname is already in memory, otherwise NULL.
+ * Returns: the full path to the named function package if it 
+ * is already in memory, otherwise NULL.
  */
 
 const char *get_function_package_path_by_name (const char *pkgname)
