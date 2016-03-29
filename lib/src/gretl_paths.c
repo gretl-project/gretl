@@ -1632,8 +1632,10 @@ static char *gretl_addon_get_path (const char *name)
 	while ((dirent = readdir(dir)) != NULL && !found) {
 	    dname = dirent->d_name;
 	    if (!strcmp(dname, name)) {
-		sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
-			dname, SLASH, dname);
+		build_path(path, fndir, dname, NULL);
+		strcat(path, SLASHSTR);
+		strcat(path, dname);
+		strcat(path, ".gfn");
 		err = gretl_test_fopen(path, "r");
 		if (!err) {
 		    version = function_package_get_version(path);
@@ -1854,7 +1856,16 @@ int get_package_data_path (const char *fname, char *fullname)
     if (pkgname == NULL) {
 	err = E_DATA;
     } else {
-	char *gfnpath = gretl_addon_get_path(pkgname);
+	const char *ppath;
+	char *gfnpath;
+
+	ppath = get_function_package_path_by_name(pkgname);
+
+	if (ppath != NULL) {
+	    gfnpath = gretl_strdup(ppath);
+	} else {
+	    gfnpath = gretl_addon_get_path(pkgname);
+	}
 
 	if (gfnpath == NULL) {
 	    gretl_errmsg_sprintf(_("Couldn't find package %s"),

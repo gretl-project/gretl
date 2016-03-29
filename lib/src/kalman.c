@@ -4390,8 +4390,8 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	    sprintf(test, "%s_call", K_input_mats[i].name);
 	    if (!strcmp(key, test)) {
 		id = K_input_mats[i].sym;
-		if (K->matcalls != NULL) {
-		    ret = gretl_strdup(K->matcalls[id]); /* copy? */
+		if (K->matcalls != NULL && K->matcalls[id] != NULL) {
+		    ret = K->matcalls[id];
 		    *type = GRETL_TYPE_STRING;
 		}
 		break;

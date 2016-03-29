@@ -4888,6 +4888,27 @@ fnpkg *get_function_package_by_name (const char *pkgname)
     return NULL;
 }
 
+/** 
+ * get_function_package_path_by_name:
+ * @pkgname: make of function package.
+ *
+ * Returns: pointer to function package if a package named
+ * @pkgname is already in memory, otherwise NULL.
+ */
+
+const char *get_function_package_path_by_name (const char *pkgname)
+{
+    int i;
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(pkgname, pkgs[i]->name)) {
+	    return pkgs[i]->fname;
+	}
+    }
+
+    return NULL;
+}
+
 /* Retrieve summary info, sample script, or code listing for a
    function package, identified by its filename.  This is called
    (indirectly) from the GUI (see below for the actual callbacks).
