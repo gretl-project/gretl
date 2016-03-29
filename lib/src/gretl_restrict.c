@@ -2238,6 +2238,9 @@ static void print_or_save_result (ExecState *state,
 
     if (ASYMPTOTIC_MODEL(pmod->ci) || rset->rfunc != NULL) {
 	asym = 1;
+    } else if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
+	/* random effects */
+	asym = 1;
     }
 
     if (asym) {
