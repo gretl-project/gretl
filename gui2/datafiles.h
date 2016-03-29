@@ -73,7 +73,7 @@ void maybe_update_pkg_registry_window (const char *pkgname,
 
 void set_alternate_gfn_dir (windata_t *vwin, char *path);
 
-gchar *gfn_browser_get_alt_path (windata_t *vwin);
+gchar *gfn_browser_get_alt_path (void);
 
 void start_new_function_package (GtkWidget *w, gpointer data);
 

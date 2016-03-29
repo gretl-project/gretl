@@ -8823,23 +8823,19 @@ static int ok_run_file (char *runfile, int *is_gfn)
     if (fp == NULL && !g_path_is_absolute(runfile) &&
 	strstr(runfile, ".gfn") != NULL) {
 	/* try for ad hoc gfn file location */
-	windata_t *vwin = get_browser_for_role(FUNC_FILES);
+	gchar *path = gfn_browser_get_alt_path();
 
-	if (vwin != NULL) {
-	    gchar *path = gfn_browser_get_alt_path(vwin);
+	if (path != NULL) {
+	    gchar *tmp = g_strdup(runfile);
 
-	    if (path != NULL) {
-		gchar *tmp = g_strdup(runfile);
-
-		build_path(runfile, path, tmp, NULL);
-		fp = fopen(runfile, "r");
-		g_free(tmp);
-		g_free(path);
-		if (fp != NULL) {
-		    fclose(fp);
-		    *is_gfn = 1;
-		    return 1;
-		}
+	    build_path(runfile, path, tmp, NULL);
+	    fp = fopen(runfile, "r");
+	    g_free(tmp);
+	    g_free(path);
+	    if (fp != NULL) {
+		fclose(fp);
+		*is_gfn = 1;
+		return 1;
 	    }
 	}
     }
@@ -8871,6 +8867,33 @@ static int ok_run_file (char *runfile, int *is_gfn)
     }
 
     return 1;
+}
+
+static int gui_get_include_file (const char *fname, char *fullname)
+{
+    if (has_suffix(fname, ".gfn") && !g_path_is_absolute(fname)) {
+	/* If the user is currently working from an ad hoc
+	   function-package directory via the package browser,
+	   search that directory first.
+	*/
+	gchar *path = gfn_browser_get_alt_path();
+
+	if (path != NULL) {
+	    int err;
+	    
+	    build_path(fullname, path, fname, NULL);
+	    err = gretl_test_fopen(fullname, "r");
+	    if (err) {
+		*fullname = '\0';
+	    }
+	    g_free(path);
+	    if (!err) {
+		return 0;
+	    }
+	}
+    }
+    
+    return get_full_filename(fname, fullname, OPT_I);
 }
 
 static void gui_output_line (const char *line, ExecState *s, PRN *prn) 
@@ -9821,7 +9844,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     case RUN:
     case INCLUDE:
 	if (cmd->ci == INCLUDE) {
-	    err = get_full_filename(cmd->param, runfile, OPT_I);
+	    err = gui_get_include_file(cmd->param, runfile);
 	} else {
 	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
