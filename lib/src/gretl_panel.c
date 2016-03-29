@@ -445,15 +445,15 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     return err;
 }
 
-/* HAC covariance matrix for the pooled or fixed-effects model, given
-   "fixed T and large N".  In the case of "large T" a different form
-   is needed for robustness in respect of autocorrelation.  See
+/* HAC covariance matrix for pooled, fixed- or random-effects models,
+   given "fixed T and large N".  In the case of "large T" a different
+   form is needed for robustness in respect of autocorrelation.  See
    Arellano, "Panel Data Econometrics" (Oxford, 2003), pages 18-19.
 
-   In the case of fixed effects there should be no missing values,
-   since we created a special "within" dataset purged of same.
-   But with the pooled model we need to index into the full dataset,
-   and work around any missing values.
+   In the case of fixed or random effects there should be no missing
+   values, since we created a special dataset purged of same. But
+   with the pooled model we need to index into the full dataset, and
+   work around any missing values.
 */
 
 static int 
@@ -465,6 +465,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_vector *eXi = NULL;
     int T = pan->Tmax;
     int k = pmod->ncoeff;
+    double Nfac;
     int i, j, v, s, t;
     int err = 0;
 
@@ -477,6 +478,11 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	goto bailout;
     }
 
+    /* Small N adjustment factor: "reduce downward bias in
+       case of finite N" (Cameron and Miller, Journal of 
+       Human Resources, Spring 2015)
+    */
+    Nfac = sqrt(pan->effn / (double) (pan->effn - 1));
     s = 0;
 
     for (i=0; i<pan->nunits; i++) {
@@ -495,7 +501,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	    if (na(pmod->uhat[s])) {
 		continue;
 	    }
-	    gretl_vector_set(e, p, pmod->uhat[s]);
+	    gretl_vector_set(e, p, Nfac * pmod->uhat[s]);
 	    s = small_index(pan, s);
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j+2];
@@ -512,7 +518,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 				  W, GRETL_MOD_CUMULATE);
     }
 
-    /* form V(b_W) = (X'X)^{-1} W (X'X)^{-1} */
+    /* form V(b) = (X'X)^{-1} W (X'X)^{-1} */
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
 
