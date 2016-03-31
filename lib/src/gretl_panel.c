@@ -2661,6 +2661,47 @@ static void save_hausman_result (panelmod_t *pan)
     }	    
 }
 
+/* Estimate the augmented GLS model for the Hausman test;
+   return either the error sum of squares or, in the
+   robust case, a Wald chi-square statistic.
+*/
+
+static double hausman_regression_result (panelmod_t *pan,
+					 const int *relist,
+					 const int *hlist,
+					 DATASET *rset)
+{
+    double ret = NADBL;
+    int *biglist = NULL;
+    int err = 0;
+    
+    biglist = gretl_list_add(relist, hlist, &err);
+
+    if (biglist != NULL) {
+	MODEL hmod;
+
+	gretl_model_init(&hmod, NULL);
+	hmod = lsq(biglist, rset, OLS, OPT_A);
+	if (hmod.errcode == 0) {
+	    if (pan->opt & OPT_R) {
+		/* do robust Wald test */
+		panel_robust_vcv(&hmod, pan, (const double **) rset->Z);
+		if (hmod.vcv != NULL) {
+		    ret = wald_omit_chisq(hlist, &hmod);
+		}
+	    } else {
+		/* just record unrestricted SSR */
+		ret = hmod.ess;
+	    }
+	}
+	clear_model(&hmod);
+    }
+    
+    free(biglist);
+
+    return ret;
+}
+
 /* Calculate the random effects regression.  Print the results
    here if we're doing the "panel diagnostics" test, otherwise
    save the results.
@@ -2676,12 +2717,12 @@ static int random_effects (panelmod_t *pan,
     gretlopt lsqopt = OPT_A | OPT_Z;
     int *relist = NULL;
     int *hlist = NULL;
-    double URSS = NADBL;
+    double hres = NADBL;
     int i, k, err = 0;
 
     gretl_model_init(&remod, dset);
 
-    /* GLS regression list */
+    /* FGLS regression list */
     relist = gretl_list_new(pan->pooled->list[0]);
     if (relist == NULL) {
 	return E_ALLOC;
@@ -2728,21 +2769,7 @@ static int random_effects (panelmod_t *pan,
     }
 
     if (hlist != NULL) {
-	/* estimate the augmented random-effects model (GLS) */
-	int *biglist = gretl_list_add(relist, hlist, &err);
-
-	if (!err) {
-#if PDEBUG
-	    fprintf(stderr, "estimate augmented GLS model\n");
-#endif	    
-	    remod = lsq(biglist, rset, OLS, OPT_A);
-	    if (remod.errcode == 0) {
-		/* record unrestricted SSR */
-		URSS = remod.ess;
-	    }
-	    clear_model(&remod);
-	}
-	free(biglist);
+	hres = hausman_regression_result(pan, relist, hlist, rset);
     }	
 
     /* regular random-effects model */
@@ -2759,7 +2786,7 @@ static int random_effects (panelmod_t *pan,
 	    print_re_model_top(pan, prn);
 	}
 
-#if PDEBUG
+#if PDEBUG > 1
 	for (i=0; i<20 && i<remod.nobs; i++) {
 	    fprintf(stderr, "remod uhat[%d] = %g\n", i+1, remod.uhat[i]);
 	}
@@ -2777,11 +2804,20 @@ static int random_effects (panelmod_t *pan,
 	    }
 	}
 
-	makevcv(&remod, remod.sigma);
+	if (pan->opt & OPT_R) {
+	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
+	} else {
+	    makevcv(&remod, remod.sigma);
+	}
 
-	if (!na(URSS)) {
-	    /* it appears that Baltagi uses T-k instead of T here. Why? */
-	    pan->H = (remod.ess / URSS - 1.0) * (remod.nobs);
+	if (!na(hres)) {
+	    if (pan->opt & OPT_R) {
+		/* @hres is already the (robust) Hausman test statistic */
+		pan->H = hres;
+	    } else {
+		/* @hres is the unrestricted ess */
+		pan->H = (remod.ess / hres - 1.0) * (remod.nobs);
+	    }
 	} else if (pan->Sigma != NULL) {
 	    vcv_slopes(pan, &remod, VCV_SUBTRACT);
 	}
@@ -2794,9 +2830,6 @@ static int random_effects (panelmod_t *pan,
 #endif	
 
     if (!err && (pan->opt & OPT_U)) {
-	if (pan->opt & OPT_R) {
-	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
-	}
 	save_panel_model(&remod, pan, (const double **) dset->Z, rset);
     } else {
 	clear_model(&remod);
