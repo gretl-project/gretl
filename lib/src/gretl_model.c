@@ -5659,6 +5659,7 @@ double model_coeff_pval (const MODEL *pmod, double x)
 
     if (!xna(x)) {
 	if (ASYMPTOTIC_MODEL(pmod->ci) ||
+	    (pmod->ci == PANEL && (pmod->opt & OPT_U)) ||
 	    ((pmod->opt & OPT_R) && libset_get_bool("robust_z"))) {
 	    p = normal_pvalue_2(x);
 	} else if (pmod->ci == AR) {

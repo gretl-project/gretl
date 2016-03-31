@@ -2201,6 +2201,8 @@ static int use_zscore (const MODEL *pmod)
 	return 0;
     } else if (ASYMPTOTIC_MODEL(pmod->ci)) {
 	return 1;
+    } else if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
+	return 1;
     } else if ((pmod->opt & OPT_R) && libset_get_bool("robust_z")) {
 	return 1;
     } else {
