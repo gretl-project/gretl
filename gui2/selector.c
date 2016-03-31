@@ -4901,14 +4901,6 @@ static void option_callback (GtkWidget *w, selector *sr)
     } else {
 	sr->opts &= ~opt;
     }  
-
-    if (sr->ci == PANEL) {
-	GtkWidget *w = g_object_get_data(G_OBJECT(sr->dlg), "robust-button");
-	
-	if (w != NULL) {
-	    gtk_widget_set_sensitive(w, !(sr->opts & OPT_U));
-	}
-    }
 }
 
 static void reverse_option_callback (GtkWidget *w, selector *sr)
