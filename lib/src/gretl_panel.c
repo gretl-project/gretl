@@ -483,10 +483,8 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
        Guide to Cluster-Robust Inference", Journal of Human
        Resources, Spring 2015).
     */
-    Nfac = pan->effn / (double) (pan->effn - 1);
-#if 1 /* as per Stata */ 
-    Nfac *= (pmod->nobs - 1) / (double) (pmod->nobs - k);
-#endif
+    Nfac = pan->effn / (pan->effn - 1.0);
+    Nfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
     Nfac = sqrt(Nfac);
     s = 0;
 
