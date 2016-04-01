@@ -1635,7 +1635,7 @@ static int print_fe_results (panelmod_t *pan,
     return 0;
 }
 
-static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
+static int time_dummies_wald_test (panelmod_t *pan, MODEL *pmod)
 {
     gretl_matrix *vcv = NULL;
     gretl_vector *b = NULL;
@@ -1649,11 +1649,13 @@ static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
     }
 
     k = pan->ntdum;
-    bigk = wmod->ncoeff;
+    bigk = pmod->ncoeff;
 
-    err = makevcv(wmod, wmod->sigma);
-    if (err) {
-	return err;
+    if (pmod->vcv == NULL) {
+	err = makevcv(pmod, pmod->sigma);
+	if (err) {
+	    return err;
+	}
     }
 
     b = gretl_column_vector_alloc(k);
@@ -1665,14 +1667,14 @@ static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
 
     di = bigk - k;
     for (i=0; i<k; i++) {
-	b->val[i] = wmod->coeff[di++];
+	b->val[i] = pmod->coeff[di++];
     }
 
     di = bigk - k;
     for (i=0; i<k; i++) {
 	dj = bigk - k;
 	for (j=0; j<=i; j++) {
-	    x = wmod->vcv[ijton(di, dj++, bigk)];
+	    x = pmod->vcv[ijton(di, dj++, bigk)];
 	    gretl_matrix_set(vcv, i, j, x);
 	    gretl_matrix_set(vcv, j, i, x);
 	}
@@ -1698,7 +1700,7 @@ static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
 	    model_test_set_dfn(test, k);
 	    model_test_set_value(test, x);
 	    model_test_set_pvalue(test, chisq_cdf_comp(k, x));
-	    maybe_add_test_to_model(wmod, test);
+	    maybe_add_test_to_model(pmod, test);
 	}
     }		
 
