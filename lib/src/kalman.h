@@ -36,11 +36,11 @@ enum {
 
 typedef struct kalman_ kalman;
 
-kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
-		    const gretl_matrix *F, const gretl_matrix *A,
-		    const gretl_matrix *H, const gretl_matrix *Q,
-		    const gretl_matrix *R, const gretl_matrix *y,
-		    const gretl_matrix *x, const gretl_matrix *m,
+kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
+		    gretl_matrix *F, gretl_matrix *A,
+		    gretl_matrix *H, gretl_matrix *Q,
+		    gretl_matrix *R, gretl_matrix *y,
+		    gretl_matrix *x, gretl_matrix *m,
 		    gretl_matrix *E, int *err);
 
 kalman *kalman_new_minimal (gretl_matrix *M[],

@@ -94,16 +94,16 @@ struct kalman_ {
        functions, including user_kalman_recheck_matrices() and the
        matrix_is_varying() macro
     */
-    const gretl_matrix *F; /* r x r: state transition matrix */
-    const gretl_matrix *A; /* k x n: coeffs on exogenous vars, obs eqn */
-    const gretl_matrix *H; /* r x n: coeffs on state variables, obs eqn */
-    const gretl_matrix *Q; /* r x r: contemp covariance matrix, state eqn */
-    const gretl_matrix *R; /* n x n: contemp covariance matrix, obs eqn */
-    const gretl_matrix *mu; /* r x 1: constant term in state transition */
-    const gretl_matrix *y; /* T x n: dependent variable vector (or matrix) */
-    const gretl_matrix *x; /* T x k: independent variables matrix */
-    const gretl_matrix *Sini; /* r x 1: S_{1|0} */
-    const gretl_matrix *Pini; /* r x r: P_{1|0} */
+    gretl_matrix *F; /* r x r: state transition matrix */
+    gretl_matrix *A; /* k x n: coeffs on exogenous vars, obs eqn */
+    gretl_matrix *H; /* r x n: coeffs on state variables, obs eqn */
+    gretl_matrix *Q; /* r x r: contemp covariance matrix, state eqn */
+    gretl_matrix *R; /* n x n: contemp covariance matrix, obs eqn */
+    gretl_matrix *mu; /* r x 1: constant term in state transition */
+    gretl_matrix *y; /* T x n: dependent variable vector (or matrix) */
+    gretl_matrix *x; /* T x k: independent variables matrix */
+    gretl_matrix *Sini; /* r x 1: S_{1|0} */
+    gretl_matrix *Pini; /* r x r: P_{1|0} */
 
     /* optional array of names of input matrices */
     char **mnames;
@@ -245,7 +245,7 @@ void kalman_free (kalman *K)
     gretl_matrix_block_destroy(K->Blk);
 
     if (K->mnames != NULL) {
-	const gretl_matrix **mptr[] = {
+	gretl_matrix **mptr[] = {
 	    &K->F, &K->A, &K->H, &K->Q, &K->R,
 	    &K->mu, &K->y, &K->x, &K->Sini, &K->Pini
 	};
@@ -835,11 +835,11 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
  * which case @err will receive a non-zero code.
  */
 
-kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
-		    const gretl_matrix *F, const gretl_matrix *A,
-		    const gretl_matrix *H, const gretl_matrix *Q,
-		    const gretl_matrix *R, const gretl_matrix *y,
-		    const gretl_matrix *x, const gretl_matrix *m,
+kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
+		    gretl_matrix *F, gretl_matrix *A,
+		    gretl_matrix *H, gretl_matrix *Q,
+		    gretl_matrix *R, gretl_matrix *y,
+		    gretl_matrix *x, gretl_matrix *m,
 		    gretl_matrix *E, int *err)
 {
     kalman *K;
@@ -899,7 +899,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 			    int ptr[], int *err)
 {
     int ids[4] = {K_y, K_H, K_F, K_Q};
-    const gretl_matrix **targ[4];
+    gretl_matrix **targ[4];
     kalman *K;
     int i;
 
@@ -1527,25 +1527,26 @@ static void kalman_initialize_error (kalman *K, int *missobs)
    a given Kalman coefficient matrix: here we call it.
 */
 
-static gretl_matrix *kalman_update_matrix (kalman *K, int i, 
-					   PRN *prn, int *err)
+static int kalman_update_matrix (kalman *K, int i,
+				 gretl_matrix **pm,
+				 PRN *prn)
 {
-    gretl_matrix *m = NULL;
+    int err;
 
-    *err = generate(K->matcalls[i], NULL, GRETL_TYPE_ANY,
-		    OPT_O, prn);
+    err = generate(K->matcalls[i], NULL, GRETL_TYPE_ANY,
+		   OPT_O, prn);
 
-    if (*err) {
+    if (err) {
 	fprintf(stderr, "kalman_update_matrix: call='%s', err=%d\n", 
-		K->matcalls[i], *err);
-    } else {
-	m = get_matrix_by_name(K->mnames[i]);
-	if (m == NULL) {
-	    *err = E_DATA;
+		K->matcalls[i], err);
+    } else if (!kalman_owns_matrix(K, i)) {
+	*pm = get_matrix_by_name(K->mnames[i]);
+	if (*pm == NULL) {
+	    err = E_DATA;
 	}
     }
 
-    return m;
+    return err;
 }
 
 /* If we have any time-varying coefficient matrices, refresh these for
@@ -1554,7 +1555,7 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i,
 
 static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
-    const gretl_matrix **cptr[] = {
+    gretl_matrix **cptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R, &K->mu
     };  
     int cross_update = 0;
@@ -1562,7 +1563,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 
     for (i=0; i<NMATCALLS && !err; i++) {
 	if (matrix_is_varying(K, i)) {
-	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
+	    err = kalman_update_matrix(K, i, cptr[i], prn);
 	    if (!err) {
 		if (K->p > 0 && i >= K_Q) {
 		    cross_update = 1;
@@ -2264,7 +2265,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 {
     int cfd = gretl_function_depth();
     kalman *K = u->K;
-    const gretl_matrix **cptr[] = {
+    gretl_matrix **cptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R,
 	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
     };
@@ -2281,7 +2282,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
-	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
+	    err = kalman_update_matrix(K, i, cptr[i], prn);
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
 	} else {
@@ -2331,7 +2332,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 {
     int cfd = gretl_function_depth();
-    const gretl_matrix **cptr[] = {
+    gretl_matrix **cptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R,
 	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
     };
@@ -2341,7 +2342,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
-	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
+	    err = kalman_update_matrix(K, i, cptr[i], prn);
 	} else if (!kalman_owns_matrix(K, i)) {
 	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], cfd, cfd);
 	}
@@ -3620,6 +3621,10 @@ int kalman_bundle_smooth (gretl_bundle *b, PRN *prn)
 
     K->t = 0;
 
+    /* FIXME: also offer disturbance smoother, but only for
+       the non-cross-correlated case
+    */
+
     if (!err) {
 	err = anderson_moore_smooth(K);
     }
@@ -4121,7 +4126,7 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
 		       GretlType vtype, int i,
 		       int copy)
 {
-    const gretl_matrix **targ = NULL;
+    gretl_matrix **targ = NULL;
     const char *mname = NULL;
     int err = 0;
     
