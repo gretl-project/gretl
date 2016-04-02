@@ -9094,13 +9094,25 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  p->dset, p->prn, 
 					  &p->err);
 	}
-    } else if (t->t == F_KSMOOTH && k == 1 && n->v.bn.n[0]->t == BUNDLE) {
-	e = n->v.bn.n[0];
-	reset_p_aux(p, save_aux);
-	ret = aux_scalar_node(p);
-	if (!p->err) {
-	    ret->v.xval = kalman_bundle_smooth(e->v.b, p->prn);
-	}	
+    } else if (t->t == F_KSMOOTH && n->v.bn.n[0]->t == BUNDLE) {
+	int dist = 0;
+	
+	if (k > 2) {
+	    n_args_error(k, 2, t->t, p);
+	} else if (k == 2) {
+	    e = eval(n->v.bn.n[1], p);
+	    if (!p->err) {
+		dist = node_get_int(e, p);
+	    }
+	}
+	if (!p->err) {	
+	    e = n->v.bn.n[0];
+	    reset_p_aux(p, save_aux);
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = kalman_bundle_smooth(e->v.b, dist, p->prn);
+	    }
+	}
     } else if (t->t == F_KSMOOTH) {
 	const char *P = NULL;
 	const char *U = NULL;
