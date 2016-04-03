@@ -4444,10 +4444,15 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	}
     }
 
-    if (id >= 0 && ret == NULL && !*err) {
+    if (id >= 0 && *reserved == 0) {
 	/* flag the fact that @key was a kalman-reserved
 	   identifier */
 	*reserved = 1;
+    }
+
+    if (*reserved && ret == NULL) {
+	gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+	*err = E_DATA;
     }
 
     return ret;

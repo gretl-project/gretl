@@ -226,6 +226,41 @@ static int allocate_generators (nlspec *s)
     return err;
 }
 
+static int unassigned_fncall (const char *s)
+{
+    int n = gretl_namechar_spn(s);
+    int ret = 0;
+
+    if (n > 0 && n < FN_NAMELEN && s[n] == '(') {
+	char word[FN_NAMELEN];
+
+	*word = '\0';
+	strncat(word, s, n);
+	if (function_lookup(word) ||
+	    get_user_function_by_name(word)) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static void genr_setup_error (const char *s, int exec)
+{
+    gchar *msg;
+
+    if (exec) {
+	msg = g_strdup_printf(_("The formula '%s'\n produced an error "
+				"on execution"), s);
+    } else {
+	msg = g_strdup_printf(_("The formula '%s'\n produced an error "
+				"on compilation"), s);
+    }
+    
+    gretl_errmsg_append(msg);
+    g_free(msg);
+}
+
 /* we "compile" the required equations first, so we can subsequently
    execute the compiled versions for maximum efficiency 
 */
@@ -248,18 +283,23 @@ static int nls_genr_setup (nlspec *s)
        derivatives, if any.
     */
 
-    j = -1; /* index for derivatives */
+    /* initialize the index for derivatives */
+    j = -1;
 
     for (i=0; i<s->ngenrs && !err; i++) {
+	gretlopt genopt = OPT_P | OPT_N;
 	GretlType gentype = GRETL_TYPE_ANY;
 	GretlType result = 0;
 	char *dname = NULL;
 
 	if (i < s->naux) {
-	    /* auxiliary variables first */
+	    /* auxiliary genrs */
 	    strcpy(formula, s->aux[i]);
+	    if (unassigned_fncall(formula)) {
+		genopt |= OPT_O;
+	    }
 	} else if (i == s->naux) {
-	    /* residual or likelihood function */
+	    /* criterion function */
 	    if (*s->lhname != '\0') {
 		sprintf(formula, "%s = %s", s->lhname, s->nlfunc);
 	    } else {
@@ -269,8 +309,8 @@ static int nls_genr_setup (nlspec *s)
 		sprintf(formula, "$nl_y = %s", s->nlfunc);
 	    }
 	} else {
-	    j++; /* increment derivative index */
-	    sprintf(s->params[j].dname, "$nl_x%d", i);
+	    /* derivative */
+	    sprintf(s->params[++j].dname, "$nl_x%d", i);
 	    if (scalar_param(s, j)) {
 		sprintf(formula, "%s = %s", s->params[j].dname, 
 			s->params[j].deriv);
@@ -285,14 +325,11 @@ static int nls_genr_setup (nlspec *s)
 
 	if (!err) {
 	    s->genrs[i] = genr_compile(formula, s->dset, gentype,
-				       OPT_P | OPT_N, NULL, &err);
+				       genopt, NULL, &err);
 	}
 
 	if (err) {
-	    fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
-		    (void *) s->genrs[i], err);
-	    fprintf(stderr, "formula: '%s'\n", formula);
-	    fprintf(stderr, "%s\n", gretl_errmsg_get());
+	    genr_setup_error(formula, 0);
 	    break;
 	}
 
@@ -304,32 +341,36 @@ static int nls_genr_setup (nlspec *s)
 	genr_unset_na_check(s->genrs[i]);
 
 	if (err) {
-	    fprintf(stderr, "execute_genr: s->genrs[%d] = %p, err = %d\n", i, 
-		    (void *) s->genrs[i], err);
-	    fprintf(stderr, "formula: '%s'\n", formula);
+	    genr_setup_error(formula, 1);
 	    break;
 	}
 
-	v = genr_get_output_varnum(s->genrs[i]);
-	m = genr_get_output_matrix(s->genrs[i]);
+	/* skip ahead already? */
+	if (genr_no_assign(s->genrs[i])) {
+	    continue;
+	}
 
-	if (v == 0 && m == NULL) {
-	    if (genr_is_print(s->genrs[i])) {
-		continue;
+	v = 0;
+	m = NULL;
+
+	/* modified 2016-04-03: limit the following test(s) to
+	   the criterion function and derivatives
+	*/
+	if (i >= s->naux) {
+	    v = genr_get_output_varnum(s->genrs[i]);
+	    m = genr_get_output_matrix(s->genrs[i]);
+	    if (v == 0 && m == NULL) {
+		/* not a series, not a matrix: should be scalar */
+		result = genr_get_output_type(s->genrs[i]);
+		if (result != GRETL_TYPE_DOUBLE ||
+		    !scalar_acceptable(s, i, dname)) {
+		    gretl_errmsg_sprintf(_("The formula '%s'\n did not produce "
+					   "the required output type"),
+					 formula);
+		    err = E_TYPES;
+		    break;
+		}
 	    }
-	    /* not a series, not a matrix: should be scalar */
-	    result = genr_get_output_type(s->genrs[i]);
-	    if (result != GRETL_TYPE_DOUBLE) {
-		fprintf(stderr, "got bad gentype %d\n", result);
-		fprintf(stderr, "formula: '%s'\n", formula);
-		err = E_TYPES;
-		break;
-	    } else if (!scalar_acceptable(s, i, dname)) {
-		gretl_errmsg_sprintf(_("The formula '%s'\n produced a scalar result"), 
-				     formula);
-		err = E_TYPES;
-		break;
-	    } 
 	}
 
 	if (i == s->naux) {
@@ -2674,14 +2715,19 @@ static int screen_bad_aux (const char *line, const DATASET *dset)
 
     ci = gretl_command_number(word);
 
-    if (ci == GENR || ci == PRINT) {
+    if (ci == GENR || ci == PRINT || ci == EVAL) {
 	err = 0;
     } else if (plausible_genr_start(line, dset)) {
 	err = 0;
+    } else if (function_lookup(word)) {
+	err = 0;
     } else if (get_user_function_by_name(word)) {
 	err = 0;
-    } else {
+    } else if (ci > 0) {
 	gretl_errmsg_sprintf(_("command '%s' not valid in this context"), 
+			     word);
+    } else {
+	gretl_errmsg_sprintf(_("'%s': not valid in this context"),
 			     word);
     }
 

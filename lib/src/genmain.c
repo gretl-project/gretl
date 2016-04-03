@@ -1006,7 +1006,7 @@ parser *genr_compile (const char *s, DATASET *dset,
     }
 
     if (opt & OPT_N) {
-	/* no exec: compile but don't run */
+	/* "no exec": compile but don't run */
 	flags |= P_NOEXEC;
     }    
 
@@ -1151,9 +1151,9 @@ double genr_get_output_scalar (const parser *p)
     }
 }
 
-int genr_is_print (const parser *p)
+int genr_no_assign (const parser *p)
 {
-    return (p->flags & P_DISCARD);
+    return (p->flags & (P_DISCARD | P_VOID));
 }
 
 int genr_is_autoregressive (const parser *p)

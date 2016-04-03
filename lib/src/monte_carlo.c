@@ -2891,16 +2891,23 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
     return NULL;
 }
 
-static int add_loop_genr (LOOPSET *loop, int lno, 
-                          GretlType gtype,
-			  const char *line, 
+static int add_loop_genr (LOOPSET *loop,
+			  int lno,
+			  CMD *cmd, 
 			  DATASET *dset,
 			  PRN *prn)
 {
+    GretlType gtype = cmd->gtype;
+    const char *line = cmd->vstart;
+    gretlopt gopt = OPT_NONE;
     int err = 0;
 
+    if (cmd->opt & OPT_O) {
+	gopt |= OPT_O;
+    }
+
     loop->cmds[lno].genr = genr_compile(line, dset, gtype,
-					OPT_NONE, prn, &err);
+					gopt, prn, &err);
 
     if (!err) {
 	loop->cmds[lno].flags |= LOOP_CMD_GENR;
@@ -3563,18 +3570,19 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 				     gretl_command_word(cmd->ci));
 		err = 1;
 	    } else if (cmd->ci == GENR) {
-		if (subst || (cmd->opt & OPT_O) ||
-		    (loop->cmds[j].flags & LOOP_CMD_NOEQ)) {
-		    /* can't use a "compiled" genr if string substitution
+		if (subst || (loop->cmds[j].flags & LOOP_CMD_NOEQ)) {
+		    /* We can't use a "compiled" genr if string substitution
 		       has been done, since the genr expression will not
-		       be constant 
+		       be constant; in addition we can't compile if the
+		       genr command is a non-equation special such as
+		       "genr time".
 		    */
 		    if (!loop_is_verbose(loop)) {
 			cmd->opt |= OPT_Q;
 		    }
 		    err = generate(cmd->vstart, dset, cmd->gtype, cmd->opt, prn);
 		} else {
-		    err = add_loop_genr(loop, j, cmd->gtype, cmd->vstart, dset, prn);
+		    err = add_loop_genr(loop, j, cmd, dset, prn);
 		    if (loop->cmds[j].genr == NULL && !err) {
 			/* fallback */
 			loop->cmds[j].flags |= LOOP_CMD_NOEQ;

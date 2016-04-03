@@ -199,7 +199,7 @@ int genr_special_word (const char *s);
 
 int genr_function_word (const char *s);
 
-int genr_is_print (const GENERATOR *p);
+int genr_no_assign (const GENERATOR *p);
 
 int genr_is_autoregressive (const GENERATOR *p);
 
