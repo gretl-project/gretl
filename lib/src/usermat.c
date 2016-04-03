@@ -809,6 +809,8 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
 
 static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
 {
+    gretl_matrix_destroy_info(targ);
+
     targ->rows = src->rows;
     targ->cols = src->cols;
 
