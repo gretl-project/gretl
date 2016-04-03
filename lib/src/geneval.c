@@ -9094,7 +9094,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  p->dset, p->prn, 
 					  &p->err);
 	}
-    } else if (t->t == F_KSMOOTH && n->v.bn.n[0]->t == BUNDLE) {
+    } else if (t->t == F_KSMOOTH && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
 	int dist = 0;
 	
 	if (k > 2) {

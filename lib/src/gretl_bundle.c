@@ -590,10 +590,20 @@ GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
 				 int *err)
 {
     GretlType ret = GRETL_TYPE_NONE;
+    int reserved = 0;
 
     if (bundle == NULL) {
 	*err = E_DATA;
-    } else {
+	return GRETL_TYPE_NONE;
+    }
+
+    if (bundle->type == BUNDLE_KALMAN) {
+	maybe_retrieve_kalman_element(bundle->data, key,
+				      &ret, &reserved,
+				      err);
+    }
+    
+    if (!*err && ret == GRETL_TYPE_NONE && !reserved) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
