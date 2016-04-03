@@ -25,7 +25,7 @@
    gretl_func.c and geneval.c
 */
 
-#define LOOPSAVE     1   /* keep an eye on this! */
+#define LOOPSAVE     0   /* keep an eye on this! */
 #define GLOBAL_TRACE 0
 
 #endif /* GENR_OPTIM_H_ */
