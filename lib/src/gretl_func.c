@@ -7104,11 +7104,11 @@ static void reset_saved_loops (ufunc *u)
 
     for (i=0; i<u->n_lines; i++) {
 	if (u->lines[i].loop != NULL) {
-	    loop_reset_genrs(u->lines[i].loop);
 # if GLOBAL_TRACE
 	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
 		    u->name, (void *) u->lines[i].loop);
-# endif    
+# endif
+	    loop_reset_genrs(u->lines[i].loop);
 	}
     }
 }

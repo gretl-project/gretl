@@ -417,7 +417,8 @@ static void clear_uvnodes (NODE *t)
 	}
     } else if (t->uv != NULL) {
 #if EDEBUG
-	fprintf(stderr, " clear_uvnode: uvar at %p\n", (void *) t);
+	fprintf(stderr, " clear_uvnode: uvar '%s' at %p, uv %p\n", t->vname,
+		(void *) t, (void *) t->uv);
 #endif
 	t->uv = NULL;
     }
