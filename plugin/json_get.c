@@ -29,6 +29,11 @@
 			 t == G_TYPE_DOUBLE || \
 			 t == G_TYPE_INT64)
 
+static int non_empty_array (JsonArray *array)
+{
+    return array != NULL && json_array_get_length(array) > 0;
+}
+
 static int real_json_get (JsonParser *parser, const char *pathstr,
 			  int *n_objects, PRN *prn)
 {
@@ -42,6 +47,12 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     *n_objects = 0;
 
     node = json_parser_get_root(parser);
+
+    if (node == NULL || json_node_is_null(node)) {
+	gretl_errmsg_set("JsonParser: got null root node");
+	return E_DATA;
+    }
+    
     path = json_path_new();
 
     if (!json_path_compile(path, pathstr, &gerr)) {
@@ -57,7 +68,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     }
 
     match = json_path_match(path, node);
-    if (match == NULL) {
+
+    if (match == NULL || json_node_is_null(match)) {
 	/* FIXME : maybe return empty string? */
 	g_object_unref(path);
 	return E_DATA;
@@ -70,37 +82,50 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	JsonArray *array;
 
 	array = json_node_get_array(match);
-	node = json_array_get_element(array, 0);
+	if (non_empty_array(array)) {
+	    node = json_array_get_element(array, 0);
+	} else {
+	    node = NULL;
+	}
 
     repeat:
 
-	if (node == NULL) {
+	if (node == NULL || json_node_is_null(node)) {
 	    gretl_errmsg_set("Failed to match JsonPath");
 	    ntype = 0;
+	    err = E_DATA;
+	    goto bailout;
 	} else {
 	    ntype = json_node_get_value_type(node);
 	}
 
-	if (!handled_type(ntype)) {
+	if (node != NULL && !handled_type(ntype)) {
 	    if (JSON_NODE_HOLDS_ARRAY(node)) {
 		array = json_node_get_array(node);
-		node = json_array_get_element(array, 0);
+		if (non_empty_array(array)) {
+		    node = json_array_get_element(array, 0);
+		}
 		goto repeat;
 	    } else {
 		gretl_errmsg_sprintf("Unhandled array type '%s'", 
 				     g_type_name(ntype));
 		err = E_DATA;
 	    }
-	} else {
+	} else if (array != NULL) {
 	    int i, n = json_array_get_length(array);
 
 	    for (i=0; i<n; i++) {
 		node = json_array_get_element(array, i);
-		if (ntype == G_TYPE_STRING) {
-		    pputs(prn, json_node_get_string(node));
-		} else {
-		    x = json_node_get_double(node);
-		    pprintf(prn, "%.15g", x);
+		if (node != NULL) {
+		    if (json_node_is_null(node)) {
+			fprintf(stderr, " got a null node\n");
+		    }
+		    if (ntype == G_TYPE_STRING) {
+			pputs(prn, json_node_get_string(node));
+		    } else {
+			x = json_node_get_double(node);
+			pprintf(prn, "%.15g", x);
+		    }
 		}
 		if (n > 1) {
 		    pputc(prn, '\n');
@@ -109,6 +134,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	    *n_objects = n;
 	}
     } else {
+	/* not an array-holding node */
 	ntype = json_node_get_value_type(match);
 	if (!handled_type(ntype)) {
 	    gretl_errmsg_sprintf("Unhandled object type '%s'", 
@@ -124,6 +150,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	    *n_objects = 1;
 	}
     }
+
+ bailout:
 
     gretl_pop_c_numeric_locale();
 
@@ -154,6 +182,13 @@ char *json_get (const char *data, const char *path, int *n_objects,
     JsonParser *parser;
     char *ret = NULL;
     int n = 0;
+
+    if (data == NULL || path == NULL) {
+	if (n_objects != NULL) {
+	    *n_objects = 0;
+	}
+	return NULL;
+    }
 
     parser = json_parser_new();
     if (parser == NULL) {
