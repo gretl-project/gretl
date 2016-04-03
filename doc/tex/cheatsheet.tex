@@ -163,6 +163,29 @@ main dataset must be recognized as a panel.  This can be arranged via
 the \cmd{setobs} command or the ``Dataset structure'' item under
 the \textsf{Data} menu.
 
+\subsection{Easter}
+
+\emph{Problem:} I have a 7-day daily dataset. How do I create an
+``Easter'' dummy?
+
+\emph{Solution:} We have the \cmd{easterday()} function, which returns
+month and day of Easter given the year. The following is an example
+script which uses this function and a few string magic tricks:
+
+\begin{code}
+series Easter = 0
+loop y=2011..2016
+    a = easterday(y)
+    m = floor(a)
+    d = round(100*(a-m))
+    ed_str = sprintf("%04d-%02d-%02d", y, m, d)
+    Easter["@ed_str"] = 1
+endloop
+\end{code}
+
+\emph{Comment:} The \cmd{round()} function is necessary for the
+``day'' component because otherwise floating-point problems may
+ensue. Try the year 2015, for example.
 
 \section{Creating/modifying variables}
 
