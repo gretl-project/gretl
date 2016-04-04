@@ -111,7 +111,8 @@ typedef enum {
     LOOP_QUIET       = 1 << 2,
     LOOP_DELVAR      = 1 << 3,
     LOOP_ATTACHED    = 1 << 4,
-    LOOP_RENAMING    = 1 << 5
+    LOOP_RENAMING    = 1 << 5,
+    LOOP_ERR_CAUGHT  = 1 << 6
 } LoopFlags;
 
 struct controller_ {
@@ -205,6 +206,7 @@ struct LOOPSET_ {
 #define loop_set_attached(l)    (l->flags |= LOOP_ATTACHED)
 #define loop_is_renaming(l)     (l->flags & LOOP_RENAMING)
 #define loop_set_renaming(l)    (l->flags |= LOOP_RENAMING)
+#define loop_err_caught(l)      (l->flags |= LOOP_ERR_CAUGHT)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -2976,6 +2978,7 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 #endif
     if (loop_cmd_catch(loop, j)) {
 	set_gretl_errno(err);
+	loop->flags |= LOOP_ERR_CAUGHT;
 	err = 0;
     }
 
@@ -3232,6 +3235,10 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
 
 static int maybe_preserve_loop (LOOPSET *loop)
 {
+    if (loop_err_caught(loop)) {
+	return 0;
+    }
+    
     if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
 	if (gretl_iteration_depth() > 0 || gretl_looping()) {
 	    int err = attach_loop_to_function(loop);
