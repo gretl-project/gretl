@@ -1238,14 +1238,15 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
     }
 }
 
-static void fit_resid_head (const FITRESID *fr, 
-			    const DATASET *dset, 
-			    int obslen, PRN *prn)
+static int fit_resid_head (const FITRESID *fr, 
+			   const DATASET *dset, 
+			   int obslen,
+			   PRN *prn)
 {
     char label[32];
     char obs1[OBSLEN], obs2[OBSLEN];
     int kstep = fr->method == FC_KSTEP;
-    int i;
+    int ywidth;
 
     if (kstep) {
 	ntodate(obs1, fr->model_t1, dset);   
@@ -1275,14 +1276,25 @@ static void fit_resid_head (const FITRESID *fr,
     pputc(prn, '\n');
     bufspace(obslen, prn);
 
-    for (i=1; i<4; i++) {
-	if (i == 1) strcpy(label, fr->depvar);
-	if (i == 2) strcpy(label, (kstep)? _("forecast") : _("fitted"));
-	if (i == 3) strcpy(label, (kstep)? _("error") : _("residual"));
-	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
+    /* column 1 */
+    maybe_trim_varname(label, fr->depvar);
+    ywidth = strlen(label) + 1;
+    if (ywidth < 13) {
+	ywidth = 13;
     }
+    pprintf(prn, "%*s", ywidth, label);
+
+    /* column 2 */
+    strcpy(label, (kstep)? _("forecast") : _("fitted"));
+    pprintf(prn, "%*s", UTF_WIDTH(label, 13), label);
+
+    /* column 3 */
+    strcpy(label, (kstep)? _("error") : _("residual"));
+    pprintf(prn, "%*s", UTF_WIDTH(label, 13), label);
 
     pputs(prn, "\n\n");
+
+    return ywidth;
 }
 
 /* prints a heading with the names of the variables in @list */
@@ -2589,17 +2601,19 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 
 #define SIGMA_MIN 1.0e-18
 
-int text_print_fit_resid (const FITRESID *fr, const DATASET *dset, 
+int text_print_fit_resid (const FITRESID *fr,
+			  const DATASET *dset, 
 			  PRN *prn)
 {
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
+    int ywidth;
     int obslen;
     int err = 0;
 
     obslen = max_obs_marker_length(dset);
-    fit_resid_head(fr, dset, obslen, prn); 
+    ywidth = fit_resid_head(fr, dset, obslen, prn);
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	real_print_obs_marker(t, dset, obslen, 0, prn);
@@ -2612,15 +2626,17 @@ int text_print_fit_resid (const FITRESID *fr, const DATASET *dset,
 	    pputc(prn, '\n');
 	} else if (na(yf)) {
 	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
-		pprintf(prn, "%13.*f\n", fr->pmax, yt);
+		pprintf(prn, "%*.*f\n", ywidth, fr->pmax, yt);
 	    } else {
-		pprintf(prn, "%13g\n", yt);
+		pprintf(prn, "%#*g\n", ywidth, yt);
 	    }
 	} else if (na(et)) {
 	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
-		pprintf(prn, "%13.*f%13.*f\n", fr->pmax, yt, yf);
+		pprintf(prn, "%*.*f", ywidth, fr->pmax, yt);
+		pprintf(prn, "%13.*f", fr->pmax, yf);
 	    } else {
-		pprintf(prn, "%13g%13g\n", yt, yf);
+		pprintf(prn, "%#*g\n", ywidth, yt);
+		pprintf(prn, "%#13g\n", yf);
 	    }
 	} else {
 	    int ast = 0;
@@ -2632,12 +2648,12 @@ int text_print_fit_resid (const FITRESID *fr, const DATASET *dset,
 		}
 	    }
 	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
-		pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
+		pprintf(prn, "%*.*f%13.*f%13.*f%s\n", ywidth,
 			fr->pmax, yt, fr->pmax, yf, fr->pmax, et,
 			(ast)? " *" : "");
 	    } else {
-		pprintf(prn, "%13g%13g%13g%s\n", 
-			yt, yf, et,
+		pprintf(prn, "%#*g%#13g%#13g%s\n", 
+			ywidth, yt, yf, et,
 			(ast)? " *" : "");
 	    }
 	}
@@ -2685,9 +2701,11 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
+    int ywidth;
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
     double tval = 0;
+    char label[32];
     int t, err = 0;
 
     if (do_errs) {
@@ -2718,16 +2736,20 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     }
 
     obslen = max_obs_marker_length(dset);
-    if (obslen < 8) {
-	obslen = 8;
-    }
 
     if (!quiet) {
 	pputc(prn, '\n');
     }
 
     bufspace(obslen + 1, prn);
-    pprintf(prn, "%12s", fr->depvar);
+
+    maybe_trim_varname(label, fr->depvar);
+    ywidth = strlen(label) + 1;
+    if (ywidth < 12) {
+	ywidth = 12;
+    }
+    pprintf(prn, "%*s", ywidth, label);
+
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
     if (do_errs) {
@@ -2750,7 +2772,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     for (t=fr->t0; t<=fr->t2; t++) {
 	print_obs_marker(t, dset, obslen, prn);
-	fcast_print_x(fr->actual[t], 15, pmax, prn);
+	fcast_print_x(fr->actual[t], ywidth + 2, pmax, prn);
 
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');

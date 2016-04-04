@@ -4587,7 +4587,6 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 
 static void print_y_data (const double *x, 
 			  const double *y,
-			  const int *order, 
 			  int t0, int t1, int t2, 
 			  FILE *fp)
 {
@@ -4595,13 +4594,8 @@ static void print_y_data (const double *x,
     double xt;
 
     for (i=0; i<n; i++) {
-	if (order != NULL) {
-	    t = order[i];
-	    xt = i + 1;
-	} else {
-	    t = t0 + i;
-	    xt = x[t];
-	}	
+	t = t0 + i;
+	xt = x[t];
 	if (t < t1 || na(y[t])) {
 	    fprintf(fp, "%.10g ?\n", xt);
 	} else {
@@ -4619,8 +4613,9 @@ enum {
     CONF_HIGH
 };
 
-static void print_confband_data (const double *x, const double *y,
-				 const double *e, const int *order,
+static void print_confband_data (const double *x,
+				 const double *y,
+				 const double *e,
 				 int t0, int t1, int t2, 
 				 int mode, FILE *fp)
 {
@@ -4628,13 +4623,8 @@ static void print_confband_data (const double *x, const double *y,
     double xt;
 
     for (i=0; i<n; i++) {
-	if (order != NULL) {
-	    t = order[i];
-	    xt = i + 1;
-	} else {
-	    t = t0 + i;
-	    xt = x[t];
-	}
+	t = t0 + i;
+	xt = x[t];
 	if (t < t1 || na(y[t]) || na(e[t])) {
 	    if (mode == CONF_LOW || mode == CONF_HIGH) {
 		fprintf(fp, "%.10g ?\n", xt);
@@ -4695,72 +4685,6 @@ static int compare_fs (const void *a, const void *b)
     return (fa->y > fb->y) - (fa->y < fb->y);
 }
 
-/* To get a somewhat more meangingful plot of actual and fitted
-   with error bars for cross-sectional data, we consider
-   ordering the observations by increasing value of the
-   dependent variable. We first check to see if the data are
-   already in sort-order; if not, we produce an array of
-   ints that specifies the sorted order -- and if there are
-   NAs for the dependent variable within the forecast range,
-   we adjust the end-point so as to omit the useless
-   observations.
-*/
-
-static int *get_sorted_fcast_order (const FITRESID *fr, 
-				    int t1, int *pt2)
-{
-    int *order = NULL;
-    struct fsorter *fs;
-    int nmiss = 0, sorted = 1;
-    int t2 = *pt2;
-    int n = t2 - t1 + 1;
-    int i, t;
-
-    for (t=t1; t<=t2; t++) {
-	if (na(fr->actual[t])) {
-	    nmiss++;
-	} else if (t < t2 && fr->actual[t] > fr->actual[t+1]) {
-	    sorted = 0;
-	}
-    }
-
-    if (sorted) {
-	/* OK, leave well alone */
-	return NULL;
-    }
-
-    fs = malloc(n * sizeof *fs);
-    if (fs == NULL) {
-	return NULL;
-    }
-
-    order = malloc(n * sizeof *order);
-    if (order == NULL) {
-	free(fs);
-	return NULL;
-    }
-
-    for (i=0, t=t1; t<=t2; t++, i++) {
-	fs[i].obs = t;
-	fs[i].y = fr->actual[t];
-    }
-
-    qsort(fs, n, sizeof *fs, compare_fs);
-
-    for (i=0; i<n; i++) {
-	order[i] = fs[i].obs;
-    }  
-
-    free(fs);
-
-    if (nmiss > 0) {
-	/* chop off trailing NAs */
-	*pt2 = (n - nmiss) + t1 - 1;
-    }
-
-    return order;
-}
-
 static void print_filledcurve_line (const char *title, FILE *fp)
 {
     char cstr[8];
@@ -4785,7 +4709,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 {
     FILE *fp = NULL;
     const double *obs = NULL;
-    int *order = NULL;
     GptFlags flags = 0;
     double xmin, xmax, xrange;
     int depvar_present = 0;
@@ -4860,19 +4783,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     if (dataset_is_time_series(dset)) {
 	fprintf(fp, "# timeseries %d\n", dset->pd);
-    } else if (dataset_is_cross_section(dset) && yhmin == t1) {
-	order = get_sorted_fcast_order(fr, t1, &t2);
-    } 
-
-    if (!dataset_is_time_series(dset)) {
-	if (order != NULL) {
-	    gchar *text = g_strdup_printf(_("observations sorted by %s"),
-					  fr->depvar);
-	    fputs("unset xtics\n", fp);
-	    fprintf(fp, "set xlabel \"%s\"\n", text);
-	} else if (n < 33) {
-	    fputs("set xtics 1\n", fp);
-	}
     }
 
     if (do_errs && !use_fill && !use_lines && n > 150) {
@@ -4927,36 +4837,32 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     if (use_fill) {
 	if (do_errs) {
-	    print_confband_data(obs, fr->fitted, maxerr, order,
+	    print_confband_data(obs, fr->fitted, maxerr,
 				t1, yhmin, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, order, t1, t1, t2, fp);
+	    print_y_data(obs, fr->actual, t1, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, order, t1, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
     } else {
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, order, t1, t1, t2, fp);
+	    print_y_data(obs, fr->actual, t1, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, order, t1, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
 	if (do_errs) {
 	    if (use_lines) {
-		print_confband_data(obs, fr->fitted, maxerr, order,
+		print_confband_data(obs, fr->fitted, maxerr,
 				    t1, yhmin, t2, CONF_LOW, fp);
-		print_confband_data(obs, fr->fitted, maxerr, order,
+		print_confband_data(obs, fr->fitted, maxerr,
 				    t1, yhmin, t2, CONF_HIGH, fp);
 	    } else {
-		print_confband_data(obs, fr->fitted, maxerr, order,
+		print_confband_data(obs, fr->fitted, maxerr,
 				    t1, yhmin, t2, CONF_BARS, fp);
 	    }
 	}	
     }
 
     gretl_pop_c_numeric_locale();
-
-    if (order != NULL) {
-	free(order);
-    }
 
     return finalize_plot_input_file(fp);
 }

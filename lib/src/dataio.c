@@ -581,7 +581,7 @@ int get_subperiod (int t, const DATASET *dset, int *err)
 
 /**
  * get_precision:
- * @x: data vector.
+ * @x: data array.
  * @n: length of @x.
  * @placemax: the maximum number of decimal places to try.
  *
@@ -596,8 +596,7 @@ int get_precision (const double *x, int n, int placemax)
 {
     int t, p, pmax = 0;
     char *s, numstr[64];
-    double zmin = 0, zmax = 0;
-    int n_ok = 0;
+    int len, n_ok = 0;
     double z;
 
     for (t=0; t<n; t++) {
@@ -608,12 +607,6 @@ int get_precision (const double *x, int n, int placemax)
 	    if (z > 0 && (z < 1.0e-6 || z > 1.0e+8)) {
 		return PMAX_NOT_AVAILABLE;
 	    }
-	    if (n_ok == 0) {
-		zmin = zmax = z;
-	    } else {
-		if (z < zmin) zmin = z;
-		if (z > zmax) zmax = z;
-	    }		
 	    n_ok++;
 	}
     }
@@ -627,9 +620,15 @@ int get_precision (const double *x, int n, int placemax)
 	    p = placemax;
 	    sprintf(numstr, "%.*f", p, fabs(x[t]));
 	    /* go to the end and drop trailing zeros */
-	    s = numstr + strlen(numstr) - 1;
+	    len = strlen(numstr);
+	    s = numstr + len - 1;
 	    while (*s-- == '0') {
 		p--;
+		len--;
+	    }
+	    if (len > 10) {
+		/* this is going to be too big */
+		return PMAX_NOT_AVAILABLE;
 	    }
 	    if (p > pmax) {
 		pmax = p;

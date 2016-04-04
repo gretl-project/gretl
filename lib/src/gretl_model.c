@@ -838,7 +838,8 @@ static void plain_ar_coeff_name (char *targ, const MODEL *pmod, int i)
  * Returns: @targ.
  */
 
-char *gretl_model_get_param_name (const MODEL *pmod, const DATASET *dset,
+char *gretl_model_get_param_name (const MODEL *pmod,
+				  const DATASET *dset,
 				  int i, char *targ)
 {
     *targ = '\0';
