@@ -9145,7 +9145,41 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }	    
 	    ret->v.m = user_kalman_smooth(P, U, &p->err);
-	} 
+	}
+    } else if (t->t == F_KSIMUL && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
+	gretl_matrix *V = NULL;
+	gretl_matrix *W = NULL;
+
+	if (k != 3) {
+	    n_args_error(k, 3, t->t, p);
+	}
+
+	for (i=1; i<3 && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (!p->err && e->t != MAT) {
+		node_type_error(t->t, i+1, MAT, e, p);
+	    }
+	    if (!p->err) {
+		if (i == 1) {
+		    V = e->v.m;
+		} else {
+		    W = e->v.m;
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
+	    e = n->v.bn.n[0];
+	    ret->v.m = kalman_bundle_simulate(e->v.b, V, W, p->prn, &p->err);
+	}
     } else if (t->t == F_KSIMUL) {
 	gretl_matrix *V = NULL;
 	gretl_matrix *W = NULL;
