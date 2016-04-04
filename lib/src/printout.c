@@ -1242,7 +1242,7 @@ static void fit_resid_head (const FITRESID *fr,
 			    const DATASET *dset, 
 			    int obslen, PRN *prn)
 {
-    char label[16];
+    char label[32];
     char obs1[OBSLEN], obs2[OBSLEN];
     int kstep = fr->method == FC_KSTEP;
     int i;
