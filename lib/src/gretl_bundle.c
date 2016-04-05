@@ -1958,8 +1958,8 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     return b;
 }
 
-gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
-				 int ptr[], int *err)
+gretl_bundle *kalman_bundle_new (gretl_matrix *M[], int ptr[],
+				 int nmat, int *err)
 {
     gretl_bundle *b = gretl_bundle_new();
 
@@ -1967,7 +1967,7 @@ gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 	*err = E_ALLOC;
     } else {
 	b->type = BUNDLE_KALMAN;
-	b->data = kalman_new_minimal(M, ptr, err);
+	b->data = kalman_new_minimal(M, ptr, nmat, err);
     }
 
     /* don't return a broken bundle */

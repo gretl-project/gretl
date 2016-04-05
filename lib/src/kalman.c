@@ -105,6 +105,10 @@ struct kalman_ {
     gretl_matrix *Sini; /* r x 1: S_{1|0} */
     gretl_matrix *Pini; /* r x r: P_{1|0} */
 
+    /* user inputs for cross-correlated disturbances */
+    gretl_matrix *B;
+    gretl_matrix *C;
+
     /* optional array of names of input matrices */
     char **mnames;
 
@@ -158,6 +162,7 @@ struct kalman_ {
 #define kalman_is_running(K)  (K->flags & KALMAN_FORWARD)
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
+#define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
 
 /* the matrix in question is not an external named user-matrix,
    and is "owned" by the Kalman struct */
@@ -172,6 +177,7 @@ struct kalman_ {
 #define filter_is_varying(K) (K->matcalls != NULL)
 
 static const char *kalman_matrix_name (int sym);
+static int kalman_revise_variance (kalman *K);
 
 /* symbolic identifiers for input matrices: note that potentially
    time-varying matrices must appear first in the enumeration, and
@@ -252,6 +258,13 @@ void kalman_free (kalman *K)
 	};
 	int i;
 
+	if (kalman_xcorr(K)) {
+	    mptr[3] = &K->B;
+	    mptr[4] = &K->C;
+	}
+
+	/* FIXME */
+
 	for (i=0; i<K_MMAX; i++) {
 	    if (kalman_owns_matrix(K, i)) {
 		gretl_matrix_free((gretl_matrix *) *mptr[i]);
@@ -299,6 +312,7 @@ static kalman *kalman_new_empty (int flags)
 	K->Blk = NULL;
 	K->F = K->A = K->H = NULL;
 	K->Q = K->R = NULL;
+	K->B = K->C = NULL;
 	K->E = K->V = K->S = K->P = K->K = NULL;
 	K->y = K->x = NULL;
 	K->mu = NULL;
@@ -860,7 +874,7 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
 	return NULL;
     }
 
-    /* use const pointers for const matrices, don't copy */
+    /* use pointers for input matrices, don't copy */
     K->F = F;
     K->A = A;
     K->H = H;
@@ -872,7 +886,7 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
     K->Pini = P;
     K->mu = m;
 
-    /* non-const, but again use external pointer */
+    /* output, but again use external pointer */
     K->E = E;
 
     kalman_set_dimensions(K, OPT_NONE);
@@ -899,10 +913,11 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
 /* supports hansl function for creating a named Kalman bundle */
 
 kalman *kalman_new_minimal (gretl_matrix *M[],
-			    int ptr[], int *err)
+			    int ptr[], int nmat,
+			    int *err)
 {
-    int ids[4] = {K_y, K_H, K_F, K_Q};
-    gretl_matrix **targ[4];
+    int ids[5] = {K_y, K_H, K_F, K_Q, K_R};
+    gretl_matrix **targ[5];
     kalman *K;
     int i;
 
@@ -913,7 +928,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 	return NULL;
     }
 
-    K = kalman_new_empty(0);
+    K = kalman_new_empty(KALMAN_USER | KALMAN_BUNDLE);
     if (K == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -926,14 +941,18 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 	return NULL;
     }
 
-    K->flags |= (KALMAN_USER | KALMAN_BUNDLE);
-
     targ[0] = &K->y;
     targ[1] = &K->H;
     targ[2] = &K->F;
-    targ[3] = &K->Q;
 
-    for (i=0; i<4; i++) {
+    if (nmat == 5) {
+	targ[3] = &K->B;
+	targ[4] = &K->C;
+    } else {
+	targ[3] = &K->Q;
+    }
+
+    for (i=0; i<nmat; i++) {
 	if (ptr[i]) {
 	    const char *name;
 	    
@@ -949,20 +968,30 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
     gretl_matrix_print(K->y, "K->y");
     gretl_matrix_print(K->H, "K->H");
     gretl_matrix_print(K->F, "K->F");
-    gretl_matrix_print(K->Q, "K->Q");
 #endif
 
-    kalman_set_dimensions(K, OPT_NONE);
+    kalman_set_dimensions(K, nmat == 5 ? OPT_C : OPT_NONE);
 
-    *err = kalman_check_dimensions(K);
-    if (*err) {
-	fprintf(stderr, "failed on kalman_check_dimensions\n");
-	free(K);
-	return NULL;
+    if (K->p > 0) {
+	*err = kalman_revise_variance(K);
+	if (*err) {
+	    fprintf(stderr, "failed in kalman_revise_variance\n");
+	} else {
+	    K->flags |= KALMAN_CROSS;
+	}
     }
 
-    *err = kalman_init(K);
+    if (!*err) {
+	*err = kalman_check_dimensions(K);
+	if (*err) {
+	    fprintf(stderr, "failed on kalman_check_dimensions\n");
+	}
+    }
 
+    if (!*err) {
+	*err = kalman_init(K);
+    }
+    
     if (*err) {
 	kalman_free(K);
 	K = NULL;
@@ -979,7 +1008,7 @@ enum {
 };
 
 /* After reading 'Q' = B and 'R' = C from the user, either at
-   (re-)initializaton or at a given time-step in the case where either
+   (re-)initialization or at a given time-step in the case where either
    of these matrices is time-varying, record the user input in K->B
    and K->C and form the 'real' Q and R.  But note that in the
    time-step case it may be that only one of Q, R needs to be treated
@@ -992,11 +1021,12 @@ static int kalman_update_crossinfo (kalman *K, int mode)
     crossinfo *c = K->cross;
     int err = 0;
 
-    /* Note that B and C may be needed for simulation */
+    /* Note that B and C may be needed as such for simulation */
 
     if (mode == UPDATE_INIT || matrix_is_varying(K, K_Q)) {
 	err = gretl_matrix_copy_values(c->B, K->Q);
 	if (!err) {
+	    /* recreate BB using modified B */
 	    err = gretl_matrix_multiply_mod(c->B, GRETL_MOD_NONE,
 					    c->B, GRETL_MOD_TRANSPOSE,
 					    c->BB, GRETL_MOD_NONE);
@@ -1006,6 +1036,7 @@ static int kalman_update_crossinfo (kalman *K, int mode)
     if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_R))) {
 	err = gretl_matrix_copy_values(c->C, K->R);
 	if (!err) {
+	    /* recreate CC using modified C */
 	    err = gretl_matrix_multiply_mod(c->C, GRETL_MOD_NONE,
 					    c->C, GRETL_MOD_TRANSPOSE,
 					    c->CC, GRETL_MOD_NONE);
@@ -1014,6 +1045,7 @@ static int kalman_update_crossinfo (kalman *K, int mode)
 
     if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_Q) ||
 		 matrix_is_varying(K, K_R))) {
+	/* recreate BC using modified B and/or C */
 	err = gretl_matrix_multiply_mod(c->B, GRETL_MOD_NONE,
 					c->C, GRETL_MOD_TRANSPOSE,
 					c->BC, GRETL_MOD_NONE);
@@ -1084,6 +1116,7 @@ static int kalman_revise_variance (kalman *K)
     }
 
     if (err) {
+	fprintf(stderr, "kalman_revise_variance: err = %d\n", err);
 	return err;
     }
 
@@ -1093,18 +1126,21 @@ static int kalman_revise_variance (kalman *K)
        avoid leaking memory.
     */
 
+    fprintf(stderr, "K_Q: %d x %d, %s\n", K->Q->rows, K->Q->cols,
+	    kalman_owns_matrix(K, K_Q) ? "owned" : "not owned");
+
     if (kalman_owns_matrix(K, K_Q)) {
 	gretl_matrix_free((gretl_matrix *) K->Q);
     }
 
     if (kalman_owns_matrix(K, K_R)) {
 	gretl_matrix_free((gretl_matrix *) K->R);
-    }    
+    }
 
     K->Q = K->cross->BB;
     K->R = K->cross->CC;
 
-#if 0
+#if 1
     gretl_matrix_print(K->cross->BB, "BB");
     gretl_matrix_print(K->cross->CC, "CC");
     gretl_matrix_print(K->cross->BC, "BC");
@@ -1553,16 +1589,22 @@ static int kalman_update_matrix (kalman *K, int i,
 }
 
 /* If we have any time-varying coefficient matrices, refresh these for
-   the current time step.  This is called on a forward filtering pass.
+   the current time step. This is called on a forward filtering pass.
 */
 
 static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
     gretl_matrix **cptr[] = {
-	&K->F, &K->A, &K->H, &K->Q, &K->R, &K->mu
+	&K->F, &K->A, &K->H, &K->Q,
+	&K->R, &K->mu
     };  
     int cross_update = 0;
     int i, err = 0;
+
+    if (kalman_xcorr(K)) {
+	cptr[3] = &K->B;
+	cptr[4] = &K->C;
+    }
 
     for (i=0; i<NMATCALLS && !err; i++) {
 	if (matrix_is_varying(K, i)) {
@@ -2176,9 +2218,17 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	} else if (i == K_H) {
 	    K->H = m;
 	} else if (i == K_Q) {
-	    K->Q = m;
+	    if (kalman_xcorr(K)) {
+		K->B = m;
+	    } else {
+		K->Q = m;
+	    }
 	} else if (i == K_R) {
-	    K->R = m;
+	    if (kalman_xcorr(K)) {
+		K->C = m;
+	    } else {
+		K->R = m;
+	    }
 	} else if (i == K_m) {
 	    K->mu = m;
 	} else if (i == K_y) {
@@ -2274,6 +2324,11 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
     };
     int i, err = 0;
 
+    if (kalman_xcorr(K)) {
+	cptr[3] = &K->B;
+	cptr[4] = &K->B;
+    }
+
     for (i=0; i<K_MMAX; i++) {
 	if (!kalman_owns_matrix(K, i)) {
 	    /* pointer may be invalid, needs refreshing */
@@ -2341,6 +2396,11 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
     };
     int i, err = 0;
 
+    if (kalman_xcorr(K)) {
+	cptr[3] = &K->B;
+	cptr[4] = &K->B;
+    }    
+
     K->flags |= KALMAN_CHECK;
 
     for (i=0; i<K_MMAX && !err; i++) {
@@ -2361,7 +2421,8 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 	return err;
     }
 
-    kalman_set_dimensions(K, OPT_NONE); /* FIXME opt */
+    /* redundant? */
+    kalman_set_dimensions(K, K->p > 0 ? OPT_C : OPT_NONE);
 
     if (gretl_matrix_rows(K->F) != K->r ||
 	gretl_matrix_rows(K->A) != K->k) {
@@ -4160,9 +4221,17 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
     } else if (i == K_H) {
 	targ = &K->H;
     } else if (i == K_Q) {
-	targ = &K->Q;
+	if (kalman_xcorr(K)) {
+	    targ = &K->B;
+	} else {
+	    targ = &K->Q;
+	}	
     } else if (i == K_R) {
-	targ = &K->R;
+	if (kalman_xcorr(K)) {
+	    targ = &K->C;
+	} else {
+	    targ = &K->R;
+	}
     } else if (i == K_m) {
 	targ = &K->mu;
     } else if (i == K_y) {
@@ -4235,6 +4304,9 @@ static double *kalman_output_scalar (kalman *K,
     } else if (!strcmp(key, "diffuse")) {
 	retval = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
 	s = &retval;
+    } else if (!strcmp(key, "cross")) {
+	retval = (K->flags & KALMAN_CROSS)? 1 : 0;
+	s = &retval;
     }	
 
     return s;
@@ -4253,6 +4325,7 @@ static const char *kalman_output_matrix_names[] =
 
 static const char *kalman_output_scalar_names[] = 
     { "diffuse",
+      "cross",
       "lnl",
       "s2",
       "t",
@@ -4275,9 +4348,17 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
     } else if (i == K_H) {
 	m = K->H;
     } else if (i == K_Q) {
-	m = K->Q;
+	if (kalman_xcorr(K)) {
+	    m = K->B;
+	} else {
+	    m = K->Q;
+	}	
     } else if (i == K_R) {
-	m = K->R;
+	if (kalman_xcorr(K)) {
+	    m = K->C;
+	} else {
+	    m = K->R;
+	}
     } else if (i == K_m) {
 	m = K->mu;
     } else if (i == K_y) {
@@ -4303,6 +4384,7 @@ int maybe_set_kalman_element (void *kptr,
     kalman *K = kptr;
     int fncall = 0;
     int i, id = -1;
+    int Kflag = 0;
     int done = 0;
 
     if (K == NULL) {
@@ -4310,19 +4392,26 @@ int maybe_set_kalman_element (void *kptr,
 	return 0;
     }
 
-    if (vtype == GRETL_TYPE_DOUBLE) {
-	if (!strcmp(key, "diffuse")) {
+    if (!strcmp(key, "diffuse")) {
+	Kflag = KALMAN_DIFFUSE;
+    }
+
+    if (Kflag) {
+	if (vtype == GRETL_TYPE_DOUBLE) {
 	    double x = *(double *) vptr;
 
 	    if (na(x)) {
 		*err = E_DATA;
 		return 0;
 	    } else if (x == 0) {
-		K->flags &= ~KALMAN_DIFFUSE;
+		K->flags &= ~Kflag;
 	    } else {
-		K->flags |= KALMAN_DIFFUSE;
+		K->flags |= Kflag;
 	    }
 	    return 1;
+	} else {
+	    *err = E_TYPES;
+	    return 0;
 	}
     }
 

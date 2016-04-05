@@ -9796,14 +9796,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_KSETUP) {
-	gretl_matrix *M[4] = {NULL};
-	int ptr[4] = {0};
+	gretl_matrix *M[5] = {NULL};
+	int ptr[5] = {0};
 	
-	if (k != 4) {
+	if (k < 4) {
 	    n_args_error(k, 4, t->t, p);
 	} 
 	
-	for (i=0; i<4 && !p->err; i++) {
+	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (!p->err) {
 		if (e->t == U_ADDR) {
@@ -9819,7 +9819,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    gretl_bundle *b = kalman_bundle_new(M, ptr, &p->err);
+	    gretl_bundle *b = kalman_bundle_new(M, ptr, k, &p->err);
 
 	    if (!p->err) {
 		ret = aux_bundle_node(p);
