@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-10 11:41-0500\n"
-"PO-Revision-Date: 2016-03-09 16:20+0100\n"
+"PO-Revision-Date: 2016-04-05 12:53+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -2611,9 +2611,9 @@ msgid "Invalid character '%c'\n"
 msgstr "Caractere '%c' inválido\n"
 
 #: lib/src/genlex.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected byte 0x%x\n"
-msgstr "Símbolo '%c' inesperado"
+msgstr "Byte 0x%x inesperado\n"
 
 #: lib/src/genmain.c:42
 #, c-format
@@ -7709,8 +7709,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 9 de março de 2016.\n"
-"(100 anos, participação de Portugal na I Grande Guerra)"
+"Tradução de 5 de abril de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -12781,7 +12780,6 @@ msgid "gretl: import %s data"
 msgstr "gretl: importar dados %s"
 
 #: gui2/gui_utils.c:1268
-#, fuzzy
 msgid "simple append"
 msgstr "acrescentar simples"
 
