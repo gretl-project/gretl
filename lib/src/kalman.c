@@ -45,8 +45,6 @@
 typedef struct crossinfo_ crossinfo;
 
 struct crossinfo_ {
-    gretl_matrix *B;  /* r x p */
-    gretl_matrix *C;  /* n x p */
     gretl_matrix *BB; /* BB': r x r */
     gretl_matrix *CC; /* CC': n x n */
     gretl_matrix *BC; /* BC': r x n */
@@ -106,8 +104,8 @@ struct kalman_ {
     gretl_matrix *Pini; /* r x r: P_{1|0} */
 
     /* user inputs for cross-correlated disturbances */
-    gretl_matrix *B;
-    gretl_matrix *C;
+    gretl_matrix *B; /* r x p: BB' = Q */
+    gretl_matrix *C; /* n x p: CC' = R */
 
     /* optional array of names of input matrices */
     char **mnames;
@@ -211,8 +209,6 @@ void free_stepinfo (kalman *K)
 
 void free_crossinfo (crossinfo *c)
 {
-    gretl_matrix_free(c->B);
-    gretl_matrix_free(c->C);
     gretl_matrix_free(c->BB);
     gretl_matrix_free(c->CC);
     gretl_matrix_free(c->BC);
@@ -533,14 +529,24 @@ static int kalman_check_dimensions (kalman *K)
 	err = check_matrix_dims(K, K->H, K_H);
     }
 
-    /* Q is mandatory, should be r x r and symmetric */
-    if (!err) {
-	err = check_matrix_dims(K, K->Q, K_Q);
-    }
+    if (K->B != NULL) {
+	/* cross-correlated disturbances */
+	if (K->C == NULL) {
+	    err = missing_matrix_error("obsymat");
+	} else if (K->B->rows != K->r || K->B->cols != K->p ||
+		   K->C->rows != K->n || K->C->cols != K->p) {
+	    err = E_NONCONF;
+	}
+    } else {
+	/* Q is mandatory, should be r x r and symmetric */
+	if (!err) {
+	    err = check_matrix_dims(K, K->Q, K_Q);
+	}
 
-    /* R should be n x n and symmetric, if present */
-    if (!err && K->R != NULL) {
-	err = check_matrix_dims(K, K->R, K_R);
+	/* R should be n x n and symmetric, if present */
+	if (!err && K->R != NULL) {
+	    err = check_matrix_dims(K, K->R, K_R);
+	}
     }
 
     /* initial S should be r x 1, if present */
@@ -803,7 +809,7 @@ static int kalman_init (kalman *K)
     return err;
 }
 
-static void kalman_set_dimensions (kalman *K, gretlopt opt)
+static void kalman_set_dimensions (kalman *K)
 {
     K->r = gretl_matrix_rows(K->F); /* F->rows defines r */
     K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
@@ -818,7 +824,7 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
        number of elements in the "combined" disturbance vector
        \varepsilon_t.
     */
-    K->p = (opt & OPT_C)? gretl_matrix_cols(K->Q): 0;
+    K->p = (K->B != NULL)? gretl_matrix_cols(K->B): 0;
 }
 
 /**
@@ -889,7 +895,7 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
     /* output, but again use external pointer */
     K->E = E;
 
-    kalman_set_dimensions(K, OPT_NONE);
+    kalman_set_dimensions(K);
 
     *err = kalman_check_dimensions(K);
     if (*err) {
@@ -946,6 +952,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
     targ[2] = &K->F;
 
     if (nmat == 5) {
+	K->flags |= KALMAN_CROSS;
 	targ[3] = &K->B;
 	targ[4] = &K->C;
     } else {
@@ -970,7 +977,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
     gretl_matrix_print(K->F, "K->F");
 #endif
 
-    kalman_set_dimensions(K, nmat == 5 ? OPT_C : OPT_NONE);
+    kalman_set_dimensions(K);
 
     if (K->p > 0) {
 	*err = kalman_revise_variance(K);
@@ -1018,45 +1025,39 @@ enum {
 
 static int kalman_update_crossinfo (kalman *K, int mode)
 {
-    crossinfo *c = K->cross;
     int err = 0;
 
     /* Note that B and C may be needed as such for simulation */
 
     if (mode == UPDATE_INIT || matrix_is_varying(K, K_Q)) {
-	err = gretl_matrix_copy_values(c->B, K->Q);
-	if (!err) {
-	    /* recreate BB using modified B */
-	    err = gretl_matrix_multiply_mod(c->B, GRETL_MOD_NONE,
-					    c->B, GRETL_MOD_TRANSPOSE,
-					    c->BB, GRETL_MOD_NONE);
-	}
+	/* recreate BB using modified B */
+	err = gretl_matrix_multiply_mod(K->B, GRETL_MOD_NONE,
+					K->B, GRETL_MOD_TRANSPOSE,
+					K->cross->BB, GRETL_MOD_NONE);
     }
 
     if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_R))) {
-	err = gretl_matrix_copy_values(c->C, K->R);
-	if (!err) {
-	    /* recreate CC using modified C */
-	    err = gretl_matrix_multiply_mod(c->C, GRETL_MOD_NONE,
-					    c->C, GRETL_MOD_TRANSPOSE,
-					    c->CC, GRETL_MOD_NONE);
-	}
+	/* recreate CC using modified C */
+	err = gretl_matrix_multiply_mod(K->C, GRETL_MOD_NONE,
+					K->C, GRETL_MOD_TRANSPOSE,
+					K->cross->CC, GRETL_MOD_NONE);
     }
 
     if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_Q) ||
 		 matrix_is_varying(K, K_R))) {
 	/* recreate BC using modified B and/or C */
-	err = gretl_matrix_multiply_mod(c->B, GRETL_MOD_NONE,
-					c->C, GRETL_MOD_TRANSPOSE,
-					c->BC, GRETL_MOD_NONE);
+	err = gretl_matrix_multiply_mod(K->B, GRETL_MOD_NONE,
+					K->C, GRETL_MOD_TRANSPOSE,
+					K->cross->BC, GRETL_MOD_NONE);
     }
 
-    if (mode == UPDATE_STEP) {
+    /* redundant? */
+    if (!err && mode == UPDATE_STEP) {
 	if (matrix_is_varying(K, K_Q)) {
-	    K->Q = c->BB;
+	    K->Q = K->cross->BB;
 	}
 	if (matrix_is_varying(K, K_R)) {
-	    K->R = c->CC;
+	    K->R = K->cross->CC;
 	}
     }
 
@@ -1071,15 +1072,11 @@ static int kalman_add_crossinfo (kalman *K)
 	return E_ALLOC;
     } 
 
-    c->B = gretl_matrix_alloc(K->r, K->p);
-    c->C = gretl_matrix_alloc(K->n, K->p);
-
     c->BB = gretl_matrix_alloc(K->r, K->r);
     c->CC = gretl_matrix_alloc(K->n, K->n);
     c->BC = gretl_matrix_alloc(K->r, K->n);
 
-    if (c->B == NULL || c->C == NULL || c->BB == NULL || 
-	c->CC == NULL || c->BC == NULL) {
+    if (c->BB == NULL || c->CC == NULL || c->BC == NULL) {
 	free_crossinfo(c);
 	return E_ALLOC;
     }
@@ -1101,7 +1098,7 @@ static int kalman_revise_variance (kalman *K)
 {
     int err = 0;
 
-    if (K->Q == NULL || K->R == NULL) {
+    if (K->B == NULL || K->C == NULL) {
 	return missing_matrix_error("'statevar' or 'obsvar'");
     }
 
@@ -1120,6 +1117,7 @@ static int kalman_revise_variance (kalman *K)
 	return err;
     }
 
+#if 0
     /* K->Q and K->R might not be user-supplied matrices: they could
        be matrices constructed from scalars and "owned" by the filter.
        In that case we should free them at this point in order to
@@ -1136,6 +1134,7 @@ static int kalman_revise_variance (kalman *K)
     if (kalman_owns_matrix(K, K_R)) {
 	gretl_matrix_free((gretl_matrix *) K->R);
     }
+#endif    
 
     K->Q = K->cross->BB;
     K->R = K->cross->CC;
@@ -1157,7 +1156,15 @@ static int user_kalman_setup (kalman *K, gretlopt opt)
 	return missing_matrix_error(NULL);
     }
 
-    kalman_set_dimensions(K, opt);
+    if (opt & OPT_C) {
+	K->flags |= KALMAN_CROSS;
+	K->B = K->Q;
+	K->Q = NULL;
+	K->C = K->R;
+	K->R = NULL;
+    }
+
+    kalman_set_dimensions(K);
 
     if (K->p > 0) {
 	err = kalman_revise_variance(K);
@@ -1181,9 +1188,6 @@ static int user_kalman_setup (kalman *K, gretlopt opt)
 
     if (!err) {
 	gretl_matrix_zero(K->e);
-	if (opt & OPT_C) {
-	    K->flags |= KALMAN_CROSS;
-	}
 	if (opt & OPT_D) {
 	    K->flags |= KALMAN_DIFFUSE;
 	}
@@ -1595,8 +1599,7 @@ static int kalman_update_matrix (kalman *K, int i,
 static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
     gretl_matrix **cptr[] = {
-	&K->F, &K->A, &K->H, &K->Q,
-	&K->R, &K->mu
+	&K->F, &K->A, &K->H, &K->Q, &K->R, &K->mu
     };  
     int cross_update = 0;
     int i, err = 0;
@@ -2422,7 +2425,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
     }
 
     /* redundant? */
-    kalman_set_dimensions(K, K->p > 0 ? OPT_C : OPT_NONE);
+    kalman_set_dimensions(K);
 
     if (gretl_matrix_rows(K->F) != K->r ||
 	gretl_matrix_rows(K->A) != K->k) {
@@ -3824,7 +3827,7 @@ static int kalman_simulate (kalman *K,
 	if (K->p > 0) {
 	    /* C \varepsilon_t */
 	    load_from_row(et, V, K->t, GRETL_MOD_NONE);
-	    gretl_matrix_multiply(K->cross->C, et, K->e);
+	    gretl_matrix_multiply(K->C, et, K->e);
 	} else if (W != NULL) {
 	    load_from_row(K->e, W, K->t, GRETL_MOD_NONE);
 	}
@@ -3841,7 +3844,7 @@ static int kalman_simulate (kalman *K,
 	gretl_matrix_multiply(K->F, K->S0, K->S1);
 	if (K->p > 0) {
 	    /* B \varepsilon_t */
-	    gretl_matrix_multiply_mod(K->cross->B, GRETL_MOD_NONE,
+	    gretl_matrix_multiply_mod(K->B, GRETL_MOD_NONE,
 				      et, GRETL_MOD_NONE,
 				      K->S1, GRETL_MOD_CUMULATE);
 	} else {	    
