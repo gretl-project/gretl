@@ -216,12 +216,6 @@ void free_crossinfo (crossinfo *c)
     free(c);
 }
 
-#define Q_is_cross_pointer(K) (K->cross != NULL && K->cross->BB != NULL \
-                               && K->Q == K->cross->BB)
-
-#define R_is_cross_pointer(K) (K->cross != NULL && K->cross->CC != NULL \
-                               && K->R == K->cross->CC)
-
 void kalman_free (kalman *K)
 {
     if (K == NULL) {
@@ -234,16 +228,6 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->P1);
     gretl_matrix_free(K->e);
     gretl_matrix_free(K->LL);
-
-    if (Q_is_cross_pointer(K)) {
-	/* avoid double freeing */
-	K->Q = NULL;
-    }
-
-    if (R_is_cross_pointer(K)) {
-	/* avoid double freeing */
-	K->R = NULL;
-    }    
 
     gretl_matrix_block_destroy(K->Blk);
 
@@ -258,8 +242,6 @@ void kalman_free (kalman *K)
 	    mptr[3] = &K->B;
 	    mptr[4] = &K->C;
 	}
-
-	/* FIXME */
 
 	for (i=0; i<K_MMAX; i++) {
 	    if (kalman_owns_matrix(K, i)) {
@@ -955,6 +937,8 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 	K->flags |= KALMAN_CROSS;
 	targ[3] = &K->B;
 	targ[4] = &K->C;
+    } else {
+	targ[3] = &K->Q;
     }
 
     for (i=0; i<nmat; i++) {
@@ -1134,6 +1118,7 @@ static int kalman_revise_variance (kalman *K)
     }
 #endif    
 
+    /* convenience pointers */
     K->Q = K->cross->BB;
     K->R = K->cross->CC;
 
@@ -1596,25 +1581,25 @@ static int kalman_update_matrix (kalman *K, int i,
 
 static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
-    gretl_matrix **cptr[] = {
+    gretl_matrix **mptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R, &K->mu
     };  
     int cross_update = 0;
     int i, err = 0;
 
     if (kalman_xcorr(K)) {
-	cptr[3] = &K->B;
-	cptr[4] = &K->C;
+	mptr[3] = &K->B;
+	mptr[4] = &K->C;
     }
 
     for (i=0; i<NMATCALLS && !err; i++) {
 	if (matrix_is_varying(K, i)) {
-	    err = kalman_update_matrix(K, i, cptr[i], prn);
+	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	    if (!err) {
 		if (kalman_xcorr(K) && i >= K_Q) {
 		    cross_update = 1;
 		} else {
-		    err = check_matrix_dims(K, *cptr[i], i);
+		    err = check_matrix_dims(K, *mptr[i], i);
 		}
 	    }	    
 	    if (err) {
@@ -2219,17 +2204,9 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	} else if (i == K_H) {
 	    K->H = m;
 	} else if (i == K_Q) {
-	    if (kalman_xcorr(K)) {
-		K->B = m;
-	    } else {
-		K->Q = m;
-	    }
+	    K->Q = m;
 	} else if (i == K_R) {
-	    if (kalman_xcorr(K)) {
-		K->C = m;
-	    } else {
-		K->R = m;
-	    }
+	    K->R = m;
 	} else if (i == K_m) {
 	    K->mu = m;
 	} else if (i == K_y) {
@@ -2319,21 +2296,21 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 {
     int cfd = gretl_function_depth();
     kalman *K = u->K;
-    gretl_matrix **cptr[] = {
+    gretl_matrix **mptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R,
 	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
     };
     int i, err = 0;
 
     if (kalman_xcorr(K)) {
-	cptr[3] = &K->B;
-	cptr[4] = &K->B;
+	mptr[3] = &K->B;
+	mptr[4] = &K->B;
     }
 
     for (i=0; i<K_MMAX; i++) {
 	if (!kalman_owns_matrix(K, i)) {
 	    /* pointer may be invalid, needs refreshing */
-	    *cptr[i] = NULL;
+	    *mptr[i] = NULL;
 	}
     }
 
@@ -2341,11 +2318,11 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
-	    err = kalman_update_matrix(K, i, cptr[i], prn);
+	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	} else if (kalman_owns_matrix(K, i)) {
-	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
+	    err = update_scalar_matrix(*(gretl_matrix **) mptr[i], K->mnames[i]);
 	} else {
-	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
+	    *mptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
 	}
     }
 
@@ -2391,24 +2368,24 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 {
     int cfd = gretl_function_depth();
-    gretl_matrix **cptr[] = {
+    gretl_matrix **mptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R,
 	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
     };
     int i, err = 0;
 
     if (kalman_xcorr(K)) {
-	cptr[3] = &K->B;
-	cptr[4] = &K->B;
+	mptr[3] = &K->B;
+	mptr[4] = &K->B;
     }    
 
     K->flags |= KALMAN_CHECK;
 
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
-	    err = kalman_update_matrix(K, i, cptr[i], prn);
+	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	} else if (!kalman_owns_matrix(K, i)) {
-	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], cfd, cfd);
+	    *mptr[i] = kalman_retrieve_matrix(K->mnames[i], cfd, cfd);
 	}
     }
 
