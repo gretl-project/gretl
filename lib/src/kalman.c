@@ -98,8 +98,8 @@ struct kalman_ {
     gretl_matrix *Q; /* r x r: contemp covariance matrix, state eqn */
     gretl_matrix *R; /* n x n: contemp covariance matrix, obs eqn */
     gretl_matrix *mu; /* r x 1: constant term in state transition */
-    gretl_matrix *y; /* T x n: dependent variable vector (or matrix) */
-    gretl_matrix *x; /* T x k: independent variables matrix */
+    gretl_matrix *y;  /* T x n: dependent variable vector (or matrix) */
+    gretl_matrix *x;  /* T x k: independent variables matrix */
     gretl_matrix *Sini; /* r x 1: S_{1|0} */
     gretl_matrix *Pini; /* r x r: P_{1|0} */
 
@@ -557,7 +557,7 @@ static int kalman_check_dimensions (kalman *K)
     }    
 
     if (err) {
-	return err;
+	goto bailout;
     }
 
     K->ifc = 0;
@@ -618,9 +618,15 @@ static int kalman_check_dimensions (kalman *K)
     /* K (gain) should be T x (r * n) */
     if (!err && K->K != NULL) {
 	err = maybe_resize_export_matrix(K, K->K, K_K);
-    }    
+    }
 
-    return 0;
+ bailout:
+
+    if (err) {
+	fprintf(stderr, "kalman_check_dimensions: err = %d\n", err);
+    }
+
+    return err;
 }
 
 /* Write the vech of @src into row @t of @targ */
@@ -881,7 +887,6 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
 
     *err = kalman_check_dimensions(K);
     if (*err) {
-	fprintf(stderr, "failed on kalman_check_dimensions\n");
 	free(K);
 	return NULL;
     }
@@ -963,18 +968,10 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 
     if (K->p > 0) {
 	*err = kalman_revise_variance(K);
-	if (*err) {
-	    fprintf(stderr, "failed in kalman_revise_variance\n");
-	} else {
-	    K->flags |= KALMAN_CROSS;
-	}
     }
 
     if (!*err) {
 	*err = kalman_check_dimensions(K);
-	if (*err) {
-	    fprintf(stderr, "failed on kalman_check_dimensions\n");
-	}
     }
 
     if (!*err) {
@@ -1069,7 +1066,8 @@ static int kalman_add_crossinfo (kalman *K)
 }
 
 /* kalman_revise_variance: the user has actually given B in place of Q
-   and C in place of R; so we have to form Q = BB', R = CC' and BC'.
+   and C in place of R; so we have to form Q = BB', R = CC', and BC'
+   (cross-correlated disturbances).
 
    This function is called in the course of initial set-up of a
    filter, and also when the Kalman matrices are being re-checked at
@@ -1100,41 +1098,22 @@ static int kalman_revise_variance (kalman *K)
 	err = kalman_update_crossinfo(K, UPDATE_INIT);
     }
 
+    if (!err) {
+	/* establish convenience pointers */
+	K->Q = K->cross->BB;
+	K->R = K->cross->CC;
+#if 0
+	gretl_matrix_print(K->cross->BB, "BB");
+	gretl_matrix_print(K->cross->CC, "CC");
+	gretl_matrix_print(K->cross->BC, "BC");
+#endif
+    }
+
     if (err) {
 	fprintf(stderr, "kalman_revise_variance: err = %d\n", err);
-	return err;
-    }
+    }    
 
-#if 0 /* ?? */
-    /* K->Q and K->R might not be user-supplied matrices: they could
-       be matrices constructed from scalars and "owned" by the filter.
-       In that case we should free them at this point in order to
-       avoid leaking memory.
-    */
-
-    fprintf(stderr, "K_Q: %d x %d, %s\n", K->Q->rows, K->Q->cols,
-	    kalman_owns_matrix(K, K_Q) ? "owned" : "not owned");
-
-    if (kalman_owns_matrix(K, K_Q)) {
-	gretl_matrix_free((gretl_matrix *) K->Q);
-    }
-
-    if (kalman_owns_matrix(K, K_R)) {
-	gretl_matrix_free((gretl_matrix *) K->R);
-    }
-#endif    
-
-    /* convenience pointers */
-    K->Q = K->cross->BB;
-    K->R = K->cross->CC;
-
-#if 0
-    gretl_matrix_print(K->cross->BB, "BB");
-    gretl_matrix_print(K->cross->CC, "CC");
-    gretl_matrix_print(K->cross->BC, "BC");
-#endif
-
-    return 0;
+    return err;
 }
 
 static int user_kalman_setup (kalman *K, gretlopt opt)
@@ -1157,16 +1136,10 @@ static int user_kalman_setup (kalman *K, gretlopt opt)
 
     if (K->p > 0) {
 	err = kalman_revise_variance(K);
-	if (err) {
-	    fprintf(stderr, "failed in kalman_revise_variance\n");
-	}
     }
 
     if (!err) {
 	err = kalman_check_dimensions(K);
-	if (err) {
-	    fprintf(stderr, "failed in kalman_check_dimensions\n");
-	}
     }
 
     if (err) {
@@ -1572,6 +1545,7 @@ static int kalman_update_matrix (kalman *K, int i,
 	fprintf(stderr, "kalman_update_matrix: call='%s', err=%d\n", 
 		K->matcalls[i], err);
     } else if (!kalman_owns_matrix(K, i)) {
+	/* re-sync to named "external" matrix */
 	*pm = get_matrix_by_name(K->mnames[i]);
 	if (*pm == NULL) {
 	    err = E_DATA;
@@ -1603,6 +1577,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	    if (!err) {
 		if (kalman_xcorr(K) && (i == K_Q || i == K_R)) {
+		    /* handle revised B and/or C */
 		    cross_update = 1;
 		} else {
 		    err = check_matrix_dims(K, *mptr[i], i);
