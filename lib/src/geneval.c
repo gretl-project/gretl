@@ -2714,21 +2714,16 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 }
 
 /* Here we know have a scalar and a 1 x 1 matrix to work with,
-   in either order. We'd generally want the result to be a scalar,
-   and surely so if @op is a comparison operator, unless the
-   1 x 1 matrix is on the left and @op is a dot operator?
+   in either order. The result should be a scalar, since the
+   one case where we may want a matrix result (matrix on LHS,
+   and @op is a dot operator) is handled elsewhere (see the
+   eval() code) and so doesn't get here.
 */
 
 static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 				  parser *p)
 {
-    NODE *ret;
-
-    if (l->t == MAT && dot_op(op)) {
-	ret = aux_matrix_node(p);
-    } else {
-	ret = aux_scalar_node(p);
-    }
+    NODE *ret = aux_scalar_node(p);
 
     if (!p->err) {
 	double x, y;
@@ -2741,14 +2736,7 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 	    y = r->v.xval;
 	}
 
-	if (ret->t == NUM) {
-	    ret->v.xval = xy_calc(x, y, op, NUM, p);
-	} else {
-	    node_allocate_matrix(ret, 1, 1, p);
-	    if (!p->err) {
-		ret->v.m->val[0] = xy_calc(x, y, op, MAT, p);
-	    }
-	}
+	ret->v.xval = xy_calc(x, y, op, NUM, p);
     }
 
     return ret;
