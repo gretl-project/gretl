@@ -237,6 +237,12 @@ static void print_tree (NODE *t, parser *p, int level)
     if (t->vname != NULL) {
 	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d), vname='%s'\n",
 		level, (void *) t, t->t, getsymb(t->t), t->flags, t->vname);
+    } else if (t->t == STR) {
+	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d, val '%s')\n",
+		level, (void *) t, t->t, getsymb(t->t), t->flags, t->v.str);
+    } else if (t->t == NUM) {
+	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d, val %g)\n",
+		level, (void *) t, t->t, getsymb(t->t), t->flags, t->v.xval);
     } else {
 	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d)\n",
 		level, (void *) t, t->t, getsymb(t->t), t->flags);
@@ -2721,7 +2727,7 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 	ret = aux_scalar_node(p);
     } else {
 	ret = aux_matrix_node(p);
-    }    
+    }
 
     if (!p->err) {
 	double x, y;
