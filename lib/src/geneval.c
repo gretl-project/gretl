@@ -2714,19 +2714,20 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 }
 
 /* Here we know have a scalar and a 1 x 1 matrix to work with,
-   in either order */
+   in either order. We'd generally want the result to be a scalar,
+   and surely so if @op is a comparison operator, unless the
+   1 x 1 matrix is on the left and @op is a dot operator?
+*/
 
 static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 				  parser *p)
 {
     NODE *ret;
 
-    if (l->t == NUM && (op == B_MOD || op == B_POW)) {
-	/* the matrix on the right is functioning as
-	   a scalar argument */
-	ret = aux_scalar_node(p);
-    } else {
+    if (l->t == MAT && dot_op(op)) {
 	ret = aux_matrix_node(p);
+    } else {
+	ret = aux_scalar_node(p);
     }
 
     if (!p->err) {

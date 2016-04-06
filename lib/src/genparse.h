@@ -484,6 +484,7 @@ enum {
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
 #define bool_comp(s) (s >= B_EQ && s <= B_OR)
+#define dot_op(s)    (s >= B_DOTMULT && s <= B_DOTNEQ)
 
 #define evalb3(s) (func3_symb(s))
 
