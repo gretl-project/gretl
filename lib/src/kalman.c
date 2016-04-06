@@ -955,8 +955,6 @@ kalman *kalman_new_minimal (gretl_matrix *M[],
 	K->flags |= KALMAN_CROSS;
 	targ[3] = &K->B;
 	targ[4] = &K->C;
-    } else {
-	targ[3] = &K->Q;
     }
 
     for (i=0; i<nmat; i++) {
@@ -1117,7 +1115,7 @@ static int kalman_revise_variance (kalman *K)
 	return err;
     }
 
-#if 0
+#if 0 /* ?? */
     /* K->Q and K->R might not be user-supplied matrices: they could
        be matrices constructed from scalars and "owned" by the filter.
        In that case we should free them at this point in order to
@@ -1139,7 +1137,7 @@ static int kalman_revise_variance (kalman *K)
     K->Q = K->cross->BB;
     K->R = K->cross->CC;
 
-#if 1
+#if 0
     gretl_matrix_print(K->cross->BB, "BB");
     gretl_matrix_print(K->cross->CC, "CC");
     gretl_matrix_print(K->cross->BC, "BC");
@@ -1613,7 +1611,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 	if (matrix_is_varying(K, i)) {
 	    err = kalman_update_matrix(K, i, cptr[i], prn);
 	    if (!err) {
-		if (K->p > 0 && i >= K_Q) {
+		if (kalman_xcorr(K) && i >= K_Q) {
 		    cross_update = 1;
 		} else {
 		    err = check_matrix_dims(K, *cptr[i], i);
