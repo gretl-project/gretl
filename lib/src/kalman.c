@@ -1084,6 +1084,12 @@ static int kalman_revise_variance (kalman *K)
 	return missing_matrix_error("'statevar' or 'obsvar'");
     }
 
+#if 0
+    fprintf(stderr, "kalman_revise_variance\n");
+    gretl_matrix_print(K->B, "B");
+    gretl_matrix_print(K->C, "C");
+#endif    
+
     if (K->cross == NULL) {
 	/* not allocated yet: this should be the case only 
 	   on initial set-up */
@@ -1596,7 +1602,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 	if (matrix_is_varying(K, i)) {
 	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	    if (!err) {
-		if (kalman_xcorr(K) && i >= K_Q) {
+		if (kalman_xcorr(K) && (i == K_Q || i == K_R)) {
 		    cross_update = 1;
 		} else {
 		    err = check_matrix_dims(K, *mptr[i], i);
@@ -1605,7 +1611,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 	    if (err) {
 		fprintf(stderr, "kalman_refresh_matrices: err = %d at t = %d\n", 
 			err, K->t);
-	    } 
+	    }
 	}
     }
 
@@ -2304,7 +2310,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 
     if (kalman_xcorr(K)) {
 	mptr[3] = &K->B;
-	mptr[4] = &K->B;
+	mptr[4] = &K->C;
     }
 
     for (i=0; i<K_MMAX; i++) {
@@ -2376,7 +2382,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     if (kalman_xcorr(K)) {
 	mptr[3] = &K->B;
-	mptr[4] = &K->B;
+	mptr[4] = &K->C;
     }    
 
     K->flags |= KALMAN_CHECK;
