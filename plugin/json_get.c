@@ -34,6 +34,54 @@ static int non_empty_array (JsonArray *array)
     return array != NULL && json_array_get_length(array) > 0;
 }
 
+static int null_node (JsonNode *node)
+{
+    return node == NULL || json_node_is_null(node);
+}
+
+static int output_json_node_value (JsonNode *node,
+				   PRN *prn)
+{
+    GType type = 0;
+    int err = 0;
+
+    if (null_node(node)) {
+	gretl_errmsg_set("jsonget: got a null node");
+	return E_DATA;
+    }
+
+    type = json_node_get_value_type(node);
+
+#if 0
+    fprintf(stderr, "jsonget: node type %s\n", g_type_name(type));
+#endif    
+    
+    if (!handled_type(type)) {
+	gretl_errmsg_sprintf("jsonget: unhandled object type '%s'", 
+			     g_type_name(type));
+	err = E_DATA;
+    } else if (type == G_TYPE_STRING) {
+	const gchar *s = json_node_get_string(node);
+
+	if (s != NULL) {
+	    pputs(prn, s);
+	} else {
+	    err = E_DATA;
+	}	
+    } else if (type == G_TYPE_DOUBLE) {
+	double x = json_node_get_double(node);
+
+	pprintf(prn, "%.15g", x);
+    } else {
+	gint64 k = json_node_get_int(node);
+	double x = (double) k;
+
+	pprintf(prn, "%.15g", x);
+    }
+
+    return err;
+}
+
 static int real_json_get (JsonParser *parser, const char *pathstr,
 			  int *n_objects, PRN *prn)
 {
@@ -41,7 +89,6 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     JsonNode *match, *node;
     JsonPath *path;
     GType ntype;
-    double x;
     int err = 0;
 
     *n_objects = 0;
@@ -49,7 +96,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     node = json_parser_get_root(parser);
 
     if (node == NULL || json_node_is_null(node)) {
-	gretl_errmsg_set("JsonParser: got null root node");
+	gretl_errmsg_set("jsonget: got null root node");
 	return E_DATA;
     }
     
@@ -57,11 +104,11 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     if (!json_path_compile(path, pathstr, &gerr)) {
 	if (gerr != NULL) {
-	    gretl_errmsg_sprintf("Failed to compile JsonPath: %s",
+	    gretl_errmsg_sprintf("jsonget: failed to compile JsonPath: %s",
 				 gerr->message);
 	    g_error_free(gerr);
 	} else {
-	    gretl_errmsg_set("Failed to compile JsonPath");
+	    gretl_errmsg_set("jsonget: failed to compile JsonPath");
 	}	    
 	g_object_unref(path);
 	return E_DATA;
@@ -69,7 +116,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     match = json_path_match(path, node);
 
-    if (match == NULL || json_node_is_null(match)) {
+    if (null_node(match)) {
 	/* FIXME : maybe return empty string? */
 	g_object_unref(path);
 	return E_DATA;
@@ -90,8 +137,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     repeat:
 
-	if (node == NULL || json_node_is_null(node)) {
-	    gretl_errmsg_set("Failed to match JsonPath");
+	if (null_node(node)) {
+	    gretl_errmsg_set("jsonget: failed to match JsonPath");
 	    ntype = 0;
 	    err = E_DATA;
 	    goto bailout;
@@ -107,47 +154,29 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 		}
 		goto repeat;
 	    } else {
-		gretl_errmsg_sprintf("Unhandled array type '%s'", 
+		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'", 
 				     g_type_name(ntype));
 		err = E_DATA;
 	    }
 	} else if (array != NULL) {
 	    int i, n = json_array_get_length(array);
 
-	    for (i=0; i<n; i++) {
+	    for (i=0; i<n && !err; i++) {
 		node = json_array_get_element(array, i);
-		if (node != NULL) {
-		    if (json_node_is_null(node)) {
-			fprintf(stderr, " got a null node\n");
+		err = output_json_node_value(node, prn);
+		if (!err) {
+		    *n_objects += 1;
+		    if (n > 1) {
+			pputc(prn, '\n');
 		    }
-		    if (ntype == G_TYPE_STRING) {
-			pputs(prn, json_node_get_string(node));
-		    } else {
-			x = json_node_get_double(node);
-			pprintf(prn, "%.15g", x);
-		    }
-		}
-		if (n > 1) {
-		    pputc(prn, '\n');
 		}
 	    }
-	    *n_objects = n;
 	}
     } else {
 	/* not an array-holding node */
-	ntype = json_node_get_value_type(match);
-	if (!handled_type(ntype)) {
-	    gretl_errmsg_sprintf("Unhandled object type '%s'", 
-				 g_type_name(ntype));
-	    err = E_DATA;
-	} else {
-	    if (ntype == G_TYPE_STRING) {
-		pputs(prn, json_node_get_string(match));
-	    } else {
-		x = json_node_get_double(match);
-		pprintf(prn, "%.15g", x);
-	    }
-	    *n_objects = 1;
+	err = output_json_node_value(match, prn);
+	if (!err) {
+	    *n_objects += 1;
 	}
     }
 
