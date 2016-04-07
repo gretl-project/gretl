@@ -151,8 +151,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 		array = json_node_get_array(node);
 		if (non_empty_array(array)) {
 		    node = json_array_get_element(array, 0);
+		    goto repeat;
 		}
-		goto repeat;
 	    } else {
 		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'", 
 				     g_type_name(ntype));
