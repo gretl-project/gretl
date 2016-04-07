@@ -32,6 +32,8 @@
 # define MDEBUG 0
 #endif
 
+#define pow_sym(t) (t == B_POW || t == B_DOTPOW)
+
 static NODE *powterm (parser *p);
 
 #if SDEBUG
@@ -1323,6 +1325,10 @@ static NODE *powterm (parser *p)
     } else if (sym == G_LPR) {
 	/* parenthesized expression */
 	t = base(p, NULL);
+	if (t != NULL && pow_sym(t->t)) {
+	    /* protection: don't ignore the parens! */
+	    t->flags |= PAR_NODE;
+	}
     } else if (sym == G_LCB) {
 	/* explicit matrix definition, possibly followed by
 	   a "subslice" specification */
@@ -1434,8 +1440,21 @@ static void convert_pow_term (NODE *n)
     L->v.b2.r = c;
 }
 
-#define pow_sym(t)     (t == B_POW || t == B_DOTPOW)
-#define pow_pow_node(n) (pow_sym(n->t) && pow_sym(n->v.b2.l->t))
+/* Identify a node that needs its associativity adjusted:
+   a '^' node with another '^' on the left, where the left
+   sub-node is NOT parenthesized.
+*/
+
+static int pow_pow_node (NODE *n)
+{
+    if (pow_sym(n->t)) {
+	NODE *l = n->v.b2.l;
+
+	return pow_sym(l->t) && !(l->flags & PAR_NODE);
+    } else {
+	return 0;
+    }
+}
 
 /* Test for whether the ' symbol must represent the unary
    transposition operator rather than binary transpose-multiply,
