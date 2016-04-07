@@ -79,7 +79,7 @@ extern "C" {
 # define A_(String) ((char *) String)
 #endif /* ENABLE_NLS */
 
-#define MAXLINE 16384  /* maximum length of command line */
+#define MAXLINE 32768  /* maximum length of command line */
 #define MAXLABEL  128  /* maximum length of descriptive labels for variables */
 #define MAXLEN    512  /* max length of regular "long" strings */
 #define MAXDISP    32  /* max length of "display names" for variables */
