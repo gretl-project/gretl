@@ -838,6 +838,14 @@ double fn_param_step (const ufunc *fun, int i)
 	fun->params[i].step;
 }
 
+static int arg_may_be_optional (GretlType t)
+{
+    return gretl_ref_type(t) ||
+	t == GRETL_TYPE_MATRIX ||
+	t == GRETL_TYPE_LIST ||
+	t == GRETL_TYPE_STRING;	
+}
+
 /**
  * fn_param_optional:
  * @fun: pointer to user-function.
@@ -849,19 +857,12 @@ double fn_param_step (const ufunc *fun, int i)
 
 int fn_param_optional (const ufunc *fun, int i)
 {
-    int t;
-
     if (i < 0 || i >= fun->n_params) {
 	return 0;
     }
 
-    t = fun->params[i].type;
-
-    return ((gretl_ref_type(t) ||
-	     t == GRETL_TYPE_MATRIX ||
-	     t == GRETL_TYPE_LIST ||
-	     t == GRETL_TYPE_STRING) && 
-	    (fun->params[i].flags & ARG_OPTIONAL));
+    return arg_may_be_optional(fun->params[i].type) &&
+	(fun->params[i].flags & ARG_OPTIONAL);
 }
 
 /**
@@ -2132,9 +2133,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	    }
 	} else if (gretl_scalar_type(fp->type)) {
 	    print_min_max_deflt(fp, prn);
-	} else if (gretl_ref_type(fp->type) || 
-		   fp->type == GRETL_TYPE_LIST ||
-		   fp->type == GRETL_TYPE_STRING) {
+	} else if (arg_may_be_optional(fp->type)) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
 	print_param_description(fp, prn);
@@ -5679,10 +5678,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (*s == '[') { 
 	if (gretl_scalar_type(type)) {
 	    err = read_min_max_deflt(&s, param, name, &nvals);
-	} else if (gretl_ref_type(type) ||
-		   type == GRETL_TYPE_MATRIX ||
-		   type == GRETL_TYPE_LIST ||
-		   type == GRETL_TYPE_STRING) {
+	} else if (arg_may_be_optional(type)) {
 	    err = read_param_option(&s, param);
 	} else {
 	    err = E_PARSE;
