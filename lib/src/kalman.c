@@ -3043,7 +3043,7 @@ static int koopman_smooth (kalman *K)
 	load_from_vech(K->Vt, K->V, K->n, t, GRETL_MOD_NONE);
 	load_from_vec(K->Kt, K->K, t);
 
-	/* u_t = V_t^{-1}e_t - K_t'r_t */
+	/* u_t = V_t^{-1} e_t - K_t' r_t */
 	gretl_matrix_multiply(K->Vt, K->e, u);
 	if (t < K->T - 1) {
 	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
@@ -3054,7 +3054,7 @@ static int koopman_smooth (kalman *K)
 	/* save u_t values in E */
 	load_to_row(K->E, u, t);
 
-	/* D_t = V_t^{-1} + K_t'N_tK_t */
+	/* D_t = V_t^{-1} + K_t' N_t K_t */
 	gretl_matrix_copy_values(D, K->Vt);
 	if (t < K->T - 1) {
 	    gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
@@ -3070,7 +3070,7 @@ static int koopman_smooth (kalman *K)
 	/* save r_t values in R */
 	load_to_row(R, r1, t);
 
-	/* r_{t-1} = HV_t^{-1}e_t + L_t'r_t */
+	/* r_{t-1} = H V_t^{-1}e_t + L_t' r_t */
 	gretl_matrix_multiply(K->H, K->Vt, K->Tmpr1);
 	gretl_matrix_multiply(K->Tmpr1, K->e, r2);
 	if (t < K->T - 1) {
@@ -3085,7 +3085,7 @@ static int koopman_smooth (kalman *K)
 	    gretl_matrix_copy_values(r0, r2);
 	}
 
-	/* N_{t-1} = HV_t^{-1}H' + L'NL */
+	/* N_{t-1} = H V_t^{-1}H' + L' N L */
 	gretl_matrix_qform(K->H, GRETL_MOD_NONE,
 			   K->Vt, N2, GRETL_MOD_NONE);
 	if (t < K->T - 1) {
