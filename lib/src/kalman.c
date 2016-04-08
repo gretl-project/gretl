@@ -3035,6 +3035,8 @@ static int koopman_smooth (kalman *K)
     gretl_matrix_zero(r1);
     gretl_matrix_zero(N1);
 
+    /* The backward recursion */
+
     for (t=K->T-1; t>=0 && !err; t--) {
 	/* load et, Vt and Kt for time t */
 	load_from_row(K->e, K->E, t, GRETL_MOD_NONE);
@@ -3048,6 +3050,7 @@ static int koopman_smooth (kalman *K)
 				      r1, GRETL_MOD_NONE,
 				      u, GRETL_MOD_DECREMENT);
 	}
+	
 	/* save u_t values in E */
 	load_to_row(K->E, u, t);
 
@@ -3102,7 +3105,8 @@ static int koopman_smooth (kalman *K)
 	n1 = gretl_matrix_reuse(K->Tmpnn, K->n, 1);
     }
 
-    /* smoothed disturbances, all time steps */
+    /* Smoothed disturbances, all time steps */
+    
     for (t=0; t<K->T; t++) {
 #if 0
 	if (K->p > 0) {
@@ -3143,7 +3147,8 @@ static int koopman_smooth (kalman *K)
 	gretl_matrix_reuse(K->Tmpnn, K->n, K->n);
     }
 
-    /* write initial smoothed state into first row of S */
+    /* Write initial smoothed state into first row of S */
+    
     if (K->Pini != NULL) {
 	gretl_matrix_multiply(K->Pini, r0, K->S0);
     } else {
@@ -3155,7 +3160,8 @@ static int koopman_smooth (kalman *K)
     }
     load_to_row(K->S, K->S0, 0);
 
-    /* smoothed state, remaining time steps */
+    /* Smoothed state, remaining time steps */
+    
     for (t=1; t<K->T; t++) {
 	/* S_{t+1} = FS_t + v_t */
 	load_from_row(K->S0, K->S, t-1, GRETL_MOD_NONE);
