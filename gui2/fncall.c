@@ -1370,16 +1370,16 @@ static void function_call_dialog (call_info *cinfo)
 	    ptype == GRETL_TYPE_OBS ||
 	    spinnable) {
 	    argtxt = g_strdup_printf("%s",
-				     (desc != NULL)? desc :
+				     (desc != NULL)? _(desc) :
 				     parname);
 	} else {
 	    const char *astr = gretl_type_get_name(ptype);
 
 	    if (desc != NULL && strstr(desc, astr)) {
-		argtxt = g_strdup_printf("%s", desc);
+		argtxt = g_strdup_printf("%s", _(desc));
 	    } else {
 		argtxt = g_strdup_printf("%s (%s)",
-					 (desc != NULL)? desc :
+					 (desc != NULL)? _(desc) :
 					 parname, astr);
 	    }
 	}
@@ -3333,8 +3333,6 @@ static void add_package_to_menu (gui_package_info *gpi,
     }
 
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
-
-    fprintf(stderr, "item.label: '%s' -> '%s'\n", item.label, _(item.label));
 
     gtk_ui_manager_add_ui(vwin->ui, merge_id, gpi->menupath, 
 			  _(item.label), item.name,
