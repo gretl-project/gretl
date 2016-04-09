@@ -3334,6 +3334,8 @@ static void add_package_to_menu (gui_package_info *gpi,
 
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
 
+    fprintf(stderr, "item.label: '%s' -> '%s'\n", item.label, _(item.label));
+
     gtk_ui_manager_add_ui(vwin->ui, merge_id, gpi->menupath, 
 			  _(item.label), item.name,
 			  GTK_UI_MANAGER_MENUITEM, 
@@ -3344,6 +3346,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     }
 
     gpi->ag = gtk_action_group_new(item.name);
+    gtk_action_group_set_translation_domain(gpi->ag, "gretl");
     gtk_action_group_add_actions(gpi->ag, &item, 1, vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, gpi->ag, 0);
     // g_object_unref(gpi->ag);
