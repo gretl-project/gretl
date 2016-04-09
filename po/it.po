@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-03-10 11:41-0500\n"
-"PO-Revision-Date: 2016-03-09 13:34+0100\n"
+"PO-Revision-Date: 2016-04-09 14:39+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2615,9 +2615,9 @@ msgid "Invalid character '%c'\n"
 msgstr "Carattere non valido \"%c\"\n"
 
 #: lib/src/genlex.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected byte 0x%x\n"
-msgstr "Simbolo inaspettato '%c'"
+msgstr "Byte inaspettato 0x%x\n"
 
 #: lib/src/genmain.c:42
 #, c-format
