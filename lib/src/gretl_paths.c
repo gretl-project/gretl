@@ -2680,7 +2680,7 @@ int gretl_x12_is_x13 (void)
 const char *gretl_rbin_path (void)
 {
 #ifdef WIN32
-    /* avoid using a stale value saved to .gretl2rc */
+    /* try to avoid using a stale value saved to .gretl2rc */
     static int checked;
 
     if (!checked) {
@@ -2696,6 +2696,8 @@ const char *gretl_rbin_path (void)
 	checked = 1;
     }
 #endif
+
+    fprintf(stderr, "gretl_rbin_path: '%s'\n", paths.rbinpath);
 
     return paths.rbinpath;
 }
