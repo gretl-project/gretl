@@ -567,7 +567,9 @@ enum {
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
-    PAR_NODE = 1 << 4  /* exponentiation node is parenthesized */
+    PAR_NODE = 1 << 4, /* exponentiation node is parenthesized */
+    NDC_NODE = 1 << 5  /* node with nondeclared result type, may be
+			  ambiguous between scalar and matrix */
 };
 
 struct node {

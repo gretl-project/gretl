@@ -2714,10 +2714,13 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 }
 
 /* Here we know have a scalar and a 1 x 1 matrix to work with,
-   in either order. The result should be a scalar, since the
-   one case where we may want a matrix result (matrix on LHS,
-   and @op is a dot operator) is handled elsewhere (see the
-   eval() code) and so doesn't get here.
+   in either order. We'll take the result to be a scalar, since
+   the one case where we surely want a matrix result (matrix on
+   LHS, and @op is a dot operator) is handled elsewhere (see the
+   eval() code) and so doesn't get here. However, to allow for
+   the possibility that in context the result is intended to be
+   a 1 x 1 matrix, we'll mark the return node as NDC_NODE, that
+   is, a node of undeclared type.
 */
 
 static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
@@ -2737,6 +2740,9 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 	}
 
 	ret->v.xval = xy_calc(x, y, op, NUM, p);
+	if (!p->err) {
+	    ret->flags |= NDC_NODE;
+	}
     }
 
     return ret;
@@ -11552,10 +11558,16 @@ static NODE *eval (NODE *t, parser *p)
     case B_DOTGTE:
     case B_DOTLTE:
     case B_DOTNEQ:
-	/* matrix-matrix or matrix-scalar binary operators */
+	/* matrix-matrix or matrix-scalar binary operators:
+	   in addition we permit scalar-scalar to allow for
+	   the possibility that results that could be taken
+	   to be 1 x 1 matrix results have been registered 
+	   internally as scalars.
+	*/
 	if ((l->t == MAT && r->t == MAT) ||
 	    (l->t == MAT && r->t == NUM) ||
-	    (l->t == NUM && r->t == MAT)) {
+	    (l->t == NUM && r->t == MAT) ||
+	    (l->t == NUM && r->t == NUM)) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else if ((l->t == MAT && r->t == SERIES) ||
 		   (l->t == SERIES && r->t == MAT)) {
@@ -14719,7 +14731,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (p->err) {
 	    return p->err;
 	}
-    } 
+    }
+
+    if (r->t == NUM && (r->flags & NDC_NODE)) {
+	p->flags |= P_NODECL;
+    }
 
 #if ONE_BY_ONE_CAST   
     if (p->targ == UNK) {
