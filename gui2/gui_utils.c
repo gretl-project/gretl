@@ -5627,7 +5627,7 @@ void start_R (const char *buf, int send_data, int interactive)
 #endif
     } else {
 #ifdef G_OS_WIN32
-	err = execute_R_buffer(buf, dataset, opt, prn);
+	err = execute_R_buffer(buf, dataset, opt, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
