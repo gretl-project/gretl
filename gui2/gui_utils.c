@@ -5626,7 +5626,19 @@ void start_R (const char *buf, int send_data, int interactive)
 	start_R_async();
 #endif
     } else {
+#ifdef G_OS_WIN32
+	err = execute_R_buffer(buf, dataset, opt, prn);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    gchar *Rout = g_strdup_printf("%sR.out", gretl_dotdir());
+
+	    view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
+	    g_free(Rout);
+	}
+#else	
 	run_R_sync();
+#endif	
     }
 }
 

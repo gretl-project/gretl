@@ -27,7 +27,7 @@ typedef enum {
     LANG_PYTHON,
     LANG_JULIA,
     LANG_MPI
-} ForeignLangs;
+} ForeignLang;
 
 int foreign_start (int ci, const char *param, gretlopt opt, PRN *prn);
 
@@ -36,6 +36,11 @@ int foreign_append (const char *line, int context);
 int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
 
 void foreign_destroy (void);
+
+int execute_R_buffer (const char *buf,
+		      const DATASET *dset, 
+		      gretlopt opt,
+		      PRN *prn);
 
 int write_gretl_R_files (const char *buf,
 			 const DATASET *dset,

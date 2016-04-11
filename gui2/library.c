@@ -8020,7 +8020,7 @@ static void run_R_script (gchar *buf, GtkWidget *parent)
 			    parent);
     }
 
-    /* resp = 0 -> non-interactive; resp = 1 -> interactive */
+    /* resp: 0 -> non-interactive; 1 -> interactive */
 
     if (!canceled(resp)) {
 	start_R(buf, send_data, resp);

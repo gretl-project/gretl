@@ -2356,8 +2356,10 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     return err;
 }
 
-static int run_R_lib (const DATASET *dset, 
-		      gretlopt opt, PRN *prn)
+static int run_R_lib (const char *buf,
+		      const DATASET *dset, 
+		      gretlopt opt,
+		      PRN *prn)
 {
     int err;
 
@@ -2366,7 +2368,7 @@ static int run_R_lib (const DATASET *dset,
 
     /* by passing OPT_L below we indicate that we're
        using the library */
-    err = write_R_source_file(NULL, dset, opt | OPT_L);
+    err = write_R_source_file(buf, dset, opt | OPT_L);
     if (!err) {
 	err = lib_run_Rlib_sync(opt, prn);
     }
@@ -2459,8 +2461,10 @@ int foreign_append (const char *line, int context)
     return err;
 }
 
-static int run_R_binary (const DATASET *dset, 
-			 gretlopt opt, PRN *prn)
+static int run_R_binary (const char *buf,
+			 const DATASET *dset, 
+			 gretlopt opt,
+			 PRN *prn)
 {
     int err;
 
@@ -2522,12 +2526,12 @@ int foreign_execute (const DATASET *dset,
     if (foreign_lang == LANG_R) {
 #ifdef USE_RLIB
 	if (gretl_use_Rlib()) {
-	    err = run_R_lib(dset, foreign_opt, prn);
+	    err = run_R_lib(NULL, dset, foreign_opt, prn);
 	} else {
-	    err = run_R_binary(dset, foreign_opt, prn);
+	    err = run_R_binary(NULL, dset, foreign_opt, prn);
 	}
 #else
-	err = run_R_binary(dset, foreign_opt, prn);
+	err = run_R_binary(NULL, dset, foreign_opt, prn);
 #endif
     } else if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt, NULL);
@@ -2574,6 +2578,39 @@ int foreign_execute (const DATASET *dset,
     }
     
     foreign_destroy();
+
+    return err;
+}
+
+/**
+ * execute_R_buffer:
+ * @buf: buffer containing commands.
+ * @dset: dataset struct.
+ * @opt: may include %OPT_V for verbose operation
+ * @prn: struct for printing output.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int execute_R_buffer (const char *buf,
+		      const DATASET *dset, 
+		      gretlopt opt,
+		      PRN *prn)
+{
+    int err = 0;
+
+    make_gretl_R_names();
+
+#ifdef USE_RLIB
+    if (gretl_use_Rlib()) {
+	err = run_R_lib(buf, dset, opt, prn);
+    } else {
+	err = run_R_binary(buf, dset, opt, prn);
+    }
+#else
+    err = run_R_binary(buf, dset, opt, prn);
+#endif
+
 
     return err;
 }
