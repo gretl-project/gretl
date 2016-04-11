@@ -5238,18 +5238,12 @@ char *double_underscores (char *targ, const char *src)
 /* MS Windows variants of functions to exec some third-party
    programs */
 
-static void run_R_sync (void)
+static void win32_run_R_sync (const char *buf, gretlopt opt)
 {
-    gchar *cmd;
     int err;
-
-    /* should we use Rlib instead of Rterm? */
-
-    cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
-			  "--slave", gretl_rbin_path());
-
-    err = win_run_sync(cmd, NULL);
-
+    
+    err = execute_R_buffer(buf, dataset, opt, NULL);
+    
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -5258,8 +5252,6 @@ static void run_R_sync (void)
 	view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
 	g_free(Rout);
     }
-
-    g_free(cmd);
 }
 
 void run_foreign_script (gchar *buf, int lang)
@@ -5627,15 +5619,7 @@ void start_R (const char *buf, int send_data, int interactive)
 #endif
     } else {
 #ifdef G_OS_WIN32
-	err = execute_R_buffer(buf, dataset, Ropt, NULL);
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    gchar *Rout = g_strdup_printf("%sR.out", gretl_dotdir());
-
-	    view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
-	    g_free(Rout);
-	}
+	win32_run_R_sync(buf, Ropt);
 #else	
 	run_R_sync();
 #endif	

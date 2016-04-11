@@ -2589,6 +2589,10 @@ int foreign_execute (const DATASET *dset,
  * @opt: may include %OPT_V for verbose operation
  * @prn: struct for printing output.
  *
+ * This is used only for MS Windows at present, working around
+ * breakage in previously coded non-interactive calls to R 
+ * executable(s).
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
