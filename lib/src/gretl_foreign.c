@@ -2470,7 +2470,7 @@ static int run_R_binary (const char *buf,
 
     /* write both profile and Rsrc files */
 
-    err = write_gretl_R_files(NULL, dset, opt);
+    err = write_gretl_R_files(buf, dset, opt);
     if (err) {
 	delete_gretl_R_files();
     } else {

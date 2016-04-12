@@ -5591,7 +5591,7 @@ void run_foreign_script (gchar *buf, int lang)
 void start_R (const char *buf, int send_data, int interactive)
 {
     gretlopt Ropt = OPT_G;
-    int err;
+    int err = 0;
 
     if (send_data && !data_status) {
 	warnbox(_("Please open a data file first"));
@@ -5606,7 +5606,16 @@ void start_R (const char *buf, int send_data, int interactive)
 	Ropt |= OPT_D;
     }
 
-     err = write_gretl_R_files(buf, dataset, Ropt);
+    /* On Windows in non-interactive mode, don't write
+       these files here; that will be handled later
+    */
+#ifdef G_OS_WIN32
+    if (interactive) {
+	err = write_gretl_R_files(buf, dataset, Ropt);
+    }
+#else   
+    err = write_gretl_R_files(buf, dataset, Ropt);
+#endif
 
     if (err) {
 	gui_errmsg(err);
