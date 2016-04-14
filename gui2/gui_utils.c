@@ -2148,8 +2148,8 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	textview_insert_file(vwin, filename);
     }
 
-    /* editing script or graph commands: grab the "changed" signal and
-       set up alert for unsaved changes on exit */
+    /* editing script or graph commands: grab the "changed" signal
+       and set up alert for unsaved changes on exit */
     if (vwin_editing_script(role)) {
 	attach_content_changed_signal(vwin);
 	if (!window_is_tab(vwin)) {

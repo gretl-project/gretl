@@ -1272,6 +1272,15 @@ static void radio_change_value (GtkWidget *w, int *v)
     }
 }
 
+static void table_attach_fixed (GtkTable *table,
+				GtkWidget *child,
+				guint left, guint right,
+				guint top, guint bottom)
+{
+    gtk_table_attach(table, child, left, right, top, bottom,
+		     0, 0, 0, 0);
+}
+
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
@@ -1634,8 +1643,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_table_resize(GTK_TABLE(s_table), s_len, s_cols);
 	    w = gtk_label_new(_(rc->description));
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
-				      w, 0, 1, s_len - 1, s_len);
+	    gtk_table_attach_defaults(GTK_TABLE(s_table), w,
+				      0, 1, s_len - 1, s_len);
 	    gtk_widget_show(w);
 
 	    rc->widget = gtk_entry_new();
@@ -1647,8 +1656,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    if (rc->flags & BROWSER) {
 		/* add path browse button */
 		w = make_path_browse_button(rc, notebook);
-		gtk_table_attach_defaults(GTK_TABLE(s_table), 
-					  w, 2, 3, s_len - 1, s_len);
+		table_attach_fixed(GTK_TABLE(s_table), w,
+				   2, 3, s_len - 1, s_len);
 		gtk_widget_show(w);
 	    }
 
