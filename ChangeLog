@@ -1,4 +1,4 @@
-version 2016b, in progress
+2016-04-14 version 2016b
 - "panel" command, random-effects version: show an overall
   Wald chi-square test on the named regressors; also support
   the --robust option
@@ -49,6 +49,7 @@ version 2016b, in progress
   add Adwaita theme, and make Adwaita the default
 - Bundled gnuplot for Windows and OS X: update to 5.1 cvs as
   of March 2016
+- MS Windows builds: update to OpenBLAS 0.2.18dev.
 
 2016-01-26 version 2016a
 - syntax enhancement: allow specification of type when setting

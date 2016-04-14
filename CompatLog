@@ -1,4 +1,4 @@
-version 2016b, in progress
+2016-04-14 version 2016b
 
 The options --quiet and --show-plot for the "freq" command
 are deprecated in favor of the new --plot=arg option. To
