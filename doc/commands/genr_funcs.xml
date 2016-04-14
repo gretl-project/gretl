@@ -7421,8 +7421,8 @@
 	  the trailing arguments, indicated by the dots above, under
 	  the control of <argname>format</argname>. It is meant to
 	  give you great flexibility in creating strings. The
-	  <argname>format</argname> is used to specify the precise way in which
-	  you want the arguments <argname>varargs</argname> to be printed.
+	  <argname>format</argname> is used to specify the precise way
+	  in which you want the arguments to be printed.
 	</para>
 	<para>
 	  In general, <argname>format</argname> must be an expression
@@ -7430,32 +7430,34 @@
 	  string literal (an alphanumeric sequence surrounded by
 	  double quotes). Some character sequences in the format have
 	  a special meaning: those beginning with the percent
-	  character (%) are interpreted as "placeholders"
+	  character (%) are interpreted as <quote>placeholders</quote>
 	  for the items contained in the argument list; moreover,
 	  special characters such as the newline character are
-	  represented via a combination beginning with the backslash (\).
+	  represented via a combination beginning with a backslash.
 	</para>
 	<para>
 	  For example, the code below
 	</para>	
 	<code>
 	  scalar x = sqrt(5)
-	  string claim = sprintf("sqrt(%d) is (roughly) %6.4f; trust me.\n", 5, x)
+	  string claim = sprintf("sqrt(%d) is (roughly) %6.4f.\n", 5, x)
 	  print claim
 	</code>
 	<para>
 	  will output
 	</para>
 	<code>
-	  sqrt(5) is (roughly) 2.2361; trust me.
+	  sqrt(5) is (roughly) 2.2361.
 	</code>
 	<para>
 	  where <lit>%d</lit> indicates that we want an integer at
-	  that place in the output; since it is the leftmost "percent"
-	  expression, it is matched to the first argument, that is
-	  5. The second special sequence is <lit>%6.4f</lit>, which
-	  stands for a decimal value with 4 digits after the decimal
-	  separator and at least 6 digits wide.
+	  that place in the output; since it is the leftmost
+	  <quote>percent</quote> expression, it is matched to the
+	  first argument, that is 5. The second special sequence is
+	  <lit>%6.4f</lit>, which stands for a decimal value with 4
+	  digits after the decimal separator and at least 6 digits
+	  wide. The number of such sequences must match the number
+	  of arguments following the format string.
 	</para>
 	<para>
 	  See the help page for the <cmdref targ="printf"/> command
