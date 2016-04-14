@@ -568,8 +568,7 @@ enum {
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
     PAR_NODE = 1 << 4, /* exponentiation node is parenthesized */
-    NDC_NODE = 1 << 5  /* node with nondeclared result type, may be
-			  ambiguous between scalar and matrix */
+    PRX_NODE = 1 << 5  /* aux node is proxy (don't reuse!) */
 };
 
 struct node {

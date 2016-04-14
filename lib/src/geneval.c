@@ -92,6 +92,7 @@ enum {
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
+#define is_proxy_node(n) (n != NULL && (n->flags & PRX_NODE))
 
 #define nullmat_ok(f) (f == F_ROWS || f == F_COLS || f == F_DET || \
 		       f == F_LDET || f == F_DIAG || f == F_TRANSP || \
@@ -756,8 +757,13 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	    (void *) p->aux);
 #endif
 
+    if (is_proxy_node(ret)) {
+	/* this node will get freed later */
+	ret = NULL;
+    }
+
     if (ret != NULL) {
-	/* got a pre-existing aux node, OK */
+	/* got a pre-existing aux node */
 	if (starting(p)) {
 	    if (ret->t != t) {
 		maybe_switch_node_type(ret, t, flags, p);
@@ -2714,19 +2720,24 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 }
 
 /* Here we know have a scalar and a 1 x 1 matrix to work with,
-   in either order. We'll take the result to be a scalar, since
-   the one case where we surely want a matrix result (matrix on
-   LHS, and @op is a dot operator) is handled elsewhere (see the
-   eval() code) and so doesn't get here. However, to allow for
-   the possibility that in context the result is intended to be
-   a 1 x 1 matrix, we'll mark the return node as NDC_NODE, that
-   is, a node of undeclared type.
-*/
+   in either order */
 
 static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 				  parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret;
+
+    if (l->t == NUM && (op == B_MOD || op == B_POW)) {
+	/* the matrix on the right is functioning as
+	   a scalar argument, so produce a scalar
+	*/
+	ret = aux_scalar_node(p);
+    } else {
+	/* one of the operands is a matrix, albeit 1 x 1,
+	   so it's safer to produce a matrix result
+	*/
+	ret = aux_matrix_node(p);
+    }
 
     if (!p->err) {
 	double x, y;
@@ -2739,9 +2750,13 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 	    y = r->v.xval;
 	}
 
-	ret->v.xval = xy_calc(x, y, op, NUM, p);
-	if (!p->err) {
-	    ret->flags |= NDC_NODE;
+	if (ret->t == NUM) {
+	    ret->v.xval = xy_calc(x, y, op, NUM, p);
+	} else {
+	    node_allocate_matrix(ret, 1, 1, p);
+	    if (!p->err) {
+		ret->v.m->val[0] = xy_calc(x, y, op, MAT, p);
+	    }
 	}
     }
 
@@ -11387,6 +11402,10 @@ static NODE *eval (NODE *t, parser *p)
 			(t->t == B_OR && node_is_true(l, p))) {
 			/* no need to evaluate @r */
 			ret = l;
+			if (is_aux_node(ret)) {
+			    /* mark return node as proxy */
+			    ret->flags |= PRX_NODE;
+			}
 			goto finish;
 		    }
 		}
@@ -12608,6 +12627,11 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
 	    free_node(t->aux, p);
 	    t->aux = ret;
 	    ret->refcount += 1;
+	} else if (is_proxy_node(t->aux)) {
+	    /* an extension to the above */
+	    free_node(t->aux, p);
+	    t->aux = ret;
+	    ret->refcount += 1;	    
 	} else {
 	    /* otherwise if we're trying to switch aux node, 
 	       something must have gone wrong 
@@ -14731,10 +14755,6 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (p->err) {
 	    return p->err;
 	}
-    }
-
-    if (r->t == NUM && (r->flags & NDC_NODE)) {
-	p->flags |= P_NODECL;
     }
 
 #if ONE_BY_ONE_CAST   
