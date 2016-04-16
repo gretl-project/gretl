@@ -1533,7 +1533,7 @@ static void kalman_initialize_error (kalman *K, int *missobs)
 /* New version of updating a time-varying matrix, for use
    with a kalman bundle. Bypasses the regular "genr" apparatus,
    passing the attached bundle directly to the given user
-   function.
+   function after is has been found by name.
 */
 
 static int kalman_update_matrix2 (kalman *K, int i,
