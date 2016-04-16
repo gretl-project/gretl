@@ -1657,6 +1657,51 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
+/* Variant of the above for use when smoothing */
+
+static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
+{
+    gretl_matrix **mptr[] = {
+	&K->F, &K->H, &K->Q, &K->R
+    };
+    int idx[] = {
+	K_F, K_H, K_Q, K_R
+    };
+    int cross_update = 0;
+    int i, ii, err = 0;
+
+    if (kalman_xcorr(K)) {
+	mptr[2] = &K->B;
+	mptr[3] = &K->C;
+    }
+
+    for (i=0; i<4 && !err; i++) {
+	ii = idx[i];
+	if (matrix_is_varying(K, ii)) {
+	    err = kalman_update_matrix(K, ii, mptr[i], prn);
+	    if (!err) {
+		if (kalman_xcorr(K) && (ii == K_Q || ii == K_R)) {
+		    /* handle revised B and/or C */
+		    cross_update = 1;
+		} else {
+		    err = check_matrix_dims(K, *mptr[i], ii);
+		}
+	    }	    
+	    if (err) {
+		fprintf(stderr, "ksmooth_refresh_matrices: err = %d at t = %d\n", 
+			err, K->t);
+	    }
+	}
+    }
+
+    if (!err && cross_update) {
+	/* cross-correlated case */
+	err = kalman_update_crossinfo(K, UPDATE_STEP);
+    }
+
+    return err;
+}
+
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
@@ -3156,6 +3201,10 @@ static int koopman_smooth (kalman *K)
 	load_from_row(K->e, K->E, t, GRETL_MOD_NONE);
 	load_from_vech(K->Vt, K->V, K->n, t, GRETL_MOD_NONE);
 	load_from_vec(K->Kt, K->K, t);
+
+	/* K->F, K->H, K->Q, K->R may be time-varying */
+	K->t = t;
+	ksmooth_refresh_matrices(K, NULL);
 
 	/* u_t = V_t^{-1} e_t - K_t' r_t */
 	gretl_matrix_multiply(K->Vt, K->e, u);

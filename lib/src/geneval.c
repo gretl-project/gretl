@@ -9111,23 +9111,28 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  p->dset, p->prn, 
 					  &p->err);
 	}
-    } else if (t->t == F_KSMOOTH && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
-	int dist = 0;
-	
-	if (k > 2) {
-	    n_args_error(k, 2, t->t, p);
-	} else if (k == 2) {
-	    e = eval(n->v.bn.n[1], p);
-	    if (!p->err) {
-		dist = node_get_int(e, p);
-	    }
+    } else if (t->t == F_KDSMOOTH && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
+	if (k > 1) {
+	    n_args_error(k, 1, t->t, p);
 	}
 	if (!p->err) {	
 	    e = n->v.bn.n[0];
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = kalman_bundle_smooth(e->v.b, dist, p->prn);
+		ret->v.xval = kalman_bundle_smooth(e->v.b, 1, p->prn);
+	    }
+	}	
+    } else if (t->t == F_KSMOOTH && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
+	if (k > 1) {
+	    n_args_error(k, 1, t->t, p);
+	}
+	if (!p->err) {	
+	    e = n->v.bn.n[0];
+	    reset_p_aux(p, save_aux);
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = kalman_bundle_smooth(e->v.b, 0, p->prn);
 	    }
 	}
     } else if (t->t == F_KSMOOTH) {
@@ -12307,6 +12312,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MCOVG:
     case F_KFILTER:
     case F_KSMOOTH:
+    case F_KDSMOOTH:
     case F_KSIMUL:
     case F_NRMAX:
     case F_LOESS:

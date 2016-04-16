@@ -410,6 +410,7 @@ enum {
     F_MCOVG,
     F_KFILTER,
     F_KSMOOTH,
+    F_KDSMOOTH,
     F_KSIMUL,
     F_NRMAX,
     F_LOESS,
