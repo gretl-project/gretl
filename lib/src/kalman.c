@@ -61,11 +61,11 @@ struct kalman_ {
     int flags;   /* for recording any options */
     int fnlevel; /* level of function execution */
 
-    int r;  /* rows of S = number of elements in state */
-    int n;  /* columns of y = number of observables */
-    int k;  /* columns of A = number of exogenous vars in obs eqn */
-    int p;  /* length of combined disturbance vector */
-    int T;  /* rows of y = number of observations */
+    int r;   /* rows of S = number of elements in state */
+    int n;   /* columns of y = number of observables */
+    int k;   /* columns of A = number of exogenous vars in obs eqn */
+    int p;   /* length of combined disturbance vector */
+    int T;   /* rows of y = number of observations */
     int okT; /* T - number of missing observations */
     int t;   /* current time step, when filtering */
 
@@ -3044,6 +3044,59 @@ static int load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
     return 0;
 }
 
+static int maybe_resize_dist_mse (kalman *K, int state,
+				  gretl_matrix **pm,
+				  gretl_matrix **pmt)
+{
+    const char *mnames[] = {
+	"stdistvar",
+	"obsdistvar"
+    };
+    gretl_matrix *m;
+    const char *mname;
+    int rows = K->T, cols = 0;
+    int newmat = 0;
+    int berr = 0;
+    int err = 0;
+
+    if (state) {
+	mname = mnames[0];
+	cols = (K->r * K->r + K->r) / 2;
+    } else {
+	mname = mnames[1];
+	cols = (K->n * K->n + K->n) / 2;
+    }
+
+    m = gretl_bundle_get_matrix(K->b, mname, &berr);
+
+    if (m == NULL) {
+	m = gretl_matrix_alloc(rows, cols);
+	if (m == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    newmat = 1;
+	}
+    } else if (m->rows != rows || m->cols != cols) {
+	err = gretl_matrix_realloc(m, rows, cols);
+    }
+
+    if (!err) {
+	/* step-t matrix */
+	*pmt = gretl_matrix_alloc(1, cols);
+	if (*pmt == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (newmat) {
+	gretl_bundle_donate_data(K->b, mname, m, GRETL_TYPE_MATRIX, 0);
+    }
+
+    *pm = m;
+
+    return err;
+}
+
 /* Partial implementation of Koopman's "disturbance smoother".
    See Koopman, Shephard and Doornik, section 4.4.  Needs
    more work.
@@ -3055,16 +3108,12 @@ static int koopman_smooth (kalman *K)
     gretl_matrix *u, *D, *L, *R;
     gretl_matrix *r0, *r1, *r2, *N1, *N2;
     gretl_matrix *n1 = NULL;
-    gretl_matrix *Mp1 = NULL;
+    gretl_matrix *Var_v = NULL;
+    gretl_matrix *Var_w = NULL;
+    gretl_matrix *Vvt = NULL;
+    gretl_matrix *Vwt = NULL;
     double x;
     int i, t, err = 0;
-
-    if (K->p > 0) {
-	Mp1 = gretl_matrix_alloc(K->p, 1);
-	if (Mp1 == NULL) {
-	    return E_ALLOC;
-	}
-    }
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
 			       &D,  K->n, K->n,
@@ -3078,8 +3127,23 @@ static int koopman_smooth (kalman *K)
 			       NULL);
 
     if (B == NULL) {
-	gretl_matrix_free(Mp1);
 	return E_ALLOC;
+    }
+
+    if (K->b != NULL) {
+	/* variance of smoothed state disturbances */
+	err = maybe_resize_dist_mse(K, 1, &Var_v, &Vvt);
+ 	if (K->R != NULL) {
+	    /* variance of smoothed obs disturbances */
+	    err = maybe_resize_dist_mse(K, 0, &Var_w, &Vwt);
+	}
+    }
+
+    if (err) {
+	gretl_matrix_block_destroy(B);
+	gretl_matrix_free(Vvt);
+	gretl_matrix_free(Vwt);
+	return err;
     }
 
     gretl_matrix_zero(r1);
@@ -3104,11 +3168,25 @@ static int koopman_smooth (kalman *K)
 	/* save u_t values in E */
 	load_to_row(K->E, u, t);
 
+	if (Var_v != NULL) {
+	    /* variance of state disturbance Q_t N_t Q_t */
+	    gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
+			       N1, Vvt, GRETL_MOD_NONE);
+	    load_to_vech(Var_v, Vvt, K->r, t);
+	}
+
 	/* D_t = V_t^{-1} + K_t' N_t K_t */
 	gretl_matrix_copy_values(D, K->Vt);
 	if (t < K->T - 1) {
 	    gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
 			       N1, D, GRETL_MOD_CUMULATE);
+	}
+
+	if (Var_w != NULL) {
+	    /* variance of obs disturbance R_t D_t R_t */
+	    gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
+			       D, Vwt, GRETL_MOD_NONE);
+	    load_to_vech(Var_w, Vwt, K->n, t);
 	}
 
 	/* L_t = F - KH' */
@@ -3128,6 +3206,7 @@ static int koopman_smooth (kalman *K)
 				      r1, GRETL_MOD_NONE,
 				      r2, GRETL_MOD_CUMULATE);
 	}
+	/* transcribe for next step */
 	gretl_matrix_copy_values(r1, r2);
 
 	/* preserve r_0 for smoothing of state */
@@ -3142,6 +3221,7 @@ static int koopman_smooth (kalman *K)
 	    gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
 			       N1, N2, GRETL_MOD_CUMULATE);
 	}
+	/* transcribe for next step */
 	gretl_matrix_copy_values(N1, N2);
     }
 
@@ -3205,6 +3285,8 @@ static int koopman_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
+    gretl_matrix_free(Vvt);
+    gretl_matrix_free(Vwt);
 
     return err;
 }
