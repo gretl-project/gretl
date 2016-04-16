@@ -146,8 +146,9 @@ struct kalman_ {
     gretl_matrix *Tmprr_2b;
     gretl_matrix *Tmpr1;
 
-    void *data; /* handle for attching additional info */
-    PRN *prn;   /* verbose printer */
+    gretl_bundle *b; /* the bundle of which this struct is a member */
+    void *data;      /* handle for attching additional info */
+    PRN *prn;        /* verbose printer */
 };
 
 /* max number of time-varying matrices: F, A, H, Q, R, mu */
@@ -304,6 +305,7 @@ static kalman *kalman_new_empty (int flags)
 	K->t = 0;
 	K->prn = NULL;
 	K->data = NULL;
+	K->b = NULL;
     }
 
     return K;
@@ -1528,13 +1530,49 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
-/* The user gave a function call that should be used for updating
-   a given Kalman coefficient matrix: here we call it.
+/* New version of updating a time-varying matrix, for use
+   with a kalman bundle. Bypasses the regular "genr" apparatus,
+   passing the attached bundle directly to the given user
+   function.
 */
 
-static int kalman_update_matrix (kalman *K, int i,
-				 gretl_matrix **pm,
-				 PRN *prn)
+static int kalman_update_matrix2 (kalman *K, int i,
+				  gretl_matrix **pm,
+				  PRN *prn)
+{
+    ufunc *uf;
+    int err = 0;
+
+    uf = get_user_function_by_name(K->matcalls[i]);
+    
+    if (uf == NULL) {
+	gretl_errmsg_sprintf("Couldn't find function '%s'", K->matcalls[i]);
+	return E_DATA;
+    }
+
+    err = push_function_arg(uf, NULL, GRETL_TYPE_BUNDLE_REF, K->b);
+
+    if (!err) {
+	err = gretl_function_exec(uf, GRETL_TYPE_NONE, NULL, NULL,
+				  NULL, prn);
+    }
+    
+    if (err) {
+	fprintf(stderr, "kalman_update_matrix2: call='%s', err=%d\n", 
+		K->matcalls[i], err);
+    }
+
+    return err;
+}
+
+/* The user gave a function call that should be used for updating
+   a given Kalman coefficient matrix: here we call it. Original
+   version.
+*/
+
+static int kalman_update_matrix1 (kalman *K, int i,
+				  gretl_matrix **pm,
+				  PRN *prn)
 {
     int err;
 
@@ -1542,7 +1580,7 @@ static int kalman_update_matrix (kalman *K, int i,
 		   OPT_O, prn);
 
     if (err) {
-	fprintf(stderr, "kalman_update_matrix: call='%s', err=%d\n", 
+	fprintf(stderr, "kalman_update_matrix1: call='%s', err=%d\n", 
 		K->matcalls[i], err);
     } else if (!kalman_owns_matrix(K, i)) {
 	/* re-sync to named "external" matrix */
@@ -1553,6 +1591,17 @@ static int kalman_update_matrix (kalman *K, int i,
     }
 
     return err;
+}
+
+static int kalman_update_matrix (kalman *K, int i,
+				 gretl_matrix **pm,
+				 PRN *prn)
+{
+    if (K->flags & KALMAN_BUNDLE) {
+	return kalman_update_matrix2(K, i, pm, prn);
+    } else {
+	return kalman_update_matrix1(K, i, pm, prn);
+    }
 }
 
 /* If we have any time-varying coefficient matrices, refresh these for
@@ -2892,6 +2941,7 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     kalman *K = gretl_bundle_get_private_data(b);
     int err;
 
+    K->b = b; /* attach bundle pointer */
     err = kalman_ensure_output_matrices(K);
 
     if (!err) {
@@ -3108,21 +3158,6 @@ static int koopman_smooth (kalman *K)
     /* Smoothed disturbances, all time steps */
     
     for (t=0; t<K->T; t++) {
-#if 0
-	if (K->p > 0) {
-	    /* cross-correlated disturbances */
-	    load_from_row(K->e, K->E, t, GRETL_MOD_NONE);
-	    load_from_row(r1, R, t, GRETL_MOD_NONE);
-	    gretl_matrix_multiply(K->C, GRETL_MOD_TRANSPOSE,
-				  K->e, GRETL_MOD_NONE,
-				  Mp1, GRETL_MOD_NONE);
-	    gretl_matrix_multiply(K->B, GRETL_MOD_TRANSPOSE,
-				  r1, GRETL_MOD_NONE,
-				  Mp1, GRETL_MOD_CUMULATE);
-	    gretl_matrix_multiply(K->B, Mp1, r2);
-	    load_to_row(R, r2, t);
-	} 
-#else
 	load_from_row(r1, R, t, GRETL_MOD_NONE);
 	gretl_matrix_multiply(K->Q, r1, r2);
 	load_to_row(R, r2, t);
@@ -3140,7 +3175,6 @@ static int koopman_smooth (kalman *K)
 		gretl_matrix_set(K->U, t, K->r + i, x);
 	    }
 	}	
-#endif
     }
 
     if (K->R != NULL && K->U != NULL) {
@@ -3640,6 +3674,8 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
     kalman *K = gretl_bundle_get_private_data(b);    
     int err;
 
+    K->b = b; /* attach bundle pointer */
+    
     err = kalman_ensure_output_matrices(K);
 
     if (!err && dist) {
@@ -3949,6 +3985,8 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     kalman *K = gretl_bundle_get_private_data(b);
     gretl_matrix *Y = NULL, *S = NULL;
     int T, saveT;
+
+    K->b = b; /* attach bundle poiunter */
 
     if (V == NULL) {
 	*err = missing_matrix_error("V");
