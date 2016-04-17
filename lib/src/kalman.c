@@ -1657,25 +1657,25 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
-/* Variant of the above for use when smoothing */
+/* Variant of the above for use when Koopman-smoothing */
 
 static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
 {
     gretl_matrix **mptr[] = {
-	&K->F, &K->H, &K->Q, &K->R
+	&K->Q, &K->R
     };
     int idx[] = {
-	K_F, K_H, K_Q, K_R
+	K_Q, K_R
     };
     int cross_update = 0;
     int i, ii, err = 0;
 
     if (kalman_xcorr(K)) {
-	mptr[2] = &K->B;
-	mptr[3] = &K->C;
+	mptr[0] = &K->B;
+	mptr[1] = &K->C;
     }
 
-    for (i=0; i<4 && !err; i++) {
+    for (i=0; i<2 && !err; i++) {
 	ii = idx[i];
 	if (matrix_is_varying(K, ii)) {
 	    err = kalman_update_matrix(K, ii, mptr[i], prn);
@@ -3142,6 +3142,24 @@ static int maybe_resize_dist_mse (kalman *K, int state,
     return err;
 }
 
+static int retrieve_Ft (kalman *K, int t)
+{
+    if (K->step == NULL || K->step->F == NULL) {
+	return E_DATA;
+    } else {
+	return load_from_vec((gretl_matrix *) K->F, K->step->F, t);
+    }
+}
+
+static int retrieve_Ht (kalman *K, int t)
+{
+    if (K->step == NULL || K->step->H == NULL) {
+	return E_DATA;
+    } else {
+	return load_from_vec((gretl_matrix *) K->H, K->step->H, t);
+    }
+}
+
 /* Partial implementation of Koopman's "disturbance smoother".
    See Koopman, Shephard and Doornik, section 4.4.  Needs
    more work.
@@ -3202,7 +3220,18 @@ static int koopman_smooth (kalman *K)
 	load_from_vech(K->Vt, K->V, K->n, t, GRETL_MOD_NONE);
 	load_from_vec(K->Kt, K->K, t);
 
-	/* K->F, K->H, K->Q, K->R may be time-varying */
+	/* get F_t and/or H_t if need be */
+	if (matrix_is_varying(K, K_F)) {
+	    err = retrieve_Ft(K, t);
+	}
+	if (!err && matrix_is_varying(K, K_H)) {
+	    err = retrieve_Ht(K, t);
+	}
+	if (err) {
+	    break;
+	}	
+
+	/* K->Q and/or K->R may be time-varying */
 	K->t = t;
 	ksmooth_refresh_matrices(K, NULL);
 
@@ -3338,24 +3367,6 @@ static int koopman_smooth (kalman *K)
     gretl_matrix_free(Vwt);
 
     return err;
-}
-
-static int retrieve_Ft (kalman *K, int t)
-{
-    if (K->step == NULL || K->step->F == NULL) {
-	return E_DATA;
-    } else {
-	return load_from_vec((gretl_matrix *) K->F, K->step->F, t);
-    }
-}
-
-static int retrieve_Ht (kalman *K, int t)
-{
-    if (K->step == NULL || K->step->H == NULL) {
-	return E_DATA;
-    } else {
-	return load_from_vec((gretl_matrix *) K->H, K->step->H, t);
-    }
 }
 
 /* Anderson-Moore Kalman smoothing: see Iskander Karibzhanov's
