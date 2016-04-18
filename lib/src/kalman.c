@@ -943,7 +943,6 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 
     for (i=0; i<nmat; i++) {
 	if (copy[i]) {
-	    gretl_matrix_print(M[i], "copying");
 	    *targ[i] = gretl_matrix_copy(M[i]);
 	} else {
 	    *targ[i] = M[i];

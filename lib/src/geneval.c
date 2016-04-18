@@ -9838,7 +9838,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    p->err = E_TYPES;
 		}
 	    }
-	    fprintf(stderr, "F_KSETUP: i=%d, copy=%d\n", i, copy[i]);
 	}
 
 	if (!p->err) {
