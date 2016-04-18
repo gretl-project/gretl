@@ -43,7 +43,8 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
 		    gretl_matrix *x, gretl_matrix *m,
 		    gretl_matrix *E, int *err);
 
-kalman *kalman_new_minimal (gretl_matrix *M[], int nmat, int *err);
+kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
+			    int nmat, int *err);
 
 void kalman_free (kalman *K);
 

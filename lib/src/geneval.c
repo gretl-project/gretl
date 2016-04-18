@@ -9818,6 +9818,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
     } else if (t->t == F_KSETUP) {
 	gretl_matrix *M[5] = {NULL};
+	int copy[5] = {0};
 	
 	if (k < 4) {
 	    n_args_error(k, 4, t->t, p);
@@ -9828,14 +9829,20 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (!p->err) {
 		if (e->t == MAT) {
 		    M[i] = e->v.m;
+		    if (is_tmp_node(e)) {
+			e->v.m = NULL;
+		    } else {
+			copy[i] = 1;
+		    }
 		} else {
 		    p->err = E_TYPES;
 		}
 	    }
+	    fprintf(stderr, "F_KSETUP: i=%d, copy=%d\n", i, copy[i]);
 	}
 
 	if (!p->err) {
-	    gretl_bundle *b = kalman_bundle_new(M, k, &p->err);
+	    gretl_bundle *b = kalman_bundle_new(M, copy, k, &p->err);
 
 	    if (!p->err) {
 		ret = aux_bundle_node(p);

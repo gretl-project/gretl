@@ -232,7 +232,7 @@ void kalman_free (kalman *K)
 
     gretl_matrix_block_destroy(K->Blk);
 
-    if (K->mnames != NULL) {
+    if ((K->flags & KALMAN_BUNDLE) || K->mnames != NULL) {
 	gretl_matrix **mptr[] = {
 	    &K->F, &K->A, &K->H, &K->Q, &K->R,
 	    &K->mu, &K->y, &K->x, &K->Sini, &K->Pini
@@ -246,10 +246,12 @@ void kalman_free (kalman *K)
 
 	for (i=0; i<K_MMAX; i++) {
 	    if ((K->flags & KALMAN_BUNDLE) || kalman_owns_matrix(K, i)) {
-		gretl_matrix_free((gretl_matrix *) *mptr[i]);
+		gretl_matrix_free(*mptr[i]);
 	    }
 	}
+    }
 
+    if (K->mnames != NULL) {
 	strings_array_free(K->mnames, K_MMAX);
     }
 
@@ -907,7 +909,8 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
 
 /* supports hansl function for creating a named Kalman bundle */
 
-kalman *kalman_new_minimal (gretl_matrix *M[], int nmat, int *err)
+kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
+			    int nmat, int *err)
 {
     gretl_matrix **targ[5];
     kalman *K;
@@ -939,7 +942,12 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int nmat, int *err)
     }
 
     for (i=0; i<nmat; i++) {
-	*targ[i] = gretl_matrix_copy(M[i]);
+	if (copy[i]) {
+	    gretl_matrix_print(M[i], "copying");
+	    *targ[i] = gretl_matrix_copy(M[i]);
+	} else {
+	    *targ[i] = M[i];
+	}
     }
 
 #if 0
