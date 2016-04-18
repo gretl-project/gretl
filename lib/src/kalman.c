@@ -3143,20 +3143,17 @@ static int combined_dist_variance (kalman *K,
 				   gretl_matrix *D,
 				   gretl_matrix *N,
 				   gretl_matrix *vv,
-				   gretl_matrix *vw)
+				   gretl_matrix *vw,
+				   gretl_matrix_block *BX)
 {
     gretl_matrix *DC, *KN, *RHS, *NB, *NK;
-    gretl_matrix_block *BX;
 
-    BX = gretl_matrix_block_new(&DC,  K->n, K->p,
-				&KN,  K->n, K->r,
-				&RHS, K->p, K->p,
-				&NB,  K->r, K->p,
-				NULL);
+    DC  = gretl_matrix_block_get_matrix(BX, 0);
+    KN  = gretl_matrix_block_get_matrix(BX, 1);
+    RHS = gretl_matrix_block_get_matrix(BX, 2);
+    NB  = gretl_matrix_block_get_matrix(BX, 3);
 
-    if (BX == NULL) {
-	return E_ALLOC;
-    }
+    KN = gretl_matrix_reuse(KN, K->n, K->r);
 
     gretl_matrix_multiply(D, K->C, DC);
     gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
@@ -3187,8 +3184,6 @@ static int combined_dist_variance (kalman *K,
     gretl_matrix_qform(K->C, GRETL_MOD_NONE, RHS,
 		       vw, GRETL_MOD_NONE);
 
-    gretl_matrix_block_destroy(BX);
-
     return 0;
 }
 
@@ -3196,7 +3191,7 @@ static int combined_dist_variance (kalman *K,
 
 static int koopman_smooth (kalman *K)
 {
-    gretl_matrix_block *B;
+    gretl_matrix_block *B, *BX = NULL;
     gretl_matrix *u, *D, *L, *R;
     gretl_matrix *r0, *r1, *r2, *N1, *N2;
     gretl_matrix *n1 = NULL;
@@ -3204,7 +3199,11 @@ static int koopman_smooth (kalman *K)
     gretl_matrix *Var_w = NULL;
     gretl_matrix *Vvt = NULL;
     gretl_matrix *Vwt = NULL;
-    gretl_matrix *Ut = NULL;
+    gretl_matrix *DC = NULL;
+    gretl_matrix *KN = NULL;
+    gretl_matrix *RHS = NULL;
+    gretl_matrix *NB = NULL;
+    gretl_matrix *Ut = NULL; 
     double x;
     int i, t, err = 0;
 
@@ -3233,17 +3232,22 @@ static int koopman_smooth (kalman *K)
     }
 
     if (K->b != NULL && K->p > 0) {
-	Ut = gretl_matrix_alloc(K->p, 1);
-	if (Ut == NULL) {
+	BX = gretl_matrix_block_new(&DC,  K->n, K->p,
+				    &KN,  K->n, K->r,
+				    &RHS, K->p, K->p,
+				    &NB,  K->r, K->p,
+				    &Ut,  K->p, 1,
+				    NULL);
+	if (BX == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (err) {
 	gretl_matrix_block_destroy(B);
+	gretl_matrix_block_destroy(BX);
 	gretl_matrix_free(Vvt);
 	gretl_matrix_free(Vwt);
-	gretl_matrix_free(Ut);
 	return err;
     }
 
@@ -3269,9 +3273,11 @@ static int koopman_smooth (kalman *K)
 	    break;
 	}	
 
-	/* K->Q and/or K->R may be time-varying */
-	K->t = t;
-	ksmooth_refresh_matrices(K, NULL);
+	if (filter_is_varying(K)) {
+	    /* K->Q and/or K->R may be time-varying */
+	    K->t = t;
+	    ksmooth_refresh_matrices(K, NULL);
+	}
 
 	/* u_t = V_t^{-1} e_t - K_t' r_t */
 	gretl_matrix_multiply(K->Vt, K->e, u);
@@ -3307,7 +3313,7 @@ static int koopman_smooth (kalman *K)
 
 	if (Var_v != NULL && Var_w != NULL && K->p > 0) {
 	    /* variance of combined disturbance */
-	    err = combined_dist_variance(K, D, N1, Vvt, Vwt);
+	    err = combined_dist_variance(K, D, N1, Vvt, Vwt, BX);
 	    if (err) {
 		break;
 	    } else {
@@ -3367,6 +3373,10 @@ static int koopman_smooth (kalman *K)
     if (K->p > 0) {
 	/* eps = B' r_t + C' e_t */
 	for (t=0; t<K->T; t++) {
+	    if (filter_is_varying(K)) {
+		K->t = t;
+		ksmooth_refresh_matrices(K, NULL);
+	    }	    
 	    load_from_row(r1, R, t, GRETL_MOD_NONE);
 	    gretl_matrix_multiply_mod(K->B, GRETL_MOD_TRANSPOSE,
 				      r1, GRETL_MOD_NONE,
@@ -3390,6 +3400,10 @@ static int koopman_smooth (kalman *K)
     } else {
 	/* the independent case */
 	for (t=0; t<K->T; t++) {
+	    if (filter_is_varying(K)) {
+		K->t = t;
+		ksmooth_refresh_matrices(K, NULL);
+	    }	    
 	    load_from_row(r1, R, t, GRETL_MOD_NONE);
 	    gretl_matrix_multiply(K->Q, r1, r2);
 	    load_to_row(R, r2, t);
@@ -3438,9 +3452,9 @@ static int koopman_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
+    gretl_matrix_block_destroy(BX);
     gretl_matrix_free(Vvt);
     gretl_matrix_free(Vwt);
-    gretl_matrix_free(Ut);
 
     return err;
 }
@@ -4557,11 +4571,6 @@ static const char *kalman_output_scalar_names[] =
 static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 {
     const gretl_matrix *m = NULL;
-    const char *name = K->mnames[i];
-
-    if (*name != '\0') {
-	return get_matrix_by_name(name);
-    }    
     
     if (i == K_F) {
 	m = K->F;
