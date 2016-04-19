@@ -3299,6 +3299,9 @@ static int koopman_smooth (kalman *K)
 
 	if (Var_v != NULL && K->p == 0) {
 	    /* variance of state disturbance Q_t N_t Q_t */
+#if 0	    
+	    fprintf(stderr, "N_%d = %#.4g\n", t, N1->val[0]);
+#endif	    
 	    gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
 			       N1, Vvt, GRETL_MOD_NONE);
 	    load_to_vech(Var_v, Vvt, K->r, t);
