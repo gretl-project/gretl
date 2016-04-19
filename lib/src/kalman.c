@@ -123,6 +123,8 @@ struct kalman_ {
     gretl_matrix *P;   /* T x nr: MSE for state, all time-steps */
     gretl_matrix *K;   /* T x rn: gain matrix, all time-steps */
     gretl_matrix *U;   /* T x ??: smoothed disturbances */
+    gretl_matrix *Vds; /* Variance of smoothed disturbance: state */
+    gretl_matrix *Vdy; /* Variance of smoothed disturbance: signal */
 
     /* structure needed only for cross-correlated case */
     crossinfo *cross;
@@ -163,11 +165,14 @@ struct kalman_ {
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
 
-/* the matrix in question is not an external named user-matrix,
-   and is "owned" by the Kalman struct */
-#define kalman_owns_matrix(K,i) (K->mnames != NULL && \
-				 (K->mnames[i][0] == '$' || \
-				  K->mnames[i][0] == '\0'))
+/* The matrix in question is an external named user-matrix,
+   not "owned" by the Kalman struct: in this case the
+   matrix must have its name recorded.
+*/
+#define matrix_is_external(K,i) (K->mnames != NULL && \
+				 K->mnames[i] != NULL && \
+				 K->mnames[i][0] != '$' && \
+				 K->mnames[i][0] != '\0')
 
 /* the matrix in question is time-varying (it has an associated 
    function call) */
@@ -245,7 +250,7 @@ void kalman_free (kalman *K)
 	}
 
 	for (i=0; i<K_MMAX; i++) {
-	    if ((K->flags & KALMAN_BUNDLE) || kalman_owns_matrix(K, i)) {
+	    if ((K->flags & KALMAN_BUNDLE) || !matrix_is_external(K, i)) {
 		gretl_matrix_free(*mptr[i]);
 	    }
 	}
@@ -263,6 +268,8 @@ void kalman_free (kalman *K)
 	gretl_matrix_free(K->P);
 	gretl_matrix_free(K->K);
 	gretl_matrix_free(K->U);
+	gretl_matrix_free(K->Vds);
+	gretl_matrix_free(K->Vdy);
     }
 
     if (K->matcalls != NULL) {
@@ -298,6 +305,7 @@ static kalman *kalman_new_empty (int flags)
 	K->y = K->x = NULL;
 	K->mu = NULL;
 	K->U = NULL;
+	K->Vds = K->Vdy = NULL;
 	K->mnames = NULL;
 	K->matcalls = NULL;
 	K->cross = NULL;
@@ -658,6 +666,20 @@ static void load_to_vec (gretl_matrix *targ, const gretl_matrix *src,
 
     for (i=0; i<targ->cols; i++) {
 	gretl_matrix_set(targ, t, i, src->val[i]);
+    }
+}
+
+/* Write the diagonal of square matrix @src into row @t of @targ */
+
+static void load_to_diag (gretl_matrix *targ, const gretl_matrix *src,
+			  int t)
+{
+    double x;
+    int i;
+
+    for (i=0; i<targ->cols; i++) {
+	x = gretl_matrix_get(src, i, i);
+	gretl_matrix_set(targ, t, i, x);
     }
 }
 
@@ -1556,7 +1578,7 @@ static int kalman_update_matrix2 (kalman *K, int i,
 
 /* The user gave a function call that should be used for updating
    a given Kalman coefficient matrix: here we call it. Original
-   version.
+   version for non-bundled user-Kalman.
 */
 
 static int kalman_update_matrix1 (kalman *K, int i,
@@ -1571,7 +1593,7 @@ static int kalman_update_matrix1 (kalman *K, int i,
     if (err) {
 	fprintf(stderr, "kalman_update_matrix1: call='%s', err=%d\n", 
 		K->matcalls[i], err);
-    } else if (!kalman_owns_matrix(K, i)) {
+    } else if (matrix_is_external(K, i)) {
 	/* re-sync to named "external" matrix */
 	*pm = get_matrix_by_name(K->mnames[i]);
 	if (*pm == NULL) {
@@ -2372,7 +2394,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
     }
 
     for (i=0; i<K_MMAX; i++) {
-	if (!kalman_owns_matrix(K, i)) {
+	if (matrix_is_external(K, i)) {
 	    /* pointer may be invalid, needs refreshing */
 	    *mptr[i] = NULL;
 	}
@@ -2383,10 +2405,10 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
 	    err = kalman_update_matrix(K, i, mptr[i], prn);
-	} else if (kalman_owns_matrix(K, i)) {
-	    err = update_scalar_matrix(*(gretl_matrix **) mptr[i], K->mnames[i]);
-	} else {
+	} else if (matrix_is_external(K, i)) {
 	    *mptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
+	} else {
+	    err = update_scalar_matrix(*mptr[i], K->mnames[i]);
 	}
     }
 
@@ -3075,55 +3097,62 @@ static int load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
     return 0;
 }
 
+/* For disturbance smoothing: ensure we have on hand
+   matrices that are correctly sized to hold estimates
+   of the variance of the disturbance(s) in the state
+   and (if applicable) observation equations.
+
+   For calculation of the variance at time t we need a
+   square matrix of dimension k, where k is either the
+   dimension of the state (if @state is non-zero) or the
+   dimension of the observable.
+   
+   For storage of results from all time steps we need a
+   matrix of size T x k: into this we'll vectorize the
+   diagonal of the result at each t.
+*/
+
 static int maybe_resize_dist_mse (kalman *K, int state,
-				  gretl_matrix **pm,
 				  gretl_matrix **pmt)
 {
-    const char *mnames[] = {
-	"stdistvar",
-	"obsdistvar"
-    };
     gretl_matrix *m;
-    const char *mname;
-    int rows = K->T, cols = 0;
-    int newmat = 0;
-    int berr = 0;
+    int k, newmat = 0;
     int err = 0;
 
     if (state) {
-	mname = mnames[0];
-	cols = (K->r * K->r + K->r) / 2;
+	k = K->r; /* size of state */
+	m = K->Vds;
     } else {
-	mname = mnames[1];
-	cols = (K->n * K->n + K->n) / 2;
+	k = K->n; /* size of observable */
+	m = K->Vdy;
     }
 
-    m = gretl_bundle_get_matrix(K->b, mname, &berr);
-
     if (m == NULL) {
-	m = gretl_matrix_alloc(rows, cols);
+	m = gretl_matrix_alloc(K->T, k);
 	if (m == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    newmat = 1;
 	}
-    } else if (m->rows != rows || m->cols != cols) {
-	err = gretl_matrix_realloc(m, rows, cols);
+    } else if (m->rows != K->T || m->cols != k) {
+	err = gretl_matrix_realloc(m, K->T, k);
     }
 
     if (!err) {
-	/* step-t matrix */
-	*pmt = gretl_matrix_alloc(1, cols);
+	/* step-t square matrix (temporary) */
+	*pmt = gretl_matrix_alloc(k, k);
 	if (*pmt == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (newmat) {
-	gretl_bundle_donate_data(K->b, mname, m, GRETL_TYPE_MATRIX, 0);
+	if (state) {
+	    K->Vds = m;
+	} else {
+	    K->Vdy = m;
+	}
     }
-
-    *pm = m;
 
     return err;
 }
@@ -3146,6 +3175,11 @@ static int retrieve_Ht (kalman *K, int t)
     }
 }
 
+/* Calculate the variance of the smoothed disturbances
+   for the cross-correlated case. See Koopman, Shephard
+   and Doornik (1998), page 19, var(\varepsilon_t|Y_n).
+*/
+
 static int combined_dist_variance (kalman *K,
 				   gretl_matrix *D,
 				   gretl_matrix *N,
@@ -3153,14 +3187,19 @@ static int combined_dist_variance (kalman *K,
 				   gretl_matrix *vw,
 				   gretl_matrix_block *BX)
 {
-    gretl_matrix *DC, *KN, *RHS, *NB, *NK;
+    gretl_matrix *DC, *KN, *Veps, *NB, *NK;
 
-    DC  = gretl_matrix_block_get_matrix(BX, 0);
-    KN  = gretl_matrix_block_get_matrix(BX, 1);
-    RHS = gretl_matrix_block_get_matrix(BX, 2);
-    NB  = gretl_matrix_block_get_matrix(BX, 3);
+    DC   = gretl_matrix_block_get_matrix(BX, 0);
+    KN   = gretl_matrix_block_get_matrix(BX, 1);
+    Veps = gretl_matrix_block_get_matrix(BX, 2);
+    NB   = gretl_matrix_block_get_matrix(BX, 3);
 
     KN = gretl_matrix_reuse(KN, K->n, K->r);
+
+    /* First chunk of Veps:
+       Koopman's notation: G_t'(D_t*G_t - K_t'*N_t*H_t)
+       In gretl:           C_t'(D_t*C_t - K_t'*N_t*B_t)
+    */
 
     gretl_matrix_multiply(D, K->C, DC);
     gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
@@ -3171,9 +3210,15 @@ static int combined_dist_variance (kalman *K,
 			      DC, GRETL_MOD_DECREMENT);
     gretl_matrix_multiply_mod(K->C, GRETL_MOD_TRANSPOSE,
 			      DC, GRETL_MOD_NONE,
-			      RHS, GRETL_MOD_NONE);
+			      Veps, GRETL_MOD_NONE);
 
     NK = gretl_matrix_reuse(KN, K->r, K->n);
+
+    /* Second chunk of Veps:
+       Koopman's notation: H_t'(N_t*H_t - N_t*K_t*G_t)
+       In gretl:           B_t'(N_t*B_t - N_t*K_t*C_t), 
+       and add to the first chunk calculated above.
+    */    
 
     gretl_matrix_multiply(N, K->B, NB);
     gretl_matrix_multiply_mod(N, GRETL_MOD_TRANSPOSE,
@@ -3184,11 +3229,17 @@ static int combined_dist_variance (kalman *K,
 			      NB, GRETL_MOD_DECREMENT);
     gretl_matrix_multiply_mod(K->B, GRETL_MOD_TRANSPOSE,
 			      NB, GRETL_MOD_NONE,
-			      RHS, GRETL_MOD_CUMULATE);
+			      Veps, GRETL_MOD_CUMULATE);
 
-    gretl_matrix_qform(K->B, GRETL_MOD_NONE, RHS,
+    /* Veps (p x p) holds the variance of \epsilon_t 
+       conditional on Y_n: now form the per-equation
+       disturbance variance matrices, @vv and @vw, for
+       this time-step.
+    */
+    
+    gretl_matrix_qform(K->B, GRETL_MOD_NONE, Veps,
 		       vv, GRETL_MOD_NONE);
-    gretl_matrix_qform(K->C, GRETL_MOD_NONE, RHS,
+    gretl_matrix_qform(K->C, GRETL_MOD_NONE, Veps,
 		       vw, GRETL_MOD_NONE);
 
     return 0;
@@ -3202,8 +3253,6 @@ static int koopman_smooth (kalman *K)
     gretl_matrix *u, *D, *L, *R;
     gretl_matrix *r0, *r1, *r2, *N1, *N2;
     gretl_matrix *n1 = NULL;
-    gretl_matrix *Var_v = NULL;
-    gretl_matrix *Var_w = NULL;
     gretl_matrix *Vvt = NULL;
     gretl_matrix *Vwt = NULL;
     gretl_matrix *DC = NULL;
@@ -3231,10 +3280,10 @@ static int koopman_smooth (kalman *K)
 
     if (K->b != NULL) {
 	/* variance of smoothed state disturbances */
-	err = maybe_resize_dist_mse(K, 1, &Var_v, &Vvt);
+	err = maybe_resize_dist_mse(K, 1, &Vvt);
  	if (K->R != NULL) {
 	    /* variance of smoothed obs disturbances */
-	    err = maybe_resize_dist_mse(K, 0, &Var_w, &Vwt);
+	    err = maybe_resize_dist_mse(K, 0, &Vwt);
 	}
     }
 
@@ -3297,14 +3346,14 @@ static int koopman_smooth (kalman *K)
 	/* save u_t values in E */
 	load_to_row(K->E, u, t);
 
-	if (Var_v != NULL && K->p == 0) {
+	if (K->Vds != NULL && K->p == 0) {
 	    /* variance of state disturbance Q_t N_t Q_t */
 #if 0	    
-	    fprintf(stderr, "N_%d = %#.4g\n", t, N1->val[0]);
+	    fprintf(stderr, "N_%d = %#.4g, Q[0] = %g\n", t, N1->val[0], K->Q->val[0]);
 #endif	    
 	    gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
 			       N1, Vvt, GRETL_MOD_NONE);
-	    load_to_vech(Var_v, Vvt, K->r, t);
+	    load_to_diag(K->Vds, Vvt, t);
 	}
 
 	/* D_t = V_t^{-1} + K_t' N_t K_t */
@@ -3314,21 +3363,21 @@ static int koopman_smooth (kalman *K)
 			       N1, D, GRETL_MOD_CUMULATE);
 	}
 
-	if (Var_w != NULL && K->p == 0) {
+	if (K->Vdy != NULL && K->p == 0) {
 	    /* variance of obs disturbance R_t D_t R_t */
 	    gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
 			       D, Vwt, GRETL_MOD_NONE);
-	    load_to_vech(Var_w, Vwt, K->n, t);
+	    load_to_diag(K->Vdy, Vwt, t);
 	}
 
-	if (Var_v != NULL && Var_w != NULL && K->p > 0) {
+	if (K->Vds != NULL && K->Vdy != NULL && K->p > 0) {
 	    /* variance of combined disturbance */
 	    err = combined_dist_variance(K, D, N1, Vvt, Vwt, BX);
 	    if (err) {
 		break;
 	    } else {
-		load_to_vech(Var_v, Vvt, K->r, t);
-		load_to_vech(Var_w, Vwt, K->n, t);
+		load_to_diag(K->Vds, Vvt, t);
+		load_to_diag(K->Vdy, Vwt, t);
 	    }
 	}
 
@@ -4406,39 +4455,30 @@ int user_kalman_get_time_step (void)
    struct in a gretl bundle */
 
 static int add_or_replace_k_matrix (gretl_matrix **targ,
-				    char *targname,
 				    gretl_matrix *src,
-				    const char *srcname,
 				    int copy)
 {
     int err = 0;
     
     if (*targ != src) {
-	if (*targ != NULL && *targname == '\0') {
+	if (*targ != NULL) {
 	    /* destroy old Kalman-owned matrix */
 	    gretl_matrix_free(*targ);
 	}
-	if (srcname != NULL) {
-	    /* attaching a named matrix pointer */
-	    strcpy(targname, srcname);
-	    *targ = src;
-	} else {
-	    /* copying matrix in, or accepting "donation"
-	       of an anonymous matrix */
-	    *targname = '\0';
-	    if (copy) { 
-		*targ = gretl_matrix_copy(src);
-		if (*targ == NULL) {
-		    err = E_ALLOC;
-		}
-	    } else {
-		*targ = src;
+	if (copy) { 
+	    *targ = gretl_matrix_copy(src);
+	    if (*targ == NULL) {
+		err = E_ALLOC;
 	    }
+	} else {
+	    *targ = src;
 	}
     }
 
     return err;
 }
+
+/* attach a matrix to a new-style Kalman bundle */
 
 static int 
 attach_input_matrix_2 (kalman *K, gretl_matrix *m,
@@ -4446,20 +4486,8 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
 		       int copy)
 {
     gretl_matrix **targ = NULL;
-    const char *mname = NULL;
     int err = 0;
     
-    if (K->mnames == NULL) {
-	K->mnames = strings_array_new_with_length(K_MMAX, VNAMELEN+1);
-	if (K->mnames == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    if (vtype == GRETL_TYPE_MATRIX_REF) {
-	mname = user_var_get_name_by_data((const void *) m);
-    }
-
     if (i == K_F) {
 	targ = &K->F;
     } else if (i == K_A) {
@@ -4497,8 +4525,7 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
     */
 
     if (targ != NULL) {
-	add_or_replace_k_matrix((gretl_matrix **) targ, K->mnames[i],
-				m, mname, copy);
+	add_or_replace_k_matrix(targ, m, copy);
     } else {
 	err = E_DATA;
     }
@@ -4525,6 +4552,10 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 	pm = &K->LL;
     } else if (!strcmp(key, "smdist")) {
 	pm = &K->U;
+    } else if (!strcmp(key, "stdistvar")) {
+	pm = &K->Vds;
+    } else if (!strcmp(key, "obsdistvar")) {
+	pm = &K->Vdy;
     }
 
     return pm;
@@ -4558,25 +4589,27 @@ static double *kalman_output_scalar (kalman *K,
     return s;
 }
 
-static const char *kalman_output_matrix_names[] =
-    { "prederr",
-      "pevar",
-      "state",
-      "stvar",
-      "gain",
-      "llt",
-      "smdist",
-      NULL
-    };
+static const char *kalman_output_matrix_names[] = {
+    "prederr",
+    "pevar",
+    "state",
+    "stvar",
+    "gain",
+    "llt",
+    "smdist",
+    "stdistvar",
+    "obsdistvar",
+    NULL
+};
 
-static const char *kalman_output_scalar_names[] = 
-    { "diffuse",
-      "cross",
-      "lnl",
-      "s2",
-      "t",
-      NULL
-    };
+static const char *kalman_output_scalar_names[] = {
+    "diffuse",
+    "cross",
+    "lnl",
+    "s2",
+    "t",
+    NULL
+};
 
 static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 {
@@ -4670,8 +4703,7 @@ int maybe_set_kalman_element (void *kptr,
 		}
 	    }
 	}
-    } else if (vtype == GRETL_TYPE_MATRIX ||
-	       vtype == GRETL_TYPE_MATRIX_REF) {
+    } else if (vtype == GRETL_TYPE_MATRIX) {
 	/* try for a matrix specifier */
 	for (i=0; i<K_MMAX; i++) {
 	    if (!strcmp(key, K_input_mats[i].name)) {
