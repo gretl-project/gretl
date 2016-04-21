@@ -337,7 +337,7 @@ int iso_latin_version (void)
 	} else if (!strncmp(lang, "tr", 2)) {
 	    return 9;
 	} else if (!strncmp(lang, "uk", 2)) {
-	    return 2;
+	    return 5;
 	}
     } 
 

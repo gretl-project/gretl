@@ -4519,6 +4519,15 @@ static void secondary_rhs_varlist (selector *sr)
     sr->rvars2 = var_list_box_new(GTK_BOX(hbox), sr, SR_RVARS2);
     mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
 
+    if (sr->ci == VAR || sr->ci == VECM || sr->ci == VLAGSEL) {
+	lptr = &sr->lags_button;
+    }
+    
+    /* add push-pull buttons */
+    push_pull_buttons(sr, add_to_rvars2_callback,
+		      remove_from_rvars2_callback,
+		      lptr, OPT_NONE);
+
     store = GTK_LIST_STORE(mod);
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(mod, &iter);
@@ -4545,15 +4554,6 @@ static void secondary_rhs_varlist (selector *sr)
     } else if (!VEC_CODE(sr->ci) && !FNPKG_CODE(sr->ci)) {
 	list_append_var(mod, &iter, 0, sr, SR_RVARS2);
     }
-
-    if (sr->ci == VAR || sr->ci == VECM || sr->ci == VLAGSEL) {
-	lptr = &sr->lags_button;
-    }
-
-    /* add push-pull buttons */
-    push_pull_buttons(sr, add_to_rvars2_callback,
-		      remove_from_rvars2_callback,
-		      lptr, OPT_NONE);
 
     table_add_right(sr, hbox, 0);
 }
@@ -6588,7 +6588,7 @@ static void primary_rhs_varlist (selector *sr)
 		    nx++;
 		}
 	    }
-	    if (nx > 0 && sr->ci == ARMA) {
+	    if (nx > 0 && sr->lags_button != NULL && sr->ci == ARMA) {
 		gtk_widget_set_sensitive(sr->lags_button, TRUE);
 	    }
 	}
