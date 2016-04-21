@@ -1,3 +1,10 @@
+version 2016c, in progress
+- Add Ukrainian translation
+- Fix spurious "no numeric conversion" message emitted by
+  some plot editing operations
+- Lags button for exogenous variables in VARs: ensure it's
+  sensitive when it's supposed to be
+
 2016-04-14 version 2016b
 - "panel" command, random-effects version: show an overall
   Wald chi-square test on the named regressors; also support
