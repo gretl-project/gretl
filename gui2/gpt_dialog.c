@@ -684,18 +684,23 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
     if (w != NULL && GTK_IS_ENTRY(w)) {
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 
-	if (s != NULL && *s != '\0') {
-	    gchar *tmp = g_strdup(s);
+	if (s != NULL) {
+	    if (!strcmp(s, "*")) {
+		*val = NADBL;
+		return;
+	    } else if (*s != '\0') {
+		gchar *tmp = g_strdup(s);
 
-	    gretl_charsub(tmp, ',', '.');
-	    gretl_push_c_numeric_locale();	    
-	    if (check_atof(tmp)) {
-		errbox(gretl_errmsg_get());
-	    } else {
-		x = atof(tmp);
+		gretl_charsub(tmp, ',', '.');
+		gretl_push_c_numeric_locale();	    
+		if (check_atof(tmp)) {
+		    errbox(gretl_errmsg_get());
+		} else {
+		    x = atof(tmp);
+		}
+		gretl_pop_c_numeric_locale();
+		g_free(tmp);
 	    }
-	    gretl_pop_c_numeric_locale();
-	    g_free(tmp);
 	}
     }
 
