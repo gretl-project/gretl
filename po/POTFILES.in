@@ -106,6 +106,7 @@ gui2/filters.c
 gui2/fncall.c
 gui2/fnsave.c
 gui2/fontfilter.c
+gui2/gfn_arglists.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
 gui2/graphics.c
@@ -118,6 +119,7 @@ gui2/guiprint.c
 gui2/gui_recode.c
 gui2/gui_utils.c
 gui2/helpfiles.c
+gui2/join-gui.c
 gui2/lagpref.c
 gui2/library.c
 gui2/menustate.c
@@ -189,6 +191,7 @@ plugin/range-mean.c
 plugin/reprobit.c
 plugin/sas_import.c
 plugin/spss_import.c
+plugin/stata_export.c
 plugin/stata_import.c
 plugin/stats_tables.c
 plugin/sysest.c
@@ -199,6 +202,7 @@ plugin/vif.c
 plugin/workbook.c
 plugin/xlsx_import.c
 doc/commands/bbl2txt.c
+doc/commands/chaprefs.c
 doc/commands/matfuncs.c
 doc/commands/reflow.c
 doc/commands/skeleton.c
