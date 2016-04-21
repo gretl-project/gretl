@@ -63,6 +63,7 @@ typedef enum {
     LANG_RU,
     LANG_ES,
     LANG_TR,
+    LANG_UK,
     LANG_MAX
 } GretlLangCode;
 

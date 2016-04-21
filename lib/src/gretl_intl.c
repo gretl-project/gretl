@@ -327,7 +327,7 @@ int iso_latin_version (void)
     }
 #endif
 
-    /* Polish, Russian, Turkish: UTF-8 locale? */
+    /* Polish, Russian, Turkish, Ukrainian: UTF-8 locale? */
     lang = getenv("LANG");
     if (lang != NULL) {
 	if (!strncmp(lang, "pl", 2)) {
@@ -336,6 +336,8 @@ int iso_latin_version (void)
 	    return 5;
 	} else if (!strncmp(lang, "tr", 2)) {
 	    return 9;
+	} else if (!strncmp(lang, "uk", 2)) {
+	    return 2;
 	}
     } 
 
@@ -569,6 +571,7 @@ static struct localeinfo locales[] = {
     { LANG_RU,    "russian" },
     { LANG_ES,    "spanish" },
     { LANG_TR,    "turkish" },
+    { LANG_UK,    "ukrainian" },
     { LANG_MAX,    NULL }
 };
 
@@ -615,6 +618,7 @@ static struct langinfo langs[] = {
     { LANG_RU,    "Russian",              "ru_RU" },
     { LANG_ES,    "Spanish",              "es_ES" },
     { LANG_TR,    "Turkish",              "tr_TR" },
+    { LANG_UK,    "Ukrainian",            "uk_UA" },
     { LANG_MAX,    NULL,                   NULL   }
 };
 
