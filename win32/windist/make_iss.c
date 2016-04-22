@@ -35,6 +35,7 @@ void add_languages (void)
 	{ "ca", "Catalan" },
 	{ "el", "Greek" },
 	{ "ja", "Japanese" },
+	{ "uk", "Ukrainian" },
 	{ NULL, NULL }
     };
     int i;
