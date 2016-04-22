@@ -664,7 +664,7 @@ static void double_to_gp_entry (double x, GtkWidget *w)
 	gchar *numstr;
 
 	if (na(x)) {
-	    numstr = g_strdup("*");
+	    numstr = g_strdup("NA");
 	} else if (x == floor(x)) {
 	    numstr = g_strdup_printf("%.1f", x);
 	} else {
@@ -685,7 +685,7 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 
 	if (s != NULL) {
-	    if (!strcmp(s, "*")) {
+	    if (!strcmp(s, "NA")) {
 		*val = NADBL;
 		return;
 	    } else if (*s != '\0') {
