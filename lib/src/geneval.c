@@ -8887,6 +8887,17 @@ static void node_nullify_ptr (NODE *n)
     if (n->t == LIST)   n->v.ivec = NULL;
 }
 
+static int bundle_pointer_arg0 (NODE *n)
+{
+    NODE *n0 = n->v.bn.n[0];
+
+    if (n0->t == U_ADDR && ubundle_node(n0->v.b1.b)) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -9064,8 +9075,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	}
-    } else if (t->t == F_KFILTER && k == 1 && n->v.bn.n[0]->t == BUNDLE) {
-	e = n->v.bn.n[0];
+    } else if (t->t == F_KFILTER && k == 1 && bundle_pointer_arg0(n)) {
+	e = n->v.bn.n[0]; /* first arg */
+	e = e->v.b1.b;    /* switch to content */
 	reset_p_aux(p, save_aux);
 	ret = aux_scalar_node(p);
 	if (!p->err) {
@@ -9111,24 +9123,26 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  p->dset, p->prn, 
 					  &p->err);
 	}
-    } else if (t->t == F_KDSMOOTH && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
+    } else if (t->t == F_KDSMOOTH && k > 0 && bundle_pointer_arg0(n)) {
 	if (k > 1) {
 	    n_args_error(k, 1, t->t, p);
 	}
 	if (!p->err) {	
 	    e = n->v.bn.n[0];
+	    e = e->v.b1.b; /* switch to content */
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
 		ret->v.xval = kalman_bundle_smooth(e->v.b, 1, p->prn);
 	    }
 	}	
-    } else if (t->t == F_KSMOOTH && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
+    } else if (t->t == F_KSMOOTH && k > 0 && bundle_pointer_arg0(n)) {
 	if (k > 1) {
 	    n_args_error(k, 1, t->t, p);
 	}
 	if (!p->err) {	
 	    e = n->v.bn.n[0];
+	    e = e->v.b1.b; /* switch to content */
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
@@ -9167,7 +9181,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = user_kalman_smooth(P, U, &p->err);
 	}
-    } else if (t->t == F_KSIMUL && k > 0 && n->v.bn.n[0]->t == BUNDLE) {
+    } else if (t->t == F_KSIMUL && k > 0 && bundle_pointer_arg0(n)) {
 	gretl_matrix *V = NULL;
 	gretl_matrix *W = NULL;
 
@@ -9199,6 +9213,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }
 	    e = n->v.bn.n[0];
+	    e = e->v.b1.b;
 	    ret->v.m = kalman_bundle_simulate(e->v.b, V, W, p->prn, &p->err);
 	}
     } else if (t->t == F_KSIMUL) {
