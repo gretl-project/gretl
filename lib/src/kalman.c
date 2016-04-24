@@ -3175,8 +3175,6 @@ static int retrieve_Ht (kalman *K, int t)
     }
 }
 
-#define DK_CORRECT 0
-
 /* Calculate the variance of the smoothed disturbances
    for the cross-correlated case. See Koopman, Shephard
    and Doornik (1998), page 19, var(\varepsilon_t|Y_n).
@@ -3249,7 +3247,7 @@ static int combined_dist_variance (kalman *K,
 
 /* See Koopman, Shephard and Doornik, section 4.4 */
 
-static int koopman_smooth (kalman *K)
+static int koopman_smooth (kalman *K, int dkstyle)
 {
     gretl_matrix_block *B, *BX = NULL;
     gretl_matrix *u, *D, *L, *R;
@@ -3349,17 +3347,18 @@ static int koopman_smooth (kalman *K)
 	load_to_row(K->E, u, t);
 
 	if (K->Vds != NULL && K->p == 0) {
-#if DK_CORRECT
-	    /* variance of state disturbance Q_t - Q_t N_t Q_t */
-	    gretl_matrix_copy_values(Vvt, K->Q);
-	    gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
-			       N1, Vvt, GRETL_MOD_DECREMENT);
+	    /* variance of state disturbance */
+	    if (dkstyle) {
+		/* Q_t - Q_t N_t Q_t */
+		gretl_matrix_copy_values(Vvt, K->Q);
+		gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
+				   N1, Vvt, GRETL_MOD_DECREMENT);
 
-#else  
-	    /* variance of state disturbance Q_t N_t Q_t */
-	    gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
-			       N1, Vvt, GRETL_MOD_NONE);
-#endif  
+	    } else {
+		/* Q_t N_t Q_t */
+		gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
+				   N1, Vvt, GRETL_MOD_NONE);
+	    }
 	    load_to_diag(K->Vds, Vvt, t);
 	}
 
@@ -3371,17 +3370,18 @@ static int koopman_smooth (kalman *K)
 	}
 
 	if (K->Vdy != NULL && K->p == 0) {
-#if DK_CORRECT
-	    /* variance of obs disturbance R_t - R_t D_t R_t */
-	    gretl_matrix_copy_values(Vwt, K->R);
-	    gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
-			       D, Vwt, GRETL_MOD_DECREMENT);
+	    /* variance of obs disturbance */
+	    if (dkstyle) {
+		/* R_t - R_t D_t R_t */
+		gretl_matrix_copy_values(Vwt, K->R);
+		gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
+				   D, Vwt, GRETL_MOD_DECREMENT);
 
-#else	    
-	    /* variance of obs disturbance R_t D_t R_t */
-	    gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
-			       D, Vwt, GRETL_MOD_NONE);
-#endif
+	    } else {
+		/* R_t D_t R_t */
+		gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
+				   D, Vwt, GRETL_MOD_NONE);
+	    }
 	    load_to_diag(K->Vdy, Vwt, t);
 	}
 
@@ -3864,7 +3864,7 @@ gretl_matrix *kalman_smooth (kalman *K,
     if (!*err) {
 	/* bodge */
 	if (K->U != NULL) {
-	    *err = koopman_smooth(K);
+	    *err = koopman_smooth(K, 0);
 	} else {
 	    *err = anderson_moore_smooth(K);
 	}
@@ -4014,8 +4014,10 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
     K->t = 0;
 
     if (!err) {
-	if (dist) {
-	    err = koopman_smooth(K);
+	if (dist > 1) {
+	    err = koopman_smooth(K, 1);
+	} else if (dist == 1) {
+	    err = koopman_smooth(K, 0);
 	} else {
 	    err = anderson_moore_smooth(K);
 	}

@@ -9124,16 +9124,23 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  &p->err);
 	}
     } else if (t->t == F_KDSMOOTH && k > 0 && bundle_pointer_arg0(n)) {
-	if (k > 1) {
-	    n_args_error(k, 1, t->t, p);
+	int param = 1;
+	int dkstyle = 0;
+
+	if (k == 2) {
+	    e = eval(n->v.bn.n[1], p);
+	    dkstyle = node_get_int(e, p);
+	} else if (k > 2) {
+	    n_args_error(k, 2, t->t, p);
 	}
-	if (!p->err) {	
+	if (!p->err) {
+	    param += dkstyle != 0;
 	    e = n->v.bn.n[0];
 	    e = e->v.b1.b; /* switch to content */
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = kalman_bundle_smooth(e->v.b, 1, p->prn);
+		ret->v.xval = kalman_bundle_smooth(e->v.b, param, p->prn);
 	    }
 	}	
     } else if (t->t == F_KSMOOTH && k > 0 && bundle_pointer_arg0(n)) {
