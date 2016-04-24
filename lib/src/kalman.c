@@ -2454,8 +2454,7 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 {
     gretl_matrix **mptr[] = {
-	&K->F, &K->A, &K->H, &K->Q, &K->R,
-	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
+	&K->F, &K->A, &K->H, &K->Q, &K->R, &K->mu
     };
     int i, err = 0;
 
@@ -2466,8 +2465,8 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     K->flags |= KALMAN_CHECK;
 
-    for (i=0; i<K_MMAX && !err; i++) {
-	if (i <= K_m && matrix_is_varying(K, i)) {
+    for (i=0; i<=K_m && !err; i++) {
+	if (matrix_is_varying(K, i)) {
 	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	}
     }
@@ -4856,7 +4855,7 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	
 	for (i=0; i<K_MMAX; i++) {
 	    id = K_input_mats[i].sym;
-	    pprintf(prn, "  %s: ", K_input_mats[i].name);
+	    pprintf(prn, " %s: ", K_input_mats[i].name);
 	    m = k_input_matrix_by_id(K, id);
 	    if (m == NULL) {
 		pputs(prn, "null\n");
@@ -4872,7 +4871,7 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	    if (name == NULL) {
 		break;
 	    } else {
-		pprintf(prn, "  %s: ", name);
+		pprintf(prn, " %s: ", name);
 		pm = kalman_output_matrix(K, name);
 		if (pm == NULL || *pm == NULL) {
 		    pputs(prn, "null\n");
@@ -4890,7 +4889,7 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	    if (name == NULL) {
 		break;
 	    } else {
-		pprintf(prn, "  %s: ", name);
+		pprintf(prn, " %s: ", name);
 		px = kalman_output_scalar(K, name);
 		if (px == NULL || na(*px)) {
 		    pputs(prn, "NA\n");
@@ -4898,7 +4897,17 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 		    pprintf(prn, "%g\n", *px);
 		}
 	    }
-	}	
+	}
+
+	if (K->matcalls != NULL) {
+	    pputs(prn, "\nKalman strings\n");
+	    for (i=0; i<=K_m && !err; i++) {
+		if (matrix_is_varying(K, i)) {
+		    pprintf(prn, " %s_call: %s", K_input_mats[i].name,
+			    K->matcalls[i]);
+		}
+	    }
+	}
     }
 
     return err;

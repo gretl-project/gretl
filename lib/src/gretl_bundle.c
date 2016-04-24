@@ -102,6 +102,19 @@ int gretl_bundle_get_n_keys (gretl_bundle *b)
     return n_items;
 }
 
+int gretl_bundle_has_content (gretl_bundle *b)
+{
+    int ret = 0;
+    
+    if (b != NULL && b->ht != NULL &&
+	(b->type == BUNDLE_KALMAN ||
+	 g_hash_table_size(b->ht) > 0)) {
+	ret = 1;
+    }    
+
+    return ret;
+}
+
 int type_can_be_bundled (GretlType type)
 {
     if (type == GRETL_TYPE_INT ||
@@ -1386,8 +1399,11 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 	    }
 	    if (bundle->type == BUNDLE_KALMAN) {
 		print_kalman_matrix_info(bundle->data, prn);
-	    }
-	    if (n_items > 0) {
+		if (n_items > 0) {
+		    pputs(prn, "\nOther content\n");
+		    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+		}
+	    } else if (n_items > 0) {
 		g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
 	    }
 	    pputc(prn, '\n');

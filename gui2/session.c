@@ -2228,7 +2228,7 @@ static void open_bundle (gui_obj *obj)
 	return;
     }
 
-    if (gretl_bundle_get_n_keys(b) == 0) {
+    if (!gretl_bundle_has_content(b)) {
 	warnbox(_("Bundle is empty"));
 	return;
     }

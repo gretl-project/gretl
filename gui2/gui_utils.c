@@ -4777,6 +4777,9 @@ static int any_saveable_content (gretl_bundle *b)
     return n;
 }
 
+/* FIXME the following needs to be revised to handle kalman
+   bundles */
+
 GtkWidget *make_bundle_content_menu (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
