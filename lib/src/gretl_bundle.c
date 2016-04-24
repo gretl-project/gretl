@@ -1398,7 +1398,7 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 		pprintf(prn, "bundle %s:\n", name);
 	    }
 	    if (bundle->type == BUNDLE_KALMAN) {
-		print_kalman_matrix_info(bundle->data, prn);
+		print_kalman_bundle_info(bundle->data, prn);
 		if (n_items > 0) {
 		    pputs(prn, "\nOther content\n");
 		    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);

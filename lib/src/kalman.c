@@ -4836,7 +4836,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
     return ret;
 }
 
-int print_kalman_matrix_info (void *kptr, PRN *prn)
+int print_kalman_bundle_info (void *kptr, PRN *prn)
 {
     kalman *K = kptr;
     int err = 0;
@@ -4903,7 +4903,7 @@ int print_kalman_matrix_info (void *kptr, PRN *prn)
 	    pputs(prn, "\nKalman strings\n");
 	    for (i=0; i<=K_m && !err; i++) {
 		if (matrix_is_varying(K, i)) {
-		    pprintf(prn, " %s_call: %s", K_input_mats[i].name,
+		    pprintf(prn, " %s_call: %s\n", K_input_mats[i].name,
 			    K->matcalls[i]);
 		}
 	    }

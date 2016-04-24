@@ -132,7 +132,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
 				     int *reserved,
 				     int *err);
 
-int print_kalman_matrix_info (void *kptr, PRN *prn);
+int print_kalman_bundle_info (void *kptr, PRN *prn);
 
 #endif /* __GTK_DOC_IGNORE__ */
 
