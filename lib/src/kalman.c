@@ -154,7 +154,7 @@ struct kalman_ {
 };
 
 /* max number of time-varying matrices: F, A, H, Q, R, mu */
-#define NMATCALLS 6
+#define K_N_MATCALLS 6
 
 #define arma_ll(K) (K->flags & KALMAN_ARMA_LL)
 
@@ -273,7 +273,7 @@ void kalman_free (kalman *K)
     }
 
     if (K->matcalls != NULL) {
-	strings_array_free(K->matcalls, NMATCALLS);
+	strings_array_free(K->matcalls, K_N_MATCALLS);
     }
 
     if (K->cross != NULL) {
@@ -1632,7 +1632,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 	mptr[4] = &K->C;
     }
 
-    for (i=0; i<NMATCALLS && !err; i++) {
+    for (i=0; i<K_N_MATCALLS && !err; i++) {
 	if (matrix_is_varying(K, i)) {
 	    err = kalman_update_matrix(K, i, mptr[i], prn);
 	    if (!err) {
@@ -2067,7 +2067,7 @@ struct K_input_mat K_input_mats[] = {
 
 static int kalman_add_matcalls (kalman *K)
 {
-    K->matcalls = strings_array_new(NMATCALLS);
+    K->matcalls = strings_array_new(K_N_MATCALLS);
 
     if (K->matcalls == NULL) {
 	return E_ALLOC;
@@ -4577,35 +4577,9 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
     return pm;
 }
 
-static double *kalman_output_scalar (kalman *K,
-				     const char *key)
-{
-    static double retval;
-    double *s = NULL;
+#define K_N_OUTPUTS 9
 
-    if (!strcmp(key, "s2")) {
-	s = &K->s2;
-    } else if (!strcmp(key, "lnl")) {
-	s = &K->loglik;
-    } else if (!strcmp(key, "t")) {
-	if (kalman_is_running(K)) {
-	    retval = K->t + 1;
-	} else {
-	    retval = kalman_checking(K) ? 1 : 0;
-	} 
-	s = &retval;
-    } else if (!strcmp(key, "diffuse")) {
-	retval = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
-	s = &retval;
-    } else if (!strcmp(key, "cross")) {
-	retval = (K->flags & KALMAN_CROSS)? 1 : 0;
-	s = &retval;
-    }	
-
-    return s;
-}
-
-static const char *kalman_output_matrix_names[] = {
+static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "prederr",
     "pevar",
     "state",
@@ -4614,17 +4588,81 @@ static const char *kalman_output_matrix_names[] = {
     "llt",
     "smdist",
     "stdistvar",
-    "obsdistvar",
-    NULL
+    "obsdistvar"
 };
 
-static const char *kalman_output_scalar_names[] = {
+#define K_N_SCALARS 5
+
+enum {
+    Ks_T = 0,
+    Ks_DIFFUSE,
+    Ks_CROSS,
+    Ks_S2,
+    Ks_LNL
+};
+
+static const char *kalman_output_scalar_names[K_N_SCALARS] = {
+    "t",
     "diffuse",
     "cross",
-    "lnl",
     "s2",
-    "t",
-    NULL
+    "lnl"
+};
+
+static double *kalman_output_scalar (kalman *K,
+				     const char *key)
+{
+    /* static storage for on-the-fly scalars */
+    static double retval[3];
+    double *s = NULL;
+    int i, idx = -1;
+
+    for (i=0; i<K_N_SCALARS; i++) {
+	if (!strcmp(key, kalman_output_scalar_names[i])) {
+	    idx = i;
+	    break;
+	}
+    }
+
+    switch (idx) {
+    case Ks_T:
+	if (kalman_is_running(K)) {
+	    retval[idx] = K->t + 1;
+	} else {
+	    retval[idx] = kalman_checking(K) ? 1 : 0;
+	}
+	s = &retval[idx];
+	break;
+    case Ks_DIFFUSE:
+	retval[idx] = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
+	s = &retval[idx];
+	break;
+    case Ks_CROSS:
+	retval[idx] = (K->flags & KALMAN_CROSS)? 1 : 0;
+	s = &retval[idx];
+	break;
+    case Ks_S2:
+	s = &K->s2;
+	break;
+    case Ks_LNL:
+	s = &K->loglik;
+	break;
+    default:
+	break;
+    }
+
+    return s;
+}
+
+/* note: must be in same order as the enum, K_F,..., K_m */
+
+static const char *kalman_matcall_names[K_N_MATCALLS] = {
+    "statemat_call", /* F */
+    "obsxmat_call",  /* A */
+    "obsymat_call",  /* H */
+    "statevar_call", /* Q */
+    "obsvar_call",   /* R */
+    "stconst_call"   /* m */
 };
 
 static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
@@ -4708,12 +4746,9 @@ int maybe_set_kalman_element (void *kptr,
     if (vtype == GRETL_TYPE_STRING) {
 	if (strchr(key, '_') != NULL) {
 	    /* try for a function call specifier */
-	    char test[16];
-	
-	    for (i=0; i<K_m; i++) {
-		sprintf(test, "%s_call", K_input_mats[i].name);
-		if (!strcmp(key, test)) {
-		    id = K_input_mats[i].sym;
+	    for (i=0; i<K_N_MATCALLS; i++) {
+		if (!strcmp(key, kalman_matcall_names[i])) {
+		    id = i;
 		    fncall = 1;
 		    break;
 		}
@@ -4776,14 +4811,10 @@ void *maybe_retrieve_kalman_element (void *kptr,
 
     if (strchr(key, '_') != NULL) {
 	/* try for a function call specifier */
-	char test[16];
-	
-	for (i=0; i<K_m; i++) {
-	    sprintf(test, "%s_call", K_input_mats[i].name);
-	    if (!strcmp(key, test)) {
-		id = K_input_mats[i].sym;
-		if (K->matcalls != NULL && K->matcalls[id] != NULL) {
-		    ret = K->matcalls[id];
+	for (i=0; i<K_N_MATCALLS; i++) {
+	    if (!strcmp(key, kalman_matcall_names[i])) {
+		if (K->matcalls != NULL && K->matcalls[i] != NULL) {
+		    ret = K->matcalls[i];
 		    *type = GRETL_TYPE_STRING;
 		}
 		break;
@@ -4866,44 +4897,36 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
 
 	pputs(prn, "\nKalman output matrices\n");
 
-	for (i=0; ; i++) {
+	for (i=0; i<K_N_OUTPUTS; i++) {
 	    name = kalman_output_matrix_names[i];
-	    if (name == NULL) {
-		break;
+	    pprintf(prn, " %s: ", name);
+	    pm = kalman_output_matrix(K, name);
+	    if (pm == NULL || *pm == NULL) {
+		pputs(prn, "null\n");
 	    } else {
-		pprintf(prn, " %s: ", name);
-		pm = kalman_output_matrix(K, name);
-		if (pm == NULL || *pm == NULL) {
-		    pputs(prn, "null\n");
-		} else {
-		    m = *pm;
-		    pprintf(prn, "%d x %d\n", m->rows, m->cols);
-		}
+		m = *pm;
+		pprintf(prn, "%d x %d\n", m->rows, m->cols);
 	    }
 	}
 
 	pputs(prn, "\nKalman scalars\n");
 
-	for (i=0; ; i++) {
+	for (i=0; i<K_N_SCALARS; i++) {
 	    name = kalman_output_scalar_names[i];
-	    if (name == NULL) {
-		break;
+	    pprintf(prn, " %s: ", name);
+	    px = kalman_output_scalar(K, name);
+	    if (px == NULL || na(*px)) {
+		pputs(prn, "NA\n");
 	    } else {
-		pprintf(prn, " %s: ", name);
-		px = kalman_output_scalar(K, name);
-		if (px == NULL || na(*px)) {
-		    pputs(prn, "NA\n");
-		} else {
-		    pprintf(prn, "%g\n", *px);
-		}
+		pprintf(prn, "%g\n", *px);
 	    }
 	}
 
 	if (K->matcalls != NULL) {
 	    pputs(prn, "\nKalman strings\n");
-	    for (i=0; i<=K_m && !err; i++) {
+	    for (i=0; i<K_N_MATCALLS; i++) {
 		if (matrix_is_varying(K, i)) {
-		    pprintf(prn, " %s_call: %s\n", K_input_mats[i].name,
+		    pprintf(prn, " %s: %s\n", kalman_matcall_names[i],
 			    K->matcalls[i]);
 		}
 	    }
@@ -4912,3 +4935,103 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
 
     return err;
 }
+
+#if 0
+
+/* Not ready yet: possible apparatus for making Kalman content
+   available in bundle-like form. If we can make this work it
+   can be used for populating the Save menu when a Kalman
+   bundle is displayed in the GUI, and also for serializing
+   a Kalman bundle via bwrite().
+*/
+
+struct vbundle_item {
+    const char *name;
+    void *data;
+    GretlType type;
+};
+
+static int pointer_array_push (GPtrArray *A,
+			       const char *name,
+			       void *data,
+			       GretlType type)
+{
+    struct vbundle_item *item;
+
+    item = malloc(sizeof *item);
+
+    if (item == NULL) {
+	return E_ALLOC;
+    } else {
+	item->name = name;
+	item->data = data;
+	item->type = type;
+	g_ptr_array_add(A, item);
+    }
+
+    return 0;
+}
+
+GPtrArray *retrieve_kalman_bundle_info (void *kptr, int *err)
+{
+    GPtrArray *A = NULL;
+    kalman *K = kptr;
+
+    if (K == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    A = g_ptr_array_new();
+
+    if (A != NULL) {
+	const gretl_matrix *m;
+	gretl_matrix **pm;
+	double *px;
+	const char *name;
+	int i, id;
+
+	for (i=0; i<K_MMAX; i++) {
+	    id = K_input_mats[i].sym;
+	    m = k_input_matrix_by_id(K, id);
+	    if (m != NULL) {
+		pointer_array_push(A, K_input_mats[i].name, (void *) m,
+				   GRETL_TYPE_MATRIX);
+	    }
+	}
+
+	for (i=0; i<K_N_OUTPUTS; i++) {
+	    name = kalman_output_matrix_names[i];
+	    pm = kalman_output_matrix(K, name);
+	    if (pm != NULL && *pm != NULL) {
+		pointer_array_push(A, name, *pm,
+				   GRETL_TYPE_MATRIX);
+	    }
+	}
+
+	for (i=0; i<K_N_SCALARS; i++) {
+	    name = kalman_output_scalar_names[i];
+	    px = kalman_output_scalar(K, name);
+	    if (px != NULL) {
+		pointer_array_push(A, name, px,
+				   GRETL_TYPE_DOUBLE);
+	    }
+	}
+
+	if (K->matcalls != NULL) {
+	    for (i=0; i<K_N_MATCALLS; i++) {
+		if (matrix_is_varying(K, i)) {
+		    pointer_array_push(A, kalman_matcall_names[i],
+				       K->matcalls[i],
+				       GRETL_TYPE_STRING);
+		}
+	    }
+	}
+    }
+
+    return A;    
+}
+
+#endif /* not yet */
+
+
