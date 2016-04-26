@@ -635,6 +635,8 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
 
 static int is_genr_special (const char *s, char *spec, const char **rem)
 {
+    fprintf(stderr, "is_genr_special: s = %p\n", (void *) s);
+    
     if (strncmp(s, "genr ", 5)) {
 	return 0;
     }
@@ -681,6 +683,10 @@ int generate (const char *line, DATASET *dset,
     int oldv, flags = 0;
     int targtype = UNK;
     parser p;
+
+    if (line == NULL) {
+	return E_ARGS;
+    }
 
     if (gtype == GRETL_TYPE_NONE) {
 	flags |= P_DISCARD;
