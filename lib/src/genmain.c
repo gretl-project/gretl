@@ -635,8 +635,6 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
 
 static int is_genr_special (const char *s, char *spec, const char **rem)
 {
-    fprintf(stderr, "is_genr_special: s = %p\n", (void *) s);
-    
     if (strncmp(s, "genr ", 5)) {
 	return 0;
     }
