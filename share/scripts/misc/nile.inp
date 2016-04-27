@@ -1,24 +1,33 @@
 # open the dataset
+
 open nile.gdt
 
 # set up the local linear trend model with the Nile data
+
 Nile = ksetup({nile}, {1}, {1}, {1})
 Nile.diffuse = 1
 Nile.obsvar = {1}
 
-# initialize the parameters
-scalar s_eta = 40
-scalar s_eps = 120
+# initialize the parameters via the reduced form
+# \Delta y_t = \eta_t + \Delta \epsilon_t
+
+series dnile = diff(nile)
+scalar vd = var(dnile)
+scalar veps = -corr(dnile,dnile(-1))*vd
+scalar s_eps = sqrt(veps)
+scalar s_eta = sqrt(vd - 2*veps)
 
 # estimate the variances via MLE
+
 scalar err = 0
 mle loglik = err ? NA : Nile.llt
     matrix Nile.statevar = s_eta^2
-    matrix Nile.obsvar = s_eps^2    
+    matrix Nile.obsvar = s_eps^2
     err = kfilter(&Nile)
     params s_eta s_eps
 end mle
 
 # extract the smoothed trend
+
 ksmooth(&Nile)
 series nile_trend = Nile.state
