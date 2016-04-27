@@ -587,7 +587,9 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 
     if (*s1 == '\0' || *s2 == '\0') {
 	return FALSE;
-    }    
+    }
+
+    /* revise the default plot title */
 
     if (f == PLOT_FIT_OLS) {
 	title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
@@ -619,7 +621,7 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	g_free(title);
     }
 
-    /* also re-jig the "Lines" tab entries for the fitted line */
+    /* also re-jig the "Lines" tab entries for the revised fitted line */
 
     if (ed->fitformula != NULL && ed->fitlegend != NULL) {
 	set_fit_type_from_combo(GTK_WIDGET(box), spec);
@@ -2860,9 +2862,13 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_entry_set_max_length(GTK_ENTRY(ed->linescale[i]), 6);
 	    double_to_gp_entry(line->scale, ed->linescale[i]);
 	    gtk_entry_set_width_chars(GTK_ENTRY(ed->linescale[i]), 6);
-	    g_signal_connect(G_OBJECT(ed->linescale[i]), "activate", 
-			     G_CALLBACK(apply_gpt_changes), 
-			     ed);
+	    if (line_is_formula(line)) {
+		gtk_widget_set_sensitive(ed->linescale[i], FALSE);
+	    } else {
+		g_signal_connect(G_OBJECT(ed->linescale[i]), "activate", 
+				 G_CALLBACK(apply_gpt_changes), 
+				 ed);
+	    }
 	    hbox = gpt_hboxit(ed->linescale[i]);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
 				      nrows-1, nrows);

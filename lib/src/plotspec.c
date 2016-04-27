@@ -1300,9 +1300,15 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    goto end_print_line;
 	}
 
-	if (na(line->scale)) {
+	if (*line->formula != '\0' &&
+	    !(i==1 && spec->fit == PLOT_FIT_LOESS)) {
+	    /* loess is the only auto-fit type that does not
+	       have a formula: the "fit" is represented by an
+	       array of data
+	    */
 	    fprintf(fp, "%s ", line->formula);
-	} else if (line->scale == 1.0) {
+	} else if (line->scale == 1.0 || na(line->scale)) {
+	    /* line->scale will be NA for loess fit */
 	    fputs("'-' using 1", fp);
 	    if (line->ncols == 5) {
 		/* Note: boxplot candlesticks, hard-wired! */

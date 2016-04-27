@@ -4,9 +4,12 @@ version 2016c, in progress
   some plot editing operations
 - Lags button for exogenous variables in VARs: ensure it's
   sensitive when it's supposed to be
+- Add Nile flow dataset to the package, plus a sample script
+  that estimates the Local Level model  
 - Fix bug: crash on malformed "genr" expression with only a
   type name
-- Add Nile flow dataset to the package
+- Fix bug: gnuplot error on selecting "loess fit" via the
+  GUI plot editor when the plot already has a fitted line
 
 2016-04-14 version 2016b
 - "panel" command, random-effects version: show an overall
