@@ -12,8 +12,8 @@ Nile.obsvar = {1}
 # \Delta y_t = \eta_t + \Delta \epsilon_t
 
 series dnile = diff(nile)
-scalar vd = var(dnile)
-scalar veps = -corr(dnile,dnile(-1))*vd
+scalar    vd = var(dnile)
+scalar  veps = -cov(dnile,dnile(-1))
 scalar s_eps = sqrt(veps)
 scalar s_eta = sqrt(vd - 2*veps)
 
@@ -31,3 +31,18 @@ end mle
 
 ksmooth(&Nile)
 series nile_trend = Nile.state
+
+# plot series with trend and associated 95% confidence band
+
+series nile_trend_se = sqrt(Nile.statevar)
+series hi = nile_trend + 1.96 * nile_trend_se
+series lo = nile_trend - 1.96 * nile_trend_se
+list X = nile nile_trend hi lo
+
+plot X
+    options with-lines time-series
+    literal set linetype 3 lc rgb "#00c0c0"
+    literal set linetype 4 lc rgb "#00c0c0"
+    literal set key right top
+    printf "set title \"%s\"", "Nile data and trend with 95\% confidence band"
+end plot --output=display
