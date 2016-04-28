@@ -1293,8 +1293,12 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	jackknife = 1;
     }
 
-     if (nullmod) {
+    if (nullmod) {
 	gretl_null_regress(&mdl, dset);
+    } else if (0 && libset_get_bool(USE_SVD)) {
+	/* experimental */
+	mdl.rho = rho;
+	gretl_svd_regress(&mdl, dset, opt);
     } else if (!jackknife && (opt & (OPT_R | OPT_I))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
