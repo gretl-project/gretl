@@ -3315,6 +3315,10 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+#if GP_DEBUG
+    fprintf(stderr, "after gpinfo_init: gi.fit = %d\n", gi.fit);
+#endif    
+
     err = maybe_add_plotx(&gi, time_fit, dset);
     if (err) {
 	goto bailout;

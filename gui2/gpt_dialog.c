@@ -530,7 +530,8 @@ static int ftype_from_selected (GtkWidget *w)
     return f;
 }
 
-static int set_fit_type_from_combo (GtkWidget *box, GPT_SPEC *spec)
+static int set_fit_type_from_combo (GtkWidget *box,
+				    GPT_SPEC *spec)
 {
     int oldfit = widget_get_int(box, "oldfit");
     FitType f;
@@ -568,12 +569,22 @@ static int set_fit_type_from_combo (GtkWidget *box, GPT_SPEC *spec)
     return err;
 }
 
+/* In this callback we're reacting to the user's selection of a
+   "fit type" for a plot (that is, to the "changed" signal from
+   the drop-down fit-type selector). We adjust other elements in
+   the plot dialog (the default title, the representations under
+   the "Lines" tab) to match this selection. 
+
+   Note, however, that no changes are being "committed" at this
+   point -- that will happen only if/when the user clicks "Apply"
+   or "OK" in the plot editor dialog action area.
+*/
+
 static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 {
     GPT_SPEC *spec = ed->spec;
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
-    gchar *title = NULL;
     FitType f;
 
     f = ftype_from_selected(GTK_WIDGET(box));
@@ -585,47 +596,50 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	}
     }	
 
-    if (*s1 == '\0' || *s2 == '\0') {
-	return FALSE;
+    if (*s1 != '\0' && *s2 != '\0') {
+	/* revise the default plot title */
+	gchar *title = NULL;
+	
+	if (f == PLOT_FIT_OLS) {
+	    title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
+				    s1, s2);
+	} else if (f == PLOT_FIT_QUADRATIC) {
+	    title = g_strdup_printf(_("%s versus %s (with quadratic fit)"),
+				    s1, s2);
+	} else if (f == PLOT_FIT_CUBIC) {
+	    title = g_strdup_printf(_("%s versus %s (with cubic fit)"),
+				    s1, s2);
+	} else if (f == PLOT_FIT_INVERSE) {
+	    title = g_strdup_printf(_("%s versus %s (with inverse fit)"),
+				    s1, s2);
+	} else if (f == PLOT_FIT_LOESS) {
+	    title = g_strdup_printf(_("%s versus %s (with loess fit)"),
+				    s1, s2);
+	} else if (f == PLOT_FIT_LOGLIN) {
+	    title = g_strdup_printf(_("%s versus %s (with semilog fit)"),
+				    s1, s2);
+	} else if (f == PLOT_FIT_LINLOG) {
+	    title = g_strdup_printf(_("%s versus %s (with linear-log fit)"),
+				    s1, s2);
+	} else {
+	    title = g_strdup("");
+	}
+
+	if (title != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(ed->gpt_titles[0].widget), title);
+	    g_free(title);
+	}
     }
 
-    /* revise the default plot title */
-
-    if (f == PLOT_FIT_OLS) {
-	title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
-		s1, s2);
-    } else if (f == PLOT_FIT_QUADRATIC) {
-	title = g_strdup_printf(_("%s versus %s (with quadratic fit)"),
-		s1, s2);
-    } else if (f == PLOT_FIT_CUBIC) {
-	title = g_strdup_printf(_("%s versus %s (with cubic fit)"),
-		s1, s2);
-    } else if (f == PLOT_FIT_INVERSE) {
-	title = g_strdup_printf(_("%s versus %s (with inverse fit)"),
-		s1, s2);
-    } else if (f == PLOT_FIT_LOESS) {
-	title = g_strdup_printf(_("%s versus %s (with loess fit)"),
-		s1, s2);
-    } else if (f == PLOT_FIT_LOGLIN) {
-	title = g_strdup_printf(_("%s versus %s (with semilog fit)"),
-		s1, s2);
-    } else if (f == PLOT_FIT_LINLOG) {
-	title = g_strdup_printf(_("%s versus %s (with linear-log fit)"),
-		s1, s2);
-    } else {
-	title = g_strdup("");
-    }
-
-    if (title != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(ed->gpt_titles[0].widget), title);
-	g_free(title);
-    }
-
-    /* also re-jig the "Lines" tab entries for the revised fitted line */
+    /* re-jig the "Lines" tab entries for the revised fitted line */
 
     if (ed->fitformula != NULL && ed->fitlegend != NULL) {
 	set_fit_type_from_combo(GTK_WIDGET(box), spec);
-	gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
+	if (f == PLOT_FIT_LOESS || f == PLOT_FIT_NONE) {
+	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), "");
+	} else {
+	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
+	}
 	gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
     }
     
@@ -1124,6 +1138,11 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     if (!err && ed->fitcombo != NULL && gtk_widget_is_sensitive(ed->fitcombo)) {
 	err = set_fit_type_from_combo(ed->fitcombo, spec);
+	if ((spec->fit == PLOT_FIT_NONE || spec->fit == PLOT_FIT_LOESS) &&
+	    ed->fitformula != NULL && spec->n_lines > 1) {
+	    /* scrub irrelevant formula, if any */
+	    spec->lines[1].formula[0] = '\0';
+	}
     }
 
     if (!err && ed->bars_check != NULL) {
