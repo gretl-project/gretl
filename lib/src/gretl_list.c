@@ -1742,7 +1742,8 @@ static int list_count (const int *list)
  * Returns: new list on success, NULL on error.
  */
 
-int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
+int *gretl_list_omit (const int *orig, const int *omit,
+		      int minpos, int *err)
 {
     int n_omit = omit[0];
     int n_orig = list_count(orig);

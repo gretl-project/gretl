@@ -7414,14 +7414,11 @@ int gretl_matrix_psd_root (gretl_matrix *a)
     return err;
 }
 
-#if 0 /* experimental */
-
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 				  int **order)
 {
     integer m = M->rows;
     integer n = M->cols;
-
     integer info = 0;
     integer lwork = -1;
     integer lda = m;
@@ -7429,7 +7426,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     doublereal *tau = NULL;
     doublereal *work = NULL;
     integer *jpvt = NULL;
-
     int i, j;
     int moved = 0;
     int err = 0;
@@ -7438,9 +7434,11 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 	return E_NONCONF;
     }
 
+    fprintf(stderr, "QR decomp: using pivoting\n");
+
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
     if (tau == NULL || work == NULL || iwork == NULL) {
@@ -7448,13 +7446,18 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 	goto bailout;
     }
 
-    /* workspace size query */
+    /* pivot array */
     jpvt = malloc(n * sizeof *jpvt);
     if (jpvt == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
+    for (i=0; i<n; i++) {
+	jpvt[i] = 0;
+    }
+
+    /* workspace size query */
     dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dgeqp3: info = %d\n", (int) info);
@@ -7501,12 +7504,11 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
  bailout:
 
     free(tau);
-    free(work);
+    lapack_free(work);
     free(iwork);
 
     for (i=0; i<n; i++) {
 	if (jpvt[i] != i + 1) {
-	    fprintf(stderr, "column was moved\n");
 	    moved = 1;
 	}
     }
@@ -7526,8 +7528,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 
     return err;
 }
-
-#endif
 
 /**
  * gretl_matrix_QR_decomp:

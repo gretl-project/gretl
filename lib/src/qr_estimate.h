@@ -22,8 +22,6 @@
 
 int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt);
 
-int gretl_svd_regress (MODEL *pmod, DATASET *dset, gretlopt opt);
-
 int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt);
 
 int qr_matrix_hccme (const gretl_matrix *X,

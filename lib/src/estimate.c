@@ -1295,10 +1295,9 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, dset);
-    } else if (0 && libset_get_bool(USE_SVD)) {
-	/* experimental */
+    } else if (getenv("GRETL_USE_QR")) {
 	mdl.rho = rho;
-	gretl_svd_regress(&mdl, dset, opt);
+	gretl_qr_regress(&mdl, dset, opt);
     } else if (!jackknife && (opt & (OPT_R | OPT_I))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
