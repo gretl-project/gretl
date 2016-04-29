@@ -103,7 +103,7 @@
 */
 
 #define TINY      8.0e-09 /* was 2.1e-09 (last changed 2007/01/20) */
-#define SMALL     1.0e-08 /* threshold for printing a warning for collinearity */
+#define SMALL     2.0e-08 /* threshold for printing a warning for collinearity */
 #define YBARZERO  0.5e-14 /* threshold for treating mean of dependent
 			     variable as effectively zero */
 #define ESSZERO   1.0e-22 /* threshold for considering a tiny error-sum-of-
@@ -1651,7 +1651,7 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
     double *xpx = pmod->xpx;
-    double *coeff = pmod->coeff;
+    double *b = pmod->coeff;
     int nc = pmod->ncoeff;
 
     if (xpx[0] <= 0.0) {
@@ -1723,18 +1723,18 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
 
     /* back-solve for the coefficients */
 
-    coeff[nc-1] = xpy[nc-1] * xpx[kk];
+    b[nc-1] = xpy[nc-1] * xpx[kk];
 
     for (j=nc-2; j>=0; j--) {
 	d = xpy[j];
 	for (i=nc-1; i>j; i--) {
-	    d -= coeff[i] * xpx[--kk];
+	    d -= b[i] * xpx[--kk];
 	}
-	coeff[j] = d * xpx[--kk];
+	b[j] = d * xpx[--kk];
     }
 
     for (j=0; j<nc; j++) {
-	if (isnan(coeff[j])) {
+	if (isnan(b[j])) {
 	    fprintf(stderr, "%s %d: coeff %d is NaN\n", __FILE__, __LINE__, j);
 	    return E_NAN;
 	}

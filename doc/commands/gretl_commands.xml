@@ -11224,6 +11224,18 @@
 	  </para>
 	</li>
 	<li>
+	  <para>
+	    <lit>force_qr</lit>: <lit>on</lit> or <lit>off</lit> (the
+	    default). This applies to the <cmdref targ="ols"/>
+	    command. By default this command computes OLS estimates
+	    using Cholesky decomposition (the fastest method), with a
+	    fallback to QR if the data seem too ill-conditioned. You
+	    can use <lit>force_qr</lit> to skip the Cholesky step; in
+	    <quote>doubtful</quote> cases this may ensure greater
+	    accuracy.
+	  </para>
+	</li>	
+	<li>
 	  <para><lit>fcp</lit>: <lit>on</lit> or <lit>off</lit> (the
 	    default). Use the algorithm of Fiorentini, Calzolari and
 	    Panattoni rather than native gretl code when computing
