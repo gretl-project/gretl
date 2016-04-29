@@ -56,8 +56,9 @@ enum {
     STATE_FORCE_DECPOINT  = 1 << 3,  /* override locale decimal separator */
     STATE_USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
     STATE_USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
-    STATE_PREWHITEN       = 1 << 6,  /* HAC pre-whitening? */
-    STATE_FORCE_HC        = 1 << 7,  /* don't use HAC for time series */
+    STATE_USE_QR          = 1 << 6,  /* QR decomp is least-squares command default */
+    STATE_PREWHITEN       = 1 << 7,  /* HAC pre-whitening? */
+    STATE_FORCE_HC        = 1 << 8,  /* don't use HAC for time series */
     STATE_USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
     STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
     STATE_MAX_VERBOSE     = 1 << 11, /* verbose output from maximizer? */
@@ -145,6 +146,7 @@ struct set_vars_ {
 			   !strcmp(s, PCSE) || \
 			   !strcmp(s, PREWHITEN) || \
 			   !strcmp(s, USE_SVD) || \
+			   !strcmp(s, USE_QR) || \
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
 			   !strcmp(s, USE_FCP) || \
@@ -1558,6 +1560,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(LBFGS_MEM, prn, opt);
     libset_print_double(NLS_TOLER, prn, opt);
     libset_print_bool(USE_SVD, prn, opt);
+    libset_print_bool(USE_QR, prn, opt);
     libset_print_bool(USE_FCP, prn, opt);
     libset_print_bool(DPDSTYLE, prn, opt);
     libset_print_double(NADARWAT_TRIM, prn, opt);
@@ -2129,6 +2132,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_WARN_ON;
     } else if (!strcmp(s, USE_SVD)) {
 	return STATE_USE_SVD;
+    } else if (!strcmp(s, USE_QR)) {
+        return STATE_USE_QR;
     } else if (!strcmp(s, USE_LBFGS)) {
 	return STATE_USE_LBFGS;
     } else if (!strcmp(s, FORCE_DECP)) {
@@ -2190,6 +2195,8 @@ static void maybe_check_env (const char *s)
 {
     if (!strcmp(s, USE_SVD)) {
 	set_flag_from_env(STATE_USE_SVD, "GRETL_USE_SVD", 0);
+    } else if (!strcmp(s, USE_QR)) {
+        set_flag_from_env(STATE_USE_QR, "GRETL_USE_QR", 0);
     } else if (!strcmp(s, USE_LBFGS)) {
 	set_flag_from_env(STATE_USE_LBFGS, "GRETL_USE_LBFGS", 0);
     }
