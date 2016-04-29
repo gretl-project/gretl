@@ -1300,30 +1300,42 @@ static int QR_decomp_plus (gretl_matrix *Q,
 
 static int drop_redundant_vars (MODEL *pmod,
 				gretl_matrix *R,
-				const DATASET *dset,
 				int *order)
 {
     int *droplist = NULL;
     int i, vi, nd = 0;
+    int k = R->rows;
     double d;
     int err = 0;
 
 #if REDEBUG
-    printlist(pmod->list, "pmod->list, into drop_redundant_vars");
+    printlist(pmod->list, "model list in drop_redundant_vars");
+    gretl_matrix_print(R, "R");
 #endif
 
-    for (i=0; i<R->rows; i++) {
-	d = gretl_matrix_get(R, i, i);
-	if (fabs(d) < R_DIAG_MIN) {
-	    if (order != NULL) {
-		vi = pmod->list[order[i+2]];
+    if (order != NULL) {
+	/* the smallest diagonal values will be furthest
+	   to the right, with pivoting 
+	*/
+	for (i=k-1; i>0; i--) {
+	    d = gretl_matrix_get(R, i, i);
+	    if (fabs(d) < R_DIAG_MIN) {
+		vi = pmod->list[order[i]+2];
+		gretl_list_append_term(&droplist, vi);
+		nd++;
 	    } else {
-		vi = pmod->list[i+2];
+		break;
 	    }
-	    gretl_list_append_term(&droplist, vi);
-	    fprintf(stderr, "dropping redundant variable %d (%s)\n",
-		    vi, dset->varname[vi]);
-	    nd++;
+	}
+    } else {
+	/* the smallest diagonal values could be anywhere */
+	for (i=0; i<k; i++) {
+	    d = gretl_matrix_get(R, i, i);
+	    if (fabs(d) < R_DIAG_MIN) {
+		vi = pmod->list[i+2];
+		gretl_list_append_term(&droplist, vi);
+		nd++;
+	    }
 	}
     }
 
@@ -1348,7 +1360,8 @@ static int drop_redundant_vars (MODEL *pmod,
    with column interchanges, and columns have actually been
    permuted. However, I'm not sure (2016-04-28) that use
    of pivoting is actually worthwhile; as of now it's not
-   user-accessible. AC.
+   user-accessible except by setting the environment
+   variable GRETL_QR_PIVOT.
 */
 
 static int reorder_betahat (MODEL *pmod, gretl_matrix *b,
@@ -1427,16 +1440,20 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     get_model_data(pmod, dset, Q, y);
 
-    if (0 && (opt & OPT_V)) {
-	/* use column piVoting: not sure this is worthwhile */
+    if (getenv("GRETL_QR_PIVOT")) {
+	/* use column piVoting */
 	orderp = &order;
     }
 
     err = QR_decomp_plus(Q, R, &rank, &warn, orderp);
 
+    if (order != NULL) {
+	fprintf(stderr, "QR: columns are permuted\n");
+    }
+
     /* handling of near-perfect collinearity */
     if (err == E_SINGULAR && !(opt & OPT_Z)) {
-	drop_redundant_vars(pmod, R, dset, order);
+	drop_redundant_vars(pmod, R, order);
 	k = pmod->list[0] - 1;
 	gretl_matrix_reuse(Q, T, k);
 	gretl_matrix_reuse(R, k, k);
@@ -1444,6 +1461,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 	get_model_data(pmod, dset, Q, y);
 	if (order != NULL) {
 	    free(order);
+	    order = NULL;
 	}
 	err = QR_decomp_plus(Q, R, &rank, &warn, orderp);
 	if (!err) {
@@ -1552,117 +1570,6 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     return err;    
 }
-
-#if 0
-
-/* Experimental: could be used to extend "set svd on" to
-   govern the basic "ols" command, along with other least
-   squares methods that use lsq(). However, we first need
-   to find the best way of producing the "hat" matrix (for
-   HCCM use) when not doing QR. Also would be good to figure
-   a means of successively dropping collinear terms, as 
-   with QR, rather than simply rejecting the case of a
-   rank-deficient X.
-*/
-
-int gretl_svd_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
-{
-    integer T, k;
-    gretl_matrix *y = NULL;
-    gretl_matrix *X = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *V = NULL;
-    int err = 0;
-
-    T = pmod->nobs;        /* # of rows (observations) */
-    k = pmod->list[0] - 1; /* # of cols (variables) */
-
-    y = gretl_matrix_alloc(T, 1);
-    X = gretl_matrix_alloc(T, k);
-    V = gretl_matrix_alloc(k, k);
-    b = gretl_matrix_alloc(k, 1);
-
-    if (y == NULL || X == NULL || V == NULL || b == NULL) {
-	err = E_ALLOC;
-	goto svd_cleanup;
-    }
-
-    get_model_data(pmod, dset, X, y);
-
-    /* @V should hold X'X */
-    err = gretl_matrix_SVD_ols(y, X, b, V, NULL, NULL);
-
-    if (!err) {
-	err = allocate_model_arrays(pmod, k, dset->n);
-    }
-
-    if (err) {
-	goto svd_cleanup;
-    }
-
-    /* write vector of fitted values into y */
-    gretl_matrix_multiply(X, b, y);
-
-    pmod->coeff = gretl_matrix_steal_data(b);
-
-    /* get SSR */
-    get_resids_and_SSR(pmod, dset, y, dset->n);
-
-    /* standard error of regression */
-    if (T - k > 0) {
-	if (pmod->opt & OPT_N) {
-	    /* no-df-corr */
-	    pmod->sigma = sqrt(pmod->ess / T);
-	} else {
-	    pmod->sigma = sqrt(pmod->ess / (T - k));
-	}
-    } else {
-	pmod->sigma = 0.0;
-    }
-
-    /* VCV and standard errors */
-    if (opt & OPT_R) { 
-	pmod->opt |= OPT_R;
-	if (opt & OPT_C) {
-	    err = qr_make_cluster_vcv(pmod, OLS, dset, V, opt);
-	} else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
-	    err = qr_make_hac(pmod, dset, V);
-	} else {
-#if 0
-	    /* requires the Q matrix */
-	    err = qr_make_hccme(pmod, dset, Q, V);
-#else
-	    err = E_DATA;
-#endif
-	}
-    } else {
-	err = qr_make_regular_vcv(pmod, V, opt);
-    }
-
-    if (!err) {
-	/* get R^2, F-stat */
-	qr_compute_stats(pmod, dset, T, opt);
-#if 0 /* requires the Q matrix */
-	/* D-W stat and p-value */
-	if ((opt & OPT_I) && pmod->missmask == NULL) {
-	    qr_dw_stats(pmod, dset, Q, y);
-	}
-#endif	
-    }
-
- svd_cleanup:
-
-    gretl_matrix_free(y);
-    gretl_matrix_free(X);
-    gretl_matrix_free(b);
-    gretl_matrix_free(V);
-
-    pmod->errcode = err;
-
-    return err;    
-}
-
-#endif
 
 int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 {

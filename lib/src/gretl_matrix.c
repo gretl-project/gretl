@@ -7434,7 +7434,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 	return E_NONCONF;
     }
 
-    fprintf(stderr, "QR decomp: using pivoting\n");
+    fprintf(stderr, "QR decomp: allowing for pivoting\n");
 
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
