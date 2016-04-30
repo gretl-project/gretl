@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include <matrix_extra.h>
 
 #define TRDEBUG 0
 
@@ -1528,6 +1529,57 @@ int list_resample (int *list, DATASET *dset)
     destroy_mangled_names();
 
     return (list[0] > 0)? 0 : E_DATA;
+}
+
+/**
+ * list_dropcoll:
+ * @list: list of variables to process.
+ * @dset: dataset struct.
+ *
+ * Drop collinear variables from @list.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int list_dropcoll (int *list, DATASET *dset)
+{
+    int i, j, n, err = 0;
+    double rii;
+    double eps = 1.0e-14;
+    gretl_matrix *X = NULL;
+
+    X = gretl_matrix_data_subset (list, dset, dset->t1, dset->t2,
+				  M_MISSING_SKIP, &err);
+
+    if (err || X == NULL) {
+	return err;
+    }
+
+    n = list[0];
+    gretl_matrix *R = gretl_matrix_alloc(n, n);
+    if (R == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+    
+    err = gretl_matrix_QR_decomp(X, R);
+    if (err) {
+	goto bailout;
+    }
+
+    j = 1;
+    for (i=0; i<n; i++, j++) {
+	rii = gretl_matrix_get(R, i, i);
+	if (fabs(rii) < eps) {
+	    err = gretl_list_delete_at_pos(list, j--);
+	}
+    }
+    
+ bailout:
+    gretl_matrix_free(X);
+    gretl_matrix_free(R);
+    
+    return err;
 }
 
 #define DUMDEBUG 0

@@ -4461,7 +4461,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 #define ok_list_func(f) (f == F_LOG || f == F_DIFF || \
 			 f == F_LDIFF || f == F_SDIFF || \
 			 f == F_SQUARE || f == F_ODEV || \
-			 f == F_RESAMPLE)
+			 f == F_RESAMPLE || f == F_DROPCOLL)
 
 /* functions that are "basically" for series, but which
    can also be applied to lists */
@@ -4513,6 +4513,9 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 		    break;
 		case F_RESAMPLE:
 		    p->err = list_resample(list, p->dset);
+		    break;
+		case F_DROPCOLL:
+		    p->err = list_dropcoll(list, p->dset);
 		    break;
 		default:
 		    break;
@@ -11883,6 +11886,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LDIFF:
     case F_SDIFF:
     case F_ODEV:
+    case F_DROPCOLL:
 	if (l->t == SERIES && cast_series_to_list(p, l, t->t)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
