@@ -1545,7 +1545,7 @@ int list_dropcoll (int *list, DATASET *dset)
 {
     int i, j, n, err = 0;
     double rii;
-    double eps = 1.0e-14;
+    double eps = 1.0e-10;
     gretl_matrix *X = NULL;
 
     X = gretl_matrix_data_subset (list, dset, dset->t1, dset->t2,
