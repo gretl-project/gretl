@@ -4463,8 +4463,10 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 			 f == F_SQUARE || f == F_ODEV || \
 			 f == F_RESAMPLE || f == F_DROPCOLL)
 
-/* functions that are "basically" for series, but which
-   can also be applied to lists */
+/* The following handles functions that are "basically" for series,
+   but which can also be applied to lists -- except for F_DROPCOLL,
+   which requires a list argument.
+*/
 
 static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4486,7 +4488,8 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 	    }
 	}
 
-	/* note: list is modified below */
+	/* note: @list is modified by the library functions
+	   called below */
 
 	if (list != NULL) {
 	    /* note: an empty list argument produces an
@@ -11886,7 +11889,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_LDIFF:
     case F_SDIFF:
     case F_ODEV:
-    case F_DROPCOLL:
 	if (l->t == SERIES && cast_series_to_list(p, l, t->t)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
@@ -11896,6 +11898,14 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	} 
+	break;
+    case F_DROPCOLL:
+	/* list argument is required */
+	if (l->t == LIST || l->t == WLIST) {
+	    ret = apply_list_func(l, NULL, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, LIST, l, p);
+	}
 	break;
     case F_HPFILT:
     case F_FRACDIFF:

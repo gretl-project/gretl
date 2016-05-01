@@ -1533,7 +1533,8 @@ int list_resample (int *list, DATASET *dset)
 
 /**
  * list_dropcoll:
- * @list: list of variables to process.
+ * @list: on entry, list of variables to process; on exit,
+ * the origonal list minus collinear terms.
  * @dset: dataset struct.
  *
  * Drop collinear variables from @list.
@@ -1543,39 +1544,44 @@ int list_resample (int *list, DATASET *dset)
 
 int list_dropcoll (int *list, DATASET *dset)
 {
-    int i, j, n, err = 0;
-    double rii;
-    double eps = 1.0e-10;
-    gretl_matrix *X = NULL;
+    gretl_matrix *R;
+    gretl_matrix *X;
+    int n, err = 0;
 
-    X = gretl_matrix_data_subset (list, dset, dset->t1, dset->t2,
-				  M_MISSING_SKIP, &err);
+    if (list == NULL) {
+	return E_DATA;
+    } else if (list[0] < 2) {
+	/* no-op */
+	return 0;
+    }
 
-    if (err || X == NULL) {
+    X = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
+				 M_MISSING_SKIP, &err);
+    if (err) {
 	return err;
     }
 
     n = list[0];
-    gretl_matrix *R = gretl_matrix_alloc(n, n);
+    R = gretl_matrix_alloc(n, n);
+    
     if (R == NULL) {
 	err = E_ALLOC;
-	goto bailout;
+    } else {
+	err = gretl_matrix_QR_decomp(X, R);
     }
     
-    err = gretl_matrix_QR_decomp(X, R);
-    if (err) {
-	goto bailout;
-    }
-
-    j = 1;
-    for (i=0; i<n; i++, j++) {
-	rii = gretl_matrix_get(R, i, i);
-	if (fabs(rii) < eps) {
-	    err = gretl_list_delete_at_pos(list, j--);
+    if (!err) {
+	double rii, eps = 1.0e-10;
+	int i, j = 1;
+	
+	for (i=0; i<n; i++, j++) {
+	    rii = gretl_matrix_get(R, i, i);
+	    if (fabs(rii) < eps) {
+		err = gretl_list_delete_at_pos(list, j--);
+	    }
 	}
     }
     
- bailout:
     gretl_matrix_free(X);
     gretl_matrix_free(R);
     
