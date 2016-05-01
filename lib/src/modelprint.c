@@ -752,10 +752,14 @@ static int least_significant_coeff (const MODEL *pmod)
     }
 
     /* Don't go beyond the last _listed_ regressor: some
-       models have "extra" coefficients that should be
+       models may have "extra" coefficients that should be
        ignored here.
     */
     imax = pmod->list[0] - 1 - pmod->ifc;
+    if (imax >= pmod->ncoeff) {
+	/* FIXME? */
+	imax = pmod->ncoeff - 1;
+    }
 
     for (i=pmod->ifc; i<=imax; i++) {
 	if (pmod->sderr[i] > 0) {
