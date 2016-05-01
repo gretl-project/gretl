@@ -1535,7 +1535,9 @@ static void uncentered_r_squared (MODEL *pmod, const DATASET *dset)
     /* special computation for the case of TSS = 0, i.e.
        the dependent variable is a constant */
 
-    if (y0 > 0) {
+    fprintf(stderr, "HERE uncentered_r_squared, y0 = %g\n", y0);
+
+    if (y0 != 0) {
 	double tss = pmod->nobs * y0 * y0;
 
 	pmod->rsq = 1 - (pmod->ess / tss);
@@ -1547,6 +1549,8 @@ static void compute_r_squared (MODEL *pmod, const DATASET *dset,
 			       int *ifc)
 {
     int yno = pmod->list[1];
+
+    fprintf(stderr, "HERE compute_r_squared\n");
 
     pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
 

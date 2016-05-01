@@ -982,9 +982,42 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
     }
 }
 
-static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
+static void mp_uncentered_r_squared (MODEL *pmod,
+				     MPMODEL *mpmod,
+				     const DATASET *dset)
+{
+    double y0 = dset->Z[pmod->list[1]][pmod->t1];
+
+    /* special computation for the case of TSS = 0, i.e.
+       the dependent variable is a constant */
+
+    if (y0 != 0) {
+	mpf_t my0, tmp, tmp2;
+
+	/* TSS = n * y_0^2 */
+	mpf_init_set_d(my0, y0);
+	mpf_init(tmp);
+	mpf_mul(tmp, my0, my0);
+	mpf_init_set_d(tmp2, (double) pmod->nobs);
+	mpf_mul(mpmod->tss, tmp, tmp2);
+
+	mpf_div(tmp, mpmod->ess, mpmod->tss);
+	mpf_set_d(tmp2, 1.0);
+	mpf_sub(mpmod->rsq, tmp2, tmp);
+
+	pmod->rsq = mpf_get_d(mpmod->rsq);
+	gretl_model_set_int(pmod, "uncentered", 1);
+
+	mpf_clear(my0);
+	mpf_clear(tmp);
+	mpf_clear(tmp2);
+    }
+}
+
+static int copy_mp_results (MPMODEL *mpmod, MODEL *pmod,
 			    const DATASET *dset, mpf_t **mpZ,
-			    char **xnames, gretlopt opt)
+			    char **xnames, int lhconst,
+			    gretlopt opt)
 {
     int tseries = dataset_is_time_series(dset);
     int i, err = 0;
@@ -1034,6 +1067,10 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 	    mp_ll_stats(mpmod, pmod);
 	    mp_makevcv(mpmod, pmod, NULL, NULL);
 	}
+    }
+
+    if (lhconst) {
+	mp_uncentered_r_squared(pmod, mpmod, dset);
     }
 
     return err;
@@ -1331,13 +1368,15 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
     mpf_clear(tmp);
 }
 
-static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
+static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
+			int *plhconst)
 {
     int i, v, nobs, nv;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
     mpf_t den, sgmasq, tmp;
     double ess;
     MPCHOLBETA cb;
+    int lhconst = 0;
 
     nv = xpxxpy.nv;
 
@@ -1381,8 +1420,11 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
     mpf_set_d(tmp, (double) nobs);
     mpf_div(zz, zz, tmp);
     mpf_sub(tss, ypy, zz);
-    if (mpf_sgn(tss) < 0) {
-	fprintf(stderr, "mpols: tss(1) = %g\n", mpf_get_d(tss));
+
+    if (mpf_sgn(tss) == 0) {
+	lhconst = 1;
+    } else if (mpf_sgn(tss) < 0) {
+	fprintf(stderr, "mpols: TSS = %g\n", mpf_get_d(tss));
         pmod->errcode = E_TSS; 
         return; 
     }
@@ -1426,13 +1468,9 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
 	mpf_mul(den, tss, tmp);
     }
 
-    if (mpf_sgn(tss) <= 0) {
-	/* FIXME case of constant on LHS? */
+    if (lhconst) {
 	mpf_set_d(pmod->rsq, NADBL);
 	mpf_set_d(pmod->adjrsq, NADBL);
-	fprintf(stderr, "mpols: tss(2) = %g\n", mpf_get_d(tss));
-	pmod->errcode = E_TSS;
-	return;
     }       
 
     if (pmod->errcode) {
@@ -1445,7 +1483,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
 	mpf_sub(pmod->rsq, MPF_ONE, tmp);
     }
 
-    if (pmod->dfd > 0) {
+    if (pmod->dfd > 0 && !lhconst) {
 	mpf_set_d(tmp, (double) (nobs - 1));
 	mpf_div(tmp, tmp, den);
 	mpf_mul(tmp, tmp, pmod->ess);
@@ -1512,6 +1550,10 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
     mpf_clear(rss);
     mpf_clear(tss);
     mpf_clear(tmp);
+
+    if (plhconst != NULL) {
+	*plhconst = lhconst;
+    }
     
     return;  
 }
@@ -1593,6 +1635,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     int orig_t1 = dset->t1;
     int orig_t2 = dset->t2;
     int missvals = 0;
+    int lhconst = 0;
     int err = 0;
 
     gretl_error_clear();
@@ -1680,7 +1723,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     xpxxpy = mp_xpxxpy_func(mpmod.list, mpmod.nobs, mpZ);
     mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
-    mp_regress(&mpmod, xpxxpy);
+    mp_regress(&mpmod, xpxxpy, &lhconst);
 
     for (i=0; i<=l0; i++) {
 	mpf_clear(xpxxpy.xpy[i]);
@@ -1689,7 +1732,8 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 
     err = mpmod.errcode;
     if (!err) {
-	err = copy_mp_results(&mpmod, pmod, dset, mpZ, xnames, opt);
+	err = copy_mp_results(&mpmod, pmod, dset, mpZ, xnames,
+			      lhconst, opt);
     } 
 
     /* free all the mpf stuff */
@@ -1754,7 +1798,7 @@ int matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
     xpxxpy = mp_xpxxpy_func(mpmod.list, T, mpZ);
     mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
-    mp_regress(&mpmod, xpxxpy);
+    mp_regress(&mpmod, xpxxpy, NULL);
 
     for (i=0; i<=l0; i++) {
 	mpf_clear(xpxxpy.xpy[i]);
