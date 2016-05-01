@@ -1542,8 +1542,9 @@ int list_resample (int *list, DATASET *dset)
  * Returns: 0 on success, error code on error.
  */
 
-int list_dropcoll (int *list, DATASET *dset)
+int list_dropcoll (int *list, double eps, DATASET *dset)
 {
+    double eps_default = 1.0e-10;
     gretl_matrix *R;
     gretl_matrix *X;
     int n, err = 0;
@@ -1553,6 +1554,12 @@ int list_dropcoll (int *list, DATASET *dset)
     } else if (list[0] < 2) {
 	/* no-op */
 	return 0;
+    }
+
+    if (eps < 0) {
+	return E_DATA;
+    } else if (na(eps)) {
+	eps = eps_default;
     }
 
     X = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
@@ -1571,9 +1578,9 @@ int list_dropcoll (int *list, DATASET *dset)
     }
     
     if (!err) {
-	double rii, eps = 1.0e-10;
+	double rii;
 	int i, j = 1;
-	
+
 	for (i=0; i<n; i++, j++) {
 	    rii = gretl_matrix_get(R, i, i);
 	    if (fabs(rii) < eps) {

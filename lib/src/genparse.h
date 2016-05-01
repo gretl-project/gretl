@@ -285,7 +285,6 @@ enum {
     F_ARRAY,
     F_STRVALS,
     F_TRAMOLIN,
-    F_DROPCOLL,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -365,6 +364,7 @@ enum {
     F_STRINGIFY,
     F_SQUARE,
     F_SEASONALS,
+    F_DROPCOLL,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

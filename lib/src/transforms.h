@@ -42,7 +42,7 @@ int list_orthdev (int *list, DATASET *dset);
 
 int list_resample (int *list, DATASET *dset);
 
-int list_dropcoll (int *list, DATASET *dset);
+int list_dropcoll (int *list, double eps, DATASET *dset);
 
 int list_laggenr (int **plist, int order, DATASET *dset, gretlopt opt);
 

@@ -4480,11 +4480,17 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
 	gretlopt opt = OPT_NONE;
+	double parm = NADBL;
 	int t = 0;
 
 	if (f == F_SQUARE) {
 	    if (r != NULL && node_is_true(r, p)) {
 		opt = OPT_O;
+	    }
+	} else if (f == F_DROPCOLL && !null_or_empty(r)) {
+	    parm = node_get_scalar(r, p);
+	    if (p->err) {
+		return ret;
 	    }
 	}
 
@@ -4518,7 +4524,7 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 		    p->err = list_resample(list, p->dset);
 		    break;
 		case F_DROPCOLL:
-		    p->err = list_dropcoll(list, p->dset);
+		    p->err = list_dropcoll(list, parm, p->dset);
 		    break;
 		default:
 		    break;
@@ -11900,9 +11906,10 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_DROPCOLL:
-	/* list argument is required */
+	/* list argument is required on left, optional scalar
+	   on the right */
 	if (l->t == LIST || l->t == WLIST) {
-	    ret = apply_list_func(l, NULL, t->t, p);
+	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, LIST, l, p);
 	}
