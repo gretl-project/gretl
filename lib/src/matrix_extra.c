@@ -495,7 +495,8 @@ static void add_dataset_colnames (gretl_matrix *M,
 static gretl_matrix *
 real_gretl_matrix_data_subset (const int *list, 
 			       const DATASET *dset,
-			       int t1, int t2, const char *mask,
+			       int t1, int t2,
+			       const char *mask,
 			       int op, int *err)
 {
     gretl_matrix *M;
