@@ -274,7 +274,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
     /* start Z-column and x-name counters */
     j = xn = 0;
 
-    if (mpmod->ifc) {
+    if (mpmod->ifc || mpmod->list[1] == 0) {
 	/* handle the constant first */
 	for (t=0; t<n; t++) {
 	    mpf_init_set_d(mpZ[j][t], 1.0);
@@ -1372,7 +1372,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
     pmod->dfn = nv - pmod->ifc;
     mpf_set(ysum, xpxxpy.xpy[0]);
     mpf_set(ypy, xpxxpy.xpy[nv + 1]);
-    if (mpf_sgn(ypy) == 0) { 
+    if (mpf_sgn(ypy) == 0) {
         pmod->errcode = E_ZERO;
         return; 
     }
@@ -1381,7 +1381,8 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
     mpf_set_d(tmp, (double) nobs);
     mpf_div(zz, zz, tmp);
     mpf_sub(tss, ypy, zz);
-    if (mpf_sgn(tss) < 0) { 
+    if (mpf_sgn(tss) < 0) {
+	fprintf(stderr, "mpols: tss(1) = %g\n", mpf_get_d(tss));
         pmod->errcode = E_TSS; 
         return; 
     }
@@ -1426,8 +1427,10 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
     }
 
     if (mpf_sgn(tss) <= 0) {
+	/* FIXME case of constant on LHS? */
 	mpf_set_d(pmod->rsq, NADBL);
 	mpf_set_d(pmod->adjrsq, NADBL);
+	fprintf(stderr, "mpols: tss(2) = %g\n", mpf_get_d(tss));
 	pmod->errcode = E_TSS;
 	return;
     }       
@@ -1437,8 +1440,10 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
 	return;
     }
 
-    mpf_div(tmp, pmod->ess, tss);
-    mpf_sub(pmod->rsq, MPF_ONE, tmp);
+    if (mpf_sgn(tss) > 0) {
+	mpf_div(tmp, pmod->ess, tss);
+	mpf_sub(pmod->rsq, MPF_ONE, tmp);
+    }
 
     if (pmod->dfd > 0) {
 	mpf_set_d(tmp, (double) (nobs - 1));
