@@ -755,13 +755,9 @@ static int least_significant_coeff (const MODEL *pmod)
        models may have "extra" coefficients that should be
        ignored here.
     */
-    imax = pmod->list[0] - 1 - pmod->ifc;
-    if (imax >= pmod->ncoeff) {
-	/* FIXME? */
-	imax = pmod->ncoeff - 1;
-    }
+    imax = pmod->list[0] - 1;
 
-    for (i=pmod->ifc; i<=imax; i++) {
+    for (i=pmod->ifc; i<imax; i++) {
 	if (pmod->sderr[i] > 0) {
 	    x = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (x < tmin) {
