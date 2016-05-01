@@ -8179,7 +8179,7 @@
       <options>
 	<option>
 	  <flag>--preserve</flag>
-	  <effect>preserve matrices</effect>
+	  <effect>preserve variables other than series</effect>
         </option>
       </options>
       <examples>
@@ -8200,9 +8200,11 @@
 	command.
       </para>
       <para>
-	By default, this command cleans out all data in gretl's current
-	workspace.  If you give the <opt>preserve</opt> option, however,
-	any currently defined matrices are retained.
+	By default, this command cleans out all data in gretl's
+	current workspace: not only series but also matrices, scalars,
+	strings, etc.  If you give the <opt>preserve</opt> option,
+	however, any currently defined variables other than series are
+	retained.
       </para>
     </description>
 
