@@ -1,0 +1,350 @@
+topsrc = ../..
+datarootdir = ${prefix}/share
+
+CC = gcc
+CFLAGS = -g -O2
+LDFLAGS = 
+MAKE = make
+XML_CFLAGS = -I/usr/include/libxml2
+XML_LIBS = -lxml2
+XSLT_CFLAGS = -I/usr/include/libxml2
+XSLT_LIBS = -lxslt -lxml2
+GLIB_CFLAGS = -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
+GLIB_LIBS = -lglib-2.0
+
+SSE2_OPT = -msse2
+OMP_OPT = -fopenmp
+
+CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
+
+prefix = /usr/local
+datadir = ${datarootdir}
+localedir = $(datadir)/locale
+
+GRETLINC = -I$(topsrc)/lib/src -I../..
+GRETLLIB = ../../lib/libgretl-1.0.la
+
+CMDSDIR = $(topsrc)/doc/commands
+
+vpath %.c = $(CMDSDIR)
+vpath %.dtd = $(CMDSDIR)
+vpath %.xsl = $(CMDSDIR)
+
+LIBTOOL = ../../libtool
+
+CMDSDIR = $(topsrc)/doc/commands
+TEXDIR = $(topsrc)/doc/tex
+SHAREDIR = $(topsrc)/share
+
+CMDDTD = $(CMDSDIR)/gretl_commands.dtd
+
+EN_SRC = $(CMDSDIR)/gretl_commands.xml
+ES_SRC = $(CMDSDIR)/gretl_commands_es.xml
+PT_SRC = $(CMDSDIR)/gretl_commands_pt.xml
+IT_SRC = $(CMDSDIR)/gretl_commands_it.xml
+
+FNCDTD = $(CMDSDIR)/genr_funcs.dtd
+
+EN_FNCSRC = $(CMDSDIR)/genr_funcs.xml
+IT_FNCSRC = $(CMDSDIR)/genr_funcs_it.xml
+PT_FNCSRC = $(CMDSDIR)/genr_funcs_pt.xml
+
+HLPXSL = $(CMDSDIR)/gretltxt.xsl \
+	$(CMDSDIR)/gretlhlp.xsl \
+	$(CMDSDIR)/equations.xsl 
+
+TEXXSL = $(CMDSDIR)/gretltex.xsl
+HTMLXSL = $(CMDSDIR)/gretlhtml.xsl
+
+XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
+  $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_pt.xml $(CMDSDIR)/hlpstrs_it.xml
+
+EQNLIST = $(CMDSDIR)/eqn_list.xml
+EQNXSL = $(CMDSDIR)/equations.xsl
+
+EN_HLPSTAMP = $(SHAREDIR)/hlp.stamp
+ES_HLPSTAMP = $(SHAREDIR)/hlp_es.stamp
+IT_HLPSTAMP = $(SHAREDIR)/hlp_it.stamp
+PT_HLPSTAMP = $(SHAREDIR)/hlp_pt.stamp
+
+EN_GENSTAMP = $(SHAREDIR)/gen.stamp
+ES_GENSTAMP = $(SHAREDIR)/gen_es.stamp
+IT_GENSTAMP = $(SHAREDIR)/gen_it.stamp
+PT_GENSTAMP = $(SHAREDIR)/gen_pt.stamp
+
+FIGSTAMP = $(SHAREDIR)/fig.stamp
+HELPREFS = $(SHAREDIR)/gretlhelp.refs
+CHAPREFS = $(CMDSDIR)/chaprefs.xml
+
+GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
+	$(topsrc)/lib/src/gretl_commands.h \
+	$(topsrc)/lib/src/gretl_commands.c \
+	$(topsrc)/lib/src/genlex.c \
+	$(topsrc)/lib/src/genmain.c \
+	$(topsrc)/lib/src/options.c
+
+TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
+
+CPROGS = xsltrans skeleton reflow bbl2txt chaprefs validate topiclist tables \
+	matfuncs us2a4
+
+progs: $(CPROGS)
+
+xsltrans: xsltrans.c 
+	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
+
+reflow: reflow.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+bbl2txt: bbl2txt.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+chaprefs: chaprefs.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+us2a4: us2a4.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+skeleton: skeleton.o $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+
+validate: validate.o $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+
+topiclist: topiclist.o $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB) $(GLIB_LIBS)
+
+tables: tables.o $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+
+matfuncs: matfuncs.o $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+
+skeleton.o: skeleton.c $(GRETLHDRS)
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
+
+validate.o: validate.c $(GRETLHDRS)
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
+
+topiclist.o: topiclist.c $(GRETLHDRS)
+	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
+
+tables.o: tables.c $(GRETLHDRS) $(topsrc)/lib/src/monte_carlo.c
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
+
+matfuncs.o: matfuncs.c $(GRETLHDRS)
+	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
+
+# test generation of XML skeleton from libgretl info:
+# the skeleton could be used as a template for translation
+skeleton.xml: skeleton gretl_commands.dtd
+	./skeleton $(CMDSDIR) > $@
+
+$(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands.xml
+	xsltproc $(EQNXSL) $(CMDSDIR)/gretl_commands.xml > eqn_list.new
+	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
+	rm -f eqn_list.new
+
+# we'll do the following manually: it's a bit hyperactive
+$(FIGSTAMP): $(EQNLIST)
+	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $@
+
+# English "online" help files
+$(EN_HLPSTAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(EN_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp
+	./xsltrans --cmds --pango $(EN_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp
+	./xsltrans --gui --pango $(EN_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp
+	touch $@
+
+# Spanish "online" help files
+$(ES_HLPSTAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(ES_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp.es
+	./xsltrans --cmds --pango $(ES_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp.es
+	./xsltrans --gui --pango $(ES_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp.es
+	touch $@
+
+# Italian "online" help files
+$(IT_HLPSTAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(IT_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp.it
+	./xsltrans --cmds --pango $(IT_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp.it
+	./xsltrans --gui --pango $(IT_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp.it
+	touch $@
+
+# Portuguese "online" help files
+$(PT_HLPSTAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(PT_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp.pt
+	./xsltrans --cmds --pango $(PT_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp.pt 
+	./xsltrans --gui --pango $(PT_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp.pt
+	touch $@
+
+# English function reference files
+$(EN_GENSTAMP): xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(EN_FNCSRC) | ./reflow > $(SHAREDIR)/genrcli.hlp
+	./xsltrans --funcs --pango $(EN_FNCSRC) | ./reflow -m > $(SHAREDIR)/genrgui.hlp
+	touch $@
+
+# Italian function reference files
+$(IT_GENSTAMP): xsltrans reflow $(IT_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(IT_FNCSRC) | ./reflow > $(SHAREDIR)/genrcli.hlp.it
+	./xsltrans --funcs --pango $(IT_FNCSRC) | ./reflow -m > $(SHAREDIR)/genrgui.hlp.it
+	touch $@
+
+# Portuguese function reference files
+$(PT_GENSTAMP): xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(PT_FNCSRC) | ./reflow > $(SHAREDIR)/genrcli.hlp.pt
+	./xsltrans --funcs --pango $(PT_FNCSRC) | ./reflow -m > $(SHAREDIR)/genrgui.hlp.pt
+	touch $@
+
+# English HTML help files (experimental)
+
+htmlhelp: cmdref.html funcref.html biblio.html
+
+cmdref.html: xsltrans reflow $(EN_SRC) $(CMDDTD) $(HTMLXSL) $(XMLSTRS)
+	./xsltrans --cmds --html $(EN_SRC) | ./reflow --html > $@
+
+funcref.html: xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(HTMLXSL) $(XMLSTRS) 
+	./xsltrans --funcs --html $(EN_FNCSRC) | ./reflow --html > $@
+
+biblio.html: bbl2txt ../tex/gretl-ref.bbl
+	./bbl2txt ../tex/gretl-ref.bbl --html > $@
+
+# Bibliography file
+$(HELPREFS): bbl2txt $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-ref.bbl
+	./bbl2txt ../tex/gretl-ref.bbl > $@
+
+# Guide chapter titles
+$(CHAPREFS): chaprefs ../tex/gretl-guide.tex
+	./chaprefs $(TEXDIR)/gretl-guide.tex > $@
+
+$(GRETLLIB):
+	$(MAKE) -C ../../lib
+
+../tex/gretl-ref.bbl:
+	$(MAKE) -C ../tex gretl-ref.pdf
+
+.PHONY: test
+
+# generate some reference tables automatically, to ensure
+# they remain in step with the actual code
+textables: tables matfuncs $(EN_FNCSRC)
+	./tables --internals > ../tex/tabinternals.tex && \
+	./tables --functions > ../tex/tabfunctions.tex && \
+	./tables --loopcmds > ../tex/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex && \
+	LANG=en_US ./matfuncs $(EN_FNCSRC) > ../tex/matfuncs.tex && \
+	touch $@
+
+textables_it: tables matfuncs $(IT_FNCSRC)
+	./tables --internals > ../tex_it/tabinternals.tex && \
+	./tables --functions > ../tex_it/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_it/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_it/tabnonloopcmds.tex && \
+	LANG=it_IT ./matfuncs $(IT_FNCSRC) > ../tex_it/matfuncs.tex && \
+	touch $@
+
+textables_es: tables matfuncs $(ES_FNCSRC)
+	./tables --internals > ../tex_es/tabinternals.tex && \
+	./tables --functions > ../tex_es/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_es/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_es/tabnonloopcmds.tex && \
+	LANG=es_ES ./matfuncs $(ES_FNCSRC) > ../tex_es/matfuncs.tex && \
+	touch $@
+
+textables_pt: tables matfuncs $(PT_FNCSRC)
+	./tables --internals > ../tex_pt/tabinternals.tex && \
+	./tables --functions > ../tex_pt/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_pt/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_pt/tabnonloopcmds.tex && \
+	LANG=pt_PT ./matfuncs $(PT_FNCSRC) > ../tex_pt/matfuncs.tex && \
+	touch $@
+
+functex: xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex.xml && \
+	cat $(EN_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex.xml && \
+	./xsltrans --funcs --tex ftex.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex/funcbody.tex && rm ftex.xml && touch $@
+
+functex_it: xsltrans reflow $(IT_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_it.xml && \
+	cat $(IT_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_it.xml && \
+	./xsltrans --funcs --tex ftex_it.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_it/funcbody.tex && rm ftex_it.xml && touch $@
+
+functex_pt: xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_pt.xml && \
+	cat $(PT_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_pt.xml && \
+	./xsltrans --funcs --tex ftex_pt.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_pt/funcbody.tex && rm ftex_pt.xml && touch $@
+
+cmdtex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex.xml && \
+	cat $(EN_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex.xml && \
+	./xsltrans --cmds --tex ctex.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex/refbody.tex && rm ctex.xml && touch $@
+
+cmdtex_it: xsltrans reflow $(IT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex_it.xml && \
+	cat $(IT_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex_it.xml && \
+	./xsltrans --cmds --tex ctex_it.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_it/refbody.tex && rm ctex_it.xml && touch $@
+
+cmdtex_es: xsltrans reflow $(ES_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex_es.xml && \
+	cat $(ES_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex_es.xml && \
+	./xsltrans --cmds --tex ctex_es.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_es/refbody.tex && rm ctex_es.xml && touch $@
+
+cmdtex_pt: xsltrans reflow $(PT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex_pt.xml && \
+	cat $(PT_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex_pt.xml && \
+	./xsltrans --cmds --tex ctex_pt.xml --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_pt/refbody.tex && rm ctex_pt.xml && touch $@
+
+topiclist_en: topiclist $(EN_SRC)
+	LANG=en_US ./topiclist $(EN_SRC) > ../tex/cmdtopics.tex && touch $@
+
+topiclist_it: topiclist $(IT_SRC)
+	LANG=it_IT ./topiclist $(IT_SRC) > ../tex_it/cmdtopics.tex && touch $@ 
+
+topiclist_es: topiclist $(ES_SRC)
+	LANG=es_ES ./topiclist $(ES_SRC) > ../tex_es/cmdtopics.tex && touch $@ 
+
+topiclist_pt: topiclist $(PT_SRC)
+	LANG=pt_PT ./topiclist $(PT_SRC) > ../tex_pt/cmdtopics.tex && touch $@ 
+
+# test validity of skeleton.xml
+test: skeleton.xml
+	xmllint --valid --noout $<
+
+help-en: $(CHAPREFS) $(EN_HLPSTAMP) $(EN_GENSTAMP)
+
+help-it: $(CHAPREFS) $(IT_HLPSTAMP) $(IT_GENSTAMP)
+
+help-pt: $(CHAPREFS) $(PT_HLPSTAMP) $(PT_GENSTAMP)
+
+help-all: help-en help-it help-pt $(HELPREFS)
+
+# Validate the commands "master" XML files against libgretl
+# By default we check the English-language files
+check: validate 
+	-./validate $(EN_SRC)
+	-./validate $(EN_FNCSRC)
+
+check-it: validate 
+	-./validate $(IT_SRC)
+	-./validate $(IT_FNSRC)
+
+check-pt: validate 
+	-./validate $(PT_SRC)
+	-./validate $(PT_FNCSRC)
+
+docclean:
+	 rm -f *.txt
+
+clean: docclean
+	rm -f $(CPROGS) *.o
+	rm -f textables cmdtex* functex* topiclist_*
+	rm -rf .libs
+
+distclean: clean
+	rm -f Makefile

@@ -2449,6 +2449,61 @@
       </description>
     </function>
 
+    <function name="dropcoll" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">X</fnarg>
+	<fnarg optional="true" type="scalar">epsilon</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns a list with the same elements as
+	  <argname>X</argname>, but for the collinear
+	  series. Therefore, if all the series in <argname>X</argname>
+	  are linearly independent, the output list is just a copy of
+	  <argname>X</argname>.
+	</para>
+	<para>
+	  The algorithm uses the QR decomposition (Householder
+	  transformation), so it is subject to finite precision
+	  error. In order to gauge the sensitivity of the algorithm, a
+	  second optional parameter <argname>epsilon</argname> may be
+	  specified to make the collinearity test more or less strict,
+	  as desired. The default value for <argname>epsilon</argname>
+	  is 10e-10. Setting <argname>epsilon</argname> to a larger
+	  value increases the probability of a series to be dropped.
+	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  nulldata 20
+	  set seed 9876
+	  series foo = normal()
+	  series bar = normal()
+	  series foobar = foo + bar
+	  list X = foo bar foobar
+	  list Y = dropcoll(X)
+	  list print X
+	  list print Y
+	  list Y = dropcoll(X, 1.0e-30)
+	  list print Y
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+	  ? list print X
+	  foo bar foobar 
+	  ? list print Y
+	  foo bar 
+	  ? list Y = dropcoll(X, 1.0e-30)
+	  Replaced list Y
+	  ? list print Y
+	  foo bar foobar 
+	</code>
+      </description>
+    </function>    
+
     <function name="dsort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>

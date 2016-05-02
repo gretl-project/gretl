@@ -2367,6 +2367,61 @@
       </description>
     </function>
 
+    <function name="dropcoll" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">X</fnarg>
+	<fnarg optional="true" type="scalar">epsilon</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Restituisce una lista con gli stessi elementi di
+	  <argname>X</argname>, fuorché le serie collineari. Qunidi,
+	  se tutte le serie in <argname>X</argname>
+	  sono linearmente indipendenti, la lista risultato è
+	  semplicemente una copia di <argname>X</argname>.
+	</para>
+	<para>
+	  L'algoritmo adopera la scomposizione QR (trasformazione di
+	  Householder), per cui è soggetto ad un errore derivante
+	  dalla precisione macchina. Per aggiustare la sensibilità
+	  dell'algoritmo, si può usare un secondo parametro opzionale
+	  <argname>epsilon</argname> per rendere il test di
+	  collinearità più o meno stringente. Il valore di default per
+	  <argname>epsilon</argname> è 10e-10. Incrementando tale
+	  valore, la probabilità che una serie venga omessa aumenta.
+	</para>
+	<para>
+	  Esempio:
+	</para>
+	<code>
+	  nulldata 20
+	  set seed 9876
+	  series foo = normal()
+	  series bar = normal()
+	  series foobar = foo + bar
+	  list X = foo bar foobar
+	  list Y = dropcoll(X)
+	  list print X
+	  list print Y
+	  list Y = dropcoll(X, 1.0e-30)
+	  list print Y
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+	  ? list print X
+	  foo bar foobar 
+	  ? list print Y
+	  foo bar 
+	  ? list Y = dropcoll(X, 1.0e-30)
+	  Replaced list Y
+	  ? list print Y
+	  foo bar foobar 
+	</code>
+      </description>
+    </function>    
+
     <function name="dsort" section="matshape" output="asinput">
       <fnargs>
     <fnarg type="series-or-vec">x</fnarg>
