@@ -2469,7 +2469,7 @@
 	  second optional parameter <argname>epsilon</argname> may be
 	  specified to make the collinearity test more or less strict,
 	  as desired. The default value for <argname>epsilon</argname>
-	  is 10e-10. Setting <argname>epsilon</argname> to a larger
+	  is 1.0e-8. Setting <argname>epsilon</argname> to a larger
 	  value increases the probability of a series to be dropped.
 	</para>
 	<para>
@@ -2485,6 +2485,7 @@
 	  list Y = dropcoll(X)
 	  list print X
 	  list print Y
+	  # set epsilon to a ridiculously small value
 	  list Y = dropcoll(X, 1.0e-30)
 	  list print Y
 	</code>
