@@ -2387,7 +2387,7 @@
 	  dell'algoritmo, si può usare un secondo parametro opzionale
 	  <argname>epsilon</argname> per rendere il test di
 	  collinearità più o meno stringente. Il valore di default per
-	  <argname>epsilon</argname> è 10e-10. Incrementando tale
+	  <argname>epsilon</argname> è 1.0e-8. Incrementando tale
 	  valore, la probabilità che una serie venga omessa aumenta.
 	</para>
 	<para>
@@ -2403,6 +2403,7 @@
 	  list Y = dropcoll(X)
 	  list print X
 	  list print Y
+	  # imposta epsilon ad un valore assurdamente piccolo
 	  list Y = dropcoll(X, 1.0e-30)
 	  list print Y
 	</code>

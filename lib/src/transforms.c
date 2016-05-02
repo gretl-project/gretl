@@ -1544,7 +1544,7 @@ int list_resample (int *list, DATASET *dset)
 
 int list_dropcoll (int *list, double eps, DATASET *dset)
 {
-    double eps_default = 1.0e-10;
+    double eps_default = 1.0e-8;
     gretl_matrix *R;
     gretl_matrix *X;
     int n, err = 0;
