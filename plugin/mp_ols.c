@@ -1001,6 +1001,7 @@ static void mp_uncentered_r_squared (MODEL *pmod,
 	mpf_init_set_d(tmp2, (double) pmod->nobs);
 	mpf_mul(mpmod->tss, tmp, tmp2);
 
+	/* R^2 = 1 - ESS/TSS */
 	mpf_div(tmp, mpmod->ess, mpmod->tss);
 	mpf_set_d(tmp2, 1.0);
 	mpf_sub(mpmod->rsq, tmp2, tmp);
