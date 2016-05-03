@@ -2503,12 +2503,10 @@ int query_addons (void)
 {
     gchar *query;
     char *buf = NULL;
-    int v1, v2, v3;
     int err = 0;
 
-    sscanf(GRETL_VERSION, "%d.%d.%d", &v1, &v2, &v3);
-    query = g_strdup_printf("/addons-data/pkginfo.php?gretl_version=%d.%d.%d",
-			    v1, v2, v3);
+    query = g_strdup_printf("/addons-data/pkginfo.php?gretl_version=%s",
+			    GRETL_VERSION);
     err = query_sourceforge(query, &buf);
     g_free(query);
 
@@ -2532,14 +2530,12 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
 {
     gchar *query;
     char *buf = NULL;
-    int v1, v2, v3;
     int err = 0;
 
     *sfdir = '\0';
 
-    sscanf(GRETL_VERSION, "%d.%d.%d", &v1, &v2, &v3);
-    query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%d.%d.%d"
-			    "&pkg=%s", v1, v2, v3, pkgname);
+    query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%s"
+			    "&pkg=%s", GRETL_VERSION, pkgname);
     err = query_sourceforge(query, &buf);
     g_free(query);
 
@@ -2566,8 +2562,8 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
     free(buf);
 
     if (err) {
-	errbox_printf("Couldn't find %s for gretl %d.%d.%d",
-		      pkgname, v1, v2, v3);
+	errbox_printf("Couldn't find %s for gretl %s",
+		      pkgname, GRETL_VERSION);
     } 
 
     return err;
