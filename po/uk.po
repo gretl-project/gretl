@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-04-21 16:38-0400\n"
-"PO-Revision-Date: 2016-04-22 19:48+0300\n"
+"PO-Revision-Date: 2016-05-03 19:08+0300\n"
 "Last-Translator: Oleh Komashko <oleg_komashko@ukr.net>\n"
 "Language-Team: \n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: lib/src/adf_kpss.c:493
 msgid "lagged differences"
@@ -461,9 +461,9 @@ msgstr "Нульова гіпотеза: параметри регрессії �
 
 #: lib/src/compare.c:278 lib/src/compare.c:281 lib/src/compare.c:284
 #: lib/src/describe.c:5949 lib/src/gretl_model.c:3801
-#: lib/src/gretl_model.c:3804 lib/src/gretl_model.c:3811
-#: lib/src/nonparam.c:980 lib/src/nonparam.c:1117 lib/src/varprint.c:1249
-#: lib/src/varprint.c:1255 lib/src/varprint.c:1263
+#: lib/src/gretl_model.c:3804 lib/src/gretl_model.c:3811 lib/src/nonparam.c:980
+#: lib/src/nonparam.c:1117 lib/src/varprint.c:1249 lib/src/varprint.c:1255
+#: lib/src/varprint.c:1263
 msgid "Null hypothesis"
 msgstr "Нульова гіпотеза"
 
@@ -507,19 +507,18 @@ msgstr "Тест Вальда"
 #: lib/src/graphing.c:4309 lib/src/gretl_model.c:3867
 #: lib/src/gretl_model.c:3881 lib/src/gretl_model.c:3884
 #: lib/src/gretl_model.c:3909 lib/src/gretl_panel.c:4015
-#: lib/src/gretl_panel.c:4273 lib/src/modelprint.c:197
-#: lib/src/modelprint.c:375 lib/src/modelprint.c:379 lib/src/modelprint.c:469
-#: lib/src/modelprint.c:472 lib/src/modelprint.c:493 lib/src/modelprint.c:496
-#: lib/src/modelprint.c:2448 lib/src/modelprint.c:2453
-#: lib/src/modelprint.c:2475 lib/src/modelprint.c:2480
-#: lib/src/modelprint.c:2972 lib/src/modelprint.c:5145
-#: lib/src/modelprint.c:5168 lib/src/printout.c:326 lib/src/pvalues.c:2636
-#: lib/src/pvalues.c:3301 lib/src/system.c:1250 lib/src/system.c:1303
-#: lib/src/system.c:3389 lib/src/system.c:3411 lib/src/system.c:3483
-#: lib/src/system.c:3501 lib/src/system.c:4612 lib/src/varprint.c:853
-#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
-#: lib/src/vartest.c:78 lib/src/vartest.c:820 lib/src/vartest.c:1107
-#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4273 lib/src/modelprint.c:197 lib/src/modelprint.c:375
+#: lib/src/modelprint.c:379 lib/src/modelprint.c:469 lib/src/modelprint.c:472
+#: lib/src/modelprint.c:493 lib/src/modelprint.c:496 lib/src/modelprint.c:2448
+#: lib/src/modelprint.c:2453 lib/src/modelprint.c:2475
+#: lib/src/modelprint.c:2480 lib/src/modelprint.c:2972
+#: lib/src/modelprint.c:5145 lib/src/modelprint.c:5168 lib/src/printout.c:326
+#: lib/src/pvalues.c:2636 lib/src/pvalues.c:3301 lib/src/system.c:1250
+#: lib/src/system.c:1303 lib/src/system.c:3389 lib/src/system.c:3411
+#: lib/src/system.c:3483 lib/src/system.c:3501 lib/src/system.c:4612
+#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
+#: lib/src/varprint.c:1266 lib/src/vartest.c:78 lib/src/vartest.c:820
+#: lib/src/vartest.c:1107 plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Хі-квадрат"
 
@@ -1139,20 +1138,19 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Не вдалося інтерпретувати дані як числові\n"
 
-#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554
-#: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
-#: plugin/jmulti_import.c:379 plugin/sas_import.c:686
-#: plugin/spss_import.c:1942 plugin/stata_import.c:2145
+#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554 plugin/excel_import.c:1741
+#: plugin/gnumeric_import.c:832 plugin/jmulti_import.c:379
+#: plugin/sas_import.c:686 plugin/spss_import.c:1942 plugin/stata_import.c:2145
 #: plugin/xlsx_import.c:1385
 msgid "warning: some variable names were duplicated\n"
 msgstr "попередження: назви деяких змінних дублюються\n"
 
-#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520
-#: plugin/eviews_import.c:535 plugin/excel_import.c:1575
-#: plugin/gnumeric_import.c:653 plugin/jmulti_import.c:350
-#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
-#: plugin/spss_import.c:1847 plugin/spss_import.c:1868
-#: plugin/stata_import.c:2113 plugin/stata_import.c:2124
+#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520 plugin/eviews_import.c:535
+#: plugin/excel_import.c:1575 plugin/gnumeric_import.c:653
+#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
+#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1847
+#: plugin/spss_import.c:1868 plugin/stata_import.c:2113
+#: plugin/stata_import.c:2124
 msgid "Out of memory\n"
 msgstr "Не вистачає пам'яті\n"
 
@@ -3307,9 +3305,8 @@ msgid "%s: invalid return type for function"
 msgstr "%s: невірний тип виведення функції"
 
 #: lib/src/gretl_func.c:2454 lib/src/gretl_func.c:2514
-#: lib/src/gretl_func.c:2594 lib/src/gretl_utils.c:1889
-#: lib/src/interact.c:1087 gui2/dialogs.c:5527 gui2/fnsave.c:4993
-#: plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2594 lib/src/gretl_utils.c:1889 lib/src/interact.c:1087
+#: gui2/dialogs.c:5527 gui2/fnsave.c:4993 plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Неможливо відкрити %s"
@@ -3708,8 +3705,7 @@ msgstr "ст. св. зн."
 #: lib/src/gretl_model.c:3993 lib/src/modelprint.c:5214
 #: lib/src/modelprint.c:5225 lib/src/modelprint.c:5227 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2007
-#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96
-#: plugin/anova.c:98
+#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
 msgid "df"
 msgstr "ст. св."
 
@@ -4087,8 +4083,7 @@ msgstr "Стандартна похибка регресії"
 msgid "Robust chi^2"
 msgstr "Робастна хі^2"
 
-#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3032
-#: lib/src/system.c:1245
+#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3032 lib/src/system.c:1245
 msgid "restriction"
 msgstr "обмеження"
 
@@ -5757,8 +5752,8 @@ msgstr "Уявна ч."
 msgid "Modulus"
 msgstr "Модуль"
 
-#: lib/src/modelprint.c:4929 lib/src/modelprint.c:4937
-#: lib/src/subsample.c:3020 lib/src/subsample.c:3042 lib/src/subsample.c:3097
+#: lib/src/modelprint.c:4929 lib/src/modelprint.c:4937 lib/src/subsample.c:3020
+#: lib/src/subsample.c:3042 lib/src/subsample.c:3097
 msgid "Frequency"
 msgstr "Частота"
 
@@ -5854,8 +5849,7 @@ msgid "modprint: expected %d names"
 msgstr "modprint: очікувалось %d назв"
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:785
-#: lib/src/monte_carlo.c:1762 lib/src/monte_carlo.c:1925
-#: lib/src/uservar.c:1761
+#: lib/src/monte_carlo.c:1762 lib/src/monte_carlo.c:1925 lib/src/uservar.c:1761
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "%s: не є скаляром"
@@ -7710,7 +7704,7 @@ msgstr "дата збірки"
 
 #: gui2/about.c:192 gui2/about.c:194
 msgid "translator_credits"
-msgstr "автор_перекладу"
+msgstr "Переклад українською: Олег Комашко"
 
 #: gui2/about.c:203
 msgid "News"
@@ -8566,9 +8560,8 @@ msgstr "Увага: в ряд має пропущені спостереженн
 msgid "Couldn't access binary datafile"
 msgstr "Бінарний файл даних недоступний"
 
-#: gui2/database.c:796 gui2/session.c:156 gui2/session.c:163
-#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
-#: gui2/session.c:3373
+#: gui2/database.c:796 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
+#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3373
 msgid "Display"
 msgstr "Показати"
 
@@ -8746,8 +8739,8 @@ msgstr "Додати до меню"
 
 #: gui2/datafiles.c:1401 gui2/datafiles.c:1603 gui2/gpt_control.c:3795
 #: gui2/gpt_control.c:3797 gui2/gpt_control.c:3907 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756
-#: gui2/toolbar.c:757 gui2/toolbar.c:758
+#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756 gui2/toolbar.c:757
+#: gui2/toolbar.c:758
 msgid "Help"
 msgstr "Довідка"
 
@@ -15372,13 +15365,13 @@ msgstr "Команди редагування графіку"
 msgid "Export as CSV..."
 msgstr "Експортувати як CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
-#: gui2/session.c:3303 gui2/session.c:3341 gui2/session.c:3352
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3303
+#: gui2/session.c:3341 gui2/session.c:3352
 msgid "Copy as CSV..."
 msgstr "Копіювати як CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
-#: gui2/session.c:3290 gui2/session.c:3324 gui2/textutil.c:478
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3290
+#: gui2/session.c:3324 gui2/textutil.c:478
 msgid "View"
 msgstr "Перегляд"
 
@@ -16819,8 +16812,7 @@ msgid "No worksheets found"
 msgstr "Робочу книгу не знайдено"
 
 #: plugin/excel_import.c:1608 plugin/gnumeric_import.c:686
-#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140
-#: plugin/xlsx_import.c:1200
+#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140 plugin/xlsx_import.c:1200
 msgid "Invalid argument for worksheet import"
 msgstr "Невірний аргумент для імпорту робочої книги"
 

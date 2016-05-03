@@ -5033,5 +5033,3 @@ GPtrArray *retrieve_kalman_bundle_info (void *kptr, int *err)
 }
 
 #endif /* not yet */
-
-
