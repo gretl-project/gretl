@@ -569,11 +569,11 @@ panel data require attention.
 
 Gretl currently offers two robust covariance matrix estimators
 specifically for panel data.  These are available for models estimated
-via fixed effects, pooled OLS, and pooled two-stage least squares.
-The default robust estimator is that suggested by \cite{arellano03},
-which is HAC provided the panel is of the ``large $n$, small $T$''
-variety (that is, many units are observed in relatively few periods).
-The Arellano estimator is
+via fixed effects, random effects, pooled OLS, and pooled two-stage
+least squares.  The default robust estimator is that suggested by
+\cite{arellano03}, which is HAC provided the panel is of the ``large
+$n$, small $T$'' variety (that is, many units are observed in
+relatively few periods).  The Arellano estimator is
 \[
 \hat{\Sigma}_{\rm A} = 
 \left(X^{\prime}X\right)^{-1}
@@ -581,17 +581,19 @@ The Arellano estimator is
     \hat{u}_i^{\prime} X_i \right)
 \left(X^{\prime}X\right)^{-1}
 \]
-where $X$ is the matrix of regressors (with the group means
-subtracted, in the case of fixed effects) $\hat{u}_i$ denotes the
-vector of residuals for unit $i$, and $n$ is the number of
-cross-sectional units.\footnote{This variance estimator is also known
-  as the ``clustered (over entities)'' estimator.}
-\cite{cameron-trivedi05} make a strong case for using this estimator;
-they note that the ordinary White HCCME can produce misleadingly small
-standard errors in the panel context because it fails to take
-autocorrelation into account. In addition \cite{stock-watson08} show
-that the White HCCME is inconsistent in the fixed-effects panel
-context for fixed $T > 2$.
+where $X$ is the matrix of regressors (with the group means subtracted
+in the case of fixed effects, or quasi-demeaned in the case of random
+effects) $\hat{u}_i$ denotes the vector of residuals for unit $i$, and
+$n$ is the number of cross-sectional units.\footnote{This variance
+  estimator is also known as the ``clustered (over entities)''
+  estimator.}  \cite{cameron-trivedi05} make a strong case for using
+this estimator; they note that the ordinary White HCCME can produce
+misleadingly small standard errors in the panel context because it
+fails to take autocorrelation into account.\footnote{See also
+  \cite{cameron-miller15} for a discussion of the Arellano-type
+  estimator in the context of the random effects model.}
+In addition \cite{stock-watson08} show that the White HCCME
+is inconsistent in the fixed-effects panel context for fixed $T > 2$.
 
 In cases where autocorrelation is not an issue the estimator
 proposed by \cite{beck-katz95} and discussed by Greene
