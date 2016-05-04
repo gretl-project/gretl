@@ -481,6 +481,9 @@ static int maybe_resize_export_matrix (kalman *K, gretl_matrix *m, int i)
 
     if (!err && (m->rows != rows || m->cols != cols)) {
 	err = gretl_matrix_realloc(m, rows, cols);
+	if (!err) {
+	    gretl_matrix_zero(m);
+	}
     }
 
     return err;
@@ -1757,7 +1760,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	} else {
 	    gretl_matrix_zero(K->Ax);
 	}
-    } 
+    }
 
     set_kalman_running(K);
 
@@ -2997,6 +3000,7 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     err = kalman_ensure_output_matrices(K);
 
     if (!err) {
+	gretl_matrix_zero(K->e);
 	err = kalman_bundle_recheck_matrices(K, prn);
     }
 
@@ -4572,12 +4576,14 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 	pm = &K->Vds;
     } else if (!strcmp(key, "obsdistvar")) {
 	pm = &K->Vdy;
+    } else if (!strcmp(key, "uhat")) {
+	pm = &K->e;
     }
 
     return pm;
 }
 
-#define K_N_OUTPUTS 9
+#define K_N_OUTPUTS 10
 
 static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "prederr",
@@ -4588,7 +4594,8 @@ static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "llt",
     "smdist",
     "stdistvar",
-    "obsdistvar"
+    "obsdistvar",
+    "uhat"
 };
 
 #define K_N_SCALARS 5
