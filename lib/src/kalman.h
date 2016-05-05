@@ -134,6 +134,9 @@ void *maybe_retrieve_kalman_element (void *kptr,
 
 int print_kalman_bundle_info (void *kptr, PRN *prn);
 
+gretl_bundle *kalman_bundle_copy (const gretl_bundle *src,
+				  int *err);
+
 #endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* KALMAN_H_ */

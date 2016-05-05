@@ -886,7 +886,9 @@ kalman *kalman_new (gretl_matrix *S, gretl_matrix *P,
 
     *err = 0;
 
-    if (F == NULL || H == NULL || Q == NULL || y == NULL) {
+    if (y == NULL || F == NULL || H == NULL || Q == NULL) {
+	fprintf(stderr, "kalman_new: y=%p, F=%p, H=%p, Q=%p\n",
+		(void *) y, (void *) F, (void *) H, (void *) Q);
 	*err = missing_matrix_error(NULL);
 	return NULL;
     }
@@ -944,6 +946,8 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     *err = 0;
 
     if (M[0] == NULL || M[1] == NULL || M[2] == NULL || M[3] == NULL) {
+	fprintf(stderr, "kalman_new_minimal: nmat=%d, y=%p, H=%p, F=%p, Q=%p\n",
+		nmat, (void *) M[0], (void *) M[1], (void *) M[2], (void *) M[3]);
 	*err = missing_matrix_error(NULL);
 	return NULL;
     }
@@ -1136,7 +1140,9 @@ static int user_kalman_setup (kalman *K, gretlopt opt)
 {
     int err = 0;
 
-    if (K->F == NULL || K->H == NULL || K->Q == NULL || K->y == NULL) {
+    if (K->y == NULL || K->H == NULL || K->F == NULL || K->Q == NULL) {
+	fprintf(stderr, "kalman_new: y=%p, H=%p, F=%p, Q=%p\n",
+		(void *) K->y, (void *) K->H, (void *) K->F, (void *) K->Q);
 	return missing_matrix_error(NULL);
     }
 
@@ -2421,7 +2427,9 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 	return err;
     }
 
-    if (K->F == NULL || K->H == NULL || K->Q == NULL) {
+    if (K->H == NULL || K->F == NULL || K->Q == NULL) {
+	fprintf(stderr, "user_kalman_recheck_matrices: H=%p, F=%p, Q=%p\n",
+		K->H, K->F, K->Q);
 	err = missing_matrix_error(NULL);
     } else if (gretl_matrix_rows(K->F) != K->r ||
 	       gretl_matrix_rows(K->A) != K->k) {
@@ -2476,7 +2484,9 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     K->flags ^= KALMAN_CHECK;
 
-    if (!err && (K->F == NULL || K->H == NULL || K->Q == NULL)) {
+    if (!err && (K->H == NULL || K->F == NULL || K->Q == NULL)) {
+	fprintf(stderr, "kalman_bundle_kalman_recheck_matrices: H=%p, F=%p, Q=%p\n",
+		K->H, K->F, K->Q);
 	err = missing_matrix_error(NULL);
     }
 
@@ -4213,8 +4223,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     int T, saveT;
 
     if (V == NULL) {
-	fprintf(stderr, "ksimul: V is NULL\n");
-	*err = missing_matrix_error(NULL);
+	*err = missing_matrix_error("V");
     } else if (u == NULL) {
 	*err = missing_kalman_error();
     } 
@@ -4971,6 +4980,82 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
     return err;
 }
 
+gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
+{
+    kalman *K, *Knew;
+    gretl_bundle *b = NULL;
+    gretl_matrix *M[5] = {NULL};
+    gretl_matrix *m, **pm, **pm1;
+    const char *name;
+    int copy[5] = {1, 1, 1, 1, 1};
+    int i, id, k = 4;
+
+    K = gretl_bundle_get_private_data((gretl_bundle *) src);
+
+    if (K == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    M[0] = K->y;
+    M[1] = K->H;
+    M[2] = K->F;
+
+    if (kalman_xcorr(K)) {
+	M[3] = K->B;
+	M[4] = K->C;
+	k = 5;
+    } else {
+	M[3] = K->Q;
+    }
+
+    b = kalman_bundle_new(M, copy, k, err);
+
+    if (*err) {
+	return b;
+    }
+
+    Knew = gretl_bundle_get_private_data(b);
+    Knew->flags = K->flags;
+
+    for (i=k; i<K_MMAX && !*err; i++) {
+	id = K_input_mats[i].sym;
+	m = (gretl_matrix *) k_input_matrix_by_id(K, id);
+	if (m != NULL) {
+	    *err = attach_input_matrix_2(Knew, m, 
+					 GRETL_TYPE_MATRIX,
+					 i, 1);
+	}
+    }
+
+    for (i=0; i<K_N_OUTPUTS && !*err; i++) {
+	name = kalman_output_matrix_names[i];
+	pm = kalman_output_matrix(K, name);
+	if (pm != NULL && *pm != NULL) {
+	    pm1 = kalman_output_matrix(Knew, name);
+	    *pm1 = gretl_matrix_copy(*pm);
+	}
+    }
+
+    Knew->s2 = K->s2;
+    Knew->loglik = K->loglik;
+
+    if (K->flags & KALMAN_CROSS) {
+	Knew->flags |= KALMAN_CROSS;
+    }
+
+    if (K->flags & KALMAN_DIFFUSE) {
+	Knew->flags |= KALMAN_DIFFUSE;
+    }
+
+    if (K->matcalls != NULL) {
+	Knew->matcalls = strings_array_dup(K->matcalls,
+					   K_N_MATCALLS);
+    }
+
+    return b;
+}
+
 #if 0
 
 /* Not ready yet: possible apparatus for making Kalman content
@@ -5068,3 +5153,4 @@ GPtrArray *retrieve_kalman_bundle_info (void *kptr, int *err)
 }
 
 #endif /* not yet */
+

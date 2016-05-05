@@ -160,7 +160,9 @@ static user_var *user_var_new (const char *name, int type,
 
 static void uvar_free_value (user_var *u)
 {
-    if (u->type == GRETL_TYPE_MATRIX) {
+    if (u->ptr == NULL) {
+	return;
+    } else if (u->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix_free(u->ptr);
     } else if (u->type == GRETL_TYPE_BUNDLE) {
 	gretl_bundle_destroy(u->ptr);

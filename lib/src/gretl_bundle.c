@@ -1211,6 +1211,38 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 }
 
 /**
+ * gretl_bundle_copy:
+ * @bundle: gretl bundle to be copied.
+ * @err: location to receive error code.
+ *
+ * Returns: a "deep copy" of @bundle (all the items in @bundle
+ * are themselves copied), or NULL on failure.
+ */
+
+gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err)
+{
+    gretl_bundle *bcpy = NULL;
+
+    if (bundle == NULL) {
+	*err = E_DATA;
+    } else {
+	if (bundle->type == BUNDLE_KALMAN) {
+	    bcpy = kalman_bundle_copy(bundle, err);
+	} else {
+	    bcpy = gretl_bundle_new();
+	    if (bcpy == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	if (!*err) {
+	    g_hash_table_foreach(bundle->ht, copy_bundled_item, bcpy);
+	}
+    }
+
+    return bcpy;
+}
+
+/**
  * gretl_bundle_copy_as:
  * @name: name of source bundle.
  * @copyname: name for copy.
@@ -1228,6 +1260,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
 {
     gretl_bundle *b0, *b1 = NULL;
     user_var *u;
+    int prev = 0;
     int err = 0;
 
     if (!strcmp(name, "$sysinfo")) {
@@ -1242,57 +1275,26 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
     }
 
     u = get_user_var_of_type_by_name(copyname, GRETL_TYPE_BUNDLE);
+    
     if (u != NULL) {
-	b1 = user_var_get_value(u);
+	b1 = user_var_steal_value(u);
+	if (b1 != NULL) {
+	    gretl_bundle_destroy(b1);
+	}
+	prev = 1;
     }
 
-    if (b1 != NULL) {
-	g_hash_table_destroy(b1->ht);
-	b1->ht = g_hash_table_new_full(g_str_hash, 
-				       g_str_equal, 
-				       bundle_key_destroy, 
-				       bundled_item_destroy);
-    } else {
-	b1 = gretl_bundle_new();
-	if (b1 == NULL) {
-	    err = E_ALLOC;
+    b1 = gretl_bundle_copy(b0, &err);
+
+    if (!err) {
+	if (prev) {
+	    err = user_var_replace_value(u, b1);
 	} else {
 	    err = user_var_add(copyname, GRETL_TYPE_BUNDLE, b1);
 	}
     }
 
-    if (!err) {
-	g_hash_table_foreach(b0->ht, copy_bundled_item, b1);
-    }
-
     return err;
-}
-
-/**
- * gretl_bundle_copy:
- * @bundle: gretl bundle to be copied.
- * @err: location to receive error code.
- *
- * Returns: a "deep copy" of @bundle (all the items in @bundle
- * are themselves copied), or NULL on failure.
- */
-
-gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err)
-{
-    gretl_bundle *bcpy = NULL;
-
-    if (bundle == NULL) {
-	*err = E_DATA;
-    } else {
-	bcpy = gretl_bundle_new();
-	if (bcpy == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    g_hash_table_foreach(bundle->ht, copy_bundled_item, bcpy);
-	}
-    }
-
-    return bcpy;
 }
 
 static void print_bundled_item (gpointer key, gpointer value, gpointer p)
