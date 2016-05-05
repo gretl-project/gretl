@@ -3266,6 +3266,13 @@ static int koopman_smooth (kalman *K, int dkstyle)
     double x;
     int i, t, err = 0;
 
+    if (K->p > 0 && dkstyle) {
+	/* Durbin-Koopman variance calculation is not 
+	   implemented for the cross-correlated case
+	*/
+	return E_DATA;
+    }
+
     B = gretl_matrix_block_new(&u,  K->n, 1,
 			       &D,  K->n, K->n,
 			       &L,  K->r, K->r,

@@ -1069,48 +1069,6 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	}
     }
 
-#if 0 /* experimental: run the Koopman-style disturbance smoother
-	 after ARMA estimation
-      */
-    if (!err) {
-	gretl_matrix *S, *U, *smu;
-	int t;
-
-	smu = gretl_column_vector_alloc(ainfo->T);
-
-	kalman_set_initial_state_vector(K, kh->S);
-	kalman_set_initial_MSE_matrix(K, kh->P);
-
-	/* OR: rewrite_kalman_matrices(K, b, KALMAN_ALL); ? */
-	S = kalman_smooth(K, NULL, &U, &err);
-
-	fprintf(stderr, "kalman_smooth: err = %d\n", err);
-	gretl_matrix_print(S, "S");
-	gretl_matrix_print(U, "U");
-
-	i = 0;
-	for (t=ainfo->t1; t<=ainfo->t2; t++) {
-	    double u = gretl_matrix_get(S, i, 0);
-
-	    /* specific to ARMA(1,1) ? */
-	    u -= b[0] * gretl_matrix_get(S, i, 1);
-	    fprintf(stderr, "%#10.5g\n", u);
-	    if (i > 0) {
-		gretl_vector_set(smu, i, gretl_matrix_get(U, i-1, 0));
-	    } else {
-		gretl_vector_set(smu, i, u);
-	    }
-	    i++;
-	}
-
-	gretl_matrix_write_as_text(smu, "smu.mat");
-
-	gretl_matrix_free(S);
-	gretl_matrix_free(U);
-	gretl_matrix_free(smu);
-    }
-#endif
-
 #if 0 /* not ready yet: after estimation of ARMA with missing
          values, use the Kalman smoother to estimate the
 	 missing data
