@@ -4980,6 +4980,12 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
     return err;
 }
 
+/* called from gretl_bundle.c to meet the case where the user calls
+   for a kalman bundle to be copied: here we create a new kalman
+   struct and copy across the required elements (since they are
+   not regular bundle members)
+*/
+
 gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
 {
     kalman *K, *Knew;
@@ -5037,6 +5043,7 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
 	}
     }
 
+    Knew->ifc = K->ifc;
     Knew->s2 = K->s2;
     Knew->loglik = K->loglik;
 
