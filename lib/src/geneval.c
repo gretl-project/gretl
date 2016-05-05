@@ -8905,10 +8905,13 @@ static void node_nullify_ptr (NODE *n)
 static int bundle_pointer_arg0 (NODE *t)
 {
     NODE *n = t->v.b1.b;
-    NODE *n0 = n->v.bn.n[0];
 
-    if (n0->t == U_ADDR && ubundle_node(n0->v.b1.b)) {
-	return 1;
+    if (n->v.bn.n_nodes > 0) {
+	NODE *n0 = n->v.bn.n[0];
+	
+	if (n0->t == U_ADDR && ubundle_node(n0->v.b1.b)) {
+	    return 1;
+	}
     }
 
     return 0;
