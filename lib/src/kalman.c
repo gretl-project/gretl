@@ -4508,7 +4508,7 @@ static int add_or_replace_k_matrix (gretl_matrix **targ,
 /* attach a matrix to a new-style Kalman bundle */
 
 static int 
-attach_input_matrix_2 (kalman *K, gretl_matrix *m,
+attach_input_matrix_2 (kalman *K, void *data,
 		       GretlType vtype, int i,
 		       int copy)
 {
@@ -4552,7 +4552,21 @@ attach_input_matrix_2 (kalman *K, gretl_matrix *m,
     */
 
     if (targ != NULL) {
-	add_or_replace_k_matrix(targ, m, copy);
+	gretl_matrix *m;
+	
+	if (vtype == GRETL_TYPE_MATRIX) {
+	    m = data;
+	    add_or_replace_k_matrix(targ, m, copy);
+	} else if (vtype == GRETL_TYPE_DOUBLE) {
+	    m = gretl_matrix_from_scalar(*(double *) data);
+	    if (m == NULL) {
+		err = E_ALLOC;
+	    } else {
+		add_or_replace_k_matrix(targ, m, 0);
+	    }
+	} else {
+	    err = E_TYPES;
+	}
     } else {
 	err = E_DATA;
     }
@@ -4757,24 +4771,32 @@ int maybe_set_kalman_element (void *kptr,
 	}
     }
 
-    if (vtype == GRETL_TYPE_STRING) {
-	if (strchr(key, '_') != NULL) {
-	    /* try for a function call specifier */
-	    for (i=0; i<K_N_MATCALLS; i++) {
-		if (!strcmp(key, kalman_matcall_names[i])) {
-		    id = i;
-		    fncall = 1;
-		    break;
-		}
+    if (strchr(key, '_') != NULL) {
+	/* try for a function call specifier */
+	for (i=0; i<K_N_MATCALLS; i++) {
+	    if (!strcmp(key, kalman_matcall_names[i])) {
+		id = i;
+		fncall = 1;
+		break;
 	    }
 	}
-    } else if (vtype == GRETL_TYPE_MATRIX) {
+	if (fncall && vtype != GRETL_TYPE_STRING) {
+	    *err = E_TYPES;
+	    return 0;
+	}
+    } else {
 	/* try for a matrix specifier */
 	for (i=0; i<K_MMAX; i++) {
 	    if (!strcmp(key, K_input_mats[i].name)) {
 		id = K_input_mats[i].sym;
 		break;
 	    }
+	}
+	if (id >= 0 && vtype != GRETL_TYPE_MATRIX &&
+	    vtype != GRETL_TYPE_DOUBLE) {
+	    /* allow series here?? */
+	    *err = E_TYPES;
+	    return 0;
 	}
     }
 
@@ -4797,8 +4819,7 @@ int maybe_set_kalman_element (void *kptr,
 		}
 	    }
 	} else {
-	    *err = attach_input_matrix_2(K, (gretl_matrix *) vptr,
-					 vtype, id, copy);
+	    *err = attach_input_matrix_2(K, vptr, vtype, id, copy);
 	}
 	done = (*err == 0);
     }

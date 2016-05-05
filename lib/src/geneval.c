@@ -8899,8 +8899,12 @@ static void node_nullify_ptr (NODE *n)
     if (n->t == LIST)   n->v.ivec = NULL;
 }
 
-static int bundle_pointer_arg0 (NODE *n)
+/* given an FNARGS node, detect if the first argument
+   is a pointer to bundle */
+
+static int bundle_pointer_arg0 (NODE *t)
 {
+    NODE *n = t->v.b1.b;
     NODE *n0 = n->v.bn.n[0];
 
     if (n0->t == U_ADDR && ubundle_node(n0->v.b1.b)) {
@@ -8945,7 +8949,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else {
 		e = eval(n->v.bn.n[i], p);
 		if (e == NULL) {
-		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+		    fprintf(stderr, "eval_nargs_func: failed "
+			    "to evaluate arg %d\n", i);
 		} else {
 		    bk[i-1] = node_get_int(e, p);
 		}
@@ -9087,14 +9092,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	}
-    } else if (t->t == F_KFILTER && k == 1 && bundle_pointer_arg0(n)) {
-	e = n->v.bn.n[0]; /* first arg */
-	e = e->v.b1.b;    /* switch to content */
-	reset_p_aux(p, save_aux);
-	ret = aux_scalar_node(p);
-	if (!p->err) {
-	    ret->v.xval = kalman_bundle_run(e->v.b, p->prn, &p->err);
-	}
     } else if (t->t == F_KFILTER) {
 	const char *E = NULL;
 	const char *V = NULL;
@@ -9135,39 +9132,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 					  p->dset, p->prn, 
 					  &p->err);
 	}
-    } else if (t->t == F_KDSMOOTH && k > 0 && bundle_pointer_arg0(n)) {
-	int param = 1;
-	int dkstyle = 0;
-
-	if (k == 2) {
-	    e = eval(n->v.bn.n[1], p);
-	    dkstyle = node_get_int(e, p);
-	} else if (k > 2) {
-	    n_args_error(k, 2, t->t, p);
-	}
-	if (!p->err) {
-	    param += dkstyle != 0;
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b; /* switch to content */
-	    reset_p_aux(p, save_aux);
-	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		ret->v.xval = kalman_bundle_smooth(e->v.b, param, p->prn);
-	    }
-	}	
-    } else if (t->t == F_KSMOOTH && k > 0 && bundle_pointer_arg0(n)) {
-	if (k > 1) {
-	    n_args_error(k, 1, t->t, p);
-	}
-	if (!p->err) {	
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b; /* switch to content */
-	    reset_p_aux(p, save_aux);
-	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		ret->v.xval = kalman_bundle_smooth(e->v.b, 0, p->prn);
-	    }
-	}
     } else if (t->t == F_KSMOOTH) {
 	const char *P = NULL;
 	const char *U = NULL;
@@ -9199,41 +9163,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }	    
 	    ret->v.m = user_kalman_smooth(P, U, &p->err);
-	}
-    } else if (t->t == F_KSIMUL && k > 0 && bundle_pointer_arg0(n)) {
-	gretl_matrix *V = NULL;
-	gretl_matrix *W = NULL;
-
-	if (k != 3) {
-	    n_args_error(k, 3, t->t, p);
-	}
-
-	for (i=1; i<3 && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (!p->err && e->t != MAT) {
-		node_type_error(t->t, i+1, MAT, e, p);
-	    }
-	    if (!p->err) {
-		if (i == 1) {
-		    V = e->v.m;
-		} else {
-		    W = e->v.m;
-		}
-	    }
-	}
-
-	if (!p->err) {
-	    reset_p_aux(p, save_aux);
-	    ret = aux_matrix_node(p);
-	}
-
-	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b;
-	    ret->v.m = kalman_bundle_simulate(e->v.b, V, W, p->prn, &p->err);
 	}
     } else if (t->t == F_KSIMUL) {
 	gretl_matrix *V = NULL;
@@ -9850,7 +9779,46 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.a = A;
 	    }
 	}
-    } else if (t->t == F_KSETUP) {
+    }
+
+    return ret;
+}
+
+static gretl_matrix *node_get_matrix_lenient (NODE *n,
+					      int ok,
+					      parser *p)
+{
+    gretl_matrix *m = NULL;
+
+    if (n->t == NUM && (ok == NUM)) {
+	m = gretl_matrix_from_scalar(n->v.xval);
+    } else if (n->t == SERIES && (ok == SERIES)) {
+	m = gretl_vector_from_series(n->v.xvec, p->dset->t1,
+				     p->dset->t2);
+    } else if (n->t == LIST && (ok == SERIES)) {
+	m = gretl_matrix_data_subset(n->v.ivec, p->dset,
+				     p->dset->t1, p->dset->t2,
+				     M_MISSING_OK, &p->err);
+    } else {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err && m == NULL) {
+	p->err = E_ALLOC;
+    }
+
+    return m;
+}
+
+static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
+{
+    NODE *save_aux = p->aux;
+    NODE *n = t->v.b1.b;
+    NODE *ret = NULL;
+    NODE *e = NULL;
+    int i, k = n->v.bn.n_nodes;
+
+    if (t->t == F_KSETUP) {
 	gretl_matrix *M[5] = {NULL};
 	int copy[5] = {0};
 	
@@ -9868,8 +9836,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    } else {
 			copy[i] = 1;
 		    }
+		} else if (i == 0) {
+		    /* obsy: accept series or list */
+		    M[i] = node_get_matrix_lenient(e, SERIES, p);
 		} else {
-		    p->err = E_TYPES;
+		    /* system matrices, state variance */
+		    M[i] = node_get_matrix_lenient(e, NUM, p);
 		}
 	    }
 	}
@@ -9882,6 +9854,51 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (ret != NULL) {
 		    ret->v.b = b;
 		}
+	    }
+	}    
+    } else if (t->t == F_KFILTER) {
+	if (k != 1) {
+	    n_args_error(k, 1, t->t, p);
+	} else {
+	    e = n->v.bn.n[0]; /* first arg */
+	    e = e->v.b1.b;    /* switch to content */
+	    reset_p_aux(p, save_aux);
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = kalman_bundle_run(e->v.b, p->prn, &p->err);
+	    }
+	}
+    } else if (t->t == F_KDSMOOTH) {
+	int param = 1;
+	int dkstyle = 0;
+
+	if (k == 2) {
+	    e = eval(n->v.bn.n[1], p);
+	    dkstyle = node_get_int(e, p);
+	} else if (k < 1 || k > 2) {
+	    n_args_error(k, 2, t->t, p);
+	}
+	if (!p->err) {
+	    param += dkstyle != 0;
+	    e = n->v.bn.n[0];
+	    e = e->v.b1.b; /* switch to content */
+	    reset_p_aux(p, save_aux);
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = kalman_bundle_smooth(e->v.b, param, p->prn);
+	    }
+	}	
+    } else if (t->t == F_KSMOOTH) {
+	if (k != 1) {
+	    n_args_error(k, 1, t->t, p);
+	}
+	if (!p->err) {	
+	    e = n->v.bn.n[0];
+	    e = e->v.b1.b; /* switch to content */
+	    reset_p_aux(p, save_aux);
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = kalman_bundle_smooth(e->v.b, 0, p->prn);
 	    }
 	}
     }
@@ -12354,10 +12371,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MRLS:
     case F_FILTER:	
     case F_MCOVG:
-    case F_KFILTER:
-    case F_KSMOOTH:
-    case F_KDSMOOTH:
-    case F_KSIMUL:
     case F_NRMAX:
     case F_LOESS:
     case F_GHK:
@@ -12367,10 +12380,22 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTPVAL:
     case F_MOVAVG:
     case F_DEFARRAY:
-    case F_KSETUP:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
+	break;
+    case F_KFILTER:
+    case F_KSMOOTH:
+    case F_KSIMUL:
+	if (bundle_pointer_arg0(t)) {
+	    ret = eval_kalman_bundle_func(t, p);
+	} else {
+	    ret = eval_nargs_func(t, p);
+	}
+	break;
+    case F_KSETUP:
+    case F_KDSMOOTH:
+	ret = eval_kalman_bundle_func(t, p);
 	break;
     case F_ISOCONV:
 	ret = isoconv_node(t, p);

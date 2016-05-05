@@ -599,7 +599,8 @@ void *gretl_bundle_get_private_data (gretl_bundle *bundle)
  * specified @bundle, or 0 on failure.
  */
 
-GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
+GretlType gretl_bundle_get_type (gretl_bundle *bundle,
+				 const char *key,
 				 int *err)
 {
     GretlType ret = GRETL_TYPE_NONE;
