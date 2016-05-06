@@ -1198,12 +1198,17 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 				  const gretl_bundle *bundle2,
 				  int *err)
 {
-    gretl_bundle *b = gretl_bundle_new();
+    gretl_bundle *b = NULL;
 
-    if (b == NULL) {
-	*err = E_ALLOC;
+    if (bundle2->type == BUNDLE_KALMAN) {
+	gretl_errmsg_set("bundle union: the right-hand operand cannot "
+			 "be a kalman bundle");
+	*err = E_DATA;
     } else {
-	g_hash_table_foreach(bundle1->ht, copy_bundled_item, b);
+	b = gretl_bundle_copy(bundle1, err);
+    }
+
+    if (!*err) {
 	g_hash_table_foreach(bundle2->ht, copy_new_bundled_item, b);
     }
     
