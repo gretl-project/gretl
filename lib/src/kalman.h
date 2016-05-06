@@ -137,6 +137,11 @@ int print_kalman_bundle_info (void *kptr, PRN *prn);
 gretl_bundle *kalman_bundle_copy (const gretl_bundle *src,
 				  int *err);
 
+int kalman_serialize (void *kptr, FILE *fp);
+
+gretl_bundle *kalman_deserialize (void *p1, void *p2,
+				  int *err);
+
 #endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* KALMAN_H_ */

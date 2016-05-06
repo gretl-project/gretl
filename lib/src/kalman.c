@@ -17,9 +17,12 @@
  * 
  */
 
+#define FULL_XML_HEADERS 1
+
 #include "libgretl.h"
 #include "uservar.h"
 #include "gretl_func.h"
+#include "gretl_xml.h"
 #include "matrix_extra.h"
 #include "libset.h"
 #include "kalman.h"
@@ -4628,6 +4631,19 @@ static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "uhat"
 };
 
+static int output_matrix_slot (const char *s)
+{
+    int i;
+
+    for (i=0; i<K_N_OUTPUTS; i++) {
+	if (!strcmp(s, kalman_output_matrix_names[i])) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
 #define K_N_SCALARS 5
 
 enum {
@@ -4701,6 +4717,19 @@ static const char *kalman_matcall_names[K_N_MATCALLS] = {
     "obsvar_call",   /* R */
     "stconst_call"   /* m */
 };
+
+static int kalman_matcall_slot (const char *s)
+{
+    int i;
+
+    for (i=0; i<K_N_MATCALLS; i++) {
+	if (!strcmp(s, kalman_matcall_names[i])) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
 
 static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 {
@@ -4980,10 +5009,225 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
     return err;
 }
 
-/* called from gretl_bundle.c to meet the case where the user calls
+/* for use in context of a kalman bundle: serialize the
+   information in the kalman struct to XML
+*/
+
+int kalman_serialize (void *kptr, FILE *fp)
+{
+    kalman *K = kptr;
+    const gretl_matrix *m;
+    gretl_matrix **pm;
+    double *px;
+    const char *name;
+    int i, id;
+    int err = 0;
+
+    if (K == NULL) {
+	fputs("kalman_serialize: got NULL\n", stderr);
+	return E_DATA;
+    }
+
+    fputs("<gretl-kalman>\n", fp);
+
+    for (i=0; i<K_MMAX; i++) {
+	id = K_input_mats[i].sym;
+	m = k_input_matrix_by_id(K, id);
+	if (m != NULL) {
+	    gretl_matrix_serialize(m, K_input_mats[i].name, fp);
+	}
+    }
+
+    for (i=0; i<K_N_OUTPUTS; i++) {
+	name = kalman_output_matrix_names[i];
+	pm = kalman_output_matrix(K, name);
+	if (pm != NULL && *pm != NULL) {
+	    gretl_matrix_serialize(*pm, name, fp);
+	}
+    }
+
+    for (i=0; i<K_N_SCALARS; i++) {
+	name = kalman_output_scalar_names[i];
+	px = kalman_output_scalar(K, name);
+	if (px != NULL && !na(*px)) {
+	    gretl_scalar_serialize(*px, name, fp);
+	}
+    }
+
+    if (K->matcalls != NULL) {
+	for (i=0; i<K_N_MATCALLS; i++) {
+	    if (matrix_is_varying(K, i)) {
+		gretl_string_serialize(K->matcalls[i],
+				       kalman_matcall_names[i],
+				       fp);
+	    }
+	}
+    }
+
+    fputs("</gretl-kalman>\n", fp);
+
+    return err;
+}
+
+static int required_matrix_slot (const char *s)
+{
+    if (!strcmp(s, "obsy"))     return 0;
+    if (!strcmp(s, "obsymat"))  return 1;
+    if (!strcmp(s, "statemat")) return 2;
+    if (!strcmp(s, "statevar")) return 3;
+    if (!strcmp(s, "obsvar"))   return 4;
+    return -1;
+};
+
+static int input_matrix_slot (const char *s)
+{
+    int i;
+
+    for (i=0; i<K_MMAX; i++) {
+	if (!strcmp(s, K_input_mats[i].name)) {
+	    return K_input_mats[i].sym;
+	}
+    }
+
+    return -1;
+};
+
+/* for use in context of a kalman bundle: deserialize the
+   kalman struct from XML
+*/
+
+gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
+{
+    xmlNodePtr cur, node = p1;
+    xmlDocPtr doc = p2;
+    gretl_matrix *Mreq[5] = {NULL};
+    gretl_matrix *Mopt[K_MMAX] = {NULL};
+    gretl_matrix *Mout[K_N_OUTPUTS] = {NULL};
+    char *S[K_N_MATCALLS] = {NULL};
+    double s2 = NADBL;
+    double lnl = NADBL;
+    int copy[5] = {0};
+    int i, nmats = 0;
+    int nstrs = 0;
+    int Kflags = 0;
+    gretl_matrix *m;
+    double x;
+    char *key, *strv;
+    gretl_bundle *b = NULL;
+
+    while (node != NULL && !*err) {
+        if (!xmlStrcmp(node->name, (XUC) "gretl-kalman")) {
+	    cur = node->xmlChildrenNode;
+	    while (cur != NULL && !*err) {
+		key = (char *) xmlGetProp(cur, (XUC) "name");
+		if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+		    /* pick up kalman matrices */
+		    m = gretl_xml_get_matrix(cur, doc, err);
+		    if ((i = required_matrix_slot(key)) >= 0) {
+			nmats++;
+			Mreq[i] = m;
+		    } else if ((i = input_matrix_slot(key)) >= 0) {
+			Mopt[i] = m;
+		    } else if ((i = output_matrix_slot(key)) >= 0) {
+			Mout[i] = m;
+		    }
+		} else if (!xmlStrcmp(cur->name, (XUC) "scalar")) {
+		    /* pick up kalman scalars */
+		    if (gretl_xml_get_prop_as_double(cur, "value", &x)) {
+			if (!strcmp(key, "diffuse") && x > 0) {
+			    Kflags |= KALMAN_DIFFUSE;
+			} else if (!strcmp(key, "cross") && x > 0) {
+			    Kflags |= KALMAN_CROSS;
+			} else if (!strcmp(key, "s2")) {
+			    s2 = x;
+			} else if (!strcmp(key, "lnl")) {
+			    lnl = x;
+			}
+		    }
+		} else if (!xmlStrcmp(cur->name, (XUC) "string")) {
+		    /* pick up kalman strings */
+		    if (gretl_xml_get_prop_as_string(cur, "value", &strv)) {
+			i = kalman_matcall_slot(strv);
+			if (i >= 0) {
+			    nstrs++;
+			    S[i] = strv;
+			} else {
+			    free(strv);
+			}
+		    }
+		}
+		free(key);
+		cur = cur->next;
+	    }
+	    break;
+	}
+	node = node->next;
+    }
+
+    if (nmats == 5 && !(Kflags & KALMAN_CROSS)) {
+	/* drop obsvar from initialization */
+	Mopt[K_R] = Mreq[4];
+	Mreq[4] = NULL;
+	nmats--;
+    }
+
+    if (((Kflags & KALMAN_CROSS) && nmats != 5) ||
+	(!(Kflags & KALMAN_CROSS) && nmats != 4)) {
+	*err = E_DATA;
+    } else {
+	b = kalman_bundle_new(Mreq, copy, nmats, err);
+	if (b != NULL) {
+	    kalman *K = gretl_bundle_get_private_data(b);
+	    gretl_matrix **pm;
+	    const char *name;
+
+	    K->flags = Kflags;
+	    K->s2 = s2;
+	    K->loglik = lnl;
+
+	    for (i=0; i<K_MMAX; i++) {
+		if (Mopt[i] != NULL) {
+		    attach_input_matrix_2(K, Mopt[i],
+					  GRETL_TYPE_MATRIX,
+					  i, 0);
+		}
+	    }
+	    for (i=0; i<K_N_OUTPUTS; i++) {
+		if (Mout[i] != NULL) {
+		    name = kalman_output_matrix_names[i];
+		    pm = kalman_output_matrix(K, name);
+		    *pm = Mout[i];
+		}
+	    }
+	    if (nstrs > 0) {
+		K->matcalls = strings_array_dup(S, K_N_MATCALLS);
+	    }
+	}
+    }
+
+    if (*err) {
+	/* clean up */
+	for (i=0; i<5; i++) {
+	    gretl_matrix_free(Mreq[i]);
+	}
+	for (i=0; i<K_MMAX; i++) {
+	    gretl_matrix_free(Mopt[i]);
+	}
+	for (i=0; i<K_N_OUTPUTS; i++) {
+	    gretl_matrix_free(Mout[i]);
+	}
+	for (i=0; i<K_N_MATCALLS; i++) {
+	    free(S[i]);
+	}
+    }
+    
+    return b;
+}
+
+/* Called from gretl_bundle.c to meet the case where the user calls
    for a kalman bundle to be copied: here we create a new kalman
    struct and copy across the required elements (since they are
-   not regular bundle members)
+   not regular bundle members).
 */
 
 gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
@@ -5160,4 +5404,3 @@ GPtrArray *retrieve_kalman_bundle_info (void *kptr, int *err)
 }
 
 #endif /* not yet */
-

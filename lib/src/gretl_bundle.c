@@ -1540,6 +1540,10 @@ void gretl_bundle_serialize (gretl_bundle *b, const char *name,
     }
     fputs(">\n", fp);
 
+    if (b->type == BUNDLE_KALMAN) {
+	kalman_serialize(b->data, fp);
+    }
+
     if (b->ht != NULL) {
 	g_hash_table_foreach(b->ht, xml_put_bundled_item, fp);
     }
@@ -1651,14 +1655,27 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2, 
 					int *err)
 {
-    xmlNodePtr node = p1;
+    xmlNodePtr cur, node = p1;
     xmlDocPtr doc = p2;
-    xmlNodePtr cur = node->xmlChildrenNode;
-    gretl_bundle *b = gretl_bundle_new();
+    gretl_bundle *b = NULL;
+    char *btype = NULL;
 
-    if (b == NULL) {
-	*err = E_ALLOC;
+    btype = (char *) xmlGetProp(node, (XUC) "type");
+
+    cur = node->xmlChildrenNode;
+
+    if (btype != NULL && !strcmp(btype, "kalman")) {
+	b = kalman_deserialize(cur, doc, err);
     } else {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    free(btype);
+
+    if (b != NULL) {
 	*err = load_bundled_items(b, cur, doc);
 	if (*err) {
 	    fprintf(stderr, "deserialize bundle: "
@@ -1708,13 +1725,7 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     char fullname[FILENAME_MAX];
-    gretl_bundle *b;
-
-    b = gretl_bundle_new();
-    if (b == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }    
+    gretl_bundle *b = NULL;
 
     if (from_dotdir) {
 	build_path(fullname, gretl_dotdir(), fname, NULL);
@@ -1726,13 +1737,12 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 
     if (!*err) {
 	gretl_push_c_numeric_locale();
-	cur = cur->xmlChildrenNode;
-	*err = load_bundled_items(b, cur, doc);
+	b = gretl_bundle_deserialize(cur, doc, err);
 	gretl_pop_c_numeric_locale();
 	xmlFreeDoc(doc);
     }
 
-    if (*err) {
+    if (*err && b != NULL) {
 	gretl_bundle_destroy(b);
 	b = NULL;
     }
@@ -1744,13 +1754,7 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf, int len,
 					     int *err)
 {
     xmlDocPtr doc = NULL;
-    gretl_bundle *b;
-
-    b = gretl_bundle_new();
-    if (b == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }    
+    gretl_bundle *b = NULL;
 
     xmlKeepBlanksDefault(0);
     doc = xmlParseMemory(buf, len);
@@ -1766,14 +1770,13 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf, int len,
 	    *err = 1;
 	} else {
 	    gretl_push_c_numeric_locale();
-	    cur = cur->xmlChildrenNode;
-	    *err = load_bundled_items(b, cur, doc);
+	    b = gretl_bundle_deserialize(cur, doc, err);
 	    gretl_pop_c_numeric_locale();
 	}
 	xmlFreeDoc(doc);
     }
 
-    if (*err) {
+    if (*err && b != NULL) {
 	gretl_bundle_destroy(b);
 	b = NULL;
     }

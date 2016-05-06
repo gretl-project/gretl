@@ -134,6 +134,14 @@ void gretl_list_serialize (const int *list,
 			   const char *name,
 			   FILE *fp);
 
+void gretl_scalar_serialize (double x,
+			     const char *name, 
+			     FILE *fp);
+
+void gretl_string_serialize (const char *s,
+			     const char *name, 
+			     FILE *fp);
+
 int gretl_matrix_write_as_gdt (const char *fname, 
 			       const gretl_matrix *X,
 			       const char **varnames, 

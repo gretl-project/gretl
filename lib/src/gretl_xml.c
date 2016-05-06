@@ -589,6 +589,33 @@ gretl_matrix *gretl_matrix_deserialize (const char *buf,
 #endif
 
 /**
+ * gretl_scalar_serialize:
+ * @x: numerical value.
+ * @name: name of object.
+ * @fp: stream for writing.
+ *
+ */
+
+void gretl_scalar_serialize (double x, const char *name, FILE *fp)
+{
+    fprintf(fp, "<scalar name=\"%s\" value=\"%.16g\"/>\n", name, x);
+
+}
+
+/**
+ * gretl_string_serialize:
+ * @s: UTF-8 string.
+ * @name: name of object.
+ * @fp: stream for writing.
+ * 
+ */
+
+void gretl_string_serialize (const char *s, const char *name, FILE *fp)
+{
+    fprintf(fp, "<string name=\"%s\" value=\"%s\"/>\n", name, s);
+}
+
+/**
  * gretl_xml_get_prop_as_int:
  * @node: XML node pointer.
  * @tag: name by which integer property is known.
