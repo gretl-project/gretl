@@ -1528,14 +1528,17 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 void gretl_bundle_serialize (gretl_bundle *b, const char *name, 
 			     FILE *fp)
 {
-    if (name == NULL) {
-	fputs("<gretl-bundle>\n", fp);
-    } else if (b->creator != NULL && *b->creator != '\0') {
-	fprintf(fp, "<gretl-bundle name=\"%s\" creator=\"%s\">\n", 
-		name, b->creator);
-    } else {
-	fprintf(fp, "<gretl-bundle name=\"%s\">\n", name);
+    fputs("<gretl-bundle", fp);
+    if (name != NULL) {
+	fprintf(fp, " name=\"%s\"", name);
     }
+    if (b->creator != NULL && *b->creator != '\0') {
+	fprintf(fp, " creator=\"%s\"", b->creator);
+    }
+    if (b->type == BUNDLE_KALMAN) {
+	fputs(" type=\"kalman\"", fp);
+    }
+    fputs(">\n", fp);
 
     if (b->ht != NULL) {
 	g_hash_table_foreach(b->ht, xml_put_bundled_item, fp);
@@ -1688,9 +1691,11 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
+	gretl_push_c_numeric_locale();
 	gretl_xml_header(fp);
 	gretl_bundle_serialize(b, NULL, fp);
 	fclose(fp);
+	gretl_pop_c_numeric_locale();
     }
 
     return err;
