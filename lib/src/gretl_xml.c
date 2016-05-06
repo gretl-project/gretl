@@ -538,56 +538,6 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     fputs("</gretl-matrix>\n", fp); 
 }
 
-#if 0 /* not used at present, but might be useful! */
-
-/**
- * gretl_matrix_deserialize:
- * @buf: character buffer containing serialization of a gretl matrix.
- * @size: size of @buf, or -1 to use full length of a NUL-terminated
- * buffer.
- * @err: location to receive error code.
- *
- * Returns: allocated gretl_matrix, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_deserialize (const char *buf, 
-					int size, 
-					int *err) 
-{
-    xmlDocPtr doc = NULL;
-    xmlNodePtr node = NULL;
-    gretl_matrix *m = NULL;
-    int sz;
-
-    sz = size < 0 ? strlen(buf) : size;
-    doc = xmlParseMemory(buf, sz);
-
-    if (doc == NULL) {
-	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), "buffer");
-	*err = E_DATA;
-    } else {
-	node = xmlDocGetRootElement(doc);
-	if (node != NULL) {
-	    if (xmlStrcmp(node->name, (XUC) "gretl-matrix")) {
-		fprintf(stderr, "Unexpected root node '%s'\n", (char *) node->name);
-		*err = E_TYPES;
-	    }
-	}
-    }    
-
-    if (!*err) {
-	m = gretl_xml_get_matrix(node, doc, err);
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-    }
-
-    return m;
-}
-
-#endif
-
 /**
  * gretl_scalar_serialize:
  * @x: numerical value.

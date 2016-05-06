@@ -4517,15 +4517,10 @@ static int add_or_replace_k_matrix (gretl_matrix **targ,
     return err;
 }
 
-/* attach a matrix to a new-style Kalman bundle */
-
-static int 
-attach_input_matrix_2 (kalman *K, void *data,
-		       GretlType vtype, int i,
-		       int copy)
+static gretl_matrix **
+get_input_matrix_target_by_id (kalman *K, int i)
 {
     gretl_matrix **targ = NULL;
-    int err = 0;
     
     if (i == K_F) {
 	targ = &K->F;
@@ -4557,13 +4552,24 @@ attach_input_matrix_2 (kalman *K, void *data,
 	targ = &K->Pini;
     }
 
-    /* FIXME when adding or replacing a matrix, do we need
-       to check for its conformability with matrices already
-       in place: or is that covered on calling kfilter()
-       or similar?
-    */
+    return targ;
+}
 
-    if (targ != NULL) {
+/* try attaching a matrix to a new-style Kalman bundle */
+
+static int 
+kalman_bundle_try_set_matrix (kalman *K, void *data,
+			      GretlType vtype, int i,
+			      int copy)
+{
+    gretl_matrix **targ;
+    int err = 0;
+
+    targ = get_input_matrix_target_by_id(K, i);
+
+    if (targ == NULL) {
+	err = E_DATA;
+    } else {
 	gretl_matrix *m;
 	
 	if (vtype == GRETL_TYPE_MATRIX) {
@@ -4579,8 +4585,23 @@ attach_input_matrix_2 (kalman *K, void *data,
 	} else {
 	    err = E_TYPES;
 	}
-    } else {
+    }
+
+    return err;
+}
+
+static int 
+kalman_bundle_set_matrix (kalman *K, gretl_matrix *m, int i, int copy)
+{
+    gretl_matrix **targ;
+    int err = 0;
+
+    targ = get_input_matrix_target_by_id(K, i);
+
+    if (targ == NULL) {
 	err = E_DATA;
+    } else {
+	err = add_or_replace_k_matrix(targ, m, copy);
     }
 
     return err;
@@ -4768,6 +4789,19 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
     return m;
 }
 
+static int input_matrix_slot (const char *s)
+{
+    int i;
+
+    for (i=0; i<K_MMAX; i++) {
+	if (!strcmp(s, K_input_mats[i].name)) {
+	    return K_input_mats[i].sym;
+	}
+    }
+
+    return -1;
+};
+
 int maybe_set_kalman_element (void *kptr,
 			      const char *key,
 			      void *vptr,
@@ -4811,30 +4845,27 @@ int maybe_set_kalman_element (void *kptr,
 
     if (strchr(key, '_') != NULL) {
 	/* try for a function call specifier */
-	for (i=0; i<K_N_MATCALLS; i++) {
-	    if (!strcmp(key, kalman_matcall_names[i])) {
+	i = kalman_matcall_slot(key);
+	if (i >= 0) {
+	    if (vtype == GRETL_TYPE_STRING) {
 		id = i;
 		fncall = 1;
-		break;
+	    } else {
+		*err = E_TYPES;
+		return 0;
 	    }
-	}
-	if (fncall && vtype != GRETL_TYPE_STRING) {
-	    *err = E_TYPES;
-	    return 0;
 	}
     } else {
 	/* try for a matrix specifier */
-	for (i=0; i<K_MMAX; i++) {
-	    if (!strcmp(key, K_input_mats[i].name)) {
-		id = K_input_mats[i].sym;
-		break;
+	i = input_matrix_slot(key);
+	if (i >= 0) {
+	    if (vtype == GRETL_TYPE_MATRIX ||
+		vtype == GRETL_TYPE_DOUBLE) {
+		id = i;
+	    } else {
+		*err = E_TYPES;
+		return 0;
 	    }
-	}
-	if (id >= 0 && vtype != GRETL_TYPE_MATRIX &&
-	    vtype != GRETL_TYPE_DOUBLE) {
-	    /* allow series here?? */
-	    *err = E_TYPES;
-	    return 0;
 	}
     }
 
@@ -4857,7 +4888,7 @@ int maybe_set_kalman_element (void *kptr,
 		}
 	    }
 	} else {
-	    *err = attach_input_matrix_2(K, vptr, vtype, id, copy);
+	    *err = kalman_bundle_try_set_matrix(K, vptr, vtype, id, copy);
 	}
 	done = (*err == 0);
     }
@@ -5079,19 +5110,6 @@ static int required_matrix_slot (const char *s)
     return -1;
 };
 
-static int input_matrix_slot (const char *s)
-{
-    int i;
-
-    for (i=0; i<K_MMAX; i++) {
-	if (!strcmp(s, K_input_mats[i].name)) {
-	    return K_input_mats[i].sym;
-	}
-    }
-
-    return -1;
-};
-
 /* for use in context of a kalman bundle: deserialize the
    kalman struct from XML
 */
@@ -5187,9 +5205,7 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
 
 	    for (i=0; i<K_MMAX; i++) {
 		if (Mopt[i] != NULL) {
-		    attach_input_matrix_2(K, Mopt[i],
-					  GRETL_TYPE_MATRIX,
-					  i, 0);
+		    kalman_bundle_set_matrix(K, Mopt[i], i, 0);
 		}
 	    }
 	    for (i=0; i<K_N_OUTPUTS; i++) {
@@ -5272,9 +5288,7 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
 	id = K_input_mats[i].sym;
 	m = (gretl_matrix *) k_input_matrix_by_id(K, id);
 	if (m != NULL) {
-	    *err = attach_input_matrix_2(Knew, m, 
-					 GRETL_TYPE_MATRIX,
-					 i, 1);
+	    *err = kalman_bundle_set_matrix(Knew, m, i, 1);
 	}
     }
 
