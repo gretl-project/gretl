@@ -28,6 +28,11 @@
 #define GUI_MAIN     "gui-main"
 #define GUI_PRECHECK "gui-precheck"
 
+typedef enum {
+    BUNDLE_PLAIN,
+    BUNDLE_KALMAN
+} BundleType;
+
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
@@ -39,6 +44,8 @@ int type_can_be_bundled (GretlType type);
 
 gretl_bundle *get_bundle_by_name (const char *name);
 
+BundleType gretl_bundle_get_type (gretl_bundle *bundle);
+
 void *gretl_bundle_get_content (gretl_bundle *bundle);
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
@@ -49,8 +56,9 @@ void *gretl_bundle_steal_data (gretl_bundle *bundle, const char *key,
 
 void *gretl_bundle_get_private_data (gretl_bundle *bundle);
 
-GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
-				 int *err);
+GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
+					const char *key,
+					int *err);
 
 gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
 				       const char *key,

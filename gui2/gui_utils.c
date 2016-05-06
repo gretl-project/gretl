@@ -32,6 +32,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 #include "csvdata.h"
+#include "kalman.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -4632,7 +4633,10 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	}
 
 	if (type == GRETL_TYPE_DOUBLE) {
-	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, val);
+	    double *xp = malloc(sizeof *xp);
+
+	    *xp = *(double *) val;
+	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, xp);
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *orig = (gretl_matrix *) val;
 	    gretl_matrix *m = gretl_matrix_copy(orig);
@@ -4732,6 +4736,47 @@ static void add_bundled_item_to_menu (gpointer key,
     g_free(label);
 }
 
+static void add_kalman_items_to_menu (GtkWidget *menu,
+				      kalman *K)
+{
+    GtkAction *action;
+    GtkWidget *item;
+    gchar *label;
+    char **S;
+    int i, ns = 0;
+
+    S = kalman_bundle_get_matrix_names(K, &ns);
+
+    for (i=0; i<ns; i++) {
+	label = g_strdup_printf("%s (matrix)", S[i]);
+	action = gtk_action_new(S[i], label, NULL, NULL);
+	g_signal_connect(G_OBJECT(action), "activate", 
+			 G_CALLBACK(save_bundled_item_call),
+			 g_object_get_data(G_OBJECT(menu), "vwin"));
+	item = gtk_action_create_menu_item(action); 
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_free(label);
+    }
+
+    strings_array_free(S, ns);
+    ns = 0;
+
+    S = kalman_bundle_get_scalar_names(K, &ns);
+
+    for (i=0; i<ns; i++) {
+	label = g_strdup_printf("%s (scalar)", S[i]);
+	action = gtk_action_new(S[i], label, NULL, NULL);
+	g_signal_connect(G_OBJECT(action), "activate", 
+			 G_CALLBACK(save_bundled_item_call),
+			 g_object_get_data(G_OBJECT(menu), "vwin"));
+	item = gtk_action_create_menu_item(action); 
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_free(label);
+    }
+
+    strings_array_free(S, ns);
+}
+
 static void check_for_saveable (gpointer key, 
 				gpointer value, 
 				gpointer data)
@@ -4785,11 +4830,23 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
     gretl_bundle *bundle = vwin->data;
     GtkWidget *menu = NULL;
 
+    if (gretl_bundle_get_type(bundle) == BUNDLE_KALMAN) {
+	kalman *K = gretl_bundle_get_private_data(bundle);
+
+	if (K != NULL) {
+	    menu = gtk_menu_new();
+	    g_object_set_data(G_OBJECT(menu), "vwin", vwin);
+	    add_kalman_items_to_menu(menu, K);
+	}
+    }
+
     if (any_saveable_content(bundle)) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
 
-	menu = gtk_menu_new();
-	g_object_set_data(G_OBJECT(menu), "vwin", vwin);
+	if (menu == NULL) {
+	    menu = gtk_menu_new();
+	    g_object_set_data(G_OBJECT(menu), "vwin", vwin);
+	}
 	g_hash_table_foreach(ht, add_bundled_item_to_menu, menu);
     }
 

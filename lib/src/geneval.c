@@ -7672,7 +7672,7 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 	   modified assignment at the initial parse stage.
 	   AC, 2013-05-12
 	*/
-	type = gretl_bundle_get_type(bundle, key, &err);
+	type = gretl_bundle_get_member_type(bundle, key, &err);
     }
 #endif
 
@@ -7792,7 +7792,7 @@ static int edit_bundle_value (gretl_bundle *b, NODE *n, parser *p)
     if (b == NULL || key == NULL) {
 	p->err = E_DATA;
     } else {
-	type = gretl_bundle_get_type(b, key, &p->err);
+	type = gretl_bundle_get_member_type(b, key, &p->err);
     }
 
     if (!p->err) {

@@ -39,11 +39,6 @@
  * An opaque type; use the relevant accessor functions.
  */
 
-typedef enum {
-    BUNDLE_PLAIN,
-    BUNDLE_KALMAN
-} BundleType;
-
 struct gretl_bundle_ {
     BundleType type; /* see enum above */
     GHashTable *ht;  /* holds key/value pairs */
@@ -589,8 +584,13 @@ void *gretl_bundle_get_private_data (gretl_bundle *bundle)
     return bundle->data;
 }
 
+BundleType gretl_bundle_get_type (gretl_bundle *bundle)
+{
+    return bundle->type;
+}
+
 /**
- * gretl_bundle_get_type:
+ * gretl_bundle_get_member_type:
  * @bundle: bundle to access.
  * @key: name of key to access.
  * @err:location to receive error code.
@@ -599,9 +599,9 @@ void *gretl_bundle_get_private_data (gretl_bundle *bundle)
  * specified @bundle, or 0 on failure.
  */
 
-GretlType gretl_bundle_get_type (gretl_bundle *bundle,
-				 const char *key,
-				 int *err)
+GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
+					const char *key,
+					int *err)
 {
     GretlType ret = GRETL_TYPE_NONE;
     int reserved = 0;

@@ -4852,7 +4852,6 @@ int maybe_set_kalman_element (void *kptr,
 		fncall = 1;
 	    } else {
 		*err = E_TYPES;
-		return 0;
 	    }
 	}
     } else {
@@ -4864,12 +4863,13 @@ int maybe_set_kalman_element (void *kptr,
 		id = i;
 	    } else {
 		*err = E_TYPES;
-		return 0;
 	    }
 	}
     }
 
-    if (id < 0) {
+    if (*err) {
+	return 0;
+    } else if (id < 0) {
 	if (kalman_output_matrix(K, key) != NULL ||
 	    kalman_output_scalar(K, key) != NULL) {
 	    *err = E_DATA;
@@ -5321,100 +5321,56 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     return b;
 }
 
-#if 0
+/* for use in constructing GUI bundle save menu */
 
-/* Not ready yet: possible apparatus for making Kalman content
-   available in bundle-like form. If we can make this work it
-   can be used for populating the Save menu when a Kalman
-   bundle is displayed in the GUI, and also for serializing
-   a Kalman bundle via bwrite().
-*/
-
-struct vbundle_item {
+char **kalman_bundle_get_matrix_names (kalman *K, int *ns)
+{
+    char **S = NULL;
+    gretl_matrix **pm;
     const char *name;
-    void *data;
-    GretlType type;
-};
+    int i, id, err = 0;
 
-static int pointer_array_push (GPtrArray *A,
-			       const char *name,
-			       void *data,
-			       GretlType type)
-{
-    struct vbundle_item *item;
+    *ns = 0;
 
-    item = malloc(sizeof *item);
-
-    if (item == NULL) {
-	return E_ALLOC;
-    } else {
-	item->name = name;
-	item->data = data;
-	item->type = type;
-	g_ptr_array_add(A, item);
+    for (i=0; i<K_MMAX && !err; i++) {
+	id = K_input_mats[i].sym;
+	if (k_input_matrix_by_id(K, id) != NULL) {
+	    err = strings_array_add(&S, ns, K_input_mats[i].name);
+	}
     }
 
-    return 0;
+    for (i=0; i<K_N_OUTPUTS && !err; i++) {
+	name = kalman_output_matrix_names[i];
+	pm = kalman_output_matrix(K, name);
+	if (pm != NULL && *pm != NULL) {
+	    err = strings_array_add(&S, ns, name);
+	}
+    }
+
+    return S;
 }
 
-GPtrArray *retrieve_kalman_bundle_info (void *kptr, int *err)
+/* also for use in constructing GUI bundle save menu */
+
+char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
 {
-    GPtrArray *A = NULL;
-    kalman *K = kptr;
+    char **S;
 
-    if (K == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }
+    *ns = 2 + !na(K->s2) + !na(K->loglik);
+    S = strings_array_new(*ns);
 
-    A = g_ptr_array_new();
-
-    if (A != NULL) {
-	const gretl_matrix *m;
-	gretl_matrix **pm;
-	double *px;
-	const char *name;
-	int i, id;
-
-	for (i=0; i<K_MMAX; i++) {
-	    id = K_input_mats[i].sym;
-	    m = k_input_matrix_by_id(K, id);
-	    if (m != NULL) {
-		pointer_array_push(A, K_input_mats[i].name, (void *) m,
-				   GRETL_TYPE_MATRIX);
-	    }
+    if (S != NULL) {
+	int i = 2;
+	
+	S[0] = gretl_strdup("cross");
+	S[1] = gretl_strdup("diffuse");
+	if (!na(K->s2)) {
+	    S[i++] = gretl_strdup("s2");
 	}
-
-	for (i=0; i<K_N_OUTPUTS; i++) {
-	    name = kalman_output_matrix_names[i];
-	    pm = kalman_output_matrix(K, name);
-	    if (pm != NULL && *pm != NULL) {
-		pointer_array_push(A, name, *pm,
-				   GRETL_TYPE_MATRIX);
-	    }
+	if (!na(K->loglik)) {
+	    S[i++] = gretl_strdup("lnl");
 	}
+    }	
 
-	for (i=0; i<K_N_SCALARS; i++) {
-	    name = kalman_output_scalar_names[i];
-	    px = kalman_output_scalar(K, name);
-	    if (px != NULL) {
-		pointer_array_push(A, name, px,
-				   GRETL_TYPE_DOUBLE);
-	    }
-	}
-
-	if (K->matcalls != NULL) {
-	    for (i=0; i<K_N_MATCALLS; i++) {
-		if (matrix_is_varying(K, i)) {
-		    pointer_array_push(A, kalman_matcall_names[i],
-				       K->matcalls[i],
-				       GRETL_TYPE_STRING);
-		}
-	    }
-	}
-    }
-
-    return A;    
+    return S;
 }
-
-#endif /* not yet */

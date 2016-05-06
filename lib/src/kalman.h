@@ -142,6 +142,10 @@ int kalman_serialize (void *kptr, FILE *fp);
 gretl_bundle *kalman_deserialize (void *p1, void *p2,
 				  int *err);
 
+char **kalman_bundle_get_matrix_names (kalman *K, int *ns);
+
+char **kalman_bundle_get_scalar_names (kalman *K, int *ns);
+
 #endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* KALMAN_H_ */
