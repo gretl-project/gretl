@@ -387,11 +387,9 @@ famous Nile dataset (cite).
 If a non-zero value is given for the optional second argument a
 different dispersion measure is computed, namely the mean squared
 distance of the inferred disturbances around the true disturbances or
-in other words the mean squared error.\footnote{This second variance
-  measure is not available at present in the case of cross-correlated
-  disturbances (section~\ref{sec:crossd}).} Again the results are
-given in vectorized diagonal form; in this case row $t$ of
-\texttt{stdistvar} holds
+in other words the mean squared error. Again the results are given in
+vectorized diagonal form; in this case row $t$ of \texttt{stdistvar}
+holds
 \[
 \mbox{diag}\left\{E\left[
  (\hat{\strdist}_t-\strdist_t)(\hat{\strdist}_t-\strdist_t)'
