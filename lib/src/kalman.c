@@ -3249,7 +3249,7 @@ static int combined_dist_variance (kalman *K,
 			      Veps, GRETL_MOD_CUMULATE);
 
     if (dkstyle) {
-	/* experiment: Veps = I - Veps */
+	/* Veps = I_p - Veps */
 	double vii;
 	int i;
 
@@ -3292,15 +3292,6 @@ static int koopman_smooth (kalman *K, int dkstyle)
     gretl_matrix *Ut = NULL; 
     double x;
     int i, t, err = 0;
-
-#if 0    
-    if (K->p > 0 && dkstyle) {
-	/* Durbin-Koopman variance calculation is not 
-	   implemented for the cross-correlated case
-	*/
-	return E_DATA;
-    }
-#endif    
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
 			       &D,  K->n, K->n,
