@@ -4979,6 +4979,19 @@ void *maybe_retrieve_kalman_element (void *kptr,
     return ret;
 }
 
+static int output_matrix_count (kalman *K)
+{
+    gretl_matrix **pm;
+    int i, n = 0;
+    
+    for (i=0; i<K_N_OUTPUTS; i++) {
+	pm = kalman_output_matrix(K, kalman_output_matrix_names[i]);
+	n += (pm != NULL && *pm != NULL);
+    }
+
+    return n;
+}
+
 int print_kalman_bundle_info (void *kptr, PRN *prn)
 {
     kalman *K = kptr;
@@ -4998,26 +5011,23 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
 	
 	for (i=0; i<K_MMAX; i++) {
 	    id = K_input_mats[i].sym;
-	    pprintf(prn, " %s: ", K_input_mats[i].name);
 	    m = k_input_matrix_by_id(K, id);
-	    if (m == NULL) {
-		pputs(prn, "null\n");
-	    } else {
+	    if (m != NULL) {
+		pprintf(prn, " %s: ", K_input_mats[i].name);
 		pprintf(prn, "%d x %d\n", m->rows, m->cols);
 	    }
 	}
 
-	pputs(prn, "\nKalman output matrices\n");
-
-	for (i=0; i<K_N_OUTPUTS; i++) {
-	    name = kalman_output_matrix_names[i];
-	    pprintf(prn, " %s: ", name);
-	    pm = kalman_output_matrix(K, name);
-	    if (pm == NULL || *pm == NULL) {
-		pputs(prn, "null\n");
-	    } else {
-		m = *pm;
-		pprintf(prn, "%d x %d\n", m->rows, m->cols);
+	if (output_matrix_count(K) > 0) {
+	    pputs(prn, "\nKalman output matrices\n");
+	    for (i=0; i<K_N_OUTPUTS; i++) {
+		name = kalman_output_matrix_names[i];
+		pm = kalman_output_matrix(K, name);
+		if (pm != NULL && *pm != NULL) {
+		    m = *pm;
+		    pprintf(prn, " %s: ", name);
+		    pprintf(prn, "%d x %d\n", m->rows, m->cols);
+		}
 	    }
 	}
 
@@ -5037,7 +5047,7 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
 	if (K->matcalls != NULL) {
 	    pputs(prn, "\nKalman strings\n");
 	    for (i=0; i<K_N_MATCALLS; i++) {
-		if (matrix_is_varying(K, i)) {
+		if (K->matcalls[i] != NULL) {
 		    pprintf(prn, " %s: %s\n", kalman_matcall_names[i],
 			    K->matcalls[i]);
 		}
@@ -5059,8 +5069,7 @@ int kalman_serialize (void *kptr, FILE *fp)
     gretl_matrix **pm;
     double *px;
     const char *name;
-    int i, id;
-    int err = 0;
+    int i, err = 0;
 
     if (K == NULL) {
 	fputs("kalman_serialize: got NULL\n", stderr);
@@ -5070,8 +5079,7 @@ int kalman_serialize (void *kptr, FILE *fp)
     fputs("<gretl-kalman>\n", fp);
 
     for (i=0; i<K_MMAX; i++) {
-	id = K_input_mats[i].sym;
-	m = k_input_matrix_by_id(K, id);
+	m = k_input_matrix_by_id(K, K_input_mats[i].sym);
 	if (m != NULL) {
 	    gretl_matrix_serialize(m, K_input_mats[i].name, fp);
 	}
@@ -5095,7 +5103,7 @@ int kalman_serialize (void *kptr, FILE *fp)
 
     if (K->matcalls != NULL) {
 	for (i=0; i<K_N_MATCALLS; i++) {
-	    if (matrix_is_varying(K, i)) {
+	    if (K->matcalls[i] != NULL) {
 		gretl_string_serialize(K->matcalls[i],
 				       kalman_matcall_names[i],
 				       fp);
@@ -5381,4 +5389,33 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
     }	
 
     return S;
+}
+
+/* to support the nelem() function for kalman bundles */
+
+int kalman_bundle_n_members (gretl_bundle *b)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+    int n = 0;
+
+    if (K != NULL) {
+	int i, id;
+	
+	n = K_N_SCALARS;
+
+	for (i=0; i<K_MMAX; i++) {
+	    id = K_input_mats[i].sym;
+	    n += (k_input_matrix_by_id(K, id) != NULL);
+	}
+
+	n += output_matrix_count(K);
+
+	if (K->matcalls != NULL) {
+	    for (i=0; i<K_N_MATCALLS; i++) {
+		n += (K->matcalls[i] != NULL);
+	    }
+	}	
+    }
+
+    return n;
 }

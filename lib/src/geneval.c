@@ -5384,7 +5384,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
 	} else if (n->t == BUNDLE) {
 	    gretl_bundle *b = n->v.b;
 
-	    ret->v.xval = gretl_bundle_get_n_keys(b);
+	    ret->v.xval = gretl_bundle_get_n_members(b);
 	} else if (ok_list_node(n)) {
 	    int *list = node_get_list(n, p);
 

@@ -128,6 +128,8 @@ int gretl_bundle_is_stacked (gretl_bundle *b);
 
 int gretl_bundle_get_n_keys (gretl_bundle *b);
 
+int gretl_bundle_get_n_members (gretl_bundle *b);
+
 int gretl_bundle_has_content (gretl_bundle *b);
 
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,

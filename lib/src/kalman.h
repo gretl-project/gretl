@@ -146,6 +146,8 @@ char **kalman_bundle_get_matrix_names (kalman *K, int *ns);
 
 char **kalman_bundle_get_scalar_names (kalman *K, int *ns);
 
+int kalman_bundle_n_members (gretl_bundle *b);
+
 #endif /* __GTK_DOC_IGNORE__ */
 
 #endif /* KALMAN_H_ */

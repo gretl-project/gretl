@@ -86,6 +86,8 @@ int gretl_bundle_is_stacked (gretl_bundle *b)
     return u != NULL;
 }
 
+/* gets the number of keys in the bundle's hash table */
+
 int gretl_bundle_get_n_keys (gretl_bundle *b)
 {
     int n_items = 0;
@@ -95,6 +97,25 @@ int gretl_bundle_get_n_keys (gretl_bundle *b)
     }
 
     return n_items;
+}
+
+/* gets total number of members including any "special"
+   contents outside of the hash table */
+
+int gretl_bundle_get_n_members (gretl_bundle *b)
+{
+    int nmemb = 0;
+
+    if (b != NULL) {
+	if (b->type == BUNDLE_KALMAN) {
+	    nmemb += kalman_bundle_n_members(b);
+	}
+	if (b->ht != NULL) {
+	    nmemb += g_hash_table_size(b->ht);
+	}
+    }
+
+    return nmemb;
 }
 
 int gretl_bundle_has_content (gretl_bundle *b)
