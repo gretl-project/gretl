@@ -4011,6 +4011,11 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
     kalman *K = gretl_bundle_get_private_data(b);    
     int err;
 
+    if (K == NULL) {
+	fprintf(stderr, "kalman_bundle_smooth: K is NULL\n");
+	return E_DATA;
+    }
+
     K->b = b; /* attach bundle pointer */
     
     err = kalman_ensure_output_matrices(K);
