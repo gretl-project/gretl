@@ -7390,7 +7390,9 @@ int gretl_matrix_psd_root (gretl_matrix *a)
 		sum += x1 * x2;
 	    }
 	    x1 = gretl_matrix_get(a, i, j);
-	    if (i == j) {
+	    if (x1 - sum == 0.0) {
+		gretl_matrix_set(L, i, i, 0.0);
+	    } else if (i == j) {
 		gretl_matrix_set(L, i, i, sqrt(x1 - sum));
 	    } else {
 		x2 = gretl_matrix_get(L, j, j);  

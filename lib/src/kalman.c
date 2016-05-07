@@ -4074,7 +4074,8 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 
 static int sim_state_0 (kalman *K, const gretl_matrix *V)
 {
-    gretl_matrix *Q, *v0 = NULL, *s0 = NULL;
+    gretl_matrix *Q, *e0 = NULL, *s0 = NULL;
+    gretl_matrix *tmp = NULL;
     int err = 0;
     
     Q = gretl_matrix_copy(K->P0);
@@ -4086,17 +4087,24 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     }
 
     if (!err) {
-	v0 = gretl_matrix_alloc(K->r, 1);
+	e0 = gretl_matrix_alloc(V->cols, 1);
 	s0 = gretl_matrix_alloc(K->r, 1);
-	if (v0 == NULL || s0 == NULL) {
+	if (e0 == NULL || s0 == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	/* FIXME cross-correlated? */
-	load_from_row(v0, V, 0, GRETL_MOD_NONE);
-	err = gretl_matrix_multiply(Q, v0, s0);
+	load_from_row(e0, V, 0, GRETL_MOD_NONE);
+	if (K->p > 0) {
+	    /* cross-correlated */
+	    tmp = gretl_matrix_alloc(K->r, 1);
+	    gretl_matrix_multiply(K->B, e0, tmp);
+	    err = gretl_matrix_multiply(Q, tmp, s0);
+	    gretl_matrix_free(tmp);
+	} else {
+	    err = gretl_matrix_multiply(Q, e0, s0);
+	}
     }
 
     if (!err) {
@@ -4105,7 +4113,7 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     }
 
     gretl_matrix_free(Q);
-    gretl_matrix_free(v0);
+    gretl_matrix_free(e0);
     gretl_matrix_free(s0);
 
     return err;
@@ -4121,7 +4129,7 @@ static int kalman_simulate (kalman *K,
     gretl_matrix *yt, *et = NULL;
     int err = 0;
 
-    yt = gretl_matrix_alloc(K->n, 1);
+    yt = gretl_zero_matrix_new(K->n, 1);
     if (yt == NULL) {
 	return E_ALLOC;
     }
@@ -4134,9 +4142,16 @@ static int kalman_simulate (kalman *K,
 	}
     }	
 
-    sim_state_0(K, V);
+    err = sim_state_0(K, V);
 
-    if (K->x == NULL) {
+    if (!err) {
+	load_to_row(Y, yt, 0);
+	if (S != NULL) {
+	    load_to_row(S, K->S0, 0);
+	}
+    }
+
+    if (!err && K->x == NULL) {
 	/* no exogenous vars */
 	if (K->A != NULL) {
 	    /* implicit const case: A is 1 x n and A'x is n x 1 */
@@ -4144,9 +4159,9 @@ static int kalman_simulate (kalman *K,
 	} else {
 	    gretl_matrix_zero(K->Ax);
 	}
-    } 
+    }
 
-    for (K->t = 0; K->t < K->T; K->t += 1) {
+    for (K->t = 1; K->t < K->T && !err; K->t += 1) {
 	int missobs = 0;
 
 	if (filter_is_varying(K)) {
@@ -4177,10 +4192,6 @@ static int kalman_simulate (kalman *K,
 
 	/* record the observables */
 	load_to_row(Y, yt, K->t);
-	if (S != NULL) {
-	    /* and the state, if wanted */
-	    load_to_row(S, K->S0, K->t);
-	}
 	
 	/* S_{t+1} = F*S_t + v_t */
 	gretl_matrix_multiply(K->F, K->S0, K->S1);
@@ -4196,6 +4207,11 @@ static int kalman_simulate (kalman *K,
 	if (K->mu != NULL) {
 	    gretl_matrix_add_to(K->S1, K->mu);
 	}
+
+	if (S != NULL) {
+	    /* record the state, if wanted */
+	    load_to_row(S, K->S1, K->t);
+	}	
 
 	gretl_matrix_copy_values(K->S0, K->S1);
     }
@@ -4329,7 +4345,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     gretl_matrix *Y = NULL, *S = NULL;
     int T, saveT;
 
-    K->b = b; /* attach bundle poiunter */
+    K->b = b; /* attach bundle pointer */
 
     if (V == NULL) {
 	*err = missing_matrix_error("V");
@@ -4341,6 +4357,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	   @V as the underlying disturbance matrix (and ignore @W).
 	*/
 	if (V->cols != K->p) {
+	    fprintf(stderr, "K->p = %d, but cols(V) = %d\n", K->p, V->cols);
 	    *err = E_NONCONF;
 	}
     } else {	
@@ -4348,11 +4365,14 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	   K->R is non-null.
 	*/
 	if (V->cols != K->r) {
+	    fprintf(stderr, "K->r = %d, but cols(V) = %d\n", K->r, V->cols);
 	    *err = E_NONCONF;
 	} else if (K->R != NULL) {
 	    if (W == NULL) {
 		*err = missing_matrix_error("W");
 	    } else if (W->rows != V->rows || W->cols != K->n) {
+		fprintf(stderr, "K->n = %d, but cols(W) = %d\n",
+			K->n, W->cols);
 		*err = E_NONCONF;
 	    }
 	}	    
@@ -4364,12 +4384,10 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 
     /* we let V provisionally define the sample length */
     saveT = K->T;
-    T = V->rows;
+    K->T = T = V->rows;
+    K->flags |= KALMAN_SIM;
 
     /* now, are the other needed matrices in place? */
-    K->flags |= KALMAN_SIM;
-    K->T = T;
-
     *err = kalman_bundle_recheck_matrices(K, prn);
 
     /* matrices to hold simulated observables and state */
