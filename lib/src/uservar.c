@@ -232,7 +232,7 @@ static void user_var_destroy (user_var *u)
 {
     int free_val = 1;
 
-#if 1 || HDEBUG
+#if HDEBUG
     fprintf(stderr, "user_var_destroy: '%s' (level %d)\n", u->name, u->level);
 #endif
 

@@ -3201,7 +3201,8 @@ static int combined_dist_variance (kalman *K,
 				   gretl_matrix *N,
 				   gretl_matrix *vv,
 				   gretl_matrix *vw,
-				   gretl_matrix_block *BX)
+				   gretl_matrix_block *BX,
+				   int dkstyle)
 {
     gretl_matrix *DC, *KN, *Veps, *NB, *NK;
 
@@ -3247,6 +3248,19 @@ static int combined_dist_variance (kalman *K,
 			      NB, GRETL_MOD_NONE,
 			      Veps, GRETL_MOD_CUMULATE);
 
+    if (dkstyle) {
+	/* experiment: Veps = I - Veps */
+	double vii;
+	int i;
+
+	gretl_matrix_multiply_by_scalar(Veps, -1.0);
+
+	for (i=0; i<K->p; i++) {
+	    vii = gretl_matrix_get(Veps, i, i);
+	    gretl_matrix_set(Veps, i, i, 1.0 + vii);
+	}
+    }
+
     /* Veps (p x p) holds the variance of \epsilon_t 
        conditional on Y_n: now form the per-equation
        disturbance variance matrices, @vv and @vw, for
@@ -3279,12 +3293,14 @@ static int koopman_smooth (kalman *K, int dkstyle)
     double x;
     int i, t, err = 0;
 
+#if 0    
     if (K->p > 0 && dkstyle) {
 	/* Durbin-Koopman variance calculation is not 
 	   implemented for the cross-correlated case
 	*/
 	return E_DATA;
     }
+#endif    
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
 			       &D,  K->n, K->n,
@@ -3410,7 +3426,8 @@ static int koopman_smooth (kalman *K, int dkstyle)
 
 	if (K->Vds != NULL && K->Vdy != NULL && K->p > 0) {
 	    /* variance of combined disturbance */
-	    err = combined_dist_variance(K, D, N1, Vvt, Vwt, BX);
+	    err = combined_dist_variance(K, D, N1, Vvt, Vwt, BX,
+					 dkstyle);
 	    if (err) {
 		break;
 	    } else {
