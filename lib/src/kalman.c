@@ -4074,8 +4074,7 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 
 static int sim_state_0 (kalman *K, const gretl_matrix *V)
 {
-    gretl_matrix *Q, *e0 = NULL, *s0 = NULL;
-    gretl_matrix *tmp = NULL;
+    gretl_matrix *Q, *v0 = NULL, *bv0 = NULL;
     int err = 0;
     
     Q = gretl_matrix_copy(K->P0);
@@ -4087,34 +4086,37 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     }
 
     if (!err) {
-	e0 = gretl_matrix_alloc(V->cols, 1);
-	s0 = gretl_matrix_alloc(K->r, 1);
-	if (e0 == NULL || s0 == NULL) {
+	v0 = gretl_matrix_alloc(V->cols, 1);
+	if (v0 == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (K->p > 0) {
+	bv0 = gretl_matrix_alloc(K->r, 1);
+	if (bv0 == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	load_from_row(e0, V, 0, GRETL_MOD_NONE);
+	load_from_row(v0, V, 0, GRETL_MOD_NONE);
 	if (K->p > 0) {
 	    /* cross-correlated */
-	    tmp = gretl_matrix_alloc(K->r, 1);
-	    gretl_matrix_multiply(K->B, e0, tmp);
-	    err = gretl_matrix_multiply(Q, tmp, s0);
-	    gretl_matrix_free(tmp);
+	    gretl_matrix_multiply(K->B, v0, bv0);
+	    gretl_matrix_multiply_mod(Q, GRETL_MOD_NONE, 
+				      bv0, GRETL_MOD_NONE,
+				      K->S0, GRETL_MOD_CUMULATE);
 	} else {
-	    err = gretl_matrix_multiply(Q, e0, s0);
+	    gretl_matrix_multiply_mod(Q, GRETL_MOD_NONE, 
+				      v0, GRETL_MOD_NONE,
+				      K->S0, GRETL_MOD_CUMULATE);
 	}
     }
 
-    if (!err) {
-	/* mess with K->S0 only on success */
-	gretl_matrix_add_to(K->S0, s0);
-    }
-
     gretl_matrix_free(Q);
-    gretl_matrix_free(e0);
-    gretl_matrix_free(s0);
+    gretl_matrix_free(v0);
+    gretl_matrix_free(bv0);
 
     return err;
 }
