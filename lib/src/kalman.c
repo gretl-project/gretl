@@ -106,6 +106,9 @@ struct kalman_ {
     gretl_matrix *Sini; /* r x 1: S_{1|0} */
     gretl_matrix *Pini; /* r x r: P_{1|0} */
 
+    /* user initialization for simulation purposes */
+    gretl_matrix *Sim0; /* either r x 1 or (r+1) x r */
+
     /* user inputs for cross-correlated disturbances */
     gretl_matrix *B; /* r x p: BB' = Q */
     gretl_matrix *C; /* n x p: CC' = R */
@@ -167,6 +170,7 @@ struct kalman_ {
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
+#define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 
 /* The matrix in question is an external named user-matrix,
    not "owned" by the Kalman struct: in this case the
@@ -203,6 +207,7 @@ enum {
     K_x,
     K_S,
     K_P,
+    K_0,
     K_MMAX /* sentinel */
 };
 
@@ -243,7 +248,8 @@ void kalman_free (kalman *K)
     if ((K->flags & KALMAN_BUNDLE) || K->mnames != NULL) {
 	gretl_matrix **mptr[] = {
 	    &K->F, &K->A, &K->H, &K->Q, &K->R,
-	    &K->mu, &K->y, &K->x, &K->Sini, &K->Pini
+	    &K->mu, &K->y, &K->x, &K->Sini, &K->Pini,
+	    &K->Sim0
 	};
 	int i;
 
@@ -304,6 +310,7 @@ static kalman *kalman_new_empty (int flags)
 	K->F = K->A = K->H = NULL;
 	K->Q = K->R = NULL;
 	K->B = K->C = NULL;
+	K->Sim0 = NULL;
 	K->E = K->V = K->S = K->P = K->K = NULL;
 	K->y = K->x = NULL;
 	K->mu = NULL;
@@ -437,7 +444,10 @@ static int check_matrix_dims (kalman *K, const gretl_matrix *m, int i)
     } else if (i == K_S || i == K_m) {
 	r = K->r;
 	c = 1;
-    } 
+    } else if (i == K_0) {
+	r = kalman_ssfsim(K) ? K->r + 1 : K->r;
+	c = kalman_ssfsim(K) ? K->r : 1;
+    }
 
     if (m->rows != r || m->cols != c) {
 	gretl_errmsg_sprintf("kalman: %s is %d x %d, should be %d x %d\n", 
@@ -572,7 +582,12 @@ static int kalman_check_dimensions (kalman *K)
     /* mu should be r x 1, if present */
     if (!err && K->mu != NULL) {
 	err = check_matrix_dims(K, K->mu, K_m);
-    }    
+    }
+
+    /* simulation initializer: size depends on flags */
+    if (K->Sim0 != NULL) {
+	err = check_matrix_dims(K, K->Sim0, K_0);
+    }
 
     if (err) {
 	goto bailout;
@@ -833,8 +848,12 @@ static void kalman_set_dimensions (kalman *K)
 {
     K->r = gretl_matrix_rows(K->F); /* F->rows defines r */
     K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
-    K->T = gretl_matrix_rows(K->y); /* y->rows defines T */
     K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
+
+    if (!kalman_simulating(K)) {
+	/* y->rows defines T, except when simulating */
+	K->T = gretl_matrix_rows(K->y);
+    }
 
     K->okT = K->T;
 
@@ -2067,7 +2086,8 @@ struct K_input_mat K_input_mats[] = {
     { K_Q, "statevar" },
     { K_m, "stconst" },
     { K_S, "inistate" },
-    { K_P, "inivar" }
+    { K_P, "inivar" },
+    { K_0, "simstart" }
 };
 
 /* Add storage to record function calls for updating matrices.
@@ -2315,7 +2335,9 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    K->Sini = m;
 	} else if (i == K_P) {
 	    K->Pini = m;
-	} 
+	} else if (i == K_0) {
+	    K->Sim0 = m;
+	}
 
 	/* record name of matrix */
 	strcpy(K->mnames[i], mname);
@@ -4067,6 +4089,26 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
     return err;
 }
 
+static gretl_matrix *extract_Q (kalman *K)
+{
+    gretl_matrix *Q;
+    double x;
+    int i, j;
+
+    Q = gretl_matrix_alloc(K->r, K->r);
+    
+    if (Q != NULL) {
+	for (i=0; i<K->r; i++) {
+	    for (j=0; j<K->r; j++) {
+		x = gretl_matrix_get(K->Sim0, i, j);
+		gretl_matrix_set(Q, i, j, x);
+	    }
+	}
+    }
+
+    return Q;
+}
+
 /* See the account in Koopman, Shephard and Doornik, Econometrics
    Journal, 1999 (volume 2, pp. 113-166), section 4.2, regarding
    the initialization of the state under simulation.
@@ -4075,13 +4117,33 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 static int sim_state_0 (kalman *K, const gretl_matrix *V)
 {
     gretl_matrix *Q, *v0 = NULL, *bv = NULL;
-    int err = 0;
-    
-    Q = gretl_matrix_copy(K->P0);
+    int getroot = 1;
+    int i, err = 0;
+
+    if (!kalman_ssfsim(K)) {
+	if (K->Sim0 != NULL) {
+	    /* K->Sim0 contains the state for t = 1 */
+	    err = gretl_matrix_copy_values(K->S0, K->Sim0);
+	}
+	return err;
+    }
+
+    /* now we're in the "ssfsim" case */
+
+    if (K->Sim0 != NULL) {
+	/* K->Sim0 contains state variance factor
+	   plus the state for t = 0 
+	*/
+	Q = extract_Q(K);
+	getroot = 0;
+    } else {	
+	Q = gretl_matrix_copy(K->P0);
+    }
 
     if (Q == NULL) {
 	err = E_ALLOC;
-    } else {
+    } else if (getroot) {
+	/* FIXME will this always work? */
 	err = gretl_matrix_psd_root(Q);
     }
 
@@ -4096,6 +4158,13 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
 	bv = gretl_matrix_alloc(K->r, 1);
 	if (bv == NULL) {
 	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && K->Sim0 != NULL) {
+	/* set S0 from last row of Sim0 */
+	for (i=0; i<K->r; i++) {
+	    K->S0->val[i] = gretl_matrix_get(K->Sim0, K->r, i);
 	}
     }
 
@@ -4129,6 +4198,7 @@ static int kalman_simulate (kalman *K,
 			    PRN *prn)
 {
     gretl_matrix *yt, *et = NULL;
+    int tmin = 0;
     int err = 0;
 
     yt = gretl_zero_matrix_new(K->n, 1);
@@ -4146,11 +4216,12 @@ static int kalman_simulate (kalman *K,
 
     err = sim_state_0(K, V);
 
-    if (!err) {
+    if (!err && kalman_ssfsim(K)) {
 	load_to_row(Y, yt, 0);
 	if (S != NULL) {
 	    load_to_row(S, K->S0, 0);
 	}
+	tmin = 1;
     }
 
     if (!err && K->x == NULL) {
@@ -4163,7 +4234,7 @@ static int kalman_simulate (kalman *K,
 	}
     }
 
-    for (K->t = 1; K->t < K->T && !err; K->t += 1) {
+    for (K->t = tmin; K->t < K->T && !err; K->t += 1) {
 	int missobs = 0;
 
 	if (filter_is_varying(K)) {
@@ -4194,6 +4265,11 @@ static int kalman_simulate (kalman *K,
 
 	/* record the t-dated observables */
 	load_to_row(Y, yt, K->t);
+
+	/* record the t-dated state? */
+	if (S != NULL && tmin == 0) {
+	    load_to_row(S, K->S0, K->t);
+	}
 	
 	/* S_{t+1} = F*S_t + v_t */
 	gretl_matrix_multiply(K->F, K->S0, K->S1);
@@ -4210,8 +4286,8 @@ static int kalman_simulate (kalman *K,
 	    gretl_matrix_add_to(K->S1, K->mu);
 	}
 
-	if (S != NULL) {
-	    /* record the (t+1)-dated state, if wanted */
+	/* record the (t+1)-dated state? */
+	if (S != NULL && tmin == 1) {
 	    load_to_row(S, K->S1, K->t);
 	}	
 
@@ -4254,7 +4330,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     user_kalman *u = get_user_kalman(-1);
     gretl_matrix *Y = NULL, *S = NULL;
     kalman *K;
-    int T, saveT;
+    int saveT;
 
     if (V == NULL) {
 	*err = missing_matrix_error("V");
@@ -4297,11 +4373,10 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 
     /* we let V provisionally define the sample length */
     saveT = K->T;
-    T = V->rows;
+    K->T = V->rows;
 
     /* now, are the other needed matrices in place? */
     K->flags |= KALMAN_SIM;
-    K->T = T;
     *err = user_kalman_recheck_matrices(u, prn);
 
     /* optional accessor for simulated state */
@@ -4345,14 +4420,15 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 {
     kalman *K = gretl_bundle_get_private_data(b);
     gretl_matrix *Y = NULL, *S = NULL;
-    int T, saveT;
-
-    K->b = b; /* attach bundle pointer */
+    gretl_matrix *ret = NULL;
+    int saveT = K->T;
 
     if (V == NULL) {
 	*err = missing_matrix_error("V");
 	return NULL;
     }
+
+    K->b = b; /* attach bundle pointer */
 
     if (K->p > 0) {
 	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
@@ -4385,11 +4461,10 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     }
 
     /* we let V provisionally define the sample length */
-    saveT = K->T;
-    K->T = T = V->rows;
-    K->flags |= KALMAN_SIM;
+    K->T = V->rows;
 
     /* now, are the other needed matrices in place? */
+    K->flags |= KALMAN_SIM;
     *err = kalman_bundle_recheck_matrices(K, prn);
 
     /* matrices to hold simulated observables and state */
@@ -4400,25 +4475,27 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	    *err = E_ALLOC;
 	}
     }
-    
+
     if (!*err) {
 	*err = kalman_simulate(K, V, W, Y, S, prn);
     }
 
-    if (*err) {
-	gretl_matrix_free(Y);
-	Y = NULL;
-	gretl_matrix_free(S);
-    } else {
-	gretl_bundle_donate_data(b, "simstate", S,
-				 GRETL_TYPE_MATRIX, 0);
+    if (!*err) {
+	*err = gretl_matrix_inplace_colcat(S, Y, NULL);
+	if (!*err) {
+	    ret = S;
+	    S = NULL;
+	}
     }
+
+    gretl_matrix_free(Y);
+    gretl_matrix_free(S);
 
     /* restore state */
     K->flags &= ~KALMAN_SIM;
     K->T = saveT;
 
-    return Y;
+    return ret;
 }
 
 /*
@@ -4583,6 +4660,8 @@ get_input_matrix_target_by_id (kalman *K, int i)
 	targ = &K->Sini;
     } else if (i == K_P) {
 	targ = &K->Pini;
+    } else if (i == K_0) {
+	targ = &K->Sim0;
     }
 
     return targ;
@@ -4698,30 +4777,39 @@ static int output_matrix_slot (const char *s)
     return -1;
 }
 
-#define K_N_SCALARS 5
+#define K_N_SCALARS 10
 
 enum {
-    Ks_T = 0,
+    Ks_t = 0,
     Ks_DIFFUSE,
     Ks_CROSS,
+    Ks_SSF,
     Ks_S2,
-    Ks_LNL
+    Ks_LNL,
+    Ks_r,
+    Ks_n,
+    Ks_T,
+    Ks_p,     
 };
 
 static const char *kalman_output_scalar_names[K_N_SCALARS] = {
     "t",
     "diffuse",
     "cross",
+    "ssfsim",
     "s2",
-    "lnl"
+    "lnl",
+    "r",
+    "n",
+    "T",
+    "p"     
 };
 
 static double *kalman_output_scalar (kalman *K,
 				     const char *key)
 {
     /* static storage for on-the-fly scalars */
-    static double retval[3];
-    double *s = NULL;
+    static double retval[K_N_SCALARS];
     int i, idx = -1;
 
     for (i=0; i<K_N_SCALARS; i++) {
@@ -4731,34 +4819,50 @@ static double *kalman_output_scalar (kalman *K,
 	}
     }
 
+    if (idx < 0) {
+	return NULL;
+    }
+
     switch (idx) {
-    case Ks_T:
+    case Ks_t:
 	if (kalman_is_running(K)) {
 	    retval[idx] = K->t + 1;
 	} else {
 	    retval[idx] = kalman_checking(K) ? 1 : 0;
 	}
-	s = &retval[idx];
 	break;
     case Ks_DIFFUSE:
 	retval[idx] = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
-	s = &retval[idx];
 	break;
     case Ks_CROSS:
 	retval[idx] = (K->flags & KALMAN_CROSS)? 1 : 0;
-	s = &retval[idx];
+	break;
+    case Ks_SSF:
+	retval[idx] = (K->flags & KALMAN_SSFSIM)? 1 : 0;
 	break;
     case Ks_S2:
-	s = &K->s2;
+	retval[idx] = K->s2;
 	break;
     case Ks_LNL:
-	s = &K->loglik;
+	retval[idx] = K->loglik;
+	break;
+    case Ks_r:
+	retval[idx] = K->r;
+	break;
+    case Ks_n:
+	retval[idx] = K->n;
+	break;
+    case Ks_T:
+	retval[idx] = K->T;
+	break;
+    case Ks_p:
+	retval[idx] = K->p;
 	break;
     default:
 	break;
     }
 
-    return s;
+    return &retval[idx];
 }
 
 /* note: must be in same order as the enum, K_F,..., K_m */
@@ -4817,6 +4921,8 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 	m = K->Sini;
     } else if (i == K_P) {
 	m = K->Pini;
+    } else if (i == K_0) {
+	m = K->Sim0;
     }
 
     return m;
@@ -4855,6 +4961,8 @@ int maybe_set_kalman_element (void *kptr,
 
     if (!strcmp(key, "diffuse")) {
 	Kflag = KALMAN_DIFFUSE;
+    } else if (!strcmp(key, "ssfsim")) {
+	Kflag = KALMAN_SSFSIM;
     }
 
     if (Kflag) {
@@ -5118,7 +5226,7 @@ int kalman_serialize (void *kptr, FILE *fp)
 	}
     }
 
-    for (i=0; i<K_N_SCALARS; i++) {
+    for (i=0; i<=Ks_LNL; i++) {
 	name = kalman_output_scalar_names[i];
 	px = kalman_output_scalar(K, name);
 	if (px != NULL && !na(*px)) {
@@ -5197,6 +5305,8 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
 			    Kflags |= KALMAN_DIFFUSE;
 			} else if (!strcmp(key, "cross") && x > 0) {
 			    Kflags |= KALMAN_CROSS;
+			} else if (!strcmp(key, "ssfsim") && x > 0) {
+			    Kflags |= KALMAN_SSFSIM;
 			} else if (!strcmp(key, "s2")) {
 			    s2 = x;
 			} else if (!strcmp(key, "lnl")) {
@@ -5397,20 +5507,30 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
 {
     char **S;
 
-    *ns = 2 + !na(K->s2) + !na(K->loglik);
-    S = strings_array_new(*ns);
+    *ns = K_N_SCALARS -1 - na(K->s2) - na(K->loglik);
+     S = strings_array_new(*ns);
 
     if (S != NULL) {
-	int i = 2;
-	
+	int i = 3;
+
+	/* flags */
 	S[0] = gretl_strdup("cross");
 	S[1] = gretl_strdup("diffuse");
+	S[2] = gretl_strdup("ssfsim");
+
+	/* actual numerical outputs */
 	if (!na(K->s2)) {
 	    S[i++] = gretl_strdup("s2");
 	}
 	if (!na(K->loglik)) {
 	    S[i++] = gretl_strdup("lnl");
 	}
+
+	/* system dimensions */
+	S[i++] = "r";
+	S[i++] = "n";
+	S[i++] = "T";
+	S[i++] = "p";
     }	
 
     return S;
