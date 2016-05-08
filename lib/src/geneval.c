@@ -9905,17 +9905,31 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_KSIMUL) {
-	/* we need a bundle pointer and one or two matrices */
+	/* we need a bundle pointer, one or two matrices,
+	   and perhaps an optional boolean */
+	gretl_bundle *kb;
 	gretl_matrix *E[2] = {NULL};
 	int freeit[2] = {0};
+	int get_state = 0;
+	int cross, nmats;
 
-	if (k != 2 && k != 3) {
-	    n_args_error(k, 3, t->t, p);
+	/* navigate to the bundle */
+	e = n->v.bn.n[0];
+	e = e->v.b1.b;
+	kb = e->v.b;
+
+	cross = gretl_bundle_get_scalar(kb, "cross", &p->err);
+
+	if (!p->err) {
+	    nmats = cross ? 1 : 2;
+	    if (k != 1 + nmats && k != 2 + nmats) {
+		n_args_error(k, 1 + nmats, t->t, p);
+	    }
 	}
 
 	for (i=1; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
-	    if (!p->err) {
+	    if (!p->err && i <= nmats) {
 		if (e->t == MAT) {
 		    E[i-1] = e->v.m;
 		} else {
@@ -9924,6 +9938,8 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 			freeit[i-1] = 1;
 		    }
 		}
+	    } else if (!p->err) {
+		get_state = node_get_int(e, p);
 	    }
 	}
 
@@ -9936,10 +9952,9 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b;
-	    ret->v.m = kalman_bundle_simulate(e->v.b, E[0], E[1],
-					      p->prn, &p->err);
+	    ret->v.m = kalman_bundle_simulate(kb, E[0], E[1],
+					      get_state, p->prn,
+					      &p->err);
 	}
 
 	if (freeit[0]) gretl_matrix_free(E[0]);

@@ -4192,6 +4192,10 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     return err;
 }
 
+/* note: it's OK for @S to be NULL (if the simulated
+   state is not wanted), so watch out for that!
+*/
+
 static int kalman_simulate (kalman *K, 
 			    const gretl_matrix *V,
 			    const gretl_matrix *W,
@@ -4419,6 +4423,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 				      const gretl_matrix *V, 
 				      const gretl_matrix *W,
+				      int get_state,
 				      PRN *prn, int *err)
 {
     kalman *K = gretl_bundle_get_private_data(b);
@@ -4438,7 +4443,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	   @V as the underlying disturbance matrix (and ignore @W).
 	*/
 	if (V->cols != K->p) {
-	    fprintf(stderr, "K->p = %d, but cols(V) = %d\n", K->p, V->cols);
+	    pprintf(prn, "K->p = %d, but cols(V) = %d\n", K->p, V->cols);
 	    *err = E_NONCONF;
 	}
     } else {	
@@ -4446,13 +4451,13 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	   K->R is non-null.
 	*/
 	if (V->cols != K->r) {
-	    fprintf(stderr, "K->r = %d, but cols(V) = %d\n", K->r, V->cols);
+	    pprintf(prn, "K->r = %d, but cols(V) = %d\n", K->r, V->cols);
 	    *err = E_NONCONF;
 	} else if (K->R != NULL) {
 	    if (W == NULL) {
 		*err = missing_matrix_error("W");
 	    } else if (W->rows != V->rows || W->cols != K->n) {
-		fprintf(stderr, "K->n = %d, but cols(W) = %d\n",
+		pprintf(prn, "K->n = %d, but cols(W) = %d\n",
 			K->n, W->cols);
 		*err = E_NONCONF;
 	    }
@@ -4473,8 +4478,10 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     /* matrices to hold simulated observables and state */
     if (!*err) {
 	Y = gretl_matrix_alloc(K->T, K->n);
-	S = gretl_matrix_alloc(K->T, K->r);
-	if (Y == NULL || S == NULL) {
+	if (get_state) {
+	    S = gretl_matrix_alloc(K->T, K->r);
+	}
+	if (Y == NULL || (get_state && S == NULL)) {
 	    *err = E_ALLOC;
 	}
     }
@@ -4484,11 +4491,17 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     }
 
     if (!*err) {
-	/* is this the best output design? */
-	*err = gretl_matrix_inplace_colcat(S, Y, NULL);
-	if (!*err) {
-	    ret = S;
-	    S = NULL;
+	if (S != NULL) {
+	    /* is this the best output design? */
+	    *err = gretl_matrix_inplace_colcat(S, Y, NULL);
+	    if (!*err) {
+		ret = S;
+		S = NULL;
+	    }
+	} else {
+	    /* just returning the observable(s) */
+	    ret = Y;
+	    Y = NULL;
 	}
     }
 

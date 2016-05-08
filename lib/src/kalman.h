@@ -112,6 +112,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 				      const gretl_matrix *V, 
 				      const gretl_matrix *W,
+				      int get_state,
 				      PRN *prn, int *err);
 
 void kalman_cleanup (void);
