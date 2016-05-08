@@ -4125,10 +4125,11 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
 	    /* K->Sim0 contains the state for t = 1 */
 	    err = gretl_matrix_copy_values(K->S0, K->Sim0);
 	}
+	/* error or not, we're done */
 	return err;
     }
 
-    /* now we're in the "ssfsim" case */
+    /* now we're in the "ssfsim" case, emulating ssfpack */
 
     if (K->Sim0 != NULL) {
 	/* K->Sim0 contains state variance factor
@@ -4169,6 +4170,7 @@ static int sim_state_0 (kalman *K, const gretl_matrix *V)
     }
 
     if (!err) {
+	/* handle the t = 0 disturbance */
 	load_from_row(v0, V, 0, GRETL_MOD_NONE);
 	if (K->p > 0) {
 	    /* cross-correlated */
@@ -4221,6 +4223,7 @@ static int kalman_simulate (kalman *K,
 	if (S != NULL) {
 	    load_to_row(S, K->S0, 0);
 	}
+	/* the first row of output is handled */
 	tmin = 1;
     }
 
@@ -4460,7 +4463,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	return NULL;
     }
 
-    /* we let V provisionally define the sample length */
+    /* we let V temporarily define the sample length */
     K->T = V->rows;
 
     /* now, are the other needed matrices in place? */
@@ -4481,6 +4484,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     }
 
     if (!*err) {
+	/* is this the best output design? */
 	*err = gretl_matrix_inplace_colcat(S, Y, NULL);
 	if (!*err) {
 	    ret = S;
