@@ -2418,7 +2418,8 @@ static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
     kalman *K = u->K;
     gretl_matrix **mptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R,
-	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
+	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini,
+	&K->Sim0
     };
     int i, err = 0;
 
