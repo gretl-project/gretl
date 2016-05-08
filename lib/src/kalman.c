@@ -4450,9 +4450,13 @@ static int check_simul_inputs (kalman *K,
 	} else if (K->R != NULL) {
 	    if (W == NULL) {
 		err = missing_matrix_error("W");
-	    } else if (W->rows != V->rows || W->cols != K->n) {
+	    } else if (W->cols != K->n) {
 		pprintf(prn, "K->n = %d, but cols(W) = %d\n",
 			K->n, W->cols);
+		err = E_NONCONF;
+	    } else if (W->rows != V->rows) {
+		pprintf(prn, "V->rows = %d but W->rows = %d\n",
+			V->rows, W->rows);
 		err = E_NONCONF;
 	    }
 	}	    

@@ -9911,7 +9911,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	gretl_matrix *E[2] = {NULL};
 	int freeit[2] = {0};
 	int get_state = 0;
-	int cross, nmats = 2;
+	int cross, nmats = 1;
 
 	/* navigate to the bundle */
 	e = n->v.bn.n[0];
@@ -9921,7 +9921,19 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	cross = gretl_bundle_get_scalar(kb, "cross", &p->err);
 
 	if (!p->err) {
-	    nmats = cross ? 1 : 2;
+	    gretl_matrix *R;
+	    int myerr = 0;
+
+	    /* we want two matrix arguments only if (a) the
+	       model does not exhibit cross-correlation and
+	       (b) the observation equation incorporates a
+	       disturbance term (indicated by the presence
+	       of an "obsvar" member)
+	    */
+	    R = gretl_bundle_get_matrix(kb, "obsvar", &myerr);
+	    if (!cross && R != NULL) {
+		nmats = 2;
+	    }
 	    if (k != 1 + nmats && k != 2 + nmats) {
 		n_args_error(k, 1 + nmats, t->t, p);
 	    }
