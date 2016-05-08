@@ -9911,7 +9911,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	gretl_matrix *E[2] = {NULL};
 	int freeit[2] = {0};
 	int get_state = 0;
-	int cross, nmats;
+	int cross, nmats = 2;
 
 	/* navigate to the bundle */
 	e = n->v.bn.n[0];

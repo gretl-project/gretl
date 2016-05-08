@@ -4421,6 +4421,46 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     return Y;
 }
 
+static int check_simul_inputs (kalman *K,
+			       const gretl_matrix *V,
+			       const gretl_matrix *W,
+			       PRN *prn)
+{
+    int err = 0;
+
+    if (K == NULL) {
+	err = E_DATA;
+    } else if (V == NULL) {
+	err = missing_matrix_error("V");
+    } else if (K->p > 0) {
+	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
+	   @V as the underlying disturbance matrix (and ignore @W).
+	*/
+	if (V->cols != K->p) {
+	    pprintf(prn, "K->p = %d, but cols(V) = %d\n", K->p, V->cols);
+	    err = E_NONCONF;
+	}
+    } else {	
+	/* Otherwise @V must have r columns, and @W must be given if
+	   K->R is non-null.
+	*/
+	if (V->cols != K->r) {
+	    pprintf(prn, "K->r = %d, but cols(V) = %d\n", K->r, V->cols);
+	    err = E_NONCONF;
+	} else if (K->R != NULL) {
+	    if (W == NULL) {
+		err = missing_matrix_error("W");
+	    } else if (W->rows != V->rows || W->cols != K->n) {
+		pprintf(prn, "K->n = %d, but cols(W) = %d\n",
+			K->n, W->cols);
+		err = E_NONCONF;
+	    }
+	}	    
+    }
+
+    return err;
+}
+
 gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 				      const gretl_matrix *V, 
 				      const gretl_matrix *W,
@@ -4430,46 +4470,17 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     kalman *K = gretl_bundle_get_private_data(b);
     gretl_matrix *Y = NULL, *S = NULL;
     gretl_matrix *ret = NULL;
-    int saveT = K->T;
+    int saveT;
 
-    if (V == NULL) {
-	*err = missing_matrix_error("V");
+    *err = check_simul_inputs(K, V, W, prn);
+    if (*err) {
 	return NULL;
     }
 
     K->b = b; /* attach bundle pointer */
 
-    if (K->p > 0) {
-	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
-	   @V as the underlying disturbance matrix (and ignore @W).
-	*/
-	if (V->cols != K->p) {
-	    pprintf(prn, "K->p = %d, but cols(V) = %d\n", K->p, V->cols);
-	    *err = E_NONCONF;
-	}
-    } else {	
-	/* Otherwise @V must have r columns, and @W must be given if
-	   K->R is non-null.
-	*/
-	if (V->cols != K->r) {
-	    pprintf(prn, "K->r = %d, but cols(V) = %d\n", K->r, V->cols);
-	    *err = E_NONCONF;
-	} else if (K->R != NULL) {
-	    if (W == NULL) {
-		*err = missing_matrix_error("W");
-	    } else if (W->rows != V->rows || W->cols != K->n) {
-		pprintf(prn, "K->n = %d, but cols(W) = %d\n",
-			K->n, W->cols);
-		*err = E_NONCONF;
-	    }
-	}	    
-    }
-
-    if (*err) {
-	return NULL;
-    }
-
     /* we let V temporarily define the sample length */
+    saveT = K->T;
     K->T = V->rows;
 
     /* now, are the other needed matrices in place? */
