@@ -4564,7 +4564,7 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     gretl_matrix *savex = NULL;
     double ssfx;
     int ssfsim = 0;
-    int saveT, myerr = 0;
+    int saveT;
 
     if (K == NULL) {
 	*err = E_DATA;
@@ -4572,10 +4572,10 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     }
 
     /* try accessing auxiliary info from the bundle */
-    Sim0 = gretl_bundle_get_matrix(b, "simstart", &myerr);
-    ssfx = gretl_bundle_get_scalar(b, "ssfsim", &myerr);
+    Sim0 = gretl_bundle_get_matrix(b, "simstart", NULL);
+    ssfx = gretl_bundle_get_scalar(b, "ssfsim", NULL);
     if (K->x != NULL) {
-	SimX = gretl_bundle_get_matrix(b, "simx", &myerr);
+	SimX = gretl_bundle_get_matrix(b, "simx", NULL);
     }
 
     ssfsim = !na(ssfx) && ssfx != 0;

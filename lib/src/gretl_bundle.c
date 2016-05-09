@@ -499,21 +499,20 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 {
     void *ret = NULL;
     int reserved = 0;
-
-    *err = 0;
+    int myerr = 0;
 
     if (bundle == NULL) {
-	*err = E_DATA;
-	return NULL;
+	myerr = E_DATA;
+	goto finish;
     }
 
     if (bundle->type == BUNDLE_KALMAN) {
 	ret = maybe_retrieve_kalman_element(bundle->data, key,
 					    type, &reserved,
-					    err);
+					    &myerr);
     }
 
-    if (!*err && ret == NULL && !reserved) {
+    if (!myerr && ret == NULL && !reserved) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
@@ -527,9 +526,17 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 		*size = item->size;
 	    }
 	} else {
-	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
-	    *err = E_DATA;
+	    if (err != NULL) {
+		gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+	    }
+	    myerr = E_DATA;
 	}
+    }
+
+ finish:
+
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return ret;
@@ -672,15 +679,20 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
     gretl_matrix *m = NULL;
     GretlType type;
     void *ptr;
+    int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (!*err && type != GRETL_TYPE_MATRIX && 
+    if (ptr != NULL && type != GRETL_TYPE_MATRIX && 
 	type != GRETL_TYPE_MATRIX_REF) {
-	*err = E_TYPES;
+	myerr = E_TYPES;
     }
 
-    if (!*err) {
+    if (ptr != NULL && !myerr) {
 	m = (gretl_matrix *) ptr;
+    }
+
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return m;
@@ -703,14 +715,19 @@ void *gretl_bundle_get_array (gretl_bundle *bundle,
     gretl_array *a = NULL;
     GretlType type;
     void *ptr;
+    int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (!*err && type != GRETL_TYPE_ARRAY) { 
-	*err = E_TYPES;
+    if (ptr != NULL && type != GRETL_TYPE_ARRAY) { 
+	myerr = E_TYPES;
     }
 
-    if (!*err) {
+    if (ptr != NULL && !myerr) {
 	a = (gretl_array *) ptr;
+    }
+
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return a;
@@ -734,15 +751,20 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
     double *x = NULL;
     GretlType type;
     void *ptr;
+    int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, n, err);
-    if (!*err && type != GRETL_TYPE_SERIES) {
-	*err = E_TYPES;
+    if (ptr != NULL && type != GRETL_TYPE_SERIES) {
+	myerr = E_TYPES;
     }
 
-    if (!*err) {
+    if (ptr != NULL && !myerr) {
 	x = (double *) ptr;
     }
+
+    if (err != NULL) {
+	*err = myerr;
+    }    
 
     return x;
 }
@@ -764,16 +786,21 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
     double x = NADBL;
     GretlType type;
     void *ptr;
+    int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (!*err && type != GRETL_TYPE_DOUBLE) {
-	*err = E_TYPES;
+    if (ptr != NULL && type != GRETL_TYPE_DOUBLE) {
+	myerr = E_TYPES;
     }
 
-    if (!*err) {
+    if (ptr != NULL && !myerr) {
 	double *px = (double *) ptr;
 
 	x = *px;
+    }
+
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return x;
@@ -796,15 +823,20 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
     const char *ret = NULL;
     GretlType type;
     void *ptr;
+    int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (!*err && type != GRETL_TYPE_STRING) {
-	*err = E_TYPES;
+    if (ptr != NULL && type != GRETL_TYPE_STRING) {
+	myerr = E_TYPES;
     }
 
-    if (!*err) {
+    if (ptr != NULL && !myerr) {
 	ret = (const char *) ptr;
     }
+
+    if (err != NULL) {
+	*err = myerr;
+    }    
 
     return ret;
 }
