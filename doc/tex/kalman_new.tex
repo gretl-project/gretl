@@ -328,13 +328,13 @@ computes a smoothed estimate of the state and its MSE using the method
 of Anderson and Moore.
 
 Note that since \cmd{ksmooth} starts with a forward pass, it can be
-run without a prior call to \cmd{kfilter}. This may appear a useless
-duplication, but in fact makes it possible to streamline nicely the
-syntax of a hansl script. The main utility of the forward pass lies in
-the calculation of the log-likelihood in the context of estimation.
-However, if a state space contains no parameters that have to be
-estimated, the model setup can be followed directly by a call to
-\cmd{ksmooth}. (And the same goes for \cmd{kdsmooth} below.)
+run without a prior call to \cmd{kfilter}. This may appear to be
+useless duplication, but in fact it enables an efficient scripting
+option.  The main utility of the forward pass lies in the calculation
+of the log-likelihood in the context of estimation; however, if a
+state space contains no parameters that have to be estimated, the
+model setup can be followed directly by a call to \cmd{ksmooth}. (And
+the same goes for \cmd{kdsmooth} below.)
 
 The backward-pass algorithm is as follows (for $t=T,\dots,1$):
 %
@@ -440,14 +440,14 @@ should be provided, in the form of a ($T \times p$) matrix, each row
 of which represents $\alldist_t'$; call this $V$.
 
 For the purposes of \texttt{ksimul} the time-series length, $T$, is
-defined by the number of rows of $V$. (If $W$ is present if must have
+defined by the number of rows of $V$. (If $W$ is present it must have
 the same number of rows.) This need not equal the original $T$ value
 (set from \texttt{obsy} in the initial call to \cmd{ksetup}). On
 exit from \texttt{ksimul} the prior $T$ value is restored.
 
 By default, the value returned by \cmd{ksimul} is a ($T \times n$)
 matrix holding simulated values for the vector of observables at each
-time step; that is, row $t$ holds $\tilde{\obsvec}_t'$ where the tilde
+time step; that is, row $t$ holds $\tilde{\obsvec}_t'$, where the tilde
 indicates a simulated quantity.  If you want a record of the simulated
 state, supply a non-zero value for the final, optional argument. In
 that case the returned matrix is $T \times (r+n)$ and contains both
