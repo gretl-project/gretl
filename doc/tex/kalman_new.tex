@@ -104,12 +104,13 @@ Here are the main features of the new interface ``at a glance'':
   functions.
 \item The ``block'' syntax for defining a filter is replaced by the
   function \cmd{ksetup}.
-\item The signatures of the functions \cmd{kfilter},
-  \cmd{ksmooth} and \cmd{ksimul} are much simplified. For the
-  most part you retrieve results by reading bundle members instead of
-  poking in matrix-pointer arguments.
+\item The signatures of the functions \cmd{kfilter} and \cmd{ksmooth}
+  are much simplified. For the most part you retrieve results by
+  reading bundle members instead of poking in matrix-pointer
+  arguments.
 \item A new function, \cmd{kdsmooth}, implements Koopman's
   ``disturbance smoother.''
+\item The \cmd{ksimul} function has been revamped and improved.
 \end{itemize}
 
 At present the old syntax and methods, as described in chapter 30 of
@@ -336,7 +337,7 @@ state space contains no parameters that have to be estimated, the
 model setup can be followed directly by a call to \cmd{ksmooth}. (And
 the same goes for \cmd{kdsmooth} below.)
 
-The backward-pass algorithm is as follows (for $t=T,\dots,1$):
+The backward-pass algorithm is as follows: for $t=T,\dots,1$
 %
 \begin{align*}
 L_t &= \statemat_t - \gain_t \obsmat_t' \\
@@ -421,41 +422,46 @@ for their variances? Do we care about extra-diagonal elements?
 \label{sec:ksimul}
 
 This simulation function has as its required arguments a pointer to a
-Kalman bundle and either or or two matrices containing artificial
-disturbances. An optional trailing boolean argument is supported, the
-purpose of which is explained below.
+Kalman bundle and a matrix containing artificial disturbances. An
+optional trailing boolean argument is supported, the purpose of which
+is explained below.
 
-If the disturbances are not cross-correlated, the second argument must
-be a ($T \times r$) matrix containing artificial disturbances for the
-state transition equation: row $t$ of this matrix represents
-$\strdist_t'$. If the model specified by the bundle has a non-null
-$\obsvar$ (\texttt{obsvar}) matrix, then the third argument should be
-a ($T \times n$) matrix containing artificial disturbances for the
-observation equation (row $t$ giving $\obsdist_t'$). Let us call these
-matrices $V$ and $W$, respectively.
+If the disturbances are not cross-correlated, the matrix argument must
+be either $T \times r$, if there is no disturbance in the observation
+equation, or $T \times (r+n)$ if the $\obsvar$ (\texttt{obsvar})
+matrix is specified. Row $t$ holds either $\strdist_t'$ or
+$(\strdist_t', \obsdist_t')$.  If the disturbances are
+cross-correlated (see section~\ref{sec:crossd}) then the matrix
+argument should be $T \times p$, each row holding $\alldist_t'$.
 
-If the disturbances are cross-correlated (see
-section~\ref{sec:crossd}) then just one set of artificial disturbances
-should be provided, in the form of a ($T \times p$) matrix, each row
-of which represents $\alldist_t'$; call this $V$.
+\textbf{FIXME}: add a note about scaling the disturbances in the non
+cross correlated case, if they are to have variances $Q$ and
+$R$ (not required in the cross case because
+$\alldist_t \sim N(0, I)$).
 
 For the purposes of \texttt{ksimul} the time-series length, $T$, is
-defined by the number of rows of $V$. (If $W$ is present it must have
-the same number of rows.) This need not equal the original $T$ value
-(set from \texttt{obsy} in the initial call to \cmd{ksetup}). On
-exit from \texttt{ksimul} the prior $T$ value is restored.
+defined by the number of rows of the supplied disturbance matrix. This
+need not equal the original $T$ value (set from \texttt{obsy} in the
+initial call to \cmd{ksetup}). However, if the model includes
+exogenous variables in the observation equation (\texttt{obsx}) and
+the simulation length is greater than the original $T$, the simulation
+will run out of data and fail unless you supply a larger $x$ matrix.
+You can do this by adding a suitable matrix to the Kalman bundle under
+the key \texttt{simx}; this will temporarily replace the initial
+\texttt{obsx}. On exit from \texttt{ksimul} the prior $T$ value is
+restored (and also the prior \texttt{obsx}, if applicable).
 
 By default, the value returned by \cmd{ksimul} is a ($T \times n$)
 matrix holding simulated values for the vector of observables at each
 time step; that is, row $t$ holds $\tilde{\obsvec}_t'$, where the tilde
-indicates a simulated quantity.  If you want a record of the simulated
+indicates a simulated quantity.  To obtain a record of the simulated
 state, supply a non-zero value for the final, optional argument. In
 that case the returned matrix is $T \times (r+n)$ and contains both
 the simulated state and the simulated observable; row $t$ holds
 $(\tilde{\statevec}_t', \tilde{\obsvec}_t')$.
 
 Note that the original \texttt{obsy} member of the bundle is not
-over-written by \texttt{ksimul}, nor is \texttt{state} or any other
+overwritten by \texttt{ksimul}, nor is \texttt{state} or any other
 user-accessible output matrix.
 
 The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$

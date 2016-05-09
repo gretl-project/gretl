@@ -110,8 +110,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
 				    PRN *prn, int *err);
 
 gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
-				      const gretl_matrix *V, 
-				      const gretl_matrix *W,
+				      const gretl_matrix *U, 
 				      int get_state,
 				      PRN *prn, int *err);
 

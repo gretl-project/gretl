@@ -9905,49 +9905,31 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_KSIMUL) {
-	/* we need a bundle pointer, one or two matrices,
+	/* we need a bundle pointer, a matrix,
 	   and perhaps an optional boolean */
-	gretl_bundle *kb;
-	gretl_matrix *E[2] = {NULL};
-	int freeit[2] = {0};
+	gretl_bundle *kb = NULL;
+	gretl_matrix *U = NULL;
+	int freeU = 0;
 	int get_state = 0;
-	int cross, nmats = 1;
 
-	/* navigate to the bundle */
-	e = n->v.bn.n[0];
-	e = e->v.b1.b;
-	kb = e->v.b;
-
-	cross = gretl_bundle_get_scalar(kb, "cross", &p->err);
-
-	if (!p->err) {
-	    gretl_matrix *R;
-	    int myerr = 0;
-
-	    /* we want two matrix arguments only if (a) the
-	       model does not exhibit cross-correlation and
-	       (b) the observation equation incorporates a
-	       disturbance term (indicated by the presence
-	       of an "obsvar" member)
-	    */
-	    R = gretl_bundle_get_matrix(kb, "obsvar", &myerr);
-	    if (!cross && R != NULL) {
-		nmats = 2;
-	    }
-	    if (k != 1 + nmats && k != 2 + nmats) {
-		n_args_error(k, 1 + nmats, t->t, p);
-	    }
+	if (k != 2 && k != 3) {
+	    n_args_error(k, 2, t->t, p);
+	} else {
+	    /* navigate to the bundle */
+	    e = n->v.bn.n[0];
+	    e = e->v.b1.b;
+	    kb = e->v.b;
 	}
 
 	for (i=1; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
-	    if (!p->err && i <= nmats) {
+	    if (!p->err && i == 1) {
 		if (e->t == MAT) {
-		    E[i-1] = e->v.m;
+		    U = e->v.m;
 		} else {
-		    E[i-1] = node_get_matrix_lenient(e, SERIES, p);
-		    if (E[i-1] != NULL) {
-			freeit[i-1] = 1;
+		    U = node_get_matrix_lenient(e, SERIES, p);
+		    if (U != NULL) {
+			freeU = 1;
 		    }
 		}
 	    } else if (!p->err) {
@@ -9964,13 +9946,11 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = kalman_bundle_simulate(kb, E[0], E[1],
-					      get_state, p->prn,
-					      &p->err);
+	    ret->v.m = kalman_bundle_simulate(kb, U, get_state,
+					      p->prn, &p->err);
 	}
 
-	if (freeit[0]) gretl_matrix_free(E[0]);
-	if (freeit[1]) gretl_matrix_free(E[1]);
+	if (freeU) gretl_matrix_free(U);
     }
 
     return ret;
