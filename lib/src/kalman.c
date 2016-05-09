@@ -4308,6 +4308,59 @@ static int kalman_simulate (kalman *K,
     return err;
 }
 
+static int check_simul_inputs (kalman *K,
+			       const gretl_matrix *V,
+			       const gretl_matrix *W,
+			       PRN *prn)
+{
+    int err = 0;
+
+    if (K == NULL) {
+	err = E_DATA;
+    } else if (V == NULL) {
+	err = missing_matrix_error("V");
+    } else if (K->p > 0) {
+	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
+	   @V as the underlying disturbance matrix (and ignore @W).
+	*/
+	if (V->cols != K->p) {
+	    pprintf(prn, "K->p = %d, but cols(V) = %d\n", K->p, V->cols);
+	    err = E_NONCONF;
+	}
+    } else {
+	/* Otherwise @V must have r columns, and @W must be given if
+	   K->R is non-null.
+	*/
+	if (V->cols != K->r) {
+	    pprintf(prn, "K->r = %d, but cols(V) = %d\n", K->r, V->cols);
+	    err = E_NONCONF;
+	} else if (K->R != NULL) {
+	    if (W == NULL) {
+		err = missing_matrix_error("W");
+	    } else if (W->cols != K->n) {
+		pprintf(prn, "K->n = %d, but cols(W) = %d\n",
+			K->n, W->cols);
+		err = E_NONCONF;
+	    } else if (W->rows != V->rows) {
+		pprintf(prn, "V->rows = %d but W->rows = %d\n",
+			V->rows, W->rows);
+		err = E_NONCONF;
+	    }
+	}   
+    }
+
+    if (!err && K->x != NULL) {
+	/* do we have enough "obsx" data? */
+	if (K->x->rows < V->rows) {
+	    pprintf(prn, "V->rows = %d but x->rows = %d\n",
+		    V->rows, K->x->rows);
+	    err = E_NONCONF;
+	}
+    }
+
+    return err;
+}
+
 /*
  * user_kalman_simulate:
  * @V: artificial disturbance to state.
@@ -4340,40 +4393,13 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     kalman *K;
     int saveT;
 
-    if (V == NULL) {
-	*err = missing_matrix_error("V");
-    } else if (u == NULL) {
+    if (u == NULL) {
 	*err = missing_kalman_error();
+	return NULL;
     } 
     
-    if (*err) {
-	return NULL;
-    }
-
     K = u->K;
-
-    if (K->p > 0) {
-	/* If K->p > 0 we're in the cross-correlated case: we'll interpret
-	   @V as the underlying disturbance matrix (and ignore @W).
-	*/
-	if (V->cols != K->p) {
-	    *err = E_NONCONF;
-	}
-    } else {	
-	/* Otherwise @V must have r columns, and @W must be given if
-	   K->R is non-null.
-	*/
-	if (V->cols != K->r) {
-	    *err = E_NONCONF;
-	} else if (K->R != NULL) {
-	    if (W == NULL) {
-		fprintf(stderr, "ksimul: W is NULL\n");
-		*err = missing_matrix_error("W");
-	    } else if (W->rows != V->rows || W->cols != K->n) {
-		*err = E_NONCONF;
-	    }
-	}	    
-    }
+    *err = check_simul_inputs(K, V, W, prn);
 
     if (*err) {
 	return NULL;
@@ -4460,6 +4486,15 @@ static int check_simul_inputs (kalman *K,
 		err = E_NONCONF;
 	    }
 	}	    
+    }
+
+    if (!err && K->x != NULL) {
+	/* do we have enough "obsx" data? */
+	if (K->x->rows < V->rows) {
+	    pprintf(prn, "V->rows = %d but x->rows = %d\n",
+		    V->rows, K->x->rows);
+	    err = E_NONCONF;
+	}
     }
 
     return err;
