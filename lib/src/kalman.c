@@ -584,7 +584,7 @@ static int kalman_check_dimensions (kalman *K)
     /* x should have T rows to match y; and it should have either k or k - 1
        columns (the latter case indicating an implicit const) */
     if (K->x != NULL) {
-	if (K->x->rows != K->T) {
+	if (K->x->rows < K->T) {
 	    fprintf(stderr, "kalman: %s has %d rows, should have %d\n", 
 		    kalman_matrix_name(K_x), K->x->rows, K->T);
 	    return E_NONCONF;
@@ -3584,6 +3584,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
     }
 
     if (K->R != NULL && K->U != NULL) {
+	/* reset to full size */
 	gretl_matrix_reuse(K->Tmpnn, K->n, K->n);
     }
 
@@ -5221,6 +5222,7 @@ int maybe_delete_kalman_element (void *kptr,
 				 int *err)
 {
     kalman *K = kptr;
+    gretl_matrix **pm;
     int i, done = 0;
 
     if (K == NULL) {
@@ -5228,12 +5230,18 @@ int maybe_delete_kalman_element (void *kptr,
     }   
 
     if (kalman_output_scalar(K, key) != NULL ||
-	input_matrix_slot(key) >= 0 ||
-	kalman_output_matrix(K, key) != NULL) {
+	input_matrix_slot(key) >= 0 || !strcmp(key, "uhat")) {
+	/* note: the matrix under the key "uhat" is part of
+	   the internal kalman apparatus */
 	gretl_errmsg_sprintf("%s: cannot be deleted", key);
 	*err = E_DATA;
+    } else if ((pm = kalman_output_matrix(K, key)) != NULL) {
+	/* OK to delete a user-output matrix */
+	gretl_matrix_free(*pm);
+	*pm = NULL;
     } else if ((i = kalman_matcall_slot(key)) >= 0) {
 	if (matrix_is_varying(K, i)) {
+	    /* OK to delete a time-variation call */
 	    free(K->matcalls[i]);
 	    K->matcalls[i] = NULL;
 	    done = 1;

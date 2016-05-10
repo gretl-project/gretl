@@ -9813,6 +9813,24 @@ static gretl_matrix *node_get_matrix_lenient (NODE *n,
     return m;
 }
 
+static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
+{
+    NODE *e = n->v.bn.n[0]; /* the first of multi args */
+    gretl_bundle *b = NULL;
+
+    e = e->v.b1.b; /* switch to content node */
+    b = e->v.b;    /* and get the actual bundle */
+
+    if (gretl_bundle_get_type(b) != BUNDLE_KALMAN ||
+	gretl_bundle_get_private_data(b) == NULL) {
+	gretl_errmsg_set("Argument 1 must be a state-space bundle");
+	p->err = E_TYPES;
+	b = NULL;
+    }
+    
+    return b;
+}
+
 static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 {
     NODE *save_aux = p->aux;
@@ -9860,65 +9878,62 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    }
 	}    
     } else if (t->t == F_KFILTER) {
-	if (k != 1) {
+	gretl_bundle *b = get_kalman_bundle_arg(n, p);
+	
+	if (!p->err && k != 1) {
 	    n_args_error(k, 1, t->t, p);
-	} else {
-	    e = n->v.bn.n[0]; /* first arg */
-	    e = e->v.b1.b;    /* switch to content */
+	}
+	if (!p->err) {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		ret->v.xval = kalman_bundle_run(e->v.b, p->prn, &p->err);
-	    }
+	}
+	if (!p->err) {
+	    ret->v.xval = kalman_bundle_run(b, p->prn, &p->err);
 	}
     } else if (t->t == F_KDSMOOTH) {
+	gretl_bundle *b = get_kalman_bundle_arg(n, p);
 	int param = 1;
 	int dkstyle = 0;
 
-	if (k == 2) {
-	    e = eval(n->v.bn.n[1], p);
-	    dkstyle = node_get_int(e, p);
-	} else if (k < 1 || k > 2) {
-	    n_args_error(k, 2, t->t, p);
+	if (!p->err) {
+	    if (k == 2) {
+		e = eval(n->v.bn.n[1], p);
+		dkstyle = node_get_int(e, p);
+	    } else if (k < 1 || k > 2) {
+		n_args_error(k, 2, t->t, p);
+	    }
 	}
 	if (!p->err) {
 	    param += dkstyle != 0;
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b; /* switch to content */
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = kalman_bundle_smooth(e->v.b, param, p->prn);
+		ret->v.xval = kalman_bundle_smooth(b, param, p->prn);
 	    }
 	}	
     } else if (t->t == F_KSMOOTH) {
-	if (k != 1) {
+	gretl_bundle *b = get_kalman_bundle_arg(n, p);
+	
+	if (!p->err && k != 1) {
 	    n_args_error(k, 1, t->t, p);
 	}
 	if (!p->err) {	
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b; /* switch to content */
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = kalman_bundle_smooth(e->v.b, 0, p->prn);
+		ret->v.xval = kalman_bundle_smooth(b, 0, p->prn);
 	    }
 	}
     } else if (t->t == F_KSIMUL) {
 	/* we need a bundle pointer, a matrix,
 	   and perhaps an optional boolean */
-	gretl_bundle *kb = NULL;
+	gretl_bundle *b = get_kalman_bundle_arg(n, p);
 	gretl_matrix *U = NULL;
 	int freeU = 0;
 	int get_state = 0;
 
-	if (k != 2 && k != 3) {
+	if (!p->err && k != 2 && k != 3) {
 	    n_args_error(k, 2, t->t, p);
-	} else {
-	    /* navigate to the bundle */
-	    e = n->v.bn.n[0];
-	    e = e->v.b1.b;
-	    kb = e->v.b;
 	}
 
 	for (i=1; i<k && !p->err; i++) {
@@ -9946,7 +9961,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = kalman_bundle_simulate(kb, U, get_state,
+	    ret->v.m = kalman_bundle_simulate(b, U, get_state,
 					      p->prn, &p->err);
 	}
 
