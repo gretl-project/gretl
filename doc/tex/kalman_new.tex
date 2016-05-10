@@ -196,11 +196,6 @@ you may give \texttt{obsy} as a series or list of series, and the
 other arguments can be given as scalars if in context they are
 $1 \times 1$.
 
-An important detail: from the user's point of view, the bundle created
-by \cmd{ksetup} looks like any other user-created bundle. However,
-bundles created via \cmd{ksetup} contain quite a few hidden,
-read-only elements that are essential for the whole apparatus to work.
-
 If applicable you may specify any of the following optional input
 matrices:
 
@@ -249,13 +244,49 @@ value on the bundle under the (reserved) key \texttt{diffuse}:
 SSmod.diffuse = 1
 \end{code}
 
-Note that for all the ``\cmd{k}'' functions described below the
-first argument (in most cases the only argument) must be a pointer to
-a bundle obtained via \cmd{ksetup}. Any old bundle will not do. A
-``pointer to bundle'' is specified by prefixing the name of the bundle
-with an ampersand, as in ``\verb|&SSmod|''. Passing the argument in
-pointer form allows these functions to modify the content of the
-bundle. 
+\section{Special features of state-space bundles}
+\label{sec:ss-special}
+
+A bundle created by \cmd{ksetup} works in most ways like any other
+gretl bundle; however, some differences should be kept in mind.  With
+an ordinary bundle you can replace or delete members at will; with a
+state-space bundle there are certain constraints.
+
+\begin{itemize}
+\item You can replace the coefficient matrices \texttt{obsymat},
+  \texttt{statemat}, \texttt{statevar} and (if applicable)
+  \texttt{obsvar} and/or \texttt{obsxmat} in a given bundle if you
+  wish---but only on condition that the replacement matrix has the
+  same dimensions as the original. Or in other words, the dimensions
+  $r$, $n$ and $k$ are set once and for all by the initialization
+  (section~\ref{sec:setup}).
+\item You can replace the data matrices \texttt{obsy} and (if
+  applicable) \texttt{obsx} subject to the condition that the number
+  of columns is unchanged ($n$ and $k$ respectively): the time-series
+  length, $T$, is mutable. But note that if \texttt{obsx} is present
+  it must have at least as many rows as \texttt{obsy} (which defines
+  $T$ for the bundle).
+\item None of the input matrices just mentioned can be deleted from
+  the bundle.
+\item Output matrices that are automatically added to the bundle by
+  the functions described in the following sections \textit{can} be
+  deleted (if you don't need them and want to save on storage). But
+  they cannot be replaced by arbitrary user content.
+\item The only other ``special'' members that can be deleted are the
+  function calls (strings) that are discussed in
+  section~\ref{sec:tvarying}.
+\end{itemize}
+
+Nonetheless, in the ``user area'' of the bundle (that is, under keys
+other than the reserved ones noted in this chapter), the usual rules
+apply.
+
+For all the ``\cmd{k}'' functions described below the first argument
+(in most cases the only argument) must be a pointer to a bundle
+obtained via \cmd{ksetup}. Any old bundle will not do. A ``pointer to
+bundle'' is specified by prefixing the name of the bundle with an
+ampersand, as in ``\verb|&SSmod|''. Passing the argument in pointer
+form allows these functions to modify the content of the bundle.
 
 \section{The \cmd{kfilter} function}
 \label{sec:kfilter}
@@ -369,8 +400,8 @@ of \texttt{stvar} holds $\statevar_{t|T}$, in transposed vech form
 This function takes a bundle-pointer argument and returns an integer
 error code (0 indicating success).  It runs a forward, filtering pass
 followed by a backward pass which computes a smoothed estimate of the
-disturbances and a dispersion measure using the method of Koopman
-(cite).
+disturbances and a dispersion measure using the method of
+\cite{koopman93}.
 
 Upon successful execution of the function, the bundle will contain
 under the key \texttt{smdist} a $T \times (r+n)$ matrix holding
@@ -395,12 +426,9 @@ respective variance matrices. So row $t$ of \texttt{stdistvar} holds
 \]
 and similarly for \texttt{obsdistvar}.  These quantities are used in
 the computation of the so-called \emph{auxiliary residuals}, which are
-advocated in (cite) as useful diagnostic tools. The auxiliary
-residuals are obtained by dividing $\hat{\strdist}_t$ and
-$\hat{\obsdist}_t$ by the square roots of the associated variances. An
-example is given in Script~\ref{script:auxres}, in which the auxiliary
-residuals for the state transition equation are computed on the
-famous Nile dataset (cite).
+advocated in \cite{durbin-koopman12} as useful diagnostic tools. The
+auxiliary residuals are obtained by dividing $\hat{\strdist}_t$ and
+$\hat{\obsdist}_t$ by the square roots of the associated variances.
 
 If a non-zero value is given for the optional second argument a
 different dispersion measure is computed, namely the mean squared
@@ -414,6 +442,11 @@ holds
  | \obsvec_1, \ldots, \obsvec_T \right]\right\}
 \]
 and similarly for \texttt{obsdistvar}.
+
+An example of use of the disturbance smoother is given in
+Script~\ref{script:auxres}, in which the auxiliary residuals for the
+state transition equation are computed on the famous Nile dataset
+(cite).
 
 \textbf{FIXME}: why do we have one object for the residuals and  two
 for their variances? Do we care about extra-diagonal elements?
@@ -442,14 +475,16 @@ $\alldist_t \sim N(0, I)$).
 For the purposes of \texttt{ksimul} the time-series length, $T$, is
 defined by the number of rows of the supplied disturbance matrix. This
 need not equal the original $T$ value (set from \texttt{obsy} in the
-initial call to \cmd{ksetup}). However, if the model includes
-exogenous variables in the observation equation (\texttt{obsx}) and
-the simulation length is greater than the original $T$, the simulation
-will run out of data and fail unless you supply a larger $x$ matrix.
-You can do this by adding a suitable matrix to the Kalman bundle under
-the key \texttt{simx}; this will temporarily replace the initial
-\texttt{obsx}. On exit from \texttt{ksimul} the prior $T$ value is
-restored (and also the prior \texttt{obsx}, if applicable).
+initial call to \cmd{ksetup}), since \texttt{obsy} is ignored under
+simulation. However, if the model includes exogenous variables in the
+observation equation (\texttt{obsx}) and the simulation length is
+greater than the original $T$, the simulation will run out of data and
+fail unless you supply a larger $x$ matrix.  This can be done in
+either of two ways. You can add a suitably sized matrix to the Kalman
+bundle under the key \texttt{simx}; if present, this will be used in
+preference to \texttt{obsx} for simulation. Or if you don't mind
+over-writing the original \texttt{obsx} you can substitute another
+matrix with the required number of rows under that key.
 
 By default, the value returned by \cmd{ksimul} is a ($T \times n$)
 matrix holding simulated values for the vector of observables at each
@@ -462,7 +497,8 @@ $(\tilde{\statevec}_t', \tilde{\obsvec}_t')$.
 
 Note that the original \texttt{obsy} member of the bundle is not
 overwritten by \texttt{ksimul}, nor is \texttt{state} or any other
-user-accessible output matrix.
+user-accessible output matrix. On exit from \texttt{ksimul} the prior
+$T$ value is restored.
 
 The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$
 is as follows: for $t=1,\dots,T$
@@ -488,11 +524,8 @@ vector.
 % by \texttt{inistate}).
 
 \textbf{IDEA}: it would be very nice to find a simple case to
-exemplify this in a bootstrap context, along the lines of Stoffer and
-Wall (1991).\footnote{Stoffer, D. S. and K. D. Wall
-  (1991). Bootstrapping state-space models: Gaussian maximum
-  likelihood estimation and the Kalman filter. \emph{J. American
-    Statistical Association} 86, 1024--33.}
+exemplify this in a bootstrap context, along the lines of 
+\cite{stoffer-wall91}.
 
 \section{Example 1: ARMA estimation}
 \label{sec:example_arma}
@@ -825,6 +858,10 @@ and
 \hat{\sigma}^2 = \frac{1}{nT-d} 
    \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
 \]
+
+
+\bibliographystyle{gretl}
+\bibliography{gretl}
  
 
 \end{document}
