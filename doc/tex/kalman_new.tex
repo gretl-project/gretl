@@ -723,10 +723,23 @@ plot P
   literal set linetype 3 lc rgb "#0000ff"
   literal set title 'State disturbance with 90% confidence band'
   literal set nokey
-end plot --output=display  
+end plot --output=display
 \end{scode}
 \end{script}
 
+\begin{figure}[htbp]
+  \centering
+  \begin{tabular}{cc}
+  \small
+  Auxiliary residuals \\
+  \includegraphics{figures/nile_eta_ksd} \\[10pt]
+  \small State disturbance with 90\% confidence band \\
+  \includegraphics{figures/nile_eta_dk}
+  \end{tabular}
+  \caption{Nile data: auxiliary residuals and $\hat{\eta}_t$ with
+    confidence band, from disturbance smoother}
+  \label{fig:nile}
+\end{figure}
 
 \section{Finer points}
 \label{sec:finer}
