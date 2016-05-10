@@ -1127,14 +1127,20 @@ int gretl_bundle_set_matrix (gretl_bundle *bundle, const char *key,
 
 int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key)
 {
+    int done = 0;
     int err = 0;
 
     if (bundle == NULL) {
-	err = E_DATA;
-    } else {
-	gboolean ok = g_hash_table_remove(bundle->ht, key);
-	
-	if (!ok) {
+	return E_DATA;
+    }
+
+    if (bundle->type == BUNDLE_KALMAN) {
+	done = maybe_delete_kalman_element(bundle->data, key, &err);
+    }
+
+    if (!done && !err) {
+	done = g_hash_table_remove(bundle->ht, key);
+	if (done) {
 	    err = E_DATA;
 	}
     }

@@ -133,6 +133,10 @@ void *maybe_retrieve_kalman_element (void *kptr,
 				     int *reserved,
 				     int *err);
 
+int maybe_delete_kalman_element (void *kptr,
+				 const char *key,
+				 int *err);
+
 int print_kalman_bundle_info (void *kptr, PRN *prn);
 
 gretl_bundle *kalman_bundle_copy (const gretl_bundle *src,

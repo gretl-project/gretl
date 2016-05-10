@@ -4742,14 +4742,41 @@ int user_kalman_get_time_step (void)
 /* below: functions to support the "wrapping" of a Kalman
    struct in a gretl bundle */
 
+static int check_replacement_dims (const gretl_matrix *orig,
+				   const gretl_matrix *repl,
+				   int id)
+{
+    if (id == K_H || id == K_A || id == K_R || id == K_F ||
+	id == K_Q || id == K_m || id == K_S || id == K_P) {
+	if (repl->rows != orig->rows ||
+	    repl->cols != orig->cols) {
+	    gretl_errmsg_set("You cannot resize a state-space "
+			     "system matrix");
+	    return E_DATA;
+	}
+    } else if (id == K_y || id == K_x) {
+	if (repl->cols != orig->cols) {
+	    gretl_errmsg_set("You cannot resize a state-space "
+			     "system matrix");
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
 static int add_or_replace_k_matrix (gretl_matrix **targ,
 				    gretl_matrix *src,
-				    int copy)
+				    int id, int copy)
 {
     int err = 0;
     
     if (*targ != src) {
 	if (*targ != NULL) {
+	    err = check_replacement_dims(*targ, src, id);
+	    if (err) {
+		return err;
+	    }
 	    /* destroy old Kalman-owned matrix */
 	    gretl_matrix_free(*targ);
 	}
@@ -4823,13 +4850,13 @@ kalman_bundle_try_set_matrix (kalman *K, void *data,
 	
 	if (vtype == GRETL_TYPE_MATRIX) {
 	    m = data;
-	    add_or_replace_k_matrix(targ, m, copy);
+	    err = add_or_replace_k_matrix(targ, m, i, copy);
 	} else if (vtype == GRETL_TYPE_DOUBLE) {
 	    m = gretl_matrix_from_scalar(*(double *) data);
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    } else {
-		add_or_replace_k_matrix(targ, m, 0);
+		err = add_or_replace_k_matrix(targ, m, i, 0);
 	    }
 	} else {
 	    err = E_TYPES;
@@ -4850,7 +4877,7 @@ kalman_bundle_set_matrix (kalman *K, gretl_matrix *m, int i, int copy)
     if (targ == NULL) {
 	err = E_DATA;
     } else {
-	err = add_or_replace_k_matrix(targ, m, copy);
+	err = add_or_replace_k_matrix(targ, m, i, copy);
     }
 
     return err;
@@ -5184,6 +5211,35 @@ int maybe_set_kalman_element (void *kptr,
 	    *err = kalman_bundle_try_set_matrix(K, vptr, vtype, id, copy);
 	}
 	done = (*err == 0);
+    }
+
+    return done;
+}
+
+int maybe_delete_kalman_element (void *kptr,
+				 const char *key,
+				 int *err)
+{
+    kalman *K = kptr;
+    int i, done = 0;
+
+    if (K == NULL) {
+	return 0;
+    }   
+
+    if (kalman_output_scalar(K, key) != NULL ||
+	input_matrix_slot(key) >= 0 ||
+	kalman_output_matrix(K, key) != NULL) {
+	gretl_errmsg_sprintf("%s: cannot be deleted", key);
+	*err = E_DATA;
+    } else if ((i = kalman_matcall_slot(key)) >= 0) {
+	if (matrix_is_varying(K, i)) {
+	    free(K->matcalls[i]);
+	    K->matcalls[i] = NULL;
+	    done = 1;
+	} else {
+	    *err = E_DATA;
+	}
     }
 
     return done;
