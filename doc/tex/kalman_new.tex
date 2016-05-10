@@ -443,10 +443,8 @@ holds
 \]
 and similarly for \texttt{obsdistvar}.
 
-An example of use of the disturbance smoother is given in
-Script~\ref{script:auxres}, in which the auxiliary residuals for the
-state transition equation are computed on the famous Nile dataset
-(cite).
+Section~\ref{sec:example_dsmooth} presents a script which exercises
+the disturbance smoother.
 
 \textbf{FIXME}: why do we have one object for the residuals and  two
 for their variances? Do we care about extra-diagonal elements?
@@ -527,8 +525,16 @@ vector.
 exemplify this in a bootstrap context, along the lines of 
 \cite{stoffer-wall91}.
 
-\section{Example 1: ARMA estimation}
+\section{Example scripts}
+\label{sec:examples}
+
+This section presents a selection of short sample
+scripts. \textbf{FIXME} say a little more?
+
+\subsection{ARMA estimation}
 \label{sec:example_arma}
+
+Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter}.
 
 As is well known, the Kalman filter provides a very efficient way to
 compute the likelihood of ARMA models; as an example, take an
@@ -586,12 +592,12 @@ shown in script~\ref{script:armaest}.
   \label{script:armaest}
 \begin{scode}
 function void arma11_via_kalman (series y)
-    /* parameter initalization */
+    /* parameter initialization */
     scalar phi = 0
     scalar theta = 0
     scalar sigma = 1
     
-    /* Kalman filter setup */
+    /* state-space model setup */
     matrix H = {1; theta}
     matrix F = {phi, 0; 1, 0}
     matrix Q = {sigma^2, 0; 0, 0}
@@ -615,8 +621,11 @@ arma 1 1 ; y --nc    # check via native command
 \end{scode}
 \end{script}
 
-\section{Example 2: local level model}
+\subsection{Local level model}
 \label{sec:example_loclev}
+
+Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
+\cmd{ksmooth}.
 
 Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
 is a random walk with normal increments of variance $\sigma^2_1$ and
@@ -628,19 +637,25 @@ $\strdist_t \sim N(0,\, \sigma^2_1)$, $\obsmat = 1$ and
 $\obsdist_t \sim N(0,\, \sigma^2_2)$.  The translation to
 \textsf{hansl} is
 \begin{code}
-bundle llmod = ksetup(y, {1}, {1}, {s1})
+bundle llmod = ksetup(y, 1, 1, s1)
 llmod.obsvar = s2
 llmod.diffuse = 1
 \end{code}
 
 The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
 estimated via maximum likelihood.  Script~\ref{script:loclev} provides
-an example of simulation and estimation of such a model. For the sake
-of brevity, simulation is carried out via ordinary gretl commands,
-rather than the state-space apparatus described above.
+an example of simulation and estimation of such a model. Since
+simulating the local level model is trivial using ordinary gretl
+commands, we don't use \cmd{ksimul} in this context.
 
-%A plot of $\mu_t$ and its estimate is presented in
-%Figure~\ref{fig:loclev}.
+Note that, as things stand, bundle members such as
+\texttt{kb.statevar} and \texttt{kb.obsvar} cannot themselves be
+selected as adjustable parameters (via the \texttt{params} keyword) in
+the context of gretl's \cmd{mle} command block. It's necessary to
+declare auxiliary, unbundled variables (in this case the scalars
+\texttt{s1} and \texttt{s2}) to play that role.  We therefore have to
+update the relevant bundle members prior to each call to \cmd{kfilter}
+in the \cmd{mle} block.
 
 \begin{script}[htbp]
   \caption{Local level model}
@@ -648,9 +663,13 @@ rather than the state-space apparatus described above.
 \begin{scode}
 nulldata 200
 set seed 101010
-setobs 1 1 --special
+setobs 1 1 --special-time-series
+
+/* set the true variance parameters */
 true_s1 = 0.5
 true_s2 = 0.25
+
+/* and simulate some data */
 v = normal() * sqrt(true_s1)
 w = normal() * sqrt(true_s2)
 mu = 2 + cum(v)
@@ -660,7 +679,7 @@ y = mu + w
 s1 = 1
 s2 = 1
 
-/* Kalman filter set-up */
+/* state-space model set-up */
 bundle kb = ksetup(y, 1, 1, s1)
 kb.obsvar = s2
 kb.diffuse = 1
@@ -679,23 +698,50 @@ series muhat = kb.state
 \end{scode}
 \end{script}
 
-% \begin{figure}[htbp]
-%   \centering
-%   \includegraphics{figures/local_level}
-%   \caption{Local level model: $\mu_t$ and its smoothed estimate}
-%   \label{fig:loclev}
-% \end{figure}
+\subsection{Disturbance smoothing}
+\label{sec:example_dsmooth}
+
+Functions illustrated in this example: \cmd{ksetup}, \cmd{kdsmooth}.
+
+In section~\ref{sec:kdsmooth} we noted that the \cmd{kdsmooth}
+function can produce two different measures of the dispersion of the
+smoothed disturbances, depending on the the value of the (optional)
+trailing boolean parameter. Here we show what these two measures are
+good for, using the famous Nile flow data that have been much analysed
+in the state-space modeling literature. We focus on the state
+equation; that is, the random-walk component of the observed series.
+For consistency with the literature let us call the $t$-dated
+disturbance to the state $\eta_t$.
+
+In the first call to \cmd{kdsmooth} we omit the optional switch and
+therefore compute $E(\hat{\eta}_t\hat{\eta}_t')$ for each $t$. This
+quantity is suitable for constructing the auxiliary residuals shown in
+the top panel of Figure~\ref{fig:nile} (for similar plots see
+\cite{koopman-etal99}, \cite{pelagatti11}).  This plot suggests the
+presence of a structural break shortly prior to 1900, as various
+authors have observed.
+
+In the second \cmd{kdsmooth} call we ask gretl to compute instead
+$E[(\hat{\eta}_t-\eta_t)(\hat{\eta}_t-\eta_t)' | y_1,\ldots,y_T]$, the
+MSE of $\hat{\eta}_t$ considered as an estimator of $\eta_t$. And in
+the lower panel of the Figure we plot $\hat{\eta}_t$ along with a 90\%
+confidence band (roughly, $\pm 1.64$ times the square root of the
+MSE). This reveals that, given the sampling variance of
+$\hat{\eta}_t$, we're not really sure that any of the $\eta_t$ values
+were truly different from zero. The resolution of the seeming conflict
+here is commonly reckoned to be that there was in fact a change in
+mean around 1900, but besides that event there's little evidence for 
+a non-zero $\sigma_{\eta}$. Or in other words the standard local level
+model is not really applicable to the data.
+
 
 \begin{script}[htbp]
-  \caption{Auxiliary residuals for the local level model --- Nile data}
+  \caption{Working with smoothed disturbances -- Nile data}
   \label{script:auxres}
 \begin{scode}
-set echo off
-set messages off
-
 open nile.gdt
 
-# ML estimates
+# ML variance estimates
 scalar s2_eta = 1468.49
 scalar s2_eps = 15099.7
 
@@ -707,10 +753,15 @@ kdsmooth(&LLM)
 series etahat = LLM.smdist[,1]
 series var_etahat = LLM.stdistvar
 series eta_aux = etahat/sqrt(var_etahat)
-plot eta_aux
-  options time-series with-lines
+series two = 2
+series minus_two = -2
+list P = eta_aux two minus_two
+plot P
+  options time-series with-lines single-yaxis
+  literal set linetype 3 lc rgb "#0000ff"
   literal set title 'Auxiliary residual, state equation'
   literal set ylabel ''
+  literal set nokey
 end plot --output=display
 
 kdsmooth(&LLM, 1)
@@ -731,9 +782,9 @@ end plot --output=display
   \centering
   \begin{tabular}{cc}
   \small
-  Auxiliary residuals \\
-  \includegraphics{figures/nile_eta_ksd} \\[10pt]
-  \small State disturbance with 90\% confidence band \\
+  Auxiliary (standardized) residuals \\
+    \includegraphics{figures/nile_eta_ksd} \\[10pt]
+    \small Estimated state disturbance, $\hat{\eta}_t$, with 90\% confidence band \\
   \includegraphics{figures/nile_eta_dk}
   \end{tabular}
   \caption{Nile data: auxiliary residuals and $\hat{\eta}_t$ with
@@ -741,7 +792,7 @@ end plot --output=display
   \label{fig:nile}
 \end{figure}
 
-\section{Finer points}
+\section{Some finer points}
 \label{sec:finer}
 
 \subsection{Cross-correlated disturbances}
