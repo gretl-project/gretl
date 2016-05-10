@@ -397,11 +397,11 @@ of \texttt{stvar} holds $\statevar_{t|T}$, in transposed vech form
 \section{The \cmd{kdsmooth} function}
 \label{sec:kdsmooth}
 
-This function takes a bundle-pointer argument and returns an integer
-error code (0 indicating success).  It runs a forward, filtering pass
-followed by a backward pass which computes a smoothed estimate of the
-disturbances and a dispersion measure using the method of
-\cite{koopman93}.
+This function requires a bundle-pointer argument and returns an
+integer error code (0 indicating success).  It runs a forward,
+filtering pass followed by a backward pass which computes a smoothed
+estimate of the disturbances and a dispersion measure using the
+methods described in \cite{koopman93} and \cite{koopman-etal99}.
 
 Upon successful execution of the function, the bundle will contain
 under the key \texttt{smdist} a $T \times (r+n)$ matrix holding
