@@ -49,6 +49,7 @@
 #include "uservar.h"
 #include "usermat.h"
 #include "libset.h"
+#include "gretl_array.h"
 #include "gretl_plot.h"
 
 #define PDEBUG 0
@@ -295,6 +296,66 @@ static int plot_printf (const char *s, const DATASET *dset)
     return err;
 }
 
+/* This could go into strutils.c? */
+
+static int strings_array_splice (char ***pS1, int *pn1,
+				 char **S2, int n2)
+{
+    char **S = NULL;
+    int i, j, n;
+    int err = 0;
+
+    if (S2 == NULL || n2 == 0) {
+	return 0;
+    }
+
+    n = *pn1 + n2;
+
+    S = realloc(*pS1, n * sizeof *S);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n2; i++) {
+	S[*pn1 + i] = NULL;
+    }
+
+    for (i=0; i<n2 && !err; i++) {
+	j = *pn1 + i;
+	if (S2[i] != NULL) {
+	    S[j] = gretl_strdup(S2[i]);
+	    if (S[j] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    *pS1 = S;
+    *pn1 = n;
+
+    return err;
+}
+
+static int plot_append_strings (char ***pS, int *pns, const char *s)
+{
+    gretl_array *A = get_array_by_name(s);
+    int ns = 0, err = 0;
+
+    if (A == NULL) {
+	err = E_DATA;
+    } else if (gretl_array_get_type(A) != GRETL_TYPE_STRINGS) {
+	err = E_TYPES;
+    } else {
+	char **S = gretl_array_get_strings(A, &ns);
+
+	if (S != NULL) {
+	    err = strings_array_splice(pS, pns, S, ns);
+	}
+    }
+
+    return err;
+}
+
 enum {
     LAST_FIELD = 1,
     EMPTY_OK
@@ -389,6 +450,8 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 	err = strings_array_add(&plot.lines, &plot.nlines, s);
     } else if (!strcmp(field, "printf")) {
 	err = plot_printf(s, dset);
+    } else if (!strcmp(field, "strings")) {
+	err = plot_append_strings(&plot.lines, &plot.nlines, s);
     } else {
 	fprintf(stderr, "plot: invalid field '%s'\n", field);
 	err = E_PARSE;

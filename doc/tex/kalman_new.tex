@@ -648,15 +648,6 @@ an example of simulation and estimation of such a model. Since
 simulating the local level model is trivial using ordinary gretl
 commands, we don't use \cmd{ksimul} in this context.
 
-Note that, as things stand, bundle members such as
-\texttt{kb.statevar} and \texttt{kb.obsvar} cannot themselves be
-selected as adjustable parameters (via the \texttt{params} keyword) in
-the context of gretl's \cmd{mle} command block. It's necessary to
-declare auxiliary, unbundled variables (in this case the scalars
-\texttt{s1} and \texttt{s2}) to play that role.  We therefore have to
-update the relevant bundle members prior to each call to \cmd{kfilter}
-in the \cmd{mle} block.
-
 \begin{script}[htbp]
   \caption{Local level model}
   \label{script:loclev}
@@ -686,10 +677,8 @@ kb.diffuse = 1
 
 /* ML estimation of variances */
 mle ll = ERR ? NA : kb.llt
-    kb.statevar = s1
-    kb.obsvar = s2
     ERR = kfilter(&kb)
-    params s1 s2
+    params kb.statevar kb.obsvar
 end mle
 
 /* compute the smoothed state */
@@ -751,8 +740,7 @@ LLM.diffuse = 1
 
 kdsmooth(&LLM)
 series etahat = LLM.smdist[,1]
-series var_etahat = LLM.stdistvar
-series eta_aux = etahat/sqrt(var_etahat)
+series eta_aux = LLM.smdist[,1] ./ sqrt(LLM.stdistvar)
 series two = 2
 series minus_two = -2
 list P = eta_aux two minus_two
