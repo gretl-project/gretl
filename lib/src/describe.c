@@ -2557,7 +2557,7 @@ int crosstab (const int *list, const DATASET *dset,
     if (rowvar[0] == 0 || (blanket && rowvar[0] == 1)) {
 	gretl_errmsg_set("xtab: variables must be discrete");
 	free(rowvar);
-	return E_DATATYPE;
+	return E_TYPES;
     }
     
     if (!blanket) {
@@ -2576,7 +2576,7 @@ int crosstab (const int *list, const DATASET *dset,
 		}
 	    }
 	    if (colvar[0] == 0) {
-		err = E_DATATYPE;
+		err = E_TYPES;
 	    }
 	}
     }
@@ -2623,13 +2623,13 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
 
     if (!series_is_discrete(dset, rv) &&
 	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[rv])) {
-	*err = E_DATATYPE;
+	*err = E_TYPES;
 	return NULL;
     }
 
     if (!series_is_discrete(dset, cv) &&
 	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[cv])) {
-	*err = E_DATATYPE;
+	*err = E_TYPES;
 	return NULL;
     }
 

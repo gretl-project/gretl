@@ -73,7 +73,6 @@ static const char *gretl_error_messages[] = {
     N_("Not a Number in calculation"),                           /* E_NAN */
     N_("Matrices not conformable for operation"),                /* E_NONCONF */
     N_("Data types not conformable for operation"),              /* E_TYPES */
-    N_("Wrong data type"),                                       /* E_DATATYPE */
     N_("Incompatible options"),                                  /* E_BADOPT */
     N_("The restrictions do not identify the parameters"),       /* E_NOIDENT */
     N_("External command failed"),                               /* E_EXTERNAL */

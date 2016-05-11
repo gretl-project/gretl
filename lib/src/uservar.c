@@ -1424,7 +1424,7 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 		    gretl_type_get_name(type));
 	}
     } else {
-	err = E_DATATYPE;
+	err = E_TYPES;
     }
 
     return err;

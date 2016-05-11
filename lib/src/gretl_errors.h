@@ -57,22 +57,21 @@ typedef enum {
     E_NAN,         /* 35 */
     E_NONCONF,     /* 36 */
     E_TYPES,       /* 37 */
-    E_DATATYPE,    /* 38 */
-    E_BADOPT,      /* 39 */
-    E_NOIDENT,     /* 40 */
-    E_EXTERNAL,    /* 41 */
-    E_TOOLONG,     /* 42 */
-    E_NODATA,      /* 43 */
-    E_NOTPD,       /* 44 */
-    E_JACOBIAN,    /* 45 */
-    E_TOOFEW,      /* 46 */
-    E_FNEST,       /* 47 */
-    E_FUNCERR,     /* 48 : error set by function writer */
-    E_STOP,        /* 49 : user aborted execution */
-    E_BADCATCH,    /* 50 : "catch" used where it's not valid */
-    E_DB_DUP,      /* 51 : duplicate vars found when saving to database */
-    E_OK,          /* 52 : not really an error */
-    E_MAX          /* 53 */
+    E_BADOPT,      /* 38 */
+    E_NOIDENT,     /* 39 */
+    E_EXTERNAL,    /* 40 */
+    E_TOOLONG,     /* 41 */
+    E_NODATA,      /* 42 */
+    E_NOTPD,       /* 43 */
+    E_JACOBIAN,    /* 44 */
+    E_TOOFEW,      /* 45 */
+    E_FNEST,       /* 46 */
+    E_FUNCERR,     /* 47 : error set by function writer */
+    E_STOP,        /* 48 : user aborted execution */
+    E_BADCATCH,    /* 49 : "catch" used where it's not valid */
+    E_DB_DUP,      /* 50 : duplicate vars found when saving to database */
+    E_OK,          /* 51 : not really an error */
+    E_MAX          /* 52 */
 } GretlError; 
 
 enum gretl_warning_codes {
