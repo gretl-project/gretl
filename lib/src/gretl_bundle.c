@@ -1140,7 +1140,7 @@ int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key)
 
     if (!done && !err) {
 	done = g_hash_table_remove(bundle->ht, key);
-	if (done) {
+	if (!done) {
 	    err = E_DATA;
 	}
     }
