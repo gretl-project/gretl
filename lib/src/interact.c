@@ -1916,6 +1916,7 @@ int gretl_delete_variables (int *list,
     } else if (opt & OPT_D) {
 	err = db_delete_series_by_name(param, prn);
     } else if (param != NULL) {
+	fprintf(stderr, "HERE, param='%s'\n", param);
 	err = gretl_delete_var_by_name(param, prn);
     } else if (list != NULL) {
 	/* delete listed series from dataset */

@@ -58,6 +58,7 @@ enum {
 
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
+    gretl_bundle *bundle; /* parent bundle, if applicable */
     int type;             /* type of parameter (scalar or vector) */
     int dtype;            /* type of derivative for parameter */
     char *deriv;          /* string representation of derivative of regression
@@ -573,12 +574,30 @@ static int push_scalar_coeff (nlspec *s, double x)
     return 0;
 }
 
+static gretl_matrix *get_param_vector (parm *p)
+{
+    gretl_matrix *m = NULL;
+
+    if (p->bundle != NULL) {
+	int err = 0;
+
+	m = gretl_bundle_get_matrix(p->bundle, p->name, &err);
+    } else {
+	m = get_matrix_by_name(p->name);
+    }
+
+    return m;
+}
+
 /* add a parameter to the model specification: this may be
    either a scalar or a vector
 */
 
-static int nlspec_push_param (nlspec *s, const char *name, 
-			      GretlType type, char *deriv)
+static int nlspec_push_param (nlspec *s,
+			      const char *name,
+			      GretlType type,
+			      gretl_bundle *bundle,
+			      char *deriv)
 {
     parm *params, *p;
     int np = s->nparam;
@@ -594,6 +613,7 @@ static int nlspec_push_param (nlspec *s, const char *name,
     p->name[0] = '\0';
     strncat(p->name, name, VNAMELEN - 1);
     p->type = type;
+    p->bundle = bundle;
     p->dtype = GRETL_TYPE_NONE;
     p->deriv = deriv;
     p->dnum = 0;
@@ -610,9 +630,18 @@ static int nlspec_push_param (nlspec *s, const char *name,
     s->nparam = np + 1;
 
     if (type == GRETL_TYPE_DOUBLE) {
-	err = push_scalar_coeff(s, gretl_scalar_get_value(name, NULL));
+	double x;
+
+	if (p->bundle != NULL) {
+	    x = gretl_bundle_get_scalar(p->bundle, p->name, &err);
+	} else {
+	    x = gretl_scalar_get_value(name, NULL);
+	}
+	if (!err) {
+	    err = push_scalar_coeff(s, x);
+	}
     } else {
-	gretl_matrix *m = get_matrix_by_name(name);
+	gretl_matrix *m = get_param_vector(p);
 	int k = gretl_vector_get_length(m);
 
 #if NLS_DEBUG
@@ -629,23 +658,71 @@ static int nlspec_push_param (nlspec *s, const char *name,
     return err;
 }
 
-/* Do we have a valid name (the name of a scalar or vector?):
-   if so return 0, else return E_DATATYPE.
-*/
-
-static int check_param_name (const char *name, GretlType *type)
+static int check_matrix_param (const char *name, gretl_bundle *b)
 {
+    gretl_matrix *m;
     int err = 0;
 
-    if (gretl_is_scalar(name)) {
-	*type = GRETL_TYPE_DOUBLE; /* OK */
+    if (b == NULL) {
+	m = get_matrix_by_name(name);
     } else {
-	gretl_matrix *m = get_matrix_by_name(name);
+	m = gretl_bundle_get_matrix(b, name, &err);
+    }
 
-	if (m == NULL || gretl_vector_get_length(m) == 0) {
-	    gretl_errmsg_sprintf(_("'%s': expected a scalar or vector"), name);
-	    err = E_DATATYPE;
+    if (err || m == NULL || gretl_vector_get_length(m) == 0) {
+	gretl_errmsg_sprintf(_("'%s': expected a scalar or vector"), name);
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
+/* Do we have a valid name (the name of a scalar or vector?):
+   if so return 0, else return E_TYPES.
+*/
+
+static int check_param_name (char **pname, GretlType *type,
+			     gretl_bundle **pbundle)
+{
+    gretl_bundle *b = NULL;
+    char *name = *pname;
+    int err = 0;
+
+    if (pbundle != NULL && strchr(name, '.') != NULL) {
+	/* did we get a bundle member? */
+	gchar **S = g_strsplit(name, ".", 2);
+
+	b = get_bundle_by_name(S[0]);
+
+	if (b != NULL) {
+	    GretlType btype;
+	    int berr = 0;
+
+	    btype = gretl_bundle_get_member_type(b, S[1], &berr);
+	    if (btype == GRETL_TYPE_DOUBLE) {
+		*type = GRETL_TYPE_DOUBLE;
+	    } else if (btype == GRETL_TYPE_MATRIX) {
+		err = check_matrix_param(S[1], b);
+		if (!err) {
+		    *type = GRETL_TYPE_MATRIX;
+		}
+	    } else {
+		err = E_TYPES;
+	    }
+	    if (!err) {
+		free(*pname);
+		*pname = gretl_strdup(S[1]);
+		*pbundle = b;
+	    }
 	} else {
+	    err = E_TYPES;
+	}
+	g_strfreev(S);
+    } else if (gretl_is_scalar(name)) {
+	*type = GRETL_TYPE_DOUBLE;
+    } else {
+	err = check_matrix_param(name, NULL);
+	if (!err) {
 	    *type = GRETL_TYPE_MATRIX;
 	}
     }
@@ -712,15 +789,18 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
 #endif
 
     for (i=0; i<nf && !err; i++) {
-	char *name = gretl_word_strdup(str, &str, OPT_S, &err);
+	gretlopt opt = OPT_S | OPT_D;
+	char *name = gretl_word_strdup(str, &str, opt, &err);
+	gretl_bundle *bundle = NULL;
 	GretlType type = 0;
 
 	if (!err) {
-	    err = check_param_name(name, &type);
+	    err = check_param_name(&name, &type, &bundle);
 	}
 
 	if (!err) {
-	    err = nlspec_push_param(s, name, type, NULL);
+	    err = nlspec_push_param(s, name, type,
+				    bundle, NULL);
 	}
 
 	free(name);
@@ -751,7 +831,8 @@ static int nlspec_add_scalar_params (nlspec *spec, int np,
 	    err = gretl_scalar_add(names[i], vals[i]);
 	}
 	if (!err) {
-	    err = nlspec_push_param(spec, names[i], GRETL_TYPE_DOUBLE, NULL);
+	    err = nlspec_push_param(spec, names[i], GRETL_TYPE_DOUBLE,
+				    NULL, NULL);
 	}
     }
 
@@ -791,25 +872,30 @@ int aux_nlspec_add_param_list (nlspec *spec, int np, double *vals,
 				    OPT_A);
 }
 
-/* update the 'external' values of scalars or matrices using
+/* update the 'external' values of scalars or vectors using
    the values produced by the optimizer.
 */
 
 int update_coeff_values (const double *b, nlspec *s)
 {
     int i, j, k = 0;
-    parm *p;
+    int err = 0;
 
     for (i=0; i<s->nparam; i++) {
-	p = &s->params[i];
+	parm *p = &s->params[i];
+	
 	if (scalar_param(s, i)) {
-	    gretl_scalar_set_value(p->name, b[k++]);
+	    if (p->bundle != NULL) {
+		err = gretl_bundle_set_scalar(p->bundle, p->name, b[k++]);
+	    } else {
+		err = gretl_scalar_set_value(p->name, b[k++]);
+	    }
 	} else {
-	    gretl_matrix *m = get_matrix_by_name(p->name);
+	    gretl_matrix *m = get_param_vector(p);
 
 	    if (m == NULL) {
 		fprintf(stderr, "Couldn't find location for coeff %d\n", k);
-		return E_DATA;
+		err = E_DATA;
 	    } else {
 		if (m != p->vec) {
 		    fprintf(stderr, "*** coeff_address: by name, '%s' is at %p; "
@@ -824,7 +910,7 @@ int update_coeff_values (const double *b, nlspec *s)
 	}
     }
 
-    return 0;
+    return err;
 }
 
 #define NLS_SKIP_MISSING 0 /* not properly tested yet */
@@ -2653,10 +2739,10 @@ int nlspec_add_param_with_deriv (nlspec *spec, const char *s)
 	return E_PARSE;
     }
 
-    err = check_param_name(name, &type);
+    err = check_param_name(&name, &type, NULL);
     
     if (!err) {
-	err = nlspec_push_param(spec, name, type, deriv);
+	err = nlspec_push_param(spec, name, type, NULL, deriv);
 	if (err) {
 	    free(deriv);
 	    deriv = NULL;
@@ -3696,7 +3782,7 @@ static int set_nlspec_from_model (const MODEL *pmod,
     return err;
 }
 
-static int push_scalar_parm (const char *name, double **px, int *n)
+static int push_scalar_param (const char *name, double **px, int *n)
 {
     double x = gretl_scalar_get_value(name, NULL);
     int err = 0;
@@ -3719,8 +3805,8 @@ static int push_scalar_parm (const char *name, double **px, int *n)
     return err;
 }
 
-static int push_vector_parm (const char *name, gretl_matrix ***pm,
-			     int *n)
+static int push_vector_param (const char *name, gretl_matrix ***pm,
+			      int *n)
 {
     gretl_matrix *m = get_matrix_by_name(name);
     int err = 0;
@@ -3788,9 +3874,9 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 	const char *s = spec->params[i].name;
 
 	if (gretl_is_scalar(s)) {
-	    err = push_scalar_parm(s, &sparms, &ns);
+	    err = push_scalar_param(s, &sparms, &ns);
 	} else if (gretl_is_matrix(s)) {
-	    err = push_vector_parm(s, &mparms, &nm);
+	    err = push_vector_param(s, &mparms, &nm);
 	} else {
 	    err = E_DATA;
 	}
