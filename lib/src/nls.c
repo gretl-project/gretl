@@ -574,6 +574,21 @@ static int push_scalar_coeff (nlspec *s, double x)
     return 0;
 }
 
+static double get_param_scalar (parm *p)
+{
+    double x = NADBL;
+
+    if (p->bundle != NULL) {
+	int err = 0;
+	
+	x = gretl_bundle_get_scalar(p->bundle, p->name, &err);
+    } else {
+	x = gretl_scalar_get_value(p->name, NULL);
+    }    
+
+    return x;
+}
+
 static gretl_matrix *get_param_vector (parm *p)
 {
     gretl_matrix *m = NULL;
@@ -630,16 +645,9 @@ static int nlspec_push_param (nlspec *s,
     s->nparam = np + 1;
 
     if (type == GRETL_TYPE_DOUBLE) {
-	double x;
+	double x = get_param_scalar(p);
 
-	if (p->bundle != NULL) {
-	    x = gretl_bundle_get_scalar(p->bundle, p->name, &err);
-	} else {
-	    x = gretl_scalar_get_value(name, NULL);
-	}
-	if (!err) {
-	    err = push_scalar_coeff(s, x);
-	}
+	err = push_scalar_coeff(s, x);
     } else {
 	gretl_matrix *m = get_param_vector(p);
 	int k = gretl_vector_get_length(m);
@@ -770,7 +778,8 @@ static int nlspec_add_param_names (nlspec *spec, const char *s)
 
    specifying the parameters to be estimated.  Here we parse such a
    list and add the parameter info to the spec.  The terms in the list
-   must be pre-existing scalar variables or vectors.
+   must be pre-existing scalars or vectors, either objects in their
+   own right or members of a bundle.
 */
 
 static int 
@@ -2720,6 +2729,7 @@ int nlspec_add_param_with_deriv (nlspec *spec, const char *s)
     const char *p = s;
     char *name = NULL;
     char *deriv = NULL;
+    gretl_bundle *b = NULL;
     GretlType type = 0;
     int err = 0;
 
@@ -2739,10 +2749,10 @@ int nlspec_add_param_with_deriv (nlspec *spec, const char *s)
 	return E_PARSE;
     }
 
-    err = check_param_name(&name, &type, NULL);
+    err = check_param_name(&name, &type, &b);
     
     if (!err) {
-	err = nlspec_push_param(spec, name, type, NULL, deriv);
+	err = nlspec_push_param(spec, name, type, b, deriv);
 	if (err) {
 	    free(deriv);
 	    deriv = NULL;
@@ -3782,17 +3792,18 @@ static int set_nlspec_from_model (const MODEL *pmod,
     return err;
 }
 
-static int push_scalar_param (const char *name, double **px, int *n)
+static int save_scalar_param (parm *p, double **px, int *n)
 {
-    double x = gretl_scalar_get_value(name, NULL);
+    double x = get_param_scalar(p);
     int err = 0;
 
     if (na(x)) {
 	err = E_DATA;
     } else {
+	double *tmp;
 	int k = *n + 1;
-	double *tmp = realloc(*px, k * sizeof *tmp);
 
+	tmp = realloc(*px, k * sizeof *tmp);
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -3805,18 +3816,19 @@ static int push_scalar_param (const char *name, double **px, int *n)
     return err;
 }
 
-static int push_vector_param (const char *name, gretl_matrix ***pm,
+static int save_vector_param (parm *p, gretl_matrix ***pm,
 			      int *n)
 {
-    gretl_matrix *m = get_matrix_by_name(name);
+    gretl_matrix *m = get_param_vector(p);
     int err = 0;
 
     if (m == NULL) {
 	err = E_DATA;
     } else {
+	gretl_matrix **tmp;
 	int k = *n + 1;
-	gretl_matrix **tmp = realloc(*pm, k * sizeof *tmp);
-
+	
+	tmp = realloc(*pm, k * sizeof *tmp);
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -3846,15 +3858,15 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 {
     nlspec *spec;
     gretl_matrix *fcmat = NULL;
-    gretl_matrix **mparms = NULL;
+    gretl_matrix **msave = NULL;
     double *orig_y = NULL;
-    double *sparms = NULL;
+    double *xsave = NULL;
     double *resu = NULL;
     int origv = dset->v;
     int yno = pmod->list[1];
     int iters = 100; /* just testing */
-    int ns = 0, nm = 0;
-    int i, j, k, s, t, fT;
+    int nx = 0, nm = 0;
+    int i, ix, im, s, t, fT;
     int err = 0;
 
     /* build the 'private' spec, based on pmod */
@@ -3871,14 +3883,12 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 
     /* back up the original parameter values */
     for (i=0; i<spec->nparam && !err; i++) {
-	const char *s = spec->params[i].name;
+	parm *p = &spec->params[i];
 
-	if (gretl_is_scalar(s)) {
-	    err = push_scalar_param(s, &sparms, &ns);
-	} else if (gretl_is_matrix(s)) {
-	    err = push_vector_param(s, &mparms, &nm);
+	if (p->type == GRETL_TYPE_DOUBLE) {
+	    err = save_scalar_param(p, &xsave, &nx);
 	} else {
-	    err = E_DATA;
+	    err = save_vector_param(p, &msave, &nm);
 	}
     }
 
@@ -3977,20 +3987,33 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 
  bailout:
 
-    /* restore original params */
-    j = k = 0;
+    /* restore original params from backup */
+    ix = im = 0;
     for (i=0; i<spec->nparam; i++) {
-	const char *s = spec->params[i].name;
+	parm *p = &spec->params[i];
 
-	if (gretl_is_scalar(s) && j < ns) {
-	    gretl_scalar_set_value(s, sparms[j++]);
-	} else if (gretl_is_matrix(s) && k < nm) {
-	    user_matrix_replace_matrix_by_name(s, mparms[k++]);
+	if (p->type == GRETL_TYPE_DOUBLE && ix < nx) {
+	    if (p->bundle != NULL) {
+		gretl_bundle_set_scalar(p->bundle, p->name, xsave[ix]);
+	    } else {
+		gretl_scalar_set_value(p->name, xsave[ix]);
+	    }
+	    ix++;
+	} else if (im < nm) {
+	    gretl_matrix *m0 = get_param_vector(p);
+	    gretl_matrix *m1 = msave[im];
+	    int k, len = gretl_vector_get_length(m0);
+
+	    for (k=0; k<len; k++) {
+		m0->val[k] = m1->val[k];
+	    }
+	    gretl_matrix_free(msave[im]);
+	    im++;
 	} 
     } 
 
-    free(sparms);
-    free(mparms);
+    free(xsave);
+    free(msave);
 
     clear_nlspec(spec);
 
