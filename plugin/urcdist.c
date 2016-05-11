@@ -254,11 +254,6 @@ static double fpval (double *beta, int nbeta, double *wght,
     double crits[URCLEN];
     double pval = 0.0;
 
-    /* parameter adjustments */
-    --prob;
-    --wght;
-    --cnorm;
-
     /* first compute all the estimated critical values,
        and find the one closest to the test statistic, 
        indexed by @imin.
@@ -430,15 +425,17 @@ static void urc_swap_endianness (double *beta,
 	reverse_double(beta[i]);
     }
 
-    for (i=0; i<URCLEN; i++) {
+    /* the following arrays are padded by one */
+
+    for (i=1; i<=URCLEN; i++) {
 	reverse_double(wght[i]);
     }    
 
-    for (i=0; i<URCLEN; i++) {
+    for (i=1; i<=URCLEN; i++) {
 	reverse_double(prob[i]);
     }
 
-    for (i=0; i<URCLEN; i++) {
+    for (i=1; i<=URCLEN; i++) {
 	reverse_double(cnorm[i]);
     }    
 }
@@ -467,9 +464,9 @@ static double urcval (int niv, int itv, int T, double tau,
     FILE *fp;
     char datafile[FILENAME_MAX];
     double beta[BIGLEN];
-    double wght[URCLEN];
-    double prob[URCLEN];
-    double cnorm[URCLEN];
+    double wght[URCLEN+1];
+    double prob[URCLEN+1];
+    double cnorm[URCLEN+1];
     struct urcinfo uis[] = {
 	{0,  1, 2, 20,      0}, /* dfnc: table 1 */
 	{0,  2, 2, 20,   7072}, /* dfc */
@@ -548,9 +545,12 @@ static double urcval (int niv, int itv, int T, double tau,
     fflush(fdb);
 #endif
 
+    /* these arrays are padded by one for fortran */
+    wght[0] = prob[0] = cnorm[0] = 0.0;
+
     /* read coefficients and weights */
     nr1 = fread(beta, sizeof(double), nbeta * URCLEN, fp);
-    nr2 = fread(wght, sizeof(double), URCLEN, fp);
+    nr2 = fread(wght + 1, sizeof(double), URCLEN, fp);
     if (nr1 != nbeta * URCLEN || nr2 != URCLEN) {
 	fprintf(stderr, "error reading urcdata\n");
 	*err = E_DATA;
@@ -559,8 +559,8 @@ static double urcval (int niv, int itv, int T, double tau,
     if (!*err) {
 	/* read from embedded "probs.tab" data */
 	fseek(fp, uis[32].pos, SEEK_SET);
-	nr1 = fread(prob, sizeof(double), URCLEN, fp);
-	nr2 = fread(cnorm, sizeof(double), URCLEN, fp);
+	nr1 = fread(prob + 1, sizeof(double), URCLEN, fp);
+	nr2 = fread(cnorm + 1, sizeof(double), URCLEN, fp);
 	if (nr1 != URCLEN || nr2 != URCLEN) {
 	    fprintf(stderr, "error reading urcdata\n");
 	    *err = E_DATA;
