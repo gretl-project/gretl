@@ -494,14 +494,17 @@ If the disturbances are not cross-correlated, the matrix argument must
 be either $T \times r$, if there is no disturbance in the observation
 equation, or $T \times (r+n)$ if the $\obsvar$ (\texttt{obsvar})
 matrix is specified. Row $t$ holds either $\strdist_t'$ or
-$(\strdist_t', \obsdist_t')$.  If the disturbances are
-cross-correlated (see section~\ref{sec:crossd}) then the matrix
-argument should be $T \times p$, each row holding $\alldist_t'$.
+$(\strdist_t', \obsdist_t')$. Note that if $\statevar$
+(\texttt{statevar}) is not simply an identity matrix you will have to
+scale the artificial state disturbances appropriately; the same goes
+for $\obsvar$ and the observation disturbances, if present.
 
-\textbf{FIXME}: add a note about scaling the disturbances in the non
-cross correlated case, if they are to have variances $Q$ and
-$R$ (not required in the cross case because
-$\alldist_t \sim N(0, I)$).
+If the disturbances are cross-correlated (see
+section~\ref{sec:crossd}) then the matrix argument should be
+$T \times p$, each row holding $\alldist_t'$. In this case no
+prior scaling is required since $\alldist_t \sim N(0, I)$; the
+disturbances for the respective equations, $\altstatevar_t \alldist_t$
+and $\altobsvar_t \alldist_t$, are computed internally.
 
 For the purposes of \texttt{ksimul} the time-series length, $T$, is
 defined by the number of rows of the supplied disturbance matrix. This

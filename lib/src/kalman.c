@@ -4612,6 +4612,10 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	Ret = NULL;
     }
 
+#if TEST_SIMDATA
+    gretl_matrix_free(UV);
+#endif     
+
     /* restore state */
     K->flags &= ~KALMAN_SIM;
     K->flags &= ~KALMAN_SSFSIM;
@@ -4619,6 +4623,116 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
     K->x = savex;
 
     return Ret;
+}
+
+static int matrix_is_diagonal (const gretl_matrix *m)
+{
+    double x;
+    int i, j;
+
+    for (j=0; j<m->cols; j++) {
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j);
+	    if (i != j && x != 0.0) return 0;
+	}
+    }
+
+    return 1;
+}
+
+/* Return a matrix in which the standard normal variates
+   in @U are scaled according to K->Q, and K->R if present.
+*/
+
+gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
+				     const gretl_matrix *U,
+				     int *err)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+    gretl_matrix *E = NULL;
+
+    if (K == NULL || U == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (K->p > 0) {
+	if (U->cols != K->p) {
+	    *err = E_DATA;
+	    return NULL;
+	} else {
+	    /* nothing to be done, really */
+	    E = gretl_matrix_copy(U);
+	}
+    } else {
+	int n = K->R == NULL ? 0 : K->n;
+	int t, j, rn = K->r + n;
+	int T = U->rows;
+	double vjj, utj;
+
+	if (U->cols != rn) {
+	    *err = E_DATA;
+	    return NULL;
+	}
+
+	E = gretl_matrix_alloc(U->rows, rn);
+	if (E == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+
+	if (matrix_is_diagonal(K->Q) &&
+	    (K->R == NULL || matrix_is_diagonal(K->R))) {
+	    for (t=0; t<T; t++) {
+		for (j=0; j<rn; j++) {
+		    if (j < K->r) {
+			vjj = gretl_matrix_get(K->Q, j, j);
+		    } else {
+			vjj = gretl_matrix_get(K->R, j-K->r, j-K->r);
+		    }
+		    utj = gretl_matrix_get(U, t, j);
+		    gretl_matrix_set(E, t, j, sqrt(vjj) * utj);
+		}
+	    }
+	} else {
+	    gretl_matrix *V = gretl_zero_matrix_new(rn, rn);
+
+	    if (V == NULL) {
+		*err = E_ALLOC;
+		goto bailout;
+	    }
+
+	    gretl_matrix_inscribe_matrix(V, K->Q, 0, 0,
+					 GRETL_MOD_NONE);
+	    if (n > 0) {
+		gretl_matrix_inscribe_matrix(V, K->R, K->r, K->r,
+					     GRETL_MOD_NONE);
+	    }
+
+	    *err = gretl_matrix_psd_root(V);
+
+	    if (*err) {
+		gretl_errmsg_set("Failed to compute factor of Omega");
+	    } else {
+		gretl_matrix_multiply_mod(U, GRETL_MOD_NONE,
+					  V, GRETL_MOD_TRANSPOSE,
+					  E, GRETL_MOD_NONE);
+	    }
+	    
+	    gretl_matrix_free(V);
+	}
+    }
+
+ bailout:
+	    
+    if (E == NULL && !*err) {
+	*err = E_ALLOC;
+    } else if (E != NULL && *err) {
+	gretl_matrix_free(E);
+	E = NULL;
+    }
+
+    return E;
 }
 
 /*
