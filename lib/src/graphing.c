@@ -2650,6 +2650,11 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	return err;
     }
 
+    if (gi->band) {
+	/* force single y-axis in "band" case */
+	opt |= OPT_Y;
+    }
+
     if (gi->fit == PLOT_FIT_NONE) {
 	gi->flags |= GPT_TS; /* may be renounced later */
     }

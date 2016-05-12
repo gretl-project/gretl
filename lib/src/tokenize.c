@@ -1136,7 +1136,7 @@ static int assemble_option_flag (CMD *c, cmd_token *tok,
    option).
 */
 
-static int handle_legacy_gnuplot_options (CMD *c)
+static void handle_legacy_gnuplot_options (CMD *c)
 {
     /* these used to be options in their own right */
     const char *old_opts[] = {
@@ -1158,8 +1158,10 @@ static int handle_legacy_gnuplot_options (CMD *c)
     };    
     char optflag[OPTLEN];
     cmd_token *tok;
-    int i, j, pos;
+    int i, j, n, pos, len;
     int err, done = 0;
+
+    n = G_N_ELEMENTS(old_opts);
     
     for (i=1; i<c->ntoks && !done; i++) {
 	tok = &c->toks[i];
@@ -1172,22 +1174,20 @@ static int handle_legacy_gnuplot_options (CMD *c)
 	    if (err) {
 		break;
 	    }
-	    for (j=0; j<G_N_ELEMENTS(old_opts); j++) {
-		if (!strcmp(optflag, old_opts[j])) {
-		    /* found an obsolete option */
+	    for (j=0; j<n && !done; j++) {
+		len = strlen(optflag);
+		if (len > 2 && !strncmp(optflag, old_opts[j], len)) {
+		    /* found an obsolete fit option */
 		    c->opt |= OPT_F;
 		    set_optval_string(GNUPLOT, OPT_F, repl[j]);
 		    for (j=pos; j<=i; j++) {
 			c->toks[j].flag |= TOK_DONE;
 		    }
 		    done = 1;
-		    break;
 		}
 	    }
 	}
     }
-
-    return 0;
 }
 
 static int check_command_options (CMD *c)
