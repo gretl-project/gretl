@@ -2297,7 +2297,7 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 	err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
 				    dset, opt, prn);
     } else if (cmd->ci == GNUPLOT) {
-	if (opt & OPT_D) {
+	if (opt & OPT_I) {
 	    err = gnuplot_process_file(opt, prn);
 	} else if (opt & OPT_C) {
 	    err = xy_plot_with_control(cmd->list, cmd->param, 

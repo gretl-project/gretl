@@ -62,6 +62,7 @@
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
 static double default_png_scale = 1.0;
+static int plotting_band;
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -80,6 +81,7 @@ struct gnuplot_info_ {
     const double *x;
     gretl_matrix *dvals;
     int *withlist;
+    int band;
 };
 
 enum {
@@ -408,7 +410,6 @@ static int get_fit_type (gnuplot_info *gi)
     int err = 0;
 
     if (ftype == NULL || *ftype == '\0') {
-	
 	err = E_DATA;
     } else if (!strcmp(ftype, "none")) {
 	gi->flags |= GPT_FIT_OMIT;
@@ -463,10 +464,6 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	/* --control */
 	gi->flags |= GPT_XYZ;
     } else {
-	if (opt & OPT_S) {
-	    /* --suppress-fitted */
-	    gi->flags |= GPT_FIT_OMIT;
-	}
 	if (opt & OPT_T) {
 	    /* --time-series */
 	    gi->flags |= GPT_IDX;
@@ -508,20 +505,12 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	if (opt & OPT_F) {
 	    /* the --fit=fitspec option */
 	    err = get_fit_type(gi);
-	} else {
-	    /* the legacy fit-specific options */
-	    if (opt & OPT_I) {
-		gi->fit = PLOT_FIT_INVERSE;
-	    } else if (opt & OPT_Q) {
-		gi->fit = PLOT_FIT_QUADRATIC;
-	    } else if (opt & OPT_L) {
-		gi->fit = PLOT_FIT_LOESS;
-	    } else if (opt & OPT_N) {
-		gi->fit = PLOT_FIT_OLS;
-	    } else if (opt & OPT_E) {
-		gi->fit = PLOT_FIT_LOGLIN;
-	    }
 	}
+    }
+
+    if (n_yvars >= 3 && (opt & OPT_N)) {
+	/* the --band option for the 2nd and 3rd lines */
+	gi->band = 1;
     }
 
 #if GP_DEBUG
@@ -865,7 +854,7 @@ write_gnuplot_font_string (char *fstr, PlotType ptype,
 
 void write_plot_line_styles (int ptype, FILE *fp)
 {
-    char cstr[8];
+    char cstr[12];
     int i;
 
     if (ptype == PLOT_3D) {
@@ -885,7 +874,11 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	}
     } else {
 	for (i=0; i<BOXCOLOR; i++) {
-	    print_rgb_hash(cstr, &user_color[i]);
+	    if (plotting_band && i == 2) {
+		; /* let line 2 share the color of line 1 */
+	    } else {
+		print_rgb_hash(cstr, &user_color[i]);
+	    }
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
     }	
@@ -2650,6 +2643,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->x = NULL;
     gi->list = NULL;
     gi->dvals = NULL;
+    gi->band = 0;
 
     err = get_gp_flags(gi, opt, list, dset);
     if (err) {
@@ -3244,8 +3238,6 @@ static int panel_group_invariant_plot (const int *plotlist,
     return err;
 }
 
-#define fit_opts (OPT_I | OPT_L | OPT_Q | OPT_N | OPT_E | OPT_F)
-
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -3282,12 +3274,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_error_clear();
 
-    err = incompatible_options(opt, fit_opts);
-    if (err) {
-	return err;
-    }
-
-    if ((opt & OPT_T) && (opt & fit_opts)) {
+    if ((opt & OPT_T) && (opt & OPT_F)) {
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
 	} else {
@@ -3339,9 +3326,11 @@ int gnuplot (const int *plotlist, const char *literal,
     /* convenience pointer */
     list = gi.list;
 
-    /* below: did have "height 1 width 1 box" for win32,
-       "width 1 box" otherwise */
-    strcpy(keystr, "set key left top\n");
+    if (gi.band) {
+	strcpy(keystr, "set nokey\n");
+    } else {
+	strcpy(keystr, "set key left top\n");
+    }
 
     /* set x-axis label for non-time series plots */
     if (!(gi.flags & GPT_TS)) {
@@ -3397,6 +3386,11 @@ int gnuplot (const int *plotlist, const char *literal,
 	make_time_tics(&gi, dset, many, xlabel, prn);
     }
 
+    if (gi.band) {
+	/* set file-scope global */
+	plotting_band = 1;
+    }
+
     /* open file and dump the prn into it: we delay writing
        the file header till we know a bit more about the plot
     */
@@ -3404,7 +3398,9 @@ int gnuplot (const int *plotlist, const char *literal,
     if (err) {
 	gretl_print_destroy(prn);
 	goto bailout;
-    } 
+    }
+
+    plotting_band = 0;
 
     fputs(gretl_print_get_buffer(prn), fp);
     gretl_print_destroy(prn);
@@ -7262,7 +7258,7 @@ int is_auto_fit_string (const char *s)
  * @opt: may include %OPT_U for output to specified file.
  * @prn: gretl printing struct.
  *
- * Respond to the "gnuplot" command with %OPT_D, to specify
+ * Respond to the "gnuplot" command with %OPT_I, to specify
  * that input should be taken from a user-created gnuplot
  * command file.
  *
@@ -7271,7 +7267,7 @@ int is_auto_fit_string (const char *s)
 
 int gnuplot_process_file (gretlopt opt, PRN *prn)
 {
-    const char *inname = get_optval_string(plot_ci, OPT_D);
+    const char *inname = get_optval_string(plot_ci, OPT_I);
     FILE *fp, *fq;
     int err = 0;
 

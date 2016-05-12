@@ -1092,7 +1092,8 @@ static int handle_option_value (CMD *c, int i, gretlopt opt,
 #define OPTLEN 32
 
 static int assemble_option_flag (CMD *c, cmd_token *tok,
-				 char *flag, int *pk)
+				 char *flag, int *pk,
+				 int dryrun)
 {
     int i, n = 0, added = 0;
 
@@ -1107,7 +1108,9 @@ static int assemble_option_flag (CMD *c, cmd_token *tok,
 		c->err = E_PARSE;
 		break;
 	    } else {
-		tok->flag |= TOK_DONE;
+		if (!dryrun) {
+		    tok->flag |= TOK_DONE;
+		}
 		strcat(flag, tok->s);
 		if (added) {
 		    *pk += 1;
@@ -1127,6 +1130,66 @@ static int assemble_option_flag (CMD *c, cmd_token *tok,
     return c->err;
 }
 
+/* For now, handle the old fit-type options whose strings
+   are listed below. If would be nice to get rid of this
+   altogether (in favour of the newer --fit=whatever
+   option).
+*/
+
+static int handle_legacy_gnuplot_options (CMD *c)
+{
+    /* these used to be options in their own right */
+    const char *old_opts[] = {
+	"inverse-fit",
+	"loess-fit",
+	"quadratic-fit",
+	"linear-fit",
+	"semilog-fit",
+	"suppress-fitted"
+    };
+    /* but are replaced by these flags for --fit */
+    const char *repl[] = {
+	"inverse",
+	"loess",
+	"quadratic",
+	"linear",
+	"semilog",
+	"none"
+    };    
+    char optflag[OPTLEN];
+    cmd_token *tok;
+    int i, j, pos;
+    int err, done = 0;
+    
+    for (i=1; i<c->ntoks && !done; i++) {
+	tok = &c->toks[i];
+	if (token_done(tok)) {
+	    continue;
+	}
+	if (tok->type == TOK_OPT) {
+	    pos = i;
+	    err = assemble_option_flag(c, tok, optflag, &i, 1);
+	    if (err) {
+		break;
+	    }
+	    for (j=0; j<G_N_ELEMENTS(old_opts); j++) {
+		if (!strcmp(optflag, old_opts[j])) {
+		    /* found an obsolete option */
+		    c->opt |= OPT_F;
+		    set_optval_string(GNUPLOT, OPT_F, repl[j]);
+		    for (j=pos; j<=i; j++) {
+			c->toks[j].flag |= TOK_DONE;
+		    }
+		    done = 1;
+		    break;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int check_command_options (CMD *c)
 {
     cmd_token *tok;
@@ -1143,6 +1206,8 @@ static int check_command_options (CMD *c)
 	c->ci = c->context;
     } else if (c->ci == SETOPT) {
 	c->ci = gretl_command_number(c->param);
+    } else if (c->ci == GNUPLOT) {
+	handle_legacy_gnuplot_options(c);
     }
 
     for (i=1; i<c->ntoks && !err; i++) {
@@ -1152,7 +1217,7 @@ static int check_command_options (CMD *c)
 	}
 	if (tok->type == TOK_OPT) {
 	    /* long-form option, possibly with attached value */
-	    err = assemble_option_flag(c, tok, optflag, &i);
+	    err = assemble_option_flag(c, tok, optflag, &i, 0);
 	    if (!err) {
 		opt = valid_long_opt(c->ci, optflag, &status);
 		if (opt == OPT_NONE) {
@@ -3445,7 +3510,7 @@ static void handle_option_inflections (CMD *cmd)
 	    cmd->ciflags = 0;
 	}
     } else if (cmd->ci == GNUPLOT) {
-	if (cmd->opt & OPT_D) {
+	if (cmd->opt & OPT_I) {
 	    /* we got the input=... option, so no args wanted */
 	    cmd->ciflags = 0;
 	} else if (cmd->opt & OPT_X) {
