@@ -1962,11 +1962,11 @@ static void print_model_heading (const MODEL *pmod,
 	if (pmod->ci == DPANEL) {
 	    if (pmod->opt & OPT_L) {
 		gretl_prn_newline(prn);
-		pputs(prn, "Including equations in levels");
+		pputs(prn, _("Including equations in levels"));
 	    }
 	    if (pmod->opt & OPT_X) {
 		gretl_prn_newline(prn);
-		pputs(prn, "H-matrix as per Ox/DPD");
+		pputs(prn, _("H-matrix as per Ox/DPD"));
 	    }	    
 	}
     }

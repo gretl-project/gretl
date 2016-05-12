@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-21 16:38-0400\n"
+"POT-Creation-Date: 2016-05-12 12:01-0400\n"
 "PO-Revision-Date: 2016-04-21 19:23-0400\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
@@ -197,7 +197,7 @@ msgstr "Невалидна опция"
 
 #: lib/src/adf_kpss.c:1224 lib/src/adf_kpss.c:1991 lib/src/boxplots.c:849
 #: lib/src/describe.c:1660 lib/src/describe.c:3039 lib/src/describe.c:3593
-#: lib/src/describe.c:4164 lib/src/graphing.c:7045
+#: lib/src/describe.c:4164 lib/src/graphing.c:7050
 #, c-format
 msgid "%s is a constant"
 msgstr "%s е константа"
@@ -231,7 +231,7 @@ msgid "H0: all groups have unit root"
 msgstr "H0: всички групи имат единичен корен"
 
 #: lib/src/adf_kpss.c:1779 lib/src/compare.c:2610 lib/src/compare.c:2651
-#: lib/src/estimate.c:4167 lib/src/estimate.c:4221 lib/src/estimate.c:4377
+#: lib/src/estimate.c:4170 lib/src/estimate.c:4224 lib/src/estimate.c:4380
 #: lib/src/genfuncs.c:2161 lib/src/gretl_func.c:7526 lib/src/pvalues.c:1671
 msgid "Couldn't load plugin function\n"
 msgstr "Не може да се зареди добавката\n"
@@ -285,9 +285,9 @@ msgstr "Параметър за определяне на отсечен лаг�
 
 #: lib/src/adf_kpss.c:2148 lib/src/compare.c:386 lib/src/compare.c:972
 #: lib/src/compare.c:1867 lib/src/compare.c:2086 lib/src/compare.c:2315
-#: lib/src/compare.c:3528 lib/src/describe.c:5951 lib/src/estimate.c:2944
-#: lib/src/estimate.c:2957 lib/src/estimate.c:2965 lib/src/estimate.c:3778
-#: lib/src/estimate.c:3781 lib/src/gretl_intl.c:117 lib/src/gretl_model.c:4038
+#: lib/src/compare.c:3528 lib/src/describe.c:5951 lib/src/estimate.c:2947
+#: lib/src/estimate.c:2960 lib/src/estimate.c:2968 lib/src/estimate.c:3781
+#: lib/src/estimate.c:3784 lib/src/gretl_intl.c:117 lib/src/gretl_model.c:4038
 #: lib/src/gretl_panel.c:4266 lib/src/gretl_restrict.c:2250
 #: lib/src/gretl_restrict.c:2259 lib/src/modelprint.c:2446
 #: lib/src/modelprint.c:2450 lib/src/modelprint.c:2455
@@ -429,7 +429,7 @@ msgid "Numerical summary"
 msgstr "Обобщение"
 
 #: lib/src/boxplots.c:303 lib/src/boxplots.c:314 lib/src/boxplots.c:317
-#: gui2/gpt_dialog.c:2377
+#: gui2/gpt_dialog.c:2398
 msgid "median"
 msgstr "медиана"
 
@@ -440,7 +440,7 @@ msgstr "(90% интервал)"
 
 #: lib/src/boxplots.c:313 lib/src/gmm.c:1535 lib/src/monte_carlo.c:2473
 #: lib/src/monte_carlo.c:2474 gui2/calculator.c:2001 gui2/calculator.c:2026
-#: gui2/calculator.c:2629 gui2/gpt_dialog.c:2379 plugin/anova.c:195
+#: gui2/calculator.c:2629 gui2/gpt_dialog.c:2400 plugin/anova.c:195
 #: plugin/anova.c:204 plugin/range-mean.c:114 plugin/range-mean.c:224
 msgid "mean"
 msgstr "средна"
@@ -458,7 +458,7 @@ msgstr "Трябва да изберете две променливи, втор
 msgid "Distribution of %s by %s"
 msgstr "Разпределение на %s според %s"
 
-#: lib/src/boxplots.c:882 lib/src/graphing.c:1805
+#: lib/src/boxplots.c:882 lib/src/graphing.c:1798
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr "Остатъци (=наблюдавани - изгладени %s)"
@@ -519,8 +519,8 @@ msgstr "Критерий на Валд"
 #: lib/src/compare.c:363 lib/src/compare.c:370 lib/src/compare.c:383
 #: lib/src/compare.c:392 lib/src/compare.c:974 lib/src/compare.c:2151
 #: lib/src/compare.c:2322 lib/src/compare.c:2328 lib/src/compare.c:2946
-#: lib/src/describe.c:1591 lib/src/estimate.c:2969 lib/src/estimate.c:3784
-#: lib/src/graphing.c:4309 lib/src/gretl_model.c:3867
+#: lib/src/describe.c:1591 lib/src/estimate.c:2972 lib/src/estimate.c:3787
+#: lib/src/graphing.c:4314 lib/src/gretl_model.c:3867
 #: lib/src/gretl_model.c:3881 lib/src/gretl_model.c:3884
 #: lib/src/gretl_model.c:3909 lib/src/gretl_panel.c:4015
 #: lib/src/gretl_panel.c:4273 lib/src/modelprint.c:197 lib/src/modelprint.c:375
@@ -577,8 +577,8 @@ msgstr "изпусни"
 msgid "add"
 msgstr "добави"
 
-#: lib/src/compare.c:914 lib/src/compare.c:2259 lib/src/graphing.c:3434
-#: lib/src/graphing.c:3446 lib/src/graphing.c:3534 lib/src/graphing.c:5212
+#: lib/src/compare.c:914 lib/src/compare.c:2259 lib/src/graphing.c:3439
+#: lib/src/graphing.c:3451 lib/src/graphing.c:3539 lib/src/graphing.c:5217
 #: lib/src/gretl_panel.c:4118 lib/src/printout.c:1292 gui2/guiprint.c:1396
 #: gui2/guiprint.c:1456 gui2/library.c:6566 plugin/leverage.c:306
 msgid "residual"
@@ -596,8 +596,8 @@ msgstr "Нелинеен критерий (логаритми)"
 #: lib/src/compare.c:2150 lib/src/compare.c:2316 lib/src/compare.c:2321
 #: lib/src/compare.c:2327 lib/src/compare.c:2947 lib/src/compare.c:2949
 #: lib/src/compare.c:2953 lib/src/describe.c:4025 lib/src/describe.c:4051
-#: lib/src/describe.c:6907 lib/src/describe.c:6910 lib/src/estimate.c:2946
-#: lib/src/estimate.c:2969 lib/src/estimate.c:3784 lib/src/gretl_model.c:4054
+#: lib/src/describe.c:6907 lib/src/describe.c:6910 lib/src/estimate.c:2949
+#: lib/src/estimate.c:2972 lib/src/estimate.c:3787 lib/src/gretl_model.c:4054
 #: lib/src/gretl_panel.c:1625 lib/src/gretl_panel.c:4016
 #: lib/src/gretl_panel.c:4267 lib/src/gretl_panel.c:4272
 #: lib/src/modelprint.c:2448 lib/src/modelprint.c:2453
@@ -624,7 +624,7 @@ msgstr ""
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr "Изпускане  %-16s (p-value %.3f)\n"
 
-#: lib/src/compare.c:1777 lib/src/estimate.c:2961 lib/src/gretl_model.c:3666
+#: lib/src/compare.c:1777 lib/src/estimate.c:2964 lib/src/gretl_model.c:3666
 #: lib/src/gretl_model.c:3672 lib/src/modelprint.c:826 gui2/library.c:3143
 msgid "squares only"
 msgstr "само квадрати"
@@ -870,8 +870,8 @@ msgstr ""
 msgid "Invalid column specification"
 msgstr "Неправилна спецификация на колоната са данни"
 
-#: lib/src/csvdata.c:462 lib/src/dbread.c:2453 lib/src/kalman.c:2281
-#: lib/src/kalman.c:2824 lib/src/libset.c:1150 lib/src/system.c:857
+#: lib/src/csvdata.c:462 lib/src/dbread.c:2453 lib/src/kalman.c:2325
+#: lib/src/kalman.c:2871 lib/src/libset.c:1152 lib/src/system.c:857
 #: lib/src/usermat.c:1015 lib/src/usermat.c:1075 lib/src/usermat.c:1084
 #: lib/src/usermat.c:1136 lib/src/usermat.c:1155 lib/src/usermat.c:1427
 #: lib/src/usermat.c:1479
@@ -1211,7 +1211,7 @@ msgstr "Дължината на динамичния ред не отговар�
 msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr ""
 
-#: lib/src/csvdata.c:6189 lib/src/dataio.c:1968 gui2/gui_utils.c:1255
+#: lib/src/csvdata.c:6189 lib/src/dataio.c:1968 gui2/gui_utils.c:1256
 #: gui2/join-gui.c:917
 msgid "Data appended OK\n"
 msgstr "Присъединяването на данните е успешно\n"
@@ -1285,11 +1285,11 @@ msgstr "записано в %s\n"
 msgid "wrote %s\n"
 msgstr "записано в %s\n"
 
-#: lib/src/dataio.c:1355 lib/src/dataio.c:2193 lib/src/gretl_xml.c:3620
+#: lib/src/dataio.c:1355 lib/src/dataio.c:2193 lib/src/gretl_xml.c:3597
 msgid "index variable"
 msgstr "ивексна променлива"
 
-#: lib/src/dataio.c:1363 lib/src/gretl_xml.c:3595
+#: lib/src/dataio.c:1363 lib/src/gretl_xml.c:3572
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1344,7 +1344,7 @@ msgstr "броя на наблюденията: %d\n"
 msgid "   number of data blocks: %d\n"
 msgstr "брой на блоковете с данни: %d\n"
 
-#: lib/src/dataio.c:2709 lib/src/dataio.c:2773 gui2/gui_utils.c:1117
+#: lib/src/dataio.c:2709 lib/src/dataio.c:2773 gui2/gui_utils.c:1118
 msgid "Unrecognized data type"
 msgstr "Непознат тип на данните"
 
@@ -1378,7 +1378,7 @@ msgid "auto-generated constant"
 msgstr "генерирана автоматично константа"
 
 #: lib/src/dataset.c:1325 gui2/fncall.c:1572 gui2/fncall.c:1583
-#: gui2/gui_utils.c:5597 gui2/toolbar.c:1281 gui2/toolbar.c:1290
+#: gui2/gui_utils.c:5657 gui2/toolbar.c:1281 gui2/toolbar.c:1290
 msgid "Please open a data file first"
 msgstr "Моля, първо отворете файл с данни"
 
@@ -1387,7 +1387,7 @@ msgstr "Моля, първо отворете файл с данни"
 msgid "The variable %s is read-only"
 msgstr "Променливата %s не може да бъде редактирана"
 
-#: lib/src/dataset.c:1755 lib/src/dataset.c:1765 lib/src/uservar.c:433
+#: lib/src/dataset.c:1755 lib/src/dataset.c:1765 lib/src/uservar.c:435
 #, c-format
 msgid "Deleted %s"
 msgstr "Изтрито %s"
@@ -1405,11 +1405,11 @@ msgstr "Не е изтрита нито една променлива"
 msgid "some data were in use"
 msgstr "Използвана е част от данните"
 
-#: lib/src/dataset.c:1922 gui2/gui_utils.c:5052
+#: lib/src/dataset.c:1922 gui2/gui_utils.c:5112
 msgid "dataset is subsampled"
 msgstr "извадката е ограничена"
 
-#: lib/src/dataset.c:2054 lib/src/dataset.c:2066 lib/src/graphing.c:6803
+#: lib/src/dataset.c:2054 lib/src/dataset.c:2066 lib/src/graphing.c:6808
 #: lib/src/gretl_utils.c:1185 lib/src/gretl_utils.c:1269
 msgid "periods"
 msgstr "Периоди"
@@ -1536,11 +1536,11 @@ msgstr "Не са намерени подходящи редове"
 #: lib/src/dbread.c:3062 lib/src/gretl_errors.c:50
 #: lib/src/gretl_restrict.c:1817 lib/src/gretl_restrict.c:1843
 #: lib/src/gretl_restrict.c:1866 lib/src/monte_carlo.c:1411
-#: gui2/gui_utils.c:763
+#: gui2/gui_utils.c:764
 msgid "Out of memory!"
 msgstr "Недостатъчна памет!"
 
-#: lib/src/dbread.c:1760 lib/src/geneval.c:7487
+#: lib/src/dbread.c:1760 lib/src/geneval.c:7499
 #: lib/src/gretl_string_table.c:906 lib/src/interact.c:1136
 #: lib/src/interact.c:2159 cli/gretlcli.c:875 cli/gretlcli-mpi.c:566
 #, fuzzy
@@ -1551,8 +1551,8 @@ msgstr "честотата (%d)  не се поддържа"
 msgid "Invalid null sample"
 msgstr "Невалидна празна извадка"
 
-#: lib/src/dbread.c:2043 lib/src/graphing.c:430 lib/src/gretl_restrict.c:2477
-#: lib/src/interact.c:1227 lib/src/options.c:1288 lib/src/options.c:1299
+#: lib/src/dbread.c:2043 lib/src/graphing.c:431 lib/src/gretl_restrict.c:2477
+#: lib/src/interact.c:1227 lib/src/options.c:1281 lib/src/options.c:1292
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Използването на аргумента '%s' в дадената команда е недопустимо"
@@ -1605,8 +1605,8 @@ msgstr ""
 msgid "Compacted dataset would be empty"
 msgstr "Окрупнените данни ще бъдат празни"
 
-#: lib/src/dbwrite.c:475 lib/src/dbwrite.c:484 lib/src/gretl_xml.c:1685
-#: lib/src/gretl_xml.c:2135
+#: lib/src/dbwrite.c:475 lib/src/dbwrite.c:484 lib/src/gretl_xml.c:1662
+#: lib/src/gretl_xml.c:2112
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Невъзможно отварянето на %s за запис"
@@ -1649,7 +1649,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "Матрицата %s не представлява таблица на контингенцията"
 
 #: lib/src/describe.c:2840 lib/src/describe.c:3025 lib/src/describe.c:3573
-#: lib/src/geneval.c:6299 lib/src/transforms.c:759 lib/src/transforms.c:1210
+#: lib/src/geneval.c:6311 lib/src/transforms.c:760 lib/src/transforms.c:1211
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -1660,7 +1660,7 @@ msgid "Correlogram"
 msgstr "Корелограма"
 
 #: lib/src/describe.c:2926 lib/src/describe.c:3338 lib/src/describe.c:3383
-#: lib/src/graphing.c:6690
+#: lib/src/graphing.c:6695
 msgid "lag"
 msgstr "лаг"
 
@@ -2104,7 +2104,7 @@ msgstr "Критерий на Лилифорс"
 msgid "Test for normality of %s:"
 msgstr "Критерий за проверка на нормално разпределение на %s:"
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:7943 lib/src/gretl_list.c:1589
+#: lib/src/discrete.c:1191 lib/src/geneval.c:7955 lib/src/gretl_list.c:1589
 #: lib/src/interact.c:1804
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2174,21 +2174,21 @@ msgstr ""
 msgid "Weight variable contains negative values"
 msgstr "Тегловата променлива съдържа отрицателни значения"
 
-#: lib/src/estimate.c:1218 plugin/arma.c:1713
+#: lib/src/estimate.c:1218 plugin/arma.c:1671
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "Установени са липсващи значения за променливата  %d,(набл. %d)"
 
-#: lib/src/estimate.c:1823
+#: lib/src/estimate.c:1826
 #, c-format
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Сумата от квадратите на грешката  (%g) е по-малка от нула"
 
-#: lib/src/estimate.c:2122 lib/src/estimate.c:2223
+#: lib/src/estimate.c:2125 lib/src/estimate.c:2226
 msgid "ESS"
 msgstr "Сума от квадратите на грешката (ESS)"
 
-#: lib/src/estimate.c:2319
+#: lib/src/estimate.c:2322
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -2201,7 +2201,7 @@ msgstr ""
 "ESS е минимална за rho = %g\n"
 "\n"
 
-#: lib/src/estimate.c:2337
+#: lib/src/estimate.c:2340
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
@@ -2211,7 +2211,7 @@ msgstr ""
 "Точна оченка на rho с помощта на процедурата на Кокран-Оркат...\n"
 "\n"
 
-#: lib/src/estimate.c:2339
+#: lib/src/estimate.c:2342
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
@@ -2221,68 +2221,68 @@ msgstr ""
 "Итеративна оценка на rho...\n"
 "\n"
 
-#: lib/src/estimate.c:2342
+#: lib/src/estimate.c:2345
 msgid "                 ITER       RHO        ESS"
 msgstr "                 Итер      RHO        ESS"
 
-#: lib/src/estimate.c:2353
+#: lib/src/estimate.c:2356
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
 msgstr ""
 
-#: lib/src/estimate.c:2465
+#: lib/src/estimate.c:2468
 #, c-format
 msgid "%s: rho = %g, error is unbounded"
 msgstr ""
 
-#: lib/src/estimate.c:2943 lib/src/gretl_model.c:3618 lib/src/modelprint.c:831
+#: lib/src/estimate.c:2946 lib/src/gretl_model.c:3618 lib/src/modelprint.c:831
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Критерий на Песаран-Тейлър за хетероскедастичност"
 
-#: lib/src/estimate.c:2953 lib/src/gretl_model.c:3597 lib/src/modelprint.c:829
+#: lib/src/estimate.c:2956 lib/src/gretl_model.c:3597 lib/src/modelprint.c:829
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Критерий на Брюш-Паган (Breusch-Pagan) за хетероскедастичност"
 
-#: lib/src/estimate.c:2955
+#: lib/src/estimate.c:2958
 msgid "with Koenker robust variance estimator"
 msgstr "устойчива оценка на дисперсията по Коенкер"
 
-#: lib/src/estimate.c:2959 lib/src/gretl_model.c:3594 lib/src/modelprint.c:824
+#: lib/src/estimate.c:2962 lib/src/gretl_model.c:3594 lib/src/modelprint.c:824
 msgid "White's test for heteroskedasticity"
 msgstr "Критерий на Уайт за хетероскедастичност"
 
-#: lib/src/estimate.c:3128
+#: lib/src/estimate.c:3131
 msgid "HET_1"
 msgstr "Хет_1"
 
-#: lib/src/estimate.c:3400
+#: lib/src/estimate.c:3403
 msgid "White's"
 msgstr "на Уайт"
 
-#: lib/src/estimate.c:3499
+#: lib/src/estimate.c:3502
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Обобщена оценка на Кокран-Оркат (Cochrane-Orcutt)"
 
-#: lib/src/estimate.c:3502
+#: lib/src/estimate.c:3505
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "Итер          ESS           % Промяна"
 
-#: lib/src/estimate.c:3780 lib/src/vartest.c:127
+#: lib/src/estimate.c:3783 lib/src/vartest.c:127
 msgid "Test for ARCH of order"
 msgstr "Критерий за ARCH процес от порядък"
 
-#: lib/src/estimate.c:3803 lib/src/modelprint.c:1853
+#: lib/src/estimate.c:3806 lib/src/modelprint.c:1853
 #, c-format
 msgid "Test for ARCH of order %d"
 msgstr "Критерий за ARCH процес от порядък %d"
 
-#: lib/src/estimate.c:3883 lib/src/estimate.c:4027
+#: lib/src/estimate.c:3886 lib/src/estimate.c:4030
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "Недопустим лагов порядък за ARCH (%d)"
 
-#: lib/src/estimate.c:4354 lib/src/genfuncs.c:1029 plugin/tramo-x12a.c:1432
+#: lib/src/estimate.c:4357 lib/src/genfuncs.c:1029 plugin/tramo-x12a.c:1432
 #, c-format
 msgid ""
 "X-12-ARIMA can't handle more than %d observations.\n"
@@ -2337,12 +2337,12 @@ msgstr "невалидна област '%s'"
 msgid "Matrix is not symmetric"
 msgstr "Матрицата не положително определена"
 
-#: lib/src/geneval.c:4723 lib/src/geneval.c:4797
+#: lib/src/geneval.c:4735 lib/src/geneval.c:4809
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Поредният номер на променливата %d излиза извън границите"
 
-#: lib/src/geneval.c:4791 lib/src/geneval.c:14483 lib/src/gretl_array.c:341
+#: lib/src/geneval.c:4803 lib/src/geneval.c:14620 lib/src/gretl_array.c:341
 #: lib/src/gretl_array.c:386 lib/src/gretl_array.c:431
 #: lib/src/gretl_array.c:475 lib/src/usermat.c:122 lib/src/usermat.c:208
 #: lib/src/usermat.c:541
@@ -2350,16 +2350,16 @@ msgstr "Поредният номер на променливата %d изли�
 msgid "Index value %d is out of bounds"
 msgstr "Значението на индекса %d излиза извън допустимите граници"
 
-#: lib/src/geneval.c:6760
+#: lib/src/geneval.c:6772
 msgid "Matrix specification is not coherent"
 msgstr "Неправилно описание на матрицата"
 
-#: lib/src/geneval.c:6959
+#: lib/src/geneval.c:6971
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "Матрицата %s не представлява таблица на контингенцията"
 
-#: lib/src/geneval.c:6970 lib/src/geneval.c:8770
+#: lib/src/geneval.c:6982 lib/src/geneval.c:8782
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2368,117 +2368,117 @@ msgstr ""
 "Броят на аргументите (%d) не съответства на броя на\n"
 "параметрите във функцията %s (%d)"
 
-#: lib/src/geneval.c:6985
+#: lib/src/geneval.c:6997
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10181
+#: lib/src/geneval.c:10297
 #, fuzzy
 msgid "array: no type was specified"
 msgstr "%s: системата не е дефинирана"
 
-#: lib/src/geneval.c:10876
+#: lib/src/geneval.c:10992
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': неправилен аргумент за %s()\n"
 
-#: lib/src/geneval.c:10927 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:11043 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: няма такава единица\n"
 
-#: lib/src/geneval.c:11283
+#: lib/src/geneval.c:11399
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: недостатъчни аргументи"
 
-#: lib/src/geneval.c:11285
+#: lib/src/geneval.c:11401
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: недправилен тип на аргумента %s"
 
-#: lib/src/geneval.c:11288
+#: lib/src/geneval.c:11404
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: аргумент %d: неправилен  тип  %s"
 
-#: lib/src/geneval.c:11298
+#: lib/src/geneval.c:11414
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: операндът трябва да е %s"
 
-#: lib/src/geneval.c:11301
+#: lib/src/geneval.c:11417
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: операндът %d трябва да е %s"
 
-#: lib/src/geneval.c:11306
+#: lib/src/geneval.c:11422
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: аргументът трябва да е %s"
 
-#: lib/src/geneval.c:11309
+#: lib/src/geneval.c:11425
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: аргументът %d трябва да е %s"
 
-#: lib/src/geneval.c:11315
+#: lib/src/geneval.c:11431
 #, c-format
 msgid ", is %s"
 msgstr ", е  %s"
 
-#: lib/src/geneval.c:13193 lib/src/genlex.c:835
+#: lib/src/geneval.c:13330 lib/src/genlex.c:836
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Символът  '%c'  не отговаря на контекста\n"
 
-#: lib/src/geneval.c:13302 lib/src/genlex.c:878 lib/src/genlex.c:948
-#: lib/src/gensyntax.c:263 lib/src/tokenize.c:3157 lib/src/tokenize.c:3175
+#: lib/src/geneval.c:13439 lib/src/genlex.c:879 lib/src/genlex.c:949
+#: lib/src/gensyntax.c:263 lib/src/tokenize.c:3222 lib/src/tokenize.c:3240
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Несъвпадение  '%c'\n"
 
-#: lib/src/geneval.c:13363
+#: lib/src/geneval.c:13500
 #, fuzzy, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "Променливата %s е от вид %s"
 
-#: lib/src/geneval.c:13564
+#: lib/src/geneval.c:13701
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': името е твърде дълго (максимум %d  символа) \n"
 
-#: lib/src/geneval.c:13686
+#: lib/src/geneval.c:13823
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : не може да се използва при матрици"
 
-#: lib/src/geneval.c:13693
+#: lib/src/geneval.c:13830
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : не е приложим за списъци"
 
-#: lib/src/geneval.c:13700
+#: lib/src/geneval.c:13837
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : не е приложимо за редове"
 
-#: lib/src/geneval.c:13707
+#: lib/src/geneval.c:13844
 #, fuzzy, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : не може да се използва при матрици"
 
-#: lib/src/geneval.c:13714 lib/src/geneval.c:13728
+#: lib/src/geneval.c:13851 lib/src/geneval.c:13865
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : не е приложимо за този тип"
 
-#: lib/src/geneval.c:13721
+#: lib/src/geneval.c:13858
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : приложимо само за матрици"
 
-#: lib/src/geneval.c:15375
+#: lib/src/geneval.c:15512
 msgid "Bare declarations are not allowed here"
 msgstr "Операцията не е допустима"
 
@@ -2588,8 +2588,8 @@ msgid "model-related"
 msgstr "свързан с модела"
 
 #: lib/src/genfuncs.c:5001 lib/src/gretl_func.c:4430 lib/src/plotspec.c:311
-#: lib/src/plotspec.c:325 lib/src/uservar.c:1493 gui2/fnsave.c:2265
-#: gui2/fnsave.c:2717 gui2/gpt_dialog.c:134 gui2/gui_utils.c:3148
+#: lib/src/plotspec.c:325 lib/src/uservar.c:1495 gui2/fnsave.c:2265
+#: gui2/fnsave.c:2717 gui2/gpt_dialog.c:134 gui2/gui_utils.c:3149
 msgid "none"
 msgstr "няма"
 
@@ -2597,44 +2597,44 @@ msgstr "няма"
 msgid "other"
 msgstr "друг"
 
-#: lib/src/genlex.c:812
+#: lib/src/genlex.c:813
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: няма такъв обект"
 
-#: lib/src/genlex.c:814
+#: lib/src/genlex.c:815
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "Символът '%s' не е определен"
 
-#: lib/src/genlex.c:824 lib/src/genlex.c:826
+#: lib/src/genlex.c:825 lib/src/genlex.c:827
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': не са посочени аргументи"
 
-#: lib/src/genlex.c:837
+#: lib/src/genlex.c:838
 msgid "(for logical AND, use '&&')\n"
 msgstr "(за логическо И използвайте '&&')\n"
 
-#: lib/src/genlex.c:839
+#: lib/src/genlex.c:840
 msgid "(for logical OR, use '||')\n"
 msgstr "(за логическо ИЛИ използвайте '||')\n"
 
-#: lib/src/genlex.c:847
+#: lib/src/genlex.c:848
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Символът  '%s' не съответства на контекста \n"
 
-#: lib/src/genlex.c:945
+#: lib/src/genlex.c:946
 msgid "Empty observation []\n"
 msgstr "Празно наблюдение[]\n"
 
-#: lib/src/genlex.c:1729
+#: lib/src/genlex.c:1730
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Неправилен символ '%c'\n"
 
-#: lib/src/genlex.c:1731
+#: lib/src/genlex.c:1732
 #, fuzzy, c-format
 msgid "Unexpected byte 0x%x\n"
 msgstr "очаквани %s, но намерени %s"
@@ -2766,272 +2766,272 @@ msgstr "Условия за ортогоналност (ОС)"
 msgid "std. dev"
 msgstr "ст. откл."
 
-#: lib/src/graphing.c:590 gui2/library.c:7313
+#: lib/src/graphing.c:579 gui2/library.c:7313
 msgid "You must supply three variables, the last of which is discrete"
 msgstr "Трябва да представите три променливи, последната от които е дискретна"
 
-#: lib/src/graphing.c:1789 gui2/gpt_dialog.c:593
+#: lib/src/graphing.c:1782 gui2/gpt_dialog.c:604
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s срещу %s (с МНМК)"
 
-#: lib/src/graphing.c:1792 gui2/gpt_dialog.c:602
+#: lib/src/graphing.c:1785 gui2/gpt_dialog.c:613
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%s срещу %s (с обратна зависимост)"
 
-#: lib/src/graphing.c:1795 gui2/gpt_dialog.c:596
+#: lib/src/graphing.c:1788 gui2/gpt_dialog.c:607
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s срещу %s (по уравнение на парабола)"
 
-#: lib/src/graphing.c:1798 gui2/gpt_dialog.c:599
+#: lib/src/graphing.c:1791 gui2/gpt_dialog.c:610
 #, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s срещу %s (с полином от трета степен)"
 
-#: lib/src/graphing.c:1810 lib/src/graphing.c:1814
+#: lib/src/graphing.c:1803 lib/src/graphing.c:1807
 #, c-format
 msgid "Actual and fitted %s"
 msgstr "Действителни и изгладени %s"
 
-#: lib/src/graphing.c:1816
+#: lib/src/graphing.c:1809
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr "Действителни и изгладени %s от %s"
 
-#: lib/src/graphing.c:2016 gui2/gpt_dialog.c:605
+#: lib/src/graphing.c:2009 gui2/gpt_dialog.c:616
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s от %s (сегментирана регресия)"
 
-#: lib/src/graphing.c:2032 lib/src/plotspec.c:1511
+#: lib/src/graphing.c:2025 lib/src/plotspec.c:1515
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr "сегментипана регресия,  d = %d, q = %g"
 
-#: lib/src/graphing.c:3158
+#: lib/src/graphing.c:3157
 msgid "time series by group"
 msgstr "динамични редове по групи"
 
-#: lib/src/graphing.c:3523 lib/src/plotspec.c:694 lib/src/plotspec.c:1339
-#: gui2/gpt_dialog.c:991 gui2/gpt_dialog.c:1408 gui2/gpt_dialog.c:2875
+#: lib/src/graphing.c:3528 lib/src/plotspec.c:694 lib/src/plotspec.c:1343
+#: gui2/gpt_dialog.c:1007 gui2/gpt_dialog.c:1429 gui2/gpt_dialog.c:2900
 msgid "right"
 msgstr "вдясно"
 
-#: lib/src/graphing.c:3523 lib/src/plotspec.c:690 lib/src/plotspec.c:696
-#: lib/src/plotspec.c:1337 gui2/gpt_dialog.c:1403 gui2/gpt_dialog.c:2874
+#: lib/src/graphing.c:3528 lib/src/plotspec.c:690 lib/src/plotspec.c:696
+#: lib/src/plotspec.c:1341 gui2/gpt_dialog.c:1424 gui2/gpt_dialog.c:2899
 msgid "left"
 msgstr "вляво"
 
-#: lib/src/graphing.c:3557 lib/src/graphing.c:3567
+#: lib/src/graphing.c:3562 lib/src/graphing.c:3572
 msgid "actual"
 msgstr "действителни"
 
-#: lib/src/graphing.c:3558 lib/src/graphing.c:3568 lib/src/printout.c:1288
+#: lib/src/graphing.c:3563 lib/src/graphing.c:3573 lib/src/printout.c:1288
 #: gui2/guiprint.c:818 gui2/guiprint.c:1396 gui2/guiprint.c:1456
 #: gui2/library.c:4459
 msgid "fitted"
 msgstr "изгладени"
 
-#: lib/src/graphing.c:3660
+#: lib/src/graphing.c:3665
 msgid "actual = predicted"
 msgstr "действителни = прогнозирани"
 
-#: lib/src/graphing.c:4411
+#: lib/src/graphing.c:4416
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' е константа"
 
-#: lib/src/graphing.c:4468
+#: lib/src/graphing.c:4473
 msgid "Test statistic for normality"
 msgstr "Критерий за нормално разпределение"
 
-#: lib/src/graphing.c:4494
+#: lib/src/graphing.c:4499
 msgid "Test statistic for gamma"
 msgstr "Критерий за гама разпределение"
 
-#: lib/src/graphing.c:4540 plugin/addons-i18n.c:10
+#: lib/src/graphing.c:4545 plugin/addons-i18n.c:10
 msgid "Density"
 msgstr "Плътност"
 
-#: lib/src/graphing.c:4542
+#: lib/src/graphing.c:4547
 msgid "Relative frequency"
 msgstr "Относителна честота"
 
-#: lib/src/graphing.c:4796 lib/src/graphing.c:5015
+#: lib/src/graphing.c:4801 lib/src/graphing.c:5020
 #, c-format
 msgid "%g percent interval"
 msgstr "%g - процентен доверителен интервал"
 
-#: lib/src/graphing.c:4809 lib/src/graphing.c:4816 lib/src/printout.c:1288
+#: lib/src/graphing.c:4814 lib/src/graphing.c:4821 lib/src/printout.c:1288
 msgid "forecast"
 msgstr "Прогноза"
 
-#: lib/src/graphing.c:5013
+#: lib/src/graphing.c:5018
 #, c-format
 msgid "%g%% interval for mean"
 msgstr "%g%% -ен интервал за средната"
 
-#: lib/src/graphing.c:5117
+#: lib/src/graphing.c:5122
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Коефициент за %s"
 
-#: lib/src/graphing.c:5141
+#: lib/src/graphing.c:5146
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "Квантилна оценка с %g%% вероятност"
 
-#: lib/src/graphing.c:5149
+#: lib/src/graphing.c:5154
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "МНМК оценка с %g%% вероятност"
 
-#: lib/src/graphing.c:5212
+#: lib/src/graphing.c:5217
 msgid "+- sqrt(h(t))"
 msgstr "+- корен кв. (h(t))"
 
-#: lib/src/graphing.c:5368
+#: lib/src/graphing.c:5373
 #, c-format
 msgid "mean %s"
 msgstr "Средна %s"
 
-#: lib/src/graphing.c:5447
+#: lib/src/graphing.c:5452
 #, fuzzy
 msgid "Group means"
 msgstr "Групи"
 
-#: lib/src/graphing.c:5792
+#: lib/src/graphing.c:5797
 msgid "time"
 msgstr "време"
 
-#: lib/src/graphing.c:5911
+#: lib/src/graphing.c:5916
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr "Реакция на %s от шокова промяна в %s с бутстрап доверителен интервал"
 
-#: lib/src/graphing.c:5916
+#: lib/src/graphing.c:5921
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "Реакция на %s от шокова промяна в %s "
 
-#: lib/src/graphing.c:5931
+#: lib/src/graphing.c:5936
 #, c-format
 msgid "%g percent confidence band"
 msgstr "%g-процентев доверителен интервал"
 
-#: lib/src/graphing.c:5936 lib/src/graphing.c:5939
+#: lib/src/graphing.c:5941 lib/src/graphing.c:5944
 msgid "point estimate"
 msgstr "точкова оценка"
 
-#: lib/src/graphing.c:5940
+#: lib/src/graphing.c:5945
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "%g и %g квантили"
 
-#: lib/src/graphing.c:6042
+#: lib/src/graphing.c:6047
 #, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "Разлагане на дисперсията на прогнозата за %s"
 
-#: lib/src/graphing.c:6271
+#: lib/src/graphing.c:6276
 msgid "VAR residuals"
 msgstr "Остатъци при VAR"
 
-#: lib/src/graphing.c:6273 gui2/gui_utils.c:3414
+#: lib/src/graphing.c:6278 gui2/gui_utils.c:3415
 msgid "System residuals"
 msgstr "Остатъци от системата"
 
-#: lib/src/graphing.c:6349
+#: lib/src/graphing.c:6354
 msgid "EC terms"
 msgstr "Корекция на грешката (ЕС terms)"
 
-#: lib/src/graphing.c:6351 gui2/gui_utils.c:4553
+#: lib/src/graphing.c:6356 gui2/gui_utils.c:4554
 msgid "EC term"
 msgstr "Корекция на грешката (ЕС term)"
 
-#: lib/src/graphing.c:6502
+#: lib/src/graphing.c:6507
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr ""
 "Обратни корени от векторната авторегресия (VAR) по отношение на единичната "
 "окръжност"
 
-#: lib/src/graphing.c:6586
+#: lib/src/graphing.c:6591
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% доверителна елипса и %g%% доверителни интервали"
 
-#: lib/src/graphing.c:6673
+#: lib/src/graphing.c:6678
 #, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(90% интервал)"
 
-#: lib/src/graphing.c:6699
+#: lib/src/graphing.c:6704
 msgid "Residual ACF"
 msgstr "Остатъци ACF"
 
-#: lib/src/graphing.c:6701
+#: lib/src/graphing.c:6706
 msgid "ACF for"
 msgstr "ACF за"
 
-#: lib/src/graphing.c:6735
+#: lib/src/graphing.c:6740
 msgid "Residual PACF"
 msgstr "Остатъци PACF"
 
-#: lib/src/graphing.c:6737
+#: lib/src/graphing.c:6742
 msgid "PACF for"
 msgstr "PACF за"
 
-#: lib/src/graphing.c:6814
+#: lib/src/graphing.c:6819
 msgid "radians"
 msgstr "радиани"
 
-#: lib/src/graphing.c:6816
+#: lib/src/graphing.c:6821
 msgid "degrees"
 msgstr "градуси"
 
-#: lib/src/graphing.c:6818
+#: lib/src/graphing.c:6823
 msgid "scaled frequency"
 msgstr "мащабирана честота"
 
-#: lib/src/graphing.c:6828
+#: lib/src/graphing.c:6833
 msgid "Residual spectrum"
 msgstr "Спектър на остатъците"
 
-#: lib/src/graphing.c:6830
+#: lib/src/graphing.c:6835
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Спектър за %s"
 
-#: lib/src/graphing.c:6836
+#: lib/src/graphing.c:6841
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Прозорец на Бартлет, ширина %d"
 
-#: lib/src/graphing.c:6842 gui2/dialogs.c:4839
+#: lib/src/graphing.c:6847 gui2/dialogs.c:4839
 msgid "log scale"
 msgstr "логаритмична скала "
 
-#: lib/src/graphing.c:6988 gui2/library.c:863 gui2/library.c:2863
+#: lib/src/graphing.c:6993 gui2/library.c:863 gui2/library.c:2863
 msgid "Q-Q plot"
 msgstr "Q-Q графика"
 
-#: lib/src/graphing.c:7076
+#: lib/src/graphing.c:7081
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Q-Q графика за %s"
 
-#: lib/src/graphing.c:7079
+#: lib/src/graphing.c:7084
 msgid "Normal quantiles"
 msgstr "Квантили на нормалното разпределение"
 
-#: lib/src/graphing.c:7186 lib/src/graphing.c:7189
+#: lib/src/graphing.c:7191 lib/src/graphing.c:7194
 #, c-format
 msgid "adjusted %s"
 msgstr "коригиран %s"
 
-#: lib/src/graphing.c:7252 plugin/range-mean.c:112
+#: lib/src/graphing.c:7257 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "оценка с МНМК"
 
@@ -3101,17 +3101,17 @@ msgstr "ВНИМАНИЕ: Неуспешно подобряване на кри�
 msgid "Initial value of objective function is not finite"
 msgstr "Началното значение на функцията не е крайно"
 
-#: lib/src/gretl_bundle.c:501 lib/src/gretl_bundle.c:566
-#: lib/src/gretl_bundle.c:614 lib/src/kalman.c:4816 lib/src/objstack.c:1451
+#: lib/src/gretl_bundle.c:530 lib/src/gretl_bundle.c:602
+#: lib/src/gretl_bundle.c:656 lib/src/kalman.c:5304 lib/src/objstack.c:1451
 msgid "no such item"
 msgstr "Няма такъв елемент"
 
-#: lib/src/gretl_bundle.c:1735
+#: lib/src/gretl_bundle.c:1827
 #, fuzzy
 msgid "xmlParseMemory failed"
 msgstr "Грешка при xmlParseFile за %s"
 
-#: lib/src/gretl_bundle.c:1741
+#: lib/src/gretl_bundle.c:1833
 msgid "xmlDocGetRootElement failed"
 msgstr ""
 
@@ -3259,72 +3259,68 @@ msgid "Data types not conformable for operation"
 msgstr "Типовете данни не съответстват на операцията"
 
 #: lib/src/gretl_errors.c:76
-msgid "Wrong data type"
-msgstr "Погрешен тип на данните"
-
-#: lib/src/gretl_errors.c:77
 msgid "Incompatible options"
 msgstr "Несъвместими опции"
 
-#: lib/src/gretl_errors.c:78
+#: lib/src/gretl_errors.c:77
 msgid "The restrictions do not identify the parameters"
 msgstr "Ограниченията не позволяват да се определят параметрите"
 
-#: lib/src/gretl_errors.c:79
+#: lib/src/gretl_errors.c:78
 msgid "External command failed"
 msgstr "външната команда не е изпълнена"
 
-#: lib/src/gretl_errors.c:80
+#: lib/src/gretl_errors.c:79
 msgid "Maximum length of command line (16384 bytes) exceeded"
 msgstr "Максималната дължина на командния ред (16384 bytes) е превишена"
 
-#: lib/src/gretl_errors.c:81 lib/src/nls.c:3103
+#: lib/src/gretl_errors.c:80 lib/src/nls.c:3199
 msgid "No dataset is in place"
 msgstr "Няма подходящи данни"
 
-#: lib/src/gretl_errors.c:82
+#: lib/src/gretl_errors.c:81
 msgid "Matrix is not positive definite"
 msgstr "Матрицата не положително определена"
 
-#: lib/src/gretl_errors.c:83
+#: lib/src/gretl_errors.c:82
 msgid "Failed to calculate Jacobian"
 msgstr "Невъзможно изчисляването на матрицата на Якоби (Jacobian)"
 
-#: lib/src/gretl_errors.c:84
+#: lib/src/gretl_errors.c:83
 msgid "Insufficient observations for this operation"
 msgstr "Незначими наблюдения за дадената операция"
 
-#: lib/src/gretl_errors.c:85
+#: lib/src/gretl_errors.c:84
 #, fuzzy
 msgid "You cannot define a function within a function"
 msgstr "За допълнителна помощ относно функцията въведете 'help functions'\n"
 
-#: lib/src/gretl_errors.c:86
+#: lib/src/gretl_errors.c:85
 msgid "Error executing function"
 msgstr "Грешка при изпълнение на функцията"
 
-#: lib/src/gretl_errors.c:87
+#: lib/src/gretl_errors.c:86
 msgid "Execution aborted by request"
 msgstr "Изпълнението бе принудително прекратено"
 
-#: lib/src/gretl_errors.c:88
+#: lib/src/gretl_errors.c:87
 #, fuzzy
 msgid "'catch' cannot be used in this context"
 msgstr "Командата  \"%s\" е неизпълнима в дадения контекст"
 
-#: lib/src/gretl_errors.c:96
+#: lib/src/gretl_errors.c:95
 msgid "gradient is not close to zero"
 msgstr "Градиентите не клонят към нула"
 
-#: lib/src/gretl_errors.c:97
+#: lib/src/gretl_errors.c:96
 msgid "generated missing values"
 msgstr "Генерирани са липсващи значения"
 
-#: lib/src/gretl_errors.c:98
+#: lib/src/gretl_errors.c:97
 msgid "generated non-finite values"
 msgstr "Генерирани са безкрайни значения"
 
-#: lib/src/gretl_errors.c:250 lib/src/gretl_errors.c:256
+#: lib/src/gretl_errors.c:249 lib/src/gretl_errors.c:255
 msgid "Warning"
 msgstr "Внимание"
 
@@ -3538,12 +3534,12 @@ msgstr "_Отвори"
 msgid "annual"
 msgstr "годишен"
 
-#: lib/src/gretl_intl.c:797 gui2/gretl.c:1564 gui2/gui_utils.c:222
-#: gui2/gui_utils.c:352
+#: lib/src/gretl_intl.c:801 gui2/gretl.c:1564 gui2/gui_utils.c:223
+#: gui2/gui_utils.c:353
 msgid "_File"
 msgstr "_Файл"
 
-#: lib/src/gretl_intl.c:848
+#: lib/src/gretl_intl.c:852
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr "%s: кодировката не се поддържа от системата"
@@ -3558,12 +3554,12 @@ msgstr "Променен е списъкът '%s'\n"
 msgid "Added list '%s'\n"
 msgstr "Добавен е списъкът '%s'\n"
 
-#: lib/src/gretl_list.c:1763
+#: lib/src/gretl_list.c:1764
 #, c-format
 msgid "Variable %d was not in the original list"
 msgstr "Променливата %d  отсъства в първоначалния списък"
 
-#: lib/src/gretl_list.c:2125
+#: lib/src/gretl_list.c:2126
 msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 "Невъзможно е да се изпълни: някои променливи в оригиналния модел са "
@@ -3634,7 +3630,7 @@ msgstr "Критерий за нелинейност (логаритми)"
 msgid "relationship is linear"
 msgstr "зависимостта е линейна"
 
-#: lib/src/gretl_model.c:3582 gui2/gui_utils.c:4220
+#: lib/src/gretl_model.c:3582 gui2/gui_utils.c:4221
 msgid "Test for normality of residual"
 msgstr "Критерий за нормално разпределение на остатъците"
 
@@ -4044,8 +4040,8 @@ msgstr "gretlgui.hlp"
 msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
-#: lib/src/gretl_plot.c:338 lib/src/tokenize.c:2128 lib/src/tokenize.c:2183
-#: lib/src/tokenize.c:2642
+#: lib/src/gretl_plot.c:399 lib/src/tokenize.c:2193 lib/src/tokenize.c:2248
+#: lib/src/tokenize.c:2707
 #, fuzzy, c-format
 msgid "Parse error at unexpected token '%s'"
 msgstr "грешка в '%s'\n"
@@ -4104,7 +4100,7 @@ msgstr "Номерът на уравнение (%d) излиза извън до
 
 #: lib/src/gretl_restrict.c:1051 lib/src/gretl_restrict.c:1825
 #: lib/src/gretl_restrict.c:1848 lib/src/gretl_restrict.c:1871
-#: lib/src/nls.c:2815
+#: lib/src/nls.c:2911
 #, c-format
 msgid "parse error in '%s'\n"
 msgstr "грешка в '%s'\n"
@@ -4303,12 +4299,12 @@ msgstr "логаритмично правдоподобие за критери�
 msgid "break-point for %s test"
 msgstr "p-value за критерий %s"
 
-#: lib/src/gretl_xml.c:94 lib/src/gretl_xml.c:566 lib/src/gretl_xml.c:4316
+#: lib/src/gretl_xml.c:94 lib/src/gretl_xml.c:4293
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "Грешка при xmlParseFile за %s"
 
-#: lib/src/gretl_xml.c:101 lib/src/gretl_xml.c:4321
+#: lib/src/gretl_xml.c:101 lib/src/gretl_xml.c:4298
 #, c-format
 msgid "%s: empty document"
 msgstr "%s: празен документ"
@@ -4318,91 +4314,91 @@ msgstr "%s: празен документ"
 msgid "File of the wrong type, root node not %s"
 msgstr "Файлът е от некоректен тип, не е %s"
 
-#: lib/src/gretl_xml.c:1692 lib/src/gretl_xml.c:2148
+#: lib/src/gretl_xml.c:1669 lib/src/gretl_xml.c:2125
 #, fuzzy, c-format
 msgid "Writing %.0f Kbytes of data\n"
 msgstr "Записване на %ld  Кбайта с данни\n"
 
-#: lib/src/gretl_xml.c:2573
+#: lib/src/gretl_xml.c:2550
 msgid "Failed to parse count of variables"
 msgstr "Неуспешно разчитане на броя на променливите"
 
-#: lib/src/gretl_xml.c:2587 lib/src/gretl_xml.c:2605 lib/src/gretl_xml.c:2753
+#: lib/src/gretl_xml.c:2564 lib/src/gretl_xml.c:2582 lib/src/gretl_xml.c:2730
 msgid "Got no variables"
 msgstr "Отсъстват променливи"
 
-#: lib/src/gretl_xml.c:2617
+#: lib/src/gretl_xml.c:2594
 #, c-format
 msgid "Variable %d has no name"
 msgstr "Променливата %d няма име"
 
-#: lib/src/gretl_xml.c:2671
+#: lib/src/gretl_xml.c:2648
 msgid "Number of variables does not match declaration"
 msgstr "Броят на променливите не отговаря на зададения брой"
 
-#: lib/src/gretl_xml.c:2708
+#: lib/src/gretl_xml.c:2685
 #, fuzzy, c-format
 msgid "join: column '%s' was not found"
 msgstr "командата '%s' не е разпозната"
 
-#: lib/src/gretl_xml.c:2901
+#: lib/src/gretl_xml.c:2878
 #, fuzzy, c-format
 msgid "Data file contains %d subnormal values"
 msgstr "Тегловата променлива съдържа отрицателни значения"
 
-#: lib/src/gretl_xml.c:2960
+#: lib/src/gretl_xml.c:2937
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Неуспешно разчитане на данните за наблюдение %d"
 
-#: lib/src/gretl_xml.c:2987 lib/src/gretl_xml.c:3142
+#: lib/src/gretl_xml.c:2964 lib/src/gretl_xml.c:3119
 msgid "Failed to parse number of observations"
 msgstr "Неуспешно разчитане на броя на наблюденията"
 
-#: lib/src/gretl_xml.c:3042 lib/src/gretl_xml.c:3192
+#: lib/src/gretl_xml.c:3019 lib/src/gretl_xml.c:3169
 msgid "Got no observations\n"
 msgstr "Няма наблюдения\n"
 
-#: lib/src/gretl_xml.c:3063 lib/src/gretl_xml.c:3205
+#: lib/src/gretl_xml.c:3040 lib/src/gretl_xml.c:3182
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "Няма маркери за наблюденията%d"
 
-#: lib/src/gretl_xml.c:3073 lib/src/gretl_xml.c:3215
+#: lib/src/gretl_xml.c:3050 lib/src/gretl_xml.c:3192
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "В наблюдение  %d  има липсващи значения"
 
-#: lib/src/gretl_xml.c:3107 lib/src/gretl_xml.c:3238
+#: lib/src/gretl_xml.c:3084 lib/src/gretl_xml.c:3215
 msgid "Number of observations does not match declaration"
 msgstr "Броят на наблюденията не отговаря на зададения брой"
 
-#: lib/src/gretl_xml.c:3391
+#: lib/src/gretl_xml.c:3368
 msgid "Required attribute 'type' is missing from data file"
 msgstr "Задължителлният атрибут 'type' липсва във файла с данни"
 
-#: lib/src/gretl_xml.c:3403
+#: lib/src/gretl_xml.c:3380
 msgid "Unrecognized type attribute for data file"
 msgstr "Неизвестен тип на данните"
 
-#: lib/src/gretl_xml.c:3428
+#: lib/src/gretl_xml.c:3405
 msgid "Failed to parse data frequency"
 msgstr "Неуспешно разчитане на честотите"
 
-#: lib/src/gretl_xml.c:3474
+#: lib/src/gretl_xml.c:3451
 msgid "Failed to parse startobs"
 msgstr "Неуспешно разчитане на първото наблюдение"
 
-#: lib/src/gretl_xml.c:3506
+#: lib/src/gretl_xml.c:3483
 msgid "Failed to parse endobs"
 msgstr "Неуспешно разчитане на последното наблюдение"
 
-#: lib/src/gretl_xml.c:3559
+#: lib/src/gretl_xml.c:3536
 #, c-format
 msgid "dummy for %s = %lf"
 msgstr "фиктивна променлива за %s = %lf"
 
-#: lib/src/gretl_xml.c:3594
+#: lib/src/gretl_xml.c:3571
 #, c-format
 msgid ""
 "\n"
@@ -4411,29 +4407,29 @@ msgstr ""
 "\n"
 "Отваряне на файл с данни%s\n"
 
-#: lib/src/gretl_xml.c:3694
+#: lib/src/gretl_xml.c:3671
 msgid "Uncompressing"
 msgstr "Декомпресия"
 
-#: lib/src/gretl_xml.c:3694
+#: lib/src/gretl_xml.c:3671
 msgid "Reading"
 msgstr "Разчитане"
 
-#: lib/src/gretl_xml.c:3695
+#: lib/src/gretl_xml.c:3672
 msgid "of data"
 msgstr "на данните"
 
-#: lib/src/gretl_xml.c:3768 lib/src/gretl_xml.c:3781 lib/src/gretl_xml.c:3788
-#: lib/src/gretl_xml.c:3804 lib/src/gretl_xml.c:3951 lib/src/gretl_xml.c:3963
-#: lib/src/gretl_xml.c:3979 lib/src/gretl_xml.c:4088
+#: lib/src/gretl_xml.c:3745 lib/src/gretl_xml.c:3758 lib/src/gretl_xml.c:3765
+#: lib/src/gretl_xml.c:3781 lib/src/gretl_xml.c:3928 lib/src/gretl_xml.c:3940
+#: lib/src/gretl_xml.c:3956 lib/src/gretl_xml.c:4065
 msgid "Variables information is missing"
 msgstr "Липсва информация за променливите"
 
-#: lib/src/gretl_xml.c:3809 lib/src/gretl_xml.c:3984
+#: lib/src/gretl_xml.c:3786 lib/src/gretl_xml.c:3961
 msgid "No observations were found"
 msgstr "Не са открити наблюдения"
 
-#: lib/src/gretl_xml.c:3860 gui2/ssheet.c:4006
+#: lib/src/gretl_xml.c:3837 gui2/ssheet.c:4006
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "Не може да се отвори '%s'"
@@ -4560,16 +4556,16 @@ msgstr "%s: командата не е достъпна\n"
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Командата  %s  още не е вградена в libgretl\n"
 
-#: lib/src/kalman.c:492
+#: lib/src/kalman.c:497
 msgid "kalman: a required matrix is missing"
 msgstr "kalman: липсва необподимата матрица"
 
-#: lib/src/kalman.c:494
+#: lib/src/kalman.c:499
 #, c-format
 msgid "kalman: required matrix %s is missing"
 msgstr "kalman: необходимата матрица %s отсъства"
 
-#: lib/src/kalman.c:502
+#: lib/src/kalman.c:507
 msgid "No Kalman filter is defined"
 msgstr "Не е дефиниран филтър на Калман"
 
@@ -4577,70 +4573,70 @@ msgstr "Не е дефиниран филтър на Калман"
 msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: в първата матрица трябва да има 2 колони"
 
-#: lib/src/libset.c:1069 lib/src/libset.c:1721
+#: lib/src/libset.c:1071 lib/src/libset.c:1724
 #, c-format
 msgid "%s: invalid value '%s'"
 msgstr "%s: невалидни значения '%s'"
 
-#: lib/src/libset.c:1475
+#: lib/src/libset.c:1477
 msgid "Variables that can be set using \"set\""
 msgstr "Променливите, които могат да се дефинират с помощта на \"set\""
 
-#: lib/src/libset.c:1477
+#: lib/src/libset.c:1479
 msgid "\"help set\" for details"
 msgstr "изпозвайте \"help set\" за повече подробности"
 
-#: lib/src/libset.c:1481
+#: lib/src/libset.c:1483
 msgid "Program interaction and behavior"
 msgstr "Поведение на програмата"
 
-#: lib/src/libset.c:1544 gui2/helpfiles.c:352 doc/commands/matfuncs.c:57
+#: lib/src/libset.c:1546 gui2/helpfiles.c:352 doc/commands/matfuncs.c:57
 msgid "Numerical methods"
 msgstr "Коичествени методи"
 
-#: lib/src/libset.c:1566
+#: lib/src/libset.c:1569
 msgid "Random number generation"
 msgstr "Генериране на случайни числа"
 
-#: lib/src/libset.c:1581
+#: lib/src/libset.c:1584
 msgid "Robust estimation"
 msgstr "Устойчива оценка"
 
-#: lib/src/libset.c:1594 gui2/datawiz.c:441 gui2/datawiz.c:520
+#: lib/src/libset.c:1597 gui2/datawiz.c:441 gui2/datawiz.c:520
 #: gui2/menustate.c:708 plugin/addons-i18n.c:29
 msgid "Time series"
 msgstr "Динамични редове"
 
-#: lib/src/libset.c:1810
+#: lib/src/libset.c:1813
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Генераторът на псевдослучайни числа се инициализира със значение %d\n"
 
-#: lib/src/libset.c:1836
+#: lib/src/libset.c:1839
 #, fuzzy, c-format
 msgid "set: unknown variable '%s'"
 msgstr "Неизвестна променлива '%s'"
 
-#: lib/src/matrix_extra.c:904 lib/src/matrix_extra.c:907
-#: lib/src/plotspec.c:1727 lib/src/plotspec.c:1743
+#: lib/src/matrix_extra.c:907 lib/src/matrix_extra.c:910
+#: lib/src/plotspec.c:1731 lib/src/plotspec.c:1747
 msgid "Non-positive values encountered"
 msgstr "Установени са нулеви или отрицателни значения"
 
-#: lib/src/matrix_extra.c:1564
+#: lib/src/matrix_extra.c:1567
 #, c-format
 msgid "%s: matrix is NULL"
 msgstr ""
 
-#: lib/src/matrix_extra.c:1566
+#: lib/src/matrix_extra.c:1569
 msgid "matrix is NULL"
 msgstr ""
 
-#: lib/src/matrix_extra.c:1572
+#: lib/src/matrix_extra.c:1575
 #, fuzzy, c-format
 msgid "%s: matrix is empty (%d x %d)"
 msgstr "Нулева матрица, %d x %d\n"
 
-#: lib/src/matrix_extra.c:1575
+#: lib/src/matrix_extra.c:1578
 #, fuzzy, c-format
 msgid "matrix is empty (%d x %d)"
 msgstr "Нулева матрица, %d x %d\n"
@@ -5137,7 +5133,7 @@ msgstr ""
 msgid "bias"
 msgstr "Изместване"
 
-#: lib/src/modelprint.c:1080 gui2/gpt_dialog.c:2841
+#: lib/src/modelprint.c:1080 gui2/gpt_dialog.c:2862
 msgid "size"
 msgstr "обем"
 
@@ -5444,6 +5440,14 @@ msgstr "Дължина на динамичния ред = %d"
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
 msgstr "Дължина на динамичния ред: минимум %d, максимум %d"
+
+#: lib/src/modelprint.c:1965
+msgid "Including equations in levels"
+msgstr ""
+
+#: lib/src/modelprint.c:1969
+msgid "H-matrix as per Ox/DPD"
+msgstr ""
 
 #: lib/src/modelprint.c:1997
 #, c-format
@@ -5921,13 +5925,13 @@ msgstr "Остатъци"
 msgid "Total"
 msgstr "Общо"
 
-#: lib/src/modelprint.c:5339 lib/src/nls.c:1656
+#: lib/src/modelprint.c:5339 lib/src/nls.c:1751
 #, c-format
 msgid "modprint: expected %d names"
 msgstr "modprint: очакват  се %d имена"
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:785
-#: lib/src/monte_carlo.c:1762 lib/src/monte_carlo.c:1925 lib/src/uservar.c:1761
+#: lib/src/monte_carlo.c:1762 lib/src/monte_carlo.c:1925 lib/src/uservar.c:1763
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': не е скаларна величина"
@@ -6030,7 +6034,7 @@ msgstr ""
 msgid "%s: not implemented in 'progressive' loops"
 msgstr "%s: не е включено за  'progressive' цикли"
 
-#: lib/src/nls.c:253
+#: lib/src/nls.c:254
 #, fuzzy, c-format
 msgid ""
 "The formula '%s'\n"
@@ -6039,7 +6043,7 @@ msgstr ""
 "С формулата '%s'\n"
 " се получава скаларен резултат"
 
-#: lib/src/nls.c:256
+#: lib/src/nls.c:257
 #, fuzzy, c-format
 msgid ""
 "The formula '%s'\n"
@@ -6048,7 +6052,7 @@ msgstr ""
 "С формулата '%s'\n"
 " се получава скаларен резултат"
 
-#: lib/src/nls.c:367
+#: lib/src/nls.c:368
 #, fuzzy, c-format
 msgid ""
 "The formula '%s'\n"
@@ -6057,34 +6061,34 @@ msgstr ""
 "С формулата '%s'\n"
 " се получава скаларен резултат"
 
-#: lib/src/nls.c:646
+#: lib/src/nls.c:681
 #, c-format
 msgid "'%s': expected a scalar or vector"
 msgstr "'%s': очаква се скаларно значение или вектор"
 
-#: lib/src/nls.c:1104
+#: lib/src/nls.c:1199
 #, c-format
 msgid "iteration %2d: SSR = %.8g\n"
 msgstr "Итерация %2d: сума от квадр. на грешката = %.8g\n"
 
-#: lib/src/nls.c:1841
+#: lib/src/nls.c:1936
 msgid "Perfect fit achieved\n"
 msgstr "Достигнато е идеално съответствие\n"
 
-#: lib/src/nls.c:1942
+#: lib/src/nls.c:2037
 msgid "In Gauss-Newton Regression:\n"
 msgstr "Регресия на Гаус-Нютън:\n"
 
-#: lib/src/nls.c:2339
+#: lib/src/nls.c:2434
 msgid "NLS: The supplied derivatives seem to be incorrect"
 msgstr "Нелинеен МНМК: производните не са зададени коректно"
 
-#: lib/src/nls.c:2340
+#: lib/src/nls.c:2435
 #, c-format
 msgid "%d out of %d tests gave zero\n"
 msgstr "в %d от %d проверки се получава нула\n"
 
-#: lib/src/nls.c:2342
+#: lib/src/nls.c:2437
 msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
@@ -6092,14 +6096,14 @@ msgstr ""
 "ВНИМАНИЕ: Производните на функциите са некоректни, или\n"
 "данните не подхождат на функциите.\n"
 
-#: lib/src/nls.c:2344
+#: lib/src/nls.c:2439
 #, c-format
 msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr "%d от  %d получени градиенти будят съмнение за достоверност.\n"
 
-#: lib/src/nls.c:2417
+#: lib/src/nls.c:2512
 #, c-format
 msgid ""
 "\n"
@@ -6109,72 +6113,72 @@ msgstr ""
 "Грешка: Матрицата на Хесе положително ли е дефинирана  дефинирана? (err = "
 "%d); операцията е върната в позиция OPG\n"
 
-#: lib/src/nls.c:2467 lib/src/nls.c:2568
+#: lib/src/nls.c:2562 lib/src/nls.c:2663
 msgid "Invalid NLS specification"
 msgstr "Некоректно зададена спецификация за нелинеен МНМК"
 
-#: lib/src/nls.c:2478 lib/src/nls.c:2580
+#: lib/src/nls.c:2573 lib/src/nls.c:2675
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
 msgstr "Нелинеен МНМК: след %d итерации решение не е получено"
 
-#: lib/src/nls.c:2641
+#: lib/src/nls.c:2737
 msgid "Analytical derivatives cannot be used with GMM"
 msgstr ""
 "Анаитични производни не могат да се използват при обобщен метод на моментите "
 "(ОММ)"
 
-#: lib/src/nls.c:2727
+#: lib/src/nls.c:2823
 #, c-format
 msgid "command '%s' not valid in this context"
 msgstr "Командата '%s' е неприложима в дадения контекст"
 
-#: lib/src/nls.c:2730
+#: lib/src/nls.c:2826
 #, fuzzy, c-format
 msgid "'%s': not valid in this context"
 msgstr "Командата '%s' е неприложима в дадения контекст"
 
-#: lib/src/nls.c:2821 gui2/dialogs.c:5903
+#: lib/src/nls.c:2917 gui2/dialogs.c:5903
 #, c-format
 msgid "'%s' is not a known series"
 msgstr "'%s' е неразпознат ред"
 
-#: lib/src/nls.c:2923 plugin/heckit.c:384
+#: lib/src/nls.c:3019 plugin/heckit.c:384
 msgid "No regression function has been specified"
 msgstr "Не е зададена регресионна функция"
 
-#: lib/src/nls.c:2928
+#: lib/src/nls.c:3024
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
 msgstr ""
 "Не може едновременно да се задават значения за параметрите \"params\"  и "
 "аналитичните производни"
 
-#: lib/src/nls.c:2938
+#: lib/src/nls.c:3034
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
 msgstr "Зададени са аналитични производни: редът \"params\"  ще бъде игнориран"
 
-#: lib/src/nls.c:2987
+#: lib/src/nls.c:3083
 msgid "No parameters have been specified"
 msgstr "Не са зададени параметри"
 
-#: lib/src/nls.c:3112
+#: lib/src/nls.c:3208
 msgid "No function has been specified"
 msgstr "Не е зададена функция"
 
-#: lib/src/nls.c:3129
+#: lib/src/nls.c:3225
 #, c-format
 msgid "%s: no parameters were specified"
 msgstr "%s: не са специфицирани параметри"
 
-#: lib/src/nls.c:3194
+#: lib/src/nls.c:3290
 msgid "Using numerical derivatives\n"
 msgstr "Използвани са числени производни\n"
 
-#: lib/src/nls.c:3195
+#: lib/src/nls.c:3291
 msgid "Using analytical derivatives\n"
 msgstr "Използвани са аналитични производни\n"
 
-#: lib/src/nls.c:3220
+#: lib/src/nls.c:3316
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr "Допустима грешка= %g\n"
@@ -6377,22 +6381,22 @@ msgstr ""
 "модел, \n"
 "който беше оценен преди това\n"
 
-#: lib/src/options.c:1176 lib/src/options.c:1209
+#: lib/src/options.c:1169 lib/src/options.c:1202
 #, fuzzy, c-format
 msgid "%s: invalid option argument"
 msgstr "%s: недправилен тип на аргумента %s"
 
-#: lib/src/options.c:1215 lib/src/tokenize.c:1057
+#: lib/src/options.c:1208 lib/src/tokenize.c:1057
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Опцията  '--%s'  предполага посочване на параметър"
 
-#: lib/src/options.c:1686
+#: lib/src/options.c:1679
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "ВНИМАНИЕ: опцията %s се игнорира извън цикъла"
 
-#: lib/src/options.c:1796
+#: lib/src/options.c:1789
 #, fuzzy, c-format
 msgid "%s: inapplicable option"
 msgstr "Несъвместими опции"
@@ -6461,11 +6465,11 @@ msgstr "извън"
 msgid "center"
 msgstr "в центъра"
 
-#: lib/src/plotspec.c:1598
+#: lib/src/plotspec.c:1602
 msgid "annual growth"
 msgstr "годишен ръст"
 
-#: lib/src/plotspec.c:1954
+#: lib/src/plotspec.c:1958
 msgid "Dates file does not conform to the specification"
 msgstr "Файлът с данни не е съобразен със срецификацията"
 
@@ -6890,12 +6894,12 @@ msgstr "Разпределение на Вейбул (форма = %g, маща�
 msgid "GED (shape = %g): "
 msgstr "GED (форма = %g): "
 
-#: lib/src/strutils.c:693 lib/src/strutils.c:712 lib/src/tokenize.c:3079
+#: lib/src/strutils.c:703 lib/src/strutils.c:722 lib/src/tokenize.c:3144
 #, fuzzy, c-format
 msgid "Unexpected symbol '%c'"
 msgstr "очаквани %s, но намерени %s"
 
-#: lib/src/strutils.c:2130
+#: lib/src/strutils.c:2140
 msgid "out of memory in XML encoding"
 msgstr "недостатъчна памет за XML кодиране"
 
@@ -7157,7 +7161,7 @@ msgstr "Предопределени промениви:"
 msgid "Exogenous variables:"
 msgstr "Екзогенни промениви:"
 
-#: lib/src/system.c:646 lib/src/system.c:680 lib/src/tokenize.c:3038
+#: lib/src/system.c:646 lib/src/system.c:680 lib/src/tokenize.c:3103
 #: plugin/arbond.c:2674
 #, c-format
 msgid "variable %d duplicated in the command list."
@@ -7242,7 +7246,7 @@ msgstr "Метод за оценка"
 msgid "Ljung-Box Q'"
 msgstr "Q'-критерий на Люнг-Бокс"
 
-#: lib/src/texprint.c:899 lib/src/varprint.c:737 gui2/gui_utils.c:4399
+#: lib/src/texprint.c:899 lib/src/varprint.c:737 gui2/gui_utils.c:4400
 msgid "Cross-equation covariance matrix"
 msgstr "Обща ковариационна матрица"
 
@@ -7272,62 +7276,62 @@ msgstr "Детерминанта на ковариационната матри�
 msgid "$t$-statistics in parentheses"
 msgstr "$t$-критерий в скобите"
 
-#: lib/src/tokenize.c:1159
+#: lib/src/tokenize.c:1224
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Невалидна опция '--%s'"
 
-#: lib/src/tokenize.c:1175
+#: lib/src/tokenize.c:1240
 #, fuzzy, c-format
 msgid "Invalid option '-%c'"
 msgstr "Невалидна опция '--%s'"
 
-#: lib/src/tokenize.c:3077
+#: lib/src/tokenize.c:3142
 #, fuzzy, c-format
 msgid "Unexpected symbol %c"
 msgstr "очаквани %s, но намерени %s"
 
-#: lib/src/transforms.c:148
+#: lib/src/transforms.c:149
 #, c-format
 msgid "= first difference of %s"
 msgstr "= първи разлики на %s"
 
-#: lib/src/transforms.c:150
+#: lib/src/transforms.c:151
 #, c-format
 msgid "= log difference of %s"
 msgstr "= лог. на разликите на %s"
 
-#: lib/src/transforms.c:152
+#: lib/src/transforms.c:153
 #, c-format
 msgid "= seasonal difference of %s"
 msgstr "= сезонни разлики на %s"
 
-#: lib/src/transforms.c:154
+#: lib/src/transforms.c:155
 #, c-format
 msgid "= log of %s"
 msgstr "= логаритми на %s"
 
-#: lib/src/transforms.c:156
+#: lib/src/transforms.c:157
 #, c-format
 msgid "= %s squared"
 msgstr "= квадрати на %s"
 
-#: lib/src/transforms.c:678
+#: lib/src/transforms.c:679
 #, c-format
 msgid "= %s times %s"
 msgstr "= %s пъти %s"
 
-#: lib/src/transforms.c:685
+#: lib/src/transforms.c:686
 #, fuzzy, c-format
 msgid "dummy for %s = '%s'"
 msgstr "фиктивна променива за %s = %g"
 
-#: lib/src/transforms.c:687 lib/src/transforms.c:690
+#: lib/src/transforms.c:688 lib/src/transforms.c:691
 #, c-format
 msgid "dummy for %s = %g"
 msgstr "фиктивна променива за %s = %g"
 
-#: lib/src/transforms.c:1624
+#: lib/src/transforms.c:1689
 msgid "dummify: no suitable variables were found"
 msgstr "dummify: не е открита подходяща променлива"
 
@@ -7374,7 +7378,7 @@ msgstr "Неясен матричен индекс"
 msgid "Matrix decomposition failed"
 msgstr "Грешка при декомпозицията на матрицата"
 
-#: lib/src/uservar.c:1660
+#: lib/src/uservar.c:1662
 #, fuzzy, c-format
 msgid "The variable %s is currently read-only"
 msgstr "Променливата %s не може да бъде редактирана"
@@ -8087,11 +8091,11 @@ msgstr "Вейбул"
 msgid " DW "
 msgstr "Дарбин-Уотсън"
 
-#: gui2/calculator.c:1995 gui2/gpt_dialog.c:3275
+#: gui2/calculator.c:1995 gui2/gpt_dialog.c:3300
 msgid "minimum"
 msgstr "Минимум"
 
-#: gui2/calculator.c:1997 gui2/gpt_dialog.c:3292
+#: gui2/calculator.c:1997 gui2/gpt_dialog.c:3317
 msgid "maximum"
 msgstr "Максимум"
 
@@ -8332,7 +8336,7 @@ msgstr "Липсват подходящи данни"
 msgid "gretl: plot a curve"
 msgstr "gretl: графики на функции"
 
-#: gui2/calculator.c:3234 gui2/gpt_dialog.c:2029 gui2/gpt_dialog.c:2678
+#: gui2/calculator.c:3234 gui2/gpt_dialog.c:2050 gui2/gpt_dialog.c:2699
 msgid "formula"
 msgstr "формула"
 
@@ -8698,7 +8702,7 @@ msgid "Installed"
 msgstr "Инсталирано"
 
 #: gui2/database.c:2181 gui2/database.c:2205 gui2/database.c:2243
-#: gui2/database.c:2474 gui2/datafiles.c:1168 gui2/fncall.c:3802
+#: gui2/database.c:2474 gui2/datafiles.c:1168 gui2/fncall.c:3798
 msgid "Up to date"
 msgstr "Актуална"
 
@@ -8710,7 +8714,7 @@ msgstr "Грешка при разархивирането на пакетни �
 msgid "Unknown: access error"
 msgstr "Невъзможен достъп до данните"
 
-#: gui2/database.c:2472 gui2/datafiles.c:1117 gui2/fncall.c:3804
+#: gui2/database.c:2472 gui2/datafiles.c:1117 gui2/fncall.c:3800
 msgid "Not up to date"
 msgstr "Версията не е актуализирана"
 
@@ -8827,7 +8831,7 @@ msgstr "Нов"
 msgid "Install"
 msgstr "Инсталирай"
 
-#: gui2/datafiles.c:1427 gui2/gpt_dialog.c:2358 gui2/selector.c:4467
+#: gui2/datafiles.c:1427 gui2/gpt_dialog.c:2379 gui2/selector.c:4467
 msgid "Remove"
 msgstr "Отстрани"
 
@@ -10514,7 +10518,7 @@ msgstr "Функцията изисква дефинирането на моде
 msgid "Would you like to open its sample script?"
 msgstr ""
 
-#: gui2/fncall.c:2920
+#: gui2/fncall.c:2916
 #, c-format
 msgid ""
 "The %s package was not found, or is not up to date.\n"
@@ -10523,15 +10527,15 @@ msgstr ""
 "Пакетът с функции %s не е открит или не е актуализиран.\n"
 "Искате ли да го изтеглите?"
 
-#: gui2/fncall.c:3543 gui2/fnsave.c:2718
+#: gui2/fncall.c:3539 gui2/fnsave.c:2718
 msgid "main window"
 msgstr "главен прозорец"
 
-#: gui2/fncall.c:3544 gui2/fnsave.c:2719
+#: gui2/fncall.c:3540 gui2/fnsave.c:2719
 msgid "model window"
 msgstr "прозорец на модела"
 
-#: gui2/fncall.c:3549
+#: gui2/fncall.c:3545
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -10542,16 +10546,16 @@ msgstr ""
 "като \"%s/%s\" в %s.\n"
 "Искате ли да се изпълни?"
 
-#: gui2/fncall.c:3739
+#: gui2/fncall.c:3735
 msgid "This package lacks a label or menu-path"
 msgstr ""
 
-#: gui2/fncall.c:3806
+#: gui2/fncall.c:3802
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Нужен е gretl %s"
 
-#: gui2/fncall.c:3812
+#: gui2/fncall.c:3808
 msgid "Error reading package"
 msgstr "Грешка при отварянето на пакета"
 
@@ -10598,7 +10602,7 @@ msgstr "Съхрани във файл"
 msgid "A file of this name already exists."
 msgstr "Списъкът с име %s вече съществува"
 
-#: gui2/fnsave.c:682 gui2/gui_utils.c:5081
+#: gui2/fnsave.c:682 gui2/gui_utils.c:5141
 msgid "OK to overwrite it?"
 msgstr "Да презапиша ли?"
 
@@ -10755,7 +10759,7 @@ msgstr ""
 msgid "Insert today's date"
 msgstr "Да се добави ли текущата дата"
 
-#: gui2/fnsave.c:2347 gui2/gui_utils.c:2445 gui2/ssheet.c:2905
+#: gui2/fnsave.c:2347 gui2/gui_utils.c:2446 gui2/ssheet.c:2905
 #: gui2/ssheet.c:2931 gui2/toolbar.c:661
 msgid "Save changes?"
 msgstr "Да се съхранят ли промените?"
@@ -11064,11 +11068,11 @@ msgid "Font"
 msgstr "Шрифта"
 
 #: gui2/gpt_control.c:3832 gui2/gpt_control.c:3908 gui2/gpt_control.c:3914
-#: gui2/gui_utils.c:1894
+#: gui2/gui_utils.c:1895
 msgid "Close"
 msgstr "Затвори"
 
-#: gui2/gpt_control.c:3847 gui2/gpt_dialog.c:2798 gui2/graphics.c:236
+#: gui2/gpt_control.c:3847 gui2/gpt_dialog.c:2819 gui2/graphics.c:236
 #: gui2/graph_page.c:683
 msgid "color"
 msgstr "цвят"
@@ -11126,48 +11130,48 @@ msgstr "gretl: избор на цвят в диаграмата"
 msgid "Select color"
 msgstr "Избери цвят"
 
-#: gui2/gpt_dialog.c:608
+#: gui2/gpt_dialog.c:619
 #, c-format
 msgid "%s versus %s (with semilog fit)"
 msgstr "%s и %s (с полулогаритмична регресия)"
 
-#: gui2/gpt_dialog.c:611
+#: gui2/gpt_dialog.c:622
 #, fuzzy, c-format
 msgid "%s versus %s (with linear-log fit)"
 msgstr "%s и %s (с полулогаритмична регресия)"
 
-#: gui2/gpt_dialog.c:725 gui2/gpt_dialog.c:764
+#: gui2/gpt_dialog.c:741 gui2/gpt_dialog.c:780
 msgid "Invalid position, must be X Y"
 msgstr "Неправилно положение, трябва да са координати X Y"
 
-#: gui2/gpt_dialog.c:1192 gui2/gpt_dialog.c:1218 gui2/gpt_dialog.c:1314
-#: gui2/gpt_dialog.c:1957 gui2/graphics.c:364
+#: gui2/gpt_dialog.c:1213 gui2/gpt_dialog.c:1239 gui2/gpt_dialog.c:1335
+#: gui2/gpt_dialog.c:1978 gui2/graphics.c:364
 #, c-format
 msgid "font: %s"
 msgstr "шрифт: %s"
 
-#: gui2/gpt_dialog.c:1256 gui2/gpt_dialog.c:1352
+#: gui2/gpt_dialog.c:1277 gui2/gpt_dialog.c:1373
 msgid "Font for graphs"
 msgstr "Шрифт в графиката"
 
-#: gui2/gpt_dialog.c:1493
+#: gui2/gpt_dialog.c:1514
 msgid "Fill color"
 msgstr "Цвят"
 
-#: gui2/gpt_dialog.c:1495
+#: gui2/gpt_dialog.c:1516
 #, c-format
 msgid "Color %d"
 msgstr "Цвят %d"
 
-#: gui2/gpt_dialog.c:1515
+#: gui2/gpt_dialog.c:1536
 msgid "Reset to default"
 msgstr "По подразбиране"
 
-#: gui2/gpt_dialog.c:1571 gui2/gpt_dialog.c:1934
+#: gui2/gpt_dialog.c:1592 gui2/gpt_dialog.c:1955
 msgid "other..."
 msgstr "друго..."
 
-#: gui2/gpt_dialog.c:1599
+#: gui2/gpt_dialog.c:1620
 msgid ""
 "To add your own \"bars\" to a plot, you must supply the\n"
 "name of a plain text file containing pairs of dates."
@@ -11175,191 +11179,191 @@ msgstr ""
 "За добавяне на  \"bars\"  в графиката, трябва да посочите\n"
 "име на текстови файл, съдържащ конкретни дати."
 
-#: gui2/gpt_dialog.c:1609
+#: gui2/gpt_dialog.c:1630
 msgid "See example"
 msgstr "Виж примера"
 
-#: gui2/gpt_dialog.c:1741
+#: gui2/gpt_dialog.c:1762
 msgid "Main"
 msgstr "Общ"
 
-#: gui2/gpt_dialog.c:1779
+#: gui2/gpt_dialog.c:1800
 msgid "key position"
 msgstr "Позиция на легендата"
 
-#: gui2/gpt_dialog.c:1808
+#: gui2/gpt_dialog.c:1829
 msgid "fitted line"
 msgstr "Линия с изгадени значения"
 
-#: gui2/gpt_dialog.c:1856
+#: gui2/gpt_dialog.c:1877
 msgid "Use only one y axis"
 msgstr "Изпозване само на една ос y"
 
-#: gui2/gpt_dialog.c:1869
+#: gui2/gpt_dialog.c:1890
 msgid "Show full border"
 msgstr "Покажи всички граници"
 
-#: gui2/gpt_dialog.c:1882
+#: gui2/gpt_dialog.c:1903
 msgid "horizontal"
 msgstr "хоризонтална"
 
-#: gui2/gpt_dialog.c:1883
+#: gui2/gpt_dialog.c:1904
 msgid "vertical"
 msgstr "вертикална"
 
-#: gui2/gpt_dialog.c:1884
+#: gui2/gpt_dialog.c:1905
 msgid "both"
 msgstr "двете скали"
 
-#: gui2/gpt_dialog.c:1891
+#: gui2/gpt_dialog.c:1912
 msgid "Show grid"
 msgstr "Покажи мрежа"
 
-#: gui2/gpt_dialog.c:1923
+#: gui2/gpt_dialog.c:1944
 msgid "Show bars"
 msgstr "Покажи стълбовете"
 
-#: gui2/gpt_dialog.c:1932
+#: gui2/gpt_dialog.c:1953
 msgid "NBER recessions"
 msgstr "NBER recessions"
 
-#: gui2/gpt_dialog.c:1970 gui2/selector.c:4197
+#: gui2/gpt_dialog.c:1991 gui2/selector.c:4197
 msgid "Set as default"
 msgstr "Създай по подразбиране"
 
-#: gui2/gpt_dialog.c:2022 gui2/gpt_dialog.c:2386
+#: gui2/gpt_dialog.c:2043 gui2/gpt_dialog.c:2407
 #, c-format
 msgid "line %d: "
 msgstr "Линия %d: "
 
-#: gui2/gpt_dialog.c:2221
+#: gui2/gpt_dialog.c:2242
 msgid "No formula was given"
 msgstr "Не е въведена формула"
 
-#: gui2/gpt_dialog.c:2375
+#: gui2/gpt_dialog.c:2396
 msgid "quartiles"
 msgstr "Квартили"
 
-#: gui2/gpt_dialog.c:2381
+#: gui2/gpt_dialog.c:2402
 msgid "lower bound"
 msgstr "долна граница"
 
-#: gui2/gpt_dialog.c:2383
+#: gui2/gpt_dialog.c:2404
 msgid "upper bound"
 msgstr "Горна граница"
 
-#: gui2/gpt_dialog.c:2402
+#: gui2/gpt_dialog.c:2423
 #, c-format
 msgid "label %d: "
 msgstr "Заглавие %d: "
 
-#: gui2/gpt_dialog.c:2646
+#: gui2/gpt_dialog.c:2667
 msgid "Lines"
 msgstr "Линии"
 
-#: gui2/gpt_dialog.c:2704
+#: gui2/gpt_dialog.c:2725
 msgid "legend"
 msgstr "Легенда"
 
-#: gui2/gpt_dialog.c:2726
+#: gui2/gpt_dialog.c:2747
 msgid "type"
 msgstr "Тип"
 
-#: gui2/gpt_dialog.c:2773
+#: gui2/gpt_dialog.c:2794
 msgid "line width"
 msgstr "Дебелина на линия"
 
-#: gui2/gpt_dialog.c:2832
+#: gui2/gpt_dialog.c:2853
 msgid "point"
 msgstr "маркер"
 
-#: gui2/gpt_dialog.c:2858
+#: gui2/gpt_dialog.c:2879
 #, fuzzy
 msgid "data scale"
 msgstr "мащаб"
 
-#: gui2/gpt_dialog.c:2872
+#: gui2/gpt_dialog.c:2897
 msgid "y axis"
 msgstr "ос y"
 
-#: gui2/gpt_dialog.c:2895
+#: gui2/gpt_dialog.c:2920
 msgid "Add line..."
 msgstr "Добави линия..."
 
-#: gui2/gpt_dialog.c:2931
+#: gui2/gpt_dialog.c:2956
 msgid "Labels"
 msgstr "Имена"
 
-#: gui2/gpt_dialog.c:2959
+#: gui2/gpt_dialog.c:2984
 msgid "text"
 msgstr "текст"
 
-#: gui2/gpt_dialog.c:2975
+#: gui2/gpt_dialog.c:3000
 msgid "position (X Y)"
 msgstr "позиция (X Y)"
 
-#: gui2/gpt_dialog.c:3012
+#: gui2/gpt_dialog.c:3037
 msgid "justification"
 msgstr "Подравняване"
 
-#: gui2/gpt_dialog.c:3040 gui2/gpt_dialog.c:3175 gui2/ssheet.c:138
+#: gui2/gpt_dialog.c:3065 gui2/gpt_dialog.c:3200 gui2/ssheet.c:138
 #: gui2/ssheet.c:145
 msgid "Add..."
 msgstr "Добави..."
 
-#: gui2/gpt_dialog.c:3079
+#: gui2/gpt_dialog.c:3104
 msgid "Arrows"
 msgstr "Стрелки"
 
-#: gui2/gpt_dialog.c:3110
+#: gui2/gpt_dialog.c:3135
 msgid "from (X Y)"
 msgstr "от (X Y)"
 
-#: gui2/gpt_dialog.c:3112
+#: gui2/gpt_dialog.c:3137
 msgid "to (X Y)"
 msgstr "до (X Y)"
 
-#: gui2/gpt_dialog.c:3148
+#: gui2/gpt_dialog.c:3173
 msgid "arrow has head"
 msgstr "Стрелки с маркери"
 
-#: gui2/gpt_dialog.c:3157
+#: gui2/gpt_dialog.c:3182
 msgid "line is dotted"
 msgstr "Прекъсната линия"
 
-#: gui2/gpt_dialog.c:3195
+#: gui2/gpt_dialog.c:3220
 msgid "X-axis"
 msgstr "Ос Х"
 
-#: gui2/gpt_dialog.c:3197
+#: gui2/gpt_dialog.c:3222
 msgid "Y-axis"
 msgstr "Ос Y"
 
-#: gui2/gpt_dialog.c:3199
+#: gui2/gpt_dialog.c:3224
 msgid "Y2-axis"
 msgstr "Ос Y2"
 
-#: gui2/gpt_dialog.c:3252
+#: gui2/gpt_dialog.c:3277
 msgid "auto axis range"
 msgstr "Автоматичен мащаб"
 
-#: gui2/gpt_dialog.c:3265
+#: gui2/gpt_dialog.c:3290
 msgid "manual range:"
 msgstr "Ръчен мащаб"
 
-#: gui2/gpt_dialog.c:3340
+#: gui2/gpt_dialog.c:3365
 msgid "linear scale"
 msgstr "Линейна скала"
 
-#: gui2/gpt_dialog.c:3348
+#: gui2/gpt_dialog.c:3373
 msgid "logarithmic scale, base:"
 msgstr "Логаритмична скала, основа:"
 
-#: gui2/gpt_dialog.c:3385
+#: gui2/gpt_dialog.c:3410
 msgid "Palette"
 msgstr "Палитра"
 
-#: gui2/gpt_dialog.c:3388
+#: gui2/gpt_dialog.c:3413
 msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
@@ -11367,15 +11371,15 @@ msgstr ""
 "Тези цветове ще бъдат използвани по подразбиране\n"
 "във всички графики\n"
 
-#: gui2/gpt_dialog.c:3655
+#: gui2/gpt_dialog.c:3680
 msgid "Title of plot"
 msgstr "Заглавие на графиката"
 
-#: gui2/gpt_dialog.c:3656
+#: gui2/gpt_dialog.c:3681
 msgid "Title for axis"
 msgstr "Заглавие на оста"
 
-#: gui2/gpt_dialog.c:3682
+#: gui2/gpt_dialog.c:3707
 msgid "gretl plot controls"
 msgstr "gretl: настройки на графиката"
 
@@ -11814,7 +11818,7 @@ msgstr "_Сортирай данните..."
 msgid "Set missing _value code..."
 msgstr "Задай кода  за _липсващи значения..."
 
-#: gui2/gretl.c:1658 gui2/gui_utils.c:328 gui2/gui_utils.c:373
+#: gui2/gretl.c:1658 gui2/gui_utils.c:329 gui2/gui_utils.c:374
 #: gui2/ssheet.c:175
 msgid "_View"
 msgstr "_Виж"
@@ -12031,7 +12035,7 @@ msgstr "_Честотно разпределение..."
 msgid "Estimated _density plot..."
 msgstr "Оценка на _функцията на пътността на разпределението..."
 
-#: gui2/gretl.c:1728 gui2/gui_utils.c:2967
+#: gui2/gretl.c:1728 gui2/gui_utils.c:2968
 msgid "_Boxplot"
 msgstr "_Диаграма правоъгълник"
 
@@ -12135,7 +12139,7 @@ msgstr "_Експонент на Хърст"
 msgid "_Edit attributes"
 msgstr "_Редактирай атрибутите"
 
-#: gui2/gretl.c:1760 gui2/gui_utils.c:2816
+#: gui2/gretl.c:1760 gui2/gui_utils.c:2817
 msgid "Define _new variable..."
 msgstr "Създай _нова променлива..."
 
@@ -12381,7 +12385,7 @@ msgstr "Проверка за _допълнения"
 msgid "_About gretl"
 msgstr "_За gretl"
 
-#: gui2/gretl.c:1904 gui2/gui_utils.c:241 gui2/gui_utils.c:365
+#: gui2/gretl.c:1904 gui2/gui_utils.c:242 gui2/gui_utils.c:366
 msgid "_Analysis"
 msgstr "_Aнализ"
 
@@ -12647,259 +12651,259 @@ msgstr ""
 msgid "No scalar variables are currently defined"
 msgstr "Не са дефинирани скаларни променливи"
 
-#: gui2/gui_recode.c:72 gui2/gui_utils.c:2099
+#: gui2/gui_recode.c:72 gui2/gui_utils.c:2100
 #, c-format
 msgid "Can't open %s for reading"
 msgstr "Невъзможно отварянето на %s за четене"
 
-#: gui2/gui_utils.c:214
+#: gui2/gui_utils.c:215
 msgid "equation"
 msgstr "уравнение"
 
-#: gui2/gui_utils.c:223 gui2/gui_utils.c:353
+#: gui2/gui_utils.c:224 gui2/gui_utils.c:354
 msgid "_Save as..."
 msgstr "_Съхрани като..."
 
-#: gui2/gui_utils.c:224 gui2/gui_utils.c:354
+#: gui2/gui_utils.c:225 gui2/gui_utils.c:355
 msgid "Save to session as _icon"
 msgstr "Съхрани в текущата сесия като _икона"
 
-#: gui2/gui_utils.c:225 gui2/gui_utils.c:355
+#: gui2/gui_utils.c:226 gui2/gui_utils.c:356
 msgid "Save as icon and cl_ose"
 msgstr "Съхрани като сесия и _затвори"
 
-#: gui2/gui_utils.c:226 gui2/gui_utils.c:356
+#: gui2/gui_utils.c:227 gui2/gui_utils.c:357
 msgid "_Print..."
 msgstr "_Печат..."
 
-#: gui2/gui_utils.c:227
+#: gui2/gui_utils.c:228
 msgid "View as equation"
 msgstr "Виж като уравнение"
 
-#: gui2/gui_utils.c:228 gui2/gui_utils.c:357
+#: gui2/gui_utils.c:229 gui2/gui_utils.c:358
 msgid "_Close"
 msgstr "_Затвори"
 
-#: gui2/gui_utils.c:229 gui2/gui_utils.c:358
+#: gui2/gui_utils.c:230 gui2/gui_utils.c:359
 msgid "_Edit"
 msgstr "_Редактирай"
 
-#: gui2/gui_utils.c:230 gui2/gui_utils.c:331 gui2/gui_utils.c:359
-#: gui2/gui_utils.c:374
+#: gui2/gui_utils.c:231 gui2/gui_utils.c:332 gui2/gui_utils.c:360
+#: gui2/gui_utils.c:375
 msgid "_Copy"
 msgstr "_Копирай"
 
-#: gui2/gui_utils.c:231
+#: gui2/gui_utils.c:232
 msgid "_Modify model..."
 msgstr "_Коригирай модела..."
 
-#: gui2/gui_utils.c:234
+#: gui2/gui_utils.c:235
 msgid "_Restore model sample"
 msgstr "_Възстнови извадката за модела"
 
-#: gui2/gui_utils.c:236 gui2/gui_utils.c:363
+#: gui2/gui_utils.c:237 gui2/gui_utils.c:364
 msgid "_Tests"
 msgstr "_Проверки"
 
-#: gui2/gui_utils.c:237 gui2/gui_utils.c:334 gui2/gui_utils.c:362
-#: gui2/gui_utils.c:375
+#: gui2/gui_utils.c:238 gui2/gui_utils.c:335 gui2/gui_utils.c:363
+#: gui2/gui_utils.c:376
 msgid "_Save"
 msgstr "_Съхрани"
 
-#: gui2/gui_utils.c:238 gui2/gui_utils.c:364
+#: gui2/gui_utils.c:239 gui2/gui_utils.c:365
 msgid "_Graphs"
 msgstr "_Графики"
 
-#: gui2/gui_utils.c:239
+#: gui2/gui_utils.c:240
 msgid "_Residual plot"
 msgstr "_Графики на остатъците"
 
-#: gui2/gui_utils.c:240
+#: gui2/gui_utils.c:241
 msgid "_Fitted, actual plot"
 msgstr "_Графика на емпиричните и изгладените значения"
 
-#: gui2/gui_utils.c:242
+#: gui2/gui_utils.c:243
 msgid "_Display actual, fitted, residual"
 msgstr "_Покажи, емпиричните, изгладените и остътъчните значения"
 
-#: gui2/gui_utils.c:244
+#: gui2/gui_utils.c:245
 msgid "_Forecasts..."
 msgstr "_Прогнози..."
 
-#: gui2/gui_utils.c:245
+#: gui2/gui_utils.c:246
 msgid "_Confidence intervals for coefficients"
 msgstr "_Доверителни интервали за коефициентите"
 
-#: gui2/gui_utils.c:247
+#: gui2/gui_utils.c:248
 msgid "Confidence _ellipse..."
 msgstr "Доверителна _елипса..."
 
-#: gui2/gui_utils.c:248
+#: gui2/gui_utils.c:249
 msgid "Coefficient covariance _matrix"
 msgstr "Матрица _на ковариационните коефициенти"
 
-#: gui2/gui_utils.c:249
+#: gui2/gui_utils.c:250
 msgid "_ANOVA"
 msgstr "_Дисп. анализ"
 
-#: gui2/gui_utils.c:250
+#: gui2/gui_utils.c:251
 msgid "_Bootstrap..."
 msgstr "_Бутстрап..."
 
-#: gui2/gui_utils.c:254
+#: gui2/gui_utils.c:255
 msgid "_Omit variables"
 msgstr "_Излишни променливи"
 
-#: gui2/gui_utils.c:255
+#: gui2/gui_utils.c:256
 msgid "_Add variables"
 msgstr "_Пропуснати променливи"
 
-#: gui2/gui_utils.c:256
+#: gui2/gui_utils.c:257
 msgid "_Sum of coefficients"
 msgstr "_Сума на коефициентите"
 
-#: gui2/gui_utils.c:257
+#: gui2/gui_utils.c:258
 msgid "_Linear restrictions"
 msgstr "_Линейни ограничения"
 
-#: gui2/gui_utils.c:258
+#: gui2/gui_utils.c:259
 msgid "Non-linearity (s_quares)"
 msgstr "Нелинейност (_квадрати)"
 
-#: gui2/gui_utils.c:259
+#: gui2/gui_utils.c:260
 msgid "Non-linearity (_logs)"
 msgstr "Неинейност (_логаритми)"
 
-#: gui2/gui_utils.c:260
+#: gui2/gui_utils.c:261
 msgid "_Ramsey's RESET"
 msgstr "_ RESET критерий на Рамзи"
 
-#: gui2/gui_utils.c:261
+#: gui2/gui_utils.c:262
 msgid "_Heteroskedasticity"
 msgstr "_Хетероскедастичност"
 
-#: gui2/gui_utils.c:262
+#: gui2/gui_utils.c:263
 msgid "_Normality of residual"
 msgstr "_Нормално разпределение на остатъците"
 
-#: gui2/gui_utils.c:263
+#: gui2/gui_utils.c:264
 msgid "_Influential observations"
 msgstr "_Значими наблюдения"
 
-#: gui2/gui_utils.c:264
+#: gui2/gui_utils.c:265
 msgid "_Chow test"
 msgstr "_Критерий на Чоу"
 
-#: gui2/gui_utils.c:265
+#: gui2/gui_utils.c:266
 msgid "_Collinearity"
 msgstr "_Колинеарност"
 
-#: gui2/gui_utils.c:266 gui2/gui_utils.c:4329
+#: gui2/gui_utils.c:267 gui2/gui_utils.c:4330
 msgid "_Autocorrelation"
 msgstr "_Автокорелация"
 
-#: gui2/gui_utils.c:267
+#: gui2/gui_utils.c:268
 msgid "_Durbin-Watson p-value"
 msgstr "_p-value за критерия на Дърбин-Уотсън"
 
-#: gui2/gui_utils.c:268 gui2/gui_utils.c:4335
+#: gui2/gui_utils.c:269 gui2/gui_utils.c:4336
 msgid "A_RCH"
 msgstr "Критерий за проверка на A_RCH процеси"
 
-#: gui2/gui_utils.c:269
+#: gui2/gui_utils.c:270
 msgid "_QLR test"
 msgstr "_Правдоподобно отношение на Квандт (_QLR)"
 
-#: gui2/gui_utils.c:270
+#: gui2/gui_utils.c:271
 msgid "_CUSUM test"
 msgstr "_Критерий на кумулираните суми (_CUSUM)"
 
-#: gui2/gui_utils.c:271
+#: gui2/gui_utils.c:272
 msgid "CUSUM_SQ test"
 msgstr "Критерий на кумулираната сума от квадратите (CUSUM_SQ)"
 
-#: gui2/gui_utils.c:272
+#: gui2/gui_utils.c:273
 msgid "_Common factor"
 msgstr "_Общ фактор"
 
-#: gui2/gui_utils.c:273
+#: gui2/gui_utils.c:274
 msgid "_Panel diagnostics"
 msgstr "_Панелна диагностика"
 
-#: gui2/gui_utils.c:277 gui2/gui_utils.c:284
+#: gui2/gui_utils.c:278 gui2/gui_utils.c:285
 msgid "White's test"
 msgstr "Критерий на Уайт"
 
-#: gui2/gui_utils.c:278
+#: gui2/gui_utils.c:279
 msgid "White's test (squares only)"
 msgstr "Критерий на Уат (само квадрати)"
 
-#: gui2/gui_utils.c:285
+#: gui2/gui_utils.c:286
 msgid "_groupwise"
 msgstr "_по групи"
 
-#: gui2/gui_utils.c:289
+#: gui2/gui_utils.c:290
 msgid "Pesaran-Taylor test"
 msgstr "Критерий на Песаран-Тейлър"
 
-#: gui2/gui_utils.c:327 gui2/gui_utils.c:347 gui2/gui_utils.c:372
+#: gui2/gui_utils.c:328 gui2/gui_utils.c:348 gui2/gui_utils.c:373
 msgid "_LaTeX"
 msgstr "_LaTeX"
 
-#: gui2/gui_utils.c:329 gui2/gui_utils.c:332 gui2/gui_utils.c:335
+#: gui2/gui_utils.c:330 gui2/gui_utils.c:333 gui2/gui_utils.c:336
 msgid "_Tabular"
 msgstr "_Taбличен"
 
-#: gui2/gui_utils.c:330 gui2/gui_utils.c:333 gui2/gui_utils.c:336
+#: gui2/gui_utils.c:331 gui2/gui_utils.c:334 gui2/gui_utils.c:337
 msgid "_Equation"
 msgstr "_Уравнение"
 
-#: gui2/gui_utils.c:337
+#: gui2/gui_utils.c:338
 msgid "_Equation options"
 msgstr "_Параметри на уравнението"
 
-#: gui2/gui_utils.c:338
+#: gui2/gui_utils.c:339
 msgid "_Tabular options..."
 msgstr "Параметри на _табицата..."
 
-#: gui2/gui_utils.c:342
+#: gui2/gui_utils.c:343
 msgid "Show _standard errors"
 msgstr "Покажи _стандартните грешки"
 
-#: gui2/gui_utils.c:343
+#: gui2/gui_utils.c:344
 msgid "Show _t-ratios"
 msgstr "Покажи _t-критериите"
 
-#: gui2/gui_utils.c:360
+#: gui2/gui_utils.c:361
 msgid "_Revise specification..."
 msgstr "_Промени модела..."
 
-#: gui2/gui_utils.c:366
+#: gui2/gui_utils.c:367
 msgid "_Forecasts"
 msgstr "_Прогнози"
 
-#: gui2/gui_utils.c:443
+#: gui2/gui_utils.c:444
 msgid "Couldn't open temp file"
 msgstr "Не може да се отвори временния файл"
 
-#: gui2/gui_utils.c:968 gui2/gui_utils.c:979 gui2/gui_utils.c:993
+#: gui2/gui_utils.c:969 gui2/gui_utils.c:980 gui2/gui_utils.c:994
 #, fuzzy
 msgid "Leave the dataset as it is"
 msgstr "Съхрани като променливи:"
 
-#: gui2/gui_utils.c:969 gui2/gui_utils.c:980
+#: gui2/gui_utils.c:970 gui2/gui_utils.c:981
 msgid "Delete the weekend rows"
 msgstr ""
 
-#: gui2/gui_utils.c:981 gui2/gui_utils.c:994
+#: gui2/gui_utils.c:982 gui2/gui_utils.c:995
 msgid "Delete all blank rows"
 msgstr ""
 
-#: gui2/gui_utils.c:1043 gui2/gui_utils.c:1332 gui2/library.c:7846
+#: gui2/gui_utils.c:1044 gui2/gui_utils.c:1333 gui2/library.c:7846
 msgid "gretl: open data"
 msgstr "gretl: отвори файл"
 
-#: gui2/gui_utils.c:1044
+#: gui2/gui_utils.c:1045
 msgid ""
 "The imported data have been interpreted as undated\n"
 "(cross-sectional).  Do you want to give the data a\n"
@@ -12909,26 +12913,26 @@ msgstr ""
 "структура. Искате ли да  интерпретирате данните\n"
 "като динамични или панелни?"
 
-#: gui2/gui_utils.c:1193 gui2/gui_utils.c:1196
+#: gui2/gui_utils.c:1194 gui2/gui_utils.c:1197
 #, c-format
 msgid "gretl: import %s data"
 msgstr "gretl: импортирай %s данни"
 
-#: gui2/gui_utils.c:1268
+#: gui2/gui_utils.c:1269
 #, fuzzy
 msgid "simple append"
 msgstr "средна в извадката"
 
-#: gui2/gui_utils.c:1269
+#: gui2/gui_utils.c:1270
 msgid "\"join\" (advanced)"
 msgstr ""
 
-#: gui2/gui_utils.c:1272
+#: gui2/gui_utils.c:1273
 #, fuzzy
 msgid "gretl: append data"
 msgstr "gretl: отвори файл"
 
-#: gui2/gui_utils.c:1333 gui2/library.c:7847
+#: gui2/gui_utils.c:1334 gui2/library.c:7847
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -12938,11 +12942,11 @@ msgstr ""
 "затварянето на текущия файл. Несъхранените\n"
 "данни ще бъдат загубени. Да продължа ли?"
 
-#: gui2/gui_utils.c:1358
+#: gui2/gui_utils.c:1359
 msgid "gretl: open session"
 msgstr "gretl: отвори сесия"
 
-#: gui2/gui_utils.c:1359
+#: gui2/gui_utils.c:1360
 msgid ""
 "Opening a new session file will automatically\n"
 "close the current session.  Any unsaved work\n"
@@ -12952,358 +12956,358 @@ msgstr ""
 "затварянето на текущата. Несъхранените\n"
 "данни ще бъдат загубени. Да продължа ли?"
 
-#: gui2/gui_utils.c:1419
+#: gui2/gui_utils.c:1420
 msgid "Buffer is empty"
 msgstr "Буферът е празен"
 
-#: gui2/gui_utils.c:1692
+#: gui2/gui_utils.c:1693
 msgid "gretl: edit plot commands"
 msgstr "gretl: команди за графиките"
 
-#: gui2/gui_utils.c:1694
+#: gui2/gui_utils.c:1695
 msgid "gretl: edit R script"
 msgstr "gretl: редактирай R скрипт"
 
-#: gui2/gui_utils.c:1696
+#: gui2/gui_utils.c:1697
 msgid "gretl: edit Ox program"
 msgstr "gretl: редактирай Ox  скрипт"
 
-#: gui2/gui_utils.c:1698
+#: gui2/gui_utils.c:1699
 msgid "gretl: edit Octave script"
 msgstr "gretl: редактирай Octave  скрипт"
 
-#: gui2/gui_utils.c:1700
+#: gui2/gui_utils.c:1701
 msgid "gretl: edit Python script"
 msgstr "gretl: редактирай Python  скрипт"
 
-#: gui2/gui_utils.c:1702
+#: gui2/gui_utils.c:1703
 #, fuzzy
 msgid "gretl: edit Julia program"
 msgstr "gretl: редактирай Ox  скрипт"
 
-#: gui2/gui_utils.c:1704
+#: gui2/gui_utils.c:1705
 #, fuzzy
 msgid "gretl: edit Stata program"
 msgstr "gretl: редактирай Ox  скрипт"
 
-#: gui2/gui_utils.c:1706
+#: gui2/gui_utils.c:1707
 #, fuzzy
 msgid "gretl: edit package spec file"
 msgstr "gretl: пакети с данни на сървъра"
 
-#: gui2/gui_utils.c:1708
+#: gui2/gui_utils.c:1709
 msgid "gretl: untitled"
 msgstr "gretl: без име"
 
-#: gui2/gui_utils.c:1748
+#: gui2/gui_utils.c:1749
 #, fuzzy, c-format
 msgid "gretl: script output %d"
 msgstr "gretl: резултати от изпълнението на скрипта"
 
-#: gui2/gui_utils.c:1750 gui2/gui_utils.c:5319 gui2/gui_utils.c:5512
+#: gui2/gui_utils.c:1751 gui2/gui_utils.c:5379 gui2/gui_utils.c:5572
 msgid "gretl: script output"
 msgstr "gretl: резултати от изпълнението на скрипта"
 
-#: gui2/gui_utils.c:1760
+#: gui2/gui_utils.c:1761
 msgid "gretl: help"
 msgstr "gretl: помощ"
 
-#: gui2/gui_utils.c:1762
+#: gui2/gui_utils.c:1763
 msgid "gretl: function reference"
 msgstr "gretl: справка по функции"
 
-#: gui2/gui_utils.c:1764
+#: gui2/gui_utils.c:1765
 msgid "gretl: command reference"
 msgstr "gretl: справка по команди"
 
-#: gui2/gui_utils.c:1770
+#: gui2/gui_utils.c:1771
 msgid "gretl: command log"
 msgstr "gretl: история на командите"
 
-#: gui2/gui_utils.c:1787 gui2/session.c:529
+#: gui2/gui_utils.c:1788 gui2/session.c:529
 msgid "gretl: session notes"
 msgstr "gretl: описание на сесиите"
 
-#: gui2/gui_utils.c:1793 gui2/library.c:6845 gui2/library.c:6879
+#: gui2/gui_utils.c:1794 gui2/library.c:6845 gui2/library.c:6879
 #: gui2/library.c:6883
 msgid "gretl: display data"
 msgstr "gretl: покажи данните"
 
-#: gui2/gui_utils.c:2214
+#: gui2/gui_utils.c:2215
 msgid "gretl console"
 msgstr "конзола на gretl "
 
-#: gui2/gui_utils.c:2516
+#: gui2/gui_utils.c:2517
 #, c-format
 msgid "model %d"
 msgstr "модел %d"
 
-#: gui2/gui_utils.c:2522 gui2/tabwin.c:857
+#: gui2/gui_utils.c:2523 gui2/tabwin.c:857
 #, c-format
 msgid "gretl: model %d"
 msgstr "gretl: модел %d"
 
-#: gui2/gui_utils.c:2678 gui2/gui_utils.c:2691
+#: gui2/gui_utils.c:2679 gui2/gui_utils.c:2692
 msgid "Outcome probabilities"
 msgstr "Изходни вероятности"
 
-#: gui2/gui_utils.c:2768
+#: gui2/gui_utils.c:2769
 msgid "_Fitted values"
 msgstr "_Изгладени значения"
 
-#: gui2/gui_utils.c:2770
+#: gui2/gui_utils.c:2771
 msgid "_Residuals"
 msgstr "_Остатъци"
 
-#: gui2/gui_utils.c:2772
+#: gui2/gui_utils.c:2773
 msgid "_Squared residuals"
 msgstr "_Квадрати на остатъците"
 
-#: gui2/gui_utils.c:2777
+#: gui2/gui_utils.c:2778
 msgid "_Error sum of squares"
 msgstr "_Сума от квадратите на остатъците"
 
-#: gui2/gui_utils.c:2779
+#: gui2/gui_utils.c:2780
 msgid "_Standard error of the regression"
 msgstr "_Стандартна грешка в регресията"
 
-#: gui2/gui_utils.c:2784
+#: gui2/gui_utils.c:2785
 msgid "_R-squared"
 msgstr "_R-квадрат"
 
-#: gui2/gui_utils.c:2785
+#: gui2/gui_utils.c:2786
 msgid "_T*R-squared"
 msgstr "_T*R-квадрат"
 
-#: gui2/gui_utils.c:2789
+#: gui2/gui_utils.c:2790
 msgid "_Log likelihood"
 msgstr "_Логаритмично праводоподобие"
 
-#: gui2/gui_utils.c:2794
+#: gui2/gui_utils.c:2795
 msgid "_Akaike Information Criterion"
 msgstr "_Информационен критерий на Акайке"
 
-#: gui2/gui_utils.c:2796
+#: gui2/gui_utils.c:2797
 msgid "_Bayesian Information Criterion"
 msgstr "_Информационен критерий на Шварц"
 
-#: gui2/gui_utils.c:2798
+#: gui2/gui_utils.c:2799
 msgid "_Hannan-Quinn Information Criterion"
 msgstr "_Информационен критерия на Ханан-Куин"
 
-#: gui2/gui_utils.c:2803
+#: gui2/gui_utils.c:2804
 msgid "_Predicted error variance"
 msgstr "_Прогнозна дисперсия на грешсите"
 
-#: gui2/gui_utils.c:2809
+#: gui2/gui_utils.c:2810
 msgid "Per-unit _constants"
 msgstr "Константа по единици"
 
-#: gui2/gui_utils.c:2978
+#: gui2/gui_utils.c:2979
 msgid "_Against time"
 msgstr "_В зависимост от времето"
 
-#: gui2/gui_utils.c:2980
+#: gui2/gui_utils.c:2981
 msgid "By _observation number"
 msgstr "По _номер на наблюдение"
 
-#: gui2/gui_utils.c:3000 gui2/gui_utils.c:3021
+#: gui2/gui_utils.c:3001 gui2/gui_utils.c:3022
 #, c-format
 msgid "_Against %s"
 msgstr "В_зависимост от  %s"
 
-#: gui2/gui_utils.c:3034
+#: gui2/gui_utils.c:3035
 msgid "Actual vs. Fitted"
 msgstr "Емпирични и изгладени"
 
-#: gui2/gui_utils.c:3044
+#: gui2/gui_utils.c:3045
 msgid "Residual _correlogram"
 msgstr "Корелограма на _остатъците"
 
-#: gui2/gui_utils.c:3048
+#: gui2/gui_utils.c:3049
 msgid "Residual _periodogram"
 msgstr "Периодограма на _остатъците"
 
-#: gui2/gui_utils.c:3057
+#: gui2/gui_utils.c:3058
 msgid "Residual _Q-Q plot"
 msgstr " _Q-Q диаграма на остатъците"
 
-#: gui2/gui_utils.c:3077
+#: gui2/gui_utils.c:3078
 #, c-format
 msgid "_Against %s and %s"
 msgstr "_В зависимост от %s и %s"
 
-#: gui2/gui_utils.c:3142
+#: gui2/gui_utils.c:3143
 msgid "Separation"
 msgstr "Равнище"
 
-#: gui2/gui_utils.c:3157
+#: gui2/gui_utils.c:3158
 #, c-format
 msgid "By %s"
 msgstr "По %s"
 
-#: gui2/gui_utils.c:3200
+#: gui2/gui_utils.c:3201
 msgid "tau sequence"
 msgstr "цикъл за тау"
 
-#: gui2/gui_utils.c:3406
+#: gui2/gui_utils.c:3407
 msgid "gretl: VAR covariance matrix"
 msgstr "gretl: VAR ковариационна матрица"
 
-#: gui2/gui_utils.c:3409
+#: gui2/gui_utils.c:3410
 msgid "gretl: system covariance matrix"
 msgstr "gretl: системна ковариационна матрица"
 
-#: gui2/gui_utils.c:3415
+#: gui2/gui_utils.c:3416
 msgid "System fitted values"
 msgstr "Система от изгладени значения"
 
-#: gui2/gui_utils.c:3482
+#: gui2/gui_utils.c:3483
 msgid "View X-12-ARIMA output"
 msgstr "Преглед на резултатите от X-12-ARIMA"
 
-#: gui2/gui_utils.c:3606
+#: gui2/gui_utils.c:3607
 msgid "Cholesky ordering:"
 msgstr "Подреждане по Чолески"
 
-#: gui2/gui_utils.c:3687
+#: gui2/gui_utils.c:3688
 msgid "include bootstrap confidence interval"
 msgstr "добави ботстрап доверителен интервал"
 
-#: gui2/gui_utils.c:3694 gui2/gui_utils.c:3978
+#: gui2/gui_utils.c:3695 gui2/gui_utils.c:3979
 msgid "impulse responses"
 msgstr "импулсна реакция"
 
-#: gui2/gui_utils.c:3699 gui2/gui_utils.c:3748 gui2/gui_utils.c:3984
+#: gui2/gui_utils.c:3700 gui2/gui_utils.c:3749 gui2/gui_utils.c:3985
 msgid "forecast horizon (periods):"
 msgstr "прогнозен хоризонт (период)"
 
-#: gui2/gui_utils.c:3734
+#: gui2/gui_utils.c:3735
 #, fuzzy
 msgid "line graph"
 msgstr "Съхрани графиката"
 
-#: gui2/gui_utils.c:3735
+#: gui2/gui_utils.c:3736
 #, fuzzy
 msgid "stacked bar graph"
 msgstr "Съхрани графиката"
 
-#: gui2/gui_utils.c:3743 gui2/gui_utils.c:4412 gui2/gui_utils.c:4534
+#: gui2/gui_utils.c:3744 gui2/gui_utils.c:4413 gui2/gui_utils.c:4535
 msgid "Forecast variance decomposition"
 msgstr "Разлагане на дисперсията на прогнозата"
 
-#: gui2/gui_utils.c:3979
+#: gui2/gui_utils.c:3980
 msgid "variance decompositions"
 msgstr "разлагане на дисперсии"
 
-#: gui2/gui_utils.c:4134 gui2/library.c:2131
+#: gui2/gui_utils.c:4135 gui2/library.c:2131
 msgid "gretl: forecasts"
 msgstr "gretl: прогнози"
 
-#: gui2/gui_utils.c:4190 gui2/gui_utils.c:4201 gui2/library.c:3228
+#: gui2/gui_utils.c:4191 gui2/gui_utils.c:4202 gui2/library.c:3228
 #: gui2/library.c:3249
 msgid "gretl: autocorrelation"
 msgstr "gretl: aвтокорелация"
 
-#: gui2/gui_utils.c:4191 gui2/gui_utils.c:4212 gui2/library.c:2653
+#: gui2/gui_utils.c:4192 gui2/gui_utils.c:4213 gui2/library.c:2653
 #: gui2/library.c:2672
 msgid "gretl: ARCH test"
 msgstr "gretl: критерий за проверка на ARCH процес"
 
-#: gui2/gui_utils.c:4192 gui2/library.c:3229
+#: gui2/gui_utils.c:4193 gui2/library.c:3229
 msgid "Lag order for test:"
 msgstr "Проверка на лагов порядък:"
 
-#: gui2/gui_utils.c:4341
+#: gui2/gui_utils.c:4342
 msgid "_Normality of residuals"
 msgstr "_Нормалност на остатъците"
 
-#: gui2/gui_utils.c:4348
+#: gui2/gui_utils.c:4349
 msgid "Linear restrictions"
 msgstr "Линейни ограничения"
 
-#: gui2/gui_utils.c:4355
+#: gui2/gui_utils.c:4356
 msgid "Omit exogenous variables..."
 msgstr "Излишни екзогенни променливи..."
 
-#: gui2/gui_utils.c:4361
+#: gui2/gui_utils.c:4362
 msgid "Omit time trend"
 msgstr "Отстрани временния тренд"
 
-#: gui2/gui_utils.c:4367
+#: gui2/gui_utils.c:4368
 msgid "Omit seasonal dummies"
 msgstr "Отстрани сезонните фиктивни променливи"
 
-#: gui2/gui_utils.c:4376
+#: gui2/gui_utils.c:4377
 msgid "Residuals from equation"
 msgstr "Остатъци от уравнението"
 
-#: gui2/gui_utils.c:4385
+#: gui2/gui_utils.c:4386
 msgid "Display residuals, all equations"
 msgstr "Покажи остатъците, всички уравнения"
 
-#: gui2/gui_utils.c:4392
+#: gui2/gui_utils.c:4393
 msgid "Display fitted values, all equations"
 msgstr "Покажи изгладените значения, всички уравнения"
 
-#: gui2/gui_utils.c:4406
+#: gui2/gui_utils.c:4407
 msgid "Impulse responses"
 msgstr "Импулсни реакции"
 
-#: gui2/gui_utils.c:4420
+#: gui2/gui_utils.c:4421
 msgid "Residuals"
 msgstr "Остатъци"
 
-#: gui2/gui_utils.c:4427
+#: gui2/gui_utils.c:4428
 msgid "Combined plot"
 msgstr "Комбинирана графика"
 
-#: gui2/gui_utils.c:4436
+#: gui2/gui_utils.c:4437
 msgid "Multiple plots"
 msgstr "Няколко графики"
 
-#: gui2/gui_utils.c:4445
+#: gui2/gui_utils.c:4446
 #, c-format
 msgid "Equation %d"
 msgstr "Уравнение %d"
 
-#: gui2/gui_utils.c:4458
+#: gui2/gui_utils.c:4459
 msgid "EC plot"
 msgstr "ЕС графика"
 
-#: gui2/gui_utils.c:4463
+#: gui2/gui_utils.c:4464
 msgid "Combined EC plot"
 msgstr "Комбинирана EC графика"
 
-#: gui2/gui_utils.c:4472
+#: gui2/gui_utils.c:4473
 msgid "VAR inverse roots"
 msgstr "Обратни корени във VAR"
 
-#: gui2/gui_utils.c:4480
+#: gui2/gui_utils.c:4481
 msgid "Impulse responses (combined)"
 msgstr "Импулсни реакции  (общи)"
 
-#: gui2/gui_utils.c:4510
+#: gui2/gui_utils.c:4511
 #, c-format
 msgid "Response of %s"
 msgstr "Реакция от %s"
 
-#: gui2/gui_utils.c:4524
+#: gui2/gui_utils.c:4525
 #, c-format
 msgid "to %s"
 msgstr "на %s"
 
-#: gui2/gui_utils.c:4850
+#: gui2/gui_utils.c:4910
 #, fuzzy
 msgid "_Save text..."
 msgstr "_Съхрани текста като..."
 
-#: gui2/gui_utils.c:4857
+#: gui2/gui_utils.c:4917
 #, fuzzy
 msgid "Save bundle to session as _icon"
 msgstr "Съхрани в текущата сесия като _икона"
 
-#: gui2/gui_utils.c:4938
+#: gui2/gui_utils.c:4998
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -13317,7 +13321,7 @@ msgstr ""
 "Искате ли да се възстанови извадката, върху която\n"
 "е оценен моделът?"
 
-#: gui2/gui_utils.c:4998
+#: gui2/gui_utils.c:5058
 #, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
@@ -13329,32 +13333,32 @@ msgstr ""
 "Искате ли да се възстанови извадката, върху която\n"
 "е оценен моделът?"
 
-#: gui2/gui_utils.c:5063 gui2/library.c:5031
+#: gui2/gui_utils.c:5123 gui2/library.c:5031
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Името на реда %s вече съществува"
 
-#: gui2/gui_utils.c:5065
+#: gui2/gui_utils.c:5125
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "Матрицата с име %s вече съществува"
 
-#: gui2/gui_utils.c:5067
+#: gui2/gui_utils.c:5127
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "Скаларната променлива  %s вече съществува"
 
-#: gui2/gui_utils.c:5069
+#: gui2/gui_utils.c:5129
 #, c-format
 msgid "A list named %s already exists"
 msgstr "Списъкът с име %s вече съществува"
 
-#: gui2/gui_utils.c:5071
+#: gui2/gui_utils.c:5131
 #, c-format
 msgid "A string named %s already exists"
 msgstr "Редът с име %s вече съществува"
 
-#: gui2/gui_utils.c:5107
+#: gui2/gui_utils.c:5167
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -13363,7 +13367,7 @@ msgstr ""
 "Името на променливата %s... е твърде дълго\n"
 "(максимума е  %d символа)"
 
-#: gui2/gui_utils.c:5112
+#: gui2/gui_utils.c:5172
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -13372,7 +13376,7 @@ msgstr ""
 "Първият символ на променливата ('%c') не е позволен\n"
 "(трябва да е латинска буква)"
 
-#: gui2/gui_utils.c:5120
+#: gui2/gui_utils.c:5180
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -13381,7 +13385,7 @@ msgstr ""
 "Името съдържа недопустим символ (на позиция %d)\n"
 "Използвайте само букви, цифри или долно тире"
 
-#: gui2/gui_utils.c:5403
+#: gui2/gui_utils.c:5463
 msgid "No command was supplied to start R"
 msgstr "Не са въведени команди за стартиране на R"
 
@@ -16931,12 +16935,12 @@ msgstr "Единичен корен MA %d = %g\n"
 msgid "MA estimate(s) out of bounds\n"
 msgstr "MA оценките са извън допустимите граници\n"
 
-#: plugin/arma.c:1446 plugin/arma_init.c:351 plugin/arma_init.c:1139
+#: plugin/arma.c:1404 plugin/arma_init.c:351 plugin/arma_init.c:1139
 #: plugin/arma_init.c:1214 plugin/arma_init.c:1217
 msgid "ARMA initialization"
 msgstr "ARMA инициализация"
 
-#: plugin/arma.c:1447
+#: plugin/arma.c:1405
 msgid "user-specified values"
 msgstr "Потребителско начално значение"
 
@@ -17421,7 +17425,7 @@ msgstr "gretl: POP информация"
 msgid "Variable '%s' is all zeros"
 msgstr "Променливата '%s' приема само нулеви значения"
 
-#: plugin/mp_ols.c:1413
+#: plugin/mp_ols.c:1457
 msgid "Error sum of squares is not >= 0"
 msgstr "Сумата от квадратите на грешката е отрицателна"
 
@@ -17885,6 +17889,9 @@ msgstr "Показатели/преобразования"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Вероятностни разпределения"
+
+#~ msgid "Wrong data type"
+#~ msgstr "Погрешен тип на данните"
 
 #~ msgid "observations sorted by %s"
 #~ msgstr "Наблюдения, сортирани по %s"
