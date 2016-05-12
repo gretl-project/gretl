@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-04-21 16:38-0400\n"
-"PO-Revision-Date: 2016-03-17 16:56+0100\n"
+"PO-Revision-Date: 2016-05-12 15:41+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -3936,9 +3936,8 @@ msgid "Couldn't estimate group means regression\n"
 msgstr "No se pudo estimar la regresión de medias de grupos\n"
 
 #: lib/src/gretl_panel.c:3491
-#, fuzzy
 msgid "Couldn't estimate group means regression"
-msgstr "No se pudo estimar la regresión de medias de grupos\n"
+msgstr "No se pudo estimar la regresión de medias de grupos"
 
 #: lib/src/gretl_panel.c:3880
 msgid "Can't produce ML estimates: some units have only one observation"
@@ -4039,19 +4038,18 @@ msgstr ""
 " sean inconsistentes o redundantes"
 
 #: lib/src/gretl_restrict.c:626
-#, fuzzy
 msgid "Invalid restriction on beta"
-msgstr "Restricción no válida"
+msgstr "Restricción sobre beta no válida"
 
 #: lib/src/gretl_restrict.c:635
-#, fuzzy, c-format
+#, c-format
 msgid "Too many restrictions: the maximum number is %d"
-msgstr "Demasiadas restricciones (el máximo es %d)"
+msgstr "Demasiadas restricciones: el número máximo es %d"
 
 #: lib/src/gretl_restrict.c:639
-#, fuzzy, c-format
+#, c-format
 msgid "The R matrix must have %d columns"
-msgstr "modprint: el primer argumento de la matriz debe tener 2 columnas"
+msgstr "La matriz R debe tener %d columnas"
 
 #: lib/src/gretl_restrict.c:734 lib/src/gretl_restrict.c:747
 msgid "Please give a coefficient number"
@@ -6010,31 +6008,31 @@ msgid "%s: not implemented in 'progressive' loops"
 msgstr "'%s' : no está implementado en bucles 'progresivos'"
 
 #: lib/src/nls.c:253
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The formula '%s'\n"
 " produced an error on execution"
 msgstr ""
-"La fórmula '%s'\n"
-"ha producido un resultado escalar"
+"Al ejecutar la fórmula '%s'\n"
+"se ha producido un error"
 
 #: lib/src/nls.c:256
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The formula '%s'\n"
 " produced an error on compilation"
 msgstr ""
-"La fórmula '%s'\n"
-"ha producido un resultado escalar"
+"Al compilar la fórmula '%s'\n"
+"se ha producido un error"
 
 #: lib/src/nls.c:367
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The formula '%s'\n"
 " did not produce the required output type"
 msgstr ""
 "La fórmula '%s'\n"
-"ha producido un resultado escalar"
+"no ha producido el tipo de resultado que se requiere"
 
 #: lib/src/nls.c:646
 #, c-format
@@ -6112,9 +6110,9 @@ msgid "command '%s' not valid in this context"
 msgstr "la instrucción '%s' no es válida en este contexto"
 
 #: lib/src/nls.c:2730
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not valid in this context"
-msgstr "la instrucción '%s' no es válida en este contexto"
+msgstr "'%s': no es válida en este contexto"
 
 #: lib/src/nls.c:2821 gui2/dialogs.c:5903
 #, c-format
@@ -7271,7 +7269,7 @@ msgid "Invalid option '-%c'"
 msgstr "La opción '-%c' no es válida"
 
 #: lib/src/tokenize.c:3077
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol %c"
 msgstr "Símbolo no esperado '%c'"
 
@@ -13453,13 +13451,12 @@ msgid "Failed to download file"
 msgstr "Fallo al descargar un fichero"
 
 #: gui2/join-gui.c:462
-#, fuzzy
 msgid "show details of importation"
-msgstr "Mostrar los detalles de las iteraciones"
+msgstr "Mostrar los detalles de la importación"
 
 #: gui2/join-gui.c:778
 msgid "The 'seq' aggregator requires an integer parameter, as in seq:1"
-msgstr ""
+msgstr "El agregador 'seq' requiere un parámetro entero, como en seq:1"
 
 #: gui2/library.c:136
 msgid "gretl: iteration info"
@@ -14267,7 +14264,7 @@ msgstr ""
 
 #: gui2/library.c:9116
 msgid "Unmatched \"if\" in script (fixed)"
-msgstr ""
+msgstr "Hay un \"if\" sin casar en el guión (resuelto)"
 
 #: gui2/library.c:9121
 msgid "Unterminated comment in script"
