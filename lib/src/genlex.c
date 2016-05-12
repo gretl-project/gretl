@@ -355,6 +355,7 @@ struct str_table funcs[] = {
     { F_KSMOOTH,  "ksmooth" },
     { F_KDSMOOTH, "kdsmooth" },
     { F_KSIMUL,   "ksimul" },
+    { F_KSIMDATA, "ksimdata" },
     { F_TRIMR,    "trimr" },
     { F_GETENV,   "getenv" },
     { F_NGETENV,  "ngetenv" },

@@ -365,6 +365,7 @@ enum {
     F_SQUARE,
     F_SEASONALS,
     F_DROPCOLL,
+    F_KSIMDATA,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_PRINCOMP,

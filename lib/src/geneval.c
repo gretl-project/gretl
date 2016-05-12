@@ -9815,11 +9815,18 @@ static gretl_matrix *node_get_matrix_lenient (NODE *n,
 
 static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
 {
-    NODE *e = n->v.bn.n[0]; /* the first of multi args */
     gretl_bundle *b = NULL;
 
-    e = e->v.b1.b; /* switch to content node */
-    b = e->v.b;    /* and get the actual bundle */
+    if (n->t == BUNDLE) {
+	/* plain bundle node */
+	b = n->v.b;
+    } else {
+	/* multi-args node */
+	NODE *e = n->v.bn.n[0];
+
+	e = e->v.b1.b; /* switch to content node */
+	b = e->v.b;    /* and get the actual bundle */
+    }
 
     if (gretl_bundle_get_type(b) != BUNDLE_KALMAN ||
 	gretl_bundle_get_private_data(b) == NULL) {
@@ -9966,6 +9973,27 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	}
 
 	if (freeU) gretl_matrix_free(U);
+    }
+
+    return ret;
+}
+
+static NODE *kalman_data_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *save_aux = p->aux;
+    gretl_bundle *b = get_kalman_bundle_arg(l, p);
+    NODE *ret = NULL;
+
+    if (!p->err) {
+	reset_p_aux(p, save_aux);
+	ret = aux_matrix_node(p);
+    }
+
+    if (!p->err) {
+	if (ret->v.m != NULL) {
+	    gretl_matrix_free(ret->v.m);
+	}
+	ret->v.m = kalman_bundle_simdata(b, r->v.m, &p->err);
     }
 
     return ret;
@@ -12464,6 +12492,15 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} else {
 	    ret = eval_kalman_bundle_func(t, p);
+	}
+	break;
+    case F_KSIMDATA:
+	if (l->t == BUNDLE && r->t == MAT) {
+	    ret = kalman_data_node(l, r, p);
+	} else if (l->t != BUNDLE) {
+	    node_type_error(t->t, 1, BUNDLE, l, p);
+	} else {
+	    node_type_error(t->t, 2, MAT, r, p);
 	}
 	break;
     case F_ISOCONV:
