@@ -8899,7 +8899,7 @@ static void node_nullify_ptr (NODE *n)
     if (n->t == LIST)   n->v.ivec = NULL;
 }
 
-/* given an FNARGS node, detect if the first argument
+/* given an FARGS node, detect if the first argument
    is a pointer to bundle */
 
 static int bundle_pointer_arg0 (NODE *t)
@@ -9816,23 +9816,29 @@ static gretl_matrix *node_get_matrix_lenient (NODE *n,
 static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
 {
     gretl_bundle *b = NULL;
+    NODE *e = NULL;
 
-    if (n->t == BUNDLE) {
-	/* plain bundle node */
-	b = n->v.b;
-    } else {
-	/* multi-args node */
-	NODE *e = n->v.bn.n[0];
-
-	e = e->v.b1.b; /* switch to content node */
-	b = e->v.b;    /* and get the actual bundle */
+    if (n->t == FARGS) {
+	/* multi-arguments node */
+	e = n->v.bn.n[0];
+	e = e->v.b1.b;
+    } else if (n->t == U_ADDR) {
+	e = n->v.b1.b;
     }
 
-    if (gretl_bundle_get_type(b) != BUNDLE_KALMAN ||
-	gretl_bundle_get_private_data(b) == NULL) {
-	gretl_errmsg_set("Argument 1 must be a state-space bundle");
+    if (e == NULL || e->t != BUNDLE) {
 	p->err = E_TYPES;
-	b = NULL;
+    } else {
+	b = e->v.b; /* get the actual bundle */
+	if (gretl_bundle_get_type(b) != BUNDLE_KALMAN ||
+	    gretl_bundle_get_private_data(b) == NULL) {
+	    p->err = E_TYPES;
+	    b = NULL;
+	}
+    }
+
+    if (p->err) {
+	gretl_errmsg_set("Argument 1 must point to a state-space bundle");
     }
     
     return b;
@@ -12495,10 +12501,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_KSIMDATA:
-	if (l->t == BUNDLE && r->t == MAT) {
+	if (l->t == U_ADDR && r->t == MAT) {
 	    ret = kalman_data_node(l, r, p);
-	} else if (l->t != BUNDLE) {
-	    node_type_error(t->t, 1, BUNDLE, l, p);
+	} else if (l->t != U_ADDR) {
+	    node_type_error(t->t, 1, U_ADDR, l, p);
 	} else {
 	    node_type_error(t->t, 2, MAT, r, p);
 	}
