@@ -126,8 +126,7 @@ struct kalman_ {
     gretl_matrix *P;   /* T x nr: MSE for state, all time-steps */
     gretl_matrix *K;   /* T x rn: gain matrix, all time-steps */
     gretl_matrix *U;   /* T x ??: smoothed disturbances */
-    gretl_matrix *Vds; /* Variance of smoothed disturbance: state */
-    gretl_matrix *Vdy; /* Variance of smoothed disturbance: signal */
+    gretl_matrix *Vsd; /* Variance of smoothed disturbance */
 
     /* structure needed only for cross-correlated case */
     crossinfo *cross;
@@ -272,8 +271,7 @@ void kalman_free (kalman *K)
 	gretl_matrix_free(K->P);
 	gretl_matrix_free(K->K);
 	gretl_matrix_free(K->U);
-	gretl_matrix_free(K->Vds);
-	gretl_matrix_free(K->Vdy);
+	gretl_matrix_free(K->Vsd);
     }
 
     if (K->matcalls != NULL) {
@@ -309,7 +307,7 @@ static kalman *kalman_new_empty (int flags)
 	K->y = K->x = NULL;
 	K->mu = NULL;
 	K->U = NULL;
-	K->Vds = K->Vdy = NULL;
+	K->Vsd = NULL;
 	K->mnames = NULL;
 	K->matcalls = NULL;
 	K->cross = NULL;
@@ -683,19 +681,24 @@ static void load_to_vec (gretl_matrix *targ,
     }
 }
 
-/* Write the diagonal of square matrix @src into 
-   row @t of @targ */
+/* Write the square root of diagonal of square matrix @src
+   into row @t of @targ, starting at column offset @j
+*/
 
 static void load_to_diag (gretl_matrix *targ,
 			  const gretl_matrix *src,
-			  int t)
+			  int t, int j)
 {
+    int i, n = gretl_vector_get_length(src);
     double x;
-    int i;
 
-    for (i=0; i<targ->cols; i++) {
+    for (i=0; i<n; i++) {
 	x = gretl_matrix_get(src, i, i);
-	gretl_matrix_set(targ, t, i, x);
+	if (x <= 0.0) {
+	    gretl_matrix_set(targ, t, i+j, 0.0);
+	} else {
+	    gretl_matrix_set(targ, t, i+j, sqrt(x));
+	}
     }
 }
 
@@ -3171,58 +3174,42 @@ static int load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
    matrices that are correctly sized to hold estimates
    of the variance of the disturbance(s) in the state
    and (if applicable) observation equations.
-
-   For calculation of the variance at time t we need a
-   square matrix of dimension k, where k is either the
-   dimension of the state (if @state is non-zero) or the
-   dimension of the observable.
-   
-   For storage of results from all time steps we need a
-   matrix of size T x k: into this we'll vectorize the
-   diagonal of the result at each t.
 */
 
-static int maybe_resize_dist_mse (kalman *K, int state,
-				  gretl_matrix **pmt)
+static int maybe_resize_dist_mse (kalman *K, 
+				  gretl_matrix **vvt,
+				  gretl_matrix **vwt)
 {
-    gretl_matrix *m;
-    int k, newmat = 0;
-    int err = 0;
+    int n = K->R == NULL ? 0 : K->n;
+    int k, err = 0;
 
-    if (state) {
-	k = K->r; /* size of state */
-	m = K->Vds;
-    } else {
-	k = K->n; /* size of observable */
-	m = K->Vdy;
-    }
+    /* combined results: how many columns do we need? */
+    k = K->r + n;
 
-    if (m == NULL) {
-	m = gretl_matrix_alloc(K->T, k);
-	if (m == NULL) {
+    if (K->Vsd == NULL) {
+	K->Vsd = gretl_matrix_alloc(K->T, k);
+	if (K->Vsd == NULL) {
 	    err = E_ALLOC;
-	} else {
-	    newmat = 1;
 	}
-    } else if (m->rows != K->T || m->cols != k) {
-	err = gretl_matrix_realloc(m, K->T, k);
+    } else if (K->Vsd->rows != K->T || K->Vsd->cols != k) {
+	err = gretl_matrix_realloc(K->Vsd, K->T, k);
     }
 
     if (!err) {
-	/* step-t square matrix (temporary) */
-	*pmt = gretl_matrix_alloc(k, k);
-	if (*pmt == NULL) {
+	/* step-t square state matrix */
+	*vvt = gretl_matrix_alloc(K->r, K->r);
+	if (*vvt == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-    if (newmat) {
-	if (state) {
-	    K->Vds = m;
-	} else {
-	    K->Vdy = m;
+    if (!err && n > 0) {
+	/* step-t square obs matrix */
+	*vwt = gretl_matrix_alloc(K->n, K->n);
+	if (*vwt == NULL) {
+	    err = E_ALLOC;
 	}
-    }
+    }    
 
     return err;
 }
@@ -3363,12 +3350,8 @@ static int koopman_smooth (kalman *K, int dkstyle)
     }
 
     if (K->b != NULL) {
-	/* variance of smoothed state disturbances */
-	err = maybe_resize_dist_mse(K, 1, &Vvt);
- 	if (K->R != NULL) {
-	    /* variance of smoothed obs disturbances */
-	    err = maybe_resize_dist_mse(K, 0, &Vwt);
-	}
+	/* for variance of smoothed disturbances */
+	err = maybe_resize_dist_mse(K, &Vvt, &Vwt);
     }
 
     if (K->b != NULL && K->p > 0) {
@@ -3430,7 +3413,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	/* save u_t values in E */
 	load_to_row(K->E, u, t);
 
-	if (K->Vds != NULL && K->p == 0) {
+	if (K->Vsd != NULL && K->p == 0) {
 	    /* variance of state disturbance */
 	    if (dkstyle) {
 		/* Q_t - Q_t N_t Q_t */
@@ -3443,7 +3426,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 		gretl_matrix_qform(K->Q, GRETL_MOD_TRANSPOSE,
 				   N1, Vvt, GRETL_MOD_NONE);
 	    }
-	    load_to_diag(K->Vds, Vvt, t);
+	    load_to_diag(K->Vsd, Vvt, t, 0);
 	}
 
 	/* D_t = V_t^{-1} + K_t' N_t K_t */
@@ -3453,7 +3436,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 			       N1, D, GRETL_MOD_CUMULATE);
 	}
 
-	if (K->Vdy != NULL && K->p == 0) {
+	if (K->R != NULL && K->Vsd != NULL && K->p == 0) {
 	    /* variance of obs disturbance */
 	    if (dkstyle) {
 		/* R_t - R_t D_t R_t */
@@ -3466,18 +3449,18 @@ static int koopman_smooth (kalman *K, int dkstyle)
 		gretl_matrix_qform(K->R, GRETL_MOD_TRANSPOSE,
 				   D, Vwt, GRETL_MOD_NONE);
 	    }
-	    load_to_diag(K->Vdy, Vwt, t);
+	    load_to_diag(K->Vsd, Vwt, t, K->r);
 	}
 
-	if (K->Vds != NULL && K->Vdy != NULL && K->p > 0) {
+	if (K->Vsd != NULL && K->p > 0) {
 	    /* variance of combined disturbance */
 	    err = combined_dist_variance(K, D, N1, Vvt, Vwt, BX,
 					 dkstyle);
 	    if (err) {
 		break;
 	    } else {
-		load_to_diag(K->Vds, Vvt, t);
-		load_to_diag(K->Vdy, Vwt, t);
+		load_to_diag(K->Vsd, Vvt, t, 0);
+		load_to_diag(K->Vsd, Vwt, t, K->r);
 	    }
 	}
 
@@ -4903,10 +4886,8 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
 	pm = &K->LL;
     } else if (!strcmp(key, "smdist")) {
 	pm = &K->U;
-    } else if (!strcmp(key, "stdistvar")) {
-	pm = &K->Vds;
-    } else if (!strcmp(key, "obsdistvar")) {
-	pm = &K->Vdy;
+    } else if (!strcmp(key, "smdisterr")) {
+	pm = &K->Vsd;
     } else if (!strcmp(key, "uhat")) {
 	pm = &K->e;
     }
@@ -4914,7 +4895,7 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
     return pm;
 }
 
-#define K_N_OUTPUTS 10
+#define K_N_OUTPUTS 9
 
 static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "prederr",
@@ -4924,8 +4905,7 @@ static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "gain",
     "llt",
     "smdist",
-    "stdistvar",
-    "obsdistvar",
+    "smdisterr",
     "uhat"
 };
 

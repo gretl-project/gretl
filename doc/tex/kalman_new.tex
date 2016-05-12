@@ -423,50 +423,64 @@ under the key \texttt{smdist} a $T \times (r+n)$ matrix holding
 smoothed estimates of $\strdist_t$ and $\obsdist_t$. That is, a matrix
 whose $t$-th row contains
 \[
-[\hat{\strdist}_t , \hat{\obsdist}_t]' 
- = E\left( [\strdist_t , \obsdist_t]' | \obsvec_1, \ldots, \obsvec_T \right)
+(\hat{\strdist}_t' , \hat{\obsdist}_t')
+ = E\left[ (\strdist_t' , \obsdist_t') \,| \,
+   \obsvec_1, \ldots, \obsvec_T \right]
 \]
+(This assumes the observation equation has a stochastic component; if
+it does not, then \texttt{smdist} is just $T \times r$.)
 
-The associated dispersion measures are provided under the keys
-\texttt{stdistvar} ($T \times r$) and \texttt{obsdistvar}
-($T \times n$).  The precise definition of these matrices depends on a
-second, optional scalar parameter. If this is 0 or omitted, the
-returned indicators of dispersion will be the mean square distance of
-the inferred disturbances from zero (the unconditional expectation of
-the disturbances), given as the vectorized diagonals of the
-respective variance matrices. So row $t$ of \texttt{stdistvar} holds
-\[
-\mbox{diag}\left\{\mbox{var}(\hat{\strdist}_t)\right\} = 
-\mbox{diag}\left\{E(\hat{\strdist}_t\hat{\strdist}_t')\right\}
-\]
-and similarly for \texttt{obsdistvar}.  These quantities are used in
-the computation of the so-called \emph{auxiliary residuals}, which are
-advocated in \cite{durbin-koopman12} as useful diagnostic tools. The
-auxiliary residuals are obtained by dividing $\hat{\strdist}_t$ and
-$\hat{\obsdist}_t$ by the square roots of the associated
-variances. For their exact definition, see \cite[][section
-4.4]{koopman-etal99}.
+An associated dispersion measure is provided under the key
+\texttt{smdisterr}. The precise definition of this matrix depends on a
+second, optional Boolean parameter. Before describing the action of
+this parameter we need to give a brief account of the two variance
+measures that are found in the literature on disturbance
+smoothing. Our account runs in terms of the state disturbance,
+$\strdist_t$, but it applies equally to the observation disturbance,
+$\obsdist_t$, if there is such a disturbance.
 
-If a non-zero value is given for the optional second argument a
-different dispersion measure is computed, namely the mean squared
-distance of the inferred disturbances around the true disturbances or
-in other words the mean squared error. Again the results are given in
-vectorized diagonal form; in this case row $t$ of \texttt{stdistvar}
-holds
+One measure of variance is the mean square distance of the inferred
+disturbances from zero (that is, from their unconditional
+expectation). Let us call this $V^{(1)}_t$:
 \[
-\mbox{diag}\left\{E\left[
- (\hat{\strdist}_t-\strdist_t)(\hat{\strdist}_t-\strdist_t)'
- | \obsvec_1, \ldots, \obsvec_T \right]\right\}
+V^{(1)}_t = E\left(\hat{\strdist}_t\hat{\strdist}_t'\right)
 \]
-and similarly for \texttt{obsdistvar}. These quantities are evaluated
-in accordance to the formulae given in \cite[][section
-4.5.3]{durbin-koopman12}.
+This measure is used in computing the so-called \emph{auxiliary
+  residuals}, which are advocated in \cite{durbin-koopman12} as useful
+diagnostic tools. Auxiliary residuals for the state equation are
+obtained by dividing $\hat{\strdist}_t$ by the square roots of the
+associated diagonal elements of $V^{(1)}_t$. In computing this matrix
+we use the formulae given in \citet[section 4.4]{koopman-etal99}.
+
+A second measure of variance is the mean squared distance of the
+inferred disturbances around their true values, or in other words the
+mean squared error, which we'll write as $V^{(2)}_t$.
+\[
+V^{(2)}_t = E\left[\left(\hat{\strdist}_t - \strdist_t\right)
+  \left(\hat{\strdist}_t - \strdist_t\right)'
+  | \,\obsvec_1, \ldots, \obsvec_T \right]
+\] 
+We calculate this matrix using the formulae given in \citet[section
+4.5.2]{durbin-koopman12}. Its diagonal elements can be used to form
+confidence intervals for the true disturbances.
+
+We are now ready to state what gretl provides under the key
+\texttt{smdisterr}. If the optional second argument is present and
+non-zero the results are based on $V^{(2)}_t$, otherwise (that is, by
+default) they are based on $V^{(1)}_t$. In either case row $t$ of
+\texttt{smdisterr} contains the square roots of the diagonal elements
+of the matrix in question: the first $r$ elements pertain to the state
+disturbances and the following $n$ elements to the observation
+equation (if applicable). Like \texttt{smdist}, \texttt{smdisterr} has
+$T$ rows and either $r+n$ or $r$ columns depending on whether or not
+there's a disturbance term in the observation equation. We return
+standard deviations rather than variances since most of the time
+it's the former that users will actually want.
 
 Section~\ref{sec:example_dsmooth} presents a script which exercises
-the disturbance smoother.
+the disturbance smoother and illustrates the difference between
+$V^{(1)}_t$ and $V^{(2)}_t$.
 
-\textbf{FIXME}: why do we have one object for the residuals and  two
-for their variances? Do we care about extra-diagonal elements?
 
 \section{The \cmd{ksimul} function}
 \label{sec:ksimul}
@@ -733,14 +747,14 @@ In the second \cmd{kdsmooth} call we ask gretl to compute instead
 $E[(\hat{\eta}_t-\eta_t)(\hat{\eta}_t-\eta_t)' | y_1,\ldots,y_T]$, the
 MSE of $\hat{\eta}_t$ considered as an estimator of $\eta_t$. And in
 the lower panel of the Figure we plot $\hat{\eta}_t$ along with a 90\%
-confidence band (roughly, $\pm 1.64$ times the square root of the
-MSE). This reveals that, given the sampling variance of
-$\hat{\eta}_t$, we're not really sure that any of the $\eta_t$ values
-were truly different from zero. The resolution of the seeming conflict
-here is commonly reckoned to be that there was in fact a change in
-mean around 1900, but besides that event there's little evidence for 
-a non-zero $\sigma^2_{\eta}$. Or in other words the standard local level
-model is not really applicable to the data.
+confidence band (roughly, $\pm 1.64$ times the RMSE). This reveals
+that, given the sampling variance of $\hat{\eta}_t$, we're not really
+sure that any of the $\eta_t$ values were truly different from
+zero. The resolution of the seeming conflict here is commonly reckoned
+to be that there was in fact a change in mean around 1900, but besides
+that event there's little evidence for a non-zero
+$\sigma^2_{\eta}$. Or in other words the standard local level model is
+not really applicable to the data.
 
 
 \begin{script}[htbp]
@@ -758,29 +772,24 @@ LLM.obsvar = s2_eps
 LLM.diffuse = 1
 
 kdsmooth(&LLM)
-series etahat = LLM.smdist[,1]
-series eta_aux = LLM.smdist[,1] ./ sqrt(LLM.stdistvar)
+series eta_aux = LLM.smdist[,1] ./ LLM.smdisterr[,1]
 series two = 2
 series minus_two = -2
 list P = eta_aux two minus_two
 plot P
-  options time-series with-lines single-yaxis
-  literal set linetype 3 lc rgb "#0000ff"
+  options time-series with-lines band
   literal set title 'Auxiliary residual, state equation'
-  literal set ylabel ''
-  literal set nokey
 end plot --output=display
 
 kdsmooth(&LLM, 1)
-series sdeta = sqrt(LLM.stdistvar)
+series etahat = LLM.smdist[,1]
+series sdeta = LLM.smdisterr[,1]
 series eta_minus = etahat - 1.64485 * sdeta
 series eta_plus = etahat + 1.64485 * sdeta
 list P = etahat eta_minus eta_plus
 plot P
-  options time-series with-lines single-yaxis
-  literal set linetype 3 lc rgb "#0000ff"
+  options time-series with-lines band
   literal set title 'State disturbance with 90% confidence band'
-  literal set nokey
 end plot --output=display
 \end{scode}
 \end{script}
@@ -794,8 +803,8 @@ end plot --output=display
     \small Estimated state disturbance, $\hat{\eta}_t$, with 90\% confidence band \\
   \includegraphics{figures/nile_eta_dk}
   \end{tabular}
-  \caption{Nile data: auxiliary residuals and $\hat{\eta}_t$ with
-    confidence band, from disturbance smoother}
+  \caption{Nile data: auxiliary residuals and $\hat{\eta}_t$
+    from disturbance smoother}
   \label{fig:nile}
 \end{figure}
 
@@ -885,8 +894,9 @@ SSmod.obsymat_call = "TV_H"
 %
 Functions that play this role will be called at each time-step of the
 filter operation, prior to performing any calculations. They should
-take a single bundle-pointer argument; their result, if any, will be
-not used, so generally they return nothing (that is, are of type \cmd{void}).
+take a single bundle-pointer argument; their result, if any, will not
+be used, so generally they return nothing (that is, are of type
+\cmd{void}).
 
 These functions will be passed a pointer to the Kalman bundle to which
 the call is attached, so that they have easy access to all the bundle
