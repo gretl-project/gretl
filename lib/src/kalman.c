@@ -4612,10 +4612,6 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 	Ret = NULL;
     }
 
-#if TEST_SIMDATA
-    gretl_matrix_free(UV);
-#endif     
-
     /* restore state */
     K->flags &= ~KALMAN_SIM;
     K->flags &= ~KALMAN_SSFSIM;
@@ -4640,13 +4636,28 @@ static int matrix_is_diagonal (const gretl_matrix *m)
     return 1;
 }
 
+static int simdata_refresh_QR (kalman *K, PRN *prn)
+{
+    gretl_matrix **mptr[] = {&K->Q, &K->R};
+    int ids[] = {K_Q, K_R};
+    int i, err = 0;
+
+    for (i=0; i<2 && !err; i++) {
+	if (matrix_is_varying(K, ids[i])) {
+	    err = kalman_update_matrix2(K, ids[i], mptr[i], prn);
+	}
+    }
+
+    return err;
+}
+ 
 /* Return a matrix in which the standard normal variates
    in @U are scaled according to K->Q, and K->R if present.
 */
 
 gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 				     const gretl_matrix *U,
-				     int *err)
+				     PRN *prn, int *err)
 {
     kalman *K = gretl_bundle_get_private_data(b);
     gretl_matrix *E = NULL;
@@ -4668,6 +4679,7 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 	int n = K->R == NULL ? 0 : K->n;
 	int t, j, rn = K->r + n;
 	int T = U->rows;
+	int varying = 0;
 	double vjj, utj;
 
 	if (U->cols != rn) {
@@ -4681,10 +4693,21 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 	    return NULL;
 	}
 
+	if (matrix_is_varying(K, K_Q) || matrix_is_varying(K, K_R)) {
+	    varying = 1;
+	}
+
+	K->b = b;
+	set_kalman_running(K);
+
 	if (matrix_is_diagonal(K->Q) &&
 	    (K->R == NULL || matrix_is_diagonal(K->R))) {
-	    for (t=0; t<T; t++) {
-		for (j=0; j<rn; j++) {
+	    for (t=0; t<T && !*err; t++) {
+		if (varying) {
+		    K->t = t;
+		    *err = simdata_refresh_QR(K, prn);
+		}
+		for (j=0; j<rn && !*err; j++) {
 		    if (j < K->r) {
 			vjj = gretl_matrix_get(K->Q, j, j);
 		    } else {
@@ -4693,30 +4716,68 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 		    utj = gretl_matrix_get(U, t, j);
 		    gretl_matrix_set(E, t, j, sqrt(vjj) * utj);
 		}
-	    }
+	    }		
 	} else {
 	    gretl_matrix *V = gretl_zero_matrix_new(rn, rn);
+	    gretl_matrix *Ut = NULL;
+	    gretl_matrix *Et = NULL;
 
 	    if (V == NULL) {
 		*err = E_ALLOC;
 		goto bailout;
 	    }
 
-	    gretl_matrix_inscribe_matrix(V, K->Q, 0, 0,
-					 GRETL_MOD_NONE);
-	    if (n > 0) {
-		gretl_matrix_inscribe_matrix(V, K->R, K->r, K->r,
-					     GRETL_MOD_NONE);
+	    if (varying) {
+		Ut = gretl_matrix_alloc(1, rn);
+		Et = gretl_matrix_alloc(1, rn);
+		if (Ut == NULL || Et == NULL) {
+		    gretl_matrix_free(V);
+		    *err = E_ALLOC;
+		    goto bailout;
+		}
 	    }
 
-	    *err = gretl_matrix_psd_root(V);
-
-	    if (*err) {
-		gretl_errmsg_set("Failed to compute factor of Omega");
+	    if (varying) {
+		for (t=0; t<T && !*err; t++) {
+		    K->t = t;
+		    *err = simdata_refresh_QR(K, prn);
+		    if (!*err) {
+			gretl_matrix_inscribe_matrix(V, K->Q, 0, 0,
+						     GRETL_MOD_NONE);
+			if (n > 0) {
+			    gretl_matrix_inscribe_matrix(V, K->R, K->r, K->r,
+							 GRETL_MOD_NONE);
+			}
+			*err = gretl_matrix_psd_root(V);
+			if (*err) {
+			    gretl_errmsg_set("Failed to compute factor of Omega_t");
+			} else {
+			    load_from_row(Ut, U, t, GRETL_MOD_NONE);
+			    gretl_matrix_multiply_mod(Ut, GRETL_MOD_NONE,
+						      V, GRETL_MOD_TRANSPOSE,
+						      Et, GRETL_MOD_NONE);
+			    load_to_row(E, Et, t);
+			}			
+		    }
+		}
+		
+		gretl_matrix_free(Ut);
+		gretl_matrix_free(Et);
 	    } else {
-		gretl_matrix_multiply_mod(U, GRETL_MOD_NONE,
-					  V, GRETL_MOD_TRANSPOSE,
-					  E, GRETL_MOD_NONE);
+		gretl_matrix_inscribe_matrix(V, K->Q, 0, 0,
+					     GRETL_MOD_NONE);
+		if (n > 0) {
+		    gretl_matrix_inscribe_matrix(V, K->R, K->r, K->r,
+						 GRETL_MOD_NONE);
+		}
+		*err = gretl_matrix_psd_root(V);
+		if (*err) {
+		    gretl_errmsg_set("Failed to compute factor of Omega");
+		} else {
+		    gretl_matrix_multiply_mod(U, GRETL_MOD_NONE,
+					      V, GRETL_MOD_TRANSPOSE,
+					      E, GRETL_MOD_NONE);
+		}
 	    }
 	    
 	    gretl_matrix_free(V);
@@ -4724,6 +4785,9 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
     }
 
  bailout:
+
+    K->t = 0;
+    set_kalman_stopped(K);
 	    
     if (E == NULL && !*err) {
 	*err = E_ALLOC;

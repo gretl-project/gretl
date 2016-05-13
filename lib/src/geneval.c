@@ -9824,6 +9824,8 @@ static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
 	e = e->v.b1.b;
     } else if (n->t == U_ADDR) {
 	e = n->v.b1.b;
+    } else if (n->t == BUNDLE) {
+	e = n;
     }
 
     if (e == NULL || e->t != BUNDLE) {
@@ -9999,7 +10001,7 @@ static NODE *kalman_data_node (NODE *l, NODE *r, parser *p)
 	if (ret->v.m != NULL) {
 	    gretl_matrix_free(ret->v.m);
 	}
-	ret->v.m = kalman_bundle_simdata(b, r->v.m, &p->err);
+	ret->v.m = kalman_bundle_simdata(b, r->v.m, p->prn, &p->err);
     }
 
     return ret;
@@ -12501,10 +12503,8 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_KSIMDATA:
-	if (l->t == U_ADDR && r->t == MAT) {
+	if (r->t == MAT) {
 	    ret = kalman_data_node(l, r, p);
-	} else if (l->t != U_ADDR) {
-	    node_type_error(t->t, 1, U_ADDR, l, p);
 	} else {
 	    node_type_error(t->t, 2, MAT, r, p);
 	}
