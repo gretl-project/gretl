@@ -2612,14 +2612,14 @@ static void binary_model_chisq (bin_info *bin, MODEL *pmod)
     }
 }
 
-/* Binary probit normality test as in Jarque, Bera and Lee (1984),
-   also quoted in Verbeek, chapter 7: we regress a column of 1s on the
-   products of the generalized residual with X, (X\beta)^2 and
-   (X\beta)^3.  The test statistic is T times the uncentered
-   R-squared, and is distributed as chi-square(2). It can be shown
-   that this test is numerically identical to the Chesher-Irish (87)
-   test in the probit case (although C&I make no mention of this in
-   their article).  
+/* Binary probit normality test as in Bera, Jarque and Lee
+   (International Economic Review, 1984), also quoted in Verbeek,
+   chapter 7: we regress a column of 1s on the products of the
+   generalized residual with X, (X\beta)^2 and (X\beta)^3.  The test
+   statistic is T times the uncentered R-squared, and is distributed
+   as chi-square(2). It can be shown that this test is numerically
+   identical to the Chesher-Irish (87) test in the probit case
+   (although C&I make no mention of this in their article).
 */
 
 static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
