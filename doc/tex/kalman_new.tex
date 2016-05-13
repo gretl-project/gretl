@@ -223,8 +223,8 @@ their reserved keys) as you usually add elements to a bundle:
 SSmod.obsxmat = A
 \end{code}
 
-Once setup is complete dimensions of the model, $r$, $n$, $k$ and $T$,
-become available as scalar members of the bundle (under their own
+Once setup is complete the dimensions of the model, $r$, $n$, $k$ and
+$T$, become available as scalar members of the bundle (under their own
 names).
 
 It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
@@ -442,7 +442,7 @@ this parameter we need to give a brief account of the two variance
 measures that are found in the literature on disturbance
 smoothing. Our account runs in terms of the state disturbance,
 $\strdist_t$, but it applies equally to the observation disturbance,
-$\obsdist_t$, if there is such a disturbance.
+$\obsdist_t$, if present.
 
 One measure of variance is the mean square distance of the inferred
 disturbances from zero (that is, from their unconditional
@@ -539,13 +539,12 @@ Time-variation or no, \cmd{ksimdata} should ensure that the
 disturbances are scaled to the variances specified by $Q_t$ and $R_t$.
 
 If the disturbances are cross-correlated (see
-section~\ref{sec:crossd}) then the second, matrix argument to
-\cmd{ksimul} should be $T \times p$, each row holding
-$\alldist_t'$. In this case no prior scaling is required since it is
-assumed that $\alldist_t \sim N(0, I)$ and the disturbances for the
-respective equations, $\altstatevar_t \alldist_t$ and
-$\altobsvar_t \alldist_t$, are computed internally, with regard to
-time-variation if applicable.
+section~\ref{sec:crossd}) then the matrix argument to \cmd{ksimul}
+should be $T \times p$, each row holding $\alldist_t'$. In this case
+no prior scaling is required since it is assumed that
+$\alldist_t \sim N(0, I)$ and the disturbances for the respective
+equations, $\altstatevar_t \alldist_t$ and $\altobsvar_t \alldist_t$,
+are computed internally, with regard to time-variation if applicable.
 
 For the purposes of \texttt{ksimul} the time-series length, $T$, is
 defined by the number of rows of the supplied disturbance matrix. This
@@ -589,8 +588,8 @@ things started. You can add such a value to a Kalman bundle under the
 reserved key \texttt{simstart}. If this member is not present in the
 bundle, $\tilde{\statevec}_1$ defaults to the value given under the
 key \texttt{inistate}, or if that in turn is not present, to a zero
-vector. See section~\ref{sec:simstart} for a further comment on
-initializing simulations.
+vector. A further note on initializing the state can be found in
+section~\ref{sec:simstart}.
 
 \textbf{IDEA}: it would be very nice to find a simple case to
 exemplify this in a bootstrap context, along the lines of 
@@ -893,7 +892,7 @@ factors $\altstatevar$ and $\altobsvar$ respectively.
 \label{sec:stconst}
 
 In some applications it is useful to be able to have an ``intercept''
-in the state transition equation, so as to generalize equation
+in the state transition equation, thus generalizing equation
 \eqref{eq:state} to
 \[
   \statevec_{t+1} = \statemu_t + \statemat_t \statevec_t + \strdist_t \\
@@ -931,28 +930,25 @@ SSmod.obsymat_call = "TV_H"
 \end{code}
 %
 Functions that play this role will be called at each time-step of the
-filter operation, prior to performing any calculations. They should
-take a single bundle-pointer argument; their result, if any, will not
-be used, so generally they return nothing (that is, are of type
-\cmd{void}). However, you can use gretl's \texttt{funcerr} keyword to
-raise an error if things seem to be going wrong; see the chapter
-titled ``User-defined functions'' in the \textit{Gretl User's Guide}
-for details.
+filtering or simulation operation, prior to performing any
+calculations. They should have a single bundle-pointer parameter, by
+means of which they will be passed a pointer to the Kalman bundle to
+which the call is attached.  The return value of such functions, if
+any, will not be used, so generally they return nothing (that is, are
+of type \cmd{void}).  However, you can use gretl's \texttt{funcerr}
+keyword to raise an error if things seem to be going wrong; see the
+chapter titled ``User-defined functions'' in the \textit{Gretl User's
+  Guide} for details.
 
-These functions will be passed a pointer to the Kalman bundle to which
-the call is attached, so they have easy access to all the bundle
-elements, which include the following two items:
-\begin{itemize}
-\item The current time step (which starts at 1), under the
-  reserved key \texttt{t}.
-\item The $n$-vector containing the forecast error from the
-  previous time step, $\prederr_{t-1}$, under the key \texttt{uhat};
-  when $t=1$ this will be a zero vector.
-\end{itemize}
+Besides the bundle members noted above, these functions have access to
+the current (1-based) time step, under the reserved key
+\texttt{t}, and the $n$-vector containing the forecast error from the
+previous time step, $\prederr_{t-1}$, under the key \texttt{uhat};
+when $t=1$ the latter will be a zero vector.
 
 If any additional information is needed for performing the update it
 can be placed in the bundle under a user-specified key.  So, for
-example, a simple updater for a $1 \times 1$ $\obsymat_t$ matrix might
+example, a simple updater for a ($1 \times 1$) $\obsymat$ matrix might
 look like this:
 %
 \begin{code}
@@ -961,7 +957,20 @@ function void TV_H (bundle *b)
 end function
 \end{code}
 %
-where the bundled matrix \texttt{b.Hvals} contains $T$ elements.
+where \texttt{b.Hvals} is a bundled $T$-vector. An updater for an
+($r \times r$) $\statemat$ matrix might be
+%
+\begin{code}
+function void update_F (bundle *b)
+    b.statemat = unvech(b.Fvals[b.t,])
+end function
+\end{code}
+%
+where the matrix \texttt{b.Fvals} is $T \times r(r+1)/2$, with row $t$
+holding the vech of $\statemat_t$. Simpler variants (e.g.\ just one
+element of the matrix in question is changed) and more complex
+variants---say, involving some sort of conditionality---are also
+possible in this framework.
 
 \subsection{Likelihood under the diffuse prior}
 \label{sec:lldiffuse}
@@ -974,7 +983,7 @@ log-likelihood calculation should be modified in the case of a diffuse
 prior for $\statecvar_{1|0}$.  However, it is not clear to us that
 there is a well-defined ``correct'' method for this.  At present we
 emulate \textsf{SsfPack}.  In case
-$\statecvar_{1|0} = \kappa \mathbf{I}_r$, we set $d = r$ and calculate
+$\statecvar_{1|0} = \kappa I_r$, we set $d = r$ and calculate
 %
 \[
   \ell = -\frac{1}{2} \left[(nT-d) \log(2 \pi) + 
@@ -995,10 +1004,10 @@ and
 \label{sec:simstart}
 
 We pointed out in section~\ref{sec:ksimul} above that you can specify
-the $\statevec_1$ from which state-space simulation recursion starts
-under the bundle key \texttt{simstart}. If you wish to make this
-starting point stochastic, you can emulate the procedure followed by
-\textsf{SsfPack}, namely setting
+the initial state, $\statevec_1$, from which recursion starts under
+simulation via the bundle key \texttt{simstart}. If you wish to make
+this starting point stochastic, you can emulate the procedure followed
+by \textsf{SsfPack}, namely setting
 \[
 \alpha_1 = a + Z v_0
 \]
@@ -1014,7 +1023,7 @@ could set $\alpha_1$ thus:
 %
 \begin{code}
 matrix Z = psdroot(B.inivar)
-B.simstart = B.inistate + Z * mnormal(B.r,1)
+B.simstart = B.inistate + Z * mnormal(B.r, 1)
 \end{code}
 
 
