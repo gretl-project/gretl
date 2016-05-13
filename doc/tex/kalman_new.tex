@@ -197,7 +197,8 @@ other arguments can be given as scalars if in context they are
 $1 \times 1$.
 
 If applicable you may specify any of the following optional input
-matrices:
+matrices:\footnote{An additional optional matrix is described in
+section~\ref{sec:stconst} below.}
 
 \begin{center}
 \begin{tabular}{ccll}
@@ -221,6 +222,10 @@ their reserved keys) as you usually add elements to a bundle:
 \begin{code}
 SSmod.obsxmat = A
 \end{code}
+
+Once setup is complete dimensions of the model, $r$, $n$, $k$ and $T$,
+become available as scalar members of the bundle (under their own
+names).
 
 It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
 ($\obsxmat$) matrices must go together---either both are given or
@@ -584,14 +589,8 @@ things started. You can add such a value to a Kalman bundle under the
 reserved key \texttt{simstart}. If this member is not present in the
 bundle, $\tilde{\statevec}_1$ defaults to the value given under the
 key \texttt{inistate}, or if that in turn is not present, to a zero
-vector.
-
-% Under simulation, the initial value $\statevec_1$ is calculated thus:
-% we find the matrix $\mathbf{T}$ such that
-% $\mathbf{T}\mathbf{T}' = \statecvar_{1|0}$ (as given by the
-% \texttt{inivar} element in the \texttt{kalman} block), multiply it
-% into $\strdist_1$, and add the result to $\statevec_{1|0}$ (as given
-% by \texttt{inistate}).
+vector. See section~\ref{sec:simstart} for a further comment on
+initializing simulations.
 
 \textbf{IDEA}: it would be very nice to find a simple case to
 exemplify this in a bootstrap context, along the lines of 
@@ -991,6 +990,32 @@ and
 \hat{\sigma}^2 = \frac{1}{nT-d} 
    \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
 \]
+
+\subsection{The initial state under simulation}
+\label{sec:simstart}
+
+We pointed out in section~\ref{sec:ksimul} above that you can specify
+the $\statevec_1$ from which state-space simulation recursion starts
+under the bundle key \texttt{simstart}. If you wish to make this
+starting point stochastic, you can emulate the procedure followed by
+\textsf{SsfPack}, namely setting
+\[
+\alpha_1 = a + Z v_0
+\]
+where $a$ is a non-stochastic $r$-vector, $v_0$ is an $r$-vector
+of standard normal random numbers, and $Z$ is a matrix such
+that $ZZ' = \statecvar_{1|0}$.
+
+Let's say we have a state-space bundle \texttt{B}, on which we have
+already set suitable values of \texttt{inistate} (corresponding to $a$
+above) and \texttt{inivar} ($\statecvar_{1|0}$).  Now we want to
+perform a simulation with a stochastic starting point. In hansl we
+could set $\alpha_1$ thus:
+%
+\begin{code}
+matrix Z = psdroot(B.inivar)
+B.simstart = B.inistate + Z * mnormal(B.r,1)
+\end{code}
 
 
 \bibliographystyle{gretl}
