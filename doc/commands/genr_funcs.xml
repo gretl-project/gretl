@@ -3091,6 +3091,10 @@
 	  infinitely long filter. In practice, presample values of
 	  <math>y</math><sub>t</sub> are assumed to be zero.
 	</para>
+	<para>
+	  A negative value of <argname>d</argname> can be given, in
+	  which case fractional integration is performed.
+	</para>	
       </description>
     </function>
 
