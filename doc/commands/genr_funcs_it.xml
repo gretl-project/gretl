@@ -1178,6 +1178,31 @@
       </description>
     </function>
 
+    <function name="array" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Funzione <quote>costruttrice</quote> di base per una nuova
+	  variabile di tipo array. Nell'uso di questa funzione, si
+	  deve specificare un tipo (in forma plurale) per l'array:
+	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit>
+	  oppure <lit>lists</lit>.  Il valore prodotto è un array del
+	  tipo specificato con <argname>n</argname> elementi, ognuno
+	  dei quali è inizializzato come <quote>vuoto</quote> (ad
+	  esempio, stringhe nulle, matrici 0x0). Esempi d'uso:
+	</para>
+	<code>
+	  strings S = array(5)
+	  matrices M = array(3)
+	</code>
+	<para>
+	  Vedi anche <fncref targ="defarray"/>.
+	</para>
+      </description>
+    </function>    
+
     <function name="asin" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -2218,6 +2243,31 @@
       </description>
     </function>
 
+    <function name="defarray" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Permette la definizione di una variabile array per
+	  esteso. Per usare questa funzione bisogna specificare un
+	  tipo (in forma plurale) per l'array: <lit>strings</lit>,
+	  <lit>matrices</lit>, <lit>bundles</lit> oppure
+	  <lit>lists</lit>. Ognuno degli argomenti deve risultare un
+	  oggetto del tipo specificato. Se la funzione va a buon fine,
+	  il valore restituito sarà un array di <math>n</math>
+	  elementi, dove <math>n</math> è il numero di argomenti.
+	</para>
+	<code>
+	  strings S = defarray("foo", "bar", "baz")
+	  matrices M = defarray(I(3), X'X, A*B, P[1:])
+	</code>
+	<para>
+	  Vedi anche <fncref targ="array"/>.
+	</para>
+      </description>
+    </function>        
+
     <function name="deseas" section="filters" output="series">
       <fnargs>
     <fnarg type="series">x</fnarg>
@@ -3031,6 +3081,11 @@
       corrisponde ad un filtro infinitamente lungo. In pratica, i
       valori di <math>y</math><sub>t</sub> precedenti al campione
       estratto sono posti pari a zero.
+    </para>
+    <para>
+      L'argomento <argname>d</argname> può essere negativo, nel qual
+      caso si può parlare di integrazione frazionale anziché
+      differenziazione.
     </para>
       </description>
     </function>
