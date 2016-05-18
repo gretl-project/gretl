@@ -398,6 +398,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].yaxis = 1;
     lines[n].type = LT_AUTO;
     lines[n].ptype = 0;
+    lines[n].dtype = 0;
     lines[n].width = 1.0;
     lines[n].ncols = 0;
     lines[n].whiskwidth = 0;
@@ -418,6 +419,7 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->yaxis = src->yaxis;
     targ->type = src->type;
     targ->ptype = src->ptype;
+    targ->dtype = src->dtype;
     targ->width = src->width;
     targ->ncols = src->ncols;
     targ->whiskwidth = src->whiskwidth;
@@ -972,7 +974,7 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
 
     if (i < spec->n_lines) {
 	line = &spec->lines[i];
-	if (*line->rgb != '\0') {
+	if (*line->rgb != '\0' && line->style != GP_STYLE_FILLEDCURVE) {
 	    fprintf(fp, "lc rgb \"%s\"\n", line->rgb);
 	    done = 1;
 	}
@@ -1020,6 +1022,8 @@ static void maybe_print_point_info (const GPT_LINE *line, FILE *fp)
 	if (line->pscale != 1.0) {
 	    fprintf(fp, " ps %g", (double) line->pscale);
 	}
+    } else if (line->dtype != 0) {
+	fprintf(fp, " dt %d", line->dtype);
     }
 }
 
@@ -1348,7 +1352,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
 
 	if (line->style == GP_STYLE_FILLEDCURVE && line->type == LT_AUTO) {
-	    print_filledcurve_color(fp);
+	    if (*line->rgb != '\0') {
+		fprintf(fp, "lc rgb \"%s\" ", line->rgb);
+	    } else {
+		print_filledcurve_color(fp);
+	    }
 	}
 
 	fprintf(fp, "w %s", gp_line_style_name(line->style));

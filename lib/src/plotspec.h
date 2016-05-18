@@ -92,6 +92,7 @@ typedef struct {
     char yaxis;                    /* 1 for left, 2 for right */
     int type;                      /* 1, 2, ... (style) */
     int ptype;                     /* point type */
+    int dtype;                     /* dash type */
     float width;                   /* line width, default 1.0 */
     char ncols;                    /* number of data columns (0 for formula) */
     float whiskwidth;              /* whiskerbar width (boxplots) */

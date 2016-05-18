@@ -2307,6 +2307,10 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	sscanf(p + 4, "%d", &line->ptype);
     }
 
+    if ((p = strstr(s, " dt "))) {
+	sscanf(p + 4, "%d", &line->dtype);
+    }
+
     if (!auto_linewidth && (p = strstr(s, " lw "))) {
 	sscanf(p + 4, "%f", &line->width);
     } 
@@ -2746,11 +2750,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
        GUI editor */
 
     for (i=0; i<spec->n_lines; i++) {
+	int idx = spec->lines[i].type; /* this will be 1-based */
+
+	if (idx == LT_AUTO) {
+	    idx = i + 1;
+	}
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
 	    spec->lines[i].flags |= GP_LINE_USER;
 	}
-	if (i < MAX_STYLES) {
-	    strcpy(spec->lines[i].rgb, styles[i].rgb);
+	if (idx > 0 && idx < MAX_STYLES && spec->lines[i].rgb[0] == '\0') {
+	    /* if we haven't already got a line-specific color,
+	       apply the default style */
+	    strcpy(spec->lines[i].rgb, styles[idx-1].rgb);
 	}
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
 	    /* the last "line" doesn't use the regular

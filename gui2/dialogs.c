@@ -3389,7 +3389,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		confidence_scope_selector(rset->dlg, optp);
 		if (gretl_is_simple_OLS(pmod)) {
 		    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 1);
-		    fixit = 1;
+		    /* why were we doing the following? */
+		    /* fixit = 1; */
 		} 
 	    }
 	}	

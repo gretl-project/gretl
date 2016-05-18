@@ -406,6 +406,12 @@ static int plain_lines_spec (gretlopt opt)
     }
 }
 
+static int invalid_field_error (const char *s)
+{
+    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
+    return E_DATA;
+}
+
 static int get_fit_type (gnuplot_info *gi)
 {
     const char *ftype = get_optval_string(plot_ci, OPT_F);
@@ -430,9 +436,7 @@ static int get_fit_type (gnuplot_info *gi)
     } else if (!strcmp(ftype, "linlog")) {
 	gi->fit = PLOT_FIT_LINLOG;
     } else {
-	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
-			     ftype);
-	err = E_DATA;
+	err = invalid_field_error(ftype);
     }
 
     return err;
@@ -445,6 +449,23 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     int err = 0;
 
     gi->flags = 0;
+
+    if (opt & OPT_N) {
+	/* --band */
+	if (list[0] == 3 && dataset_is_time_series(dset)) {
+	    /* take --time-series as implicit */
+	    gi->flags |= (GPT_IDX | GPT_TS | GPT_LINES);
+	    gi->band = 1;
+	} else if (list[0] == 4) {
+	    if (opt & OPT_O) {
+		gi->flags |= GPT_LINES;
+	    }
+	    gi->band = 1;
+	} else {
+	    err = E_DATA;
+	}
+	return err;
+    }
 
     if (opt & OPT_R) {
 	/* internal option for residual plot */
@@ -508,11 +529,6 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    /* the --fit=fitspec option */
 	    err = get_fit_type(gi);
 	}
-    }
-
-    if (n_yvars >= 3 && (opt & OPT_N)) {
-	/* the --band option for the 2nd and 3rd lines */
-	gi->band = 1;
     }
 
 #if GP_DEBUG
@@ -1225,6 +1241,7 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
     }
 
     if (get_local_decpoint() == ',') {
+	/* is this right? */
 	fputs("set decimalsign ','\n", fp);
     }
 
@@ -4907,55 +4924,123 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     return finalize_plot_input_file(fp);
 }
 
-static int get_band_options (int *fill, int *dash, char *rgb)
+static int check_colorspec (char *s)
+{
+    int n = 0, err = 0;
+    
+    if (*s == '#') {
+	s++;
+	n = strlen(s);
+    } else if (!strncmp(s, "0x", 2) || !strncmp(s, "0X", 2)) {
+	/* normalize to use '#' */
+	char tmp[12];
+
+	sprintf(tmp, "#%s", s+2);
+	strcpy(s, tmp);
+	s++;
+	n = strlen(s);
+    }
+
+    if (n != 6) {
+	/* we allow only RRGGBB */
+	return E_PARSE;
+    } else {
+	char test[2] = {0};
+	unsigned k;
+	int i;
+
+	for (i=0; i<n && !err; i++) {
+	    test[0] = s[i];
+	    if (sscanf(test, "%x", &k) != 1) {
+		err = invalid_field_error(s);
+	    }
+	}
+    }
+
+    return err;
+}
+
+enum {
+    BAND_LINE,
+    BAND_FILL,
+    BAND_DASH
+};
+
+/* We're looking here for any one of three patterns:
+   <style>, <style>:<color>, or <color>, where <style>
+   should be "fill" or "dash" and <color> should be a
+   hex string such as "#00ff00" or "0x00ff00".
+*/
+
+static int get_band_options (int *style, char *rgb)
 {
     const char *s = get_optval_string(plot_ci, OPT_N);
     int err = 0;
 
     if (s != NULL) {
-	char *p, *smod = NULL;
-	int slen, minlen = 7;
-
-	if (*s == '"' && s[strlen(s) - 1] == '"') {
-	    smod = gretl_strndup(s+1, strlen(s) - 2);
-	    s = smod;
-	}
-
-	p = strchr(s, ':');
-	slen = strlen(s);
+	const char *p = strchr(s, ':');
+	int slen = strlen(s);
+	int minlen = 7; /* minimal color spec */
 
 	if (p == NULL) {
 	    if (slen == 4) {
+		/* got a style specifier? */
 		if (!strcmp(s, "fill")) {
-		    *fill = 1;
+		    *style = BAND_FILL;
 		} else if (!strcmp(s, "dash")) {
-		    *dash = 1;
+		    *style = BAND_DASH;
+		} else {
+		    err = invalid_field_error(s);
 		}
-	    } else if (slen < minlen || slen > 9) {
-		err = E_PARSE;
+	    } else if (slen < minlen || slen > 8) {
+		err = invalid_field_error(s);
 	    } else {
 		strcpy(rgb, s);
 	    }
 	} else {
+	    /* embedded colon: style + color */
 	    minlen += 5;
-	    if (slen < minlen || slen > 9+5) {
-		err = E_PARSE;
+	    if (slen < minlen || slen > 8+5) {
+		err = invalid_field_error(s);
 	    } else if (!strncmp(s, "fill:", 5)) {
-		*fill = 1;
+		*style = BAND_FILL;
 	    } else if (!strncmp(s, "dash:", 5)) {
-		*dash = 1;
+		*style = BAND_DASH;
 	    } else {
-		err = E_PARSE;
+		err = invalid_field_error(s);
 	    }
 	    if (!err) {
 		strcpy(rgb, s + 5);
 	    }
 	}
 
-	free(smod);
+	if (!err && *rgb != '\0') {
+	    err = check_colorspec(rgb);
+	}
     }
 
     return err;
+}
+
+static int band_straddles_zero (const double *b1,
+				const double *b2,
+				int t1, int t2)
+{
+    int t, lt0 = 0, gt0 = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (b1[t] < 0 || b2[t] < 0) {
+	    lt0 = 1;
+	}
+	if (b1[t] > 0 || b2[t] > 0) {
+	    gt0 = 1;
+	}
+	if (lt0 && gt0) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 static int plot_with_band (gnuplot_info *gi,
@@ -4968,88 +5053,111 @@ static int plot_with_band (gnuplot_info *gi,
     const double *b1 = NULL;
     const double *b2 = NULL;
     char yname[MAXDISP];
+    char xname[MAXDISP];
     char rgb[10] = {0};
-    int use_fill = 0;
-    int use_dash = 0;
+    int style = BAND_LINE;
+    int show_zero;
     int t1 = dset->t1;
     int t2 = dset->t2;
     int err = 0;
 
-    if (gi->list[0] != 4) {
+    err = list_adjust_sample(gi->list, &t1, &t2, dset, NULL);
+    if (!err && t2 - t1 < 3) {
 	err = E_DATA;
-    } else {
-	err = list_adjust_sample(gi->list, &t1, &t2, dset, NULL);
-	if (!err && t2 - t1 < 3) {
-	    err = E_DATA;
-	}
     }
 
     if (!err) {
-	err = get_band_options(&use_fill, &use_dash, rgb);
+	err = get_band_options(&style, rgb);
     }
 
     if (err) {
 	return err;
     }
-    
-    if (gi->flags & GPT_TS) {
+
+    if (style == BAND_DASH && gnuplot_version() < 5.0) {
+	/* can't do it */
+	style = BAND_LINE;
+    }
+
+    if (gi->flags & (GPT_TS | GPT_IDX)) {
+	// gi->flags |= GPT_LETTERBOX;
 	x = gi->x;
+	*xname = '\0';
     } else {
 	x = dset->Z[gi->list[4]];
+	strcpy(xname, series_get_graph_name(dset, gi->list[4]));
     }
 
     fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
     if (err) {
 	return err;
-    }    
+    }
 
-    if (dataset_is_time_series(dset)) {
+    /* assemble the data we'll need */
+    y  = dset->Z[gi->list[1]];
+    b1 = dset->Z[gi->list[2]];
+    b2 = dset->Z[gi->list[3]];
+    show_zero = band_straddles_zero(b1, b2, t1, t2);
+
+    if (gi->flags & GPT_TS) {
 	fprintf(fp, "# timeseries %d\n", dset->pd);
     }
 
     fputs("set nokey\n", fp);
+    strcpy(yname, series_get_graph_name(dset, gi->list[1]));
+    fprintf(fp, "set ylabel \"%s\"\n", yname);
+    if (*xname != '\0') {
+	fprintf(fp, "set xlabel \"%s\"\n", xname);
+    }
+    if (show_zero && style != BAND_FILL) {
+	fputs("set xzeroaxis\n", fp);
+    }
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
-    strcpy(yname, series_get_graph_name(dset, gi->list[1]));
-    
+
     fputs("plot \\\n", fp);
 
-    if (use_fill) {
+    if (style == BAND_FILL) {
 	/* plot the confidence band first, so the other lines
 	   come out on top */
 	print_filledcurve_line(NULL, rgb, fp);
-	fputs("0 notitle w lines lt 0, \\\n", fp);
-	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", yname);
+	if (show_zero) {
+	    fputs("0 notitle w lines lt 0, \\\n", fp);
+	}
+	if (gi->flags & GPT_LINES) {
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", yname);
+	} else {
+	    fprintf(fp, "'-' using 1:2 title '%s' lt 1\n", yname);
+	}
     } else {
 	/* plot confidence band last */
 	char lspec[24], dspec[8];
 
 	*lspec = *dspec = '\0';
-	fputs("0 notitle w lines lt 0, \\\n", fp);
-	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n", yname);
+	if (gi->flags & GPT_LINES) {
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n", yname);
+	} else {
+	    fprintf(fp, "'-' using 1:2 title '%s' lt 1, \\\n", yname);
+	}
 	if (*rgb != '\0') {
 	    sprintf(lspec, "lc rgb \"%s\"", rgb);
 	} else {
 	    strcpy(lspec, "lt 2");
 	}
-	if (use_dash) {
+	if (style == BAND_DASH) {
 	    strcpy(dspec, " dt 2");
 	}
 	fprintf(fp, "'-' using 1:2 notitle w lines %s%s, \\\n", lspec, dspec);
 	fprintf(fp, "'-' using 1:2 notitle w lines %s%s\n", lspec, dspec);
     }
 
-    gretl_push_c_numeric_locale();
-
     /* write out the inline data, the order depending on whether
        or not we're using fill style for the band
     */
 
-    y  = dset->Z[gi->list[1]];
-    b1 = dset->Z[gi->list[2]];
-    b2 = dset->Z[gi->list[3]];
+    gretl_push_c_numeric_locale();
 
-    if (use_fill) {
+    if (style == BAND_FILL) {
 	print_user_band_data(x, b1, b2, t1, t2, CONF_FILL, fp);
 	print_user_y_data(x, y, t1, t2, fp);
     } else {
@@ -5060,7 +5168,6 @@ static int plot_with_band (gnuplot_info *gi,
     gretl_pop_c_numeric_locale();
 
     err = finalize_plot_input_file(fp);
-
     clear_gpinfo(gi);
 
     return err;

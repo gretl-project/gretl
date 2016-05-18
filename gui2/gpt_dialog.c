@@ -372,37 +372,31 @@ static int style_from_line_number (GPT_SPEC *spec, int i,
 
 static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 {
-    GtkWidget *image, *button;
-    int j = 0, dotted = 0, shade = 0;
+    GtkWidget *image = NULL;
+    GtkWidget *button = NULL;
+    int j = i, dotted = 0;
 
     if (spec->lines[i].type == 0) {
 	return NULL;
     }
 
-    if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
-	shade = 1;
+    if (spec->lines[i].rgb[0] != '\0') {
+	/* we have a specific color for this line */
+	gretlRGB color;
+
+	gretl_rgb_get(&color, spec->lines[i].rgb); 
+	image = get_image_for_color(&color);
+    } else if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
+	image = get_image_for_color(get_graph_color(SHADECOLOR));
     } else {
 	j = style_from_line_number(spec, i, &dotted);
 	if (j < 0) {
 	    return NULL;
 	}
-    }
-
-    if (shade) {
-	image = get_image_for_color(get_graph_color(SHADECOLOR));
-    } else if (spec->lines[j].rgb[0] != '\0') {
-	gretlRGB color;
-
-	gretl_rgb_get(&color, spec->lines[j].rgb); 
-	image = get_image_for_color(&color);
-    } else {
 	image = get_image_for_color(get_graph_color(j));
     }
 
-    if (image == NULL) {
-	/* failsafe -- shouldn't happen */
-	button = gtk_button_new_with_label(_("Select color"));
-    } else {
+    if (image != NULL) {
 	button = gtk_button_new();
 	gtk_container_add(GTK_CONTAINER(button), image);
 	g_object_set_data(G_OBJECT(button), "image", image);
@@ -412,7 +406,7 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 			 GINT_TO_POINTER(j));
     }
 
-    if (dotted) {
+    if (dotted && button != NULL) {
 	gtk_widget_set_sensitive(button, FALSE);
     }
 
@@ -428,17 +422,11 @@ static void apply_line_color (GtkWidget *cb, GPT_SPEC *spec,
 	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
     }
 
-    if (rgb != NULL) {
-	if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
-	    set_graph_palette(SHADECOLOR, *rgb);
-	} else {
-	    int j = style_from_line_number(spec, i, NULL);
-
-	    if (j >= 0) {
-		print_rgb_hash(spec->lines[j].rgb, rgb);
-	    }
-	}
+    if (rgb != NULL && i >= 0 && i < spec->n_lines) {
+	print_rgb_hash(spec->lines[i].rgb, rgb);
     }
+
+    /* should we also update the "palette"? */
 }
 
 /* end graph color selection apparatus */
