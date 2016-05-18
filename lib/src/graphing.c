@@ -62,7 +62,6 @@
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
 static double default_png_scale = 1.0;
-static int plotting_band;
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -153,6 +152,9 @@ static void make_time_tics (gnuplot_info *gi,
 			    PRN *prn);
 static void get_multiplot_layout (int n, int tseries,
 				  int *rows, int *cols);
+static int plot_with_band (gnuplot_info *gi,
+			   const char *literal,
+			   const DATASET *dset);
     
 #ifndef WIN32
 
@@ -874,11 +876,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	}
     } else {
 	for (i=0; i<BOXCOLOR; i++) {
-	    if (plotting_band && i == 2) {
-		; /* let line 2 share the color of line 1 */
-	    } else {
-		print_rgb_hash(cstr, &user_color[i]);
-	    }
+	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
     }	
@@ -3324,18 +3322,16 @@ int gnuplot (const int *plotlist, const char *literal,
 	return time_fit_plot(&gi, literal, dset);
     }
 
+    if (gi.band) {
+	return plot_with_band(&gi, literal, dset);
+    }
+
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
 	many = 1;
     }
 
     /* convenience pointer */
     list = gi.list;
-
-    if (gi.band) {
-	strcpy(keystr, "set nokey\n");
-    } else {
-	strcpy(keystr, "set key left top\n");
-    }
 
     /* set x-axis label for non-time series plots */
     if (!(gi.flags & GPT_TS)) {
@@ -3391,11 +3387,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	make_time_tics(&gi, dset, many, xlabel, prn);
     }
 
-    if (gi.band) {
-	/* set file-scope global */
-	plotting_band = 1;
-    }
-
     /* open file and dump the prn into it: we delay writing
        the file header till we know a bit more about the plot
     */
@@ -3404,8 +3395,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	gretl_print_destroy(prn);
 	goto bailout;
     }
-
-    plotting_band = 0;
 
     fputs(gretl_print_get_buffer(prn), fp);
     gretl_print_destroy(prn);
@@ -4611,6 +4600,20 @@ static void print_y_data (const double *x,
     fputs("e\n", fp);
 }
 
+static void print_user_y_data (const double *x, 
+			       const double *y,
+			       int t1, int t2, 
+			       FILE *fp)
+{
+    int t;
+
+    for (t=0; t<=t2; t++) {
+	fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+    }
+
+    fputs("e\n", fp);
+}
+
 enum {
     CONF_BARS,
     CONF_FILL,
@@ -4648,6 +4651,32 @@ static void print_confband_data (const double *x,
     }
 
     fputs("e\n", fp);
+}
+
+static void print_user_band_data (const double *x,
+				  const double *b1,
+				  const double *b2,
+				  int t1, int t2, 
+				  int mode, FILE *fp)
+{
+    int t;
+ 
+    for (t=t1; t<=t2; t++) {
+	if (mode == CONF_FILL) {
+	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], b1[t], b2[t]);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", x[t], b1[t]);
+	} 
+    }
+
+    fputs("e\n", fp);
+
+    if (mode != CONF_FILL) {
+	for (t=t1; t<=t2; t++) {
+	    fprintf(fp, "%.10g %.10g\n", x[t], b2[t]);
+	}
+	fputs("e\n", fp);
+    }
 }
 
 static void print_x_confband_data (const double *x, const double *y,
@@ -4690,11 +4719,18 @@ static int compare_fs (const void *a, const void *b)
     return (fa->y > fb->y) - (fa->y < fb->y);
 }
 
-static void print_filledcurve_line (const char *title, FILE *fp)
+static void print_filledcurve_line (const char *title,
+				    const char *rgb,
+				    FILE *fp)
 {
-    char cstr[8];
+    char cstr[10];
 
-    print_rgb_hash(cstr, &user_shade_color);
+    if (rgb != NULL && *rgb != '\0') {
+	*cstr = '\0';
+	strncat(cstr, rgb, 9);
+    } else {
+	print_rgb_hash(cstr, &user_shade_color);
+    }
     
     if (title == NULL) {
 	fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve, \\\n",
@@ -4805,7 +4841,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	/* plot the confidence bands first so the other lines
 	   come out on top */
 	if (do_errs) {
-	    print_filledcurve_line(cistr, fp);
+	    print_filledcurve_line(cistr, NULL, fp);
 	} 
 	if (depvar_present) {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n",
@@ -4836,8 +4872,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     gretl_push_c_numeric_locale();
 
     /* write out the inline data, the order depending on whether
-       or not we're using fill style for the confidence
-       bands
+       or not we're using fill style for the confidence bands
     */
 
     if (use_fill) {
@@ -4870,6 +4905,165 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     gretl_pop_c_numeric_locale();
 
     return finalize_plot_input_file(fp);
+}
+
+static int get_band_options (int *fill, int *dash, char *rgb)
+{
+    const char *s = get_optval_string(plot_ci, OPT_N);
+    int err = 0;
+
+    if (s != NULL) {
+	char *p, *smod = NULL;
+	int slen, minlen = 7;
+
+	if (*s == '"' && s[strlen(s) - 1] == '"') {
+	    smod = gretl_strndup(s+1, strlen(s) - 2);
+	    s = smod;
+	}
+
+	p = strchr(s, ':');
+	slen = strlen(s);
+
+	if (p == NULL) {
+	    if (slen == 4) {
+		if (!strcmp(s, "fill")) {
+		    *fill = 1;
+		} else if (!strcmp(s, "dash")) {
+		    *dash = 1;
+		}
+	    } else if (slen < minlen || slen > 9) {
+		err = E_PARSE;
+	    } else {
+		strcpy(rgb, s);
+	    }
+	} else {
+	    minlen += 5;
+	    if (slen < minlen || slen > 9+5) {
+		err = E_PARSE;
+	    } else if (!strncmp(s, "fill:", 5)) {
+		*fill = 1;
+	    } else if (!strncmp(s, "dash:", 5)) {
+		*dash = 1;
+	    } else {
+		err = E_PARSE;
+	    }
+	    if (!err) {
+		strcpy(rgb, s + 5);
+	    }
+	}
+
+	free(smod);
+    }
+
+    return err;
+}
+
+static int plot_with_band (gnuplot_info *gi,
+			   const char *literal,
+			   const DATASET *dset)
+{
+    FILE *fp = NULL;
+    const double *x = NULL;
+    const double *y = NULL;
+    const double *b1 = NULL;
+    const double *b2 = NULL;
+    char yname[MAXDISP];
+    char rgb[10] = {0};
+    int use_fill = 0;
+    int use_dash = 0;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int err = 0;
+
+    if (gi->list[0] != 4) {
+	err = E_DATA;
+    } else {
+	err = list_adjust_sample(gi->list, &t1, &t2, dset, NULL);
+	if (!err && t2 - t1 < 3) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	err = get_band_options(&use_fill, &use_dash, rgb);
+    }
+
+    if (err) {
+	return err;
+    }
+    
+    if (gi->flags & GPT_TS) {
+	x = gi->x;
+    } else {
+	x = dset->Z[gi->list[4]];
+    }
+
+    fp = open_gp_stream(PLOT_REGULAR, gi->flags, &err);
+    if (err) {
+	return err;
+    }    
+
+    if (dataset_is_time_series(dset)) {
+	fprintf(fp, "# timeseries %d\n", dset->pd);
+    }
+
+    fputs("set nokey\n", fp);
+
+    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+    strcpy(yname, series_get_graph_name(dset, gi->list[1]));
+    
+    fputs("plot \\\n", fp);
+
+    if (use_fill) {
+	/* plot the confidence band first, so the other lines
+	   come out on top */
+	print_filledcurve_line(NULL, rgb, fp);
+	fputs("0 notitle w lines lt 0, \\\n", fp);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", yname);
+    } else {
+	/* plot confidence band last */
+	char lspec[24], dspec[8];
+
+	*lspec = *dspec = '\0';
+	fputs("0 notitle w lines lt 0, \\\n", fp);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n", yname);
+	if (*rgb != '\0') {
+	    sprintf(lspec, "lc rgb \"%s\"", rgb);
+	} else {
+	    strcpy(lspec, "lt 2");
+	}
+	if (use_dash) {
+	    strcpy(dspec, " dt 2");
+	}
+	fprintf(fp, "'-' using 1:2 notitle w lines %s%s, \\\n", lspec, dspec);
+	fprintf(fp, "'-' using 1:2 notitle w lines %s%s\n", lspec, dspec);
+    }
+
+    gretl_push_c_numeric_locale();
+
+    /* write out the inline data, the order depending on whether
+       or not we're using fill style for the band
+    */
+
+    y  = dset->Z[gi->list[1]];
+    b1 = dset->Z[gi->list[2]];
+    b2 = dset->Z[gi->list[3]];
+
+    if (use_fill) {
+	print_user_band_data(x, b1, b2, t1, t2, CONF_FILL, fp);
+	print_user_y_data(x, y, t1, t2, fp);
+    } else {
+	print_user_y_data(x, y, t1, t2, fp);
+	print_user_band_data(x, b1, b2, t1, t2, 0, fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    err = finalize_plot_input_file(fp);
+
+    clear_gpinfo(gi);
+
+    return err;
 }
 
 static int *get_x_sorted_order (const FITRESID *fr, 
@@ -5140,7 +5334,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* plot the rq confidence band first so the other lines
        come out on top */
-    print_filledcurve_line(NULL, fp);
+    print_filledcurve_line(NULL, NULL, fp);
 
     /* rq estimates */
     tmp = g_strdup_printf(_("Quantile estimates with %g%% band"), cval);
@@ -5934,7 +6128,7 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 	fputs("plot \\\n", fp);
 	if (use_fill) {
 	    sprintf(title, _("%g percent confidence band"), 100 * (1 - alpha));
-	    print_filledcurve_line(title, fp);
+	    print_filledcurve_line(title, NULL, fp);
 	    if (data_straddle_zero(resp)) {
 		fputs("0 notitle w lines lt 0, \\\n", fp);
 	    }
@@ -6166,7 +6360,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	    fputs("plot \\\n", fp);
 
 	    if (confint && use_fill) {
-		print_filledcurve_line(NULL, fp);
+		print_filledcurve_line(NULL, NULL, fp);
 		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
 	    } else if (confint) {
 		fputs("'-' using 1:2 notitle w lines, \\\n", fp); 

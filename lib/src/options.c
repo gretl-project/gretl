@@ -262,7 +262,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_U, "output", 2 },
     { GNUPLOT,  OPT_Y, "single-yaxis", 0 },
     { GNUPLOT,  OPT_X, "matrix", 2 },
-    { GNUPLOT,  OPT_N, "band", 0 },
+    { GNUPLOT,  OPT_N, "band", 1 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
     { HECKIT,   OPT_M, "ml", 0 },
@@ -449,7 +449,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_U, "output", 2 },
     { PLOT,     OPT_Y, "single-yaxis", 0 },
     { PLOT,     OPT_Z, "dummy", 0 },
-    { PLOT,     OPT_N, "band", 0 },
+    { PLOT,     OPT_N, "band", 1 },
     { PRINT,    OPT_O, "byobs", 0 },
     { PRINT,    OPT_L, "list", 0 },
     { PRINT,    OPT_N, "no-dates", 0 },
@@ -1432,7 +1432,13 @@ int set_optval_int (int ci, gretlopt opt, int k)
 
 int set_optval_string (int ci, gretlopt opt, const char *s)
 {
-    return real_push_option(ci, opt, gretl_strdup(s), 1, 0);
+    char *scpy = gretl_strdup(s);
+
+    if (scpy == NULL) {
+	return E_ALLOC;
+    } else {
+	return real_push_option(ci, opt, scpy, 1, 0);
+    }
 }
 
 /* valid_long_opt: this is (semi-) public because we have need of
