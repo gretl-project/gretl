@@ -122,8 +122,9 @@ other.
 
 \section{Notation}
 
-As a reminder, the basic representation of a state-space model as
-given in the \textit{Gretl User's Guide} is as follows:
+In this document, we are going to use, as basic representation of
+a state-space model, the following pair of equations:\footnote{Only
+  marginally different from what we used in \textit{Gretl User's Guide}.}
 %
 \begin{align}
   \label{eq:state}
@@ -814,7 +815,8 @@ series two = 2
 series minus_two = -2
 list P = eta_aux two minus_two
 plot P
-  options time-series with-lines band
+  options time-series with-lines band=dash
+  literal set ylabel ''
   literal set title 'Auxiliary residual, state equation'
 end plot --output=display
 
@@ -825,7 +827,8 @@ series eta_minus = etahat - 1.64485 * sdeta
 series eta_plus = etahat + 1.64485 * sdeta
 list P = etahat eta_minus eta_plus
 plot P
-  options time-series with-lines band
+  options time-series with-lines band=dash
+  literal set ylabel ''
   literal set title 'State disturbance with 90% confidence band'
 end plot --output=display
 \end{scode}
@@ -835,9 +838,9 @@ end plot --output=display
   \centering
   \begin{tabular}{cc}
   \small
-  Auxiliary (standardized) residuals, state equation \\
+  %Auxiliary (standardized) residuals, state equation \\
     \includegraphics{figures/nile_eta_ksd} \\[10pt]
-    \small Estimated state disturbance, $\hat{\eta}_t$, with 90\% confidence band \\
+  % \small Estimated state disturbance, $\hat{\eta}_t$, with 90\% confidence band \\
   \includegraphics{figures/nile_eta_dk}
   \end{tabular}
   \caption{Nile data: auxiliary residuals and $\hat{\eta}_t$
