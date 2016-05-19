@@ -1044,6 +1044,8 @@ int gp_line_data_columns (GPT_SPEC *spec, int i)
     }
 }
 
+#define FREEZE_COL0RS 0 /* not yet */
+
 int plotspec_print (GPT_SPEC *spec, FILE *fp)
 {
     int i, j, k, t;
@@ -1072,9 +1074,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	gretl_pop_c_numeric_locale();
     }
 
+#if !FREEZE_COL0RS
     if (!mono) {
 	write_styles_from_plotspec(spec, fp);
     }
+#endif
 
     if (!string_is_blank(spec->titles[0])) {
 	fprintf(fp, "set title \"%s\"\n", spec->titles[0]);
@@ -1351,6 +1355,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
+#if FREEZE_COLORS
+	if (*line->rgb != '\0') {
+	    fprintf(fp, "lc rgb \"%s\" ", line->rgb);
+	} 
+#else
 	if (line->style == GP_STYLE_FILLEDCURVE && line->type == LT_AUTO) {
 	    if (*line->rgb != '\0') {
 		fprintf(fp, "lc rgb \"%s\" ", line->rgb);
@@ -1358,14 +1367,16 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		print_filledcurve_color(fp);
 	    }
 	}
+#endif
 
 	fprintf(fp, "w %s", gp_line_style_name(line->style));
-
+#if !FREEZE_COLORS
 	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
 	} else if (spec->nbars > 0 && line->style != GP_STYLE_FILLEDCURVE) {
 	    fprintf(fp, " lt %d", i + 1);
 	}
+#endif
 
 	maybe_print_point_info(line, fp);
 

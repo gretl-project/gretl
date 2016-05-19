@@ -115,6 +115,7 @@ typedef enum {
     PLOT_XCORRELOGRAM,
     PLOT_STACKED_BAR,
     PLOT_3D,
+    PLOT_BAND,
     PLOT_TYPE_MAX
 } PlotType;
 
