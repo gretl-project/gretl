@@ -138,7 +138,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_XCORRELOGRAM,   "cross-correlogram" },
     { PLOT_STACKED_BAR,    "stacked-bars" },
     { PLOT_3D,             "3-D plot" },
-    { PLOT_BAND,           " band plot" },
+    { PLOT_BAND,           "band plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -5081,10 +5081,11 @@ static int plot_with_band (gnuplot_info *gi,
     }
 
     if (gi->flags & (GPT_TS | GPT_IDX)) {
-	/* FIXME: why is this not working right? */
-	/* gi->flags |= GPT_LETTERBOX; */
 	x = gi->x;
 	*xname = '\0';
+	if (gi->flags & GPT_TS) {
+	    gi->flags |= GPT_LETTERBOX;
+	}
     } else {
 	x = dset->Z[gi->list[4]];
 	strcpy(xname, series_get_graph_name(dset, gi->list[4]));
@@ -5101,8 +5102,8 @@ static int plot_with_band (gnuplot_info *gi,
     b2 = dset->Z[gi->list[3]];
     show_zero = band_straddles_zero(b1, b2, t1, t2);
 
-    if (0 && gi->flags & GPT_TS) {
-	fprintf(fp, "# timeseries %d\n", dset->pd);
+    if (gi->flags & GPT_TS) {
+	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
     }
 
     fputs("set nokey\n", fp);
