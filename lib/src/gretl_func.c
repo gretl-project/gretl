@@ -2916,10 +2916,14 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	if (!strcmp(name, pkg->pub[i]->name)) {
 	    u = pkg->pub[i];
 	    if (role == UFUN_GUI_MAIN) {
+#if 1
+		; /* OK, type does not matter */
+#else	
 		if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
 		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
 		    err = E_TYPES;
 		}
+#endif
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
 		if (u->n_params == 0) {
@@ -2992,9 +2996,13 @@ int function_ok_for_package_role (const char *name,
     }
 
     if (role == UFUN_GUI_MAIN) {
+#if 1
+	; /* OK, we don't mind what type it is */
+#else
 	if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
 	    err = E_TYPES;
 	}
+#endif
     } else {
 	/* bundle-print, bundle-plot, etc. */
 	if (u->n_params == 0) {

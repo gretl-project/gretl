@@ -1461,18 +1461,18 @@ char *gretl_version_string (char *targ, int vnum)
 {
     if (vnum >= 20150) {
 	const char *s = "abcdefghij";
+	int y, idx;
 	char c;
-	int y;
 
 	y = vnum / 10;
-	c = vnum - 10 * y - 1;
-	
-	if (c >= 0 && c < 10) {
-	    c = s[(int) c];
+	idx = vnum - 10 * y;
+
+	if (idx >= 0 && idx < 10) {
+	    c = s[idx];
 	} else {
 	    c = 'a';
 	}
-	
+
 	sprintf(targ, "%d%c", y, c);
     } else {
 	int x, y, z;
