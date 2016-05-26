@@ -465,7 +465,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_vector *eXi = NULL;
     int T = pan->Tmax;
     int k = pmod->ncoeff;
-    double Nfac;
+    double Nfac = 1.0;
     int i, j, v, s, t;
     int err = 0;
 
@@ -483,10 +483,21 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
        Guide to Cluster-Robust Inference", Journal of Human
        Resources, Spring 2015).
     */
-    Nfac = pan->effn / (pan->effn - 1.0);
-    Nfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
-    Nfac = sqrt(Nfac);
+    if (pmod->ci != IVREG) {
+	/* FIXME IVREG? */
+	Nfac = pan->effn / (pan->effn - 1.0);
+	Nfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
+	Nfac = sqrt(Nfac);
+    }
     s = 0;
+
+#if 0
+    fprintf(stderr, "Nfac1 = %d/%d = %g\n", pan->effn, pan->effn-1,
+	    pan->effn / (pan->effn - 1.0));
+    fprintf(stderr, "Nfac2 = %d/%d = %g\n", pmod->nobs-1, pmod->nobs-k,
+	    (pmod->nobs - 1.0) / (pmod->nobs - k));
+    fprintf(stderr, "Nfac final = %g\n", Nfac);
+#endif
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
