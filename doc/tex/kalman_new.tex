@@ -12,29 +12,6 @@
 
 \begin{document}
 
-% \newcommand{\obsvec}{\mathbf{y}}
-% \newcommand{\obsymat}{\mathbf{H}}
-% \newcommand{\obsx}{\mathbf{x}}
-% \newcommand{\obsxmat}{\mathbf{A}}
-% \newcommand{\obsdist}{\mathbf{w}}
-% \newcommand{\obsvar}{\mathbf{R}}
-
-% \newcommand{\statevec}{\bm{\xi}}
-% \newcommand{\statecvar}{\mathbf{P}}
-% \newcommand{\statemat}{\mathbf{F}}
-% \newcommand{\strdist}{\mathbf{v}}
-% \newcommand{\statevar}{\mathbf{Q}}
-% \newcommand{\gain}{\mathbf{K}}
-% \newcommand{\statemu}{\bm{\mu}}
-
-% \newcommand{\altstatevar}{\mathbf{B}}
-% \newcommand{\altobsvar}{\mathbf{C}}
-% \newcommand{\alldist}{\bm{\varepsilon}}
-
-% \newcommand{\prederr}{\mathbf{e}}
-% \newcommand{\predvar}{\bm{\Sigma}}
-
-% less fussy?
 \newcommand{\obsvec}{y}
 \newcommand{\obsymat}{H}
 \newcommand{\obsx}{x}
@@ -717,7 +694,16 @@ The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
 estimated via maximum likelihood.  Script~\ref{script:loclev} provides
 an example of simulation and estimation of such a model. Since
 simulating the local level model is trivial using ordinary gretl
-commands, we don't use \cmd{ksimul} in this context.
+commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
+  the way the script is, there is an ``off-by-one'' misalignment
+  between the state vector and the observable series. For convenience,
+  the script is written as if equation \eqref{eq:state} was modified
+  into the equivalent formulation
+  \[
+  \statevec_{t} = \statemat \statevec_{t-1} + \strdist_t ;
+  \]
+  we tried to keep the script as simple as possible, so that the
+  reader is free to focus on the interesting aspects. }
 
 \begin{script}[htbp]
   \caption{Local level model}
