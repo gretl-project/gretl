@@ -69,7 +69,6 @@ genr alpha = $coeff(0)
 genr beta = $coeff(x1)
 \end{code}
 
-
 \section{NLS dialog window}
 \label{nls-gui}
 
@@ -90,7 +89,6 @@ tags.
   \caption{NLS dialog box}
   \label{fig-nls-dialog}
 \end{figure}
-
 
 \section{Analytical and numerical derivatives}
 \label{nls-deriv}
@@ -130,6 +128,64 @@ of collinearity among the derivatives.
 
 Note that you cannot mix analytical and numerical derivatives: you
 should supply expressions for all of the derivatives or none.
+
+\section{Advanced use}
+\label{sec:nls-generalize}
+
+The \cmd{nls} block can also contain more sophisticated constructs.
+First, it can handle intermediate expressions; this makes it possible
+to construct the conditional mean expression as a multi-step job, this
+enhancing modularity and readability of the code. Second, more complex
+objects, such as lists and matrices, can be used for this purpose.
+
+For example, suppose that we want to estimate a Probit Binary Response
+model via NLS. The specification is
+\begin{equation}
+\label{eq:probit-nls}
+y_i = \Phi\left[g(\bm{x}_i)\right] + u_i, \qquad g(\bm{x}_i) = b_0 +
+b_1 x_{1,i} + b_2 x_{2,i} = \bm{b}'\bm{x}_i
+\end{equation}
+Note: this is not the recommended way to estimate a probit model: the
+$u_i$ term is heteroskedastic by construction and ML estimation is
+much preferable here. Still, NLS is a consistent estimator of the
+parameter vector $\bm{b}$, although its covariance matrix will have to
+be adjusted to compensate for heteroskedasticity: this is accomplished
+via the \option{robust} switch.
+
+\begin{script}[htbp]
+  \caption{NLS estimation of a Probit model}
+  \label{script:nls-probit-numder}
+  \begin{scode}
+    open greene25_1.gdt
+    list X = const age income ownrent selfempl
+
+    # initalisation
+    ols cardhldr X --quiet
+    matrix b = $coeff / $sigma
+
+    # proceed with NLS estimation
+    nls cardhldr = cnorm(ndx)
+        series ndx = lincomb(X, b)
+        params b
+    end nls --robust
+
+    # compare with ML probit 
+    probit cardhldr X --p-values
+  \end{scode}
+\end{script}
+
+The example in script \ref{script:nls-probit-numder} can be enhanced by
+using analytical derivatives: since
+\[
+\frac{\partial g(\bm{x}_i)}{b_j} = \varphi(\bm{b}'\bm{x}_i) \cdot x_{ij}
+\]
+one could substitute the \cmd{params} line in the script with the two-liner
+\begin{code}
+  series f = dnorm(ndx)
+  deriv b = {f} .* {X}
+\end{code}
+and have \cmd{nls} use analytically-computed derivatives, which are
+quicker and usually more reliable.
 
 \section{Controlling termination}
 \label{nls-toler}
