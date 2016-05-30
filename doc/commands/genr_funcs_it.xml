@@ -1403,9 +1403,20 @@
       rappresentano, rispettivamente, i limiti inferiore e
       superiore delle frequenze da estrarre, mentre
       <argname>k</argname> è l'ordine dell'approssimazione da
-      usare. Se questi argomenti non sono forniti, vengono usati i
-      seguenti valori di default: <argname>f1</argname> = 8,
-      <argname>f1</argname> = 32, <argname>k</argname> = 8.
+      usare.
+    </para>
+    <para>
+      Se questi argomenti non sono forniti dall'utente, i valori di
+      default dipendono dalla periodicità del dataset. Per dati
+      annuali, i valori di default per <argname>f1</argname>,
+      <argname>f2</argname> e <argname>k</argname> sono
+      rispettivamente 2, 8 e 3; per dati trimestrali, 6, 32 e 12; per
+      dati mensili, 18, 96 e 36. Questi valori sono scelti in modo da
+      rispettare la scelta più comune fra gli economisti applicati, e
+      cioè di usare questo filtro per estrarre la componente alla
+      frequenza di <quote>business cycle</quote>; questa, a sua volta,
+      è di solito definita come compresa fra 18 mesi e 8 anni. Il
+      filtro, come impostazione predefinita, usa 3 anni di dati.
     </para>
     <para>
       Se <argname>f2</argname> è maggiore o uguale del numero di

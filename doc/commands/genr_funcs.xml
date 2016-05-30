@@ -1438,13 +1438,25 @@
       <description>
 	<para>
 	  Returns the result from application of the Baxter&ndash;King
-	  bandpass filter to the series <argname>y</argname>.  The optional
-	  parameters <argname>f1</argname> and <argname>f2</argname>
-	  represent, respectively, the lower and upper bounds of the range of
-	  frequencies to extract, while <argname>k</argname> is the
-	  approximation order to be used. If these arguments are not supplied
-	  then the following default values are used: <argname>f1</argname> =
-	  8, <argname>f2</argname> = 32, <argname>k</argname> = 8.
+	  bandpass filter to the series <argname>y</argname>.  The
+	  optional parameters <argname>f1</argname> and
+	  <argname>f2</argname> represent, respectively, the lower and
+	  upper bounds of the range of frequencies to extract, while
+	  <argname>k</argname> is the approximation order to be
+	  used.
+	</para>
+	<para>
+	  If these arguments are not supplied then the default values
+	  depend on the periodicity of the dataset. For yearly data
+	  the defaults for <argname>f1</argname>,
+	  <argname>f2</argname> and <argname>k</argname> are 2, 8 and
+	  3, respectively; for quarterly data, 6, 32 and 12; for
+	  monthly data, 18, 96 and 36. These values are chosen to
+	  match the most common choice among practitioners, that is to
+	  use this filter for extracting the <quote>business
+	  cycle</quote> frequency component; this, in turn, is
+	  commonly defined as being between 18 months and 8 years. The
+	  filter, per default choice, spans 3 years of data.
 	</para>
 	<para>
 	  If <argname>f2</argname> is greater than or equal to the
