@@ -3303,6 +3303,13 @@ int get_command_index (char *line, int cmode, CMD *cmd)
     fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
 
+    if ((cmd->context == FOREIGN || cmd->context == MPI) &&
+	!ends_foreign_block(line)) {
+	cmd->opt = OPT_NONE;
+	cmd->ci = cmd->context;
+	return 0;
+    }
+
     if (filter_comments(line, cmd)) {
 	return 0;
     }
