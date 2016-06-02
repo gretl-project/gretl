@@ -352,7 +352,7 @@ Then, for example, if you want to retrieve the matrix $\gain$ at time
 10, you need to reshape the tenth row of the matrix \texttt{G} into
 the appropriate dimensions:
 \begin{code}
-matrix K10 = reshape(G[10,], SSmod.r, SSmod.n)  
+matrix K10 = mshape(G[10,], SSmod.r, SSmod.n)  
 \end{code}
 \section{The \cmd{ksmooth} function}
 \label{sec:ksmooth}
