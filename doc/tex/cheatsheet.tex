@@ -638,53 +638,50 @@ more elegant:
 function that automatically drops collinear variables from a list.
 
 \emph{Solution:}
-The neatest way to achieve this is to use \emph{Gram-Schmidt
-  orthogonalization}, which is performed by the matrix function
-\cmd{qrdecomp()}. The function below defines a user-level function
-that (i) converts the list to a matrix (ii) spots collinear columns
-and (iii) removes them if any.
+In previous versions of \app{gretl} this required some
+scripting. Nowadays, we have the \cmd{dropcoll} function, which does
+just that. See the \GCR.
 
+\subsection{Convolution / polynomial multiplication}
+
+\emph{Problem:} How do I multiply polynomials? There is no functions
+to do that, and still it's a faily basic mathematical task.
+
+\emph{Solution:} Never fear! We have the \cmd{filter} function, which
+is advertised as a time series tool, but in fact does just that.
+
+Suppose you want to multiply two finite-order polynomials $P(x) =
+\sum_{i=1}^p p_i x^i$ and $Q(x) = \sum_{i=1}^q q_i x^i$. What you want
+is the sequence of coefficients of the polynomial $R(x) = P(x) \cdot
+Q(x) = \sum_{i=1}^{pq-1} r_i x^i$, where $r_i = \sum_j p_j q_{i-j}$,
+also known as the \emph{convolution} of the $p_i$ and $q_i$
+coefficients. The same operation can be performed via the FFT, but in
+most cases using \cmd{filter} is quicker and more natural.
+
+As an example, we'll use the same one we used in Section
+\ref{sec:genr-fft}: consider the multiplication of two polynomials:
+\begin{eqnarray*}
+  P(x) & = & 1 + 0.5 x \\
+  Q(x) & = & 1 + 0.3 x - 0.8 x^2 \\
+  R(x) = P(x) \cdot Q(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3
+\end{eqnarray*}
+The following code snippet performs all the necessary calculations:
 \begin{code}
-function list autodrop(list X, scalar criterion[1.0e-12])
-    list drop = null
-    matrix R
-    qrdecomp({X}, &R)
-
-    scalar ndrop = 0
-    loop i=1..nelem(X) --quiet
-        if criterion > abs(R[i,i])
-            drop += X[i]
-            ndrop++
-        endif
-    endloop
-
-    if ndrop > 0 
-        printf "%d collinear variables dropped (%s)\n", \
-          ndrop, varname(drop)    
-        return X - drop
-    else 
-        return X
-    endif
-end function
+p = {1; 0.5}
+q = {1; 0.3; -0.8}
+r = filter(p | zeros(rows(q)-1, 1), q)
+print r  
 \end{code}
-
-\emph{Comment:} The function also accepts a second optional argument
-which sets a criterion for deciding how strict the decision rule must
-be. Usage example:
-
+Runnning the above produces
 \begin{code}
-nulldata 20
+r (4 x 1)
 
-x1 = normal()
-x2 = normal()
-x3 = x1 + x2
-x4 = x1 + 1
-
-list A = const x1 x2 x3 x4
-list C = autodrop(A)
+      1 
+    0.8 
+  -0.65 
+   -0.4 
 \end{code}
-Running the code above will create a list \texttt{C} containing just
-\texttt{const}, \texttt{x1} and \texttt{x2}.
+which is indeed the desired result.
 
 \subsection{Comparing two lists}
 
