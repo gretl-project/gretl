@@ -3206,6 +3206,11 @@ static double *compact_series (const DATASET *dset, int i, int oldn,
     return x;
 }
 
+/* compact an entire dataset, transcribing from each higher-frequency
+   series to a set of lower-frequency series each of which holds the
+   observations from a given sub-period
+*/
+
 static DATASET *compact_data_multi (const DATASET *dset, int newpd,
 				    int startmaj, int startmin,
 				    int endmaj, int endmin,
@@ -3222,7 +3227,7 @@ static DATASET *compact_data_multi (const DATASET *dset, int newpd,
     if (newpd == 1) {
 	T = endmaj - startmaj + 1;
     } else if (newpd == 4) {
-	T = oldpd * (endmaj - startmaj + 1);
+	T = oldpd * (endmaj - startmaj + 1) / compfac;
 	q0 = 1 + (startmin - 1) / 3;
 	qT = 1 + (endmin - 1) / 3;
 	T += qT - q0 - 3;
@@ -3236,6 +3241,7 @@ static DATASET *compact_data_multi (const DATASET *dset, int newpd,
 	return NULL;
     }
 
+    /* the number of series, after compaction */
     v = 1 + (dset->v - 1) * compfac;
 
 #if 0
@@ -3253,18 +3259,24 @@ static DATASET *compact_data_multi (const DATASET *dset, int newpd,
 	sprintf(cset->stobs, "%d", startmaj);
 	sprintf(cset->endobs, "%d", endmaj);
     } else {
-	sprintf(cset->stobs, "%d:%02d", startmaj, q0);
-	sprintf(cset->endobs, "%d:%02d", endmaj, qT);
+	/* newpd must be 4 */
+	sprintf(cset->stobs, "%d:%d", startmaj, q0);
+	sprintf(cset->endobs, "%d:%d", endmaj, qT);
     }
 
     cset->pd = newpd;
-    cset->sd0 = get_date_x(cset->pd, cset->stobs);
     cset->structure = TIME_SERIES;
+    cset->sd0 = get_date_x(cset->pd, cset->stobs);
 
-    k = 1; /* first new series */
+#if 0  
+    fprintf(stderr, "stobs '%s', endobs '%s', sd0 %g\n",
+	    cset->stobs, cset->endobs, cset->sd0);
+#endif
+
+    k = 1; /* the first new series */
 
     for (i=1; i<dset->v; i++) {
-	/* loop across data series */
+	/* loop across original data series */
 	offset = startmin - 1;
 	s = 0;
 	for (t=0; t<T; t++) {
@@ -3302,7 +3314,7 @@ static DATASET *compact_data_multi (const DATASET *dset, int newpd,
 	k += compfac;
     }
 
-#if 0    
+#if 0
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     printdata(NULL, NULL, cset, OPT_O, prn);
     gretl_print_destroy(prn);
@@ -4255,6 +4267,12 @@ int compact_data_set (DATASET *dset, int newpd,
 	
 	cset = compact_data_multi(dset, newpd, startmaj, startmin,
 				  endmaj, endmin, &nv, &err);
+	if (!err) {
+	    free_Z(dset);
+	    clear_datainfo(dset, CLEAR_FULL);
+	    *dset = *cset;
+	    free(cset);
+	}
 	return err;
     }
 

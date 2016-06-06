@@ -481,7 +481,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
 	sprintf(datestr, fmt, x);
 	colonize_obs(datestr);
     }
-    
+
     return datestr;
 }
 
