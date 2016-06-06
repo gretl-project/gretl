@@ -3206,6 +3206,111 @@ static double *compact_series (const DATASET *dset, int i, int oldn,
     return x;
 }
 
+static DATASET *compact_data_multi (const DATASET *dset, int newpd,
+				    int startmaj, int startmin,
+				    int endmaj, int endmin,
+				    int *nv, int *err)
+{
+    DATASET *cset = NULL;
+    char sfx[6];
+    int oldpd = dset->pd;
+    int compfac = oldpd / newpd;
+    int v, i, j, k, t, s, T;
+    int q0 = 0, qT = 0;
+    int offset;
+
+    if (newpd == 1) {
+	T = endmaj - startmaj + 1;
+    } else if (newpd == 4) {
+	T = oldpd * (endmaj - startmaj + 1);
+	q0 = 1 + (startmin - 1) / 3;
+	qT = 1 + (endmin - 1) / 3;
+	T += qT - q0 - 3;
+    } else {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (T <= 1) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    v = 1 + (dset->v - 1) * compfac;
+
+#if 0
+    fprintf(stderr, "oldpd %d, newpd %d, v=%d, T=%d, start=%d:%d, end=%d:%d\n",
+	    oldpd, newpd, v, T, startmaj, startmin, endmaj, endmin);
+#endif
+    
+    cset = create_new_dataset(v, T, 0);
+    if (cset == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (newpd == 1) {
+	sprintf(cset->stobs, "%d", startmaj);
+	sprintf(cset->endobs, "%d", endmaj);
+    } else {
+	sprintf(cset->stobs, "%d:%02d", startmaj, q0);
+	sprintf(cset->endobs, "%d:%02d", endmaj, qT);
+    }
+
+    cset->pd = newpd;
+    cset->sd0 = get_date_x(cset->pd, cset->stobs);
+    cset->structure = TIME_SERIES;
+
+    k = 1; /* first new series */
+
+    for (i=1; i<dset->v; i++) {
+	/* loop across data series */
+	offset = startmin - 1;
+	s = 0;
+	for (t=0; t<T; t++) {
+	    /* loop across new time periods */
+	    for (j=0; j<compfac; j++) {
+		/* loop across new series <- sub-periods */
+		int named = 0;
+		
+		if (!named) {
+		    strcpy(cset->varname[k+j], dset->varname[i]);
+		    if (oldpd == 12) {
+			gretl_trunc(cset->varname[k+j], VNAMELEN - 5);
+			sprintf(sfx, "_m%02d", j+1);
+		    } else {
+			gretl_trunc(cset->varname[k+j], VNAMELEN - 4);
+			sprintf(sfx, "_q%d", j+1);
+		    }
+		    strcat(cset->varname[k+j], sfx);
+		    named = 1;
+		}
+		while (s < offset) {
+		    cset->Z[k+j][t] = NADBL;
+		    offset--;
+		    j++;
+		}
+		if (s < dset->n) {
+		    cset->Z[k+j][t] = dset->Z[i][s];
+		} else {
+		    cset->Z[k+j][t] = NADBL;
+		}
+		s++;
+	    }
+	}
+	/* advance column write position */
+	k += compfac;
+    }
+
+#if 0    
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    printdata(NULL, NULL, cset, OPT_O, prn);
+    gretl_print_destroy(prn);
+#endif
+
+    return cset;
+}
+
 /* specific apparatus for converting daily time series to monthly */
 
 static double *extend_series (const double *z, int n)
@@ -3376,7 +3481,7 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 		   int oldn, CompactMethod method, 
 		   int *startskip, int *newn) 
 {
-    int ss, es, n;
+    int ss = 0, n = 0;
 
     if (method == COMPACT_EOP) {
 	int unused;
@@ -3397,8 +3502,9 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	    n++;
 	}
     } else {
+	int es = endmin % compfac;
+	
 	ss = (compfac - (startmin % compfac) + 1) % compfac;
-	es = endmin % compfac;
 	n = (oldn - ss - es) / compfac;
     }
 
@@ -4073,6 +4179,18 @@ int compact_data_set (DATASET *dset, int newpd,
 
     gretl_error_clear();
 
+    if (default_method == COMPACT_MULTI) {
+	/* for now (2016-06-06) we'll do this only for monthly to
+	   quarterly or annual, or quarterly to annual
+	*/
+	if (!(oldpd == 12 && newpd == 1) &&
+	    !(oldpd == 12 && newpd == 4) &&
+	    !(oldpd == 4 && newpd == 1)) {
+	    gretl_errmsg_set("Unsupported conversion");
+	    return E_DATA;
+	}
+    }    
+
     if (oldpd == 52) {
 	return weekly_dataset_to_monthly(dset, default_method);
     }
@@ -4131,6 +4249,15 @@ int compact_data_set (DATASET *dset, int newpd,
 	} 
     }
 
+    if (default_method == COMPACT_MULTI) {
+	DATASET *cset;
+	int nv = 0;
+	
+	cset = compact_data_multi(dset, newpd, startmaj, startmin,
+				  endmaj, endmin, &nv, &err);
+	return err;
+    }
+
     min_startskip = oldpd;
     newn = 0;
     any_eop = 0;
@@ -4138,7 +4265,8 @@ int compact_data_set (DATASET *dset, int newpd,
     get_global_compact_params(compfac, startmin, endmin, default_method,
 			      &min_startskip, &newn, &any_eop, &all_same, 
 			      dset);
-    if (newn == 0) {
+
+    if (newn == 0 && default_method != COMPACT_MULTI) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	return 1;
     }    

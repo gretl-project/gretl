@@ -66,13 +66,14 @@ typedef enum {
 
 /**
  * CompactMethod:
- * @COMPACT_NONE: no data compaction
- * @COMPACT_SUM: take sum of higher frequency data
- * @COMPACT_AVG: take mean of higher frequency data
- * @COMPACT_SOP: use start-of-period value
- * @COMPACT_EOP: use end-of-period value
- * @COMPACT_WDAY: use a specified day of the week
- * @COMPACT_MAX: sentinel value
+ * @COMPACT_NONE:  no data compaction
+ * @COMPACT_SUM:   take sum of higher frequency data
+ * @COMPACT_AVG:   take mean of higher frequency data
+ * @COMPACT_SOP:   use start-of-period value
+ * @COMPACT_EOP:   use end-of-period value
+ * @COMPACT_WDAY:  use a specified day of the week
+ * @COMPACT_MULTI: break out into list
+ * @COMPACT_MAX:   sentinel value
  *
  * Symbolic codes for various methods of compacting data
  * series (i.e. converting from a higher to a lower
@@ -87,6 +88,7 @@ typedef enum {
     COMPACT_SOP,
     COMPACT_EOP,
     COMPACT_WDAY,
+    COMPACT_MULTI,
     COMPACT_MAX
 } CompactMethod;
 

@@ -3111,6 +3111,8 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 	    method = COMPACT_SOP;
 	} else if (!strcmp(s, "last") || !strcmp(s, "eop")) {
 	    method = COMPACT_EOP;
+	} else if (!strcmp(s, "multi")) {
+	    method = COMPACT_MULTI;
 	} else if (!strcmp(s, "avg") || !strcmp(s, "average")) {
 	    method = COMPACT_AVG;
 	} else if (*s != '\0') {
