@@ -2999,6 +2999,87 @@ init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
     dset->t2 = dset->n - 1;
 }
 
+/* for now (2016-06-06) we'll do "multi" compaction only for
+   monthly to quarterly or annual, or quarterly to annual
+*/
+
+static int compact_multi_pd_check (int high, int low)
+{
+    if (!(high == 12 && low == 1) &&
+	!(high == 12 && low == 4) &&
+	!(high == 4 && low == 1)) {
+	gretl_errmsg_set("Unsupported conversion");
+	return E_DATA;
+    }   
+
+    return 0;
+}
+
+/* construct a little dataset as a temporary wrapper for an
+   import using compact=multi
+*/
+
+static DATASET *make_import_tmpset (const DATASET *dset,
+				    SERIESINFO *sinfo,
+				    double **dbZ,
+				    int *err)
+{
+    DATASET *tmpset = NULL;
+
+    *err = compact_multi_pd_check(sinfo->pd, dset->pd);
+    if (*err) {
+	return NULL;
+    }    
+
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    tmpset->v = 2;
+    tmpset->n = sinfo->nobs;
+
+    tmpset->Z = malloc(2 * sizeof *tmpset->Z);
+    if (tmpset->Z == NULL) {
+	*err = E_ALLOC;
+	free(tmpset);
+	return NULL;
+    }    
+
+    *err = dataset_allocate_varnames(tmpset);
+    if (*err) {
+	free(tmpset->Z[1]);
+	free(tmpset->Z);
+	free(tmpset);
+	return NULL;
+    }
+
+    tmpset->Z[0] = NULL;
+    tmpset->Z[1] = dbZ[1];
+    dbZ[1] = NULL; /* note: stolen */
+
+    tmpset->t1 = sinfo->t1;
+    tmpset->t2 = sinfo->t2;
+    tmpset->pd = sinfo->pd;
+    strcpy(tmpset->stobs, sinfo->stobs);
+    strcpy(tmpset->endobs, sinfo->endobs);
+    tmpset->structure = TIME_SERIES;
+    tmpset->sd0 = get_date_x(tmpset->pd, tmpset->stobs);
+
+    strcpy(tmpset->varname[1], sinfo->varname);
+
+#if 0
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    fprintf(stderr, "import_tmpset: t1=%d, t2=%d, nobs=%d, pd=%d, offset=%d\n",
+	    sinfo->t1, sinfo->t2, sinfo->nobs, sinfo->pd, sinfo->offset);
+    printdata(NULL, NULL, tmpset, OPT_O, prn);
+    gretl_print_destroy(prn);
+#endif
+
+    return tmpset;
+}
+
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    DATASET *dset, CompactMethod cmethod, 
 			    int interpolate, int dbv, PRN *prn)
@@ -3010,9 +3091,22 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     int new = (dbv == dset->v);
 
     if (cmethod == COMPACT_MULTI) {
-	/* FIXME */
-	gretl_errmsg_set("Conversion \"compact=multi\" not yet supported");
-	return E_DATA;
+	int err = 0;
+	
+	if (dset == NULL || dset->v == 0) {
+	    gretl_errmsg_set("\"compact=multi\": requires a dataset in place");
+	    err = E_DATA;
+	} else {
+	    DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
+
+	    if (!err) {
+		err = compact_data_set(tmpset, dset->pd, COMPACT_MULTI, 0, 0);
+	    }
+	    if (!err) {
+		err = merge_or_replace_data(dset, &tmpset, OPT_NONE, prn);
+	    }
+	}
+	return err;
     }
 
     if (dset->n == 0) {
@@ -4200,14 +4294,9 @@ int compact_data_set (DATASET *dset, int newpd,
     gretl_error_clear();
 
     if (default_method == COMPACT_MULTI) {
-	/* for now (2016-06-06) we'll do this only for monthly to
-	   quarterly or annual, or quarterly to annual
-	*/
-	if (!(oldpd == 12 && newpd == 1) &&
-	    !(oldpd == 12 && newpd == 4) &&
-	    !(oldpd == 4 && newpd == 1)) {
-	    gretl_errmsg_set("Unsupported conversion");
-	    return E_DATA;
+	err = compact_multi_pd_check(oldpd, newpd);
+	if (err) {
+	    return err;
 	}
     }    
 
