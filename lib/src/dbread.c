@@ -2039,6 +2039,8 @@ static CompactMethod compact_method_from_option (int *err)
 	method = COMPACT_SOP;
     } else if (!strcmp(s, "last")) {
 	method = COMPACT_EOP;
+    } else if (!strcmp(s, "multi")) {
+	method = COMPACT_MULTI;
     } else {
 	gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
 	*err = E_PARSE;
@@ -3006,6 +3008,12 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     int t, start, stop;
     int free_xvec = 0;
     int new = (dbv == dset->v);
+
+    if (cmethod == COMPACT_MULTI) {
+	/* FIXME */
+	gretl_errmsg_set("Conversion \"compact=multi\" not yet supported");
+	return E_DATA;
+    }
 
     if (dset->n == 0) {
 	/* if the length of the dataset is not defined yet,
