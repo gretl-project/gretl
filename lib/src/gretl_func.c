@@ -2199,6 +2199,34 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     return 0;
 }
 
+char **gretl_function_retrieve_code (ufunc *u, int *nlines)
+{
+    char **S = NULL;
+    int i, j = 0;
+
+    for (i=0; i<u->n_lines; i++) {
+	if (!u->lines[i].ignore) {
+	    j++;
+	}
+    }
+
+    if (j > 0) {
+	S = strings_array_new(j);
+    }
+
+    if (S != NULL) {
+	*nlines = j;
+	j = 0;
+	for (i=0; i<u->n_lines; i++) {
+	    if (!u->lines[i].ignore) {
+		S[j++] = u->lines[i].s;
+	    }
+	}	
+    }
+
+    return S;
+}
+
 /* construct a name for @pkg based on its filename member:
    take the basename and knock off ".gfn"
 */

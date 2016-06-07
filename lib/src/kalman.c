@@ -73,6 +73,7 @@ struct kalman_ {
     int t;   /* current time step, when filtering */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
+    int tvdone; /* time-variation function checked? */
 
     double SSRw;    /* \sum_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
     double sumldet; /* \sum_{t=1}^T ln |V_t| */
@@ -314,6 +315,7 @@ static kalman *kalman_new_empty (int flags)
 	K->step = NULL;
 	K->flags = flags;
 	K->fnlevel = 0;
+	K->tvdone = 0;
 	K->t = 0;
 	K->prn = NULL;
 	K->data = NULL;
@@ -1585,6 +1587,41 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
+static int check_matrix_updates (kalman *K, ufunc *uf)
+{
+    char **lines;
+    int nlines = 0;
+
+    lines = gretl_function_retrieve_code(uf, &nlines);
+    
+    if (lines != NULL) {
+	const char *bname = user_var_get_name_by_data(K->b);
+	char test[VNAMELEN+1];
+	const char *s;
+	int n = strlen(bname) + 1;
+	int i, j;
+	
+	sprintf(test, "%s.", bname);
+	fprintf(stderr, "test string: %s\n", test);
+	for (i=0; i<nlines; i++) {
+	    fprintf(stderr, " uf line %d: %s\n", i+1, lines[i]);
+	    if (!strncmp(lines[i], test, n)) {
+		for (j=K_F; j<=K_m; j++) {
+		    s = kalman_matrix_name(j);
+		    fprintf(stderr, " check for '%s'\n", s);
+		    if (!strncmp(lines[i] + n, s, strlen(s))) {
+			fprintf(stderr, "matrix %s is varying\n", s);
+			break;
+		    }
+		}
+	    }
+	}
+	free(lines);
+    }
+
+    return 0;
+}
+
 /* New version of updating a time-varying matrix, for use
    with a kalman bundle. Bypasses the regular "genr" apparatus,
    passing the attached bundle directly to the given user
@@ -1603,6 +1640,11 @@ static int kalman_update_matrix2 (kalman *K, int i,
     if (uf == NULL) {
 	gretl_errmsg_sprintf("Couldn't find function '%s'", K->matcalls[i]);
 	return E_DATA;
+    }
+
+    if (0 && !K->tvdone) {
+	check_matrix_updates(K, uf);
+	K->tvdone = 1;
     }
 
     err = push_function_arg(uf, NULL, GRETL_TYPE_BUNDLE_REF, K->b);
@@ -3057,6 +3099,7 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     }    
 
     if (!err) {
+	K->tvdone = 0;
 	err = kalman_forecast(K, prn);
     }
 
