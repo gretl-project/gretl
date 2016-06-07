@@ -3091,6 +3091,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     int new = (dbv == dset->v);
 
     if (cmethod == COMPACT_MULTI) {
+	/* special case: adds multiple series */
 	int err = 0;
 	
 	if (dset == NULL || dset->v == 0) {
