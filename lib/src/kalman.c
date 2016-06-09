@@ -1587,6 +1587,8 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
+#if 0 /* not yet */
+
 static int check_matrix_updates (kalman *K, ufunc *uf)
 {
     char **lines;
@@ -1595,20 +1597,17 @@ static int check_matrix_updates (kalman *K, ufunc *uf)
     lines = gretl_function_retrieve_code(uf, &nlines);
     
     if (lines != NULL) {
-	const char *bname = user_var_get_name_by_data(K->b);
+	const char *bname = fn_param_name(uf, 0);
 	char test[VNAMELEN+1];
 	const char *s;
 	int n = strlen(bname) + 1;
 	int i, j;
 	
 	sprintf(test, "%s.", bname);
-	fprintf(stderr, "test string: %s\n", test);
 	for (i=0; i<nlines; i++) {
-	    fprintf(stderr, " uf line %d: %s\n", i+1, lines[i]);
 	    if (!strncmp(lines[i], test, n)) {
 		for (j=K_F; j<=K_m; j++) {
 		    s = kalman_matrix_name(j);
-		    fprintf(stderr, " check for '%s'\n", s);
 		    if (!strncmp(lines[i] + n, s, strlen(s))) {
 			fprintf(stderr, "matrix %s is varying\n", s);
 			break;
@@ -1621,6 +1620,8 @@ static int check_matrix_updates (kalman *K, ufunc *uf)
 
     return 0;
 }
+
+#endif
 
 /* New version of updating a time-varying matrix, for use
    with a kalman bundle. Bypasses the regular "genr" apparatus,
@@ -1642,11 +1643,13 @@ static int kalman_update_matrix2 (kalman *K, int i,
 	return E_DATA;
     }
 
-    if (0 && !K->tvdone) {
+#if 0 /* not yet */
+    if (!K->tvdone) {
 	check_matrix_updates(K, uf);
 	K->tvdone = 1;
     }
-
+#endif
+    
     err = push_function_arg(uf, NULL, GRETL_TYPE_BUNDLE_REF, K->b);
 
     if (!err) {
@@ -3099,7 +3102,6 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     }    
 
     if (!err) {
-	K->tvdone = 0;
 	err = kalman_forecast(K, prn);
     }
 

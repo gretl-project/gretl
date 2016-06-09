@@ -3104,7 +3104,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 		err = compact_data_set(tmpset, dset->pd, COMPACT_MULTI, 0, 0);
 	    }
 	    if (!err) {
-		err = merge_or_replace_data(dset, &tmpset, OPT_NONE, prn);
+		err = merge_or_replace_data(dset, &tmpset, OPT_F, prn);
 	    }
 	}
 	return err;
