@@ -262,8 +262,8 @@ state-space bundle there are certain constraints.
   the functions described in the following sections \textit{can} be
   deleted (if you don't need them and want to save on storage). But
   they cannot be replaced by arbitrary user content.
-\item The only other ``special'' members that can be deleted are the
-  function calls (strings) that are discussed in
+\item The only other ``special'' member that can be deleted is the
+  function call (string) that is discussed in
   section~\ref{sec:tvarying}.
 \end{itemize}
 
@@ -912,31 +912,30 @@ be stipulated as time varying, as explained in the next section.
 Any or all of the matrices \texttt{obsymat}, \texttt{obsxmat},
 \texttt{obsvar}, \texttt{statemat}, \texttt{statevar} and
 \texttt{stconst} may be time-varying.  In that case you must supply
-the name of a function to be called to update the matrix: you add this
-to the bundle as a string, under a key which is composed of the
-keyword for the matrix in question followed by an underscore and
-\texttt{call}.\footnote{The choice of the name for the function itself
-  is of course totally up to the user.} For example, if
-\texttt{obsymat} ($\obsymat_t$) should be updated by a function named
-\texttt{TV\_H} you would write
+the name of a function to be called to update the matrix or matrices
+in question: you add this to the bundle as a string, under the key
+\texttt{timevar\_call}.\footnote{The choice of the name for the
+  function itself is of course totally up to the user.} For example,
+if just \texttt{obsymat} ($\obsymat_t$) should be updated, by a
+function named \texttt{TV\_H}, you would write
 %
 \begin{code}
-SSmod.obsymat_call = "TV_H"
+SSmod.timevar_call = "TV_H"
 \end{code}
 %
-Functions that play this role will be called at each time-step of the
-filtering or simulation operation, prior to performing any
-calculations. They should have a single bundle-pointer parameter, by
-means of which they will be passed a pointer to the Kalman bundle to
-which the call is attached.  The return value of such functions, if
-any, will not be used, so generally they return nothing (that is, are
-of type \cmd{void}).  However, you can use gretl's \texttt{funcerr}
-keyword to raise an error if things seem to be going wrong; see the
-chapter titled ``User-defined functions'' in the \textit{Gretl User's
-  Guide} for details.
+The function that plays this role will be called at each time-step of
+the filtering or simulation operation, prior to performing any
+calculations. It should have a single bundle-pointer parameter, by
+means of which it will be passed a pointer to the Kalman bundle to
+which the call is attached.  Its return value, if any, will not be
+used, so generally it returns nothing (is of type \cmd{void}).
+However, you can use gretl's \texttt{funcerr} keyword to raise an
+error if things seem to be going wrong; see the chapter titled
+``User-defined functions'' in the \textit{Gretl User's Guide} for
+details.
 
-Besides the bundle members noted above, these functions have access to
-the current (1-based) time step, under the reserved key
+Besides the bundle members noted above, a time variation function has
+access to the current (1-based) time step, under the reserved key
 \texttt{t}, and the $n$-vector containing the forecast error from the
 previous time step, $\prederr_{t-1}$, under the key \texttt{uhat};
 when $t=1$ the latter will be a zero vector.
@@ -952,18 +951,22 @@ function void TV_H (bundle *b)
 end function
 \end{code}
 %
-where \texttt{b.Hvals} is a bundled $T$-vector. An updater for an
-($r \times r$) $\statemat$ matrix might be
+where \texttt{b.Hvals} is a bundled $T$-vector. An updater that
+operates on both $\obsymat$ ($r \times n$) and $\statemat$ ($r \times
+r$) might be
 %
 \begin{code}
-function void update_F (bundle *b)
+function void update_2 (bundle *b)
+    b.obsymat = mshape(b.Hvals[b.t,], b.r, b.n)
     b.statemat = unvech(b.Fvals[b.t,])
 end function
 \end{code}
 %
-where the matrix \texttt{b.Fvals} is $T \times r(r+1)/2$, with row $t$
-holding the vech of $\statemat_t$. Simpler variants (e.g.\ just one
-element of the matrix in question is changed) and more complex
+where in this case we assume that \texttt{b.Hvals} is $T \times rn$,
+with row $t$ holding the (transposed) vec of $\obsymat_t$, and
+\texttt{b.Fvals} is $T \times r(r+1)/2$, with row $t$ holding the vech
+of $\statemat_t$. Simpler variants (e.g.\ just one element of a
+relevant matrix in question is changed) and more complex
 variants---say, involving some sort of conditionality---are also
 possible in this framework.
 
