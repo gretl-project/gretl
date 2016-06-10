@@ -1596,12 +1596,31 @@ static void kalman_initialize_error (kalman *K, int *missobs)
     }
 }
 
+/* Given a new-style (unified) function to update one or more
+   of the potentially time-varying matrices, try to figure
+   out which matrix or matrices are actually modified by
+   this function.
+*/
+
 static int check_for_matrix_updates (kalman *K, ufunc *uf)
 {
     char **lines;
     int nlines = 0;
 
-    K->varying = calloc(K_N_MATCALLS + 1, 1);
+    if (K->varying != NULL) {
+	free(K->varying);
+	K->varying = NULL;
+    }
+
+    if (uf == NULL) {
+	uf = get_user_function_by_name(K->matcall);
+	if (uf == NULL) {
+	    gretl_errmsg_sprintf("Couldn't find function '%s'", K->matcall);
+	    return E_DATA;
+	}
+    }
+    
+    K->varying = calloc(K_N_MATCALLS, 1);
 
     lines = gretl_function_retrieve_code(uf, &nlines);
     
@@ -1652,7 +1671,7 @@ static int kalman_update_matrices_2 (kalman *K, PRN *prn)
     if (K->varying == NULL) {
 	check_for_matrix_updates(K, uf);
     }
-    
+
     err = push_function_arg(uf, NULL, GRETL_TYPE_BUNDLE_REF, K->b);
 
     if (!err) {
@@ -1720,7 +1739,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 
     for (i=0; i<K_N_MATCALLS && !err; i++) {
 	if (matrix_is_varying(K, i)) {
-	    if (K->matcall == NULL) {
+	    if (K->matcalls != NULL) {
 		/* old style */
 		err = kalman_update_matrix_1(K, i, mptr[i], prn);
 	    }
@@ -1783,7 +1802,7 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     for (i=0; i<2 && !err; i++) {
 	ii = idx[i];
 	if (matrix_is_varying(K, ii)) {
-	    if (K->matcall == NULL) {
+	    if (K->matcalls != NULL) {
 		/* old style, one-by-one updates */
 		err = kalman_update_matrix_1(K, ii, mptr[i], prn);
 	    }
@@ -5365,10 +5384,11 @@ int maybe_set_kalman_element (void *kptr,
 	} else {
 	    K->matcall = (char *) vptr;
 	}
-	/* signal for re-evaluation of what's varying */
-	free(K->varying);
-	K->varying = NULL;
-	done = 1;
+	/* re-evaluate what's actually varying */
+	*err = check_for_matrix_updates(K, NULL);
+	if (!*err) {
+	    done = 1;
+	}
     } else if (id < 0) {
 	if (kalman_output_matrix(K, key) != NULL ||
 	    kalman_output_scalar(K, key) != NULL) {
