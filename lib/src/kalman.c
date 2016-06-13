@@ -92,8 +92,8 @@ struct kalman_ {
     gretl_matrix *e;  /* n x 1: one-step forecast error(s), time t */
 
     /* input data matrices: note that the order matters for various 
-       functions, including user_kalman_recheck_matrices() and the
-       matrix_is_varying() macro
+       functions, including user_kalman_recheck_matrices() and
+       matrix_is_varying()
     */
     gretl_matrix *F; /* r x r: state transition matrix */
     gretl_matrix *A; /* k x n: coeffs on exogenous vars, obs eqn */
@@ -181,14 +181,11 @@ struct kalman_ {
 				 K->mnames[i][0] != '$' && \
 				 K->mnames[i][0] != '\0')
 
-/* the matrix in question is time-varying */
-#define matrix_is_varying(K,i) ((K->varying != NULL && K->varying[i]) || \
-				(K->matcalls != NULL && K->matcalls[i] != NULL))
-
 #define filter_is_varying(K) (K->matcall != NULL || K->matcalls != NULL)
 
 static const char *kalman_matrix_name (int sym);
 static int kalman_revise_variance (kalman *K);
+static int check_for_matrix_updates (kalman *K, ufunc *uf);
 
 /* symbolic identifiers for input matrices: note that potentially
    time-varying matrices must appear first in the enumeration, and
@@ -1052,6 +1049,24 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     }
 
     return K;
+}
+
+static int matrix_is_varying (kalman *K, int i)
+{
+    if (K->matcalls != NULL) {
+	/* old style */
+	return K->matcalls[i] != NULL;
+    } else if (K->matcall != NULL) {
+	/* new style */
+	if (K->varying == NULL) {
+	    check_for_matrix_updates(K, NULL);
+	}
+	if (K->varying != NULL) {
+	    return K->varying[i];
+	}
+    }
+
+    return 0;
 }
 
 enum {
