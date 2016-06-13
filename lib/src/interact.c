@@ -863,10 +863,10 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 
 	fname = gretl_maybe_switch_dir(fname);
 
-	if (opt & OPT_W) {
-	    fp = gretl_fopen(fname, "w");
+	if (opt & OPT_A) {
+	    fp = gretl_fopen(fname, "ab");
 	} else {
-	    fp = gretl_fopen(fname, "a");
+	    fp = gretl_fopen(fname, "wb");
 	}
 
 	if (fp == NULL) {
@@ -875,10 +875,10 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	}
 
 	if (gretl_messages_on()) {
-	    if (opt == OPT_W) {
-		pprintf(prn, _("Now writing output to '%s'\n"), fname);
-	    } else {
+	    if (opt & OPT_A) {
 		pprintf(prn, _("Now appending output to '%s'\n"), fname);
+	    } else {
+		pprintf(prn, _("Now writing output to '%s'\n"), fname);
 	    }
 	    
 	}
