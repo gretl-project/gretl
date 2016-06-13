@@ -899,9 +899,6 @@ char *retrieve_file_content (const char *fname, const char *codeset,
     } else if (is_web_resource(fname)) {
 #ifdef USE_CURL
 	content = retrieve_public_file_as_buffer(fname, &len, err);
-	if (!*err && !g_utf8_validate(content, len, NULL)) {
-	    content = recode_content(content, codeset, err);
-	}
 #else
 	gretl_errmsg_set(_("Internet access not supported"));
 	*err = E_DATA;
@@ -920,9 +917,11 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	    gretl_errmsg_set(gerr->message);
 	    *err = E_FOPEN;
 	    g_error_free(gerr);
-	} else if (!g_utf8_validate(content, len, NULL)) {
-	    content = recode_content(content, codeset, err);
 	}
+    }
+
+    if (content != NULL && !g_utf8_validate(content, len, NULL)) {
+	content = recode_content(content, codeset, err);
     }
 
     if (*err && content != NULL) {
