@@ -5418,6 +5418,8 @@ int set_panel_group_strings (const char *vname,
 	    /* FIXME subsampled case? */
 	    fprintf(stderr, "Got %d strings but there are %d groups\n",
 		    ns, ng);
+	    strings_array_free(S, ns);
+	    S = NULL;
 	    err = E_DATA;
 	}
     }
