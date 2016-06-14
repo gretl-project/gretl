@@ -698,6 +698,14 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 		    p->err = E_ALLOC;
 		}
 	    }
+	} else {
+	    /* scrub any pre-existing values in the current
+	       sample range */
+	    int t;
+
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		n->v.xvec[t] = NADBL;
+	    }
 	}
 	nullify = 0;
     } else {
