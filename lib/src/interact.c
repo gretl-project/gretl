@@ -859,14 +859,15 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	outfile_redirect(prn, stdout, opt, vparms);
 	*outname = '\0';
     } else {
+	/* should the file be opened in binary mode on Windows? */
 	FILE *fp;
 
 	fname = gretl_maybe_switch_dir(fname);
 
 	if (opt & OPT_A) {
-	    fp = gretl_fopen(fname, "ab");
+	    fp = gretl_fopen(fname, "a");
 	} else {
-	    fp = gretl_fopen(fname, "wb");
+	    fp = gretl_fopen(fname, "w");
 	}
 
 	if (fp == NULL) {
