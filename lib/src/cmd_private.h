@@ -87,7 +87,7 @@ void gretl_exec_state_transcribe_flags (ExecState *s, CMD *cmd);
 
 void gretl_exec_state_set_model (ExecState *s, MODEL *pmod);
 
-int process_command_error (CMD *cmd, int err);
+int process_command_error (ExecState *s, int err);
 
 int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart);
 

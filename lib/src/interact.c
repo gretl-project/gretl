@@ -824,25 +824,25 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 
     diverted = printing_is_redirected(prn);
 
-    /* command to close outfile */
     if (opt & OPT_C) {
+	/* command to close outfile */
 	if (!diverted) {
 	    pputs(prn, _("Output is not currently diverted to file\n"));
-	    return 1;
+	    err = 1;
 	} else {
 	    print_end_redirection(prn);
 	    maybe_restore_vparms(vparms);
 	    if (gretl_messages_on() && *outname != '\0') {
 		pprintf(prn, _("Closed output file '%s'\n"), outname);
 	    }
-	    return 0;
 	}
+	return err;
     }
 
     /* command to divert output to file */
     if (diverted) {
-	fprintf(stderr, _("Output is already diverted to '%s'\n"),
-		outname);
+	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
+			     outname);
 	return 1;
     } else if (fname == NULL || *fname == '\0') {
 	return E_ARGS;
@@ -859,7 +859,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	outfile_redirect(prn, stdout, opt, vparms);
 	*outname = '\0';
     } else {
-	/* should the file be opened in binary mode on Windows? */
+	/* should the stream be opened in binary mode on Windows? */
 	FILE *fp;
 
 	fname = gretl_maybe_switch_dir(fname);
@@ -3213,7 +3213,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	maybe_print_error_message(cmd, err, prn);
     }
 
-    err = process_command_error(cmd, err);
+    err = process_command_error(s, err);
 
     if (err) {
 	gretl_cmd_destroy_context(cmd);
@@ -3530,7 +3530,7 @@ void gretl_exec_state_set_model (ExecState *s, MODEL *pmod)
     s->pmod = pmod;
 }
 
-int process_command_error (CMD *cmd, int err)
+int process_command_error (ExecState *s, int err)
 {
     int ret = err;
 
@@ -3538,12 +3538,16 @@ int process_command_error (CMD *cmd, int err)
 	if (gretl_compiling_function() ||
 	    gretl_compiling_loop()) {
 	    ; /* pass the error through */
-	} else if (cmd->flags & CMD_CATCH) {
+	} else if (s->cmd->flags & CMD_CATCH) {
 	    /* local "continue on error" */
 	    set_gretl_errno(err);
-	    cmd->flags ^= CMD_CATCH;
+	    s->cmd->flags ^= CMD_CATCH;
 	    ret = 0;
 	}
+    }
+
+    if (ret && printing_is_redirected(s->prn)) {
+	print_end_redirection(s->prn);	
     }
 
     return ret;
