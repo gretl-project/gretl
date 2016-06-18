@@ -52,11 +52,11 @@
 
 struct PRN_ {
     FILE *fp;          /* file to which to print, or NULL */
-    FILE *fpaux;       /* auxiliary file (output redirected) */
     char *buf;         /* buffer to which to print, or NULL */
     size_t bufsize;    /* allocated size of buffer */
     size_t blen;       /* string length of buffer */
     int savepos;       /* saved position in stream or buffer */
+    GPtrArray *fplist; /* stack for use with redirection */
     PrnFormat format;  /* plain, TeX, RTF */
     int fixed;         /* non-zero for fixed-size buffer */
     char delim;        /* CSV field delimiter */
@@ -70,6 +70,30 @@ enum {
     GBUF_FIXED = 2
 };
 
+static void prn_destroy_fp_list (PRN *prn)
+{
+    int i, n = prn->fplist->len;
+    FILE *fp;
+
+    for (i=n-1; i>=0; i--) {
+	fp = g_ptr_array_index(prn->fplist, i);
+	if (fp != NULL) {
+	    if (fp != prn->fp && fp != stdout && fp != stderr) {
+		fclose(fp);
+	    }
+	    g_ptr_array_remove_index(prn->fplist, i);
+	}
+    }
+
+    g_ptr_array_free(prn->fplist, TRUE);
+    prn->fplist = NULL;
+}
+
+static int prn_fp_list_active (PRN *prn)
+{
+    return prn->fplist != NULL && prn->fplist->len > 0;
+}
+
 /**
  * gretl_print_destroy:
  * @prn: pointer to gretl printing struct.
@@ -79,13 +103,13 @@ enum {
 
 void gretl_print_destroy (PRN *prn)
 {
-    int fpdup;
-
     if (prn == NULL) {
 	return;
     }
 
-    fpdup = (prn->fp == prn->fpaux);
+    if (prn->fplist != NULL) {
+	prn_destroy_fp_list(prn);
+    }
 
     if (prn->fp != NULL) {
 	if (prn->fp == stdout) {
@@ -103,11 +127,6 @@ void gretl_print_destroy (PRN *prn)
 	/* prn had a tempfile attached */
 	gretl_remove(prn->fname);
 	free(prn->fname);
-    }
-
-    if (!fpdup && prn->fpaux != NULL && 
-	prn->fpaux != stdout && prn->fpaux != stderr) {
-	fclose(prn->fpaux);
     }
 
     if (prn->buf != NULL) {
@@ -172,7 +191,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     }
 
     prn->fp = NULL;
-    prn->fpaux = NULL;
+    prn->fplist = NULL;
     prn->buf = NULL;
     prn->bufsize = 0;
     prn->blen = 0;
@@ -443,7 +462,7 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 	return E_DATA;
     }
 
-    if (prn->fp == NULL || prn->fpaux != NULL) {
+    if (prn->fp == NULL || prn_fp_list_active(prn)) {
 	return E_DATA;
     }
 
@@ -1220,24 +1239,55 @@ int printing_to_standard_stream (PRN *prn)
     return ret;
 }
 
+static void prn_push_stream (PRN *prn, FILE *fp)
+{
+    if (prn->fp != NULL) {
+	if (prn->fplist == NULL) {
+	    prn->fplist = g_ptr_array_new();
+	}
+	g_ptr_array_add(prn->fplist, (gpointer) prn->fp);
+    }
+
+    prn->fp = fp;
+}
+
+static void prn_pop_stream (PRN *prn)
+{
+    FILE *prev = NULL;
+    
+    if (prn->fplist != NULL) {
+	int n = prn->fplist->len;
+
+	if (n > 0) {
+	    prev = g_ptr_array_index(prn->fplist, n-1);
+	    g_ptr_array_remove_index(prn->fplist, n-1);
+	}
+    }
+
+    prn->fp = prev;
+}
+
 /**
- * printing_is_redirected:
+ * print_redirection_level:
  * @prn: gretl printing struct.
  * 
- * Returns: 1 if the output of @prn has been redirected
- * relative to its original setting, else 0.
+ * Returns: 0 if the output of @prn has not been redirected
+ * relative to its original setting, else the level of
+ * (possibly nested) redirection.
  */
 
-int printing_is_redirected (PRN *prn)
+int print_redirection_level (PRN *prn)
 {
     int ret = 0;
 
     if (prn != NULL) {
-	if (prn->fpaux != NULL || 
-	    (prn->fp != NULL && prn->buf != NULL)) {
+	if (prn->fp != NULL && prn->buf != NULL) {
 	    ret = 1;
 	} else if (prn->fixed) {
 	    ret = 1;
+	}
+	if (prn_fp_list_active(prn)) {
+	    ret += prn->fplist->len; /* is this right? */
 	}
     }
 
@@ -1256,28 +1306,25 @@ int printing_is_redirected (PRN *prn)
 
 int print_start_redirection (PRN *prn, FILE *fp)
 {
-    int err = 0;
-
-    if (prn != NULL) {
-	/* flush the current stream */
-	if (prn->fp != NULL) {
-	    fflush(prn->fp);
-	}
-	if (fp == NULL) {
-	    /* disable printing */
-	    prn->fixed = 1;
-	} else {
-	    /* record current stream in fpaux, and
-	       hook output to specified stream
-	    */
-	    prn->fpaux = prn->fp;
-	    prn->fp = fp;
-	}
-    } else {
-	err = 1;
+    if (prn == NULL || prn->fixed) {
+	return 1;
     }
 
-    return err;
+    /* flush the current stream */
+    if (prn->fp != NULL) {
+	fflush(prn->fp);
+    }
+    if (fp == NULL) {
+	/* "redirection" means just disable printing */
+	prn->fixed = 1;
+    } else {
+	/* record current stream in prn->fplist, and
+	   hook output to specified stream
+	*/
+	prn_push_stream(prn, fp);
+    }
+
+    return 0;
 }
 
 /**
@@ -1290,9 +1337,11 @@ int print_start_redirection (PRN *prn, FILE *fp)
  * Returns: 0 on success, 1 on error.
  */
 
-int print_end_redirection (PRN *prn)
+int print_end_redirection (PRN *prn, int destroy)
 {
     int err = 0;
+
+    fprintf(stderr, "print_end_redirection: destroy = %d\n", destroy);
 
     if (prn != NULL) {
 	if (prn->fixed) {
@@ -1301,13 +1350,12 @@ int print_end_redirection (PRN *prn)
 	    if (prn->fp != stdout && prn->fp != stderr) {
 		fclose(prn->fp);
 	    }
-	    prn->fp = prn->fpaux;
-	    prn->fpaux = NULL;
+	    prn_pop_stream(prn);
 	}
     } else {
 	err = 1;
     }
-    
+
     return err;
 }
 

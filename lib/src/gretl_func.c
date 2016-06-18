@@ -7033,7 +7033,8 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 */
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
-			DATASET *dset, PRN *prn, int orig_v)
+			DATASET *dset, PRN *prn, int orig_v,
+			int redir_level)
 {
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
@@ -7122,6 +7123,12 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }
 
     set_executing_off(call, dset, prn);
+
+    if (print_redirection_level(prn) > redir_level) {
+	// print_end_redirection(prn, 1);
+	gretl_errmsg_set("Incorrect use of 'outfile' in function");
+	err = 1;
+    }
 
     return err;
 }
@@ -7789,6 +7796,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     int orig_t1 = 0;
     int orig_t2 = 0;
     int indent0 = 0, started = 0;
+    int redir_level = 0;
     int retline = -1;
     int debugging = u->debug;
 #if LOOPSAVE
@@ -7874,6 +7882,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	err = start_fncall(call, dset, prn);
 	if (!err) {
 	    started = 1;
+	    redir_level = print_redirection_level(prn);
 	}
     }
 
@@ -8042,7 +8051,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
     if (started) {
 	int stoperr = stop_fncall(call, rtype, ret, dset, prn,
-				  orig_v);
+				  orig_v, redir_level);
 
 	if (stoperr && !err) {
 	    err = stoperr;

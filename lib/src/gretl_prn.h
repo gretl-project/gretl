@@ -127,11 +127,11 @@ void gretl_print_close_stream (PRN *prn);
 
 int printing_to_standard_stream (PRN *prn);
 
-int printing_is_redirected (PRN *prn);
+int print_redirection_level (PRN *prn);
 
 int print_start_redirection (PRN *prn, FILE *fp);
 
-int print_end_redirection (PRN *prn);
+int print_end_redirection (PRN *prn, int destroy);
 
 int plain_format (PRN *prn);
 

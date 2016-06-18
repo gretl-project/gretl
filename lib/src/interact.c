@@ -781,9 +781,16 @@ static void showlabels (const int *list, const DATASET *dset, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
-			      int *parms)
+static int outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
+			     int *parms)
 {
+    int err;
+
+    err = print_start_redirection(prn, fp);
+    if (err) {
+	return err;
+    }
+    
     if (opt & OPT_Q) {
 	parms[0] = gretl_echo_on();
 	parms[1] = gretl_messages_on();
@@ -792,7 +799,8 @@ static void outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
     } else {
 	parms[0] = parms[1] = -1;
     }
-    print_start_redirection(prn, fp);
+
+    return 0;
 }
 
 static void maybe_restore_vparms (int *parms)
@@ -822,7 +830,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	return E_ARGS;
     }
 
-    diverted = printing_is_redirected(prn);
+    diverted = print_redirection_level(prn) > 0;
 
     if (opt & OPT_C) {
 	/* command to close outfile */
@@ -830,7 +838,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	    pputs(prn, _("Output is not currently diverted to file\n"));
 	    err = 1;
 	} else {
-	    print_end_redirection(prn);
+	    print_end_redirection(prn, 0);
 	    maybe_restore_vparms(vparms);
 	    if (gretl_messages_on() && *outname != '\0') {
 		pprintf(prn, _("Closed output file '%s'\n"), outname);
@@ -840,7 +848,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
     }
 
     /* command to divert output to file */
-    if (diverted) {
+    if (diverted && gretl_function_depth() == 0) {
 	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
 			     outname);
 	return 1;
@@ -850,13 +858,13 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	if (gretl_messages_on()) {
 	    pputs(prn, _("Now discarding output\n")); 
 	}
-	outfile_redirect(prn, NULL, opt, vparms);
+	err = outfile_redirect(prn, NULL, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	outfile_redirect(prn, stderr, opt, vparms);
+	err = outfile_redirect(prn, stderr, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stdout")) {
-	outfile_redirect(prn, stdout, opt, vparms);
+	err = outfile_redirect(prn, stdout, opt, vparms);
 	*outname = '\0';
     } else {
 	/* should the stream be opened in binary mode on Windows? */
@@ -884,8 +892,13 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	    
 	}
 
-	outfile_redirect(prn, fp, opt, vparms);
-	strcpy(outname, fname);
+	err = outfile_redirect(prn, fp, opt, vparms);
+	if (err) {
+	    fclose(fp);
+	    remove(fname);
+	} else {
+	    strcpy(outname, fname);
+	}
     }
 
     return err;
@@ -3211,9 +3224,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (err) {
 	maybe_print_error_message(cmd, err, prn);
+	process_command_error(s, err);
     }
-
-    err = process_command_error(s, err);
 
     if (err) {
 	gretl_cmd_destroy_context(cmd);
@@ -3546,8 +3558,9 @@ int process_command_error (ExecState *s, int err)
 	}
     }
 
-    if (ret && printing_is_redirected(s->prn)) {
-	print_end_redirection(s->prn);	
+    if (ret && print_redirection_level(s->prn) > 0) {
+	print_end_redirection(s->prn, 1);
+	pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
     }
 
     return ret;
