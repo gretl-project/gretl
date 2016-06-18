@@ -401,9 +401,9 @@ MODEL tobit_driver (const int *list, DATASET *dset,
 /*
  * do_modprint:
  * @line: command line.
- * @opt: may contain %OPT_C for CSV, %OPT_R for RTF, or %OPT_T 
- * to use TeX format.  If %OPT_T is given, then %OPT_O calls for
- * a complete LaTeX document, otherwise %OPT_O is ignored.
+ * @opt: may contain %OPT_O for specifying output, and if
+ * TeX output is called for then %OPT_C calls for
+ * a complete LaTeX document.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics
@@ -430,11 +430,6 @@ int do_modprint (const char *mname, const char *names,
     gretl_matrix *addstats = NULL;
     const char *parnames = NULL;
     int err = 0;
-
-    err = incompatible_options(opt, OPT_C | OPT_R | OPT_T);
-    if (err) {
-	return err;
-    }
 
     if (mname == NULL || names == NULL) {
 	return E_ARGS;
@@ -477,20 +472,46 @@ int do_modprint (const char *mname, const char *names,
 
     if (!err) {
 	PrnFormat fmt = GRETL_FORMAT_TXT;
+	char fname[FILENAME_MAX];
 
-	if (opt & OPT_C) {
-	    fmt = GRETL_FORMAT_CSV;
-	} else if (opt & OPT_R) {
-	    fmt = GRETL_FORMAT_RTF;
-	} else if (opt & OPT_T) {
-	    fmt = GRETL_FORMAT_TEX;
-	    if (opt & OPT_O) {
-		fmt |= GRETL_FORMAT_DOC;
+	*fname = '\0';
+
+	if (opt & OPT_O) {
+	    /* try for --output=filename, and if found let
+	       the suffix determine the output type
+	    */
+	    const char *s = get_optval_string(MODPRINT, OPT_O);
+
+	    if (s != NULL && *s != '\0') {
+		strcpy(fname, s);
+		if (has_suffix(fname, ".tex")) {
+		    fmt = GRETL_FORMAT_TEX;
+		    if (opt & OPT_C) {
+			fmt |= GRETL_FORMAT_DOC;
+		    }		    
+		} else if (has_suffix(fname, ".rtf")) {
+		    fmt = GRETL_FORMAT_RTF;
+		} else if (has_suffix(fname, ".csv")) {
+		    fmt = GRETL_FORMAT_CSV;
+		}
 	    }
-	}
+	}	
 
-	gretl_print_set_format(prn, fmt);
-	err = print_model_from_matrices(coef_se, addstats, parnames, prn);
+	if (*fname != '\0') {
+	    PRN *myprn;
+	    
+	    gretl_maybe_switch_dir(fname);
+	    myprn = gretl_print_new_with_filename(fname, &err);
+	    if (!err) {
+		gretl_print_set_format(myprn, fmt);
+		err = print_model_from_matrices(coef_se, addstats,
+						parnames, myprn);
+		gretl_print_destroy(myprn);
+	    }
+	} else {
+	    gretl_print_set_format(prn, fmt);
+	    err = print_model_from_matrices(coef_se, addstats, parnames, prn);
+	}
     }
 
     return err;

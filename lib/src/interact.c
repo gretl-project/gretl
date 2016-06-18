@@ -814,6 +814,19 @@ static void maybe_restore_vparms (int *parms)
     parms[0] = parms[1] = -1;
 }
 
+static int cwd_is_workdir (void)
+{
+    char thisdir[MAXLEN];
+
+    if (getcwd(thisdir, MAXLEN - 1) != NULL) {
+	int n = strlen(thisdir);
+
+	return strncmp(thisdir, gretl_workdir(), n) == 0;
+    }
+
+    return 0;
+}
+
 static int 
 do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 {
@@ -838,7 +851,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	    pputs(prn, _("Output is not currently diverted to file\n"));
 	    err = 1;
 	} else {
-	    print_end_redirection(prn, 0);
+	    print_end_redirection(prn);
 	    maybe_restore_vparms(vparms);
 	    if (gretl_messages_on() && *outname != '\0') {
 		pprintf(prn, _("Closed output file '%s'\n"), outname);
@@ -868,36 +881,42 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	*outname = '\0';
     } else {
 	/* should the stream be opened in binary mode on Windows? */
+	char tmp[FILENAME_MAX];
+	const char *name = tmp;
 	FILE *fp;
 
-	fname = gretl_maybe_switch_dir(fname);
+	/* switches to workdir if needed */
+	strcpy(tmp, fname);
+	gretl_maybe_prepend_dir(tmp);
 
 	if (opt & OPT_A) {
-	    fp = gretl_fopen(fname, "a");
+	    fp = gretl_fopen(tmp, "a");
 	} else {
-	    fp = gretl_fopen(fname, "w");
+	    fp = gretl_fopen(tmp, "w");
 	}
 
 	if (fp == NULL) {
-	    pprintf(prn, _("Couldn't open %s for writing\n"), fname);
+	    pprintf(prn, _("Couldn't open %s for writing\n"), tmp);
 	    return 1;
 	}
 
 	if (gretl_messages_on()) {
-	    if (opt & OPT_A) {
-		pprintf(prn, _("Now appending output to '%s'\n"), fname);
-	    } else {
-		pprintf(prn, _("Now writing output to '%s'\n"), fname);
+	    if (cwd_is_workdir()) {
+		name = fname;
 	    }
-	    
+	    if (opt & OPT_A) {
+		pprintf(prn, _("Now appending output to '%s'\n"), name);
+	    } else {
+		pprintf(prn, _("Now writing output to '%s'\n"), name);
+	    }
 	}
 
 	err = outfile_redirect(prn, fp, opt, vparms);
 	if (err) {
 	    fclose(fp);
-	    remove(fname);
+	    remove(tmp);
 	} else {
-	    strcpy(outname, fname);
+	    strcpy(outname, name);
 	}
     }
 
@@ -3559,7 +3578,7 @@ int process_command_error (ExecState *s, int err)
     }
 
     if (ret && print_redirection_level(s->prn) > 0) {
-	print_end_redirection(s->prn, 1);
+	print_end_redirection(s->prn);
 	pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
     }
 

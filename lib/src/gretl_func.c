@@ -7125,7 +7125,6 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     set_executing_off(call, dset, prn);
 
     if (print_redirection_level(prn) > redir_level) {
-	// print_end_redirection(prn, 1);
 	gretl_errmsg_set("Incorrect use of 'outfile' in function");
 	err = 1;
     }

@@ -131,7 +131,7 @@ int print_redirection_level (PRN *prn);
 
 int print_start_redirection (PRN *prn, FILE *fp);
 
-int print_end_redirection (PRN *prn, int destroy);
+int print_end_redirection (PRN *prn);
 
 int plain_format (PRN *prn);
 

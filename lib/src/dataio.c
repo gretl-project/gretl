@@ -2336,7 +2336,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	if (fname == NULL) {
 	    return E_BADOPT;
 	} else {
-	    fname = gretl_maybe_switch_dir(fname);
+	    gretl_maybe_switch_dir(fname);
 	}
     }
 

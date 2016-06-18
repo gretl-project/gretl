@@ -1337,11 +1337,9 @@ int print_start_redirection (PRN *prn, FILE *fp)
  * Returns: 0 on success, 1 on error.
  */
 
-int print_end_redirection (PRN *prn, int destroy)
+int print_end_redirection (PRN *prn)
 {
     int err = 0;
-
-    fprintf(stderr, "print_end_redirection: destroy = %d\n", destroy);
 
     if (prn != NULL) {
 	if (prn->fixed) {

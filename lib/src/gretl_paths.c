@@ -1486,31 +1486,6 @@ static void make_path_absolute (char *fname, const char *orig)
     }
 }
 
-/* When given a filename such as "./foo", see if shelldir is
-   set -- if so, try opening the file as if shelldir was
-   the CWD.
-*/
-
-static int shelldir_open_dotfile (char *fname, char *orig)
-{
-    char *sdir = get_shelldir();
-    FILE *test;
-    int ret = 0;
-
-    if (sdir != NULL) {
-	real_make_path_absolute(fname, orig, sdir);
-	test = gretl_fopen(fname, "r");
-	if (test != NULL) {
-	    fclose(test);
-	    ret = 1;
-	} else {
-	    strcpy(fname, orig);
-	}
-    }
-
-    return ret;
-}
-
 /**
  * get_plausible_search_dirs:
  * @stype: DATA_SEARCH for data file packages, DB_SEARCH for
@@ -1930,34 +1905,31 @@ char *gretl_addpath (char *fname, int script)
 	    fname, script);
 #endif
 
-    /* keep a backup of the input */
+    /* keep a backup of the original input */
     strcpy(orig, fname);
 
-    if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
-	return fname;
-    }  
-
-    /* try opening filename as given */
-    err = gretl_test_fopen(fname, "r");
-
-    if (!err) { 
-	/* fine, got it */
-	if (!fname_has_path(fname)) {
-	    make_path_absolute(fname, orig);
-	}
-	return fname;
-    } else if (g_path_is_absolute(fname)) {
-	if (!script && maybe_add_suffix(fname, ".gdt")) {
+    if (g_path_is_absolute(fname)) {
+	err = gretl_test_fopen(fname, "r");
+	if (err && !script && maybe_add_suffix(fname, ".gdt")) {
 	    err = gretl_test_fopen(fname, "r");
-	    if (!err) {
-		return fname;
+	    if (err) {
+		strcpy(fname, orig);
 	    }
 	}
-	/* unable to open file: if the path was absolute, fail */
-	return NULL;
+	return err ? NULL : fname;
+    }
+
+    /* try workdir first */
+    build_path(fname, paths.workdir, orig, NULL);
+    err = gretl_test_fopen(fname, "r");
+
+    if (!err) {
+	return fname;
     } else {
 	const char *gpath = gretl_current_dir();
 	char trydir[MAXLEN];
+
+	strcpy(fname, orig);
 
 	if (*gpath != '\0') {
 	    /* try looking where the last-opened script was found */
@@ -2068,17 +2040,6 @@ char *gretl_addpath (char *fname, int script)
 		return fname;
 	    }
 	}
-
-	strcpy(fname, orig);
-	gpath = get_shelldir();
-
-	if (gpath != NULL && *gpath != '\0') {
-	    /* try looking in shelldir? */
-	    test = search_dir(fname, gpath, 0);
-	    if (test != NULL) { 
-		return fname;
-	    }
-	}	
     }
 
 #ifdef WIN32
@@ -3508,9 +3469,8 @@ int gretl_set_paths (ConfigPaths *cpaths)
 }
 
 /* For writing a file, name given by user: if the path is not
-   absolute, switch to the gretl "workdir" (for a plain filename and
-   STATE_USE_CWD not set), or to the current "shelldir" (for a filename
-   beginning with '.', or if STATE_USE_CWD is set).
+   absolute, switch to the gretl "workdir" unless @fname begins
+   with '~' in which case we switch to the user's HOME.
 */
 
 const char *gretl_maybe_switch_dir (const char *fname)
@@ -3522,15 +3482,7 @@ const char *gretl_maybe_switch_dir (const char *fname)
 	    fname += 2;
 	}
     } else if (!g_path_is_absolute(fname)) {
-	if (dotpath(fname) || libset_get_bool(USE_CWD)) {
-	    char *sdir = get_shelldir();
-
-	    if (sdir != NULL && *sdir != '\0') {
-		gretl_chdir(sdir);
-	    }
-	} else {
-	    gretl_chdir(paths.workdir);
-	}
+	gretl_chdir(paths.workdir);
     }
 
     return fname;
@@ -3564,15 +3516,7 @@ char *gretl_maybe_prepend_dir (char *fname)
 	    build_path(tmp, home, fname + 2, NULL);
 	}
     } else if (!g_path_is_absolute(fname)) {
-	if (dotpath(fname) || libset_get_bool(USE_CWD)) {
-	    char *sdir = get_shelldir();
-
-	    if (sdir != NULL && *sdir != '\0') {
-		build_path(tmp, sdir, fname, NULL);
-	    }
-	} else {
-	    build_path(tmp, paths.workdir, fname, NULL);
-	}
+	build_path(tmp, paths.workdir, fname, NULL);
     }
 
     if (*tmp != '\0') {
