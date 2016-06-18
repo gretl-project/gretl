@@ -8247,16 +8247,20 @@
         Scrive i risultati sul <repl>file-output</repl>, fino a nuovo
         ordine. Usando l'opzione <opt>append</opt>, i risultati
         vengono aggiunti a un file esistente, mentre <opt>write</opt>
-        apre un nuovo file (o ne sovrascrive uno esistente). Può essere
-        aperto solo un file alla volta.
+        apre un nuovo file (o ne sovrascrive uno esistente).
+        L'opzione <opt>close</opt> può essere usata per chiudere un
+        file di output aperto in precedenza, tornando a scrivere i
+        risultati sul canale predefinito. Si noti che solo un file di
+        output può essere aperto in un dato momento (ma vedi sotto),
+        cosicché con l'opzione <opt>close</opt> un serve l'argomento
+        <repl>file-output</repl>.
       </para>
-
       <para>
-        L'opzione <opt>close</opt> può essere usata per chiudere
-        un file di output aperto in precedenza, tornando a scrivere i
-        risultati sul canale predefinito.
+	Il file di output verrà creato nella directory data dal valore
+	corrente di <lit>workdir</lit>, a meno che la stringa
+	<repl>file-output</repl> non contenga essa stessa una
+	specifica completa di percorso.
       </para>
-
       <para>
         Nel primo degli esempi precedenti viene aperto il file
 	<filename>regress.txt</filename>, mentre nel secondo viene
@@ -8265,14 +8269,63 @@
         regressione verrebbero scritti su
         <filename>regress.txt</filename> invece che sullo schermo.
       </para>
-
       <para>
-        Esiste una variante: se si usa la parola chiave <lit>null</lit>
-        al posto di un nome di file insieme all'opzione <opt>write</opt>,
-        l'effetto è quello di sopprimere la stampa dei risultati fino alla
-        successiva istruzione <lit>outfile --close</lit>.
+        Ci sono tre varianti: se si usa la parola chiave
+        <lit>null</lit> al posto di un nome di file insieme
+        all'opzione <opt>write</opt>, l'effetto è quello di sopprimere
+        la stampa dei risultati fino alla successiva istruzione
+        <lit>outfile --close</lit>. Inoltre, se una delle parole
+        chiave <lit>stdout</lit> o <lit>stderr</lit> vengono usate al
+        posto del nome di file, l'effetto è di ridirigere l'output
+        rispettivamente sullo standard output o sullo standard error.
       </para>
+      <para>
+	L'opzione <opt>quiet</opt> si usa con <opt>write</opt>
+	o <opt>append</opt>: ha l'effetto di annullare la stampa
+	dei comandi e dei messaggi ausiliari fino alla chiusura del
+	file. È equivalente a
+      </para>
+      <code>
+	set echo off
+	set messages off
+      </code>
+      <para>
+	se non per il fatto che al termine della ridirezione i valori
+	originali di <lit>echo</lit> e <lit>messages</lit> vengono
+	ripristinati.
+      </para>
+      <para>
+	In un dato punto del codice, ci può essere solo un file aperto
+	con questa tecnica; quindi, le chiamate a questo comando non
+	possono essere annidate. Ciononostante, questo comando è
+	consentito nelle funzioni scritte dall'utente (purché il file
+	di output venga chuso nella stessa funzione), cosicché
+	l'output può essere ridiretto tempraneamente e poi riassegnato
+	al file di output originale. Ad esempio, il codice
+      </para>
+      <code>
+	function void f(string s)
+	    outfile inner.txt --write
+	    print s
+	    outfile --close
+	end function
 
+	outfile outer.txt --write --quiet
+	print "Fuori"
+	f("Dentro")
+	print "Ancora fuori"
+	outfile --close
+      </code>
+      produrrà un file di nome <quote>outer.txt</quote> contenente le
+      due linee
+      <code>
+	Fuori
+	Ancora fuori
+      </code>
+      e un file di nome <quote>inner.txt</quote> contenente la linea
+      <code>
+	Dentro
+      </code>
     </description>
 
   </command>

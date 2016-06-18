@@ -7623,9 +7623,9 @@
 
     <description>
       <para>
-	Prints the coefficient table and optional additional statistics for a
-	model estimated <quote>by hand</quote>. Mainly useful for user-written
-	functions.
+	Prints the coefficient table and optional additional
+	statistics for a model estimated <quote>by
+	hand</quote>. Mainly useful for user-written functions.
       </para>
       <para>
 	The argument <repl>coeffmat</repl> should be a <math>k</math>
@@ -7638,13 +7638,16 @@
 	double quotes.)
       </para>
       <para>
-	The optional argument <repl>addstats</repl> is a vector containing
-	<math>p</math> additional statistics to be printed under the
-	coefficient table.  If this argument is given, then <repl>names</repl>
-	should contain <math>k + p</math> comma-separated strings, the
-	additional <math>p</math> strings to be associated with the additional
-	statistics.
+	The optional argument <repl>addstats</repl> is a vector
+	containing <math>p</math> additional statistics to be printed
+	under the coefficient table.  If this argument is given, then
+	<repl>names</repl> should contain <math>k + p</math>
+	comma-separated strings, the additional <math>p</math> strings
+	to be associated with the additional statistics.
       </para>
+      <para>
+	FIXME: DOCUMENT THE OUTFILE OPTION AND ADD THE "WORKDIR" MEMO.
+    </para>
     </description>
 
   </command>
@@ -8692,19 +8695,20 @@
 
     <description>
       <para>
-	Diverts output to <repl>filename</repl>, until further
-	notice.  Use the flag <opt>append</opt> to append output to
-	an existing file or <opt>write</opt> to start a new file
-	(or overwrite an existing one).  Only one file can be opened
-	in this way at any given time.
+	Diverts output to <repl>filename</repl>, until further notice.
+	Use the flag <opt>append</opt> to append output to an existing
+	file or <opt>write</opt> to start a new file (or overwrite an
+	existing one).  The <opt>close</opt> flag is used to close an
+	output file that was previously opened as above.  Output will
+	then revert to the default stream. Note that since only one
+	file can be opened via <lit>outfile</lit> at any given time
+	(but see below), no filename argument need (nor should) be
+	supplied with this variant of the command.
       </para>
       <para>
-	The <opt>close</opt> flag is used to close an output
-	file that was previously opened as above.  Output will then
-	revert to the default stream. Note that since only one file
-	can be opened via <lit>outfile</lit> at any given time, no
-	filename argument need (nor should) be supplied with this
-	variant of the command.
+	The output file will be written in the curently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
       </para>
       <para>
 	In the first example command above, the file
@@ -8740,6 +8744,37 @@
 	the <lit>echo</lit> and <lit>messages</lit> variables are
 	restored.
       </para>
+      <para>
+	Only one file can be opened in this way at any given
+	time. Therefore, calls to this command cannot be
+	nested. However, usage of this command is permitted inside
+	user-written functions (provided the output file is also
+	closed from inside the same function), so output can be
+	temporarily diverted and then given back to the original
+	output file. For example, the code
+      </para>
+      <code>
+	function void f(string s)
+	    outfile inner.txt --write
+	    print s
+	    outfile --close
+	end function
+
+	outfile outer.txt --write --quiet
+	print "Outside"
+	f("Inside")
+	print "Outside again"
+	outfile --close
+      </code>
+      will produce a file called <quote>outer.txt</quote> containing the two lines
+      <code>
+	Outside
+	Outside again
+      </code>
+      and a file called <quote>inner.txt</quote> containing the line
+      <code>
+	Inside
+      </code>
     </description>
 
   </command>
