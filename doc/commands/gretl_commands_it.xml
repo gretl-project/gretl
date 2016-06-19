@@ -3204,6 +3204,11 @@
 	veda anche <cmdref targ="tabprint"/>.
       </para>
       <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	di file contenga un percorso completo. 
+      </para>
+      <para>
 	Usando l'opzione <opt>complete</opt>, il file &latex; è un
         documento completo, pronto per essere processato; altrimenti il
         file va incluso in un documento.
@@ -4982,6 +4987,11 @@
 	graphpg --output="myfile.pdf"
       </code>
       <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	di file contenga un percorso completo. 
+      </para>
+      <para>
 	In questo contesto l'output usa linee colorate di default; per usare 
 	linee punteggiate o tratteggiate al posto dei colori è possibile aggiungere
 	l'opzione <opt>monochrome</opt>.
@@ -6052,15 +6062,20 @@
 
     <description>
       <para>
-	Nella sua prima forma mostra le etichette informative (se presenti) per le variabili
-	in <repl>varlist</repl>, oppure per tutte le variabili nel dataset
-	se <repl>varlist</repl> non è specificata.
+	Nella sua prima forma mostra le etichette informative (se
+	presenti) per le variabili in <repl>varlist</repl>, oppure per
+	tutte le variabili nel dataset se <repl>varlist</repl> non è
+	specificata.
       </para>
       <para>
-	Con l'opzione <opt>to-file</opt>, scrive nel file indicato le etichette di tutte
-	le variabili nel dataset, una per linea. Se non sono presenti etichette viene
-	emesso un messaggio d'errore; se alcune variabili hanno etichette e altre no,
-	per le seconde viene mostrata una linea vuota.
+	Con l'opzione <opt>to-file</opt>, scrive nel file indicato le
+	etichette di tutte le variabili nel dataset, una per linea. Se
+	non sono presenti etichette viene emesso un messaggio
+	d'errore; se alcune variabili hanno etichette e altre no, per
+	le seconde viene mostrata una linea vuota. Il file di output
+	verrà scritto nella directory corrispondente al valore
+	corrente di <lit>workdir</lit>, a meno che il nome di file
+	contenga un percorso completo.
       </para>
       <para>
 	Con l'opzione <opt>from-file</opt>, legge il file specificato (che deve
@@ -6820,17 +6835,23 @@
 
     <description>
       <para>
-	Con l'opzione <opt>to-file</opt>, scrive nel file indicato le stringhe
-	marcatrici delle osservazioni presenti nel dataset corrente, una per ogni 
-	linea. Se il dataset non contiene stringhe viene emesso un messaggio d'errore.
+	Con l'opzione <opt>to-file</opt>, scrive nel file indicato le
+	stringhe marcatrici delle osservazioni presenti nel dataset
+	corrente, una per ogni linea. Se il dataset non contiene
+	stringhe viene emesso un messaggio d'errore. Il file di output
+	verrà scritto nella directory corrispondente al valore
+	corrente di <lit>workdir</lit>, a meno che il nome di file
+	contenga un percorso completo.
       </para>
       <para>
-	Con l'opzione <opt>from-file</opt>, legge dal file specificato (che deve essere
-	in formato testo) e assegna alle righe del dataset i marcatori di osservazione, 
-	leggendone uno per riga. In generale il file dovrebbe contenere tanti marcatori 
-	quante sono le osservazioni nel dataset, ma se quest'ultimo è un panel il 
-	numero di marcatori nel file potrebbe anche essere pari al numero di unità
-	in cross-section (nel qual caso i marcatori sono ripetuti a ogni data).
+	Con l'opzione <opt>from-file</opt>, legge dal file specificato
+	(che deve essere in formato testo) e assegna alle righe del
+	dataset i marcatori di osservazione, leggendone uno per
+	riga. In generale il file dovrebbe contenere tanti marcatori
+	quante sono le osservazioni nel dataset, ma se quest'ultimo è
+	un panel il numero di marcatori nel file potrebbe anche essere
+	pari al numero di unità in cross-section (nel qual caso i
+	marcatori sono ripetuti a ogni data).
       </para>
       <para>
 	L'opzione <opt>delete</opt> fa quello che vi aspettate: 
@@ -7210,15 +7231,16 @@
 	mostra la tabella modelli in una finestra; <cmd>free</cmd>
 	pulisce la tabella.</para>
       <para>
-	Per stampare la tabella del modello usate l'opzione 
-	<opt>output=</opt> seguita dal nome di un file. Se quest'ultimo ha il suffisso
-	<quote><lit>.tex</lit></quote>, l'output sarà in formato 
-	&tex;; se il suffisso è <quote><lit>.rtf</lit></quote>
-	l'output sarà RTF; in caso contrario sarà in formato di testo. Nel caso di 
-	output in formato &tex; per default verrà prodotto un 
+	Per stampare la tabella del modello usate l'opzione
+	<opt>output=</opt> seguita dal nome di un file. Se
+	quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
+	l'output sarà in formato &tex;; se il suffisso è
+	<quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
+	contrario sarà in formato di testo. Nel caso di output in
+	formato &tex; per default verrà prodotto un
 	<quote>frammento</quote> pronto per essere inserito in un
-	documento; se invece si preferisce ottenere un documento completo, 
-	usate l'opzione <opt>complete</opt>; per esempio, 
+	documento; se invece si preferisce ottenere un documento
+	completo, usate l'opzione <opt>complete</opt>; per esempio,
       </para>
       <code>
 	modeltab --output="myfile.tex" --complete
@@ -7241,6 +7263,11 @@
         <argument>nomi</argument>
 	<argument optional="true">stat</argument>
       </arguments>
+      <option>
+	<flag>--output</flag>
+	<optparm>filename</optparm>
+	<effect>invia l'output al file specificato</effect>
+      </option>
     </usage>
 
     <description>
@@ -7262,6 +7289,23 @@
         coefficienti. Se si usa questo argomento, <repl>nomi</repl> deve
         contenere <math>k + p</math> stringhe separate da virgola, di cui le
         ultime <math>p</math> sono associate alle statistiche aggiuntive.
+      </para>
+      <para>
+	Per inviare l'output ad un file, usate l'opzione
+	<opt>output=</opt> seguita dal nome di un file. Se
+	quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
+	l'output sarà in formato &tex;; se il suffisso è
+	<quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
+	contrario sarà in formato di testo. Nel caso di output in
+	formato &tex; per default verrà prodotto un
+	<quote>frammento</quote> pronto per essere inserito in un
+	documento; se invece si preferisce ottenere un documento
+	completo, usate l'opzione <opt>complete</opt>.
+      </para>
+      <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	di file contenga un percorso completo. 
       </para>
     </description>
 
@@ -8124,6 +8168,19 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampare la lista di serie</effect>
+	</option>
+	<option>
+	  <flag>--preserve</flag>
+	  <effect>mantieni in memoria le variabili non-serie</effect>
+	</option>
+	<option>
+	  <flag>--frompkg</flag>
+	  <optparm>pkgname</optparm>
+	  <effect>vedi sotto</effect>
+	</option>	
+	<option>
 	  <flag>--www</flag>
 	  <effect>usa un database sul server di gretl</effect>
 	</option>
@@ -8140,14 +8197,45 @@
 
     <description>
       <para>
-        Apre un file di dati. Se è già stato aperto un file di dati, esso viene
-        sostituito da quello selezionato. Se non si specifica un percorso
-        completo, il programma cercherà automaticamente il file in alcuni
-        percorsi predefiniti. Se non si specifica un'estensione per il file,
-        come nel primo degli esempi, gretl assume che si tratti di un file di
-        dati standard, con estensione <lit>.gdt</lit>. A seconda del nome del
-        file e di alcune sue caratteristiche, gretl cerca di indovinare il
-        formato dei dati (standard, testo semplice, CSV, MS Excel, Stata, ecc).
+        Apre un file di dati. Se è già stato aperto un file di dati,
+        esso viene sostituito da quello selezionato.
+      </para>
+      <para>
+	Se non si specifica un percorso completo, il programma
+	cercherà automaticamente il file in alcuni percorsi
+	predefiniti, a partire dal valore attuale di
+	<lit>workdir</lit>. Se non si specifica un'estensione per il
+	file, come nel primo degli esempi, gretl assume che si tratti
+	di un file di dati standard, con estensione <lit>.gdt</lit>. A
+	seconda del nome del file e di alcune sue caratteristiche,
+	gretl cerca di indovinare il formato dei dati (standard, testo
+	semplice, CSV, MS Excel, Stata, ecc).
+      </para>
+      <para>
+	If the <opt>frompkg</opt> option is used, gretl will look for
+	the specified data file in the subdirectory associated with
+	the function package specified by <repl>pkgname</repl>.
+      </para>
+      <para>
+	If the <repl>filename</repl> argument takes the form of a
+	URI starting with <lit>http://</lit>, then gretl will attempt
+	to download the indicated data file before opening it.
+      </para>
+      <para>
+	By default, opening a new data file clears the current gretl
+	session, which includes deletion of all named variables,
+	including matrices, scalars and strings.  If you wish to keep
+	your currently defined variables (other than series, which are
+	necessarily cleared out), use the <opt>preserve</opt>
+	option.
+      </para>
+      <para>
+	Questo comando può essere usato anche per aprire un database (gretl,
+	RATS 4.0 o PcGive) per la lettura. In questo caso, dev'essere seguito dal comando
+        <cmdref targ="data"/> per estrarre una particolare serie dal database.
+        Se si usa l'opzione <lit>www</lit>, il programma cercherà di accedere al
+        database specificato sul server di gretl &mdash; ad esempio il database
+        "Federal Reserve interest rates" nel terzo degli esempi visti sopra.
       </para>
       <para>
 	Quando si apre un file di un foglio elettronico (Gnumeric, Open Document o XLS),
@@ -8168,14 +8256,34 @@
         L'impostazione predefinita consiste nel leggere tutte le celle del
         foglio, a partire dalla prima in alto a sinistra.
       </para>
-
       <para>
-	Questo comando può essere usato anche per aprire un database (gretl,
-	RATS 4.0 o PcGive) per la lettura. In questo caso, dev'essere seguito dal comando
-        <cmdref targ="data"/> per estrarre una particolare serie dal database.
-        Se si usa l'opzione <lit>www</lit>, il programma cercherà di accedere al
-        database specificato sul server di gretl &mdash; ad esempio il database
-        "Federal Reserve interest rates" nel terzo degli esempi visti sopra.
+	With plain text files, gretl generally expects to find the data
+	columns delimited in some standard manner.  But there is also a
+	special facility for reading <quote>fixed format</quote> files, in
+	which there are no delimiters but there is a known specification of
+	the form, &eg;, <quote>variable <math>k</math> occupies 8 columns
+	starting at column 24</quote>.  To read such files, you should append
+	a string <opt>fixed-cols=</opt><repl>colspec</repl>, where
+	<repl>colspec</repl> is composed of comma-separated integers.  These
+	integers are interpreted as a set of pairs.  The first element of each
+	pair denotes a starting column, measured in bytes from the beginning
+	of the line with 1 indicating the first byte; and the second element
+	indicates how many bytes should be read for the given field.  So, for
+	example, if you say
+      </para>
+      <code>
+	open fixed.txt --fixed-cols=1,6,20,3
+      </code>
+      <para>
+	then for variable 1 gretl will read 6 bytes starting at column 1; and
+	for variable 2, 3 bytes starting at column 20.  Lines that are blank,
+	or that begin with <lit>#</lit>, are ignored, but otherwise the
+	column-reading template is applied, and if anything other than a valid
+	numerical value is found an error is flagged.  If the data are read
+	successfully, the variables will be named <lit>v1</lit>,
+	<lit>v2</lit>, etc.  It's up to the user to provide meaningful names
+	and/or descriptions using the commands <cmdref targ="rename"/> and/or 
+	<cmdref targ="setinfo"/>.
       </para>
     </description>
 
@@ -11064,23 +11172,81 @@
 
     <description>
       <para>
-	Salva l'intero dataset, o un sottoinsieme delle variabili se è
-        stata indicata una <repl>lista-variabili</repl>, nel file
-        indicato con <repl>file-dati</repl>.</para>
-
+	Save data to <repl>filename</repl>. By default all currently
+	defined series are saved but the optional <repl>varlist</repl>
+	argument can be used to select a subset of series. If the
+	dataset is sub-sampled, only the observations in the current
+	sample range are saved.
+      </para>
       <para>
-	L'impostazione predefinita è di salvare i dati nel formato
-        <quote>interno</quote> di gretl, ma le opzioni del comando
-        permettono di usare formati alternativi. I dati CSV
-        (Comma-Separated Values, dati separati da virgole) possono
-        essere letti dai programmi di foglio elettronico e possono
-        essere modificati con un editor di testi. I formati
-        <program>Octave</program>, <program>R</program> e
-        <program>PcGive</program> sono destinati ad essere usati con i
-        rispettivi programmi. La compressione con gzip può essere utile per
-        grandi dataset. Si veda la <guideref targ="chap:datafiles"/> per i dettagli sui
-        vari formati.</para>
-
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	di file contenga un percorso completo. 
+      </para>
+      <para>
+	The format in which the data are written may be controlled in
+	the first instance by the extension or suffix of
+	<repl>filename</repl>, as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.gdt</lit>, or no extension: gretl's native XML
+	    data format. (If no extension is provided,
+	    <quote><lit>.gdt</lit></quote> is added automatically.)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.gtdb</lit>: gretl's native binary data format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.csv</lit>: comma-separated values (CSV).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.txt</lit> or <lit>.asc</lit>: space-separated
+	    values.
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	    <lit>.R</lit>: GNU R format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.m</lit>: GNU Octave format.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.dta</lit>: Stata dta format (version 113).
+	  </para>
+	</li>	
+      </ilist>
+      <para>
+	The format-related option flags shown above can be used to
+	force the issue of the save format independently of the
+	filename (or to get gretl to write in the formats of PcGive or
+	JMulTi). However, if <repl>filename</repl> has extension
+	<lit>.gdt</lit> or <lit>.gdtb</lit> this necessarily implies
+	use of native format and the addition of a conflicting
+	option flag will generate an error.
+      </para>
+      <para>
+	When data are saved in native format (only), the
+	<opt>gzipped</opt> option may be used for data compression,
+	which can be useful for large datasets. The optional parameter
+	for this flag controls the level of compression (from 0 to 9):
+	higher levels produce a smaller file, but compression takes
+	longer. The default level is 1; a level of 0 means that no
+	compression is applied.
+      </para>
+      
       <para>
 	L'opzione <lit>--omit-obs</lit> è applicabile solo quando si salvano
         dati in formato CSV. In modalità predefinita, se i dati sono serie
@@ -11110,7 +11276,18 @@
         delle nuove variabili, in modo che queste ultime rimpiazzino le
         variabili preesistenti.
       </para>
-
+      <para>
+	The <opt>comment</opt> option is available when saving data
+	as a database or in CSV format. The required parameter is a
+	double-quoted one-line string, attached to the option flag
+	with an equals sign. The string is inserted as a comment into
+	the database index file or at the top of the CSV output.
+      </para>
+      <para>
+	The <lit>store</lit> command behaves in a special manner in
+	the context of a <quote>progressive loop</quote>.  See
+	<guideref targ="chap:looping"/> for details.
+      </para>
     </description>
 
     <gui-access>
@@ -11347,18 +11524,6 @@
     <usage>
       <options>
         <option>
-	  <flag>--rtf</flag>
-	  <effect>Produce RTF invece di &latex;</effect>
-        </option>
-        <option>
-	  <flag>--csv</flag>
-	  <effect>Produce CSV invece di &latex;</effect>
-        </option>
-        <option>
-	  <flag>--complete</flag>
-	  <effect>Crea un documento completo</effect>
-        </option>
-        <option>
 	  <flag>--format="f1|f2|f3|f4"</flag>
 	  <effect>Specifica un formato personalizzato</effect>
         </option>
@@ -11381,6 +11546,11 @@
 	<filename>model_N.tex</filename> (o
 	<filename>model_N.rtf</filename>), dove <lit>N</lit> è il
 	numero dei modelli stimati finora nella sessione in corso.
+      </para>
+      <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	di file contenga un percorso completo. 
       </para>
       <para>
 	Selezionando il formato CSV, i valori sono separati da
