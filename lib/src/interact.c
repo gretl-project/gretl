@@ -49,6 +49,7 @@
 # include "gretl_www.h"
 #endif
 
+#include <unistd.h> /* for getcwd() */
 #include <errno.h>
 
 /* for the "shell" command */

@@ -56,7 +56,7 @@ struct PRN_ {
     size_t bufsize;    /* allocated size of buffer */
     size_t blen;       /* string length of buffer */
     int savepos;       /* saved position in stream or buffer */
-    GPtrArray *fplist; /* stack for use with redirection */
+    GPtrArray *fplist; /* stack for use with output redirection */
     PrnFormat format;  /* plain, TeX, RTF */
     int fixed;         /* non-zero for fixed-size buffer */
     char delim;        /* CSV field delimiter */
