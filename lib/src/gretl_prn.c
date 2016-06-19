@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_func.h"
 #include <stdarg.h>
 #include <errno.h>
 #include <glib.h>
@@ -56,12 +57,19 @@ struct PRN_ {
     size_t bufsize;    /* allocated size of buffer */
     size_t blen;       /* string length of buffer */
     int savepos;       /* saved position in stream or buffer */
-    GPtrArray *fplist; /* stack for use with output redirection */
+    GArray *fplist;    /* stack for use with output redirection */
     PrnFormat format;  /* plain, TeX, RTF */
     int fixed;         /* non-zero for fixed-size buffer */
     char delim;        /* CSV field delimiter */
     char *fname;       /* temp file name, or NULL */
 };
+
+struct fpinfo_ {
+    FILE *fp;
+    int level;
+};
+
+typedef struct fpinfo_ fpinfo;
 
 #define PRN_DEBUG 0
 
@@ -73,19 +81,20 @@ enum {
 static void prn_destroy_fp_list (PRN *prn)
 {
     int i, n = prn->fplist->len;
+    fpinfo *fi;
     FILE *fp;
 
     for (i=n-1; i>=0; i--) {
-	fp = g_ptr_array_index(prn->fplist, i);
-	if (fp != NULL) {
-	    if (fp != prn->fp && fp != stdout && fp != stderr) {
-		fclose(fp);
+	fi = &g_array_index(prn->fplist, fpinfo, i);
+	if (fi != NULL) {
+	    if (fi->fp != NULL && fi->fp != prn->fp && fi->fp != stdout && fi->fp != stderr) {
+		fclose(fi->fp);
 	    }
-	    g_ptr_array_remove_index(prn->fplist, i);
+	    g_array_remove_index(prn->fplist, i);
 	}
     }
 
-    g_ptr_array_free(prn->fplist, TRUE);
+    g_array_free(prn->fplist, TRUE);
     prn->fplist = NULL;
 }
 
@@ -1242,10 +1251,13 @@ int printing_to_standard_stream (PRN *prn)
 static void prn_push_stream (PRN *prn, FILE *fp)
 {
     if (prn->fp != NULL) {
+	fpinfo fi = {prn->fp, 0};
+	 
 	if (prn->fplist == NULL) {
-	    prn->fplist = g_ptr_array_new();
+	    prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
 	}
-	g_ptr_array_add(prn->fplist, (gpointer) prn->fp);
+	fi.level = gretl_function_depth();
+	g_array_append_val(prn->fplist, fi);
     }
 
     prn->fp = fp;
@@ -1257,10 +1269,12 @@ static void prn_pop_stream (PRN *prn)
     
     if (prn->fplist != NULL) {
 	int n = prn->fplist->len;
+	fpinfo *fi;
 
 	if (n > 0) {
-	    prev = g_ptr_array_index(prn->fplist, n-1);
-	    g_ptr_array_remove_index(prn->fplist, n-1);
+	    fi = &g_array_index(prn->fplist, fpinfo, n-1);
+	    prev = fi->fp;
+	    g_array_remove_index(prn->fplist, n-1);
 	}
     }
 
@@ -1292,6 +1306,23 @@ int print_redirection_level (PRN *prn)
     }
 
     return ret;
+}
+
+int print_redirected_at_level (PRN *prn, int level)
+{
+    if (prn->fplist != NULL) {
+	fpinfo *fi;
+	int i;
+
+	for (i=0; i<prn->fplist->len; i++) {
+	    fi = &g_array_index(prn->fplist, fpinfo, i);
+	    if (fi->level == level) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 /**

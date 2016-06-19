@@ -828,6 +828,19 @@ static int cwd_is_workdir (void)
     return 0;
 }
 
+static int redirection_ok (PRN *prn)
+{
+    int fd = gretl_function_depth();
+    
+    if (fd == 0) {
+	return 0;
+    } else if (print_redirected_at_level(prn, fd)) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 static int 
 do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 {
@@ -862,7 +875,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
     }
 
     /* command to divert output to file */
-    if (diverted && gretl_function_depth() == 0) {
+    if (diverted && !redirection_ok(prn)) {
 	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
 			     outname);
 	return 1;

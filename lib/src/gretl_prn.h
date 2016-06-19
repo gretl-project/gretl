@@ -129,6 +129,8 @@ int printing_to_standard_stream (PRN *prn);
 
 int print_redirection_level (PRN *prn);
 
+int print_redirected_at_level (PRN *prn, int level);
+
 int print_start_redirection (PRN *prn, FILE *fp);
 
 int print_end_redirection (PRN *prn);
