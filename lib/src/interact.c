@@ -835,6 +835,7 @@ static int redirection_ok (PRN *prn)
     if (fd == 0) {
 	return 0;
     } else if (print_redirected_at_level(prn, fd)) {
+	/* we may want to lift this ban in future? */
 	return 0;
     } else {
 	return 1;
