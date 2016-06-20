@@ -4846,6 +4846,16 @@
 	  <flag>--fit</flag>
 	  <optparm>fitspec</optparm>
 	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--band</flag>
+	  <optparm>bandspec</optparm>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--band-style</flag>
+	  <optparm>style</optparm>
+	  <effect>see below</effect>
         </option>	
         <option>
 	  <flag>--matrix</flag>
@@ -4966,6 +4976,44 @@
 	  </para>
 	</li>	
       </ilist>
+      <para>
+	The <opt>band</opt> option can be used for plotting zero or
+	more series along with a <quote>band</quote> of some sort
+	(typically representing a confidence interval). This option
+	requires two comma-separated parameters: the name or ID number
+	of a series representing the center of the band, and the name
+	or ID of a series giving the width of the band: the effect is
+	to draw a band with <math>y</math> coordinates equal to center
+	minus width and center plus width. An optional third parameter
+	(again, comma-separated) can be used to give a multiplier for
+	the width dimension, in the form of a numerical constant or
+	the name of a scalar variable. So for example, the following
+	example plots <lit>y</lit> along with a band of plus or minus
+	1.96 times <lit>se_y</lit>:
+      </para>
+      <code>
+	gnuplot y --band=y,se_y,1.96 --with-lines
+      </code>
+      <para>
+	When the <opt>band</opt> option is given, the companion option
+	<opt>band-style</opt> can be used to control the band's
+	representation. By default the upper and lower limits are
+	shown as solid lines, but the parameters <lit>fill</lit> or
+	<lit>dash</lit> cause the band to be drawn as a shaded area or
+	using dashed lines, respectively.  In addition a hexadecimal
+	red-green-blue color specification can be appended (following
+	a comma) or substituted. Here are some style examples:
+      </para>
+      <code>
+	gnuplot ... --band-style=fill
+	gnuplot ... --band-style=dash,0xbbddff
+	gnuplot ... --band-style=0x000000
+      </code>
+      <para>
+	The first example produces a shaded area in the default color;
+	the second switches to dashed lines with a specified blue-gray
+	color; and the third uses solid black lines.
+      </para>
       <para>
 	In interactive mode the plot is displayed immediately. In
 	batch mode the default behavior is that a gnuplot command file

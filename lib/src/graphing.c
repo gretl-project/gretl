@@ -5078,7 +5078,7 @@ static int parse_band_pm_option (const int *list,
 
     g_strfreev(S);
 
-#if 1
+#if 0
     fprintf(stderr, "pm err = %d\n", err);
     fprintf(stderr, "pm center = %d (pos %d)\n", pm->center, cpos);
     fprintf(stderr, "pm width = %d (pos %d)\n", pm->width, wpos);
@@ -5093,6 +5093,9 @@ static int parse_band_pm_option (const int *list,
     }
 
     if (!err && (cpos == 0 || wpos == 0)) {
+	/* stick the "extra" series into *plist so we
+	   can check all series for NAs
+	*/
 	*plist = gretl_list_copy(list);
 	if (cpos == 0) {
 	    gretl_list_append_term(plist, pm->center);
@@ -5117,7 +5120,7 @@ static int parse_band_style_option (int *style, char *rgb)
     int err = 0;
 
     if (s != NULL) {
-	const char *p = strchr(s, ':');
+	const char *p = strchr(s, ',');
 	int slen = strlen(s);
 	int minlen = 7; /* minimal color spec */
 
@@ -5137,13 +5140,13 @@ static int parse_band_style_option (int *style, char *rgb)
 		strcpy(rgb, s);
 	    }
 	} else {
-	    /* embedded colon: style + color */
+	    /* embedded comma: style + color */
 	    minlen += 5;
 	    if (slen < minlen || slen > 8+5) {
 		err = invalid_field_error(s);
-	    } else if (!strncmp(s, "fill:", 5)) {
+	    } else if (!strncmp(s, "fill,", 5)) {
 		*style = BAND_FILL;
-	    } else if (!strncmp(s, "dash:", 5)) {
+	    } else if (!strncmp(s, "dash,", 5)) {
 		*style = BAND_DASH;
 	    } else {
 		err = invalid_field_error(s);
@@ -5264,8 +5267,8 @@ static int plot_with_band (gnuplot_info *gi,
 	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
     }
 
-    fputs("set nokey\n", fp);
     if (n_yvars == 1) {
+	fputs("set nokey\n", fp);
 	strcpy(yname, series_get_graph_name(dset, gi->list[1]));
 	fprintf(fp, "set ylabel \"%s\"\n", yname);
     }
@@ -5277,7 +5280,8 @@ static int plot_with_band (gnuplot_info *gi,
     }
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
-
+    gretl_push_c_numeric_locale();
+    
     fputs("plot \\\n", fp);
 
     if (style == BAND_FILL) {
@@ -5319,7 +5323,6 @@ static int plot_with_band (gnuplot_info *gi,
 	if (*rgb != '\0') {
 	    sprintf(lspec, "lc rgb \"%s\"", rgb);
 	} else {
-	    /* FIXME */
 	    sprintf(lspec, "lt %d", n_yvars + 1);
 	}
 	if (style == BAND_DASH) {
@@ -5334,8 +5337,6 @@ static int plot_with_band (gnuplot_info *gi,
     /* write out the inline data, the order depending on whether
        or not we're using fill style for the band
     */
-
-    gretl_push_c_numeric_locale();
 
     if (style == BAND_FILL) {
 	print_user_pm_data(x, c, w, t1, t2, fp);
