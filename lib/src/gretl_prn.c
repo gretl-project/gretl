@@ -82,12 +82,12 @@ static void prn_destroy_fp_list (PRN *prn)
 {
     int i, n = prn->fplist->len;
     fpinfo *fi;
-    FILE *fp;
 
     for (i=n-1; i>=0; i--) {
 	fi = &g_array_index(prn->fplist, fpinfo, i);
 	if (fi != NULL) {
-	    if (fi->fp != NULL && fi->fp != prn->fp && fi->fp != stdout && fi->fp != stderr) {
+	    if (fi->fp != NULL && fi->fp != prn->fp &&
+		fi->fp != stdout && fi->fp != stderr) {
 		fclose(fi->fp);
 	    }
 	    g_array_remove_index(prn->fplist, i);
