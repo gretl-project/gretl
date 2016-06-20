@@ -4624,7 +4624,11 @@ static void print_user_y_data (const double *x,
     int t;
 
     for (t=0; t<=t2; t++) {
-	fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+	if (na(y[t])) {
+	    fprintf(fp, "%.10g ?\n", x[t]);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+	}
     }
 
     fputs("e\n", fp);
