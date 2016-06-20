@@ -142,7 +142,7 @@ $\obsvar_t = \obsvar$ for all $t$, the model is said to be
 follows, but discuss the time-varying case in
 section~\ref{sec:tvarying}.
 
-\section{Defining the model}
+\section{Defining the model as a bundle}
 \label{sec:setup}
 
 The \cmd{ksetup} function is used to initialize a state space
@@ -362,6 +362,7 @@ the appropriate dimensions:
 \begin{code}
 matrix K10 = mshape(G[10,], SSmod.r, SSmod.n)  
 \end{code}
+
 \section{The \cmd{ksmooth} function}
 \label{sec:ksmooth}
 

@@ -1526,11 +1526,15 @@
 	  companion function <fncref targ="bwrite"/>.
 	</para>
 	<para>
-	  If a non-zero value is given for the optional
-	  <argname>import</argname> argument, the input file is looked
-	  for in the user's <quote>dot</quote> directory. In
-	  this case the <argname>fname</argname> argument should be
-	  a plain filename, without any path component.
+	  If the file name does not contain a full path specification,
+	  it will be looked for in several <quote>likely</quote>
+	  locations, beginning with the currently set
+	  <lit>workdir</lit>. However, if a non-zero value is given
+	  for the optional <argname>import</argname> argument, the
+	  input file is looked for in the user's <quote>dot</quote>
+	  directory. In this case the <argname>fname</argname>
+	  argument should be a plain filename, without any path
+	  component.
 	</para>
 	<para>
 	  Should an error occur (such as the file being badly formatted or
@@ -1593,8 +1597,11 @@
 	  value will be non-zero.
 	</para>
 	<para>
-	  If a non-zero value is given for the <argname>export</argname>
-	  argument, the output file will be written into the user's
+	  The output file will be written in the currently set
+	  <lit>workdir</lit>, unless the <repl>filename</repl> string
+	  contains a full path specification. However, if a non-zero
+	  value is given for the <argname>export</argname> argument,
+	  the output file will be written into the user's
 	  <quote>dot</quote> directory. In this case a plain filename,
 	  without any path component, should be given for the second
 	  argument.
@@ -5162,13 +5169,17 @@
 	  </li>
 	</ilist>
 	<para>
-	  If a non-zero value is given for the optional
-	  <argname>import</argname> argument, the input file is looked
-	  for in the user's <quote>dot</quote> directory. This is
-	  intended for use with the matrix-exporting functions offered
-	  in the context of the <cmdref targ="foreign"/> command. In
-	  this case the <argname>fname</argname> argument should be a
-	  plain filename, without any path component.
+	  If the file name does not contain a full path specification,
+	  it will be looked for in several <quote>likely</quote>
+	  locations, beginning with the currently set
+	  <lit>workdir</lit>. However, if a non-zero value is given
+	  for the optional <argname>import</argname> argument, the
+	  input file is looked for in the user's <quote>dot</quote>
+	  directory. This is intended for use with the
+	  matrix-exporting functions offered in the context of the
+	  <cmdref targ="foreign"/> command. In this case the
+	  <argname>fname</argname> argument should be a plain
+	  filename, without any path component.
 	</para>
 	<para>
 	  Should an error occur (such as the file being badly formatted or
@@ -5326,13 +5337,16 @@
 	  return value will be non-zero.
 	</para>
 	<para>
-	  If a non-zero value is given for the
-	  <argname>export</argname> argument, the output file will be
-	  written into the user's <quote>dot</quote> directory, where
-	  it is accessible by default via the matrix-loading functions
-	  offered in the context of the <cmdref targ="foreign"/>
-	  command. In this case a plain filename, without any path
-	  component, should be given for the second argument.
+	  The output file will be written in the currently set
+	  <lit>workdir</lit>, unless the <repl>filename</repl> string
+	  contains a full path specification. However, if a non-zero
+	  value is given for the <argname>export</argname> argument,
+	  the output file will be written into the user's
+	  <quote>dot</quote> directory, where it is accessible by
+	  default via the matrix-loading functions offered in the
+	  context of the <cmdref targ="foreign"/> command. In this
+	  case a plain filename, without any path component, should be
+	  given for the second argument.
 	</para>
 	<para>
 	  Matrices stored via the <lit>mwrite</lit> function in its
@@ -6925,8 +6939,11 @@
       <description>
 	<para>
 	  If a file by the name of <argname>fname</argname> exists and
-	  is readable, returns a string containing the content of
-	  this file, otherwise flags an error.  
+	  is readable, returns a string containing the content of this
+	  file, otherwise flags an error.  If <argname>fname</argname>
+	  does not contain a full path specification, it will be
+	  looked for in several <quote>likely</quote> locations,
+	  beginning with the currently set <lit>workdir</lit>.
 	</para>
 	<para>
 	  If <argname>fname</argname> starts with the identifier of a
