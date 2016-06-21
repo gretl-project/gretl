@@ -697,16 +697,26 @@ int gretl_object_compose_unique_name (void *p, GretlObjType type)
 	GRETL_VAR *var = (GRETL_VAR *) p;
 
 	if (var->ci == VAR) {
+	    char *vstr = _("VAR");
+
+	    if (strlen(vstr) > 3) {
+		vstr = "VAR";
+	    }
 	    id = ++n_vars;
-	    sprintf(name, "%s %d", _("VAR"), id);
+	    sprintf(name, "%s %d", vstr, id);
 	    while (get_VAR_by_name(name) != NULL) {
-		sprintf(name, "%s %d", _("VAR"), ++id);
+		sprintf(name, "%s %d", vstr, ++id);
 	    }
 	} else {
+	    char *vstr = _("VECM");
+
+	    if (strlen(vstr) > 4) {
+		vstr = "VECM";
+	    }	    
 	    id = gretl_VECM_id(var);
-	    sprintf(name, "%s %d", _("VECM"), id);
+	    sprintf(name, "%s %d", vstr, id);
 	    while (get_VECM_by_name(name) != NULL) {
-		sprintf(name, "%s %d", _("VECM"), ++id);
+		sprintf(name, "%s %d", vstr, ++id);
 	    }
 	}
 	gretl_VAR_set_name(var, name);
