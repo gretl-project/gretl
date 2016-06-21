@@ -155,7 +155,8 @@ static void get_multiplot_layout (int n, int tseries,
 				  int *rows, int *cols);
 static int plot_with_band (gnuplot_info *gi,
 			   const char *literal,
-			   const DATASET *dset);
+			   const DATASET *dset,
+			   gretlopt opt);
     
 #ifndef WIN32
 
@@ -405,12 +406,6 @@ static int plain_lines_spec (gretlopt opt)
     } else {
 	return 0;
     }
-}
-
-static int invalid_field_error (const char *s)
-{
-    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
-    return E_DATA;
 }
 
 static int get_fit_type (gnuplot_info *gi)
@@ -3182,7 +3177,7 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 {
     DATASET *dset = NULL;
     int *plotlist = NULL;
-    int err = 0;
+    int pmax, err = 0;
 
     if (gretl_is_null_matrix(m)) {
 	return E_DATA;
@@ -3198,17 +3193,29 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 	return err;
     }
 
-    plotlist = gretl_consecutive_list_new(1, dset->v - 1);
-    if (plotlist == NULL) {
-	err = E_ALLOC;
-    } 
+    if (opt & OPT_N) {
+	/* --band : reserve the last two columns */
+	pmax = dset->v - 3;
+    } else {
+	pmax = dset->v - 1;
+    }
+
+    if (pmax <= 0) {
+	
+	err = E_DATA;
+    } else {
+	plotlist = gretl_consecutive_list_new(1, pmax);
+	if (plotlist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
     if (!err) {
-	opt &= ~OPT_X;
 	err = gnuplot(plotlist, literal, dset, opt);
     }
 
-    destroy_dataset(dset);   
+    destroy_dataset(dset);
+    
     free(plotlist);
 
     return err;
@@ -3339,7 +3346,7 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.band) {
-	return plot_with_band(&gi, literal, dset);
+	return plot_with_band(&gi, literal, dset, opt);
     }
 
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
@@ -5026,6 +5033,7 @@ struct band_pm {
 
 static int parse_band_pm_option (const int *list,
 				 const DATASET *dset,
+				 gretlopt opt,
 				 struct band_pm *pm,
 				 int **plist)
 {
@@ -5044,7 +5052,10 @@ static int parse_band_pm_option (const int *list,
     while (S != NULL && S[i] != NULL && !err) {
 	if (i < 2) {
 	    /* specs for the "center" and "width" series: required */
-	    if (integer_string(S[i])) {
+	    if (opt & OPT_X) {
+		/* special for matrix-derived dataset */
+		v = (i == 0)? dset->v - 2 : dset->v - 1;
+	    } else if (integer_string(S[i])) {
 		/* var ID number? */
 		v = atoi(S[i]);
 	    } else {
@@ -5195,7 +5206,8 @@ static int band_straddles_zero (const double *c,
 
 static int plot_with_band (gnuplot_info *gi,
 			   const char *literal,
-			   const DATASET *dset)
+			   const DATASET *dset,
+			   gretlopt opt)
 {
     struct band_pm pm = {-1, -1, 1.0};
     FILE *fp = NULL;
@@ -5214,7 +5226,7 @@ static int plot_with_band (gnuplot_info *gi,
     int i, n_yvars = 0;
     int err = 0;
 
-    err = parse_band_pm_option(gi->list, dset, &pm, &biglist);
+    err = parse_band_pm_option(gi->list, dset, opt, &pm, &biglist);
 
     if (!err) {
 	err = parse_band_style_option(&style, rgb);

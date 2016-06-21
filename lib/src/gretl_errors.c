@@ -560,3 +560,8 @@ int gretl_error_is_fatal (void)
     }
 }
 
+int invalid_field_error (const char *s)
+{
+    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
+    return E_DATA;
+}
