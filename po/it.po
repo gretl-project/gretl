@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-12 12:01-0400\n"
-"PO-Revision-Date: 2016-05-17 08:04+0200\n"
+"PO-Revision-Date: 2016-06-21 18:15+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -6314,7 +6314,7 @@ msgstr "Prob"
 #: lib/src/objstack.c:665 lib/src/objstack.c:701 lib/src/objstack.c:703
 #: gui2/selector.c:3756
 msgid "VAR"
-msgstr "VAR - Autoregressione vettoriale"
+msgstr "VAR"
 
 #: lib/src/objstack.c:667 lib/src/objstack.c:707 lib/src/objstack.c:709
 #: gui2/selector.c:3760
