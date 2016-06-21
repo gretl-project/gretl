@@ -30,8 +30,11 @@
 \label{sec:amble}
 
 The original interface to the treatment of linear state space models
-in gretl predated the development of gretl's ``bundle'' type. It
-recently struck the gretl authors that the bundle type could be used
+in gretl predated the development of gretl's ``bundle''
+type.\footnote{If anyone needs documentation for the original
+  interface, available in gretl 2016c and earlier versions, it can be
+  found at \url{http://gretl.sourceforge.net/papers/kalman_old.pdf}.}
+In 2016 it struck the gretl authors that the bundle type could be used
 to advantage in reformulating the user interface; we suspect people
 will find the new interface a good deal easier to use. Moreover, the
 new interface makes it much more practical to split long portions of
@@ -74,9 +77,8 @@ Here are the main features of the new interface ``at a glance'':
   simplified and generalized.
 \end{itemize}
 
-At present the old syntax and methods, as described in chapter 30 of
-the \textit{Gretl User's Guide}, are still available, with the new
-interface operating in parallel. However, we may retire the old
+At present the old syntax and methods are still available, with the
+new interface operating in parallel. However, we may retire the old
 interface at some point. Please note that you cannot ``mix and match''
 the old and new interfaces; you must adhere consistently to one or the
 other.
@@ -84,8 +86,7 @@ other.
 \section{Notation}
 
 In this document, we are going to use, as basic representation of
-a state-space model, the following pair of equations:\footnote{Only
-  marginally different from what we used in \textit{Gretl User's Guide}.}
+a state-space model, the following pair of equations:
 %
 \begin{align}
   \label{eq:state}
@@ -654,9 +655,8 @@ means of which it will be passed a pointer to the Kalman bundle to
 which the call is attached.  Its return value, if any, will not be
 used, so generally it returns nothing (is of type \cmd{void}).
 However, you can use gretl's \texttt{funcerr} keyword to raise an
-error if things seem to be going wrong; see the chapter titled
-``User-defined functions'' in the \textit{Gretl User's Guide} for
-details.
+error if things seem to be going wrong; see
+chapter~\ref{chap:functions} for details.
 
 Besides the bundle members noted above, a time variation function has
 access to the current (1-based) time step, under the reserved key
@@ -757,7 +757,7 @@ B.simstart = B.inistate + Z * mnormal(B.r, 1)
 \end{code}
 
 \section{Example scripts}
-\label{sec:examples}
+\label{sec:ss-examples}
 
 This section presents a selection of short sample scripts, which cover
 the most important aspects of this document.
