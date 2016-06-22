@@ -155,7 +155,7 @@ static void get_multiplot_layout (int n, int tseries,
 				  int *rows, int *cols);
 static int plot_with_band (int ci, gnuplot_info *gi,
 			   const char *literal,
-			   const DATASET *dset,
+			   DATASET *dset,
 			   gretlopt opt);
     
 #ifndef WIN32
@@ -3168,17 +3168,8 @@ static void make_time_tics (gnuplot_info *gi,
     }
 }
 
-static gretl_matrix *get_band_matrix (DATASET *dset)
-{
-    gretl_matrix *m = NULL;
-
-    /* FIXME */
-
-    return m;
-}
-
-/* Respond to use of the option --matrix=<matname> in the gnuplot
-   command, or create a plot directly from a matrix and a plot list.
+/* Handle the use of a matrix in the context of the "plot" command
+   block, or create a plot directly from a matrix and a plot list.
 */
 
 int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 
@@ -3215,8 +3206,6 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 
     if (!err) {
 	if (opt & OPT_N) {
-	    /* This branch still needs to be written */
-	    gretl_matrix *b = get_band_matrix(dset);
 	    gnuplot_info gi;
 	    
 	    err = gpinfo_init(&gi, opt, plotlist, literal, dset);
@@ -3362,7 +3351,8 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.band) {
-	return plot_with_band(GNUPLOT, &gi, literal, dset, opt);
+	return plot_with_band(GNUPLOT, &gi, literal,
+			      (DATASET *) dset, opt);
     }
 
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
@@ -4647,7 +4637,7 @@ static void print_user_y_data (const double *x,
     int t;
 
     for (t=0; t<=t2; t++) {
-	if (na(y[t])) {
+	if (xna(y[t])) {
 	    fprintf(fp, "%.10g ?\n", x[t]);
 	} else {
 	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
@@ -4735,7 +4725,7 @@ static void print_user_pm_data (const double *x,
     int t;
  
     for (t=t1; t<=t2; t++) {
-	if (na(c[t]) || na(w[t])) {
+	if (xna(c[t]) || xna(w[t])) {
 	    fprintf(fp, "%.10g ? ?\n", x[t]);
 	} else {
 	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], c[t], w[t]);
@@ -5047,6 +5037,78 @@ struct band_pm {
     double factor;
 };
 
+static int process_band_matrix (const int *list,
+				DATASET *dset,
+				struct band_pm *pm,
+				int **plist)
+{
+    const char *s = get_optval_string(PLOT, OPT_N);
+    gretl_matrix *m = NULL;
+    gchar **S;
+    int i = 0;
+    int err = 0;
+
+    if (s == NULL) {
+	return E_INVARG;
+    }
+
+    S = g_strsplit(s, ",", -1);
+    
+    while (S != NULL && S[i] != NULL && !err) {
+	if (i == 0) {
+	    m = get_matrix_by_name(S[i]);
+	    if (m == NULL || m->cols != 2 || m->rows != dset->n) {
+		err = invalid_field_error(S[i]);
+	    } else {
+		pm->center = dset->v;
+		pm->width = dset->v + 1;
+	    }
+	} else if (i == 1) {
+	    /* spec for width multiplier: optional */
+	    if (numeric_string(S[i])) {
+		pm->factor = dot_atof(S[i]);
+	    } else if (gretl_is_scalar(S[i])) {
+		pm->factor = gretl_scalar_get_value(S[i], &err);
+	    } else {
+		/* FIXME support named vector */
+		err = invalid_field_error(S[i]);
+	    }
+	} else {
+	    /* we got too many comma-separated terms */
+	    err = invalid_field_error(S[i]);
+	}
+	i++;
+    }
+
+    g_strfreev(S);
+
+    if (!err && (pm->factor < 0 || xna(pm->factor))) {
+	err = E_INVARG;
+    }
+
+    if (!err) {
+	int newv = dset->v + 2;
+	double **tmp = realloc(dset->Z, newv * sizeof *tmp);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    dset->Z = tmp;
+	    dset->Z[dset->v] = m->val;
+	    dset->Z[dset->v+1] = m->val + m->rows;
+	    dset->v += 2;
+	}
+    }
+
+    if (!err) {
+	*plist = gretl_list_copy(list);
+	gretl_list_append_term(plist, pm->center);
+	gretl_list_append_term(plist, pm->width);
+    }
+
+    return err;
+}
+
 static int parse_band_pm_option (const int *list,
 				 const DATASET *dset,
 				 gretlopt opt,
@@ -5222,7 +5284,7 @@ static int band_straddles_zero (const double *c,
 
 static int plot_with_band (int ci, gnuplot_info *gi,
 			   const char *literal,
-			   const DATASET *dset,
+			   DATASET *dset,
 			   gretlopt opt)
 {
     struct band_pm pm = {-1, -1, 1.0};
@@ -5243,11 +5305,14 @@ static int plot_with_band (int ci, gnuplot_info *gi,
     int err = 0;
 
     if (ci == PLOT) {
-	gretl_errmsg_set("Not ready yet");
-	return E_NOTIMP;
+	/* Coming from a "plot" block: in this case the band
+	   should be given in the form of a separate matrix
+	   with columns center and width.
+	*/
+	err = process_band_matrix(gi->list, dset, &pm, &biglist);
+    } else {
+	err = parse_band_pm_option(gi->list, dset, opt, &pm, &biglist);
     }
-
-    err = parse_band_pm_option(gi->list, dset, opt, &pm, &biglist);
 
     if (!err) {
 	err = parse_band_style_option(&style, rgb);
@@ -5394,6 +5459,11 @@ static int plot_with_band (int ci, gnuplot_info *gi,
 
     err = finalize_plot_input_file(fp);
     clear_gpinfo(gi);
+
+    if (ci == PLOT) {
+	/* get rid of two extra dataset columns */
+	dset->v -= 2;
+    }
 
     return err;
 }
