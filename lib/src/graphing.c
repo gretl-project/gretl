@@ -153,7 +153,7 @@ static void make_time_tics (gnuplot_info *gi,
 			    PRN *prn);
 static void get_multiplot_layout (int n, int tseries,
 				  int *rows, int *cols);
-static int plot_with_band (gnuplot_info *gi,
+static int plot_with_band (int ci, gnuplot_info *gi,
 			   const char *literal,
 			   const DATASET *dset,
 			   gretlopt opt);
@@ -3168,6 +3168,15 @@ static void make_time_tics (gnuplot_info *gi,
     }
 }
 
+static gretl_matrix *get_band_matrix (DATASET *dset)
+{
+    gretl_matrix *m = NULL;
+
+    /* FIXME */
+
+    return m;
+}
+
 /* Respond to use of the option --matrix=<matname> in the gnuplot
    command, or create a plot directly from a matrix and a plot list.
 */
@@ -3193,15 +3202,9 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 	return err;
     }
 
-    if (opt & OPT_N) {
-	/* --band : reserve the last two columns */
-	pmax = dset->v - 3;
-    } else {
-	pmax = dset->v - 1;
-    }
+    pmax = dset->v - 1;
 
     if (pmax <= 0) {
-	
 	err = E_DATA;
     } else {
 	plotlist = gretl_consecutive_list_new(1, pmax);
@@ -3211,11 +3214,24 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
     }
 
     if (!err) {
-	err = gnuplot(plotlist, literal, dset, opt);
+	if (opt & OPT_N) {
+	    /* This branch still needs to be written */
+	    gretl_matrix *b = get_band_matrix(dset);
+	    gnuplot_info gi;
+	    
+	    err = gpinfo_init(&gi, opt, plotlist, literal, dset);
+	    if (!err) {
+		err = maybe_add_plotx(&gi, 0, dset);
+	    }
+	    if (!err) {
+		err = plot_with_band(PLOT, &gi, literal, dset, opt);
+	    }
+	} else {
+	    err = gnuplot(plotlist, literal, dset, opt);
+	}
     }
 
     destroy_dataset(dset);
-    
     free(plotlist);
 
     return err;
@@ -3346,7 +3362,7 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.band) {
-	return plot_with_band(&gi, literal, dset, opt);
+	return plot_with_band(GNUPLOT, &gi, literal, dset, opt);
     }
 
     if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
@@ -5204,7 +5220,7 @@ static int band_straddles_zero (const double *c,
     return 0;
 }
 
-static int plot_with_band (gnuplot_info *gi,
+static int plot_with_band (int ci, gnuplot_info *gi,
 			   const char *literal,
 			   const DATASET *dset,
 			   gretlopt opt)
@@ -5225,6 +5241,11 @@ static int plot_with_band (gnuplot_info *gi,
     int t2 = dset->t2;
     int i, n_yvars = 0;
     int err = 0;
+
+    if (ci == PLOT) {
+	gretl_errmsg_set("Not ready yet");
+	return E_NOTIMP;
+    }
 
     err = parse_band_pm_option(gi->list, dset, opt, &pm, &biglist);
 
