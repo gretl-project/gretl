@@ -142,6 +142,11 @@ struct plot_type_info ptinfo[] = {
     { PLOT_TYPE_MAX,       NULL }
 };
 
+enum {
+    BP_REGULAR,
+    BP_BLOCKMAT
+};
+
 static int graph_list_adjust_sample (int *list, 
 				     gnuplot_info *ginfo,
 				     const DATASET *dset,
@@ -153,7 +158,8 @@ static void make_time_tics (gnuplot_info *gi,
 			    PRN *prn);
 static void get_multiplot_layout (int n, int tseries,
 				  int *rows, int *cols);
-static int plot_with_band (int ci, gnuplot_info *gi,
+static int plot_with_band (int mode,
+			   gnuplot_info *gi,
 			   const char *literal,
 			   DATASET *dset,
 			   gretlopt opt);
@@ -3213,7 +3219,8 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 		err = maybe_add_plotx(&gi, 0, dset);
 	    }
 	    if (!err) {
-		err = plot_with_band(PLOT, &gi, literal, dset, opt);
+		err = plot_with_band(BP_BLOCKMAT, &gi, literal,
+				     dset, opt);
 	    }
 	} else {
 	    err = gnuplot(plotlist, literal, dset, opt);
@@ -3351,7 +3358,7 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     if (gi.band) {
-	return plot_with_band(GNUPLOT, &gi, literal,
+	return plot_with_band(BP_REGULAR, &gi, literal,
 			      (DATASET *) dset, opt);
     }
 
@@ -5282,7 +5289,7 @@ static int band_straddles_zero (const double *c,
     return 0;
 }
 
-static int plot_with_band (int ci, gnuplot_info *gi,
+static int plot_with_band (int mode, gnuplot_info *gi,
 			   const char *literal,
 			   DATASET *dset,
 			   gretlopt opt)
@@ -5304,17 +5311,17 @@ static int plot_with_band (int ci, gnuplot_info *gi,
     int i, n_yvars = 0;
     int err = 0;
 
-    if (ci == PLOT) {
-	/* Coming from a "plot" block: in this case the band
-	   should be given in the form of a separate matrix
-	   with columns center and width.
+    if (mode == BP_BLOCKMAT) {
+	/* Coming from a "plot" block in matrix mode: in this case the
+	   band should be given in the form of a named matrix with
+	   two columns holding center and width, respectively.
 	*/
 	err = process_band_matrix(gi->list, dset, &pm, &biglist);
     } else {
 	err = parse_band_pm_option(gi->list, dset, opt, &pm, &biglist);
     }
 
-    if (!err) {
+    if (!err && (opt & OPT_J)) {
 	err = parse_band_style_option(&style, rgb);
     }
     
@@ -5460,8 +5467,9 @@ static int plot_with_band (int ci, gnuplot_info *gi,
     err = finalize_plot_input_file(fp);
     clear_gpinfo(gi);
 
-    if (ci == PLOT) {
-	/* get rid of two extra dataset columns */
+    if (mode == BP_BLOCKMAT) {
+	/* hide the two extra dataset columns 
+	   representing the band */
 	dset->v -= 2;
     }
 
