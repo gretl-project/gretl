@@ -5044,6 +5044,16 @@ struct band_pm {
     double factor;
 };
 
+/* Handle the special case where we get to the band-plot code
+   from a "plot" block in which the data to be plotted (and
+   hence also the band specification) are given in matrix
+   form. By this point the plot-data have been converted to
+   (temporary) DATASET form; here we retrieve the band-spec
+   matrix, check it for conformability, and stick the two
+   extra columns onto the dataset (borrowing pointers into
+   the matrix content).
+*/
+
 static int process_band_matrix (const int *list,
 				DATASET *dset,
 				struct band_pm *pm,
@@ -5065,8 +5075,10 @@ static int process_band_matrix (const int *list,
 	if (i == 0) {
 	    m = get_matrix_by_name(S[i]);
 	    if (m == NULL || m->cols != 2 || m->rows != dset->n) {
+		/* missing or non-conformable */
 		err = invalid_field_error(S[i]);
 	    } else {
+		/* the last two series in expanded dataset */
 		pm->center = dset->v;
 		pm->width = dset->v + 1;
 	    }
@@ -5077,7 +5089,6 @@ static int process_band_matrix (const int *list,
 	    } else if (gretl_is_scalar(S[i])) {
 		pm->factor = gretl_scalar_get_value(S[i], &err);
 	    } else {
-		/* FIXME support named vector */
 		err = invalid_field_error(S[i]);
 	    }
 	} else {
@@ -5094,12 +5105,14 @@ static int process_band_matrix (const int *list,
     }
 
     if (!err) {
+	/* enlarge the dset->Z array */
 	int newv = dset->v + 2;
 	double **tmp = realloc(dset->Z, newv * sizeof *tmp);
 
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    /* note: we don't need varnames here */
 	    dset->Z = tmp;
 	    dset->Z[dset->v] = m->val;
 	    dset->Z[dset->v+1] = m->val + m->rows;
@@ -5115,6 +5128,12 @@ static int process_band_matrix (const int *list,
 
     return err;
 }
+
+/* Handle the band plus-minus option for all cases apart
+   from the special one handled just above. Here we require
+   two comma-separated series identifiers for center and
+   width.
+*/
 
 static int parse_band_pm_option (const int *list,
 				 const DATASET *dset,
@@ -5209,9 +5228,14 @@ static int parse_band_pm_option (const int *list,
 }
 
 /* We're looking here for any one of three patterns:
-   <style>, <style>:<color>, or <color>, where <style>
-   should be "fill" or "dash" and <color> should be a
-   hex string such as "#00ff00" or "0x00ff00".
+
+   <style>
+   <style>,<color>
+   <color>
+
+   where <style> should be "fill", "dash" or "line" (the
+   default) and <color> should be a hex string such as 
+   "#00ff00" or "0x00ff00".
 */
 
 static int parse_band_style_option (int *style, char *rgb)
@@ -5231,6 +5255,8 @@ static int parse_band_style_option (int *style, char *rgb)
 		    *style = BAND_FILL;
 		} else if (!strcmp(s, "dash")) {
 		    *style = BAND_DASH;
+		} else if (!strcmp(s, "line")) {
+		    *style = BAND_LINE;
 		} else {
 		    err = invalid_field_error(s);
 		}
@@ -5248,6 +5274,8 @@ static int parse_band_style_option (int *style, char *rgb)
 		*style = BAND_FILL;
 	    } else if (!strncmp(s, "dash,", 5)) {
 		*style = BAND_DASH;
+	    } else if (!strncmp(s, "line,", 5)) {
+		*style = BAND_LINE;
 	    } else {
 		err = invalid_field_error(s);
 	    }
