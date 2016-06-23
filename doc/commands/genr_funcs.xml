@@ -7011,6 +7011,16 @@
 	  file. Returns 0 on successful completion, non-zero if there
 	  is no such file or the file cannot be removed.
 	</para>
+	<para>
+	  If <argname>fname</argname> contains a full path
+	  specification, gretl will attempt to delete that file and
+	  return an error if the file doesn't exist or can't be
+	  deleted for some reason (such as insufficient
+	  privileges). If <argname>fname</argname> does not contain a
+	  full path, then it will be assumed that the given file name
+	  is relative to <lit>workdir</lit>. If the file doesn't exist
+	  or is unwritable, no other directories will be searched.
+	</para>
       </description>
     </function>
 
