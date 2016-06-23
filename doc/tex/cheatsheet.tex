@@ -704,6 +704,30 @@ syntax for this would be something like
 scalar NotTheSame = nelem((A-B) || (B-A)) > 0
 \end{code}
 
+\subsection{Reordering list elements}
+
+\emph{Problem:} Is there a way to reorder list elements?
+
+\emph{Solution:} You can use the fact that a list can be cast into
+a vector of integers and then manipulated via ordinary matrix
+syntax. So, for example, if you wanted to ``flip'' a list you may
+just use the \cmd{mreverse} function. For example:
+\begin{code}
+open AWM.gdt --quiet
+list X = 3 6 9 12
+matrix tmp = X
+list revX = mreverse(tmp')
+
+list X print
+list revX print
+\end{code}
+will produce
+\begin{code}
+? list X print
+D1 D872 EEN_DIS GCD 
+? list revX print
+GCD EEN_DIS D872 D1 
+\end{code}
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
