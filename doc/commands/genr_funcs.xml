@@ -4115,32 +4115,40 @@
       </description>
     </function>
 
-    <function name="kfilter" section="filters" output="scalar">
+    <function name="kdsmooth" section="sspace" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="matrixref">&amp;E</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;V</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;G</fnarg>
+	<fnarg type="bundleref">&amp;Model</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Requires that a Kalman filter be set up.  Performs a forward,
-	  filtering pass and returns 0 on successful completion or 1 
-	  if numerical problems are encountered.
+	  Performs disturbance smooting for a Kalman bundle previously
+	  set up by means of the <fncref targ="ksetup"/> and returns 0
+	  on successful completion or 1 if numerical problems are
+	  encountered.
 	</para>
 	<para>
-	  The optional matrix arguments can be used to retrieve the following
-	  information: <argname>E</argname> gets the matrix of one-step ahead
-	  prediction errors and <argname>V</argname> gets the variance matrix
-	  for these errors; <argname>S</argname> gets the matrix of estimated
-	  values of the state vector and <argname>P</argname> the variance
-	  matrix of these estimates; <argname>G</argname> gets the Kalman
-	  gain.  All of these matrices have <math>T
-	  </math> rows, corresponding
-	  to <math>T
-	  </math> observations.  For the column dimensions and
-	  further details see <guideref targ="chap:kalman"/>.
+	  For details see <guideref targ="chap:kalman"/>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="ksetup"/>
+            <fncref targ="kfilter"/>
+            <fncref targ="ksmooth"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
+    <function name="kfilter" section="sspace" output="scalar">
+      <fnargs>
+	<fnarg optional="true" type="bundleref">&amp;Model</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs a forward, filtering pass on a Kalman bundle
+	  previously set up by means of the <fncref targ="ksetup"/>
+	  and returns 0 on successful completion or 1 if numerical
+	  problems are encountered.
 	</para>
 	<para>
 	  <seelist>
@@ -4174,29 +4182,47 @@
       </description>
     </function> 
 
-    <function name="ksimul" section="filters" output="matrix">
+    <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
-	<fnarg type="matrix">v</fnarg>
-	<fnarg type="matrix">w</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
+	<fnarg type="smlist">Y</fnarg>
+	<fnarg type="scalar-or-matrix">H</fnarg>
+	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Q</fnarg>
+	<fnarg optional="true" type="matrix">C</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Requires that a Kalman filter be set up.  Performs a simulation
-	  and returns a matrix holding simulated values of the
-	  observable variables.
+	  Sets up a Kalman bundle
 	</para>
 	<para>
-	  The argument <argname>v</argname> supplies artificial disturbances
-	  for the state transition equation and <argname>w</argname> supplies
-	  disturbances for the observation equation, if applicable.  The
-	  optional argument <argname>S</argname> may be used to retrieve the
-	  simulated state vector.  For details see <guideref
-          targ="chap:kalman"/>.
+	  For details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
-            <cmdref targ="kalman"/>
+            <fncref targ="kfilter"/>
+            <fncref targ="ksmooth"/>
+            <fncref targ="kdsmooth"/>
+            <fncref targ="ksimul"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
+    <function name="ksimul" section="sspace" output="scalar">
+      <fnargs>
+	<fnarg optional="true" type="bundleref">&amp;Model</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Uses a Kalman bundle previously set up by means of the
+	  <fncref targ="ksetup"/> to simulate data.
+	</para>
+	<para>
+	  For details see <guideref targ="chap:kalman"/>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="ksetup"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksmooth"/>
 	  </seelist>
@@ -4204,16 +4230,16 @@
       </description>
     </function> 
 
-    <function name="ksmooth" section="filters" output="matrix">
+    <function name="ksmooth" section="sspace" output="matrix">
       <fnargs>
-	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Requires that a Kalman filter be set up.  Performs a backward,
-	  smoothing pass and returns a matrix holding smoothed estimates of
-	  the state vector.  The optional argument <argname>P</argname> may be
-	  used to retrieve the MSE of the smoothed state.  For details see
+	  Performs a smoothing (backwards) pass on a Kalman bundle
+	  previously set up by means of the <fncref targ="ksetup"/> and
+	  returns 0 on successful completion or 1 if numerical
+	  problems are encountered.  For details see
 	  <guideref targ="chap:kalman"/>.
 	</para>
 	<para>

@@ -40,7 +40,7 @@
    name    CDATA #REQUIRED
    targ    CDATA #IMPLIED
    section (data-utils | filters | linalg | math | matbuild | 
-            matshape | numerical | probdist | stats | strings | 
+            matshape | numerical | probdist | stats | sspace | strings | 
             transforms | access | calendar) "math" 
    output  (scalar | series | matrix | smatrix | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int |
@@ -171,8 +171,3 @@
 <!ATTLIST repl
    quote (true | false) "false"
 >
-
-
-
-
-
