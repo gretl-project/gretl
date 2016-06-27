@@ -6215,67 +6215,6 @@
     </ilist>
   </command>
 
-  <command name="kalman" section="Estimation" label="Kalman filter">
-
-    <usage>
-      <options>
-	<option>
-	  <flag>--cross</flag>
-	  <effect>allow for cross-correlated disturbances</effect>
-	</option>
-	<option>
-	  <flag>--diffuse</flag>
-	  <effect>use diffuse initialization</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Opens a block of statements to set up a Kalman filter.  This block
-	should end with the line <lit>end kalman</lit>, to which the options
-	shown above may be appended.  The intervening lines specify the
-	matrices that compose the filter.  For example,
-      </para>
-      <code>
-	kalman 
-	  obsy y
-	  obsymat H
-	  statemat F
-	  statevar Q
-	end kalman
-      </code>
-      <para>
-	would set up a linear, time invariant state-space model with
-	observation equation 
-	<equation status="display" 
-	  tex="\[y_t=H'\alpha_t\]"
-	  ascii="y(t) = H'a(t)"
-	  graphic="kalman1"/> 
-	and state transition equation
-	<equation status="display" 
-	  tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
-	  ascii="a(t+1) = F a(t) + u(t)"
-	  graphic="kalman2"/> 
-	where <math>V(u) = Q</math>.
-      </para>
-      <para>
-	More complex state-space models are handled via the additional
-	keywords <lit>obsx</lit>, <lit>obsxmat</lit>,
-	<lit>obsvar</lit>, <lit>inistate</lit>, <lit>inivar</lit> and
-	<lit>stconst</lit>. Please see <guideref targ="chap:kalman"/>
-	for details.
-      </para>
-	<para>
-	  <seelist>
-	    <fncref targ="kfilter"/>
-	    <fncref targ="ksimul"/>
-	    <fncref targ="ksmooth"/>
-	  </seelist>
-	</para>
-    </description>
-
-  </command>
 
   <command name="kpss" section="Tests" label="KPSS stationarity test">
 

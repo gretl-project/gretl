@@ -4117,7 +4117,8 @@
 
     <function name="kdsmooth" section="sspace" output="scalar">
       <fnargs>
-	<fnarg type="bundleref">&amp;Model</fnarg>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bool" optional="true">MSE</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4127,13 +4128,28 @@
 	  encountered.
 	</para>
 	<para>
-	  For details see <guideref targ="chap:kalman"/>.
+	  On succession completion, the smoothed disturbances will be
+	  available as <lit>Mod.smdist</lit>.
+	</para>
+	<para>
+	  The optional <argname>MSE</argname> argument determines the
+	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
+	  omitted, this matrix will contain the unconditional standard
+	  errors of the smoothed residuals, which are normally used to
+	  compute the so-called <it>auxiliary
+	  residuals</it>. Otherwise, <lit>Mod.smdisterr</lit> will
+	  contain the estimated root mean square deviations of the
+	  auxiliary residuals from their true value.
+	</para>
+	<para>
+	  For more details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
             <fncref targ="ksetup"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksmooth"/>
+            <fncref targ="ksimul"/>
 	  </seelist>
 	</para>
       </description>
@@ -4141,7 +4157,7 @@
 
     <function name="kfilter" section="sspace" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="bundleref">&amp;Model</fnarg>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4151,8 +4167,20 @@
 	  problems are encountered.
 	</para>
 	<para>
+	  On succession completion, the one-step-ahead prediction
+	  errors will be available as <lit>Mod.prederr</lit> and the
+	  sequence of their covariance matrices as
+	  <lit>Mod.pevar</lit>, respectively. Moreover, the key
+	  <lit>Mod.llt</lit> gives access to a T-vector, containing
+	  the log-likelihood by observation.
+	</para>
+	<para>
+	  For more details see <guideref targ="chap:kalman"/>.
+	</para>
+	<para>
 	  <seelist>
-            <cmdref targ="kalman"/>
+            <fncref targ="kdsmooth"/>
+            <fncref targ="ksetup"/>
             <fncref targ="ksmooth"/>
             <fncref targ="ksimul"/>
 	  </seelist>
@@ -4192,16 +4220,40 @@
       </fnargs>
       <description>
 	<para>
-	  Sets up a Kalman bundle
+	  Sets up a Kalman bundle, that is an object which contains
+	  all the information needed to define a linear state space
+	  model of the form
+	  <equation status="display" 
+		    tex="\[y_t=H'\alpha_t\]"
+		    ascii="y(t) = H'a(t)"
+		    graphic="kalman1"/> 
+	  and state transition equation
+	  <equation status="display" 
+		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
+		    ascii="a(t+1) = F a(t) + u(t)"
+		    graphic="kalman2"/> 
+	  where <math>V(u) = Q</math>.
 	</para>
 	<para>
-	  For details see <guideref targ="chap:kalman"/>.
+	  Objects created via this function can be later used via the
+	  dedicated functions <fncref targ="kfilter"/> for filtering,
+	  <fncref targ="ksmooth"/> and <fncref targ="kdsmooth"/> for
+	  smoothing and <fncref targ="ksimul"/> for performing
+	  simulations.
+	</para>
+	<para>
+	  The class of models that gretl can handle is in fact much
+	  wider than the one implied by the representation above: it
+	  is possible to have time-varying models, models with diffuse
+	  priors and exogenous variable in the measurement equation
+	  and models with cross-correlated innovations. For further
+	  details, see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
+            <fncref targ="kdsmooth"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksmooth"/>
-            <fncref targ="kdsmooth"/>
             <fncref targ="ksimul"/>
 	  </seelist>
 	</para>
@@ -4210,7 +4262,7 @@
 
     <function name="ksimul" section="sspace" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="bundleref">&amp;Model</fnarg>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4236,14 +4288,20 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a smoothing (backwards) pass on a Kalman bundle
-	  previously set up by means of the <fncref targ="ksetup"/> and
-	  returns 0 on successful completion or 1 if numerical
-	  problems are encountered.  For details see
-	  <guideref targ="chap:kalman"/>.
+	  Performs a fixed-point smoothing (backwards) pass on a
+	  Kalman bundle previously set up by means of the <fncref
+	  targ="ksetup"/> and returns 0 on successful completion or 1
+	  if numerical problems are encountered.  
+	</para>
+	<para>
+	  On succession completion, the smoothed states will be
+	  available as <lit>Mod.state</lit> and the sequence of their
+	  covariance matrices as <lit>Mod.stvar</lit>, respectively.
+	  For more details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
+            <fncref targ="kdsmooth"/>
             <cmdref targ="kalman"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksimul"/>
