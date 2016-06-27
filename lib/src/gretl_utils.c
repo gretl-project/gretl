@@ -1882,18 +1882,19 @@ int gretl_copy_file (const char *src, const char *dest)
     size_t n;
 
     if (!strcmp(src, dest)) {
-	return 1;
+	gretl_errmsg_set("Source and destination files are the same");
+	return E_FOPEN;
     }
    
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't open %s"), src);
-	return 1; 
+	return E_FOPEN; 
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't write to %s"), dest);
 	fclose(srcfd);
-	return 1;
+	return E_FOPEN;
     }
 
     while ((n = fread(buf, 1, sizeof buf, srcfd)) > 0) {

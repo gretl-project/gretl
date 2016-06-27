@@ -1958,6 +1958,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    err = gretl_invert_symmetric_matrix2(K->Vt, &ldet);
 	    if (err) {
 		fprintf(stderr, "kalman_forecast: failed to invert V\n");
+		gretl_matrix_print(K->Vt, "V");
 	    }
 	}
 
