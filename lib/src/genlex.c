@@ -455,6 +455,7 @@ struct str_table funcs[] = {
     { F_SEASONALS, "seasonals" },
     { F_DEFARRAY,  "defarray" },
     { F_KSETUP,    "ksetup" },
+    { F_MLINCOMB,  "mlincomb" },
     { 0,           NULL }
 };
 

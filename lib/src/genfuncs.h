@@ -132,7 +132,7 @@ int list_linear_combo (double *y, const int *list,
 		       const DATASET *dset);
 
 int midas_linear_combo (double *y, const int *list,
-			gretl_matrix *theta,
+			const gretl_matrix *theta,
 			int method,
 			const DATASET *dset);
 

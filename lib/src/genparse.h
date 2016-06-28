@@ -403,6 +403,7 @@ enum {
     F_SUBSTR,
     F_REDUCE,
     F_SCATTER,
+    F_MLINCOMB,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

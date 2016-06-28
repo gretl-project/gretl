@@ -4000,13 +4000,16 @@ int list_linear_combo (double *y, const int *list,
 }
 
 int midas_linear_combo (double *y, const int *list,
-			gretl_matrix *theta,
-			int method,
-			const DATASET *dset)
+			const gretl_matrix *theta,
+			int method, const DATASET *dset)
 {
     gretl_matrix *w = NULL;
     int p, m = list[0];
     int i, j, err = 0;
+
+    if (method < 1 || method > 2) {
+	return E_INVARG;
+    }
 
     p = gretl_vector_get_length(theta);
 
@@ -4021,6 +4024,7 @@ int midas_linear_combo (double *y, const int *list,
     }
 
     if (method == 2) {
+	/* unrestricted beta */
 	if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
 	    goto wzero;
 	}
@@ -4047,9 +4051,9 @@ int midas_linear_combo (double *y, const int *list,
 	double wsum = 0.0;
 
 	for (i=0; i<m; i++) {
-	    si = i / (double) (m+1);
-	    ai = pow(si, (theta->val[0] - 1));
-	    bi = pow((1-si), (theta->val[1] - 1));
+	    si = (i+1) / (double) (m+1);
+	    ai = pow(si, (theta->val[0] - 1.0));
+	    bi = pow((1.0 - si), (theta->val[1] - 1.0));
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
@@ -4061,7 +4065,6 @@ int midas_linear_combo (double *y, const int *list,
  wzero:
 
     err = list_linear_combo(y, list, w, dset);
-
     gretl_matrix_free(w);
 
     return err;
