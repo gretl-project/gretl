@@ -3385,6 +3385,11 @@
 	See also <cmdref targ="tabprint"/>.
       </para>
       <para>
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
+      </para>
+      <para>
 	If the <opt>complete</opt> flag is given, the &latex; file is
 	a complete document, ready for processing; otherwise it must
 	be included in a document.
@@ -4841,6 +4846,16 @@
 	  <flag>--fit</flag>
 	  <optparm>fitspec</optparm>
 	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--band</flag>
+	  <optparm>bandspec</optparm>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--band-style</flag>
+	  <optparm>style</optparm>
+	  <effect>see below</effect>
         </option>	
         <option>
 	  <flag>--matrix</flag>
@@ -4961,6 +4976,44 @@
 	  </para>
 	</li>	
       </ilist>
+      <para>
+	The <opt>band</opt> option can be used for plotting zero or
+	more series along with a <quote>band</quote> of some sort
+	(typically representing a confidence interval). This option
+	requires two comma-separated parameters: the name or ID number
+	of a series representing the center of the band, and the name
+	or ID of a series giving the width of the band: the effect is
+	to draw a band with <math>y</math> coordinates equal to center
+	minus width and center plus width. An optional third parameter
+	(again, comma-separated) can be used to give a multiplier for
+	the width dimension, in the form of a numerical constant or
+	the name of a scalar variable. So for example, the following
+	example plots <lit>y</lit> along with a band of plus or minus
+	1.96 times <lit>se_y</lit>:
+      </para>
+      <code>
+	gnuplot y --band=y,se_y,1.96 --with-lines
+      </code>
+      <para>
+	When the <opt>band</opt> option is given, the companion option
+	<opt>band-style</opt> can be used to control the band's
+	representation. By default the upper and lower limits are
+	shown as solid lines, but the parameters <lit>fill</lit> or
+	<lit>dash</lit> cause the band to be drawn as a shaded area or
+	using dashed lines, respectively.  In addition a hexadecimal
+	red-green-blue color specification can be appended (following
+	a comma) or substituted. Here are some style examples:
+      </para>
+      <code>
+	gnuplot ... --band-style=fill
+	gnuplot ... --band-style=dash,0xbbddff
+	gnuplot ... --band-style=0x000000
+      </code>
+      <para>
+	The first example produces a shaded area in the default color;
+	the second switches to dashed lines with a specified blue-gray
+	color; and the third uses solid black lines.
+      </para>
       <para>
 	In interactive mode the plot is displayed immediately. In
 	batch mode the default behavior is that a gnuplot command file
@@ -5176,6 +5229,11 @@
       <code>
 	graphpg --output="myfile.pdf"
       </code>
+      <para>
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
+      </para>
       <para>
 	In this context the output uses colored lines by default; to
 	use dot/dash patterns instead of colors you can append the
@@ -6157,67 +6215,6 @@
     </ilist>
   </command>
 
-  <command name="kalman" section="Estimation" label="Kalman filter">
-
-    <usage>
-      <options>
-	<option>
-	  <flag>--cross</flag>
-	  <effect>allow for cross-correlated disturbances</effect>
-	</option>
-	<option>
-	  <flag>--diffuse</flag>
-	  <effect>use diffuse initialization</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Opens a block of statements to set up a Kalman filter.  This block
-	should end with the line <lit>end kalman</lit>, to which the options
-	shown above may be appended.  The intervening lines specify the
-	matrices that compose the filter.  For example,
-      </para>
-      <code>
-	kalman 
-	  obsy y
-	  obsymat H
-	  statemat F
-	  statevar Q
-	end kalman
-      </code>
-      <para>
-	would set up a linear, time invariant state-space model with
-	observation equation 
-	<equation status="display" 
-	  tex="\[y_t=H'\alpha_t\]"
-	  ascii="y(t) = H'a(t)"
-	  graphic="kalman1"/> 
-	and state transition equation
-	<equation status="display" 
-	  tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
-	  ascii="a(t+1) = F a(t) + u(t)"
-	  graphic="kalman2"/> 
-	where <math>V(u) = Q</math>.
-      </para>
-      <para>
-	More complex state-space models are handled via the additional
-	keywords <lit>obsx</lit>, <lit>obsxmat</lit>,
-	<lit>obsvar</lit>, <lit>inistate</lit>, <lit>inivar</lit> and
-	<lit>stconst</lit>. Please see <guideref targ="chap:kalman"/>
-	for details.
-      </para>
-	<para>
-	  <seelist>
-	    <fncref targ="kfilter"/>
-	    <fncref targ="ksimul"/>
-	    <fncref targ="ksmooth"/>
-	  </seelist>
-	</para>
-    </description>
-
-  </command>
 
   <command name="kpss" section="Tests" label="KPSS stationarity test">
 
@@ -6375,10 +6372,13 @@
 	if <repl>varlist</repl> is not specified.
       </para>
       <para>
-	With the option <opt>to-file</opt>, writes to the named file the
-	labels for all series in the dataset, one per line. If no labels are
-	present an error is flagged; if some series have labels and others
-	do not, a blank line is printed for series with no label.
+	With the option <opt>to-file</opt>, writes to the named file
+	the labels for all series in the dataset, one per line. If no
+	labels are present an error is flagged; if some series have
+	labels and others do not, a blank line is printed for series
+	with no label. The output file will be written in the currently
+	set <lit>workdir</lit>, unless the <repl>filename</repl>
+	string contains a full path specification.
       </para>
       <para>
 	With the option <opt>from-file</opt>, reads the specified file
@@ -7185,6 +7185,9 @@
 	With the option <opt>to-file</opt>, writes to the named file
 	the observation marker strings from the current dataset, one
 	per line. If no such strings are present an error is flagged.
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
       </para>
       <para>
 	With the option <opt>from-file</opt>, reads the specified
@@ -7619,13 +7622,18 @@
         <argument>names</argument>
 	<argument optional="true">addstats</argument>
       </arguments>
+      <option>
+	<flag>--output</flag>
+	<optparm>filename</optparm>
+	<effect>send output to specified file</effect>
+      </option>
     </usage>
 
     <description>
       <para>
-	Prints the coefficient table and optional additional statistics for a
-	model estimated <quote>by hand</quote>. Mainly useful for user-written
-	functions.
+	Prints the coefficient table and optional additional
+	statistics for a model estimated <quote>by
+	hand</quote>. Mainly useful for user-written functions.
       </para>
       <para>
 	The argument <repl>coeffmat</repl> should be a <math>k</math>
@@ -7638,12 +7646,28 @@
 	double quotes.)
       </para>
       <para>
-	The optional argument <repl>addstats</repl> is a vector containing
-	<math>p</math> additional statistics to be printed under the
-	coefficient table.  If this argument is given, then <repl>names</repl>
-	should contain <math>k + p</math> comma-separated strings, the
-	additional <math>p</math> strings to be associated with the additional
-	statistics.
+	The optional argument <repl>addstats</repl> is a vector
+	containing <math>p</math> additional statistics to be printed
+	under the coefficient table.  If this argument is given, then
+	<repl>names</repl> should contain <math>k + p</math>
+	comma-separated strings, the additional <math>p</math> strings
+	to be associated with the additional statistics.
+      </para>
+      <para>
+	To put the output into a file, use the flag <opt>output=</opt>
+	plus a filename. If the filename has the suffix
+	<quote><lit>.tex</lit></quote>, the output will be in &tex;
+	format; if the suffix is <quote><lit>.rtf</lit></quote> the
+	output will be RTF; otherwise it will be plain text.  In the
+	case of &tex; output the default is to produce a
+	<quote>fragment</quote>, suitable for inclusion in a document;
+	if you want a stand-alone document instead, use the
+	<opt>complete</opt> option.
+      </para>
+      <para>
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
       </para>
     </description>
 
@@ -8542,12 +8566,14 @@
 	greater flexibility) <cmdref targ="join"/>.
       </para>
       <para>
-	If a full path is not given, the program will search some relevant
-	paths to try to find the file.  If no filename suffix is given (as
-	in the first example above), gretl assumes a native datafile with
-	suffix <lit>.gdt</lit>.  Based on the name of the file and various
-	heuristics, gretl will try to detect the format of the data file
-	(native, plain text, CSV, MS Excel, Stata, SPSS, etc.).
+	If a full path is not given, the program will search some
+	relevant paths to try to find the file, with
+	<lit>workdir</lit> as a first choice. If no filename suffix
+	is given (as in the first example above), gretl assumes a
+	native datafile with suffix <lit>.gdt</lit>.  Based on the
+	name of the file and various heuristics, gretl will try to
+	detect the format of the data file (native, plain text, CSV,
+	MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
 	If the <opt>frompkg</opt> option is used, gretl will look for
@@ -8692,19 +8718,20 @@
 
     <description>
       <para>
-	Diverts output to <repl>filename</repl>, until further
-	notice.  Use the flag <opt>append</opt> to append output to
-	an existing file or <opt>write</opt> to start a new file
-	(or overwrite an existing one).  Only one file can be opened
-	in this way at any given time.
+	Diverts output to <repl>filename</repl>, until further notice.
+	Use the flag <opt>append</opt> to append output to an existing
+	file or <opt>write</opt> to start a new file (or overwrite an
+	existing one).  The <opt>close</opt> flag is used to close an
+	output file that was previously opened as above.  Output will
+	then revert to the default stream. Note that since only one
+	file can be opened via <lit>outfile</lit> at any given time
+	(but see below), no filename argument need (nor should) be
+	supplied with this variant of the command.
       </para>
       <para>
-	The <opt>close</opt> flag is used to close an output
-	file that was previously opened as above.  Output will then
-	revert to the default stream. Note that since only one file
-	can be opened via <lit>outfile</lit> at any given time, no
-	filename argument need (nor should) be supplied with this
-	variant of the command.
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
       </para>
       <para>
 	In the first example command above, the file
@@ -8740,6 +8767,37 @@
 	the <lit>echo</lit> and <lit>messages</lit> variables are
 	restored.
       </para>
+      <para>
+	Only one file can be opened in this way at any given
+	time. Therefore, calls to this command cannot be
+	nested. However, usage of this command is permitted inside
+	user-written functions (provided the output file is also
+	closed from inside the same function), so output can be
+	temporarily diverted and then given back to the original
+	output file. For example, the code
+      </para>
+      <code>
+	function void f(string s)
+	    outfile inner.txt --write
+	    print s
+	    outfile --close
+	end function
+
+	outfile outer.txt --write --quiet
+	print "Outside"
+	f("Inside")
+	print "Outside again"
+	outfile --close
+      </code>
+      will produce a file called <quote>outer.txt</quote> containing the two lines
+      <code>
+	Outside
+	Outside again
+      </code>
+      and a file called <quote>inner.txt</quote> containing the line
+      <code>
+	Inside
+      </code>
     </description>
 
   </command>
@@ -12219,6 +12277,11 @@
 	sample range are saved.
       </para>
       <para>
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
+      </para>
+      <para>
 	The format in which the data are written may be controlled in
 	the first instance by the extension or suffix of
 	<repl>filename</repl>, as follows:
@@ -12557,18 +12620,6 @@
     <usage>
       <options>
         <option>
-	  <flag>--rtf</flag>
-	  <effect>Produce RTF instead of &latex;</effect>
-        </option>
-        <option>
-	  <flag>--csv</flag>
-	  <effect>Produce CSV instead of &latex;</effect>
-        </option>
-        <option>
-	  <flag>--complete</flag>
-	  <effect>Create a complete document</effect>
-        </option>
-        <option>
 	  <flag>--format="f1|f2|f3|f4"</flag>
 	  <effect>Specify a custom format</effect>
         </option>
@@ -12577,6 +12628,10 @@
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
         </option>	
+
+	<!-- -rtf, -csv, and -complete options removed from the
+	     docs on their way to deprecation -->
+
       </options>
     </usage>
 
@@ -12592,6 +12647,11 @@
 	<lit>tex</lit>, <lit>rtf</lit> or <lit>csv</lit>, where
 	<lit>N</lit> is the number of models estimated to date in the
 	current session.
+      </para>
+      <para>
+	The output file will be written in the currently set
+	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	contains a full path specification.
       </para>
       <para> 
 	If CSV format is selected, values are comma-separated unless

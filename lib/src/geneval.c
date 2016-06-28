@@ -698,6 +698,14 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 		    p->err = E_ALLOC;
 		}
 	    }
+	} else {
+	    /* scrub any pre-existing values in the current
+	       sample range */
+	    int t;
+
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		n->v.xvec[t] = NADBL;
+	    }
 	}
 	nullify = 0;
     } else {
@@ -5348,6 +5356,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_NLINES) {
 	    ret->v.xval = count_lines(s);
 	} else if (f == F_REMOVE) {
+	    gretl_maybe_switch_dir(s);
 	    ret->v.xval = gretl_remove(s);
 	} else if (f == F_TYPEOF) {
 	    GretlType type = 0;

@@ -2039,6 +2039,10 @@ static CompactMethod compact_method_from_option (int *err)
 	method = COMPACT_SOP;
     } else if (!strcmp(s, "last")) {
 	method = COMPACT_EOP;
+    } else if (!strcmp(s, "spread")) {
+	method = COMPACT_SPREAD;
+    } else if (!strcmp(s, "rspread")) {
+	method = COMPACT_RSPREAD;
     } else {
 	gretl_errmsg_sprintf(_("field '%s' in command is invalid"), s);
 	*err = E_PARSE;
@@ -2997,6 +3001,87 @@ init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
     dset->t2 = dset->n - 1;
 }
 
+/* for now (2016-06-06) we'll do "spread" compaction only for
+   monthly to quarterly or annual, or quarterly to annual
+*/
+
+static int compact_spread_pd_check (int high, int low)
+{
+    if (!(high == 12 && low == 1) &&
+	!(high == 12 && low == 4) &&
+	!(high == 4 && low == 1)) {
+	gretl_errmsg_set("Unsupported conversion");
+	return E_DATA;
+    }   
+
+    return 0;
+}
+
+/* construct a little dataset as a temporary wrapper for an
+   import using compact=spread (or rspread)
+*/
+
+static DATASET *make_import_tmpset (const DATASET *dset,
+				    SERIESINFO *sinfo,
+				    double **dbZ,
+				    int *err)
+{
+    DATASET *tmpset = NULL;
+
+    *err = compact_spread_pd_check(sinfo->pd, dset->pd);
+    if (*err) {
+	return NULL;
+    }    
+
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    tmpset->v = 2;
+    tmpset->n = sinfo->nobs;
+
+    tmpset->Z = malloc(2 * sizeof *tmpset->Z);
+    if (tmpset->Z == NULL) {
+	*err = E_ALLOC;
+	free(tmpset);
+	return NULL;
+    }    
+
+    *err = dataset_allocate_varnames(tmpset);
+    if (*err) {
+	free(tmpset->Z[1]);
+	free(tmpset->Z);
+	free(tmpset);
+	return NULL;
+    }
+
+    tmpset->Z[0] = NULL;
+    tmpset->Z[1] = dbZ[1];
+    dbZ[1] = NULL; /* note: stolen */
+
+    tmpset->t1 = sinfo->t1;
+    tmpset->t2 = sinfo->t2;
+    tmpset->pd = sinfo->pd;
+    strcpy(tmpset->stobs, sinfo->stobs);
+    strcpy(tmpset->endobs, sinfo->endobs);
+    tmpset->structure = TIME_SERIES;
+    tmpset->sd0 = get_date_x(tmpset->pd, tmpset->stobs);
+
+    strcpy(tmpset->varname[1], sinfo->varname);
+
+#if 0
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    fprintf(stderr, "import_tmpset: t1=%d, t2=%d, nobs=%d, pd=%d, offset=%d\n",
+	    sinfo->t1, sinfo->t2, sinfo->nobs, sinfo->pd, sinfo->offset);
+    printdata(NULL, NULL, tmpset, OPT_O, prn);
+    gretl_print_destroy(prn);
+#endif
+
+    return tmpset;
+}
+
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    DATASET *dset, CompactMethod cmethod, 
 			    int interpolate, int dbv, PRN *prn)
@@ -3006,6 +3091,26 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     int t, start, stop;
     int free_xvec = 0;
     int new = (dbv == dset->v);
+
+    if (cmethod == COMPACT_SPREAD || cmethod == COMPACT_RSPREAD) {
+	/* special case: adds multiple series */
+	int err = 0;
+	
+	if (dset == NULL || dset->v == 0) {
+	    gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
+	    err = E_DATA;
+	} else {
+	    DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
+
+	    if (!err) {
+		err = compact_data_set(tmpset, dset->pd, cmethod, 0, 0);
+	    }
+	    if (!err) {
+		err = merge_or_replace_data(dset, &tmpset, OPT_F, prn);
+	    }
+	}
+	return err;
+    }
 
     if (dset->n == 0) {
 	/* if the length of the dataset is not defined yet,
@@ -3206,6 +3311,140 @@ static double *compact_series (const DATASET *dset, int i, int oldn,
     return x;
 }
 
+/* compact an entire dataset, transcribing from each higher-frequency
+   series to a set of lower-frequency series, each of which holds the
+   observations from a given sub-period
+*/
+
+static DATASET *compact_data_spread (const DATASET *dset, int newpd,
+				     int startmaj, int startmin,
+				     int endmaj, int endmin,
+				     int method, int *nv,
+				     int *err)
+{
+    DATASET *cset = NULL;
+    char sfx[6];
+    int oldpd = dset->pd;
+    int compfac = oldpd / newpd;
+    int v, i, j, k, t, s, T;
+    int q0 = 0, qT = 0;
+    int offset;
+
+    if (newpd == 1) {
+	T = endmaj - startmaj + 1;
+    } else if (newpd == 4) {
+	T = oldpd * (endmaj - startmaj + 1) / compfac;
+	q0 = 1 + (startmin - 1) / 3;
+	qT = 1 + (endmin - 1) / 3;
+	T += qT - q0 - 3;
+    } else {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (T <= 1) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    /* the number of series, after compaction */
+    v = 1 + (dset->v - 1) * compfac;
+
+#if 0
+    fprintf(stderr, "oldpd %d, newpd %d, v=%d, T=%d, start=%d:%d, end=%d:%d\n",
+	    oldpd, newpd, v, T, startmaj, startmin, endmaj, endmin);
+#endif
+    
+    cset = create_new_dataset(v, T, 0);
+    if (cset == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (newpd == 1) {
+	sprintf(cset->stobs, "%d", startmaj);
+	sprintf(cset->endobs, "%d", endmaj);
+    } else {
+	/* newpd must be 4 */
+	sprintf(cset->stobs, "%d:%d", startmaj, q0);
+	sprintf(cset->endobs, "%d:%d", endmaj, qT);
+    }
+
+    cset->pd = newpd;
+    cset->structure = TIME_SERIES;
+    cset->sd0 = get_date_x(cset->pd, cset->stobs);
+
+#if 0  
+    fprintf(stderr, "stobs '%s', endobs '%s', sd0 %g\n",
+	    cset->stobs, cset->endobs, cset->sd0);
+#endif
+
+    k = 1; /* the first new series */
+
+    for (i=1; i<dset->v; i++) {
+	/* loop across original data series */
+	offset = startmin - 1;
+	s = 0;
+	for (t=0; t<T; t++) {
+	    /* loop across new time periods */
+	    for (j=0; j<compfac; j++) {
+		/* loop across new series <- sub-periods */
+		int named = 0;
+
+		if (!named) {
+		    strcpy(cset->varname[k+j], dset->varname[i]);
+		    if (oldpd == 12) {
+			gretl_trunc(cset->varname[k+j], VNAMELEN - 5);
+			sprintf(sfx, "_m%02d", j+1);
+		    } else {
+			gretl_trunc(cset->varname[k+j], VNAMELEN - 4);
+			sprintf(sfx, "_q%d", j+1);
+		    }
+		    strcat(cset->varname[k+j], sfx);
+		    named = 1;
+		}
+		while (s < offset) {
+		    cset->Z[k+j][t] = NADBL;
+		    offset--;
+		    j++;
+		}
+		if (s < dset->n) {
+		    cset->Z[k+j][t] = dset->Z[i][s];
+		} else {
+		    cset->Z[k+j][t] = NADBL;
+		}
+		s++;
+	    }
+	}
+	if (method == COMPACT_RSPREAD) {
+	    /* reverse the new columns */
+	    char stmp[VNAMELEN];
+	    double *xtmp;
+	    int p;
+	    
+	    for (j=0; j<compfac/2; j++) {
+		p = k+compfac-j-1;
+		xtmp = cset->Z[k+j];
+		strcpy(stmp, cset->varname[k+j]);
+		cset->Z[k+j] = cset->Z[p];
+		strcpy(cset->varname[k+j], cset->varname[p]);
+		cset->Z[p] = xtmp;
+		strcpy(cset->varname[p], stmp);
+	    }
+	}
+	/* advance column write position for next source series */
+	k += compfac;
+    }
+
+#if 0
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    printdata(NULL, NULL, cset, OPT_O, prn);
+    gretl_print_destroy(prn);
+#endif
+
+    return cset;
+}
+
 /* specific apparatus for converting daily time series to monthly */
 
 static double *extend_series (const double *z, int n)
@@ -3376,7 +3615,7 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 		   int oldn, CompactMethod method, 
 		   int *startskip, int *newn) 
 {
-    int ss, es, n;
+    int ss = 0, n = 0;
 
     if (method == COMPACT_EOP) {
 	int unused;
@@ -3397,8 +3636,9 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	    n++;
 	}
     } else {
+	int es = endmin % compfac;
+	
 	ss = (compfac - (startmin % compfac) + 1) % compfac;
-	es = endmin % compfac;
 	n = (oldn - ss - es) / compfac;
     }
 
@@ -4068,10 +4308,23 @@ int compact_data_set (DATASET *dset, int newpd,
     int endmaj, endmin;
     int any_eop, all_same;
     int min_startskip = 0;
+    int spread = 0;
     char stobs[OBSLEN];
     int i, err = 0;
 
     gretl_error_clear();
+
+    if (default_method == COMPACT_SPREAD ||
+	default_method == COMPACT_RSPREAD) {
+	spread = 1;
+    }
+
+    if (spread) {
+	err = compact_spread_pd_check(oldpd, newpd);
+	if (err) {
+	    return err;
+	}
+    }    
 
     if (oldpd == 52) {
 	return weekly_dataset_to_monthly(dset, default_method);
@@ -4131,6 +4384,22 @@ int compact_data_set (DATASET *dset, int newpd,
 	} 
     }
 
+    if (spread) {
+	DATASET *cset;
+	int nv = 0;
+	
+	cset = compact_data_spread(dset, newpd, startmaj, startmin,
+				   endmaj, endmin, default_method,
+				   &nv, &err);
+	if (!err) {
+	    free_Z(dset);
+	    clear_datainfo(dset, CLEAR_FULL);
+	    *dset = *cset;
+	    free(cset);
+	}
+	return err;
+    }
+
     min_startskip = oldpd;
     newn = 0;
     any_eop = 0;
@@ -4138,7 +4407,8 @@ int compact_data_set (DATASET *dset, int newpd,
     get_global_compact_params(compfac, startmin, endmin, default_method,
 			      &min_startskip, &newn, &any_eop, &all_same, 
 			      dset);
-    if (newn == 0) {
+
+    if (newn == 0 && !spread) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	return 1;
     }    

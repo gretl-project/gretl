@@ -1438,13 +1438,25 @@
       <description>
 	<para>
 	  Returns the result from application of the Baxter&ndash;King
-	  bandpass filter to the series <argname>y</argname>.  The optional
-	  parameters <argname>f1</argname> and <argname>f2</argname>
-	  represent, respectively, the lower and upper bounds of the range of
-	  frequencies to extract, while <argname>k</argname> is the
-	  approximation order to be used. If these arguments are not supplied
-	  then the following default values are used: <argname>f1</argname> =
-	  8, <argname>f2</argname> = 32, <argname>k</argname> = 8.
+	  bandpass filter to the series <argname>y</argname>.  The
+	  optional parameters <argname>f1</argname> and
+	  <argname>f2</argname> represent, respectively, the lower and
+	  upper bounds of the range of frequencies to extract, while
+	  <argname>k</argname> is the approximation order to be
+	  used.
+	</para>
+	<para>
+	  If these arguments are not supplied then the default values
+	  depend on the periodicity of the dataset. For yearly data
+	  the defaults for <argname>f1</argname>,
+	  <argname>f2</argname> and <argname>k</argname> are 2, 8 and
+	  3, respectively; for quarterly data, 6, 32 and 12; for
+	  monthly data, 18, 96 and 36. These values are chosen to
+	  match the most common choice among practitioners, that is to
+	  use this filter for extracting the <quote>business
+	  cycle</quote> frequency component; this, in turn, is
+	  commonly defined as being between 18 months and 8 years. The
+	  filter, per default choice, spans 3 years of data.
 	</para>
 	<para>
 	  If <argname>f2</argname> is greater than or equal to the
@@ -1514,11 +1526,15 @@
 	  companion function <fncref targ="bwrite"/>.
 	</para>
 	<para>
-	  If a non-zero value is given for the optional
-	  <argname>import</argname> argument, the input file is looked
-	  for in the user's <quote>dot</quote> directory. In
-	  this case the <argname>fname</argname> argument should be
-	  a plain filename, without any path component.
+	  If the file name does not contain a full path specification,
+	  it will be looked for in several <quote>likely</quote>
+	  locations, beginning with the currently set
+	  <lit>workdir</lit>. However, if a non-zero value is given
+	  for the optional <argname>import</argname> argument, the
+	  input file is looked for in the user's <quote>dot</quote>
+	  directory. In this case the <argname>fname</argname>
+	  argument should be a plain filename, without any path
+	  component.
 	</para>
 	<para>
 	  Should an error occur (such as the file being badly formatted or
@@ -1581,8 +1597,11 @@
 	  value will be non-zero.
 	</para>
 	<para>
-	  If a non-zero value is given for the <argname>export</argname>
-	  argument, the output file will be written into the user's
+	  The output file will be written in the currently set
+	  <lit>workdir</lit>, unless the <repl>filename</repl> string
+	  contains a full path specification. However, if a non-zero
+	  value is given for the <argname>export</argname> argument,
+	  the output file will be written into the user's
 	  <quote>dot</quote> directory. In this case a plain filename,
 	  without any path component, should be given for the second
 	  argument.
@@ -4096,36 +4115,72 @@
       </description>
     </function>
 
-    <function name="kfilter" section="filters" output="scalar">
+    <function name="kdsmooth" section="sspace" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="matrixref">&amp;E</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;V</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;G</fnarg>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
+	<fnarg type="bool" optional="true">MSE</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Requires that a Kalman filter be set up.  Performs a forward,
-	  filtering pass and returns 0 on successful completion or 1 
-	  if numerical problems are encountered.
+	  Performs disturbance smoothing for a Kalman bundle
+	  previously set up by means of <fncref targ="ksetup"/>
+	  and returns 0 on successful completion or 1 if numerical
+	  problems are encountered.
 	</para>
 	<para>
-	  The optional matrix arguments can be used to retrieve the following
-	  information: <argname>E</argname> gets the matrix of one-step ahead
-	  prediction errors and <argname>V</argname> gets the variance matrix
-	  for these errors; <argname>S</argname> gets the matrix of estimated
-	  values of the state vector and <argname>P</argname> the variance
-	  matrix of these estimates; <argname>G</argname> gets the Kalman
-	  gain.  All of these matrices have <math>T
-	  </math> rows, corresponding
-	  to <math>T
-	  </math> observations.  For the column dimensions and
-	  further details see <guideref targ="chap:kalman"/>.
+	  On successful completion, the smoothed disturbances will be
+	  available as <lit>Mod.smdist</lit>.
+	</para>
+	<para>
+	  The optional <argname>MSE</argname> argument determines the
+	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
+	  omitted, this matrix will contain the unconditional standard
+	  errors of the smoothed residuals, which are normally used to
+	  compute the so-called <it>auxiliary
+	  residuals</it>. Otherwise, <lit>Mod.smdisterr</lit> will
+	  contain the estimated root mean square deviations of the
+	  auxiliary residuals from their true value.
+	</para>
+	<para>
+	  For more details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
-            <cmdref targ="kalman"/>
+            <fncref targ="ksetup"/>
+            <fncref targ="kfilter"/>
+            <fncref targ="ksmooth"/>
+            <fncref targ="ksimul"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
+    <function name="kfilter" section="sspace" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs a forward, filtering pass on a Kalman bundle
+	  previously set up by means of <fncref targ="ksetup"/>
+	  and returns 0 on successful completion or 1 if numerical
+	  problems are encountered.
+	</para>
+	<para>
+	  On successful completion, the one-step-ahead prediction
+	  errors will be available as <lit>Mod.prederr</lit> and the
+	  sequence of their covariance matrices as
+	  <lit>Mod.pevar</lit>. Moreover, the key <lit>Mod.llt</lit>
+	  gives access to a <math>T</math>-vector containing the
+	  log-likelihood by observation.
+	</para>
+	<para>
+	  For more details see <guideref targ="chap:kalman"/>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="kdsmooth"/>
+            <fncref targ="ksetup"/>
             <fncref targ="ksmooth"/>
             <fncref targ="ksimul"/>
 	  </seelist>
@@ -4155,29 +4210,71 @@
       </description>
     </function> 
 
-    <function name="ksimul" section="filters" output="matrix">
+    <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
-	<fnarg type="matrix">v</fnarg>
-	<fnarg type="matrix">w</fnarg>
-	<fnarg optional="true" type="matrixref">&amp;S</fnarg>
+	<fnarg type="smlist">Y</fnarg>
+	<fnarg type="scalar-or-matrix">H</fnarg>
+	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Q</fnarg>
+	<fnarg optional="true" type="matrix">C</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Requires that a Kalman filter be set up.  Performs a simulation
-	  and returns a matrix holding simulated values of the
-	  observable variables.
+	  Sets up a Kalman bundle, that is an object which contains
+	  all the information needed to define a linear state space
+	  model of the form
+	  <equation status="display" 
+		    tex="\[y_t=H'\alpha_t\]"
+		    ascii="y(t) = H'a(t)"
+		    graphic="kalman1"/> 
+	  and state transition equation
+	  <equation status="display" 
+		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
+		    ascii="a(t+1) = F a(t) + u(t)"
+		    graphic="kalman2"/> 
+	  where Var<math>(u) = Q</math>.
 	</para>
 	<para>
-	  The argument <argname>v</argname> supplies artificial disturbances
-	  for the state transition equation and <argname>w</argname> supplies
-	  disturbances for the observation equation, if applicable.  The
-	  optional argument <argname>S</argname> may be used to retrieve the
-	  simulated state vector.  For details see <guideref
-          targ="chap:kalman"/>.
+	  Objects created via this function can be later used via the
+	  dedicated functions <fncref targ="kfilter"/> for filtering,
+	  <fncref targ="ksmooth"/> and <fncref targ="kdsmooth"/> for
+	  smoothing and <fncref targ="ksimul"/> for performing
+	  simulations.
+	</para>
+	<para>
+	  The class of models that gretl can handle is in fact much
+	  wider than the one implied by the representation above: it
+	  is possible to have time-varying models, models with diffuse
+	  priors and exogenous variable in the measurement equation
+	  and models with cross-correlated innovations. For further
+	  details, see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
-            <cmdref targ="kalman"/>
+            <fncref targ="kdsmooth"/>
+            <fncref targ="kfilter"/>
+            <fncref targ="ksmooth"/>
+            <fncref targ="ksimul"/>
+	  </seelist>
+	</para>
+      </description>
+    </function> 
+
+    <function name="ksimul" section="sspace" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Uses a Kalman bundle previously set up by means of
+	  <fncref targ="ksetup"/> to simulate data.
+	</para>
+	<para>
+	  For details see <guideref targ="chap:kalman"/>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="ksetup"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksmooth"/>
 	  </seelist>
@@ -4185,20 +4282,26 @@
       </description>
     </function> 
 
-    <function name="ksmooth" section="filters" output="matrix">
+    <function name="ksmooth" section="sspace" output="matrix">
       <fnargs>
-	<fnarg optional="true" type="matrixref">&amp;P</fnarg>
+	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Requires that a Kalman filter be set up.  Performs a backward,
-	  smoothing pass and returns a matrix holding smoothed estimates of
-	  the state vector.  The optional argument <argname>P</argname> may be
-	  used to retrieve the MSE of the smoothed state.  For details see
-	  <guideref targ="chap:kalman"/>.
+	  Performs a fixed-point smoothing (backward) pass on a
+	  Kalman bundle previously set up by means of <fncref
+	  targ="ksetup"/> and returns 0 on successful completion or 1
+	  if numerical problems are encountered.  
+	</para>
+	<para>
+	  On successful completion, the smoothed states will be
+	  available as <lit>Mod.state</lit> and the sequence of their
+	  covariance matrices as <lit>Mod.stvar</lit>.  For more
+	  details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
+            <fncref targ="kdsmooth"/>
             <cmdref targ="kalman"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksimul"/>
@@ -5150,13 +5253,17 @@
 	  </li>
 	</ilist>
 	<para>
-	  If a non-zero value is given for the optional
-	  <argname>import</argname> argument, the input file is looked
-	  for in the user's <quote>dot</quote> directory. This is
-	  intended for use with the matrix-exporting functions offered
-	  in the context of the <cmdref targ="foreign"/> command. In
-	  this case the <argname>fname</argname> argument should be a
-	  plain filename, without any path component.
+	  If the file name does not contain a full path specification,
+	  it will be looked for in several <quote>likely</quote>
+	  locations, beginning with the currently set
+	  <lit>workdir</lit>. However, if a non-zero value is given
+	  for the optional <argname>import</argname> argument, the
+	  input file is looked for in the user's <quote>dot</quote>
+	  directory. This is intended for use with the
+	  matrix-exporting functions offered in the context of the
+	  <cmdref targ="foreign"/> command. In this case the
+	  <argname>fname</argname> argument should be a plain
+	  filename, without any path component.
 	</para>
 	<para>
 	  Should an error occur (such as the file being badly formatted or
@@ -5314,13 +5421,16 @@
 	  return value will be non-zero.
 	</para>
 	<para>
-	  If a non-zero value is given for the
-	  <argname>export</argname> argument, the output file will be
-	  written into the user's <quote>dot</quote> directory, where
-	  it is accessible by default via the matrix-loading functions
-	  offered in the context of the <cmdref targ="foreign"/>
-	  command. In this case a plain filename, without any path
-	  component, should be given for the second argument.
+	  The output file will be written in the currently set
+	  <lit>workdir</lit>, unless the <repl>filename</repl> string
+	  contains a full path specification. However, if a non-zero
+	  value is given for the <argname>export</argname> argument,
+	  the output file will be written into the user's
+	  <quote>dot</quote> directory, where it is accessible by
+	  default via the matrix-loading functions offered in the
+	  context of the <cmdref targ="foreign"/> command. In this
+	  case a plain filename, without any path component, should be
+	  given for the second argument.
 	</para>
 	<para>
 	  Matrices stored via the <lit>mwrite</lit> function in its
@@ -6913,8 +7023,11 @@
       <description>
 	<para>
 	  If a file by the name of <argname>fname</argname> exists and
-	  is readable, returns a string containing the content of
-	  this file, otherwise flags an error.  
+	  is readable, returns a string containing the content of this
+	  file, otherwise flags an error.  If <argname>fname</argname>
+	  does not contain a full path specification, it will be
+	  looked for in several <quote>likely</quote> locations,
+	  beginning with the currently set <lit>workdir</lit>.
 	</para>
 	<para>
 	  If <argname>fname</argname> starts with the identifier of a
@@ -6981,6 +7094,16 @@
 	  is writable by the user, removes (deletes) the named
 	  file. Returns 0 on successful completion, non-zero if there
 	  is no such file or the file cannot be removed.
+	</para>
+	<para>
+	  If <argname>fname</argname> contains a full path
+	  specification, gretl will attempt to delete that file and
+	  return an error if the file doesn't exist or can't be
+	  deleted for some reason (such as insufficient
+	  privileges). If <argname>fname</argname> does not contain a
+	  full path, then it will be assumed that the given file name
+	  is relative to <lit>workdir</lit>. If the file doesn't exist
+	  or is unwritable, no other directories will be searched.
 	</para>
       </description>
     </function>

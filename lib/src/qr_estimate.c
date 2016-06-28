@@ -1607,6 +1607,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 	} else if (dataset_is_panel(dset)) {
 	    err = qr_make_regular_vcv(pmod, V, OPT_X);
 	    if (!err) {
+		pmod->ci = IVREG;
 		err = panel_tsls_robust_vcv(pmod, dset);
 	    }
 	} else if (dataset_is_time_series(dset) && 
@@ -1771,6 +1772,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 
     if (!(pmod->opt & OPT_N)) {
 	/* apply df adjustment a la Stata */
+	/* FIXME IVREG case? */
 	double dfadj;
 
 	N = pmod->nobs;
@@ -1779,7 +1781,6 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 #if CDEBUG > 1
 	gretl_matrix_print(V, "V(adjusted)");
 #endif
-
     }
 
  bailout:

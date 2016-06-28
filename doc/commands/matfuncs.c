@@ -34,6 +34,7 @@ enum {
     FILTERS,
     NUMERICAL,
     PROBDIST,
+    SSPACE,
     STRINGS,
     TRANSFORMS,
     ACCESS,
@@ -59,6 +60,7 @@ struct tab_labeler labelers[] = {
     { STRINGS,      "strings",      N_("Strings") },
     { TRANSFORMS,   "transforms",   N_("Transformations") },
     { ACCESS,       "access",       N_("Accessors") },
+    { SSPACE,       "sspace",       N_("State space modeling") },
     { TAB_MAX,      NULL,           NULL }
 };
 

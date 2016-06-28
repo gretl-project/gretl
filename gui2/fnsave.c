@@ -3246,7 +3246,6 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     GtkWidget *tmp, *vbox, *hbox;
     GtkWidget **combo_array;
     GtkWidget *notebook;
-    const char *funname;
     const char *key;
     const char *special;
     int tabcols = 4;
@@ -3302,6 +3301,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     */
 
     for (i=0; i<N_SPECIALS; i++) {
+	const char *funname = NULL;
 	int n_cands = 0;
 	int selected = 0;
 	int role = i + 1;

@@ -1528,7 +1528,7 @@ char *space_to_score (char *s)
  * strings_array_new:
  * @nstrs: number of strings in array.
  *
- * Allocates storage for @nstrs strings and initalizes all 
+ * Allocates storage for @nstrs strings and initializes all 
  * to NULL.
  * 
  * Returns: the allocated array, or NULL on failure.

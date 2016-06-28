@@ -3684,7 +3684,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     cmd->flags &= ~CMD_PROG;
 
     if (err) {
-	err = process_command_error(cmd, err);
+	err = process_command_error(s, err);
     }
 
     if (loop->parent == NULL) {

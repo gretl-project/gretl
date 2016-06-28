@@ -481,7 +481,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
 	sprintf(datestr, fmt, x);
 	colonize_obs(datestr);
     }
-    
+
     return datestr;
 }
 
@@ -1593,6 +1593,34 @@ static int compare_ranges (const DATASET *targ,
     return addobs;
 }
 
+/* Determine whether there's any overlap between the calendar
+   in @addset and that in @dset. Return 0 on success (there is
+   an overlap), non-zero otherwise.
+*/
+
+static int check_for_overlap (const DATASET *dset,
+			      const DATASET *addset,
+			      int *offset)
+{
+    int at1 = merge_dateton(addset->stobs, dset);
+    int at2 = merge_dateton(addset->endobs, dset);
+
+    if (!(at1 >= dset->n) && !(at2 < 0)) {
+	/* OK, there must be some overlap */
+	if (at1 < 0) {
+	    *offset = at1;
+	}
+	return 0;
+    } else {
+	/* either the "add" data start after the original data end,
+	   or they end before the originals start, no there's no
+	   overlap
+	*/
+	gretl_errmsg_set("No overlap in data ranges");
+	return E_DATA;
+    }
+}
+
 /* When appending data to a current panel dataset, and the length of
    the series in the new data is less than the full panel size
    (n * T), try to determine if it's OK to expand the incoming data to
@@ -1781,6 +1809,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
     int orig_n = dset->n;
     int dayspecial = 0;
     int yrspecial = 0;
+    int fixsample = 0;
     int addsimple = 0;
     int addpanel = 0;
     int addvars = 0;
@@ -1809,7 +1838,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	dayspecial = 1;
     }
 
-    if (simple_range_match(dset, addset, &offset)) {
+    if (opt & OPT_F) {
+	fixsample = 1;
+    } else if (simple_range_match(dset, addset, &offset)) {
 	/* we'll allow undated data to be merged with the existing
 	   dateset, sideways, provided the number of observations
 	   matches OK */
@@ -1825,7 +1856,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	err = 1;
     }
 
-    if (!err && gretl_function_depth() > 0) {
+    if (!err && fixsample) {
+	err = check_for_overlap(dset, addset, &offset);
+    } else if (!err && gretl_function_depth() > 0) {
 	/* we won't add observations within a function, but
 	   we should still check for an error from compare_ranges()
 	*/
@@ -2024,6 +2057,10 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	}
 	if (opt & OPT_U) {
 	    merge_opt |= OPT_U;
+	}
+	if (opt & OPT_F) {
+	    /* fixed sample range */
+	    merge_opt |= OPT_F;
 	}
 	err = merge_data(dset0, *pdset1, merge_opt, prn);
 	destroy_dataset(*pdset1);
@@ -2299,7 +2336,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	if (fname == NULL) {
 	    return E_BADOPT;
 	} else {
-	    fname = gretl_maybe_switch_dir(fname);
+	    gretl_maybe_switch_dir(fname);
 	}
     }
 

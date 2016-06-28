@@ -83,7 +83,7 @@ PRN *kalman_get_printer (const kalman *K);
 #ifndef __GTK_DOC_IGNORE__
 
 int kalman_parse_line (const char *line, const DATASET *dset, 
-		       gretlopt opt);
+		       gretlopt opt, PRN *prn);
 
 double user_kalman_get_loglik (void);
 

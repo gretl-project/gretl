@@ -2199,6 +2199,34 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     return 0;
 }
 
+char **gretl_function_retrieve_code (ufunc *u, int *nlines)
+{
+    char **S = NULL;
+    int i, j = 0;
+
+    for (i=0; i<u->n_lines; i++) {
+	if (!u->lines[i].ignore) {
+	    j++;
+	}
+    }
+
+    if (j > 0) {
+	S = strings_array_new(j);
+    }
+
+    if (S != NULL) {
+	*nlines = j;
+	j = 0;
+	for (i=0; i<u->n_lines; i++) {
+	    if (!u->lines[i].ignore) {
+		S[j++] = u->lines[i].s;
+	    }
+	}	
+    }
+
+    return S;
+}
+
 /* construct a name for @pkg based on its filename member:
    take the basename and knock off ".gfn"
 */
@@ -2916,10 +2944,14 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	if (!strcmp(name, pkg->pub[i]->name)) {
 	    u = pkg->pub[i];
 	    if (role == UFUN_GUI_MAIN) {
+#if 1
+		; /* OK, type does not matter */
+#else	
 		if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
 		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
 		    err = E_TYPES;
 		}
+#endif
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
 		if (u->n_params == 0) {
@@ -2992,9 +3024,13 @@ int function_ok_for_package_role (const char *name,
     }
 
     if (role == UFUN_GUI_MAIN) {
+#if 1
+	; /* OK, we don't mind what type it is */
+#else
 	if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
 	    err = E_TYPES;
 	}
+#endif
     } else {
 	/* bundle-print, bundle-plot, etc. */
 	if (u->n_params == 0) {
@@ -6997,7 +7033,8 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 */
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
-			DATASET *dset, PRN *prn, int orig_v)
+			DATASET *dset, PRN *prn, int orig_v,
+			int redir_level)
 {
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
@@ -7086,6 +7123,11 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }
 
     set_executing_off(call, dset, prn);
+
+    if (print_redirection_level(prn) > redir_level) {
+	gretl_errmsg_set("Incorrect use of 'outfile' in function");
+	err = 1;
+    }
 
     return err;
 }
@@ -7753,6 +7795,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     int orig_t1 = 0;
     int orig_t2 = 0;
     int indent0 = 0, started = 0;
+    int redir_level = 0;
     int retline = -1;
     int debugging = u->debug;
 #if LOOPSAVE
@@ -7838,6 +7881,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	err = start_fncall(call, dset, prn);
 	if (!err) {
 	    started = 1;
+	    redir_level = print_redirection_level(prn);
 	}
     }
 
@@ -8006,7 +8050,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
     if (started) {
 	int stoperr = stop_fncall(call, rtype, ret, dset, prn,
-				  orig_v);
+				  orig_v, redir_level);
 
 	if (stoperr && !err) {
 	    err = stoperr;

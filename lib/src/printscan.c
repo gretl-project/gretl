@@ -431,6 +431,75 @@ static int printf_as_int (double x, int fc,
     return 0;
 }
 
+/* Allow for UTF-8 strings where the number of characters
+   is not equal to the number of bytes: we'll adjust a
+   printf specification such as "%10s" so that the result
+   comes out 10 characters wide, rather than 10 bytes.
+*/
+
+static void maybe_adjust_string_format (char *str,
+					int *wstar,
+					int *pstar,
+					int *wid,
+					int *prec,
+					char **fmt)
+{
+    int adj = strlen(str) - g_utf8_strlen(str, -1);
+
+    if (adj > 0) {
+	const char *s = *fmt;
+	char *p, *tmp = NULL;
+	int uwid = 0, uprec = 0;
+	
+	if (*wstar) {
+	    /* got width in variable form */
+	    uwid = *wid;
+	} else {
+	    /* maybe got inline width? */
+	    if (isdigit(s[1]) || s[1] == '-') {
+		uwid = atoi(s + 1);
+	    }
+	}
+	
+	if (*pstar) {
+	    /* got "precision" in variable form */
+	    p = g_utf8_offset_to_pointer(str, *prec);
+	    uprec = p - str;
+	} else if ((p = strchr(s, '.')) != NULL) {
+	    /* got inline precision? */
+	    uprec = atoi(p + 1);
+	    p = g_utf8_offset_to_pointer(str, uprec);
+	    uprec = p - str;	    
+	}
+
+	if (uwid != 0) {
+	    if (uprec > 0 && uprec < strlen(str)) {
+		gchar *trunc = g_strndup(str, uprec);
+
+		adj = strlen(trunc) - g_utf8_strlen(trunc, -1);
+		g_free(trunc);
+	    }
+	    uwid = (uwid < 0)? uwid - adj : uwid + adj;
+	}
+
+	if (uwid != 0 && uprec > 0) {
+	    tmp = g_strdup_printf("%%%d.%ds", uwid, uprec);
+	} else if (uwid != 0) {
+	    tmp = g_strdup_printf("%%%ds", uwid);
+	} else if (uprec > 0) {
+	    tmp = g_strdup_printf("%%.%ds", uprec);
+	}
+
+	if (tmp != NULL) {
+	    /* replace the incoming format */
+	    free(*fmt);
+	    *fmt = gretl_strdup(tmp);
+	    g_free(tmp);
+	    *wstar = *pstar = 0;
+	}
+    }
+}
+
 /* Extract the next conversion spec from *pfmt, find and evaluate the
    corresponding elements in *pargs, and print the result. Note
    that @t should be negative (and therefore ignored) unless
@@ -588,6 +657,8 @@ static int print_arg (const char **pfmt, const char **pargs,
 		      wstar, pstar, prn);
     } else if (fc == 's') {
 	/* printing a string */
+	maybe_adjust_string_format(str, &wstar, &pstar,
+				   &wid, &prec, &fmt);
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, str);
 	} else if (wstar || pstar) {

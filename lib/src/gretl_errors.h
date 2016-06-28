@@ -125,4 +125,6 @@ int gretl_error_is_fatal (void);
 
 int gretl_errmsg_is_set (void);
 
+int invalid_field_error (const char *s);
+
 #endif /* GRETL_ERRORS_H */

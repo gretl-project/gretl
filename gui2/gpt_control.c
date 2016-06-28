@@ -1351,7 +1351,8 @@ static int get_gpt_marker (const char *line, char *label,
     return 1;
 }
 
-/* special graphs for which editing via GUI is not supported */
+/* special graphs for which editing via GUI is not supported
+   note: FIXME relax the restriction on PLOT_BAND asap */
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
                       p == PLOT_LEVERAGE || \
@@ -1362,7 +1363,8 @@ static int get_gpt_marker (const char *line, char *label,
                       p == PLOT_BI_GRAPH || \
 		      p == PLOT_ELLIPSE || \
 		      p == PLOT_RQ_TAU || \
-		      p == PLOT_3D)
+		      p == PLOT_3D || \
+		      p == PLOT_BAND)
 
 /* graphs where we don't attempt to find data coordinates */
 

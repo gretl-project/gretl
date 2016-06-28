@@ -1185,24 +1185,13 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	}
     } else {
 	strcpy(fullname, fname);
+	gretl_maybe_prepend_dir(fullname);
 	if (gz) {
 	    fz = gretl_gzopen(fullname, "r");
 	} else if (bin) {
 	    fp = gretl_fopen(fullname, "rb");
 	} else {
 	    fp = gretl_fopen(fullname, "r");
-	}
-	if (fz == Z_NULL && fp == NULL) {
-	    gretl_maybe_prepend_dir(fullname);
-	    if (strcmp(fullname, fname)) {
-		if (gz) {
-		    fz = gretl_gzopen(fullname, "r");
-		} else if (bin) {
-		    fp = gretl_fopen(fullname, "rb");
-		} else {
-		    fp = gretl_fopen(fullname, "r");
-		}
-	    }
 	}
     }
 

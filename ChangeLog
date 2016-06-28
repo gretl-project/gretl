@@ -1,9 +1,16 @@
 version 2016c, in progress
 - Add Ukrainian translation
+- Major revision of the user interface to the Kalman filter
+  and state space modeling
 - New function dropcoll() to expunge collinear terms from a
   list of series
 - New variable under the "set" command: "force_qr" forces
   the use of QR decomposition in the "ols" command
+- Add new --band option to the "gnuplot" and "plot" commands,
+  for plotting, e.g., confidence bands
+- Writing and reading files via commands and functions: ensure
+  that the gretl "working directory" is respected if an
+  absolute path is not given
 - Fix spurious "no numeric conversion" message emitted by
   some plot editing operations
 - Lags button for exogenous variables in VARs: ensure it's
@@ -16,6 +23,7 @@ version 2016c, in progress
   variable is a constant
 - Fix bug: gnuplot error on selecting "loess fit" via the
   GUI plot editor when the plot already has a fitted line
+- Miscellaneous smaller bug fixes
 
 2016-04-14 version 2016b
 - "panel" command, random-effects version: show an overall

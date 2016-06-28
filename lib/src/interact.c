@@ -49,6 +49,7 @@
 # include "gretl_www.h"
 #endif
 
+#include <unistd.h> /* for getcwd() */
 #include <errno.h>
 
 /* for the "shell" command */
@@ -781,9 +782,16 @@ static void showlabels (const int *list, const DATASET *dset, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
-			      int *parms)
+static int outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
+			     int *parms)
 {
+    int err;
+
+    err = print_start_redirection(prn, fp);
+    if (err) {
+	return err;
+    }
+    
     if (opt & OPT_Q) {
 	parms[0] = gretl_echo_on();
 	parms[1] = gretl_messages_on();
@@ -792,7 +800,8 @@ static void outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
     } else {
 	parms[0] = parms[1] = -1;
     }
-    print_start_redirection(prn, fp);
+
+    return 0;
 }
 
 static void maybe_restore_vparms (int *parms)
@@ -804,6 +813,33 @@ static void maybe_restore_vparms (int *parms)
 	set_gretl_messages(1);
     }    
     parms[0] = parms[1] = -1;
+}
+
+static int cwd_is_workdir (void)
+{
+    char thisdir[MAXLEN];
+
+    if (getcwd(thisdir, MAXLEN - 1) != NULL) {
+	int n = strlen(thisdir);
+
+	return strncmp(thisdir, gretl_workdir(), n) == 0;
+    }
+
+    return 0;
+}
+
+static int redirection_ok (PRN *prn)
+{
+    int fd = gretl_function_depth();
+    
+    if (fd == 0) {
+	return 0;
+    } else if (print_redirected_at_level(prn, fd)) {
+	/* we may want to lift this ban in future? */
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 static int 
@@ -822,27 +858,27 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	return E_ARGS;
     }
 
-    diverted = printing_is_redirected(prn);
+    diverted = print_redirection_level(prn) > 0;
 
-    /* command to close outfile */
     if (opt & OPT_C) {
+	/* command to close outfile */
 	if (!diverted) {
 	    pputs(prn, _("Output is not currently diverted to file\n"));
-	    return 1;
+	    err = 1;
 	} else {
 	    print_end_redirection(prn);
 	    maybe_restore_vparms(vparms);
 	    if (gretl_messages_on() && *outname != '\0') {
 		pprintf(prn, _("Closed output file '%s'\n"), outname);
 	    }
-	    return 0;
 	}
+	return err;
     }
 
     /* command to divert output to file */
-    if (diverted) {
-	fprintf(stderr, _("Output is already diverted to '%s'\n"),
-		outname);
+    if (diverted && !redirection_ok(prn)) {
+	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
+			     outname);
 	return 1;
     } else if (fname == NULL || *fname == '\0') {
 	return E_ARGS;
@@ -850,41 +886,53 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	if (gretl_messages_on()) {
 	    pputs(prn, _("Now discarding output\n")); 
 	}
-	outfile_redirect(prn, NULL, opt, vparms);
+	err = outfile_redirect(prn, NULL, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	outfile_redirect(prn, stderr, opt, vparms);
+	err = outfile_redirect(prn, stderr, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stdout")) {
-	outfile_redirect(prn, stdout, opt, vparms);
+	err = outfile_redirect(prn, stdout, opt, vparms);
 	*outname = '\0';
     } else {
+	/* should the stream be opened in binary mode on Windows? */
+	char tmp[FILENAME_MAX];
+	const char *name = tmp;
 	FILE *fp;
 
-	fname = gretl_maybe_switch_dir(fname);
+	/* switches to workdir if needed */
+	strcpy(tmp, fname);
+	gretl_maybe_prepend_dir(tmp);
 
-	if (opt & OPT_W) {
-	    fp = gretl_fopen(fname, "w");
+	if (opt & OPT_A) {
+	    fp = gretl_fopen(tmp, "a");
 	} else {
-	    fp = gretl_fopen(fname, "a");
+	    fp = gretl_fopen(tmp, "w");
 	}
 
 	if (fp == NULL) {
-	    pprintf(prn, _("Couldn't open %s for writing\n"), fname);
+	    pprintf(prn, _("Couldn't open %s for writing\n"), tmp);
 	    return 1;
 	}
 
 	if (gretl_messages_on()) {
-	    if (opt == OPT_W) {
-		pprintf(prn, _("Now writing output to '%s'\n"), fname);
-	    } else {
-		pprintf(prn, _("Now appending output to '%s'\n"), fname);
+	    if (cwd_is_workdir()) {
+		name = fname;
 	    }
-	    
+	    if (opt & OPT_A) {
+		pprintf(prn, _("Now appending output to '%s'\n"), name);
+	    } else {
+		pprintf(prn, _("Now writing output to '%s'\n"), name);
+	    }
 	}
 
-	outfile_redirect(prn, fp, opt, vparms);
-	strcpy(outname, fname);
+	err = outfile_redirect(prn, fp, opt, vparms);
+	if (err) {
+	    fclose(fp);
+	    remove(tmp);
+	} else {
+	    strcpy(outname, name);
+	}
     }
 
     return err;
@@ -2038,7 +2086,6 @@ static int install_function_package (const char *pkgname,
 				     PRN *prn)
 {
     char *fname = NULL;
-    char *homefile = NULL;
     int filetype = 0;
     int local = (opt & OPT_L);
     int http = 0;
@@ -2075,43 +2122,26 @@ static int install_function_package (const char *pkgname,
 		fname = gretl_strdup(p + 1);
 	    }
 	} else if (local) {
-	    /* get last portion of local filename */
-	    const char *p = NULL;
+	    const char *p;
 	    
-	    if (!strncmp(pkgname, "~/", 2)) {
-		homefile = gretl_prepend_homedir(pkgname, &err);
-		if (!err) {
-		    p = strrchr(homefile, SLASH);
-		}
-	    } else {
-		p = strrchr(pkgname, SLASH);
-	    }
+	    gretl_maybe_switch_dir(pkgname);
+	    p = strrchr(pkgname, SLASH);
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }
+	    
 	}
     }
 
     if (!err && filetype) {
 	const char *basename = fname != NULL ? fname : pkgname;
-	const char *path = gretl_function_package_path();
+	const char *instpath = gretl_function_package_path();
 	gchar *fullname;
-	int preserve = 0;
 
-	fullname = g_strdup_printf("%s%s", path, basename);
+	fullname = g_strdup_printf("%s%s", instpath, basename);
 
 	if (local) {
-	    const char *lpath = homefile != NULL ? homefile : pkgname;
-	    
-	    /* copy file into place if need be */
-	    if (strcmp(fullname, lpath)) {
-		err = gretl_copy_file(lpath, fullname);
-	    } else if (filetype == 2) {
-		/* local zip file already in the right place:
-		   if we're not copying it, don't delete it
-		*/
-		preserve = 1;
-	    }
+	    err = gretl_copy_file(pkgname, fullname);
 	} else if (http) {
 	    /* get file from a specified server */
 	    err = retrieve_public_file(pkgname, fullname);
@@ -2121,8 +2151,8 @@ static int install_function_package (const char *pkgname,
 	}
 	
 	if (!err && filetype == 2) {
-	    err = gretl_unzip_into(fullname, path);
-	    if (!preserve) {
+	    err = gretl_unzip_into(fullname, instpath);
+	    if (!err) {
 		/* delete the zipfile */
 		gretl_remove(fullname);
 	    }
@@ -2136,7 +2166,6 @@ static int install_function_package (const char *pkgname,
     }
 
     free(fname);
-    free(homefile);
     
     return err;
 }
@@ -2150,7 +2179,6 @@ static int install_function_package (const char *pkgname,
 				     PRN *prn)
 {
     char *fname = NULL;
-    char *homefile = NULL;
     int filetype = 0;
     int err = 0;
 
@@ -2171,16 +2199,10 @@ static int install_function_package (const char *pkgname,
 
     if (!err) {
 	/* get last portion of local filename */
-	const char *p = NULL;
-	    
-	if (!strncmp(pkgname, "~/", 2)) {
-	    homefile = gretl_prepend_homedir(pkgname, &err);
-	    if (!err) {
-		p = strrchr(homefile, SLASH);
-	    }
-	} else {
-	    p = strrchr(pkgname, SLASH);
-	}
+	const char *p;
+
+	gretl_maybe_switch_dir(pkgname);
+	p = strrchr(pkgname, SLASH);
 	if (p != NULL) {
 	    fname = gretl_strdup(p + 1);
 	}
@@ -2188,26 +2210,17 @@ static int install_function_package (const char *pkgname,
 
     if (!err && filetype) {
 	const char *basename = fname != NULL ? fname : pkgname;
-	const char *path = gretl_function_package_path();
-	const char *lpath = homefile != NULL ? homefile : pkgname;
+	const char *instpath = gretl_function_package_path();
 	gchar *fullname;
-	int preserve = 0;
 
-	fullname = g_strdup_printf("%s%s", path, basename);
+	fullname = g_strdup_printf("%s%s", instpath, basename);
 
-	/* copy file into place if need be */
-	if (strcmp(fullname, lpath)) {
-	    err = gretl_copy_file(lpath, fullname);
-	} else if (filetype == 2) {
-	    /* local zip file already in the right place:
-	       if we're not copying it, don't delete it
-	    */
-	    preserve = 1;
-	}
+	/* copy file into place */
+	err = gretl_copy_file(pkgname, fullname);
 	
 	if (!err && filetype == 2) {
-	    err = gretl_unzip_into(fullname, path);
-	    if (!preserve) {
+	    err = gretl_unzip_into(fullname, instpath);
+	    if (!err) {
 		/* delete the zipfile */
 		gretl_remove(fullname);
 	    }
@@ -2221,7 +2234,6 @@ static int install_function_package (const char *pkgname,
     }
 
     free(fname);
-    free(homefile);
     
     return err;
 }
@@ -2913,7 +2925,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case KALMAN:
 	/* tokenizer: @line arg OK for now */
-	err = kalman_parse_line(line, dset, cmd->opt);
+	err = kalman_parse_line(line, dset, cmd->opt, prn);
 	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
@@ -3087,7 +3099,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "foreign")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
-	    err = kalman_parse_line(line, dset, cmd->opt);
+	    err = kalman_parse_line(line, dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "plot")) {
@@ -3210,9 +3222,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (err) {
 	maybe_print_error_message(cmd, err, prn);
+	process_command_error(s, err);
     }
-
-    err = process_command_error(cmd, err);
 
     if (err) {
 	gretl_cmd_destroy_context(cmd);
@@ -3302,6 +3313,13 @@ int get_command_index (char *line, int cmode, CMD *cmd)
 #if CMD_DEBUG
     fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
+
+    if ((cmd->context == FOREIGN || cmd->context == MPI) &&
+	!ends_foreign_block(line)) {
+	cmd->opt = OPT_NONE;
+	cmd->ci = cmd->context;
+	return 0;
+    }
 
     if (filter_comments(line, cmd)) {
 	return 0;
@@ -3522,7 +3540,7 @@ void gretl_exec_state_set_model (ExecState *s, MODEL *pmod)
     s->pmod = pmod;
 }
 
-int process_command_error (CMD *cmd, int err)
+int process_command_error (ExecState *s, int err)
 {
     int ret = err;
 
@@ -3530,12 +3548,17 @@ int process_command_error (CMD *cmd, int err)
 	if (gretl_compiling_function() ||
 	    gretl_compiling_loop()) {
 	    ; /* pass the error through */
-	} else if (cmd->flags & CMD_CATCH) {
+	} else if (s->cmd->flags & CMD_CATCH) {
 	    /* local "continue on error" */
 	    set_gretl_errno(err);
-	    cmd->flags ^= CMD_CATCH;
+	    s->cmd->flags ^= CMD_CATCH;
 	    ret = 0;
 	}
+    }
+
+    if (ret && print_redirection_level(s->prn) > 0) {
+	print_end_redirection(s->prn);
+	pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
     }
 
     return ret;

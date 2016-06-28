@@ -1795,6 +1795,7 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 	build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {
 	strcpy(fullname, fname);
+	gretl_maybe_prepend_dir(fullname);
     }
 
     *err = gretl_xml_open_doc_root(fullname, "gretl-bundle", &doc, &cur);

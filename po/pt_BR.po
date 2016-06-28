@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-12 12:01-0400\n"
-"PO-Revision-Date: 2016-04-11 11:41-0300\n"
+"POT-Creation-Date: 2016-06-03 11:50-0300\n"
+"PO-Revision-Date: 2016-06-03 12:16-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -3927,9 +3927,8 @@ msgid "Couldn't estimate group means regression\n"
 msgstr "Não foi possível estimar a regressão de médias de grupo\n"
 
 #: lib/src/gretl_panel.c:3491
-#, fuzzy
 msgid "Couldn't estimate group means regression"
-msgstr "Não foi possível estimar a regressão de médias de grupo\n"
+msgstr "Não foi possível estimar a regressão de médias de grupo"
 
 #: lib/src/gretl_panel.c:3880
 msgid "Can't produce ML estimates: some units have only one observation"
@@ -4029,19 +4028,18 @@ msgstr ""
 "redundantes"
 
 #: lib/src/gretl_restrict.c:626
-#, fuzzy
 msgid "Invalid restriction on beta"
-msgstr "Restrição inválida"
+msgstr "Restrição inválida em beta"
 
 #: lib/src/gretl_restrict.c:635
-#, fuzzy, c-format
+#, c-format
 msgid "Too many restrictions: the maximum number is %d"
-msgstr "Demasiadas restrições (o máximo é %d)"
+msgstr "Excesso de restrições: o número máximo é %d"
 
 #: lib/src/gretl_restrict.c:639
-#, fuzzy, c-format
+#, c-format
 msgid "The R matrix must have %d columns"
-msgstr "modprint: o primeiro argumento da matriz deve ter 2 colunas"
+msgstr "A matriz R deve ter %d colunas"
 
 #: lib/src/gretl_restrict.c:734 lib/src/gretl_restrict.c:747
 msgid "Please give a coefficient number"
@@ -5403,11 +5401,11 @@ msgstr "Comprimento da série temporal: mínimo %d, máximo %d"
 
 #: lib/src/modelprint.c:1965
 msgid "Including equations in levels"
-msgstr ""
+msgstr "Incluindo equações em níveis"
 
 #: lib/src/modelprint.c:1969
 msgid "H-matrix as per Ox/DPD"
-msgstr ""
+msgstr "Matriz H de acordo com Ox/DPD"
 
 #: lib/src/modelprint.c:1997
 #, c-format
@@ -5998,31 +5996,31 @@ msgid "%s: not implemented in 'progressive' loops"
 msgstr "'%s' : não está implementado em ciclos (\"loop\") 'progressivos'"
 
 #: lib/src/nls.c:254
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The formula '%s'\n"
 " produced an error on execution"
 msgstr ""
 "A fórmula '%s'\n"
-"produziu um resultado escalar"
+" produziu um erro na execução"
 
 #: lib/src/nls.c:257
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The formula '%s'\n"
 " produced an error on compilation"
 msgstr ""
 "A fórmula '%s'\n"
-"produziu um resultado escalar"
+" produziu um erro na compilação"
 
 #: lib/src/nls.c:368
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The formula '%s'\n"
 " did not produce the required output type"
 msgstr ""
 "A fórmula '%s'\n"
-"produziu um resultado escalar"
+" não produziu o tipo de resultado requerido"
 
 #: lib/src/nls.c:681
 #, c-format
@@ -6096,9 +6094,9 @@ msgid "command '%s' not valid in this context"
 msgstr "O comando '%s' não é válido neste contexto"
 
 #: lib/src/nls.c:2826
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not valid in this context"
-msgstr "O comando '%s' não é válido neste contexto"
+msgstr "'%s': não é válido neste contexto"
 
 #: lib/src/nls.c:2917 gui2/dialogs.c:5903
 #, c-format
@@ -7251,9 +7249,9 @@ msgid "Invalid option '-%c'"
 msgstr "Opção inválida '-%c'"
 
 #: lib/src/tokenize.c:3142
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol %c"
-msgstr "Símbolo '%c' não esperado"
+msgstr "Símbolo %c não esperado"
 
 #: lib/src/transforms.c:149
 #, c-format
@@ -7755,10 +7753,9 @@ msgstr "compilado em"
 #: gui2/about.c:192 gui2/about.c:194
 msgid "translator_credits"
 msgstr ""
-"Raquel Guimarães\n"
-"Henrique Andrade <henrique.andrade@ufrgs.br>\n"
-"Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 11 de abril de 2016."
+"Traduzido por: Raquel Guimarães,\n"
+"Henrique Andrade <henrique.andrade@ufrgs.br> e\n"
+"Hélio Guilherme <helio_guilherme@hotmail.com>"
 
 #: gui2/about.c:203
 msgid "News"
@@ -13428,13 +13425,12 @@ msgid "Failed to download file"
 msgstr "Download do arquivo falhou"
 
 #: gui2/join-gui.c:462
-#, fuzzy
 msgid "show details of importation"
-msgstr "Mostrar detalhes das iterações"
+msgstr "mostrar detalhes da importação"
 
 #: gui2/join-gui.c:778
 msgid "The 'seq' aggregator requires an integer parameter, as in seq:1"
-msgstr ""
+msgstr "O agregador 'seq' requer um parâmetro inteiro, como em seq:1"
 
 #: gui2/library.c:136
 msgid "gretl: iteration info"
@@ -14239,7 +14235,7 @@ msgstr ""
 
 #: gui2/library.c:9116
 msgid "Unmatched \"if\" in script (fixed)"
-msgstr ""
+msgstr "\"%s\" sem par no script (corrigido)"
 
 #: gui2/library.c:9121
 msgid "Unterminated comment in script"

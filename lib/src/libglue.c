@@ -401,9 +401,9 @@ MODEL tobit_driver (const int *list, DATASET *dset,
 /*
  * do_modprint:
  * @line: command line.
- * @opt: may contain %OPT_C for CSV, %OPT_R for RTF, or %OPT_T 
- * to use TeX format.  If %OPT_T is given, then %OPT_O calls for
- * a complete LaTeX document, otherwise %OPT_O is ignored.
+ * @opt: may contain %OPT_O for specifying output, and if
+ * TeX output is called for then %OPT_C calls for
+ * a complete LaTeX document.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics
@@ -430,11 +430,6 @@ int do_modprint (const char *mname, const char *names,
     gretl_matrix *addstats = NULL;
     const char *parnames = NULL;
     int err = 0;
-
-    err = incompatible_options(opt, OPT_C | OPT_R | OPT_T);
-    if (err) {
-	return err;
-    }
 
     if (mname == NULL || names == NULL) {
 	return E_ARGS;
@@ -477,23 +472,101 @@ int do_modprint (const char *mname, const char *names,
 
     if (!err) {
 	PrnFormat fmt = GRETL_FORMAT_TXT;
+	char fname[FILENAME_MAX];
 
-	if (opt & OPT_C) {
-	    fmt = GRETL_FORMAT_CSV;
-	} else if (opt & OPT_R) {
-	    fmt = GRETL_FORMAT_RTF;
-	} else if (opt & OPT_T) {
-	    fmt = GRETL_FORMAT_TEX;
-	    if (opt & OPT_O) {
-		fmt |= GRETL_FORMAT_DOC;
+	*fname = '\0';
+
+	if (opt & OPT_O) {
+	    /* try for --output=filename, and if found let
+	       the suffix determine the output type
+	    */
+	    const char *s = get_optval_string(MODPRINT, OPT_O);
+
+	    if (s != NULL && *s != '\0') {
+		strcpy(fname, s);
+		if (has_suffix(fname, ".tex")) {
+		    fmt = GRETL_FORMAT_TEX;
+		    if (opt & OPT_C) {
+			fmt |= GRETL_FORMAT_DOC;
+		    }		    
+		} else if (has_suffix(fname, ".rtf")) {
+		    fmt = GRETL_FORMAT_RTF;
+		} else if (has_suffix(fname, ".csv")) {
+		    fmt = GRETL_FORMAT_CSV;
+		}
 	    }
-	}
+	}	
 
-	gretl_print_set_format(prn, fmt);
-	err = print_model_from_matrices(coef_se, addstats, parnames, prn);
+	if (*fname != '\0') {
+	    PRN *myprn;
+	    
+	    gretl_maybe_switch_dir(fname);
+	    myprn = gretl_print_new_with_filename(fname, &err);
+	    if (!err) {
+		gretl_print_set_format(myprn, fmt);
+		err = print_model_from_matrices(coef_se, addstats,
+						parnames, myprn);
+		gretl_print_destroy(myprn);
+	    }
+	} else {
+	    gretl_print_set_format(prn, fmt);
+	    err = print_model_from_matrices(coef_se, addstats, parnames, prn);
+	}
     }
 
     return err;
+}
+
+int *matrix_bandplot_biglist (int ci,
+			      const gretl_matrix *m,
+			      const int *list,
+			      int *err)
+{
+    const char *s = get_optval_string(ci, OPT_N);
+    gchar **S = NULL;
+    int *biglist = NULL;
+    int ccol = 0, wcol = 0;
+    int c, i;
+
+    if (s == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    S = g_strsplit(s, ",", -1);
+
+    for (i=0; i<2 && !*err; i++) {
+	c = 0;
+	if (S[i] == NULL) {
+	    *err = E_DATA;
+	} else if (integer_string(S[i])) {
+	    c = atoi(S[i]);
+	} else {
+	    c = get_scalar_value_by_name(S[i], err);
+	}
+	if (!*err && c >= 1 && c <= m->cols) {
+	    if (i == 0) {
+		ccol = c;
+	    } else {
+		wcol = c;
+	    }
+	} else {
+	    c = 0;
+	}	
+	if (!*err && c == 0) {
+	    *err = invalid_field_error(S[i]);
+	}
+    }
+
+    g_strfreev(S);
+
+    if (!*err) {
+	biglist = gretl_list_copy(list);
+	gretl_list_append_term(&biglist, ccol);
+	gretl_list_append_term(&biglist, wcol);
+    }
+
+    return biglist;
 }
 
 int matrix_command_driver (int ci, 
@@ -507,6 +580,7 @@ int matrix_command_driver (int ci,
     DATASET *mdset = NULL;
     int *collist = NULL;
     const char *mname;
+    int cmax = 0;
     int err = 0;
 
     mname = get_optval_string(ci, OPT_X);
@@ -516,7 +590,18 @@ int matrix_command_driver (int ci,
     }
 
     if (gretl_is_null_matrix(m)) {
-	err = E_DATA;
+	return E_DATA;
+    }
+
+    if (ci == GNUPLOT && (opt & OPT_N)) {
+	/* --band=... */
+	int *biglist = matrix_bandplot_biglist(ci, m, list, &err);
+
+	if (!err) {
+	    mdset = gretl_dataset_from_matrix(m, biglist, OPT_B, &err);
+	    cmax = mdset->v - 3;
+	    free(biglist);
+	} 
     } else if (ci == SCATTERS) {
 	/* note: this is a special case, for now */
 	return matrix_scatters(m, list, dset, opt);
@@ -532,15 +617,20 @@ int matrix_command_driver (int ci,
     }
 
     if (!err) {
+	if (cmax == 0) {
+	    cmax = mdset->v - 1;
+	}
 	dataset_set_matrix_name(mdset, mname);
-	collist = gretl_consecutive_list_new(1, mdset->v - 1);
+	collist = gretl_consecutive_list_new(1, cmax);
 	if (collist == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	opt &= ~OPT_X;
+	if (ci != GNUPLOT) {
+	    opt &= ~OPT_X;
+	}
 	if (ci == BXPLOT) {
 	    err = boxplots(collist, param, mdset, opt);
 	} else if (ci == GNUPLOT) {

@@ -359,7 +359,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
     gtk_text_buffer_get_end_iter(buf, &iter);
     gtk_text_buffer_insert(buf, &iter, "\n", 1);
 
-    if (!printing_is_redirected(state->prn)) {
+    if (print_redirection_level(state->prn) == 0) {
 	print_result_to_console(buf, &iter, state);
     }
     
