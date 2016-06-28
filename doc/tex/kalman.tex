@@ -85,8 +85,8 @@ other.
 
 \section{Notation}
 
-In this document, we are going to use, as basic representation of
-a state-space model, the following pair of equations:
+In this document our basic representation of a state-space model is
+given by the following pair of equations:
 %
 \begin{align}
   \label{eq:state}
@@ -122,15 +122,15 @@ section~\ref{sec:tvarying}.
 \section{Defining the model as a bundle}
 \label{sec:setup}
 
-The \cmd{ksetup} function is used to initialize a state space
-model, by specifying only its indispensable elements: the observables
-and their link to the unobserved state vector, plus the law of motion
-for the latter and the covariance matrix of its
-innovations. Therefore, the function takes a minimum of four
-arguments.\footnote{An optional, fifth argument is used for
-  initializing a state space model in which there is some non-zero
-  correlation between $\strdist_t$ and $\obsdist_t$. See section
-  \ref{sec:crossd}.} The corresponding bundle keys are as follows:
+The \cmd{ksetup} function is used to initialize a state space model,
+by specifying only its indispensable elements: the observables and
+their link to the unobserved state vector, plus the law of motion for
+the latter and the covariance matrix of its innovations. Therefore,
+the function takes a minimum of four arguments.\footnote{An optional,
+  fifth argument is used for initializing a state space model in which
+  there is some non-zero correlation between the disturbances
+  $\strdist_t$ and $\obsdist_t$. See section \ref{sec:crossd}.} The
+corresponding bundle keys are as follows:
 
 \begin{center}
 \begin{tabular}{ccl}
@@ -322,7 +322,7 @@ The Kalman gain is defined as
 \gain_t = \statemat_t \statecvar_{t|t-1} \obsymat_t 
 \left[\obsymat_t' \statecvar_{t|t-1} \obsymat_t + \obsvar_t\right]^{-1}
 \]
-and is almost never necessary to the end user. However, it is the key
+This matrix is rarely required by the user. However, it is the key
 quantity in the filtering algorithm, so we make it available under a
 dedicated key for diagnostic purposes in case numerical problems
 should arise. For example, the following retrieves the gain after a
@@ -343,7 +343,7 @@ matrix K10 = mshape(G[10,], SSmod.r, SSmod.n)
 \section{The \cmd{ksmooth} function}
 \label{sec:ksmooth}
 
-Like \cmd{kfilter} this function takes a single bundle-pointer
+Like \cmd{kfilter}, this function takes a single bundle-pointer
 argument and returns an integer error code (0 indicating success).  It
 runs a forward, filtering pass followed by a backward pass which
 computes a smoothed estimate of the state and its MSE using the method
@@ -354,9 +354,9 @@ run without a prior call to \cmd{kfilter}. This may appear to be
 useless duplication, but in fact it enables an efficient scripting
 option.  The main utility of the forward pass lies in the calculation
 of the log-likelihood in the context of estimation; however, if a
-state space contains no parameters that have to be estimated, the
-model setup can be followed directly by a call to \cmd{ksmooth}. (And
-the same goes for \cmd{kdsmooth} below.)
+state space model contains no parameters that have to be estimated,
+the model setup can be followed directly by a call to
+\cmd{ksmooth}. (And the same goes for \cmd{kdsmooth} below.)
 
 The backward-pass algorithm is as follows: for $t=T,\dots,1$
 %
@@ -390,8 +390,8 @@ of \texttt{stvar} holds $\statecvar_{t|T}$, in transposed vech form
 This function requires a bundle-pointer argument and returns an
 integer error code (0 indicating success).  It runs a forward,
 filtering pass followed by a backward pass which computes a smoothed
-estimate of the disturbances and a dispersion measure using the
-methods described in \cite{koopman93} and \cite{koopman-etal99}.
+estimate of the disturbances along with a dispersion measure, using
+the methods described in \cite{koopman93} and \cite{koopman-etal99}.
 
 Upon successful execution of the function, the bundle will contain
 under the key \texttt{smdist} a $T \times (r+n)$ matrix holding
@@ -694,13 +694,16 @@ relevant matrix in question is changed) and more complex
 variants---say, involving some sort of conditionality---are also
 possible in this framework.
 
-It is also worth noting that this setup lends itself to a much wider
-scope than time-varying system matrices. In fact, this syntax allows
-for the possibility of executing a user-defined operations at each
-step. The function that goes under \texttt{timevar\_call} can read all
-the elements of the model bundle and modify several of them: the
-system matrices (which can therefore be made time-varying) and the
-user-defined elements.
+It is worth noting that this setup lends itself to a much wider scope
+than time-varying system matrices. In fact, this syntax allows for the
+possibility of executing user-defined operations at each step. The
+function that goes under \texttt{timevar\_call} can read all the
+elements of the model bundle and can modify several of them: the
+system matrices (which can therefore be made time-varying) as well as
+the user-defined elements.
+
+An extended example of use of the time-variation facility is presented
+in section~\ref{sec:ss-examples}.
 
 \subsection{Likelihood under the diffuse prior}
 \label{sec:lldiffuse}
@@ -759,8 +762,8 @@ B.simstart = B.inistate + Z * mnormal(B.r, 1)
 \section{Example scripts}
 \label{sec:ss-examples}
 
-This section presents a selection of short sample scripts, which cover
-the most important aspects of this document.
+This section presents a selection of short sample scripts to
+illustrate the most important points covered in this chapter.
 
 \subsection{ARMA estimation}
 \label{sec:example_arma}
@@ -968,46 +971,41 @@ sequence of slope coefficients $\beta_{1,t}$ is, instead, estimated by
 running the smoother, which also yields a consistent estimate of the
 dispersion of the estimated state
 
-Script \ref{script:PhCurve} contains an example of the above, in which
-data from the AWM database are used to estimate a time-varying
-relationship between inflation and unemployment (or a Phillips Curve
-if you prefer) of the form
+Script \ref{script:PhCurve} presents an example of the above, in which
+data from the AWM database are used to estimate a Phillips Curve
+with time-varying slope:
 \[
-INFQ_t = \beta_0 + \beta_{1,t} URX_t + \varepsilon_t .
+\mbox{INFQ}_t = \beta_0 + \beta_{1,t} \mbox{URX}_t + \varepsilon_t
 \]
-At the end of the script, the evolution through time of the slope
-coefficient is plotted, together with a 95\% confidence band, which is
-what figure \ref{fig:tvar} shows.
+where INFQ is a measure of quarterly inflation and URX a measure of
+unemployment.  At the end of the script, the evolution through time of
+the slope coefficient is plotted together with a 95\% confidence
+band---see Figure~\ref{fig:tvar}.
 
 \begin{script}[htbp]
   \caption{Phillips curve on Euro data with time-varying slope}
   \label{script:PhCurve}
 \begin{scode}
-#
-# Phillips Curve with time-varying slope (fixed intercept)
-#
-set echo off
-set messages off
-
-# --- Bundle updating function --------------
 function void at_each_step(bundle *b)
     b.obsymat = b.mX[b.t,]'
 end function
 
-# --- Open the data -------------------------
 open AWM.gdt --quiet
 smpl 1974:1 1994:1
-# param init
+
+/* parameter initialization */
 scalar b0 = mean(INFQ)
 scalar s_obs = 0.1
 scalar s_state = 0.1
-# bundle setup
+
+/* bundle setup */
 bundle B = ksetup(INFQ, 1, 1, 1)
-matrix B.mX = { URX }
-matrix B.depvar = { INFQ }
+matrix B.mX = {URX}
+matrix B.depvar = {INFQ}
 B.timevar_call = "at_each_step"
 B.diffuse = 1
-# MLE estimation of the parameters beta_0 and the two variances
+
+/* ML estimation of intercept and the two variances */
 mle LL = err ? NA : B.llt
     B.obsy = B.depvar - b0
     B.obsvar = s_obs^2
@@ -1015,7 +1013,8 @@ mle LL = err ? NA : B.llt
     err = kfilter(&B)
     params b0 s_obs s_state
 end mle
-# display the smoothed time-varying slope with confidence band
+
+/* display the smoothed time-varying slope */
 ksmooth(&B)
 series tvar_b1hat = B.state[,1]
 series tvar_b1se = sqrt(B.stvar[,1])
@@ -1102,9 +1101,9 @@ end plot --output=display
   \centering
   \begin{tabular}{cc}
   \small
-  %Auxiliary (standardized) residuals, state equation \\
-    \includegraphics{figures/nile_eta_ksd} \\[10pt]
-  % \small Estimated state disturbance, $\hat{\eta}_t$, with 90\% confidence band \\
+  (a) Auxiliary (standardized) residuals, state equation \\
+    \includegraphics{figures/nile_eta_ksd} \\[14pt]
+  \small (b) Estimated state disturbance with 90\% confidence band \\
   \includegraphics{figures/nile_eta_dk}
   \end{tabular}
   \caption{Nile data: auxiliary residuals and $\hat{\eta}_t$
