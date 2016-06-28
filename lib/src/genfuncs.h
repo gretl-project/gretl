@@ -131,6 +131,11 @@ int list_linear_combo (double *y, const int *list,
 		       const gretl_vector *b, 
 		       const DATASET *dset);
 
+int midas_linear_combo (double *y, const int *list,
+			gretl_matrix *theta,
+			int method,
+			const DATASET *dset);
+
 double imhof (const gretl_matrix *m, double arg, int *err);
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 

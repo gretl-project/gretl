@@ -3374,7 +3374,7 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     cset->structure = TIME_SERIES;
     cset->sd0 = get_date_x(cset->pd, cset->stobs);
 
-#if 0  
+#if 0 
     fprintf(stderr, "stobs '%s', endobs '%s', sd0 %g\n",
 	    cset->stobs, cset->endobs, cset->sd0);
 #endif

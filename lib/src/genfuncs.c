@@ -3999,6 +3999,74 @@ int list_linear_combo (double *y, const int *list,
     return err;
 }
 
+int midas_linear_combo (double *y, const int *list,
+			gretl_matrix *theta,
+			int method,
+			const DATASET *dset)
+{
+    gretl_matrix *w = NULL;
+    int p, m = list[0];
+    int i, j, err = 0;
+
+    p = gretl_vector_get_length(theta);
+
+    if (method == 2 && p != 2) {
+	gretl_errmsg_set("theta must be a 2-vector");
+	return E_DATA;
+    }
+
+    w = gretl_zero_matrix_new(m, 1);
+    if (w == NULL) {
+	return E_ALLOC;
+    }
+
+    if (method == 2) {
+	if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
+	    goto wzero;
+	}
+    }    
+
+    if (method == 1) {
+	/* unrestricted exponential */
+	double wsum = 0.0;
+
+	for (i=0; i<m; i++) {
+	    w->val[i] = (i+1) * theta->val[0];
+	    for (j=1; j<p; j++) {
+		w->val[i] += pow(i+1, j+1) * theta->val[j];
+	    }
+	    w->val[i] = exp(w->val[i]);
+	    wsum += w->val[i];
+	}
+	for (i=0; i<m; i++) {
+	    w->val[i] /= wsum;
+	}
+    } else if (method == 2) {
+	/* unrestricted beta */
+	double si, ai, bi;
+	double wsum = 0.0;
+
+	for (i=0; i<m; i++) {
+	    si = i / (double) (m+1);
+	    ai = pow(si, (theta->val[0] - 1));
+	    bi = pow((1-si), (theta->val[1] - 1));
+	    w->val[i] = ai * bi;
+	    wsum += w->val[i];
+	}
+	for (i=0; i<m; i++) {
+	    w->val[i] /= wsum;
+	}
+    }
+
+ wzero:
+
+    err = list_linear_combo(y, list, w, dset);
+
+    gretl_matrix_free(w);
+
+    return err;
+}
+
 /* Imhof: draws on the RATS code in IMHOF.SRC from Estima, 2004.
 
    Imhof Procedure for computing P(u'Au < x) for a quadratic form in

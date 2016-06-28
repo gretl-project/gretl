@@ -1607,9 +1607,7 @@ static int check_for_overlap (const DATASET *dset,
 
     if (!(at1 >= dset->n) && !(at2 < 0)) {
 	/* OK, there must be some overlap */
-	if (at1 < 0) {
-	    *offset = at1;
-	}
+	*offset = at1;
 	return 0;
     } else {
 	/* either the "add" data start after the original data end,
