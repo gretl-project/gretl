@@ -456,7 +456,7 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	/* --band */
 	if (opt & OPT_T) {
 	    /* --time-series */
-	    gi->flags |= GPT_IDX;
+	    gi->flags |= (GPT_TS | GPT_IDX);
 	    /* there's no xvar in @list */
 	    n_yvars++;
 	}
