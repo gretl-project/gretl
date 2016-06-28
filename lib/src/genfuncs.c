@@ -4026,7 +4026,7 @@ int midas_linear_combo (double *y, const int *list,
     if (method == 2) {
 	/* unrestricted beta */
 	if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
-	    goto wzero;
+	    goto wdone;
 	}
     }    
 
@@ -4052,8 +4052,8 @@ int midas_linear_combo (double *y, const int *list,
 
 	for (i=0; i<m; i++) {
 	    si = (i+1) / (double) (m+1);
-	    ai = pow(si, (theta->val[0] - 1.0));
-	    bi = pow((1.0 - si), (theta->val[1] - 1.0));
+	    ai = pow(si, theta->val[0] - 1.0);
+	    bi = pow(1.0 - si, theta->val[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
@@ -4062,7 +4062,7 @@ int midas_linear_combo (double *y, const int *list,
 	}
     }
 
- wzero:
+ wdone:
 
     err = list_linear_combo(y, list, w, dset);
     gretl_matrix_free(w);
