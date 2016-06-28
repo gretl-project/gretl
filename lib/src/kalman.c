@@ -2846,6 +2846,7 @@ static const char *kalman_matrix_name (int sym)
  * @opt: may contain %OPT_D for diffuse initialization of the
  * Kalman filter, %OPT_C to specify that the disturbances are 
  * correlated across the two equations.
+ * @prn: pointer to gretl printer.
  *
  * Parses @line and either (a) starts a filter definition or
  * (b) adds a matrix specification to the filter or (c)
@@ -2856,7 +2857,7 @@ static const char *kalman_matrix_name (int sym)
  */
 
 int kalman_parse_line (const char *line, const DATASET *dset, 
-		       gretlopt opt)
+		       gretlopt opt, PRN *prn)
 {
     user_kalman *u;
     int err = 0;
@@ -2875,6 +2876,12 @@ int kalman_parse_line (const char *line, const DATASET *dset,
     if (!strncmp(line, "end ", 4)) {
 	/* "end kalman": complete the set-up */
 	err = user_kalman_setup(u->K, opt);
+	pputs(prn, "\n**********************************************\n");
+	pputs(prn, "Warning: this interface to the Kalman filter is\n");
+	pputs(prn, "deprecated and will likely be removed in the next\n");
+	pputs(prn, "gretl release. Please see chapter 30 of the Gretl\n");
+	pputs(prn, "User's guide for an account of the new interface.\n");
+	pputs(prn, "**********************************************\n\n");
     } else {
 	/* we're supposed to find a matrix spec */ 
 	const char *s = line;

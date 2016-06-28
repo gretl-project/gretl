@@ -2925,7 +2925,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case KALMAN:
 	/* tokenizer: @line arg OK for now */
-	err = kalman_parse_line(line, dset, cmd->opt);
+	err = kalman_parse_line(line, dset, cmd->opt, prn);
 	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
@@ -3099,7 +3099,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "foreign")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
-	    err = kalman_parse_line(line, dset, cmd->opt);
+	    err = kalman_parse_line(line, dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "plot")) {
