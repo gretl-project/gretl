@@ -3785,13 +3785,17 @@ static int method_selected (int i, CompactMethod *method)
 	return *method == COMPACT_SUM;
     } else if (i == 2) {
 	return *method == COMPACT_EOP;
-    } else if (i == 3) {
+    } else {
 	return *method == COMPACT_SOP;
-    } else if (i == 4) {
+    }
+
+#if 0 /* not yet */    
+    if (i == 4) {
 	return *method == COMPACT_SPREAD;
-    } else if (i == 5) {
+    } else {
 	return *method == COMPACT_RSPREAD;
     }
+#endif    
 }
 
 static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
