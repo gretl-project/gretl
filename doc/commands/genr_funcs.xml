@@ -4122,13 +4122,13 @@
       </fnargs>
       <description>
 	<para>
-	  Performs disturbance smooting for a Kalman bundle previously
-	  set up by means of the <fncref targ="ksetup"/> and returns 0
-	  on successful completion or 1 if numerical problems are
-	  encountered.
+	  Performs disturbance smoothing for a Kalman bundle
+	  previously set up by means of <fncref targ="ksetup"/>
+	  and returns 0 on successful completion or 1 if numerical
+	  problems are encountered.
 	</para>
 	<para>
-	  On succession completion, the smoothed disturbances will be
+	  On successful completion, the smoothed disturbances will be
 	  available as <lit>Mod.smdist</lit>.
 	</para>
 	<para>
@@ -4162,17 +4162,17 @@
       <description>
 	<para>
 	  Performs a forward, filtering pass on a Kalman bundle
-	  previously set up by means of the <fncref targ="ksetup"/>
+	  previously set up by means of <fncref targ="ksetup"/>
 	  and returns 0 on successful completion or 1 if numerical
 	  problems are encountered.
 	</para>
 	<para>
-	  On succession completion, the one-step-ahead prediction
+	  On successful completion, the one-step-ahead prediction
 	  errors will be available as <lit>Mod.prederr</lit> and the
 	  sequence of their covariance matrices as
-	  <lit>Mod.pevar</lit>, respectively. Moreover, the key
-	  <lit>Mod.llt</lit> gives access to a T-vector, containing
-	  the log-likelihood by observation.
+	  <lit>Mod.pevar</lit>. Moreover, the key <lit>Mod.llt</lit>
+	  gives access to a <math>T</math>-vector containing the
+	  log-likelihood by observation.
 	</para>
 	<para>
 	  For more details see <guideref targ="chap:kalman"/>.
@@ -4232,7 +4232,7 @@
 		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
 		    ascii="a(t+1) = F a(t) + u(t)"
 		    graphic="kalman2"/> 
-	  where <math>V(u) = Q</math>.
+	  where Var<math>(u) = Q</math>.
 	</para>
 	<para>
 	  Objects created via this function can be later used via the
@@ -4266,7 +4266,7 @@
       </fnargs>
       <description>
 	<para>
-	  Uses a Kalman bundle previously set up by means of the
+	  Uses a Kalman bundle previously set up by means of
 	  <fncref targ="ksetup"/> to simulate data.
 	</para>
 	<para>
@@ -4288,16 +4288,16 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a fixed-point smoothing (backwards) pass on a
-	  Kalman bundle previously set up by means of the <fncref
+	  Performs a fixed-point smoothing (backward) pass on a
+	  Kalman bundle previously set up by means of <fncref
 	  targ="ksetup"/> and returns 0 on successful completion or 1
 	  if numerical problems are encountered.  
 	</para>
 	<para>
-	  On succession completion, the smoothed states will be
+	  On successful completion, the smoothed states will be
 	  available as <lit>Mod.state</lit> and the sequence of their
-	  covariance matrices as <lit>Mod.stvar</lit>, respectively.
-	  For more details see <guideref targ="chap:kalman"/>.
+	  covariance matrices as <lit>Mod.stvar</lit>.  For more
+	  details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
