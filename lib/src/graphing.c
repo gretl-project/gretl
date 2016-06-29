@@ -5248,7 +5248,16 @@ static int parse_band_style_option (int *style, char *rgb)
 	int slen = strlen(s);
 	int minlen = 7; /* minimal color spec */
 
-	if (p == NULL) {
+	if (*s == ',') {
+	    /* we're skipping field 1 */
+	    slen--;
+	    s++;
+	    if (slen < minlen || slen > 8) {
+		err = invalid_field_error(s);
+	    } else {
+		strcpy(rgb, s);
+	    }
+	} else if (p == NULL) {
 	    if (slen == 4) {
 		/* got a style specifier? */
 		if (!strcmp(s, "fill")) {
