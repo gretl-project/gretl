@@ -87,6 +87,7 @@ mkdir -p windist/gretl/data/misc
 mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/data/nist
 mkdir -p windist/gretl/data/plotbars
+mkdir -p windist/gretl/data/gnuplot
 mkdir -p windist/gretl/functions
 mkdir -p windist/gretl/functions/gig
 mkdir -p windist/gretl/functions/ivpanel
@@ -293,6 +294,11 @@ done
 # Plot bars data files
 for f in ${TOPDIR}/share/data/plotbars/*.txt ; do
     add_file $f gretl/data/plotbars/`basename $f`
+done
+
+# gnuplot colorname data
+for f in ${TOPDIR}/share/data/gnuplot/*.txt ; do
+    add_file $f gretl/data/gnuplot/`basename $f`
 done
 
 # NIST test data files
