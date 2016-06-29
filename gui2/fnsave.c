@@ -2165,6 +2165,76 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(label);
 }
 
+struct jel_lookup {
+    int code;
+    const char *label;
+};
+
+struct jel_lookup tag_lookups[] = {
+    { 10, "Econometric and Statistical Methods: General" },
+    { 11, "Bayesian Analysis: General" },
+    { 12, "Hypothesis Testing: General" },
+    { 13, "Estimation: General" },
+    { 14, "Semiparametric and Nonparametric Methods" },
+    { 15, "Statistical Simulation Methods: General" },
+    { 20, "Single Equation Models: General" },
+    { 21, "Cross-Sectional Models" },
+    { 22, "Univariate Time-Series Models" },
+    { 23, "Univariate Panel Data Models" },
+    { 24, "Truncated, Censored and Threshold Models" },
+    { 25, "Discrete and Qualitative Choice Models" },
+    { 26, "Instrumental Variables (IV) Estimation" },
+    { 30, "Multivariate Models: General" },
+    { 31, "Multivariate Cross-sectional Models" },
+    { 32, "Multivariate Time-Series Models" },
+    { 33, "Multivariate Panel Data Models" },
+    { 34, "Multivariate: Truncated and Censored" },
+    { 35, "Multivariate: Discrete and Qualitative" },
+    { 36, "Multivariate: IV Estimation" },
+    { 38, "Classification Methods" },
+    { 40, "Econometric Methods: Special Topics" },
+    { 41, "Duration Models" },
+    { 51, "Model Construction and Estimation" },
+    { 52, "Model Evaluation, Validation, and Selection" },
+    { 53, "Forecasting, Prediction and Simulation Methods" },
+    { 54, "Quantitative Policy Modeling" },
+    { 58, "Financial Econometrics" },
+    { 81, "Data Access" },
+    { 88, "Other Computer Software" },
+    {  0, NULL }
+};
+
+/* As a fallback if we couldn't get the canonical listing of tags
+   from the server, use the inline info above to construct the
+   listing: we hope it's in sync with that on the server!
+*/
+
+static char *make_local_tags_buf (void)
+{
+    char *s = NULL;
+    size_t len = 0;
+    int i;
+
+    for (i=0; tag_lookups[i].code > 0; i++) {
+	len += strlen(tag_lookups[i].label) + 8;
+    }
+
+    s = calloc(len, 1);
+
+    if (s != NULL) {
+	char s0[6];
+
+	for (i=0; tag_lookups[i].code > 0; i++) {
+	    sprintf(s0, "C%02d: ", tag_lookups[i].code);
+	    strcat(s, s0);
+	    strcat(s, tag_lookups[i].label);
+	    strcat(s, "\n");
+	}
+    }
+
+    return s;
+}
+
 static void tagsel_callback (GtkComboBox *combo,
 			     function_info *finfo)
 {
@@ -2233,13 +2303,17 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
 	
     err = list_remote_function_categories(&getbuf);
 
-    if (!err && (getbuf == NULL || *getbuf != 'C')) {
+    if (err || getbuf == NULL || *getbuf != 'C') {
 	free(getbuf);
-	err = 1;
+	getbuf = NULL;
     }
 
-    if (err) {
-	return;
+    if (getbuf == NULL) {
+	fprintf(stderr, "add_tag_selectors: couldn't get tags list from server\n");
+	getbuf = make_local_tags_buf();
+	if (getbuf == NULL) {
+	    return;
+	}
     }
 
     if (finfo->tags != NULL) {
