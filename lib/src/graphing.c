@@ -4996,42 +4996,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     return finalize_plot_input_file(fp);
 }
 
-static int check_colorspec (char *s)
-{
-    int n = 0, err = 0;
-    
-    if (*s == '#') {
-	s++;
-	n = strlen(s);
-    } else if (!strncmp(s, "0x", 2) || !strncmp(s, "0X", 2)) {
-	/* normalize to use '#' */
-	char tmp[12];
-
-	sprintf(tmp, "#%s", s+2);
-	strcpy(s, tmp);
-	s++;
-	n = strlen(s);
-    }
-
-    if (n != 6) {
-	/* we allow only RRGGBB */
-	return E_PARSE;
-    } else {
-	char test[2] = {0};
-	unsigned k;
-	int i;
-
-	for (i=0; i<n && !err; i++) {
-	    test[0] = s[i];
-	    if (sscanf(test, "%x", &k) != 1) {
-		err = invalid_field_error(s);
-	    }
-	}
-    }
-
-    return err;
-}
-
 enum {
     BAND_LINE,
     BAND_FILL,
@@ -5227,6 +5191,70 @@ static int parse_band_pm_option (const int *list,
     return err;
 }
 
+static int parse_gnuplot_color (const char *s,
+				char *targ)
+{
+    int hexcheck = 0;
+    int err = 0;
+
+    if (*s == '0') {
+	/* should be 0xRRGGBB */
+	if (strlen(s) != 8) {
+	    err = invalid_field_error(s);
+	} else {
+	    sprintf(targ, "#%s", s + 2);
+	    hexcheck = 1;
+	}
+    } else if (*s == '#') {
+	/* should be #RRGGBB */
+	if (strlen(s) != 7) {
+	    err = invalid_field_error(s);
+	} else {
+	    strcpy(targ, s);
+	    hexcheck = 1;
+	}
+    } else {
+	/* should be gnuplot colorname: look it up */
+	if (strlen(s) < 3 || strlen(s) > 17) {
+	    err = invalid_field_error(s);
+	} else {
+	    char fname[FILENAME_MAX];
+	    FILE *fp;
+
+	    sprintf(fname, "%sdata%cgnuplot%cgpcolors.txt",
+		    gretl_home(), SLASH, SLASH);
+	    fp = gretl_fopen(fname, "r");
+    
+	    if (fp == NULL) {
+		err = E_FOPEN;
+	    } else {
+		char line[32], cname[18], rgb[8];
+	
+		while (fgets(line, sizeof line, fp)) {
+		    if (sscanf(line, "%s %s", cname, rgb) == 2) {
+			if (!strcmp(s, cname)) {
+			    sprintf(targ, "#%s", rgb);
+			    break;
+			}
+		    }
+		}
+		fclose(fp);
+	    }
+	}
+    }
+
+    if (hexcheck) {
+	char *test = NULL;
+
+	strtoul(targ + 1, &test, 16);
+	if (*test != '\0') {
+	    err = invalid_field_error(s);
+	}
+    }
+
+    return err;
+}
+
 /* We're looking here for any one of three patterns:
 
    <style>
@@ -5245,39 +5273,24 @@ static int parse_band_style_option (int *style, char *rgb)
 
     if (s != NULL) {
 	const char *p = strchr(s, ',');
-	int slen = strlen(s);
-	int minlen = 7; /* minimal color spec */
 
 	if (*s == ',') {
 	    /* we're skipping field 1 */
-	    slen--;
-	    s++;
-	    if (slen < minlen || slen > 8) {
-		err = invalid_field_error(s);
-	    } else {
-		strcpy(rgb, s);
-	    }
+	    err = parse_gnuplot_color(s + 1, rgb);
 	} else if (p == NULL) {
-	    if (slen == 4) {
-		/* got a style specifier? */
-		if (!strcmp(s, "fill")) {
-		    *style = BAND_FILL;
-		} else if (!strcmp(s, "dash")) {
-		    *style = BAND_DASH;
-		} else if (!strcmp(s, "line")) {
-		    *style = BAND_LINE;
-		} else {
-		    err = invalid_field_error(s);
-		}
-	    } else if (slen < minlen || slen > 8) {
-		err = invalid_field_error(s);
+	    /* just got field 1, style spec */
+	    if (!strcmp(s, "fill")) {
+		*style = BAND_FILL;
+	    } else if (!strcmp(s, "dash")) {
+		*style = BAND_DASH;
+	    } else if (!strcmp(s, "line")) {
+		*style = BAND_LINE;
 	    } else {
-		strcpy(rgb, s);
+		err = invalid_field_error(s);
 	    }
 	} else {
 	    /* embedded comma: style + color */
-	    minlen += 5;
-	    if (slen < minlen || slen > 8+5) {
+	    if (strlen(s) < 8) {
 		err = invalid_field_error(s);
 	    } else if (!strncmp(s, "fill,", 5)) {
 		*style = BAND_FILL;
@@ -5289,12 +5302,8 @@ static int parse_band_style_option (int *style, char *rgb)
 		err = invalid_field_error(s);
 	    }
 	    if (!err) {
-		strcpy(rgb, s + 5);
+		err = parse_gnuplot_color(s + 5, rgb);
 	    }
-	}
-
-	if (!err && *rgb != '\0') {
-	    err = check_colorspec(rgb);
 	}
     }
 
