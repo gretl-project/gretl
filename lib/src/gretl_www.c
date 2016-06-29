@@ -74,6 +74,7 @@ struct urlinfo_ {
     FILE *fp;                /* for saving content locally */
     int (*progfunc)();       /* progress indicator function */
     int pstarted;            /* progress bar status flag */
+    int timeout;             /* seconds till timing out */
 };
 
 static void urlinfo_init (urlinfo *u, 
@@ -101,6 +102,7 @@ static void urlinfo_init (urlinfo *u,
 
     u->progfunc = NULL;
     u->pstarted = 0;
+    u->timeout = 0;
 
     gretl_error_clear();
 
@@ -399,7 +401,9 @@ static int curl_get (urlinfo *u)
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, u->verbose);
-
+	if (u->timeout > 0) {
+	    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) u->timeout);
+	}
 	if (wproxy && *proxyhost != '\0') {
 	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
 	}
@@ -498,6 +502,11 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, datapkg_list);
     } else {
 	strcat(u.url, datacgi);
+    }
+
+    if (opt == LIST_CATS) {
+	/* getting gfn tags listing for GUI */
+	u.timeout = 10;
     }
 
     if (strstr(gretlhost, "ricardo") == NULL) {
