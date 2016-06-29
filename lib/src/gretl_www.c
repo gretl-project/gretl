@@ -506,7 +506,7 @@ static int retrieve_url (const char *hostname,
 
     if (opt == LIST_CATS) {
 	/* getting gfn tags listing for GUI */
-	u.timeout = 10;
+	u.timeout = 8;
     }
 
     if (strstr(gretlhost, "ricardo") == NULL) {
