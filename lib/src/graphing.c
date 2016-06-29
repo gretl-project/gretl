@@ -5231,14 +5231,16 @@ static int parse_gnuplot_color (const char *s,
 		char line[32], cname[18], rgb[8];
 	
 		while (fgets(line, sizeof line, fp)) {
-		    if (sscanf(line, "%s %s", cname, rgb) == 2) {
-			if (!strcmp(s, cname)) {
-			    sprintf(targ, "#%s", rgb);
-			    break;
-			}
+		    if (sscanf(line, "%s %s", cname, rgb) == 2 &&
+			strcmp(s, cname) == 0) {
+			sprintf(targ, "#%s", rgb);
+			break;
 		    }
 		}
 		fclose(fp);
+		if (*targ != '#') {
+		    err = invalid_field_error(s);
+		}
 	    }
 	}
     }
