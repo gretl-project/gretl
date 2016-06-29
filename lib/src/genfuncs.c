@@ -4015,7 +4015,7 @@ int midas_linear_combo (double *y, const int *list,
 
     if (method == 2 && p != 2) {
 	gretl_errmsg_set("theta must be a 2-vector");
-	return E_DATA;
+	return E_INVARG;
     }
 
     w = gretl_zero_matrix_new(m, 1);
