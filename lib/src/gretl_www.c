@@ -375,6 +375,20 @@ static int gretl_curl_toggle (int on)
     return 0;
 }
 
+static void set_curl_proxy (urlinfo *u, CURL *curl)
+{
+    CURLcode err;
+	    
+    err = curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
+    
+    if (err != CURLE_OK) {
+	fprintf(stderr, "trying to set http proxy '%s':\n", proxyhost);
+	fprintf(stderr, " CURL error %d (%s)", err, curl_easy_strerror(err));
+    } else if (u->verbose) {
+	fprintf(stderr, "using http proxy '%s'\n", proxyhost);
+    }
+}
+
 static int curl_get (urlinfo *u)
 {
     CURL *curl;
@@ -401,11 +415,13 @@ static int curl_get (urlinfo *u)
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, u->verbose);
+	
 	if (u->timeout > 0) {
 	    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) u->timeout);
 	}
+	
 	if (wproxy && *proxyhost != '\0') {
-	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
+	    set_curl_proxy(u, curl);
 	}
 
 #if SSLWIN
@@ -631,7 +647,7 @@ int upload_function_package (const char *login, const char *pass,
 	}
 
 	if (wproxy && *proxyhost != '\0') {
-	    curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
+	    set_curl_proxy(&u, curl);
 	}
 
 	curl_formadd(&post, &last, 
