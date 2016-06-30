@@ -3792,8 +3792,6 @@ static int method_selected (int i, CompactMethod *method)
 #if 0 /* not yet */    
     if (i == 4) {
 	return *method == COMPACT_SPREAD;
-    } else {
-	return *method == COMPACT_RSPREAD;
     }
 #endif    
 }
@@ -3807,16 +3805,14 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	N_("Compact by summing"),
 	N_("Use end-of-period values"),
 	N_("Use start-of-period values"),
-	N_("Spread to multiple series"),
-	N_("Spread to multiple series, reversed"),
+	N_("Spread to multiple series")
     };
     int ccodes[] = {
 	COMPACT_AVG,
 	COMPACT_SUM,
 	COMPACT_EOP,
 	COMPACT_SOP,
-	COMPACT_SPREAD,
-	COMPACT_RSPREAD,
+	COMPACT_SPREAD
     };
     GtkWidget *button;
     GtkWidget *vbox;

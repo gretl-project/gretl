@@ -3113,8 +3113,6 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 	    method = COMPACT_EOP;
 	} else if (!strcmp(s, "spread")) {
 	    method = COMPACT_SPREAD;
-	} else if (!strcmp(s, "rspread")) {
-	    method = COMPACT_RSPREAD;
 	} else if (!strcmp(s, "avg") || !strcmp(s, "average")) {
 	    method = COMPACT_AVG;
 	} else if (*s != '\0') {

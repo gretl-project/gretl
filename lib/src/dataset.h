@@ -72,8 +72,7 @@ typedef enum {
  * @COMPACT_SOP:     use start-of-period value
  * @COMPACT_EOP:     use end-of-period value
  * @COMPACT_WDAY:    use a specified day of the week
- * @COMPACT_SPREAD:  spread out into list
- * @COMPACT_RSPREAD: spread out into list, reversed
+ * @COMPACT_SPREAD:  spread out into multiple series
  * @COMPACT_MAX:     sentinel value
  *
  * Symbolic codes for various methods of compacting data
@@ -90,7 +89,6 @@ typedef enum {
     COMPACT_EOP,
     COMPACT_WDAY,
     COMPACT_SPREAD,
-    COMPACT_RSPREAD,
     COMPACT_MAX
 } CompactMethod;
 

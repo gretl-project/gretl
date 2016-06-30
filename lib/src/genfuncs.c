@@ -4013,22 +4013,21 @@ int midas_linear_combo (double *y, const int *list,
 
     p = gretl_vector_get_length(theta);
 
-    if (method == 2 && p != 2) {
-	gretl_errmsg_set("theta must be a 2-vector");
-	return E_INVARG;
+    if (method == 2) {
+	/* check beta parameters */
+	if (p != 2) {
+	    gretl_errmsg_set("theta must be a 2-vector");
+	    return E_INVARG;
+	} else if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
+	    gretl_errmsg_set("theta must be positive");
+	    return E_INVARG;
+	}	    
     }
 
-    w = gretl_zero_matrix_new(m, 1);
+    w = gretl_column_vector_alloc(m);
     if (w == NULL) {
 	return E_ALLOC;
     }
-
-    if (method == 2) {
-	/* unrestricted beta */
-	if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
-	    goto wdone;
-	}
-    }    
 
     if (method == 1) {
 	/* unrestricted exponential */
@@ -4051,7 +4050,7 @@ int midas_linear_combo (double *y, const int *list,
 	double wsum = 0.0;
 
 	for (i=0; i<m; i++) {
-	    si = (i+1) / (double) (m+1);
+	    si = (i+1) / (double) (m+1); /* over m+1 or just m? */
 	    ai = pow(si, theta->val[0] - 1.0);
 	    bi = pow(1.0 - si, theta->val[1] - 1.0);
 	    w->val[i] = ai * bi;
@@ -4061,8 +4060,6 @@ int midas_linear_combo (double *y, const int *list,
 	    w->val[i] /= wsum;
 	}
     }
-
- wdone:
 
     err = list_linear_combo(y, list, w, dset);
     gretl_matrix_free(w);
