@@ -1312,8 +1312,6 @@ static NODE *powterm (parser *p)
 	t = listvar_node(p);
 	if (t != NULL && (p->sym == G_LPR || p->sym == G_LBR)) {
 	    /* list.series node may be "inflected" as lag or obs */
-	    if (p->sym == G_LPR) 
-		fprintf(stderr, "*** listvar: setting LAG\n");
 	    p->sym = (p->sym == G_LPR)? LAG : OBS;
 	    t = newb2(p->sym, t, NULL);
 	    if (t != NULL) {
