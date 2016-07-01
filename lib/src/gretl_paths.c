@@ -1427,6 +1427,8 @@ char *search_dir (char *fname, const char *topdir, int flags)
 # define fslash(c) (c == '/')
 #endif
 
+#if 0 /* unused, 2016-06-30 */
+
 static int dotpath (const char *fname)
 {
     if (fname[0] == '.') {
@@ -1485,6 +1487,8 @@ static void make_path_absolute (char *fname, const char *orig)
 	}
     }
 }
+
+#endif
 
 /**
  * get_plausible_search_dirs:
