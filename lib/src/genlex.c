@@ -835,6 +835,7 @@ static void function_noargs_error (const char *s, parser *p)
 void context_error (int c, parser *p)
 {
     if (c != 0) {
+	fprintf(stderr, "c = %d, EOT=%d\n", c, EOT);
 	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
 	if (c == '&') {
@@ -844,7 +845,10 @@ void context_error (int c, parser *p)
 	} else if (c == ',') {
 	    p->err = E_PARSE;
 	}
-    } else {
+    } else if (p->sym == EOT) {
+	parser_print_input(p);
+	pputs(p->prn, _("Incomplete expression\n"));
+    } else {	
 	const char *s = getsymb_full(p->sym, p);
 
 	if (s != NULL && *s != '\0' && strcmp(s, "unknown")) {
