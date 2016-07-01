@@ -3999,16 +3999,15 @@ int list_linear_combo (double *y, const int *list,
     return err;
 }
 
-int midas_linear_combo (double *y, const int *list,
-			const gretl_matrix *theta,
-			int method, const DATASET *dset)
+gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
+			     int method, int *err)
 {
     gretl_matrix *w = NULL;
-    int p, m = list[0];
-    int i, j, err = 0;
+    int p, i, j;
 
-    if (method < 1 || method > 2) {
-	return E_INVARG;
+    if (method < 1 || method > 2 || m < 1) {
+	*err = E_INVARG;
+	return NULL;
     }
 
     p = gretl_vector_get_length(theta);
@@ -4017,16 +4016,16 @@ int midas_linear_combo (double *y, const int *list,
 	/* check beta parameters */
 	if (p != 2) {
 	    gretl_errmsg_set("theta must be a 2-vector");
-	    return E_INVARG;
+	    *err = E_INVARG;
 	} else if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
-	    gretl_errmsg_set("theta must be positive");
-	    return E_INVARG;
+	    return NULL;
 	}	    
     }
 
     w = gretl_column_vector_alloc(m);
     if (w == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return NULL;
     }
 
     if (method == 1) {
@@ -4050,7 +4049,7 @@ int midas_linear_combo (double *y, const int *list,
 	double wsum = 0.0;
 
 	for (i=0; i<m; i++) {
-	    si = (i+1) / (double) (m+1); /* over m+1 or just m? */
+	    si = (i+1) / (double) m; /* over m+1 or just m? */
 	    ai = pow(si, theta->val[0] - 1.0);
 	    bi = pow(1.0 - si, theta->val[1] - 1.0);
 	    w->val[i] = ai * bi;
@@ -4061,7 +4060,32 @@ int midas_linear_combo (double *y, const int *list,
 	}
     }
 
-    err = list_linear_combo(y, list, w, dset);
+    return w;
+}
+
+int midas_linear_combo (double *y, const int *list,
+			const gretl_matrix *theta,
+			int method, const DATASET *dset)
+{
+    gretl_matrix *w = NULL;
+    int m = list[0];
+    int err = 0;
+
+    w = midas_weights(m, theta, method, &err);
+
+    if (method == 2 && !err && w == NULL) {
+	int t;
+	
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    y[t] = NADBL;
+	}
+	return 0;
+    }
+
+    if (!err) {
+	err = list_linear_combo(y, list, w, dset);
+    }
+    
     gretl_matrix_free(w);
 
     return err;

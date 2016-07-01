@@ -131,6 +131,9 @@ int list_linear_combo (double *y, const int *list,
 		       const gretl_vector *b, 
 		       const DATASET *dset);
 
+gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
+			     int method, int *err);
+
 int midas_linear_combo (double *y, const int *list,
 			const gretl_matrix *theta,
 			int method,

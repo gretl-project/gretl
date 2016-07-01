@@ -404,6 +404,7 @@ enum {
     F_REDUCE,
     F_SCATTER,
     F_MLINCOMB,
+    F_MWEIGHTS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

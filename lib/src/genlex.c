@@ -456,6 +456,7 @@ struct str_table funcs[] = {
     { F_DEFARRAY,  "defarray" },
     { F_KSETUP,    "ksetup" },
     { F_MLINCOMB,  "mlincomb" },
+    { F_MWEIGHTS,  "mweights" },
     { 0,           NULL }
 };
 
