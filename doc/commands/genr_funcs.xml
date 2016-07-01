@@ -1528,10 +1528,10 @@
 	<para>
 	  If the file name does not contain a full path specification,
 	  it will be looked for in several <quote>likely</quote>
-	  locations, beginning with the currently set
-	  <lit>workdir</lit>. However, if a non-zero value is given
-	  for the optional <argname>import</argname> argument, the
-	  input file is looked for in the user's <quote>dot</quote>
+	  locations, beginning with the currently set <cmdref
+	  targ="workdir"/>. However, if a non-zero value is given for
+	  the optional <argname>import</argname> argument, the input
+	  file is looked for in the user's <quote>dot</quote>
 	  directory. In this case the <argname>fname</argname>
 	  argument should be a plain filename, without any path
 	  component.
@@ -1597,8 +1597,8 @@
 	  value will be non-zero.
 	</para>
 	<para>
-	  The output file will be written in the currently set
-	  <lit>workdir</lit>, unless the <repl>filename</repl> string
+	  The output file will be written in the currently set <cmdref
+	  targ="workdir"/>, unless the <repl>filename</repl> string
 	  contains a full path specification. However, if a non-zero
 	  value is given for the <argname>export</argname> argument,
 	  the output file will be written into the user's
@@ -5255,10 +5255,10 @@
 	<para>
 	  If the file name does not contain a full path specification,
 	  it will be looked for in several <quote>likely</quote>
-	  locations, beginning with the currently set
-	  <lit>workdir</lit>. However, if a non-zero value is given
-	  for the optional <argname>import</argname> argument, the
-	  input file is looked for in the user's <quote>dot</quote>
+	  locations, beginning with the currently set <cmdref
+	  targ="workdir"/>. However, if a non-zero value is given for
+	  the optional <argname>import</argname> argument, the input
+	  file is looked for in the user's <quote>dot</quote>
 	  directory. This is intended for use with the
 	  matrix-exporting functions offered in the context of the
 	  <cmdref targ="foreign"/> command. In this case the
@@ -5421,8 +5421,8 @@
 	  return value will be non-zero.
 	</para>
 	<para>
-	  The output file will be written in the currently set
-	  <lit>workdir</lit>, unless the <repl>filename</repl> string
+	  The output file will be written in the currently set <cmdref
+	  targ="workdir"/>, unless the <repl>filename</repl> string
 	  contains a full path specification. However, if a non-zero
 	  value is given for the <argname>export</argname> argument,
 	  the output file will be written into the user's
@@ -7027,7 +7027,7 @@
 	  file, otherwise flags an error.  If <argname>fname</argname>
 	  does not contain a full path specification, it will be
 	  looked for in several <quote>likely</quote> locations,
-	  beginning with the currently set <lit>workdir</lit>.
+	  beginning with the currently set <cmdref targ="workdir"/>.
 	</para>
 	<para>
 	  If <argname>fname</argname> starts with the identifier of a
@@ -7102,8 +7102,9 @@
 	  deleted for some reason (such as insufficient
 	  privileges). If <argname>fname</argname> does not contain a
 	  full path, then it will be assumed that the given file name
-	  is relative to <lit>workdir</lit>. If the file doesn't exist
-	  or is unwritable, no other directories will be searched.
+	  is relative to <cmdref targ="workdir"/>. If the file doesn't
+	  exist or is unwritable, no other directories will be
+	  searched.
 	</para>
       </description>
     </function>

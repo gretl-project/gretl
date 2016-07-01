@@ -13602,9 +13602,10 @@
 
     <description>
       <para>
-	The working directory is where gretl looks by default when
-	reading or writing data files or scripts via the file Open and
-	Save dialogs. In addition it is the default location for
+	The working directory (or <quote>workdir</quote>) is where
+	gretl looks by default when reading or writing data files or
+	scripts via the file Open and Save dialogs. In addition it is
+	the default location for
       </para>
       <ilist>
 	<li>

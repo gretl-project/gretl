@@ -1299,7 +1299,10 @@ void command_help_callback (int idx, int en)
 
     if (idx > NC) {
 	show_gui_help(idx);
-    } else if (idx > 0) {
+	return;
+    }
+    
+    if (idx > 0) {
 	pos = help_pos_from_index(idx, role);
 	if (pos < 0 && !en && translated_helpfile == 1) {
 	    /* no translated entry: fall back on English */
