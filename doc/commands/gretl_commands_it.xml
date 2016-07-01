@@ -3205,7 +3205,7 @@
       </para>
       <para>
 	Il file di output verrà scritto nella directory corrispondente
-	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
 	di file contenga un percorso completo. 
       </para>
       <para>
@@ -4988,7 +4988,7 @@
       </code>
       <para>
 	Il file di output verrà scritto nella directory corrispondente
-	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
 	di file contenga un percorso completo. 
       </para>
       <para>
@@ -6011,7 +6011,7 @@
 	d'errore; se alcune variabili hanno etichette e altre no, per
 	le seconde viene mostrata una linea vuota. Il file di output
 	verrà scritto nella directory corrispondente al valore
-	corrente di <lit>workdir</lit>, a meno che il nome di file
+	corrente di <cmdref targ="workdir"/>, a meno che il nome di file
 	contenga un percorso completo.
       </para>
       <para>
@@ -6777,7 +6777,7 @@
 	corrente, una per ogni linea. Se il dataset non contiene
 	stringhe viene emesso un messaggio d'errore. Il file di output
 	verrà scritto nella directory corrispondente al valore
-	corrente di <lit>workdir</lit>, a meno che il nome di file
+	corrente di <cmdref targ="workdir"/>, a meno che il nome di file
 	contenga un percorso completo.
       </para>
       <para>
@@ -7241,7 +7241,7 @@
       </para>
       <para>
 	Il file di output verrà scritto nella directory corrispondente
-	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
 	di file contenga un percorso completo. 
       </para>
     </description>
@@ -8141,7 +8141,7 @@
 	Se non si specifica un percorso completo, il programma
 	cercherà automaticamente il file in alcuni percorsi
 	predefiniti, a partire dal valore attuale di
-	<lit>workdir</lit>. Se non si specifica un'estensione per il
+	<cmdref targ="workdir"/>. Se non si specifica un'estensione per il
 	file, come nel primo degli esempi, gretl assume che si tratti
 	di un file di dati standard, con estensione <lit>.gdt</lit>. A
 	seconda del nome del file e di alcune sue caratteristiche,
@@ -8302,7 +8302,7 @@
       </para>
       <para>
 	Il file di output verrà creato nella directory data dal valore
-	corrente di <lit>workdir</lit>, a meno che la stringa
+	corrente di <cmdref targ="workdir"/>, a meno che la stringa
 	<repl>file-output</repl> non contenga essa stessa una
 	specifica completa di percorso.
       </para>
@@ -11117,7 +11117,7 @@
       </para>
       <para>
 	Il file di output verrà scritto nella directory corrispondente
-	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
 	di file contenga un percorso completo. 
       </para>
       <para>
@@ -11486,7 +11486,7 @@
       </para>
       <para>
 	Il file di output verrà scritto nella directory corrispondente
-	al valore corrente di <lit>workdir</lit>, a meno che il nome
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
 	di file contenga un percorso completo. 
       </para>
       <para>
