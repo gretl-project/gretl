@@ -195,7 +195,7 @@ typedef struct {
 RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
       MACHSET | BROWSER, sizeof paths.gretldir, TAB_MAIN, NULL },
-    { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
+    { "workdir", N_("User's gretl directory"), NULL, paths.workdir, 
       INVISET, sizeof paths.workdir, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
@@ -2210,7 +2210,12 @@ static void win32_read_gretlrc (void)
 		strcpy(linevar, line + strlen(key) + 3); 
 		gretl_strstrip(linevar); 
 		if (*linevar != '\0') {
-		    find_and_set_rc_var(key, linevar);
+		    if (!strcmp(key, "userdir")) {
+			/* legacy */
+			find_and_set_rc_var("workdir", linevar);
+		    } else {
+			find_and_set_rc_var(key, linevar);
+		    }
 		}
 	    }
 	}
@@ -2338,7 +2343,11 @@ static int read_gretlrc (void)
 		strncat(linevar, line + strlen(key) + 3, MAXLEN-1); 
 		gretl_strstrip(linevar); 
 		if (*linevar != '\0') {
-		    find_and_set_rc_var(key, linevar);
+		    if (!strcmp(key, "userdir")) {
+			find_and_set_rc_var("workdir", linevar);
+		    } else {
+			find_and_set_rc_var(key, linevar);
+		    }
 		}
 	    }
 	}	

@@ -3758,7 +3758,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	} else if (!strcmp(key, "gnuplot")) {
 	    strncat(cpaths->gnuplot, val, MAXLEN - 1);
 #endif
-	} else if (!strcmp(key, "userdir")) {
+	} else if (!strcmp(key, "workdir") || !strcmp(key, "userdir")) {
+	    /* "userdir" is a legacy thing */
 	    strncat(cpaths->workdir, val, MAXLEN - 1);
 	} else if (!strcmp(key, "no_dotdir")) {
 	    cpaths->no_dotdir = rc_bool(val);
