@@ -13260,7 +13260,7 @@
 
   </command>
 
-  <command name="working-dir" section="Utilities" label="Working directory"
+  <command name="workdir" section="Utilities" label="Working directory"
     context="gui">
 
     <description>

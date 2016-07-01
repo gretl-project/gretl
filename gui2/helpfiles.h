@@ -62,6 +62,8 @@ char *quoted_help_string (const char *s);
 
 int function_help_index_from_word (const char *s);
 
+int extra_command_number (const char *s);
+
 int gui_console_help (const char *param);
 
 void set_up_helpview_menu (windata_t *hwin);

@@ -336,7 +336,7 @@ static int gretl_plugin_unzip (const char *fname,
 
 /*
  * @fname: full path to zipfile to be created.
- * @path: path relative to userdir for files to be picked up
+ * @path: path relative to workdir for files to be picked up
  * and zipped.
  */
 

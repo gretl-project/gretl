@@ -50,6 +50,11 @@
 
 #include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
+/* Dummy "page" numbers for use in hyperlinks: these
+   must be greater than the number of gretl commands
+   and built-in functions to avoid collisions.
+*/
+
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
 #define GFR_PAGE    997
@@ -3696,6 +3701,18 @@ static int get_code_skip (const char *s)
     return skip;
 }
 
+static int command_word_index (const char *s)
+{
+    int i = gretl_command_number(s);
+
+    if (i == 0) {
+	i = extra_command_number(s);
+	if (i < 0) i = 0;
+    }
+
+    return i;
+}
+
 /* return non-zero if we inserted any hyperlinks */
 
 static gboolean
@@ -3733,12 +3750,12 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		if (role == FUNCS_HELP) {
 		    itarg = function_help_index_from_word(targ);
 		} else {
-		    itarg = gretl_command_number(targ);
+		    itarg = command_word_index(targ);
 		}
 		ret = insert_link(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_XREF) {
 		if (role == FUNCS_HELP) {
-		    itarg = gretl_command_number(targ);
+		    itarg = command_word_index(targ);
 		} else {
 		    itarg = function_help_index_from_word(targ);
 		}

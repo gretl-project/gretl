@@ -12255,7 +12255,7 @@
 
   </command>
 
-  <command name="working-dir" section="Utilities" label="Directory di lavoro"
+  <command name="workdir" section="Utilities" label="Directory di lavoro"
     context="gui">
 
     <description>

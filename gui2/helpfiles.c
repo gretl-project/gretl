@@ -125,7 +125,7 @@ static struct gui_help_item gui_help_items[] = {
     { BOOTSTRAP,      "bootstrap" },
     { TRANSPOS,       "transpos" },
     { DATASORT,       "datasort" },
-    { WORKDIR,        "working-dir" },
+    { WORKDIR,        "workdir" },
     { DFGLS,          "dfgls" },
     { GPT_ADDLINE,    "addline" }, 
     { GPT_CURVE,      "curve" }, 
@@ -201,7 +201,12 @@ static int gui_ci_to_index (int ci)
     return -1;
 }
 
-static int extra_command_number (const char *s)
+/* Public because it's wanted in textbuf.c for getting
+   the help indices of certain items that are not actual
+   gretl commands.
+*/
+
+int extra_command_number (const char *s)
 {
     int i;
 
@@ -1292,7 +1297,9 @@ void command_help_callback (int idx, int en)
     int role = (en)? CLI_HELP_EN : CLI_HELP;
     int pos = 0;
 
-    if (idx > 0) {
+    if (idx > NC) {
+	show_gui_help(idx);
+    } else if (idx > 0) {
 	pos = help_pos_from_index(idx, role);
 	if (pos < 0 && !en && translated_helpfile == 1) {
 	    /* no translated entry: fall back on English */

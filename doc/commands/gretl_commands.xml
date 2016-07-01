@@ -3385,8 +3385,8 @@
 	See also <cmdref targ="tabprint"/>.
       </para>
       <para>
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
       <para>
@@ -5230,8 +5230,8 @@
 	graphpg --output="myfile.pdf"
       </code>
       <para>
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
       <para>
@@ -6377,7 +6377,7 @@
 	labels are present an error is flagged; if some series have
 	labels and others do not, a blank line is printed for series
 	with no label. The output file will be written in the currently
-	set <lit>workdir</lit>, unless the <repl>filename</repl>
+	set <cmdref targ="workdir"/>, unless the <repl>filename</repl>
 	string contains a full path specification.
       </para>
       <para>
@@ -7185,8 +7185,8 @@
 	With the option <opt>to-file</opt>, writes to the named file
 	the observation marker strings from the current dataset, one
 	per line. If no such strings are present an error is flagged.
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
       <para>
@@ -7665,8 +7665,8 @@
 	<opt>complete</opt> option.
       </para>
       <para>
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
     </description>
@@ -8567,13 +8567,13 @@
       </para>
       <para>
 	If a full path is not given, the program will search some
-	relevant paths to try to find the file, with
-	<lit>workdir</lit> as a first choice. If no filename suffix
-	is given (as in the first example above), gretl assumes a
-	native datafile with suffix <lit>.gdt</lit>.  Based on the
-	name of the file and various heuristics, gretl will try to
-	detect the format of the data file (native, plain text, CSV,
-	MS Excel, Stata, SPSS, etc.).
+	relevant paths to try to find the file, with <cmdref
+	targ="workdir"/> as a first choice. If no filename suffix is
+	given (as in the first example above), gretl assumes a native
+	datafile with suffix <lit>.gdt</lit>.  Based on the name of
+	the file and various heuristics, gretl will try to detect the
+	format of the data file (native, plain text, CSV, MS Excel,
+	Stata, SPSS, etc.).
       </para>
       <para>
 	If the <opt>frompkg</opt> option is used, gretl will look for
@@ -8721,7 +8721,10 @@
 	Diverts output to <repl>filename</repl>, until further notice.
 	Use the flag <opt>append</opt> to append output to an existing
 	file or <opt>write</opt> to start a new file (or overwrite an
-	existing one).  The <opt>close</opt> flag is used to close an
+	existing one).
+      </para>
+      <para>
+	The <opt>close</opt> flag is used to close an
 	output file that was previously opened as above.  Output will
 	then revert to the default stream. Note that since only one
 	file can be opened via <lit>outfile</lit> at any given time
@@ -8729,18 +8732,18 @@
 	supplied with this variant of the command.
       </para>
       <para>
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
       <para>
 	In the first example command above, the file
 	<filename>regress.txt</filename> is opened for writing, and in
 	the second it is closed.  This would make sense as a sequence
-	only if some commands were issued before the
-	<opt>close</opt>.  For example if an <cmd>ols</cmd> command
-	intervened, its output would go to
-	<filename>regress.txt</filename> rather than the screen.
+	only if some commands were issued before the <opt>close</opt>.
+	For example if an estimation command intervened, its output
+	would go to <filename>regress.txt</filename> rather than the
+	screen.
       </para>
       <para>
 	Three special variants on the above are available. If you give
@@ -8768,16 +8771,17 @@
 	restored.
       </para>
       <para>
-	Only one file can be opened in this way at any given
-	time. Therefore, calls to this command cannot be
-	nested. However, usage of this command is permitted inside
+	In general only one file can be opened in this way at any
+	given time, so calls to this command cannot be
+	nested. However, use of this command is permitted inside
 	user-written functions (provided the output file is also
 	closed from inside the same function), so output can be
-	temporarily diverted and then given back to the original
-	output file. For example, the code
+	temporarily diverted and then given back to an original output
+	file (if <lit>outfile</lit> is currently in use by the
+	caller). For example, the code
       </para>
       <code>
-	function void f(string s)
+	function void f (string s)
 	    outfile inner.txt --write
 	    print s
 	    outfile --close
@@ -8789,12 +8793,17 @@
 	print "Outside again"
 	outfile --close
       </code>
-      will produce a file called <quote>outer.txt</quote> containing the two lines
+      <para>
+	will produce a file called <quote>outer.txt</quote> containing
+	the two lines
+      </para>
       <code>
 	Outside
 	Outside again
       </code>
-      and a file called <quote>inner.txt</quote> containing the line
+      <para>
+	and a file called <quote>inner.txt</quote> containing the line
+      </para>
       <code>
 	Inside
       </code>
@@ -11002,6 +11011,20 @@
       </para>
       <ilist>
 	<li>
+	  <para><lit>workdir</lit>: <repl>path</repl>.  Sets the
+	  default directory for writing and reading files, whenever
+	  full paths are not specified.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>use_cwd</lit>: <lit>on</lit> or <lit>off</lit>
+	  (the default). Governs the setting of <lit>workdir</lit> at
+	  start-up: if it's <lit>on</lit>, the working directory is
+	  inherited from the shell, otherwise it is set to whatever
+	  was selected in the previous gretl session.
+	  </para>
+	</li>	
+	<li>
 	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the default),
 	    <lit>space</lit>, <lit>tab</lit> or <lit>semicolon</lit>.  Sets
 	    the column delimiter used when saving data to file in CSV format.
@@ -11120,18 +11143,7 @@
 	</li>
 	<li>
 	  <para><lit>shelldir</lit>: <repl>path</repl>.  Sets the current
-	  working directory for shell commands.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>use_cwd</lit>: <lit>on</lit> or <lit>off</lit>
-	  (the default). This setting affects the behavior of the
-	  <cmdref targ="outfile"/> and <cmdref targ="store"/>
-	  commands, which write external files. Normally, the file
-	  will be written in the user's default data directory; if
-	  <lit>use_cwd</lit> is <lit>on</lit>, on the contrary, the
-	  file will be created in the working directory when gretl was
-	  started.
+	  working directory for shell commands issued from within gretl.
 	  </para>
 	</li>
 	<li>
@@ -12277,8 +12289,8 @@
 	sample range are saved.
       </para>
       <para>
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
       <para>
@@ -12649,8 +12661,8 @@
 	current session.
       </para>
       <para>
-	The output file will be written in the currently set
-	<lit>workdir</lit>, unless the <repl>filename</repl> string
+	The output file will be written in the currently set <cmdref
+	targ="workdir"/>, unless the <repl>filename</repl> string
 	contains a full path specification.
       </para>
       <para> 
@@ -13585,45 +13597,67 @@
 
   </command>
 
-  <command name="working-dir" section="Utilities" label="Working directory"
+  <command name="workdir" section="Utilities" label="Working directory"
     context="gui">
 
     <description>
       <para>
-	The <quote>working directory</quote> is where gretl looks
-	by default when reading or writing data files or scripts
-	via the file Open and Save dialogs.
-      </para>
-      <para>
-	In addition the working directory is the default location for
+	The working directory is where gretl looks by default when
+	reading or writing data files or scripts via the file Open and
+	Save dialogs. In addition it is the default location for
       </para>
       <ilist>
 	<li>
 	  <para>
-	    reading files via the script commands <lit>append</lit>,
-	    <lit>open</lit>, <lit>run</lit> and <lit>include</lit>; and
+	    reading files via commands such as <lit>append</lit>,
+	    <lit>open</lit>, <lit>run</lit> and <lit>include</lit>;
+	    and
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    writing files via the commands <lit>eqnprint</lit>,
-	    <lit>tabprint</lit>, <lit>gnuplot</lit>, <lit>outfile</lit>
-	    and <lit>store</lit>.
+	    writing files via commands such as <lit>eqnprint</lit>,
+	    <lit>tabprint</lit>, <lit>gnuplot</lit>,
+	    <lit>outfile</lit> and <lit>store</lit>.
 	  </para>
 	</li>
       </ilist>
       <para>
-	The option of having gretl use the current directory (as
-	determined via the shell) at start-up may be useful to people who
-	are in the habit of launching gretl from a command prompt rather
-	than a menu or icon.
+	The working directory can be set in either of two ways:
+	using the dialog accessed by the <quote>Working
+	directory</quote> item under the File menu, or using
+	the <cmdref targ="set"/> command, as in
+      </para>
+      <code>
+	set workdir /path/to/somewhere
+      </code>
+      <para>
+	The current value of the <lit>workdir</lit> variable can be
+	inspected in the dialog just mentioned or via the command
+      </para>
+      <code>
+	eval $workdir
+      </code>      
+      <para>
+	By default the value of <lit>workdir</lit> is preserved across
+	gretl sessions. However, users who like to work from the
+	command prompt (launching gretl from a terminal window) may
+	prefer to have the working directory set automatically as the
+	current directory (according to the shell) at start-up.
+	This option can be selected in the dialog or by the command
+      </para>
+      <code>
+	set use_cwd on
+      </code>
+      <para>
+	(<quote>cwd</quote> = current working directory).
       </para>
       <para>
-	This dialog also allows you to set the behavior of the GUI file
-	selector: when you open or save a file in a given folder, should the
-	selector remember and return to the same folder on the next
-	invocation?  Or should the selector always visit the chosen working
-	directory?
+	The working directory dialog also allows you to set the
+	behavior of the GUI file selector: when you open or save a
+	file in a given folder, should the selector remember and
+	return to the same folder on the next invocation?  Or should
+	the selector always visit the chosen working directory?
       </para>
     </description>
 
