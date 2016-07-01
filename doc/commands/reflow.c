@@ -538,10 +538,11 @@ static char *code_get_line (char *line, char **pbuf)
 
     strncat(line, buf, n);
     buf += n;
-    buf += strspn(buf, "\n\r");
+    if (*buf == '\r') buf++;
+    if (*buf == '\n') buf++;
     *pbuf = buf;
 
-    return line == '\0' ? NULL : line;
+    return line == '\0' ? "\n" : line;
 }
 
 static void format_code_buf (char *buf, int ptype)
