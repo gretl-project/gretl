@@ -4430,13 +4430,20 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretlopt opt = OPT_NONE;
-	int k, *list = NULL;
+	gretl_matrix *v = NULL;
+	int k = 0, *list = NULL;
 
 	if (!null_or_empty(r)) {
 	    k = node_get_int(r, p);
 	    if (!p->err && k != 0) {
 		opt = OPT_L;
 	    }
+	}
+
+	if (scalar_node(l)) {
+	    k = node_get_int(l, p);
+	} else {
+	    v = l->v.m;
 	}
 
 	if (!p->err) {
@@ -4454,9 +4461,8 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    if (list == NULL) {
 		p->err = E_ALLOC;
 	    } else {
-		k = node_get_int(l, p);
-		if (!p->err && list[0] > 0) {
-		    p->err = list_laggenr(&list, k, p->dset, opt);
+		if (list[0] > 0) {
+		    p->err = list_laggenr(&list, k, v, p->dset, opt);
 		}
 		ret->v.ivec = list;
 	    }
@@ -11838,7 +11844,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-	if (scalar_node(l) && ok_list_node(m)) {
+	if ((scalar_node(l) || l->t == MAT) && ok_list_node(m)) {
 	    ret = list_make_lags(l, m, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
