@@ -3999,6 +3999,11 @@ int list_linear_combo (double *y, const int *list,
     return err;
 }
 
+/* Computes a column m-vector holding weights for use with MIDAS:
+   at present only exponential Almon (method = 1) and Beta (method
+   = 2) are supported.
+*/
+
 gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 			     int method, int *err)
 {
@@ -4014,10 +4019,12 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 
     if (method == 2) {
 	/* check beta parameters */
+	double eps = 2.2204e-16;
+
 	if (p != 2) {
 	    gretl_errmsg_set("theta must be a 2-vector");
 	    *err = E_INVARG;
-	} else if (theta->val[0] <= 0.0 || theta->val[1] <= 0.0) {
+	} else if (theta->val[0] < eps || theta->val[1] < eps) {
 	    return NULL;
 	}	    
     }
@@ -4049,7 +4056,7 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 	double wsum = 0.0;
 
 	for (i=0; i<m; i++) {
-	    si = (i+1) / (double) m; /* over m+1 or just m? */
+	    si = (i+1) / (double) m;
 	    ai = pow(si, theta->val[0] - 1.0);
 	    bi = pow(1.0 - si, theta->val[1] - 1.0);
 	    w->val[i] = ai * bi;
