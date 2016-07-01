@@ -462,9 +462,16 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
 	if (opt & OPT_O) {
 	    gi->flags |= GPT_LINES;
-	}	
+	}
+	gi->flags |= GPT_FIT_OMIT;
 	gi->band = 1;
 	return 0;
+    }
+
+    if (opt & OPT_S) {
+	/* the old --suppress-fitted option may still be used
+	   internally, for some plot types */
+	gi->flags |= GPT_FIT_OMIT;
     }
 
     if (opt & OPT_R) {
