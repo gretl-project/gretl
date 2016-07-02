@@ -10,6 +10,7 @@ include @pkgdir/gig_setup.inp
 include @pkgdir/gig_estimate.inp
 include @pkgdir/gig_printout.inp
 include @pkgdir/gig_plot.inp
+include @pkgdir/gig_fcast.inp
 
 makepkg gig.gfn --index --translations --quiet --dtd="@dtd"
 
