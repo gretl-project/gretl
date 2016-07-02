@@ -1,5 +1,6 @@
 author = Riccardo "Jack" Lucchetti and Stefano Balietti
 email = r.lucchetti@univpm.it
+tags = C22
 version = 2.2
 date = 2016-07-02
 description = An assortment of univariate GARCH models

@@ -23,7 +23,8 @@ INP = gig_estimate.inp \
       gig_mle.inp \
       gig_plot.inp \
       gig_printout.inp \
-      gig_setup.inp
+      gig_setup.inp \
+      gig_fcast.inp
 
 all: $(PKG).gfn pdfdoc
 
