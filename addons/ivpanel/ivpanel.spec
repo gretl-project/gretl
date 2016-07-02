@@ -1,5 +1,6 @@
 author = Allin Cottrell
 email = cottrell@wfu.edu
+tags = C23 C26
 version = 0.5
 date = 2015-10-18
 description = Within and Between TSLS models plus G2SLS

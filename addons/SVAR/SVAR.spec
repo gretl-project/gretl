@@ -1,5 +1,6 @@
 author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
+tags = C32
 version = 1.2
 date = 2015-10-18
 description = Structural VARs
