@@ -14,6 +14,7 @@ bundle-print = gig_bundle_print
 bundle-plot = GUI_gig_plot
 gui-main = GUI_gig
 label = gig
+tags = C22
 help = gig.pdf
 sample-script = examples/example1.inp
 min-version = 2016b
