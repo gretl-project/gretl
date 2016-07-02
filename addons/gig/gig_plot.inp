@@ -231,11 +231,16 @@ function void gig_dplot(bundle *model)
     gnuplot --input="@tmpfile" --output="display"
 end function
 
-function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
-                           "Plot type" {"Time series", "Density"})
+
+    
+function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \
+                           "Plot type" {"Time series", "Density", "Forecast"})
     if ptype == 0
         gig_plot(&model)
-    else 
+    elif ptype == 1
         gig_dplot(&model)  
+    elif ptype == 2
+	matrix tmp = gig_var_fcast(&model, 15, 1024)
+        gig_vfgraph(tmp, model, 60, 0.9)  
     endif
 end function

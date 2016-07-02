@@ -1,3 +1,31 @@
+function string s_modeltype(bundle *mod)
+    scalar type  = mod.type
+    scalar p    = mod.p
+    scalar q    = mod.q
+    
+    if type =  0
+        return sprintf("ARCH(%d) [Engle]", p)
+    elif type =  1
+        return sprintf("GARCH(%d,%d) [Bollerslev]", p, q)
+    elif type =  2
+        return sprintf("Taylor/Schwert's GARCH(%d,%d)", p, q)
+    elif type =  3
+        return sprintf("GJR(%d,%d) [Glosten et al.]", p, q)
+    elif type =  4
+        return sprintf("TARCH(%d,%d) [Zakoian]", p, q)
+    elif type =  5
+        return sprintf("NARCH(%d,%d) [Higgins and Bera]", p, q)
+    elif type =  6
+        return sprintf("APARCH(%d,%d) [Ding]", p, q)
+    elif type =  7
+        return sprintf("EGARCH(%d,%d) [Nelson]", p, q)
+    elif type =  8
+        return sprintf("GARCH-in-mean(%d,%d) [Engle]", p, q)
+    elif type =  9
+        return sprintf("free-APARCH(%d,%d)", p, q)
+    endif
+end function			    
+
 function void gig_printHeader(bundle *mod)
 
     ncoeff  = rows(mod.coeff) # rows
@@ -13,29 +41,7 @@ function void gig_printHeader(bundle *mod)
     t2   = mod.t2
     nobs = mod.nobs
 
-    printf "\nModel: "
-
-    if type =  0
-        printf "ARCH(%d) [Engle]", p
-    elif type =  1
-        printf "GARCH(%d,%d) [Bollerslev]", p, q
-    elif type =  2
-        printf "Taylor/Schwert's GARCH(%d,%d)", p, q
-    elif type =  3
-        printf "GJR(%d,%d) [Glosten et al.]", p, q
-    elif type =  4
-        printf "TARCH(%d,%d) [Zakoian]", p, q
-    elif type =  5
-        printf "NARCH(%d,%d) [Higgins and Bera]", p, q
-    elif type =  6
-        printf "APARCH(%d,%d) [Ding]", p, q
-    elif type =  7
-        printf "EGARCH(%d,%d) [Nelson]", p, q
-    elif type =  8
-        printf "GARCH-in-mean(%d,%d) [Engle]", p, q
-    elif type =  9
-        printf "free-APARCH(%d,%d)", p, q
-    endif
+    printf "\nModel: %s", s_modeltype(&mod)
 
     # DISTRIBUTIONS ordered by no. of extra params
 
@@ -58,7 +64,7 @@ function void gig_printHeader(bundle *mod)
     # OBS used
 
     printf "\nDependent variable: %s", mod.depvarname
-    printf "\nSample: %s-%s (T = %d)", obslabel(t1), obslabel(t2), nobs
+    printf "\nSample: %s -- %s (T = %d)", obslabel(t1), obslabel(t2), nobs
 
     # VCV 
 

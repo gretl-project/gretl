@@ -87,7 +87,7 @@
 
 \title{The \gig\ package}
 \author{Jack Lucchetti \and Stefano Balietti}
-\date{version 2.14}
+\date{version 2.2}
 \begin{document}
 
 \maketitle
@@ -844,22 +844,29 @@ disabled by default.
 \subsection{Forecasting}
 \label{sec:forecast}
 
-The package does not contain, at present, functions for
-forecasting. To some extent, that's because we're sort of lazy. But it
-should also be said that writing a routine for volatility forecasting
-using conditionally heteroskedastic models is quite difficult to do
-properly: there are many choices that you may want to
-make that are not obvious at all, and therefore hard to automate.
+As of version 2.2 (July 2016) there is now a function for
+simulation-based variance
+forecasting named \cmd{gig\_var\_fcast}. It takes 3 arguments:
+\begin{enumerate}
+\item a pointer to the bundle containing the model
+\item the horizon up to which you want the forecast
+\item the number of draws to use in the simulation
+\end{enumerate}
 
-
-However, for simple models a simple script should be quite easy to set
-up: you estimate the model first, fetch all the necessary quantities
-from the bundle containing your model, and create your forecast. A
-simple example script follows.
+In practice, future values for $\sigma^2_t$ will be calculated by
+means of equation \eqref{eq:aparch};\footnote{No, no EGARCH yet;
+  sorry.} the future $\uhat_t$ terms are drawn with replacement from
+the residuals of the model.  It will return a matrix with the
+simulation results for your playing pleasure.
+ 
+The same matrix can be used as the first argument to the companion
+function \cmd{gig\_vfgraph}, for which we defer to section
+\ref{sec:plots}.  A brief example follows.
 
 \begin{scode}
 set echo off
 set messages off
+set seed 123
 
 open b-g.gdt --quiet
 include gig.gfn
@@ -870,41 +877,17 @@ gig_estimate(&heraclitus)
 #    forecast
 # ---------------
 
-# grab all the ingredients from the bundle               
-series h = heraclitus.h
-series uhat = heraclitus.uhat
-matrix theta = heraclitus.coeff
+scalar horizon = 390
+scalar rep = 400
+matrix varfore = gig_var_fcast(&heraclitus, 39, 1024)
+\end{scode}
 
-# generate the parameters as scalars from the 
-# estimated coefficients vector (see appendix B)
-
-scalar omega = theta[2]
-scalar alpha = theta[3]
-scalar beta  = theta[5]
-
-# now extend the dataset by 20 observations
-dataset addobs 20
-
-# and select a sub-sample
-scalar latest = $nobs - 25
-smpl latest ;
-
-# initialize
-series fore = h[latest]
-# use GARCH formula while in-sample and 
-# conditional variance afterwards
-series fore = omega  + beta * fore(-1) + \
-              alpha * (ok(uhat(-1)) ? uhat(-1)^2 : fore(-1))
-
-# mummy, look at the pretty picture!
-gnuplot fore time --with-lines --suppress-fitted --output=display
-
-# restore full sample 
-smpl full
-  \end{scode}
-%$
-
-
+The matrix \texttt{varfore} will contain 39 rows and 1024 columns with
+the simulation results. If, for example, you'd like to calculate the
+median of the simulated variances, all you have to do is 
+\begin{code}
+matrix median_vola = quantile(varfore', 0.5)'  
+\end{code}
 
 \section{Plots}
 \label{sec:plots}
@@ -922,18 +905,21 @@ smpl full
 \end{figure}
 
 
-The \gig\ package provides two built-in functions for plotting the
-results of a model: \texttt{gig\_plot} and \texttt{gig\_dplot}, which
-correspond to the ``Time series'' and the ``Density'' entries of the
-``Plot'' GUI menu (see subsection \ref{sec:GUI}). 
+The \gig\ package provides three built-in functions for plotting the
+results of a model: \cmd{gig\_plot}, \cmd{gig\_dplot} and
+\cmd{gig\_vfgraph}, which correspond to the ``Time series'',
+``Density'' and the ``Forecast'' entries of the ``Plot'' GUI menu (see
+subsection \ref{sec:GUI}).
 
-The former produces a plot that is very similar to the one that
-\app{gretl}'s native GARCH routine gives you after estimation, that is
-a time-plot of the model residuals and the estimated conditional
-standard deviation. The latter compares the estimated density of the
-standardised innovations to their non-parametric kernel estimate and
-can be used for judging visually how adequate the choice of a
-conditional distribution is.
+The \cmd{gig\_plot} function produces a plot that is very similar to
+the one that \app{gretl}'s native GARCH routine gives you after
+estimation, that is a time-plot of the model residuals and the
+estimated conditional standard deviation. 
+
+The \cmd{gig\_plot} function, instead, compares the estimated density
+of the standardised innovations to their non-parametric kernel
+estimate and can be used for judging visually how adequate the choice
+of a conditional distribution is.
 
 The following code
 fragment exemplifies of their usage in a script; the input code:
@@ -978,6 +964,14 @@ Sample: 1-1974 (T = 1974), VCV method: Robust
 	BIC:    2017.70544	 HQC:   1996.49706
 \end{code}
 and the plots shown in Figure \ref{fig:ex-plots}.
+
+The function \cmd{gig\_vfgraph}, instead, is a little more complex: it
+takes four arguments. The first one is a matrix with the results of
+the simulations used to forecast the variances, such as the one
+produced by the \cmd{gig\_var\_fcast} function. The other two are two
+scalars indicating how many observation of the in-sample fitted
+variants you want in the graph and the width of the coverage region
+(between 0 and 1).
 
 \section{Numerical issues}
 \label{sec:numerical}
