@@ -67,7 +67,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 
 	    series e2 = e*e
 	    scalar K1 = lngamma((ni+1)/2) - lngamma(ni/2) - 0.5*ln(pi*(ni-2))
-	    series ret = K1 - 0.5 * ln(h) - 0.5*(ni+1) * ln( 1+ e2/(h * (ni-2)))
+	    series ret = K1 - 0.5 * ln(h) - 0.5*(ni+1) * ln(1 + e2/(h*(ni-2)))
 
 	    series den = e2 + (ni-2)*h
 	    de = - (ni + 1) * e / den

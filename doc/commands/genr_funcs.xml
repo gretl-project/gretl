@@ -4324,17 +4324,26 @@
 
     <function name="lags" section="transforms" output="list">
       <fnargs>
-	<fnarg type="int">p</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
 	<fnarg type="series-or-list">y</fnarg>
 	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Generates lags 1 to <argname>p</argname> of the series
-	  <argname>y</argname>, or if <argname>y</argname> is a list, of all
-	  series in the list.  If <argname>p</argname> = 0, the maximum
-	  lag defaults to the periodicity of the data; otherwise
+	  If the first argument is a scalar, generates lags 1 to
+	  <argname>p</argname> of the series <argname>y</argname>, or
+	  if <argname>y</argname> is a list, of all series in the
+	  list.  If <argname>p</argname> = 0, the maximum lag defaults
+	  to the periodicity of the data; otherwise
 	  <argname>p</argname> must be positive.
+	</para>
+	<para>
+	  If a vector is given as the first argument, the lags
+	  generated are those specified in the vector. Common usage
+	  in this case would be to give <argname>p</argname> as, for
+	  example, <lit>seq(3,7)</lit>, hence omitting the first and
+	  second lags. However, it is OK to give a vector with gaps,
+	  as in <lit>{3,5,7}</lit>.
 	</para>
 	<para> 
 	  The generated variables are automatically named according to

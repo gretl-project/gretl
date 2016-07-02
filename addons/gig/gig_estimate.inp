@@ -83,4 +83,3 @@ function scalar gig_estimate(bundle *model, int verbose[0:2:1])
    return err
 
 end function
-

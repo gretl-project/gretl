@@ -1182,11 +1182,32 @@ static int *make_lags_list (int *list, int order)
     return gretl_list_new(nl);
 }
 
+static int lag_wanted (int p, const gretl_matrix *v, int n)
+{
+    int ret = 1;
+
+    if (v != NULL) {
+	int i;
+
+	ret = 0; /* reverse the assumption */
+
+	for (i=0; i<n; i++) {
+	    if (v->val[i] == p) {
+		ret = 1;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
  * list_laggenr:
  * @plist: on entry, pointer to list of variables to process.  On exit
  * the list holds the ID numbers of the lag variables.
  * @order: number of lags to generate (or 0 for automatic).
+ * @lvec: (optional alternative) vector holding lags to generate.
  * @dset: dataset struct.
  * @opt: may contain OPT_L to order the list by lag rather than
  * by variable. 
@@ -1197,19 +1218,32 @@ static int *make_lags_list (int *list, int order)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int list_laggenr (int **plist, int order, DATASET *dset,
-		  gretlopt opt)
+int list_laggenr (int **plist, int order,
+		  const gretl_matrix *lvec,
+		  DATASET *dset, gretlopt opt)
 {
     int origv = dset->v;
     int *list = *plist;
     int *laglist = NULL;
     int l, i, j, v, lv;
     int startlen, l0 = 0;
+    int n = 0, lmin = 0;
     int err;
 
-    if (order < 0) {
+    if (lvec != NULL) {
+	n = gretl_vector_get_length(lvec);
+	if (n == 0) {
+	    return E_INVARG;
+	}
+	lmin = lvec->val[0];
+	order = lvec->val[n-1];
+    } else {
+	lmin = 1;
+    }
+
+    if (order < 0 || order > dset->n) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
-	return E_DATA;
+	return E_INVARG;
     }
 
     if (order == 0) {
@@ -1233,7 +1267,10 @@ int list_laggenr (int **plist, int order, DATASET *dset,
 
     if (opt & OPT_L) {
 	/* order the list by lags */
-	for (l=1; l<=order; l++) {
+	for (l=lmin; l<=order; l++) {
+	    if (!lag_wanted(l, lvec, n)) {
+		continue;
+	    }
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
 		lv = get_transform(LAGS, v, l, 0.0, dset,
@@ -1248,7 +1285,10 @@ int list_laggenr (int **plist, int order, DATASET *dset,
 	/* order by variable */
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    for (l=1; l<=order; l++) {
+	    for (l=lmin; l<=order; l++) {
+		if (!lag_wanted(l, lvec, n)) {
+		    continue;
+		}		
 		lv = get_transform(LAGS, v, l, 0.0, dset,
 				   startlen, origv, NULL);
 		if (lv > 0) {

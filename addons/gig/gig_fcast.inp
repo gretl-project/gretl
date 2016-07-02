@@ -1,0 +1,148 @@
+# include ~/src/gretl-git/addons/gig/gig_printout.inp
+
+function matrix aparch_fcast(matrix e, matrix e0, matrix h0, 
+      scalar omega, matrix alpha, matrix gamma, matrix beta, scalar delta)
+
+    # in principle, we could just as well use the aparchFilter
+    # function from gig_mle.inp, but this is lighter and more specialised
+    
+    q = rows(alpha)
+    p = rows(beta)
+    head = xmax(p,q)
+    scalar hor = rows(e)
+
+    scalar is_asymmetric = maxc(abs(gamma)) .> 1.0e-07
+
+    matrix ee  = e0 | e  
+    matrix ae = abs(ee)
+    h0init = h0.^(delta/2)
+    scalar s = head + 1
+
+    matrix elag = mlag(ee, seq(1,q))
+    if is_asymmetric
+       	tmp_ae = abs(elag) - elag .* gamma'
+    else
+       	tmp_ae = abs(elag)
+    endif
+
+    matrix h = omega + (tmp_ae.^delta) * alpha 
+    matrix ret = p>0 ? filter(h0init | h, 1, beta) : h
+    ret = ret[2*head+1:]
+    
+    if delta != 2
+	ret = ret.^(2/delta)
+    endif
+
+    return ret
+    
+end function
+
+function matrix s2m(series x)
+    matrix a = ok(x)
+    matrix b = misszero(x)
+    return selifr(b,a)
+end function
+
+/* -------------- PUBLIC FUNCTIONS START HERE --------------------- */
+    
+function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
+
+    DBG = 0
+    
+    matrix ret = {}
+    # checks
+    if mod.type == 7 || mod.vk > 1 # EGARCH or exo in variance
+        printf "Variance forecasting not available for this model (yet)\n"
+        return ret
+    endif
+
+    if mod.type == 2 ||  mod.type > 3 
+        printf "FIXME: results may be fishy for delta != 2\n"
+    endif
+
+    # fetch stuff from the bundle first
+    loop foreach i p q mk --quiet
+        scalar $i = mod.$i
+    endloop 
+
+    # matrix e = s2m(mod.stduhat)
+    matrix e = s2m(mod.uhat)
+    matrix h = s2m(mod.h)
+    
+    scalar ini = mk+1
+    scalar fin = mk+1
+    scalar omega = mod.coeff[ini:fin]
+    ini = fin+1
+    fin += q
+    matrix alpha = mod.coeff[ini:fin]
+    ini = fin+1
+    fin += q
+    matrix gamma = mod.coeff[ini:fin]
+    ini = fin+1
+    fin += p
+    matrix beta = mod.coeff[ini:fin]
+    scalar delta = mod.coeff[fin+1]
+
+    # --- debug ----------------------------------
+    if DBG
+        printf "real_do_fcast:\n" 
+        print omega alpha gamma beta delta
+    endif
+    
+    # --------------------------------------------
+
+    matrix sel = ceil(muniform(horizon,rep) * rows(e)) # b'strap selector
+    scalar back = xmax(p,q)
+    matrix h0 = h[rows(h)-back+1:]
+    matrix e0 = e[rows(e)-back+1:]
+
+    # --- debug ----------------------------------
+    if DBG
+        printf "real_do_fcast:\n" 
+        print e0 h0
+    endif
+    # --------------------------------------------
+    
+    matrix ret = zeros(horizon, rep)
+
+    loop i=1..rep --quiet
+        matrix ei = e[sel[,i]]
+        scalar chk = sumc(ei)
+        if !ok(chk)  
+            printf "%16.8f\n", ei ~ sel[,i]
+        endif
+        ret[,i] = aparch_fcast(ei, e0, h0, omega, alpha, gamma, beta, delta)
+    endloop
+
+    return ret
+end function
+
+function void gig_vfgraph(const matrix f, bundle mod, scalar before,
+			  scalar alpha)
+
+    scalar horizon = rows(f)
+    scalar a = (1-alpha)/2
+    q0 = quantile(f', a)'
+    q1 = quantile(f', 1-a)'
+    m = meanc(f')'
+    me = quantile(f',0.5)'
+    matrix h = s2m(mod.h)
+
+    matrix hinit = h[rows(h)-before:]
+    matrix gp1 = ( hinit | me ) ~ seq(0,horizon+before)' 
+    matrix gp2 = ( hinit ~ 0 ) | ((q0+q1) ~ (q1-q0))/2
+
+    string ylab = sprintf("set ylabel 'conditional variance for %s'", \
+			  mod.depvarname)
+    string titlelab = sprintf("set title \"%s\"", s_modeltype(&mod))
+    plot gp1
+        option --with-lines
+        option --fit=none
+        option --band=gp2
+        option --band-style=fill
+	literal @ylab
+	literal @titlelab
+	literal unset xlabel
+    end plot --output=display
+end function
+    

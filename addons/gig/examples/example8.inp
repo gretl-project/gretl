@@ -1,0 +1,30 @@
+# Example n. 8
+
+# estimate a simple model and then perform
+# variance forecasting via simulation
+
+set echo off
+set messages off
+set seed 123
+include gig.gfn
+
+# estimate a simple model
+
+open nysewk
+rr = ldiff(close) * 100
+list X = const
+mod = gig_setup(rr, 3, X)
+gig_estimate(&mod, 1)
+
+# now forecast
+scalar horizon = 39   # how many steps ahead?
+scalar rep = 4096     # how many simulations?
+matrix varfore1 = gig_var_fcast(&mod, horizon, rep)
+
+# how many values of the estimated in-sample volatility
+# do we want in the graph?
+
+scalar before = 260 
+
+# do the graph
+gig_vfgraph(varfore1, mod, before, 0.9)

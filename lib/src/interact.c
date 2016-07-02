@@ -2572,7 +2572,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case LAGS:
-	err = list_laggenr(&listcpy, cmd->order, dset, OPT_NONE); 
+	err = list_laggenr(&listcpy, cmd->order, NULL, dset, OPT_NONE); 
 	if (!err) {
 	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();

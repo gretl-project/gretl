@@ -349,13 +349,10 @@ function void adjust_for_scale(bundle *m, scalar scale)
 	m.coeff = m.coeff .* J1
 	m.stderr = m.stderr .* J2
 	m.vcv = m.vcv .* (J2*J2')
+	m.uhat = m.uhat / scale
 	m.h = m.h / sc2
 	crit_adj = ln(scale)*m.nobs .* {1; -2; -2; -2}
 	m.criteria = m.criteria + crit_adj
-    endif
-    
-    if inbundle(m, "uhat")
-	m.uhat. = m.uhat / scale
     endif
 
 end function
