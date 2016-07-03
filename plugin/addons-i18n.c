@@ -11,6 +11,7 @@ const char *gig_translations[] = {
     N_("Dependent Variable"),
     N_("Distribution"),
     N_("EGARCH"),
+    N_("Forecast"),
     N_("GARCH"),
     N_("GED"),
     N_("GJR"),
