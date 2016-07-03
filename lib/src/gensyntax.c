@@ -1414,18 +1414,18 @@ static NODE *powterm (parser *p)
     return t;
 }
 
-/* convert B_POW to right associativity: that is,
+/* convert binary operator to right associativity: that is,
    
-       pow           pow
+       opr           opr
       L   R         L   R
       |   |   ->    |   |
-     pow  c         a  pow
+     opr  c         a  opr
      | |               | |
      a b               b c
 
 */
 
-static void convert_pow_term (NODE *n)
+static void convert_associativity (NODE *n)
 {
     NODE *L = n->v.b2.l;
     NODE *a = L->v.b2.l;
@@ -1449,6 +1449,17 @@ static int pow_pow_node (NODE *n)
 	NODE *l = n->v.b2.l;
 
 	return pow_sym(l->t) && !(l->flags & PAR_NODE);
+    } else {
+	return 0;
+    }
+}
+
+static int tr_tr_node (NODE *n)
+{
+    if (n->t == B_TRMUL) {
+	NODE *l = n->v.b2.l;
+
+	return l->t == B_TRMUL;
     } else {
 	return 0;
     }
@@ -1505,16 +1516,18 @@ static NODE *factor (parser *p)
 		    if (upsym == B_TRMUL && must_be_unary(p->sym)) {
 			/* dummy RHS for unary transpose */
 #if SDEBUG
-			fprintf(stderr, "factor: B_TRMUL and must_be_unary\n");
+			fprintf(stderr, "factor: B_TRMUL must in fact be unary\n");
 #endif
 			t->v.b2.r = newempty();
 		    } else {
-			t->v.b2.r = powterm(p);
+			t->v.b2.r = factor(p);
 		    }
 		}
-		if (!p->err && pow_pow_node(t)) {
-		    /* make exponentiation associate rightward */
-		    convert_pow_term(t);
+		if (!p->err && (pow_pow_node(t) || tr_tr_node(t))) {
+		    /* make operator associate rightward */
+		    fprintf(stderr, "*** %s: converting associativity\n",
+			    getsymb(t->t));
+		    convert_associativity(t);
 		}
 	    }
 	}
