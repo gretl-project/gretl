@@ -3222,7 +3222,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (err) {
 	maybe_print_error_message(cmd, err, prn);
-	process_command_error(s, err);
+	err = process_command_error(s, err);
     }
 
     if (err) {
