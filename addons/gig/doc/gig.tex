@@ -857,7 +857,7 @@ In practice, future values for $\sigma^2_t$ will be calculated by
 means of equation \eqref{eq:aparch};\footnote{No, no EGARCH yet;
   sorry.} the future $\uhat_t$ terms are drawn with replacement from
 the residuals of the model.  It will return a matrix with the
-simulation results for your playing pleasure.
+simulation results (one per row) for your playing pleasure.
  
 The same matrix can be used as the first argument to the companion
 function \cmd{gig\_vfgraph}, for which we defer to section
@@ -886,7 +886,7 @@ The matrix \texttt{varfore} will contain 39 rows and 1024 columns with
 the simulation results. If, for example, you'd like to calculate the
 median of the simulated variances, all you have to do is 
 \begin{code}
-matrix median_vola = quantile(varfore', 0.5)'  
+matrix median_vola = quantile(varfore, 0.5)  
 \end{code}
 
 \section{Plots}
