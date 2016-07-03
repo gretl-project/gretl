@@ -835,7 +835,6 @@ static void function_noargs_error (const char *s, parser *p)
 void context_error (int c, parser *p)
 {
     if (c != 0) {
-	fprintf(stderr, "c = %d, EOT=%d\n", c, EOT);
 	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
 	if (c == '&') {

@@ -11589,7 +11589,7 @@ static NODE *eval (NODE *t, parser *p)
 		p->err = 1;
 	    }
 	}
-    }	    
+    }
 
     if (!p->err && eval_right(t->t)) {
 	if (r_return(t->t)) {
