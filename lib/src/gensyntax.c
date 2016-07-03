@@ -1414,57 +1414,6 @@ static NODE *powterm (parser *p)
     return t;
 }
 
-/* convert binary operator to right associativity: that is,
-   
-       opr           opr
-      L   R         L   R
-      |   |   ->    |   |
-     opr  c         a  opr
-     | |               | |
-     a b               b c
-
-*/
-
-static void convert_associativity (NODE *n)
-{
-    NODE *L = n->v.b2.l;
-    NODE *a = L->v.b2.l;
-    NODE *b = L->v.b2.r;
-    NODE *c = n->v.b2.r;
-
-    n->v.b2.l = a;
-    n->v.b2.r = L;
-    L->v.b2.l = b;
-    L->v.b2.r = c;
-}
-
-/* Identify a node that needs its associativity adjusted:
-   a '^' node with another '^' on the left, where the left
-   sub-node is NOT parenthesized.
-*/
-
-static int pow_pow_node (NODE *n)
-{
-    if (pow_sym(n->t)) {
-	NODE *l = n->v.b2.l;
-
-	return pow_sym(l->t) && !(l->flags & PAR_NODE);
-    } else {
-	return 0;
-    }
-}
-
-static int tr_tr_node (NODE *n)
-{
-    if (n->t == B_TRMUL) {
-	NODE *l = n->v.b2.l;
-
-	return l->t == B_TRMUL;
-    } else {
-	return 0;
-    }
-}
-
 /* Test for whether the ' symbol must represent the unary
    transposition operator rather than binary transpose-multiply,
    based on the following symbol, @t.
@@ -1522,12 +1471,6 @@ static NODE *factor (parser *p)
 		    } else {
 			t->v.b2.r = factor(p);
 		    }
-		}
-		if (!p->err && (pow_pow_node(t) || tr_tr_node(t))) {
-		    /* make operator associate rightward */
-		    fprintf(stderr, "*** %s: converting associativity\n",
-			    getsymb(t->t));
-		    convert_associativity(t);
 		}
 	    }
 	}
