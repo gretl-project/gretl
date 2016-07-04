@@ -8421,7 +8421,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_MWEIGHTS) {
-	if (!scalar_node(r)) {
+	if (!scalar_node(l)) {
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (m->t != MAT) {
 	    node_type_error(f, 2, MAT, m, p);
