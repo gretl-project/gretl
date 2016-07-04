@@ -103,7 +103,7 @@ function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
     endif
     # --------------------------------------------
     
-    matrix ret = zeros(horizon, rep)
+    matrix ret = zeros(rep, horizon)
 
     loop i=1..rep --quiet
         matrix ei = e[sel[,i]]
@@ -111,7 +111,7 @@ function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
         if !ok(chk)  
             printf "%16.8f\n", ei ~ sel[,i]
         endif
-        ret[,i] = aparch_fcast(ei, e0, h0, omega, alpha, gamma, beta, delta)
+        ret[i,] = aparch_fcast(ei, e0, h0, omega, alpha, gamma, beta, delta)'
     endloop
 
     return ret
@@ -120,12 +120,12 @@ end function
 function void gig_vfgraph(const matrix f, bundle mod, scalar before,
 			  scalar alpha)
 
-    scalar horizon = rows(f)
+    scalar horizon = cols(f)
     scalar a = (1-alpha)/2
-    q0 = quantile(f', a)'
-    q1 = quantile(f', 1-a)'
-    m = meanc(f')'
-    me = quantile(f',0.5)'
+    q0 = quantile(f, a)'
+    q1 = quantile(f, 1-a)'
+    m = meanc(f)'
+    me = quantile(f,0.5)'
     matrix h = s2m(mod.h)
 
     matrix hinit = h[rows(h)-before:]
