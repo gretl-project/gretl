@@ -1836,7 +1836,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	dayspecial = 1;
     }
 
-    if (opt & OPT_F) {
+    if (opt & OPT_X) {
 	fixsample = 1;
     } else if (simple_range_match(dset, addset, &offset)) {
 	/* we'll allow undated data to be merged with the existing
@@ -2056,9 +2056,9 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	if (opt & OPT_U) {
 	    merge_opt |= OPT_U;
 	}
-	if (opt & OPT_F) {
+	if (opt & OPT_X) {
 	    /* fixed sample range */
-	    merge_opt |= OPT_F;
+	    merge_opt |= OPT_X;
 	}
 	err = merge_data(dset0, *pdset1, merge_opt, prn);
 	destroy_dataset(*pdset1);

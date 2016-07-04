@@ -10,6 +10,8 @@ version 2016c, in progress
 - Add new --band option to the "gnuplot" and "plot" commands,
   for plotting, e.g., confidence bands
 - "nls" command: add --no-gradient-check option, as in "mle"
+- "append" command: add --fixed-sample option: restricts the
+  operation to "sideways" appending of new series
 - Writing and reading files via commands and functions: ensure
   that the gretl "working directory" is respected if an
   absolute path is not given
