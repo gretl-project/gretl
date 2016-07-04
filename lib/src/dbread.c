@@ -3319,8 +3319,18 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 				     int endmaj, int endmin,
 				     int *nv, int *err)
 {
+    const char *subper[] = {
+	"month",
+	"quarter"
+    };
+    const char *period[] = {
+	"year",
+	"quarter"
+    };
+    const char *p0, *p1;
     DATASET *cset = NULL;
     char sfx[6];
+    char label[MAXLABEL];
     int oldpd = dset->pd;
     int compfac = oldpd / newpd;
     int v, i, j, k, t, s, T;
@@ -3362,11 +3372,15 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     if (newpd == 1) {
 	sprintf(cset->stobs, "%d", startmaj);
 	sprintf(cset->endobs, "%d", endmaj);
+	p1 = period[0];
     } else {
 	/* newpd must be 4 */
 	sprintf(cset->stobs, "%d:%d", startmaj, q0);
 	sprintf(cset->endobs, "%d:%d", endmaj, qT);
+	p1 = period[1];
     }
+
+    p0 = (oldpd == 12)? subper[0] : subper[1];
 
     cset->pd = newpd;
     cset->structure = TIME_SERIES;
@@ -3399,6 +3413,9 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 			sprintf(sfx, "_q%d", j+1);
 		    }
 		    strcat(cset->varname[k+j], sfx);
+		    sprintf(label, "%s in %s %d of %s", dset->varname[i],
+			    p0, j+1, p1);
+		    series_record_label(cset, k+j, label);
 		    named = 1;
 		}
 		while (s < offset) {
