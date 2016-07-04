@@ -4,10 +4,12 @@ version 2016c, in progress
   and state space modeling
 - New function dropcoll() to expunge collinear terms from a
   list of series
+- lags() function: accept a vector for the first argument
 - New variable under the "set" command: "force_qr" forces
   the use of QR decomposition in the "ols" command
 - Add new --band option to the "gnuplot" and "plot" commands,
   for plotting, e.g., confidence bands
+- "nls" command: add --no-gradient-check option, as in "mle"
 - Writing and reading files via commands and functions: ensure
   that the gretl "working directory" is respected if an
   absolute path is not given
@@ -23,6 +25,8 @@ version 2016c, in progress
   variable is a constant
 - Fix bug: gnuplot error on selecting "loess fit" via the
   GUI plot editor when the plot already has a fitted line
+- Fix bug: the transpose-multiply operator (') now respects
+  right -associativity
 - gig: add variance forecasting (only residual-based for APARCH
   so far)
 - Miscellaneous smaller bug fixes

@@ -2543,9 +2543,11 @@ static int lm_calculate (nlspec *spec, PRN *prn)
 	goto nls_cleanup;
     }
 
-    err = check_derivatives(spec, prn);
-    if (err) {
-	goto nls_cleanup; 
+    if (!(spec->opt & OPT_G)) {
+	err = check_derivatives(spec, prn);
+	if (err) {
+	    goto nls_cleanup; 
+	}
     }
 
     /* note: maxfev is automatically set to 100*(n + 1) */

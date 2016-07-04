@@ -7506,9 +7506,9 @@
 	produce false positives, instances where correct derivatives
 	appear to be wrong and estimation is refused. To counter this,
 	or to achieve a little extra speed, you can give the option
-	<opt>no-gradient-check</opt>.  Obviously, you should do
-	this only if you are quite confident that the gradient you
-	have specified is right.
+	<opt>no-gradient-check</opt>.  Obviously, you should do this
+	only if you are confident that the gradient you have specified
+	is right.
       </para>
       <para>
 	For a much more in-depth description of <cmd>mle</cmd>, please
@@ -8003,6 +8003,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
+	<option>
+	  <flag>--no-gradient-check</flag>
+	  <effect>see below</effect>
+	</option>	
       </options>
       <examples>
 	<demos>
@@ -8136,6 +8140,16 @@
 	Line 10, <cmd>end nls</cmd>, completes the command and calls for
 	estimation. Any options should be appended to this line.
       </para>
+      <para>
+	If you supply analytical derivatives, by default gretl runs a
+	numerical check on their plausibility.  Occasionally this may
+	produce false positives, instances where correct derivatives
+	appear to be wrong and estimation is refused. To counter this,
+	or to achieve a little extra speed, you can give the option
+	<opt>no-gradient-check</opt>.  Obviously, you should do this
+	only if you are confident that the gradient you have specified
+	is right.
+      </para>      
       <para>
 	For further details on NLS estimation please see
 	<guideref targ="chap:nls"/>.
