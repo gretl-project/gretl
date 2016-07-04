@@ -1870,8 +1870,11 @@ static double get_const_by_id (int id)
     if (id == CONST_PI) {
 	return M_PI;
     } else if (id == CONST_EPS) {
-	/* IEEE 754 - 2008, double precision */
-	return pow(2.0, -53);
+	/* see https://en.wikipedia.org/wiki/Machine_epsilon :
+	   we now use the (b) definition, as per Matlab, Gauss,
+	   R and others
+	*/
+	return pow(2.0, -52);
     } else if (id == CONST_INF) {
 #ifdef INFINITY
 	return INFINITY;
