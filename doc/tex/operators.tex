@@ -6,11 +6,12 @@
 Table~\ref{tab:ops} lists the operators available in \app{gretl} in
 order of decreasing precedence: the operators on the first row have
 the highest precedence, those on the second row have the second
-highest precedence and so on. Operators on any given row have equal
+highest, and so on. Operators on any given row have equal
 precedence. Where successive operators have the same precedence the
-order of evaluation is in general left to right. The exception is
-exponentiation; the expression \verb|a^b^c| is equivalent to
-\verb|a^(b^c)|, not \verb|(a^b)^c|.
+order of evaluation is in general left to right. The exceptions are
+exponentiation and matrix transpose-multiply. The expression
+\verb|a^b^c| is equivalent to \verb|a^(b^c)|, not \verb|(a^b)^c|, 
+and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
 
 \begin{table}[htbp]
 \caption{Operator precedence}
