@@ -134,6 +134,9 @@ int list_linear_combo (double *y, const int *list,
 gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 			     int method, int *err);
 
+gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
+			      int method, int *err);
+
 int midas_linear_combo (double *y, const int *list,
 			const gretl_matrix *theta,
 			int method,

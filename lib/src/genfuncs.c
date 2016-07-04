@@ -4007,6 +4007,8 @@ int list_linear_combo (double *y, const int *list,
 gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 			     int method, int *err)
 {
+    double eps = pow(2.0, -52);
+    double wsum = 0.0;
     gretl_matrix *w = NULL;
     int p, i, j;
 
@@ -4019,11 +4021,10 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 
     if (method == 2) {
 	/* check beta parameters */
-	double eps = 2.2204e-16;
-
 	if (p != 2) {
 	    gretl_errmsg_set("theta must be a 2-vector");
 	    *err = E_INVARG;
+	    return NULL;
 	} else if (theta->val[0] < eps || theta->val[1] < eps) {
 	    return NULL;
 	}	    
@@ -4036,9 +4037,7 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
     }
 
     if (method == 1) {
-	/* unrestricted exponential */
-	double wsum = 0.0;
-
+	/* exponential Almon */
 	for (i=0; i<m; i++) {
 	    w->val[i] = (i+1) * theta->val[0];
 	    for (j=1; j<p; j++) {
@@ -4047,27 +4046,149 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
 	}
-	for (i=0; i<m; i++) {
-	    w->val[i] /= wsum;
-	}
     } else if (method == 2) {
-	/* unrestricted beta */
+	/* Beta, zero at end */
 	double si, ai, bi;
-	double wsum = 0.0;
 
 	for (i=0; i<m; i++) {
-	    si = (i+1) / (double) m;
+	    si = i / (m - 1.0);
+	    if (i == 0) {
+		si += eps;
+	    } else if (i == m-1) {
+		si -= eps;
+	    }
 	    ai = pow(si, theta->val[0] - 1.0);
 	    bi = pow(1.0 - si, theta->val[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
-	for (i=0; i<m; i++) {
-	    w->val[i] /= wsum;
-	}
+    }
+
+    for (i=0; i<m; i++) {
+	w->val[i] /= wsum;
     }
 
     return w;
+}
+
+gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
+			      int method, int *err)
+{
+    double eps = pow(2.0, -52);
+    double ws2, wsum = 0.0;
+    gretl_matrix *w = NULL;
+    gretl_matrix *G = NULL;
+    int p, i, j;
+
+    if (method < 1 || method > 2 || m < 1) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    p = gretl_vector_get_length(theta);
+
+    if (method == 2) {
+	/* check beta parameters */
+	if (p != 2) {
+	    gretl_errmsg_set("theta must be a 2-vector");
+	    *err = E_INVARG;
+	} else if (theta->val[0] < eps || theta->val[1] < eps) {
+	    *err = E_INVARG;
+	}
+	if (*err) {
+	    return NULL;
+	}
+    }
+
+    w = gretl_column_vector_alloc(m);
+    if (w == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    G = gretl_matrix_alloc(m, p);
+    if (G == NULL) {
+	gretl_matrix_free(w);
+	*err = E_ALLOC;
+	return NULL;
+    }    
+
+    if (method == 1) {
+	/* exponential Almon */
+	double *dsum = malloc(p * sizeof *dsum);
+	double gij;
+
+	for (j=0; j<p; j++) {
+	    dsum[j] = 0.0;
+	}
+	for (i=0; i<m; i++) {
+	    w->val[i] = (i+1) * theta->val[0];
+	    for (j=1; j<p; j++) {
+		w->val[i] += pow(i+1, j+1) * theta->val[j];
+	    }
+	    w->val[i] = exp(w->val[i]);
+	    wsum += w->val[i];
+	}
+	ws2 = wsum * wsum;
+	for (i=0; i<m; i++) {
+	    for (j=0; j<p; j++) {
+		dsum[j] += pow(i+1, j+1) * w->val[i];
+	    }
+	}
+	for (i=0; i<m; i++) {
+	    for (j=0; j<p; j++) {
+		gij = pow(i+1, j+1) * w->val[i] / wsum;
+		gij -= w->val[i] * dsum[j] / ws2;
+		gretl_matrix_set(G, i, j, p*gij);
+	    }
+	}
+	free(dsum);
+    } else if (method == 2) {
+	/* Beta, zero at end */
+	double si, ai, bi;
+	double g1sum = 0;
+	double g2sum = 0;
+
+	for (i=0; i<m; i++) {
+	    si = i / (m - 1.0);
+	    if (i == 0) {
+		si += eps;
+	    } else if (i == m-1) {
+		si -= eps;
+	    }
+	    ai = pow(si, theta->val[0] - 1.0);
+	    bi = pow(1.0 - si, theta->val[1] - 1.0);
+	    w->val[i] = ai * bi;
+	    wsum += w->val[i];
+	}
+	ws2 = wsum * wsum;
+	for (i=0; i<m; i++) {
+	    si = i / (m - 1.0);
+	    if (i == 0) {
+		si += eps;
+	    } else if (i == m-1) {
+		si -= eps;
+	    }	    
+	    ai = w->val[i] * log(si);
+	    g1sum += ai;
+	    gretl_matrix_set(G, i, 0, ai/wsum);
+	    bi = w->val[i] * log(1-si);
+	    g2sum += bi;
+	    gretl_matrix_set(G, i, 1, bi/wsum);
+	}
+	for (i=0; i<m; i++) {
+	    ai = gretl_matrix_get(G, i, 0);
+	    ai -= w->val[i] * g1sum/ws2;
+	    gretl_matrix_set(G, i, 0, 2*ai);
+	    bi = gretl_matrix_get(G, i, 1);
+	    bi -= w->val[i] * g2sum/ws2;
+	    gretl_matrix_set(G, i, 1, 2*bi);
+	}	
+    }
+
+    gretl_matrix_free(w);
+
+    return G;
 }
 
 int midas_linear_combo (double *y, const int *list,

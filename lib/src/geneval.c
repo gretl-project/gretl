@@ -8435,6 +8435,21 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		A = midas_weights(length, m->v.m, method, &p->err);
 	    }
 	}
+    } else if (f == F_MGRADIENT) {
+	if (!scalar_node(l)) {
+	    node_type_error(f, 1, NUM, l, p);
+	} else if (m->t != MAT) {
+	    node_type_error(f, 2, MAT, m, p);
+	} else if (!scalar_node(r)) {
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    int length = node_get_int(l, p);
+	    int method = node_get_int(r, p);
+
+	    if (!p->err) {
+		A = midas_gradient(length, m->v.m, method, &p->err);
+	    }
+	}
     }
 
     if (!p->err && post_process) {
@@ -12473,6 +12488,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_IWISHART:
     case F_SUBSTR:
     case F_MWEIGHTS:
+    case F_MGRADIENT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
