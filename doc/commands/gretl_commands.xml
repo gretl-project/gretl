@@ -6462,8 +6462,8 @@
 
   </command>
 
-  <command name="lags" section="Transformations" 
-    label="Create lags" context="cli">
+  <command name="lags" section="Transformations" label="Create lags"
+	   context="cli">
 
     <usage>
       <arguments>
@@ -6473,6 +6473,7 @@
       <options>
 	<option>
 	  <flag>--bylag</flag>
+	  <effect>order terms by lag</effect>
 	</option>
       </options>
       <examples>
