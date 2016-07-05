@@ -4343,7 +4343,8 @@
 	  in this case would be to give <argname>p</argname> as, for
 	  example, <lit>seq(3,7)</lit>, hence omitting the first and
 	  second lags. However, it is OK to give a vector with gaps,
-	  as in <lit>{3,5,7}</lit>.
+	  as in <lit>{3,5,7}</lit>, although the lags should always
+	  be given is ascending order.
 	</para>
 	<para> 
 	  The generated variables are automatically named according to
