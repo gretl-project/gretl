@@ -15116,6 +15116,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
 	    }
 	    if (p->err == 0) {
+		/* made a change to an element of a series */
 		set_dataset_is_changed();
 	    }
 	}
@@ -15229,6 +15230,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		v, p->lh.name);
 #endif
 	if (!p->err) {
+	    /* (probably) changed or added a series */
 	    set_dataset_is_changed();
 	}
     } else if (p->targ == MAT) {
