@@ -133,7 +133,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { KPSS,     "kpss",     CI_ORD1 | CI_LIST },
     { LABELS,   "labels",   CI_LIST | CI_DOALL },
     { LAD,      "lad",      CI_LIST },
-    { LAGS,     "lags",     CI_ORD1 | CI_LIST | CI_NOOPT },
+    { LAGS,     "lags",     CI_ORD1 | CI_LIST },
     { LDIFF,    "ldiff",    CI_LIST | CI_NOOPT },
     { LEVERAGE, "leverage", 0 },
     { LEVINLIN, "levinlin", CI_PARM1 | CI_LIST | CI_LLEN1 },

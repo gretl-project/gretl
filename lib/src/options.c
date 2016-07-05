@@ -307,6 +307,7 @@ struct gretl_option gretl_opts[] = {
     { KPSS,     OPT_D, "seasonals", 0 },
     { KPSS,     OPT_V, "verbose", 0 },
     { KPSS,     OPT_F, "difference", 0 },
+    { LAGS,     OPT_L, "bylag", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
     { LEVERAGE, OPT_U, "plot", 2 },
     { LEVINLIN, OPT_N, "nc", 0 },
