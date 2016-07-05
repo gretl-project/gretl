@@ -583,6 +583,47 @@ int user_matrix_replace_submatrix (const char *mname,
     }
 }
 
+/* Handle the case where we got a single string as argument
+   to colnames() or rownames(), for a matrix with more than
+   one column or row: construct specific names by appending
+   a column or row index.
+*/
+
+static char **expand_names (const char *s, int n, int *err)
+{
+    char **S = NULL;
+
+    if (!gretl_is_ascii(s)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    S = strings_array_new(n);
+    
+    if (S == NULL) {
+	*err = E_ALLOC;
+    } else {
+	char tmp[10];
+	int i, m;
+
+	for (i=0; i<n && !*err; i++) {
+	    sprintf(tmp, "%d", i+1);
+	    m = strlen(tmp);
+	    sprintf(tmp, "%.*s%d", 9-m, s, i+1);
+	    S[i] = gretl_strdup(tmp);
+	    if (S[i] == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	if (*err) {
+	   strings_array_free(S, n);
+	   S = NULL;
+	}
+    }
+
+    return S;
+}
+
 int umatrix_set_names_from_string (gretl_matrix *M, 
 				   const char *s,
 				   int byrow)
@@ -602,16 +643,24 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 	int ns;
 
 	S = gretl_string_split(s, &ns, " \n\t");
+	
 	if (S == NULL) {
 	    err = E_ALLOC;
+	} else if (ns == 1 && n > 1) {
+	    strings_array_free(S, ns);
+	    S = expand_names(s, n, &err);
 	} else if (ns != n) {
 	    err = E_NONCONF;
 	    strings_array_free(S, ns);
-	} else if (byrow) {
-	    gretl_matrix_set_rownames(M, S);
-	} else {
-	    gretl_matrix_set_colnames(M, S);
-	} 
+	}
+
+	if (!err) {
+	    if (byrow) {
+		gretl_matrix_set_rownames(M, S);
+	    } else {
+		gretl_matrix_set_colnames(M, S);
+	    }
+	}
     }
 
     return err;
