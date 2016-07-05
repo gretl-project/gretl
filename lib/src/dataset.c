@@ -73,7 +73,9 @@ int check_dataset_is_changed (void)
 
 void set_dataset_is_changed (void)
 {
-    dataset_changed = 1;
+    if (gretl_function_depth() == 0) {
+	dataset_changed = 1;
+    }
 }
 
 static void dataset_set_nobs (DATASET *dset, int n)
