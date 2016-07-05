@@ -6470,18 +6470,25 @@
         <argument optional="true" separated="true">order</argument>
 	<argument>laglist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--bylag</flag>
+	</option>
+      </options>
       <examples>
 	<example>lags x y</example>
 	<example>lags 12 ; x y</example>
+	<example>lags 4 ; x1 x2 x3 --bylag</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Creates new series which are lagged values of each of the series in
-	<repl>varlist</repl>.  By default the number of lags created equals the
-	periodicity of the data. For example, if the periodicity is 4 (quarterly),
-	the command <cmd>lags x</cmd> creates
+	Creates new series which are lagged values of each of the
+	series in <repl>varlist</repl>.  By default the number of lags
+	created equals the periodicity of the data. For example, if
+	the periodicity is 4 (quarterly), the command <cmd>lags
+	x</cmd> creates
       </para>
       <mono>
 	x_1 = x(t-1)
@@ -6493,6 +6500,16 @@
 	The number of lags created can be controlled by the optional
 	first parameter (which, if present, must be followed by a 
 	semicolon).
+      </para>
+      <para>
+	The <opt>bylag</opt> option is meaningful only if
+	<repl>varlist</repl> contains more than one series and the
+	maximum lag order is greater than 1. By default the lagged
+	terms are added to the dataset by variable: first all lags of
+	the first series, then all lags of the second series, and so
+	on. But if <opt>bylag</opt> is given, the ordering is by lags:
+	first lag 1 of all the listed series, then lag 2 of all the
+	list series, and so on.
       </para>
     </description>
 
