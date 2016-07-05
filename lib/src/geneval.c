@@ -1881,6 +1881,12 @@ static double get_const_by_id (int id)
 #else
 	return 1.0/0.0;
 #endif
+    } else if (id == CONST_NAN) {
+#ifdef NAN
+	return NAN;
+#else
+	return 0.0/0.0;
+#endif
     } else if (id == CONST_WIN32) {
 #ifdef WIN32
 	return 1;
@@ -8688,6 +8694,9 @@ static double subst_val (double x, const double *x0, int n0,
 
     for (i=0; i<n0; i++) {
 	if (x == x0[i]) {
+	    return (n1 == 1)? *x1 : x1[i];
+	} else if (isnan(x) && isnan(x0[i])) {
+	    /* we'll count this as a match */
 	    return (n1 == 1)? *x1 : x1[i];
 	}
     }

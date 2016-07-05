@@ -50,6 +50,7 @@ struct str_table consts[] = {
     { CONST_PI,       "$pi" },
     { CONST_NA,       "NA" },
     { CONST_INF,      "$inf" },
+    { CONST_NAN,      "$nan" },
     { CONST_WIN32,    "WIN32" },
     { CONST_EPS,      "$macheps" },
     { CONST_HAVE_MPI, "$havempi" },
