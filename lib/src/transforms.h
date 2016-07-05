@@ -46,7 +46,8 @@ int list_dropcoll (int *list, double eps, DATASET *dset);
 
 int list_laggenr (int **plist, int order,
 		  const gretl_matrix *lvec,
-		  DATASET *dset, gretlopt opt);
+		  DATASET *dset, int compfac,
+		  gretlopt opt);
 
 int *laggenr_from_to (int v, int fromlag, int tolag, 
 		      DATASET *dset, int *err);

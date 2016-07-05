@@ -4434,12 +4434,18 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	gretlopt opt = OPT_NONE;
 	gretl_matrix *v = NULL;
-	int k = 0, *list = NULL;
+	int *list = NULL;
+	int k = 0, cfac = 0;
 
 	if (!null_or_empty(r)) {
 	    k = node_get_int(r, p);
-	    if (!p->err && k != 0) {
-		opt = OPT_L;
+	    if (!p->err) {
+		if (k == 1) {
+		    opt = OPT_L;
+		} else if (k > 1) {
+		    opt = OPT_L;
+		    cfac = k;
+		}
 	    }
 	}
 
@@ -4465,7 +4471,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		p->err = E_ALLOC;
 	    } else {
 		if (list[0] > 0) {
-		    p->err = list_laggenr(&list, k, v, p->dset, opt);
+		    p->err = list_laggenr(&list, k, v, p->dset, cfac, opt);
 		}
 		ret->v.ivec = list;
 	    }

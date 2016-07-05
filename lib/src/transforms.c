@@ -1202,6 +1202,45 @@ static int lag_wanted (int p, const gretl_matrix *v, int n)
     return ret;
 }
 
+static int process_hf_input (const gretl_matrix *lvec,
+			     DATASET *dset,
+			     int compfac,
+			     int *lf_min, int *lf_max,
+			     int *skip_first,
+			     int *n_terms)
+{
+    int hf_min, hf_max;
+    int i, n;
+
+    if (dset->pd != 12 && dset->pd != 4) {
+	return E_INVARG;
+    }
+
+    n = gretl_vector_get_length(lvec);
+
+    for (i=1; i<n; i++) {
+	if (lvec->val[i] != lvec->val[i-1] + 1) {
+	    return E_INVARG;
+	}
+    }
+
+    hf_min = lvec->val[0];
+    hf_max = lvec->val[n-1];
+    *lf_min = (int) ceil(hf_min / (double) compfac);
+    *lf_max = (int) ceil(hf_max / (double) compfac);
+    *skip_first = (hf_min - 1) % compfac;
+    *n_terms = hf_max - hf_min + 1;
+
+#if 0
+    fprintf(stderr, "hf_min = %d, lf_min = %d\n", hf_min, *lf_min);
+    fprintf(stderr, "hf_max = %d, lf_max = %d\n", hf_max, *lf_max);
+    fprintf(stderr, "skip_first = %d\n", *skip_first);
+    fprintf(stderr, "n_terms = %d\n", *n_terms);
+#endif
+
+    return 0;
+}
+
 /**
  * list_laggenr:
  * @plist: on entry, pointer to list of variables to process.  On exit
@@ -1220,7 +1259,8 @@ static int lag_wanted (int p, const gretl_matrix *v, int n)
 
 int list_laggenr (int **plist, int order,
 		  const gretl_matrix *lvec,
-		  DATASET *dset, gretlopt opt)
+		  DATASET *dset, int compfac,
+		  gretlopt opt)
 {
     int origv = dset->v;
     int *list = *plist;
@@ -1228,6 +1268,8 @@ int list_laggenr (int **plist, int order,
     int l, i, j, v, lv;
     int startlen, l0 = 0;
     int n = 0, lmin = 0;
+    int skip_first = 0;
+    int n_terms = 0;
     int err;
 
     if (lvec != NULL) {
@@ -1237,6 +1279,13 @@ int list_laggenr (int **plist, int order,
 	}
 	lmin = lvec->val[0];
 	order = lvec->val[n-1];
+	if (compfac > 0) {
+	    err = process_hf_input(lvec, dset, compfac, &lmin, &order,
+				   &skip_first, &n_terms);
+	    if (err) {
+		return err;
+	    }
+	}	    
     } else {
 	lmin = 1;
     }
@@ -1265,7 +1314,28 @@ int list_laggenr (int **plist, int order,
 
     j = 1;
 
-    if (opt & OPT_L) {
+    if (compfac > 0) {
+	/* high-frequency lags, by lags */
+	int hfp = 0;
+	
+	for (l=lmin; l<=order; l++) {
+	    for (i=1; i<=list[0]; i++) {
+		hfp++;
+		if (hfp <= skip_first) {
+		    continue;
+		} else if (hfp > (n_terms + skip_first)) {
+		    break;
+		}
+		v = list[i];
+		lv = get_transform(LAGS, v, l, 0.0, dset,
+				   startlen, origv, NULL);
+		if (lv > 0) {
+		    laglist[j++] = lv;
+		    l0++;
+		}
+	    }
+	}	
+    } else if (opt & OPT_L) {
 	/* order the list by lags */
 	for (l=lmin; l<=order; l++) {
 	    if (!lag_wanted(l, lvec, n)) {
