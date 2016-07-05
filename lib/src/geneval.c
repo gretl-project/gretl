@@ -14772,6 +14772,10 @@ static int create_or_edit_list (parser *p)
 	}
     }
 
+    if (!p->err) {
+	set_dataset_is_changed();
+    }
+
     free(list);
 
     return p->err;
