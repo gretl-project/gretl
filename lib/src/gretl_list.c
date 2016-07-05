@@ -2551,6 +2551,13 @@ int *full_var_list (const DATASET *dset, int *nvars)
     int i, j, nv = 0;
     int *list = NULL;
 
+    if (dset == NULL) {
+	if (nvars != NULL) {
+	    *nvars = 0;
+	}
+	return NULL;
+    }
+
     for (i=1; i<dset->v; i++) {
 	if (!series_is_hidden(dset, i) &&
 	    series_get_stack_level(dset, i) == fsd) {

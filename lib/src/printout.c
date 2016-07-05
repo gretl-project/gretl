@@ -2143,7 +2143,7 @@ int printdata (const int *list, const char *mstr,
 	}
     } else if (list == NULL) {
 	/* no list given */
-	if (mstr == NULL) {
+	if (mstr == NULL && dset != NULL) {
 	    int nvars = 0;
 
 	    plist = full_var_list(dset, &nvars);
