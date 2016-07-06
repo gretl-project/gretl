@@ -740,33 +740,60 @@ static int check_param_name (char **pname, GretlType *type,
 
 static int nlspec_add_param_names (nlspec *spec, const char *s)
 {
-    char sname[VNAMELEN];
+    const char *test = NULL;
     int n, err = 0;
 
     s += strspn(s, " ");
-    n = gretl_namechar_spn(s);
 
-    if (n == 0 || n >= VNAMELEN) {
-	err = E_PARSE;
-    } else {
-	*sname = '\0';
-	strncat(sname, s, n);
-	if (!is_user_string(sname)) {
-	    err = E_UNKVAR;
+    if (*s == '"') {
+	/* inline string literal */
+	const char *p = strchr(s+1, '"');
+
+	if (p == NULL) {
+	    err = E_INVARG;
 	} else {
-	    const char *names = get_string_by_name(sname);
-
-	    if (names == NULL || *names == '\0') {
-		err = E_DATA;
+	    n = p - s - 1;
+	    if (n > 0) {
+		spec->parnames = gretl_strndup(s+1, n);
 	    } else {
-		free(spec->parnames);
-		spec->parnames = gretl_strdup(names);
-		if (spec->parnames == NULL) {
+		err = E_INVARG;
+	    }
+	    test = p + 1;
+	}
+    } else {
+	/* name of string variable? */
+	char sname[VNAMELEN];
+	
+	n = gretl_namechar_spn(s);
+
+	if (n == 0 || n >= VNAMELEN) {
+	    err = E_INVARG;
+	} else {
+	    test = s + n;
+	    *sname = '\0';
+	    strncat(sname, s, n);
+	    if (is_user_string(sname)) {
+		const char *names = get_string_by_name(sname);
+
+		if (names == NULL || *names == '\0') {
+		    err = E_INVARG;
+		} else {
+		    free(spec->parnames);
+		    spec->parnames = gretl_strdup(names);
+		    if (spec->parnames == NULL) {
 		    err = E_ALLOC;
+		    }
 		}
+	    } else {
+		err = E_INVARG;
 	    }
 	} 
-    } 
+    }
+
+    if (!err && test != NULL && !string_is_blank(test)) {
+	gretl_errmsg_set("found trailing junk on command line\n");
+	err = E_INVARG;
+    }
 
     return err;
 }

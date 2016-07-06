@@ -4774,7 +4774,6 @@
     </usage>
 
     <description>
-
       <para>
 	Performs Generalized Method of Moments (GMM) estimation using the
 	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
@@ -4810,7 +4809,18 @@
 	orthogonal to each of the instruments composing the columns of
 	<lit>W</lit>.
       </para>
-
+      <subhead>Parameter names</subhead>
+      <para>
+	In estimating a nonlinear model it is often convenient to name
+	the parameters tersely. In printing the results, however, it
+	may be desirable to use more informative labels. This can be
+	achieved via the additional keyword <lit>param_names</lit>
+	within the command block. For a model with <math>k</math>
+	parameters the argument following this keyword should be
+	either a double-quoted string literal holding <math>k</math>
+	space-separated names or the name of a string variable that
+	holds <math>k</math> such names.
+      </para>      
     </description>
 
     <gui-access>
@@ -7542,9 +7552,21 @@
 	only if you are confident that the gradient you have specified
 	is right.
       </para>
+      <subhead>Parameter names</subhead>
       <para>
-	For a much more in-depth description of <cmd>mle</cmd>, please
-	refer to <guideref targ="chap:mle"/>.
+	In estimating a nonlinear model it is often convenient to name
+	the parameters tersely. In printing the results, however, it
+	may be desirable to use more informative labels. This can be
+	achieved via the additional keyword <lit>param_names</lit>
+	within the command block. For a model with <math>k</math>
+	parameters the argument following this keyword should be
+	either a double-quoted string literal holding <math>k</math>
+	space-separated names or the name of a string variable that
+	holds <math>k</math> such names.
+      </para>      
+      <para>
+	For an in-depth description of <cmd>mle</cmd>, please refer to
+	<guideref targ="chap:mle"/>.
       </para>
     </description>
 
@@ -8181,7 +8203,19 @@
 	<opt>no-gradient-check</opt>.  Obviously, you should do this
 	only if you are confident that the gradient you have specified
 	is right.
-      </para>      
+      </para>
+      <subhead>Parameter names</subhead>
+      <para>
+	In estimating a nonlinear model it is often convenient to name
+	the parameters tersely. In printing the results, however, it
+	may be desirable to use more informative labels. This can be
+	achieved via the additional keyword <lit>param_names</lit>
+	within the command block. For a model with <math>k</math>
+	parameters the argument following this keyword should be
+	either a double-quoted string literal holding <math>k</math>
+	space-separated names or the name of a string variable that
+	holds <math>k</math> such names.
+      </para>
       <para>
 	For further details on NLS estimation please see
 	<guideref targ="chap:nls"/>.

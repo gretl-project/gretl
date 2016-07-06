@@ -9,6 +9,8 @@ version 2016c, in progress
   the use of QR decomposition in the "ols" command
 - Add new --band option to the "gnuplot" and "plot" commands,
   for plotting, e.g., confidence bands
+- "gmm", "mle" and "nls" commands: document the previously
+  hidden "param_names" keyword
 - "nls" command: add --no-gradient-check option, as in "mle"
 - "append" command: add --fixed-sample option: restricts the
   operation to "sideways" appending of new series
