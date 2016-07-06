@@ -185,7 +185,9 @@ char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
-#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+#if 0 /* defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX) */
+
+/* it seems that the following is not really necessary */
 
 static void quell_blas_warning (GtkToggleButton *b, gpointer p)
 {
@@ -237,7 +239,7 @@ static void gui_check_blas_threading (void)
     }
 }
 
-#endif
+#endif /* blas warning may be wanted */
 
 static void spreadsheet_edit (void) 
 {
@@ -823,7 +825,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "calling gtk_main()\n");
 #endif
 
-#if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
+#if 0 /* defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX) */
     gui_check_blas_threading();
 #endif    
 

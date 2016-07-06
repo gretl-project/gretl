@@ -123,10 +123,6 @@ float retrieve_float (netfloat nf)
 }
 #endif
 
-static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-			    DATASET *dset, CompactMethod cmethod,
-			    int interpolate, int dbv, PRN *prn);
-
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
     char dbbin[MAXLEN];
@@ -2590,7 +2586,7 @@ static int get_one_db_series (const char *series,
     }
 
     if (!err) {
-	err = cli_add_db_data(dbZ, &sinfo, dset, this_method, 
+	err = lib_add_db_data(dbZ, &sinfo, dset, this_method, 
 			      interpolate, v, prn);
     }
 
@@ -3080,20 +3076,19 @@ static DATASET *make_import_tmpset (const DATASET *dset,
     return tmpset;
 }
 
-static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-			    DATASET *dset, CompactMethod cmethod, 
-			    int interpolate, int dbv, PRN *prn)
+int lib_add_db_data (double **dbZ, SERIESINFO *sinfo, 
+		     DATASET *dset, CompactMethod cmethod, 
+		     int interpolate, int dbv, PRN *prn)
 {
     double *xvec = NULL;
     int pad1 = 0, pad2 = 0;
     int t, start, stop;
     int free_xvec = 0;
     int new = (dbv == dset->v);
+    int err = 0;
 
     if (cmethod == COMPACT_SPREAD) {
 	/* special case: adds multiple series */
-	int err = 0;
-	
 	if (dset == NULL || dset->v == 0) {
 	    gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
 	    err = E_DATA;
@@ -3118,8 +3113,11 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
 	    dset->structure = TIME_SERIES;
 	}
-    } else if (check_db_import(sinfo, dset)) {
-	return 1;
+    } else {
+	err = check_db_import(sinfo, dset);
+	if (err) {
+	    return err;
+	}
     }
 
     if (dset->v == 0) {
@@ -3127,12 +3125,10 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	dset->v = 2;
 	dbv = 1;
 	if (start_new_Z(dset, 0)) {
-	    gretl_errmsg_set(_("Out of memory!"));
-	    return 1;
+	    return E_ALLOC;
 	}
     } else if (new && dataset_add_series(dset, 1)) {
-	gretl_errmsg_set(_("Out of memory!"));
-	return 1;
+	return E_ALLOC;
     }
 
 #if DB_DEBUG
@@ -3152,7 +3148,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    if (new) {
 		dataset_drop_last_variables(dset, 1);
 	    }
-	    return 1;
+	    return E_DATA;
 	}
 	if (cmethod == COMPACT_NONE) {
 	    cmethod = COMPACT_AVG;
@@ -3162,13 +3158,13 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	}
 	xvec = compact_db_series(dbZ[1], sinfo, dset->pd, cmethod);
 	if (xvec == NULL) {
-	    gretl_errmsg_set(_("Out of memory!"));
 	    if (new) {
 		dataset_drop_last_variables(dset, 1);
 	    }
-	    return 1;
+	    return E_ALLOC;
+	} else {
+	    free_xvec = 1;
 	}
-	free_xvec = 1;
     } else {  
 	/* series does not need compacting */
 	xvec = dbZ[1];
@@ -3216,7 +3212,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	free(xvec);
     }
 
-    return 0;
+    return err;
 }
 
 /* compact an individual series, in the context of converting an

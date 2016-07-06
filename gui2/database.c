@@ -281,6 +281,8 @@ static const char *compact_method_string (CompactMethod method)
 	return "first";
     } else if (method == COMPACT_EOP) {
 	return "last";
+    } else if (method == COMPACT_SPREAD) {
+	return "spread";
     } else {
 	return NULL;
     }
@@ -349,6 +351,57 @@ static void record_db_open_command (dbwrapper *dw)
     }
 }
 
+/* record successful importation in command log */
+
+static void record_db_import (const char *varname,
+			      int compact,
+			      int interpol,
+			      CompactMethod method)
+{
+    const char *cstr = NULL;
+    
+    if (compact && (cstr = compact_method_string(method)) != NULL) {
+	lib_command_sprintf("data %s --compact=%s", varname,
+			    cstr);
+    } else if (interpol) {
+	lib_command_sprintf("data %s --interpolate", varname);
+    } else {
+	lib_command_sprintf("data %s", varname);
+    }
+
+    record_command_verbatim();
+}
+
+static int handle_compact_spread (double **dbZ,
+				  SERIESINFO *sinfo,
+				  DATASET *dset,
+				  int v)
+{
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return E_ALLOC;
+    }
+
+    err = lib_add_db_data(dbZ, sinfo, dset,
+			  COMPACT_SPREAD, 0,
+			  v, prn);
+    if (err) {
+	char *buf = gretl_print_steal_buffer(prn);
+
+	if (buf != NULL && *buf != '\0') {
+	    errbox(buf);
+	} else {
+	    gui_errmsg(err);
+	}
+    }
+
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
 static int 
 add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw) 
 {
@@ -364,11 +417,12 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
     record_db_open_command(dw);
 
     for (i=0; i<dw->nv && !err; i++) {
-	int overwrite = 0;
 	double x, *xvec = NULL;
-	const char *cstr = NULL;
 	int v, dbv, start, stop;
 	int pad1 = 0, pad2 = 0;
+	int overwrite = 0;
+	int spread = 0;
+	int expand = 0;
 	int compact = 0;
 	int interpol = 0;
 
@@ -379,18 +433,36 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    continue;
 	}
 
-	if (sinfo->pd < dataset->pd && !warned) {
-	    resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol,
-				      vwin->main);
-	    if (resp != GRETL_YES) {
-		return 0;
+	if (sinfo->pd < dataset->pd) {
+	    /* the incoming series needs to be expanded */
+	    if (!warned) {
+		resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol,
+					  vwin->main);
+		if (resp != GRETL_YES) {
+		    return 0;
+		}
+		warned = 1;
 	    }
-	    warned = 1;
+	    expand = 1;
+	} else if (sinfo->pd > dataset->pd) {
+	    /* the incoming series needs to be compacted */
+	    if (!chosen) {
+		data_compact_dialog(sinfo->pd, &dataset->pd, NULL, 
+				    &method, NULL, vwin->main);
+		if (method == COMPACT_NONE) {
+		    /* canceled */
+		    return 0;
+		}
+		chosen = 1;
+	    }	    
+	    compact = 1;
+	    spread = (method == COMPACT_SPREAD);
 	}
 
-	/* is there already a var of this name? */
 	dbv = series_index(dataset, sinfo->varname);
+	
 	if (dbv < dataset->v) {
+	    /* there's already a series of this name */
 	    if (dw->nv == 1) {
 		resp = yes_no_dialog("gretl",                      
 				     _("There is already a variable of this name\n"
@@ -401,36 +473,39 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 		}
 	    }
 	    overwrite = 1;
-	    /* pick up on pre-registered compaction method? */
-	    if (series_get_compact_method(dataset, dbv) != COMPACT_NONE) {
-		method = series_get_compact_method(dataset, dbv);
-	    }
-	}
+	    if (compact) {
+		/* pick up on pre-set method? */
+		int m = series_get_compact_method(dataset, dbv);
 
-	if (!overwrite && dataset_add_series(dataset, 1)) {
-	    nomem();
-	    return 1;
-	}
-
-	if (sinfo->pd < dataset->pd) {
-	    /* the series needs to be expanded */
-	    xvec = expand_db_series(dbZ[v], sinfo, dataset->pd, interpol);
-	} else if (sinfo->pd > dataset->pd) {
-	    /* the series needs to be compacted */
-	    compact = 1;
-	    if (!chosen) {
-		data_compact_dialog(sinfo->pd, &dataset->pd, NULL, 
-				    &method, NULL, vwin->main);
-		if (method == COMPACT_NONE) {
-		    if (!overwrite) {
-			dataset_drop_last_variables(dataset, 1);
-		    }
-		    return 0;
+		if (m != COMPACT_NONE) {
+		    method = m;
 		}
-		chosen = 1;
 	    }
-	    xvec = compact_db_series(dbZ[v], sinfo, dataset->pd, 
-				     method);
+	}
+
+	if (spread) {
+	    /* creating multiple series */
+	    err = handle_compact_spread(dbZ, sinfo, dataset, v);
+	    if (err) {
+		break;
+	    } else {
+		record_db_import(sinfo->varname, compact, interpol, method);
+		continue;
+	    }
+	}
+
+	if (!overwrite) {
+	    err = dataset_add_series(dataset, 1);
+	    if (err) {
+		nomem();
+		return err;
+	    }
+	}
+
+	if (expand) {
+	    xvec = expand_db_series(dbZ[v], sinfo, dataset->pd, interpol);
+	} else if (compact) {
+	    xvec = compact_db_series(dbZ[v], sinfo, dataset->pd, method);
 	} else {  
 	    /* the frequency does not need adjustment */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
@@ -449,19 +524,10 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    return 1;
 	}
 
-	/* record successful importation in command log */
-	if (compact && (cstr = compact_method_string(method)) != NULL) {
-	    lib_command_sprintf("data %s --compact=%s", sinfo->varname,
-				cstr);
-	} else if (interpol) {
-	    lib_command_sprintf("data %s --interpolate", sinfo->varname);
-	} else {
-	    lib_command_sprintf("data %s", sinfo->varname);
-	}
+	/* record in command log */
+	record_db_import(sinfo->varname, compact, interpol, method);
 
-	record_command_verbatim();
-
-	/* common stuff for adding a var */
+	/* common stuff for adding a series */
 	strcpy(dataset->varname[dbv], sinfo->varname);
 	series_set_label(dataset, dbv, sinfo->descrip);
 	get_db_padding(sinfo, dataset, &pad1, &pad2);
@@ -3110,19 +3176,6 @@ static void set_compact_info_from_default (int method)
     }
 }
 
-static const char *method_string (CompactMethod method)
-{
-    if (method == COMPACT_SUM) {
-	return "sum";
-    } else if (method == COMPACT_SOP) {
-	return "first";
-    } else if (method == COMPACT_EOP) {
-	return "last";
-    } else {
-	return NULL;
-    }
-}
-
 void do_compact_data_set (void)
 {
     CompactMethod method = COMPACT_AVG;
@@ -3152,7 +3205,7 @@ void do_compact_data_set (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	const char *mstr = method_string(method);
+	const char *mstr = compact_method_string(method);
 
 	if (mstr != NULL) {
 	    lib_command_sprintf("dataset compact %d %s", newpd, mstr);
@@ -3162,6 +3215,9 @@ void do_compact_data_set (void)
 	record_command_verbatim();
 
 	mark_dataset_as_modified();
+	if (method == COMPACT_SPREAD) {
+	    populate_varlist();
+	}
 	set_compact_info_from_default(method);
     }
 }

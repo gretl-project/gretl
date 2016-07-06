@@ -129,6 +129,10 @@ int db_range_check (SERIESINFO *sinfo, DATASET *dset);
 
 int check_db_import (SERIESINFO *sinfo, DATASET *dset);
 
+int lib_add_db_data (double **dbZ, SERIESINFO *sinfo, 
+		     DATASET *dset, CompactMethod cmethod, 
+		     int interpolate, int dbv, PRN *prn);
+
 int compact_data_set (DATASET *dset, int newpd,
 		      CompactMethod default_method, 
 		      int monstart, int repday);

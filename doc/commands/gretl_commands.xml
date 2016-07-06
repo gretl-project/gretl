@@ -1942,16 +1942,20 @@
 
     <description>
 
-      <para>When you add to a dataset a series that is of higher
+      <para>
+	When you add to a dataset a series that is of higher
 	frequency, it is necessary to <quote>compact</quote> the new
 	series.  For instance, a monthly series will have to be
-	compacted to fit into a quarterly dataset.</para>  
+	compacted to fit into a quarterly dataset.
+      </para>  
 
-      <para>In addition, you may sometimes want to compact an entire
+      <para>
+	In addition, you may sometimes want to compact an entire
 	dataset to a lower frequency (perhaps, prior to adding a
-	lower-frequency variable to the dataset).</para>
+	lower-frequency variable to the dataset).
+      </para>
 
-      <para>Gretl offers four options for compacting:</para>
+      <para>Gretl offers five options for compacting:</para>
 
       <ilist>
 	<li><para>Averaging: The value written to the dataset will be
@@ -1975,15 +1979,30 @@
 	    higher-frequency data.  For example, the first quarter of
 	    1990 will get the January 1990 value.</para>
 	</li>
+	<li>
+	  <para>
+	  <quote>Spreading</quote>: In this case no higher-frequency
+	  information is lost; rather, it is spread over a set of
+	  <math>m</math> series, where <math>m</math> is the ratio of
+	  the higher frequency to the lower. Each series in the set
+	  holds the values from a given sub-period, which is
+	  identified by a specific suffix. For example, when
+	  compacting a series <lit>x</lit> from monthly to quarterly
+	  the names of the generated series will be <lit>x_m01</lit>,
+	  <lit>x_m02</lit> and <lit>x_m03</lit>, for the three
+	  months in each quarter.
+	  </para>
+	</li>	
       </ilist>
 
-      <para>In the case of compacting an entire dataset, the choice
-	you make in this dialog box sets the default method.  But if
-	you have set a compaction method for an individual variable
-	(menu item <quote>Variable/Edit attributes</quote>) that
-	method is used rather than the default.  If the compaction
-	method is already set for all variables, the choice of a
-	default compaction method is not presented.
+      <para>
+	In the case of compacting an entire dataset, the choice you
+	make in this dialog box sets the default method.  But if you
+	have set a compaction method for an individual variable (menu
+	item <quote>Variable/Edit attributes</quote>) that method is
+	used rather than the default.  If the compaction method is
+	already set for all variables, the choice of a default
+	compaction method is not presented.
       </para>
 
     </description>
@@ -2389,11 +2408,18 @@
 	data LHUR PUNEW --compact=average
       </code>
       <para>
-	The four available compaction methods are <quote>average</quote>
-	(takes the mean of the high frequency observations),
-	<quote>last</quote> (uses the last observation),
-	<quote>first</quote> and <quote>sum</quote>.  If no method is
-	specified, the default is to use the average.
+	The five available compaction methods are
+	<quote>average</quote> (takes the mean of the high frequency
+	observations), <quote>last</quote> (uses the last
+	observation), <quote>first</quote>, <quote>sum</quote> and
+	<quote>spread</quote>.  If no method is specified, the default
+	is to use the average. The <quote>spread</quote> method is
+	special: no information is lost, rather it is spread across
+	multiple series, one per sub-period. So for example when
+	adding a monthly series to a quarterly dataset three
+	series are created, one for each month of the quarter;
+	their names bear the suffixes <lit>m01</lit>, <lit>m02</lit>
+	and <lit>m03</lit>.
       </para>
       <para>
 	If the series to be read are of lower frequency than the
@@ -2534,16 +2560,18 @@
       </para>      
       <para>
 	<lit>compact</lit>: Must be followed by a positive integer
-	representing a new data frequency, which should be lower than the
-	current frequency (for example, a value of 4 when the current
-	frequency is 12 indicates compaction from monthly to quarterly).
-	This command is available for time series data only; it compacts
-	all the series in the data set to the new frequency.  A second
-	parameter may be given, namely one of <lit>sum</lit>,
-	<lit>first</lit> or <lit>last</lit>, to specify, respectively,
-	compaction using the sum of the higher-frequency values,
-	start-of-period values or end-of-period values.  The default
-	is to compact by averaging.
+	representing a new data frequency, which should be lower than
+	the current frequency (for example, a value of 4 when the
+	current frequency is 12 indicates compaction from monthly to
+	quarterly).  This command is available for time series data
+	only; it compacts all the series in the data set to the new
+	frequency.  A second parameter may be given, namely one of
+	<lit>sum</lit>, <lit>first</lit>, <lit>last</lit> or
+	<lit>spread</lit>, to specify, respectively, compaction using
+	the sum of the higher-frequency values, start-of-period
+	values, end-of-period values, or spreading of the
+	higher-frequency values across multiple series (one per
+	sub-period).  The default is to compact by averaging.
       </para>
       <para>
 	<lit>expand</lit>: This command is only available for annual

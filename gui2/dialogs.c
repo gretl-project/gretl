@@ -3777,23 +3777,24 @@ enum {
     ALL_METHODS_SET_SAME
 };
 
-static int method_selected (int i, CompactMethod *method)
+static int method_selected (int code, CompactMethod method)
 {
-    if (i == 0) {
-	return *method == COMPACT_NONE || *method == COMPACT_AVG;
-    } else if (i == 1) {
-	return *method == COMPACT_SUM;
-    } else if (i == 2) {
-	return *method == COMPACT_EOP;
+    if (code == COMPACT_AVG && method == COMPACT_NONE) {
+	return 1;
     } else {
-	return *method == COMPACT_SOP;
+	return code == method;
     }
+}
 
-#if 0 /* not yet */    
-    if (i == 4) {
-	return *method == COMPACT_SPREAD;
+static int spread_compaction_ok (int lf, int hf)
+{
+    if (lf == 1 && (hf == 4 || hf == 12)) {
+	return 1;
+    } else if (lf == 4 && hf == 12) {
+	return 1;
+    } else {
+	return 0;
     }
-#endif    
 }
 
 static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
@@ -3817,6 +3818,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     GtkWidget *button;
     GtkWidget *vbox;
     GSList *group = NULL;
+    int spread_ok;
     int i;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
@@ -3828,18 +3830,25 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	gtk_box_pack_start(GTK_BOX(vbox), label, TRUE, TRUE, 0);
     }
 
-    for (i=0; i<4; i++) {
+    spread_ok = spread_compaction_ok(*cinfo->target_pd, current_pd);
+
+    for (i=0; i<5; i++) { /* was 4 */
+	int code = ccodes[i];
+	
 	button = gtk_radio_button_new_with_label(group, _(cstrs[i]));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), 
-				     method_selected(i, method));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button),
+				     method_selected(code, *method));
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_compact_type), method);
 	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(ccodes[i]));
+			  GINT_TO_POINTER(code));
 	if (i > 0 && current_pd == 52) {
 	    gtk_widget_set_sensitive(button, FALSE);
-	}	
+	}
+	if (code == COMPACT_SPREAD && !spread_ok) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	}
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
