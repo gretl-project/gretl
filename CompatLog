@@ -1,4 +1,4 @@
-version 2016c, in progress
+2016-07-06 version 2016c
 
 The original interface to gretl's Kalman filter facility is
 now deprecated in favor of a new bundle-based interface. The

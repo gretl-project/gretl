@@ -1,4 +1,4 @@
-version 2016c, in progress
+2016-07-06 version 2016c
 - Add Ukrainian translation
 - Major revision of the user interface to the Kalman filter
   and state space modeling
@@ -8,12 +8,13 @@ version 2016c, in progress
 - New variable under the "set" command: "force_qr" forces
   the use of QR decomposition in the "ols" command
 - Add new --band option to the "gnuplot" and "plot" commands,
-  for plotting, e.g., confidence bands
+  for plotting confidence bands and the like
 - "gmm", "mle" and "nls" commands: document the previously
   hidden "param_names" keyword
 - "nls" command: add --no-gradient-check option, as in "mle"
 - "append" command: add --fixed-sample option: restricts the
   operation to "sideways" appending of new series
+- "data" command, --compact option: add new mode, "spread"
 - Writing and reading files via commands and functions: ensure
   that the gretl "working directory" is respected if an
   absolute path is not given
@@ -30,7 +31,7 @@ version 2016c, in progress
 - Fix bug: gnuplot error on selecting "loess fit" via the
   GUI plot editor when the plot already has a fitted line
 - Fix bug: the transpose-multiply operator (') now respects
-  right -associativity
+  right-associativity
 - gig: add variance forecasting (only residual-based for APARCH
   so far)
 - Miscellaneous smaller bug fixes
@@ -39,7 +40,7 @@ version 2016c, in progress
 - "panel" command, random-effects version: show an overall
   Wald chi-square test on the named regressors; also support
   the --robust option
-- "dataset" command: expose and document the "pad-daily" 
+- "dataset" command: expose and document the "pad-daily"
   option
 - "vecm" command: clarify the options available when specify-
   ing a restriction on beta via matrices R and q

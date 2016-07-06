@@ -10,7 +10,6 @@ Local:
 * "make dist" to create the new gretl-YYYYx.tar.xz
 * Make the MS Windows installers (32- and 64-bit)
 * Make the Mac OS X installers (intel-X11, ppc, quartz)
-* Get all the packages in place for upload to SF.
 
 Remote:
 * On sourceforge, make a new versioned subdirectory for gretl,
@@ -27,4 +26,4 @@ Local:
 * Send a message to gretl-announce
 
 Allin Cottrell
-last revised, October 2015
+last revised, July 2016
