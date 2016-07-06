@@ -24,6 +24,8 @@
   sensitive when it's supposed to be
 - Add Nile flow dataset to the package, plus a sample script
   that estimates the Local Level model
+- Function package DTD: make "tags" element mandatory; plus
+  add offline tags list to GUI package editor
 - Fix bug: crash on malformed "genr" expression with only a
   type name
 - Fix bug: crash with the "mpols" command when the dependent
