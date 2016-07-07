@@ -128,6 +128,30 @@
       </description>
     </function>
 
+    <function name="$diagpval" section="access" output="scalar">
+      <description>
+	<para>
+	  Deve seguire la stima di un sistema di equazioni. Returns the
+	  <math>P</math>-value associated with the <fncref
+	  targ="$diagtest"/> statistic.
+	</para>
+      </description>
+    </function>     
+
+    <function name="$diagtest" section="access" output="scalar">
+      <description>
+	<para>
+	  Deve seguire la stima di un sistema di equazioni. Returns the
+	  test statistic for the null hypothesis that the
+	  cross-equation covariance matrix is diagonal. This is the
+	  Breusch&ndash;Pagan test except when the estimator is
+	  (unrestricted) iterated SUR, in which case it is a Likelihood
+	  Ratio test. See <guideref targ="chap:system"/> for
+	  details; see also <fncref targ="$diagpval"/>.
+	</para>
+      </description>
+    </function>    
+
     <function name="$dwpval" section="access" output="scalar">
       <description>
     <para>
@@ -388,6 +412,25 @@
       </description>
     </function>
 
+    <function name="$lang" section="access" output="string">
+      <description>
+	<para>
+	  Restituisce una string indicante la lingua attualmente usata
+	  da gretl, se può essere determinata. The string is composed
+	  of a two-letter ISO 639-1 language code (for example,
+	  <lit>en</lit> for English, <lit>jp</lit> for Japanese,
+	  <lit>el</lit> for Greek) followed by an underscore plus a
+	  two-letter ISO 3166-1 country code.  Thus for example
+	  Portuguese in Portugal gives <lit>pt_PT</lit> while
+	  Portuguese in Brazil gives <lit>pt_BR</lit>.
+	</para>
+	<para>
+	  If the national language cannot be determined, the string
+	  <quote><lit>unknown</lit></quote> is returned.
+	</para>
+      </description>
+    </function>    
+
     <function name="$llt" section="access" output="series">
       <description>
     <para>
@@ -477,7 +520,7 @@
 
     <function name="$obsmajor" section="access" output="series">
       <description>
-    <para>
+	<para>
       Applicabile quando le osservazioni nel dataset aperto hanno
       una struttura maggiore:minore, come in serie storiche
       trimestrali (anno:trimestre), mensili (anno:mese), orarie
@@ -572,6 +615,17 @@
     </para>
       </description>
     </function>
+
+    <function name="$qlrbreak" section="access" output="scalar">
+      <description>
+	<para>
+	  Must follow an invocation of the <cmdref targ="qlrtest"/>
+	  command (the QLR test for a structural break at an unknown
+	  point). The value returned is the 1-based index of the
+	  observation at which the test statistic is maximized.
+	</para>
+      </description>
+    </function>    
 
     <function name="$rho" section="access" output="scalar">
       <fnargs>
