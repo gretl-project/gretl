@@ -9446,12 +9446,14 @@ int script_install_function_package (const char *pkgname,
     return err;
 }
 
-static int script_renumber_series (const char *s, DATASET *dset, 
+static int script_renumber_series (const int *list,
+				   const char *parm,
+				   DATASET *dset, 
 				   PRN *prn)
 {
     int err, fixmax = max_untouchable_series_ID();
 
-    err = renumber_series_with_checks(s, fixmax, dset, prn);
+    err = renumber_series_with_checks(list, parm, fixmax, dset, prn);
     if (err) {
 	errmsg(err, prn);
     }
@@ -9925,7 +9927,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    close_session(cmd->opt);
 	    break;
 	} else if (cmd->auxint == DS_RENUMBER) {
-	    err = script_renumber_series(cmd->param, dset, prn);
+	    err = script_renumber_series(cmd->list, cmd->parm2, dset, prn);
 	    break;
 	}
 	/* else fall-through intended */

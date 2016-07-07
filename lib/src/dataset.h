@@ -400,8 +400,11 @@ int dataset_drop_last_variables (DATASET *dset, int delvars);
 int dataset_renumber_variable (int v_old, int v_new, 
 			       DATASET *dset);
 
-int renumber_series_with_checks (const char *s, int fixmax,
-				 DATASET *dset, PRN *prn);
+int renumber_series_with_checks (const int *list,
+				 const char *param,
+				 int fixmax,
+				 DATASET *dset,
+				 PRN *prn);
 
 int maybe_prune_dataset (DATASET **pdset, void *p);
 

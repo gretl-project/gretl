@@ -847,12 +847,14 @@ static void cli_exec_callback (ExecState *s, void *ptr,
     /* otherwise, no-op */
 }
 
-static int cli_renumber_series (const char *s, DATASET *dset, 
+static int cli_renumber_series (const int *list,
+				const char *parm,
+				DATASET *dset,
 				PRN *prn)
 {
     int err, fixmax = highest_numbered_var_in_saved_object(dset);
 
-    err = renumber_series_with_checks(s, fixmax, dset, prn);
+    err = renumber_series_with_checks(list, parm, fixmax, dset, prn);
     if (err) {
 	errmsg(err, prn);
     }
@@ -1290,7 +1292,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
 	} else if (cmd->auxint == DS_RENUMBER) {
-	    err = cli_renumber_series(cmd->param, dset, prn);
+	    err = cli_renumber_series(cmd->list, cmd->parm2, dset, prn);
 	    break;
 	}
 	/* else fall-through intended */

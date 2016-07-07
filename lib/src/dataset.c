@@ -3238,44 +3238,60 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed)
     return err;
 }
 
-/* note: @s should be a string containing a varname and new
-   number (it is originally obtained as the "param" string
-   from the dataset command); @fixmax is the greatest series 
-   ID number that cannot be changed (based on saved models, 
-   etc., as determined by the caller)
+/* note: @list should contain a single series ID, that of the
+   target series, and @param should hold a numeric string
+   giving the position to which @targ should be moved;
+   @fixmax is the greatest series ID number that cannot be 
+   changed (based on saved models, etc., as determined by the
+   caller)
 */
 
-int renumber_series_with_checks (const char *s, int fixmax,
-				 DATASET *dset, PRN *prn)
+int renumber_series_with_checks (const int *list,
+				 const char *param,
+				 int fixmax,
+				 DATASET *dset,
+				 PRN *prn)
 {
     char vname[VNAMELEN];
     int v_old, v_new;
-    int n, err = 0;
-    
-    n = sscanf(s, "%s %d", vname, &v_new);
-    if (n != 2) {
-	err = E_PARSE;
-    } else {
-	v_old = current_series_index(dset, vname);
-	if (v_old < 0) {
-	    err = E_UNKVAR;
-	} else {
-	    int f1 = max_varno_in_saved_lists();
+    int f1, err = 0;
 
-	    if (f1 > fixmax) {
-		fixmax = f1;
-	    }
+    if (list == NULL || list[0] != 1 ||
+	param == NULL || *param == '\0') {
+	return E_INVARG;
+    }
 
-	    if (v_old <= fixmax) {
-		gretl_errmsg_sprintf(_("Variable %s cannot be renumbered"), vname);
-		err = E_DATA;
-	    } else if (v_new <= fixmax) {
-		gretl_errmsg_sprintf(_("Target ID %d is not available"), v_new);
-		err = E_DATA;
-	    } else {		
-		err = dataset_renumber_variable(v_old, v_new, dset);
-	    }
-	}
+    if (sscanf(param, "%d", &v_new) != 1) {
+	return E_INVARG;
+    }
+
+    v_old = list[1];
+
+    if (v_old < 1 || v_old > dset->v - 1 ||
+	v_new < 1 || v_new > dset->v - 1) {
+	/* out of bounds */
+	return E_INVARG;
+    } else if (v_new == v_old) {
+	/* no-op */
+	return 0;
+    }
+
+    f1 = max_varno_in_saved_lists();
+
+    if (f1 > fixmax) {
+	fixmax = f1;
+    }
+
+    strcpy(vname, dset->varname[v_old]);
+
+    if (v_old <= fixmax) {
+	gretl_errmsg_sprintf(_("Variable %s cannot be renumbered"), vname);
+	err = E_DATA;
+    } else if (v_new <= fixmax) {
+	gretl_errmsg_sprintf(_("Target ID %d is not available"), v_new);
+	err = E_DATA;
+    } else {		
+	err = dataset_renumber_variable(v_old, v_new, dset);
     }
 
     if (!err && gretl_messages_on()) {
@@ -3423,10 +3439,6 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else {
 	err = E_PARSE;
     }
-
-    if (!err && op != DS_RENUMBER) {
-	print_smpl(dset, get_full_length_n(), prn);
-    }  
 
     return err;
 }
