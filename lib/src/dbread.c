@@ -2007,6 +2007,8 @@ get_compact_method_and_advance (const char *s, CompactMethod *method)
 	    *method = COMPACT_SOP;
 	} else if (!strcmp(comp, "last")) {
 	    *method = COMPACT_EOP;
+	} else if (!strcmp(comp, "spread")) {
+	    *method = COMPACT_SPREAD;
 	}
 
 	p = strchr(p, ')');
@@ -3413,9 +3415,6 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 			sprintf(sfx, "_q%d", j+1);
 		    }
 		    strcat(cset->varname[k+j], sfx);
-		    sprintf(label, "%s in %s %d of %s", dset->varname[i],
-			    p0, j+1, p1);
-		    series_record_label(cset, k+j, label);
 		    named = 1;
 		}
 		while (s < offset) {
@@ -3438,13 +3437,18 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 	    int p;
 	    
 	    for (j=0; j<compfac/2; j++) {
-		p = k+compfac-j-1;
+		p = k + compfac - j - 1;
 		xtmp = cset->Z[k+j];
 		strcpy(stmp, cset->varname[k+j]);
 		cset->Z[k+j] = cset->Z[p];
 		strcpy(cset->varname[k+j], cset->varname[p]);
 		cset->Z[p] = xtmp;
 		strcpy(cset->varname[p], stmp);
+	    }
+	    for (j=0; j<compfac; j++) {
+		sprintf(label, "%s in %s %d of %s", dset->varname[i],
+			p0, compfac - j, p1);
+		series_record_label(cset, k+j, label);
 	    }
 	}
 	/* advance column write position for next source series */
