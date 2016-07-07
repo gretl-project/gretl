@@ -1288,6 +1288,10 @@ int list_laggenr (int **plist, int order,
 	}	    
     } else {
 	lmin = 1;
+	if (compfac > 0) {
+	    n_terms = order;
+	    order = (int) ceil(order / (double) compfac);
+	}
     }
 
     if (order < 0 || order > dset->n) {

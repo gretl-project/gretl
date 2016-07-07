@@ -1,3 +1,6 @@
+version 2016d, in progress
+- Small fixes for --compact=spread and new lags() options
+
 2016-07-06 version 2016c
 - Add Ukrainian translation
 - Major revision of the user interface to the Kalman filter
