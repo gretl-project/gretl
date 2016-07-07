@@ -1,5 +1,6 @@
 version 2016d, in progress
 - Small fixes for --compact=spread and new lags() options
+- Fix breakage in "dataset renumber" command
 
 2016-07-06 version 2016c
 - Add Ukrainian translation
