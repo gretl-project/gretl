@@ -9,25 +9,28 @@ function matrix aparch_fcast(matrix e, matrix e0, matrix h0,
     q = rows(alpha)
     p = rows(beta)
     head = xmax(p,q)
-    scalar hor = rows(e)
+    scalar hor = rows(e) + 1
 
     scalar is_asymmetric = maxc(abs(gamma)) .> 1.0e-07
 
-    matrix ee  = e0 | e  
+    matrix ee  = e0 | e
     matrix ae = abs(ee)
     h0init = h0.^(delta/2)
     scalar s = head + 1
 
-    matrix elag = mlag(ee, seq(1,q))
+    matrix elag = mlag(ee, seq(0,q-1))
     if is_asymmetric
        	tmp_ae = abs(elag) - elag .* gamma'
     else
        	tmp_ae = abs(elag)
     endif
 
-    matrix h = omega + (tmp_ae.^delta) * alpha 
+    # print e e0 tmp_ae h0init
+    
+    matrix h = omega + (tmp_ae.^delta) * alpha
     matrix ret = p>0 ? filter(h0init | h, 1, beta) : h
-    ret = ret[2*head+1:]
+    scalar good = rows(ret) - hor
+    ret = ret[good+1:]
     
     if delta != 2
 	ret = ret.^(2/delta)
@@ -91,7 +94,10 @@ function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
     
     # --------------------------------------------
 
-    matrix sel = ceil(muniform(horizon,rep) * rows(e)) # b'strap selector
+    if horizon > 1
+	matrix sel = ceil(muniform(horizon-1,rep) * rows(e)) # b'strap selector
+    endif
+    
     scalar back = xmax(p,q)
     matrix h0 = h[rows(h)-back+1:]
     matrix e0 = e[rows(e)-back+1:]
@@ -106,11 +112,15 @@ function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
     matrix ret = zeros(rep, horizon)
 
     loop i=1..rep --quiet
-        matrix ei = e[sel[,i]]
-        scalar chk = sumc(ei)
-        if !ok(chk)  
-            printf "%16.8f\n", ei ~ sel[,i]
-        endif
+	if horizon > 1
+            matrix ei = e[sel[,i]]
+            scalar chk = sumc(ei)
+            if !ok(chk)  
+		printf "%16.8f\n", ei ~ sel[,i]
+            endif
+	else
+	    ei = {}
+	endif
         ret[i,] = aparch_fcast(ei, e0, h0, omega, alpha, gamma, beta, delta)'
     endloop
 
