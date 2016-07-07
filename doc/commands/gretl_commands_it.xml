@@ -8658,6 +8658,180 @@
 
   </command>
 
+  <command name="plot" section="Graphs" context="cli">
+    <usage>
+      <arguments>
+        <argument>data</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--with-lines</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines, not points</effect>
+        </option>
+        <option>
+	  <flag>--with-lp</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use lines and points</effect>
+        </option>
+        <option>
+	  <flag>--with-impulses</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use vertical lines</effect>
+        </option>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>plot against time</effect>
+        </option>
+        <option>
+	  <flag>--single-yaxis</flag>
+	  <effect>force use of just one y-axis</effect>
+        </option>
+        <option>
+	  <flag>--dummy</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--fit</flag>
+	  <optparm>fitspec</optparm>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--band</flag>
+	  <optparm>bandspec</optparm>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--band-style</flag>
+	  <optparm>style</optparm>
+	  <effect>see below</effect>
+        </option>	
+        <option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Il blocco <lit>plot</lit> offre un'alternativa al comando
+	<cmdref targ="gnuplot"/>, che ppotrebbe essere più efficace
+	per produrre grafici particolarmente elaborati (con diverse
+	opzioni e/o comandi gnuplot inseriti).
+      </para>
+      <para>
+	Un blocco <lit>plot</lit> comincia col comando <lit>plot</lit>
+	seguito dall'argomento <repl>data</repl>, che indica i dati da
+	usare: quest'ultimo dev'essere il nome di una lista, una
+	matrice, o una serie singola.
+      </para>
+      <para>
+	If a list or matrix is given, the last element (list) or
+	column (matrix) is assumed to be the <math>x</math>-axis
+	variable and the other(s) the <math>y</math>-axis variable(s),
+	unless the <opt>time-series</opt> option is given in which
+	case all the specified data go on the <math>y</math> axis.
+      </para>
+      <para>
+	The option of supplying a single series name is restricted to
+	time-series data, in which case it is assumed that a
+	time-series plot is wanted; otherwise an error is flagged.
+      </para>
+      <para>
+	The starting line may be prefixed with
+	the <quote><repl>savename</repl> <lit>&lt;-</lit></quote>
+	apparatus to save a plot as an icon in the GUI program.
+	The block ends with <lit>end plot</lit>.
+      </para>
+      <para>
+	Inside the block you have zero or more lines of these types,
+	identified by an initial keyword:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>option</lit>: specify a single option.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	  <lit>options</lit>: specify multiple options on a single
+	  line, separated by spaces.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>literal</lit>: a command to be passed to gnuplot
+	    literally.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>printf</lit>: a printf statement whose result will be
+	    passed to gnuplot literally.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that when you specify an option using the
+	<lit>option</lit> or <lit>options</lit> keywords, it is not
+	necessary to supply the customary double-dash before the
+	option specifier. For details on the effects of the various
+	options please see <cmdref targ="gnuplot"/> (but see
+	below for some specifics on using the <opt>band</opt>
+	option in the <lit>plot</lit> context).
+      </para>
+      <para>
+	L'uso del blocco <lit>plot</lit> è illustrato al meglio
+	tramite un esempio:
+      </para>
+      <code>
+	string title = "My title"
+	string xname = "My x-variable"
+	plot plotmat
+	    options with-lines fit=none
+	    literal set linetype 3 lc rgb "#0000ff"
+	    literal set nokey
+	    printf "set title \"%s\"", title
+	    printf "set xlabel \"%s\"", xname
+	end plot --output=display
+      </code>
+      <para>
+	This example assumes that <lit>plotmat</lit> is the name of a
+	matrix with at least 2 columns (or a list with at least two
+	members).  Note that it is considered good practice to place
+	the <opt>output</opt> option (only) on the last line of the
+	block.
+      </para>
+      <subhead>Plotting a band with matrix data</subhead>
+      <para>
+	The <opt>band</opt> and <opt>band-style</opt> options mostly
+	work as described in the help for <lit>gnuplot</lit>,
+	with the following exception: when the data to be plotted are
+	given in the form of a matrix, the first parameter to
+	<opt>band</opt> must be given as the name of a matrix with two
+	columns (holding, respectively, the center and the width of
+	the band). This parameter takes the place of the two values
+	(series names or ID numbers, or matrix columns) required by
+	the <lit>gnuplot</lit> version of this option. An illustration
+	follows:
+      </para>
+      <code>
+	scalar n = 100
+	matrix x = seq(1,n)'
+	matrix y = x + filter(mnormal(n,1), 1, {1.8, -0.9})
+	matrix B = y ~ muniform(n,1)
+	plot y
+	    options time-series with-lines
+	    options band=B,10 band-style=fill
+	end plot --output=display
+      </code>
+    </description>
+
+  </command>
+  
   <command name="polyweights" section="Transformations" context="gui"
     label="Trend polinomiale">
 
@@ -10799,7 +10973,68 @@
 
   </command>
 
-  <command name="shell" section="Utilities" label="Esegue comandi shell" context="cli">
+  <command name="setopt" section="Programming" context="cli"
+    label="Set options for next command">
+
+    <usage>
+      <arguments>
+	<argument>command</argument>
+	<argument optional="true">action</argument>
+	<argument>options</argument>
+      </arguments>
+      <examples>
+        <example>setopt mle --hessian</example>
+        <example>setopt ols persist --quiet</example>
+	<example>setopt ols clear</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Questo comando abilita la preselezione di opzioni per un
+	comando dato. Di solito questo non è necessario, ma potrebbe
+	essere utile per chi scrive funzioni in hansl, quando certe
+	opzioni devono essere rese condizionali a un argomento fornito
+	dal livello chiamante.
+      </para>
+      <para>
+	Ad esempio, se una funnzione prevede un argomento booleano
+	<quote><lit>quiet</lit></quote>, il cui effetto è sopprimere
+	la stampa dei risultati di una regressione eseguita dentro la
+	funzione, si può usare <cmd>setopt</cmd> come segue:
+      </para>
+      <code>
+	if quiet
+	  setopt ols --quiet
+	endif
+	ols ...
+      </code>
+      <para>
+	The <opt>quiet</opt> option will then be applied to the
+	next <lit>ols</lit> command if and only if the variable
+	<lit>quiet</lit> has a non-zero value.
+      </para>
+      <para>
+	By default, options set in this way apply only to the
+	following instance of <repl>command</repl>; they are not
+	persistent. However if you give <lit>persist</lit> as the
+	value for <repl>action</repl> the options will continue to
+	apply to the given command until further notice.  The antidote
+	to the <lit>persist</lit> action is <lit>clear</lit>: this
+	erases any stored setting for the specified command.
+      </para>
+      <para>
+	It should be noted that options set via <lit>setopt</lit> are
+	compounded with any options attached to the target command
+	directly. So for example one might append the
+	<opt>hessian</opt> option to an <lit>mle</lit> command
+	unconditionally but use <lit>setopt</lit> to add
+	<opt>quiet</opt> conditionally.
+      </para>
+    </description> 
+  </command>
+
+<command name="shell" section="Utilities" label="Esegue comandi shell" context="cli">
 
     <usage>
       <arguments>
