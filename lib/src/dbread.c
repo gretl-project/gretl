@@ -3099,7 +3099,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 		err = compact_data_set(tmpset, dset->pd, cmethod, 0, 0);
 	    }
 	    if (!err) {
-		err = merge_or_replace_data(dset, &tmpset, OPT_X, prn);
+		err = merge_or_replace_data(dset, &tmpset, OPT_X | OPT_U, prn);
 	    }
 	}
 	return err;
@@ -3401,7 +3401,11 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 
 		if (!named) {
 		    strcpy(cset->varname[k+j], dset->varname[i]);
-		    if (oldpd == 12) {
+		    if (oldpd == 12 && newpd == 4) {
+			gretl_trunc(cset->varname[k+j], VNAMELEN - 4);
+			sprintf(sfx, "_m%d", j+1);
+		    } else if (oldpd == 12) {
+			/* going to annual */
 			gretl_trunc(cset->varname[k+j], VNAMELEN - 5);
 			sprintf(sfx, "_m%02d", j+1);
 		    } else {
