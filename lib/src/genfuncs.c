@@ -4021,8 +4021,8 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 
     if (method == 2) {
 	/* check beta parameters */
-	if (p != 2) {
-	    gretl_errmsg_set("theta must be a 2-vector");
+	if (p != 2 && p != 3) {
+	    gretl_errmsg_set("theta must be a 2- or 3-vector");
 	    *err = E_INVARG;
 	    return NULL;
 	} else if (theta->val[0] < eps || theta->val[1] < eps) {
@@ -4047,7 +4047,7 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 	    wsum += w->val[i];
 	}
     } else if (method == 2) {
-	/* Beta, zero at end */
+	/* Beta */
 	double si, ai, bi;
 
 	for (i=0; i<m; i++) {
@@ -4068,6 +4068,15 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 	w->val[i] /= wsum;
     }
 
+    if (method == 2 && p == 3) {
+	/* beta with third param, not zero-terminated */
+	wsum = 1 + m * theta->val[2];
+	for (i=0; i<m; i++) {
+	    w->val[i] += theta->val[2];
+	    w->val[i] /= wsum;
+	}
+    }
+    
     return w;
 }
 
@@ -4090,6 +4099,7 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
     if (method == 2) {
 	/* check beta parameters */
 	if (p != 2) {
+	    /* can't yet do the gradient for betaNN */
 	    gretl_errmsg_set("theta must be a 2-vector");
 	    *err = E_INVARG;
 	} else if (theta->val[0] < eps || theta->val[1] < eps) {
