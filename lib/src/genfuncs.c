@@ -4098,9 +4098,8 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 
     if (method == 2) {
 	/* check beta parameters */
-	if (p != 2) {
-	    /* can't yet do the gradient for betaNN */
-	    gretl_errmsg_set("theta must be a 2-vector");
+	if (p != 2 && p != 3) {
+	    gretl_errmsg_set("theta must be a 2 or 3--vector");
 	    *err = E_INVARG;
 	} else if (theta->val[0] < eps || theta->val[1] < eps) {
 	    *err = E_INVARG;
@@ -4154,7 +4153,7 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 	}
 	free(dsum);
     } else if (method == 2) {
-	/* Beta, zero at end */
+	/* Beta */
 	double si, ai, bi;
 	double g1sum = 0;
 	double g2sum = 0;
@@ -4193,7 +4192,23 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 	    bi = gretl_matrix_get(G, i, 1);
 	    bi -= w->val[i] * g2sum/ws2;
 	    gretl_matrix_set(G, i, 1, 2*bi);
-	}	
+	}
+	if (p == 3) {
+	    /* not zero-terminated */
+	    double c3 = theta->val[2];
+	    double m3 = 1 / (1 + m * c3);
+	    double wi;
+	    
+	    for (i=0; i<2*m; i++) {
+		/* scale the first two columns */
+		G->val[i] *= m3;
+	    }
+	    for (i=0; i<m; i++) {
+		/* compute the third-col derivative */
+		wi = m3 * (w->val[i] / wsum + c3);
+		gretl_matrix_set(G, i, 2, m3 * (1 - m*wi));
+	    }
+	}
     }
 
     gretl_matrix_free(w);
