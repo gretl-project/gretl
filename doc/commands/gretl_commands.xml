@@ -11130,17 +11130,18 @@
 
     <description>
       <para>
-	The most common use of this command is the first variant shown above,
-	where it is used to set the value of a selected program parameter.
-	This is discussed in detail below.  The other uses are: with
-	<opt>to-file</opt>, to write a script file containing all the
-	current parameter settings; with <opt>from-file</opt> to read a
-	script file containing parameter settings and apply them to the
-	current session; with <lit>stopwatch</lit> to zero the gretl
-	<quote>stopwatch</quote> which can be used to measure CPU time (see
-	the entry for the <lit>$stopwatch</lit> accessor in the gretl function
-	reference); or, if the word <lit>set</lit> is given alone, to print
-	the current settings.
+	The most common use of this command is the first variant shown
+	above, where it is used to set the value of a selected program
+	parameter.  This is discussed in detail below.  The other uses
+	are: with <opt>to-file</opt>, to write a script file
+	containing all the current parameter settings; with
+	<opt>from-file</opt> to read a script file containing
+	parameter settings and apply them to the current session; with
+	<lit>stopwatch</lit> to zero the gretl
+	<quote>stopwatch</quote> which can be used to measure CPU time
+	(see the entry for the <fncref targ="$stopwatch"/> accessor);
+	or, if the word <lit>set</lit> is given alone, to print the
+	current settings.
       </para>
       <para>
 	Values set via this comand remain in force for the duration of
