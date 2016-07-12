@@ -1320,11 +1320,58 @@ static int parse_as_for_loop (LOOPSET *loop, char *s)
     return err;
 }
 
+static int is_indexed_loop (const char *s,
+			    char *lvar,
+			    char **start,
+			    char **stop)
+{
+    int n;
+
+    /* must conform to the pattern
+
+      lvar = start..stop
+
+      where @start and/or @stop may be compound terms,
+      with or without whitespace between terms
+    */
+
+    s += strspn(s, " ");
+    n = gretl_namechar_spn(s);
+
+    if (n > 0 && n < VNAMELEN) {
+	const char *s0 = s;
+	const char *p = strstr(s, "..");
+
+	if (p != NULL) {
+	    s += n;
+	    s += strspn(s, " ");
+	    if (*s == '=' && *(s+1) != '=') {
+		*lvar = '\0';
+		strncat(lvar, s0, n);
+		/* skip any space after '=' */
+		s++;
+		s += strspn(s, " ");
+		*start = gretl_strndup(s, p - s);
+		g_strchomp(*start);
+		/* skip ".. " */
+		p += 2;
+		p += strspn(p, " ");
+		*stop = gretl_strdup(p);
+		g_strchomp(*stop);
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int parse_first_loopline (char *s, LOOPSET *loop, 
 				 DATASET *dset)
 {
-    char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
-    char fmt[32];
+    char vname[VNAMELEN];
+    char *start = NULL;
+    char *stop = NULL;
     int err = 0;
 
     /* skip preliminary string */
@@ -1343,19 +1390,18 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     fprintf(stderr, "parse_first_loopline: '%s'\n", s);
 #endif
 
-    sprintf(fmt, "%%%d[^= ] = %%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1, 
-	    VNAMELEN-1);
-
     if (!strncmp(s, "foreach ", 8)) {
 	err = parse_as_each_loop(loop, dset, s + 8);
-    } else if (sscanf(s, fmt, lvar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, dset, lvar, op, rvar);
-    } else if (!strncmp(s, "for", 3)) {
+    } else if (!strncmp(s, "for ", 4)) {
 	err = parse_as_for_loop(loop, s + 4);
-    } else if (!strncmp(s, "while", 5)) {
+    } else if (!strncmp(s, "while ", 6)) {
 	err = parse_as_while_loop(loop, s + 6);
-    } else if (gretl_scan_varname(s, lvar) == 1) {
-	err = parse_as_count_loop(loop, dset, lvar);
+    } else if (is_indexed_loop(s, vname, &start, &stop)) {
+	err = parse_as_indexed_loop(loop, dset, vname, start, stop);
+	free(start);
+	free(stop);
+    } else if (gretl_scan_varname(s, vname) == 1) {
+	err = parse_as_count_loop(loop, dset, vname);
     } else {
 	printf("parse_first_loopline: failed on '%s'\n", s);
 	gretl_errmsg_set(_("No valid loop condition was given."));
