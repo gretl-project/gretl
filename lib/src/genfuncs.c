@@ -4017,7 +4017,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
        @k = number of hyper-parameters
     */
 
-    if (method < 1 || method > 2 || p < 1) {
+    if (method < 1 || method > 3 || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4073,10 +4073,20 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
+    } else if (method == 3) {
+	/* straight Almon ploynomial */
+	for (i=0; i<p; i++) {
+	    w->val[i] = theta[0];
+	    for (j=1; j<k; j++) {
+		w->val[i] += pow(i+1, j) * theta[j];
+	    }
+	}
     }
 
-    for (i=0; i<p; i++) {
-	w->val[i] /= wsum;
+    if (method != 3) {
+	for (i=0; i<p; i++) {
+	    w->val[i] /= wsum;
+	}
     }
 
     if (method == 2 && k == 3) {
@@ -4101,7 +4111,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     gretl_matrix *G = NULL;
     int k, i, j;
 
-    if (method < 1 || method > 2 || p < 1) {
+    if (method < 1 || method > 3 || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4131,10 +4141,12 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
     }
 
-    w = gretl_column_vector_alloc(p);
-    if (w == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+    if (method != 3) {
+	w = gretl_column_vector_alloc(p);
+	if (w == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
     }
 
     G = gretl_matrix_alloc(p, k);
@@ -4229,6 +4241,14 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 		/* compute the third-col derivative */
 		wi = m3 * (w->val[i] / wsum + c3);
 		gretl_matrix_set(G, i, 2, m3 * (1 - p*wi));
+	    }
+	}
+    } else if (method == 3) {
+	/* straight Almon polynomial */
+	for (i=0; i<p; i++) {
+	    gretl_matrix_set(G, i, 0, 1.0);
+	    for (j=1; j<k; j++) {
+		gretl_matrix_set(G, i, j, pow(i + 1.0, j));
 	    }
 	}
     }
