@@ -3999,6 +3999,14 @@ int list_linear_combo (double *y, const int *list,
     return err;
 }
 
+enum {
+    MIDAS_EXP_ALMON = 1,
+    MIDAS_BETA,
+    MIDAS_ALMON,
+    MIDAS_MAX /* sentinel */
+};
+    
+
 /* Computes a column m-vector holding weights for use with MIDAS:
    at present only exponential Almon (method = 1) and Beta (method
    = 2) are supported.
@@ -4017,7 +4025,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
        @k = number of hyper-parameters
     */
 
-    if (method < 1 || method > 3 || p < 1) {
+    if (method < MIDAS_EXP_ALMON || method >= MIDAS_MAX || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4030,7 +4038,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
     theta = m->val;
 
-    if (method == 2) {
+    if (method == MIDAS_BETA) {
 	/* check beta parameters */
 	if (k != 2 && k != 3) {
 	    gretl_errmsg_set("theta must be a 2- or 3-vector");
@@ -4047,8 +4055,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	return NULL;
     }
 
-    if (method == 1) {
-	/* exponential Almon */
+    if (method == MIDAS_EXP_ALMON) {
 	for (i=0; i<p; i++) {
 	    w->val[i] = (i+1) * theta[0];
 	    for (j=1; j<k; j++) {
@@ -4057,8 +4064,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
 	}
-    } else if (method == 2) {
-	/* Beta */
+    } else if (method == MIDAS_BETA) {
 	double si, ai, bi;
 
 	for (i=0; i<p; i++) {
@@ -4073,7 +4079,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
-    } else if (method == 3) {
+    } else if (method == MIDAS_ALMON) {
 	/* straight Almon ploynomial */
 	for (i=0; i<p; i++) {
 	    w->val[i] = theta[0];
@@ -4083,13 +4089,14 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (method != 3) {
+    if (method != MIDAS_ALMON) {
+	/* normalize the weights */
 	for (i=0; i<p; i++) {
 	    w->val[i] /= wsum;
 	}
     }
 
-    if (method == 2 && k == 3) {
+    if (method == MIDAS_BETA && k == 3) {
 	/* beta with third param, not zero-terminated */
 	wsum = 1 + p * theta[2];
 	for (i=0; i<p; i++) {
@@ -4111,7 +4118,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     gretl_matrix *G = NULL;
     int k, i, j;
 
-    if (method < 1 || method > 3 || p < 1) {
+    if (method < MIDAS_EXP_ALMON || method >= MIDAS_MAX || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4128,7 +4135,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 
     theta = m->val;
 
-    if (method == 2) {
+    if (method == MIDAS_BETA) {
 	/* check beta parameters */
 	if (k != 2 && k != 3) {
 	    gretl_errmsg_set("theta must be a 2 or 3--vector");
@@ -4141,7 +4148,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
     }
 
-    if (method != 3) {
+    if (method != MIDAS_ALMON) {
 	w = gretl_column_vector_alloc(p);
 	if (w == NULL) {
 	    *err = E_ALLOC;
@@ -4156,8 +4163,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	return NULL;
     }    
 
-    if (method == 1) {
-	/* exponential Almon */
+    if (method == MIDAS_EXP_ALMON) {
 	double *dsum = malloc(k * sizeof *dsum);
 	double gij;
 
@@ -4186,8 +4192,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	}
 	free(dsum);
-    } else if (method == 2) {
-	/* Beta */
+    } else if (method == MIDAS_BETA) {
 	double si, ai, bi;
 	double g1sum = 0;
 	double g2sum = 0;
@@ -4243,7 +4248,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 		gretl_matrix_set(G, i, 2, m3 * (1 - p*wi));
 	    }
 	}
-    } else if (method == 3) {
+    } else if (method == MIDAS_ALMON) {
 	/* straight Almon polynomial */
 	for (i=0; i<p; i++) {
 	    gretl_matrix_set(G, i, 0, 1.0);
@@ -4268,7 +4273,7 @@ int midas_linear_combo (double *y, const int *list,
 
     w = midas_weights(m, theta, method, &err);
 
-    if (method == 2 && !err && w == NULL) {
+    if (method == MIDAS_BETA && !err && w == NULL) {
 	int t;
 	
 	for (t=dset->t1; t<=dset->t2; t++) {
