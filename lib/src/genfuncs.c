@@ -4004,33 +4004,44 @@ int list_linear_combo (double *y, const int *list,
    = 2) are supported.
 */
 
-gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
+gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 			     int method, int *err)
 {
+    double *theta;
     double eps = pow(2.0, -52);
     double wsum = 0.0;
     gretl_matrix *w = NULL;
-    int p, i, j;
+    int k, i, j;
 
-    if (method < 1 || method > 2 || m < 1) {
+    /* @p = lag order 
+       @k = number of hyper-parameters
+    */
+
+    if (method < 1 || method > 2 || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    p = gretl_vector_get_length(theta);
+    k = gretl_vector_get_length(m);
+    if (k == 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    theta = m->val;
 
     if (method == 2) {
 	/* check beta parameters */
-	if (p != 2 && p != 3) {
+	if (k != 2 && k != 3) {
 	    gretl_errmsg_set("theta must be a 2- or 3-vector");
 	    *err = E_INVARG;
 	    return NULL;
-	} else if (theta->val[0] < eps || theta->val[1] < eps) {
+	} else if (theta[0] < eps || theta[1] < eps) {
 	    return NULL;
 	}	    
     }
 
-    w = gretl_column_vector_alloc(m);
+    w = gretl_column_vector_alloc(p);
     if (w == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -4038,10 +4049,10 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 
     if (method == 1) {
 	/* exponential Almon */
-	for (i=0; i<m; i++) {
-	    w->val[i] = (i+1) * theta->val[0];
-	    for (j=1; j<p; j++) {
-		w->val[i] += pow(i+1, j+1) * theta->val[j];
+	for (i=0; i<p; i++) {
+	    w->val[i] = (i+1) * theta[0];
+	    for (j=1; j<k; j++) {
+		w->val[i] += pow(i+1, j+1) * theta[j];
 	    }
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
@@ -4050,29 +4061,29 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
 	/* Beta */
 	double si, ai, bi;
 
-	for (i=0; i<m; i++) {
-	    si = i / (m - 1.0);
+	for (i=0; i<p; i++) {
+	    si = i / (p - 1.0);
 	    if (i == 0) {
 		si += eps;
-	    } else if (i == m-1) {
+	    } else if (i == p-1) {
 		si -= eps;
 	    }
-	    ai = pow(si, theta->val[0] - 1.0);
-	    bi = pow(1.0 - si, theta->val[1] - 1.0);
+	    ai = pow(si, theta[0] - 1.0);
+	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
     }
 
-    for (i=0; i<m; i++) {
+    for (i=0; i<p; i++) {
 	w->val[i] /= wsum;
     }
 
-    if (method == 2 && p == 3) {
+    if (method == 2 && k == 3) {
 	/* beta with third param, not zero-terminated */
-	wsum = 1 + m * theta->val[2];
-	for (i=0; i<m; i++) {
-	    w->val[i] += theta->val[2];
+	wsum = 1 + p * theta[2];
+	for (i=0; i<p; i++) {
+	    w->val[i] += theta[2];
 	    w->val[i] /= wsum;
 	}
     }
@@ -4080,28 +4091,39 @@ gretl_matrix *midas_weights (int m, const gretl_matrix *theta,
     return w;
 }
 
-gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
+gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err)
 {
+    double *theta;
     double eps = pow(2.0, -52);
     double ws2, wsum = 0.0;
     gretl_matrix *w = NULL;
     gretl_matrix *G = NULL;
-    int p, i, j;
+    int k, i, j;
 
-    if (method < 1 || method > 2 || m < 1) {
+    if (method < 1 || method > 2 || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    p = gretl_vector_get_length(theta);
+    /* @p = lag order 
+       @k = number of hyper-parameters
+    */    
+
+    k = gretl_vector_get_length(m);
+    if (k == 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    theta = m->val;
 
     if (method == 2) {
 	/* check beta parameters */
-	if (p != 2 && p != 3) {
+	if (k != 2 && k != 3) {
 	    gretl_errmsg_set("theta must be a 2 or 3--vector");
 	    *err = E_INVARG;
-	} else if (theta->val[0] < eps || theta->val[1] < eps) {
+	} else if (theta[0] < eps || theta[1] < eps) {
 	    *err = E_INVARG;
 	}
 	if (*err) {
@@ -4109,13 +4131,13 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 	}
     }
 
-    w = gretl_column_vector_alloc(m);
+    w = gretl_column_vector_alloc(p);
     if (w == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    G = gretl_matrix_alloc(m, p);
+    G = gretl_matrix_alloc(p, k);
     if (G == NULL) {
 	gretl_matrix_free(w);
 	*err = E_ALLOC;
@@ -4124,31 +4146,31 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 
     if (method == 1) {
 	/* exponential Almon */
-	double *dsum = malloc(p * sizeof *dsum);
+	double *dsum = malloc(k * sizeof *dsum);
 	double gij;
 
-	for (j=0; j<p; j++) {
+	for (j=0; j<k; j++) {
 	    dsum[j] = 0.0;
 	}
-	for (i=0; i<m; i++) {
-	    w->val[i] = (i+1) * theta->val[0];
-	    for (j=1; j<p; j++) {
-		w->val[i] += pow(i+1, j+1) * theta->val[j];
+	for (i=0; i<p; i++) {
+	    w->val[i] = (i+1) * theta[0];
+	    for (j=1; j<k; j++) {
+		w->val[i] += pow(i+1, j+1) * theta[j];
 	    }
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
 	}
 	ws2 = wsum * wsum;
-	for (i=0; i<m; i++) {
-	    for (j=0; j<p; j++) {
+	for (i=0; i<p; i++) {
+	    for (j=0; j<k; j++) {
 		dsum[j] += pow(i+1, j+1) * w->val[i];
 	    }
 	}
-	for (i=0; i<m; i++) {
-	    for (j=0; j<p; j++) {
+	for (i=0; i<p; i++) {
+	    for (j=0; j<k; j++) {
 		gij = pow(i+1, j+1) * w->val[i] / wsum;
 		gij -= w->val[i] * dsum[j] / ws2;
-		gretl_matrix_set(G, i, j, p*gij);
+		gretl_matrix_set(G, i, j, k*gij);
 	    }
 	}
 	free(dsum);
@@ -4158,24 +4180,24 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 	double g1sum = 0;
 	double g2sum = 0;
 
-	for (i=0; i<m; i++) {
-	    si = i / (m - 1.0);
+	for (i=0; i<p; i++) {
+	    si = i / (p - 1.0);
 	    if (i == 0) {
 		si += eps;
-	    } else if (i == m-1) {
+	    } else if (i == p - 1) {
 		si -= eps;
 	    }
-	    ai = pow(si, theta->val[0] - 1.0);
-	    bi = pow(1.0 - si, theta->val[1] - 1.0);
+	    ai = pow(si, theta[0] - 1.0);
+	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
 	ws2 = wsum * wsum;
-	for (i=0; i<m; i++) {
-	    si = i / (m - 1.0);
+	for (i=0; i<p; i++) {
+	    si = i / (p - 1.0);
 	    if (i == 0) {
 		si += eps;
-	    } else if (i == m-1) {
+	    } else if (i == p - 1) {
 		si -= eps;
 	    }	    
 	    ai = w->val[i] * log(si);
@@ -4185,7 +4207,7 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 	    g2sum += bi;
 	    gretl_matrix_set(G, i, 1, bi/wsum);
 	}
-	for (i=0; i<m; i++) {
+	for (i=0; i<p; i++) {
 	    ai = gretl_matrix_get(G, i, 0);
 	    ai -= w->val[i] * g1sum/ws2;
 	    gretl_matrix_set(G, i, 0, 2*ai);
@@ -4193,20 +4215,20 @@ gretl_matrix *midas_gradient (int m, const gretl_matrix *theta,
 	    bi -= w->val[i] * g2sum/ws2;
 	    gretl_matrix_set(G, i, 1, 2*bi);
 	}
-	if (p == 3) {
+	if (k == 3) {
 	    /* not zero-terminated */
-	    double c3 = theta->val[2];
-	    double m3 = 1 / (1 + m * c3);
+	    double c3 = theta[2];
+	    double m3 = 1 / (1 + p * c3);
 	    double wi;
 	    
-	    for (i=0; i<2*m; i++) {
+	    for (i=0; i<2*p; i++) {
 		/* scale the first two columns */
 		G->val[i] *= m3;
 	    }
-	    for (i=0; i<m; i++) {
+	    for (i=0; i<p; i++) {
 		/* compute the third-col derivative */
 		wi = m3 * (w->val[i] / wsum + c3);
-		gretl_matrix_set(G, i, 2, m3 * (1 - m*wi));
+		gretl_matrix_set(G, i, 2, m3 * (1 - p*wi));
 	    }
 	}
     }
