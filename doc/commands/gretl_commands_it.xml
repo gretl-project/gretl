@@ -10254,45 +10254,50 @@
   <command name="set" section="Programming" label="Imposta parametri del programma" context="cli">
 
     <usage>
-      <arguments>
-        <argument>variabile</argument>
-        <argument>valore</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>set</lit> <repl>variabile</repl> <repl>valore</repl></altform>
+	<altform><lit>set --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>set --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>set stopwatch</lit></altform>
+	<altform><lit>set</lit></altform>
+      </altforms>
       <examples>
         <example>set svd on</example>
         <example>set csv_delim tab</example>
 	<example>set horizon 10</example>
+	<example>set --to-file=mysettings.inp</example>
       </examples>    
     </usage>
 
     <description>
       <para>
-	Imposta i valori di vari parametri del programma. Il valore
-        impostato rimane in vigore per la durata della sessione di
-        gretl, a meno di non essere modificato da un ulteriore
-        esecuzione del comando <cmd>set</cmd>. I parametri che possono
-        essere impostati in questo modo sono elencati di seguito.
-        Si noti che le impostazioni di <lit>hac_lag</lit>, <lit>hc_version</lit>
-        e <lit>hac_kernel</lit> sono usate quando viene data l'opzione
-        <opt>robust</opt> a un comando di stima.
+	L'uso più comune di questo comando è quello mostrato nella
+	prima variante qui sopra, dove viene fissato il valore di un
+	certo parametro. Più avanti, questo aspetto sarà analizzato in
+	dettaglio. Gli altri usi sono: con <opt>from-file</opt> per
+	leggere un file di script contenente certe impostazioni e
+	applicarle alla sessione corrente; con <opt>stopwatch</opt>,
+	per azzerare il <quote>cronometro</quote> della CPU di gretl
+	(si veda lo help per l'accessore <fncref targ="$stopwatch"/>).
+	Se il comando <cmd>set</cmd> è usato senza parametri, vengono
+	mostrate le impostazioni attuali per tutti i parametri
+	rilevanti.
       </para>
       <para>
-        Un uso speciale di questo comando è <cmd>set stopwatch</cmd>. In questo
-        modo viene avviata la misurazione del tempo della CPU, che viene fermata
-        la prima volta che viene usata la variabile accessoria
-        <fncref targ="$stopwatch"/>, ad esempio assegnandola a un'altra variabile,
-        oppure stampandola. <fncref targ="$stopwatch"/> conterrà il numero di secondi
-        usati dalla CPU, dal momento in cui è stato dato il comando
-        <lit>set stopwatch</lit>.
+	Il valore impostato rimane in vigore per la durata della
+	sessione di gretl, a meno di non essere modificato da un
+	ulteriore esecuzione del comando <cmd>set</cmd>. I parametri
+	che possono essere impostati in questo modo sono elencati di
+	seguito.  Si noti che le impostazioni di <lit>hac_lag</lit>,
+	<lit>hc_version</lit> e <lit>hac_kernel</lit> sono usate
+	quando viene data l'opzione <opt>robust</opt> a un comando di
+	stima.
       </para>
       <para>
-        Se il comando <cmd>set</cmd> è usato senza parametri, vengono
-        mostrate le impostazioni attuali per tutti i parametri rilevanti.
-      </para>
-      <para>
-	Le impostazioni disponibili sono raggruppate in sei categorie:
-        interazione col programma, metodi numerici, generazione di numeri
-        casuali, stima robusta, filtri e stima di modelli per serie storiche.
+	Le impostazioni disponibili sono raggruppate in categorie:
+	interazione col programma, metodi numerici, generazione di
+	numeri casuali, stima robusta, filtri, stima di modelli per
+	serie storiche e interazione con R.
       </para>
 
       <para>
@@ -10304,17 +10309,78 @@
       </para>
       <ilist>
 	<li>
-	  <para><lit>csv_delim</lit>:
-	  <lit>comma</lit> (virgola, valore predefinito), <lit>space</lit>
-            (spazio), o <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
-            salvataggio di dati su file in formato CSV.
+	  <para><lit>workdir</lit>: <repl>path</repl>.  Stabilisce la
+	  directory di default per la lettura/scrittura dei file, ogni
+	  qual volta non si specifichino percorsi completi.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>echo</lit>:
-	  <lit>off</lit> o <lit>on</lit> (valore predefinito).
-	    Sopprime o ripristina l'indicazione dei comandi eseguiti nell'output
-            dei risultati.</para>
+	  <para><lit>use_cwd</lit>: <lit>on</lit> oppure
+	  <lit>off</lit> (il default). Regola l'inizializzazione
+	  automatica di <lit>workdir</lit>: se <lit>on</lit>, essa
+	  viene ereditata dalla shell, altrimenti viene fissata al
+	  valore che aveva nella sessione gretl precedente.
+	  </para>
+	</li>	
+	<li>
+	  <para><lit>csv_delim</lit>: <lit>comma</lit> (virgola,
+	  valore predefinito), <lit>space</lit> (spazio), o
+	  <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
+	  salvataggio di dati su file in formato CSV.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_write_na</lit>: the string used to represent
+	  missing values when writing data to file in CSV format.
+	  Maximum 7 characters; the default is <lit>NA</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_read_na</lit>: the string taken to represent
+	  missing values (NAs) when reading data in CSV
+	  format. Maximum 7 characters. The default depends on whether
+	  a data column is found to contain numerical data (mostly) or
+	  string values. For numerical data the following are taken as
+	  indicating NAs: an empty cell, or any of the strings
+	  <lit>NA</lit>, <lit>N.A.</lit>, <lit>na</lit>,
+	  <lit>n.a.</lit>, <lit>N/A</lit>, <lit>#N/A</lit>,
+	  <lit>NaN</lit>, <lit>.NaN</lit>, <lit>.</lit>,
+	  <lit>..</lit>, <lit>-999</lit>, and <lit>-9999</lit>.  For
+	  string-valued data only a blank cell, or a cell containing
+	  an empty string, is counted as NA. These defaults can be
+	  reimposed by giving <lit>default</lit> as the value for
+	  <lit>csv_read_na</lit>. To specify that only empty cells
+	  are read as NAs, give a value of <lit>""</lit>. Note that
+	  empty cells are always read as NAs regardless of the setting
+	  of this variable.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_digits</lit>: a positive integer specifying
+	  the number of significant digits to use when writing data in
+	  CSV format. By default up to 15 digits are used depending on
+	  the precision of the original data. Note that CSV output
+	  employs the C library's <lit>fprintf</lit> function with
+	  <quote><lit>%g</lit></quote> conversion, which means that
+	  trailing zeros are dropped.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
+	  (the default). When writing a matrix to file as text, gretl
+	  by default uses scientific notation with 18-digit precision,
+	  hence ensuring that the stored values are a faithful
+	  representation of the numbers in memory. When writing
+	  primary data with no more than 6 digits of precision it may
+	  be preferable to use <lit>%g</lit> format for a more compact
+	  and human-readable file; you can make this switch via
+	  <lit>set mwrite_g on</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>echo</lit>: <lit>off</lit> o <lit>on</lit>
+	  (valore predefinito).  Sopprime o ripristina l'indicazione
+	  dei comandi eseguiti nell'output dei risultati.</para>
 	</li>
 	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> o <lit>off</lit>
@@ -10356,6 +10422,12 @@
             campione.
          </para>
 	</li>
+	<li>
+	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Suppress or resume the printing of warning messages
+	  issued when arithmetical operations produce non-finite values. 
+         </para>
+	</li>
  	<li>
 	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> o <lit>0</lit>
 	    (valore predefinito). Da usare per le funzioni definite dall'utente.
@@ -10381,16 +10453,6 @@
            di lavoro attuale per i comandi shell.
          </para>
 	</li>
-	<li>
-	  <para><lit>use_cwd</lit>: <lit>on</lit> o <lit>off</lit>
-	  (valore predefinito). Questa impostazione modifica il comportamento
-          dei comandi <cmdref targ="outfile"/> e <cmdref targ="store"/>, che
-          scrivono su file esterni. Normalmente, il file verrà scritto nella
-          directory dati predefinita dell'utente: se si imposta
-	  <lit>use_cwd</lit> a <lit>on</lit>, al contrario, il file verrà creato
-          nella directory di lavoro da cui gretl è stato eseguito.
-	  </para>
-	</li>
       </ilist>
 
       <para>
@@ -10401,6 +10463,15 @@
         usati da gretl per la stima.
       </para>
       <ilist>
+	<li>	
+	  <para><lit>optimizer</lit>: either <lit>auto</lit> (the
+	  default), <lit>BFGS</lit> or <lit>newton</lit>. Sets the
+	  optimization algorithm used for various ML estimators, in
+	  cases where both BFGS and Newton&ndash;Raphson are
+	  applicable. The default is to use Newton&ndash;Raphson
+	  where an analytical Hessian is available, otherwise BFGS.
+	  </para>
+	</li>
 	<li>	
 	<para><lit>bhhh_maxiter</lit>: un intero. Imposta il massimo numero di
           iterazioni per la routine BHHH, che è usata dal comando
