@@ -4088,40 +4088,38 @@
 	  need details.
 	</para>
 	<para>
-	  Gretl's implementation uses <lit>json-glib</lit> as back-end
-	  (see <url>https://developer.gnome.org/json-glib/</url>) so
-	  it shares both its features and its limitations. Presently
-	  avaiable operators are:
+	  That said, the following operators should be available
+	  to <lit>jsonget</lit>:
 	</para>
 	  <ilist>
 	    <li>
               <para>
-		root node, via the <lit>$</lit> character;
+		root node, via the <lit>$</lit> character
               </para>
 	    </li>
 	    <li>
               <para>
-		recursive descent operator, or <lit>..</lit>;
+		recursive descent operator: <lit>..</lit>
               </para>
 	    </li>
 	    <li>
               <para>
-		wildcard operator, or <lit>*</lit>;
+		wildcard operator: <lit>*</lit>
               </para>
 	    </li>
 	    <li>
               <para>
-		subscript operator, or <lit>[]</lit>;
+		subscript operator: <lit>[]</lit>
               </para>
 	    </li>
 	    <li>
               <para>
-		set notation operator, or <lit>[start,end]</lit>;
+		set notation operator, for example <lit>[i,j]</lit>
               </para>
 	    </li>
 	    <li>
               <para>
-		slice operator, or <lit>[start:end:step]</lit>.
+		slice operator: <lit>[start:end:step]</lit>
               </para>
 	    </li>
 	  </ilist>
