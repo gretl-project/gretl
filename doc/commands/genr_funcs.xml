@@ -4080,6 +4080,44 @@
 	  For an account of JsonPath syntax, see for example
 	  <url>http://goessner.net/articles/JsonPath/</url>.
 	</para>
+	<para>
+	  Gretl's implementation uses <lit>json-glib</lit> as back-end
+	  (see <url>https://developer.gnome.org/json-glib/</url>) so
+	  it shares both its features and its limitations. Presently
+	  avaiable operators are:
+	</para>
+	  <ilist>
+	    <li>
+              <para>
+		root node, via the <lit>$</lit> character;
+              </para>
+	    </li>
+	    <li>
+              <para>
+		recursive descent operator, or <lit>..</lit>;
+              </para>
+	    </li>
+	    <li>
+              <para>
+		wildcard operator, or <lit>*</lit>;
+              </para>
+	    </li>
+	    <li>
+              <para>
+		subscript operator, or <lit>[]</lit>;
+              </para>
+	    </li>
+	    <li>
+              <para>
+		set notation operator, or <lit>[start,end]</lit>;
+              </para>
+	    </li>
+	    <li>
+              <para>
+		slice operator, or <lit>[start:end:step]</lit>.
+              </para>
+	    </li>
+	  </ilist>
       </description>
     </function>    
 
