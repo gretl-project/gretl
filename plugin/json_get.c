@@ -29,9 +29,6 @@
 			 t == G_TYPE_DOUBLE || \
 			 t == G_TYPE_INT64)
 
-static int output_json_node_value (JsonNode *node,
-				   PRN *prn);
-
 static int non_empty_array (JsonArray *array)
 {
     return array != NULL && json_array_get_length(array) > 0;
@@ -41,44 +38,6 @@ static int null_node (JsonNode *node)
 {
     return node == NULL || json_node_is_null(node);
 }
-
-#if 1
-
-static void show_obj_member (gpointer p1, gpointer p2)
-{
-    const char *name = p1;
-    JsonObject *obj = p2;
-
-    if (name != NULL && obj != NULL) {
-	JsonNode *node;
-	GType type;
-	
-	node = json_object_get_member(obj, name);
-	if (node != NULL) {
-	    type = json_node_get_value_type(node);
-	    fprintf(stderr, " member '%s' (type %s)\n",
-		    name, g_type_name(type));
-	    output_json_node_value(node, NULL);
-	}
-    }
-}
-
-static void explore_json_object (JsonNode *node)
-{
-    JsonObject *obj = json_node_get_object(node);
-
-    if (obj != NULL) {
-	guint n = json_object_get_size(obj);
-	GList *list;
-	
-	fprintf(stderr, "Got JsonObject of size %d\n", n);
-	list = json_object_get_members(obj);
-	g_list_foreach(list, show_obj_member, obj);
-	g_list_free(list);
-    }
-}
-
-#endif
 
 static int output_json_node_value (JsonNode *node,
 				   PRN *prn)
@@ -133,6 +92,60 @@ static int output_json_node_value (JsonNode *node,
     }
 
     return err;
+}
+
+/* for passing deep into callbacks */
+struct jsdata {
+    int *n_objects;
+    int *err;
+    PRN *prn;
+};
+
+static void show_obj_value (gpointer data, gpointer p)
+{
+    JsonNode *node = data;
+    struct jsdata *jsd = p;
+
+    if (JSON_NODE_HOLDS_ARRAY(node)) {
+	fprintf(stderr, " show_obj_value: got array\n");
+    } else {
+	fprintf(stderr, " show_obj_value: not an array\n");
+    }
+
+    if (node != NULL && !*jsd->err) {
+	// fprintf(stderr, " member of type %s:\n", g_type_name(type));
+	*jsd->err = output_json_node_value(node, jsd->prn);
+	if (!*jsd->err) {
+	    *jsd->n_objects += 1;
+	    pputc(jsd->prn, '\n');
+	}
+    }
+}
+
+static int explore_json_object (JsonNode *node, int *n_objects,
+				PRN *prn)
+{
+    JsonObject *obj = json_node_get_object(node);
+    int err = 0;
+
+    if (obj == NULL) {
+	return E_DATA;
+    }
+
+    if (json_object_get_size(obj) > 0) {
+	GList *list = json_object_get_values(obj);
+	struct jsdata jsd = {
+	    n_objects,
+	    &err,
+	    prn
+	};
+
+	list = json_object_get_values(obj);
+	g_list_foreach(list, show_obj_value, &jsd);
+	g_list_free(list);
+    }
+
+    return 0;
 }
 
 static int real_json_get (JsonParser *parser, const char *pathstr,
@@ -210,9 +223,10 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'", 
 				     g_type_name(ntype));
 		if (json_node_get_node_type(node) == JSON_NODE_OBJECT) {
-		    explore_json_object(node);
+		    err = explore_json_object(node, n_objects, prn);
+		} else {
+		    err = E_DATA;
 		}
-		err = E_DATA;
 	    }
 	} else if (array != NULL) {
 	    int i, n = json_array_get_length(array);
