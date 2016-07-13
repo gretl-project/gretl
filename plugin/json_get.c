@@ -29,6 +29,9 @@
 			 t == G_TYPE_DOUBLE || \
 			 t == G_TYPE_INT64)
 
+static int output_json_node_value (JsonNode *node,
+				   PRN *prn);
+
 static int non_empty_array (JsonArray *array)
 {
     return array != NULL && json_array_get_length(array) > 0;
@@ -38,6 +41,44 @@ static int null_node (JsonNode *node)
 {
     return node == NULL || json_node_is_null(node);
 }
+
+#if 1
+
+static void show_obj_member (gpointer p1, gpointer p2)
+{
+    const char *name = p1;
+    JsonObject *obj = p2;
+
+    if (name != NULL && obj != NULL) {
+	JsonNode *node;
+	GType type;
+	
+	node = json_object_get_member(obj, name);
+	if (node != NULL) {
+	    type = json_node_get_value_type(node);
+	    fprintf(stderr, " member '%s' (type %s)\n",
+		    name, g_type_name(type));
+	    output_json_node_value(node, NULL);
+	}
+    }
+}
+
+static void explore_json_object (JsonNode *node)
+{
+    JsonObject *obj = json_node_get_object(node);
+
+    if (obj != NULL) {
+	guint n = json_object_get_size(obj);
+	GList *list;
+	
+	fprintf(stderr, "Got JsonObject of size %d\n", n);
+	list = json_object_get_members(obj);
+	g_list_foreach(list, show_obj_member, obj);
+	g_list_free(list);
+    }
+}
+
+#endif
 
 static int output_json_node_value (JsonNode *node,
 				   PRN *prn)
@@ -64,19 +105,31 @@ static int output_json_node_value (JsonNode *node,
 	const gchar *s = json_node_get_string(node);
 
 	if (s != NULL) {
-	    pputs(prn, s);
+	    if (prn == NULL) {
+		fprintf(stderr, "%s\n", s);
+	    } else {
+		pputs(prn, s);
+	    }
 	} else {
 	    err = E_DATA;
 	}	
     } else if (type == G_TYPE_DOUBLE) {
 	double x = json_node_get_double(node);
 
-	pprintf(prn, "%.15g", x);
+	if (prn == NULL) {
+	    fprintf(stderr, "%.15g\n", x);
+	} else {
+	    pprintf(prn, "%.15g", x);
+	}
     } else {
 	gint64 k = json_node_get_int(node);
 	double x = (double) k;
 
-	pprintf(prn, "%.15g", x);
+	if (prn == NULL) {
+	    fprintf(stderr, "%.15g\n", x);
+	} else {
+	    pprintf(prn, "%.15g", x);
+	}
     }
 
     return err;
@@ -156,6 +209,9 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	    } else {
 		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'", 
 				     g_type_name(ntype));
+		if (json_node_get_node_type(node) == JSON_NODE_OBJECT) {
+		    explore_json_object(node);
+		}
 		err = E_DATA;
 	    }
 	} else if (array != NULL) {
