@@ -107,9 +107,7 @@ static void show_obj_value (gpointer data, gpointer p)
     struct jsdata *jsd = p;
 
     if (JSON_NODE_HOLDS_ARRAY(node)) {
-	fprintf(stderr, " show_obj_value: got array\n");
-    } else {
-	fprintf(stderr, " show_obj_value: not an array\n");
+	fprintf(stderr, " show_obj_value: got array!\n");
     }
 
     if (node != NULL && !*jsd->err) {
@@ -122,8 +120,9 @@ static void show_obj_value (gpointer data, gpointer p)
     }
 }
 
-static int explore_json_object (JsonNode *node, int *n_objects,
-				PRN *prn)
+static int excavate_json_object (JsonNode *node,
+				 int *n_objects,
+				 PRN *prn)
 {
     JsonObject *obj = json_node_get_object(node);
     int err = 0;
@@ -192,11 +191,12 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     gretl_push_c_numeric_locale();
 
     if (JSON_NODE_HOLDS_ARRAY(match)) {
-	JsonArray *array;
+	JsonArray *array = json_node_get_array(match);
+	int len = 0, index = 0;
 
-	array = json_node_get_array(match);
 	if (non_empty_array(array)) {
-	    node = json_array_get_element(array, 0);
+	    len = json_array_get_length(array);
+	    node = json_array_get_element(array, index);
 	} else {
 	    node = NULL;
 	}
@@ -214,19 +214,24 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
 	if (node != NULL && !handled_type(ntype)) {
 	    if (JSON_NODE_HOLDS_ARRAY(node)) {
+		/* recurse on array type */
 		array = json_node_get_array(node);
 		if (non_empty_array(array)) {
 		    node = json_array_get_element(array, 0);
 		    goto repeat;
 		}
+	    } else if (json_node_get_node_type(node) == JSON_NODE_OBJECT) {
+		err = excavate_json_object(node, n_objects, prn);
+		if (!err) {
+		    if (index < len - 1) {
+			node = json_array_get_element(array, ++index);
+			goto repeat;
+		    }
+		}
 	    } else {
 		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'", 
 				     g_type_name(ntype));
-		if (json_node_get_node_type(node) == JSON_NODE_OBJECT) {
-		    err = explore_json_object(node, n_objects, prn);
-		} else {
-		    err = E_DATA;
-		}
+		err = E_DATA;
 	    }
 	} else if (array != NULL) {
 	    int i, n = json_array_get_length(array);
