@@ -1504,7 +1504,7 @@ static int loop_count_too_high (LOOPSET *loop)
 	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
 				 maxit);
 	    gretl_errmsg_append(_("You can use \"set loop_maxiter\" "
-				  "to increase the limit"));
+				  "to increase the limit"), 0);
 	    loop->err = 1;
 	}
     }
