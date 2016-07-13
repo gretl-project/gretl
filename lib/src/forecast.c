@@ -743,6 +743,11 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	} 
     }
 
+    /* The computation of $nl_y below may depend on computing
+       some auxiliary quantities used within the nls block, so
+       try that first below: nl_model_run_aux_genrs().
+    */
+
     if (!err) {
 	/* upper limit of static forecast */
 	int t2 = (fc->method == FC_STATIC)? fc->t2 : pmod->t2;
@@ -751,9 +756,12 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    /* non-null static range */
 	    dset->t1 = fc->t1;
 	    dset->t2 = t2;
-	    sprintf(formula, "$nl_y = %s", nlfunc);
-	    err = generate(formula, dset, GRETL_TYPE_SERIES,
-			   OPT_P, NULL);
+	    err = nl_model_run_aux_genrs(pmod, dset);
+	    if (!err) {
+		sprintf(formula, "$nl_y = %s", nlfunc);
+		err = generate(formula, dset, GRETL_TYPE_SERIES,
+			       OPT_P, NULL);
+	    }
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[fcv][t];
@@ -768,9 +776,12 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    */
 	    dset->t1 = pmod->t2 + 1;
 	    dset->t2 = fc->t2;
-	    strcpy(formula, pmod->depvar);
-	    err = generate(formula, dset, GRETL_TYPE_SERIES,
-			   OPT_P, NULL);
+	    err = nl_model_run_aux_genrs(pmod, dset);
+	    if (!err) {
+		strcpy(formula, pmod->depvar);
+		err = generate(formula, dset, GRETL_TYPE_SERIES,
+			       OPT_P, NULL);
+	    }
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[yno][t];
@@ -795,7 +806,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
-#if 1   /* not fully tested! */
+#if 0   /* Not much tested: FIXME make this an option? */
 	err = nls_boot_calc(pmod, dset, fc->t1, fc->t2, fc->sderr);
 	if (!err) {
 	    double et, s2 = pmod->sigma * pmod->sigma;

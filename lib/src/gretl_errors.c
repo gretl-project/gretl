@@ -311,18 +311,31 @@ void gretl_errmsg_set (const char *str)
 /**
  * gretl_errmsg_append:
  * @str: an error message.
+ * @err: the current error state, if any.
  *
  * Add @str to the current gretl error message, starting a
  * new line, if space permits.
  */
 
-void gretl_errmsg_append (const char *str)
+void gretl_errmsg_append (const char *str, int err)
 {
-    int n = strlen(gretl_errmsg);
-    int m = strlen(str);
+    int n, m = strlen(str);
+
+    if (*gretl_errmsg == '\0' && err > 0 && err < E_MAX) {
+	const char *s = look_up_errmsg(err);
+
+	if (s != NULL) {
+	    strcpy(gretl_errmsg, s);
+	}
+    }
+
+    n = strlen(gretl_errmsg);
 
     if (n + m + 2 < ERRLEN) {
-	strcat(gretl_errmsg, "\n");
+	if (n > 0) {
+	    /* there's a message in place already */
+	    strcat(gretl_errmsg, "\n");
+	}
 	strcat(gretl_errmsg, str);
     }
 }

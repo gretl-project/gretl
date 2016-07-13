@@ -62,7 +62,10 @@ MODEL model_from_nlspec (nlspec *spec, DATASET *dset,
 			 gretlopt opt, PRN *prn);
 
 int nls_boot_calc (const MODEL *pmod, DATASET *dset,
-		   int ft1, int ft2, double *fcerr); 
+		   int ft1, int ft2, double *fcerr);
+
+int nl_model_run_aux_genrs (const MODEL *pmod, 
+			    DATASET *dset);
 
 double get_default_nls_toler (void);
 

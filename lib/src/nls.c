@@ -246,7 +246,7 @@ static int unassigned_fncall (const char *s)
     return ret;
 }
 
-static void genr_setup_error (const char *s, int exec)
+static void genr_setup_error (const char *s, int err, int exec)
 {
     gchar *msg;
 
@@ -257,8 +257,8 @@ static void genr_setup_error (const char *s, int exec)
 	msg = g_strdup_printf(_("The formula '%s'\n produced an error "
 				"on compilation"), s);
     }
-    
-    gretl_errmsg_append(msg);
+
+    gretl_errmsg_append(msg, err);
     g_free(msg);
 }
 
@@ -330,7 +330,7 @@ static int nls_genr_setup (nlspec *s)
 	}
 
 	if (err) {
-	    genr_setup_error(formula, 0);
+	    genr_setup_error(formula, err, 0);
 	    break;
 	}
 
@@ -342,7 +342,7 @@ static int nls_genr_setup (nlspec *s)
 	genr_unset_na_check(s->genrs[i]);
 
 	if (err) {
-	    genr_setup_error(formula, 1);
+	    genr_setup_error(formula, err, 1);
 	    break;
 	}
 
@@ -1719,6 +1719,10 @@ static int nl_model_add_spec_info (MODEL *pmod, nlspec *spec)
 	pputc(prn, '\n');
     }
 
+    if (spec->naux > 0) {
+	gretl_model_set_int(pmod, "nl_naux", spec->naux);
+    }
+
     for (i=0; i<spec->naux; i++) {
 	pprintf(prn, "%s\n", spec->aux[i]);
     }
@@ -2092,6 +2096,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	if (spec->flags & NL_AUTOREG) {
 	    gretl_model_set_int(&gnr, "dynamic", 1);
 	}
+	gnr.opt = spec->opt;
     }
 
     destroy_dataset(gdset);
@@ -3786,6 +3791,56 @@ MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
     return model;
 }
 
+/* For forecasting purposes ("fcast" command): in general
+   it's not enough just to run the genr command that
+   creates or revises the dependent variable; we may also
+   have to generate some intermediate quantities. In
+   nl_model_run_aux_genrs() we retrieve any auxiliary
+   genrs from @pmod and try running them.
+*/
+
+int nl_model_run_aux_genrs (const MODEL *pmod, 
+			    DATASET *dset)
+{
+    char line[MAXLEN];
+    const char *buf;
+    int i, j, n_aux = 0;
+    int err = 0;
+
+    n_aux = gretl_model_get_int(pmod, "nl_naux");
+    if (n_aux == 0) {
+	/* nothing to be done? */
+	return 0;
+    }
+
+    buf = gretl_model_get_data(pmod, "nlinfo");
+    if (buf == NULL) {
+	return E_DATA;
+    }
+
+    bufgets_init(buf);
+
+    i = j = 0;
+    while (bufgets(line, sizeof line, buf) && !err) {
+	if (*line == '#') {
+	    continue;
+	}
+	if (i > 0 && j < n_aux) {
+	    tailstrip(line);
+	    err = generate(line, dset, GRETL_TYPE_ANY, OPT_P, NULL);
+	    if (err) {
+		genr_setup_error(line, err, 1);
+	    }
+	    j++;
+	}
+	i++;
+    }
+
+    bufgets_finalize(buf);
+
+    return err;
+}
+
 /* apparatus for bootstrapping NLS forecast errors */
 
 /* reconstitute the nlspec based on the information saved in @pmod */
@@ -3816,7 +3871,12 @@ static int set_nlspec_from_model (const MODEL *pmod,
 
     if (err) {
 	clear_nlspec(&private_spec);
-    } 
+    } else {
+	private_spec.opt = pmod->opt;
+	if (private_spec.opt & OPT_V) {
+	    private_spec.opt ^= OPT_V;
+	}
+    }
 
     return err;
 }
@@ -3898,7 +3958,7 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
     int i, ix, im, s, t, fT;
     int err = 0;
 
-    /* build the 'private' spec, based on pmod */
+    /* build the 'private' spec, based on @pmod */
     err = set_nlspec_from_model(pmod, dset);
     if (err) {
 	return err;
