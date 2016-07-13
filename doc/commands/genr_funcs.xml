@@ -4077,8 +4077,15 @@
 	  string.
 	</para>
 	<para>
-	  For an account of JsonPath syntax, see for example
-	  <url>http://goessner.net/articles/JsonPath/</url>.
+	  An accurate account of JsonPath syntax can be found at
+	  <url>http://goessner.net/articles/JsonPath/</url>. However,
+	  please note that the back-end for <lit>jsonget</lit> is
+	  provided by <lit>json-glib</lit>, which does not necessarily
+	  support all elements of JsonPath. Moreover, the exact
+	  functionality of <lit>json-glib</lit> may differ depending
+	  on the version you have on your system. See
+	  <url>http://developer.gnome.org/json-glib/</url> if you
+	  need details.
 	</para>
 	<para>
 	  Gretl's implementation uses <lit>json-glib</lit> as back-end
