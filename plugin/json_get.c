@@ -64,31 +64,19 @@ static int output_json_node_value (JsonNode *node,
 	const gchar *s = json_node_get_string(node);
 
 	if (s != NULL) {
-	    if (prn == NULL) {
-		fprintf(stderr, "%s\n", s);
-	    } else {
-		pputs(prn, s);
-	    }
+	    pputs(prn, s);
 	} else {
 	    err = E_DATA;
 	}	
     } else if (type == G_TYPE_DOUBLE) {
 	double x = json_node_get_double(node);
 
-	if (prn == NULL) {
-	    fprintf(stderr, "%.15g\n", x);
-	} else {
-	    pprintf(prn, "%.15g", x);
-	}
+	pprintf(prn, "%.15g", x);
     } else {
 	gint64 k = json_node_get_int(node);
 	double x = (double) k;
 
-	if (prn == NULL) {
-	    fprintf(stderr, "%.15g\n", x);
-	} else {
-	    pprintf(prn, "%.15g", x);
-	}
+	pprintf(prn, "%.15g", x);
     }
 
     return err;
