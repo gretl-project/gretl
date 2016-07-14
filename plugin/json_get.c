@@ -99,7 +99,6 @@ static void show_obj_value (gpointer data, gpointer p)
     }
 
     if (node != NULL && !*jsd->err) {
-	// fprintf(stderr, " member of type %s:\n", g_type_name(type));
 	*jsd->err = output_json_node_value(node, jsd->prn);
 	if (!*jsd->err) {
 	    *jsd->n_objects += 1;
@@ -132,7 +131,7 @@ static int excavate_json_object (JsonNode *node,
 	g_list_free(list);
     }
 
-    return 0;
+    return err;
 }
 
 static int real_json_get (JsonParser *parser, const char *pathstr,
