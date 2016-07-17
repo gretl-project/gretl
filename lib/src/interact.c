@@ -2321,6 +2321,8 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 	err = multi_scatters(cmd->list, dset, opt);
     } else if (cmd->ci == BXPLOT) {
 	err = boxplots(cmd->list, cmd->param, dset, opt);
+    } else if (cmd->ci == HFPLOT) {
+	err = hf_plot(cmd->list, cmd->param, dset, opt);
     }
 
     return err;
@@ -3174,6 +3176,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case GNUPLOT:
     case BXPLOT:
     case SCATTERS:
+    case HFPLOT:
 	err = execute_plot_call(cmd, dset, NULL, prn);
 	break;
 

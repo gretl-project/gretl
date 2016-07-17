@@ -1272,6 +1272,10 @@ int list_laggenr (int **plist, int order,
     int n_terms = 0;
     int err;
 
+    if (compfac < 0) {
+	return E_INVARG;
+    }
+
     if (lvec != NULL) {
 	n = gretl_vector_get_length(lvec);
 	if (n == 0) {

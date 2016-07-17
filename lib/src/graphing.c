@@ -7959,6 +7959,137 @@ int qq_plot (const int *list, const DATASET *dset, gretlopt opt)
     return err;
 }
 
+static int pd_from_compfac (const DATASET *dset,
+			    int compfac,
+			    char *stobs)
+{
+    int pd = -1;
+    
+    if (dset->pd == 1 && (compfac == 12 || compfac == 4)) {
+	/* annual from monthly or quarterly */
+	pd = compfac;
+    } else if (dset->pd == 4 && compfac == 3) {
+	/* quarterly from monthly */
+	pd = 12;
+    } else if (dset->pd == 4) {
+	/* maybe quarterly from daily? */
+	if (compfac >= 60 && compfac <= 69) {
+	    pd = 5;
+	} else if (compfac >= 71 && compfac <= 81) {
+	    pd = 6;
+	} else if (compfac >= 82 && compfac <= 93) {
+	    return 7;
+	}	
+    } else if (dset->pd == 12) {
+	/* maybe monthly from daily? */
+	if (compfac >= 20 && compfac <= 23) {
+	    pd = 5;
+	} else if (compfac >= 24 && compfac <= 27) {
+	    pd = 6;
+	} else if (compfac >= 28 && compfac <= 31) {
+	    pd = 7;
+	}
+    }
+
+    if (pd > 0) {
+	char *p, tmp[OBSLEN];
+	int y, q, m;
+	
+	ntodate(tmp, dset->t1, dset);
+	y = atoi(tmp);
+	p = strchr(tmp, ':');
+	
+	if ((dset->pd == 4 || dset->pd == 12) && p == NULL) {
+	    return -1;
+	}
+	
+	if (dset->pd == 1) {
+	    if (pd == 4) {
+		sprintf(stobs, "%d:1", y);
+	    } else if (pd == 12) {
+		sprintf(stobs, "%d:01", y);
+	    }
+	} else if (dset->pd == 4) {
+	    q = atoi(p + 1);
+	    m = (q==1)? 1 : (q==2)? 4 : (q==3)? 7 : 10;
+	    if (pd == 12) {
+		sprintf(stobs, "%d:%02d", y, m);
+	    } else {
+		/* daily */
+		sprintf(stobs, "%d-%02d-01", y, m);
+	    }
+	} else if (dset->pd == 12) {
+	    /* daily */
+	    m = atoi(p + 1);
+	    sprintf(stobs, "%d-%02d-01", y, m);
+	}
+    }
+
+    return pd;
+}
+
+/* high-frequency plot for MIDAS */
+
+int hf_plot (const int *list, const char *literal,
+	     const DATASET *dset, gretlopt opt)
+{
+    DATASET *hset;
+    double xit;
+    char stobs[OBSLEN];
+    int plotlist[2] = {1,1};
+    gretlopt plotopt = OPT_T;
+    int plotpd = 0;
+    int n, T, i, t, s;
+    int err;
+
+    if (list == NULL || list[0] < 3) {
+	return E_INVARG;
+    } else if (!dataset_is_time_series(dset)) {
+	return E_PDWRONG;
+    }
+
+    n = list[0];
+    T = n * (dset->t2 - dset->t1 + 1);
+
+    hset = create_auxiliary_dataset(2, T, OPT_NONE);
+    if (hset == NULL) {
+	return E_ALLOC;
+    }
+
+    s = 0;
+    for (t=dset->t1; t<=dset->t2; t++) {
+	for (i=n; i>0; i--) {
+	    xit = dset->Z[list[i]][t];
+	    hset->Z[1][s++] = xit;
+	}
+    }
+
+    /* try to set a suitable time-series interpretation
+       on the data to be plotted 
+    */
+    plotpd = pd_from_compfac(dset, n, stobs);
+    if (plotpd > 0) {
+	char numstr[8];
+
+	sprintf(numstr, "%d", plotpd);
+	set_obs(numstr, stobs, hset, OPT_T);
+    }
+
+    if (opt & OPT_O) {
+	plotopt |= OPT_O;
+    }
+    if (opt & OPT_U) {
+	plotopt |= OPT_U;
+    }
+
+    set_effective_plot_ci(HFPLOT);
+    err = gnuplot(plotlist, literal, hset, plotopt);
+
+    destroy_dataset(hset);
+
+    return err;
+}
+
 /**
  * xy_plot_with_control:
  * @list: list of variables by ID number: Y, X, control.

@@ -3369,7 +3369,7 @@ static int daily_spread_offset (const DATASET *dset,
     return ndays > compfac ? 0 : compfac - ndays;
 }
 
-#define DAYDBG 1
+#define DAYDBG 0
 
 /* For a single row, @cset_t, of a compacted dataset,
    write daily values into the set of monthly or
@@ -3408,7 +3408,7 @@ static void fill_cset_t (const DATASET *dset,
 	ndays++;
     }
 
-#if DAYDBG > 1
+#if DAYDBG
     fprintf(stderr, "%d:%d, ndays = %d\n", y, pstart, ndays);
 #endif
 
@@ -3428,15 +3428,13 @@ static void fill_cset_t (const DATASET *dset,
 #if DAYDBG > 1
 	fprintf(stderr, " %s: %d missing value(s), mean value %g\n",
 		dset->varname[i], nmiss, zbar);
-#endif	
+#endif
 	for (j=0; j<compfac; j++) {
 	    if (j < iniskip) {
-		/* before the start of the daily data */
-		cset->Z[j+k][cset_t] = NADBL;
-	    } else if (j > ndays && cset_t == cset->n - 1) {
-		/* after the end of the daily data */
-		cset->Z[j+k][cset_t] = NADBL;
-	    } else if (j > ndays || na(z[j])) {
+		; /* before the start of the daily data */
+	    } else if (j >= ndays && cset_t == cset->n - 1) {
+		; /* after the end of the daily data */
+	    } else if (j >= ndays || na(z[j])) {
 		/* pad with period average (?) */
 		cset->Z[j+k][cset_t] = zbar;
 	    } else {
@@ -3448,6 +3446,25 @@ static void fill_cset_t (const DATASET *dset,
     }
 
     *startday += ndays;
+}
+
+/* days per month or quarter: maybe make this user-
+   configurable? */
+
+static int conventional_days_per (int days_per_week,
+				  int pd)
+{
+    int ret;
+    
+    if (days_per_week == 5) {
+	ret = 22;
+    } else if (days_per_week == 6) {
+	ret = 26;
+    } else {
+	ret = 30;
+    }
+
+    return (pd == 12)? ret : 3 * ret;
 }
 
 /* compact daily data to monthly or quarterly using the
@@ -3464,9 +3481,8 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     };
     const char *period;
     DATASET *cset = NULL;
-    char sfx[6];
     char label[MAXLABEL];
-    int compfac = 0;
+    int compfac;
     int v, i, j, k, t, T;
     int startyr, startper;
     int endyr, endper;
@@ -3476,19 +3492,18 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 
     daily_yp(dset, 0, newpd, &startyr, &startper);
     daily_yp(dset, dset->n - 1, newpd, &endyr, &endper);
+    compfac = conventional_days_per(dset->pd, newpd);
 
     if (newpd == 12) {
-	compfac = 22; /* make this configurable? */
 	period = periods[0];
-	T = 12 * (endyr - startyr) + (endper - startper + 1);
     } else if (newpd == 4) {
-	compfac = 66;
 	period = periods[1];
-	T = 4 * (endyr - startyr) + (endper - startper + 1);
     } else {
 	*err = E_DATA;
 	return NULL;
     }
+
+    T = newpd * (endyr - startyr) + (endper - startper + 1);
 
     if (T <= 1) {
 	*err = E_DATA;
@@ -3521,6 +3536,13 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     cset->structure = TIME_SERIES;
     cset->sd0 = get_date_x(cset->pd, cset->stobs);
 
+    /* ensure no uninitialized data */
+    for (i=1; i<v; i++) {
+	for (t=0; t<T; t++) {
+	    cset->Z[i][t] = NADBL;
+	}
+    }
+
     /* the number of skipped days at the start of the data */
     startday = daily_spread_offset(dset, newpd, compfac);
 
@@ -3534,6 +3556,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     k = 1;
     for (i=1; i<dset->v; i++) {
 	double *xtmp;
+	char sfx[6];
 	int p;
 
 	/* switch data order */

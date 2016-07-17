@@ -120,7 +120,8 @@ static struct gretl_cmd gretl_cmds[] = {
     { GRAPHPG,  "graphpg",  CI_PARM1 }, 
     { HAUSMAN,  "hausman",  CI_NOOPT },
     { HECKIT,   "heckit",   CI_LIST },
-    { HELP,     "help",     CI_PARM1 },    
+    { HELP,     "help",     CI_PARM1 },
+    { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
     { HSK,      "hsk",      CI_LIST }, 
     { HURST,    "hurst",    CI_LIST | CI_LLEN1 },
     { IF,       "if",       CI_EXPR },
@@ -2921,7 +2922,7 @@ static int handle_command_extra (CMD *c)
     cmd_token *tok;
     int i;
 
-    if (c->ci == GNUPLOT || c->ci == BXPLOT) {
+    if (c->ci == GNUPLOT || c->ci == BXPLOT || c->ci == HFPLOT) {
 	/* if present, 'extra' goes into param */
 	for (i=c->cstart+1; i<c->ntoks; i++) {
 	    tok = &c->toks[i];

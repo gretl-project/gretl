@@ -228,6 +228,9 @@ int hurstplot (const int *list, DATASET *dset, gretlopt opt,
 
 int qq_plot (const int *list, const DATASET *dset, gretlopt opt);
 
+int hf_plot (const int *list, const char *literal,
+	     const DATASET *dset, gretlopt opt);
+
 int correlogram_plot (const char *vname,
 		      const double *acf, 
 		      const double *pacf,
