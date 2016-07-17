@@ -2,11 +2,45 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+#include <limits.h>
 
 void current_ymd (int *y, int *m, int *d)
 {
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
+    char *endptr;
+    char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
+    unsigned long long epoch;
+
+    if (source_date_epoch != NULL) {
+        errno = 0;
+        epoch = strtoull(source_date_epoch, &endptr, 10);
+        if ((errno == ERANGE && (epoch == ULLONG_MAX || epoch == 0))
+                || (errno != 0 && epoch == 0)) {
+            fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: "
+		    "strtoull: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        if (endptr == source_date_epoch) {
+            fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: "
+		    "No digits were found: %s\n", endptr);
+            exit(EXIT_FAILURE);
+        }
+        if (*endptr != '\0') {
+            fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: "
+		    "Trailing garbage: %s\n", endptr);
+            exit(EXIT_FAILURE);
+        }
+        if (epoch > ULONG_MAX) {
+            fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: "
+		    "value must be smaller than or equal to: %lu but was "
+		    "found to be: %llu \n", ULONG_MAX, epoch);
+            exit(EXIT_FAILURE);
+        }
+        t = epoch;
+        lt = gmtime(&t);
+    }
 
     *y = lt->tm_year + 1900;
     *m = lt->tm_mon + 1;
