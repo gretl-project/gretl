@@ -137,11 +137,6 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err);
 
-int midas_linear_combo (double *y, const int *list,
-			const gretl_matrix *theta,
-			int method,
-			const DATASET *dset);
-
 double imhof (const gretl_matrix *m, double arg, int *err);
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 

@@ -404,7 +404,6 @@ enum {
     F_SUBSTR,
     F_REDUCE,
     F_SCATTER,
-    F_MLINCOMB,
     F_MWEIGHTS,
     F_MGRADIENT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */

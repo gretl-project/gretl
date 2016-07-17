@@ -4263,34 +4263,6 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     return G;
 }
 
-int midas_linear_combo (double *y, const int *list,
-			const gretl_matrix *theta,
-			int method, const DATASET *dset)
-{
-    gretl_matrix *w = NULL;
-    int m = list[0];
-    int err = 0;
-
-    w = midas_weights(m, theta, method, &err);
-
-    if (method == MIDAS_BETA && !err && w == NULL) {
-	int t;
-	
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    y[t] = NADBL;
-	}
-	return 0;
-    }
-
-    if (!err) {
-	err = list_linear_combo(y, list, w, dset);
-    }
-    
-    gretl_matrix_free(w);
-
-    return err;
-}
-
 /* Imhof: draws on the RATS code in IMHOF.SRC from Estima, 2004.
 
    Imhof Procedure for computing P(u'Au < x) for a quadratic form in

@@ -5115,29 +5115,20 @@ static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *lincomb_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
+static NODE *lincomb_func (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
-	const gretl_matrix *b = m->v.m;
-	int k = 0;
+	const gretl_matrix *b = r->v.m;
 
 	if (!p->err && (list == NULL || gretl_is_null_matrix(b))) {
 	    p->err = E_DATA;
 	}
 
-	if (!p->err && f == F_MLINCOMB) {
-	    k = node_get_int(r, p);
-	}
-
 	if (!p->err) {
-	    if (f == F_MLINCOMB) {
-		p->err = midas_linear_combo(ret->v.xvec, list, b, k, p->dset);
-	    } else {
-		p->err = list_linear_combo(ret->v.xvec, list, b, p->dset);
-	    }
+	    p->err = list_linear_combo(ret->v.xvec, list, b, p->dset);
 	}
 	
 	free(list);
@@ -12694,19 +12685,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_LINCOMB:
 	/* list + matrix -> series */
 	if (ok_list_node(l) && r->t == MAT) {
-	    ret = lincomb_func(l, r, NULL, t->t, p);
+	    ret = lincomb_func(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_MLINCOMB:
-	/* list + matrix + int -> series */
-	if (ok_list_node(l) && m->t == MAT && scalar_node(r)) {
-	    ret = lincomb_func(l, m, r, t->t, p);
-	} else {
-	    p->err = E_TYPES;
-	}
-	break;	
     case F_ARGNAME:
     case F_BACKTICK:
     case F_STRSTRIP:
