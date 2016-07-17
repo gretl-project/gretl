@@ -368,6 +368,7 @@ enum {
     F_KSIMDATA,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
+    F_HFLAG,
     F_PRINCOMP,
     F_BFGSMAX,
     F_MSHAPE,

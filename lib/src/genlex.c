@@ -192,6 +192,7 @@ struct str_table funcs[] = {
     { F_LDIFF,    "ldiff" },
     { F_SDIFF,    "sdiff" },
     { F_LLAG,     "lags" },
+    { F_HFLAG,    "hfags" },
     { F_DROPCOLL, "dropcoll" },
     { F_TOINT,    "int" },
     { F_ROUND,    "round" },

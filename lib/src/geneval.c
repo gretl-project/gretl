@@ -4446,11 +4446,11 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	if (!null_or_empty(r)) {
 	    k = node_get_int(r, p);
 	    if (!p->err) {
-		if (k == 1) {
-		    opt = OPT_L;
-		} else if (k > 1) {
-		    opt = OPT_L;
+		if (f == F_HFLAG) {
 		    cfac = k;
+		    opt = OPT_L;
+		} else if (k != 0) {
+		    opt = OPT_L;
 		}
 	    }
 	}
@@ -4464,7 +4464,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	if (!p->err) {
 	    if (m->t == LIST) {
 		list = gretl_list_copy(m->v.ivec);
-	    } else if (useries_node(m)) {
+	    } else if (f == F_LLAG && useries_node(m)) {
 		list = gretl_list_new(1);
 		list[1] = m->vnum;
 	    } else {
@@ -11877,6 +11877,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
+    case F_HFLAG:
 	if ((scalar_node(l) || l->t == MAT) && ok_list_node(m)) {
 	    ret = list_make_lags(l, m, r, t->t, p);
 	} else {
