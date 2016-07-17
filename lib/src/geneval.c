@@ -10873,7 +10873,7 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
 	    ntodate(obs, t, dset);
 	    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) != 3) {
 		err = E_DATA;
-	    } else if (i ==  R_OBSMAJ) {
+	    } else if (i == R_OBSMAJ) {
 		x[t] = y;
 	    } else if (i == R_OBSMIN) {
 		x[t] = m;

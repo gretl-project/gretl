@@ -3082,8 +3082,10 @@ static int dataset_int_param (const char **ps, int op,
 	    ok = 1;
 	} else if (dated_daily_data(dset) && (k == 52 || k == 12)) {
 	    ok = 1;
-	} else if (dataset_is_daily(dset) && k == 52) {
-	    ok = 1;
+	} else if (dataset_is_daily(dset) && k == 4) {
+	    if (strstr(*ps, "spread")) {
+		ok = 1;
+	    }
 	}
 
 	if (!ok) {
