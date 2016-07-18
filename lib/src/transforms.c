@@ -18,7 +18,8 @@
  */
 
 #include "libgretl.h"
-#include <matrix_extra.h>
+#include "uservar.h"
+#include "matrix_extra.h"
 
 #define TRDEBUG 0
 
@@ -406,7 +407,9 @@ static int get_diff (int v, double *diffvec, int ci,
     return 0;
 }
 
-/* write high-frequency difference of variable v into diffvec */
+/* write a matrix containing high-frequency differences of
+   the series in @list over the current sample range
+*/
 
 static gretl_matrix *get_hf_diffs (const int *list,
 				   int ci, double mult,
@@ -434,7 +437,7 @@ static gretl_matrix *get_hf_diffs (const int *list,
 	    vi = list[i+1];
 	    x0 = Z[vi][s];
 	    if (i < n-1) {
-		x1 = Z[vi+1][s];
+		x1 = Z[list[i+2]][s];
 	    } else if (s > 0) {
 		x1 = Z[v1][s-1];
 	    } else {
@@ -442,7 +445,7 @@ static gretl_matrix *get_hf_diffs (const int *list,
 	    }
 	    dti = NADBL;
 	    if (!na(x0) && !na(x1)) {
-		if (ci == HFDIFF) {
+		if (ci == DIFF) {
 		    dti = mult * (x0 - x1);
 		} else if (x0 > 0 && x1 > 0) {
 		    dti = mult * log(x0/x1);
@@ -1522,9 +1525,33 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
     return err;
 }
 
+static int check_hf_difflist (const int *list,
+			      const DATASET *dset,
+			      int ci, int *n_add)
+{
+    char vname[VNAMELEN];
+    int i, v, err = 0;
+
+    for (i=1; i<=list[0] && !err; i++) {
+	make_transform_varname(vname, dset->varname[list[i]],
+			       ci, 0, VNAMELEN - 8);
+	v = current_series_index(dset, vname);
+	if (v > 0) {
+	    *n_add -= 1;
+	} else if (gretl_is_user_var(vname)) {
+	    gretl_errmsg_sprintf("%s: collides with existing object name",
+				 vname);
+	    err = E_TYPES;
+	}
+    }
+
+    return err;
+}
+
 int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
 {
     gretl_matrix *dX = NULL;
+    int n_add, hfci = 0;
     int err = 0;
 
     if (list[0] == 0) {
@@ -1532,9 +1559,9 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
     }
 
     if (ci == DIFF) {
-	ci = HFDIFF;
+	hfci = HFDIFF;
     } else if (ci == LDIFF) {
-	ci = HFLDIFF;
+	hfci = HFLDIFF;
     } else {
 	return E_INVARG;
     }
@@ -1543,26 +1570,42 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
 	return E_PDWRONG;
     }
 
+    n_add = list[0];
+    err = check_hf_difflist(list, dset, ci, &n_add);
+    if (err) {
+	return err;
+    }
+
     if (na(parm)) {
 	/* set to default */
 	parm = 1.0;
     }
 
-    /* FIXME a good deal more checking needed here */
-
     dX = get_hf_diffs(list, ci, parm, dset, &err);
 
     if (!err) {
+	char vname[VNAMELEN];
+	char label[MAXLABEL];
+	const char *parent;
 	int i, s, t, n = dX->cols;
-	int vi, li, v0 = dset->v;
+	int vi, v0 = dset->v;
+	int offset = 0;
 
-	err = dataset_add_series(dset, n);
+	err = dataset_add_series(dset, n_add);
 
 	if (!err) {
 	    for (i=0; i<n; i++) {
-		vi = v0 + i;
-		li = list[i+1];
-		sprintf(dset->varname[vi], "d_%s", dset->varname[li]);
+		parent = dset->varname[list[i+1]];
+		make_transform_varname(vname, parent, ci, 0,
+				       VNAMELEN - 8);
+		vi = current_series_index(dset, vname);
+		if (vi < 0) {
+		    vi = v0 + offset;
+		    offset++;
+		    strcpy(dset->varname[vi], vname);
+		    make_transform_label(label, parent, hfci, 0);
+		    series_record_label(dset, vi, label);
+		}
 		s = 0;
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    dset->Z[vi][t] = gretl_matrix_get(dX, s++, i);
