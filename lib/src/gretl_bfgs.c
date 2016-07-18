@@ -136,11 +136,11 @@ int hessian_from_score (double *b, gretl_matrix *H,
     int n = gretl_matrix_rows(H);
     int i, j, err = 0;
     
-    splus  = malloc(n * sizeof *splus);
-    sminus = malloc(n * sizeof *sminus);
-    g      = malloc(n * sizeof *g);
+    splus = malloc(3 * n * sizeof *splus);
+    sminus = splus + n;
+    g = sminus + n;
 
-    if (splus == NULL || sminus == NULL || g == NULL) {
+    if (splus == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -176,8 +176,6 @@ int hessian_from_score (double *b, gretl_matrix *H,
  bailout:
 
     free(splus);
-    free(sminus);
-    free(g);
 
     return err;
 }

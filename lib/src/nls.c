@@ -1941,7 +1941,7 @@ print_GNR_dataset (const int *list, DATASET *gdset)
 /* Gauss-Newton regression to calculate standard errors for the NLS
    parameters (see Davidson and MacKinnon).  This model is taken
    as the basis for the model struct returned by the nls function,
-   which is why we make the artificial dataset, gZ, full length.
+   which is why we make the artificial dataset, gdset, full length.
 */
 
 static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
