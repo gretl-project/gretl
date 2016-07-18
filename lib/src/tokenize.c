@@ -2237,6 +2237,7 @@ static int check_list_sepcount (int ci, int nsep)
     case XTAB:
     case LAGS:
     case SCATTERS:
+    case HFPLOT:
 	maxsep = 1;
 	break;
     default:

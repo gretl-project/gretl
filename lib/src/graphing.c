@@ -2580,6 +2580,10 @@ static int use_lines (gnuplot_info *gi)
     return 0;
 }
 
+/* list of series IDs for which we should skip observations
+   with NAs when printing the plot data */
+static int *na_skiplist;
+
 static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 			   FILE *fp)
 {
@@ -2624,6 +2628,11 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 	    const char *label = NULL;
 	    const char *date = NULL;
 	    char obs[OBSLEN];
+
+	    if (in_gretl_list(na_skiplist, datlist[ynum]) &&
+		na(dset->Z[datlist[ynum]][t])) {
+		continue;
+	    }
 
 	    if (gi->flags & GPT_TIMEFMT) {
 		ntodate(obs, t, dset);
@@ -8036,10 +8045,15 @@ int hf_plot (const int *list, const char *literal,
     DATASET *hset;
     double xit;
     char stobs[OBSLEN];
-    int plotlist[2] = {1,1};
+    int *gplist = NULL;
+    int *hflist = NULL;
+    int *lflist = NULL;
+    char *p;
     gretlopt plotopt = OPT_T;
     int plotpd = 0;
-    int n, T, i, t, s;
+    int nv, nlf = 0;
+    int cfac;
+    int i, s, t, T;
     int err;
 
     if (list == NULL || list[0] < 3) {
@@ -8048,26 +8062,72 @@ int hf_plot (const int *list, const char *literal,
 	return E_PDWRONG;
     }
 
-    n = list[0];
-    T = n * (dset->t2 - dset->t1 + 1);
+    if (gretl_list_has_separator(list)) {
+	err = gretl_list_split_on_separator(list, &hflist, &lflist);
+	if (err) {
+	    return err;
+	} else {
+	    cfac = hflist[0];
+	    nlf = lflist[0];
+	    nv = 2 + nlf;
+	}
+    } else {
+	cfac = list[0];
+	nv = 2;
+    }
 
-    hset = create_auxiliary_dataset(2, T, OPT_NONE);
+    T = cfac * (dset->t2 - dset->t1 + 1);
+
+    hset = create_auxiliary_dataset(nv, T, OPT_NONE);
     if (hset == NULL) {
 	return E_ALLOC;
     }
 
+    strcpy(hset->varname[1], dset->varname[list[1]]);
+    p = strrchr(hset->varname[1], '_');
+    if (p != NULL) {
+	*p = '\0';
+    }
+
     s = 0;
+    /* transcribe high-frequency data */
     for (t=dset->t1; t<=dset->t2; t++) {
-	for (i=n; i>0; i--) {
+	for (i=cfac; i>0; i--) {
 	    xit = dset->Z[list[i]][t];
 	    hset->Z[1][s++] = xit;
 	}
     }
 
+    if (lflist != NULL) {
+	/* add low-frequency term(s) */
+	for (i=1; i<=nlf; i++) {
+	    int vi = lflist[i];
+
+	    strcpy(hset->varname[i+1], dset->varname[vi]);
+	    for (s=0; s<hset->n; s++) {
+		hset->Z[i+1][s] = NADBL;
+	    }
+	    s = 0;
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		xit = dset->Z[vi][t];
+		hset->Z[i+1][s] = xit;
+		s += cfac;
+	    }
+	}
+    }
+
+    gplist = gretl_consecutive_list_new(1, nv - 1);
+
+    if (lflist != NULL) {
+	free(lflist);
+	lflist = gretl_consecutive_list_new(2, nv - 1);
+	na_skiplist = lflist;
+    }
+
     /* try to set a suitable time-series interpretation
        on the data to be plotted 
     */
-    plotpd = pd_from_compfac(dset, n, stobs);
+    plotpd = pd_from_compfac(dset, cfac, stobs);
     if (plotpd > 0) {
 	char numstr[8];
 
@@ -8083,7 +8143,12 @@ int hf_plot (const int *list, const char *literal,
     }
 
     set_effective_plot_ci(HFPLOT);
-    err = gnuplot(plotlist, literal, hset, plotopt);
+    err = gnuplot(gplist, literal, hset, plotopt);
+    na_skiplist = NULL;
+
+    free(gplist);
+    free(hflist);
+    free(lflist);
 
     destroy_dataset(hset);
 

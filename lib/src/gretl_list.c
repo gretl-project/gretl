@@ -2248,7 +2248,9 @@ int gretl_list_has_separator (const int *list)
  * or %E_DATA if @list does not contain a separator.
  */
 
-int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
+int gretl_list_split_on_separator (const int *list,
+				   int **plist1,
+				   int **plist2)
 {
     int *list1 = NULL, *list2 = NULL;
     int i, n = 0;

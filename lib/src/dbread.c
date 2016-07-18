@@ -3006,7 +3006,7 @@ static int compact_spread_pd_check (int high, int low)
 {
     if ((low == 12 || low == 4) &&
 	(high == 5 || high == 6 || high == 7)) {
-	/* experiment: daily to monthly or quarterly */
+	/* daily to monthly or quarterly */
 	return 0;
     }
     
