@@ -62,6 +62,8 @@ int dumgenr_with_oddval (int **plist, DATASET *dset, double oddval);
 
 int list_makediscrete (const int *list, DATASET *dset, gretlopt opt);
 
+int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset);
+
 void gretl_transforms_cleanup (void);
 
 #endif /* TRANSFORMS_H */

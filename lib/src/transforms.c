@@ -41,7 +41,9 @@ enum {
 
 enum {
     INVERSE = NC + 1,
-    RESAMPLE
+    RESAMPLE,
+    HFDIFF,
+    HFLDIFF
 };
 
 static char *get_mangled_name_by_id (int v);
@@ -165,6 +167,10 @@ make_transform_label (char *label, const char *parent,
 	sprintf(label, "= 1/%s", parent);
     } else if (ci == RESAMPLE) {
 	sprintf(label, "= resampled %s", parent);
+    } else if (ci == HFDIFF) {
+	sprintf(label, _("= high-frequency difference of %s"), parent);
+    } else if (ci == HFLDIFF) {
+	sprintf(label, _("= high-frequency log difference of %s"), parent);
     } else {
 	err = 1;
     }
@@ -398,6 +404,55 @@ static int get_diff (int v, double *diffvec, int ci,
     }
 
     return 0;
+}
+
+/* write high-frequency difference of variable v into diffvec */
+
+static gretl_matrix *get_hf_diffs (const int *list,
+				   int ci, double mult,
+				   const DATASET *dset,
+				   int *err)
+{
+    double **Z = dset->Z;
+    gretl_matrix *dX = NULL;
+    double x0, x1, dti;
+    int n = list[0];
+    int v1 = list[1];
+    int i, vi, s, t, T;
+
+    T = dset->t2 - dset->t1 + 1;
+    dX = gretl_zero_matrix_new(T, n);
+
+    if (dX == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=T-1; t>=0; t--) {
+	s = t + dset->t1;
+	for (i=0; i<n; i++) {
+	    vi = list[i+1];
+	    x0 = Z[vi][s];
+	    if (i < n-1) {
+		x1 = Z[vi+1][s];
+	    } else if (s > 0) {
+		x1 = Z[v1][s-1];
+	    } else {
+		x1 = NADBL;
+	    }
+	    dti = NADBL;
+	    if (!na(x0) && !na(x1)) {
+		if (ci == HFDIFF) {
+		    dti = mult * (x0 - x1);
+		} else if (x0 > 0 && x1 > 0) {
+		    dti = mult * log(x0/x1);
+		}
+	    }
+	    gretl_matrix_set(dX, t, i, dti);
+	}
+    }
+
+    return dX;
 }
 
 /* orthogonal deviations */
@@ -1055,7 +1110,8 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
     int i, v, ok;
     int err = 0;
 
-    if (f == SQUARE || f == LDIFF || f == SDIFF || f == RESAMPLE) {
+    if (f == SQUARE || f == LDIFF || f == SDIFF ||
+	f == HFLDIFF || f == RESAMPLE) {
 	/* 3-character prefixes */
 	maxc--;
     } else if (f == DUMMIFY) {
@@ -1462,6 +1518,61 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
     list[0] = l0;
 
     destroy_mangled_names();
+
+    return err;
+}
+
+int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
+{
+    gretl_matrix *dX = NULL;
+    int err = 0;
+
+    if (list[0] == 0) {
+	return 0;
+    }
+
+    if (ci == DIFF) {
+	ci = HFDIFF;
+    } else if (ci == LDIFF) {
+	ci = HFLDIFF;
+    } else {
+	return E_INVARG;
+    }
+
+    if (!dataset_is_time_series(dset)) {
+	return E_PDWRONG;
+    }
+
+    if (na(parm)) {
+	/* set to default */
+	parm = 1.0;
+    }
+
+    /* FIXME a good deal more checking needed here */
+
+    dX = get_hf_diffs(list, ci, parm, dset, &err);
+
+    if (!err) {
+	int i, s, t, n = dX->cols;
+	int vi, li, v0 = dset->v;
+
+	err = dataset_add_series(dset, n);
+
+	if (!err) {
+	    for (i=0; i<n; i++) {
+		vi = v0 + i;
+		li = list[i+1];
+		sprintf(dset->varname[vi], "d_%s", dset->varname[li]);
+		s = 0;
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    dset->Z[vi][t] = gretl_matrix_get(dX, s++, i);
+		}
+		list[i+1] = vi;
+	    }
+	    list[0] = n;
+	}
+	gretl_matrix_free(dX);
+    }
 
     return err;
 }

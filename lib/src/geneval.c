@@ -4490,11 +4490,12 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 #define ok_list_func(f) (f == F_LOG || f == F_DIFF || \
 			 f == F_LDIFF || f == F_SDIFF || \
 			 f == F_SQUARE || f == F_ODEV || \
-			 f == F_RESAMPLE || f == F_DROPCOLL)
+			 f == F_RESAMPLE || f == F_DROPCOLL || \
+			 f == F_HFDIFF || f == F_HFLDIFF)
 
 /* The following handles functions that are "basically" for series,
    but which can also be applied to lists -- except for F_DROPCOLL,
-   which requires a list argument.
+   F_HFDIFF and F_HDLDIFF, which require a list argument.
 */
 
 static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
@@ -4516,10 +4517,14 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 	    if (r != NULL && node_is_true(r, p)) {
 		opt = OPT_O;
 	    }
-	} else if (f == F_DROPCOLL && !null_or_empty(r)) {
-	    parm = node_get_scalar(r, p);
-	    if (p->err) {
-		return ret;
+	} else if (f == F_DROPCOLL || f == F_HFDIFF ||
+		   f == F_HFLDIFF) {
+	    /* handle optional parameter */
+	    if (!null_or_empty(r)) {
+		parm = node_get_scalar(r, p);
+		if (p->err) {
+		    return ret;
+		}
 	    }
 	}
 
@@ -4554,6 +4559,11 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 		    break;
 		case F_DROPCOLL:
 		    p->err = list_dropcoll(list, parm, p->dset);
+		    break;
+		case F_HFDIFF:
+		case F_HFLDIFF:
+		    t = (f == F_HFDIFF)? DIFF : LDIFF;
+		    p->err = hf_list_diffgenr(list, t, parm, p->dset);
 		    break;
 		default:
 		    break;
@@ -11873,6 +11883,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = list_make_lags(l, m, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
+	}
+	break;
+    case F_HFDIFF:
+    case F_HFLDIFF:
+	if (ok_list_node(l) && empty_or_num(r)) {
+	    ret = apply_list_func(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case U_NEG: 

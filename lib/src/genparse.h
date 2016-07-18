@@ -366,6 +366,8 @@ enum {
     F_SEASONALS,
     F_DROPCOLL,
     F_KSIMDATA,
+    F_HFDIFF,
+    F_HFLDIFF,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
