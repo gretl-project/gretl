@@ -8083,6 +8083,7 @@ int hf_plot (const int *list, const char *literal,
 	return E_ALLOC;
     }
 
+    /* set the hf series name */
     strcpy(hset->varname[1], dset->varname[list[1]]);
     p = strrchr(hset->varname[1], '_');
     if (p != NULL) {
@@ -8099,7 +8100,7 @@ int hf_plot (const int *list, const char *literal,
     }
 
     if (lflist != NULL) {
-	/* add low-frequency term(s) */
+	/* add low-frequency term(s), if any */
 	for (i=1; i<=nlf; i++) {
 	    int vi = lflist[i];
 
@@ -8121,7 +8122,6 @@ int hf_plot (const int *list, const char *literal,
     if (lflist != NULL) {
 	free(lflist);
 	lflist = gretl_consecutive_list_new(2, nv - 1);
-	na_skiplist = lflist;
     }
 
     /* try to set a suitable time-series interpretation
@@ -8143,6 +8143,7 @@ int hf_plot (const int *list, const char *literal,
     }
 
     set_effective_plot_ci(HFPLOT);
+    na_skiplist = lflist; /* file-scope global */
     err = gnuplot(gplist, literal, hset, plotopt);
     na_skiplist = NULL;
 
