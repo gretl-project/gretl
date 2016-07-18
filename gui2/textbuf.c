@@ -372,56 +372,34 @@ int text_can_undo (windata_t *vwin)
     }
 }
 
-static void strip_CRLF (char *s)
-{
-    int n = strlen(s);
-
-    if (n >= 2 && s[n-2] == '\r') {
-	s[n-2] = '\n';
-	s[n-1] = '\0';
-    }
-}
-
-static int source_buffer_load_file (GtkSourceBuffer *sbuf, 
-				    int role, FILE *fp)
+static int source_buffer_load_file (GtkSourceBuffer *sbuf,
+				    int role,
+				    const char *fname)
 {
     GtkTextBuffer *tbuf = GTK_TEXT_BUFFER(sbuf);
-    char fline[MAXSTR];
-    gchar *chunk = NULL;
     GtkTextIter iter;
-    int i = 0;
+    gchar *buf = NULL;
+    gsize sz = 0;
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
-
     gtk_text_buffer_set_text(tbuf, "", -1);
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
-    memset(fline, 0, sizeof fline);
+    gretl_file_get_contents(fname, &buf, &sz);
 
-    while (fgets(fline, sizeof fline, fp)) {
-	if (!g_utf8_validate(fline, -1, NULL)) {
-	    if (i == 0) {
-		chunk = my_locale_to_utf8(fline);
-		i++;
-	    } else {
-		chunk = my_locale_to_utf8_next(fline);
-	    }
-	    if (chunk == NULL) {
-		continue;
+    if (buf != NULL) {
+	gchar *trbuf = NULL;
+
+	if (!g_utf8_validate(buf, -1, NULL)) {
+	    trbuf = my_locale_to_utf8(buf);
+	    if (trbuf != NULL) {
+		gtk_text_buffer_insert(tbuf, &iter, trbuf, -1);
+		g_free(trbuf);
 	    }
 	} else {
-	    chunk = fline;
+	    gtk_text_buffer_insert(tbuf, &iter, buf, -1);
 	}
-
-	strip_CRLF(chunk);
-
-	gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
-	memset(fline, 0, sizeof fline);
-
-	if (chunk != fline) {
-	    g_free(chunk);
-	    chunk = NULL;
-	}
+	g_free(buf);
     }
 
     gtk_source_buffer_end_not_undoable_action(sbuf);
@@ -610,37 +588,16 @@ void sourceview_print (windata_t *vwin)
     /* g_object_unref(comp); ?? */
 }
 
-static void 
-real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
-{
-    FILE *fp = NULL;
-
-    if (fname != NULL) {
-	fp = gretl_fopen(fname, "rb");
-	if (fp == NULL) {
-	    file_read_errbox(fname);
-	    return;
-	}
-    }
-
-    sourceview_apply_language(vwin);
-
-    if (fp != NULL) {
-	source_buffer_load_file(vwin->sbuf, vwin->role, fp);
-	fclose(fp);
-    } else {
-	source_buffer_load_buf(vwin->sbuf, buf);
-    }
-}
-
 void sourceview_insert_file (windata_t *vwin, const char *fname)
 {
-    real_sourceview_insert(vwin, fname, NULL);
+    sourceview_apply_language(vwin);
+    source_buffer_load_file(vwin->sbuf, vwin->role, fname);
 }
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf)
 {
-    real_sourceview_insert(vwin, NULL, buf);
+    sourceview_apply_language(vwin);
+    source_buffer_load_buf(vwin->sbuf, buf);
 }
 
 static void set_source_tabs (GtkWidget *w, int cw)
