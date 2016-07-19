@@ -416,8 +416,8 @@ static gretl_matrix *get_hf_diffs (const int *list,
 				   const DATASET *dset,
 				   int *err)
 {
-    double **Z = dset->Z;
     gretl_matrix *dX = NULL;
+    double **Z = dset->Z;
     double x0, x1, dti;
     int n = list[0];
     int v1 = list[1];
@@ -1113,8 +1113,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
     int i, v, ok;
     int err = 0;
 
-    if (f == SQUARE || f == LDIFF || f == SDIFF ||
-	f == HFLDIFF || f == RESAMPLE) {
+    if (f == SQUARE || f == LDIFF || f == SDIFF || f == RESAMPLE) {
 	/* 3-character prefixes */
 	maxc--;
     } else if (f == DUMMIFY) {
@@ -1261,12 +1260,12 @@ static int lag_wanted (int p, const gretl_matrix *v, int n)
     return ret;
 }
 
-static int process_hf_input (const gretl_matrix *lvec,
-			     DATASET *dset,
-			     int compfac,
-			     int *lf_min, int *lf_max,
-			     int *skip_first,
-			     int *n_terms)
+static int process_hf_lags_input (const gretl_matrix *lvec,
+				  DATASET *dset,
+				  int compfac,
+				  int *lf_min, int *lf_max,
+				  int *skip_first,
+				  int *n_terms)
 {
     int hf_min, hf_max;
     int i, n;
@@ -1300,7 +1299,7 @@ static int process_hf_input (const gretl_matrix *lvec,
     return 0;
 }
 
-static int check_hf_laglist (const int *list, DATASET *dset)
+static int check_hf_laglist (const int *list, const DATASET *dset)
 {
     int i, warn = 0;
 
@@ -1360,8 +1359,8 @@ int list_laggenr (int **plist, int order,
 	lmin = lvec->val[0];
 	order = lvec->val[n-1];
 	if (compfac > 0) {
-	    err = process_hf_input(lvec, dset, compfac, &lmin, &order,
-				   &skip_first, &n_terms);
+	    err = process_hf_lags_input(lvec, dset, compfac, &lmin,
+					&order, &skip_first, &n_terms);
 	    if (err) {
 		return err;
 	    }
@@ -1487,14 +1486,14 @@ int default_lag_order (const DATASET *dset)
  * @list: on entry, list of variables to process; on exit,
  * ID numbers of the generated variables.
  * @ci: must be DIFF, LDIFF or SDIFF.
- * @dset: dataset struct.
+ * @dset: pointer to dataset struct.
  *
  * Generate differences of the variables in @list, and add them
  * to the data set.  If @ci is DIFF these are ordinary first
  * differences; if @ci is LDIFF they are log differences; and
  * if @ci is SDIFF they are seasonal differences.
  *
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: 0 on successful completion, non-zero on error.
  */
 
 int list_diffgenr (int *list, int ci, DATASET *dset)
@@ -1543,7 +1542,7 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
 }
 
 static int check_hf_difflist (const int *list,
-			      DATASET *dset,
+			      const DATASET *dset,
 			      int ci, int *n_add)
 {
     char vname[VNAMELEN];
@@ -1574,6 +1573,24 @@ static int check_hf_difflist (const int *list,
 
     return err;
 }
+
+/**
+ * hf_list_diffgenr:
+ * @list: on entry, midas list of variables to process; on exit,
+ * ID numbers of the generated variables.
+ * @ci: must be DIFF or LDIFF.
+ * @parm: optional scalar multiplier.
+ * @dset: pointer to dataset struct.
+ *
+ * Generate high-frequency differences of the variables in @list
+ * and add them to the data set.  If @ci is DIFF these are ordinary
+ * first differences; if @ci is LDIFF they are log differences.
+ * If @parm is not NA then the new series are all multiplied by
+ * the specified value (as in multiplication of log-differences
+ * by 100).
+ *
+ * Returns: 0 on successful completion, non-zero on error.
+ */
 
 int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
 {

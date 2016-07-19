@@ -141,8 +141,7 @@ int hessian_from_score (double *b, gretl_matrix *H,
     g = sminus + n;
 
     if (splus == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+	return E_ALLOC;
     }
 
     for (i=0; i<n; i++) {
@@ -172,8 +171,6 @@ int hessian_from_score (double *b, gretl_matrix *H,
     if (!err) {
 	gretl_matrix_xtr_symmetric(H);
     }
-
- bailout:
 
     free(splus);
 

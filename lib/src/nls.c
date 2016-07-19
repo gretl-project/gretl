@@ -1229,66 +1229,47 @@ static int nl_function_calc (double *f, void *p)
     return 0;
 }
 
-static int get_nls_derivs (int T, int offset, double *g, double **G,
-			   void *p)
+static int get_nls_derivs (int T, int offset, double *g,
+			   DATASET *gdset, void *p)
 {
     nlspec *spec = (nlspec *) p;
     double *gi;
     double x;
-    int j, t;
+    int j, t, gcol = 0;
     int err = 0;
 
     if (g != NULL) {
+	/* coming from nls_calc */
 	gi = g;
-    } else if (G != NULL) {
-	gi = (*G) + offset;
+    } else if (gdset != NULL) {
+	/* coming from GNR */
+	gcol = 2;
+	gi = gdset->Z[gcol] + offset;
     } else {
 	return 1;
     }
 
-#if NLS_DEBUG
-    fprintf(stderr, "get_nls_derivs: T = %d, offset = %d\n", T, offset);
-#endif
-
-    for (j=0; j<spec->nparam; j++) {
-
+    for (j=0; j<spec->nparam && !err; j++) {
 	if (nls_calculate_deriv(spec, j)) {
 	    return 1;
 	}
-
-#if NLS_DEBUG
-	fprintf(stderr, "param[%d]: done nls_calculate_deriv\n", j);
-#endif
-
 	if (matrix_deriv(spec, j)) {
 	    gretl_matrix *m = get_derivative_matrix(spec, j, &err);
 	    int i;
 
-	    if (err) {
-		return err;
-	    }
-
-#if NLS_DEBUG
-	    fprintf(stderr, "param[%d]: matrix at %p (%d x %d)\n", j, 
-		    (void *) m, m->rows, m->cols);
-#endif
-
-	    for (i=0; i<m->cols; i++) {
+	    for (i=0; i<m->cols && !err; i++) {
 		x = gretl_matrix_get(m, 0, i);
 		for (t=0; t<T; t++) {
 		    if (t > 0 && m->rows > 0) {
 			x = gretl_matrix_get(m, t, i);
 		    }
 		    gi[t] = (spec->ci == MLE)? x : -x;
-#if NLS_DEBUG > 1
-		    fprintf(stderr, " set g[%d] = M(%d,%d) = %.14g\n", 
-			    t, t, i, gi[t]);
-#endif
 		}
+		/* advance write column */
 		if (g != NULL) {
 		    gi += T;
-		} else {
-		    gi = *(++G) + offset;
+		} else if (gcol < gdset->v - 1) {
+		    gi = gdset->Z[++gcol] + offset;
 		}
 	    }
 	} else if (scalar_deriv(spec, j)) {
@@ -1298,11 +1279,11 @@ static int get_nls_derivs (int T, int offset, double *g, double **G,
 		gi[t] = (spec->ci == MLE)? x : -x;
 	    }
 	    if (j < spec->nparam - 1) {
-		/* advance the writing position */
+		/* advance write column */
 		if (g != NULL) {
 		    gi += T;
 		} else {
-		    gi = *(++G) + offset;
+		    gi = gdset->Z[++gcol] + offset;
 		}
 	    }	    
 	} else {
@@ -1314,26 +1295,18 @@ static int get_nls_derivs (int T, int offset, double *g, double **G,
 		v = spec->params[j].dnum = spec->dset->v - 1;
 	    }
 
-#if NLS_DEBUG
-	    fprintf(stderr, "param[%d]: dnum = %d\n", j, v);
-#endif
-
 	    /* transcribe from dataset to array g */
 	    for (t=0; t<T; t++) {
 		s = t + spec->t1;
 		x = spec->dset->Z[v][s];
 		gi[t] = (spec->ci == MLE)? x : -x;
-#if NLS_DEBUG > 1
-		fprintf(stderr, " set g[%d] = s->Z[%d][%d] = %.14g\n", 
-			t, v, s, gi[t]);
-#endif
 	    }
 	    if (j < spec->nparam - 1) {
-		/* advance the writing position */
+		/* advance write column */
 		if (g != NULL) {
 		    gi += T;
 		} else {
-		    gi = *(++G) + offset;
+		    gi = gdset->Z[++gcol] + offset;
 		}
 	    }
 	}
@@ -1342,7 +1315,7 @@ static int get_nls_derivs (int T, int offset, double *g, double **G,
     return err;
 }
 
-/* for use with analytical derivatives */
+/* for use with analytical derivatives, at present only for mle */
 
 static int get_mle_gradient (double *b, double *g, int n, 
 			     BFGS_CRIT_FUNC llfunc,
@@ -1435,6 +1408,64 @@ static int get_mle_gradient (double *b, double *g, int n,
 
     return err;
 }
+
+#define NLS_HESSIAN 0
+
+#if NLS_HESSIAN
+
+/* special-case experiment for unified matrix deriv only:
+   calculate gradient with respect to the negative of the
+   sum of squared residuals
+*/
+
+static int get_nls_gradient (double *b, double *g, int n, 
+			     BFGS_CRIT_FUNC llfunc,
+			     void *p)
+{
+    nlspec *spec = (nlspec *) p;
+    gretl_matrix *m;
+    double x, *u;
+    int i, t;
+    int err = 0;
+
+    update_coeff_values(b, spec);
+
+    /* update derivative matrix */
+    if (nls_calculate_deriv(spec, 0)) {
+	return 1;
+    }
+
+    /* update residual series */
+    if (execute_genr(spec->genrs[spec->naux], spec->dset, spec->prn)) {
+	return 1;
+    }
+
+    u = spec->dset->Z[spec->lhv] + spec->t1;
+    m = get_derivative_matrix(spec, 0, &err);
+
+    for (i=0; i<m->cols && !err; i++) {
+	g[i] = 0.0;
+	for (t=0; t<m->rows; t++) {
+	    x = gretl_matrix_get(m, t, i);
+	    if (na(x)) {
+		fprintf(stderr, "NA in gradient calculation\n");
+		err = 1;
+	    } else {
+		/* Convert x = gradient wrt regression function
+		   to gradient wrt maximand, -SSR.
+		*/
+		g[i] += 2 * u[t] * x;
+	    }
+	}
+	fprintf(stderr, "g[%d] = %#.12g\n", i, g[i]);
+    }
+
+    fprintf(stderr, "get_nls_gradient: err = %d\n\n", err);
+
+    return err;
+}
+
+#endif
 
 static int get_mle_hessian (double *b, gretl_matrix *H, void *p)
 {
@@ -1963,7 +1994,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     fprintf(stderr, "Z[%d] = %p\n", v-1, (void *) dset->Z[v-1]);
 #endif
 
-    if (gretl_iszero(0, spec->nobs - 1, uhat)) {
+    if (gretl_iszero(0, T - 1, uhat)) {
 	pputs(prn, _("Perfect fit achieved\n"));
 	perfect = 1;
 	for (t=0; t<spec->nobs; t++) {
@@ -1987,7 +2018,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     gdset->pd = dset->pd;
     gdset->structure = dset->structure;
 
-    glist = gretl_list_new(spec->ncoeff + 1);
+    glist = gretl_consecutive_list_new(1, spec->ncoeff + 1);
 
     if (glist == NULL) {
 	destroy_dataset(gdset);
@@ -1996,12 +2027,10 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	return gnr;
     }
 
-    j = 0;
-
-    /* dependent variable (NLS residual) */
-    glist[1] = 1;
+    /* write the dependent variable (NLS residual)
+       into slot 1 in gdset */
     strcpy(gdset->varname[1], "gnr_y");
-    for (t=0; t<gdset->n; t++) {
+    for (t=0, j=0; t<gdset->n; t++) {
 	if (t < gdset->t1 || t > gdset->t2) {
 	    gdset->Z[1][t] = NADBL;
 	} else {
@@ -2010,10 +2039,9 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     }
 
     for (i=0; i<spec->ncoeff; i++) {
-	/* independent vars: derivatives wrt NLS params */
-	v = i + 2;
-	glist[v] = v;
-	sprintf(gdset->varname[v], "gnr_x%d", i + 1);
+	/* independent vars: derivatives wrt NLS params,
+	   starting at slot 2 in gdset */
+	sprintf(gdset->varname[i+2], "gnr_x%d", i + 1);
     }
 
     if (analytic_mode(spec)) {
@@ -2030,7 +2058,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	fprintf(stderr, "GNR: calling get_nls_derivs\n");
 	fprintf(stderr, "Z[%d] = %p\n", dset->v-1, (void *) dset->Z[dset->v-1]);
 #endif
-	get_nls_derivs(T, spec->t1, NULL, gdset->Z + 2, spec);
+	get_nls_derivs(T, spec->t1, NULL, gdset, spec);
     } else {
 	for (i=0; i<spec->ncoeff; i++) {
 	    v = i + 2;
@@ -2046,6 +2074,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     }
 
 #if NLS_DEBUG > 1
+    printlist(glist, "glist");
     print_GNR_dataset(glist, gdset);
 #endif
 
@@ -2058,6 +2087,9 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     gnr = lsq(glist, gdset, OLS, lsqopt);
 
 #if NLS_DEBUG
+    strcpy(gdset->stobs, dset->stobs);
+    strcpy(gdset->endobs, dset->endobs);
+    gdset->sd0 = dset->sd0;
     gnr.name = gretl_strdup("GNR for NLS");
     printmodel(&gnr, gdset, OPT_NONE, prn);
     free(gnr.name);
@@ -3212,6 +3244,39 @@ static int nls_model_fix_sample (MODEL *pmod,
     return 0;
 }
 
+#if NLS_HESSIAN
+
+static int nls_hessian_experiment (nlspec *s)
+{
+    gretl_matrix *H;
+    int err = 0;
+
+    /* we'll try this experiment onlt if we have a
+       unified matrix derivative */
+    if (s->nparam > 1 || !matrix_deriv(s, 0)) {
+	return 1;
+    }
+
+    H = hessian_inverse_from_score(s->coeff, s->ncoeff, 
+				   get_nls_gradient, NULL,
+				   s, &err);
+    if (H != NULL) {
+	double hi;
+	int i;
+	
+	gretl_matrix_print(H, "nls Hessian inverse");
+	for (i=0; i<H->rows; i++) {
+	    hi = gretl_matrix_get(H, i, i);
+	    fprintf(stderr, "se %d: %g\n", i+1, sqrt(hi));
+	}
+	gretl_matrix_free(H);
+    }
+
+    return err;
+}
+
+#endif
+
 /* static function providing the real content for the two public
    wrapper functions below: does NLS, MLE or GMM */
 
@@ -3356,6 +3421,11 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 		/* coefficients only: don't bother with GNR */
 		add_nls_coeffs(&nlmod, spec);
 	    } else {
+#if NLS_HESSIAN		
+		if (0 && !numeric_mode(spec)) {
+		    nls_hessian_experiment(spec);
+		}
+#endif		
 		/* Use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
 		nlmod = GNR(spec, spec->dset, prn);
