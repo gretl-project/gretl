@@ -3353,7 +3353,7 @@ static int daily_yp (const DATASET *dset, int t,
 static int daily_spread_offset (const DATASET *dset,
 				int pd, int compfac)
 {
-    int t, y, p = 0, p0;
+    int t, y, p = 0, p0 = 0;
     int ndays = 0;
 
     for (t=0; t<dset->n; t++) {
