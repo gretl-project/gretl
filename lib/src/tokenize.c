@@ -183,7 +183,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SCATTERS, "scatters", CI_LIST },
     { SDIFF,    "sdiff",    CI_LIST | CI_NOOPT },
     { SET,      "set",      CI_PARM1 | CI_PARM2 | CI_INFL },
-    { SETINFO,  "setinfo",  CI_LIST | CI_LLEN1 }, /* + special: handled later */
+    { SETINFO,  "setinfo",  CI_LIST | CI_LLEN1 | CI_INFL }, /* + special: handled later */
     { SETOBS,   "setobs",   CI_PARM1 | CI_PARM2 },
     { SETOPT,   "setopt",   CI_PARM1 | CI_PARM2 },
     { SETMISS,  "setmiss",  CI_PARM1 | CI_LIST | CI_DOALL },
@@ -3541,6 +3541,14 @@ static void handle_option_inflections (CMD *cmd)
 	if (cmd->opt == OPT_O) {
 	    /* --output: no arg needed */
 	    cmd->ciflags &= ~CI_PARM1;
+	}
+    } else if (cmd->ci == SETINFO) {
+	if (cmd->opt & (OPT_M | OPT_C | OPT_D)) {
+	    /* midas, continuous or discrete */
+	    if (!(cmd->opt & (OPT_G | OPT_I))) {
+		/* but not graph-name or description */
+		cmd->ciflags &= ~CI_LLEN1;
+	    }
 	}
     }
 }

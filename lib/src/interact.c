@@ -694,10 +694,14 @@ void gretl_record_command (CMD *cmd, const char *line, PRN *prn)
     real_echo_command(cmd, line, 1, prn);
 }
 
-static int set_var_info (int v, const char *parm1, const char *parm2,
-			 gretlopt opt, DATASET *dset)
+static int set_var_info (const int *list,
+			 const char *parm1,
+			 const char *parm2,
+			 gretlopt opt,
+			 DATASET *dset)
 {
-    int err = 0;
+    int v = list[1];
+    int i, err = 0;
 
     if (dset == NULL || dset->varinfo == NULL) {
 	return E_NODATA;
@@ -705,10 +709,19 @@ static int set_var_info (int v, const char *parm1, const char *parm2,
 	return E_DATA;
     }
 
-    if (opt & OPT_D) {
-	series_set_discrete(dset, v, 1);
-    } else if (opt & OPT_C) {
-	series_set_discrete(dset, v, 0);
+    if ((opt & (OPT_G | OPT_I)) && list[0] > 1) {
+	return E_INVARG;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	if (opt & OPT_D) {
+	    series_set_discrete(dset, list[i], 1);
+	} else if (opt & OPT_C) {
+	    series_set_discrete(dset, list[i], 0);
+	}
+	if (opt & OPT_M) {
+	    series_set_flag(dset, list[i], VAR_MIDAS);
+	}
     }
 
     if (opt & OPT_I) {
@@ -2630,7 +2643,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETINFO:
-	err = set_var_info(cmd->list[1], cmd->param, cmd->parm2, 
+	err = set_var_info(cmd->list, cmd->param, cmd->parm2, 
 			   cmd->opt, dset);
 	break;
 

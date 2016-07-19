@@ -38,7 +38,8 @@ typedef enum {
     VAR_HIDDEN     = 1 << 1,
     VAR_GENERATED  = 1 << 2,
     VAR_LISTARG    = 1 << 3,
-    VAR_TIMECOL    = 1 << 4
+    VAR_TIMECOL    = 1 << 4,
+    VAR_MIDAS      = 1 << 5
 } VarFlags;
 
 typedef enum {

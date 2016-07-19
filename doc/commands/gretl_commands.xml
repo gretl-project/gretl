@@ -11697,6 +11697,10 @@
 	  <flag>--continuous</flag>
 	  <effect>mark series as continuous</effect>
 	</option>
+	<option>
+	  <flag>--midas</flag>
+	  <effect>mark as component of high-frequency data</effect>
+	</option>	
       </options>
       <examples>
         <example>setinfo x1 --description="Description of x1"</example>
@@ -11707,10 +11711,12 @@
 
     <description context="cli">
       <para>
-	Sets up to three attributes of <repl>series</repl>, given by name
-	or ID number, as follows.
+	If the options <opt>description</opt> or <opt>graph-name</opt>
+	are invoked the argument must be a single series, otherwise it
+	may be a list of series in which case it operates on all
+	members of the list. This command sets up to four attributes
+	as follows.
       </para>
-
       <para>
 	If the <opt>description</opt> flag is given followed by a
 	string in double quotes, that string is used to set the
@@ -11718,13 +11724,11 @@
 	to the <cmdref targ="labels"/> command, and is also shown in
 	the main window of the GUI program.
       </para>
-
       <para>
 	If the <opt>graph-name</opt> flag is given followed by a
 	quoted string, that string will be used in place of the
 	variable's name in graphs.
       </para>
-
       <para>
 	If one or other of the <opt>discrete</opt> or
 	<opt>continuous</opt> option flags is given, the variable's
@@ -11732,7 +11736,13 @@
 	all series as continuous; setting a series as discrete
 	affects the way the variable is handled in frequency plots.
       </para>
-
+      <para>
+	The <opt>midas</opt> option sets a flag indicating that a
+	given series holds data of a higher frequency than the base
+	frequency of the dataset; for example, the dataset is
+	quarterly and the series holds values for month 1, 2 or 3
+	of each quarter. (MIDAS = Mixed Data Sampling.)
+      </para>
     </description>
 
     <description context="gui">
