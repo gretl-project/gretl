@@ -3749,7 +3749,7 @@ void series_unset_flag (DATASET *dset, int i, VarFlags flag)
  * Returns: the flags set series @i.
  */
 
-VarFlags series_get_flags (DATASET *dset, int i)
+VarFlags series_get_flags (const DATASET *dset, int i)
 {
     if (i >= 0 && i < dset->v) {
 	return dset->varinfo[i]->flags;
