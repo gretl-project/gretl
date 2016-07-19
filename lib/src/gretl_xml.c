@@ -2330,7 +2330,11 @@ static int real_write_gdt (const char *fname, const int *list,
 
 	if (series_is_discrete(dset, v)) {
 	    alt_puts("\n discrete=\"true\"", fp, fz);
-	}	    
+	}
+
+	if (series_get_flags(dset,v) & VAR_MIDAS) {
+	    alt_puts("\n midas=\"true\"", fp, fz);
+	}	
 
 	alt_puts("\n/>\n", fp, fz);
     }
@@ -2855,6 +2859,14 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		}
 		free(tmp);
 	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "midas");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, k, VAR_MIDAS);
+		}
+		free(tmp);
+	    }	    
 
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
