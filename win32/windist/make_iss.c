@@ -150,9 +150,7 @@ void add_code_block (void)
 void add_run_block (void)
 {
     puts("\n[Run]");
-    puts("Filename: \"{app}\\delold.bat\"");
-    puts("WorkingDir: \"{app}\"");
-    puts("Flags: skipifdoesntexist");
+    puts("Filename: \"{app}\\delold.bat\"; WorkingDir: \"{app}\"; Flags: skipifdoesntexist");
 }
 
 void preamble (const char *s, int x64)
