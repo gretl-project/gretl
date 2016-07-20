@@ -1466,6 +1466,25 @@ static int node_get_int (NODE *n, parser *p)
     }
 }
 
+static int node_get_bool (NODE *n, parser *p, int deflt)
+{
+    int ret = -1;
+
+    if (!null_or_empty(n)) {
+	int k = node_get_int(n, p);
+
+	if (!p->err) {
+	    ret = (k != 0);
+	}
+    } else if (deflt == 0 || deflt == 1) {
+	ret = deflt;
+    } else {
+	p->err = E_ARGS;
+    }
+
+    return ret;
+}
+
 static NODE *DW_node (NODE *r, parser *p)
 {
     NODE *s, *e, *ret = NULL;
@@ -4443,22 +4462,26 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	int *list = NULL;
 	int k = 0, cfac = 0;
 
-	if (!null_or_empty(r)) {
-	    k = node_get_int(r, p);
-	    if (!p->err) {
-		if (f == F_HFLAG) {
-		    cfac = k;
-		    opt = OPT_L;
-		} else if (k != 0) {
-		    opt = OPT_L;
-		}
+	if (f == F_LLAG) {
+	    /* regular lags of list: default order of lags
+	       is by variable */
+	    int bylag = node_get_bool(r, p, 0);
+	    
+	    if (!p->err && bylag != 0) {
+		opt = OPT_L; /* by lags */
 	    }
+	} else {
+	    /* high-frequency: default order is by lags */
+	    opt = OPT_L;
 	}
 
-	if (scalar_node(l)) {
-	    k = node_get_int(l, p);
-	} else {
-	    v = l->v.m;
+	if (!p->err) {
+	    /* lag order or vector */
+	    if (scalar_node(l)) {
+		k = node_get_int(l, p);
+	    } else {
+		v = l->v.m;
+	    }
 	}
 
 	if (!p->err) {
@@ -4472,15 +4495,23 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
 
-	if (!p->err) {
-	    if (list == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		if (list[0] > 0) {
-		    p->err = list_laggenr(&list, k, v, p->dset, cfac, opt);
-		}
-		ret->v.ivec = list;
+	if (!p->err && list == NULL) {
+	    p->err = E_ALLOC;
+	}
+
+	if (!p->err && f == F_HFLAG) {
+	    /* compaction factor for high-frequency data */
+	    cfac = list[0];
+	    if (cfac < 2) {
+		p->err = E_INVARG;
 	    }
+	}
+
+	if (!p->err) {
+	    if (list[0] > 0) {
+		p->err = list_laggenr(&list, k, v, p->dset, cfac, opt);
+	    }
+	    ret->v.ivec = list;
 	}
     }
 
