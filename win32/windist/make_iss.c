@@ -305,10 +305,10 @@ int main (int argc, char **argv)
 
     define_program_icons();
     set_registry_entries();
-    add_code_block();
     if (!snapshot) {
 	add_run_block();
-    }
+    }    
+    add_code_block();
 
     return 0;
 }
