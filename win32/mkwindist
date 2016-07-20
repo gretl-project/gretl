@@ -356,6 +356,7 @@ done
 add_file ${TOPDIR}/plugin/data/urcdata.bin gretl/plugins/data/urcdata.bin
 add_file ${TOPDIR}/plugin/data/dwdata.gz gretl/plugins/data/dwdata.gz
 add_file gretl_website.url gretl/gretl_website.url
+add_file ${TOPDIR}/win32/delold.bat gretl/delold.bat
 
 # cd into distribution subdirectory
 cd windist
