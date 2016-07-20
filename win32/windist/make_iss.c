@@ -143,6 +143,16 @@ void add_code_block (void)
     puts("#include \"../../win32/windist/modpath.iss\"");
 }
 
+/* delete gretl PDF doc files that are not part of the
+   installation, to force their updating */
+
+void add_run_block (void)
+{
+    puts("\n[Run]");
+    puts("Filename: \"{app}\\delold.bat\"");
+    puts("WorkingDir: \"{app}\"");
+}
+
 void preamble (const char *s, int x64)
 {
     puts("; -- gretl.iss --");
@@ -289,6 +299,7 @@ int main (int argc, char **argv)
     define_program_icons();
     set_registry_entries();
     add_code_block();
+    add_run_block();
 
     return 0;
 }
