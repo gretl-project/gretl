@@ -87,7 +87,6 @@ make_transform_varname (char *vname, const char *orig, int ci,
 {
     *vname = '\0';
 
-
     if (ci == DIFF) {
 	strcpy(vname, "d_");
 	strncat(vname, orig, len - 2);
@@ -110,17 +109,32 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	char ext[8];
 
 	if (aux >= 0) {
-	    /* an actual lag */
+	    /* an actual lag (or contemporaneous) */
 	    sprintf(ext, "_%d", aux);
+	    strncat(vname, orig, len - strlen(ext));
+	    strcat(vname, ext);
 	} else {
-	    /* in fact a lead */
+	    /* in fact a lead: in naming the series we'll
+	       try to avoid appending a plain digit to
+	       a series name that already ends in a digit,
+	       since this may get confusing
+	    */
+	    int n1, n2;
+	    
 	    sprintf(ext, "%d", -aux);
+	    n1 = strlen(orig);
+	    n2 = strlen(ext);
+	    if (n1 + n2 + 2 < VNAMELEN) {
+		if (isdigit(orig[n1-1])) {
+		    sprintf(vname, "%s_f%d", orig, -aux);
+		} else {
+		    sprintf(vname, "%s%d", orig, -aux);
+		}
+	    } else {
+		strncat(vname, orig, len - n2);
+		strcat(vname, ext);
+	    }		
 	}
-	/* FIXME leads: if the (possibly truncated) name
-	   ends in a digit, don't just append a digit?
-	*/
-	strncat(vname, orig, len - strlen(ext));
-	strcat(vname, ext);
     } else if (ci == DUMMIFY) {
 	char ext[6];
 
