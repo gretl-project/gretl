@@ -4,6 +4,7 @@ version 2016d, in progress
 - gig addon: fix an off-by-one bug
 - Fix bug: potential crash in GUI filter plot with very long
   series name
+- Installers for Windows, Mac: include fuller set of PDF docs
 
 2016-07-06 version 2016c
 - Add Ukrainian translation

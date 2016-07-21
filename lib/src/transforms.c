@@ -107,7 +107,7 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	strcpy(vname, "sq_");
 	strncat(vname, orig, len - 3);
     } else if (ci == LAGS) {
-	char ext[6];
+	char ext[8];
 
 	if (aux >= 0) {
 	    /* an actual lag */
@@ -116,6 +116,9 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	    /* in fact a lead */
 	    sprintf(ext, "%d", -aux);
 	}
+	/* FIXME leads: if the (possibly truncated) name
+	   ends in a digit, don't just append a digit?
+	*/
 	strncat(vname, orig, len - strlen(ext));
 	strcat(vname, ext);
     } else if (ci == DUMMIFY) {
@@ -1248,7 +1251,6 @@ static int lag_wanted (int p, const gretl_matrix *v, int n)
 	int i;
 
 	ret = 0; /* reverse the assumption */
-
 	for (i=0; i<n; i++) {
 	    if (v->val[i] == p) {
 		ret = 1;
@@ -1284,10 +1286,16 @@ static int process_hf_lags_input (const gretl_matrix *lvec,
 
     hf_min = lvec->val[0];
     hf_max = lvec->val[n-1];
+
     *lf_min = (int) ceil(hf_min / (double) compfac);
     *lf_max = (int) ceil(hf_max / (double) compfac);
     *skip_first = (hf_min - 1) % compfac;
     *n_terms = hf_max - hf_min + 1;
+
+    if (*skip_first < 0) {
+	/* handle leads */
+	*skip_first = compfac + *skip_first;
+    }
 
 #if 0
     fprintf(stderr, "hf_min = %d, lf_min = %d\n", hf_min, *lf_min);
@@ -1319,7 +1327,7 @@ static int check_hf_laglist (const int *list, const DATASET *dset)
  * @plist: on entry, pointer to list of variables to process.  On exit
  * the list holds the ID numbers of the lag variables.
  * @order: number of lags to generate (or 0 for automatic).
- * @lvec: (optional alternative) vector holding lags to generate.
+ * @lvec: (alternative to @order) vector holding lags to generate.
  * @dset: dataset struct.
  * @opt: may contain OPT_L to order the list by lag rather than
  * by variable. 
@@ -1340,8 +1348,9 @@ int list_laggenr (int **plist, int order,
     int *laglist = NULL;
     int l, i, j, v, lv;
     int startlen, l0 = 0;
-    int n = 0, lmin = 0;
+    int lmin = 0, lmax = 0;
     int skip_first = 0;
+    int veclen = 0;
     int n_terms = 0;
     int err;
 
@@ -1352,61 +1361,74 @@ int list_laggenr (int **plist, int order,
     }
 
     if (lvec != NULL) {
-	n = gretl_vector_get_length(lvec);
-	if (n == 0) {
+	/* got a vector of lags in @lvec */
+	veclen = gretl_vector_get_length(lvec);
+	if (veclen == 0) {
 	    return E_INVARG;
 	}
 	lmin = lvec->val[0];
-	order = lvec->val[n-1];
+	lmax = lvec->val[veclen-1];
 	if (compfac > 0) {
+	    /* doing midas lags */
 	    err = process_hf_lags_input(lvec, dset, compfac, &lmin,
-					&order, &skip_first, &n_terms);
+					&lmax, &skip_first, &n_terms);
 	    if (err) {
 		return err;
 	    }
-	}	    
-    } else {
-	lmin = 1;
-	if (compfac > 0) {
-	    n_terms = order;
-	    order = (int) ceil(order / (double) compfac);
+	} else {
+	    n_terms = veclen;
 	}
+    } else {
+	/* got a straight integer lag order in arg @order */
+	if (order < 0 || order > dset->n) {
+	    gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
+	    return E_INVARG;
+	} else if (order == 0) {
+	    order = default_lag_order(dset);
+	}
+	lmin = 1;
+	n_terms = lmax = order;
     }
 
-    if (order < 0 || order > dset->n) {
-	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
-	return E_INVARG;
-    }
-
-    if (order == 0) {
-	order = default_lag_order(dset);
-    } 
+    /* Note: at this point @lmin and @lmax are defined in terms of
+       the frequency of @dset, even when we're handling midas data.
+       In the regular case, @n_terms holds the number of lag terms
+       wanted per series in the input @list, but in the midas case
+       @n_terms is the total number of hf lag terms wanted (since
+       the input @list actually represents a single series).
+    */    
 
     err = transform_preprocess_list(list, dset, LAGS);
     if (err) {
 	return err;
     }
 
-    laglist = make_lags_list(list, order);
+    if (compfac) {
+	laglist = gretl_list_new(n_terms);
+    } else {
+	laglist = make_lags_list(list, n_terms);
+    }
+    
     if (laglist == NULL) {
 	destroy_mangled_names();
 	return E_ALLOC;
     }
 
-    startlen = get_starting_length(list, dset, (order > 9)? 3 : 2);
+    startlen = get_starting_length(list, dset, (lmax > 9)? 3 : 2);
 
     j = 1;
 
     if (compfac > 0) {
-	/* high-frequency lags, by lags */
+	/* midas high-frequency lags, by lags */
+	int hfpmax = n_terms + skip_first;
 	int hfp = 0;
-	
-	for (l=lmin; l<=order; l++) {
+
+	for (l=lmin; l<=lmax; l++) {
 	    for (i=1; i<=list[0]; i++) {
 		hfp++;
 		if (hfp <= skip_first) {
 		    continue;
-		} else if (hfp > (n_terms + skip_first)) {
+		} else if (hfp > hfpmax) {
 		    break;
 		}
 		v = list[i];
@@ -1420,8 +1442,8 @@ int list_laggenr (int **plist, int order,
 	}	
     } else if (opt & OPT_L) {
 	/* order the list by lags */
-	for (l=lmin; l<=order; l++) {
-	    if (!lag_wanted(l, lvec, n)) {
+	for (l=lmin; l<=lmax; l++) {
+	    if (!lag_wanted(l, lvec, veclen)) {
 		continue;
 	    }
 	    for (i=1; i<=list[0]; i++) {
@@ -1438,8 +1460,8 @@ int list_laggenr (int **plist, int order,
 	/* order by variable */
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    for (l=lmin; l<=order; l++) {
-		if (!lag_wanted(l, lvec, n)) {
+	    for (l=lmin; l<=lmax; l++) {
+		if (!lag_wanted(l, lvec, veclen)) {
 		    continue;
 		}		
 		lv = get_transform(LAGS, v, l, 0.0, dset,
