@@ -1,13 +1,20 @@
 #!/bin/sh
 
-# Shell script to make gretl win32 distribution
+# Shell script to make gretl Windows installer
 
 BUILDTYPE=$1
-
 if [ "x${BUILDTYPE}" = "x" ] ; then
   echo "mkwindist: argument must be 'cross' or 'native'"
   exit 1
 fi
+
+W0RDLEN=$2
+if [ "x${WORDLEN}" = "x" ] ; then
+  X64="no"
+else
+  X64="yes"
+fi
+
 
 TOPDIR=".."
 THISDIR=`pwd`
@@ -21,7 +28,11 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   ADDONS=/home/cottrell/src/build/addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
-  SYSBASE=/opt/win32/i686-pc-mingw32
+  if [ $X64 = "yes" ] ; then
+    SYSBASE=/opt/win64/x86_64-w64-mingw32
+  else
+    SYSBASE=/opt/win32/i686-pc-mingw32
+  fi
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
@@ -37,8 +48,11 @@ SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
 SYSSV=${SYSBASE}/share/gtksourceview-2.0
-# GPDIST=${WINFILES}/gp466w32.tar.gz
-GPDIST=${WINFILES}/gp51w32.tar.gz
+if [ $X64 = "yes" ] ; then
+  GPDIST=${WINFILES}/gp51w64.tar.gz
+else
+  GPDIST=${WINFILES}/gp51w32.tar.gz
+fi
 
 #############################################
 
@@ -77,7 +91,11 @@ VERSION=$(grep GRETL_VERSION[^_] $TOPDIR/lib/src/version.h | \
 if [ -f windist/MANIFEST ] ; then
    cp windist/MANIFEST windist/MANIFEST.`date +%Y-%m-%d`
 fi
-echo "VERSION $VERSION" > windist/MANIFEST
+if [ $X64 = "yes" ] ; then
+  echo "VERSION $VERSION x64" > windist/MANIFEST
+else
+  echo "VERSION $VERSION" > windist/MANIFEST
+fi
 echo "DATE `date`" >> windist/MANIFEST
 rm -rf windist/gretl
 
@@ -163,15 +181,23 @@ for f in \
 	libpango-1.0-0.dll \
 	libpangocairo-1.0-0.dll \
 	libpangowin32-1.0-0.dll \
-	libpng14-14.dll \
-	readline5.dll \
-	history5.dll \
 	libxml2-2.dll \
 	zlib1.dll \
 	libjson-glib-1.0-0.dll
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
+
+# dlls which differ across 32- vs 64-bit builds
+if [ $X64 = "yes" ] ; then
+  for f in libpixman-1-0.dll libpng16-16.dll libreadline6.dll ; do
+    add_file ${SYSBIN}/$f gretl/$f
+  done
+else
+  for f in libpng14-14.dll readline5.dll history5.dll ; do
+    add_file ${SYSBIN}/$f gretl/$f
+  done
+fi
 
 if [ $OPENBLAS = "yes" ] ; then
   add_file ${SYSBIN}/libopenblas.dll gretl/libopenblas.dll
@@ -261,8 +287,11 @@ for lang in es it pt ; do
 done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
-add_file ${DOCDIR}/gretl-guide.pdf gretl/doc/gretl-guide.pdf
-add_file ${DOCDIR}/gretl-ref.pdf gretl/doc/gretl-ref.pdf
+
+# PDF docs
+for f in gretl-guide gretl-ref hansl-primer pkgbook gretl-keys ; do
+    add_file ${DOCDIR}/$f.pdf gretl/doc/$f.pdf
+done
 
 # top-level data files
 for f in ${TOPDIR}/share/data/*.gdt ; do
@@ -384,10 +413,16 @@ cd $WINDIST
 
 make gretl.iss
 
+if [ $X64 = "yes" ] ; then
+  EXENAME="gretl_install-64.exe"
+else
+  EXENAME="gretl_install.exe" 
+fi
+
 # make Inno installer
 echo "Building gretl installer executable..."
 ${INNO_CMD} ./gretl.iss 2>errlog && \
-mv Output/setup.exe Output/gretl_install.exe && \
-ls -l Output/gretl_install.exe
+mv Output/setup.exe Output/${EXENAME} && \
+ls -l Output/${EXENAME}
 
 touch dist.stamp
