@@ -109,12 +109,12 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	char ext[8];
 
 	if (aux >= 0) {
-	    /* an actual lag (or contemporaneous) */
+	    /* an actual lag (or contemporaneous value) */
 	    sprintf(ext, "_%d", aux);
 	    strncat(vname, orig, len - strlen(ext));
 	    strcat(vname, ext);
 	} else {
-	    /* in fact a lead: in naming the series we'll
+	    /* a lead: in naming the output series we'll
 	       try to avoid appending a plain digit to
 	       a series name that already ends in a digit,
 	       since this may get confusing
@@ -126,11 +126,13 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	    n2 = strlen(ext);
 	    if (n1 + n2 + 2 < VNAMELEN) {
 		if (isdigit(orig[n1-1])) {
+		    /* separate the digits */
 		    sprintf(vname, "%s_f%d", orig, -aux);
 		} else {
 		    sprintf(vname, "%s%d", orig, -aux);
 		}
 	    } else {
+		/* Oh, well, can't be helped */
 		strncat(vname, orig, len - n2);
 		strcat(vname, ext);
 	    }		
