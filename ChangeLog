@@ -2,6 +2,8 @@ version 2016d, in progress
 - Small fixes for --compact=spread and new lags() options
 - Fix breakage in "dataset renumber" command
 - gig addon: fix an off-by-one bug
+- Fix bug: potential crash in GUI filter plot with very long
+  series name
 
 2016-07-06 version 2016c
 - Add Ukrainian translation
