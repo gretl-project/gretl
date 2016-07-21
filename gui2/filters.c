@@ -886,13 +886,13 @@ static void print_gp_data (filter_info *finfo, const double *obs,
 static int 
 do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 {
+    gchar *xtitle = NULL;
+    gchar *ztitle = NULL;
+    gchar *title = NULL;
     int twoplot = 0;
     int zkeypos = 'R';
     FILE *fp = NULL;
     const double *obs;
-    char xtitle[48];
-    char ztitle[48];
-    char title[128];
     int v, err = 0;
 
     obs = gretl_plotx(dataset, OPT_NONE);
@@ -903,15 +903,19 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     if ((finfo->graph_opt & FILTER_GRAPH_TREND) &&
 	(finfo->graph_opt & FILTER_GRAPH_CYCLE)) {
 	twoplot = 1;
-    } 
+    }
 
-    fp = open_plot_input_file((twoplot)? PLOT_TRI_GRAPH : PLOT_REGULAR, &err);
+    if (twoplot) {
+	fp = open_plot_input_file(PLOT_TRI_GRAPH, 0, &err);
+    } else {
+	fp = open_plot_input_file(PLOT_REGULAR, GPT_LETTERBOX, &err);
+    }
     if (err) { 
 	return err;
     }
 
     if (!twoplot) {
-	fprintf(fp, "# timeseries %d\n", dataset->pd);
+	fprintf(fp, "# timeseries %d (letterbox)\n", dataset->pd);
     }
 
     if (dataset->pd == 4) {
@@ -946,8 +950,8 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	if (zkeypos == 'L') {
 	    print_keypos_string(GP_KEY_LEFT_TOP, fp);
 	}
-	sprintf(xtitle, _("%s (original data)"), finfo->vname);
-	sprintf(ztitle, _("%s (smoothed)"), finfo->vname);
+	xtitle = g_strdup_printf(_("%s (original data)"), finfo->vname);
+	ztitle = g_strdup_printf(_("%s (smoothed)"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
 	print_gp_data(finfo, obs, dataset->Z[v], fp);
@@ -958,13 +962,13 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("set size 1.0,0.38\n", fp);
 	fputs("set origin 0.0,0.0\n", fp);
 	fputs("set xzeroaxis\n", fp);
-	sprintf(title, _("Cyclical component of %s"), finfo->vname);
+	title = g_strdup_printf(_("Cyclical component of %s"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
 	print_gp_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
 	fputs("unset multiplot\n", fp);
     } else if (finfo->ftype == FILTER_FD) {
-	sprintf(ztitle, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
+	ztitle = g_strdup_printf("fracdiff(%s, %g)", finfo->vname, finfo->lambda);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", ztitle);
 	print_gp_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
@@ -972,8 +976,8 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	if (zkeypos == 'L') {
 	    print_keypos_string(GP_KEY_LEFT_TOP, fp);
 	}
-	sprintf(xtitle, _("%s (original data)"), finfo->vname);
-	sprintf(ztitle, _("%s (smoothed)"), finfo->vname);
+	xtitle = g_strdup_printf(_("%s (original data)"), finfo->vname);
+	ztitle = g_strdup_printf(_("%s (smoothed)"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
 	print_gp_data(finfo, obs, dataset->Z[v], fp);
@@ -982,10 +986,11 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("e\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
 	if (finfo->ftype == FILTER_BK) {
-	    sprintf(title, _("Baxter-King component of %s at frequency %d to %d"), 
-		    finfo->vname, finfo->bkl, finfo->bku);
+	    title =
+		g_strdup_printf(_("Baxter-King component of %s at frequency %d to %d"), 
+				finfo->vname, finfo->bkl, finfo->bku);
 	} else {
-	    sprintf(title, _("Cyclical component of %s"), finfo->vname);
+	    title = g_strdup_printf(_("Cyclical component of %s"), finfo->vname);
 	}
 	fprintf(fp, "set title '%s'\n", title); 
 	fputs("set xzeroaxis\n", fp);
@@ -995,6 +1000,10 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     }	
 
     gretl_pop_c_numeric_locale();
+
+    g_free(xtitle);
+    g_free(ztitle);
+    g_free(title);
 
     err = finalize_plot_input_file(fp);
     gui_graph_handler(err);
@@ -1012,7 +1021,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     int i, n = finfo->order;
     int err = 0;
 
-    fp = open_plot_input_file(PLOT_ROOTS, &err);
+    fp = open_plot_input_file(PLOT_ROOTS, 0, &err);
     if (err) { 
 	gui_errmsg(err);
 	return;
@@ -1119,7 +1128,7 @@ static int do_filter_response_graph (filter_info *finfo)
 	return E_ALLOC;
     }
 
-    fp = open_plot_input_file(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
     if (err) { 
 	gui_errmsg(err);
 	gretl_matrix_free(G);
