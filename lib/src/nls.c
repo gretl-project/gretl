@@ -1185,7 +1185,7 @@ static int nl_function_calc (double *f, void *p)
     fprintf(stderr, "\n*** nl_function_calc called\n");
 #endif
 
-    /* calculate residual given current parameter estimates */
+    /* calculate function given current parameter estimates */
     err = nl_calculate_fvec(s);
     if (err) {
 	return err;
@@ -1199,20 +1199,16 @@ static int nl_function_calc (double *f, void *p)
 	y = s->dset->Z[s->lhv] + s->t1;
     }
 
-    /* transcribe from dataset to array f */
-
+    /* transcribe from vector or series to array @f */
     for (t=0; t<s->nobs; t++) {
 	if (na(y[t])) {
 	    fprintf(stderr, "nl_calculate_fvec: produced NA at obs %d\n", t);
 	    return 1;
 	}
-
 	f[t] = y[t];
-
 #if NLS_DEBUG > 1
 	fprintf(stderr, "fvec[%d] = %.14g\n", t,  f[t]);
 #endif
-
 	if (s->ci == MLE) {
 	    s->crit += f[t];
 	} else {
