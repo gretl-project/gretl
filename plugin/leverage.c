@@ -201,7 +201,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     const double *obs = NULL;
     int t, err = 0;
 
-    fp = open_plot_input_file(PLOT_LEVERAGE, &err);
+    fp = open_plot_input_file(PLOT_LEVERAGE, 0, &err);
     if (err) {
 	return err;
     }

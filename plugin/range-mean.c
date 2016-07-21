@@ -96,7 +96,7 @@ static int do_range_mean_plot (const gretl_matrix *y,
     int fitline = 0;
     int t, err = 0;
 
-    fp = open_plot_input_file(PLOT_RANGE_MEAN, &err);
+    fp = open_plot_input_file(PLOT_RANGE_MEAN, 0, &err);
     if (err) {
 	return err;
     }

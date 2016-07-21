@@ -527,7 +527,7 @@ static void htest_graph (int d, double x, double *parms)
     FILE *fp;
     int alt = 0, err = 0;
 
-    fp = open_plot_input_file(PLOT_H_TEST, &err);
+    fp = open_plot_input_file(PLOT_H_TEST, 0, &err);
     if (err) {
 	return;
     }
@@ -608,7 +608,7 @@ static void dist_graph (int d, double *parms)
     FILE *fp;
     int alt = 0, err = 0;
 
-    fp = open_plot_input_file(PLOT_PROB_DIST, &err);
+    fp = open_plot_input_file(PLOT_PROB_DIST, 0, &err);
     if (err) {
 	return;
     }
@@ -3174,7 +3174,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 
     g_free(s0);
 
-    fp = open_plot_input_file(PLOT_CURVE, &err);
+    fp = open_plot_input_file(PLOT_CURVE, 0, &err);
     if (err) { 
 	return;
     }
@@ -3293,7 +3293,7 @@ static void do_plot_cdf (GtkWidget *w, GtkWidget *dlg)
     double xmax = 4.0;
     int opt, err = 0;
 
-    fp = open_plot_input_file(PLOT_CURVE, &err);
+    fp = open_plot_input_file(PLOT_CURVE, 0, &err);
     if (err) { 
 	return;
     }

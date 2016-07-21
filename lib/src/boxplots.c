@@ -564,7 +564,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     int fmt, qtype = 2;
     int i, err = 0;
 
-    fp = open_plot_input_file(PLOT_BOXPLOTS, &err);
+    fp = open_plot_input_file(PLOT_BOXPLOTS, 0, &err);
 
     if (err) {
 	return err;

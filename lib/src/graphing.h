@@ -173,7 +173,7 @@ int split_graph_fontspec (const char *s, char *name, int *psz);
 
 void gnuplot_missval_string (FILE *fp);
 
-FILE *open_plot_input_file (PlotType ptype, int *err);
+FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err);
 
 int finalize_plot_input_file (FILE *fp);
 

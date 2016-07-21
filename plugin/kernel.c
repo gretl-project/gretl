@@ -92,7 +92,7 @@ static int density_plot (kernel_info *kinfo, const char *vname)
     double xt, xdt;
     int t, err = 0;
     
-    fp = open_plot_input_file(PLOT_KERNEL, &err);
+    fp = open_plot_input_file(PLOT_KERNEL, 0, &err);
     if (err) {
 	return err;
     }

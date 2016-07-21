@@ -2114,7 +2114,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
     FILE *fp;
     int i, err = 0;
 
-    fp = open_plot_input_file(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
     if (err) {
 	return err; 
     }

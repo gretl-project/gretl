@@ -3323,7 +3323,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     FILE *fp;
     int k, err = 0;
 
-    fp = open_plot_input_file(PLOT_XCORRELOGRAM, &err);
+    fp = open_plot_input_file(PLOT_XCORRELOGRAM, 0, &err);
     if (err) {
 	return err;
     }
@@ -6327,7 +6327,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
     int downsample = 0;
     int t, err = 0;
 
-    fp = open_plot_input_file(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
     if (err) {
 	return err;
     }

@@ -33,7 +33,7 @@ do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
     FILE *fp;
     int t, err = 0;
 
-    fp = open_plot_input_file(PLOT_HURST, &err);
+    fp = open_plot_input_file(PLOT_HURST, 0, &err);
     if (err) {
 	return err;
     }

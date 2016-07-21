@@ -559,7 +559,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
 	return E_ALLOC;
     }
 
-    fp = open_plot_input_file(PLOT_TRI_GRAPH, &err);
+    fp = open_plot_input_file(PLOT_TRI_GRAPH, 0, &err);
     if (err) {
 	return err;
     }

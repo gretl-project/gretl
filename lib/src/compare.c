@@ -2531,7 +2531,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 
     set_effective_plot_ci(QLRTEST);
 
-    fp = open_plot_input_file(PLOT_REGULAR, &err);
+    fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
     if (err) {
 	return err;
     }
@@ -3167,7 +3167,7 @@ static int cusum_do_graph (double a, double b, const double *W,
     double x0 = 0.0;
     int j, t, err = 0;
 
-    fp = open_plot_input_file(PLOT_CUSUM, &err);
+    fp = open_plot_input_file(PLOT_CUSUM, 0, &err);
     if (err) {
 	return err;
     }
