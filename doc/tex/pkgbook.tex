@@ -871,7 +871,7 @@ should already be pretty comfortable with hansl. See the \textit{Hansl
 
 The requirements on the sample script and help text are set out in
 section~\ref{sec:common-req}.  That leaves the \textsf{spec} file. A
-simple case of this is shown in Example~\ref{ex:spec1}.
+simple case of this is shown in Listing~\ref{ex:spec1}.
 
 \begin{script}[htbp]
   \caption{Simple \texttt{mypkg.spec}}
@@ -1010,7 +1010,7 @@ To run \app{make} you need a file, usually called \texttt{Makefile},
 which contains a sequence of rules to tell the program ``what to do
 when.''\footnote{A complete tutorial on \app{make} can be found at
   \url{http://www.gnu.org/software/make/manual/make.html}.}
-Example~\ref{ex:make1} shows a very simple instance, though it does
+Listing~\ref{ex:make1} shows a very simple instance, though it does
 illustrate a small refinement in the package-building process.
 
 \begin{script}[htbp]
@@ -1111,7 +1111,7 @@ genr dpcx = pc(x)
 print x dpcx --byobs
 \end{code}
 
-You should see something similar to Example~\ref{ex:func_check}. The
+You should see something similar to Listing~\ref{ex:func_check}. The
 function seems to work OK.  Once your function is debugged, you may
 proceed to the next step.
 
@@ -1614,7 +1614,7 @@ scripting. In the former case, as we've said, some visual feedback is
 wanted, but in the latter case it should probably be optional
 (assuming your function returns something).
 
-Example~\ref{ex:bunret} shows a modification of our toy package to
+Listing~\ref{ex:bunret} shows a modification of our toy package to
 accommodate this. Hopefully it should be self-explanatory. We would
 now make \texttt{GUI\_bunret} the \texttt{gui-main} function and mark
 it as \texttt{no-print}. Plain \texttt{bunret} (now intended for
@@ -1743,7 +1743,7 @@ to the \texttt{\$}-variables for the model in question. Among these is
 the \texttt{\$command} accessor, which gives the command-word for the
 estimator. So, for example, the pre-check function for a package which
 targets binary logit and probit models might look like
-Example~\ref{code:precheck} (it could be written a good deal more
+Listing~\ref{code:precheck} (it could be written a good deal more
 tersely, but the example shows the logic very explicitly).
 
 \begin{script}[htbp]
@@ -1941,7 +1941,7 @@ upload. The file selection dialog will offer a choice of looking for
 and gretl determines that it's actually a zip file that needs
 to be uploaded, it will attempt to build the zip package first.
 
-\textit{Shell method}: Example~\ref{ex:curl-upload} shows two shell
+\textit{Shell method}: Listing~\ref{ex:curl-upload} shows two shell
 scripts, the first suitable for uploading a stand-alone gfn package
 and the second for uploading a zip package. The first three lines of
 each would, of course, have to be filled out appropriately for your
@@ -2270,7 +2270,7 @@ with a single tab character.\footnote{Explicit instructions are not
   certain kinds of targets. However, it doesn't know anything about
   gretl files.}
 
-Example~\ref{ex:make2} shows a variant of the simple Makefile from
+Listing~\ref{ex:make2} shows a variant of the simple Makefile from
 section~\ref{sec:using-make}, where we have added PDF documentation to
 the package. In this example the initial section defines just one
 variable, \texttt{PKG}. Note the special syntax for using the value of

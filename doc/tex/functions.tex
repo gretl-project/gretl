@@ -434,7 +434,7 @@ time gretl spends transcribing the value of the variable to the
 local copy may be non-negligible, compared to the time the function
 spends doing the job it was written for.
 
-Example \ref{ex:perf-pointers} takes this to the extreme.  We define
+Listing \ref{ex:perf-pointers} takes this to the extreme.  We define
 two functions which return the number of rows of a matrix (a pretty
 fast operation).  Function \texttt{a()} gets a matrix as argument;
 function \texttt{b()} gets a pointer to a matrix.  The functions are
@@ -491,7 +491,7 @@ If a pointer argument is used for this sort of purpose---and the
 object to which the pointer points is not modified (is treated as
 read-only) by the function---one can signal this to the user by adding
 the \texttt{const} qualifier, as shown for function \texttt{b()} in
-Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
+Listing~\ref{ex:perf-pointers}.  When a pointer argument is qualified
 in this way, any attempt to modify the object within the function will
 generate an error. 
 
@@ -500,7 +500,7 @@ is technically redundant for the following reason: if you mark a
 matrix argument as \texttt{const} then gretl will in fact pass it in
 pointer mode internally (since it can't be modified within the
 function there's no downside to simply making it available to the
-function rather than copying it). So in the Example we could give the
+function rather than copying it). So in the example we could give the
 signature of the \texttt{b()} function as simply
 \begin{code}
 function scalar b(const matrix X)

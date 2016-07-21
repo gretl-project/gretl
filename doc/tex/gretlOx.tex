@@ -108,7 +108,7 @@ expects to find the named file in the user's dotdir.
 \section{Illustration: replication of DPD model}
 \label{sec:dpd-replication}
 
-Example~\ref{Ox-DPD} shows a more ambitious case.  This script
+Listing~\ref{Ox-DPD} shows a more ambitious case.  This script
 replicates one of the dynamic panel data models in
 \cite{arellano-bond91}, first using gretl and then using \app{Ox}; we
 then check the relative differences between the parameter estimates
@@ -127,7 +127,7 @@ We get the parameter estimates back from \app{Ox} using
 gretl side.  The \verb|gretl_export| function takes two
 arguments, a matrix and a file name.  The file is written into the
 user's dotdir, from where it can be picked up using \texttt{mread}.
-The final portion of the output from Example~\ref{Ox-DPD} is shown
+The final portion of the output from Listing~\ref{Ox-DPD} is shown
 below:
 %
 \begin{code}

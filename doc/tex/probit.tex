@@ -379,7 +379,7 @@ printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
 \end{scode}
 \end{script}
 
-Example \ref{ex:oprobit} reproduces the results presented in section
+Listing \ref{ex:oprobit} reproduces the results presented in section
 15.10 of \cite{wooldridge-panel}.  The question of interest in this
 analysis is what difference it makes, to the allocation of assets
 in pension funds, whether individual plan participants have a
@@ -460,7 +460,7 @@ Likelihood ratio test: Chi-square(8) = 583.722 [0.0000]
 \end{scodebit}
 \end{script}
 
-Example~\ref{ex:mlogit} reproduces Table 15.2 in
+Listing~\ref{ex:mlogit} reproduces Table 15.2 in
 \cite{wooldridge-panel}, based on data on career choice from
 \cite{keane97}.  The dependent variable is the occupational status of
 an individual (0 = in school; 1 = not in school and not working; 2 =
@@ -880,7 +880,7 @@ heckit lww X ; LFP Z --two-step
 \end{scode}
 \end{script}
 
-Example \ref{ex:heckit} shows two estimates from the dataset used in
+Listing \ref{ex:heckit} shows two estimates from the dataset used in
 \cite{mroz87}: the first one replicates Table 22.7 in
 \cite{greene03},\footnote{Note that the estimates given by gretl
   do not coincide with those found in the printed volume.  They do,
@@ -1199,7 +1199,7 @@ contains several covariates, which are described in the data file; we
 will focus below on interpretation of the \texttt{married} variable, a
 dummy which equals 1 if the respondent was married when imprisoned.
 
-Example~\ref{ex:duration1} shows the gretl commands for a
+Listing~\ref{ex:duration1} shows the gretl commands for a
 Weibull model along with most of the output.  Consider first the scale
 factor, $\sigma$. The estimate is 1.241 with a standard error of
 0.048.  (We don't print a $z$ score and $p$-value for this term since
@@ -1295,7 +1295,7 @@ impact on the hazard across time. We can do this by plotting the
 hazard for two values of the index function $X\beta$: in each case the
 values of all the covariates other than \texttt{married} are set to
 their means (or some chosen values) while \texttt{married} is set
-first to 0 then to 1. Example~\ref{ex:hazard-plots} provides a script
+first to 0 then to 1. Listing~\ref{ex:hazard-plots} provides a script
 that does this, and the resulting plots are shown in
 Figure~\ref{fig:hazard-plots}. Note that when computing the hazards we
 need to multiply by the Jacobian of the transformation from $t_i$ to

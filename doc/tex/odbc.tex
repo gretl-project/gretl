@@ -357,7 +357,7 @@ data cons inc query=Qry --odbc
 \end{scode}
 \end{script}
 
-Example~\ref{ex:odbc-1} shows a query for two series: first we set up
+Listing~\ref{ex:odbc-1} shows a query for two series: first we set up
 an empty quarterly dataset. Then we connect to the database using the
 \texttt{open} statement. Once the connection is established we
 retrieve two columns from the \texttt{Consump} table. No observation
@@ -392,7 +392,7 @@ data bar obs-format="%d:%d" query=foo --odbc
 print bar --byobs
 \end{scode}
 
-Example \ref{ex:odbc-3} shows what happens if the rows in
+Listing \ref{ex:odbc-3} shows what happens if the rows in
 the outcome from the \texttt{SELECT} statement do not match the
 observations in the currently open \app{gretl} dataset. The query
 includes a condition which filters out all the data from the first

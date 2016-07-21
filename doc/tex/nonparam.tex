@@ -93,7 +93,7 @@ on:
 series yh = loess(y, x, 2, 0.75, 1)
 \end{code}
 
-An illustration of loess is provided in Example~\ref{scr:loess-sine}:
+An illustration of loess is provided in Listing~\ref{scr:loess-sine}:
 we generate a series that has a deterministic sine wave component
 overlaid with noise uniformly distributed on $(-1,1)$. Loess is then
 used to retrieve a good approximation to the sine function.  The
@@ -168,7 +168,7 @@ gnuplot HA m0 m1 m2 WA --output=display --with-lines=m0,m1,m2
   \label{fig:nadarwat-ex}
 \end{figure}
 
-Example~\ref{scr:nadarwat-ex} produces the graph shown in
+Listing~\ref{scr:nadarwat-ex} produces the graph shown in
 Figure~\ref{fig:nadarwat-ex} (after some slight editing).
 
 The choice of the bandwidth is up to the user: larger values of $h$

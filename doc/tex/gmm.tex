@@ -352,7 +352,7 @@ section \ref{sec:gmm-intro} therefore specialize here to:
   the special case of a perfect linear fit.
 \end{itemize}
 
-The code snippet contained in Example~\ref{gmm-ols-ex} uses gretl's
+The code snippet contained in Listing~\ref{gmm-ols-ex} uses gretl's
 \texttt{gmm} command to make the above operational.  In
 example~\ref{gmm-ols-ex}, the series \texttt{e} holds the
 ``residuals'' and the series \texttt{x} holds the regressor.  If
@@ -402,7 +402,7 @@ $\hat{u}_t$ as $y_t - X_t \hat{\beta}$, as usual.  But instead of
 relying on $E(u|X) = 0$ as in OLS, we base estimation on the condition
 $E(u|Z) = 0$.  In this case it is natural to base the initial
 weighting matrix on the covariance matrix of the instruments.
-Example~\ref{gmm-tsls-ex} presents a model from Stock and Watson's
+Listing~\ref{gmm-tsls-ex} presents a model from Stock and Watson's
 \textit{Introduction to Econometrics}.  The demand for cigarettes is
 modeled as a linear function of the logs of price and income; income
 is treated as exogenous while price is taken to be endogenous and two

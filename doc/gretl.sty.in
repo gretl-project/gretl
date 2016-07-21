@@ -5,7 +5,7 @@
 \RequirePackage{amsmath,color}
 \ProvidesPackage{gretl}
 
-\newcommand{\scriptname}{Example}
+\newcommand{\scriptname}{Listing}
 \newcommand{\GCR}{\textit{Gretl Command Reference}{}}
 \newcommand{\GUG}{the \textit{Gretl User's Guide}{}}
 
@@ -98,7 +98,7 @@
 \renewcommand{\bottomfraction}{0.8}
 \renewcommand{\textfraction}{0.07}
 
-%% add script as float ("Example")
+%% add script as float ("Listing")
 \ifcsname c@chapter\endcsname
  \newcounter{script}[chapter]
  \renewcommand \thescript

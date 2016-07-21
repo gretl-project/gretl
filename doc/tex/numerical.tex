@@ -75,7 +75,7 @@ contour lines are banana-shaped. It is defined by:
 \]
 %
 The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
-0$.  Example~\ref{rosenbrock} shows a gretl script that
+0$.  Listing~\ref{rosenbrock} shows a gretl script that
 discovers the minimum using \texttt{BFGSmax} (giving a verbose account
 of progress). Note that, in this particular case, the function to be
 maximized only depends on the parameters, so the second parameter is
@@ -116,7 +116,7 @@ the gradient vector appropriately.  It is not required that the
 gradient function returns any value directly; if it does, that value
 is ignored.
 
-Example~\ref{rosen-analytical} illustrates, showing how the Rosenbrock
+Listing~\ref{rosen-analytical} illustrates, showing how the Rosenbrock
 script can be modified to use analytical derivatives.  (Note that
 since this is a minimization problem the values written into
 \texttt{g[1]} and \texttt{g[2]} in the function \verb|Rosen_grad| are
@@ -188,7 +188,7 @@ can happen far from the maximum.
 Script~\ref{rosen-newton} extends the Rosenbrock example, using
 \texttt{NRmax} with a function \verb+Rosen_hess+ to compute the
 Hessian. The functions \texttt{Rosenbrock} and \verb+Rosen_grad+ are
-just the same as in Example~\ref{rosen-analytical} and are omitted for
+just the same as in Listing~\ref{rosen-analytical} and are omitted for
 brevity.
 
 \begin{script}[htbp]
@@ -293,7 +293,7 @@ $\theta_n$. In other words, failing an actual improvement in the
 criterion, \texttt{simann} randomizes the starting point, which may be
 helpful in tricky optimization problems.
 
-Example~\ref{ex:simann} shows \texttt{simann} at work as a helper for
+Listing~\ref{ex:simann} shows \texttt{simann} at work as a helper for
 \texttt{BFGSmax} in finding the maximum of a bimodal function.
 Unaided, \texttt{BFGSmax} requires 60 function evaluations and
 55 evaluations of the gradient, while after simulated annealing

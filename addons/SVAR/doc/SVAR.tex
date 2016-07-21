@@ -16,7 +16,7 @@
 
 % ---------- Ripped from gretl.sty ----------------------------------------
 
-\newcommand{\scriptname}{Example}
+\newcommand{\scriptname}{Listing}
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
@@ -52,7 +52,7 @@
 
 \def\floatpagefraction{.8}
 
-%% add script as float (Example)
+%% add script as float (Listing)
 \newcounter{script}[section]
 \renewcommand \thescript
      {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}
@@ -1209,6 +1209,7 @@ Bootstrap results (1000 replications)
 \end{table}
 
 \subsection{Example}
+
 The way all this is handled in \texttt{SVAR} is hopefully quite
 intuitive: an example script is reported in Table
 \ref{tab:BlQuah}. After reading the data in, the function
