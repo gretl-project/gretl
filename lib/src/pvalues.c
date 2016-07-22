@@ -603,13 +603,12 @@ double student_cdf_inverse (double df, double a)
 
 double chisq_cdf (double df, double x)
 {
-    double p = NADBL;
+    double p = chdtr(df, x);
 
-    if (df > 0 && x >= 0) {
-	p = chdtr(df, x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
+    /* 2016-07-22: should we return NA instead of zero
+       in case of CEPHES_UNDERFLOW? */
+    if (get_cephes_errno() == CEPHES_DOMAIN) {
+	p = NADBL;
     }
 
     return p;
@@ -627,14 +626,11 @@ double chisq_cdf (double df, double x)
 
 double chisq_cdf_comp (double df, double x)
 {
-    double p = NADBL;
+    double p = chdtrc(df, x);
 
-    if (df > 0 && x >= 0) {
-	p = chdtrc(df, x);
-	if (get_cephes_errno()) {
-	    p = NADBL;
-	}
-    }
+    if (get_cephes_errno() == CEPHES_DOMAIN) {
+	p = NADBL;
+    }    
 
     return p;
 }
@@ -651,13 +647,10 @@ double chisq_cdf_comp (double df, double x)
 
 static double chisq_critval (int df, double a)
 {
-    double x = NADBL;
+    double x = chdtri(df, a);
 
-    if (df > 0 && a >= 0) {
-	x = chdtri(df, a);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+    if (get_cephes_errno() == CEPHES_DOMAIN) {
+	x = NADBL;
     }
 
     return x;
@@ -667,7 +660,7 @@ static double chisq_cdf_inverse (int df, double a)
 {
     double x = NADBL;
 
-    if (df > 0 && a >= 0) {
+    if (df >= 1 && a >= 0.0) {
 	x = chdtri(df, 1 - a);
 	if (get_cephes_errno()) {
 	    x = NADBL;
