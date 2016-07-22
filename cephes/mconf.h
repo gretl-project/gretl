@@ -78,17 +78,6 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 /* Version number of package */
 #define VERSION "2.7"
 
-/* math error conditions */
-enum {
-    CEPHES_DOMAIN = 1,  /* argument domain error */
-    CEPHES_SING,        /* argument singularity */
-    CEPHES_OVERFLOW,    /* overflow range error */
-    CEPHES_UNDERFLOW,   /* underflow range error */
-    CEPHES_TLOSS,       /* total loss of precision */
-    CEPHES_PLOSS,       /* partial loss of precision */
-    CEPHES_UNKNOWN      /* unspecified error */
-};
-
 /* complex number */
 typedef struct {
     double r;
@@ -104,6 +93,8 @@ typedef struct {
     long double i;
 } cmplxl;
 #endif
+
+#include "libprob.h"
 
 /* Type of computer arithmetic */
 

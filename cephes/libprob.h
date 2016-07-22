@@ -1,6 +1,17 @@
 #ifndef LIBPROB_H
 #define LIBPROB_H
 
+/* cephes error conditions */
+enum {
+    CEPHES_DOMAIN = 1,  /* argument domain error */
+    CEPHES_SING,        /* argument singularity */
+    CEPHES_OVERFLOW,    /* overflow range error */
+    CEPHES_UNDERFLOW,   /* underflow range error */
+    CEPHES_TLOSS,       /* total loss of precision */
+    CEPHES_PLOSS,       /* partial loss of precision */
+    CEPHES_UNKNOWN      /* unspecified error */
+};
+
 /* area under the binomial pdf, from 0 to k, of the
    binomial distribution with success probability p
    and n trials.
