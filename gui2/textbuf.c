@@ -3158,6 +3158,8 @@ static gboolean script_electric_enter (windata_t *vwin)
 	}
 	gtk_text_buffer_place_cursor(tbuf, &start);
 	gtk_text_buffer_end_user_action(tbuf);
+	mark = gtk_text_buffer_get_insert(tbuf);
+	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(vwin->text), mark);
 	ret = TRUE;
     }
 
