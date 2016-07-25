@@ -183,20 +183,16 @@ for f in \
 	libpangowin32-1.0-0.dll \
 	libxml2-2.dll \
 	zlib1.dll \
+	libpng16-16.dll \
+	libreadline6.dll \
 	libjson-glib-1.0-0.dll
 do
     add_file ${SYSBIN}/$f gretl/$f
 done
 
-# dlls which differ across 32- vs 64-bit builds
+# extra dll for 64-bit build (statically linked for w32)
 if [ $X64 = "yes" ] ; then
-  for f in libpixman-1-0.dll libpng16-16.dll libreadline6.dll ; do
-    add_file ${SYSBIN}/$f gretl/$f
-  done
-else
-  for f in libpng14-14.dll readline5.dll history5.dll ; do
-    add_file ${SYSBIN}/$f gretl/$f
-  done
+  add_file ${SYSBIN}/libpixman-1-0.dll gretl/libpixman-1-0.dll
 fi
 
 if [ $OPENBLAS = "yes" ] ; then
