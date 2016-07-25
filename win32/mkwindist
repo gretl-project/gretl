@@ -3,18 +3,18 @@
 # Shell script to make gretl Windows installer
 
 BUILDTYPE=$1
+ARCH=$2
+
 if [ "x${BUILDTYPE}" = "x" ] ; then
   echo "mkwindist: argument must be 'cross' or 'native'"
   exit 1
 fi
 
-W0RDLEN=$2
-if [ "x${WORDLEN}" = "x" ] ; then
+if [ "x${ARCH}" = "x" ] ; then
   X64="no"
 else
   X64="yes"
 fi
-
 
 TOPDIR=".."
 THISDIR=`pwd`
