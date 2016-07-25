@@ -4,7 +4,10 @@ version 2016d, in progress
 - gig addon: fix an off-by-one bug
 - Fix bug: potential crash in GUI filter plot with very long
   series name
+- Fix: return 1 rather than NA for chi-square p-value in case
+  of underflow
 - Installers for Windows, Mac: include fuller set of PDF docs
+- MS Windows builds: update to gtk-2.24.30, update libffi
 
 2016-07-06 version 2016c
 - Add Ukrainian translation
