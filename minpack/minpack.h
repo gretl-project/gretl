@@ -53,7 +53,7 @@ int qrsolv_(int n, double *r, int ldr, int *ipvt,
 	    double *diag, double *qtb, double *x, 
 	    double *sdiag, double *wa);
 
-int setulb_(int n, int m, double *x, double *l, double *u, 
+int setulb_(int *n, int *m, double *x, double *l, double *u, 
 	    int *nbd, double *f, double *g, double *factr, 
 	    double *pgtol, double *wa, int *iwa, 
 	    char *task, char *csave, int *lsave, 

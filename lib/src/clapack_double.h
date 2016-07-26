@@ -1,7 +1,7 @@
 #ifndef CLAPACK_DOUBLE_H
 #define CLAPACK_DOUBLE_H
 
-/* CLAPACK subroutines: double-precision real versions only */
+/* LAPACK subroutines: double-precision real versions only */
 
 int dbdsdc_(char *uplo, char *compq, integer *n, doublereal *
 	    d__, doublereal *e, doublereal *u, integer *ldu, doublereal *vt, 
@@ -1430,9 +1430,21 @@ void dsyrk_ (const char *UPLO, const char *TRANS, const integer *N,
 
 double dnrm2_ (const integer *n, double *X, const integer *incx);
 
+void daxpy_ (integer *n, double *da, double *dx, integer *incx,
+	     double *dy, integer *incy);
+
+double ddot_  (integer *n, double *dx, integer *incx,
+	      double *dy, integer *incy);
+
+void dscal_ (integer *n, double *da, double *dx, integer *incx);
+
+void dcopy_ (integer *n, double *dx, integer *incx,
+	     double *dy, integer *incy);
+
 double dlamch_ (char *cmach);
 
 /* lapack 3.2 functions */
+
 void dgejsv_ (const char *joba, const char *jobu, const char *jobv, 
 	      const char *jobr, const char *jobt, const char *jobp,
 	      integer *m, integer *n, double *a, integer *lda, double *sva, 

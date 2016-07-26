@@ -1262,7 +1262,7 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
     */
     m = libset_get_int(LBFGS_MEM); 
 
-    dim = (2*m+4)*n + 12*m*m + 12*m; /* for wa */
+    dim = (2*m+5)*n + 11*m*m + 8*m; /* for wa */
     dim += 3*n; /* for g, l and u */
 
     wspace = malloc(dim * sizeof *wspace);
@@ -1286,7 +1286,8 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
 	gradfunc = numeric_gradient;
     }
 
-    /* Gradient convergence criterion (not used -- we use reltol instead) */
+    /* Gradient convergence criterion (currently unused -- 
+       we use reltol instead) */
     pgtol = 0;
 
     /* Bounds on the parameters: for now we just set them all to be
@@ -1301,7 +1302,7 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     while (1) {
 	/* Call the L-BFGS-B code */
-	setulb_(n, m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
+	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
 		task, csave, lsave, isave, dsave);
 
 	iter = isave[29] + 1;
@@ -1415,6 +1416,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     gretl_iteration_push();
 
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
+	fprintf(stderr, "calling LBFGS_max\n");
 	ret = LBFGS_max(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
 			crittype, gradfunc, data, 

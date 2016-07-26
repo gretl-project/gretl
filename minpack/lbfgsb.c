@@ -1,8 +1,38 @@
 /* 
-   routines.f -- translated by f2c (version 20061008),
-   then subjected to some modest clean-up by Allin Cottrell
+   lbfgsb.c -- translated from lbfgsb.f (plus a couple of functions
+   from linpack.f) via f2c, then subject to minimal clean-up by
+   Allin Cottrell, 2015-07-26. The original source is version 3.0
+   of L-BFGS-B, downloaded from
 
-   See http://www.ece.northwestern.edu/~nocedal/lbfgsb.html
+   http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
+
+   and subject to the "New BSD License" or "Modified BSD License,"
+   as follows:
+
+   Copyright (c) <year>, <copyright holder>
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
@@ -10,961 +40,1068 @@
 #include <math.h>
 #include <time.h>
 
-#ifndef min
-# define min(a,b) ((a) <= (b) ? (a) : (b))
-#endif
-#ifndef max
-# define max(a,b) ((a) >= (b) ? (a) : (b))
-#endif
+#include "gretl_f2c.h"
+#include "clapack_double.h"
+#include "minpack.h"
 
-static double b173 = .001; /* ftol default for dcsrch */
-static double b174 = .9;   /* gtol default for dcsrch */
-static double b175 = .1;   /* xtol default for dcsrch */
-static double b176 = 1.0e-15; /* min. step value: was 0. */
+static double c_b9 = 0.;
+static int c__1 = 1;
+static int c__11 = 11;
+static double c_b280 = .001;
+static double c_b281 = .9;
+static double c_b282 = .1;
 
-static void dcopy_(int n, double *dx, double *dy)
+static int dpofa_(double *a, int *lda, int *n, int *info)
 {
-    int i, m;
+    int a_dim1, a_offset, i__1, i__2, i__3;
 
-    if (n <= 0) {
-	return;
-    }
+    int j, k;
+    double s, t;
+    int jm1;
 
-    m = n % 7;
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
 
-    if (m != 0) {
-	for (i = 0; i < m; ++i) {
-	    dy[i] = dx[i];
+   i__1 = *n;
+    for (j = 1; j <= i__1; ++j) {
+	*info = j;
+	s = 0.;
+	jm1 = j - 1;
+	if (jm1 < 1) {
+	    goto L20;
 	}
-	if (n < 7) {
-	    return;
+	i__2 = jm1;
+	for (k = 1; k <= i__2; ++k) {
+	    i__3 = k - 1;
+	    t = a[k + j * a_dim1] - ddot_(&i__3, &a[k * a_dim1 + 1], &c__1, &
+					  a[j * a_dim1 + 1], &c__1);
+	    t /= a[k + k * a_dim1];
+	    a[k + j * a_dim1] = t;
+	    s += t * t;
 	}
+    L20:
+	s = a[j + j * a_dim1] - s;
+	if (s <= 0.) {
+	    goto L40;
+	}
+	a[j + j * a_dim1] = sqrt(s);
     }
+    *info = 0;
+ L40:
+    return 0;
+} /* dpofa_ */
 
-    for (i = m; i < n; i += 7) {
-	dy[i] = dx[i];
-	dy[i + 1] = dx[i + 1];
-	dy[i + 2] = dx[i + 2];
-	dy[i + 3] = dx[i + 3];
-	dy[i + 4] = dx[i + 4];
-	dy[i + 5] = dx[i + 5];
-	dy[i + 6] = dx[i + 6];
-    }
-}
-
-static double ddot_(int n, double *dx, double *dy)
+static int dtrsl_(double *t, int *ldt, int *n, 
+		  double *b, int *job, int *info)
 {
-    double dtemp = 0.0;
-    int i, m;
+    int t_dim1, t_offset, i__1, i__2;
 
-    if (n <= 0) {
-	return 0;
-    }
-
-    m = n % 5;
-
-    if (m != 0) {
-	for (i = 0; i < m; ++i) {
-	    dtemp += dx[i] * dy[i];
-	}
-	if (n < 5) {
-	    return dtemp;
-	}
-    }
-
-    for (i = m; i < n; i += 5) {
-	dtemp = dtemp + dx[i] * dy[i] + dx[i + 1] * dy[i + 1] + 
-	    dx[i + 2] * dy[i + 2] + dx[i + 3] * 
-	    dy[i + 3] + dx[i + 4] * dy[i + 4];
-    }
-
-    return dtemp;
-}
-
-static void daxpy_(int n, double da, double *dx, double *dy)
-{
-    int i, m;
-
-    if (n <= 0 || da == 0) {
-	return;
-    }
-
-    m = n % 4;
-
-    if (m != 0) {
-	for (i = 0; i < m; ++i) {
-	    dy[i] += da * dx[i];
-	}
-	if (n < 4) {
-	    return;
-	}
-    }
-
-    for (i = m; i < n; i += 4) {
-	dy[i] += da * dx[i];
-	dy[i + 1] += da * dx[i + 1];
-	dy[i + 2] += da * dx[i + 2];
-	dy[i + 3] += da * dx[i + 3];
-    }
-}
-
-static void dscal_(int n, double da, double *dx)
-{
-    int i, m;
-
-    if (n <= 0) {
-	return;
-    }
-
-    m = n % 5;
-
-    if (m != 0) {
-	for (i = 0; i < m; ++i) {
-	    dx[i] = da * dx[i];
-	}
-	if (n < 5) {
-	    return;
-	}
-    }
-
-    for (i = m; i < n; i += 5) {
-	dx[i] = da * dx[i];
-	dx[i + 1] = da * dx[i + 1];
-	dx[i + 2] = da * dx[i + 2];
-	dx[i + 3] = da * dx[i + 3];
-	dx[i + 4] = da * dx[i + 4];
-    }
-}
-
-/* solution of T * X = B, or T' * X = B, for triangular T */
-
-static void dtrsl_(double *t, int ldt, int n, double *b, 
-		   int transp, int *info)
-{
-    int t_offset, i2;
-    int j, jj;
+    int j, jj, case__;
     double temp;
 
-    t_offset = 1 + ldt;
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
     t -= t_offset;
     --b;
 
-    for (j = 1; j <= n; ++j) {
-	if (t[j + j * ldt] == 0.0) {
-	    *info = j;
-	    return;
+    i__1 = *n;
+    for (*info = 1; *info <= i__1; ++(*info)) {
+	if (t[*info + *info * t_dim1] == 0.) {
+	    goto L150;
 	}
     }
-
     *info = 0;
 
-    if (transp == 1) {
-	/* transposing */
-	b[1] /= t[ldt + 1];
-	if (n > 1) {
-	    for (j = 2; j <= n; ++j) {
-		i2 = j - 1;
-		b[j] -= ddot_(i2, &t[j * ldt + 1], &b[1]);
-		b[j] /= t[j + j * ldt];
-	    }
-	}
-    } else {
-	b[n] /= t[n + n * ldt];
-	if (n > 1) {
-	    for (jj = 2; jj <= n; ++jj) {
-		j = n - jj + 1;
-		temp = -b[j + 1];
-		daxpy_(j, temp, &t[(j + 1) * ldt + 1], &b[1]);
-		b[j] /= t[j + j * ldt];
-	    }
-	}
+    case__ = 1;
+    if (*job % 10 != 0) {
+	case__ = 2;
     }
-}
-
-/* factorization of symmetric p.d. matrix */
-
-static void dpofa_(double *a, int lda, int n, int *info)
-{
-    double s, t, d;
-    int j, k;
-
-    for (j = 0; j < n; ++j) {
-	s = 0.0;
-	for (k = 0; k < j; ++k) {
-	    d = ddot_(k, &a[k * lda], &a[j * lda]);
-	    t = a[k + j * lda] - d;
-	    t /= a[k + k * lda];
-	    a[k + j * lda] = t;
-	    s += t * t;
-	}
-	s = a[j + j * lda] - s;
-	if (s <= 0.0) {
-	    *info = j;
-	    return;
-	}
-	a[j + j * lda] = sqrt(s);
+    if (*job % 100 / 10 != 0) {
+	case__ += 2;
+    }
+    switch (case__) {
+	case 1:  goto L20;
+	case 2:  goto L50;
+	case 3:  goto L80;
+	case 4:  goto L110;
     }
 
-    *info = 0;
-}
+    /* solve t*x=b for t lower triangular */
 
-static int active_(int n, double *l, double *u, int *nbd, 
-		   double *x, int *iwhere, int *prjctd, 
-		   int *cnstnd, int *boxed)
+L20:
+    b[1] /= t[t_dim1 + 1];
+    if (*n < 2) {
+	goto L40;
+    }
+    i__1 = *n;
+    for (j = 2; j <= i__1; ++j) {
+	temp = -b[j - 1];
+	i__2 = *n - j + 1;
+	daxpy_(&i__2, &temp, &t[j + (j - 1) * t_dim1], &c__1, &b[j], &c__1);
+	b[j] /= t[j + j * t_dim1];
+    }
+L40:
+    goto L140;
+
+    /* solve t*x=b for t upper triangular. */
+
+L50:
+    b[*n] /= t[*n + *n * t_dim1];
+    if (*n < 2) {
+	goto L70;
+    }
+    i__1 = *n;
+    for (jj = 2; jj <= i__1; ++jj) {
+	j = *n - jj + 1;
+	temp = -b[j + 1];
+	daxpy_(&j, &temp, &t[(j + 1) * t_dim1 + 1], &c__1, &b[1], &c__1);
+	b[j] /= t[j + j * t_dim1];
+    }
+L70:
+    goto L140;
+
+    /* solve trans(t)*x=b for t lower triangular. */
+
+L80:
+    b[*n] /= t[*n + *n * t_dim1];
+    if (*n < 2) {
+	goto L100;
+    }
+    i__1 = *n;
+    for (jj = 2; jj <= i__1; ++jj) {
+	j = *n - jj + 1;
+	i__2 = jj - 1;
+	b[j] -= ddot_(&i__2, &t[j + 1 + j * t_dim1], &c__1, &b[j + 1], &c__1);
+	b[j] /= t[j + j * t_dim1];
+    }
+L100:
+    goto L140;
+
+    /* solve trans(t)*x=b for t upper triangular. */
+
+L110:
+    b[1] /= t[t_dim1 + 1];
+    if (*n < 2) {
+	goto L130;
+    }
+    i__1 = *n;
+    for (j = 2; j <= i__1; ++j) {
+	i__2 = j - 1;
+	b[j] -= ddot_(&i__2, &t[j * t_dim1 + 1], &c__1, &b[1], &c__1);
+	b[j] /= t[j + j * t_dim1];
+    }
+L130:
+L140:
+L150:
+    return 0;
+} /* dtrsl_ */
+
+static int active_(int *n, double *l, double *u, int *nbd,
+		   double *x, int *iwhere, logical *prjctd,
+		   logical *cnstnd, logical *boxed)
 {
-    int i, nbdd;
+    int i__1;
 
-    nbdd = 0;
+    int i__, nbdd;
+
+    --iwhere;
+    --x;
+    --nbd;
+    --u;
+    --l;
+
+   nbdd = 0;
     *prjctd = 0;
     *cnstnd = 0;
     *boxed = 1;
-
-    for (i = 0; i < n; ++i) {
-	if (nbd[i] > 0) {
-	    if (nbd[i] <= 2 && x[i] <= l[i]) {
-		if (x[i] < l[i]) {
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if (nbd[i__] > 0) {
+	    if (nbd[i__] <= 2 && x[i__] <= l[i__]) {
+		if (x[i__] < l[i__]) {
 		    *prjctd = 1;
-		    x[i] = l[i];
+		    x[i__] = l[i__];
 		}
 		++nbdd;
-	    } else if (nbd[i] >= 2 && x[i] >= u[i]) {
-		if (x[i] > u[i]) {
+	    } else if (nbd[i__] >= 2 && x[i__] >= u[i__]) {
+		if (x[i__] > u[i__]) {
 		    *prjctd = 1;
-		    x[i] = u[i];
+		    x[i__] = u[i__];
 		}
 		++nbdd;
 	    }
 	}
     }
-
-    for (i = 0; i < n; ++i) {
-	if (nbd[i] != 2) {
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if (nbd[i__] != 2) {
 	    *boxed = 0;
 	}
-	if (nbd[i] == 0) {
-	    iwhere[i] = -1;
+	if (nbd[i__] == 0) {
+	    iwhere[i__] = -1;
 	} else {
 	    *cnstnd = 1;
-	    if (nbd[i] == 2 && u[i] - l[i] <= 0.) {
-		iwhere[i] = 3;
+	    if (nbd[i__] == 2 && u[i__] - l[i__] <= 0.) {
+		iwhere[i__] = 3;
 	    } else {
-		iwhere[i] = 0;
+		iwhere[i__] = 0;
 	    }
 	}
     }
 
     return 0;
-}
+} /* active_ */
 
-static int bmv_(int m, double *sy, double *wt, int col, 
+static int bmv_(int *m, double *sy, double *wt, int *col,
 		double *v, double *p, int *info)
 {
-    int sy_offset, wt_offset;
-    int i, k, icol;
+    int sy_dim1, sy_offset, wt_dim1, wt_offset, i__1, i__2;
+
+    int i__, k, i2;
     double sum;
 
-    wt_offset = 1 + m;
+    wt_dim1 = *m;
+    wt_offset = 1 + wt_dim1;
     wt -= wt_offset;
-    sy_offset = 1 + m;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
     sy -= sy_offset;
     --p;
     --v;
 
-    if (col == 0) {
+    if (*col == 0) {
 	return 0;
     }
-
-    p[col + 1] = v[col + 1];
-    for (i = 2; i <= col; ++i) {
-	icol = col + i;
-	sum = 0.0;
-	for (k = 1; k < i; ++k) {
-	    sum += sy[i + k * m] * v[k] / sy[k + k * m];
+    p[*col + 1] = v[*col + 1];
+    i__1 = *col;
+    for (i__ = 2; i__ <= i__1; ++i__) {
+	i2 = *col + i__;
+	sum = 0.;
+	i__2 = i__ - 1;
+	for (k = 1; k <= i__2; ++k) {
+	    sum += sy[i__ + k * sy_dim1] * v[k] / sy[k + k * sy_dim1];
 	}
-	p[icol] = v[icol] + sum;
-    }
-
-    dtrsl_(&wt[wt_offset], m, col, &p[col + 1], 1, info);
+	p[i2] = v[i2] + sum;
+   }
+    dtrsl_(&wt[wt_offset], m, col, &p[*col + 1], &c__11, info);
     if (*info != 0) {
 	return 0;
     }
-
-    for (i = 1; i <= col; ++i) {
-	p[i] = v[i] / sqrt(sy[i + i * m]);
-    }
-
-    dtrsl_(&wt[wt_offset], m, col, &p[col + 1], 0, info);
+    i__1 = *col;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	p[i__] = v[i__] / sqrt(sy[i__ + i__ * sy_dim1]);
+   }
+    dtrsl_(&wt[wt_offset], m, col, &p[*col + 1], &c__1, info);
     if (*info != 0) {
 	return 0;
     }
-
-    for (i = 1; i <= col; ++i) {
-	p[i] = -p[i] / sqrt(sy[i + i * m]);
+    i__1 = *col;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	p[i__] = -p[i__] / sqrt(sy[i__ + i__ * sy_dim1]);
     }
-    for (i = 1; i <= col; ++i) {
-	sum = 0.0;
-	for (k = i+1; k <= col; ++k) {
-	    sum += sy[k + i * m] * p[col + k] / sy[i + i * m];
+    i__1 = *col;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	sum = 0.;
+	i__2 = *col;
+	for (k = i__ + 1; k <= i__2; ++k) {
+	    sum += sy[k + i__ * sy_dim1] * p[*col + k] / sy[i__ + i__ * 
+		    sy_dim1];
 	}
-	p[i] += sum;
+	p[i__] += sum;
     }
-
     return 0;
-}
+} /* bmv_ */
 
-static int cmprlb_(int n, int m, double *x, 
+static int cmprlb_(int *n, int *m, double *x, 
 		   double *g, double *ws, double *wy, double *sy, 
-		   double *wt, double *z, double *r, double *wa, 
-		   int *index, double theta, int col, int head, 
-		   int nfree, int cnstnd, int *info)
+		   double *wt, double *z__, double *r__, double *wa, 
+		   int *index, double *theta, int *col, int *head, 
+		   int *nfree, logical *cnstnd, int *info)
 {
-    int ws_offset, wy_offset, sy_offset, wt_offset;
-    int i, j, k;
+    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
+	wt_dim1, wt_offset, i__1, i__2;
+
+    int i__, j, k;
     double a1, a2;
     int pointr;
 
     --index;
-    --r;
-    --z;
+    --r__;
+    --z__;
     --g;
     --x;
     --wa;
-    wt_offset = 1 + m;
+    wt_dim1 = *m;
+    wt_offset = 1 + wt_dim1;
     wt -= wt_offset;
-    sy_offset = 1 + m;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
     sy -= sy_offset;
-    wy_offset = 1 + n;
+    wy_dim1 = *n;
+    wy_offset = 1 + wy_dim1;
     wy -= wy_offset;
-    ws_offset = 1 + n;
+    ws_dim1 = *n;
+    ws_offset = 1 + ws_dim1;
     ws -= ws_offset;
 
-    if (!cnstnd && col > 0) {
-	for (i = 1; i <= n; ++i) {
-	    r[i] = -g[i];
+    if (! (*cnstnd) && *col > 0) {
+	i__1 = *n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    r__[i__] = -g[i__];
 	}
     } else {
-	for (i = 1; i <= nfree; ++i) {
-	    k = index[i];
-	    r[i] = -theta * (z[k] - x[k]) - g[k];
+	i__1 = *nfree;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    k = index[i__];
+	    r__[i__] = -(*theta) * (z__[k] - x[k]) - g[k];
 	}
-	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, 
-	     &wa[2 * m + 1], &wa[1], info);
+	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &wa[(*m << 1) + 1], &wa[
+		1], info);
 	if (*info != 0) {
 	    *info = -8;
 	    return 0;
 	}
-	pointr = head;
-	for (j = 1; j <= col; ++j) {
+	pointr = *head;
+	i__1 = *col;
+	for (j = 1; j <= i__1; ++j) {
 	    a1 = wa[j];
-	    a2 = theta * wa[col + j];
-	    for (i = 1; i <= nfree; ++i) {
-		k = index[i];
-		r[i] += wy[k + pointr * n] * a1 + ws[k + pointr * n] * a2;
+	    a2 = *theta * wa[*col + j];
+	    i__2 = *nfree;
+	    for (i__ = 1; i__ <= i__2; ++i__) {
+		k = index[i__];
+		r__[i__] = r__[i__] + wy[k + pointr * wy_dim1] * a1 + ws[k + 
+			pointr * ws_dim1] * a2;
 	    }
-	    pointr = pointr % m + 1;
+	    pointr = pointr % *m + 1;
 	}
     }
-
     return 0;
-}
+} /* cmprlb_ */
 
-static void errclb_(int n, int m, double factr, double *l, 
-		    double *u, int *nbd, char *task, int *info,
-		    int *k)
+static int errclb_(int *n, int *m, double *factr, 
+		   double *l, double *u, int *nbd, char *task,
+		   int *info, int *k)
 {
-    int i;
+    int i__1;
 
-    if (n <= 0) {
+    int i__;
+
+    --nbd;
+    --u;
+    --l;
+
+    if (*n <= 0) {
 	strcpy(task, "ERROR: N .LE. 0");
     }
-    if (m <= 0) {
+    if (*m <= 0) {
 	strcpy(task, "ERROR: M .LE. 0");
     }
-    if (factr < 0.) {
+    if (*factr < 0.) {
 	strcpy(task, "ERROR: FACTR .LT. 0");
     }
-    for (i = 0; i < n; ++i) {
-	if (nbd[i] < 0 || nbd[i] > 3) {
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if (nbd[i__] < 0 || nbd[i__] > 3) {
 	    strcpy(task, "ERROR: INVALID NBD");
 	    *info = -6;
-	    *k = i + 1; /* 1-based */
+	    *k = i__;
 	}
-	if (nbd[i] == 2) {
-	    if (l[i] > u[i]) {
+	if (nbd[i__] == 2) {
+	    if (l[i__] > u[i__]) {
 		strcpy(task, "ERROR: NO FEASIBLE SOLUTION");
 		*info = -7;
-		*k = i + 1;
+		*k = i__;
 	    }
 	}
     }
-}
+    return 0;
+} /* errclb_ */
 
-static int formk_(int n, int *nsub, int *ind, int *nenter, 
-		  int *ileave, int *indx2, int *iupdat, int *updatd, 
-		  double *wn, double *wn1, int m, double *ws, 
-		  double *wy, double *sy, double theta, int col, 
+static int formk_(int *n, int *nsub, int *ind, int *nenter,
+		  int *ileave, int *indx2, int *iupdat, logical *
+		  updatd, double *wn, double *wn1, int *m, double *ws, 
+		  double *wy, double *sy, double *theta, int *col, 
 		  int *head, int *info)
 {
-    int wn_offset, wn1_offset, ws_offset, 
-	wy_offset, sy_offset, i1, i2, i3;
-    int i, k, k1, m2, is, js, iy, jy, is1, js1, col2, dend, pend;
+    int wn_dim1, wn_offset, wn1_dim1, wn1_offset, ws_dim1, ws_offset, 
+	    wy_dim1, wy_offset, sy_dim1, sy_offset, i__1, i__2, i__3;
+
+    int i__, k, k1, m2, is, js, iy, jy, is1, js1, col2, dend, pend;
     int upcl;
     double temp1, temp2, temp3, temp4;
     int ipntr, jpntr, dbegin, pbegin;
 
-    m2 = m * 2;
-
     --indx2;
     --ind;
-    sy_offset = 1 + m;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
     sy -= sy_offset;
-    wy_offset = 1 + n;
+    wy_dim1 = *n;
+    wy_offset = 1 + wy_dim1;
     wy -= wy_offset;
-    ws_offset = 1 + n;
+    ws_dim1 = *n;
+    ws_offset = 1 + ws_dim1;
     ws -= ws_offset;
-    wn1_offset = 1 + m2;
+    wn1_dim1 = 2 * *m;
+    wn1_offset = 1 + wn1_dim1;
     wn1 -= wn1_offset;
-    wn_offset = 1 + m2;
+    wn_dim1 = 2 * *m;
+    wn_offset = 1 + wn_dim1;
     wn -= wn_offset;
 
     if (*updatd) {
-	if (*iupdat > m) {
-	    i1 = m - 1;
-	    for (jy = 1; jy <= i1; ++jy) {
-		js = m + jy;
-		i2 = m - jy;
-		dcopy_(i2, &wn1[jy + 1 + (jy + 1) * m2], 
-		       &wn1[jy + jy * m2]);
-		i2 = m - jy;
-		dcopy_(i2, &wn1[js + 1 + (js + 1) * m2],
-		       &wn1[js + js * m2]);
-		i2 = m - 1;
-		dcopy_(i2, &wn1[m + 2 + (jy + 1) * m2],
-		       &wn1[m + 1 + jy * m2]);
+	if (*iupdat > *m) {
+	    i__1 = *m - 1;
+	    for (jy = 1; jy <= i__1; ++jy) {
+		js = *m + jy;
+		i__2 = *m - jy;
+		dcopy_(&i__2, &wn1[jy + 1 + (jy + 1) * wn1_dim1], &c__1, &wn1[
+			jy + jy * wn1_dim1], &c__1);
+		i__2 = *m - jy;
+		dcopy_(&i__2, &wn1[js + 1 + (js + 1) * wn1_dim1], &c__1, &wn1[
+			js + js * wn1_dim1], &c__1);
+		i__2 = *m - 1;
+		dcopy_(&i__2, &wn1[*m + 2 + (jy + 1) * wn1_dim1], &c__1, &wn1[
+			*m + 1 + jy * wn1_dim1], &c__1);
 	    }
 	}
 	pbegin = 1;
 	pend = *nsub;
 	dbegin = *nsub + 1;
-	dend = n;
-	iy = col;
-	is = m + col;
-	ipntr = *head + col - 1;
-	if (ipntr > m) {
-	    ipntr -= m;
+	dend = *n;
+	iy = *col;
+	is = *m + *col;
+	ipntr = *head + *col - 1;
+	if (ipntr > *m) {
+	    ipntr -= *m;
 	}
 	jpntr = *head;
-	for (jy = 1; jy <= col; ++jy) {
-	    js = m + jy;
+	i__1 = *col;
+	for (jy = 1; jy <= i__1; ++jy) {
+	    js = *m + jy;
 	    temp1 = 0.;
 	    temp2 = 0.;
 	    temp3 = 0.;
-	    i2 = pend;
-	    for (k = pbegin; k <= i2; ++k) {
+	    i__2 = pend;
+	    for (k = pbegin; k <= i__2; ++k) {
 		k1 = ind[k];
-		temp1 += wy[k1 + ipntr * n] * wy[k1 + jpntr * n];
+		temp1 += wy[k1 + ipntr * wy_dim1] * wy[k1 + jpntr * wy_dim1];
 	    }
-	    i2 = dend;
-	    for (k = dbegin; k <= i2; ++k) {
+	    i__2 = dend;
+	    for (k = dbegin; k <= i__2; ++k) {
 		k1 = ind[k];
-		temp2 += ws[k1 + ipntr * n] * ws[k1 + jpntr * n];
-		temp3 += ws[k1 + ipntr * n] * wy[k1 + jpntr * n];
+		temp2 += ws[k1 + ipntr * ws_dim1] * ws[k1 + jpntr * ws_dim1];
+		temp3 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
 	    }
-	    wn1[iy + jy * m2] = temp1;
-	    wn1[is + js * m2] = temp2;
-	    wn1[is + jy * m2] = temp3;
-	    jpntr = jpntr % m + 1;
+	    wn1[iy + jy * wn1_dim1] = temp1;
+	    wn1[is + js * wn1_dim1] = temp2;
+	    wn1[is + jy * wn1_dim1] = temp3;
+	    jpntr = jpntr % *m + 1;
 	}
-	jy = col;
-	jpntr = *head + col - 1;
-	if (jpntr > m) {
-	    jpntr -= m;
+	jy = *col;
+	jpntr = *head + *col - 1;
+	if (jpntr > *m) {
+	    jpntr -= *m;
 	}
 	ipntr = *head;
-	for (i = 1; i <= col; ++i) {
-	    is = m + i;
+	i__1 = *col;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    is = *m + i__;
 	    temp3 = 0.;
-	    i2 = pend;
-	    for (k = pbegin; k <= i2; ++k) {
+	    i__2 = pend;
+	    for (k = pbegin; k <= i__2; ++k) {
 		k1 = ind[k];
-		temp3 += ws[k1 + ipntr * n] * wy[k1 + jpntr * n];
+		temp3 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
 	    }
-	    ipntr = ipntr % m + 1;
-	    wn1[is + jy * m2] = temp3;
+	    ipntr = ipntr % *m + 1;
+	    wn1[is + jy * wn1_dim1] = temp3;
 	}
-	upcl = col - 1;
+	upcl = *col - 1;
     } else {
-	upcl = col;
+	upcl = *col;
     }
     ipntr = *head;
-    for (iy = 1; iy <= upcl; ++iy) {
-	is = m + iy;
+    i__1 = upcl;
+    for (iy = 1; iy <= i__1; ++iy) {
+	is = *m + iy;
 	jpntr = *head;
-	for (jy = 1; jy <= iy; ++jy) {
-	    js = m + jy;
+	i__2 = iy;
+	for (jy = 1; jy <= i__2; ++jy) {
+	    js = *m + jy;
 	    temp1 = 0.;
 	    temp2 = 0.;
 	    temp3 = 0.;
 	    temp4 = 0.;
-	    i3 = *nenter;
-	    for (k = 1; k <= i3; ++k) {
+	    i__3 = *nenter;
+	    for (k = 1; k <= i__3; ++k) {
 		k1 = indx2[k];
-		temp1 += wy[k1 + ipntr * n] * wy[k1 + jpntr * n];
-		temp2 += ws[k1 + ipntr * n] * ws[k1 + jpntr * n];
+		temp1 += wy[k1 + ipntr * wy_dim1] * wy[k1 + jpntr * wy_dim1];
+		temp2 += ws[k1 + ipntr * ws_dim1] * ws[k1 + jpntr * ws_dim1];
 	    }
-	    i3 = n;
-	    for (k = *ileave; k <= i3; ++k) {
+	    i__3 = *n;
+	    for (k = *ileave; k <= i__3; ++k) {
 		k1 = indx2[k];
-		temp3 += wy[k1 + ipntr * n] * wy[k1 + jpntr * n];
-		temp4 += ws[k1 + ipntr * n] * ws[k1 + jpntr * n];
+		temp3 += wy[k1 + ipntr * wy_dim1] * wy[k1 + jpntr * wy_dim1];
+		temp4 += ws[k1 + ipntr * ws_dim1] * ws[k1 + jpntr * ws_dim1];
 	    }
-	    wn1[iy + jy * m2] = wn1[iy + jy * m2] + temp1 - temp3;
-	    wn1[is + js * m2] = wn1[is + js * m2] - temp2 + temp4;
-	    jpntr = jpntr % m + 1;
+	    wn1[iy + jy * wn1_dim1] = wn1[iy + jy * wn1_dim1] + temp1 - temp3;
+	    wn1[is + js * wn1_dim1] = wn1[is + js * wn1_dim1] - temp2 + temp4;
+	    jpntr = jpntr % *m + 1;
 	}
-	ipntr = ipntr % m + 1;
+	ipntr = ipntr % *m + 1;
     }
     ipntr = *head;
-    i1 = m + upcl;
-    for (is = m + 1; is <= i1; ++is) {
+    i__1 = *m + upcl;
+    for (is = *m + 1; is <= i__1; ++is) {
 	jpntr = *head;
-	i2 = upcl;
-	for (jy = 1; jy <= i2; ++jy) {
+	i__2 = upcl;
+	for (jy = 1; jy <= i__2; ++jy) {
 	    temp1 = 0.;
 	    temp3 = 0.;
-	    for (k = 1; k <= *nenter; ++k) {
+	    i__3 = *nenter;
+	    for (k = 1; k <= i__3; ++k) {
 		k1 = indx2[k];
-		temp1 += ws[k1 + ipntr * n] * wy[k1 + jpntr * n];
+		temp1 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
 	    }
-	    for (k = *ileave; k <= n; ++k) {
+	    i__3 = *n;
+	    for (k = *ileave; k <= i__3; ++k) {
 		k1 = indx2[k];
-		temp3 += ws[k1 + ipntr * n] * wy[k1 + jpntr * n];
+		temp3 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
 	    }
-	    if (is <= jy + m) {
-		wn1[is + jy * m2] = wn1[is + jy * m2] + 
-		    temp1 - temp3;
+	    if (is <= jy + *m) {
+		wn1[is + jy * wn1_dim1] = wn1[is + jy * wn1_dim1] + temp1 - 
+			temp3;
 	    } else {
-		wn1[is + jy * m2] = wn1[is + jy * m2] - 
-		    temp1 + temp3;
+		wn1[is + jy * wn1_dim1] = wn1[is + jy * wn1_dim1] - temp1 + 
+			temp3;
 	    }
-	    jpntr = jpntr % m + 1;
+	    jpntr = jpntr % *m + 1;
 	}
-	ipntr = ipntr % m + 1;
+	ipntr = ipntr % *m + 1;
     }
-
-    for (iy = 1; iy <= col; ++iy) {
-	is = col + iy;
-	is1 = m + iy;
-	for (jy = 1; jy <= iy; ++jy) {
-	    js = col + jy;
-	    js1 = m + jy;
-	    wn[jy + iy * m2] = wn1[iy + jy * m2] / theta;
-	    wn[js + is * m2] = wn1[is1 + js1 * m2] * theta;
+    m2 = *m << 1;
+    i__1 = *col;
+    for (iy = 1; iy <= i__1; ++iy) {
+	is = *col + iy;
+	is1 = *m + iy;
+	i__2 = iy;
+	for (jy = 1; jy <= i__2; ++jy) {
+	    js = *col + jy;
+	    js1 = *m + jy;
+	    wn[jy + iy * wn_dim1] = wn1[iy + jy * wn1_dim1] / *theta;
+	    wn[js + is * wn_dim1] = wn1[is1 + js1 * wn1_dim1] * *theta;
 	}
-	for (jy = 1; jy <= iy-1; ++jy) {
-	    wn[jy + is * m2] = -wn1[is1 + jy * m2];
+	i__2 = iy - 1;
+	for (jy = 1; jy <= i__2; ++jy) {
+	    wn[jy + is * wn_dim1] = -wn1[is1 + jy * wn1_dim1];
 	}
-	for (jy = iy; jy <= col; ++jy) {
-	    wn[jy + is * m2] = wn1[is1 + jy * m2];
+	i__2 = *col;
+	for (jy = iy; jy <= i__2; ++jy) {
+	    wn[jy + is * wn_dim1] = wn1[is1 + jy * wn1_dim1];
 	}
-	wn[iy + iy * m2] += sy[iy + iy * m];
+	wn[iy + iy * wn_dim1] += sy[iy + iy * sy_dim1];
     }
-
-    dpofa_(&wn[wn_offset], m2, col, info);
+    dpofa_(&wn[wn_offset], &m2, col, info);
     if (*info != 0) {
 	*info = -1;
 	return 0;
     }
-
-    col2 = col << 1;
-    for (js = col + 1; js <= col2; ++js) {
-	dtrsl_(&wn[wn_offset], m2, col, &wn[js * m2 + 1], 1, info);
+    col2 = *col << 1;
+    i__1 = col2;
+    for (js = *col + 1; js <= i__1; ++js) {
+	dtrsl_(&wn[wn_offset], &m2, col, &wn[js * wn_dim1 + 1], &c__11, info);
     }
-    for (is = col + 1; is <= col2; ++is) {
-	for (js = is; js <= col2; ++js) {
-	    wn[is + js * m2] += ddot_(col, &wn[is * m2 + 1], 
-					   &wn[js * m2 + 1]);
+    i__1 = col2;
+    for (is = *col + 1; is <= i__1; ++is) {
+	i__2 = col2;
+	for (js = is; js <= i__2; ++js) {
+	    wn[is + js * wn_dim1] += ddot_(col, &wn[is * wn_dim1 + 1], &c__1, 
+		    &wn[js * wn_dim1 + 1], &c__1);
 	}
     }
-
-    dpofa_(&wn[col + 1 + (col + 1) * m2], m2, col, info);
+    dpofa_(&wn[*col + 1 + (*col + 1) * wn_dim1], &m2, col, info);
     if (*info != 0) {
 	*info = -2;
 	return 0;
     }
-
     return 0;
-}
+} /* formk_ */
 
-static void formt_(int m, double *wt, double *sy, double *ss, 
-		   int col, double theta, int *info)
+static int formt_(int *m, double *wt, double *sy, 
+		  double *ss, int *col, double *theta,
+		  int *info)
 {
-    int wt_offset, sy_offset, ss_offset;
-    int i, j, k, k1;
+    int wt_dim1, wt_offset, sy_dim1, sy_offset, ss_dim1, ss_offset, i__1, 
+	i__2, i__3;
+
+    int i__, j, k, k1;
     double ddum;
 
-    ss_offset = 1 + m;
+    ss_dim1 = *m;
+    ss_offset = 1 + ss_dim1;
     ss -= ss_offset;
-    sy_offset = 1 + m;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
     sy -= sy_offset;
-    wt_offset = 1 + m;
+    wt_dim1 = *m;
+    wt_offset = 1 + wt_dim1;
     wt -= wt_offset;
 
-    for (j = 1; j <= col; ++j) {
-	wt[j * m + 1] = theta * ss[j * m + 1];
+    i__1 = *col;
+    for (j = 1; j <= i__1; ++j) {
+	wt[j * wt_dim1 + 1] = *theta * ss[j * ss_dim1 + 1];
     }
-
-    for (i = 2; i <= col; ++i) {
-	for (j = i; j <= col; ++j) {
-	    k1 = min(i,j) - 1;
+    i__1 = *col;
+    for (i__ = 2; i__ <= i__1; ++i__) {
+	i__2 = *col;
+	for (j = i__; j <= i__2; ++j) {
+	    k1 = min(i__,j) - 1;
 	    ddum = 0.;
-	    for (k = 1; k <= k1; ++k) {
-		ddum += sy[i + k * m] * sy[j + k * m] / sy[k + k * m];
+	    i__3 = k1;
+	    for (k = 1; k <= i__3; ++k) {
+		ddum += sy[i__ + k * sy_dim1] * sy[j + k * sy_dim1] / sy[k + 
+			k * sy_dim1];
 	    }
-	    wt[i + j * m] = ddum + theta * ss[i + j * m];
+	    wt[i__ + j * wt_dim1] = ddum + *theta * ss[i__ + j * ss_dim1];
 	}
     }
-
     dpofa_(&wt[wt_offset], m, col, info);
     if (*info != 0) {
 	*info = -3;
     }
-}
+    return 0;
+} /* formt_ */
 
-static void freev_(int n, int *nfree, int *index, int *nenter, 
-		   int *ileave, int *indx2, int *iwhere, 
-		   int *wrk, int *updatd, int cnstnd, 
-		   int iter)
+static int freev_(int *n, int *nfree, int *index, 
+		  int *nenter, int *ileave, int *indx2, int *iwhere, 
+		  logical *wrk, logical *updatd, logical *cnstnd,
+		  int *iter)
 {
-    int i, k, iact;
+    int i__1;
+
+    int i__, k, iact;
 
     --iwhere;
     --indx2;
     --index;
 
     *nenter = 0;
-    *ileave = n + 1;
-
-    if (iter > 0 && cnstnd) {
-	for (i = 1; i <= *nfree; ++i) {
-	    k = index[i];
+    *ileave = *n + 1;
+    if (*iter > 0 && *cnstnd) {
+	i__1 = *nfree;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    k = index[i__];
 	    if (iwhere[k] > 0) {
 		--(*ileave);
 		indx2[*ileave] = k;
 	    }
 	}
-	for (i = *nfree + 1; i <= n; ++i) {
-	    k = index[i];
+	i__1 = *n;
+	for (i__ = *nfree + 1; i__ <= i__1; ++i__) {
+	    k = index[i__];
 	    if (iwhere[k] <= 0) {
 		++(*nenter);
 		indx2[*nenter] = k;
 	    }
 	}
     }
-
-    *wrk = *ileave < n + 1 || *nenter > 0 || *updatd;
+    *wrk = *ileave < *n + 1 || *nenter > 0 || *updatd;
     *nfree = 0;
-    iact = n + 1;
-
-    for (i = 1; i <= n; ++i) {
-	if (iwhere[i] <= 0) {
+    iact = *n + 1;
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if (iwhere[i__] <= 0) {
 	    ++(*nfree);
-	    index[*nfree] = i;
+	    index[*nfree] = i__;
 	} else {
 	    --iact;
-	    index[iact] = i;
+	    index[iact] = i__;
 	}
     }
-}
 
-static void hpsolb_(int n, double *t, int *iorder, int iheap)
+    return 0;
+} /* freev_ */
+
+static int hpsolb_(int *n, double *t, int *iorder, 
+		   int *iheap)
 {
-    int i, j, k;
+    int i__1;
+
+    int i__, j, k;
     double out, ddum;
     int indxin, indxou;
 
     --iorder;
     --t;
 
-    if (iheap == 0) {
-	for (k = 2; k <= n; ++k) {
+    if (*iheap == 0) {
+	i__1 = *n;
+	for (k = 2; k <= i__1; ++k) {
 	    ddum = t[k];
 	    indxin = iorder[k];
-	    i = k;
-	L10:
-	    if (i > 1) {
-		j = i / 2;
+	    i__ = k;
+L10:
+	    if (i__ > 1) {
+		j = i__ / 2;
 		if (ddum < t[j]) {
-		    t[i] = t[j];
-		    iorder[i] = iorder[j];
-		    i = j;
+		    t[i__] = t[j];
+		    iorder[i__] = iorder[j];
+		    i__ = j;
 		    goto L10;
 		}
 	    }
-	    t[i] = ddum;
-	    iorder[i] = indxin;
+	    t[i__] = ddum;
+	    iorder[i__] = indxin;
 	}
     }
-
-    if (n > 1) {
-	i = 1;
+    if (*n > 1) {
+	i__ = 1;
 	out = t[1];
 	indxou = iorder[1];
-	ddum = t[n];
-	indxin = iorder[n];
-    L30:
-	j = i + i;
-	if (j <= n - 1) {
+	ddum = t[*n];
+	indxin = iorder[*n];
+L30:
+	j = i__ + i__;
+	if (j <= *n - 1) {
 	    if (t[j + 1] < t[j]) {
 		++j;
 	    }
 	    if (t[j] < ddum) {
-		t[i] = t[j];
-		iorder[i] = iorder[j];
-		i = j;
+		t[i__] = t[j];
+		iorder[i__] = iorder[j];
+		i__ = j;
 		goto L30;
 	    }
 	}
-	t[i] = ddum;
-	iorder[i] = indxin;
-	t[n] = out;
-	iorder[n] = indxou;
+	t[i__] = ddum;
+	iorder[i__] = indxin;
+	t[*n] = out;
+	iorder[*n] = indxou;
     }
-}
+    return 0;
+} /* hpsolb_ */
 
-static int matupd_(int n, int m, double *ws, double *wy, double *sy, 
-		   double *ss, double *d, double *r, int *itail, 
-		   int iupdat, int *col, int *head, double *theta, 
-		   double rr, double dr, double stp, double dtd)
+static int matupd_(int *n, int *m, double *ws, 
+		   double *wy, double *sy, double *ss, double *d__, 
+		   double *r__, int *itail, int *iupdat, int *col, 
+		   int *head, double *theta, double *rr, double *dr, 
+		   double *stp, double *dtd)
 {
-    int ws_offset, wy_offset, sy_offset, ss_offset, i1, i2;
-    int j, pointr;
+    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
+	    ss_dim1, ss_offset, i__1, i__2;
 
-    --r;
-    --d;
-    ss_offset = 1 + m;
+    int j;
+    int pointr;
+
+    --r__;
+    --d__;
+    ss_dim1 = *m;
+    ss_offset = 1 + ss_dim1;
     ss -= ss_offset;
-    sy_offset = 1 + m;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
     sy -= sy_offset;
-    wy_offset = 1 + n;
+    wy_dim1 = *n;
+    wy_offset = 1 + wy_dim1;
     wy -= wy_offset;
-    ws_offset = 1 + n;
+    ws_dim1 = *n;
+    ws_offset = 1 + ws_dim1;
     ws -= ws_offset;
 
-    if (iupdat <= m) {
-	*col = iupdat;
-	*itail = (*head + iupdat - 2) % m + 1;
+    if (*iupdat <= *m) {
+	*col = *iupdat;
+	*itail = (*head + *iupdat - 2) % *m + 1;
     } else {
-	*itail = *itail % m + 1;
-	*head = *head % m + 1;
+	*itail = *itail % *m + 1;
+	*head = *head % *m + 1;
     }
-
-    dcopy_(n, &d[1], &ws[*itail * n + 1]);
-    dcopy_(n, &r[1], &wy[*itail * n + 1]);
-    *theta = rr / dr;
-
-    if (iupdat > m) {
-	i1 = *col - 1;
-	for (j = 1; j <= i1; ++j) {
-	    dcopy_(j, &ss[(j + 1) * m + 2], &ss[j * m + 1]);
-	    i2 = *col - j;
-	    dcopy_(i2, &sy[j + 1 + (j + 1) * m], &sy[j + j * m]);
+    dcopy_(n, &d__[1], &c__1, &ws[*itail * ws_dim1 + 1], &c__1);
+    dcopy_(n, &r__[1], &c__1, &wy[*itail * wy_dim1 + 1], &c__1);
+    *theta = *rr / *dr;
+    if (*iupdat > *m) {
+	i__1 = *col - 1;
+	for (j = 1; j <= i__1; ++j) {
+	    dcopy_(&j, &ss[(j + 1) * ss_dim1 + 2], &c__1, &ss[j * ss_dim1 + 1]
+		    , &c__1);
+	    i__2 = *col - j;
+	    dcopy_(&i__2, &sy[j + 1 + (j + 1) * sy_dim1], &c__1, &sy[j + j * 
+		    sy_dim1], &c__1);
 	}
     }
-
     pointr = *head;
-    i1 = *col - 1;
-
-    for (j = 1; j <= i1; ++j) {
-	sy[*col + j * m] = ddot_(n, &d[1], &wy[pointr * n + 1]);
-	ss[j + *col * m] = ddot_(n, &ws[pointr * n + 1], &d[1]);
-	pointr = pointr % m + 1;
+    i__1 = *col - 1;
+    for (j = 1; j <= i__1; ++j) {
+	sy[*col + j * sy_dim1] = ddot_(n, &d__[1], &c__1, &wy[pointr * 
+		wy_dim1 + 1], &c__1);
+	ss[j + *col * ss_dim1] = ddot_(n, &ws[pointr * ws_dim1 + 1], &c__1, &
+		d__[1], &c__1);
+	pointr = pointr % *m + 1;
     }
-
-    if (stp == 1.) {
-	ss[*col + *col * m] = dtd;
+    if (*stp == 1.) {
+	ss[*col + *col * ss_dim1] = *dtd;
     } else {
-	ss[*col + *col * m] = stp * stp * dtd;
+	ss[*col + *col * ss_dim1] = *stp * *stp * *dtd;
     }
-    sy[*col + *col * m] = dr;
-
+    sy[*col + *col * sy_dim1] = *dr;
     return 0;
-}
+} /* matupd_ */
 
-static void projgr_(int n, double *l, double *u, 
-		    int *nbd, double *x, double *g, 
-		    double *sbgnrm)
+static int projgr_(int *n, double *l, double *u, int *nbd,
+		   double *x, double *g, double *sbgnrm)
 {
-    double d1, d2, gi;
-    int i;
+    int i__1;
+    double d__1, d__2;
 
-    *sbgnrm = 0;
+    int i__;
+    double gi;
 
-    for (i = 0; i < n; ++i) {
-	gi = g[i];
-	if (nbd[i] != 0) {
-	    if (gi < 0) {
-		if (nbd[i] >= 2) {
-		    d1 = x[i] - u[i];
-		    gi = max(d1, gi);
-		}
-	    } else {
-		if (nbd[i] <= 2) {
-		    d1 = x[i] - l[i];
-		    gi = min(d1, gi);
-		}
-	    }
-	}
-	d1 = *sbgnrm, d2 = fabs(gi);
-	*sbgnrm = max(d1, d2);
-    }
-}
-
-static int subsm_(int n, int m, int nsub, int *ind, double *l, 
-		  double *u, int *nbd, double *x, double *d, 
-		  double *ws, double *wy, double theta, 
-		  int col, int head, int *iword, double *wv, 
-		  double *wn, int *info)
-{
-    int ws_offset, wy_offset, wn_offset;
-    int pointr, ibd = 0, m2 = m * 2;
-    double dk, temp1, temp2, alpha;
-    int js, jy, col2;
-    int i, j, k;
-
-    --d;
+    --g;
     --x;
     --nbd;
     --u;
     --l;
-    wn_offset = 1 + m2;
+
+    *sbgnrm = 0.;
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	gi = g[i__];
+	if (nbd[i__] != 0) {
+	    if (gi < 0.) {
+		if (nbd[i__] >= 2) {
+		    d__1 = x[i__] - u[i__];
+		    gi = max(d__1,gi);
+		}
+	    } else {
+		if (nbd[i__] <= 2) {
+		    d__1 = x[i__] - l[i__];
+		    gi = min(d__1,gi);
+		}
+	    }
+	}
+	d__1 = *sbgnrm, d__2 = fabs(gi);
+	*sbgnrm = max(d__1,d__2);
+    }
+    return 0;
+} /* projgr_ */
+
+static int subsm_(int *n, int *m, int *nsub, int *ind,
+		  double *l, double *u, int *nbd, double *x, 
+		  double *d__, double *xp, double *ws, double *wy, 
+		  double *theta, double *xx, double *gg, int *col, 
+		  int *head, int *iword, double *wv, double *wn, 
+		  int *info)
+{
+    int ws_dim1, ws_offset, wy_dim1, wy_offset, wn_dim1, wn_offset,
+	i__1, i__2;
+    double d__1, d__2;
+
+    int i__, j, k, m2;
+    double dk;
+    int js, jy;
+    double xk;
+    int ibd, col2;
+    double dd_p__, temp1, temp2, alpha;
+    int pointr;
+
+    --gg;
+    --xx;
+    --xp;
+    --d__;
+    --x;
+    --nbd;
+    --u;
+    --l;
+    wn_dim1 = 2 * *m;
+    wn_offset = 1 + wn_dim1;
     wn -= wn_offset;
     --wv;
-    wy_offset = 1 + n;
+    wy_dim1 = *n;
+    wy_offset = 1 + wy_dim1;
     wy -= wy_offset;
-    ws_offset = 1 + n;
+    ws_dim1 = *n;
+    ws_offset = 1 + ws_dim1;
     ws -= ws_offset;
     --ind;
 
-    if (nsub <= 0) {
+    if (*nsub <= 0) {
 	return 0;
     }
-
-    pointr = head;
-    for (i = 1; i <= col; ++i) {
-	temp1 = temp2 = 0.0;
-	for (j = 1; j <= nsub; ++j) {
+    pointr = *head;
+    i__1 = *col;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	temp1 = 0.;
+	temp2 = 0.;
+	i__2 = *nsub;
+	for (j = 1; j <= i__2; ++j) {
 	    k = ind[j];
-	    temp1 += wy[k + pointr * n] * d[j];
-	    temp2 += ws[k + pointr * n] * d[j];
+	    temp1 += wy[k + pointr * wy_dim1] * d__[j];
+	    temp2 += ws[k + pointr * ws_dim1] * d__[j];
 	}
-	wv[i] = temp1;
-	wv[col + i] = theta * temp2;
-	pointr = pointr % m + 1;
+	wv[i__] = temp1;
+	wv[*col + i__] = *theta * temp2;
+	pointr = pointr % *m + 1;
     }
-
-    col2 = col * 2;
-    dtrsl_(&wn[wn_offset], m2, col2, &wv[1], 1, info);
+    m2 = *m << 1;
+    col2 = *col << 1;
+    dtrsl_(&wn[wn_offset], &m2, &col2, &wv[1], &c__11, info);
     if (*info != 0) {
 	return 0;
     }
-    for (i = 1; i <= col; ++i) {
-	wv[i] = -wv[i];
+    i__1 = *col;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	wv[i__] = -wv[i__];
     }
-    dtrsl_(&wn[wn_offset], m2, col2, &wv[1], 0, info);
+    dtrsl_(&wn[wn_offset], &m2, &col2, &wv[1], &c__1, info);
     if (*info != 0) {
 	return 0;
     }
-    pointr = head;
-    for (jy = 1; jy <= col; ++jy) {
-	js = col + jy;
-	for (i = 1; i <= nsub; ++i) {
-	    k = ind[i];
-	    d[i] = d[i] + wy[k + pointr * n] * wv[jy] / theta 
-		+ ws[k + pointr * n] * wv[js];
+    pointr = *head;
+    i__1 = *col;
+    for (jy = 1; jy <= i__1; ++jy) {
+	js = *col + jy;
+	i__2 = *nsub;
+	for (i__ = 1; i__ <= i__2; ++i__) {
+	    k = ind[i__];
+	    d__[i__] = d__[i__] + wy[k + pointr * wy_dim1] * wv[jy] / *theta 
+		    + ws[k + pointr * ws_dim1] * wv[js];
 	}
-	pointr = pointr % m + 1;
+	pointr = pointr % *m + 1;
     }
-    for (i = 1; i <= nsub; ++i) {
-	d[i] /= theta;
+    d__1 = 1. / *theta;
+    dscal_(nsub, &d__1, &d__[1], &c__1);
+    *iword = 0;
+    dcopy_(n, &x[1], &c__1, &xp[1], &c__1);
+    i__1 = *nsub;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	k = ind[i__];
+	dk = d__[i__];
+	xk = x[k];
+	if (nbd[k] != 0) {
+	    if (nbd[k] == 1) {
+		/* lower bounds only */
+		d__1 = l[k], d__2 = xk + dk;
+		x[k] = max(d__1,d__2);
+		if (x[k] == l[k]) {
+		    *iword = 1;
+		}
+	    } else {
+		if (nbd[k] == 2) {
+		    /* upper and lower bounds */
+		    d__1 = l[k], d__2 = xk + dk;
+		    xk = max(d__1,d__2);
+		    d__1 = u[k];
+		    x[k] = min(d__1,xk);
+		    if (x[k] == l[k] || x[k] == u[k]) {
+			*iword = 1;
+		    }
+		} else {
+		    if (nbd[k] == 3) {
+			/* upper bounds only */
+			d__1 = u[k], d__2 = xk + dk;
+			x[k] = min(d__1,d__2);
+			if (x[k] == u[k]) {
+			    *iword = 1;
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* free variables */
+	    x[k] = xk + dk;
+	}
     }
-
+    if (*iword == 0) {
+	goto L911;
+    }
+    dd_p__ = 0.;
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	dd_p__ += (x[i__] - xx[i__]) * gg[i__];
+    }
+    if (dd_p__ > 0.) {
+	dcopy_(n, &xp[1], &c__1, &x[1], &c__1);
+    } else {
+	goto L911;
+    }
     alpha = 1.;
     temp1 = alpha;
-
-    for (i = 1; i <= nsub; ++i) {
-	k = ind[i];
-	dk = d[i];
+    ibd = 0;
+    i__1 = *nsub;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	k = ind[i__];
+	dk = d__[i__];
 	if (nbd[k] != 0) {
-	    if (dk < 0 && nbd[k] <= 2) {
+	    if (dk < 0. && nbd[k] <= 2) {
 		temp2 = l[k] - x[k];
 		if (temp2 >= 0.) {
 		    temp1 = 0.;
 		} else if (dk * alpha < temp2) {
 		    temp1 = temp2 / dk;
 		}
-	    } else if (dk > 0 && nbd[k] >= 2) {
+	    } else if (dk > 0. && nbd[k] >= 2) {
 		temp2 = u[k] - x[k];
-		if (temp2 <= 0) {
-		    temp1 = 0;
+		if (temp2 <= 0.) {
+		    temp1 = 0.;
 		} else if (dk * alpha > temp2) {
 		    temp1 = temp2 / dk;
 		}
 	    }
 	    if (temp1 < alpha) {
 		alpha = temp1;
-		ibd = i;
+		ibd = i__;
 	    }
 	}
     }
-
     if (alpha < 1.) {
-	dk = d[ibd];
+	dk = d__[ibd];
 	k = ind[ibd];
 	if (dk > 0.) {
 	    x[k] = u[k];
-	    d[ibd] = 0.;
+	    d__[ibd] = 0.;
 	} else if (dk < 0.) {
 	    x[k] = l[k];
-	    d[ibd] = 0.;
+	    d__[ibd] = 0.;
 	}
     }
-    for (i = 1; i <= nsub; ++i) {
-	k = ind[i];
-	x[k] += alpha * d[i];
+    i__1 = *nsub;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	k = ind[i__];
+	x[k] += alpha * d__[i__];
     }
-
-    *iword = (alpha < 1.0);
+L911:
 
     return 0;
-}
+} /* subsm_ */
 
-static void dcstep_(double *stx, double *fx, double *dx, 
-		    double *sty, double *fy, double *dy, double *stp, 
-		    double *fp, double *dp, int *brackt, double *stpmin, 
-		    double *stpmax)
+static int dcstep_(double *stx, double *fx, double *dx, 
+		   double *sty, double *fy, double *dy, double *stp, 
+		   double *fp, double *dp, logical *brackt,
+		   double *stpmin, double *stpmax)
 {
-    double p, q, r, s, sgnd, stpc, stpf, stpq, gamma, theta;
-    double d1, d2, d3;
+    double d__1, d__2, d__3;
+
+    double p, q, r__, s, sgnd, stpc, stpf, stpq, gamma, theta;
 
     sgnd = *dp * (*dx / fabs(*dx));
-
     if (*fp > *fx) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d1 = fabs(theta), d2 = fabs(*dx), d1 = max(d1,d2), d2 = fabs(*dp);
-	s = max(d1, d2);
-	d1 = theta / s;
-	gamma = s * sqrt(d1 * d1 - *dx / s * (*dp / s));
+	d__1 = fabs(theta), d__2 = fabs(*dx),
+	    d__1 = max(d__1,d__2), d__2 = fabs(*dp);
+	s = max(d__1,d__2);
+	d__1 = theta / s;
+	gamma = s * sqrt(d__1 * d__1 - *dx / s * (*dp / s));
 	if (*stp < *stx) {
 	    gamma = -gamma;
 	}
 	p = gamma - *dx + theta;
 	q = gamma - *dx + gamma + *dp;
-	r = p / q;
-	stpc = *stx + r * (*stp - *stx);
-	stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 
-	    2. * (*stp - *stx);
-	if ((d1 = stpc - *stx, fabs(d1)) < (d2 = stpq - *stx, fabs(d2))) {
+	r__ = p / q;
+	stpc = *stx + r__ * (*stp - *stx);
+	stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 2. * (*stp 
+		- *stx);
+	if ((d__1 = stpc - *stx, fabs(d__1)) < (d__2 = stpq - *stx, fabs(d__2)))
+		 {
 	    stpf = stpc;
 	} else {
 	    stpf = stpc + (stpq - stpc) / 2.;
@@ -972,19 +1109,20 @@ static void dcstep_(double *stx, double *fx, double *dx,
 	*brackt = 1;
     } else if (sgnd < 0.) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d1 = fabs(theta), d2 = fabs(*dx), d1 = max(d1,d2), d2 = fabs(*dp);
-	s = max(d1, d2);
-	d1 = theta / s;
-	gamma = s * sqrt(d1 * d1 - *dx / s * (*dp / s));
+	d__1 = fabs(theta), d__2 = fabs(*dx), d__1 = max(d__1,d__2), d__2 = fabs(
+		*dp);
+	s = max(d__1,d__2);
+	d__1 = theta / s;
+	gamma = s * sqrt(d__1 * d__1 - *dx / s * (*dp / s));
 	if (*stp > *stx) {
 	    gamma = -gamma;
 	}
 	p = gamma - *dp + theta;
 	q = gamma - *dp + gamma + *dx;
-	r = p / q;
-	stpc = *stp + r * (*stx - *stp);
+	r__ = p / q;
+	stpc = *stp + r__ * (*stx - *stp);
 	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
-	if ((d1 = stpc - *stp, fabs(d1)) > (d2 = stpq - *stp, fabs(d2))) {
+	if ((d__1 = stpc - *stp, fabs(d__1)) > (d__2 = stpq - *stp, fabs(d__2))) {
 	    stpf = stpc;
 	} else {
 	    stpf = stpq;
@@ -992,19 +1130,20 @@ static void dcstep_(double *stx, double *fx, double *dx,
 	*brackt = 1;
     } else if (fabs(*dp) < fabs(*dx)) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d1 = fabs(theta), d2 = fabs(*dx), d1 = max(d1,d2), d2 = fabs(*dp);
-	s = max(d1, d2);
-	d3 = theta / s;
-	d1 = 0., d2 = d3 * d3 - *dx / s * (*dp / s);
-	gamma = s * sqrt((max(d1,d2)));
+	d__1 = fabs(theta), d__2 = fabs(*dx), d__1 = max(d__1,d__2), d__2 = fabs(
+		*dp);
+	s = max(d__1,d__2);
+	d__3 = theta / s;
+	d__1 = 0., d__2 = d__3 * d__3 - *dx / s * (*dp / s);
+	gamma = s * sqrt((max(d__1,d__2)));
 	if (*stp > *stx) {
 	    gamma = -gamma;
 	}
 	p = gamma - *dp + theta;
 	q = gamma + (*dx - *dp) + gamma;
-	r = p / q;
-	if (r < 0. && gamma != 0.) {
-	    stpc = *stp + r * (*stx - *stp);
+	r__ = p / q;
+	if (r__ < 0. && gamma != 0.) {
+	    stpc = *stp + r__ * (*stx - *stp);
 	} else if (*stp > *stx) {
 	    stpc = *stpmax;
 	} else {
@@ -1012,20 +1151,22 @@ static void dcstep_(double *stx, double *fx, double *dx,
 	}
 	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
 	if (*brackt) {
-	    if ((d1 = stpc - *stp, fabs(d1)) < (d2 = stpq - *stp, fabs(d2))) {
+	    if ((d__1 = stpc - *stp, fabs(d__1)) < (d__2 = stpq - *stp, fabs(
+		    d__2))) {
 		stpf = stpc;
 	    } else {
 		stpf = stpq;
 	    }
 	    if (*stp > *stx) {
-		d1 = *stp + (*sty - *stp) * .66;
-		stpf = min(d1,stpf);
+		d__1 = *stp + (*sty - *stp) * .66;
+		stpf = min(d__1,stpf);
 	    } else {
-		d1 = *stp + (*sty - *stp) * .66;
-		stpf = max(d1,stpf);
+		d__1 = *stp + (*sty - *stp) * .66;
+		stpf = max(d__1,stpf);
 	    }
 	} else {
-	    if ((d1 = stpc - *stp, fabs(d1)) > (d2 = stpq - *stp, fabs(d2))) {
+	    if ((d__1 = stpc - *stp, fabs(d__1)) >
+		(d__2 = stpq - *stp, fabs(d__2))) {
 		stpf = stpc;
 	    } else {
 		stpf = stpq;
@@ -1036,17 +1177,18 @@ static void dcstep_(double *stx, double *fx, double *dx,
     } else {
 	if (*brackt) {
 	    theta = (*fp - *fy) * 3. / (*sty - *stp) + *dy + *dp;
-	    d1 = fabs(theta), d2 = fabs(*dy), d1 = max(d1,d2), d2 = fabs(*dp);
-	    s = max(d1,d2);
-	    d1 = theta / s;
-	    gamma = s * sqrt(d1 * d1 - *dy / s * (*dp / s));
+	    d__1 = fabs(theta), d__2 = fabs(*dy),
+		d__1 = max(d__1,d__2), d__2 = fabs(*dp);
+	    s = max(d__1,d__2);
+	    d__1 = theta / s;
+	    gamma = s * sqrt(d__1 * d__1 - *dy / s * (*dp / s));
 	    if (*stp > *sty) {
 		gamma = -gamma;
 	    }
 	    p = gamma - *dp + theta;
 	    q = gamma - *dp + gamma + *dy;
-	    r = p / q;
-	    stpc = *stp + r * (*sty - *stp);
+	    r__ = p / q;
+	    stpc = *stp + r__ * (*sty - *stp);
 	    stpf = stpc;
 	} else if (*stp > *stx) {
 	    stpf = *stpmax;
@@ -1054,13 +1196,12 @@ static void dcstep_(double *stx, double *fx, double *dx,
 	    stpf = *stpmin;
 	}
     }
-
     if (*fp > *fx) {
 	*sty = *stp;
 	*fy = *fp;
 	*dy = *dp;
     } else {
-	if (sgnd < 0) {
+	if (sgnd < 0.) {
 	    *sty = *stx;
 	    *fy = *fx;
 	    *dy = *dx;
@@ -1069,25 +1210,27 @@ static void dcstep_(double *stx, double *fx, double *dx,
 	*fx = *fp;
 	*dx = *dp;
     }
-
     *stp = stpf;
-}
+    return 0;
+} /* dcstep_ */
 
 static int dcsrch_(double *f, double *g, double *stp, 
-		   double ftol, double gtol, double xtol, double stpmin, 
-		   double *stpmax, char *task, int *isave, 
-		   double *dsave)
+		   double *ftol, double *gtol, double *xtol,
+		   double *stpmin, double *stpmax, char *task,
+		   int *isave, double *dsave)
 {
+    double d__1;
+
     double fm, gm, fx, fy, gx, gy, fxm, fym, gxm, gym, stx, sty;
+    int stage;
     double finit, ginit, width, ftest, gtest, stmin, stmax, width1;
-    int stage, brackt;
-    double d1;
+    logical brackt;
 
     --dsave;
     --isave;
 
     if (strncmp(task, "START", 5) == 0) {
-	if (*stp < stpmin) {
+	if (*stp < *stpmin) {
 	    strcpy(task, "ERROR: STP .LT. STPMIN");
 	}
 	if (*stp > *stpmax) {
@@ -1096,19 +1239,19 @@ static int dcsrch_(double *f, double *g, double *stp,
 	if (*g >= 0.) {
 	    strcpy(task, "ERROR: INITIAL G .GE. ZERO");
 	}
-	if (ftol < 0.) {
+	if (*ftol < 0.) {
 	    strcpy(task, "ERROR: FTOL .LT. ZERO");
 	}
-	if (gtol < 0.) {
+	if (*gtol < 0.) {
 	    strcpy(task, "ERROR: GTOL .LT. ZERO");
 	}
-	if (xtol < 0.) {
+	if (*xtol < 0.) {
 	    strcpy(task, "ERROR: XTOL .LT. ZERO");
 	}
-	if (stpmin < 0.) {
+	if (*stpmin < 0.) {
 	    strcpy(task, "ERROR: STPMIN .LT. ZERO");
 	}
-	if (*stpmax < stpmin) {
+	if (*stpmax < *stpmin) {
 	    strcpy(task, "ERROR: STPMAX .LT. STPMIN");
 	}
 	if (strncmp(task, "ERROR", 5) == 0) {
@@ -1118,8 +1261,8 @@ static int dcsrch_(double *f, double *g, double *stp,
 	stage = 1;
 	finit = *f;
 	ginit = *g;
-	gtest = ftol * ginit;
-	width = *stpmax - stpmin;
+	gtest = *ftol * ginit;
+	width = *stpmax - *stpmin;
 	width1 = width / .5;
 	stx = 0.;
 	fx = finit;
@@ -1159,16 +1302,16 @@ static int dcsrch_(double *f, double *g, double *stp,
     if (brackt && (*stp <= stmin || *stp >= stmax)) {
 	strcpy(task, "WARNING: ROUNDING ERRORS PREVENT PROGRESS");
     }
-    if (brackt && stmax - stmin <= xtol * stmax) {
+    if (brackt && stmax - stmin <= *xtol * stmax) {
 	strcpy(task, "WARNING: XTOL TEST SATISFIED");
     }
     if (*stp == *stpmax && *f <= ftest && *g <= gtest) {
 	strcpy(task, "WARNING: STP = STPMAX");
     }
-    if (*stp == stpmin && (*f > ftest || *g >= gtest)) {
+    if (*stp == *stpmin && (*f > ftest || *g >= gtest)) {
 	strcpy(task, "WARNING: STP = STPMIN");
     }
-    if (*f <= ftest && fabs(*g) <= gtol * (-ginit)) {
+    if (*f <= ftest && fabs(*g) <= *gtol * (-ginit)) {
 	strcpy(task, "CONVERGENCE");
     }
     if (strncmp(task, "WARN", 4) == 0 || strncmp(task, "CONV", 4) == 0) {
@@ -1192,11 +1335,11 @@ static int dcsrch_(double *f, double *g, double *stp,
 		stmax);
     }
     if (brackt) {
-	if ((d1 = sty - stx, fabs(d1)) >= width1 * .66) {
+	if ((d__1 = sty - stx, fabs(d__1)) >= width1 * .66) {
 	    *stp = stx + (sty - stx) * .5;
 	}
 	width1 = width;
-	width = (d1 = sty - stx, fabs(d1));
+	width = (d__1 = sty - stx, fabs(d__1));
     }
     if (brackt) {
 	stmin = min(stx,sty);
@@ -1205,14 +1348,14 @@ static int dcsrch_(double *f, double *g, double *stp,
 	stmin = *stp + (*stp - stx) * 1.1;
 	stmax = *stp + (*stp - stx) * 4.;
     }
-    *stp = max(*stp, stpmin);
-    *stp = min(*stp, *stpmax);
-    if ((brackt && (*stp <= stmin || *stp >= stmax)) || 
-        (brackt && stmax - stmin <= xtol * stmax)) {
+    *stp = max(*stp,*stpmin);
+    *stp = min(*stp,*stpmax);
+    if ((brackt && (*stp <= stmin || *stp >= stmax)) ||
+	(brackt && stmax - stmin <= *xtol * stmax)) {
 	*stp = stx;
     }
     strcpy(task, "FG");
- L1000:
+L1000:
     if (brackt) {
 	isave[1] = 1;
     } else {
@@ -1235,22 +1378,25 @@ static int dcsrch_(double *f, double *g, double *stp,
     return 0;
 } /* dcsrch_ */
 
-static int lnsrlb_(int n, double *l, double *u, 
-		   int *nbd, double *x, double *f, double *fold, 
-		   double *gd, double *gdold, double *g, double *d, 
-		   double *r, double *t, double *z, double *stp, 
-		   double *dnorm, double *dtd, double *xstep, double *
-		   stpmx, int *iter, int *ifun, int *iback, int *nfgv, 
-		   int *info, char *task, int *boxed, int *cnstnd, char *
-		   csave, int *isave, double *dsave)
+int lnsrlb_(int *n, double *l, double *u, 
+	    int *nbd, double *x, double *f, double *fold, 
+	    double *gd, double *gdold, double *g, double *d__, 
+	    double *r__, double *t, double *z__, double *stp, 
+	    double *dnorm, double *dtd, double *xstep, double *stpmx,
+	    int *iter, int *ifun, int *iback, int *nfgv, 
+	    int *info, char *task, logical *boxed, logical *cnstnd,
+	    char *csave, int *isave, double *dsave)
 {
-    double d1, a1, a2;
-    int i;
+    int i__1;
+    double d__1;
 
-    --z;
+    int i__;
+    double a1, a2;
+
+    --z__;
     --t;
-    --r;
-    --d;
+    --r__;
+    --d__;
     --g;
     --x;
     --nbd;
@@ -1262,29 +1408,28 @@ static int lnsrlb_(int n, double *l, double *u,
     if (strncmp(task, "FG_LN", 5) == 0) {
 	goto L556;
     }
-
-    *dtd = ddot_(n, &d[1], &d[1]);
+    *dtd = ddot_(n, &d__[1], &c__1, &d__[1], &c__1);
     *dnorm = sqrt(*dtd);
     *stpmx = 1e10;
-
     if (*cnstnd) {
 	if (*iter == 0) {
-	    *stpmx = 1.0;
+	    *stpmx = 1.;
 	} else {
-	    for (i = 1; i <= n; ++i) {
-		a1 = d[i];
-		if (nbd[i] != 0) {
-		    if (a1 < 0. && nbd[i] <= 2) {
-			a2 = l[i] - x[i];
-			if (a2 >= 0.0) {
-			    *stpmx = 0.0;
+	    i__1 = *n;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		a1 = d__[i__];
+		if (nbd[i__] != 0) {
+		    if (a1 < 0. && nbd[i__] <= 2) {
+			a2 = l[i__] - x[i__];
+			if (a2 >= 0.) {
+			    *stpmx = 0.;
 			} else if (a1 * *stpmx < a2) {
 			    *stpmx = a2 / a1;
 			}
-		    } else if (a1 > 0.0 && nbd[i] >= 2) {
-			a2 = u[i] - x[i];
-			if (a2 <= 0.0) {
-			    *stpmx = 0.0;
+		    } else if (a1 > 0. && nbd[i__] >= 2) {
+			a2 = u[i__] - x[i__];
+			if (a2 <= 0.) {
+			    *stpmx = 0.;
 			} else if (a1 * *stpmx > a2) {
 			    *stpmx = a2 / a1;
 			}
@@ -1293,24 +1438,20 @@ static int lnsrlb_(int n, double *l, double *u,
 	    }
 	}
     }
-
     if (*iter == 0 && ! (*boxed)) {
-	d1 = 1.0 / *dnorm;
-	*stp = min(d1,*stpmx);
+	d__1 = 1. / *dnorm;
+	*stp = min(d__1,*stpmx);
     } else {
-	*stp = 1.0;
+	*stp = 1.;
     }
-
-    dcopy_(n, &x[1], &t[1]);
-    dcopy_(n, &g[1], &r[1]);
-
+    dcopy_(n, &x[1], &c__1, &t[1], &c__1);
+    dcopy_(n, &g[1], &c__1, &r__[1], &c__1);
     *fold = *f;
     *ifun = 0;
     *iback = 0;
     strcpy(csave, "START");
-
- L556:
-    *gd = ddot_(n, &g[1], &d[1]);
+L556:
+    *gd = ddot_(n, &g[1], &c__1, &d__[1], &c__1);
     if (*ifun == 0) {
 	*gdold = *gd;
 	if (*gd >= 0.) {
@@ -1318,30 +1459,28 @@ static int lnsrlb_(int n, double *l, double *u,
 	    return 0;
 	}
     }
-
-    dcsrch_(f, gd, stp, b173, b174, b175, b176, stpmx, csave,
-	    &isave[1], &dsave[1]);
-
+    dcsrch_(f, gd, stp, &c_b280, &c_b281, &c_b282, &c_b9, stpmx, csave, &
+	    isave[1], &dsave[1]);
     *xstep = *stp * *dnorm;
-
-    if (strncmp(csave, "CONV", 4) != 0 && strncmp(csave, "WARN", 4) != 0) {
+    if (strncmp(csave, "CONV", 4) != 0 &&
+	strncmp(csave, "WARN", 4) != 0) {
 	strcpy(task, "FG_LNSRCH");
 	++(*ifun);
 	++(*nfgv);
 	*iback = *ifun - 1;
 	if (*stp == 1.) {
-	    dcopy_(n, &z[1], &x[1]);
+	    dcopy_(n, &z__[1], &c__1, &x[1], &c__1);
 	} else {
-	    for (i = 1; i <= n; ++i) {
-		x[i] = *stp * d[i] + t[i];
+	    i__1 = *n;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		x[i__] = *stp * d__[i__] + t[i__];
 	    }
 	}
     } else {
 	strcpy(task, "NEW_X");
     }
-
     return 0;
-}
+} /* lnsrlb_ */
 
 static void timer_(double *ttime)
 {
@@ -1350,117 +1489,40 @@ static void timer_(double *ttime)
     *ttime = (double) tim / CLOCKS_PER_SEC;
 }
 
-static double dpmeps_(void)
-{
-    static double zero = 0.;
-    static double one = 1.;
-    static double two = 2.;
-    int i1, i, it, irnd;
-    double ret_val;
-    double a, b;
-    double beta;
-    double temp, temp1, betah;
-    int ibeta, itemp, negep;
-    double tempa;
-    double betain;
-
-    a = one;
-    b = one;
- L10:
-    a += a;
-    temp = a + one;
-    temp1 = temp - a;
-    if (temp1 - one == zero) {
-	goto L10;
-    }
- L20:
-    b += b;
-    temp = a + b;
-    itemp = (int) (temp - a);
-    if (itemp == 0) {
-	goto L20;
-    }
-    ibeta = itemp;
-    beta = (double) ibeta;
-    it = 0;
-    b = one;
- L30:
-    ++it;
-    b *= beta;
-    temp = b + one;
-    temp1 = temp - b;
-    if (temp1 - one == zero) {
-	goto L30;
-    }
-    irnd = 0;
-    betah = beta / two;
-    temp = a + betah;
-    if (temp - a != zero) {
-	irnd = 1;
-    }
-    tempa = a + beta;
-    temp = tempa + betah;
-    if (irnd == 0 && temp - tempa != zero) {
-	irnd = 2;
-    }
-    negep = it + 3;
-    betain = one / beta;
-    a = one;
-    i1 = negep;
-    for (i = 1; i <= i1; ++i) {
-	a *= betain;
-	/* L40: */
-    }
- L50:
-    temp = one + a;
-    if (temp - one != zero) {
-	goto L60;
-    }
-    a *= beta;
-    goto L50;
- L60:
-    ret_val = a;
-    if (ibeta == 2 || irnd == 0) {
-	goto L70;
-    }
-    a = a * (one + a) / two;
-    temp = one + a;
-    if (temp - one != zero) {
-	ret_val = a;
-    }
- L70:
-
-#if 0
-    fprintf(stderr, "dpmeps(): returning %g\n", ret_val);
-#endif
-
-    return ret_val;
-}
-
-static int cauchy_(int n, double *x, double *l, double *u, int *nbd, 
-		   double *g, int *iorder, int *iwhere, double *t, 
-		   double *d, double *xcp, int m, 
+static int cauchy_(int *n, double *x, double *l, 
+		   double *u, int *nbd, double *g, int *iorder,
+		   int *iwhere, double *t, double *d__, double *xcp, int *m, 
 		   double *wy, double *ws, double *sy, double *wt, 
-		   double theta, int col, int head, double *p, 
-		   double *c, double *wbp, double *v, int *nint, 
-		   double *sg, double *yg, double *sbgnrm, 
-		   int *info, double epsmch)
+		   double *theta, int *col, int *head, double *p, 
+		   double *c__, double *wbp, double *v, int *nseg, 
+		   double *sbgnrm, int *info, double *epsmch)
 {
-    static double tu, tl;
-    int wy_offset, ws_offset, sy_offset, wt_offset, i1, i2;
-    double d1, f1, f2, dt, tj, tj0;
-    double dibp, dtm, wmc, wmp, wmw;
-    int ibp, col2;
-    int iter, bnded, nfree; 
+    int wy_dim1, wy_offset, ws_dim1, ws_offset, sy_dim1, sy_offset, 
+	wt_dim1, wt_offset, i__1, i__2;
+    double d__1;
+
+    int i__, j;
+    double f1, f2, dt, tj, tj0;
+    double tu = 0.0, tl = 0.0;
+    int ibp;
+    double dtm;
+    double wmc, wmp, wmw;
+    int col2;
+    double dibp;
+    int iter;
     double zibp, tsum, dibp2;
-    double neggi, bkmin;
-    double f2_orig;
-    int nleft, nbreak, ibkmin;
-    int pointr, xlower, xupper;
-    int i, j;
+    logical bnded;
+    double neggi;
+    int nfree;
+    double bkmin;
+    int nleft;
+    double f2_org__;
+    int nbreak, ibkmin;
+    int pointr;
+    logical xlower, xupper;
 
     --xcp;
-    --d;
+    --d__;
     --t;
     --iwhere;
     --iorder;
@@ -1469,87 +1531,88 @@ static int cauchy_(int n, double *x, double *l, double *u, int *nbd,
     --u;
     --l;
     --x;
-    --yg;
-    --sg;
     --v;
     --wbp;
-    --c;
+    --c__;
     --p;
-    wt_offset = 1 + m;
+    wt_dim1 = *m;
+    wt_offset = 1 + wt_dim1;
     wt -= wt_offset;
-    sy_offset = 1 + m;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
     sy -= sy_offset;
-    ws_offset = 1 + n;
+    ws_dim1 = *n;
+    ws_offset = 1 + ws_dim1;
     ws -= ws_offset;
-    wy_offset = 1 + n;
+    wy_dim1 = *n;
+    wy_offset = 1 + wy_dim1;
     wy -= wy_offset;
 
     if (*sbgnrm <= 0.) {
-	dcopy_(n, &x[1], &xcp[1]);
+	dcopy_(n, &x[1], &c__1, &xcp[1], &c__1);
 	return 0;
     }
-
     bnded = 1;
-    nfree = n + 1;
+    nfree = *n + 1;
     nbreak = 0;
     ibkmin = 0;
     bkmin = 0.;
-    col2 = col * 2;
+    col2 = *col << 1;
     f1 = 0.;
-
-    for (i = 1; i <= col2; ++i) {
-	p[i] = 0.;
+    i__1 = col2;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	p[i__] = 0.;
     }
-
-    for (i = 1; i <= n; ++i) {
-	neggi = -g[i];
-	if (iwhere[i] != 3 && iwhere[i] != -1) {
-	    if (nbd[i] <= 2) {
-		tl = x[i] - l[i];
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	neggi = -g[i__];
+	if (iwhere[i__] != 3 && iwhere[i__] != -1) {
+	    if (nbd[i__] <= 2) {
+		tl = x[i__] - l[i__];
 	    }
-	    if (nbd[i] >= 2) {
-		tu = u[i] - x[i];
+	    if (nbd[i__] >= 2) {
+		tu = u[i__] - x[i__];
 	    }
-	    xlower = nbd[i] <= 2 && tl <= 0.0;
-	    xupper = nbd[i] >= 2 && tu <= 0.0;
-	    iwhere[i] = 0;
+	    xlower = nbd[i__] <= 2 && tl <= 0.;
+	    xupper = nbd[i__] >= 2 && tu <= 0.;
+	    iwhere[i__] = 0;
 	    if (xlower) {
 		if (neggi <= 0.) {
-		    iwhere[i] = 1;
+		    iwhere[i__] = 1;
 		}
 	    } else if (xupper) {
 		if (neggi >= 0.) {
-		    iwhere[i] = 2;
+		    iwhere[i__] = 2;
 		}
 	    } else {
-		if (fabs(neggi) <= 0) {
-		    iwhere[i] = -3;
+		if (fabs(neggi) <= 0.) {
+		    iwhere[i__] = -3;
 		}
 	    }
 	}
-	pointr = head;
-	if (iwhere[i] != 0 && iwhere[i] != -1) {
-	    d[i] = 0.;
+	pointr = *head;
+	if (iwhere[i__] != 0 && iwhere[i__] != -1) {
+	    d__[i__] = 0.;
 	} else {
-	    d[i] = neggi;
+	    d__[i__] = neggi;
 	    f1 -= neggi * neggi;
-	    i2 = col;
-	    for (j = 1; j <= i2; ++j) {
-		p[j] += wy[i + pointr * n] * neggi;
-		p[col + j] += ws[i + pointr * n] * neggi;
-		pointr = pointr % m + 1;
+	    i__2 = *col;
+	    for (j = 1; j <= i__2; ++j) {
+		p[j] += wy[i__ + pointr * wy_dim1] * neggi;
+		p[*col + j] += ws[i__ + pointr * ws_dim1] * neggi;
+		pointr = pointr % *m + 1;
 	    }
-	    if (nbd[i] <= 2 && nbd[i] != 0 && neggi < 0) {
+	    if (nbd[i__] <= 2 && nbd[i__] != 0 && neggi < 0.) {
 		++nbreak;
-		iorder[nbreak] = i;
+		iorder[nbreak] = i__;
 		t[nbreak] = tl / (-neggi);
 		if (nbreak == 1 || t[nbreak] < bkmin) {
 		    bkmin = t[nbreak];
 		    ibkmin = nbreak;
 		}
-	    } else if (nbd[i] >= 2 && neggi > 0) {
+	    } else if (nbd[i__] >= 2 && neggi > 0.) {
 		++nbreak;
-		iorder[nbreak] = i;
+		iorder[nbreak] = i__;
 		t[nbreak] = tu / neggi;
 		if (nbreak == 1 || t[nbreak] < bkmin) {
 		    bkmin = t[nbreak];
@@ -1557,46 +1620,43 @@ static int cauchy_(int n, double *x, double *l, double *u, int *nbd,
 		}
 	    } else {
 		--nfree;
-		iorder[nfree] = i;
-		if (fabs(neggi) > 0) {
+		iorder[nfree] = i__;
+		if (fabs(neggi) > 0.) {
 		    bnded = 0;
 		}
 	    }
 	}
     }
-
-    if (theta != 1.0) {
-	dscal_(col, theta, &p[col + 1]);
+    if (*theta != 1.) {
+	dscal_(col, theta, &p[*col + 1], &c__1);
     }
-    dcopy_(n, &x[1], &xcp[1]);
-
-    if (nbreak == 0 && nfree == n + 1) {
+    dcopy_(n, &x[1], &c__1, &xcp[1], &c__1);
+    if (nbreak == 0 && nfree == *n + 1) {
 	return 0;
     }
-
-    for (j = 1; j <= col2; ++j) {
-	c[j] = 0.0;
+    i__1 = col2;
+    for (j = 1; j <= i__1; ++j) {
+	c__[j] = 0.;
     }
-    f2 = -theta * f1;
-    f2_orig = f2;
-    if (col > 0) {
+    f2 = -(*theta) * f1;
+    f2_org__ = f2;
+    if (*col > 0) {
 	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &p[1], &v[1], info);
 	if (*info != 0) {
 	    return 0;
 	}
-	f2 -= ddot_(col2, &v[1], &p[1]);
+	f2 -= ddot_(&col2, &v[1], &c__1, &p[1], &c__1);
     }
     dtm = -f1 / f2;
     tsum = 0.;
-    *nint = 1;
+    *nseg = 1;
     if (nbreak == 0) {
 	goto L888;
     }
     nleft = nbreak;
     iter = 1;
     tj = 0.;
-
- L777:
+L777:
     tj0 = tj;
     if (iter == 1) {
 	tj = bkmin;
@@ -1608,8 +1668,8 @@ static int cauchy_(int n, double *x, double *l, double *u, int *nbd,
 		iorder[ibkmin] = iorder[nbreak];
 	    }
 	}
-	i1 = iter - 2;
-	hpsolb_(nleft, &t[1], &iorder[1], i1);
+	i__1 = iter - 2;
+	hpsolb_(&nleft, &t[1], &iorder[1], &i__1);
 	tj = t[nleft];
 	ibp = iorder[nleft];
     }
@@ -1620,8 +1680,8 @@ static int cauchy_(int n, double *x, double *l, double *u, int *nbd,
     tsum += dt;
     --nleft;
     ++iter;
-    dibp = d[ibp];
-    d[ibp] = 0.;
+    dibp = d__[ibp];
+    d__[ibp] = 0.;
     if (dibp > 0.) {
 	zibp = u[ibp] - x[ibp];
 	xcp[ibp] = u[ibp];
@@ -1631,38 +1691,38 @@ static int cauchy_(int n, double *x, double *l, double *u, int *nbd,
 	xcp[ibp] = l[ibp];
 	iwhere[ibp] = 1;
     }
-    if (nleft == 0 && nbreak == n) {
+    if (nleft == 0 && nbreak == *n) {
 	dtm = dt;
 	goto L999;
     }
-
-    ++(*nint);
-    d1 = dibp;
-    dibp2 = d1 * d1;
-    f1 = f1 + dt * f2 + dibp2 - theta * dibp * zibp;
-    f2 -= theta * dibp2;
-    if (col > 0) {
-	daxpy_(col2, dt, &p[1], &c[1]);
-	pointr = head;
-	for (j = 1; j <= col; ++j) {
-	    wbp[j] = wy[ibp + pointr * n];
-	    wbp[col + j] = theta * ws[ibp + pointr * n];
-	    pointr = pointr % m + 1;
+    ++(*nseg);
+    d__1 = dibp;
+    dibp2 = d__1 * d__1;
+    f1 = f1 + dt * f2 + dibp2 - *theta * dibp * zibp;
+    f2 -= *theta * dibp2;
+    if (*col > 0) {
+	daxpy_(&col2, &dt, &p[1], &c__1, &c__[1], &c__1);
+	pointr = *head;
+	i__1 = *col;
+	for (j = 1; j <= i__1; ++j) {
+	    wbp[j] = wy[ibp + pointr * wy_dim1];
+	    wbp[*col + j] = *theta * ws[ibp + pointr * ws_dim1];
+	    pointr = pointr % *m + 1;
 	}
 	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &wbp[1], &v[1], info);
 	if (*info != 0) {
 	    return 0;
 	}
-	wmc = ddot_(col2, &c[1], &v[1]);
-	wmp = ddot_(col2, &p[1], &v[1]);
-	wmw = ddot_(col2, &wbp[1], &v[1]);
-	d1 = -dibp;
-	daxpy_(col2, d1, &wbp[1], &p[1]);
+	wmc = ddot_(&col2, &c__[1], &c__1, &v[1], &c__1);
+	wmp = ddot_(&col2, &p[1], &c__1, &v[1], &c__1);
+	wmw = ddot_(&col2, &wbp[1], &c__1, &v[1], &c__1);
+	d__1 = -dibp;
+	daxpy_(&col2, &d__1, &wbp[1], &c__1, &p[1], &c__1);
 	f1 += dibp * wmc;
 	f2 = f2 + dibp * 2. * wmp - dibp2 * wmw;
     }
-    d1 = epsmch * f2_orig;
-    f2 = max(d1,f2);
+    d__1 = *epsmch * f2_org__;
+    f2 = max(d__1,f2);
     if (nleft > 0) {
 	dtm = -f1 / f2;
 	goto L777;
@@ -1673,85 +1733,154 @@ static int cauchy_(int n, double *x, double *l, double *u, int *nbd,
     } else {
 	dtm = -f1 / f2;
     }
-
- L888:
-    if (dtm <= 0) {
-	dtm = 0;
+L888:
+    if (dtm <= 0.) {
+	dtm = 0.;
     }
     tsum += dtm;
-    daxpy_(n, tsum, &d[1], &xcp[1]);
-
- L999:
-    if (col > 0) {
-	daxpy_(col2, dtm, &p[1], &c[1]);
+    daxpy_(n, &tsum, &d__[1], &c__1, &xcp[1], &c__1);
+L999:
+    if (*col > 0) {
+	daxpy_(&col2, &dtm, &p[1], &c__1, &c__[1], &c__1);
     }
+
     return 0;
-}
+} /* cauchy_ */
 
-static int mainlb_(int n, int m, double *x, 
-		   double *l, double *u, int *nbd, double *f, double *g, 
-		   double *factr, double *pgtol, double *ws, 
-		   double *wy, double *sy, double *ss, double *yy, double *wt, 
-		   double *wn, double *snd, double *z, double *r, 
-		   double *d, double *t, double *wa, double *sg, 
-		   double *sgo, double *yg, double *ygo, int *index, 
-		   int *iwhere, int *indx2, char *task, char *csave, 
-		   int *lsave, int *isave, double *dsave)
+static int mainlb_(int *n, int *m, double *x, 
+		   double *l, double *u, int *nbd, double *f, double 
+		   *g, double *factr, double *pgtol, double *ws, double *
+		   wy, double *sy, double *ss, double *wt, double *wn, 
+		   double *snd, double *z__, double *r__, double *d__, 
+		   double *t, double *xp, double *wa, int *index, 
+		   int *iwhere, int *indx2, char *task,
+		   char *csave, logical *lsave, int *isave, double *dsave)
 {
-    double d1, d2, gd, dr, rr, dtd = 0;
-    double tol, stp, cpu1 = 0, cpu2 = 0;
-    double ddum, fold = 0;
+    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
+	ss_dim1, ss_offset, wt_dim1, wt_offset, wn_dim1, wn_offset, 
+	snd_dim1, snd_offset, i__1;
+    double d__1, d__2;
+
+    int i__, k;
+    double gd, dr, rr, dtd;
+    int col;
+    double tol;
+    logical wrk;
+    double stp, cpu1, cpu2;
+    int head;
+    double fold;
+    int nact;
+    double ddum;
+    int info, nseg;
+    double time;
+    int nfgv, ifun, iter;
+    char word[4];
     double time1, time2;
-    double theta, dnorm = 0;
-    double xstep, stpmx = 0;
-    double cachyt, epsmch;
-    double sbtime, sbgnrm;
-    double lnscht, gdold = 0;
-    int nfgv, iter, nint, ifun = 0;
-    int info, iback = 0;
-    int nskip, nfree, boxed;
-    int ileave, updatd, iupdat;
-    int prjctd, cnstnd, nenter;
-    int col, wrk, head;
+    int iback;
+    double gdold;
+    int nfree;
+    logical boxed;
+    int itail;
+    double theta;
+    double dnorm;
+    int nskip, iword;
+    double xstep, stpmx;
+    int ileave;
+    double cachyt;
+    int itfile;
+    double epsmch;
+    logical updatd;
+    double sbtime;
+    logical prjctd;
+    int iupdat;
+    double sbgnrm;
+    logical cnstnd;
+    int nenter;
+    double lnscht;
     int nintol;
-    int i, k;
 
-    static int iword, itail, nact, itfile;
-
+    --indx2;
+    --iwhere;
+    --index;
+    --xp;
+    --t;
+    --d__;
+    --r__;
+    --z__;
+    --g;
+    --nbd;
+    --u;
+    --l;
+    --x;
+    --wa;
+    snd_dim1 = 2 * *m;
+    snd_offset = 1 + snd_dim1;
+    snd -= snd_offset;
+    wn_dim1 = 2 * *m;
+    wn_offset = 1 + wn_dim1;
+    wn -= wn_offset;
+    wt_dim1 = *m;
+    wt_offset = 1 + wt_dim1;
+    wt -= wt_offset;
+    ss_dim1 = *m;
+    ss_offset = 1 + ss_dim1;
+    ss -= ss_offset;
+    sy_dim1 = *m;
+    sy_offset = 1 + sy_dim1;
+    sy -= sy_offset;
+    wy_dim1 = *n;
+    wy_offset = 1 + wy_dim1;
+    wy -= wy_offset;
+    ws_dim1 = *n;
+    ws_offset = 1 + ws_dim1;
+    ws -= ws_offset;
     --lsave;
     --isave;
     --dsave;
 
     if (strncmp(task, "START", 5) == 0) {
+	epsmch = 2.22e-16;
 	timer_(&time1);
-	epsmch = dpmeps_();
 	col = 0;
 	head = 1;
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
+	iback = 0;
+	itail = 0;
+	iword = 0;
+	nact = 0;
+	ileave = 0;
+	nenter = 0;
+	fold = 0.;
+	dnorm = 0.;
+	cpu1 = 0.;
+	gd = 0.;
+	stpmx = 0.;
+	sbgnrm = 0.;
+	stp = 0.;
+	gdold = 0.;
+	dtd = 0.;
 	iter = 0;
 	nfgv = 0;
-	nint = 0;
+	nseg = 0;
 	nintol = 0;
 	nskip = 0;
-	nenter = 0;
-	ileave = 0;
-	nfree = n;
-#if 0
+	nfree = *n;
+	ifun = 0;
 	tol = *factr * epsmch;
-#else
-	tol = *factr / 100.0;
-#endif
 	cachyt = 0.;
 	sbtime = 0.;
 	lnscht = 0.;
+	strcpy(word, "---");
 	info = 0;
-	errclb_(n, m, *factr, l, u, nbd, task, &info, &k);
+	itfile = 8;
+	errclb_(n, m, factr, &l[1], &u[1], &nbd[1], task, &info, &k);
 	if (strncmp(task, "ERROR", 5) == 0) {
 	    return 0;
 	}
-	active_(n, l, u, nbd, x, iwhere, &prjctd, &cnstnd, &boxed);
+	active_(n, &l[1], &u[1], &nbd[1], &x[1], &iwhere[1], &prjctd, 
+		&cnstnd, &boxed);
     } else {
 	prjctd = lsave[1];
 	cnstnd = lsave[2];
@@ -1766,7 +1895,7 @@ static int mainlb_(int n, int m, double *x,
 	itail = isave[8];
 	iter = isave[9];
 	iupdat = isave[10];
-	nint = isave[12];
+	nseg = isave[12];
 	nfgv = isave[13];
 	info = isave[14];
 	ifun = isave[15];
@@ -1801,30 +1930,37 @@ static int mainlb_(int n, int m, double *x,
 	    goto L111;
 	}
 	if (strncmp(task, "STOP", 4) == 0) {
+	    if (strncmp(task + 6, "CPU", 3) == 0) {
+		dcopy_(n, &t[1], &c__1, &x[1], &c__1);
+		dcopy_(n, &r__[1], &c__1, &g[1], &c__1);
+		*f = fold;
+	    }
 	    goto L999;
 	}
     }
     strcpy(task, "FG_START");
     goto L1000;
- L111:
+L111:
     nfgv = 1;
-    projgr_(n, l, u, nbd, x, g, &sbgnrm);
+    projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
     if (sbgnrm <= *pgtol) {
-	strcpy(task, "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL");
+	strcpy(task, "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL");
 	goto L999;
     }
- L222:
+L222:
     iword = -1;
-    if (!cnstnd && col > 0) {
-	dcopy_(n, x, z);
+    if (! cnstnd && col > 0) {
+	dcopy_(n, &x[1], &c__1, &z__[1], &c__1);
 	wrk = updatd;
-	nint = 0;
+	nseg = 0;
 	goto L333;
     }
     timer_(&cpu1);
-    cauchy_(n, x, l, u, nbd, g, indx2, iwhere, t, d, z, m, wy, ws, 
-	    sy, wt, theta, col, head, wa, wa + 2*m, wa + 4*m,
-	    wa + 6*m, &nint, sg, yg, &sbgnrm, &info, epsmch);
+    cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1], &t[
+	    1], &d__[1], &z__[1], m, &wy[wy_offset], &ws[ws_offset], &sy[
+	    sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], &wa[(*m 
+	    << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nseg,
+	    &sbgnrm, &info, &epsmch);
     if (info != 0) {
 	info = 0;
 	col = 0;
@@ -1838,19 +1974,19 @@ static int mainlb_(int n, int m, double *x,
     }
     timer_(&cpu2);
     cachyt = cachyt + cpu2 - cpu1;
-    nintol += nint;
-    freev_(n, &nfree, index, &nenter, &ileave, indx2, iwhere, 
-	   &wrk, &updatd, cnstnd, iter);
-    nact = n - nfree;
- L333:
+    nintol += nseg;
+    freev_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iwhere[1], &
+	    wrk, &updatd, &cnstnd, &iter);
+    nact = *n - nfree;
+L333:
     if (nfree == 0 || col == 0) {
 	goto L555;
     }
     timer_(&cpu1);
     if (wrk) {
-	formk_(n, &nfree, index, &nenter, &ileave, indx2, &iupdat, 
-	       &updatd, wn, snd, m, ws, wy, sy, theta, col, 
-	       &head, &info);
+	formk_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iupdat, &
+		updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset], &
+		wy[wy_offset], &sy[sy_offset], &theta, &col, &head, &info);
     }
     if (info != 0) {
 	info = 0;
@@ -1863,15 +1999,16 @@ static int mainlb_(int n, int m, double *x,
 	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
-    cmprlb_(n, m, x, g, ws, wy, sy, wt, z, r, wa, index, 
-	    theta, col, head, nfree, cnstnd, &info);
+    cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], &sy[sy_offset]
+	    , &wt[wt_offset], &z__[1], &r__[1], &wa[1], &index[1], &theta, &
+	    col, &head, &nfree, &cnstnd, &info);
     if (info != 0) {
 	goto L444;
     }
-    subsm_(n, m, nfree, index, l, u, nbd, z, r,
-	   ws, wy, theta, col, head, &iword, 
-	   wa, wn, &info);
- L444:
+    subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z__[1], &r__[1], &
+	    xp[1], &ws[ws_offset], &wy[wy_offset], &theta, &x[1], &g[1], &col,
+	     &head, &iword, &wa[1], &wn[wn_offset], &info);
+L444:
     if (info != 0) {
 	info = 0;
 	col = 0;
@@ -1885,19 +2022,20 @@ static int mainlb_(int n, int m, double *x,
     }
     timer_(&cpu2);
     sbtime = sbtime + cpu2 - cpu1;
- L555:
-    for (i = 0; i < n; ++i) {
-	d[i] = z[i] - x[i];
+L555:
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	d__[i__] = z__[i__] - x[i__];
     }
     timer_(&cpu1);
- L666:
-    lnsrlb_(n, l, u, nbd, x, f, &fold, &gd, &gdold, g,
-	    d, r, t, z, &stp, &dnorm, &dtd, &xstep, &stpmx, 
-	    &iter, &ifun, &iback, &nfgv, &info, task, &boxed, &cnstnd, 
+L666:
+    lnsrlb_(n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1], &
+	    d__[1], &r__[1], &t[1], &z__[1], &stp, &dnorm, &dtd, &xstep, &
+	    stpmx, &iter, &ifun, &iback, &nfgv, &info, task, &boxed, &cnstnd, 
 	    csave, &isave[22], &dsave[17]);
     if (info != 0 || iback >= 20) {
-	dcopy_(n, t, x);
-	dcopy_(n, r, g);
+	dcopy_(n, &t[1], &c__1, &x[1], &c__1);
+	dcopy_(n, &r__[1], &c__1, &g[1], &c__1);
 	*f = fold;
 	if (col == 0) {
 	    if (info == 0) {
@@ -1930,33 +2068,34 @@ static int mainlb_(int n, int m, double *x,
 	timer_(&cpu2);
 	lnscht = lnscht + cpu2 - cpu1;
 	++iter;
-	projgr_(n, l, u, nbd, x, g, &sbgnrm);
+	projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
 	goto L1000;
     }
- L777:
+L777:
     if (sbgnrm <= *pgtol) {
-	strcpy(task, "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL");
+	strcpy(task, "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL");
 	goto L999;
     }
-    d1 = fabs(fold), d2 = fabs(*f), d1 = max(d1,d2);
-    ddum = max(d1, 1);
+    d__1 = fabs(fold), d__2 = fabs(*f), d__1 = max(d__1, d__2);
+    ddum = max(d__1,1.);
     if (fold - *f <= tol * ddum) {
-	strcpy(task, "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH");
+	strcpy(task, "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH");
 	if (iback >= 10) {
 	    info = -5;
 	}
 	goto L999;
     }
-    for (i = 0; i < n; ++i) {
-	r[i] = g[i] - r[i];
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	r__[i__] = g[i__] - r__[i__];
     }
-    rr = ddot_(n, r, r);
+    rr = ddot_(n, &r__[1], &c__1, &r__[1], &c__1);
     if (stp == 1.) {
 	dr = gd - gdold;
 	ddum = -gdold;
     } else {
 	dr = (gd - gdold) * stp;
-	dscal_(n, stp, d);
+	dscal_(n, &stp, &d__[1], &c__1);
 	ddum = -gdold * stp;
     }
     if (dr <= epsmch * ddum) {
@@ -1964,14 +2103,13 @@ static int mainlb_(int n, int m, double *x,
 	updatd = 0;
 	goto L888;
     }
-
     updatd = 1;
     ++iupdat;
-
-    matupd_(n, m, ws, wy, sy, ss, d, r, &itail, iupdat, 
-	    &col, &head, &theta, rr, dr, stp, dtd);
-    formt_(m, wt, sy, ss, col, theta, &info);
-
+    matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset], &ss[
+	    ss_offset], &d__[1], &r__[1], &itail, &iupdat, &col, &head, &
+	    theta, &rr, &dr, &stp, &dtd);
+    formt_(m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], &col, &theta, &
+	    info);
     if (info != 0) {
 	info = 0;
 	col = 0;
@@ -1981,11 +2119,13 @@ static int mainlb_(int n, int m, double *x,
 	updatd = 0;
 	goto L222;
     }
- L888:
+L888:
     goto L222;
- L999:
+L999:
     timer_(&time2);
- L1000:
+    time = time2 - time1;
+    fprintf(stderr, "time = %g\n", time);
+L1000:
     lsave[1] = prjctd;
     lsave[2] = cnstnd;
     lsave[3] = boxed;
@@ -1999,7 +2139,7 @@ static int mainlb_(int n, int m, double *x,
     isave[8] = itail;
     isave[9] = iter;
     isave[10] = iupdat;
-    isave[12] = nint;
+    isave[12] = nseg;
     isave[13] = nfgv;
     isave[14] = info;
     isave[15] = ifun;
@@ -2024,68 +2164,69 @@ static int mainlb_(int n, int m, double *x,
     dsave[14] = stp;
     dsave[15] = gdold;
     dsave[16] = dtd;
-
     return 0;
-}
+} /* mainlb_ */
 
-int setulb_(int n, int m, double *x, double *l, double *u, 
-	    int *nbd, double *f, double *g, double *factr, 
-	    double *pgtol, double *wa, int *iwa, 
-	    char *task, char *csave, int *lsave, 
+int setulb_(int *n, int *m, double *x, 
+	    double *l, double *u, int *nbd, double *f, double 
+	    *g, double *factr, double *pgtol, double *wa, int *iwa,
+	    char *task, char *csave, logical *lsave, 
 	    int *isave, double *dsave)
 {
-    int ld, lr, lt, lz, lwa, lsg, lyg, lwn, lss, lws;
-    int lwt, lsy, lwy, lyy, lsnd, lsgo, lygo;
+    int i__1;
 
+    int ld, lr, lt, lz, lwa, lwn, lss, lxp, lws, lwt, lsy, lwy, lsnd;
+
+    --iwa;
+    --g;
+    --nbd;
+    --u;
+    --l;
+    --x;
     --wa;
+    --lsave;
     --isave;
+    --dsave;
 
     if (strncmp(task, "START", 5) == 0) {
-	isave[1] = m * n;
-	isave[2] = m * m;
-	isave[3] = m * m << 2;
+	isave[1] = *m * *n;
+	i__1 = *m;
+	isave[2] = i__1 * i__1;
+	i__1 = *m;
+	isave[3] = i__1 * i__1 << 2;
 	isave[4] = 1;
 	isave[5] = isave[4] + isave[1];
 	isave[6] = isave[5] + isave[1];
 	isave[7] = isave[6] + isave[2];
 	isave[8] = isave[7] + isave[2];
 	isave[9] = isave[8] + isave[2];
-	isave[10] = isave[9] + isave[2];
+	isave[10] = isave[9] + isave[3];
 	isave[11] = isave[10] + isave[3];
-	isave[12] = isave[11] + isave[3];
-	isave[13] = isave[12] + n;
-	isave[14] = isave[13] + n;
-	isave[15] = isave[14] + n;
-	isave[16] = isave[15] + n;
-	isave[17] = isave[16] + (m << 3);
-	isave[18] = isave[17] + m;
-	isave[19] = isave[18] + m;
-	isave[20] = isave[19] + m;
+	isave[12] = isave[11] + *n;
+	isave[13] = isave[12] + *n;
+	isave[14] = isave[13] + *n;
+	isave[15] = isave[14] + *n;
+	isave[16] = isave[15] + *n;
     }
-
+    
     lws = isave[4];
     lwy = isave[5];
     lsy = isave[6];
     lss = isave[7];
-    lyy = isave[8];
-    lwt = isave[9];
-    lwn = isave[10];
-    lsnd = isave[11];
-    lz = isave[12];
-    lr = isave[13];
-    ld = isave[14];
-    lt = isave[15];
+    lwt = isave[8];
+    lwn = isave[9];
+    lsnd = isave[10];
+    lz = isave[11];
+    lr = isave[12];
+    ld = isave[13];
+    lt = isave[14];
+    lxp = isave[15];
     lwa = isave[16];
-    lsg = isave[17];
-    lsgo = isave[18];
-    lyg = isave[19];
-    lygo = isave[20];
-
-    mainlb_(n, m, x, l, u, nbd, f, g, factr, pgtol, 
-	    &wa[lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], &wa[lwn], 
-	    &wa[lsnd], &wa[lz], &wa[lr], &wa[ld], &wa[lt], &wa[lwa], &wa[lsg],
-	    &wa[lsgo], &wa[lyg], &wa[lygo], iwa, iwa + n, iwa + 2*n,
-	    task, csave, lsave, &isave[22], dsave);
-
+    
+    mainlb_(n, m, &x[1], &l[1], &u[1], &nbd[1], f, &g[1], factr, pgtol,
+	    &wa[lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lwt], &wa[lwn], &wa[lsnd],
+	    &wa[lz], &wa[lr], &wa[ld], &wa[lt], &wa[lxp], &wa[lwa], &iwa[1], 
+	    &iwa[*n + 1], &iwa[(*n << 1) + 1], task, csave, &lsave[1],
+	    &isave[22], &dsave[1]);
     return 0;
-}
+} /* setulb_ */
