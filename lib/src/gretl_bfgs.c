@@ -1227,9 +1227,53 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
+static int transcribe_lbfgs_bounds (const gretl_matrix *m,
+				    int nparm, int *nbd,
+				    double *l, double *u)
+{
+    double h = libset_get_double(CONV_HUGE);
+    int i, j, r = gretl_matrix_rows(m);
+    int err = 0;
+
+    if (r != 3) {
+	return E_INVARG;
+    }
+
+    for (i=0; i<nparm; i++) {
+	/* mark as unbounded */
+	nbd[i] = 0;
+    }
+
+    for (i=0; i<m->cols && !err; i++) {
+	j = (int) gretl_matrix_get(m, 0, i);
+	if (j < 1 || j > nparm) {
+	    err = E_INVARG;
+	} else {
+	    j--;
+	    l[j] = gretl_matrix_get(m, 1, i);
+	    u[j] = gretl_matrix_get(m, 2, i);
+	    if (l[j] > u[j]) {
+		err = E_INVARG;
+	    } else if (l[j] != -h && u[j] != h) {
+		/* both lower and upper bounds */
+		nbd[j] = 2;
+	    } else if (l[j] != -h) {
+		/* lower bound only */
+		nbd[j] = 1;
+	    } else if (u[j] != h) {
+		/* upper bound only */
+		nbd[j] = 3;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int LBFGS_max (double *b, int n, int maxit, double reltol,
 		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+		      int crittype, BFGS_GRAD_FUNC gradfunc,
+		      gretl_matrix *bounds, void *data, 
 		      gretlopt opt, PRN *prn)
 {
     double *wspace = NULL;
@@ -1293,14 +1337,22 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
        we use reltol instead) */
     pgtol = 0;
 
-    /* Bounds on the parameters: for now we just set them all to be
-       less than some ridiculously large number */
-    for (i=0; i<n; i++) {
-	nbd[i] = 3; /* case 3: upper bound only */
-	u[i] = NADBL / 100;
-    }	
+    /* Bounds on the parameters? */
+    if (bounds != NULL) {
+	err = transcribe_lbfgs_bounds(bounds, n, nbd, l, u);
+	if (err) {
+	    goto bailout;
+	}
+    } else {
+	/* By default we just set all parameters to be
+	   less than some ridiculously large number */
+	for (i=0; i<n; i++) {
+	    nbd[i] = 3; /* case 3: upper bound only */
+	    u[i] = NADBL / 100;
+	}
+    }
 
-    /* Start the iteration by initializing 'task' */
+    /* Start the iteration by initializing @task */
     strcpy(task, "START");
 
     while (1) {
@@ -1402,7 +1454,7 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
  * by p2c then re-crafted by B. D. Ripley for gnu R; revised for 
  * gretl by Allin Cottrell and Jack Lucchetti). Alternatively,
  * if OPT_L is given, uses the L-BFGS-B method (limited memory
- * BFGS), based on Lbfgsb.2.1 by Ciyou Zhu, Richard Byrd, Jorge 
+ * BFGS), based on Lbfgsb.3.0 by Ciyou Zhu, Richard Byrd, Jorge 
  * Nocedal and Jose Luis Morales. 
  * 
  * Returns: 0 on successful completion, non-zero error code
@@ -1421,8 +1473,8 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	ret = LBFGS_max(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
-			crittype, gradfunc, data, 
-			opt, prn);
+			crittype, gradfunc, NULL,
+			data, opt, prn);
     } else {
 	ret = BFGS_orig(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
