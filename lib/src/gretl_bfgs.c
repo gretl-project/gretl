@@ -1233,8 +1233,9 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
 		      gretlopt opt, PRN *prn)
 {
     double *wspace = NULL;
+    int *ispace = NULL;
     double *g, *l, *u, *wa;
-    int *iwa, *nbd = NULL;
+    int *iwa, *nbd;
     int i, m, dim;
     char task[60];
     char csave[60];
@@ -1263,12 +1264,12 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
     m = libset_get_int(LBFGS_MEM); 
 
     dim = (2*m+5)*n + 11*m*m + 8*m; /* for wa */
-    dim += 3*n; /* for g, l and u */
+    dim += 3*n;                     /* for g, l and u */
 
     wspace = malloc(dim * sizeof *wspace);
-    nbd = malloc(4*n * sizeof *nbd);
+    ispace = malloc(4*n * sizeof *ispace);
 
-    if (wspace == NULL || nbd == NULL) {
+    if (wspace == NULL || ispace == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1277,6 +1278,8 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
     l = g + n;
     u = l + n;
     wa = u + n;
+
+    nbd = ispace;
     iwa = nbd + n;
 
     verbskip = libset_get_int("bfgs_verbskip");
@@ -1364,7 +1367,7 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
  bailout:
 
     free(wspace);
-    free(nbd);
+    free(ispace);
 
     return err;
 }
@@ -1416,7 +1419,6 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     gretl_iteration_push();
 
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
-	fprintf(stderr, "calling LBFGS_max\n");
 	ret = LBFGS_max(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
 			crittype, gradfunc, data, 
