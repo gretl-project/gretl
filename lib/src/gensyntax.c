@@ -528,7 +528,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	parser_getc(p);
     }
 
-    if (!fncall_func(sym) && !varargs_func(sym)) {
+    if (!varargs_func(sym)) {
 	/* check for a nested function call (2013-08-25) or
 	   bundle/array member (2015-09-25)
 	*/
@@ -663,19 +663,17 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 
 enum {
     RIGHT_STR  = 1 << 0,
-    MID_STR    = 1 << 1,
-    MID_FNCALL = 1 << 2
+    MID_STR    = 1 << 1
 };
 
-/* get_middle_string_arg() is mostly used to retrieve a string
+/* get_literal_string_arg() is mostly used to retrieve a string
    that defines a function call, e.g. in BFGSmax(). It can also
    be used to trap a non-quoted string that functions as an
    "enum" value, as in the "vcat" flag for mpireduce().
-   In the former case @opt will be MID_FNCALL, in the latter
-   MID_STR.
+   In the former case @opt will be 0, in the latter MID_STR.
 */
 
-static NODE *get_middle_string_arg (parser *p, int opt)
+static NODE *get_literal_string_arg (parser *p, int opt)
 {
     int close = 0;
 
@@ -704,7 +702,7 @@ static NODE *get_middle_string_arg (parser *p, int opt)
 	close = (i1 > 0 && i1 < i2)? i1 : i2;
 	p->idstr = gretl_strndup(p->point - 1, close + 1);
     } else {
-	/* handle the MID_FNCALL case: the terminator of
+	/* handle the function-call case: the terminator of
 	   the argument will be a bare comma (unquoted, not 
 	   in parentheses) or a right paren which matches
 	   the paren that opens the argument list of
@@ -763,7 +761,7 @@ static NODE *get_middle_string_arg (parser *p, int opt)
 	parser_advance(p, close);
 	lex(p);
 #if SDEBUG
-	fprintf(stderr, "get_middle_string_arg: '%s'\n", p->idstr);
+	fprintf(stderr, "get_literal_string_arg: '%s'\n", p->idstr);
 #endif
     }
 
@@ -1042,8 +1040,59 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
     }
 }
 
-#define next_arg_is_string(i,m,k,o) ((i>m && i<k-1 && (o & (MID_STR|MID_FNCALL))) || \
-                                   (i==k-1 && (o & RIGHT_STR)))
+struct argrecord {
+    int f;
+    int vec[4];
+};
+
+/* Here we record the positions of function-call arguments to
+   built-in functions that take such arguments. These require
+   special handling: they should be passed forward as string
+   literals even if they are not wrapped in double-quotes.
+*/
+
+struct argrecord fncall_argrec[] = {
+    {F_BFGSMAX,  {0, 1, 1, 0}},
+    {F_NRMAX,    {0, 1, 1, 1}},
+    {F_FDJAC,    {0, 1, 0, 0}},
+    {F_SIMANN,   {0, 1, 0, 0}},
+    {F_BFGSCMAX, {0, 0, 1, 1}}
+};
+
+static const int *get_callargs (int f)
+{
+    int n = G_N_ELEMENTS(fncall_argrec);
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (f == fncall_argrec[i].f) {
+	    return fncall_argrec[i].vec;
+	}
+    }
+
+    if (fncall_func(f)) {
+	/* inconsistent with info in genparse.h */
+	fprintf(stderr, "ERROR: function %s has an 'fncall' arg"
+		" but no argrecord\n", getsymb(f));
+    }
+
+    return NULL;
+}
+
+static int next_arg_is_string (int i, const int *callargs, int k,
+			       int opt)
+{
+    if (callargs && callargs[i]) {
+	return 1;
+    }
+    if ((opt & MID_STR) && i > 0 && i < k-1) {
+	return 1;
+    }
+    if ((opt & RIGHT_STR) && i == k-1) {
+	return 1;
+    }
+    return 0;
+}
 
 /* Get up to @k comma-separated arguments (possibly optional).
    However, if k < 0 this is a signal to get as many arguments as we
@@ -1053,8 +1102,8 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
 static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 {
     NODE *child;
+    const int *callargs;
     char cexp = 0;
-    int midmin = 0;
     int i = 0;
 
 #if SDEBUG
@@ -1066,9 +1115,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	return;
     }
 
-    if (f == F_BFGSCMAX) {
-	midmin = 1;
-    }
+    callargs = get_callargs(f);
 
     lex(p);
 
@@ -1086,8 +1133,10 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (i > midmin && i < k - 1 && (opt & (MID_STR | MID_FNCALL))) {
-	    child = get_middle_string_arg(p, opt);
+	if (i <= 3 && callargs && callargs[i]) {
+	    child = get_literal_string_arg(p, opt);
+	} else if (i > 0 && i < k - 1 && (opt & MID_STR)) {
+	    child = get_literal_string_arg(p, opt);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
 	    child = get_final_string_arg(p, t, f, 0);
 	} else {
@@ -1102,7 +1151,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
 	    /* lex unless next arg needs special handling */
-	    if (!next_arg_is_string(i, midmin, k, opt)) {
+	    if (!next_arg_is_string(i, callargs, k, opt)) {
 		lex(p);
 	    }
 	} else {
@@ -1181,8 +1230,6 @@ static NODE *powterm (parser *p)
 
     if (string_mid_func(sym)) {
 	opt |= MID_STR;
-    } else if (fncall_func(sym) && !func2_symb(sym)) {
-	opt |= MID_FNCALL;
     }
 
     if (unary_op(sym)) {
