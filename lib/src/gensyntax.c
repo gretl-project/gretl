@@ -1042,7 +1042,7 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
     }
 }
 
-#define next_arg_is_string(i,k,o) ((i>0 && i<k-1 && (o & (MID_STR|MID_FNCALL))) || \
+#define next_arg_is_string(i,m,k,o) ((i>m && i<k-1 && (o & (MID_STR|MID_FNCALL))) || \
                                    (i==k-1 && (o & RIGHT_STR)))
 
 /* Get up to @k comma-separated arguments (possibly optional).
@@ -1054,6 +1054,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 {
     NODE *child;
     char cexp = 0;
+    int midmin = 0;
     int i = 0;
 
 #if SDEBUG
@@ -1063,7 +1064,11 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     if (p->sym != G_LPR) {
 	expected_symbol_error('(', p);
 	return;
-    }	
+    }
+
+    if (f == F_BFGSCMAX) {
+	midmin = 1;
+    }
 
     lex(p);
 
@@ -1081,7 +1086,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (i > 0 && i < k - 1 && (opt & (MID_STR|MID_FNCALL))) {
+	if (i > midmin && i < k - 1 && (opt & (MID_STR | MID_FNCALL))) {
 	    child = get_middle_string_arg(p, opt);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
 	    child = get_final_string_arg(p, t, f, 0);
@@ -1097,7 +1102,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
 	    /* lex unless next arg needs special handling */
-	    if (!next_arg_is_string(i, k, opt)) {
+	    if (!next_arg_is_string(i, midmin, k, opt)) {
 		lex(p);
 	    }
 	} else {
@@ -1366,8 +1371,13 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		int k = (sym == F_NRMAX || sym == F_MOVAVG)? 4 : -1;
+		int k = -1;
 
+		if (sym == F_NRMAX ||
+		    sym == F_BFGSCMAX ||
+		    sym == F_MOVAVG) {
+		    k = 4;
+		}
 		get_args(t->v.b1.b, p, sym, k, opt, &next);
 	    }
 	}

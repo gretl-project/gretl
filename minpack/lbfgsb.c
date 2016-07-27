@@ -1772,7 +1772,6 @@ static int mainlb_(int *n, int *m, double *x,
     int nact;
     double ddum;
     int info, nseg;
-    double time;
     int nfgv, ifun, iter;
     char word[4];
     double time1, time2;
@@ -2123,8 +2122,9 @@ L888:
     goto L222;
 L999:
     timer_(&time2);
-    time = time2 - time1;
-    fprintf(stderr, "time = %g\n", time);
+#if 0    
+    fprintf(stderr, "time = %g\n", time2 - time1);
+#endif    
 L1000:
     lsave[1] = prjctd;
     lsave[2] = cnstnd;

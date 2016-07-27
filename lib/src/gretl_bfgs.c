@@ -737,7 +737,8 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 
 #define GRAD_TOLER 1.0
 
-static int copy_initial_hessian (gretl_matrix *A, double **H, 
+static int copy_initial_hessian (double **H,
+				 const gretl_matrix *A,
 				 int n)
 {
     int i, j;
@@ -930,7 +931,7 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-		      gretl_matrix *A0, gretlopt opt, PRN *prn)
+		      const gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     int verbskip, verbose = (opt & OPT_V);
     double *wspace = NULL;
@@ -959,7 +960,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     }
 
     /* initialize curvature matrix */
-    err = copy_initial_hessian(A0, H, n);
+    err = copy_initial_hessian(H, A0, n);
     if (err) {
 	goto bailout;
     }
@@ -1232,10 +1233,11 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
 				    double *l, double *u)
 {
     double h = libset_get_double(CONV_HUGE);
-    int i, j, r = gretl_matrix_rows(m);
+    int i, j, c = gretl_matrix_cols(m);
     int err = 0;
 
-    if (r != 3) {
+    if (c != 3) {
+	fprintf(stderr, "lbfgs_bounds: matrix should have 3 cols\n");
 	return E_INVARG;
     }
 
@@ -1244,14 +1246,15 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
 	nbd[i] = 0;
     }
 
-    for (i=0; i<m->cols && !err; i++) {
-	j = (int) gretl_matrix_get(m, 0, i);
+    for (i=0; i<m->rows && !err; i++) {
+	j = (int) gretl_matrix_get(m, i, 0);
 	if (j < 1 || j > nparm) {
+	    fprintf(stderr, "lbfgs_bounds: out-of-bounds index %d\n", j);
 	    err = E_INVARG;
 	} else {
 	    j--;
-	    l[j] = gretl_matrix_get(m, 1, i);
-	    u[j] = gretl_matrix_get(m, 2, i);
+	    l[j] = gretl_matrix_get(m, i, 1);
+	    u[j] = gretl_matrix_get(m, i, 2);
 	    if (l[j] > u[j]) {
 		err = E_INVARG;
 	    } else if (l[j] != -h && u[j] != h) {
@@ -1272,9 +1275,8 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
 
 static int LBFGS_max (double *b, int n, int maxit, double reltol,
 		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-		      int crittype, BFGS_GRAD_FUNC gradfunc,
-		      gretl_matrix *bounds, void *data, 
-		      gretlopt opt, PRN *prn)
+		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
+		      const gretl_matrix *bounds, gretlopt opt, PRN *prn)
 {
     double *wspace = NULL;
     int *ispace = NULL;
@@ -1337,8 +1339,8 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
        we use reltol instead) */
     pgtol = 0;
 
-    /* Bounds on the parameters? */
     if (bounds != NULL) {
+	/* Handle specified bounds on the parameters */
 	err = transcribe_lbfgs_bounds(bounds, n, nbd, l, u);
 	if (err) {
 	    goto bailout;
@@ -1464,7 +1466,7 @@ static int LBFGS_max (double *b, int n, int maxit, double reltol,
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	      gretl_matrix *A0, gretlopt opt, PRN *prn)
+	      const gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     int ret, wnum;
 
@@ -1473,14 +1475,46 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	ret = LBFGS_max(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
-			crittype, gradfunc, NULL,
-			data, opt, prn);
+			crittype, gradfunc, data,
+			NULL, opt, prn);
     } else {
 	ret = BFGS_orig(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
 			crittype, gradfunc, data, 
 			A0, opt, prn);
     }
+
+    gretl_iteration_pop();
+
+    wnum = check_gretl_warning();
+    if (wnum != W_GRADIENT) {
+	/* suppress expected numerical warnings */
+	set_gretl_warning(0);
+    }
+
+    return ret;
+}
+
+/* constrained L_BFGS-B */
+
+static int BFGS_cmax (double *b, int n,
+		      int maxit, double reltol,
+		      int *fncount, int *grcount,
+		      BFGS_CRIT_FUNC cfunc, 
+		      int crittype,
+		      BFGS_GRAD_FUNC gradfunc,
+		      void *data, 
+		      const gretl_matrix *bounds,
+		      gretlopt opt, PRN *prn)
+{
+    int ret, wnum;
+
+    gretl_iteration_push();
+
+    ret = LBFGS_max(b, n, maxit, reltol,
+		    fncount, grcount, cfunc, 
+		    crittype, gradfunc, data,
+		    bounds, opt, prn);
 
     gretl_iteration_pop();
 
@@ -1743,6 +1777,7 @@ double user_BFGS (gretl_matrix *b,
 		  const char *fncall,
 		  const char *gradcall, 
 		  DATASET *dset,
+		  const gretl_matrix *bounds,
 		  PRN *prn, int *err)
 {
     umax *u;
@@ -1765,6 +1800,7 @@ double user_BFGS (gretl_matrix *b,
     }
 
     u->b = b;
+    u->prn = prn; /* placement of this? */
 
     *err = user_gen_setup(u, fncall, gradcall, NULL, dset);
     if (*err) {
@@ -1778,13 +1814,19 @@ double user_BFGS (gretl_matrix *b,
 	opt = OPT_V;
     }
 
-    u->prn = prn; /* 2015-03-10: this was conditional on OPT_V */
-
-    *err = BFGS_max(b->val, u->ncoeff, 
-		    maxit, tol, &fcount, &gcount,
-		    user_get_criterion, C_OTHER, 
-		    (u->gg == NULL)? NULL : user_get_gradient, 
-		    u, NULL, opt, prn);
+    if (bounds != NULL) {
+	*err = BFGS_cmax(b->val, u->ncoeff, 
+			 maxit, tol, &fcount, &gcount,
+			 user_get_criterion, C_OTHER, 
+			 (u->gg == NULL)? NULL : user_get_gradient, 
+			 u, bounds, opt, prn);	
+    } else {
+	*err = BFGS_max(b->val, u->ncoeff, 
+			maxit, tol, &fcount, &gcount,
+			user_get_criterion, C_OTHER, 
+			(u->gg == NULL)? NULL : user_get_gradient, 
+			u, NULL, opt, prn);
+    }
 
     if (fcount > 0 && (verbose || !gretl_looping())) {
 	pprintf(prn, _("Function evaluations: %d\n"), fcount);

@@ -2956,7 +2956,7 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
 
 static int is_function_call (const char *s)
 {
-    if (!strchr(s, '(')) {
+    if (!strchr(s, '(') || !strchr(s, ')')) {
 	return 0;
     } else {
 	return 1;
@@ -3001,6 +3001,75 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p)
     return n->v.m;
 }
 
+static const char *node_get_fncall (NODE *n, parser *p)
+{
+    const char *ret = NULL;
+    
+    if (n->t != STR) {
+	p->err = E_TYPES;
+    } else {
+	ret = n->v.str;
+	if (!is_function_call(ret)) {
+	    p->err = E_TYPES;
+	}
+    }
+
+    return ret;
+}
+
+static void n_args_error (int k, int n, int f, parser *p)
+{
+    gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
+			    "match the number of\nparameters for "
+			    "function %s (%d)"), k, getsymb(f), n);
+    p->err = 1;
+}
+
+static NODE *BFGS_constrained_max (NODE *t, parser *p)
+{
+    NODE *save_aux = p->aux;
+    NODE *n = t->v.b1.b;
+    NODE *ret = NULL;
+    NODE *e = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *bounds = NULL;
+    const char *sf = NULL;
+    const char *sg = NULL;
+    int i, k = n->v.bn.n_nodes;
+
+    if (k < 3 || k > 4) {
+	n_args_error(k, 3, F_BFGSCMAX, p);
+    }
+
+    for (i=0; i<k && !p->err; i++) {
+	e = n->v.bn.n[i];
+	if (i == 0) {
+	    b = node_get_matrix(e, p);
+	} else if (i == 1) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (!p->err) {
+		bounds = node_get_matrix(e, p);
+	    }
+	} else if (i == 2) {
+	    sf = node_get_fncall(e, p);
+	} else if (i == 3 && !null_or_empty(e)) {
+	    sg = node_get_fncall(e, p);
+	}
+    }
+
+    if (!p->err) {
+	reset_p_aux(p, save_aux);
+	ret = aux_scalar_node(p);
+    }
+
+    if (!p->err) {
+	ret->v.xval = user_BFGS(b, sf, sg, p->dset, bounds,
+				p->prn, &p->err);
+    }	
+
+    return ret;
+}
+
 static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -3041,7 +3110,7 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	ret->v.xval = user_BFGS(b, sf, sg, p->dset, 
+	ret->v.xval = user_BFGS(b, sf, sg, p->dset, NULL,
 				p->prn, &p->err);
     } else {
 	ret = aux_scalar_node(p);
@@ -8893,14 +8962,6 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
     return ret;
 }
 
-static void n_args_error (int k, int n, int f, parser *p)
-{
-    gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
-			    "match the number of\nparameters for "
-			    "function %s (%d)"), k, getsymb(f), n);
-    p->err = 1;
-}
-
 static NODE *isoconv_node (NODE *t, parser *p)
 {
     NODE *save_aux = p->aux;
@@ -12475,7 +12536,10 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = BFGS_maximize(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
-	} 
+	}
+	break;
+    case F_BFGSCMAX:
+	ret = BFGS_constrained_max(t, p);
 	break;
     case F_SIMANN:
 	/* matrix-pointer, plus string and int args */

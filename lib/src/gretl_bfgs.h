@@ -36,7 +36,7 @@ typedef int (*HESS_FUNC) (double *, gretl_matrix *, void *);
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	      gretl_matrix *A0, gretlopt opt, PRN *prn);
+	      const gretl_matrix *A0, gretlopt opt, PRN *prn);
 
 int newton_raphson_max (double *b, int n, int maxit, 
 			double crittol, double gradtol, 
@@ -70,7 +70,8 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
 double user_BFGS (gretl_matrix *b, 
 		  const char *fncall,
 		  const char *gradcall,
-		  DATASET *dset, 
+		  DATASET *dset,
+		  const gretl_matrix *bounds,
 		  PRN *prn, 
 		  int *err);
 
