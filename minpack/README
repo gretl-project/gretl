@@ -14,9 +14,9 @@ the callbacks therefore also has an additional "void *"
 parameter. 
 
 The file lbfgsb.c is an f2c translation of the fortran code
-routines.f from L-BFGS-B, at
+lbfgsb.f from L-BFGS-B, at
 
-http://www.ece.northwestern.edu/~nocedal/lbfgsb.html
+http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
 
 L-BFGS-B References:
 
@@ -28,6 +28,11 @@ C. Zhu, R. H. Byrd and J. Nocedal. L-BFGS-B: Algorithm 778:
 L-BFGS-B, FORTRAN routines for large scale bound constrained 
 optimization (1997), ACM Transactions on Mathematical Software, 
 Vol 23, Num. 4, pp. 550 - 560.
+
+Jorge Nocedal and Jose Luis Morales, Remark on "Algorithm 778: 
+L-BFGS-B: Fortran Subroutines for Large-Scale Bound Constrained 
+Optimization"  (2011). ACM Transactions on Mathematical Software, 
+Vol 38, Num. 1, pp. 1 - 4.
 
 ====
  
