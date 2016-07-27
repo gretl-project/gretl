@@ -1133,8 +1133,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (i <= 3 && callargs && callargs[i]) {
-	    child = get_literal_string_arg(p, opt);
+	if (i < 4 && callargs && callargs[i]) {
+	    child = get_literal_string_arg(p, 0);
 	} else if (i > 0 && i < k - 1 && (opt & MID_STR)) {
 	    child = get_literal_string_arg(p, opt);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
