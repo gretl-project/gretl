@@ -50,7 +50,7 @@ function scalar Rosenbrock(matrix *param)
   return -(1-x)^2 - 100 * (y - x^2)^2
 end function
 
-matrix theta = { 0, 0 }
+matrix theta = {0, 0}
 
 set max_verbose 1
 M = BFGSmax(&theta, Rosenbrock(&theta))
@@ -80,11 +80,6 @@ discovers the minimum using \texttt{BFGSmax} (giving a verbose account
 of progress). Note that, in this particular case, the function to be
 maximized only depends on the parameters, so the second parameter is
 omitted from the definition of the function \texttt{Rosenbrock}. 
-
-\subsection{Limited-memory variant}
-\label{sec:LBFGS}
-
-See \cite{byrd-etal95} (\ldots FIXME: expand a little here \ldots)
 
 \subsection{Supplying analytical derivatives for BFGS}
 \label{sec:BFGSgrad}
@@ -139,8 +134,8 @@ function void Rosen_grad (matrix *g, matrix *param)
   g[2] = -200*(y - x^2)
 end function
 
-matrix theta = { 0, 0 }
-matrix grad = { 0, 0 }
+matrix theta = {0, 0}
+matrix grad = {0, 0}
 
 set max_verbose 1
 M = BFGSmax(&theta, Rosenbrock(&theta), Rosen_grad(&grad, &theta))
@@ -149,6 +144,41 @@ print theta
 print grad
 \end{scode}
 \end{script}
+
+\subsection{Limited-memory variant}
+\label{sec:LBFGS}
+
+As an alternative to ``standard'' BFGS gretl offers the limited-memory
+variant, \textsf{L-BFGS-B}. This is described by \cite{byrd-etal95}
+and \cite{zhu-etal97}. Gretl uses version 3.0 of this code, which
+features improvements described by \cite{morales11}. Some problems
+that defeat standard BFGS may be amenable to solution by
+\textsf{L-BFGS-B}. To see if this is the case, gretl code that uses
+BFGS can be pushed into using the alternative algorithm via the \cmd{set}
+command, as follows:
+%
+\begin{code}
+set lbfgs on
+\end{code}
+
+The primary case for using \textsf{L-BFGS-B}, however, is constrained
+optimization: this algorithm supports constraints on the parameters in
+the form of minima and/or maxima. In gretl this is implemented by the
+function \cmd{BFGScmax} (`c' for constrained). The syntax is basically
+similar to that of \cmd{BFGSmax}, except that the first argument must
+followed by specification of a ``bounds'' matrix. This matrix should
+have three columns and as many rows as there are constrained elements
+of the parameter vector. Each row should hold the (1-based) index of
+the constrained parameter, followed by lower and upper bounds. The
+values \verb|-$huge| and \verb|$huge| should be used to indicate that
+the parameter is unconstrained downward or upward, respectively. For
+example, the following code constructs a matrix to specify that the
+second element of the parameter vector must be non-negative, and the
+fourth must lie between 0 and 1:
+%
+\begin{code}
+matrix bounds = {2, 0, $huge; 4, 0, 1}
+\end{code}
 
 \section{Newton--Raphson}
 \label{sec:newton-raphson}
