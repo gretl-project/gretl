@@ -285,7 +285,8 @@ want a manageable number of occupational category dummies.
 
 Let's call the source series \texttt{src} and one of the target dummies
 \texttt{D1}. And let's say that the values of \texttt{src} to be grouped
-under \texttt{D1} are 2, 13, 14 and 25.
+under \texttt{D1} are 2, 13, 14 and 25. We'll consider three possible
+solutions: ``Longhand,'' ``Clever,'' and ``Proper.''
 
 \emph{``Longhand'' solution:}
 \begin{code}
@@ -501,7 +502,7 @@ print h1 h2 h3 h4 --byobs
 \emph{Comment:} Solution 1 is the preferable one: it relies on the
 built-in \cmd{leverage} command, which computes the requested series
 quite efficiently, taking care of missing values, possible
-restrictions to the sample, etcetera.
+restrictions to the sample, etc.
 
 However, three more are shown for didactical purposes, mainly to show
 the user how to manipulate matrices. Solution 2 first constructs the
@@ -644,8 +645,8 @@ just that. See the \GCR.
 
 \subsection{Convolution / polynomial multiplication}
 
-\emph{Problem:} How do I multiply polynomials? There is no functions
-to do that, and still it's a faily basic mathematical task.
+\emph{Problem:} How do I multiply polynomials? There's no dedicated
+function to do that, and yet it's a fairly basic mathematical task.
 
 \emph{Solution:} Never fear! We have the \cmd{filter} function, which
 is advertised as a time series tool, but in fact does just that.
@@ -688,17 +689,22 @@ which is indeed the desired result.
 \emph{Problem:} How can I tell if two lists contain the same variables
 (not necessarily in the same order)?
 
-\emph{Solution:} Under many respects, lists are like sets, so it makes
-sense to use the so-called ``symmetric difference'' operator; this, in
-turn can be defined as
+\emph{Solution:} In many respects, lists are like sets, so it makes
+sense to use the so-called ``symmetric difference'' operator, which is
+defined as
 \[
-A\,\triangle\,B = (A \backslash B) \cup (B \backslash A) .
+A\,\triangle\,B = (A \setminus B) \cup (B \setminus A)
+\]
+where backslash represents the relative complement operator, such
+that
+\[
+A \setminus B = \left\{ x \in A \,|\, x \not \in B \right\}
 \]
 
-In practice: we first check if there are series in $A$ but not in $B$,
-then we perform the reverse check. If the union of the two results is
-an empty set, then the lists contain the same variables. The hansl
-syntax for this would be something like
+In practice we first check if there are any series in $A$ but not in
+$B$, then we perform the reverse check. If the union of the two
+results is an empty set, then the lists must contain the same
+variables. The hansl syntax for this would be something like
 
 \begin{code}
 scalar NotTheSame = nelem((A-B) || (B-A)) > 0
