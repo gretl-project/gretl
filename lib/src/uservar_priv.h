@@ -20,13 +20,6 @@
 #ifndef USERVAR_PRIV_H_
 #define USERVAR_PRIV_H_
 
-typedef enum {
-    UV_PRIVATE = 1 << 0,
-    UV_SHELL   = 1 << 1,
-    UV_MAIN    = 1 << 2,
-    UV_NODECL  = 1 << 3
-} UVFlags;
-
 struct user_var_ {
     GretlType type;
     int level;

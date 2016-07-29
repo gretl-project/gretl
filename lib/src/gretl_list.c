@@ -109,6 +109,42 @@ int gretl_is_list (const char *name)
 }
 
 /**
+ * gretl_is_midas_list:
+ * @list: the list array.
+ *
+ * Returns: 1 if @list has been set as a MIDAS list in an
+ * approved manner, 0 otherwise.
+ */
+
+int gretl_is_midas_list (const int *list)
+{
+    user_var *u = get_user_var_by_data((const void *) list);
+
+    return (user_var_get_flags(u) & UV_MIDAS) != 0;
+}
+
+/**
+ * gretl_list_set_midas:
+ * @list: the list array.
+ *
+ * Attempts to set the MIDAS flags on @list.
+
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
+int gretl_list_set_midas (const int *list)
+{
+    user_var *u = get_user_var_by_data((const void *) list);
+
+    if (u != NULL) {
+	user_var_set_flag(u, UV_MIDAS);
+	return 0;
+    } else {
+	return E_INVARG;
+    }
+}
+
+/**
  * append_to_list_by_data:
  * @ptr: pointer to a user_var.
  * @add: list to add.

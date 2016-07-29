@@ -14195,6 +14195,8 @@ static int series_compatible (const gretl_matrix *m, parser *p)
     return ok;
 }
 
+#define GENMISS_VERBOSE 0
+
 /* below: note that the node we're checking is p->ret, which may
    differ in type from the target to which it will be
    assigned/converted
@@ -14216,6 +14218,9 @@ static void gen_check_errvals (parser *p)
     if (r->t == NUM) {
 	if (!isfinite(r->v.xval)) {
 #if SCALARS_ENSURE_FINITE
+# if GENMISS_VERBOSE
+	    fprintf(stderr, "scalar return = %g\n", r->v.xval);
+# endif
 	    r->v.xval = NADBL;
 	    set_gretl_warning(W_GENMISS);
 #else
@@ -14228,6 +14233,9 @@ static void gen_check_errvals (parser *p)
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    if (!isfinite(r->v.xvec[t])) {
 #if SERIES_ENSURE_FINITE
+# if GENMISS_VERBOSE
+		fprintf(stderr, "series return: xvec[%d] = %g\n", t, r->v.xvec[t]);
+# endif
 		r->v.xvec[t] = NADBL;
 		set_gretl_warning(W_GENMISS);
 #else

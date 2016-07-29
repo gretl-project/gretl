@@ -4055,6 +4055,8 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	return NULL;
     }
 
+    errno = 0;
+
     if (method == MIDAS_EXP_ALMON) {
 	for (i=0; i<p; i++) {
 	    w->val[i] = (i+1) * theta[0];
@@ -4104,6 +4106,16 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] /= wsum;
 	}
     }
+
+    if (errno) {
+	if (gretl_warnings_on()) {
+	    fprintf(stderr, "midas_weights: %s\n", strerror(errno));
+	}
+	gretl_matrix_free(w);
+	w = NULL;
+	*err = E_INVARG;
+	errno = 0;
+    }
     
     return w;
 }
@@ -4134,6 +4146,8 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     }
 
     theta = m->val;
+
+    errno = 0;
 
     if (method == MIDAS_BETA) {
 	/* check beta parameters */
@@ -4259,6 +4273,16 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     }
 
     gretl_matrix_free(w);
+
+    if (errno) {
+	if (gretl_warnings_on()) {
+	    fprintf(stderr, "midas_gradient: %s\n", strerror(errno));
+	}
+	gretl_matrix_free(G);
+	G = NULL;
+	*err = E_INVARG;
+	errno = 0;
+    }	
 
     return G;
 }

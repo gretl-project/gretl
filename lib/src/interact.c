@@ -713,6 +713,10 @@ static int set_var_info (const int *list,
 	return E_INVARG;
     }
 
+    if (opt & OPT_M) {
+	gretl_list_set_midas(list);
+    }
+
     for (i=1; i<=list[0]; i++) {
 	if (opt & OPT_D) {
 	    series_set_discrete(dset, list[i], 1);

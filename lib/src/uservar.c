@@ -727,6 +727,21 @@ int user_var_get_level (user_var *uvar)
     return (uvar == NULL)? -1 : uvar->level;
 }
 
+int user_var_get_flags (user_var *uvar)
+{
+    return (uvar == NULL)? 0 : (int) uvar->flags;
+}
+
+int user_var_set_flag (user_var *uvar, UVFlags flag)
+{
+    if (uvar != NULL) {
+	uvar->flags |= flag;
+	return 0;
+    } else {
+	return E_INVARG;
+    }
+}
+
 void *user_var_get_value (user_var *uvar)
 {
     return (uvar == NULL)? NULL : uvar->ptr;
