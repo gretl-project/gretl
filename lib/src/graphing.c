@@ -8019,6 +8019,16 @@ static int pd_from_compfac (const DATASET *dset,
     return pd;
 }
 
+static void transcribe_graph_name (DATASET *targ, int i,
+				   const DATASET *src, int j)
+{
+    const char *s = series_get_display_name(src, j);
+    
+    if (s != NULL && *s != '\0') {
+	series_record_display_name(targ, i, s);
+    }
+}
+
 /* high-frequency plot for MIDAS */
 
 int hf_plot (const int *list, const char *literal,
@@ -8071,6 +8081,7 @@ int hf_plot (const int *list, const char *literal,
     if (p != NULL) {
 	*p = '\0';
     }
+    transcribe_graph_name(hset, 1, dset, list[1]);
 
     s = 0;
     /* transcribe high-frequency data */
@@ -8087,6 +8098,7 @@ int hf_plot (const int *list, const char *literal,
 	    int vi = lflist[i];
 
 	    strcpy(hset->varname[i+1], dset->varname[vi]);
+	    transcribe_graph_name(hset, i+1, dset, vi);
 	    for (s=0; s<hset->n; s++) {
 		hset->Z[i+1][s] = NADBL;
 	    }

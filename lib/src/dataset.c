@@ -2933,7 +2933,7 @@ int series_record_label (DATASET *dset, int i,
 }
 
 int series_record_display_name (DATASET *dset, int i,
-			  const char *s) 
+				const char *s) 
 {
     char *targ = dset->varinfo[i]->display_name;
 
