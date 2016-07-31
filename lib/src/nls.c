@@ -3250,7 +3250,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 			    gretlopt opt, PRN *prn)
 {
     MODEL nlmod;
-    int i, t, origv;
+    int origv;
     int err = 0;
 
     if (spec == NULL) {
