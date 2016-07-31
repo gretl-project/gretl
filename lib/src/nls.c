@@ -3323,7 +3323,9 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	spec->jac = NULL;
     } else {
 	/* allocate auxiliary arrays */
-	spec->fvec = malloc(spec->nobs * sizeof *spec->fvec);
+	size_t fvec_bytes = spec->nobs * sizeof *spec->fvec;
+	    
+	spec->fvec = malloc(fvec_bytes);
 	spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
 
 	if (spec->fvec == NULL || spec->jac == NULL) {
@@ -3332,14 +3334,11 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	}
 
 	if (spec->lvec != NULL) {
-	    for (t=0; t<spec->nobs; t++) {
-		spec->fvec[t] = spec->lvec->val[t];
-	    }
+	    memcpy(spec->fvec, spec->lvec->val, fvec_bytes);
 	} else {
-	    i = 0;
-	    for (t=spec->t1; t<=spec->t2; t++) {
-		spec->fvec[i++] = spec->dset->Z[spec->lhv][t];
-	    }
+	    double *src = spec->dset->Z[spec->lhv] + spec->t1;
+	    
+	    memcpy(spec->fvec, src, fvec_bytes);
 	}
     }
 
