@@ -2,6 +2,7 @@ version 2016d, in progress
 - New function BFGSmaxc() for constrained maximization using
   L-BFGS-B, version 3.0
 - Small fixes for --compact=spread and new lags() options
+- "nls" command: make --verbose output more informative
 - Fix breakage in "dataset renumber" command
 - gig addon: fix an off-by-one bug
 - Fix bug: potential crash in GUI filter plot with very long
