@@ -2876,6 +2876,7 @@ print_iter_info (int iter, double crit, int type, int k,
     const char *cstrs[] = {
 	N_("loglikelihood"),
 	N_("GMM criterion"),
+	N_("SSR"),
 	N_("Criterion"),
     };
     const char *cstr = cstrs[type];

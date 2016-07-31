@@ -1175,7 +1175,7 @@ static double get_mle_ll (const double *b, void *p)
    also for checking derivatives in the MLE case
 */
 
-static int nl_function_calc (double *f, void *p)
+static int nl_function_calc (double *f, double *x, void *p)
 {
     nlspec *s = (nlspec *) p;
     const double *y;
@@ -1212,6 +1212,7 @@ static int nl_function_calc (double *f, void *p)
 	if (s->ci == MLE) {
 	    s->crit += f[t];
 	} else {
+	    /* sum of squares */
 	    s->crit += f[t] * f[t];
 	}
     }
@@ -1219,7 +1220,9 @@ static int nl_function_calc (double *f, void *p)
     s->iters += 1;
 
     if (s->ci == NLS && (s->opt & OPT_V)) {
-	pprintf(s->prn, _("iteration %2d: SSR = %.8g\n"), s->iters, s->crit);
+	/* nls verbose output */
+	print_iter_info(s->iters, s->crit, C_SSR, s->ncoeff,
+			x, NULL, 0, s->prn);
     }
 
     return 0;
@@ -2360,7 +2363,7 @@ static int nls_calc (int m, int n, double *x, double *fvec,
 
     if (*iflag == 1) {
 	/* calculate function at x, results into fvec */
-	if (nl_function_calc(fvec, p)) {
+	if (nl_function_calc(fvec, x, p)) {
 	    *iflag = -1;
 	} 
     } else if (*iflag == 2) {
@@ -2628,7 +2631,7 @@ nls_calc_approx (int m, int n, double *x, double *fvec,
 
     /* calculate function at x, results into fvec */  
     if (!err) {
-	err = errc = nl_function_calc(fvec, p);
+	err = errc = nl_function_calc(fvec, x, p);
     }
     
     if (err) {

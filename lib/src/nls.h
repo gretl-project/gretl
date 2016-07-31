@@ -23,6 +23,7 @@
 enum {
     C_LOGLIK,
     C_GMM,
+    C_SSR,
     C_OTHER
 };
 
