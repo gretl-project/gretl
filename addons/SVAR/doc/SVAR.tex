@@ -675,9 +675,11 @@ given to the \texttt{SVAR\_boot} function, which takes as arguments
 
 The function outputs a scalar, which keeps track of how many bootstrap
 replications failed to converge (none here). Note that this procedure
-may be quite CPU-intensive. The output contains a table similar to the
-output to \texttt{Cmodel}, which is used to display the bootstrap
-means and standard errors of the parameters:
+may be quite CPU-intensive. 
+
+The function can also return in output a table similar to the output
+to \texttt{Cmodel}, which is used to display the bootstrap means and
+standard errors of the parameters:
 \begin{code}
 Bootstrap results (1024 replications)
              coefficient   std. error      z       p-value 
@@ -688,6 +690,11 @@ Bootstrap results (1024 replications)
   C[ 2; 2]     1.30234     0.0853908    15.25      1.61e-52 ***
 
 Failed = 0, Time (bootstrap) = 20.24
+\end{code}
+This can be achieved by supplying a zero fourth argument to the
+\cmd{SVAR\_boot} function, as in
+\begin{code}
+  bfail = SVAR_boot(&Mod, 1024, 0.90, 0)
 \end{code}
 
 Once the bootstrap is done, its results are stored into the bundle for
@@ -2229,7 +2236,8 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_boot(bundle *obj, scalar rep, scalar alpha)}
+\begin{funcdoc}{SVAR\_boot(bundle *obj, scalar rep, scalar alpha, bool
+    quiet[1])}
   Perform a bootstrap analysis of a model. Returns the number of
   bootstrap replications in which the model failed to converge. Its
   arguments are:
@@ -2237,6 +2245,8 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \item a bundle holding the model
   \item the number of bootstrap replications
   \item the quantile used for the confidence bands
+  \item (optional) omit the table with bootstap means and standard
+    errors (default: yes) 
   \end{enumerate}
 \end{funcdoc}
 
