@@ -2625,13 +2625,11 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		series_set_lag(dset, i, atoi((char *) tmp));
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");
 	    if (tmp != NULL) {
 		series_set_compact_method(dset, i, compact_string_to_int((char *) tmp));
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "discrete");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
@@ -2639,6 +2637,13 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		}
 		free(tmp);
 	    }
+	    tmp = xmlGetProp(cur, (XUC) "midas");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, i, VAR_MIDAS);
+		}
+		free(tmp);
+	    }	    
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
 		free(tmp);
