@@ -133,9 +133,9 @@ int *get_list_by_name (const char *name);
 
 int gretl_is_list (const char *name);
 
-int gretl_is_midas_list (const int *list);
+int gretl_is_midas_list (const int *list, const DATASET *dset);
 
-int gretl_list_set_midas (const int *list);
+int gretl_list_set_midas (const int *list, DATASET *dset);
 
 int append_to_list_by_data (void *ptr, const int *add);
 

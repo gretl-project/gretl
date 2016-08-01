@@ -111,37 +111,61 @@ int gretl_is_list (const char *name)
 /**
  * gretl_is_midas_list:
  * @list: the list array.
+ * @dset: pointer to dataset.
  *
  * Returns: 1 if @list has been set as a MIDAS list in an
  * approved manner, 0 otherwise.
  */
 
-int gretl_is_midas_list (const int *list)
+int gretl_is_midas_list (const int *list, const DATASET *dset)
 {
-    user_var *u = get_user_var_by_data((const void *) list);
+    int ret = 0;
 
-    return (user_var_get_flags(u) & UV_MIDAS) != 0;
+    if (list != NULL) {
+	int i, vi;
+
+	ret = 1;
+	for (i=1; i<=list[0] && ret; i++) {
+	    vi = list[i];
+	    if (vi < 1 || vi >= dset->v) {
+		ret = 0;
+	    } else if (!(series_get_flags(dset, vi) & VAR_MIDAS)) {
+		ret = 0;
+	    }
+	}
+    }
+
+    return ret;
 }
 
 /**
  * gretl_list_set_midas:
  * @list: the list array.
+ * @dset: pointer to dataset.
  *
- * Attempts to set the MIDAS flags on @list.
-
- * Returns: 0 on success, non-zero code on failure.
+ * Attempts to set the MIDAS flag on the members of @list.
+ *
+ * 0 on success, non-zero code on failure.
  */
 
-int gretl_list_set_midas (const int *list)
+int gretl_list_set_midas (const int *list, DATASET *dset)
 {
-    user_var *u = get_user_var_by_data((const void *) list);
+    int err = 0;
 
-    if (u != NULL) {
-	user_var_set_flag(u, UV_MIDAS);
-	return 0;
-    } else {
-	return E_INVARG;
+    if (list != NULL) {
+	int i, vi;
+	
+	for (i=1; i<=list[0] && !err; i++) {
+	    vi = list[i];
+	    if (vi < 1 || vi >= dset->v) {
+		err = E_INVARG;
+	    } else {
+		series_set_flag(dset, vi, VAR_MIDAS);
+	    }
+	}
     }
+
+    return err;
 }
 
 /**

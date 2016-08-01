@@ -709,12 +709,11 @@ static int set_var_info (const int *list,
 	return E_DATA;
     }
 
-    if ((opt & (OPT_G | OPT_I)) && list[0] > 1) {
-	return E_INVARG;
-    }
-
     if (opt & OPT_M) {
-	gretl_list_set_midas(list);
+	err = gretl_list_set_midas(list, dset);
+	if (err) {
+	    return err;
+	}
     }
 
     for (i=1; i<=list[0]; i++) {
@@ -723,10 +722,12 @@ static int set_var_info (const int *list,
 	} else if (opt & OPT_C) {
 	    series_set_discrete(dset, list[i], 0);
 	}
-	if (opt & OPT_M) {
-	    series_set_flag(dset, list[i], VAR_MIDAS);
-	}
     }
+
+    /* below: we'll accept multi-series lists, but the
+       string-setting facility will apply to just the
+       first member, as "representative" of the list
+    */
 
     if (opt & OPT_I) {
 	const char *s = get_optval_string(SETINFO, OPT_I);

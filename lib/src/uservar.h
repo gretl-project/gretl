@@ -29,8 +29,7 @@ typedef enum {
     UV_PRIVATE = 1 << 0,
     UV_SHELL   = 1 << 1,
     UV_MAIN    = 1 << 2,
-    UV_NODECL  = 1 << 3,
-    UV_MIDAS   = 1 << 4
+    UV_NODECL  = 1 << 3
 } UVFlags;
 
 typedef int (*USER_VAR_FUNC) (const char *, GretlType, int);
