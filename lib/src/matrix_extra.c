@@ -1143,6 +1143,30 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
     return A;
 }
 
+#ifndef WIN32
+
+/* In reading matrices, accept "NA" for NaN? */
+
+static double unix_scan_NA (const char *s, FILE *fp, int *err)
+{
+    char test[3];
+
+    if (s != NULL) {
+	sscanf(s, "%2s", test);
+    } else {
+	fscanf(fp, "%2s", test);
+    }
+
+    if (!strcmp(test, "NA")) {
+	return M_NA;
+    } else {
+	*err = E_DATA;
+	return 0;
+    }
+}
+
+#endif
+
 /**
  * gretl_matrix_read_from_file:
  * @fname: name of file.
@@ -1235,6 +1259,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 
     if (!*err) {
 	char *p = NULL, *zbuf = NULL;
+	long pos = 0;
 	double x;
 	int i, j;
 
@@ -1249,9 +1274,13 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 		if (fz) {
 		    n = sscanf(p, "%lf", &x);
 		} else {
+		    pos = ftell(fp);
 		    n = fscanf(fp, "%lf", &x);
 		}
 		if (n != 1) {
+		    if (!fz) {
+			fseek(fp, pos, SEEK_SET);
+		    }
 #ifdef WIN32
 		    if (fz) {
 			x = win32_sscan_nonfinite(p, err);
@@ -1259,7 +1288,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 			x = win32_fscan_nonfinite(fp, err);
 		    }
 #else
-		    *err = E_DATA;
+		    x = unix_scan_NA(p, fp, err);
 #endif
 		}
 		if (*err) {
