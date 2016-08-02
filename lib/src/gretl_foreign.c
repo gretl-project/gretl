@@ -1497,8 +1497,9 @@ static void write_R_io_funcs (FILE *fp)
 
     fputs("gretl.export <- function(x, sx) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
+    fputs("  objname <- as.character(substitute(x))\n", fp);
     fputs("  if (missing(sx)) {\n", fp);
-    fputs("    sx <- as.character(substitute(x))\n", fp);
+    fputs("    sx <- objname\n", fp);
     fputs("  }\n", fp);
     fputs("  if (is.ts(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
@@ -1507,15 +1508,19 @@ static void write_R_io_funcs (FILE *fp)
     fputs("      colnames(dfx) <- sx;\n", fp);
     fputs("    }\n", fp);
     fputs("    write.csv(dfx, file=fname, row.names=F)\n", fp);
+    fputs("    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n", fp);
     fputs("  } else if (is.data.frame(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
     fputs("    write.csv(x, file=fname, row.names=F)\n", fp);
+    fputs("    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n", fp);
     fputs("  } else if (is.matrix(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".mat\", sep=\"\")\n", fp);
     fputs("    write(dim(x), fname)\n", fp);
     fputs("    write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
+    fputs("    gretlmsg <- paste(\"wrote matrix\", fname, \"\\n\")\n", fp);
+    fputs("  } else {\n", fp);
+    fputs("    gretlmsg <- paste(\"not a recognized object-type\", objname, \"\\n\")\n", fp);
     fputs("  }\n", fp);
-    fputs("  gretlmsg <- paste(\"wrote\", fname, \"\\n\")\n", fp);
     fputs("  cat(gretlmsg)\n", fp);
     fputs("}\n", fp);
 
