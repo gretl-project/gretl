@@ -1775,8 +1775,7 @@ static int copy_user_parnames (MODEL *pmod, nlspec *spec)
     for (i=0; i<pmod->ncoeff && !err; i++) {
 	pname = strtok((i == 0)? tmp : NULL, sep);
 	if (pname == NULL) {
-	    gretl_errmsg_sprintf("Expected %d param names", pmod->ncoeff);
-	    err = E_DATA;
+	    pmod->params[i] = gretl_strdup("unnamed");
 	} else {
 	    pmod->params[i] = gretl_strdup(pname);
 	    if (pmod->params[i] == NULL) {
