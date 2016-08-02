@@ -4572,6 +4572,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    /* compaction factor for high-frequency data */
 	    cfac = list[0];
 	    if (cfac < 2) {
+		fprintf(stderr, "hflags: list too short\n");
 		p->err = E_INVARG;
 	    }
 	}

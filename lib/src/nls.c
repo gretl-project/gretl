@@ -1775,9 +1775,7 @@ static int copy_user_parnames (MODEL *pmod, nlspec *spec)
     for (i=0; i<pmod->ncoeff && !err; i++) {
 	pname = strtok((i == 0)? tmp : NULL, sep);
 	if (pname == NULL) {
-	    fprintf(stderr, "copy_user_parnames: too few strings\n");
-	    gretl_errmsg_sprintf(_("modprint: expected %d names"), 
-				 pmod->ncoeff);
+	    gretl_errmsg_sprintf("Expected %d param names", pmod->ncoeff);
 	    err = E_DATA;
 	} else {
 	    pmod->params[i] = gretl_strdup(pname);
@@ -1964,10 +1962,13 @@ static int finalize_nls_model (MODEL *pmod, nlspec *spec,
     }
 
     if (!err) {
+	err = add_param_names_to_model(pmod, spec);
+    }
+
+    if (!err) {
 	ls_criteria(pmod);
 	pmod->fstt = pmod->chisq = NADBL;
 	add_coeffs_to_model(pmod, spec->coeff);
-	add_param_names_to_model(pmod, spec);
 	pmod->list[1] = spec->dv;
 
 	/* set additional data on model to be shipped out */

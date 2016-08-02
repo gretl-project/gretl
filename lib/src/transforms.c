@@ -1288,8 +1288,8 @@ static int process_hf_lags_input (const gretl_matrix *lvec,
     int hf_min, hf_max;
     int i, n;
 
-    if (dset->pd != 12 && dset->pd != 4) {
-	return E_INVARG;
+    if (dset->pd != 1 && dset->pd != 12 && dset->pd != 4) {
+	return E_PDWRONG;
     }
 
     n = gretl_vector_get_length(lvec);
