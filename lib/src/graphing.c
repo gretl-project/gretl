@@ -407,8 +407,17 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 
 static int plain_lines_spec (gretlopt opt)
 {
-    if ((opt & OPT_O) && !(opt & (OPT_B | OPT_M | OPT_P))) {
+    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_B | OPT_P))) {
 	return get_optval_string(plot_ci, OPT_O) == NULL;
+    } else {
+	return 0;
+    }
+}
+
+static int plain_impulses_spec (gretlopt opt)
+{
+    if ((opt & OPT_M) && !(opt & (OPT_O | OPT_B | OPT_P))) {
+	return get_optval_string(plot_ci, OPT_M) == NULL;
     } else {
 	return 0;
     }
@@ -460,14 +469,9 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    /* there's no xvar in @list */
 	    n_yvars++;
 	}
-	if (opt & OPT_O) {
-	    gi->flags |= GPT_LINES;
-	} else if (opt & OPT_M) {
-	    gi->flags |= GPT_IMPULSES;
-	}
 	gi->flags |= GPT_FIT_OMIT;
 	gi->band = 1;
-	return 0;
+	goto linespec;
     }
 
     if (opt & OPT_S) {
@@ -482,11 +486,6 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     } else if (opt & OPT_A) {
 	/* internal option for fitted-actual plot */
 	gi->flags |= GPT_FA;
-    }
-
-    if (opt & OPT_G) {
-	/* internal option, saving as icon */
-	gi->flags |= GPT_ICON;
     }
 
     if (opt & OPT_Z) {
@@ -504,9 +503,14 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
     }
 
+ linespec:
+
     if (plain_lines_spec(opt)) {
 	/* just using lines */
 	gi->flags |= GPT_LINES;
+    } else if (plain_impulses_spec(opt)) {
+	/* just using impulses */
+	gi->flags |= GPT_IMPULSES;
     } else if (opt & (OPT_M | OPT_O | OPT_P | OPT_B)) {
 	/* for handling per-variable "plot with" options */
 	gi->withlist = gretl_list_new(n_yvars);
@@ -530,6 +534,11 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    gp_set_non_point_info(gi, list, dset, OPT_B);
 	}
     }
+
+    if (opt & OPT_G) {
+	/* internal option, saving as icon */
+	gi->flags |= GPT_ICON;
+    }    
 
     gi->fit = PLOT_FIT_NONE;
 
