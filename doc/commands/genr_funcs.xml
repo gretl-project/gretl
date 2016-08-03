@@ -5383,10 +5383,6 @@
 	  filename, without any path component.
 	</para>
 	<para>
-	  Should an error occur (such as the file being badly formatted or
-	  inaccessible), an empty matrix is returned.
-	</para>
-	<para>
 	  <seelist>
             <fncref targ="bread"/>
             <fncref targ="mwrite"/>

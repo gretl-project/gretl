@@ -3794,11 +3794,14 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	}
 
+#if 0
+	/* Allin, 2016-08-03: I really don't like this
+	   behaviour! */
 	if (f == F_MREAD && p->err == E_FOPEN) {
-	    /* should we be doing this?? */
 	    ret->v.m = gretl_null_matrix_new();
 	    p->err = 0;
 	}
+#endif	
 
 	if (f == F_MREAD && ret->v.m == NULL) {
 	    matrix_error(p);
