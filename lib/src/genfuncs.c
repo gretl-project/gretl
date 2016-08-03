@@ -4315,6 +4315,72 @@ int midas_linear_combo (double *y, const int *list,
     return err;
 }
 
+int *vector_to_midas_list (const gretl_matrix *v,
+			   int compfac,
+			   const char *prefix,
+			   DATASET *dset,
+			   int *err)
+{
+    char vname[VNAMELEN];
+    int *list = NULL;
+    int origv = dset->v;
+    int i;
+
+    /* double-check! */
+    if (gretl_vector_get_length(v) != sample_size(dset) * compfac) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    /* check names for collisions first */
+    for (i=0; i<compfac && !*err; i++) {
+	sprintf(vname, "%s%d", prefix, i+1);
+	if (current_series_index(dset, vname) >= 1) {
+	    *err = E_INVARG; /* message? */
+	} else if (get_user_var_by_name(vname) != NULL) {
+	    *err = E_INVARG; /* message? */
+	}
+    }
+
+    if (!*err) {
+	/* try adding the required number of series */
+	*err = dataset_add_series(dset, compfac);
+	if (!*err) {
+	    list = gretl_list_new(compfac);
+	    if (list == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (!*err) {
+	/* actually construct the series */
+	char label[MAXLABEL];
+	int pos, pos0 = compfac - 1;
+	int t, k = origv;
+
+	for (i=0; i<compfac; i++) {
+	    sprintf(dset->varname[k], "%s%d", prefix, compfac - i);
+	    sprintf(label, "%s in sub-period %d", prefix, compfac - i);
+	    series_record_label(dset, k, label);
+	    list[i+1] = k;
+	    k++;
+	}
+	
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    pos = pos0;
+	    for (k=origv; k<dset->v; k++) {
+		dset->Z[k][t] = v->val[pos--];
+	    }
+	    pos0 += compfac;
+	}
+	
+	gretl_list_set_midas(list, dset);
+    }    
+
+    return list;
+}
+
 /* Imhof: draws on the RATS code in IMHOF.SRC from Estima, 2004.
 
    Imhof Procedure for computing P(u'Au < x) for a quadratic form in

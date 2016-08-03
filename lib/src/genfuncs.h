@@ -142,6 +142,12 @@ int midas_linear_combo (double *y, const int *list,
 			int method,
 			const DATASET *dset);
 
+int *vector_to_midas_list (const gretl_matrix *v,
+			   int compfac,
+			   const char *prefix,
+			   DATASET *dset,
+			   int *err);
+
 double imhof (const gretl_matrix *m, double arg, int *err);
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 

@@ -4680,6 +4680,43 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    gretl_matrix *v = l->v.m;
+    int compfac = node_get_int(m, p);
+    char *pfx = r->v.str;
+    NODE *ret = NULL;
+
+    if (!p->err) {
+	int n = gretl_vector_get_length(v);
+
+	if (n == 0) {
+	    p->err = E_NONCONF;
+	} else if (compfac < 2) {
+	    p->err = E_INVARG;
+	} else if (*pfx == '\0' || !gretl_is_ascii(pfx) ||
+		   strlen(pfx) > 24) {
+	    p->err = E_INVARG;
+	} else {
+	    int T = sample_size(p->dset);
+
+	    if (n != compfac * T) {
+		p->err = E_INVARG;
+	    }
+	}
+    }
+
+    if (!p->err) {
+	ret = aux_list_node(p);
+	if (ret != NULL) {
+	    ret->v.ivec = vector_to_midas_list(v, compfac, pfx,
+					       p->dset, &p->err);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *dataset_list_node (parser *p)
 {
     NODE *ret = aux_list_node(p);
@@ -11986,6 +12023,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_HFLAG:
 	if ((scalar_node(l) || l->t == MAT) && ok_list_node(m)) {
 	    ret = list_make_lags(l, m, r, t->t, p);
+	} else {
+	    p->err = E_TYPES; 
+	}
+	break;
+    case F_HFLIST:
+	if (l->t == MAT && scalar_node(m) && r->t == STR) {
+	    ret = hf_list_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES; 
 	}

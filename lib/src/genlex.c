@@ -463,6 +463,7 @@ struct str_table funcs[] = {
     { F_MLINCOMB,  "mlincomb" },
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
+    { F_HFLIST,    "hflist" },
     { 0,           NULL }
 };
 
