@@ -734,6 +734,25 @@ D1 D872 EEN_DIS GCD
 ? list revX print
 GCD EEN_DIS D872 D1 
 \end{code}
+
+\subsection{Plotting an asymmetric confidence interval}
+
+\emph{Problem:} ``I like the look of the \option{band} option to the
+\cmd{gnuplot} and \cmd{plot} commands, but it's set up for plotting a
+symmetric interval and I want to show an asymmetric one.''
+
+\emph{Solution:} Any interval is by construction symmetrical about its
+mean at each observation. So you just need to perform a little
+tweak. Say you want to plot a series \texttt{x} along with a band
+defined by the two series \texttt{top} and \texttt{bot}. Here we go:
+\begin{code}
+# create series for mid-point and deviation
+series mid = (top + bot)/2
+series dev = top - mid
+gnuplot x --band=mid,dev --time-series --with-lines --output=display
+\end{code}
+
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
