@@ -1519,7 +1519,8 @@ static void write_R_io_funcs (FILE *fp)
     fputs("    write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
     fputs("    gretlmsg <- paste(\"wrote matrix\", fname, \"\\n\")\n", fp);
     fputs("  } else {\n", fp);
-    fputs("    gretlmsg <- paste(\"not a recognized object-type\", objname, \"\\n\")\n", fp);
+    fputs("    gretlmsg <- paste(\"gretl.export: don't know how to write object\", objname, "
+	  " \"(try as.matrix?)\\n\")\n", fp);
     fputs("  }\n", fp);
     fputs("  cat(gretlmsg)\n", fp);
     fputs("}\n", fp);
