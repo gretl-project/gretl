@@ -462,6 +462,8 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	}
 	if (opt & OPT_O) {
 	    gi->flags |= GPT_LINES;
+	} else if (opt & OPT_M) {
+	    gi->flags |= GPT_IMPULSES;
 	}
 	gi->flags |= GPT_FIT_OMIT;
 	gi->band = 1;
@@ -2815,6 +2817,8 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
 	}
     } else if (gi->flags & GPT_LINES) {
         strcpy(str, "w lines");
+    } else if (gi->flags & GPT_IMPULSES) {
+	strcpy(str, "w impulses");
     } else {
 	strcpy(str, "w points");
     }
@@ -5349,11 +5353,13 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     char yname[MAXDISP];
     char xname[MAXDISP];
     char rgb[10] = {0};
+    char wspec[16] = {0};
     int *biglist = NULL;
     int style = BAND_LINE;
     int show_zero = 0;
     int t1 = dset->t1;
     int t2 = dset->t2;
+    int nmiss = 0;
     int i, n_yvars = 0;
     int err = 0;
 
@@ -5373,11 +5379,11 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     
     if (!err) {
 	if (biglist != NULL) {
-	    err = list_adjust_sample(biglist, &t1, &t2, dset, NULL);
+	    err = list_adjust_sample(biglist, &t1, &t2, dset, &nmiss);
 	} else {
-	    err = list_adjust_sample(gi->list, &t1, &t2, dset, NULL);
+	    err = list_adjust_sample(gi->list, &t1, &t2, dset, &nmiss);
 	}
-	if (!err && t2 - t1 < 3) {
+	if (!err && t2 - t1 - nmiss < 3) {
 	    err = E_DATA;
 	}
     }
@@ -5446,34 +5452,29 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	if (show_zero) {
 	    fputs("0 notitle w lines lt 0, \\\n", fp);
 	}
-	for (i=0; i<n_yvars; i++) {
-	    const char *iname = series_get_graph_name(dset, gi->list[i+1]);
-	    
-	    if (gi->flags & GPT_LINES) {
-		fprintf(fp, "'-' using 1:2 title '%s' w lines lt %d", iname, i+1);
-	    } else {
-		fprintf(fp, "'-' using 1:2 title '%s' lt %d", iname, i+1);
-	    }
-	    if (i == n_yvars - 1) {
+	/* plot the non-band data */
+	for (i=1; i<=n_yvars; i++) {
+	    const char *iname = series_get_graph_name(dset, gi->list[i]);
+
+	    set_withstr(gi, i, wspec);
+	    fprintf(fp, "'-' using 1:2 title '%s' %s lt %d", iname, wspec, i);
+	    if (i == n_yvars) {
 		fputc('\n', fp);
 	    } else {
 		fputs(", \\\n", fp);
 	    }
 	}
     } else {
-	/* plot confidence band last */
 	char lspec[24], dspec[8];
 
 	*lspec = *dspec = '\0';
 
-	for (i=0; i<n_yvars; i++) {
-	    const char *iname = series_get_graph_name(dset, gi->list[i+1]);
-	
-	    if (gi->flags & GPT_LINES) {
-		fprintf(fp, "'-' using 1:2 title '%s' w lines lt %d, \\\n", iname, i+1);
-	    } else {
-		fprintf(fp, "'-' using 1:2 title '%s' lt %d, \\\n", iname, i+1);
-	    }
+	/* plot the non-band data first */
+	for (i=1; i<=n_yvars; i++) {
+	    const char *iname = series_get_graph_name(dset, gi->list[i]);
+
+	    set_withstr(gi, i, wspec);
+	    fprintf(fp, "'-' using 1:2 title '%s' %s lt %d, \\\n", iname, wspec, i);
 	}
 	if (*rgb != '\0') {
 	    sprintf(lspec, "lc rgb \"%s\"", rgb);
@@ -5483,6 +5484,7 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	if (style == BAND_DASH) {
 	    strcpy(dspec, " dt 2");
 	}
+	/* then the confidence band */
 	fprintf(fp, "'-' using 1:($2-%g*$3) notitle w lines %s%s, \\\n",
 		pm.factor, lspec, dspec);
 	fprintf(fp, "'-' using 1:($2+%g*$3) notitle w lines %s%s\n",

@@ -9442,7 +9442,7 @@
       <subhead>Plotting a band with matrix data</subhead>
       <para>
 	The <opt>band</opt> and <opt>band-style</opt> options mostly
-	work as described in the help for <lit>gnuplot</lit>,
+	work as described in the help for <cmdref targ="gnuplot"/>,
 	with the following exception: when the data to be plotted are
 	given in the form of a matrix, the first parameter to
 	<opt>band</opt> must be given as the name of a matrix with two
