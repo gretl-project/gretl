@@ -143,7 +143,7 @@ int midas_linear_combo (double *y, const int *list,
 			const DATASET *dset);
 
 int *vector_to_midas_list (const gretl_matrix *v,
-			   int compfac,
+			   int f_ratio,
 			   const char *prefix,
 			   DATASET *dset,
 			   int *err);

@@ -4316,7 +4316,7 @@ int midas_linear_combo (double *y, const int *list,
 }
 
 int *vector_to_midas_list (const gretl_matrix *v,
-			   int compfac,
+			   int f_ratio,
 			   const char *prefix,
 			   DATASET *dset,
 			   int *err)
@@ -4326,27 +4326,28 @@ int *vector_to_midas_list (const gretl_matrix *v,
     int origv = dset->v;
     int i;
 
-    /* double-check! */
-    if (gretl_vector_get_length(v) != sample_size(dset) * compfac) {
+    /* double-check to avoid crashing below */
+    if (gretl_vector_get_length(v) != sample_size(dset) * f_ratio) {
 	*err = E_DATA;
 	return NULL;
     }
 
     /* check names for collisions first */
-    for (i=0; i<compfac && !*err; i++) {
+    for (i=0; i<f_ratio && !*err; i++) {
 	sprintf(vname, "%s%d", prefix, i+1);
-	if (current_series_index(dset, vname) >= 1) {
-	    *err = E_INVARG; /* message? */
-	} else if (get_user_var_by_name(vname) != NULL) {
-	    *err = E_INVARG; /* message? */
+	if (current_series_index(dset, vname) >= 1 ||
+	    get_user_var_by_name(vname) != NULL) {
+	    gretl_errmsg_set("The constructed series names would "
+			     "collide with those of existing objects");
+	    *err = E_INVARG;
 	}
     }
 
     if (!*err) {
 	/* try adding the required number of series */
-	*err = dataset_add_series(dset, compfac);
+	*err = dataset_add_series(dset, f_ratio);
 	if (!*err) {
-	    list = gretl_list_new(compfac);
+	    list = gretl_list_new(f_ratio);
 	    if (list == NULL) {
 		*err = E_ALLOC;
 	    }
@@ -4356,12 +4357,12 @@ int *vector_to_midas_list (const gretl_matrix *v,
     if (!*err) {
 	/* actually construct the series */
 	char label[MAXLABEL];
-	int pos, pos0 = compfac - 1;
+	int pos, pos0 = f_ratio - 1;
 	int t, k = origv;
 
-	for (i=0; i<compfac; i++) {
-	    sprintf(dset->varname[k], "%s%d", prefix, compfac - i);
-	    sprintf(label, "%s in sub-period %d", prefix, compfac - i);
+	for (i=0; i<f_ratio; i++) {
+	    sprintf(dset->varname[k], "%s%d", prefix, f_ratio - i);
+	    sprintf(label, "%s in sub-period %d", prefix, f_ratio - i);
 	    series_record_label(dset, k, label);
 	    list[i+1] = k;
 	    k++;
@@ -4372,7 +4373,7 @@ int *vector_to_midas_list (const gretl_matrix *v,
 	    for (k=origv; k<dset->v; k++) {
 		dset->Z[k][t] = v->val[pos--];
 	    }
-	    pos0 += compfac;
+	    pos0 += f_ratio;
 	}
 	
 	gretl_list_set_midas(list, dset);

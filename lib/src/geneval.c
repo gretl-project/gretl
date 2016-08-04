@@ -4683,7 +4683,7 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
 {
     gretl_matrix *v = l->v.m;
-    int compfac = node_get_int(m, p);
+    int f_ratio = node_get_int(m, p);
     char *pfx = r->v.str;
     NODE *ret = NULL;
 
@@ -4692,7 +4692,7 @@ static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
 
 	if (n == 0) {
 	    p->err = E_NONCONF;
-	} else if (compfac < 2) {
+	} else if (f_ratio < 2) {
 	    p->err = E_INVARG;
 	} else if (*pfx == '\0' || !gretl_is_ascii(pfx) ||
 		   strlen(pfx) > 24) {
@@ -4700,7 +4700,7 @@ static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
 	} else {
 	    int T = sample_size(p->dset);
 
-	    if (n != compfac * T) {
+	    if (n != f_ratio * T) {
 		p->err = E_INVARG;
 	    }
 	}
@@ -4709,7 +4709,7 @@ static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
     if (!p->err) {
 	ret = aux_list_node(p);
 	if (ret != NULL) {
-	    ret->v.ivec = vector_to_midas_list(v, compfac, pfx,
+	    ret->v.ivec = vector_to_midas_list(v, f_ratio, pfx,
 					       p->dset, &p->err);
 	}
     }
