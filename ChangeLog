@@ -9,6 +9,8 @@ version 2016d, in progress
   series name
 - Fix: return 1 rather than NA for chi-square p-value in case
   of underflow
+- Fix bug in mcorr() function: correlations between constants
+  should be NaNs, not zeros
 - Installers for Windows, Mac: include fuller set of PDF docs
 - MS Windows builds: update to gtk-2.24.30, update libffi
 
