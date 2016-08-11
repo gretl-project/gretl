@@ -12159,6 +12159,8 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 		if (vv != 0.0) {
 		    x = ssx->val[i] * ssx->val[j];
 		    vv /= sqrt(x);
+		} else {
+		    vv = M_NA;
 		}
 	    } else {
 		vv /= den;
