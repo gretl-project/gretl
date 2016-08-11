@@ -135,6 +135,8 @@ static const char *test_type_key (ModelTestType t)
 	return "within_F";
     } else if (t == GRETL_TEST_RE_WALD) {
 	return "re_wald_test";
+    } else if (t == GRETL_TEST_XDEPEND) {
+	return "cross_sectional_dependence_test";
     } else {
 	return NULL;
     }
@@ -3635,6 +3637,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_PANEL_WELCH,
       N_("Robust test for differing group intercepts"),
       N_("The groups have a common intercept") },
+    { GRETL_TEST_XDEPEND,
+      N_("Pesaran test for cross-sectional dependence"),
+      NULL },    
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 

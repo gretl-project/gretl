@@ -63,7 +63,7 @@ int model_test_driver (int order, DATASET *dset,
     }
 
     err = incompatible_options(opt, OPT_A | OPT_H | OPT_L | OPT_S |
-			       OPT_N | OPT_P | OPT_W | OPT_X);
+			       OPT_N | OPT_P | OPT_W | OPT_X | OPT_D);
     if (err) {
 	return err;
     }
@@ -168,6 +168,15 @@ int model_test_driver (int order, DATASET *dset,
     if (!err && (opt & OPT_C)) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = comfac_test(ptr, dset, testopt, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
+    }
+
+    /* cross-sectionsal dependence */
+    if (!err && (opt & OPT_D)) {
+	if (type == GRETL_OBJ_EQN) {
+	    err = panel_xdepend_test(ptr, dset, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

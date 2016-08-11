@@ -32,6 +32,9 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
+int panel_xdepend_test (MODEL *pmod, DATASET *dset, 
+			gretlopt opt, PRN *prn);
+
 int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 			   gretlopt opt, PRN *prn);
 

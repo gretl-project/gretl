@@ -4308,6 +4308,101 @@ int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset,
     return err;
 }
 
+/* test for cross-sectional dependence */
+
+int panel_xdepend_test (MODEL *pmod, DATASET *dset, 
+			gretlopt opt, PRN *prn)
+{
+    const double *u;
+    double rij, rsum = 0.0;
+    double ssx, ssy, sxy;
+    double xbar, ybar;
+    int N, T, Tij;
+    int i, j, t, si, sj;
+    int effN = 0;
+    int err = 0;
+    
+    if (dset->structure != STACKED_TIME_SERIES) {
+	return E_PDWRONG;
+    } else if (pmod->uhat == NULL) {
+	return E_DATA;
+    }
+
+    T = dset->pd;
+    N = dset->n / T;
+    u = pmod->uhat;
+
+    for (i=0; i<N-1; i++) {
+	int Nj = 0;
+	
+	for (j=i+1; j<N; j++) {
+	    xbar = ybar = 0.0;
+	    Tij = 0;
+	    for (t=0; t<T; t++) {
+		si = i * T + t;
+		sj = j * T + t;
+		if (!na(u[si]) && !na(u[sj])) {
+		    Tij++;
+		    xbar += u[si];
+		    ybar += u[sj];
+		}
+	    }
+	    if (Tij >= 2) {
+		ssx = ssy = sxy = 0.0;
+		xbar /= Tij;
+		ybar /= Tij;
+		for (t=0; t<T; t++) {
+		    si = i * T + t;
+		    sj = j * T + t;
+		    if (!na(u[si]) && !na(u[sj])) {
+			ssx += (u[si] - xbar) * (u[si] - xbar);
+			ssy += (u[sj] - ybar) * (u[sj] - ybar);
+			sxy += (u[si] - xbar) * (u[sj] - ybar);
+		    }
+		}
+		rij = sxy / sqrt(ssx * ssy);
+		rsum += sqrt(Tij) * rij;
+		Nj++;
+	    }
+	}
+	if (Nj > 0) {
+	    effN++;
+	}
+    }
+
+    if (effN == 0) {
+	err = E_TOOFEW;
+    }
+
+    if (!err) {
+	double CD, pval;
+
+	N = effN + 1;
+	CD = sqrt(2.0 / (N * (N - 1.0))) * rsum;
+	pval = normal_pvalue_1(CD);
+
+	if (!(opt & OPT_I)) {
+	    pputs(prn, _("Pesaran test for cross-sectional dependence"));
+	    pprintf(prn, "\n%s: z = %f,\n", _("Test statistic"), CD);
+	    pprintf(prn, "%s = P(z) > %g) = %.3g\n", _("with p-value"), 
+		    CD, pval);
+	}	
+
+	if (opt & OPT_S) {
+	    ModelTest *test = model_test_new(GRETL_TEST_XDEPEND);
+
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_Z);
+		model_test_set_value(test, CD);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }	    
+	}
+    }    
+
+    return err;
+}
+
 /**
  * switch_panel_orientation:
  * @dset: pointer to dataset struct.

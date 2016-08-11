@@ -324,6 +324,7 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_A, "autocorr", 0 },
     { MODTEST,  OPT_B, "breusch-pagan", 0 },
     { MODTEST,  OPT_C, "comfac", 0 },
+    { MODTEST,  OPT_D, "xdepend", 0 },
     { MODTEST,  OPT_H, "arch", 0 },
     { MODTEST,  OPT_L, "logs", 0 },
     { MODTEST,  OPT_N, "normality", 0 },

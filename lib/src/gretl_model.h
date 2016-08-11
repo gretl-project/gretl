@@ -222,6 +222,7 @@ typedef enum {
     GRETL_TEST_WITHIN_F,
     GRETL_TEST_PANEL_WELCH,
     GRETL_TEST_RE_WALD,
+    GRETL_TEST_XDEPEND,
     GRETL_TEST_MAX
 } ModelTestType;
 
