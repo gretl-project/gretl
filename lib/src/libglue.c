@@ -173,7 +173,7 @@ int model_test_driver (int order, DATASET *dset,
 	}
     }
 
-    /* cross-sectionsal dependence */
+    /* cross-sectional dependence */
     if (!err && (opt & OPT_D)) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = panel_xdepend_test(ptr, dset, testopt, prn);

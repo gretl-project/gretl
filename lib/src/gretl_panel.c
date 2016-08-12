@@ -4315,11 +4315,12 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 {
     const double *u;
     double rij, rsum = 0.0;
+    double arsum = 0.0;
     double ssx, ssy, sxy;
     double xbar, ybar;
-    int N, T, Tij;
+    int N1, N2, T, Tij;
     int i, j, t, si, sj;
-    int effN = 0;
+    int N = 0, Nr = 0;
     int err = 0;
     
     if (dset->structure != STACKED_TIME_SERIES) {
@@ -4329,13 +4330,14 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
     }
 
     T = dset->pd;
-    N = dset->n / T;
+    N1 = pmod->t1 / T;
+    N2 = pmod->t2 / T;
     u = pmod->uhat;
 
-    for (i=0; i<N-1; i++) {
+    for (i=N1; i<N2; i++) {
 	int Nj = 0;
 	
-	for (j=i+1; j<N; j++) {
+	for (j=i+1; j<=N2; j++) {
 	    xbar = ybar = 0.0;
 	    Tij = 0;
 	    for (t=0; t<T; t++) {
@@ -4362,30 +4364,33 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 		}
 		rij = sxy / sqrt(ssx * ssy);
 		rsum += sqrt(Tij) * rij;
+		arsum += fabs(rij);
+		Nr++;
 		Nj++;
 	    }
 	}
 	if (Nj > 0) {
-	    effN++;
+	    N++;
 	}
     }
 
-    if (effN == 0) {
+    if (N == 0) {
 	err = E_TOOFEW;
     }
 
     if (!err) {
 	double CD, pval;
 
-	N = effN + 1;
+	N = N + 1;
 	CD = sqrt(2.0 / (N * (N - 1.0))) * rsum;
-	pval = normal_pvalue_1(CD);
+	pval = normal_pvalue_2(CD);
 
 	if (!(opt & OPT_I)) {
 	    pputs(prn, _("Pesaran test for cross-sectional dependence"));
 	    pprintf(prn, "\n%s: z = %f,\n", _("Test statistic"), CD);
-	    pprintf(prn, "%s = P(z) > %g) = %.3g\n", _("with p-value"), 
+	    pprintf(prn, "%s = P(|z| > %g) = %.3g\n", _("with p-value"), 
 		    CD, pval);
+	    pprintf(prn, "Average absolute correlation = %.3f\n", arsum / Nr);
 	}	
 
 	if (opt & OPT_S) {
@@ -4398,6 +4403,8 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 		maybe_add_test_to_model(pmod, test);
 	    }	    
 	}
+
+	record_test_result(CD, pval, _("cross sectional dependence"));
     }    
 
     return err;

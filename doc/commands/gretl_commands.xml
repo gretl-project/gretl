@@ -7820,6 +7820,10 @@
 	  <effect>common factor restriction, AR1 models only</effect>
         </option>
         <option>
+	  <flag>--xdepend</flag>
+	  <effect>cross-sectional dependence, panel data only</effect>
+        </option>	
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print details</effect>
         </option>
@@ -7842,11 +7846,13 @@
 	heteroskedasticity; the LMF test for serial correlation <cite
 	key="kiviet86" p="true">(Kiviet, 1986)</cite>; a test for ARCH
 	(Autoregressive Conditional Heteroskedasticity; see also the
-	<cmd>arch</cmd> command); or a test of the common factor
-	restriction implied by AR(1) estimation.  With the exception
-	of the normality and common factor test most of the options
-	are only available for models estimated via OLS, but see below
-	for details regarding two-stage least squares.
+	<cmd>arch</cmd> command); a test of the common factor
+	restriction implied by AR(1) estimation; or a test for
+	cross-sectional dependence in panel-data models.  With the
+	exception of the normality, common factor and cross-sectional
+	dependence tests most of the options are only available for
+	models estimated via OLS, but see below for details regarding
+	two-stage least squares.
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case
@@ -7875,6 +7881,13 @@
 	dynamic model, which is used to test the common factor restriction
 	implicit in the AR(1) specification.
       </para>
+      <para>
+	The <opt>xdepend</opt> option is available only for models
+	estimated on panel data. The test statistic is that developed
+	by <cite key="pesaran04">Pesaran (2004)</cite>. The null
+	hypothesis is that the error term is independently distributed
+	across the cross-sectional units or individuals.
+      </para>      
       <para>
 	By default, the program prints the auxiliary regression on
 	which the test statistic is based, where applicable.  This may
