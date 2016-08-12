@@ -393,8 +393,8 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 	    strcpy(sinfo->endobs, q + 2);
 	}
     } else {
-	*sinfo->stobs = 0;
-	*sinfo->endobs = 0;
+	*sinfo->stobs = '\0';
+	*sinfo->endobs = '\0';
 	strncat(sinfo->stobs, stobs, 8);
 	strncat(sinfo->endobs, endobs, 8);
     }

@@ -2111,13 +2111,117 @@ static int print_by_var (const int *list, const DATASET *dset,
     return 0;
 }
 
+static int midas_print_list (const int *list,
+			     const DATASET *dset,
+			     PRN *prn)
+{
+    DATASET *tmpset = NULL;
+    int mpd, pd = dset->pd;
+    int T, m = list[0];
+    int err = 0;
+
+    if (m < 3 || gretl_list_has_separator(list)) {
+	return E_INVARG;
+    } else if (!dataset_is_time_series(dset)) {
+	return E_INVARG;
+    } else if (pd != 1 && pd != 4 && pd != 12) {
+	/* host dataset should be annual, quarterly or monthly */
+	return E_PDWRONG;
+    }
+
+    if (pd == 1) {
+	/* annual: midas series should be quarterly or monthly */
+	if (m != 4 && m != 12) {
+	    return E_INVARG;
+	} else {
+	    mpd = m;
+	}
+    } else if (pd == 4) {
+	/* quarterly: midas series should be monthly or daily */
+	if (m == 3) {
+	    mpd = 12;
+	} else if (m == 66) {
+	    mpd = 5;
+	} else if (m == 78) {
+	    mpd = 6;
+	} else if (m == 90) {
+	    mpd = 7;
+	} else {
+	    return E_INVARG;
+	}
+    } else {
+	/* monthly: midas series should be daily */
+	if (m == 22) {
+	    mpd = 5;
+	} else if (m == 26) {
+	    mpd = 6;
+	} else if (m == 30) {
+	    mpd = 7;
+	} else {
+	    return E_INVARG;
+	}
+    }
+
+    if (!gretl_is_midas_list(list, dset)) {
+	gretl_warnmsg_set("The argument appears not to be a MIDAS list");
+    }
+
+    T = sample_size(dset) * m;
+
+    tmpset = create_auxiliary_dataset(2, T, OPT_NONE);
+    if (tmpset == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	char *p, stobs[OBSLEN];
+	int mlist[2] = {1, 1};
+	int i, t, s;
+
+	tmpset->pd = mpd;
+	tmpset->structure = TIME_SERIES;
+	strcpy(tmpset->varname[1], dset->varname[list[1]]);
+	p = strrchr(tmpset->varname[1], '_');
+	if (p != NULL) *p = '\0';
+
+	ntodate(stobs, dset->t1, dset);
+
+	if (mpd == 4) {
+	    sprintf(tmpset->stobs, "%d:1", atoi(stobs));
+	} else if (mpd == 12) {
+	    sprintf(tmpset->stobs, "%d:01", atoi(stobs));
+	} else {
+	    int y, m, d = 1; /* FIXME day 1 !! */
+
+	    sscanf(stobs, "%d:%d", &y, &m);
+	    sprintf(tmpset->stobs, "%d-%02d-%02d", y, m, d);
+	}
+
+	tmpset->sd0 = get_date_x(tmpset->pd, tmpset->stobs);
+	ntodate(tmpset->endobs, tmpset->t2, tmpset);
+
+	s = 0;
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    for (i=m; i>0; i--) {
+		tmpset->Z[1][s++] = dset->Z[list[i]][t];
+	    }
+	}
+
+	err = print_by_obs(mlist, tmpset, OPT_NONE, 0, prn);
+	destroy_dataset(tmpset);
+    }
+
+    return err;
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
  * @mstr: optional string holding names of non-series objects to print.
  * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
- * if OPT_N, use simple obs numbers, not dates.
+ * if OPT_N, use simple obs numbers, not dates; if OPT_M, print midas
+ * list in original time-series order.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
@@ -2161,6 +2265,12 @@ int printdata (const int *list, const char *mstr,
     /* at this point plist should have something in it */
     if (plist == NULL) {
 	return E_ALLOC;
+    }
+
+    if (opt & OPT_M) {
+	err = midas_print_list(plist, dset, prn);
+	free(plist);
+	return err;
     }
 
     if (gretl_list_has_separator(plist)) {
