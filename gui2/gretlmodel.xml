@@ -36,6 +36,7 @@
       <menuitem action="cusum:r"/>
       <menuitem action="modtest:c"/>
       <separator/>
+      <menuitem action="modtest:d"/>
       <menuitem action="hausman"/>
     </menu>      
     <menu action="Save"/>

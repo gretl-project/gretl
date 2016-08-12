@@ -4386,7 +4386,7 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 	pval = normal_pvalue_2(CD);
 
 	if (!(opt & OPT_I)) {
-	    pputs(prn, _("Pesaran test for cross-sectional dependence"));
+	    pputs(prn, _("Pesaran CD test for cross-sectional dependence"));
 	    pprintf(prn, "\n%s: z = %f,\n", _("Test statistic"), CD);
 	    pprintf(prn, "%s = P(|z| > %g) = %.3g\n", _("with p-value"), 
 		    CD, pval);

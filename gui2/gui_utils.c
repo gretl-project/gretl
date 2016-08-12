@@ -271,6 +271,7 @@ static GtkActionEntry model_test_items[] = {
     { "cusum", NULL, N_("_CUSUM test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "cusum:r", NULL, N_("CUSUM_SQ test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "modtest:c", NULL, N_("_Common factor"), NULL, NULL, G_CALLBACK(do_modtest) },
+    { "modtest:d", NULL, N_("_Cross-sectional dependence"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "hausman", NULL, N_("_Panel diagnostics"), NULL, NULL, G_CALLBACK(do_panel_tests) }
 };
 

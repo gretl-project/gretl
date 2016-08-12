@@ -3614,8 +3614,8 @@ static struct test_strings tstrings[] = {
       N_("Breusch-Pagan test"),
       N_("Variance of the unit-specific error = 0") },
     { GRETL_TEST_PANEL_TIMEDUM,
-      N_("Wald test for joint significance of time dummies"),
-      NULL },
+      N_("Wald joint test on time dummies"),
+      N_("No time effects") },
     { GRETL_TEST_HET_1,
       N_("Pesaran-Taylor test for heteroskedasticity"),
       N_("heteroskedasticity not present") },
@@ -3638,8 +3638,8 @@ static struct test_strings tstrings[] = {
       N_("Robust test for differing group intercepts"),
       N_("The groups have a common intercept") },
     { GRETL_TEST_XDEPEND,
-      N_("Pesaran test for cross-sectional dependence"),
-      NULL },    
+      N_("Pesaran CD test for cross-sectional dependence"),
+      N_("No cross-sectional dependence") },    
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 
@@ -5495,7 +5495,9 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_panel(dset)) {
 	/* panel-only tests */
-	if (ci == HAUSMAN || (ci == MODTEST && (opt & OPT_P))) {
+	if (ci == HAUSMAN) {
+	    ok = 0;
+	} else if (ci == MODTEST && (opt & (OPT_P | OPT_D))) {
 	    ok = 0;
 	}
     }

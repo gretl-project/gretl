@@ -2621,6 +2621,10 @@ void do_modtest (GtkAction *action, gpointer p)
 	strcpy(title, _("gretl: common factor test"));
 	lib_command_strcpy("modtest --comfac");
 	err = comfac_test(pmod, dset, OPT_S, prn);
+    } else if (opt == OPT_D) {
+	strcpy(title, _("gretl: cross-sectional dependence"));
+	lib_command_strcpy("modtest --xdepend");
+	err = panel_xdepend_test(pmod, dset, OPT_S, prn);
     }
 
     if (err) {
