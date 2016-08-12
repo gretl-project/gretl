@@ -5390,6 +5390,9 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    ok = (mci != ARCH && mci != GARCH);
 	} else if (opt & OPT_C) {
 	    ok = (mci == AR1);
+	} else if (opt & OPT_D) {
+	    /* x-sectional dependence */
+	    ok = 1;
 	} else if (opt & OPT_N) {
 	    /* normality */
 	    if (mci == LOGIT || mci == HECKIT || mci == DURATION) {
