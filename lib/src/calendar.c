@@ -870,46 +870,17 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
     return ret;    
 }
 
-#if 0
-
 /**
- * first_day_in_month:
- * @yr: 4-digit year
- * @mon: month number, 1-based
+ * date_to_daily_index:
+ * @date: date in format YYYY-MM-DD.
  * @wkdays: number of days in week (7, 6 or 5)
  * 
- * Returns: the daily date of the first relevant day in
- * month @mon of year @yr. For example, if @yr is 2016,
- * @mon = 5 (May) and @wkdays = 5, the value returned will
- * be 2, since 2016-05-02 was a Monday and therefore the first
- * relevant day of that month on a 5-day calendar.
+ * Returns: the zero-based index of the specified day
+ * within the specified month and year. In the case
+ * of 5- or 6-day data index zero does not necessarily
+ * correspond to the first day of the month but rather
+ * to the first relevant day.
  */
-
-int first_day_in_month (int yr, int mon, int wkdays)
-{
-    int ret = 0;
-
-    if (wkdays == 7) {
-	/* duh! */
-	ret = 1;
-    } else {
-	int i, wd;
-
-	for (i=1; i<8; i++) {
-	    wd = day_of_week_from_ymd(yr, mon, i);
-	    if (day_in_calendar(wkdays, wd)) {
-		ret = i;
-		break;
-	    }
-	}	
-    } 
-
-    return ret; 
-}
-
-#endif
-
-/* zero-based index of day within month */
 
 int date_to_daily_index (const char *date, int wkdays)
 {
@@ -940,6 +911,23 @@ int date_to_daily_index (const char *date, int wkdays)
 
     return idx; 
 }
+
+/**
+ * daily_index_to_date:
+ * @date: location to receive the date (YYYY-MM-DD).
+ * @y: year.
+ * @m: month.
+ * @idx: zero-based index of day within month.
+ * @wkdays: number of days in week (7, 6 or 5)
+ *
+ * Fills out @date with the calendar data implied by
+ * the specification of @y, @m, @idx and @wkdays,
+ * provided this specification corresponds to an actual
+ * calendar data.
+
+ * Returns: 0 on successful completion, non-zero if
+ * there is no such calendat date.
+ */
 
 int daily_index_to_date (char *date, int y, int m, int idx,
 			 int wkdays)

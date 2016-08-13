@@ -3341,57 +3341,12 @@ static int daily_yp (const DATASET *dset, int t,
     return 0;
 }
 
-/* Determine the number of days we're short of daily 
-   data at the start of @dset, relative to the number
-   of data points there "should be" in a month or quarter
-   as set by @compfac. We do this because a daily
-   dataset might not start at the beginning of a
-   month or quarter, in which case we want to write
-   leading NAs into a compacted dataset.
-*/
-
-static int daily_spread_offset (const DATASET *dset,
-				int pd, int compfac)
-{
-    char obs[12];
-    int t, y, m, d, p = 0, p0 = 0;
-    int ret, ndays = 0;
-
-    ntodate(obs, 0, dset);
-    sscanf(obs, YMD_READ_FMT, &y, &m, &d);
-    ret = days_in_month_before (y, m, d, dset->pd);
-    fprintf(stderr, "daily_spread_offset: obs='%s', days_before=%d\n",
-	    obs, ret);
-
-#if 1 /* FIXME! */ 
-    for (t=0; t<dset->n; t++) {
-	daily_yp(dset, t, pd, &y, &p);
-	if (t == 0) {
-	    /* establish a reference point */
-	    p0 = p;
-	} else if (p != p0) {
-	    /* we've gone on to the next month or
-	       quarter */
-	    break;
-	}
-	ndays++;
-    }
-
-    ret = ndays > compfac ? 0 : compfac - ndays;
-
-    fprintf(stderr, "daily_spread_offset: ndays=%d, ret=%d\n",
-	    ndays, ret);
-#endif    
-
-    return ret;
-}
-
 #define DAYDBG 0
 
 /* For a single row, @cset_t, of a compacted dataset,
    write daily values into the set of monthly or
    quarterly series that will represent them. The
-   data are drawn from @dset and transcribed to
+   daily data are drawn from @dset and transcribed to
    @cset.
 */
 
@@ -3401,25 +3356,18 @@ static void fill_cset_t (const DATASET *dset,
 			 int cset_t,
 			 int compfac)
 {
+    char obs[OBSLEN];
+    double cvec[30];
     const double *z;
-    int t, y, p, pstart = 0;
-    int nmiss, ndays = 0;
-    int i, j, k, t0;
-    int iniskip = 0;
-    double zsum, zbar;
+    int y, p, pstart = 0;
+    int effn = 0, ndays = 0;
+    int i, j, k, s, t, t0;
+    double zsum = 0.0;
 
     t0 = *startday;
+    k = 1;
 
-    if (cset_t == 0) {
-	iniskip = t0;
-    }
-
-#if 0 /* FIXME */
-    fprintf(stderr, "cset->pd = %d, startday = %d\n", cset->pd,
-	    *startday);
-#endif
-
-    /* how many daily obs in this period? */
+    /* how many daily obs do we have in this period? */
     for (t=t0; t<dset->n; t++) {
 	daily_yp(dset, t, cset->pd, &y, &p);
 	if (t == t0) {
@@ -3428,52 +3376,41 @@ static void fill_cset_t (const DATASET *dset,
 	    break;
 	}
 	ndays++;
-    }
+    }    
 
-#if DAYDBG
-    fprintf(stderr, "%d:%d, ndays = %d\n", y, pstart, ndays);
-#endif
+    /* the outer loop is over the series in the daily
+       source dataset */
 
-#if 0 /* FIXME! */    
-    if (cset->pd == 12) {
-	int altndays = get_days_in_month(y, pstart, cset->pd);
-	
-	fprintf(stderr, "%d:%d, altndays = %d\n", y, pstart, altndays);
-    }
-#endif
-
-    k = 1;
-    for (i=1; i<dset->v; i++) {
-	z = dset->Z[i] + t0;
-	zsum = 0.0;
-	nmiss = 0;
-	for (j=0; j<ndays; j++) {
-	    if (na(z[j])) {
-		nmiss++;
-	    } else {
-		zsum += z[j];
-	    }
-	}
-	zbar = zsum / (ndays - nmiss);
-#if DAYDBG > 1
-	if (nmiss > 0) {
-	    fprintf(stderr, " %s: %d missing value(s), mean value %g\n",
-		    dset->varname[i], nmiss, zbar);
-	}
-#endif
+    for (i=1; i<dset->v ; i++) {
+	t = t0;
+	z = dset->Z[i];
 	for (j=0; j<compfac; j++) {
-	    if (j < iniskip) {
-		; /* before the start of the daily data */
-	    } else if (j >= ndays && cset_t == cset->n - 1) {
-		; /* after the end of the daily data */
-	    } else if (j >= ndays || na(z[j])) {
-		/* pad with period average (?) */
-		cset->Z[j+k][cset_t] = zbar;
-	    } else {
-		/* transcribe actual observation */
-		cset->Z[j+k][cset_t] = z[j];
+	    cvec[j] = NADBL;
+	}
+	zsum = 0.0;
+	for (j=0; j<compfac && j<ndays; j++) {
+	    ntodate(obs, t0 + j, dset);
+	    s = date_to_daily_index(obs, dset->pd);
+	    cvec[s] = z[t++];
+	    if (!na(cvec[s])) {
+		zsum += cvec[s];
+		effn++;
 	    }
 	}
+	if (effn < compfac) {
+	    /* we have some padding to do */
+	    double zbar = zsum / effn;
+	
+	    for (j=0; j<compfac; j++) {
+		if (na(cvec[j])) {
+		    cvec[j] = zbar;
+		}
+	    }
+	}
+	for (j=0; j<compfac; j++) {
+	    cset->Z[k+j][cset_t] = cvec[j];
+	}
+
 	k += compfac;
     }
 
@@ -3574,13 +3511,8 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 	}
     }
 
-    /* the number of skipped days at the start of the data */
-    startday = daily_spread_offset(dset, newpd, compfac);
-#if 1
-    fprintf(stderr, "startday (daily spread offset) = %d\n", startday);
-#endif    
-
     /* do the actual data transcription first */
+    startday = 0;
     for (t=0; t<T; t++) {
 	fill_cset_t(dset, &startday, cset, t, compfac);
     }

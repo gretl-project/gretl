@@ -2112,6 +2112,11 @@ static int print_by_var (const int *list, const DATASET *dset,
     return 0;
 }
 
+/* Infer the current month from the current @qtr along
+   with the number of days per period, @ndays, and the
+   current index within the days array, @day.
+*/
+
 static int quarter_to_month (int qtr, int ndays, int day)
 {
     return qtr * 3 - 2 + (day - 1) / (ndays/3);
@@ -2172,32 +2177,32 @@ static int midas_print_list (const int *list,
     }
 
     if (!gretl_is_midas_list(list, dset)) {
-	gretl_warnmsg_set("The argument appears not to be a MIDAS list");
+	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
     }
 
     T = sample_size(dset) * m;
 
     if (mpd >= 5 && mpd <= 7) {
-	/* add markers for daily dates */
+	/* we'll add markers for daily dates */
 	daily = 1;
 	opt = OPT_M;
     }
 
-    tmpset = create_auxiliary_dataset(2, T, opt);
+    tmpset = create_auxiliary_dataset(1, T, opt);
     if (tmpset == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
 	char *p, obs[OBSLEN];
-	int mlist[2] = {1, 1};
+	int mlist[2] = {1, 0};
 	int nonex;
 	int i, t, s;
 
 	tmpset->pd = mpd;
 	tmpset->structure = TIME_SERIES;
-	strcpy(tmpset->varname[1], dset->varname[list[1]]);
-	p = strrchr(tmpset->varname[1], '_');
+	strcpy(tmpset->varname[0], dset->varname[list[1]]);
+	p = strrchr(tmpset->varname[0], '_');
 	if (p != NULL) *p = '\0';
 
 	ntodate(obs, dset->t1, dset);
@@ -2224,10 +2229,10 @@ static int midas_print_list (const int *list,
 			/* skip non-existent daily dates */
 			tmpset->t2 -= 1;
 		    } else {
-			tmpset->Z[1][s++] = dset->Z[list[i]][t];
+			tmpset->Z[0][s++] = dset->Z[list[i]][t];
 		    }
 		} else {
-		    tmpset->Z[1][s++] = dset->Z[list[i]][t];
+		    tmpset->Z[0][s++] = dset->Z[list[i]][t];
 		}
 	    }
 	}
