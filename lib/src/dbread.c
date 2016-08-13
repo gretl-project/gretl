@@ -3353,20 +3353,37 @@ static int daily_yp (const DATASET *dset, int t,
 static int daily_spread_offset (const DATASET *dset,
 				int pd, int compfac)
 {
-    int t, y, p = 0, p0 = 0;
-    int ndays = 0;
+    char obs[12];
+    int t, y, m, d, p = 0, p0 = 0;
+    int ret, ndays = 0;
 
+    ntodate(obs, 0, dset);
+    sscanf(obs, YMD_READ_FMT, &y, &m, &d);
+    ret = days_in_month_before (y, m, d, dset->pd);
+    fprintf(stderr, "daily_spread_offset: obs='%s', days_before=%d\n",
+	    obs, ret);
+
+#if 1 /* FIXME! */ 
     for (t=0; t<dset->n; t++) {
 	daily_yp(dset, t, pd, &y, &p);
 	if (t == 0) {
+	    /* establish a reference point */
 	    p0 = p;
 	} else if (p != p0) {
+	    /* we've gone on to the next month or
+	       quarter */
 	    break;
 	}
 	ndays++;
     }
 
-    return ndays > compfac ? 0 : compfac - ndays;
+    ret = ndays > compfac ? 0 : compfac - ndays;
+
+    fprintf(stderr, "daily_spread_offset: ndays=%d, ret=%d\n",
+	    ndays, ret);
+#endif    
+
+    return ret;
 }
 
 #define DAYDBG 0
@@ -3397,6 +3414,11 @@ static void fill_cset_t (const DATASET *dset,
 	iniskip = t0;
     }
 
+#if 0 /* FIXME */
+    fprintf(stderr, "cset->pd = %d, startday = %d\n", cset->pd,
+	    *startday);
+#endif
+
     /* how many daily obs in this period? */
     for (t=t0; t<dset->n; t++) {
 	daily_yp(dset, t, cset->pd, &y, &p);
@@ -3410,6 +3432,14 @@ static void fill_cset_t (const DATASET *dset,
 
 #if DAYDBG
     fprintf(stderr, "%d:%d, ndays = %d\n", y, pstart, ndays);
+#endif
+
+#if 0 /* FIXME! */    
+    if (cset->pd == 12) {
+	int altndays = get_days_in_month(y, pstart, cset->pd);
+	
+	fprintf(stderr, "%d:%d, altndays = %d\n", y, pstart, altndays);
+    }
 #endif
 
     k = 1;
@@ -3426,8 +3456,10 @@ static void fill_cset_t (const DATASET *dset,
 	}
 	zbar = zsum / (ndays - nmiss);
 #if DAYDBG > 1
-	fprintf(stderr, " %s: %d missing value(s), mean value %g\n",
-		dset->varname[i], nmiss, zbar);
+	if (nmiss > 0) {
+	    fprintf(stderr, " %s: %d missing value(s), mean value %g\n",
+		    dset->varname[i], nmiss, zbar);
+	}
 #endif
 	for (j=0; j<compfac; j++) {
 	    if (j < iniskip) {
@@ -3451,8 +3483,7 @@ static void fill_cset_t (const DATASET *dset,
 /* days per month or quarter: maybe make this user-
    configurable? */
 
-static int conventional_days_per (int days_per_week,
-				  int pd)
+int midas_days_per_period (int days_per_week, int pd)
 {
     int ret;
     
@@ -3492,7 +3523,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 
     daily_yp(dset, 0, newpd, &startyr, &startper);
     daily_yp(dset, dset->n - 1, newpd, &endyr, &endper);
-    compfac = conventional_days_per(dset->pd, newpd);
+    compfac = midas_days_per_period(dset->pd, newpd);
 
     if (newpd == 12) {
 	period = periods[0];
@@ -3514,7 +3545,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     v = 1 + (dset->v - 1) * compfac;
 
 #if 1
-    fprintf(stderr, "oldpd %d, newpd %d, v=%d, T=%d, start=%d:%d, end=%d:%d\n",
+    fprintf(stderr, "oldpd %d, newpd %d, nvars=%d, T=%d, start=%d:%d, end=%d:%d\n",
 	    dset->pd, newpd, v, T, startyr, startper, endyr, endper);
 #endif
     
@@ -3545,6 +3576,9 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 
     /* the number of skipped days at the start of the data */
     startday = daily_spread_offset(dset, newpd, compfac);
+#if 1
+    fprintf(stderr, "startday (daily spread offset) = %d\n", startday);
+#endif    
 
     /* do the actual data transcription first */
     for (t=0; t<T; t++) {

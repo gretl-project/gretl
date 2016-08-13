@@ -59,6 +59,8 @@ int days_in_month_before (int yr, int mon, int day, int wkdays);
 
 int days_in_month_after (int yr, int mon, int day, int wkdays);
 
+int first_day_in_month (int yr, int mon, int wkdays);
+
 int calendar_obs_number (const char *date, const DATASET *dset);
 
 int calendar_date_string (char *str, int t, const DATASET *dset);

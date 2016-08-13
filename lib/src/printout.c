@@ -26,6 +26,7 @@
 #include "gretl_func.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "dbread.h"
 
 #include <time.h>
 
@@ -2140,22 +2141,22 @@ static int midas_print_list (const int *list,
 	/* quarterly: midas series should be monthly or daily */
 	if (m == 3) {
 	    mpd = 12;
-	} else if (m == 66) {
+	} else if (m == midas_days_per_period(5, 4)) {
 	    mpd = 5;
-	} else if (m == 78) {
+	} else if (m == midas_days_per_period(6, 4)) {
 	    mpd = 6;
-	} else if (m == 90) {
+	} else if (m == midas_days_per_period(7, 4)) {
 	    mpd = 7;
 	} else {
 	    return E_INVARG;
 	}
     } else {
 	/* monthly: midas series should be daily */
-	if (m == 22) {
+	if (m == midas_days_per_period(5, 12)) {
 	    mpd = 5;
-	} else if (m == 26) {
+	} else if (m == midas_days_per_period(6, 12)) {
 	    mpd = 6;
-	} else if (m == 30) {
+	} else if (m == midas_days_per_period(7, 12)) {
 	    mpd = 7;
 	} else {
 	    return E_INVARG;
@@ -2191,9 +2192,10 @@ static int midas_print_list (const int *list,
 	} else if (mpd == 12) {
 	    sprintf(tmpset->stobs, "%d:01", atoi(stobs));
 	} else {
-	    int y, m, d = 1; /* FIXME day 1 !! */
+	    int y, m, d;
 
 	    sscanf(stobs, "%d:%d", &y, &m);
+	    d = first_day_in_month(y, m, mpd);
 	    sprintf(tmpset->stobs, "%d-%02d-%02d", y, m, d);
 	}
 

@@ -140,4 +140,6 @@ int compact_data_set (DATASET *dset, int newpd,
 int expand_data_set (DATASET *dset, int newpd,
 		     int interpol);
 
+int midas_days_per_period (int days_per_week, int pd);
+
 #endif /* DBREAD_H */
