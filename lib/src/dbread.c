@@ -3360,12 +3360,11 @@ static void fill_cset_t (const DATASET *dset,
     double cvec[30];
     const double *z;
     int y, p, pstart = 0;
-    int effn = 0, ndays = 0;
+    int effn, ndays = 0;
     int i, j, k, s, t, t0;
     double zsum = 0.0;
 
     t0 = *startday;
-    k = 1;
 
     /* how many daily obs do we have in this period? */
     for (t=t0; t<dset->n; t++) {
@@ -3378,20 +3377,22 @@ static void fill_cset_t (const DATASET *dset,
 	ndays++;
     }    
 
-    /* the outer loop is over the series in the daily
+    /* the outer loop is over the daily series in the
        source dataset */
 
-    for (i=1; i<dset->v ; i++) {
-	t = t0;
-	z = dset->Z[i];
+    k = 1;
+
+    for (i=1; i<dset->v; i++) {
+	z = dset->Z[i] + t0;
 	for (j=0; j<compfac; j++) {
 	    cvec[j] = NADBL;
 	}
+	effn = 0;
 	zsum = 0.0;
 	for (j=0; j<compfac && j<ndays; j++) {
 	    ntodate(obs, t0 + j, dset);
 	    s = date_to_daily_index(obs, dset->pd);
-	    cvec[s] = z[t++];
+	    cvec[s] = z[j];
 	    if (!na(cvec[s])) {
 		zsum += cvec[s];
 		effn++;
@@ -3407,6 +3408,7 @@ static void fill_cset_t (const DATASET *dset,
 		}
 	    }
 	}
+	/* transcribe into target dataset */
 	for (j=0; j<compfac; j++) {
 	    cset->Z[k+j][cset_t] = cvec[j];
 	}
