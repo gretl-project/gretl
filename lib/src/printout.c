@@ -2112,13 +2112,21 @@ static int print_by_var (const int *list, const DATASET *dset,
     return 0;
 }
 
+static int quarter_to_month (int qtr, int ndays, int day)
+{
+    return qtr * 3 - 2 + (day - 1) / (ndays/3);
+}
+
 static int midas_print_list (const int *list,
 			     const DATASET *dset,
 			     PRN *prn)
 {
     DATASET *tmpset = NULL;
+    gretlopt opt = 0;
     int mpd, pd = dset->pd;
     int T, m = list[0];
+    int yr, mon;
+    int daily = 0;
     int err = 0;
 
     if (m < 3 || gretl_list_has_separator(list)) {
@@ -2169,14 +2177,21 @@ static int midas_print_list (const int *list,
 
     T = sample_size(dset) * m;
 
-    tmpset = create_auxiliary_dataset(2, T, OPT_NONE);
+    if (mpd >= 5 && mpd <= 7) {
+	/* add markers for daily dates */
+	daily = 1;
+	opt = OPT_M;
+    }
+
+    tmpset = create_auxiliary_dataset(2, T, opt);
     if (tmpset == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	char *p, stobs[OBSLEN];
+	char *p, obs[OBSLEN];
 	int mlist[2] = {1, 1};
+	int nonex;
 	int i, t, s;
 
 	tmpset->pd = mpd;
@@ -2185,28 +2200,47 @@ static int midas_print_list (const int *list,
 	p = strrchr(tmpset->varname[1], '_');
 	if (p != NULL) *p = '\0';
 
-	ntodate(stobs, dset->t1, dset);
+	ntodate(obs, dset->t1, dset);
 
 	if (mpd == 4) {
-	    sprintf(tmpset->stobs, "%d:1", atoi(stobs));
+	    sprintf(tmpset->stobs, "%d:1", atoi(obs));
 	} else if (mpd == 12) {
-	    sprintf(tmpset->stobs, "%d:01", atoi(stobs));
-	} else {
-	    int y, m, d;
-
-	    sscanf(stobs, "%d:%d", &y, &m);
-	    d = first_day_in_month(y, m, mpd);
-	    sprintf(tmpset->stobs, "%d-%02d-%02d", y, m, d);
+	    sprintf(tmpset->stobs, "%d:01", atoi(obs));
 	}
-
-	tmpset->sd0 = get_date_x(tmpset->pd, tmpset->stobs);
-	ntodate(tmpset->endobs, tmpset->t2, tmpset);
 
 	s = 0;
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    for (i=m; i>0; i--) {
-		tmpset->Z[1][s++] = dset->Z[list[i]][t];
+	    if (daily) {
+		ntodate(obs, t, dset);
+		sscanf(obs, "%d:%d", &yr, &mon);
 	    }
+	    for (i=m; i>0; i--) {
+		if (daily) {
+		    if (pd == 4) {
+			mon = quarter_to_month(mon, m, i);
+		    }
+		    nonex = daily_index_to_date(tmpset->S[s], yr, mon, m-i, mpd);
+		    if (nonex) {
+			/* skip non-existent daily dates */
+			tmpset->t2 -= 1;
+		    } else {
+			tmpset->Z[1][s++] = dset->Z[list[i]][t];
+		    }
+		} else {
+		    tmpset->Z[1][s++] = dset->Z[list[i]][t];
+		}
+	    }
+	}
+
+	if (daily) {
+	    strcpy(tmpset->stobs, tmpset->S[0]);
+	    strcpy(tmpset->endobs, tmpset->S[tmpset->t2]);
+	    tmpset->markers = DAILY_DATE_STRINGS;
+	}
+
+	tmpset->sd0 = get_date_x(tmpset->pd, tmpset->stobs);
+	if (!daily) {
+	    ntodate(tmpset->endobs, tmpset->t2, tmpset);
 	}
 
 	err = print_by_obs(mlist, tmpset, OPT_NONE, 0, prn);

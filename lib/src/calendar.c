@@ -870,6 +870,8 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
     return ret;    
 }
 
+#if 0
+
 /**
  * first_day_in_month:
  * @yr: 4-digit year
@@ -903,6 +905,73 @@ int first_day_in_month (int yr, int mon, int wkdays)
     } 
 
     return ret; 
+}
+
+#endif
+
+/* zero-based index of day within month */
+
+int date_to_daily_index (const char *date, int wkdays)
+{
+    int y, m, d;
+    int idx = 0;
+
+    if (sscanf(date, YMD_READ_FMT, &y, &m, &d) != 3) {
+	return -1;
+    }
+
+    if (wkdays == 7) {
+	idx = d - 1;
+    } else {
+	int leap = leap_year(y);
+	int n = days_in_month[leap][m];
+	int i, wd;
+
+	for (i=1; i<=n; i++) {
+	    if (d == i) {
+		break;
+	    }
+	    wd = day_of_week_from_ymd(y, m, i);
+	    if (day_in_calendar(wkdays, wd)) {
+		idx++;
+	    }
+	}	
+    } 
+
+    return idx; 
+}
+
+int daily_index_to_date (char *date, int y, int m, int idx,
+			 int wkdays)
+{
+    int day = 0;
+
+    if (wkdays == 7) {
+	day = idx + 1;
+    } else {
+	int leap = leap_year(y);
+	int n = days_in_month[leap][m];
+	int i, wd, seq = 0;
+
+	for (i=1; i<=n; i++) {
+	    wd = day_of_week_from_ymd(y, m, i);
+	    if (day_in_calendar(wkdays, wd)) {
+		if (seq == idx) {
+		    day = i;
+		    break;
+		}
+		seq++;
+	    }
+	}	
+    }
+
+    if (day <= 0) {
+	*date = '\0';
+	return E_DATA;
+    } else {
+	sprintf(date, YMD_WRITE_FMT, y, m, day);
+	return 0;
+    }
 }
 
 /**
