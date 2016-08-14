@@ -1,0 +1,62 @@
+The information below is intended to help those who are packaging
+gretl for Linux distributions. It describes certain options to the
+configure script which may affect the usability and/or functionality
+of a gretl build on various platforms.
+
+1. CPU and openmp functionality
+
+Gretl's configure script aims to produce a binary whose functionality
+is as advanced as possible based on the characteristics of the build
+host. Please note that this may not be what you want if you intend to
+build gretl for a "lowest common denominator" target machine.
+
+The specific configure options that are most relevant here are
+
+--enable-sse2
+--enable-avx
+--enable-openmp
+
+These are all marked as "auto", meaning that they will be probed
+at configure time. If your build host has one or more of these
+attributes but you do NOT want them built into the package you
+are creating, you should give one or more of the following options
+to configure
+
+--disable-sse2
+--disable-avx
+--disable-openmp
+
+(It should probably go without saying that a build with SSE2 or AVX
+enabled will fail at start-up with "Illegal instruction" if a user
+attempts to run it on a machine whose CPU does not support the
+instruction set in question.)
+
+2. MPI support
+
+The first point above was in effect a warning: you may wish to avoid
+enabling inadvertently a feature which could cause your gretl build 
+to be inoperative on some users' machines. This second point is in a
+sense "the other way round": you may wish to enable a feature that
+could benefit some users but will not hurt others.
+
+MPI support in gretl can be described as an "optional dependency".
+In the configure process we scan for the MPI-specific compiler,
+mpicc, which is supplied by MPI implementations such as Open MPI and
+MPICH. If this is found, the additional program gretlmpi gets built.
+If there's no MPI implementation on the end-user's machine then
+the gretlmpi binary won't work (unless and until the user installs
+such an implementation), but the rest of gretl's functionality is
+unaffected. You can find details on this at
+
+http://ricardo.ecn.wfu.edu/~cottrell/gretl/gretl-mpi.pdf
+
+but we would recommend that packagers enable MPI support in gretl
+by including an MPI implementation on the build host. That way,
+users of your package can either get MPI support "out of the box"
+(if they already have MPI installed) or can install an MPI package
+later and thereby get MPI support on demand.
+
+Allin Cottrell
+Department of Economics
+Wake Forest University
+2016-08-14
