@@ -3321,7 +3321,11 @@ static void load_default_path (char *targ)
     } else if (targ == paths.jlpath) {
 	strcpy(paths.jlpath, "julia");
     } else if (targ == paths.mpiexec) {
+#if defined(MAC_NATIVE)
+	strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
+#else
 	strcpy(paths.mpiexec, "mpiexec");
+#endif
     } else if (targ == paths.mpi_hosts) {
 	*paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
