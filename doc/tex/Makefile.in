@@ -11,11 +11,13 @@ GUIDE = gretl-guide.pdf
 REF = gretl-ref.pdf
 HANSL = hansl-primer.pdf
 PKGBOOK = pkgbook.pdf
+MPIDOC = gretl-mpi.pdf
 KBD = gretl-keys.pdf
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
 ALTHANSL = hansl-primer-a4.pdf
 ALTPKGBOOK = pkgbook-a4.pdf
+ALTMPIDOC = gretl-mpi-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
 
 TEXSRC = cli.tex \
@@ -123,6 +125,10 @@ $(PKGBOOK): pkgbook.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
+$(MPIDOC): gretl-mpi.tex links date.tex $(STYSRC)
+	pdflatex $<
+	pdflatex $<
+
 $(KBD): gretl-keys.tex links $(STYSRC)
 	pdflatex $<
 
@@ -154,6 +160,10 @@ $(ALTPKGBOOK): pkgbook-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
+$(ALTMPIDOC): gretl-mpi-a4.tex links date.tex $(STYSRC)
+	pdflatex $<
+	pdflatex $<
+
 $(ALTKBD): gretl-keys-a4.tex links $(STYSRC)
 	pdflatex $<
 
@@ -166,12 +176,15 @@ gretl-ref.tex:
 hansl-primer.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
+gretl-mpi.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+
 gretl-keys.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
-letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(KBD)
+letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(KBD)
 
-a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTKBD)
+a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTKBD)
 
 gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
@@ -183,6 +196,9 @@ hansl-primer-a4.tex: $(docsrc)/tex/hansl-primer.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 pkgbook-a4.tex: $(docsrc)/tex/pkgbook.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
+
+gretl-mpi-a4.tex: $(docsrc)/tex/gretl-mpi.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
@@ -230,6 +246,9 @@ hanslpass: hansl-primer.tex links
 	pdflatex $<
 
 pkgbookpass: pkgbook.tex links
+	pdflatex $<
+
+mpidocpass: gretl-mpi.tex links
 	pdflatex $<
 
 bibpass: onepass refpass
