@@ -2701,7 +2701,7 @@ int db_get_series (const char *line, DATASET *dset,
 		}
 		strings_array_free(tmp, nmatch);
 	    } else {
-		err = E_DATA;
+		err = E_INVARG;
 	    }
 	} else {
 	    err = get_one_db_series(vnames[i], dset, cmethod,
@@ -3359,6 +3359,7 @@ static void fill_cset_t (const DATASET *dset,
 {
     char obs[OBSLEN];
     double cvec[30];
+    int idx[30];
     const double *z;
     int y, p, pstart = 0;
     int effn, ndays = 0;
@@ -3383,6 +3384,12 @@ static void fill_cset_t (const DATASET *dset,
 	    ndays, compfac);
 #endif
 
+    /* construct array of month-day indices */
+    for (j=0; j<compfac && j<ndays; j++) {
+	ntodate(obs, t0 + j, dset);
+	idx[j] = date_to_daily_index(obs, dset->pd);
+    }
+
     /* the outer loop is over the daily series in the
        source dataset */
 
@@ -3396,8 +3403,7 @@ static void fill_cset_t (const DATASET *dset,
 	effn = 0;
 	zsum = 0.0;
 	for (j=0; j<compfac && j<ndays; j++) {
-	    ntodate(obs, t0 + j, dset);
-	    s = date_to_daily_index(obs, dset->pd);
+	    s = idx[j];
 	    cvec[s] = z[j];
 	    if (!na(cvec[s])) {
 		zsum += cvec[s];

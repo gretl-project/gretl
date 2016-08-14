@@ -8079,7 +8079,7 @@ int hf_plot (const int *list, const char *literal,
 	nv = 2;
     }
 
-    T = cfac * (dset->t2 - dset->t1 + 1);
+    T = sample_size(dset) * cfac;
 
     hset = create_auxiliary_dataset(nv, T, OPT_NONE);
     if (hset == NULL) {
