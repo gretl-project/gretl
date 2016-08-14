@@ -2334,6 +2334,10 @@ static int real_write_gdt (const char *fname, const int *list,
 
 	if (series_get_flags(dset,v) & VAR_MIDAS) {
 	    alt_puts("\n midas=\"true\"", fp, fz);
+	}
+
+	if (series_get_flags(dset,v) & VAR_HFANCHOR) {
+	    alt_puts("\n hf-anchor=\"true\"", fp, fz);
 	}	
 
 	alt_puts("\n/>\n", fp, fz);
@@ -2643,6 +2647,13 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		    series_set_flag(dset, i, VAR_MIDAS);
 		}
 		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, i, VAR_HFANCHOR);
+		}
+		free(tmp);
 	    }	    
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
@@ -2869,6 +2880,14 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
 		    series_set_flag(dset, k, VAR_MIDAS);
+		}
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, k, VAR_HFANCHOR);
 		}
 		free(tmp);
 	    }	    

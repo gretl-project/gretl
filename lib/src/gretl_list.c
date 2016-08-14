@@ -129,6 +129,8 @@ int gretl_is_midas_list (const int *list, const DATASET *dset)
 	    vi = list[i];
 	    if (vi < 1 || vi >= dset->v) {
 		ret = 0;
+	    } else if (i == 1 && !(series_get_flags(dset, vi) & VAR_HFANCHOR)) {
+		ret = 0;
 	    } else if (!(series_get_flags(dset, vi) & VAR_MIDAS)) {
 		ret = 0;
 	    }
@@ -160,6 +162,9 @@ int gretl_list_set_midas (const int *list, DATASET *dset)
 	    if (vi < 1 || vi >= dset->v) {
 		err = E_INVARG;
 	    } else {
+		if (i == 1) {
+		    series_set_flag(dset, vi, VAR_HFANCHOR);
+		}
 		series_set_flag(dset, vi, VAR_MIDAS);
 	    }
 	}

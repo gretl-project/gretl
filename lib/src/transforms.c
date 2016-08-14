@@ -1323,21 +1323,6 @@ static int process_hf_lags_input (const gretl_matrix *lvec,
     return 0;
 }
 
-static int check_hf_laglist (const int *list, const DATASET *dset)
-{
-    int i, warn = 0;
-
-    for (i=1; i<=list[0] && !warn; i++) {
-	if (!(series_get_flags(dset, list[i]) & VAR_MIDAS)) {
-	    gretl_warnmsg_sprintf("%s appears not to be a MIDAS series",
-				  dset->varname[list[i]]);
-	    warn = 1;
-	}
-    }
-
-    return warn;
-}
-
 /**
  * list_laggenr:
  * @plist: on entry, pointer to list of variables to process.  On exit
@@ -1373,7 +1358,9 @@ int list_laggenr (int **plist, int order,
     if (compfac < 0) {
 	return E_INVARG;
     } else if (compfac > 0) {
-	check_hf_laglist(list, dset);
+	if (!gretl_is_midas_list(list, dset)) {
+	    gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	}
     }
 
     if (lvec != NULL) {
@@ -1584,14 +1571,15 @@ static int check_hf_difflist (const int *list,
 			      int ci, int *n_add)
 {
     char vname[VNAMELEN];
-    int warnvar = 0;
+    int warn = 0;
     int i, v, li, err = 0;
+
+    if (!gretl_is_midas_list(list, dset)) {
+	warn = 1;
+    }
 
     for (i=1; i<=list[0] && !err; i++) {
 	li = list[i];
-	if (!(series_get_flags(dset, li) & VAR_MIDAS)) {
-	    warnvar = li;
-	}
 	make_transform_varname(vname, dset->varname[li],
 			       ci, 0, VNAMELEN - 8);
 	v = current_series_index(dset, vname);
@@ -1604,9 +1592,8 @@ static int check_hf_difflist (const int *list,
 	}
     }
 
-    if (warnvar > 0) {
-	gretl_warnmsg_sprintf("%s appears not to be a MIDAS series",
-			      dset->varname[warnvar]);
+    if (!err && warn) {
+	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
     }
 
     return err;
