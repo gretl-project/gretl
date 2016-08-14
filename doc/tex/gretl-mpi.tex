@@ -153,9 +153,11 @@ and \textsf{OpenMP} is discussed in section~\ref{sec:contention}.
 \section{How do I set this up?}
 \label{sec:setup}
 
-Right now you can make use of MPI in gretl only by building gretl from
-the git sources yourself or using a current snapshot (on Windows or OS
-X). You will also need to have a suitable MPI package installed.
+As of this writing you can make use of MPI in gretl only by building
+gretl from the git sources yourself (on Linux), by using a recent
+release or snapshot (on MS Windows), or by using a current snapshot
+(on Mac OS X). You will also need to have a suitable MPI package
+installed.
 
 Running an MPI-enabled program---such as the new
 \texttt{gretlmpi}, described below---requires a special launcher,
@@ -773,7 +775,7 @@ them on.
 
 To enable MPI support on Linux at present you have to install an MPI
 package first, then build gretl from the git sources. (Hopefully this
-will eventually be handled by the Linux distributions.)
+will be handled by the Linux distributions before long.)
 
 It's straightforward to install one of the open-source MPI
 implementations on a Linux system using your distribution's package
@@ -818,11 +820,11 @@ which is available as a free download via
 
 \url{http://www.microsoft.com/en-us/download/details.aspx?id=41634}
 
-The current gretl snapshots for Windows (both 32- and 64-bit) provide
-support for this.\footnote{In principle you could install \textsf{Open
-    MPI} or \textsf{MPICH} on Windows---though you'd have to build
-  them yourself---but at present gretl on Windows only supports
-  \textsf{MS-MPI}.}
+The current releases (and snapshots) for Windows (both 32- and 64-bit)
+provide support for this.\footnote{In principle you could install
+  \textsf{Open MPI} or \textsf{MPICH} on Windows---though you'd have
+  to build them yourself---but at present gretl on Windows only
+  supports \textsf{MS-MPI}.}
 
 When you run the \textsf{MS-MPI} installer this automatically adds the
 relevant directory to your path, and you should be good to go. Note,
@@ -834,82 +836,44 @@ first. You can do that by going to the Windows Start menu, selecting
 \begin{code}
 smpd -d
 \end{code}
-(This opens a console window, which you can just minimize.)
+(This opens a console window, which you can just minimize to get it
+out of the way.)
 
 \subsection{Mac OS X}
 
 At present gretl's MPI support is enabled only in the quartz (Intel
 64-bit) snapshot.
 
-\subsubsection*{Snow Leopard}
+There's some history here: up to version 10.6 of OS X (Snow Leopard),
+Apple provided an MPI implementation as a standard component of the
+OS. But Snow Leopard is, of course, quite old by now and this policy
+was discontinued with OS X 10.7. So as of \today{} gretl does not
+attempt to use Apple's MPI. The current quartz snapshot includes
+\texttt{gretlmpi}, but this is linked against version 1.6.5 of
+\textsf{Open MPI}, which is assumed to be installed under
+\texttt{/opt/openmpi}. This assumption will \textit{not} be correct in
+general, but you can make it so by installing the package
+\begin{code}
+openmpi-1.6.5-mac64.tar.bz2
+\end{code}
+which can be found at
 
-The quartz snapshot includes a build of \texttt{gretlmpi} which is
-linked against the MPI libraries supplied with OS X 10.6 (Snow
-Leopard)---namely, \textsf{Open MPI} version 1.2.8. Gretl/MPI therefore
-works ``out of the box'' on Snow Leopard.
-
-\vspace{4pt}
-
-As of OS X 10.7, however, Apple discontinued its support for MPI. So
-if you're running Lion or higher and want to activate the MPI features
-in the gretl snapshot you will have to install MPI yourself, if you
-haven't already done so.
-
-\subsubsection*{Lion and higher, MPI not installed}
-
-The case where you don't have any MPI installation on your Mac should
-be fairly simple. You just need to install an MPI version that is
-compatible with 1.2.8. The last \textsf{Open MPI} release in the 1.2
-series was 1.2.9. Presumably this differs from 1.2.8 only in respect
-of bug fixes, so it's a good candidate. We recommend installing the
-64-bit binary package of \textsf{Open MPI} 1.2.9 available from the
-``OSX testing'' area on the gretl website at
-  
 \url{http://sourceforge.net/projects/gretl/files/osx-testing/}
 
-The file is called \texttt{openmpi-1.2.9-mac64.tar.bz2}. To unpack it
-you would do
+To unpack the package you would do
 \begin{code}
 cd /
-sudo tar xvfj /where/you/put/openmpi-1.2.9-mac64.tar.bz2
+sudo tar xvfj /where/you/put/openmpi-1.6.5-mac64.tar.bz2
 \end{code}
-with ``\texttt{/where/you/put}'' replaced appropriately, of
-course. This will install the libraries in \texttt{/usr/lib}, where
-\texttt{gretlmpi} expects to find them. Hopefully you should then
-be good to go.
-
-If you prefer to build and install MPI yourself, you should probably
-choose version 1.2.9, and should configure the build with
-\verb|--prefix=/usr|.
-
-\subsubsection*{Lion and higher, MPI already installed}
-
-If you're running Lion or higher and already have MPI installed there
-are three sub-cases to consider.
-\begin{itemize}
-\item The installed MPI version is compatible with 1.2.8, and the
-  MPI libaries are in \texttt{/usr/lib}. Fine, you should be good to
-  go.
-\item The installed MPI version is compatible with 1.2.8 but the
-  libraries are somewhere other than \texttt{/usr/lib}. Then you
-  should be able to use Apple's \verb|install_name_tool| on
-  \texttt{gretlmpi} to re-target the links to
-  \texttt{libmpi.0.dylib}, \texttt{libopen-rte.0.dylib} and
-  \texttt{libopen-pal.0.dylib}.
-\item The installed MPI version is not compatible with
-  1.2.8. (Unfortunately this is quite likely, since 1.2 is pretty old
-  and if you were installing MPI independently you'd probably choose a
-  more current version.) In this case you can't use
-  \texttt{gretlmpi} from the snapshot---or not without attempting
-  the potentially risky and confusing step of installing two MPI
-  version in parallel. However, there remain two possibilities: build
-  gretl yourself (so that \texttt{gretlmpi} gets linked to the
-  right libraries), or post to the \texttt{gretl-users} mailing list,
-  noting your \textsf{Open MPI} version. If there's enough interest,
-  we could perhaps prepare variants of \texttt{gretlmpi} linked
-  against more recent versions of MPI and make them available as
-  drop-in replacements for the program in the snapshot.
-\end{itemize}
+%
+This will install the files under \texttt{/opt/openmpi}, which is
+where gretl will expect to find them; plus, it's a location where they
+are unlikely to collide with any other MPI implementation you may have
+installed.\footnote{Earlier draft versions of this document referred
+  to a package containing \textsf{Open MPI} 1.2.9, to be installed
+  under the \texttt{/usr} tree on OS X. That package is obsolete, in
+  part because Apple's policy is now that users are not allowed to
+  install custom software under \texttt{/usr}.}
 
 \section{MPI dependency questions}
 \label{sec:mpi-depend}
