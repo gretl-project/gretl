@@ -2196,7 +2196,7 @@ static int midas_print_list (const int *list,
     if (!err) {
 	char *p, obs[OBSLEN];
 	int mlist[2] = {1, 0};
-	int nonex;
+	int nonex, qtr = 0;
 	int i, t, s;
 
 	tmpset->pd = mpd;
@@ -2218,21 +2218,36 @@ static int midas_print_list (const int *list,
 	    if (daily) {
 		ntodate(obs, t, dset);
 		sscanf(obs, "%d:%d", &yr, &mon);
+		if (pd == 4) {
+		    qtr = mon;
+		}
 	    }
 	    for (i=m; i>0; i--) {
+		int vi = list[i];
+		
 		if (daily) {
 		    if (pd == 4) {
-			mon = quarter_to_month(mon, m, i);
+			/* FIXME this is broken */
+			mon = quarter_to_month(qtr, m, m-i+1);
+			if (1 || s == 0) {
+			    fprintf(stderr, "mon=%d, from qtr=%d, m=%d, i=%d\n",
+				    mon, qtr, m, i);
+			}
+			nonex = daily_index_to_date(tmpset->S[s], yr, mon, m/3 - i, mpd);
+		    } else {
+			nonex = daily_index_to_date(tmpset->S[s], yr, mon, m-i, mpd);
 		    }
-		    nonex = daily_index_to_date(tmpset->S[s], yr, mon, m-i, mpd);
 		    if (nonex) {
 			/* skip non-existent daily dates */
+			fprintf(stderr, "skipping non-existent date %d-%02d idx %d\n",
+				yr, mon, m-i);
 			tmpset->t2 -= 1;
 		    } else {
-			tmpset->Z[0][s++] = dset->Z[list[i]][t];
+			fprintf(stderr, "S[%d] = '%s'\n", s, tmpset->S[s]);
+			tmpset->Z[0][s++] = dset->Z[vi][t];
 		    }
 		} else {
-		    tmpset->Z[0][s++] = dset->Z[list[i]][t];
+		    tmpset->Z[0][s++] = dset->Z[vi][t];
 		}
 	    }
 	}

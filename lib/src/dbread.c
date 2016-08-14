@@ -3354,7 +3354,8 @@ static void fill_cset_t (const DATASET *dset,
 			 int *startday,
 			 DATASET *cset,
 			 int cset_t,
-			 int compfac)
+			 int compfac,
+			 int qmonth)
 {
     char obs[OBSLEN];
     double cvec[30];
@@ -3366,21 +3367,26 @@ static void fill_cset_t (const DATASET *dset,
 
     t0 = *startday;
 
-    /* how many daily obs do we have in this period? */
+    /* how many daily obs do we have in this month? */
     for (t=t0; t<dset->n; t++) {
-	daily_yp(dset, t, cset->pd, &y, &p);
+	daily_yp(dset, t, 12, &y, &p);
 	if (t == t0) {
 	    pstart = p;
 	} else if (p != pstart) {
 	    break;
 	}
 	ndays++;
-    }    
+    }
+
+#if 0
+    fprintf(stderr, "fill_cset_t: ndays = %d, compfac = %d\n",
+	    ndays, compfac);
+#endif
 
     /* the outer loop is over the daily series in the
        source dataset */
 
-    k = 1;
+    k = 1 + qmonth * compfac;
 
     for (i=1; i<dset->v; i++) {
 	z = dset->Z[i] + t0;
@@ -3516,7 +3522,13 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     /* do the actual data transcription first */
     startday = 0;
     for (t=0; t<T; t++) {
-	fill_cset_t(dset, &startday, cset, t, compfac);
+	if (newpd == 4) {
+	    fill_cset_t(dset, &startday, cset, t, compfac/3, 0);
+	    fill_cset_t(dset, &startday, cset, t, compfac/3, 1);
+	    fill_cset_t(dset, &startday, cset, t, compfac/3, 2);
+	} else {
+	    fill_cset_t(dset, &startday, cset, t, compfac, 0);
+	}
     }
 
     /* then name the series and reorganize */
