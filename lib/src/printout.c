@@ -2114,7 +2114,7 @@ static int print_by_var (const int *list, const DATASET *dset,
 
 /* Infer the current month from the current @qtr along
    with the number of days per period, @ndays, and the
-   current index within the days array, @day.
+   current index within the month-days array, @day.
 */
 
 static int quarter_to_month (int qtr, int ndays, int day)
@@ -2197,7 +2197,7 @@ static int midas_print_list (const int *list,
 	char *p, obs[OBSLEN];
 	int mlist[2] = {1, 0};
 	int nonex, qtr = 0;
-	int i, t, s;
+	int i, t, s, m3 = 0;
 
 	tmpset->pd = mpd;
 	tmpset->structure = TIME_SERIES;
@@ -2213,6 +2213,12 @@ static int midas_print_list (const int *list,
 	    sprintf(tmpset->stobs, "%d:01", atoi(obs));
 	}
 
+	if (daily && pd == 4) {
+	    m3 = m / 3;
+	}
+
+	/* loop across observations in low-frequency dataset */
+
 	s = 0;
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (daily) {
@@ -2222,28 +2228,21 @@ static int midas_print_list (const int *list,
 		    qtr = mon;
 		}
 	    }
+	    /* read data right-to-left */
 	    for (i=m; i>0; i--) {
 		int vi = list[i];
 		
 		if (daily) {
 		    if (pd == 4) {
-			/* FIXME this is broken */
 			mon = quarter_to_month(qtr, m, m-i+1);
-			if (1 || s == 0) {
-			    fprintf(stderr, "mon=%d, from qtr=%d, m=%d, i=%d\n",
-				    mon, qtr, m, i);
-			}
-			nonex = daily_index_to_date(tmpset->S[s], yr, mon, m/3 - i, mpd);
+			nonex = daily_index_to_date(tmpset->S[s], yr, mon, (m-i) % m3, mpd);
 		    } else {
 			nonex = daily_index_to_date(tmpset->S[s], yr, mon, m-i, mpd);
 		    }
 		    if (nonex) {
-			/* skip non-existent daily dates */
-			fprintf(stderr, "skipping non-existent date %d-%02d idx %d\n",
-				yr, mon, m-i);
+			/* skip any non-existent daily dates */
 			tmpset->t2 -= 1;
 		    } else {
-			fprintf(stderr, "S[%d] = '%s'\n", s, tmpset->S[s]);
 			tmpset->Z[0][s++] = dset->Z[vi][t];
 		    }
 		} else {

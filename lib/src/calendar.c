@@ -934,6 +934,12 @@ int daily_index_to_date (char *date, int y, int m, int idx,
 {
     int day = 0;
 
+    if (m < 1 || m > 12 || idx < 0 || idx > 30) {
+	fprintf(stderr, "daily_index_to_date: y=%d, m=%d, idx=%d\n",
+		y, m, idx);
+	return E_DATA;
+    }
+
     if (wkdays == 7) {
 	day = idx + 1;
     } else {
