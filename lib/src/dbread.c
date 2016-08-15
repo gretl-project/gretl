@@ -26,6 +26,7 @@
 #include "matrix_extra.h"
 #include "usermat.h"
 #include "dbread.h"
+#include "gretl_midas.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -2998,8 +2999,7 @@ init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
 }
 
 /* We'll do "spread" compaction for monthly to quarterly or annual,
-   or quarterly to annual. On an experimental basis, we'll also
-   try daily to monthly or quarterly.
+   quarterly to annual, or daily to monthly or quarterly.
 */
 
 static int compact_spread_pd_check (int high, int low)
@@ -3429,24 +3429,6 @@ static void fill_cset_t (const DATASET *dset,
     }
 
     *startday += ndays;
-}
-
-/* days per month or quarter: maybe make this user-
-   configurable? */
-
-int midas_days_per_period (int days_per_week, int pd)
-{
-    int ret;
-    
-    if (days_per_week == 5) {
-	ret = 22;
-    } else if (days_per_week == 6) {
-	ret = 26;
-    } else {
-	ret = 30;
-    }
-
-    return (pd == 12)? ret : 3 * ret;
 }
 
 /* compact daily data to monthly or quarterly using the

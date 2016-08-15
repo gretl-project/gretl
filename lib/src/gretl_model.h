@@ -112,6 +112,7 @@ struct VCVInfo_ {
                           c == LAD || \
                           c == LOGISTIC || \
                           c == LOGIT || \
+			  c == MIDASREG || \
                           c == MLE || \
                           c == MPOLS || \
 			  c == NEGBIN || \
@@ -174,7 +175,7 @@ struct VCVInfo_ {
 
 /* model where the specification is not based on a list
    of variables */
-#define NONLIST_MODEL(c) (c == NLS || c == MLE || c == GMM)
+#define NONLIST_MODEL(c) (c == NLS || c == MLE || c == GMM || c == MIDASREG)
 
 #define is_model_ref_cmd(c) (c == ADD || \
 	                     c == ARCH || \

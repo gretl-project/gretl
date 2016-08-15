@@ -1571,12 +1571,7 @@ static int check_hf_difflist (const int *list,
 			      int ci, int *n_add)
 {
     char vname[VNAMELEN];
-    int warn = 0;
     int i, v, li, err = 0;
-
-    if (!gretl_is_midas_list(list, dset)) {
-	warn = 1;
-    }
 
     for (i=1; i<=list[0] && !err; i++) {
 	li = list[i];
@@ -1590,10 +1585,6 @@ static int check_hf_difflist (const int *list,
 				 vname);
 	    err = E_TYPES;
 	}
-    }
-
-    if (!err && warn) {
-	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
     }
 
     return err;
@@ -1621,6 +1612,7 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
 {
     gretl_matrix *dX = NULL;
     int n_add, hfci = 0;
+    int set_midas = 1;
     int err = 0;
 
     if (list[0] == 0) {
@@ -1643,6 +1635,11 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
     err = check_hf_difflist(list, dset, ci, &n_add);
     if (err) {
 	return err;
+    }
+
+    if (!gretl_is_midas_list(list, dset)) {
+	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	set_midas = 0;
     }
 
     if (na(parm)) {
@@ -1684,6 +1681,10 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
 	    list[0] = n;
 	}
 	gretl_matrix_free(dX);
+    }
+
+    if (!err && set_midas) {
+	gretl_list_set_midas(list, dset);
     }
 
     return err;

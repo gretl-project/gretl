@@ -26,7 +26,7 @@
 #include "gretl_func.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
-#include "dbread.h"
+#include "gretl_midas.h"
 
 #include <time.h>
 
@@ -2112,156 +2112,18 @@ static int print_by_var (const int *list, const DATASET *dset,
     return 0;
 }
 
-/* Infer the current month from the current @qtr along
-   with the number of days per period, @ndays, and the
-   current index within the month-days array, @day.
-*/
-
-static int quarter_to_month (int qtr, int ndays, int day)
-{
-    return qtr * 3 - 2 + (day - 1) / (ndays/3);
-}
-
 static int midas_print_list (const int *list,
 			     const DATASET *dset,
 			     PRN *prn)
 {
     DATASET *tmpset = NULL;
-    gretlopt opt = 0;
-    int mpd, pd = dset->pd;
-    int T, m = list[0];
-    int yr, mon;
-    int daily = 0;
     int err = 0;
 
-    if (m < 3 || gretl_list_has_separator(list)) {
-	return E_INVARG;
-    } else if (!dataset_is_time_series(dset)) {
-	return E_INVARG;
-    } else if (pd != 1 && pd != 4 && pd != 12) {
-	/* host dataset should be annual, quarterly or monthly */
-	return E_PDWRONG;
-    }
-
-    if (pd == 1) {
-	/* annual: midas series should be quarterly or monthly */
-	if (m != 4 && m != 12) {
-	    return E_INVARG;
-	} else {
-	    mpd = m;
-	}
-    } else if (pd == 4) {
-	/* quarterly: midas series should be monthly or daily */
-	if (m == 3) {
-	    mpd = 12;
-	} else if (m == midas_days_per_period(5, 4)) {
-	    mpd = 5;
-	} else if (m == midas_days_per_period(6, 4)) {
-	    mpd = 6;
-	} else if (m == midas_days_per_period(7, 4)) {
-	    mpd = 7;
-	} else {
-	    return E_INVARG;
-	}
-    } else {
-	/* monthly: midas series should be daily */
-	if (m == midas_days_per_period(5, 12)) {
-	    mpd = 5;
-	} else if (m == midas_days_per_period(6, 12)) {
-	    mpd = 6;
-	} else if (m == midas_days_per_period(7, 12)) {
-	    mpd = 7;
-	} else {
-	    return E_INVARG;
-	}
-    }
-
-    if (!gretl_is_midas_list(list, dset)) {
-	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
-    }
-
-    T = sample_size(dset) * m;
-
-    if (mpd >= 5 && mpd <= 7) {
-	/* we'll add markers for daily dates */
-	daily = 1;
-	opt = OPT_M;
-    }
-
-    tmpset = create_auxiliary_dataset(1, T, opt);
-    if (tmpset == NULL) {
-	err = E_ALLOC;
-    }
+    tmpset = midas_aux_dataset(list, dset, &err);
 
     if (!err) {
-	char *p, obs[OBSLEN];
 	int mlist[2] = {1, 0};
-	int nonex, qtr = 0;
-	int i, t, s, m3 = 0;
-
-	tmpset->pd = mpd;
-	tmpset->structure = TIME_SERIES;
-	strcpy(tmpset->varname[0], dset->varname[list[1]]);
-	p = strrchr(tmpset->varname[0], '_');
-	if (p != NULL) *p = '\0';
-
-	ntodate(obs, dset->t1, dset);
-
-	if (mpd == 4) {
-	    sprintf(tmpset->stobs, "%d:1", atoi(obs));
-	} else if (mpd == 12) {
-	    sprintf(tmpset->stobs, "%d:01", atoi(obs));
-	}
-
-	if (daily && pd == 4) {
-	    m3 = m / 3;
-	}
-
-	/* loop across observations in low-frequency dataset */
-
-	s = 0;
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (daily) {
-		ntodate(obs, t, dset);
-		sscanf(obs, "%d:%d", &yr, &mon);
-		if (pd == 4) {
-		    qtr = mon;
-		}
-	    }
-	    /* read data right-to-left */
-	    for (i=m; i>0; i--) {
-		int vi = list[i];
-		
-		if (daily) {
-		    if (pd == 4) {
-			mon = quarter_to_month(qtr, m, m-i+1);
-			nonex = daily_index_to_date(tmpset->S[s], yr, mon, (m-i) % m3, mpd);
-		    } else {
-			nonex = daily_index_to_date(tmpset->S[s], yr, mon, m-i, mpd);
-		    }
-		    if (nonex) {
-			/* skip any non-existent daily dates */
-			tmpset->t2 -= 1;
-		    } else {
-			tmpset->Z[0][s++] = dset->Z[vi][t];
-		    }
-		} else {
-		    tmpset->Z[0][s++] = dset->Z[vi][t];
-		}
-	    }
-	}
-
-	if (daily) {
-	    strcpy(tmpset->stobs, tmpset->S[0]);
-	    strcpy(tmpset->endobs, tmpset->S[tmpset->t2]);
-	    tmpset->markers = DAILY_DATE_STRINGS;
-	}
-
-	tmpset->sd0 = get_date_x(tmpset->pd, tmpset->stobs);
-	if (!daily) {
-	    ntodate(tmpset->endobs, tmpset->t2, tmpset);
-	}
-
+	
 	err = print_by_obs(mlist, tmpset, OPT_NONE, 0, prn);
 	destroy_dataset(tmpset);
     }

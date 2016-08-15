@@ -146,6 +146,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MAKEPKG,  "makepkg",  CI_PARM1 },
     { MARKERS,  "markers",  0 },
     { MEANTEST, "meantest", CI_LIST | CI_LLEN2 },
+    { MIDASREG, "midasreg", CI_LIST },
     { MLE,      "mle",      CI_EXPR | CI_BLOCK },
     { MODELTAB, "modeltab", CI_PARM1 | CI_INFL },
     { MODPRINT, "modprint", CI_PARM1 | CI_PARM2 | CI_EXTRA },
@@ -2215,6 +2216,7 @@ static int check_list_sepcount (int ci, int nsep)
     case GARCH:
     case HECKIT:
     case IVREG:
+    case MIDASREG:
 	minsep = maxsep = 1;
 	break;
     case ARBOND:
@@ -2600,6 +2602,17 @@ static int panel_gmm_special (CMD *cmd, const char *s)
     return 0;
 }
 
+static int midas_term_special (CMD *cmd, const char *s)
+{
+    if (cmd->ci == MIDASREG) {
+	if (!strcmp(s, "mds")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void rejoin_list_toks (CMD *c, int k1, int *k2,
 			      char *lstr, int j)
 {
@@ -2635,6 +2648,15 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 	    free(tmp);
 	    mark_token_done(c->toks[i]);
 	    *k2 = ++i;
+	} else if (i < c->ntoks - 1 && midas_term_special(c, tok->s)) {
+	    cmd_token *next = &c->toks[i+1];
+	    char *tmp;
+
+	    tmp = gretl_strdup_printf("%s(%s)", tok->s, next->s);
+	    c->param = gretl_str_expand(&c->param, tmp, " ");
+	    free(tmp);
+	    mark_token_done(c->toks[i]);
+	    *k2 = ++i;	    
 	} else {
 	    strcat(lstr, tok->s);
 	}
@@ -2754,9 +2776,9 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && *lstr != '\0') {
 	tailstrip(lstr);
-	if (c->ci == ARBOND || c->ci == DPANEL) {
+	if (c->ci == ARBOND || c->ci == DPANEL || c->ci == MIDASREG) {
 	    /* We may have a ';' separator that's not followed
-	       by any regular second list, just GMM() terms; so
+	       by any regular second list, just special terms; so
 	       don't error out on a trailing ';' in defining a
 	       list.
 	    */

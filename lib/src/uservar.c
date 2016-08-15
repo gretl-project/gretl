@@ -742,6 +742,15 @@ int user_var_set_flag (user_var *uvar, UVFlags flag)
     }
 }
 
+void user_var_privatize_by_name (const char *name)
+{
+    user_var *u = get_user_var_by_name(name);
+
+    if (u != NULL) {
+	u->flags |= UV_PRIVATE;
+    }
+}
+
 void *user_var_get_value (user_var *uvar)
 {
     return (uvar == NULL)? NULL : uvar->ptr;

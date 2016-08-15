@@ -88,6 +88,8 @@ int user_var_get_flags (user_var *uvar);
 
 int user_var_set_flag (user_var *uvar, UVFlags flag);
 
+void user_var_privatize_by_name (const char *name);
+
 int user_var_set_name (user_var *uvar, const char *name);
 
 int user_var_adjust_level (user_var *uvar, int adj);
@@ -122,6 +124,8 @@ void destroy_user_vars (void);
 int destroy_user_vars_at_level (int level);
 
 int destroy_private_matrices (void);
+
+int destroy_private_uvars (void);
 
 int delete_user_vars_of_type (GretlType type, PRN *prn);
 

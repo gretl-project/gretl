@@ -36,6 +36,7 @@
 #include "gretl_string_table.h"
 #include "gretl_typemap.h"
 #include "gretl_array.h"
+#include "gretl_midas.h"
 #include "dbread.h"
 #include "gretl_foreign.h"
 #include "boxplots.h"
@@ -2878,6 +2879,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case TOBIT:
     case DURATION:
     case BIPROBIT:
+    case MIDASREG:
 	clear_model(model);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
 	    *model = logit_probit(cmd->list, dset, cmd->ci, cmd->opt, prn);
@@ -2914,6 +2916,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    *model = interval_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == BIPROBIT) {
 	    *model = biprobit_model(cmd->list, dset, cmd->opt, prn);
+	} else if (cmd->ci == MIDASREG) {
+	    *model = midas_model(cmd->list, cmd->param, dset,
+				 cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;

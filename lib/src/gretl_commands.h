@@ -100,6 +100,7 @@ typedef enum {
     MAKEPKG,
     MARKERS,
     MEANTEST,
+    MIDASREG,
     MLE,
     MODELTAB,
     MODPRINT,

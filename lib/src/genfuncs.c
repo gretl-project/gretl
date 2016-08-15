@@ -25,6 +25,7 @@
 #include "gretl_panel.h"
 #include "gretl_fft.h"
 #include "gretl_typemap.h"
+#include "gretl_midas.h"
 #include "estim_private.h"
 #include "../../cephes/cephes.h"
 
@@ -3999,14 +4000,6 @@ int list_linear_combo (double *y, const int *list,
     return err;
 }
 
-enum {
-    MIDAS_EXP_ALMON = 1,
-    MIDAS_BETA,
-    MIDAS_ALMON,
-    MIDAS_MAX /* sentinel */
-};
-    
-
 /* Computes a column m-vector holding weights for use with MIDAS:
    at present only exponential Almon (method = 1) and Beta (method
    = 2) are supported.
@@ -4038,10 +4031,14 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
     theta = m->val;
 
-    if (method == MIDAS_BETA) {
+    if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
 	/* check beta parameters */
-	if (k != 2 && k != 3) {
-	    gretl_errmsg_set("theta must be a 2- or 3-vector");
+	if (method == MIDAS_BETA0 && k != 2) {
+	    gretl_errmsg_set("theta must be a 2-vector");
+	    *err = E_INVARG;
+	    return NULL;
+	} else if (method == MIDAS_BETAN && k != 3) {
+	    gretl_errmsg_set("theta must be a 3-vector");
 	    *err = E_INVARG;
 	    return NULL;
 	} else if (theta[0] < eps || theta[1] < eps) {
@@ -4066,7 +4063,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
 	}
-    } else if (method == MIDAS_BETA) {
+    } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
 	double si, ai, bi;
 
 	for (i=0; i<p; i++) {
@@ -4098,7 +4095,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (method == MIDAS_BETA && k == 3) {
+    if (method == MIDAS_BETAN) {
 	/* beta with third param, not zero-terminated */
 	wsum = 1 + p * theta[2];
 	for (i=0; i<p; i++) {
@@ -4149,10 +4146,13 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 
     errno = 0;
 
-    if (method == MIDAS_BETA) {
+    if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
 	/* check beta parameters */
-	if (k != 2 && k != 3) {
-	    gretl_errmsg_set("theta must be a 2 or 3--vector");
+	if (method == MIDAS_BETA0 && k != 2) {
+	    gretl_errmsg_set("theta must be a 2-vector");
+	    *err = E_INVARG;
+	} else if (method == MIDAS_BETAN && k != 3) {
+	    gretl_errmsg_set("theta must be a 3--vector");
 	    *err = E_INVARG;
 	} else if (theta[0] < eps || theta[1] < eps) {
 	    *err = E_INVARG;
@@ -4206,7 +4206,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	}
 	free(dsum);
-    } else if (method == MIDAS_BETA) {
+    } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
 	double si, ai, bi;
 	double g1sum = 0;
 	double g2sum = 0;
@@ -4297,7 +4297,8 @@ int midas_linear_combo (double *y, const int *list,
 
     w = midas_weights(m, theta, method, &err);
 
-    if (method == MIDAS_BETA && !err && w == NULL) {
+    if ((method == MIDAS_BETA0 || method == MIDAS_BETAN) &&
+	!err && w == NULL) {
 	int t;
 	
 	for (t=dset->t1; t<=dset->t2; t++) {

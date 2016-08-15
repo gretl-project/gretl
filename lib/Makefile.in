@@ -127,6 +127,7 @@ PUBLIC_HDRS = \
 	gretl_intl.h \
 	gretl_list.h \
 	gretl_matrix.h \
+	gretl_midas.h \
 	gretl_model.h \
 	gretl_normal.h \
 	gretl_panel.h \
@@ -208,6 +209,7 @@ SRCS = adf_kpss.c \
 	gretl_intl.c \
 	gretl_list.c \
 	gretl_matrix.c \
+	gretl_midas.c \
 	gretl_model.c \
 	gretl_normal.c \
 	gretl_panel.c \

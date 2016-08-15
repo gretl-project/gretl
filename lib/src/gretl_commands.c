@@ -110,6 +110,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { MAKEPKG,  "makepkg" },
     { MARKERS,  "markers" },
     { MEANTEST, "meantest" },
+    { MIDASREG, "midasreg" },
     { MLE,      "mle" },
     { MODELTAB, "modeltab" },
     { MODPRINT, "modprint" },
