@@ -21,10 +21,11 @@
 #define GRETL_MIDAS_H
 
 typedef enum {
-    MIDAS_EXP_ALMON = 1,
+    MIDAS_U,
+    MIDAS_NEALMON,
     MIDAS_BETA0,
     MIDAS_BETAN,
-    MIDAS_ALMON,
+    MIDAS_ALMONP,
     MIDAS_MAX /* sentinel */
 } MidasType;
 

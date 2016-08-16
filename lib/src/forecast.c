@@ -54,8 +54,6 @@
                           c == PROBIT || \
                           c == TOBIT)
 
-#define CHECK_LAGGED_DEPVAR(c) (c != NLS && c != ARMA)
-
 typedef struct Forecast_ Forecast;
 
 struct Forecast_ {
@@ -710,6 +708,8 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
+#define NLS_DEBUG 1
+
 /* Generate forecasts from nonlinear least squares model, using the
    string specification of the regression function that was saved as
    data on the model (see nls.c).  If the NLS formula is dynamic and
@@ -735,6 +735,11 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     if (nlfunc == NULL) {
 	err = E_DATA;
     }
+
+#if NLS_DEBUG
+    fprintf(stderr, "nls_fcast: merhod=%d, nlfunc='%s'\n",
+	    fc->method, nlfunc);
+#endif
 
     if (fc->method == FC_AUTO) {
 	yno = pmod->list[1];
@@ -765,6 +770,11 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    }
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
+#if NLS_DEBUG
+		    fprintf(stderr, " fc->yhat[%d] (static): %g ("
+			    "pmod yhat[t] %g)\n", t, dset->Z[fcv][t],
+			    pmod->yhat[t]);
+#endif
 		    fc->yhat[t] = dset->Z[fcv][t];
 		}
 	    }
@@ -780,6 +790,9 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    err = nl_model_run_aux_genrs(pmod, dset);
 	    if (!err) {
 		strcpy(formula, pmod->depvar);
+#if NLS_DEBUG
+		sprintf(formula, " dynamic: pmod->depvar = %s", formula);
+#endif
 		err = generate(formula, dset, GRETL_TYPE_SERIES,
 			       OPT_P, NULL);
 	    }

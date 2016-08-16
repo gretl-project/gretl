@@ -625,7 +625,7 @@ int midas_model_calculate_depvar (MODEL *pmod,
    Almon polynomial specification.
 */
 
-#define takes_coeff(t) (t != 0 && t != MIDAS_ALMON)
+#define takes_coeff(t) (t != MIDAS_U && t != MIDAS_ALMONP)
 
 static int finalize_midas_model (MODEL *pmod,
 				 const int *list,
@@ -681,8 +681,7 @@ static int finalize_midas_model (MODEL *pmod,
 	int pos = k + hfslopes;
 
 	for (i=0; i<nmidas && !err; i++) {
-	    if (minfo[i].type == 0) {
-		/* U-MIDAS */
+	    if (minfo[i].type == MIDAS_U) {
 		for (j=0; j<minfo[i].k; j++) {
 		    gretl_matrix_set(m, j, i, b[pos++]);
 		}

@@ -4018,7 +4018,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
        @k = number of hyper-parameters
     */
 
-    if (method < MIDAS_EXP_ALMON || method >= MIDAS_MAX || p < 1) {
+    if (method < MIDAS_NEALMON || method >= MIDAS_MAX || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4054,7 +4054,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
     errno = 0;
 
-    if (method == MIDAS_EXP_ALMON) {
+    if (method == MIDAS_NEALMON) {
 	for (i=0; i<p; i++) {
 	    w->val[i] = (i+1) * theta[0];
 	    for (j=1; j<k; j++) {
@@ -4078,7 +4078,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
 	}
-    } else if (method == MIDAS_ALMON) {
+    } else if (method == MIDAS_ALMONP) {
 	/* straight Almon ploynomial */
 	for (i=0; i<p; i++) {
 	    w->val[i] = theta[0];
@@ -4088,7 +4088,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (method != MIDAS_ALMON) {
+    if (method != MIDAS_ALMONP) {
 	/* normalize the weights */
 	for (i=0; i<p; i++) {
 	    w->val[i] /= wsum;
@@ -4127,7 +4127,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     gretl_matrix *G = NULL;
     int k, i, j;
 
-    if (method < MIDAS_EXP_ALMON || method >= MIDAS_MAX || p < 1) {
+    if (method < MIDAS_NEALMON || method >= MIDAS_MAX || p < 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4162,7 +4162,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
     }
 
-    if (method != MIDAS_ALMON) {
+    if (method != MIDAS_ALMONP) {
 	w = gretl_column_vector_alloc(p);
 	if (w == NULL) {
 	    *err = E_ALLOC;
@@ -4177,7 +4177,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	return NULL;
     }    
 
-    if (method == MIDAS_EXP_ALMON) {
+    if (method == MIDAS_NEALMON) {
 	double *dsum = malloc(k * sizeof *dsum);
 	double gij;
 
@@ -4262,7 +4262,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 		gretl_matrix_set(G, i, 2, m3 * (1 - p*wi));
 	    }
 	}
-    } else if (method == MIDAS_ALMON) {
+    } else if (method == MIDAS_ALMONP) {
 	/* straight Almon polynomial */
 	for (i=0; i<p; i++) {
 	    gretl_matrix_set(G, i, 0, 1.0);
