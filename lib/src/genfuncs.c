@@ -4152,7 +4152,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    gretl_errmsg_set("theta must be a 2-vector");
 	    *err = E_INVARG;
 	} else if (method == MIDAS_BETAN && k != 3) {
-	    gretl_errmsg_set("theta must be a 3--vector");
+	    gretl_errmsg_set("theta must be a 3-vector");
 	    *err = E_INVARG;
 	} else if (theta[0] < eps || theta[1] < eps) {
 	    *err = E_INVARG;

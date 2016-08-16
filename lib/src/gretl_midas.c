@@ -171,7 +171,7 @@ DATASET *midas_aux_dataset (const int *list,
 		    qtr = mon;
 		}
 	    }
-	    /* read data right-to-left */
+	    /* read data right-to-left! */
 	    for (i=m; i>0; i--) {
 		int vi = list[i];
 		
