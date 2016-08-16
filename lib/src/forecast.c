@@ -47,6 +47,7 @@
 
 #define FCAST_SPECIAL(c) (c == LOGIT || \
                           c == LOGISTIC || \
+			  c == MIDASREG || \
 			  c == NEGBIN || \
                           c == NLS || \
                           c == POISSON || \
@@ -827,6 +828,93 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     return err;
+}
+
+static int midas_fcast (Forecast *fc, const MODEL *pmod, 
+			DATASET *dset)
+{
+#if 1
+    return E_NOTIMP; /* FIXME */
+#else    
+    int oldt1 = dset->t1;
+    int oldt2 = dset->t2;
+    int fcv = dset->v;
+    int yno = 0;
+    double *y = NULL;
+    int t, err = 0;
+
+    if (fc->method == FC_AUTO) {
+	yno = pmod->list[1];
+	y = copyvec(dset->Z[yno], dset->n);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	} 
+    }
+
+    if (!err) {
+	/* upper limit of static forecast */
+	int t2 = (fc->method == FC_STATIC)? fc->t2 : pmod->t2;
+
+	if (t2 >= fc->t1) {
+	    /* non-null static range */
+	    dset->t1 = fc->t1;
+	    dset->t2 = t2;
+	    if (!err) {
+		sprintf(formula, "$nl_y = %s", nlfunc);
+		err = generate(formula, dset, GRETL_TYPE_SERIES,
+			       OPT_P, NULL);
+	    }
+	    if (!err) {
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    fc->yhat[t] = dset->Z[fcv][t];
+		}
+	    }
+	}
+
+	if (!err && fc->method == FC_AUTO && fc->t2 > pmod->t2) {
+	    /* dynamic forecast out of sample: in this context
+	       pmod->depvar is actually the expression to generate
+	       the series in question 
+	    */
+	    dset->t1 = pmod->t2 + 1;
+	    dset->t2 = fc->t2;
+	    if (!err) {
+		strcpy(formula, pmod->depvar);
+		err = generate(formula, dset, GRETL_TYPE_SERIES,
+			       OPT_P, NULL);
+	    }
+	    if (!err) {
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    fc->yhat[t] = dset->Z[yno][t];
+		}
+	    }
+	}
+    }
+
+    if (dset->v > fcv) {
+	err = dataset_drop_last_variables(dset, dset->v - fcv);
+    }
+
+    dset->t1 = oldt1;
+    dset->t2 = oldt2;
+
+    if (y != NULL) {
+	/* restore original dependent variable */
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[yno][t] = y[t];
+	}
+	free(y);
+    }
+
+    if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
+	/* kinda simple-minded */
+	for (t=fc->t1; t<=fc->t2; t++) {
+	    fc->sderr[t] = pmod->sigma;
+	}
+    }
+
+    return err;
+#endif
 }
 
 #if AR_DEBUG
@@ -2352,6 +2440,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = static_fcast_with_errs(&fc, pmod, dset, opt);
     } else if (pmod->ci == NLS) {
 	err = nls_fcast(&fc, pmod, dset);
+    } else if (pmod->ci == MIDASREG) {
+	err = midas_fcast(&fc, pmod, dset);
     } else if (SIMPLE_AR_MODEL(pmod->ci) || dummy_AR) {
 	err = ar_fcast(&fc, pmod, dset);
     } else if (pmod->ci == ARMA) {

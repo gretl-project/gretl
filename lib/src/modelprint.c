@@ -3364,7 +3364,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
-	pmod->ci != LAD && pmod->ci != HECKIT && 
+	pmod->ci != LAD && pmod->ci != HECKIT && pmod->ci != MIDASREG &&
 	pmod->ci != ARBOND && pmod->ci != DPANEL && pmod->ci != GARCH && 
 	pmod->ci != DURATION && !ordered_model(pmod) && !multinomial_model(pmod) && 
 	!COUNT_MODEL(pmod->ci) && !intreg_model(pmod) &&
