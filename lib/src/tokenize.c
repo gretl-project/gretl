@@ -2605,7 +2605,7 @@ static int panel_gmm_special (CMD *cmd, const char *s)
 static int midas_term_special (CMD *cmd, const char *s)
 {
     if (cmd->ci == MIDASREG) {
-	if (!strcmp(s, "mds")) {
+	if (!strcmp(s, "mds") || !strcmp(s, "mdsl")) {
 	    return 1;
 	}
     }
