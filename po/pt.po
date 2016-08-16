@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-08-12 11:11-0400\n"
-"PO-Revision-Date: 2016-05-13 11:08+0100\n"
+"PO-Revision-Date: 2016-08-17 00:35+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -2599,9 +2599,8 @@ msgid "(for logical OR, use '||')\n"
 msgstr "(para o OU lógico, use '||')\n"
 
 #: lib/src/genlex.c:856
-#, fuzzy
 msgid "Incomplete expression\n"
-msgstr "Entrada incompleta"
+msgstr "Expressão incompleta\n"
 
 #: lib/src/genlex.c:861
 #, c-format
@@ -3661,15 +3660,12 @@ msgid "Variance of the unit-specific error = 0"
 msgstr "Variância do erro de unidade-específica = 0"
 
 #: lib/src/gretl_model.c:3617
-#, fuzzy
 msgid "Wald joint test on time dummies"
-msgstr ""
-"Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
+msgstr "Teste conjunto de Wald sobre as variáveis tempo auxiliares"
 
 #: lib/src/gretl_model.c:3618
-#, fuzzy
 msgid "No time effects"
-msgstr "Efeitos fixos"
+msgstr "Sem efeitos temporais"
 
 #: lib/src/gretl_model.c:3624
 msgid "restriction is acceptable"
@@ -3697,12 +3693,11 @@ msgstr "Teste robusto para diferenciar grupos de intercepções no eixo x=0"
 
 #: lib/src/gretl_model.c:3641 lib/src/gretl_panel.c:4389
 msgid "Pesaran CD test for cross-sectional dependence"
-msgstr ""
+msgstr "Teste Pesaran CD para a dependência em secção-cruzada "
 
 #: lib/src/gretl_model.c:3642
-#, fuzzy
 msgid "No cross-sectional dependence"
-msgstr "Para dados de secção-cruzada"
+msgstr "Sem dependência em secção-cruzada"
 
 #: lib/src/gretl_model.c:3649 lib/src/gretl_panel.c:4025
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -3961,9 +3956,8 @@ msgid "groupwise heteroskedasticity"
 msgstr "heterocedasticidade entre grupos"
 
 #: lib/src/gretl_panel.c:4407
-#, fuzzy
 msgid "cross sectional dependence"
-msgstr "índice unitário da secção-cruzada"
+msgstr "dependência em secção-cruzada"
 
 #: lib/src/gretl_panel.c:4724
 #, c-format
@@ -4444,9 +4438,9 @@ msgid "Closed output file '%s'\n"
 msgstr "O ficheiro de redireccionamento de resultados '%s' está fechado\n"
 
 #: lib/src/interact.c:898
-#, fuzzy, c-format
+#, c-format
 msgid "Output is already diverted to '%s'"
-msgstr "O dispositivo de saída já está redireccionado para '%s'\n"
+msgstr "A saída já está redirecionada para '%s'"
 
 #: lib/src/interact.c:905
 msgid "Now discarding output\n"
@@ -4548,7 +4542,7 @@ msgstr "Desculpe, o comando %s ainda não está implementado em libgretl\n"
 
 #: lib/src/interact.c:3582
 msgid "An error occurred when 'outfile' was active\n"
-msgstr ""
+msgstr "Ocorreu um erro quando o 'ficheiro de saída' estava ativo\n"
 
 #: lib/src/kalman.c:505
 msgid "kalman: a required matrix is missing"
@@ -7299,14 +7293,14 @@ msgid "= %s squared"
 msgstr "= %s quadrado"
 
 #: lib/src/transforms.c:191
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency difference of %s"
-msgstr "= primeira diferença de %s"
+msgstr "= alta-frequência diferença de %s"
 
 #: lib/src/transforms.c:193
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency log difference of %s"
-msgstr "= diferença logarítmica de %s"
+msgstr "= alta-frequência diferença logarítmica de %s"
 
 #: lib/src/transforms.c:756
 #, c-format
@@ -7783,7 +7777,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 13 de maio de 2016."
+"Tradução de 17 de agosto de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -9638,9 +9632,8 @@ msgid "Use start-of-period values"
 msgstr "Usar valores de ínicio-de-período"
 
 #: gui2/dialogs.c:3809
-#, fuzzy
 msgid "Spread to multiple series"
-msgstr "Séries temporais empilhadas"
+msgstr "Espalhar por múltiplas séries"
 
 #: gui2/dialogs.c:3829
 msgid "Default method:"
@@ -12768,9 +12761,8 @@ msgid "_Common factor"
 msgstr "Factor _Comum"
 
 #: gui2/gui_utils.c:274
-#, fuzzy
 msgid "_Cross-sectional dependence"
-msgstr "Dados de secção-cruzada"
+msgstr "Dependência em secção-_cruzada"
 
 #: gui2/gui_utils.c:275
 msgid "_Panel diagnostics"
@@ -13410,9 +13402,8 @@ msgid "Strings"
 msgstr "Cadeias de caracteres"
 
 #: gui2/helpfiles.c:377
-#, fuzzy
 msgid "State space"
-msgstr "espaço"
+msgstr "Espaço de estados"
 
 #: gui2/helpfiles.c:379
 msgid "Calendar"
@@ -13776,9 +13767,8 @@ msgid "gretl: common factor test"
 msgstr "gretl: teste de factor comum"
 
 #: gui2/library.c:2625
-#, fuzzy
 msgid "gretl: cross-sectional dependence"
-msgstr "Para dados de secção-cruzada"
+msgstr "gretl: dependência em secção-cruzada"
 
 #: gui2/library.c:2658
 msgid "Lag order for ARCH test:"
@@ -16586,9 +16576,8 @@ msgid "EGARCH"
 msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:14
-#, fuzzy
 msgid "Forecast"
-msgstr "_Predições"
+msgstr "Predição"
 
 #: plugin/addons-i18n.c:16
 msgid "GED"
@@ -17795,9 +17784,8 @@ msgid "Probability distributions"
 msgstr "Distribuições de probabilidade"
 
 #: doc/commands/matfuncs.c:63
-#, fuzzy
 msgid "State space modeling"
-msgstr "Estimar modelo reduzido"
+msgstr "Modelizar espaço de estados"
 
 #~ msgid "iteration %2d: SSR = %.8g\n"
 #~ msgstr "iteração %2d: SSR = %.8g\n"
