@@ -178,6 +178,7 @@ static int nls_dynamic_check (nlspec *s, char *formula)
 			OPT_P | OPT_N, NULL, &err);
 
     if (!err && genr_is_autoregressive(genr)) {
+	fprintf(stderr, "nls_dynamic_check: setting NL_AUTOREG\n");
 	s->flags |= NL_AUTOREG;
     }
 

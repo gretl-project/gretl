@@ -265,7 +265,7 @@ static int parse_midas_info (const char *s, midas_info *m,
 	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%d, %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1);
 	n = sscanf(s, fmt, lname, &m1, &m2, &p, mname);
-	if (n == 4 && p == 0) {
+	if (n == 4 && p == MIDAS_U) {
 	    umidas = 1;
 	} else if (n != 5) {
 	    err = E_PARSE;
@@ -276,7 +276,7 @@ static int parse_midas_info (const char *s, midas_info *m,
 	sprintf(fmt, "%%%d[^, ] , %%d, %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1);
 	n = sscanf(s, fmt, lname, &p, mname);
-	if (n == 2 && p == 0) {
+	if (n == 2 && p == MIDAS_U) {
 	    umidas = 1;
 	} else if (n != 3) {
 	    err = E_PARSE;
@@ -390,7 +390,7 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 		*test = '\0';
 		strncat(test, s, len);
 		err = parse_midas_info(test, &m[i], dset);
-		if (!err && m[i].type == 0) {
+		if (!err && m[i].type == MIDAS_U) {
 		    umidas++;
 		}
 		s = p + 1;
@@ -901,7 +901,7 @@ MODEL midas_model (const int *list,
 
 	/* MIDAS series and gradient matrices */
 	for (i=0; i<nmidas && !err; i++) {
-	    if (minfo[i].type == 0) {
+	    if (minfo[i].type == MIDAS_U) {
 		sprintf(line, "series mlc___%d = lincomb(%s, %s)",
 			i+1, minfo[i].lname, minfo[i].mname);
 	    } else {

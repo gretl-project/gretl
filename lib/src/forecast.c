@@ -708,7 +708,7 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-#define NLS_DEBUG 1
+#define NLS_DEBUG 0
 
 /* Generate forecasts from nonlinear least squares model, using the
    string specification of the regression function that was saved as
@@ -737,8 +737,9 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     }
 
 #if NLS_DEBUG
-    fprintf(stderr, "nls_fcast: merhod=%d, nlfunc='%s'\n",
+    fprintf(stderr, "nls_fcast: method=%d, nlfunc='%s'\n",
 	    fc->method, nlfunc);
+    fprintf(stderr, " fc limits: t1=%d, t2 = %d\n", fc->t1, fc->t2);
 #endif
 
     if (fc->method == FC_AUTO) {
@@ -770,7 +771,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    }
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
-#if NLS_DEBUG
+#if NLS_DEBUG > 1
 		    fprintf(stderr, " fc->yhat[%d] (static): %g ("
 			    "pmod yhat[t] %g)\n", t, dset->Z[fcv][t],
 			    pmod->yhat[t]);
@@ -788,15 +789,23 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	    dset->t1 = pmod->t2 + 1;
 	    dset->t2 = fc->t2;
 	    err = nl_model_run_aux_genrs(pmod, dset);
-	    if (!err) {
+	    if (err) {
+		fprintf(stderr, "nls_fcast: error %d running NLS "
+			"aux genrs\n", err);
+	    } else {
 		strcpy(formula, pmod->depvar);
 #if NLS_DEBUG
-		sprintf(formula, " dynamic: pmod->depvar = %s", formula);
+		fprintf(stderr, " dynamic: formula='%s'\n", formula);
 #endif
 		err = generate(formula, dset, GRETL_TYPE_SERIES,
 			       OPT_P, NULL);
+		if (err) {
+		    fprintf(stderr, "nls_fcast: error %d "
+			    "running depvar formula\n", err);
+		}
 	    }
 	    if (!err) {
+		/* FIXME: this may produce nothing but NAs, why? */
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[yno][t];
 		}
