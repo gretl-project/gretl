@@ -1020,6 +1020,9 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
     } else if (pmod->ci == OLS && 
 	       gretl_model_get_int(pmod, "restricted")) {
 	return N_("Restricted OLS");
+    } else if (pmod->ci == OLS &&
+	       gretl_model_get_int(pmod, "umidas")) {
+	return N_("MIDAS (OLS)");
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }

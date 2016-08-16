@@ -23,6 +23,8 @@
 #include "matrix_extra.h"
 #include "gretl_midas.h"
 
+#define MIDAS_DEBUG 0
+
 /* days per month or quarter: maybe make this user-
    configurable? */
 
@@ -225,7 +227,7 @@ typedef struct midas_info_ midas_info;
 /* Parse a particular entry in the incoming array of
    "mds(foo,m1,m2,p,theta)" specifications.  We check that
    foo is an existent MIDAS list, and that m1, m2, p and
-   theta have admissible values.
+   theta all have admissible values.
 */
 
 static int parse_midas_info (const char *s, midas_info *m,
@@ -363,7 +365,9 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 	    }		
 	}
     }
+
     if (!err && umidas > 0 && umidas < nspec) {
+	/* FIXME? */
 	gretl_errmsg_set("U-MIDAS specifications cannot be mixed with others");
 	err = E_INVARG;
     }
@@ -379,6 +383,8 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 
     return err;
 }
+
+/* extract the list of regular (low-frequency) regressors */
 
 static int *make_midas_xlist (const int *list, int *err)
 {
@@ -398,6 +404,12 @@ static int *make_midas_xlist (const int *list, int *err)
 
     return xlist;
 }
+
+/* Given the name of an incoming MIDAS list plus minlag and
+   maxlag values (at this point stored in the midas_info
+   structure) build the list of required lags of the
+   MIDAS series.
+*/
 
 static int *make_midas_laglist (midas_info *m,
 				DATASET *dset,
@@ -420,6 +432,13 @@ static int *make_midas_laglist (midas_info *m,
 
     return lcpy;
 }
+
+/* Build a full list of all series involved: dependent
+   variable, regular regressors, and all lags of MIDAS
+   terms. We want this either for setting the usable
+   sample range -- or in the case of U-MIDAS, as the
+   list to pass to OLS.
+*/
 
 static int *make_midas_biglist (const int *list,
 				midas_info *m,
@@ -449,6 +468,11 @@ static int *make_midas_biglist (const int *list,
 
     return biglist;
 }
+
+/* If we're doing MIDAS via nls, set the usable
+   sample range first. That way we'll know how
+   big certain matrices ought to be.
+*/
 
 static int midas_set_sample (const int *list,
 			     DATASET *dset,
@@ -484,6 +508,8 @@ static int midas_set_sample (const int *list,
     return err;
 }
 
+/* estimate U-MIDAS via OLS */
+
 static int umidas_ols (MODEL *pmod,
 		       const int *list,
 		       DATASET *dset,
@@ -499,7 +525,7 @@ static int umidas_ols (MODEL *pmod,
     if (biglist == NULL) {
 	return E_ALLOC;
     } else {
-	*pmod = lsq(biglist, dset, OLS, opt);
+	*pmod = lsq(biglist, dset, OLS, opt | OPT_Z);
 	free(biglist);
     }
 
@@ -552,6 +578,13 @@ int midas_model_calculate_depvar (MODEL *pmod,
     return err;
 }
 
+/* Identify parameterizations which take an additional
+   leading coefficient: all but U-MIDAS and the plain
+   Almon polynomial specification.
+*/
+
+#define takes_coeff(t) (t != 0 && t != MIDAS_ALMON)
+
 static int finalize_midas_model (MODEL *pmod,
 				 const int *list,
 				 const char *param,
@@ -566,18 +599,11 @@ static int finalize_midas_model (MODEL *pmod,
     int i, rows = 0;
     int err = 0;
 
-    if (!umidas) {
-	pmod->ci = MIDASREG;
-	free(pmod->depvar);
-	pmod->depvar = gretl_strdup(dset->varname[list[1]]);
-	free(pmod->list);
-	pmod->list = gretl_list_copy(list);
-    }
-
     gretl_model_set_string_as_data(pmod, "midas_spec",
 				   gretl_strdup(param));
 
     if (umidas) {
+	/* @pmod is the result of OLS estimation */
 	int vi;
 	
 	gretl_model_allocate_param_names(pmod, pmod->ncoeff);
@@ -585,7 +611,14 @@ static int finalize_midas_model (MODEL *pmod,
 	    vi = pmod->list[i+2];
 	    gretl_model_set_param_name(pmod, i, dset->varname[vi]);
 	}
-	return 0;
+	gretl_model_set_int(pmod, "umidas", 1);
+    } else {
+	/* @pmod is the result of NLS estimation */
+	pmod->ci = MIDASREG;
+	free(pmod->depvar);
+	pmod->depvar = gretl_strdup(dset->varname[list[1]]);
+	free(pmod->list);
+	pmod->list = gretl_list_copy(list);
     }
 
     for (i=0; i<nmidas; i++) {
@@ -600,32 +633,42 @@ static int finalize_midas_model (MODEL *pmod,
     if (m == NULL || theta == NULL) {
 	err = E_ALLOC;
     } else {
-	gretl_matrix *w;
+	gretl_matrix *w = NULL;
 	double *b = pmod->coeff;
-	double wij, hfslope = 0;
-	int k = pmod->list[0] - 1;
+	double wij, hfb = 0;
+	int k = list[0] - 1;
 	int pos = k + hfslopes;
 	int ptype, j;
 
 	for (i=0; i<nmidas && !err; i++) {
 	    ptype = minfo[i].type;
-	    hfslope = (ptype == MIDAS_ALMON)? 1.0 : b[k++];
-	    theta->rows = minfo[i].k;
-	    for (j=0; j<minfo[i].k; j++) {
-		theta->val[j] = b[pos++];
-	    }
-	    w = midas_weights(minfo[i].nterms, theta,
-			      ptype, &err);
-	    if (!err) {
-		for (j=0; j<minfo[i].nterms; j++) {
-		    wij = hfslope * w->val[j];
-		    gretl_matrix_set(m, j, i, wij);
+	    if (ptype == 0) {
+		/* U-MIDAS */
+		for (j=0; j<minfo[i].k; j++) {
+		    gretl_matrix_set(m, j, i, b[pos++]);
 		}
-		for (j=minfo[i].nterms; j<rows; j++) {
+		for (j=minfo[i].k; j<rows; j++) {
 		    gretl_matrix_set(m, j, i, M_NA);
 		}
+	    } else {
+		hfb = takes_coeff(ptype) ? 1.0 : b[k++];
+		theta->rows = minfo[i].k;
+		for (j=0; j<minfo[i].k; j++) {
+		    theta->val[j] = b[pos++];
+		}		
+		w = midas_weights(minfo[i].nterms, theta,
+				  ptype, &err);
+		if (!err) {
+		    for (j=0; j<minfo[i].nterms; j++) {
+			wij = hfb * w->val[j];
+			gretl_matrix_set(m, j, i, wij);
+		    }
+		    for (j=minfo[i].nterms; j<rows; j++) {
+			gretl_matrix_set(m, j, i, M_NA);
+		    }
+		}
+		gretl_matrix_free(w);
 	    }
-	    gretl_matrix_free(w);
 	}
 
 	if (!err) {
@@ -641,7 +684,87 @@ static int finalize_midas_model (MODEL *pmod,
     return err;
 }
 
-#define takes_coeff(t) (t != 0 && t != MIDAS_ALMON)
+/* Define "private" matrices to hold the regular X data
+   (MX___), the vector of coefficients on these data
+   (bx___), and the vector of coefficients on the
+   MIDAS list terms (high-frequency slopes).
+*/
+
+static int add_midas_matrices (const int *xlist,
+			       const DATASET *dset,
+			       midas_info *minfo,
+			       int nmidas,
+			       int *pslopes)
+{
+    gretl_matrix *m;
+    int hfslopes = 0;
+    int i, err = 0;
+
+    if (xlist != NULL) {
+	m = gretl_matrix_data_subset(xlist, dset,
+				     dset->t1, dset->t2,
+				     M_MISSING_ERROR,
+				     &err);
+	if (!err) {
+	    err = private_matrix_add(m, "MX___");
+	}
+	if (!err) {
+	    m = gretl_zero_matrix_new(xlist[0], 1);
+	    if (m != NULL) {
+		err = private_matrix_add(m, "bx___");
+	    } else {
+		err = E_ALLOC;
+	    }
+	}
+    }
+    
+    if (!err) {
+	for (i=0; i<nmidas; i++) {
+	    if (takes_coeff(minfo[i].type)) {
+		hfslopes++;
+	    }
+	}
+	if (hfslopes > 0) {
+	    m = gretl_zero_matrix_new(hfslopes, 1);
+	    if (m != NULL) {
+		err = private_matrix_add(m, "bmlc___");
+	    } else {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    *pslopes = hfslopes;
+
+    return err;
+}
+
+static int put_midas_nls_line (char *line,
+			       DATASET *dset,
+			       PRN *prn)
+{
+    int err;
+    
+#if MIDAS_DEBUG
+    pputs(prn, line);
+    pputc(prn, '\n');
+#endif
+    
+    err = nl_parse_line(NLS, line, dset, prn);
+    *line = '\0';
+
+    return err;
+}
+
+static void append_pname (char *s, const char *pname)
+{
+    char c = s[strlen(s) - 1];
+    
+    if (c != ' ' && c != '"') {
+	strncat(s, " ", 1);
+    }
+    strcat(s, pname);
+}
 
 MODEL midas_model (const int *list,
 		   const char *param,
@@ -691,11 +814,14 @@ MODEL midas_model (const int *list,
 		minfo[i].nterms = mlist[0];
 		minfo[i].laglist = mlist;
 	    }
-	}	
+	}
     }
 
     if (!err && umidas) {
 	err = umidas_ols(&mod, list, dset, minfo, nmidas, opt);
+#if MIDAS_DEBUG	
+	pputs(prn, "*** U-MIDAS via OLS ***\n");
+#endif	
 	goto umidas_finish;
     }
 
@@ -706,41 +832,13 @@ MODEL midas_model (const int *list,
 
     if (!err) {
 	/* add the required matrices */
-	gretl_matrix *m;
-
-	if (xlist != NULL) {
-	    m = gretl_matrix_data_subset(xlist, dset,
-					 dset->t1, dset->t2,
-					 M_MISSING_ERROR,
-					 &err);
-	    if (!err) {
-		err = private_matrix_add(m, "MX___");
-	    }
-	    if (!err) {
-		m = gretl_zero_matrix_new(xlist[0], 1);
-		if (m != NULL) {
-		    err = private_matrix_add(m, "bx___");
-		} else {
-		    err = E_ALLOC;
-		}
-	    }
-	}
-	if (!err) {
-	    for (i=0; i<nmidas; i++) {
-		if (takes_coeff(minfo[i].type)) {
-		    hfslopes++;
-		}
-	    }
-	    if (hfslopes > 0) {
-		m = gretl_zero_matrix_new(hfslopes, 1);
-		if (m != NULL) {
-		    err = private_matrix_add(m, "bmlc___");
-		} else {
-		    err = E_ALLOC;
-		}
-	    }
-	}
+	err = add_midas_matrices(xlist, dset, minfo, nmidas,
+				 &hfslopes);
     }
+
+#if MIDAS_DEBUG	
+    pputs(prn, "*** MIDAS via NLS ***\n\n");
+#endif    
 
     if (!err) {
 	char line[MAXLEN];
@@ -759,7 +857,7 @@ MODEL midas_model (const int *list,
 	    }
 	    strcat(line, tmp);
 	}
-	err = nl_parse_line(NLS, line, dset, prn);
+	err = put_midas_nls_line(line, dset, prn);
 
 	/* MIDAS series and gradient matrices */
 	for (i=0; i<nmidas && !err; i++) {
@@ -771,27 +869,27 @@ MODEL midas_model (const int *list,
 			i+1, minfo[i].lname, minfo[i].mname,
 			minfo[i].type);
 	    }
-	    err = nl_parse_line(NLS, line, dset, prn);
+	    err = put_midas_nls_line(line, dset, prn);
 	    if (!err) {
 		sprintf(line, "matrix mgr___%d = mgradient(%d, %s, %d)",
 			i+1, minfo[i].nterms, minfo[i].mname, minfo[i].type);
-		err = nl_parse_line(NLS, line, dset, prn);
+		err = put_midas_nls_line(line, dset, prn);
 	    }
 	}
 
 	/* derivatives */
 	if (!err && xlist != NULL) {
 	    strcpy(line, "deriv bx___ = MX___");
-	    err = nl_parse_line(NLS, line, dset, prn);
+	    err = put_midas_nls_line(line, dset, prn);
 	}
 	if (!err && hfslopes > 0) {
 	    strcpy(line, "deriv bmlc___ = {");
 	    for (i=0; i<nmidas; i++) {
-		if (takes_coeff(minfo[j].type)) {
+		if (takes_coeff(minfo[i].type)) {
 		    sprintf(tmp, "mlc___%d", i+1);
 		    strcat(line, tmp);
 		}
-		for (j=i; j<nmidas; j++) {
+		for (j=i+1; j<nmidas; j++) {
 		    if (takes_coeff(minfo[j].type)) {
 			strcat(line, ", ");
 			break;
@@ -799,7 +897,7 @@ MODEL midas_model (const int *list,
 		}
 	    }
 	    strcat(line, "}");
-	    err = nl_parse_line(NLS, line, dset, prn);
+	    err = put_midas_nls_line(line, dset, prn);
 	}
 	j = 0;
 	for (i=0; i<nmidas && !err; i++) {
@@ -810,7 +908,7 @@ MODEL midas_model (const int *list,
 		sprintf(line, "deriv %s = {%s} * mgr___%d",
 			minfo[i].mname, minfo[i].lname, i+1);
 	    }		
-	    err = nl_parse_line(NLS, line, dset, prn);
+	    err = put_midas_nls_line(line, dset, prn);
 	}
 
 	/* parameter names */
@@ -818,30 +916,34 @@ MODEL midas_model (const int *list,
 	    strcpy(line, "param_names \"");
 	    if (xlist != NULL) {
 		for (i=1; i<=xlist[0]; i++) {
-		    strcat(line, dset->varname[xlist[i]]);
-		    strcat(line, " ");
+		    strcpy(tmp, dset->varname[xlist[i]]);
+		    append_pname(line, tmp);
 		}
 	    }
 	    for (i=0; i<nmidas && !err; i++) {
 		if (takes_coeff(minfo[i].type)) {
 		    if (hfslopes > 1) {
-			sprintf(tmp, " HF_slope%d", i+1);
+			sprintf(tmp, "HF_slope%d", i+1);
 		    } else {
-			strcpy(tmp, " HF_slope");
+			strcpy(tmp, "HF_slope");
 		    }
-		    strcat(line, tmp);
+		    append_pname(line, tmp);
 		}
 	    }
 	    for (i=0; i<nmidas && !err; i++) {
 		for (j=0; j<minfo[i].k; j++) {
-		    sprintf(tmp, " %s[%d]", minfo[i].mname, j+1);
-		    strcat(line, tmp);
+		    sprintf(tmp, "%s[%d]", minfo[i].mname, j+1);
+		    append_pname(line, tmp);
 		}
 	    }
 	    strcat(line, "\"");
-	    err = nl_parse_line(NLS, line, dset, prn);
+	    err = put_midas_nls_line(line, dset, prn);
 	}
     }
+
+#if MIDAS_DEBUG
+    pputc(prn, '\n');
+#endif
 
     if (!err) {
 	mod = nl_model(dset, opt & OPT_G, prn);
