@@ -509,6 +509,28 @@ static int *make_midas_laglist (midas_info *m,
     }
 }
 
+static int make_midas_laglists (midas_info *minfo,
+				int nmidas,
+				DATASET *dset)
+{
+    int *mlist;
+    int i, err = 0;
+	
+    for (i=0; i<nmidas && !err; i++) {
+	mlist = make_midas_laglist(&minfo[i], dset, &err);
+	if (!err) {
+	    if (!minfo[i].prelag) {
+		sprintf(minfo[i].lname, "ML___%d", i+1);
+		err = remember_list(mlist, minfo[i].lname, NULL);
+	    }
+	    minfo[i].nterms = mlist[0];
+	    minfo[i].laglist = mlist;
+	}
+    }
+
+    return err;
+}
+
 /* Build a full list of all series involved: dependent
    variable, regular regressors, and all lags of MIDAS
    terms. We want this either for setting the usable
@@ -618,51 +640,79 @@ static int umidas_ols (MODEL *pmod,
     return pmod->errcode;
 }
 
-int midas_model_calculate_depvar (MODEL *pmod,
-				  DATASET *dset)
+/* Identify parameterizations which take an additional
+   leading coefficient: all but U-MIDAS and the plain
+   Almon polynomial specification.
+*/
+#define takes_coeff(t) (t != MIDAS_U && t != MIDAS_ALMONP)
+
+/* Prepare for generating a MIDAS forecast */
+
+int midas_forecast_setup (MODEL *pmod,
+			  DATASET *dset,
+			  char **pformula)
 {
     const char *param;
     midas_info *minfo = NULL;
+    int *mks = NULL;
     int *xlist = NULL;
     int nmidas = 0;
-    int umidas = 0;
+    int use_ols = 0;
     int err = 0;
 
-    /* FIXME this is supposed to help with implementing
-       forecasting, but it's not figured out yet
-    */
-
     param = gretl_model_get_data(pmod, "midas_spec");
+    fprintf(stderr, "midas_spec = '%s'\n", param);
+    
+    mks = gretl_model_get_data(pmod, "midas_klist");
+    printlist(mks, "mks");
+    
     err = parse_midas_specs(param, dset, &minfo,
-			    &nmidas, &umidas);
+			    &nmidas, &use_ols);
 
     if (!err) {
 	xlist = make_midas_xlist(pmod->list, &err);
-	printlist(xlist, "midas xlist");
     }
 
     if (!err) {
-	/* re-build MIDAS lag-lists */
-	int i, *mlist;
+	/* reconstitute MIDAS lag-lists */
+	make_midas_laglists(minfo, nmidas, dset);
+    }
+
+    if (!err) {
+	char tmp[64], line[MAXLEN];
+	double *b = pmod->coeff;
+	int i, j = 0;
 	
-	for (i=0; i<nmidas && !err; i++) {
-	    mlist = make_midas_laglist(&minfo[i], dset, &err);
-	    if (!err) {
-		minfo[i].laglist = mlist;
+	sprintf(line, "%s=", dset->varname[pmod->list[1]]);
+	gretl_push_c_numeric_locale();
+    
+	for (i=1; i<=xlist[0]; i++) {
+	    sprintf(tmp, "%+.12g*%s", b[j++], dset->varname[xlist[i]]);
+	    strcat(line, tmp);
+	}
+
+	for (i=0; i<nmidas; i++) {
+	    if (takes_coeff(minfo[i].type)) {
+		sprintf(tmp, "%+.12g*mlincomb(%s,%s,%d)", b[j++],
+			minfo[i].lname, minfo[i].mname, minfo[i].type);
+	    } else if (minfo[i].type == MIDAS_ALMONP) {
+		sprintf(tmp, "+mlincomb(%s,%s,%d)", minfo[i].lname,
+			minfo[i].mname, minfo[i].type);
+	    } else {
+		sprintf(tmp, "+lincomb(%s,%s)", minfo[i].lname,
+			minfo[i].mname);
 	    }
-	}	
+	    strcat(line, tmp);
+	}
+
+	gretl_pop_c_numeric_locale();
+	*pformula = gretl_strdup(line);
     }
 
     free(xlist);
     
     return err;
 }
-
-/* Identify parameterizations which take an additional
-   leading coefficient: all but U-MIDAS and the plain
-   Almon polynomial specification.
-*/
-#define takes_coeff(t) (t != MIDAS_U && t != MIDAS_ALMONP)
 
 /* Get the MIDAS model ready for shipping out. What
    exactly we do here depends in part on whether
@@ -756,6 +806,16 @@ static int finalize_midas_model (MODEL *pmod,
 	} else {
 	    gretl_matrix_free(m);
 	}
+    }
+
+    if (!err) {
+	/* add a record of the number of coeffs per midas spec */
+	int *mks = gretl_list_new(nmidas);
+	
+	for (i=0; i<nmidas; i++) {
+	    mks[i+1] = minfo[i].k;
+	}
+	gretl_model_set_list_as_data(pmod, "midas_klist", mks);
     }
 
     gretl_matrix_free(theta);
@@ -910,19 +970,7 @@ MODEL midas_model (const int *list,
 
     if (!err) {
 	/* build (or just read) MIDAS lag-lists */
-	int *mlist;
-	
-	for (i=0; i<nmidas && !err; i++) {
-	    mlist = make_midas_laglist(&minfo[i], dset, &err);
-	    if (!err) {
-		if (!minfo[i].prelag) {
-		    sprintf(minfo[i].lname, "ML___%d", i+1);
-		    err = remember_list(mlist, minfo[i].lname, NULL);
-		}
-		minfo[i].nterms = mlist[0];
-		minfo[i].laglist = mlist;
-	    }
-	}
+	err = make_midas_laglists(minfo, nmidas, dset);
     }
 
     if (!err && use_ols) {
