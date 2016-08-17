@@ -1165,9 +1165,7 @@ MODEL midas_model (const int *list,
 #endif
 
     if (!err) {
-	gretlopt nlsopt = (opt | OPT_G | OPT_M);
-	
-	mod = nl_model(dset, nlsopt, prn);
+	mod = nl_model(dset, (opt | OPT_G | OPT_M), prn);
     }
 
  umidas_finish:
