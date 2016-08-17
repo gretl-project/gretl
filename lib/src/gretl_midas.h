@@ -35,6 +35,10 @@ DATASET *midas_aux_dataset (const int *list,
 			    const DATASET *dset,
 			    int *err);
 
+int midas_forecast_setup (const MODEL *pmod,
+			  DATASET *dset,
+			  char **pformula);
+
 MODEL midas_model (const int *list, const char *param,
 		   DATASET *dset, gretlopt opt,
 		   PRN *prn);

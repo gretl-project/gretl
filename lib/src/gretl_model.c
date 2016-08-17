@@ -5334,6 +5334,8 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 
     if (mci == NLS && test_ci == FCAST) {
 	return 1;
+    } else if (mci == MIDASREG && test_ci == FCAST) {
+	return 1;
     }
 
     if (mci == BIPROBIT) {

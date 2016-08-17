@@ -888,7 +888,6 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == POISSON) return N_("Poisson");
     else if (ci == NEGBIN) return N_("Negative Binomial");
     else if (ci == DURATION) return N_("Duration");
-    else if (ci == MIDASREG) return N_("MIDAS (NLS)");
     else if (ci == NLS) return N_("NLS");
     else if (ci == MLE) return N_("ML");
     else if (ci == GMM) return N_("GMM");
@@ -1020,9 +1019,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
     } else if (pmod->ci == OLS && 
 	       gretl_model_get_int(pmod, "restricted")) {
 	return N_("Restricted OLS");
-    } else if (pmod->ci == OLS &&
-	       gretl_model_get_int(pmod, "umidas")) {
-	return N_("MIDAS (OLS)");
+    } else if (pmod->ci == MIDASREG) {
+	if (gretl_model_get_int(pmod, "umidas")) {
+	    return N_("MIDAS (OLS)");
+	} else {
+	    return N_("MIDAS (NLS)");
+	}
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }

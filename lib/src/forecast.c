@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "matrix_extra.h"
 #include "uservar.h"
+#include "gretl_midas.h"
 #include "forecast.h"
 #include "var.h"
 #include "system.h"
@@ -805,7 +806,6 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 		}
 	    }
 	    if (!err) {
-		/* FIXME: this may produce nothing but NAs, why? */
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[yno][t];
 		}
@@ -855,18 +855,18 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 static int midas_fcast (Forecast *fc, const MODEL *pmod, 
 			DATASET *dset)
 {
-#if 1
-    return E_NOTIMP; /* FIXME */
-#else    
     int oldt1 = dset->t1;
     int oldt2 = dset->t2;
     int fcv = dset->v;
-    int yno = 0;
+    char formula[MAXLINE];
+    char *mdsfunc = NULL;
     double *y = NULL;
-    int t, err = 0;
+    int yno = pmod->list[1];
+    int t, err;
 
-    if (fc->method == FC_AUTO) {
-	yno = pmod->list[1];
+    err = midas_forecast_setup(pmod, dset, &mdsfunc);
+
+    if (!err && fc->method == FC_AUTO) {
 	y = copyvec(dset->Z[yno], dset->n);
 	if (y == NULL) {
 	    err = E_ALLOC;
@@ -882,7 +882,7 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	    dset->t1 = fc->t1;
 	    dset->t2 = t2;
 	    if (!err) {
-		sprintf(formula, "$nl_y = %s", nlfunc);
+		sprintf(formula, "$nl_y=%s", mdsfunc);
 		err = generate(formula, dset, GRETL_TYPE_SERIES,
 			       OPT_P, NULL);
 	    }
@@ -894,18 +894,16 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	}
 
 	if (!err && fc->method == FC_AUTO && fc->t2 > pmod->t2) {
-	    /* dynamic forecast out of sample: in this context
-	       pmod->depvar is actually the expression to generate
-	       the series in question 
-	    */
+	    /* dynamic forecast out of sample */
 	    dset->t1 = pmod->t2 + 1;
 	    dset->t2 = fc->t2;
-	    if (!err) {
-		strcpy(formula, pmod->depvar);
-		err = generate(formula, dset, GRETL_TYPE_SERIES,
-			       OPT_P, NULL);
-	    }
-	    if (!err) {
+	    sprintf(formula, "%s=%s", dset->varname[yno], mdsfunc);
+	    err = generate(formula, dset, GRETL_TYPE_SERIES,
+			   OPT_P, NULL);
+	    if (err) {
+		fprintf(stderr, "midas_fcast: error %d "
+			"running depvar formula\n", err);
+	    } else {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[yno][t];
 		}
@@ -929,14 +927,14 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
-	/* kinda simple-minded */
 	for (t=fc->t1; t<=fc->t2; t++) {
 	    fc->sderr[t] = pmod->sigma;
 	}
     }
 
-    return err;
-#endif
+    free(mdsfunc);
+
+    return err;    
 }
 
 #if AR_DEBUG
