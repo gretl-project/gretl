@@ -168,6 +168,8 @@ int gretl_scalar_add_mutable (const char *name, double val);
 
 int gretl_scalar_convert (const char *name, gretl_matrix **pm);
 
+int private_scalar_add (double val, const char *name);
+
 int add_auxiliary_scalar (const char *name, double val);
 
 void set_auxiliary_scalars (void);

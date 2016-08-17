@@ -377,6 +377,22 @@ int private_matrix_add (gretl_matrix *M, const char *name)
     return real_user_var_add(name, GRETL_TYPE_MATRIX, M, OPT_P);
 }
 
+int private_scalar_add (double val, const char *name)
+{
+    double *px = malloc(sizeof *px);
+    int err;
+
+    if (px == NULL) {
+	err = E_ALLOC;
+    } else {
+	*px = val;
+	err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
+				px, OPT_P);
+    }
+    
+    return err;
+}
+
 /**
  * user_var_delete_by_name:
  * @name: name of the variable to delete.
