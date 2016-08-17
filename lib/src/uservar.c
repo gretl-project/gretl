@@ -2426,3 +2426,55 @@ int print_user_var_by_name (const char *name,
 
     return 0;
 }
+
+int list_user_vars_of_type (const DATASET *dset,
+			    PRN *prn)
+{
+    const char *typename;
+    GretlType t;
+
+    typename = get_optval_string(VARLIST, OPT_T);
+    if (typename == NULL) {
+	return E_INVARG;
+    }
+
+    if (!strcmp(typename, "accessor")) {
+	list_ok_dollar_vars((DATASET *) dset, prn);
+	return 0;
+    }
+
+    t = gretl_type_from_string(typename);
+    if (t == GRETL_TYPE_NONE) {
+	return E_INVARG;
+    }
+
+    if (t == GRETL_TYPE_SERIES) {
+	list_series(dset, prn);
+    } else if (t == GRETL_TYPE_DOUBLE) {
+	print_scalars(prn);
+    } else if (t == GRETL_TYPE_LIST ||
+	       t == GRETL_TYPE_MATRIX ||
+	       t == GRETL_TYPE_BUNDLE ||
+	       t == GRETL_TYPE_STRING) {
+	int i, n = 0;
+
+	pprintf(prn, "\nvariables of type %s:", typename);
+	for (i=0; i<n_vars; i++) {
+	    if (uvars[i]->type == t) {
+		if (n == 0) {
+		    pputc(prn, '\n');
+		}		
+		pprintf(prn, "  %s\n", uvars[i]->name);
+		n++;
+	    }
+	}
+	if (n == 0) {
+	    pputs(prn, " none\n");
+	}
+	pputc(prn, '\n');
+    } else {
+	return E_INVARG;
+    }
+
+    return 0;
+}

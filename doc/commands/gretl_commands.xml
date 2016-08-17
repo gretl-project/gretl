@@ -13421,29 +13421,31 @@
     <usage>
       <options>
 	<option>
-	  <flag>--scalars</flag>
-	  <effect>list scalars</effect>
-	</option>
-	<option>
-	  <flag>--accessors</flag>
-	  <effect>list accessor variables</effect>
-	</option>
+	  <flag>--type</flag>
+	  <optparm>typename</optparm>
+	</option>	
       </options>
     </usage>
 
     <description>
       <para>
-	By default, prints a listing of the (series) variables
-	currently available; <cmd>ls</cmd> may be used as an alias for
-	this command.
+	By default, prints a listing of the series in the current
+	dataset (if any); <cmd>ls</cmd> may be used as an alias.
       </para>
       <para>
-	If the <opt>scalars</opt> option is given, prints a listing
-	of any currently defined scalar variables and their
-	values. Otherwise, if the <opt>accessors</opt> option is
-	given, prints a list of the internal variables currently
-	available via accessors such as <fncref targ="$nobs"/> and
-	<fncref targ="$uhat"/>.
+	If the <opt>type</opt> option is given, it should be followed
+	(after an equals sign) by one of the following typenames:
+	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
+	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit> or
+	<lit>accessor</lit>. The effect is to print the names of all
+	currently defined objects of the named type.
+      </para>
+      <para>
+	As a special case, if the typename is <lit>accessor</lit>, the
+	names printed are those of the internal variables currently
+	available as <quote>accessors,</quote> such as <fncref
+	targ="$nobs"/> and <fncref targ="$uhat"/> (regardless of their
+	specific type).
       </para>
     </description>
 

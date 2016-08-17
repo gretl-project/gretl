@@ -208,4 +208,7 @@ int print_user_var_by_name (const char *name,
 			    const DATASET *dset,
 			    PRN *prn);
 
+int list_user_vars_of_type (const DATASET *dset,
+			    PRN *prn);
+
 #endif /* USERVAR_H_ */

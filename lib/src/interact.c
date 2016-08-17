@@ -2676,7 +2676,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case VARLIST:
-	if (cmd->opt & OPT_S) {
+	if (cmd->opt & OPT_T) {
+	    list_user_vars_of_type(dset, prn);
+	} else if (cmd->opt & OPT_S) {
 	    print_scalars(prn);
 	} else if (cmd->opt & OPT_A) {
 	    list_ok_dollar_vars(dset, prn);
