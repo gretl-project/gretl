@@ -932,6 +932,10 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	}
     }
 
+    /* clean up uservars the MIDAS mechanism created */
+    destroy_private_uvars();	
+    
+
     free(mdsfunc);
 
     return err;    

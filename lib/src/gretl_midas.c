@@ -746,7 +746,6 @@ int midas_forecast_setup (const MODEL *pmod,
 	if (hflist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    printlist(hflist, "hflist");
 	    err = remember_list(hflist, "HFL___", NULL);
 	    user_var_privatize_by_name("HFL___");
 	}
@@ -781,11 +780,6 @@ int midas_forecast_setup (const MODEL *pmod,
 	*pformula = gretl_strdup(line);
     }
 
-    if (err) {
-	/* clean up uservars we created here */
-	destroy_private_uvars();	
-    }
-    
     return err;
 }
 
@@ -1171,7 +1165,9 @@ MODEL midas_model (const int *list,
 #endif
 
     if (!err) {
-	mod = nl_model(dset, opt & OPT_G, prn);
+	gretlopt nlsopt = (opt | OPT_G | OPT_M);
+	
+	mod = nl_model(dset, nlsopt, prn);
     }
 
  umidas_finish:

@@ -3350,7 +3350,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	spec->tol = libset_get_double(NLS_TOLER);
     }
 
-    if (spec->ci != GMM && !(spec->opt & OPT_Q)) {
+    if (spec->ci != GMM && !(spec->opt & (OPT_Q | OPT_M))) {
 	pputs(prn, (numeric_mode(spec))?
 	      _("Using numerical derivatives\n") :
 	      _("Using analytical derivatives\n"));
@@ -3377,7 +3377,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	}
     }
 
-    if (!(spec->opt & OPT_Q) && !(spec->flags & NL_NEWTON)) {
+    if (!(spec->opt & (OPT_Q | OPT_M)) && !(spec->flags & NL_NEWTON)) {
 	pprintf(prn, _("Tolerance = %g\n"), spec->tol);
     }
 

@@ -2458,7 +2458,7 @@ int list_user_vars_of_type (const DATASET *dset,
 	       t == GRETL_TYPE_STRING) {
 	int i, n = 0;
 
-	pprintf(prn, "\nvariables of type %s:", typename);
+	pprintf(prn, "variables of type %s:", typename);
 	for (i=0; i<n_vars; i++) {
 	    if (uvars[i]->type == t) {
 		if (n == 0) {
