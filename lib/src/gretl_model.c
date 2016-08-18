@@ -5332,9 +5332,12 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     int mci = pmod->ci;
     int ok = 1;
 
+    if (mci == MIDASREG) {
+	/* treat as a case of NLS */
+	mci = NLS;
+    }
+
     if (mci == NLS && test_ci == FCAST) {
-	return 1;
-    } else if (mci == MIDASREG && test_ci == FCAST) {
 	return 1;
     }
 
@@ -5457,6 +5460,9 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 		   const DATASET *dset)
 {
     int ok = command_ok_for_model(ci, opt, pmod);
+
+    /* for now we'll treat MIDASREG as a case of NLS */
+    if (ci == MIDASREG) ci = NLS;
 
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs */

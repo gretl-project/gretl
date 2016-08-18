@@ -24,6 +24,7 @@
 #include "gretl_midas.h"
 
 #define MIDAS_DEBUG 0
+#define FC_DEBUG 0
 
 /* days per month or quarter: maybe make this user-
    configurable? */
@@ -721,6 +722,10 @@ static int push_midas_coeff_array (const MODEL *pmod,
 	}
     }
 
+#if FC_DEBUG
+    gretl_matrix_print(hfb, "hfb in fcast");
+#endif
+
     err = private_matrix_add(hfb, "hfb___");    
 
     return err;
@@ -759,6 +764,10 @@ int midas_forecast_setup (const MODEL *pmod,
 	err = parse_midas_specs(param, dset, &minfo,
 				&nmidas, &use_ols, mks);
     }
+
+#if FC_DEBUG
+    fprintf(stderr, "\nmidas_forecast_setup: spec='%s'\n", param);
+#endif
 
     if (!err) {
 	/* reconstitute MIDAS lag-lists */
@@ -804,6 +813,10 @@ int midas_forecast_setup (const MODEL *pmod,
 	strcat(line, "+lincomb(HFL___,hfb___)");
 
 	gretl_pop_c_numeric_locale();
+
+#if FC_DEBUG
+	fprintf(stderr, "formula='%s'\n", line);
+#endif
 	*pformula = gretl_strdup(line);
     }
 
