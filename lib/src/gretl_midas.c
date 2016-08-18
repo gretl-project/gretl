@@ -910,9 +910,14 @@ static int finalize_midas_model (MODEL *pmod,
 	gretl_matrix *w = NULL;
 	double *b = pmod->coeff;
 	double wij, hfb = 0;
+	int type0 = minfo[0].type;
+	int mixed = 0;
 	int j, k = list[0] - 1;
 
 	for (i=0; i<nmidas && !err; i++) {
+	    if (minfo[i].type != type0) {
+		mixed = 1;
+	    }
 	    if (minfo[i].type == MIDAS_U) {
 		for (j=0; j<minfo[i].k; j++) {
 		    gretl_matrix_set(m, j, i, b[k++]);
@@ -944,6 +949,10 @@ static int finalize_midas_model (MODEL *pmod,
 	if (!err) {
 	    /* save "gross" MIDAS coefficients onto the model */
 	    err = gretl_model_set_matrix_as_data(pmod, "midas_coeffs", m);
+	    /* also save record of MIDAS spec type */
+	    if (!mixed && type0 > 0) {
+		gretl_model_set_int(pmod, "midas_type", type0);
+	    }
 	} else {
 	    gretl_matrix_free(m);
 	}
