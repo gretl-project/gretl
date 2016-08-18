@@ -4875,7 +4875,8 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 }
 
 static int theil_decomp (double *m, double MSE,
-			 const double *y, const double *f,
+			 const double *y,
+			 const double *f,
 			 int t1, int t2)
 {
     double da, dp;
@@ -5027,7 +5028,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
     }
 
     gretl_vector_set(m, 0, ME);
-    gretl_vector_set(m, 1, MSE);
+    gretl_vector_set(m, 1, sqrt(MSE));
     gretl_vector_set(m, 2, MAE);
     gretl_vector_set(m, 3, MPE);
     gretl_vector_set(m, 4, MAPE);

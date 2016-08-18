@@ -191,16 +191,15 @@ To be written.
 \label{sec:fcast-stats}
 
 Let $y_t$ be the value of a variable of interest at time $t$ and let
-$f_t$ be a forecast of $y_t$.  We define the forecast error as $e_t =
-y_t - f_t$.  Given a series of $T$ observations and associated
+$f_t$ be a forecast of $y_t$.  We define the forecast error as
+$e_t = y_t - f_t$.  Given a series of $T$ observations and associated
 forecasts we can construct several measures of the overall accuracy of
 the forecasts.  Some commonly used measures are the Mean Error (ME),
-Mean Squared Error (MSE), Root Mean Squared Error (RMSE), Mean
-Absolute Error (MAE), Mean Percentage Error (MPE) and Mean Absolute
-Percentage Error (MAPE).  These are defined as follows.
+Root Mean Squared Error (RMSE), Mean Absolute Error (MAE), Mean
+Percentage Error (MPE) and Mean Absolute Percentage Error (MAPE).
+These are defined as follows.
 %
 \[ {\rm ME} = \frac{1}{T} \sum_{t=1}^T e_t \qquad 
-   {\rm MSE} = \frac{1}{T} \sum_{t=1}^T e_t^2 \qquad 
    {\rm RMSE} = \sqrt{\frac{1}{T} \sum_{t=1}^T e_t^2} \qquad 
    {\rm MAE} = \frac{1}{T} \sum_{t=1}^T |e_t|
 \] 
@@ -279,14 +278,14 @@ series arguments corresponding to $y$ and $f$.  The vector returned is
 \[
 \left(
 \begin{array}{lllllllll}
-{\rm ME} & {\rm MSE} & {\rm MAE} & {\rm MPE} & {\rm MAPE} &
+{\rm ME} & {\rm RMSE} & {\rm MAE} & {\rm MPE} & {\rm MAPE} &
 U & U^M & U^R & U^D
 \end{array}
 \right)'
 \]
 %
-(Note that the RMSE is not included since it can easily be obtained
-given the MSE.)  The series given as arguments to \texttt{fcstats}
+(Note that the MSE is not included since it can easily be obtained
+given the RMSE.)  The series given as arguments to \texttt{fcstats}
 must not contain any missing values in the currently defined sample
 range; use the \texttt{smpl} command to adjust the range if needed.
 

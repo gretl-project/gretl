@@ -2558,7 +2558,6 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 {
     const char *strs[] = {
 	N_("Mean Error"),
-	N_("Mean Squared Error"),
 	N_("Root Mean Squared Error"),
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
@@ -2570,7 +2569,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
     };
     gretl_matrix *m;
     double x;
-    int i, j, t1, t2;
+    int i, t1, t2;
     int n, nmax = 0;
     int len, err = 0;
 
@@ -2587,18 +2586,14 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 
     len = gretl_vector_get_length(m);
 
-    j = 0;
     for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    n = g_utf8_strlen(_(strs[j]), -1);	    
-	    if (n > nmax) nmax = n;
-	    if (i == 2) {
-		n = g_utf8_strlen(_(strs[j+1]), -1);
-		if (n > nmax) nmax = n;
+	    n = g_utf8_strlen(_(strs[i]), -1);	    
+	    if (n > nmax) {
+		nmax = n;
 	    }
 	}
-	j += (i == 2)? 2 : 1;
     }
 
     nmax += 2;
@@ -2607,17 +2602,11 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
     pputs(prn, _("Forecast evaluation statistics"));
     pputs(prn, "\n\n");
 
-    j = 0;
     for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[j]), nmax), _(strs[j]), x);
-	    if (i == 1) {
-		pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[j+1]), nmax), 
-			_(strs[j+1]), sqrt(x));	
-	    }
+	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[i]), nmax), _(strs[i]), x);
 	}
-	j += (i == 1)? 2 : 1;
     }
     pputc(prn, '\n');
     
