@@ -475,11 +475,18 @@ parse_midas_specs (const char *spec, const DATASET *dset,
     return err;
 }
 
-/* extract the list of regular (low-frequency) regressors */
+/* Extract the list of regular (low-frequency) regressors.
+   While we're at it, see if any regressors are lags of the
+   dependent variable and if so record this fact in @ldv.
+*/
 
-static int *make_midas_xlist (const int *list, int *err)
+static int *make_midas_xlist (const int *list,
+			      const DATASET *dset,
+			      int *ldv,
+			      int *err)
 {
     int i, nx = list[0] - 1;
+    int xi, yno = list[1];
     int *xlist = NULL;
 
     if (nx > 0) {
@@ -488,7 +495,11 @@ static int *make_midas_xlist (const int *list, int *err)
 	    *err = E_ALLOC;
 	} else {
 	    for (i=1; i<=nx; i++) {
-		xlist[i] = list[i+1];
+		xi = list[i+1];
+		xlist[i] = xi;
+		if (standard_lag_of(xi, yno, dset) > 0) {
+		    *ldv = 1;
+		}
 	    }
 	}
     }
@@ -743,6 +754,7 @@ static int push_midas_coeff_array (const MODEL *pmod,
 
 int midas_forecast_setup (const MODEL *pmod,
 			  DATASET *dset,
+			  ForecastMethod method,
 			  char **pformula)
 {
     const char *param;
@@ -754,9 +766,9 @@ int midas_forecast_setup (const MODEL *pmod,
     int use_ols = 0;
     int err = 0;
 
-    param = gretl_model_get_data(pmod, "midas_spec");
-    mks =   gretl_model_get_data(pmod, "midas_klist");
-    xlist = gretl_model_get_data(pmod, "lfxlist");
+    param =   gretl_model_get_data(pmod, "midas_spec");
+    mks =     gretl_model_get_data(pmod, "midas_klist");
+    xlist =   gretl_model_get_data(pmod, "lfxlist");
 
     if (param == NULL || mks == NULL || xlist == NULL) {
 	err = E_DATA;
@@ -796,17 +808,27 @@ int midas_forecast_setup (const MODEL *pmod,
 	   calculate fitted values */
 	char tmp[64], line[MAXLEN];
 	double *b = pmod->coeff;
-	int i, vi, j = 0;
+	int p, yno = pmod->list[1];
+	int i, xi, j = 0;
 	
 	*line = '\0';
 	gretl_push_c_numeric_locale();
     
 	for (i=1; i<=xlist[0]; i++) {
-	    vi = xlist[i];
-	    if (vi == 0) {
+	    xi = xlist[i];
+	    if (xi == 0) {
 		sprintf(tmp, "%+.15g", b[j++]);
 	    } else {
-		sprintf(tmp, "%+.15g*%s", b[j++], dset->varname[vi]);
+		/* allow for dynamic formula? */
+		p = (method == FC_STATIC)? 0 :
+		    standard_lag_of(xi, yno, dset);
+		if (p > 0) {
+		    sprintf(tmp, "%+.15g*%s(-%d)", b[j++],
+			    dset->varname[yno], p);
+		} else {
+		    sprintf(tmp, "%+.15g*%s", b[j++],
+			    dset->varname[xi]);
+		}
 	    }
 	    strcat(line, tmp);
 	}
@@ -835,6 +857,7 @@ static int finalize_midas_model (MODEL *pmod,
 				 midas_info *minfo,
 				 int nmidas,
 				 int *xlist,
+				 int ldepvar,
 				 int hfslopes)
 {
     gretl_matrix *m = NULL;
@@ -867,6 +890,10 @@ static int finalize_midas_model (MODEL *pmod,
 
     /* record list of low-frequency regressors */
     gretl_model_set_list_as_data(pmod, "lfxlist", xlist);
+
+    if (ldepvar) {
+	gretl_model_set_int(pmod, "dynamic", 1);
+    }
 
     for (i=0; i<nmidas; i++) {
 	if (minfo[i].nterms > rows) {
@@ -1058,6 +1085,7 @@ MODEL midas_model (const int *list,
     char tmp[64];
     int *xlist = NULL;
     int i, nmidas = 0;
+    int ldepvar = 0;
     int hfslopes = 0;
     int origv = dset->v;
     int save_t1 = dset->t1;
@@ -1077,7 +1105,7 @@ MODEL midas_model (const int *list,
 
     if (!err) {
 	/* build list of regular regressors */
-	xlist = make_midas_xlist(list, &err);
+	xlist = make_midas_xlist(list, dset, &ldepvar, &err);
 	if (xlist != NULL) {
 	    err = remember_list(xlist, "XL___", NULL);
 	    user_var_privatize_by_name("XL___");
@@ -1228,8 +1256,11 @@ MODEL midas_model (const int *list,
 
     if (!mod.errcode) {
 	finalize_midas_model(&mod, list, param, dset,
-			     minfo, nmidas, xlist, hfslopes);
-    }    
+			     minfo, nmidas, xlist,
+			     ldepvar, hfslopes);
+    } else {
+	free(xlist);
+    }
 
     destroy_private_uvars();
     free(minfo);

@@ -25,13 +25,6 @@ extern "C" {
 #endif
 
 typedef enum {
-    FC_STATIC,
-    FC_DYNAMIC,
-    FC_AUTO,
-    FC_KSTEP
-} ForecastMethod;
-
-typedef enum {
     FC_AUTO_OK      = 1 << 0,
     FC_DYNAMIC_OK   = 1 << 1,
     FC_ADDOBS_OK    = 1 << 2,

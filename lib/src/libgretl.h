@@ -246,6 +246,13 @@ typedef enum {
     C_MAX
 } ModelSelCriteria;
 
+typedef enum {
+    FC_STATIC,
+    FC_DYNAMIC,
+    FC_AUTO,
+    FC_KSTEP
+} ForecastMethod;
+
 #ifndef CMPLX
 typedef struct _cmplx {
     double r;

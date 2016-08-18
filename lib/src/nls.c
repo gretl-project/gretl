@@ -161,10 +161,12 @@ static int nls_dynamic_check (nlspec *s, char *formula)
 {
     GENERATOR *genr;
     double *y;
-    int t, err = 0;
+    int T = s->dset->n;
+    int v = s->dv;
+    int err = 0;
 
     /* back up the dependent variable */
-    y = copyvec(s->dset->Z[s->dv], s->dset->n);
+    y = copyvec(s->dset->Z[v], T);
     if (y == NULL) {
 	return E_ALLOC;
     }
@@ -183,9 +185,7 @@ static int nls_dynamic_check (nlspec *s, char *formula)
     }
 
     /* restore the dependent variable */
-    for (t=0; t<s->dset->n; t++) {
-	s->dset->Z[s->dv][t] = y[t];
-    }    
+    memcpy(s->dset->Z[v], y, T * sizeof *y);
 
     destroy_genr(genr);
     free(y);

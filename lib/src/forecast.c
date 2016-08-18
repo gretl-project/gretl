@@ -858,7 +858,7 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
     int yno = pmod->list[1];
     int t, err;
 
-    err = midas_forecast_setup(pmod, dset, &mdsfunc);
+    err = midas_forecast_setup(pmod, dset, fc->method, &mdsfunc);
 
 #if MIDAS_DEBUG
     fprintf(stderr, "mdas_fcast: method %d\n", fc->method);
@@ -899,10 +899,11 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	    /* dynamic forecast out of sample */
 	    dset->t1 = pmod->t2 + 1;
 	    dset->t2 = fc->t2;
-#if MIDAS_DEBUG
-	    fprintf(stderr, " dynamic range %d to %d\n", dset->t1, dset->t2);
-#endif
 	    sprintf(formula, "%s=%s", dset->varname[yno], mdsfunc);
+#if MIDAS_DEBUG
+	    fprintf(stderr, " dynamic range %d to %d\n %s\n", dset->t1,
+		    dset->t2, formula);
+#endif
 	    err = generate(formula, dset, GRETL_TYPE_SERIES,
 			   OPT_P, NULL);
 	    if (!err) {
@@ -2190,7 +2191,8 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
     return 0;
 }
 
-#define dynamic_nls(m) (m->ci == NLS && gretl_model_get_int(m, "dynamic"))
+#define dynamic_nls(m) ((m->ci == NLS || m->ci == MIDASREG) \
+			&& gretl_model_get_int(m, "dynamic"))
 
 static int get_forecast_method (Forecast *fc,
 				MODEL *pmod, 
