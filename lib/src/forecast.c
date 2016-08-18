@@ -881,11 +881,9 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	    /* non-null static range */
 	    dset->t1 = fc->t1;
 	    dset->t2 = t2;
-	    if (!err) {
-		sprintf(formula, "$nl_y=%s", mdsfunc);
-		err = generate(formula, dset, GRETL_TYPE_SERIES,
-			       OPT_P, NULL);
-	    }
+	    sprintf(formula, "$nl_y=%s", mdsfunc);
+	    err = generate(formula, dset, GRETL_TYPE_SERIES,
+			   OPT_P, NULL);
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[fcv][t];
@@ -900,10 +898,7 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	    sprintf(formula, "%s=%s", dset->varname[yno], mdsfunc);
 	    err = generate(formula, dset, GRETL_TYPE_SERIES,
 			   OPT_P, NULL);
-	    if (err) {
-		fprintf(stderr, "midas_fcast: error %d "
-			"running depvar formula\n", err);
-	    } else {
+	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    fc->yhat[t] = dset->Z[yno][t];
 		}
@@ -920,9 +915,7 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 
     if (y != NULL) {
 	/* restore original dependent variable */
-	for (t=0; t<dset->n; t++) {
-	    dset->Z[yno][t] = y[t];
-	}
+	memcpy(dset->Z[yno], y, dset->n * sizeof *y);
 	free(y);
     }
 
@@ -932,9 +925,8 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	}
     }
 
-    /* clean up uservars the MIDAS mechanism created */
+    /* clean up any uservars the MIDAS mechanism created */
     destroy_private_uvars();	
-    
 
     free(mdsfunc);
 

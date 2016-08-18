@@ -226,23 +226,29 @@ struct midas_info_ {
 typedef struct midas_info_ midas_info;
 
 /* Parse a particular entry in the incoming array of MIDAS
-   specifications. Each entry should look like either
+   specifications. Each entry should look like one of
+   the following:
 
-   mds(foo, m1, m2, p, theta) or
-   mdsl(foo, p, theta)
+   (1) mds(list, minlag, maxlag, type, theta)
+   (2) mds(list, minlag, maxlag, 0)
+   (3) mdsl(list, type, theta)
+   (4) mdsl(list, 0)
 
-   The first form implies that lags of the MIDAS terms
-   should be auto-generated (from lags m1 to m2), while
-   the second implies that the incoming list (foo)
-   already holds whatever lags are wanted.
+   Forms (1) and (2) imply that lags of the MIDAS terms
+   in @list should be auto-generated, while (3) and (4)
+   imply that the incoming @list already holds whatever
+   lags are wanted.
 
-   In the first case we check that foo is a "MIDAS list";
-   and we check that any/all relevant parameters have
-   admissible values.
+   Variants (2) and (4), with @type set to 0, are for
+   U-MIDAS terms: in this case @theta (a vector to
+   initialize the coefficients) is not (always) required.
+   These variants cannot be used, however, if the full
+   specification mixes both U-MIDAS and other terms.
 
    Note that @mks (a list of numbers of coefficients
    associated with MIDAS terms) will be non-NULL if and
-   only if we're rebuilding with a forecast in mind.
+   only if we're rebuilding with a forecast in mind. In
+   that case the @theta specifier is ignored.
 */
 
 static int parse_midas_info (const char *s,
@@ -312,7 +318,7 @@ static int parse_midas_info (const char *s,
 	} else if (p < 0 || p >= MIDAS_MAX) {
 	    err = E_INVARG;
 	} else if (mks != NULL) {
-	    /* use stored 'k' value */
+	    /* use stored @k value */
 	    k = mks[i+1];
 	} else if (umidas) {
 	    if (m->prelag) {
@@ -344,6 +350,15 @@ static int parse_midas_info (const char *s,
 
     return err;
 }
+
+/* In case we got any U-MIDAS terms in the specification,
+   check for coherence. If there's a mixture of U-MIDAS
+   specs and others then every spec must have an
+   initializer. If all terms are U-MIDAS it's OK if there
+   are no initializers (we'll just use OLS in this case).
+   It's never OK to have some specs with initializers
+   and others without.
+*/
 
 static int umidas_check (midas_info *m, int nmidas,
 			 int nu, int *use_ols)
@@ -382,10 +397,9 @@ static int umidas_check (midas_info *m, int nmidas,
     return err;
 }
 
-/* parse one or more strings of one of these forms:
-
-     mds(list, minlag, maxlag, type, theta)
-     mdsl(list, type, theta)
+/* Parse the @spec string, which should contain one or more
+   MIDAS specifications. For details on what exactly we're
+   looking for, see the comment on parse_midas_info() above.
 */
 
 static int 
@@ -459,7 +473,6 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 
     return err;
 }
-
 
 /* extract the list of regular (low-frequency) regressors */
 
@@ -541,11 +554,15 @@ static int make_midas_laglists (midas_info *minfo,
     return err;
 }
 
-/* Build a full list of all series involved: dependent
-   variable, regular regressors, and all lags of MIDAS
-   terms. We want this either for setting the usable
-   sample range -- or in the case of U-MIDAS via OLS,
-   as the list to pass to lsq().
+/* If @list is non-NULL, build a full list of all series
+   involved: dependent variable, regular regressors, and
+   all lags of MIDAS terms. We want this either for setting
+   the usable sample range, or (in the case of U-MIDAS via
+   OLS), as the list to pass to lsq().
+
+   If @list is NULL, however, the returned list will just
+   contain all the MIDAS lag terms: we use this variant
+   when setting up for forecasting.
 */
 
 static int *make_midas_biglist (const int *list,
@@ -585,7 +602,7 @@ static int *make_midas_biglist (const int *list,
 
 /* If we're doing MIDAS via nls, set the usable
    sample range first. That way we'll know how
-   big certain matrices ought to be.
+   big the X data matrix ought to be.
 */
 
 static int midas_set_sample (const int *list,
@@ -656,6 +673,11 @@ static int umidas_ols (MODEL *pmod,
     return pmod->errcode;
 }
 
+/* For forecasting, put into uservar space a "private"
+   matrix containing all the coefficients on MIDAS
+   lag terms.
+*/
+
 static int push_midas_coeff_array (const MODEL *pmod,
 				   const int *xlist,
 				   midas_info *m,
@@ -665,6 +687,7 @@ static int push_midas_coeff_array (const MODEL *pmod,
     int i, err;
 	
     if (gretl_model_get_int(pmod, "umidas")) {
+	/* original estimation was U-MIDAS OLS */
 	int nx = xlist[0];
 	int nt = pmod->ncoeff - nx;
 
@@ -709,7 +732,9 @@ static int push_midas_coeff_array (const MODEL *pmod,
 */
 #define takes_coeff(t) (t != MIDAS_U && t != MIDAS_ALMONP)
 
-/* Prepare for generating a MIDAS forecast */
+/* Prepare for generating a MIDAS forecast: this
+   is called from midas_fcast() in forecast.c.
+*/
 
 int midas_forecast_setup (const MODEL *pmod,
 			  DATASET *dset,
@@ -758,6 +783,8 @@ int midas_forecast_setup (const MODEL *pmod,
     }
 
     if (!err) {
+	/* build a string that can be passed to "genr" to
+	   calculate fitted values */
 	char tmp[64], line[MAXLEN];
 	double *b = pmod->coeff;
 	int i, vi, j = 0;
@@ -883,7 +910,9 @@ static int finalize_midas_model (MODEL *pmod,
     }
 
     if (!err) {
-	/* add a record of the number of coeffs per midas spec */
+	/* add a record of the number of coeffs per midas spec:
+	   this will be useful when generating forecasts
+	*/
 	int *mks = gretl_list_new(nmidas);
 	
 	for (i=0; i<nmidas; i++) {
@@ -997,7 +1026,7 @@ static void make_pname (char *targ, midas_info *m, int i,
 	if (list != NULL) {
 	    strcpy(targ, dset->varname[list[i+1]]);
 	} else {
-	    sprintf(targ, "U_MIDAS%d", i+1);
+	    sprintf(targ, "U-MIDAS%d", i+1);
 	}
     }
 }
@@ -1193,6 +1222,7 @@ MODEL midas_model (const int *list,
     free(minfo);
 
     if (dset->v > origv) {
+	/* or maybe not? */
 	dataset_drop_last_variables(dset, dset->v - origv);
     }
 
