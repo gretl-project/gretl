@@ -319,7 +319,7 @@ static int parse_midas_info (const char *s,
 	} else if (p < 0 || p >= MIDAS_MAX) {
 	    err = E_INVARG;
 	} else if (mks != NULL) {
-	    /* use stored @k value */
+	    /* forecasting: use stored @k value */
 	    k = mks[i+1];
 	} else if (umidas) {
 	    if (m->prelag) {
