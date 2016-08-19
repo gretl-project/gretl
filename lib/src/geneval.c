@@ -13791,7 +13791,7 @@ static void maybe_do_type_errmsg (const char *name, int t)
 				   "not acceptable in context"), 
 				 name, tstr);
 	} else {
-	    gretl_errmsg_sprintf(_("Result of type %s is not "
+	    gretl_errmsg_sprintf(_("A variable of type %s is not "
 				   "acceptable in context"), tstr);
 	}
     }
