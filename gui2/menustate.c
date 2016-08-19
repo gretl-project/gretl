@@ -608,7 +608,7 @@ GtkWidget *build_var_popup (int selvar)
 	if (i == MNU_HFDAT || i == MNU_HFPLT) {
 	    if (!dataset_could_be_midas(dataset)) {
 		continue;
-	    } else if (!(series_get_flags(dataset, selvar) & VAR_MIDAS)) {
+	    } else if (series_get_midas_period(dataset, selvar) <= 0) {
 		continue;
 	    } else if (!in_midas_list(selvar, dataset, lname)) {
 		continue;

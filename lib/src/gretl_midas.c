@@ -44,6 +44,33 @@ int midas_days_per_period (int days_per_week, int pd)
     return (pd == 12)? ret : 3 * ret;
 }
 
+/* Could @m be a valid frequency ratio (= number of members
+   of a valid "MIDAS list"), given the periodicity of @dset?
+   If so, return 1; if not, return 0.
+*/
+
+int is_valid_midas_frequency_ratio (const DATASET *dset, int m)
+{
+    if (dset->pd == 1) {
+	/* lf = annual, hf = quarterly or monthly */
+	return (m == 4 || m == 12);
+    } else if (dset->pd == 4 && m == 3) {
+	/* lf = quarterly, hf = monthly */
+	return 1;
+    } else if (dset->pd == 4 || dset->pd == 12) {
+	/* lf = quarterly or monthly, hf = daily */
+	if (m == midas_days_per_period(5, dset->pd)) {
+	    return 1;
+	} else if (m == midas_days_per_period(6, dset->pd)) {
+	    return 1;
+	} else if (m == midas_days_per_period(7, dset->pd)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* Infer the current month from the current @qtr along
    with the number of days per period, @ndays, and the
    current index within the month-days array, @day.

@@ -39,8 +39,7 @@ typedef enum {
     VAR_GENERATED  = 1 << 2,
     VAR_LISTARG    = 1 << 3,
     VAR_TIMECOL    = 1 << 4,
-    VAR_MIDAS      = 1 << 5,
-    VAR_HFANCHOR   = 1 << 6
+    VAR_HFANCHOR   = 1 << 5
 } VarFlags;
 
 typedef enum {
@@ -559,5 +558,14 @@ const char *panel_group_names_varname (const DATASET *dset);
 int is_panel_group_names_series (const DATASET *dset, int v);
 
 int is_dataset_series (const DATASET *dset, const double *x);
+
+int series_get_midas_period (const DATASET *dset, int i);
+
+void series_set_midas_period (const DATASET *dset, int i,
+			      int period);
+
+int series_is_midas_anchor (const DATASET *dset, int i);
+
+void series_set_midas_anchor (const DATASET *dset, int i);
 
 #endif /* DATASET_H */

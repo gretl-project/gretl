@@ -36,11 +36,12 @@ struct VARINFO_ {
     char display_name[MAXDISP];
     char parent[VNAMELEN];
     VarFlags flags;
-    int transform;    /* note: command index of transform */
-    int lag;
     char compact_method;
     gint64 mtime;
-    char stack_level; /* FIXME should be int? */
+    short transform;    /* note: command index of transform */
+    short lag;
+    short stack_level;
+    short midas_period;
     series_table *st;
 };
 
@@ -303,6 +304,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->flags = 0;
     vinfo->transform = 0;
     vinfo->lag = 0;
+    vinfo->midas_period = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
@@ -329,6 +331,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->flags = src->flags;
     targ->transform = src->transform;
     targ->lag = src->lag;
+    targ->midas_period = src->midas_period;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
     if (src->st != NULL) {
@@ -4597,3 +4600,40 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 
     return err;
 }
+
+/* MIDAS-related functions */
+
+int series_get_midas_period (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->midas_period;
+    }
+
+    return 0;
+}
+
+void series_set_midas_period (const DATASET *dset, int i,
+			      int period)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->midas_period = period;
+    }
+}
+
+int series_is_midas_anchor (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return (dset->varinfo[i]->flags & VAR_HFANCHOR) != 0;
+    }
+
+    return 0;
+}
+
+void series_set_midas_anchor (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->flags |= VAR_HFANCHOR;
+    }
+}
+
+/* end MIDAS-related functions */

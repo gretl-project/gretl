@@ -3691,7 +3691,10 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 	    sprintf(label, "%s in %s %d of %s", dset->varname[i],
 		    p0, compfac - j, p1);
 	    series_record_label(cset, k+j, label);
-	    series_set_flag(cset, k+j, VAR_MIDAS);
+	    series_set_midas_period(cset, k+j, compfac - j);
+	    if (j == 0) {
+		series_set_midas_anchor(cset, k+j);
+	    }
 	}
 
 	/* advance column write position for next source series */

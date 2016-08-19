@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_list.h"
 #include "gretl_func.h"
+#include "gretl_midas.h"
 #include "libset.h"
 #include "uservar.h"
 
@@ -121,19 +122,25 @@ int gretl_is_midas_list (const int *list, const DATASET *dset)
 {
     int ret = 0;
 
-    if (list != NULL) {
-	int i, vi;
+    if (list != NULL && list[0] > 2) {
+	int i, m, p;
+	
+	if (!series_is_midas_anchor(dset, list[1])) {
+	    return 0;
+	}
+
+	m = series_get_midas_period(dset, list[1]);
+	if (!is_valid_midas_frequency_ratio(dset, m) || list[0] != m) {
+	    return 0;
+	}
 
 	ret = 1;
-	for (i=1; i<=list[0] && ret; i++) {
-	    vi = list[i];
-	    if (vi < 1 || vi >= dset->v) {
-		ret = 0;
-	    } else if (i == 1 && !(series_get_flags(dset, vi) & VAR_HFANCHOR)) {
-		ret = 0;
-	    } else if (!(series_get_flags(dset, vi) & VAR_MIDAS)) {
+	for (i=2; i<=list[0] && ret; i++) {
+	    p = series_get_midas_period(dset, list[i]);
+	    if (p != m - 1) {
 		ret = 0;
 	    }
+	    m = p;
 	}
     }
 
@@ -155,17 +162,24 @@ int gretl_list_set_midas (const int *list, DATASET *dset)
     int err = 0;
 
     if (list != NULL) {
-	int i, vi;
+	int i, m = list[0];
+
+	if (!is_valid_midas_frequency_ratio(dset, m)) {
+	    err = E_INVARG;
+	}
 	
 	for (i=1; i<=list[0] && !err; i++) {
-	    vi = list[i];
-	    if (vi < 1 || vi >= dset->v) {
+	    if (list[i] < 1 || list[i] >= dset->v) {
 		err = E_INVARG;
-	    } else {
-		if (i == 1) {
-		    series_set_flag(dset, vi, VAR_HFANCHOR);
-		}
-		series_set_flag(dset, vi, VAR_MIDAS);
+	    }
+	}
+
+	if (!err) {
+	    series_set_midas_anchor(dset, list[1]);
+	    series_set_midas_period(dset, list[1], m);
+
+	    for (i=2; i<=list[0]; i++) {
+		series_set_midas_period(dset, list[i], m - i + 1);
 	    }
 	}
     }

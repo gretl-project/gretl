@@ -2250,7 +2250,7 @@ static int real_write_gdt (const char *fname, const int *list,
 
     for (i=1; i<=nvars; i++) {
 	const char *vstr;
-	int vprop;
+	int vprop, mpd;
 
 	v = savenum(list, i);
 	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
@@ -2332,12 +2332,16 @@ static int real_write_gdt (const char *fname, const int *list,
 	    alt_puts("\n discrete=\"true\"", fp, fz);
 	}
 
-	if (series_get_flags(dset,v) & VAR_MIDAS) {
-	    alt_puts("\n midas=\"true\"", fp, fz);
+	if (series_is_midas_anchor(dset, v)) {
+	    alt_puts("\n hf-anchor=\"true\"", fp, fz);
 	}
 
-	if (series_get_flags(dset,v) & VAR_HFANCHOR) {
-	    alt_puts("\n hf-anchor=\"true\"", fp, fz);
+	if ((mpd = series_get_midas_period(dset, v)) > 0) {
+	    if (gz) {
+		gzprintf(fz, "\n midas_period=\"%d\"", mpd);
+	    } else {
+		fprintf(fp, "\n midas_period=\"%d\"", mpd);
+	    }	    
 	}	
 
 	alt_puts("\n/>\n", fp, fz);
@@ -2641,20 +2645,22 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		}
 		free(tmp);
 	    }
-	    tmp = xmlGetProp(cur, (XUC) "midas");
-	    if (tmp != NULL) {
-		if (!strcmp((char *) tmp, "true")) {
-		    series_set_flag(dset, i, VAR_MIDAS);
-		}
-		free(tmp);
-	    }
 	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
-		    series_set_flag(dset, i, VAR_HFANCHOR);
+		    series_set_midas_anchor(dset, i);
 		}
 		free(tmp);
-	    }	    
+	    }	 	    
+	    tmp = xmlGetProp(cur, (XUC) "midas_period");
+	    if (tmp != NULL) {
+		int mpd = atoi((char *) tmp);
+		
+		if (mpd > 0) {
+		    series_set_midas_period(dset, i, mpd);
+		}
+		free(tmp);
+	    }
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
 		free(tmp);
@@ -2876,10 +2882,12 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		free(tmp);
 	    }
 
-	    tmp = xmlGetProp(cur, (XUC) "midas");
+	    tmp = xmlGetProp(cur, (XUC) "midas_period");
 	    if (tmp != NULL) {
-		if (!strcmp((char *) tmp, "true")) {
-		    series_set_flag(dset, k, VAR_MIDAS);
+		int mpd = atoi((char *) tmp);
+		
+		if (mpd > 0) {
+		    series_set_midas_period(dset, k, mpd);
 		}
 		free(tmp);
 	    }
@@ -2887,7 +2895,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
-		    series_set_flag(dset, k, VAR_HFANCHOR);
+		    series_set_midas_anchor(dset, k);
 		}
 		free(tmp);
 	    }	    

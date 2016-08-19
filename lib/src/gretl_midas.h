@@ -31,6 +31,8 @@ typedef enum {
 
 int midas_days_per_period (int days_per_week, int pd);
 
+int is_valid_midas_frequency_ratio (const DATASET *dset, int m);
+
 DATASET *midas_aux_dataset (const int *list,
 			    const DATASET *dset,
 			    int *err);
