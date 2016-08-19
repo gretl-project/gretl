@@ -7619,17 +7619,23 @@ void display_var (void)
     }
 }
 
-void midas_list_callback (const char *listname, int ci)
+void midas_list_callback (const int *list,
+			  const char *listname,
+			  int ci)
 {
-    int *list = get_list_by_name(listname);
     int err = 0;
 
     if (list == NULL) {
-	/* "can't happen" */
-	errbox("Couldn't find the specified MIDAS list");
+	list = get_list_by_name(listname);
+	if (list == NULL) {
+	    /* "can't happen" */
+	    errbox("Couldn't find the specified MIDAS list");
+	    return;
+	}
     }
 
     if (ci == PRINT) {
+	char *p, title[VNAMELEN];
 	PRN *prn;
 
 	if (bufopen(&prn)) {
@@ -7640,7 +7646,14 @@ void midas_list_callback (const char *listname, int ci)
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
 	} else {
-	    view_buffer(prn, 36, 400, listname, PRINT, NULL);
+	    if (listname != NULL) {
+		strcpy(title, listname);
+	    } else {
+		strcpy(title, dataset->varname[list[1]]);
+		p = strrchr(title, '_');
+		if (p != NULL) *p = '\0';
+	    }
+	    view_buffer(prn, 36, 400, title, PRINT, NULL);
 	}
     } else if (ci == PLOT) {
 	err = hf_plot(list, NULL, dataset, OPT_G | OPT_O);

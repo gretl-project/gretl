@@ -322,7 +322,9 @@ void display_selected (void);
 
 void display_var (void);
 
-void midas_list_callback (const char *listname, int ci);
+void midas_list_callback (const int *list,
+			  const char *listname,
+			  int ci);
 
 /* script- and file-related functions */
 

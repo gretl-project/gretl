@@ -407,6 +407,19 @@ static int series_is_dummifiable (int v)
     }
 }
 
+static int dataset_could_be_midas (const DATASET *dset)
+{
+    if (dataset_is_time_series(dset) &&
+	(dset->pd == 1 || dset->pd == 4 || dset->pd == 12)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* Menu items to display on right-click when a single
+   series is selected in the main window */
+
 const char *var_popup_strings[] = {
     N_("Display values"),          /* 0 */
     N_("Summary statistics"),      /* 1 */
@@ -476,7 +489,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case 13:
     case 14:
 	lname = g_object_steal_data(G_OBJECT(w), "listname");
-	midas_list_callback(lname, idx == 13 ? PRINT : PLOT);
+	midas_list_callback(NULL, lname, idx == 13 ? PRINT : PLOT);
 	g_free(lname);
 	break;
     case 16:
@@ -516,6 +529,7 @@ GtkWidget *build_var_popup (int selvar)
 	*lname = '\0';
 	if (var_popup_strings[i] == NULL) {
 	    if (!nullbak) {
+		/* don't insert two consecutive separators */
 		item = gtk_separator_menu_item_new();
 		gtk_widget_show(item);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -548,7 +562,7 @@ GtkWidget *build_var_popup (int selvar)
 	    continue;
 	}
 	if (i == 13 || i == 14) {
-	    if (!dataset_is_time_series(dataset)) {
+	    if (!dataset_could_be_midas(dataset)) {
 		continue;
 	    } else if (!(series_get_flags(dataset, selvar) & VAR_MIDAS)) {
 		continue;
@@ -572,6 +586,9 @@ GtkWidget *build_var_popup (int selvar)
     return menu;
 }
 
+/* Menu items to display on right-click when two or more
+   series are selected in the main window */
+
 const char *sel_popup_strings[] = {
     N_("Display values"),        /* 0 */
     N_("Summary statistics"),    /* 1 */
@@ -583,11 +600,14 @@ const char *sel_popup_strings[] = {
     N_("Copy to clipboard"),     /* 7 */
     N_("Delete"),                /* 8 */
     NULL,                        /* 9 */
-    N_("Add logs"),              /* 10 */
-    N_("Add differences"),       /* 11 */
+    N_("Display high-frequency data"), /* 10 */
+    N_("High-frequency plot"),         /* 11 */
     NULL,                        /* 12 */
-    N_("Define list"),           /* 13 */
-    N_("Define new variable...") /* 14 */
+    N_("Add logs"),              /* 13 */
+    N_("Add differences"),       /* 14 */
+    NULL,                        /* 15 */
+    N_("Define list"),           /* 16 */
+    N_("Define new variable...") /* 17 */
 };
 
 static gint selection_popup_click (GtkWidget *w, gpointer p)
@@ -637,11 +657,16 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	csv_selected_to_clipboard();
     } else if (idx == 8)  {
 	delete_selected_vars();
-    } else if (idx == 10 || idx == 11)  {
-	add_logs_etc(idx == 10 ? LOGS : DIFF, 0);
-    } else if (idx == 13) { 
+    } else if (idx == 10 || idx == 11) {
+	int *list = main_window_selection_as_list();
+	
+	midas_list_callback(list, NULL, idx == 10 ? PRINT : PLOT);
+	free(list);
+    } else if (idx == 13 || idx == 14)  {
+	add_logs_etc(idx == 13 ? LOGS : DIFF, 0);
+    } else if (idx == 16) { 
 	make_list_from_main();
-    } else if (idx == 14) { 
+    } else if (idx == 17) { 
 	genr_callback();
     }
 
@@ -656,12 +681,23 @@ GtkWidget *build_selection_popup (void)
     GtkWidget *item;
     int i, n = G_N_ELEMENTS(sel_popup_strings);
     int nullbak = 0;
+    int midas_list = 0;
 
     menu = gtk_menu_new();
+
+    if (dataset_could_be_midas(dataset)) {
+	int *list = main_window_selection_as_list();
+
+	if (gretl_is_midas_list(list, dataset)) {
+	    midas_list = 1;
+	}
+	free(list);
+    }
 
     for (i=0; i<n; i++) {
 	if (sel_popup_strings[i] == NULL) {
 	    if (!nullbak) {
+		/* don't insert two consecutive separators */
 		item = gtk_separator_menu_item_new();
 		gtk_widget_show(item);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -669,10 +705,13 @@ GtkWidget *build_selection_popup (void)
 	    }
 	    continue;
 	}
-	if (!dataset_is_time_series(dataset) && (i == 3 || i == 11)) {
+	if (!dataset_is_time_series(dataset) && (i == 3 || i == 14)) {
 	    continue;
 	}
 	if (!extended_ts(dataset) && i == 4) {
+	    continue;
+	}
+	if (!midas_list && (i == 10 || i == 11)) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(sel_popup_strings[i]));
