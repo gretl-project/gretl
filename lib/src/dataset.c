@@ -36,7 +36,7 @@ struct VARINFO_ {
     char display_name[MAXDISP];
     char parent[VNAMELEN];
     VarFlags flags;
-    int transform;
+    int transform;    /* note: command index of transform */
     int lag;
     char compact_method;
     gint64 mtime;

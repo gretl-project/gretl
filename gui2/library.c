@@ -7617,7 +7617,37 @@ void display_var (void)
 			   VIEW_SERIES, NULL);
 	series_view_connect(vwin, v);
     }
-	
+}
+
+void midas_list_callback (const char *listname, int ci)
+{
+    int *list = get_list_by_name(listname);
+    int err = 0;
+
+    if (list == NULL) {
+	/* "can't happen" */
+	errbox("Couldn't find the specified MIDAS list");
+    }
+
+    if (ci == PRINT) {
+	PRN *prn;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
+	err = printdata(list, NULL, dataset, OPT_M, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    view_buffer(prn, 36, 400, listname, PRINT, NULL);
+	}
+    } else if (ci == PLOT) {
+	err = hf_plot(list, NULL, dataset, OPT_G | OPT_O);
+	gui_graph_handler(err);
+    } else {
+	dummy_call();
+    }
 }
 
 static int suppress_logo;

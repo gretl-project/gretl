@@ -211,4 +211,11 @@ int print_user_var_by_name (const char *name,
 int list_user_vars_of_type (const DATASET *dset,
 			    PRN *prn);
 
+int leads_midas_list (int ID, const DATASET *dset,
+		      char *listname);
+
+int in_midas_list (int ID, const DATASET *dset,
+		   char *listname);
+
+
 #endif /* USERVAR_H_ */

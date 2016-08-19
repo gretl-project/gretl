@@ -2469,7 +2469,7 @@ int list_user_vars_of_type (const DATASET *dset,
 	    }
 	}
 	if (n == 0) {
-	    pputs(prn, " none\n");
+	    pprintf(prn, " %s\n", _("none"));
 	}
 	pputc(prn, '\n');
     } else {
@@ -2477,4 +2477,50 @@ int list_user_vars_of_type (const DATASET *dset,
     }
 
     return 0;
+}
+
+int leads_midas_list (int ID, const DATASET *dset,
+		      char *listname)
+{
+    int level = gretl_function_depth();
+    int *list;
+    int i, ret = 0;
+
+    for (i=0; i<n_vars && !ret; i++) {
+	if (uvars[i]->type == GRETL_TYPE_LIST &&
+	    uvars[i]->level == level) {
+	    list = uvars[i]->ptr;
+	    if (list[0] > 2 && list[1] == ID) {
+		ret = gretl_is_midas_list(list, dset);
+		if (ret && listname != NULL) {
+		    strcpy(listname, uvars[i]->name);
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
+int in_midas_list (int ID, const DATASET *dset,
+		   char *listname)
+{
+    int level = gretl_function_depth();
+    int *list;
+    int i, ret = 0;
+
+    for (i=0; i<n_vars && !ret; i++) {
+	if (uvars[i]->type == GRETL_TYPE_LIST &&
+	    uvars[i]->level == level) {
+	    list = uvars[i]->ptr;
+	    if (list[0] > 2 && in_gretl_list(list, ID)) {
+		ret = gretl_is_midas_list(list, dset);
+		if (ret && listname != NULL) {
+		    strcpy(listname, uvars[i]->name);
+		}
+	    }
+	}
+    }
+
+    return ret;
 }
