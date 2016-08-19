@@ -417,92 +417,129 @@ static int dataset_could_be_midas (const DATASET *dset)
     }
 }
 
-/* Menu items to display on right-click when a single
-   series is selected in the main window */
+typedef enum {
+    MNU_DISP,
+    MNU_EDIT,
+    MNU_STATS,
+    MNU_TPLOT,
+    MNU_PPLOT,
+    MNU_FDIST,
+    MNU_BPLOT,
+    MNU_CGRAM,
+    MNU_PGRAM,
+    MNU_ATTRS,
+    MNU_CORR,
+    MNU_XCORR,
+    MNU_SCATR,
+    MNU_CLIPB,
+    MNU_DELET,
+    MNU_SEPAR,
+    MNU_HFDAT,
+    MNU_HFPLT,
+    MNU_LOGS,
+    MNU_DIFF,
+    MNU_PCDIF,
+    MNU_DUMIF,
+    MNU_GENR,
+    MNU_LIST
+} MenuIdx;
 
-const char *var_popup_strings[] = {
-    N_("Display values"),          /* 0 */
-    N_("Summary statistics"),      /* 1 */
-    N_("Time series plot"),        /* 2 */
-    N_("Panel plot..."),           /* 3 */
-    N_("Frequency distribution"),  /* 4 */
-    N_("Boxplot"),                 /* 5 */
-    N_("Correlogram"),             /* 6 */
-    N_("Periodogram"),             /* 7 */
-    N_("Edit attributes"),         /* 8 */
-    N_("Edit values"),             /* 9 */
-    N_("Copy to clipboard"),       /* 10 */
-    N_("Delete"),                  /* 11 */
-    NULL,                          /* 12 */
-    N_("Display high-frequency data"), /* 13 */
-    N_("High-frequency plot"),         /* 14 */
-    NULL,                          /* 15 */
-    N_("Add log"),                 /* 16 */
-    N_("Add difference"),          /* 17 */
-    N_("Add percent change..."),   /* 18 */
-    N_("Dummify..."),              /* 19 */
-    NULL,                          /* 20 */
-    N_("Define new variable...")   /* 21 */
+struct popup_entries {
+    MenuIdx idx;       /* one of the enum values above */
+    const char *str;   /* translatable string */
+    int target;        /* 0 = single var, 1 = multiple, 2 = both */
+};
+
+struct popup_entries main_pop_entries[] = {
+    { MNU_DISP,  N_("Display values"), 2 },
+    { MNU_EDIT,  N_("Edit values"), 2 },
+    { MNU_STATS, N_("Summary statistics"), 2 },
+    { MNU_TPLOT, N_("Time series plot"), 2 },
+    { MNU_PPLOT, N_("Panel plot..."), 0 },
+    { MNU_FDIST, N_("Frequency distribution"), 0 },
+    { MNU_BPLOT, N_("Boxplot"), 0 },
+    { MNU_CGRAM, N_("Correlogram"), 0, },
+    { MNU_PGRAM, N_("Periodogram"), 0, },
+    { MNU_ATTRS, N_("Edit attributes"), 0 },
+    { MNU_CORR,  N_("Correlation matrix"), 1 },
+    { MNU_XCORR, N_("Cross-correlogram"), 1 },
+    { MNU_SCATR, N_("XY scatterplot"), 1 },
+    { MNU_CLIPB, N_("Copy to clipboard"), 2 },
+    { MNU_DELET, N_("Delete"), 2 },
+    { MNU_SEPAR, NULL, 2 },
+    { MNU_HFDAT, N_("Display high-frequency data"), 2},
+    { MNU_HFPLT, N_("High-frequency plot"), 2 },
+    { MNU_SEPAR, NULL, 2 },
+    { MNU_LOGS,  N_("Add log"), 0 },
+    { MNU_DIFF,  N_("Add difference"), 0 },
+    { MNU_PCDIF, N_("Add percent change..."), 0 },
+    { MNU_DUMIF, N_("Dummify..."), 0 },
+    { MNU_LOGS,  N_("Add logs"), 1 },
+    { MNU_DIFF,  N_("Add differences"), 1 },
+    { MNU_SEPAR, NULL, 2 },
+    { MNU_GENR,  N_("Define new variable..."), 2 },
+    { MNU_LIST,  N_("Define list"), 1 }
 };
 
 static gint var_popup_click (GtkWidget *w, gpointer p)
 {
-    gint idx = GPOINTER_TO_INT(p);
+    gint i = GPOINTER_TO_INT(p);
     int v = mdata_active_var();
     gchar *lname;
 
-    switch(idx) {
-    case 0:
+    switch (i) {
+    case MNU_DISP:
 	display_var();
 	break;
-    case 1:
+    case MNU_STATS:
 	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE);
 	break;
-    case 2:
-    case 3:
+    case MNU_TPLOT:
+    case MNU_PPLOT:
 	do_graph_var(v);
 	break;
-    case 4:
+    case MNU_FDIST:
 	do_freq_dist();
 	break;
-    case 5:
+    case MNU_BPLOT:
 	menu_boxplot_callback(v);
 	break;
-    case 6:
+    case MNU_CGRAM:
 	do_corrgm();
 	break;
-    case 7:
+    case MNU_PGRAM:
 	do_pergm(NULL);
 	break;
-    case 8:
+    case MNU_ATTRS:
 	varinfo_dialog(v);
 	break;
-    case 9:
+    case MNU_EDIT:
 	show_spreadsheet(SHEET_EDIT_VARLIST);
 	break;
-    case 10:
+    case MNU_CLIPB:
 	csv_selected_to_clipboard();
 	break;
-    case 11:
+    case MNU_DELET:
 	delete_single_var(v);
 	break;
-    case 13:
-    case 14:
+    case MNU_HFDAT:
+    case MNU_HFPLT:
 	lname = g_object_steal_data(G_OBJECT(w), "listname");
-	midas_list_callback(NULL, lname, idx == 13 ? PRINT : PLOT);
+	midas_list_callback(NULL, lname,
+			    i == MNU_HFDAT ? PRINT : PLOT);
 	g_free(lname);
 	break;
-    case 16:
-    case 17:
-	add_logs_etc(idx == 16 ? LOGS : DIFF, v);
+    case MNU_LOGS:
+    case MNU_DIFF:
+	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, v);
 	break;
-    case 18:
+    case MNU_PCDIF:
 	percent_change_dialog(v);
 	break;
-    case 19:
+    case MNU_DUMIF:
 	add_discrete_dummies(v);
 	break;
-    case 21:
+    case MNU_GENR:
 	genr_callback();
 	break;
     default:
@@ -519,15 +556,20 @@ GtkWidget *build_var_popup (int selvar)
     GtkWidget *menu;
     GtkWidget *item;
     char lname[VNAMELEN];
-    int i, n = G_N_ELEMENTS(var_popup_strings);
+    int i, j, n = G_N_ELEMENTS(main_pop_entries);
     int real_panel = multi_unit_panel_sample(dataset);
     int nullbak = 0;
 
     menu = gtk_menu_new();
 
-    for (i=0; i<n; i++) {
+    for (j=0; j<n; j++) {
 	*lname = '\0';
-	if (var_popup_strings[i] == NULL) {
+	if (main_pop_entries[j].target == 1) {
+	    /* multiple selection only */
+	    continue;
+	}
+	i = main_pop_entries[j].idx;
+	if (i == MNU_SEPAR) {
 	    if (!nullbak) {
 		/* don't insert two consecutive separators */
 		item = gtk_separator_menu_item_new();
@@ -537,31 +579,33 @@ GtkWidget *build_var_popup (int selvar)
 	    }
 	    continue;
 	}
-	if (real_panel && (i == 2 || i == 5)) {
+	if (real_panel && (i == MNU_TPLOT || i == MNU_BPLOT)) {
 	    /* don't offer regular ts or boxplot */
 	    continue;
 	}
-	if (!real_panel && i == 3) {
+	if (!real_panel && i == MNU_PPLOT) {
 	    /* don't offer panel plot */
 	    continue;
 	}	
-	if ((i == 6 || i == 7) && !dataset_is_time_series(dataset)) {
+	if ((i == MNU_CGRAM || i == MNU_PGRAM) &&
+	    !dataset_is_time_series(dataset)) {
 	    /* correlogram, periodogram */ 
 	    continue;
 	}
-	if ((i == 2 || i == 17 || i == 18) && !extended_ts(dataset)) {
+	if ((i == MNU_TPLOT || i == MNU_DIFF || i == MNU_PCDIF) &&
+	    !extended_ts(dataset)) {
 	    /* time-series plot, difference, percent change */
 	    continue;
 	}
-	if (i == 5 && dataset_is_time_series(dataset)) {
+	if (i == MNU_BPLOT && dataset_is_time_series(dataset)) {
 	    /* skip boxplot option */
 	    continue;
 	}
-	if (i == 19 && !series_is_dummifiable(selvar)) {
+	if (i == MNU_DUMIF && !series_is_dummifiable(selvar)) {
 	    /* skip dummify option */
 	    continue;
 	}
-	if (i == 13 || i == 14) {
+	if (i == MNU_HFDAT || i == MNU_HFPLT) {
 	    if (!dataset_could_be_midas(dataset)) {
 		continue;
 	    } else if (!(series_get_flags(dataset, selvar) & VAR_MIDAS)) {
@@ -570,7 +614,7 @@ GtkWidget *build_var_popup (int selvar)
 		continue;
 	    }
 	}
-	item = gtk_menu_item_new_with_label(_(var_popup_strings[i]));
+	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),
 			 GINT_TO_POINTER(i));
@@ -586,38 +630,14 @@ GtkWidget *build_var_popup (int selvar)
     return menu;
 }
 
-/* Menu items to display on right-click when two or more
-   series are selected in the main window */
-
-const char *sel_popup_strings[] = {
-    N_("Display values"),        /* 0 */
-    N_("Summary statistics"),    /* 1 */
-    N_("Correlation matrix"),    /* 2 */
-    N_("Cross-correlogram"),     /* 3 */
-    N_("Time series plot"),      /* 4 */
-    N_("XY scatterplot"),        /* 5 */
-    N_("Edit values"),           /* 6 */
-    N_("Copy to clipboard"),     /* 7 */
-    N_("Delete"),                /* 8 */
-    NULL,                        /* 9 */
-    N_("Display high-frequency data"), /* 10 */
-    N_("High-frequency plot"),         /* 11 */
-    NULL,                        /* 12 */
-    N_("Add logs"),              /* 13 */
-    N_("Add differences"),       /* 14 */
-    NULL,                        /* 15 */
-    N_("Define list"),           /* 16 */
-    N_("Define new variable...") /* 17 */
-};
-
 static gint selection_popup_click (GtkWidget *w, gpointer p)
 {
-    gint idx = GPOINTER_TO_INT(p);
+    gint i = GPOINTER_TO_INT(p);
     int ci = 0;
 
-    if (idx == 1) {
+    if (i == MNU_STATS) {
 	ci = SUMMARY;
-    } else if (idx == 2) {
+    } else if (i == MNU_CORR) {
 	ci = CORR;
     }
 
@@ -643,30 +663,31 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	    do_menu_op(ci, buf, OPT_NONE);
 	    free(buf);
 	}
-    } else if (idx == 0) { 
+    } else if (i == MNU_DISP) { 
 	display_selected(); 
-    } else if (idx == 3)  {
+    } else if (i == MNU_XCORR)  {
 	xcorrgm_callback();
-    } else if (idx == 4) { 
+    } else if (i == MNU_TPLOT) { 
 	plot_from_selection(GR_PLOT);
-    } else if (idx == 5)  {
+    } else if (i == MNU_SCATR)  {
 	plot_from_selection(GR_XY);
-    } else if (idx == 6)  {
+    } else if (i == MNU_EDIT)  {
  	show_spreadsheet(SHEET_EDIT_VARLIST);
-    } else if (idx == 7) { 
+    } else if (i == MNU_CLIPB) { 
 	csv_selected_to_clipboard();
-    } else if (idx == 8)  {
+    } else if (i == MNU_DELET)  {
 	delete_selected_vars();
-    } else if (idx == 10 || idx == 11) {
+    } else if (i == MNU_HFDAT || i == MNU_HFPLT) {
 	int *list = main_window_selection_as_list();
 	
-	midas_list_callback(list, NULL, idx == 10 ? PRINT : PLOT);
+	midas_list_callback(list, NULL, i == MNU_HFDAT ?
+			    PRINT : PLOT);
 	free(list);
-    } else if (idx == 13 || idx == 14)  {
-	add_logs_etc(idx == 13 ? LOGS : DIFF, 0);
-    } else if (idx == 16) { 
+    } else if (i == MNU_LOGS || i == MNU_DIFF)  {
+	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0);
+    } else if (i == MNU_LIST) { 
 	make_list_from_main();
-    } else if (idx == 17) { 
+    } else if (i == MNU_GENR) { 
 	genr_callback();
     }
 
@@ -679,7 +700,7 @@ GtkWidget *build_selection_popup (void)
 {
     GtkWidget *menu;
     GtkWidget *item;
-    int i, n = G_N_ELEMENTS(sel_popup_strings);
+    int i, j, n = G_N_ELEMENTS(main_pop_entries);
     int nullbak = 0;
     int midas_list = 0;
 
@@ -694,8 +715,13 @@ GtkWidget *build_selection_popup (void)
 	free(list);
     }
 
-    for (i=0; i<n; i++) {
-	if (sel_popup_strings[i] == NULL) {
+    for (j=0; j<n; j++) {
+	if (main_pop_entries[j].target == 0) {
+	    /* for single selection only */
+	    continue;
+	}
+	i = main_pop_entries[j].idx;
+	if (i == MNU_SEPAR) {
 	    if (!nullbak) {
 		/* don't insert two consecutive separators */
 		item = gtk_separator_menu_item_new();
@@ -705,16 +731,17 @@ GtkWidget *build_selection_popup (void)
 	    }
 	    continue;
 	}
-	if (!dataset_is_time_series(dataset) && (i == 3 || i == 14)) {
+	if ((i == MNU_TPLOT || i == MNU_XCORR) &&
+	    !dataset_is_time_series(dataset)) {
 	    continue;
 	}
-	if (!extended_ts(dataset) && i == 4) {
+	if (!extended_ts(dataset) && i == MNU_TPLOT) {
 	    continue;
 	}
-	if (!midas_list && (i == 10 || i == 11)) {
+	if (!midas_list && (i == MNU_HFDAT || i == MNU_HFPLT)) {
 	    continue;
 	}
-	item = gtk_menu_item_new_with_label(_(sel_popup_strings[i]));
+	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(selection_popup_click),
 			 GINT_TO_POINTER(i));
