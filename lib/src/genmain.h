@@ -179,6 +179,8 @@ double evaluate_if_cond (GENERATOR *genr, DATASET *dset, int *err);
 
 double generate_scalar (const char *s, DATASET *dset, int *err);
 
+double generate_boolean (const char *s, DATASET *dset, int *err);
+
 int generate_int (const char *s, DATASET *dset, int *err);
 
 double *generate_series (const char *s, DATASET *dset, PRN *prn,

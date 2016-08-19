@@ -97,7 +97,7 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 	*err = E_DATA;
     } else {
 	*err = 0;
-	val = generate_scalar(s, dset, err);
+	val = generate_boolean(s, dset, err);
     }
 
 #if IFDEBUG

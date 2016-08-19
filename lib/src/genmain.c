@@ -768,7 +768,10 @@ int generate (const char *line, DATASET *dset,
 
 /* retrieve a scalar result directly */
 
-double generate_scalar (const char *s, DATASET *dset, int *err)
+static double real_generate_scalar (const char *s,
+				    DATASET *dset,
+				    int boolean,
+				    int *err)
 {
     parser p;
     double x = NADBL;
@@ -786,6 +789,10 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
+	} else if (boolean && p.ret->t == STR) {
+	    char *s = p.ret->v.str;
+
+	    x = (s != NULL && *s != '\0');	    
 	} else if (p.ret->t == NUM) {
 	    x = p.ret->v.xval;
 	} else {
@@ -798,6 +805,16 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     gen_cleanup(&p, 0);
 
     return x;
+}
+
+double generate_scalar (const char *s, DATASET *dset, int *err)
+{
+    return real_generate_scalar(s, dset, 0, err);
+}
+
+double generate_boolean (const char *s, DATASET *dset, int *err)
+{
+    return real_generate_scalar(s, dset, 1, err);
 }
 
 /* retrieve an integer result directly */
@@ -1080,6 +1097,10 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
+	} else if (p->ret->t == STR) {
+	    char *s = p->ret->v.str;
+
+	    x = (s != NULL && *s != '\0');
 	} else if (p->ret->t == NUM) {
 	    x = p->ret->v.xval;
 	} else {
