@@ -13767,29 +13767,32 @@ static int check_private_varname (const char *s)
 
 static void maybe_do_type_errmsg (const char *name, int t)
 {
-    if (name != NULL && *name != '\0') {
-	const char *tstr = NULL;
+    const char *tstr = NULL;
 
-	if (t == NUM) {
-	    tstr = "scalar";
-	} else if (t == SERIES) {
-	    tstr = "series";
-	} else if (t == MAT) {
-	    tstr = "matrix";
-	} else if (t == STR) {
-	    tstr = "string";
-	} else if (t == BUNDLE) {
-	    tstr = "bundle";
-	} else if (t == LIST) {
-	    tstr = "list";
-	} else if (t == ARRAY) {
-	    tstr = "array";
-	}
+    if (t == NUM) {
+	tstr = "scalar";
+    } else if (t == SERIES) {
+	tstr = "series";
+    } else if (t == MAT) {
+	tstr = "matrix";
+    } else if (t == STR) {
+	tstr = "string";
+    } else if (t == BUNDLE) {
+	tstr = "bundle";
+    } else if (t == LIST) {
+	tstr = "list";
+    } else if (t == ARRAY) {
+	tstr = "array";
+    }
 
-	if (tstr != NULL) {
+    if (tstr != NULL) {
+	if (name != NULL && *name != '\0') {
 	    gretl_errmsg_sprintf(_("The variable %s is of type %s, "
 				   "not acceptable in context"), 
 				 name, tstr);
+	} else {
+	    gretl_errmsg_sprintf(_("Result of type %s is not "
+				   "acceptable in context"), tstr);
 	}
     }
 }
@@ -14962,6 +14965,7 @@ static int create_or_edit_list (parser *p)
 static int gen_check_return_type (parser *p)
 {
     NODE *r = p->ret;
+    int msgdone = 0;
     int err = 0;
 
     if (r == NULL) {
@@ -15023,6 +15027,8 @@ static int gen_check_return_type (parser *p)
 	    ; /* OK, we can handle this */
 	} else if (!ok_bundled_type(r->t)) {
 	    err = E_TYPES;
+	    maybe_do_type_errmsg(r->vname, r->t);
+	    msgdone = 1;
 	}
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr == NULL && p->op == B_ASN) {
@@ -15034,7 +15040,7 @@ static int gen_check_return_type (parser *p)
 	}
     }
 
-    if (err == E_TYPES) {
+    if (!msgdone && err == E_TYPES) {
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
     }	
 
