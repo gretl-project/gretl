@@ -1784,6 +1784,7 @@ GtkActionEntry main_entries[] = {
     { "CointMenu", NULL, N_("_Cointegration test"), NULL, NULL, NULL },
     { "coint", NULL, N_("_Engle-Granger..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "coint2", NULL, N_("_Johansen..."), NULL, NULL, G_CALLBACK(selector_callback) },
+    { "midasreg", NULL, "MIDAS", NULL, NULL, G_CALLBACK(model_callback) },
     { "PanelModels", NULL, N_("_Panel"), NULL, NULL, NULL },
     { "panel", NULL, N_("_Fixed or random effects..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "PANEL_WLS", NULL, N_("_Weighted least squares..."), NULL, NULL, G_CALLBACK(model_callback) },

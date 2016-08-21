@@ -175,6 +175,8 @@ void iconview_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/View/IconView", s);
 }
 
+#define OK_MIDAS_PD(p) (p == 1 || p == 4 || p == 12)
+
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \
                         (d->pd == 4 || d->pd == 12 || \
                          d->pd == 5 || d->pd == 6 || \
@@ -236,6 +238,12 @@ void time_series_menu_state (gboolean s)
 
     /* Model menu */
     flip(mdata->ui, "/menubar/Model/TSModels", s);
+#if 0 /* not ready yet */
+    flip(mdata->ui, "/menubar/Model/TSModels/midasreg",
+	 s && OK_MIDAS_PD(dataset->pd));
+#else    
+    flip(mdata->ui, "/menubar/Model/TSModels/midasreg", FALSE);
+#endif    
 
     /* Sample menu */
     flip(mdata->ui, "/menubar/Data/DataCompact", 

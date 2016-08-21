@@ -52,7 +52,8 @@
 enum {
     SR_LVARS  = 1,
     SR_RVARS1,
-    SR_RVARS2
+    SR_RVARS2,
+    SR_LVARS2
 };
 
 #define N_EXTRA  8
@@ -63,6 +64,7 @@ struct _selector {
     GtkWidget *vbox;
     GtkWidget *action_area;
     GtkWidget *lvars;
+    GtkWidget *lvars2;
     GtkWidget *table;
     GtkWidget *depvar;
     GtkWidget *rvars1;
@@ -188,11 +190,12 @@ enum {
                      c == VLAGSEL || \
                      c == VECM || \
                      c == COINT2 || \
+		     c == MIDASREG || \
                      c == SAVE_FUNCTIONS || \
 		     c == EDIT_FUNCTIONS)
 
 #define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || \
-                      c == HECKIT || c == BIPROBIT)
+                      c == HECKIT || c == BIPROBIT || c == MIDASREG)
 
 #define RHS_PREFILL(c) (c == CORR || \
 	                c == MAHAL || \
@@ -1140,9 +1143,9 @@ static void render_varname (GtkTreeViewColumn *column,
 }
 
 /* build a new liststore and associated tree view, and pack into the
-   given @box */
+   given @hbox */
 
-static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus) 
+static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus) 
 {
     GtkListStore *store; 
     GtkWidget *view, *scroller;
@@ -1225,7 +1228,9 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
 			     G_CALLBACK(listvar_special_click),
 			     view);
 	}
-    } 
+    } else if (locus == SR_LVARS2) {
+	; /* FIXME hook up a suitable callback */
+    }
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
@@ -1234,7 +1239,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
 					GTK_SHADOW_IN);    
     gtk_container_add(GTK_CONTAINER(scroller), view);
 
-    gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
+    gtk_box_pack_start(hbox, scroller, TRUE, TRUE, 0);
 
     width *= gui_scale;
     gtk_widget_set_size_request(view, width, height);
@@ -3773,6 +3778,8 @@ static char *est_str (int cmdnum)
 	return N_("Loess");
     case NADARWAT:
 	return N_("Nadaraya-Watson");
+    case MIDASREG:
+	return N_("MIDAS regression");
     default:
 	return "";
     }
@@ -3991,12 +3998,14 @@ static void build_gmm_popdown (selector *sr)
 }
 
 static void table_add_left (selector *sr,
-			    GtkWidget *child)
+			    GtkWidget *child,
+			    int startrow,
+			    int endrow)
 {
     guint xpad = 4, ypad = 2;
 
     gtk_table_attach(GTK_TABLE(sr->table), child,
-		     0, 1, 0, sr->n_rows,
+		     0, 1, startrow, endrow,
 		     GTK_EXPAND | GTK_SHRINK | GTK_FILL,
 		     GTK_EXPAND | GTK_SHRINK | GTK_FILL,
 		     xpad, ypad);
@@ -4034,6 +4043,22 @@ static void table_add_right (selector *sr,
 		     2, 3, sr->row, sr->row+1,
 		     GTK_EXPAND | GTK_SHRINK | GTK_FILL,
 		     fixed ? 0 : (GTK_EXPAND | GTK_SHRINK | GTK_FILL),
+		     xpad, ypad);
+    /* finished a row, so advance */
+    sr->row += 1;
+}
+
+static void alt_table_add_left (selector *sr,
+				GtkWidget *child,
+				int startrow,
+				int endrow)
+{
+    guint xpad = 4, ypad = 2;
+
+    gtk_table_attach(GTK_TABLE(sr->table), child,
+		     0, 1, startrow, endrow,
+		     GTK_EXPAND | GTK_SHRINK | GTK_FILL,
+		     GTK_EXPAND | GTK_SHRINK | GTK_FILL,
 		     xpad, ypad);
     sr->row += 1;
 }
@@ -4506,6 +4531,8 @@ static void secondary_rhs_varlist (selector *sr)
 	tmp = gtk_label_new(_("Selection regressors"));
     } else if (sr->ci == BIPROBIT) {
 	tmp = gtk_label_new(_("Equation 2 regressors"));
+    } else if (sr->ci == MIDASREG) {
+	tmp = gtk_label_new(_("High-frequency"));
     } else if (FNPKG_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Helper functions"));
     }
@@ -4532,7 +4559,9 @@ static void secondary_rhs_varlist (selector *sr)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(mod, &iter);
 
-    if (USE_ZLIST(sr->ci) && instlist != NULL) {
+    if (sr->ci == MIDASREG) {
+	; /* FIXME do something here */
+    } else if (USE_ZLIST(sr->ci) && instlist != NULL) {
 	for (i=1; i<=instlist[0]; i++) {
 	    if (instlist[i] < dataset->v) {
 		list_append_var(mod, &iter, instlist[i], sr, SR_RVARS2);
@@ -4820,6 +4849,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     }
 
     sr->lvars = NULL;
+    sr->lvars2 = NULL;
     sr->depvar = NULL;
     sr->rvars1 = NULL;
     sr->rvars2 = NULL;
@@ -6656,6 +6686,25 @@ static void list_append_named_lists (GtkListStore *store,
     g_list_free(llist);    
 }
 
+static void midas_special_left_panel (selector *sr,
+				      GtkWidget *left_box,
+				      int saverow)
+{
+    GtkListStore *store;
+    GtkTreeIter iter;
+    GtkWidget *l2box, *lbl;
+
+    lbl = gtk_label_new("MIDAS vars");
+    l2box = gtk_hbox_new(FALSE, 0);
+    sr->lvars2 = var_list_box_new(GTK_BOX(l2box), sr, SR_LVARS2);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars2)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    alt_table_add_left(sr, left_box, 0, saverow);
+    alt_table_add_left(sr, lbl, saverow, saverow + 1);
+    alt_table_add_left(sr, l2box, saverow + 1, sr->n_rows);
+}
+
 selector *selection_dialog (int ci, const char *title, int (*callback)())
 {
     GtkListStore *store;
@@ -6663,6 +6712,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     GtkWidget *left_box;
     selector *sr;
     int preselect;
+    int saverow;
     int yvar = 0;
     int i;
 
@@ -6725,6 +6775,8 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	ci == DPANEL || THREE_VARS_CODE(ci) || NONPARAM_CODE(ci)) {
 	build_mid_section(sr);
     }
+
+    saverow = sr->row;
     
     if (ci == GR_FBOX || THREE_VARS_CODE(ci)) {
 	/* choose extra var for plot */
@@ -6736,8 +6788,14 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	primary_rhs_varlist(sr);
     }
 
-    /* add left-hand column now we know how tall it should be */
-    table_add_left(sr, left_box);
+    if (ci == MIDASREG) {
+	/* we need two left-hand list boxes, the second to
+	   hold high-frequency vars */
+	midas_special_left_panel(sr, left_box, saverow);
+    } else {
+	/* add left-hand column now we know how many rows it should span */
+	table_add_left(sr, left_box, 0, sr->n_rows);
+    }
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
@@ -7250,7 +7308,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     table_add_right(sr, right_box, 0);
 
     /* pack left-hand stuff */
-    table_add_left(sr, left_box);
+    table_add_left(sr, left_box, 0, sr->n_rows);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);

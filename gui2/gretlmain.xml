@@ -251,6 +251,7 @@
 	  <menuitem action="coint"/>
 	  <menuitem action="coint2"/>
 	</menu>
+	<menuitem action="midasreg"/>
       </menu>
       <menu action="PanelModels">
 	<menuitem action="panel"/>
