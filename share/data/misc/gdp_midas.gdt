@@ -18,16 +18,16 @@ Review, November/December 2010).
 />
 <variable name="payems_m3"
  label="Non-farm payroll employment, month 3 of quarter"
- midas="true"
  hf-anchor="true"
+ midas_period="3"
 />
 <variable name="payems_m2"
  label="Non-farm payroll employment, month 2 of quarter"
- midas="true"
+ midas_period="2"
 />
 <variable name="payems_m1"
  label="Non-farm payroll employment, month 1 of quarter"
- midas="true"
+ midas_period="1"
 />
 </variables>
 <observations count="258" labels="false">
