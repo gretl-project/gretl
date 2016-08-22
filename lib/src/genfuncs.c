@@ -4105,12 +4105,11 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     }
 
     if (errno) {
-	if (gretl_warnings_on()) {
-	    fprintf(stderr, "midas_weights: %s\n", strerror(errno));
-	}
+	gretl_errmsg_sprintf("Failed to calculate MIDAS weights: %s",
+			     strerror(errno));
+	*err = E_INVARG;
 	gretl_matrix_free(w);
 	w = NULL;
-	*err = E_INVARG;
 	errno = 0;
     }
     
@@ -4275,12 +4274,11 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     gretl_matrix_free(w);
 
     if (errno) {
-	if (gretl_warnings_on()) {
-	    fprintf(stderr, "midas_gradient: %s\n", strerror(errno));
-	}
+	gretl_errmsg_sprintf("Failed to calculate MIDAS gradient: %s",
+			     strerror(errno));
+	*err = E_INVARG;
 	gretl_matrix_free(G);
 	G = NULL;
-	*err = E_INVARG;
 	errno = 0;
     }	
 

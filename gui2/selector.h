@@ -26,7 +26,7 @@
                         c != MLOGIT && c != COUNTMOD && \
                         c != DURATION && c != HECKIT && \
 			c != BIPROBIT && c != REPROBIT && \
-			c != TOBIT)
+			c != TOBIT && c != MIDASREG)
 
 typedef struct iterinfo_t iterinfo;
 
@@ -34,6 +34,19 @@ struct iterinfo_t {
     int ci;
     int maxiters;
     double tol;
+};
+
+typedef struct gui_midas_spec_ gui_midas_spec;
+
+struct gui_midas_spec_ {
+    int nterms;
+    char listname[VNAMELEN];
+    int leadvar;
+    int fratio;
+    int ptype;
+    int minlag;
+    int maxlag;
+    int nparm;
 };
 
 void clear_selector (void);
@@ -72,6 +85,8 @@ const char *selector_list (const selector *sr);
 int selector_list_hasconst (const selector *sr);
 
 gpointer selector_get_data (const selector *sr);
+
+gpointer selector_get_extra_data (const selector *sr);
 
 gretlopt selector_get_opts (const selector *sr);
 

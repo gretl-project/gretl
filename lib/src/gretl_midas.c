@@ -239,6 +239,53 @@ DATASET *midas_aux_dataset (const int *list,
     return mset;
 }
 
+static gretl_matrix *maybe_make_auto_theta (char *name, int i,
+					    int ptype,
+					    int m1, int m2)
+{
+    gretl_matrix *theta = NULL;
+    int k = 0;
+    
+    if (!strcmp(name, "null")) {
+	/* OK if we know how many parameters are needed? */
+	if (ptype == MIDAS_BETA0) {
+	    k = 2;
+	} else if (ptype == MIDAS_BETAN) {
+	    k = 3;
+	} else if (ptype == MIDAS_U) {
+	    k = m2 - m1 + 1;
+	}
+    } else if (integer_string(name)) {
+	int chk = atoi(name);
+
+	if (chk >= 1 && chk < 100) {
+	    k = chk;
+	}
+    }
+
+    if (k > 0) {
+	theta = gretl_zero_matrix_new(k, 1);
+	if (theta != NULL) {
+	    if (ptype == MIDAS_BETA0) {
+		theta->val[0] = 1;
+		theta->val[1] = 5;
+	    } else if (ptype == MIDAS_BETAN) {
+		theta->val[0] = 1;
+		theta->val[1] = 1;
+		theta->val[1] = 0;
+	    }
+	    sprintf(name, "theta___%d", i+1);
+	    private_matrix_add(theta, name);
+	}
+    }
+
+#if MIDAS_DEBUG
+    gretl_matrix_print(theta, "auto-generated theta");
+#endif
+
+    return theta;
+}
+
 struct midas_info_ {
     char lname[VNAMELEN];  /* name of MIDAS list */
     char mname[VNAMELEN];  /* name of initial theta vector */
@@ -334,6 +381,9 @@ static int parse_midas_info (const char *s,
 
 	if (!umidas && mks == NULL) {
 	    theta = get_matrix_by_name(mname);
+	    if (theta == NULL) {
+		theta = maybe_make_auto_theta(mname, i, p, m1, m2);
+	    }
 	}
 
 	if (m->prelag && list == NULL) {
@@ -554,12 +604,11 @@ static int *make_midas_laglist (midas_info *m,
     } else {
 	/* copy, because we're going to modify the list */
 	int *lcpy = gretl_list_copy(list);
+	gretl_matrix *lv;
 
 	if (lcpy == NULL) {
 	    *err = E_ALLOC;
-	} else if (!m->prelag) {
-	    gretl_matrix *lv;
-
+	} else {
 	    lv = gretl_matrix_seq(m->minlag, m->maxlag, 1, err);
 	    if (!*err) {
 		*err = list_laggenr(&lcpy, 0, lv, dset, lcpy[0], OPT_L);
@@ -676,6 +725,10 @@ static int midas_set_sample (const int *list,
     }
 
     free(biglist);
+
+#if MIDAS_DEBUG
+    fprintf(stderr, "midas_set_sample: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -1049,6 +1102,10 @@ static int add_midas_matrices (const int *xlist,
 	}
     }
 
+#if MIDAS_DEBUG
+    fprintf(stderr, "add_midas_matrices: returning %d\n", err);
+#endif
+
     *pslopes = hfslopes;
 
     return err;
@@ -1061,9 +1118,9 @@ static int put_midas_nls_line (char *line,
     int err;
     
 #if MIDAS_DEBUG
-    /* display on @prn what we're passing to nls */
-    pputs(prn, line);
-    pputc(prn, '\n');
+    /* display on stderr what we're passing to nls */
+    fputs(line, stderr);
+    fputc('\n', stderr);
 #endif
     
     err = nl_parse_line(NLS, line, dset, prn);
@@ -1156,7 +1213,7 @@ MODEL midas_model (const int *list,
     if (!err && use_ols) {
 	err = umidas_ols(&mod, list, dset, minfo, nmidas, opt);
 #if MIDAS_DEBUG	
-	pputs(prn, "*** U-MIDAS via OLS ***\n");
+	fputs("*** U-MIDAS via OLS ***\n", stderr);
 #endif	
 	goto umidas_finish;
     }
@@ -1173,7 +1230,7 @@ MODEL midas_model (const int *list,
     }
 
 #if MIDAS_DEBUG	
-    pputs(prn, "*** MIDAS via NLS ***\n\n");
+    fputs("*** MIDAS via NLS ***\n\n", stderr);
 #endif    
 
     if (!err) {
@@ -1267,7 +1324,7 @@ MODEL midas_model (const int *list,
     }
 
 #if MIDAS_DEBUG
-    pputc(prn, '\n');
+    fputc('\n', stderr);
 #endif
 
     if (!err) {

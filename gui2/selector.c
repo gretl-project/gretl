@@ -91,6 +91,7 @@ struct _selector {
     size_t cmdsize;
     size_t cmdlen;
     gpointer data;
+    gpointer extra_data;
     int (*callback)();
 };
 
@@ -99,6 +100,15 @@ enum {
     COL_LAG,
     COL_NAME,
     COL_FLAG
+};
+
+enum {
+    MCOL_M = 1,
+    MCOL_NAME,
+    MCOL_MINLAG,
+    MCOL_MAXLAG,
+    MCOL_TYPE,
+    MCOL_K
 };
 
 #define EXTRA_LAGS (N_EXTRA - 1)
@@ -167,6 +177,7 @@ enum {
                          c == OPROBIT || \
 			 c == REPROBIT || \
 	                 c == QUANTREG || \
+			 c == MIDASREG || \
 			 c == SPEARMAN || \
                          c == TOBIT || \
                          c == VAR || \
@@ -195,7 +206,7 @@ enum {
 		     c == EDIT_FUNCTIONS)
 
 #define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || \
-                      c == HECKIT || c == BIPROBIT || c == MIDASREG)
+                      c == HECKIT || c == BIPROBIT)
 
 #define RHS_PREFILL(c) (c == CORR || \
 	                c == MAHAL || \
@@ -281,12 +292,14 @@ static GtkWidget *multiplot_menu;
 
 static selector *open_selector;
 
-static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
+static gint listvar_reorder_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
 			       selector *sr);
 static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
+static gint listvar_midas_click (GtkWidget *widget, GdkEventButton *event, 
+				 selector *sr);
 static int list_show_var (int v, int ci, int show_lags);
 static void available_functions_list (selector *sr, void *p);
 static void primary_rhs_varlist (selector *sr);
@@ -1130,6 +1143,38 @@ static void list_append_var (GtkTreeModel *mod,
     }
 }
 
+static void list_append_midas_var (GtkListStore *store,
+				   GtkTreeIter *iterp,
+				   int v, int m)
+{
+    char mname[VNAMELEN];
+    const char *vname;
+    int ID = v;
+
+    vname = get_listname_by_consecutive_content(m, v);
+
+    if (vname != NULL) {
+	/* got a pre-existing MIDAS list */
+	strcpy(mname, vname);
+	ID = -1;
+    } else {
+	/* got the "anchor" of a potential list */
+	char *p;
+	
+	vname = dataset->varname[v];
+	strcpy(mname, vname);
+	p = strrchr(mname, '_');
+	if (p != NULL) {
+	    *p = '\0';
+	}
+    }
+
+    gtk_list_store_append(store, iterp);    
+    gtk_list_store_set(store, iterp, 
+		       COL_ID, ID, MCOL_M, m,
+		       MCOL_NAME, mname, -1);
+}
+
 static void render_varname (GtkTreeViewColumn *column,
 			    GtkCellRenderer *renderer,
 			    GtkTreeModel *model,
@@ -1157,16 +1202,24 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
     gboolean flagcol = FALSE;
+    gboolean midascol = FALSE;
     int width = 140;
     int height = -1;
-    
+
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
 	/* VECM special, with restricted/unrestricted flag column */
 	store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_INT, 
 				   G_TYPE_STRING, G_TYPE_STRING);
 	flagcol = TRUE;
+    } else if (sr->ci == MIDASREG && locus == SR_RVARS2) {
+	/* MIDAS special with parameterization info */
+	store = gtk_list_store_new(7, G_TYPE_INT, G_TYPE_INT, 
+				   G_TYPE_STRING, G_TYPE_INT,
+				   G_TYPE_INT, G_TYPE_INT,
+				   G_TYPE_INT);
+	midascol = TRUE;
     } else {
-	/* ID number, lag, varname */
+	/* ID number, lag or frequency ratio, varname */
 	store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
     }
 
@@ -1203,9 +1256,13 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
-    gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
-    g_signal_connect(G_OBJECT(view), "motion-notify-event",
-		     G_CALLBACK(listbox_drag), NULL);
+    if (locus == SR_LVARS2 || (locus == SR_RVARS2 && sr->ci == MIDASREG)) {
+	gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
+    } else {
+	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
+	g_signal_connect(G_OBJECT(view), "motion-notify-event",
+			 G_CALLBACK(listbox_drag), NULL);
+    }
 
     if (locus == SR_LVARS) { 
 	/* left-hand box with the selectable vars */
@@ -1227,13 +1284,19 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 	    g_signal_connect(G_OBJECT(view), "button-press-event",
 			     G_CALLBACK(listvar_flagcol_click),
 			     view);
+	} else if (midascol) {
+	    g_signal_connect(G_OBJECT(view), "button-press-event",
+			     G_CALLBACK(listvar_midas_click),
+			     sr);
 	} else {
 	    g_signal_connect(G_OBJECT(view), "button-press-event",
-			     G_CALLBACK(listvar_special_click),
+			     G_CALLBACK(listvar_reorder_click),
 			     view);
 	}
     } else if (locus == SR_LVARS2) {
-	; /* FIXME hook up a suitable callback */
+	g_signal_connect(G_OBJECT(view), "button-press-event",
+			 G_CALLBACK(lvars_right_click),
+			 sr);	
     }
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
@@ -1742,8 +1805,10 @@ static int rvars1_n_vars (selector *sr)
 /* add a variable (or possibly a list of variables) to the listbox 
    at @locus */
 
-static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
-			      selector *sr, int locus)
+static void real_add_generic (GtkTreeModel *srcmodel,
+			      GtkTreeIter *srciter, 
+			      selector *sr,
+			      int locus)
 {
     GtkWidget *w;
     GtkTreeModel *model;
@@ -1870,6 +1935,52 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
     }
 }
 
+static void move_midas_term (GtkTreeModel *src,
+			     GtkTreeIter *srciter,
+			     selector *sr)
+{
+    GtkTreeModel *targ;
+    GtkTreeIter iter;
+    gchar *vname = NULL;
+    int v, m, src_cols;
+    
+    /* get the 'source' info */
+    gtk_tree_model_get(src, srciter,
+		       COL_ID, &v, MCOL_M, &m,
+		       MCOL_NAME, &vname, -1);
+
+    /* append to target */
+    src_cols = gtk_tree_model_get_n_columns(src);
+    if (src_cols == 3) {
+	/* going left to right */
+	int lmin = 1, lmax = 2*m, ptype = 1, k = 2;
+	
+	if (midas_term_dialog(vname, m, &lmin, &lmax, &ptype,
+			      &k, sr->dlg) < 0) {
+	    return;
+	}
+	targ = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
+	gtk_list_store_append(GTK_LIST_STORE(targ), &iter);
+	gtk_list_store_set(GTK_LIST_STORE(targ), &iter, 
+			   COL_ID, v, MCOL_M, m, MCOL_NAME, vname,
+			   MCOL_MINLAG, lmin, MCOL_MAXLAG, lmax, 
+			   MCOL_TYPE, ptype, MCOL_K, k,
+			   -1);
+    } else {
+	/* going right to left */
+	targ = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars2));
+	gtk_list_store_append(GTK_LIST_STORE(targ), &iter);
+	gtk_list_store_set(GTK_LIST_STORE(targ), &iter, 
+			   COL_ID, v, MCOL_M, m,
+			   MCOL_NAME, vname, -1);
+    }
+    
+    g_free(vname);
+
+    /* and remove from source */
+    gtk_list_store_remove(GTK_LIST_STORE(src), srciter);    
+}
+
 static void add_to_rvars1 (GtkTreeModel *model, GtkTreePath *path,
 			   GtkTreeIter *iter, selector *sr)
 {
@@ -1895,13 +2006,23 @@ static void add_to_rvars2 (GtkTreeModel *model, GtkTreePath *path,
 
 static void add_to_rvars2_callback (GtkWidget *w, selector *sr)
 {
-    GtkTreeSelection *selection;
+    GtkTreeSelection *sel;
 
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
-    gtk_tree_selection_selected_foreach(selection, 
-					(GtkTreeSelectionForeachFunc) 
-					add_to_rvars2,
-					sr);
+    if (sr->ci == MIDASREG) {
+	GtkTreeModel *model = NULL;
+	GtkTreeIter iter;
+	
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars2));
+	if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	    move_midas_term(model, &iter, sr);
+	}
+    } else {
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
+	gtk_tree_selection_selected_foreach(sel, 
+					    (GtkTreeSelectionForeachFunc) 
+					    add_to_rvars2,
+					    sr);
+    }
 }
 
 static void add_all_to_rvars1_callback (GtkWidget *w, selector *sr)
@@ -2023,7 +2144,18 @@ static void remove_from_rvars1_callback (GtkWidget *w, selector *sr)
 
 static void remove_from_rvars2_callback (GtkWidget *w, selector *sr)
 {
-    remove_from_right(w, sr, sr->rvars2);
+    if (sr->ci == MIDASREG) {
+	GtkTreeSelection *sel;
+	GtkTreeModel *model = NULL;
+	GtkTreeIter iter;
+
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->rvars2));
+	if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	    move_midas_term(model, &iter, sr);
+	}
+    } else {
+	remove_from_right(w, sr, sr->rvars2);
+    }
 }
 
 /* double-clicking sets the dependent variable and marks it as the
@@ -2115,6 +2247,40 @@ static gint listvar_flagcol_click (GtkWidget *widget,
 	}
 	gtk_menu_popup(GTK_MENU(flag_popup), NULL, NULL, NULL, NULL,
 		       event->button, event->time);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gint listvar_midas_click (GtkWidget *widget, 
+				 GdkEventButton *event, 
+				 selector *sr)
+{
+    if (right_click(event)) {
+	GtkTreeSelection *sel;
+	GtkTreeModel *model = NULL;
+	GtkTreeIter iter;
+	
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
+	if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	    int m, lmin, lmax, ptype, k, resp;
+	    gchar *vname = NULL;
+	    
+	    gtk_tree_model_get(model, &iter, MCOL_M, &m, MCOL_NAME, &vname,
+			       MCOL_MINLAG, &lmin, MCOL_MAXLAG, &lmax,
+			       MCOL_TYPE, &ptype, MCOL_K, &k, -1);
+	    
+	    resp = midas_term_dialog(vname, m, &lmin, &lmax, &ptype,
+				     &k, sr->dlg);
+	    if (resp != GRETL_CANCEL) {
+		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+				   MCOL_MINLAG, lmin, MCOL_MAXLAG, lmax, 
+				   MCOL_TYPE, ptype, MCOL_K, k,
+				   -1);		
+	    }
+	}
+
 	return TRUE;
     }
 
@@ -2259,7 +2425,7 @@ static void move_selected_rows (GtkMenuItem *item, GtkTreeView *view)
     gtk_widget_destroy(GTK_WIDGET(item));
 }
 
-static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
+static gint listvar_reorder_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data)
 {
     if (right_click(event)) {
@@ -2311,12 +2477,18 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 			       selector *sr)
 {
     if (right_click(event)) {
-	if (NONPARAM_CODE(sr->ci)) {
-	    set_extra_var_callback(NULL, sr);
-	} else if (sr->ci == GR_FBOX) {
-	    set_third_var_callback(NULL, sr);
+	if (widget == sr->lvars2) {
+	    if (sr->ci == MIDASREG) {
+		add_to_rvars2_callback(widget, sr);
+	    }
 	} else {
-	    add_to_rvars1_callback(NULL, sr);
+	    if (NONPARAM_CODE(sr->ci)) {
+		set_extra_var_callback(NULL, sr);
+	    } else if (sr->ci == GR_FBOX) {
+		set_third_var_callback(NULL, sr);
+	    } else {
+		add_to_rvars1_callback(NULL, sr);
+	    }
 	}
 	return TRUE;
     }
@@ -3007,6 +3179,63 @@ static int get_rvars2_data (selector *sr, int rows, int context)
     return err;
 }
 
+static void get_midas_specs (selector *sr)
+{
+    gui_midas_spec *specs;
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gchar *vname;
+    int i, rows = 0;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	do {
+	    rows++;
+	} while (gtk_tree_model_iter_next(model, &iter));
+    }
+
+    if (rows == 0) {
+	warnbox("You must specify at least one MIDAS term");
+	sr->error = 1;
+	return;
+    }
+
+    specs = malloc(rows * sizeof *specs);
+    if (specs == NULL) {
+	nomem();
+	sr->error = E_ALLOC;
+	return;
+    }
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    for (i=0; i<rows; i++) {
+	specs[i].nterms = rows;
+	gtk_tree_model_get(model, &iter,
+			   COL_ID, &specs[i].leadvar,
+			   MCOL_M, &specs[i].fratio,
+			   MCOL_NAME, &vname,
+			   MCOL_MINLAG, &specs[i].minlag,
+			   MCOL_MAXLAG, &specs[i].maxlag,
+			   MCOL_TYPE, &specs[i].ptype,
+			   MCOL_K, &specs[i].nparm, -1);
+	if (specs[i].leadvar > 0) {
+	    specs[i].listname[0] = '\0';
+	} else {
+	    strcpy(specs[i].listname, vname);
+	    specs[i].leadvar = 0;
+	}
+	gtk_tree_model_iter_next(model, &iter);
+    }
+
+    if (sr->extra_data != NULL) {
+	free(sr->extra_data);
+    }
+
+    sr->extra_data = specs;
+}
+
 static void read_quantreg_extras (selector *sr)
 {
     GtkWidget *w = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
@@ -3567,8 +3796,11 @@ static void compose_cmdlist (selector *sr)
 	get_rvars1_data(sr, rows, context);
     }
 
-    /* cases with a (possibly optional) secondary RHS list */
-    if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
+    if (sr->ci == MIDASREG) {
+	/* read special material from lower right */
+	get_midas_specs(sr);
+    } else if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
+	/* cases with a (possibly optional) secondary RHS list */
 	rows = varlist_row_count(sr, SR_RVARS2, &realrows);
 	if (rows > 0) {
 	    if (realrows > 0) {
@@ -3699,6 +3931,7 @@ static void destroy_selector (GtkWidget *w, selector *sr)
     }
 
     free(sr->cmdlist);
+    free(sr->extra_data);
     free(sr);
 
     open_selector = NULL;
@@ -4323,18 +4556,25 @@ static void AR_order_spin (selector *sr)
 {
     GtkWidget *tmp, *hbox;
     GtkAdjustment *adj;
-    gdouble val, maxlag;
+    gdouble val, minlag, maxlag;
 
     hbox = gtk_hbox_new(FALSE, 5);
 
     if (sr->ci == ARCH) {
 	tmp = gtk_label_new(_("ARCH order:"));
 	val = dataset->pd;
+	minlag = 1;
 	maxlag = 2 * dataset->pd;
+    } else if (sr->ci == MIDASREG) {
+	tmp = gtk_label_new(_("AR order:"));
+	val = 1;
+	minlag = 0;
+	maxlag = 100;
     } else {
 	/* dpanel */
 	tmp = gtk_label_new(_("AR order:"));
 	val = dpd_p;
+	minlag = 1;
 	maxlag = 10;
 	if (maxlag < dataset->pd - 2) {
 	    maxlag = dataset->pd - 2;
@@ -4347,7 +4587,7 @@ static void AR_order_spin (selector *sr)
 
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    adj = (GtkAdjustment *) gtk_adjustment_new(val, 1, maxlag, 1, 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(val, minlag, maxlag, 1, 1, 0);
     sr->extra[0] = gtk_spin_button_new(adj, 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
 
@@ -4564,7 +4804,7 @@ static void secondary_rhs_varlist (selector *sr)
     gtk_tree_model_get_iter_first(mod, &iter);
 
     if (sr->ci == MIDASREG) {
-	; /* FIXME do something here */
+	; /* FIXME do something here? */
     } else if (USE_ZLIST(sr->ci) && instlist != NULL) {
 	for (i=1; i<=instlist[0]; i++) {
 	    if (instlist[i] < dataset->v) {
@@ -4703,6 +4943,9 @@ static void build_mid_section (selector *sr)
     } else if (sr->ci == TOBIT) {
 	tobit_limits_selector(sr);
 	table_add_vwedge(sr);
+    } else if (sr->ci == MIDASREG) {
+	/* AR_order_spin(sr); FIXME */
+	primary_rhs_varlist(sr);
     } else if (USE_ZLIST(sr->ci)) {
 	primary_rhs_varlist(sr);
     } else if (sr->ci == AR) {
@@ -4787,6 +5030,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->opts = OPT_NONE;
     sr->parent = parent;
     sr->data = data;
+    sr->extra_data = NULL;
     
     if (MODEL_CODE(ci)) {
 	if (dataset->v > 9) {
@@ -5473,7 +5717,8 @@ static void build_selector_switches (selector *sr)
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
 	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG || 
-	sr->ci == HECKIT || sr->ci == BIPROBIT || sr->ci == TOBIT) {
+	sr->ci == HECKIT || sr->ci == BIPROBIT || sr->ci == TOBIT ||
+	sr->ci == MIDASREG) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? (and REPROBIT should be here?) */
@@ -6681,11 +6926,16 @@ static void list_append_named_lists (GtkListStore *store,
 {
     GList *llist = user_var_names_for_type(GRETL_TYPE_LIST);
     GList *tail = llist;
+    const int *list;
 
     while (tail != NULL) {
-	gtk_list_store_append(store, iterp);
-	gtk_list_store_set(store, iterp, COL_ID, -1, COL_LAG, 0,
-			   COL_NAME, tail->data, -1);
+	list = get_list_by_name(tail->data);
+	if (list != NULL && list[0] > 0 &&
+	    series_get_midas_period(dataset, list[1]) == 0) {
+	    gtk_list_store_append(store, iterp);
+	    gtk_list_store_set(store, iterp, COL_ID, -1, COL_LAG, 0,
+			       COL_NAME, tail->data, -1);
+	}
 	tail = tail->next;
     }
 
@@ -6728,15 +6978,15 @@ static int midas_special_left_panel (selector *sr,
 		}
 	    }
 	    if (is_midas) {
-		fprintf(stderr, "found midas list starting at ID=%d\n", i);
 		nmidas++;
-		list_append_var_simple(store, &iter, i);
+		list_append_midas_var(store, &iter, i, m);
 	    }
 	}
     }
 
     if (nmidas == 0) {
-	gretl_errmsg_set("No MIDAS data were found in the current dataset");
+	gretl_errmsg_set("No MIDAS data were found in the current dataset\n"
+			 "FIXME: some help should be offered here!");
 	err = 1;
     }
 
@@ -6810,7 +7060,8 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
 	ci == QUANTREG || ci == INTREG || ci == TOBIT ||
-	ci == DPANEL || THREE_VARS_CODE(ci) || NONPARAM_CODE(ci)) {
+	ci == DPANEL || ci == MIDASREG || THREE_VARS_CODE(ci) ||
+	NONPARAM_CODE(ci)) {
 	build_mid_section(sr);
     }
 
@@ -7768,6 +8019,11 @@ int selector_list_hasconst (const selector *sr)
 gpointer selector_get_data (const selector *sr)
 {
     return sr->data;
+}
+
+gpointer selector_get_extra_data (const selector *sr)
+{
+    return sr->extra_data;
 }
 
 gretlopt selector_get_opts (const selector *sr)

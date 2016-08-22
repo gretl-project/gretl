@@ -205,4 +205,9 @@ int output_policy_dialog (windata_t *source, windata_t *target,
 
 void percent_change_dialog (int v);
 
+int midas_term_dialog (const char *name, int m,
+		       int *minlag, int *maxlag,
+		       int *ptype, int *ncoef,
+		       GtkWidget *parent);
+
 #endif /* DIALOGS_H */

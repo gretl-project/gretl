@@ -32,6 +32,7 @@
 #include "fileselect.h"
 #include "winstack.h"
 #include "gretl_panel.h"
+#include "gretl_midas.h"
 #include "texprint.h"
 #include "forecast.h"
 #include "console.h"
@@ -6285,4 +6286,156 @@ void percent_change_dialog (int v)
     gtk_widget_show_all(dialog);
 }
 
+struct midas_sync {
+    int *ptype;
+    int *minlag;
+    int *maxlag;
+    GtkWidget *kspin;
+    GtkWidget *l0spin;
+    GtkWidget *l1spin;
+};
 
+static void set_midas_ptype (GtkComboBox *w, struct midas_sync *msync)
+{
+    int pt = gtk_combo_box_get_active(w);
+    int fixval = 0;
+
+    if (pt == MIDAS_BETA0) {
+	fixval = 2;
+    } else if (pt == MIDAS_BETAN) {
+	fixval = 3;
+    } else if (pt == MIDAS_U) {
+	int l0 = spinner_get_int(msync->l0spin);
+	int l1 = spinner_get_int(msync->l1spin);
+	int k = l1 - l0 + 1;
+	    
+	fixval = k;
+    }
+
+    if (fixval) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(msync->kspin), fixval);
+    }
+    gtk_widget_set_sensitive(msync->kspin, fixval == 0);
+    
+    *msync->ptype = pt;
+}
+
+static void set_midas_lag (GtkSpinButton *w, struct midas_sync *msync)
+{
+    int l0, l1, val = gtk_spin_button_get_value_as_int(w);
+
+    if (GTK_WIDGET(w) == msync->l0spin) {
+	l0 = val;
+	if (spinner_get_int(msync->l1spin) < l0) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(msync->l1spin), l0);
+	}
+	*msync->minlag = l0;
+    } else {
+	l1 = val;
+	if (spinner_get_int(msync->l0spin) > l1) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(msync->l0spin), l1);
+	}
+	*msync->maxlag = l1;
+    }
+}
+
+int midas_term_dialog (const char *name, int m,
+		       int *minlag, int *maxlag,
+		       int *ptype, int *ncoef,
+		       GtkWidget *parent)
+{
+    const char *opts[] = {
+	N_("Unrestricted (U-MIDAS)"),
+	N_("Normalized exponential Almon"),
+	N_("Normalized beta (zero last lag)"),
+	N_("Normalized beta (non-zero last lag)"),
+	N_("Almon polynomial")
+    };
+    struct midas_sync msync;
+    GtkWidget *dialog, *combo;
+    GtkWidget *vbox, *hbox, *tmp;
+    gchar *msg;
+    int i, hcode = 0; /* FIXME */
+    int ret = GRETL_CANCEL;
+
+    if (maybe_raise_dialog()) {
+	return ret;
+    }
+
+    dialog = gretl_dialog_new("gretl: MIDAS term", parent, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    msync.ptype = ptype;
+    msync.minlag = minlag;
+    msync.maxlag = maxlag;
+
+    /* label */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    msg = g_strdup_printf(_("High-frequency regressor %s"), name);
+    tmp = gtk_label_new(msg);
+    g_free(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    /* param type selection */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    tmp = gtk_label_new(_("Parameterization"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    combo = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    for (i=0; i<G_N_ELEMENTS(opts); i++) {
+	combo_box_append_text(combo, opts[i]);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), *ptype);
+
+    /* number of coefficients */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    tmp = gtk_label_new(_("Number of parameters"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    msync.kspin = tmp = gtk_spin_button_new_with_range(1, 10, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *ncoef);
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+		     G_CALLBACK(set_int_from_spinner), ncoef);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+
+    /* minimum and maximum lags */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    tmp = gtk_label_new(_("Lags"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    msync.l0spin = tmp = gtk_spin_button_new_with_range(-100, 100, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *minlag);
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+		     G_CALLBACK(set_midas_lag), &msync);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tmp = gtk_label_new(_("to"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    msync.l1spin = tmp = gtk_spin_button_new_with_range(-100, 100, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), *maxlag);
+    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+		     G_CALLBACK(set_midas_lag), &msync);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+
+    /* param-type signal */
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(set_midas_ptype), &msync);
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    tmp = ok_validate_button(hbox, &ret, NULL);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_grab_default(tmp);
+    if (hcode) {
+	context_help_button(hbox, hcode);
+    } else {
+	gretl_dialog_keep_above(dialog);
+    }
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}

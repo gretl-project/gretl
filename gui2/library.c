@@ -45,6 +45,7 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
+#include "gretl_midas.h"
 #include "gretl_foreign.h"
 #include "gretl_help.h"
 #include "gretl_zip.h"
@@ -4104,7 +4105,11 @@ static int real_do_model (int action)
 	break;	
     case MPOLS:
 	*pmod = mp_ols(libcmd.list, dataset);
-	break;	
+	break;
+    case MIDASREG:
+	*pmod = midas_model(libcmd.list, libcmd.param, dataset,
+			    libcmd.opt, prn);
+	break;
     default:
 	errbox(_("Sorry, not implemented yet!"));
 	err = 1;
@@ -4139,12 +4144,75 @@ static int real_do_model (int action)
     return err;
 }
 
+static gchar *compose_midas_param (gpointer p)
+{
+    gui_midas_spec *si, *specs = p;
+    char *tmp, *buf = NULL;
+    int *list = NULL;
+    int umidas = 1;
+    int i;
+
+    if (specs == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<specs[0].nterms; i++) {
+	if (specs[i].ptype != MIDAS_U) {
+	    umidas = 0;
+	    break;
+	}
+    }
+
+    for (i=0; i<specs[0].nterms; i++) {
+	si = &specs[i];
+	if (si->listname[0] == '\0') {
+	    /* we'll have to construct a list */
+	    int lmax = si->leadvar + si->fratio - 1;
+	    
+	    list = gretl_consecutive_list_new(si->leadvar, lmax);
+	    sprintf(si->listname, "HFL___%d", i+1);
+	    remember_list(list, si->listname, NULL);
+	    user_var_privatize_by_name(si->listname);
+	    
+	}
+	if (umidas) {
+	    tmp = g_strdup_printf("mds(%s,%d,%d,%d)",
+				  si->listname, si->minlag,
+				  si->maxlag, si->ptype);
+	} else if (si->ptype == MIDAS_BETA0 ||
+		   si->ptype == MIDAS_BETAN ||
+		   si->ptype == MIDAS_U) {
+	    tmp = g_strdup_printf("mds(%s,%d,%d,%d,null)",
+				  si->listname, si->minlag,
+				  si->maxlag, si->ptype);
+	} else {
+	    tmp = g_strdup_printf("mds(%s,%d,%d,%d,%d)",
+				  si->listname, si->minlag,
+				  si->maxlag, si->ptype,
+				  si->nparm);
+	}
+	if (i == 0) {
+	    buf = tmp;
+	} else {
+	    gchar *tmp2 = g_strjoin(" ", buf, tmp, NULL);
+
+	    g_free(buf);
+	    g_free(tmp);
+	    buf = tmp2;
+	}
+    }
+
+    return buf;
+}
+
 int do_model (selector *sr) 
 {
     gretlopt opt, addopt = OPT_NONE;
+    gpointer extra_data;
     char estimator[9];
     const char *buf;
     const char *flagstr;
+    gchar *pbuf = NULL;
     int ci;
 
     if (selector_error(sr)) {
@@ -4158,6 +4226,7 @@ int do_model (selector *sr)
 
     ci = selector_code(sr);
     opt = selector_get_opts(sr);
+    extra_data = selector_get_extra_data(sr);
 
     /* In some cases, choices which are represented by option flags in
        gretl script are represented by ancillary "ci" values in the
@@ -4200,13 +4269,19 @@ int do_model (selector *sr)
 	} else {
 	    ci = POISSON;
 	}
+    } else if (ci == MIDASREG) {
+	pbuf = compose_midas_param(extra_data);
     }
 	
     strcpy(estimator, gretl_command_word(ci));
 
     libcmd.opt = opt | addopt;
     flagstr = print_flags(libcmd.opt, ci);
-    lib_command_sprintf("%s %s%s", estimator, buf, flagstr);
+    if (pbuf != NULL) {
+	lib_command_sprintf("%s %s ; %s%s", estimator, buf, pbuf, flagstr);
+    } else {
+	lib_command_sprintf("%s %s%s", estimator, buf, flagstr);
+    }
 
 #if 0
     fprintf(stderr, "\nmodel command elements:\n");

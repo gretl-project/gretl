@@ -2353,6 +2353,7 @@ static int nls_calc (int m, int n, double *x, double *fvec,
 		     void *p)
 {
     nlspec *s = (nlspec *) p;
+    int err;
 
 #if NLS_DEBUG
     fprintf(stderr, "nls_calc called by minpack with iflag = %d\n", 
@@ -2364,12 +2365,16 @@ static int nls_calc (int m, int n, double *x, double *fvec,
 
     if (*iflag == 1) {
 	/* calculate function at x, results into fvec */
-	if (nl_function_calc(fvec, x, p)) {
+	err = nl_function_calc(fvec, x, p);
+	if (err) {
+	    fprintf(stderr, "nl_function_calc: err = %d\n", err);
 	    *iflag = -1;
 	} 
     } else if (*iflag == 2) {
 	/* calculate jacobian at x, results into jac */
-	if (get_nls_derivs(m, jac, NULL, p)) {
+	err = get_nls_derivs(m, jac, NULL, p);
+	if (err) {
+	    fprintf(stderr, "get_nls_derivs: err = %d\n", err);
 	    *iflag = -1; 
 	}
     }
@@ -2587,7 +2592,7 @@ static int lm_calculate (nlspec *spec, PRN *prn)
     lmder1_(nls_calc, m, n, spec->coeff, spec->fvec, spec->jac, ldjac, 
 	    spec->tol, &info, ipvt, wa, lwa, spec);
 
-    switch ((int) info) {
+    switch (info) {
     case -1: 
 	err = 1;
 	break;
