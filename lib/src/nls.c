@@ -1452,7 +1452,6 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
 
     /* before over-writing the Gauss-Newton R^2, record it:
        it should be very small at convergence */
-    fprintf(stderr, "HERE R^2 = %g\n", pmod->rsq);
     gretl_model_set_double(pmod, "GNR_Rsquared", pmod->rsq);
 
     if (tss == 0.0) {
