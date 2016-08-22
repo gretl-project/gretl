@@ -1085,7 +1085,9 @@ static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
     return FALSE;
 }
 
-static void list_append_var_simple (GtkListStore *store, GtkTreeIter *iterp, int v)
+static void list_append_var_simple (GtkListStore *store,
+				    GtkTreeIter *iterp,
+				    int v)
 {
     const char *vname = dataset->varname[v];
 
@@ -1097,8 +1099,10 @@ static void list_append_var_simple (GtkListStore *store, GtkTreeIter *iterp, int
 		       -1);
 }
 
-static void list_append_var (GtkTreeModel *mod, GtkTreeIter *iter,
-			     int v, selector *sr, int locus)
+static void list_append_var (GtkTreeModel *mod,
+			     GtkTreeIter *iter,
+			     int v, selector *sr,
+			     int locus)
 {
     int i, lcontext = 0;
 
@@ -6431,6 +6435,8 @@ static int list_show_var (int v, int ci, int show_lags)
 	    gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
 	    ret = 1;
 	}
+    } else if (ci == MIDASREG && series_get_midas_period(dataset, v)) {
+	ret = 0;
     }
 
     return ret;
@@ -6686,13 +6692,15 @@ static void list_append_named_lists (GtkListStore *store,
     g_list_free(llist);    
 }
 
-static void midas_special_left_panel (selector *sr,
-				      GtkWidget *left_box,
-				      int saverow)
+static int midas_special_left_panel (selector *sr,
+				     GtkWidget *left_box,
+				     int saverow)
 {
     GtkListStore *store;
     GtkTreeIter iter;
     GtkWidget *l2box, *lbl;
+    int i, m, nmidas = 0;
+    int err = 0;
 
     lbl = gtk_label_new("MIDAS vars");
     l2box = gtk_hbox_new(FALSE, 0);
@@ -6703,6 +6711,36 @@ static void midas_special_left_panel (selector *sr,
     alt_table_add_left(sr, left_box, 0, saverow);
     alt_table_add_left(sr, lbl, saverow, saverow + 1);
     alt_table_add_left(sr, l2box, saverow + 1, sr->n_rows);
+
+    for (i=1; i<dataset->v; i++) {
+	m = series_is_midas_anchor(dataset, i);
+	if (m > 0 && i + m <= dataset->v) {
+	    int is_midas = 1;
+	    int j, p, p0 = m;
+
+	    for (j=i+1; j<i+m; j++) {
+		p = series_get_midas_period(dataset, j);
+		if (p != p0 - 1) {
+		    is_midas = 0;
+		    break;
+		} else {
+		    p0 = p;
+		}
+	    }
+	    if (is_midas) {
+		fprintf(stderr, "found midas list starting at ID=%d\n", i);
+		nmidas++;
+		list_append_var_simple(store, &iter, i);
+	    }
+	}
+    }
+
+    if (nmidas == 0) {
+	gretl_errmsg_set("No MIDAS data were found in the current dataset");
+	err = 1;
+    }
+
+    return err;
 }
 
 selector *selection_dialog (int ci, const char *title, int (*callback)())
@@ -6713,8 +6751,8 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     selector *sr;
     int preselect;
     int saverow;
-    int yvar = 0;
-    int i;
+    int i, yvar = 0;
+    int err = 0;
 
     preselect = presel;
     presel = 0;
@@ -6791,7 +6829,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     if (ci == MIDASREG) {
 	/* we need two left-hand list boxes, the second to
 	   hold high-frequency vars */
-	midas_special_left_panel(sr, left_box, saverow);
+	err = midas_special_left_panel(sr, left_box, saverow);
     } else {
 	/* add left-hand column now we know how many rows it should span */
 	table_add_left(sr, left_box, 0, sr->n_rows);
@@ -6849,6 +6887,14 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 
     gtk_widget_show_all(sr->dlg);
     selector_set_focus(sr);
+
+    if (err) {
+	msgbox(errmsg_get_with_default(err), GTK_MESSAGE_ERROR, sr->dlg);
+	gtk_widget_destroy(sr->dlg);
+	sr = NULL;
+    } else {
+	selector_set_focus(sr);
+    }
 
     return sr;
 }

@@ -2524,3 +2524,32 @@ int in_midas_list (int ID, const DATASET *dset,
 
     return ret;
 }
+
+const char *get_listname_by_consecutive_content (int l0, int l1)
+{
+    int level = gretl_function_depth();
+    const char *ret = NULL;
+    int i, j, *list;
+
+    for (i=0; i<n_vars; i++) {
+	if (uvars[i]->type == GRETL_TYPE_LIST &&
+	    uvars[i]->level == level) {
+	    list = uvars[i]->ptr;
+	    if (list[0] == l0 && list[1] == l1) {
+		int found = 1;
+		
+		for (j=2; j<=l0; j++) {
+		    if (list[j] != list[j-1] + 1) {
+			found = 0;
+			break;
+		    }
+		}
+		if (found) {
+		    return uvars[i]->name;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}

@@ -4622,8 +4622,9 @@ void series_set_midas_period (const DATASET *dset, int i,
 
 int series_is_midas_anchor (const DATASET *dset, int i)
 {
-    if (i > 0 && i < dset->v) {
-	return (dset->varinfo[i]->flags & VAR_HFANCHOR) != 0;
+    if (i > 0 && i < dset->v &&
+	(dset->varinfo[i]->flags & VAR_HFANCHOR)) {
+	return dset->varinfo[i]->midas_period;
     }
 
     return 0;

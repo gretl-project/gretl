@@ -217,5 +217,7 @@ int leads_midas_list (int ID, const DATASET *dset,
 int in_midas_list (int ID, const DATASET *dset,
 		   char *listname);
 
+const char *
+get_listname_by_consecutive_content (int l0, int l1);
 
 #endif /* USERVAR_H_ */
