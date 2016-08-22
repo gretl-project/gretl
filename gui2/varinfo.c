@@ -411,10 +411,12 @@ static void free_name_setter (GtkWidget *w, name_setter *nset)
 static const char *comp_int_to_string (int i)
 {
     if (i == COMPACT_NONE) return N_("not set");
-    if (i == COMPACT_AVG)  return N_("average of observations");
     if (i == COMPACT_SUM)  return N_("sum of observations");
+    if (i == COMPACT_AVG)  return N_("average of observations");
     if (i == COMPACT_SOP)  return N_("first observation");
     if (i == COMPACT_EOP)  return N_("last observation");
+    if (i == COMPACT_WDAY)   return N_("specific day in week");
+    if (i == COMPACT_SPREAD) return N_("spead (MIDAS)");
     return N_("not set");
 }
 
@@ -852,7 +854,7 @@ void varinfo_dialog (int varnum)
 
     if (dataset_is_time_series(dataset)) {  
 	/* compaction method */
-	int i;
+	int i, method;
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new (_("Compaction method (for reducing frequency):"));
@@ -861,13 +863,17 @@ void varinfo_dialog (int varnum)
 
 	vset->compaction_menu = gtk_combo_box_text_new();
 
-	for (i=COMPACT_NONE; i<COMPACT_WDAY; i++) {
+	for (i=COMPACT_NONE; i<=COMPACT_SPREAD; i++) {
 	    combo_box_append_text(vset->compaction_menu, 
 				  _(comp_int_to_string(i)));
 	}
-	
+
+	method = series_get_compact_method(dataset, varnum);
+	if (method == 0 && series_get_midas_period(dataset, varnum) > 0) {
+	    method = COMPACT_SPREAD;
+	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
-				 series_get_compact_method(dataset, varnum));
+				 method);
 	g_signal_connect(G_OBJECT(vset->compaction_menu), "changed",
 			 G_CALLBACK(varinfo_compact_changed), vset);
 	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);
