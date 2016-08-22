@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-08-12 11:11-0400\n"
-"PO-Revision-Date: 2016-05-13 11:42+0100\n"
+"PO-Revision-Date: 2016-08-22 16:38+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -466,9 +466,9 @@ msgstr "Hipótese nula:[O parámetro de regresión para *%s* é cero]"
 
 #: lib/src/compare.c:278 lib/src/compare.c:281 lib/src/compare.c:284
 #: lib/src/describe.c:5949 lib/src/gretl_model.c:3806
-#: lib/src/gretl_model.c:3809 lib/src/gretl_model.c:3816 lib/src/nonparam.c:980
-#: lib/src/nonparam.c:1117 lib/src/varprint.c:1249 lib/src/varprint.c:1255
-#: lib/src/varprint.c:1263
+#: lib/src/gretl_model.c:3809 lib/src/gretl_model.c:3816
+#: lib/src/nonparam.c:980 lib/src/nonparam.c:1117 lib/src/varprint.c:1249
+#: lib/src/varprint.c:1255 lib/src/varprint.c:1263
 msgid "Null hypothesis"
 msgstr "Hipótese nula"
 
@@ -512,18 +512,19 @@ msgstr "Proba de Wald"
 #: lib/src/graphing.c:4350 lib/src/gretl_model.c:3872
 #: lib/src/gretl_model.c:3886 lib/src/gretl_model.c:3889
 #: lib/src/gretl_model.c:3914 lib/src/gretl_panel.c:4026
-#: lib/src/gretl_panel.c:4284 lib/src/modelprint.c:197 lib/src/modelprint.c:375
-#: lib/src/modelprint.c:379 lib/src/modelprint.c:469 lib/src/modelprint.c:472
-#: lib/src/modelprint.c:493 lib/src/modelprint.c:496 lib/src/modelprint.c:2448
-#: lib/src/modelprint.c:2453 lib/src/modelprint.c:2475
-#: lib/src/modelprint.c:2480 lib/src/modelprint.c:2972
-#: lib/src/modelprint.c:5145 lib/src/modelprint.c:5168 lib/src/printout.c:326
-#: lib/src/pvalues.c:2629 lib/src/pvalues.c:3294 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3389 lib/src/system.c:3411
-#: lib/src/system.c:3483 lib/src/system.c:3501 lib/src/system.c:4612
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:78 lib/src/vartest.c:820
-#: lib/src/vartest.c:1107 plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4284 lib/src/modelprint.c:197
+#: lib/src/modelprint.c:375 lib/src/modelprint.c:379 lib/src/modelprint.c:469
+#: lib/src/modelprint.c:472 lib/src/modelprint.c:493 lib/src/modelprint.c:496
+#: lib/src/modelprint.c:2448 lib/src/modelprint.c:2453
+#: lib/src/modelprint.c:2475 lib/src/modelprint.c:2480
+#: lib/src/modelprint.c:2972 lib/src/modelprint.c:5145
+#: lib/src/modelprint.c:5168 lib/src/printout.c:326 lib/src/pvalues.c:2629
+#: lib/src/pvalues.c:3294 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3389 lib/src/system.c:3411 lib/src/system.c:3483
+#: lib/src/system.c:3501 lib/src/system.c:4612 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:78 lib/src/vartest.c:820 lib/src/vartest.c:1107
+#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Chi-cadrado"
 
@@ -856,7 +857,7 @@ msgstr "Especificación incorrecta de columna"
 #: lib/src/usermat.c:1528
 #, c-format
 msgid "'%s': no such matrix"
-msgstr "'%s': non existe esa matriz"
+msgstr "*%s*: non existe esa matriz"
 
 #: lib/src/csvdata.c:679
 #, c-format
@@ -1037,7 +1038,7 @@ msgid ""
 "If '%s' is intended as the name of a variable, please change it --\n"
 "strings of this sort usually mean 'not a number'."
 msgstr ""
-"Se '%s' proponse como nome dunha variable, modifíquese --\n"
+"Se *%s* proponse como nome dunha variable, modifíquese --\n"
 "cadeas desta clase xeralmente significan 'non numérico'."
 
 #: lib/src/csvdata.c:2783
@@ -1145,19 +1146,20 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Fallo ao interpretar os datos como numéricos\n"
 
-#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554 plugin/excel_import.c:1741
-#: plugin/gnumeric_import.c:832 plugin/jmulti_import.c:379
-#: plugin/sas_import.c:686 plugin/spss_import.c:1942 plugin/stata_import.c:2145
+#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1741 plugin/gnumeric_import.c:832
+#: plugin/jmulti_import.c:379 plugin/sas_import.c:686
+#: plugin/spss_import.c:1942 plugin/stata_import.c:2145
 #: plugin/xlsx_import.c:1385
 msgid "warning: some variable names were duplicated\n"
 msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
 
-#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1575 plugin/gnumeric_import.c:653
-#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
-#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1847
-#: plugin/spss_import.c:1868 plugin/stata_import.c:2113
-#: plugin/stata_import.c:2124
+#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1575
+#: plugin/gnumeric_import.c:653 plugin/jmulti_import.c:350
+#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
+#: plugin/spss_import.c:1847 plugin/spss_import.c:1868
+#: plugin/stata_import.c:2113 plugin/stata_import.c:2124
 msgid "Out of memory\n"
 msgstr "Fóra de memoria\n"
 
@@ -1317,7 +1319,7 @@ msgstr ""
 #: lib/src/dataio.c:2570
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
-msgstr "   Atopouse a matriz '%s' con %d filas e %d columnas\n"
+msgstr "   Atopouse a matriz *%s* con %d filas e %d columnas\n"
 
 #: lib/src/dataio.c:2613
 #, c-format
@@ -1529,8 +1531,8 @@ msgid "Invalid null sample"
 msgstr "Mostra nula incorrecta"
 
 #: lib/src/dbread.c:2043 lib/src/gretl_errors.c:578
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293 lib/src/options.c:1289
-#: lib/src/options.c:1300
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293
+#: lib/src/options.c:1289 lib/src/options.c:1300
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Campo '%s' incorrecto na instrución"
@@ -2596,9 +2598,8 @@ msgid "(for logical OR, use '||')\n"
 msgstr "(para a O lóxica, usar '||')\n"
 
 #: lib/src/genlex.c:856
-#, fuzzy
 msgid "Incomplete expression\n"
-msgstr "Entrada incompleta"
+msgstr "Expresión incompleta\n"
 
 #: lib/src/genlex.c:861
 #, c-format
@@ -3315,8 +3316,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2482 lib/src/gretl_func.c:2542
-#: lib/src/gretl_func.c:2622 lib/src/gretl_utils.c:1890 lib/src/interact.c:1153
-#: gui2/dialogs.c:5545 gui2/fnsave.c:5067 plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2622 lib/src/gretl_utils.c:1890
+#: lib/src/interact.c:1153 gui2/dialogs.c:5545 gui2/fnsave.c:5067
+#: plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Non se puido abrir *%s*"
@@ -3662,15 +3664,12 @@ msgid "Variance of the unit-specific error = 0"
 msgstr "Varianza do erro específico unitario = 0"
 
 #: lib/src/gretl_model.c:3617
-#, fuzzy
 msgid "Wald joint test on time dummies"
-msgstr ""
-"Proba de Wald de significancia conxunta das variables ficticias temporais"
+msgstr "Proba conxunta de Wald sobre variables ficticias temporais"
 
 #: lib/src/gretl_model.c:3618
-#, fuzzy
 msgid "No time effects"
-msgstr "Efectos fixos"
+msgstr "Efectos non temporais"
 
 #: lib/src/gretl_model.c:3624
 msgid "restriction is acceptable"
@@ -3698,12 +3697,11 @@ msgstr "Proba robusta para diferenciar interceptos de grupos"
 
 #: lib/src/gretl_model.c:3641 lib/src/gretl_panel.c:4389
 msgid "Pesaran CD test for cross-sectional dependence"
-msgstr ""
+msgstr "Proba CD de Pesaran para dependencia de sección cruzada"
 
 #: lib/src/gretl_model.c:3642
-#, fuzzy
 msgid "No cross-sectional dependence"
-msgstr "Para datos de sección cruzada"
+msgstr "dependencia non de sección cruzada"
 
 #: lib/src/gretl_model.c:3649 lib/src/gretl_panel.c:4025
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -3737,7 +3735,8 @@ msgstr "Graos de liberdade denominador"
 #: lib/src/gretl_model.c:3998 lib/src/modelprint.c:5214
 #: lib/src/modelprint.c:5225 lib/src/modelprint.c:5227 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2007
-#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
+#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96
+#: plugin/anova.c:98
 msgid "df"
 msgstr "Graos de liberdade"
 
@@ -3959,9 +3958,8 @@ msgid "groupwise heteroskedasticity"
 msgstr "Heterocedasticidade por grupos"
 
 #: lib/src/gretl_panel.c:4407
-#, fuzzy
 msgid "cross sectional dependence"
-msgstr "índice de unidades de sección cruzada"
+msgstr "dependencia de sección cruzada"
 
 #: lib/src/gretl_panel.c:4724
 #, c-format
@@ -4124,7 +4122,8 @@ msgstr "Desviación típica da regresión"
 msgid "Robust chi^2"
 msgstr "Chi^2 robusto"
 
-#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3032 lib/src/system.c:1245
+#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3032
+#: lib/src/system.c:1245
 msgid "restriction"
 msgstr "restrición"
 
@@ -4439,9 +4438,9 @@ msgid "Closed output file '%s'\n"
 msgstr "Pechouse o ficheiro de resultados '%s'\n"
 
 #: lib/src/interact.c:898
-#, fuzzy, c-format
+#, c-format
 msgid "Output is already diverted to '%s'"
-msgstr "Os resultados xa están sendo enviados a '%s'\n"
+msgstr "O resultado xa está sendo enviado a *%s*"
 
 #: lib/src/interact.c:905
 msgid "Now discarding output\n"
@@ -4539,7 +4538,7 @@ msgstr "A instrución '%s' non está aínda integrada en libgretl\n"
 
 #: lib/src/interact.c:3582
 msgid "An error occurred when 'outfile' was active\n"
-msgstr ""
+msgstr "Ocorreu un erro cando 'outfile' estaba activo\n"
 
 #: lib/src/kalman.c:505
 msgid "kalman: a required matrix is missing"
@@ -5810,8 +5809,8 @@ msgstr "Imaxinaria"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:4929 lib/src/modelprint.c:4937 lib/src/subsample.c:3020
-#: lib/src/subsample.c:3042 lib/src/subsample.c:3097
+#: lib/src/modelprint.c:4929 lib/src/modelprint.c:4937
+#: lib/src/subsample.c:3020 lib/src/subsample.c:3042 lib/src/subsample.c:3097
 msgid "Frequency"
 msgstr "Frecuencia"
 
@@ -5907,7 +5906,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: Agardábanse %d nomes."
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:785
-#: lib/src/monte_carlo.c:1808 lib/src/monte_carlo.c:1971 lib/src/uservar.c:1778
+#: lib/src/monte_carlo.c:1808 lib/src/monte_carlo.c:1971
+#: lib/src/uservar.c:1778
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': non é un escalar"
@@ -7289,14 +7289,14 @@ msgid "= %s squared"
 msgstr "= cadrado de *%s*"
 
 #: lib/src/transforms.c:191
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency difference of %s"
-msgstr "= primeira diferenza de *%s*"
+msgstr "= diferenza de alta fecuencia de *%s*"
 
 #: lib/src/transforms.c:193
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency log difference of %s"
-msgstr "= diferenza logarítmica de *%s*"
+msgstr "= diferenza logarítmica de alta fecuencia de *%s*"
 
 #: lib/src/transforms.c:756
 #, c-format
@@ -8644,8 +8644,9 @@ msgstr "Aviso: A serie ten observacións perdidas"
 msgid "Couldn't access binary datafile"
 msgstr "Non puido accederse ao ficheiro de datos binario"
 
-#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3373
+#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163
+#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
+#: gui2/session.c:3373
 msgid "Display"
 msgstr "Amosar"
 
@@ -8823,8 +8824,8 @@ msgstr "Engadir ao menú"
 
 #: gui2/datafiles.c:1401 gui2/datafiles.c:1603 gui2/gpt_control.c:3808
 #: gui2/gpt_control.c:3810 gui2/gpt_control.c:3920 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756 gui2/toolbar.c:757
-#: gui2/toolbar.c:758
+#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756
+#: gui2/toolbar.c:757 gui2/toolbar.c:758
 msgid "Help"
 msgstr "Axuda"
 
@@ -9646,9 +9647,8 @@ msgid "Use start-of-period values"
 msgstr "Usar valores principio-de-período"
 
 #: gui2/dialogs.c:3809
-#, fuzzy
 msgid "Spread to multiple series"
-msgstr "Series temporais amontoadas"
+msgstr "Propagar a series múltiples"
 
 #: gui2/dialogs.c:3829
 msgid "Default method:"
@@ -12775,9 +12775,8 @@ msgid "_Common factor"
 msgstr "_Factor común"
 
 #: gui2/gui_utils.c:274
-#, fuzzy
 msgid "_Cross-sectional dependence"
-msgstr "Datos de sección cruzada"
+msgstr "_Dependencia de sección cruzada"
 
 #: gui2/gui_utils.c:275
 msgid "_Panel diagnostics"
@@ -13419,9 +13418,8 @@ msgid "Strings"
 msgstr "Cadeas de caracteres"
 
 #: gui2/helpfiles.c:377
-#, fuzzy
 msgid "State space"
-msgstr "espazo"
+msgstr "Espazo dos estados"
 
 #: gui2/helpfiles.c:379
 msgid "Calendar"
@@ -13786,9 +13784,8 @@ msgid "gretl: common factor test"
 msgstr "Gretl: Proba de factor común"
 
 #: gui2/library.c:2625
-#, fuzzy
 msgid "gretl: cross-sectional dependence"
-msgstr "Para datos de sección cruzada"
+msgstr "Gretl: dependencia de sección cruzada"
 
 #: gui2/library.c:2658
 msgid "Lag order for ARCH test:"
@@ -15465,13 +15462,13 @@ msgstr "Editar as ordes de gráfica"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3303
-#: gui2/session.c:3341 gui2/session.c:3352
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
+#: gui2/session.c:3303 gui2/session.c:3341 gui2/session.c:3352
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3290
-#: gui2/session.c:3324 gui2/textutil.c:478
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
+#: gui2/session.c:3290 gui2/session.c:3324 gui2/textutil.c:478
 msgid "View"
 msgstr "Ver"
 
@@ -16594,9 +16591,8 @@ msgid "EGARCH"
 msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:14
-#, fuzzy
 msgid "Forecast"
-msgstr "_Predicións"
+msgstr "Predición"
 
 #: plugin/addons-i18n.c:16
 msgid "GED"
@@ -16923,7 +16919,8 @@ msgid "No worksheets found"
 msgstr "Non se atoparon follas de traballo"
 
 #: plugin/excel_import.c:1608 plugin/gnumeric_import.c:686
-#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140 plugin/xlsx_import.c:1200
+#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140
+#: plugin/xlsx_import.c:1200
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento incorrecto para a importación dunha folla de cálculo"
 
@@ -17803,9 +17800,8 @@ msgid "Probability distributions"
 msgstr "Distribucións de probabilidade"
 
 #: doc/commands/matfuncs.c:63
-#, fuzzy
 msgid "State space modeling"
-msgstr "Estimar o modelo reducido"
+msgstr "Modelar o espazo dos estados"
 
 #~ msgid "iteration %2d: SSR = %.8g\n"
 #~ msgstr "Iteración %2d: SCE = %.8g\n"
