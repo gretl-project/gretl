@@ -1397,7 +1397,6 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
  *   OPT_Z: (internal use) suppress the automatic elimination of 
  *      perfectly collinear variables.
  *   OPT_X: compute "variance matrix" as just (X'X)^{-1}
- *   OPT_B: don't compute R^2.
  *   OPT_I: compute Durbin-Watson p-value.
  *   OPT_U: treat null model as OK.
  *   OPT_P: (ar1 only): use Prais-Winsten.
@@ -1849,13 +1848,10 @@ static void regress (MODEL *pmod, double *xpy,
 
     if (pmod->errcode) return;
 
-    if (!(opt & OPT_B)) {
-	/* changed 2008-09-25 */
-	if (pmod->tss > 0.0) {
-	    compute_r_squared(pmod, dset, &ifc);
-	} else if (pmod->tss == 0.0) {
-	    uncentered_r_squared(pmod, dset);
-	}
+    if (pmod->tss > 0.0) {
+	compute_r_squared(pmod, dset, &ifc);
+    } else if (pmod->tss == 0.0 && !(opt & OPT_A)) {
+	uncentered_r_squared(pmod, dset);
     }
 
     if (s2 <= 0.0 || pmod->dfd == 0 || pmod->dfn == 0) {

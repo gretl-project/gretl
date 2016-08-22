@@ -638,6 +638,36 @@ static void print_probit_rho (const MODEL *pmod, PRN *prn)
     gretl_prn_newline(prn);
 }
 
+static void print_GNR_info (const MODEL *pmod, PRN *prn)
+{
+    double R2 = gretl_model_get_double(pmod, "GNR_Rsquared");
+    double tmax = gretl_model_get_double(pmod, "GNR_tmax");
+
+    if (na(R2) && na(tmax)) {
+	return;
+    }
+    
+    ensure_vsep(prn);
+
+    if (!na(R2)) {
+	if (tex_format(prn)) {
+	    pprintf(prn, "GNR $R^2$ = %g\n", R2);
+	} else {
+	    pprintf(prn, "GNR R-squared_u = %g\n", R2);
+	}
+    }
+
+    if (!na(tmax)) {
+	if (tex_format(prn)) {
+	    pprintf(prn, "GNR $|t|$ max = %g\n", tmax);
+	} else {
+	    pprintf(prn, "GNR |t| max = %g\n", tmax);
+	}
+    }    
+
+    gretl_prn_newline(prn);
+}
+
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "nonunique")) {
@@ -3357,6 +3387,10 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	print_duration_alpha(pmod, prn);
     } else if (pmod->ci == BIPROBIT) {
 	print_probit_rho(pmod, prn);
+    } else if (pmod->ci == NLS ||
+	       (pmod->ci == MIDASREG &&
+		!gretl_model_get_int(pmod, "umidas"))) {
+	print_GNR_info(pmod, prn);
     }
 
     /* FIXME alternate R^2 measures (within, centered) */

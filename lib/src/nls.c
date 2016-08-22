@@ -1448,7 +1448,12 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	d = spec->dset->Z[dv][s++] - pmod->ybar;
 	tss += d * d;
-    } 
+    }
+
+    /* before over-writing the Gauss-Newton R^2, record it:
+       it should be very small at convergence */
+    fprintf(stderr, "HERE R^2 = %g\n", pmod->rsq);
+    gretl_model_set_double(pmod, "GNR_Rsquared", pmod->rsq);
 
     if (tss == 0.0) {
 	pmod->rsq = pmod->adjrsq = NADBL;
@@ -1579,6 +1584,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 
 static int add_nls_std_errs_to_model (MODEL *pmod)
 {
+    double abst, tstat_max = 0;
     int i, k;
 
     if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
@@ -1591,9 +1597,17 @@ static int add_nls_std_errs_to_model (MODEL *pmod)
 	    pmod->sderr[i] = 0.0;
 	} else if (pmod->vcv[k] > 0.0) {
 	    pmod->sderr[i] = sqrt(pmod->vcv[k]);
+	    abst = fabs(pmod->coeff[i] / pmod->sderr[i]);
+	    if (abst > tstat_max) {
+		tstat_max = abst;
+	    }
 	} else {
 	    pmod->sderr[i] = NADBL;
 	}
+    }
+
+    if (tstat_max > 0) {
+	gretl_model_set_double(pmod, "GNR_tmax", tstat_max);
     }
 
     return 0;
@@ -2017,7 +2031,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     print_GNR_dataset(glist, gdset);
 #endif
 
-    lsqopt = OPT_A | OPT_B; /* OPT_B: don't calculate R^2 */
+    lsqopt = OPT_A;
     if (spec->opt & OPT_R) {
 	/* robust variance matrix, if wanted */
 	lsqopt |= OPT_R;
