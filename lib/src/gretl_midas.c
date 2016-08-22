@@ -1333,6 +1333,9 @@ MODEL midas_model (const int *list,
 
  umidas_finish:
 
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
+
     for (i=0; i<nmidas; i++) {
 	if (!minfo[i].prelag) {
 	    user_var_delete_by_name(minfo[i].lname, NULL);
@@ -1362,9 +1365,6 @@ MODEL midas_model (const int *list,
 	/* or maybe not? */
 	dataset_drop_last_variables(dset, dset->v - origv);
     }
-
-    dset->t1 = save_t1;
-    dset->t2 = save_t2;
 
     return mod;
 }

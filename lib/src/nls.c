@@ -1377,64 +1377,6 @@ static int get_mle_gradient (double *b, double *g, int n,
     return err;
 }
 
-#define NLS_HESSIAN 0
-
-#if NLS_HESSIAN
-
-/* special-case experiment for unified matrix deriv only:
-   calculate gradient with respect to the negative of the
-   sum of squared residuals
-*/
-
-static int get_nls_gradient (double *b, double *g, int n, 
-			     BFGS_CRIT_FUNC llfunc,
-			     void *p)
-{
-    nlspec *spec = (nlspec *) p;
-    gretl_matrix *m;
-    double x, *u;
-    int i, t;
-    int err = 0;
-
-    update_coeff_values(b, spec);
-
-    /* update derivative matrix */
-    if (nls_calculate_deriv(spec, 0)) {
-	return 1;
-    }
-
-    /* update residual series */
-    if (execute_genr(spec->genrs[spec->naux], spec->dset, spec->prn)) {
-	return 1;
-    }
-
-    u = spec->dset->Z[spec->lhv] + spec->t1;
-    m = get_derivative_matrix(spec, 0, &err);
-
-    for (i=0; i<m->cols && !err; i++) {
-	g[i] = 0.0;
-	for (t=0; t<m->rows; t++) {
-	    x = gretl_matrix_get(m, t, i);
-	    if (na(x)) {
-		fprintf(stderr, "NA in gradient calculation\n");
-		err = 1;
-	    } else {
-		/* Convert x = gradient wrt regression function
-		   to gradient wrt maximand, -SSR.
-		*/
-		g[i] += 2 * u[t] * x;
-	    }
-	}
-	fprintf(stderr, "g[%d] = %#.12g\n", i, g[i]);
-    }
-
-    fprintf(stderr, "get_nls_gradient: err = %d\n\n", err);
-
-    return err;
-}
-
-#endif
-
 static int get_mle_hessian (double *b, gretl_matrix *H, void *p)
 {
     nlspec *spec = (nlspec *) p;
@@ -1952,6 +1894,9 @@ static int finalize_nls_model (MODEL *pmod, nlspec *spec,
     pmod->t1 = spec->t1;
     pmod->t2 = spec->t2;
     pmod->full_n = dset->n;
+
+    pmod->smpl.t1 = spec->dset->t1;
+    pmod->smpl.t2 = spec->dset->t2;
     
     add_stats_to_model(pmod, spec);
     
@@ -3216,39 +3161,6 @@ static int nls_model_fix_sample (MODEL *pmod,
     return 0;
 }
 
-#if NLS_HESSIAN
-
-static int nls_hessian_experiment (nlspec *s)
-{
-    gretl_matrix *H;
-    int err = 0;
-
-    /* we'll try this experiment onlt if we have a
-       unified matrix derivative */
-    if (s->nparam > 1 || !matrix_deriv(s, 0)) {
-	return 1;
-    }
-
-    H = hessian_inverse_from_score(s->coeff, s->ncoeff, 
-				   get_nls_gradient, NULL,
-				   s, &err);
-    if (H != NULL) {
-	double hi;
-	int i;
-	
-	gretl_matrix_print(H, "nls Hessian inverse");
-	for (i=0; i<H->rows; i++) {
-	    hi = gretl_matrix_get(H, i, i);
-	    fprintf(stderr, "se %d: %g\n", i+1, sqrt(hi));
-	}
-	gretl_matrix_free(H);
-    }
-
-    return err;
-}
-
-#endif
-
 /* static function providing the real content for the two public
    wrapper functions below: does NLS, MLE or GMM */
 
@@ -3392,12 +3304,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 		/* coefficients only: don't bother with GNR */
 		add_nls_coeffs(&nlmod, spec);
 	    } else {
-#if NLS_HESSIAN		
-		if (0 && !numeric_mode(spec)) {
-		    nls_hessian_experiment(spec);
-		}
-#endif		
-		/* Use Gauss-Newton Regression for covariance matrix,
+		/* use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
 		nlmod = GNR(spec, spec->dset, prn);
 	    }
