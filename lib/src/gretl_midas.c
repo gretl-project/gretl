@@ -272,7 +272,7 @@ static gretl_matrix *maybe_make_auto_theta (char *name, int i,
 	    } else if (ptype == MIDAS_BETAN) {
 		theta->val[0] = 1;
 		theta->val[1] = 1;
-		theta->val[1] = 0;
+		theta->val[2] = 0;
 	    }
 	    sprintf(name, "theta___%d", i+1);
 	    private_matrix_add(theta, name);
@@ -925,6 +925,27 @@ int midas_forecast_setup (const MODEL *pmod,
     return err;
 }
 
+static const char *midas_type_string (int ptype, int mixed,
+				      int n, int i)
+{
+    const char *strs[] = {
+	"U-MIDAS",
+	"nealmon",
+	"beta0",
+	"betaN",
+	"almonp"
+    };
+    static char tmp[16];
+    const char *ret = strs[ptype];
+
+    if (!mixed && n > 1) {
+	sprintf(tmp, "%s%d", ret, i);
+	ret = tmp;
+    }
+
+    return ret;
+}
+
 /* Get the MIDAS model ready for shipping out. What
    exactly we do here depends in part on whether
    estimation was done by NLS or OLS.
@@ -988,6 +1009,7 @@ static int finalize_midas_model (MODEL *pmod,
 	err = E_ALLOC;
     } else {
 	gretl_matrix *w = NULL;
+	char **cnames = NULL;
 	double *b = pmod->coeff;
 	double wij, hfb = 0;
 	int type0 = minfo[0].type;
@@ -1027,7 +1049,24 @@ static int finalize_midas_model (MODEL *pmod,
 	}
 
 	if (!err) {
-	    /* save "gross" MIDAS coefficients onto the model */
+	    const char *s;
+	    
+	    cnames = strings_array_new(nmidas);
+	    if (cnames != NULL) {
+		for (i=0; i<nmidas; i++) {
+		    s = midas_type_string(minfo[i].type, mixed,
+					  nmidas, i+1);
+		    cnames[i] = gretl_strdup(s);
+		}
+	    }
+	}
+
+	if (!err) {
+	    /* save "gross" MIDAS coefficients onto the model
+	       FIXME x-axis data */
+	    if (cnames != NULL) {
+		gretl_matrix_set_colnames(m, cnames);
+	    }
 	    err = gretl_model_set_matrix_as_data(pmod, "midas_coeffs", m);
 	    /* also save record of MIDAS spec type */
 	    if (!mixed && type0 > 0) {

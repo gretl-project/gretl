@@ -2695,6 +2695,24 @@ static void add_multinomial_probs_item (windata_t *vwin)
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
+static void midas_plot_callback (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+    gretl_matrix *C = NULL;
+    int err;
+
+    if (pmod == NULL) return;
+
+    C = gretl_model_get_data(pmod, "midas_coeffs");
+
+    if (C != NULL) {
+	err = matrix_plot(C, NULL, "{set xlabel 'high-frequency lag';}",
+			  OPT_T | OPT_O | OPT_G);
+	gui_graph_handler(err);
+    }
+}
+
 #define intervals_model(m) (m->ci == LAD && \
 			    gretl_model_get_data(m, "coeff_intervals"))
 
@@ -3050,6 +3068,12 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	entry.label = _("Residual _periodogram");
 	entry.callback = G_CALLBACK(residual_periodogram_callback);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
+	if (gretl_model_get_data(pmod, "midas_coeffs") != NULL) {
+	    entry.name = "MIDAScoeffs";
+	    entry.label = _("_MIDAS coefficients");
+	    entry.callback = G_CALLBACK(midas_plot_callback);
+	    vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
+	}
     } else {
 	vwin_menu_add_separator(vwin, "/menubar/Graphs");
     }

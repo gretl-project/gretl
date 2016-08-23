@@ -643,27 +643,17 @@ static void print_GNR_info (const MODEL *pmod, PRN *prn)
     double R2 = gretl_model_get_double(pmod, "GNR_Rsquared");
     double tmax = gretl_model_get_double(pmod, "GNR_tmax");
 
-    if (na(R2) && na(tmax)) {
+    if (na(R2) || na(tmax)) {
 	return;
     }
     
     ensure_vsep(prn);
 
-    if (!na(R2)) {
-	if (tex_format(prn)) {
-	    pprintf(prn, "GNR $R^2$ = %g\n", R2);
-	} else {
-	    pprintf(prn, "GNR R-squared_u = %g\n", R2);
-	}
+    if (tex_format(prn)) {
+	pprintf(prn, "GNR: $R^2$ = %g, $|t|$ max = %g\n", R2, tmax);
+    } else {
+	pprintf(prn, "GNR: R-squared = %g, |t| max = %g\n", R2, tmax);
     }
-
-    if (!na(tmax)) {
-	if (tex_format(prn)) {
-	    pprintf(prn, "GNR $|t|$ max = %g\n", tmax);
-	} else {
-	    pprintf(prn, "GNR |t| max = %g\n", tmax);
-	}
-    }    
 
     gretl_prn_newline(prn);
 }
