@@ -221,7 +221,7 @@ enum {
 #define select_lags_primary(c) (MODEL_CODE(c))
 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && \
-			       c != DPANEL)
+			       c != DPANEL && c != MIDASREG)
 
 /* Should we have a lags button associated with auxiliary
    variable selector? */
@@ -391,6 +391,8 @@ static int lag_context_from_widget (GtkWidget *w)
 
     return context;
 }
+
+/* note: @nx is exclusive of const and (lags of) dependent variable */
 
 static int lags_button_relevant (selector *sr, int locus)
 {
@@ -3657,6 +3659,29 @@ static void parse_third_var_slot (selector *sr)
     }
 }
 
+/* lag order for the dependent variable in midasreg */
+
+static void midas_process_AR_spin (selector *sr)
+{
+    int yno = selector_get_depvar_number(sr);
+    
+    if (sr->extra[0] != NULL && yno > 0 && yno < dataset->v) {
+	const char *yname = dataset->varname[yno];
+	int p = spinner_get_int(sr->extra[0]);
+	gchar *bit = NULL;
+
+	if (p == 1) {
+	    bit = g_strdup_printf(" %s(-1)", yname);
+	} else if (p > 1) {
+	    bit = g_strdup_printf(" %s(-1 to -%d)", yname, p);
+	}
+	if (bit != NULL) {
+	    add_to_cmdlist(sr, bit);
+	    g_free(bit);
+	}
+    }
+}
+
 static void selector_cancel_unavailable_options (selector *sr)
 {
     if (sr->ci == ARMA) {
@@ -3752,7 +3777,7 @@ static void compose_cmdlist (selector *sr)
     if (sr->ci == GR_FBOX || THREE_VARS_CODE(sr->ci)) { 
 	parse_third_var_slot(sr);
 	return;
-    } 
+    }
 
     /* count the rows (variables) in the "primary" right-hand selection
        list box */
@@ -3794,6 +3819,10 @@ static void compose_cmdlist (selector *sr)
     if (sr->rvars1 != NULL) {
 	context = sr_get_lag_context(sr, SR_RVARS1);
 	get_rvars1_data(sr, rows, context);
+    }
+
+    if (sr->ci == MIDASREG) {
+	midas_process_AR_spin(sr);
     }
 
     if (sr->ci == MIDASREG) {
@@ -4944,7 +4973,7 @@ static void build_mid_section (selector *sr)
 	tobit_limits_selector(sr);
 	table_add_vwedge(sr);
     } else if (sr->ci == MIDASREG) {
-	/* AR_order_spin(sr); FIXME */
+	AR_order_spin(sr);
 	primary_rhs_varlist(sr);
     } else if (USE_ZLIST(sr->ci)) {
 	primary_rhs_varlist(sr);
@@ -8577,7 +8606,7 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 
     if (sr->ci != ARMA && sr->ci != VAR &&
 	sr->ci != VECM && sr->ci != VLAGSEL &&
-	sr->ci != DPANEL) { 
+	sr->ci != DPANEL && sr->ci != MIDASREG) { 
 	ynum = selector_get_depvar_number(sr);
     }
 

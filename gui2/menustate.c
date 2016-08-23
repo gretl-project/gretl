@@ -753,7 +753,7 @@ static gint midas_popup_click (GtkWidget *w, gpointer p)
 	midas_list_callback(list, NULL, i == MDS_DISP ? PRINT : PLOT);
 	free(list);
     } else if (i == MDS_LOGS || i == MDS_DIFF)  {
-	dummy_call();
+	dummy_call(); /* FIXME! */
 	// add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0);
     } else if (i == MDS_LIST) { 
 	make_list_from_main();
