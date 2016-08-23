@@ -283,6 +283,49 @@ static gboolean maybe_do_meta_click (GdkEventButton *event,
 
 #endif
 
+static int extend_midas_selection (GtkTreeView *view,
+				   GtkTreePath *path,
+				   int vnum, int p0)
+{
+    GtkTreePath *path0 = gtk_tree_path_copy(path);
+    GtkTreePath *path1 = gtk_tree_path_copy(path);
+    int p, i, j, extended = 0;
+
+    if (!series_is_midas_anchor(dataset, vnum)) {
+	for (i=vnum-1, j=1; i>0; i--, j++) {
+	    p = series_get_midas_period(dataset, i);
+	    if (p != p0 + j) {
+		break;
+	    }
+	    if (gtk_tree_path_prev(path0)) {
+		extended++;
+	    }
+	}
+    }
+
+    for (i=vnum+1, j=1; i<dataset->v; i++, j++) {
+	p = series_get_midas_period(dataset, i);
+	if (p != p0 - j) {
+	    break;
+	}
+	gtk_tree_path_next(path1);
+	extended++;
+    }
+
+    if (extended) {
+	GtkTreeSelection *selection;
+
+	selection = gtk_tree_view_get_selection(view);
+	gtk_tree_selection_unselect_all(selection);
+	gtk_tree_selection_select_range(selection, path0, path1);
+    }
+    
+    gtk_tree_path_free(path0);
+    gtk_tree_path_free(path1);
+
+    return extended;
+}
+
 /* Respond to a mouse click in gretl's main window. This callback
    is connected after the one that deals with right-clicking to
    handle popups, so here we can assume it's not a right-click.
@@ -307,16 +350,24 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 	    ret = TRUE;
 	} else {
 	    gchar *varnum;
+	    int p;
 
 	    g_object_set_data(G_OBJECT(vwin->listbox), "active_row",
 			      GINT_TO_POINTER(row));
 	    tree_view_get_string(view, row, 0, &varnum);
 	    vwin->active_var = atoi(varnum);
 	    g_free(varnum);
-	    update_dialogs_from_varclick(vwin->active_var);
+	    p = series_get_midas_period(dataset, vwin->active_var);
+	    if (p > 0 &&
+		extend_midas_selection(view, path,
+				       vwin->active_var, p)) {
+		ret = TRUE;
+	    } else {
+		update_dialogs_from_varclick(vwin->active_var);
 #ifdef OS_OSX
-	    ret = maybe_do_meta_click(event, view, path);
+		ret = maybe_do_meta_click(event, view, path);
 #endif
+	    }
 	} 
 
 	gtk_tree_path_free(path);

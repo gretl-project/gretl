@@ -425,7 +425,7 @@ static int dataset_could_be_midas (const DATASET *dset)
     }
 }
 
-typedef enum {
+enum MenuIdx {
     MNU_DISP,
     MNU_EDIT,
     MNU_STATS,
@@ -442,58 +442,83 @@ typedef enum {
     MNU_CLIPB,
     MNU_DELET,
     MNU_SEPAR,
-    MNU_HFDAT,
-    MNU_HFPLT,
     MNU_LOGS,
     MNU_DIFF,
     MNU_PCDIF,
     MNU_DUMIF,
     MNU_GENR,
     MNU_LIST
-} MenuIdx;
+};
+
+enum MenuTarget {
+    T_SINGLE,
+    T_MULTI,
+    T_BOTH,
+};
 
 struct popup_entries {
-    MenuIdx idx;       /* one of the enum values above */
+    int idx;           /* one of the MenuIdxvalues above */
     const char *str;   /* translatable string */
-    int target;        /* 0 = single var, 1 = multiple, 2 = both */
+    int target;       /* one of the MenuTarget values above */
+};
+
+struct mpopup_entries {
+    int idx;           /* one of the MDSIdx values below */
+    const char *str;   /* translatable string */
 };
 
 struct popup_entries main_pop_entries[] = {
-    { MNU_DISP,  N_("Display values"), 2 },
-    { MNU_EDIT,  N_("Edit values"), 2 },
-    { MNU_STATS, N_("Summary statistics"), 2 },
-    { MNU_TPLOT, N_("Time series plot"), 2 },
-    { MNU_PPLOT, N_("Panel plot..."), 0 },
-    { MNU_FDIST, N_("Frequency distribution"), 0 },
-    { MNU_BPLOT, N_("Boxplot"), 0 },
-    { MNU_CGRAM, N_("Correlogram"), 0, },
-    { MNU_PGRAM, N_("Periodogram"), 0, },
-    { MNU_ATTRS, N_("Edit attributes"), 0 },
-    { MNU_CORR,  N_("Correlation matrix"), 1 },
-    { MNU_XCORR, N_("Cross-correlogram"), 1 },
-    { MNU_SCATR, N_("XY scatterplot"), 1 },
-    { MNU_CLIPB, N_("Copy to clipboard"), 2 },
-    { MNU_DELET, N_("Delete"), 2 },
-    { MNU_SEPAR, NULL, 2 },
-    { MNU_HFDAT, N_("Display high-frequency data"), 2},
-    { MNU_HFPLT, N_("High-frequency plot"), 2 },
-    { MNU_SEPAR, NULL, 2 },
-    { MNU_LOGS,  N_("Add log"), 0 },
-    { MNU_DIFF,  N_("Add difference"), 0 },
-    { MNU_PCDIF, N_("Add percent change..."), 0 },
-    { MNU_DUMIF, N_("Dummify..."), 0 },
-    { MNU_LOGS,  N_("Add logs"), 1 },
-    { MNU_DIFF,  N_("Add differences"), 1 },
-    { MNU_SEPAR, NULL, 2 },
-    { MNU_GENR,  N_("Define new variable..."), 2 },
-    { MNU_LIST,  N_("Define list"), 1 }
+    { MNU_DISP,  N_("Display values"), T_BOTH },
+    { MNU_EDIT,  N_("Edit values"), T_BOTH },
+    { MNU_STATS, N_("Summary statistics"), T_BOTH },
+    { MNU_TPLOT, N_("Time series plot"), T_BOTH },
+    { MNU_PPLOT, N_("Panel plot..."), T_SINGLE },
+    { MNU_FDIST, N_("Frequency distribution"), T_SINGLE },
+    { MNU_BPLOT, N_("Boxplot"), T_SINGLE },
+    { MNU_CGRAM, N_("Correlogram"), T_SINGLE, },
+    { MNU_PGRAM, N_("Periodogram"), T_SINGLE, },
+    { MNU_ATTRS, N_("Edit attributes"), T_SINGLE },
+    { MNU_CORR,  N_("Correlation matrix"), T_MULTI },
+    { MNU_XCORR, N_("Cross-correlogram"), T_MULTI },
+    { MNU_SCATR, N_("XY scatterplot"), T_MULTI },
+    { MNU_CLIPB, N_("Copy to clipboard"), T_BOTH },
+    { MNU_DELET, N_("Delete"), T_BOTH },
+    { MNU_SEPAR, NULL, T_BOTH },
+    { MNU_LOGS,  N_("Add log"), T_SINGLE },
+    { MNU_DIFF,  N_("Add difference"), T_SINGLE },
+    { MNU_PCDIF, N_("Add percent change..."), T_SINGLE },
+    { MNU_DUMIF, N_("Dummify..."), T_SINGLE },
+    { MNU_LOGS,  N_("Add logs"), T_MULTI },
+    { MNU_DIFF,  N_("Add differences"), T_MULTI },
+    { MNU_SEPAR, NULL, T_BOTH },
+    { MNU_GENR,  N_("Define new variable..."), T_BOTH },
+    { MNU_LIST,  N_("Define list"), T_MULTI }
+};
+
+enum MDSIdx {
+    MDS_DISP,
+    MDS_TPLOT,
+    MDS_LOGS,
+    MDS_DIFF,
+    MDS_SEPAR,
+    MDS_GENR,
+    MDS_LIST
+};
+
+struct mpopup_entries midas_pop_entries[] = {
+    { MDS_DISP,  N_("Display values") },
+    { MDS_TPLOT, N_("Time series plot") },
+    { MDS_LOGS,  N_("Add logs...") },
+    { MDS_DIFF,  N_("Add differences...") },
+    { MDS_SEPAR, NULL },
+    { MDS_GENR,  N_("Define new variable...") },
+    { MDS_LIST,  N_("Define list") }
 };
 
 static gint var_popup_click (GtkWidget *w, gpointer p)
 {
     gint i = GPOINTER_TO_INT(p);
     int v = mdata_active_var();
-    gchar *lname;
 
     switch (i) {
     case MNU_DISP:
@@ -530,13 +555,6 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case MNU_DELET:
 	delete_single_var(v);
 	break;
-    case MNU_HFDAT:
-    case MNU_HFPLT:
-	lname = g_object_steal_data(G_OBJECT(w), "listname");
-	midas_list_callback(NULL, lname,
-			    i == MNU_HFDAT ? PRINT : PLOT);
-	g_free(lname);
-	break;
     case MNU_LOGS:
     case MNU_DIFF:
 	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, v);
@@ -561,9 +579,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 
 GtkWidget *build_var_popup (int selvar)
 {
-    GtkWidget *menu;
-    GtkWidget *item;
-    char lname[VNAMELEN];
+    GtkWidget *menu, *item;
     int i, j, n = G_N_ELEMENTS(main_pop_entries);
     int real_panel = multi_unit_panel_sample(dataset);
     int nullbak = 0;
@@ -571,9 +587,8 @@ GtkWidget *build_var_popup (int selvar)
     menu = gtk_menu_new();
 
     for (j=0; j<n; j++) {
-	*lname = '\0';
-	if (main_pop_entries[j].target == 1) {
-	    /* multiple selection only */
+	if (main_pop_entries[j].target == T_MULTI) {
+	    /* not applicable */
 	    continue;
 	}
 	i = main_pop_entries[j].idx;
@@ -613,25 +628,12 @@ GtkWidget *build_var_popup (int selvar)
 	    /* skip dummify option */
 	    continue;
 	}
-	if (i == MNU_HFDAT || i == MNU_HFPLT) {
-	    if (!dataset_could_be_midas(dataset)) {
-		continue;
-	    } else if (series_get_midas_period(dataset, selvar) <= 0) {
-		continue;
-	    } else if (!in_midas_list(selvar, dataset, lname)) {
-		continue;
-	    }
-	}
 	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),
 			 GINT_TO_POINTER(i));
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	if (*lname != '\0') {
-	    g_object_set_data_full(G_OBJECT(item), "listname",
-				   g_strdup(lname), g_free);
-	}
 	nullbak = 0;
     }
 
@@ -685,12 +687,6 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	csv_selected_to_clipboard();
     } else if (i == MNU_DELET)  {
 	delete_selected_vars();
-    } else if (i == MNU_HFDAT || i == MNU_HFPLT) {
-	int *list = main_window_selection_as_list();
-	
-	midas_list_callback(list, NULL, i == MNU_HFDAT ?
-			    PRINT : PLOT);
-	free(list);
     } else if (i == MNU_LOGS || i == MNU_DIFF)  {
 	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0);
     } else if (i == MNU_LIST) { 
@@ -704,27 +700,16 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
-GtkWidget *build_selection_popup (void)
+static GtkWidget *build_regular_selection_popup (void)
 {
-    GtkWidget *menu;
-    GtkWidget *item;
+    GtkWidget *menu, *item;
     int i, j, n = G_N_ELEMENTS(main_pop_entries);
     int nullbak = 0;
-    int midas_list = 0;
 
     menu = gtk_menu_new();
 
-    if (dataset_could_be_midas(dataset)) {
-	int *list = main_window_selection_as_list();
-
-	if (gretl_is_midas_list(list, dataset)) {
-	    midas_list = 1;
-	}
-	free(list);
-    }
-
     for (j=0; j<n; j++) {
-	if (main_pop_entries[j].target == 0) {
+	if (main_pop_entries[j].target == T_SINGLE) {
 	    /* for single selection only */
 	    continue;
 	}
@@ -746,9 +731,6 @@ GtkWidget *build_selection_popup (void)
 	if (!extended_ts(dataset) && i == MNU_TPLOT) {
 	    continue;
 	}
-	if (!midas_list && (i == MNU_HFDAT || i == MNU_HFPLT)) {
-	    continue;
-	}
 	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(selection_popup_click),
@@ -759,6 +741,76 @@ GtkWidget *build_selection_popup (void)
     }
 
     return menu;
+}
+
+static gint midas_popup_click (GtkWidget *w, gpointer p)
+{
+    gint i = GPOINTER_TO_INT(p);
+
+    if (i == MNU_DISP || i == MDS_TPLOT) {
+	int *list = main_window_selection_as_list();
+	
+	midas_list_callback(list, NULL, i == MDS_DISP ? PRINT : PLOT);
+	free(list);
+    } else if (i == MDS_LOGS || i == MDS_DIFF)  {
+	dummy_call();
+	// add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0);
+    } else if (i == MDS_LIST) { 
+	make_list_from_main();
+    } else if (i == MDS_GENR) { 
+	genr_callback();
+    }
+
+    gtk_widget_destroy(mdata->popup);
+
+    return FALSE;
+}
+
+static GtkWidget *build_midas_popup (void)
+{
+    GtkWidget *menu, *item;
+    int n = G_N_ELEMENTS(midas_pop_entries);
+    int i, j;
+
+    menu = gtk_menu_new();
+
+    for (j=0; j<n; j++) {
+	i = midas_pop_entries[j].idx;
+	if (i == MDS_SEPAR) {
+	    item = gtk_separator_menu_item_new();
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    continue;
+	}
+	item = gtk_menu_item_new_with_label(_(midas_pop_entries[j].str));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(midas_popup_click),
+			 GINT_TO_POINTER(i));
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
+
+    return menu;
+}
+
+GtkWidget *build_selection_popup (void)
+{
+    int midas_list = 0;
+
+    if (dataset_could_be_midas(dataset)) {
+	int *list = main_window_selection_as_list();
+
+	if (gretl_is_midas_list(list, dataset)) {
+	    midas_list = 1;
+	}
+	free(list);
+    }
+
+    if (midas_list) {
+	return build_midas_popup();
+    } else {
+	return build_regular_selection_popup();
+    }
 }
 
 void clear_sample_label (void)
