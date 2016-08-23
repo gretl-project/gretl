@@ -300,6 +300,37 @@ struct midas_info_ {
 
 typedef struct midas_info_ midas_info;
 
+static int lag_info_from_prelag_list (midas_info *m,
+				      const int *list,
+				      const DATASET *dset)
+{
+    int m1 = series_get_lag(dset, list[1]);
+    int p1 = series_get_midas_period(dset, list[1]);
+    int i, p, maxp = 0;
+
+    if (p1 > 0) {
+	for (i=1; i<=list[0]; i++) {
+	    p = series_get_midas_period(dset, list[i]);
+	    if (p > maxp) {
+		maxp = p;
+	    }
+	}
+    }
+
+    if (is_valid_midas_frequency_ratio(dset, maxp)) {
+	int hfl = maxp * m1 - (p1 - 1);
+	
+	m->minlag = hfl;
+	m->maxlag = hfl + list[0] - 1;
+    } else {
+	/* oof! just report 1,... */
+	m->minlag = 1;
+	m->maxlag = list[0];
+    }
+
+    return 0;
+}
+
 /* Parse a particular entry in the incoming array of MIDAS
    specifications. Each entry should look like one of
    the following:
@@ -349,6 +380,7 @@ static int parse_midas_info (const char *s,
     m->nterms = 0;
 
     if (!strncmp(s, "mds(", 4)) {
+	/* calling for auto-generated lags */
 	s += 4;
 	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%d, %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1);
@@ -359,6 +391,7 @@ static int parse_midas_info (const char *s,
 	    err = E_PARSE;
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
+	/* list already hold lags */
 	m->prelag = 1;
 	s += 5;
 	sprintf(fmt, "%%%d[^, ] , %%d, %%%d[^) ])",
@@ -417,7 +450,10 @@ static int parse_midas_info (const char *s,
 	    if (!umidas && mks == NULL) {
 		strcpy(m->mname, mname);
 	    }
-	    if (!m->prelag) {
+	    if (m->prelag) {
+		/* scrounge lag info from incoming list */
+		lag_info_from_prelag_list(m, list, dset);
+	    } else {
 		m->minlag = m1;
 		m->maxlag = m2;
 	    }

@@ -1424,7 +1424,7 @@ int list_laggenr (int **plist, int order,
     if (compfac > 0) {
 	/* midas high-frequency lags, by lags */
 	int hfpmax = n_terms + skip_first;
-	int hfp = 0;
+	int mp, hfp = 0;
 
 	for (l=lmin; l<=lmax; l++) {
 	    for (i=1; i<=list[0]; i++) {
@@ -1438,6 +1438,8 @@ int list_laggenr (int **plist, int order,
 		lv = get_transform(LAGS, v, l, 0.0, dset,
 				   startlen, origv, NULL);
 		if (lv > 0) {
+		    mp = series_get_midas_period(dset, v);
+		    series_set_midas_period(dset, lv, mp);
 		    laglist[j++] = lv;
 		    l0++;
 		}
