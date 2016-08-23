@@ -925,25 +925,65 @@ int midas_forecast_setup (const MODEL *pmod,
     return err;
 }
 
-static const char *midas_type_string (int ptype, int mixed,
-				      int n, int i)
+static int add_midas_plot_matrix (MODEL *pmod,
+				  midas_info *m,
+				  const double *b)
 {
-    const char *strs[] = {
-	"U-MIDAS",
-	"nealmon",
-	"beta0",
-	"betaN",
-	"almonp"
-    };
-    static char tmp[16];
-    const char *ret = strs[ptype];
+    gretl_matrix *C = NULL;
+    gretl_matrix *theta = NULL;
+    gretl_matrix *w = NULL;
+    int err = 0;
+	
+    C = gretl_matrix_alloc(m->nterms, 2);
+    err = (C == NULL);
 
-    if (!mixed && n > 1) {
-	sprintf(tmp, "%s%d", ret, i);
-	ret = tmp;
+    if (!err && m->type != MIDAS_U) {
+	theta = gretl_matrix_alloc(m->k, 1);
+	err = (theta == NULL);
     }
 
-    return ret;
+    if (!err) {
+	double ci, hfb = 0;
+	int p = m->minlag;
+	int i, k = 0;
+	
+	if (m->type == MIDAS_U) {
+	    for (i=0; i<m->k; i++) {
+		gretl_matrix_set(C, i, 0, b[k++]);
+		gretl_matrix_set(C, i, 1, p++);
+	    }
+	} else {
+	    hfb = takes_coeff(m->type) ? b[k++] : 1.0;
+	    for (i=0; i<m->k; i++) {
+		theta->val[i] = b[k++];
+	    }		
+	    w = midas_weights(m->nterms, theta, m->type, &err);
+	    if (!err) {
+		for (i=0; i<m->nterms; i++) {
+		    ci = hfb * w->val[i];
+		    gretl_matrix_set(C, i, 0, ci);
+		    gretl_matrix_set(C, i, 1, p++);
+		}
+	    }
+	    gretl_matrix_free(w);
+	}
+    }
+
+    gretl_matrix_free(theta);
+
+    if (!err) {
+	char *cnames[2] = {"coeff", "lag"};
+	char **S = strings_array_dup(cnames, 2);
+
+	if (S != NULL) {
+	    gretl_matrix_set_colnames(C, S);
+	}
+	err = gretl_model_set_matrix_as_data(pmod, "midas_coeffs", C);
+    } else {
+	gretl_matrix_free(C);
+    }
+
+    return err;
 }
 
 /* Get the MIDAS model ready for shipping out. What
@@ -961,10 +1001,8 @@ static int finalize_midas_model (MODEL *pmod,
 				 int ldepvar,
 				 int hfslopes)
 {
-    gretl_matrix *m = NULL;
-    gretl_matrix *theta = NULL;
-    int i, rows = 0;
-    int err = 0;
+    int type0, mixed = 0;
+    int i, err = 0;
 
     gretl_model_set_string_as_data(pmod, "midas_spec",
 				   gretl_strdup(param));
@@ -996,85 +1034,31 @@ static int finalize_midas_model (MODEL *pmod,
 	gretl_model_set_int(pmod, "dynamic", 1);
     }
 
-    for (i=0; i<nmidas; i++) {
-	if (minfo[i].nterms > rows) {
-	    rows = minfo[i].nterms;
-	}
-    }
-
-    m = gretl_matrix_alloc(rows, nmidas);
-    theta = gretl_matrix_alloc(rows, 1);
-
-    if (m == NULL || theta == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_matrix *w = NULL;
-	char **cnames = NULL;
-	double *b = pmod->coeff;
-	double wij, hfb = 0;
-	int type0 = minfo[0].type;
-	int mixed = 0;
-	int j, k = list[0] - 1;
-
-	for (i=0; i<nmidas && !err; i++) {
+    /* record the (common) type of MIDAS term? */
+    type0 = minfo[0].type;
+    if (nmidas > 1) {
+	for (i=1; i<nmidas; i++) {
 	    if (minfo[i].type != type0) {
 		mixed = 1;
-	    }
-	    if (minfo[i].type == MIDAS_U) {
-		for (j=0; j<minfo[i].k; j++) {
-		    gretl_matrix_set(m, j, i, b[k++]);
-		}
-		for (j=minfo[i].k; j<rows; j++) {
-		    gretl_matrix_set(m, j, i, M_NA);
-		}
-	    } else {
-		hfb = takes_coeff(minfo[i].type) ? b[k++] : 1.0;
-		theta->rows = minfo[i].k;
-		for (j=0; j<minfo[i].k; j++) {
-		    theta->val[j] = b[k++];
-		}		
-		w = midas_weights(minfo[i].nterms, theta,
-				  minfo[i].type, &err);
-		if (!err) {
-		    for (j=0; j<minfo[i].nterms; j++) {
-			wij = hfb * w->val[j];
-			gretl_matrix_set(m, j, i, wij);
-		    }
-		    for (j=minfo[i].nterms; j<rows; j++) {
-			gretl_matrix_set(m, j, i, M_NA);
-		    }
-		}
-		gretl_matrix_free(w);
+		break;
 	    }
 	}
-
-	if (!err) {
-	    const char *s;
-	    
-	    cnames = strings_array_new(nmidas);
-	    if (cnames != NULL) {
-		for (i=0; i<nmidas; i++) {
-		    s = midas_type_string(minfo[i].type, mixed,
-					  nmidas, i+1);
-		    cnames[i] = gretl_strdup(s);
-		}
-	    }
-	}
-
-	if (!err) {
-	    /* save "gross" MIDAS coefficients onto the model
-	       FIXME x-axis data */
-	    if (cnames != NULL) {
-		gretl_matrix_set_colnames(m, cnames);
-	    }
-	    err = gretl_model_set_matrix_as_data(pmod, "midas_coeffs", m);
-	    /* also save record of MIDAS spec type */
-	    if (!mixed && type0 > 0) {
-		gretl_model_set_int(pmod, "midas_type", type0);
-	    }
-	} else {
-	    gretl_matrix_free(m);
-	}
+    }
+    if (!mixed && type0 > 0) {
+	gretl_model_set_int(pmod, "midas_type", type0);
+    }	
+	
+    if (nmidas == 1) {
+	/* Record the "gross" MIDAS coefficients, to enable
+	   drawing of a plot? We'll do this only if we have
+	   a single MIDAS term, which is probably the most
+	   most common case. Otherwise it becomes too hard
+	   to get the plot right.
+	*/
+	int nx = list[0] - 1;
+	const double *b = pmod->coeff + nx;
+	
+	add_midas_plot_matrix(pmod, &minfo[0], b);
     }
 
     if (!err) {
@@ -1088,8 +1072,6 @@ static int finalize_midas_model (MODEL *pmod,
 	}
 	gretl_model_set_list_as_data(pmod, "midas_klist", mks);
     }
-
-    gretl_matrix_free(theta);
 
     return err;
 }

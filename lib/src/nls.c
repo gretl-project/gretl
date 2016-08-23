@@ -1592,16 +1592,14 @@ static int add_nls_std_errs_to_model (MODEL *pmod)
 
     for (i=0; i<pmod->ncoeff; i++) {
 	k = ijton(i, i, pmod->ncoeff);
-	if (pmod->vcv[k] == 0.0) {
-	    pmod->sderr[i] = 0.0;
-	} else if (pmod->vcv[k] > 0.0) {
+	if (pmod->vcv[k] < 0.0) {
+	    pmod->sderr[i] = NADBL;
+	} else {
 	    pmod->sderr[i] = sqrt(pmod->vcv[k]);
 	    abst = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (abst > tstat_max) {
 		tstat_max = abst;
 	    }
-	} else {
-	    pmod->sderr[i] = NADBL;
 	}
     }
 

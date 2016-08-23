@@ -2707,8 +2707,12 @@ static void midas_plot_callback (GtkAction *action, gpointer p)
     C = gretl_model_get_data(pmod, "midas_coeffs");
 
     if (C != NULL) {
-	err = matrix_plot(C, NULL, "{set xlabel 'high-frequency lag';}",
-			  OPT_T | OPT_O | OPT_G);
+	const char *literal =
+	    "{set title 'MIDAS coefficients';"
+	    " set xlabel 'high-frequency lag';"
+	    " set ylabel '';}";
+	
+	err = matrix_plot(C, NULL, literal,  OPT_P | OPT_S | OPT_G);
 	gui_graph_handler(err);
     }
 }
