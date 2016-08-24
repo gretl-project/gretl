@@ -1206,6 +1206,7 @@ static void list_append_midas_var (GtkListStore *store,
 		       MCOL_NAME, mname, -1);
 
     if (!strcmp(mname, mds_listname)) {
+	/* FIXME */
 	fprintf(stderr, "Should add %s on right?\n", mname);
     }
 }
@@ -3273,7 +3274,6 @@ static void get_midas_specs (selector *sr)
 			   MCOL_K, &specs[i].nparm, -1);
 	if (i == 0) {
 	    /* remember some stuff */
-	    strcpy(mds_listname, vname);
 	    mds_quad[0] = specs[i].minlag;
 	    mds_quad[1] = specs[i].maxlag;
 	    mds_quad[2] = specs[i].ptype;
