@@ -30,7 +30,6 @@
 #include "gretl_panel.h"
 #include "missing_private.h"
 #include "gretl_string_table.h"
-#include "gretl_array.h"
 #include "uservar.h"
 
 #ifdef WIN32

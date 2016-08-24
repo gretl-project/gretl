@@ -28,7 +28,6 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 #include "gretl_string_table.h"
-#include "gretl_array.h"
 #include "gretl_typemap.h"
 #include "gretl_zip.h"
 #include "uservar.h"

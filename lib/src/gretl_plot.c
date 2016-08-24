@@ -49,7 +49,6 @@
 #include "uservar.h"
 #include "usermat.h"
 #include "libset.h"
-#include "gretl_array.h"
 #include "gretl_plot.h"
 
 #define PDEBUG 0

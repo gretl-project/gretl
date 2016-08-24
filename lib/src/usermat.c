@@ -20,7 +20,6 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
-#include "gretl_array.h"
 #include "gretl_normal.h"
 #include "usermat.h"
 #include "genparse.h"

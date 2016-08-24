@@ -35,7 +35,6 @@
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
 #include "gretl_typemap.h"
-#include "gretl_array.h"
 #include "gretl_midas.h"
 #include "dbread.h"
 #include "gretl_foreign.h"

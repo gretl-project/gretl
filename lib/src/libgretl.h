@@ -390,6 +390,7 @@ typedef struct MODEL_ {
 #include "genfuncs.h"
 #include "compare.h"
 #include "gretl_bundle.h"
+#include "gretl_array.h"    
 #include "gretl_intl.h"
 #include "gretl_list.h"
 #include "gretl_paths.h"

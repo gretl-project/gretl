@@ -179,6 +179,7 @@ static model_data_item *
 replicate_data_item (const model_data_item *orig)
 {
     model_data_item *item = malloc(sizeof *item);
+    int err = 0;
 
     if (item != NULL) {
 	item->key = gretl_strdup(orig->key);
@@ -191,6 +192,8 @@ replicate_data_item (const model_data_item *orig)
     if (item != NULL) {
 	if (orig->type == GRETL_TYPE_MATRIX) {
 	    item->ptr = gretl_matrix_copy(orig->ptr);
+	} else if (orig->type == GRETL_TYPE_ARRAY) {
+	    item->ptr = gretl_array_copy(orig->ptr, &err);
 	} else {
 	    item->ptr = malloc(orig->size);
 	}
@@ -202,7 +205,8 @@ replicate_data_item (const model_data_item *orig)
     }	
 
     if (item != NULL) {
-	if (orig->type != GRETL_TYPE_MATRIX) {
+	if (orig->type != GRETL_TYPE_MATRIX &&
+	    orig->type != GRETL_TYPE_ARRAY) {
 	    memcpy(item->ptr, orig->ptr, orig->size);
 	}
 	item->type = orig->type;
@@ -341,6 +345,31 @@ int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key,
     return gretl_model_set_data_with_destructor(pmod, key, (void *) m, 
 						GRETL_TYPE_MATRIX, 0, 
 						matrix_free_callback);
+}
+
+static void array_free_callback (void *p)
+{
+    gretl_array_destroy((gretl_array *) p);
+}
+
+/**
+ * gretl_model_set_array_as_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string, used in retrieval.
+ * @A: array to attach.
+ *
+ * Attaches @A to @pmod as data, recoverable via the key @key 
+ * using gretl_model_get_data().
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_array_as_data (MODEL *pmod, const char *key, 
+				   gretl_array *A)
+{
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) A, 
+						GRETL_TYPE_ARRAY, 0, 
+						array_free_callback);
 }
 
 /**
@@ -4321,6 +4350,10 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    gretl_matrix *m = (gretl_matrix *) item->ptr;
 
 	    gretl_matrix_serialize(m, NULL, fp);
+	} else if (item->type == GRETL_TYPE_ARRAY) {
+	    gretl_array *A = (gretl_array *) item->ptr;
+
+	    gretl_array_serialize(A, fp);
 	} else {
 	    ; /* no-op: not handled */
 	}

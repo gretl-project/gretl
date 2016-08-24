@@ -24,7 +24,6 @@
 #include "usermat.h"
 #include "gretl_string_table.h"
 #include "matrix_extra.h"
-#include "gretl_array.h"
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_typemap.h"

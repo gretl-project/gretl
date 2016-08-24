@@ -23,7 +23,6 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "uservar.h"
-#include "gretl_array.h"
 #include "gretl_xml.h"
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"

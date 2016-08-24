@@ -273,6 +273,9 @@ int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list);
 
 int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str);
 
+int gretl_model_set_array_as_data (MODEL *pmod, const char *key,
+				   gretl_array *A);
+
 int gretl_model_destroy_data_item (MODEL *pmod, const char *key);
 
 int gretl_model_detach_data_item (MODEL *pmod, const char *key);

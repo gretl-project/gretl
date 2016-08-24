@@ -27,7 +27,6 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
-#include "gretl_array.h"
 
 /**
  * SECTION:gretl_panel
