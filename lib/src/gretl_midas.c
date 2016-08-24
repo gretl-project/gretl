@@ -368,17 +368,11 @@ static void midas_info_init (midas_info *m)
    initialize the coefficients) is not (always) required.
    These variants cannot be used, however, if the full
    specification mixes both U-MIDAS and other terms.
-
-   Note that @mks (a list of numbers of coefficients
-   associated with MIDAS terms) will be non-NULL if and
-   only if we're rebuilding with a forecast in mind. In
-   that case the @theta specifier is ignored.
 */
 
 static int parse_midas_info (const char *s,
 			     midas_info *minfo, int i,
-			     const DATASET *dset,
-			     const int *mks)
+			     const DATASET *dset)
 {
     midas_info *m = &minfo[i];
     char lname[VNAMELEN];
@@ -423,7 +417,7 @@ static int parse_midas_info (const char *s,
 	int *list = get_list_by_name(lname);
 	int k = 0;
 
-	if (!umidas && mks == NULL) {
+	if (!umidas) {
 	    theta = get_matrix_by_name(mname);
 	    if (theta == NULL) {
 		theta = maybe_make_auto_theta(mname, i, p, m1, m2);
@@ -439,9 +433,6 @@ static int parse_midas_info (const char *s,
 	    err = E_INVARG;
 	} else if (p < 0 || p >= MIDAS_MAX) {
 	    err = E_INVARG;
-	} else if (mks != NULL) {
-	    /* forecasting: use stored @k value */
-	    k = mks[i+1];
 	} else if (umidas) {
 	    if (m->prelag) {
 		k = list[0];
@@ -459,7 +450,7 @@ static int parse_midas_info (const char *s,
 	if (!err) {
 	    strcpy(m->lnam0, lname);
 	    strcpy(m->lname, lname);
-	    if (!umidas && mks == NULL) {
+	    if (!umidas) {
 		strcpy(m->mname, mname);
 	    }
 	    if (m->prelag) {
@@ -531,7 +522,7 @@ static int umidas_check (midas_info *m, int nmidas,
 static int 
 parse_midas_specs (const char *spec, const DATASET *dset,
 		   midas_info **pm, int *pnspec,
-		   int *use_ols, const int *mks)
+		   int *use_ols)
 {
     midas_info *m = NULL;
     const char *s;
@@ -576,7 +567,7 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 	    } else {
 		*test = '\0';
 		strncat(test, s, len);
-		err = parse_midas_info(test, m, i, dset, mks);
+		err = parse_midas_info(test, m, i, dset);
 		if (!err && m[i].type == MIDAS_U) {
 		    umidas++;
 		}
@@ -647,7 +638,12 @@ static int *make_midas_laglist (midas_info *m,
     int *list = get_list_by_name(m->lname);
 
     if (m->prelag) {
-	/* don't copy -- and don't free either! */
+	/* don't copy; and don't free either! */
+	if (list == NULL) {
+	    fprintf(stderr, "make_midas_laglist, prelag: '%s': no list!\n",
+		    m->lname);
+	    *err = E_DATA;
+	}
 	return list;
     } else {
 	/* copy, because we're going to modify the list */
@@ -1094,7 +1090,7 @@ static midas_info *minfo_from_array (gretl_array *A,
 	    if (b == NULL) {
 		*err = E_DATA;
 	    } else {
-		strcpy(m->lnam0, gretl_bundle_get_string(b, "lname", err));
+		strcpy(m->lname, gretl_bundle_get_string(b, "lname", err));
 		strcpy(m->mname, gretl_bundle_get_string(b, "mname", err));
 		m->prelag = gretl_bundle_get_scalar(b, "prelag", err);
 		m->minlag = gretl_bundle_get_scalar(b, "minlag", err);
@@ -1337,7 +1333,7 @@ MODEL midas_model (const int *list,
 	err = E_DATA;
     } else {
 	err = parse_midas_specs(param, dset, &minfo,
-				&nmidas, &use_ols, NULL);
+				&nmidas, &use_ols);
     }
 
     if (!err) {
