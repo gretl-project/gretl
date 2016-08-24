@@ -680,17 +680,22 @@ static void retrieve_tobit_info (MODEL *pmod)
 
 static void retrieve_midas_info (MODEL *pmod)
 {
-    int *ml0 = gretl_model_get_data(pmod, "midas_minlag");
-    int *ml1 = gretl_model_get_data(pmod, "midas_maxlag");
-    int *mts = gretl_model_get_data(pmod, "midas_types");
-    int *mks = gretl_model_get_data(pmod, "midas_klist");
+    gretl_bundle *b = NULL;
+    gretl_array *A;
+    int err = 0;
 
-    if (ml0 != NULL && ml1 != NULL &&
-	mts != NULL && mks != NULL) {
-	mds_quad[0] = ml0[1];
-	mds_quad[1] = ml1[1];
-	mds_quad[2] = mts[1];
-	mds_quad[3] = mks[1];
+    A = gretl_model_get_data(pmod, "midas_info");
+
+    if (A != NULL) {
+	b = gretl_array_get_bundle(A, 0);
+    }
+
+    if (b != NULL) {
+	strcpy(mds_listname, gretl_bundle_get_string(b, "lname", &err));
+	mds_quad[0] = gretl_bundle_get_scalar(b, "minlag", &err);
+	mds_quad[1] = gretl_bundle_get_scalar(b, "maxlag", &err);
+	mds_quad[2] = gretl_bundle_get_scalar(b, "type", &err);
+	mds_quad[3] = gretl_bundle_get_scalar(b, "nparm", &err);	    
     }
 }
 

@@ -209,7 +209,7 @@ void *gretl_array_get_element (gretl_array *A, int i,
     void *ret = NULL;
 
     /* Note that the data returned here are not "deep copied",
-       we just pass the pointer. It's up to geneval.c to
+       we just pass the pointer. It's up to the caller to
        decide if a copy has to be made, given that the
        pointer from here should not be modified.
     */
@@ -217,7 +217,9 @@ void *gretl_array_get_element (gretl_array *A, int i,
     if (A == NULL || i < 0 || i >= A->n) {
 	*err = E_DATA;
     } else {
-	*type = gretl_type_get_singular(A->type);
+	if (type != NULL) {
+	    *type = gretl_type_get_singular(A->type);
+	}
 	if (A->type == GRETL_TYPE_STRINGS) {
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_strdup("");
@@ -242,6 +244,24 @@ void *gretl_array_get_element (gretl_array *A, int i,
     }
 
     return ret;
+}
+
+gretl_bundle *gretl_array_get_bundle (gretl_array *A, int i)
+{
+    gretl_bundle *b = NULL;
+
+    /* The bundle returned here is not "deep copied",
+       we just pass the pointer. It's up to the caller to
+       decide if a copy has to be made, given that the
+       pointer from here should not be modified.
+    */
+
+    if (A != NULL && i >= 0 && i < A->n &&
+	A->type == GRETL_TYPE_BUNDLES) {
+	b = A->data[i];
+    }
+
+    return b;
 }
 
 GretlType gretl_array_get_type (gretl_array *A)

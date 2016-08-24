@@ -26,6 +26,25 @@
 #define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
+struct midas_info_ {
+    char lnam0[VNAMELEN];  /* name of MIDAS list on input */
+    char lname[VNAMELEN];  /* name of MIDAS list */
+    char mname[VNAMELEN];  /* name of initial theta vector */
+    int prelag;            /* input list already holds lags */
+    int minlag;            /* minimum lag */
+    int maxlag;            /* maximum lag */
+    int type;              /* type of parameterization */
+    int nparm;             /* number of parameters */
+    int nterms;            /* number of lag terms */
+    int *laglist;          /* list of lag series */
+};
+
+typedef struct midas_info_ midas_info;
+
+static midas_info *minfo_from_array (gretl_array *A,
+				     int *nmidas,
+				     int *err);
+
 /* days per month or quarter: maybe make this user-
    configurable? */
 
@@ -286,20 +305,6 @@ static gretl_matrix *maybe_make_auto_theta (char *name, int i,
     return theta;
 }
 
-struct midas_info_ {
-    char lname[VNAMELEN];  /* name of MIDAS list */
-    char mname[VNAMELEN];  /* name of initial theta vector */
-    int prelag;            /* input list already holds lags */
-    int minlag;            /* minimum lag */
-    int maxlag;            /* maximum lag */
-    int type;              /* type of parameterization */
-    int k;                 /* number of parameters */
-    int nterms;            /* number of lag terms */
-    int *laglist;          /* list of lag series */
-};
-
-typedef struct midas_info_ midas_info;
-
 static int lag_info_from_prelag_list (midas_info *m,
 				      const int *list,
 				      const DATASET *dset)
@@ -329,6 +334,19 @@ static int lag_info_from_prelag_list (midas_info *m,
     }
 
     return 0;
+}
+
+static void midas_info_init (midas_info *m)
+{
+    m->lnam0[0] = '\0';
+    m->lname[0] = '\0';
+    m->mname[0] = '\0';
+    m->prelag = 0;
+    m->minlag = 0;
+    m->maxlag = 0;
+    m->type = 0;
+    m->nparm = 0;
+    m->nterms = 0;
 }
 
 /* Parse a particular entry in the incoming array of MIDAS
@@ -370,14 +388,7 @@ static int parse_midas_info (const char *s,
     int umidas = 0;
     int err = 0;
 
-    m->lname[0] = '\0';
-    m->mname[0] = '\0';
-    m->prelag = 0;
-    m->minlag = 0;
-    m->maxlag = 0;
-    m->type = 0;
-    m->k = 0;
-    m->nterms = 0;
+    midas_info_init(m);
 
     if (!strncmp(s, "mds(", 4)) {
 	/* calling for auto-generated lags */
@@ -446,6 +457,7 @@ static int parse_midas_info (const char *s,
 	}
 
 	if (!err) {
+	    strcpy(m->lnam0, lname);
 	    strcpy(m->lname, lname);
 	    if (!umidas && mks == NULL) {
 		strcpy(m->mname, mname);
@@ -458,7 +470,7 @@ static int parse_midas_info (const char *s,
 		m->maxlag = m2;
 	    }
 	    m->type = p;
-	    m->k = k;
+	    m->nparm = k;
 	}
     }
 
@@ -873,29 +885,21 @@ int midas_forecast_setup (const MODEL *pmod,
 			  ForecastMethod method,
 			  char **pformula)
 {
-    const char *param;
+    gretl_array *mA;
     midas_info *minfo = NULL;
-    int *mks = NULL;
     int *xlist = NULL;
     int *hflist = NULL;
     int nmidas = 0;
-    int use_ols = 0;
     int err = 0;
 
-    param =   gretl_model_get_data(pmod, "midas_spec");
-    mks =     gretl_model_get_data(pmod, "midas_klist");
-    xlist =   gretl_model_get_data(pmod, "lfxlist");
+    mA = gretl_model_get_data(pmod, "midas_info");
+    xlist = gretl_model_get_data(pmod, "lfxlist");
 
-    if (param == NULL || mks == NULL || xlist == NULL) {
+    if (mA == NULL || xlist == NULL) {
 	err = E_DATA;
     } else {
-	err = parse_midas_specs(param, dset, &minfo,
-				&nmidas, &use_ols, mks);
+	minfo = minfo_from_array(mA, &nmidas, &err);
     }
-
-#if FC_DEBUG
-    fprintf(stderr, "\nmidas_forecast_setup: spec='%s'\n", param);
-#endif
 
     if (!err) {
 	/* reconstitute MIDAS lag-lists */
@@ -974,7 +978,7 @@ static int add_midas_plot_matrix (MODEL *pmod,
     err = (C == NULL);
 
     if (!err && m->type != MIDAS_U) {
-	theta = gretl_matrix_alloc(m->k, 1);
+	theta = gretl_matrix_alloc(m->nparm, 1);
 	err = (theta == NULL);
     }
 
@@ -984,13 +988,13 @@ static int add_midas_plot_matrix (MODEL *pmod,
 	int i, k = 0;
 	
 	if (m->type == MIDAS_U) {
-	    for (i=0; i<m->k; i++) {
+	    for (i=0; i<m->nparm; i++) {
 		gretl_matrix_set(C, i, 0, b[k++]);
 		gretl_matrix_set(C, i, 1, p++);
 	    }
 	} else {
 	    hfb = takes_coeff(m->type) ? b[k++] : 1.0;
-	    for (i=0; i<m->k; i++) {
+	    for (i=0; i<m->nparm; i++) {
 		theta->val[i] = b[k++];
 	    }		
 	    w = midas_weights(m->nterms, theta, m->type, &err);
@@ -1020,6 +1024,97 @@ static int add_midas_plot_matrix (MODEL *pmod,
     }
 
     return err;
+}
+
+static int model_add_minfo_array (MODEL *pmod,
+				  midas_info *minfo,
+				  int nmidas)
+{
+    gretl_array *A;
+    int err = 0;
+    
+    A = gretl_array_new(GRETL_TYPE_BUNDLES, nmidas, &err);
+
+    if (A != NULL) {
+	midas_info *m;
+	gretl_bundle *b;
+	int i;
+
+	for (i=0; i<nmidas && !err; i++) {
+	    b = gretl_bundle_new();
+	    if (b == NULL) {
+		err = E_ALLOC;
+	    } else {
+		m = &minfo[i];
+		gretl_bundle_set_string(b, "lname",  m->lnam0);
+		gretl_bundle_set_string(b, "mname",  m->mname);
+		gretl_bundle_set_scalar(b, "prelag", m->prelag);
+		gretl_bundle_set_scalar(b, "minlag", m->minlag);
+		gretl_bundle_set_scalar(b, "maxlag", m->maxlag);
+		gretl_bundle_set_scalar(b, "type",  m->type);
+		gretl_bundle_set_scalar(b, "nparm", m->nparm);
+		err = gretl_array_set_bundle(A, i, b, 0);
+	    }
+	}
+
+	if (err) {
+	    gretl_array_destroy(A);
+	} else {
+	    gretl_model_set_array_as_data(pmod, "midas_info", A);
+	}
+    }
+
+    return err;
+}
+
+static midas_info *minfo_from_array (gretl_array *A,
+				     int *nmidas,
+				     int *err)
+{
+    int n = gretl_array_get_length(A);
+    midas_info *m, *minfo = NULL;
+
+    if (n == 0) {
+	*err = E_DATA;
+    } else {
+	minfo = malloc(n * sizeof *minfo);
+	if (minfo == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (minfo != NULL) {
+	gretl_bundle *b;
+	int i;
+
+	for (i=0; i<n && !*err; i++) {
+	    m = &minfo[i];
+	    midas_info_init(m);
+	    b = gretl_array_get_bundle(A, i);
+	    if (b == NULL) {
+		*err = E_DATA;
+	    } else {
+		strcpy(m->lnam0, gretl_bundle_get_string(b, "lname", err));
+		strcpy(m->mname, gretl_bundle_get_string(b, "mname", err));
+		m->prelag = gretl_bundle_get_scalar(b, "prelag", err);
+		m->minlag = gretl_bundle_get_scalar(b, "minlag", err);
+		m->maxlag = gretl_bundle_get_scalar(b, "maxlag", err);
+		m->type = gretl_bundle_get_scalar(b, "type", err);
+		m->nparm = gretl_bundle_get_scalar(b, "nparm", err);
+	    }
+	}
+
+	if (*err) {
+	    free(minfo);
+	    minfo = NULL;
+	}
+    }
+
+    if (!*err) {
+	*nmidas = n;
+    }
+
+    return minfo;
 }
 
 /* Get the MIDAS model ready for shipping out. What
@@ -1098,26 +1193,7 @@ static int finalize_midas_model (MODEL *pmod,
     }
 
     if (!err) {
-	/* Add a record of the midas specification in the form
-	   of a set of lists: this will be useful when generating
-	   forecasts, and for use in the GUI.
-	*/
-	int *ml0 = gretl_list_new(nmidas);
-	int *ml1 = gretl_list_new(nmidas);
-	int *mts = gretl_list_new(nmidas);
-	int *mks = gretl_list_new(nmidas);
-
-	for (i=0; i<nmidas; i++) {
-	    ml0[i+1] = minfo[i].minlag;
-	    ml1[i+1] = minfo[i].maxlag;
-	    mts[i+1] = minfo[i].type;
-	    mks[i+1] = minfo[i].k;
-	}
-	
-	gretl_model_set_list_as_data(pmod, "midas_minlag", ml0);
-	gretl_model_set_list_as_data(pmod, "midas_maxlag", ml1);
-	gretl_model_set_list_as_data(pmod, "midas_types", mts);
-	gretl_model_set_list_as_data(pmod, "midas_klist", mks);
+	err = model_add_minfo_array(pmod, minfo, nmidas);
     }
 
     return err;
@@ -1381,7 +1457,7 @@ MODEL midas_model (const int *list,
 		    }
 		    append_pname(line, tmp);
 		}
-		for (j=0; j<minfo[i].k; j++) {
+		for (j=0; j<minfo[i].nparm; j++) {
 		    make_pname(tmp, &minfo[i], j, dset);
 		    append_pname(line, tmp);
 		}
