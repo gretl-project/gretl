@@ -1824,6 +1824,12 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
+    } else if (pmod->ci == MIDASREG) {
+	int *lfx = gretl_model_get_data(pmod, "lfxlist");
+
+	if (lfx != NULL) {
+	    list = gretl_list_copy(lfx);
+	}
     } else if (ordered_model(pmod)) {
 	nx = pmod->list[0] - 1;
 	list = gretl_list_new(nx);

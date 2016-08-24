@@ -425,7 +425,7 @@ static int dataset_could_be_midas (const DATASET *dset)
     }
 }
 
-enum MenuIdx {
+enum MenuIdx_ {
     MNU_DISP,
     MNU_EDIT,
     MNU_STATS,
@@ -450,20 +450,36 @@ enum MenuIdx {
     MNU_LIST
 };
 
-enum MenuTarget {
+enum MDSIdx_ {
+    MDS_DISP,
+    MDS_TPLOT,
+    MDS_LOGS,
+    MDS_DIFF,
+    MDS_SEPAR,
+    MDS_CDISP,
+    MDS_CEDIT,
+    MDS_GENR,
+    MDS_LIST
+};
+
+enum MenuTarg_ {
     T_SINGLE,
     T_MULTI,
     T_BOTH,
 };
 
+typedef enum MenuIdx_ MenuIdx;
+typedef enum MDSIdx_ MDSIdx;
+typedef enum MenuTarg_ MenuTarg;
+
 struct popup_entries {
-    int idx;           /* one of the MenuIdxvalues above */
+    MenuIdx idx;       /* one of the MenuIdxvalues above */
     const char *str;   /* translatable string */
-    int target;       /* one of the MenuTarget values above */
+    MenuTarg target;   /* one of the MenuTarget values above */
 };
 
 struct mpopup_entries {
-    int idx;           /* one of the MDSIdx values below */
+    MDSIdx idx;        /* one of the MDSIdx values above */
     const char *str;   /* translatable string */
 };
 
@@ -495,21 +511,14 @@ struct popup_entries main_pop_entries[] = {
     { MNU_LIST,  N_("Define list"), T_MULTI }
 };
 
-enum MDSIdx {
-    MDS_DISP,
-    MDS_TPLOT,
-    MDS_LOGS,
-    MDS_DIFF,
-    MDS_SEPAR,
-    MDS_GENR,
-    MDS_LIST
-};
-
 struct mpopup_entries midas_pop_entries[] = {
     { MDS_DISP,  N_("Display values") },
     { MDS_TPLOT, N_("Time series plot") },
     { MDS_LOGS,  N_("Add logs...") },
     { MDS_DIFF,  N_("Add differences...") },
+    { MDS_SEPAR, NULL },
+    { MDS_CDISP, N_("Display components") },
+    { MDS_CEDIT, N_("Edit components") },
     { MDS_SEPAR, NULL },
     { MDS_GENR,  N_("Define new variable...") },
     { MDS_LIST,  N_("Define list") }
@@ -517,7 +526,7 @@ struct mpopup_entries midas_pop_entries[] = {
 
 static gint var_popup_click (GtkWidget *w, gpointer p)
 {
-    gint i = GPOINTER_TO_INT(p);
+    MenuIdx i = GPOINTER_TO_INT(p);
     int v = mdata_active_var();
 
     switch (i) {
@@ -557,7 +566,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	break;
     case MNU_LOGS:
     case MNU_DIFF:
-	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, v);
+	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, v, 0);
 	break;
     case MNU_PCDIF:
 	percent_change_dialog(v);
@@ -642,7 +651,7 @@ GtkWidget *build_var_popup (int selvar)
 
 static gint selection_popup_click (GtkWidget *w, gpointer p)
 {
-    gint i = GPOINTER_TO_INT(p);
+    MenuIdx i = GPOINTER_TO_INT(p);
     int ci = 0;
 
     if (i == MNU_STATS) {
@@ -688,7 +697,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MNU_DELET)  {
 	delete_selected_vars();
     } else if (i == MNU_LOGS || i == MNU_DIFF)  {
-	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0);
+	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0, 0);
     } else if (i == MNU_LIST) { 
 	make_list_from_main();
     } else if (i == MNU_GENR) { 
@@ -745,16 +754,19 @@ static GtkWidget *build_regular_selection_popup (void)
 
 static gint midas_popup_click (GtkWidget *w, gpointer p)
 {
-    gint i = GPOINTER_TO_INT(p);
+    MDSIdx i = GPOINTER_TO_INT(p);
 
-    if (i == MNU_DISP || i == MDS_TPLOT) {
+    if (i == MDS_DISP || i == MDS_TPLOT) {
 	int *list = main_window_selection_as_list();
 	
 	midas_list_callback(list, NULL, i == MDS_DISP ? PRINT : PLOT);
 	free(list);
     } else if (i == MDS_LOGS || i == MDS_DIFF)  {
-	dummy_call(); /* FIXME! */
-	// add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0);
+	add_logs_etc(i == MDS_LOGS ? LOGS : DIFF, 0, 1);
+    } else if (i == MDS_CDISP) {
+	display_selected();
+    } else if (i == MDS_CEDIT) {
+	show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MDS_LIST) { 
 	make_list_from_main();
     } else if (i == MDS_GENR) { 

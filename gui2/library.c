@@ -6233,7 +6233,7 @@ void do_remove_obs (void)
     }
 }
 
-void add_logs_etc (int ci, int varnum)
+void add_logs_etc (int ci, int varnum, int midas)
 {
     char *liststr;
     int *tmplist = NULL;
@@ -6247,6 +6247,12 @@ void add_logs_etc (int ci, int varnum)
     }
 
     if (liststr == NULL) {
+	return;
+    }
+
+    if ((ci == LAGS || ci == DIFF || ci == LDIFF || ci == SDIFF) && midas) {
+	/* FIXME! */
+	dummy_call();
 	return;
     }
 
@@ -6292,6 +6298,10 @@ void add_logs_etc (int ci, int varnum)
 	err = list_diffgenr(tmplist, ci, dataset);
     }
 
+    if (!err && midas && (ci == LOGS || ci == SQUARE)) {
+	gretl_list_set_midas(tmplist, dataset);
+    }
+
     free(tmplist);
 
     if (err) {
@@ -6327,8 +6337,9 @@ static int logs_etc_code (GtkAction *action)
 void logs_etc_callback (GtkAction *action)
 {
     int ci = logs_etc_code(action);
-    
-    add_logs_etc(ci, 0);
+
+    /* FIXME MIDAS */
+    add_logs_etc(ci, 0, 0);
 }
 
 int save_fit_resid (windata_t *vwin, int code)

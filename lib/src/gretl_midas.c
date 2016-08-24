@@ -1098,14 +1098,25 @@ static int finalize_midas_model (MODEL *pmod,
     }
 
     if (!err) {
-	/* add a record of the number of coeffs per midas spec:
-	   this will be useful when generating forecasts
+	/* Add a record of the midas specification in the form
+	   of a set of lists: this will be useful when generating
+	   forecasts, and for use in the GUI.
 	*/
+	int *ml0 = gretl_list_new(nmidas);
+	int *ml1 = gretl_list_new(nmidas);
+	int *mts = gretl_list_new(nmidas);
 	int *mks = gretl_list_new(nmidas);
-	
+
 	for (i=0; i<nmidas; i++) {
+	    ml0[i+1] = minfo[i].minlag;
+	    ml1[i+1] = minfo[i].maxlag;
+	    mts[i+1] = minfo[i].type;
 	    mks[i+1] = minfo[i].k;
 	}
+	
+	gretl_model_set_list_as_data(pmod, "midas_minlag", ml0);
+	gretl_model_set_list_as_data(pmod, "midas_maxlag", ml1);
+	gretl_model_set_list_as_data(pmod, "midas_types", mts);
 	gretl_model_set_list_as_data(pmod, "midas_klist", mks);
     }
 

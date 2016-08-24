@@ -285,6 +285,10 @@ static char cluster_var[VNAMELEN];
 static double tobit_lo = 0;
 static double tobit_hi = NADBL;
 
+static char mds_listname[VNAMELEN];
+static int mds_quad[4] = {0, 0, 1, 2};
+static int mds_order = 1;
+
 static gretlopt model_opt;
 
 static GtkWidget *multiplot_label;
@@ -306,6 +310,7 @@ static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 static void reset_arma_spinners (selector *sr);
+static void clear_midas_spec (void);
 
 static int want_combo (selector *sr)
 {
@@ -482,6 +487,7 @@ void clear_selector (void)
 
     lp_pvals = 0;
 
+    clear_midas_spec();
     destroy_lag_preferences();
     call_iters_dialog(NULL, NULL);
 
@@ -670,7 +676,23 @@ static void retrieve_tobit_info (MODEL *pmod)
 	tobit_lo = x0;
 	tobit_hi = x1;
     } 
-}	
+}
+
+static void retrieve_midas_info (MODEL *pmod)
+{
+    int *ml0 = gretl_model_get_data(pmod, "midas_minlag");
+    int *ml1 = gretl_model_get_data(pmod, "midas_maxlag");
+    int *mts = gretl_model_get_data(pmod, "midas_types");
+    int *mks = gretl_model_get_data(pmod, "midas_klist");
+
+    if (ml0 != NULL && ml1 != NULL &&
+	mts != NULL && mks != NULL) {
+	mds_quad[0] = ml0[1];
+	mds_quad[1] = ml1[1];
+	mds_quad[2] = mts[1];
+	mds_quad[3] = mks[1];
+    }
+}
 
 /* support for the "Modify model..." Edit menu item */
 
@@ -810,6 +832,8 @@ void selector_from_model (windata_t *vwin)
 	    retrieve_tobit_info(pmod);
 	} else if (pmod->ci == BIPROBIT) {
 	    retrieve_biprobit_info(pmod, &gotinst);
+	} else if (pmod->ci == MIDASREG) {
+	    retrieve_midas_info(pmod);
 	}
 
 	if (pmod->opt & OPT_R) {
@@ -1175,6 +1199,10 @@ static void list_append_midas_var (GtkListStore *store,
     gtk_list_store_set(store, iterp, 
 		       COL_ID, ID, MCOL_M, m,
 		       MCOL_NAME, mname, -1);
+
+    if (!strcmp(mname, mds_listname)) {
+	fprintf(stderr, "Should add %s on right?\n", mname);
+    }
 }
 
 static void render_varname (GtkTreeViewColumn *column,
@@ -1954,9 +1982,16 @@ static void move_midas_term (GtkTreeModel *src,
     /* append to target */
     src_cols = gtk_tree_model_get_n_columns(src);
     if (src_cols == 3) {
-	/* going left to right */
-	int lmin = 1, lmax = 2*m, ptype = 1, k = 2;
-	
+	/* going left to right: defaults */
+	int lmin = 1, lmax = 2*m;
+	int ptype = mds_quad[2];
+	int k = mds_quad[3];
+
+	if (mds_quad[0] < mds_quad[1]) {
+	    lmin = mds_quad[0];
+	    lmax = mds_quad[1];
+	}
+
 	if (midas_term_dialog(vname, m, &lmin, &lmax, &ptype,
 			      &k, sr->dlg) < 0) {
 	    return;
@@ -2272,7 +2307,6 @@ static gint listvar_midas_click (GtkWidget *widget,
 	    gtk_tree_model_get(model, &iter, MCOL_M, &m, MCOL_NAME, &vname,
 			       MCOL_MINLAG, &lmin, MCOL_MAXLAG, &lmax,
 			       MCOL_TYPE, &ptype, MCOL_K, &k, -1);
-	    
 	    resp = midas_term_dialog(vname, m, &lmin, &lmax, &ptype,
 				     &k, sr->dlg);
 	    if (resp != GRETL_CANCEL) {
@@ -3181,6 +3215,16 @@ static int get_rvars2_data (selector *sr, int rows, int context)
     return err;
 }
 
+static void clear_midas_spec (void)
+{
+    *mds_listname = '\0';
+    mds_quad[0] = 0;
+    mds_quad[1] = 0;
+    mds_quad[2] = 1;
+    mds_quad[3] = 2;
+    mds_order = 1;
+}
+
 static void get_midas_specs (selector *sr)
 {
     gui_midas_spec *specs;
@@ -3222,6 +3266,14 @@ static void get_midas_specs (selector *sr)
 			   MCOL_MAXLAG, &specs[i].maxlag,
 			   MCOL_TYPE, &specs[i].ptype,
 			   MCOL_K, &specs[i].nparm, -1);
+	if (i == 0) {
+	    /* remember some stuff */
+	    strcpy(mds_listname, vname);
+	    mds_quad[0] = specs[i].minlag;
+	    mds_quad[1] = specs[i].maxlag;
+	    mds_quad[2] = specs[i].ptype;
+	    mds_quad[3] = specs[i].nparm;	    
+	}
 	if (specs[i].leadvar > 0) {
 	    specs[i].listname[0] = '\0';
 	} else {
@@ -3679,6 +3731,7 @@ static void midas_process_AR_spin (selector *sr)
 	    add_to_cmdlist(sr, bit);
 	    g_free(bit);
 	}
+	mds_order = p;
     }
 }
 
@@ -3822,6 +3875,7 @@ static void compose_cmdlist (selector *sr)
     }
 
     if (sr->ci == MIDASREG) {
+	/* FIXME placement of this? */
 	midas_process_AR_spin(sr);
     }
 
@@ -4596,7 +4650,7 @@ static void AR_order_spin (selector *sr)
 	maxlag = 2 * dataset->pd;
     } else if (sr->ci == MIDASREG) {
 	tmp = gtk_label_new(_("AR order:"));
-	val = 1;
+	val = mds_order;
 	minlag = 0;
 	maxlag = 100;
     } else {
