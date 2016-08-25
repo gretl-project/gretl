@@ -650,9 +650,9 @@ static void print_GNR_info (const MODEL *pmod, PRN *prn)
     ensure_vsep(prn);
 
     if (tex_format(prn)) {
-	pprintf(prn, "GNR: $R^2$ = %g, $|t|$ max = %g\n", R2, tmax);
+	pprintf(prn, "GNR: $R^2$ = %g, max $|t|$ = %g\n", R2, tmax);
     } else {
-	pprintf(prn, "GNR: R-squared = %g, |t| max = %g\n", R2, tmax);
+	pprintf(prn, "GNR: R-squared = %g, max |t| = %g\n", R2, tmax);
     }
 
     gretl_prn_newline(prn);
