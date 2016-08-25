@@ -908,8 +908,10 @@ int midas_forecast_setup (const MODEL *pmod,
 	if (hflist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = remember_list(hflist, "HFL___", NULL);
-	    user_var_privatize_by_name("HFL___");
+	    /* note: remember_list() copies its argument */
+	    err = remember_list(hflist, "HFLFC___", NULL);
+	    user_var_privatize_by_name("HFLFC___");
+	    free(hflist);
 	}
     }
 
@@ -948,7 +950,7 @@ int midas_forecast_setup (const MODEL *pmod,
 	    }
 	    strcat(line, tmp);
 	}
-	strcat(line, "+lincomb(HFL___,hfb___)");
+	strcat(line, "+lincomb(HFLFC___,hfb___)");
 
 	gretl_pop_c_numeric_locale();
 
@@ -957,6 +959,8 @@ int midas_forecast_setup (const MODEL *pmod,
 #endif
 	*pformula = gretl_strdup(line);
     }
+
+    free(minfo);
 
     return err;
 }

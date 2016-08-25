@@ -1340,7 +1340,8 @@ static int real_destroy_user_vars_at_level (int level, int type,
 
 #if HDEBUG
     fprintf(stderr, "real_destroy_user_vars_at_level: level %d, "
-	    "type %d (%s)\n", level, type, gretl_type_get_name(type));
+	    "type %d (%s), imin=%d\n", level, type,
+	    gretl_type_get_name(type), imin);
 #endif
     
     for (i=imin; i<n_vars; i++) {

@@ -15458,7 +15458,7 @@ static int save_generated_var (parser *p, PRN *prn)
 
 	    if (!p->err) {
 		p->err = gen_add_or_replace(p, GRETL_TYPE_BUNDLE, b);
-		if (!p->err && b == r->v.b) {
+		if (!p->err && r->t != DBUNDLE && b == r->v.b) {
 		    /* avoid destroying the assigned bundle */
 		    r->v.b = NULL;
 		}
