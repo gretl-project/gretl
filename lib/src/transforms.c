@@ -1278,30 +1278,16 @@ static int lag_wanted (int p, const gretl_matrix *v, int n)
     return ret;
 }
 
-static int process_hf_lags_input (const gretl_matrix *lvec,
+static int process_hf_lags_input (int hf_min, int hf_max,
 				  DATASET *dset,
 				  int compfac,
 				  int *lf_min, int *lf_max,
 				  int *skip_first,
 				  int *n_terms)
 {
-    int hf_min, hf_max;
-    int i, n;
-
     if (dset->pd != 1 && dset->pd != 12 && dset->pd != 4) {
 	return E_PDWRONG;
     }
-
-    n = gretl_vector_get_length(lvec);
-
-    for (i=1; i<n; i++) {
-	if (lvec->val[i] != lvec->val[i-1] + 1) {
-	    return E_INVARG;
-	}
-    }
-
-    hf_min = lvec->val[0];
-    hf_max = lvec->val[n-1];
 
     *lf_min = (int) ceil(hf_min / (double) compfac);
     *lf_max = (int) ceil(hf_max / (double) compfac);
@@ -1327,19 +1313,20 @@ static int process_hf_lags_input (const gretl_matrix *lvec,
  * list_laggenr:
  * @plist: on entry, pointer to list of variables to process.  On exit
  * the list holds the ID numbers of the lag variables.
- * @order: number of lags to generate (or 0 for automatic).
- * @lvec: (alternative to @order) vector holding lags to generate.
+ * @lmin: minimum lag to include (defaults to 1).
+ * @lmax: maximum lag to include (or 0 for automatic).
+ * @lvec: (alternative to @lmin, @lmax) vector holding lags to generate.
  * @dset: dataset struct.
  * @opt: may contain OPT_L to order the list by lag rather than
  * by variable. 
  *
- * Generates and adds to the data set @order lagged values of the 
+ * Generates and adds to the data set lagged values of the 
  * variables given in the list pointed to by @plist.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int list_laggenr (int **plist, int order,
+int list_laggenr (int **plist, int lmin, int lmax,
 		  const gretl_matrix *lvec,
 		  DATASET *dset, int compfac,
 		  gretlopt opt)
@@ -1349,15 +1336,18 @@ int list_laggenr (int **plist, int order,
     int *laglist = NULL;
     int l, i, j, v, lv;
     int startlen, l0 = 0;
-    int lmin = 0, lmax = 0;
     int skip_first = 0;
     int veclen = 0;
     int n_terms = 0;
-    int err;
+    int err = 0;
 
     if (compfac < 0) {
 	return E_INVARG;
     } else if (compfac > 0) {
+	/* MIDAS: we want lmin and lmax, not lvec */
+	if (lvec != NULL) {
+	    return E_INVARG;
+	}	
 	if (!gretl_is_midas_list(list, dset)) {
 	    gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
 	}
@@ -1367,30 +1357,36 @@ int list_laggenr (int **plist, int order,
 	/* got a vector of lags in @lvec */
 	veclen = gretl_vector_get_length(lvec);
 	if (veclen == 0) {
-	    return E_INVARG;
-	}
-	lmin = lvec->val[0];
-	lmax = lvec->val[veclen-1];
-	if (compfac > 0) {
-	    /* doing midas lags */
-	    err = process_hf_lags_input(lvec, dset, compfac, &lmin,
-					&lmax, &skip_first, &n_terms);
-	    if (err) {
-		return err;
-	    }
+	    err = E_INVARG;
 	} else {
+	    lmin = lvec->val[0];
+	    lmax = lvec->val[veclen-1];
 	    n_terms = veclen;
 	}
+    } else if (compfac > 0) {
+	/* the MIDAS case */
+	int hmin = lmin, hmax = lmax;
+
+	if (hmax < hmin) {
+	    err = E_INVARG;
+	} else {
+	    err = process_hf_lags_input(hmin, hmax, dset, compfac, &lmin,
+					&lmax, &skip_first, &n_terms);
+	}
     } else {
-	/* got a straight integer lag order in arg @order */
-	if (order < 0 || order > dset->n) {
-	    gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
+	/* non-MIDAS, using order = @lmax */
+	if (lmax < 0 || lmax > dset->n) {
+	    gretl_errmsg_sprintf(_("Invalid lag order %d"), lmax);
 	    return E_INVARG;
-	} else if (order == 0) {
-	    order = default_lag_order(dset);
+	} else if (lmax == 0) {
+	    lmax = default_lag_order(dset);
 	}
 	lmin = 1;
-	n_terms = lmax = order;
+	n_terms = lmax;
+    }
+
+    if (err) {
+	return err;
     }
 
     /* Note: at this point @lmin and @lmax are defined in terms of

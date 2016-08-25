@@ -6289,7 +6289,7 @@ void add_logs_etc (int ci, int varnum, int midas)
     }
 
     if (ci == LAGS) {
-	err = list_laggenr(&tmplist, order, NULL, dataset, 0, OPT_NONE);
+	err = list_laggenr(&tmplist, 1, order, NULL, dataset, 0, OPT_NONE);
     } else if (ci == LOGS) {
 	err = list_loggenr(tmplist, dataset);
     } else if (ci == SQUARE) {

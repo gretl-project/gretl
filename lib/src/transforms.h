@@ -44,7 +44,7 @@ int list_resample (int *list, DATASET *dset);
 
 int list_dropcoll (int *list, double eps, DATASET *dset);
 
-int list_laggenr (int **plist, int order,
+int list_laggenr (int **plist, int lmin, int lmax,
 		  const gretl_matrix *lvec,
 		  DATASET *dset, int compfac,
 		  gretlopt opt);

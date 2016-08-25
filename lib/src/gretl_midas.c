@@ -648,16 +648,12 @@ static int *make_midas_laglist (midas_info *m,
     } else {
 	/* copy, because we're going to modify the list */
 	int *lcpy = gretl_list_copy(list);
-	gretl_matrix *lv;
 
 	if (lcpy == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    lv = gretl_matrix_seq(m->minlag, m->maxlag, 1, err);
-	    if (!*err) {
-		*err = list_laggenr(&lcpy, 0, lv, dset, lcpy[0], OPT_L);
-		gretl_matrix_free(lv);
-	    }
+	    *err = list_laggenr(&lcpy, m->minlag, m->maxlag,
+				NULL, dset, lcpy[0], OPT_L);
 	}
 
 	return lcpy;

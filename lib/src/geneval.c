@@ -4524,7 +4524,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 /* argument is series or list; value returned is list in either
    case */
 
-static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
+static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = aux_list_node(p);
 
@@ -4532,19 +4532,11 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	gretlopt opt = OPT_NONE;
 	gretl_matrix *v = NULL;
 	int *list = NULL;
-	int k = 0, cfac = 0;
+	int k = 0;
 
-	if (f == F_LLAG) {
-	    /* regular lags of list: default order of lags
-	       is by variable */
-	    int bylag = node_get_bool(r, p, 0);
-	    
-	    if (!p->err && bylag != 0) {
-		opt = OPT_L; /* by lags */
-	    }
-	} else {
-	    /* high-frequency: default order is by lags */
-	    opt = OPT_L;
+	/* ordering of the results? */
+	if (node_get_bool(r, p, 0) > 0 && !p->err) {
+	    opt = OPT_L; /* by lags */
 	}
 
 	if (!p->err) {
@@ -4559,7 +4551,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	if (!p->err) {
 	    if (m->t == LIST) {
 		list = gretl_list_copy(m->v.ivec);
-	    } else if (f == F_LLAG && useries_node(m)) {
+	    } else if (useries_node(m)) {
 		list = gretl_list_new(1);
 		list[1] = m->vnum;
 	    } else {
@@ -4571,18 +4563,58 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    p->err = E_ALLOC;
 	}
 
-	if (!p->err && f == F_HFLAG) {
+	if (!p->err) {
+	    if (list[0] > 0) {
+		p->err = list_laggenr(&list, 1, k, v,
+				      p->dset, 0, opt);
+	    }
+	    ret->v.ivec = list;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_list_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretlopt opt = OPT_NONE;
+	gretl_matrix *v = NULL;
+	int *list = NULL;
+	int lmin, lmax;
+	int cfac = 0;
+
+	lmin = node_get_int(l, p);
+	if (!p->err) {
+	    lmax = node_get_int(m, p);
+	}
+	if (!p->err) {
+	    if (r->t == LIST) {
+		list = gretl_list_copy(r->v.ivec);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+
+	if (!p->err && list == NULL) {
+	    p->err = E_ALLOC;
+	}
+
+	if (!p->err) {
 	    /* compaction factor for high-frequency data */
 	    cfac = list[0];
 	    if (cfac < 2) {
-		fprintf(stderr, "hflags: list too short\n");
+		fprintf(stderr, "hflags: not a MIDAS list\n");
 		p->err = E_INVARG;
 	    }
 	}
 
 	if (!p->err) {
 	    if (list[0] > 0) {
-		p->err = list_laggenr(&list, k, v, p->dset, cfac, opt);
+		p->err = list_laggenr(&list, lmin, lmax, NULL,
+				      p->dset, cfac, OPT_L);
 	    }
 	    ret->v.ivec = list;
 	}
@@ -12020,13 +12052,19 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-    case F_HFLAG:
 	if ((scalar_node(l) || l->t == MAT) && ok_list_node(m)) {
-	    ret = list_make_lags(l, m, r, t->t, p);
+	    ret = list_make_lags(l, m, r, p);
 	} else {
 	    p->err = E_TYPES; 
 	}
 	break;
+    case F_HFLAG:
+	if (scalar_node(l) && scalar_node(m) && ok_list_node(r)) {
+	    ret = hf_list_make_lags(l, m, r, p);
+	} else {
+	    p->err = E_TYPES; 
+	}
+	break;	
     case F_HFLIST:
 	if (l->t == MAT && scalar_node(m) && r->t == STR) {
 	    ret = hf_list_node(l, m, r, p);
