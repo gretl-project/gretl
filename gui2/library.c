@@ -6240,6 +6240,12 @@ void add_logs_etc (int ci, int varnum, int midas)
     int order = 0;
     int err = 0;
 
+    if ((ci == LAGS || ci == DIFF || ci == LDIFF || ci == SDIFF) && midas) {
+	/* FIXME! */
+	warnbox("Please use console or script when transforming MIDAS series");
+	return;
+    }    
+
     if (varnum > 0 && varnum < dataset->v) {
 	liststr = gretl_strdup_printf(" %s", dataset->varname[varnum]);
     } else {
@@ -6247,12 +6253,6 @@ void add_logs_etc (int ci, int varnum, int midas)
     }
 
     if (liststr == NULL) {
-	return;
-    }
-
-    if ((ci == LAGS || ci == DIFF || ci == LDIFF || ci == SDIFF) && midas) {
-	/* FIXME! */
-	dummy_call();
 	return;
     }
 

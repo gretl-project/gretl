@@ -458,6 +458,7 @@ enum MDSIdx_ {
     MDS_SEPAR,
     MDS_CDISP,
     MDS_CEDIT,
+    MDS_CDEL,
     MDS_GENR,
     MDS_LIST
 };
@@ -519,6 +520,7 @@ struct mpopup_entries midas_pop_entries[] = {
     { MDS_SEPAR, NULL },
     { MDS_CDISP, N_("Display components") },
     { MDS_CEDIT, N_("Edit components") },
+    { MDS_CDEL,  N_("Delete components") },
     { MDS_SEPAR, NULL },
     { MDS_GENR,  N_("Define new variable...") },
     { MDS_LIST,  N_("Define list") }
@@ -767,6 +769,8 @@ static gint midas_popup_click (GtkWidget *w, gpointer p)
 	display_selected();
     } else if (i == MDS_CEDIT) {
 	show_spreadsheet(SHEET_EDIT_VARLIST);
+    } else if (i == MDS_CDEL) {
+	delete_selected_vars();
     } else if (i == MDS_LIST) { 
 	make_list_from_main();
     } else if (i == MDS_GENR) { 
