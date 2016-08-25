@@ -72,6 +72,10 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 				const char *key,
 				int *err);
 
+int gretl_bundle_get_int (gretl_bundle *bundle,
+			  const char *key,
+			  int *err);
+
 const char *gretl_bundle_get_string (gretl_bundle *bundle,
 				     const char *key,
 				     int *err);
@@ -100,6 +104,9 @@ int gretl_bundle_set_string (gretl_bundle *bundle, const char *key,
 
 int gretl_bundle_set_scalar (gretl_bundle *bundle, const char *key,
 			     double val);
+
+int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
+			  int val);
 
 int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 			     const double *x, int n);
