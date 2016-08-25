@@ -3494,9 +3494,19 @@
       </fnargs>
       <description>
 	<para>
-	  Given a MIDAS list on input, produces a list of
-	  high-frequency lags. FIXME, this is just a placeholder at
-	  present.
+	  Given a MIDAS list, <repl>hfvars</repl>, produces a list
+	  holding high-frequency lags <repl>minlag</repl> to
+	  <repl>maxlag</repl>. Use positive values for actual lags,
+	  negative for leads. For example, if <repl>minlag</repl> is
+	  &minus;3 and <repl>maxlag</repl> is 5 than the returned list
+	  will hold 9 series: 3 leads, the contemporary value, and 5
+	  lags.
+	</para>
+	<para>
+	  Note that high-frequency lag 0 corresponds to the first
+	  high frequency period within a low frequency period, for
+	  example the first month of a quarter or the first day of
+	  a month.
 	</para>
       </description>
     </function>    
