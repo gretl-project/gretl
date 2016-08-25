@@ -1344,7 +1344,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
     if (compfac < 0) {
 	return E_INVARG;
     } else if (compfac > 0) {
-	/* MIDAS: we want lmin and lmax, not lvec */
+	/* MIDAS: we want @lmin and @lmax, not @lvec */
 	if (lvec != NULL) {
 	    return E_INVARG;
 	}	
@@ -1374,7 +1374,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 					&lmax, &skip_first, &n_terms);
 	}
     } else {
-	/* non-MIDAS, using order = @lmax */
+	/* non-MIDAS, using order = @lmax, ignoring @lmin */
 	if (lmax < 0 || lmax > dset->n) {
 	    gretl_errmsg_sprintf(_("Invalid lag order %d"), lmax);
 	    return E_INVARG;

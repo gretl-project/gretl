@@ -4521,8 +4521,8 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-/* argument is series or list; value returned is list in either
-   case */
+/* middle argument is series or list; value returned is list in
+   either case */
 
 static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 {
@@ -4549,18 +4549,7 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	if (!p->err) {
-	    if (m->t == LIST) {
-		list = gretl_list_copy(m->v.ivec);
-	    } else if (useries_node(m)) {
-		list = gretl_list_new(1);
-		list[1] = m->vnum;
-	    } else {
-		p->err = E_TYPES;
-	    }
-	}
-
-	if (!p->err && list == NULL) {
-	    p->err = E_ALLOC;
+	    list = node_get_list(m, p);
 	}
 
 	if (!p->err) {
@@ -4575,15 +4564,15 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+/* args are minlag, maxlag, MIDAS-list-to-lag */
+
 static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
-	gretlopt opt = OPT_NONE;
-	gretl_matrix *v = NULL;
 	int *list = NULL;
-	int lmin, lmax;
+	int lmin, lmax = 0;
 	int cfac = 0;
 
 	lmin = node_get_int(l, p);
@@ -4591,15 +4580,7 @@ static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 	    lmax = node_get_int(m, p);
 	}
 	if (!p->err) {
-	    if (r->t == LIST) {
-		list = gretl_list_copy(r->v.ivec);
-	    } else {
-		p->err = E_TYPES;
-	    }
-	}
-
-	if (!p->err && list == NULL) {
-	    p->err = E_ALLOC;
+	    list = node_get_list(r, p);
 	}
 
 	if (!p->err) {
@@ -4608,6 +4589,7 @@ static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 	    if (cfac < 2) {
 		fprintf(stderr, "hflags: not a MIDAS list\n");
 		p->err = E_INVARG;
+		free(list);
 	    }
 	}
 
@@ -4943,7 +4925,9 @@ int *node_get_list (NODE *n, parser *p)
 	p->err = E_TYPES;
     }
 
-    if (p->err == E_UNKVAR && v != 0) {
+    if (!p->err && list == NULL) {
+	p->err = E_ALLOC;
+    } else if (p->err == E_UNKVAR && v != 0) {
 	gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
     }
 
