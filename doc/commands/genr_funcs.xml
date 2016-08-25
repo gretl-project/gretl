@@ -3486,6 +3486,21 @@
       </description>
     </function>
 
+    <function name="hflags" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="int">minlag</fnarg>
+	<fnarg type="int">maxlag</fnarg>
+	<fnarg type="list">hfvars</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a MIDAS list on input, produces a list of
+	  high-frequency lags. FIXME, this is just a placeholder at
+	  present.
+	</para>
+      </description>
+    </function>    
+
     <function name="hpfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
