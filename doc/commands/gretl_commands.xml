@@ -7380,7 +7380,7 @@
 	dependent variable; for a good brief introduction see <cite
 	key="armesto10">Armesto, Engemann and Owyang (2010)</cite>.
       </para>
-      <para>
+      <para context="cli">
 	The variables in <repl>indepvars</repl> should be of the same
 	frequency as the dependent variable. This list should usually
 	include <lit>const</lit> or <lit>0</lit> (intercept) and
@@ -7390,7 +7390,24 @@
 	parentheses, prefixed by either <lit>mds</lit> or
 	<lit>mdsl</lit>.
       </para>
-      <para>
+      <para context="gui">
+	The variables under <repl>Regressors</repl> are of the same
+	frequency as the dependent variable, and are selected from the
+	upper list on the left. MIDAS models typically include one or
+	more lags of the dependent variable; that is controlled by the
+	<quote>AR order</quote> spin button, which defaults to 1 lag.
+	To add MIDAS (high frequency) terms, select from the lower
+	left-hand list and use the lower green arrow (or right-click).
+      </para>
+      <para context="gui">
+	On adding a MIDAS term, a dialog pops up to let you select
+	the range of lags, the parameterization type, and (for
+	types that do not have a fixed number of parameters) the
+	number of hyper-parameters. You can bring this dialog up
+	again to revise a specification by right-clicking on a
+	MIDAS term on the right.
+      </para>      
+      <para context="cli">
 	<lit>mds</lit>: this variant generally requires 5 arguments,
 	as follows: the name of a <quote>MIDAS list</quote>, two
 	integers giving the minimum and maximum high-frequency lags,
@@ -7401,10 +7418,10 @@
 	list <lit>X</lit>, using parameterization type 1 (exponential
 	Almon, see below) with initializer <lit>theta</lit>.
       </para>
-      <code>
+      <code context="cli">
 	mds(X, 3, 11, 1, theta)
       </code>
-      <para>
+      <para context="cli">
 	<lit>mdsl</lit>: generally requires 3 arguments: the name of a
 	list of MIDAS lags, an integer to specify the parameterization
 	and the name of an initialization vector. In this case the
@@ -7413,10 +7430,10 @@
 	list which already holds all the required lags; such a list
 	can be constructed using the <fncref targ="hflags"/> function.
       </para>
-      <code>
+      <code context="cli">
 	mdsl(XLags, 1, theta)
       </code>
-      <para>
+      <para context="cli">
 	The supported types of parameterization are as follows: 0 =
 	<quote>unrestricted MIDAS</quote> or U-MIDAS (each lag has its
 	own coefficient); 1 = normalized exponential Almon (requires
@@ -7426,7 +7443,7 @@
 	parameters); and 4 = (non-normalized) Almon polynomial, which
 	requires at least one parameter.
       </para>
-      <para>
+      <para context="cli">
 	In a specification which includes only U-MIDAS terms,
 	estimation proceeds using OLS and the final initializer
 	argument for <lit>mds</lit> or <lit>mdsl</lit> is not
