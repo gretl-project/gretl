@@ -1044,11 +1044,11 @@ static int model_add_minfo_array (MODEL *pmod,
 		m = &minfo[i];
 		gretl_bundle_set_string(b, "lname",  m->lnam0);
 		gretl_bundle_set_string(b, "mname",  m->mname);
-		gretl_bundle_set_scalar(b, "prelag", m->prelag);
-		gretl_bundle_set_scalar(b, "minlag", m->minlag);
-		gretl_bundle_set_scalar(b, "maxlag", m->maxlag);
-		gretl_bundle_set_scalar(b, "type",  m->type);
-		gretl_bundle_set_scalar(b, "nparm", m->nparm);
+		gretl_bundle_set_int(b, "prelag", m->prelag);
+		gretl_bundle_set_int(b, "minlag", m->minlag);
+		gretl_bundle_set_int(b, "maxlag", m->maxlag);
+		gretl_bundle_set_int(b, "type",  m->type);
+		gretl_bundle_set_int(b, "nparm", m->nparm);
 		err = gretl_array_set_bundle(A, i, b, 0);
 	    }
 	}
@@ -1092,11 +1092,11 @@ static midas_info *minfo_from_array (gretl_array *A,
 	    } else {
 		strcpy(m->lname, gretl_bundle_get_string(b, "lname", err));
 		strcpy(m->mname, gretl_bundle_get_string(b, "mname", err));
-		m->prelag = gretl_bundle_get_scalar(b, "prelag", err);
-		m->minlag = gretl_bundle_get_scalar(b, "minlag", err);
-		m->maxlag = gretl_bundle_get_scalar(b, "maxlag", err);
-		m->type = gretl_bundle_get_scalar(b, "type", err);
-		m->nparm = gretl_bundle_get_scalar(b, "nparm", err);
+		m->prelag = gretl_bundle_get_int(b, "prelag", err);
+		m->minlag = gretl_bundle_get_int(b, "minlag", err);
+		m->maxlag = gretl_bundle_get_int(b, "maxlag", err);
+		m->type = gretl_bundle_get_int(b, "type", err);
+		m->nparm = gretl_bundle_get_int(b, "nparm", err);
 	    }
 	}
 

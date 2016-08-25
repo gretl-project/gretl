@@ -692,10 +692,10 @@ static void retrieve_midas_info (MODEL *pmod)
 
     if (b != NULL) {
 	strcpy(mds_listname, gretl_bundle_get_string(b, "lname", &err));
-	mds_quad[0] = gretl_bundle_get_scalar(b, "minlag", &err);
-	mds_quad[1] = gretl_bundle_get_scalar(b, "maxlag", &err);
-	mds_quad[2] = gretl_bundle_get_scalar(b, "type", &err);
-	mds_quad[3] = gretl_bundle_get_scalar(b, "nparm", &err);	    
+	mds_quad[0] = gretl_bundle_get_int(b, "minlag", &err);
+	mds_quad[1] = gretl_bundle_get_int(b, "maxlag", &err);
+	mds_quad[2] = gretl_bundle_get_int(b, "type", &err);
+	mds_quad[3] = gretl_bundle_get_int(b, "nparm", &err);	    
     }
 }
 
