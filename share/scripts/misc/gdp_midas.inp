@@ -11,7 +11,7 @@ open gdp_midas.gdt --quiet
 # form list of high-frequency log differences
 list dX = ld_payems*
 # and a list of their lags
-list dXL = hflags(seq(3,11), dX)
+list dXL = hflags(3, 11, dX)
 
 # to collect forecasts
 matrix FC = {}
