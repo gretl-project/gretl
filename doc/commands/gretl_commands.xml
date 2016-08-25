@@ -7414,7 +7414,7 @@
 	can be constructed using the <fncref targ="hflags"/> function.
       </para>
       <code>
-	mds(XLags, 1, theta)
+	mdsl(XLags, 1, theta)
       </code>
       <para>
 	The supported types of parameterization are as follows: 0 =
