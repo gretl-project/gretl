@@ -11,6 +11,7 @@
 "ects_nls","Nonlinear least squares (Davidson)","artificial data"
 "frontier","Stochastic frontier cost function","Italian banks"
 "garch","GARCH (Bollerslev and Ghysels, 1996)","exchange rate"
+"gdp_midas","MIDAS examples from Ghysels","GDP and employment"
 "heckit","Heckman selection bias","wages"
 "hall_cbapm","Nonlinear GMM estimation","Consumption and asset returns"
 "hamilton","VECM with tests on cointegrating vector","US and Italian prices"

@@ -1,0 +1,70 @@
+set echo off
+set messages off
+
+/* ADL-MIDAS test examples from Eric Ghysels' MIDAS
+   Toolbox, using the midasreg command with high-frequency
+   lags predefined
+*/
+
+open gdp_midas.gdt --quiet
+
+# form list of high-frequency log differences
+list dX = ld_payems*
+# and a list of their lags
+list dXL = hflags(seq(3,11), dX)
+
+# to collect forecasts
+matrix FC = {}
+
+# to inflect the "fcast" command
+setopt fcast persist --out-of-sample --static --quiet
+
+# estimation sample
+smpl 1985:1 2009:1
+
+print "=== U-MIDAS ==="
+midasreg ld_qgdp 0 ld_qgdp(-1) ; mdsl(dXL, 0)
+printf "midas coefficients:\n%10.5f\n", $model.midas_coeffs[,1]
+fcast
+FC ~= $fcast
+
+print "=== beta (zero last lag) ==="
+matrix theta = {1,5}
+midasreg ld_qgdp 0 ld_qgdp(-1) ; mdsl(dXL, 2, theta)
+printf "midas coefficients:\n%10.5f\n", $model.midas_coeffs[,1]
+fcast
+FC ~= $fcast
+
+print "=== beta (non-zero last lag) ==="
+theta = {1,1,0}
+midasreg ld_qgdp 0 ld_qgdp(-1) ; mdsl(dXL, 3, theta)
+printf "midas coefficients:\n%10.5f\n", $model.midas_coeffs[,1]
+fcast
+FC ~= $fcast
+
+print "=== normalized exponential Almon ==="
+theta = {0,0}
+midasreg ld_qgdp 0 ld_qgdp(-1) ; mdsl(dXL, 1, theta)
+printf "midas coefficients:\n%10.5f\n", $model.midas_coeffs[,1]
+fcast
+FC ~= $fcast
+
+print "=== Almon polynomial ==="
+theta = {0,0,0,0}
+midasreg ld_qgdp 0 ld_qgdp(-1) ; mdsl(dXL, 4, theta)
+printf "midas coefficients:\n%10.5f\n", $model.midas_coeffs[,1]
+fcast --out-of-sample --static --quiet
+FC ~= $fcast
+
+# forecast range
+smpl 2009:2 2011:2
+matrix my = {ld_qgdp}
+print "Forecast RMSEs:"
+printf "  U-MIDAS %.4f\n", fcstats(my, FC[,1])[2]
+printf "  Beta0   %.4f\n", fcstats(my, FC[,2])[2]
+printf "  BetaNZ  %.4f\n", fcstats(my, FC[,3])[2]
+printf "  neAlmon %.4f\n", fcstats(my, FC[,4])[2]
+printf "  Almonp  %.4f\n", fcstats(my, FC[,5])[2]
+
+
+
