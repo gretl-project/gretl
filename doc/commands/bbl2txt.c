@@ -51,6 +51,11 @@ void remember_author (char *s, char *au)
 	int n = p - s;
 	
 	strncat(au, s, n - 1);
+	p = au;
+	while (*p) {
+	    if (*p == '~') *p = ' ';
+	    p++;
+	}
     }
 }
 
@@ -101,7 +106,13 @@ void print_item (char *s, const char *key, int html)
 		printf("<@itl=\"");
 	    }
 	    s += 5;
+	} else if (!strncmp(s, "\\urlprefix\\url{", 14)) {
+	    printf("URL ");
+	    url = 1;
+	    putit = 0;
+	    s += 14;			    
 	} else if (!strncmp(s, "\\url{", 4)) {
+	    printf("URL ");
 	    url = 1;
 	    putit = 0;
 	    s += 3;
@@ -143,7 +154,11 @@ void print_item (char *s, const char *key, int html)
 	}
 
 	if (putit) {
-	    putchar(*s);
+	    if (!url && *s == '~') {
+		putchar(' ');
+	    } else {	    
+		putchar(*s);
+	    }
 	    if (html && rparen == 0 && *s == ')') {
 		fputs("</a>", stdout);
 		rparen++;
@@ -183,7 +198,7 @@ int parse_record (char *buf, int html)
     p++;
     buf = p;
 
-    while (*p) {
+    while (0 && *p) {
 	if (*p == '~') {
 	    *p = ' ';
 	}
