@@ -1197,7 +1197,8 @@ static gretl_matrix *build_XZ (const gretl_matrix *X,
     int nx = 0;
 
     if (X != NULL) {
-	/* allow for the case of no low-freq regressors? */
+	/* allow for the unlikely case of no low-freq 
+	   regressors */
 	nx = X->cols;
     }
 	    
@@ -1250,7 +1251,7 @@ static int add_midas_matrices (int yno,
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *b = NULL;
-    char cname[16];
+    gretl_matrix *c = NULL;
     int hfslopes = 0;
     int init_err = 0;
     int i, T, nx = 0;
@@ -1277,7 +1278,8 @@ static int add_midas_matrices (int yno,
 	}
     }
 
-    if (!err && !init_err) {
+    if (!err) {
+	/* for initialization only */
 	y = gretl_column_vector_alloc(T);
 	if (y != NULL) {
 	    memcpy(y->val, dset->Z[yno] + dset->t1,
@@ -1294,60 +1296,64 @@ static int add_midas_matrices (int yno,
 		hfslopes++;
 	    }
 	}
+	/* full-length coeff vector */
+	c = gretl_zero_matrix_new(nx + hfslopes, 1);
+	if (c == NULL) {
+	    init_err = 1;
+	}
     }
 
-    /* FIXME OLS initialization code not right yet? */
+    if (!err && !init_err) {
+	if (hfslopes > 0) {
+	    gretl_matrix *XZ;
 
-    if (!err && !init_err && hfslopes > 0) {
-	gretl_matrix *bplus;
-	gretl_matrix *XZ;
-	double bzi;
-
-	bplus = gretl_column_vector_alloc(nx + hfslopes);
-	XZ = build_XZ(X, dset, minfo, T, nmidas, hfslopes);
-	if (bplus == NULL || XZ == NULL) {
-	    init_err = 1;
+	    XZ = build_XZ(X, dset, minfo, T, nmidas, hfslopes);
+	    if (XZ == NULL) {
+		init_err = 1;
+	    } else {
+		init_err = gretl_matrix_ols(y, XZ, c, NULL,
+					    NULL, NULL);
+	    }
+	    gretl_matrix_free(XZ);
 	} else {
-	    init_err = gretl_matrix_ols(y, XZ, bplus, NULL,
+	    /* plain Almon polynomial by itself comes here */
+	    init_err = gretl_matrix_ols(y, X, c, NULL,
 					NULL, NULL);
 	}
+    }
+
+#if MIDAS_DEBUG
+    if (!err && !init_err) {
+	gretl_matrix_print(c, "MIDAS OLS initialization");
+    }
+#endif
+
+    if (!err) {
 	if (!init_err) {
-	    /* transcribe the OLS estimates */
+	    /* initialize X coeffs from OLS */
 	    for (i=0; i<nx; i++) {
-		b->val[i] = bplus->val[i];
+		b->val[i] = c->val[i];
 	    }
+	}
+	if (hfslopes > 0) {
+	    /* initialize hf slopes, with fallback to zero */
+	    char tmp[16];
+	    double bzi;
+	
 	    for (i=0; i<nmidas && !err; i++) {
 		if (takes_coeff(minfo[i].type)) {
-		    sprintf(cname, "bmlc___%d", i+1);
-		    bzi = bplus->val[nx+i];
-		    err = private_scalar_add(bzi, cname);
+		    sprintf(tmp, "bmlc___%d", i+1);
+		    bzi = init_err ? 0.0 : c->val[nx+i];
+		    err = private_scalar_add(bzi, tmp);
 		}
 	    }
 	}
-	gretl_matrix_print(bplus, "bplus (OLS init)");
-	gretl_matrix_free(XZ);
-	gretl_matrix_free(bplus);
-    } else if (!err && !init_err) {
-	/* plain Almon polynomial by itself comes here */
-	init_err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
-	gretl_matrix_print(b, "b (OLS init)");
     }
 
     gretl_matrix_free(y);
+    gretl_matrix_free(c);
 
-    if (!err && init_err && hfslopes > 0) {
-	/* initialization failed above: fall back to zero */
-	char tmp[16];
-	
-	for (i=0; i<nmidas && !err; i++) {
-	    if (takes_coeff(minfo[i].type)) {
-		sprintf(tmp, "bmlc___%d", i+1);
-		err = private_scalar_add(0, tmp);
-	    }
-	}
-    }
-
-    /* we're finished with the laglists now */
+    /* we're finished with the per-term laglists now */
     for (i=0; i<nmidas; i++) {
 	if (!minfo[i].prelag) {
 	    free(minfo[i].laglist);
