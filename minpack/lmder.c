@@ -18,12 +18,12 @@
 /*
 c     lmder:
 c
-c     the purpose of lmder is to minimize the sum of the squares of
+c     The purpose of lmder is to minimize the sum of the squares of
 c     m nonlinear functions in n variables by a modification of
-c     the levenberg-marquardt algorithm. the user must provide a
+c     the Levenberg-Marquardt algorithm. The user must provide a
 c     subroutine which calculates the functions and the jacobian.
 c
-c     the subroutine statement is
+c     The subroutine statement is
 c
 c       subroutine lmder(fcn,m,n,x,fvec,fjac,ldfjac,ftol,xtol,gtol,
 c                        maxfev,diag,mode,factor,nprint,info,nfev,
@@ -65,7 +65,7 @@ c
 c       fvec is an output array of length m which contains
 c         the functions evaluated at the output x.
 c
-c       fjac is an output m by n array. the upper n by n submatrix
+c       fjac is an output m by n array. The upper n by n submatrix
 c         of fjac contains an upper triangular matrix r with
 c         diagonal elements of nonincreasing magnitude such that
 c
@@ -73,7 +73,7 @@ c                t     t           t
 c               p *(jac *jac)*p = r *r,
 c
 c         where p is a permutation matrix and jac is the final
-c         calculated jacobian. column j of p is column ipvt(j)
+c         calculated jacobian. Column j of p is column ipvt(j)
 c         (see below) of the identity matrix. the lower trapezoidal
 c         part of fjac contains information generated during
 c         the computation of r.
@@ -81,56 +81,56 @@ c
 c       ldfjac is a positive integer input variable not less than m
 c         which specifies the leading dimension of the array fjac.
 c
-c       ftol is a nonnegative input variable. termination
+c       ftol is a nonnegative input variable. Termination
 c         occurs when both the actual and predicted relative
 c         reductions in the sum of squares are at most ftol.
-c         therefore, ftol measures the relative error desired
+c         Therefore, ftol measures the relative error desired
 c         in the sum of squares.
 c
-c       xtol is a nonnegative input variable. termination
+c       xtol is a nonnegative input variable. Termination
 c         occurs when the relative error between two consecutive
 c         iterates is at most xtol. therefore, xtol measures the
 c         relative error desired in the approximate solution.
 c
-c       gtol is a nonnegative input variable. termination
+c       gtol is a nonnegative input variable. Termination
 c         occurs when the cosine of the angle between fvec and
 c         any column of the jacobian is at most gtol in absolute
-c         value. therefore, gtol measures the orthogonality
+c         value. Therefore, gtol measures the orthogonality
 c         desired between the function vector and the columns
 c         of the jacobian.
 c
-c       maxfev is a positive integer input variable. termination
+c       maxfev is a positive integer input variable. Termination
 c         occurs when the number of calls to fcn with iflag = 1
 c         has reached maxfev.
 c
-c       diag is an array of length n. if mode = 1 (see
-c         below), diag is internally set. if mode = 2, diag
+c       diag is an array of length n. If mode = 1 (see
+c         below), diag is internally set. If mode = 2, diag
 c         must contain positive entries that serve as
 c         multiplicative scale factors for the variables.
 c
-c       mode is an integer input variable. if mode = 1, the
-c         variables will be scaled internally. if mode = 2,
-c         the scaling is specified by the input diag. other
+c       mode is an integer input variable. If mode = 1, the
+c         variables will be scaled internally. If mode = 2,
+c         the scaling is specified by the input diag. Other
 c         values of mode are equivalent to mode = 1.
 c
 c       factor is a positive input variable used in determining the
-c         initial step bound. this bound is set to the product of
+c         initial step bound. This bound is set to the product of
 c         factor and the euclidean norm of diag*x if nonzero, or else
-c         to factor itself. in most cases factor should lie in the
-c         interval (.1,100.).100. is a generally recommended value.
+c         to factor itself. In most cases factor should lie in the
+c         interval (.1,100.). 100. is a generally recommended value.
 c
 c       nprint is an integer input variable that enables controlled
-c         printing of iterates if it is positive. in this case,
+c         printing of iterates if it is positive. In this case,
 c         fcn is called with iflag = 0 at the beginning of the first
 c         iteration and every nprint iterations thereafter and
 c         immediately prior to return, with x, fvec, and fjac
 c         available for printing. fvec and fjac should not be
-c         altered. if nprint is not positive, no special calls
+c         altered. If nprint is not positive, no special calls
 c         of fcn with iflag = 0 are made.
 c
-c       info is an integer output variable. if the user has
+c       info is an integer output variable. If the user has
 c         terminated execution, info is set to the (negative)
-c         value of iflag. see description of fcn. otherwise,
+c         value of iflag. See description of fcn. Otherwise,
 c         info is set as follows.
 c
 c         info = 0  improper input parameters.
@@ -185,8 +185,8 @@ c       user-supplied ...... fcn
 c
 c       minpack-supplied ... enorm,lmpar,qrfac
 c
-c     argonne national laboratory. minpack project. march 1980.
-c     burton s. garbow, kenneth e. hillstrom, jorge j. more
+c     Argonne National Laboratory. Minpack project. March 1980.
+c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
 int lmder_(S_fp fcn, int m, int n, double *x, double *fvec, 
@@ -216,7 +216,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     *njev = 0;
 
     /* check the input parameters for errors */
-
     if (n <= 0 || m < n || ldfjac < m || ftol < 0.0 || xtol < 0.0 || 
 	    gtol < 0.0 || maxfev <= 0 || factor <= 0.0) {
 	goto bailout;
@@ -232,7 +231,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 
     /* evaluate the function at the starting point
        and calculate its norm */
-
     iflag = 1;
     (*fcn)(m, n, x, fvec, fjac, ldfjac, &iflag, p);
     *nfev = 1;
@@ -249,7 +247,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
  outer_start:
 
     /* calculate the jacobian matrix */
-
     iflag = 2;
     (*fcn)(m, n, x, fvec, fjac, ldfjac, &iflag, p);
     *njev += 1;
@@ -274,7 +271,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     /* on the first iteration and if mode is 1, scale according
        to the norms of the columns of the initial jacobian 
     */
-
     if (iter == 1) {
 	if (mode != 2) {
 	    for (j = 0; j < n; ++j) {
@@ -298,7 +294,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     }
 
     /* form Q'*fvec and store the first n components in qtf */
-
     for (i = 0; i < m; ++i) {
 	wa4[i] = fvec[i];
     }
@@ -318,7 +313,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     }
 
     /* compute the norm of the scaled gradient */
-
     gnorm = 0.0;
     if (fnorm != 0.0) {
 	for (j = 0; j < n; ++j) {
@@ -404,7 +398,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 
 	/* compute the ratio of the actual to the predicted
 	   reduction */
-
 	ratio = 0.0;
 	if (prered != 0.0) {
 	    ratio = actred / prered;
@@ -430,7 +423,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 	}
 
 	/* test for successful iteration */
-
 	if (ratio >= p0001) {
 	    /* successful iteration: update x, fvec, and their norms */
 	    for (j = 0; j < n; ++j) {
@@ -446,7 +438,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 	}
 
 	/* tests for convergence */
-
 	if (fabs(actred) <= ftol && prered <= ftol && p5 * ratio <= 1.0) {
 	    *info = 1;
 	}
@@ -462,7 +453,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 	}
 
 	/* tests for termination and stringent tolerances */
-
 	if (*nfev >= maxfev) {
 	    *info = 5;
 	}
@@ -491,7 +481,6 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
  bailout:
 
     /* termination, either normal or user-imposed */
-
     if (iflag < 0) {
 	*info = iflag;
     }
