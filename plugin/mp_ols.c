@@ -2346,6 +2346,7 @@ int mp_midas_weights (const double *theta, int k,
 
     if (!err) {
 	for (i=0; i<k; i++) {
+	    mpfr_div(mw[i], mw[i], wsum, GMP_RNDN);
 	    w->val[i] = mpfr_get_d(mw[i], GMP_RNDN);
 	}	
     }
