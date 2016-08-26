@@ -1238,7 +1238,9 @@ static gretl_matrix *build_XZ (const gretl_matrix *X,
    (MX___) and the vector of coefficients on these data
    (bx___). Also add scalars, bmlc___i, to serve as the
    multipliers on the linear combinations of MIDAS terms
-   (high-frequency slopes).
+   (high-frequency slopes). While we're here, we'll also
+   try running OLS to initialize bx___ and the hf slope
+   coefficients.
 */
 
 static int add_midas_matrices (int yno,
@@ -1296,7 +1298,7 @@ static int add_midas_matrices (int yno,
 		hfslopes++;
 	    }
 	}
-	/* full-length coeff vector */
+	/* "full-length" coeff vector */
 	c = gretl_zero_matrix_new(nx + hfslopes, 1);
 	if (c == NULL) {
 	    init_err = 1;
@@ -1304,22 +1306,23 @@ static int add_midas_matrices (int yno,
     }
 
     if (!err && !init_err) {
-	if (hfslopes > 0) {
-	    gretl_matrix *XZ;
+	gretl_matrix *XZ = NULL;
 
+	if (hfslopes > 0) {
 	    XZ = build_XZ(X, dset, minfo, T, nmidas, hfslopes);
 	    if (XZ == NULL) {
-		init_err = 1;
-	    } else {
-		init_err = gretl_matrix_ols(y, XZ, c, NULL,
-					    NULL, NULL);
+		/* fallback, ignoring "Z" */
+		c->rows = nx;
 	    }
-	    gretl_matrix_free(XZ);
+	}
+	if (XZ != NULL) {
+	    init_err = gretl_matrix_ols(y, XZ, c, NULL,
+					NULL, NULL);
 	} else {
-	    /* plain Almon polynomial by itself comes here */
 	    init_err = gretl_matrix_ols(y, X, c, NULL,
 					NULL, NULL);
-	}
+	}	    
+	gretl_matrix_free(XZ);
     }
 
 #if MIDAS_DEBUG
@@ -1337,13 +1340,14 @@ static int add_midas_matrices (int yno,
 	}
 	if (hfslopes > 0) {
 	    /* initialize hf slopes, with fallback to zero */
+	    int use_c = !init_err && c->rows > nx;
 	    char tmp[16];
 	    double bzi;
 	
 	    for (i=0; i<nmidas && !err; i++) {
 		if (takes_coeff(minfo[i].type)) {
 		    sprintf(tmp, "bmlc___%d", i+1);
-		    bzi = init_err ? 0.0 : c->val[nx+i];
+		    bzi = use_c ? c->val[nx+i] : 0.0;
 		    err = private_scalar_add(bzi, tmp);
 		}
 	    }
