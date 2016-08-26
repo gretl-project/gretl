@@ -4005,6 +4005,8 @@ int list_linear_combo (double *y, const int *list,
    = 2) are supported.
 */
 
+#define CLAMPIT 0
+
 gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 			     int method, int *err)
 {
@@ -4052,15 +4054,37 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	return NULL;
     }
 
+#if CLAMPIT /* an ugly hack! */
+ clamp:
+    if (errno) {
+	for (i=0; i<k; i++) {
+	    theta[i] /= 10.0;
+	}
+    }
+#endif
+
     errno = 0;
 
     if (method == MIDAS_NEALMON) {
+	double ewi;
+	
 	for (i=0; i<p; i++) {
 	    w->val[i] = (i+1) * theta[0];
 	    for (j=1; j<k; j++) {
 		w->val[i] += pow(i+1, j+1) * theta[j];
 	    }
-	    w->val[i] = exp(w->val[i]);
+	    ewi = exp(w->val[i]);
+	    if (errno) {
+		fprintf(stderr, "at nealmon weight %d: exp(%g), range error\n",
+			i, w->val[i]);
+		gretl_matrix_print(m, "theta, in midas_weights");
+#if CLAMPIT
+		goto clamp; /* ??? */
+#else
+		break;
+#endif
+	    }
+	    w->val[i] = ewi; 
 	    wsum += w->val[i];
 	}
     } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
@@ -4077,6 +4101,9 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
+	    if (errno) {
+		break;
+	    }
 	}
     } else if (method == MIDAS_ALMONP) {
 	/* straight Almon ploynomial */
@@ -4087,6 +4114,15 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    }
 	}
     }
+
+    if (errno) {
+	gretl_errmsg_sprintf("Failed to calculate MIDAS weights: %s",
+			     strerror(errno));
+	*err = E_INVARG;
+	gretl_matrix_free(w);
+	errno = 0;
+	return NULL;
+    }    
 
     if (method != MIDAS_ALMONP) {
 	/* normalize the weights */
@@ -4102,15 +4138,6 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    w->val[i] += theta[2];
 	    w->val[i] /= wsum;
 	}
-    }
-
-    if (errno) {
-	gretl_errmsg_sprintf("Failed to calculate MIDAS weights: %s",
-			     strerror(errno));
-	*err = E_INVARG;
-	gretl_matrix_free(w);
-	w = NULL;
-	errno = 0;
     }
     
     return w;
@@ -4142,7 +4169,6 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     }
 
     theta = m->val;
-
     errno = 0;
 
     if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
