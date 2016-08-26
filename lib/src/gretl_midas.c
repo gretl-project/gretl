@@ -739,7 +739,7 @@ static int midas_set_sample (const int *list,
 			     int nmidas)
 {
     int *biglist;
-    int j, err = 0;
+    int err = 0;
 
     biglist = make_midas_biglist(list, m, nmidas);
     if (biglist == NULL) {
@@ -754,14 +754,6 @@ static int midas_set_sample (const int *list,
 	    dset->t1 = t1;
 	    dset->t2 = t2;
 	}
-    }
-
-    for (j=0; j<nmidas; j++) {
-	/* we're done with these lists now */
-	if (!m[j].prelag) {
-	    free(m[j].laglist);
-	}
-	m[j].laglist = NULL;
     }
 
     free(biglist);
@@ -1195,6 +1187,52 @@ static int finalize_midas_model (MODEL *pmod,
     return err;
 }
 
+static gretl_matrix *build_XZ (const gretl_matrix *X,
+			       const DATASET *dset,
+			       midas_info *minfo,
+			       int T, int nmidas,
+			       int hfslopes)
+{
+    gretl_matrix *XZ;
+    int nx = 0;
+
+    if (X != NULL) {
+	/* allow for the case of no low-freq regressors? */
+	nx = X->cols;
+    }
+	    
+    XZ = gretl_matrix_alloc(T, nx + hfslopes);
+    
+    if (XZ != NULL) {
+	const int *zlist;
+	double zti;
+	int i, j, k, t;
+
+	if (X != NULL) {
+	    /* transcribe low-frequency regressors */
+	    memcpy(XZ->val, X->val, T * nx * sizeof(double));
+	}
+
+	/* transcribe time-mean of MIDAS terms */
+	k = nx * T;
+	for (i=0; i<nmidas; i++) {
+	    if (!takes_coeff(minfo[i].type)) {
+		continue;
+	    }
+	    zlist = minfo[i].laglist;
+	    for (t=0; t<T; t++) {
+		zti = 0.0;
+		for (j=1; j<=zlist[0]; j++) {
+		    zti += dset->Z[zlist[j]][t+dset->t1];
+		}
+		XZ->val[k++] = zti / zlist[0];
+	    }
+	}		
+    }
+
+    return XZ;
+}
+
 /* Define "private" matrices to hold the regular X data
    (MX___) and the vector of coefficients on these data
    (bx___). Also add scalars, bmlc___i, to serve as the
@@ -1202,45 +1240,120 @@ static int finalize_midas_model (MODEL *pmod,
    (high-frequency slopes).
 */
 
-static int add_midas_matrices (const int *xlist,
+static int add_midas_matrices (int yno,
+			       const int *xlist,
 			       const DATASET *dset,
 			       midas_info *minfo,
 			       int nmidas,
 			       int *pslopes)
 {
-    gretl_matrix *m;
+    gretl_matrix *X = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *b = NULL;
+    char cname[16];
     int hfslopes = 0;
-    int i, err = 0;
+    int init_err = 0;
+    int i, T, nx = 0;
+    int err = 0;
+
+    T = sample_size(dset);
 
     if (xlist != NULL) {
-	m = gretl_matrix_data_subset(xlist, dset,
+	nx = xlist[0];
+	X = gretl_matrix_data_subset(xlist, dset,
 				     dset->t1, dset->t2,
 				     M_MISSING_ERROR,
 				     &err);
 	if (!err) {
-	    err = private_matrix_add(m, "MX___");
+	    err = private_matrix_add(X, "MX___");
 	}
 	if (!err) {
-	    m = gretl_zero_matrix_new(xlist[0], 1);
-	    if (m != NULL) {
-		err = private_matrix_add(m, "bx___");
+	    b = gretl_zero_matrix_new(nx, 1);
+	    if (b!= NULL) {
+		err = private_matrix_add(b, "bx___");
 	    } else {
 		err = E_ALLOC;
 	    }
 	}
     }
-    
+
+    if (!err && !init_err) {
+	y = gretl_column_vector_alloc(T);
+	if (y != NULL) {
+	    memcpy(y->val, dset->Z[yno] + dset->t1,
+		   T * sizeof(double));
+	} else {
+	    init_err = 1;
+	}
+    }
+
     if (!err) {
+	/* count the HF slope coeffs */
+	for (i=0; i<nmidas && !err; i++) {
+	    if (takes_coeff(minfo[i].type)) {
+		hfslopes++;
+	    }
+	}
+    }
+
+    /* FIXME OLS initialization code not right yet? */
+
+    if (!err && !init_err && hfslopes > 0) {
+	gretl_matrix *bplus;
+	gretl_matrix *XZ;
+	double bzi;
+
+	bplus = gretl_column_vector_alloc(nx + hfslopes);
+	XZ = build_XZ(X, dset, minfo, T, nmidas, hfslopes);
+	if (bplus == NULL || XZ == NULL) {
+	    init_err = 1;
+	} else {
+	    init_err = gretl_matrix_ols(y, XZ, bplus, NULL,
+					NULL, NULL);
+	}
+	if (!init_err) {
+	    /* transcribe the OLS estimates */
+	    for (i=0; i<nx; i++) {
+		b->val[i] = bplus->val[i];
+	    }
+	    for (i=0; i<nmidas && !err; i++) {
+		if (takes_coeff(minfo[i].type)) {
+		    sprintf(cname, "bmlc___%d", i+1);
+		    bzi = bplus->val[nx+i];
+		    err = private_scalar_add(bzi, cname);
+		}
+	    }
+	}
+	gretl_matrix_print(bplus, "bplus (OLS init)");
+	gretl_matrix_free(XZ);
+	gretl_matrix_free(bplus);
+    } else if (!err && !init_err) {
+	/* plain Almon polynomial by itself comes here */
+	init_err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	gretl_matrix_print(b, "b (OLS init)");
+    }
+
+    gretl_matrix_free(y);
+
+    if (!err && init_err && hfslopes > 0) {
+	/* initialization failed above: fall back to zero */
 	char tmp[16];
 	
 	for (i=0; i<nmidas && !err; i++) {
 	    if (takes_coeff(minfo[i].type)) {
 		sprintf(tmp, "bmlc___%d", i+1);
 		err = private_scalar_add(0, tmp);
-		hfslopes++;
 	    }
 	}
     }
+
+    /* we're finished with the laglists now */
+    for (i=0; i<nmidas; i++) {
+	if (!minfo[i].prelag) {
+	    free(minfo[i].laglist);
+	}
+	minfo[i].laglist = NULL;
+    }    
 
 #if MIDAS_DEBUG
     fprintf(stderr, "add_midas_matrices: returning %d\n", err);
@@ -1365,8 +1478,8 @@ MODEL midas_model (const int *list,
 
     if (!err) {
 	/* add the required matrices */
-	err = add_midas_matrices(xlist, dset, minfo, nmidas,
-				 &hfslopes);
+	err = add_midas_matrices(list[1], xlist, dset, minfo,
+				 nmidas, &hfslopes);
     }
 
 #if MIDAS_DEBUG	
