@@ -187,6 +187,8 @@ struct plugin_function_info plugin_functions[] = {
     { "mp_vector_ln",             P_MP_OLS },
 #endif
     { "mp_bw_filter",             P_MP_OLS },
+    { "mp_midas_weights",         P_MP_OLS },
+    { "mp_midas_gradient",        P_MP_OLS },
 
     /* principal components analysis */
     { "pca_from_cmatrix", P_PCA },
