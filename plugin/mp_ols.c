@@ -25,10 +25,7 @@
 
 #include <float.h>
 #include <gmp.h>
-
-#ifdef HAVE_MPFR
 #include <mpfr.h>
-#endif
 
 #define MP_DEBUG 0
 
@@ -77,9 +74,7 @@ typedef struct {
 } MPCHOLBETA;
 
 static void set_gretl_mp_bits (void);
-#ifdef HAVE_MPFR
 static void set_gretl_mpfr_bits (void);
-#endif
 
 static void mpf_constants_init (void)
 {
@@ -462,8 +457,6 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
     return 0;
 }
 
-#ifdef HAVE_MPFR
-
 static mpfr_t MPFR_ONE;
 
 static void mpfr_constants_init (void)
@@ -510,8 +503,6 @@ int mp_vector_ln (const double *srcvec, double *targvec, int n)
 
     return 0;
 }
-
-#endif
 
 static int poly_check (MPMODEL *mpmod, const int *polylist, const int *list)
 {
@@ -574,8 +565,6 @@ static void set_gretl_mp_bits (void)
 
     mpf_set_default_prec(bits);
 }
-
-#ifdef HAVE_MPFR
 
 static void set_gretl_mpfr_bits (void)
 {
@@ -1880,8 +1869,6 @@ static void mp_array_free (mpf_t *y, int n)
     }
 }
 
-#if HAVE_MPFR
-
 static mpfr_t *doubles_array_to_mpfr (const double *dy, int n)
 {
     mpfr_t *y = NULL;
@@ -1927,8 +1914,6 @@ static void mpfr_array_free (mpfr_t *y, int n)
 	free(y);
     }
 }
-
-#endif
 
 static mpf_t **mp_2d_array_new (int n, int T)
 {
@@ -2274,8 +2259,6 @@ int mp_bw_filter (const double *x, double *bw, int T, int n,
     return err;
 }
 
-#if HAVE_MPFR
-
 /* Multiple precision versions of midas_weights() and 
    midas_gradient(). We come here only if the standard
    double precision variants hot a range error -- see
@@ -2570,4 +2553,3 @@ int mp_midas_gradient (const double *theta, int k,
 #endif /* not ready */    
 }
 
-#endif /* HAVE_MPFR */
