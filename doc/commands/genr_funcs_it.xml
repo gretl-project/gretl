@@ -3434,11 +3434,10 @@
       dove $n = (j-1) m + l$.
     </para>
     <para>
-      Non siamo a conoscenza di un nome standard per questa
-      operazione nell'algebra delle matrici. "Prodotto diretto
-      orizzontale" ("Horizontal direct product") è il modo con cui
-      questa operazione viene chiamata nel linguaggio di
-      programmazione GAUSS.
+       "Prodotto diretto orizzontale" ("Horizontal direct product") è
+       il modo con cui questa operazione viene chiamata nel linguaggio
+       di programmazione GAUSS. Il suo equivalente in algebra
+       matriciale standard si chiama "prodotto di Khatri-Rao per riga".
     </para>
     <para>
       Esempio: il codice

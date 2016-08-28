@@ -3464,9 +3464,11 @@
 	  where $n = (j-1) m + l$.
 	</para>
 	<para>
-	  As far as we know there isn't an established name for this
-	  operation in matrix algebra; it is called <quote>horizontal
-	  direct product</quote> in the GAUSS programming language.
+	  This operation is called <quote>horizontal direct
+	  product</quote> in conformity to its implementation in the
+	  GAUSS programming language. Its equivalent in standard
+	  matrix algebra would be called the row-wise Khatri-Rao
+	  product.
 	</para>
 	<para>
 	  Example: the code
