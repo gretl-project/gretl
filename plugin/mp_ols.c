@@ -468,12 +468,12 @@ static mpfr_t MPFR_ONE;
 
 static void mpfr_constants_init (void)
 {
-    mpf_init_set_ui(MPFR_ONE, 1, GMP_RNDN);
+    mpfr_init_set_ui(MPFR_ONE, 1, GMP_RNDN);
 }
 
 static void mpfr_constants_clear (void)
 {
-    mpf_clear(MPFR_ONE);
+    mpfr_clear(MPFR_ONE);
 }
 
 /**
@@ -2465,13 +2465,14 @@ int mp_midas_gradient (const double *theta, int k,
 	mpfr_clear(ws2);
     } else  {
 	/* beta */
-	mpfr_t si, ai, bi;
+	mpfr_t si, ai, bi, ws2;
 	mpfr_t g1sum, g2sum;
 	double dsi, dgij;
 
 	mpfr_init(si);
 	mpfr_init(ai);
 	mpfr_init(bi);
+	mpfr_init(ws2);
 	mpfr_init_set_d(g1sum, 0.0, GMP_RNDN);
 	mpfr_init_set_d(g2sum, 0.0, GMP_RNDN);
 
@@ -2550,6 +2551,7 @@ int mp_midas_gradient (const double *theta, int k,
 	mpfr_clear(si);
 	mpfr_clear(ai);
 	mpfr_clear(bi);
+	mpfr_clear(ws2);
 	mpfr_clear(g1sum);
 	mpfr_clear(g2sum);	
     }
