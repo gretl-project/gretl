@@ -2405,7 +2405,7 @@ int mp_midas_gradient (const double *theta,
     if (method == 1) {
 	/* nealmon */
 	mpfr_t *dsum = mpfr_array_new(k);
-	mpfr_t ival, jval, wnorm, ws2;
+	mpfr_t wnorm, ws2;
 	double dgij;
 
 	if (dsum == NULL) {
@@ -2413,8 +2413,6 @@ int mp_midas_gradient (const double *theta,
 	    goto bailout;
 	}
 
-	mpfr_init(ival);
-	mpfr_init(jval);
 	mpfr_init(wnorm);
 	mpfr_init(ws2);
 
@@ -2422,11 +2420,9 @@ int mp_midas_gradient (const double *theta,
 	    mpfr_init_set_d(dsum[j], 0.0, GMP_RNDN);
 	}
 	for (i=0; i<p; i++) {
-	    mpfr_set_ui(ival, i+1, GMP_RNDN);
-	    mpfr_mul(mw[i], ival, mt[0], GMP_RNDN);
+	    mpfr_mul_ui(mw[i], mt[0], i+1, GMP_RNDN);
 	    for (j=1; j<k; j++) {
-		mpfr_set_ui(jval, j+1, GMP_RNDN);
-		mpfr_pow(tmp, ival, jval, GMP_RNDN);
+		mpfr_ui_pow_ui(tmp, i+1, j+1, GMP_RNDN);
 		mpfr_mul(tmp, tmp, mt[j], GMP_RNDN);
 		mpfr_add(mw[i], mw[i], tmp, GMP_RNDN);
 	    }
@@ -2436,10 +2432,8 @@ int mp_midas_gradient (const double *theta,
 	}
 	mpfr_mul(ws2, wsum, wsum, GMP_RNDN);
 	for (i=0; i<p; i++) {
-	    mpfr_set_ui(ival, i+1, GMP_RNDN);
 	    for (j=0; j<k; j++) {
-		mpfr_set_ui(jval, j+1, GMP_RNDN);
-		mpfr_pow(tmp, ival, jval, GMP_RNDN);
+		mpfr_ui_pow_ui(tmp, i+1, j+1, GMP_RNDN);
 		mpfr_mul(tmp, tmp, mw[i], GMP_RNDN);
 		mpfr_add(dsum[j], dsum[j], tmp, GMP_RNDN);
 	    }
@@ -2449,10 +2443,8 @@ int mp_midas_gradient (const double *theta,
 	}
 	for (i=0; i<p; i++) {
 	    mpfr_div(wnorm, mw[i], wsum, GMP_RNDN);
-	    mpfr_set_ui(ival, i+1, GMP_RNDN);
 	    for (j=0; j<k; j++) {
-		mpfr_set_ui(jval, j+1, GMP_RNDN);
-		mpfr_pow(tmp, ival, jval, GMP_RNDN);
+		mpfr_ui_pow_ui(tmp, i+1, j+1, GMP_RNDN);
 		mpfr_mul(gij, tmp, wnorm, GMP_RNDN);
 		mpfr_mul(tmp, mw[i], dsum[j], GMP_RNDN);
 		mpfr_sub(gij, gij, tmp, GMP_RNDN);
@@ -2462,8 +2454,6 @@ int mp_midas_gradient (const double *theta,
 	}
 
 	mpfr_array_free(dsum, k);
-	mpfr_clear(ival);
-	mpfr_clear(jval);
 	mpfr_clear(wnorm);
 	mpfr_clear(ws2);
     } else  {
@@ -2557,7 +2547,7 @@ int mp_midas_gradient (const double *theta,
 	}
 
 	/* transcribe results */
-	for (j=0; j<2; j++) {
+	for (j=0; j<k; j++) {
 	    for (i=0; i<p; i++) {
 		dgij = mpfr_get_d(mg[j][i], GMP_RNDN);
 		gretl_matrix_set(G, i, j, dgij);
