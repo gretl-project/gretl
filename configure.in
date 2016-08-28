@@ -252,16 +252,6 @@ else
 fi,
 try_readline=yes)
 
-AC_ARG_WITH(mpfr,
-[  --with-mpfr            Use MPFR library [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_mpfr=no
-else
-  try_mpfr=yes
-fi,
-try_mpfr=yes)
-
 AC_ARG_WITH(gsf,
 [  --with-gsf             Use libgsf library [[default=no]]],
 if test "x${withval}" = "xyes"
@@ -472,16 +462,10 @@ AC_CHECK_LIB(z, gzopen,have_zlib="yes" ; \
 AC_SUBST(have_zlib)
 
 dnl
-dnl Check for GMP
+dnl Check for GMP and MPFR
 dnl
 AM_PATH_GMP(4.0.1, have_gmp="yes")
-
-dnl
-dnl See if MPFR is available
-dnl
-if test x"${try_mpfr}" != xno ; then
-  AM_PATH_MPFR(2.2.0, have_mpfr="yes" ; AC_DEFINE(HAVE_MPFR))
-fi
+AM_PATH_MPFR(2.2.0, have_mpfr="yes")
 
 dnl
 dnl Check for LAPACK
@@ -818,7 +802,6 @@ dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
-AC_SUBST(have_mpfr)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)
@@ -1049,6 +1032,12 @@ Please install GMP and then reconfigure gretl.
 GMP is available from http://gmplib.org/
 "
 
+elif test "${have_mpfr}" = "no" ; then
+echo "
+Please install MPFR and then reconfigure gretl.
+MPFR is available from http://www.mpfr.org/
+"
+
 elif test "${have_curl}" = "no" ; then
 echo "
 Please install libcurl and then reconfigure gretl.
@@ -1087,7 +1076,6 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}

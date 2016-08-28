@@ -666,7 +666,6 @@ have_audio
 have_gnu_regex
 fake_gtkspinner
 have_sourceview
-have_mpfr
 mac_native
 gtk_version
 build_gui
@@ -861,7 +860,6 @@ enable_www
 with_lucida
 with_gmake
 with_readline
-with_mpfr
 with_gsf
 with_x_12_arima
 with_tramo_seats
@@ -1583,7 +1581,6 @@ Optional Packages:
   --with-lucida           Use Lucida fonts for manual [git only]
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline        Use readline library [default=auto]
-  --with-mpfr            Use MPFR library [default=auto]
   --with-gsf             Use libgsf library [default=no]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
@@ -6576,20 +6573,6 @@ else
 fi
 else
   try_readline=yes
-fi
-
-
-
-# Check whether --with-mpfr was given.
-if test "${with_mpfr+set}" = set; then :
-  withval=$with_mpfr; if test "x${withval}" = "xno"
-then
-  try_mpfr=no
-else
-  try_mpfr=yes
-fi
-else
-  try_mpfr=yes
 fi
 
 
@@ -16723,8 +16706,6 @@ rm -f core conftest.err conftest.$ac_objext \
   rm -f conf.gmptest
 
 
-if test x"${try_mpfr}" != xno ; then
-
 # Check whether --with-mpfr-prefix was given.
 if test "${with_mpfr_prefix+set}" = set; then :
   withval=$with_mpfr_prefix; mpfr_config_prefix="$withval"
@@ -16832,8 +16813,7 @@ fi
   if test "x$no_mpfr" = x ; then
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-     have_mpfr="yes" ; $as_echo "#define HAVE_MPFR 1" >>confdefs.h
-
+     have_mpfr="yes"
   else
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -16892,7 +16872,6 @@ rm -f core conftest.err conftest.$ac_objext \
 
   rm -f conf.mpfrtest
 
-fi
 
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
@@ -19147,7 +19126,6 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
-
 
 
 
@@ -28850,6 +28828,12 @@ Please install GMP and then reconfigure gretl.
 GMP is available from http://gmplib.org/
 "
 
+elif test "${have_mpfr}" = "no" ; then
+echo "
+Please install MPFR and then reconfigure gretl.
+MPFR is available from http://www.mpfr.org/
+"
+
 elif test "${have_curl}" = "no" ; then
 echo "
 Please install libcurl and then reconfigure gretl.
@@ -28888,7 +28872,6 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}

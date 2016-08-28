@@ -11,9 +11,6 @@
 /* Flag use of libcurl */
 #define USE_CURL 1
 
-/* Extra floating-point GMP routines? */
-#define HAVE_MPFR 1
-
 /* openblas? */
 #define OPENBLAS_BUILD 1
 
