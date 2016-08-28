@@ -2384,6 +2384,9 @@ int mp_midas_gradient (const double *theta, int k,
 		       gretl_matrix *G,
 		       int method)
 {
+#if 1 /* not ready yet */
+    return E_NAN;
+#else
     int p = gretl_vector_get_length(w);
     double eps = pow(2.0, -52);
     mpfr_t *mw, *mt;
@@ -2564,6 +2567,7 @@ int mp_midas_gradient (const double *theta, int k,
     mpfr_constants_clear();
     
     return err;
+#endif /* not ready */    
 }
 
 #endif /* HAVE_MPFR */
