@@ -4004,6 +4004,7 @@ static int try_mp_midas_weights (const double *theta, int k,
 				 gretl_matrix *w, int method)
 {
     int (*mpfun) (const double *, int, gretl_matrix *, int);
+    int err = 0;
 
     mpfun = get_plugin_function("mp_midas_weights");
 
@@ -4012,7 +4013,33 @@ static int try_mp_midas_weights (const double *theta, int k,
 	return E_FOPEN;
     }
 
-    return (*mpfun) (theta, k, w, method);
+    err = (*mpfun) (theta, k, w, method);
+
+    if (!err) {
+	int i, n = gretl_vector_get_length(w);
+
+	for (i=0; i<n; i++) {
+	    if (!isfinite(w->val[i])) {
+		err = E_NAN;
+		break;
+	    }
+	}
+    }
+
+    return err;	
+}
+
+static int inf_check (double val, const char *context, int *err)
+{
+    if (isinf(val)) {
+	fprintf(stderr, "range error in %s\n", context);
+	*err = E_NAN;
+    } else {
+	/* tolerate underflow */
+	errno = 0;
+    }
+
+    return *err;
 }
 
 /* Computes a column m-vector holding weights for use with MIDAS:
@@ -4071,21 +4098,16 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     errno = 0;
 
     if (method == MIDAS_NEALMON) {
-	double ewi;
-	
 	for (i=0; i<p; i++) {
 	    w->val[i] = (i+1) * theta[0];
 	    for (j=1; j<k; j++) {
 		w->val[i] += pow(i+1, j+1) * theta[j];
 	    }
-	    ewi = exp(w->val[i]);
-	    if (errno) {
-		gretl_matrix_print(m, "nealmon params, in midas_weights");
-		*err = E_NAN;
+	    w->val[i] = exp(w->val[i]);
+	    wsum += w->val[i];
+	    if (errno && inf_check(wsum, "nealmon weights", err)) {
 		break;
 	    }
-	    w->val[i] = ewi; 
-	    wsum += w->val[i];
 	}
     } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
 	double si, ai, bi;
@@ -4101,9 +4123,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
-	    if (errno) {
-		gretl_matrix_print(m, "beta params, in midas_weights");
-		*err = E_NAN;
+	    if (errno && inf_check(wsum, "beta weights", err)) {
 		break;
 	    }
 	}
@@ -4117,7 +4137,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (1 || *err == E_NAN) {
+    if (*err == E_NAN) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
 
@@ -4160,13 +4180,12 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     return w;
 }
 
-static int try_mp_midas_grad (const double *theta, int k,
-			      gretl_matrix *w,
+static int try_mp_midas_grad (const double *theta,
 			      gretl_matrix *G,
 			      int method)
 {
-    int (*mpfun) (const double *, int, gretl_matrix *,
-		  gretl_matrix *, int);
+    int (*mpfun) (const double *, gretl_matrix *, int);
+    int err = 0;
 
     mpfun = get_plugin_function("mp_midas_gradient");
 
@@ -4174,8 +4193,21 @@ static int try_mp_midas_grad (const double *theta, int k,
 	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
+    
+    err = (*mpfun) (theta, G, method);
+    
+    if (!err) {
+	int i, n = G->rows * G->cols;
 
-    return (*mpfun) (theta, k, w, G, method);
+	for (i=0; i<n; i++) {
+	    if (!isfinite(G->val[i])) {
+		err = E_NAN;
+		break;
+	    }
+	}
+    }
+
+    return err;
 }
 
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
@@ -4251,13 +4283,14 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
-	    if (errno) {
-		gretl_matrix_print(m, "nealmon params, in midas_gradient");
-		*err = E_NAN;
-		break;
+	    if (errno && inf_check(wsum, "nealmon gradient", err)) {
+		goto range_error;
 	    }	    
 	}
-	ws2 = wsum * wsum; /* potential overflow? */
+	ws2 = wsum * wsum;
+	if (errno && inf_check(ws2, "nealmon gradient", err)) {
+	    goto range_error;
+	}	
 	for (i=0; i<p; i++) {
 	    for (j=0; j<k; j++) {
 		dsum[j] += pow(i+1, j+1) * w->val[i];
@@ -4290,13 +4323,19 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
-	    if (errno) {
-		gretl_matrix_print(m, "beta params, in midas_gradient");
-		*err = E_NAN;
-		break;
+	    if (errno && inf_check(wsum, "beta gradient", err)) {
+		goto range_error;
 	    }	    
 	}
+	if (wsum <= eps) {
+	    fprintf(stderr, "sum of weights = %g\n", wsum);
+	    *err = E_NAN;
+	    goto range_error;
+	}    
 	ws2 = wsum * wsum;
+	if (errno && inf_check(ws2, "beta gradient", err)) {
+	    goto range_error;
+	}	
 	for (i=0; i<p; i++) {
 	    si = i / (p - 1.0);
 	    if (i == 0) {
@@ -4314,25 +4353,25 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	for (i=0; i<p; i++) {
 	    ai = gretl_matrix_get(G, i, 0);
 	    ai -= w->val[i] * g1sum/ws2;
-	    gretl_matrix_set(G, i, 0, 2*ai);
+	    gretl_matrix_set(G, i, 0, k * ai);
 	    bi = gretl_matrix_get(G, i, 1);
 	    bi -= w->val[i] * g2sum/ws2;
-	    gretl_matrix_set(G, i, 1, 2*bi);
+	    gretl_matrix_set(G, i, 1, k * bi);
 	}
 	if (k == 3) {
 	    /* not zero-terminated */
 	    double c3 = theta[2];
 	    double m3 = 1 / (1 + p * c3);
-	    double wi;
-	    
+	    double g;
+
 	    for (i=0; i<2*p; i++) {
 		/* scale the first two columns */
 		G->val[i] *= m3;
 	    }
 	    for (i=0; i<p; i++) {
 		/* compute the third-col derivative */
-		wi = m3 * (w->val[i] / wsum + c3);
-		gretl_matrix_set(G, i, 2, m3 * (1 - p*wi));
+		g = k * (1 - w->val[i] / wsum * p);
+		gretl_matrix_set(G, i, 2, m3 * m3 * g);
 	    }
 	}
     } else if (method == MIDAS_ALMONP) {
@@ -4345,12 +4384,14 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
     }
 
+ range_error:
+
     if (*err == E_NAN) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
 
 	errno = 0;
-	*err = try_mp_midas_grad(theta, k, w, G, method);
+	*err = try_mp_midas_grad(theta, G, method);
 	if (*err) {
 	    errno = save_errno;
 	}

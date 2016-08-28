@@ -34,6 +34,8 @@ static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
 static mpf_t MPF_TINY;
 
+static mpfr_t MPFR_ONE;
+
 typedef struct {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
@@ -92,7 +94,17 @@ static void mpf_constants_clear (void)
     mpf_clear(MPF_TINY);
 }
 
-static void mp_2d_array_free (mpf_t **X, int v, int n)
+static void mpfr_constants_init (void)
+{
+    mpfr_init_set_ui(MPFR_ONE, 1, GMP_RNDN);
+}
+
+static void mpfr_constants_clear (void)
+{
+    mpfr_clear(MPFR_ONE);
+}
+
+static void mpf_2d_array_free (mpf_t **X, int v, int n)
 {
     int i, t;
 
@@ -111,7 +123,26 @@ static void mp_2d_array_free (mpf_t **X, int v, int n)
     free(X);
 }
 
-static mpf_t **mp_2d_array_alloc (int v, int n)
+static void mpfr_2d_array_free (mpfr_t **X, int v, int n)
+{
+    int i, t;
+
+    if (X == NULL) {
+	return;
+    }
+
+    for (i=0; i<v; i++) {
+	if (X[i] != NULL) {
+	    for (t=0; t<n; t++) {
+		mpfr_clear(X[i][t]);
+	    }
+	    free(X[i]);
+	}
+    }
+    free(X);
+}
+
+static mpf_t **mpf_2d_array_alloc (int v, int n)
 {
     mpf_t **X = malloc(v * sizeof *X);
     int i, j;
@@ -251,7 +282,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
 	return NULL;
     }
 
-    mpZ = mp_2d_array_alloc(l0, n);
+    mpZ = mpf_2d_array_alloc(l0, n);
     if (mpZ == NULL) {
 	return NULL;
     }
@@ -331,7 +362,7 @@ static mpf_t **mpZ_from_matrices (const gretl_matrix *y,
     double x;
     int i, t;
 
-    mpZ = mp_2d_array_alloc(k, T);
+    mpZ = mpf_2d_array_alloc(k, T);
 
     if (mpZ == NULL) {
 	*err = E_ALLOC;
@@ -455,18 +486,6 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
     mpf_clear(targ);
 
     return 0;
-}
-
-static mpfr_t MPFR_ONE;
-
-static void mpfr_constants_init (void)
-{
-    mpfr_init_set_ui(MPFR_ONE, 1, GMP_RNDN);
-}
-
-static void mpfr_constants_clear (void)
-{
-    mpfr_clear(MPFR_ONE);
 }
 
 /**
@@ -1698,7 +1717,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     } 
 
     /* free all the mpf stuff */
-    mp_2d_array_free(mpZ, l0, mpmod.nobs);
+    mpf_2d_array_free(mpZ, l0, mpmod.nobs);
     mpf_constants_clear();
 
  bailout:
@@ -1772,7 +1791,7 @@ int matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
     } 
 
     /* free all the mpf stuff */
-    mp_2d_array_free(mpZ, l0, mpmod.nobs);
+    mpf_2d_array_free(mpZ, l0, mpmod.nobs);
     mpf_constants_clear();
 
  bailout:
@@ -1799,7 +1818,7 @@ static mpf_t *doubles_array_to_mp (const double *dy, int n)
     return y;
 }
 
-static mpf_t *mp_array_new (int n)
+static mpf_t *mpf_array_new (int n)
 {
     mpf_t *y = NULL;
     int i;
@@ -1816,7 +1835,7 @@ static mpf_t *mp_array_new (int n)
     return y;
 }
 
-static void mp_array_free (mpf_t *y, int n)
+static void mpf_array_free (mpf_t *y, int n)
 {
     if (y != NULL) {
 	int i;
@@ -1874,7 +1893,7 @@ static void mpfr_array_free (mpfr_t *y, int n)
     }
 }
 
-static mpf_t **mp_2d_array_new (int n, int T)
+static mpf_t **mpf_2d_array_new (int n, int T)
 {
     mpf_t **x = NULL;
     int i, t;    
@@ -1891,11 +1910,40 @@ static mpf_t **mp_2d_array_new (int n, int T)
     for (i=0; i<n; i++) {
 	x[i] = malloc(T * sizeof **x);
 	if (x[i] == NULL) {
-	    mp_2d_array_free(x, n, T);
+	    mpf_2d_array_free(x, n, T);
 	    return NULL;
 	} else {
 	    for (t=0; t<T; t++) {
 		mpf_init(x[i][t]);
+	    }
+	}	
+    }    
+
+    return x;
+}
+
+static mpfr_t **mpfr_2d_array_new (int n, int T)
+{
+    mpfr_t **x = NULL;
+    int i, t;    
+
+    x = malloc(n * sizeof *x);
+    if (x == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	x[i] = NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	x[i] = malloc(T * sizeof **x);
+	if (x[i] == NULL) {
+	    mpfr_2d_array_free(x, n, T);
+	    return NULL;
+	} else {
+	    for (t=0; t<T; t++) {
+		mpfr_init(x[i][t]);
 	    }
 	}	
     }    
@@ -1914,7 +1962,7 @@ static int mp_symm_toeplitz (mpf_t *g, mpf_t *y, int T, int q)
 
     mpf_init(tmp);
 
-    mu = mp_2d_array_new(q+1, T);
+    mu = mpf_2d_array_new(q+1, T);
     if (mu == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -1962,7 +2010,7 @@ static int mp_symm_toeplitz (mpf_t *g, mpf_t *y, int T, int q)
  bailout:
 
     mpf_clear(tmp);
-    mp_2d_array_free(mu, q+1, T);
+    mpf_2d_array_free(mu, q+1, T);
 
     return err;
 }
@@ -2170,7 +2218,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int n,
 
     /* the workspace we need for everything except the
        Toeplitz solver */
-    g = mp_array_new(m);
+    g = mpf_array_new(m);
     if (g == NULL) {
 	return E_ALLOC;
     }
@@ -2212,8 +2260,8 @@ int mp_bw_filter (const double *x, double *bw, int T, int n,
     
     mpf_constants_clear();
 
-    mp_array_free(g, m);
-    mp_array_free(y, T);
+    mpf_array_free(g, m);
+    mpf_array_free(y, T);
 
     return err;
 }
@@ -2224,7 +2272,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int n,
    genfuncs.c for context.
 */
 
-#define WDEBUG 1
+#define WDEBUG 0
 
 int mp_midas_weights (const double *theta, int k,
 		      gretl_matrix *w, int method)
@@ -2256,7 +2304,7 @@ int mp_midas_weights (const double *theta, int k,
 	mpfr_init(incr);
 	
 	for (i=0; i<p; i++) {
-	    mpfr_set_ui(ival, (unsigned int) (i+1), GMP_RNDN);
+	    mpfr_set_ui(ival, i+1, GMP_RNDN);
 	    mpfr_mul(mw[i], ival, mt[0], GMP_RNDN);
 	    for (j=1; j<k; j++) {
 		mpfr_set_ui(jval, j+1, GMP_RNDN);
@@ -2321,17 +2369,14 @@ int mp_midas_weights (const double *theta, int k,
     return err;
 }
 
-int mp_midas_gradient (const double *theta, int k,
-		       gretl_matrix *w,
+int mp_midas_gradient (const double *theta,
 		       gretl_matrix *G,
 		       int method)
 {
-#if 1 /* not ready yet */
-    return E_NAN;
-#else
-    int p = gretl_vector_get_length(w);
+    int p = G->rows;
+    int k = G->cols;
     double eps = pow(2.0, -52);
-    mpfr_t *mw, *mt;
+    mpfr_t *mw, *mt, **mg = NULL;
     mpfr_t wsum, tmp, gij;
     int i, j, err = 0;
 
@@ -2339,7 +2384,7 @@ int mp_midas_gradient (const double *theta, int k,
     
     mw = mpfr_array_new(p);
     mt = doubles_array_to_mpfr(theta, k);
-    
+
     if (mw == NULL || mt == NULL) {
 	return E_ALLOC;
     }
@@ -2348,12 +2393,25 @@ int mp_midas_gradient (const double *theta, int k,
     mpfr_init(tmp);
     mpfr_init(gij);
     mpfr_constants_init();
+
+    if (method > 1) {
+	mg = mpfr_2d_array_new(k, p);
+	if (mg == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
     
     if (method == 1) {
 	/* nealmon */
 	mpfr_t *dsum = mpfr_array_new(k);
 	mpfr_t ival, jval, wnorm, ws2;
 	double dgij;
+
+	if (dsum == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
 
 	mpfr_init(ival);
 	mpfr_init(jval);
@@ -2364,10 +2422,10 @@ int mp_midas_gradient (const double *theta, int k,
 	    mpfr_init_set_d(dsum[j], 0.0, GMP_RNDN);
 	}
 	for (i=0; i<p; i++) {
-	    mpfr_set_ui(ival, (unsigned) (i+1), GMP_RNDN);
+	    mpfr_set_ui(ival, i+1, GMP_RNDN);
 	    mpfr_mul(mw[i], ival, mt[0], GMP_RNDN);
 	    for (j=1; j<k; j++) {
-		mpfr_set_ui(jval, (unsigned) (j+1), GMP_RNDN);
+		mpfr_set_ui(jval, j+1, GMP_RNDN);
 		mpfr_pow(tmp, ival, jval, GMP_RNDN);
 		mpfr_mul(tmp, tmp, mt[j], GMP_RNDN);
 		mpfr_add(mw[i], mw[i], tmp, GMP_RNDN);
@@ -2376,11 +2434,11 @@ int mp_midas_gradient (const double *theta, int k,
 	    mpfr_exp(mw[i], tmp, GMP_RNDN);
 	    mpfr_add(wsum, wsum, mw[i], GMP_RNDN);
 	}
-	mpfr_mul(ws2, wsum, wsum, GMP_RNDN); /* ? */
+	mpfr_mul(ws2, wsum, wsum, GMP_RNDN);
 	for (i=0; i<p; i++) {
-	    mpfr_set_ui(ival, (unsigned) (i+1), GMP_RNDN);
+	    mpfr_set_ui(ival, i+1, GMP_RNDN);
 	    for (j=0; j<k; j++) {
-		mpfr_set_ui(jval, (unsigned) (j+1), GMP_RNDN);
+		mpfr_set_ui(jval, j+1, GMP_RNDN);
 		mpfr_pow(tmp, ival, jval, GMP_RNDN);
 		mpfr_mul(tmp, tmp, mw[i], GMP_RNDN);
 		mpfr_add(dsum[j], dsum[j], tmp, GMP_RNDN);
@@ -2391,9 +2449,9 @@ int mp_midas_gradient (const double *theta, int k,
 	}
 	for (i=0; i<p; i++) {
 	    mpfr_div(wnorm, mw[i], wsum, GMP_RNDN);
-	    mpfr_set_ui(ival, (unsigned) (i+1), GMP_RNDN);
+	    mpfr_set_ui(ival, i+1, GMP_RNDN);
 	    for (j=0; j<k; j++) {
-		mpfr_set_ui(jval, (unsigned) (j+1), GMP_RNDN);
+		mpfr_set_ui(jval, j+1, GMP_RNDN);
 		mpfr_pow(tmp, ival, jval, GMP_RNDN);
 		mpfr_mul(gij, tmp, wnorm, GMP_RNDN);
 		mpfr_mul(tmp, mw[i], dsum[j], GMP_RNDN);
@@ -2429,10 +2487,12 @@ int mp_midas_gradient (const double *theta, int k,
 		dsi -= eps;
 	    }
 	    mpfr_sub(tmp, mt[0], MPFR_ONE, GMP_RNDN);
-	    mpfr_pow(ai, dsi, tmp, GMP_RNDN);
+	    mpfr_set_d(si, dsi, GMP_RNDN);
+	    mpfr_pow(ai, si, tmp, GMP_RNDN);
 	    mpfr_sub(tmp, mt[1], MPFR_ONE, GMP_RNDN);
-	    mpfr_pow(bi, MPFR_ONE - dsi, tmp, GMP_RNDN);
-	    mpfr_add(mw[i], ai, bi, GMP_RNDN);
+	    mpfr_sub(si, MPFR_ONE, si, GMP_RNDN);
+	    mpfr_pow(bi, si, tmp, GMP_RNDN);
+	    mpfr_mul(mw[i], ai, bi, GMP_RNDN);
 	    mpfr_add(wsum, wsum, mw[i], GMP_RNDN);
 	}
 	mpfr_mul(ws2, wsum, wsum, GMP_RNDN);
@@ -2443,55 +2503,66 @@ int mp_midas_gradient (const double *theta, int k,
 	    } else if (i == p - 1) {
 		dsi -= eps;
 	    }
-	    mpfr_mul(ai, mw[i], log(si), GMP_RNDN);
+	    mpfr_set_d(si, dsi, GMP_RNDN);
+	    mpfr_log(tmp, si, GMP_RNDN);
+	    mpfr_mul(ai, mw[i], tmp, GMP_RNDN);
 	    mpfr_add(g1sum, g1sum, ai, GMP_RNDN);
 	    mpfr_div(ai, ai, wsum, GMP_RNDN);
-	    gretl_matrix_set(G, i, 0, mpfr_get_d(ai, GMP_RNDN));
-	    mpfr_mul(bi, mw[i], log(1-si), GMP_RNDN);
+	    mpfr_set(mg[0][i], ai, GMP_RNDN);
+	    mpfr_set_d(si, dsi, GMP_RNDN);
+	    mpfr_sub(si, MPFR_ONE, si, GMP_RNDN);
+	    mpfr_log(tmp, si, GMP_RNDN);
+	    mpfr_mul(bi, mw[i], tmp, GMP_RNDN);
 	    mpfr_add(g2sum, g2sum, bi, GMP_RNDN);
 	    mpfr_div(bi, bi, wsum, GMP_RNDN);
-	    gretl_matrix_set(G, i, 1, mpfr_get_d(bi, GMP_RNDN));
+	    mpfr_set(mg[1][i], bi, GMP_RNDN);
 	}
 	for (i=0; i<p; i++) {
-	    mpfr_set_d(ai, gretl_matrix_get(G, i, 0), GMP_RNDN); /* ? */
+	    mpfr_set(ai, mg[0][i], GMP_RNDN);
 	    mpfr_div(tmp, g1sum, ws2, GMP_RNDN);
 	    mpfr_mul(tmp, tmp, mw[i], GMP_RNDN);
 	    mpfr_sub(ai, ai, tmp, GMP_RNDN);
-	    dgij = mpfr_get_d(ai, GMP_RNDN);
-	    gretl_matrix_set(G, i, 0, 2 * dgij);
-	    mpfr_set_d(bi, gretl_matrix_get(G, i, 1), GMP_RNDN); /* ? */
+	    mpfr_mul_ui(mg[0][i], ai, k, GMP_RNDN);
+	    mpfr_set(bi, mg[1][i], GMP_RNDN);
 	    mpfr_div(tmp, g2sum, ws2, GMP_RNDN);
 	    mpfr_mul(tmp, tmp, mw[i], GMP_RNDN);
 	    mpfr_sub(bi, bi, tmp, GMP_RNDN);
-	    dgij = mpfr_get_d(bi, GMP_RNDN);
-	    gretl_matrix_set(G, i, 1, 2 * dgij);
+	    mpfr_mul_ui(mg[1][i], bi, k, GMP_RNDN);
 	}
 	if (k == 3) {
 	    /* not zero-terminated */
-	    mpfr_t wi, mm3;
+	    mpfr_t mm3;
 	    double c3 = theta[2];
 	    double m3 = 1 / (1 + p * c3);
-	    double dwi;
 
-	    mpfr_init(wi);
 	    mpfr_init_set_d(mm3, m3, GMP_RNDN);
-	    
-	    for (i=0; i<2*p; i++) {
-		/* scale the first two columns */
-		G->val[i] *= m3;
+
+	    /* scale the first two columns */
+	    for (j=0; j<2; j++) {
+		for (i=0; i<p; i++) {
+		    mpfr_mul(mg[j][i], mg[j][i], mm3, GMP_RNDN);
+		}
 	    }
+	    /* compute the third-col derivatives */
 	    for (i=0; i<p; i++) {
-		/* compute the third-col derivative */
-		mpfr_add(tmp, wsum, mt[2], GMP_RNDN);
-		mpfr_div(wi, mw[i], tmp, GMP_RNDN);
-		mpfr_mul(wi, wi, mm3, GMP_RNDN);
-		dwi = mpfr_get_d(wi, GMP_RNDN);
-		gretl_matrix_set(G, i, 2, m3 * (1 - p*dwi));
+		mpfr_div(tmp, mw[i], wsum, GMP_RNDN);
+		mpfr_mul_ui(tmp, tmp, p, GMP_RNDN);
+		mpfr_sub(tmp, MPFR_ONE, tmp, GMP_RNDN);
+		mpfr_mul_ui(tmp, tmp, k, GMP_RNDN);
+		mpfr_mul(tmp, tmp, mm3, GMP_RNDN);
+		mpfr_mul(mg[2][i], tmp, mm3, GMP_RNDN);
 	    }
 
-	    mpfr_clear(wi);
 	    mpfr_clear(mm3);
 	}
+
+	/* transcribe results */
+	for (j=0; j<2; j++) {
+	    for (i=0; i<p; i++) {
+		dgij = mpfr_get_d(mg[j][i], GMP_RNDN);
+		gretl_matrix_set(G, i, j, dgij);
+	    }
+	}	
 
 	mpfr_clear(si);
 	mpfr_clear(ai);
@@ -2501,14 +2572,19 @@ int mp_midas_gradient (const double *theta, int k,
 	mpfr_clear(g2sum);	
     }
 
+#if WDEBUG
+    gretl_matrix_print(G, "G, in mp module");
+#endif
+
+ bailout:
+
     mpfr_array_free(mw, p);
     mpfr_array_free(mt, k);
+    mpfr_2d_array_free(mg, k, p);
     mpfr_clear(wsum);
     mpfr_clear(tmp);
     mpfr_clear(gij);
     mpfr_constants_clear();
     
     return err;
-#endif /* not ready */    
 }
-
