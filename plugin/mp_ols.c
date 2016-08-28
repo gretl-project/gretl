@@ -665,47 +665,6 @@ static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
     mpfr_free_cache();
 }
 
-#else
-
-#include <errno.h>
-
-/* compute log-likelihood etc., based on the ESS from the
-   multiple-precision model but using ordinary double-precision
-   arithmetic: a fallback if the MPFR library is not available
-*/
-
-static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
-{
-    int k = mpmod->ncoeff;
-    int n = mpmod->nobs;
-
-    pmod->ess = mpf_get_d(mpmod->ess);
-
-    if (pmod->ess < 0 || xna(pmod->ess)) {
-	pmod->ess = pmod->lnL = NADBL;
-    } else {
-	const double ln2pi1 = 2.837877066409345;
-
-	errno = 0;
-
-	pmod->lnL = -.5 * n * log(pmod->ess);
-
-	if (errno == EDOM || errno == ERANGE) {
-	    pmod->lnL = NADBL;
-	    errno = 0;
-	} else {
-	    pmod->lnL += -.5 * n * (ln2pi1 - log((double) n));
-	}
-    }
-
-    pmod->ncoeff = k;
-    pmod->nobs = n;
-
-    mle_criteria(pmod, 0);
-}
-
-#endif
-
 static void mp_dwstat (const MPMODEL *mpmod, MODEL *pmod,
 		       mpf_t *uhat)
 {

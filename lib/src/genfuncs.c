@@ -4117,7 +4117,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (*err == E_NAN) {
+    if (1 || *err == E_NAN) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
 
