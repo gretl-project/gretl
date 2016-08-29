@@ -4354,10 +4354,10 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	for (i=0; i<p; i++) {
 	    ai = gretl_matrix_get(G, i, 0);
 	    ai -= w->val[i] * g1sum/ws2;
-	    gretl_matrix_set(G, i, 0, k * ai);
+	    gretl_matrix_set(G, i, 0, ai);
 	    bi = gretl_matrix_get(G, i, 1);
 	    bi -= w->val[i] * g2sum/ws2;
-	    gretl_matrix_set(G, i, 1, k * bi);
+	    gretl_matrix_set(G, i, 1, bi);
 	}
 	if (k == 3) {
 	    /* not zero-terminated */
@@ -4371,7 +4371,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	    for (i=0; i<p; i++) {
 		/* compute the third-col derivative */
-		g = k * (1 - w->val[i] / wsum * p);
+		g = 1 - w->val[i] / wsum * p;
 		gretl_matrix_set(G, i, 2, m3 * m3 * g);
 	    }
 	}

@@ -2511,13 +2511,11 @@ int mp_midas_gradient (const double *theta,
 	    mpfr_set(ai, mg[0][i], GMP_RNDN);
 	    mpfr_div(tmp, g1sum, ws2, GMP_RNDN);
 	    mpfr_mul(tmp, tmp, mw[i], GMP_RNDN);
-	    mpfr_sub(ai, ai, tmp, GMP_RNDN);
-	    mpfr_mul_ui(mg[0][i], ai, k, GMP_RNDN);
+	    mpfr_sub(mg[0][i], ai, tmp, GMP_RNDN);
 	    mpfr_set(bi, mg[1][i], GMP_RNDN);
 	    mpfr_div(tmp, g2sum, ws2, GMP_RNDN);
 	    mpfr_mul(tmp, tmp, mw[i], GMP_RNDN);
-	    mpfr_sub(bi, bi, tmp, GMP_RNDN);
-	    mpfr_mul_ui(mg[1][i], bi, k, GMP_RNDN);
+	    mpfr_sub(mg[1][i], bi, tmp, GMP_RNDN);
 	}
 	if (k == 3) {
 	    /* not zero-terminated */
@@ -2538,7 +2536,6 @@ int mp_midas_gradient (const double *theta,
 		mpfr_div(tmp, mw[i], wsum, GMP_RNDN);
 		mpfr_mul_ui(tmp, tmp, p, GMP_RNDN);
 		mpfr_sub(tmp, MPFR_ONE, tmp, GMP_RNDN);
-		mpfr_mul_ui(tmp, tmp, k, GMP_RNDN);
 		mpfr_mul(tmp, tmp, mm3, GMP_RNDN);
 		mpfr_mul(mg[2][i], tmp, mm3, GMP_RNDN);
 	    }
