@@ -1698,7 +1698,8 @@ int is_libset_var (const char *s)
 }
 
 #define default_ok(s) (!strcmp(s, BFGS_TOLER) || \
-                       !strcmp(s, BHHH_TOLER))
+                       !strcmp(s, BHHH_TOLER) || \
+		       !strcmp(s, NLS_TOLER))
 
 #define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
 

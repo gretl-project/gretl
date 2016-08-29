@@ -11565,10 +11565,13 @@
 	</li>
 	<li>
 	<para>
-	  <lit>nls_toler</lit>: a floating-point value (the default is the
-	  machine precision to the power 3/4).  Sets the tolerance used in
-	  judging whether or not convergence has occurred in nonlinear least
-	  squares estimation using the <cmdref targ="nls"/> command.
+	  <lit>nls_toler</lit>: a floating-point value. Sets the
+	  tolerance used in judging whether or not convergence has
+	  occurred in nonlinear least squares estimation using the
+	  <cmdref targ="nls"/> command.  The default value is the
+	  machine precision to the power 3/4; this value may be
+	  re-established by typing <lit>default</lit> in place of a
+	  numeric value.
 	</para>
 	</li>
 	<li>
