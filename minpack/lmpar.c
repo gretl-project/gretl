@@ -18,7 +18,7 @@
 /*
 c     lmpar:
 c
-c     given an m by n matrix a, an n by n nonsingular diagonal
+c     Given an m by n matrix a, an n by n nonsingular diagonal
 c     matrix d, an m-vector b, and a positive number delta,
 c     the problem is to determine a value for the parameter
 c     par such that if x solves the system
@@ -36,12 +36,12 @@ c           abs(dxnorm-delta) .le. 0.1*delta .
 c
 c     this subroutine completes the solution of the problem
 c     if it is provided with the necessary information from the
-c     qr factorization, with column pivoting, of a. that is, if
+c     qr factorization, with column pivoting, of a. That is, if
 c     a*p = q*r, where p is a permutation matrix, q has orthogonal
 c     columns, and r is an upper triangular matrix with diagonal
 c     elements of nonincreasing magnitude, then lmpar expects
 c     the full upper triangle of r, the permutation matrix p,
-c     and the first n components of (q transpose)*b. on output
+c     and the first n components of (q transpose)*b. On output
 c     lmpar also provides an upper triangular matrix s such that
 c
 c            t   t                   t
@@ -49,12 +49,12 @@ c           p *(a *a + par*d*d)*p = s *s .
 c
 c     s is employed within lmpar and may be of separate interest.
 c
-c     only a few iterations are generally needed for convergence
-c     of the algorithm. if, however, the limit of 10 iterations
+c     Only a few iterations are generally needed for convergence
+c     of the algorithm. If, however, the limit of 10 iterations
 c     is reached, then the output par will contain the best
 c     value obtained so far.
 c
-c     the subroutine statement is
+c     The subroutine statement is
 c
 c       subroutine lmpar(n,r,ldr,ipvt,diag,qtb,delta,par,x,sdiag,
 c                        wa1,wa2)
@@ -63,9 +63,9 @@ c     where
 c
 c       n is a positive integer input variable set to the order of r.
 c
-c       r is an n by n array. on input the full upper triangle
+c       r is an n by n array. On input the full upper triangle
 c         must contain the full upper triangle of the matrix r.
-c         on output the full upper triangle is unaltered, and the
+c         On output the full upper triangle is unaltered, and the
 c         strict lower triangle contains the strict upper triangle
 c         (transposed) of the upper triangular matrix s.
 c
@@ -73,7 +73,7 @@ c       ldr is a positive integer input variable not less than n
 c         which specifies the leading dimension of the array r.
 c
 c       ipvt is an integer input array of length n which defines the
-c         permutation matrix p such that a*p = q*r. column j of p
+c         permutation matrix p such that a*p = q*r. Column j of p
 c         is column ipvt(j) of the identity matrix.
 c
 c       diag is an input array of length n which must contain the
@@ -85,8 +85,8 @@ c
 c       delta is a positive input variable which specifies an upper
 c         bound on the euclidean norm of d*x.
 c
-c       par is a nonnegative variable. on input par contains an
-c         initial estimate of the levenberg-marquardt parameter.
+c       par is a nonnegative variable. On input par contains an
+c         initial estimate of the Levenberg-Marquardt parameter.
 c         on output par contains the final estimate.
 c
 c       x is an output array of length n which contains the least
@@ -98,12 +98,12 @@ c         diagonal elements of the upper triangular matrix s.
 c
 c       wa1 and wa2 are work arrays of length n.
 c
-c     subprograms called
+c     Subprograms called
 c
 c       minpack-supplied ... enorm,qrsolv
 c
-c     argonne national laboratory. minpack project. march 1980.
-c     burton s. garbow, kenneth e. hillstrom, jorge j. more
+c     Argonne National Laboratory. Minpack project. March 1980.
+c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
 int lmpar_(int n, double *r, int ldr, int *ipvt, double *diag, 

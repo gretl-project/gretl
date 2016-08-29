@@ -25,8 +25,8 @@ int fdjac2_(S_fp fcn, int m, int n, int quality, double *x,
 	    double epsfcn, double *wa, void *p);
 
 int lmder1_(S_fp fcn, int m, int n, double *x, double *fvec, 
-	    double *fjac, int ldfjac, double tol, int *info, 
-	    int *ipvt, double *wa, int lwa, void *p);
+	    double *fjac, int ldfjac, double tol, double factor,
+	    int *info, int *ipvt, double *wa, int lwa, void *p);
 
 int lmder_(S_fp fcn, int m, int n, double *x, double *fvec, 
 	   double *fjac, int ldfjac, double ftol, double xtol, 

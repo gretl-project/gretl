@@ -16,19 +16,19 @@
 /*
 c     lmder1:
 c
-c     simplified driver for lmder, which sets various control
+c     Simplified driver for lmder, which sets various control
 c     parameters to default values; see lmder.c for details
 c
-c     argonne national laboratory. minpack project. march 1980.
-c     burton s. garbow, kenneth e. hillstrom, jorge j. more
+c     Argonne National Laboratory. Minpack project. March 1980.
+c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
 int lmder1_(S_fp fcn, int m, int n, double *x, double *fvec, 
-	    double *fjac, int ldfjac, double tol, int *info, 
-	    int *ipvt, double *wa, int lwa, void *p)
+	    double *fjac, int ldfjac, double tol, double factor,
+	    int *info, int *ipvt, double *wa, int lwa, void *p)
 {
     /* default control values */
-    const double factor = 100;
+    /* const double factor = 100; */
     int maxfev = (n + 1) * 100;
     double ftol = tol;
     double xtol = tol;

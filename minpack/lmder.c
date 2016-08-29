@@ -41,14 +41,14 @@ c         integer m,n,ldfjac,iflag
 c         double precision x(n),fvec(m),fjac(ldfjac,n)
 c         ----------
 c         if iflag = 1 calculate the functions at x and
-c         return this vector in fvec. do not alter fjac.
+c         return this vector in fvec. Do not alter fjac.
 c         if iflag = 2 calculate the jacobian at x and
-c         return this matrix in fjac. do not alter fvec.
+c         return this matrix in fjac. Do not alter fvec.
 c         ----------
 c         return
 c         end
 c
-c         the value of iflag should not be changed by fcn unless
+c         The value of iflag should not be changed by fcn unless
 c         the user wants to terminate execution of lmder.
 c         in this case set iflag to a negative integer.
 c
@@ -56,10 +56,10 @@ c       m is a positive integer input variable set to the number
 c         of functions.
 c
 c       n is a positive integer input variable set to the number
-c         of variables. n must not exceed m.
+c         of variables; n must not exceed m.
 c
-c       x is an array of length n. on input x must contain
-c         an initial estimate of the solution vector. on output x
+c       x is an array of length n. On input x must contain
+c         an initial estimate of the solution vector. On output x
 c         contains the final estimate of the solution vector.
 c
 c       fvec is an output array of length m which contains
@@ -74,7 +74,7 @@ c               p *(jac *jac)*p = r *r,
 c
 c         where p is a permutation matrix and jac is the final
 c         calculated jacobian. Column j of p is column ipvt(j)
-c         (see below) of the identity matrix. the lower trapezoidal
+c         (see below) of the identity matrix. The lower trapezoidal
 c         part of fjac contains information generated during
 c         the computation of r.
 c
@@ -89,7 +89,7 @@ c         in the sum of squares.
 c
 c       xtol is a nonnegative input variable. Termination
 c         occurs when the relative error between two consecutive
-c         iterates is at most xtol. therefore, xtol measures the
+c         iterates is at most xtol. Therefore, xtol measures the
 c         relative error desired in the approximate solution.
 c
 c       gtol is a nonnegative input variable. Termination
@@ -117,7 +117,7 @@ c       factor is a positive input variable used in determining the
 c         initial step bound. This bound is set to the product of
 c         factor and the euclidean norm of diag*x if nonzero, or else
 c         to factor itself. In most cases factor should lie in the
-c         interval (.1,100.). 100. is a generally recommended value.
+c         interval (.1, 100.). 100. is a generally recommended value.
 c
 c       nprint is an integer input variable that enables controlled
 c         printing of iterates if it is positive. In this case,
@@ -150,10 +150,10 @@ c
 c         info = 5  number of calls to fcn with iflag = 1 has
 c                   reached maxfev.
 c
-c         info = 6  ftol is too small. no further reduction in
+c         info = 6  ftol is too small. No further reduction in
 c                   the sum of squares is possible.
 c
-c         info = 7  xtol is too small. no further improvement in
+c         info = 7  xtol is too small. No further improvement in
 c                   the approximate solution x is possible.
 c
 c         info = 8  gtol is too small. fvec is orthogonal to the
