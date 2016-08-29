@@ -83,7 +83,7 @@ static void mpf_constants_init (void)
     mpf_init_set_d(MPF_ONE, 1.0);
     mpf_init_set_d(MPF_ZERO, 0.0);
     mpf_init_set_d(MPF_MINUS_ONE, -1.0);
-    mpf_init_set_d(MPF_TINY, 1.0e-25);
+    mpf_init_set_d(MPF_TINY, 1.0e-30);
 }
 
 static void mpf_constants_clear (void)

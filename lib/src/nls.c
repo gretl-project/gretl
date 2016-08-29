@@ -2112,7 +2112,17 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
 	errmsg(gnr.errcode, prn);
     } else if (gnr.list[0] < glist[0]) {
-	gnr.errcode = E_JACOBIAN;
+	clear_model(&gnr);
+	gnr = mp_ols(glist, gdset);
+	if (gnr.errcode) {
+	    /* back-track! */
+	    clear_model(&gnr);
+	    gnr = lsq(glist, gdset, OLS, lsqopt);
+	}
+	if (gnr.list[0] < glist[0]) {
+	    gnr.errcode = E_JACOBIAN;
+	}
+	gretl_model_set_int(&gnr, "near-singular", 1);
     }
 
     if (gnr.errcode == 0 || gnr.errcode == E_JACOBIAN) {
