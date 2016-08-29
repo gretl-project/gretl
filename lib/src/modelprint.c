@@ -667,6 +667,7 @@ static void print_GNR_info (const MODEL *pmod, PRN *prn)
     if (gretl_model_get_int(pmod, "near-singular")) {
 	msg = N_("Warning: Jacobian near to rank-deficiency");
 	pputs(prn, _(msg));
+	gretl_prn_newline(prn);
     }
 
     gretl_prn_newline(prn);
