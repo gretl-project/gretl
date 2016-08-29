@@ -4000,6 +4000,8 @@ int list_linear_combo (double *y, const int *list,
     return err;
 }
 
+#define MDEBUG 0
+
 static int try_mp_midas_weights (const double *theta, int k,
 				 gretl_matrix *w, int method)
 {
@@ -4042,6 +4044,39 @@ static int inf_check (double val, const char *context, int *err)
     return *err;
 }
 
+static int check_beta_params (int method, double *theta,
+			      int k, double eps)
+{
+    int err = 0;
+    
+    if (method == MIDAS_BETA0 && k != 2) {
+	gretl_errmsg_set("theta must be a 2-vector");
+	err = E_INVARG;
+    } else if (method == MIDAS_BETAN && k != 3) {
+	gretl_errmsg_set("theta must be a 3-vector");
+	err = E_INVARG;
+    } else if (theta[0] < eps || theta[1] < eps) {
+	if (gretl_iteration_depth() > 0) {
+	    /* doing NLS or similar: try clamping? */
+	    fprintf(stderr, "clamping bad beta parameter:");
+	    if (theta[0] < eps) {
+		fprintf(stderr, " theta[0] = %g", theta[0]);
+		theta[0] = eps;
+	    }
+	    if (theta[1] < eps) {
+		fprintf(stderr, " theta[1] = %g", theta[1]);
+		theta[1] = eps;
+	    }
+	    fputc('\n', stderr);
+	} else {
+	    gretl_errmsg_set("beta: parameters must be positive");
+	    err = E_INVARG;
+	}	
+    }
+
+    return err;
+}
+
 /* Computes a column m-vector holding weights for use with MIDAS:
    at present only exponential Almon (method = 1) and Beta (method
    = 2) are supported.
@@ -4056,6 +4091,10 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     gretl_matrix *w = NULL;
     int using_mp = 0;
     int k, i, j;
+
+#if MDEBUG
+    gretl_matrix_print(m, "m, in midas_weights");
+#endif    
 
     /* @p = lag order 
        @k = number of hyper-parameters
@@ -4075,18 +4114,10 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     theta = m->val;
 
     if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
-	/* check beta parameters */
-	if (method == MIDAS_BETA0 && k != 2) {
-	    gretl_errmsg_set("theta must be a 2-vector");
-	    *err = E_INVARG;
+	*err = check_beta_params(method, theta, k, eps);
+	if (*err) {
 	    return NULL;
-	} else if (method == MIDAS_BETAN && k != 3) {
-	    gretl_errmsg_set("theta must be a 3-vector");
-	    *err = E_INVARG;
-	    return NULL;
-	} else if (theta[0] < eps || theta[1] < eps) {
-	    return NULL;
-	}	    
+	}	
     }
 
     w = gretl_column_vector_alloc(p);
@@ -4137,7 +4168,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (*err == E_NAN) {
+    if (*err == E_NAN || (method != MIDAS_ALMONP && wsum < eps)) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
 
@@ -4169,13 +4200,18 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     }
 
     if (method == MIDAS_BETAN) {
-	/* beta with third param, not zero-terminated */
+	/* beta with third param, not zero-terminated:
+	   add theta[2] and renormalize
+	*/
 	wsum = 1 + p * theta[2];
 	for (i=0; i<p; i++) {
-	    w->val[i] += theta[2];
-	    w->val[i] /= wsum;
+	    w->val[i] = (w->val[i] + theta[2]) / wsum;
 	}
     }
+
+#if MDEBUG
+    gretl_matrix_print(w, "w: midas weights");
+#endif
     
     return w;
 }
@@ -4220,6 +4256,10 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     gretl_matrix *G = NULL;
     int k, i, j;
 
+#if MDEBUG
+    gretl_matrix_print(m, "m, in midas_gradient");
+#endif
+
     if (method < MIDAS_NEALMON || method >= MIDAS_MAX || p < 1) {
 	*err = E_INVARG;
 	return NULL;
@@ -4239,16 +4279,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     errno = 0;
 
     if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
-	/* check beta parameters */
-	if (method == MIDAS_BETA0 && k != 2) {
-	    gretl_errmsg_set("theta must be a 2-vector");
-	    *err = E_INVARG;
-	} else if (method == MIDAS_BETAN && k != 3) {
-	    gretl_errmsg_set("theta must be a 3-vector");
-	    *err = E_INVARG;
-	} else if (theta[0] < eps || theta[1] < eps) {
-	    *err = E_INVARG;
-	}
+	*err = check_beta_params(method, theta, k, eps);
 	if (*err) {
 	    return NULL;
 	}
@@ -4312,6 +4343,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	double g1sum = 0;
 	double g2sum = 0;
 
+	/* loop 1: form raw weights and their sum */
 	for (i=0; i<p; i++) {
 	    si = i / (p - 1.0);
 	    if (i == 0) {
@@ -4330,13 +4362,20 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	if (wsum <= eps) {
 	    /* should we just set G to zero in this case? */
 	    fprintf(stderr, "sum of weights = %g\n", wsum);
+#if 0
+	    gretl_matrix_zero(G);
+	    goto finish;
+#else
 	    *err = E_NAN;
 	    goto range_error;
+#endif
 	}    
 	ws2 = wsum * wsum;
 	if (errno && inf_check(ws2, "beta gradient", err)) {
 	    goto range_error;
-	}	
+	}
+	/* loop 2: form first component of derivative
+	   and second cumulant */
 	for (i=0; i<p; i++) {
 	    si = i / (p - 1.0);
 	    if (i == 0) {
@@ -4351,6 +4390,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    g2sum += bi;
 	    gretl_matrix_set(G, i, 1, bi/wsum);
 	}
+	/* loop 3: form second component and subtract */
 	for (i=0; i<p; i++) {
 	    ai = gretl_matrix_get(G, i, 0);
 	    ai -= w->val[i] * g1sum/ws2;
@@ -4371,7 +4411,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	    for (i=0; i<p; i++) {
 		/* compute the third-col derivative */
-		g = 1 - w->val[i] / wsum * p;
+		g = 1 - p * w->val[i]/wsum;
 		gretl_matrix_set(G, i, 2, m3 * m3 * g);
 	    }
 	}
@@ -4398,6 +4438,8 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
     }
 
+ finish:
+
     gretl_matrix_free(w);
 
     if (errno) {
@@ -4409,7 +4451,11 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	gretl_matrix_free(G);
 	G = NULL;
 	errno = 0;
-    }	
+    }
+
+#if MDEBUG
+    gretl_matrix_print(G, "G: midas gradient");
+#endif    
 
     return G;
 }

@@ -57,6 +57,8 @@ void nlspec_set_t1_t2 (nlspec *spec, int t1, int t2);
 int nl_parse_line (int ci, const char *line, 
 		   const DATASET *dset, PRN *prn);
 
+int nl_set_smallstep (void);
+
 MODEL nl_model (DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL model_from_nlspec (nlspec *spec, DATASET *dset, 

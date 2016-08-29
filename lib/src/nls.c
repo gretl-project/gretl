@@ -53,7 +53,8 @@ enum {
     NL_ANALYTICAL = 1 << 0,
     NL_AUTOREG    = 1 << 1,
     NL_AHESS      = 1 << 2,
-    NL_NEWTON     = 1 << 3
+    NL_NEWTON     = 1 << 3,
+    NL_SMALLSTEP  = 1 << 4
 } nl_flags;
 
 struct parm_ {
@@ -1451,7 +1452,8 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
     }
 
     /* before over-writing the Gauss-Newton R^2, record it:
-       it should be very small at convergence */
+       it should be very small at convergence
+    */
     gretl_model_set_double(pmod, "GNR_Rsquared", pmod->rsq);
 
     if (tss == 0.0) {
@@ -1584,10 +1586,13 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 static int add_nls_std_errs_to_model (MODEL *pmod)
 {
     double abst, tstat_max = 0;
-    int i, k;
+    int i, k, err = 0;
 
-    if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
-	return E_ALLOC;
+    if (pmod->vcv == NULL) {
+	err = makevcv(pmod, pmod->sigma);
+	if (err) {
+	    return err;
+	}
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -1606,6 +1611,62 @@ static int add_nls_std_errs_to_model (MODEL *pmod)
     if (tstat_max > 0) {
 	gretl_model_set_double(pmod, "GNR_tmax", tstat_max);
     }
+
+    return 0;
+}
+
+/* Experimental: watch out for bad stuff! Here we react
+   to the case where there's machine-perfect collinearity
+   in the Gauss-Newton regression and one or more terms
+   were dropped. We don't have standard errors for those
+   terms but we do have coefficient estimates; we set
+   the standard errors to NA. Note that @list here is
+   the full list of regressors passed to the GNR.
+*/
+
+static int add_partial_std_errs_to_model (MODEL *pmod,
+					  const int *list)
+{
+    double *coeff, *sderr;
+    int k, *dlist;
+    int i, j;
+
+    dlist = gretl_model_get_data(pmod, "droplist");
+    if (dlist == NULL) {
+	/* reinstate this error */
+	return E_JACOBIAN;
+    }
+
+    k = list[0] - 1;
+    coeff = malloc(k * sizeof *coeff);
+    sderr = malloc(k * sizeof *sderr);
+
+    if (coeff == NULL || sderr == NULL) {
+	return E_ALLOC;
+    }
+
+    j = 0;
+    for (i=0; i<k; i++) {
+	if (in_gretl_list(dlist, i+2)) {
+	    /* missing, skip it */
+	    sderr[i] = NADBL;
+	} else {
+	    sderr[i] = pmod->sderr[j++];
+	}
+    }
+
+    free(pmod->coeff);
+    pmod->coeff = coeff;
+    free(pmod->sderr);
+    pmod->sderr = sderr;
+    pmod->ncoeff = k;
+
+    /* clean up stuff we don't want */
+    gretl_model_destroy_data_item(pmod, "droplist");
+    free(pmod->xpx);
+    pmod->xpx = NULL;
+    free(pmod->vcv);
+    pmod->vcv = NULL;
 
     return 0;
 }
@@ -1896,7 +1957,7 @@ static int transcribe_nls_function (MODEL *pmod, const char *s)
 }
 
 static int finalize_nls_model (MODEL *pmod, nlspec *spec,
-			       int perfect)
+			       int perfect, int *glist)
 {
     DATASET *dset = spec->dset;
     int err = 0;
@@ -1909,9 +1970,13 @@ static int finalize_nls_model (MODEL *pmod, nlspec *spec,
     pmod->smpl.t1 = spec->dset->t1;
     pmod->smpl.t2 = spec->dset->t2;
     
+    if (pmod->errcode == E_JACOBIAN) {
+	err = add_partial_std_errs_to_model(pmod, glist);
+    } else {    
+	err = add_nls_std_errs_to_model(pmod);
+    }
+
     add_stats_to_model(pmod, spec);
-    
-    err = add_nls_std_errs_to_model(pmod);
 
     if (!err) {
 	err = add_fit_resid_to_model(pmod, spec, perfect);
@@ -2037,7 +2102,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     gnr = lsq(glist, gdset, OLS, lsqopt);
 
 #if NLS_DEBUG
-    gnr.name = gretl_strdup("GNR for NLS");
+    gnr.name = gretl_strdup("Gauss-Newton regression for NLS");
     printmodel(&gnr, gdset, OPT_NONE, prn);
     free(gnr.name);
     gnr.name = NULL;
@@ -2046,12 +2111,12 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     if (gnr.errcode) {
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
 	errmsg(gnr.errcode, prn);
-    } else if (gnr.list[0] != glist[0]) {
+    } else if (gnr.list[0] < glist[0]) {
 	gnr.errcode = E_JACOBIAN;
     }
 
-    if (gnr.errcode == 0) {
-	gnr.errcode = finalize_nls_model(&gnr, spec, perfect);
+    if (gnr.errcode == 0 || gnr.errcode == E_JACOBIAN) {
+	gnr.errcode = finalize_nls_model(&gnr, spec, perfect, glist);
     }
 
     destroy_dataset(gdset);
@@ -2523,8 +2588,13 @@ static int lm_calculate (nlspec *spec, PRN *prn)
     int lwa = 5 * n + m; /* work array size */
     int ldjac = m;       /* leading dimension of jac array */
     int info = 0;
+    int nfev = 0;
+    int njev = 0;
     int *ipvt;
     double *wa;
+    double factor;
+    double ftol, xtol, gtol;
+    int mode, maxfev, nprint;
     int err = 0;
 
     wa = malloc(lwa * sizeof *wa);
@@ -2542,11 +2612,24 @@ static int lm_calculate (nlspec *spec, PRN *prn)
 	}
     }
 
-    /* note: maxfev is automatically set to 100*(n + 1) */
+    /* mostly use the lmder1() defaults */
+    maxfev = 100 * (n + 1);
+    nprint = 0;
+    mode = 1;
+    ftol = xtol = spec->tol;
+    gtol = 0.0;
+    factor = 100; /* default */
+
+    if (spec->flags & NL_SMALLSTEP) {
+	/* try to ensure a shorter step-length */
+	factor = 1.0;
+    }
 
     /* call minpack */
-    lmder1_(nls_calc, m, n, spec->coeff, spec->fvec, spec->jac, ldjac, 
-	    spec->tol, &info, ipvt, wa, lwa, spec);
+    lmder_(nls_calc, m, n, spec->coeff, spec->fvec, spec->jac, ldjac,
+	   ftol, xtol, gtol, maxfev, wa, mode, factor, nprint,
+	   &info, &nfev, &njev, ipvt, wa + n, wa + 2*n, wa + 3*n,
+	   wa + 4*n, wa + 5*n, spec);
 
     switch (info) {
     case -1: 
@@ -3051,6 +3134,16 @@ int nl_parse_line (int ci, const char *line,
     return err;
 }
 
+int nl_set_smallstep (void)
+{
+    if (private_spec.nlfunc != NULL) {
+	private_spec.flags |= NL_SMALLSTEP;
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
 static double default_nls_toler;
 
 /**
@@ -3295,6 +3388,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	}	
     } else {
 	/* NLS: invoke the appropriate minpack driver function */
+	gretl_iteration_push();
 	if (numeric_mode(spec)) {
 	    err = lm_approximate(spec, prn);
 	} else {
@@ -3303,6 +3397,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 		fprintf(stderr, "lm_calculate returned %d\n", err);
 	    }
 	}
+	gretl_iteration_pop();
     }
 
     if (!(spec->opt & (OPT_Q | OPT_M)) && !(spec->flags & NL_NEWTON)) {

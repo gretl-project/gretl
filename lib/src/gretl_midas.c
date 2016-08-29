@@ -290,7 +290,7 @@ static gretl_matrix *maybe_make_auto_theta (char *name, int i,
 		theta->val[1] = 5;
 	    } else if (ptype == MIDAS_BETAN) {
 		theta->val[0] = 1;
-		theta->val[1] = 1;
+		theta->val[1] = 5;
 		theta->val[2] = 0;
 	    }
 	    sprintf(name, "theta___%d", i+1);
@@ -1374,6 +1374,21 @@ static int add_midas_matrices (int yno,
     return err;
 }
 
+static int any_smallstep_terms (midas_info *m, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (m[i].type == MIDAS_NEALMON ||
+	    m[i].type == MIDAS_BETA0 ||
+	    m[i].type == MIDAS_BETAN) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int put_midas_nls_line (char *line,
 			       DATASET *dset,
 			       PRN *prn)
@@ -1591,6 +1606,9 @@ MODEL midas_model (const int *list,
 #endif
 
     if (!err) {
+	if (any_smallstep_terms(minfo, nmidas)) {
+	    nl_set_smallstep();
+	}
 	mod = nl_model(dset, (opt | OPT_G | OPT_M), prn);
     }
 
