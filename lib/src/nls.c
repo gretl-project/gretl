@@ -2116,7 +2116,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	MODEL mpmod = mp_ols(glist, gdset);
 
 	if (mpmod.errcode) {
-	    /* back-track! */
+	    /* back-track if mp_ols failed */
 	    clear_model(&mpmod);
 	    gnr.errcode = E_JACOBIAN;
 	} else {
