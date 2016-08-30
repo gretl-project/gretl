@@ -34,8 +34,6 @@ static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
 static mpf_t MPF_TINY;
 
-static mpfr_t MPFR_ONE;
-
 typedef struct {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
@@ -92,16 +90,6 @@ static void mpf_constants_clear (void)
     mpf_clear(MPF_ZERO);
     mpf_clear(MPF_MINUS_ONE);
     mpf_clear(MPF_TINY);
-}
-
-static void mpfr_constants_init (void)
-{
-    mpfr_init_set_ui(MPFR_ONE, 1, GMP_RNDN);
-}
-
-static void mpfr_constants_clear (void)
-{
-    mpfr_clear(MPFR_ONE);
 }
 
 static void mpf_2d_array_free (mpf_t **X, int v, int n)
@@ -2297,18 +2285,14 @@ int mp_midas_weights (const double *theta, int k,
 
     if (method == 1) {
 	/* nealmon */
-	mpfr_t ival, jval, incr;
+	mpfr_t incr;
 
-	mpfr_init(ival);
-	mpfr_init(jval);
 	mpfr_init(incr);
 	
 	for (i=0; i<p; i++) {
-	    mpfr_set_ui(ival, i+1, GMP_RNDN);
-	    mpfr_mul(mw[i], ival, mt[0], GMP_RNDN);
+	    mpfr_mul_ui(mw[i], mt[0], i+1, GMP_RNDN);
 	    for (j=1; j<k; j++) {
-		mpfr_set_ui(jval, j+1, GMP_RNDN);
-		mpfr_pow(tmp, ival, jval, GMP_RNDN);
+		mpfr_ui_pow_ui(tmp, i+1, j+1, GMP_RNDN);
 		mpfr_mul(incr, tmp, mt[j], GMP_RNDN);
 		mpfr_add(mw[i], mw[i], incr, GMP_RNDN);
 	    }
@@ -2317,8 +2301,6 @@ int mp_midas_weights (const double *theta, int k,
 	    mpfr_add(wsum, wsum, mw[i], GMP_RNDN);
 	}
 
-	mpfr_clear(ival);
-	mpfr_clear(jval);
 	mpfr_clear(incr);
     } else {
 	/* beta */
@@ -2353,13 +2335,26 @@ int mp_midas_weights (const double *theta, int k,
 
     if (!err) {
 	for (i=0; i<p; i++) {
+	    /* normalize */
 	    mpfr_div(tmp, mw[i], wsum, GMP_RNDN);
+	}
+	if (method == 3) {
+	    /* beta with non-zero last lag: add theta[2]
+	       and renormalize */
+	    mpfr_set_d(wsum, 1.0 + p * theta[2], GMP_RNDN);
+	    for (i=0; i<p; i++) {
+		mpfr_add_d(mw[i], mw[i], theta[2], GMP_RNDN);
+		mpfr_div(mw[i], mw[i], wsum, GMP_RNDN);
+	    }
+	}
+	for (i=0; i<p; i++) {
 	    w->val[i] = mpfr_get_d(tmp, GMP_RNDN);
 	}
-#if WDEBUG
-	gretl_matrix_print(w, "w, in mp module");
-#endif
     }
+
+#if WDEBUG
+    gretl_matrix_print(w, "w, in mp module");
+#endif
     
     mpfr_array_free(mw, p);
     mpfr_array_free(mt, k);
@@ -2392,7 +2387,6 @@ int mp_midas_gradient (const double *theta,
     mpfr_init_set_d(wsum, 0.0, GMP_RNDN);
     mpfr_init(tmp);
     mpfr_init(gij);
-    mpfr_constants_init();
 
     if (method > 1) {
 	mg = mpfr_2d_array_new(k, p);
@@ -2476,11 +2470,11 @@ int mp_midas_gradient (const double *theta,
 	    } else if (i == p - 1) {
 		dsi -= eps;
 	    }
-	    mpfr_sub(tmp, mt[0], MPFR_ONE, GMP_RNDN);
+	    mpfr_sub_ui(tmp, mt[0], 1, GMP_RNDN);
 	    mpfr_set_d(si, dsi, GMP_RNDN);
 	    mpfr_pow(ai, si, tmp, GMP_RNDN);
-	    mpfr_sub(tmp, mt[1], MPFR_ONE, GMP_RNDN);
-	    mpfr_sub(si, MPFR_ONE, si, GMP_RNDN);
+	    mpfr_sub_ui(tmp, mt[1], 1, GMP_RNDN);
+	    mpfr_ui_sub(si, 1, si, GMP_RNDN);
 	    mpfr_pow(bi, si, tmp, GMP_RNDN);
 	    mpfr_mul(mw[i], ai, bi, GMP_RNDN);
 	    mpfr_add(wsum, wsum, mw[i], GMP_RNDN);
@@ -2500,7 +2494,7 @@ int mp_midas_gradient (const double *theta,
 	    mpfr_div(ai, ai, wsum, GMP_RNDN);
 	    mpfr_set(mg[0][i], ai, GMP_RNDN);
 	    mpfr_set_d(si, dsi, GMP_RNDN);
-	    mpfr_sub(si, MPFR_ONE, si, GMP_RNDN);
+	    mpfr_ui_sub(si, 1, si, GMP_RNDN);
 	    mpfr_log(tmp, si, GMP_RNDN);
 	    mpfr_mul(bi, mw[i], tmp, GMP_RNDN);
 	    mpfr_add(g2sum, g2sum, bi, GMP_RNDN);
@@ -2535,7 +2529,7 @@ int mp_midas_gradient (const double *theta,
 	    for (i=0; i<p; i++) {
 		mpfr_div(tmp, mw[i], wsum, GMP_RNDN);
 		mpfr_mul_ui(tmp, tmp, p, GMP_RNDN);
-		mpfr_sub(tmp, MPFR_ONE, tmp, GMP_RNDN);
+		mpfr_ui_sub(tmp, 1, tmp, GMP_RNDN);
 		mpfr_mul(tmp, tmp, mm3, GMP_RNDN);
 		mpfr_mul(mg[2][i], tmp, mm3, GMP_RNDN);
 	    }
@@ -2571,7 +2565,6 @@ int mp_midas_gradient (const double *theta,
     mpfr_clear(wsum);
     mpfr_clear(tmp);
     mpfr_clear(gij);
-    mpfr_constants_clear();
     
     return err;
 }

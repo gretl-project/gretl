@@ -4199,7 +4199,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
-    if (method == MIDAS_BETAN) {
+    if (!using_mp && method == MIDAS_BETAN) {
 	/* beta with third param, not zero-terminated:
 	   add theta[2] and renormalize
 	*/
