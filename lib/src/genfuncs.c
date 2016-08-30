@@ -4438,8 +4438,6 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
     }
 
- finish:
-
     gretl_matrix_free(w);
 
     if (errno) {
