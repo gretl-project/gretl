@@ -157,7 +157,7 @@ newline or semicolon after an else or end keyword."
   :type 'boolean
   :group 'gretl)
 
-(defcustom gretl-block-offset 2
+(defcustom gretl-block-offset 4
   "*Extra indentation applied to statements in gretl block structures."
   :type 'integer
   :group 'gretl)
@@ -207,7 +207,7 @@ newline or semicolon after an else or end keyword."
     ("foreign" . ("end"))
     ("restrict" . ("end"))
     ("kalman" . ("end"))
-    ("function" . ("end"))
+    ("function" . ("end function"))
     ("system" . ("end")))
   "Alist with gretl's matching block keywords.
 Has gretl's begin keywords as keys and a list of the matching else or
@@ -283,7 +283,7 @@ gretl-blink-matching-block
 
 gretl-block-offset
   Extra indentation applied to statements in block structures.
-  Default is 2.
+  Default is 4.
 
 gretl-continuation-offset
   Extra indentation applied to gretl continuation lines.
