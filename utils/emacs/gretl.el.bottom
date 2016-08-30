@@ -207,6 +207,7 @@ newline or semicolon after an else or end keyword."
     ("foreign" . ("end"))
     ("restrict" . ("end"))
     ("kalman" . ("end"))
+    ("function" . ("end"))
     ("system" . ("end")))
   "Alist with gretl's matching block keywords.
 Has gretl's begin keywords as keys and a list of the matching else or
