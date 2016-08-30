@@ -1349,7 +1349,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	mdl.rho = mdl.dw = NADBL;
     }
 
-    /* weird special case: degenerate model */
+    /* special case: degenerate model */
     if (mdl.ncoeff == 1 && mdl.ifc) {
 	mdl.rsq = mdl.adjrsq = 0.0;
 	mdl.fstt = NADBL;

@@ -13311,6 +13311,8 @@ static void printnode (NODE *t, parser *p, int value)
 	}
     } else if (t->t == BUNDLE) {
 	gretl_bundle_print(t->v.b, p->prn);
+    } else if (t->t == DBUNDLE) {
+	pputs(p->prn, bvarname(t->v.idnum));
     } else if (t->t == ARRAY) {
 	gretl_array_print(t->v.a, p->prn);
     } else if (t->t == UOBJ) {

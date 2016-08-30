@@ -4400,10 +4400,20 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     return err;
 }
 
+/* ensure we get a valid identifier for the bundle key */
+
+static char *item_key_to_bundle_key (char *targ,
+				     const char *src)
+{
+    strcpy(targ, src);
+    return gretl_charsub(targ, '-', '_');
+}
+
 int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 {
     gretl_bundle *b = (gretl_bundle *) ptr;
     model_data_item *item;
+    char bkey[VNAMELEN];
     double xval;
     int i, ival;
     int err = 0;
@@ -4411,14 +4421,17 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
     for (i=0; i<pmod->n_data_items && !err; i++) {
 	item = pmod->data_items[i];
 	if (item->type == GRETL_TYPE_INT) {
+	    item_key_to_bundle_key(bkey, item->key);
 	    ival = *(int *) item->ptr;
-	    err = gretl_bundle_set_scalar(b, item->key, ival);
+	    err = gretl_bundle_set_scalar(b, bkey, ival);
 	} else if (item->type == GRETL_TYPE_DOUBLE) {
+	    item_key_to_bundle_key(bkey, item->key);
 	    xval = *(double *) item->ptr;
-	    err = gretl_bundle_set_scalar(b, item->key, xval);
+	    err = gretl_bundle_set_scalar(b, bkey, xval);
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    /* experiment: include matrices here */
-	    err = gretl_bundle_set_matrix(b, item->key, item->ptr);
+	    item_key_to_bundle_key(bkey, item->key);
+	    err = gretl_bundle_set_matrix(b, bkey, item->ptr);
 	}
     }
 
