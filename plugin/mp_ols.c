@@ -2268,7 +2268,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int n,
 
 /* Multiple precision versions of midas_weights() and 
    midas_gradient(). We come here only if the standard
-   double precision variants hot a range error -- see
+   double precision variants hit a range error -- see
    genfuncs.c for context.
 */
 
