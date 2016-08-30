@@ -1239,10 +1239,10 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 	mpf_sub(test, xpxxpy.xpx[kk], d);
 	mpf_div(rtest, test, xpxxpy.xpx[kk]);
         if (mpf_sgn(test) != 1 || mpf_cmp(rtest, MPF_TINY) < 0) {
-	    fprintf(stderr, "mp_cholbeta: rtest = %g\n", mpf_get_d(rtest));
+	    gmp_fprintf(stderr, "mp_cholbeta: rtest = %Fg\n", rtest);
 	    mpf_set(cb.rss, MPF_MINUS_ONE); 
 	    goto mp_cholbeta_abort;
-        }   
+        }
 	mpf_sqrt(tmp, test);
 	mpf_div(e, MPF_ONE, tmp);
 	mpf_set(xpxxpy.xpx[kk], e);

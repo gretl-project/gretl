@@ -1407,6 +1407,14 @@ static void beck_katz_failed_line (PRN *prn)
     }
 }
 
+static void nls_robust_failed_line (PRN *prn)
+{
+    if (plain_format(prn)) {
+	pputs(prn, A_("Could not compute robust standard errors"));
+	pputc(prn, '\n');
+    }
+}
+
 static void hac_vcv_line (const VCVInfo *vi, PRN *prn)
 {
     const char *kstrs[] = {
@@ -1569,6 +1577,9 @@ void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
     } else if ((pmod->ci == ARBOND || pmod->ci == DPANEL) && 
 	       gretl_model_get_int(pmod, "asy")) {
 	dpd_asy_vcv_line(prn);
+    } else if ((pmod->ci == NLS || pmod->ci == MIDASREG) &&
+	       gretl_model_get_int(pmod, "non-robust")) {
+	nls_robust_failed_line(prn);
     } else {
 	vi = gretl_model_get_data(pmod, "vcv_info");
     }

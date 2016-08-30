@@ -2102,7 +2102,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
     gnr = lsq(glist, gdset, OLS, lsqopt);
 
 #if NLS_DEBUG
-    gnr.name = gretl_strdup("Gauss-Newton regression for NLS");
+    gnr.name = gretl_strdup("Gauss-Newton Regression for NLS");
     printmodel(&gnr, gdset, OPT_NONE, prn);
     free(gnr.name);
     gnr.name = NULL;
@@ -2112,15 +2112,19 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
 	errmsg(gnr.errcode, prn);
     } else if (gnr.list[0] < glist[0]) {
-	clear_model(&gnr);
-	gnr = mp_ols(glist, gdset);
-	if (gnr.errcode) {
+	/* excessive collinearity */
+	MODEL mpmod = mp_ols(glist, gdset);
+
+	if (mpmod.errcode) {
 	    /* back-track! */
-	    clear_model(&gnr);
-	    gnr = lsq(glist, gdset, OLS, lsqopt);
-	}
-	if (gnr.list[0] < glist[0]) {
+	    clear_model(&mpmod);
 	    gnr.errcode = E_JACOBIAN;
+	} else {
+	    clear_model(&gnr);
+	    gnr = mpmod;
+	    if (lsqopt & OPT_R) {
+		gretl_model_set_int(&gnr, "non-robust", 1);
+	    }
 	}
 	gretl_model_set_int(&gnr, "near-singular", 1);
     }
