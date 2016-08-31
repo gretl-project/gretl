@@ -27,17 +27,10 @@
 enum {
     MATBUILD,
     MATSHAPE,
-    MATH,
     LINALG,
     STATS,
-    DATA_UTILS,
-    FILTERS,
     NUMERICAL,
-    PROBDIST,
-    SSPACE,
-    STRINGS,
-    TRANSFORMS,
-    ACCESS,
+    DECORATION,
     TAB_MAX
 };
 
@@ -50,17 +43,10 @@ struct tab_labeler {
 struct tab_labeler labelers[] = {
     { MATBUILD,     "matbuild",     N_("Creation and I/O") },
     { MATSHAPE,     "matshape",     N_("Shape/size/arrangement") },
-    { MATH,         "math",         N_("Element by element") },
     { LINALG,       "linalg",       N_("Matrix algebra") },
     { STATS,        "stats",        N_("Statistics/transformations") },
-    { DATA_UTILS,   "data-utils",   N_("Data utilities") },
-    { FILTERS,      "filters",      N_("Filters") },
     { NUMERICAL,    "numerical",    N_("Numerical methods") },
-    { PROBDIST,     "probdist",     N_("Probability distributions") },
-    { STRINGS,      "strings",      N_("Strings") },
-    { TRANSFORMS,   "transforms",   N_("Transformations") },
-    { ACCESS,       "access",       N_("Accessors") },
-    { SSPACE,       "sspace",       N_("State space modeling") },
+    { DECORATION,   "decoration",   N_("Decoration") },
     { TAB_MAX,      NULL,           NULL }
 };
 
@@ -176,6 +162,12 @@ static int not_wanted (const char *s)
 {
     if (!strcmp(s, "probdist") ||
 	!strcmp(s, "calendar") ||
+	!strcmp(s, "strings") ||
+	!strcmp(s, "access") ||
+	!strcmp(s, "transforms") ||
+	!strcmp(s, "sspace") ||
+	!strcmp(s, "filters") ||
+	!strcmp(s, "data-utils") ||
 	!strcmp(s, "math")) {
 	return 1;
     }
@@ -183,12 +175,36 @@ static int not_wanted (const char *s)
     return 0;
 }
 
+static int add_section (sectlist *slist, const char *name)
+{
+    section *sect, **sects = NULL;
+    int ns;
+    
+    sect = section_new(name);
+    if (sect == NULL) {
+	return 1;
+    }
+
+    ns = slist->nsects + 1;
+
+    sects = realloc(slist->sections, ns * sizeof *sects);
+    if (sects == NULL) {
+	fprintf(stderr, "Out of memory\n");
+	return 1;
+    }
+
+    slist->sections = sects;
+    slist->sections[ns - 1] = sect;
+    slist->nsects = ns;
+
+    return 0;
+}
+
 static int 
 maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 {
-    section *sect, **sects = NULL;
     char *tmp;
-    int ns, err = 0;
+    int err = 0;
 
     tmp = (char *) xmlGetProp(node, (UTF) "section");
     if (tmp == NULL) {
@@ -197,6 +213,7 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
     }
 
     if (not_wanted(tmp)) {
+	free(tmp);
 	return 0;
     }
 
@@ -213,23 +230,7 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 #if VERBOSE
 	fprintf(stderr, " not recorded: adding new section\n");
 #endif
-
-	sect = section_new(tmp);
-	if (sect == NULL) {
-	    return 1;
-	}
-
-	ns = slist->nsects + 1;
-
-	sects = realloc(slist->sections, ns * sizeof *sects);
-	if (sects == NULL) {
-	    fprintf(stderr, "Out of memory\n");
-	    return 1;
-	}
-
-	slist->sections = sects;
-	slist->sections[ns - 1] = sect;
-	slist->nsects = ns;
+	err = add_section(slist, tmp);
     } 
 
     free(tmp);
@@ -298,6 +299,21 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	return 1;
     }
 
+    /* a few "specials" where the sections from genr_funcs.xml
+       don't really match up with what we want */
+    if (!strcmp(fname, "mread") || !strcmp(fname, "mwrite")) {
+	free(sname);
+	sname = gretl_strdup("matbuild");
+	matrix_ok = 1;
+	goto specials;
+    } else if (!strcmp(fname, "colnames") ||
+	       !strcmp(fname, "rownames")) {
+	free(sname);
+	sname = gretl_strdup("decoration");
+	matrix_ok = 1;
+	goto specials;
+    }
+
     if (matrix_return(retval)) {
 	matrix_ok = 1;
     } else {
@@ -324,6 +340,8 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
     if (!matrix_ok) {
 	goto bailout;
     }
+
+ specials:    
 
     for (i=0; i<s->nsects; i++) {
 	if (!strcmp(sname, s->sections[i]->name)) {
@@ -453,6 +471,7 @@ static void sectlist_init (sectlist *s)
 {
     s->nsects = 0;
     s->sections = NULL;
+    add_section(s, "decoration");
 }
 
 void free_section (section *sect)

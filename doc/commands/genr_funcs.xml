@@ -4495,8 +4495,8 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="ksetup"/>
             <fncref targ="kdsmooth"/>
-            <cmdref targ="kalman"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksimul"/>
 	  </seelist>
