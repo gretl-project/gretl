@@ -4706,7 +4706,7 @@ static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
 
 	if (n == 0) {
 	    p->err = E_NONCONF;
-	} else if (f_ratio < 2) {
+	} else if (f_ratio < 3) {
 	    p->err = E_INVARG;
 	} else if (*pfx == '\0' || !gretl_is_ascii(pfx) ||
 		   strlen(pfx) > 24) {

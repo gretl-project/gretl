@@ -3495,11 +3495,10 @@
       </fnargs>
       <description>
 	<para>
-	  Given a MIDAS list, <repl>hfvars</repl>, produces a list of
-	  the same length holding high-frequency first
-	  differences. The second argument is optional and defaults to
-	  unity: it can be used to multiply the differences by some
-	  constant.
+	  Given a <cmdref targ="MIDAS_list"/>, produces a list of the
+	  same length holding high-frequency first differences. The
+	  second argument is optional and defaults to unity: it can be
+	  used to multiply the differences by some constant.
 	</para>
       </description>
     </function>
@@ -3511,8 +3510,8 @@
       </fnargs>
       <description>
 	<para>
-	  Given a MIDAS list, <repl>hfvars</repl>, produces a list of
-	  the same length holding high-frequency log-differences. The
+	  Given a <cmdref targ="MIDAS_list"/>, produces a list of the
+	  same length holding high-frequency log-differences. The
 	  second argument is optional and defaults to unity: it can be
 	  used to multiply the differences by some constant, for
 	  example one might give a value of 100 to produce
@@ -3529,13 +3528,13 @@
       </fnargs>
       <description>
 	<para>
-	  Given a MIDAS list, <repl>hfvars</repl>, produces a list
-	  holding high-frequency lags <repl>minlag</repl> to
-	  <repl>maxlag</repl>. Use positive values for actual lags,
-	  negative for leads. For example, if <repl>minlag</repl> is
-	  &minus;3 and <repl>maxlag</repl> is 5 than the returned list
-	  will hold 9 series: 3 leads, the contemporary value, and 5
-	  lags.
+	  Given a <cmdref targ="MIDAS_list"/>, <repl>hfvars</repl>,
+	  produces a list holding high-frequency lags
+	  <repl>minlag</repl> to <repl>maxlag</repl>. Use positive
+	  values for actual lags, negative for leads. For example, if
+	  <repl>minlag</repl> is &minus;3 and <repl>maxlag</repl> is 5
+	  than the returned list will hold 9 series: 3 leads, the
+	  contemporary value, and 5 lags.
 	</para>
 	<para>
 	  Note that high-frequency lag 0 corresponds to the first
@@ -3554,13 +3553,13 @@
       </fnargs>
       <description>
 	<para>
-	  Produces from the vector <repl>x</repl> a MIDAS list of
-	  <repl>m</repl> series, where <repl>m</repl> is the ratio of
-	  the frequency of observation for the variable in
-	  <repl>x</repl> to the base frequency of the current
-	  dataset. The value of <repl>m</repl> must be at least 2 and
-	  the length of <repl>x</repl> must be <repl>m</repl> times
-	  the length of the current sample range.
+	  Produces from the vector <repl>x</repl> a <cmdref
+	  targ="MIDAS_list"/> of <repl>m</repl> series, where
+	  <repl>m</repl> is the ratio of the frequency of observation
+	  for the variable in <repl>x</repl> to the base frequency of
+	  the current dataset. The value of <repl>m</repl> must be at
+	  least 3 and the length of <repl>x</repl> must be
+	  <repl>m</repl> times the length of the current sample range.
 	</para>
 	<para>
 	  The names of the series in the returned list are constructed

@@ -3669,6 +3669,8 @@ static int command_word_index (char *s)
 	if (i < 0) {
 	    i = 0;
 	} else {
+	    /* e.g. "MIDAS_list" -> "MIDAS list", for
+	       display purposes */
 	    gretl_charsub(s, '_', ' ');
 	}
     }
