@@ -9,7 +9,6 @@ void write_chapter_info (const char *path, const char *src,
 {
     char targ[64];
     char tmp[512];
-    char title[80];
     FILE *fp;
     char *s;
 
