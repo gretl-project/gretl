@@ -168,6 +168,7 @@ static int not_wanted (const char *s)
 	!strcmp(s, "sspace") ||
 	!strcmp(s, "filters") ||
 	!strcmp(s, "data-utils") ||
+	!strcmp(s, "midas") ||
 	!strcmp(s, "math")) {
 	return 1;
     }
