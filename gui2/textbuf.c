@@ -3660,13 +3660,17 @@ static int get_code_skip (const char *s)
     return skip;
 }
 
-static int command_word_index (const char *s)
+static int command_word_index (char *s)
 {
     int i = gretl_command_number(s);
 
     if (i == 0) {
 	i = extra_command_number(s);
-	if (i < 0) i = 0;
+	if (i < 0) {
+	    i = 0;
+	} else {
+	    gretl_charsub(s, '_', ' ');
+	}
     }
 
     return i;

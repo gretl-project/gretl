@@ -148,6 +148,7 @@ static struct gui_help_item gui_help_items[] = {
     { DAILY_PURGE,    "daily-purge" },
     { PKG_FILES,      "data-files" },
     { EDITOR,         "script-editor" },
+    { MIDAS_LIST,     "MIDAS_list" },
     { -1,             NULL },
 };
 
@@ -377,6 +378,8 @@ static const char *real_funcs_heading (const char *s)
 	return _("State space");
     } else if (!strcmp(s, "calendar")) {
 	return _("Calendar");
+    } else if (!strcmp(s, "midas")) {
+	return _("MIDAS");
     } else {
 	return "??";
     }

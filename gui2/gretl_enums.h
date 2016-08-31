@@ -129,6 +129,7 @@ enum extra_cmds {
     BUILD_PKG,
     PKG_FILES,
     EDITOR,
+    MIDAS_LIST,
     GUI_CMD_MAX
 };
 

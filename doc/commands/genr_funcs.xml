@@ -3488,7 +3488,7 @@
       </description>
     </function>
 
-    <function name="hfdiff" section="transforms" output="list">
+    <function name="hfdiff" section="midas" output="list">
       <fnargs>
 	<fnarg type="list">hfvars</fnarg>
 	<fnarg type="scalar">multiplier</fnarg>
@@ -3504,7 +3504,7 @@
       </description>
     </function>
 
-    <function name="hfldiff" section="transforms" output="list">
+    <function name="hfldiff" section="midas" output="list">
       <fnargs>
 	<fnarg type="list">hfvars</fnarg>
 	<fnarg type="scalar">multiplier</fnarg>
@@ -3521,7 +3521,7 @@
       </description>
     </function>    
 
-    <function name="hflags" section="transforms" output="list">
+    <function name="hflags" section="midas" output="list">
       <fnargs>
 	<fnarg type="int">minlag</fnarg>
 	<fnarg type="int">maxlag</fnarg>
@@ -3546,7 +3546,7 @@
       </description>
     </function>
 
-    <function name="hflist" section="transforms" output="list">
+    <function name="hflist" section="midas" output="list">
       <fnargs>
 	<fnarg type="vector">x</fnarg>
 	<fnarg type="int">m</fnarg>
