@@ -5069,6 +5069,33 @@
       </description>
     </function>
 
+    <function name="mgradient" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="int">p</fnarg>
+	<fnarg type="vector">theta</fnarg>
+	<fnarg type="int">type</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Let <math>k</math> denote the number of elements in the
+	  vector of hyper-parameters, <repl>theta</repl>.  This
+	  function returns a <times r="p" c="k"/> matrix holding the
+	  gradient of the vector of weights (as calculated by <fncref
+	  targ="mweights"/>) with respect to the elements of
+	  <repl>theta</repl>. The first argument represents the
+	  desired lag order and the last argument specifies the type
+	  of parameterization.  See <lit>mweights</lit> for an account
+	  of the acceptable <repl>type</repl> values.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mweights"/>
+	    <fncref targ="mlincomb"/>
+	  </seelist>
+	</para>	
+      </description>
+    </function>    
+
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
@@ -5212,6 +5239,44 @@
 	</para>
       </description>
     </function>
+
+    <function name="mlincomb" section="midas" output="series">
+      <fnargs>
+	<fnarg type="list">hfvars</fnarg>
+	<fnarg type="vector">theta</fnarg>
+	<fnarg type="int">type</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  A convenience MIDAS function which combines <fncref
+	  targ="lincomb"/> with <fncref targ="mweights"/>.  Given a
+	  list <repl>hfvars</repl>, it constructs a series which is a
+	  weighted sum of the elements of the list, the weights based
+	  on the vector of hyper-parameters <repl>theta</repl> and the
+	  type of parameterization: see <lit>mweights</lit> for
+	  details. Note that <fncref targ="hflags"/> is generally
+	  the best way to create a list suitable as the first argument
+	  to this function.
+	</para>
+	<para>
+	  To be explicit, the call
+	</para>
+	<code>
+	  series s = mlincomb(hfvars, theta, 2)
+	</code>
+	<para>
+	  is equivalent to
+	</para>
+	<code>
+	  matrix w = mweights(nelem(hfvars), theta, 2)
+	  series s = lincomb(hfvars, w)
+	</code>
+	<para>
+	  but use of <lit>mlincomb</lit> saves on some typing and
+	  also some CPU cycles.
+	</para>
+      </description>
+    </function>    
 
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
@@ -5596,6 +5661,36 @@
 	</para>
       </description>
     </function>
+
+    <function name="mweights" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="int">p</fnarg>
+	<fnarg type="vector">theta</fnarg>
+	<fnarg type="int">type</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a <math>p</math>-vector of MIDAS weights to be
+	  applied to <math>p</math> lags of a high-frequency series,
+	  based on the vector <repl>theta</repl> of hyper-parameters.
+	</para>
+	<para>
+	  The <repl>type</repl> argument identifies the type of
+	  parameterization, which governs the required number of
+	  elements, <math>k</math>, in <repl>theta</repl>: 1 =
+	  normalized exponential Almon (<math>k</math> at least 1,
+	  typically 2); 2 = normalized beta with zero last
+	  (<math>k</math> = 2); 3 = normalized beta with non-zero last
+	  lag (<math>k</math> = 3); and 4 = Almon polynomial
+	  (<math>k</math> at least 1).
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
+	  </seelist>
+	</para>	
+      </description>
+    </function>    
 
     <function name="mwrite" section="data-utils" output="int">
       <fnargs>
