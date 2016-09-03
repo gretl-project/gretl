@@ -694,11 +694,18 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-  <xsl:text>\hyperlink{cmd-</xsl:text>
-  <xsl:value-of select="@targ"/>
-  <xsl:text>}{</xsl:text>
-  <xsl:value-of select="@targ"/>
-  <xsl:text>}</xsl:text>
+  <xsl:choose>
+    <xsl:when test="contains(@targ, '_')">
+      <xsl:value-of select="translate(@targ, '_', ' ')"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\hyperlink{cmd-</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>}{</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>}</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:if test="parent::seelist and following-sibling::*">
     <xsl:text>, </xsl:text>
   </xsl:if>
