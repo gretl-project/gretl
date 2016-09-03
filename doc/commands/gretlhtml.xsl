@@ -704,17 +704,24 @@
 
 <xsl:template match="cmdref">
   <xsl:choose>
-    <xsl:when test="$topic = 'funcs'">
-      <xsl:text>&lt;a href="./cmdref.html#</xsl:text>
+    <xsl:when test="contains(@targ, '_')">
+      <xsl:value-of select="translate(@targ, '_', ' ')"/>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:text>&lt;a href="#</xsl:text>
+      <xsl:choose>
+	<xsl:when test="$topic = 'funcs'">
+	  <xsl:text>&lt;a href="./cmdref.html#</xsl:text>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:text>&lt;a href="#</xsl:text>
+	</xsl:otherwise>
+      </xsl:choose>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>"&gt;</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>&lt;/a&gt;</xsl:text>
     </xsl:otherwise>
   </xsl:choose>
-  <xsl:value-of select="@targ"/>
-  <xsl:text>"&gt;</xsl:text>
-  <xsl:value-of select="@targ"/>
-  <xsl:text>&lt;/a&gt;</xsl:text>
   <xsl:if test="parent::seelist and following-sibling::*">
     <xsl:text>, </xsl:text>
   </xsl:if>

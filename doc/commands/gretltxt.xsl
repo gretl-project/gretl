@@ -534,7 +534,7 @@
 
 <xsl:template match="cmdref">
   <xsl:text>"</xsl:text>
-  <xsl:value-of select="@targ"/>
+  <xsl:value-of select="translate(@targ, '_', ' ')"/>
   <xsl:text>"</xsl:text> 
   <xsl:if test="parent::seelist and following-sibling::*">
     <xsl:text>, </xsl:text>

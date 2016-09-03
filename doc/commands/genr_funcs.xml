@@ -5079,7 +5079,7 @@
 	<para>
 	  Let <math>k</math> denote the number of elements in the
 	  vector of hyper-parameters, <repl>theta</repl>.  This
-	  function returns a <times r="p" c="k"/> matrix holding the
+	  function returns a <by r="p" c="k"/> matrix holding the
 	  gradient of the vector of weights (as calculated by <fncref
 	  targ="mweights"/>) with respect to the elements of
 	  <repl>theta</repl>. The first argument represents the
