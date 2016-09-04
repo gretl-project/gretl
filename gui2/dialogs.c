@@ -3183,8 +3183,18 @@ static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
     }
 }
 
-#define fcast_errs_ok(m) (m == NULL || m->ci != NLS || \
-			  !gretl_model_get_int(m, "dynamic"))
+static int fcast_errs_ok (MODEL *pmod)
+{
+    if (pmod == NULL) {
+	return 0;
+    } else if (pmod->ci == NLS) {
+	return gretl_model_get_int(pmod, "dynamic") == 0;
+    } else if (pmod->ci == MIDASREG) {
+	return gretl_model_get_int(pmod, "umidas") != 0;
+    } else {
+	return 1;
+    }
+}
 
 /* Note: the @pmod argument may be NULL, if this dialog is
    called in relation to a system of equations */
