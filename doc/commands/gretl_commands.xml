@@ -3839,10 +3839,10 @@
 	<lit>display</lit> can be used to force display of the plot in
 	a window. For example,
       </para>
-      <code>
+      <code context="cli">
 	fcast --plot=fc.pdf
       </code>
-      <para>
+      <para context="cli">
 	will generate a graphic in PDF format.  Absolute pathnames are
 	respected, otherwise files are written to the gretl working
 	directory.
