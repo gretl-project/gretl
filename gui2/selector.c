@@ -1275,7 +1275,7 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
     if (locus == SR_RVARS2 && sr->ci == MIDASREG) {
-	gretl_tooltips_add(view, "Select and right-click to edit specification");
+	gretl_tooltips_add(view, _("Select and right-click to edit specification"));
     }
 
     if (flagcol) {
