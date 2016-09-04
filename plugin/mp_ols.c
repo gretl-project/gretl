@@ -2443,7 +2443,7 @@ int mp_midas_gradient (const double *theta,
 		mpfr_mul(tmp, mw[i], dsum[j], GMP_RNDN);
 		mpfr_sub(gij, gij, tmp, GMP_RNDN);
 		dgij = mpfr_get_d(gij, GMP_RNDN);
-		gretl_matrix_set(G, i, j, k * dgij);
+		gretl_matrix_set(G, i, j, dgij);
 	    }
 	}
 

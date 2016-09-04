@@ -4321,7 +4321,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	ws2 = wsum * wsum;
 	if (errno && inf_check(ws2, "nealmon gradient", err)) {
 	    goto range_error;
-	}	
+	}
 	for (i=0; i<p; i++) {
 	    for (j=0; j<k; j++) {
 		dsum[j] += pow(i+1, j+1) * w->val[i];
@@ -4334,7 +4334,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    for (j=0; j<k; j++) {
 		gij = pow(i+1, j+1) * w->val[i] / wsum;
 		gij -= w->val[i] * dsum[j];
-		gretl_matrix_set(G, i, j, k*gij);
+		gretl_matrix_set(G, i, j, gij);
 	    }
 	}
 	free(dsum);
@@ -4362,13 +4362,8 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	if (wsum <= eps) {
 	    /* should we just set G to zero in this case? */
 	    fprintf(stderr, "sum of weights = %g\n", wsum);
-#if 0
-	    gretl_matrix_zero(G);
-	    goto finish;
-#else
 	    *err = E_NAN;
 	    goto range_error;
-#endif
 	}    
 	ws2 = wsum * wsum;
 	if (errno && inf_check(ws2, "beta gradient", err)) {
