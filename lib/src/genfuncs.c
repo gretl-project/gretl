@@ -4318,22 +4318,18 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 		goto range_error;
 	    }	    
 	}
-	ws2 = wsum * wsum;
-	if (errno && inf_check(ws2, "nealmon gradient", err)) {
-	    goto range_error;
-	}
 	for (i=0; i<p; i++) {
 	    for (j=0; j<k; j++) {
-		dsum[j] += pow(i+1, j+1) * w->val[i];
+		dsum[j] += w->val[i] * pow(i+1, j+1);
 	    }
 	}
 	for (j=0; j<k; j++) {
-	    dsum[j] /= ws2;
+	    dsum[j] /= wsum;
 	}
 	for (i=0; i<p; i++) {
+	    w->val[i] /= wsum;
 	    for (j=0; j<k; j++) {
-		gij = pow(i+1, j+1) * w->val[i] / wsum;
-		gij -= w->val[i] * dsum[j];
+		gij = w->val[i] * (pow(i+1, j+1) - dsum[j]);
 		gretl_matrix_set(G, i, j, gij);
 	    }
 	}
