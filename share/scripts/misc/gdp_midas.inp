@@ -66,5 +66,8 @@ printf "  BetaNZ  %.4f\n", fcstats(my, FC[,3])[2]
 printf "  neAlmon %.4f\n", fcstats(my, FC[,4])[2]
 printf "  Almonp  %.4f\n", fcstats(my, FC[,5])[2]
 
+# revert to estimation sample
+smpl 1985:1 2009:1
+
 
 

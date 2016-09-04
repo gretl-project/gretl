@@ -1272,7 +1272,11 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 						      "text", 
 						      COL_NAME,
 						      NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column); 
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+
+    if (locus == SR_RVARS2 && sr->ci == MIDASREG) {
+	gretl_tooltips_add(view, "Select and right-click to edit specification");
+    }
 
     if (flagcol) {
 	column = gtk_tree_view_column_new_with_attributes(NULL,
