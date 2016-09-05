@@ -479,6 +479,7 @@ struct str_table func_alias[] = {
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
+    { HF_BNEXP,    "_bnexp" },
     { 0,           NULL }
 };
 
