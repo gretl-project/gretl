@@ -642,30 +642,36 @@ static void print_GNR_info (const MODEL *pmod, PRN *prn)
 {
     double R2 = gretl_model_get_double(pmod, "GNR_Rsquared");
     double tmax = gretl_model_get_double(pmod, "GNR_tmax");
+    int rd = gretl_model_get_int(pmod, "near-singular");
     const char *msg;
 
-    if (na(R2) || na(tmax)) {
+    if (na(R2) && na(tmax) && rd == 0) {
 	return;
     }
     
     ensure_vsep(prn);
 
-    if (tex_format(prn)) {
-	pprintf(prn, "GNR: $R^2$ = %g, max $|t|$ = %g\n", R2, tmax);
+    if (!na(R2) && !na(tmax)) {
+	if (tex_format(prn)) {
+	    pprintf(prn, "GNR: $R^2$ = %g, max $|t|$ = %g\n", R2, tmax);
+	} else {
+	    pprintf(prn, "GNR: R-squared = %g, max |t| = %g\n", R2, tmax);
+	}
+	if (R2 > 1.0e-8 || tmax > 1.0e-4) {
+	    msg = N_("Warning: convergence is questionable");
+	} else {
+	    msg = N_("Convergence seems to be reasonably complete");
+	}
+	pputs(prn, _(msg));
+	gretl_prn_newline(prn);
     } else {
-	pprintf(prn, "GNR: R-squared = %g, max |t| = %g\n", R2, tmax);
+	pputs(prn, _("GNR: got incomplete results"));
+	gretl_prn_newline(prn);
     }
 
-    if (R2 > 1.0e-8 || tmax > 1.0e-4) {
-	msg = N_("Warning: convergence is questionable");
-    } else {
-	msg = N_("Convergence seems to be reasonably complete");
-    }
-    pputs(prn, _(msg));
-    gretl_prn_newline(prn);
-
-    if (gretl_model_get_int(pmod, "near-singular")) {
-	msg = N_("Warning: Jacobian near to rank-deficiency");
+    if (rd > 0) {
+	msg = (rd > 1)? N_("Warning: Jacobian is rank-deficient") :
+	    N_("Warning: Jacobian near to rank-deficiency");
 	pputs(prn, _(msg));
 	gretl_prn_newline(prn);
     }
