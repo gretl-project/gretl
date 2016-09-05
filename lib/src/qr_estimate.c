@@ -874,6 +874,27 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
     return XOX;
 }
 
+/* not a rigorous check, but catches the worst cases */
+
+static int vcv_is_broken (const gretl_matrix *V)
+{
+    if (V == NULL) {
+	return 1;
+    } else {
+	double v;
+	int i;
+
+	for (i=0; i<V->rows; i++) {
+	    v = gretl_matrix_get(V, i, i);
+	    if (v < 0 || xna(v)) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* Calculate HAC covariance matrix.  Algorithm and (basically)
    notation taken from Davidson and MacKinnon (DM), Econometric
    Theory and Methods, chapter 9.
@@ -914,8 +935,12 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     if (!err) {
 	gretl_matrix_qform(XTXi, GRETL_MOD_TRANSPOSE, XOX,
 			   V, GRETL_MOD_NONE);
-	/* Transcribe vcv into triangular representation */
-	err = qr_make_vcv(pmod, V, VCV_ROBUST);
+	if (vcv_is_broken(V)) {
+	    err = E_JACOBIAN;
+	} else {
+	    /* Transcribe vcv into triangular representation */
+	    err = qr_make_vcv(pmod, V, VCV_ROBUST);
+	}
     }
 
     if (!err) {
@@ -966,7 +991,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 {
     gretl_matrix *X;
     gretl_matrix *diag = NULL;
-    gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *vcv = NULL;
+    gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *V = NULL;
     int T = pmod->nobs; 
     int k = pmod->list[0] - 1;
     int hc_version;
@@ -985,8 +1010,8 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 
     tmp1 = gretl_matrix_alloc(k, T);
     tmp2 = gretl_matrix_alloc(k, k);
-    vcv = gretl_matrix_alloc(k, k);
-    if (tmp1 == NULL || tmp2 == NULL || vcv == NULL) {
+    V = gretl_matrix_alloc(k, k);
+    if (tmp1 == NULL || tmp2 == NULL || V == NULL) {
 	err = 1;
 	goto bailout;
     }  
@@ -1019,10 +1044,10 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     do_X_prime_diag(X, diag, tmp1);
     gretl_matrix_multiply(tmp1, X, tmp2);
     gretl_matrix_qform(XTXi, GRETL_MOD_NONE, tmp2,
-		       vcv, GRETL_MOD_NONE);
+		       V, GRETL_MOD_NONE);
 
     /* Transcribe vcv into triangular representation */
-    err = qr_make_vcv(pmod, vcv, VCV_ROBUST);
+    err = qr_make_vcv(pmod, V, VCV_ROBUST);
 
  bailout:
 
@@ -1030,7 +1055,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     gretl_matrix_free(diag);
     gretl_matrix_free(tmp1);
     gretl_matrix_free(tmp2);
-    gretl_matrix_free(vcv);
+    gretl_matrix_free(V);
 
     return err;
 }
@@ -1427,6 +1452,14 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 	}
     } else {
 	err = qr_make_regular_vcv(pmod, V, opt);
+    }
+
+    if ((opt & OPT_R) && err == E_JACOBIAN) {
+	/* try fallback? */
+	err = qr_make_regular_vcv(pmod, V, opt);
+	if (!err) {
+	    gretl_model_set_int(pmod, "non-robust", 1);
+	}
     }
 
     if (!err) {

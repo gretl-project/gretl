@@ -4056,22 +4056,9 @@ static int check_beta_params (int method, double *theta,
 	gretl_errmsg_set("theta must be a 3-vector");
 	err = E_INVARG;
     } else if (theta[0] < eps || theta[1] < eps) {
-	if (gretl_iteration_depth() > 0) {
-	    /* doing NLS or similar: try clamping? */
-	    fprintf(stderr, "clamping bad beta parameter:");
-	    if (theta[0] < eps) {
-		fprintf(stderr, " theta[0] = %g", theta[0]);
-		theta[0] = eps;
-	    }
-	    if (theta[1] < eps) {
-		fprintf(stderr, " theta[1] = %g", theta[1]);
-		theta[1] = eps;
-	    }
-	    fputc('\n', stderr);
-	} else {
-	    gretl_errmsg_set("beta: parameters must be positive");
-	    err = E_INVARG;
-	}	
+	gretl_errmsg_set("beta: parameters must be positive");
+	fprintf(stderr, "beta: theta1=%g, theta2=%g\n", theta[0], theta[1]);
+	err = E_INVARG;
     }
 
     return err;
@@ -4246,6 +4233,26 @@ static int try_mp_midas_grad (const double *theta,
     return err;
 }
 
+static int mgrad_zero (const gretl_matrix *G)
+{
+    int i, j, colzero;
+
+    for (j=0; j<G->cols; j++) {
+	colzero = 1;
+	for (i=0; i<G->rows; i++) {
+	    if (gretl_matrix_get(G, i, j) != 0.0) {
+		colzero = 0;
+		break;
+	    }
+	}
+	if (colzero) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err)
 {
@@ -4418,7 +4425,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 
  range_error:
 
-    if (*err == E_NAN) {
+    if (*err == E_NAN || mgrad_zero(G)) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
 

@@ -155,7 +155,7 @@ static mpf_t **mpf_2d_array_alloc (int v, int n)
 
 #define eqzero(x) (fabs(x) < 1.0e-300)
 
-/* reject the incoming data if any vars are all "zero" */
+/* reject the incoming data if any vars are all-zero */
 
 static int data_problems (const int *list, const DATASET *dset)
 {
@@ -177,7 +177,7 @@ static int data_problems (const int *list, const DATASET *dset)
 	if (allzero) {
 	    gretl_errmsg_sprintf(_("Variable '%s' is all zeros"), 
 				 dset->varname[list[i]]);
-	    return 1;
+	    return E_DATA;
 	}
     }
 
@@ -1355,7 +1355,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
     }
 
     for (i=0; i<nv; i++) {
-	mpf_init (pmod->sderr[i]);
+	mpf_init(pmod->sderr[i]);
     }
 
     mpf_init(den);
@@ -1423,7 +1423,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
     if (mpf_sgn(pmod->ess) < 0) { 
 	gretl_errmsg_set(_("Error sum of squares is not >= 0"));
 	pmod->errcode = E_DATA;
-        return; 
+        return;
     }
 
     if (pmod->dfd == 0) {

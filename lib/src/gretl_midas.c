@@ -26,6 +26,8 @@
 #define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
+#define BETA_USE_LOGS 1
+
 struct midas_info_ {
     char lnam0[VNAMELEN];  /* name of MIDAS list on input */
     char lname[VNAMELEN];  /* name of MIDAS list */
@@ -44,6 +46,15 @@ typedef struct midas_info_ midas_info;
 static midas_info *minfo_from_array (gretl_array *A,
 				     int *nmidas,
 				     int *err);
+
+/* Identify parameterizations which take an additional
+   leading coefficient: all but U-MIDAS and the plain
+   Almon polynomial specification.
+*/
+#define takes_coeff(t) (t != MIDAS_U && t != MIDAS_ALMONP)
+
+/* convenience macro for picking out beta specifications */
+#define beta_type(t) (t == MIDAS_BETA0 || t == MIDAS_BETAN)
 
 /* days per month or quarter: maybe make this user-
    configurable? */
@@ -258,12 +269,30 @@ DATASET *midas_aux_dataset (const int *list,
     return mset;
 }
 
-static gretl_matrix *maybe_make_auto_theta (char *name, int i,
+static gretl_matrix *maybe_make_auto_theta (gretl_matrix *m,
+					    char *name, int i,
 					    int ptype,
 					    int m1, int m2)
 {
     gretl_matrix *theta = NULL;
     int k = 0;
+
+    if (m != NULL) {
+	/* We got the name of an existing matrix on input, 
+	   but it pertains to a beta specification and so
+	   will not be usable as is.
+	*/
+	k = gretl_vector_get_length(m);
+	theta = gretl_matrix_alloc(1, k);
+	theta->val[0] = log(m->val[0]);
+	theta->val[1] = log(m->val[1]);
+	if (k == 3) {
+	    theta->val[2] = m->val[2];
+	}
+	sprintf(name, "theta___%d", i+1);
+	private_matrix_add(theta, name);
+	return theta;
+    }
     
     if (!strcmp(name, "null")) {
 	/* OK if we know how many parameters are needed? */
@@ -283,15 +312,15 @@ static gretl_matrix *maybe_make_auto_theta (char *name, int i,
     }
 
     if (k > 0) {
-	theta = gretl_zero_matrix_new(k, 1);
+	theta = gretl_zero_matrix_new(1, k);
 	if (theta != NULL) {
-	    if (ptype == MIDAS_BETA0) {
+	    if (beta_type(ptype)) {
+#if BETA_USE_LOGS
+		theta->val[1] = log(5);
+#else
 		theta->val[0] = 1;
 		theta->val[1] = 5;
-	    } else if (ptype == MIDAS_BETAN) {
-		theta->val[0] = 1;
-		theta->val[1] = 5;
-		theta->val[2] = 0;
+#endif
 	    }
 	    sprintf(name, "theta___%d", i+1);
 	    private_matrix_add(theta, name);
@@ -420,8 +449,15 @@ static int parse_midas_info (const char *s,
 	if (!umidas) {
 	    theta = get_matrix_by_name(mname);
 	    if (theta == NULL) {
-		theta = maybe_make_auto_theta(mname, i, p, m1, m2);
+		theta = maybe_make_auto_theta(theta, mname, i,
+					      p, m1, m2);
 	    }
+#if BETA_USE_LOGS
+	    else if (beta_type(p)) {
+		theta = maybe_make_auto_theta(theta, mname, i,
+					      p, m1, m2);
+	    }		
+#endif
 	}
 
 	if (m->prelag && list == NULL) {
@@ -522,7 +558,7 @@ static int umidas_check (midas_info *m, int nmidas,
 static int 
 parse_midas_specs (const char *spec, const DATASET *dset,
 		   midas_info **pm, int *pnspec,
-		   int *use_ols)
+		   int *use_ols, int *n_beta)
 {
     midas_info *m = NULL;
     const char *s;
@@ -568,8 +604,12 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 		*test = '\0';
 		strncat(test, s, len);
 		err = parse_midas_info(test, m, i, dset);
-		if (!err && m[i].type == MIDAS_U) {
-		    umidas++;
+		if (!err) {
+		    if (m[i].type == MIDAS_U) {
+			umidas++;
+		    } else if (beta_type(m[i].type)) {
+			*n_beta += 1;
+		    }
 		}
 		s = p + 1;
 	    }		
@@ -897,8 +937,8 @@ int midas_forecast_setup (const MODEL *pmod,
 	    err = E_ALLOC;
 	} else {
 	    /* note: remember_list() copies its argument */
-	    err = remember_list(hflist, "HFLFC___", NULL);
-	    user_var_privatize_by_name("HFLFC___");
+	    err = remember_list(hflist, "HFL___", NULL);
+	    user_var_privatize_by_name("HFL___");
 	    free(hflist);
 	}
     }
@@ -938,7 +978,7 @@ int midas_forecast_setup (const MODEL *pmod,
 	    }
 	    strcat(line, tmp);
 	}
-	strcat(line, "+lincomb(HFLFC___,hfb___)");
+	strcat(line, "+lincomb(HFL___,hfb___)");
 
 	gretl_pop_c_numeric_locale();
 
@@ -952,6 +992,88 @@ int midas_forecast_setup (const MODEL *pmod,
 
     return err;
 }
+
+#if BETA_USE_LOGS
+
+/* If we have estimated a MIDAS model that includes one or more
+   beta specifications, using log-transformation of the hyper-
+   parameters, revise the model's covariance matrix using the 
+   Jacobian and also revise the affected coefficients.
+*/
+
+static void beta_translate (MODEL *pmod,
+			    midas_info *m,
+			    int nmidas,
+			    int nbeta,
+			    int *xlist)
+{
+    gretl_matrix *V0 = NULL;
+    gretl_matrix *V1 = NULL;
+    gretl_matrix *J = NULL;
+    int nc = pmod->ncoeff;
+    int i, k = xlist[0];
+    int err = 0;
+
+    if (pmod->vcv != NULL) {
+	/* otherwise we have partial std errors at best */
+	V0 = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+	if (err) {
+	    pmod->errcode = err;
+	} else {
+	    J = gretl_identity_matrix_new(nc);
+	    V1 = gretl_matrix_alloc(nc, nc);
+	    if (J == NULL || V1 == NULL) {
+		gretl_matrix_free(J);
+		gretl_matrix_free(V1);
+		pmod->errcode = E_ALLOC;
+	    }
+	}
+	if (pmod->errcode) {
+	    return;
+	}
+    }
+
+    for (i=0; i<nmidas; i++) {
+	if (beta_type(m[i].type)) {
+	    k++; /* skip the leading slope coeff */
+	    pmod->coeff[k] = exp(pmod->coeff[k]);
+	    if (J != NULL) {
+		gretl_matrix_set(J, k, k, pmod->coeff[k]);
+	    } else if (!na(pmod->sderr[k])) {
+		pmod->sderr[k] *= pmod->coeff[k];
+	    }
+	    k++;
+	    pmod->coeff[k] = exp(pmod->coeff[k]);
+	    if (J != NULL) {
+		gretl_matrix_set(J, k, k, pmod->coeff[k]);
+	    } else if (!na(pmod->sderr[k])) {
+		pmod->sderr[k] *= pmod->coeff[k];
+	    }
+	    k++;
+	    if (m[i].type == MIDAS_BETAN) {
+		k++; /* skip third hyper-parameter */
+	    }
+	} else {
+	    /* skip unaffected coeffs */
+	    k += m[i].nparm + takes_coeff(m[i].type);
+	}
+    }
+
+    if (J != NULL) {
+	err = gretl_matrix_qform(J, GRETL_MOD_NONE, V0,
+				 V1, GRETL_MOD_NONE);
+	if (!err) {
+	    err = gretl_model_write_vcv(pmod, V1);
+	}
+	gretl_matrix_free(J);
+	gretl_matrix_free(V0);
+	gretl_matrix_free(V1);
+    }
+
+    pmod->errcode = err;
+}
+
+#endif
 
 static int add_midas_plot_matrix (MODEL *pmod,
 				  midas_info *m,
@@ -1391,15 +1513,16 @@ static int any_smallstep_terms (midas_info *m, int n)
 
 static int put_midas_nls_line (char *line,
 			       DATASET *dset,
+			       gretlopt opt,
 			       PRN *prn)
 {
     int err;
     
-#if MIDAS_DEBUG
-    /* display on stderr what we're passing to nls */
-    fputs(line, stderr);
-    fputc('\n', stderr);
-#endif
+    if (opt & OPT_P) {
+	/* display what we're passing to nls */
+	pputs(prn, line);
+	pputc(prn, '\n');
+    }
     
     err = nl_parse_line(NLS, line, dset, prn);
     *line = '\0';
@@ -1461,6 +1584,7 @@ MODEL midas_model (const int *list,
     int origv = dset->v;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int n_beta = 0;
     int use_ols = 0;
     MODEL mod;
     int err = 0;
@@ -1470,8 +1594,8 @@ MODEL midas_model (const int *list,
     if (param == NULL || *param == '\0') {
 	err = E_DATA;
     } else {
-	err = parse_midas_specs(param, dset, &minfo,
-				&nmidas, &use_ols);
+	err = parse_midas_specs(param, dset, &minfo, &nmidas,
+				&use_ols, &n_beta);
     }
 
     if (!err) {
@@ -1490,9 +1614,6 @@ MODEL midas_model (const int *list,
 
     if (!err && use_ols) {
 	err = umidas_ols(&mod, list, dset, minfo, nmidas, opt);
-#if MIDAS_DEBUG	
-	fputs("*** U-MIDAS via OLS ***\n", stderr);
-#endif	
 	goto umidas_finish;
     }
 
@@ -1507,9 +1628,9 @@ MODEL midas_model (const int *list,
 				 nmidas, &hfslopes);
     }
 
-#if MIDAS_DEBUG	
-    fputs("*** MIDAS via NLS ***\n\n", stderr);
-#endif    
+    if (opt & OPT_P) {
+	pputs(prn, "\n=== auto-generated nls specification ===\n");
+    }
 
     if (!err) {
 	char line[MAXLEN];
@@ -1528,37 +1649,83 @@ MODEL midas_model (const int *list,
 	    }
 	    strcat(line, tmp);
 	}
-	err = put_midas_nls_line(line, dset, prn);
+	err = put_midas_nls_line(line, dset, opt, prn);
 
 	/* MIDAS series and gradient matrices */
 	for (i=0; i<nmidas && !err; i++) {
 	    if (minfo[i].type == MIDAS_U) {
 		sprintf(line, "series mlc___%d = lincomb(%s, %s)",
 			i+1, minfo[i].lname, minfo[i].mname);
+#if BETA_USE_LOGS
+	    } else if (minfo[i].type == MIDAS_BETA0) {
+		sprintf(line, "series mlc___%d = mlincomb(%s, exp(%s), %d)",
+			i+1, minfo[i].lname, minfo[i].mname,
+			minfo[i].type);
+	    } else if (minfo[i].type == MIDAS_BETAN) {
+		sprintf(line, "series mlc___%d = mlincomb(%s, _bnexp(%s,0), %d)",
+			i+1, minfo[i].lname, minfo[i].mname,
+			minfo[i].type);
+#endif
 	    } else {
 		sprintf(line, "series mlc___%d = mlincomb(%s, %s, %d)",
 			i+1, minfo[i].lname, minfo[i].mname,
 			minfo[i].type);
 	    }
-	    err = put_midas_nls_line(line, dset, prn);
+	    err = put_midas_nls_line(line, dset, opt, prn);
 	    if (!err && minfo[i].type != MIDAS_U) {
+#if BETA_USE_LOGS		
+		if (minfo[i].type == MIDAS_BETA0) {
+		    sprintf(line, "matrix mgr___%d = mgradient(%d, exp(%s), %d)",
+			    i+1, minfo[i].nterms, minfo[i].mname,
+			    minfo[i].type);
+		} else if (minfo[i].type == MIDAS_BETAN) {
+		    sprintf(line, "matrix mgr___%d = mgradient(%d, _bnexp(%s,0), %d)",
+			    i+1, minfo[i].nterms, minfo[i].mname,
+			    minfo[i].type);
+		} else {
+		    sprintf(line, "matrix mgr___%d = mgradient(%d, %s, %d)",
+			    i+1, minfo[i].nterms, minfo[i].mname,
+			    minfo[i].type);
+		}
+#else
 		sprintf(line, "matrix mgr___%d = mgradient(%d, %s, %d)",
 			i+1, minfo[i].nterms, minfo[i].mname, minfo[i].type);
-		err = put_midas_nls_line(line, dset, prn);
+#endif
+		err = put_midas_nls_line(line, dset, opt, prn);
 	    }
 	}
 
 	/* derivatives */
 	if (!err && xlist != NULL) {
 	    strcpy(line, "deriv bx___ = MX___");
-	    err = put_midas_nls_line(line, dset, prn);
+	    err = put_midas_nls_line(line, dset, opt, prn);
 	}
 	for (i=0; i<nmidas && !err; i++) {
 	    if (takes_coeff(minfo[i].type)) {
 		sprintf(line, "deriv bmlc___%d = {mlc___%d}", i+1, i+1);
-		err = put_midas_nls_line(line, dset, prn);
+		err = put_midas_nls_line(line, dset, opt, prn);
 	    }
 	    if (!err) {
+#if BETA_USE_LOGS
+		if (minfo[i].type == MIDAS_BETA0) {
+		    sprintf(line, "deriv %s = bmlc___%d * {%s} * mgr___%d"
+			    " .* exp(%s)", minfo[i].mname, i+1, minfo[i].lname,
+			    i+1, minfo[i].mname);
+		} else if (minfo[i].type == MIDAS_BETAN) {
+		    sprintf(line, "deriv %s = bmlc___%d * {%s} * mgr___%d"
+			    " .* _bnexp(%s,1)", minfo[i].mname, i+1, minfo[i].lname,
+			    i+1, minfo[i].mname);
+		} else if (takes_coeff(minfo[i].type)) {
+		    sprintf(line, "deriv %s = bmlc___%d * {%s} * mgr___%d",
+			    minfo[i].mname, i+1, minfo[i].lname, i+1);
+		} else if (minfo[i].type == MIDAS_ALMONP) {
+		    sprintf(line, "deriv %s = {%s} * mgr___%d",
+			    minfo[i].mname, minfo[i].lname, i+1);
+		} else {
+		    sprintf(line, "deriv %s = {%s}", minfo[i].mname,
+			    minfo[i].lname);
+		}
+#else
 		if (takes_coeff(minfo[i].type)) {
 		    sprintf(line, "deriv %s = bmlc___%d * {%s} * mgr___%d",
 			    minfo[i].mname, i+1, minfo[i].lname, i+1);
@@ -1569,7 +1736,8 @@ MODEL midas_model (const int *list,
 		    sprintf(line, "deriv %s = {%s}", minfo[i].mname,
 			    minfo[i].lname);
 		}
-		err = put_midas_nls_line(line, dset, prn);
+#endif
+		err = put_midas_nls_line(line, dset, opt, prn);
 	    }
 	}
 
@@ -1597,19 +1765,24 @@ MODEL midas_model (const int *list,
 		}
 	    }
 	    strcat(line, "\"");
-	    err = put_midas_nls_line(line, dset, prn);
+	    err = put_midas_nls_line(line, dset, opt, prn);
 	}
     }
 
-#if MIDAS_DEBUG
-    fputc('\n', stderr);
-#endif
+    if (opt & OPT_P) {
+	pputs(prn, "=== end nls specification ===\n");
+    }
 
     if (!err) {
 	if (any_smallstep_terms(minfo, nmidas)) {
 	    nl_set_smallstep();
 	}
 	mod = nl_model(dset, (opt | OPT_G | OPT_M), prn);
+#if BETA_USE_LOGS	
+	if (mod.errcode == 0 && n_beta > 0) {
+	    beta_translate(&mod, minfo, nmidas, n_beta, xlist);
+	}
+#endif
     }
 
  umidas_finish:

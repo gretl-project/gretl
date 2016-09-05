@@ -1627,21 +1627,26 @@ static int add_nls_std_errs_to_model (MODEL *pmod)
 static int add_partial_std_errs_to_model (MODEL *pmod,
 					  const int *list)
 {
+    int ndrop = list[0] - pmod->list[0];
     double *coeff, *sderr;
     int k, *dlist;
     int i, j;
 
-    dlist = gretl_model_get_data(pmod, "droplist");
-    if (dlist == NULL) {
-	/* reinstate this error */
+    if (ndrop <= 0) {
+	/* eh? reinstate the error */
+	fprintf(stderr, "no droplist found\n");
 	return E_JACOBIAN;
     }
+	
+    dlist = gretl_list_new(ndrop);
+    gretl_list_diff(dlist, list, pmod->list);
 
     k = list[0] - 1;
     coeff = malloc(k * sizeof *coeff);
     sderr = malloc(k * sizeof *sderr);
 
     if (coeff == NULL || sderr == NULL) {
+	free(dlist);
 	return E_ALLOC;
     }
 
@@ -1667,6 +1672,9 @@ static int add_partial_std_errs_to_model (MODEL *pmod,
     pmod->xpx = NULL;
     free(pmod->vcv);
     pmod->vcv = NULL;
+    free(dlist);
+
+    fprintf(stderr, "added partial standard errors\n");
 
     return 0;
 }
@@ -2117,16 +2125,19 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 
 	if (mpmod.errcode) {
 	    /* back-track if mp_ols failed */
+	    fprintf(stderr, "nls: using MP for Jacobian failed (err=%d)\n",
+		    mpmod.errcode);
 	    clear_model(&mpmod);
 	    gnr.errcode = E_JACOBIAN;
+	    gretl_model_set_int(&gnr, "near-singular", 2);
 	} else {
 	    clear_model(&gnr);
 	    gnr = mpmod;
 	    if (lsqopt & OPT_R) {
 		gretl_model_set_int(&gnr, "non-robust", 1);
 	    }
+	    gretl_model_set_int(&gnr, "near-singular", 1);
 	}
-	gretl_model_set_int(&gnr, "near-singular", 1);
     }
 
     if (gnr.errcode == 0 || gnr.errcode == E_JACOBIAN) {
