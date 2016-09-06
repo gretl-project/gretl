@@ -7456,32 +7456,61 @@
       </code>
       <para context="cli">
 	<lit>mdsl</lit>: generally requires 3 arguments: the name of a
-	list of MIDAS lags, an integer to specify the parameterization
-	and the name of an initialization vector. In this case the
-	minimum and maximum lags are implicit in the initial list
-	argument. In the example below <lit>Xlags</lit> should be a
-	list which already holds all the required lags; such a list
-	can be constructed using the <fncref targ="hflags"/> function.
+	list of MIDAS lags, an integer to specify the type of
+	parameterization and the name of an initialization vector. In
+	this case the minimum and maximum lags are implicit in the
+	initial list argument. In the example below <lit>Xlags</lit>
+	should be a list which already holds all the required lags;
+	such a list can be constructed using the <fncref
+	targ="hflags"/> function.
       </para>
       <code context="cli">
 	mdsl(XLags, 1, theta)
       </code>
       <para context="cli">
-	The supported types of parameterization are as follows: 0 =
-	<quote>unrestricted MIDAS</quote> or U-MIDAS (each lag has its
-	own coefficient); 1 = normalized exponential Almon (requires
-	at least one parameter and commonly uses two); 2 = normalized
-	beta with a zero last lag (requires exactly two parameters); 3
-	= normalized beta with non-zero last lag (requires three
-	parameters); and 4 = (non-normalized) Almon polynomial, which
-	requires at least one parameter.
+	The supported types of parameterization are as follows:
       </para>
       <para context="cli">
-	In a specification which includes only U-MIDAS terms,
-	estimation proceeds using OLS and the final initializer
-	argument for <lit>mds</lit> or <lit>mdsl</lit> is not
-	required.
+	0 = <quote>unrestricted MIDAS</quote> or U-MIDAS (each lag has
+	its own coefficient)
       </para>
+      <para context="cli">
+	1 = normalized exponential Almon; requires at least one
+	parameter, commonly uses two
+      </para>
+      <para context="cli">
+	2 = normalized beta with a zero last lag; requires exactly two
+	parameters
+      </para>
+      <para context="cli">
+	3 = normalized beta with non-zero last lag; requires exactly
+	three parameters
+      </para>
+      <para context="cli">
+	4 = (non-normalized) Almon polynomial; requires at least
+	one parameter
+      </para>
+      <para context="cli">
+	When the parameterization is U-MIDAS, the final initializer
+	argument is not required with <lit>mds</lit> or
+	<lit>mdsl</lit>. In other cases you can request an automatic
+	initialization by substituting one or other of these two
+	forms for the name of an initial parameter vector:
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    The keyword <lit>null</lit>: this is acceptable only if the
+	    parameterization has a fixed number of terms (the beta cases,
+	    2 or 3).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    An integer value giving the required number of parameters.
+	  </para>
+	</li>
+      </ilist>
     </description>
 
     <gui-access>
