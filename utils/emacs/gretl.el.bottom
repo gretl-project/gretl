@@ -494,17 +494,13 @@ level."
 		(while (< (point) eol)
 		  (if (gretl-not-in-string-or-comment-p)
 		      (cond
-		       ((looking-at "\\<switch\\>")
-			(setq icol (+ icol (* 2 gretl-block-offset))))
 		       ((looking-at gretl-block-begin-regexp)
 			(setq icol (+ icol gretl-block-offset)))
 		       ((looking-at gretl-block-else-regexp)
 			(if (= bot (point))
 			    (setq icol (+ icol gretl-block-offset))))
 		       ((looking-at gretl-block-end-regexp)
-			(if (not (= bot (point)))
-			    (setq icol (- icol
-					  (gretl-block-end-offset)))))))
+			(setq icol (- icol (gretl-block-end-offset))))))
 		  (forward-char)))
 	      (if is-continuation-line
 		  (setq icol (+ icol gretl-continuation-offset)))))))
@@ -1177,14 +1173,16 @@ Note that all gretl mode abbrevs start with a grave accent."
   "Run the current gretl script, sending the results to a buffer."
   (interactive)
   (let (save-pop-frames pop-up-frames)
-  (setq pop-up-frames gretl-output-in-new-frame)
-  (write-region (point-min) (point-max) "#gretltmp.inp" nil 1 nil nil)
-  (get-buffer-create "gretl_output")
-  (call-process gretl-program nil "gretl_output" nil "-b" "#gretltmp.inp")
-  (pop-to-buffer "gretl_output" nil nil)
-  (goto-char (point-min))
-  (call-process gretl-remove-file nil nil nil "#gretltmp.inp")
-  (setq pop-up-frames save-pop-frames)))
+    (defvar gretl-tempfile)
+    (setq gretl-tempfile "/tmp/gretltmp.inp")
+    (setq pop-up-frames gretl-output-in-new-frame)
+    (write-region (point-min) (point-max) gretl-tempfile nil 1 nil nil)
+    (get-buffer-create "gretl_output")
+    (call-process gretl-program nil "gretl_output" nil  "-q" "-b" gretl-tempfile)
+    (pop-to-buffer "gretl_output" nil nil)
+    (goto-char (point-min))
+    (call-process gretl-remove-file nil nil nil gretl-tempfile)
+    (setq pop-up-frames save-pop-frames)))
 
 ;;; Bug reporting
 

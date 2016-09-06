@@ -81,13 +81,15 @@ All gretl abbrevs start with a grave accent (`).")
   "Regexp to match the start of a gretl comment up to its body.")
 
 (defvar gretl-begin-keywords
-  '("loop" "foreign" "function" "gmm" "if" "system" "mle" "nls" "restrict"))
+  '("if" "loop" "nls" "mle" "gmm" "foreign"
+    "restrict" "kalman" "function" "system" "plot"))
 
 (defvar gretl-else-keywords
   '("else" "elif"))
 
 (defvar gretl-end-keywords
-  '("end" "endif" "endloop"))
+  '("endif" "endloop" "end nls" "end mle" "end gmm" "end foreign" "end restrict"
+    "end kalman" "end function" "end system" "end plot"))
 
 (defvar gretl-keywords
   (append gretl-begin-keywords
@@ -97,4 +99,3 @@ All gretl abbrevs start with a grave accent (`).")
   "Reserved words in gretl.")
 
 ;; Insert auto-generated keywords sections
-
