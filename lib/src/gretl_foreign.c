@@ -36,7 +36,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 0
+#define FDEBUG 1
 
 static char **foreign_lines;
 static int foreign_started;
@@ -1584,7 +1584,8 @@ static int write_gretl_R_profile (gretlopt opt)
     int err = 0;
 
 #if FDEBUG
-    fprintf(stderr, "writing R profile: starting\n");
+    fprintf(stderr, "writing R profile: interactive = %d\n",
+	    (opt & OPT_I)? 1 : 0);
 #endif
 
     /* On Windows we'll not use the environment-variable
@@ -1649,21 +1650,24 @@ static int write_R_source_file (const char *buf,
     int err = 0;
 
 #if FDEBUG
-    fprintf(stderr, "write R source file: starting\n");
+    fprintf(stderr, "write R source file: interactive %d, library %d\n",
+	    (opt & OPT_I)? 1 : 0, (opt & OPT_L)? 1 : 0);
 #endif
 
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	int sunk = 0;
+	int regsunk = 0;
+	int errsunk = 0;
 
 #ifdef G_OS_WIN32
 	if (!(opt & OPT_I) && !(opt & OPT_L)) {
 	    /* non-interactive, not using Rlib */
-	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
+	    fprintf(fp, "regout <- file(\"%s\", open=\"wt\")\n", gretl_Rout);
+	    fputs("sink(regout, type=\"output\")\n", fp);
 	    fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 	    fputs("sink(errout, type=\"message\")\n", fp);
-	    sunk = 1;
+	    regsunk = errsunk = 1;
 	}
 #endif
 
@@ -1678,12 +1682,14 @@ static int write_R_source_file (const char *buf,
 		put_R_startup_content(fp);
 		startup_done = 1;
 	    }
-	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
+	    fprintf(fp, "regout <- file(\"%s\", open=\"wt\")\n", gretl_Rout);
+	    fputs("sink(regout, type=\"output\")\n", fp);
+	    regsunk = 1;
 	    if (!(opt & OPT_I)) {
 		fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 		fputs("sink(errout, type=\"message\")\n", fp);
+		errsunk = 1;
 	    }
-	    sunk = 1;
 #if 0 /* ifdef G_OS_WIN32 */
 	    /* not working, 2012-12-27 */
 	    maybe_print_R_path_addition(fp);
@@ -1708,7 +1714,15 @@ static int write_R_source_file (const char *buf,
 	    put_foreign_lines(fp);
 	}
 
-	if (sunk) {
+	if (regsunk) {
+	    fputs("flush(regout)\n", fp);
+	    fputs("close(regout)\n", fp);
+	}
+	if (errsunk) {
+	    fputs("flush(errout)\n", fp);
+	    fputs("close(errout)\n", fp);
+	}
+	if (regsunk || errsunk) {
 	    fputs("sink()\n", fp);
 	}
 
