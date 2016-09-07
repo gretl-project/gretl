@@ -36,7 +36,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 0
+#define FDEBUG 1
 
 static char **foreign_lines;
 static int foreign_started;
@@ -1555,7 +1555,7 @@ static int write_gretl_R_profile (gretlopt opt)
     int err = 0;
 
 #if FDEBUG
-    printf("writing R profile: starting\n");
+    fprintf(stderr, "writing R profile: starting\n");
 #endif
 
     /* On Windows we'll not use the environment-variable
@@ -1588,7 +1588,7 @@ static int write_gretl_R_profile (gretlopt opt)
     }
 
 #if FDEBUG
-    printf("writing R profile: returning %d\n", err);
+    fprintf(stderr, "writing R profile: returning %d\n", err);
 #endif
 
     return err;
@@ -1620,7 +1620,7 @@ static int write_R_source_file (const char *buf,
     int err = 0;
 
 #if FDEBUG
-    printf("write R source file: starting\n");
+    fprintf(stderr, "write R source file: starting\n");
 #endif
 
     if (fp == NULL) {
@@ -1644,7 +1644,7 @@ static int write_R_source_file (const char *buf,
 
 	    if (!startup_done) {
 #if FDEBUG
-		printf("Rlib: writing 'startup' material\n");
+		fprintf(stderr, "Rlib: writing 'startup' material\n");
 #endif
 		put_R_startup_content(fp);
 		startup_done = 1;
@@ -1687,13 +1687,13 @@ static int write_R_source_file (const char *buf,
     }
 
 #if FDEBUG
-    printf("write R source file: returning %d\n", err);
+    fprintf(stderr, "write R source file: returning %d\n", err);
 #endif
 
     return err;
 }
 
-/* Write files to be read by R: profile to be read on startup and
+/* Write files to be read by R: profile to be read on startup, and
    command source file.  This is called when we're exec'ing the R
    binary.  OPT_G in @opt indicates that this function is being called
    from the GUI program; @buf may contain R commands taken from a GUI
@@ -1707,7 +1707,7 @@ int write_gretl_R_files (const char *buf,
     int err = 0;
 
 #if FDEBUG
-    printf("write_gretl_R_files: starting\n");
+    fprintf(stderr, "write_gretl_R_files: starting\n");
 #endif
 
     make_gretl_R_names();
@@ -1727,7 +1727,7 @@ int write_gretl_R_files (const char *buf,
     }
 
 #if FDEBUG
-    printf("write_gretl_R_files: returning %d\n", err);
+    fprintf(stderr, "write_gretl_R_files: returning %d\n", err);
 #endif
 
     return err;
@@ -1736,7 +1736,7 @@ int write_gretl_R_files (const char *buf,
 void delete_gretl_R_files (void)
 {
 #if FDEBUG
-    printf("deleting gretl R files...\n");
+    fprintf(stderr, "deleting gretl R files...\n");
 #endif
 
     if (gretl_Rprofile != NULL) {
@@ -1881,7 +1881,7 @@ static int load_R_symbols (void)
     int err = 0;
 
 #if FDEBUG
-    printf("Loading libR symbols from '%s'\n", libpath);
+    fprintf(stderr, "Loading libR symbols from '%s'\n", libpath);
 #endif
 
     Rhandle = gretl_dlopen(libpath, 1);
@@ -1937,7 +1937,7 @@ static int load_R_symbols (void)
  bailout:
 
 #if FDEBUG
-    printf("load_R_symbols: returning %d\n", err);
+    fprintf(stderr, "load_R_symbols: returning %d\n", err);
 #endif
 
     return err;
@@ -1946,7 +1946,7 @@ static int load_R_symbols (void)
 void gretl_R_cleanup (void)
 {
 #if FDEBUG
-    printf("gretl_R_cleanup: Rinit = %d\n", Rinit);
+    fprintf(stderr, "gretl_R_cleanup: Rinit = %d\n", Rinit);
 #endif
 
     if (Rinit) {
@@ -2010,7 +2010,7 @@ static int gretl_Rlib_init (void)
     int err = 0;
 
 #if FDEBUG
-    printf("gretl_Rlib_init: starting\n");
+    fprintf(stderr, "gretl_Rlib_init: starting\n");
 #endif
 
 #ifndef WIN32
@@ -2086,7 +2086,7 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     int err = 0;
 
 #if FDEBUG
-    printf("lib_run_Rlib_sync: starting\n");
+    fprintf(stderr, "lib_run_Rlib_sync: starting\n");
 #endif
 
     if (!Rinit) {
@@ -2131,7 +2131,7 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
     }
 
 #if FDEBUG
-    printf("lib_run_Rlib_sync: returning %d\n", err);
+    fprintf(stderr, "lib_run_Rlib_sync: returning %d\n", err);
 #endif
 
     return (err)? E_EXTERNAL : 0;
@@ -2176,7 +2176,7 @@ static int gretl_use_Rlib (void)
     int ret = 0;
 
 #if FDEBUG
-    printf("gretl_use_Rlib: starting\n");
+    fprintf(stderr, "gretl_use_Rlib: starting\n");
 #endif
 
     if (!Rlib_err && libset_get_bool(R_LIB) && !getenv("GRETL_NO_RLIB")) {
@@ -2192,7 +2192,7 @@ static int gretl_use_Rlib (void)
     }
 
 #if FDEBUG
-    printf("gretl_use_Rlib: using %s\n", (ret)? "library" : "executable");
+    fprintf(stderr, "gretl_use_Rlib: using %s\n", (ret)? "library" : "executable");
 #endif    
 
     return ret;
@@ -2369,6 +2369,10 @@ static int run_R_lib (const char *buf,
 {
     int err;
 
+#if FDEBUG
+    fprintf(stderr, "run_R_lib\n");
+#endif    
+
     /* we don't want gretl.Rprofile in the way */
     gretl_remove(gretl_Rprofile);
 
@@ -2474,7 +2478,7 @@ static int run_R_binary (const char *buf,
 {
     int err;
 
-    /* write both profile and Rsrc files */
+    /* write profile (perhaps) and Rsrc files */
 
     err = write_gretl_R_files(buf, dset, opt);
     if (err) {

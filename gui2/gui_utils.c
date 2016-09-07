@@ -5716,6 +5716,7 @@ void start_R (const char *buf, int send_data, int interactive)
 	start_R_async();
 #endif
     } else {
+	/* non-interactive */
 #ifdef G_OS_WIN32
 	win32_run_R_sync(buf, Ropt);
 #else	
