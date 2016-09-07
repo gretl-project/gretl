@@ -284,30 +284,64 @@ static void make_gretl_R_names (void)
 
 #ifdef G_OS_WIN32
 
+static char *get_rscript_path (void)
+{
+    const char *rbin = gretl_rbin_path();
+    char *p, *rscript = NULL;
+
+    rscript = calloc(strlen(rbin) + 16, 1);
+    strcpy(rscript, rbin);
+    p = strrchr(rscript, 'R');
+
+    if (p != NULL) {
+	*p = '\0';
+	strcat(p, "Rscript.exe");
+    } else {
+	free(rscript);
+	rscript = NULL;
+    }
+
+    return script;
+}
+
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
+    char *rscript = get_rscript_path();
     gchar *cmd;
     int err = 0;
 
-    /* note that here we're calling R with gretl_Rprofile
-       as an argument, as opposed to getting R to source
-       it via the environment */
+    /* ensure that we don't get stale output */
+    gretl_remove(gretl_Rout);
+    gretl_remove(gretl_Rmsg);
 
-    cmd = g_strdup_printf("\"%s\" CMD BATCH --no-save --no-init-file "
-			  "--no-restore-data --slave \"%s\"",
-			  gretl_rbin_path(), gretl_Rprofile);
+    /* Note that here we're calling R with gretl_Rprofile
+       as an argument, as opposed to getting R to source
+       it via the environment, since the latter seemed not
+       to be working on Windows.
+    */
+
+    if (rscript != NULL) {
+	cmd = g_strdup_printf("\"%s\" --vanilla \"%s\"", rscript,
+			      gretl_Rprofile);
+	free(rscript);
+    } else {
+	cmd = g_strdup_printf("\"%s\" CMD BATCH --no-save --no-init-file "
+			      "--no-restore-data --slave \"%s\" \"%s\"",
+			      gretl_rbin_path(), gretl_Rprofile,
+			      gretl_Rout);
+    }
 
     err = win_run_sync(cmd, NULL);
 
 #if FDEBUG
-    fprintf(stderr, "Running R binary: err = %d\n", err);
+    fprintf(stderr, "lib_run_R_sync: err = %d\n cmd='%s'\n", err, cmd);
 #endif
 
     if (!(opt & OPT_Q)) {
 	const gchar *outname;
 	FILE *fp;
 
-	outname = (err)? gretl_Rmsg : gretl_Rout;
+	outname = err ? gretl_Rmsg : gretl_Rout;
 	fp = gretl_fopen(outname, "r");
 
 	if (fp != NULL) {
@@ -317,13 +351,8 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 		pputs(prn, line);
 	    }
 	    fclose(fp);
-	    gretl_remove(outname);
 	}
     }
-
-#if FDEBUG
-    fprintf(stderr, "win_run_sync: err = %d\n", err);
-#endif
 
     g_free(cmd);
 
