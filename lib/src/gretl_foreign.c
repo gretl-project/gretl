@@ -36,7 +36,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 1
+#define FDEBUG 0
 
 static char **foreign_lines;
 static int foreign_started;
@@ -287,7 +287,7 @@ static void make_gretl_R_names (void)
 static char *get_rscript_path (void)
 {
     const char *rbin = gretl_rbin_path();
-    char *p, *rscript = NULL;
+    char *p, *rscript;
 
     rscript = calloc(strlen(rbin) + 16, 1);
     strcpy(rscript, rbin);
@@ -301,7 +301,7 @@ static char *get_rscript_path (void)
 	rscript = NULL;
     }
 
-    return script;
+    return rscript;
 }
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
