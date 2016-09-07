@@ -633,9 +633,6 @@ static int real_archive_files (const char *targ, const char **filenames,
     err = process_zfiles(&zf, fr, &w, &openerr);
     if (err) {
 	fclose(zf.fp);
-	if (fr != NULL) {
-	    fclose(fr);
-	}
 	goto bailout;
     }
 
@@ -674,10 +671,6 @@ static int real_archive_files (const char *targ, const char **filenames,
     fclose(zf.fp);
     zf.fp = NULL;
 
-    if (fr != NULL) {
-	fclose(fr);
-    }
-
     /* Replace old zip file with new zip file, leaving only the new one */
     if (!err) {
 	trace(1, "moving %s into position as %s\n", tempzip, zf.fname);
@@ -690,6 +683,10 @@ static int real_archive_files (const char *targ, const char **filenames,
     }
 
  bailout:
+
+    if (fr != NULL) {
+	fclose(fr);
+    }
 
     zlib_deflate_free(&zf);
 

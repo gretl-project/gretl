@@ -693,6 +693,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	}
 
 	if (err) {
+	    free(theta);
 	    goto bailout;
 	}	
 

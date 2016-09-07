@@ -2866,6 +2866,7 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
     /* allocate auxiliary dataset */
     pmod->dataset = create_auxiliary_dataset(maxv, sn, 0);
     if (pmod->dataset == NULL) {
+	free(mask);
 	return E_ALLOC;
     }
 

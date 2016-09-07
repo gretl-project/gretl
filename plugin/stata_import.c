@@ -1438,6 +1438,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     }
 
     if (err) {
+	free(types);
 	return err;
     }
 
@@ -1471,6 +1472,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     }
 
     if (err) {
+	free(types);
 	return err;
     }    
 

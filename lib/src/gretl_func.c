@@ -1818,6 +1818,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (err) {
+	ufunc_free(fun);
 	return err;
     }
 

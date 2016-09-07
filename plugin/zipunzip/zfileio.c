@@ -93,8 +93,9 @@ flist *flist_expel (flist *f, int *fcount)
     return t;
 }
 
-flist *flist_entry_new (const char *name, char *iname, char *zname,
-			zfile *zf)
+static flist *
+flist_entry_new (const char *name, char *iname, char *zname,
+		 zfile *zf)
 {
     flist *f = malloc(sizeof *f);
 

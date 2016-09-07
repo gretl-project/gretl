@@ -1286,6 +1286,7 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
 
     mod = bp_preliminary_ols(list, dset);
     if (mod.errcode) {
+	bp_container_destroy(bp);
 	return mod;
     } 
 

@@ -133,6 +133,7 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 
     mask = mask_from_test_list(list, pmod, &err);
     if (err) {
+	free(mask);
 	return err;
     }
 

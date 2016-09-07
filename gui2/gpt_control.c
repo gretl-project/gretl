@@ -2040,7 +2040,6 @@ static void get_plot_nobs (GPT_SPEC *spec, const char *buf, int *do_markers)
     int n = 0, started = -1;
     int startmin = 1;
     char line[MAXLEN], test[9];
-    char *p;
 
     spec->code = PLOT_REGULAR;
     *do_markers = 0;
@@ -2074,6 +2073,8 @@ static void get_plot_nobs (GPT_SPEC *spec, const char *buf, int *do_markers)
 	}
 
 	if (started == startmin) {
+	    char *p;
+	    
 	    if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", test) == 1) {
 		    *do_markers = 1;

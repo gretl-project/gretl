@@ -2535,6 +2535,7 @@ int *augment_regression_list (const int *orig, int aux,
 
     list = malloc(listlen * sizeof *list);
     if (list == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 

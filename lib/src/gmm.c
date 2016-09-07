@@ -1360,6 +1360,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 			       &m3, k, k,
 			       NULL);
     if (B == NULL) {
+	free(wa4);
 	return E_ALLOC;
     }
 

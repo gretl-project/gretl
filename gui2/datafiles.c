@@ -273,15 +273,19 @@ static file_collection *collection_stack (file_collection *coll, int op)
     int j;
 
     if (op == STACK_PUSH && coll != NULL) {
+	void *tmp;
+	
 	if (coll->which == COLL_DATA) {
-	    datacoll = realloc(datacoll, (n_data + 1) * sizeof *datacoll);
-	    if (datacoll != NULL) {
+	    tmp = realloc(datacoll, (n_data + 1) * sizeof *datacoll);
+	    if (tmp != NULL) {
+		datacoll = tmp;
 		datacoll[n_data++] = coll;
 		ret = coll;
 	    }
 	} else if (coll->which == COLL_PS) {
-	    pscoll = realloc(pscoll, (n_ps + 1) * sizeof *pscoll);
-	    if (pscoll != NULL) {
+	    tmp = realloc(pscoll, (n_ps + 1) * sizeof *pscoll);
+	    if (tmp != NULL) {
+		pscoll = tmp;
 		pscoll[n_ps++] = coll;
 		ret = coll;
 	    }

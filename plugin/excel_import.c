@@ -1466,6 +1466,7 @@ static int get_sheet_dimensions (wbook *book, xls_info *xi, PRN *prn)
     if (xi->datacols < 1) {
 	pputs(prn, _("No data found.\n"));
 	pputs(prn, _(adjust_rc));
+	free(blanks);
 	return 1;
     }
 

@@ -5905,8 +5905,14 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
 
     if (list[0] < 2) return E_ARGS;
 
-    if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
-    if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
+    x = malloc(n * sizeof *x);
+    y = malloc(n * sizeof *y);
+
+    if (x == NULL || y == NULL) {
+	free(x);
+	free(y);
+	return E_ALLOC;
+    }
 
     n1 = transcribe_array(x, dset->Z[list[1]], dset);
     n2 = transcribe_array(y, dset->Z[list[2]], dset);
