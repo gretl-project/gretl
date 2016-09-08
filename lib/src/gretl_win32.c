@@ -280,6 +280,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 	WaitForSingleObject(pi.hProcess, INFINITE); 
 	if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
 	    if (exitcode != 0) {
+		fprintf(stderr, "win_run_sync: got exit code %d\n", exitcode);
 		gretl_errmsg_sprintf("%s: exit code %d", cmdline, 
 				     exitcode);
 		err = 1;
@@ -880,104 +881,6 @@ int R_path_from_registry (char *s, int which)
 		    fclose(fp);
 		} else {
 		    err = E_FOPEN;
-		}
-	    }
-	}
-    }
-
-    return err;
-}
-
-/* for use in R, we need to form a version of the PATH with all
-   backslashes doubled 
-*/
-
-static char *get_fixed_R_path (const char *path, const char *rpath)
-{
-    char *fixpath;
-    int plen = (path != NULL)? strlen(path) : 0;
-    int rlen = strlen(rpath);
-    int i, ns = 0;
-
-    for (i=0; i<plen; i++) {
-	if (path[i] == '\\') ns++;
-    }
-
-    for (i=0; i<rlen; i++) {
-	if (rpath[i] == '\\') ns++;
-    }
- 
-    fixpath = malloc(plen + rlen + ns + 1);
-
-    if (fixpath != NULL) {
-	int j = 0;
-
-	for (i=0; i<plen; i++) {
-	    if (path[i] == '\\') {
-		fixpath[j++] = '\\';
-		fixpath[j++] = '\\';
-	    } else {
-		fixpath[j++] = path[i];
-	    }
-	}
-
-	if (plen > 0) {
-	    fixpath[j++] = ';';
-	}
-
-	for (i=0; i<rlen; i++) {
-	    if (rpath[i] == '\\') {
-		fixpath[j++] = '\\';
-		fixpath[j++] = '\\';
-	    } else {
-		fixpath[j++] = rpath[i];
-	    }
-	}
-
-	fixpath[j] = '\0';
-    }
-
-    return fixpath;
-}
-
-int maybe_print_R_path_addition (FILE *fp)
-{
-    static char *fixpath;
-    static int ok;
-    int err = 0;
-
-    if (ok) {
-	; /* no need to amend the path */
-    } else if (fixpath != NULL) {
-	/* revised path already built */
-	fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
-    } else {
-	char Rpath[MAXLEN];
-
-	strcpy(Rpath, gretl_rlib_path());
-
-	if (*Rpath == '\0') {
-	    err = 1;
-	} else {
-	    char *p = strrchr(Rpath, '\\');
-	    char *path = getenv("PATH");
-
-	    if (p != NULL) {
-		/* chop off "\R.dll" */
-		*p = '\0';
-	    }
-
-	    fprintf(stderr, "Rpath = '%s'\n", Rpath);
-
-	    if (path != NULL && strstr(path, Rpath) != NULL) {
-		ok = 1; /* nothing to be done */
-	    } else {
-		fixpath = get_fixed_R_path(path, Rpath);
-		if (fixpath == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    fprintf(stderr, "added Rpath to PATH:\n %s\n", fixpath);
-		    fprintf(fp, "Sys.setenv(PATH=\"%s\")\n", fixpath);
 		}
 	    }
 	}

@@ -5329,17 +5329,20 @@ char *double_underscores (char *targ, const char *src)
 
 static void win32_run_R_sync (const char *buf, gretlopt opt)
 {
+    PRN *prn = NULL;
     int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
     
-    err = execute_R_buffer(buf, dataset, opt, NULL);
+    err = execute_R_buffer(buf, dataset, opt, prn);
     
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *Rout = g_strdup_printf("%sR.out", gretl_dotdir());
-
-	view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
-	g_free(Rout);
+	view_buffer(prn, 78, 350, _("gretl: script output"),
+		    PRINT, NULL);
     }
 }
 

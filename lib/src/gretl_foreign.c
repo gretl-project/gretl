@@ -36,7 +36,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 1
+#define FDEBUG 0
 
 static char **foreign_lines;
 static int foreign_started;
@@ -288,6 +288,7 @@ static char *get_rscript_path (void)
 {
     const char *rbin = gretl_rbin_path();
     char *p, *rscript;
+    int err = 0;
 
     rscript = calloc(strlen(rbin) + 16, 1);
     strcpy(rscript, rbin);
@@ -296,10 +297,15 @@ static char *get_rscript_path (void)
     if (p != NULL) {
 	*p = '\0';
 	strcat(p, "Rscript.exe");
+	err = gretl_stat(rscript, NULL);
     } else {
+	err = 1;
+    }
+
+    if (err) {
 	free(rscript);
 	rscript = NULL;
-    }
+    }	
 
     return rscript;
 }
@@ -1657,17 +1663,15 @@ static int write_R_source_file (const char *buf,
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	int regsunk = 0;
-	int errsunk = 0;
+	int sunk = 0;
 
 #ifdef G_OS_WIN32
 	if (!(opt & OPT_I) && !(opt & OPT_L)) {
-	    /* non-interactive, not using Rlib */
-	    fprintf(fp, "regout <- file(\"%s\", open=\"wt\")\n", gretl_Rout);
-	    fputs("sink(regout, type=\"output\")\n", fp);
+	    /* Windows, non-interactive, not using Rlib */
+	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
 	    fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 	    fputs("sink(errout, type=\"message\")\n", fp);
-	    regsunk = errsunk = 1;
+	    sunk = 1;
 	}
 #endif
 
@@ -1682,18 +1686,12 @@ static int write_R_source_file (const char *buf,
 		put_R_startup_content(fp);
 		startup_done = 1;
 	    }
-	    fprintf(fp, "regout <- file(\"%s\", open=\"wt\")\n", gretl_Rout);
-	    fputs("sink(regout, type=\"output\")\n", fp);
-	    regsunk = 1;
+	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
 	    if (!(opt & OPT_I)) {
 		fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 		fputs("sink(errout, type=\"message\")\n", fp);
-		errsunk = 1;
 	    }
-#if 0 /* ifdef G_OS_WIN32 */
-	    /* not working, 2012-12-27 */
-	    maybe_print_R_path_addition(fp);
-#endif
+	    sunk = 1;
 	}
 
 	if (opt & OPT_D) {
@@ -1706,7 +1704,7 @@ static int write_R_source_file (const char *buf,
 	}
 
 	if (buf != NULL) {
-	    /* pass on the script supplied in the 'buf' argument */
+	    /* pass on the script supplied in @buf */
 	    fputs("# load script from gretl\n", fp);
 	    fputs(buf, fp);
 	} else if (!(opt & OPT_G)) {
@@ -1714,15 +1712,7 @@ static int write_R_source_file (const char *buf,
 	    put_foreign_lines(fp);
 	}
 
-	if (regsunk) {
-	    fputs("flush(regout)\n", fp);
-	    fputs("close(regout)\n", fp);
-	}
-	if (errsunk) {
-	    fputs("flush(errout)\n", fp);
-	    fputs("close(errout)\n", fp);
-	}
-	if (regsunk || errsunk) {
+	if (sunk) {
 	    fputs("sink()\n", fp);
 	}
 
@@ -2639,10 +2629,10 @@ int foreign_execute (const DATASET *dset,
  * execute_R_buffer:
  * @buf: buffer containing commands.
  * @dset: dataset struct.
- * @opt: may include %OPT_V for verbose operation
+ * @opt: may include %OPT_D to send data from gretl.
  * @prn: struct for printing output.
  *
- * This is used only for MS Windows at present, working around
+ * This is used only for MS Windows, working around
  * breakage in previously coded non-interactive calls to R 
  * executable(s).
  *

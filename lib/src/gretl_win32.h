@@ -76,8 +76,6 @@ int win32_uses_virtual_store (void);
 
 int R_path_from_registry (char *s, int which);
 
-int maybe_print_R_path_addition (FILE *fp);
-
 int win32_check_for_program (const char *prog);
 
 char *strptime (const char *buf, const char *format, 

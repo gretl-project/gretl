@@ -539,8 +539,6 @@ int gretl_open (const char *pathname, int flags, int mode)
     return fd;
 }
 
-
-
 /* On MS Windows support cheap fakery of fchdir, otherwise
    call the real fchdir() */
 
@@ -556,7 +554,9 @@ int gretl_fchdir (int fd)
 /**
  * gretl_stat:
  * @fname: name of file to be examined.
- * @buf: pointer to a C struct stat.
+ * @buf: pointer to a C struct stat (or NULL is OK if
+ * the caller just wants the return value from the stat
+ * call).
  *
  * A wrapper for the C library's stat(), making allowance for
  * the possibility that @fname has to be converted from UTF-8 
@@ -575,16 +575,17 @@ int gretl_stat (const char *fname, struct stat *buf)
     err = maybe_recode_path(fname, &pconv, -1);
     
     if (err) {
-	/* emulate 'stat' */
+	/* emulate stat() */
 	err = -1;
+    } else if (buf == NULL) {
+	struct stat tmp = {0};
+
+	err = stat(pconv ? pconv : fname, &tmp);
     } else {
-	if (pconv != NULL) {
-            err = stat(pconv, buf);
- 	    g_free(pconv);
-	} else {
-            err = stat(fname, buf);
- 	}
+	err = stat(pconv ? pconv : fname, buf);
     }
+
+    g_free(pconv);
 
     return err;
 }
