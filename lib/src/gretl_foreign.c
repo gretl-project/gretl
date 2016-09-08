@@ -326,9 +326,8 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	free(rscript);
     } else {
 	cmd = g_strdup_printf("\"%s\" CMD BATCH --no-save --no-init-file "
-			      "--no-restore-data --slave \"%s\" \"%s\"",
-			      gretl_rbin_path(), gretl_Rprofile,
-			      gretl_Rout);
+			      "--no-restore-data --slave \"%s\"",
+			      gretl_rbin_path(), gretl_Rprofile);
     }
 
     err = win_run_sync(cmd, NULL);
@@ -351,6 +350,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 		pputs(prn, line);
 	    }
 	    fclose(fp);
+	    gretl_remove(outname);
 	}
     }
 
