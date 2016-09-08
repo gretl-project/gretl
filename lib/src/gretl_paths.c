@@ -2643,22 +2643,32 @@ int gretl_x12_is_x13 (void)
     return strstr(paths.x12a, "x13") != NULL;
 }
 
+#ifdef WIN32
+
+/* try to avoid using a stale value saved to .gretl2rc */
+
+static void R_path_try_registry (int which, char *targ)
+{
+    char tmp[MAX_PATH];
+    int err;
+
+    err = R_path_from_registry(tmp, which);
+
+    if (!err) {
+	*targ = '\0';
+	strncat(targ, tmp, MAXLEN - 1);
+    }	
+}
+
+#endif
+
 const char *gretl_rbin_path (void)
 {
 #ifdef WIN32
-    /* try to avoid using a stale value saved to .gretl2rc */
     static int checked;
 
     if (!checked) {
-	char tmp[MAX_PATH];
-	int err;
-
-	err = R_path_from_registry(tmp, REXE);
-
-	if (!err) {
-	    paths.rbinpath[0] = '\0';
-	    strncat(paths.rbinpath, tmp, MAXLEN - 1);
-	}	
+	R_path_try_registry(REXE, paths.rbinpath);
 	checked = 1;
     }
 #endif
@@ -2670,6 +2680,17 @@ const char *gretl_rbin_path (void)
 
 const char *gretl_rlib_path (void)
 {
+#ifdef WIN32
+    static int checked;
+
+    if (!checked) {
+	R_path_try_registry(RLIB, paths.rlibpath);
+	checked = 1;
+    }	
+#endif
+
+    fprintf(stderr, "gretl_rlib_path: '%s'\n", paths.rlibpath);
+    
     return paths.rlibpath;
 }
 
