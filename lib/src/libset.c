@@ -529,7 +529,7 @@ static int set_omp_n_threads (int n)
 	omp_set_num_threads(n);
     }
 #else
-    gretl_warmsg_set("set_omp_n_threads: OpenMP is not enabled");
+    gretl_warnmsg_set("set_omp_n_threads: OpenMP is not enabled");
 #endif
 
     return 0;
