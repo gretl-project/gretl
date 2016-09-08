@@ -5727,6 +5727,48 @@
 
   </command>
 
+  <command name="hfplot" section="Graphs" 
+    label="Create a MIDAS plot" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>hflist</argument>
+	<argument optional="true" separated="true">lflist</argument>
+      </arguments>      
+      <options>
+	<option>
+	  <flag>--with-lines</flag>
+	  <effect>plot with lines</effect>
+	</option>
+	<option>
+	  <flag>--time-series</flag>
+	  <effect>put time on x-axis</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>	  
+	</option>	
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Provides a means of plotting a high-frequency series, possibly
+	along with one or more series observed at the base frequency
+	of the dataset.  The first argument should be a <cmdref
+	targ="MIDAS_list"/>; the optional additional
+	<repl>lflist</repl> terms, following a semicolon, should be
+	regular (<quote>low-frequency</quote>) series.
+      </para>
+      <para>
+	For details on the effect of the <opt>output</opt> option,
+	please see the <cmdref targ="gnuplot"/> command.
+      </para> 
+    </description>
+
+  </command>  
+
   <command name="hsk" section="Estimation"
     label="Heteroskedasticity-corrected estimates">
 
@@ -9801,11 +9843,16 @@
 	  <flag>--no-dates</flag>
 	  <effect>use simple observation numbers</effect>
 	</option>
+	<option>
+	  <flag>--midas</flag>
+	  <effect>see below</effect>
+	</option>	
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
 	<example>print my_matrix</example>
 	<example>print "This is a string"</example>
+	<example>print hflist --midas</example>
       </examples>
     </usage>
 
@@ -9831,7 +9878,14 @@
 	Note that you can gain greater control over the printing format (and
 	so, for example, expose a greater number of digits than are shown by
 	default) by using <cmdref targ="printf"/>.
-      </para>	
+      </para>
+      <para>
+	The <opt>midas</opt> option is specific to datasets that
+	contain one or more high-frequency series, each represented by
+	a <cmdref targ="MIDAS_list"/>. If one such list is given as
+	argument and this option is appended, the series is printed
+	by observation at its <quote>native</quote> frequency.
+      </para>
     </description>
 
     <gui-access>
