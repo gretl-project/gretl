@@ -1,4 +1,9 @@
 version 2016d, in progress
+- New commands to support MIDAS: "midasreg" and "hfplot"
+- New MIDAS-related functions: hfdiff(), hfldiff(), hflags(),
+  hflist(), mgradient(), mlincomb() and mweights()
+- Add sample MIDAS datafile, gdp_midas.gdt, and accompanying
+  illustrative script, gdp_midas.inp
 - New function BFGSmaxc() for constrained maximization using
   L-BFGS-B, version 3.0
 - Small fixes for --compact=spread and new lags() options
@@ -9,6 +14,8 @@ version 2016d, in progress
 - gig addon: fix an off-by-one bug
 - Fix bug: potential crash in GUI filter plot with very long
   series name
+- Fix bug: non-interactive calling of R from gretl on Windows
+  got broken somehow
 - Fix: return 1 rather than NA for chi-square p-value in case
   of underflow
 - Fix bug in mcorr() function: correlations between constants
