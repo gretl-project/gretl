@@ -407,7 +407,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-#ifdef HAVE_MPI
+# ifdef HAVE_MPI
 
 /* Windows: for now we'll not attempt to support anything
    other than "native" MS-MPI
@@ -492,7 +492,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-#endif
+# endif
 
 static char *win32_dotpath (void)
 {
@@ -1266,6 +1266,7 @@ static int write_gretl_mpi_file (gretlopt opt)
 	}
     }
 
+#if defined(_OPENMP)
     if (!err) {
 	if (opt & OPT_T) {
 	    /* respect the --omp-threads option */
@@ -1286,6 +1287,7 @@ static int write_gretl_mpi_file (gretlopt opt)
 	    fputs("set omp_num_threads 1\n", fp);
 	}
     }
+#endif
 
     if (!err) {
 	/* put out the stored 'foreign' lines */
