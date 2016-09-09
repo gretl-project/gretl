@@ -7077,12 +7077,32 @@ static int midas_special_left_panel (selector *sr,
     }
 
     if (nmidas == 0) {
-	gretl_errmsg_set("No MIDAS data were found in the current dataset\n"
-			 "FIXME: some help should be offered here!");
 	err = 1;
     }
 
     return err;
+}
+
+static void no_midas_data (GtkWidget *parent)
+{
+    const gchar *title = N_("gretl: warning");
+    GtkWindow *pwin = GTK_WINDOW(parent);
+    GtkWidget *dialog, *hbox, *help;
+    const gchar *msg;
+
+    msg = N_("No MIDAS data were found in the current dataset");
+    dialog = gtk_message_dialog_new(pwin,
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_WARNING,
+				    GTK_BUTTONS_CLOSE,
+				    "%s", msg);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    help = context_help_button(hbox, MIDAS_LIST);
+    gtk_widget_show(help);
+    gtk_window_set_title(GTK_WINDOW(dialog), _(title));
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
 }
 
 selector *selection_dialog (int ci, const char *title, int (*callback)())
@@ -7094,7 +7114,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     int preselect;
     int saverow;
     int i, yvar = 0;
-    int err = 0;
+    int midas_err = 0;
 
     preselect = presel;
     presel = 0;
@@ -7172,7 +7192,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     if (ci == MIDASREG) {
 	/* we need two left-hand list boxes, the second to
 	   hold high-frequency vars */
-	err = midas_special_left_panel(sr, left_box, saverow);
+	midas_err = midas_special_left_panel(sr, left_box, saverow);
     } else {
 	/* add left-hand column now we know how many rows it should span */
 	table_add_left(sr, left_box, 0, sr->n_rows);
@@ -7231,8 +7251,8 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     gtk_widget_show_all(sr->dlg);
     selector_set_focus(sr);
 
-    if (err) {
-	msgbox(errmsg_get_with_default(err), GTK_MESSAGE_ERROR, sr->dlg);
+    if (midas_err) {
+	no_midas_data(sr->dlg);
 	gtk_widget_destroy(sr->dlg);
 	sr = NULL;
     } else {

@@ -7412,6 +7412,13 @@
 	for creating lists of lags, which are the stock in trade of
 	MIDAS modeling.
       </para>
+      <para>
+	For guidance on how to create a dataset that supports MIDAS
+	lists, please see
+      </para>
+      <para>
+	<url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
+      </para>
     </description>
   </command>
   
