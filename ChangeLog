@@ -11,6 +11,7 @@ version 2016d, in progress
 - "modtest" command: add --xdepend option for Pesaran's CD
   test of cross-sectional dependence in panel-data models
 - Fix breakage in "dataset renumber" command
+- Fix breakage in "modtest" command with --white option
 - gig addon: fix an off-by-one bug
 - Fix bug: potential crash in GUI filter plot with very long
   series name
