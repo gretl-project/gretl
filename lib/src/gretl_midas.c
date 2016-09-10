@@ -995,6 +995,19 @@ int midas_forecast_setup (const MODEL *pmod,
 
 #if BETA_USE_LOGS
 
+static double exp_fixup (double val, double eps)
+{
+    double ret = exp(val);
+
+    /* Note: the affected beta parameters are in fact clamped at a
+       minimum value of @eps in the functions midas_weights() and
+       midas_gradient(). Here we just recognize that fact (which is
+       admittedly a rather nasty bodge).
+    */
+
+    return ret < eps ? eps : ret;
+}
+
 /* If we have estimated a MIDAS model that includes one or more
    beta specifications, using log-transformation of the hyper-
    parameters, revise the model's covariance matrix using the 
@@ -1007,6 +1020,7 @@ static void beta_translate (MODEL *pmod,
 			    int nbeta,
 			    int *xlist)
 {
+    double eps = pow(2.0, -52);
     gretl_matrix *V0 = NULL;
     gretl_matrix *V1 = NULL;
     gretl_matrix *J = NULL;
@@ -1036,14 +1050,14 @@ static void beta_translate (MODEL *pmod,
     for (i=0; i<nmidas; i++) {
 	if (beta_type(m[i].type)) {
 	    k++; /* skip the leading slope coeff */
-	    pmod->coeff[k] = exp(pmod->coeff[k]);
+	    pmod->coeff[k] = exp_fixup(pmod->coeff[k], eps);
 	    if (J != NULL) {
 		gretl_matrix_set(J, k, k, pmod->coeff[k]);
 	    } else if (!na(pmod->sderr[k])) {
 		pmod->sderr[k] *= pmod->coeff[k];
 	    }
 	    k++;
-	    pmod->coeff[k] = exp(pmod->coeff[k]);
+	    pmod->coeff[k] = exp_fixup(pmod->coeff[k], eps);
 	    if (J != NULL) {
 		gretl_matrix_set(J, k, k, pmod->coeff[k]);
 	    } else if (!na(pmod->sderr[k])) {

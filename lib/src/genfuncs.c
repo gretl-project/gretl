@@ -4056,9 +4056,15 @@ static int check_beta_params (int method, double *theta,
 	gretl_errmsg_set("theta must be a 3-vector");
 	err = E_INVARG;
     } else if (theta[0] < eps || theta[1] < eps) {
-	gretl_errmsg_set("beta: parameters must be positive");
-	fprintf(stderr, "beta: theta1=%g, theta2=%g\n", theta[0], theta[1]);
-	err = E_INVARG;
+	if (theta[0] < 0.0 || theta[1] < 0.0) {
+	    gretl_errmsg_set("beta: parameters must be positive");
+	    fprintf(stderr, "beta: theta1=%g, theta2=%g\n", theta[0], theta[1]);
+	    err = E_INVARG;
+	} else {
+	    /* bodge! */
+	    if (theta[0] < eps) theta[0] = eps;
+	    if (theta[1] < eps) theta[1] = eps;
+	}
     }
 
     return err;
