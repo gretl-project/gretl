@@ -5074,7 +5074,9 @@ matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
  * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
  * @c: matrix to hold the product.
  * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
- * add the result to the existing value of @c.
+ * add the result to the existing value of @c, or 
+ * %GRETL_MOD_DECREMENT to subtract from the existing value
+ * of @c.
  *
  * Multiplies @a (or a-transpose) into @b (or b transpose),
  * with the result written into @c.

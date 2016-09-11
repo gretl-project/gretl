@@ -4070,10 +4070,7 @@ static int check_beta_params (int method, double *theta,
     return err;
 }
 
-/* Computes a column m-vector holding weights for use with MIDAS:
-   at present only exponential Almon (method = 1) and Beta (method
-   = 2) are supported.
-*/
+/* Computes a column m-vector holding weights for use with MIDAS */
 
 gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 			     int method, int *err)
