@@ -1273,10 +1273,10 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
     return err;
 }
 
-static int LBFGS_max (double *b, int n, int maxit, double reltol,
-		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
-		      const gretl_matrix *bounds, gretlopt opt, PRN *prn)
+int LBFGS_max (double *b, int n, int maxit, double reltol,
+	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
+	       const gretl_matrix *bounds, gretlopt opt, PRN *prn)
 {
     double *wspace = NULL;
     int *ispace = NULL;
