@@ -1001,8 +1001,7 @@ static double exp_fixup (double val, double eps)
 
     /* Note: the affected beta parameters are in fact clamped at a
        minimum value of @eps in the functions midas_weights() and
-       midas_gradient(). Here we just recognize that fact (which is
-       admittedly a rather nasty bodge).
+       midas_gradient(). Here we just recognize that fact.
     */
 
     return ret < eps ? eps : ret;
@@ -1085,6 +1084,123 @@ static void beta_translate (MODEL *pmod,
     }
 
     pmod->errcode = err;
+}
+
+#endif
+
+#if 0 /* not ready */
+
+struct bfgs_midas_info_ {
+    midas_info *minfo;
+    int nmidas;
+    gretl_matrix *theta; /* MIDAS hyper-params */
+    gretl_matrix *b;     /* low-freq coefficients */
+    gretl_matrix *y;     /* dependent variable */
+    gretl_matrix *u;     /* residual */
+    gretl_matrix *X;     /* low-freq regressors */
+    gretl_matrix **Z;    /* high-freq regressors */
+};
+
+typedef struct bfgs_midas_info_ bfgs_midas_info;
+
+static bfgs_midas_info *bmi_new (midas_info *minfo,
+				 int nmidas,
+				 int *err)
+{
+    bfgs_midas_info *bmi = malloc(sizeof *bmi);
+
+    if (bmi == NULL) {
+	*err = E_ALLOC;
+    } else {
+	bmi->minfo = minfo;
+	bmi->nmidas = nmidas;
+	bmi->theta = NULL;
+	bmi->b = NULL;
+	bmi->y = NULL;
+	bmi->u = NULL;
+	bmi->X = NULL;
+	bmi->Z = NULL;
+    }
+
+    return bmi;
+}
+
+static void bmi_destroy (bfgs_midas_info *bmi)
+{
+    int i;
+    
+    gretl_matrix_free(bmi->theta);
+    gretl_matrix_free(bmi->b);
+    gretl_matrix_free(bmi->y);
+    gretl_matrix_free(bmi->u);
+    gretl_matrix_free(bmi->X);
+    for (i=0; i<bmi->nmidas; i++) {
+	gretl_matrix_free(bmi->Z[i]);
+    }
+    free(bmi->Z);
+
+    free(bmi);
+}
+
+static double bfgs_midas_SSR (const double *b, void *ptr)
+{
+    bfgs_midas_info *bmi = ptr;
+    midas_info *m, *minfo = bmi->minfo;
+    gretl_matrix *w;
+    double SSR = 0.0;
+    int i, j, k, t;
+    int err = 0;
+
+    gretl_matrix_copy_values(bmi->u, bmi->y);
+
+    for (i=0; i<bmi->X->cols; i++) {
+	bmi->b->val[i] = b[i];
+    }
+    gretl_matrix_multiply_mod(bmi->X, GRETL_MOD_NONE,
+			      bmi->b, GRETL_MOD_NONE,
+			      bmi->u, GRETL_MOD_DECREMENT);
+    k = bmi->X->cols;
+
+    for (i=0; i<bmi->nmidas && !err; i++) {
+	double hfb = 1.0;
+	
+	m = &minfo[i];
+	if (takes_coeff(m->type)) {
+	    hfb = b[k++];
+	}
+	gretl_matrix_reuse(bmi->theta, m->nparm, 1);
+	for (j=0; j<m->nparm; j++) {
+	    bmi->theta->val[j] = b[k++];
+	}
+	w = midas_weights(m->nterms, bmi->theta, m->type, &err);
+	if (!err) {
+	    if (takes_coeff(m->type)) {
+		gretl_matrix_multiply_by_scalar(w, hfb);
+	    }
+	    gretl_matrix_multiply_mod(bmi->Z[i], GRETL_MOD_NONE,
+				      w, GRETL_MOD_NONE,
+				      bmi->u, GRETL_MOD_DECREMENT);
+	    gretl_matrix_free(w);
+	}
+    }
+
+    if (err) {
+	return NADBL;
+    }
+
+    for (t=0; t<bmi->X->rows; t++) {
+	SSR += bmi->u->val[t] * bmi->u->val[t];
+    }
+
+    return -SSR;
+}
+
+static int bfgs_midas_grad (double *g, double *b, int n, void *ptr)
+{
+    int err = 0;
+
+
+    return err;
 }
 
 #endif

@@ -1215,8 +1215,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
 /* Note: we need this because the original L-BFGS-B code is
    set up as a minimizer.  We could get rid of it if anyone
-   has the strength to go into lbfgsb.c and make the
-   necessary adjustments.
+   has the strength to go into lbfgsb.c (ex Fortran) and make
+   the necessary adjustments.
 */
 
 static void reverse_gradient (double *g, int n)
@@ -1731,14 +1731,10 @@ static int user_gen_setup (umax *u,
 			   const char *hesscall,
 			   DATASET *dset)
 {
-    char formula[MAXLINE];
+    gchar *formula;
     int err = 0;
 
-    if (u->gentype == GRETL_TYPE_MATRIX) {
-	sprintf(formula, "$umax=%s", fncall);
-    } else {
-	sprintf(formula, "$umax=%s", fncall);
-    }
+    formula = g_strdup_printf("$umax=%s", fncall);
 
     u->gf = genr_compile(formula, dset, u->gentype, OPT_P,
 			 u->prn, &err);
@@ -1769,6 +1765,8 @@ static int user_gen_setup (umax *u,
 	destroy_genr(u->gg);
 	u->gf = u->gg = NULL;
     }
+
+    g_free(formula);
 
     return err;
 }
