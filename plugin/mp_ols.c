@@ -568,7 +568,9 @@ static void set_gretl_mp_bits (void)
 	bits = strtoul(user_bits, NULL, 10);
     }
 
+#if 0
     fprintf(stderr, "GMP: using %d bits\n", (int) bits);
+#endif
 
     mpf_set_default_prec(bits);
 }
@@ -582,7 +584,9 @@ static void set_gretl_mpfr_bits (void)
 	bits = strtoul(user_bits, NULL, 10);
     }
 
+#if 0
     fprintf(stderr, "MPFR: using %d bits\n", (int) bits);
+#endif
 
     mpfr_set_default_prec(bits);
 } 
