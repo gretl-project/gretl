@@ -2121,7 +2121,6 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	errmsg(gnr.errcode, prn);
     } else if (gnr.list[0] < glist[0]) {
 	/* excessive collinearity */
-	int save_ID = gnr.ID;
 	MODEL mpmod = mp_ols(glist, gdset);
 
 	if (mpmod.errcode) {
@@ -2132,6 +2131,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	    gnr.errcode = E_JACOBIAN;
 	    gretl_model_set_int(&gnr, "near-singular", 2);
 	} else {
+	    model_count_minus();
 	    clear_model(&gnr);
 	    gnr = mpmod;
 	    if (lsqopt & OPT_R) {
@@ -2139,7 +2139,6 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	    }
 	    gretl_model_set_int(&gnr, "near-singular", 1);
 	}
-	gnr.ID = save_ID;
     }
 
     if (gnr.errcode == 0 || gnr.errcode == E_JACOBIAN) {
