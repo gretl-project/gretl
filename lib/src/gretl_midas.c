@@ -21,6 +21,8 @@
 #include "usermat.h"
 #include "uservar.h"
 #include "matrix_extra.h"
+#include "libset.h"
+#include "gretl_bfgs.h"
 #include "gretl_midas.h"
 
 #define MIDAS_DEBUG 0
@@ -32,6 +34,7 @@ struct midas_info_ {
     char lnam0[VNAMELEN];  /* name of MIDAS list on input */
     char lname[VNAMELEN];  /* name of MIDAS list */
     char mname[VNAMELEN];  /* name of initial theta vector */
+    gretl_matrix *theta;   /* value of initial theta vector */
     int prelag;            /* input list already holds lags */
     int minlag;            /* minimum lag */
     int maxlag;            /* maximum lag */
@@ -370,6 +373,7 @@ static void midas_info_init (midas_info *m)
     m->lnam0[0] = '\0';
     m->lname[0] = '\0';
     m->mname[0] = '\0';
+    m->theta = NULL;
     m->prelag = 0;
     m->minlag = 0;
     m->maxlag = 0;
@@ -498,6 +502,7 @@ static int parse_midas_info (const char *s,
 	    }
 	    m->type = p;
 	    m->nparm = k;
+	    m->theta = theta;
 	}
     }
 
@@ -1088,23 +1093,109 @@ static void beta_translate (MODEL *pmod,
 
 #endif
 
-#if 0 /* not ready */
+#if 1 /* not ready */
 
 struct bfgs_midas_info_ {
+    const int *list;
     midas_info *minfo;
     int nmidas;
-    gretl_matrix *theta; /* MIDAS hyper-params */
-    gretl_matrix *b;     /* low-freq coefficients */
-    gretl_matrix *y;     /* dependent variable */
-    gretl_matrix *u;     /* residual */
-    gretl_matrix *X;     /* low-freq regressors */
-    gretl_matrix **Z;    /* high-freq regressors */
+    int n_beta;
+    DATASET *dset;
+    gretl_matrix *b;      /* all coefficients */
+    gretl_matrix *theta;  /* MIDAS hyper-params */
+    gretl_matrix *bounds; /* bounds on hyper-params */
+    gretl_matrix *u;      /* residual vector */
 };
 
 typedef struct bfgs_midas_info_ bfgs_midas_info;
 
-static bfgs_midas_info *bmi_new (midas_info *minfo,
+static int bmi_setup (bfgs_midas_info *bmi,
+		      gretl_matrix *c)
+{
+    int T = sample_size(bmi->dset);
+    double eps = pow(2.0, -52);
+    int i, j, k, ii;
+    int npmax = 0;
+    midas_info *m;
+
+    bmi->u = gretl_column_vector_alloc(T);
+    bmi->bounds = gretl_matrix_alloc(2 * bmi->n_beta, 3);
+
+    if (bmi->u == NULL || bmi->bounds == NULL) {
+	return E_ALLOC;
+    }
+
+    k = bmi->list[0] - 1;
+    j = 0;
+
+    for (i=0; i<bmi->nmidas; i++) {
+	m = &bmi->minfo[i];
+	if (m->nparm > npmax) {
+	    npmax = m->nparm;
+	}
+	if (beta_type(m->type)) {
+	    k++;
+	    gretl_matrix_set(bmi->bounds, j, 0, k + 1);
+	    gretl_matrix_set(bmi->bounds, j, 1, eps);
+	    gretl_matrix_set(bmi->bounds, j, 2, 1000);
+	    j++;
+	    gretl_matrix_set(bmi->bounds, j, 0, k + 2);
+	    gretl_matrix_set(bmi->bounds, j, 1, eps);
+	    gretl_matrix_set(bmi->bounds, j, 2, 1000);
+	    j++;
+	    k += m->nparm;
+	} else {
+	    k += m->nparm + takes_coeff(m->type);
+	}
+    }
+
+    bmi->b = gretl_column_vector_alloc(k);
+    bmi->theta = gretl_column_vector_alloc(npmax);
+
+    if (bmi->b == NULL || bmi->theta == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<bmi->list[0]-1; i++) {
+	bmi->b->val[i] = c->val[i];
+    }
+
+    k = ii = bmi->list[0] - 1;
+    for (i=0; i<bmi->nmidas; i++) {
+	m = &bmi->minfo[i];
+	if (takes_coeff(m->type)) {
+	    bmi->b->val[k++] = c->val[ii++];
+	}
+#if BETA_USE_LOGS
+	for (j=0; j<m->nparm; j++) {
+	    bmi->b->val[k++] = j < 2 ? exp(m->theta->val[j]) :
+		m->theta->val[j];
+	}
+#else
+	for (j=0; j<m->nparm; j++) {
+	    bmi->b->val[k++] = m->theta->val[j];
+	}
+#endif
+    }
+
+    return 0;
+}
+
+static void bmi_destroy (bfgs_midas_info *bmi)
+{
+    gretl_matrix_free(bmi->b);
+    gretl_matrix_free(bmi->theta);
+    gretl_matrix_free(bmi->bounds);
+    gretl_matrix_free(bmi->u);
+    free(bmi);
+}
+
+static bfgs_midas_info *bmi_new (const int *list,
+				 midas_info *minfo,
 				 int nmidas,
+				 int n_beta,
+				 gretl_matrix *c,
+				 DATASET *dset,
 				 int *err)
 {
     bfgs_midas_info *bmi = malloc(sizeof *bmi);
@@ -1112,17 +1203,18 @@ static bfgs_midas_info *bmi_new (midas_info *minfo,
     if (bmi == NULL) {
 	*err = E_ALLOC;
     } else {
+	bmi->list = list;
 	bmi->minfo = minfo;
 	bmi->nmidas = nmidas;
-	bmi->theta = NULL;
+	bmi->n_beta = n_beta;
+	bmi->dset = dset;
 	bmi->b = NULL;
-	bmi->y = NULL;
+	bmi->theta = NULL;
+	bmi->bounds = NULL;
 	bmi->u = NULL;
-	bmi->X = NULL;
-	bmi->Z = gretl_matrix_array_new(nmidas);
-	if (bmi->Z == NULL) {
-	    *err = E_ALLOC;
-	    free(bmi);
+	*err = bmi_setup(bmi, c);
+	if (*err) {
+	    bmi_destroy(bmi);
 	    bmi = NULL;
 	}
     }
@@ -1130,43 +1222,37 @@ static bfgs_midas_info *bmi_new (midas_info *minfo,
     return bmi;
 }
 
-static void bmi_destroy (bfgs_midas_info *bmi)
-{
-    int i;
-    
-    gretl_matrix_free(bmi->theta);
-    gretl_matrix_free(bmi->b);
-    gretl_matrix_free(bmi->y);
-    gretl_matrix_free(bmi->u);
-    gretl_matrix_free(bmi->X);
-    gretl_matrix_array_free(bmi->Z, bmi->nmidas);
-
-    free(bmi);
-}
-
 static double bfgs_midas_SSR (const double *b, void *ptr)
 {
     bfgs_midas_info *bmi = ptr;
-    midas_info *m, *minfo = bmi->minfo;
+    DATASET *dset = bmi->dset;
+    midas_info *m;
+    const double *y;
     gretl_matrix *w;
     double SSR = 0.0;
-    int i, j, k, t;
+    int i, vi, j, k, t, s;
     int err = 0;
 
-    gretl_matrix_copy_values(bmi->u, bmi->y);
+    y = dset->Z[bmi->list[1]];
+    s = 0;
 
-    for (i=0; i<bmi->X->cols; i++) {
-	bmi->b->val[i] = b[i];
+    /* set residual to y minus (low-freq) X*\beta */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	bmi->u->val[s] = y[t];
+	for (i=2; i<=bmi->list[0]; i++) {
+	    vi = bmi->list[i];
+	    bmi->u->val[s] -= dset->Z[vi][t] * b[i-2];
+	}
+	s++;
     }
-    gretl_matrix_multiply_mod(bmi->X, GRETL_MOD_NONE,
-			      bmi->b, GRETL_MOD_NONE,
-			      bmi->u, GRETL_MOD_DECREMENT);
-    k = bmi->X->cols;
 
+    k = bmi->list[0] - 1;
+
+    /* now handle the high-frequency terms */
     for (i=0; i<bmi->nmidas && !err; i++) {
 	double hfb = 1.0;
 	
-	m = &minfo[i];
+	m = &bmi->minfo[i];
 	if (takes_coeff(m->type)) {
 	    hfb = b[k++];
 	}
@@ -1179,9 +1265,14 @@ static double bfgs_midas_SSR (const double *b, void *ptr)
 	    if (takes_coeff(m->type)) {
 		gretl_matrix_multiply_by_scalar(w, hfb);
 	    }
-	    gretl_matrix_multiply_mod(bmi->Z[i], GRETL_MOD_NONE,
-				      w, GRETL_MOD_NONE,
-				      bmi->u, GRETL_MOD_DECREMENT);
+	    s = 0;
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		for (j=0; j<m->nterms; j++) {
+		    vi = m->laglist[j+1];
+		    bmi->u->val[s] -= dset->Z[vi][t] * w->val[j];
+		}
+		s++;
+	    }
 	    gretl_matrix_free(w);
 	}
     }
@@ -1190,17 +1281,33 @@ static double bfgs_midas_SSR (const double *b, void *ptr)
 	return NADBL;
     }
 
-    for (t=0; t<bmi->X->rows; t++) {
-	SSR += bmi->u->val[t] * bmi->u->val[t];
+    for (s=0; s<bmi->u->rows; s++) {
+	SSR += bmi->u->val[s] * bmi->u->val[s];
     }
 
+    /* note: sign changed for the maximizer */
     return -SSR;
 }
 
-static int bfgs_midas_grad (double *g, double *b, int n, void *ptr)
+static int bmi_run (bfgs_midas_info *bmi, gretlopt opt, PRN *prn)
 {
-    int err = 0;
+    double reltol;
+    int fncount = 0, grcount = 0;
+    int n, err;
 
+    n = gretl_vector_get_length(bmi->b);
+    reltol = libset_get_double(BFGS_TOLER);
+
+    err = LBFGS_max(bmi->b->val, n, 1000, reltol,
+		    &fncount, &grcount, bfgs_midas_SSR, 
+		    C_SSR, NULL, bmi, bmi->bounds,
+		    opt, prn);
+
+#if 1
+    if (!err) {
+	gretl_matrix_print(bmi->b, "bmi_run: final bmi->b");
+    }
+#endif
 
     return err;
 }
@@ -1502,7 +1609,8 @@ static int add_midas_matrices (int yno,
 			       const DATASET *dset,
 			       midas_info *minfo,
 			       int nmidas,
-			       int *pslopes)
+			       int *pslopes,
+			       gretl_matrix **cptr)
 {
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
@@ -1609,15 +1717,12 @@ static int add_midas_matrices (int yno,
     }
 
     gretl_matrix_free(y);
-    gretl_matrix_free(c);
 
-    /* we're finished with the per-term laglists now */
-    for (i=0; i<nmidas; i++) {
-	if (!minfo[i].prelag) {
-	    free(minfo[i].laglist);
-	}
-	minfo[i].laglist = NULL;
-    }    
+    if (cptr != NULL) {
+	*cptr = c;
+    } else {
+	gretl_matrix_free(c);
+    }
 
 #if MIDAS_DEBUG
     fprintf(stderr, "add_midas_matrices: returning %d\n", err);
@@ -1707,7 +1812,9 @@ MODEL midas_model (const int *list,
 		   gretlopt opt,
 		   PRN *prn)
 {
+    bfgs_midas_info *bmi = NULL;
     midas_info *minfo = NULL;
+    gretl_matrix *c = NULL;
     char tmp[64];
     int *xlist = NULL;
     int i, nmidas = 0;
@@ -1756,8 +1863,17 @@ MODEL midas_model (const int *list,
 
     if (!err) {
 	/* add the required matrices */
+	gretl_matrix **cptr = n_beta > 0 ? &c : NULL;
+
 	err = add_midas_matrices(list[1], xlist, dset, minfo,
-				 nmidas, &hfslopes);
+				 nmidas, &hfslopes, cptr);
+    }
+
+    if (!err && n_beta > 0) {
+	bmi = bmi_new(list, minfo, nmidas, n_beta, c, dset, &err);
+	if (!err) {
+	    err = bmi_run(bmi, opt, prn);
+	}
     }
 
     if (opt & OPT_P) {
@@ -1924,6 +2040,7 @@ MODEL midas_model (const int *list,
 
     for (i=0; i<nmidas; i++) {
 	if (!minfo[i].prelag) {
+	    free(minfo[i].laglist);
 	    user_var_delete_by_name(minfo[i].lname, NULL);
 	}
 	if (minfo[i].type != MIDAS_U) {
@@ -1944,8 +2061,13 @@ MODEL midas_model (const int *list,
 	free(xlist);
     }
 
+    gretl_matrix_free(c);
     destroy_private_uvars();
     free(minfo);
+
+    if (bmi != NULL) {
+	bmi_destroy(bmi);
+    }
 
     if (dset->v > origv) {
 	/* or maybe not? */
