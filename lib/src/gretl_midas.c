@@ -1119,7 +1119,12 @@ static bfgs_midas_info *bmi_new (midas_info *minfo,
 	bmi->y = NULL;
 	bmi->u = NULL;
 	bmi->X = NULL;
-	bmi->Z = NULL;
+	bmi->Z = gretl_matrix_array_new(nmidas);
+	if (bmi->Z == NULL) {
+	    *err = E_ALLOC;
+	    free(bmi);
+	    bmi = NULL;
+	}
     }
 
     return bmi;
@@ -1134,10 +1139,7 @@ static void bmi_destroy (bfgs_midas_info *bmi)
     gretl_matrix_free(bmi->y);
     gretl_matrix_free(bmi->u);
     gretl_matrix_free(bmi->X);
-    for (i=0; i<bmi->nmidas; i++) {
-	gretl_matrix_free(bmi->Z[i]);
-    }
-    free(bmi->Z);
+    gretl_matrix_array_free(bmi->Z, bmi->nmidas);
 
     free(bmi);
 }
