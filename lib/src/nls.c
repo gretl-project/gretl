@@ -1583,7 +1583,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 /* NLS: add coefficient covariance matrix and standard errors 
    based on GNR */
 
-static int add_nls_std_errs_to_model (MODEL *pmod)
+static int add_full_std_errs_to_model (MODEL *pmod)
 {
     double abst, tstat_max = 0;
     int i, k, err = 0;
@@ -1617,7 +1617,7 @@ static int add_nls_std_errs_to_model (MODEL *pmod)
 
 /* Experimental: watch out for bad stuff! Here we react
    to the case where there's machine-perfect collinearity
-   in the Gauss-Newton regression and one or more terms
+   in the Gauss-Newton Regression and one or more terms
    were dropped. We don't have standard errors for those
    terms but we do have coefficient estimates; we set
    the standard errors to NA. Note that @list here is
@@ -1677,6 +1677,19 @@ static int add_partial_std_errs_to_model (MODEL *pmod,
     fprintf(stderr, "added partial standard errors\n");
 
     return 0;
+}
+
+static int add_GNR_std_errs_to_model (MODEL *pmod, const int *list)
+{
+    int err;
+    
+    if (pmod->errcode == E_JACOBIAN) {
+	err = add_partial_std_errs_to_model(pmod, list);
+    } else {    
+	err = add_full_std_errs_to_model(pmod);
+    }
+
+    return err;
 }
 
 /* transcribe coefficient estimates into model struct */
@@ -1825,7 +1838,7 @@ static int add_param_names_to_model (MODEL *pmod, nlspec *spec)
 
     pmod->params = strings_array_new(nc);
     if (pmod->params == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     pmod->nparams = nc;
@@ -1893,12 +1906,14 @@ static int add_param_names_to_model (MODEL *pmod, nlspec *spec)
     return err;
 }
 
-static int
-add_fit_resid_to_model (MODEL *pmod, nlspec *spec, int perfect)
+static int add_fit_resid_to_nls_model (MODEL *pmod,
+				       DATASET *dset,
+				       int yno,
+				       const double *uvec,
+				       int perfect,
+				       int autoreg)
 {
-    DATASET *dset = spec->dset;
     int T = dset->n;
-    int yno = spec->dv;
     double *tmp;
     int s, t;
     int err = 0;
@@ -1929,13 +1944,13 @@ add_fit_resid_to_model (MODEL *pmod, nlspec *spec, int perfect)
 	    pmod->uhat[t] = 0.0;
 	    pmod->yhat[t] = dset->Z[yno][t];
 	} else {
-	    pmod->uhat[t] = spec->fvec[s];
-	    pmod->yhat[t] = dset->Z[yno][t] - spec->fvec[s];
+	    pmod->uhat[t] = uvec[s];
+	    pmod->yhat[t] = dset->Z[yno][t] - uvec[s];
 	    s++;
 	}
     }
 
-    if (perfect || (spec->flags & NL_AUTOREG)) {
+    if (perfect || autoreg) {
 	pmod->rho = pmod->dw = NADBL;
     }
 
@@ -1964,8 +1979,8 @@ static int transcribe_nls_function (MODEL *pmod, const char *s)
     return err;
 }
 
-static int finalize_nls_model (MODEL *pmod, nlspec *spec,
-			       int perfect, int *glist)
+int finalize_nls_model (MODEL *pmod, nlspec *spec,
+			int perfect, int *glist)
 {
     DATASET *dset = spec->dset;
     int err = 0;
@@ -1977,17 +1992,18 @@ static int finalize_nls_model (MODEL *pmod, nlspec *spec,
 
     pmod->smpl.t1 = spec->dset->t1;
     pmod->smpl.t2 = spec->dset->t2;
-    
-    if (pmod->errcode == E_JACOBIAN) {
-	err = add_partial_std_errs_to_model(pmod, glist);
-    } else {    
-	err = add_nls_std_errs_to_model(pmod);
-    }
+
+    err = add_GNR_std_errs_to_model(pmod, glist);
 
     add_stats_to_model(pmod, spec);
 
     if (!err) {
-	err = add_fit_resid_to_model(pmod, spec, perfect);
+	int autoreg = (spec->flags & NL_AUTOREG)? 1 : 0;
+	int yno = spec->dv;
+	    
+	err = add_fit_resid_to_nls_model(pmod, spec->dset, yno,
+					 spec->fvec, perfect,
+					 autoreg);
     }
 
     if (!err) {
@@ -2003,7 +2019,9 @@ static int finalize_nls_model (MODEL *pmod, nlspec *spec,
 	/* set additional data on model to be shipped out */
 	gretl_model_set_int(pmod, "iters", spec->iters);
 	gretl_model_set_double(pmod, "tol", spec->tol);
-	transcribe_nls_function(pmod, spec->nlfunc);
+	if (spec->nlfunc != NULL) {
+	    transcribe_nls_function(pmod, spec->nlfunc);
+	}
 	if (spec->flags & NL_AUTOREG) {
 	    gretl_model_set_int(pmod, "dynamic", 1);
 	}
