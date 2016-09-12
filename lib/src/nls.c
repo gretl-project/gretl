@@ -2034,75 +2034,12 @@ print_GNR_dataset (const int *list, DATASET *gdset)
    as the basis for the model struct returned by the "nls" command.
 */
 
-static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
+MODEL GNR (int *glist, DATASET *gdset, gretlopt opt, PRN *prn)
 {
-    double *uhat = spec->fvec;
-    DATASET *gdset;
-    int *glist;
+    gretlopt lsqopt = OPT_A;
     MODEL gnr;
-    gretlopt lsqopt;
-    int i, j, t, v;
-    int T = spec->nobs;
-    int perfect = 0;
 
-    if (gretl_iszero(0, T - 1, uhat)) {
-	pputs(prn, _("Perfect fit achieved\n"));
-	perfect = 1;
-	for (t=0; t<spec->nobs; t++) {
-	    uhat[t] = 1.0; /* will be adjusted later */
-	}
-	spec->crit = 0.0;
-    }
-
-    /* number of variables = const + depvar + spec->ncoeff
-       (derivatives) */
-    gdset = create_auxiliary_dataset(2 + spec->ncoeff, T, 0);
-    glist = gretl_consecutive_list_new(1, spec->ncoeff + 1);
-    if (gdset == NULL || glist == NULL) {
-	destroy_dataset(gdset);
-	free(glist);
-	gretl_model_init(&gnr, NULL);
-	gnr.errcode = E_ALLOC;
-	return gnr;
-    }
-
-    if (dataset_is_time_series(dset)) {
-	/* this may inflect the choice of variance estimator
-	   when the --robust flag is given */
-	gdset->structure = SPECIAL_TIME_SERIES;
-    }
-
-    /* dependent variable (NLS residual): write into
-       slot 1 in gdset */
-    strcpy(gdset->varname[1], "gnr_y");
-    for (t=0; t<T; t++) {
-	gdset->Z[1][t] = uhat[t];
-    }
-
-    /* independent variables: derivatives wrt NLS params,
-       starting at slot 2 in gdset */
-    for (i=0; i<spec->ncoeff; i++) {
-	sprintf(gdset->varname[i+2], "gnr_x%d", i + 1);
-    }
-    if (analytic_mode(spec)) {
-	get_nls_derivs(T, NULL, gdset, spec);
-    } else {
-	for (i=0; i<spec->ncoeff; i++) {
-	    v = i + 2;
-	    j = T * i; /* offset into jac array */
-	    for (t=0; t<T; t++) {
-		gdset->Z[v][t] = spec->jac[j++];
-	    }
-	}
-    }
-
-#if NLS_DEBUG > 1
-    printlist(glist, "glist");
-    print_GNR_dataset(glist, gdset);
-#endif
-
-    lsqopt = OPT_A;
-    if (spec->opt & OPT_R) {
+    if (opt & OPT_R) {
 	/* robust variance matrix, if wanted */
 	lsqopt |= OPT_R;
     }
@@ -2141,14 +2078,81 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	}
     }
 
-    if (gnr.errcode == 0 || gnr.errcode == E_JACOBIAN) {
-	gnr.errcode = finalize_nls_model(&gnr, spec, perfect, glist);
+    return gnr;
+}
+
+static DATASET *make_GNR_dataset (nlspec *spec,
+				  DATASET *dset,
+				  int **pglist,
+				  int *perfect,
+				  PRN *prn,
+				  int *err)
+{
+    double *uhat = spec->fvec;
+    DATASET *gdset = NULL;
+    int *glist;
+    int i, j, t, v;
+    int T = spec->nobs;
+
+    if (gretl_iszero(0, T - 1, uhat)) {
+	pputs(prn, _("Perfect fit achieved\n"));
+	*perfect = 1;
+	for (t=0; t<spec->nobs; t++) {
+	    uhat[t] = 1.0; /* will be adjusted later */
+	}
+	spec->crit = 0.0;
     }
 
-    destroy_dataset(gdset);
-    free(glist);
+    /* number of variables = const + depvar + spec->ncoeff
+       (derivatives) */
+    gdset = create_auxiliary_dataset(2 + spec->ncoeff, T, 0);
+    glist = gretl_consecutive_list_new(1, spec->ncoeff + 1);
+    
+    if (gdset == NULL || glist == NULL) {
+	destroy_dataset(gdset);
+	free(glist);
+	*err = E_ALLOC;
+	return NULL;
+    }
 
-    return gnr;
+    if (dataset_is_time_series(dset)) {
+	/* this may inflect the choice of variance estimator
+	   when the --robust flag is given */
+	gdset->structure = SPECIAL_TIME_SERIES;
+    }
+
+    /* dependent variable (NLS residual): write into
+       slot 1 in gdset */
+    strcpy(gdset->varname[1], "gnr_y");
+    for (t=0; t<T; t++) {
+	gdset->Z[1][t] = uhat[t];
+    }
+
+    /* independent variables: derivatives wrt NLS params,
+       starting at slot 2 in gdset */
+    for (i=0; i<spec->ncoeff; i++) {
+	sprintf(gdset->varname[i+2], "gnr_x%d", i + 1);
+    }
+    if (analytic_mode(spec)) {
+	get_nls_derivs(T, NULL, gdset, spec);
+    } else {
+	for (i=0; i<spec->ncoeff; i++) {
+	    v = i + 2;
+	    j = T * i; /* offset into jac array */
+	    for (t=0; t<T; t++) {
+		gdset->Z[v][t] = spec->jac[j++];
+	    }
+	}
+    }
+
+#if NLS_DEBUG > 1
+    printlist(glist, "glist");
+    print_GNR_dataset(glist, gdset);
+#endif
+
+    *pglist = glist;
+
+    return gdset;
 }
 
 /* allocate space to copy info into model struct */
@@ -3291,6 +3295,29 @@ static int nls_model_fix_sample (MODEL *pmod,
     return 0;
 }
 
+static void nls_run_GNR (MODEL *pmod, nlspec *spec, PRN *prn)
+{
+    DATASET *gdset = NULL;
+    int *glist = NULL;
+    int perfect = 0;
+    int err = 0;
+
+    gdset = make_GNR_dataset(spec, spec->dset, &glist, &perfect,
+			     prn, &err);
+
+    if (err) {
+	pmod->errcode = err;
+    } else {
+	*pmod = GNR(glist, gdset, spec->opt, prn);
+	if (pmod->errcode == 0 || pmod->errcode == E_JACOBIAN) {
+	    pmod->errcode = finalize_nls_model(pmod, spec,
+					       perfect, glist);
+	}
+	destroy_dataset(gdset);
+	free(glist);
+    }
+}
+
 /* static function providing the real content for the two public
    wrapper functions below: does NLS, MLE or GMM */
 
@@ -3438,7 +3465,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	    } else {
 		/* use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
-		nlmod = GNR(spec, spec->dset, prn);
+		nls_run_GNR(&nlmod, spec, prn);
 	    }
 	} else {
 	    /* MLE, GMM */

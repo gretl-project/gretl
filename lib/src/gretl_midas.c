@@ -1853,7 +1853,7 @@ MODEL midas_model (const int *list,
 
     if (!err && use_ols) {
 	err = umidas_ols(&mod, list, dset, minfo, nmidas, opt);
-	goto umidas_finish;
+	goto midas_finish;
     }
 
     if (!err) {
@@ -2033,7 +2033,7 @@ MODEL midas_model (const int *list,
 #endif
     }
 
- umidas_finish:
+ midas_finish:
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;

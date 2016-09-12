@@ -64,6 +64,8 @@ MODEL nl_model (DATASET *dset, gretlopt opt, PRN *prn);
 MODEL model_from_nlspec (nlspec *spec, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
+MODEL GNR (int *glist, DATASET *gdset, gretlopt opt, PRN *prn);
+
 int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 		   int ft1, int ft2, double *fcerr);
 
