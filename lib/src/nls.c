@@ -1907,13 +1907,12 @@ static int add_param_names_to_model (MODEL *pmod, nlspec *spec)
 }
 
 static int add_fit_resid_to_nls_model (MODEL *pmod,
-				       DATASET *dset,
-				       int yno,
-				       const double *uvec,
-				       int perfect,
-				       int autoreg)
+				       nlspec *spec,
+				       int perfect)
 {
+    DATASET *dset = spec->dset;
     int T = dset->n;
+    int yno = spec->dv;
     double *tmp;
     int s, t;
     int err = 0;
@@ -1944,13 +1943,13 @@ static int add_fit_resid_to_nls_model (MODEL *pmod,
 	    pmod->uhat[t] = 0.0;
 	    pmod->yhat[t] = dset->Z[yno][t];
 	} else {
-	    pmod->uhat[t] = uvec[s];
-	    pmod->yhat[t] = dset->Z[yno][t] - uvec[s];
+	    pmod->uhat[t] = spec->fvec[s];
+	    pmod->yhat[t] = dset->Z[yno][t] - spec->fvec[s];
 	    s++;
 	}
     }
 
-    if (perfect || autoreg) {
+    if (perfect || (spec->flags & NL_AUTOREG)) {
 	pmod->rho = pmod->dw = NADBL;
     }
 
@@ -1998,12 +1997,7 @@ int finalize_nls_model (MODEL *pmod, nlspec *spec,
     add_stats_to_model(pmod, spec);
 
     if (!err) {
-	int autoreg = (spec->flags & NL_AUTOREG)? 1 : 0;
-	int yno = spec->dv;
-	    
-	err = add_fit_resid_to_nls_model(pmod, spec->dset, yno,
-					 spec->fvec, perfect,
-					 autoreg);
+	add_fit_resid_to_nls_model(pmod, spec, perfect);
     }
 
     if (!err) {

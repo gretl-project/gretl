@@ -29,8 +29,8 @@
 #define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
-#define BETA_USE_LOGS 1
-#define BETA_USE_BFGS 0 /* not just yet */
+#define BETA_USE_LOGS 0
+#define BETA_USE_BFGS 1 /* not just yet */
 
 struct midas_info_ {
     char lnam0[VNAMELEN];  /* name of MIDAS list on input */
@@ -822,7 +822,6 @@ static int umidas_ols (MODEL *pmod,
 		       gretlopt opt)
 {
     int *biglist;
-    int j;
 
     biglist = make_midas_biglist(list, m, nmidas);
     
@@ -831,14 +830,6 @@ static int umidas_ols (MODEL *pmod,
     } else {
 	*pmod = lsq(biglist, dset, OLS, opt | OPT_Z);
 	free(biglist);
-    }
-
-    for (j=0; j<nmidas; j++) {
-	/* we're done with these lists now */
-	if (!m[j].prelag) {
-	    free(m[j].laglist);
-	}
-	m[j].laglist = NULL;
     }
 
     return pmod->errcode;
@@ -1345,11 +1336,11 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
     for (i=0; i<bmi->nmidas && !err; i++) {
 	midas_info *m = &bmi->minfo[i];
 	double gij, hfb = 1.0;
-	int ii;
+	int ii, pos;
 
 	if (m->type == MIDAS_U || m->type == MIDAS_ALMONP) {
 	    /* there's no coefficient in front of the linear combo */
-	    goto theta_grad:
+	    goto theta_grad;
 	}
 	
 	if (takes_coeff(m->type)) {
@@ -1377,27 +1368,39 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
 
     theta_grad:
 
-	/* gradient wrt theta (FIXME U-MIDAS) */
-	G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
-	if (!err) {
-	    int pos = xcol;
-	    
+	/* gradient wrt theta */
+	pos = xcol;
+
+	if (m->type == MIDAS_U) {
 	    s = 0;
 	    for (t=dset->t1; t<=dset->t2; t++) {
-		for (ii=0; ii<m->nparm; ii++) {
-		    xit = 0;
-		    for (j=0; j<m->nterms; j++) {
-			vi = m->laglist[j+1];
-			gij = gretl_matrix_get(G, j, ii);
-			xit += dset->Z[vi][t] * gij;
-		    }
-		    gretl_matrix_set(bmi->X, s, pos+ii, xit * hfb);
+		for (j=0; j<m->nterms; j++) {
+		    vi = m->laglist[j+1];
+		    xit = dset->Z[vi][t];
+		    gretl_matrix_set(bmi->X, s, pos+j, xit);
 		}
 		s++;
 	    }
-	    gretl_matrix_free(G);
-	    xcol += m->nparm;
+	} else {   
+	    G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
+	    if (!err) {
+		s = 0;
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    for (ii=0; ii<m->nparm; ii++) {
+			xit = 0;
+			for (j=0; j<m->nterms; j++) {
+			    vi = m->laglist[j+1];
+			    gij = gretl_matrix_get(G, j, ii);
+			    xit += dset->Z[vi][t] * gij;
+			}
+			gretl_matrix_set(bmi->X, s, pos+ii, xit * hfb);
+		    }
+		    s++;
+		}
+		gretl_matrix_free(G);
+	    }
 	}
+	xcol += m->nparm;
     }
 
     gretl_matrix_multiply_mod(bmi->X, GRETL_MOD_TRANSPOSE,
@@ -1503,7 +1506,7 @@ static int bfgs_GNR (MODEL *pmod,
     for (i=0; i<bmi->nmidas && !err; i++) {
 	midas_info *m = &bmi->minfo[i];
 	double zt, gij, hfb = 1.0;
-	int ii;
+	int ii, pos;
 
 	if (m->type == MIDAS_U || m->type == MIDAS_ALMONP) {
 	    /* nothing to be done here */
@@ -1538,25 +1541,39 @@ static int bfgs_GNR (MODEL *pmod,
 
     theta_grad:
 
-	/* gradient wrt theta (FIXME U-MIDAS) */
-	G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
-	if (!err) {
-	    int pos = zcol;
-	    
+	/* gradient wrt theta */
+	pos = zcol;
+
+	if (m->type == MIDAS_U) {
 	    s = 0;
 	    for (t=dset->t1; t<=dset->t2; t++) {
-		for (ii=0; ii<m->nparm; ii++) {
-		    zt = 0;
-		    for (j=0; j<m->nterms; j++) {
-			vi = m->laglist[j+1];
-			gij = gretl_matrix_get(G, j, ii);
-			zt += dset->Z[vi][t] * gij;
-		    }
-		    gdset->Z[pos+ii][s] = zt * hfb;
+		for (j=0; j<m->nterms; j++) {
+		    vi = m->laglist[j+1];
+		    gdset->Z[pos+j][s] = dset->Z[vi][t];
 		}
 		s++;
 	    }
-	    gretl_matrix_free(G);
+	} else {
+	    G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
+	    if (!err) {
+		s = 0;
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    for (ii=0; ii<m->nparm; ii++) {
+			zt = 0;
+			for (j=0; j<m->nterms; j++) {
+			    vi = m->laglist[j+1];
+			    gij = gretl_matrix_get(G, j, ii);
+			    zt += dset->Z[vi][t] * gij;
+			}
+			gdset->Z[pos+ii][s] = zt * hfb;
+		    }
+		    s++;
+		}
+		gretl_matrix_free(G);
+	    }
+	}
+
+	if (!err) {
 	    for (ii=0; ii<m->nparm; ii++) {
 		glist[0] += 1;
 		glist[glist[0]] = pos + ii;
