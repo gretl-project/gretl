@@ -1337,7 +1337,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     /* Gradient convergence criterion (currently unused -- 
        we use reltol instead) */
-    pgtol = 0;
+    pgtol = 0.0;
 
     if (bounds != NULL) {
 	/* Handle specified bounds on the parameters */
@@ -1388,6 +1388,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 		break;
 	    } 
 	} else {
+	    fprintf(stderr, "%s\n", task);
 	    break;
 	}
 
