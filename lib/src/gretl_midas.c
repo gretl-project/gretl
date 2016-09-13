@@ -271,28 +271,29 @@ DATASET *midas_aux_dataset (const int *list,
     return mset;
 }
 
-static gretl_matrix *maybe_make_auto_theta (gretl_matrix *m,
-					    char *name, int i,
-					    int ptype,
-					    int m1, int m2)
+static gretl_matrix *make_auto_theta (char *name, int i,
+				      int ptype, int k,
+				      int m1, int m2)
 {
     gretl_matrix *theta = NULL;
-    int k = 0;
 
-    if (!strcmp(name, "null")) {
-	/* OK if we know how many parameters are needed? */
-	if (ptype == MIDAS_BETA0) {
-	    k = 2;
-	} else if (ptype == MIDAS_BETAN) {
-	    k = 3;
-	} else if (ptype == MIDAS_U) {
-	    k = m2 - m1 + 1;
-	}
-    } else if (integer_string(name)) {
-	int chk = atoi(name);
+    if (k == 0) {
+	/* we have to infer k */
+	if (!strcmp(name, "null")) {
+	    /* OK if we know how many parameters are needed? */
+	    if (ptype == MIDAS_BETA0) {
+		k = 2;
+	    } else if (ptype == MIDAS_BETAN) {
+		k = 3;
+	    } else if (ptype == MIDAS_U) {
+		k = m2 - m1 + 1;
+	    }
+	} else if (integer_string(name)) {
+	    int chk = atoi(name);
 
-	if (chk >= 1 && chk < 100) {
-	    k = chk;
+	    if (chk >= 1 && chk < 100) {
+		k = chk;
+	    }
 	}
     }
 
@@ -376,9 +377,7 @@ static void midas_info_init (midas_info *m)
 
    Variants (2) and (4), with @type set to 0, are for
    U-MIDAS terms: in this case @theta (a vector to
-   initialize the coefficients) is not (always) required.
-   These variants cannot be used, however, if the full
-   specification mixes both U-MIDAS and other terms.
+   initialize the coefficients) is not required.
 */
 
 static int parse_midas_info (const char *s,
@@ -431,8 +430,7 @@ static int parse_midas_info (const char *s,
 	if (!umidas) {
 	    theta = get_matrix_by_name(mname);
 	    if (theta == NULL) {
-		theta = maybe_make_auto_theta(theta, mname, i,
-					      p, m1, m2);
+		theta = make_auto_theta(mname, i, p, 0, m1, m2);
 	    }
 	}
 
@@ -482,45 +480,36 @@ static int parse_midas_info (const char *s,
 }
 
 /* In case we got any U-MIDAS terms in the specification,
-   check for coherence. If there's a mixture of U-MIDAS
-   specs and others then every spec must have an
-   initializer. If all terms are U-MIDAS it's OK if there
-   are no initializers (we'll just use OLS in this case).
-   It's never OK to have some specs with initializers
-   and others without.
+   check to see if we need to add any initializers for
+   U-MIDAS coefficients.
 */
 
-static int umidas_check (midas_info *m, int nmidas,
-			 int nu, int *use_ols)
+static int umidas_check (midas_info *minfo, int nmidas,
+			 int nu, int nb, int *use_ols)
 {
-    int ntheta = 0;
     int i, err = 0;
 
-    /* how many U-MIDAS coeff initializers do we have? */
-    for (i=0; i<nmidas; i++) {
-	if (m[i].type == MIDAS_U) {
-	    if (m[i].mname[0] != '\0') {
-		ntheta++;
-	    }
-	}
+    if (nu == nmidas) {
+	/* all U-MIDAS: so use OLS */
+	*use_ols = 1;
+	return 0;
+    } else if (nb > 0) {
+	/* U-MIDAS + beta mix: OK */
+	return 0;
     }
-    
-    if (nu < nmidas) {
-	/* mixing U-MIDAS spec(s) with others */
-	if (ntheta != nu) {
-	    gretl_errmsg_set("In mixed specifications, U-MIDAS terms "
-			     "must have an initializer");
-	    err = E_INVARG;
-	}
-    } else {
-	/* all specs U-MIDAS */
-	if (ntheta == 0) {
-	    /* OK, no initializers */
-	    *use_ols = 1;
-	} else if (ntheta != nu) {
-	    gretl_errmsg_set("U-MIDAS: initializers must be given for "
-			     "either all or no terms");
-	    err = E_INVARG;
+
+    /* mix of U-MIDAS and Almon terms: we'll be using
+       NLS and we need initializers */
+	
+    for (i=0; i<nmidas && !err; i++) {
+	midas_info *m = &minfo[i];
+	
+	if (m->type == MIDAS_U && m->theta == NULL) {
+	    m->theta = make_auto_theta(m->mname, i, MIDAS_U,
+				       m->nparm, 0, 0);
+	    if (m->theta == NULL) {
+		err = E_DATA;
+	    }
 	}
     }
 
@@ -594,7 +583,7 @@ parse_midas_specs (const char *spec, const DATASET *dset,
     }
 
     if (!err && umidas > 0) {
-	err = umidas_check(m, nspec, umidas, use_ols);
+	err = umidas_check(m, nspec, umidas, *n_beta, use_ols);
     }
 
     if (err) {
@@ -987,7 +976,7 @@ static int bmi_setup (bfgs_midas_info *bmi,
     int T = sample_size(bmi->dset);
     double eps = pow(2.0, -52);
     int i, j, k, ii;
-    int npmax = 0;
+    int clen, npmax = 0;
     midas_info *m;
 
     bmi->u = gretl_column_vector_alloc(T);
@@ -1034,21 +1023,17 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	bmi->b->val[i] = c->val[i];
     }
 
+    clen = gretl_vector_get_length(c);
+
     k = ii = bmi->list[0] - 1;
     for (i=0; i<bmi->nmidas; i++) {
 	m = &bmi->minfo[i];
 	if (takes_coeff(m->type)) {
-	    bmi->b->val[k++] = c->val[ii++];
+	    bmi->b->val[k++] = (ii < clen)? c->val[ii++] : 0;
 	}
-	if (m->theta == NULL) {
-	    /* U_MIDAS */
-	    for (j=0; j<m->nparm; j++) {
-		bmi->b->val[k++] = 0;
-	    }	    
-	} else {
-	    for (j=0; j<m->nparm; j++) {
-		bmi->b->val[k++] = m->theta->val[j];
-	    }
+	for (j=0; j<m->nparm; j++) {
+	    bmi->b->val[k++] = (m->theta == NULL)? 0 :
+		m->theta->val[j];
 	}
     }
 
