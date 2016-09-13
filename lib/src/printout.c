@@ -2901,6 +2901,8 @@ print_iter_info (int iter, double crit, int type, int k,
 
     if (type == C_GMM) {
 	crit = -crit;
+    } else if (type == C_SSR && crit < 0) {
+	crit = -crit;
     }
 
     if (iter < 0) {
