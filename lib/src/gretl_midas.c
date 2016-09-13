@@ -1167,12 +1167,16 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
     bfgs_midas_info *bmi = ptr;
     DATASET *dset = bmi->dset;
     gretl_matrix *w, *G;
+    double *targ, *src;
+    size_t colsize;
     double xit;
     int xcol, vi;
+    int starting = 0;
     int i, j, k, t, s, T;
     int err = 0;
 
     T = sample_size(bmi->dset);
+    colsize = T * sizeof *targ;
 
     if (bmi->X == NULL) {
 	bmi->X = gretl_matrix_alloc(T, n);
@@ -1180,13 +1184,13 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
 	    return E_ALLOC;
 	}
 	/* low-freq regressors: only needs to be done once */
+	targ = bmi->X->val;
 	for (i=2; i<=bmi->list[0]; i++) {
-	    vi = bmi->list[i];
-	    for (t=0; t<T; t++) {
-		xit = dset->Z[vi][t+dset->t1];
-		gretl_matrix_set(bmi->X, t, i-2, xit);
-	    }
+	    src = dset->Z[bmi->list[i]] + dset->t1;
+	    memcpy(targ, src, colsize);
+	    targ += T;
 	}
+	starting = 1;
     }
 
     xcol = k = bmi->list[0] - 1;
@@ -1231,21 +1235,19 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
     theta_grad:
 
 	/* gradient wrt theta */
-	pos = xcol;
 
-	if (m->type == MIDAS_U) {
-	    s = 0;
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		for (j=0; j<m->nterms; j++) {
-		    vi = m->laglist[j+1];
-		    xit = dset->Z[vi][t];
-		    gretl_matrix_set(bmi->X, s, pos+j, xit);
-		}
-		s++;
+	if (m->type == MIDAS_U && starting) {
+	    targ = bmi->X->val + xcol * T;
+	    for (j=0; j<m->nterms; j++) {
+		vi = m->laglist[j+1];
+		src = dset->Z[vi] + dset->t1;
+		memcpy(targ, src, colsize);
+		targ += T;
 	    }
-	} else {   
+	} else if (m->type != MIDAS_U) { 
 	    G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
 	    if (!err) {
+		pos = xcol;
 		s = 0;
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    for (ii=0; ii<m->nparm; ii++) {
@@ -1305,14 +1307,16 @@ static int bfgs_GNR (MODEL *pmod,
     DATASET *gdset = NULL;
     int *glist = NULL;
     gretl_matrix *w, *G;
+    size_t colsize;
     int nc, zcol, vi;
     int i, j, k, t, s, v, T;
     int err = 0;
 
     T = sample_size(bmi->dset);
+    colsize = T * sizeof(double);
     nc = gretl_vector_get_length(bmi->b);
     v = nc + 2;
-    
+
     for (i=2; i<=bmi->list[0]; i++) {
 	if (bmi->list[i] == 0) {
 	    v--;
@@ -1333,9 +1337,7 @@ static int bfgs_GNR (MODEL *pmod,
 
     /* dependent var: nls residual */
     glist[0] = glist[1] = 1;
-    for (t=0; t<T; t++) {
-	gdset->Z[1][t] = bmi->u->val[t];
-    }
+    memcpy(gdset->Z[1], bmi->u->val, colsize);
     strcpy(gdset->varname[1], "gy");
 
     zcol = 2;
@@ -1349,9 +1351,7 @@ static int bfgs_GNR (MODEL *pmod,
 	    gvi = 0;
 	} else {
 	    gvi = zcol++;
-	    for (t=0; t<T; t++) {
-		gdset->Z[gvi][t] = dset->Z[vi][t+dset->t1];
-	    }
+	    memcpy(gdset->Z[gvi], dset->Z[vi] + dset->t1, colsize);
 	    sprintf(gdset->varname[gvi], "gx%d", i-1);
 	}
 	glist[i] = gvi;
@@ -1406,13 +1406,9 @@ static int bfgs_GNR (MODEL *pmod,
 	pos = zcol;
 
 	if (m->type == MIDAS_U) {
-	    s = 0;
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		for (j=0; j<m->nterms; j++) {
-		    vi = m->laglist[j+1];
-		    gdset->Z[pos+j][s] = dset->Z[vi][t];
-		}
-		s++;
+	    for (j=0; j<m->nterms; j++) {
+		vi = m->laglist[j+1];
+		memcpy(gdset->Z[pos+j], dset->Z[vi] + dset->t1, colsize);
 	    }
 	} else {
 	    G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
@@ -1488,8 +1484,7 @@ static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
     if (!err) {
 	err = bfgs_GNR(pmod, bmi, pnames, opt, prn);
 	if (!err) {
-	    gretl_model_set_int(pmod, "fncount", fncount);
-	    gretl_model_set_int(pmod, "grcount", grcount);
+	    gretl_model_set_int(pmod, "iters", fncount);
 	}
     }
 
