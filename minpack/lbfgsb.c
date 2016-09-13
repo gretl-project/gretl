@@ -1955,10 +1955,10 @@ L222:
 	goto L333;
     }
     timer_(&cpu1);
-    cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1], &t[
-	    1], &d__[1], &z__[1], m, &wy[wy_offset], &ws[ws_offset], &sy[
-	    sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], &wa[(*m 
-	    << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nseg,
+    cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1],
+	    &t[1], &d__[1], &z__[1], m, &wy[wy_offset], &ws[ws_offset],
+	    &sy[sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1],
+	    &wa[(*m << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nseg,
 	    &sbgnrm, &info, &epsmch);
     if (info != 0) {
 	info = 0;
@@ -1974,8 +1974,8 @@ L222:
     timer_(&cpu2);
     cachyt = cachyt + cpu2 - cpu1;
     nintol += nseg;
-    freev_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iwhere[1], &
-	    wrk, &updatd, &cnstnd, &iter);
+    freev_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iwhere[1],
+	   &wrk, &updatd, &cnstnd, &iter);
     nact = *n - nfree;
 L333:
     if (nfree == 0 || col == 0) {
@@ -1983,9 +1983,9 @@ L333:
     }
     timer_(&cpu1);
     if (wrk) {
-	formk_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iupdat, &
-		updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset], &
-		wy[wy_offset], &sy[sy_offset], &theta, &col, &head, &info);
+	formk_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iupdat,
+	       &updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset],
+	       &wy[wy_offset], &sy[sy_offset], &theta, &col, &head, &info);
     }
     if (info != 0) {
 	info = 0;
@@ -1998,15 +1998,15 @@ L333:
 	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
-    cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], &sy[sy_offset]
-	    , &wt[wt_offset], &z__[1], &r__[1], &wa[1], &index[1], &theta, &
-	    col, &head, &nfree, &cnstnd, &info);
+    cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], &sy[sy_offset],
+	    &wt[wt_offset], &z__[1], &r__[1], &wa[1], &index[1], &theta, &col,
+	    &head, &nfree, &cnstnd, &info);
     if (info != 0) {
 	goto L444;
     }
-    subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z__[1], &r__[1], &
-	    xp[1], &ws[ws_offset], &wy[wy_offset], &theta, &x[1], &g[1], &col,
-	     &head, &iword, &wa[1], &wn[wn_offset], &info);
+    subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z__[1], &r__[1],
+	   &xp[1], &ws[ws_offset], &wy[wy_offset], &theta, &x[1], &g[1], &col,
+	   &head, &iword, &wa[1], &wn[wn_offset], &info);
 L444:
     if (info != 0) {
 	info = 0;
@@ -2030,8 +2030,8 @@ L555:
 L666:
     lnsrlb_(n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1],
 	    &d__[1], &r__[1], &t[1], &z__[1], &stp, &dnorm, &dtd, &xstep,
-	    &stpmx, &iter, &ifun, &iback, &nfgv, &info, task, &boxed, &cnstnd, 
-	    csave, &isave[22], &dsave[17]);
+	    &stpmx, &iter, &ifun, &iback, &nfgv, &info, task, &boxed,
+	    &cnstnd, csave, &isave[22], &dsave[17]);
     if (info != 0 || iback >= 20) {
 	dcopy_(n, &t[1], &c__1, &x[1], &c__1);
 	dcopy_(n, &r__[1], &c__1, &g[1], &c__1);
@@ -2104,9 +2104,9 @@ L777:
     }
     updatd = 1;
     ++iupdat;
-    matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset], &ss[
-	    ss_offset], &d__[1], &r__[1], &itail, &iupdat, &col, &head,
-	    &theta, &rr, &dr, &stp, &dtd);
+    matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset],
+	    &ss[ss_offset], &d__[1], &r__[1], &itail, &iupdat, &col,
+	    &head, &theta, &rr, &dr, &stp, &dtd);
     formt_(m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], &col,
 	   &theta, &info);
     if (info != 0) {
