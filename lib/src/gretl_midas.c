@@ -29,8 +29,8 @@
 #define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
-#define BETA_USE_LOGS 0
-#define BETA_USE_BFGS 1 /* not just yet */
+#define BETA_USE_LOGS 1
+#define BETA_USE_BFGS 0 /* not just yet */
 
 struct midas_info_ {
     char lnam0[VNAMELEN];  /* name of MIDAS list on input */
@@ -282,6 +282,7 @@ static gretl_matrix *maybe_make_auto_theta (gretl_matrix *m,
     gretl_matrix *theta = NULL;
     int k = 0;
 
+#if BETA_USE_LOGS
     if (m != NULL) {
 	/* We got the name of an existing matrix on input, 
 	   but it pertains to a beta specification and so
@@ -298,6 +299,7 @@ static gretl_matrix *maybe_make_auto_theta (gretl_matrix *m,
 	private_matrix_add(theta, name);
 	return theta;
     }
+#endif
     
     if (!strcmp(name, "null")) {
 	/* OK if we know how many parameters are needed? */
