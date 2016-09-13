@@ -679,6 +679,7 @@ static int *make_midas_laglist (midas_info *m,
 
 static int make_midas_laglists (midas_info *minfo,
 				int nmidas,
+				int use_bfgs,
 				DATASET *dset)
 {
     int *mlist;
@@ -687,7 +688,7 @@ static int make_midas_laglists (midas_info *minfo,
     for (i=0; i<nmidas && !err; i++) {
 	mlist = make_midas_laglist(&minfo[i], dset, &err);
 	if (!err) {
-	    if (!minfo[i].prelag) {
+	    if (!minfo[i].prelag && !use_bfgs) {
 		sprintf(minfo[i].lname, "ML___%d", i+1);
 		err = remember_list(mlist, minfo[i].lname, NULL);
 	    }
@@ -895,7 +896,7 @@ int midas_forecast_setup (const MODEL *pmod,
 
     if (!err) {
 	/* reconstitute MIDAS lag-lists */
-	err = make_midas_laglists(minfo, nmidas, dset);
+	err = make_midas_laglists(minfo, nmidas, 0, dset);
     }
 
     if (!err) {
@@ -1005,6 +1006,7 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	    npmax = m->nparm;
 	}
 	if (beta_type(m->type)) {
+	    /* set up minima and maxima */
 	    k++;
 	    gretl_matrix_set(bmi->bounds, j, 0, k + 1);
 	    gretl_matrix_set(bmi->bounds, j, 1, eps);
@@ -1303,7 +1305,6 @@ transcribe_to_nlspec (nlspec *s, bfgs_midas_info *bmi,
     s->t2 = bmi->dset->t2;
     s->crit = bmi->SSR;
     s->parnames = parnames;
-    // s->tol = XXX;
     s->fvec = bmi->u->val;
     s->coeff = bmi->b->val;
     s->dset = bmi->dset;
@@ -1805,6 +1806,7 @@ static int add_midas_matrices (int yno,
 			       const DATASET *dset,
 			       midas_info *minfo,
 			       int nmidas,
+			       int use_bfgs,
 			       int *pslopes,
 			       gretl_matrix **cptr)
 {
@@ -1825,13 +1827,15 @@ static int add_midas_matrices (int yno,
 				     dset->t1, dset->t2,
 				     M_MISSING_ERROR,
 				     &err);
-	if (!err) {
+	if (!err && !use_bfgs) {
 	    err = private_matrix_add(X, "MX___");
 	}
 	if (!err) {
 	    b = gretl_zero_matrix_new(nx, 1);
-	    if (b!= NULL) {
-		err = private_matrix_add(b, "bx___");
+	    if (b != NULL) {
+		if (!use_bfgs) {
+		    err = private_matrix_add(b, "bx___");
+		}
 	    } else {
 		err = E_ALLOC;
 	    }
@@ -1896,7 +1900,7 @@ static int add_midas_matrices (int yno,
 		b->val[i] = c->val[i];
 	    }
 	}
-	if (hfslopes > 0) {
+	if (hfslopes > 0 && !use_bfgs) {
 	    /* initialize hf slopes, with fallback to zero */
 	    int use_c = !init_err && c->rows > nx;
 	    char tmp[16];
@@ -1913,6 +1917,12 @@ static int add_midas_matrices (int yno,
     }
 
     gretl_matrix_free(y);
+
+    if (use_bfgs) {
+	/* no need to keep these */
+	gretl_matrix_free(X);
+	gretl_matrix_free(b);
+    }
 
 #if MIDAS_DEBUG
     fprintf(stderr, "add_midas_matrices: returning %d\n", err);
@@ -2029,7 +2039,7 @@ static gchar *make_pnames (const int *xlist,
 }
 
 /* Main driver function for built-in MIDAS estimation.
-   The actual engine used is either NLS or OLS.
+   The actual engine used is NLS, LBFGS or OLS.
 */
 
 MODEL midas_model (const int *list,
@@ -2052,6 +2062,7 @@ MODEL midas_model (const int *list,
     int save_t2 = dset->t2;
     int n_beta = 0;
     int use_ols = 0;
+    int use_bfgs = 0;
     MODEL mod;
     int err = 0;
 
@@ -2062,12 +2073,15 @@ MODEL midas_model (const int *list,
     } else {
 	err = parse_midas_specs(param, dset, &minfo, &nmidas,
 				&use_ols, &n_beta);
+	if (!err && n_beta > 0) {
+	    use_bfgs = 1;
+	}
     }
 
     if (!err) {
 	/* build list of regular regressors */
 	xlist = make_midas_xlist(list, dset, &ldepvar, &err);
-	if (xlist != NULL) {
+	if (xlist != NULL && !use_bfgs) {
 	    err = remember_list(xlist, "XL___", NULL);
 	    user_var_privatize_by_name("XL___");
 	}
@@ -2075,7 +2089,7 @@ MODEL midas_model (const int *list,
 
     if (!err) {
 	/* build (or just read) MIDAS lag-lists */
-	err = make_midas_laglists(minfo, nmidas, dset);
+	err = make_midas_laglists(minfo, nmidas, use_bfgs, dset);
     }
 
     if (!err && use_ols) {
@@ -2091,14 +2105,14 @@ MODEL midas_model (const int *list,
     if (!err) {
 	/* add the required matrices */
 	err = add_midas_matrices(list[1], xlist, dset, minfo,
-				 nmidas, &hfslopes, &c);
+				 nmidas, use_bfgs, &hfslopes, &c);
     }
 
     if (!err) {
 	pnames = make_pnames(xlist, dset, minfo, nmidas, hfslopes);
     }
 
-    if (!err && n_beta > 0) {
+    if (!err && use_bfgs) {
 	bmi = bmi_new(list, minfo, nmidas, n_beta, c, dset, &err);
 	if (!err) {
 	    err = bmi_run(&mod, bmi, pnames, opt, prn);
