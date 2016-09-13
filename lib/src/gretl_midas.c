@@ -1095,7 +1095,7 @@ static void beta_translate (MODEL *pmod,
 
 #endif
 
-#if BETA_USE_BFGS /* not ready? */
+#if BETA_USE_BFGS
 
 struct bfgs_midas_info_ {
     const int *list;
@@ -1104,7 +1104,7 @@ struct bfgs_midas_info_ {
     int n_beta;
     DATASET *dset;
     gretl_matrix *b;      /* all coefficients */
-    gretl_matrix *g;      /* gradients */
+    gretl_matrix *g;      /* SSR gradients */
     gretl_matrix *theta;  /* MIDAS hyper-params */
     gretl_matrix *bounds; /* bounds on hyper-params */
     gretl_matrix *u;      /* residual vector */
@@ -1217,6 +1217,7 @@ static bfgs_midas_info *bmi_new (const int *list,
 	bmi->n_beta = n_beta;
 	bmi->dset = dset;
 	bmi->b = NULL;
+	bmi->g = NULL;
 	bmi->theta = NULL;
 	bmi->bounds = NULL;
 	bmi->u = NULL;
@@ -1236,7 +1237,6 @@ static double bfgs_midas_SSR (const double *b, void *ptr)
 {
     bfgs_midas_info *bmi = ptr;
     DATASET *dset = bmi->dset;
-    midas_info *m;
     const double *y;
     gretl_matrix *w;
     int i, vi, j, k, t, s;
@@ -1261,9 +1261,9 @@ static double bfgs_midas_SSR (const double *b, void *ptr)
 
     /* now handle the high-frequency terms */
     for (i=0; i<bmi->nmidas && !err; i++) {
+	midas_info *m = &bmi->minfo[i];
 	double hfb = 1.0;
 	
-	m = &bmi->minfo[i];
 	if (takes_coeff(m->type)) {
 	    hfb = b[k++];
 	}
@@ -1271,7 +1271,11 @@ static double bfgs_midas_SSR (const double *b, void *ptr)
 	for (j=0; j<m->nparm; j++) {
 	    bmi->theta->val[j] = b[k++];
 	}
-	w = midas_weights(m->nterms, bmi->theta, m->type, &err);
+	if (m->type != MIDAS_U) {
+	    w = midas_weights(m->nterms, bmi->theta, m->type, &err);
+	} else {
+	    w = bmi->theta;
+	}
 	if (!err) {
 	    if (takes_coeff(m->type)) {
 		gretl_matrix_multiply_by_scalar(w, hfb);
@@ -1284,7 +1288,9 @@ static double bfgs_midas_SSR (const double *b, void *ptr)
 		}
 		s++;
 	    }
-	    gretl_matrix_free(w);
+	    if (w != bmi->theta) {
+		gretl_matrix_free(w);
+	    }
 	}
     }
 
@@ -1309,23 +1315,17 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
     DATASET *dset = bmi->dset;
     gretl_matrix *w, *G;
     double xit;
-    int nc, xcol, vi;
+    int xcol, vi;
     int i, j, k, t, s, T;
-    int starting = 0;
     int err = 0;
 
     T = sample_size(bmi->dset);
-    nc = gretl_vector_get_length(bmi->b);
 
     if (bmi->X == NULL) {
-	bmi->X = gretl_matrix_alloc(T, nc);
+	bmi->X = gretl_matrix_alloc(T, n);
 	if (bmi->X == NULL) {
 	    return E_ALLOC;
 	}
-	starting = 1;
-    }
-    
-    if (starting) {
 	/* low-freq regressors: only needs to be done once */
 	for (i=2; i<=bmi->list[0]; i++) {
 	    vi = bmi->list[i];
@@ -1347,7 +1347,10 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
 	double gij, hfb = 1.0;
 	int ii;
 
-	/* FIXME U-MIDAS, Almon poly */
+	if (m->type == MIDAS_U || m->type == MIDAS_ALMONP) {
+	    /* there's no coefficient in front of the linear combo */
+	    goto theta_grad:
+	}
 	
 	if (takes_coeff(m->type)) {
 	    hfb = bmi->b->val[k++];
@@ -1372,7 +1375,9 @@ static int bfgs_midas_gradient (double *b, double *g, int n,
 	}
 	xcol++;
 
-	/* gradient wrt theta */
+    theta_grad:
+
+	/* gradient wrt theta (FIXME U-MIDAS) */
 	G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
 	if (!err) {
 	    int pos = xcol;
@@ -1500,7 +1505,10 @@ static int bfgs_GNR (MODEL *pmod,
 	double zt, gij, hfb = 1.0;
 	int ii;
 
-	/* FIXME U-MIDAS, Almon poly */
+	if (m->type == MIDAS_U || m->type == MIDAS_ALMONP) {
+	    /* nothing to be done here */
+	    goto theta_grad;
+	}
 	
 	if (takes_coeff(m->type)) {
 	    hfb = bmi->b->val[k++];
@@ -1528,7 +1536,9 @@ static int bfgs_GNR (MODEL *pmod,
 	sprintf(gdset->varname[zcol], "mdx%d", i+1);
 	zcol++;
 
-	/* gradient wrt theta */
+    theta_grad:
+
+	/* gradient wrt theta (FIXME U-MIDAS) */
 	G = midas_gradient(m->nterms, bmi->theta, m->type, &err);
 	if (!err) {
 	    int pos = zcol;
