@@ -211,7 +211,7 @@ static int active_(int *n, double *l, double *u, int *nbd,
     --u;
     --l;
 
-   nbdd = 0;
+    nbdd = 0;
     *prjctd = 0;
     *cnstnd = 0;
     *boxed = 1;
@@ -2037,6 +2037,7 @@ L666:
 	dcopy_(n, &r__[1], &c__1, &g[1], &c__1);
 	*f = fold;
 	if (col == 0) {
+	    fprintf(stderr, "lnsrlb: info=%d, iback=%d\n", info, iback);
 	    if (info == 0) {
 		info = -9;
 		--nfgv;

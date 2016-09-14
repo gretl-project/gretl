@@ -1467,6 +1467,65 @@ static int bfgs_GNR (MODEL *pmod,
     return err;
 }
 
+#define TRY_SDBOX 0
+
+#if TRY_SDBOX
+
+#include "sdbox.c"
+
+static double sdbox_midas_SSR (int n, double *x, void *ptr)
+{
+    double crit = bfgs_midas_SSR(x, ptr);
+
+    return -crit;
+}
+
+static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
+		    gchar *pnames, gretlopt opt,
+		    PRN *prn)
+{
+    double *lb, *ub, *xo;
+    double reltol = libset_get_double(BFGS_TOLER);
+    int n = gretl_vector_get_length(bmi->b);
+    double fbest;
+    int i, j, err = 0;
+
+    lb = malloc(n * sizeof *lb);
+    ub = malloc(n * sizeof *ub);
+    xo = malloc(n * sizeof *xo);
+
+    for (i=0; i<n; i++) {
+	lb[i] = -1.0e200;
+	ub[i] = +1.0e200;
+    }
+
+    for (j=0; j<bmi->bounds->rows; j++) {
+	i = gretl_matrix_get(bmi->bounds, j, 0) - 1;
+	lb[i] = gretl_matrix_get(bmi->bounds, j, 1);
+	ub[i] = gretl_matrix_get(bmi->bounds, j, 2);
+    }
+
+    sdbox(n, lb, ub, bmi->b->val,
+	  sdbox_midas_SSR, xo, &fbest,
+	  1000, reltol, bmi);
+
+    for (i=0; i<n; i++) {
+	bmi->b->val[i] = xo[i];
+    }
+
+    free(lb);
+    free(ub);
+    free(xo);
+
+    if (!err) {
+	err = bfgs_GNR(pmod, bmi, pnames, opt, prn);
+    }
+
+    return err;
+}
+
+#else
+
 static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
 		    gchar *pnames, gretlopt opt,
 		    PRN *prn)
@@ -1490,6 +1549,8 @@ static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
 
     return err;
 }
+
+#endif
 
 static int add_midas_plot_matrix (MODEL *pmod,
 				  midas_info *m,
