@@ -1392,7 +1392,9 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 		break;
 	    } 
 	} else {
-	    fprintf(stderr, "%s\n", task);
+	    if (strncmp(task, "CONVER", 6)) {
+		fprintf(stderr, "%s\n", task);
+	    }
 	    break;
 	}
 

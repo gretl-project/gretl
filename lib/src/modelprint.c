@@ -3213,7 +3213,7 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
     int iters = gretl_model_get_int(pmod, "iters");
 
     if (iters > 0) {
-	pputc(prn, '\n');
+	/* pputc(prn, '\n'); */
 	pprintf(prn, A_("Convergence achieved after %d iterations\n"), iters);
     } else {
 	int fncount = gretl_model_get_int(pmod, "fncount");

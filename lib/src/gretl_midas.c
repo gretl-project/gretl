@@ -29,6 +29,8 @@
 #define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
+#define USE_LBFGS_B 1
+
 struct midas_info_ {
     char lnam0[VNAMELEN];  /* name of MIDAS list on input */
     char lname[VNAMELEN];  /* name of MIDAS list */
@@ -302,7 +304,7 @@ static gretl_matrix *make_auto_theta (char *name, int i,
 	if (theta != NULL) {
 	    if (beta_type(ptype)) {
 		theta->val[0] = 1;
-		theta->val[1] = 1;
+		theta->val[1] = 10; /* optimize somehow? */
 	    }
 	    sprintf(name, "theta___%d", i+1);
 	    private_matrix_add(theta, name);
@@ -980,11 +982,16 @@ static int bmi_setup (bfgs_midas_info *bmi,
     midas_info *m;
 
     bmi->u = gretl_column_vector_alloc(T);
-    bmi->bounds = gretl_matrix_alloc(2 * bmi->n_beta, 3);
-
-    if (bmi->u == NULL || bmi->bounds == NULL) {
+    if (bmi->u == NULL) {
 	return E_ALLOC;
     }
+
+#if USE_LBFGS_B
+    bmi->bounds = gretl_matrix_alloc(2 * bmi->n_beta, 3);
+    if (bmi->bounds == NULL) {
+	return E_ALLOC;
+    }
+#endif
 
     k = bmi->list[0] - 1;
     j = 0;
@@ -994,6 +1001,7 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	if (m->nparm > npmax) {
 	    npmax = m->nparm;
 	}
+#if USE_LBFGS_B	
 	if (beta_type(m->type)) {
 	    /* set up minima and maxima */
 	    k++;
@@ -1009,6 +1017,9 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	} else {
 	    k += m->nparm + takes_coeff(m->type);
 	}
+#else
+	k += m->nparm + takes_coeff(m->type);
+#endif
     }
 
     bmi->b = gretl_column_vector_alloc(k);
@@ -1467,97 +1478,6 @@ static int bfgs_GNR (MODEL *pmod,
     return err;
 }
 
-#define TRY_ASA_CG 0
-
-#if TRY_ASA_CG
-
-#include "asa_cg.c"
-
-static bfgs_midas_info *bmiptr;
-
-static double asa_midas_SSR (asa_objective *asa)
-{
-    double crit;
-    int i;
-
-    for (i=0; i<asa->n; i++) {
-	fprintf(stderr, "asa->x[%d] = %g bmi %g\n", i,
-		asa->x[i], bmiptr->b->val[i]);
-    }
-    crit = bfgs_midas_SSR(asa->x, bmiptr);
-
-    return -crit;
-}
-
-static void asa_midas_gradient (asa_objective *asa)
-{
-    int i;
-
-    for (i=0; i<asa->n; i++) {
-	fprintf(stderr, "asa->x[%d] = %g bmi %g\n", i,
-		asa->x[i], bmiptr->b->val[i]);
-    }
-    
-    bfgs_midas_gradient(asa->x, asa->g, asa->n, NULL, bmiptr);
-    
-    for (i=0; i<asa->n; i++) {
-	asa->g[i] = -asa->g[i];
-    }
-}
-
-static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
-		    gchar *pnames, gretlopt opt,
-		    PRN *prn)
-{
-    double *lo, *hi, *x;
-    int n = gretl_vector_get_length(bmi->b);
-    int i, j, err = 0;
-
-    lo = malloc(n * sizeof *lo);
-    hi = malloc(n * sizeof *hi);
-    x = malloc(n * sizeof *x);
-
-    for (i=0; i<n; i++) {
-	lo[i] = -1.0e200;
-	hi[i] = +1.0e200;
-    }
-
-    for (j=0; j<bmi->bounds->rows; j++) {
-	i = gretl_matrix_get(bmi->bounds, j, 0) - 1;
-	lo[i] = gretl_matrix_get(bmi->bounds, j, 1);
-	hi[i] = gretl_matrix_get(bmi->bounds, j, 2);
-    }
-
-    for (i=0; i<n; i++) {
-	fprintf(stderr, "coeff %d: %g to %g\n", i, lo[i], hi[i]);
-	x[i] = bmi->b->val[i];
-    }
-    gretl_matrix_print(bmi->b, "bmi->b, starting");
-
-    bmiptr = bmi;
-
-    asa_cg(x, lo, hi, n, NULL, NULL, NULL,
-	   1.0e-5, asa_midas_SSR, asa_midas_gradient,
-	   NULL, NULL, NULL);
-
-    bmiptr = NULL;
-
-    for (i=0; i<n; i++) {
-	bmi->b->val[i] = x[i];
-    }    
-
-    free(lo);
-    free(hi);
-
-    if (!err) {
-	err = bfgs_GNR(pmod, bmi, pnames, opt, prn);
-    }
-
-    return err;
-}
-
-#else
-
 static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
 		    gchar *pnames, gretlopt opt,
 		    PRN *prn)
@@ -1567,16 +1487,16 @@ static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
     int fncount = 0, grcount = 0;
     int err;
 
-#if 0
+#if USE_LBFGS_B
+    err = LBFGS_max(bmi->b->val, n, 1000, reltol,
+		    &fncount, &grcount, bfgs_midas_SSR, 
+		    C_SSR, bfgs_midas_gradient,
+		    bmi, bmi->bounds, opt, prn);    
+#else
     err = BFGS_max(bmi->b->val, n, 1000, reltol,
 		   &fncount, &grcount, bfgs_midas_SSR,
 		   C_SSR, bfgs_midas_gradient, bmi, 
 		   NULL, opt, prn);
-#else
-    err = LBFGS_max(bmi->b->val, n, 1000, reltol,
-		    &fncount, &grcount, bfgs_midas_SSR, 
-		    C_SSR, bfgs_midas_gradient,
-		    bmi, bmi->bounds, opt, prn);
 #endif    
 
     if (!err) {
@@ -1588,8 +1508,6 @@ static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
 
     return err;
 }
-
-#endif
 
 static int add_midas_plot_matrix (MODEL *pmod,
 				  midas_info *m,

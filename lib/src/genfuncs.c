@@ -4367,7 +4367,9 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	}
 	if (wsum <= eps) {
 	    /* should we just set G to zero in this case? */
+#if 0
 	    fprintf(stderr, "sum of weights = %g\n", wsum);
+#endif
 	    *err = E_NAN;
 	    goto range_error;
 	}    
