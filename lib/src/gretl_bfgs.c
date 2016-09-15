@@ -1286,6 +1286,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     char task[60];
     char csave[60];
     double f, pgtol;
+    double factr;
     double gradmax;
     double dsave[29];
     int isave[44];
@@ -1339,6 +1340,9 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
        we use reltol instead) */
     pgtol = 0.0;
 
+    /* tol = (factr * macheps) => factr = tol/macheps */
+    factr = reltol / pow(2.0, -52);
+
     if (bounds != NULL) {
 	/* Handle specified bounds on the parameters */
 	err = transcribe_lbfgs_bounds(bounds, n, nbd, l, u);
@@ -1359,7 +1363,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     while (1) {
 	/* Call the L-BFGS-B code */
-	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
+	setulb_(&n, &m, b, l, u, nbd, &f, g, &factr, &pgtol, wa, iwa, 
 		task, csave, lsave, isave, dsave);
 
 	iter = isave[29] + 1;

@@ -1748,9 +1748,9 @@ L999:
 } /* cauchy_ */
 
 static int mainlb_(int *n, int *m, double *x, 
-		   double *l, double *u, int *nbd, double *f, double 
-		   *g, double *factr, double *pgtol, double *ws, double *
-		   wy, double *sy, double *ss, double *wt, double *wn, 
+		   double *l, double *u, int *nbd, double *f, double *g,
+		   double *factr, double *pgtol, double *ws, double *wy,
+		   double *sy, double *ss, double *wt, double *wn, 
 		   double *snd, double *z__, double *r__, double *d__, 
 		   double *t, double *xp, double *wa, int *index, 
 		   int *iwhere, int *indx2, char *task,

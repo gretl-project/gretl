@@ -1467,55 +1467,87 @@ static int bfgs_GNR (MODEL *pmod,
     return err;
 }
 
-#define TRY_SDBOX 0
+#define TRY_ASA_CG 0
 
-#if TRY_SDBOX
+#if TRY_ASA_CG
 
-#include "sdbox.c"
+#include "asa_cg.c"
 
-static double sdbox_midas_SSR (int n, double *x, void *ptr)
+static bfgs_midas_info *bmiptr;
+
+static double asa_midas_SSR (asa_objective *asa)
 {
-    double crit = bfgs_midas_SSR(x, ptr);
+    double crit;
+    int i;
+
+    for (i=0; i<asa->n; i++) {
+	fprintf(stderr, "asa->x[%d] = %g bmi %g\n", i,
+		asa->x[i], bmiptr->b->val[i]);
+    }
+    crit = bfgs_midas_SSR(asa->x, bmiptr);
 
     return -crit;
+}
+
+static void asa_midas_gradient (asa_objective *asa)
+{
+    int i;
+
+    for (i=0; i<asa->n; i++) {
+	fprintf(stderr, "asa->x[%d] = %g bmi %g\n", i,
+		asa->x[i], bmiptr->b->val[i]);
+    }
+    
+    bfgs_midas_gradient(asa->x, asa->g, asa->n, NULL, bmiptr);
+    
+    for (i=0; i<asa->n; i++) {
+	asa->g[i] = -asa->g[i];
+    }
 }
 
 static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
 		    gchar *pnames, gretlopt opt,
 		    PRN *prn)
 {
-    double *lb, *ub, *xo;
-    double reltol = libset_get_double(BFGS_TOLER);
+    double *lo, *hi, *x;
     int n = gretl_vector_get_length(bmi->b);
-    double fbest;
     int i, j, err = 0;
 
-    lb = malloc(n * sizeof *lb);
-    ub = malloc(n * sizeof *ub);
-    xo = malloc(n * sizeof *xo);
+    lo = malloc(n * sizeof *lo);
+    hi = malloc(n * sizeof *hi);
+    x = malloc(n * sizeof *x);
 
     for (i=0; i<n; i++) {
-	lb[i] = -1.0e200;
-	ub[i] = +1.0e200;
+	lo[i] = -1.0e200;
+	hi[i] = +1.0e200;
     }
 
     for (j=0; j<bmi->bounds->rows; j++) {
 	i = gretl_matrix_get(bmi->bounds, j, 0) - 1;
-	lb[i] = gretl_matrix_get(bmi->bounds, j, 1);
-	ub[i] = gretl_matrix_get(bmi->bounds, j, 2);
+	lo[i] = gretl_matrix_get(bmi->bounds, j, 1);
+	hi[i] = gretl_matrix_get(bmi->bounds, j, 2);
     }
-
-    sdbox(n, lb, ub, bmi->b->val,
-	  sdbox_midas_SSR, xo, &fbest,
-	  1000, reltol, bmi);
 
     for (i=0; i<n; i++) {
-	bmi->b->val[i] = xo[i];
+	fprintf(stderr, "coeff %d: %g to %g\n", i, lo[i], hi[i]);
+	x[i] = bmi->b->val[i];
     }
+    gretl_matrix_print(bmi->b, "bmi->b, starting");
 
-    free(lb);
-    free(ub);
-    free(xo);
+    bmiptr = bmi;
+
+    asa_cg(x, lo, hi, n, NULL, NULL, NULL,
+	   1.0e-5, asa_midas_SSR, asa_midas_gradient,
+	   NULL, NULL, NULL);
+
+    bmiptr = NULL;
+
+    for (i=0; i<n; i++) {
+	bmi->b->val[i] = x[i];
+    }    
+
+    free(lo);
+    free(hi);
 
     if (!err) {
 	err = bfgs_GNR(pmod, bmi, pnames, opt, prn);
@@ -1535,10 +1567,17 @@ static int bmi_run (MODEL *pmod, bfgs_midas_info *bmi,
     int fncount = 0, grcount = 0;
     int err;
 
+#if 0
+    err = BFGS_max(bmi->b->val, n, 1000, reltol,
+		   &fncount, &grcount, bfgs_midas_SSR,
+		   C_SSR, bfgs_midas_gradient, bmi, 
+		   NULL, opt, prn);
+#else
     err = LBFGS_max(bmi->b->val, n, 1000, reltol,
 		    &fncount, &grcount, bfgs_midas_SSR, 
 		    C_SSR, bfgs_midas_gradient,
 		    bmi, bmi->bounds, opt, prn);
+#endif    
 
     if (!err) {
 	err = bfgs_GNR(pmod, bmi, pnames, opt, prn);
