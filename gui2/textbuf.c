@@ -36,7 +36,6 @@
 #include <gtksourceview/gtksourcestyleschememanager.h>
 
 #ifdef USE_GTKSOURCEVIEW_3
-# include <gtksourceview/gtksourcebuffer.h>
 # include <gtksourceview/gtksource.h>
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 #endif

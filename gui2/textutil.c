@@ -33,7 +33,7 @@
 #if USE_GTKSOURCEVIEW_2
 # include <gtksourceview/gtksourceiter.h>
 #else
-# include <gtksourceview/gtksourcebuffer.h>
+# include <gtksourceview/gtksource.h>
 #endif
 
 struct search_replace {
