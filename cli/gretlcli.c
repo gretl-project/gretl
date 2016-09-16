@@ -123,6 +123,7 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    *scriptval = atof(s + 12);
 	} else if (*s == '-' && *(s+1) != '\0') {
 	    /* spurious option? */
+	    fprintf(stderr, "Bad option: %s\n", s);
 	    err = E_DATA;
 	    break;
 	} else if (!gotfile) {
@@ -143,7 +144,7 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    err = incompatible_options(opt, OPT_MAKEPKG | OPT_INSTPKG);
 	}	
     }
-
+    
     *pargc = argc;
     *pargv = argv;
     *popt = opt;
@@ -587,6 +588,7 @@ int main (int argc, char *argv[])
 	if (opt & (OPT_BATCH | OPT_RUNIT | OPT_MAKEPKG | OPT_INSTPKG)) {
 	    if (*filearg == '\0') {
 		/* we're missing a filename argument */
+		fprintf(stdout, "No filename given\n");
 		usage(1);
 	    } else if ((opt & OPT_BATCH) && !strcmp(filearg, "-")) {
 		/* batch mode, but read from stdin */

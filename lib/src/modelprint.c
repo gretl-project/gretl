@@ -653,10 +653,12 @@ static void print_GNR_info (const MODEL *pmod, PRN *prn)
 
     if (!na(R2) && !na(tmax)) {
 	if (tex_format(prn)) {
-	    pprintf(prn, "GNR: $R^2$ = %g, max $|t|$ = %g\n", R2, tmax);
+	    pprintf(prn, "GNR: $R^2$ = %g, max $|t|$ = %g", R2, tmax);
 	} else {
-	    pprintf(prn, "GNR: R-squared = %g, max |t| = %g\n", R2, tmax);
+	    pprintf(prn, "GNR: R-squared = %g, max |t| = %g", R2, tmax);
 	}
+	gretl_prn_newline(prn);
+
 	if (R2 > 1.0e-8 || tmax > 1.0e-4) {
 	    msg = N_("Warning: convergence is questionable");
 	} else {
@@ -676,7 +678,9 @@ static void print_GNR_info (const MODEL *pmod, PRN *prn)
 	gretl_prn_newline(prn);
     }
 
-    gretl_prn_newline(prn);
+    if (!tex_format(prn)) {
+	gretl_prn_newline(prn);
+    }
 }
 
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
