@@ -71,7 +71,7 @@ All gretl abbrevs start with a grave accent (`).")
     (setq abbrevs-changed ac)))
 
 (defvar gretl-comment-char ?#
-  "Character to start an gretl comment.")
+  "Character to start a gretl comment.")
 
 (defvar gretl-comment-start
   (concat (make-string 1 gretl-comment-char) " ")

@@ -479,9 +479,7 @@ level."
       ;; to the beginning of the previous code line, and compute the
       ;; offset this line gives.
       (if (condition-case nil
-	      (progn
-		(up-list -1)
-		t)
+	      (progn (up-list -1) t)
 	    (error nil))
 	  (setq icol (+ 1 (current-column)))
 	(if (zerop (gretl-previous-code-line))
@@ -499,11 +497,15 @@ level."
 		       ((looking-at gretl-block-else-regexp)
 			(if (= bot (point))
 			    (setq icol (+ icol gretl-block-offset))))
-		       ((looking-at gretl-block-end-regexp)
-			(setq icol (- icol (gretl-block-end-offset))))))
+		       ((looking-at "end function")
+			(setq icol (- icol (gretl-block-end-offset)))
+			)))
 		  (forward-char)))
 	      (if is-continuation-line
-		  (setq icol (+ icol gretl-continuation-offset)))))))
+		  (setq icol (+ icol gretl-continuation-offset)))
+	      ) ;; progn
+	  ) ;; if zerop
+	))
     (save-excursion
       (back-to-indentation)
       (cond
