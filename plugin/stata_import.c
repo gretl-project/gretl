@@ -1331,6 +1331,33 @@ static int get_strl_data (char *buf, int bufsize,
     return err;
 }
 
+static void set_discreteness_from_types (DATASET *dset,
+					 const int *types,
+					 int newtypes)
+{
+    int i;
+
+    for (i=1; i<dset->v; i++) {
+	int discrete = 0;
+	int t = types[i-1];
+
+	if (newtypes) {
+	    if (t != STATA_13_FLOAT && t != STATA_13_DOUBLE &&
+		t != STATA_13_LONG) {
+		discrete = 1;
+	    }
+	} else {
+	    if (!stata_type_float(t) && !stata_type_double(t) &&
+		!stata_type_long(t)) {
+		discrete = 1;
+	    }	    
+	}
+	if (discrete) {
+	    series_set_discrete(dset, i, 1);
+	}
+    }
+}
+
 /* main reader for dta format 117+ */
 
 static int read_dta_117_data (FILE *fp, DATASET *dset,
@@ -1559,6 +1586,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	}
     }
 
+    if (!err) {
+	set_discreteness_from_types(dset, types, 1);
+    }
+
     free(types);
 
     if (lvars != NULL) {
@@ -1758,6 +1789,10 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	    gretl_print_destroy(st_prn);
 	}
     }
+
+    if (!err) {
+	set_discreteness_from_types(dset, types, 0);
+    }    
 
     free(types);
 
