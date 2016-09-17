@@ -60,6 +60,7 @@
 			 c == OLS ||		\
 			 c == OMIT ||		\
 			 c == OPEN ||		\
+			 c == QLRTEST ||        \
 			 c == RESET ||		\
 			 c == RESTRICT ||	\
 			 c == RMPLOT ||		\

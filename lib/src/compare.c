@@ -2598,8 +2598,9 @@ static void save_QLR_test (MODEL *pmod, const char *datestr,
 
 /* for internal use by the "qlrtest" command */
 
-static double get_QLR_pval (double test, int df, int k1, int k2, 
-			    MODEL *pmod, PRN *prn)
+static double get_QLR_pval (double test, int df,
+			    int k1, int k2, 
+			    MODEL *pmod)
 {
     double (*qlr_asy_pvalue) (double, int, double);
     double pi_1, pi_2, lam0;
@@ -2624,13 +2625,6 @@ static double get_QLR_pval (double test, int df, int k1, int k2,
     fprintf(stderr, "lambda0 = %g, pi0 = %g, test = %g, pval = %g\n",
 	    lam0, 1.0/(1 + sqrt(lam0)), test, pval);
 #endif
-
-    if (!na(pval)) {
-	pprintf(prn, _("Asymptotic p-value = %.6g for "
-		       "chi-square(%d) = %g"),
-		pval, df, test);
-	pputc(prn, '\n');
-    }
 
     return pval;
 }
@@ -2659,41 +2653,33 @@ double QLR_pval (double X2, int df, double p1, double p2)
     return pval;
 }
 
-static void QLR_print_result (MODEL *pmod,
-			      double test, int tmax, 
-			      int k1, int k2, 
+static void QLR_print_result (double test,
+			      double pval,
+			      const char *datestr,
 			      int dfn, int dfd,
-			      const DATASET *dset, 
-			      gretlopt opt,
 			      int robust,
 			      PRN *prn)
 {
-    char datestr[OBSLEN];
-    double X2, pval;
-
-    ntodate(datestr, tmax, dset);
-
     pputs(prn, _("Quandt likelihood ratio test for structural break at an "
 		 "unknown point,\nwith 15 percent trimming"));
-    pputs(prn, ":\n\n");
+    pputs(prn, ":\n");
     if (robust) {
 	pprintf(prn, _("The maximum Wald test = %g occurs "
 		       "at observation %s"), test, datestr);
-	X2 = test;
     } else {
 	pprintf(prn, _("The maximum F(%d, %d) = %g occurs "
 		       "at observation %s"), dfn, dfd, test, datestr);
-	X2 = dfn * test;
+	test *= dfn;
     }
     pputc(prn, '\n');
 
-    pval = get_QLR_pval(X2, dfn, k1, k2, pmod, prn);
-
-    record_QLR_test_result(X2, pval, tmax + 1);
-
-    if (opt & OPT_S) {
-	save_QLR_test(pmod, datestr, X2, pval, dfn);
+    if (!na(pval)) {
+	pprintf(prn, _("Asymptotic p-value = %.6g for "
+		       "chi-square(%d) = %g"),
+		pval, dfn, test);
+	pputc(prn, '\n');
     }
+    pputc(prn, '\n');
 }
 
 static void save_chow_test (MODEL *pmod, const char *chowstr,
@@ -2871,8 +2857,21 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	}
 
 	if (!err) {
-	    QLR_print_result(pmod, testmax, tmax, split, smax, 
-			     dfn, dfd, dset, opt, robust, prn);
+	    char datestr[OBSLEN];
+	    double pval, X2;
+
+	    X2 = robust ? testmax : dfn * testmax;
+	    pval = get_QLR_pval(X2, dfn, split, smax, pmod);
+	    ntodate(datestr, tmax, dset);
+	    
+	    if (!(opt & OPT_Q)) {
+		QLR_print_result(testmax, pval, datestr, dfn, dfd,
+				 robust, prn);
+	    }
+	    record_QLR_test_result(X2, pval, tmax + 1);
+	    if (opt & OPT_S) {
+		save_QLR_test(pmod, datestr, X2, pval, dfn);
+	    }
 	    if (testvec != NULL) {
 		QLR_graph(testvec, split, smax, dset, dfn, robust);
 	    }

@@ -10200,6 +10200,10 @@
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+	</option>	
       </options>      
     </usage>
     
