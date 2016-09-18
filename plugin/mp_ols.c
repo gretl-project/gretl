@@ -1344,7 +1344,8 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
 			int *plhconst)
 {
     int i, v, nobs, nv;
-    mpf_t *diag, ysum, ypy, zz, rss, tss;
+    mpf_t *diag = NULL;
+    mpf_t ysum, ypy, zz, rss, tss;
     mpf_t den, sgmasq, tmp;
     double ess;
     MPCHOLBETA cb;
@@ -1397,8 +1398,8 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
 	lhconst = 1;
     } else if (mpf_sgn(tss) < 0) {
 	fprintf(stderr, "mpols: TSS = %g\n", mpf_get_d(tss));
-        pmod->errcode = E_TSS; 
-        return; 
+        pmod->errcode = E_TSS;
+	goto cleanup;
     }
 
     /* Choleski-decompose X'X and find the coefficients */
@@ -1408,14 +1409,14 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
 
     if (cb.errcode) {
         pmod->errcode = E_ALLOC;
-        return;
+        goto cleanup;
     } 
 
     mpf_set(rss, cb.rss);
     mpf_clear(cb.rss);
     if (mpf_cmp(rss, MPF_MINUS_ONE) == 0) { 
         pmod->errcode = E_SINGULAR;
-        return; 
+        goto cleanup;
     }
 
     mpf_sub(pmod->ess, ypy, rss);
@@ -1427,7 +1428,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
     if (mpf_sgn(pmod->ess) < 0) { 
 	gretl_errmsg_set(_("Error sum of squares is not >= 0"));
 	pmod->errcode = E_DATA;
-        return;
+        goto cleanup;
     }
 
     if (pmod->dfd == 0) {
@@ -1447,7 +1448,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
 
     if (pmod->errcode) {
 	fprintf(stderr, "mp_ols: pmod->errcode = %d\n", pmod->errcode);
-	return;
+	goto cleanup;
     }
 
     if (mpf_sgn(tss) > 0) {
@@ -1494,7 +1495,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
     diag = malloc(nv * sizeof *diag); 
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
-	return;
+	goto cleanup;
     }
 
     for (i=0; i<nv; i++) {
@@ -1512,7 +1513,13 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
 	mpf_clear(diag[i]);
     }
 
-    free(diag); 
+    free(diag);
+
+    if (plhconst != NULL) {
+	*plhconst = lhconst;
+    }
+
+ cleanup:
 
     mpf_clear(den);
     mpf_clear(sgmasq);
@@ -1522,12 +1529,6 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
     mpf_clear(rss);
     mpf_clear(tss);
     mpf_clear(tmp);
-
-    if (plhconst != NULL) {
-	*plhconst = lhconst;
-    }
-    
-    return;  
 }
 
 /* checks a list for a constant term (ID # 0), and if present, 
@@ -2365,6 +2366,8 @@ int mp_midas_weights (const double *theta, int k,
     mpfr_clear(wsum);
     mpfr_clear(tmp);
 
+    mpfr_free_cache();
+
     return err;
 }
 
@@ -2410,9 +2413,6 @@ int mp_midas_gradient (const double *theta,
 	    goto bailout;
 	}
 
-	for (j=0; j<k; j++) {
-	    mpfr_init_set_d(dsum[j], 0.0, GMP_RNDN);
-	}
 	for (i=0; i<p; i++) {
 	    mpfr_mul_ui(mw[i], mt[0], i+1, GMP_RNDN);
 	    for (j=1; j<k; j++) {
@@ -2561,6 +2561,8 @@ int mp_midas_gradient (const double *theta,
     mpfr_clear(wsum);
     mpfr_clear(tmp);
     mpfr_clear(gij);
+
+    mpfr_free_cache();
     
     return err;
 }
