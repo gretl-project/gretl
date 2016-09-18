@@ -1743,14 +1743,98 @@ static int finalize_midas_model (MODEL *pmod,
     return err;
 }
 
-static gretl_matrix *build_XZ (const gretl_matrix *X,
-			       const DATASET *dset,
-			       midas_info *minfo,
-			       int T, int nmidas,
-			       int hfslopes)
+static int midas_beta_init (const gretl_matrix *y,
+			    const gretl_matrix *X,
+			    gretl_matrix *c,
+			    const DATASET *dset,
+			    midas_info *m,
+			    int T)
 {
     gretl_matrix *XZ;
     int nx = 0;
+    int err = 0;
+
+    if (X != NULL) {
+	/* conditional to allow for the unlikely case of
+	   no low-freq regressors */
+	nx = X->cols;
+    }
+	    
+    XZ = gretl_matrix_alloc(T, nx + 1);
+
+    if (XZ == NULL) {
+	err = E_ALLOC;
+    } else {
+	double theta_vals[] = {1, 10, 1, 1, 2, 10};
+	double zti, SSR, SSRmin = 1e200;
+	const int *zlist = m->laglist;
+	gretl_matrix *w, *u;
+	int best_idx = 0;
+	int p = zlist[0];
+	int i, j, k, t;
+
+	if (X != NULL) {
+	    /* transcribe low-frequency regressors */
+	    memcpy(XZ->val, X->val, T * nx * sizeof(double));
+	}
+
+	u = gretl_matrix_alloc(T, 1);
+
+	for (i=0; i<3 && !err; i++) {
+	    /* set theta and compute weights */
+	    m->theta->val[0] = theta_vals[i*2];
+	    m->theta->val[1] = theta_vals[i*2+1];
+	    w = midas_weights(p, m->theta, MIDAS_BETA0, &err);
+	    /* add (single) midas linear combo */
+	    k = nx * T;
+	    for (t=0; t<T; t++) {
+		zti = 0.0;
+		for (j=1; j<=p; j++) {
+		    zti += dset->Z[zlist[j]][t+dset->t1] * w->val[j-1];
+		}
+		XZ->val[k++] = zti;
+	    }
+	    /* run OLS conditional on theta */
+	    err = gretl_matrix_ols(y, XZ, c, NULL, u, NULL);
+	    if (!err) {
+		SSR = 0.0;
+		for (t=0; t<T; t++) {
+		    SSR += u->val[t] * u->val[t];
+		}
+		fprintf(stderr, "theta %d: SSR=%g\n", i, SSR);
+		if (SSR < SSRmin) {
+		    SSRmin = SSR;
+		    best_idx = i;
+		}
+	    }
+	    gretl_matrix_free(w);
+	}
+
+	if (!err) {
+	    fprintf(stderr, "best_idx = %d, SSRmin=%g\n",
+		    best_idx, SSRmin);
+	    m->theta->val[0] = theta_vals[best_idx*2];
+	    m->theta->val[1] = theta_vals[best_idx*2+1];
+	}
+	
+	gretl_matrix_free(XZ);
+	gretl_matrix_free(u);
+    }
+
+    return err;
+}
+
+static int midas_means_init (const gretl_matrix *y,
+			     const gretl_matrix *X,
+			     gretl_matrix *c,
+			     const DATASET *dset,
+			     midas_info *minfo,
+			     int T, int nmidas,
+			     int hfslopes)
+{
+    gretl_matrix *XZ;
+    int nx = 0;
+    int err = 0;
 
     if (X != NULL) {
 	/* conditional to allow for the unlikely case of
@@ -1759,8 +1843,10 @@ static gretl_matrix *build_XZ (const gretl_matrix *X,
     }
 	    
     XZ = gretl_matrix_alloc(T, nx + hfslopes);
-    
-    if (XZ != NULL) {
+
+    if (XZ == NULL) {
+	err = E_ALLOC;
+    } else {
 	const int *zlist;
 	double zti;
 	int i, j, k, t;
@@ -1784,10 +1870,14 @@ static gretl_matrix *build_XZ (const gretl_matrix *X,
 		}
 		XZ->val[k++] = zti / zlist[0];
 	    }
-	}		
+	}
+
+	err = gretl_matrix_ols(y, XZ, c, NULL,
+			       NULL, NULL);
+	gretl_matrix_free(XZ);
     }
 
-    return XZ;
+    return err;
 }
 
 /* Define "private" matrices to hold the regular X data
@@ -1804,6 +1894,7 @@ static int add_midas_matrices (int yno,
 			       const DATASET *dset,
 			       midas_info *minfo,
 			       int nmidas,
+			       int n_beta,
 			       int use_bfgs,
 			       int *pslopes,
 			       gretl_matrix **cptr)
@@ -1866,23 +1957,18 @@ static int add_midas_matrices (int yno,
     }
 
     if (!err && !init_err) {
-	gretl_matrix *XZ = NULL;
-
-	if (hfslopes > 0) {
-	    XZ = build_XZ(X, dset, minfo, T, nmidas, hfslopes);
-	    if (XZ == NULL) {
-		/* fallback, ignoring "Z" */
-		c->rows = nx;
-	    }
+	if (nmidas == 1 && minfo[0].type == MIDAS_BETA0) {
+	    init_err = midas_beta_init(y, X, c, dset, &minfo[0], T);
+	} else if (hfslopes > 0) {
+	    init_err = midas_means_init(y, X, c, dset, minfo,
+					T, nmidas, hfslopes);
 	}
-	if (XZ != NULL) {
-	    init_err = gretl_matrix_ols(y, XZ, c, NULL,
-					NULL, NULL);
-	} else {
+	if (init_err) {
+	    /* fallback, ignoring "Z" */
+	    c->rows = nx;
 	    init_err = gretl_matrix_ols(y, X, c, NULL,
 					NULL, NULL);
 	}	    
-	gretl_matrix_free(XZ);
     }
 
 #if MIDAS_DEBUG
@@ -2103,7 +2189,8 @@ MODEL midas_model (const int *list,
     if (!err) {
 	/* add the required matrices */
 	err = add_midas_matrices(list[1], xlist, dset, minfo,
-				 nmidas, use_bfgs, &hfslopes, &c);
+				 nmidas, n_beta, use_bfgs,
+				 &hfslopes, &c);
     }
 
     if (!err) {
