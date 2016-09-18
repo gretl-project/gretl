@@ -30,14 +30,14 @@
 # include "gretlwin32.h" /* for browser_open() */
 #endif
 
-#include <gtksourceview/gtksourceview.h>
-#include <gtksourceview/gtksourcelanguagemanager.h>
-#include <gtksourceview/gtksourceprintcompositor.h>
-#include <gtksourceview/gtksourcestyleschememanager.h>
-
 #ifdef USE_GTKSOURCEVIEW_3
 # include <gtksourceview/gtksource.h>
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
+#else
+# include <gtksourceview/gtksourceview.h>
+# include <gtksourceview/gtksourcelanguagemanager.h>
+# include <gtksourceview/gtksourceprintcompositor.h>
+# include <gtksourceview/gtksourcestyleschememanager.h>
 #endif
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
