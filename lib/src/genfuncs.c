@@ -4325,6 +4325,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
 	    if (errno && inf_check(wsum, "nealmon gradient", err)) {
+		free(dsum);
 		goto range_error;
 	    }	    
 	}
