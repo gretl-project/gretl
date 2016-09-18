@@ -1862,6 +1862,7 @@ static int midas_beta_init (const gretl_matrix *y,
 	err = fill_beta_Z(XZ, m, dset, nx, T);
 	if (!err) {
 	    err = gretl_matrix_ols(y, XZ, c, NULL, NULL, NULL);
+	    gretl_matrix_print(c, "c, conditional on user-theta");
 	}
     }
 
