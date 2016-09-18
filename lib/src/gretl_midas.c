@@ -36,6 +36,7 @@ struct midas_info_ {
     char lname[VNAMELEN];  /* name of MIDAS list */
     char mname[VNAMELEN];  /* name of initial theta vector */
     gretl_matrix *theta;   /* value of initial theta vector */
+    int auto_theta;        /* automatic initialization */
     int prelag;            /* input list already holds lags */
     int minlag;            /* minimum lag */
     int maxlag;            /* maximum lag */
@@ -355,6 +356,7 @@ static void midas_info_init (midas_info *m)
     m->lname[0] = '\0';
     m->mname[0] = '\0';
     m->theta = NULL;
+    m->auto_theta = 0;
     m->prelag = 0;
     m->minlag = 0;
     m->maxlag = 0;
@@ -432,6 +434,7 @@ static int parse_midas_info (const char *s,
 	if (!umidas) {
 	    theta = get_matrix_by_name(mname);
 	    if (theta == NULL) {
+		m->auto_theta = 1;
 		theta = make_auto_theta(mname, i, p, 0, m1, m2);
 	    }
 	}
@@ -507,6 +510,7 @@ static int umidas_check (midas_info *minfo, int nmidas,
 	midas_info *m = &minfo[i];
 	
 	if (m->type == MIDAS_U && m->theta == NULL) {
+	    m->auto_theta = 1;
 	    m->theta = make_auto_theta(m->mname, i, MIDAS_U,
 				       m->nparm, 0, 0);
 	    if (m->theta == NULL) {
@@ -1743,6 +1747,35 @@ static int finalize_midas_model (MODEL *pmod,
     return err;
 }
 
+static int fill_beta_Z (gretl_matrix *XZ,
+			midas_info *m,
+			const DATASET *dset,
+			int nx, int T)
+{
+    gretl_matrix *w;
+    const int *zlist = m->laglist;
+    int p = zlist[0];
+    int err = 0;
+
+    w = midas_weights(p, m->theta, m->type, &err);
+
+    if (!err) {
+	double zk;
+	int j, t, k = nx * T;
+	    
+	for (t=0; t<T; t++) {
+	    zk = 0.0;
+	    for (j=1; j<=p; j++) {
+		zk += dset->Z[zlist[j]][t+dset->t1] * w->val[j-1];
+	    }
+	    XZ->val[k++] = zk;
+	}
+	gretl_matrix_free(w);
+    }
+
+    return err;
+}
+
 static int midas_beta_init (const gretl_matrix *y,
 			    const gretl_matrix *X,
 			    gretl_matrix *c,
@@ -1764,14 +1797,17 @@ static int midas_beta_init (const gretl_matrix *y,
 
     if (XZ == NULL) {
 	err = E_ALLOC;
-    } else {
-	double theta_vals[] = {1, 10, 1, 1, 2, 10};
-	double zti, SSR, SSRmin = 1e200;
-	const int *zlist = m->laglist;
-	gretl_matrix *w, *u;
+    } else if (m->auto_theta) {
+	/* trial some alternative initializations for the
+	   beta hyper-parameters (theta) and select the one
+	   that produces the smallest SSR on running OLS
+	   conditional on theta
+	*/
+	double theta_vals[] = {1, 1, 2, 10};
+	double SSR, SSRmin = 1e200;
+	gretl_matrix *u;
 	int best_idx = 0;
-	int p = zlist[0];
-	int i, j, k, t;
+	int i, t, N;
 
 	if (X != NULL) {
 	    /* transcribe low-frequency regressors */
@@ -1780,20 +1816,13 @@ static int midas_beta_init (const gretl_matrix *y,
 
 	u = gretl_matrix_alloc(T, 1);
 
-	for (i=0; i<3 && !err; i++) {
+	N = sizeof theta_vals / (2 * sizeof theta_vals[0]);
+
+	for (i=0; i<N && !err; i++) {
 	    /* set theta and compute weights */
 	    m->theta->val[0] = theta_vals[i*2];
 	    m->theta->val[1] = theta_vals[i*2+1];
-	    w = midas_weights(p, m->theta, MIDAS_BETA0, &err);
-	    /* add (single) midas linear combo */
-	    k = nx * T;
-	    for (t=0; t<T; t++) {
-		zti = 0.0;
-		for (j=1; j<=p; j++) {
-		    zti += dset->Z[zlist[j]][t+dset->t1] * w->val[j-1];
-		}
-		XZ->val[k++] = zti;
-	    }
+	    err = fill_beta_Z(XZ, m, dset, nx, T);
 	    /* run OLS conditional on theta */
 	    err = gretl_matrix_ols(y, XZ, c, NULL, u, NULL);
 	    if (!err) {
@@ -1801,25 +1830,42 @@ static int midas_beta_init (const gretl_matrix *y,
 		for (t=0; t<T; t++) {
 		    SSR += u->val[t] * u->val[t];
 		}
-		fprintf(stderr, "theta %d: SSR=%g\n", i, SSR);
 		if (SSR < SSRmin) {
 		    SSRmin = SSR;
 		    best_idx = i;
 		}
 	    }
-	    gretl_matrix_free(w);
 	}
 
 	if (!err) {
-	    fprintf(stderr, "best_idx = %d, SSRmin=%g\n",
-		    best_idx, SSRmin);
 	    m->theta->val[0] = theta_vals[best_idx*2];
 	    m->theta->val[1] = theta_vals[best_idx*2+1];
+	    if (best_idx != N-1) {
+		fill_beta_Z(XZ, m, dset, nx, T);
+		gretl_matrix_ols(y, XZ, c, NULL, NULL, NULL);
+	    }
+	    fprintf(stderr, "best_idx = %d, SSRmin=%g\n",
+		    best_idx, SSRmin);
+	    gretl_matrix_print(m->theta, "best theta");
+	    gretl_matrix_print(c, "resulting c");
 	}
 	
-	gretl_matrix_free(XZ);
 	gretl_matrix_free(u);
+    } else {
+	/* the user gave a theta spec on input: respect it, and
+	   just use OLS to pre-optimize the x-coefficients and
+	   HF slope coeff in @c
+	*/
+	if (X != NULL) {
+	    memcpy(XZ->val, X->val, T * nx * sizeof(double));
+	}
+	err = fill_beta_Z(XZ, m, dset, nx, T);
+	if (!err) {
+	    err = gretl_matrix_ols(y, XZ, c, NULL, NULL, NULL);
+	}
     }
+
+    gretl_matrix_free(XZ);
 
     return err;
 }
