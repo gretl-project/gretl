@@ -31,13 +31,17 @@
 
 #define USE_LBFGS_B 1
 
+enum mflags {
+    M_PRELAG = 1 << 0,
+    M_AUTO   = 1 << 1
+};
+
 struct midas_info_ {
     char lnam0[VNAMELEN];  /* name of MIDAS list on input */
     char lname[VNAMELEN];  /* name of MIDAS list */
     char mname[VNAMELEN];  /* name of initial theta vector */
     gretl_matrix *theta;   /* value of initial theta vector */
-    int auto_theta;        /* automatic initialization */
-    int prelag;            /* input list already holds lags */
+    char flags;            /* values from @mflags */
     int minlag;            /* minimum lag */
     int maxlag;            /* maximum lag */
     int type;              /* type of parameterization */
@@ -45,6 +49,9 @@ struct midas_info_ {
     int nterms;            /* number of lag terms */
     int *laglist;          /* list of lag series */
 };
+
+#define prelag(m)     (m->flags & M_PRELAG)
+#define auto_theta(m) (m->flags & M_AUTO)
 
 typedef struct midas_info_ midas_info;
 
@@ -356,8 +363,7 @@ static void midas_info_init (midas_info *m)
     m->lname[0] = '\0';
     m->mname[0] = '\0';
     m->theta = NULL;
-    m->auto_theta = 0;
-    m->prelag = 0;
+    m->flags = 0;
     m->minlag = 0;
     m->maxlag = 0;
     m->type = 0;
@@ -411,7 +417,7 @@ static int parse_midas_info (const char *s,
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
 	/* list already hold lags */
-	m->prelag = 1;
+	m->flags |= M_PRELAG;
 	s += 5;
 	sprintf(fmt, "%%%d[^, ] , %%d, %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1);
@@ -434,14 +440,14 @@ static int parse_midas_info (const char *s,
 	if (!umidas) {
 	    theta = get_matrix_by_name(mname);
 	    if (theta == NULL) {
-		m->auto_theta = 1;
+		m->flags |= M_AUTO;
 		theta = make_auto_theta(mname, i, p, 0, m1, m2);
 	    }
 	}
 
-	if (m->prelag && list == NULL) {
+	if (prelag(m) && list == NULL) {
 	    err = E_INVARG;
-	} else if (!m->prelag && !gretl_is_midas_list(list, dset)) {
+	} else if (!prelag(m) && !gretl_is_midas_list(list, dset)) {
 	    gretl_errmsg_set("mds(): the first term must be a MIDAS list");
 	    err = E_INVARG;
 	} else if (m1 > m2) {
@@ -449,7 +455,7 @@ static int parse_midas_info (const char *s,
 	} else if (p < 0 || p >= MIDAS_MAX) {
 	    err = E_INVARG;
 	} else if (umidas) {
-	    if (m->prelag) {
+	    if (prelag(m)) {
 		k = list[0];
 	    } else {
 		k = m2 - m1 + 1;
@@ -468,7 +474,7 @@ static int parse_midas_info (const char *s,
 	    if (!umidas) {
 		strcpy(m->mname, mname);
 	    }
-	    if (m->prelag) {
+	    if (prelag(m)) {
 		/* scrounge lag info from incoming list */
 		lag_info_from_prelag_list(m, list, dset);
 	    } else {
@@ -510,7 +516,7 @@ static int umidas_check (midas_info *minfo, int nmidas,
 	midas_info *m = &minfo[i];
 	
 	if (m->type == MIDAS_U && m->theta == NULL) {
-	    m->auto_theta = 1;
+	    m->flags |= M_AUTO;
 	    m->theta = make_auto_theta(m->mname, i, MIDAS_U,
 				       m->nparm, 0, 0);
 	    if (m->theta == NULL) {
@@ -649,7 +655,7 @@ static int *make_midas_laglist (midas_info *m,
 {
     int *list = get_list_by_name(m->lname);
 
-    if (m->prelag) {
+    if (prelag(m)) {
 	/* don't copy; and don't free either! */
 	if (list == NULL) {
 	    fprintf(stderr, "make_midas_laglist, prelag: '%s': no list!\n",
@@ -677,18 +683,20 @@ static int make_midas_laglists (midas_info *minfo,
 				int use_bfgs,
 				DATASET *dset)
 {
+    midas_info *m;
     int *mlist;
     int i, err = 0;
 	
     for (i=0; i<nmidas && !err; i++) {
-	mlist = make_midas_laglist(&minfo[i], dset, &err);
+	m = &minfo[i];
+	mlist = make_midas_laglist(m, dset, &err);
 	if (!err) {
-	    if (!minfo[i].prelag && !use_bfgs) {
-		sprintf(minfo[i].lname, "ML___%d", i+1);
-		err = remember_list(mlist, minfo[i].lname, NULL);
+	    if (!prelag(m) && !use_bfgs) {
+		sprintf(m->lname, "ML___%d", i+1);
+		err = remember_list(mlist, m->lname, NULL);
 	    }
-	    minfo[i].nterms = mlist[0];
-	    minfo[i].laglist = mlist;
+	    m->nterms = mlist[0];
+	    m->laglist = mlist;
 	}
     }
 
@@ -1603,7 +1611,7 @@ static int model_add_minfo_array (MODEL *pmod,
 		m = &minfo[i];
 		gretl_bundle_set_string(b, "lname",  m->lnam0);
 		gretl_bundle_set_string(b, "mname",  m->mname);
-		gretl_bundle_set_int(b, "prelag", m->prelag);
+		gretl_bundle_set_int(b, "prelag", prelag(m) ? 1 : 0);
 		gretl_bundle_set_int(b, "minlag", m->minlag);
 		gretl_bundle_set_int(b, "maxlag", m->maxlag);
 		gretl_bundle_set_int(b, "type",  m->type);
@@ -1651,7 +1659,9 @@ static midas_info *minfo_from_array (gretl_array *A,
 	    } else {
 		strcpy(m->lname, gretl_bundle_get_string(b, "lname", err));
 		strcpy(m->mname, gretl_bundle_get_string(b, "mname", err));
-		m->prelag = gretl_bundle_get_int(b, "prelag", err);
+		if (gretl_bundle_get_int(b, "prelag", err)) {
+		    m->flags |= M_PRELAG;
+		}
 		m->minlag = gretl_bundle_get_int(b, "minlag", err);
 		m->maxlag = gretl_bundle_get_int(b, "maxlag", err);
 		m->type = gretl_bundle_get_int(b, "type", err);
@@ -1804,7 +1814,7 @@ static int midas_beta_init (const gretl_matrix *y,
 
     if (XZ == NULL) {
 	err = E_ALLOC;
-    } else if (m->auto_theta) {
+    } else if (auto_theta(m)) {
 	/* trial some alternative initializations for the
 	   beta hyper-parameters (theta) and select the one
 	   that produces the smallest SSR on running OLS
@@ -2353,11 +2363,13 @@ MODEL midas_model (const int *list,
     dset->t2 = save_t2;
 
     for (i=0; i<nmidas; i++) {
-	if (!minfo[i].prelag) {
-	    free(minfo[i].laglist);
-	    user_var_delete_by_name(minfo[i].lname, NULL);
+	midas_info *m = &minfo[i];
+	
+	if (!prelag(m)) {
+	    free(m->laglist);
+	    user_var_delete_by_name(m->lname, NULL);
 	}
-	if (minfo[i].type != MIDAS_U) {
+	if (m->type != MIDAS_U) {
 	    sprintf(tmp, "mgr___%d", i+1);
 	    user_var_delete_by_name(tmp, NULL);
 	}
