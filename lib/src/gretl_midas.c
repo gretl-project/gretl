@@ -1347,7 +1347,10 @@ static int bfgs_GNR (MODEL *pmod,
     }
 
     if (dataset_is_time_series(dset)) {
-	gdset->structure = SPECIAL_TIME_SERIES;
+	gdset->structure = dset->structure;
+	gdset->pd = dset->pd;
+	ntodate(gdset->stobs, dset->t1, dset);
+	gdset->sd0 = get_date_x(gdset->pd, gdset->stobs);
     }    
 
     /* dependent var: nls residual */
@@ -1465,6 +1468,10 @@ static int bfgs_GNR (MODEL *pmod,
     if (pmod->errcode == 0 || pmod->errcode == E_JACOBIAN) {
 	nlspec spec = {0};
 
+	if (opt & OPT_B) {
+	    /* test for structural break */
+	    QLR_test(pmod, gdset, OPT_Q | OPT_M, NULL);
+	}
 	transcribe_to_nlspec(&spec, bmi, parnames, opt);
 	err = finalize_nls_model(pmod, &spec, 0, glist);
 
@@ -1844,10 +1851,12 @@ static int midas_beta_init (const gretl_matrix *y,
 		fill_beta_Z(XZ, m, dset, nx, T);
 		gretl_matrix_ols(y, XZ, c, NULL, NULL, NULL);
 	    }
+#if 0
 	    fprintf(stderr, "best_idx = %d, SSRmin=%g\n",
 		    best_idx, SSRmin);
 	    gretl_matrix_print(m->theta, "best theta");
 	    gretl_matrix_print(c, "resulting c");
+#endif
 	}
 	
 	gretl_matrix_free(u);
@@ -1862,7 +1871,9 @@ static int midas_beta_init (const gretl_matrix *y,
 	err = fill_beta_Z(XZ, m, dset, nx, T);
 	if (!err) {
 	    err = gretl_matrix_ols(y, XZ, c, NULL, NULL, NULL);
+#if 0
 	    gretl_matrix_print(c, "c, conditional on user-theta");
+#endif
 	}
     }
 

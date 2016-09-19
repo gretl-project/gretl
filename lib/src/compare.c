@@ -1979,7 +1979,7 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
  *
  * Tests the given IV model for autocorrelation of order equal
  * to the specified value, or equal to the frequency of the data if
- * the supplied @order is zero, as per Godfrey (1999), "Testing for
+ * the supplied @order is zero, as per Godfrey (1994), "Testing for
  * Serial Correlation by Variable Addition in Dynamic Models Estimated
  * by Instrumental Variables", RES. Note that none of the
  * asymptotically equivalent tests given on page 553 is used
@@ -2735,7 +2735,9 @@ static int QLR_plot_wanted (gretlopt opt)
  * @ci: either CHOW or QLRTEST.
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_D included, do the Chow test based on a given dummy
- * variable; if OPT_T included, do the QLR test.
+ * variable; if OPT_T included, do the QLR test. If OPT_M,
+ * _just_save the test on the model, don't set $test and
+ * $pvalue.
  * @prn: gretl printing struct.
  *
  * Returns: 0 on successful completion, error code on error.
@@ -2868,8 +2870,10 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		QLR_print_result(testmax, pval, datestr, dfn, dfd,
 				 robust, prn);
 	    }
-	    record_QLR_test_result(X2, pval, tmax + 1);
-	    if (opt & OPT_S) {
+	    if (!(opt & OPT_M)) {
+		record_QLR_test_result(X2, pval, tmax + 1);
+	    }
+	    if (opt & (OPT_S | OPT_M)) {
 		save_QLR_test(pmod, datestr, X2, pval, dfn);
 	    }
 	    if (testvec != NULL) {

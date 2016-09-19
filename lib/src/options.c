@@ -360,6 +360,7 @@ struct gretl_option gretl_opts[] = {
     { MIDASREG, OPT_R, "robust", 0 },
     { MIDASREG, OPT_V, "verbose", 0 },
     { MIDASREG, OPT_P, "print-spec", 0 },
+    { MIDASREG, OPT_B, "breaktest", 0 },
     { MLE,      OPT_A, "auxiliary", 0 },
     { MLE,      OPT_H, "hessian", 0 },
     { MLE,      OPT_G, "no-gradient-check", 0 },
