@@ -2128,9 +2128,10 @@ static DATASET *make_GNR_dataset (nlspec *spec,
     }
 
     if (dataset_is_time_series(dset)) {
-	/* this may inflect the choice of variance estimator
-	   when the --robust flag is given */
-	gdset->structure = SPECIAL_TIME_SERIES;
+	gdset->structure = dset->structure;
+	gdset->pd = dset->pd;
+	ntodate(gdset->stobs, dset->t1, dset);
+	gdset->sd0 = get_date_x(gdset->pd, gdset->stobs);
     }
 
     /* dependent variable (NLS residual): write into
@@ -3322,6 +3323,9 @@ static void nls_run_GNR (MODEL *pmod, nlspec *spec, PRN *prn)
     } else {
 	*pmod = GNR(glist, gdset, spec->opt, prn);
 	if (pmod->errcode == 0 || pmod->errcode == E_JACOBIAN) {
+	    if (pmod->errcode == 0 && (spec->opt & OPT_B)) {
+		QLR_test(pmod, gdset, OPT_Q | OPT_M, NULL);
+	    }
 	    pmod->errcode = finalize_nls_model(pmod, spec,
 					       perfect, glist);
 	}

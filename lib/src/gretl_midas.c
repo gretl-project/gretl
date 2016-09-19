@@ -1468,7 +1468,7 @@ static int bfgs_GNR (MODEL *pmod,
     if (pmod->errcode == 0 || pmod->errcode == E_JACOBIAN) {
 	nlspec spec = {0};
 
-	if (opt & OPT_B) {
+	if (pmod->errcode == 0 && (opt & OPT_B)) {
 	    /* test for structural break */
 	    QLR_test(pmod, gdset, OPT_Q | OPT_M, NULL);
 	}
