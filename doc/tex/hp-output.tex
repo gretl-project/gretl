@@ -4,18 +4,71 @@
 \section{Formatted output}
 \label{sec:printf}
 
-To give you more control over output, hansl provides you with the
-\cmd{printf} command, which works in a very similar way as in a great
-number of programming languages.
+A common occurrence when you're writing a script---particularly when
+you intend for the script to be used by others, and you'd like the
+output to be reasonably self-explanatory---is that you want to output
+something along the following lines:
+\begin{code}
+The coefficient on X is Y, with standard error Z
+\end{code}
+where \texttt{X}, \texttt{Y} and \texttt{Z} are placeholders for
+values not known at the time of writing the script; they will be
+filled out as the values of variables or expressions when the script
+is run. Let's say that at run time the replacements in the sentence
+above should come from variables named \texttt{vname} (a string),
+\texttt{b} (a scalar value) and \texttt{se} (also a scalar value),
+respectively.
 
-Its syntax goes like this:
+Across the spectrum of programming languages there are basically two
+ways of arranging for this. One way originates in the \textsf{C}
+language and goes under the name \texttt{printf}. In this approach we
+(a) replace the generic placeholders \texttt{X}, \texttt{Y} and
+\texttt{Z} with more informative \textit{conversion specifiers}, and
+(b) append the variables (or expressions) that are to be stuck into
+the text, in order. Here's the hansl version:
+\begin{code}
+printf "The coefficient on %s is %g, with standard error %g\n", vname, b, se
+\end{code}
+The value of \texttt{vname} replaces the conversion specifier
+``\texttt{\%s},'' and the values of \texttt{b} and \texttt{se} replace
+the two ``\texttt{\%g}'' specifiers, left to right. In relation to
+hansl, here are the basic points you need to know: ``\texttt{\%s}''
+pairs with a string argument, and ``\texttt{\%g}'' pairs with a
+numeric argument.
+
+The \textsf{C}-derived \texttt{printf} (either in the form of a
+function, or in the form of a command, as shown above) is present in
+most ``serious'' programming languages. It is extremely versatile, and
+in its advanced forms affords the programmer fine control over
+the output.
+
+In some scripting languages, however, \texttt{printf} is reckoned
+``too difficult'' for non-specialist users. In that case some sort of
+substitute is typically offered. We're skeptical: ``simplified''
+alternatives to \texttt{printf} can be quite confusing, and if at some
+point you want fine control over the output, they either do not
+support it, or support it only via some convoluted mechanism. A
+typical alternative looks something like this (please note,
+\texttt{display} is \textit{not} a hansl command, it's just
+illustrative):
+\begin{code}
+display "The coefficient on ", vname, "is ", b, ", with standard error ", se, "\n"
+\end{code}
+That is, you break the string into bits, and intersperse the names of
+the variables to be printed. The requirement to provide conversion
+specifiers is replaced by a default automatic formatting of the
+variables based on their type. By the same token, the command line
+becomes peppered with mutiple commas and quotation marks. If this looks
+preferable to you, you are welcome to join one of the gretl mailing
+lists are argue for its provision.
+
+Anyway, to be a bit more precise about \cmd{printf}, its syntax goes
+like this:
 \begin{flushleft}
   \texttt{printf \emph{format}, \emph{arguments}}
 \end{flushleft}
-
-The \cmd{printf} command gives you great flexibility in what to
-print and how. The \emph{format} is used to specify the precise
-way in which you want the \emph{arguments} to be printed.
+The \emph{format} is used to specify the precise way in which you want
+the \emph{arguments} to be printed.
 
 \subsection{The format string}
 \label{sec:fmtstring}
