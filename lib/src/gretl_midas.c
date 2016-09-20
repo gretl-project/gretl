@@ -59,6 +59,8 @@ static midas_info *minfo_from_array (gretl_array *A,
 				     int *nmidas,
 				     int *err);
 
+static int box_nealmon = 0;
+
 /* Identify parameterizations which take an additional
    leading coefficient: all but U-MIDAS and the plain
    Almon polynomial specification.
@@ -496,7 +498,7 @@ static int parse_midas_info (const char *s,
 */
 
 static int umidas_check (midas_info *minfo, int nmidas,
-			 int nu, int nb, int *use_ols)
+			 int nu, int n_boxed, int *use_ols)
 {
     int i, err = 0;
 
@@ -504,8 +506,8 @@ static int umidas_check (midas_info *minfo, int nmidas,
 	/* all U-MIDAS: so use OLS */
 	*use_ols = 1;
 	return 0;
-    } else if (nb > 0) {
-	/* U-MIDAS + beta mix: OK */
+    } else if (n_boxed > 0) {
+	/* U-MIDAS + bfgs mix: OK */
 	return 0;
     }
 
@@ -536,7 +538,7 @@ static int umidas_check (midas_info *minfo, int nmidas,
 static int 
 parse_midas_specs (const char *spec, const DATASET *dset,
 		   midas_info **pm, int *pnspec,
-		   int *use_ols, int *n_beta)
+		   int *use_ols, int *n_boxed)
 {
     midas_info *m = NULL;
     const char *s;
@@ -586,7 +588,9 @@ parse_midas_specs (const char *spec, const DATASET *dset,
 		    if (m[i].type == MIDAS_U) {
 			umidas++;
 		    } else if (beta_type(m[i].type)) {
-			*n_beta += 1;
+			*n_boxed += 1;
+		    } else if (box_nealmon && m->type == MIDAS_NEALMON) {
+			*n_boxed += 1;
 		    }
 		}
 		s = p + 1;
@@ -595,7 +599,7 @@ parse_midas_specs (const char *spec, const DATASET *dset,
     }
 
     if (!err && umidas > 0) {
-	err = umidas_check(m, nspec, umidas, *n_beta, use_ols);
+	err = umidas_check(m, nspec, umidas, *n_boxed, use_ols);
     }
 
     if (err) {
@@ -971,7 +975,7 @@ struct bfgs_midas_info_ {
     const int *list;
     midas_info *minfo;
     int nmidas;
-    int n_beta;
+    int n_boxed;
     DATASET *dset;
     gretl_matrix *b;      /* all coefficients */
     gretl_matrix *g;      /* SSR gradients */
@@ -999,7 +1003,7 @@ static int bmi_setup (bfgs_midas_info *bmi,
     }
 
 #if USE_LBFGS_B
-    bmi->bounds = gretl_matrix_alloc(2 * bmi->n_beta, 3);
+    bmi->bounds = gretl_matrix_alloc(2 * bmi->n_boxed, 3);
     if (bmi->bounds == NULL) {
 	return E_ALLOC;
     }
@@ -1015,7 +1019,7 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	}
 #if USE_LBFGS_B	
 	if (beta_type(m->type)) {
-	    /* set up minima and maxima */
+	    /* set up beta minima and maxima */
 	    k++;
 	    gretl_matrix_set(bmi->bounds, j, 0, k + 1);
 	    gretl_matrix_set(bmi->bounds, j, 1, eps);
@@ -1026,6 +1030,18 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	    gretl_matrix_set(bmi->bounds, j, 2, 1000);
 	    j++;
 	    k += m->nparm;
+	} else if (box_nealmon && m->type == MIDAS_NEALMON) {
+	    /* set up nealmon minima and maxima? */
+	    k++;
+	    gretl_matrix_set(bmi->bounds, j, 0, k + 1);
+	    gretl_matrix_set(bmi->bounds, j, 1, -1.0e6);
+	    gretl_matrix_set(bmi->bounds, j, 2, +1.0e6);
+	    j++;
+	    gretl_matrix_set(bmi->bounds, j, 0, k + 2);
+	    gretl_matrix_set(bmi->bounds, j, 1, -1.0e6);
+	    gretl_matrix_set(bmi->bounds, j, 2, +1.0e6);
+	    j++;
+	    k += m->nparm;	    
 	} else {
 	    k += m->nparm + takes_coeff(m->type);
 	}
@@ -1077,7 +1093,7 @@ static void bmi_destroy (bfgs_midas_info *bmi)
 static bfgs_midas_info *bmi_new (const int *list,
 				 midas_info *minfo,
 				 int nmidas,
-				 int n_beta,
+				 int n_boxed,
 				 gretl_matrix *c,
 				 DATASET *dset,
 				 int *err)
@@ -1090,7 +1106,7 @@ static bfgs_midas_info *bmi_new (const int *list,
 	bmi->list = list;
 	bmi->minfo = minfo;
 	bmi->nmidas = nmidas;
-	bmi->n_beta = n_beta;
+	bmi->n_boxed = n_boxed;
 	bmi->dset = dset;
 	bmi->b = NULL;
 	bmi->g = NULL;
@@ -2008,7 +2024,7 @@ static int add_midas_matrices (int yno,
 			       const DATASET *dset,
 			       midas_info *minfo,
 			       int nmidas,
-			       int n_beta,
+			       int n_boxed,
 			       int use_bfgs,
 			       int *pslopes,
 			       gretl_matrix **cptr)
@@ -2270,7 +2286,7 @@ MODEL midas_model (const int *list,
     int origv = dset->v;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int n_beta = 0;
+    int n_boxed = 0;
     int use_ols = 0;
     int use_bfgs = 0;
     MODEL mod;
@@ -2282,8 +2298,8 @@ MODEL midas_model (const int *list,
 	err = E_DATA;
     } else {
 	err = parse_midas_specs(param, dset, &minfo, &nmidas,
-				&use_ols, &n_beta);
-	if (!err && n_beta > 0) {
+				&use_ols, &n_boxed);
+	if (!err && n_boxed > 0) {
 	    use_bfgs = 1;
 	}
     }
@@ -2315,7 +2331,7 @@ MODEL midas_model (const int *list,
     if (!err) {
 	/* add the required matrices */
 	err = add_midas_matrices(list[1], xlist, dset, minfo,
-				 nmidas, n_beta, use_bfgs,
+				 nmidas, n_boxed, use_bfgs,
 				 &hfslopes, &c);
     }
 
@@ -2325,7 +2341,7 @@ MODEL midas_model (const int *list,
     }
 
     if (!err && use_bfgs) {
-	bmi = bmi_new(list, minfo, nmidas, n_beta, c, dset, &err);
+	bmi = bmi_new(list, minfo, nmidas, n_boxed, c, dset, &err);
 	if (!err) {
 	    err = bmi_run(&mod, bmi, pnames, opt, prn);
 	}
