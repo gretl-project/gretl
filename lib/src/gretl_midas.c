@@ -1713,7 +1713,7 @@ int compose_midas_info_line (char *targ, const MODEL *pmod, int i)
 	l2 = gretl_bundle_get_int(b, "maxlag", &err);
 
 	if (!err) {
-	    sprintf(targ, _("MIDAS list %s, lags %d to %d"),
+	    sprintf(targ, _("MIDAS list %s, high-frequency lags %d to %d"),
 		    lname, l1, l2);
 	}
     }
