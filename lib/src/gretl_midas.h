@@ -46,6 +46,6 @@ MODEL midas_model (const int *list, const char *param,
 		   DATASET *dset, gretlopt opt,
 		   PRN *prn);
 
-int compose_midas_info_line (char *targ, const MODEL *pmod, int i);
+const char *get_midas_info_line (const MODEL *pmod, int i);
 
 #endif /* GRETL_MIDAS_H */

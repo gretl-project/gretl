@@ -1682,31 +1682,31 @@ static midas_info *minfo_from_array (gretl_array *A,
     return minfo;
 }
 
-/* For use when printing a midasreg model: compose a line to
-   be printed before the coefficients associated with a
-   MIDAS list. 
+/* For use when printing a midasreg model: returns a line
+   to be printed before the coefficients associated with a
+   MIDAS list, or NULL on failure. 
 */
 
-int compose_midas_info_line (char *targ, const MODEL *pmod, int i)
+const char *get_midas_info_line (const MODEL *pmod, int i)
 {
+    static char targ[MAXLEN];
+    const char *ret = NULL;
     gretl_array *A = gretl_model_get_data(pmod, "midas_info");
     gretl_bundle *b = NULL;
-    int n, err = 0;
 
     *targ = '\0';
 
     if (A != NULL) {
-	n = gretl_array_get_length(A);
+	int n = gretl_array_get_length(A);
+
 	if (i >= 0 && i < n) {
 	    b = gretl_array_get_bundle(A, i);
 	}
     }
 
-    if (b == NULL) {
-	err = E_DATA;
-    } else {
+    if (b != NULL) {
 	const char *lname;
-	int l1, l2;
+	int l1, l2, err = 0;
 
 	lname = gretl_bundle_get_string(b, "lname", &err);
 	l1 = gretl_bundle_get_int(b, "minlag", &err);
@@ -1715,10 +1715,11 @@ int compose_midas_info_line (char *targ, const MODEL *pmod, int i)
 	if (!err) {
 	    sprintf(targ, _("MIDAS list %s, high-frequency lags %d to %d"),
 		    lname, l1, l2);
+	    ret = targ;
 	}
     }
 
-    return err;
+    return ret;
 }
 
 /* Get the MIDAS model ready for shipping out. What

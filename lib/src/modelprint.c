@@ -4526,17 +4526,12 @@ static int separator_wanted (int i, int seppos,
 	ret = 1;
     } else if (pmod->ci == MIDASREG) {
 	const int *seplist = gretl_model_get_data(pmod, "seplist");
+	int j = 0;
 
-	if (seplist != NULL) {
-	    static char mstr[MAXLABEL];
-	    int err, j = in_gretl_list(seplist, i);
-
-	    if (j > 0) {
-		err = compose_midas_info_line(mstr, pmod, j-1);
-		if (!err) {
-		    *sepstr = mstr;
-		    ret = 1;
-		}
+	if (seplist != NULL && (j = in_gretl_list(seplist, i)) > 0) {
+	    *sepstr = get_midas_info_line(pmod, j-1);
+	    if (*sepstr != NULL) {
+		ret = 1;
 	    }
 	}
     }
