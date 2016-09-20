@@ -3591,6 +3591,27 @@
 	expression which could stand as the right-hand side of an
 	assignment statement.
       </para>
+      <para>
+	Note that a command such as
+      </para>
+      <code>
+	print x^2
+      </code>
+      <para>
+	will not work in gretl, since <lit>x^2</lit> is not (cannot
+	be) the name of a variable, but (given a scalar variable named
+	<lit>x</lit>)
+      </para>
+      <code>
+	eval x^2
+      </code>
+      <para>
+	will work fine, displaying the square of <lit>x</lit>.
+      </para>
+      <para>
+	See also <cmdref targ="printf"/>, for the case where you
+	wish to combine textual and numerical output.
+      </para>
     </description>
   </command>
 
@@ -9838,8 +9859,8 @@
       <altforms>
         <altform><lit>print</lit> <repl>varlist</repl></altform>
 	<altform><lit>print</lit></altform>
-	<altform><lit>print</lit> <repl>object_name</repl></altform>
-        <altform><lit>print</lit> <repl>string_literal</repl></altform>
+	<altform><lit>print</lit> <repl>object-names</repl></altform>
+        <altform><lit>print</lit> <repl>string-literal</repl></altform>
       </altforms>
       <options>
 	<option>
@@ -9865,33 +9886,57 @@
 
     <description>
       <para>
-	If <repl>varlist</repl> is given, prints the values of the specified
-	series, or if no argument is given, prints the values of all series in
-	the current dataset. If the <opt>byobs</opt> flag is added the data
-	are printed by observation, otherwise they are printed by variable.
-	When printing by observation, the default is to show the date (with
-	time-series data) or the observation marker string (if any) at the
-	start of each line. The <opt>no-dates</opt> option suppresses the
-	printing of dates or markers; a simple observation number is shown
-	instead.
+	Please note that <lit>print</lit> is a rather
+	<quote>basic</quote> command (primarily intended for printing
+	the values of series); see <cmdref targ="printf"/> and <cmdref
+	targ="eval"/> for more advanced, and less restrictive,
+	alternatives.
       </para>
       <para>
-	Besides printing series, you may give the name of a (single) matrix or
-	scalar variable for printing. Or you may give a literal string
-	argument, enclosed in double quotes, to be printed as is. In these
-	case the option flags are not applicable.
+	In the first variant shown above (also see the first example),
+	<repl>varlist</repl> should be a list of series (either a
+	named list or a list specified via the names or ID numbers of
+	series, separated by spaces). In that case this command prints
+	the values of the listed series. By default the data are
+	printed <quote>by variable</quote>, but if the
+	<opt>byobs</opt> flag is added they are printed by
+	observation. When printing by observation, the default is to
+	show the date (with time-series data) or the observation
+	marker string (if any) at the start of each line. The
+	<opt>no-dates</opt> option suppresses the printing of dates or
+	markers; a simple observation number is shown instead. See
+	the final paragraph of this entry for the effect of the
+	<opt>midas</opt> option (which applies only to a named
+	list of series).
       </para>
       <para>
-	Note that you can gain greater control over the printing format (and
-	so, for example, expose a greater number of digits than are shown by
-	default) by using <cmdref targ="printf"/>.
+	If no argument is given (the second variant shown above) then
+	the action is similar to the first case except that
+	<emphasis>all</emphasis> series in the current dataset are
+	printed. The supported options are as decribed above.
       </para>
       <para>
-	The <opt>midas</opt> option is specific to datasets that
+	The third variant (with the <repl>object-names</repl>
+	argument; see the second example) expects a space-separated
+	list of names of primary gretl objects other than series
+	(scalars, matrices, strings, bundles, arrays). The value(s) of
+	these objects are displayed. No option flags are supported in
+	this case.
+      </para>
+      <para>
+	In the fourth form (third example),
+	<repl>string-literal</repl> should be a string enclosed in
+	double-quotes (and there should be nothing else following on
+	the command line). The string in question is printed, followed
+	by a newline character.
+      </para>
+      <para>
+	The <opt>midas</opt> option is specific to the printing of a
+	list of series, and moreover it is specific to datasets that
 	contain one or more high-frequency series, each represented by
 	a <cmdref targ="MIDAS_list"/>. If one such list is given as
-	argument and this option is appended, the series is printed
-	by observation at its <quote>native</quote> frequency.
+	argument and this option is appended, the series is printed by
+	observation at its <quote>native</quote> frequency.
       </para>
     </description>
 
@@ -9914,24 +9959,29 @@
 
     <description>
       <para>
-	Prints scalar values, series, matrices, or strings under the control
-	of a format string (providing a subset of the <lit>printf()</lit>
-	statement in the C programming language).  Recognized numeric formats
-	are <lit>%e</lit>, <lit>%E</lit>, <lit>%f</lit>, <lit>%g</lit>,
-	<lit>%G</lit> and <lit>%d</lit>, in each case with the various
-	modifiers available in C.  Examples: the format <lit>%.10g</lit>
-	prints a value to 10 significant figures; <lit>%12.6f</lit> prints a
-	value to 6 decimal places, with a width of 12 characters.  The format
-	<lit>%s</lit> should be used for strings.
+	Prints scalar values, series, matrices, or strings under the
+	control of a format string (providing a subset of the
+	<lit>printf</lit> function in the C programming language).
+	Recognized numeric formats are <lit>%e</lit>, <lit>%E</lit>,
+	<lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit> and <lit>%d</lit>,
+	in each case with the various modifiers available in C.
+	Examples: the format <lit>%.10g</lit> prints a value to 10
+	significant figures; <lit>%12.6f</lit> prints a value to 6
+	decimal places, with a width of 12 characters. Note, however,
+	that in gretl the format <lit>%g</lit> is a good default
+	choice for all numerical values; you don't need to get too
+	complicated.  The format <lit>%s</lit> should be used for
+	strings.
       </para>
       <para>
-	The format string itself must be enclosed in double quotes.  The
-	values to be printed must follow the format string, separated by
-	commas.  These values should take the form of either (a) the names of
-	variables, (b) expressions that are valid for the <cmd>genr</cmd>
-	command, or (c) the special functions <lit>varname()</lit> or
-	<lit>date()</lit>.  The following example prints the values of two
-	variables plus that of a calculated expression:
+	The format string itself must be enclosed in double quotes.
+	The values to be printed must follow the format string,
+	separated by commas.  These values should take the form of
+	either (a) the names of variables, (b) expressions that are
+	yield some sort of printable result, or (c) the special
+	functions <lit>varname()</lit> or <lit>date()</lit>.  The
+	following example prints the values of two variables plus that
+	of a calculated expression:
       </para>
       <code>
 	ols 1 0 2 3
@@ -9941,9 +9991,10 @@
           b, se_b, b/se_b
       </code>
       <para>
-	The next lines illustrate the use of the varname and date functions,
-	which respectively print the name of a variable, given its ID number,
-	and a date string, given a 1-based observation number.
+	The next lines illustrate the use of the varname and date
+	functions, which respectively print the name of a variable,
+	given its ID number, and a date string, given a 1-based
+	observation number.
       </para>
       <code>
 	printf "The name of variable %d is %s\n", i, varname(i)
@@ -9964,11 +10015,11 @@
 	use <lit>%%</lit>.
       </para>
       <para>
-	As in C, numerical values that form part of the format (width and or
-	precision) may be given directly as numbers, as in <lit>%10.4f</lit>,
-	or they may be given as variables.  In the latter case, one puts
-	asterisks into the format string and supplies corresponding arguments
-	in order.  For example,
+	As in C, numerical values that form part of the format (width
+	and or precision) may be given directly as numbers, as in
+	<lit>%10.4f</lit>, or they may be given as variables.  In the
+	latter case, one puts asterisks into the format string and
+	supplies corresponding arguments in order.  For example,
       </para>
       <code>
 	scalar width = 12
