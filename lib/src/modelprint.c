@@ -22,6 +22,7 @@
 #include "system.h"
 #include "texprint.h"
 #include "usermat.h"
+#include "gretl_midas.h"
 
 static int 
 plain_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn);
@@ -3687,28 +3688,77 @@ static void alt_print_coeff (const model_coeff *mc, PRN *prn)
     }
 }
 
-static void print_coeff_separator (const char *s, int n, PRN *prn)
+static char *tex_handle_underscores (const char *s,
+				     int n)
+{
+    char *ret = malloc(strlen(s) + 1 + n);
+    int i, j = 0;
+
+    if (ret != NULL) {
+
+	for (i=0; s[i] != '\0'; i++) {
+	    if (s[i] == '_' && (i == 0 || s[i-1] != '\\')) {
+		ret[j++] = '\\';
+		ret[j++] = '_';
+	    } else {
+		ret[j++] = s[i];
+	    }
+	}
+
+	ret[j] = '\0';
+    }
+
+    return ret;
+}
+
+static int has_raw_underscores (const char *s)
+{
+    int i, n = 0;
+
+    for (i=0; s[i] != '\0'; i++) {
+	if (s[i] == '_' && (i == 0 || s[i-1] != '\\')) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
+static void print_coeff_separator (const char *s, int width,
+				   PRN *prn)
 {
     int havestr = (s != NULL && *s != '\0');
+    int vspace = (width > 0);
 
     if (plain_format(prn)) {
 	if (havestr) {
-	    if (n > 0) {
-		pputs(prn, "\n  "); 
-		print_centered(_(s), n, prn);
+	    if (vspace) {
+		pputs(prn, "\n  ");
 	    } else {
-		pputs(prn, "  "); 
+		pputs(prn, "  ");
+	    }
+	    if (width > 0) {
+		print_centered(_(s), width, prn);
+	    } else {
 		pputs(prn, _(s));
 	    }
 	    pputc(prn, '\n'); 
 	}
-	if (n > 0) {
+	if (vspace) {
 	    pputc(prn, '\n');
 	}
     } else if (tex_format(prn)) {
 	if (havestr) {
+	    int n = has_raw_underscores(s);
+	    char *repl = NULL;
+
+	    if (n > 0) {
+		repl = tex_handle_underscores(s, n);
+	    }
 	    pputs(prn, "\\\\ [-8pt]\n");
-	    pprintf(prn, "\\multicolumn{%d}{c}{%s} \\\\[1ex]\n", n, A_(s));
+	    pprintf(prn, "\\multicolumn{%d}{c}{%s} \\\\[1ex]\n", width,
+		    repl != NULL ? A_(repl) : A_(s));
+	    free(repl);
 	} else {
 	    pputs(prn, "\\\\ \n");
 	}
@@ -4465,6 +4515,35 @@ static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
     sprintf(sep, "%s = %d", vname, val);
 }
 
+static int separator_wanted (int i, int seppos,
+			     const char **sepstr,
+			     const MODEL *pmod)
+{
+    int ret = 0;
+    
+    if (i == seppos) {
+	/* the straightforward criterion */
+	ret = 1;
+    } else if (pmod->ci == MIDASREG) {
+	const int *seplist = gretl_model_get_data(pmod, "seplist");
+
+	if (seplist != NULL) {
+	    static char mstr[MAXLABEL];
+	    int err, j = in_gretl_list(seplist, i);
+
+	    if (j > 0) {
+		err = compose_midas_info_line(mstr, pmod, j-1);
+		if (!err) {
+		    *sepstr = mstr;
+		    ret = 1;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static int plain_print_coeffs (const MODEL *pmod, 
 			       const DATASET *dset, 
 			       PRN *prn)
@@ -4674,7 +4753,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     for (i=0; i<nc; i++) {
 	char tmp[NAMETRUNC];
 
-	if (i == seppos) {
+	if (separator_wanted(i, seppos, &sepstr, pmod)) {
 	    if (pmod->ci == BIPROBIT) {
 		pputc(prn, '\n');
 		print_coeff_left_string(sepstr, prn);
@@ -4839,7 +4918,7 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	err = prepare_model_coeff(pmod, dset, i, adfnum, &mc, prn);
 	if (err) gotnan = 1;
 
-	if (i == seppos) {
+	if (separator_wanted(i, seppos, &sepstr, pmod)) {
 	    if (pmod->ci == BIPROBIT) {
 		print_coeff_left_string(sepstr, prn);
 	    } else {		

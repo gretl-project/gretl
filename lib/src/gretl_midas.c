@@ -1682,6 +1682,45 @@ static midas_info *minfo_from_array (gretl_array *A,
     return minfo;
 }
 
+/* For use when printing a midasreg model: compose a line to
+   be printed before the coefficients associated with a
+   MIDAS list. 
+*/
+
+int compose_midas_info_line (char *targ, const MODEL *pmod, int i)
+{
+    gretl_array *A = gretl_model_get_data(pmod, "midas_info");
+    gretl_bundle *b = NULL;
+    int n, err = 0;
+
+    *targ = '\0';
+
+    if (A != NULL) {
+	n = gretl_array_get_length(A);
+	if (i >= 0 && i < n) {
+	    b = gretl_array_get_bundle(A, i);
+	}
+    }
+
+    if (b == NULL) {
+	err = E_DATA;
+    } else {
+	const char *lname;
+	int l1, l2;
+
+	lname = gretl_bundle_get_string(b, "lname", &err);
+	l1 = gretl_bundle_get_int(b, "minlag", &err);
+	l2 = gretl_bundle_get_int(b, "maxlag", &err);
+
+	if (!err) {
+	    sprintf(targ, _("MIDAS list %s, lags %d to %d"),
+		    lname, l1, l2);
+	}
+    }
+
+    return err;
+}
+
 /* Get the MIDAS model ready for shipping out. What
    exactly we do here depends in part on whether
    estimation was done by NLS or OLS.
@@ -1694,6 +1733,7 @@ static int finalize_midas_model (MODEL *pmod,
 				 midas_info *minfo,
 				 int nmidas,
 				 int *xlist,
+				 int *seplist,
 				 int ldepvar,
 				 int hfslopes)
 {
@@ -1725,6 +1765,11 @@ static int finalize_midas_model (MODEL *pmod,
 
     /* record list of low-frequency regressors */
     gretl_model_set_list_as_data(pmod, "lfxlist", xlist);
+    
+    /* and positions where MIDAS terms start */
+    if (seplist != NULL) {
+	gretl_model_set_list_as_data(pmod, "seplist", seplist);
+    }
 
     if (ldepvar) {
 	gretl_model_set_int(pmod, "dynamic", 1);
@@ -2159,11 +2204,14 @@ static gchar *make_pnames (const int *xlist,
 			   const DATASET *dset,
 			   midas_info *minfo,
 			   int nmidas,
-			   int hfslopes)
+			   int hfslopes,
+			   int **pseps)
 {
     char tmp[64], str[MAXLEN];
-    int i, j;
+    int *seplist;
+    int i, j, k = 0;
 
+    seplist = gretl_list_new(nmidas);
     *str = '\0';
     
     if (xlist != NULL) {
@@ -2171,8 +2219,12 @@ static gchar *make_pnames (const int *xlist,
 	    strcpy(tmp, dset->varname[xlist[i]]);
 	    append_pname(str, tmp);
 	}
+	k += xlist[0];
     }
     for (i=0; i<nmidas; i++) {
+	if (seplist != NULL) {
+	    seplist[i+1] = k;
+	}
 	if (takes_coeff(minfo[i].type)) {
 	    if (hfslopes > 1) {
 		sprintf(tmp, "HF_slope%d", i+1);
@@ -2180,12 +2232,16 @@ static gchar *make_pnames (const int *xlist,
 		strcpy(tmp, "HF_slope");
 	    }
 	    append_pname(str, tmp);
+	    k++;
 	}
 	for (j=0; j<minfo[i].nparm; j++) {
 	    make_pname(tmp, &minfo[i], j, dset);
 	    append_pname(str, tmp);
+	    k++;
 	}
     }
+
+    *pseps = seplist;
 
     return g_strdup(str);
 }
@@ -2206,6 +2262,7 @@ MODEL midas_model (const int *list,
     gchar *pnames = NULL;
     char tmp[64];
     int *xlist = NULL;
+    int *seplist = NULL;
     int i, nmidas = 0;
     int ldepvar = 0;
     int hfslopes = 0;
@@ -2262,7 +2319,8 @@ MODEL midas_model (const int *list,
     }
 
     if (!err) {
-	pnames = make_pnames(xlist, dset, minfo, nmidas, hfslopes);
+	pnames = make_pnames(xlist, dset, minfo, nmidas,
+			     hfslopes, &seplist);
     }
 
     if (!err && use_bfgs) {
@@ -2382,9 +2440,10 @@ MODEL midas_model (const int *list,
     if (!mod.errcode) {
 	finalize_midas_model(&mod, list, param, dset,
 			     minfo, nmidas, xlist,
-			     ldepvar, hfslopes);
+			     seplist, ldepvar, hfslopes);
     } else {
 	free(xlist);
+	free(seplist);
     }
 
     gretl_matrix_free(c);
