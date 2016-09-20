@@ -190,10 +190,9 @@ econometric stuff for a while, and I'm pretty confident I can pick a
 new scripting language if it's not too obscure.  I just need a few
 tips to get me started''. If that's not what you're thinking at all,
 we suggest you move along to chapter~\ref{chap:hello}; but if it is,
-well then, we'll give you a one-page hansl script which exemplifies a
-hefty share of the topics discussed in the rest of this primer. We
-will use for our example a Vector AutoRegressive model, or VAR for
-short.
+well then, we'll give you a hansl script which exemplifies a hefty
+share of the topics discussed in the rest of this primer. We will use
+for our example a Vector AutoRegressive model, or VAR for short.
 
 As you probably know, a finite-order VAR can be estimated via
 conditional maximum likelihood simply by applying OLS to each equation
@@ -249,7 +248,7 @@ matrix B = {}                          # initialize an empty matrix
 loop foreach i X                       # loop over the 3 var equations
     ols $i const X(-1 to -p) --quiet   # using native OLS command
     B ~= $coeff                        # and store the estimated coefficients
-endloop                               # as matrix columns
+endloop                                # as matrix columns
 
 /* via matrices */
 

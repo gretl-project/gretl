@@ -213,7 +213,7 @@ and \emph{not} (\verb|!|) with scalars, as in the following example:
   c = !(a && b) 
 \end{code}
 In the example above, \texttt{c} will equal 1 (true), since
-\verb|(a && b)| is false, and the exclamation mark is the ``not''
+\verb|(a && b)| is false, and the exclamation mark is the negation
 operator.  Note that 0 evaluates to false, and anything else (not
 necessarily 1) evaluates to true.
 
@@ -228,10 +228,10 @@ the second line is equivalent to \texttt{b = a}, followed by
 \texttt{a++}, which in turn is shorthand for \texttt{a = a+1}, so
 running the code above will result in \texttt{b} containing 5 and
 \texttt{a} containing 6. Postfix subtraction is also supported; prefix
-operators, however, are not. Another C borrowing is inflected
-assignment, as in \texttt{a += b}, which is equivalent to \texttt{a =
-  a + b}; several other similar operators are available, such as
-\texttt{-=}, \texttt{*=} and more. See the \GCR{} for details.
+operators, however, are not supported. Another C borrowing is
+inflected assignment, as in \texttt{a += b}, which is equivalent to
+\texttt{a = a + b}; several other similar operators are available,
+such as \texttt{-=}, \texttt{*=} and more. See the \GCR{} for details.
 
 The internal representation for a missing value is \texttt{DBL\_MAX},
 the largest double-precision number (generally in the neighborhood of
@@ -239,8 +239,8 @@ the largest double-precision number (generally in the neighborhood of
 the square root or the logarithm of a negative number. You can also
 set a value to ``missing'' directly using the keyword \texttt{NA}.
 The function \cmd{ok} can be used to determine whether a scalar is
-\texttt{NA}, as in the following example which assigns a value of zero
-\texttt{test}:
+\texttt{NA}, as in the following example, which assigns a value of
+zero to the variable named \texttt{test}:
 \begin{code}
   scalar not_really = NA
   scalar test = ok(not_really)

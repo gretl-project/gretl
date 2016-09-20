@@ -37,7 +37,7 @@ pairs with a string argument, and ``\texttt{\%g}'' pairs with a
 numeric argument.
 
 The \textsf{C}-derived \texttt{printf} (either in the form of a
-function, or in the form of a command, as shown above) is present in
+function, or in the form of a command as shown above) is present in
 most ``serious'' programming languages. It is extremely versatile, and
 in its advanced forms affords the programmer fine control over
 the output.
@@ -54,7 +54,7 @@ illustrative):
 \begin{code}
 display "The coefficient on ", vname, "is ", b, ", with standard error ", se, "\n"
 \end{code}
-That is, you break the string into bits, and intersperse the names of
+That is, you break the string into pieces and intersperse the names of
 the variables to be printed. The requirement to provide conversion
 specifiers is replaced by a default automatic formatting of the
 variables based on their type. By the same token, the command line
@@ -77,11 +77,11 @@ In the general case the \cmd{printf} format must be an expression that
 evaluates to a string, but in most cases will just be a \textit{string
   literal} (an alphanumeric sequence surrounded by double
 quotes). However, some character sequences in the format have a
-special meaning: those beginning with the percent character
-(\texttt{\%}) are interpreted as ``placeholders'' for the items
-contained in the argument list; moreover, special characters such as
-the newline character are represented via a combination beginning with
-the backslash (\verb|\|).
+special meaning. As illustrated above, those beginning with a
+percent sign (\texttt{\%}) are interpreted as placeholders for the
+items contained in the argument list. In addition, special characters
+such as the newline character are represented via a combination
+beginning with a backslash (\verb|\|).
 
 For example,
 \begin{code}
@@ -103,11 +103,27 @@ Let's see how:
     decimal separator is the dot in English, but may be different in
     other locales.} and at least 6 digits wide; this will be matched
   to the second argument. Note that arguments are separated by
-  commas. Also note that the second argument is not a scalar constant
-  nor a scalar variable, but an expression that evaluates to a scalar.
+  commas. Also note that the second argument is neither a scalar
+  constant nor a scalar variable, but an expression that evaluates to
+  a scalar.
 \item The format string ends with the sequence \verb|\n|, which
   inserts a newline.
 \end{itemize}
+
+The conversion specifiers in the square-root example are relatively
+fancy, but as we noted earlier \texttt{\%g} will work fine for
+almost all numerical values in hansl. So we could have used the
+simpler form:
+\begin{code}
+printf "The square root of %g is (roughly) %g.\n", 5, sqrt(5)
+\end{code}
+The effect of \texttt{\%g} is to print a number using up to 6
+significant digits (but dropping trailing zeros); it automatically
+switches to scientific notation if the number is very large or very
+small. So the result here is
+\begin{code}
+The square root of 5 is (roughly) 2.23607.
+\end{code}
 
 The escape sequences \verb|\n| (newline), \verb|\t| (tab), \verb|\v|
 (vertical tab) and \verb|\\| (literal backslash) are recognized. To
