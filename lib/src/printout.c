@@ -2019,7 +2019,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 	}
     }
 
-    if (opt & OPT_N) {
+    if (opt & OPT_D) {
 	obslen = obslen_from_t(dset->t2);
     } else {
 	obslen = max_obs_marker_length(dset);
@@ -2047,7 +2047,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 		/* screened out by boolean */
 		continue;
 	    }
-	    if (opt & OPT_N) {
+	    if (opt & OPT_D) {
 		pprintf(prn, "%*d", obslen, t + 1);
 	    } else {
 		real_print_obs_marker(t, dset, obslen, 0, prn);
@@ -2137,7 +2137,7 @@ static int midas_print_list (const int *list,
  * @mstr: optional string holding names of non-series objects to print.
  * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
- * if OPT_N, use simple obs numbers, not dates; if OPT_M, print midas
+ * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
  * list in original time-series order.
  * @prn: gretl printing struct.
  *
