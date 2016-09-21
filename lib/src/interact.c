@@ -2693,9 +2693,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->param != NULL) {
 	    /* directly printing a string literal */
 	    pputs(prn, cmd->param);
-	    if (!(cmd->opt & OPT_N)) {
-		pputc(prn, '\n');
-	    }
+	    pputc(prn, '\n');
 	} else {
 	    err = printdata(cmd->list, cmd->parm2, dset, cmd->opt, prn);
 	}
