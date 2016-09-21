@@ -1535,9 +1535,9 @@ static void uncentered_r_squared (MODEL *pmod, const DATASET *dset)
        the dependent variable is a constant */
 
     if (y0 != 0) {
-	double tss = pmod->nobs * y0 * y0;
+	double den = pmod->nobs * y0 * y0;
 
-	pmod->rsq = 1 - (pmod->ess / tss);
+	pmod->rsq = 1 - (pmod->ess / den);
 	gretl_model_set_int(pmod, "uncentered", 1);
     }
 }
@@ -1573,7 +1573,11 @@ static void compute_r_squared (MODEL *pmod, const DATASET *dset,
 	    /* make the centered R^2 available for output */
 	    gretl_model_set_double(pmod, "centered-R2", pmod->rsq);
 
-	    /* but make the "official" figure the uncentered R^2,
+	    /* but flag the fact that the reported R-squared is
+	       in fact uncentered */
+	    gretl_model_set_int(pmod, "uncentered", 1);
+
+	    /* and make the "official" figure the uncentered R^2,
 	       as per NIST, R, Stata, SPSS, ... */
 	    pmod->rsq = 1 - pmod->ess / den;
 	    pmod->adjrsq = 
