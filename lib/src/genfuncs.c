@@ -4033,13 +4033,13 @@ static int try_mp_midas_weights (const double *theta, int k,
 
 #define INF_CHECK_VERBOSE 0
 
-static int inf_check (double val, const gretl_matrix *w,
+static int inf_check (double val, const gretl_matrix *theta,
 		      const char *context, int *err)
 {
     if (isinf(val)) {
 #if INF_CHECK_VERBOSE
 	fprintf(stderr, "range error in %s\n", context);
-	gretl_matrix_print(w, "weights");
+	gretl_matrix_print(theta, "theta");
 #endif
 	*err = E_NAN;
     } else {
@@ -4132,7 +4132,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    }
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
-	    if (errno && inf_check(wsum, w, "nealmon weights", err)) {
+	    if (errno && inf_check(wsum, m, "nealmon weights", err)) {
 		break;
 	    }
 	}
@@ -4150,7 +4150,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
-	    if (errno && inf_check(wsum, w, "beta weights", err)) {
+	    if (errno && inf_check(wsum, m, "beta weights", err)) {
 		break;
 	    }
 	}
@@ -4330,7 +4330,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	    w->val[i] = exp(w->val[i]);
 	    wsum += w->val[i];
-	    if (errno && inf_check(wsum, w, "nealmon gradient", err)) {
+	    if (errno && inf_check(wsum, m, "nealmon gradient", err)) {
 		free(dsum);
 		goto range_error;
 	    }	    
@@ -4368,7 +4368,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    bi = pow(1.0 - si, theta[1] - 1.0);
 	    w->val[i] = ai * bi;
 	    wsum += w->val[i];
-	    if (errno && inf_check(wsum, w, "beta gradient", err)) {
+	    if (errno && inf_check(wsum, m, "beta gradient", err)) {
 		goto range_error;
 	    }	    
 	}
@@ -4381,7 +4381,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    goto range_error;
 	}    
 	ws2 = wsum * wsum;
-	if (errno && inf_check(ws2, w, "beta gradient", err)) {
+	if (errno && inf_check(ws2, m, "beta gradient", err)) {
 	    goto range_error;
 	}
 	/* loop 2: form first component of derivative

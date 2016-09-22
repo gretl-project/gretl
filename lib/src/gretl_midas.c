@@ -1034,12 +1034,12 @@ static int bmi_setup (bfgs_midas_info *bmi,
 	    /* set up nealmon minima and maxima? */
 	    k++;
 	    gretl_matrix_set(bmi->bounds, j, 0, k + 1);
-	    gretl_matrix_set(bmi->bounds, j, 1, -1.0e6);
-	    gretl_matrix_set(bmi->bounds, j, 2, +1.0e6);
+	    gretl_matrix_set(bmi->bounds, j, 1, -5.0);
+	    gretl_matrix_set(bmi->bounds, j, 2, +5.0);
 	    j++;
 	    gretl_matrix_set(bmi->bounds, j, 0, k + 2);
-	    gretl_matrix_set(bmi->bounds, j, 1, -1.0e6);
-	    gretl_matrix_set(bmi->bounds, j, 2, +1.0e6);
+	    gretl_matrix_set(bmi->bounds, j, 1, -5.0);
+	    gretl_matrix_set(bmi->bounds, j, 2, +5.0);
 	    j++;
 	    k += m->nparm;	    
 	} else {

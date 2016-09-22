@@ -1343,7 +1343,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     /* tol = (factr * macheps) => factr = tol/macheps */
     factr = reltol / pow(2.0, -52);
 
-    if (bounds != NULL) {
+    if (!gretl_is_null_matrix(bounds)) {
 	/* Handle specified bounds on the parameters */
 	err = transcribe_lbfgs_bounds(bounds, n, nbd, l, u);
 	if (err) {
