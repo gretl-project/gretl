@@ -1577,10 +1577,10 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
     GtkWidget *hbox, *label;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 10);
 
     label = gtk_label_new(txt);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 10);
     gtk_widget_show(label);
 
     return hbox;
@@ -3739,6 +3739,12 @@ static void web_get_login (GtkWidget *w, gpointer p)
 
 static void login_dialog (login_info *linfo, GtkWidget *parent)
 {
+    const gchar *msg = N_("Upload package: This means that the package will\n"
+			  "be uploaded to the gretl server for approval.\n"
+			  "You should do this only if you are the author of\n"
+			  "this package and either the package is not already\n"
+			  "on the server or you have made changes since the\n"
+			  "last upload.");
     GtkWidget *button, *label;
     GtkWidget *tbl, *vbox, *hbox;
     int i;
@@ -3748,10 +3754,12 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
     linfo->dlg = gretl_dialog_new(_("gretl: upload"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(linfo->dlg));
 
-    hbox = label_hbox(vbox, _("Upload function package"));
+    label_hbox(vbox, _(msg));
 
+    hbox = gtk_hbox_new(FALSE, 5);
     tbl = gtk_table_new(2, 2, FALSE);
-    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 10);
 
     for (i=0; i<2; i++) {
 	char *src = (i == 0)? linfo->login : linfo->pass;
@@ -3778,14 +3786,13 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 	}
     }
 
-    hbox = label_hbox(vbox, 
-		      _("If you don't have a login to the gretl server\n"
-			"please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
-			"The 'Website' button below should open this page\n"
-			"in your web browser."));
+    label_hbox(vbox, 
+	       _("If you don't have a login to the gretl server\n"
+		 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
+		 "The 'Website' button below should open this page\n"
+		 "in your web browser."));
 
     /* control button area */
-
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(linfo->dlg));
 
     /* Cancel */
