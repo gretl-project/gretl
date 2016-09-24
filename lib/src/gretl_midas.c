@@ -69,7 +69,6 @@ struct midas_info_ {
     int *seplist;         /* list of coeff separator positions */
     gchar *pnames;        /* string holding parameter names */
     int hfslopes;         /* # of high-frequency slope coeffs */
-    int n_boxed;          /* number of restricted (boxed) terms */
     int method;           /* estimation method */
     int ldepvar;          /* lagged dependent variable? (1/0) */
     DATASET *dset;        /* dataset */
@@ -529,20 +528,17 @@ static int parse_midas_term (const char *s,
    the associated coefficients.
 */
 
-static int umidas_check (midas_info *mi, int nu)
+static int umidas_check (midas_info *mi, int n_umidas)
 {
     int i, err = 0;
 
-    if (nu == mi->nmidas) {
+    if (n_umidas == mi->nmidas) {
 	/* all U-MIDAS: so use OLS */
 	mi->method = MDS_OLS;
 	return 0;
-    } else if (mi->n_boxed > 0) {
-	/* U-MIDAS + bfgs mix: OK */
-	return 0;
     }
 
-    /* mix of U-MIDAS and Almon terms: we'll be using
+    /* mix of U-MIDAS and "unboxed" terms: we'll be using
        NLS and we need initializers */
 	
     for (i=0; i<mi->nmidas && !err; i++) {
@@ -571,25 +567,26 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		   const DATASET *dset)
 {
     const char *s;
-    int nspec = 0;
-    int umidas = 0;
+    int n_spec = 0;
+    int n_umidas = 0;
+    int n_boxed = 0;
     int err = 0;
 
     /* first check: count closing parentheses */
     s = spec;
     while (*s) {
 	if (*s == ')') {
-	    nspec++;
+	    n_spec++;
 	}
 	s++;
     }
 
-    if (nspec == 0) {
+    if (n_spec == 0) {
 	/* spec is junk */
 	err = E_PARSE;
     } else {
 	/* allocate info structs */
-	mi->mterms = malloc(nspec * sizeof *mi->mterms);
+	mi->mterms = malloc(n_spec * sizeof *mi->mterms);
 	if (mi->mterms == NULL) {
 	    err = E_ALLOC;
 	}
@@ -602,7 +599,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	int len, i = 0;
 
 	s = spec;
-	for (i=0; i<nspec && !err; i++) {
+	for (i=0; i<n_spec && !err; i++) {
 	    midas_term *mt = &mi->mterms[i];
 	    
 	    while (*s == ' ') s++;
@@ -617,11 +614,11 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		err = parse_midas_term(test, mt, i, dset);
 		if (!err) {
 		    if (mi->mterms[i].type == MIDAS_U) {
-			umidas++;
+			n_umidas++;
 		    } else if (beta_type(mt->type)) {
-			mi->n_boxed += 1;
+			n_boxed++;
 		    } else if (box_nealmon && mt->type == MIDAS_NEALMON) {
-			mi->n_boxed += 1;
+			n_boxed++;
 		    }
 		}
 		s = p + 1;
@@ -633,9 +630,11 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	free(mi->mterms);
 	mi->mterms = NULL;
     } else {
-	mi->nmidas = nspec;
-	if (umidas > 0) {
-	    err = umidas_check(mi, umidas);
+	mi->nmidas = n_spec;
+	if (n_boxed > 0) {
+	    mi->method = MDS_BFGS;
+	} else if (n_umidas > 0) {
+	    err = umidas_check(mi, n_umidas);
 	}
     }    
 
@@ -1006,7 +1005,7 @@ int midas_forecast_setup (const MODEL *pmod,
     return err;
 }
 
-/* (L)BFGS apparatus */
+/* L-BFGS-B apparatus */
 
 static int midas_bfgs_setup (midas_info *mi,
 			     gretl_matrix *c)
@@ -1015,6 +1014,7 @@ static int midas_bfgs_setup (midas_info *mi,
     double eps = pow(2.0, -52);
     int i, j, k, ii;
     int clen, npmax = 0;
+    int bound_rows = 0;
     midas_term *mt;
 
     mi->u = gretl_column_vector_alloc(T);
@@ -1022,12 +1022,19 @@ static int midas_bfgs_setup (midas_info *mi,
 	return E_ALLOC;
     }
 
-    if (mi->n_boxed > 0) {
-	/* FIXME number of rows! */
-	mi->bounds = gretl_matrix_alloc(2 * mi->n_boxed, 3);
-	if (mi->bounds == NULL) {
-	    return E_ALLOC;
+    /* how many boxed coeffs do we have? */
+    for (i=0; i<mi->nmidas; i++) {
+	mt = &mi->mterms[i];
+	if (beta_type(mt->type)) {
+	    bound_rows += 2;
+	} else if (box_nealmon && mt->type == MIDAS_NEALMON) {
+	    bound_rows += mt->nparm;
 	}
+    }
+    
+    mi->bounds = gretl_matrix_alloc(bound_rows, 3);
+    if (mi->bounds == NULL) {
+	return E_ALLOC;
     }
 
     k = mi->list[0] - 1;
@@ -1041,36 +1048,29 @@ static int midas_bfgs_setup (midas_info *mi,
 	if (mi->bounds != NULL) {
 	    if (beta_type(mt->type)) {
 		/* set up beta minima and maxima */
-		k++;
-		gretl_matrix_set(mi->bounds, j, 0, k + 1);
-		gretl_matrix_set(mi->bounds, j, 1, eps);
-		gretl_matrix_set(mi->bounds, j, 2, 1000);
-		j++;
-		gretl_matrix_set(mi->bounds, j, 0, k + 2);
-		gretl_matrix_set(mi->bounds, j, 1, eps);
-		gretl_matrix_set(mi->bounds, j, 2, 1000);
-		j++;
-		k += mt->nparm;
+		k++; /* skip slope */
+		for (ii=0; ii<2; ii++) {
+		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
+		    gretl_matrix_set(mi->bounds, j, 1, eps);
+		    gretl_matrix_set(mi->bounds, j, 2, 1000);
+		    j++;
+		}
 	    } else if (box_nealmon && mt->type == MIDAS_NEALMON) {
-		/* set up nealmon minima and maxima? FIXME:
-		   don't assume 2 parameters!
-		*/
-		k++;
-		gretl_matrix_set(mi->bounds, j, 0, k + 1);
-		gretl_matrix_set(mi->bounds, j, 1, -5.0);
-		gretl_matrix_set(mi->bounds, j, 2, +5.0);
-		j++;
-		gretl_matrix_set(mi->bounds, j, 0, k + 2);
-		gretl_matrix_set(mi->bounds, j, 1, -5.0);
-		gretl_matrix_set(mi->bounds, j, 2, +5.0);
-		j++;
-		k += mt->nparm;	    
+		/* set up nealmon minima and maxima? */
+		k++; /* skip slope */
+		for (ii=0; ii<mt->nparm; ii++) {
+		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
+		    gretl_matrix_set(mi->bounds, j, 1, -5.0);
+		    gretl_matrix_set(mi->bounds, j, 2, +5.0);
+		    j++;
+		}
 	    } else {
-		k += mt->nparm + takes_coeff(mt->type);
+		k += takes_coeff(mt->type);
 	    }
 	} else {
-	    k += mt->nparm + takes_coeff(mt->type);
+	    k += takes_coeff(mt->type);
 	}
+	k += mt->nparm;
     }
 
     mi->b = gretl_column_vector_alloc(k);
@@ -2374,9 +2374,6 @@ MODEL midas_model (const int *list,
 	err = E_DATA;
     } else {
 	err = parse_midas_specs(mi, param, dset);
-	if (!err && mi->n_boxed > 0) {
-	    mi->method = MDS_BFGS;
-	}
     }
 
     if (!err) {
