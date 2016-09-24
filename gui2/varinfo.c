@@ -416,7 +416,7 @@ static const char *comp_int_to_string (int i)
     if (i == COMPACT_SOP)  return N_("first observation");
     if (i == COMPACT_EOP)  return N_("last observation");
     if (i == COMPACT_WDAY)   return N_("specific day in week");
-    if (i == COMPACT_SPREAD) return N_("spead (MIDAS)");
+    if (i == COMPACT_SPREAD) return N_("spread (MIDAS)");
     return N_("not set");
 }
 

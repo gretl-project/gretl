@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-09-23 13:14-0400\n"
-"PO-Revision-Date: 2016-06-21 18:15+0200\n"
+"PO-Revision-Date: 2016-09-24 11:23+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2426,9 +2426,9 @@ msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "La variabile %s è di tipo %s, non accettabile nel contesto"
 
 #: lib/src/geneval.c:13863
-#, fuzzy, c-format
+#, c-format
 msgid "A variable of type %s is not acceptable in context"
-msgstr "La variabile %s è di tipo %s, non accettabile nel contesto"
+msgstr "Una variabile di tipo %s, non è accettabile nel contesto"
 
 #: lib/src/geneval.c:14063
 #, c-format
@@ -3714,7 +3714,7 @@ msgstr "Test robusto per la differenza delle intercette di gruppo"
 
 #: lib/src/gretl_model.c:3676 lib/src/gretl_panel.c:4388
 msgid "Pesaran CD test for cross-sectional dependence"
-msgstr ""
+msgstr "Test CD di Pesaran per dipendenza fra unità"
 
 #: lib/src/gretl_model.c:3677
 #, fuzzy
@@ -4552,7 +4552,7 @@ msgstr "Il comando %s non è ancora implementato in libgretl\n"
 
 #: lib/src/interact.c:3589
 msgid "An error occurred when 'outfile' was active\n"
-msgstr ""
+msgstr "C'è stato un errore mentre il comando 'outfile' era attivo\n"
 
 #: lib/src/kalman.c:505
 msgid "kalman: a required matrix is missing"
@@ -4775,15 +4775,15 @@ msgstr "Tolleranza per la convergenza:"
 
 #: lib/src/modelprint.c:671
 msgid "GNR: got incomplete results"
-msgstr ""
+msgstr "GNR: rsiultato incompleto"
 
 #: lib/src/modelprint.c:676
 msgid "Warning: Jacobian is rank-deficient"
-msgstr ""
+msgstr "Attenzione: lo Jacobiano è di rango ridotto"
 
 #: lib/src/modelprint.c:677
 msgid "Warning: Jacobian near to rank-deficiency"
-msgstr ""
+msgstr "Attenzione: Lo Jacobiano è prossimo ad avere rango ridotto"
 
 #: lib/src/modelprint.c:690
 msgid "Warning: solution is probably not unique"
@@ -5127,11 +5127,11 @@ msgstr "OLS vincolato"
 
 #: lib/src/modelprint.c:1070
 msgid "MIDAS (OLS)"
-msgstr ""
+msgstr "MIDAS (OLS)"
 
 #: lib/src/modelprint.c:1072
 msgid "MIDAS (NLS)"
-msgstr ""
+msgstr "MIDAS (NLS)"
 
 #: lib/src/modelprint.c:1121
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -9983,15 +9983,15 @@ msgstr "Durata (esponenziale)"
 
 #: gui2/dialogs.c:6360
 msgid "Normalized beta (zero last lag)"
-msgstr ""
+msgstr "Beta normalizzata (ultimo ritardo zero)"
 
 #: gui2/dialogs.c:6361
 msgid "Normalized beta (non-zero last lag)"
-msgstr ""
+msgstr "Beta normalizzata (ultimo ritardo non-zero)"
 
 #: gui2/dialogs.c:6362
 msgid "Almon polynomial"
-msgstr ""
+msgstr "Polinomio di Almon"
 
 #: gui2/dialogs.c:6385
 #, fuzzy, c-format
@@ -10900,6 +10900,12 @@ msgid ""
 "on the server or you have made changes since the\n"
 "last upload."
 msgstr ""
+"Carica pacchetto: con questa scelta, il pacchetto\n"
+"verrà caricato sul server di gretl per l'approvazione\n"
+"da parte degli sviluppatori.\n"
+"Questa azione è riservata agli autori del pacchetto,\n"
+"quando vogliano caricarne una versione nuova o\n"
+"modificata."
 
 #: gui2/fnsave.c:3754
 msgid "gretl: upload"
@@ -13522,7 +13528,7 @@ msgstr "Calendario"
 
 #: gui2/helpfiles.c:382
 msgid "MIDAS"
-msgstr ""
+msgstr "MIDAS"
 
 #: gui2/helpfiles.c:422 gui2/textbuf.c:1982
 msgid "Index"
@@ -14694,7 +14700,7 @@ msgstr "V"
 
 #: gui2/selector.c:1278
 msgid "Select and right-click to edit specification"
-msgstr ""
+msgstr "Seleziona e clicca sul pulsante destro per cambiare la specificazione"
 
 # Si riferisce alla variabile nei vecm vincolata o no allo spazio di
 # cointegrazione
@@ -16658,7 +16664,7 @@ msgstr "5 giorni per settimana"
 
 #: gui2/varinfo.c:419
 msgid "spead (MIDAS)"
-msgstr ""
+msgstr "sottoperiodi (MIDAS)"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"
