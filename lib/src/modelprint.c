@@ -4529,7 +4529,7 @@ static int separator_wanted (int i, int seppos,
 	int j = 0;
 
 	if (seplist != NULL && (j = in_gretl_list(seplist, i)) > 0) {
-	    *sepstr = get_midas_info_line(pmod, j-1);
+	    *sepstr = get_midas_term_line(pmod, j-1);
 	    if (*sepstr != NULL) {
 		ret = 1;
 	    }
