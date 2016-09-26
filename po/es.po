@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-09-23 13:14-0400\n"
-"PO-Revision-Date: 2016-05-13 10:24+0200\n"
+"PO-Revision-Date: 2016-09-26 11:58+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Lokalize 2.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:493
@@ -117,7 +117,7 @@ msgstr "con constante y tendencia cuadrática"
 #: plugin/anova.c:155 plugin/johansen.c:1579 plugin/johansen.c:1580
 #: plugin/johansen.c:1599 plugin/johansen.c:1625
 msgid "p-value"
-msgstr "Valor p"
+msgstr "valor p"
 
 #: lib/src/adf_kpss.c:623 lib/src/modelprint.c:3603 lib/src/modelprint.c:3668
 #: lib/src/subsample.c:2995
@@ -2422,9 +2422,9 @@ msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "La variable %s es de tipo %s, no es aceptable en este contexto"
 
 #: lib/src/geneval.c:13863
-#, fuzzy, c-format
+#, c-format
 msgid "A variable of type %s is not acceptable in context"
-msgstr "La variable %s es de tipo %s, no es aceptable en este contexto"
+msgstr "En este contexto no es aceptable una variable de tipo %s"
 
 #: lib/src/geneval.c:14063
 #, c-format
@@ -2607,9 +2607,8 @@ msgid "(for logical OR, use '||')\n"
 msgstr "(para la O lógica, usar '||')\n"
 
 #: lib/src/genlex.c:857
-#, fuzzy
 msgid "Incomplete expression\n"
-msgstr "Entrada incompleta"
+msgstr "Expresión incompleta\n"
 
 #: lib/src/genlex.c:862
 #, c-format
@@ -3682,16 +3681,12 @@ msgid "Variance of the unit-specific error = 0"
 msgstr "Varianza del error específico a la unidad = 0"
 
 #: lib/src/gretl_model.c:3652
-#, fuzzy
 msgid "Wald joint test on time dummies"
-msgstr ""
-"Contraste de Wald de significatividad conjunta de las variables ficticias de "
-"tiempo"
+msgstr "Contraste conjunto de Wald sobre las variables ficticias temporales"
 
 #: lib/src/gretl_model.c:3653
-#, fuzzy
 msgid "No time effects"
-msgstr "Efectos fijos"
+msgstr "Sin efectos temporales"
 
 #: lib/src/gretl_model.c:3659
 msgid "restriction is acceptable"
@@ -3719,12 +3714,11 @@ msgstr "Contraste robusto de diferentes interceptos por grupos"
 
 #: lib/src/gretl_model.c:3676 lib/src/gretl_panel.c:4388
 msgid "Pesaran CD test for cross-sectional dependence"
-msgstr ""
+msgstr "Contraste CD de Pesaran de dependencia en sección cruzada"
 
 #: lib/src/gretl_model.c:3677
-#, fuzzy
 msgid "No cross-sectional dependence"
-msgstr "Para datos de sección cruzada"
+msgstr "No hay dependencia en sección cruzada"
 
 #: lib/src/gretl_model.c:3684 lib/src/gretl_panel.c:4024
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -3981,9 +3975,8 @@ msgid "groupwise heteroskedasticity"
 msgstr "Heterocedasticidad por grupos"
 
 #: lib/src/gretl_panel.c:4406
-#, fuzzy
 msgid "cross sectional dependence"
-msgstr "índice de unidades de sección cruzada"
+msgstr "dependencia en sección cruzada"
 
 #: lib/src/gretl_panel.c:4723
 #, c-format
@@ -4467,9 +4460,9 @@ msgid "Closed output file '%s'\n"
 msgstr "Se ha cerrado el archivo de resultados '%s'\n"
 
 #: lib/src/interact.c:898
-#, fuzzy, c-format
+#, c-format
 msgid "Output is already diverted to '%s'"
-msgstr "Los resultados ya está siendo enviados a '%s'\n"
+msgstr "Los resultados ya está siendo enviados a '%s'"
 
 #: lib/src/interact.c:905
 msgid "Now discarding output\n"
@@ -4567,7 +4560,7 @@ msgstr "Lo siento, la instrucción %s no está aún implementado en libgretl\n"
 
 #: lib/src/interact.c:3589
 msgid "An error occurred when 'outfile' was active\n"
-msgstr ""
+msgstr "Ocurrió un error mientras 'outfile' estaba activado\n"
 
 #: lib/src/kalman.c:505
 msgid "kalman: a required matrix is missing"
@@ -4779,26 +4772,24 @@ msgid "Number of instruments = %d"
 msgstr "Número de instrumentos = %d"
 
 #: lib/src/modelprint.c:664
-#, fuzzy
 msgid "Warning: convergence is questionable"
-msgstr "Atención: en %d iteraciones no se alcanzó la convergencia"
+msgstr "Atención: la convergencia es cuestionable"
 
 #: lib/src/modelprint.c:666
-#, fuzzy
 msgid "Convergence seems to be reasonably complete"
-msgstr "Tolerancia de la convergencia:"
+msgstr "La convergencia parece ser razonablemente completa"
 
 #: lib/src/modelprint.c:671
 msgid "GNR: got incomplete results"
-msgstr ""
+msgstr "GNR: se obtuvieron resultados incompletos"
 
 #: lib/src/modelprint.c:676
 msgid "Warning: Jacobian is rank-deficient"
-msgstr ""
+msgstr "Atención: el jacobiano es de rango deficiente"
 
 #: lib/src/modelprint.c:677
 msgid "Warning: Jacobian near to rank-deficiency"
-msgstr ""
+msgstr "Atención: el jacobiano es de rango casi deficiente"
 
 #: lib/src/modelprint.c:690
 msgid "Warning: solution is probably not unique"
@@ -5143,11 +5134,11 @@ msgstr "MCO restringidos"
 
 #: lib/src/modelprint.c:1070
 msgid "MIDAS (OLS)"
-msgstr ""
+msgstr "MIDAS (MCO)"
 
 #: lib/src/modelprint.c:1072
 msgid "MIDAS (NLS)"
-msgstr ""
+msgstr "MIDAS (MCNL)"
 
 #: lib/src/modelprint.c:1121
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -5262,9 +5253,8 @@ msgid "Could not compute Beck-Katz standard errors"
 msgstr "No fue posible calcular las desviaciones típicas de Beck-Katz"
 
 #: lib/src/modelprint.c:1424
-#, fuzzy
 msgid "Could not compute robust standard errors"
-msgstr "No fue posible calcular las desviaciones típicas de Beck-Katz"
+msgstr "No fue posible calcular las desviaciones típicas robustas"
 
 #: lib/src/modelprint.c:1432
 msgid "Bartlett kernel"
@@ -7363,14 +7353,14 @@ msgid "= %s squared"
 msgstr "= %s cuadrado"
 
 #: lib/src/transforms.c:191
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency difference of %s"
-msgstr "= primera diferencia de %s"
+msgstr "= diferencia de alta frecuencia de %s"
 
 #: lib/src/transforms.c:193
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency log difference of %s"
-msgstr "= diferencia logarítmica de %s"
+msgstr "= diferencia logarítmica de alta frecuencia de %s"
 
 #: lib/src/transforms.c:756
 #, c-format
@@ -9706,9 +9696,8 @@ msgid "Use start-of-period values"
 msgstr "Usar valores principio-de-periodo"
 
 #: gui2/dialogs.c:3820
-#, fuzzy
 msgid "Spread to multiple series"
-msgstr "Series temporales apiladas"
+msgstr "Extender a múltiples series"
 
 #: gui2/dialogs.c:3840
 msgid "Default method:"
@@ -10001,41 +9990,37 @@ msgid "Monthly, annualized"
 msgstr "Mensual, anualizada"
 
 #: gui2/dialogs.c:6358
-#, fuzzy
 msgid "Unrestricted (U-MIDAS)"
-msgstr "No restringido"
+msgstr "No restringido (U-MIDAS)"
 
 #: gui2/dialogs.c:6359
-#, fuzzy
 msgid "Normalized exponential Almon"
-msgstr "Duración (exponencial)"
+msgstr "Almon exponencial normalizado"
 
 #: gui2/dialogs.c:6360
 msgid "Normalized beta (zero last lag)"
-msgstr ""
+msgstr "Beta normalizado (último retardo cero)"
 
 #: gui2/dialogs.c:6361
 msgid "Normalized beta (non-zero last lag)"
-msgstr ""
+msgstr "Beta normalizado (ültimo retardo diferente de cero)"
 
 #: gui2/dialogs.c:6362
 msgid "Almon polynomial"
-msgstr ""
+msgstr "Polinomio de Almon"
 
 #: gui2/dialogs.c:6385
-#, fuzzy, c-format
+#, c-format
 msgid "High-frequency regressor %s"
-msgstr "= primera diferencia de %s"
+msgstr "Regresor de alta frecuencia %s"
 
 #: gui2/dialogs.c:6393
-#, fuzzy
 msgid "Parameterization"
-msgstr "restricción"
+msgstr "Parametrización"
 
 #: gui2/dialogs.c:6405
-#, fuzzy
 msgid "Number of parameters"
-msgstr "Número de casos"
+msgstr "Número de parámetros"
 
 #: gui2/dialogs.c:6416 plugin/addons-i18n.c:63
 msgid "Lags"
@@ -10930,6 +10915,12 @@ msgid ""
 "on the server or you have made changes since the\n"
 "last upload."
 msgstr ""
+"Subir el paquete: Esto significa que el paquete serál\n"
+"cargado al servidor de Gretl para su aprobación.\n"
+"Vd. solo debería hacer esto si es el autor de\n"
+"este paquete y el paquete no está aún en el servidor\n"
+"o ha realizado cambios desde la última vez que \n"
+"lo subió."
 
 #: gui2/fnsave.c:3754
 msgid "gretl: upload"
@@ -12888,9 +12879,8 @@ msgid "_Common factor"
 msgstr "Factor _común"
 
 #: gui2/gui_utils.c:274
-#, fuzzy
 msgid "_Cross-sectional dependence"
-msgstr "Datos de sección cruzada"
+msgstr "Dependencia de sección _cruzada"
 
 #: gui2/gui_utils.c:275
 msgid "_Panel diagnostics"
@@ -13190,9 +13180,8 @@ msgid "Residual _periodogram"
 msgstr "_Periodograma de los residuos"
 
 #: gui2/gui_utils.c:3077
-#, fuzzy
 msgid "_MIDAS coefficients"
-msgstr "_Suma de los coeficientes"
+msgstr "Coeficientes _MIDAS"
 
 #: gui2/gui_utils.c:3087
 msgid "Residual _Q-Q plot"
@@ -13536,9 +13525,8 @@ msgid "Strings"
 msgstr "Cadenas de caracteres"
 
 #: gui2/helpfiles.c:378
-#, fuzzy
 msgid "State space"
-msgstr "espacio"
+msgstr "Espacio de los estados"
 
 #: gui2/helpfiles.c:380
 msgid "Calendar"
@@ -13546,7 +13534,7 @@ msgstr "Calendario"
 
 #: gui2/helpfiles.c:382
 msgid "MIDAS"
-msgstr ""
+msgstr "MIDAS"
 
 #: gui2/helpfiles.c:422 gui2/textbuf.c:1982
 msgid "Index"
@@ -13908,9 +13896,8 @@ msgid "gretl: common factor test"
 msgstr "gretl: contraste de factor común"
 
 #: gui2/library.c:2626
-#, fuzzy
 msgid "gretl: cross-sectional dependence"
-msgstr "Para datos de sección cruzada"
+msgstr "gretl: dependencia de sección cruzada"
 
 #: gui2/library.c:2659
 msgid "Lag order for ARCH test:"
@@ -14503,29 +14490,24 @@ msgid "Define new variable..."
 msgstr "Definir nueva variable..."
 
 #: gui2/menustate.c:518
-#, fuzzy
 msgid "Add logs..."
-msgstr "Añadir logaritmos"
+msgstr "Añadir logaritmos..."
 
 #: gui2/menustate.c:519
-#, fuzzy
 msgid "Add differences..."
-msgstr "Añadir diferencias"
+msgstr "Añadir diferencias..."
 
 #: gui2/menustate.c:521
-#, fuzzy
 msgid "Display components"
-msgstr "Todos los componentes"
+msgstr "Mostrar los componentes"
 
 #: gui2/menustate.c:522
-#, fuzzy
 msgid "Edit components"
-msgstr "Todos los componentes"
+msgstr "Editar los componentes"
 
 #: gui2/menustate.c:523
-#, fuzzy
 msgid "Delete components"
-msgstr "Todos los componentes"
+msgstr "Borrar componentes"
 
 #: gui2/menustate.c:915
 msgid "Unknown"
@@ -14712,6 +14694,8 @@ msgstr "R"
 #: gui2/selector.c:1278
 msgid "Select and right-click to edit specification"
 msgstr ""
+"Seleccionar y pulsar sobre el botón derecho del ratón para editar la"
+" especificación"
 
 #: gui2/selector.c:1778 gui2/selector.c:2265
 msgid "Unrestricted"
@@ -14891,9 +14875,8 @@ msgid "Multiple precision OLS"
 msgstr "MCO de precisión múltiple"
 
 #: gui2/selector.c:4111
-#, fuzzy
 msgid "MIDAS regression"
-msgstr "Regresión KPSS"
+msgstr "Regresión MIDAS"
 
 #: gui2/selector.c:4121
 msgid "Weight variable"
@@ -15056,9 +15039,8 @@ msgid "Equation 2 regressors"
 msgstr "Regresores de la ecuación 2"
 
 #: gui2/selector.c:4871
-#, fuzzy
 msgid "High-frequency"
-msgstr "Frecuencia"
+msgstr "Alta frecuencia"
 
 #: gui2/selector.c:4873
 msgid "Helper functions"
@@ -15441,9 +15423,8 @@ msgid "Public functions"
 msgstr "Funciones públicas"
 
 #: gui2/selector.c:7093
-#, fuzzy
 msgid "No MIDAS data were found in the current dataset"
-msgstr "Intentar añadiendo al conjunto de datos actual"
+msgstr "No se han encontrado datos MIDAS en el conjunto de datos actual"
 
 #: gui2/selector.c:7269
 msgid "Select variables for logging"
@@ -16666,13 +16647,13 @@ msgid "last observation"
 msgstr "última observación"
 
 #: gui2/varinfo.c:418
-#, fuzzy
 msgid "specific day in week"
-msgstr "La especificación es adecuada"
+msgstr "día de la semana específico"
 
 #: gui2/varinfo.c:419
+#, fuzzy
 msgid "spead (MIDAS)"
-msgstr ""
+msgstr "spead (MIDAS)"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"
@@ -16755,9 +16736,8 @@ msgid "EGARCH"
 msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:14
-#, fuzzy
 msgid "Forecast"
-msgstr "_Predicciones"
+msgstr "Predicción"
 
 #: plugin/addons-i18n.c:16
 msgid "GED"
@@ -17951,9 +17931,8 @@ msgid "Statistics/transformations"
 msgstr "Estadísticas/transformaciones"
 
 #: doc/commands/matfuncs.c:49
-#, fuzzy
 msgid "Decoration"
-msgstr "Duración"
+msgstr "Decoración"
 
 #~ msgid "Upload function package"
 #~ msgstr "Subir paquete de función al servidor"
