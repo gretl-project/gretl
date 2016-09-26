@@ -1273,10 +1273,16 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
     return err;
 }
 
-int LBFGS_max (double *b, int n, int maxit, double reltol,
-	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
-	       const gretl_matrix *bounds, gretlopt opt, PRN *prn)
+int LBFGS_max (double *b, int n,
+	       int maxit, double reltol,
+	       int *fncount, int *grcount,
+	       BFGS_CRIT_FUNC cfunc, int crittype,
+	       BFGS_GRAD_FUNC gradfunc,
+	       BFGS_COMBO_FUNC combfunc,
+	       void *data,
+	       const gretl_matrix *bounds,
+	       gretlopt opt,
+	       PRN *prn)
 {
     double *wspace = NULL;
     int *ispace = NULL;
@@ -1332,7 +1338,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     verbskip = libset_get_int("bfgs_verbskip");
     show_activity = show_activity_func_installed();
 
-    if (gradfunc == NULL) {
+    if (gradfunc == NULL && combfunc == NULL) {
 	gradfunc = numeric_gradient;
     }
 
@@ -1370,7 +1376,11 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
 	if (!strncmp(task, "FG", 2)) {
 	    /* Compute function value, f */
-	    f = cfunc(b, data);
+	    if (combfunc != NULL) {
+		f = combfunc(b, g, n, data);
+	    } else {
+		f = cfunc(b, data);
+	    }
 	    if (!na(f)) {
 		f = -f; /* maximize, don't minimize */
 	    } else if (*fncount == 0) {
@@ -1379,8 +1389,10 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 		break;
 	    }
 	    *fncount += 1;
-	    /* Compute gradient, g */
-	    gradfunc(b, g, n, cfunc, data);
+	    if (combfunc == NULL) {
+		/* Compute gradient, g */
+		gradfunc(b, g, n, cfunc, data);
+	    }
 	    reverse_gradient(g, n);
 	    *grcount += 1;
 	} else if (!strncmp(task, "NEW_X", 5)) {
@@ -1482,7 +1494,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	ret = LBFGS_max(b, n, maxit, reltol,
 			fncount, grcount, cfunc, 
-			crittype, gradfunc, data,
+			crittype, gradfunc, NULL, data,
 			NULL, opt, prn);
     } else {
 	ret = BFGS_orig(b, n, maxit, reltol,
@@ -1507,8 +1519,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 static int BFGS_cmax (double *b, int n,
 		      int maxit, double reltol,
 		      int *fncount, int *grcount,
-		      BFGS_CRIT_FUNC cfunc, 
-		      int crittype,
+		      BFGS_CRIT_FUNC cfunc, int crittype,
 		      BFGS_GRAD_FUNC gradfunc,
 		      void *data, 
 		      const gretl_matrix *bounds,
@@ -1520,7 +1531,7 @@ static int BFGS_cmax (double *b, int n,
 
     ret = LBFGS_max(b, n, maxit, reltol,
 		    fncount, grcount, cfunc, 
-		    crittype, gradfunc, data,
+		    crittype, gradfunc, NULL, data,
 		    bounds, opt, prn);
 
     gretl_iteration_pop();

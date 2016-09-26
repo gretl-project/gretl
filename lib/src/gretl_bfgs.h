@@ -30,6 +30,7 @@ typedef enum {
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
 			       BFGS_CRIT_FUNC, void *);
+typedef double (*BFGS_COMBO_FUNC) (double *, double *, int, void *);
 typedef const double *(*BFGS_LLT_FUNC) (const double *, int, void *);
 typedef int (*HESS_FUNC) (double *, gretl_matrix *, void *);
 
@@ -40,7 +41,8 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
 int LBFGS_max (double *b, int n, int maxit, double reltol,
 	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
+	       int crittype, BFGS_GRAD_FUNC gradfunc,
+	       BFGS_COMBO_FUNC combo_func, void *data,
 	       const gretl_matrix *bounds, gretlopt opt, PRN *prn);
 
 int newton_raphson_max (double *b, int n, int maxit, 
