@@ -359,6 +359,7 @@ struct gretl_option gretl_opts[] = {
     { MEANTEST, OPT_O, "unequal-vars", 0 },
     { MIDASREG, OPT_R, "robust", 0 },
     { MIDASREG, OPT_V, "verbose", 0 },
+    { MIDASREG, OPT_L, "levenberg", 0 },
     { MIDASREG, OPT_P, "print-spec", 0 },
     { MIDASREG, OPT_B, "breaktest", 0 },
     { MLE,      OPT_A, "auxiliary", 0 },
