@@ -1299,6 +1299,7 @@ int LBFGS_max (double *b, int n,
     int lsave[4];
     int iter, ibak = 0;
     int show_activity = 0;
+    int maximize = (crittype != C_SSR);
     int verbskip, verbose = (opt & OPT_V);
     int err = 0;
 
@@ -1382,7 +1383,7 @@ int LBFGS_max (double *b, int n,
 		f = cfunc(b, data);
 	    }
 	    if (!na(f)) {
-		f = -f; /* maximize, don't minimize */
+		if (maximize) f = -f; 
 	    } else if (*fncount == 0) {
 		fprintf(stderr, "initial value of f is not finite\n");
 		err = E_DATA;
@@ -1393,7 +1394,9 @@ int LBFGS_max (double *b, int n,
 		/* Compute gradient, g */
 		gradfunc(b, g, n, cfunc, data);
 	    }
-	    reverse_gradient(g, n);
+	    if (maximize) {
+		reverse_gradient(g, n);
+	    }
 	    *grcount += 1;
 	} else if (!strncmp(task, "NEW_X", 5)) {
 	    /* The optimizer has produced a new set of parameter values */
@@ -1414,9 +1417,9 @@ int LBFGS_max (double *b, int n,
 	    if (iter != ibak) {
 		double steplen = (iter == 1)? NADBL : dsave[13];
 
-		reverse_gradient(g, n);
+		if (maximize) reverse_gradient(g, n);
 		print_iter_info(iter, -f, crittype, n, b, g, steplen, prn);
-		reverse_gradient(g, n);
+		if (maximize) reverse_gradient(g, n);
 	    }
 	    ibak = iter;
 	}
@@ -1432,7 +1435,7 @@ int LBFGS_max (double *b, int n,
     }
 
     if (opt & OPT_V) {
-	reverse_gradient(g, n);
+	if (maximize) reverse_gradient(g, n);
 	print_iter_info(-1, -f, crittype, n, b, g, dsave[13], prn);
 	pputc(prn, '\n');
     }
