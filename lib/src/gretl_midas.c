@@ -17,6 +17,20 @@
  * 
  */
 
+/* Note, 2016-09-26: to avoid clutter and unclarity, this version
+   of gretl_midas.c, switches fully to "conditional OLS" for
+   estimation of MIDAS models that comprise one or more beta or
+   normalized exponential Almon (nealmon) terms. By this we mean
+   a combination of L-BFGS-B (with constraints on the beta and/or
+   nealmon hyper-parameters) and OLS: all coefficients other than
+   the hyper-parameters are estimated via OLS conditional on the
+   "theta" vector of hyper-parameters as optimized by L-BFGS-B.
+
+   In case this proves to be a bad idea, we can go back to commit
+   8aa2c9, the step before we started working towards conditional
+   OLS.
+*/
+
 #include "libgretl.h"
 #include "usermat.h"
 #include "uservar.h"
@@ -29,18 +43,16 @@
 #define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
-#define USE_COND_OLS 0 /* not yet */
-
 enum mflags {
-    M_PRELAG = 1 << 0,
-    M_AUTO   = 1 << 1
+    M_PRELAG  = 1 << 0,
+    M_AUTO    = 1 << 1,
+    M_TMPLIST = 1 << 2
 };
 
 enum midas_methods {
     MDS_NLS,
     MDS_OLS,
-    MDS_BFGS,
-    MDS_COLS
+    MDS_BFGS
 };
 
 /* information on an individual MIDAS term */
@@ -79,7 +91,7 @@ struct midas_info_ {
     int nobs;             /* number of observations used */
     size_t colsize;       /* matrix column size in bytes */
     DATASET *dset;        /* dataset */
-    gretl_matrix *b;      /* all coefficients */
+    gretl_matrix *b;      /* all, or OLS, coefficients */
     gretl_matrix *g;      /* SSR gradients */
     gretl_matrix *theta;  /* MIDAS hyper-params */
     gretl_matrix *bounds; /* bounds on hyper-params */
@@ -99,8 +111,6 @@ static midas_term *mterms_from_array (gretl_array *A,
 				      int *nmidas,
 				      int *err);
 
-static int box_nealmon = 0;
-
 /* Identify parameterizations which take an additional
    leading coefficient: all but U-MIDAS and the plain
    Almon polynomial specification.
@@ -109,9 +119,6 @@ static int box_nealmon = 0;
 
 /* convenience macro for picking out beta specifications */
 #define beta_type(t) (t == MIDAS_BETA0 || t == MIDAS_BETAN)
-
-#define using_bfgs(mi) (mi->method == MDS_BFGS || \
-			mi->method == MDS_COLS)
 
 /* days per month or quarter: maybe make this user-
    configurable? */
@@ -630,9 +637,8 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		if (!err) {
 		    if (mt->type == MIDAS_U) {
 			n_umidas++;
-		    } else if (beta_type(mt->type)) {
-			n_boxed++;
-		    } else if (box_nealmon && mt->type == MIDAS_NEALMON) {
+		    } else if (beta_type(mt->type) ||
+			       mt->type == MIDAS_NEALMON) {
 			n_boxed++;
 		    } else if (mt->type == MIDAS_ALMONP) {
 			n_almonp++;
@@ -657,7 +663,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	} else if (n_umidas > 0) {
 	    err = umidas_check(mi, n_umidas);
 	}
-    }    
+    }
 
     return err;
 }
@@ -743,6 +749,7 @@ static int fcast_make_midas_laglists (midas_term *mterms,
 	    if (!prelag(mt)) {
 		sprintf(mt->lname, "ML___%d", i+1);
 		err = remember_list(mlist, mt->lname, NULL);
+		mt->flags |= M_TMPLIST;
 	    }
 	    mt->nlags = mlist[0];
 	    mt->laglist = mlist;
@@ -764,8 +771,13 @@ static int make_midas_laglists (midas_info *mi,
 	mlist = make_midas_laglist(mt, dset, &err);
 	if (!err) {
 	    if (!prelag(mt) && mi->method != MDS_BFGS) {
+		/* In the "prelag" case the list is already
+		   in userspace, and if method is BFGS the list
+		   doesn't need to be pushed into userspace.
+		*/
 		sprintf(mt->lname, "ML___%d", i+1);
 		err = remember_list(mlist, mt->lname, NULL);
+		mt->flags |= M_TMPLIST;
 	    }
 	    mt->nlags = mlist[0];
 	    mt->laglist = mlist;
@@ -1038,28 +1050,19 @@ static int midas_bfgs_setup (midas_info *mi,
     double eps = pow(2.0, -52);
     double *src, *targ = NULL;
     int i, j, k, ii, vi;
-    int npmax = 0;
-    int bound_rows = 0;
-    int nb, bigk = 1;
+    int nb, bound_rows = 0;
     midas_term *mt;
 
     mi->u = gretl_column_vector_alloc(mi->nobs);
-    if (mi->u == NULL) {
+    mi->y = gretl_column_vector_alloc(mi->nobs);
+    mi->xi = gretl_column_vector_alloc(mi->nobs);
+    
+    if (mi->u == NULL || mi->y == NULL || mi->xi == NULL) {
 	return E_ALLOC;
     }
 
-    if (mi->method == MDS_COLS) {
-	/* We'll be using OLS conditional on theta */
-	mi->y = gretl_column_vector_alloc(mi->nobs);
-	mi->xi = gretl_column_vector_alloc(mi->nobs);
-	if (mi->y == NULL || mi->xi == NULL) {
-	    return E_ALLOC;
-	}
-	if (mi->nalmonp == 0) {
-	    memcpy(mi->y->val, dset->Z[mi->yno] + dset->t1,
-		   mi->colsize);
-	}
-	bigk = 0;
+    if (mi->nalmonp == 0) {
+	memcpy(mi->y->val, dset->Z[mi->yno] + dset->t1, mi->colsize);
     }
 
     /* number of low-frequency regressors */
@@ -1072,7 +1075,7 @@ static int midas_bfgs_setup (midas_info *mi,
 	mt = &mi->mterms[i];
 	if (beta_type(mt->type)) {
 	    bound_rows += 2;
-	} else if (box_nealmon && mt->type == MIDAS_NEALMON) {
+	} else if (mt->type == MIDAS_NEALMON) {
 	    bound_rows += mt->nparm;
 	}
 	if (mt->type == MIDAS_U) {
@@ -1087,124 +1090,78 @@ static int midas_bfgs_setup (midas_info *mi,
 	return E_ALLOC;
     }
 
-    if (mi->method == MDS_COLS) {
-	/* build X matrix for cond. OLS */
-	mi->X = gretl_matrix_alloc(mi->nobs, nb);
-	if (mi->X == NULL) {
-	    return E_ALLOC;
-	} else {
-	    targ = mi->X->val;
-	    for (i=0; i<mi->nx; i++) {
-		vi = mi->list[i+2];
-		src = dset->Z[vi] + dset->t1;
-		memcpy(targ, src, mi->colsize);
-		targ += mi->nobs;
-	    }
-	}
+    /* build X matrix for cond. OLS */
+    mi->X = gretl_matrix_alloc(mi->nobs, nb);
+    if (mi->X == NULL) {
+	return E_ALLOC;
+    }
+    
+    targ = mi->X->val;
+    for (i=0; i<mi->nx; i++) {
+	vi = mi->list[i+2];
+	src = dset->Z[vi] + dset->t1;
+	memcpy(targ, src, mi->colsize);
+	targ += mi->nobs;
     }
 
-    k = bigk ? mi->nx : 0;
-    j = 0;
+    k = j = 0;
 
     for (i=0; i<mi->nmidas; i++) {
 	mt = &mi->mterms[i];
-	if (mt->nparm > npmax) {
-	    npmax = mt->nparm;
-	}
 	if (mi->bounds != NULL) {
 	    if (beta_type(mt->type)) {
 		/* set up beta minima and maxima */
-		if (bigk) k++; /* skip slope */
 		for (ii=0; ii<2; ii++) {
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
 		    gretl_matrix_set(mi->bounds, j, 1, eps);
 		    gretl_matrix_set(mi->bounds, j, 2, 1000);
 		    j++;
 		}
-	    } else if (box_nealmon && mt->type == MIDAS_NEALMON) {
-		/* set up nealmon minima and maxima? */
-		if (bigk) k++; /* skip slope */
+	    } else if (mt->type == MIDAS_NEALMON) {
+		/* set up nealmon minima and maxima */
 		for (ii=0; ii<mt->nparm; ii++) {
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
-		    gretl_matrix_set(mi->bounds, j, 1, -5.0);
-		    gretl_matrix_set(mi->bounds, j, 2, +5.0);
+		    gretl_matrix_set(mi->bounds, j, 1, -2.0);
+		    gretl_matrix_set(mi->bounds, j, 2, +2.0);
 		    j++;
 		}
-	    } else {
-		if (bigk) k += takes_coeff(mt->type);
+	    }
+	}
+	if (mt->type == MIDAS_U) {
+	    /* transcribe HF lags data */
+	    for (ii=0; ii<mt->nlags; ii++) {
+		vi = mt->laglist[ii+1];
+		src = dset->Z[vi] + dset->t1;
+		memcpy(targ, src, mi->colsize);
+		targ += mi->nobs;
 	    }
 	} else {
-	    if (bigk) k += takes_coeff(mt->type);
-	}
-	if (bigk || mt->type != MIDAS_U) {
 	    k += mt->nparm;
-	}
-	if (mi->method == MDS_COLS) {
 	    if (takes_coeff(mt->type)) {
 		/* leave space for weighted combo */
 		targ += mi->nobs;
-	    } else if (mt->type == MIDAS_U) {
-		/* transcribe HF lags data */
-		for (ii=0; ii<mt->nlags; ii++) {
-		    vi = mt->laglist[ii+1];
-		    src = dset->Z[vi] + dset->t1;
-		    memcpy(targ, src, mi->colsize);
-		    targ += mi->nobs;
-		}
 	    }
 	}
     }
 
     mi->g = gretl_column_vector_alloc(k);
-    if (mi->g == NULL) {
-	return E_ALLOC;
-    }
-
-    if (mi->method == MDS_COLS) {
-	mi->b = gretl_column_vector_alloc(nb);
-	mi->theta = gretl_column_vector_alloc(k);
-    } else {
-	mi->b = gretl_column_vector_alloc(k);
-	mi->theta = gretl_column_vector_alloc(npmax);
-    }
+    mi->b = gretl_column_vector_alloc(nb);
+    mi->theta = gretl_column_vector_alloc(k);
     
-    if (mi->b == NULL || mi->theta == NULL) {
+    if (mi->g == NULL || mi->b == NULL || mi->theta == NULL) {
 	return E_ALLOC;
     }
 
-    if (mi->method == MDS_COLS) {
-	/* initialization of overall mi->theta: the
-	   composition of one or more individual theta
-	   vectors
-	*/
-	ii = 0;
-	for (i=0; i<mi->nmidas; i++) {
-	    mt = &mi->mterms[i];
-	    if (mt->type != MIDAS_U) {
-		for (j=0; j<mt->nparm; j++) {
-		    mi->theta->val[ii++] = mt->theta->val[j];
-		}
-	    }
-	}
-	gretl_matrix_print(mi->theta, "initial mi->theta");
-    } else {
-	/* "plain" L-BFGS-B */
-	int clen = gretl_vector_get_length(c);
-
-	for (i=0; i<mi->list[0]-1; i++) {
-	    mi->b->val[i] = c->val[i];
-	}
-	
-	k = ii = mi->nx;
-	
-	for (i=0; i<mi->nmidas; i++) {
-	    mt = &mi->mterms[i];
-	    if (takes_coeff(mt->type)) {
-		mi->b->val[k++] = (ii < clen)? c->val[ii++] : 0;
-	    }
+    /* initialization of overall mi->theta: the
+       composition of one or more individual theta
+       vectors
+    */
+    ii = 0;
+    for (i=0; i<mi->nmidas; i++) {
+	mt = &mi->mterms[i];
+	if (mt->type != MIDAS_U) {
 	    for (j=0; j<mt->nparm; j++) {
-		mi->b->val[k++] = (mt->theta == NULL)? 0 :
-		    mt->theta->val[j];
+		mi->theta->val[ii++] = mt->theta->val[j];
 	    }
 	}
     }
@@ -1220,6 +1177,8 @@ static void midas_info_destroy (midas_info *mi)
     gretl_matrix_free(mi->bounds);
     gretl_matrix_free(mi->u);
     gretl_matrix_free(mi->X);
+    gretl_matrix_free(mi->y);
+    gretl_matrix_free(mi->xi);
     
     free(mi->mterms);
     free(mi->xlist);
@@ -1229,78 +1188,9 @@ static void midas_info_destroy (midas_info *mi)
     free(mi);
 }
 
-static double bfgs_midas_SSR (const double *b, void *ptr)
-{
-    midas_info *mi = ptr;
-    DATASET *dset = mi->dset;
-    const double *y;
-    gretl_matrix *w;
-    int i, vi, j, k, t, s;
-    int err = 0;
-
-    y = dset->Z[mi->list[1]];
-    s = 0;
-
-    mi->SSR = 0.0;
-
-    /* set residual to y minus (low-freq) X*\beta */
-    for (t=dset->t1; t<=dset->t2; t++) {
-	mi->u->val[s] = y[t];
-	for (i=2; i<=mi->list[0]; i++) {
-	    vi = mi->list[i];
-	    mi->u->val[s] -= dset->Z[vi][t] * b[i-2];
-	}
-	s++;
-    }
-
-    k = mi->nx;
-
-    /* now handle the high-frequency terms */
-    for (i=0; i<mi->nmidas && !err; i++) {
-	midas_term *mt = &mi->mterms[i];
-	double hfb = 1.0;
-	
-	if (takes_coeff(mt->type)) {
-	    hfb = b[k++];
-	}
-	gretl_matrix_reuse(mi->theta, mt->nparm, 1);
-	for (j=0; j<mt->nparm; j++) {
-	    mi->theta->val[j] = b[k++];
-	}
-	if (mt->type != MIDAS_U) {
-	    w = midas_weights(mt->nlags, mi->theta, mt->type, &err);
-	} else {
-	    w = mi->theta;
-	}
-	if (!err) {
-	    if (takes_coeff(mt->type)) {
-		gretl_matrix_multiply_by_scalar(w, hfb);
-	    }
-	    s = 0;
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		for (j=0; j<mt->nlags; j++) {
-		    vi = mt->laglist[j+1];
-		    mi->u->val[s] -= dset->Z[vi][t] * w->val[j];
-		}
-		s++;
-	    }
-	    if (w != mi->theta) {
-		gretl_matrix_free(w);
-	    }
-	}
-    }
-
-    if (err) {
-	return NADBL;
-    }
-
-    for (s=0; s<mi->u->rows; s++) {
-	mi->SSR += mi->u->val[s] * mi->u->val[s];
-    }
-
-    /* note: sign changed for the maximizer */
-    return -mi->SSR;
-}
+/* combined callback that returns SSR given @theta, and also
+   calculates the gradient in @g
+*/
 
 static double bfgs_ols_callback (double *theta, double *g,
 				 int n, void *ptr)
@@ -1434,144 +1324,84 @@ static double bfgs_ols_callback (double *theta, double *g,
     return -mi->SSR;
 }
 
-/* compute in @g the gradient of SSR with respect to @b */
+/* Given mi->b (OLS coefficients) and mi->theta (hyper-
+   parameters optimized by L-BFGS-B), combine them into
+   the full coefficient array.
+*/
 
-static int bfgs_midas_gradient (double *b, double *g, int n,
-				BFGS_CRIT_FUNC func, void *ptr)
+static int make_full_coeff_vector (midas_info *mi, int n)
 {
-    midas_info *mi = ptr;
-    DATASET *dset = mi->dset;
-    gretl_matrix *w, *G;
-    double *targ, *src;
-    double xit;
-    int xcol, vi;
-    int starting = 0;
-    int i, j, k, t, s;
-    int err = 0;
+    gretl_matrix *c;
+    midas_term *mt;
+    int i, j, k, l, m;
 
-    if (mi->X == NULL) {
-	mi->X = gretl_matrix_alloc(mi->nobs, n);
-	if (mi->X == NULL) {
-	    return E_ALLOC;
-	}
-	/* low-freq regressors: only needs to be done once */
-	targ = mi->X->val;
-	for (i=2; i<=mi->list[0]; i++) {
-	    src = dset->Z[mi->list[i]] + dset->t1;
-	    memcpy(targ, src, mi->colsize);
-	    targ += mi->nobs;
-	}
-	starting = 1;
+    c = gretl_column_vector_alloc(n);
+
+    if (c == NULL) {
+	return E_ALLOC;
     }
 
-    xcol = k = mi->nx;
-
-    /* MIDAS terms: for each, first the weighted combination
-       (a single series), then the derivatives wrt the elements
-       of theta.
-    */
-    for (i=0; i<mi->nmidas && !err; i++) {
-	midas_term *mt = &mi->mterms[i];
-	double gij, hfb = 1.0;
-	int ii, pos;
-
-	if (mt->type == MIDAS_U || mt->type == MIDAS_ALMONP) {
-	    /* there's no leading coefficient here */
-	    goto theta_grad;
-	}
-	
-	if (takes_coeff(mt->type)) {
-	    hfb = mi->b->val[k++];
-	}
-	gretl_matrix_reuse(mi->theta, mt->nparm, 1);
-	for (j=0; j<mt->nparm; j++) {
-	    mi->theta->val[j] = mi->b->val[k++];
-	}
-	w = midas_weights(mt->nlags, mi->theta, mt->type, &err);
-	if (!err) {
-	    s = 0;
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		xit = 0;
-		for (j=0; j<mt->nlags; j++) {
-		    vi = mt->laglist[j+1];
-		    xit += dset->Z[vi][t] * w->val[j];
-		}
-		gretl_matrix_set(mi->X, s, xcol, xit);  
-		s++;
-	    }
-	    gretl_matrix_free(w);
-	}
-	xcol++;
-
-    theta_grad:
-
-	/* gradient wrt theta */
-
-	if (mt->type == MIDAS_U && starting) {
-	    targ = mi->X->val + xcol * mi->nobs;
+    k = l = m = 0;
+    
+    for (i=0; i<mi->nx; i++) {
+	c->val[k++] = mi->b->val[l++];
+    }
+    for (i=0; i<mi->nmidas; i++) {
+	mt = &mi->mterms[i];
+	if (mt->type == MIDAS_U) {
 	    for (j=0; j<mt->nlags; j++) {
-		vi = mt->laglist[j+1];
-		src = dset->Z[vi] + dset->t1;
-		memcpy(targ, src, mi->colsize);
-		targ += mi->nobs;
+		c->val[k++] = mi->b->val[l++];
 	    }
-	} else if (mt->type != MIDAS_U) { 
-	    G = midas_gradient(mt->nlags, mi->theta, mt->type, &err);
-	    if (!err) {
-		pos = xcol;
-		s = 0;
-		for (t=dset->t1; t<=dset->t2; t++) {
-		    for (ii=0; ii<mt->nparm; ii++) {
-			xit = 0;
-			for (j=0; j<mt->nlags; j++) {
-			    vi = mt->laglist[j+1];
-			    gij = gretl_matrix_get(G, j, ii);
-			    xit += dset->Z[vi][t] * gij;
-			}
-			gretl_matrix_set(mi->X, s, pos+ii, xit * hfb);
-		    }
-		    s++;
-		}
-		gretl_matrix_free(G);
+	} else {
+	    if (takes_coeff(mt->type)) {
+		c->val[k++] = mi->b->val[l++];
 	    }
-	}
-	xcol += mt->nparm;
-    }
-
-    gretl_matrix_multiply_mod(mi->X, GRETL_MOD_TRANSPOSE,
-			      mi->u, GRETL_MOD_NONE,
-			      mi->g, GRETL_MOD_NONE);
-
-    if (!err) {
-	for (i=0; i<n; i++) {
-	    g[i] = mi->g->val[i];
+	    for (j=0; j<mt->nparm; j++) {
+		c->val[k++] = mi->theta->val[m++];
+	    }
 	}
     }
 
-    return err;
+    /* swap out the original mi->b */
+    gretl_matrix_free(mi->b);
+    mi->b = c;
+
+    return 0;
 }
 
-static void
+static int
 transcribe_to_nlspec (nlspec *s, midas_info *mi,
 		      gretlopt opt)
 {
+    int err = 0;
+
+    s->ncoeff = mi->b->rows + mi->theta->rows;
+    err = make_full_coeff_vector(mi, s->ncoeff);
+    if (err) {
+	return err;
+    }    
+    
     s->ci = MIDASREG;
     s->opt = opt;
     s->dv = mi->list[1];
-    s->ncoeff = gretl_vector_get_length(mi->b);
+    s->coeff = mi->b->val;
     s->t1 = mi->dset->t1;
     s->t2 = mi->dset->t2;
     s->crit = mi->SSR;
     s->parnames = mi->pnames;
     s->fvec = mi->u->val;
-    s->coeff = mi->b->val;
     s->dset = mi->dset;
+
+    return err;
 }
 
-static int bfgs_GNR (MODEL *pmod,
-		     midas_info *mi,
-		     gretlopt opt,
-		     PRN *prn)
+/* The Gauss-Newton Regression after running BFGS plus
+   conditional OLS */
+
+static int cond_ols_GNR (MODEL *pmod,
+			 midas_info *mi,
+			 gretlopt opt,
+			 PRN *prn)
 {
     DATASET *dset = mi->dset;
     DATASET *gdset = NULL;
@@ -1581,11 +1411,8 @@ static int bfgs_GNR (MODEL *pmod,
     int i, j, k, t, s, v;
     int err = 0;
 
-    if (mi->method == MDS_COLS) {
-	nc = mi->theta->rows + mi->b->rows;
-    } else {
-	nc = gretl_vector_get_length(mi->b);
-    }
+    /* total number of coefficients in the GNR */
+    nc = mi->b->rows + mi->theta->rows;
     
     v = nc + 2;
     for (i=2; i<=mi->list[0]; i++) {
@@ -1632,34 +1459,36 @@ static int bfgs_GNR (MODEL *pmod,
 	glist[0] += 1;
     }
 
+    /* the read position for OLS coefficients */
     k = mi->nx;
 
-    /* MIDAS terms: for each, first the weighted combination
-       (a single series), then the derivatives wrt the elements
-       of theta.
-    */
+    /* MIDAS terms */
     for (i=0; i<mi->nmidas && !err; i++) {
 	midas_term *mt = &mi->mterms[i];
 	double zt, gij, hfb = 1.0;
 	int ii, pos;
 
-	if (mt->type == MIDAS_U || mt->type == MIDAS_ALMONP) {
-	    /* nothing to be done here */
-	    goto theta_grad;
+	if (mt->type == MIDAS_U) {
+	    /* gradient wrt U-MIDAS coeffs */
+	    for (j=0; j<mt->nlags; j++) {
+		vi = mt->laglist[j+1];
+		memcpy(gdset->Z[zcol], dset->Z[vi] + dset->t1,
+		       mi->colsize);
+		glist[0] += 1;
+		glist[glist[0]] = zcol;
+		sprintf(gdset->varname[zcol], "mdx%d", i+1);
+		zcol++;
+	    }
+	    k += mt->nlags;
+	    continue;
 	}
-	
-	if (takes_coeff(mt->type)) {
-	    hfb = mi->b->val[k++];
-	}
-	gretl_matrix_reuse(mi->theta, mt->nparm, 1); /* FIXME */
-	for (j=0; j<mt->nparm; j++) {
-	    mi->theta->val[j] = mi->b->val[k++];
-	}
-	w = midas_weights(mt->nlags, mi->theta, mt->type, &err);
+
+	/* gradient wrt weighted linear combination */
+	w = midas_weights(mt->nlags, mt->theta, mt->type, &err);
 	if (!err) {
 	    s = 0;
 	    for (t=dset->t1; t<=dset->t2; t++) {
-		zt = 0;
+		zt = 0.0;
 		for (j=0; j<mt->nlags; j++) {
 		    vi = mt->laglist[j+1];
 		    zt += dset->Z[vi][t] * w->val[j];
@@ -1674,35 +1503,27 @@ static int bfgs_GNR (MODEL *pmod,
 	sprintf(gdset->varname[zcol], "mdx%d", i+1);
 	zcol++;
 
-    theta_grad:
-
-	/* gradient wrt theta */
+	/* gradient wrt hyper-parameters */
 	pos = zcol;
-
-	if (mt->type == MIDAS_U) {
-	    for (j=0; j<mt->nlags; j++) {
-		vi = mt->laglist[j+1];
-		memcpy(gdset->Z[pos+j], dset->Z[vi] + dset->t1,
-		       mi->colsize);
-	    }
-	} else {
-	    G = midas_gradient(mt->nlags, mi->theta, mt->type, &err);
-	    if (!err) {
-		s = 0;
-		for (t=dset->t1; t<=dset->t2; t++) {
-		    for (ii=0; ii<mt->nparm; ii++) {
-			zt = 0;
-			for (j=0; j<mt->nlags; j++) {
-			    vi = mt->laglist[j+1];
-			    gij = gretl_matrix_get(G, j, ii);
-			    zt += dset->Z[vi][t] * gij;
-			}
-			gdset->Z[pos+ii][s] = zt * hfb;
+	if (takes_coeff(mt->type)) {
+	    hfb = mi->b->val[k++];
+	}
+	G = midas_gradient(mt->nlags, mt->theta, mt->type, &err);
+	if (!err) {
+	    s = 0;
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		for (ii=0; ii<mt->nparm; ii++) {
+		    zt = 0.0;
+		    for (j=0; j<mt->nlags; j++) {
+			vi = mt->laglist[j+1];
+			gij = gretl_matrix_get(G, j, ii);
+			zt += dset->Z[vi][t] * gij;
 		    }
-		    s++;
+		    gdset->Z[pos+ii][s] = zt * hfb;
 		}
-		gretl_matrix_free(G);
+		s++;
 	    }
+	    gretl_matrix_free(G);
 	}
 
 	if (!err) {
@@ -1753,36 +1574,21 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
 			   gretlopt opt, PRN *prn)
 {
     double reltol = libset_get_double(BFGS_TOLER);
-    int n, fncount = 0, grcount = 0;
+    int n = gretl_vector_get_length(mi->theta);
+    int fncount = 0, grcount = 0;
     int err;
 
-    if (mi->method == MDS_COLS) {
-	n = gretl_vector_get_length(mi->theta);
-	err = LBFGS_max(mi->theta->val, n, 1000, reltol,
-			&fncount, &grcount, NULL, 
-			C_SSR, NULL, bfgs_ols_callback,
-			mi, mi->bounds, opt, prn);
-    } else {
-	n = gretl_vector_get_length(mi->b);
-	err = LBFGS_max(mi->b->val, n, 1000, reltol,
-			&fncount, &grcount, bfgs_midas_SSR, 
-			C_SSR, bfgs_midas_gradient, NULL,
-			mi, mi->bounds, opt, prn);
-    }
-
-    if (mi->method == MDS_COLS) {
-	gretl_matrix_print(mi->b, "final mi->b");
-	gretl_matrix_print(mi->theta, "final mi->theta");
-	fprintf(stderr, "final mi->SSR = %.8g\n", mi->SSR);
-	err = 1; /* can't continue just yet */
-    }    
+    err = LBFGS_max(mi->theta->val, n, 1000, reltol,
+		    &fncount, &grcount, NULL, 
+		    C_SSR, NULL, bfgs_ols_callback,
+		    mi, mi->bounds, opt, prn);
 
     if (!err) {
-	/* GNR not ready for cond ols yet */
-	err = bfgs_GNR(pmod, mi, opt, prn);
-	if (!err) {
-	    gretl_model_set_int(pmod, "iters", fncount);
-	}
+	err = cond_ols_GNR(pmod, mi, opt, prn);
+    }
+
+    if (!err) {
+	gretl_model_set_int(pmod, "iters", fncount);
     }
 
     return err;
@@ -2089,12 +1895,13 @@ static int fill_beta_Z (gretl_matrix *XZ,
 
     if (!err) {
 	double zk;
-	int j, t, k = nx * T;
+	int j, s, t, k = nx * T;
 	    
 	for (t=0; t<T; t++) {
+	    s = t + dset->t1;
 	    zk = 0.0;
 	    for (j=1; j<=p; j++) {
-		zk += dset->Z[zlist[j]][t+dset->t1] * w->val[j-1];
+		zk += dset->Z[zlist[j]][s] * w->val[j-1];
 	    }
 	    XZ->val[k++] = zk;
 	}
@@ -2179,21 +1986,6 @@ static int midas_beta_init (const gretl_matrix *y,
 	}
 	
 	gretl_matrix_free(u);
-    } else {
-	/* the user gave a theta spec on input: respect it, and
-	   just use OLS to pre-optimize the x-coefficients and
-	   HF slope coeff in @c
-	*/
-	if (X != NULL) {
-	    memcpy(XZ->val, X->val, T * nx * sizeof(double));
-	}
-	err = fill_beta_Z(XZ, mt, dset, nx, T);
-	if (!err) {
-	    err = gretl_matrix_ols(y, XZ, c, NULL, NULL, NULL);
-#if 0
-	    gretl_matrix_print(c, "c, conditional on user-theta");
-#endif
-	}
     }
 
     gretl_matrix_free(XZ);
@@ -2649,14 +2441,7 @@ MODEL midas_model (const int *list,
 	err = midas_set_sample(mi, dset);
     }
 
-#if USE_COND_OLS    
-    /* TEMPORARY!! */
-    if (mi->method == MDS_BFGS) {
-	mi->method = MDS_COLS;
-    }
-#endif    
-
-    if (!err && mi->method != MDS_COLS) {
+    if (!err && mi->method != MDS_BFGS) {
 	/* add some required matrices */
 	err = add_midas_matrices(mi, dset, &c);
     }
@@ -2672,7 +2457,7 @@ MODEL midas_model (const int *list,
 	if (!err) {
 	    mod = nl_model(dset, (opt | OPT_G | OPT_M), prn);
 	}	
-    } else {
+    } else if (!err) {
 	/* estimation using L-BFGS-B */
 	err = midas_bfgs_setup(mi, dset, c);
 	if (!err) {
@@ -2689,8 +2474,10 @@ MODEL midas_model (const int *list,
 	midas_term *mt = &mi->mterms[i];
 	
 	if (!prelag(mt)) {
-	    free(mt->laglist);
-	    user_var_delete_by_name(mt->lname, NULL);
+	    free(mt->laglist);	    
+	    if (mt->flags & M_TMPLIST) {
+		user_var_delete_by_name(mt->lname, NULL);
+	    }
 	}
 	if (mt->type != MIDAS_U) {
 	    sprintf(tmp, "mgr___%d", i+1);
