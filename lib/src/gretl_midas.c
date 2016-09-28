@@ -923,7 +923,7 @@ static int push_midas_coeff_array (const MODEL *pmod,
 	
     if (gretl_model_get_int(pmod, "umidas")) {
 	/* original estimation was U-MIDAS OLS */
-	int nx = xlist[0];
+	int nx = xlist == NULL? 0 : xlist[0];
 	int nt = pmod->ncoeff - nx;
 
 	hfb = gretl_column_vector_alloc(nt);
@@ -979,14 +979,24 @@ int midas_forecast_setup (const MODEL *pmod,
     int *xlist = NULL;
     int *hflist = NULL;
     int nmidas = 0;
+    int nx = 0;
     int err = 0;
 
     mA = gretl_model_get_data(pmod, "midas_info");
-    xlist = gretl_model_get_data(pmod, "lfxlist");
-
-    if (mA == NULL || xlist == NULL) {
+    if (mA == NULL) {
 	err = E_DATA;
-    } else {
+    }
+
+    if (!err && gretl_model_get_int(pmod, "no_lfx") == 0) {
+	xlist = gretl_model_get_data(pmod, "lfxlist");
+	if (xlist == NULL) {
+	    err = E_DATA;
+	} else {
+	    nx = xlist[0];
+	}
+    }
+
+    if (!err) {
 	mterms = mterms_from_array(mA, &nmidas, &err);
     }
 
@@ -1025,8 +1035,8 @@ int midas_forecast_setup (const MODEL *pmod,
 	*line = '\0';
 	gretl_push_c_numeric_locale();
     
-	for (i=1; i<=xlist[0]; i++) {
-	    xi = xlist[i];
+	for (i=0; i<nx; i++) {
+	    xi = xlist[i+1];
 	    if (xi == 0) {
 		sprintf(tmp, "%+.15g", b[j++]);
 	    } else {
@@ -1907,8 +1917,12 @@ static int finalize_midas_model (MODEL *pmod,
     pmod->ci = MIDASREG;
 
     /* record list of low-frequency regressors */
-    gretl_model_set_list_as_data(pmod, "lfxlist", mi->xlist);
-    mi->xlist = NULL; /* donated to pmod */
+    if (mi->xlist == NULL) {
+	gretl_model_set_int(pmod, "no_lfx", 1);
+    } else {
+	gretl_model_set_list_as_data(pmod, "lfxlist", mi->xlist);
+	mi->xlist = NULL; /* donated to pmod */
+    }
     
     /* and positions where MIDAS terms start */
     if (mi->seplist != NULL) {
@@ -2022,21 +2036,27 @@ static int add_midas_matrices (midas_info *mi,
     int init_err = 0;
     int err = 0;
 
-    X = gretl_matrix_data_subset(mi->xlist, dset,
-				 dset->t1, dset->t2,
-				 M_MISSING_ERROR,
-				 &err);
-    if (!err) {
-	err = private_matrix_add(X, "MX___");
+    if (mi->nx > 0) {
+	X = gretl_matrix_data_subset(mi->xlist, dset,
+				     dset->t1, dset->t2,
+				     M_MISSING_ERROR,
+				     &err);
+	if (!err) {
+	    err = private_matrix_add(X, "MX___");
+	}
+
+	if (!err) {
+	    b = gretl_zero_matrix_new(mi->nx, 1);
+	    if (b != NULL) {
+		err = private_matrix_add(b, "bx___");
+	    } else {
+		err = E_ALLOC;
+	    }
+	}
     }
 
-    if (!err) {
-	b = gretl_zero_matrix_new(mi->nx, 1);
-	if (b != NULL) {
-	    err = private_matrix_add(b, "bx___");
-	} else {
-	    err = E_ALLOC;
-	}
+    if (mi->nx == 0 && mi->hfslopes == 0) {
+	return err;
     }
 
     if (!err) {
@@ -2062,7 +2082,7 @@ static int add_midas_matrices (midas_info *mi,
 	if (mi->hfslopes > 0) {
 	    init_err = midas_means_init(mi, y, X, c, dset);
 	}
-	if (mi->hfslopes == 0 || init_err) {
+	if (init_err || (mi->hfslopes == 0 && mi->nx > 0)) {
 	    /* simpler initialization, ignoring HF terms */
 	    c->rows = mi->nx;
 	    init_err = gretl_matrix_ols(y, X, c, NULL,
