@@ -33,7 +33,8 @@
 #ifdef USE_GTKSOURCEVIEW_3
 # include <gtksourceview/gtksource.h>
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
-#else
+# define COMPLETION_OK 1
+#else /* using GtkSourceView 2 */
 # include <gtksourceview/gtksourceview.h>
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
@@ -45,9 +46,8 @@
 # define COMPLETION_OK 0
 #else
 # define COMPLETION_OK 1
+# include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 #endif
-
-#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
