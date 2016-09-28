@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-09-23 13:14-0400\n"
-"PO-Revision-Date: 2016-08-22 16:38+0100\n"
+"PO-Revision-Date: 2016-09-28 13:50+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -467,9 +467,9 @@ msgstr "Hipótese nula:[O parámetro de regresión para *%s* é cero]"
 
 #: lib/src/compare.c:279 lib/src/compare.c:282 lib/src/compare.c:285
 #: lib/src/describe.c:5955 lib/src/gretl_model.c:3841
-#: lib/src/gretl_model.c:3844 lib/src/gretl_model.c:3851 lib/src/nonparam.c:980
-#: lib/src/nonparam.c:1117 lib/src/varprint.c:1249 lib/src/varprint.c:1255
-#: lib/src/varprint.c:1263
+#: lib/src/gretl_model.c:3844 lib/src/gretl_model.c:3851
+#: lib/src/nonparam.c:980 lib/src/nonparam.c:1117 lib/src/varprint.c:1249
+#: lib/src/varprint.c:1255 lib/src/varprint.c:1263
 msgid "Null hypothesis"
 msgstr "Hipótese nula"
 
@@ -513,18 +513,19 @@ msgstr "Proba de Wald"
 #: lib/src/graphing.c:4349 lib/src/gretl_model.c:3907
 #: lib/src/gretl_model.c:3921 lib/src/gretl_model.c:3924
 #: lib/src/gretl_model.c:3949 lib/src/gretl_panel.c:4025
-#: lib/src/gretl_panel.c:4283 lib/src/modelprint.c:198 lib/src/modelprint.c:376
-#: lib/src/modelprint.c:380 lib/src/modelprint.c:470 lib/src/modelprint.c:473
-#: lib/src/modelprint.c:494 lib/src/modelprint.c:497 lib/src/modelprint.c:2517
-#: lib/src/modelprint.c:2522 lib/src/modelprint.c:2544
-#: lib/src/modelprint.c:2549 lib/src/modelprint.c:3041
-#: lib/src/modelprint.c:5291 lib/src/modelprint.c:5314 lib/src/printout.c:327
-#: lib/src/pvalues.c:2629 lib/src/pvalues.c:3294 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3389 lib/src/system.c:3411
-#: lib/src/system.c:3483 lib/src/system.c:3501 lib/src/system.c:4612
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:78 lib/src/vartest.c:820
-#: lib/src/vartest.c:1107 plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4283 lib/src/modelprint.c:198
+#: lib/src/modelprint.c:376 lib/src/modelprint.c:380 lib/src/modelprint.c:470
+#: lib/src/modelprint.c:473 lib/src/modelprint.c:494 lib/src/modelprint.c:497
+#: lib/src/modelprint.c:2517 lib/src/modelprint.c:2522
+#: lib/src/modelprint.c:2544 lib/src/modelprint.c:2549
+#: lib/src/modelprint.c:3041 lib/src/modelprint.c:5291
+#: lib/src/modelprint.c:5314 lib/src/printout.c:327 lib/src/pvalues.c:2629
+#: lib/src/pvalues.c:3294 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3389 lib/src/system.c:3411 lib/src/system.c:3483
+#: lib/src/system.c:3501 lib/src/system.c:4612 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:78 lib/src/vartest.c:820 lib/src/vartest.c:1107
+#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Chi-cadrado"
 
@@ -1146,19 +1147,20 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Fallo ao interpretar os datos como numéricos\n"
 
-#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554 plugin/excel_import.c:1742
-#: plugin/gnumeric_import.c:832 plugin/jmulti_import.c:379
-#: plugin/sas_import.c:686 plugin/spss_import.c:1942 plugin/stata_import.c:2182
+#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1742 plugin/gnumeric_import.c:832
+#: plugin/jmulti_import.c:379 plugin/sas_import.c:686
+#: plugin/spss_import.c:1942 plugin/stata_import.c:2182
 #: plugin/xlsx_import.c:1385
 msgid "warning: some variable names were duplicated\n"
 msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
 
-#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1576 plugin/gnumeric_import.c:653
-#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
-#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1847
-#: plugin/spss_import.c:1868 plugin/stata_import.c:2150
-#: plugin/stata_import.c:2161
+#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1576
+#: plugin/gnumeric_import.c:653 plugin/jmulti_import.c:350
+#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
+#: plugin/spss_import.c:1847 plugin/spss_import.c:1868
+#: plugin/stata_import.c:2150 plugin/stata_import.c:2161
 msgid "Out of memory\n"
 msgstr "Fóra de memoria\n"
 
@@ -1530,8 +1532,8 @@ msgid "Invalid null sample"
 msgstr "Mostra nula incorrecta"
 
 #: lib/src/dbread.c:2044 lib/src/gretl_errors.c:578
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293 lib/src/options.c:1296
-#: lib/src/options.c:1307
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293
+#: lib/src/options.c:1296 lib/src/options.c:1307
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Campo '%s' incorrecto na instrución"
@@ -2414,12 +2416,12 @@ msgstr "'%c' non coincidente\n"
 #: lib/src/geneval.c:13859
 #, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
-msgstr "A variable *%s* é do tipo %s, non asumible no contexto"
+msgstr "A variable *%s* é de tipo %s, non aceptable neste contexto"
 
 #: lib/src/geneval.c:13863
-#, fuzzy, c-format
+#, c-format
 msgid "A variable of type %s is not acceptable in context"
-msgstr "A variable *%s* é do tipo %s, non asumible no contexto"
+msgstr "Neste contexto non é aceptable unha variable de tipo %s"
 
 #: lib/src/geneval.c:14063
 #, c-format
@@ -3320,8 +3322,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2482 lib/src/gretl_func.c:2542
-#: lib/src/gretl_func.c:2622 lib/src/gretl_utils.c:1890 lib/src/interact.c:1153
-#: gui2/dialogs.c:5556 gui2/fnsave.c:5074 plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2622 lib/src/gretl_utils.c:1890
+#: lib/src/interact.c:1153 gui2/dialogs.c:5556 gui2/fnsave.c:5074
+#: plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Non se puido abrir *%s*"
@@ -3738,7 +3741,8 @@ msgstr "Graos de liberdade denominador"
 #: lib/src/gretl_model.c:4033 lib/src/modelprint.c:5360
 #: lib/src/modelprint.c:5371 lib/src/modelprint.c:5373 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2007
-#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
+#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96
+#: plugin/anova.c:98
 msgid "df"
 msgstr "Graos de liberdade"
 
@@ -4124,7 +4128,8 @@ msgstr "Desviación típica da regresión"
 msgid "Robust chi^2"
 msgstr "Chi^2 robusto"
 
-#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3033 lib/src/system.c:1245
+#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3033
+#: lib/src/system.c:1245
 msgid "restriction"
 msgstr "restrición"
 
@@ -4751,26 +4756,24 @@ msgid "Number of instruments = %d"
 msgstr "Número de instrumentos = %d"
 
 #: lib/src/modelprint.c:664
-#, fuzzy
 msgid "Warning: convergence is questionable"
-msgstr "Aviso: Había observacións perdidas\n"
+msgstr "Aviso:  A converxencia é discutible"
 
 #: lib/src/modelprint.c:666
-#, fuzzy
 msgid "Convergence seems to be reasonably complete"
-msgstr "Tolerancia da converxencia:"
+msgstr "A converxencia semella estar razoablemente completada"
 
 #: lib/src/modelprint.c:671
 msgid "GNR: got incomplete results"
-msgstr ""
+msgstr "GNR: acadáronse resultados incompletos"
 
 #: lib/src/modelprint.c:676
 msgid "Warning: Jacobian is rank-deficient"
-msgstr ""
+msgstr "Aviso: o xacobiano é de rango deficiente"
 
 #: lib/src/modelprint.c:677
 msgid "Warning: Jacobian near to rank-deficiency"
-msgstr ""
+msgstr "Aviso: o xacobiano é de rango case deficiente"
 
 #: lib/src/modelprint.c:690
 msgid "Warning: solution is probably not unique"
@@ -4928,7 +4931,7 @@ msgstr "Duración"
 
 #: lib/src/modelprint.c:937
 msgid "NLS"
-msgstr "MC. non lineais"
+msgstr "MC non lineais"
 
 #: lib/src/modelprint.c:938
 msgid "ML"
@@ -5112,11 +5115,11 @@ msgstr "MCO restrinxidos"
 
 #: lib/src/modelprint.c:1070
 msgid "MIDAS (OLS)"
-msgstr ""
+msgstr "MIDAS (MC ordinarios)"
 
 #: lib/src/modelprint.c:1072
 msgid "MIDAS (NLS)"
-msgstr ""
+msgstr "MIDAS (MC non lineais)"
 
 #: lib/src/modelprint.c:1121
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -5231,9 +5234,8 @@ msgid "Could not compute Beck-Katz standard errors"
 msgstr "Non puideron calcularse as desviacións típicas de Beck-Katz"
 
 #: lib/src/modelprint.c:1424
-#, fuzzy
 msgid "Could not compute robust standard errors"
-msgstr "Non puideron calcularse as desviacións típicas de Beck-Katz"
+msgstr "Non puideron calcularse as desviacións típicas robustas"
 
 #: lib/src/modelprint.c:1432
 msgid "Bartlett kernel"
@@ -5845,8 +5847,8 @@ msgstr "Imaxinaria"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:5075 lib/src/modelprint.c:5083 lib/src/subsample.c:3021
-#: lib/src/subsample.c:3043 lib/src/subsample.c:3098
+#: lib/src/modelprint.c:5075 lib/src/modelprint.c:5083
+#: lib/src/subsample.c:3021 lib/src/subsample.c:3043 lib/src/subsample.c:3098
 msgid "Frequency"
 msgstr "Frecuencia"
 
@@ -5942,7 +5944,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: Agardábanse %d nomes."
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:785
-#: lib/src/monte_carlo.c:1808 lib/src/monte_carlo.c:1971 lib/src/uservar.c:1803
+#: lib/src/monte_carlo.c:1808 lib/src/monte_carlo.c:1971
+#: lib/src/uservar.c:1803
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': non é un escalar"
@@ -6090,7 +6093,7 @@ msgstr "Acadouse un axuste perfecto\n"
 
 #: lib/src/nls.c:2534
 msgid "NLS: The supplied derivatives seem to be incorrect"
-msgstr "MC. non lineais: as derivadas que se indicaron semellan incorrectas"
+msgstr "MC non lineais: as derivadas que se indicaron semellan incorrectas"
 
 #: lib/src/nls.c:2535
 #, c-format
@@ -6126,12 +6129,12 @@ msgstr ""
 
 #: lib/src/nls.c:2682 lib/src/nls.c:2783
 msgid "Invalid NLS specification"
-msgstr "Especificación incorrecta de MC. non lineais"
+msgstr "Especificación incorrecta de MC non lineais"
 
 #: lib/src/nls.c:2693 lib/src/nls.c:2795
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
-msgstr "MC. non lineais: non se acadou a converxencia logo de %d iteracións"
+msgstr "MC non lineais: non se acadou a converxencia logo de %d iteracións"
 
 #: lib/src/nls.c:2857
 msgid "Analytical derivatives cannot be used with GMM"
@@ -8520,7 +8523,7 @@ msgstr "Gretl: Mínimos cadrados non lineais"
 
 #: gui2/callbacks.c:547 gui2/callbacks.c:634
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr "MC. non lineais: Especificar a función e, se é posible, as derivadas:"
+msgstr "MC non lineais: Especificar a función e, se é posible, as derivadas:"
 
 #: gui2/callbacks.c:553 gui2/callbacks.c:649 gui2/library.c:3642
 msgid "gretl: simultaneous equations system"
@@ -8675,8 +8678,9 @@ msgstr "Aviso: A serie ten observacións perdidas"
 msgid "Couldn't access binary datafile"
 msgstr "Non puido accederse ao ficheiro de datos binario"
 
-#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3373
+#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163
+#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
+#: gui2/session.c:3373
 msgid "Display"
 msgstr "Amosar"
 
@@ -8852,8 +8856,8 @@ msgstr "Engadir ao menú"
 
 #: gui2/datafiles.c:1405 gui2/datafiles.c:1607 gui2/gpt_control.c:3809
 #: gui2/gpt_control.c:3811 gui2/gpt_control.c:3921 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756 gui2/toolbar.c:757
-#: gui2/toolbar.c:758
+#: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756
+#: gui2/toolbar.c:757 gui2/toolbar.c:758
 msgid "Help"
 msgstr "Axuda"
 
@@ -9969,41 +9973,37 @@ msgid "Monthly, annualized"
 msgstr "Mensual, convertido a anual"
 
 #: gui2/dialogs.c:6358
-#, fuzzy
 msgid "Unrestricted (U-MIDAS)"
-msgstr "Non restrinxido"
+msgstr "Non restrinxido (U-MIDAS)"
 
 #: gui2/dialogs.c:6359
-#, fuzzy
 msgid "Normalized exponential Almon"
-msgstr "Duración (exponencial)"
+msgstr "ALMON exponencial normalizado"
 
 #: gui2/dialogs.c:6360
 msgid "Normalized beta (zero last lag)"
-msgstr ""
+msgstr "Beta normalizado (último retardo nulo)"
 
 #: gui2/dialogs.c:6361
 msgid "Normalized beta (non-zero last lag)"
-msgstr ""
+msgstr "Beta normalizado (último retardo non nulo)"
 
 #: gui2/dialogs.c:6362
 msgid "Almon polynomial"
-msgstr ""
+msgstr "Polinomio de ALMON "
 
 #: gui2/dialogs.c:6385
-#, fuzzy, c-format
+#, c-format
 msgid "High-frequency regressor %s"
-msgstr "= diferenza de alta fecuencia de *%s*"
+msgstr "Regresor *%s* de alta frecuencia"
 
 #: gui2/dialogs.c:6393
-#, fuzzy
 msgid "Parameterization"
-msgstr "restrición"
+msgstr "Parametrización"
 
 #: gui2/dialogs.c:6405
-#, fuzzy
 msgid "Number of parameters"
-msgstr "Número de casos"
+msgstr "Número de parámetros"
 
 #: gui2/dialogs.c:6416 plugin/addons-i18n.c:63
 msgid "Lags"
@@ -10897,6 +10897,12 @@ msgid ""
 "on the server or you have made changes since the\n"
 "last upload."
 msgstr ""
+"Subir o paquete: Isto significa que o paquete vaise\n"
+"subir ao servidor de Gretl para a súa aceptación.\n"
+"Vostede só debera facer isto se é o autor deste\n"
+"paquete e, ou o paquete non está ainda no servidor,\n"
+"ou ben fixo cambios nel desde a derradeira vez que \n"
+"o subiu."
 
 #: gui2/fnsave.c:3754
 msgid "gretl: upload"
@@ -13156,9 +13162,8 @@ msgid "Residual _periodogram"
 msgstr "_Periodograma dos erros"
 
 #: gui2/gui_utils.c:3077
-#, fuzzy
 msgid "_MIDAS coefficients"
-msgstr "_Suma dos coeficientes"
+msgstr "Coeficientes _MIDAS"
 
 #: gui2/gui_utils.c:3087
 msgid "Residual _Q-Q plot"
@@ -13510,7 +13515,7 @@ msgstr "Calendario"
 
 #: gui2/helpfiles.c:382
 msgid "MIDAS"
-msgstr ""
+msgstr "MIDAS"
 
 #: gui2/helpfiles.c:422 gui2/textbuf.c:1982
 msgid "Index"
@@ -14462,29 +14467,24 @@ msgid "Define new variable..."
 msgstr "Definir nova variable..."
 
 #: gui2/menustate.c:518
-#, fuzzy
 msgid "Add logs..."
-msgstr "Engadir logaritmos"
+msgstr "Engadir logaritmos..."
 
 #: gui2/menustate.c:519
-#, fuzzy
 msgid "Add differences..."
-msgstr "Engadir diferenzas"
+msgstr "Engadir diferenzas..."
 
 #: gui2/menustate.c:521
-#, fuzzy
 msgid "Display components"
-msgstr "Todos os compoñentes"
+msgstr "Amosar compoñentes"
 
 #: gui2/menustate.c:522
-#, fuzzy
 msgid "Edit components"
-msgstr "Todos os compoñentes"
+msgstr "Editar compoñentes"
 
 #: gui2/menustate.c:523
-#, fuzzy
 msgid "Delete components"
-msgstr "Todos os compoñentes"
+msgstr "Eliminar compoñentes"
 
 #: gui2/menustate.c:915
 msgid "Unknown"
@@ -14671,6 +14671,7 @@ msgstr "R"
 #: gui2/selector.c:1278
 msgid "Select and right-click to edit specification"
 msgstr ""
+"Selecciona e pulsa o botón dereito do rato para editar a especificación"
 
 #: gui2/selector.c:1778 gui2/selector.c:2265
 msgid "Unrestricted"
@@ -14850,9 +14851,8 @@ msgid "Multiple precision OLS"
 msgstr "MCO de alta precisión"
 
 #: gui2/selector.c:4111
-#, fuzzy
 msgid "MIDAS regression"
-msgstr "Regresión KPSS"
+msgstr "Regresión MIDAS"
 
 #: gui2/selector.c:4121
 msgid "Weight variable"
@@ -15015,9 +15015,8 @@ msgid "Equation 2 regressors"
 msgstr "Regresores da ecuación 2"
 
 #: gui2/selector.c:4871
-#, fuzzy
 msgid "High-frequency"
-msgstr "Frecuencia"
+msgstr "Alta frecuencia"
 
 #: gui2/selector.c:4873
 msgid "Helper functions"
@@ -15400,9 +15399,8 @@ msgid "Public functions"
 msgstr "Funcións públicas"
 
 #: gui2/selector.c:7093
-#, fuzzy
 msgid "No MIDAS data were found in the current dataset"
-msgstr "Tentar engadindo ao conxunto de datos actual"
+msgstr "Non se atoparon datos MIDAS no actual conxunto de datos"
 
 #: gui2/selector.c:7269
 msgid "Select variables for logging"
@@ -15578,13 +15576,13 @@ msgstr "Editar as ordes de gráfica"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3303
-#: gui2/session.c:3341 gui2/session.c:3352
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
+#: gui2/session.c:3303 gui2/session.c:3341 gui2/session.c:3352
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3290
-#: gui2/session.c:3324 gui2/textutil.c:478
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
+#: gui2/session.c:3290 gui2/session.c:3324 gui2/textutil.c:478
 msgid "View"
 msgstr "Ver"
 
@@ -16627,13 +16625,12 @@ msgid "last observation"
 msgstr "última observación"
 
 #: gui2/varinfo.c:418
-#, fuzzy
 msgid "specific day in week"
-msgstr "A especificación é axeitada"
+msgstr "día específico da semana"
 
 #: gui2/varinfo.c:419
 msgid "spead (MIDAS)"
-msgstr ""
+msgstr "spead (MIDAS)"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"
@@ -17040,7 +17037,8 @@ msgid "No worksheets found"
 msgstr "Non se atoparon follas de traballo"
 
 #: plugin/excel_import.c:1609 plugin/gnumeric_import.c:686
-#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140 plugin/xlsx_import.c:1200
+#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140
+#: plugin/xlsx_import.c:1200
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento incorrecto para a importación dunha folla de cálculo"
 
@@ -17912,9 +17910,8 @@ msgid "Statistics/transformations"
 msgstr "Estatísticas/transformacións"
 
 #: doc/commands/matfuncs.c:49
-#, fuzzy
 msgid "Decoration"
-msgstr "Duración"
+msgstr "Decoración"
 
 #~ msgid "Upload function package"
 #~ msgstr "Subir paquete de función ao servidor"
