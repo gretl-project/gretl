@@ -6048,29 +6048,82 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the right nullspace of <argname>A</argname>, via the
-	  singular value decomposition: the result is a matrix
-	  <math>B</math> such that the product <math>AB</math> is a zero
-	  matrix, except when <argname>A</argname> has full column rank,
-	  in which case an empty matrix is returned. Otherwise, if
-	  <argname>A</argname> is <by r="m" c="n"/>,
-	  <math>B</math> will be <math>n</math> by (<math>n</math> &minus;
-	  <math>r</math>), where <math>r</math> is the rank of
-	  <argname>A</argname>. 
+	  Computes the right nullspace of <argname>A</argname>, via
+	  the singular value decomposition: the result is a matrix
+	  <math>B</math> such that the product <math>AB</math> is a
+	  zero matrix, except when <argname>A</argname> has full
+	  column rank, in which case an empty matrix is
+	  returned. Otherwise, if <argname>A</argname> is <by r="m"
+	  c="n"/>, <math>B</math> will be <math>n</math> by
+	  (<math>n</math> &minus; <math>r</math>), where
+	  <math>r</math> is the rank of <argname>A</argname>.
+	</para>
+	<para context="notex">
+	  If <argname>A</argname> has not full column rank, then
+	  the vertical concatenation of <argname>A</argname> and
+	  the transpose of <argname>B</argname> produces a full
+	  rank matrix.
 	</para>
 	<para context="tex">
 	  Computes the right nullspace of <argname>A</argname>, via the
 	  singular value decomposition: the result is a matrix $B$ such
-	  that $AB = [0]$, except when $A$ has full column rank, in which
+	  that
+	  \begin{itemize}
+	  \item $AB = [0]$, except when $A$ has full column rank, in which
 	  case an empty matrix is returned. Otherwise, if $A$ is $m \times
 	  n$, $B$ will be an $n \times (n-r)$ matrix, where $r$ is the
 	  rank of $A$.  
+	  \item If $A$ has not full column rank, then the vertical
+	  concatenation of $A$ and $B'$ produces a full rank matrix.
+	  \end{itemize}
 	</para>
-	<para>
-	  <seelist>
-            <fncref targ="rank"/>
-            <fncref targ="svd"/>
-	  </seelist>
+    <para>
+        Example:
+    </para>
+    <code>
+      A = mshape(seq(1,6),2,3)
+      B = nullspace(A)
+      C = A | B'
+
+      print A B C
+
+      eval A*B
+      eval rank(C)
+    </code>
+    <para>
+        Produces
+    </para>
+    <code>
+      ? print A B C
+      A (2 x 3)
+
+      1   3   5 
+      2   4   6 
+
+      B (3 x 1)
+
+      -0.5 
+         1 
+      -0.5 
+
+      C (3 x 3)
+
+         1      3      5 
+         2      4      6 
+      -0.5      1   -0.5 
+
+      ? eval A*B
+      -4.4409e-16 
+      -4.4409e-16 
+
+      ? eval rank(C)
+      3
+    </code>
+    <para>
+      <seelist>
+        <fncref targ="rank"/>
+        <fncref targ="svd"/>
+      </seelist>
 	</para>
       </description>
     </function>
