@@ -5757,7 +5757,7 @@
       </fnargs>
       <description>
     <para context="notex">
-      Calcola lo spazio nullo a destra di <argname>A</argname>
+      Calcola lo spazio nullo destro di <argname>A</argname>
       usando la scomposizione a valori singolari (SVD); il
       risultato è una matrice <math>B</math> tale che il prodotto
       <math>AB</math> è una matrice nulla, tranne quando
@@ -5768,15 +5768,68 @@
       <math>r</math>), dove <math>r</math> è il rango di
       <argname>A</argname>.
     </para>
+    <para context="notex">
+      Se il rango colonna di <argname>A</argname> non è pieno, la
+      concatenazione verticale di <argname>A</argname> e
+      <argname>B</argname> trasposto produce una matrice di rango
+      pieno.
+    </para>
     <para context="tex">
       Calcola lo spazio nullo a destra di <argname>A</argname>,
       usando la scomposizione a valori singolari: il risultato è
-      una matrice $B$ tale che $AB=[0]$, tranne quando $A$ è di
-      rango colonna pieno, caso in cui viene restituita una
-      matrice vuota. In caso contrario, se $A$ è $m \times n$, $B$
-      sarà una matrice $n \times (n-r)$, dove $r$ è il rango di
-      $A$.
+      una matrice $B$ tale che
+      \begin{itemize}
+      \item $AB=[0]$, tranne quando $A$ è di rango colonna pieno, caso
+      in cui viene restituita una matrice vuota. In caso contrario, se
+      $A$ è $m \times n$, $B$ sarà una matrice $n \times (n-r)$, dove
+      $r$ è il rango di $A$.
+      \item Se il rango colonna di $A$ non è pieno, la
+      concatenzaione verticale di $A$ e $B'$ produce una matrice di rango
+      pieno.
+      \end{itemize}
     </para>
+    <para>
+        Esempio:
+    </para>
+    <code>
+      A = mshape(seq(1,6),2,3)
+      B = nullspace(A)
+      C = A | B'
+
+      print A B C
+
+      eval A*B
+      eval rank(C)
+    </code>
+    <para>
+        produce
+    </para>
+    <code>
+      ? print A B C
+      A (2 x 3)
+
+      1   3   5 
+      2   4   6 
+
+      B (3 x 1)
+
+      -0.5 
+         1 
+      -0.5 
+
+      C (3 x 3)
+
+         1      3      5 
+         2      4      6 
+      -0.5      1   -0.5 
+
+      ? eval A*B
+      -4.4409e-16 
+      -4.4409e-16 
+
+      ? eval rank(C)
+      3
+    </code>
     <para>
       <seelist>
         <fncref targ="rank"/>
