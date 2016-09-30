@@ -6059,7 +6059,7 @@
 	  <math>r</math> is the rank of <argname>A</argname>.
 	</para>
 	<para context="notex">
-	  If <argname>A</argname> has not full column rank, then
+	  If <argname>A</argname> is not of full column rank, then
 	  the vertical concatenation of <argname>A</argname> and
 	  the transpose of <argname>B</argname> produces a full
 	  rank matrix.
@@ -6073,7 +6073,7 @@
 	  case an empty matrix is returned. Otherwise, if $A$ is $m \times
 	  n$, $B$ will be an $n \times (n-r)$ matrix, where $r$ is the
 	  rank of $A$.  
-	  \item If $A$ has not full column rank, then the vertical
+	  \item If $A$ is not of full column rank, then the vertical
 	  concatenation of $A$ and $B'$ produces a full rank matrix.
 	  \end{itemize}
 	</para>
