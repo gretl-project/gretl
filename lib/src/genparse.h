@@ -368,7 +368,6 @@ enum {
     F_KSIMDATA,
     F_HFDIFF,
     F_HFLDIFF,
-    HF_BNEXP,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

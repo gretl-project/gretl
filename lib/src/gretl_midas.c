@@ -453,7 +453,7 @@ static int parse_midas_term (const char *s,
     char lname[VNAMELEN];
     char mname[VNAMELEN];
     char fmt[48];
-    int n, m1, m2, p;
+    int ns, p1, p2, type;
     int umidas = 0;
     int err = 0;
 
@@ -464,10 +464,10 @@ static int parse_midas_term (const char *s,
 	s += 4;
 	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%d, %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1);
-	n = sscanf(s, fmt, lname, &m1, &m2, &p, mname);
-	if (n == 4 && p == MIDAS_U) {
+	ns = sscanf(s, fmt, lname, &p1, &p2, &type, mname);
+	if (ns == 4 && type == MIDAS_U) {
 	    umidas = 1;
-	} else if (n != 5) {
+	} else if (ns != 5) {
 	    err = E_PARSE;
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
@@ -476,13 +476,13 @@ static int parse_midas_term (const char *s,
 	s += 5;
 	sprintf(fmt, "%%%d[^, ] , %%d, %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1);
-	n = sscanf(s, fmt, lname, &p, mname);
-	if (n == 2 && p == MIDAS_U) {
+	ns = sscanf(s, fmt, lname, &type, mname);
+	if (ns == 2 && type == MIDAS_U) {
 	    umidas = 1;
-	} else if (n != 3) {
+	} else if (ns != 3) {
 	    err = E_PARSE;
 	}
-	m1 = m2 = 0; /* got no min/max info */
+	p1 = p2 = 0; /* got no min/max info */
     } else {
 	err = E_INVARG;
     }
@@ -496,7 +496,7 @@ static int parse_midas_term (const char *s,
 	    theta = get_matrix_by_name(mname);
 	    if (theta == NULL) {
 		mt->flags |= M_AUTO;
-		theta = make_auto_theta(mname, i, p, 0, m1, m2);
+		theta = make_auto_theta(mname, i, type, 0, p1, p2);
 	    }
 	}
 
@@ -505,20 +505,20 @@ static int parse_midas_term (const char *s,
 	} else if (!prelag(mt) && !gretl_is_midas_list(list, dset)) {
 	    gretl_errmsg_set("mds(): the first term must be a MIDAS list");
 	    err = E_INVARG;
-	} else if (m1 > m2) {
+	} else if (p1 > p2) {
 	    err = E_INVARG;
-	} else if (p < 0 || p >= MIDAS_MAX) {
+	} else if (type < 0 || type >= MIDAS_MAX) {
 	    err = E_INVARG;
 	} else if (umidas) {
 	    if (prelag(mt)) {
 		k = list[0];
 	    } else {
-		k = m2 - m1 + 1;
+		k = p2 - p1 + 1;
 	    }
 	} else {
 	    k = gretl_vector_get_length(theta);
-	    if (k < 1 || (p == MIDAS_BETA0 && k != 2) ||
-		(p == MIDAS_BETAN && k != 3)) {
+	    if (k < 1 || (type == MIDAS_BETA0 && k != 2) ||
+		(type == MIDAS_BETAN && k != 3)) {
 		err = E_INVARG;
 	    }
 	}
@@ -533,10 +533,10 @@ static int parse_midas_term (const char *s,
 		/* scrounge lag info from incoming list */
 		lag_info_from_prelag_list(mt, list, dset);
 	    } else {
-		mt->minlag = m1;
-		mt->maxlag = m2;
+		mt->minlag = p1;
+		mt->maxlag = p2;
 	    }
-	    mt->type = p;
+	    mt->type = type;
 	    mt->nparm = k;
 	    mt->theta = theta;
 	}
@@ -1100,7 +1100,7 @@ static int midas_beta_init (midas_info *mi)
 	if (best_idx >= 0) {
 	    mi->theta->val[0] = theta[best_idx][0];
 	    mi->theta->val[1] = theta[best_idx][1];
-#if 1
+#if 0
 	    fprintf(stderr, "best_idx = %d, SSRmin=%g\n",
 		    best_idx, SSRmin);
 	    gretl_matrix_print(mi->theta, "best theta");

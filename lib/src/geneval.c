@@ -1522,42 +1522,6 @@ static NODE *DW_node (NODE *r, parser *p)
     return ret;
 }
 
-/* Hidden function for internal use with midasreg: given
-   the vector of hyper-parameters for the three-parameter
-   beta specification (with non-zero last lag), return a
-   vector in which the first two elements are run through
-   exp() but the third is either left alone (if rval is 0)
-   or set to 1.0 (if rval is non-zero). 
-*/
-
-static NODE *bnexp_node (NODE *l, NODE *r, parser *p)
-{
-    gretl_matrix *m = l->v.m;
-    NODE *ret = NULL;
-
-    if (gretl_vector_get_length(m) != 3) {
-	p->err = E_NONCONF;
-    } else {
-	int rval = node_get_int(r, p);
-	
-	ret = aux_matrix_node(p);
-	if (!p->err) {
-	    ret->v.m = gretl_matrix_copy(m);
-	    if (ret->v.m == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		ret->v.m->val[0] = exp(m->val[0]);
-		ret->v.m->val[1] = exp(m->val[1]);
-		if (rval != 0) {
-		    ret->v.m->val[2] = 1.0;
-		}
-	    }
-	}
-    }
-
-    return ret;
-}
-
 static NODE *eval_urcpval (NODE *n, parser *p)
 {
     NODE *ret = NULL;
@@ -13076,15 +13040,6 @@ static NODE *eval (NODE *t, parser *p)
 			    l_ok ? r : l, p);
 	} else {
 	    ret = stringify_series(l, r, p);
-	}
-	break;
-    case HF_BNEXP:
-	if (l->t != MAT) {
-	    node_type_error(t->t, 1, MAT, l, p);
-	} else if (r->t != NUM) {
-	    node_type_error(t->t, 2, NUM, r, p);
-	} else {
-	    ret = bnexp_node(l, r, p);
 	}
 	break;
     default: 
