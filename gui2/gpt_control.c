@@ -1045,7 +1045,7 @@ static void pre_test_plot_buffer (const char *buf,
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause)
 {
-    FILE *fp = gretl_fopen(fname, "w");
+    FILE *fp = gretl_fopen(fname, "wb");
     int putterm = addpause;
     int wxt_ok = 0;
 
@@ -1082,20 +1082,28 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 #ifdef G_OS_WIN32
 
-static void real_send_to_gp (const char *fname, int persist)
+static int real_send_to_gp (const char *fname, int persist)
 {
+    UINT retval;
     gchar *cmd;
     int err;
 
     cmd = g_strdup_printf("\"%s\" \"%s\"", 
 			  gretl_gnuplot_path(), 
 			  fname);
-    err = (WinExec(cmd, SW_SHOWNORMAL) < 32);
+    retval = WinExec(cmd, SW_SHOWNORMAL);
+    err = (retval < 32);
+    if (err) {
+	fprintf(stderr, "real_send_to_gp: retval=%d, cmd='%s'\n",
+		(int) retval, cmd);
+    }
     g_free(cmd);
 
     if (err) {
 	win_show_last_error();
     }
+
+    return err;
 }
 
 #else
@@ -1120,7 +1128,7 @@ static void gnuplot_done (GPid pid, gint status, gpointer p)
     g_spawn_close_pid(pid);
 }
 
-static void real_send_to_gp (const char *fname, int persist)
+static int real_send_to_gp (const char *fname, int persist)
 {
     const char *gp = gretl_gnuplot_path();
     GError *error = NULL;
@@ -1128,6 +1136,7 @@ static void real_send_to_gp (const char *fname, int persist)
     GPid pid = 0;
     gint fd = -1;
     gboolean run;
+    int err = 0;
 
     argv[0] = g_strdup(gp);
     argv[1] = g_strdup(fname);
@@ -1144,8 +1153,10 @@ static void real_send_to_gp (const char *fname, int persist)
     if (error != NULL) {
 	errbox(error->message);
 	g_error_free(error);
+	err = 1;
     } else if (!run) {
 	errbox(_("gnuplot command failed"));
+	err = 1;
     } else if (pid > 0) {
 	gpointer p = fd > 0 ? GINT_TO_POINTER(fd) : NULL;
 
@@ -1155,6 +1166,8 @@ static void real_send_to_gp (const char *fname, int persist)
     g_free(argv[0]);
     g_free(argv[1]);
     g_free(argv[2]);
+
+    return err;
 }
 
 #endif
@@ -1174,14 +1187,6 @@ void run_gnuplot_script (gchar *buf)
 	real_send_to_gp(tmpfile, 1);
     }
 
-    /* don't remove the temp script before gnuplot has
-       had a chance to read it */
-#ifdef G_OS_WIN32
-    Sleep(1000);
-#else
-    sleep(1);
-#endif
-    gretl_remove(tmpfile);
     g_free(tmpfile);
 }
 
