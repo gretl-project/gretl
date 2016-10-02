@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-23 13:14-0400\n"
+"POT-Creation-Date: 2016-10-02 16:01-0400\n"
 "PO-Revision-Date: 2016-04-21 19:23-0400\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
@@ -426,7 +426,7 @@ msgstr "Обобщение на бутстрап интервала на дов�
 msgid "Numerical summary for %s"
 msgstr "Обобощение за  %s"
 
-#: lib/src/boxplots.c:290 gui2/gpt_control.c:3840 gui2/gpt_control.c:3918
+#: lib/src/boxplots.c:290 gui2/gpt_control.c:3845 gui2/gpt_control.c:3923
 msgid "Numerical summary"
 msgstr "Обобщение"
 
@@ -1541,7 +1541,7 @@ msgstr "Не са намерени подходящи редове"
 msgid "Out of memory!"
 msgstr "Недостатъчна памет!"
 
-#: lib/src/dbread.c:1757 lib/src/geneval.c:7744
+#: lib/src/dbread.c:1757 lib/src/geneval.c:7708
 #: lib/src/gretl_string_table.c:903 lib/src/interact.c:1202
 #: lib/src/interact.c:2205 cli/gretlcli.c:879 cli/gretlcli-mpi.c:568
 #, fuzzy
@@ -1553,8 +1553,8 @@ msgid "Invalid null sample"
 msgstr "Невалидна празна извадка"
 
 #: lib/src/dbread.c:2044 lib/src/gretl_errors.c:578
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293 lib/src/options.c:1296
-#: lib/src/options.c:1307
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293 lib/src/options.c:1297
+#: lib/src/options.c:1308
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Използването на аргумента '%s' в дадената команда е недопустимо"
@@ -1651,7 +1651,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "Матрицата %s не представлява таблица на контингенцията"
 
 #: lib/src/describe.c:2840 lib/src/describe.c:3025 lib/src/describe.c:3573
-#: lib/src/geneval.c:6556 lib/src/transforms.c:837 lib/src/transforms.c:1379
+#: lib/src/geneval.c:6520 lib/src/transforms.c:837 lib/src/transforms.c:1379
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -2105,7 +2105,7 @@ msgstr "Критерий на Лилифорс"
 msgid "Test for normality of %s:"
 msgstr "Критерий за проверка на нормално разпределение на %s:"
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:8200 lib/src/gretl_list.c:1668
+#: lib/src/discrete.c:1191 lib/src/geneval.c:8164 lib/src/gretl_list.c:1668
 #: lib/src/interact.c:1870
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2319,26 +2319,26 @@ msgstr "Променена променлива %s (ID %d)"
 msgid "Generated series %s (ID %d)"
 msgstr "Създадена е променлива %s (ID %d)"
 
-#: lib/src/geneval.c:2033 lib/src/gretl_foreign.c:102
+#: lib/src/geneval.c:1997 lib/src/gretl_foreign.c:102
 #, fuzzy
 msgid "MPI is not supported in this gretl build"
 msgstr "%s: кодировката не се поддържа от системата"
 
-#: lib/src/geneval.c:2043
+#: lib/src/geneval.c:2007
 msgid "The MPI library is not loaded"
 msgstr ""
 
-#: lib/src/geneval.c:2297
+#: lib/src/geneval.c:2261
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "невалидна област '%s'"
 
-#: lib/src/geneval.c:2626 lib/src/usermat.c:811
+#: lib/src/geneval.c:2590 lib/src/usermat.c:811
 #, fuzzy
 msgid "Matrix is not symmetric"
 msgstr "Матрицата не положително определена"
 
-#: lib/src/geneval.c:3058 lib/src/geneval.c:7227
+#: lib/src/geneval.c:3022 lib/src/geneval.c:7191
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2347,12 +2347,12 @@ msgstr ""
 "Броят на аргументите (%d) не съответства на броя на\n"
 "параметрите във функцията %s (%d)"
 
-#: lib/src/geneval.c:4967 lib/src/geneval.c:5041
+#: lib/src/geneval.c:4931 lib/src/geneval.c:5005
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Поредният номер на променливата %d излиза извън границите"
 
-#: lib/src/geneval.c:5035 lib/src/geneval.c:14990 lib/src/gretl_array.c:361
+#: lib/src/geneval.c:4999 lib/src/geneval.c:14945 lib/src/gretl_array.c:361
 #: lib/src/gretl_array.c:406 lib/src/gretl_array.c:451
 #: lib/src/gretl_array.c:495 lib/src/usermat.c:121 lib/src/usermat.c:207
 #: lib/src/usermat.c:540
@@ -2360,131 +2360,131 @@ msgstr "Поредният номер на променливата %d изли�
 msgid "Index value %d is out of bounds"
 msgstr "Значението на индекса %d излиза извън допустимите граници"
 
-#: lib/src/geneval.c:7017
+#: lib/src/geneval.c:6981
 msgid "Matrix specification is not coherent"
 msgstr "Неправилно описание на матрицата"
 
-#: lib/src/geneval.c:7216
+#: lib/src/geneval.c:7180
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "Матрицата %s не представлява таблица на контингенцията"
 
-#: lib/src/geneval.c:7242
+#: lib/src/geneval.c:7206
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10603
+#: lib/src/geneval.c:10567
 #, fuzzy
 msgid "array: no type was specified"
 msgstr "%s: системата не е дефинирана"
 
-#: lib/src/geneval.c:11298
+#: lib/src/geneval.c:11262
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': неправилен аргумент за %s()\n"
 
-#: lib/src/geneval.c:11349 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:11313 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: няма такава единица\n"
 
-#: lib/src/geneval.c:11705
+#: lib/src/geneval.c:11669
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: недостатъчни аргументи"
 
-#: lib/src/geneval.c:11707
+#: lib/src/geneval.c:11671
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: недправилен тип на аргумента %s"
 
-#: lib/src/geneval.c:11710
+#: lib/src/geneval.c:11674
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: аргумент %d: неправилен  тип  %s"
 
-#: lib/src/geneval.c:11720
+#: lib/src/geneval.c:11684
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: операндът трябва да е %s"
 
-#: lib/src/geneval.c:11723
+#: lib/src/geneval.c:11687
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: операндът %d трябва да е %s"
 
-#: lib/src/geneval.c:11728
+#: lib/src/geneval.c:11692
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: аргументът трябва да е %s"
 
-#: lib/src/geneval.c:11731
+#: lib/src/geneval.c:11695
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: аргументът %d трябва да е %s"
 
-#: lib/src/geneval.c:11737
+#: lib/src/geneval.c:11701
 #, c-format
 msgid ", is %s"
 msgstr ", е  %s"
 
-#: lib/src/geneval.c:13689 lib/src/genlex.c:847
+#: lib/src/geneval.c:13644 lib/src/genlex.c:846
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Символът  '%c'  не отговаря на контекста\n"
 
-#: lib/src/geneval.c:13798 lib/src/genlex.c:893 lib/src/genlex.c:963
+#: lib/src/geneval.c:13753 lib/src/genlex.c:892 lib/src/genlex.c:962
 #: lib/src/gensyntax.c:263 lib/src/tokenize.c:3246 lib/src/tokenize.c:3264
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "Несъвпадение  '%c'\n"
 
-#: lib/src/geneval.c:13859
+#: lib/src/geneval.c:13814
 #, fuzzy, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "Променливата %s е от вид %s"
 
-#: lib/src/geneval.c:13863
+#: lib/src/geneval.c:13818
 #, fuzzy, c-format
 msgid "A variable of type %s is not acceptable in context"
 msgstr "Променливата %s е от вид %s"
 
-#: lib/src/geneval.c:14063
+#: lib/src/geneval.c:14018
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': името е твърде дълго (максимум %d  символа) \n"
 
-#: lib/src/geneval.c:14185
+#: lib/src/geneval.c:14140
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : не може да се използва при матрици"
 
-#: lib/src/geneval.c:14192
+#: lib/src/geneval.c:14147
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : не е приложим за списъци"
 
-#: lib/src/geneval.c:14199
+#: lib/src/geneval.c:14154
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : не е приложимо за редове"
 
-#: lib/src/geneval.c:14206
+#: lib/src/geneval.c:14161
 #, fuzzy, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : не може да се използва при матрици"
 
-#: lib/src/geneval.c:14213 lib/src/geneval.c:14227
+#: lib/src/geneval.c:14168 lib/src/geneval.c:14182
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : не е приложимо за този тип"
 
-#: lib/src/geneval.c:14220
+#: lib/src/geneval.c:14175
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : приложимо само за матрици"
 
-#: lib/src/geneval.c:15891
+#: lib/src/geneval.c:15846
 msgid "Bare declarations are not allowed here"
 msgstr "Операцията не е допустима"
 
@@ -2604,49 +2604,49 @@ msgstr "няма"
 msgid "other"
 msgstr "друг"
 
-#: lib/src/genlex.c:824
+#: lib/src/genlex.c:823
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: няма такъв обект"
 
-#: lib/src/genlex.c:826
+#: lib/src/genlex.c:825
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "Символът '%s' не е определен"
 
-#: lib/src/genlex.c:836 lib/src/genlex.c:838
+#: lib/src/genlex.c:835 lib/src/genlex.c:837
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': не са посочени аргументи"
 
-#: lib/src/genlex.c:849
+#: lib/src/genlex.c:848
 msgid "(for logical AND, use '&&')\n"
 msgstr "(за логическо И използвайте '&&')\n"
 
-#: lib/src/genlex.c:851
+#: lib/src/genlex.c:850
 msgid "(for logical OR, use '||')\n"
 msgstr "(за логическо ИЛИ използвайте '||')\n"
 
-#: lib/src/genlex.c:857
+#: lib/src/genlex.c:856
 #, fuzzy
 msgid "Incomplete expression\n"
 msgstr "Не са запълнени всички полета"
 
-#: lib/src/genlex.c:862
+#: lib/src/genlex.c:861
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Символът  '%s' не съответства на контекста \n"
 
-#: lib/src/genlex.c:960
+#: lib/src/genlex.c:959
 msgid "Empty observation []\n"
 msgstr "Празно наблюдение[]\n"
 
-#: lib/src/genlex.c:1744
+#: lib/src/genlex.c:1743
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Неправилен символ '%c'\n"
 
-#: lib/src/genlex.c:1746
+#: lib/src/genlex.c:1745
 #, fuzzy, c-format
 msgid "Unexpected byte 0x%x\n"
 msgstr "очаквани %s, но намерени %s"
@@ -3080,36 +3080,36 @@ msgstr "изпълнени са %d итерации \n"
 msgid "norm of gradient = %g"
 msgstr "Норма на градиента = %g"
 
-#: lib/src/gretl_bfgs.c:1837 lib/src/modelprint.c:3229
+#: lib/src/gretl_bfgs.c:1851 lib/src/modelprint.c:3229
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr "Оценка на функцията: %d\n"
 
-#: lib/src/gretl_bfgs.c:1838 lib/src/modelprint.c:3230
+#: lib/src/gretl_bfgs.c:1852 lib/src/modelprint.c:3230
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "Оценка на градиента: %d\n"
 
-#: lib/src/gretl_bfgs.c:2172
+#: lib/src/gretl_bfgs.c:2186
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
 msgstr "Градиент в допустимостта (%g)\n"
 
-#: lib/src/gretl_bfgs.c:2176
+#: lib/src/gretl_bfgs.c:2190
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
 msgstr "Успешни значения на критерия в областта на допустимост (%g)\n"
 
-#: lib/src/gretl_bfgs.c:2181
+#: lib/src/gretl_bfgs.c:2195
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
 msgstr "ВНИМАНИЕ: Неуспешно подобряване на критерия (градиент = %g)\n"
 
-#: lib/src/gretl_bfgs.c:2184
+#: lib/src/gretl_bfgs.c:2198
 msgid "Warning: couldn't improve criterion\n"
 msgstr "ВНИМАНИЕ: Неуспешно подобряване на критерия\n"
 
-#: lib/src/gretl_bfgs.c:2395
+#: lib/src/gretl_bfgs.c:2409
 msgid "Initial value of objective function is not finite"
 msgstr "Началното значение на функцията не е крайно"
 
@@ -6445,22 +6445,22 @@ msgstr ""
 "модел, \n"
 "който беше оценен преди това\n"
 
-#: lib/src/options.c:1184 lib/src/options.c:1217
+#: lib/src/options.c:1185 lib/src/options.c:1218
 #, fuzzy, c-format
 msgid "%s: invalid option argument"
 msgstr "%s: недправилен тип на аргумента %s"
 
-#: lib/src/options.c:1223 lib/src/tokenize.c:1059
+#: lib/src/options.c:1224 lib/src/tokenize.c:1059
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Опцията  '--%s'  предполага посочване на параметър"
 
-#: lib/src/options.c:1700
+#: lib/src/options.c:1701
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "ВНИМАНИЕ: опцията %s се игнорира извън цикъла"
 
-#: lib/src/options.c:1810
+#: lib/src/options.c:1811
 #, fuzzy, c-format
 msgid "%s: inapplicable option"
 msgstr "Несъвместими опции"
@@ -8865,7 +8865,7 @@ msgid "Execute"
 msgstr "Изпълни"
 
 #: gui2/datafiles.c:1391 gui2/datafiles.c:1601 gui2/gpt_control.c:281
-#: gui2/gpt_control.c:3842 gui2/gpt_control.c:3919 gui2/session.c:190
+#: gui2/gpt_control.c:3847 gui2/gpt_control.c:3924 gui2/session.c:190
 #: gui2/session.c:196 gui2/session.c:206 gui2/session.c:3298
 #: gui2/session.c:3337 gui2/session.c:3350
 msgid "Edit"
@@ -8879,8 +8879,8 @@ msgstr ""
 msgid "Add to menu"
 msgstr "Добави към менюто"
 
-#: gui2/datafiles.c:1405 gui2/datafiles.c:1607 gui2/gpt_control.c:3809
-#: gui2/gpt_control.c:3811 gui2/gpt_control.c:3921 gui2/session.c:165
+#: gui2/datafiles.c:1405 gui2/datafiles.c:1607 gui2/gpt_control.c:3814
+#: gui2/gpt_control.c:3816 gui2/gpt_control.c:3926 gui2/session.c:165
 #: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756 gui2/toolbar.c:757
 #: gui2/toolbar.c:758
 msgid "Help"
@@ -11067,7 +11067,7 @@ msgstr "По-малък"
 msgid "Copy"
 msgstr "Копирай"
 
-#: gui2/gpt_control.c:280 gui2/gpt_control.c:3832 gui2/gpt_control.c:3915
+#: gui2/gpt_control.c:280 gui2/gpt_control.c:3837 gui2/gpt_control.c:3920
 msgid "Display PDF"
 msgstr "Покажи PDF"
 
@@ -11080,135 +11080,135 @@ msgstr "Прозорец"
 msgid " Click to set position"
 msgstr "Натиснете за задаване на позиция"
 
-#: gui2/gpt_control.c:1148
+#: gui2/gpt_control.c:1158
 msgid "gnuplot command failed"
 msgstr "командата gnuplot не е изпълнена"
 
-#: gui2/gpt_control.c:1219 gui2/gpt_control.c:1300
+#: gui2/gpt_control.c:1224 gui2/gpt_control.c:1305
 msgid "Gnuplot error creating graph"
 msgstr "Грешка на приожението Gnuplot при създаване на графиката"
 
-#: gui2/gpt_control.c:2645
+#: gui2/gpt_control.c:2650
 msgid "Plot file is corrupted"
 msgstr "Файлът с графиката е повреден"
 
-#: gui2/gpt_control.c:3395
+#: gui2/gpt_control.c:3400
 msgid "Couldn't access graph info"
 msgstr "Няма достъп до информацията за графиката"
 
-#: gui2/gpt_control.c:3552 gui2/gpt_control.c:3862 gui2/graphics.c:240
+#: gui2/gpt_control.c:3557 gui2/gpt_control.c:3867 gui2/graphics.c:240
 #: gui2/graph_page.c:684
 msgid "monochrome"
 msgstr "черно-бяла"
 
-#: gui2/gpt_control.c:3556 gui2/gpt_control.c:3898 gui2/gpt_control.c:3904
+#: gui2/gpt_control.c:3561 gui2/gpt_control.c:3903 gui2/gpt_control.c:3909
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Съхрани като Windows метафайл (EMF)..."
 
-#: gui2/gpt_control.c:3563 gui2/gpt_control.c:3828 gui2/gpt_control.c:3906
+#: gui2/gpt_control.c:3568 gui2/gpt_control.c:3833 gui2/gpt_control.c:3911
 #: gui2/menustate.c:501
 msgid "Copy to clipboard"
 msgstr "Копирай в буфера"
 
-#: gui2/gpt_control.c:3565 gui2/gpt_control.c:3913
+#: gui2/gpt_control.c:3570 gui2/gpt_control.c:3918
 msgid "Print"
 msgstr "Печат"
 
-#: gui2/gpt_control.c:3586
+#: gui2/gpt_control.c:3591
 msgid "roots (real, imaginary, modulus, frequency)"
 msgstr "корени (рационални, нерационални, модули, честоти)"
 
-#: gui2/gpt_control.c:3623
+#: gui2/gpt_control.c:3628
 msgid "roots"
 msgstr "корени"
 
-#: gui2/gpt_control.c:3645
+#: gui2/gpt_control.c:3650
 msgid "gretl: boxplot data"
 msgstr "gretl: данни за диаграма правоъгълник (boxplot)"
 
-#: gui2/gpt_control.c:3784
+#: gui2/gpt_control.c:3789
 msgid " Drag to define zoom rectangle"
 msgstr "Определете участък за мащабиране"
 
-#: gui2/gpt_control.c:3795 gui2/gpt_control.c:3896
+#: gui2/gpt_control.c:3800 gui2/gpt_control.c:3901
 msgid "Add another curve..."
 msgstr "Добави друга крива..."
 
-#: gui2/gpt_control.c:3797 gui2/gpt_control.c:3900
+#: gui2/gpt_control.c:3802 gui2/gpt_control.c:3905
 msgid "Save as PNG..."
 msgstr "Съхрани като PNG..."
 
-#: gui2/gpt_control.c:3801 gui2/gpt_control.c:3902
+#: gui2/gpt_control.c:3806 gui2/gpt_control.c:3907
 msgid "Save as PDF..."
 msgstr "Съхрани като PDF..."
 
-#: gui2/gpt_control.c:3804 gui2/gpt_control.c:3901
+#: gui2/gpt_control.c:3809 gui2/gpt_control.c:3906
 msgid "Save as postscript (EPS)..."
 msgstr "Съхрани като postscript (EPS)..."
 
-#: gui2/gpt_control.c:3807 gui2/gpt_control.c:3907 gui2/toolbar.c:220
+#: gui2/gpt_control.c:3812 gui2/gpt_control.c:3912 gui2/toolbar.c:220
 msgid "Save to session as icon"
 msgstr "Съхрани сесията като икона"
 
-#: gui2/gpt_control.c:3813 gui2/gpt_control.c:3908
+#: gui2/gpt_control.c:3818 gui2/gpt_control.c:3913
 msgid "Freeze data labels"
 msgstr "Фиксирай имената на данните"
 
-#: gui2/gpt_control.c:3816 gui2/gpt_control.c:3910
+#: gui2/gpt_control.c:3821 gui2/gpt_control.c:3915
 msgid "Clear data labels"
 msgstr "Очисти заглавията на данните"
 
-#: gui2/gpt_control.c:3818 gui2/gpt_control.c:3909
+#: gui2/gpt_control.c:3823 gui2/gpt_control.c:3914
 msgid "All data labels"
 msgstr "Покажи всички имена на данните"
 
-#: gui2/gpt_control.c:3820 gui2/gpt_control.c:3911
+#: gui2/gpt_control.c:3825 gui2/gpt_control.c:3916
 msgid "Zoom..."
 msgstr "Машаб"
 
-#: gui2/gpt_control.c:3822 gui2/gpt_control.c:3926
+#: gui2/gpt_control.c:3827 gui2/gpt_control.c:3931
 msgid "Restore full view"
 msgstr "Възстанови изходния мащаб"
 
-#: gui2/gpt_control.c:3824 gui2/gpt_control.c:3927
+#: gui2/gpt_control.c:3829 gui2/gpt_control.c:3932
 msgid "Replace full view"
 msgstr "Замени изходния мащаб"
 
-#: gui2/gpt_control.c:3834 gui2/gpt_control.c:3916
+#: gui2/gpt_control.c:3839 gui2/gpt_control.c:3921
 msgid "OLS estimates"
 msgstr "Оценки с МНМК"
 
-#: gui2/gpt_control.c:3838 gui2/gpt_control.c:3917
+#: gui2/gpt_control.c:3843 gui2/gpt_control.c:3922
 msgid "Numerical values"
 msgstr "Числови значения"
 
-#: gui2/gpt_control.c:3844 gui2/gpt_control.c:3920
+#: gui2/gpt_control.c:3849 gui2/gpt_control.c:3925
 msgid "Font"
 msgstr "Шрифта"
 
-#: gui2/gpt_control.c:3846 gui2/gpt_control.c:3922 gui2/gpt_control.c:3928
+#: gui2/gpt_control.c:3851 gui2/gpt_control.c:3927 gui2/gpt_control.c:3933
 #: gui2/gui_utils.c:1896
 msgid "Close"
 msgstr "Затвори"
 
-#: gui2/gpt_control.c:3861 gui2/gpt_dialog.c:2807 gui2/graphics.c:236
+#: gui2/gpt_control.c:3866 gui2/gpt_dialog.c:2807 gui2/graphics.c:236
 #: gui2/graph_page.c:683
 msgid "color"
 msgstr "цвят"
 
-#: gui2/gpt_control.c:4477
+#: gui2/gpt_control.c:4482
 msgid "Malformed PNG file for graph"
 msgstr "Неподходящ за графика  PNG файл"
 
-#: gui2/gpt_control.c:4850
+#: gui2/gpt_control.c:4855
 msgid "gretl: graph"
 msgstr "gretl: графика"
 
-#: gui2/gpt_control.c:4912
+#: gui2/gpt_control.c:4917
 msgid " Right-click on graph for menu"
 msgstr "Настинете с десен бутон на мишката за извикване на менюто"
 
-#: gui2/gpt_control.c:5154
+#: gui2/gpt_control.c:5159
 msgid "Couldn't find a usable terminal program"
 msgstr "Невъзможно откриването на подходящ терминал на програмата"
 
@@ -16770,8 +16770,9 @@ msgid "specific day in week"
 msgstr "спецификацията е адекватна"
 
 #: gui2/varinfo.c:419
-msgid "spead (MIDAS)"
-msgstr ""
+#, fuzzy
+msgid "spread (MIDAS)"
+msgstr "Неограничен"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"

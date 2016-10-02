@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-23 13:14-0400\n"
+"POT-Creation-Date: 2016-10-02 16:01-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -396,7 +396,7 @@ msgstr ""
 msgid "Numerical summary for %s"
 msgstr ""
 
-#: lib/src/boxplots.c:290 gui2/gpt_control.c:3840 gui2/gpt_control.c:3918
+#: lib/src/boxplots.c:290 gui2/gpt_control.c:3845 gui2/gpt_control.c:3923
 msgid "Numerical summary"
 msgstr ""
 
@@ -1448,7 +1448,7 @@ msgstr ""
 msgid "Out of memory!"
 msgstr ""
 
-#: lib/src/dbread.c:1757 lib/src/geneval.c:7744
+#: lib/src/dbread.c:1757 lib/src/geneval.c:7708
 #: lib/src/gretl_string_table.c:903 lib/src/interact.c:1202
 #: lib/src/interact.c:2205 cli/gretlcli.c:879 cli/gretlcli-mpi.c:568
 msgid "Internet access not supported"
@@ -1459,8 +1459,8 @@ msgid "Invalid null sample"
 msgstr ""
 
 #: lib/src/dbread.c:2044 lib/src/gretl_errors.c:578
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293 lib/src/options.c:1296
-#: lib/src/options.c:1307
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1293 lib/src/options.c:1297
+#: lib/src/options.c:1308
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr ""
@@ -1552,7 +1552,7 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr ""
 
 #: lib/src/describe.c:2840 lib/src/describe.c:3025 lib/src/describe.c:3573
-#: lib/src/geneval.c:6556 lib/src/transforms.c:837 lib/src/transforms.c:1379
+#: lib/src/geneval.c:6520 lib/src/transforms.c:837 lib/src/transforms.c:1379
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
@@ -1984,7 +1984,7 @@ msgstr ""
 msgid "Test for normality of %s:"
 msgstr ""
 
-#: lib/src/discrete.c:1191 lib/src/geneval.c:8200 lib/src/gretl_list.c:1668
+#: lib/src/discrete.c:1191 lib/src/geneval.c:8164 lib/src/gretl_list.c:1668
 #: lib/src/interact.c:1870
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2185,36 +2185,36 @@ msgstr ""
 msgid "Generated series %s (ID %d)"
 msgstr ""
 
-#: lib/src/geneval.c:2033 lib/src/gretl_foreign.c:102
+#: lib/src/geneval.c:1997 lib/src/gretl_foreign.c:102
 msgid "MPI is not supported in this gretl build"
 msgstr ""
 
-#: lib/src/geneval.c:2043
+#: lib/src/geneval.c:2007
 msgid "The MPI library is not loaded"
 msgstr ""
 
-#: lib/src/geneval.c:2297
+#: lib/src/geneval.c:2261
 #, c-format
 msgid "got invalid field '%s'"
 msgstr ""
 
-#: lib/src/geneval.c:2626 lib/src/usermat.c:811
+#: lib/src/geneval.c:2590 lib/src/usermat.c:811
 msgid "Matrix is not symmetric"
 msgstr ""
 
-#: lib/src/geneval.c:3058 lib/src/geneval.c:7227
+#: lib/src/geneval.c:3022 lib/src/geneval.c:7191
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
 "parameters for function %s (%d)"
 msgstr ""
 
-#: lib/src/geneval.c:4967 lib/src/geneval.c:5041
+#: lib/src/geneval.c:4931 lib/src/geneval.c:5005
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr ""
 
-#: lib/src/geneval.c:5035 lib/src/geneval.c:14990 lib/src/gretl_array.c:361
+#: lib/src/geneval.c:4999 lib/src/geneval.c:14945 lib/src/gretl_array.c:361
 #: lib/src/gretl_array.c:406 lib/src/gretl_array.c:451
 #: lib/src/gretl_array.c:495 lib/src/usermat.c:121 lib/src/usermat.c:207
 #: lib/src/usermat.c:540
@@ -2222,130 +2222,130 @@ msgstr ""
 msgid "Index value %d is out of bounds"
 msgstr ""
 
-#: lib/src/geneval.c:7017
+#: lib/src/geneval.c:6981
 msgid "Matrix specification is not coherent"
 msgstr ""
 
-#: lib/src/geneval.c:7216
+#: lib/src/geneval.c:7180
 #, c-format
 msgid "The function %s does not return any value"
 msgstr ""
 
-#: lib/src/geneval.c:7242
+#: lib/src/geneval.c:7206
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10603
+#: lib/src/geneval.c:10567
 msgid "array: no type was specified"
 msgstr ""
 
-#: lib/src/geneval.c:11298
+#: lib/src/geneval.c:11262
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr ""
 
-#: lib/src/geneval.c:11349 cli/cli_object.c:48 gui2/objectsave.c:53
+#: lib/src/geneval.c:11313 cli/cli_object.c:48 gui2/objectsave.c:53
 #, c-format
 msgid "%s: no such object\n"
 msgstr ""
 
-#: lib/src/geneval.c:11705
+#: lib/src/geneval.c:11669
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr ""
 
-#: lib/src/geneval.c:11707
+#: lib/src/geneval.c:11671
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr ""
 
-#: lib/src/geneval.c:11710
+#: lib/src/geneval.c:11674
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr ""
 
-#: lib/src/geneval.c:11720
+#: lib/src/geneval.c:11684
 #, c-format
 msgid "%s: operand should be %s"
 msgstr ""
 
-#: lib/src/geneval.c:11723
+#: lib/src/geneval.c:11687
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr ""
 
-#: lib/src/geneval.c:11728
+#: lib/src/geneval.c:11692
 #, c-format
 msgid "%s: argument should be %s"
 msgstr ""
 
-#: lib/src/geneval.c:11731
+#: lib/src/geneval.c:11695
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr ""
 
-#: lib/src/geneval.c:11737
+#: lib/src/geneval.c:11701
 #, c-format
 msgid ", is %s"
 msgstr ""
 
-#: lib/src/geneval.c:13689 lib/src/genlex.c:847
+#: lib/src/geneval.c:13644 lib/src/genlex.c:846
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr ""
 
-#: lib/src/geneval.c:13798 lib/src/genlex.c:893 lib/src/genlex.c:963
+#: lib/src/geneval.c:13753 lib/src/genlex.c:892 lib/src/genlex.c:962
 #: lib/src/gensyntax.c:263 lib/src/tokenize.c:3246 lib/src/tokenize.c:3264
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr ""
 
-#: lib/src/geneval.c:13859
+#: lib/src/geneval.c:13814
 #, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr ""
 
-#: lib/src/geneval.c:13863
+#: lib/src/geneval.c:13818
 #, c-format
 msgid "A variable of type %s is not acceptable in context"
 msgstr ""
 
-#: lib/src/geneval.c:14063
+#: lib/src/geneval.c:14018
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr ""
 
-#: lib/src/geneval.c:14185
+#: lib/src/geneval.c:14140
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr ""
 
-#: lib/src/geneval.c:14192
+#: lib/src/geneval.c:14147
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr ""
 
-#: lib/src/geneval.c:14199
+#: lib/src/geneval.c:14154
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr ""
 
-#: lib/src/geneval.c:14206
+#: lib/src/geneval.c:14161
 #, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr ""
 
-#: lib/src/geneval.c:14213 lib/src/geneval.c:14227
+#: lib/src/geneval.c:14168 lib/src/geneval.c:14182
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr ""
 
-#: lib/src/geneval.c:14220
+#: lib/src/geneval.c:14175
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr ""
 
-#: lib/src/geneval.c:15891
+#: lib/src/geneval.c:15846
 msgid "Bare declarations are not allowed here"
 msgstr ""
 
@@ -2463,48 +2463,48 @@ msgstr ""
 msgid "other"
 msgstr ""
 
-#: lib/src/genlex.c:824
+#: lib/src/genlex.c:823
 #, c-format
 msgid "%s: no such object"
 msgstr ""
 
-#: lib/src/genlex.c:826
+#: lib/src/genlex.c:825
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr ""
 
-#: lib/src/genlex.c:836 lib/src/genlex.c:838
+#: lib/src/genlex.c:835 lib/src/genlex.c:837
 #, c-format
 msgid "'%s': no argument was given"
 msgstr ""
 
-#: lib/src/genlex.c:849
+#: lib/src/genlex.c:848
 msgid "(for logical AND, use '&&')\n"
 msgstr ""
 
-#: lib/src/genlex.c:851
+#: lib/src/genlex.c:850
 msgid "(for logical OR, use '||')\n"
 msgstr ""
 
-#: lib/src/genlex.c:857
+#: lib/src/genlex.c:856
 msgid "Incomplete expression\n"
 msgstr ""
 
-#: lib/src/genlex.c:862
+#: lib/src/genlex.c:861
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr ""
 
-#: lib/src/genlex.c:960
+#: lib/src/genlex.c:959
 msgid "Empty observation []\n"
 msgstr ""
 
-#: lib/src/genlex.c:1744
+#: lib/src/genlex.c:1743
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr ""
 
-#: lib/src/genlex.c:1746
+#: lib/src/genlex.c:1745
 #, c-format
 msgid "Unexpected byte 0x%x\n"
 msgstr ""
@@ -2930,36 +2930,36 @@ msgstr ""
 msgid "norm of gradient = %g"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:1837 lib/src/modelprint.c:3229
+#: lib/src/gretl_bfgs.c:1851 lib/src/modelprint.c:3229
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:1838 lib/src/modelprint.c:3230
+#: lib/src/gretl_bfgs.c:1852 lib/src/modelprint.c:3230
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2172
+#: lib/src/gretl_bfgs.c:2186
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2176
+#: lib/src/gretl_bfgs.c:2190
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2181
+#: lib/src/gretl_bfgs.c:2195
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2184
+#: lib/src/gretl_bfgs.c:2198
 msgid "Warning: couldn't improve criterion\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2395
+#: lib/src/gretl_bfgs.c:2409
 msgid "Initial value of objective function is not finite"
 msgstr ""
 
@@ -6138,22 +6138,22 @@ msgid ""
 "the reference model was estimated\n"
 msgstr ""
 
-#: lib/src/options.c:1184 lib/src/options.c:1217
+#: lib/src/options.c:1185 lib/src/options.c:1218
 #, c-format
 msgid "%s: invalid option argument"
 msgstr ""
 
-#: lib/src/options.c:1223 lib/src/tokenize.c:1059
+#: lib/src/options.c:1224 lib/src/tokenize.c:1059
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr ""
 
-#: lib/src/options.c:1700
+#: lib/src/options.c:1701
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr ""
 
-#: lib/src/options.c:1810
+#: lib/src/options.c:1811
 #, c-format
 msgid "%s: inapplicable option"
 msgstr ""
@@ -8442,7 +8442,7 @@ msgid "Execute"
 msgstr ""
 
 #: gui2/datafiles.c:1391 gui2/datafiles.c:1601 gui2/gpt_control.c:281
-#: gui2/gpt_control.c:3842 gui2/gpt_control.c:3919 gui2/session.c:190
+#: gui2/gpt_control.c:3847 gui2/gpt_control.c:3924 gui2/session.c:190
 #: gui2/session.c:196 gui2/session.c:206 gui2/session.c:3298
 #: gui2/session.c:3337 gui2/session.c:3350
 msgid "Edit"
@@ -8456,8 +8456,8 @@ msgstr ""
 msgid "Add to menu"
 msgstr ""
 
-#: gui2/datafiles.c:1405 gui2/datafiles.c:1607 gui2/gpt_control.c:3809
-#: gui2/gpt_control.c:3811 gui2/gpt_control.c:3921 gui2/session.c:165
+#: gui2/datafiles.c:1405 gui2/datafiles.c:1607 gui2/gpt_control.c:3814
+#: gui2/gpt_control.c:3816 gui2/gpt_control.c:3926 gui2/session.c:165
 #: gui2/session.c:172 gui2/session.c:3429 gui2/toolbar.c:756 gui2/toolbar.c:757
 #: gui2/toolbar.c:758
 msgid "Help"
@@ -10538,7 +10538,7 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: gui2/gpt_control.c:280 gui2/gpt_control.c:3832 gui2/gpt_control.c:3915
+#: gui2/gpt_control.c:280 gui2/gpt_control.c:3837 gui2/gpt_control.c:3920
 msgid "Display PDF"
 msgstr ""
 
@@ -10551,135 +10551,135 @@ msgstr ""
 msgid " Click to set position"
 msgstr ""
 
-#: gui2/gpt_control.c:1148
+#: gui2/gpt_control.c:1158
 msgid "gnuplot command failed"
 msgstr ""
 
-#: gui2/gpt_control.c:1219 gui2/gpt_control.c:1300
+#: gui2/gpt_control.c:1224 gui2/gpt_control.c:1305
 msgid "Gnuplot error creating graph"
 msgstr ""
 
-#: gui2/gpt_control.c:2645
+#: gui2/gpt_control.c:2650
 msgid "Plot file is corrupted"
 msgstr ""
 
-#: gui2/gpt_control.c:3395
+#: gui2/gpt_control.c:3400
 msgid "Couldn't access graph info"
 msgstr ""
 
-#: gui2/gpt_control.c:3552 gui2/gpt_control.c:3862 gui2/graphics.c:240
+#: gui2/gpt_control.c:3557 gui2/gpt_control.c:3867 gui2/graphics.c:240
 #: gui2/graph_page.c:684
 msgid "monochrome"
 msgstr ""
 
-#: gui2/gpt_control.c:3556 gui2/gpt_control.c:3898 gui2/gpt_control.c:3904
+#: gui2/gpt_control.c:3561 gui2/gpt_control.c:3903 gui2/gpt_control.c:3909
 msgid "Save as Windows metafile (EMF)..."
 msgstr ""
 
-#: gui2/gpt_control.c:3563 gui2/gpt_control.c:3828 gui2/gpt_control.c:3906
+#: gui2/gpt_control.c:3568 gui2/gpt_control.c:3833 gui2/gpt_control.c:3911
 #: gui2/menustate.c:501
 msgid "Copy to clipboard"
 msgstr ""
 
-#: gui2/gpt_control.c:3565 gui2/gpt_control.c:3913
+#: gui2/gpt_control.c:3570 gui2/gpt_control.c:3918
 msgid "Print"
 msgstr ""
 
-#: gui2/gpt_control.c:3586
+#: gui2/gpt_control.c:3591
 msgid "roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui2/gpt_control.c:3623
+#: gui2/gpt_control.c:3628
 msgid "roots"
 msgstr ""
 
-#: gui2/gpt_control.c:3645
+#: gui2/gpt_control.c:3650
 msgid "gretl: boxplot data"
 msgstr ""
 
-#: gui2/gpt_control.c:3784
+#: gui2/gpt_control.c:3789
 msgid " Drag to define zoom rectangle"
 msgstr ""
 
-#: gui2/gpt_control.c:3795 gui2/gpt_control.c:3896
+#: gui2/gpt_control.c:3800 gui2/gpt_control.c:3901
 msgid "Add another curve..."
 msgstr ""
 
-#: gui2/gpt_control.c:3797 gui2/gpt_control.c:3900
+#: gui2/gpt_control.c:3802 gui2/gpt_control.c:3905
 msgid "Save as PNG..."
 msgstr ""
 
-#: gui2/gpt_control.c:3801 gui2/gpt_control.c:3902
+#: gui2/gpt_control.c:3806 gui2/gpt_control.c:3907
 msgid "Save as PDF..."
 msgstr ""
 
-#: gui2/gpt_control.c:3804 gui2/gpt_control.c:3901
+#: gui2/gpt_control.c:3809 gui2/gpt_control.c:3906
 msgid "Save as postscript (EPS)..."
 msgstr ""
 
-#: gui2/gpt_control.c:3807 gui2/gpt_control.c:3907 gui2/toolbar.c:220
+#: gui2/gpt_control.c:3812 gui2/gpt_control.c:3912 gui2/toolbar.c:220
 msgid "Save to session as icon"
 msgstr ""
 
-#: gui2/gpt_control.c:3813 gui2/gpt_control.c:3908
+#: gui2/gpt_control.c:3818 gui2/gpt_control.c:3913
 msgid "Freeze data labels"
 msgstr ""
 
-#: gui2/gpt_control.c:3816 gui2/gpt_control.c:3910
+#: gui2/gpt_control.c:3821 gui2/gpt_control.c:3915
 msgid "Clear data labels"
 msgstr ""
 
-#: gui2/gpt_control.c:3818 gui2/gpt_control.c:3909
+#: gui2/gpt_control.c:3823 gui2/gpt_control.c:3914
 msgid "All data labels"
 msgstr ""
 
-#: gui2/gpt_control.c:3820 gui2/gpt_control.c:3911
+#: gui2/gpt_control.c:3825 gui2/gpt_control.c:3916
 msgid "Zoom..."
 msgstr ""
 
-#: gui2/gpt_control.c:3822 gui2/gpt_control.c:3926
+#: gui2/gpt_control.c:3827 gui2/gpt_control.c:3931
 msgid "Restore full view"
 msgstr ""
 
-#: gui2/gpt_control.c:3824 gui2/gpt_control.c:3927
+#: gui2/gpt_control.c:3829 gui2/gpt_control.c:3932
 msgid "Replace full view"
 msgstr ""
 
-#: gui2/gpt_control.c:3834 gui2/gpt_control.c:3916
+#: gui2/gpt_control.c:3839 gui2/gpt_control.c:3921
 msgid "OLS estimates"
 msgstr ""
 
-#: gui2/gpt_control.c:3838 gui2/gpt_control.c:3917
+#: gui2/gpt_control.c:3843 gui2/gpt_control.c:3922
 msgid "Numerical values"
 msgstr ""
 
-#: gui2/gpt_control.c:3844 gui2/gpt_control.c:3920
+#: gui2/gpt_control.c:3849 gui2/gpt_control.c:3925
 msgid "Font"
 msgstr ""
 
-#: gui2/gpt_control.c:3846 gui2/gpt_control.c:3922 gui2/gpt_control.c:3928
+#: gui2/gpt_control.c:3851 gui2/gpt_control.c:3927 gui2/gpt_control.c:3933
 #: gui2/gui_utils.c:1896
 msgid "Close"
 msgstr ""
 
-#: gui2/gpt_control.c:3861 gui2/gpt_dialog.c:2807 gui2/graphics.c:236
+#: gui2/gpt_control.c:3866 gui2/gpt_dialog.c:2807 gui2/graphics.c:236
 #: gui2/graph_page.c:683
 msgid "color"
 msgstr ""
 
-#: gui2/gpt_control.c:4477
+#: gui2/gpt_control.c:4482
 msgid "Malformed PNG file for graph"
 msgstr ""
 
-#: gui2/gpt_control.c:4850
+#: gui2/gpt_control.c:4855
 msgid "gretl: graph"
 msgstr ""
 
-#: gui2/gpt_control.c:4912
+#: gui2/gpt_control.c:4917
 msgid " Right-click on graph for menu"
 msgstr ""
 
-#: gui2/gpt_control.c:5154
+#: gui2/gpt_control.c:5159
 msgid "Couldn't find a usable terminal program"
 msgstr ""
 
@@ -16072,7 +16072,7 @@ msgid "specific day in week"
 msgstr ""
 
 #: gui2/varinfo.c:419
-msgid "spead (MIDAS)"
+msgid "spread (MIDAS)"
 msgstr ""
 
 #: gui2/varinfo.c:682
