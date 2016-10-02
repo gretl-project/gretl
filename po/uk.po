@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-09-23 13:14-0400\n"
-"PO-Revision-Date: 2016-05-03 19:08+0300\n"
+"PO-Revision-Date: 2016-10-02 16:50+0300\n"
 "Last-Translator: Oleh Komashko <oleg_komashko@ukr.net>\n"
 "Language-Team: \n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 1.8.9\n"
 
 #: lib/src/adf_kpss.c:493
 msgid "lagged differences"
@@ -1241,7 +1241,7 @@ msgstr "Неприпустимий символ '%c' в рядку дати"
 #: lib/src/dataio.c:171
 #, c-format
 msgid "Bad character %d in date string"
-msgstr "Неприпустимий символ %d в рядку даты"
+msgstr "Неприпустимий символ %d в рядку дати"
 
 #: lib/src/dataio.c:327 lib/src/dataio.c:332 lib/src/dataio.c:345
 #, c-format
@@ -1473,7 +1473,7 @@ msgstr "Неможливо відкрити індексний файл бази
 
 #: lib/src/dbread.c:459
 msgid "Couldn't open database binary file"
-msgstr "Неможливо відкрити бінарный файл бази даних"
+msgstr "Неможливо відкрити бінарний файл бази даних"
 
 #: lib/src/dbread.c:602 lib/src/dbread.c:612 gui2/database.c:1591
 msgid "Failed to parse series information"
@@ -1620,7 +1620,7 @@ msgstr "Матриця %s не є таблицею спряженості"
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
-msgstr "Невірный порядок лагу %d"
+msgstr "Невірний порядок лагу %d"
 
 #: lib/src/describe.c:2925 gui2/menustate.c:495
 msgid "Correlogram"
@@ -1754,7 +1754,7 @@ msgstr "#Н/Д"
 #: lib/src/describe.c:4375 lib/src/describe.c:5706
 #, c-format
 msgid "%s, using the observations %s - %s"
-msgstr "%s, використавши спостереження %s - %s"
+msgstr "%s, на базі спостережень %s - %s"
 
 #: lib/src/describe.c:4379 lib/src/describe.c:5711 gui2/guiprint.c:598
 #: gui2/guiprint.c:918 gui2/guiprint.c:1085 gui2/guiprint.c:1178
@@ -1783,7 +1783,7 @@ msgstr "Максимум"
 
 #: lib/src/describe.c:4420
 msgid "Standard deviation"
-msgstr "Стандартне відхилення"
+msgstr "Станд. відхилення"
 
 #: lib/src/describe.c:4421 lib/src/describe.c:4614 gui2/guiprint.c:633
 #: gui2/guiprint.c:958
@@ -1802,7 +1802,7 @@ msgstr "Ексцес"
 #: lib/src/describe.c:4425
 #, no-c-format
 msgid "5% percentile"
-msgstr "5% процентиль\t\t\t\t"
+msgstr "5% процентиль"
 
 #: lib/src/describe.c:4427
 #, no-c-format
@@ -1828,7 +1828,7 @@ msgstr "Міжгрупове ст. відх."
 
 #: lib/src/describe.c:4448 lib/src/describe.c:4573 gui2/menustate.c:490
 msgid "Summary statistics"
-msgstr "Описова статистика"
+msgstr "Числові характеристики"
 
 #: lib/src/describe.c:4454
 #, c-format
@@ -1866,7 +1866,7 @@ msgstr "95% проц."
 
 #: lib/src/describe.c:4623 gui2/guiprint.c:655
 msgid "IQ range"
-msgstr "Міжквартильний розмах"
+msgstr "Міжкварт. розмах"
 
 #: lib/src/describe.c:4934 lib/src/describe.c:5066 lib/src/describe.c:5165
 #, c-format
@@ -2408,9 +2408,9 @@ msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "Змінна %s має тип %s, неприпустимий у даному контексті"
 
 #: lib/src/geneval.c:13863
-#, fuzzy, c-format
+#, c-format
 msgid "A variable of type %s is not acceptable in context"
-msgstr "Змінна %s має тип %s, неприпустимий у даному контексті"
+msgstr "Змінна, що має тип %s, неприпустима у даному контексті"
 
 #: lib/src/geneval.c:14063
 #, c-format
@@ -2591,9 +2591,8 @@ msgid "(for logical OR, use '||')\n"
 msgstr "(для позначення диз'юнкції  використовуйте '||')\n"
 
 #: lib/src/genlex.c:857
-#, fuzzy
 msgid "Incomplete expression\n"
-msgstr "Неповний запис"
+msgstr "Неповний вираз\n"
 
 #: lib/src/genlex.c:862
 #, c-format
@@ -3094,7 +3093,7 @@ msgstr "Похибка в даних"
 
 #: lib/src/gretl_errors.c:41
 msgid "Exact or near collinearity encountered"
-msgstr "Виявлено (майже) точну  колінеарність"
+msgstr "Виявлено (майже) точну колінеарність"
 
 #: lib/src/gretl_errors.c:42
 msgid "Insufficient degrees of freedom for regression"
@@ -3654,14 +3653,12 @@ msgid "Variance of the unit-specific error = 0"
 msgstr "Дисперсія об'єкт-специфічних похибок = 0"
 
 #: lib/src/gretl_model.c:3652
-#, fuzzy
 msgid "Wald joint test on time dummies"
-msgstr "Тест Вальда (Wald) для спільної значущості часових фіктивних змінних"
+msgstr "Сукупний тест Вальда для час. фікт. зм."
 
 #: lib/src/gretl_model.c:3653
-#, fuzzy
 msgid "No time effects"
-msgstr "Фіксовані ефекти"
+msgstr "Без ефектів часу"
 
 #: lib/src/gretl_model.c:3659
 msgid "restriction is acceptable"
@@ -3689,12 +3686,11 @@ msgstr "Робастний тест для група-специфічних к�
 
 #: lib/src/gretl_model.c:3676 lib/src/gretl_panel.c:4388
 msgid "Pesaran CD test for cross-sectional dependence"
-msgstr ""
+msgstr "CD-тест Песарана для просторової залежності"
 
 #: lib/src/gretl_model.c:3677
-#, fuzzy
 msgid "No cross-sectional dependence"
-msgstr "Для просторових даних"
+msgstr "Без залежності від просторових об'єктів"
 
 #: lib/src/gretl_model.c:3684 lib/src/gretl_panel.c:4024
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -3948,9 +3944,8 @@ msgid "groupwise heteroskedasticity"
 msgstr "групова гетероскедастичність"
 
 #: lib/src/gretl_panel.c:4406
-#, fuzzy
 msgid "cross sectional dependence"
-msgstr "індекс просторового об’єкту"
+msgstr "залежність від просторових об’єктів"
 
 #: lib/src/gretl_panel.c:4723
 #, c-format
@@ -4374,7 +4369,7 @@ msgid ""
 "Read datafile %s\n"
 msgstr ""
 "\n"
-"Прочитати файлу даних %s\n"
+"Прочитано файл даних %s\n"
 
 #: lib/src/gretl_xml.c:3715
 msgid "Uncompressing"
@@ -4425,9 +4420,9 @@ msgid "Closed output file '%s'\n"
 msgstr "Файл виведення '%s' закрито\n"
 
 #: lib/src/interact.c:898
-#, fuzzy, c-format
+#, c-format
 msgid "Output is already diverted to '%s'"
-msgstr "Виведення вже скеровано до '%s'\n"
+msgstr "Виведення вже спрямовано до '%s'"
 
 #: lib/src/interact.c:905
 msgid "Now discarding output\n"
@@ -4525,7 +4520,7 @@ msgstr "На жаль, команду %s ще не реалізовано у lib
 
 #: lib/src/interact.c:3589
 msgid "An error occurred when 'outfile' was active\n"
-msgstr ""
+msgstr "Виникла помилка при активному  'outfile'\n"
 
 #: lib/src/kalman.c:505
 msgid "kalman: a required matrix is missing"
@@ -4737,26 +4732,24 @@ msgid "Number of instruments = %d"
 msgstr "Кількість інструментів = %d"
 
 #: lib/src/modelprint.c:664
-#, fuzzy
 msgid "Warning: convergence is questionable"
-msgstr "Увага: виявлено пропущені значення\n"
+msgstr "Увага: збіжність не гарантовано"
 
 #: lib/src/modelprint.c:666
-#, fuzzy
 msgid "Convergence seems to be reasonably complete"
-msgstr "Умова збіжності (точність):"
+msgstr "Збіжність виглядає прийнятною"
 
 #: lib/src/modelprint.c:671
 msgid "GNR: got incomplete results"
-msgstr ""
+msgstr "GNR: одержано неповні результати"
 
 #: lib/src/modelprint.c:676
 msgid "Warning: Jacobian is rank-deficient"
-msgstr ""
+msgstr "Увага: Якобіан має неповний ранг"
 
 #: lib/src/modelprint.c:677
 msgid "Warning: Jacobian near to rank-deficiency"
-msgstr ""
+msgstr "Увага: Якобіан має неповний ранг"
 
 #: lib/src/modelprint.c:690
 msgid "Warning: solution is probably not unique"
@@ -5097,11 +5090,11 @@ msgstr "Обмежений МНК"
 
 #: lib/src/modelprint.c:1070
 msgid "MIDAS (OLS)"
-msgstr ""
+msgstr "MIDAS (МНК)"
 
 #: lib/src/modelprint.c:1072
 msgid "MIDAS (NLS)"
-msgstr ""
+msgstr "MIDAS (НМНК)"
 
 #: lib/src/modelprint.c:1121
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -5120,7 +5113,7 @@ msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
-"Критичні значения для бажаного максимального розміру для 2МНК,\n"
+"Критичні значення для бажаного максимального розміру для 2МНК,\n"
 "  тести здійснювались  на 5% номінальному  рівні значущості:\n"
 
 #: lib/src/modelprint.c:1132
@@ -5214,9 +5207,8 @@ msgid "Could not compute Beck-Katz standard errors"
 msgstr "Не вдалося обчислити стандартні похибки Бека-Каца (Beck-Katz)"
 
 #: lib/src/modelprint.c:1424
-#, fuzzy
 msgid "Could not compute robust standard errors"
-msgstr "Не вдалося обчислити стандартні похибки Бека-Каца (Beck-Katz)"
+msgstr "Не вдалося обчислити стійкі стандартні похибки "
 
 #: lib/src/modelprint.c:1432
 msgid "Bartlett kernel"
@@ -5401,7 +5393,7 @@ msgstr "Модель"
 #: lib/src/modelprint.c:1965 lib/src/modelprint.c:1980
 #, c-format
 msgid "%s, using observations %s%s%s"
-msgstr "%s, використовуючи спостереження %s%s%s"
+msgstr "%s, на базі спостережень %s%s%s"
 
 #: lib/src/modelprint.c:1975
 #, c-format
@@ -5438,11 +5430,11 @@ msgstr "Довжина часових рядів: мінімум %d, макси�
 
 #: lib/src/modelprint.c:2028
 msgid "Including equations in levels"
-msgstr ""
+msgstr "Включаючи рівняння у рівнях"
 
 #: lib/src/modelprint.c:2032
 msgid "H-matrix as per Ox/DPD"
-msgstr ""
+msgstr "H-матриця згідно до Ox/DPD"
 
 #: lib/src/modelprint.c:2060
 #, c-format
@@ -5637,7 +5629,7 @@ msgstr "Інформаційний критерій Хеннана-Куїнна"
 #.
 #: lib/src/modelprint.c:2944
 msgid "note on model statistics abbreviations here"
-msgstr "інформація стосовно використаних скорочень тут:"
+msgstr "note on model statistics abbreviations here"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2951
@@ -5778,11 +5770,11 @@ msgstr "Сума абс. похибок"
 
 #: lib/src/modelprint.c:3147
 msgid "Durbin's $h$"
-msgstr "$h$-стат. Дубина"
+msgstr "$h$-стат. Дурбіна"
 
 #: lib/src/modelprint.c:3147
 msgid "Durbin's h"
-msgstr "h-стат. Дурбина"
+msgstr "h-стат. Дурбіна"
 
 #: lib/src/modelprint.c:3222 lib/src/system.c:4503 lib/src/system.c:4505
 #, c-format
@@ -6103,8 +6095,7 @@ msgid ""
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 msgstr ""
 "\n"
-"Похибка: Гессіан не є недодатно визначеним?   (err = %d);  примусово "
-"використано   OPG\n"
+"Похибка: Гессіан не є недод. визначеним?   (err = %d);  примусово вик. OPG\n"
 
 #: lib/src/nls.c:2682 lib/src/nls.c:2783
 msgid "Invalid NLS specification"
@@ -6127,7 +6118,7 @@ msgstr "команда '%s' недопустима у даному контек�
 #: lib/src/nls.c:2946
 #, c-format
 msgid "'%s': not valid in this context"
-msgstr "'%s': недопустимо у даному контексті"
+msgstr "'%s': неприпустимо у даному контексті"
 
 #: lib/src/nls.c:3037 gui2/dialogs.c:5932
 #, c-format
@@ -6369,7 +6360,7 @@ msgid ""
 "the reference model was estimated\n"
 msgstr ""
 "Неможливо виконати: активний набір змінився після оцінювання\n"
-"моделіь была оценена\n"
+"вихідної моделі\n"
 
 #: lib/src/options.c:1184 lib/src/options.c:1217
 #, c-format
@@ -6583,13 +6574,13 @@ msgid ""
 "Pearson chi-square test not computed: some expected frequencies were less\n"
 "than %g\n"
 msgstr ""
-"Не удалось рассчитать Хи-квадрат: некоторые частоты были меньше\n"
-"чем %g\n"
+"Хі-кв. тест Пірсона не здійснено: деякі очікувані частоти менші\n"
+"ніж %g\n"
 
 #: lib/src/printout.c:681
 #, c-format
 msgid "Pearson chi-square test = %g (%d df, p-value = %g)"
-msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = %g)"
+msgstr "Хі-кв. тест Пірсона = %g (%d ст. св., p-значення = %g)"
 
 #: lib/src/printout.c:686
 #, no-c-format
@@ -6663,7 +6654,7 @@ msgstr "похибка"
 #: lib/src/printout.c:1800
 #, c-format
 msgid "Listing %d variables:\n"
-msgstr "Перелік %d змінних:\n"
+msgstr "Наявні %d змінних:\n"
 
 #: lib/src/printout.c:2560 gui2/guiprint.c:1271
 msgid "Mean Error"
@@ -7120,7 +7111,7 @@ msgstr "Нерозпізнаний тип системи рівнянь"
 
 #: lib/src/system.c:114
 msgid "An equation system must have at least two equations"
-msgstr "Система уравнений должна иметь по крайней мере два уравнений"
+msgstr "Система рівнянь мусить мати щонайменше два рівняння"
 
 #: lib/src/system.c:283 lib/src/system.c:4481 lib/src/system.c:4485
 #: lib/src/system.c:4491 lib/src/system.c:4495
@@ -7206,7 +7197,7 @@ msgstr "Перевірка над-ідентифікації за Гансено
 
 #: lib/src/system.c:3478 lib/src/system.c:3482
 msgid "LR test for diagonal covariance matrix"
-msgstr "LR-тест для диагональной ковариационной матрицы"
+msgstr "LR-тест для діагональної коваріаційної матриці"
 
 #: lib/src/system.c:3494
 msgid "Breusch--Pagan test for diagonal covariance matrix"
@@ -7295,14 +7286,14 @@ msgid "= %s squared"
 msgstr "=  %s у квадраті"
 
 #: lib/src/transforms.c:191
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency difference of %s"
-msgstr "= перша різниця %s"
+msgstr "= високочастотна різниця %s"
 
 #: lib/src/transforms.c:193
-#, fuzzy, c-format
+#, c-format
 msgid "= high-frequency log difference of %s"
-msgstr "=  різниця логарифму %s"
+msgstr "=  високочастотна різниця логарифму %s"
 
 #: lib/src/transforms.c:756
 #, c-format
@@ -7326,7 +7317,7 @@ msgstr "dummify: не знайдено жодної придатної змін�
 #: lib/src/tsls.c:768
 #, c-format
 msgid "Number of instruments (%d) exceeds the number of observations (%d)"
-msgstr "Число інструментів (%d) перевищує число параметрів (%d)"
+msgstr "Число інструментів (%d) перевищує число спостережень (%d)"
 
 #: lib/src/tsls.c:895
 #, c-format
@@ -7361,7 +7352,7 @@ msgstr "Неоднозначна індексація матриці"
 
 #: lib/src/usermat.c:1035
 msgid "Matrix decomposition failed"
-msgstr "Помилка у  декомпозиції матриці"
+msgstr "Помилка у декомпозиції матриці"
 
 #: lib/src/uservar.c:1702
 #, c-format
@@ -7529,12 +7520,12 @@ msgstr "Рівняння для"
 
 #: lib/src/varprint.c:1150 lib/src/varprint.c:1153 lib/src/varprint.c:1155
 msgid "F-tests of zero restrictions"
-msgstr "F-тесты для нульових обмежень"
+msgstr "F-тести для нульових обмежень"
 
 #: lib/src/varprint.c:1242 lib/src/varprint.c:1243
 #, c-format
 msgid "the longest lag is %d"
-msgstr "самый длинный лаг %d"
+msgstr "найдовший  лаг є %d"
 
 #: lib/src/varprint.c:1248 lib/src/varprint.c:1254 lib/src/varprint.c:1262
 msgid "For the system as a whole"
@@ -7542,7 +7533,7 @@ msgstr "Для  системи як цілого"
 
 #: lib/src/varprint.c:1250 lib/src/varprint.c:1256 lib/src/varprint.c:1264
 msgid "Alternative hypothesis"
-msgstr "Альтернативная гипотеза"
+msgstr "Альтернативна гіпотеза"
 
 #: lib/src/varprint.c:1269
 msgid "Comparison of information criteria"
@@ -8403,7 +8394,7 @@ msgstr "gretl: VECM"
 
 #: gui2/callbacks.c:399 gui2/library.c:4626
 msgid "gretl: VAR lag selection"
-msgstr "gretl: выбір лагів для VAR"
+msgstr "gretl: вибір лагів для VAR"
 
 #: gui2/callbacks.c:428 gui2/callbacks.c:442 gui2/callbacks.c:445
 #: gui2/callbacks.c:447 gui2/callbacks.c:595 gui2/callbacks.c:604
@@ -8966,7 +8957,7 @@ msgstr "База даних"
 
 #: gui2/datafiles.c:2683 gui2/datafiles.c:2695 gui2/datafiles.c:2701
 msgid "Local status"
-msgstr "Локальный статус"
+msgstr "Локальний статус"
 
 #: gui2/datafiles.c:2686 gui2/datafiles.c:2691 gui2/datafiles.c:2698
 #: gui2/datafiles.c:2704
@@ -8976,7 +8967,7 @@ msgstr "Пакет"
 #: gui2/datafiles.c:2687 gui2/datafiles.c:2692 gui2/datafiles.c:2699
 #: gui2/fnsave.c:3553
 msgid "Version"
-msgstr "Версия"
+msgstr "Версія"
 
 #: gui2/datafiles.c:2693 gui2/fnsave.c:3551
 msgid "Author"
@@ -9135,7 +9126,7 @@ msgstr "Неділя"
 
 #: gui2/datawiz.c:530
 msgid "None (don't use dates)"
-msgstr "Не использовать даты"
+msgstr "Жодний (не викор. дати)"
 
 #: gui2/datawiz.c:575
 #, c-format
@@ -9157,7 +9148,7 @@ msgid ""
 "Panel data (%s)\n"
 "%d cross-sectional units observed over %d periods"
 msgstr ""
-"Панельные данные (%s)\n"
+"Панельні дані (%s)\n"
 "%d просторових об'єктів, що спостерігаються %d періодів"
 
 #: gui2/datawiz.c:595 gui2/datawiz.c:603
@@ -9633,9 +9624,8 @@ msgid "Use start-of-period values"
 msgstr "Використати початкові значення періодів"
 
 #: gui2/dialogs.c:3820
-#, fuzzy
 msgid "Spread to multiple series"
-msgstr "Розташовані один над одним часові ряди"
+msgstr "Поширити на декілька рядів"
 
 #: gui2/dialogs.c:3840
 msgid "Default method:"
@@ -9928,41 +9918,37 @@ msgid "Monthly, annualized"
 msgstr "Щомісячні, у розрахунку за рік"
 
 #: gui2/dialogs.c:6358
-#, fuzzy
 msgid "Unrestricted (U-MIDAS)"
-msgstr "Необмежена"
+msgstr "Необмежена (U-MIDAS)"
 
 #: gui2/dialogs.c:6359
-#, fuzzy
 msgid "Normalized exponential Almon"
-msgstr "Тривалість (експоненційна)"
+msgstr "Нормалізована експонента (за Алмон)"
 
 #: gui2/dialogs.c:6360
 msgid "Normalized beta (zero last lag)"
-msgstr ""
+msgstr "Нормалізоване бета (нульовий останній лаг)"
 
 #: gui2/dialogs.c:6361
 msgid "Normalized beta (non-zero last lag)"
-msgstr ""
+msgstr "Нормалізоване бета (ненульовий останній лаг)"
 
 #: gui2/dialogs.c:6362
 msgid "Almon polynomial"
-msgstr ""
+msgstr "Поліном Алмон(Almon)"
 
 #: gui2/dialogs.c:6385
-#, fuzzy, c-format
+#, c-format
 msgid "High-frequency regressor %s"
-msgstr "= перша різниця %s"
+msgstr "Високочастотний регресор %s"
 
 #: gui2/dialogs.c:6393
-#, fuzzy
 msgid "Parameterization"
-msgstr "обмеження"
+msgstr "Параметризація"
 
 #: gui2/dialogs.c:6405
-#, fuzzy
 msgid "Number of parameters"
-msgstr "Число спостережень"
+msgstr "Число параметрів"
 
 #: gui2/dialogs.c:6416 plugin/addons-i18n.c:63
 msgid "Lags"
@@ -10034,7 +10020,7 @@ msgstr "CSV файли (*.*)"
 
 #: gui2/fileselect.c:856 gui2/fileselect.c:878
 msgid "ASCII files (*.txt)"
-msgstr "ASCII файлы (*.txt)"
+msgstr "ASCII файли (*.txt)"
 
 #: gui2/fileselect.c:857
 msgid "Gnumeric files (*.gnumeric)"
@@ -10586,7 +10572,7 @@ msgstr "_Написати файл специфікації..."
 
 #: gui2/fnsave.c:359
 msgid "_Upload to server..."
-msgstr "_Переслати на сервер..."
+msgstr "_Надіслати на сервер..."
 
 #: gui2/fnsave.c:615
 msgid "Save the file to its standard \"installed\" location"
@@ -10861,10 +10847,16 @@ msgid ""
 "on the server or you have made changes since the\n"
 "last upload."
 msgstr ""
+"Надіслати пакет: Це означає, що пакет буде\n"
+"надіслано до серверу gretl для одобренняl.\n"
+"Це слід виконувати лише автору\n"
+"даного пакету якщо пакет ще не надіслано\n"
+"до серверу, або післе внесення змін після останнього\n"
+"надсилання."
 
 #: gui2/fnsave.c:3754
 msgid "gretl: upload"
-msgstr "gretl: переслати"
+msgstr "gretl: надіслати"
 
 #: gui2/fnsave.c:3768
 msgid "Login"
@@ -10895,7 +10887,7 @@ msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
 msgstr ""
-"Цей пакет мусить пересилатись як файл zip.\n"
+"Цей пакет мусить надсилатись як файл zip.\n"
 "Спробувати створити файл zip зараз?"
 
 #: gui2/fnsave.c:4193
@@ -10923,8 +10915,8 @@ msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
 msgstr ""
-"Нет доступных для объединения в пакет функций.\n"
-"Хотите создать новую функцию?"
+"Функції для включення до пакету відсутні.\n"
+"Бажаєте створити нову функцію?"
 
 #: gui2/fnsave.c:5052
 msgid "gretl: function packages"
@@ -11391,7 +11383,7 @@ msgstr "висота"
 
 #: gui2/graphics.c:180
 msgid "inches"
-msgstr "дюймы"
+msgstr "дюйми"
 
 #: gui2/graphics.c:186
 msgid "cm"
@@ -11585,7 +11577,7 @@ msgstr "Python-скрипт"
 
 #: gui2/gretl.c:1588
 msgid "Julia program"
-msgstr "Julia програма "
+msgstr "програма Julia"
 
 #: gui2/gretl.c:1589
 msgid "Ox program"
@@ -11701,7 +11693,7 @@ msgstr "_Новий пакет"
 
 #: gui2/gretl.c:1625
 msgid "_Upload package..."
-msgstr "_Переслати пакет..."
+msgstr "_Надіслати пакет..."
 
 #: gui2/gretl.c:1626
 msgid "Edit spec file..."
@@ -11709,11 +11701,11 @@ msgstr "Редагувати файл специфікації..."
 
 #: gui2/gretl.c:1627
 msgid "_NIST test suite"
-msgstr "результати тестів_NIST"
+msgstr "результати тестів _NIST"
 
 #: gui2/gretl.c:1628
 msgid "_Basic"
-msgstr "_Базовий"
+msgstr "_Базові"
 
 #: gui2/gretl.c:1629
 msgid "_Verbose"
@@ -11765,7 +11757,7 @@ msgstr "_Показати значення"
 
 #: gui2/gretl.c:1646
 msgid "_Edit values"
-msgstr "_Редагувати значения"
+msgstr "_Редагувати значення"
 
 #: gui2/gretl.c:1647
 msgid "_Add observations..."
@@ -12519,7 +12511,7 @@ msgstr "95\\% проц."
 
 #: gui2/guiprint.c:989
 msgid "IQ Range"
-msgstr "Міжквартильний розмах"
+msgstr "Міжкварт.  розмах"
 
 #: gui2/guiprint.c:1081
 #, c-format
@@ -12656,7 +12648,7 @@ msgstr "_Зберегти як..."
 
 #: gui2/gui_utils.c:225 gui2/gui_utils.c:356
 msgid "Save to session as _icon"
-msgstr "Зберегти сесію як _іконку"
+msgstr "Зберегти як _іконку для перегляду"
 
 #: gui2/gui_utils.c:226 gui2/gui_utils.c:357
 msgid "Save as icon and cl_ose"
@@ -12794,7 +12786,7 @@ msgstr "_Автокореляція"
 
 #: gui2/gui_utils.c:268
 msgid "_Durbin-Watson p-value"
-msgstr "р-значення статистики _Дурбина-Уотсона"
+msgstr "р-значення статистики _Дурбіна-Уотсона"
 
 #: gui2/gui_utils.c:269 gui2/gui_utils.c:4365
 msgid "A_RCH"
@@ -12817,9 +12809,8 @@ msgid "_Common factor"
 msgstr "Обмеження у вигяді _спільного множника"
 
 #: gui2/gui_utils.c:274
-#, fuzzy
 msgid "_Cross-sectional dependence"
-msgstr "Просторові дані"
+msgstr "_Просторова залежність"
 
 #: gui2/gui_utils.c:275
 msgid "_Panel diagnostics"
@@ -13119,9 +13110,8 @@ msgid "Residual _periodogram"
 msgstr "Періодограма _залишків"
 
 #: gui2/gui_utils.c:3077
-#, fuzzy
 msgid "_MIDAS coefficients"
-msgstr "_Сума коефіцієнтів"
+msgstr "_MIDAS-коефіцієнти"
 
 #: gui2/gui_utils.c:3087
 msgid "Residual _Q-Q plot"
@@ -13465,9 +13455,8 @@ msgid "Strings"
 msgstr "Рядки"
 
 #: gui2/helpfiles.c:378
-#, fuzzy
 msgid "State space"
-msgstr "пробіл"
+msgstr "Простір станів"
 
 #: gui2/helpfiles.c:380
 msgid "Calendar"
@@ -13475,7 +13464,7 @@ msgstr "Календар"
 
 #: gui2/helpfiles.c:382
 msgid "MIDAS"
-msgstr ""
+msgstr "MIDAS"
 
 #: gui2/helpfiles.c:422 gui2/textbuf.c:1982
 msgid "Index"
@@ -13507,7 +13496,7 @@ msgstr "На жаль, довідка не доступна."
 
 #: gui2/helpfiles.c:1452
 msgid "Sorry, help not found"
-msgstr "На жаль, довідку не  знайдено"
+msgstr "На жаль, довідку не знайдено"
 
 #: gui2/helpfiles.c:1879
 msgid "gretl: find"
@@ -13836,9 +13825,8 @@ msgid "gretl: common factor test"
 msgstr "gretl: тест обмеження у вигляді спільного множника"
 
 #: gui2/library.c:2626
-#, fuzzy
 msgid "gretl: cross-sectional dependence"
-msgstr "Для просторових даних"
+msgstr "gretl: просторова залежність"
 
 #: gui2/library.c:2659
 msgid "Lag order for ARCH test:"
@@ -14428,29 +14416,24 @@ msgid "Define new variable..."
 msgstr "Визначити нову змінну..."
 
 #: gui2/menustate.c:518
-#, fuzzy
 msgid "Add logs..."
-msgstr "Додати логарифми"
+msgstr "Додати логарифми..."
 
 #: gui2/menustate.c:519
-#, fuzzy
 msgid "Add differences..."
-msgstr "Додати різниці"
+msgstr "Додати різниці..."
 
 #: gui2/menustate.c:521
-#, fuzzy
 msgid "Display components"
-msgstr "Усі компоненти"
+msgstr "Показати компоненти"
 
 #: gui2/menustate.c:522
-#, fuzzy
 msgid "Edit components"
-msgstr "Усі компоненти"
+msgstr "Редагувати компоненти"
 
 #: gui2/menustate.c:523
-#, fuzzy
 msgid "Delete components"
-msgstr "Усі компоненти"
+msgstr "Видалити компоненти"
 
 #: gui2/menustate.c:915
 msgid "Unknown"
@@ -14637,7 +14620,7 @@ msgstr "R"
 
 #: gui2/selector.c:1278
 msgid "Select and right-click to edit specification"
-msgstr ""
+msgstr "Для редаг. специфікації виберіть та натисніть праву кнопку"
 
 #: gui2/selector.c:1778 gui2/selector.c:2265
 msgid "Unrestricted"
@@ -14817,9 +14800,8 @@ msgid "Multiple precision OLS"
 msgstr "МНК з високою точністю"
 
 #: gui2/selector.c:4111
-#, fuzzy
 msgid "MIDAS regression"
-msgstr "Регресія для KPSS "
+msgstr "MIDAS-регресія "
 
 #: gui2/selector.c:4121
 msgid "Weight variable"
@@ -14887,7 +14869,7 @@ msgstr "Вейбулла"
 
 #: gui2/selector.c:4257
 msgid "Exponential"
-msgstr "Экспоненційний"
+msgstr "Експоненційний"
 
 #: gui2/selector.c:4258
 msgid "Log-logistic"
@@ -14982,9 +14964,8 @@ msgid "Equation 2 regressors"
 msgstr "Регресори рівняння 2"
 
 #: gui2/selector.c:4871
-#, fuzzy
 msgid "High-frequency"
-msgstr "Частота"
+msgstr "Високочастотний"
 
 #: gui2/selector.c:4873
 msgid "Helper functions"
@@ -15367,9 +15348,8 @@ msgid "Public functions"
 msgstr "Інтерфейсні функції"
 
 #: gui2/selector.c:7093
-#, fuzzy
 msgid "No MIDAS data were found in the current dataset"
-msgstr "Намагаюсь додати до поточного файлу даних"
+msgstr "Поточний набір даних не містить даних у форматі MIDAS"
 
 #: gui2/selector.c:7269
 msgid "Select variables for logging"
@@ -16588,13 +16568,12 @@ msgid "last observation"
 msgstr "останнє спостереження"
 
 #: gui2/varinfo.c:418
-#, fuzzy
 msgid "specific day in week"
-msgstr "специфікація адекватна"
+msgstr "певний день тиждня"
 
 #: gui2/varinfo.c:419
 msgid "spead (MIDAS)"
-msgstr ""
+msgstr "spead (MIDAS)"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"
@@ -16677,9 +16656,8 @@ msgid "EGARCH"
 msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:14
-#, fuzzy
 msgid "Forecast"
-msgstr "_Прогнози"
+msgstr "Прогноз"
 
 #: plugin/addons-i18n.c:16
 msgid "GED"
@@ -17082,7 +17060,7 @@ msgstr "Характеристики масштабованого діапазо
 
 #: plugin/fractals.c:252
 msgid "(logs are to base 2)"
-msgstr "(логарифмы за основою 2)"
+msgstr "(логарифми за основою 2)"
 
 #: plugin/fractals.c:264
 msgid "Error estimating Hurst exponent model\n"
@@ -17200,7 +17178,7 @@ msgstr "власне значення"
 
 #: plugin/johansen.c:1505
 msgid "Exogenous regressor(s)"
-msgstr "Экзогенні регресор(и)"
+msgstr "Екзогенний(ні) регресор(и)"
 
 #: plugin/johansen.c:1568
 msgid "including constant term"
@@ -17486,7 +17464,7 @@ msgstr "gretl: завантаження даних"
 
 #: plugin/progress_bar.c:62
 msgid "gretl: storing data"
-msgstr "gretl: збереження данных"
+msgstr "gretl: збереження даних"
 
 #: plugin/progress_bar.c:64
 msgid "gretl: scanning fonts"
@@ -17494,7 +17472,7 @@ msgstr "gretl: пошук шрифтів"
 
 #: plugin/progress_bar.c:135
 msgid "Retrieving"
-msgstr "Відновлення"
+msgstr "Одержано"
 
 #: plugin/progress_bar.c:135
 msgid "Storing"
@@ -17871,9 +17849,8 @@ msgid "Statistics/transformations"
 msgstr "Статистика/перетворення"
 
 #: doc/commands/matfuncs.c:49
-#, fuzzy
 msgid "Decoration"
-msgstr "Тривалість"
+msgstr "Декорація"
 
 #~ msgid "Upload function package"
 #~ msgstr "Переслати пакет функцій на сервер"
