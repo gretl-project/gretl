@@ -1174,16 +1174,18 @@ Note that all gretl mode abbrevs start with a grave accent."
 (defun gretl-run-buffer ()
   "Run the current gretl script, sending the results to a buffer."
   (interactive)
-  (let (save-pop-frames pop-up-frames)
+  (let ((save-pop-frames pop-up-frames) (gretl-buf (buffer-name)))
     (defvar gretl-tempfile)
     (setq gretl-tempfile "/tmp/gretltmp.inp")
     (setq pop-up-frames gretl-output-in-new-frame)
     (write-region (point-min) (point-max) gretl-tempfile nil 1 nil nil)
     (get-buffer-create "gretl_output")
-    (call-process gretl-program nil "gretl_output" nil  "-q" "-b" gretl-tempfile)
     (pop-to-buffer "gretl_output" nil nil)
+    (erase-buffer)
+    (call-process gretl-program nil "gretl_output" nil  "-q" "-b" gretl-tempfile)
     (goto-char (point-min))
     (call-process gretl-remove-file nil nil nil gretl-tempfile)
+    (pop-to-buffer gretl-buf)
     (setq pop-up-frames save-pop-frames)))
 
 ;;; Bug reporting
