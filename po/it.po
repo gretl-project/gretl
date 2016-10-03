@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-10-02 16:01-0400\n"
-"PO-Revision-Date: 2016-09-26 11:51+0200\n"
+"PO-Revision-Date: 2016-10-03 07:39+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -16636,7 +16636,6 @@ msgid "specific day in week"
 msgstr "giorno della settimana specifico"
 
 #: gui2/varinfo.c:419
-#, fuzzy
 msgid "spread (MIDAS)"
 msgstr "sottoperiodi (MIDAS)"
 
