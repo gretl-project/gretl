@@ -372,6 +372,8 @@ static int nls_genr_setup (nlspec *s)
 					 formula);
 		    err = E_TYPES;
 		    break;
+		} else {
+		    gentype = GRETL_TYPE_DOUBLE;
 		}
 	    }
 	}
