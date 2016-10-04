@@ -266,6 +266,7 @@ static gui_obj *get_gui_obj_by_data (void *finddata);
 static int gui_user_var_callback (const char *name, GretlType type,
 				  int action);
 static void auto_view_session (void);
+static int display_session_model (SESSION_MODEL *sm);
 
 static int session_graph_count;
 static int session_bundle_count;
@@ -720,9 +721,10 @@ void save_output_as_text_icon (windata_t *vwin)
 }
 
 static int add_model_to_session (void *ptr, const char *name,
-				 GretlObjType type)
+				 GretlObjType type,
+				 SESSION_MODEL **psm)
 {
-    SESSION_MODEL *mod;
+    SESSION_MODEL *model;
     int err = 0;
 
 #if SESSION_DEBUG
@@ -730,14 +732,18 @@ static int add_model_to_session (void *ptr, const char *name,
 	    " with ptr = %p\n", ptr);
 #endif
 
-    mod = session_model_new(ptr, name, type);
+    model = session_model_new(ptr, name, type);
 
-    if (mod == NULL || session_append_model(mod)) {
+    if (model == NULL || session_append_model(model)) {
 	err = E_ALLOC;
     } else if (iconlist != NULL) {
-	session_add_icon(mod, type, ICON_ADD_SINGLE);
+	session_add_icon(model, type, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
 	auto_view_session();
+    }
+
+    if (!err && psm != NULL) {
+	*psm = model;
     }
 
     return err;
@@ -758,30 +764,36 @@ static int replace_session_graph (SESSION_GRAPH *graph,
     return ADD_OBJECT_REPLACE;
 }
 
-static int 
-real_add_graph_to_session (const char *fname, const char *grname,
-			   GretlObjType type)
+static int real_add_graph_to_session (const char *fname,
+				      const char *grname,
+				      GretlObjType type,
+				      SESSION_GRAPH **pgraph)
 {
     SESSION_GRAPH *graph = get_session_graph_by_name(grname);
+    int ret = ADD_OBJECT_OK;
 
     if (graph != NULL) {
-	return replace_session_graph(graph, grname, type);
-    } 
-
-    graph = session_append_graph(grname, fname, type);
-    if (graph == NULL) {
-	return ADD_OBJECT_FAIL;
+	ret = replace_session_graph(graph, grname, type);
+    } else {
+	graph = session_append_graph(grname, fname, type);
+	if (graph == NULL) {
+	    ret = ADD_OBJECT_FAIL;
+	}
     }
 
-    mark_session_changed();
-
-    if (iconlist != NULL) {
-	session_add_icon(graph, type, ICON_ADD_SINGLE);
-    } else if (autoicon_on()) {
-	auto_view_session();
+    if (ret != ADD_OBJECT_FAIL) {
+	if (pgraph != NULL) {
+	    *pgraph = graph;
+	}
+	mark_session_changed();
+	if (iconlist != NULL) {
+	    session_add_icon(graph, type, ICON_ADD_SINGLE);
+	} else if (autoicon_on()) {
+	    auto_view_session();
+	}
     }
 
-    return ADD_OBJECT_OK;
+    return ret;
 }
 
 const char *get_session_dirname (void)
@@ -877,7 +889,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
     gretl_remove(fname);
     strcpy(fname, fullname); /* was @shortname */
 
-    err = real_add_graph_to_session(shortname, graphname, type);
+    err = real_add_graph_to_session(shortname, graphname, type, NULL);
     if (err == ADD_OBJECT_FAIL) {
 	err = 1;
     }
@@ -914,12 +926,13 @@ static void make_graph_filename (char *shortname)
 */
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
-			      GretlObjType type)
+			      GretlObjType type, int display)
 {
-    SESSION_GRAPH *orig;
+    SESSION_GRAPH *graph = NULL;
     char shortname[MAXSAVENAME];
     char grpath[MAXLEN];
     int replace = 0;
+    int ret = 0;
     
     errno = 0;
 
@@ -930,11 +943,11 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 
     gretl_chdir(gretl_dotdir());
 
-    orig = get_session_graph_by_name(gname);
+    graph = get_session_graph_by_name(gname);
 
-    if (orig != NULL) {
+    if (graph != NULL) {
 	/* replacing */
-	session_file_make_path(grpath, orig->fname);
+	session_file_make_path(grpath, graph->fname);
 	replace = 1;
     } else {
 	/* ensure unique filename */
@@ -952,10 +965,25 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
     gretl_remove(fname);
 
     if (replace) {
-	return replace_session_graph(orig, NULL, type);
+	ret = replace_session_graph(graph, NULL, type);
     } else {
-	return real_add_graph_to_session(shortname, gname, type);
+	ret = real_add_graph_to_session(shortname, gname, type, &graph);
     }
+
+    if (ret == ADD_OBJECT_REPLACE) {
+	/* don't keep a stale plot window open */
+	GtkWidget *pwin = get_window_for_plot(graph);
+
+	if (pwin != NULL) {
+	    gtk_widget_destroy(pwin);
+	}
+    }
+
+    if (ret != ADD_OBJECT_FAIL && display) {
+	display_session_graph_by_data(graph);
+    }
+
+    return ret;
 }
 
 void *get_session_object_by_name (const char *name, GretlObjType *type)
@@ -1046,9 +1074,10 @@ static int show_model_in_window (void *ptr, GretlObjType type)
    of syncing the GUI session with the model stack state.
 */
 
-int add_model_to_session_callback (void *ptr, GretlObjType type)
+int add_model_to_session_callback (void *ptr, GretlObjType type,
+				   gretlopt opt)
 {
-    SESSION_MODEL *targ = NULL;
+    SESSION_MODEL *model = NULL;
     char *name = gretl_object_get_name(ptr, type);
     int err = 0;
 
@@ -1058,24 +1087,28 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
     }
 
     /* are we replacing a session model's content? */
-    targ = get_session_model_by_name(name);
+    model = get_session_model_by_name(name);
 
-    if (targ != NULL) {
-	windata_t *vwin = get_viewer_for_data(targ->ptr);
+    if (model != NULL) {
+	windata_t *vwin = get_viewer_for_data(model->ptr);
 
 	if (vwin != NULL) {
 	    /* current model window is "orphaned" */
 	    gretl_viewer_destroy(vwin);
 	}
-
-	targ->ptr = ptr;
-	targ->type = type;
+	model->ptr = ptr;
+	model->type = type;
 	mark_session_changed();
     } else {
-	err = add_model_to_session(ptr, name, type);
+	err = add_model_to_session(ptr, name, type, &model);
 	if (!err) {
 	    mark_session_changed();
 	}
+    }
+
+    if (!err && (opt & OPT_W)) {
+	/* should open a window for this session model */
+	display_session_model(model);
     }
 
     return err;
@@ -1143,7 +1176,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 	return;
     }    
 
-    err = add_model_to_session(ptr, name, type);
+    err = add_model_to_session(ptr, name, type, NULL);
 
     if (!err) {
 	mark_session_changed();
@@ -2411,7 +2444,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 	char fullname[MAXLEN];
 
 	session_file_make_path(fullname, graph->fname);
-	if (get_window_for_plot(fullname) || 
+	if (get_window_for_plot(graph) || 
 	    get_editor_for_file(fullname)) {
 	    busy = 1;
 	}
@@ -3975,10 +4008,16 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
 
 static void real_open_session_graph (SESSION_GRAPH *graph)
 {
-    char tmp[MAXLEN];
+    GtkWidget *plotwin = get_window_for_plot(graph);
 
-    session_file_make_path(tmp, graph->fname);
-    display_session_graph(tmp, graph->name);
+    if (plotwin != NULL) {
+	gtk_window_present(GTK_WINDOW(plotwin));
+    } else {
+	char tmp[MAXLEN];
+
+	session_file_make_path(tmp, graph->fname);
+	display_session_graph(tmp, graph->name, graph);
+    }
 }
 
 static void open_gui_graph (gui_obj *obj)

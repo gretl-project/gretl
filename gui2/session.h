@@ -73,7 +73,7 @@ void save_output_as_text_icon (windata_t *vwin);
 int gui_add_graph_to_session (char *fname, char *fullname, int type);
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
-			      GretlObjType type);
+			      GretlObjType type, int display);
 
 char *session_graph_make_path (char *path, const char *fname);
 
@@ -81,7 +81,8 @@ const char *last_session_graph_name (void);
 
 void model_add_as_icon (GtkAction *action, gpointer p);
 
-int add_model_to_session_callback (void *ptr, GretlObjType type);
+int add_model_to_session_callback (void *ptr, GretlObjType type,
+				   gretlopt opt);
 
 void session_model_callback (void *ptr, int action);
 

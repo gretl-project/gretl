@@ -1049,7 +1049,7 @@ void maybe_close_window_for_user_var (const gpointer data,
     }
 }
 
-GtkWidget *get_window_for_plot (const char *plotfile)
+GtkWidget *get_window_for_plot (void *session_plot)
 {
     GtkWidget *ret = NULL;
 
@@ -1058,13 +1058,13 @@ GtkWidget *get_window_for_plot (const char *plotfile)
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
 	GtkWidget *w;
-	gchar *test;
+	void *test;
 
 	while (list != NULL && ret == NULL) {
 	    w = window_from_action((GtkAction *) list->data);
 	    if (w != NULL) {
-		test = g_object_get_data(G_OBJECT(w), "plot-filename");
-		if (test != NULL && strstr(test, plotfile) != NULL) {
+		test = g_object_get_data(G_OBJECT(w), "session-ptr");
+		if (test != NULL && test == session_plot) {
 		    ret = w;
 		}
 	    }	    

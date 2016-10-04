@@ -9273,11 +9273,11 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	    dataset->modflag = 0;
 	}
     } else if (ptr != NULL && type == GRETL_OBJ_EQN) {
-	add_model_to_session_callback(ptr, type);
+	add_model_to_session_callback(ptr, type, s->cmd->opt);
     } else if (ptr != NULL && type == GRETL_OBJ_VAR) {
-	add_model_to_session_callback(ptr, type);
+	add_model_to_session_callback(ptr, type, s->cmd->opt);
     } else if (ptr != NULL && type == GRETL_OBJ_SYS) {
-	add_model_to_session_callback(ptr, type);
+	add_model_to_session_callback(ptr, type, s->cmd->opt);
     } else if (ci == FREQ && ((s->flags & CONSOLE_EXEC) ||
 			      (s->cmd->opt & OPT_G))) {
 	register_graph();
@@ -9297,7 +9297,8 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	err = graph_page_parse_line(s->line, s->cmd->opt);
     } else if (is_plotting_command(s->cmd)) {
 	if (*s->cmd->savename != '\0') {
-	    maybe_save_graph(s->cmd->savename, ci, s->prn);
+	    ci = is_plotting_command(s->cmd);
+	    maybe_save_graph(s->cmd->savename, ci, s->cmd->opt, s->prn);
 	} else {
 	    register_graph();
 	}

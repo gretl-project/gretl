@@ -4731,7 +4731,7 @@ static png_plot *png_plot_new (void)
 */
 
 static int gnuplot_show_png (const char *fname, const char *name,
-			     GPT_SPEC *spec, int saved)
+			     GPT_SPEC *spec, void *session_ptr)
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -4748,7 +4748,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
-	    fname, (void *) spec, saved);
+	    fname, (void *) spec, (ptr != NULL));
 #endif
 
     plot = png_plot_new();
@@ -4767,7 +4767,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	strcpy(plot->spec->fname, fname);
     }
 
-    if (saved) {
+    if (session_ptr != NULL) {
 	plot->status |= PLOT_SAVED;
     }
 
@@ -4959,6 +4959,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	gtk_widget_destroy(plot->shell);
     } else {
 	g_object_set_data(G_OBJECT(plot->shell), "object", plot);
+	if (session_ptr != NULL) {
+	    g_object_set_data(G_OBJECT(plot->shell),
+			      "session-ptr", session_ptr);
+	}
     }
 
     return err;
@@ -4971,13 +4975,14 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
 void register_graph (void)
 {
-    gnuplot_show_png(gretl_plotfile(), NULL, NULL, 0);
+    gnuplot_show_png(gretl_plotfile(), NULL, NULL, NULL);
 }
 
 /* @fname is the name of a plot command file from the
    current session, and @title is its display name */
 
-void display_session_graph (const char *fname, const char *title) 
+void display_session_graph (const char *fname, const char *title,
+			    void *session_ptr) 
 {
     char fullname[MAXLEN];
     gchar *plotcmd;
@@ -5003,7 +5008,7 @@ void display_session_graph (const char *fname, const char *title)
 	/* display the bad plot file */
 	view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
     } else {
-	err = gnuplot_show_png(fullname, title, NULL, 1);
+	err = gnuplot_show_png(fullname, title, NULL, session_ptr);
     }
 
     if (err) {
