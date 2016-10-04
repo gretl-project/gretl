@@ -67,10 +67,23 @@ static int gui_parse_object_request (const char *line,
     return action;
 }
 
-int maybe_save_graph (const char *name, int ci, PRN *prn)
+int maybe_save_graph (const char *name, int ci, gretlopt opt, PRN *prn)
 {
     GretlObjType type;
+    int display = 0;
     int add, err = 0;
+
+    if (opt & OPT_U) {
+	/* If the plotting command included "--output=display"
+	   we should arrange to show the plot in a window as
+	   well as adding it as an icon.
+	*/	
+	const char *s = get_optval_string(ci, OPT_U);
+
+	if (s != NULL && !strcmp(s, "display")) {
+	    display = 1;
+	}
+    }
 
     /* note: gretl_plotfile() below should give the name of
        a temporary file to which gnuplot commands have
@@ -78,7 +91,7 @@ int maybe_save_graph (const char *name, int ci, PRN *prn)
     */
 
     type = (ci == BXPLOT)? GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
-    add = cli_add_graph_to_session(gretl_plotfile(), name, type);
+    add = cli_add_graph_to_session(gretl_plotfile(), name, type, display);
 
     if (add == ADD_OBJECT_FAIL) {
 	err = 1;

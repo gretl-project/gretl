@@ -20,7 +20,7 @@
 #ifndef OBJECTSAVE_H
 #define OBJECTSAVE_H
 
-int maybe_save_graph (const char *name, int ci, PRN *prn);
+int maybe_save_graph (const char *name, int ci, gretlopt opt, PRN *prn);
 
 int save_text_buffer (const char *name, PRN *prn, int pos);
 

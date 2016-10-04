@@ -26,7 +26,8 @@ typedef struct png_plot_t png_plot;
 
 int remove_png_term_from_plot_by_name (const char *fname);
 
-void display_session_graph (const char *path, const char *title);
+void display_session_graph (const char *path, const char *title,
+			    void *ptr);
 
 void register_graph (void);
 

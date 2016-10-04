@@ -2275,11 +2275,11 @@ void set_plot_produced (void)
 int is_plotting_command (CMD *cmd)
 {
     if (GRAPHING_COMMAND(cmd->ci)) {
-	return 1;
+	return cmd->ci;
     } else if (cmd->ci == END &&
 	       cmd->param != NULL &&
 	       !strcmp(cmd->param, "plot")) {
-	return 1;
+	return PLOT;
     } else {
 	return 0;
     }
