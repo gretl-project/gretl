@@ -5009,7 +5009,8 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 enum {
     BAND_LINE,
     BAND_FILL,
-    BAND_DASH
+    BAND_DASH,
+    BAND_BARS
 };
 
 struct band_pm {
@@ -5297,6 +5298,8 @@ static int parse_band_style_option (int *style, char *rgb)
 		*style = BAND_DASH;
 	    } else if (!strcmp(s, "line")) {
 		*style = BAND_LINE;
+	    } else if (!strcmp(s, "bars")) {
+		*style = BAND_BARS;
 	    } else {
 		err = invalid_field_error(s);
 	    }
@@ -5310,6 +5313,8 @@ static int parse_band_style_option (int *style, char *rgb)
 		*style = BAND_DASH;
 	    } else if (!strncmp(s, "line,", 5)) {
 		*style = BAND_LINE;
+	    } else if (!strcmp(s, "bars")) {
+		*style = BAND_BARS;
 	    } else {
 		err = invalid_field_error(s);
 	    }
@@ -5493,10 +5498,15 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	    strcpy(dspec, " dt 2");
 	}
 	/* then the confidence band */
-	fprintf(fp, "'-' using 1:($2-%g*$3) notitle w lines %s%s, \\\n",
-		pm.factor, lspec, dspec);
-	fprintf(fp, "'-' using 1:($2+%g*$3) notitle w lines %s%s\n",
-		pm.factor, lspec, dspec);
+	if (style == BAND_BARS) {
+	    fprintf(fp, "'-' using 1:($2):(%g*$3) w errorbars %s%s\n",
+		    pm.factor, lspec, dspec);
+	} else {
+	    fprintf(fp, "'-' using 1:($2-%g*$3) notitle w lines %s%s, \\\n",
+		    pm.factor, lspec, dspec);
+	    fprintf(fp, "'-' using 1:($2+%g*$3) notitle w lines %s%s\n",
+		    pm.factor, lspec, dspec);
+	}
     }
 
     /* write out the inline data, the order depending on whether
@@ -5515,7 +5525,9 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	    print_user_y_data(x, y, t1, t2, fp);
 	}
 	print_user_pm_data(x, c, w, t1, t2, fp);
-	print_user_pm_data(x, c, w, t1, t2, fp);
+	if (style != BAND_BARS) {
+	    print_user_pm_data(x, c, w, t1, t2, fp);
+	}
     }
 
     gretl_pop_c_numeric_locale();
