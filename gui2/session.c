@@ -970,6 +970,15 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 	ret = real_add_graph_to_session(shortname, gname, type, &graph);
     }
 
+    if (ret == ADD_OBJECT_REPLACE) {
+	/* don't keep a stale plot window open */
+	GtkWidget *pwin = get_window_for_plot(graph);
+
+	if (pwin != NULL) {
+	    gtk_widget_destroy(pwin);
+	}
+    }
+
     if (ret != ADD_OBJECT_FAIL && display) {
 	display_session_graph_by_data(graph);
     }
@@ -2435,7 +2444,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 	char fullname[MAXLEN];
 
 	session_file_make_path(fullname, graph->fname);
-	if (get_window_for_plot(fullname) || 
+	if (get_window_for_plot(graph) || 
 	    get_editor_for_file(fullname)) {
 	    busy = 1;
 	}
@@ -3999,15 +4008,14 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
 
 static void real_open_session_graph (SESSION_GRAPH *graph)
 {
-    GtkWidget *plotwin;
-    char tmp[MAXLEN];
+    GtkWidget *plotwin = get_window_for_plot(graph);
 
-    session_file_make_path(tmp, graph->fname);
-    plotwin = get_window_for_plot(tmp);
-    
     if (plotwin != NULL) {
 	gtk_window_present(GTK_WINDOW(plotwin));
     } else {
+	char tmp[MAXLEN];
+
+	session_file_make_path(tmp, graph->fname);
 	display_session_graph(tmp, graph->name, graph);
     }
 }
