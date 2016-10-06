@@ -41,6 +41,7 @@
 #undef XML_DEBUG
 
 #define GRETLDATA_VERSION "1.3"
+#define GDT_DEBUG 0
 
 #ifdef WIN32
 
@@ -1277,6 +1278,10 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
     n = atoi((const char *) tmp);
     free(tmp);
 
+#if GDT_DEBUG
+    fprintf(stderr, "gretl_xml_get_strings_array: count=%d\n", n);
+#endif
+
     if (n > 0) {
 	S = strings_array_new(n);
 	if (S == NULL) {
@@ -1284,14 +1289,19 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 	} else {
 	    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
 	    if (tmp == NULL) {
+		fprintf(stderr, "xmlNodeListGetString failed\n");
 		*err = E_DATA;
 	    } else {
 		p = (const char *) tmp;
 		for (i=0; i<n && !*err; i++) {
 		    S[i] = chunk_strdup(p, &p, err);
-		    if (*err == E_DATA && i == n - 1 && slop) {
-			*err = 0;
-			n--;
+		    if (*err) {
+			fprintf(stderr, "chunk_strdup: err=%d, i=%d, n=%d, "
+				"slop=%d\n", *err, i, n, slop);
+			if (*err == E_DATA && i == n - 1 && slop) {
+			    *err = 0;
+			    n--;
+			}
 		    }
 		}
 		free(tmp);
@@ -2715,8 +2725,6 @@ static int missing_series_error (const char **vnames, int nv,
     return E_DATA;
 }
 
-#define GDT_DEBUG 0
-
 static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 				   const char **vnames, int nv,
 				   int *fullv, int **pvlist)
@@ -3301,6 +3309,10 @@ static int process_string_tables (xmlDocPtr doc,
 	free(tmp);
     }
 
+#if GDT_DEBUG
+    fprintf(stderr, "process_string_tables: ntabs=%d, err=%d\n", ntabs, err);
+#endif
+
     if (!err) {
 	cur = node->xmlChildrenNode;
 	while (cur && xmlIsBlankNode(cur)) {
@@ -3312,6 +3324,7 @@ static int process_string_tables (xmlDocPtr doc,
     }
 
     if (err) {
+	fprintf(stderr, "process_string_tables: returning err = %d\n", err);
 	return err;
     }
 
@@ -3327,13 +3340,17 @@ static int process_string_tables (xmlDocPtr doc,
 	    } else {
 		v = owner_id(dset, (const char *) owner);
 		if (v <= 0 && !subset) {
+		    fprintf(stderr, "process_string_tables: invalid owner_id\n");
 		    err = E_DATA;
 		}
 	    }
 	    if (v > 0) {
 		strs = gretl_xml_get_strings_array(cur, doc, &n_strs, 
 						   0, &err);
-		if (!err) {
+		if (err) {
+		    fprintf(stderr, "process_string_tables: get_strings_array "
+			    "gave error %d\n", err);
+		} else {
 		    st = series_table_new(strs, n_strs);
 		    if (st == NULL) {
 			strings_array_free(strs, n_strs);
@@ -3345,8 +3362,9 @@ static int process_string_tables (xmlDocPtr doc,
 	    }
 	    free(owner);
 	}	   
- 
-	cur = cur->next;
+	if (!err) {
+	    cur = cur->next;
+	}
     }
 
     return err;
@@ -3780,6 +3798,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
 	    if (process_varlist(cur, tmpset, 0)) {
+		fprintf(stderr, "error processing varlist\n");
 		err = 1;
 	    } else {
 		gotvars = 1;
@@ -3793,7 +3812,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		
 		err = read_observations(doc, cur, tmpset, dsize,
 					binary, fname);
-		if (!err) {
+		if (err) {
+		    fprintf(stderr, "error %d in read_observations\n", err);
+		} else {
 		    gotobs = 1;
 		}
 	    }
@@ -3802,6 +3823,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
 	    } else if (process_string_tables(doc, cur, tmpset, 0)) {
+		fprintf(stderr, "error processing string tables\n");
 		err = 1;
 	    }	    
 	} else if (!xmlStrcmp(cur->name, (XUC) "panel-info")) {
@@ -3810,6 +3832,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		err = 1;
 	    } else {
 		err = process_panel_info(cur, tmpset, &repad);
+		if (err) {
+		    fprintf(stderr, "error processing panel info\n");
+		}
 	    }
 	}
 	if (!err) {
@@ -3818,7 +3843,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     }
 
 #if GDT_DEBUG
-    fprintf(stderr, "done walking XML tree...\n");
+    fprintf(stderr, "done walking XML tree, err = %d\n", err);
 #endif
 
     if (!err && !gotvars) {
