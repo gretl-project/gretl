@@ -1302,6 +1302,7 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 			    n--;
 			} else {
 			    /* treat as non-fatal? */
+			    fprintf(stderr, "repairing missing string value!\n");
 			    S[i] = gretl_strdup("empty string");
 			    *err = 0;
 			}
