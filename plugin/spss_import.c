@@ -273,6 +273,10 @@ static int read_rec_7_3 (spss_data *sdat, int size, int count)
     }
 
     enc = sdat->encoding = data[7];
+
+#if SPSS_DEBUG
+    fprintf(stderr, "rec_7_3 encoding: got %d\n", enc);
+#endif
     
     /* See
        http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html
@@ -348,10 +352,28 @@ static int recode_sav_string (char *targ, const char *src,
 {
     int err = 0;
 
+#if SPSS_DEBUG > 1
+    fprintf(stderr, "recode_sav_string: '%s', enc=%d\n", src, encoding);
+#endif
+
     *targ = '\0';
 
     if (g_utf8_validate(src, -1, NULL)) {
 	gretl_utf8_strncat_trim(targ, src, maxlen);
+    } else if (encoding == 28591) {
+	/* https://www.gnu.org/software/pspp/pspp-dev/html_node/ \
+	   Machine-Integer-Info-Record.html */
+	gchar *conv;
+	gsize wrote = 0;
+
+	conv = g_convert(src, -1, "UTF-8", "ISO8859-1",
+			 NULL, &wrote, NULL);
+	if (conv != NULL) {
+	    gretl_utf8_strncat_trim(targ, conv, maxlen);
+	    g_free(conv);
+	} else {
+	    err = E_DATA;
+	}
     } else if (encoding >= 500 && encoding <= 9999) {
 	/* try Windows codepage? */
 	char cpage[8];
@@ -377,6 +399,7 @@ static int recode_sav_string (char *targ, const char *src,
 
     return err;
 }
+
 
 /* Read record type 7, subtype 13: long variable names */
 
@@ -490,6 +513,10 @@ static int read_subrecord (spss_data *sdat)
 	/* http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html */
 	skip = 1;
 	break;
+    case 20:
+	fprintf(stderr, "Found subtype 20: Character Encoding Record (FIXME)\n");
+	skip = 1;
+	break;
     default:
 	fprintf(stderr, "Unrecognized record type 7, subtype %d encountered "
 		"in save file\n", data.subtype);
@@ -601,24 +628,24 @@ static int check_label_varindex (spss_data *sdat, spss_labelset *lset, int idx)
 
     if (idx < 1 || idx > sdat->nvars) {
 	err = sav_error("Variable index associated with value label (%d) is "
-			 "not between 1 and the number of values (%d)",
-			 idx, sdat->nvars);
+			"not between 1 and the number of values (%d)",
+			idx, sdat->nvars);
     } else {
 	spss_var *v = &sdat->vars[idx-1];
 
 	if (v->type == -1) {
 	    err = sav_error("Variable index associated with value label (%d) refers "
-			     "to a continuation of a string variable, not to an actual "
-			     "variable", idx);
+			    "to a continuation of a string variable, not to an actual "
+			    "variable", idx);
 	} else if (v->type == SPSS_STRING && v->width > MAX_SHORT_STRING) {
 	    err = sav_error("Value labels are not allowed on long string variables (%s)", 
-			     v->name);
+			    v->name);
 	} else if (lset->vtype == SPSS_UNDEF) {
 	    /* record type of first variable */
 	    lset->vtype = v->type;
 	} else if (v->type != lset->vtype) {
 	    err = sav_error("Variables associated with value label are not all "
-			     "of the same type.");
+			    "of the same type.");
 	}
     }
 
@@ -773,6 +800,10 @@ static int read_sav_other_records (spss_data *sdat)
 	if (err) {
 	    break;
 	}
+
+#if SPSS_DEBUG > 1
+	fprintf(stderr, "read_sav_other_records: type = %d\n", rec_type);
+#endif	
 
 	switch (rec_type) {
 	case 3:
@@ -1045,7 +1076,9 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 	   any */
 	if (long_string_count) {
 	    if (sv.type == -1) {
+#if SPSS_DEBUG
 		fprintf(stderr, " long string continuation\n");
+#endif
 		v->type = -1;
 		long_string_count--;
 		/* note: no further processing here */

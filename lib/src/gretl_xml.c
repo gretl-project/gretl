@@ -1295,12 +1295,15 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 		p = (const char *) tmp;
 		for (i=0; i<n && !*err; i++) {
 		    S[i] = chunk_strdup(p, &p, err);
-		    if (*err) {
-			fprintf(stderr, "chunk_strdup: err=%d, i=%d, n=%d, "
-				"slop=%d\n", *err, i, n, slop);
-			if (*err == E_DATA && i == n - 1 && slop) {
+		    if (*err == E_DATA) {
+			if (i == n - 1 && slop) {
+			    /* somebody got off by one somewhere? */
 			    *err = 0;
 			    n--;
+			} else {
+			    /* treat as non-fatal? */
+			    S[i] = gretl_strdup("empty string");
+			    *err = 0;
 			}
 		    }
 		}
@@ -2432,7 +2435,9 @@ static int real_write_gdt (const char *fname, const int *list,
 
     alt_puts("</observations>\n", fp, fz);
 
-    if ((ntabs = string_table_count(dset, list, nvars)) > 0) {
+    ntabs = string_table_count(dset, list, nvars);
+
+    if (ntabs > 0) {
 	char **strs;
 	int j, n_strs;
 
@@ -2458,6 +2463,11 @@ static int real_write_gdt (const char *fname, const int *list,
 	    }
 	    for (j=0; j<n_strs; j++) {
 		gretl_xml_encode_to_buf(xmlbuf, strs[j], sizeof xmlbuf);
+		if (*xmlbuf == '\0') {
+		    fprintf(stderr, "string values for var %d: string %d is empty\n",
+			    i, j);
+		    strcpy(xmlbuf, "empty string");
+		}
 		if (gz) {
 		    gzprintf(fz, "\"%s\" ", xmlbuf);
 		} else {
@@ -2570,7 +2580,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 	    dset->v = nv + 1;
 	} else {
 	    gretl_errmsg_set(_("Failed to parse count of variables"));
-	    err = 1;
+	    err = E_DATA;
 	}
 	if (!err && dataset_allocate_varnames(dset)) {
 	    err = E_ALLOC;
@@ -2584,11 +2594,11 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 	free(tmp);
     } else {
 	gretl_errmsg_set(_("Got no variables"));
-	err = 1;
+	err = E_DATA;
     }
 
     if (err) {
-	return 1;
+	return err;
     } else if (nv == 0) {
 	fprintf(stderr, "Empty dataset!\n");
 	return 0;
@@ -2602,7 +2612,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 
     if (cur == NULL) {
 	gretl_errmsg_set(_("Got no variables"));
-	return 1;
+	return E_DATA;
     }
 
     i = 1;
@@ -2614,7 +2624,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		free(tmp);
 	    } else {
 		gretl_errmsg_sprintf(_("Variable %d has no name"), i);
-		return 1;
+		return E_DATA;
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "label");
 	    if (tmp != NULL) {
@@ -2682,7 +2692,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
    
     if (i != dset->v) {
 	gretl_errmsg_set(_("Number of variables does not match declaration"));
-	err = 1;
+	err = E_DATA;
     } 
 
     return err;
@@ -3797,9 +3807,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	    tmpset->descrip = (char *) 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
-	    if (process_varlist(cur, tmpset, 0)) {
+	    err = process_varlist(cur, tmpset, 0);
+	    if (err) {
 		fprintf(stderr, "error processing varlist\n");
-		err = 1;
 	    } else {
 		gotvars = 1;
 	    }
@@ -3821,19 +3831,21 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	} else if (!xmlStrcmp(cur->name, (XUC) "string-tables")) {
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
-		err = 1;
-	    } else if (process_string_tables(doc, cur, tmpset, 0)) {
-		fprintf(stderr, "error processing string tables\n");
-		err = 1;
+		err = E_DATA;
+	    } else {
+		err = process_string_tables(doc, cur, tmpset, 0);
+		if (err) {
+		    fprintf(stderr, "error %d processing string tables\n", err);
+		}
 	    }	    
 	} else if (!xmlStrcmp(cur->name, (XUC) "panel-info")) {
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
-		err = 1;
+		err = E_DATA;
 	    } else {
 		err = process_panel_info(cur, tmpset, &repad);
 		if (err) {
-		    fprintf(stderr, "error processing panel info\n");
+		    fprintf(stderr, "error %d processing panel info\n", err);
 		}
 	    }
 	}
@@ -3901,9 +3913,15 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	destroy_dataset(tmpset);
     }
 
-    if (err) {
-	/* not sure about this */
-	gchar *msg = g_strdup_printf(_("Couldn't open '%s'"), fname);
+    if (err && err != E_ALLOC) {
+	/* ensure we don't just show "unspecified error" */
+	gchar *msg;
+
+	if (err == E_DATA) {
+	    msg = g_strdup_printf(_("'%s': malformed gdt file"), fname);
+	} else {
+	    msg = g_strdup_printf(_("Couldn't read '%s'"), fname);
+	}
 
 	gretl_errmsg_ensure(msg);
 	g_free(msg);
