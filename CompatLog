@@ -4,6 +4,9 @@ The second element in the vector returned by fcstats() is now
 the RMSE instead of the MSE, since it seems this is the statistic
 that is in fact wanted more often.
 
+The option of using the Box-Muller method in generating random
+normal variates has been removed (we now only use the Ziggurat).
+
 2016-07-06 version 2016c
 
 The original interface to gretl's Kalman filter facility is

@@ -11,6 +11,13 @@ version 2016d, in progress
 - "nls" command: make --verbose output more informative
 - "modtest" command: add --xdepend option for Pesaran's CD
   test of cross-sectional dependence in panel-data models
+- "gnuplot" and "plot": add "bars" option for plotting a
+  confidence band with error bars
+- The option of using the Box-Muller method for generating
+  random normals is now removed
+- The Mersenne Twister code is updated to SFMT 1.4.1
+- Fix an issue where gretl might fail to read back a gdt data
+  file written by itself  
 - Fix breakage in "dataset renumber" command
 - Fix breakage in "modtest" command with --white option
 - gig addon: fix an off-by-one bug
