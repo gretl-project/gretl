@@ -1,65 +1,98 @@
+#pragma once
 #ifndef SFMT_PARAMS_H
 #define SFMT_PARAMS_H
 
+#if !defined(SFMT_MEXP)
+#if defined(__GNUC__) && !defined(__ICC)
+  #warning "SFMT_MEXP is not defined. I assume MEXP is 19937."
+#endif
+  #define SFMT_MEXP 19937
+#endif
 /*-----------------
   BASIC DEFINITIONS
   -----------------*/
-/** Mersenne Exponent. The period of the sequence 
- *  is a multiple of 2^MEXP-1 */
-#define MEXP 19937
+/** Mersenne Exponent. The period of the sequence
+ *  is a multiple of 2^MEXP-1.
+ * #define SFMT_MEXP 19937 */
 /** SFMT generator has an internal state array of 128-bit integers,
  * and N is its size. */
-#define N (MEXP / 128 + 1)
+#define SFMT_N (SFMT_MEXP / 128 + 1)
 /** N32 is the size of internal state array when regarded as an array
  * of 32-bit integers.*/
-#define N32 (N * 4)
+#define SFMT_N32 (SFMT_N * 4)
 /** N64 is the size of internal state array when regarded as an array
  * of 64-bit integers.*/
-#define N64 (N * 2)
+#define SFMT_N64 (SFMT_N * 2)
 
 /*----------------------
   the parameters of SFMT
+  following definitions are in paramsXXXX.h file.
   ----------------------*/
+/** the pick up position of the array.
+#define SFMT_POS1 122
+*/
 
-#define POS1	122
-#define SL1	18
-#define SL2	1
-#define SR1	11
-#define SR2	1
-#define MSK1	0xdfffffefU
-#define MSK2	0xddfecb7fU
-#define MSK3	0xbffaffffU
-#define MSK4	0xbffffff6U
-#define PARITY1	0x00000001U
-#define PARITY2	0x00000000U
-#define PARITY3	0x00000000U
-#define PARITY4	0x13c9e684U
+/** the parameter of shift left as four 32-bit registers.
+#define SFMT_SL1 18
+ */
 
-/* PARAMETERS FOR ALTIVEC */
-#if defined(__APPLE__)	/* For OSX */
-    #define ALTI_SL1	(vector unsigned int)(SL1, SL1, SL1, SL1)
-    #define ALTI_SR1	(vector unsigned int)(SR1, SR1, SR1, SR1)
-    #define ALTI_MSK	(vector unsigned int)(MSK1, MSK2, MSK3, MSK4)
-    #define ALTI_MSK64 \
-	(vector unsigned int)(MSK2, MSK1, MSK4, MSK3)
-    #define ALTI_SL2_PERM \
-	(vector unsigned char)(1,2,3,23,5,6,7,0,9,10,11,4,13,14,15,8)
-    #define ALTI_SL2_PERM64 \
-	(vector unsigned char)(1,2,3,4,5,6,7,31,9,10,11,12,13,14,15,0)
-    #define ALTI_SR2_PERM \
-	(vector unsigned char)(7,0,1,2,11,4,5,6,15,8,9,10,17,12,13,14)
-    #define ALTI_SR2_PERM64 \
-	(vector unsigned char)(15,0,1,2,3,4,5,6,17,8,9,10,11,12,13,14)
-#else	/* For OTHER OSs(Linux?) */
-    #define ALTI_SL1	{SL1, SL1, SL1, SL1}
-    #define ALTI_SR1	{SR1, SR1, SR1, SR1}
-    #define ALTI_MSK	{MSK1, MSK2, MSK3, MSK4}
-    #define ALTI_MSK64	{MSK2, MSK1, MSK4, MSK3}
-    #define ALTI_SL2_PERM	{1,2,3,23,5,6,7,0,9,10,11,4,13,14,15,8}
-    #define ALTI_SL2_PERM64	{1,2,3,4,5,6,7,31,9,10,11,12,13,14,15,0}
-    #define ALTI_SR2_PERM	{7,0,1,2,11,4,5,6,15,8,9,10,17,12,13,14}
-    #define ALTI_SR2_PERM64	{15,0,1,2,3,4,5,6,17,8,9,10,11,12,13,14}
-#endif	/* For OSX */
-#define IDSTR	"SFMT-19937:122-18-1-11-1:dfffffef-ddfecb7f-bffaffff-bffffff6"
+/** the parameter of shift left as one 128-bit register.
+ * The 128-bit integer is shifted by (SFMT_SL2 * 8) bits.
+#define SFMT_SL2 1
+*/
+
+/** the parameter of shift right as four 32-bit registers.
+#define SFMT_SR1 11
+*/
+
+/** the parameter of shift right as one 128-bit register.
+ * The 128-bit integer is shifted by (SFMT_SL2 * 8) bits.
+#define SFMT_SR21 1
+*/
+
+/** A bitmask, used in the recursion.  These parameters are introduced
+ * to break symmetry of SIMD.
+#define SFMT_MSK1 0xdfffffefU
+#define SFMT_MSK2 0xddfecb7fU
+#define SFMT_MSK3 0xbffaffffU
+#define SFMT_MSK4 0xbffffff6U
+*/
+
+/** These definitions are part of a 128-bit period certification vector.
+#define SFMT_PARITY1	0x00000001U
+#define SFMT_PARITY2	0x00000000U
+#define SFMT_PARITY3	0x00000000U
+#define SFMT_PARITY4	0xc98e126aU
+*/
+
+#if SFMT_MEXP == 607
+  #include "SFMT-params607.h"
+#elif SFMT_MEXP == 1279
+  #include "SFMT-params1279.h"
+#elif SFMT_MEXP == 2281
+  #include "SFMT-params2281.h"
+#elif SFMT_MEXP == 4253
+  #include "SFMT-params4253.h"
+#elif SFMT_MEXP == 11213
+  #include "SFMT-params11213.h"
+#elif SFMT_MEXP == 19937
+  #include "SFMT-params19937.h"
+#elif SFMT_MEXP == 44497
+  #include "SFMT-params44497.h"
+#elif SFMT_MEXP == 86243
+  #include "SFMT-params86243.h"
+#elif SFMT_MEXP == 132049
+  #include "SFMT-params132049.h"
+#elif SFMT_MEXP == 216091
+  #include "SFMT-params216091.h"
+#else
+#if defined(__GNUC__) && !defined(__ICC)
+  #error "SFMT_MEXP is not valid."
+  #undef SFMT_MEXP
+#else
+  #undef SFMT_MEXP
+#endif
+
+#endif
 
 #endif /* SFMT_PARAMS_H */

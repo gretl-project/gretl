@@ -38,11 +38,13 @@
 # include <omp.h>
 #endif
 
+#define SFMT_MEXP 19937
+
 #include "../../rng/SFMT.c"
 #include "../../dcmt/dc.h"
 
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
-# define USE_RAND_ARRAY 1 /* faster, requires aligned malloc */
+# define USE_RAND_ARRAY 0 /* faster, requires aligned malloc */
 #else
 # define USE_RAND_ARRAY 0
 #endif
@@ -67,6 +69,8 @@
 
 static guint32 sfmt_seed;
 static guint32 dcmt_seed;
+
+static sfmt_t gretl_sfmt;
 
 static int use_dcmt = 0;
 
@@ -115,10 +119,10 @@ static void *simd_malloc (size_t size, int *err)
 
 /* RSIZE must be a multiple of 4, and greater than or equal
    to (MEXP / 128 + 1) * 4, where MEXP is the Mersenne Exponent
-   defined in rng/SFMT-params.h (currently 19937).
+   defined above (currently 19937).
 */
 
-#define RSIZE (MEXP / 128 + 1) * 16
+#define RSIZE 100000 // (SFMT_MEXP / 128 + 1) * 16
 
 static guint32 *rbuf;
 static int r_i;
@@ -133,15 +137,16 @@ static int sfmt_array_setup (void)
 
     if (rbuf == NULL) {
 	rbuf = simd_malloc(RSIZE * sizeof *rbuf, &err);
-#if 0
+#if 1
 	if (!err) {
-	    fprintf(stderr, "sfmt_array_setup: allocated array of size %d\n", RSIZE);
+	    fprintf(stderr, "sfmt_array_setup: allocated array of size %d (%d bytes)\n",
+		    (int) RSIZE, (int) (RSIZE * sizeof *rbuf));
 	}
 #endif
     }
 
     if (rbuf != NULL) {
-	fill_array32(rbuf, RSIZE);
+	sfmt_fill_array32(&gretl_sfmt, rbuf, RSIZE);
 	r_i = 0;
     }
 
@@ -160,10 +165,11 @@ static void sfmt_array_cleanup (void)
     }
 }
 
-static guint32 sfmt_rand32 (void)
+static inline guint32 sfmt_rand32 (void)
 {
     if (r_i == RSIZE) {
-	fill_array32(rbuf, RSIZE);
+	fprintf(stderr, "r_i=%d, refill array\n", r_i);
+	sfmt_fill_array32(&gretl_sfmt, rbuf, RSIZE);
 	r_i = 0;
     }
 
@@ -172,7 +178,13 @@ static guint32 sfmt_rand32 (void)
 
 #else /* !USE_RAND_ARRAY */
 
-# define sfmt_rand32 gen_rand32
+#define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
+#if 0
+static inline guint32 sfmt_rand32 (void)
+{
+    return sfmt_genrand_uint32(&gretl_sfmt);
+}
+#endif
 
 #endif /* USE_RAND_ARRAY or not */
 
@@ -302,7 +314,7 @@ void gretl_rand_init (void)
 	sfmt_seed = time(NULL);
     }
     
-    init_gen_rand(sfmt_seed);
+    sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
 
 #if USE_RAND_ARRAY
     sfmt_array_setup();
@@ -367,7 +379,7 @@ static void gretl_dcmt_set_seed (unsigned int seed)
 static void gretl_sfmt_set_seed (unsigned int seed)
 {
     sfmt_seed = seed;
-    init_gen_rand(sfmt_seed);
+    sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
 #if USE_RAND_ARRAY
     sfmt_array_setup();
 #endif
@@ -421,11 +433,15 @@ void gretl_rand_set_multi_seed (const gretl_matrix *seed)
 
 #endif
 
+#ifndef to_real2
+# define to_real2 sfmt_to_real2
+#endif
+
 /**
  * gretl_rand_01:
  *
  * Returns: the next random double, equally distributed over
- * the range [0..1).
+ * the range [0, 1).
  */
 
 double gretl_rand_01 (void)
