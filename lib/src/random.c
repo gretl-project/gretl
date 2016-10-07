@@ -474,7 +474,60 @@ static guint32 gretl_rand_octet (guint32 *sign)
     return wr.c[wr_i] & 0x07F;
 }
 
-static double ran_normal_ziggurat (void)
+/**
+ * gretl_rand_normal:
+ * @a: target array
+ * @t1: start of the fill range
+ * @t2: end of the fill range
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the standard normal distribution, using the Mersenne Twister
+ * for uniform input and the Ziggurat method for converting to the
+ * normal distribution.
+ */
+
+void gretl_rand_normal (double *a, int t1, int t2) 
+{
+    guint32 sign, i, j;
+    double x, y;
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	while (1) {
+	    j = use_dcmt ? dcmt_rand32() : sfmt_rand32();
+	    i = gretl_rand_octet(&sign);
+	    j = j >> 2;
+
+	    x = j * z_wtab[i];
+
+	    if (j < z_ktab[i]) {
+		break;
+	    }
+
+	    if (i < 127) {
+		double y0 = z_ytab[i], y1 = z_ytab[i+1];
+
+		y = y1 + (y0 - y1) * gretl_rand_01();
+	    } else {
+		x = ZIG_R - log(1.0 - gretl_rand_01()) / ZIG_R;
+		y = exp(-ZIG_R * (x - 0.5 * ZIG_R)) * gretl_rand_01();
+	    }
+
+	    if (y < exp(-0.5 * x * x)) {
+		break;
+	    }
+	}
+	a[t] = sign ? x : -x;
+    }
+}
+
+/**
+ * gretl_one_snormal:
+ *
+ * Returns: a single drawing from the standard normal distribution.
+ */
+
+double gretl_one_snormal (void) 
 {
     guint32 sign, i, j;
     double x, y;
@@ -505,38 +558,6 @@ static double ran_normal_ziggurat (void)
     }
 
     return sign ? x : -x;
-}
-
-/**
- * gretl_rand_normal:
- * @a: target array
- * @t1: start of the fill range
- * @t2: end of the fill range
- *
- * Fill the selected range of array @a with pseudo-random drawings
- * from the standard normal distribution, using the Mersenne Twister
- * for uniform input and the Ziggurat method for converting to the
- * normal distribution.
- */
-
-void gretl_rand_normal (double *a, int t1, int t2) 
-{
-    int t;
-
-    for (t=t1; t<=t2; t++) {
-	a[t] = ran_normal_ziggurat();
-    }
-}
-
-/**
- * gretl_one_snormal:
- *
- * Returns: a single drawing from the standard normal distribution.
- */
-
-double gretl_one_snormal (void) 
-{
-    return ran_normal_ziggurat();
 }
 
 /**
