@@ -5,7 +5,8 @@ Prerequisites:
 * libgretl must be installed, along with its headers and pkg-config .pc file
 
 * The TestU01 library (P. L'Ecuyer and R. Simard) must be installed --
-  see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+  see http://simul.iro.umontreal.ca/testu01/tu01.html. As of this
+  writing the current version is TestU01-1.2.3.
 
 Given the above, adjust the lines at the top of the Makefile in this 
 directory if needed for your system, then type "make" to build the 
@@ -29,4 +30,4 @@ One or two "failures" (p-values quite close to 0 or 1) are to be expected
 when running BigCrush.
 
 Allin Cottrell
-April 2011
+October 2016

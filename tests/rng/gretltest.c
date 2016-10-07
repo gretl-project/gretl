@@ -1,5 +1,4 @@
-#include "unif01.h"
-#include "bbattery.h"
+#include "TestU01.h"
 
 #include <gretl/libgretl.h>
 
@@ -25,15 +24,11 @@ static void show_help (const char *prog)
     fputs("--normal : base test on gretl's normal RNG\n", stdout);
     fputs("           (default, uniform RNG)\n\n", stdout);
 
-    fputs("--box-muller : when using normal RNG, use Box-Muller\n", stdout);
-    fputs("               instead of Ziggurat (Ziggurat is default)\n\n", stdout);
-
     exit(EXIT_SUCCESS);
 }
 
 enum {
-    NORMAL_RNG = 1 << 0,
-    BOX_MULLER = 1 << 1
+    NORMAL_RNG = 1 << 0
 };
 
 static int read_opts (int argc, char **argv, int *flags,
@@ -54,11 +49,9 @@ static int read_opts (int argc, char **argv, int *flags,
 		err = 1;
 	    }
 	} else if (!strcmp(s, "--uniform")) {
-	    ; /* the default, np-op */
+	    ; /* the default, no-op */
 	} else if (!strcmp(s, "--normal")) {
 	    *flags |= NORMAL_RNG;
-	} else if (!strcmp(s, "--box-muller")) {
-	    *flags |= BOX_MULLER;
 	} else {
 	    fprintf(stderr, "%s: invalid option '%s'\n", argv[0], s);
 	}
@@ -77,10 +70,6 @@ static int read_opts (int argc, char **argv, int *flags,
 	printf("*** %s: running %s using %s generator\n", argv[0],
 	       size_string[*testsize], (*flags & NORMAL_RNG) ?
 	       "normal" : "uniform");
-	if (*flags & NORMAL_RNG) {
-	    printf(" using %s for normals\n", (*flags & BOX_MULLER) ?
-		   "Box-Muller" : "Ziggurat");
-	}
 	putchar('\n');
     }
 
@@ -94,9 +83,6 @@ static int read_opts (int argc, char **argv, int *flags,
 
    --normal : base test on gretl's normal RNG (default, use
               uniform RNG)
-
-   --box-muller : when using normal RNG, use Box-Muller
-                  instead of Ziggurat (Ziggurat is default)
 */
 
 int main (int argc, char **argv)
@@ -113,10 +99,6 @@ int main (int argc, char **argv)
     } 
 
     gretl_rand_init();
-
-    if (flags & BOX_MULLER) {
-	gretl_rand_set_box_muller(1);
-    }    
 
     if (flags & NORMAL_RNG) {
 	gen = unif01_CreateExternGen01("libgretl", u01_from_normal);

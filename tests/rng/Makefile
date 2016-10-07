@@ -1,6 +1,6 @@
 CC = gcc -Wall -O2 -msse2
-TESTU01_CFLAGS = -I/usr/include/TestU01
-TESTU01_LIB = -ltestu01
+TESTU01_CFLAGS = -I/usr/local/include
+TESTU01_LIB = -L/usr/local/lib -ltestu01
 
 # you shouldn't have to edit below here
 
