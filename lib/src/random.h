@@ -88,10 +88,6 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
 					int v, int replics, 
 					int *err);
 
-void gretl_rand_set_box_muller (int s);
-
-int gretl_rand_get_box_muller (void);
-
 unsigned int gretl_rand_get_seed (void);
 
 int gretl_rand_set_dcmt (int s);

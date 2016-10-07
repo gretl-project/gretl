@@ -43,12 +43,6 @@
 #include "../../rng/SFMT.c"
 #include "../../dcmt/dc.h"
 
-#if defined(HAVE_POSIX_MEMALIGN) || defined(OS_OSX) || defined(WIN32)
-# define USE_RAND_ARRAY 0 /* faster, requires aligned malloc */
-#else
-# define USE_RAND_ARRAY 0
-#endif
-
 /**
  * SECTION:random
  * @short_description: generate pseudo-random values
@@ -67,132 +61,20 @@
  * global libgretl function libgretl_cleanup().
  */
 
-static guint32 sfmt_seed;
-static guint32 dcmt_seed;
-
 static sfmt_t gretl_sfmt;
-
-static int use_dcmt = 0;
+static guint32 sfmt_seed;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
-#if USE_RAND_ARRAY
-
-#ifdef USE_AVX
-# define ALIGN 32
-#else
-# define ALIGN 16
-#endif
-
-#ifndef HAVE_POSIX_MEMALIGN
-# if defined(WIN32) || ALIGN > 16
-#  define USE_GRETL_MEMALIGN
-# endif
-#endif
-
-static void *simd_malloc (size_t size, int *err)
-{
-    void *mem = NULL;
-
-#if defined(HAVE_POSIX_MEMALIGN)
-    *err = posix_memalign((void **) &mem, ALIGN, size);
-    if (*err) {
-	fprintf(stderr, "posix_memalign: err = %d\n", *err);
-	return NULL;
-    }
-#elif defined(USE_GRETL_MEMALIGN)
-    mem = gretl_aligned_malloc(size, ALIGN);
-    if (mem == NULL) {
-	fputs("gretl_aligned_malloc: failed\n", stderr);
-	*err = E_ALLOC;
-    }    
-#else /* assume malloc is 16-byte aligned by default (OS X) */
-    mem = malloc(size);
-    if (mem == NULL) {
-	fputs("osx_malloc: failed\n", stderr);
-	*err = E_ALLOC;
-    }
-#endif
-
-    return mem;
-}
-
-/* RSIZE must be a multiple of 4, and greater than or equal
-   to (MEXP / 128 + 1) * 4, where MEXP is the Mersenne Exponent
-   defined above (currently 19937).
-*/
-
-#define RSIZE 100000 // (SFMT_MEXP / 128 + 1) * 16
-
-static guint32 *rbuf;
-static int r_i;
-
-#if defined(_OPENMP) && !defined(OS_OSX)
-#pragma omp threadprivate(rbuf, r_i)
-#endif
-
-static int sfmt_array_setup (void)
-{
-    int err = 0;
-
-    if (rbuf == NULL) {
-	rbuf = simd_malloc(RSIZE * sizeof *rbuf, &err);
-#if 1
-	if (!err) {
-	    fprintf(stderr, "sfmt_array_setup: allocated array of size %d (%d bytes)\n",
-		    (int) RSIZE, (int) (RSIZE * sizeof *rbuf));
-	}
-#endif
-    }
-
-    if (rbuf != NULL) {
-	sfmt_fill_array32(&gretl_sfmt, rbuf, RSIZE);
-	r_i = 0;
-    }
-
-    return err;
-}
-
-static void sfmt_array_cleanup (void)
-{
-    if (rbuf != NULL) {
-#if defined(USE_GRETL_MEMALIGN)
-	gretl_aligned_free(rbuf);
-#else
-	free(rbuf);
-#endif
-	rbuf = NULL;
-    }
-}
-
-static inline guint32 sfmt_rand32 (void)
-{
-    if (r_i == RSIZE) {
-	fprintf(stderr, "r_i=%d, refill array\n", r_i);
-	sfmt_fill_array32(&gretl_sfmt, rbuf, RSIZE);
-	r_i = 0;
-    }
-
-    return rbuf[r_i++];
-}
-
-#else /* !USE_RAND_ARRAY */
-
 #define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
-#if 0
-static inline guint32 sfmt_rand32 (void)
-{
-    return sfmt_genrand_uint32(&gretl_sfmt);
-}
-#endif
-
-#endif /* USE_RAND_ARRAY or not */
 
 /* Find n independent "small" Mersenne Twisters with period 2^521-1;
    set the one corresponding to @self as the one to use
 */
 
 static mt_struct *dcmt;
+static guint32 dcmt_seed;
+static int use_dcmt = 0;
 
 static int set_up_dcmt (int n, int self, unsigned int seed)
 {
@@ -315,11 +197,6 @@ void gretl_rand_init (void)
     }
     
     sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
-
-#if USE_RAND_ARRAY
-    sfmt_array_setup();
-#endif
-
     gretl_rand_octet(NULL);
 }
 
@@ -345,10 +222,6 @@ void gretl_dcmt_init (int n, int self, unsigned int seed)
 
 void gretl_rand_free (void)
 {
-#if USE_RAND_ARRAY
-    sfmt_array_cleanup();
-#endif
-
     if (dcmt != NULL) {
 	free_mt_struct(dcmt);
 	dcmt = NULL;
@@ -380,9 +253,6 @@ static void gretl_sfmt_set_seed (unsigned int seed)
 {
     sfmt_seed = seed;
     sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
-#if USE_RAND_ARRAY
-    sfmt_array_setup();
-#endif
 }
 
 /**
@@ -408,35 +278,6 @@ void gretl_rand_set_seed (unsigned int seed)
     gretl_rand_octet(NULL);
 }
 
-#if 0 /* not yet */
-
-/**
- * gretl_rand_set_multi_seed:
- * @seed: the chosen seed values.
- *
- * Set a specific (and hence reproducible) set of seed values for gretl's 
- * PRNG, in the form of a matrix containing an array of 4 32-bit values.
- */
-
-void gretl_rand_set_multi_seed (const gretl_matrix *seed)
-{
-    guint32 useeds[4];
-    int i;
-
-    for (i=0; i<4; i++) {
-	useeds[i] = seed->val[i];
-    }
-
-    init_by_array(useeds, 4);
-    gretl_rand_octet(NULL);
-}
-
-#endif
-
-#ifndef to_real2
-# define to_real2 sfmt_to_real2
-#endif
-
 /**
  * gretl_rand_01:
  *
@@ -447,9 +288,9 @@ void gretl_rand_set_multi_seed (const gretl_matrix *seed)
 double gretl_rand_01 (void)
 {
     if (use_dcmt) {
-	return to_real2(dcmt_rand32());
+	return sfmt_to_real2(dcmt_rand32());
     } else {
-	return to_real2(sfmt_rand32());
+	return sfmt_to_real2(sfmt_rand32());
     }
 }
 
@@ -666,82 +507,6 @@ static double ran_normal_ziggurat (void)
     return sign ? x : -x;
 }
 
-/* alternative: normals via the Box-Muller method */
-
-static void gretl_two_snormals (double *z1, double *z2) 
-{
-    double x, y, z;
-
- tryagain:
-    x = 2 * gretl_rand_01() - 1;
-    y = 2 * gretl_rand_01() - 1;
-    z = x * x + y * y;
-
-    if (z >= 1) {
-	goto tryagain;
-    }
-
-    z = sqrt(-2 * log(z)/z);
-    *z1 = z * x;
-    *z2 = z * y;
-}
-
-static double ran_normal_box_muller (void)
-{
-    double x, y, z;
-
- tryagain:
-    x = gretl_rand_01();
-    y = gretl_rand_01();
-    z = sqrt(-2. * log(x));
-
-    if (isnan(z) || isinf(z)) {
-	goto tryagain;
-    }
-
-    return z * cos(M_2PI * y);
-}
-
-static int use_box_muller;
-static int env_checked;
-
-static void box_muller_env_check (void)
-{
-    if (getenv("GRETL_USE_BOX_MULLER")) {
-	use_box_muller = 1;
-    }
-
-    env_checked = 1;
-}
-
-/**
- * gretl_rand_set_box_muller:
- * @s: 1 or 0.
- *
- * If @s is non-zero, set libgretl's generator for normal
- * variates to use the Box-Muller method, as opposed to the
- * default which is to use the Ziggurat method. If @s is
- * zero, reset to the Ziggurat.
- */
-
-void gretl_rand_set_box_muller (int s)
-{
-    use_box_muller = s;
-}
-
-/**
- * gretl_rand_get_box_muller:
- *
- * Returns: non-zero if libgretl is using the Box-Muller method
- * for generating normal random variates, zero if the default
- * Ziggurat method is in use.
- */
-
-int gretl_rand_get_box_muller (void)
-{
-    return use_box_muller;
-}
-
 /**
  * gretl_rand_normal:
  * @a: target array
@@ -750,32 +515,16 @@ int gretl_rand_get_box_muller (void)
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the standard normal distribution, using the Mersenne Twister
- * for uniform input and either the Ziggurat or the Box-Muller method 
- * for converting to the normal distribution.
+ * for uniform input and the Ziggurat method for converting to the
+ * normal distribution.
  */
 
 void gretl_rand_normal (double *a, int t1, int t2) 
 {
     int t;
 
-    if (!env_checked) {
-	box_muller_env_check();
-    }
-    
-    if (use_box_muller) {
-	double z1, z2;
-
-	for (t=t1; t<=t2; t++) {
-	    gretl_two_snormals(&z1, &z2);
-	    a[t] = z1;
-	    if (t < t2) {
-		a[++t] = z2;
-	    }
-	}
-    } else {	
-	for (t=t1; t<=t2; t++) {
-	    a[t] = ran_normal_ziggurat();
-	}
+    for (t=t1; t<=t2; t++) {
+	a[t] = ran_normal_ziggurat();
     }
 }
 
@@ -787,15 +536,7 @@ void gretl_rand_normal (double *a, int t1, int t2)
 
 double gretl_one_snormal (void) 
 {
-    if (!env_checked) {
-	box_muller_env_check();
-    } 
-
-    if (use_box_muller) {
-	return ran_normal_box_muller();
-    } else {
-	return ran_normal_ziggurat();
-    }
+    return ran_normal_ziggurat();
 }
 
 /**
@@ -809,8 +550,7 @@ double gretl_one_snormal (void)
  * Fill the selected range of array @a with pseudo-random drawings
  * from the normal distribution with the given mean and standard
  * deviation, using the Mersenne Twister for uniform input and  
- * either the Ziggurat or the Box-Muller method for converting to 
- * the normal distribution.
+ * the Ziggurat method for converting to the normal distribution.
  *
  * Returns: 0 on success, 1 on invalid input.
  */
@@ -903,10 +643,10 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 
     for (t=t1; t<=t2; t++) {
 	if (use_dcmt) {
-	    a[t] = to_real2(dcmt_rand32()) * (max - min) + min;
+	    a[t] = sfmt_to_real2(dcmt_rand32()) * (max - min) + min;
 	} else {
-	    /* FIXME use native array functionality? */
-	    a[t] = to_real2(sfmt_rand32()) * (max - min) + min;
+	    /* use native array functionality? */
+	    a[t] = sfmt_to_real2(sfmt_rand32()) * (max - min) + min;
 	}
     }
 
@@ -1042,11 +782,11 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 
     if (use_dcmt) {
 	for (t=t1; t<=t2; t++) {
-	   a[t] = to_real2(dcmt_rand32());
+	   a[t] = sfmt_to_real2(dcmt_rand32());
 	}
     } else {
 	for (t=t1; t<=t2; t++) {
-	   a[t] = to_real2(sfmt_rand32());
+	   a[t] = sfmt_to_real2(sfmt_rand32());
 	}
     }
 }
@@ -1054,9 +794,9 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 static double gretl_rand_uniform_one (void) 
 {
     if (use_dcmt) {
-	return to_real2(dcmt_rand32());
+	return sfmt_to_real2(dcmt_rand32());
     } else {
-	return to_real2(sfmt_rand32());
+	return sfmt_to_real2(sfmt_rand32());
     }
 }
 
@@ -1326,7 +1066,7 @@ int gretl_rand_student (double *a, int t1, int t2, double v)
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the F distribution with @v1 and @v2 degrees of freedom, 
- * using the Mersenne Twister for uniform input and the Box-Muller 
+ * using the Mersenne Twister for uniform input and the Ziggurat
  * method for converting to the normal distribution.
  *
  * Returns: 0 on success, non-zero on error.

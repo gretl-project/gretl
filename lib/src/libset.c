@@ -289,12 +289,6 @@ static const char *steplen_strs[] = {
     NULL
 };
 
-static const char *normal_rand_strs[] = {
-    "ziggurat",
-    "box-muller",
-    NULL
-};
-
 static const char *wildboot_strs[] = {
     "rademacher",
     "mammen",
@@ -315,8 +309,6 @@ static const char **libset_option_strings (const char *s)
 	return vecm_norm_strs;
     } else if (!strcmp(s, GRETL_OPTIM)) {
 	return optim_strs;
-    } else if (!strcmp(s, NORMAL_RAND)) {
-	return normal_rand_strs;
     } else if (!strcmp(s, "csv_delim")) {
 	return csv_delim_args;
     } else if (!strcmp(s, OPTIM_STEPLEN)) {
@@ -369,8 +361,6 @@ static const char *libset_option_string (const char *s)
 	return vecm_norm_strs[state->vecm_norm];
     } else if (!strcmp(s, GRETL_OPTIM)) {
 	return optim_strs[state->optim];
-    } else if (!strcmp(s, NORMAL_RAND)) {
-	return normal_rand_strs[gretl_rand_get_box_muller()];
     } else if (!strcmp(s, OPTIM_STEPLEN)) {
 	return steplen_strs[state->optim_steplen];
     } else if (!strcmp(s, WILDBOOT_DIST)) {
@@ -1041,14 +1031,6 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}	
-    } else if (!g_ascii_strcasecmp(key, NORMAL_RAND)) {
-	for (i=0; normal_rand_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, normal_rand_strs[i])) {
-		gretl_rand_set_box_muller(i);
-		err = 0;
-		break;
-	    }
-	}
     } else if (!g_ascii_strcasecmp(key, WILDBOOT_DIST)) {
 	for (i=0; wildboot_strs[i] != NULL; i++) {
 	    if (!g_ascii_strcasecmp(val, wildboot_strs[i])) {
@@ -1404,7 +1386,6 @@ static void libset_print_bool (const char *s, PRN *prn,
                          !strcmp(s, HC_VERSION) || \
 			 !strcmp(s, VECM_NORM) || \
 			 !strcmp(s, GRETL_OPTIM) || \
-			 !strcmp(s, NORMAL_RAND) || \
 			 !strcmp(s, OPTIM_STEPLEN) || \
 			 !strcmp(s, WILDBOOT_DIST))
 
@@ -1583,12 +1564,10 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     if (opt & OPT_D) {
 	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
-	pprintf(prn, " normal_rand = %s\n", libset_option_string(NORMAL_RAND));
     } else {
 	if (seed_is_set) {
 	    pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
 	}
-	pprintf(prn, "set normal_rand %s\n", libset_option_string(NORMAL_RAND));
     }
     if (gretl_mpi_initialized()) {
 	libset_print_bool(USE_DCMT, prn, opt);
