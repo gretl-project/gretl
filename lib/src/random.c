@@ -318,7 +318,8 @@ static uint64_t randi54 (void)
 #endif
 }
 
-/* generates a random number on (0,1) with 53-bit resolution */
+/* generates a uniform random double on (0,1) with 53-bit resolution */
+
 static double randu53 (void)
 {
     const uint32_t a = randi32() >> 5;
@@ -495,7 +496,8 @@ static guint32 mt_int_range (guint32 begin, guint32 end)
 
     if (dist > 0) {
 	/* maxval is set to the predecessor of the greatest
-	 * multiple of dist less or equal 2^32. */
+	   multiple of dist less then or equal to 2^32 
+	*/
 	guint32 maxval;
 
 	if (dist <= 0x80000000u) { /* 2^31 */
