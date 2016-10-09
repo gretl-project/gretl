@@ -41,6 +41,7 @@
 /* For optimizing the Ziggurat */
 #if defined(i386) || defined (__i386__)
 # define HAVE_X86_32 1
+# define UMASK 0x80000000UL /* most significant w-r bits */
 #else
 # define HAVE_X86_32 0
 #endif
@@ -301,22 +302,19 @@ static inline uint32_t randi32 (void)
     }
 }
 
+#if !(HAVE_X86_32)
+
 /* 53 bits for mantissa + 1 bit sign */
 
 static uint64_t randi54 (void)
 {
     const uint32_t lo = randi32();
     const uint32_t hi = randi32() & 0x3FFFFF;
-#if HAVE_X86_32
-    uint64_t u;
-    uint32_t *p = (uint32_t *) (&u);
-    p[0] = lo;
-    p[1] = hi;
-    return u;
-#else
+
     return (((uint64_t) (hi) << 32) | lo);
-#endif
 }
+
+#endif
 
 /* generates a uniform random double on (0,1) with 53-bit resolution */
 
@@ -339,7 +337,6 @@ static double randu53 (void)
 */
 
 #define ZIGGURAT_TABLE_SIZE 256
-
 #define ZIGGURAT_NOR_R 3.6541528853610088
 #define ZIGGURAT_NOR_INV_R 0.27366123732975828
 #define NOR_SECTION_AREA 0.00492867323399
