@@ -541,6 +541,7 @@ static void protect_against_ubuntu (void)
 		break;
 	    }
 	}
+	fclose(fp);
     }
 }
 
