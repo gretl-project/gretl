@@ -492,10 +492,10 @@ static int seek_file_collections (const char *basedir,
 #if COLL_DEBUG
 static void print_collection (const file_collection *coll)
 {
-    printf("path = '%s'\n", coll->path);
-    printf("descfile = '%s'\n", coll->descfile);
+    fprintf(stderr, "path = '%s'\n", coll->path);
+    fprintf(stderr, "descfile = '%s'\n", coll->descfile);
     if (coll->title != NULL && *coll->title != '\0') {
-	printf("title = '%s'\n", coll->title);
+	fprintf(stderr, "title = '%s'\n", coll->title);
     }
 }
 
@@ -504,9 +504,9 @@ static void print_collections (int role)
     file_collection *coll;
 
     if (role == TEXTBOOK_DATA) {
-	printf("\n*** Data collections:\n");
+	fputs("\n*** Data collections:\n", stderr);
     } else {
-	printf("\n*** Script collections:\n");
+	fputs("\n*** Script collections:\n", stderr);
     }
 
     while ((coll = pop_file_collection(role))) {
