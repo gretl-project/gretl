@@ -6598,21 +6598,9 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 	} else if (gretl_is_null_matrix(l->v.m)) {
 	    p->err = E_DATA;
 	} else {
-	    int n = gretl_vector_get_length(l->v.m);
-
-	    if (n > 0) {
-		ret->v.m = gretl_matrix_copy(l->v.m);
-		if (ret->v.m == NULL) {
-		    p->err = E_ALLOC;
-		} else {
-		    double *x = ret->v.m->val;
-
-		    qsort(x, n, sizeof *x, (f == F_SORT)? gretl_compare_doubles :
-			  gretl_inverse_compare_doubles);
-		}
-	    } else {
-		p->err = E_TYPES;
-	    }
+	    int descending = (f == F_DSORT);
+		
+	    ret->v.m = gretl_vector_sort(l->v.m, descending, &p->err);
 	}
     } 
 

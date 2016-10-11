@@ -922,6 +922,25 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     return c;
 }
 
+static gretl_matrix *matrix_copy_plain (const gretl_matrix *m)
+{
+    gretl_matrix *c;
+
+    if (m == NULL) {
+	return NULL;
+    }
+
+    c = gretl_matrix_alloc(m->rows, m->cols);
+
+    if (c != NULL) {
+	int n = c->rows * c->cols;
+
+	memcpy(c->val, m->val, n * sizeof *m->val);
+    }
+
+    return c;
+}
+
 /**
  * gretl_matrix_copy:
  * @m: source matrix to be copied.
@@ -12982,21 +13001,42 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     return ret;
 }
 
-static int compare_rows (const void *a, const void *b)
+static int unstable_comp (double a, double b)
 {
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
     int ret = 0;
 
-    if (isnan(*da) || isnan(*db)) {
-	if (!isnan(*da)) {
+    if (isnan(a) || isnan(b)) {
+	if (!isnan(a)) {
 	    ret = -1;
-	} else if (!isnan(*db)) {
+	} else if (!isnan(b)) {
 	    ret = 1;
 	}
     } else {
-	ret = (*da > *db) - (*da < *db);
+	ret = (a > b) - (a < b);
     }
+
+    return ret;
+}
+
+static int compare_values (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+    int ret = unstable_comp(*da, *db);
+
+    if (ret == 0) {
+	/* ensure stable sort */
+	ret = a - b > 0 ? 1 : -1;
+    }
+
+    return ret;
+}
+
+static int inverse_compare_values (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+    int ret = unstable_comp(*db, *da);
 
     if (ret == 0) {
 	/* ensure stable sort */
@@ -13053,7 +13093,7 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 	rs[i].row = i;
     }
 
-    qsort(rs, m->rows, sizeof *rs, compare_rows);
+    qsort(rs, m->rows, sizeof *rs, compare_values);
 
     for (j=0; j<m->cols; j++) {
 	for (i=0; i<m->rows; i++) {
@@ -13080,6 +13120,98 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 
     return a;
 }
+
+#define has_colnames(m) (m != NULL && !is_block_matrix(m) && \
+			 m->info != NULL && m->info->colnames != NULL)
+
+#define has_rownames(m) (m != NULL && !is_block_matrix(m) && \
+			 m->info != NULL && m->info->rownames != NULL)
+
+struct named_val {
+    double x;
+    const char *s;
+};
+
+struct named_val *make_named_vals (const gretl_matrix *m, int n,
+				   char **S)
+{
+    struct named_val *nv = malloc(n * sizeof *nv);
+
+    if (nv != NULL) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    nv[i].x = m->val[i];
+	    nv[i].s = S[i];
+	}
+    }
+
+    return nv;
+}
+
+gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
+				 int descending,
+				 int *err)
+{
+    int n = gretl_vector_get_length(v);
+    gretl_matrix *vs = NULL;
+
+    if (n == 0) {
+	*err = E_TYPES;
+	return NULL;
+    }
+
+    vs = matrix_copy_plain(v);
+    
+    if (vs == NULL) {
+	*err = E_ALLOC;
+    } else {
+	struct named_val *nvals = NULL;
+	char **S = NULL;
+
+	if (v->cols > 1 && has_colnames(v)) {
+	    S = v->info->colnames;
+	} else if (v->rows > 1 && has_rownames(v)) {
+	    S = v->info->rownames;
+	}
+
+	if (S != NULL) {
+	    nvals = make_named_vals(v, n, S);
+	    if (nvals == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+
+	if (nvals != NULL) {
+	    char ***pS;
+	    int i;
+	    
+	    qsort(nvals, n, sizeof *nvals, descending ?
+		  inverse_compare_values : compare_values);
+	    for (i=0; i<n; i++) {
+		vs->val[i] = nvals[i].x;
+	    }
+	    gretl_matrix_add_info(vs);
+	    if (vs->info != NULL) {
+		pS = v->cols > 1 ? &vs->info->colnames : &vs->info->rownames;
+		*pS = strings_array_new(n);
+		if (*pS != NULL) {
+		    for (i=0; i<n; i++) {
+			(*pS)[i] = gretl_strdup(nvals[i].s);
+		    }
+		}
+	    }
+ 	    free(nvals);
+	} else if (!*err) {
+	    double *x = vs->val;
+	    
+	    qsort(x, n, sizeof *x, descending ? gretl_inverse_compare_doubles :
+		  gretl_compare_doubles);
+	}
+    }    
+
+    return vs;
+ }
 
 /* Calculate X(t)-transpose * X(t-lag) */
 
@@ -13458,7 +13590,7 @@ int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
 
 const char **gretl_matrix_get_colnames (const gretl_matrix *m)
 {
-    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+    if (has_colnames(m)) {
 	return (const char **) m->info->colnames;
     } else {
 	return NULL;
@@ -13477,7 +13609,7 @@ const char **gretl_matrix_get_colnames (const gretl_matrix *m)
 
 const char **gretl_matrix_get_rownames (const gretl_matrix *m)
 {
-    if (m != NULL && !is_block_matrix(m) && m->info != NULL) {
+    if (has_rownames(m)) {
 	return (const char **) m->info->rownames;
     } else {
 	return NULL;

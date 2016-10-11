@@ -15,9 +15,13 @@ version 2016d, in progress
   confidence band with error bars
 - The option of using the Box-Muller method for generating
   random normals is now removed
-- The Mersenne Twister code is updated to SFMT 1.4.1
+- The Mersenne Twister code is updated to SFMT 1.4.1, and the
+  generation of random normals is speeded up
 - Fix an issue where gretl might fail to read back a gdt data
-  file written by itself  
+  file written by itself
+- Fix for sort() and dsort() as applied to row or column
+  vectors: if row or column names are present, keep them
+  aligned with the original values  
 - Fix breakage in "dataset renumber" command
 - Fix breakage in "modtest" command with --white option
 - gig addon: fix an off-by-one bug

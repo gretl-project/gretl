@@ -787,6 +787,10 @@ gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
 gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m, 
 					   int k, int *err);
 
+gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
+				 int descending,
+				 int *err);
+
 gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X, 
 					const gretl_matrix *u,
 					const gretl_matrix *w,
