@@ -526,6 +526,26 @@ gint mac_hide_unhide (GdkEventKey *event)
 
 #endif /* MAC_INTEGRATION */
 
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+
+static void protect_against_ubuntu (void)
+{
+    FILE *fp = fopen("/etc/os-release", "r");
+
+    if (fp != NULL) {
+	char line[80];
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (strstr(line, "buntu")) {
+		setenv("UBUNTU_MENUPROXY", "0", 1);
+		break;
+	    }
+	}
+    }
+}
+
+#endif
+
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
    totally unresponsive
@@ -584,8 +604,7 @@ int main (int argc, char **argv)
 #if defined(G_OS_WIN32)
     win32_set_gretldir(callname);
 #elif !defined(OS_OSX)
-    /* could be on Ubuntu? */
-    setenv("UBUNTU_MENUPROXY", "0", 1);
+    protect_against_ubuntu();
 #endif
 
     gui_nls_init();
