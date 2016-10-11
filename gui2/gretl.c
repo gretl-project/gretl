@@ -185,62 +185,6 @@ char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
-#if 0 /* defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX) */
-
-/* it seems that the following is not really necessary */
-
-static void quell_blas_warning (GtkToggleButton *b, gpointer p)
-{
-    set_thread_warn(!gtk_toggle_button_get_active(b));
-}
-
-static void gui_check_blas_threading (void)
-{
-    int problem = 0;
-    char *s1, *s2;
-
-    if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
-	problem = 1;
-    }
-
-    if (problem && get_thread_warn()) {
-	const char *msg =
-	    "<b>Warning</b>\n\n"
-	    "gretl is built using OpenMP, but is linked against\n"
-	    "OpenBLAS parallelized via pthreads. This combination\n"
-	    "of threading mechanisms is not recommended. Ideally,\n"
-	    "OpenBLAS should also use OpenMP.";
-	GtkWidget *dlg, *ca, *cb, *hb;
-
-	dlg = gtk_message_dialog_new_with_markup(GTK_WINDOW(mdata->main), 0,
-						 GTK_MESSAGE_WARNING,
-						 GTK_BUTTONS_CLOSE,
-						 NULL);
-	gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dlg), msg);
-	gtk_window_set_title(GTK_WINDOW(dlg), "gretl: warning");
-	ca = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-	hb = gtk_hbox_new(FALSE, 10);
-	cb = gtk_check_button_new_with_label("Don't show this warning again");
-	g_signal_connect(G_OBJECT(cb), "toggled",
-			 G_CALLBACK(quell_blas_warning), NULL);
-	gtk_box_pack_start(GTK_BOX(hb), cb, FALSE, FALSE, 32);
-	gtk_container_add(GTK_CONTAINER(ca), hb);
-	gtk_widget_show_all(hb);
-	
-	gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
-	gtk_dialog_run(GTK_DIALOG(dlg));
-	gtk_widget_destroy(dlg);
-
-	/* do we really need to do this? */
-	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
-    } else if (problem) {
-	fprintf(stderr, "Disabling OpenBLAS multi-threading (OpenMP/pthreads collision)\n");
-	gretl_setenv("OPENBLAS_NUM_THREADS", "1");
-    }
-}
-
-#endif /* blas warning may be wanted */
-
 static void spreadsheet_edit (void) 
 {
     show_spreadsheet(SHEET_EDIT_VARLIST);
@@ -637,8 +581,11 @@ int main (int argc, char **argv)
     char filearg[MAXLEN];
     GError *opterr = NULL;
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
     win32_set_gretldir(callname);
+#elif !defined(OS_OSX)
+    /* could be on Ubuntu? */
+    setenv("UBUNTU_MENUPROXY", "0", 1);
 #endif
 
     gui_nls_init();
