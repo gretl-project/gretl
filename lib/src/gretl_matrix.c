@@ -13132,8 +13132,8 @@ struct named_val {
     const char *s;
 };
 
-struct named_val *make_named_vals (const gretl_matrix *m, int n,
-				   char **S)
+static struct named_val *
+make_named_vals (const gretl_matrix *m, char **S, int n)
 {
     struct named_val *nv = malloc(n * sizeof *nv);
 
@@ -13147,6 +13147,34 @@ struct named_val *make_named_vals (const gretl_matrix *m, int n,
     }
 
     return nv;
+}
+
+static int vector_copy_marginal_names (gretl_vector *v,
+				       struct named_val *nv,
+				       int n)
+{
+    int err = 0;
+    
+    if (v->info == NULL) {
+	err = gretl_matrix_add_info(v);
+    }
+
+    if (!err) {
+	char ***pS;
+	int i;
+	    
+	pS = v->cols > 1 ? &v->info->colnames : &v->info->rownames;
+	*pS = strings_array_new(n);
+	if (*pS != NULL) {
+	    for (i=0; i<n; i++) {
+		(*pS)[i] = gretl_strdup(nv[i].s);
+	    }
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
 }
 
 gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
@@ -13176,14 +13204,13 @@ gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
 	}
 
 	if (S != NULL) {
-	    nvals = make_named_vals(v, n, S);
+	    nvals = make_named_vals(v, S, n);
 	    if (nvals == NULL) {
 		*err = E_ALLOC;
 	    }
 	}
 
 	if (nvals != NULL) {
-	    char ***pS;
 	    int i;
 	    
 	    qsort(nvals, n, sizeof *nvals, descending ?
@@ -13191,16 +13218,7 @@ gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
 	    for (i=0; i<n; i++) {
 		vs->val[i] = nvals[i].x;
 	    }
-	    gretl_matrix_add_info(vs);
-	    if (vs->info != NULL) {
-		pS = v->cols > 1 ? &vs->info->colnames : &vs->info->rownames;
-		*pS = strings_array_new(n);
-		if (*pS != NULL) {
-		    for (i=0; i<n; i++) {
-			(*pS)[i] = gretl_strdup(nvals[i].s);
-		    }
-		}
-	    }
+	    vector_copy_marginal_names(vs, nvals, n);
  	    free(nvals);
 	} else if (!*err) {
 	    double *x = vs->val;
