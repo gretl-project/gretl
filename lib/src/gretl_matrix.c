@@ -13153,12 +13153,10 @@ static int vector_copy_marginal_names (gretl_vector *v,
 				       struct named_val *nv,
 				       int n)
 {
-    int err = 0;
-    
-    if (v->info == NULL) {
-	err = gretl_matrix_add_info(v);
-    }
+    int err = gretl_matrix_add_info(v);
 
+    /* note: we assume v->info is NULL on entry */
+    
     if (!err) {
 	char ***pS;
 	int i;
