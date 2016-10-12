@@ -45,8 +45,11 @@
 /* fixups for GTK3 */
 
 #if GTK_MAJOR_VERSION >= 3
-#include <gdk/gdkkeysyms-compat.h>
+# include <gdk/gdkkeysyms-compat.h>
+# include <gtksourceview/gtksource.h>
 # define gtk_combo_box_entry_new_text gtk_combo_box_text_new_with_entry
+#else
+# include <gtksourceview/gtksourceview.h>
 #endif
 
 /* remedial macros for old GTK installations */

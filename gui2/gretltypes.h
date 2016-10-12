@@ -60,12 +60,6 @@ typedef enum {
 
 typedef struct windata_t_ windata_t;
 
-#ifdef USE_GTKSOURCEVIEW_3
-# include <gtksourceview/gtksource.h>
-#else
-# include <gtksourceview/gtksourceview.h>
-#endif
-
 struct windata_t_ {
     GtkWidget *main;      /* top-level GTK window */
     GtkWidget *topmain;   /* for use when embedded in tabs */

@@ -31,11 +31,9 @@
 #endif
 
 #ifdef USE_GTKSOURCEVIEW_3
-# include <gtksourceview/gtksource.h>
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 # define COMPLETION_OK 1
 #else /* using GtkSourceView 2 */
-# include <gtksourceview/gtksourceview.h>
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
