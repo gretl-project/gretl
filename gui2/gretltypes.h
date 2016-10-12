@@ -60,7 +60,11 @@ typedef enum {
 
 typedef struct windata_t_ windata_t;
 
-#include <gtksourceview/gtksourceview.h>
+#ifdef USE_GTKSOURCEVIEW_3
+# include <gtksourceview/gtksource.h>
+#else
+# include <gtksourceview/gtksourceview.h>
+#endif
 
 struct windata_t_ {
     GtkWidget *main;      /* top-level GTK window */
