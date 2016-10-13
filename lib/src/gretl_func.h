@@ -242,7 +242,8 @@ int print_function_package_code (const char *fname, int tabwidth,
 ufunc *get_function_from_package (const char *funname, fnpkg *pkg);
 
 int get_function_file_header (const char *fname, char **pdesc,
-			      char **pver, int *pdfdoc);
+			      char **pver, char **pdate,
+			      int *pdfdoc);
 
 double function_package_get_version (const char *fname);
 

@@ -63,6 +63,7 @@ windata_t *display_function_package_data (const char *pkgname,
 
 void maybe_update_gfn_browser (const char *pkgname,
 			       const char *version,
+			       const char *date,
 			       const char *descrip,
 			       const char *fname,
 			       int uses_subdir,

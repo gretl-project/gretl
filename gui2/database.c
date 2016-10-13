@@ -2141,8 +2141,8 @@ static gchar *make_gfn_path (const char *pkgname)
 			   pkgname, SLASH, pkgname);
 }
 
-#define STATUS_COLUMN  4
-#define ZIPFILE_COLUMN 5
+#define STATUS_COLUMN  5
+#define ZIPFILE_COLUMN 6
 
 /* note : @vwin here is the source viewer window displaying the
    remote file (database, or datafiles package, or function package)
@@ -2964,9 +2964,10 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	char *descrip = NULL;
 	char *version = NULL;
 	char *author = NULL;
+	char date[12];
 	gboolean zipfile;
 
-	if (read_remote_filetime(line, fname, &remtime, NULL)) {
+	if (read_remote_filetime(line, fname, &remtime, date)) {
 	    continue;
 	}
 
@@ -3003,13 +3004,14 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	if (descrip != NULL && version != NULL && author != NULL) {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 
-			   0, basename, 
-			   1, version,
-			   2, author,
-			   3, descrip, 
-			   4, _(status),
-			   5, zipfile,
-			   -1);
+			       0, basename, 
+			       1, version,
+			       2, date,
+			       3, author,
+			       4, descrip, 
+			       5, _(status),
+			       6, zipfile,
+			       -1);
 	    n++;
 	}
 

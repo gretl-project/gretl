@@ -85,6 +85,9 @@ enum {
     PKG_ATTR_DOC = 1 << 1
 };
 
+#define GFN_DIRNAME_COL 4
+#define GFN_FLAGS_COL 5
+
 #define REMOTE_ACTION(c) (c == REMOTE_DB || \
                           c == REMOTE_FUNC_FILES || \
                           c == REMOTE_DATA_PKGS || \
@@ -1045,7 +1048,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     int dircol = 0;
 
     if (vwin->role == FUNC_FILES) {
-	dircol = 3;
+	dircol = GFN_DIRNAME_COL;
     } else if (vwin->role != REMOTE_FUNC_FILES &&
 	       vwin->role != PKG_REGISTRY) {
 	dummy_call();
@@ -1290,13 +1293,12 @@ static int get_menu_add_ok (windata_t *vwin)
 {
     gchar *pkgname = NULL;
     gchar *dirname = NULL;
-    int dircol = 3;
     int ret = 0;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &pkgname);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-			 dircol, &dirname);
+			 GFN_DIRNAME_COL, &dirname);
 
     if (pkgname != NULL && dirname != NULL) {
 	char path[FILENAME_MAX];
@@ -1326,7 +1328,7 @@ static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
        directory and/or its documentation in PDF format.
     */
     tree_view_get_int(GTK_TREE_VIEW(vwin->listbox),
-		      vwin->active_var, 4, &flags);
+		      vwin->active_var, GFN_FLAGS_COL, &flags);
 
     button = g_object_get_data(G_OBJECT(vwin->mbar), "res-button");
     if (button != NULL) {
@@ -2152,11 +2154,12 @@ static int populate_gfn_registry_list (windata_t *vwin)
 }
 
 static int get_func_info (const char *path, char **pdesc, 
-			  char **pver, int *pdfdoc)
+			  char **pver, char **pdate,
+			  int *pdfdoc)
 {
     int err;
 
-    err = get_function_file_header(path, pdesc, pver, pdfdoc);
+    err = get_function_file_header(path, pdesc, pver, pdate, pdfdoc);
     if (err) {
 	gui_errmsg(err);
     }
@@ -2172,7 +2175,7 @@ static int real_duplicate (const char *fname,
 {
     gchar *dupdir = NULL;
     
-    gtk_tree_model_get(model, iter, 3, &dupdir, -1);
+    gtk_tree_model_get(model, iter, GFN_DIRNAME_COL, &dupdir, -1);
 
     if (!strcmp(dirname, dupdir)) {
 	/* it's actually the same file */
@@ -2275,6 +2278,7 @@ char *maybe_ellipsize_string (char *s, int maxlen)
 
 static void browser_insert_gfn_info (const char *pkgname,
 				     const char *version,
+				     const char *date,
 				     char *summary,
 				     const char *dirname,
 				     int uses_subdir,
@@ -2298,9 +2302,10 @@ static void browser_insert_gfn_info (const char *pkgname,
     gtk_list_store_set(store, iter, 
 		       0, pkgname, 
 		       1, version,
-		       2, summary, 
-		       3, dirname,
-		       4, flags,
+		       2, date,
+		       3, summary, 
+		       4, dirname,
+		       5, flags,
 		       -1);
 }
 
@@ -2312,7 +2317,9 @@ static int ok_gfn_path (const char *fullname,
 			int imax, 
 			int subdir)
 {
-    char *descrip = NULL, *version = NULL;
+    char *descrip = NULL;
+    char *version = NULL;
+    char *date = NULL;
     int pdfdoc = 0;
     int is_dup = 0;
     int err, ok = 0;
@@ -2321,7 +2328,7 @@ static int ok_gfn_path (const char *fullname,
        it may be worth performing the next action as a sanity
        check on the purported gfn.
     */
-    err = get_func_info(fullname, &descrip, &version, &pdfdoc);
+    err = get_func_info(fullname, &descrip, &version, &date, &pdfdoc);
 
     if (!err && store != NULL) {
 	is_dup = fn_file_is_duplicate(shortname, version,
@@ -2344,6 +2351,7 @@ static int ok_gfn_path (const char *fullname,
 	    gtk_list_store_append(store, iter);
 	    browser_insert_gfn_info(pkgname,
 				    version,
+				    date,
 				    descrip,
 				    dirname,
 				    subdir,
@@ -2358,6 +2366,7 @@ static int ok_gfn_path (const char *fullname,
 
     free(descrip);
     free(version);
+    free(date);
 
     return ok;
 }
@@ -2526,6 +2535,7 @@ static int gfn_paths_match (const char *p0, const char *p1,
 
 static void update_gfn_browser (const char *pkgname,
 				const char *version,
+				const char *date,
 				const char *descrip,
 				const char *fname,
 				int uses_subdir,
@@ -2536,7 +2546,7 @@ static void update_gfn_browser (const char *pkgname,
     GtkTreeIter iter;
     gchar *p, *dirname;
     gchar *summary;
-    gchar *c0, *c1, *c3;
+    gchar *oldname, *oldver, *olddir;
     int dirmatch = 0;
     int done = 0;
 
@@ -2555,20 +2565,21 @@ static void update_gfn_browser (const char *pkgname,
     summary = g_strdup(descrip);
 
     while (1) {
-	gtk_tree_model_get(model, &iter, 0, &c0, 1, &c1, 3, &c3, -1);
-	if (!strcmp(c0, pkgname) && !strcmp(c1, version)) {
+	gtk_tree_model_get(model, &iter, 0, &oldname, 1, &oldver,
+			   GFN_DIRNAME_COL, &olddir, -1);
+	if (!strcmp(oldname, pkgname) && !strcmp(oldver, version)) {
 	    /* Found a match for package name and version: so update
 	       the browser entry and record that we're done.
 	    */
 	    fprintf(stderr, "gfn update: updating %s %s\n", pkgname, version);
-	    browser_insert_gfn_info(pkgname, version, summary,
+	    browser_insert_gfn_info(pkgname, version, date, summary,
 				    dirname, uses_subdir, pdfdoc,
 				    GTK_LIST_STORE(model), &iter);
 	    done = 1;
 	} else if (!dirmatch) {
-	    dirmatch = gfn_paths_match(c3, dirname, pkgname);
+	    dirmatch = gfn_paths_match(olddir, dirname, pkgname);
 	}
-	g_free(c0); g_free(c1); g_free(c3);
+	g_free(oldname); g_free(oldver); g_free(olddir);
 	if (done || !gtk_tree_model_iter_next(model, &iter)) {
 	    break;
 	}
@@ -2584,7 +2595,7 @@ static void update_gfn_browser (const char *pkgname,
 	*/
 	fprintf(stderr, "gfn update: appending %s %s\n", pkgname, version);
 	gtk_list_store_append(GTK_LIST_STORE(model), &iter);
-	browser_insert_gfn_info(pkgname, version, summary,
+	browser_insert_gfn_info(pkgname, version, date, summary,
 				dirname, uses_subdir, pdfdoc,
 				GTK_LIST_STORE(model), &iter);
 	presort_treelist(vwin);
@@ -2602,6 +2613,7 @@ static void update_gfn_browser (const char *pkgname,
 
 void maybe_update_gfn_browser (const char *pkgname,
 			       const char *version,
+			       const char *date,
 			       const char *descrip,
 			       const char *fname,
 			       int uses_subdir,
@@ -2613,10 +2625,10 @@ void maybe_update_gfn_browser (const char *pkgname,
     if (vwin != NULL && vwin->listbox != NULL) {
 	if (del) {
 	    browser_delete_row_by_content(vwin, 0, pkgname,
-					  3, fname);
+					  GFN_DIRNAME_COL, fname);
 	} else {
-	    update_gfn_browser(pkgname, version, descrip, fname,
-			       uses_subdir, pdfdoc, vwin);
+	    update_gfn_browser(pkgname, version, date, descrip,
+			       fname, uses_subdir, pdfdoc, vwin);
 	}
     }
 }
@@ -2685,11 +2697,13 @@ static GtkWidget *files_vbox (windata_t *vwin)
     const char *func_titles[] = {
 	N_("Package"), 
 	N_("Version"),
+	N_("Date"),
 	N_("Summary") 
     };
     const char *remote_func_titles[] = {
 	N_("Package"), 
 	N_("Version"),
+	N_("Date"),
 	N_("Author"),
 	N_("Summary"), 
 	N_("Local status")
@@ -2719,10 +2733,12 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
+	G_TYPE_STRING,
 	G_TYPE_STRING,   /* hidden string: directory */
 	G_TYPE_INT       /* hidden flags: has examples dir? doc? */
     };
     GType remote_func_types[] = {
+	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,

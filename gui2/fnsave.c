@@ -4393,6 +4393,7 @@ int save_function_package (const char *fname, gpointer p)
 	gtk_widget_set_sensitive(finfo->validate, TRUE);
 	maybe_update_gfn_browser(pkgname,
 				 finfo->version,
+				 finfo->date,
 				 finfo->pkgdesc,
 				 finfo->fname,
 				 finfo->uses_subdir,
