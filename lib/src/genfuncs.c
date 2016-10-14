@@ -3922,6 +3922,40 @@ static int x_sectional_sum (double *x, const int *list,
     return err;
 }
 
+static int x_sectional_median (double *y, const int *list, 
+			       const DATASET *dset)
+{
+    int i, t, n = list[0];
+    double *xt;
+
+    if (n == 0) {
+	return E_DATA;
+    }
+
+    xt = malloc(n * sizeof *xt);
+    if (xt == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	y[t] = 0.0;
+	for (i=0; i<list[0]; i++) {
+	    xt[i] = dset->Z[list[i+1]][t];
+	    if (na(xt[i])) {
+		y[t] = NADBL;
+		break;
+	    }
+	}
+	if (y[t] == 0.0) {
+	    y[t] = gretl_median(0, n-1, xt);
+	}
+    }
+
+    free(xt);
+
+    return 0;
+}
+
 int cross_sectional_stat (double *x, const int *list, 
 			  const DATASET *dset, int f)
 {
@@ -3935,8 +3969,10 @@ int cross_sectional_stat (double *x, const int *list,
 	return x_sectional_extremum(f, x, list, dset);
     } else if (f == F_SUM) {
 	return x_sectional_sum(x, list, dset);
+    } else if (f == F_MEDIAN) {
+	return x_sectional_median(x, list, dset);
     } else {
-	return E_DATA;
+	return E_TYPES;
     }
 }
 

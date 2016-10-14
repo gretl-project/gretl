@@ -12382,7 +12382,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_scalar_func(l, t->t, p);
 	} else if ((t->t == F_MEAN || t->t == F_SD || 
 		    t->t == F_VCE || t->t == F_MIN ||
-		    t->t == F_MAX || t->t == F_SUM) 
+		    t->t == F_MAX || t->t == F_SUM ||
+		    t->t == F_MEDIAN) 
 		   && ok_list_node(l)) {
 	    /* list -> series also acceptable for these cases */
 	    ret = list_to_series_func(l, t->t, p);

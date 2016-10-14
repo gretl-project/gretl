@@ -5032,17 +5032,21 @@
       </description>
     </function>
 
-    <function name="median" section="stats" output="scalar">
+    <function name="median" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The median of the non-missing observations in series
-	  <argname>y</argname>. 
-	  <seelist>
-            <fncref targ="quantile"/>
-	  </seelist>
+	  If <argname>x</argname> is a series, returns the (scalar)
+	  sample median, skipping any missing observations.
+	</para>
+	<para>
+	  If <argname>x</argname> is a list, returns a series
+	  <math>y</math> such that <math>y</math><sub>t</sub> is the
+	  median of the values of the variables in the list at
+	  observation <math>t</math>, or <lit>NA</lit> if there are
+	  any missing values at <math>t</math>.
 	</para>
       </description>
     </function>

@@ -13,6 +13,7 @@ version 2016d, in progress
   test of cross-sectional dependence in panel-data models
 - "gnuplot" and "plot": add "bars" option for plotting a
   confidence band with error bars
+- median() function: accept a list argument, as with mean()
 - GUI function package browser: add last-modified date to
   the information shown
 - The option of using the Box-Muller method for generating
