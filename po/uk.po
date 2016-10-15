@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-10-02 16:01-0400\n"
-"PO-Revision-Date: 2016-10-02 16:50+0300\n"
+"PO-Revision-Date: 2016-10-15 19:55+0300\n"
 "Last-Translator: Oleh Komashko <oleg_komashko@ukr.net>\n"
 "Language-Team: \n"
 "Language: uk\n"
@@ -1783,12 +1783,12 @@ msgstr "Максимум"
 
 #: lib/src/describe.c:4420
 msgid "Standard deviation"
-msgstr "Станд. відхилення"
+msgstr "Ст. відхилення"
 
 #: lib/src/describe.c:4421 lib/src/describe.c:4614 gui2/guiprint.c:633
 #: gui2/guiprint.c:958
 msgid "C.V."
-msgstr "Коефіцієнт варіації"
+msgstr "К-т варіації"
 
 #: lib/src/describe.c:4422 lib/src/describe.c:4615 gui2/guiprint.c:633
 #: gui2/guiprint.c:958
@@ -1807,11 +1807,11 @@ msgstr "5% процентиль"
 #: lib/src/describe.c:4427
 #, no-c-format
 msgid "95% percentile"
-msgstr "95%-процентиль"
+msgstr "95% процентиль"
 
 #: lib/src/describe.c:4428
 msgid "Interquartile range"
-msgstr "Міжквартильний розмах"
+msgstr "Міжкварт.  розмах"
 
 #: lib/src/describe.c:4429 lib/src/describe.c:4624 gui2/guiprint.c:655
 #: gui2/guiprint.c:990
@@ -1820,11 +1820,11 @@ msgstr "Пропущені спост."
 
 #: lib/src/describe.c:4431
 msgid "Within s.d."
-msgstr "Внутрішньогрупове ст. відх."
+msgstr "Внутрішньогруп. ст. відх."
 
 #: lib/src/describe.c:4432
 msgid "Between s.d."
-msgstr "Міжгрупове ст. відх."
+msgstr "Міжгруп. ст. відх."
 
 #: lib/src/describe.c:4448 lib/src/describe.c:4573 gui2/menustate.c:490
 msgid "Summary statistics"
@@ -11067,7 +11067,7 @@ msgstr "Закрити"
 #: gui2/gpt_control.c:3866 gui2/gpt_dialog.c:2807 gui2/graphics.c:236
 #: gui2/graph_page.c:683
 msgid "color"
-msgstr "кольор"
+msgstr "кольоровий"
 
 #: gui2/gpt_control.c:4482
 msgid "Malformed PNG file for graph"
@@ -11974,11 +11974,11 @@ msgstr "_Відновити повний діапазон"
 
 #: gui2/gretl.c:1711
 msgid "_Show status"
-msgstr "_Показати статус"
+msgstr "_Показати характеристики"
 
 #: gui2/gretl.c:1712
 msgid "_Restrict, based on criterion..."
-msgstr "_Обмежити, на базі критерію..."
+msgstr "_Обмежити на базі критерію..."
 
 #: gui2/gretl.c:1714
 msgid "R_andom sub-sample..."
@@ -12214,7 +12214,7 @@ msgstr "_Йогансена..."
 
 #: gui2/gretl.c:1788
 msgid "_Panel"
-msgstr "_Панель"
+msgstr "_Панельні дані"
 
 #: gui2/gretl.c:1789
 msgid "_Fixed or random effects..."
@@ -12314,7 +12314,7 @@ msgstr "_Надарая-Уотсона..."
 
 #: gui2/gretl.c:1816
 msgid "_Nonlinear Least Squares..."
-msgstr "_Нелинійний МНК..."
+msgstr "_Нелінійний МНК..."
 
 #: gui2/gretl.c:1817
 msgid "_Maximum likelihood..."
@@ -12378,7 +12378,7 @@ msgstr "gretl: назвіть список"
 
 #: gui2/gretl.c:2212
 msgid "sample status"
-msgstr "статус вибірки"
+msgstr "характеристики вибірки"
 
 #: gui2/gretlwin32.c:303
 msgid "Copy buffer was empty"
@@ -16572,9 +16572,8 @@ msgid "specific day in week"
 msgstr "певний день тиждня"
 
 #: gui2/varinfo.c:419
-#, fuzzy
 msgid "spread (MIDAS)"
-msgstr "spead (MIDAS)"
+msgstr "розповсюдження (MIDAS)"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"
@@ -17521,7 +17520,7 @@ msgstr "Похибка при оцінюванні моделі 'розмах-с
 #: plugin/range-mean.c:278
 #, c-format
 msgid "slope of range against mean = %g\n"
-msgstr "кут. коеф. розмаху відносно середнього) = %g\n"
+msgstr "кут. коеф. розмаху відносно середнього = %g\n"
 
 #: plugin/range-mean.c:285
 msgid "range-mean test"
