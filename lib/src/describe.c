@@ -4484,7 +4484,7 @@ void print_summary_single (const Summary *s,
     for (i=0; i<NSUMM; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
-	} else if ((i == 8 || i == 9) && skip0595) {
+	} else if (skip0595 && (i == 8 || i == 9)) {
 	    continue;
 	}
 	if (strlen(_(labels[i])) > slen) {
@@ -4496,11 +4496,23 @@ void print_summary_single (const Summary *s,
     for (i=0; i<NSUMM; i++) {
 	if ((s->opt & OPT_S) && simple_skip[i]) {
 	    continue;
-	} else if ((i == 8 || i == 9) && skip0595) {
+	} else if (skip0595 && (i == 8 || i == 9)) {
 	    continue;
 	}
 	bufspace(offset, prn);
-	pprintf(prn, "%-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
+	if (i == 8 || i == 9) {
+	    /* the strings contain '%' */
+	    gchar *pcstr = g_strdup(_(labels[i]));
+	    int n = slen - g_utf8_strlen(pcstr, -1);
+
+	    pputs(prn, pcstr);
+	    if (n > 0) {
+		bufspace(n, prn);
+	    }
+	    g_free(pcstr);
+	} else {
+	    pprintf(prn, "%-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
+	}
 	if (i == NSUMM - 1) {
 	    summary_print_val(vals[i], -1, places, prn);
 	} else {
@@ -4670,9 +4682,21 @@ void print_summary (const Summary *summ,
 	pputc(prn, '\n');
 
 	if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
-	    pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
-		    UTF_WIDTH(_(ha[0]), 15), _(hc[0]),
-		    UTF_WIDTH(_(ha[1]), 15), _(hc[1]),
+	    /* note: use pputs for strings containing literal '%' */
+	    gchar *hc0 = g_strdup(_(hc[0]));
+	    gchar *hc1 = g_strdup(_(hc[1]));
+	    int n;
+
+	    pprintf(prn, "%*s", len, " ");
+	    n = 15 - g_utf8_strlen(hc0, -1);
+	    if (n > 0) bufspace(n, prn);
+	    pputs(prn, hc0);
+	    n = 15 - g_utf8_strlen(hc1, -1);
+	    if (n > 0) bufspace(n, prn);
+	    pputs(prn, hc1);
+	    g_free(hc0); g_free(hc1);
+	   
+	    pprintf(prn, "%*s%*s\n",
 		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
 		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
 	} else {
