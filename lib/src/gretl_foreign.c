@@ -2394,11 +2394,13 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	    } else if (nr == 0 && nc == 0) {
 		m = gretl_null_matrix_new();
 	    } else {
+		gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
+				     name, nr, nc);
 		err = E_DATA;
 	    }
 	}
 
-	if (m != NULL) {
+	if (m != NULL && nr > 0) {
 	    int i, j;
 
 	    for (i=0; i<nr; i++) {
