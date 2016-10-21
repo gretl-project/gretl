@@ -792,68 +792,78 @@ static int write_ox_io_file (void)
     return 0;
 }
 
+static int real_write_octave_io_file (void)
+{
+    const char *dotdir = gretl_dotdir();
+    gchar *fname;
+    FILE *fp;
+
+    fname = g_strdup_printf("%sgretl_io.m", dotdir);
+    fp = gretl_fopen(fname, "w");
+    g_free(fname);
+
+    if (fp == NULL) {
+	return E_FOPEN;
+    } else {
+#ifdef G_OS_WIN32
+	gchar *dotcpy = win32_dotpath();
+
+	fputs("function dotdir = gretl_dotdir()\n", fp);
+	fprintf(fp, "  dotdir = \"%s\";\n", dotcpy);
+	g_free(dotcpy);
+#else
+	fputs("function dotdir = gretl_dotdir()\n", fp);
+	fprintf(fp, "  dotdir = \"%s\";\n", dotdir);
+#endif	
+	fputs("endfunction\n\n", fp);
+
+	fputs("function gretl_export(X, str, autodot=1)\n", fp);
+	fputs("  if (autodot)\n", fp);
+	fputs("    dname = gretl_dotdir();\n", fp);
+	fputs("    fd = fopen(strcat(dname, str), \"w\");\n", fp);
+	fputs("  else\n", fp);
+	fputs("    fd = fopen(str, \"w\");\n", fp);
+	fputs("  endif\n", fp);
+	fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
+	fputs("  c = columns(X);\n", fp);
+	fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)), \"1\", \"%.15g\"), \"\\n\");",
+	      fp);
+	fputc('\n', fp);
+	fputs("  fprintf(fd, fs, X');\n", fp);
+	fputs("  fclose(fd);\n", fp);
+	fputs("endfunction\n\n", fp);  
+
+	fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
+	fputs("  if (autodot)\n", fp);
+	fputs("    dname = gretl_dotdir();\n", fp);
+	fputs("    fd = fopen(strcat(dname, str), \"r\");\n", fp);
+	fputs("  else\n", fp);
+	fputs("    fd = fopen(str, \"r\");\n", fp);
+	fputs("  endif\n", fp);
+	fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
+	fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
+	fputs("  fclose(fd);\n", fp);
+	fputs("endfunction\n\n", fp);
+
+	fclose(fp);
+    }
+
+    return 0;
+}
+
 static int write_octave_io_file (void)
 {
     static int written;
+    int err = 0;
 
     if (!written) {
-	const char *dotdir = gretl_dotdir();
-	gchar *fname;
-	FILE *fp;
-
-	fname = g_strdup_printf("%sgretl_io.m", dotdir);
-	fp = gretl_fopen(fname, "w");
-	g_free(fname);
-
-	if (fp == NULL) {
-	    return E_FOPEN;
-	} else {
-#ifdef G_OS_WIN32
-            gchar *dotcpy = win32_dotpath();
-
-	    fputs("function dotdir = gretl_dotdir()\n", fp);
-	    fprintf(fp, "  dotdir = \"%s\";\n", dotcpy);
-	    g_free(dotcpy);
-#else
-	    fputs("function dotdir = gretl_dotdir()\n", fp);
-	    fprintf(fp, "  dotdir = \"%s\";\n", dotdir);
-#endif	
-	    fputs("endfunction\n\n", fp);
-
-	    fputs("function gretl_export(X, str, autodot=1)\n", fp);
-	    fputs("  if (autodot)\n", fp);
-            fputs("    dname = gretl_dotdir();\n", fp);
-	    fputs("    fd = fopen(strcat(dname, str), \"w\");\n", fp);
-	    fputs("  else\n", fp);
-	    fputs("    fd = fopen(str, \"w\");\n", fp);
-	    fputs("  endif\n", fp);
-	    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
-	    fputs("  c = columns(X);\n", fp);
-            fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)), \"1\", \"%.15g\"), \"\\n\");",
-		  fp);
-	    fputc('\n', fp);
-	    fputs("  fprintf(fd, fs, X');\n", fp);
-	    fputs("  fclose(fd);\n", fp);
-	    fputs("endfunction\n\n", fp);  
-
-	    fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
-	    fputs("  if (autodot)\n", fp);
-            fputs("    dname = gretl_dotdir();\n", fp);
-	    fputs("    fd = fopen(strcat(dname, str), \"r\");\n", fp);
-	    fputs("  else\n", fp);
-	    fputs("    fd = fopen(str, \"r\");\n", fp);
-            fputs("  endif\n", fp);
-	    fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
-	    fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
-	    fputs("  fclose(fd);\n", fp);
-	    fputs("endfunction\n\n", fp);
-
-	    fclose(fp);
+	err = real_write_octave_io_file();
+	if (!err) {
 	    written = 1;
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static int write_python_io_file (void)
@@ -2366,23 +2376,39 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     *rtype = R_type_to_gretl_type(res);
 
     if (*rtype == GRETL_TYPE_MATRIX) {
-	gretl_matrix *pm;
-	int nc = R_ncols(res);
-	int nr = R_nrows(res);
-	int i, j;
+	gretl_matrix *m = NULL;
+	int nr = 0, nc = 0;
 
-	pm = gretl_matrix_alloc(nr, nc);
-	if (pm == NULL) {
-	    return E_ALLOC;
+	if (!R_isReal(res)) {
+	    gretl_errmsg_sprintf("%s: got 'matrix' result, but not of type real", name);
+	    err = E_TYPES;
+	} else {
+	    nr = R_nrows(res);
+	    nc = R_ncols(res);
+
+	    if (nr > 0 && nc > 0) {
+		m = gretl_matrix_alloc(nr, nc);
+		if (m == NULL) {
+		    err = E_ALLOC;
+		}
+	    } else if (nr == 0 && nc == 0) {
+		m = gretl_null_matrix_new();
+	    } else {
+		err = E_DATA;
+	    }
 	}
 
-	for (i=0; i<nr; i++) {
-	    for (j=0; j<nc; j++) {
-		gretl_matrix_set(pm, i, j, R_REAL(res)[i + j * nr]);
+	if (m != NULL) {
+	    int i, j;
+
+	    for (i=0; i<nr; i++) {
+		for (j=0; j<nc; j++) {
+		    gretl_matrix_set(m, i, j, R_REAL(res)[i + j * nr]);
+		}
 	    }
 	}
 	R_unprotect(1);
-	*ret = pm;
+	*ret = m;
     } else if (gretl_scalar_type(*rtype)) {
 	double *realres = R_REAL(res);
 	double *dret = *ret;
@@ -2391,7 +2417,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
     	R_unprotect(1);
     } else {
-	err = E_EXTERNAL;
+	err = E_TYPES;
     }
 
     return err;
