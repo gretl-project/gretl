@@ -5166,6 +5166,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
     gretl_matrix *m = NULL;
     double ME, MSE, MAE, MPE, MAPE, U;
     double x, u[2];
+    char **rownames = NULL;
     int nstats = (opt & OPT_D)? 9 : 6;
     int t, T;
 
@@ -5253,7 +5254,25 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 
     if (opt & OPT_D) {
 	theil_decomp(m->val + 6, MSE, y, f, t1, t2);
-    } 
+	rownames = strings_array_new(9);
+    } else {
+	rownames = strings_array_new(6);
+    }
+
+    if (rownames != NULL) {
+	rownames[0] = gretl_strdup("ME");
+	rownames[1] = gretl_strdup("RMSE");
+	rownames[2] = gretl_strdup("MAE");
+	rownames[3] = gretl_strdup("MPE");
+	rownames[4] = gretl_strdup("MAPE");
+	rownames[5] = gretl_strdup("U");
+	if (opt & OPT_D) {
+	    rownames[6] = gretl_strdup("UM");
+	    rownames[7] = gretl_strdup("UR");
+	    rownames[8] = gretl_strdup("UD");
+	}
+	gretl_matrix_set_rownames(m, rownames);
+    }
 
     return m;
 }

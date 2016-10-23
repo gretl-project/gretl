@@ -2848,7 +2848,7 @@
 	</para>
 	<code>
 	  1  Mean Error (ME)
-	  2  Mean Squared Error (MSE)
+	  2  Root Mean Squared Error (RMSE)
 	  3  Mean Absolute Error (MAE)
 	  4  Mean Percentage Error (MPE)
 	  5  Mean Absolute Percentage Error (MAPE)
