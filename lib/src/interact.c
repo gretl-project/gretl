@@ -3426,6 +3426,8 @@ const char *gretl_cmd_get_savename (CMD *cmd)
     return cmd->savename;
 }
 
+#define PMDEBUG 0
+
 void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
 			    char *line,
@@ -3463,7 +3465,7 @@ void gretl_exec_state_init (ExecState *s,
 	   this invisible within the function, but set things
 	   up so that we can restore it as last model on
 	   exit from the function -- the idea being that
-	   excuting a function should not change the 'last
+	   executing a function should not change the 'last
 	   model' state at caller level. To achieve this we
 	   need to take out a 'private' reference to the
 	   model, stored in the ExecState, and then remove
@@ -3471,6 +3473,10 @@ void gretl_exec_state_init (ExecState *s,
 	*/
 	s->prev_model = get_last_model(&s->prev_type);
 	if (s->prev_model != NULL) {
+#if PMDEBUG
+	    fprintf(stderr, "ExecState %p: set prev_model %p\n",
+		    (void *) s, s->prev_model);
+#endif
 	    gretl_object_ref(s->prev_model, s->prev_type);
 	    set_as_last_model(NULL, GRETL_OBJ_NULL);
 	}
@@ -3537,6 +3543,10 @@ void gretl_exec_state_clear (ExecState *s)
 	if (s->prev_model != NULL) {
 	    gretl_object_unref(s->prev_model, s->prev_type);
 	}
+#if PMDEBUG
+	fprintf(stderr, "ExecState %p, set prev_model %p as last_model\n",
+		(void *) s, (void *) s->prev_model);
+#endif
 	/* restore the previous model count */
 	if (s->prev_model_count >= 0) {
 	    set_model_count(s->prev_model_count);

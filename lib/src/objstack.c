@@ -415,8 +415,9 @@ void set_as_last_model (void *ptr, GretlObjType type)
 
 #if ODEBUG
     if (last_model.ptr != NULL) {
-	fprintf(stderr, " refcount on \"last_model\" = %d\n",
-		object_get_refcount(last_model.ptr, last_model.type));
+	int rc = object_get_refcount(last_model.ptr, last_model.type);
+
+	fprintf(stderr, " refcount on \"last_model\" = %d\n", rc);
     }
 #endif
 }
