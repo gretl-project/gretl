@@ -254,7 +254,7 @@ int gretl_model_protect (MODEL *pmod)
     return err;
 }
 
-static int gretl_model_unprotect (MODEL *pmod)
+int gretl_model_unprotect (MODEL *pmod)
 {
     MODEL **prmod;
     int match = 0;

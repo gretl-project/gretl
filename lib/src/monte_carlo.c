@@ -2061,6 +2061,12 @@ static MODEL *get_model_record_by_line (LOOPSET *loop, int lno, int *err)
 	return NULL;
     }
 
+    /* 2016-10-24: I think this is right, AC. Note
+       that there's a matching "unprotect" when a loop
+       is destroyed.
+    */
+    gretl_model_protect(pmod);
+
     loop->model_lines[n] = lno;
     pmod->ID = n + 1;
     loop->models[n] = pmod;
@@ -3716,6 +3722,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    set_as_last_model(s->model, GRETL_OBJ_EQN);
 	}
 	for (i=0; i<loop->n_models; i++) {
+	    gretl_model_unprotect(loop->models[i]);
 	    gretl_model_free(loop->models[i]);
 	}
     }

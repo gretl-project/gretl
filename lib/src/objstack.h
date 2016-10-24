@@ -68,6 +68,8 @@ void set_as_last_model (void *ptr, GretlObjType type);
 
 int gretl_model_protect (MODEL *pmod);
 
+int gretl_model_unprotect (MODEL *pmod);
+
 void *get_last_model (GretlObjType *type);
 
 GretlObjType get_last_model_type (void);
