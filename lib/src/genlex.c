@@ -81,7 +81,6 @@ struct str_table dvars[] = {
     { R_KLNL,      "$kalman_lnl" },
     { R_KS2,       "$kalman_s2" },
     { R_KSTEP,     "$kalman_t" },
-    { R_INDEX,     "obs" },
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
     { R_STOPWATCH, "$stopwatch" },
@@ -95,6 +94,7 @@ struct str_table dvars[] = {
     { R_ERRNO,     "$error" },
     { R_SEED,      "$seed" },
     { R_HUGE,      "$huge" },
+    { R_INDEX,     "obs" },
     { 0,           NULL },
 };
 
