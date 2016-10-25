@@ -1473,52 +1473,45 @@ static int make_ess (MODEL *pmod, const DATASET *dset)
     return 0;
 }
 
-#define SMALLDIFF 1.15e-15 /* was 9.0e-16, a bit too tight? */
-
 /* The heuristic used here is that the model effectively
    contains a constant or intercept if the means of y and
-   yhat are the same, where "the same" means that the
-   relative difference is less than SMALLDIFF.
+   yhat are the same, or in other words the mean residual
+   is zero -- but allowing for some numerical slop.
 */
 
 int check_for_effective_const (MODEL *pmod, const DATASET *dset)
 {
-    double absdiff, reldiff;
-    double x1 = 0.0, x2 = 0.0;
-    double eps = 1.0e-16;
-    int yno = pmod->list[1];
+    double ubar = 0.0, ybar = 0.0;
+    const double *y = dset->Z[pmod->list[1]];
     int t, ret = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->yhat[t])) {
-	    x1 += pmod->yhat[t];
-	    x2 += dset->Z[yno][t];
+	if (!na(pmod->uhat[t])) {
+	    ubar += pmod->uhat[t];
+	    ybar += y[t];
 	}
     }
 
-    x1 /= pmod->nobs;
-    x2 /= pmod->nobs;
+    ubar = fabs(ubar / pmod->nobs);
+    ybar = fabs(ybar / pmod->nobs);
 
-    absdiff = fabs(x1 - x2);
-
-    /* are the criteria below correct? */
-
-    if (fabs(x2) < eps || absdiff < SMALLDIFF) {
-	reldiff = absdiff;
-    } else {
-	reldiff = absdiff / fabs(x2);
+    if (ubar < 1.0e-7) {
+	/* absolute value of mean residual small enough? */
+	ret = 1;
+    } else if (ubar < 0.01 && ybar > 1.0e-20) {
+	/* try scaled variant? */
+	ret = ubar / ybar < 2.0e-15;
     }
 
-#if 0
+#if 1
     fprintf(stderr, "check_for_effective_const:\n"
-	    "x1=%g, x2=%g, absdiff=%g, reldiff=%g\n",
-	    x1, x2, absdiff, reldiff);
+	    "ubar = %g, ybar = %g, ret = %d\n",
+	    ubar, ybar, ret);
 #endif
 
-    if (reldiff < SMALLDIFF) {
+    if (ret) {
 	gretl_model_set_int(pmod, "effconst", 1);
 	pmod->dfn -= 1;
-	ret = 1;
     } else if (gretl_model_get_int(pmod, "effconst")) {
 	gretl_model_set_int(pmod, "effconst", 0);
 	pmod->dfn += 1;
