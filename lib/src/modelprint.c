@@ -3354,8 +3354,11 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
     if (opt & OPT_S) {
 	/* --simple-print */
 	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
-	    pprintf(prn, "%s = %g, %s = %f\n\n", A_("SSR"), 
-		    pmod->ess, A_("R-squared"), pmod->rsq);
+	    int uc = gretl_model_get_int(pmod, "uncentered");
+
+	    pprintf(prn, "%s = %g, %s = %f\n\n", A_("SSR"), pmod->ess,
+		    uc ? A_("Uncentered R-squared") : A_("R-squared"),
+		    pmod->rsq);
 	}
 	goto close_format;
     }
