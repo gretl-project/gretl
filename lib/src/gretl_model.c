@@ -4417,7 +4417,7 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
     double xval;
     int i, ival;
     int err = 0;
-	
+
     for (i=0; i<pmod->n_data_items && !err; i++) {
 	item = pmod->data_items[i];
 	if (item->type == GRETL_TYPE_INT) {
@@ -4446,6 +4446,11 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 					       GRETL_TYPE_BUNDLE, 0);
 	    }
 	}
+    }
+
+    if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+	/* fixed effects: add within R-squared */
+	gretl_bundle_set_scalar(b, "within_R2", pmod->adjrsq);
     }
 
     return err;
