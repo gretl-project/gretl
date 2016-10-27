@@ -2460,7 +2460,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
     int start = 2;
     int i, ret = -1;
 
-    if (ci == COINT || ci == ANOVA) {
+    if (ci == COINT || ci == ANOVA || ci == DELEET) {
 	start = 1;
     } else if (ci == ARCH) {
 	start = 3;

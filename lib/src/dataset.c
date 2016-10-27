@@ -1821,7 +1821,7 @@ int dataset_drop_listed_variables (int *list,
 {
     int oldv = dset->v;
     int *dlist = NULL;
-    int free_dlist = 0;
+    int dupv, free_dlist = 0;
     int err = 0;
 
     if (dset->n == 0 || dset->v == 0) {
@@ -1848,6 +1848,13 @@ int dataset_drop_listed_variables (int *list,
 	return 0;
     } else {
 	dlist = list;
+    }
+
+    dupv = gretl_list_duplicates(dlist, DELEET);
+    if (dupv >= 0) {
+	gretl_errmsg_sprintf(_("variable %d duplicated in the "
+			       "command list."), dupv);
+	return E_DATA;
     }
 
     err = real_drop_listed_vars(dlist, dset, renumber,

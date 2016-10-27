@@ -4453,6 +4453,11 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 	gretl_bundle_set_scalar(b, "within_R2", pmod->adjrsq);
     }
 
+    if (!na(pmod->dw)) {
+	/* add Durbin-Watson if available */
+	gretl_bundle_set_scalar(b, "DW", pmod->dw);
+    }
+
     return err;
 }
 

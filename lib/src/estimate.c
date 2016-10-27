@@ -1495,6 +1495,9 @@ int check_for_effective_const (MODEL *pmod, const DATASET *dset)
     ubar = fabs(ubar / pmod->nobs);
     ybar = fabs(ybar / pmod->nobs);
 
+    /* the calibration below is debatable: watch out for
+       "wrong" results */
+
     if (ubar < 1.0e-7) {
 	/* absolute value of mean residual small enough? */
 	ret = 1;
