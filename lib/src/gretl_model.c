@@ -4450,12 +4450,12 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 
     if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
 	/* fixed effects: add within R-squared */
-	gretl_bundle_set_scalar(b, "within_R2", pmod->adjrsq);
+	gretl_bundle_set_scalar(b, "within_rsq", pmod->adjrsq);
     }
 
     if (!na(pmod->dw)) {
-	/* add Durbin-Watson if available */
-	gretl_bundle_set_scalar(b, "DW", pmod->dw);
+	/* add Durbin-Watson statistic if available */
+	gretl_bundle_set_scalar(b, "dw", pmod->dw);
     }
 
     return err;
