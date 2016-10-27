@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-10-02 16:01-0400\n"
-"PO-Revision-Date: 2016-08-17 00:35+0100\n"
+"PO-Revision-Date: 2016-10-27 01:06+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -2422,9 +2422,9 @@ msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "A variável %s é do tipo %s, não aceitável no contexto"
 
 #: lib/src/geneval.c:13818
-#, fuzzy, c-format
+#, c-format
 msgid "A variable of type %s is not acceptable in context"
-msgstr "A variável %s é do tipo %s, não aceitável no contexto"
+msgstr "A variável do tipo %s não é aceitável no contexto"
 
 #: lib/src/geneval.c:14018
 #, c-format
@@ -4760,26 +4760,28 @@ msgid "Number of instruments = %d"
 msgstr "Número de instrumentos = %d"
 
 #: lib/src/modelprint.c:664
-#, fuzzy
 msgid "Warning: convergence is questionable"
-msgstr "Aviso: havia valores ausentes\n"
+msgstr "Aviso: a convergência é questionável"
 
 #: lib/src/modelprint.c:666
-#, fuzzy
 msgid "Convergence seems to be reasonably complete"
-msgstr "Tolerância da convergência:"
+msgstr "A convergência aparenta ser razoavelmente completa"
 
 #: lib/src/modelprint.c:671
 msgid "GNR: got incomplete results"
-msgstr ""
+msgstr "GNR: obteve-se resultados incompletos"
 
 #: lib/src/modelprint.c:676
+#, fuzzy
 msgid "Warning: Jacobian is rank-deficient"
-msgstr ""
+msgstr "Aviso: a Jacobiana não é linearmente independente (é \"rank-deficient\")"
 
 #: lib/src/modelprint.c:677
+#, fuzzy
 msgid "Warning: Jacobian near to rank-deficiency"
 msgstr ""
+"Aviso: a Jacobiana está perto de ser não linearmente independente (\"rank-"
+"deficient\")"
 
 #: lib/src/modelprint.c:690
 msgid "Warning: solution is probably not unique"
@@ -5121,11 +5123,11 @@ msgstr "Mínimos Quadrados (OLS) com restrições"
 
 #: lib/src/modelprint.c:1070
 msgid "MIDAS (OLS)"
-msgstr ""
+msgstr "MIDAS (OLS)"
 
 #: lib/src/modelprint.c:1072
 msgid "MIDAS (NLS)"
-msgstr ""
+msgstr "MIDAS (NLS)"
 
 #: lib/src/modelprint.c:1121
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -5240,9 +5242,8 @@ msgid "Could not compute Beck-Katz standard errors"
 msgstr "Não se conseguiu calcular os erros padrão de Beck-Katz"
 
 #: lib/src/modelprint.c:1424
-#, fuzzy
 msgid "Could not compute robust standard errors"
-msgstr "Não se conseguiu calcular os erros padrão de Beck-Katz"
+msgstr "Não se conseguiu calcular os erros padrão robustos"
 
 #: lib/src/modelprint.c:1432
 msgid "Bartlett kernel"
@@ -7814,7 +7815,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 17 de agosto de 2016."
+"Tradução de 27 de outubro de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -9961,41 +9962,37 @@ msgid "Monthly, annualized"
 msgstr "Mensal, anualizado"
 
 #: gui2/dialogs.c:6358
-#, fuzzy
 msgid "Unrestricted (U-MIDAS)"
-msgstr "Sem restrições"
+msgstr "Sem restrições (U-MIDAS)"
 
 #: gui2/dialogs.c:6359
-#, fuzzy
 msgid "Normalized exponential Almon"
-msgstr "Duração (exponencial)"
+msgstr "Exponencial normalizada Almon"
 
 #: gui2/dialogs.c:6360
 msgid "Normalized beta (zero last lag)"
-msgstr ""
+msgstr "Beta normalizada (último desfasamento a zero)"
 
 #: gui2/dialogs.c:6361
 msgid "Normalized beta (non-zero last lag)"
-msgstr ""
+msgstr "Beta normalizada (último desfasamento não zero)"
 
 #: gui2/dialogs.c:6362
 msgid "Almon polynomial"
-msgstr ""
+msgstr "Polinomial Almon"
 
 #: gui2/dialogs.c:6385
-#, fuzzy, c-format
+#, c-format
 msgid "High-frequency regressor %s"
-msgstr "= alta-frequência diferença de %s"
+msgstr "Regressor %s de alta-frequência"
 
 #: gui2/dialogs.c:6393
-#, fuzzy
 msgid "Parameterization"
-msgstr "restrição"
+msgstr "Parametrização"
 
 #: gui2/dialogs.c:6405
-#, fuzzy
 msgid "Number of parameters"
-msgstr "Número de casos"
+msgstr "Número de parâmetros"
 
 #: gui2/dialogs.c:6416 plugin/addons-i18n.c:63
 msgid "Lags"
@@ -10891,6 +10888,11 @@ msgid ""
 "on the server or you have made changes since the\n"
 "last upload."
 msgstr ""
+"Carregar (\"Upload\") pacote: Isto significa que o pacote será carregado para "
+"o servidor gretl para aprovação.\n"
+"Você deve apenas fazer isto se você é o autor deste pacote e se o pacote não "
+"existir já no servidor, ou se você fez alterações desde o último "
+"carregamento."
 
 #: gui2/fnsave.c:3754
 msgid "gretl: upload"
@@ -13147,9 +13149,8 @@ msgid "Residual _periodogram"
 msgstr "_Periodograma dos resíduos"
 
 #: gui2/gui_utils.c:3077
-#, fuzzy
 msgid "_MIDAS coefficients"
-msgstr "_Soma de coeficientes"
+msgstr "Coeficientes _MIDAS"
 
 #: gui2/gui_utils.c:3087
 msgid "Residual _Q-Q plot"
@@ -13501,7 +13502,7 @@ msgstr "Calendário"
 
 #: gui2/helpfiles.c:382
 msgid "MIDAS"
-msgstr ""
+msgstr "MIDAS"
 
 #: gui2/helpfiles.c:422 gui2/textbuf.c:1982
 msgid "Index"
@@ -14455,29 +14456,24 @@ msgid "Define new variable..."
 msgstr "Definir nova variável..."
 
 #: gui2/menustate.c:518
-#, fuzzy
 msgid "Add logs..."
-msgstr "Acrescentar logs"
+msgstr "Acrescentar logs..."
 
 #: gui2/menustate.c:519
-#, fuzzy
 msgid "Add differences..."
-msgstr "Acrescentar diferenças"
+msgstr "Acrescentar diferenças..."
 
 #: gui2/menustate.c:521
-#, fuzzy
 msgid "Display components"
-msgstr "Todas as componentes"
+msgstr "Mostrar componentes"
 
 #: gui2/menustate.c:522
-#, fuzzy
 msgid "Edit components"
-msgstr "Todas as componentes"
+msgstr "Editar componentes"
 
 #: gui2/menustate.c:523
-#, fuzzy
 msgid "Delete components"
-msgstr "Todas as componentes"
+msgstr "Apagar componentes"
 
 #: gui2/menustate.c:915
 msgid "Unknown"
@@ -14663,7 +14659,7 @@ msgstr "R"
 
 #: gui2/selector.c:1278
 msgid "Select and right-click to edit specification"
-msgstr ""
+msgstr "Selecionar e clicar com o botão direito para editar a especificação"
 
 #: gui2/selector.c:1778 gui2/selector.c:2265
 msgid "Unrestricted"
@@ -14845,9 +14841,8 @@ msgid "Multiple precision OLS"
 msgstr "Mínimos Quadrados (OLS) de precisão múltipla"
 
 #: gui2/selector.c:4111
-#, fuzzy
 msgid "MIDAS regression"
-msgstr "Regressão KPSS"
+msgstr "Regressão MIDAS"
 
 #: gui2/selector.c:4121
 msgid "Weight variable"
@@ -15010,9 +15005,8 @@ msgid "Equation 2 regressors"
 msgstr "Regressores da equação 2"
 
 #: gui2/selector.c:4871
-#, fuzzy
 msgid "High-frequency"
-msgstr "Frequência"
+msgstr "Alta-frequência"
 
 #: gui2/selector.c:4873
 msgid "Helper functions"
@@ -15395,9 +15389,8 @@ msgid "Public functions"
 msgstr "Funções públicas"
 
 #: gui2/selector.c:7093
-#, fuzzy
 msgid "No MIDAS data were found in the current dataset"
-msgstr "Tente acrescentar ao conjunto de dados atual"
+msgstr "Não se encontraram dados MIDAS no conjunto de dados atual"
 
 #: gui2/selector.c:7269
 msgid "Select variables for logging"
@@ -16619,14 +16612,12 @@ msgid "last observation"
 msgstr "última observação"
 
 #: gui2/varinfo.c:418
-#, fuzzy
 msgid "specific day in week"
-msgstr "a especificação é adequada"
+msgstr "dia específico da semana"
 
 #: gui2/varinfo.c:419
-#, fuzzy
 msgid "spread (MIDAS)"
-msgstr "Sem restrições"
+msgstr "disperso (MIDAS)"
 
 #: gui2/varinfo.c:682
 msgid "Previous series"
@@ -17905,9 +17896,8 @@ msgid "Statistics/transformations"
 msgstr "Estatísticas e Transformações"
 
 #: doc/commands/matfuncs.c:49
-#, fuzzy
 msgid "Decoration"
-msgstr "Duração"
+msgstr "Decoração"
 
 #~ msgid "Upload function package"
 #~ msgstr "Fazer \"upload\" de pacote de funções"
