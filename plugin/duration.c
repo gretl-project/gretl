@@ -619,7 +619,7 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 	    if (opt & OPT_R) {
 		err = gretl_model_add_QML_vcv(pmod, DURATION, 
 					      H, dinfo->G,
-					      dset, opt);
+					      dset, opt, NULL);
 	    } else {
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }

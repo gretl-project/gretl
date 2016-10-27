@@ -2247,12 +2247,13 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
  * @dset: pointer to dataset (can be NULL if not doing
  * clustering).
  * @opt: may include OPT_C for cluster-robust variant.
+ * @pV: location to receive the full covariance matrix, or NULL.
  * 
  * Write a QML covariance matrix into the model @pmod, and set
  * the standard errors to the square root of the diagonal
  * elements of this matrix. The @ci argument, specifying the
  * estimator for @pmod, is required only if @opt includes
- & OPT_C; otherwise it is ignored.
+ * OPT_C; otherwise it is ignored.
  * 
  * Returns: 0 on success, non-zero code on error.
  */
@@ -2261,7 +2262,8 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 			     const gretl_matrix *H, 
 			     const gretl_matrix *G,
 			     const DATASET *dset,
-			     gretlopt opt)
+			     gretlopt opt,
+			     gretl_matrix **pV)
 {
     gretl_matrix *GG = NULL;
     gretl_matrix *V = NULL;
@@ -2321,7 +2323,12 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
     }
 
     gretl_matrix_free(GG);
-    gretl_matrix_free(V);
+
+    if (pV != NULL) {
+	*pV = V;
+    } else {
+	gretl_matrix_free(V);
+    }
 
     return err;
 }

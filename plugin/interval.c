@@ -22,6 +22,7 @@
 #include "libset.h"
 #include "gretl_bfgs.h"
 #include "gretl_normal.h"
+#include "matrix_extra.h"
 
 #define INTDEBUG 0
 
@@ -532,28 +533,38 @@ static gretl_matrix *interval_hessian_inverse (double *theta,
     return H;
 }
 
-static void interval_trim_vcv (MODEL *pmod, int k,
-			       gretl_matrix *V)
+static int interval_trim_vcv (MODEL *pmod, int k,
+			      const gretl_matrix *V)
 {
+    gretl_matrix *Vt;
     double vij;
     int n = V->rows;
     int i, j;
 
-    gretl_matrix_reuse(V, k, k);
+    Vt = gretl_matrix_copy(V);
+    if (Vt == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_reuse(Vt, k, k);
 
     for (i=0; i<k; i++) {
 	for (j=0; j<=i; j++) {
 	    vij = pmod->vcv[ijton(i, j, n)];
-	    gretl_matrix_set(V, i, j, vij);
+	    gretl_matrix_set(Vt, i, j, vij);
 	}
     }
 
     for (i=0; i<k; i++) {
 	for (j=0; j<=i; j++) {
-	    vij = gretl_matrix_get(V, i, j);
+	    vij = gretl_matrix_get(Vt, i, j);
 	    pmod->vcv[ijton(i, j, k)] = vij;
 	}
-    }    
+    }
+
+    gretl_matrix_free(Vt);
+
+    return 0;
 }
 
 static int intreg_model_add_vcv (MODEL *pmod,
@@ -563,6 +574,7 @@ static int intreg_model_add_vcv (MODEL *pmod,
 				 double *x)
 {
     gretl_matrix *H = NULL;
+    gretl_matrix *V = NULL;
     int err = 0;
 
     H = interval_hessian_inverse(IC->theta, IC, &err);
@@ -570,8 +582,9 @@ static int intreg_model_add_vcv (MODEL *pmod,
     if (!err) {
 	if (opt & OPT_R) {
 	    err = gretl_model_add_QML_vcv(pmod, pmod->ci, H, IC->G,
-					  dset, opt);
+					  dset, opt, &V);
 	} else {
+	    V = H;
 	    err = gretl_model_add_hessian_vcv(pmod, H);
 	}
     }
@@ -579,11 +592,20 @@ static int intreg_model_add_vcv (MODEL *pmod,
     if (!err) {
 	int k = IC->k - 1;
 
-	*x = gretl_model_get_vcv_element(pmod, k, k, H->rows);
-	interval_trim_vcv(pmod, IC->nx, H);
+	*x = gretl_model_get_vcv_element(pmod, k, k, V->rows);
+	err = interval_trim_vcv(pmod, IC->nx, V);
+	if (!err) {
+	    /* note: donates @V to @pmod */
+	    gretl_model_set_matrix_as_data(pmod, "full_vcv", V);
+	} else if (V != H) {
+	    gretl_matrix_free(V);
+	}
     }
 
-    gretl_matrix_free(H);
+    if (H != V) {
+	/* the robust case: we're finished with H */
+	gretl_matrix_free(H);
+    }
 
     return err;
 }
@@ -800,7 +822,7 @@ static int fill_intreg_model (int_container *IC,
 			      gretlopt opt)
 {
     MODEL *pmod = IC->pmod;
-    double x, ndx, u;
+    double ndx, u, x = 0;
     int i, j, k = IC->k;
     int obstype;
     int err = 0;

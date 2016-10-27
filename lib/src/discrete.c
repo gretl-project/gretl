@@ -792,7 +792,7 @@ static int fill_op_model (MODEL *pmod, const int *list,
 
     if (OC->opt & OPT_R) {
 	err = gretl_model_add_QML_vcv(pmod, OC->ci, H, OC->G,
-				      dset, OC->opt);
+				      dset, OC->opt, NULL);
     } else {
 	err = gretl_model_add_hessian_vcv(pmod, H);
     }
@@ -1726,7 +1726,7 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
     if (!err) {
 	if (opt & OPT_R) {
 	    err = gretl_model_add_QML_vcv(pmod, LOGIT, H, G, 
-					  dset, opt);
+					  dset, opt, NULL);
 	} else {
 	    err = gretl_model_add_hessian_vcv(pmod, H);
 	}
@@ -2567,7 +2567,7 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
     if (!err) {
 	if (opt & OPT_R) {
 	    err = gretl_model_add_QML_vcv(pmod, bin->ci, H, G, 
-					  dset, opt);
+					  dset, opt, NULL);
 	} else {
 	    err = gretl_model_add_hessian_vcv(pmod, H);
 	}

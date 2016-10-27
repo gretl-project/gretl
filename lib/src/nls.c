@@ -1569,9 +1569,8 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	if (!err) {
 	    if ((spec->opt & OPT_R) && spec->Hinv != NULL) {
 		/* robust option -> QML */
-		err = gretl_model_add_QML_vcv(pmod, MLE, 
-					      spec->Hinv, G,
-					      NULL, OPT_R);
+		err = gretl_model_add_QML_vcv(pmod, MLE, spec->Hinv,
+					      G, NULL, OPT_R, NULL);
 	    } else {
 		err = gretl_model_add_OPG_vcv(pmod, G);
 	    }

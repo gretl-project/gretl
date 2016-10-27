@@ -1040,7 +1040,7 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	    if (opt & OPT_R) {
 		err = gretl_model_add_QML_vcv(pmod, BIPROBIT, 
 					      H, bp->score,
-					      dset, opt);
+					      dset, opt, NULL);
 	    } else {
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }

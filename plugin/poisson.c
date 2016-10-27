@@ -327,7 +327,7 @@ static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
 	    if (opt & OPT_R) {
 		err = gretl_model_add_QML_vcv(pmod, pmod->ci, 
 					      H, nbinfo->G,
-					      dset, opt);
+					      dset, opt, NULL);
 	    } else {
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
@@ -482,8 +482,8 @@ static int poisson_robust_vcv (MODEL *pmod,
     H = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
     if (!err) {
-	err = gretl_model_add_QML_vcv(pmod, POISSON, 
-				      H, G, dset, opt);
+	err = gretl_model_add_QML_vcv(pmod, POISSON, H, G,
+				      dset, opt, NULL);
     }
 
     gretl_matrix_free(H);
