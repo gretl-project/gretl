@@ -602,8 +602,10 @@ static int intreg_model_add_vcv (MODEL *pmod,
 	}
     }
 
-    if (H != V) {
-	/* the robust case: we're finished with H */
+    if (opt & OPT_R) {
+	/* In the robust case we're finished with H, which was
+	   just one ingredient in the covariance matrix
+	*/
 	gretl_matrix_free(H);
     }
 
