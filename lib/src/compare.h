@@ -123,7 +123,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 int comfac_test (MODEL *pmod, DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-double get_DW_pvalue_for_model (const MODEL *pmod, 
+double get_DW_pvalue_for_model (MODEL *pmod, 
 				DATASET *dset,
 				int *err);
 

@@ -1672,7 +1672,7 @@ int omit_test (MODEL *pmod, const int *omitvars,
  * Returns: the p-value, or #NADBL on error.
  */
 
-double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset, 
+double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset, 
 				int *err)
 {
     MODEL dwmod;
@@ -1680,6 +1680,12 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
     int save_t2 = dset->t2;
     int *list = NULL;
     double pv = NADBL;
+
+    /* maybe this has already been done? */
+    pv = gretl_model_get_double(pmod, "dw_pval");
+    if (!na(pv)) {
+	return pv;
+    }
 
     if (dset == NULL || dset->Z == NULL) {
 	*err = E_NODATA;
@@ -1714,6 +1720,10 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
 
     if (!*err) {
 	pv = gretl_model_get_double(&dwmod, "dw_pval");
+	if (!na(pv)) {
+	    /* record result on the incoming model */
+	    gretl_model_set_double(pmod, "dw_pval", pv);
+	}
     }
 
     /* put back into dset what was there on input */

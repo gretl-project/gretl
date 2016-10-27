@@ -2066,10 +2066,21 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 
     for (i=M_ESS; i<M_SCALAR_MAX && !*err; i++) {
 	berr = 0;
-	val = gretl_model_get_scalar(pmod, i, dset, &berr);
-	if (!berr) {
-	    key = mvarname(i) + 1;
-	    *err = gretl_bundle_set_scalar(b, key, val);	    
+	if (i == M_DWPVAL) {
+	    /* Durbin-Watson p-value: don't include this unless
+	       it has already been computed and attached to the 
+	       model, since it may involve heavy computation.
+	    */
+	    val = gretl_model_get_double(pmod, "dwpval");
+	    if (!na(val)) {
+		*err = gretl_bundle_set_scalar(b, "dwpval", val);
+	    }
+	} else {
+	    val = gretl_model_get_scalar(pmod, i, dset, &berr);
+	    if (!berr) {
+		key = mvarname(i) + 1;
+		*err = gretl_bundle_set_scalar(b, key, val);	    
+	    }
 	}
     }
 

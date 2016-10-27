@@ -6260,7 +6260,7 @@ const char *gretl_model_get_name (const MODEL *pmod)
  * in which case @err will contain a non-zero error code.
  */
 
-double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
+double gretl_model_get_scalar (MODEL *pmod, ModelDataIndex idx, 
 			       DATASET *dset, int *err)
 {
     double x = NADBL;

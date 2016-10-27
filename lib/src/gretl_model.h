@@ -486,7 +486,7 @@ void gretl_model_set_name (MODEL *pmod, const char *name);
 
 const char *gretl_model_get_name (const MODEL *pmod);
 
-double gretl_model_get_scalar (const MODEL *pmod, 
+double gretl_model_get_scalar (MODEL *pmod, 
 			       ModelDataIndex idx, 
 			       DATASET *dset, 
 			       int *err);
