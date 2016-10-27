@@ -20,6 +20,8 @@ version 2016d, in progress
   random normals is now removed
 - The Mersenne Twister code is updated to SFMT 1.4.1, and the
   generation of random normals is speeded up
+- Add and document a $model accessor which retrieves a bundle
+  containing information regarding a single-equation model
 - Fix an issue where gretl might fail to read back a gdt data
   file written by itself
 - Fix for sort() and dsort() as applied to row or column
@@ -36,6 +38,8 @@ version 2016d, in progress
   of underflow
 - Fix bug in mcorr() function: correlations between constants
   should be NaNs, not zeros
+- Fix bug: potential crash with the "delete" command on a
+  list which contains duplicated series
 - Installers for Windows, Mac: include fuller set of PDF docs
 - MS Windows builds: update to gtk-2.24.30, update libffi
 

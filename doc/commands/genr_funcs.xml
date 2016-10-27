@@ -475,6 +475,31 @@
       </description>
     </function>
 
+    <function name="$model" section="access" output="bundle">
+      <description>
+	<para>
+	  Must follow estimation of a single-equation model; returns a
+	  bundle containing many items of data pertaining to the
+	  model. All the regular model accessors are included: these
+	  are referenced by keys that are the same as the regular
+	  accessor names, minus the leading dollar sign. So for
+	  example the residuals appear under the key <lit>uhat</lit>
+	  and the error sum of squares under <lit>ess</lit>.
+	</para>
+	<para>
+	  Depending on the estimator, additional information may be
+	  available; the keys for such information should hopefully be
+	  fairly self-explanatory. To see what's available you can get
+	  a copy of the bundle and print its content, as in
+	</para>
+	<code>
+	  ols y 0 x
+	  bundle b = $model
+	  print b
+	</code>
+      </description>
+    </function>    
+
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
