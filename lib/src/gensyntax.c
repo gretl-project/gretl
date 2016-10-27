@@ -661,6 +661,35 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     }
 }
 
+/* Here we're allowing for the possibility that an "fncall"
+   argument is given in the form of a string variable. If the
+   relevant portion of the statement contains any quotation
+   marks that cannot be the case.
+*/
+
+static void try_for_string_var (parser *p, int close, int anyquote)
+{
+    int err = 0;
+
+    if (!anyquote) {
+	char *sname = gretl_strndup(p->point - 1, close + 1);
+	char *sval = get_string_by_name(sname);
+
+	if (sval != NULL) {
+	    p->idstr = gretl_strdup(sval);
+	} else {
+	    err = 1;
+	}
+	free(sname);
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	unmatched_symbol_error(')', p);
+    }
+}
+
 enum {
     RIGHT_STR  = 1 << 0,
     MID_STR    = 1 << 1
@@ -711,11 +740,13 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 	const char *s = p->point;
 	int gotparen = 0;
 	int quoted = 0;
+	int anyquote = 0;
 	int paren = 0;
 	int i = 0;
 
 	while (*s) {
 	    if (*s == '"') {
+		anyquote = 1;
 		quoted = !quoted;
 	    } 
 	    if (!quoted) {
@@ -723,6 +754,11 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 		    gotparen++;
 		    paren++;
 		} else if (*s == ')') {
+		    if (paren == 0) {
+			paren--;
+			close = i;
+			break;
+		    }
 		    paren--;
 		}
 		if (paren == 0) {
@@ -735,7 +771,7 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 			close = i;
 			break;
 		    }
-		} 
+		}
 	    }
 	    s++;
 	    i++;
@@ -744,7 +780,7 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 	if (paren > 0) {
 	    unmatched_symbol_error('(', p);
 	} else if (paren < 0) {
-	    unmatched_symbol_error(')', p);
+	    try_for_string_var(p, close, anyquote);
 	} else if (quoted) {
 	    unmatched_symbol_error('"', p);
 	} else {
