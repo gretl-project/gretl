@@ -1924,12 +1924,12 @@ double user_NR (gretl_matrix *b,
     return ret;
 }
 
-double user_deriv_free (MaxMethod method,
-			gretl_matrix *b,
-			const char *fncall,
-			int maxit,
-			DATASET *dset,
-			PRN *prn, int *err)
+double deriv_free_max (MaxMethod method,
+		       gretl_matrix *b,
+		       const char *fncall,
+		       int maxit,
+		       DATASET *dset,
+		       PRN *prn, int *err)
 {
     umax *u;
     gretlopt opt = OPT_NONE;
@@ -2808,12 +2808,11 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		  gretlopt opt, PRN *prn)
 {
     gretl_matrix b;
-    double f0; /* there was an unused "f1" here */
-    double fmax, fmin, fnew;
+    double f0, fmax, fmin, fnew;
     int imax, imin = 0;
     double x, ystar, y2star, z;
     int improved = 0;
-    int i, l, iter, err = 0;
+    int i, l, iter;
     int flag, ifault;
     /* termination criterion for variance of function values */
     double reqmin = 1.0e-5;
@@ -2825,8 +2824,10 @@ int gretl_amoeba (double *theta, int n, int maxit,
     /* misc */
     double eps = 0.01;
     double del = 1.0;
-    /* workspace */
+    /* step lengths */
     double *step;
+    /* workspace */
+    double *wspace;
     double *p2star;
     double *pbar;
     double *pstar;
@@ -2834,6 +2835,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     double *y;
     /* simplex */
     gretl_matrix *p;
+    int err = 0;
 
     /*
       @step determines the size and shape of the initial simplex.  The
@@ -2856,15 +2858,16 @@ int gretl_amoeba (double *theta, int n, int maxit,
     /* function at each vertex */
     y = malloc((n+1) * sizeof *y);
 
-    /* the coordinates of the point which is estimated to optimize 
-       the function, plus additional workspace */
-    xmax = malloc(4 * n * sizeof *xmax);
+    /* workspace */
+    wspace = malloc(4 * n * sizeof *xmax);
 
-    if (p == NULL || y == NULL || xmax == NULL) {
+    if (p == NULL || y == NULL || wspace == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
+    xmax = wspace; /* coordinates of the point which is estimated to maximize
+		      the function */
     pbar = xmax + n;
     pstar = pbar + n;
     p2star = pstar + n;
@@ -2996,7 +2999,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
 	/* Check if @fmax has been improved upon */
 	improved = y[imin] > fmax;
-	fprintf(stderr, "iter %d, improved = %d\n", iter, improved);
 	if (improved) {
 	    fmax = y[imin];
 	    imax = imin;
@@ -3015,7 +3017,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	}
 
 	if (z <= tol) {
-	    fprintf(stderr, "terminate on z=%g < tol=%g\n\n", z, tol);
+	    fprintf(stderr, "breaking on z=%g < tol=%g\n\n", z, tol);
 	    break;
 	}
 
@@ -3047,7 +3049,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	}
 
 	if (ifault == 0) {
-	    fprintf(stderr, "break on ifault at iter %d == 0\n", iter);
+	    fprintf(stderr, "breaking on ifault = 0 at iter %d\n", iter);
 	    break;
 	}
 
@@ -3063,13 +3065,20 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_iteration_pop();
 
-    fprintf(stderr, "finished: iter=%d, fmax=%g, fmin=%g, f0=%g\n",
-	    iter, fmax, fmin, f0);
+    fprintf(stderr, "amoeba finished: iter=%d, fmax=%g (f0=%g)\n", iter, fmax, f0);
+
+    /* I think this is the right criterion in relation to the
+       message below, AC */
+    improved = fmax > f0;
 
     if (improved) {
 	if (opt & OPT_V) {
 	    pputc(prn, '\n');
 	}
+	/* final update of coefficients */
+	for (i=0; i<n; i++) {
+	    b.val[i] = xmax[i];
+	}	
     } else {
 	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
     }
@@ -3082,7 +3091,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_matrix_free(p);
     free(y);
-    free(xmax);
+    free(wspace);
     free(step);
     
     return err;

@@ -91,13 +91,13 @@ double user_NR (gretl_matrix *b,
 		PRN *prn, 
 		int *err);
 
-double user_deriv_free (MaxMethod method,
-			gretl_matrix *b,
-			const char *fncall,
-			int maxit,
-			DATASET *dset,
-			PRN *prn,
-			int *err);
+double deriv_free_max (MaxMethod method,
+		       gretl_matrix *b,
+		       const char *fncall,
+		       int maxit,
+		       DATASET *dset,
+		       PRN *prn,
+		       int *err);
 
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);

@@ -3157,8 +3157,8 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 	    MaxMethod method = (t == F_SIMANN)? SIMANN_MAX :
 		AMOEBA_MAX;
 
-	    ret->v.xval = user_deriv_free(method, b, sf, maxit, p->dset,
-					  p->prn, &p->err);
+	    ret->v.xval = deriv_free_max(method, b, sf, maxit, p->dset,
+					 p->prn, &p->err);
 	}
     } else {
 	ret = aux_scalar_node(p);
