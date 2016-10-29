@@ -2782,6 +2782,27 @@ static void simplex_print (gretl_matrix *p, double fbest, double fworst,
     pputs(prn, "\n\n");
 }
 
+static double deviance (double *y, int n) {
+    /* used as a rough indicator if all the vertices are at 
+       the same height
+    */
+
+    double x, ret = 0.0;
+    int i;
+    
+    for (i=0; i<n+1; i++) {
+	ret += y[i];
+    }
+    x = ret / ((double) n+1);
+
+    ret = 0.0;
+    for (i=0; i<n+1; i++) {
+	ret += (y[i] - x) * (y[i] - x);
+    }
+	
+    return ret;
+}
+
 #define NMDEBUG 0
 
 /**
@@ -2815,14 +2836,14 @@ int gretl_amoeba (double *theta, int n, int maxit,
     int i, l, iter;
     int flag, ifault;
     /* termination criterion for variance of function values */
-    double reqmin = 1.0e-5;
+    double reqmin = 1.0e-12;
     double tol = reqmin * n;
     /* coefficients for contraction, extension, reflection */
     double ccoeff = 0.5;
     double ecoeff = 2.0;
     double rcoeff = 1.0;
     /* misc */
-    double eps = 0.01;
+    double eps = 0.001;
     double del = 1.0;
     /* step lengths */
     double *step;
@@ -2888,8 +2909,14 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_iteration_push();
     
+    err = simplex_build(p, b.val, y, cfunc, data, step, del);
     for (iter=0; iter<maxit; iter++) {
-	err = simplex_build(p, b.val, y, cfunc, data, step, del);
+	z = deviance(y, n);
+	if (z <= tol) {
+	    fprintf(stderr, "breaking on z=%g < tol=%g\n\n", z, tol);
+	    break;
+	}
+
 #if NMDEBUG
 	gretl_matrix_print(p, "simplex (outside loop)");
 #endif
@@ -2897,6 +2924,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	
 	if (opt & OPT_V) {
 	    simplex_print(p, fmax, fmin, imax, imin, iter, prn);
+	    pprintf(prn, "deviance = %g\n", z);
 	}
 
 	/* Inner loop */
@@ -2995,6 +3023,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		}
 		y[imin] = flag ? y2star : ystar;
 	    }
+
 	}
 
 	/* Check if @fmax has been improved upon */
@@ -3004,22 +3033,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    imax = imin;
 	}
 
-	/* Check to see if minimum reached (??) */
-	z = 0.0;
-	for (i=0; i<n+1; i++) {
-	    z += y[i];
-	}
-	x = z / n+1;
-
-	z = 0.0;
-	for (i=0; i<n+1; i++) {
-	    z += (y[i] - x) * (y[i] - x);
-	}
-
-	if (z <= tol) {
-	    fprintf(stderr, "breaking on z=%g < tol=%g\n\n", z, tol);
-	    break;
-	}
 
 	/* Factorial tests to check that fnew is a local optimum */
 	for (i=0; i<n; i++) {
