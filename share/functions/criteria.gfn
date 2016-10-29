@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
-<gretl-function-package name="criteria" ID="1266796477" minver="1.8.6">
-<author>Allin Cottrell</author>
-<version>1.0</version>
-<date>2010-02-21</date>
+<gretl-function-package name="criteria" ID="1266796477" minver="2.1.10">
+<author email="cottrell@wfu.edu">Allin Cottrell</author>
+<version>1.2</version>
+<date>2016-10-29</date>
 <description>Calculate model selection criteria</description>
+<tags>C10</tags>
 <help>
 Computes the Akaike Information Criterion (AIC), Schwarz's Bayesian
 Information Criterion (BIC) and the Hannan-Quinn criterion (HQC), 
@@ -21,7 +22,7 @@ The HQC is computed as HQC = -2L + 2k log log n.
 A row vector containing the three criteria is available for
 assignment on return.
 </help>
-<gretl-function name="criteria" type="matrix" private="0">
+<gretl-function name="criteria" type="matrix">
  <params count="3">
   <param name="ess" type="scalar"/>
   <param name="n" type="scalar"/>
@@ -43,6 +44,7 @@ return crit
 </code>
 </gretl-function>
 <sample-script>
+include criteria.gfn
 # Demonstrate that the criteria() function produces the
 # same results as gretl does for a given model.
 open data4-10
