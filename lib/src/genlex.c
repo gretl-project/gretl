@@ -464,6 +464,7 @@ struct str_table funcs[] = {
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
+    { F_AMOEBA,    "amoeba" },     /* Nelder-Mead algorithm */
     { 0,           NULL }
 };
 

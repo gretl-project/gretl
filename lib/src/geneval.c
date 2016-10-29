@@ -3119,7 +3119,8 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *simann_node (NODE *l, NODE *m, NODE *r, parser *p)
+static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
+			      parser *p, int t)
 {
     NODE *ret = NULL;
 
@@ -3151,12 +3152,14 @@ static NODE *simann_node (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	ret = aux_scalar_node(p);
-	if (ret == NULL) { 
-	    return NULL;
-	}
 
-	ret->v.xval = user_simann(b, sf, maxit, p->dset, 
-				  p->prn, &p->err);
+	if (ret != NULL) {
+	    MaxMethod method = (t == F_SIMANN)? SIMANN_MAX :
+		AMOEBA_MAX;
+
+	    ret->v.xval = user_deriv_free(method, b, sf, maxit, p->dset,
+					  p->prn, &p->err);
+	}
     } else {
 	ret = aux_scalar_node(p);
     }
@@ -12601,9 +12604,10 @@ static NODE *eval (NODE *t, parser *p)
 	ret = BFGS_constrained_max(t, p);
 	break;
     case F_SIMANN:
+    case F_AMOEBA:
 	/* matrix-pointer, plus string and int args */
 	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
-	    ret = simann_node(l, m, r, p);
+	    ret = deriv_free_node(l, m, r, p, t->t);
 	} else {
 	    p->err = E_TYPES;
 	} 

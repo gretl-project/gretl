@@ -1924,11 +1924,12 @@ double user_NR (gretl_matrix *b,
     return ret;
 }
 
-double user_simann (gretl_matrix *b, 
-		    const char *fncall,
-		    int maxit,
-		    DATASET *dset,
-		    PRN *prn, int *err)
+double user_deriv_free (MaxMethod method,
+			gretl_matrix *b,
+			const char *fncall,
+			int maxit,
+			DATASET *dset,
+			PRN *prn, int *err)
 {
     umax *u;
     gretlopt opt = OPT_NONE;
@@ -1958,9 +1959,15 @@ double user_simann (gretl_matrix *b,
 	u->prn = prn;
     }
 
-    *err = gretl_simann(b->val, u->ncoeff, maxit, 
-			user_get_criterion, u, 
-			opt, prn);
+    if (method == SIMANN_MAX) {
+	*err = gretl_simann(b->val, u->ncoeff, maxit,
+			    user_get_criterion, u,
+			    opt, prn);
+    } else if (method == AMOEBA_MAX) {
+	*err = gretl_amoeba(b->val, u->ncoeff, maxit,
+			    user_get_criterion, u,
+			    opt, prn);
+    }
 
     if (!*err) {
 	ret = user_get_criterion(b->val, u);	    
@@ -2673,5 +2680,403 @@ int gretl_simann (double *theta, int n, int maxit,
     gretl_matrix_free(bstar);
     gretl_matrix_free(d);
 
+    return err;
+}
+
+/* --------------- amoeba-related functions -----------------------------*/
+
+static int simplex_build (gretl_matrix *p, double *x, double *y,
+			  BFGS_CRIT_FUNC cfunc, void *data,
+			  double *step, double delta)
+{
+    int i, j, n = p -> rows;
+    double w;
+
+    for (i=0; i<n; i++) {
+	gretl_matrix_set(p, i, n, x[i]);
+    }
+
+    y[n] = cfunc(x, data);
+      
+    for (j=0; j<n; j++ ) {
+	w = x[j];
+	x[j] += step[j] * delta;
+	for (i=0; i<n; i++) {
+	    gretl_matrix_set(p, i, j, x[i]);
+	}
+	y[j] = cfunc(x, data);
+	x[j] = w;
+    }
+
+    return 0;
+}
+
+static int simplex_contract (gretl_matrix *p, double *xbest, double *y,
+			     BFGS_CRIT_FUNC cfunc, void *data,
+			     int ibest)
+{
+    int i, j, n = p->rows;
+    double w, avg;
+    
+    for (j=0; j<n+1; j++) {
+	for (i=0; i<n; i++) {
+	    w = gretl_matrix_get(p, i, j);
+	    avg = 0.5 * (w + gretl_matrix_get(p, i, ibest));
+	    gretl_matrix_set(p, i, j, avg);
+	    xbest[i] = avg;
+	}
+	y[j] = cfunc(xbest, data);
+    }
+
+    return 0;
+}
+
+static int find_xtreme (double *x, int n, int max, double *xtr)
+{
+    int i, match, ret = 0;
+
+    *xtr = x[0];
+
+    for (i=1; i<n; i++) {
+	match = max ? (x[i] > *xtr) : (x[i] < *xtr);
+	if (match) {
+	    *xtr = x[i];
+	    ret = i;
+	}
+    }
+
+    return ret;
+}
+
+/* Calculate the centroid of the simplex vertices,
+   excepting the k-th vertex.
+*/
+
+static void centroid (gretl_matrix *p, int k, double *pbar)
+{
+    int i, j, n = p->rows;
+    double z;
+
+    for (i=0; i<n; i++) {
+	for (j=0, z = 0.0; j<n+1; j++) {
+	    z += gretl_matrix_get(p, i, j);
+	}
+	z -= gretl_matrix_get(p, i, k);
+	pbar[i] = z / n;
+    }
+}
+
+static void simplex_print (gretl_matrix *p, double fbest, double fworst,
+			   int best, int worst, int iter, PRN *prn)
+{
+    int i, n = p->rows;
+
+    pprintf(prn, "%4d: Best: %g, worst: %g\n", iter, fbest, fworst);
+    for (i=0; i<n; i++) {
+	pprintf(prn, "%8.4f ", gretl_matrix_get(p, i, best));
+    }
+    pputc(prn, '\n');
+    for (i=0; i<n; i++) {
+	pprintf(prn, "%8.4f ", gretl_matrix_get(p, i, worst));
+    }
+    pputs(prn, "\n\n");
+}
+
+#define NMDEBUG 0
+
+/**
+ * gretl_amoeba:
+ * @theta: parameter array.
+ * @n: length of @theta.
+ * @maxit: the maximum number of iterations to perform.
+ * @cfunc: the function to be maximized.
+ * @data: pointer to be passed to the @cfunc callback.
+ * @opt: may include %OPT_V for verbose operation.
+ * @prn: printing struct, or NULL.
+ *
+ * Nelder-Mead method, aka "amoeba": for the moment, this is a
+ * near-literal ripoff of ASA047, as found at
+ * http://people.sc.fsu.edu/~jburkardt/c_src/asa047/asa047.c (which is
+ * LGPL, so we're ok) but will probably need some tweaking, for
+ * example by incorporating ideas from Gao-Han (2012)
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_amoeba (double *theta, int n, int maxit,
+		  BFGS_CRIT_FUNC cfunc, void *data, 
+		  gretlopt opt, PRN *prn)
+{
+    gretl_matrix b;
+    double f0; /* there was an unused "f1" here */
+    double fbest, fworst, fnew;
+    int ibest, iworst = 0;
+    double x, ystar, y2star, z;
+    int flag;
+    int improved = 0;
+    int i, l, iter, err = 0;
+    int ifault;
+    /* terminating limit for the variance of function values */
+    double reqmin = 1.0e-5;
+    /* coefficients for contraction, extension, reflection */
+    double ccoeff = 0.5;
+    double ecoeff = 2.0;
+    double rcoeff = 1.0;
+    /* misc */
+    double eps = 0.01;
+    double del = 1.0;
+    double rq = reqmin * n;
+    /* workspace */
+    double *step;
+    double *p2star;
+    double *pbar;
+    double *pstar;
+    double *xbest;
+    double *y;
+    /* simplex */
+    gretl_matrix *p;
+
+    /*
+      @step determines the size and shape of the initial simplex.  The
+      relative magnitudes of its elements should reflect the units of
+      the variables.  For the moment, set step to all ones (but
+      this'll have to be adjusted)
+    */
+    step = malloc(n * sizeof *step);
+    if (step == NULL) {
+	return E_ALLOC;
+    } else {
+	for (i=0; i<n; i++) {
+	    step[i] = 1;
+	}
+    }
+
+    /* simplex */
+    p = gretl_matrix_alloc(n, n+1);
+
+    /* function at each vertex */
+    y = malloc((n+1) * sizeof *y);
+
+    /* the coordinates of the point which is estimated to optimize 
+       the function, plus additional workspace */
+    xbest = malloc(4 * n * sizeof *xbest);
+
+    if (p == NULL || y == NULL || xbest == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    pbar = xbest + n;
+    pstar = pbar + n;
+    p2star = pstar + n;
+
+    if (maxit <= 0) {
+	maxit = 1024;
+    }
+
+    /* -----------------------------------------------------------------------*/
+
+    set_up_matrix(&b, theta, n, 1);
+    f0 = fbest = fworst = cfunc(b.val, data);
+
+    if (opt & OPT_V) {
+	pprintf(prn, "\nNelder-Mead algorithm: initial function value = %.8g\n",
+		f0);
+    }
+
+    gretl_iteration_push();
+    
+    for (iter=0; iter<maxit; iter++) {
+	err = simplex_build(p, b.val, y, cfunc, data, step, del);
+#if NMDEBUG
+	gretl_matrix_print(p, "simplex (outside loop)");
+#endif
+	ibest = find_xtreme(y, n+1, 1, &fbest);
+	
+	if (opt & OPT_V) {
+	    simplex_print(p, fbest, fworst, ibest, iworst, iter, prn);
+	}
+
+	/* Inner loop */
+
+	iworst = find_xtreme(y, n+1, 0, &fworst);
+	centroid(p, iworst, pbar);
+
+	/* Reflection through the centroid */
+#if NMDEBUG
+	fprintf(stderr, "reflection through the centroid\n");
+#endif
+	for (i=0; i<n; i++) {
+	    x = pbar[i] - gretl_matrix_get(p, i, iworst);
+	    pstar[i] = pbar[i] + rcoeff * x;
+	}
+	ystar = cfunc(pstar, data);
+
+	if (ystar > fbest) {
+	    /* Successful reflection, so extension */
+#if NMDEBUG
+	    fprintf(stderr, "Successful reflection, so extension\n");
+#endif
+	    for (i=0; i<n; i++) {
+		x = pstar[i] - pbar[i];
+		p2star[i] = pbar[i] + ecoeff * x;
+	    }
+	    y2star = cfunc(p2star, data);
+
+	    /* if flag==1, extension; else, retain extension or contraction */
+	    flag = ystar > y2star;
+#if NMDEBUG
+	    if (flag) {
+		fprintf(stderr, "extension\n");
+	    } else {
+		fprintf(stderr, "retain extension or contraction\n");
+	    }
+#endif
+	    for (i=0; i<n; i++) {
+		gretl_matrix_set(p, i, iworst, flag ? pstar[i] : p2star[i]);
+	    }
+	    y[iworst] = flag ? ystar : y2star;
+	} else {
+#if NMDEBUG
+	    fprintf(stderr, "No extension\n");
+#endif
+	    l = 0;
+	    for (i=0; i<n+1; i++) {
+		l += ystar > y[i];
+	    }
+
+	    if (l > 1) {
+		for (i=0; i<n; i++) {
+		    gretl_matrix_set(p, i, iworst, pstar[i]);
+		}
+		y[iworst] = ystar;
+	    } else if (l == 0) {
+#if NMDEBUG
+		fprintf(stderr, "Contraction on the Y(IWORST) side of the centroid\n");
+#endif
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(p, i, iworst) - pbar[i];
+		    p2star[i] = pbar[i] + ccoeff * x;
+		}
+		y2star = cfunc(p2star, data);
+
+		if (y[iworst] < y2star) {
+#if NMDEBUG
+		    fprintf(stderr, "Contract the whole simplex\n");
+#endif
+		    err = simplex_contract(p, xbest, y, cfunc, data, ibest);
+		    ibest = find_xtreme(y, n+1, 0, &fbest);
+		    continue;
+		} else {
+#if NMDEBUG
+		    fprintf(stderr, "Retain contraction\n");
+#endif
+		    for (i=0; i<n; i++) {
+			gretl_matrix_set(p, i, iworst, p2star[i]);
+		    }
+		    y[iworst] = y2star;
+		}
+	    } else if (l == 1) {
+#if NMDEBUG
+		fprintf(stderr, "Contraction on the reflection side of the centroid\n");
+#endif
+		for (i=0; i<n; i++) {
+		    x = pstar[i] - pbar[i];
+		    p2star[i] = pbar[i] + ccoeff * x;
+		}
+		y2star = cfunc(p2star, data);
+
+		/* if flag==1, retain reflection */
+		flag = ystar <= y2star;
+		for (i=0; i<n; i++) {
+		    gretl_matrix_set(p, i, iworst, flag ? p2star[i] : pstar[i]);
+		}
+		y[iworst] = flag ? y2star : ystar;
+	    }
+	}
+
+	/* Check if FBEST improved  */
+	improved = y[iworst] > fbest;
+	if (improved) {
+	    fbest = y[iworst];
+	    ibest = iworst;
+	}
+
+	/* Check to see if minimum reached */
+	for (i=0, z=0.0; i<n+1; i++) {
+	    z += y[i];
+	}
+	x = z / n+1;
+
+	for (i=0, z=0.0; i<n+1; i++) {
+	    z += (y[i] - x) * (y[i] - x);
+	}
+
+	if (z <= rq) {
+	    break;
+	}
+
+	/* Factorial tests to check that fnew is a local optimum */
+	for (i=0; i<n; i++) {
+	    xbest[i] = gretl_matrix_get(p, i, ibest);
+	}
+
+	fnew = y[ibest];
+	ifault = 0;
+
+	for (i=0; i<n; i++) {
+	    del = step[i] * eps;
+	    xbest[i] = xbest[i] + del;
+	    z = cfunc(xbest, data);
+	    
+	    if (z > fnew) {
+		ifault = 2;
+		break;
+	    }
+	    xbest[i] -= 2*del;
+
+	    z = cfunc(xbest, data);
+	    if (z > fnew) {
+		ifault = 2;
+		break;
+	    }
+	    xbest[i] += del;
+	}
+
+	if (ifault == 0) {
+	    break;
+	}
+
+	/* Restart the procedure */
+	for (i=0; i<n; i++) {
+	    b.val[i] = xbest[i];
+	}
+	del = eps;
+#if NMDEBUG
+	gretl_matrix_print(&b, "b");
+#endif
+    }
+
+    gretl_iteration_pop();
+
+    if (improved) {
+	if (opt & OPT_V) {
+	    pputc(prn, '\n');
+	}
+    } else {
+	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
+    }
+    
+    if (fbest - fworst < 1.0e-9) {
+	pprintf(prn, "*** warning: surface seems to be flat\n");
+    }
+
+ bailout:
+
+    gretl_matrix_free(p);
+    free(y);
+    free(xbest);
+    free(step);
+    
     return err;
 }

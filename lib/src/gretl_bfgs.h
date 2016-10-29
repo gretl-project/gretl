@@ -24,8 +24,9 @@ typedef enum {
     BHHH_MAX,
     BFGS_MAX,
     LBFGS_MAX,
-    LM_MAX
-} OptimizerCode;
+    SIMANN_MAX,
+    AMOEBA_MAX
+} MaxMethod;
 
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
@@ -90,17 +91,22 @@ double user_NR (gretl_matrix *b,
 		PRN *prn, 
 		int *err);
 
-double user_simann (gretl_matrix *b, 
-		    const char *fncall,
-		    int maxit, 
-		    DATASET *dset,
-		    PRN *prn, 
-		    int *err);
+double user_deriv_free (MaxMethod method,
+			gretl_matrix *b,
+			const char *fncall,
+			int maxit,
+			DATASET *dset,
+			PRN *prn,
+			int *err);
 
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);
 
 int gretl_simann (double *theta, int n, int maxit,
+		  BFGS_CRIT_FUNC cfunc, void *data,
+		  gretlopt opt, PRN *prn);
+
+int gretl_amoeba (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn);
 
