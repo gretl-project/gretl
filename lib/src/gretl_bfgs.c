@@ -2731,16 +2731,16 @@ static int simplex_contract (gretl_matrix *p, double *xbest, double *y,
     return 0;
 }
 
-static int find_xtreme (double *x, int n, int max, double *xtr)
+static int find_extreme (double *y, int n, int max, double *xtr)
 {
     int i, match, ret = 0;
 
-    *xtr = x[0];
+    *xtr = y[0];
 
     for (i=1; i<n; i++) {
-	match = max ? (x[i] > *xtr) : (x[i] < *xtr);
+	match = max ? (y[i] > *xtr) : (y[i] < *xtr);
 	if (match) {
-	    *xtr = x[i];
+	    *xtr = y[i];
 	    ret = i;
 	}
     }
@@ -2809,15 +2809,15 @@ int gretl_amoeba (double *theta, int n, int maxit,
 {
     gretl_matrix b;
     double f0; /* there was an unused "f1" here */
-    double fbest, fworst, fnew;
-    int ibest, iworst = 0;
+    double fmax, fmin, fnew;
+    int imax, imin = 0;
     double x, ystar, y2star, z;
-    int flag;
     int improved = 0;
     int i, l, iter, err = 0;
-    int ifault;
-    /* terminating limit for the variance of function values */
+    int flag, ifault;
+    /* termination criterion for variance of function values */
     double reqmin = 1.0e-5;
+    double tol = reqmin * n;
     /* coefficients for contraction, extension, reflection */
     double ccoeff = 0.5;
     double ecoeff = 2.0;
@@ -2825,13 +2825,12 @@ int gretl_amoeba (double *theta, int n, int maxit,
     /* misc */
     double eps = 0.01;
     double del = 1.0;
-    double rq = reqmin * n;
     /* workspace */
     double *step;
     double *p2star;
     double *pbar;
     double *pstar;
-    double *xbest;
+    double *xmax;
     double *y;
     /* simplex */
     gretl_matrix *p;
@@ -2859,14 +2858,14 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     /* the coordinates of the point which is estimated to optimize 
        the function, plus additional workspace */
-    xbest = malloc(4 * n * sizeof *xbest);
+    xmax = malloc(4 * n * sizeof *xmax);
 
-    if (p == NULL || y == NULL || xbest == NULL) {
+    if (p == NULL || y == NULL || xmax == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    pbar = xbest + n;
+    pbar = xmax + n;
     pstar = pbar + n;
     p2star = pstar + n;
 
@@ -2877,7 +2876,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     /* -----------------------------------------------------------------------*/
 
     set_up_matrix(&b, theta, n, 1);
-    f0 = fbest = fworst = cfunc(b.val, data);
+    f0 = fmax = fmin = cfunc(b.val, data);
 
     if (opt & OPT_V) {
 	pprintf(prn, "\nNelder-Mead algorithm: initial function value = %.8g\n",
@@ -2891,28 +2890,28 @@ int gretl_amoeba (double *theta, int n, int maxit,
 #if NMDEBUG
 	gretl_matrix_print(p, "simplex (outside loop)");
 #endif
-	ibest = find_xtreme(y, n+1, 1, &fbest);
+	imax = find_extreme(y, n+1, 1, &fmax);
 	
 	if (opt & OPT_V) {
-	    simplex_print(p, fbest, fworst, ibest, iworst, iter, prn);
+	    simplex_print(p, fmax, fmin, imax, imin, iter, prn);
 	}
 
 	/* Inner loop */
 
-	iworst = find_xtreme(y, n+1, 0, &fworst);
-	centroid(p, iworst, pbar);
+	imin = find_extreme(y, n+1, 0, &fmin);
+	centroid(p, imin, pbar);
 
 	/* Reflection through the centroid */
 #if NMDEBUG
 	fprintf(stderr, "reflection through the centroid\n");
 #endif
 	for (i=0; i<n; i++) {
-	    x = pbar[i] - gretl_matrix_get(p, i, iworst);
+	    x = pbar[i] - gretl_matrix_get(p, i, imin);
 	    pstar[i] = pbar[i] + rcoeff * x;
 	}
 	ystar = cfunc(pstar, data);
 
-	if (ystar > fbest) {
+	if (ystar > fmax) {
 	    /* Successful reflection, so extension */
 #if NMDEBUG
 	    fprintf(stderr, "Successful reflection, so extension\n");
@@ -2933,9 +2932,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    }
 #endif
 	    for (i=0; i<n; i++) {
-		gretl_matrix_set(p, i, iworst, flag ? pstar[i] : p2star[i]);
+		gretl_matrix_set(p, i, imin, flag ? pstar[i] : p2star[i]);
 	    }
-	    y[iworst] = flag ? ystar : y2star;
+	    y[imin] = flag ? ystar : y2star;
 	} else {
 #if NMDEBUG
 	    fprintf(stderr, "No extension\n");
@@ -2947,34 +2946,34 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
 	    if (l > 1) {
 		for (i=0; i<n; i++) {
-		    gretl_matrix_set(p, i, iworst, pstar[i]);
+		    gretl_matrix_set(p, i, imin, pstar[i]);
 		}
-		y[iworst] = ystar;
+		y[imin] = ystar;
 	    } else if (l == 0) {
 #if NMDEBUG
-		fprintf(stderr, "Contraction on the Y(IWORST) side of the centroid\n");
+		fprintf(stderr, "Contraction on the Y(IMIN) side of the centroid\n");
 #endif
 		for (i=0; i<n; i++) {
-		    x = gretl_matrix_get(p, i, iworst) - pbar[i];
+		    x = gretl_matrix_get(p, i, imin) - pbar[i];
 		    p2star[i] = pbar[i] + ccoeff * x;
 		}
 		y2star = cfunc(p2star, data);
 
-		if (y[iworst] < y2star) {
+		if (y[imin] < y2star) {
 #if NMDEBUG
 		    fprintf(stderr, "Contract the whole simplex\n");
 #endif
-		    err = simplex_contract(p, xbest, y, cfunc, data, ibest);
-		    ibest = find_xtreme(y, n+1, 0, &fbest);
+		    err = simplex_contract(p, xmax, y, cfunc, data, imax);
+		    imax = find_extreme(y, n+1, 0, &fmax);
 		    continue;
 		} else {
 #if NMDEBUG
 		    fprintf(stderr, "Retain contraction\n");
 #endif
 		    for (i=0; i<n; i++) {
-			gretl_matrix_set(p, i, iworst, p2star[i]);
+			gretl_matrix_set(p, i, imin, p2star[i]);
 		    }
-		    y[iworst] = y2star;
+		    y[imin] = y2star;
 		}
 	    } else if (l == 1) {
 #if NMDEBUG
@@ -2989,67 +2988,72 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		/* if flag==1, retain reflection */
 		flag = ystar <= y2star;
 		for (i=0; i<n; i++) {
-		    gretl_matrix_set(p, i, iworst, flag ? p2star[i] : pstar[i]);
+		    gretl_matrix_set(p, i, imin, flag ? p2star[i] : pstar[i]);
 		}
-		y[iworst] = flag ? y2star : ystar;
+		y[imin] = flag ? y2star : ystar;
 	    }
 	}
 
-	/* Check if FBEST improved  */
-	improved = y[iworst] > fbest;
+	/* Check if @fmax has been improved upon */
+	improved = y[imin] > fmax;
+	fprintf(stderr, "iter %d, improved = %d\n", iter, improved);
 	if (improved) {
-	    fbest = y[iworst];
-	    ibest = iworst;
+	    fmax = y[imin];
+	    imax = imin;
 	}
 
-	/* Check to see if minimum reached */
-	for (i=0, z=0.0; i<n+1; i++) {
+	/* Check to see if minimum reached (??) */
+	z = 0.0;
+	for (i=0; i<n+1; i++) {
 	    z += y[i];
 	}
 	x = z / n+1;
 
-	for (i=0, z=0.0; i<n+1; i++) {
+	z = 0.0;
+	for (i=0; i<n+1; i++) {
 	    z += (y[i] - x) * (y[i] - x);
 	}
 
-	if (z <= rq) {
+	if (z <= tol) {
+	    fprintf(stderr, "terminate on z=%g < tol=%g\n\n", z, tol);
 	    break;
 	}
 
 	/* Factorial tests to check that fnew is a local optimum */
 	for (i=0; i<n; i++) {
-	    xbest[i] = gretl_matrix_get(p, i, ibest);
+	    xmax[i] = gretl_matrix_get(p, i, imax);
 	}
 
-	fnew = y[ibest];
+	fnew = y[imax];
 	ifault = 0;
 
 	for (i=0; i<n; i++) {
 	    del = step[i] * eps;
-	    xbest[i] = xbest[i] + del;
-	    z = cfunc(xbest, data);
+	    xmax[i] = xmax[i] + del;
+	    z = cfunc(xmax, data);
 	    
 	    if (z > fnew) {
 		ifault = 2;
 		break;
 	    }
-	    xbest[i] -= 2*del;
+	    xmax[i] -= 2*del;
 
-	    z = cfunc(xbest, data);
+	    z = cfunc(xmax, data);
 	    if (z > fnew) {
 		ifault = 2;
 		break;
 	    }
-	    xbest[i] += del;
+	    xmax[i] += del;
 	}
 
 	if (ifault == 0) {
+	    fprintf(stderr, "break on ifault at iter %d == 0\n", iter);
 	    break;
 	}
 
 	/* Restart the procedure */
 	for (i=0; i<n; i++) {
-	    b.val[i] = xbest[i];
+	    b.val[i] = xmax[i];
 	}
 	del = eps;
 #if NMDEBUG
@@ -3059,6 +3063,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_iteration_pop();
 
+    fprintf(stderr, "finished: iter=%d, fmax=%g, fmin=%g, f0=%g\n",
+	    iter, fmax, fmin, f0);
+
     if (improved) {
 	if (opt & OPT_V) {
 	    pputc(prn, '\n');
@@ -3067,7 +3074,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
     }
     
-    if (fbest - fworst < 1.0e-9) {
+    if (fmax - fmin < 1.0e-9) {
 	pprintf(prn, "*** warning: surface seems to be flat\n");
     }
 
@@ -3075,7 +3082,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_matrix_free(p);
     free(y);
-    free(xbest);
+    free(xmax);
     free(step);
     
     return err;
