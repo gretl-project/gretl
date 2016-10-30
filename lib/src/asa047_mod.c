@@ -47,10 +47,11 @@
   C version by John Burkardt.
 */
 
-int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
-	    double *ynewlo, double reqmin, double step[], int konvge,
-	    int maxcalls, int *ncalls, int *nresets, void *data,
-	    gretlopt opt, PRN *prn)
+static int
+nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
+	double *ynewlo, double reqmin, double step[], int konvge,
+	int maxcalls, int *ncalls, int *nresets, void *data,
+	gretlopt opt, PRN *prn)
 {
     gretl_matrix *pmat = NULL;
     double ccoeff = 0.5;
@@ -66,8 +67,8 @@ int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     double *p2star;
     double *pbar;
     double *pstar;
-    double rq, x, z;
     double *y;
+    double rq, x, z;
     double y2star;
     double ylo;
     double ystar;
@@ -78,6 +79,7 @@ int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	return E_INVARG;
     }
 
+    /* use a gretl_matrix in case we want to print it */
     pmat = gretl_matrix_alloc(n, n + 1);
     wspace = malloc((4*n + 1) * sizeof *wspace);
 
@@ -119,7 +121,7 @@ int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 
 	for (j = 0; j < n; j++) {
 	    x = start[j];
-	    start[j] = start[j] + step[j] * del;
+	    start[j] += step[j] * del;
 	    for (i = 0; i < n; i++) {
 		p[i+j*n] = start[i];
 	    }
@@ -134,7 +136,6 @@ int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	*/                
 	ylo = y[0];
 	ilo = 0;
-
 	for (i = 1; i < nn; i++) {
 	    if (y[i] < ylo) {
 		ylo = y[i];
@@ -155,14 +156,14 @@ int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		}
 	    }
 	    /* Calculate pbar, the centroid of the simplex vertices
-	       excepting the vertex with y value ynewlo.
+	       excepting the vertex with y-value ynewlo.
 	    */
 	    for (i = 0; i < n; i++) {
 		z = 0.0;
 		for (j = 0; j < nn; j++) {
-		    z = z + p[i+j*n];
+		    z += p[i+j*n];
 		}
-		z = z - p[i+ihi*n];  
+		z -= p[i+ihi*n];
 		pbar[i] = z / n;
 	    }
 
@@ -305,33 +306,35 @@ int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	err = 0;
 
 	for (i = 0; i < n; i++) {
-	    del = step[i] * eps;
-	    xmin[i] = xmin[i] + del;
+	    double xsave = xmin[i];
+	    double dx = step[i] * eps;
+
+	    xmin[i] = xsave + dx;
 	    z = -cfunc(xmin, data);
 	    *ncalls += 1;
 	    if (z < *ynewlo) {
 		err = E_NOCONV;
 		break;
 	    }
-	    xmin[i] = xmin[i] - 2 * del;
+	    xmin[i] = xsave - dx;
 	    z = -cfunc(xmin, data);
 	    *ncalls += 1;
 	    if (z < *ynewlo) {
 		err = E_NOCONV;
 		break;
 	    }
-	    xmin[i] = xmin[i] + del;
+	    xmin[i] = xsave;
 	}
 
 	if (err == 0) {
 	    if (opt & OPT_V) {
-		pprintf(prn, "Found optimum %#g after %d function calls, %d resets\n\n",
-			*ynewlo, *ncalls, *nresets);
+		pprintf(prn, "Found optimum %#g after %d function calls, "
+			"%d resets\n\n", *ynewlo, *ncalls, *nresets);
 	    }
 	    break;
 	}
 	
-	/* restart the procedure */
+	/* prepare to restart the procedure */
 	for (i = 0; i < n; i++) {
 	    start[i] = xmin[i];
 	}
