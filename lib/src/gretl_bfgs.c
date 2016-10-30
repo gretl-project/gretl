@@ -1299,9 +1299,11 @@ int LBFGS_max (double *b, int n,
     int lsave[4];
     int iter, ibak = 0;
     int show_activity = 0;
-    int maximize = (crittype != C_SSR);
+    int maximize;
     int verbskip, verbose = (opt & OPT_V);
     int err = 0;
+
+    maximize = (crittype != C_SSR) && !(opt & OPT_I);
 
     *fncount = *grcount = 0;    
 
@@ -1924,12 +1926,13 @@ double user_NR (gretl_matrix *b,
     return ret;
 }
 
-double deriv_free_max (MaxMethod method,
-		       gretl_matrix *b,
-		       const char *fncall,
-		       int maxit,
-		       DATASET *dset,
-		       PRN *prn, int *err)
+double deriv_free_optimize (MaxMethod method,
+			    gretl_matrix *b,
+			    const char *fncall,
+			    int maxit,
+			    int minimize,
+			    DATASET *dset,
+			    PRN *prn, int *err)
 {
     umax *u;
     gretlopt opt = OPT_NONE;
@@ -1959,11 +1962,15 @@ double deriv_free_max (MaxMethod method,
 	u->prn = prn;
     }
 
+    if (minimize) {
+	opt |= OPT_I;
+    }
+
     if (method == SIMANN_MAX) {
 	*err = gretl_simann(b->val, u->ncoeff, maxit,
 			    user_get_criterion, u,
 			    opt, prn);
-    } else if (method == AMOEBA_MAX) {
+    } else if (method == NM_MAX) {
 	*err = gretl_amoeba(b->val, u->ncoeff, maxit,
 			    user_get_criterion, u,
 			    opt, prn);
@@ -2555,6 +2562,15 @@ static void set_up_matrix (gretl_matrix *m, double *val,
     m->info = NULL;
 }
 
+static double simann_call (BFGS_CRIT_FUNC cfunc,
+			   double *b, void *data,
+			   int minimize)
+{
+    double ret = cfunc(b, data);
+
+    return na(ret) ? NADBL : minimize ? -ret : ret;
+}
+
 /**
  * gretl_simann:
  * @theta: parameter array.
@@ -2587,11 +2603,15 @@ int gretl_simann (double *theta, int n, int maxit,
     double Temp = 1.0;
     double radius = 1.0;
     int improved = 0;
+    int minimize;
     int i, err = 0;
 
     if (maxit <= 0) {
 	maxit = 1024;
     }
+
+    /* maximize by default, but minimize if OPT_I is given */
+    minimize = (opt & OPT_I)? 1 : 0;
 
     set_up_matrix(&b, theta, n, 1);
 
@@ -2605,7 +2625,7 @@ int gretl_simann (double *theta, int n, int maxit,
 	goto bailout;
     }
 
-    f0 = fbest = fworst = cfunc(b.val, data);
+    f0 = fbest = fworst = simann_call(cfunc, b.val, data, minimize);
 
     if (opt & OPT_V) {
 	pprintf(prn, "\nSimulated annealing: initial function value = %.8g\n",
@@ -2622,7 +2642,7 @@ int gretl_simann (double *theta, int n, int maxit,
 	gretl_matrix_random_fill(d, D_NORMAL);
 	gretl_matrix_multiply_by_scalar(d, radius);
 	gretl_matrix_add_to(b1, d);
-	f1 = cfunc(b1->val, data);
+	f1 = simann_call(cfunc, b1->val, data, minimize);
 
 	if (!na(f1) && (f1 > f0 || gretl_rand_01() < Temp)) {
 	    /* jump to the new point */
@@ -2719,11 +2739,11 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	xmin[i] = 0.0;
     }
 
-    maxcalls = maxit <= 0 ? 10000 : maxit;
+    maxcalls = maxit <= 0 ? 2000 : maxit;
 
-    err = nelmax(cfunc, n, theta, xmin, &fval, reqmin,
-		 step, konvge, maxcalls, &ncalls, &nresets,
-		 data, opt, prn);
+    err = nelder_mead(cfunc, n, theta, xmin, &fval, reqmin,
+		      step, konvge, maxcalls, &ncalls, &nresets,
+		      data, opt, prn);
 
     if (!err) {
 	for (i=0; i<n; i++) {

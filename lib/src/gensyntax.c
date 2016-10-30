@@ -1093,7 +1093,7 @@ struct argrecord fncall_argrec[] = {
     {F_FDJAC,    {0, 1, 0, 0}},
     {F_SIMANN,   {0, 1, 0, 0}},
     {F_BFGSCMAX, {0, 0, 1, 1}},
-    {F_AMOEBA,   {0, 1, 0, 0}}
+    {F_NMMAX,    {0, 1, 0, 0}}
 };
 
 static const int *get_callargs (int f)
@@ -1467,6 +1467,12 @@ static NODE *powterm (parser *p)
 	}
     } else {
 	t = base(p, NULL);
+    }
+
+    if (max_func(sym) && (p->flags & P_ALIASED)) {
+	/* transfer flag to newly created node */
+	t->flags |= ALS_NODE;
+	p->flags ^= P_ALIASED;
     }
 
     if (t != NULL && (sym == ELEMENT || sym == BMEMB || sym == DBMEMB)) {

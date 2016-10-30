@@ -410,7 +410,7 @@ enum {
     F_MGRADIENT,
     F_MLINCOMB,
     F_HFLIST,
-    F_AMOEBA,
+    F_NMMAX,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -492,7 +492,11 @@ enum {
 /* functions taking one or more "fncall" (string) arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 			s == F_FDJAC || s == F_SIMANN || \
-			s == F_BFGSCMAX || s == F_AMOEBA)
+			s == F_BFGSCMAX || s == F_NMMAX)
+
+#define max_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
+		     s == F_SIMANN || s == F_BFGSCMAX || \
+		     s == F_NMMAX)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
@@ -581,7 +585,8 @@ enum {
     PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
     SVL_NODE = 1 << 3, /* holds string-valued series */
     PAR_NODE = 1 << 4, /* exponentiation node is parenthesized */
-    PRX_NODE = 1 << 5  /* aux node is proxy (don't reuse!) */
+    PRX_NODE = 1 << 5, /* aux node is proxy (don't reuse!) */
+    ALS_NODE = 1 << 6  /* node holds aliased function call */
 };
 
 struct node {
@@ -621,7 +626,8 @@ enum parser_flags {
     P_VOID    = 1 << 22, /* function call, no assignment */
     P_NOEXEC  = 1 << 23, /* just compile, don't evaluate */
     P_MSAVE   = 1 << 24, /* trying for reuse of an aux matrix */
-    P_OBSVAL  = 1 << 25  /* generating value of observation in series */
+    P_OBSVAL  = 1 << 25, /* generating value of observation in series */
+    P_ALIASED = 1 << 26  /* state: handling aliased object (temporary) */
 };
 
 struct lhinfo {

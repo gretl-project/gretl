@@ -25,7 +25,7 @@ typedef enum {
     BFGS_MAX,
     LBFGS_MAX,
     SIMANN_MAX,
-    AMOEBA_MAX
+    NM_MAX
 } MaxMethod;
 
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);
@@ -91,13 +91,14 @@ double user_NR (gretl_matrix *b,
 		PRN *prn, 
 		int *err);
 
-double deriv_free_max (MaxMethod method,
-		       gretl_matrix *b,
-		       const char *fncall,
-		       int maxit,
-		       DATASET *dset,
-		       PRN *prn,
-		       int *err);
+double deriv_free_optimize (MaxMethod method,
+			    gretl_matrix *b,
+			    const char *fncall,
+			    int maxit,
+			    int minimize,
+			    DATASET *dset,
+			    PRN *prn,
+			    int *err);
 
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);

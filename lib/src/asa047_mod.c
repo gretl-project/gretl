@@ -47,11 +47,22 @@
   C version by John Burkardt.
 */
 
+static double nm_call (BFGS_CRIT_FUNC cfunc,
+		       double *b, void *data,
+		       int *ncalls, int minimize)
+{
+    double ret = cfunc(b, data);
+
+    *ncalls += 1;
+
+    return minimize ? ret : na(ret) ? ret : -ret;
+}
+
 static int
-nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
-	double *ynewlo, double reqmin, double step[], int konvge,
-	int maxcalls, int *ncalls, int *nresets, void *data,
-	gretlopt opt, PRN *prn)
+nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
+	     double *ynewlo, double reqmin, double step[], int konvge,
+	     int maxcalls, int *ncalls, int *nresets, void *data,
+	     gretlopt opt, PRN *prn)
 {
     gretl_matrix *pmat = NULL;
     double ccoeff = 0.5;
@@ -73,6 +84,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     double ylo;
     double ystar;
     int outer, inner;
+    int getmin;
     int err = 0;
 
     if (reqmin <= 0.0 || n < 1 || konvge < 1) {
@@ -100,6 +112,9 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 
     nn = n + 1;
     rq = reqmin * n;
+
+    /* maximize by default, but minimize if OPT_I is given */
+    getmin = (opt & OPT_I)? 1 : 0;
     
     /* Initial or restarted loop */
 
@@ -107,8 +122,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	for (i = 0; i < n; i++) {
 	    p[i+n*n] = start[i];
 	}
-	y[n] = -cfunc(start, data);
-	*ncalls += 1;
+	y[n] = nm_call(cfunc, start, data, ncalls, getmin);
 
 	if (opt & OPT_V) {
 	    if (outer == 1) {
@@ -119,21 +133,18 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    }
 	}
 
+	/* construct the simplex */
 	for (j = 0; j < n; j++) {
 	    x = start[j];
 	    start[j] += step[j] * del;
 	    for (i = 0; i < n; i++) {
 		p[i+j*n] = start[i];
 	    }
-	    y[j] = -cfunc(start, data);
-	    *ncalls += 1;
+	    y[j] = nm_call(cfunc, start, data, ncalls, getmin);
 	    start[j] = x;
 	}
-	/*                 
-          The simplex construction is complete.
-          Find highest and lowest y values: ynewlo = y(ihi)
-	  indicates the vertex of the simplex to be replaced.
-	*/                
+
+	/* find the lowest y value */
 	ylo = y[0];
 	ilo = 0;
 	for (i = 1; i < nn; i++) {
@@ -171,8 +182,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    for (i = 0; i < n; i++) {
 		pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i+ihi*n]);
 	    }
-	    ystar = -cfunc(pstar, data);
-	    *ncalls += 1;
+	    ystar = nm_call(cfunc, pstar, data, ncalls, getmin);
 
 	    if ((opt & OPT_V) && (inner == 1 || inner % 10 == 0)) {
 		pprintf(prn, " inner iter %3d: function value %#g\n",
@@ -184,8 +194,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		for (i = 0; i < n; i++) {
 		    p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
 		}
-		y2star = -cfunc(p2star, data);
-		*ncalls += 1;
+		y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
 		/* Check extension */
 		if (ystar < y2star) {
 		    for (i = 0; i < n; i++) {
@@ -214,8 +223,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		    for (i = 0; i < n; i++) {
 			p2star[i] = pbar[i] + ccoeff * (p[i+ihi*n] - pbar[i]);
 		    }
-		    y2star = -cfunc(p2star, data);
-		    *ncalls += 1;
+		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
 		    /* Contract the whole simplex */
 		    if (y[ihi] < y2star) {
 			for (j = 0; j < nn; j++) {
@@ -223,8 +231,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 				p[i+j*n] = (p[i+j*n] + p[i+ilo*n]) * 0.5;
 				xmin[i] = p[i+j*n];
 			    }
-			    y[j] = -cfunc(xmin, data);
-			    *ncalls += 1;
+			    y[j] = nm_call(cfunc, xmin, data, ncalls, getmin);
 			}
 			ylo = y[0];
 			ilo = 0;
@@ -245,8 +252,7 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		    for (i = 0; i < n; i++) {
 			p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
 		    }
-		    y2star = -cfunc(p2star, data);
-		    *ncalls += 1;
+		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
 		    /* Retain reflection? */
 		    if (y2star <= ystar) {
 			for (i = 0; i < n; i++) {
@@ -310,15 +316,13 @@ nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    double dx = step[i] * eps;
 
 	    xmin[i] = xsave + dx;
-	    z = -cfunc(xmin, data);
-	    *ncalls += 1;
+	    z = nm_call(cfunc, xmin, data, ncalls, getmin);
 	    if (z < *ynewlo) {
 		err = E_NOCONV;
 		break;
 	    }
 	    xmin[i] = xsave - dx;
-	    z = -cfunc(xmin, data);
-	    *ncalls += 1;
+	    z = nm_call(cfunc, xmin, data, ncalls, getmin);
 	    if (z < *ynewlo) {
 		err = E_NOCONV;
 		break;
