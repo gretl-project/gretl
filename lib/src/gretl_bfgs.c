@@ -2701,7 +2701,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     int konvge = 10;
     int numres = 0;
     int kcount;
-    double reqmin = 1.0e-8;
+    double reqmin = 1.0e-12;
     double fval = 0.0;
     double *step;
     double *xmin;
