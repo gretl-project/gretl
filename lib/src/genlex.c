@@ -471,6 +471,8 @@ struct str_table funcs[] = {
 struct str_table func_alias[] = {
     { F_NMMAX,    "NMmin" },
     { F_SIMANN,   "SAmin" },
+    { F_BFGSMAX,  "BFGSmin" },
+    { F_BFGSCMAX, "BFGScmin" },
     { F_GAMMA,    "gammafunc" },
     { F_GAMMA,    "gamma" },
     { F_LOG,      "logs" },

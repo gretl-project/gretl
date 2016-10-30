@@ -3063,14 +3063,17 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
     }
 
     if (!p->err) {
+	int minimize = (t->flags & ALS_NODE)? 1 : 0;
+	
 	ret->v.xval = user_BFGS(b, sf, sg, p->dset, bounds,
-				p->prn, &p->err);
+				minimize, p->prn, &p->err);
     }	
 
     return ret;
 }
 
-static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
+static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r,
+			    parser *p, NODE *t)
 {
     NODE *ret = NULL;
 
@@ -3106,12 +3109,13 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	ret = aux_scalar_node(p);
-	if (ret == NULL) { 
-	    return NULL;
-	}
 
-	ret->v.xval = user_BFGS(b, sf, sg, p->dset, NULL,
-				p->prn, &p->err);
+	if (ret != NULL) { 
+	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
+
+	    ret->v.xval = user_BFGS(b, sf, sg, p->dset, NULL,
+				    minimize, p->prn, &p->err);
+	}
     } else {
 	ret = aux_scalar_node(p);
     }
@@ -12596,7 +12600,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BFGSMAX:
 	/* matrix-pointer, plus one or two string args */
 	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
-	    ret = BFGS_maximize(l, m, r, p);
+	    ret = BFGS_maximize(l, m, r, p, t);
 	} else {
 	    p->err = E_TYPES;
 	}

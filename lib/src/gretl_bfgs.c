@@ -767,6 +767,36 @@ static int copy_initial_hessian (double **H,
     return 0;
 }
 
+static double bfgs_fncall (BFGS_CRIT_FUNC cfunc,
+			   double *b, void *data,
+			   int minimize)
+{
+    double ret = cfunc(b, data);
+
+    return na(ret) ? ret : minimize ? -ret : ret;
+}
+
+static int bfgs_gradcall (BFGS_GRAD_FUNC gradfunc,
+			  double *b, double *g, int n,
+			  BFGS_CRIT_FUNC cfunc,
+			  void *data,
+			  int minimize)
+{
+    int ret = gradfunc(b, g, n, cfunc, data);
+
+    if (minimize) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    if (!na(g[i])) {
+		g[i] = -g[i];
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* returns number of coefficient that have actually changed */
 
 static int coeff_at_end (double *b, const double *X, const double *t, 
@@ -787,7 +817,8 @@ static int coeff_at_end (double *b, const double *X, const double *t,
 static double quad_slen (int n, int *pndelta, double *b, 
 			 const double *X, const double *t, 
 			 double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
-			 double g0, double f0, int *pfcount)
+			 double g0, double f0, int *pfcount,
+			 int minimize)
 {
     double d, f1 = *pf;
     double steplen = 1.0, endpoint = 1.0;
@@ -806,7 +837,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 
 	if (ndelta > 0) {
 	    if (!f1_done) {
-		f1 = cfunc(b, data);
+		f1 = bfgs_fncall(cfunc, b, data, minimize);
 		fcount++;
 	    }
 	    d = -g0 * endpoint * acctol;
@@ -851,7 +882,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 		    endpoint *= STEPFRAC;
 		} else {
 		    ndelta = coeff_at_end(b, X, t, n, steplen);
-		    f1 = cfunc(b, data);
+		    f1 = bfgs_fncall(cfunc, b, data, minimize);
 		    fcount++;		    
 #if BFGS_DEBUG
 		    fprintf(stderr, "quad_slen, interpolate: %g is safe\n", steplen); 
@@ -889,7 +920,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 
 static double simple_slen (int n, int *pndelta, double *b, double *X, double *t, 
 			   double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
-			   double g0, double f0, int *pfcount)
+			   double g0, double f0, int *pfcount, int minimize)
 {
     double d, f1 = *pf, steplen = 1.0;
     int i, crit_ok = 0, fcount = 0;
@@ -910,7 +941,7 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 	    }
 	}
 	if (ndelta > 0) {
-	    f1 = cfunc(b, data);
+	    f1 = bfgs_fncall(cfunc, b, data, minimize);
 	    d = -g0 * steplen * acctol;
 	    fcount++;
 	    crit_ok = !na(f1) && (f1 >= f0 + d);
@@ -934,6 +965,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		      const gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     int verbskip, verbose = (opt & OPT_V);
+    int minimize = (opt & OPT_I);
     double *wspace = NULL;
     double **H = NULL;
     double *g, *t, *X, *c;
@@ -970,7 +1002,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     X = t + n;
     c = X + n;
 
-    f = cfunc(b, data);
+    f = bfgs_fncall(cfunc, b, data, minimize);
 
     if (na(f)) {
 	gretl_errmsg_set(_("BFGS: initial value of objective function is not finite"));
@@ -984,7 +1016,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     f0 = fmax = f;
     iter = ilast = fcount = gcount = 1;
-    gradfunc(b, g, n, cfunc, data);
+    bfgs_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
 
 #if BFGS_DEBUG
     fprintf(stderr, "initial gradient:\n");
@@ -1059,10 +1091,10 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    /* heading in the right direction */
 	    if (quad) {
 		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
-				    sumgrad, fmax, &fcount);
+				    sumgrad, fmax, &fcount, minimize);
 	    } else {
 		steplen = simple_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
-				      sumgrad, fmax, &fcount);
+				      sumgrad, fmax, &fcount, minimize);
 	    }		
 	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 
@@ -1084,7 +1116,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		fprintf(stderr, "making progress, ndelta = %d\n", ndelta);
 #endif
 		fmax = f;
-		gradfunc(b, g, n, cfunc, data);
+		bfgs_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
 #if BFGS_DEBUG
 		fprintf(stderr, "new gradient:\n");
 		for (i=0; i<n; i++) {
@@ -1224,7 +1256,9 @@ static void reverse_gradient (double *g, int n)
     int i;
 
     for (i=0; i<n; i++) {
-	g[i] = -g[i];
+	if (!na(g[i])) {
+	    g[i] = -g[i];
+	}
     }
 }
 
@@ -1799,7 +1833,8 @@ double user_BFGS (gretl_matrix *b,
 		  const char *gradcall, 
 		  DATASET *dset,
 		  const gretl_matrix *bounds,
-		  PRN *prn, int *err)
+		  int minimize, PRN *prn,
+		  int *err)
 {
     umax *u;
     gretlopt opt = OPT_NONE;
@@ -1832,8 +1867,12 @@ double user_BFGS (gretl_matrix *b,
     verbose = libset_get_bool(MAX_VERBOSE);
 
     if (verbose) {
-	opt = OPT_V;
+	opt |= OPT_V;
     }
+
+    if (minimize) {
+	opt |= OPT_I;
+    }    
 
     if (bounds != NULL) {
 	*err = BFGS_cmax(b->val, u->ncoeff, 

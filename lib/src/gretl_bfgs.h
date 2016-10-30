@@ -80,7 +80,7 @@ double user_BFGS (gretl_matrix *b,
 		  const char *gradcall,
 		  DATASET *dset,
 		  const gretl_matrix *bounds,
-		  PRN *prn, 
+		  int minimize, PRN *prn, 
 		  int *err);
 
 double user_NR (gretl_matrix *b, 
