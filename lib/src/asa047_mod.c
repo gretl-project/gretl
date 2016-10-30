@@ -48,7 +48,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
     double ecoeff = 2.0;
     double rcoeff = 1.0;
     double eps = 0.001;
-    double del;
+    double del = 1.0;
     int i, ihi, ilo;
     int j, jcount;
     int l, nn;
@@ -81,12 +81,10 @@ void nelmax (double fn(const double x[], void *data ), int n,
     pbar = p2star + n;
     y = pbar + n;
 
-    *icount = 0;
-    *numres = 0;
-
+    *icount = *numres = 0;
     jcount = konvge; 
+
     nn = n + 1;
-    del = 1.0;
     rq = reqmin * n;
     
     /* Initial or restarted loop */
@@ -96,7 +94,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	    p[i+n*n] = start[i];
 	}
 	y[n] = -fn(start, data);
-	*icount = *icount + 1;
+	*icount += 1;
 
 	for (j = 0; j < n; j++) {
 	    x = start[j];
@@ -105,7 +103,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		p[i+j*n] = start[i];
 	    }
 	    y[j] = -fn(start, data);
-	    *icount = *icount + 1;
+	    *icount += 1;
 	    start[j] = x;
 	}
 	/*                 
@@ -127,7 +125,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	  Inner loop
 	*/
 	for ( ; ; ) {
-	    if (kcount <= *icount) {
+	    if (*icount >= kcount) {
 		break;
 	    }
 	    *ynewlo = y[0];
@@ -158,7 +156,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i+ihi*n]);
 	    }
 	    ystar = -fn(pstar, data);
-	    *icount = *icount + 1;
+	    *icount += 1;
 	    /*
 	      Successful reflection, so extension
 	    */
@@ -167,7 +165,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		    p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
 		}
 		y2star = -fn(p2star, data);
-		*icount = *icount + 1;
+		*icount += 1;
 		/*
 		  Check extension
 		*/
@@ -186,11 +184,11 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		l = 0;
 		for (i = 0; i < nn; i++) {
 		    if (ystar < y[i]) {
-			l = l + 1;
+			l++;
 		    }
 		}
 
-		if (1 < l) {
+		if (l > 1) {
 		    for (i = 0; i < n; i++) {
 			p[i+ihi*n] = pstar[i];
 		    }
@@ -200,7 +198,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 			p2star[i] = pbar[i] + ccoeff * (p[i+ihi*n] - pbar[i]);
 		    }
 		    y2star = -fn(p2star, data);
-		    *icount = *icount + 1;
+		    *icount += 1;
 		    /*
 		      Contract the whole simplex
 		    */
@@ -211,7 +209,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 				xmin[i] = p[i+j*n];
 			    }
 			    y[j] = -fn(xmin, data);
-			    *icount = *icount + 1;
+			    *icount += 1;
 			}
 			ylo = y[0];
 			ilo = 0;
@@ -234,7 +232,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 			p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
 		    }
 		    y2star = -fn(p2star, data);
-		    *icount = *icount + 1;
+		    *icount += 1;
 		    /*
 		      Retain reflection?
 		    */
@@ -271,13 +269,13 @@ void nelmax (double fn(const double x[], void *data ), int n,
 
 		z = 0.0;
 		for (i = 0; i < nn; i++) {
-		    z = z + y[i];
+		    z += y[i];
 		}
 		x = z / nn;
 
 		z = 0.0;
 		for (i = 0; i < nn; i++) {
-		    z = z + pow(y[i] - x, 2);
+		    z += (y[i] - x) * (y[i] - x);
 		}
 
 		if (z <= rq) {
@@ -297,7 +295,7 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	}
 	*ynewlo = y[ilo];
 
-	if (kcount < *icount) {
+	if (*icount > kcount) {
 	    *ifault = 2;
 	    break;
 	}
@@ -308,14 +306,14 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	    del = step[i] * eps;
 	    xmin[i] = xmin[i] + del;
 	    z = -fn(xmin, data);
-	    *icount = *icount + 1;
+	    *icount += 1;
 	    if (z < *ynewlo) {
 		*ifault = 2;
 		break;
 	    }
 	    xmin[i] = xmin[i] - del - del;
 	    z = -fn(xmin, data);
-	    *icount = *icount + 1;
+	    *icount += 1;
 	    if (z < *ynewlo) {
 		*ifault = 2;
 		break;
