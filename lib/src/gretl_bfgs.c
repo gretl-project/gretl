@@ -2696,11 +2696,10 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		  gretlopt opt, PRN *prn)
 {
 
-    int icount = 0;
-    int ifault = 0;
+    int ncalls = 0;
     int konvge = 10;
-    int numres = 0;
-    int kcount;
+    int nresets = 0;
+    int maxcalls;
     double reqmin = 1.0e-12;
     double fval = 0.0;
     double *step;
@@ -2720,22 +2719,13 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	xmin[i] = 0.0;
     }
 
-    kcount = maxit <= 0 ? 10000 : maxit;
+    maxcalls = maxit <= 0 ? 10000 : maxit;
 
-    nelmax(cfunc, n, theta, xmin, &fval, reqmin,
-	   step, konvge, kcount, &icount, &numres,
-	   &ifault, data);
+    err = nelmax(cfunc, n, theta, xmin, &fval, reqmin,
+		 step, konvge, maxcalls, &ncalls, &nresets,
+		 data, opt, prn);
 
-    fprintf(stderr, "%d iterations, %d restarts, ifault = %d\n",
-	    icount, numres, ifault);
-
-    if (ifault == 3) {
-	err = E_ALLOC;
-    } else if (ifault) {
-	err = E_NOCONV;
-    } else {
-	int i;
-
+    if (!err) {
 	for (i=0; i<n; i++) {
 	    theta[i] = xmin[i];
 	}

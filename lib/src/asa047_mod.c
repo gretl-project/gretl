@@ -1,4 +1,12 @@
 /*
+  nelmax: this is based closely on the nelmin function as written
+  in C by John Burkardt; see
+  http://people.sc.fsu.edu/~jburkardt/c_src/asa047
+  It is converted to a maximizer, and modified for use with
+  the gretl library.
+
+  Here follows a portion of Burkardt's original notice:
+
   Purpose:
 
   NELMIN minimizes a function using the Nelder-Mead algorithm.
@@ -39,11 +47,12 @@
   C version by John Burkardt.
 */
 
-void nelmax (double fn(const double x[], void *data ), int n,
-	     double start[], double xmin[], double *ynewlo,
-	     double reqmin, double step[], int konvge, int kcount, 
-	     int *icount, int *numres, int *ifault, void *data)
+int nelmax (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
+	    double *ynewlo, double reqmin, double step[], int konvge,
+	    int maxcalls, int *ncalls, int *nresets, void *data,
+	    gretlopt opt, PRN *prn)
 {
+    gretl_matrix *pmat = NULL;
     double ccoeff = 0.5;
     double ecoeff = 2.0;
     double rcoeff = 1.0;
@@ -62,26 +71,29 @@ void nelmax (double fn(const double x[], void *data ), int n,
     double y2star;
     double ylo;
     double ystar;
+    int outer, inner;
+    int err = 0;
 
     if (reqmin <= 0.0 || n < 1 || konvge < 1) {
-	*ifault = 1;
-	return;
+	return E_INVARG;
     }
 
-    p = malloc((n * (n + 1)) * sizeof *p);
+    pmat = gretl_matrix_alloc(n, n + 1);
     wspace = malloc((4*n + 1) * sizeof *wspace);
 
-    if (p == NULL || wspace == NULL) {
-	*ifault = 3;
-	return;
+    if (pmat == NULL || wspace == NULL) {
+	gretl_matrix_free(pmat);
+	free(wspace);
+	return E_ALLOC;
     }
 
+    p = pmat->val;
     pstar = wspace;
     p2star = pstar + n;
     pbar = p2star + n;
     y = pbar + n;
 
-    *icount = *numres = 0;
+    *ncalls = *nresets = 0;
     jcount = konvge; 
 
     nn = n + 1;
@@ -89,12 +101,21 @@ void nelmax (double fn(const double x[], void *data ), int n,
     
     /* Initial or restarted loop */
 
-    for ( ; ; ) {
+    for (outer=1; ; outer++) {
 	for (i = 0; i < n; i++) {
 	    p[i+n*n] = start[i];
 	}
-	y[n] = -fn(start, data);
-	*icount += 1;
+	y[n] = -cfunc(start, data);
+	*ncalls += 1;
+
+	if (opt & OPT_V) {
+	    if (outer == 1) {
+		pprintf(prn, "\nNelder-Mead outer iteration %d: function value = %#g\n",
+			outer, y[n]);
+	    } else {
+		pprintf(prn, "Outer iteration %d (reset)\n", outer);
+	    }
+	}
 
 	for (j = 0; j < n; j++) {
 	    x = start[j];
@@ -102,15 +123,14 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	    for (i = 0; i < n; i++) {
 		p[i+j*n] = start[i];
 	    }
-	    y[j] = -fn(start, data);
-	    *icount += 1;
+	    y[j] = -cfunc(start, data);
+	    *ncalls += 1;
 	    start[j] = x;
 	}
 	/*                 
           The simplex construction is complete.
-                    
-          Find highest and lowest Y values.  YNEWLO = Y(IHI) indicates
-          the vertex of the simplex to be replaced.
+          Find highest and lowest y values: ynewlo = y(ihi)
+	  indicates the vertex of the simplex to be replaced.
 	*/                
 	ylo = y[0];
 	ilo = 0;
@@ -121,13 +141,10 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		ilo = i;
 	    }
 	}
-	/*
-	  Inner loop
-	*/
-	for ( ; ; ) {
-	    if (*icount >= kcount) {
-		break;
-	    }
+
+	/* Inner loop */
+
+	for (inner=1; *ncalls < maxcalls; inner++) {
 	    *ynewlo = y[0];
 	    ihi = 0;
 
@@ -137,9 +154,8 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		    ihi = i;
 		}
 	    }
-	    /*
-	      Calculate PBAR, the centroid of the simplex vertices
-	      excepting the vertex with Y value YNEWLO.
+	    /* Calculate pbar, the centroid of the simplex vertices
+	       excepting the vertex with y value ynewlo.
 	    */
 	    for (i = 0; i < n; i++) {
 		z = 0.0;
@@ -149,26 +165,27 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		z = z - p[i+ihi*n];  
 		pbar[i] = z / n;
 	    }
-	    /*
-	      Reflection through the centroid
-	    */
+
+	    /* Reflection through the centroid */
 	    for (i = 0; i < n; i++) {
 		pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i+ihi*n]);
 	    }
-	    ystar = -fn(pstar, data);
-	    *icount += 1;
-	    /*
-	      Successful reflection, so extension
-	    */
+	    ystar = -cfunc(pstar, data);
+	    *ncalls += 1;
+
+	    if ((opt & OPT_V) && (inner == 1 || inner % 10 == 0)) {
+		pprintf(prn, " inner iter %3d: function value %#g\n",
+			inner, ystar);
+	    }
+
 	    if (ystar < ylo) {
+		/* Successful reflection, so extension */
 		for (i = 0; i < n; i++) {
 		    p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
 		}
-		y2star = -fn(p2star, data);
-		*icount += 1;
-		/*
-		  Check extension
-		*/
+		y2star = -cfunc(p2star, data);
+		*ncalls += 1;
+		/* Check extension */
 		if (ystar < y2star) {
 		    for (i = 0; i < n; i++) {
 			p[i+ihi*n] = pstar[i];
@@ -187,7 +204,6 @@ void nelmax (double fn(const double x[], void *data ), int n,
 			l++;
 		    }
 		}
-
 		if (l > 1) {
 		    for (i = 0; i < n; i++) {
 			p[i+ihi*n] = pstar[i];
@@ -197,23 +213,20 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		    for (i = 0; i < n; i++) {
 			p2star[i] = pbar[i] + ccoeff * (p[i+ihi*n] - pbar[i]);
 		    }
-		    y2star = -fn(p2star, data);
-		    *icount += 1;
-		    /*
-		      Contract the whole simplex
-		    */
+		    y2star = -cfunc(p2star, data);
+		    *ncalls += 1;
+		    /* Contract the whole simplex */
 		    if (y[ihi] < y2star) {
 			for (j = 0; j < nn; j++) {
 			    for (i = 0; i < n; i++) {
 				p[i+j*n] = (p[i+j*n] + p[i+ilo*n]) * 0.5;
 				xmin[i] = p[i+j*n];
 			    }
-			    y[j] = -fn(xmin, data);
-			    *icount += 1;
+			    y[j] = -cfunc(xmin, data);
+			    *ncalls += 1;
 			}
 			ylo = y[0];
 			ilo = 0;
-
 			for (i = 1; i < nn; i++) {
 			    if (y[i] < ylo) {
 				ylo = y[i];
@@ -231,11 +244,9 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		    for (i = 0; i < n; i++) {
 			p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
 		    }
-		    y2star = -fn(p2star, data);
-		    *icount += 1;
-		    /*
-		      Retain reflection?
-		    */
+		    y2star = -cfunc(p2star, data);
+		    *ncalls += 1;
+		    /* Retain reflection? */
 		    if (y2star <= ystar) {
 			for (i = 0; i < n; i++) {
 			    p[i+ihi*n] = p2star[i];
@@ -249,9 +260,8 @@ void nelmax (double fn(const double x[], void *data ), int n,
 		    }
 		}
 	    }
-	    /*
-	      Check if YLO improved
-	    */
+
+	    /* Check if ylo improved */
 	    if (y[ihi] < ylo) {
 		ylo = y[ihi];
 		ilo = ihi;
@@ -261,67 +271,63 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	    if (jcount > 0) {
 		continue;
 	    }
-	    /*
-	      Check to see if minimum reached
-	    */
-	    if (*icount <= kcount) {
+	    
+	    /* Check to see if minimum reached */
+	    if (*ncalls <= maxcalls) {
 		jcount = konvge;
-
 		z = 0.0;
 		for (i = 0; i < nn; i++) {
 		    z += y[i];
 		}
 		x = z / nn;
-
 		z = 0.0;
 		for (i = 0; i < nn; i++) {
 		    z += (y[i] - x) * (y[i] - x);
 		}
-
 		if (z <= rq) {
-#if 0
-		    fprintf(stderr, "conv check satisfied: %g <= %g\n", z, rq);
-#endif
 		    break;
 		}
 	    }
 	}
 	
-	/*
-	  factorial tests to check that YNEWLO is a local minimum.
-	*/
+	/* Factorial tests to check that ynewlo is a
+	   local minimum */
 	for (i = 0; i < n; i++) {
 	    xmin[i] = p[i+ilo*n];
 	}
 	*ynewlo = y[ilo];
 
-	if (*icount > kcount) {
-	    *ifault = 2;
+	if (*ncalls > maxcalls) {
+	    err = E_NOCONV;
 	    break;
 	}
 
-	*ifault = 0;
+	err = 0;
 
 	for (i = 0; i < n; i++) {
 	    del = step[i] * eps;
 	    xmin[i] = xmin[i] + del;
-	    z = -fn(xmin, data);
-	    *icount += 1;
+	    z = -cfunc(xmin, data);
+	    *ncalls += 1;
 	    if (z < *ynewlo) {
-		*ifault = 2;
+		err = E_NOCONV;
 		break;
 	    }
-	    xmin[i] = xmin[i] - del - del;
-	    z = -fn(xmin, data);
-	    *icount += 1;
+	    xmin[i] = xmin[i] - 2 * del;
+	    z = -cfunc(xmin, data);
+	    *ncalls += 1;
 	    if (z < *ynewlo) {
-		*ifault = 2;
+		err = E_NOCONV;
 		break;
 	    }
 	    xmin[i] = xmin[i] + del;
 	}
 
-	if (*ifault == 0) {
+	if (err == 0) {
+	    if (opt & OPT_V) {
+		pprintf(prn, "Found optimum %#g after %d function calls, %d resets\n\n",
+			*ynewlo, *ncalls, *nresets);
+	    }
 	    break;
 	}
 	
@@ -330,11 +336,11 @@ void nelmax (double fn(const double x[], void *data ), int n,
 	    start[i] = xmin[i];
 	}
 	del = eps;
-	*numres += 1;
+	*nresets += 1;
     }
   
-    free(p);
+    gretl_matrix_free(pmat);
     free(wspace);
 
-    return;
+    return err;
 }
