@@ -2685,6 +2685,70 @@ int gretl_simann (double *theta, int n, int maxit,
 
 /* --------------- amoeba-related functions -----------------------------*/
 
+#define USE_BURKARDT 0
+
+#if USE_BURKARDT
+
+#include "asa047_mod.c"
+
+int gretl_amoeba (double *theta, int n, int maxit,
+		  BFGS_CRIT_FUNC cfunc, void *data, 
+		  gretlopt opt, PRN *prn)
+{
+
+    int icount = 0;
+    int ifault = 0;
+    int konvge = 10;
+    int numres = 0;
+    int kcount;
+    double reqmin = 1.0e-8;
+    double fval = 0.0;
+    double *step;
+    double *xmin;
+    int i, err = 0;
+
+    step = malloc(n * sizeof *step);
+    xmin = malloc(n * sizeof *xmin);
+
+    if (step == NULL || xmin == NULL) {
+	free(step); free(xmin);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	step[i] = 1.0;
+	xmin[i] = 0.0;
+    }
+
+    kcount = maxit <= 0 ? 10000 : maxit;
+
+    nelmax(cfunc, n, theta, xmin, &fval, reqmin,
+	   step, konvge, kcount, &icount, &numres,
+	   &ifault, data);
+
+    fprintf(stderr, "%d iterations, %d restarts, ifault = %d\n",
+	    icount, numres, ifault);
+
+    if (ifault == 3) {
+	err = E_ALLOC;
+    } else if (ifault) {
+	err = E_NOCONV;
+    } else {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    theta[i] = xmin[i];
+	}
+    }
+
+    free(step);
+    free(xmin);
+
+    return err;
+}
+
+#else /* not using original Burkardt code */
+
 static int simplex_build (gretl_matrix *p, double *x, double *y,
 			  BFGS_CRIT_FUNC cfunc, void *data,
 			  double *step, double delta)
@@ -3023,7 +3087,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		}
 		y[imin] = flag ? y2star : ystar;
 	    }
-
 	}
 
 	/* Check if @fmax has been improved upon */
@@ -3032,7 +3095,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    fmax = y[imin];
 	    imax = imin;
 	}
-
 
 	/* Factorial tests to check that fnew is a local optimum */
 	for (i=0; i<n; i++) {
@@ -3109,3 +3171,5 @@ int gretl_amoeba (double *theta, int n, int maxit,
     
     return err;
 }
+
+#endif
