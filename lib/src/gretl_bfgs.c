@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* The BFGS and Newton optimizers plus the fdjac Jacobian function */
@@ -27,7 +27,7 @@
 #include "uservar.h"
 
 #include "../../minpack/minpack.h"
-#include <float.h> 
+#include <float.h>
 
 #define BFGS_DEBUG 0
 
@@ -42,7 +42,7 @@ void BFGS_defaults (int *maxit, double *tol, int ci)
 	*maxit = 1000;
     }
 
-    if (ci == PROBIT || ci == INTREG || ci == ARMA || 
+    if (ci == PROBIT || ci == INTREG || ci == ARMA ||
 	ci == NEGBIN || ci == DURATION) {
 	if (na(*tol)) {
 	    *tol = 1.0e-12;
@@ -110,18 +110,18 @@ static double **triangular_array_new (int n)
  * @cfunc: function to compute criterion (or NULL, see below).
  * @data: data to be passed to the @gradfunc callback.
  *
- * Uses the score function (@gradfunc) is to construct a 
- * numerical approximation to the Hessian. This is primarily 
- * intended for building a covariance matrix at convergence; 
- * note that it may not work well at an arbitrary point in 
- * the parameter space. 
+ * Uses the score function (@gradfunc) is to construct a
+ * numerical approximation to the Hessian. This is primarily
+ * intended for building a covariance matrix at convergence;
+ * note that it may not work well at an arbitrary point in
+ * the parameter space.
  *
  * Note that the only use of @cfunc within this function is
  * as an argument to be passed to @gradfunc. It is therefore
- * OK to pass NULL for @cfunc provided that @gradfunc does not 
- * use its 4th argument, which corresponds to the BFGS_CRIT_FUNC 
+ * OK to pass NULL for @cfunc provided that @gradfunc does not
+ * use its 4th argument, which corresponds to the BFGS_CRIT_FUNC
  * parameter.
- * 
+ *
  * Returns: 0 on successful completion, non-zero error code
  * on error.
  */
@@ -135,7 +135,7 @@ int hessian_from_score (double *b, gretl_matrix *H,
     double x, eps = 1.0e-05;
     int n = gretl_matrix_rows(H);
     int i, j, err = 0;
-    
+
     splus = malloc(3 * n * sizeof *splus);
     sminus = splus + n;
     g = sminus + n;
@@ -186,10 +186,10 @@ int hessian_from_score (double *b, gretl_matrix *H,
  * @data: data to be passed to the @gradfunc callback.
  * @err: location to receive error code.
  *
- * A wrapper for hessian_from_score() which takes care of 
+ * A wrapper for hessian_from_score() which takes care of
  * (a) allocation of the Hessian and (b) inversion.
- * 
- * Returns: the inverse of the (negative) Hessian on successful 
+ *
+ * Returns: the inverse of the (negative) Hessian on successful
  * completion, NULL on error.
  */
 
@@ -235,14 +235,14 @@ static void hess_h_reduce (double *h, double v, int n)
     }
 }
 
-static void hess_b_adjust_i (double *c, const double *b, double *h, int n, 
+static void hess_b_adjust_i (double *c, const double *b, double *h, int n,
 			     int i, double sgn)
 {
     memcpy(c, b, n * sizeof *b);
     c[i] += sgn * h[i];
 }
 
-static void hess_b_adjust_ij (double *c, const double *b, double *h, int n, 
+static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
 			      int i, int j, double sgn)
 {
     memcpy(c, b, n * sizeof *b);
@@ -326,7 +326,7 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 		goto bailout;
 	    }
 	    /* F'(i) */
-	    Dx[k] = (f1 - f2) / (2.0 * h[i]); 
+	    Dx[k] = (f1 - f2) / (2.0 * h[i]);
 	    /* F''(i) */
 	    Hx[k] = (f1 - 2.0*f0 + f2) / (h[i] * h[i]);
 	    hess_h_reduce(h, v, n);
@@ -416,15 +416,15 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
  * @data: data to be passed to the @gradfunc callback.
  * @err: location to receive error code.
  *
- * A wrapper for numerical_hessian() which takes care of 
+ * A wrapper for numerical_hessian() which takes care of
  * (a) allocation of the Hessian and (b) inversion.
- * 
- * Returns: the inverse of the (negative) Hessian on successful 
+ *
+ * Returns: the inverse of the (negative) Hessian on successful
  * completion, NULL on error.
  */
 
-gretl_matrix *numerical_hessian_inverse (const double *b, int n, 
-					 BFGS_CRIT_FUNC func, 
+gretl_matrix *numerical_hessian_inverse (const double *b, int n,
+					 BFGS_CRIT_FUNC func,
 					 void *data, int *err)
 {
     gretl_matrix *H = gretl_zero_matrix_new(n, n);
@@ -462,9 +462,9 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
 
 #define ALT_OPG 0
 
-/* build the T x k G matrix, given a set of coefficient estimates, 
+/* build the T x k G matrix, given a set of coefficient estimates,
    @b, and a function for calculating the per-observation contributions
-   to the loglikelihood, @lltfun 
+   to the loglikelihood, @lltfun
 */
 
 gretl_matrix *numerical_score_matrix (double *b, int T, int k,
@@ -552,8 +552,8 @@ static int richardson_gradient (double *b, double *g, int n,
 	    if (na(f1) || na(f2)) {
 		b[i] = bi0;
 		return 1;
-	    }		    
-	    df[k] = (f2 - f1) / (2 * h); 
+	    }
+	    df[k] = (f2 - f1) / (2 * h);
 	    h /= 2.0;
 	}
 	b[i] = bi0;
@@ -650,7 +650,7 @@ static int broken_gradient (double *g, int n)
     return 0;
 }
 
-/* 
+/*
    If "set initvals" has been used, replace whatever initial values
    might have been in place with those given by the user (the customer
    is always right).  In addition, respect user settings for the
@@ -761,7 +761,7 @@ static int copy_initial_hessian (double **H,
 	    for (j=0; j<=i; j++) {
 		H[i][j] = gretl_matrix_get(A, i, j);
 	    }
-	}	
+	}
     }
 
     return 0;
@@ -799,7 +799,7 @@ static int bfgs_gradcall (BFGS_GRAD_FUNC gradfunc,
 
 /* returns number of coefficient that have actually changed */
 
-static int coeff_at_end (double *b, const double *X, const double *t, 
+static int coeff_at_end (double *b, const double *X, const double *t,
 			 int n, double length)
 {
     int i, ndelta = n;
@@ -814,9 +814,9 @@ static int coeff_at_end (double *b, const double *X, const double *t,
     return ndelta;
 }
 
-static double quad_slen (int n, int *pndelta, double *b, 
-			 const double *X, const double *t, 
-			 double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
+static double quad_slen (int n, int *pndelta, double *b,
+			 const double *X, const double *t,
+			 double *pf, BFGS_CRIT_FUNC cfunc, void *data,
 			 double g0, double f0, int *pfcount,
 			 int minimize)
 {
@@ -829,7 +829,7 @@ static double quad_slen (int n, int *pndelta, double *b,
     /* Below: iterate so long as (a) we haven't achieved an acceptable
        value of the criterion and (b) there is still some prospect
        of doing so.
-    */    
+    */
 
     do {
 	crit_ok = 0;
@@ -842,13 +842,13 @@ static double quad_slen (int n, int *pndelta, double *b,
 	    }
 	    d = -g0 * endpoint * acctol;
 
-	    /* find the optimal steplength by quadratic interpolation; 
-	       inspired by Kelley (1999), "Iterative Methods for Optimization", 
-	       especially section 3.2.1. 
+	    /* find the optimal steplength by quadratic interpolation;
+	       inspired by Kelley (1999), "Iterative Methods for Optimization",
+	       especially section 3.2.1.
 	    */
 	    if (xna(f1)) {
-		/* function goes into NA zone, presumably outside the 
-		   admissible parameter space; hence, try a much smaller 
+		/* function goes into NA zone, presumably outside the
+		   admissible parameter space; hence, try a much smaller
 		   step. FIXME execution can come back here indefinitely.
 		*/
 		endpoint *= STEPFRAC;
@@ -861,34 +861,34 @@ static double quad_slen (int n, int *pndelta, double *b,
 		*/
 		endpoint *= STEPFRAC;
 #if BFGS_DEBUG
-		fprintf(stderr, "opt_slen: %g is incredible; trimming\n", 
+		fprintf(stderr, "opt_slen: %g is incredible; trimming\n",
 			f1 - f0);
 #endif
 	    } else if (f1 < f0 + d) {
 		/* function computes, but goes down: try quadratic approx */
 		steplen = 0.5 * endpoint * g0 / (f0 - f1 + g0);
 #if BFGS_DEBUG
-		fprintf(stderr, "quad_slen, interpolate: f0 = %g, f1 = %g, g0 = %g\n", 
+		fprintf(stderr, "quad_slen, interpolate: f0 = %g, f1 = %g, g0 = %g\n",
 			f0, f1, g0);
 		fprintf(stderr, "quad_slen, interpolate: endpoint = %g, "
 			"steplen = %g\n", endpoint, steplen);
 #endif
-		    
+
 		if (steplen < safelen) {
 		    /* We have a ludicrously small steplength here,
 		       most likely because the endpoint is too far out.
-		       Let's trim it down and retry. 
+		       Let's trim it down and retry.
 		    */
 		    endpoint *= STEPFRAC;
 		} else {
 		    ndelta = coeff_at_end(b, X, t, n, steplen);
 		    f1 = bfgs_fncall(cfunc, b, data, minimize);
-		    fcount++;		    
+		    fcount++;
 #if BFGS_DEBUG
-		    fprintf(stderr, "quad_slen, interpolate: %g is safe\n", steplen); 
+		    fprintf(stderr, "quad_slen, interpolate: %g is safe\n", steplen);
 #endif
 		    crit_ok = !na(f1) && (f1 >= f0 + d);
-		    /* if the function still goes down (or berserk), let's 
+		    /* if the function still goes down (or berserk), let's
 		       trim the endpoint one more time and retry */
 #if BFGS_DEBUG
 		    fprintf(stderr, "quad_slen, interpolate: crit_ok = %d"
@@ -918,8 +918,8 @@ static double quad_slen (int n, int *pndelta, double *b,
     return steplen;
 }
 
-static double simple_slen (int n, int *pndelta, double *b, double *X, double *t, 
-			   double *pf, BFGS_CRIT_FUNC cfunc, void *data, 
+static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
+			   double *pf, BFGS_CRIT_FUNC cfunc, void *data,
 			   double g0, double f0, int *pfcount, int minimize)
 {
     double d, f1 = *pf, steplen = 1.0;
@@ -929,7 +929,7 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
     /* Below: iterate so long as (a) we haven't achieved an acceptable
        value of the criterion and (b) there is still some prospect
        of doing so.
-    */    
+    */
 
     do {
 	ndelta = n;
@@ -960,8 +960,8 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 }
 
 static int BFGS_orig (double *b, int n, int maxit, double reltol,
-		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+		      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc,
+		      int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
 		      const gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     int verbskip, verbose = (opt & OPT_V);
@@ -1087,15 +1087,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    fputc('\n', stderr);
 	}
 #endif
-	if (sumgrad > 0.0) { 
+	if (sumgrad > 0.0) {
 	    /* heading in the right direction */
 	    if (quad) {
-		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
+		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data,
 				    sumgrad, fmax, &fcount, minimize);
 	    } else {
-		steplen = simple_slen(n, &ndelta, b, X, t, &f, cfunc, data, 
+		steplen = simple_slen(n, &ndelta, b, X, t, &f, cfunc, data,
 				      sumgrad, fmax, &fcount, minimize);
-	    }		
+	    }
 	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 
 #if BFGS_DEBUG
@@ -1171,7 +1171,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	} else {
 	    /* heading in the wrong direction */
 	    if (ilast == gcount) {
-		/* we just did a reset, so don't reset again; instead set 
+		/* we just did a reset, so don't reset again; instead set
 		   ndelta = 0 so that we exit the main loop
 		*/
 		ndelta = 0;
@@ -1216,7 +1216,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		    " f0=%.18g, fmax=%.18g\n", f0, fmax);
 	    err = E_NOCONV;
 	}
-    } 
+    }
 
     if (!err && gradnorm > GRAD_TOLER) {
 	gretl_warnmsg_sprintf(_("norm of gradient = %g"), gradnorm);
@@ -1339,7 +1339,7 @@ int LBFGS_max (double *b, int n,
 
     maximize = (crittype != C_SSR) && !(opt & OPT_I);
 
-    *fncount = *grcount = 0;    
+    *fncount = *grcount = 0;
 
     optim_get_user_values(b, n, &maxit, &reltol, &gradmax, NULL, opt, prn);
 
@@ -1351,7 +1351,7 @@ int LBFGS_max (double *b, int n,
 
       Was initially set to 5 (then 10, then 8; and 8 is the default).
     */
-    m = libset_get_int(LBFGS_MEM); 
+    m = libset_get_int(LBFGS_MEM);
 
     dim = (2*m+5)*n + 11*m*m + 8*m; /* for wa */
     dim += 3*n;                     /* for g, l and u */
@@ -1379,7 +1379,7 @@ int LBFGS_max (double *b, int n,
 	gradfunc = numeric_gradient;
     }
 
-    /* Gradient convergence criterion (currently unused -- 
+    /* Gradient convergence criterion (currently unused --
        we use reltol instead) */
     pgtol = 0.0;
 
@@ -1406,7 +1406,7 @@ int LBFGS_max (double *b, int n,
 
     while (1) {
 	/* Call the L-BFGS-B code */
-	setulb_(&n, &m, b, l, u, nbd, &f, g, &factr, &pgtol, wa, iwa, 
+	setulb_(&n, &m, b, l, u, nbd, &f, g, &factr, &pgtol, wa, iwa,
 		task, csave, lsave, isave, dsave);
 
 	iter = isave[29] + 1;
@@ -1419,7 +1419,7 @@ int LBFGS_max (double *b, int n,
 		f = cfunc(b, data);
 	    }
 	    if (!na(f)) {
-		if (maximize) f = -f; 
+		if (maximize) f = -f;
 	    } else if (*fncount == 0) {
 		fprintf(stderr, "initial value of f is not finite\n");
 		err = E_DATA;
@@ -1441,7 +1441,7 @@ int LBFGS_max (double *b, int n,
 		       "EVALUATIONS EXCEEDS LIMIT");
 		err = E_NOCONV;
 		break;
-	    } 
+	    }
 	} else {
 	    if (strncmp(task, "CONVER", 6)) {
 		fprintf(stderr, "%s\n", task);
@@ -1496,11 +1496,11 @@ int LBFGS_max (double *b, int n,
  * @crittype: code for type of the maximand/minimand: should
  * be %C_LOGLIK, %C_GMM or %C_OTHER.  Used only in printing
  * iteration info.
- * @gradfunc: pointer to function used to calculate the 
+ * @gradfunc: pointer to function used to calculate the
  * gradient, or %NULL for default numerical calculation.
  * @data: pointer that will be passed as the last
  * parameter to the callback functions @cfunc and @gradfunc.
- * @A0: initial approximation to the inverse of the Hessian 
+ * @A0: initial approximation to the inverse of the Hessian
  * (or %NULL to use identity matrix)
  * @opt: may contain %OPT_V for verbose operation, %OPT_L to
  * force use of L-BFGS-B.
@@ -1511,19 +1511,19 @@ int LBFGS_max (double *b, int n,
  * criterion value as calculated by @cfunc. By default uses the BFGS
  * variable-metric method (based on Pascal code in J. C. Nash,
  * "Compact Numerical Methods for Computers," 2nd edition, converted
- * by p2c then re-crafted by B. D. Ripley for gnu R; revised for 
+ * by p2c then re-crafted by B. D. Ripley for gnu R; revised for
  * gretl by Allin Cottrell and Jack Lucchetti). Alternatively,
  * if OPT_L is given, uses the L-BFGS-B method (limited memory
- * BFGS), based on Lbfgsb.3.0 by Ciyou Zhu, Richard Byrd, Jorge 
- * Nocedal and Jose Luis Morales. 
- * 
+ * BFGS), based on Lbfgsb.3.0 by Ciyou Zhu, Richard Byrd, Jorge
+ * Nocedal and Jose Luis Morales.
+ *
  * Returns: 0 on successful completion, non-zero error code
  * on error.
  */
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
-	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc,
+	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data,
 	      const gretl_matrix *A0, gretlopt opt, PRN *prn)
 {
     int ret, wnum;
@@ -1532,13 +1532,13 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     if ((opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	ret = LBFGS_max(b, n, maxit, reltol,
-			fncount, grcount, cfunc, 
+			fncount, grcount, cfunc,
 			crittype, gradfunc, NULL, data,
 			NULL, opt, prn);
     } else {
 	ret = BFGS_orig(b, n, maxit, reltol,
-			fncount, grcount, cfunc, 
-			crittype, gradfunc, data, 
+			fncount, grcount, cfunc,
+			crittype, gradfunc, data,
 			A0, opt, prn);
     }
 
@@ -1560,7 +1560,7 @@ static int BFGS_cmax (double *b, int n,
 		      int *fncount, int *grcount,
 		      BFGS_CRIT_FUNC cfunc, int crittype,
 		      BFGS_GRAD_FUNC gradfunc,
-		      void *data, 
+		      void *data,
 		      const gretl_matrix *bounds,
 		      gretlopt opt, PRN *prn)
 {
@@ -1569,7 +1569,7 @@ static int BFGS_cmax (double *b, int n,
     gretl_iteration_push();
 
     ret = LBFGS_max(b, n, maxit, reltol,
-		    fncount, grcount, cfunc, 
+		    fncount, grcount, cfunc,
 		    crittype, gradfunc, NULL, data,
 		    bounds, opt, prn);
 
@@ -1657,7 +1657,7 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gf, u->dset, u->prn); 
+    err = execute_genr(u->gf, u->dset, u->prn);
 
     if (err) {
 	return NADBL;
@@ -1680,7 +1680,7 @@ static double user_get_criterion (const double *b, void *p)
     }
 
     u->fx_out = x;
-    
+
     return x;
 }
 
@@ -1697,7 +1697,7 @@ static int user_get_gradient (double *b, double *g, int k,
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gg, u->dset, u->prn); 
+    err = execute_genr(u->gg, u->dset, u->prn);
 
     if (err) {
 	return err;
@@ -1713,7 +1713,7 @@ static int user_get_gradient (double *b, double *g, int k,
 	for (i=0; i<k; i++) {
 	    g[i] = ug->val[i];
 	}
-    } 
+    }
 
     return err;
 }
@@ -1732,7 +1732,7 @@ static int user_get_hessian (double *b, gretl_matrix *H,
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gh, u->dset, u->prn); 
+    err = execute_genr(u->gh, u->dset, u->prn);
 
     if (err) {
 	return err;
@@ -1746,13 +1746,13 @@ static int user_get_hessian (double *b, gretl_matrix *H,
 	err = E_NONCONF;
     } else {
 	gretl_matrix_copy_values(H, uH);
-    } 
+    }
 
     return err;
 }
 
 /* parse the name of the user gradient matrix (vector) or
-   Hessian out of the associated function call, where it 
+   Hessian out of the associated function call, where it
    must be the first argument, given in pointer form
 */
 
@@ -1828,9 +1828,9 @@ static int user_gen_setup (umax *u,
     return err;
 }
 
-double user_BFGS (gretl_matrix *b, 
+double user_BFGS (gretl_matrix *b,
 		  const char *fncall,
-		  const char *gradcall, 
+		  const char *gradcall,
 		  DATASET *dset,
 		  const gretl_matrix *bounds,
 		  int minimize, PRN *prn,
@@ -1872,19 +1872,19 @@ double user_BFGS (gretl_matrix *b,
 
     if (minimize) {
 	opt |= OPT_I;
-    }    
+    }
 
     if (bounds != NULL) {
-	*err = BFGS_cmax(b->val, u->ncoeff, 
+	*err = BFGS_cmax(b->val, u->ncoeff,
 			 maxit, tol, &fcount, &gcount,
-			 user_get_criterion, C_OTHER, 
-			 (u->gg == NULL)? NULL : user_get_gradient, 
-			 u, bounds, opt, prn);	
+			 user_get_criterion, C_OTHER,
+			 (u->gg == NULL)? NULL : user_get_gradient,
+			 u, bounds, opt, prn);
     } else {
-	*err = BFGS_max(b->val, u->ncoeff, 
+	*err = BFGS_max(b->val, u->ncoeff,
 			maxit, tol, &fcount, &gcount,
-			user_get_criterion, C_OTHER, 
-			(u->gg == NULL)? NULL : user_get_gradient, 
+			user_get_criterion, C_OTHER,
+			(u->gg == NULL)? NULL : user_get_gradient,
 			u, NULL, opt, prn);
     }
 
@@ -1904,9 +1904,9 @@ double user_BFGS (gretl_matrix *b,
     return ret;
 }
 
-double user_NR (gretl_matrix *b, 
+double user_NR (gretl_matrix *b,
 		const char *fncall,
-		const char *gradcall, 
+		const char *gradcall,
 		const char *hesscall,
 		DATASET *dset,
 		PRN *prn, int *err)
@@ -1946,9 +1946,9 @@ double user_NR (gretl_matrix *b,
     u->prn = prn; /* 2015-03-10: this was conditional on OPT_V */
 
 
-    *err = newton_raphson_max(b->val, u->ncoeff, maxit, 
-			      crittol, gradtol, 
-			      &iters, C_OTHER, 
+    *err = newton_raphson_max(b->val, u->ncoeff, maxit,
+			      crittol, gradtol,
+			      &iters, C_OTHER,
 			      user_get_criterion,
 			      (u->gg == NULL)? NULL : user_get_gradient,
 			      (u->gh == NULL)? NULL : user_get_hessian,
@@ -2016,7 +2016,7 @@ double deriv_free_optimize (MaxMethod method,
     }
 
     if (!*err) {
-	ret = user_get_criterion(b->val, u);	    
+	ret = user_get_criterion(b->val, u);
     }
 
  bailout:
@@ -2043,9 +2043,9 @@ static int user_calc_fvec (int m, int n, double *x, double *fvec,
     gretl_matrix_print(u->b, "user_calc_fvec: u->b");
 #endif
 
-    err = execute_genr(u->gf, u->dset, u->prn); 
+    err = execute_genr(u->gf, u->dset, u->prn);
     if (err) {
-	fprintf(stderr, "execute_genr: err = %d\n", err); 
+	fprintf(stderr, "execute_genr: err = %d\n", err);
     }
 
     if (err) {
@@ -2060,19 +2060,19 @@ static int user_calc_fvec (int m, int n, double *x, double *fvec,
 #endif
 
     if (v == NULL || gretl_vector_get_length(v) != m) {
-	fprintf(stderr, "user_calc_fvec: got bad matrix\n"); 
+	fprintf(stderr, "user_calc_fvec: got bad matrix\n");
 	*iflag = -1;
     } else {
 	for (i=0; i<m; i++) {
 	    fvec[i] = v->val[i];
 	}
     }
-    
+
     return 0;
 }
 
 static int fdjac_allocate (int m, int n,
-			   gretl_matrix **J, 
+			   gretl_matrix **J,
 			   double **w, double **f)
 {
     *J = gretl_matrix_alloc(m, n);
@@ -2137,7 +2137,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	*err = E_DATA;
 	goto bailout;
     }
-    
+
     *err = fdjac_allocate(m, n, &J, &wa, &fvec);
     if (*err) {
 	goto bailout;
@@ -2156,8 +2156,8 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	*err = E_DATA;
     } else {
 	int quality = libset_get_int(FDJAC_QUAL);
-	
-	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val, 
+
+	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val,
 		m, &iflag, 0.0, wa, u);
     }
 
@@ -2201,7 +2201,7 @@ static void copy_to (double *targ, const double *src, int n)
     }
 }
 
-static void copy_plus (double *targ, const double *src, 
+static void copy_plus (double *targ, const double *src,
 		       double step, const double *a, int n)
 {
     int i;
@@ -2229,7 +2229,7 @@ enum {
     STEPMIN_MET
 };
 
-static void print_NR_status (int status, double crittol, double gradtol, 
+static void print_NR_status (int status, double crittol, double gradtol,
 			     double sumgrad, PRN *prn)
 {
     int msgs = gretl_messages_on();
@@ -2253,7 +2253,7 @@ static void print_NR_status (int status, double crittol, double gradtol,
     }
 }
 
-/* 
+/*
    The strategy here may be simplistic, but appears to be effective in
    quite a few cases: If the (negative) Hessian is not pd, we try to
    nudge it towards positive definiteness without losing too much
@@ -2267,7 +2267,7 @@ static void print_NR_status (int status, double crittol, double gradtol,
    gradient method (on a scaled version of the coefficients).
    Hopefully, a few of those should be able to "tow us away" from the
    non-pd region. In desperate cases, we use the a diagonal matrix
-   with the absolute values of H_{i,i} plus one.  
+   with the absolute values of H_{i,i} plus one.
 */
 
 #define SPECTRAL 0
@@ -2280,7 +2280,7 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     int restore = 0;
     double x;
 
-    /* first, check if all the elements along the diagonal are 
+    /* first, check if all the elements along the diagonal are
        numerically positive
     */
 
@@ -2389,7 +2389,7 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
  * be %C_LOGLIK, %C_GMM or %C_OTHER.  Used only in printing
  * iteration info.
  * @cfunc: pointer to function used to calculate maximand.
- * @gradfunc: pointer to function used to calculate the 
+ * @gradfunc: pointer to function used to calculate the
  * gradient, or %NULL for default numerical calculation.
  * @hessfunc: pointer to function used to calculate the
  * Hessian.
@@ -2410,18 +2410,18 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
  * with a routine for fixing up the matrix if it's not positive
  * definite. If @hessfunc is NULL we fall back on a numerical
  * approximation to the Hessian.
- * 
+ *
  * Returns: 0 on successful completion, non-zero error code
  * on error.
  */
 
-int newton_raphson_max (double *b, int n, int maxit, 
-			double crittol, double gradtol, 
-			int *itercount, int crittype, 
+int newton_raphson_max (double *b, int n, int maxit,
+			double crittol, double gradtol,
+			int *itercount, int crittype,
 			BFGS_CRIT_FUNC cfunc,
-			BFGS_GRAD_FUNC gradfunc, 
+			BFGS_GRAD_FUNC gradfunc,
 			HESS_FUNC hessfunc,
-			void *data, gretlopt opt, 
+			void *data, gretlopt opt,
 			PRN *prn)
 {
     int verbose = (opt & OPT_V);
@@ -2440,7 +2440,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     if (b0 == NULL) {
 	return E_ALLOC;
     }
-    
+
     B = gretl_matrix_block_new(&H0, n, n,
 			       &H1, n, n,
 			       &g, n, 1,
@@ -2522,7 +2522,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}
 
 	if (verbose) {
-	    print_iter_info(iter, f1, crittype, n, b1, g->val, 
+	    print_iter_info(iter, f1, crittype, n, b1, g->val,
 			    steplen, prn);
 	}
 
@@ -2535,7 +2535,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	if (err || broken_matrix(g)) {
 	    err = (err == 0)? E_NAN : err;
 	    break;
-	}	
+	}
 
 	if (hessfunc != NULL) {
 	    err = hessfunc(b1, H1, data);
@@ -2572,7 +2572,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     gretl_iteration_pop();
 
     if (verbose) {
-	print_iter_info(-1, f1, crittype, n, b1, g->val, 
+	print_iter_info(-1, f1, crittype, n, b1, g->val,
 			steplen, prn);
 	pputc(prn, '\n');
     }
@@ -2592,7 +2592,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     return err;
 }
 
-static void set_up_matrix (gretl_matrix *m, double *val, 
+static void set_up_matrix (gretl_matrix *m, double *val,
 			   int rows, int cols)
 {
     m->val = val;
@@ -2626,10 +2626,10 @@ static double simann_call (BFGS_CRIT_FUNC cfunc,
  * otherwise to the last point visited.
  *
  * Returns: 0 on success, non-zero code on error.
- */ 
+ */
 
 int gretl_simann (double *theta, int n, int maxit,
-		  BFGS_CRIT_FUNC cfunc, void *data, 
+		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn)
 {
     gretl_matrix b;
@@ -2695,7 +2695,7 @@ int gretl_simann (double *theta, int n, int maxit,
 			pprintf(prn, "\n%6s %12s %12s %12s\n",
 				"iter", "temp", "radius", "fbest");
 		    }
-		    pprintf(prn, "%6d %#12.6g %#12.6g %#12.6g\n", 
+		    pprintf(prn, "%6d %#12.6g %#12.6g %#12.6g\n",
 			    i, Temp, radius, fbest);
 		}
 		improved = 1;
@@ -2727,7 +2727,7 @@ int gretl_simann (double *theta, int n, int maxit,
     } else {
 	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
     }
-    
+
     if (fbest - fworst < 1.0e-9) {
 	pprintf(prn, "*** warning: surface seems to be flat\n");
     }
@@ -2751,7 +2751,7 @@ int gretl_simann (double *theta, int n, int maxit,
 #include "asa047_mod.c"
 
 int gretl_amoeba (double *theta, int n, int maxit,
-		  BFGS_CRIT_FUNC cfunc, void *data, 
+		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn)
 {
 
@@ -2810,7 +2810,7 @@ static int simplex_build (gretl_matrix *p, double *x, double *y,
     }
 
     y[n] = cfunc(x, data);
-      
+
     for (j=0; j<n; j++ ) {
 	w = x[j];
 	x[j] += step[j] * delta;
@@ -2830,7 +2830,7 @@ static int simplex_contract (gretl_matrix *p, double *xbest, double *y,
 {
     int i, j, n = p->rows;
     double w, avg;
-    
+
     for (j=0; j<n+1; j++) {
 	for (i=0; i<n; i++) {
 	    w = gretl_matrix_get(p, i, j);
@@ -2896,13 +2896,13 @@ static void simplex_print (gretl_matrix *p, double fbest, double fworst,
 }
 
 static double deviance (double *y, int n) {
-    /* used as a rough indicator if all the vertices are at 
+    /* used as a rough indicator if all the vertices are at
        the same height
     */
 
     double x, ret = 0.0;
     int i;
-    
+
     for (i=0; i<n+1; i++) {
 	ret += y[i];
     }
@@ -2912,7 +2912,7 @@ static double deviance (double *y, int n) {
     for (i=0; i<n+1; i++) {
 	ret += (y[i] - x) * (y[i] - x);
     }
-	
+
     return ret;
 }
 
@@ -2938,7 +2938,7 @@ static double deviance (double *y, int n) {
  */
 
 int gretl_amoeba (double *theta, int n, int maxit,
-		  BFGS_CRIT_FUNC cfunc, void *data, 
+		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn)
 {
     gretl_matrix b;
@@ -3021,7 +3021,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     }
 
     gretl_iteration_push();
-    
+
     err = simplex_build(p, b.val, y, cfunc, data, step, del);
     for (iter=0; iter<maxit; iter++) {
 	z = deviance(y, n);
@@ -3034,7 +3034,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	gretl_matrix_print(p, "simplex (outside loop)");
 #endif
 	imax = find_extreme(y, n+1, 1, &fmax);
-	
+
 	if (opt & OPT_V) {
 	    simplex_print(p, fmax, fmin, imax, imin, iter, prn);
 	    pprintf(prn, "deviance = %g\n", z);
@@ -3157,7 +3157,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    del = step[i] * eps;
 	    xmax[i] = xmax[i] + del;
 	    z = cfunc(xmax, data);
-	    
+
 	    if (z > fnew) {
 		ifault = 2;
 		break;
@@ -3202,11 +3202,11 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	/* final update of coefficients */
 	for (i=0; i<n; i++) {
 	    b.val[i] = xmax[i];
-	}	
+	}
     } else {
 	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
     }
-    
+
     if (fmax - fmin < 1.0e-9) {
 	pprintf(prn, "*** warning: surface seems to be flat\n");
     }
@@ -3217,7 +3217,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     free(y);
     free(wspace);
     free(step);
-    
+
     return err;
 }
 
