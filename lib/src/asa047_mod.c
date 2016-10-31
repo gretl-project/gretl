@@ -1,6 +1,6 @@
 /*
-  nelmax: this is based closely on the nelmin function as written
-  in C by John Burkardt; see
+  nelder_mead: this is based closely on the nelmin function as
+  written in C by John Burkardt; see
   http://people.sc.fsu.edu/~jburkardt/c_src/asa047
   It is converted to a maximizer, and modified for use with
   the gretl library.
@@ -35,7 +35,7 @@
 
   Licensing:
 
-  This code is distributed under the GNU LGPL license. 
+  This code is distributed under the GNU LGPL license.
 
   Modified:
 
@@ -108,14 +108,14 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     y = pbar + n;
 
     *ncalls = *nresets = 0;
-    jcount = konvge; 
+    jcount = konvge;
 
     nn = n + 1;
     rq = reqmin * n;
 
     /* maximize by default, but minimize if OPT_I is given */
     getmin = (opt & OPT_I)? 1 : 0;
-    
+
     /* Initial or restarted loop */
 
     for (outer=1; ; outer++) {
@@ -278,7 +278,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    if (jcount > 0) {
 		continue;
 	    }
-	    
+
 	    /* Check to see if minimum reached */
 	    if (*ncalls <= maxcalls) {
 		jcount = konvge;
@@ -296,7 +296,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		}
 	    }
 	}
-	
+
 	/* Factorial tests to check that ynewlo is a
 	   local minimum */
 	for (i = 0; i < n; i++) {
@@ -337,7 +337,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    }
 	    break;
 	}
-	
+
 	/* prepare to restart the procedure */
 	for (i = 0; i < n; i++) {
 	    start[i] = xmin[i];
@@ -345,7 +345,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	del = eps;
 	*nresets += 1;
     }
-  
+
     gretl_matrix_free(pmat);
     free(wspace);
 
