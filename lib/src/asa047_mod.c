@@ -116,7 +116,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     /* maximize by default, but minimize if OPT_I is given */
     getmin = (opt & OPT_I)? 1 : 0;
 
-    /* Initial or restarted loop */
+    gretl_iteration_push();
 
     for (outer=1; ; outer++) {
 	for (i = 0; i < n; i++) {
@@ -345,6 +345,8 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	del = eps;
 	*nresets += 1;
     }
+
+    gretl_iteration_pop();
 
     gretl_matrix_free(pmat);
     free(wspace);

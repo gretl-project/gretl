@@ -2754,7 +2754,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn)
 {
-
     int ncalls = 0;
     int konvge = 10;
     int nresets = 0;
@@ -2783,6 +2782,11 @@ int gretl_amoeba (double *theta, int n, int maxit,
     err = nelder_mead(cfunc, n, theta, xmin, &fval, reqmin,
 		      step, konvge, maxcalls, &ncalls, &nresets,
 		      data, opt, prn);
+
+    if (err == E_NOCONV) {
+	/* tolerate non-convergence */
+	err = 0;
+    }
 
     if (!err) {
 	for (i=0; i<n; i++) {
@@ -2969,6 +2973,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     double *y;
     /* simplex */
     gretl_matrix *p;
+    int ncalls = 0;
     int err = 0;
 
     /*
@@ -3023,7 +3028,13 @@ int gretl_amoeba (double *theta, int n, int maxit,
     gretl_iteration_push();
 
     err = simplex_build(p, b.val, y, cfunc, data, step, del);
+    ncalls = n + 2;
+    
     for (iter=0; iter<maxit; iter++) {
+	/* just for comparison with Burkardt */
+	if (ncalls > maxit) {
+	    break;
+	}
 	z = deviance(y, n);
 	if (z <= tol) {
 #if NMDEBUG	    
@@ -3056,6 +3067,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    pstar[i] = pbar[i] + rcoeff * x;
 	}
 	ystar = cfunc(pstar, data);
+	ncalls++;
 
 	if (ystar > fmax) {
 	    /* Successful reflection, so extension */
@@ -3067,6 +3079,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		p2star[i] = pbar[i] + ecoeff * x;
 	    }
 	    y2star = cfunc(p2star, data);
+	    ncalls++;
 
 	    /* if flag==1, extension; else, retain extension or contraction */
 	    flag = ystar > y2star;
@@ -3104,12 +3117,14 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		    p2star[i] = pbar[i] + ccoeff * x;
 		}
 		y2star = cfunc(p2star, data);
+		ncalls++;
 
 		if (y[imin] < y2star) {
 #if NMDEBUG
 		    fprintf(stderr, "Contract the whole simplex\n");
 #endif
 		    err = simplex_contract(p, xmax, y, cfunc, data, imax);
+		    ncalls += n + 1;
 		    imax = find_extreme(y, n+1, 0, &fmax);
 		    continue;
 		} else {
@@ -3130,6 +3145,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		    p2star[i] = pbar[i] + ccoeff * x;
 		}
 		y2star = cfunc(p2star, data);
+		ncalls++;
 
 		/* if flag==1, retain reflection */
 		flag = ystar <= y2star;
@@ -3159,6 +3175,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    del = step[i] * eps;
 	    xmax[i] = xmax[i] + del;
 	    z = cfunc(xmax, data);
+	    ncalls++;
 
 	    if (z > fnew) {
 		ifault = 2;
@@ -3167,6 +3184,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    xmax[i] -= 2*del;
 
 	    z = cfunc(xmax, data);
+	    ncalls++;
 	    if (z > fnew) {
 		ifault = 2;
 		break;
@@ -3193,7 +3211,8 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_iteration_pop();
 
-    fprintf(stderr, "amoeba finished: iter=%d, ifault=%d\n", iter, ifault);
+    fprintf(stderr, "amoeba finished: iter=%d, fncalls=%d, ifault=%d\n",
+	    iter, ncalls, ifault);
 
     /* I think this is the right criterion in relation to the
        message below, AC */
