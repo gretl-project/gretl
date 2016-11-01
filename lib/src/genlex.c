@@ -464,12 +464,13 @@ struct str_table funcs[] = {
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
-    { F_NMMAX,     "amoeba" },     /* Nelder-Mead algorithm */
+    { F_NMMAX,     "NMmax" },
     { 0,           NULL }
 };
 
 struct str_table func_alias[] = {
     { F_NMMAX,    "NMmin" },
+    { F_NRMAX,    "NRmin" },
     { F_SIMANN,   "SAmin" },
     { F_BFGSMAX,  "BFGSmin" },
     { F_BFGSCMAX, "BFGScmin" },

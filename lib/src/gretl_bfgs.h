@@ -88,7 +88,7 @@ double user_NR (gretl_matrix *b,
 		const char *gradcall, 
 		const char *hesscall,
 		DATASET *dset,
-		PRN *prn, 
+		int minimize, PRN *prn, 
 		int *err);
 
 double deriv_free_optimize (MaxMethod method,

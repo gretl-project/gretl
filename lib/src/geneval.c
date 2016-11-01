@@ -9629,8 +9629,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
+	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
+
 	    ret->v.xval = user_NR(b, sf, sg, sh, p->dset, 
-				  p->prn, &p->err);
+				  minimize, p->prn, &p->err);
 	}
     } else if (t->t == F_LOESS) {
 	const double *y = NULL, *x = NULL;

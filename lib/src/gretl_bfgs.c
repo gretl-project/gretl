@@ -767,20 +767,20 @@ static int copy_initial_hessian (double **H,
     return 0;
 }
 
-static double bfgs_fncall (BFGS_CRIT_FUNC cfunc,
-			   double *b, void *data,
-			   int minimize)
+static double optim_fncall (BFGS_CRIT_FUNC cfunc,
+			    double *b, void *data,
+			    int minimize)
 {
     double ret = cfunc(b, data);
 
     return na(ret) ? ret : minimize ? -ret : ret;
 }
 
-static int bfgs_gradcall (BFGS_GRAD_FUNC gradfunc,
-			  double *b, double *g, int n,
-			  BFGS_CRIT_FUNC cfunc,
-			  void *data,
-			  int minimize)
+static int optim_gradcall (BFGS_GRAD_FUNC gradfunc,
+			   double *b, double *g, int n,
+			   BFGS_CRIT_FUNC cfunc,
+			   void *data,
+			   int minimize)
 {
     int ret = gradfunc(b, g, n, cfunc, data);
 
@@ -837,7 +837,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 
 	if (ndelta > 0) {
 	    if (!f1_done) {
-		f1 = bfgs_fncall(cfunc, b, data, minimize);
+		f1 = optim_fncall(cfunc, b, data, minimize);
 		fcount++;
 	    }
 	    d = -g0 * endpoint * acctol;
@@ -882,7 +882,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 		    endpoint *= STEPFRAC;
 		} else {
 		    ndelta = coeff_at_end(b, X, t, n, steplen);
-		    f1 = bfgs_fncall(cfunc, b, data, minimize);
+		    f1 = optim_fncall(cfunc, b, data, minimize);
 		    fcount++;
 #if BFGS_DEBUG
 		    fprintf(stderr, "quad_slen, interpolate: %g is safe\n", steplen);
@@ -941,7 +941,7 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 	    }
 	}
 	if (ndelta > 0) {
-	    f1 = bfgs_fncall(cfunc, b, data, minimize);
+	    f1 = optim_fncall(cfunc, b, data, minimize);
 	    d = -g0 * steplen * acctol;
 	    fcount++;
 	    crit_ok = !na(f1) && (f1 >= f0 + d);
@@ -1002,7 +1002,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     X = t + n;
     c = X + n;
 
-    f = bfgs_fncall(cfunc, b, data, minimize);
+    f = optim_fncall(cfunc, b, data, minimize);
 
     if (na(f)) {
 	gretl_errmsg_set(_("BFGS: initial value of objective function is not finite"));
@@ -1016,7 +1016,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     f0 = fmax = f;
     iter = ilast = fcount = gcount = 1;
-    bfgs_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
+    optim_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
 
 #if BFGS_DEBUG
     fprintf(stderr, "initial gradient:\n");
@@ -1116,7 +1116,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		fprintf(stderr, "making progress, ndelta = %d\n", ndelta);
 #endif
 		fmax = f;
-		bfgs_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
+		optim_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
 #if BFGS_DEBUG
 		fprintf(stderr, "new gradient:\n");
 		for (i=0; i<n; i++) {
@@ -1909,6 +1909,7 @@ double user_NR (gretl_matrix *b,
 		const char *gradcall,
 		const char *hesscall,
 		DATASET *dset,
+		int minimize,
 		PRN *prn, int *err)
 {
     umax *u;
@@ -1940,11 +1941,14 @@ double user_NR (gretl_matrix *b,
     }
 
     if (libset_get_bool(MAX_VERBOSE)) {
-	opt = OPT_V;
+	opt |= OPT_V;
+    }
+
+    if (minimize) {
+	opt |= OPT_I;
     }
 
     u->prn = prn; /* 2015-03-10: this was conditional on OPT_V */
-
 
     *err = newton_raphson_max(b->val, u->ncoeff, maxit,
 			      crittol, gradtol,
@@ -2424,7 +2428,9 @@ int newton_raphson_max (double *b, int n, int maxit,
 			void *data, gretlopt opt,
 			PRN *prn)
 {
+    BFGS_GRAD_FUNC realgrad = NULL;
     int verbose = (opt & OPT_V);
+    int minimize = (opt & OPT_I);
     double stepmin = 1.0e-6;
     gretl_matrix_block *B;
     gretl_matrix *H0, *H1;
@@ -2451,27 +2457,29 @@ int newton_raphson_max (double *b, int n, int maxit,
 	return E_ALLOC;
     }
 
+    if (gradfunc == NULL) {
+	gradfunc = numeric_gradient;
+    } else {
+	realgrad = gradfunc;
+    }
+
     /* needs some work */
     optim_get_user_values(b, n, NULL, NULL, NULL, NULL, opt, prn);
 
     b1 = b0 + n;
     copy_to(b1, b, n);
 
-    f1 = cfunc(b1, data);
+    f1 = optim_fncall(cfunc, b1, data, minimize);
     if (na(f1)) {
 	gretl_errmsg_set(_("Initial value of objective function is not finite"));
 	err = E_NAN;
     }
 
     if (!err) {
-	if (gradfunc != NULL) {
-	    err = gradfunc(b, g->val, n, cfunc, data);
-	} else {
-	    err = numeric_gradient(b, g->val, n, cfunc, data);
-	}
+	err = optim_gradcall(gradfunc, b, g->val, n, cfunc, data, minimize);
 	if (err) {
 	    fprintf(stderr, "newton_raphson_max: err = %d from %s\n", err,
-		    gradfunc != NULL ? "supplied gradfunc" : "numeric_gradient");
+		    realgrad ? "supplied gradfunc" : "numeric_gradient");
 	}
     }
 
@@ -2479,7 +2487,10 @@ int newton_raphson_max (double *b, int n, int maxit,
 	if (hessfunc != NULL) {
 	    err = hessfunc(b, H1, data);
 	} else {
-	    err = NR_fallback_hessian(b, H1, gradfunc, cfunc, data);
+	    err = NR_fallback_hessian(b, H1, realgrad, cfunc, data);
+	}
+	if (minimize) {
+	    gretl_matrix_multiply_by_scalar(H1, -1.0);
 	}
 	if (!err) {
 	    gretl_matrix_copy_values(H0, H1);
@@ -2512,13 +2523,13 @@ int newton_raphson_max (double *b, int n, int maxit,
 	/* apply quadratic approximation */
 	gretl_matrix_multiply(H0, g, a);
 	copy_plus(b1, b0, steplen, a->val, n);
-	f1 = cfunc(b1, data);
+	f1 = optim_fncall(cfunc, b1, data, minimize);
 
 	while (na(f1) || ((f1 < f0) && (steplen > stepmin))) {
 	    /* try smaller step */
 	    steplen /= 2.0;
 	    copy_plus(b1, b0, steplen, a->val, n);
-	    f1 = cfunc(b1, data);
+	    f1 = optim_fncall(cfunc, b1, data, minimize);
 	}
 
 	if (verbose) {
@@ -2526,11 +2537,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 			    steplen, prn);
 	}
 
-	if (gradfunc != NULL) {
-	    err = gradfunc(b1, g->val, n, cfunc, data);
-	} else {
-	    err = numeric_gradient(b1, g->val, n, cfunc, data);
-	}
+	err = optim_gradcall(gradfunc, b1, g->val, n, cfunc, data,
+			     minimize);
 
 	if (err || broken_matrix(g)) {
 	    err = (err == 0)? E_NAN : err;
@@ -2540,7 +2548,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	if (hessfunc != NULL) {
 	    err = hessfunc(b1, H1, data);
 	} else {
-	    err = NR_fallback_hessian(b1, H1, gradfunc, cfunc, data);
+	    err = NR_fallback_hessian(b1, H1, realgrad, cfunc, data);
 	}
 
 	if (err || broken_matrix(H1)) {

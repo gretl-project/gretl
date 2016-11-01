@@ -1244,7 +1244,7 @@ static void get_ovar_ref (NODE *t, parser *p)
 }
 
 static NODE *powterm (parser *p)
-{ 
+{
     /* watch out for unary operators */
     int sym = p->sym == B_SUB ? U_NEG : 
 	p->sym == B_ADD ? U_POS : p->sym;
@@ -1469,11 +1469,9 @@ static NODE *powterm (parser *p)
 	t = base(p, NULL);
     }
 
-    if (p->flags & P_ALIASED) {
-	if (max_func(sym)) {
-	    /* transfer flag to newly created node */
-	    t->flags |= ALS_NODE;
-	}
+    if (max_func(sym) && (p->flags & P_ALIASED)) {
+	/* transfer flag to newly created node */
+	t->flags |= ALS_NODE;
 	p->flags ^= P_ALIASED;
     }
 
