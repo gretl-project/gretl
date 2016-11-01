@@ -2744,7 +2744,7 @@ int gretl_simann (double *theta, int n, int maxit,
 
 /* --------------- amoeba-related functions -----------------------------*/
 
-#define USE_BURKARDT 0
+#define USE_BURKARDT 1
 
 #if USE_BURKARDT
 
@@ -3026,7 +3026,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
     for (iter=0; iter<maxit; iter++) {
 	z = deviance(y, n);
 	if (z <= tol) {
+#if NMDEBUG	    
 	    fprintf(stderr, "breaking on z=%g < tol=%g\n\n", z, tol);
+#endif	    
 	    break;
 	}
 
@@ -3173,7 +3175,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	}
 
 	if (ifault == 0) {
+#if NMDEBUG	    
 	    fprintf(stderr, "breaking on ifault = 0 at iter %d\n", iter);
+#endif	    
 	    break;
 	}
 
@@ -3189,7 +3193,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     gretl_iteration_pop();
 
-    fprintf(stderr, "amoeba finished: iter=%d, fmax=%g (f0=%g)\n", iter, fmax, f0);
+    fprintf(stderr, "amoeba finished: iter=%d, ifault=%d\n", iter, ifault);
 
     /* I think this is the right criterion in relation to the
        message below, AC */
