@@ -70,9 +70,6 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     double rcoeff = 1.0;
     double eps = 0.001;
     double del = 1.0;
-    int i, ihi, ilo;
-    int j, jcount;
-    int l, nn;
     double *wspace;
     double *p;
     double *p2star;
@@ -80,9 +77,9 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     double *pstar;
     double *y;
     double rq, x, z;
-    double y2star;
-    double ylo;
-    double ystar;
+    double ylo, ystar, y2star;
+    int i, ihi, ilo;
+    int l, j, jcount;
     int outer, inner;
     int getmin;
     int err = 0;
@@ -110,7 +107,6 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
     *ncalls = *nresets = 0;
     jcount = konvge;
 
-    nn = n + 1;
     rq = reqmin * n;
 
     /* maximize by default, but minimize if OPT_I is given */
@@ -147,7 +143,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	/* find the lowest y value */
 	ylo = y[0];
 	ilo = 0;
-	for (i = 1; i < nn; i++) {
+	for (i = 1; i <= n; i++) {
 	    if (y[i] < ylo) {
 		ylo = y[i];
 		ilo = i;
@@ -160,7 +156,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    *ynewlo = y[0];
 	    ihi = 0;
 
-	    for (i = 1; i < nn; i++) {
+	    for (i = 1; i <= n; i++) {
 		if (*ynewlo < y[i]) {
 		    *ynewlo = y[i];
 		    ihi = i;
@@ -171,14 +167,14 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    */
 	    for (i = 0; i < n; i++) {
 		z = 0.0;
-		for (j = 0; j < nn; j++) {
+		for (j = 0; j <= n; j++) {
 		    z += p[i+j*n];
 		}
 		z -= p[i+ihi*n];
 		pbar[i] = z / n;
 	    }
 
-	    /* Reflection through the centroid */
+	    /* reflection through the centroid */
 	    for (i = 0; i < n; i++) {
 		pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i+ihi*n]);
 	    }
@@ -190,12 +186,12 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    }
 
 	    if (ystar < ylo) {
-		/* Successful reflection, so extension */
+		/* successful reflection, so extension */
 		for (i = 0; i < n; i++) {
 		    p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
 		}
 		y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
-		/* Check extension */
+		/* check extension */
 		if (ystar < y2star) {
 		    for (i = 0; i < n; i++) {
 			p[i+ihi*n] = pstar[i];
@@ -209,7 +205,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		}
 	    } else {
 		l = 0;
-		for (i = 0; i < nn; i++) {
+		for (i = 0; i <= n; i++) {
 		    if (ystar < y[i]) {
 			l++;
 		    }
@@ -224,9 +220,9 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 			p2star[i] = pbar[i] + ccoeff * (p[i+ihi*n] - pbar[i]);
 		    }
 		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
-		    /* Contract the whole simplex */
+		    /* contract the whole simplex */
 		    if (y[ihi] < y2star) {
-			for (j = 0; j < nn; j++) {
+			for (j = 0; j <= n; j++) {
 			    for (i = 0; i < n; i++) {
 				p[i+j*n] = (p[i+j*n] + p[i+ilo*n]) * 0.5;
 				xmin[i] = p[i+j*n];
@@ -235,7 +231,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 			}
 			ylo = y[0];
 			ilo = 0;
-			for (i = 1; i < nn; i++) {
+			for (i = 1; i <= n; i++) {
 			    if (y[i] < ylo) {
 				ylo = y[i];
 				ilo = i;
@@ -253,7 +249,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 			p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
 		    }
 		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
-		    /* Retain reflection? */
+		    /* retain reflection? */
 		    if (y2star <= ystar) {
 			for (i = 0; i < n; i++) {
 			    p[i+ihi*n] = p2star[i];
@@ -268,7 +264,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		}
 	    }
 
-	    /* Check if ylo improved */
+	    /* check if ylo improved */
 	    if (y[ihi] < ylo) {
 		ylo = y[ihi];
 		ilo = ihi;
@@ -279,16 +275,16 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		continue;
 	    }
 
-	    /* Check to see if minimum reached */
+	    /* check to see if optimum reached */
 	    if (*ncalls <= maxcalls) {
 		jcount = konvge;
 		z = 0.0;
-		for (i = 0; i < nn; i++) {
+		for (i = 0; i <= n; i++) {
 		    z += y[i];
 		}
-		x = z / nn;
+		x = z / (n+1);
 		z = 0.0;
-		for (i = 0; i < nn; i++) {
+		for (i = 0; i <= n; i++) {
 		    z += (y[i] - x) * (y[i] - x);
 		}
 		if (z <= rq) {
@@ -297,8 +293,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    }
 	}
 
-	/* Factorial tests to check that ynewlo is a
-	   local minimum */
+	/* check that ynewlo is a local minimum */
 	for (i = 0; i < n; i++) {
 	    xmin[i] = p[i+ilo*n];
 	}
