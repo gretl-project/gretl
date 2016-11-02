@@ -120,13 +120,14 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
     int k = VCV->rows;
     int i, j;
 
-    /* invert the covariance matrix */
+    /* copy the covariance matrix */
     Vi = gretl_matrix_copy(VCV);
     if (Vi == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
-    
+
+    /* and invert it */
     *err = gretl_invert_symmetric_matrix(Vi);
     if (*err) {
 	goto bailout;
