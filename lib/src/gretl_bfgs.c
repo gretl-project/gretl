@@ -2296,9 +2296,6 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     if (err) {
 	fprintf(stderr, "NR_invert_hessian: non-positive "
 		"diagonal (hii=%g)\n", hii);
-#if 1
-	gretl_matrix_print(H, "H");
-#endif
     } else {
 	err = gretl_invert_symmetric_matrix(H);
 
@@ -2319,9 +2316,6 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 			gretl_matrix_set(H, j, i, x);
 		    }
 		}
-#if 0
-		gretl_matrix_print(H, "after shrinkage");
-#endif
 		err = gretl_invert_symmetric_matrix(H);
 	    }
 	    restore = (err != 0);
@@ -2489,10 +2483,10 @@ int newton_raphson_max (double *b, int n, int maxit,
 	} else {
 	    err = NR_fallback_hessian(b, H1, realgrad, cfunc, data);
 	}
-	if (minimize) {
-	    gretl_matrix_multiply_by_scalar(H1, -1.0);
-	}
 	if (!err) {
+	    if (minimize) {
+		gretl_matrix_multiply_by_scalar(H1, -1.0);
+	    }
 	    gretl_matrix_copy_values(H0, H1);
 	    err = NR_invert_hessian(H1, H0);
 	}
@@ -2557,6 +2551,9 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}
 
 	if (!err) {
+	    if (minimize) {
+		gretl_matrix_multiply_by_scalar(H1, -1.0);
+	    }
 	    gretl_matrix_copy_values(H0, H1);
 	    err = NR_invert_hessian(H1, H0);
 	    if (err) {
@@ -3037,7 +3034,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     err = simplex_build(p, b.val, y, cfunc, data, step, del);
     ncalls = n + 2;
-    
+
     for (iter=0; iter<maxit; iter++) {
 	/* just for comparison with Burkardt */
 	if (ncalls > maxit) {
@@ -3045,9 +3042,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	}
 	z = deviance(y, n);
 	if (z <= tol) {
-#if NMDEBUG	    
+#if NMDEBUG
 	    fprintf(stderr, "breaking on z=%g < tol=%g\n\n", z, tol);
-#endif	    
+#endif
 	    break;
 	}
 
@@ -3201,9 +3198,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	}
 
 	if (ifault == 0) {
-#if NMDEBUG	    
+#if NMDEBUG
 	    fprintf(stderr, "breaking on ifault = 0 at iter %d\n", iter);
-#endif	    
+#endif
 	    break;
 	}
 
