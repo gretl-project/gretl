@@ -126,11 +126,11 @@ static int msel_out_of_bounds (int *range, int n)
     }
 }
 
-static int vec_is_const (const gretl_matrix *m, int n)
+static int vec_is_const (const gretl_matrix *m, int ns)
 {
     int i;
 
-    for (i=1; i<n; i++) {
+    for (i=1; i<ns; i++) {
 	if (m->val[i] != m->val[i-1]) {
 	    return 0;
 	}
@@ -139,12 +139,72 @@ static int vec_is_const (const gretl_matrix *m, int n)
     return 1;
 }
 
+static int vec_is_exclusion (const gretl_matrix *m, int n,
+			     gretl_matrix **pv, int *err)
+{
+    int len = gretl_vector_get_length(m);
+    int i, k, neg = 0;
+
+    for (i=0; i<len; i++) {
+	if (m->val[i] < 0) {
+	    neg++;
+	    k = (int) fabs(m->val[i]);
+	    if (k > n) {
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
+		*err = E_DATA;
+		return 0;
+	    }
+	}
+    }
+
+    if (neg == len) {
+	int excluded, j, nsel = n;
+
+	for (i=1; i<=n; i++) {
+	    for (j=0; j<len; j++) {
+		if (m->val[j] == -i) {
+		    nsel--;
+		    break;
+		}
+	    }
+	}
+
+	if (nsel == 0) {
+	    return 1;
+	}
+
+	*pv = gretl_vector_alloc(nsel);
+	if (*pv == NULL) {
+	    *err = E_ALLOC;
+	    return 0;
+	}
+
+	k = 0;
+	for (i=1; i<=n; i++) {
+	    excluded = 0;
+	    for (j=0; j<len; j++) {
+		if (m->val[j] == -i) {
+		    excluded = 1;
+		    break;
+		}
+	    }
+	    if (!excluded) {
+		(*pv)->val[k++] = i;
+	    }
+	}
+	return 1;
+    }
+
+    return 0;
+}
+
 /* convert a matrix subspec component into list of rows 
    or columns */
 
 static int *mspec_make_list (int type, union msel *sel, int n,
 			     int *err)
 {
+    gretl_vector *ivec = NULL;
     int *slice = NULL;
     int exclude = 0;
     int i, ns = 0;
@@ -158,9 +218,13 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	    gretl_errmsg_set(_("Range is non-positive!"));
 	    *err = E_DATA;
 	} else {
-	    ns = gretl_vector_get_length(sel->m);
-	    if (ns > 1 && vec_is_const(sel->m, ns)) {
-		ns = 1;
+	    if (vec_is_exclusion(sel->m, n, &ivec, err)) {
+		ns = (ivec == NULL)? 0 : gretl_vector_get_length(ivec);
+	    } else {
+		ns = gretl_vector_get_length(sel->m);
+		if (ns > 1 && vec_is_const(sel->m, ns)) {
+		    ns = 1;
+		}
 	    }
 	}
     } else {
@@ -194,19 +258,19 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	}
     } 
 
-    if (*err) {
-	return NULL;
+    if (!*err) {
+	if (ns == 0) {
+	    slice = gretl_null_list();
+	} else {
+	    slice = gretl_list_new(ns);
+	}
+	if (slice == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
-    if (ns == 0) {
-	slice = gretl_null_list();
-    } else {
-	slice = gretl_list_new(ns);
-    }
-    
-    if (slice == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+    if (*err) {
+	goto bailout;
     }
 
     if (exclude) {
@@ -220,7 +284,9 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	}
     } else {
 	for (i=0; i<slice[0]; i++) {
-	    if (type == SEL_MATRIX) {
+	    if (ivec != NULL) {
+		slice[i+1] = ivec->val[i];
+	    } else if (type == SEL_MATRIX) {
 		slice[i+1] = sel->m->val[i];
 	    } else {
 		slice[i+1] = sel->range[0] + i;
@@ -234,6 +300,12 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 				 slice[i]);
 	    *err = 1;
 	}
+    }
+
+ bailout:
+
+    if (ivec != NULL) {
+	gretl_matrix_free(ivec);
     }
 
     if (*err) {

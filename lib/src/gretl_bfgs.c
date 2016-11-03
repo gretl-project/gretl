@@ -1101,7 +1101,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    if (iter > 1) {
 		done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 #if BFGS_DEBUG
-		fprintf(stderr, "convergence test: LHS=%g, RHS=%g; done = %d\n",
+		fprintf(stderr, "convergence test: LHS=%g, RHS=%g; done=%d\n",
 			fabs(fmax - f), reltol * (fabs(fmax) + reltol),
 			done);
 #endif
