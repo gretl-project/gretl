@@ -146,6 +146,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 			     int *err)
 {
     int *slice = NULL;
+    int exclude = 0;
     int i, ns = 0;
 
     if (type == SEL_ALL || type == SEL_NULL) {
@@ -164,16 +165,30 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	}
     } else {
 	/* range or element */
+	int sr0 = sel->range[0];
+	int sr1 = sel->range[1];
+	
 	if (sel->range[1] == MSEL_MAX) {
 	    sel->range[1] = n;
 	}
-	if (msel_out_of_bounds(sel->range, n)) {
+	if (sr0 < 0 && sr1 == sr0) {
+	    /* excluding a single row or column? */
+	    sr0 = -sr0;
+	    if (sr0 > n) {
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+				     sr0);
+		*err = E_DATA;
+	    } else {
+		ns = n - 1;
+		exclude = sr0;
+	    }
+	} else if (msel_out_of_bounds(sel->range, n)) {
 	    *err = E_DATA;
 	} else {
-	    ns = sel->range[1] - sel->range[0] + 1;
+	    ns = sr1 - sr0 + 1;
 	    if (ns <= 0) {
 		gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
-				     sel->range[0], sel->range[1]); 
+				     sr0, sr1); 
 		*err = E_DATA;
 	    }
 	}
@@ -194,12 +209,23 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	return NULL;
     }
 
-    for (i=0; i<slice[0]; i++) {
-	if (type == SEL_MATRIX) {
-	    slice[i+1] = sel->m->val[i];
-	} else {
-	    slice[i+1] = sel->range[0] + i;
-	} 
+    if (exclude) {
+	int k = 1;
+	
+	for (i=1; i<=slice[0]; i++) {
+	    if (i == exclude) {
+		k++;
+	    }
+	    slice[i] = k++;
+	}
+    } else {
+	for (i=0; i<slice[0]; i++) {
+	    if (type == SEL_MATRIX) {
+		slice[i+1] = sel->m->val[i];
+	    } else {
+		slice[i+1] = sel->range[0] + i;
+	    } 
+	}
     }
 
     for (i=1; i<=slice[0] && !*err; i++) {
@@ -440,6 +466,44 @@ int matrix_replace_submatrix (gretl_matrix *M,
     return err;
 }
 
+static int check_for_exclusion (const gretl_matrix *M,
+				matrix_subspec *spec,
+				int i, int j)
+{
+    if (i < 0 && j < 0) {
+	i = -i; j = -j;
+	if (i > M->rows || j > M->cols) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+				 i > M->rows ? i : j);	    
+	    return E_DATA;
+	} else {
+	    int k, r = 1, c = 1;
+
+	    spec->rslice = gretl_list_new(M->rows - 1);
+	    spec->cslice = gretl_list_new(M->cols - 1);
+	    if (spec->rslice == NULL || spec->cslice == NULL) {
+		return E_ALLOC;
+	    }
+	    for (k=1; k<M->rows; k++) {
+		if (r == i) {
+		    r++;
+		}
+		spec->rslice[k] = r++;
+	    }
+	    for (k=1; k<M->cols; k++) {
+		if (c == j) {
+		    c++;
+		}
+		spec->cslice[k] = c++;
+	    }	    
+	    return 0;
+	}
+    } else {
+	gretl_errmsg_set("Invalid sub-matrix specification");
+	return E_DATA;
+    }
+}
+
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
 				    matrix_subspec *spec,
 				    int prechecked, 
@@ -465,13 +529,23 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     } else if (spec->type[0] == SEL_ELEMENT) {
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
-	double x = matrix_get_element(M, i, j, err);
+	int keep_going = 0;
 
-	if (!*err) {
-	    S = gretl_matrix_from_scalar(x);
+	if (i > 0 && j > 0) {
+	    double x = matrix_get_element(M, i, j, err);
+	    
+	    if (!*err) {
+		S = gretl_matrix_from_scalar(x);
+	    }
+	} else {
+	    *err = check_for_exclusion(M, spec, i, j);
+	    if (*err == 0) {
+		keep_going = 1;
+	    }
 	}
-
-	return S;
+	if (!keep_going) {
+	    return S;
+	}
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
