@@ -327,8 +327,10 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 
 	if (err == 0) {
 	    if (opt & OPT_V) {
+		double crit = getmin ? *ynewlo : -(*ynewlo);
+
 		pprintf(prn, "Found optimum %#g after %d function calls, "
-			"%d resets\n\n", *ynewlo, *ncalls, *nresets);
+			"%d resets\n\n", crit, *ncalls, *nresets);
 	    }
 	    break;
 	}
