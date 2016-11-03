@@ -974,7 +974,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     double sumgrad, gradmax, gradnorm = 0.0;
     double fmax, f, f0, s, steplen = 0.0;
     double D1, D2;
-    int i, j, ilast, iter, done;
+    int i, j, ilast, iter, done = 0;
     int err = 0;
 
     optim_get_user_values(b, n, &maxit, &reltol, &gradmax, &quad, opt, prn);
@@ -1097,13 +1097,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		steplen = simple_slen(n, &ndelta, b, X, t, &f, cfunc, data,
 				      sumgrad, fmax, &fcount, minimize);
 	    }
-	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 
+	    if (iter > 1) {
+		done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 #if BFGS_DEBUG
-	    fprintf(stderr, "convergence test: LHS=%g, RHS=%g; done = %d\n",
-		    fabs(fmax - f), reltol * (fabs(fmax) + reltol),
-		    done);
+		fprintf(stderr, "convergence test: LHS=%g, RHS=%g; done = %d\n",
+			fabs(fmax - f), reltol * (fabs(fmax) + reltol),
+			done);
 #endif
+	    }
 
 	    /* prepare to stop if relative change is small enough */
 	    if (done) {
