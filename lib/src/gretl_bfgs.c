@@ -1075,7 +1075,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	gradnorm = sqrt(gradnorm / n);
 
 #if BFGS_DEBUG
-	fprintf(stderr, "\niter %d: sumgrad = %g\n", iter, sumgrad);
+	fprintf(stderr, "\niter %d: sumgrad=%g, gradnorm=%g\n",
+		iter, sumgrad, gradnorm);
 #endif
 
 #if BFGS_DEBUG
@@ -1199,6 +1200,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #if BFGS_DEBUG
     fprintf(stderr, "terminated: fmax=%g, ndelta=%d, ilast=%d, gcount=%d\n",
 	    fmax, ndelta, ilast, gcount);
+    fprintf(stderr, "gradnorm = %g, vs gradmax = %g\n", gradnorm, gradmax);
 #endif
 
     if (iter >= maxit) {
