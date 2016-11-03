@@ -232,8 +232,8 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	int sr0 = sel->range[0];
 	int sr1 = sel->range[1];
 	
-	if (sel->range[1] == MSEL_MAX) {
-	    sel->range[1] = n;
+	if (sr1 == MSEL_MAX) {
+	    sr1 = sel->range[1] = n;
 	}
 	if (sr0 < 0 && sr1 == sr0) {
 	    /* excluding a single row or column? */
@@ -256,7 +256,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		*err = E_DATA;
 	    }
 	}
-    } 
+    }
 
     if (!*err) {
 	if (ns == 0) {
