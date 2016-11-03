@@ -39,12 +39,18 @@
 # include <gtksourceview/gtksourcestyleschememanager.h>
 #endif
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
-/* the gtksourceview 2.0 completion UI depends on gtk >= 2.16 */
-# define COMPLETION_OK 0
-#else
-# define COMPLETION_OK 1
-# include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
+/* GTK2: word completion depends on gtk >= 2.16 and
+   gtksourceview >= 2.10
+*/
+#ifdef USE_GTKSOURCEVIEW_2
+# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
+#  define COMPLETION_OK 0
+# elif !defined(HAVE_GTKSOURCEVIEW_210)
+#  define COMPLETION_OK 0
+# else
+#  define COMPLETION_OK 1
+#  include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
+# endif
 #endif
 
 /* Dummy "page" numbers for use in hyperlinks: these
