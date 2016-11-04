@@ -6,6 +6,7 @@ version 2016d, in progress
   illustrative script, gdp_midas.inp
 - New function BFGSmaxc() for constrained maximization using
   L-BFGS-B, version 3.0
+- New function cindex() to get Belsley's condition index
 - Small fixes for --compact=spread and new lags() options
 - "qlrtest" command: enable --quiet option
 - "nls" command: make --verbose output more informative
@@ -13,6 +14,8 @@ version 2016d, in progress
   test of cross-sectional dependence in panel-data models
 - "gnuplot" and "plot": add "bars" option for plotting a
   confidence band with error bars
+- "pca" command: restore facility to skip missing observations
+  rather than flagging an error
 - median() function: accept a list argument, as with mean()
 - GUI function package browser: add last-modified date to
   the information shown
