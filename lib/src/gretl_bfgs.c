@@ -2792,6 +2792,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		      step, konvge, maxcalls, &ncalls, &nresets,
 		      data, opt, prn);
 
+    fprintf(stderr, "asa047 finished: fncalls=%d, err=%d (%s)\n",
+	    ncalls, err, errmsg_get_with_default(err));
+
     if (err == E_NOCONV) {
 	/* tolerate non-convergence */
 	err = 0;
@@ -2960,7 +2963,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     double x, ystar, y2star, z;
     int improved = 0;
     int i, l, iter;
-    int flag, ifault;
+    int flag, ifault = 0;
     /* termination criterion for variance of function values */
     double reqmin = 1.0e-12;
     double tol = reqmin * n;
@@ -3040,10 +3043,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
     ncalls = n + 2;
 
     for (iter=0; iter<maxit; iter++) {
-	/* just for comparison with Burkardt */
-	if (ncalls > maxit) {
-	    break;
-	}
 	z = deviance(y, n);
 	if (z <= tol) {
 #if NMDEBUG
@@ -3052,9 +3051,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	    break;
 	}
 
-#if NMDEBUG
-	gretl_matrix_print(p, "simplex (outside loop)");
-#endif
 	imax = find_extreme(y, n+1, 1, &fmax);
 
 	if (opt & OPT_V) {
@@ -3068,9 +3064,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	centroid(p, imin, pbar);
 
 	/* Reflection through the centroid */
-#if NMDEBUG
-	fprintf(stderr, "reflection through the centroid\n");
-#endif
 	for (i=0; i<n; i++) {
 	    x = pbar[i] - gretl_matrix_get(p, i, imin);
 	    pstar[i] = pbar[i] + rcoeff * x;
@@ -3080,9 +3073,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
 	if (ystar > fmax) {
 	    /* Successful reflection, so extension */
-#if NMDEBUG
-	    fprintf(stderr, "Successful reflection, so extension\n");
-#endif
 	    for (i=0; i<n; i++) {
 		x = pstar[i] - pbar[i];
 		p2star[i] = pbar[i] + ecoeff * x;
@@ -3092,21 +3082,11 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
 	    /* if flag==1, extension; else, retain extension or contraction */
 	    flag = ystar > y2star;
-#if NMDEBUG
-	    if (flag) {
-		fprintf(stderr, "extension\n");
-	    } else {
-		fprintf(stderr, "retain extension or contraction\n");
-	    }
-#endif
 	    for (i=0; i<n; i++) {
 		gretl_matrix_set(p, i, imin, flag ? pstar[i] : p2star[i]);
 	    }
 	    y[imin] = flag ? ystar : y2star;
 	} else {
-#if NMDEBUG
-	    fprintf(stderr, "No extension\n");
-#endif
 	    l = 0;
 	    for (i=0; i<n+1; i++) {
 		l += ystar > y[i];
@@ -3118,9 +3098,6 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		}
 		y[imin] = ystar;
 	    } else if (l == 0) {
-#if NMDEBUG
-		fprintf(stderr, "Contraction on the Y(IMIN) side of the centroid\n");
-#endif
 		for (i=0; i<n; i++) {
 		    x = gretl_matrix_get(p, i, imin) - pbar[i];
 		    p2star[i] = pbar[i] + ccoeff * x;
@@ -3129,26 +3106,17 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		ncalls++;
 
 		if (y[imin] < y2star) {
-#if NMDEBUG
-		    fprintf(stderr, "Contract the whole simplex\n");
-#endif
 		    err = simplex_contract(p, xmax, y, cfunc, data, imax);
 		    ncalls += n + 1;
 		    imax = find_extreme(y, n+1, 0, &fmax);
 		    continue;
 		} else {
-#if NMDEBUG
-		    fprintf(stderr, "Retain contraction\n");
-#endif
 		    for (i=0; i<n; i++) {
 			gretl_matrix_set(p, i, imin, p2star[i]);
 		    }
 		    y[imin] = y2star;
 		}
 	    } else if (l == 1) {
-#if NMDEBUG
-		fprintf(stderr, "Contraction on the reflection side of the centroid\n");
-#endif
 		for (i=0; i<n; i++) {
 		    x = pstar[i] - pbar[i];
 		    p2star[i] = pbar[i] + ccoeff * x;
