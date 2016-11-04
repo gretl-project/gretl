@@ -7326,6 +7326,72 @@ double gretl_matrix_rcond (const gretl_matrix *m, int *err)
 }
 
 /**
+ * gretl_matrix_cond_index:
+ * @m: matrix to examine.
+ * @err: location to receive error code.
+ * 
+ * Estimates the condition index (a la Belsley) of the real 
+ * matrix @m.
+ *
+ * Returns: the estimate, or #NADBL on failure.
+ */
+
+double gretl_matrix_cond_index (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *X, *XX, *v;
+    double xij, den, cidx = NADBL;
+    int i, j, r, c;
+
+    if (gretl_is_null_matrix(m)) {
+	return NADBL;
+    }
+
+    r = m->rows;
+    c = m->cols;
+
+    X = gretl_matrix_alloc(r, c);
+    XX = gretl_matrix_alloc(c, c);
+
+    if (X == NULL || XX == NULL) {
+	gretl_matrix_free(X);
+	gretl_matrix_free(XX);
+	*err = E_ALLOC;
+	return NADBL;
+    }
+
+    /* normalize columns of @m into X */
+    for (j=0; j<c; j++) {
+	den = 0.0;
+	for (i=0; i<r; i++) {
+	    xij = gretl_matrix_get(m, i, j);
+	    den += xij * xij;
+	}
+	den = sqrt(den);
+	for (i=0; i<r; i++) {
+	    xij = gretl_matrix_get(m, i, j);
+	    gretl_matrix_set(X, i, j, xij / den);
+	}
+    }
+
+    /* form X'X */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      XX, GRETL_MOD_NONE);
+
+    v = gretl_symmetric_matrix_eigenvals(XX, 0, err);
+
+    if (!*err) {
+	cidx = sqrt(v->val[c-1] / v->val[0]);
+    }
+	
+    gretl_matrix_free(X);
+    gretl_matrix_free(XX);
+    gretl_matrix_free(v);
+
+    return cidx;
+}
+
+/**
  * gretl_matrix_cholesky_decomp:
  * @a: matrix to operate on.
  * 

@@ -285,6 +285,7 @@ enum {
     F_ARRAY,
     F_STRVALS,
     F_TRAMOLIN,
+    F_CINDEX,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
