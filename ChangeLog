@@ -6,7 +6,7 @@ version 2016d, in progress
   illustrative script, gdp_midas.inp
 - New function BFGSmaxc() for constrained maximization using
   L-BFGS-B, version 3.0
-- New function cindex() to get Belsley's condition index
+- New function cnumber() to get Belsley's condition number
 - Small fixes for --compact=spread and new lags() options
 - "qlrtest" command: enable --quiet option
 - "nls" command: make --verbose output more informative

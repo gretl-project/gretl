@@ -1957,7 +1957,7 @@
       </description>
     </function>
 
-    <function name="cindex" section="linalg" output="scalar">
+    <function name="cnumber" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2471,7 +2471,7 @@
 	  <seelist> 
             <fncref targ="ldet"/>
             <fncref targ="rcond"/>
-	    <fncref targ="cindex"/>
+	    <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>
@@ -4645,7 +4645,7 @@
 	  <seelist> 
             <fncref targ="det"/>
             <fncref targ="rcond"/>
-	    <fncref targ="cindex"/>
+	    <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>

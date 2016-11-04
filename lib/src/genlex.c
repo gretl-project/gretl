@@ -465,7 +465,7 @@ struct str_table funcs[] = {
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
     { F_NMMAX,     "NMmax" },
-    { F_CINDEX,    "cindex" },
+    { F_CNUMBER,   "cnumber" },
     { 0,           NULL }
 };
 

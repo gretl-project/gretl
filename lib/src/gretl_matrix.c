@@ -7330,7 +7330,7 @@ double gretl_matrix_rcond (const gretl_matrix *m, int *err)
  * @m: matrix to examine.
  * @err: location to receive error code.
  * 
- * Estimates the condition index (a la Belsley) of the real 
+ * Estimates the condition number (a la Belsley) of the real 
  * matrix @m.
  *
  * Returns: the estimate, or #NADBL on failure.
