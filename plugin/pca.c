@@ -168,7 +168,12 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
     int done, todo;
     int i, j;
 
-    pprintf(prn, "%s\n\n", _("Principal Components Analysis"));
+    pprintf(prn, "%s\n", _("Principal Components Analysis"));
+    if (cmat->missing > 0) {
+	pprintf(prn, "%d incomplete observations were dropped\n",
+		cmat->missing);
+    }
+    pputc(prn, '\n');
 
     if (cmat->ci == CORR) {
 	pprintf(prn, "%s\n\n", _("Eigenanalysis of the Correlation Matrix"));

@@ -5468,6 +5468,8 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	}
     }
 
+    v->missing = 0;
+
     /* first pass: get sample size and sums */
 
     for (t=v->t1; t<=v->t2; t++) {
@@ -5475,7 +5477,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	for (i=0; i<m; i++) {
 	    if (na(Z[v->list[i+1]][t])) {
 		miss = 1;
-		v->missing = 1;
+		v->missing += 1;
 		break;
 	    }
 	}
@@ -5626,13 +5628,7 @@ VMatrix *corrlist (int ci, int *list, const DATASET *dset,
     if (v->t2 - v->t1 + 1 < 3) {
 	*err = E_TOOFEW;
 	goto bailout;
-    } else if (ci == PCA && nmiss > 0) {
-	/* When doing PCA, it's too complicated to handle
-	   missing observations within the sample range.
-	*/
-	*err = E_MISSDATA;
-	goto bailout;
-    }	
+    }
 
     v->dim = m = list[0];  
     mm = (m * (m + 1)) / 2;
