@@ -106,7 +106,6 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 
     *ncalls = *nresets = 0;
     jcount = konvge;
-
     rq = reqmin * n;
 
     /* maximize by default, but minimize if OPT_I is given */
@@ -122,7 +121,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 
 	if (opt & OPT_V) {
 	    if (outer == 1) {
-		pprintf(prn, "\nNelder-Mead outer iteration %d: function value = %#g\n",
+		pprintf(prn, "\nOuter iteration %d: function value = %#g\n",
 			outer, y[n]);
 	    } else {
 		pprintf(prn, "Outer iteration %d (reset)\n", outer);
@@ -150,8 +149,6 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 	    }
 	}
 
-	/* Inner loop */
-
 	for (inner=1; *ncalls < maxcalls; inner++) {
 	    *ynewlo = y[0];
 	    ihi = 0;
@@ -162,9 +159,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[], double xmin[],
 		    ihi = i;
 		}
 	    }
-	    /* Calculate pbar, the centroid of the simplex vertices
-	       excepting the vertex with y-value ynewlo.
-	    */
+	    /* calculate pbar, the centroid of the simplex */
 	    for (i = 0; i < n; i++) {
 		z = 0.0;
 		for (j = 0; j <= n; j++) {
