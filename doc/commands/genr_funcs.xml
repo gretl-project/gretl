@@ -1957,6 +1957,35 @@
       </description>
     </function>
 
+    <function name="cindex" section="linalg" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the condition index of the <by r="n" c="k"/> matrix
+	  <argname>X</argname>, as defined in <cite
+	  key="belsley-etal80">Belsley, Kuh and Welsch
+	  (1980)</cite>. A large value of this index is an indicator
+	  of multicollinearity; <quote>large</quote> is often taken to
+	  mean 50 or greater (sometimes 30 or greater).
+	</para>
+	<para>
+	  The steps in the calculation are: (1) form a counterpart to
+	  <argname>X</argname> where the columns are normalized
+	  (divided by the square root of the sum of squares), call
+	  this <math>Z</math>; (2) form <math>Z'Z</math> and obtain
+	  its eigenvalues; and (3) compute the square root of the
+	  ratio of the largest to the smallest eigenvalue.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="rcond"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2442,6 +2471,7 @@
 	  <seelist> 
             <fncref targ="ldet"/>
             <fncref targ="rcond"/>
+	    <fncref targ="cindex"/>
 	  </seelist>
 	</para>
       </description>
@@ -4615,6 +4645,7 @@
 	  <seelist> 
             <fncref targ="det"/>
             <fncref targ="rcond"/>
+	    <fncref targ="cindex"/>
 	  </seelist>
 	</para>
       </description>
