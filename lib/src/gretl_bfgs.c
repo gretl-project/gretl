@@ -2752,52 +2752,17 @@ int gretl_simann (double *theta, int n, int maxit,
 }
 
 /*
-  nelder_mead: this is based closely on the nelmin function as
-  written in C by John Burkardt; see
+  nelder_mead: this is based closely on the nelmin function as written
+  in C by John Burkardt; see
   http://people.sc.fsu.edu/~jburkardt/c_src/asa047
-  It is converted to a maximizer, and modified for use with
-  the gretl library.
+  It is converted to a maximizer, and modified for use with the
+  gretl library.
 
-  Here follows a portion of Burkardt's original notice:
-
-  Purpose:
-
-  NELMIN minimizes a function using the Nelder-Mead algorithm.
-
-  Discussion:
-
-  This routine seeks the minimum value of a user-specified function.
-
-  Simplex function minimisation procedure due to Nelder+Mead(1965),
-  as implemented by O'Neill(1971, Appl.Statist. 20, 338-45), with
-  subsequent comments by Chambers+Ertel(1974, 23, 250-1), Benyon(1976,
-  25, 97) and Hill(1978, 27, 380-2)
-
-  The function to be minimized must be defined by a function of
-  the form
-
-  function fn ( x, f )
-  double fn
-  double x(*)
-
-  and the name of this subroutine must be declared EXTERNAL in the
-  calling routine and passed as the argument FN.
-
-  This routine does not include a termination test using the
-  fitting of a quadratic surface.
-
-  Licensing:
-
-  This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-  28 October 2010
-
-  Author:
-
-  Original FORTRAN77 version by R ONeill.
-  C version by John Burkardt.
+  Burkardt's code is distributed under the GNU LGPL license, and was
+  last modified on 28 October 2010. It draws on original Fortran code
+  by R. O'Neill, for which see "Algorithm AS 47: Function Minimization
+  Using a Simplex Procedure", Journal of the Royal Statistical
+  Society, Series C (Applied Statistics), Vol. 20, No. 3, 1971.
 */
 
 static double nm_call (BFGS_CRIT_FUNC cfunc,
@@ -2839,10 +2804,6 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
     int getmin;
     int err = 0;
 
-    if (reqmin <= 0.0 || n < 1) {
-	return E_INVARG;
-    }
-
     /* use a gretl_matrix in case we want to print it */
     pmat = gretl_matrix_alloc(n, n + 1);
     wspace = malloc((4*n + 1) * sizeof *wspace);
@@ -2869,7 +2830,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
     gretl_iteration_push();
 
     for (outer=1; ; outer++) {
-	for (i = 0; i < n; i++) {
+	for (i=0; i<n; i++) {
 	    p[i+n*n] = start[i];
 	}
 	y[n] = nm_call(cfunc, start, data, ncalls, getmin);
@@ -2884,10 +2845,10 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	}
 
 	/* construct the simplex */
-	for (j = 0; j < n; j++) {
+	for (j=0; j<n; j++) {
 	    x = start[j];
 	    start[j] += step[j] * del;
-	    for (i = 0; i < n; i++) {
+	    for (i=0; i<n; i++) {
 		p[i+j*n] = start[i];
 	    }
 	    y[j] = nm_call(cfunc, start, data, ncalls, getmin);
@@ -2897,7 +2858,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	/* find the lowest y value */
 	ylo = y[0];
 	ilo = 0;
-	for (i = 1; i <= n; i++) {
+	for (i=1; i<=n; i++) {
 	    if (y[i] < ylo) {
 		ylo = y[i];
 		ilo = i;
@@ -2908,16 +2869,16 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	    *ynewlo = y[0];
 	    ihi = 0;
 
-	    for (i = 1; i <= n; i++) {
+	    for (i=1; i<=n; i++) {
 		if (*ynewlo < y[i]) {
 		    *ynewlo = y[i];
 		    ihi = i;
 		}
 	    }
 	    /* calculate pbar, the centroid of the simplex */
-	    for (i = 0; i < n; i++) {
+	    for (i=0; i<n; i++) {
 		z = 0.0;
-		for (j = 0; j <= n; j++) {
+		for (j=0; j<=n; j++) {
 		    z += p[i+j*n];
 		}
 		z -= p[i+ihi*n];
@@ -2925,7 +2886,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	    }
 
 	    /* reflection through the centroid */
-	    for (i = 0; i < n; i++) {
+	    for (i=0; i<n; i++) {
 		pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i+ihi*n]);
 	    }
 	    ystar = nm_call(cfunc, pstar, data, ncalls, getmin);
@@ -2937,43 +2898,43 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 
 	    if (ystar < ylo) {
 		/* successful reflection, so extension */
-		for (i = 0; i < n; i++) {
+		for (i=0; i<n; i++) {
 		    p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
 		}
 		y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
 		/* check extension */
 		if (ystar < y2star) {
-		    for (i = 0; i < n; i++) {
+		    for (i=0; i<n; i++) {
 			p[i+ihi*n] = pstar[i];
 		    }
 		    y[ihi] = ystar;
 		} else {
-		    for (i = 0; i < n; i++) {
+		    for (i=0; i<n; i++) {
 			p[i+ihi*n] = p2star[i];
 		    }
 		    y[ihi] = y2star;
 		}
 	    } else {
 		l = 0;
-		for (i = 0; i <= n; i++) {
+		for (i=0; i<=n; i++) {
 		    if (ystar < y[i]) {
 			l++;
 		    }
 		}
 		if (l > 1) {
-		    for (i = 0; i < n; i++) {
+		    for (i=0; i<n; i++) {
 			p[i+ihi*n] = pstar[i];
 		    }
 		    y[ihi] = ystar;
 		} else if (l == 0) {
-		    for (i = 0; i < n; i++) {
+		    for (i=0; i<n; i++) {
 			p2star[i] = pbar[i] + ccoeff * (p[i+ihi*n] - pbar[i]);
 		    }
 		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
 		    /* contract the whole simplex */
 		    if (y[ihi] < y2star) {
-			for (j = 0; j <= n; j++) {
-			    for (i = 0; i < n; i++) {
+			for (j=0; j<=n; j++) {
+			    for (i=0; i<n; i++) {
 				p[i+j*n] = (p[i+j*n] + p[i+ilo*n]) * 0.5;
 				xmin[i] = p[i+j*n];
 			    }
@@ -2981,7 +2942,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 			}
 			ylo = y[0];
 			ilo = 0;
-			for (i = 1; i <= n; i++) {
+			for (i=1; i<=n; i++) {
 			    if (y[i] < ylo) {
 				ylo = y[i];
 				ilo = i;
@@ -2989,24 +2950,24 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 			}
 			continue;
 		    } else {
-			for (i = 0; i < n; i++) {
+			for (i=0; i<n; i++) {
 			    p[i+ihi*n] = p2star[i];
 			}
 			y[ihi] = y2star;
 		    }
 		} else if (l == 1) {
-		    for (i = 0; i < n; i++) {
+		    for (i=0; i<n; i++) {
 			p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
 		    }
 		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
 		    /* retain reflection? */
 		    if (y2star <= ystar) {
-			for (i = 0; i < n; i++) {
+			for (i=0; i<n; i++) {
 			    p[i+ihi*n] = p2star[i];
 			}
 			y[ihi] = y2star;
 		    } else {
-			for (i = 0; i < n; i++) {
+			for (i=0; i<n; i++) {
 			    p[i+ihi*n] = pstar[i];
 			}
 			y[ihi] = ystar;
@@ -3029,12 +2990,12 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	    if (*ncalls <= maxcalls) {
 		jcount = konvge;
 		z = 0.0;
-		for (i = 0; i <= n; i++) {
+		for (i=0; i<=n; i++) {
 		    z += y[i];
 		}
 		x = z / (n+1);
 		z = 0.0;
-		for (i = 0; i <= n; i++) {
+		for (i=0; i<=n; i++) {
 		    z += (y[i] - x) * (y[i] - x);
 		}
 		if (z <= rq) {
@@ -3044,7 +3005,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	}
 
 	/* check that ynewlo is a local minimum */
-	for (i = 0; i < n; i++) {
+	for (i=0; i<n; i++) {
 	    xmin[i] = p[i+ilo*n];
 	}
 	*ynewlo = y[ilo];
@@ -3056,7 +3017,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 
 	err = 0;
 
-	for (i = 0; i < n; i++) {
+	for (i=0; i<n; i++) {
 	    double xsave = xmin[i];
 	    double dx = step[i] * eps;
 
@@ -3085,8 +3046,8 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	    break;
 	}
 
-	/* prepare to restart the procedure */
-	for (i = 0; i < n; i++) {
+	/* prepare to restart */
+	for (i=0; i<n; i++) {
 	    start[i] = xmin[i];
 	}
 	del = eps;
