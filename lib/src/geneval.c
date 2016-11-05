@@ -1184,10 +1184,17 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return 0;
     }
 
-    /* logical OR: if x is valid and non-zero, ignore NA for y */
-    if (op == B_OR && !na(x) && x != 0) {
+    /* logical OR: if x or y is valid and non-zero, ignore NA for
+       the other term */
+    if (op == B_OR && ((!na(x) && x != 0) || (!na(y) && y != 0))) {
 	return 1.0;
-    }  
+    }
+
+    /* logical AND: if either x or y is false, the logical product
+       should be false */
+    if (op == B_AND && (x == 0 || y == 0)) {
+	return 0;
+    }    
 
     /* otherwise NA propagates to the result */
     if (na(x) || na(y)) {
