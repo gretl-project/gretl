@@ -1191,7 +1191,7 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 
     /* logical AND: if either x or y is false, the logical product
-       should be false */
+       should be false, even if the other term is NA */
     if (op == B_AND && (x == 0 || y == 0)) {
 	return 0;
     }    
