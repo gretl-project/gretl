@@ -2751,20 +2751,361 @@ int gretl_simann (double *theta, int n, int maxit,
     return err;
 }
 
-/* --------------- amoeba-related functions -----------------------------*/
+/*
+  nelder_mead: this is based closely on the nelmin function as
+  written in C by John Burkardt; see
+  http://people.sc.fsu.edu/~jburkardt/c_src/asa047
+  It is converted to a maximizer, and modified for use with
+  the gretl library.
 
-#define USE_BURKARDT 1
+  Here follows a portion of Burkardt's original notice:
 
-#if USE_BURKARDT
+  Purpose:
 
-#include "asa047_mod.c"
+  NELMIN minimizes a function using the Nelder-Mead algorithm.
+
+  Discussion:
+
+  This routine seeks the minimum value of a user-specified function.
+
+  Simplex function minimisation procedure due to Nelder+Mead(1965),
+  as implemented by O'Neill(1971, Appl.Statist. 20, 338-45), with
+  subsequent comments by Chambers+Ertel(1974, 23, 250-1), Benyon(1976,
+  25, 97) and Hill(1978, 27, 380-2)
+
+  The function to be minimized must be defined by a function of
+  the form
+
+  function fn ( x, f )
+  double fn
+  double x(*)
+
+  and the name of this subroutine must be declared EXTERNAL in the
+  calling routine and passed as the argument FN.
+
+  This routine does not include a termination test using the
+  fitting of a quadratic surface.
+
+  Licensing:
+
+  This code is distributed under the GNU LGPL license.
+
+  Modified:
+
+  28 October 2010
+
+  Author:
+
+  Original FORTRAN77 version by R ONeill.
+  C version by John Burkardt.
+*/
+
+static double nm_call (BFGS_CRIT_FUNC cfunc,
+		       double *b, void *data,
+		       int *ncalls, int minimize)
+{
+    double ret = cfunc(b, data);
+
+    *ncalls += 1;
+
+    return minimize ? ret : na(ret) ? ret : -ret;
+}
+
+static int
+nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
+	     double xmin[], double *ynewlo, double reqmin,
+	     double step[], int maxcalls, int *ncalls, int *nresets,
+	     void *data, gretlopt opt, PRN *prn)
+{
+    gretl_matrix *pmat = NULL;
+    double ccoeff = 0.5;
+    double ecoeff = 2.0;
+    double rcoeff = 1.0;
+    double eps = 0.001;
+    double del = 1.0;
+    double *wspace;
+    double *p;
+    double *p2star;
+    double *pbar;
+    double *pstar;
+    double *y;
+    double rq, x, z;
+    double ylo, ystar, y2star;
+    /* frequency of convergence check */
+    int konvge = 10;
+    int i, ihi, ilo;
+    int l, j, jcount;
+    int outer, inner;
+    int getmin;
+    int err = 0;
+
+    if (reqmin <= 0.0 || n < 1) {
+	return E_INVARG;
+    }
+
+    /* use a gretl_matrix in case we want to print it */
+    pmat = gretl_matrix_alloc(n, n + 1);
+    wspace = malloc((4*n + 1) * sizeof *wspace);
+
+    if (pmat == NULL || wspace == NULL) {
+	gretl_matrix_free(pmat);
+	free(wspace);
+	return E_ALLOC;
+    }
+
+    p = pmat->val;
+    pstar = wspace;
+    p2star = pstar + n;
+    pbar = p2star + n;
+    y = pbar + n;
+
+    *ncalls = *nresets = 0;
+    jcount = konvge;
+    rq = reqmin * n;
+
+    /* maximize by default, but minimize if OPT_I is given */
+    getmin = (opt & OPT_I)? 1 : 0;
+
+    gretl_iteration_push();
+
+    for (outer=1; ; outer++) {
+	for (i = 0; i < n; i++) {
+	    p[i+n*n] = start[i];
+	}
+	y[n] = nm_call(cfunc, start, data, ncalls, getmin);
+
+	if (opt & OPT_V) {
+	    if (outer == 1) {
+		pprintf(prn, "\nOuter iteration %d: function value = %#g\n",
+			outer, y[n]);
+	    } else {
+		pprintf(prn, "Outer iteration %d (reset)\n", outer);
+	    }
+	}
+
+	/* construct the simplex */
+	for (j = 0; j < n; j++) {
+	    x = start[j];
+	    start[j] += step[j] * del;
+	    for (i = 0; i < n; i++) {
+		p[i+j*n] = start[i];
+	    }
+	    y[j] = nm_call(cfunc, start, data, ncalls, getmin);
+	    start[j] = x;
+	}
+
+	/* find the lowest y value */
+	ylo = y[0];
+	ilo = 0;
+	for (i = 1; i <= n; i++) {
+	    if (y[i] < ylo) {
+		ylo = y[i];
+		ilo = i;
+	    }
+	}
+
+	for (inner=1; *ncalls < maxcalls; inner++) {
+	    *ynewlo = y[0];
+	    ihi = 0;
+
+	    for (i = 1; i <= n; i++) {
+		if (*ynewlo < y[i]) {
+		    *ynewlo = y[i];
+		    ihi = i;
+		}
+	    }
+	    /* calculate pbar, the centroid of the simplex */
+	    for (i = 0; i < n; i++) {
+		z = 0.0;
+		for (j = 0; j <= n; j++) {
+		    z += p[i+j*n];
+		}
+		z -= p[i+ihi*n];
+		pbar[i] = z / n;
+	    }
+
+	    /* reflection through the centroid */
+	    for (i = 0; i < n; i++) {
+		pstar[i] = pbar[i] + rcoeff * (pbar[i] - p[i+ihi*n]);
+	    }
+	    ystar = nm_call(cfunc, pstar, data, ncalls, getmin);
+
+	    if ((opt & OPT_V) && (inner == 1 || inner % 10 == 0)) {
+		pprintf(prn, " inner iter %3d: function value %#g\n",
+			inner, ystar);
+	    }
+
+	    if (ystar < ylo) {
+		/* successful reflection, so extension */
+		for (i = 0; i < n; i++) {
+		    p2star[i] = pbar[i] + ecoeff * (pstar[i] - pbar[i]);
+		}
+		y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
+		/* check extension */
+		if (ystar < y2star) {
+		    for (i = 0; i < n; i++) {
+			p[i+ihi*n] = pstar[i];
+		    }
+		    y[ihi] = ystar;
+		} else {
+		    for (i = 0; i < n; i++) {
+			p[i+ihi*n] = p2star[i];
+		    }
+		    y[ihi] = y2star;
+		}
+	    } else {
+		l = 0;
+		for (i = 0; i <= n; i++) {
+		    if (ystar < y[i]) {
+			l++;
+		    }
+		}
+		if (l > 1) {
+		    for (i = 0; i < n; i++) {
+			p[i+ihi*n] = pstar[i];
+		    }
+		    y[ihi] = ystar;
+		} else if (l == 0) {
+		    for (i = 0; i < n; i++) {
+			p2star[i] = pbar[i] + ccoeff * (p[i+ihi*n] - pbar[i]);
+		    }
+		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
+		    /* contract the whole simplex */
+		    if (y[ihi] < y2star) {
+			for (j = 0; j <= n; j++) {
+			    for (i = 0; i < n; i++) {
+				p[i+j*n] = (p[i+j*n] + p[i+ilo*n]) * 0.5;
+				xmin[i] = p[i+j*n];
+			    }
+			    y[j] = nm_call(cfunc, xmin, data, ncalls, getmin);
+			}
+			ylo = y[0];
+			ilo = 0;
+			for (i = 1; i <= n; i++) {
+			    if (y[i] < ylo) {
+				ylo = y[i];
+				ilo = i;
+			    }
+			}
+			continue;
+		    } else {
+			for (i = 0; i < n; i++) {
+			    p[i+ihi*n] = p2star[i];
+			}
+			y[ihi] = y2star;
+		    }
+		} else if (l == 1) {
+		    for (i = 0; i < n; i++) {
+			p2star[i] = pbar[i] + ccoeff * (pstar[i] - pbar[i]);
+		    }
+		    y2star = nm_call(cfunc, p2star, data, ncalls, getmin);
+		    /* retain reflection? */
+		    if (y2star <= ystar) {
+			for (i = 0; i < n; i++) {
+			    p[i+ihi*n] = p2star[i];
+			}
+			y[ihi] = y2star;
+		    } else {
+			for (i = 0; i < n; i++) {
+			    p[i+ihi*n] = pstar[i];
+			}
+			y[ihi] = ystar;
+		    }
+		}
+	    }
+
+	    /* check if ylo improved */
+	    if (y[ihi] < ylo) {
+		ylo = y[ihi];
+		ilo = ihi;
+	    }
+	    jcount--;
+
+	    if (jcount > 0) {
+		continue;
+	    }
+
+	    /* check to see if optimum reached */
+	    if (*ncalls <= maxcalls) {
+		jcount = konvge;
+		z = 0.0;
+		for (i = 0; i <= n; i++) {
+		    z += y[i];
+		}
+		x = z / (n+1);
+		z = 0.0;
+		for (i = 0; i <= n; i++) {
+		    z += (y[i] - x) * (y[i] - x);
+		}
+		if (z <= rq) {
+		    break;
+		}
+	    }
+	}
+
+	/* check that ynewlo is a local minimum */
+	for (i = 0; i < n; i++) {
+	    xmin[i] = p[i+ilo*n];
+	}
+	*ynewlo = y[ilo];
+
+	if (*ncalls > maxcalls) {
+	    err = E_NOCONV;
+	    break;
+	}
+
+	err = 0;
+
+	for (i = 0; i < n; i++) {
+	    double xsave = xmin[i];
+	    double dx = step[i] * eps;
+
+	    xmin[i] = xsave + dx;
+	    z = nm_call(cfunc, xmin, data, ncalls, getmin);
+	    if (z < *ynewlo) {
+		err = E_NOCONV;
+		break;
+	    }
+	    xmin[i] = xsave - dx;
+	    z = nm_call(cfunc, xmin, data, ncalls, getmin);
+	    if (z < *ynewlo) {
+		err = E_NOCONV;
+		break;
+	    }
+	    xmin[i] = xsave;
+	}
+
+	if (err == 0) {
+	    if (opt & OPT_V) {
+		double crit = getmin ? *ynewlo : -(*ynewlo);
+
+		pprintf(prn, "Found optimum %#g after %d function calls, "
+			"%d resets\n\n", crit, *ncalls, *nresets);
+	    }
+	    break;
+	}
+
+	/* prepare to restart the procedure */
+	for (i = 0; i < n; i++) {
+	    start[i] = xmin[i];
+	}
+	del = eps;
+	*nresets += 1;
+    }
+
+    gretl_iteration_pop();
+
+    gretl_matrix_free(pmat);
+    free(wspace);
+
+    return err;
+}
 
 int gretl_amoeba (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn)
 {
     int ncalls = 0;
-    int konvge = 10;
     int nresets = 0;
     int maxcalls;
     double reqmin = 1.0e-12;
@@ -2789,7 +3130,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     maxcalls = maxit <= 0 ? 2000 : maxit;
 
     err = nelder_mead(cfunc, n, theta, xmin, &fval, reqmin,
-		      step, konvge, maxcalls, &ncalls, &nresets,
+		      step, maxcalls, &ncalls, &nresets,
 		      data, opt, prn);
 
     fprintf(stderr, "asa047 finished: fncalls=%d, err=%d (%s)\n",
@@ -2811,414 +3152,3 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     return err;
 }
-
-#else /* not using original Burkardt code */
-
-static int simplex_build (gretl_matrix *p, double *x, double *y,
-			  BFGS_CRIT_FUNC cfunc, void *data,
-			  double *step, double delta)
-{
-    int i, j, n = p -> rows;
-    double w;
-
-    for (i=0; i<n; i++) {
-	gretl_matrix_set(p, i, n, x[i]);
-    }
-
-    y[n] = cfunc(x, data);
-
-    for (j=0; j<n; j++ ) {
-	w = x[j];
-	x[j] += step[j] * delta;
-	for (i=0; i<n; i++) {
-	    gretl_matrix_set(p, i, j, x[i]);
-	}
-	y[j] = cfunc(x, data);
-	x[j] = w;
-    }
-
-    return 0;
-}
-
-static int simplex_contract (gretl_matrix *p, double *xbest, double *y,
-			     BFGS_CRIT_FUNC cfunc, void *data,
-			     int ibest)
-{
-    int i, j, n = p->rows;
-    double w, avg;
-
-    for (j=0; j<n+1; j++) {
-	for (i=0; i<n; i++) {
-	    w = gretl_matrix_get(p, i, j);
-	    avg = 0.5 * (w + gretl_matrix_get(p, i, ibest));
-	    gretl_matrix_set(p, i, j, avg);
-	    xbest[i] = avg;
-	}
-	y[j] = cfunc(xbest, data);
-    }
-
-    return 0;
-}
-
-static int find_extreme (double *y, int n, int max, double *xtr)
-{
-    int i, match, ret = 0;
-
-    *xtr = y[0];
-
-    for (i=1; i<n; i++) {
-	match = max ? (y[i] > *xtr) : (y[i] < *xtr);
-	if (match) {
-	    *xtr = y[i];
-	    ret = i;
-	}
-    }
-
-    return ret;
-}
-
-/* Calculate the centroid of the simplex vertices,
-   excepting the k-th vertex.
-*/
-
-static void centroid (gretl_matrix *p, int k, double *pbar)
-{
-    int i, j, n = p->rows;
-    double z;
-
-    for (i=0; i<n; i++) {
-	for (j=0, z = 0.0; j<n+1; j++) {
-	    z += gretl_matrix_get(p, i, j);
-	}
-	z -= gretl_matrix_get(p, i, k);
-	pbar[i] = z / n;
-    }
-}
-
-static void simplex_print (gretl_matrix *p, double fbest, double fworst,
-			   int best, int worst, int iter, PRN *prn)
-{
-    int i, n = p->rows;
-
-    pprintf(prn, "%4d: Best: %g, worst: %g\n", iter, fbest, fworst);
-    for (i=0; i<n; i++) {
-	pprintf(prn, "%8.4f ", gretl_matrix_get(p, i, best));
-    }
-    pputc(prn, '\n');
-    for (i=0; i<n; i++) {
-	pprintf(prn, "%8.4f ", gretl_matrix_get(p, i, worst));
-    }
-    pputs(prn, "\n\n");
-}
-
-static double deviance (double *y, int n) {
-    /* used as a rough indicator if all the vertices are at
-       the same height
-    */
-
-    double x, ret = 0.0;
-    int i;
-
-    for (i=0; i<n+1; i++) {
-	ret += y[i];
-    }
-    x = ret / ((double) n+1);
-
-    ret = 0.0;
-    for (i=0; i<n+1; i++) {
-	ret += (y[i] - x) * (y[i] - x);
-    }
-
-    return ret;
-}
-
-#define NMDEBUG 0
-
-/**
- * gretl_amoeba:
- * @theta: parameter array.
- * @n: length of @theta.
- * @maxit: the maximum number of iterations to perform.
- * @cfunc: the function to be maximized.
- * @data: pointer to be passed to the @cfunc callback.
- * @opt: may include %OPT_V for verbose operation.
- * @prn: printing struct, or NULL.
- *
- * Nelder-Mead method, aka "amoeba": for the moment, this is a
- * near-literal ripoff of ASA047, as found at
- * http://people.sc.fsu.edu/~jburkardt/c_src/asa047/asa047.c (which is
- * LGPL, so we're ok) but will probably need some tweaking, for
- * example by incorporating ideas from Gao-Han (2012)
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int gretl_amoeba (double *theta, int n, int maxit,
-		  BFGS_CRIT_FUNC cfunc, void *data,
-		  gretlopt opt, PRN *prn)
-{
-    gretl_matrix b;
-    double f0, fmax, fmin, fnew;
-    int imax, imin = 0;
-    double x, ystar, y2star, z;
-    int improved = 0;
-    int i, l, iter;
-    int flag, ifault = 0;
-    /* termination criterion for variance of function values */
-    double reqmin = 1.0e-12;
-    double tol = reqmin * n;
-    /* coefficients for contraction, extension, reflection */
-    double ccoeff = 0.5;
-    double ecoeff = 2.0;
-    double rcoeff = 1.0;
-    /* misc */
-    double eps = 0.001;
-    double del = 1.0;
-    /* step lengths */
-    double *step;
-    /* workspace */
-    double *wspace;
-    double *p2star;
-    double *pbar;
-    double *pstar;
-    double *xmax;
-    double *y;
-    /* simplex */
-    gretl_matrix *p;
-    int ncalls = 0;
-    int err = 0;
-
-    /*
-      @step determines the size and shape of the initial simplex.  The
-      relative magnitudes of its elements should reflect the units of
-      the variables.  For the moment, set step to all ones (but
-      this'll have to be adjusted)
-    */
-    step = malloc(n * sizeof *step);
-    if (step == NULL) {
-	return E_ALLOC;
-    } else {
-	for (i=0; i<n; i++) {
-	    step[i] = 1;
-	}
-    }
-
-    /* simplex */
-    p = gretl_matrix_alloc(n, n+1);
-
-    /* function at each vertex */
-    y = malloc((n+1) * sizeof *y);
-
-    /* workspace */
-    wspace = malloc(4 * n * sizeof *xmax);
-
-    if (p == NULL || y == NULL || wspace == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    xmax = wspace; /* coordinates of the point which is estimated to maximize
-		      the function */
-    pbar = xmax + n;
-    pstar = pbar + n;
-    p2star = pstar + n;
-
-    if (maxit <= 0) {
-	maxit = 1024;
-    }
-
-    /* -----------------------------------------------------------------------*/
-
-    set_up_matrix(&b, theta, n, 1);
-    f0 = fmax = fmin = cfunc(b.val, data);
-
-    if (opt & OPT_V) {
-	pprintf(prn, "\nNelder-Mead algorithm: initial function value = %.8g\n",
-		f0);
-    }
-
-    gretl_iteration_push();
-
-    err = simplex_build(p, b.val, y, cfunc, data, step, del);
-    ncalls = n + 2;
-
-    for (iter=0; iter<maxit; iter++) {
-	z = deviance(y, n);
-	if (z <= tol) {
-#if NMDEBUG
-	    fprintf(stderr, "breaking on z=%g < tol=%g\n\n", z, tol);
-#endif
-	    break;
-	}
-
-	imax = find_extreme(y, n+1, 1, &fmax);
-
-	if (opt & OPT_V) {
-	    simplex_print(p, fmax, fmin, imax, imin, iter, prn);
-	    pprintf(prn, "deviance = %g\n", z);
-	}
-
-	/* Inner loop */
-
-	imin = find_extreme(y, n+1, 0, &fmin);
-	centroid(p, imin, pbar);
-
-	/* Reflection through the centroid */
-	for (i=0; i<n; i++) {
-	    x = pbar[i] - gretl_matrix_get(p, i, imin);
-	    pstar[i] = pbar[i] + rcoeff * x;
-	}
-	ystar = cfunc(pstar, data);
-	ncalls++;
-
-	if (ystar > fmax) {
-	    /* Successful reflection, so extension */
-	    for (i=0; i<n; i++) {
-		x = pstar[i] - pbar[i];
-		p2star[i] = pbar[i] + ecoeff * x;
-	    }
-	    y2star = cfunc(p2star, data);
-	    ncalls++;
-
-	    /* if flag==1, extension; else, retain extension or contraction */
-	    flag = ystar > y2star;
-	    for (i=0; i<n; i++) {
-		gretl_matrix_set(p, i, imin, flag ? pstar[i] : p2star[i]);
-	    }
-	    y[imin] = flag ? ystar : y2star;
-	} else {
-	    l = 0;
-	    for (i=0; i<n+1; i++) {
-		l += ystar > y[i];
-	    }
-
-	    if (l > 1) {
-		for (i=0; i<n; i++) {
-		    gretl_matrix_set(p, i, imin, pstar[i]);
-		}
-		y[imin] = ystar;
-	    } else if (l == 0) {
-		for (i=0; i<n; i++) {
-		    x = gretl_matrix_get(p, i, imin) - pbar[i];
-		    p2star[i] = pbar[i] + ccoeff * x;
-		}
-		y2star = cfunc(p2star, data);
-		ncalls++;
-
-		if (y[imin] < y2star) {
-		    err = simplex_contract(p, xmax, y, cfunc, data, imax);
-		    ncalls += n + 1;
-		    imax = find_extreme(y, n+1, 0, &fmax);
-		    continue;
-		} else {
-		    for (i=0; i<n; i++) {
-			gretl_matrix_set(p, i, imin, p2star[i]);
-		    }
-		    y[imin] = y2star;
-		}
-	    } else if (l == 1) {
-		for (i=0; i<n; i++) {
-		    x = pstar[i] - pbar[i];
-		    p2star[i] = pbar[i] + ccoeff * x;
-		}
-		y2star = cfunc(p2star, data);
-		ncalls++;
-
-		/* if flag==1, retain reflection */
-		flag = ystar <= y2star;
-		for (i=0; i<n; i++) {
-		    gretl_matrix_set(p, i, imin, flag ? p2star[i] : pstar[i]);
-		}
-		y[imin] = flag ? y2star : ystar;
-	    }
-	}
-
-	/* Check if @fmax has been improved upon */
-	improved = y[imin] > fmax;
-	if (improved) {
-	    fmax = y[imin];
-	    imax = imin;
-	}
-
-	/* Factorial tests to check that fnew is a local optimum */
-	for (i=0; i<n; i++) {
-	    xmax[i] = gretl_matrix_get(p, i, imax);
-	}
-
-	fnew = y[imax];
-	ifault = 0;
-
-	for (i=0; i<n; i++) {
-	    del = step[i] * eps;
-	    xmax[i] = xmax[i] + del;
-	    z = cfunc(xmax, data);
-	    ncalls++;
-
-	    if (z > fnew) {
-		ifault = 2;
-		break;
-	    }
-	    xmax[i] -= 2*del;
-
-	    z = cfunc(xmax, data);
-	    ncalls++;
-	    if (z > fnew) {
-		ifault = 2;
-		break;
-	    }
-	    xmax[i] += del;
-	}
-
-	if (ifault == 0) {
-#if NMDEBUG
-	    fprintf(stderr, "breaking on ifault = 0 at iter %d\n", iter);
-#endif
-	    break;
-	}
-
-	/* Restart the procedure */
-	for (i=0; i<n; i++) {
-	    b.val[i] = xmax[i];
-	}
-	del = eps;
-#if NMDEBUG
-	gretl_matrix_print(&b, "b");
-#endif
-    }
-
-    gretl_iteration_pop();
-
-    fprintf(stderr, "amoeba finished: iter=%d, fncalls=%d, ifault=%d\n",
-	    iter, ncalls, ifault);
-
-    /* I think this is the right criterion in relation to the
-       message below, AC */
-    improved = fmax > f0;
-
-    if (improved) {
-	if (opt & OPT_V) {
-	    pputc(prn, '\n');
-	}
-	/* final update of coefficients */
-	for (i=0; i<n; i++) {
-	    b.val[i] = xmax[i];
-	}
-    } else {
-	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
-    }
-
-    if (fmax - fmin < 1.0e-9) {
-	pprintf(prn, "*** warning: surface seems to be flat\n");
-    }
-
- bailout:
-
-    gretl_matrix_free(p);
-    free(y);
-    free(wspace);
-    free(step);
-
-    return err;
-}
-
-#endif
