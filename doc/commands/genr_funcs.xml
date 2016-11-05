@@ -2556,7 +2556,7 @@
 	</para>
 	<para context="tex">
 	  Returns the digamma (or Psi) function of $x$, that is 
-	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
+	  $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
 	</para>
       </description>
     </function>
