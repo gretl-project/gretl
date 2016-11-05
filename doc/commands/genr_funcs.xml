@@ -5995,6 +5995,46 @@
       </description>
     </function>
 
+    <function name="NMmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg optional="true" type="int">maxfeval</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Numerical maximization via the Nelder&ndash;Mead
+	  derivative-free simplex method.  On input the vector
+	  <argname>b</argname> should hold the initial values of a set
+	  of parameters, and the argument <argname>f</argname> should
+	  specify a call to a function that calculates the (scalar)
+	  criterion to be maximized, given the current parameter
+	  values and any other relevant data. On successful
+	  completion, <lit>NMmax</lit> returns the maximized value of
+	  the criterion, and <argname>b</argname> holds the parameter
+	  values which produce the maximum.
+	</para>
+	<para>
+	  The optional third argument may be used to set the maximum
+	  number of function evalations; if it is omitted the maximum
+	  defaults to 2000.
+	</para>
+	<para>
+	  If the object is in fact minimization, either the function
+	  call should return the negative of the criterion or
+	  alternatively <lit>NMmax</lit> may be called under the
+	  alias <lit>NMmin</lit>.
+	</para>
+	<para>
+	  For more details and examples see the chapter on numerical
+	  methods in <guideref targ="chap:numerical"/>.
+	  <seelist>
+            <fncref targ="simann"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
+
     <function name="nobs" section="stats" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>

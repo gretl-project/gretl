@@ -4,9 +4,9 @@
 Several functions are available to aid in the construction of
 special-purpose estimators: one group of functions are used to
 maximize user-supplied functions via numerical methods: BFGS,
-Newton--Raphson and Simulated Annealing.  Another relevant function is
-\texttt{fdjac}, which produces a forward-difference approximation to
-the Jacobian.
+Newton--Raphson, Simulated Annealing and Nelder--Mead.  Another
+relevant function is \texttt{fdjac}, which produces a
+forward-difference approximation to the Jacobian.
 
 \section{BFGS}
 \label{sec:BFGSmax}
@@ -359,6 +359,54 @@ u = BFGSmax(&x, bimodal(x, A))
 print x
 \end{scode}
 \end{script}
+
+\section{Nelder--Mead}
+\label{sec:nelder-mead}
+
+The Nelder--Mead derivative-free simplex maximizer (also known as the
+``amoeba'' algorithm) is implemented by the function \texttt{NMmax}.
+The argument list of this function is essentially the same as for
+\texttt{simann}: the required arguments are an initial parameter
+vector and a function-call to compute the maximand, while an optional
+third argument can be used to set the maximum number of function
+evaluations (default value: 2000).
+
+This method is unlikely to produce as close an approximation to the
+``true'' optimum as derivative-based methods such as BFGS and
+Newton--Raphson, but it is more robust than the latter. It may succeed
+in some cases where derivative-based methods fail, and it may be
+useful, like \texttt{simann}, for improving the starting point for an
+optimization problem so that a derivative-based method can then take
+over successfully. \texttt{NMmax} includes an internal convergence
+check, but it doesn't flag an error if convergence is not achieved:
+this permits a mode of usage where you set a fairly tight budget of
+function evaluations (for example, 200) and just take any improvement
+in the objective function that is available without worrying about
+whether an optimum has truly been reached.
+
+If the task is actually minimization, you can either have the
+function-call return the negative of the actual criterion, or if you
+prefer, call \texttt{NMmax} under the alias \texttt{NMmin}.
+
+Here is an example of use: minimization of the Powell quartic
+function, which is problematic for BFGS. (The true minimum is zero,
+obtained for \texttt{x} a 4-vector of zeros.)
+%
+\begin{code}
+function scalar powell (matrix *x)
+  fx1 = x[1] + 10 * x[2]
+  fx2 = x[3] - x[4]
+  fx3 = x[2] - 2 * x[3]
+  fx4 = x[1] - x[4]
+  return fx1^2 + 5.0 * fx2^2 + fx3^4 + 10.0 * fx4^4
+end function
+
+matrix x = {3, -1, 0, 1}'
+printf "Initial f(X) = %g\n", powell(&x)
+fmin = NMmin(x, powell(&x))
+printf "Estimate of optimal X*:\n%14f\n", x
+printf "f(X*) = %g\n", fmin
+\end{code}
 
 \section{Computing a Jacobian}
 \label{sec:fdjac}
