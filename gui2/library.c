@@ -664,7 +664,7 @@ static const char *selected_varname (void)
 void do_menu_op (int ci, const char *liststr, gretlopt opt)
 {
     PRN *prn;
-    char title[96];
+    char title[128];
     gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
     const char *flagstr = NULL;

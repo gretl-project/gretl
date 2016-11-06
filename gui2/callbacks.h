@@ -39,6 +39,8 @@ void revise_system_model (void *ptr, GtkWidget *parent);
 
 void newdata_callback (void);
 
+void edit_gfn_callback (void);
+
 void xcorrgm_callback (void);
 
 void do_nistcheck (GtkAction *action);

@@ -210,11 +210,6 @@ static void open_session_callback (void)
     file_selector(OPEN_SESSION, FSEL_DATA_NONE, NULL);
 }
 
-static void edit_package_callback (GtkAction *action, gpointer p)
-{
-    file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
-}
-
 static void edit_spec_callback (GtkAction *action, gpointer p)
 {
     file_selector(OPEN_SPEC, FSEL_DATA_NONE, NULL);
@@ -1587,7 +1582,7 @@ GtkActionEntry main_entries[] = {
     { "FunctionFiles", NULL, N_("_Function packages"), NULL, NULL, NULL },
     { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
     { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_package_callback) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
     { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
     { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
