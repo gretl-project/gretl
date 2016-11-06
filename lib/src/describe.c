@@ -4365,19 +4365,21 @@ static void output_line (char *str, PRN *prn, int dblspc)
 static void prhdr (const char *str, const DATASET *dset, 
 		   int missing, PRN *prn)
 {
-    char date1[OBSLEN], date2[OBSLEN], tmp[96];
+    char date1[OBSLEN], date2[OBSLEN];
+    gchar *tmp;
 
     ntodate(date1, dset->t1, dset);
     ntodate(date2, dset->t2, dset);
 
     pputc(prn, '\n');
 
-    sprintf(tmp, _("%s, using the observations %s - %s"), str, date1, date2);
+    tmp = g_strdup_printf(_("%s, using the observations %s - %s"),
+			  str, date1, date2);
     output_line(tmp, prn, 0);
+    g_free(tmp);
 
     if (missing) {
-	strcpy(tmp, _("(missing values were skipped)"));
-	output_line(tmp, prn, 1);
+	output_line(_("(missing values were skipped)"), prn, 1);
     }
 }
 
