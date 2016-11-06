@@ -66,6 +66,7 @@
       <menu action="FunctionFiles">
 	<menuitem action="LocalGfn"/>
 	<menuitem action="RemoteGfn"/>
+	<separator/>
 	<menuitem action="EditGfn"/>
 	<menuitem action="NewGfn"/>
 	<menuitem action="UploadGfn"/>
