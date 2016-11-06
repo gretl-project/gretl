@@ -469,7 +469,7 @@ they return.\footnote{This is something that the package authors are
   minimal documentation, but we cannot guarantee anything more.}  To
 find this, go to the list of locally-installed packages and click on
 the ``Info'' icon. A text box will appear showing the documentation
-provided by the package author. in the \textsf{GHegy} case, for
+provided by the package author. In the \textsf{GHegy} case, for
 example, not only are we told all we need to know about the
 \cmd{GHegy\_test} function, but we also discover that the package
 contains two additional functions we can use, namely
@@ -650,7 +650,7 @@ eval $dotdir
 \end{code}
 %
 to get the respective base directories on your system: append
-\texttt{functions} and you'll have the canonical package
+``\texttt{functions}'' and you'll have the canonical package
 paths.\footnote{OK, there's an exception here: on Mac OS X the path to
   the per-user functions directory, which is shown above, is not the
   same as the \verb|$dotdir| path.}
@@ -690,30 +690,32 @@ your own purposes.\footnote{If you do come up with any fixes or
 
 Once again, you can start from the browser window for packages ``on
 local machine.'' The \textsf{View code} button or right-click menu
-item brings up a window showing all the function code.  Or use
-\textsf{Edit} (button or menu item) to open a window where you can
-inspect both package code and metadata. In the package editor window,
-the button labeled \textsf{Edit function code} takes you into the
-hansl code (function by function, if the package contains more than
-one function). With a complex, multi-function package it may be
-difficult to get a good overview of the package in this way but here's
-an alternative: click the \textsf{Save...} button and select
-\textsf{Save as script}. This enables you to write out a gretl
-\texttt{inp} file containing all the functions in the package, which
-you can then open in gretl's script editor---or, of course, the text
-editor of your choice.
+item brings up a window showing all the function code. From here
+you may copy material and paste it into a script of your own.
 
-When doing this sort of thing you don't \textit{have} to go via the
-package browser window. Here's one possible scenario: you have package
-\textsf{XYZ} installed, and you don't want to mess with the installed
-version, but at the same time you'd like to do some exploration and/or
-experimentation. Solution: go to the web interface to gretl packages
-mentioned in section~\ref{sec:browsers} and download a copy of
-\textsf{XYZ}, placing it somewhere other than one of the standard
-gretl function directories. Then go to the main-window menu item
-``Tools, Function packages, Edit package...'' and navigate to find the
-\texttt{gfn} file. (If the package is in zip format you'll have to
-unzip it first.) 
+Making changes to an existing package, however, cannot be done via the
+package browser window: it's necessary to go via the main-window menu
+item ``Tools, Function packages, Edit package.'' This route will let
+you edit a package only if you have write permission on the file in
+question.  Here's a plausible scenario: you have package \textsf{XYZ}
+installed, and you don't want to (or don't have permission to) mess
+with the installed version, but at the same time you'd like to do some
+exploration and/or experimentation. Solution: go to the web interface
+to gretl packages mentioned in section~\ref{sec:browsers} and download
+a copy of \textsf{XYZ}, placing it somewhere other than one of the
+standard gretl function directories. Then go to ``Tools, Function
+packages, Edit package...'' and navigate to find the \texttt{gfn}
+file. (If the package is in zip format you'll have to unzip it first.)
+
+In the package editor window, the button labeled \textsf{Edit function
+  code} takes you into the hansl code (function by function, if the
+package contains more than one function). With a complex,
+multi-function package it may be difficult to get a good overview of
+the package in this way but here's an alternative: click the
+\textsf{Save...} button and select \textsf{Save as script}. This
+enables you to write out a gretl \texttt{inp} file containing all the
+functions in the package, which you can then open in gretl's script
+editor---or, of course, the text editor of your choice.
 
 An alternative way of opening a specific package for editing, via the
 command line in a terminal window, is to invoke gretl with the flag
@@ -1118,11 +1120,8 @@ proceed to the next step.
 \subsection{Create your package}
 \label{sec:gui-create}
 
-In the gretl main window, take a look at the ``Tools, Function
-packages'' menu.  This menu contains four items: ``On local machine'',
-``On server'', ``Edit package'' and ``New package''.
-
-Select ``New package''.  A first dialog should appear (see
+In the gretl main window, go to the ``Tools, Function packages'' menu,
+and select ``New package.''  A first dialog should appear (see
 Figure~\ref{fig:startpkg}), in which the left-hand panel lists all the
 functions you have available for packaging; you must specify the name
 of the package, one or more public functions to package, and zero or
