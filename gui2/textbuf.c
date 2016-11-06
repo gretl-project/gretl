@@ -124,6 +124,17 @@ void cursor_to_top (windata_t *vwin)
     gtk_text_buffer_place_cursor(buf, &start);
     mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
     gtk_text_view_scroll_to_mark(view, mark, 0.0, FALSE, 0, 0);
+    gtk_text_buffer_delete_mark(buf, mark);
+}
+
+void cursor_to_end (windata_t *vwin)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+    GtkTextIter end;
+
+    gtk_text_buffer_get_end_iter(buf, &end);
+    gtk_text_buffer_place_cursor(buf, &end);
 }
 
 void scroll_to_foot (windata_t *vwin)

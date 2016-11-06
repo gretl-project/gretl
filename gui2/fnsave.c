@@ -1261,13 +1261,18 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 
     title = g_strdup_printf("%s-sample", pkgname);
 
-    if (finfo->sample != NULL) {
+    if (finfo->sample == NULL) {
+	pprintf(prn, "include %s.gfn\n", pkgname);
+    } else {
 	pputs(prn, finfo->sample);
 	pputc(prn, '\n');
     } 
 
     finfo->samplewin = view_buffer(prn, 78, 350, title,
 				   EDIT_PKG_SAMPLE, finfo);
+    if (finfo->sample == NULL) {
+	cursor_to_end(finfo->samplewin);
+    }
 
     g_object_set_data(G_OBJECT(finfo->samplewin->main), "finfo",
 		      finfo);
