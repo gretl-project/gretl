@@ -3757,6 +3757,10 @@
 	  <effect>don't print forecast statistics</effect>
         </option>
         <option>
+	  <flag>--stats-only</flag>
+	  <effect>only print forecast statistics</effect>
+        </option>	
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print anything</effect>
         </option>

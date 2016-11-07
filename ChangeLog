@@ -17,6 +17,8 @@ version 2016d, in progress
   confidence band with error bars
 - "pca" command: restore facility to skip missing observations
   rather than flagging an error
+- "fcast" command: add a --stats-only option to print the
+  forecast evaluation statistics without the actual forecasts
 - median() function: accept a list argument, as with mean()
 - GUI function package browser: add last-modified date to
   the information shown
