@@ -219,6 +219,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_D, "dynamic", 0 },
     { FCAST,    OPT_M, "mean-y", 0 },
     { FCAST,    OPT_N, "no-stats", 0 },
+    { FCAST,    OPT_T, "stats-only", 0 },
     { FCAST,    OPT_S, "static", 0 },
     { FCAST,    OPT_R, "rolling", 0 },
     { FCAST,    OPT_O, "out-of-sample", 0 },

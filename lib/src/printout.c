@@ -2724,6 +2724,11 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     char label[32];
     int t, err = 0;
 
+    if (opt & OPT_T) {
+	/* --stats-only */
+	return print_fcast_stats(fr, OPT_D, prn);
+    }
+
     if (do_errs) {
 	maxerr = malloc(fr->nobs * sizeof *maxerr);
 	if (maxerr == NULL) {
