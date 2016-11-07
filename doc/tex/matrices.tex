@@ -29,7 +29,7 @@ To specify a matrix \textit{directly in terms of scalars}, the syntax
 is, for example:
 
 \begin{code}
-matrix A = { 1, 2, 3 ; 4, 5, 6 }
+matrix A = {1, 2, 3 ; 4, 5, 6}
 \end{code}
 
 The matrix is defined by rows; the elements on each row are separated
@@ -45,7 +45,7 @@ To specify a matrix \textit{in terms of data series} the syntax is,
 for example,
 %
 \begin{code}
-matrix A = { x1, x2, x3 }
+matrix A = {x1, x2, x3}
 \end{code}
 %
 where the names of the variables are separated by commas.  Besides
@@ -53,7 +53,7 @@ names of existing variables, you can use expressions that evaluate to
 a series.  For example, given a series \texttt{x} you could do
 %
 \begin{code}
-matrix A = { x, x^2 }
+matrix A = {x, x^2}
 \end{code}
 %
 Each variable occupies a column (and there can only be one variable
@@ -68,7 +68,7 @@ Chapter~\ref{chap:persistent}), as in
 %
 \begin{code}
 list xlist = x1 x2 x3
-matrix A = { xlist }
+matrix A = {xlist}
 \end{code}
 %
 When you provide a named list, the data series are by default placed
@@ -79,7 +79,7 @@ As a special case of constructing a matrix from a list of variables,
 you can say
 %
 \begin{code}
-matrix A = { dataset }
+matrix A = {dataset}
 \end{code}
 %
 This builds a matrix using all the series in the current dataset,
@@ -208,7 +208,7 @@ The \textsl{cols} specification works in the same way, \textit{mutatis
 matrix B = A[1,]
 matrix B = A[2:3,3:5]
 matrix B = A[2,2]
-matrix idx = { 1, 2, 6 }
+matrix idx = {1, 2, 6}
 matrix B = A[idx,]
 \end{code}
 %
@@ -231,7 +231,7 @@ a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
 $3\times 3$ matrix $A$:
 %
 \begin{code}
-matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix A = {1, 2, 3; 4, 5, 6; 7, 8, 9}
 matrix B = A[1:2,2:3]
 \end{code}
 %
@@ -241,10 +241,54 @@ $3\times 3$ matrix $A$.  The fourth line replaces the diagonal of $A$
 with 1s.
 %
 \begin{code}
-matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix A = {1, 2, 3; 4, 5, 6; 7, 8, 9}
 matrix A[2:3,2:3] = I(2)
-matrix d = { 1, 1, 1 }
+matrix d = {1, 1, 1}
 matrix A[diag] = d
+\end{code}
+
+\section{Deleting rows or columns}
+\label{sec:neg-indices}
+
+A variant of sub-matrix notation is available for convenience in
+dropping specified rows and/or columns from a matrix, namely giving
+negative values for the indices. Here is a simple example,
+%
+\begin{code}
+matrix A = {1, 2, 3; 4, 5, 6; 7, 8, 9}
+matrix B = A[-2,-3]
+\end{code}
+%
+which creates \texttt{B} as a $2\times 2$ matrix which drops row 2 and
+column 3 from \texttt{A}. Negative indices can also be given in the
+form of an index vector:
+%
+\begin{code}
+matrix rdrop = {-1,-3,-5}
+matrix B = A[rdrop,]
+\end{code}
+%
+In this case \texttt{B} is formed by dropping rows 1, 3 and 5 from
+\texttt{A} (which must have at least 5 rows), but retaining the column
+dimension of \texttt{A}.
+
+There are two limitations on the use of negative indices. First, the
+\texttt{from:to} range syntax described in the previous section is not
+available, but you can use the \texttt{seq} function to achieve an
+equivalent effect, as in
+%
+\begin{code}
+matrix A = muniform(1, 10)
+matrix B = A[,-seq(3,7)]
+\end{code}
+%
+where \texttt{B} drops columns 3 to 7 from \texttt{A}. Second, use of
+negative indices is valid only on the right-hand side of a matrix
+calculation; there is no ``negative index'' equivalent of assignment
+to a sub-matrix, as in
+%
+\begin{code}
+A[1:3,] = ones(3, cols(A))
 \end{code}
 
 \section{Matrix operators}
