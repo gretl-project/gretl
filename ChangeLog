@@ -28,6 +28,8 @@ version 2016d, in progress
   generation of random normals is speeded up
 - Add and document a $model accessor which retrieves a bundle
   containing information regarding a single-equation model
+- Matrix manipulation syntax: allow use of negative indices to
+  drop specified rows/columns
 - Fix an issue where gretl might fail to read back a gdt data
   file written by itself
 - Fix for sort() and dsort() as applied to row or column
