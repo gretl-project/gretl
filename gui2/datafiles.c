@@ -1032,7 +1032,7 @@ gchar *gfn_browser_get_alt_path (void)
 
     if (vwin != NULL && widget_get_int(vwin->listbox, "altdir")) {
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 0,
-			     3, &path);
+			     GFN_DIRNAME_COL, &path);
     }
 
     return path;
