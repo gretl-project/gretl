@@ -437,7 +437,7 @@ double gretl_one_snormal (void)
 		xx = - ZIGGURAT_NOR_INV_R * log(randu53());
 		yy = - log(randu53());
             } while (yy+yy <= xx*xx);
-	    return ((rabs & 0x100) ? -ZIGGURAT_NOR_R-xx : ZIGGURAT_NOR_R+xx);
+	    return (rabs & 0x100) ? -ZIGGURAT_NOR_R-xx : ZIGGURAT_NOR_R+xx;
         } else if ((fi[idx-1] - fi[idx]) * randu53() + fi[idx] < exp(-0.5*x*x)) {
 	    return x;
 	}
