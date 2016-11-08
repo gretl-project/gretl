@@ -281,6 +281,7 @@
       <menuitem action="KbdRef"/>
       <menuitem action="Primer"/>
       <menuitem action="Pkgbook"/>
+      <menuitem action="gretlMPI"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>

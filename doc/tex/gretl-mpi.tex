@@ -157,15 +157,14 @@ As of this writing you can make use of MPI in gretl only by building
 gretl from the git sources yourself (on Linux), by using a recent
 release or snapshot (on MS Windows), or by using a current snapshot
 (on Mac OS X). You will also need to have a suitable MPI package
-installed.
+installed. See also section~\ref{sec:platforms} below.
 
-Running an MPI-enabled program---such as the new
-\texttt{gretlmpi}, described below---requires a special launcher,
-\texttt{mpiexec}.  This is supplied by MPI packages, the best known of
-which are \textsf{Open MPI}, \textsf{MPICH} and Microsoft's
-\textsf{MS-MPI}. See section~\ref{sec:platforms} for
-details.\footnote{MPI-enabled programs are compiled with a special
-  compiler-wrapper, \texttt{mpicc}, which is supplied by both
+Running an MPI-enabled program---such as the new \texttt{gretlmpi},
+described below---requires a special launcher, \texttt{mpiexec}.  This
+is supplied by MPI packages, the best known of which are \textsf{Open
+  MPI}, \textsf{MPICH} and Microsoft's
+\textsf{MS-MPI}.\footnote{MPI-enabled programs are compiled with a
+  special compiler-wrapper, \texttt{mpicc}, which is supplied by both
   \textsf{Open MPI} and \textsf{MPICH}. You will need \texttt{mpicc}
   only if you are building MPI-enabled gretl from the C sources
   yourself.}

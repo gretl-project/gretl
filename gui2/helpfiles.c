@@ -1952,7 +1952,8 @@ enum {
     X12A_REF,
     GRETL_KEYS,
     HANSL_PRIMER,
-    PKGBOOK
+    PKGBOOK,
+    GRETL_MPI
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2076,6 +2077,10 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     const char *pkgbook_files[] = {
 	"pkgbook.pdf",
 	"pkgbook-a4.pdf"
+    };
+    const char *gretlMPI_files[] = {
+	"gretl-mpi.pdf",
+	"gretl-mpi-a4.pdf"
     };    
     const char *fname;
     FILE *fp;
@@ -2101,6 +2106,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = primer_files[i];
     } else if (code == PKGBOOK) {
 	fname = pkgbook_files[i];
+    } else if (code == GRETL_MPI) {
+	fname = gretlMPI_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2197,6 +2204,8 @@ void display_pdf_help (GtkAction *action)
 	    code = HANSL_PRIMER;
 	} else if (!strcmp(gtk_action_get_name(action), "Pkgbook")) {
 	    code = PKGBOOK;
+	} else if (!strcmp(gtk_action_get_name(action), "gretlMPI")) {
+	    code = GRETL_MPI;
 	}
     }
 
