@@ -1712,13 +1712,16 @@ int gmm_calculate (nlspec *s, PRN *prn)
     }
 
     if (s->opt & OPT_I) {
-	/* iterate */
+	/* iterate (but note: don't pass this option to BFGS,
+	   since that would switch maximize to minimize)
+	*/
 	oldcoeff = copyvec(s->coeff, s->ncoeff);
 	if (oldcoeff == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    outer_max = libset_get_int(GMM_MAXITER);
 	}
+	iopt ^= OPT_I;
     } else if (s->opt & OPT_T) {
 	/* two-step */
 	outer_max = 2;
