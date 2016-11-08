@@ -32,6 +32,7 @@
 #include "treeutils.h"
 #include "datawiz.h"
 #include "winstack.h"
+#include "matrix_extra.h"
 
 static void doubleclick_action (windata_t *vwin)
 {
@@ -776,6 +777,69 @@ void xcorrgm_callback (void)
 	strcat(title, _("cross-correlogram"));
 	simple_selection(XCORRGM, title, do_xcorrgm, NULL);
     }
+}
+
+void cond_number_callback (void)
+{
+    gretl_matrix *X = NULL;
+    double cnumber;
+    int *list = main_window_selection_as_list();
+    int addconst = 0;
+    int resp, err = 0;
+
+    resp = yes_no_cancel_dialog(_("Collinearity check"),
+				_("Include a constant?"),
+				NULL);
+    if (resp < 0) {
+	/* canceled */
+	return;
+    }
+
+    if (resp == GRETL_YES) {
+	int *lplus = gretl_list_new(list[0] + 1);
+	int i;
+
+	lplus[1] = 0;
+	for (i=2; i<=lplus[0]; i++) {
+	    lplus[i] = list[i-1];
+	}
+	free(list);
+	list = lplus;
+	addconst = 1;
+    }
+
+    X = gretl_matrix_data_subset(list, dataset,
+				 dataset->t1,
+				 dataset->t2,
+				 M_MISSING_SKIP,
+				 &err);
+
+    if (!err) {
+	cnumber = gretl_matrix_cond_index(X, &err);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	PRN *prn = NULL;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
+	pputs(prn, "For a matrix composed of the selected series");
+	if (addconst) {
+	    pputc(prn, ' ');
+	    pputs(prn, "plus a constant");
+	}
+	pprintf(prn, ":\n\n%s = %g\n\n", _("condition number"), cnumber);
+	pputs(prn, _("A condition number greater than 50 is commonly regarded as\n"
+		     "indicating strong collinearity."));
+	pputc(prn, '\n');
+	view_buffer(prn, 78, 200, _("Collinearity check"), PRINT, NULL);
+    }
+
+    gretl_matrix_free(X);
+    free(list);
 }
 
 static int nist_verbosity (GtkAction *action)

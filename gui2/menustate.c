@@ -437,6 +437,7 @@ enum MenuIdx_ {
     MNU_PGRAM,
     MNU_ATTRS,
     MNU_CORR,
+    MNU_COND,
     MNU_XCORR,
     MNU_SCATR,
     MNU_CLIPB,
@@ -496,6 +497,7 @@ struct popup_entries main_pop_entries[] = {
     { MNU_PGRAM, N_("Periodogram"), T_SINGLE, },
     { MNU_ATTRS, N_("Edit attributes"), T_SINGLE },
     { MNU_CORR,  N_("Correlation matrix"), T_MULTI },
+    { MNU_COND,  N_("Collinearity"), T_MULTI },
     { MNU_XCORR, N_("Cross-correlogram"), T_MULTI },
     { MNU_SCATR, N_("XY scatterplot"), T_MULTI },
     { MNU_CLIPB, N_("Copy to clipboard"), T_BOTH },
@@ -685,7 +687,9 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	    free(buf);
 	}
     } else if (i == MNU_DISP) { 
-	display_selected(); 
+	display_selected();
+    } else if (i == MNU_COND) {
+	cond_number_callback();
     } else if (i == MNU_XCORR)  {
 	xcorrgm_callback();
     } else if (i == MNU_TPLOT) { 
