@@ -973,7 +973,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     int quad = 0, show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
     double fmax, f, f0, s, steplen = 0.0;
-    double D1, D2;
+    double fdiff, D1, D2;
     int i, j, ilast, iter, done = 0;
     int err = 0;
 
@@ -1098,12 +1098,13 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 				      sumgrad, fmax, &fcount, minimize);
 	    }
 
-	    if (iter > 1) {
-		done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
+	    fdiff = fabs(fmax - f);
+
+	    if (iter > 1 || fdiff > 0) {
+		done = fdiff <= reltol * (fabs(fmax) + reltol);
 #if BFGS_DEBUG
 		fprintf(stderr, "convergence test: LHS=%g, RHS=%g; done=%d\n",
-			fabs(fmax - f), reltol * (fabs(fmax) + reltol),
-			done);
+			fdiff, reltol * (fabs(fmax) + reltol), done);
 #endif
 	    }
 
@@ -3094,8 +3095,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		      step, maxcalls, &ncalls, &nresets,
 		      data, opt, prn);
 
-    fprintf(stderr, "asa047 finished: fncalls=%d, err=%d (%s)\n",
-	    ncalls, err, errmsg_get_with_default(err));
+    fprintf(stderr, "asa047: fncalls=%d, err=%d\n", ncalls, err);
 
     if (err == E_NOCONV) {
 	/* tolerate non-convergence */
