@@ -784,7 +784,6 @@ void cond_number_callback (void)
     gretl_matrix *X = NULL;
     double cnumber;
     int *list = main_window_selection_as_list();
-    int addconst = 0;
     int resp, err = 0;
 
     resp = yes_no_cancel_dialog(_("Collinearity check"),
@@ -805,7 +804,6 @@ void cond_number_callback (void)
 	}
 	free(list);
 	list = lplus;
-	addconst = 1;
     }
 
     X = gretl_matrix_data_subset(list, dataset,
@@ -826,12 +824,10 @@ void cond_number_callback (void)
 	if (bufopen(&prn)) {
 	    return;
 	}
-	pputs(prn, "For a matrix composed of the selected series");
-	if (addconst) {
-	    pputc(prn, ' ');
-	    pputs(prn, "plus a constant");
-	}
-	pprintf(prn, ":\n\n%s = %g\n\n", _("condition number"), cnumber);
+	pputs(prn, "For a matrix composed of the selected series:");
+	pputc(prn, '\n');
+	gretl_list_print(list, dataset, prn);
+	pprintf(prn, "\n%s = %g\n\n", _("condition number"), cnumber);
 	pputs(prn, _("A condition number greater than 50 is commonly regarded as\n"
 		     "indicating strong collinearity."));
 	pputc(prn, '\n');
