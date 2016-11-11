@@ -824,7 +824,7 @@ void cond_number_callback (void)
 	if (bufopen(&prn)) {
 	    return;
 	}
-	pputs(prn, "For a matrix composed of the selected series:");
+	pputs(prn, _("For a matrix composed of the selected series:"));
 	pputc(prn, '\n');
 	gretl_list_print(list, dataset, prn);
 	pprintf(prn, "\n%s = %g\n\n", _("condition number"), cnumber);

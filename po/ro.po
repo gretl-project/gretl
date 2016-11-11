@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-10 09:14-0500\n"
+"POT-Creation-Date: 2016-11-11 15:46-0500\n"
 "PO-Revision-Date: 2015-07-30 11:50+0100\n"
 "Last-Translator: Mihaela Nicolau <m.nicolau@univ-danubius.ro>\n"
 "Language-Team: Romanian\n"
@@ -8436,6 +8436,10 @@ msgstr "non-linearitate"
 #, fuzzy
 msgid "Include a constant?"
 msgstr "Include o constantă"
+
+#: gui2/callbacks.c:827
+msgid "For a matrix composed of the selected series:"
+msgstr ""
 
 #: gui2/callbacks.c:830
 #, fuzzy

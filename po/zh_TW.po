@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-10 09:14-0500\n"
+"POT-Creation-Date: 2016-11-11 15:46-0500\n"
 "PO-Revision-Date: 2016-04-21 19:22-0400\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
@@ -8748,6 +8748,10 @@ msgstr "共線性檢定(_Collinearity)"
 #, fuzzy
 msgid "Include a constant?"
 msgstr "含常數項 (Include a constant)"
+
+#: gui2/callbacks.c:827
+msgid "For a matrix composed of the selected series:"
+msgstr ""
 
 #: gui2/callbacks.c:830
 #, fuzzy

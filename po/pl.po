@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.92\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-10 09:14-0500\n"
+"POT-Creation-Date: 2016-11-11 15:46-0500\n"
 "PO-Revision-Date: 2016-09-29 00:50-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.umk.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -8584,6 +8584,10 @@ msgstr "ocena _współliniowości"
 #, fuzzy
 msgid "Include a constant?"
 msgstr "Włącz wyraz wolny"
+
+#: gui2/callbacks.c:827
+msgid "For a matrix composed of the selected series:"
+msgstr ""
 
 #: gui2/callbacks.c:830
 #, fuzzy

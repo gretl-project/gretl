@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-10 09:14-0500\n"
+"POT-Creation-Date: 2016-11-11 15:46-0500\n"
 "PO-Revision-Date: 2016-11-05 12:04-0400\n"
 "Last-Translator: Oleh Komashko <oleg_komashko@ukr.net>\n"
 "Language-Team: \n"
@@ -8563,6 +8563,10 @@ msgstr "_Мультиколінеарність"
 #, fuzzy
 msgid "Include a constant?"
 msgstr "Включити константу"
+
+#: gui2/callbacks.c:827
+msgid "For a matrix composed of the selected series:"
+msgstr ""
 
 #: gui2/callbacks.c:830
 #, fuzzy
