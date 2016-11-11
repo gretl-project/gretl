@@ -1058,7 +1058,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 {
     char path[FILENAME_MAX];
     gchar *pkgname = NULL;
-    gchar *dir;
+    gchar *dir = NULL;
     int dircol = 0;
 
     if (vwin->role == FUNC_FILES) {
@@ -1082,9 +1082,26 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	} else {
 	    build_path(path, dir, pkgname, ".gfn");
 	}
-	g_free(dir);
     } else {
 	strcpy(path, pkgname);
+    }
+
+    if (vwin->role == FUNC_FILES && task != DELETE_FN_PKG) {
+	/* try to ensure we don't get a stale version */
+	char test[FILENAME_MAX];
+	const char *loaded = NULL;
+	gchar *version = NULL;
+
+	build_path(test, dir, pkgname, ".gfn");
+	if (function_package_is_loaded(test, &loaded)) {
+	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+				 1, &version);
+	    if (loaded != NULL && version != NULL &&
+		strcmp(version, loaded)) {
+		function_package_unload_by_filename(test);
+	    }
+	}
+	g_free(version);
     }
 
 #if GFN_DEBUG
@@ -1114,6 +1131,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     }
 
     g_free(pkgname);
+    g_free(dir);
 }
 
 static void show_addon_info (GtkWidget *w, gpointer data)
