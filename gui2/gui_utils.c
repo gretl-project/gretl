@@ -235,7 +235,7 @@ static GtkActionEntry model_items[] = {
     { "Restore", NULL, N_("_Restore model sample"), NULL, NULL, G_CALLBACK(model_sample_callback) },
 #endif
     { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
-    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
+    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },
     { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
     { "ResidPlot", NULL, N_("_Residual plot"), NULL, NULL, NULL },    
     { "FittedActualPlot", NULL, N_("_Fitted, actual plot"), NULL, NULL, NULL },    
@@ -246,8 +246,10 @@ static GtkActionEntry model_items[] = {
     { "ConfIntervals", NULL, N_("_Confidence intervals for coefficients"), NULL, NULL, 
       G_CALLBACK(do_coeff_intervals) },    
     { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },    
-    { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },    
-    { "ANOVA", NULL, N_("_ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },    
+    { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },
+    { "Collinearity", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
+    { "Leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
+    { "ANOVA", NULL, N_("_ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },
     { "Bootstrap", NULL, N_("_Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }
 };
 
@@ -261,9 +263,7 @@ static GtkActionEntry model_test_items[] = {
     { "reset", NULL, N_("_Ramsey's RESET"), NULL, NULL, G_CALLBACK(do_reset) },
     { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },    
     { "modtest:n", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
-    { "leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
     { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },    
-    { "vif", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
     { "modtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
     { "dwpval", NULL, N_("_Durbin-Watson p-value"), NULL, NULL, G_CALLBACK(do_dwpval) },
     { "modtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
@@ -2569,63 +2569,6 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     return vwin;
 }
 
-#define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))
-
-static void get_ci_and_opt (const gchar *s, int *ci, gretlopt *opt)
-{
-    char c, word[9];
-
-    sscanf(s, "%8[^:]:%c", word, &c);
-    *ci = gretl_command_number(word);
-    *opt = opt_from_flag((unsigned char) c);
-}
-
-static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
-{
-    gretlopt opt;
-    char path[128];
-    const gchar *s;
-    int i, n, ci;
-
-    if (pmod->ci == MPOLS) {
-	/* can we relax this? */
-	flip(ui, "/menubar/Tests", FALSE);
-	return;
-    }
-
-    n = G_N_ELEMENTS(model_test_items);
-
-    for (i=0; i<n; i++) {
-	opt = OPT_NONE;
-	s = model_test_items[i].name;
-	if (strchr(s, ':')) {
-	    get_ci_and_opt(s, &ci, &opt);
-	} else if (!strcmp(s, "dwpval")) {
-	    sprintf(path, "/menubar/Tests/%s", s);
-	    flip(ui, path, dw_pval_ok(pmod));
-	    continue;
-	} else if (!strcmp(s, "Hsk")) {
-	    ci = MODTEST;
-	    opt = (dataset_is_panel(dataset))? OPT_P : OPT_W;
-	} else {
-	    ci = gretl_command_number(s);
-	}
-	sprintf(path, "/menubar/Tests/%s", s);
-	flip(ui, path, model_test_ok(ci, opt, pmod, dataset));
-    }
-}
-
-static void arma_x12_menu_mod (windata_t *vwin)
-{
-    flip(vwin->ui, "/menubar/Analysis/Covariance", FALSE);
-    add_x12_output_menu_item(vwin);
-}
-
-static void rq_coeff_intervals_mod (windata_t *vwin)
-{
-    flip(vwin->ui, "/menubar/Analysis/ConfIntervals", FALSE);
-}
-
 static void mnl_probs_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2695,6 +2638,118 @@ static void add_multinomial_probs_item (windata_t *vwin)
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
+#define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))
+
+static void get_ci_and_opt (const gchar *s, int *ci, gretlopt *opt)
+{
+    char c, word[9];
+
+    sscanf(s, "%8[^:]:%c", word, &c);
+    *ci = gretl_command_number(word);
+    *opt = opt_from_flag((unsigned char) c);
+}
+
+static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
+{
+    gretlopt opt;
+    char path[128];
+    const gchar *s;
+    int i, n, ci;
+
+    if (pmod->ci == MPOLS) {
+	/* can we relax this? */
+	flip(ui, "/menubar/Tests", FALSE);
+	return;
+    }
+
+    n = G_N_ELEMENTS(model_test_items);
+
+    for (i=0; i<n; i++) {
+	opt = OPT_NONE;
+	s = model_test_items[i].name;
+	if (strchr(s, ':')) {
+	    get_ci_and_opt(s, &ci, &opt);
+	} else if (!strcmp(s, "dwpval")) {
+	    sprintf(path, "/menubar/Tests/%s", s);
+	    flip(ui, path, dw_pval_ok(pmod));
+	    continue;
+	} else if (!strcmp(s, "Hsk")) {
+	    ci = MODTEST;
+	    opt = (dataset_is_panel(dataset))? OPT_P : OPT_W;
+	} else {
+	    ci = gretl_command_number(s);
+	}
+	sprintf(path, "/menubar/Tests/%s", s);
+	flip(ui, path, model_test_ok(ci, opt, pmod, dataset));
+    }
+
+    if (pmod->ci == GARCH) {
+	flip(ui, "/menubar/Tests/Hsk", FALSE);
+    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
+	/* random effects probit */
+	flip(ui, "/menubar/Tests/modtest:n", FALSE);
+    }
+}
+
+static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
+{
+    GtkUIManager *ui = vwin->ui;
+    
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
+	/* can we relax some of this later? */
+	flip(ui, "/menubar/Analysis/DisplayAFR", FALSE);
+	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+    } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
+	/* relax this? */
+	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+	add_multinomial_probs_item(vwin);
+    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
+	/* random effects probit */
+	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+    }
+
+    if (pmod->ncoeff == 1) {
+	flip(ui, "/menubar/Analysis/ConfEllipse", FALSE);
+    }
+
+    if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
+	(pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
+	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+    }
+
+    if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) || na(pmod->tss)) {
+	flip(ui, "/menubar/Analysis/ANOVA", FALSE);
+    }
+
+    if (!bootstrap_ok(pmod->ci)) {
+	flip(ui, "/menubar/Analysis/Bootstrap", FALSE);
+    }
+
+    if (gretl_model_get_int(pmod, "null-model")) {
+	flip(ui, "/menubar/Analysis/ConfIntervals", FALSE);
+	flip(ui, "/menubar/Analysis/Covariance", FALSE);
+    }
+
+    if (!model_test_ok(VIF, OPT_NONE, pmod, dataset)) {
+	flip(ui, "/menubar/Analysis/Collinearity", FALSE);
+    }
+
+    if (!model_test_ok(LEVERAGE, OPT_NONE, pmod, dataset)) {
+	flip(ui, "/menubar/Analysis/Leverage", FALSE);
+    }    
+}
+
+static void arma_x12_menu_mod (windata_t *vwin)
+{
+    flip(vwin->ui, "/menubar/Analysis/Covariance", FALSE);
+    add_x12_output_menu_item(vwin);
+}
+
+static void rq_coeff_intervals_mod (windata_t *vwin)
+{
+    flip(vwin->ui, "/menubar/Analysis/ConfIntervals", FALSE);
+}
+
 static void midas_plot_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2722,8 +2777,6 @@ static void midas_plot_callback (GtkAction *action, gpointer p)
 
 static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 {
-    set_tests_menu_state(vwin->ui, pmod);
-
     /* disallow saving an already-saved model */
     if (is_session_model((void *) pmod)) {
 	set_model_save_state(vwin, FALSE);
@@ -2735,56 +2788,27 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/menubar/Save", FALSE);
 	flip(vwin->ui, "/menubar/Analysis", FALSE);
 	return;
-    } 
+    }
+
+    set_tests_menu_state(vwin->ui, pmod);
+    set_analysis_menu_state(vwin, pmod);
 
     if (intervals_model(pmod)) {
 	rq_coeff_intervals_mod(vwin);
     }
 
-    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
-	/* can we relax some of this later? */
-	flip(vwin->ui, "/menubar/Analysis/DisplayAFR", FALSE);
-	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
-	flip(vwin->ui, "/menubar/Graphs", FALSE);
-    } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
-	/* relax this? */
-	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
-	add_multinomial_probs_item(vwin);
-    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
-	/* random effects probit */
-	flip(vwin->ui, "/menubar/Tests/modtest:n", FALSE);
-	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
-    } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
+    if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
-    } 
+    }     
+
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
+	/* can we relax this later? */
+	flip(vwin->ui, "/menubar/Graphs", FALSE);
+    }
 
     if (pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* FIXME? */
 	flip(vwin->ui, "/menubar/Save", FALSE);
-    }
-
-    if (pmod->ncoeff == 1) {
-	flip(vwin->ui, "/menubar/Analysis/ConfEllipse", FALSE);
-    }
-
-    if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
-	(pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
-	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
-    } else if (pmod->ci == GARCH) {
-	flip(vwin->ui, "/menubar/Tests/Hsk", FALSE);
-    }
-
-    if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) || na(pmod->tss)) {
-	flip(vwin->ui, "/menubar/Analysis/ANOVA", FALSE);
-    }
-
-    if (!bootstrap_ok(pmod->ci)) {
-	flip(vwin->ui, "/menubar/Analysis/Bootstrap", FALSE);
-    }
-
-    if (gretl_model_get_int(pmod, "null-model")) {
-	flip(vwin->ui, "/menubar/Analysis/ConfIntervals", FALSE);
-	flip(vwin->ui, "/menubar/Analysis/Covariance", FALSE);
     }
 }
 
