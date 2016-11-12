@@ -50,6 +50,7 @@
                          c == FRACTINT ||       \
 			 c == FREQ ||		\
 			 c == KPSS ||		\
+			 c == LABELS ||         \
 			 c == MAKEPKG ||	\
 			 c == MODTEST ||	\
 			 c == LEVERAGE ||	\
@@ -428,6 +429,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
     { OUTFILE,  OPT_Q, "quiet", 0 },
+    { OUTFILE,  OPT_B, "buffer", 0 },
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 1 },
     { PANEL,    OPT_F, "fixed-effects", 0 },

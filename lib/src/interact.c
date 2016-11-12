@@ -758,7 +758,8 @@ static int set_var_info (const int *list,
     return err;
 }
 
-static void showlabels (const int *list, const DATASET *dset, PRN *prn)
+static void showlabels (const int *list, gretlopt opt,
+			const DATASET *dset, PRN *prn)
 {
     const char *label;
     int i, v, vmax, nl = 0;
@@ -785,27 +786,35 @@ static void showlabels (const int *list, const DATASET *dset, PRN *prn)
 	return;
     } 
 
-    pprintf(prn, _("Listing labels for variables:\n"));
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("Listing labels for variables:\n"));
+    }
 
     for (i=1; i<=vmax; i++) {
 	v = list == NULL ? i : list[i];
 	if (v >= 0 && v < dset->v) {
 	    label = series_get_label(dset, v);
 	    if (*label != '\0') {
-		pprintf(prn, " %s: %s\n", dset->varname[v], label);
+		if (opt & OPT_Q) {
+		    pprintf(prn, "%s: %s\n", dset->varname[v], label);
+		} else {
+		    pprintf(prn, " %s: %s\n", dset->varname[v], label);
+		}
 	    }
 	}
     }
 
-    pputc(prn, '\n');
+    if (!(opt & OPT_Q)) {
+	pputc(prn, '\n');
+    }
 }
 
-static int outfile_redirect (PRN *prn, FILE *fp, gretlopt opt,
-			     int *parms)
+static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
+			     gretlopt opt, int *parms)
 {
     int err;
 
-    err = print_start_redirection(prn, fp);
+    err = print_start_redirection(prn, fp, strvar);
     if (err) {
 	return err;
     }
@@ -860,27 +869,60 @@ static int redirection_ok (PRN *prn)
     }
 }
 
+static int outbuf_check (const char *name, const DATASET *dset)
+{
+    GretlType t = gretl_type_from_name(name, dset);
+    int err = 0;
+
+    if (t != GRETL_TYPE_NONE && t != GRETL_TYPE_STRING) {
+	err = E_TYPES;
+    } else if (t == GRETL_TYPE_NONE) {
+	err = check_varname(name);
+	if (!err) {
+	    err = create_user_var(name, GRETL_TYPE_STRING);
+	}
+    }
+
+    return err;
+}
+
 static int 
-do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
+do_outfile_command (gretlopt opt, const char *fname,
+		    const DATASET *dset, PRN *prn)
 {
     static char outname[MAXLEN];
     static int vparms[2];
-    int diverted = 0;
+    int rlevel = 0;
     int err = 0;
 
     if (prn == NULL) {
 	return 0;
     }
 
+    if (opt & OPT_B) {
+	/* --buffer: implies --write, incompatible with --append */
+	if (opt & OPT_A) {
+	    return E_BADOPT;
+	} else {
+	    opt |= OPT_W;
+	}
+    }
+
     if (!(opt & (OPT_W | OPT_A | OPT_C))) {
 	return E_ARGS;
     }
 
-    diverted = print_redirection_level(prn) > 0;
+    /* --append plus --buffer won't work */
+    err = incompatible_options(opt, OPT_A | OPT_B);
+    if (err) {
+	return err;
+    }
+
+    rlevel = print_redirection_level(prn);
 
     if (opt & OPT_C) {
 	/* command to close outfile */
-	if (!diverted) {
+	if (rlevel == 0) {
 	    pputs(prn, _("Output is not currently diverted to file\n"));
 	    err = 1;
 	} else {
@@ -894,7 +936,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
     }
 
     /* command to divert output to file */
-    if (diverted && !redirection_ok(prn)) {
+    if (rlevel > 0 && !redirection_ok(prn)) {
 	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
 			     outname);
 	return 1;
@@ -904,26 +946,43 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	if (gretl_messages_on()) {
 	    pputs(prn, _("Now discarding output\n")); 
 	}
-	err = outfile_redirect(prn, NULL, opt, vparms);
+	err = outfile_redirect(prn, NULL, NULL, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	err = outfile_redirect(prn, stderr, opt, vparms);
+	err = outfile_redirect(prn, stderr, NULL, opt, vparms);
 	*outname = '\0';
     } else if (!strcmp(fname, "stdout")) {
-	err = outfile_redirect(prn, stdout, opt, vparms);
+	err = outfile_redirect(prn, stdout, NULL, opt, vparms);
 	*outname = '\0';
     } else {
 	/* should the stream be opened in binary mode on Windows? */
 	char tmp[FILENAME_MAX];
 	const char *name = tmp;
+	const char *strvar = NULL;
 	FILE *fp;
 
-	/* switches to workdir if needed */
-	strcpy(tmp, fname);
-	gretl_maybe_prepend_dir(tmp);
+	if (opt & OPT_B) {
+	    /* @fname is actually the name of a string variable */
+	    err = outbuf_check(fname, dset);
+	    if (err) {
+		return err;
+	    } else {
+		gchar *pname = g_strdup_printf("%s.prntmp", fname);
+		
+		build_path(tmp, gretl_dotdir(), pname, NULL);
+		g_free(pname);
+		strvar = fname;
+	    }
+	} else {
+	    /* switches to workdir if needed */
+	    strcpy(tmp, fname);
+	    gretl_maybe_prepend_dir(tmp);
+	}
 
 	if (opt & OPT_A) {
 	    fp = gretl_fopen(tmp, "a");
+	} else if (opt & OPT_B) {
+	    fp = gretl_fopen(tmp, "w+");
 	} else {
 	    fp = gretl_fopen(tmp, "w");
 	}
@@ -936,6 +995,8 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	if (gretl_messages_on()) {
 	    if (cwd_is_workdir()) {
 		name = fname;
+	    } else if (strvar != NULL) {
+		name = strvar;
 	    }
 	    if (opt & OPT_A) {
 		pprintf(prn, _("Now appending output to '%s'\n"), name);
@@ -944,7 +1005,7 @@ do_outfile_command (gretlopt opt, const char *fname, PRN *prn)
 	    }
 	}
 
-	err = outfile_redirect(prn, fp, opt, vparms);
+	err = outfile_redirect(prn, fp, strvar, opt, vparms);
 	if (err) {
 	    fclose(fp);
 	    remove(tmp);
@@ -2658,13 +2719,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case LABELS:
-	if (cmd->opt) {
+	if (cmd->opt & (OPT_D | OPT_F | OPT_T)) {
 	    err = read_or_write_var_labels(cmd->opt, dset, prn);
 	    if (!err && (cmd->opt & (OPT_D | OPT_F))) {
 		schedule_callback(s);
 	    }
 	} else {
-	    showlabels(cmd->list, dset, prn);
+	    showlabels(cmd->list, cmd->opt, dset, prn);
 	}
 	break;
 
@@ -2758,7 +2819,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case OUTFILE:
-	err = do_outfile_command(cmd->opt, cmd->param, prn);
+	err = do_outfile_command(cmd->opt, cmd->param, dset, prn);
 	break;
 
     case SETOBS:
