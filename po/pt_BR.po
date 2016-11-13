@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-11-11 20:32-0200\n"
-"PO-Revision-Date: 2016-11-11 20:35-0200\n"
+"PO-Revision-Date: 2016-11-13 12:57-0200\n"
 "Last-Translator: Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.9\n"
+"X-Generator: Poedit 1.8.11\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -15854,7 +15854,7 @@ msgstr "Preferência de tema"
 
 #: gui2/settings.c:213
 msgid "Web browser"
-msgstr "Navegador Web"
+msgstr "Navegador web"
 
 #: gui2/settings.c:216
 msgid "Allow shell commands"
@@ -15870,7 +15870,7 @@ msgstr "Usar abas na visualização de modelos"
 
 #: gui2/settings.c:222
 msgid "Prompt to save session"
-msgstr "Aviso para salvar sessão"
+msgstr "Avisar para salvar sessão"
 
 #: gui2/settings.c:224
 msgid "Set working directory from shell"
@@ -15886,7 +15886,7 @@ msgstr "Preferência de idioma"
 
 #: gui2/settings.c:232
 msgid "Default graph scale"
-msgstr "Escala de gráfico padrão"
+msgstr "Tamanho de gráfico padrão"
 
 #: gui2/settings.c:235
 msgid "Command to launch gnuplot"
@@ -17764,7 +17764,7 @@ msgstr "Detectar e corrigir valores extremos"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
-msgstr "Para além de valores extremos aditivos, permitir para:"
+msgstr "Além de valores extremos aditivos, permitir:"
 
 #: plugin/tramo_options.c:628
 msgid "transitory changes"
