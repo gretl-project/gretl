@@ -1256,23 +1256,21 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     }
 
     if (!*err) {
-	n = (r > 0) + (c > 0);
-	if (n == 2) {
-	    ; /* we got dimensions from the preamble */
+	if (r > 0 && c > 0) {
+	    /* we got dimensions from the preamble */
+	    n = 2;
 	} else if (fz) {
 	    char tmp[64];
 
 	    if (gzgets(fz, tmp, sizeof tmp) != NULL) {
 		n = sscanf(tmp, "%d %d\n", &r, &c);
-	    } else {
-		n = 0;
 	    }
 	} else {
 	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
 	if (n < 2 || r <= 0 || c <= 0) {
-	    fprintf(stderr, "error reading rows, cols (n=%d, r=%d, c=%d)\n",
-		    n, r, c);
+	    fprintf(stderr, "error reading rows, cols (r=%d, c=%d)\n",
+		    r, c);
 	    *err = E_DATA;
 	} else {
 	    A = gretl_matrix_alloc(r, c);
