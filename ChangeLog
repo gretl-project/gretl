@@ -19,6 +19,8 @@ version 2016d, in progress
   rather than flagging an error
 - "fcast" command: add a --stats-only option to print the
   forecast evaluation statistics without the actual forecasts
+- "outfile" command: add a --buffer option to divert output
+  to a string variable
 - median() function: accept a list argument, as with mean()
 - GUI main window popup menu: add option to check for 
   collinearity when two or more series are selected

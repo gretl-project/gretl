@@ -912,12 +912,6 @@ do_outfile_command (gretlopt opt, const char *fname,
 	return E_ARGS;
     }
 
-    /* --append plus --buffer won't work */
-    err = incompatible_options(opt, OPT_A | OPT_B);
-    if (err) {
-	return err;
-    }
-
     rlevel = print_redirection_level(prn);
 
     if (opt & OPT_C) {
