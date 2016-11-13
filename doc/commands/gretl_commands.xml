@@ -9167,10 +9167,10 @@
 	given time, so calls to this command cannot be
 	nested. However, use of this command is permitted inside
 	user-written functions (provided the output file is also
-	closed from inside the same function), so output can be
+	closed from inside the same function) such that output can be
 	temporarily diverted and then given back to an original output
-	file (if <lit>outfile</lit> is currently in use by the
-	caller). For example, the code
+	file, in case <lit>outfile</lit> is currently in use by the
+	caller. For example, the code
       </para>
       <code>
 	function void f (string s)
@@ -9221,9 +9221,9 @@
 	printf "mybuf = \n'%s'\n", mybuf
       </code>
       <para>
-	In this case the variable <lit>mybuf</lit> captures of the
-	output of the <lit>labels</lit> command. This facility may
-	be of use to writers of function packages.
+	In this case the variable <lit>mybuf</lit> captures the output
+	of the <lit>labels</lit> command. This facility may be of use
+	to writers of function packages.
       </para>
     </description>
 
