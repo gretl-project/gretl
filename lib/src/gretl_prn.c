@@ -1255,29 +1255,16 @@ int printing_to_standard_stream (PRN *prn)
 
 static void prn_push_stream (PRN *prn, FILE *fp, const char *strvar)
 {
-    if (prn->fp != NULL) {
-	fpinfo fi = {prn->fp, 0, NULL};
+    fpinfo fi = {prn->fp, 0, NULL};
 
-	if (prn->fplist == NULL) {
-	    prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
-	}
-	fi.level = gretl_function_depth();
-	if (strvar != NULL) {
-	    fi.strvar = g_strdup(strvar);
-	}
-	g_array_append_val(prn->fplist, fi);
-    } else {
-	fpinfo fi = {NULL, 0, NULL};
-
-	if (prn->fplist == NULL) {
-	    prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
-	}
-	fi.level = gretl_function_depth();
-	if (strvar != NULL) {
-	    fi.strvar = g_strdup(strvar);
-	}
-	g_array_append_val(prn->fplist, fi);
+    if (prn->fplist == NULL) {
+	prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
     }
+    fi.level = gretl_function_depth();
+    if (strvar != NULL) {
+	fi.strvar = g_strdup(strvar);
+    }
+    g_array_append_val(prn->fplist, fi);
 
     prn->fp = fp;
 }
@@ -1345,7 +1332,7 @@ static int prn_pop_stream (PRN *prn)
 	}
     }
 
-    if (prn->fp != stdout && prn->fp != stderr) {
+    if (prn->fp != NULL && prn->fp != stdout && prn->fp != stderr) {
 	fclose(prn->fp);
     }
 
