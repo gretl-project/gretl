@@ -1624,9 +1624,13 @@ static int get_parm2 (CMD *c, int options_later)
 	c->parm2 = merge_toks_r_to_l(c, pos);
     } else {
 	c->parm2 = tok->s;
-	if (c->ci == MODPRINT && (tok->flag & TOK_QUOTED)) {
-	    /* signal quoted status of string literal */
-	    c->opt |= OPT_L;
+	if (tok->flag & TOK_QUOTED) {
+	    if (c->ci == MODPRINT) {
+		/* signal quoted status of string literal */
+		c->opt |= OPT_L;
+	    } else if (c->ci == SET) {
+		c->parm2 = gretl_strdup_printf("\"%s\"", tok->s);
+	    }
 	}
 	tok->flag |= TOK_DONE;
     }
