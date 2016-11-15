@@ -8586,7 +8586,7 @@ msgstr "Apri il file gfn"
 
 #: gui2/callbacks.c:743
 msgid "Start looking in:"
-msgstr ""
+msgstr "Guarda per prima cosa in:"
 
 #: gui2/callbacks.c:777 gui2/library.c:1430
 msgid "cross-correlogram"
@@ -8602,7 +8602,7 @@ msgstr "Includere una costante?"
 
 #: gui2/callbacks.c:827
 msgid "For a matrix composed of the selected series:"
-msgstr ""
+msgstr "Per la matrice composta dalle serie selezionate:"
 
 #: gui2/callbacks.c:830
 msgid "condition number"
@@ -8841,7 +8841,7 @@ msgstr "Pacchetto di funzioni %s"
 #: gui2/datafiles.c:850
 #, c-format
 msgid "Unload package %s?"
-msgstr ""
+msgstr "Disattiva il pacchetto %s?"
 
 #: gui2/datafiles.c:857
 #, c-format
