@@ -377,16 +377,24 @@ Newton--Raphson, but it is more robust than the latter. It may succeed
 in some cases where derivative-based methods fail, and it may be
 useful, like \texttt{simann}, for improving the starting point for an
 optimization problem so that a derivative-based method can then take
-over successfully. \texttt{NMmax} includes an internal convergence
-check, but it doesn't flag an error if convergence is not achieved:
-this permits a mode of usage where you set a fairly tight budget of
-function evaluations (for example, 200) and just take any improvement
-in the objective function that is available without worrying about
-whether an optimum has truly been reached.
+over successfully.
 
-If the task is actually minimization, you can either have the
-function-call return the negative of the actual criterion, or if you
-prefer, call \texttt{NMmax} under the alias \texttt{NMmin}.
+\texttt{NMmax} includes an internal ``convergence'' check---namely,
+verification that the best value achieved for the objective function
+at termination of the algorithm is at least a local optimum---but by
+default it doesn't flag an error if this condition is not
+satisfied. This permits a mode of usage where you set a fairly tight
+budget of function evaluations (for example, 200) and just take any
+improvement in the objective function that is available, without
+worrying about whether an optimum has truly been reached. However, if
+you want the convergence check to be enforced you can flag this by
+setting a negative value for the maximum function evaluations
+argument; in that case the absolute value of the argument is taken and
+an error is provoked on non-convergence.
+
+If the task for this function is actually minimization, you can either
+have the function-call return the negative of the actual criterion or,
+if you prefer, call \texttt{NMmax} under the alias \texttt{NMmin}.
 
 Here is an example of use: minimization of the Powell quartic
 function, which is problematic for BFGS. (The true minimum is zero,

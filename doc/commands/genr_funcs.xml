@@ -6016,8 +6016,14 @@
 	</para>
 	<para>
 	  The optional third argument may be used to set the maximum
-	  number of function evalations; if it is omitted the maximum
-	  defaults to 2000.
+	  number of function evaluations; if it is omitted or set to
+	  zero the maximum defaults to 2000. As a special signal to
+	  this function the <argname>maxfeval</argname> value may be
+	  set to a negative number. In this case the absolute value is
+	  taken, and <lit>NMmax</lit> flags an error if the best value
+	  found for the objective function at the maximum number of
+	  function evaluations is not a local optimum. Otherwise
+	  non-convergence in this sense is not treated as an error.
 	</para>
 	<para>
 	  If the object is in fact minimization, either the function

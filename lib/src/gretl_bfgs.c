@@ -3089,7 +3089,12 @@ int gretl_amoeba (double *theta, int n, int maxit,
 	xmin[i] = 0.0;
     }
 
-    maxcalls = maxit <= 0 ? 2000 : maxit;
+    if (maxit < 0) {
+	maxcalls = -maxit;
+	opt |= OPT_F; /* fail on non-convergence */
+    } else {
+	maxcalls = maxit == 0 ? 2000 : maxit;
+    }
 
     err = nelder_mead(cfunc, n, theta, xmin, &fval, reqmin,
 		      step, maxcalls, &ncalls, &nresets,
@@ -3097,7 +3102,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     fprintf(stderr, "asa047: fncalls=%d, err=%d\n", ncalls, err);
 
-    if (err == E_NOCONV) {
+    if (err == E_NOCONV && !(opt & OPT_F)) {
 	/* tolerate non-convergence */
 	err = 0;
     }
