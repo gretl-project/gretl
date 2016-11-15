@@ -6810,7 +6810,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/Influential observations</menu-path>
+      <menu-path>Model window, /Analysis/Influential observations</menu-path>
     </gui-access>
 
   </command>
@@ -14030,7 +14030,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/Collinearity</menu-path>
+      <menu-path>Model window, /Analysis/Collinearity</menu-path>
     </gui-access>
 
   </command>
