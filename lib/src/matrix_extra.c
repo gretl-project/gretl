@@ -993,7 +993,9 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
     return err;
 }
 
-static int skip_matrix_comment (FILE *fp, gzFile fz, int *err)
+static int skip_matrix_comment (FILE *fp, gzFile fz,
+				int *rows, int *cols,
+				int *err)
 {
     int c, ret = 0;
 
@@ -1004,13 +1006,29 @@ static int skip_matrix_comment (FILE *fp, gzFile fz, int *err)
     }
 
     if (c == '#') {
+	char *p, test[16] = {0};
+	int n, i = 0;
+
 	ret = 1;
 	while (c != '\n' && c != EOF && c != -1) {
 	    if (fz) {
 		c = gzgetc(fz);
 	    } else {
 		c = fgetc(fp);
-	    }	    
+	    }
+	    if (i < 15) {
+		test[i] = c;
+	    }
+	    i++;
+	}
+	if ((p = strstr(test, "rows:")) != NULL) {
+	    if (sscanf(p + 5, "%d", &n) == 1) {
+		*rows = n;
+	    }
+	} else if ((p = strstr(test, "columns:")) != NULL) {
+	    if (sscanf(p + 8, "%d", &n) == 1) {
+		*cols = n;
+	    }
 	}
     } else if (fz) {
 	gzungetc(c, fz);
@@ -1187,7 +1205,8 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 					   int import, int *err)
 {
     char fullname[FILENAME_MAX];
-    int r, c, n, gz, bin = 0;
+    int r = 0, c = 0, n = 0;
+    int gz, bin = 0;
     gretl_matrix *A = NULL;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
@@ -1228,26 +1247,30 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	return read_binary_matrix_file(fp, err);
     }
 
-    /* skip any leading comment lines starting with '#' */
-    while (!*err && skip_matrix_comment(fp, fz, err)) {
+    /* 'Eat' any leading comment lines starting with '#',
+       but while we go, scan for Matlab-style rows/columns
+       specification.
+    */
+    while (!*err && skip_matrix_comment(fp, fz, &r, &c, err)) {
 	;
     }
 
     if (!*err) {
-	if (fz) {
+	if (r > 0 && c > 0) {
+	    /* we got dimensions from the preamble */
+	    n = 2;
+	} else if (fz) {
 	    char tmp[64];
 
 	    if (gzgets(fz, tmp, sizeof tmp) != NULL) {
 		n = sscanf(tmp, "%d %d\n", &r, &c);
-	    } else {
-		n = 0;
 	    }
 	} else {
 	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
 	if (n < 2 || r <= 0 || c <= 0) {
-	    fprintf(stderr, "error reading rows, cols (n=%d, r=%d, c=%d)\n",
-		    n, r, c);
+	    fprintf(stderr, "error reading rows, cols (r=%d, c=%d)\n",
+		    r, c);
 	    *err = E_DATA;
 	} else {
 	    A = gretl_matrix_alloc(r, c);

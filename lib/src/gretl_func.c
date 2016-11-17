@@ -4272,12 +4272,16 @@ static void function_package_free_full (fnpkg *pkg)
 
 /* is the package with filename @fname already in memory? */
 
-static fnpkg *get_loaded_pkg_by_filename (const char *fname)
+static fnpkg *get_loaded_pkg_by_filename (const char *fname,
+					  const char **version)
 {
     int i;
 
     for (i=0; i<n_pkgs; i++) {
 	if (!strcmp(fname, pkgs[i]->fname)) {
+	    if (version != NULL) {
+		*version = pkgs[i]->version;
+	    }
 	    return pkgs[i];
 	}
     }
@@ -4297,7 +4301,7 @@ static fnpkg *get_loaded_pkg_by_filename (const char *fname)
 
 void function_package_unload_by_filename (const char *fname)
 {
-    fnpkg *pkg = get_loaded_pkg_by_filename(fname);
+    fnpkg *pkg = get_loaded_pkg_by_filename(fname, NULL);
 
     if (pkg != NULL) {
 	real_function_package_unload(pkg, 0);
@@ -4315,7 +4319,7 @@ void function_package_unload_by_filename (const char *fname)
 
 void function_package_unload_full_by_filename (const char *fname)
 {
-    fnpkg *pkg = get_loaded_pkg_by_filename(fname);
+    fnpkg *pkg = get_loaded_pkg_by_filename(fname, NULL);
 
     if (pkg != NULL) {
 	real_function_package_unload(pkg, 1);
@@ -4789,14 +4793,16 @@ static fnpkg *read_package_file (const char *fname, int *err)
 /** 
  * function_package_is_loaded:
  * @fname: full path to gfn file.
+ * @version: locaate to receive version info, or NULL.
  *
  * Returns: 1 if the function package with filename @fname is
  * loaded in memory, otherwise 0.
  */
 
-int function_package_is_loaded (const char *fname)
+int function_package_is_loaded (const char *fname,
+				const char **version)
 {
-    return (get_loaded_pkg_by_filename(fname) != NULL);
+    return (get_loaded_pkg_by_filename(fname, version) != NULL);
 }
 
 /** 
@@ -4842,7 +4848,7 @@ int load_function_package_by_filename (const char *fname, PRN *prn)
     fnpkg *pkg = NULL;
     int err = 0;
 
-    if (function_package_is_loaded(fname)) {
+    if (function_package_is_loaded(fname, NULL)) {
 	/* already loaded: no-op */
 	fprintf(stderr, "load_function_package_by_filename:\n"
 		" '%s' is already loaded\n", fname);
@@ -4956,7 +4962,7 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
     int free_pkg = 0;
     int err = 0;
 
-    pkg = get_loaded_pkg_by_filename(fname);
+    pkg = get_loaded_pkg_by_filename(fname, NULL);
 
 #if PKG_DEBUG
     fprintf(stderr, "real_print_gfn_data: fname='%s', pkg=%p\n", 

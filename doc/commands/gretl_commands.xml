@@ -3757,6 +3757,10 @@
 	  <effect>don't print forecast statistics</effect>
         </option>
         <option>
+	  <flag>--stats-only</flag>
+	  <effect>only print forecast statistics</effect>
+        </option>	
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print anything</effect>
         </option>
@@ -6806,7 +6810,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/Influential observations</menu-path>
+      <menu-path>Model window, /Analysis/Influential observations</menu-path>
     </gui-access>
 
   </command>
@@ -9092,6 +9096,10 @@
         <option>
 	  <flag>--quiet</flag>
 	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--buffer</flag>
+	  <effect>see below</effect>
         </option>	
       </options>
       <examples>
@@ -9159,10 +9167,10 @@
 	given time, so calls to this command cannot be
 	nested. However, use of this command is permitted inside
 	user-written functions (provided the output file is also
-	closed from inside the same function), so output can be
+	closed from inside the same function) such that output can be
 	temporarily diverted and then given back to an original output
-	file (if <lit>outfile</lit> is currently in use by the
-	caller). For example, the code
+	file, in case <lit>outfile</lit> is currently in use by the
+	caller. For example, the code
       </para>
       <code>
 	function void f (string s)
@@ -9191,6 +9199,32 @@
       <code>
 	Inside
       </code>
+      <para>
+	As described above, the primary usage of this command is to
+	divert output to a named file. However, the <opt>buffer</opt>
+	option may be used to achieve a different effect, namely
+	directing output to a named string variable. This option
+	implies <opt>write</opt> and is incompatible with
+	<opt>append</opt>. The position of the <repl>filename</repl>
+	argument is occupied by the name of a string variable (which
+	must, of course, conform to the requirements for a valid
+	gretl identifier). If a string variable of the given name
+	already exists, its value will be over-written; if there
+	is no such variable, it will be created automatically. Here
+	is a simple example of usage:
+      </para>
+      <code>
+	open data4-1
+	outfile mybuf --buffer --quiet
+	labels
+	outfile --close
+	printf "mybuf = \n'%s'\n", mybuf
+      </code>
+      <para>
+	In this case the variable <lit>mybuf</lit> captures the output
+	of the <lit>labels</lit> command. This facility may be of use
+	to writers of function packages.
+      </para>
     </description>
 
   </command>
@@ -13996,7 +14030,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/Collinearity</menu-path>
+      <menu-path>Model window, /Analysis/Collinearity</menu-path>
     </gui-access>
 
   </command>

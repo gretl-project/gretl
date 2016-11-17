@@ -2354,6 +2354,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     struct range_setting *rset = NULL;
     GtkWidget *w, *vbox, *hbox;
     int u = sample_range_code(action);
+    int T = sample_size(dataset);
 
 #if 0 /* not ready */
     if (dataset_is_panel(dataset) && u == SMPL) {
@@ -2361,6 +2362,11 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	return;
     }
 #endif
+
+    if (u == SMPLRAND && T < 2) {
+	warnbox(_("The current data range is too small for this option"));
+	return;
+    }
 
     rset = rset_new(u, p, NULL, NULL, NULL, _("gretl: set sample"), NULL);
     if (rset == NULL) return;
@@ -2374,13 +2380,13 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	hbox = gtk_hbox_new(FALSE, 5);
 
 	labtxt = g_strdup_printf(_("Number of observations to select (max %d)"),
-				 dataset->n - 1);
+				 T - 1);
 
 	/* spinner for number of obs */
 	w = gtk_label_new(labtxt);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	adj = (GtkAdjustment *) gtk_adjustment_new(default_randsize(), 
-						   1, dataset->n - 1,
+						   1, T - 1,
 						   1, 1, 0);
 	rset->spin1 = gtk_spin_button_new(adj, 1, 0);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);

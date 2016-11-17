@@ -39,6 +39,8 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 
 void cursor_to_top (windata_t *vwin);
 
+void cursor_to_end (windata_t *vwin);
+
 void cursor_to_mark (windata_t *vwin, GtkTextMark *mark);
 
 void scroll_to_foot (windata_t *vwin);

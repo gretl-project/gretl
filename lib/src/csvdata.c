@@ -2928,20 +2928,15 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
     }
 
     while (csv_fgets(c, fp) && !err) {
-
 	tailstrip(c->line);
-
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
 	}
-
 	if (row_not_wanted(c, s)) {
 	    s++;
 	    continue;
 	}
-
 	m = strlen(c->line);
-
 	for (i=1; i<=c->ncols && !err; i++) {
 	    k = c->cols_list[i];
 	    n = c->width_list[i];
@@ -2955,6 +2950,11 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    p = c->line + k - 1;
 	    *c->str = '\0';
 	    strncat(c->str, p, n);
+	    /* Added 2016-11-16: allow trailing blanks in a field
+	       of specified width. This is required for handling
+	       US CPS data.
+	    */
+	    tailstrip(c->str);
 	    if (csv_missval(c->str, i, t+1, missp, prn)) {
 		c->dset->Z[i][t] = NADBL;
 	    } else {
@@ -2967,7 +2967,6 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 		}
 	    }
 	}
-
 	s++;
 	if (++t == c->dset->n) {
 	    break;

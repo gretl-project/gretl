@@ -384,6 +384,12 @@ static void create_ziggurat_tables (void)
     initt = 0;
 }
 
+/**
+ * gretl_one_snormal:
+ *
+ * Returns: a single drawing from the standard normal distribution.
+ */
+
 double gretl_one_snormal (void)
 {
     if (initt) {
@@ -431,12 +437,24 @@ double gretl_one_snormal (void)
 		xx = - ZIGGURAT_NOR_INV_R * log(randu53());
 		yy = - log(randu53());
             } while (yy+yy <= xx*xx);
-	    return ((rabs & 0x100) ? -ZIGGURAT_NOR_R-xx : ZIGGURAT_NOR_R+xx);
+	    return (rabs & 0x100) ? -ZIGGURAT_NOR_R-xx : ZIGGURAT_NOR_R+xx;
         } else if ((fi[idx-1] - fi[idx]) * randu53() + fi[idx] < exp(-0.5*x*x)) {
 	    return x;
 	}
     }
 }
+
+/**
+ * gretl_rand_normal:
+ * @a: target array
+ * @t1: start of the fill range
+ * @t2: end of the fill range
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the standard normal distribution, using the Mersenne Twister
+ * for uniform input and the Ziggurat method for converting to the
+ * normal distribution.
+ */
 
 void gretl_rand_normal (double *a, int t1, int t2)
 {
@@ -493,7 +511,7 @@ static guint32 mt_int_range (guint32 begin, guint32 end)
 
     if (dist > 0) {
 	/* maxval is set to the predecessor of the greatest
-	   multiple of dist less then or equal to 2^32 
+	   multiple of dist less than or equal to 2^32 
 	*/
 	guint32 maxval;
 
@@ -554,7 +572,6 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 	if (use_dcmt) {
 	    a[t] = sfmt_to_real2(dcmt_rand32()) * (max - min) + min;
 	} else {
-	    /* use native array functionality? */
 	    a[t] = sfmt_to_real2(sfmt_rand32()) * (max - min) + min;
 	}
     }

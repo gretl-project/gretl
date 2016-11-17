@@ -1324,11 +1324,8 @@ static int set_workdir (const char *s)
     } else {
 	char workdir[MAXLEN];
 
-	if (*s == '"') {
-	    sscanf(s+1, "%511[^\"]", workdir);
-	} else {
-	    sscanf(s, "%511s", workdir);
-	}
+	*workdir = '\0';
+	strncat(workdir, s, MAXLEN - 1);
 	if (workdir_callback != NULL) {
 	    err = (*workdir_callback)(workdir);
 	} else {

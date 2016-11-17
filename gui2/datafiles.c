@@ -823,11 +823,7 @@ static void browser_delete_row_by_content (windata_t *vwin,
 static int gui_delete_fn_pkg (const char *pkgname, const char *fname, 
 			      windata_t *vwin)
 {
-    char *msg = g_strdup_printf(_("Function package %s"), fname);
-    const char *opts[] = {
-	N_("Unload member functions only"),
-	N_("Unload and delete package file"),
-    };
+    gchar *msg = NULL;
     int resp, err = 0;
 
     if (package_being_edited(pkgname)) {
@@ -836,14 +832,32 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	return 0;
     }
 
-    resp = radio_dialog(NULL, msg, opts, 2, 0, 0, vwin_toplevel(vwin));    
-    g_free(msg);
+    if (gretl_write_access((char *) fname) == 0) {
+	/* 0 means OK */
+	const char *opts[] = {
+	    N_("Unload member functions only"),
+	    N_("Unload and delete package file"),
+	};
 
-    if (resp < 0) {
-	/* canceled */
+	msg = g_strdup_printf(_("Function package %s"), fname);
+	resp = radio_dialog(NULL, msg, opts, 2, 0, 0, vwin_toplevel(vwin));
+	g_free(msg);
+	if (resp < 0) {
+	    /* canceled */
+	    return 0;
+	}	
+    } else if (get_function_package_by_name(pkgname)) {
+	msg = g_strdup_printf(_("Unload package %s?"), pkgname);
+	resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
+	g_free(msg);
+	if (resp == GRETL_NO) {
+	    return 0;
+	}
+    } else {
+	infobox_printf(_("Package %s is not loaded"), pkgname);
 	return 0;
     }
-
+    
     if (resp == 0) {
 	/* unload the package from memory */
 	function_package_unload_full_by_filename(fname);
@@ -1018,7 +1032,7 @@ gchar *gfn_browser_get_alt_path (void)
 
     if (vwin != NULL && widget_get_int(vwin->listbox, "altdir")) {
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 0,
-			     3, &path);
+			     GFN_DIRNAME_COL, &path);
     }
 
     return path;
@@ -1044,7 +1058,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 {
     char path[FILENAME_MAX];
     gchar *pkgname = NULL;
-    gchar *dir;
+    gchar *dir = NULL;
     int dircol = 0;
 
     if (vwin->role == FUNC_FILES) {
@@ -1068,9 +1082,26 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	} else {
 	    build_path(path, dir, pkgname, ".gfn");
 	}
-	g_free(dir);
     } else {
 	strcpy(path, pkgname);
+    }
+
+    if (vwin->role == FUNC_FILES && task != DELETE_FN_PKG) {
+	/* try to ensure we don't get a stale version */
+	char test[FILENAME_MAX];
+	const char *loaded = NULL;
+	gchar *version = NULL;
+
+	build_path(test, dir, pkgname, ".gfn");
+	if (function_package_is_loaded(test, &loaded)) {
+	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+				 1, &version);
+	    if (loaded != NULL && version != NULL &&
+		strcmp(version, loaded)) {
+		function_package_unload_by_filename(test);
+	    }
+	}
+	g_free(version);
     }
 
 #if GFN_DEBUG
@@ -1086,8 +1117,6 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	display_function_package_data(pkgname, path, VIEW_PKG_SAMPLE);
     } else if (task == VIEW_FN_PKG_CODE) {
 	display_function_package_data(pkgname, path, VIEW_PKG_CODE);
-    } else if (task == EDIT_FN_PKG) {
-	edit_function_package(path);
     } else if (task == MENU_ADD_FN_PKG) {
 	gui_function_pkg_query_register(path, vwin->main);
     } else if (task == MENU_REMOVE_FN_PKG) {
@@ -1102,6 +1131,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     }
 
     g_free(pkgname);
+    g_free(dir);
 }
 
 static void show_addon_info (GtkWidget *w, gpointer data)
@@ -1184,13 +1214,6 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 
 	g_free(pkgname);
     }
-}
-
-void browser_edit_func (GtkWidget *w, gpointer data)
-{
-    windata_t *vwin = (windata_t *) data;
-
-    browser_functions_handler(vwin, EDIT_FN_PKG);
 }
 
 void browser_call_func (GtkWidget *w, gpointer data)
@@ -1390,9 +1413,6 @@ static void build_funcfiles_popup (windata_t *vwin)
 	add_popup_item(_("Execute"), vwin->popup, 
 		       G_CALLBACK(browser_call_func), 
 		       vwin);
-	add_popup_item(_("Edit"), vwin->popup, 
-		       G_CALLBACK(browser_edit_func), 
-		       vwin);
 	if (res_ok) {
 	    add_popup_item(_("Resources..."), vwin->popup, 
 			   G_CALLBACK(show_package_resources), 
@@ -1410,9 +1430,6 @@ static void build_funcfiles_popup (windata_t *vwin)
 	}	
 	add_popup_item(_("Unload/delete..."), vwin->popup, 
 		       G_CALLBACK(browser_del_func), 
-		       vwin);
-	add_popup_item(_("New"), vwin->popup, 
-		       G_CALLBACK(start_new_function_package), 
 		       vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	/* files on server: limited menu */
@@ -1579,12 +1596,10 @@ enum {
     BTN_INDX,
     BTN_INST,
     BTN_EXEC,
-    BTN_EDIT,
     BTN_ADD,
     BTN_DEL,
     BTN_WWW,
     BTN_HOME,
-    BTN_NEW,
     BTN_FIND,
     BTN_OPEN,
     BTN_DIR,
@@ -1600,7 +1615,6 @@ static GretlToolItem files_items[] = {
     { N_("Sample script"),  GTK_STOCK_JUSTIFY_LEFT, G_CALLBACK(show_function_sample), BTN_CODE },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
     { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func), BTN_EXEC },    
-    { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },    
     { N_("List series"),    GTK_STOCK_INDEX,      NULL,                           BTN_INDX },
     { N_("Install"),        GTK_STOCK_SAVE,       NULL,                           BTN_INST },
     { N_("Resources..."),   GTK_STOCK_OPEN,       G_CALLBACK(show_package_resources), BTN_RES },
@@ -1610,15 +1624,13 @@ static GretlToolItem files_items[] = {
     { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
-    { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(start_new_function_package), BTN_NEW }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
 
 #define common_item(f) (f == 0 || f == BTN_FIND)
 
-#define local_funcs_item(f) (f == BTN_EDIT || f == BTN_NEW || \
-			     f == BTN_DEL || f == BTN_CODE || \
+#define local_funcs_item(f) (f == BTN_DEL || f == BTN_CODE || \
 			     f == BTN_RES || f == BTN_DOC || \
 			     f == BTN_REG)
 

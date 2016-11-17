@@ -1,25 +1,26 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_func.h"
+#include "uservar.h"
 #include <stdarg.h>
 #include <errno.h>
 #include <glib.h>
@@ -27,7 +28,7 @@
 /**
  * SECTION:gretl_prn
  * @short_description: gretl printing struct
- * @title: PRN 
+ * @title: PRN
  * @include: libgretl.h
  *
  * Most libgretl functions that print output call for a
@@ -44,7 +45,7 @@
  * counterparts to the standard C functions fprintf, fputs and
  * fputc, but note that with pputs and pputc the PRN argument
  * must be given first (unlike fputs and fputc in which the
- * FILE argument goes last). 
+ * FILE argument goes last).
  *
  * Note that whenever a PRN appears as a function parameter
  * in libgretl it is OK to give a NULL argument: in that case
@@ -67,6 +68,7 @@ struct PRN_ {
 struct fpinfo_ {
     FILE *fp;
     int level;
+    gchar *strvar;
 };
 
 typedef struct fpinfo_ fpinfo;
@@ -89,6 +91,9 @@ static void prn_destroy_fp_list (PRN *prn)
 	    if (fi->fp != NULL && fi->fp != prn->fp &&
 		fi->fp != stdout && fi->fp != stderr) {
 		fclose(fi->fp);
+	    }
+	    if (fi->strvar != NULL) {
+		g_free(fi->strvar);
 	    }
 	    g_array_remove_index(prn->fplist, i);
 	}
@@ -125,8 +130,8 @@ void gretl_print_destroy (PRN *prn)
 	    fflush(stdout);
 	} else if (prn->fp != stderr) {
 #if PRN_DEBUG
-	    fprintf(stderr, "gretl_print_destroy: prn=%p, closing fp at %p\n", 
-		    (void *) prn, (void *) prn->fp); 
+	    fprintf(stderr, "gretl_print_destroy: prn=%p, closing fp at %p\n",
+		    (void *) prn, (void *) prn->fp);
 #endif
 	    fclose(prn->fp);
 	}
@@ -140,8 +145,8 @@ void gretl_print_destroy (PRN *prn)
 
     if (prn->buf != NULL) {
 #if PRN_DEBUG
-  	fprintf(stderr, "gretl_print_destroy: freeing buffer at %p\n", 
-		(void *) prn->buf); 
+  	fprintf(stderr, "gretl_print_destroy: freeing buffer at %p\n",
+		(void *) prn->buf);
 #endif
 	if (prn->fixed == GBUF_FIXED) {
 	    /* the buffer was obtained from GLib */
@@ -177,12 +182,12 @@ static int prn_add_tempfile (PRN *prn)
 	free(prn->fname);
 	prn->fname = NULL;
 	err = E_FOPEN;
-    } 
+    }
 
     return err;
 }
 
-static PRN *real_gretl_print_new (PrnType ptype, 
+static PRN *real_gretl_print_new (PrnType ptype,
 				  const char *fname,
 				  char *buf,
 				  FILE *fp,
@@ -218,7 +223,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	    err = E_FOPEN;
 	    free(prn);
 	    prn = NULL;
-	} 
+	}
     } else if (ptype == GRETL_PRINT_TEMPFILE) {
 	err = prn_add_tempfile(prn);
 	if (err) {
@@ -251,9 +256,9 @@ static PRN *real_gretl_print_new (PrnType ptype,
 
 #if PRN_DEBUG
     fprintf(stderr, "real_gretl_print_new at %p: type=%d, fname='%s', "
-	    "buf=%p, fp=%p\n", (void *) prn, ptype, fname, 
+	    "buf=%p, fp=%p\n", (void *) prn, ptype, fname,
 	    (void *) buf, (void *) fp);
-#endif    
+#endif
 
     if (perr != NULL) {
 	*perr = err;
@@ -266,14 +271,14 @@ static PRN *real_gretl_print_new (PrnType ptype,
  * gretl_print_new:
  * @ptype: code indicating the desired printing mode.
  * @err: location to receive error code, or NULL.
- * 
+ *
  * Create and initialize a gretl printing struct. If @ptype
  * is %GRETL_PRINT_BUFFER, output will go to an automatically
  * resized buffer; if @ptype is %GRETL_PRINT_STDOUT or
  * %GRETL_PRINT_STDERR output goes to %stdout or %stderr
  * respectively.
  *
- * If you want a named file associated with the struct, use 
+ * If you want a named file associated with the struct, use
  * #gretl_print_new_with_filename instead; if you want to
  * attach a fixed, pre-allocated text buffer, use
  * #gretl_print_new_with_buffer.
@@ -299,9 +304,9 @@ PRN *gretl_print_new (PrnType ptype, int *err)
  * gretl_print_new_with_filename:
  * @fname: name of the file to be opened for writing.
  * @err: location to receive error code.
- * 
+ *
  * Create and initialize a gretl printing struct, with
- * output directed to the named file.  
+ * output directed to the named file.
  *
  * Returns: pointer to newly created struct, or NULL on failure.
  */
@@ -319,7 +324,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 /**
  * gretl_print_new_with_tempfile:
  * @err: location to receive error code.
- * 
+ *
  * Create and initialize a gretl printing struct, with
  * output directed to a temporary file, which is deleted
  * when the printing struct is destroyed.
@@ -335,7 +340,7 @@ PRN *gretl_print_new_with_tempfile (int *err)
 /**
  * gretl_print_has_tempfile:
  * @prn: printing struct to test.
- * 
+ *
  * Returns: 1 if @prn has a tempfile attached, else 0.
  */
 
@@ -351,7 +356,7 @@ int gretl_print_has_tempfile (PRN *prn)
 /**
  * gretl_print_get_tempfile_name:
  * @prn: printing struct to test.
- * 
+ *
  * Returns: if @prn has a tempfile attached, return the name
  * of that file, otherwise return NULL.
  */
@@ -368,7 +373,7 @@ const char *gretl_print_get_tempfile_name (PRN *prn)
 /**
  * gretl_print_new_with_buffer:
  * @buf: pre-allocated text buffer.
- * 
+ *
  * Creates and initializes a gretl printing struct, with
  * fixed text buffer @buf.  Fails if @buf is NULL.  This is a
  * convenience function: you can't use #pprintf, #pputs or
@@ -392,7 +397,7 @@ PRN *gretl_print_new_with_buffer (char *buf)
 /**
  * gretl_print_new_with_gchar_buffer:
  * @buf: pre-allocated text buffer.
- * 
+ *
  * Just as gretl_print_new_with_buffer() except that the buffer is
  * of pointer-to-gchar type, as obtained from one or other GLib
  * function. This means that when the #PRN is detroyed the
@@ -414,7 +419,7 @@ PRN *gretl_print_new_with_gchar_buffer (gchar *buf)
 /**
  * gretl_print_new_with_stream:
  * @fp: pre-opened stream.
- * 
+ *
  * Creates and initializes a gretl printing struct, with
  * printing to @fp.
  *
@@ -431,12 +436,12 @@ PRN *gretl_print_new_with_stream (FILE *fp)
     } else {
 	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, 0, NULL);
     }
-} 
- 
+}
+
 /**
  * gretl_print_detach_stream
  * @prn: printing struct to operate on.
- * 
+ *
  * Sets the stream member of @prn to NULL so that @prn can
  * be destroyed without closing the associated stream.  May be
  * used in conjunction with gretl_print_new_with_stream().
@@ -453,7 +458,7 @@ void gretl_print_detach_stream (PRN *prn)
  * @oldpath: name of current file (or NULL if @prn was
  * set up using #gretl_print_new_with_tempfile).
  * @newpath: new name for file.
- * 
+ *
  * If @prn is printing to a %FILE pointer, rename the
  * file to which it is printing and switch the stream
  * to the new file.
@@ -502,7 +507,7 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 #endif
 	if (prn->fname != NULL) {
 	    /* @prn originally used a tempfile: the record of
-	       the temporary filename should be deleted 
+	       the temporary filename should be deleted
 	    */
 	    free(prn->fname);
 	    prn->fname = NULL;
@@ -515,7 +520,7 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
 /**
  * gretl_print_reset_buffer:
  * @prn: printing struct to operate on.
- * 
+ *
  * If @prn has an attached buffer, write a NUL byte to
  * the start of the buffer and reset the count of bytes
  * printed to zero.  The next call to @pprintf or
@@ -542,7 +547,7 @@ int gretl_print_reset_buffer (PRN *prn)
 /**
  * gretl_print_get_buffer:
  * @prn: printing struct.
- * 
+ *
  * Obtain a pointer to the buffer associated
  * with @prn, if any.  This pointer must not be
  * modified in any way.
@@ -558,7 +563,7 @@ const char *gretl_print_get_buffer (PRN *prn)
 /**
  * gretl_print_get_trimmed_buffer:
  * @prn: printing struct.
- * 
+ *
  * Obtain a pointer to the buffer associated
  * with @prn, if any.  This pointer must not be
  * modified in any way.  An opening newline
@@ -596,13 +601,13 @@ const char *gretl_print_get_trimmed_buffer (PRN *prn)
  * @prn: printing struct.
  * @width: location to receive width, or NULL.
  * @height: location to receive height, or NULL.
- * 
+ *
  * If @prn has a non-null buffer attached, provides
  * the width and/or height of the buffer, the width in
  * characters and the height in lines. This function is
  * intended for use with text designed for printing in
  * a GUI window, and with "reasonable" line lengths for
- * that context; if the lines are too long (more than 
+ * that context; if the lines are too long (more than
  * 120 UTF-8 characters) the values written to @width
  * and/or @height will be zero.
  */
@@ -611,7 +616,7 @@ void gretl_print_get_size (PRN *prn, int *width, int *height)
 {
     int w = 0, h = 0;
 
-    if (prn != NULL && prn->buf != NULL) { 
+    if (prn != NULL && prn->buf != NULL) {
 	char line[128];
 	int lw;
 
@@ -636,16 +641,16 @@ void gretl_print_get_size (PRN *prn, int *width, int *height)
 
     if (height != NULL) {
 	*height = h;
-    }    
+    }
 }
 
 /**
  * gretl_print_steal_buffer:
  * @prn: printing struct.
- * 
+ *
  * Obtain a pointer to the buffer associated with @prn,
- * if any.  The pointer on @prn itself is set to NULL 
- * and the caller takes responsibility for freeing the 
+ * if any.  The pointer on @prn itself is set to NULL
+ * and the caller takes responsibility for freeing the
  * buffer.
  *
  * Returns: the buffer, or NULL on failure.
@@ -667,7 +672,7 @@ char *gretl_print_steal_buffer (PRN *prn)
  * gretl_print_replace_buffer:
  * @prn: printing struct.
  * @buf: malloced replacement buffer.
- * 
+ *
  * If @prn currently has a printing buffer in place,
  * destroy the original and replace it with @buf. Note
  * @prn "takes ownership" of @buf, which will be freed
@@ -696,10 +701,10 @@ int gretl_print_replace_buffer (PRN *prn, char *buf)
 /**
  * gretl_print_read_tempfile:
  * @prn: printing struct.
- * 
+ *
  * Obtain a read handle to the tempfile stream associated with
  * with @prn, if any.  This should be matched with a call to
- * gretl_print_stop_tempfile_read() once you're finished with 
+ * gretl_print_stop_tempfile_read() once you're finished with
  * reading.
  *
  * Returns: %FILE pointer, or NULL on failure.
@@ -727,7 +732,7 @@ FILE *gretl_print_read_tempfile (PRN *prn)
  * gretl_print_stop_tempfile_read:
  * @prn: printing struct.
  * @fp: auxiliary stream.
- * 
+ *
  * For @prn with tempfile attached, stops reading
  * of the tempfile and closes @fp (recording the
  * position at which reading stopped).
@@ -738,7 +743,7 @@ FILE *gretl_print_read_tempfile (PRN *prn)
 
 int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp)
 {
-    if (prn == NULL || prn->fp == NULL || 
+    if (prn == NULL || prn->fp == NULL ||
 	prn->fname == NULL || fp == NULL) {
 	return E_DATA;
     }
@@ -752,10 +757,10 @@ int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp)
 /**
  * gretl_print_set_save_position:
  * @prn: printing struct.
- * 
- * Sets the current buffer offset as the position from 
- * which a chunk of the current buffer may be saved, 
- * using gretl_print_get_chunk().  
+ *
+ * Sets the current buffer offset as the position from
+ * which a chunk of the current buffer may be saved,
+ * using gretl_print_get_chunk().
  *
  * Returns: 0 on success, error code if @prn is not
  * connected to a buffer.
@@ -774,7 +779,7 @@ int gretl_print_set_save_position (PRN *prn)
 /**
  * gretl_print_unset_save_position:
  * @prn: printing struct.
- * 
+ *
  * Erases the "save position" offset as set by
  * gretl_print_set_save_position().
  */
@@ -789,9 +794,9 @@ void gretl_print_unset_save_position (PRN *prn)
 /**
  * gretl_print_get_chunk:
  * @prn: printing struct.
- * 
+ *
  * Retrieves a copy of the buffer associated with @prn,
- * starting at the offset from the start of the buffer 
+ * starting at the offset from the start of the buffer
  * as set by gretl_print_set_save_position().
  *
  * Returns: allocated buffer on success, or NULL on error.
@@ -817,9 +822,9 @@ char *gretl_print_get_chunk (PRN *prn)
  * gretl_print_get_chunk_at:
  * @prn: printing struct.
  * @pos: the byte poistion at which to start.
- * 
+ *
  * Retrieves a copy of the buffer associated with @prn,
- * starting at the offset from the start of the buffer 
+ * starting at the offset from the start of the buffer
  * specified by @pos.
  *
  * Returns: allocated buffer on success, or NULL on error.
@@ -843,7 +848,7 @@ char *gretl_print_get_chunk_at (PRN *prn, int pos)
 /**
  * gretl_print_tell:
  * @prn: printing struct.
- * 
+ *
  * Returns: the current write position, if @prn
  * has a buffer attached, otherwise -1.
  */
@@ -874,7 +879,7 @@ static void set_default_csv_delim (PRN *prn)
  * gretl_print_set_format:
  * @prn: printing struct.
  * @format: desired format code.
- * 
+ *
  * Sets the printing format on @prn.
  */
 
@@ -895,7 +900,7 @@ void gretl_print_set_format (PRN *prn, PrnFormat format)
  * gretl_print_set_delim:
  * @prn: printing struct.
  * @delim: desired CSV field-delimiter.
- * 
+ *
  * Sets the CSV delimiter on @prn.
  */
 
@@ -909,7 +914,7 @@ void gretl_print_set_delim (PRN *prn, char delim)
 /**
  * gretl_print_toggle_doc_flag:
  * @prn: printing struct.
- * 
+ *
  * Toggles the %GRETL_FORMAT_DOC flag on @prn.
  */
 
@@ -923,7 +928,7 @@ void gretl_print_toggle_doc_flag (PRN *prn)
 /**
  * gretl_print_set_has_minus:
  * @prn: printing struct.
- * 
+ *
  * Sets the %GRETL_FORMAT_HAS_MINUS flag on @prn,
  * indicating that the Unicode minus sign is
  * supported.
@@ -939,7 +944,7 @@ void gretl_print_set_has_minus (PRN *prn)
 /**
  * gretl_print_has_minus:
  * @prn: printing struct.
- * 
+ *
  * Returns: 1 if @prn supports Unicode minus sign, else 0.
  */
 
@@ -959,15 +964,15 @@ static int realloc_prn_buffer (PRN *prn, size_t newlen)
 
     if (newlen <= 0) {
 	newlen = prn->bufsize * 2;
-    }    
+    }
 
 #if PRN_DEBUG
     fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
-	    (int) (prn->bufsize - prn->blen), prn->buf, 
+	    (int) (prn->bufsize - prn->blen), prn->buf,
 	    (int) newlen);
 #endif
 
-    tmp = realloc(prn->buf, newlen); 
+    tmp = realloc(prn->buf, newlen);
 
     if (tmp == NULL) {
 	err = 1;
@@ -996,8 +1001,8 @@ static int pprintf_init (PRN *prn)
     prn->buf = malloc(prn->bufsize);
 
 #if PRN_DEBUG
-    fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", 
-	    (int) prn->bufsize, (void *) prn->buf); 
+    fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n",
+	    (int) prn->bufsize, (void *) prn->buf);
 #endif
 
     if (prn->buf == NULL) {
@@ -1018,9 +1023,9 @@ static int pprintf_init (PRN *prn)
  *
  * Multi-purpose printing function: can output to stream, to buffer
  * or to nowhere (silently discarding the output), depending on
- * how @prn was initialized.  Note that it's preferable to use 
+ * how @prn was initialized.  Note that it's preferable to use
  * pputs() for large chunks of fixed text.
- * 
+ *
  * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
  */
@@ -1081,7 +1086,7 @@ int pprintf (PRN *prn, const char *format, ...)
 
     if (plen > 0) {
 	prn->blen += plen;
-    }    
+    }
 
     return plen;
 }
@@ -1090,7 +1095,7 @@ int pprintf (PRN *prn, const char *format, ...)
  * pputs:
  * @prn: gretl printing struct.
  * @s: constant string to print.
- * 
+ *
  * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
  */
@@ -1121,10 +1126,10 @@ int pputs (PRN *prn, const char *s)
 	    return -1;
 	}
 	bytesleft = prn->bufsize - prn->blen;
-    }	
+    }
 
 #if PRN_DEBUG > 1
-    fprintf(stderr, "pputs: bufsize=%d, blen=%d, bytesleft=%d, copying %d bytes\n", 
+    fprintf(stderr, "pputs: bufsize=%d, blen=%d, bytesleft=%d, copying %d bytes\n",
 	    (int) prn->bufsize, (int) prn->blen, bytesleft, slen);
 #endif
 
@@ -1138,7 +1143,7 @@ int pputs (PRN *prn, const char *s)
  * pputc:
  * @prn: gretl printing struct.
  * @c: character to print
- * 
+ *
  * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
  */
@@ -1178,7 +1183,7 @@ int pputc (PRN *prn, int c)
 /**
  * gretl_prn_newline:
  * @prn: gretl printing struct.
- * 
+ *
  * Print a line break, in the mode appropriate to the
  * format of @prn (plain text, TeX or RTF).
  */
@@ -1197,7 +1202,7 @@ void gretl_prn_newline (PRN *prn)
 /**
  * gretl_print_flush_stream:
  * @prn: gretl printing struct.
- * 
+ *
  * If the output of @prn is directed to a stream, flush
  * that stream.
  */
@@ -1212,7 +1217,7 @@ void gretl_print_flush_stream (PRN *prn)
 /**
  * gretl_print_close_file:
  * @prn: gretl printing struct.
- * 
+ *
  * If the output of @prn is directed to a stream, close
  * the stream. Also frees and sets to NULL the filename
  * associated with the stream (but does not remove the
@@ -1232,7 +1237,7 @@ void gretl_print_close_stream (PRN *prn)
 /**
  * printing_to_standard_stream:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the output of @prn is directed to one of the
  * standard streams, %stdout or %stderr, else 0.
  */
@@ -1248,25 +1253,70 @@ int printing_to_standard_stream (PRN *prn)
     return ret;
 }
 
-static void prn_push_stream (PRN *prn, FILE *fp)
+static void prn_push_stream (PRN *prn, FILE *fp, const char *strvar)
 {
-    if (prn->fp != NULL) {
-	fpinfo fi = {prn->fp, 0};
-	 
-	if (prn->fplist == NULL) {
-	    prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
-	}
-	fi.level = gretl_function_depth();
-	g_array_append_val(prn->fplist, fi);
+    fpinfo fi = {prn->fp, 0, NULL};
+
+    if (prn->fplist == NULL) {
+	prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
     }
+    fi.level = gretl_function_depth();
+    if (strvar != NULL) {
+	fi.strvar = g_strdup(strvar);
+    }
+    g_array_append_val(prn->fplist, fi);
 
     prn->fp = fp;
 }
 
-static void prn_pop_stream (PRN *prn)
+static int handle_outbuf_content (FILE *fp, fpinfo *fi)
+{
+    user_var *uv;
+    int err = 0;
+
+    uv = get_user_var_of_type_by_name(fi->strvar,
+				      GRETL_TYPE_STRING);
+    if (uv == NULL) {
+	err = E_DATA;
+    } else {
+	char *buf = NULL;
+	long pos;
+	size_t len;
+
+	fflush(fp);
+	fseek(fp, 0, SEEK_END);
+	pos = ftell(fp);
+
+	if (pos > 0) {
+	    buf = calloc(pos + 1, 1);
+	    if (buf == NULL) {
+		err = E_ALLOC;
+	    } else {
+		fseek(fp, 0, SEEK_SET);
+		len = fread(buf, 1, pos, fp);
+		if (len < pos) {
+		    err = E_DATA;
+		    free(buf);
+		}
+	    }
+	} else {
+	    buf = gretl_strdup("");
+	}
+
+	if (!err) {
+	    err = user_var_replace_value(uv, buf);
+	}
+    }
+
+    return err;
+}
+
+static int prn_pop_stream (PRN *prn)
 {
     FILE *prev = NULL;
-    
+    char *strvar = NULL;
+    int err = 0;
+
     if (prn->fplist != NULL) {
 	int n = prn->fplist->len;
 	fpinfo *fi;
@@ -1274,17 +1324,36 @@ static void prn_pop_stream (PRN *prn)
 	if (n > 0) {
 	    fi = &g_array_index(prn->fplist, fpinfo, n-1);
 	    prev = fi->fp;
+	    if (fi->strvar != NULL) {
+		strvar = fi->strvar;
+		err = handle_outbuf_content(prn->fp, fi);
+	    }
 	    g_array_remove_index(prn->fplist, n-1);
 	}
     }
 
+    if (prn->fp != NULL && prn->fp != stdout && prn->fp != stderr) {
+	fclose(prn->fp);
+    }
+
+    if (strvar != NULL) {
+	gchar *fname = g_strdup_printf("%s%s.prntmp",
+				       gretl_dotdir(),
+				       strvar);
+	gretl_remove(fname);
+	g_free(fname);
+	free(strvar);
+    }
+
     prn->fp = prev;
+
+    return err;
 }
 
 /**
  * print_redirection_level:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 0 if the output of @prn has not been redirected
  * relative to its original setting, else the level of
  * (possibly nested) redirection.
@@ -1329,20 +1398,22 @@ int print_redirected_at_level (PRN *prn, int level)
  * print_start_redirection:
  * @prn: gretl printing struct.
  * @fp: stream to which output should be redirected.
- * 
+ * @strvar: name of associated string variable, or NULL.
+ *
  * Redirects output of @prn to @fp.
  *
  * Returns: 0 on success, 1 on error.
  */
 
-int print_start_redirection (PRN *prn, FILE *fp)
+int print_start_redirection (PRN *prn, FILE *fp,
+			     const char *strvar)
 {
     if (prn == NULL || prn->fixed) {
 	return 1;
     }
 
-    /* flush the current stream */
     if (prn->fp != NULL) {
+	/* flush the current stream */
 	fflush(prn->fp);
     }
     if (fp == NULL) {
@@ -1352,7 +1423,7 @@ int print_start_redirection (PRN *prn, FILE *fp)
 	/* record current stream in prn->fplist, and
 	   hook output to specified stream
 	*/
-	prn_push_stream(prn, fp);
+	prn_push_stream(prn, fp, strvar);
     }
 
     return 0;
@@ -1361,7 +1432,7 @@ int print_start_redirection (PRN *prn, FILE *fp)
 /**
  * print_end_redirection:
  * @prn: gretl printing struct.
- * 
+ *
  * If the output of @prn has been diverted relative to
  * its original setting, terminate the redirection.
  *
@@ -1376,13 +1447,10 @@ int print_end_redirection (PRN *prn)
 	if (prn->fixed) {
 	    prn->fixed = 0;
 	} else if (prn->fp != NULL) {
-	    if (prn->fp != stdout && prn->fp != stderr) {
-		fclose(prn->fp);
-	    }
-	    prn_pop_stream(prn);
+	    err = prn_pop_stream(prn);
 	}
     } else {
-	err = 1;
+	err = E_DATA;
     }
 
     return err;
@@ -1391,7 +1459,7 @@ int print_end_redirection (PRN *prn)
 /**
  * plain_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is plain text, else 0.
  */
 
@@ -1403,7 +1471,7 @@ int plain_format (PRN *prn)
 /**
  * rtf_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is RTF, else 0.
  */
 
@@ -1421,14 +1489,14 @@ int rtf_format (PRN *prn)
 /**
  * rtf_doc_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is RTF, and the
  * RTF preamble should be printed, else 0.
  */
 
 int rtf_doc_format (PRN *prn)
 {
-    return (prn != NULL && 
+    return (prn != NULL &&
 	    (prn->format & GRETL_FORMAT_RTF) &&
 	    (prn->format & GRETL_FORMAT_DOC));
 }
@@ -1436,7 +1504,7 @@ int rtf_doc_format (PRN *prn)
 /**
  * tex_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is TeX, else 0.
  */
 
@@ -1448,14 +1516,14 @@ int tex_format (PRN *prn)
 /**
  * tex_doc_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is TeX and a complete
  * TeX document is being produced, else 0.
  */
 
 int tex_doc_format (PRN *prn)
 {
-    return (prn != NULL && 
+    return (prn != NULL &&
 	    (prn->format & GRETL_FORMAT_TEX) &&
 	    (prn->format & GRETL_FORMAT_DOC));
 }
@@ -1463,7 +1531,7 @@ int tex_doc_format (PRN *prn)
 /**
  * tex_eqn_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is TeX and a model
  * is being represented as an equation, rather than in
  * tabular form, else 0.
@@ -1471,7 +1539,7 @@ int tex_doc_format (PRN *prn)
 
 int tex_eqn_format (PRN *prn)
 {
-    return (prn != NULL && 
+    return (prn != NULL &&
 	    (prn->format & GRETL_FORMAT_TEX) &&
 	    (prn->format & GRETL_FORMAT_EQN));
 }
@@ -1479,7 +1547,7 @@ int tex_eqn_format (PRN *prn)
 /**
  * csv_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if the format of @prn is CSV, else 0.
  */
 
@@ -1491,7 +1559,7 @@ int csv_format (PRN *prn)
 /**
  * prn_format:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: The formatting flags for @prn.
  */
 
@@ -1503,7 +1571,7 @@ int prn_format (PRN *prn)
 /**
  * prn_delim:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: The character to be used as delimiter for CSV.
  */
 
@@ -1515,7 +1583,7 @@ char prn_delim (PRN *prn)
 /**
  * gretl_print_has_buffer:
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if @prn is using a buffer for printing,
  * otherwise 0 (e.g., if a file is being used).
  */
@@ -1535,7 +1603,7 @@ int gretl_print_has_buffer (PRN *prn)
  * further printing.  May speed things up if we
  * know there is a large amount of text to be
  * printed.
- * 
+ *
  * Returns: 0 on success, non-zero on failure.
  */
 
@@ -1554,7 +1622,7 @@ int gretl_print_alloc (PRN *prn, size_t s)
 	size_t newlen = prn->blen + s + 1;
 	char *tmp;
 
-	tmp = realloc(prn->buf, newlen); 
+	tmp = realloc(prn->buf, newlen);
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -1592,7 +1660,7 @@ PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
 	} else {
 	    vprn = prn;
 	}
-    } 
+    }
 
     return vprn;
 }
@@ -1601,7 +1669,7 @@ PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
  * close_down_verbose_printer:
  * @vprn: prn pointer obtained via set_up_verbose_printer().
  *
- * Turns off verbose printing and frees the resources 
+ * Turns off verbose printing and frees the resources
  * associated with @vprn.
  */
 
@@ -1612,4 +1680,3 @@ void close_down_verbose_printer (PRN *vprn)
 	gretl_print_destroy(vprn);
     }
 }
- 

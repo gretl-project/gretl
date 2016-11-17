@@ -1184,10 +1184,17 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return 0;
     }
 
-    /* logical OR: if x is valid and non-zero, ignore NA for y */
-    if (op == B_OR && !na(x) && x != 0) {
+    /* logical OR: if x or y is valid and non-zero, ignore NA for
+       the other term */
+    if (op == B_OR && ((!na(x) && x != 0) || (!na(y) && y != 0))) {
 	return 1.0;
-    }  
+    }
+
+    /* logical AND: if either x or y is false, the logical product
+       should be false, even if the other term is NA */
+    if (op == B_AND && (x == 0 || y == 0)) {
+	return 0;
+    }    
 
     /* otherwise NA propagates to the result */
     if (na(x) || na(y)) {
@@ -3503,6 +3510,9 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    break;
 	case F_RCOND:
 	    ret->v.xval = gretl_matrix_rcond(m, &p->err);
+	    break;
+	case F_CNUMBER:
+	    ret->v.xval = gretl_matrix_cond_index(m, &p->err);
 	    break;
 	case F_RANK:
 	    ret->v.xval = gretl_matrix_rank(m, &p->err);
@@ -12549,6 +12559,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NORM1:
     case F_INFNORM:
     case F_RCOND:
+    case F_CNUMBER:
     case F_RANK:
 	/* matrix -> scalar functions */
 	if (l->t == MAT || l->t == NUM) {

@@ -32,6 +32,7 @@
 #include "treeutils.h"
 #include "datawiz.h"
 #include "winstack.h"
+#include "matrix_extra.h"
 
 static void doubleclick_action (windata_t *vwin)
 {
@@ -702,6 +703,69 @@ void newdata_callback (void)
     new_data_structure_dialog();
 }
 
+void edit_gfn_callback (void)
+{
+    gchar *syspath = NULL;
+    gchar *dotpath = NULL;
+    gchar *startdir = NULL;
+    int edit_sys_ok = 0;
+    int edit_dot_ok = 0;
+    int n_opts = 1;
+
+    syspath = g_strdup_printf("%sfunctions", gretl_home());
+    if (gretl_write_access(syspath) == 0) {
+	edit_sys_ok = 1;
+	n_opts++;
+    }
+
+    dotpath = g_strdup_printf("%sfunctions", gretl_dotdir());
+    if (gretl_write_access(dotpath) == 0) {
+	edit_dot_ok = 1;
+	n_opts++;
+    }
+
+    if (n_opts > 1) {
+	const char *opts[n_opts];
+	int resp;
+	
+	if (edit_sys_ok && edit_dot_ok) {
+	    opts[0] = N_("system gfn directory");
+	    opts[1] = N_("personal gfn directory");
+	    opts[2] = N_("current working directory");
+	} else if (edit_sys_ok) {
+	    opts[0] = N_("system gfn directory");
+	    opts[1] = N_("current working directory");
+	} else if (edit_dot_ok) {
+	    opts[0] = N_("personal gfn directory");
+	    opts[1] = N_("current working directory");
+	}	    
+	    
+	resp = radio_dialog(_("Open .gfn file"), _("Start looking in:"),
+			    opts, n_opts, 0, 0, NULL);
+	if (resp < 0) {
+	    /* canceled */
+	    return;
+	}
+
+	if (edit_sys_ok && edit_dot_ok) {
+	    startdir = resp == 0 ? syspath : resp == 1 ? dotpath : NULL;
+	} else if (edit_sys_ok) {
+	    startdir = resp == 0 ? syspath : NULL;
+	} else if (edit_dot_ok) {
+	    startdir = resp == 0 ? dotpath : NULL;
+	}
+    }
+
+    if (startdir != NULL) {
+	file_selector_with_startdir(OPEN_GFN, startdir, NULL);
+    } else {
+	file_selector(OPEN_GFN, FSEL_DATA_NONE, NULL);
+    }
+
+    g_free(syspath);
+    g_free(dotpath);
+}
+
 void xcorrgm_callback (void)
 {
     if (mdata_selection_count() == 2) {
@@ -713,6 +777,65 @@ void xcorrgm_callback (void)
 	strcat(title, _("cross-correlogram"));
 	simple_selection(XCORRGM, title, do_xcorrgm, NULL);
     }
+}
+
+void cond_number_callback (void)
+{
+    gretl_matrix *X = NULL;
+    double cnumber;
+    int *list = main_window_selection_as_list();
+    int resp, err = 0;
+
+    resp = yes_no_cancel_dialog(_("Collinearity check"),
+				_("Include a constant?"),
+				NULL);
+    if (resp < 0) {
+	/* canceled */
+	return;
+    }
+
+    if (resp == GRETL_YES) {
+	int *lplus = gretl_list_new(list[0] + 1);
+	int i;
+
+	lplus[1] = 0;
+	for (i=2; i<=lplus[0]; i++) {
+	    lplus[i] = list[i-1];
+	}
+	free(list);
+	list = lplus;
+    }
+
+    X = gretl_matrix_data_subset(list, dataset,
+				 dataset->t1,
+				 dataset->t2,
+				 M_MISSING_SKIP,
+				 &err);
+
+    if (!err) {
+	cnumber = gretl_matrix_cond_index(X, &err);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	PRN *prn = NULL;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
+	pputs(prn, _("For a matrix composed of the selected series:"));
+	pputc(prn, '\n');
+	gretl_list_print(list, dataset, prn);
+	pprintf(prn, "\n%s = %g\n\n", _("condition number"), cnumber);
+	pputs(prn, _("A condition number greater than 50 is commonly regarded as\n"
+		     "indicating strong collinearity."));
+	pputc(prn, '\n');
+	view_buffer(prn, 78, 200, _("Collinearity check"), PRINT, NULL);
+    }
+
+    gretl_matrix_free(X);
+    free(list);
 }
 
 static int nist_verbosity (GtkAction *action)

@@ -4365,19 +4365,21 @@ static void output_line (char *str, PRN *prn, int dblspc)
 static void prhdr (const char *str, const DATASET *dset, 
 		   int missing, PRN *prn)
 {
-    char date1[OBSLEN], date2[OBSLEN], tmp[96];
+    char date1[OBSLEN], date2[OBSLEN];
+    gchar *tmp;
 
     ntodate(date1, dset->t1, dset);
     ntodate(date2, dset->t2, dset);
 
     pputc(prn, '\n');
 
-    sprintf(tmp, _("%s, using the observations %s - %s"), str, date1, date2);
+    tmp = g_strdup_printf(_("%s, using the observations %s - %s"),
+			  str, date1, date2);
     output_line(tmp, prn, 0);
+    g_free(tmp);
 
     if (missing) {
-	strcpy(tmp, _("(missing values were skipped)"));
-	output_line(tmp, prn, 1);
+	output_line(_("(missing values were skipped)"), prn, 1);
     }
 }
 
@@ -4440,7 +4442,8 @@ void print_summary_single (const Summary *s,
 	offset = 4;
     } else {
 	const char *vname = dset->varname[s->list[1]];
-	char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
+	char obs1[OBSLEN], obs2[OBSLEN];
+	gchar *tmp = NULL;
 
 	ntodate(obs1, dset->t1, dset);
 	ntodate(obs2, dset->t2, dset);
@@ -4451,17 +4454,18 @@ void print_summary_single (const Summary *s,
 	    const char *mname = dataset_get_matrix_name(dset);
 
 	    if (mname != NULL) {
-		sprintf(tmp, _("for column %d of %s (%d valid observations)"), 
-			atoi(vname), mname, s->n);
+		tmp = g_strdup_printf(_("for column %d of %s (%d valid observations)"), 
+				      atoi(vname), mname, s->n);
 	    } else {
-		sprintf(tmp, _("for column %d (%d valid observations)"), 
-			atoi(vname), s->n);
+		tmp = g_strdup_printf(_("for column %d (%d valid observations)"), 
+				      atoi(vname), s->n);
 	    }
 	} else {
-	    sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-		    dset->varname[s->list[1]], s->n);
+	    tmp = g_strdup_printf(_("for the variable '%s' (%d valid observations)"), 
+				  dset->varname[s->list[1]], s->n);
 	}
 	output_line(tmp, prn, 1);
+	g_free(tmp);
     }
 
     vals[0]  = s->mean[0];
@@ -5468,6 +5472,8 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	}
     }
 
+    v->missing = 0;
+
     /* first pass: get sample size and sums */
 
     for (t=v->t1; t<=v->t2; t++) {
@@ -5475,7 +5481,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
 	for (i=0; i<m; i++) {
 	    if (na(Z[v->list[i+1]][t])) {
 		miss = 1;
-		v->missing = 1;
+		v->missing += 1;
 		break;
 	    }
 	}
@@ -5626,13 +5632,7 @@ VMatrix *corrlist (int ci, int *list, const DATASET *dset,
     if (v->t2 - v->t1 + 1 < 3) {
 	*err = E_TOOFEW;
 	goto bailout;
-    } else if (ci == PCA && nmiss > 0) {
-	/* When doing PCA, it's too complicated to handle
-	   missing observations within the sample range.
-	*/
-	*err = E_MISSDATA;
-	goto bailout;
-    }	
+    }
 
     v->dim = m = list[0];  
     mm = (m * (m + 1)) / 2;

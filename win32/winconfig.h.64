@@ -46,6 +46,7 @@
 
 /* Use gtksourceview-2.0 for syntax highlighting */
 #define USE_GTKSOURCEVIEW_2 1
+#define HAVE_GTKSOURCEVIEW_210 1
 
 /* Does unistd.h have getdomainname? */
 #define GETDOMAINNAME 1

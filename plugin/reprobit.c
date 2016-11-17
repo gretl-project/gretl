@@ -556,11 +556,14 @@ static int add_rho_LR_test (MODEL *pmod, double LR)
 static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 				double *theta, const DATASET *dset)
 {
-    int Tmin = C->nobs;
-    int i, vi, k = pmod->ncoeff, npar = C->npar;
+    gretl_matrix *Hinv;
     double sigma, LR;
-    int err = 0;
-    gretl_matrix *Hinv = gretl_zero_matrix_new(npar, npar);
+    int Tmin = C->nobs;
+    int npar = C->npar;
+    int k = pmod->ncoeff;
+    int i, vi, err = 0;
+
+    Hinv = gretl_zero_matrix_new(npar, npar);
 
     if (Hinv == NULL) {
 	err = E_ALLOC;
@@ -571,7 +574,6 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
 
     if (!err) {
 	err = gretl_invert_symmetric_matrix(Hinv);
-
 	if (err) {
 	    fprintf(stderr, "hessian_inverse_from_score: failed (err = %d)\n", 
 		    err);
@@ -581,7 +583,6 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
     if (err) {
 	/* try generic inverse */
 	err = gretl_invert_symmetric_indef_matrix(Hinv);
-
 	if (err) {
 	    fprintf(stderr, "hessian_inverse_from_score: failed again (err = %d)\n", 
 		    err);
@@ -621,6 +622,9 @@ static int transcribe_reprobit (MODEL *pmod, reprob_container *C,
     pmod->rsq = pmod->adjrsq = NADBL;
 
     LR = 2.0 * (C->ll - pmod->lnL);
+    if (LR < 0) {
+	LR = 0;
+    }
     add_rho_LR_test(pmod, LR);
 
     /* set the likelihood-based measures */
@@ -729,6 +733,11 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 
     if (err && mod.errcode == 0) {
 	mod.errcode = err;
+    }
+
+    if (!err && (opt & OPT_R)) {
+	pputs(prn, "Robust variance estimation is not supported for "
+	      "random-effects probit.\n");
     }
 
     return mod;    

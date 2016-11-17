@@ -1957,6 +1957,38 @@
       </description>
     </function>
 
+    <function name="cnumber" section="linalg" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the condition number of the <by r="n" c="k"/> matrix
+	  <argname>X</argname>, as defined in <cite
+	  key="belsley-etal80">Belsley, Kuh and Welsch
+	  (1980)</cite>. If the columns of <argname>X</argname> are
+	  mutually orthogonal the condition number of
+	  <argname>X</argname> is unity. Conversely, a large value of
+	  the condition number is an indicator of multicollinearity;
+	  <quote>large</quote> is often taken to mean 50 or greater
+	  (sometimes 30 or greater).
+	</para>
+	<para>
+	  The steps in the calculation are: (1) form a matrix
+	  <math>Z</math> whose columns are the columns of
+	  <argname>X</argname> divided by their respective Euclidean
+	  norms; (2) form <math>Z'Z</math> and obtain its eigenvalues;
+	  and (3) compute the square root of the ratio of the largest
+	  to the smallest eigenvalue.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="rcond"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2442,6 +2474,7 @@
 	  <seelist> 
             <fncref targ="ldet"/>
             <fncref targ="rcond"/>
+	    <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>
@@ -2523,7 +2556,7 @@
 	</para>
 	<para context="tex">
 	  Returns the digamma (or Psi) function of $x$, that is 
-	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
+	  $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
 	</para>
       </description>
     </function>
@@ -4615,6 +4648,7 @@
 	  <seelist> 
             <fncref targ="det"/>
             <fncref targ="rcond"/>
+	    <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>
@@ -5960,6 +5994,52 @@
     </code>
       </description>
     </function>
+
+    <function name="NMmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg optional="true" type="int">maxfeval</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Numerical maximization via the Nelder&ndash;Mead
+	  derivative-free simplex method.  On input the vector
+	  <argname>b</argname> should hold the initial values of a set
+	  of parameters, and the argument <argname>f</argname> should
+	  specify a call to a function that calculates the (scalar)
+	  criterion to be maximized, given the current parameter
+	  values and any other relevant data. On successful
+	  completion, <lit>NMmax</lit> returns the maximized value of
+	  the criterion, and <argname>b</argname> holds the parameter
+	  values which produce the maximum.
+	</para>
+	<para>
+	  The optional third argument may be used to set the maximum
+	  number of function evaluations; if it is omitted or set to
+	  zero the maximum defaults to 2000. As a special signal to
+	  this function the <argname>maxfeval</argname> value may be
+	  set to a negative number. In this case the absolute value is
+	  taken, and <lit>NMmax</lit> flags an error if the best value
+	  found for the objective function at the maximum number of
+	  function evaluations is not a local optimum. Otherwise
+	  non-convergence in this sense is not treated as an error.
+	</para>
+	<para>
+	  If the object is in fact minimization, either the function
+	  call should return the negative of the criterion or
+	  alternatively <lit>NMmax</lit> may be called under the
+	  alias <lit>NMmin</lit>.
+	</para>
+	<para>
+	  For more details and examples see the chapter on numerical
+	  methods in <guideref targ="chap:numerical"/>.
+	  <seelist>
+            <fncref targ="simann"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
 
     <function name="nobs" section="stats" output="int">
       <fnargs>

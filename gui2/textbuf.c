@@ -37,13 +37,16 @@
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
+# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
+#  define COMPLETION_OK 0
+# elif !defined(HAVE_GTKSOURCEVIEW_210)
+#  define COMPLETION_OK 0
+# else
+#  define COMPLETION_OK 1
+# endif
 #endif
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
-/* the gtksourceview 2.0 completion UI depends on gtk >= 2.16 */
-# define COMPLETION_OK 0
-#else
-# define COMPLETION_OK 1
+#if COMPLETION_OK
 # include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 #endif
 
@@ -121,6 +124,17 @@ void cursor_to_top (windata_t *vwin)
     gtk_text_buffer_place_cursor(buf, &start);
     mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
     gtk_text_view_scroll_to_mark(view, mark, 0.0, FALSE, 0, 0);
+    gtk_text_buffer_delete_mark(buf, mark);
+}
+
+void cursor_to_end (windata_t *vwin)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+    GtkTextIter end;
+
+    gtk_text_buffer_get_end_iter(buf, &end);
+    gtk_text_buffer_place_cursor(buf, &end);
 }
 
 void scroll_to_foot (windata_t *vwin)

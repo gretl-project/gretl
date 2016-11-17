@@ -26,7 +26,6 @@ enum {
     VIEW_FN_PKG_INFO,
     VIEW_FN_PKG_CODE,
     VIEW_FN_PKG_SAMPLE,
-    EDIT_FN_PKG,
     DELETE_FN_PKG,
     CALL_FN_PKG,
     MENU_ADD_FN_PKG,
@@ -38,8 +37,6 @@ enum {
 void browser_open_data (GtkWidget *w, gpointer data);
 
 void browser_open_ps (GtkWidget *w, gpointer data);
-
-void browser_edit_func (GtkWidget *w, gpointer data);
 
 void browser_call_func (GtkWidget *w, gpointer data);
 

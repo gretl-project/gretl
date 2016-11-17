@@ -50,6 +50,7 @@
                          c == FRACTINT ||       \
 			 c == FREQ ||		\
 			 c == KPSS ||		\
+			 c == LABELS ||         \
 			 c == MAKEPKG ||	\
 			 c == MODTEST ||	\
 			 c == LEVERAGE ||	\
@@ -219,6 +220,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_D, "dynamic", 0 },
     { FCAST,    OPT_M, "mean-y", 0 },
     { FCAST,    OPT_N, "no-stats", 0 },
+    { FCAST,    OPT_T, "stats-only", 0 },
     { FCAST,    OPT_S, "static", 0 },
     { FCAST,    OPT_R, "rolling", 0 },
     { FCAST,    OPT_O, "out-of-sample", 0 },
@@ -427,6 +429,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
     { OUTFILE,  OPT_Q, "quiet", 0 },
+    { OUTFILE,  OPT_B, "buffer", 0 },
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 1 },
     { PANEL,    OPT_F, "fixed-effects", 0 },

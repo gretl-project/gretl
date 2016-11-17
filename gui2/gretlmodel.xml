@@ -24,8 +24,6 @@
       <separator/>
       <menu action="Hsk"/>
       <menuitem action="modtest:n"/>
-      <menuitem action="leverage"/>
-      <menuitem action="vif"/>
       <menuitem action="chow"/>
       <separator/>
       <menuitem action="modtest:a"/>
@@ -50,6 +48,8 @@
       <menuitem action="ConfIntervals"/>
       <menuitem action="ConfEllipse"/>
       <menuitem action="Covariance"/>
+      <menuitem action="Collinearity"/>
+      <menuitem action="Leverage"/>
       <menuitem action="ANOVA"/>
       <menuitem action="Bootstrap"/>
     </menu>     

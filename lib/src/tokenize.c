@@ -1624,7 +1624,7 @@ static int get_parm2 (CMD *c, int options_later)
 	c->parm2 = merge_toks_r_to_l(c, pos);
     } else {
 	c->parm2 = tok->s;
-	if (c->ci == MODPRINT && (tok->flag & TOK_QUOTED)) {
+	if ((tok->flag & TOK_QUOTED) && c->ci == MODPRINT) {
 	    /* signal quoted status of string literal */
 	    c->opt |= OPT_L;
 	}
