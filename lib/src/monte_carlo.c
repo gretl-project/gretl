@@ -2600,7 +2600,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
     int iters = loop->iter;
     int i, j = 0, k = 0;
 
-    if (loop->type != COUNT_LOOP && !(loop_is_quiet(loop))) {
+    if (!loop_is_quiet(loop)) {
 	pprintf(prn, _("\nNumber of iterations: %d\n\n"), iters);
     }
 
