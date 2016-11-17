@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-10-02 16:01-0400\n"
-"PO-Revision-Date: 2016-10-27 16:32+0100\n"
+"PO-Revision-Date: 2016-11-02 16:39+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Poedit 1.8.7.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:493
@@ -7839,8 +7839,8 @@ msgid "translator_credits"
 msgstr ""
 "Traducido al Español por Ignacio Díaz-Emparanza <ignacio.diaz-emparanza@ehu."
 "eus>\n"
-"Se agradece la financiación de los proyectos ECO2016-76884-P y"
-" ECO2013-40935-P\n"
+"Se agradece la financiación de los proyectos ECO2016-76884-P y ECO2013-40935-"
+"P\n"
 "del Ministerio de Economía y Competitividad y del grupo de\n"
 "investigación \"Econometrics Research Group\" de la UPV/EHU IT642-13"
 
@@ -9698,7 +9698,7 @@ msgstr "Usar valores principio-de-periodo"
 
 #: gui2/dialogs.c:3820
 msgid "Spread to multiple series"
-msgstr "Extender a múltiples series"
+msgstr "Distribuir en varias series"
 
 #: gui2/dialogs.c:3840
 msgid "Default method:"
