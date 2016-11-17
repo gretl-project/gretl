@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-11-11 15:46-0500\n"
-"PO-Revision-Date: 2016-10-27 16:32+0100\n"
+"PO-Revision-Date: 2016-11-17 14:09+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Poedit 1.8.7.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:493
@@ -4443,12 +4443,12 @@ msgstr "No se encontraron observaciones"
 #: lib/src/gretl_xml.c:3922
 #, c-format
 msgid "'%s': malformed gdt file"
-msgstr ""
+msgstr "'%s': archivo gdt mal formado"
 
 #: lib/src/gretl_xml.c:3924
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read '%s'"
-msgstr "No se pudo abrir '%s'"
+msgstr "No se pudo leer '%s'"
 
 #: lib/src/gretl_zip.c:491 lib/src/gretl_zip.c:499
 msgid "not found"
@@ -8598,57 +8598,52 @@ msgid "Failed to create empty data set"
 msgstr "Fallo al crear conjunto de datos vacío"
 
 #: gui2/callbacks.c:732 gui2/callbacks.c:736
-#, fuzzy
 msgid "system gfn directory"
-msgstr "seleccione un directorio"
+msgstr "directorio gfn de sistema"
 
 #: gui2/callbacks.c:733 gui2/callbacks.c:739
-#, fuzzy
 msgid "personal gfn directory"
-msgstr "Directorio gretl de usuario"
+msgstr "Directorio gfn personal"
 
 #: gui2/callbacks.c:734 gui2/callbacks.c:737 gui2/callbacks.c:740
-#, fuzzy
 msgid "current working directory"
-msgstr "gretl: directorio de trabajo"
+msgstr "directorio de trabajo actual"
 
 #: gui2/callbacks.c:743
-#, fuzzy
 msgid "Open .gfn file"
-msgstr "Abrir el fichero %s"
+msgstr "Abrir un fichero .gfn"
 
 #: gui2/callbacks.c:743
 msgid "Start looking in:"
-msgstr ""
+msgstr "Comenzar mirando en:"
 
 #: gui2/callbacks.c:777 gui2/library.c:1430
 msgid "cross-correlogram"
 msgstr "correlograma cruzado"
 
 #: gui2/callbacks.c:789 gui2/callbacks.c:834
-#, fuzzy
 msgid "Collinearity check"
-msgstr "_Colinealidad"
+msgstr "Comprobación de colinealidad"
 
 #: gui2/callbacks.c:790
-#, fuzzy
 msgid "Include a constant?"
-msgstr "Incluir una constante"
+msgstr "¿Incluir una constante?"
 
 #: gui2/callbacks.c:827
 msgid "For a matrix composed of the selected series:"
-msgstr ""
+msgstr "Para una matriz formada por las series seleccionadas:"
 
 #: gui2/callbacks.c:830
-#, fuzzy
 msgid "condition number"
-msgstr "índice de condición"
+msgstr "número de condición"
 
 #: gui2/callbacks.c:831
 msgid ""
 "A condition number greater than 50 is commonly regarded as\n"
 "indicating strong collinearity."
 msgstr ""
+"Un número de condición mayor que 50 normalmente se considera\n"
+"indicador de fuerte colinealidad."
 
 #: gui2/cmdstack.c:163
 #, c-format
@@ -8874,14 +8869,14 @@ msgid "Function package %s"
 msgstr "Paquete de función %s"
 
 #: gui2/datafiles.c:850
-#, fuzzy, c-format
+#, c-format
 msgid "Unload package %s?"
-msgstr "_Cargar el paquete..."
+msgstr "¿Descargar el paquete %s?"
 
 #: gui2/datafiles.c:857
-#, fuzzy, c-format
+#, c-format
 msgid "Package %s is not loaded"
-msgstr "No se ha cargado la biblioteca MPI"
+msgstr "El paquete %s no se ha cargado"
 
 #: gui2/datafiles.c:972 gui2/datafiles.c:1013
 msgid "No function files were found"
@@ -12485,9 +12480,8 @@ msgid "_Function package guide"
 msgstr "Guía de los paquetes de _funciones"
 
 #: gui2/gretl.c:1792
-#, fuzzy
 msgid "_gretl + MPI"
-msgstr "gretl: GMM"
+msgstr "_gretl + MPI"
 
 #: gui2/gretl.c:1793
 msgid "Check for _updates"
@@ -14525,9 +14519,8 @@ msgid "Correlation matrix"
 msgstr "Matriz de correlación"
 
 #: gui2/menustate.c:500
-#, fuzzy
 msgid "Collinearity"
-msgstr "_Colinealidad"
+msgstr "Colinealidad"
 
 #: gui2/menustate.c:502 gui2/selector.c:6860
 msgid "XY scatterplot"
