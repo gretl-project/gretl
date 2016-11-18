@@ -6687,7 +6687,8 @@ void resid_plot (GtkAction *action, gpointer p)
     } else {    
 	/* plot against obs index or time */
 	opt |= OPT_T;
-	if (dataset_is_time_series(dset)) {
+	if (dataset_is_time_series(dset) ||
+	    dataset_is_panel(dset)) {
 	    opt |= OPT_O; /* use lines */
 	}
     } 
