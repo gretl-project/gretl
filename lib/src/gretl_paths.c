@@ -2673,7 +2673,9 @@ const char *gretl_rbin_path (void)
     }
 #endif
 
+#if 0
     fprintf(stderr, "gretl_rbin_path: '%s'\n", paths.rbinpath);
+#endif
 
     return paths.rbinpath;
 }
@@ -2689,8 +2691,10 @@ const char *gretl_rlib_path (void)
     }	
 #endif
 
+#if 0
     fprintf(stderr, "gretl_rlib_path: '%s'\n", paths.rlibpath);
-    
+#endif
+
     return paths.rlibpath;
 }
 
