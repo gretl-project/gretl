@@ -399,14 +399,14 @@ corresponding argument is not strictly needed, but will be used if
 present).  In that case the parameter should be given a default value
 of \texttt{null} and the the function should test to see if the caller
 supplied a corresponding argument or not, using the built-in function
-\texttt{isnull()}.  For example, here is the simple function shown
+\texttt{exists()}.  For example, here is the simple function shown
 above, modified to make the filling out of the \texttt{ess} value
 optional.
 %
 \begin{code}
 function series get_uhat_and_ess(series y, list xvars, scalar *ess[null])
   ols y 0 xvars --quiet
-  if !isnull(ess) 
+  if exists(ess) 
      ess = $ess
   endif
   return $uhat
