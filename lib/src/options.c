@@ -307,8 +307,6 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_X, "tconvert", 2 },
     { JOIN,     OPT_H, "no-header", 0 },
     { JOIN,     OPT_V, "verbose", 0 },
-    { KALMAN,   OPT_C, "cross", 0 },
-    { KALMAN,   OPT_D, "diffuse", 0 },
     { KPSS,     OPT_T, "trend", 0 },
     { KPSS,     OPT_D, "seasonals", 0 },
     { KPSS,     OPT_V, "verbose", 0 },

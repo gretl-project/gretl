@@ -130,7 +130,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { INSTALL,  "install",  CI_PARM1 },
     { INTREG,   "intreg",   CI_LIST },
     { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_EXTRA },
-    { KALMAN,   "kalman",   CI_BLOCK },
     { KPSS,     "kpss",     CI_ORD1 | CI_LIST },
     { LABELS,   "labels",   CI_LIST | CI_DOALL },
     { LAD,      "lad",      CI_LIST },
@@ -216,7 +215,7 @@ static struct gretl_cmd gretl_cmds[] = {
 }; 
 
 #define not_catchable(c) (c == IF || c == ENDIF || c == ELIF || \
-			  c == FUNC || c == KALMAN)
+			  c == FUNC)
 
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR)

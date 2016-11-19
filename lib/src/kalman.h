@@ -82,32 +82,9 @@ PRN *kalman_get_printer (const kalman *K);
 
 #ifndef __GTK_DOC_IGNORE__
 
-int kalman_parse_line (const char *line, const DATASET *dset, 
-		       gretlopt opt, PRN *prn);
-
-double user_kalman_get_loglik (void);
-
-gretl_matrix *user_kalman_get_matrix (int idx, int *err);
-
-double user_kalman_get_s2 (void);
-
-int user_kalman_get_time_step (void);
-
-int user_kalman_run (const char *E, const char *V, const char *S,
-		     const char *P, const char *G, const DATASET *dset, 
-		     PRN *prn, int *errp);
-
 int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp);
 
-gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
-				  int *err);
-
 int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn);
-
-gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
-				    const gretl_matrix *W,
-				    const char *Sname, 
-				    PRN *prn, int *err);
 
 gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 				      const gretl_matrix *U, 
@@ -117,10 +94,6 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 				     const gretl_matrix *U,
 				     PRN *prn, int *err);
-
-void kalman_cleanup (void);
-
-int delete_kalman (PRN *prn);
 
 /* for interfacing with gretl bundle mechanism */
 

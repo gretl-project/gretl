@@ -36,9 +36,6 @@ typedef enum {
     R_HUGE,       /* conventional "huge" number, like eg 1.0e100 */
     R_DSET_MAX,   /* separator */
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
-    R_KLNL,       /* log-likelihood from Kalman filter (if applicable) */
-    R_KS2,        /* variance estimate from Kalman filter (if applicable) */
-    R_KSTEP,      /* current Kalman time-step (if applicable) */
     R_STOPWATCH,  /* stopwatch */
     R_TEST_BRK,   /* obs at which break occurs (QLR test) */
     R_SCALAR_MAX, /* separator: scalars vs series */
@@ -110,8 +107,6 @@ typedef enum {
     M_FCAST,      /* last forecast generated via fcast command */
     M_FCERR,      /* standard errors associated with M_FCAST */
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
-    M_KLLT,       /* Kalman log-likelihood, per time-step */
-    M_KUHAT,      /* Kalman: current prediction error */
     M_EHAT,       /* ARMA: vector of estimated innovations */
     M_PMANTEAU,   /* VAR portmanteau test plus 's' value */
     M_MATRIX_MAX, /*** SEPARATOR, end of matrices ***/

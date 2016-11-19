@@ -1,3 +1,7 @@
+version 2016e, in progress
+
+The old interface to the Kalman filter has now been removed.
+
 2016-11-19 version 2016d
 
 New code in the Ziggurat mechanism (for greater speed and better

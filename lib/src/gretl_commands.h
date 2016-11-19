@@ -84,7 +84,6 @@ typedef enum {
     INSTALL,
     INTREG,
     JOIN,
-    KALMAN,
     KPSS,
     LABELS, 
     LAD,

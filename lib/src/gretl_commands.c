@@ -94,7 +94,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { INSTALL,  "install" },
     { INTREG,   "intreg" },
     { JOIN,     "join" },
-    { KALMAN,   "kalman" },
     { KPSS,     "kpss" },
     { LABELS,   "labels" },
     { LAD,      "lad" },

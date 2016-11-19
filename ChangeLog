@@ -1,3 +1,6 @@
+version 2016e, in progress
+- Remove obsolete Kalman-filter interface
+
 2016-11-19 version 2016d
 - New commands to support MIDAS: "midasreg" and "hfplot"
 - New MIDAS-related functions: hfdiff(), hfldiff(), hflags(),

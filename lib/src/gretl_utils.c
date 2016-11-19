@@ -28,7 +28,6 @@
 #include "gretl_string_table.h"
 #include "gretl_xml.h"
 #include "forecast.h"
-#include "kalman.h"
 #include "gretl_typemap.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -1968,9 +1967,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
 	return E_DATA;
     }
 
-    if (!strcmp(s, "kalman")) {
-	err = delete_kalman(prn);
-    } else if (gretl_is_user_var(s)) {
+    if (gretl_is_user_var(s)) {
 	err = user_var_delete_by_name(s, prn);
     } else {
 	err = maybe_delete_bundle_value(s, prn);
@@ -2217,7 +2214,6 @@ void libgretl_cleanup (void)
     forecast_matrix_cleanup();
     stored_options_cleanup();
     option_printing_cleanup();
-    kalman_cleanup();
     gnuplot_cleanup();
     bufgets_cleanup();
     plugins_cleanup();

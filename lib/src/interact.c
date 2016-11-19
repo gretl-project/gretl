@@ -40,7 +40,6 @@
 #include "gretl_foreign.h"
 #include "boxplots.h"
 #include "gretl_plot.h"
-#include "kalman.h"
 #include "flow_control.h"
 #include "libglue.h"
 #include "csvdata.h"
@@ -3005,14 +3004,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
-    case KALMAN:
-	/* tokenizer: @line arg OK for now */
-	err = kalman_parse_line(line, dset, cmd->opt, prn);
-	if (!err && (cmd->opt == OPT_NONE)) {
-	    gretl_cmd_set_context(cmd, cmd->ci);
-	}
-	break;
-
     case PLOT:
 	if (!cmd->context) {
 	    err = gretl_plot_start(cmd->param, dset);
@@ -3180,8 +3171,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = do_end_restrict(s, dset);
 	} else if (!strcmp(cmd->param, "foreign")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
-	} else if (!strcmp(cmd->param, "kalman")) {
-	    err = kalman_parse_line(line, dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "mpi")) {
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "plot")) {
@@ -3440,8 +3429,7 @@ int get_command_index (char *line, int cmode, CMD *cmd)
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
-	cmd->ci == KALMAN || cmd->ci == PLOT ||
-	cmd->ci == MPI) {
+	cmd->ci == PLOT || cmd->ci == MPI) {
 	cmd->context = cmd->ci;
     }
 

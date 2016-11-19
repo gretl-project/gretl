@@ -9335,138 +9335,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	    
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	}
-    } else if (t->t == F_KFILTER) {
-	const char *E = NULL;
-	const char *V = NULL;
-	const char *S = NULL;
-	const char *P = NULL;
-	const char *G = NULL;
-
-	if (k > 5) {
-	    n_args_error(k, 5, t->t, p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e->t == EMPTY) {
-		; /* NULL arguments are OK */
-	    } else if (e->t != U_ADDR) {
-		node_type_error(t->t, i+1, U_ADDR, e, p);
-	    } else if (i == 0) {
-		E = ptr_node_get_matrix_name(e, p);
-	    } else if (i == 1) {
-		V = ptr_node_get_matrix_name(e, p);
-	    } else if (i == 2) {
-		S = ptr_node_get_matrix_name(e, p);
-	    } else if (i == 3) {
-		P = ptr_node_get_matrix_name(e, p);
-	    } else if (i == 4) {
-		G = ptr_node_get_matrix_name(e, p);
-	    }
-	}
-
-	if (!p->err) {
-	    reset_p_aux(p, save_aux);
-	    ret = aux_scalar_node(p);
-	}
-
-	if (!p->err) {
-	    ret->v.xval = user_kalman_run(E, V, S, P, G, 
-					  p->dset, p->prn, 
-					  &p->err);
-	}
-    } else if (t->t == F_KSMOOTH) {
-	const char *P = NULL;
-	const char *U = NULL;
-
-	if (k > 2) {
-	    n_args_error(k, 2, t->t, p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e->t == EMPTY) {
-		; /* NULL arguments are acceptable */
-	    } else if (e->t != U_ADDR) {
-		node_type_error(t->t, i+1, U_ADDR, e, p);
-	    } else if (i == 0) {
-		P = ptr_node_get_matrix_name(e, p);
-	    } else if (i == 1) {
-		U = ptr_node_get_matrix_name(e, p);
-	    }
-	}
-
-	if (!p->err) {
-	    reset_p_aux(p, save_aux);
-	    ret = aux_matrix_node(p);
-	}
-
-	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }	    
-	    ret->v.m = user_kalman_smooth(P, U, &p->err);
-	}
-    } else if (t->t == F_KSIMUL) {
-	gretl_matrix *V = NULL;
-	gretl_matrix *W = NULL;
-	const char *S = NULL;
-	int freeV = 0, freeW = 0;
-	
-	if (k < 1 || k > 3) {
-	    n_args_error(k, 1, t->t, p);
-	} 
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (p->err) {
-		break;
-	    }
-	    if (i == 0) {
-		if (e->t == SERIES) {
-		    V = tmp_matrix_from_series(e, p);
-		    freeV = 1;
-		} else if (e->t != MAT) {
-		    node_type_error(t->t, i+1, MAT, e, p);
-		} else {
-		    V = e->v.m;
-		}
-	    } else if (i == 1) {
-		if (e->t == EMPTY) {
-		    ; /* OK */
-		} else if (e->t == SERIES) {
-		    W = tmp_matrix_from_series(e, p);
-		    freeW = 1;
-		} else if (e->t != MAT) {
-		    node_type_error(t->t, i+1, MAT, e, p);
-		} else {
-		    W = e->v.m;
-		}
-	    } else {		
-		if (e->t == EMPTY) {
-		    ; /* OK */
-		} else if (e->t != U_ADDR) {
-		    node_type_error(t->t, i+1, U_ADDR, e, p);
-		} else {
-		    S = ptr_node_get_matrix_name(e, p);
-		}
-	    } 
-	}
-
-	if (!p->err) {
-	    reset_p_aux(p, save_aux);
-	    ret = aux_matrix_node(p);
-	}
-
-	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }	    
-	    ret->v.m = user_kalman_simulate(V, W, S, p->prn, &p->err);
-	}
-
-	if (freeV) gretl_matrix_free(V);
-	if (freeW) gretl_matrix_free(W);
     } else if (t->t == F_MOLS || t->t == F_MPOLS) {
 	gretlopt opt = (t->t == F_MPOLS)? OPT_M : OPT_NONE;
 	gretl_matrix *Y = NULL;
@@ -10183,7 +10051,8 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	}
     } else if (t->t == F_KSIMUL) {
 	/* we need a bundle pointer, a matrix,
-	   and perhaps an optional boolean */
+	   and perhaps an optional boolean 
+	*/
 	gretl_bundle *b = get_kalman_bundle_arg(n, p);
 	gretl_matrix *U = NULL;
 	int freeU = 0;
@@ -10923,8 +10792,6 @@ static NODE *eval_query (NODE *t, parser *p)
 double dvar_get_scalar (int i, const DATASET *dset,
 			char *label)
 {
-    int ival;
-
     switch (i) {
     case R_NOBS:
 	return (dset == NULL) ? NADBL : 
@@ -10947,14 +10814,6 @@ double dvar_get_scalar (int i, const DATASET *dset,
 	return get_last_lnl(label);
     case R_TEST_BRK:
 	return get_last_break(label);
-    case R_KLNL:
-	return user_kalman_get_loglik();
-    case R_KS2:
-	return user_kalman_get_s2();
-    case R_KSTEP:
-	ival = user_kalman_get_time_step();
-
-	return (double) ival;
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_WINDOWS:
@@ -12760,18 +12619,12 @@ static NODE *eval (NODE *t, parser *p)
     case F_KFILTER:
     case F_KSMOOTH:
     case F_KSIMUL:
+    case F_KSETUP:
+    case F_KDSMOOTH:
 	if (bundle_pointer_arg0(t)) {
 	    ret = eval_kalman_bundle_func(t, p);
 	} else {
-	    ret = eval_nargs_func(t, p);
-	}
-	break;
-    case F_KSETUP:
-    case F_KDSMOOTH:
-	if (t->t == F_KDSMOOTH && !bundle_pointer_arg0(t)) {
 	    p->err = E_TYPES;
-	} else {
-	    ret = eval_kalman_bundle_func(t, p);
 	}
 	break;
     case F_KSIMDATA:

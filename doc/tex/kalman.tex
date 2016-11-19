@@ -30,22 +30,23 @@
 \label{sec:amble}
 
 The original interface to the treatment of linear state space models
-in gretl predated the development of gretl's ``bundle''
-type.\footnote{If anyone needs documentation for the original
-  interface, available in gretl 2016c and earlier versions, it can be
-  found at \url{http://gretl.sourceforge.net/papers/kalman_old.pdf}.}
-In 2016 it struck the gretl authors that the bundle type could be used
-to advantage in reformulating the user interface; we suspect people
-will find the new interface a good deal easier to use. Moreover, the
-new interface makes it much more practical to split long portions of
-code into smaller, dedicated functions, which are arguably easier to
-debug and maintain; this should hopefully lead to more function
-packages using gretl's native state space facilities. And finally, the
-new interface is designed in such a way that certain operations, that
-would have required a great deal of low-level coding under the old
-regime, are simple, fast and natural with the new one. This is the
-case of ``disturbance smoothing'' (see section \ref{sec:kdsmooth}) or
-the case when system matrices are time-varying (see section
+in gretl (which has now been tretired) predated the development of
+gretl's ``bundle'' type.\footnote{If anyone needs documentation for
+  the original interface, available in gretl 2016d and earlier
+  versions, it can be found at
+  \url{http://gretl.sourceforge.net/papers/kalman_old.pdf}.}  In 2016
+it struck the gretl authors that the bundle type could be used to
+advantage in reformulating the user interface; we suspect people will
+find the new interface a good deal easier to use. Moreover, the new
+interface makes it much more practical to split long portions of code
+into smaller, dedicated functions, which are arguably easier to debug
+and maintain; hopefully, this may lead to more function packages using
+gretl's native state space facilities. And finally, the new interface
+is designed in such a way that certain operations, that would have
+required a great deal of low-level coding under the old regime, are
+simple, fast and natural with the new one. This is the case of
+``disturbance smoothing'' (see section \ref{sec:kdsmooth}) or the case
+when system matrices are time-varying (see section
 \ref{sec:tvarying}).
 
 Technically, a gretl bundle is an associative array; that is, an
@@ -76,12 +77,6 @@ Here are the main features of the new interface ``at a glance'':
 \item The mechanism for handling time-varying system matrices has been
   simplified and generalized.
 \end{itemize}
-
-At present the old syntax and methods are still available, with the
-new interface operating in parallel. However, we may retire the old
-interface at some point. Please note that you cannot ``mix and match''
-the old and new interfaces; you must adhere consistently to one or the
-other.
 
 \section{Notation}
 

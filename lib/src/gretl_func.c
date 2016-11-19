@@ -32,7 +32,6 @@
 #include "gretl_zip.h"
 #include "uservar.h"
 #include "flow_control.h"
-#include "kalman.h"
 #include "system.h"
 #include "genr_optim.h"
 
@@ -1948,8 +1947,6 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
     } else if (wordmatch(s, "system")) {
 	ni++;
     } else if (wordmatch(s, "foreign")) {
-	ni++;
-    } else if (wordmatch(s, "kalman")) {
 	ni++;
     } else if (wordmatch(s, "end") ||
 	       wordmatch(s, "endif") ||
@@ -7118,9 +7115,6 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     if (anyerr && !err) {
 	err = anyerr;
     }    
-
-    /* if the function defined a Kalman filter, clean that up */
-    delete_kalman(NULL);
 
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
