@@ -20,10 +20,10 @@
 #ifndef GRETL__VERSION_H
 #define GRETL__VERSION_H
 
-#define LIBGRETL_CURRENT   18
+#define LIBGRETL_CURRENT   19
 #define LIBGRETL_REVISION  0
 #define LIBGRETL_AGE       0
 
-#define GRETL_VERSION "2016d-git"
+#define GRETL_VERSION "2016d"
 
 #endif /* GRETL__VERSION_H */
