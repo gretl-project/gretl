@@ -1,15 +1,15 @@
-version 2016d, in progress
-
-The second element in the vector returned by fcstats() is now
-the RMSE instead of the MSE, since it seems this is the statistic
-that is in fact wanted more often.
-
-The option of using the Box-Muller method in generating random
-normal variates has been removed (we now only use the Ziggurat).
+2016-11-19 version 2016d
 
 New code in the Ziggurat mechanism (for greater speed and better
 coverage of the real line) means that gretl's random normal
 variates will not be the same as in 2016c for any given seed.
+
+The option of using the Box-Muller method in generating random
+normal variates has been removed (we now only use the Ziggurat).
+
+The second element in the vector returned by fcstats() is now
+the RMSE instead of the MSE, since it seems this is the statistic
+that is in fact wanted more often.
 
 2016-07-06 version 2016c
 
