@@ -992,12 +992,19 @@ static int write_stata_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
+	    gchar *path = g_strdup(dotdir);
+	    int n = strlen(path);
+
+	    if (path[n-1] == SLASH) {
+		path[n-1] = '\0';
+	    }
 	    fputs("program define gretl_export\n", fp);
 	    /* not sure about req'd version, but see mat2txt.ado */
 	    fputs("version 8.2\n", fp);
 	    fputs("local matrix `1'\n", fp);
 	    fputs("local fname `2'\n", fp);
 	    fputs("tempname myfile\n", fp);
+	    fprintf(fp, "cd \"%s\"\n", path);
 	    fputs("file open `myfile' using \"`fname'\", "
 		  "write text replace\n", fp);
 	    fputs("local nrows = rowsof(`matrix')\n", fp);
@@ -1013,6 +1020,7 @@ static int write_stata_io_file (void)
 
 	    fclose(fp);
 	    written = 1;
+	    g_free(path);
 	}
     }
 
