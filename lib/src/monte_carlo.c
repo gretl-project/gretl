@@ -3606,6 +3606,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		loop->brk = 1;
 		break;
 	    } else if (cmd->ci == FUNCRET) {
+		/* The following line added 2016-11-20: just in case
+		   the return value is, or references, an automatic
+		   loop index scalar.
+		*/
+		loop->flags &= ~LOOP_DELVAR;
 		err = set_function_should_return(line);
 		loop->brk = 1;
 		break;
