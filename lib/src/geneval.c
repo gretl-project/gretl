@@ -12616,12 +12616,12 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;
+    case F_KSETUP:
     case F_KFILTER:
     case F_KSMOOTH:
     case F_KSIMUL:
-    case F_KSETUP:
     case F_KDSMOOTH:
-	if (bundle_pointer_arg0(t)) {
+	if (t->t == F_KSETUP || bundle_pointer_arg0(t)) {
 	    ret = eval_kalman_bundle_func(t, p);
 	} else {
 	    p->err = E_TYPES;

@@ -690,23 +690,6 @@ void *user_var_get_value_and_type (const char *name,
     return ret;
 }
 
-/* note: used in kalman.c */
-
-gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
-{
-    int i;
-
-    for (i=0; i<n_vars; i++) {
-	if (uvars[i]->type == GRETL_TYPE_MATRIX &&
-	    uvars[i]->level == level && 
-	    strcmp(uvars[i]->name, name) == 0) {
-	    return uvars[i]->ptr;
-	}
-    }
-
-    return NULL;
-}
-
 int gretl_is_user_var (const char *name)
 {
     return get_user_var_by_name(name) != NULL;

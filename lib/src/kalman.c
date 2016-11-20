@@ -92,8 +92,7 @@ struct kalman_ {
     gretl_matrix *e;  /* n x 1: one-step forecast error(s), time t */
 
     /* input data matrices: note that the order matters for various 
-       functions, including user_kalman_recheck_matrices() and
-       matrix_is_varying()
+       functions, including matrix_is_varying()
     */
     gretl_matrix *F; /* r x r: state transition matrix */
     gretl_matrix *A; /* k x n: coeffs on exogenous vars, obs eqn */
@@ -109,9 +108,6 @@ struct kalman_ {
     /* user inputs for cross-correlated disturbances */
     gretl_matrix *B; /* r x p: BB' = Q */
     gretl_matrix *C; /* n x p: CC' = R */
-
-    /* optional array of names of input matrices */
-    char **mnames;
 
     /* apparatus for registering time-variation of matrices */
     char *matcall;
@@ -152,7 +148,7 @@ struct kalman_ {
     gretl_matrix *Tmpr1;
 
     gretl_bundle *b; /* the bundle of which this struct is a member */
-    void *data;      /* handle for attching additional info */
+    void *data;      /* handle for attaching additional info */
     PRN *prn;        /* verbose printer */
 };
 
@@ -168,15 +164,6 @@ struct kalman_ {
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
-
-/* The matrix in question is an external named user-matrix,
-   not "owned" by the Kalman struct: in this case the
-   matrix must have its name recorded.
-*/
-#define matrix_is_external(K,i) (K->mnames != NULL && \
-				 K->mnames[i] != NULL && \
-				 K->mnames[i][0] != '$' && \
-				 K->mnames[i][0] != '\0')
 
 #define filter_is_varying(K) (K->matcall != NULL)
 
@@ -238,7 +225,7 @@ void kalman_free (kalman *K)
 
     gretl_matrix_block_destroy(K->Blk);
 
-    if ((K->flags & KALMAN_BUNDLE) || K->mnames != NULL) {
+    if (K->flags & KALMAN_BUNDLE) {
 	gretl_matrix **mptr[] = {
 	    &K->F, &K->A, &K->H, &K->Q, &K->R,
 	    &K->mu, &K->y, &K->x, &K->Sini, &K->Pini
@@ -251,18 +238,10 @@ void kalman_free (kalman *K)
 	}
 
 	for (i=0; i<K_MMAX; i++) {
-	    if ((K->flags & KALMAN_BUNDLE) || !matrix_is_external(K, i)) {
-		gretl_matrix_free(*mptr[i]);
-	    }
+	    gretl_matrix_free(*mptr[i]);
 	}
-    }
 
-    if (K->mnames != NULL) {
-	strings_array_free(K->mnames, K_MMAX);
-    }
-
-    if (K->flags & KALMAN_BUNDLE) {
-	/* we own these "export" matrices */
+	/* we also own these "export" matrices */
 	gretl_matrix_free(K->E);
 	gretl_matrix_free(K->V);
 	gretl_matrix_free(K->S);
@@ -306,7 +285,6 @@ static kalman *kalman_new_empty (int flags)
 	K->mu = NULL;
 	K->U = NULL;
 	K->Vsd = NULL;
-	K->mnames = NULL;
 	K->matcall = NULL;
 	K->varying = NULL;
 	K->cross = NULL;

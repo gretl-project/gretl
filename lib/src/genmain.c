@@ -240,7 +240,6 @@ static const char *reswords[] = {
     "list",
     "bundle",
     "array",
-    "kalman",
     "void",
     /* debugging instructions, etc. */
     "continue",
