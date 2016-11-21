@@ -54,7 +54,9 @@ int gretl_spawn (char *cmdline);
 
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn);
 
-int gretl_win32_grab_output (const char *cmdline, char **sout);
+int gretl_win32_grab_output (const char *cmdline,
+			     const char *currdir,
+			     char **sout);
 
 char *slash_convert (char *str, int which);
 

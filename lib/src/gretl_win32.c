@@ -247,38 +247,43 @@ void win_copy_last_error (void)
 static int real_win_run_sync (char *cmdline, const char *currdir,
 			      int console_app) 
 {
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi; 
+    STARTUPINFO sinfo;
+    PROCESS_INFORMATION pinfo;
     DWORD exitcode;
     DWORD flags;
     int ok, err = 0;
 
-    ZeroMemory(&si, sizeof si);
-    ZeroMemory(&pi, sizeof pi);  
-    si.cb = sizeof si;
+    ZeroMemory(&sinfo, sizeof sinfo);
+    ZeroMemory(&pinfo, sizeof pinfo);
+    sinfo.cb = sizeof sinfo;
 
     if (console_app) {
 	flags = CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS;
     } else {
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.wShowWindow = SW_SHOWMINIMIZED;
+	sinfo.dwFlags = STARTF_USESHOWWINDOW;
+	sinfo.wShowWindow = SW_SHOWMINIMIZED;
 	flags = HIGH_PRIORITY_CLASS;
     }
 
     /* zero return means failure */
-    ok = CreateProcess(NULL, cmdline, 
-		       NULL, NULL, FALSE,
+    ok = CreateProcess(NULL,
+		       cmdline,
+		       NULL,
+		       NULL,
+		       FALSE,
 		       flags,
-		       NULL, currdir,
-		       &si, &pi);
+		       NULL,
+		       currdir,
+		       &sinfo,
+		       &pinfo);
 
     if (!ok) {
 	fprintf(stderr, "win_run_sync: failed command:\n%s\n", cmdline);
 	win_copy_last_error();
 	err = 1;
     } else {
-	WaitForSingleObject(pi.hProcess, INFINITE); 
-	if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+	WaitForSingleObject(pinfo.hProcess, INFINITE);
+	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
 	    if (exitcode != 0) {
 		fprintf(stderr, "win_run_sync: got exit code %d\n", exitcode);
 		gretl_errmsg_sprintf("%s: exit code %d", cmdline, 
@@ -292,8 +297,8 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 	}
     }
    
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    CloseHandle(pinfo.hProcess);
+    CloseHandle(pinfo.hThread);
 
     return err;
 }
@@ -437,18 +442,29 @@ enum {
 };
 
 static int 
-run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread,
-		     int flag) 
+run_child_with_pipe (const char *arg, const char *currdir,
+		     HANDLE hwrite, HANDLE hread, int flag) 
 { 
     PROCESS_INFORMATION pinfo; 
     STARTUPINFO sinfo;
     char *cmdline = NULL;
+    char *targdir = NULL;
     int ok;
 
     if (flag == SHELL_RUN) {
 	cmdline = compose_command_line(arg);
     } else {
 	cmdline = g_strdup(arg);
+    }
+
+    if (currdir != NULL) {
+	int n;
+
+	targdir = g_strdup(currdir);
+	n = strlen(targdir);
+	if (targdir[n-1] == '\\') {
+	    targdir[n-1] = '\0';
+	}
     }
  
     ZeroMemory(&pinfo, sizeof pinfo);
@@ -468,7 +484,7 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread,
 		       TRUE,          /* handles are inherited */
 		       CREATE_NO_WINDOW,
 		       NULL,          /* use parent's environment */
-		       get_shelldir(),          
+		       targdir,
 		       &sinfo,
 		       &pinfo);
    
@@ -480,24 +496,25 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread,
     }
 
     g_free(cmdline);
+    g_free(targdir);
 
     return ok;
 }
 
-static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn,
-			       int flag) 
+static int run_cmd_with_pipes (const char *arg, const char *currdir,
+			       char **sout, PRN *prn, int flag)
 { 
     HANDLE hread, hwrite;
-    SECURITY_ATTRIBUTES sa; 
-    int ok; 
+    SECURITY_ATTRIBUTES sattr;
+    int ok;
  
     /* set the bInheritHandle flag so pipe handles are inherited */
-    sa.nLength = sizeof(SECURITY_ATTRIBUTES); 
-    sa.bInheritHandle = TRUE; 
-    sa.lpSecurityDescriptor = NULL; 
+    sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sattr.bInheritHandle = TRUE;
+    sattr.lpSecurityDescriptor = NULL;
 
     /* create pipe for the child process's STDOUT */ 
-    ok = CreatePipe(&hread, &hwrite, &sa, 0);
+    ok = CreatePipe(&hread, &hwrite, &sattr, 0);
 
     if (!ok) {
 	win_show_last_error();
@@ -505,7 +522,7 @@ static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn,
 	/* ensure that the read handle to the child process's pipe for 
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	ok = run_child_with_pipe(arg, hwrite, hread, flag);
+	ok = run_child_with_pipe(arg, currdir, hwrite, hread, flag);
 	if (ok) {
 	    /* read from child's output pipe */
 	    read_from_pipe(hwrite, hread, sout, prn); 
@@ -517,33 +534,38 @@ static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn,
 
 static int run_cmd_wait (const char *cmd, PRN *prn)
 {
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
+    STARTUPINFO sinfo;
+    PROCESS_INFORMATION pinfo;
     char *cmdline = NULL;
     int ok, err = 0;
 
-    ZeroMemory(&si, sizeof si);
-    ZeroMemory(&pi, sizeof pi);
+    ZeroMemory(&sinfo, sizeof sinfo);
+    ZeroMemory(&pinfo, sizeof pinfo);
 
-    si.cb = sizeof si;
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOWMINIMIZED;
+    sinfo.cb = sizeof sinfo;
+    sinfo.dwFlags = STARTF_USESHOWWINDOW;
+    sinfo.wShowWindow = SW_SHOWMINIMIZED;
 
     cmdline = compose_command_line(cmd);
 
-    ok = CreateProcess(NULL, cmdline, 
-		       NULL, NULL, FALSE,
+    ok = CreateProcess(NULL,
+		       cmdline,
+		       NULL,
+		       NULL,
+		       FALSE,
 		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-		       NULL, get_shelldir(),
-		       &si, &pi);
+		       NULL,
+		       gretl_workdir(), /* FIXME? */
+		       &sinfo,
+		       &pinfo);
 
     if (!ok) {
 	win_show_last_error();
 	err = 1;
     } else {
-	WaitForSingleObject(pi.hProcess, INFINITE);
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
+	WaitForSingleObject(pinfo.hProcess, INFINITE);
+	CloseHandle(pinfo.hProcess);
+	CloseHandle(pinfo.hThread);
     }
 
     g_free(cmdline);
@@ -551,14 +573,16 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     return err;
 }
 
-int gretl_win32_grab_output (const char *cmdline, char **sout)
+int gretl_win32_grab_output (const char *cmdline,
+			     const char *currdir,
+			     char **sout)
 {
-    return run_cmd_with_pipes(cmdline, sout, NULL, PROG_RUN);
+    return run_cmd_with_pipes(cmdline, currdir, sout, NULL, PROG_RUN);
 }
 
 int gretl_shell_grab (const char *arg, char **sout)
 {
-    return run_cmd_with_pipes(arg, sout, NULL, SHELL_RUN);
+    return run_cmd_with_pipes(arg, NULL, sout, NULL, SHELL_RUN);
 }
 
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
@@ -583,7 +607,7 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 	    err = 1;
 	}
     } else if (getenv("GRETL_SHELL_NEW")) {
-	err = run_cmd_with_pipes(arg, NULL, prn, SHELL_RUN);
+	err = run_cmd_with_pipes(arg, NULL, NULL, prn, SHELL_RUN);
     } else {
 	err = run_cmd_wait(arg, prn);
     } 
@@ -995,7 +1019,7 @@ static const char *abb_month[] = {
 static const char *full_month[] = {
     "January",
     "February",
-    "Mars",
+    "March",
     "April",
     "May",
     "June",

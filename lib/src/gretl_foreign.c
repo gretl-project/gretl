@@ -396,7 +396,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	return 1;
     }
 
-    err = gretl_win32_grab_output(cmd, &sout);
+    err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
 
     if (sout != NULL && *sout != '\0') {
 	pputs(prn, sout);
@@ -478,7 +478,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-	err = gretl_win32_grab_output(cmd, &sout);
+	err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
 	if (sout != NULL && *sout != '\0') {
 	    pputs(prn, sout);
 	}

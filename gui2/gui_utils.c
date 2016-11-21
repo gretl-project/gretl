@@ -5422,7 +5422,7 @@ void run_foreign_script (gchar *buf, int lang)
 		pputc(prn, '\n');
 	    }
 	} else {
-	    err = gretl_win32_grab_output(cmd, &sout);
+	    err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
 	    if (sout != NULL) {
 		prn = gretl_print_new_with_buffer(sout);
 		if (prn == NULL) {

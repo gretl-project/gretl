@@ -3480,13 +3480,6 @@ int gretl_set_paths (ConfigPaths *cpaths)
 	}
     }
 
-#if defined(WIN32) || defined(OS_OSX) 
-    shelldir_init(paths.workdir);
-#else
-    /* if on Linux, respect the "real" CWD */
-    shelldir_init(NULL);
-#endif
-
     set_builtin_path_strings(0);
     set_gretl_tex_preamble();
 
@@ -3530,9 +3523,8 @@ const char *gretl_maybe_switch_dir (const char *fname)
  * If @fname starts with the construction "~/" to indicate
  * the user's HOME, replace this with the full path to that
  * directory.  Otherwise, if @fname is not already an
- * absolute path, prepend either the gretl "shelldir" or the
- * user's gretl working directory, depending on whether or
- * %USE_CWD is set. Otherwise do nothing.
+ * absolute path, prepend the user's gretl working directory.
+ * Otherwise do nothing.
  * 
  * Returns: the possibly modified filename.
  */

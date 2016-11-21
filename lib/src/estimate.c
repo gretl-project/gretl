@@ -4267,7 +4267,7 @@ int get_x12a_maxpd (void)
 	char *sout = NULL;
 
 #ifdef WIN32
-	gretl_win32_grab_output(x12a, &sout);
+	gretl_win32_grab_output(x12a, gretl_dotdir(), &sout);
 #else
 	gretl_glib_grab_output(x12a, &sout);
 #endif

@@ -10448,11 +10448,6 @@
           disabilitata esplicitamente.
 	  </para>
 	</li>
-	<li>
-	  <para><lit>shelldir</lit>: <repl>percorso</repl>. Imposta la directory
-           di lavoro attuale per i comandi shell.
-         </para>
-	</li>
       </ilist>
 
       <para>

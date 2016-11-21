@@ -116,7 +116,6 @@ struct set_vars_ {
     gretl_matrix *initvals;     /* parameter initializer */
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
     struct robust_opts ropts;   /* robust standard error options */
-    char shelldir[MAXLEN];      /* working dir for shell commands */
     char csv_write_na[8];       /* representation of NA in CSV output */
     char csv_read_na[8];        /* representation of NA in CSV input */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
@@ -444,7 +443,6 @@ static void state_vars_copy (set_vars *sv)
 
     sv->initvals = gretl_matrix_copy(state->initvals);
     sv->matmask = gretl_matrix_copy(state->matmask);
-    strcpy(sv->shelldir, state->shelldir);
     strcpy(sv->csv_write_na, state->csv_write_na);
     strcpy(sv->csv_read_na, state->csv_read_na);
 
@@ -611,8 +609,6 @@ static void state_vars_init (set_vars *sv)
     sv->fdjac_qual = 0;
     sv->wildboot_dist = 0;
 
-    *sv->shelldir = '\0';
-
     strcpy(sv->csv_write_na, "NA");
     strcpy(sv->csv_read_na, "default");
 
@@ -769,17 +765,6 @@ int get_matrix_mask_nobs (void)
 
     return n;
 }
-
-char *get_shelldir (void)
-{
-    check_for_state();
-
-    if (state != NULL && *state->shelldir != '\0') {
-	return state->shelldir;
-    } else {
-	return NULL;
-    }
-} 
 
 int get_hac_lag (int T)
 {
@@ -1227,82 +1212,6 @@ void destroy_matrix_mask (void)
     state->matmask = NULL;
 }
 
-void shelldir_init (const char *s)
-{
-    if (s != NULL) {
-	int n;
-
-	*state->shelldir = '\0';
-	strncat(state->shelldir, s, MAXLEN - 1);
-	n = strlen(state->shelldir);
-	if (n > 0 && (state->shelldir[n-1] == '\\' ||
-		      state->shelldir[n-1] == '/')) {
-	    state->shelldir[n-1] = '\0';
-	}	
-    } else {
-	char *test = getcwd(state->shelldir, MAXLEN);
-
-	if (test == NULL) {
-	    *state->shelldir = '\0';
-	} 
-    }
-}
-
-static int set_shelldir (const char *s)
-{
-    int len = 0, err = 0;
-
-    if (*s == '\0') {
-	*state->shelldir = '\0';
-    } else if (*s == '"') {
-	s++;
-	len = gretl_charpos('"', s);
-	if (len <= 0) {
-	    err = E_PARSE;
-	} 
-    } else {
-	len = strlen(s);
-    }
-
-    if (!err && len > 0) {
-	char test[MAXLEN];
-	char *home = NULL;
-	int slen = len;
-
-	if (*s == '~') {
-	    home = getenv("HOME");
-	    if (home != NULL) {
-		s++;
-		slen--;
-		len = slen + strlen(home);
-	    }
-	} 
-
-	*test = '\0';
-    
-	if (len >= MAXLEN) {
-	    gretl_errmsg_set("shelldir: string is too long");
-	    err = E_DATA;
-	} else if (home != NULL) {
-	    strcat(test, home);
-	    strncat(test, s, slen);
-	} else {
-	    strncat(test, s, len);
-	}
-
-	if (!gretl_isdir(test)) {
-	    gretl_errmsg_sprintf("shelldir: '%s' no such directory", test);
-	    err = E_DATA;
-	}
-
-	if (!err) {
-	    strcpy(state->shelldir, test);
-	}
-    }
-
-    return err;
-}
-
 static int (*workdir_callback)();
 
 void set_workdir_callback (int (*callback)())
@@ -1512,21 +1421,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     if (opt & OPT_D) {
 	/* display only */
 	libset_print_bool(SHELL_OK, prn, opt);
-	if (*state->shelldir) {
-	    pprintf(prn, " shelldir = '%s'\n", state->shelldir);
-	} else {
-	    pputs(prn, " shelldir = unset\n");
-	}
-    } else {
-	/* saving to file */
-	if (*state->shelldir) {
-	    if (strchr(state->shelldir, ' ')) {
-		pprintf(prn, "set shelldir \"%s\"\n", state->shelldir);
-	    } else {
-		pprintf(prn, "set shelldir %s\n", state->shelldir);
-	    }
-	}
-    }	
+    }
 
     libset_print_bool(USE_CWD, prn, opt);
     libset_print_bool(SKIP_MISSING, prn, opt);
@@ -1645,9 +1540,6 @@ static int libset_query_settings (const char *s, PRN *prn)
 	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
 		arg_from_delim(data_delim));
 	coded_var_show_opts(s, prn);
-    } else if (!strcmp(s, "shelldir")) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
-		state->shelldir);
     } else if (!strcmp(s, "workdir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		gretl_workdir());
@@ -1745,7 +1637,8 @@ int execute_set (const char *setobj, const char *setarg,
 	}
     } else if (argc == 2) {
 	if (!strcmp(setobj, "shelldir")) {
-	    return set_shelldir(setarg);
+	    pputs(prn, "'shelldir' is obsolete, please use 'workdir'\n");
+	    return 0;
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(setarg);
 	} else if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {

@@ -10829,11 +10829,6 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>shelldir</lit>: <repl>path</repl>.  Sets the current
-	  working directory for shell commands.
-	  </para>
-	</li>
-	<li>
 	  <para><lit>use_cwd</lit>: <lit>on</lit> or <lit>off</lit>
 	  (the default). This setting affects the behavior of the
 	  <cmdref targ="outfile"/> and <cmdref targ="store"/>

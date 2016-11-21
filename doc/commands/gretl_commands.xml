@@ -11642,11 +11642,6 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>shelldir</lit>: <repl>path</repl>.  Sets the current
-	  working directory for shell commands issued from within gretl.
-	  </para>
-	</li>
-	<li>
 	  <para><lit>bfgs_verbskip</lit>: one integer. This setting
 	  affects the behavior of the <opt>verbose</opt> option to
 	  those commands that use BFGS as an optimization algorithm and

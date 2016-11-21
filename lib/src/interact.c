@@ -369,7 +369,7 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
     argv[3] = g_strdup(arg);
     argv[4] = NULL;
 
-    g_spawn_sync(get_shelldir(), argv, NULL, 0, NULL, NULL,
+    g_spawn_sync(gretl_workdir(), argv, NULL, 0, NULL, NULL,
 		 &sout, &serr, &status, &gerr); 
 
     g_free(argv[0]);

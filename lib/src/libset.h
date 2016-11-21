@@ -178,9 +178,6 @@ int gretl_messages_on (void);
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
 
-void shelldir_init (const char *s);
-char *get_shelldir (void);
-
 void set_data_export_decimal_comma (int s);
 char get_data_export_decpoint (void);
 
