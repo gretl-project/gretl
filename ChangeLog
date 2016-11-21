@@ -1,5 +1,6 @@
 version 2016e, in progress
 - Remove obsolete Kalman-filter interface
+- Fix bug: functions failing to return loop-index value
 
 2016-11-19 version 2016d
 - New commands to support MIDAS: "midasreg" and "hfplot"
