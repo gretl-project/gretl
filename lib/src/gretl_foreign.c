@@ -382,7 +382,8 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
 	path = gretl_stata_path();
-	cmd = g_strdup_printf("\"%s\" /q /e do gretltmp.do", path);
+	/* FIXME do we want a "do" argument here? */
+	cmd = g_strdup_printf("\"%s\" /q /e gretltmp.do", path);
     } else if (foreign_lang == LANG_PYTHON) {
 	path = gretl_python_path();
 	fname = gretl_python_filename();
@@ -1029,7 +1030,7 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 
 #ifdef G_OS_WIN32
     if (lang == LANG_STATA) {
-	/* leave path with backslahes */
+	/* leave path with backslashes */
 	fprintf(fp, "quietly adopath + \"%s\"\n", gretl_dotdir());
     } else {
 	/* convert to forward slashes */
