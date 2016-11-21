@@ -382,7 +382,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
 	path = gretl_stata_path();
-	cmd = g_strdup_printf("\"%s\" /q /e gretltmp.do", path);
+	cmd = g_strdup_printf("\"%s\" /q /e do gretltmp.do", path);
     } else if (foreign_lang == LANG_PYTHON) {
 	path = gretl_python_path();
 	fname = gretl_python_filename();
@@ -992,21 +992,14 @@ static int write_stata_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
-	    gchar *path = g_strdup(dotdir);
-	    int n = strlen(path);
-
-	    if (path[n-1] == SLASH) {
-		path[n-1] = '\0';
-	    }
 	    fputs("program define gretl_export\n", fp);
 	    /* not sure about req'd version, but see mat2txt.ado */
 	    fputs("version 8.2\n", fp);
 	    fputs("local matrix `1'\n", fp);
 	    fputs("local fname `2'\n", fp);
 	    fputs("tempname myfile\n", fp);
-	    fprintf(fp, "cd \"%s\"\n", path);
-	    fputs("file open `myfile' using \"`fname'\", "
-		  "write text replace\n", fp);
+	    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
+		    "write text replace\n", dotdir);
 	    fputs("local nrows = rowsof(`matrix')\n", fp);
 	    fputs("local ncols = colsof(`matrix')\n", fp);
 	    fputs("file write `myfile' %8.0g (`nrows') %8.0g (`ncols') _n\n", fp);
@@ -1020,7 +1013,6 @@ static int write_stata_io_file (void)
 
 	    fclose(fp);
 	    written = 1;
-	    g_free(path);
 	}
     }
 
