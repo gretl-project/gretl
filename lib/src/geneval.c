@@ -7963,6 +7963,10 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 	case ARRAY:
 	    ptr = n->v.a;
 	    type = GRETL_TYPE_ARRAY;
+	    if (gretl_is_array_type(lhtype)) {
+		/* don't provoke a spurious error below */
+		lhtype = GRETL_TYPE_ARRAY;
+	    }
 	    donate = is_tmp_node(n);
 	    break;
 	case LIST:
@@ -9095,10 +9099,7 @@ static GretlType lh_array_type (parser *p)
 	}
     }
 
-    if (gtype != GRETL_TYPE_MATRICES &&
-	gtype != GRETL_TYPE_STRINGS &&
-	gtype != GRETL_TYPE_BUNDLES && 
-	gtype != GRETL_TYPE_LISTS) {
+    if (!gretl_is_array_type(gtype)) {
 	p->err = E_TYPES;
     }
 
@@ -13762,8 +13763,6 @@ static GretlType bundle_type_from_gentype (parser *p)
     }
 }
 
-#define GTYPE_DEBUG 0
-
 /* process the left-hand side of a genr formula */
 
 static void pre_process (parser *p, int flags)
@@ -13872,10 +13871,6 @@ static void pre_process (parser *p, int flags)
 	return;
     }
 
-#if GTYPE_DEBUG
-    fprintf(stderr, "p1: lh.gtype=%d, targ=%d\n", p->lh.gtype, p->targ);
-#endif
-
 #if LHDEBUG || EDEBUG
     fprintf(stderr, "LHS: %s", test);
     if (p->lh.substr != NULL) {
@@ -13924,7 +13919,7 @@ static void pre_process (parser *p, int flags)
 	    } else if (vtype == GRETL_TYPE_STRING) {
 		p->lh.t = STR;
 	    } else if (vtype == GRETL_TYPE_BUNDLE) {
-		if (p->targ != UNK) {
+		if (p->targ != UNK && !gretl_is_array_type(p->lh.gtype)) {
 		    p->lh.gtype = bundle_type_from_gentype(p);
 		    if (p->err) {
 			return;
@@ -13937,10 +13932,6 @@ static void pre_process (parser *p, int flags)
 	    }
 	}
     }
-
-#if GTYPE_DEBUG
-    fprintf(stderr, "p2: lh.gtype=%d, targ=%d\n", p->lh.gtype, p->targ);
-#endif
 
     /* if pre-existing var, check for const-ness */
     if (!newvar && overwrite_const_check(test, p)) {
@@ -13965,10 +13956,6 @@ static void pre_process (parser *p, int flags)
 	    return;
 	}
     }
-
-#if GTYPE_DEBUG
-    fprintf(stderr, "p3: lh.gtype=%d, targ=%d\n", p->lh.gtype, p->targ);
-#endif
 
     strcpy(p->lh.name, test);
 

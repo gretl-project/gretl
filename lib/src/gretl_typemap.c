@@ -294,6 +294,14 @@ GretlType gretl_get_gen_type (const char *s)
     return t;
 }
 
+int gretl_is_array_type (GretlType type)
+{
+    return type == GRETL_TYPE_STRINGS ||
+	type == GRETL_TYPE_MATRICES ||
+	type == GRETL_TYPE_BUNDLES ||
+	type == GRETL_TYPE_LISTS;
+}
+
 void gretl_typemap_cleanup (void)
 {
     gretl_get_gen_type(NULL);

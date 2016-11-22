@@ -34,6 +34,8 @@ GretlType gretl_type_from_string (const char *s);
 
 GretlType gretl_get_gen_type (const char *s);
 
+int gretl_is_array_type (GretlType type);
+
 void gretl_typemap_cleanup (void);
 
 #endif /* GRETL_TYPEMAP_H_ */
