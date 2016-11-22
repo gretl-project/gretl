@@ -10449,7 +10449,7 @@ static NODE *gen_array_node (NODE *n, parser *p)
 	if (n != NULL && n->t == NUM) {
 	    len = node_get_int(n, p);
 	}
-	
+
 	if (!p->err) {
 	    ret = aux_array_node(p);
 	    if (!p->err) {
@@ -12922,8 +12922,8 @@ static NODE *eval (NODE *t, parser *p)
  bailout:
 
 #if EDEBUG
-    fprintf(stderr, "eval (t->t = %03d, %s): returning NODE at %p\n", 
-	    t->t, getsymb(t->t), (void *) ret);
+    fprintf(stderr, "eval (t->t = %03d, %s): returning NODE at %p, err %d\n", 
+	    t->t, getsymb(t->t), (void *) ret, p->err);
     if (t->t == SERIES) 
 	fprintf(stderr, " (SERIES node, xvec at %p, vnum = %d)\n", 
 		(void *) t->v.xvec, t->vnum);
@@ -13762,6 +13762,8 @@ static GretlType bundle_type_from_gentype (parser *p)
     }
 }
 
+#define GTYPE_DEBUG 0
+
 /* process the left-hand side of a genr formula */
 
 static void pre_process (parser *p, int flags)
@@ -13817,6 +13819,7 @@ static void pre_process (parser *p, int flags)
 	    p->targ = BUNDLE;
 	    s += 7;
 	} else if (ok_array_decl(p, s)) {
+	    fprintf(stderr, "ok_array_decl\n");
 	    p->targ = ARRAY;
 	    s += strcspn(s, " ") + 1;
 	}
@@ -13848,7 +13851,7 @@ static void pre_process (parser *p, int flags)
     extract_LHS_string(s, test, p);
     if (p->err || (p->flags & P_DECL)) {
 	return;
-    } 
+    }
 
     /* record next read position */
     p->point = s + strlen(test);
@@ -13867,7 +13870,11 @@ static void pre_process (parser *p, int flags)
 
     if (p->err) {
 	return;
-    }    
+    }
+
+#if GTYPE_DEBUG
+    fprintf(stderr, "p1: lh.gtype=%d, targ=%d\n", p->lh.gtype, p->targ);
+#endif
 
 #if LHDEBUG || EDEBUG
     fprintf(stderr, "LHS: %s", test);
@@ -13931,6 +13938,10 @@ static void pre_process (parser *p, int flags)
 	}
     }
 
+#if GTYPE_DEBUG
+    fprintf(stderr, "p2: lh.gtype=%d, targ=%d\n", p->lh.gtype, p->targ);
+#endif
+
     /* if pre-existing var, check for const-ness */
     if (!newvar && overwrite_const_check(test, p)) {
 	return;
@@ -13954,6 +13965,10 @@ static void pre_process (parser *p, int flags)
 	    return;
 	}
     }
+
+#if GTYPE_DEBUG
+    fprintf(stderr, "p3: lh.gtype=%d, targ=%d\n", p->lh.gtype, p->targ);
+#endif
 
     strcpy(p->lh.name, test);
 
@@ -15740,7 +15755,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
-	fprintf(stderr, "targ=%s, input='%s'\n", getsymb(targtype), s);
+	fprintf(stderr, "targ=%d (%s), input='%s'\n", targtype,
+		(targtype < PUNCT_MAX)? gretl_type_get_name(targtype) :
+		getsymb(targtype), s);
     }
 #endif
 
