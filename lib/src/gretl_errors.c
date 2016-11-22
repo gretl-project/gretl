@@ -217,9 +217,10 @@ static void print_function_info (PRN *prn)
 
 	current_function_info(&fname, &pname);
 	if (fname != NULL && pname != NULL) {
-	    pprintf(prn, "In regard to function %s (package %s):\n", fname, pname);
+	    pprintf(prn, "%s %s (%s %s):\n", _("In regard to function"),
+		    fname, _("package"), pname);
 	} else if (fname != NULL) {
-	    pprintf(prn, "In regard to function %s:\n", fname);
+	    pprintf(prn, "%s %s:\n", _("In regard to function"), fname);
 	}
     }
 }
