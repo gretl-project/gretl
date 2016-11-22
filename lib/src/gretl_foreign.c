@@ -265,6 +265,21 @@ static const gchar *gretl_mpi_filename (void)
 
 #endif
 
+/* special: print to @prn Stata's batch logfile */
+
+static void do_stata_printout (PRN *prn)
+{
+    gchar *buf = NULL;
+
+    /* we should located in dotdir at this point */
+
+    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	pputs(prn, buf);
+	g_free(buf);
+	pputc(prn, '\n');
+    }
+}
+
 static void make_gretl_R_names (void)
 {
     static int done;
@@ -382,8 +397,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
 	path = gretl_stata_path();
-	/* FIXME do we want a "do" argument here? */
-	cmd = g_strdup_printf("\"%s\" /q /e gretltmp.do", path);
+	cmd = g_strdup_printf("\"%s\" /q /e do gretltmp.do", path);
     } else if (foreign_lang == LANG_PYTHON) {
 	path = gretl_python_path();
 	fname = gretl_python_filename();
@@ -396,10 +410,21 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	return 1;
     }
 
+    if (foreign_lang == LANG_STATA) {
+	/* we need to get into dotdir here, to control
+	   location of output log */
+	gretl_chdir(gretl_dotdir());
+    }
+
     err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
 
     if (sout != NULL && *sout != '\0') {
 	pputs(prn, sout);
+    }
+
+    if (!err && foreign_lang == LANG_STATA && !(opt & OPT_Q)) {
+	/* output will be in log file, not stdout */
+	do_stata_printout(prn);
     }
 
     g_free(sout);
@@ -504,21 +529,6 @@ static char *win32_dotpath (void)
 }
 
 #else /* !G_OS_WIN32 */
-
-/* print from Stata's batch logfile */
-
-static void do_stata_printout (PRN *prn)
-{
-    gchar *buf = NULL;
-
-    /* we're located in dotdir at this point */
-
-    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-	pputs(prn, buf);
-	g_free(buf);
-	pputc(prn, '\n');
-    }
-}
 
 static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
 {
