@@ -2125,13 +2125,19 @@ int libset_get_bool (const char *key)
 static void libset_set_decpoint (int on)
 {
 #ifdef ENABLE_NLS
-    static char num_locale[32];
+    /* on Windows locale specifiers can be quite verbose */
+    static char num_locale[64];
 
     if (on) {
 	char *orig = setlocale(LC_NUMERIC, "");
 
-	*num_locale = '\0';
-	strncat(num_locale, orig, 31);
+	if (orig != NULL && strlen(orig) <= 63) {
+	    *num_locale = '\0';
+	    strncat(num_locale, orig, 63);
+	} else {
+	    /* wtf? */
+	    strcpy(num_locale, "C");
+	}
 	setlocale(LC_NUMERIC, "C");
     } else {
 	setlocale(LC_NUMERIC, num_locale);
