@@ -2677,8 +2677,8 @@ static void topslot_empty (int ci)
 
 static void reverse_list (char *list)
 {
+    char istr[VNAMELEN];
     char *tmp, *p;
-    char istr[8];
 
     p = strchr(list, ';');
     if (p == NULL) return;
@@ -2686,7 +2686,7 @@ static void reverse_list (char *list)
     tmp = malloc(strlen(list) + 4);
     if (tmp == NULL) return;
 
-    sscanf(list, "%7s", istr);
+    sscanf(list, "%31s", istr);
 
     strcpy(tmp, p + 2);
     strcat(tmp, " ; ");

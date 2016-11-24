@@ -2,6 +2,8 @@ version 2016e, in progress
 - Remove obsolete Kalman-filter interface
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
+- Fix bug: multiple X-Y scatterplots could fail when using
+  long variable names
 
 2016-11-19 version 2016d
 - New commands to support MIDAS: "midasreg" and "hfplot"
