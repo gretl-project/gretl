@@ -2125,32 +2125,12 @@ int libset_get_bool (const char *key)
 static void libset_set_decpoint (int on)
 {
 #ifdef ENABLE_NLS
-    /* on Windows locale specifiers can be quite verbose */
-    static char num_locale[64];
-
     if (on) {
-	char *orig = setlocale(LC_NUMERIC, "");
-
-# ifdef G_OS_WIN32
-	if (orig != NULL) {
-	    fputs("libset_set_decpoint: got non-NULL value\n", stderr);
-	    fprintf(stderr, "setlocale(LC_NUMERIC, \"\") gave:\n"
-		    " '%s'\n", orig);
-	}
-# endif
-	if (orig != NULL && strlen(orig) <= 63) {
-	    *num_locale = '\0';
-	    strncat(num_locale, orig, 63);
-	} else {
-	    /* wtf? */
-	    if (orig == NULL) {
-		fputs("setlocale(LC_NUMERIC, \"\") gave NULL!\n", stderr);
-	    }
-	    strcpy(num_locale, "C");
-	}
+	/* force use of the decimal dot */
 	setlocale(LC_NUMERIC, "C");
     } else {
-	setlocale(LC_NUMERIC, num_locale);
+	/* revert to whatever is the local default */
+	setlocale(LC_NUMERIC, "");
     }
 
 # ifdef G_OS_WIN32
