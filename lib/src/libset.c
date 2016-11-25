@@ -2131,13 +2131,19 @@ static void libset_set_decpoint (int on)
     if (on) {
 	char *orig = setlocale(LC_NUMERIC, "");
 
+# ifdef G_OS_WIN32
+	if (orig != NULL) {
+	    fprintf(stderr, "setlocale(LC_NUMERIC, \"\") gave:\n"
+		    " '%s'\n", orig);
+	}
+# endif
 	if (orig != NULL && strlen(orig) <= 63) {
 	    *num_locale = '\0';
 	    strncat(num_locale, orig, 63);
 	} else {
 	    /* wtf? */
 	    if (orig == NULL) {
-		fprintf(stderr, "setlocale() gave NULL!\n");
+		fputs("setlocale(LC_NUMERIC, \"\") gave NULL!\n", stderr);
 	    }
 	    strcpy(num_locale, "C");
 	}
@@ -2145,6 +2151,10 @@ static void libset_set_decpoint (int on)
     } else {
 	setlocale(LC_NUMERIC, num_locale);
     }
+
+# ifdef G_OS_WIN32
+    fputs("calling reset_local_decpoint()\n", stderr);
+# endif    
 
     reset_local_decpoint();
 #endif

@@ -140,13 +140,21 @@ int reset_local_decpoint (void)
     struct lconv *lc = localeconv();
 
     if (lc == NULL) {
-	fprintf(stderr, "localeconv() gave NULL!\n");
+	fputs("localeconv() gave NULL!\n", stderr);
+	decpoint = '.';
+    } else if (lc->decimal_point == NULL) {
+	fputs("lc->decimal_point is NULL!\n", stderr);
 	decpoint = '.';
     } else {
 	decpoint = *lc->decimal_point;
     }
 
     set_atof_point(decpoint);
+
+# ifdef G_OS_WIN32
+    fprintf(stderr, "reset_local_decpoint: returning '%c'\n",
+	    decpoint);
+# endif
 
     return decpoint;
 }
