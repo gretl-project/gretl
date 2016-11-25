@@ -611,7 +611,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	}
     }
 
-#if 1 || MDEBUG
+#if MDEBUG
     printlist(spec->rslice, "rslice");
     printlist(spec->cslice, "cslice");
     fprintf(stderr, "M = %d x %d\n", M->rows, M->cols);
