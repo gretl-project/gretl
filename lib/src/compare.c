@@ -1606,7 +1606,11 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     err = rmod.errcode;
 
     if (err) {
-	errmsg(err, prn);
+	if (err == E_NOOMIT && (opt & OPT_I)) {
+	    ; /* --silent: keep quiet */
+	} else {
+	    errmsg(err, prn);
+	}
     } else {
 	int *omitlist = gretl_list_diff_new(orig->list, rmod.list, 2);
 
