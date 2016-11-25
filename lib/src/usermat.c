@@ -126,19 +126,6 @@ static int msel_out_of_bounds (int *range, int n)
     }
 }
 
-static int vec_is_const (const gretl_matrix *m, int ns)
-{
-    int i;
-
-    for (i=1; i<ns; i++) {
-	if (m->val[i] != m->val[i-1]) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
 static int vec_is_exclusion (const gretl_matrix *m, int n,
 			     gretl_matrix **pv, int *err)
 {
@@ -222,9 +209,6 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		ns = (ivec == NULL)? 0 : gretl_vector_get_length(ivec);
 	    } else {
 		ns = gretl_vector_get_length(sel->m);
-		if (ns > 1 && vec_is_const(sel->m, ns)) {
-		    ns = 1;
-		}
 	    }
 	}
     } else {
@@ -627,7 +611,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	}
     }
 
-#if MDEBUG
+#if 1 || MDEBUG
     printlist(spec->rslice, "rslice");
     printlist(spec->cslice, "cslice");
     fprintf(stderr, "M = %d x %d\n", M->rows, M->cols);
