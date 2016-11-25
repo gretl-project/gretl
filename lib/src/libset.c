@@ -2133,6 +2133,7 @@ static void libset_set_decpoint (int on)
 
 # ifdef G_OS_WIN32
 	if (orig != NULL) {
+	    fputs("libset_set_decpoint: got non-NULL value\n", stderr);
 	    fprintf(stderr, "setlocale(LC_NUMERIC, \"\") gave:\n"
 		    " '%s'\n", orig);
 	}
