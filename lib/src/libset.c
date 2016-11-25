@@ -2136,6 +2136,9 @@ static void libset_set_decpoint (int on)
 	    strncat(num_locale, orig, 63);
 	} else {
 	    /* wtf? */
+	    if (orig == NULL) {
+		fprintf(stderr, "setlocale() gave NULL!\n");
+	    }
 	    strcpy(num_locale, "C");
 	}
 	setlocale(LC_NUMERIC, "C");

@@ -137,11 +137,17 @@ static int decpoint;
 
 int reset_local_decpoint (void)
 {
-    struct lconv *lc;
+    struct lconv *lc = localeconv();
 
-    lc = localeconv();
-    decpoint = *lc->decimal_point;
+    if (lc == NULL) {
+	fprintf(stderr, "localeconv() gave NULL!\n");
+	decpoint = '.';
+    } else {
+	decpoint = *lc->decimal_point;
+    }
+
     set_atof_point(decpoint);
+
     return decpoint;
 }
 
