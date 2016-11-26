@@ -247,14 +247,6 @@ static void expected_symbol_error (int c, parser *p)
 			     found);
     }
 
-    if (found != NULL) {
-	if (!strcmp(found, "&")) {
-	    pputs(p->prn, "(for logical AND, please use \"&&\")\n");
-	} else if (!strcmp(found, "|")) {
-	    pputs(p->prn, "(for logical OR, please use \"||\")\n");
-	}
-    }
-
     p->err = E_PARSE;
 }
 
