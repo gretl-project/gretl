@@ -878,17 +878,50 @@ void context_error (int c, parser *p)
     }
 }
 
+/* @parsing_query: we want to keep track of the case
+   where we're lexing/parsing the branches of a
+   ternary "query" expression. When such an expression
+   is evaluated, it's OK if the branch _not_ taken
+   contains an undefined symbol; indeed, this can
+   occur by design, as in
+
+     scalar y = isnull(x) ? 0 : x
+
+   when "x" is in fact undefined.
+
+   We therefore use the "UNDEF" node type to defuse the
+   error that would otherwise arise on parsing. An error
+   is triggered only if the branch that references the
+   UNDEF node is selected (attempting to evaluate an UNDEF
+   node automatically throws an error.)
+*/
+
+static int parsing_query;
+
+void set_parsing_query (int s)
+{
+    parsing_query = s;
+}
+
 static char *get_quoted_string (parser *p)
 {
     char *s = NULL;
     int n;
 
-    /* look for a matching (non-escaped) double-quote */
-    n = double_quote_position(p->point);
+    /* FIXME: should backslash be taken as literal or
+       as escape character? Depends on the context,
+       but in exactly what way?
+    */
 
-    if (n < 0) {
-	/* backward compatibility */
+    if (parsing_query) {
 	n = gretl_charpos('"', p->point);
+    } else {
+	/* look for a matching (non-escaped) double-quote */
+	n = double_quote_position(p->point);
+	if (n < 0) {
+	    /* backward compatibility */
+	    n = gretl_charpos('"', p->point);
+	}
     }
 
     if (n >= 0) {
@@ -1070,31 +1103,7 @@ static int maybe_get_R_function (const char *s)
 # define maybe_get_R_function(s) (0)
 #endif
 
-/* @parsing_query: we want to keep track of the case
-   where we're lexing/parsing the branches of a
-   ternary "query" expression. When such an expression
-   is evaluated, it's OK if the branch _not_ taken
-   contains an undefined symbol; indeed, this can
-   occur by design, as in
-
-     scalar y = isnull(x) ? 0 : x
-
-   when "x" is in fact undefined.
-
-   We therefore use the "UNDEF" node type to defuse the
-   error that would otherwise arise on parsing. An error
-   is triggered only if the branch that references the
-   UNDEF node is selected (attempting to evaluate an UNDEF
-   node automatically throws an error.)
-*/ 
-
-static int parsing_query;
 static int doing_genseries;
-
-void set_parsing_query (int s)
-{
-    parsing_query = s;
-}
 
 void set_doing_genseries (int s)
 {
