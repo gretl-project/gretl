@@ -240,17 +240,19 @@ static void expected_symbol_error (int c, parser *p)
 
     parser_print_input(p);
 
-    if (*found == '\0') {
-	pprintf(p->prn, _("Expected '%c' but formula ended\n"), c);
+    if (found == NULL || *found == '\0') {
+	gretl_errmsg_sprintf(_("Expected '%c' but formula ended\n"), c);
     } else {
-	pprintf(p->prn, _("Expected '%c' but found '%s'\n"), c, 
-		found);
+	gretl_errmsg_sprintf(_("Expected '%c' but found '%s'\n"), c, 
+			     found);
     }
 
-    if (!strcmp(found, "&")) {
-	pputs(p->prn, "(for logical AND, please use \"&&\")\n");
-    } else if (!strcmp(found, "|")) {
-	pputs(p->prn, "(for logical OR, please use \"||\")\n");
+    if (found != NULL) {
+	if (!strcmp(found, "&")) {
+	    pputs(p->prn, "(for logical AND, please use \"&&\")\n");
+	} else if (!strcmp(found, "|")) {
+	    pputs(p->prn, "(for logical OR, please use \"||\")\n");
+	}
     }
 
     p->err = E_PARSE;
