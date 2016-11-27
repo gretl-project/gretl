@@ -430,7 +430,7 @@ static int maybe_get_input_line_continuation (char *line)
 
 static int xout;
 
-#ifdef HAVE_READLINE
+#ifdef HAVE_RL_DONE
 static int ctrl_x (int count, int key)
 {
     xout = 1;
@@ -550,7 +550,7 @@ int main (int argc, char *argv[])
     nls_init();
 #endif
 
-#ifdef HAVE_READLINE
+#ifdef HAVE_RL_DONE
     rl_bind_key(0x18, ctrl_x);
 #endif
 
