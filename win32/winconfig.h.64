@@ -35,6 +35,9 @@
 /* Current readline? */
 #define NEW_READLINE 1
 
+/* Define if readline provides extern int rl_done */
+#define HAVE_RL_DONE 1
+
 /* Define if zlib is available */
 #define HAVE_ZLIB 1
 
