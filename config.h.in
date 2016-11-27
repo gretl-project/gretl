@@ -56,6 +56,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define for GNU readline version >= 4.2 */
 #undef NEW_READLINE
 
+/* Define if readline provides extern int rl_done */
+#undef HAVE_RL_DONE
+
 /* Define if zlib is available */
 #undef HAVE_ZLIB
 
