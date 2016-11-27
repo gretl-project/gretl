@@ -36,6 +36,12 @@ AC_ARG_WITH(readline-prefix,[  --with-readline-prefix=PFX   Prefix where readlin
       AC_CHECK_LIB(readline, rl_completion_matches, AC_DEFINE(NEW_READLINE),,$termcap_lib)
       AC_SUBST(new_readline)
 
+      dnl see if we have rl_done available
+      AC_CHECK_DECL([rl_done], AC_DEFINE(HAVE_RL_DONE),,[
+        #include <stdio.h>
+        #include <readline/readline.h>
+      ])
+
       dnl remove any extraneous stuff from the flags and libs lines
       if test "$READLINE_CFLAGS" = "-I/include" ; then 
          READLINE_CFLAGS=""
