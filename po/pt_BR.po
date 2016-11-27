@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-22 17:16-0500\n"
-"PO-Revision-Date: 2016-11-13 12:57-0200\n"
+"POT-Creation-Date: 2016-11-26 22:19-0200\n"
+"PO-Revision-Date: 2016-11-26 22:19-0200\n"
 "Last-Translator: Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -3040,7 +3040,7 @@ msgstr "\"Array\" de %s, comprimento %d\n"
 
 #: lib/src/gretl_bfgs.c:403 lib/src/gretl_bfgs.c:442
 msgid "Failed to compute numerical Hessian"
-msgstr "Falha no cálculo numérico da Hessiana"
+msgstr "Falha no cálculo numérico da hessiana"
 
 #: lib/src/gretl_bfgs.c:686
 msgid ""
@@ -3313,14 +3313,12 @@ msgid "generated non-finite values"
 msgstr "foram gerados valores não-finitos"
 
 #: lib/src/gretl_errors.c:220 lib/src/gretl_errors.c:223
-#, fuzzy
 msgid "In regard to function"
-msgstr "﻿Selecione a função"
+msgstr "Em relação à função"
 
 #: lib/src/gretl_errors.c:221
-#, fuzzy
 msgid "package"
-msgstr "Pacote"
+msgstr "pacote"
 
 #: lib/src/gretl_errors.c:250 lib/src/gretl_errors.c:256
 msgid "Warning"
@@ -5296,7 +5294,7 @@ msgstr "variante"
 
 #: lib/src/modelprint.c:1484
 msgid "Standard errors based on Hessian"
-msgstr "Erros padrão baseados na Hessiana"
+msgstr "Erros padrão baseados na hessiana"
 
 #: lib/src/modelprint.c:1487
 msgid "Standard errors based on Information Matrix"
@@ -6147,7 +6145,7 @@ msgid ""
 "Error: Hessian non-negative definite? (err = %d); dropping back to OPG\n"
 msgstr ""
 "\n"
-"Erro: Hessiana definida não negativa? (err = %d); retornando para OPG\n"
+"Erro: hessiana definida não negativa? (err = %d); retornando para OPG\n"
 
 #: lib/src/nls.c:2683 lib/src/nls.c:2784
 msgid "Invalid NLS specification"
@@ -7750,7 +7748,7 @@ msgstr ""
 
 #: cli/gretlcli.c:1185 gui2/library.c:7117 gui2/library.c:9912
 msgid "Take note: variables have been renumbered"
-msgstr "Tome nota: as variáveis foram renumeradas"
+msgstr "Aviso: as variáveis foram renumeradas"
 
 #: cli/gretlcli.c:1203 cli/gretlcli-mpi.c:860 gui2/library.c:9951
 msgid "Data series length count missing or invalid\n"
@@ -9533,7 +9531,7 @@ msgstr "Tornar esta restrição permanente"
 
 #: gui2/dialogs.c:2367
 msgid "The current data range is too small for this option"
-msgstr ""
+msgstr "A amostra corrente é muito pequena para essa opção"
 
 #: gui2/dialogs.c:2382
 #, c-format
@@ -15211,7 +15209,7 @@ msgstr "Equação da variância inclui quadrados"
 
 #: gui2/selector.c:5949
 msgid "Parameter covariance matrix via Hessian"
-msgstr "Parametrizar a matriz de covariância por Hessiana"
+msgstr "Parametrizar a matriz de covariância por hessiana"
 
 #: gui2/selector.c:5951
 msgid "Difference the independent variables"
@@ -17133,7 +17131,7 @@ msgstr ""
 
 #: plugin/fcp.c:246
 msgid " (using Hessian)"
-msgstr " (usando Hessiana)"
+msgstr " (usando hessiana)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
