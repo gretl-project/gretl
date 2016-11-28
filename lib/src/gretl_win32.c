@@ -657,17 +657,10 @@ int win32_write_access (char *path)
     if (!err) {
 	/* build a trustee and get the file's DACL */
 	BuildTrusteeWithSid(&t, sid);
-#if 1 // def _WIN64
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, 
 				   (PSECURITY_DESCRIPTOR) &sd);
-#else
-	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
-				   DACL_SECURITY_INFORMATION, 
-				   NULL, NULL, &dacl, NULL, 
-				   &sd);
-#endif
 	err = (ret != ERROR_SUCCESS);
     }
 
@@ -1511,11 +1504,6 @@ double win32_stopwatch (void)
 
     return (double) dt / 1.0e6;
 }
-
-#ifndef WIN64
-/* missing from mingw's wincon.h */
-BOOL WINAPI GetCurrentConsoleFont(HANDLE, BOOL, PCONSOLE_FONT_INFO);
-#endif
 
 int cli_set_win32_charset (const char *package)
 {
