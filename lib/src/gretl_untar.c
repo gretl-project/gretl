@@ -104,7 +104,7 @@ static int makedir (char *path)
 	buffer[len-1] = '\0';
     }
 
-    if (gretl_mkdir(buffer, 0775) == 0) {
+    if (gretl_mkdir(buffer) == 0) {
 	free(buffer);
 	return 1;
     }
@@ -119,7 +119,7 @@ static int makedir (char *path)
 	}
 	hold = *p;
 	*p = 0;
-	if ((mkdir(buffer, 0775) == -1) && (errno == ENOENT)) {
+	if ((gretl_mkdir(buffer) == -1) && (errno == ENOENT)) {
 	    fprintf(stderr,"couldn't create directory %s\n", buffer);
 	    free(buffer);
 	    return 0;
