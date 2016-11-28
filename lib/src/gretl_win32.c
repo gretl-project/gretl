@@ -657,7 +657,7 @@ int win32_write_access (char *path)
     if (!err) {
 	/* build a trustee and get the file's DACL */
 	BuildTrusteeWithSid(&t, sid);
-#ifdef _WIN64
+#if 1 // def _WIN64
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, 

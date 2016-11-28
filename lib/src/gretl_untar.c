@@ -104,7 +104,7 @@ static int makedir (char *path)
 	buffer[len-1] = '\0';
     }
 
-    if (mkdir(buffer, 0775) == 0) {
+    if (gretl_mkdir(buffer, 0775) == 0) {
 	free(buffer);
 	return 1;
     }
