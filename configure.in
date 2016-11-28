@@ -946,9 +946,9 @@ if test "${gp_3d}" = "yes" ; then
   AC_DEFINE(GNUPLOT3D)
 fi
 
-dnl Create output
 CFLAGS="$orig_CFLAGS"
-AC_OUTPUT([ 
+
+AC_CONFIG_FILES([
 Makefile 
 gretl_sh
 gretl.pc 
@@ -971,10 +971,12 @@ osx/fixlinks.sh
 osx/Info.plist
 redhat/gretl.spec
 utils/emacs/Makefile
+doc/gretl.sty
+doc/gretl-lite.sty
 ])
 
 if test "${build_docs}" = "yes" ; then
-  AC_OUTPUT([
+  AC_CONFIG_FILES([
     doc/Makefile
     doc/commands/Makefile
     doc/tex/Makefile
@@ -985,13 +987,8 @@ if test "${build_docs}" = "yes" ; then
   ])
 fi
 
-AC_OUTPUT([
-  doc/gretl.sty
-  doc/gretl-lite.sty
-])
-
 if test "${build_addons}" = "yes" ; then
-  AC_OUTPUT([
+  AC_CONFIG_FILES([
     addons/Makefile
     addons/gig/Makefile
     addons/gig/pkg.inp
@@ -1007,6 +1004,8 @@ if test "${build_addons}" = "yes" ; then
     addons/SVAR/doc/Makefile
   ])
 fi
+
+AC_OUTPUT
 
 if test "${have_zlib}" = "no" ; then
 echo "
