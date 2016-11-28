@@ -214,8 +214,10 @@ void *gretl_array_get_element (gretl_array *A, int i,
        pointer from here should not be modified.
     */
 
-    if (A == NULL || i < 0 || i >= A->n) {
-	*err = E_DATA;
+    if (A == NULL) {
+	*err = E_UNKVAR;
+    } else if (i < 0 || i >= A->n) {
+	*err = E_INVARG;
     } else {
 	if (type != NULL) {
 	    *type = gretl_type_get_singular(A->type);

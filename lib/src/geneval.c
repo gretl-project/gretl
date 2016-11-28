@@ -4121,6 +4121,10 @@ static NODE *array_element_node (gretl_array *a, int i,
 
     data = gretl_array_get_element(a, i-1, &type, &p->err);
 
+    if (p->err == E_INVARG) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
+    }
+
     if (!p->err) {
 	if (type == GRETL_TYPE_STRING) {
 	    ret = aux_string_node(p);
