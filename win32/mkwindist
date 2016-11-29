@@ -31,7 +31,7 @@ if [ "$BUILDTYPE" = "cross" ] ; then
   if [ $X64 = "yes" ] ; then
     SYSBASE=/opt/win64/x86_64-w64-mingw32
   else
-    SYSBASE=/opt/win32/i686-pc-mingw32
+    SYSBASE=/opt/win32/i686-w64-mingw32
   fi
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
