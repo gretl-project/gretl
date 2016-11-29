@@ -78,6 +78,7 @@
 /* for plot bar */
 #include "../pixmaps/upsize.xpm"
 #include "../pixmaps/downsize.xpm"
+#include "../pixmaps/open_menu.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -150,7 +151,8 @@ void gretl_stock_icons_init (void)
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
 	{ mini_tools_xpm, GRETL_STOCK_TOOLS},
 	{ upsize_xpm, GRETL_STOCK_BIGGER},
-	{ downsize_xpm, GRETL_STOCK_SMALLER}
+	{ downsize_xpm, GRETL_STOCK_SMALLER},
+	{ open_menu_xpm, GRETL_STOCK_MENU}
     };
     static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);

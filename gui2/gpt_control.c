@@ -158,6 +158,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest);
 #else
 static void set_plot_for_copy (png_plot *plot);
 #endif
+static void build_plot_menu (png_plot *plot);
 
 enum {
     GRETL_PNG_OK,
@@ -249,6 +250,8 @@ static void graph_shrink_callback (GtkWidget *w, png_plot *plot)
     plot_do_rescale(plot, -1);
 }
 
+#if 0
+
 static void graph_copy_callback (GtkWidget *w, png_plot *plot)
 {
 #ifdef G_OS_WIN32
@@ -258,14 +261,23 @@ static void graph_copy_callback (GtkWidget *w, png_plot *plot)
 #endif    
 }
 
+static void show_pdf_callback (GtkWidget *w, png_plot *plot)
+{
+    graph_display_pdf(plot->spec);
+}
+
+#endif
+
 static void graph_edit_callback (GtkWidget *w, png_plot *plot)
 {
     start_editing_png_plot(plot);
 }
 
-static void show_pdf_callback (GtkWidget *w, png_plot *plot)
+static void graph_popup_callback (GtkWidget *w, png_plot *plot)
 {
-    graph_display_pdf(plot->spec);
+    build_plot_menu(plot);
+    gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
+		   1, gtk_get_current_event_time());
 }
 
 static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
@@ -274,11 +286,14 @@ static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
 }
 
 static GretlToolItem plotbar_items[] = {
+    { N_("Menu"),        GRETL_STOCK_MENU,    G_CALLBACK(graph_popup_callback), 0 },
     { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 },
     { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
+#if 0
     { N_("Copy"),        GTK_STOCK_COPY,      G_CALLBACK(graph_copy_callback), 0 },
     { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
     { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
+#endif
     { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
 };
 
@@ -4913,8 +4928,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
 					     "plot_message");
+#if 0
     gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
 		       plot->cid, _(" Right-click on graph for menu"));
+#endif
     
     if (plot_has_xrange(plot)) {
 	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",

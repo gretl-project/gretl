@@ -48,6 +48,7 @@
 #define GRETL_STOCK_TOOLS   "gretl-tools"
 #define GRETL_STOCK_BIGGER  "gretl-bigger"
 #define GRETL_STOCK_SMALLER "gretl-smaller"
+#define GRETL_STOCK_MENU    "gretl-menu"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,
