@@ -15821,6 +15821,12 @@ else
   AVX_CFLAGS=""
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+    if test "$have_avx_intrinsics" = "yes" && test "x$FORCE_AVX" != x ; then
+      have_avx_intrinsics="force"
+      avx_result="yes"
+    fi
+
     if test "$have_avx_intrinsics" = "yes" ; then
       if test "$cross_compiling" = yes; then :
   avx_result=yes

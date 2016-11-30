@@ -1,5 +1,5 @@
 # AC_C_AVX
-# -----------
+# 
 # Run a double check for avx: first check that it's supported by the
 # compiler, and if so then also check that it's supported by the CPU.
 # Some systems may have a cc that's "more advanced" than the CPU, and
@@ -9,7 +9,15 @@
 # compiler supports avx then so will the target CPU. If that 
 # assumption is invalid, it will be necessary to pass the option
 # --disable-avx to the configure script explicitly.
-# -----------
+#
+# Final case: the build is being done on a host whose CPUs do not
+# support AVX, but the compiler does support it and the intent is
+# to run the binaries on an AVX-enabled machine. In that case the
+# builder can force the issue by putting FORCE_AVX=1 into the
+# environment. (Here we're assuming that it's the same OS on the
+# build host and target, so it's not a case of cross-compilation
+# in the full sense.)
+#
 AC_DEFUN([AC_C_AVX],
 [
   AC_MSG_CHECKING([whether to use AVX])
@@ -45,6 +53,12 @@ int main () {
     return 0;
 }      
     ])], have_avx_intrinsics=yes,AVX_CFLAGS="")
+
+    if test "$have_avx_intrinsics" = "yes" && test "x$FORCE_AVX" != x ; then
+      have_avx_intrinsics="force"
+      avx_result="yes"
+    fi
+
     if test "$have_avx_intrinsics" = "yes" ; then
       AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <stdlib.h>
