@@ -3500,6 +3500,9 @@ static void insert_math_content (GtkTextBuffer *tbuf, GtkTextIter *iter,
 				 const char *s, const char *indent)
 {
     static char minus[4];
+    gchar ubuf[6];
+    gunichar c;
+    int i, n;
 
     if (*minus == '\0') {
 	/* find the best representation of minus */
@@ -3523,17 +3526,26 @@ static void insert_math_content (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	}
 	pango_font_description_free(pfd);
     }
-    
-    while (*s) {
-	if (isalpha(*s)) {
-	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, 1,
-						     "italic", indent, NULL);
-	} else if (*s == '-') {
+
+    n = g_utf8_strlen(s, -1);
+
+    for (i=0; i<n; i++) {
+	c = g_utf8_get_char(s);
+	if (*s == '-') {
 	    gtk_text_buffer_insert(tbuf, iter, minus, -1);
 	} else {
-	    gtk_text_buffer_insert(tbuf, iter, s, 1);
-	}	    
-	s++;
+	    memset(ubuf, 0, sizeof ubuf);
+	    g_unichar_to_utf8(c, ubuf);
+	    if (g_unichar_isalpha(c)) {
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, ubuf, -1,
+							 "italic", indent, NULL);
+	    } else {
+		gtk_text_buffer_insert(tbuf, iter, ubuf, -1);
+	    }
+	}
+	if (i < n-1) {
+	    s = g_utf8_find_next_char(s, NULL);
+	}
     }
 }
 
