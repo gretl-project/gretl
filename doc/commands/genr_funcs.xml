@@ -5803,9 +5803,7 @@
 	    <para>
 	      If <argname>fname</argname> has the suffix
 	      <quote><lit>.gz</lit></quote> the the file is written
-	      with gzip compression. The format is basically as
-	      described above except that the matrix elements are
-	      written in a single column, in column-major order.
+	      with gzip compression.
 	    </para>
 	  </li>
 	  <li>
@@ -5829,7 +5827,9 @@
 	  program it is not advisable to use the gzip or binary
 	  options. But if the file is intended for reading by gretl
 	  the alternative formats save space, and the binary format
-	  allows for much faster reading of large matrices.
+	  allows for much faster reading of large matrices. The gzip
+	  format is not recommended for very large matrices, since
+	  decompression can be quite slow.
 	</para>
 	<para>
 	  <seelist>

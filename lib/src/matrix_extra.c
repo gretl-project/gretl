@@ -1044,56 +1044,51 @@ static int skip_matrix_comment (FILE *fp, gzFile fz,
     return ret;
 }
 
-static char *decompress_matrix_buffer (gzFile fz, const char *fname,
-				       int rows, int cols, int *err)
+static int get_uncompressed_size (const char *fname, int *err)
 {
-    char *buf;
-    int len, rem;
+    FILE *fp = gretl_fopen(fname, "rb");
+    int len, b[4] = {0};
+    int nread = 0;
 
-    /* Initial guess at uncompressed size in bytes: this should 
-       be OK for gretl-generated mat.gz files; we resize below if
-       needed.
-    */
-    len = rows * cols * 27 + 1;
-    if ((rem = len % 16) > 0) {
-	len += 16 - rem;
+    if (fp == NULL) {
+	*err = E_FOPEN;
+	return 0;
     }
 
-    buf = malloc(len);
+    fseek(fp, -4, SEEK_END);
+
+    nread += fread(&b[3], 1, 1, fp);
+    nread += fread(&b[2], 1, 1, fp);
+    nread += fread(&b[1], 1, 1, fp);
+    nread += fread(&b[0], 1, 1, fp);
+
+    if (nread < 4) {
+	len = 0;
+	*err = E_DATA;
+    } else {
+	len = (b[0] << 24) | ((b[1] << 16) + (b[2] << 8) + b[3]);
+	if (len <= 0) {
+	    *err = E_DATA;
+	}
+    }
+
+    fclose(fp);
+
+    return len;
+}
+
+static char *decompress_matrix_buffer (gzFile fz, int ulen,
+				       int *err)
+{
+    char *buf = calloc(ulen, 1);
+    int got;
 
     if (buf == NULL) {
 	*err = E_ALLOC;
     } else {
-	int zc, zret, bytes = 0;
-	char *tmp;
-	
-	while (!*err) {
-	    memset(buf + bytes, 0, len - bytes);
-	    zret = gzread(fz, buf + bytes, len - bytes);
-	    if (zret == Z_OK || zret == Z_BUF_ERROR) {
-		break;
-	    } else {
-		bytes += zret;
-		/* is there any more to be read? */
-		zc = gzgetc(fz);
-		if (zc >= 0) {
-		    gzungetc(zc, fz);
-		    len += 1024;
-		    tmp = realloc(buf, len);
-		    if (tmp == NULL) {
-			*err = E_ALLOC;
-		    } else {
-			buf = tmp;
-		    }
-		} else {
-		    break;
-		}
-	    }
-	}
-
-	if (*err) {
-	    free(buf);
-	    buf = NULL;
+	got = gzread(fz, buf, (unsigned) ulen);
+	if (got <= 0) {
+	    *err = E_DATA;
 	}
     }
 
@@ -1167,7 +1162,7 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 
 static double unix_scan_NA (const char *s, FILE *fp, int *err)
 {
-    char test[3];
+    char test[3] = {0};
 
     if (s != NULL) {
 	sscanf(s, "%2s", test);
@@ -1206,7 +1201,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 {
     char fullname[FILENAME_MAX];
     int r = 0, c = 0, n = 0;
-    int gz, bin = 0;
+    int gz, bin = 0, ulen = 0;
     gretl_matrix *A = NULL;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
@@ -1219,23 +1214,24 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 
     if (import) {
 	build_path(fullname, gretl_dotdir(), fname, NULL);
-	if (gz) {
-	    fz = gretl_gzopen(fullname, "r");
-	} else if (bin) {
-	    fp = gretl_fopen(fullname, "rb");
-	} else {
-	    fp = gretl_fopen(fullname, "r");
-	}
     } else {
 	strcpy(fullname, fname);
 	gretl_maybe_prepend_dir(fullname);
-	if (gz) {
-	    fz = gretl_gzopen(fullname, "r");
-	} else if (bin) {
-	    fp = gretl_fopen(fullname, "rb");
-	} else {
-	    fp = gretl_fopen(fullname, "r");
+    }
+
+    if (gz) {
+	ulen = get_uncompressed_size(fullname, err);
+	if (*err) {
+	    return NULL;
 	}
+    }
+
+    if (gz) {
+	fz = gretl_gzopen(fullname, "r");
+    } else if (bin) {
+	fp = gretl_fopen(fullname, "rb");
+    } else {
+	fp = gretl_fopen(fullname, "r");
     }
 
     if (fz == Z_NULL && fp == NULL) {
@@ -1287,7 +1283,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	int i, j;
 
 	if (fz) {
-	    p = zbuf = decompress_matrix_buffer(fz, fullname, r, c, err);
+	    p = zbuf = decompress_matrix_buffer(fz, ulen, err);
 	}
 
 	gretl_push_c_numeric_locale();
