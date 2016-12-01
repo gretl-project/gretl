@@ -7251,8 +7251,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
 
 #if EDEBUG
-	fprintf(stderr, "%s: arg %d is of type %d\n", funname, i, 
-		arg == NULL? -1 : arg->t);
+	fprintf(stderr, "%s: arg %d is of type %d (err=%d)\n", funname, i, 
+		arg == NULL? -1 : arg->t, p->err);
 #endif
 
 	if (!p->err && arg->t == U_ADDR) {

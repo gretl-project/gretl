@@ -6343,6 +6343,28 @@ static int do_matrix_scalar_cast (fn_arg *arg, fn_param *param)
     return real_add_scalar_arg(param, m->val[0]);
 }
 
+/* Handle the case of a matrix parameter for which a scalar
+   was given as argument.
+*/
+
+static int do_scalar_matrix_cast (fn_arg *arg, fn_param *param)
+{
+    gretl_matrix *m = gretl_matrix_alloc(1, 1);
+    int err = 0;
+
+    if (m == NULL) {
+	err = E_ALLOC;
+    } else {
+	double x = arg->val.x;
+
+	m->val[0] = na(x) ? M_NA : x;
+	err = copy_as_arg(param->name, GRETL_TYPE_MATRIX, m);
+	gretl_matrix_free(m);
+    }
+
+    return err;
+}
+
 static void fncall_finalize_listvars (fncall *call)
 {
     int i, v;
@@ -6422,7 +6444,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    if (arg->type != GRETL_TYPE_NONE) {
+	    if (arg->type == GRETL_TYPE_DOUBLE) {
+		err = do_scalar_matrix_cast(arg, fp);
+	    } else if (arg->type != GRETL_TYPE_NONE) {
 		if (fp->flags & ARG_CONST) {
 		    err = localize_const_matrix(arg, fp);
 		} else {
@@ -7260,6 +7284,8 @@ static int check_function_args (fncall *call, PRN *prn)
 		   arg->type == GRETL_TYPE_MATRIX &&
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
+	} else if (fp->type == GRETL_TYPE_MATRIX && arg->type == GRETL_TYPE_DOUBLE) {
+	    ; /* ought to be OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_NONE) {
