@@ -3239,7 +3239,7 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *bundle_text_write (NODE *l, NODE *m, NODE *r, parser *p)
+static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -12469,7 +12469,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BWRITE:
 	/* bundle, with string as second arg */
 	if (l->t == BUNDLE && m->t == STR && empty_or_num(r)) {
-	    ret = bundle_text_write(l, m, r, p);
+	    ret = bundle_file_write(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}

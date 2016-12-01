@@ -550,7 +550,6 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 void gretl_scalar_serialize (double x, const char *name, FILE *fp)
 {
     fprintf(fp, "<scalar name=\"%s\" value=\"%.16g\"/>\n", name, x);
-
 }
 
 /**
