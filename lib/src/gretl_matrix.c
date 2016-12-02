@@ -12052,6 +12052,8 @@ int gretl_is_identity_matrix (const gretl_matrix *m)
 
     if (gretl_is_null_matrix(m)) {
 	return 0;
+    } else if (m->rows != m->cols) {
+	return 0;
     }
 
     for (j=0; j<m->cols; j++) {
