@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-11-22 17:16-0500\n"
-"PO-Revision-Date: 2016-11-23 11:49+0100\n"
+"PO-Revision-Date: 2016-12-02 15:24+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -11838,7 +11838,7 @@ msgstr "_Xeral..."
 
 #: gui2/gretl.c:1596
 msgid "_Fixed font..."
-msgstr "Tipo de letra _fixa:"
+msgstr "Tipo de letra _fixa..."
 
 #: gui2/gretl.c:1598 gui2/gretl.c:1896
 msgid "_Menu font..."
@@ -14042,7 +14042,9 @@ msgstr "Restricións lineais"
 msgid ""
 "Please note: the decimal character must be '.'\n"
 "in this context"
-msgstr "Teña en conta que o separador decimal|ndebe ser '.' neste contexto"
+msgstr ""
+"Teña en conta que o separador decimal\n"
+"debe ser '.' neste contexto"
 
 #: gui2/library.c:3996 gui2/library.c:5970 gui2/selector.c:6874
 msgid "ANOVA"
