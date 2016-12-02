@@ -3819,11 +3819,33 @@
 	<para>
 	  Returns the (1-based) position of <argname>y</argname> in
 	  list <argname>L</argname>, or 0 if <argname>y</argname>
-	  is not present in <argname>L</argname>. The second
-	  argument may be given as the name of a series or
-	  alternatively as an integer ID number.
+	  is not present in <argname>L</argname>.
 	</para>
-      </description>
+	<para>
+	  The second argument may be given as the name of a series or
+	  alternatively as an integer ID number. If you know that a
+	  series of a certain name (say <lit>foo</lit>) exists, then
+	  you can call this function as, for example,
+	</para>
+	<code>
+	  pos = inlist(L, foo)
+	</code>
+	<para>
+	  Here you are, in effect, asking <quote>Give me the position
+	  of series <lit>foo</lit> in list <lit>L</lit> (or 0 if it is
+	  not included in L).</quote> However, if you are unsure
+	  whether a series of the given name exists, you should place
+	  the name in quotes:
+	</para>
+	<code>
+	  pos = inlist(L, "foo")
+	</code>
+	<para>
+	  In this case you are asking, <quote>If there's a series
+	  named <lit>foo</lit> in <lit>L</lit> give me its position,
+	  otherwise return 0.</quote>
+	</para>
+	</description>
     </function>
 
     <function name="int" section="math" output="asinput">
