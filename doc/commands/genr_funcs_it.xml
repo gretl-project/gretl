@@ -3644,8 +3644,30 @@
       Restituisce la posizione di <argname>y</argname> (a partire
       dalla prima posizione) nella lista <argname>L</argname>, o 0
       se <argname>y</argname> non è presente in
-      <argname>L</argname>. Il secondo argomento può essere il
-      nome di una variabile o il suo identificativo numerico (intero).
+      <argname>L</argname>.
+    </para>
+    <para>
+      Il secondo argomento può essere il nome di una variabile o il
+      suo identificativo numerico (intero). Se si sa già per certo che
+      una certa serie (diciamo, <lit>pippo</lit>) esiste, allora la
+      funzione può essere chiamata così: 
+    </para>
+    <code>
+      pos = inlist(L, pippo)
+    </code>
+    <para>
+      In questo caso, sarebbe come chiedere <quote>Dimmi la posizione
+      della serie <lit>pippo</lit> nella lista <lit>L</lit> (o 0 se non
+      c'è).</quote> Se però non si è certi dell'effettiva esistenza
+      della serie, il nome va fra virgolette, come in
+    </para>
+    <code>
+      pos = inlist(L, "pippo")
+    </code>
+    <para>
+      In questo caso, invece, sarebbe come chiedere <quote>Se c'è una
+      serie <lit>pippo</lit> nella lista <lit>L</lit>, dimmi a che
+      posto sta, e 0 se non c'è.</quote>
     </para>
       </description>
     </function>
