@@ -2848,7 +2848,7 @@ void working_dir_dialog (void)
     }
 
     dialog = gretl_dialog_new(_("gretl: working directory"), 
-			      mdata->main, GRETL_DLG_BLOCK);
+			      mdata->main, GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gtk_box_set_spacing(GTK_BOX(vbox), 5);
