@@ -1344,20 +1344,16 @@ static double dh_b2_to_z2 (double b1, double b2, double n)
 
 double doornik_chisq (double skew, double xkurt, int n)
 {
-    double rb1, b1, b2, z1, z2;
+    double z1, z2, x2 = NADBL;
 
-    rb1 = skew;
-    b1 = skew * skew;
-    b2 = xkurt + 3.0; /* Note: convert from "excess" to regular */
-
-    z1 = dh_root_b1_to_z1(rb1, (double) n);
-    z2 = dh_b2_to_z2(b1, b2, (double) n);
+    z1 = dh_root_b1_to_z1(skew, (double) n);
+    z2 = dh_b2_to_z2(skew * skew, xkurt + 3.0, (double) n);
 
     if (!na(z2)) {
-	z2 = z1*z1 + z2*z2;
+	x2 = z1*z1 + z2*z2;
     }
 
-    return z2;
+    return x2;
 }
 
 static int
