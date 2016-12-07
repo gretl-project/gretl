@@ -1106,9 +1106,10 @@ $X\beta$ this becomes $(\log t - X\beta)/\sigma$.  It turns out that
 this constitutes a useful simplifying change of variables for all of
 the distributions discussed here. As in \cite{kalbfleisch02}, we
 define
-\[
+\begin{equation}
+\label{eq:duration-w}
 w_i \equiv (\log t_i - x_i\beta)/\sigma
-\]
+\end{equation}
 The interpretation of the scale factor, $\sigma$, in this expression
 depends on the distribution. For the log-normal, $\sigma$ represents
 the standard deviation of $\log t$; for the Weibull and the
@@ -1184,17 +1185,17 @@ option flags \verb|--exponential|, \verb|--loglogistic| or
 
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
-section 20.3 of \cite{wooldridge-panel}, and it concerns criminal
+section 20.3 of \cite{wooldridge-panel} and it concerns criminal
 recidivism.\footnote{Germ\'an Rodr\'iguez of Princeton University has a
   page discussing this example and displaying estimates from
-  \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
+  \app{Stata} at \url{http://data.princeton.edu/pop509/recid1.html}.}
 The data (filename \texttt{recid.gdt}) pertain to a sample of 1,445
 convicts released from prison between July 1, 1977 and June 30,
 1978. The dependent variable is the time in months until they are
 again arrested. The information was gathered retrospectively by
 examining records in April 1984; the maximum possible length of
 observation is 81 months.  Right-censoring is important: when the date
-were compiled about 62 percent had not been arrested.  The dataset
+were compiled about 62 percent had not been rearrested.  The dataset
 contains several covariates, which are described in the data file; we
 will focus below on interpretation of the \texttt{married} variable, a
 dummy which equals 1 if the respondent was married when imprisoned.
@@ -1284,11 +1285,12 @@ Let us now focus on the \texttt{married} coefficient, which is
 positive in both specifications but larger and more sharply estimated
 in the log-normal variant. The first thing is to get the
 interpretation of the sign right.  Recall that $X\beta$ enters
-negatively into the intermediate variable $w$. The Weibull hazard is 
+negatively into the intermediate variable $w$
+(equation~\ref{eq:duration-w}). The Weibull hazard is
 $\lambda(w_i) = e^{w_i}$, so being married reduces the hazard of
 re-offending, or in other words lengthens the expected duration out of
 prison.  The same qualitative interpretation applies for the
-log-normal.  
+log-normal.
 
 To get a better sense of the married effect, it is useful to show its
 impact on the hazard across time. We can do this by plotting the
