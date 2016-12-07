@@ -5403,7 +5403,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 	    /* hazard */
 	    ai = d / (double) r;
 	}
-#if 1
+#if 0
 	fprintf(stderr, "i=%02d, y=%g, d=%d, r=%d\n", i, yi, d, r);
 #endif
 	if (ibak >= 0) {
@@ -5422,7 +5422,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 	ibak = i;
     }
 
-#if 1
+#if 0
     gretl_matrix_print(A, "A");
 #endif
 
