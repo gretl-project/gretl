@@ -461,6 +461,8 @@ struct str_table funcs[] = {
     { F_HFLIST,    "hflist" },
     { F_NMMAX,     "NMmax" },
     { F_CNUMBER,   "cnumber" },
+    { F_NAALEN,    "naalen" },
+    { F_KMEIER,    "kmeier" },
     { 0,           NULL }
 };
 

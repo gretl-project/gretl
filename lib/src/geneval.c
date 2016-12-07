@@ -5426,7 +5426,9 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 /* Functions taking two series as arguments and returning a scalar
    or matrix result. We also accept as arguments two matrices if 
-   they are vectors of the same length.
+   they are vectors of the same length. In the case of F_NAALEN
+   and F_KMEIER we can accept input with no right-hand argument 
+   (meaning no censoring).
 */
 
 static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
@@ -5437,24 +5439,37 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	const double *x = NULL, *y = NULL;
 	int t1 = 0, t2 = 0;
 
-	if (l->t == SERIES && r->t == SERIES) {
-	    /* two series */
+	if (l->t == SERIES) {
+	    /* series on left */
 	    x = l->v.xvec;
-	    y = r->v.xvec;
 	    t1 = p->dset->t1;
 	    t2 = p->dset->t2;
+	    if (null_or_empty(r)) {
+		; /* OK for duration funcs */
+	    } else {
+		y = r->v.xvec;
+	    }
 	} else {
-	    /* two matrices */
+	    /* matrix on left */
 	    int n1 = gretl_vector_get_length(l->v.m);
-	    int n2 = gretl_vector_get_length(r->v.m);
+	    int n2 = 0;
 
-	    if (n1 == 0 || n1 != n2) {
+	    if (n1 == 0) {
 		p->err = E_TYPES;
 	    } else {
 		x = l->v.m->val;
-		y = r->v.m->val;
 		t1 = 0;
 		t2 = n1 - 1;
+		if (null_or_empty(r)) {
+		    ; /* OK for duration funcs */
+		} else {
+		    n2 = gretl_vector_get_length(r->v.m);
+		    if (n2 != n1) {
+			p->err = E_NONCONF;
+		    } else {
+			y = r->v.m->val;
+		    }
+		}
 	    }
 	}
 
@@ -5462,7 +5477,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    return ret;
 	}
 
-	if (f == F_FCSTATS) {
+	if (f == F_FCSTATS || f == F_NAALEN || f == F_KMEIER) {
 	    ret = aux_matrix_node(p);
 	} else {
 	    ret = aux_scalar_node(p);
@@ -5481,6 +5496,12 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	case F_FCSTATS:
 	    ret->v.m = forecast_stats(x, y, t1, t2, OPT_D, &p->err);
+	    break;
+	case F_NAALEN:
+	    ret->v.m = duration_func(x, y, t1, t2, OPT_NONE, &p->err);
+	    break;
+	case F_KMEIER:
+	    ret->v.m = duration_func(x, y, t1, t2, OPT_K, &p->err);
 	    break;
 	default:
 	    break;
@@ -12329,11 +12350,17 @@ static NODE *eval (NODE *t, parser *p)
     case F_COR:
     case F_COV:
     case F_FCSTATS:
+    case F_NAALEN:
+    case F_KMEIER:
 	/* functions taking two series/vectors as args */
 	if (l->t == SERIES && r->t == SERIES) {
 	    ret = series_2_func(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == MAT) {
 	    ret = series_2_func(l, r, t->t, p);
+	} else if ((l->t == SERIES || l->t == MAT) &&
+		   null_or_empty(r) &&
+		   (t->t == F_NAALEN || t->t == F_KMEIER)) {
+	    ret = series_2_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == SERIES)? 2 : 1,
 			    SERIES, (l->t == SERIES)? r : l, p);
