@@ -616,6 +616,8 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	fputs("set ytics nomirror\n", fp);
 	fputs("set border 2\n", fp);
 
+	/* FIXME use_xtics and panel boxplots? */
+
 	if (use_xtics(grp)) {
 	    fputs("set xtics (", fp);
 	    for (i=0; i<np; i++) {
@@ -805,19 +807,6 @@ static int factorized_boxplot_check (const int *list,
     return err;
 }
 
-static int all_missing (int t1, int t2, const double *x)
-{
-    int t;
-
-    for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
 /* build the boxplot group data structure, then pass it to 
    gnuplot_do_boxplot to write the command file */
 
@@ -848,8 +837,6 @@ static int real_boxplots (const int *list,
 	if (gretl_isconst(dset->t1, dset->t2, dset->Z[v])) {
 	    gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[v]);
 	    return E_DATA;
-	} else if (all_missing(dset->t1, dset->t2, dset->Z[v])) {
-	    return E_MISSDATA;
 	}
     }
 
