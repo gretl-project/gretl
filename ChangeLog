@@ -1,5 +1,7 @@
 version 2016e, in progress
 - Remove obsolete Kalman-filter interface
+- New functions kmeier() and naalen() for nonparametric
+  estimation of survival and hazard functions
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
