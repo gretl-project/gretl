@@ -4252,6 +4252,43 @@
       </description>
     </function>
 
+    <function name="kmeier" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">d</fnarg>
+	<fnarg type="series-or-vec" optional="true">cens</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dato un campione di dati di durata, <argname>d</argname>, ed
+	  eventualmente una variabile di censura,
+	  <argname>cens</argname>, questa funzione calcola lo
+	  stimatore nonparametrico di Kaplan&ndash;Meier della
+	  funzione di sopravvivenza (<cite key="kaplan-meier">Kaplan
+	  and Meier, 1958</cite>). La matrice risultato ha tre
+	  colonne, contenenti (nell'ordine) i valori in
+	  <argname>d</argname>, ordinati, la funzione di sopravvivenza
+	  stimata e la sua varianza asintotica, calcolata col metodo
+	  di <cite key="greenwood26">Greenwood (1926)</cite>.
+	</para>
+	<para>
+	  Se l'argomento <argname>cens</argname> non viene omesso, il
+	  valore 0 indica che l'osservazione non è censurata, mentre
+	  il valore 1 denota una censura a destra (e cioè che il
+	  periodo di osservazione dell'individuo in questione si è
+	  concluso prima che la durata fosse registrata come
+	  conclusa). Se <argname>cens</argname> è omesso, si assume
+	  che le osservazioni siano non censurate. (Nota: le
+	  convenzioni su <argname>cens</argname> potranno subire
+	  modifiche in futuro per coprire altri tipi di censura.)
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="naalen"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="kpsscrit" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="scalar">T</fnarg>
@@ -5520,6 +5557,42 @@
         <fncref targ="values"/>
       </seelist>
     </para>
+      </description>
+    </function>
+
+    <function name="naalen" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">d</fnarg>
+	<fnarg type="series-or-vec" optional="true">cens</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dato un campione di dati di durata, <argname>d</argname>, ed
+	  eventualmente una variabile di censura,
+	  <argname>cens</argname>, questa funzione calcola lo
+	  stimatore nonparametrico di Nelson&ndash;Aalen della
+	  funzione di rischio (<cite key="nelson72">Nelson,
+	  1972</cite>; <cite key="aalen78">Aalen, 1978)</cite>). La
+	  matrice risultato ha tre colonne, contenenti (nell'ordine) i
+	  valori in <argname>d</argname>, ordinati, la funzione di
+	  sopravvivenza stimata e la sua varianza stimata.
+	</para>
+	<para>
+	  Se l'argomento <argname>cens</argname> non viene omesso, il
+	  valore 0 indica che l'osservazione non è censurata, mentre
+	  il valore 1 denota una censura a destra (e cioè che il
+	  periodo di osservazione dell'individuo in questione si è
+	  concluso prima che la durata fosse registrata come
+	  conclusa). Se <argname>cens</argname> è omesso, si assume
+	  che le osservazioni siano non censurate. (Nota: le
+	  convenzioni su <argname>cens</argname> potranno subire
+	  modifiche in futuro per coprire altri tipi di censura.)
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="kmeier"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
