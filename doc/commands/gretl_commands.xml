@@ -5072,7 +5072,7 @@
 	1.96 times <lit>se_y</lit>:
       </para>
       <code>
-	gnuplot y --band=y,se_y,1.96 --with-lines
+	gnuplot y --time-series --band=y,se_y,1.96 --with-lines
       </code>
       <para>
 	When the <opt>band</opt> option is given, the companion option

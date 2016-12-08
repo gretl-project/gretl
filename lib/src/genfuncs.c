@@ -5288,20 +5288,25 @@ static int durations_squeeze (gretl_matrix **pA, gretl_matrix **pTmp,
 {
     gretl_matrix *T, *A = *pA;
     gretl_matrix *Tmp = *pTmp;
-    double ai, yi;
+    double aij;
     int m = n - repeats;
-    int i, j, err = 0;
+    int i, j, err;
 
-    gretl_matrix_realloc(Tmp, m, 2);
+    err = gretl_matrix_realloc(Tmp, m, 3);
+    if (err) {
+	return err;
+    }
 
     j = 0;
     for (i=0; i<n; i++) {
-	ai = gretl_matrix_get(A, i, 0);
-	if (ai > 0) {
+	aij = gretl_matrix_get(A, i, 0);
+	if (aij > 0) {
 	    /* got some actual values: transcribe */
-	    yi = gretl_matrix_get(A, i, 1);
-	    gretl_matrix_set(Tmp, j, 0, ai);
-	    gretl_matrix_set(Tmp, j, 1, yi);
+	    gretl_matrix_set(Tmp, j, 0, aij);
+	    aij = gretl_matrix_get(A, i, 1);
+	    gretl_matrix_set(Tmp, j, 1, aij);
+	    aij = gretl_matrix_get(A, i, 2);
+	    gretl_matrix_set(Tmp, j, 2, aij);
 	    j++;
 	}
     }
@@ -5323,9 +5328,15 @@ static int durations_squeeze (gretl_matrix **pA, gretl_matrix **pTmp,
   function OR (given OPT_K) the Kaplan-Meier estimate of the survival
   function.
 
-  The return value is a matrix with the estimator in the first column
-  and the associated duration value in the second. Any repeated
-  duration values are squeezed out.
+  Th return value is a matrix with the (unique) duration value in the
+  first column, the estimator in the second and its estimated variance
+  in the third. Any repeated duration values in the input data are
+  squeezed out.
+
+  On Nelson-Aalen, the piece by O. Borgan at
+  http://www.med.mcgill.ca/epidemiology/hanley/c609/material/NelsonAalenEstimator.pdf
+  is quite helpful, and on Kaplan-Meier see
+  www.public.iastate.edu/~kkoehler/stat565/kaplanmeier.4page.pdf
 */
 
 gretl_matrix *duration_func (const double *y, const double *cens,
@@ -5336,6 +5347,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
     gretl_matrix *M = NULL;
     gretl_matrix *A = NULL;
     double yi, ai, aibak;
+    double vaibak, vai = 0;
     int kmeier = (opt & OPT_K);
     int nmax = t2 - t1 + 1;
     int i, t, n = nmax;
@@ -5354,7 +5366,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
     }
 
     Tmp = gretl_zero_matrix_new(n, 2);
-    A   = gretl_zero_matrix_new(n, 2);
+    A   = gretl_zero_matrix_new(n, 3);
     if (Tmp == NULL || A == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -5399,27 +5411,42 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 	if (kmeier) {
 	    /* survival */
 	    ai = (r - d) / (double) r;
+	    vai = d / (r * ((double) r - d));
 	} else {
 	    /* hazard */
 	    ai = d / (double) r;
+	    vai = ((r - d) * d) / ((r - 1) * (double) r*r);
 	}
 #if 0
-	fprintf(stderr, "i=%02d, y=%g, d=%d, r=%d\n", i, yi, d, r);
+	fprintf(stderr, "i=%d, y=%g, d=%d, r=%d\n", i, yi, d, r);
 #endif
+	gretl_matrix_set(A, i, 0, yi);
 	if (ibak >= 0) {
-	    aibak = gretl_matrix_get(A, ibak, 0);
+	    aibak = gretl_matrix_get(A, ibak, 1);
+	    vaibak = gretl_matrix_get(A, ibak, 2);
 	    if (kmeier) {
-		gretl_matrix_set(A, i, 0, aibak * ai);
+		gretl_matrix_set(A, i, 1, aibak * ai);
+		gretl_matrix_set(A, i, 2, vaibak + vai);
 	    } else {
-		gretl_matrix_set(A, i, 0, aibak + ai);
+		gretl_matrix_set(A, i, 1, aibak + ai);
+		gretl_matrix_set(A, i, 2, vaibak + vai);
 	    }
 	} else {
-	    gretl_matrix_set(A, i, 0, ai);
+	    gretl_matrix_set(A, i, 1, ai);
+	    gretl_matrix_set(A, i, 2, vai);
 	}
-	gretl_matrix_set(A, i, 1, yi);
 	/* decrement number "at risk" */
 	r -= ni;
 	ibak = i;
+    }
+
+    if (kmeier) {
+	/* compute variance using @vai cumulator */
+	for (i=0; i<n; i++) {
+	    ai  = gretl_matrix_get(A, i, 1);
+	    vai = gretl_matrix_get(A, i, 2);
+	    gretl_matrix_set(A, i, 2, ai * ai * vai);
+	}
     }
 
 #if 0

@@ -4461,6 +4461,44 @@
       </description>
     </function>
 
+    <function name="kmeier" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">d</fnarg>
+	<fnarg type="series-or-vec" optional="true">cens</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a sample of duration data, <argname>d</argname>,
+	  possibly accompanied by a record of censoring status,
+	  <argname>cens</argname>, computes the Kaplan&ndash;Meier
+	  nonparametric estimator of the survival function (<cite
+	  key="kaplan-meier">Kaplan and Meier, 1958</cite>). The
+	  returned matrix has three columns holding, respectively, the
+	  sorted unique values in <argname>d</argname>, the estimated
+	  survival function corresponding to the duration value in
+	  column 1 and the estimated (large sample) variance of the
+	  estimator, calculated via the method of <cite
+	  key="greenwood26">Greenwood (1926)</cite>.
+	</para>
+	<para>
+	  If the <argname>cens</argname> series is given, the value 0
+	  is taken to indicate an uncensored observation while a value
+	  of 1 indicates a right-censored observation (that is, the
+	  period of observation of the individual in question has
+	  ended before the duration or spell has been recorded as
+	  terminated). If <argname>cens</argname> is not given, it is
+	  assumed that all observations are uncensored. (Note: the
+	  semantics of <argname>cens</argname> may be extended at some
+	  point to cover other types of censoring.)
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="naalen"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="kpsscrit" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="scalar">T</fnarg>
@@ -5878,6 +5916,43 @@
 	<para>
 	  <seelist>
             <fncref targ="values"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="naalen" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">d</fnarg>
+	<fnarg type="series-or-vec" optional="true">cens</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given a sample of duration data, <argname>d</argname>,
+	  possibly accompanied by a record of censoring status,
+	  <argname>cens</argname>, computes the Nelson&ndash;Aalen
+	  nonparametric estimator of the hazard function (<cite
+	  key="nelson72">Nelson, 1972</cite>; <cite
+	  key="aalen78">Aalen, 1978)</cite>.  The returned matrix has
+	  three columns holding, respectively, the sorted unique
+	  values in <argname>d</argname>, the estimated cumulated
+	  hazard function corresponding to the duration value in
+	  column 1, and the estimated variance of the estimator.
+	</para>
+	<para>
+	  If the <argname>cens</argname> series is given, the value 0
+	  is taken to indicate an uncensored observation while a value
+	  of 1 indicates a right-censored observation (that is, the
+	  period of observation of the individual in question has
+	  ended before the duration or spell has been recorded as
+	  terminated). If <argname>cens</argname> is not given, it is
+	  assumed that all observations are uncensored. (Note: the
+	  semantics of <argname>cens</argname> may be extended at some
+	  point to cover other types of censoring.)
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="kmeier"/>
 	  </seelist>
 	</para>
       </description>
