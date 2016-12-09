@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -32,7 +32,7 @@
 
 /* Spearman, one-tailed alpha = .005, .025, .05 */
 
-static double rhocrit[18][3] = { 
+static double rhocrit[18][3] = {
     { 0.8929, 0.7450, 0.6786 }, /*  n = 7 */
     { 0.8571, 0.7143, 0.6190 }, /*  8 */
     { 0.8167, 0.6833, 0.5833 }, /*  9 */
@@ -63,8 +63,8 @@ static double spearman_signif (double rho, int n)
 
     if (n < 7) {
 	return 1.0;
-    } 
-    
+    }
+
     x = rhocrit[n - 7];
 
     if (rho > x[0]) return .01;
@@ -84,8 +84,8 @@ enum {
 */
 
 static void make_ranking (const double *sz, int m,
-			  const double *x, const double *y, 
-			  int n, double *rz, int *ties, 
+			  const double *x, const double *y,
+			  int n, double *rz, int *ties,
 			  int which)
 {
     const double *z;
@@ -123,14 +123,14 @@ static void make_ranking (const double *sz, int m,
 	    if (ties != NULL) {
 		*ties = 1;
 	    }
-	} 
+	}
 
 	r += cases;
     }
 }
 
-static int rankcorr_get_rankings (const double *x, const double *y, int n, 
-				  double **rxout, double **ryout, 
+static int rankcorr_get_rankings (const double *x, const double *y, int n,
+				  double **rxout, double **ryout,
 				  int *pm, int *ties)
 {
     double *sx = NULL, *sy = NULL;
@@ -142,7 +142,7 @@ static int rankcorr_get_rankings (const double *x, const double *y, int n,
 	if (!na(x[i]) && !na(y[i])) {
 	    m++;
 	}
-    }    
+    }
 
     if (m < 2) {
 	return E_DATA;
@@ -153,8 +153,8 @@ static int rankcorr_get_rankings (const double *x, const double *y, int n,
     rx = malloc(m * sizeof *rx);
     ry = malloc(m * sizeof *ry);
 
-    if (sx == NULL || sy == NULL || 
-	rx == NULL || ry == NULL) { 
+    if (sx == NULL || sy == NULL ||
+	rx == NULL || ry == NULL) {
 	free(sx);
 	free(sy);
 	free(rx);
@@ -198,9 +198,9 @@ static int rankcorr_get_rankings (const double *x, const double *y, int n,
     return 0;
 }
 
-static int real_spearman_rho (const double *x, const double *y, int n, 
+static int real_spearman_rho (const double *x, const double *y, int n,
 			      double *rho, double *zval,
-			      double **rxout, double **ryout, 
+			      double **rxout, double **ryout,
 			      int *pm)
 {
     double *rx = NULL, *ry = NULL;
@@ -218,7 +218,7 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     if (ties == 0) {
 	/* calculate rho and z-score, no ties */
 	sd = 0.0;
-	for (i=0; i<m; i++) { 
+	for (i=0; i<m; i++) {
 	    sd += (rx[i] - ry[i]) * (rx[i] - ry[i]);
 	}
 	sr = 1.0 - 6.0 * sd / (m * (m * m - 1));
@@ -246,8 +246,20 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     return err;
 }
 
+double spearman_rho_func (const double *x, const double *y,
+			  int n, int *err)
+{
+    double z, rho = NADBL;
+    int m = 0;
+
+    *err = real_spearman_rho(x, y, n, &rho, &z,
+			     NULL, NULL, &m);
+
+    return rho;
+}
+
 static void print_raw_and_ranked (int vx, int vy,
-				  const double *x, const double *y, 
+				  const double *x, const double *y,
 				  const double *rx, const double *ry,
 				  const DATASET *dset,
 				  PRN *prn)
@@ -287,11 +299,11 @@ static void print_raw_and_ranked (int vx, int vy,
  *
  * Calculates and prints Spearman's rank correlation coefficient for the two
  * variables specified in the @list.
- * 
+ *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int spearman_rho (const int *list, const DATASET *dset, 
+int spearman_rho (const int *list, const DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
     int T = dset->t2 - dset->t1 + 1;
@@ -339,7 +351,7 @@ int spearman_rho (const int *list, const DATASET *dset,
 	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), zval,
 		normal_pvalue_2(zval));
     } else if (m > 24) {
-	double tval = rho * sqrt((m - 2) / (1 - rho*rho)); 
+	double tval = rho * sqrt((m - 2) / (1 - rho*rho));
 
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), m - 2,
@@ -348,7 +360,7 @@ int spearman_rho (const int *list, const DATASET *dset,
 	double pval = spearman_signif(fabs(rho), m);
 
 	if (pval < 1.0) {
-	    pprintf(prn, _("significant at the %g%% level (two-tailed)\n"), 
+	    pprintf(prn, _("significant at the %g%% level (two-tailed)\n"),
 		    100.0 * pval);
 	} else {
 	    /* xgettext:no-c-format */
@@ -361,7 +373,7 @@ int spearman_rho (const int *list, const DATASET *dset,
 
  skipit:
 
-    if (rx != NULL && ry != NULL) { 
+    if (rx != NULL && ry != NULL) {
 	print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
 	free(rx);
 	free(ry);
@@ -387,7 +399,7 @@ static int compare_pairs_x (const void *a, const void *b)
     if (ret == 0) {
 	ret = (pa->y > pb->y) - (pa->y < pb->y);
     }
-     
+
     return ret;
 }
 
@@ -399,7 +411,7 @@ static int compare_pairs_y (const void *a, const void *b)
     return (pa->y > pb->y) - (pa->y < pb->y);
 }
 
-static int real_kendall_tau (const double *x, const double *y, 
+static int real_kendall_tau (const double *x, const double *y,
 			     int n, struct xy_pair *xy, int nn,
 			     double *ptau, double *pz)
 {
@@ -436,7 +448,7 @@ static int real_kendall_tau (const double *x, const double *y,
 		} else if (xy[j].y < xy[i].y) {
 		    N1++;
 		}
-	    } 
+	    }
 	}
 	if (i > 0) {
 	    /* account for ties in x */
@@ -470,8 +482,8 @@ static int real_kendall_tau (const double *x, const double *y,
 		Ty += tt1;
 		Ty2 += tt1 * (ty - 2);
 		Ty25 += tt1 * (2 * ty + 5);
-		ty = 0;	
-	    }	
+		ty = 0;
+	    }
 	}
     }
 
@@ -499,21 +511,48 @@ static int real_kendall_tau (const double *x, const double *y,
 	    s2 += (1.0/(9*nn1*(nn-2))) * Tx2 * Ty2;
 	}
 	if (Tx != 0 && Ty != 0) {
-	    s2 += (1.0/(2*nn1)) * Tx * Ty; 
-	}  
+	    s2 += (1.0/(2*nn1)) * Tx * Ty;
+	}
     }
 
     z = (S - 1) / sqrt(s2);
 
     if (ptau != NULL) {
 	*ptau = tau;
-    }    
+    }
 
     if (pz != NULL) {
 	*pz = z;
     }
 
     return 0;
+}
+
+double kendall_tau_func (const double *x, const double *y,
+			 int n, int *err)
+{
+    struct xy_pair *xy;
+    double z, tau = NADBL;
+    int i, nn = 0;
+
+    /* count valid pairs */
+    for (i=0; i<n; i++) {
+	if (!xna(x[i]) && !xna(y[i])) {
+	    nn++;
+	}
+    }
+
+    xy = malloc(nn * sizeof *xy);
+
+    if (xy == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = real_kendall_tau(x, y, n, xy, nn, &tau, &z);
+    }
+
+    free(xy);
+
+    return tau;
 }
 
 /**
@@ -525,11 +564,11 @@ static int real_kendall_tau (const double *x, const double *y,
  *
  * Calculates and prints Kendall's rank correlation tau statistic for
  * the two variables specified in @list.
- * 
+ *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int kendall_tau (const int *list, const DATASET *dset, 
+int kendall_tau (const int *list, const DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     struct xy_pair *xy = NULL;
@@ -556,7 +595,7 @@ int kendall_tau (const int *list, const DATASET *dset,
 	if (!na(x[t]) && !na(y[t])) {
 	    nn++;
 	}
-    } 
+    }
 
     if (nn < 2) {
 	return E_MISSDATA;
@@ -585,7 +624,7 @@ int kendall_tau (const int *list, const DATASET *dset,
 
 	rankcorr_get_rankings(x, y, T, &rx, &ry, NULL, NULL);
 
-	if (rx != NULL && ry != NULL) { 
+	if (rx != NULL && ry != NULL) {
 	    print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
 	    free(rx);
 	    free(ry);
@@ -614,7 +653,7 @@ static int locke_shuffle_init (const double *x,
 {
     double *sx = NULL;
     int i, m = 0;
-	
+
     for (i=0; i<*n; i++) {
 	if (x[i] < 0.0) {
 	    return E_DATA;
@@ -640,13 +679,13 @@ static int locke_shuffle_init (const double *x,
 	if (!na(x[i])) {
 	    sx[m++] = x[i];
 	}
-    }    
+    }
 
     m = 2 * m / 2;
     *n = m;
 
     return 0;
-} 
+}
 
 #define NREPEAT 100
 
@@ -663,7 +702,7 @@ static int locke_shuffle_init (const double *x,
  * Commun. Statis.-Theor. Meth. A5(4), 351-364 (1976).  Also
  * see Shapiro and Chen, Journal of Quality Technology 33(1),
  * Jan 2001.
- * 
+ *
  * Returns: the z value for test, or #NADBL on error.
  */
 
@@ -682,7 +721,7 @@ double lockes_test (const double *x, int t1, int t2)
     }
 
     m /= 2;
-	
+
     u = malloc(m * sizeof *u);
     v = malloc(m * sizeof *v);
     uv = malloc(m * sizeof *uv);
@@ -719,13 +758,13 @@ double lockes_test (const double *x, int t1, int t2)
 #if LOCKE_DEBUG
 	printf("z[%d] = %g\n", j, zj);
 #endif
-    }   
+    }
 
     z /= (double) NREPEAT;
 
 #if LOCKE_DEBUG
     fprintf(stderr, "Kendall's tau: average z = %g\n", z);
-#endif 
+#endif
 
     free(u);
     free(v);
@@ -746,11 +785,11 @@ double lockes_test (const double *x, int t1, int t2)
  * Performs, and prints the results of, the runs test for randomness
  * for the variable specified by @v.  The normal approximation
  * is that given in Gary Smith, Statistical Reasoning, 2e, p. 674.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int runs_test (int v, const DATASET *dset, 
+int runs_test (int v, const DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     double xt, *x, mu, s2, sigma;
@@ -777,7 +816,7 @@ int runs_test (int v, const DATASET *dset,
 		continue;
 	    }
 	    x[n++] = xt - xt1;
-	} 	
+	}
     } else {
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    xt = dset->Z[v][t];
@@ -785,7 +824,7 @@ int runs_test (int v, const DATASET *dset,
 		continue;
 	    }
 	    x[n++] = xt;
-	} 
+	}
     }
 
     if (n <= 1) {
@@ -802,7 +841,7 @@ int runs_test (int v, const DATASET *dset,
 	} else {
 	    Nm++;
 	}
-	if ((x[t] > 0 && x[t-1] <= 0) || (x[t] <= 0 && x[t-1] > 0)) { 
+	if ((x[t] > 0 && x[t-1] <= 0) || (x[t] <= 0 && x[t-1] > 0)) {
 	    runs++;
 	}
     }
@@ -824,7 +863,7 @@ int runs_test (int v, const DATASET *dset,
 	sigma = sqrt(s2);
 	z = (runs - mu) / sigma;
 	pval = normal_pvalue_2(z);
-    }	
+    }
 
     if (opt & OPT_D) {
 	pprintf(prn, "\n%s\n", _("Runs test (first difference)"));
@@ -832,7 +871,7 @@ int runs_test (int v, const DATASET *dset,
 	pprintf(prn, "\n%s\n", _("Runs test (level)"));
     }
 
-    pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
+    pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"),
 	    dset->varname[v], runs);
 
     if (na(z)) {
@@ -853,7 +892,7 @@ int runs_test (int v, const DATASET *dset,
     pputc(prn, '\n');
 
     record_test_result(z, pval, "runs");
-  
+
     free(x);
 
     return 0;
@@ -908,8 +947,8 @@ struct ranker {
    Zero Differences are Present", JASA(62), 1967, 1068-1069.
 */
 
-static int 
-signed_rank_test (const double *x, const double *y, 
+static int
+signed_rank_test (const double *x, const double *y,
 		  int v1, int v2, const DATASET *dset,
 		  double *result, gretlopt opt, PRN *prn)
 {
@@ -947,7 +986,7 @@ signed_rank_test (const double *x, const double *y,
 	    r[i].c = (d > 0)? '+' : '-';
 	    i++;
 	}
-    } 
+    }
 
     qsort(r, n, sizeof *r, gretl_compare_doubles);
 
@@ -967,7 +1006,7 @@ signed_rank_test (const double *x, const double *y,
 	    double avg = (Z + i + 1 + Z + i + m + 1) / 2.0;
 
 	    for (t=0; t<=m; t++) {
-		r[i+t].rank = avg;	
+		r[i+t].rank = avg;
 	    }
 	    i += m;
 	    T += pow((double) m, 3) - m;
@@ -981,7 +1020,7 @@ signed_rank_test (const double *x, const double *y,
 	    _("the median difference is zero"));
 
     if (opt & OPT_V) {
-	pprintf(prn, "%16s %8s %16s\n\n", "difference", "rank", 
+	pprintf(prn, "%16s %8s %16s\n\n", "difference", "rank",
 		"signed rank");
     }
 
@@ -999,7 +1038,7 @@ signed_rank_test (const double *x, const double *y,
 	if (opt & OPT_V) {
 	    pprintf(prn, "%16g %8g %16g\n", r[i].val, r[i].rank, d);
 	}
-    } 
+    }
 
     if (opt & OPT_V) {
 	pputc(prn, '\n');
@@ -1007,7 +1046,7 @@ signed_rank_test (const double *x, const double *y,
 
     pprintf(prn, "  n = %d\n", n);
     pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
-    pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"), 
+    pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"),
 	    Z, _("non-zero ties"), k);
 
     if (n > 8) {
@@ -1030,7 +1069,7 @@ signed_rank_test (const double *x, const double *y,
 	pprintf(prn, "  5%% critical values: %d (two-tailed), %d (one-tailed)\n",
 		rank5[n-6][0], rank5[n-6][1]);
     } else {
-	pprintf(prn, "  %s\n", 
+	pprintf(prn, "  %s\n",
 		_("Sample too small for statistical significance"));
     }
 
@@ -1044,7 +1083,7 @@ signed_rank_test (const double *x, const double *y,
     return 0;
 }
 
-static int rank_sum_test (const double *x, const double *y, 
+static int rank_sum_test (const double *x, const double *y,
 			  int v1, int v2, const DATASET *dset,
 			  double *result, gretlopt opt, PRN *prn)
 {
@@ -1129,7 +1168,7 @@ static int rank_sum_test (const double *x, const double *y,
 	}
 	if (r[i].c == 'a') {
 	    wa += r[i].rank;
-	} 
+	}
     }
 
     if (opt & OPT_V) {
@@ -1155,7 +1194,7 @@ static int rank_sum_test (const double *x, const double *y,
 	    (*cv)(na, nb, prn);
 	}
     } else {
-	pprintf(prn, "  %s\n", 
+	pprintf(prn, "  %s\n",
 		_("Sample too small for statistical significance"));
     }
 
@@ -1169,7 +1208,7 @@ static int rank_sum_test (const double *x, const double *y,
     return 0;
 }
 
-static int sign_test (const double *x, const double *y, 
+static int sign_test (const double *x, const double *y,
 		      int v1, int v2, const DATASET *dset,
 		      double *result, gretlopt opt, PRN *prn)
 {
@@ -1192,14 +1231,14 @@ static int sign_test (const double *x, const double *y,
     pprintf(prn, "\n%s\n\n", _("Sign Test"));
     pprintf(prn, _("Number of differences: n = %d\n"), n);
     pputs(prn, "  ");
-    pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"), 
+    pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
 	    dset->varname[v1], dset->varname[v2],
 	    w, 100.0 * w / n);
 
     pputs(prn, "  ");
     pprintf(prn, _("Under the null hypothesis of no difference, W "
 		   "follows B(%d, %.1f)\n"), n, 0.5);
-    pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w, 
+    pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w,
 	    binomial_cdf(0.5, n, w));
     if (w == 0) {
 	pv = 1.0;
@@ -1225,11 +1264,11 @@ static int sign_test (const double *x, const double *y,
  * Performs, and prints the results of, a non-parametric
  * test for a difference between two variables or groups.
  * The specific test performed depends on @opt.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int diff_test (const int *list, const DATASET *dset, 
+int diff_test (const int *list, const DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     const double *x, *y;
@@ -1258,7 +1297,7 @@ int diff_test (const int *list, const DATASET *dset,
 	err = rank_sum_test(x, y, v1, v2, dset, result, opt, prn);
     } else if (opt & OPT_I) {
 	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
-    } 
+    }
 
     record_test_result(result[0], result[1], "diff");
 
@@ -1275,7 +1314,7 @@ struct pair_sorter {
 /**
  * sort_pairs_by_x:
  * @x: data vector by which to sort.
- * @y: data vector. 
+ * @y: data vector.
  * @order: location to receive sort order, or %NULL.
  * @labels: array of strings to be sorted along with
  * the data, or %NULL.
@@ -1286,7 +1325,7 @@ struct pair_sorter {
  * observations appear in the sorted vectors.  Also
  * optionally sorts an accomanying array of observation
  * labels.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
@@ -1324,8 +1363,8 @@ int sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int **order,
 	y->val[t] = s[t].yi;
 	if (labels != NULL) {
 	    labels[t] = s[t].s;
-	} 	
-    }  
+	}
+    }
 
     if (order != NULL) {
 	int *idx = malloc(T * sizeof *idx);
@@ -1381,7 +1420,7 @@ struct loess_info {
    where y is missing, the weight is NADBL.
 */
 
-static int make_robustness_weights (gretl_matrix *rw, int N) 
+static int make_robustness_weights (gretl_matrix *rw, int N)
 {
     double *tmp = malloc(N * sizeof *tmp);
     double s, eis;
@@ -1426,11 +1465,11 @@ static int make_robustness_weights (gretl_matrix *rw, int N)
 
 /* Multiply the robustness weights, @rw, into the regular
    weights, @wt, taking care to register the two vectors
-   (rw is full-length while wt is local), and to skip any 
+   (rw is full-length while wt is local), and to skip any
    missing values in rw.
 */
 
-static void adjust_weights (const gretl_matrix *rw, 
+static void adjust_weights (const gretl_matrix *rw,
 			    gretl_matrix *wt, int a)
 {
     int k, n = gretl_vector_get_length(wt);
@@ -1443,7 +1482,7 @@ static void adjust_weights (const gretl_matrix *rw,
 	    while (na(rw->val[t])) t++;
 	}
     }
-} 
+}
 
 /* Apply the weights in lo->wt to the local data matrices
    lo->Xi and lo->yi. This is straightforward since all
@@ -1499,15 +1538,15 @@ static int loess_get_local_data (int i, int *pa,
     fprintf(stderr, "\ni=%d, a=%d, n_ok=%d\n", i, a, n_ok);
 #endif
 
-    /* First determine where we should start reading the 
+    /* First determine where we should start reading the
        neighbors of xi: search rightward from a, so far as
        this is feasible.
     */
 
     while (n_ok > n) {
 	/* find b, the next point that would be included if
-	   we move the neighbor set one place to the right: 
-	   start at a+1 and proceed until we have n points 
+	   we move the neighbor set one place to the right:
+	   start at a+1 and proceed until we have n points
 	   with valid y-values
 	*/
 	for (m=0, b=a+1; ; b++) {
@@ -1518,7 +1557,7 @@ static int loess_get_local_data (int i, int *pa,
 	if (fabs(x[i] - x[a]) < fabs(x[i] - x[b])) {
 	    /* the max distance increased: get out */
 	    break;
-	}	    
+	}
 	/* shift one (valid) place to the right */
 	a = next_ok_obs(y, a);
 	n_ok--;
@@ -1529,7 +1568,7 @@ static int loess_get_local_data (int i, int *pa,
     lo->n_ok = n_ok;
 
     /* Having found the starting index for the n nearest neighbors
-       of xi, transcribe the relevant data into Xi and yi. As we 
+       of xi, transcribe the relevant data into Xi and yi. As we
        go, check whether x is constant in this sub-sample.
     */
 
@@ -1559,7 +1598,7 @@ static int loess_get_local_data (int i, int *pa,
     }
 
 #if LDEBUG
-    fprintf(stderr, " -> a=%d, n_ok=%d (xconst = %d)\n", 
+    fprintf(stderr, " -> a=%d, n_ok=%d (xconst = %d)\n",
 	    a, n_ok, *xconst);
 #endif
 
@@ -1615,7 +1654,7 @@ static int loess_count_usable_obs (const gretl_matrix *y,
 	    }
 	    n_ok++;
 	}
-    }   
+    }
 
     return n_ok;
 }
@@ -1630,8 +1669,8 @@ static int loess_count_usable_obs (const gretl_matrix *y,
  * the first-stage residuals).
  * @err: location to receive error code.
  *
- * Computes loess estimates based on William Cleveland, "Robust Locally 
- * Weighted Regression and Smoothing Scatterplots", Journal of the 
+ * Computes loess estimates based on William Cleveland, "Robust Locally
+ * Weighted Regression and Smoothing Scatterplots", Journal of the
  * American Statistical Association, Vol. 74 (1979), pp. 829-836.
  * Typically one expects that @d = 1 and @q is in the neighborhood
  * of 0.5.
@@ -1639,7 +1678,7 @@ static int loess_count_usable_obs (const gretl_matrix *y,
  * The x,y pairs must be pre-sorted by increasing value of @x; an
  * error is flagged if this is not the case.  See also
  * sort_pairs_by_x().
- * 
+ *
  * Returns: allocated vector containing the loess fitted values, or
  * %NULL on failure.
  */
@@ -1707,7 +1746,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     if (yh == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
     if (opt & OPT_R) {
 	/* extra storage for residuals/robustness weights */
@@ -1754,11 +1793,11 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
 	    if (k > 0) {
 		/* We have robustness weights, rw, based on the residuals
-		   from the last round, which should be used to adjust 
+		   from the last round, which should be used to adjust
 		   the wt as computed in loess_get_local_data().
 		*/
 		adjust_weights(rw, wt, a);
-	    } 
+	    }
 
 	    /* apply weights to the local data */
 	    weight_local_data(&lo);
@@ -1805,14 +1844,14 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     } /* end robustness iterations */
 
  bailout:
-	
+
     gretl_matrix_block_destroy(B);
     gretl_matrix_free(rw);
 
     if (*err) {
 	gretl_matrix_free(yh);
 	yh = NULL;
-    } 
+    }
 
     return yh;
 }

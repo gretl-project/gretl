@@ -7041,3 +7041,39 @@ int gretl_normality_test (int varno, const DATASET *dset,
     
     return err;
 }
+
+gretl_matrix *gretl_normtest_matrix (const double *y,
+				     int t1, int t2,
+				     gretlopt opt,
+				     int *err)
+{
+    gretl_matrix *ret = NULL;
+    double test = NADBL;
+    double pval = NADBL;
+
+    if (opt & OPT_J) {
+	/* Jarque-Bera */
+	*err = skew_kurt_test(y, t1, t2, &test, &pval, opt);
+    } else if (opt & OPT_W) {
+	/* Shapiro-Wilk */
+	*err = shapiro_wilk(y, t1, t2, &test, &pval);
+    } else if (opt & OPT_L) {
+	/* Lilliefors */
+	*err = lilliefors_test(y, t1, t2, &test, &pval);
+    } else {
+	/* Doornik-Hansen */
+	*err = skew_kurt_test(y, t1, t2, &test, &pval, opt);
+    }
+
+    if (!*err) {
+	ret = gretl_matrix_alloc(1, 2);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    ret->val[0] = na(test)? M_NA : test;
+	    ret->val[1] = na(pval)? M_NA : pval;
+	}
+    }
+
+    return ret;
+}

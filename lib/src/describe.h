@@ -279,6 +279,11 @@ int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval);
 int gretl_normality_test (int varno, const DATASET *dset,
 			  gretlopt opt, PRN *prn);
 
+gretl_matrix *gretl_normtest_matrix (const double *y,
+				     int t1, int t2,
+				     gretlopt opt,
+				     int *err);
+
 gretl_matrix *acf_matrix (const double *x, int order,
 			  const DATASET *dset, int n,
 			  int *err);

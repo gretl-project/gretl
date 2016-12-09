@@ -28,6 +28,12 @@ int kendall_tau (const int *list,
 		 const DATASET *dset,
 		 gretlopt opt, PRN *prn);
 
+double spearman_rho_func (const double *x, const double *y,
+			  int n, int *err);
+
+double kendall_tau_func (const double *x, const double *y,
+			 int n, int *err);
+
 double lockes_test (const double *x, int t1, int t2);
 
 int runs_test (int v, const DATASET *dset, 

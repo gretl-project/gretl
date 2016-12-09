@@ -463,6 +463,7 @@ struct str_table funcs[] = {
     { F_CNUMBER,   "cnumber" },
     { F_NAALEN,    "naalen" },
     { F_KMEIER,    "kmeier" },
+    { F_NORMTEST,  "normtest" },
     { 0,           NULL }
 };
 

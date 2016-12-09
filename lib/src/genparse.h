@@ -287,7 +287,6 @@ enum {
     F_TRAMOLIN,
     F_CNUMBER,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
-    F_COR,
     F_COV,
     F_SDC,
     F_DUMIFY,
@@ -371,6 +370,7 @@ enum {
     F_HFLDIFF,
     F_NAALEN,
     F_KMEIER,
+    F_NORMTEST,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
@@ -414,6 +414,7 @@ enum {
     F_MLINCOMB,
     F_HFLIST,
     F_NMMAX,
+    F_COR,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -487,7 +488,8 @@ enum {
 #define string_last_func(s) (s == F_DESEAS || s == F_AGGRBY || \
 			     s == F_INBUNDLE ||	s == F_SSCANF || \
 			     s == F_PRINTF || s == F_SPRINTF || \
-			     s == F_ALLREDUCE)
+			     s == F_ALLREDUCE || s == F_COR || \
+			     s == F_NORMTEST)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
