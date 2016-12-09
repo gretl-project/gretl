@@ -5494,29 +5494,32 @@
       </fnargs>
       <description>
     <para>
-      Copia la matrice <argname>X</argname> in un file di testo di nome 
-      <argname>fname</argname>. Nella prima riga il file contiene 
-      due interi separati da un tabulatore corrispondenti ai numeri di 
-      riga e di colonna; nelle righe seguenti sono indicati gli elementi
-      della matrice in notazione scientifica, separati da tabulatori
-      (una riga per ciascuna linea).
+      Copia la matrice <argname>X</argname> in un file di nome
+      <argname>fname</argname>, di regola un file di testo. Nella
+      prima riga il file contiene due interi, separati da un tabulatore,
+      corrispondenti ai numeri di righe e di colonne; nelle linee
+      seguenti sono indicati gli elementi della matrice in notazione
+      scientifica, separati da tabulatori (una riga per ciascuna
+      linea). Per formati alternativi, vedi più avanti.
     </para>
     <para>
-      Se il file <argname>fname</argname> esiste già verrà sovrascritto.
-      Il valore restituito è 0 in caso l'esecuzione venga portata a termine
-      correttamente; se si verifica un errore, per esempio dovuto al
-      fatto che il file non può essere sovrascritto, il valore restituito 
-      sarà non nullo.
+      Se il file <argname>fname</argname> esiste già, verrà
+      sovrascritto.  Il valore restituito è 0 in caso l'esecuzione
+      venga portata a termine correttamente; se si verifica un errore,
+      per esempio dovuto al fatto che il file non può essere
+      sovrascritto, il valore restituito sarà non nullo.
     </para>
     <para>
-      Se viene indicato un valore non nullo per l'argomento 
-      <argname>export</argname>, il file di output sarà salvato nella 
-      directory <quote>dot</quote> dell'utente, e ad esso per default 
-      sarà possibile 
-      accedere usando le funzioni che caricano matrici descritte nell'ambito 
-      del comando <cmdref targ="foreign"/>. In questo caso 
-      è necessario
-      indicare come secondo argomento il nome del file privo del percorso.
+      Il file verrà scritto nella directory corrispondente a <cmdref
+      targ="workdir"/>, a meno che la stringa <repl>filename</repl>
+      non contenga un percorso completo.  Se viene indicato un valore
+      non nullo per l'argomento <argname>export</argname>, il file di
+      output sarà salvato nella directory <quote>dot</quote>
+      dell'utente, e ad esso per default sarà possibile accedere
+      usando le funzioni che caricano matrici descritte nell'ambito
+      del comando <cmdref targ="foreign"/>. In questo caso è
+      necessario indicare come secondo argomento il nome del file
+      privo del percorso.
     </para>
     <para>
       Le matrici memorizzate usando il comando <lit>mwrite</lit> possono 
@@ -5524,11 +5527,42 @@
       <guideref targ="chap:matrices"/> per ulteriori dettagli.
     </para>
     <para>
-      E' disponibile un'estensione del comportamento base di questa
-      funzione: se <argname>fname</argname> ha estensione 
-      <quote><lit>.gz</lit></quote>, il file viene salvato usando la 
-      compressione gzip.
+      Sono disponibili due estensioni (mutuamente esclusive) del
+      comportamento base di questa funzione.
     </para>
+	<ilist>
+	  <li>
+	    <para>
+	      Se <argname>fname</argname> ha estensione
+	      <quote><lit>.gz</lit></quote>, il file viene salvato
+	      usando la compressione gzip.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Se <argname>fname</argname> ha il suffisso
+	      <quote><lit>.bin</lit></quote>, il file viene salvato in
+	      formato binario. In tal caso, i primi 19 byte
+	      contengono la stringa <lit>gretl_binary_matrix</lit>,
+	      i successivi 8 contengono due interi da 32 bit coi
+	      numeri di righe e colonne, e il resto contiene gli
+	      elementi della matrice in numeri in doppia precisione
+	      (little-endian, ordine per colonna). Se gretl viene
+	      eseguito su un sistema operativo big-endian, la
+	      conversione viene effettuata automaticamente in lettura
+	      e scrittura.
+	    </para>
+	  </li>	  
+	</ilist>
+	<para>
+	  Si noti che se il file dev'essere letto da un altro
+	  programma, l'uso delle opzioni gzip o binarie è
+	  sconsigliato. Tuttavia, se il file dev'essere riletto da
+	  gretl, i formati alternativi producono un sensibile
+	  risparmio di spazio e il formato binario è anche molto più
+	  veloce in lettura. Per matrici molto grandi, sconsigliamo
+	  l'uso del formato gzip, che tende ad essere piuttosto lento.
+	</para>
     <para>
       <seelist>
         <fncref targ="mread"/>

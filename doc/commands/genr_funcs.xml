@@ -5869,7 +5869,7 @@
 	  <li>
 	    <para>
 	      If <argname>fname</argname> has the suffix
-	      <quote><lit>.bin</lit></quote> the the file is written
+	      <quote><lit>.bin</lit></quote> then the file is written
 	      in binary format. In this case the first 19 bytes
 	      contain the characters <lit>gretl_binary_matrix</lit>,
 	      the next 8 bytes contain two 32-bit integers giving the
