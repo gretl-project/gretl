@@ -5424,50 +5424,20 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static gretlopt get_series2_option (NODE *c, parser *p)
-{
-    gretlopt opt = OPT_NONE;
-
-    if (c->t == STR) {
-	const char *s = c->v.str;
-
-	if (!strcmp(s, "spearman")) {
-	    opt = OPT_S;
-	} else if (!strcmp(s, "kendall")) {
-	    opt = OPT_K;
-	} else {
-	    p->err = E_INVARG;
-	}
-    } else {
-	p->err = E_TYPES;
-    }
-
-    return opt;
-}
-
 /* Functions taking two series as arguments and returning a scalar
    or matrix result. We also accept as arguments two matrices if 
    they are vectors of the same length. In the case of F_NAALEN
    and F_KMEIER we can accept input with no right-hand argument 
    (meaning no censoring).
-
-   In some cases (F_COR) we accept an additional "control"
-   argument, @c.
 */
 
-static NODE *series_2_func (NODE *l, NODE *r, int f, NODE *c,
-			    parser *p)
+static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
 	const double *x = NULL, *y = NULL;
-	gretlopt opt = OPT_NONE;
 	int t1 = 0, t2 = 0;
-
-	if (c != NULL && c->t != EMPTY) {
-	    opt = get_series2_option(c, p);
-	}
 
 	if (l->t == SERIES) {
 	    /* series on left */
@@ -5519,17 +5489,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, NODE *c,
 
 	switch (f) {
 	case F_COR:
-	    if (opt) {
-		int n = t2 - t1 + 1;
-
-		if (opt & OPT_S) {
-		    ret->v.xval = spearman_rho_func(x, y, n, &p->err);
-		} else {
-		    ret->v.xval = kendall_tau_func(x, y, n, &p->err);
-		}
-	    } else {
-		ret->v.xval = gretl_corr(t1, t2, x, y, NULL);
-	    }
+	    ret->v.xval = gretl_corr(t1, t2, x, y, NULL);
 	    break;
 	case F_COV:
 	    ret->v.xval = gretl_covar(t1, t2, x, y, NULL);
@@ -12467,32 +12427,23 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_COV:
+    case F_COR:
     case F_FCSTATS:
     case F_NAALEN:
     case F_KMEIER:
 	/* functions taking two series/vectors as args */
 	if (l->t == SERIES && r->t == SERIES) {
-	    ret = series_2_func(l, r, t->t, NULL, p);
+	    ret = series_2_func(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == MAT) {
-	    ret = series_2_func(l, r, t->t, NULL, p);
+	    ret = series_2_func(l, r, t->t, p);
 	} else if ((l->t == SERIES || l->t == MAT) &&
 		   null_or_empty(r) &&
 		   (t->t == F_NAALEN || t->t == F_KMEIER)) {
-	    ret = series_2_func(l, NULL, t->t, NULL, p);
+	    ret = series_2_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == SERIES)? 2 : 1,
 			    SERIES, (l->t == SERIES)? r : l, p);
 	} 
-	break;
-    case F_COR:
-	/* as above but with optional third arg */
-	if (l->t == SERIES && m->t == SERIES) {
-	    ret = series_2_func(l, m, t->t, r, p);
-	} else if (l->t == MAT && m->t == MAT) {
-	    ret = series_2_func(l, m, t->t, r, p);
-	} else {
-	    p->err = E_INVARG;
-	}
 	break;
     case F_MXTAB:
 	/* functions taking two series or matrices as args and returning 

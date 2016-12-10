@@ -246,18 +246,6 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     return err;
 }
 
-double spearman_rho_func (const double *x, const double *y,
-			  int n, int *err)
-{
-    double z, rho = NADBL;
-    int m = 0;
-
-    *err = real_spearman_rho(x, y, n, &rho, &z,
-			     NULL, NULL, &m);
-
-    return rho;
-}
-
 static void print_raw_and_ranked (int vx, int vy,
 				  const double *x, const double *y,
 				  const double *rx, const double *ry,
@@ -309,7 +297,9 @@ int spearman_rho (const int *list, const DATASET *dset,
     int T = dset->t2 - dset->t1 + 1;
     double *rx = NULL, *ry = NULL;
     const double *x, *y;
-    double rho, zval;
+    double rho, zval = NADBL;
+    double tval = NADBL;
+    double pval = NADBL;
     int vx, vy, m;
     int err;
 
@@ -332,54 +322,70 @@ int spearman_rho (const int *list, const DATASET *dset,
 	return err;
     }
 
-    pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), dset->varname[vx],
-	    dset->varname[vy]);
-
-    if (na(rho)) {
-	pputs(prn, _("Spearman's rank correlation is undefined\n"));
+    if (na(rho) && (opt & OPT_Q)) {
 	return err;
     }
 
-    pprintf(prn, _("Spearman's rank correlation coefficient (rho) = %.8f\n"), rho);
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), dset->varname[vx],
+		dset->varname[vy]);
+	if (na(rho)) {
+	    pputs(prn, _("Spearman's rank correlation is undefined\n"));
+	    return err;
+	}
+	pprintf(prn, _("Spearman's rank correlation coefficient (rho) = %.8f\n"), rho);
+    }
 
     if (rho == 0.0) {
 	goto skipit;
     }
 
     if (!na(zval)) {
-	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
-	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), zval,
-		normal_pvalue_2(zval));
+	pval = normal_pvalue_2(zval);
     } else if (m > 24) {
-	double tval = rho * sqrt((m - 2) / (1 - rho*rho));
+	tval = rho * sqrt((m - 2) / (1 - rho*rho));
+	pval = student_pvalue_2(m - 2, tval);
+    }
 
-	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
-	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), m - 2,
-		tval, student_pvalue_2(m - 2, tval));
-    } else if (m >= 7) {
-	double pval = spearman_signif(fabs(rho), m);
+    if (!(opt & OPT_Q)) {
+	if (!na(zval)) {
+	    pputs(prn, _("Under the null hypothesis of no correlation:\n "));
+	    pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), zval,
+		    pval);
+	} else if (m > 24) {
+	    pputs(prn, _("Under the null hypothesis of no correlation:\n "));
+	    pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), m - 2,
+		    tval, pval);
+	} else if (m >= 7) {
+	    double msl = spearman_signif(fabs(rho), m);
 
-	if (pval < 1.0) {
-	    pprintf(prn, _("significant at the %g%% level (two-tailed)\n"),
-		    100.0 * pval);
+	    if (msl < 1.0) {
+		pprintf(prn, _("significant at the %g%% level (two-tailed)\n"),
+			100.0 * msl);
+	    } else {
+		/* xgettext:no-c-format */
+		pputs(prn, _("not significant at the 10% level\n"));
+	    }
 	} else {
-	    /* xgettext:no-c-format */
-	    pputs(prn, _("not significant at the 10% level\n"));
+	    pputs(prn, _("Sample is too small to calculate a p-value based on "
+			 "the normal distribution\n"));
 	}
-    } else {
-	pputs(prn, _("Sample is too small to calculate a p-value based on "
-		     "the normal distribution\n"));
     }
 
  skipit:
 
     if (rx != NULL && ry != NULL) {
 	print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
-	free(rx);
-	free(ry);
     }
 
-    pputc(prn, '\n');
+    if (!(opt & OPT_Q)) {
+	pputc(prn, '\n');
+    }
+
+    record_test_result(rho, pval, "Spearman's rho");
+
+    free(rx);
+    free(ry);
 
     return 0;
 }
@@ -528,33 +534,6 @@ static int real_kendall_tau (const double *x, const double *y,
     return 0;
 }
 
-double kendall_tau_func (const double *x, const double *y,
-			 int n, int *err)
-{
-    struct xy_pair *xy;
-    double z, tau = NADBL;
-    int i, nn = 0;
-
-    /* count valid pairs */
-    for (i=0; i<n; i++) {
-	if (!xna(x[i]) && !xna(y[i])) {
-	    nn++;
-	}
-    }
-
-    xy = malloc(nn * sizeof *xy);
-
-    if (xy == NULL) {
-	*err = E_ALLOC;
-    } else {
-	*err = real_kendall_tau(x, y, n, xy, nn, &tau, &z);
-    }
-
-    free(xy);
-
-    return tau;
-}
-
 /**
  * kendall_tau:
  * @list: list of (two) variables to process.
@@ -574,7 +553,7 @@ int kendall_tau (const int *list, const DATASET *dset,
     struct xy_pair *xy = NULL;
     int T = dset->t2 - dset->t1 + 1;
     const double *x, *y;
-    double tau, z;
+    double tau, z, pval = NADBL;
     int vx, vy;
     int t, nn = 0;
     int err = 0;
@@ -611,27 +590,33 @@ int kendall_tau (const int *list, const DATASET *dset,
     err = real_kendall_tau(x, y, T, xy, nn, &tau, &z);
 
     if (!err) {
+	pval = normal_pvalue_2(z);
+    }
+
+    if (!err && !(opt & OPT_Q)) {
 	pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), dset->varname[vx],
 		dset->varname[vy]);
 	pprintf(prn, "%s = %.8f\n", _("Kendall's tau"), tau);
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
-	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), z,
-		normal_pvalue_2(z));
-    }
+	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), z, pval);
 
-    if (opt & OPT_V) {
-	double *rx = NULL, *ry = NULL;
+	if (opt & OPT_V) {
+	    double *rx = NULL, *ry = NULL;
 
-	rankcorr_get_rankings(x, y, T, &rx, &ry, NULL, NULL);
+	    rankcorr_get_rankings(x, y, T, &rx, &ry, NULL, NULL);
 
-	if (rx != NULL && ry != NULL) {
-	    print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
-	    free(rx);
-	    free(ry);
+	    if (rx != NULL && ry != NULL) {
+		print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
+		free(rx);
+		free(ry);
+	    }
 	}
+	pputc(prn, '\n');
     }
 
-    pputc(prn, '\n');
+    if (!err) {
+	record_test_result(tau, pval, "Kendall's tau");
+    }
 
     free(xy);
 
