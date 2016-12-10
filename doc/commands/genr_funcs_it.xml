@@ -474,9 +474,9 @@
 
     <function name="$ncoeff" section="access" output="int">
       <description>
-    <para>
-      Produce il numero totale dei coefficienti stimati nell'ultimo modello.
-    </para>
+	<para>
+	  Produce il numero totale dei coefficienti stimati nell'ultimo modello.
+	</para>
       </description>
     </function>
 
@@ -5262,100 +5262,98 @@
 
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
-    <fnarg type="string">d</fnarg>
-    <fnarg type="scalar">p1</fnarg>
-    <fnarg type="scalar" conditional="true">p2</fnarg>
-    <fnarg type="scalar" conditional="true">p3</fnarg>
-    <fnarg type="int">rows</fnarg>
-    <fnarg type="int">cols</fnarg>
+	<fnarg type="string">d</fnarg>
+	<fnarg type="scalar">p1</fnarg>
+	<fnarg type="scalar" conditional="true">p2</fnarg>
+	<fnarg type="scalar" conditional="true">p3</fnarg>
+	<fnarg type="int">rows</fnarg>
+	<fnarg type="int">cols</fnarg>
       </fnargs>
       <examples>
-    <example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
-    <example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
+	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
       </examples>
       <description>
-    <para>
-      Funziona come <fncref targ="randgen"/> tranne che il valore
-      calcolato è una matrice anzichè una variabile. Gli argomenti
-      iniziali di questa funzione (il cui numero dipende dalla
-      distribuzione specificata) sono come quelli descritti per
-      <lit>randgen</lit>, ma devono essere seguiti da due interi
-      per specificare il numero di righe (<argname>r</argname>) e
-      colonne (<argname>c</argname>) della matrice casuale
-      desiderata.
-    </para>
-    <para>
-      Il primo esempio fornito sopra calcola un vettore colonna
-      casuale uniforme di 50 elementi, mentre il secondo specifica
-      una matrice casuale <by r="20" c="20"/> con elementi tratti
-      dalla distribuzione <math>t</math> con 14 gradi di libertà.
-    </para>
-    <para>
-      <seelist>
-        <fncref targ="mnormal"/>
-        <fncref targ="muniform"/>
-      </seelist>
-    </para>
+	<para>
+	  Funziona come <fncref targ="randgen"/> tranne che il valore
+	  calcolato è una matrice anzichè una variabile. Gli argomenti
+	  iniziali di questa funzione (il cui numero dipende dalla
+	  distribuzione specificata) sono come quelli descritti per
+	  <lit>randgen</lit>, ma devono essere seguiti da due interi
+	  per specificare il numero di righe (<argname>r</argname>) e
+	  colonne (<argname>c</argname>) della matrice casuale
+	  desiderata.
+	</para>
+	<para>
+	  Il primo esempio fornito sopra calcola un vettore colonna
+	  casuale uniforme di 50 elementi, mentre il secondo specifica
+	  una matrice casuale <by r="20" c="20"/> con elementi tratti
+	  dalla distribuzione <math>t</math> con 14 gradi di libertà.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mnormal"/>
+            <fncref targ="muniform"/>
+	  </seelist>
+	</para>
       </description>
     </function>
-
+    
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
-    <fnarg type="string">nomefile</fnarg>
-    <fnarg optional="true" type="bool">import</fnarg>
+	<fnarg type="string">nomefile</fnarg>
+	<fnarg optional="true" type="bool">import</fnarg>
       </fnargs>
       <description>
-    <para>
-      Legge una matrice da un file di testo. La stringa 
-      <argname>nomefile</argname> deve contenere il nome del file da cui
-      deve essere letta la matrice. Se questo nome ha estensione 
-      <quote><lit>.gz</lit></quote>, si assume che il file sia stato creato
-      con compressione gzip.
-    </para>
-    <para>
-      Il file in questione può iniziare con un numero
-      di commenti qualsiasi, definiti come linee che iniziano 
-      con il carattere <lit>#</lit>; queste linee sono ignorate. 
-      A parte questo, il contenuto deve rispettare le regole seguenti:
-    </para>
-    <ilist>
-      <li>
-        <para>
-          La prima riga non commentata deve contenere due interi,
-          separati da uno spazio o un tabulatore, che indicano
-          rispettivamente il numero di righe e di colonne.
-        </para>
-      </li>
-      <li>
-        <para>
-          Le colonne devono essere separate da spazi o caratteri.
-        </para>
-      </li>
-      <li>
-        <para>
-          Il separatore decimale deve essere il punto, 
-          <quote><lit>.</lit></quote>.
-        </para>
-      </li>
-    </ilist>
-    <para>
-      Se viene indicato un valore non nullo per l'argomento
-      opzionale <argname>import</argname>, la ricerca del file di
-      input avviene all'interno della directory <quote>dot</quote>
-      dell'utente. Questa funzione è pensata per essere usata in
-      combinazione con le funzioni che esportano matrici
-      illustrate nel contesto del comando <cmdref
-      targ="foreign"/>.  In questo caso l'argomento
-      <argname>fname</argname> dovrebbe essere semplicemente un
-      nome di file, senza indicazione del percorso.
-    </para>
-    <para>
-      Se dovesse verificarsi un errore (per esempio dovuto al
-      fatto che il file è inaccessibile o mal formattato) la
-      funzione restituisce una matrice vuota.
-    </para>
+	<para>
+	  Legge una matrice da un file di nome
+	  <argname>nomefile</argname>. Se questo nome ha estensione
+	  <quote><lit>.gz</lit></quote>, si assume che il file sia stato
+	  creato con compressione gzip; se invece ha estensione
+	  <quote><lit>.bin</lit></quote>, si assume che il file sia in
+	  formato binario (vedi <fncref targ="mwrite"/> per
+	  dettagli). Altrimenti, si intende che il file sia di testo,
+	  conforme alla seguenti specifiche:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Il file in questione può iniziare con un numero
+	      di commenti qualsiasi, definiti come linee che iniziano 
+	      con il carattere <lit>#</lit>; queste linee sono ignorate. 
+	    </para>
+	  </li>	  
+	  <li>
+            <para>
+              La prima riga non commentata deve contenere due interi,
+              separati da uno spazio o un tabulatore, che indicano
+              rispettivamente il numero di righe e di colonne.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Il separatore decimale deve essere il punto,
+              <quote><lit>.</lit></quote>.
+            </para>
+	  </li>
+	</ilist>
+	<para>
+	  Se il nome di file non contiene un percorso completo, il file
+	  verrà cercato in varie sottodirectory <quote>probabili</quote> a
+	  partire dal valore corrente di <cmdref targ="workdir"/>.
+	  Se però viene indicato un valore non nullo per l'argomento
+	  opzionale <argname>import</argname>, la ricerca del file di
+	  input avviene all'interno della directory <quote>dot</quote>
+	  dell'utente. Questa funzione è pensata per essere usata in
+	  combinazione con le funzioni che esportano matrici
+	  illustrate nel contesto del comando <cmdref
+	  targ="foreign"/>.  In questo caso l'argomento
+	  <argname>fname</argname> dovrebbe essere semplicemente un
+	  nome di file, senza indicazione del percorso.
+	</para>
     <para>
       <seelist>
+        <fncref targ="bread"/>
         <fncref targ="mwrite"/>
       </seelist>
     </para>
