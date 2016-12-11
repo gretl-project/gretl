@@ -8789,6 +8789,17 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *string_scrape_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL) {
+	ret->v.m = scrape_numerical_values(n->v.str, &p->err);
+    }
+
+    return ret;
+}
+
 static int x_to_period (double x, char c, int *err)
 {
     if (na(x)) {
@@ -12691,6 +12702,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_SSCANF:
 	if (l->t == STR && m->t == STR && r->t == STR) {
 	    ret = eval_print_scan(l, m, r, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, STR, NULL, p);
+	}
+	break;
+    case F_STRSCRAPE:
+	if (l->t == STR) {
+	    ret = string_scrape_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, STR, NULL, p);
 	}

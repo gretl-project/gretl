@@ -2897,3 +2897,54 @@ char *gretl_substring (const char *str, int first, int last, int *err)
 
     return ret;
 }
+
+gretl_matrix *scrape_numerical_values (char *text, int *err)
+{
+    gretl_matrix *m = NULL;
+    const char *numstart = "-0123456789";
+    char *end, *s = text;
+    int n = 0;
+
+    gretl_push_c_numeric_locale();
+
+    while (*s) {
+	s += strcspn(s, numstart);
+	if (*s == '-' && !isdigit(*(s+1))) {
+	    /* false positive */
+	    s++;
+	} else if (*s) {
+	    end = NULL;
+	    strtod(s, &end);
+	    s = end;
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	m = gretl_null_matrix_new();
+    } else {
+	m = gretl_vector_alloc(n);
+    }
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    } else if (n > 0) {
+	int i = 0;
+
+	s = text;
+	while (*s) {
+	    s += strcspn(s, numstart);
+	    if (*s == '-' && !isdigit(*(s+1))) {
+		s++;
+	    } else if (*s) {
+		end = NULL;
+		m->val[i++] = strtod(s, &end);
+		s = end;
+	    }
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    return m;
+}

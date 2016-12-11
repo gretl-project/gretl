@@ -40,7 +40,6 @@
 			 c == APPEND ||		\
 			 c == CHOW ||		\
 			 c == COINT2 ||		\
-			 c == CORR ||           \
 			 c == CORRGM ||		\
 			 c == CUSUM ||		\
 			 c == DATA ||		\

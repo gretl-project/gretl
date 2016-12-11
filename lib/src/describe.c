@@ -5743,26 +5743,6 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
     }
 }
 
-static void handle_binary_corr (VMatrix *corr, const DATASET *dset,
-				gretlopt opt, PRN *prn)
-{
-    double r = corr->vec[1];
-    double pval = NADBL;
-
-    if (fabs(r) < 1.0) {
-	int n2 = corr->n - 2;
-	double tval = r * sqrt(n2 / (1 - r*r));
-
-	pval = student_pvalue_2(n2, tval);
-    }
-
-    record_test_result(r, pval, "Pearson correlation");
-
-    if (!(opt & OPT_Q)) {
-	printcorr(corr, prn);
-    }
-}
-
 /**
  * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
@@ -5798,11 +5778,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
     }
 
     if (corr != NULL) {
-	if (corr->dim == 2) {
-	    handle_binary_corr(corr, dset, opt, prn);
-	} else {
-	    print_corrmat(corr, dset, prn);
-	}
+	print_corrmat(corr, dset, prn);
 	free_vmatrix(corr);
     }
 
