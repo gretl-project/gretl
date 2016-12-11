@@ -5802,6 +5802,43 @@
       </description>
     </function>
 
+    <function name="normtest" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="string" optional="true">method</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esegue un test di normalità su <argname>y</argname>. Di
+	  default, quello di Doornik&ndash;Hansen; tuttavia, si può
+	  usare l'argomento opzionale <argname>method</argname> per le
+	  alternative disponibili: <lit>swilk</lit> per il test di
+	  Shapiro&ndash;Wilk test, <lit>jbera</lit> per quello di 
+	  Jarque&ndash;Bera, oppure <lit>lillie</lit> per il test di
+	  Lilliefors.
+	</para>
+	<para>
+	  Il secondo argomento può essere fornito con o senza
+	  virgolette. Nel socndo caso, tuttavia, se l'argomento
+	  corrisponde al nome di una variabile stringa esistente,
+	  verrà usato il valore di tale variabile. L'esempio seguente
+	  mostra tre modi possibili di eseguire un test di
+	  Shapiro&ndash;Wilk:
+	</para>
+	<code>
+	  matrix nt = normtest(y, swilk)
+	  matrix nt = normtest(y, "swilk")
+	  string testtype = "swilk"
+	  matrix nt = normtest(y, testtype)
+	</code>
+	<para>
+	  La matrice risultato è <by r="1" c="2"/>; contiene la
+	  statistica test statistic e il suo p-value. Vedi anche il
+	  comando <cmdref targ="normtest"/>.
+	</para>
+      </description>
+    </function>    
+
     <function name="npv" section="math" output="scalar">
       <fnargs>
     <fnarg type="series-or-vec">x</fnarg>
