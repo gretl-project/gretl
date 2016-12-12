@@ -596,6 +596,11 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 
 	/* generalized (Cox-Snell) residual */
 	pmod->uhat[t] = -log(St);
+#if 0
+	if (!uncensored(dinfo, i)) {
+	    pmod->uhat[t] += 1.0;
+	}
+#endif
 
 	i++;
     }
