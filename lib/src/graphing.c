@@ -87,7 +87,8 @@ enum {
     W_LINES,
     W_IMPULSES,
     W_LP,
-    W_BOXES
+    W_BOXES,
+    W_STEPS
 };
 
 #define MAX_LETTERBOX_LINES 8
@@ -372,6 +373,8 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 	withval = W_LP;
     } else if (opt == OPT_B) {
 	withval = W_BOXES;
+    } else if (opt & OPT_Q) {
+	withval = W_STEPS;
     }
 
     if (s == NULL) {
@@ -406,7 +409,7 @@ static int gp_set_non_point_info (gnuplot_info *gi,
 
 static int plain_lines_spec (gretlopt opt)
 {
-    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_B | OPT_P))) {
+    if ((opt & OPT_O) && !(opt & (OPT_M | OPT_B | OPT_P | OPT_Q))) {
 	return get_optval_string(plot_ci, OPT_O) == NULL;
     } else {
 	return 0;
@@ -415,8 +418,17 @@ static int plain_lines_spec (gretlopt opt)
 
 static int plain_impulses_spec (gretlopt opt)
 {
-    if ((opt & OPT_M) && !(opt & (OPT_O | OPT_B | OPT_P))) {
+    if ((opt & OPT_M) && !(opt & (OPT_O | OPT_B | OPT_P | OPT_Q))) {
 	return get_optval_string(plot_ci, OPT_M) == NULL;
+    } else {
+	return 0;
+    }
+}
+
+static int plain_steps_spec (gretlopt opt)
+{
+    if ((opt & OPT_Q) && !(opt & (OPT_O | OPT_M | OPT_B | OPT_P))) {
+	return get_optval_string(plot_ci, OPT_Q) == NULL;
     } else {
 	return 0;
     }
@@ -510,6 +522,9 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     } else if (plain_impulses_spec(opt)) {
 	/* just using impulses */
 	gi->flags |= GPT_IMPULSES;
+    } else if (plain_steps_spec(opt)) {
+	/* just using steps */
+	gi->flags |= GPT_STEPS;
     } else if (opt & (OPT_M | OPT_O | OPT_P | OPT_B)) {
 	/* for handling per-variable "plot with" options */
 	gi->withlist = gretl_list_new(n_yvars);
@@ -2820,6 +2835,8 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
 	    strcpy(str, "w linespoints");
 	} else if (withval == W_BOXES) {
 	    strcpy(str, "w boxes");
+	} else if (withval == W_STEPS) {
+	    strcpy(str, "w steps");
 	} else {
 	    strcpy(str, "w points");
 	}
@@ -2827,6 +2844,8 @@ static void set_withstr (gnuplot_info *gi, int i, char *str)
         strcpy(str, "w lines");
     } else if (gi->flags & GPT_IMPULSES) {
 	strcpy(str, "w impulses");
+    } else if (gi->flags & GPT_STEPS) {
+	strcpy(str, "w steps");
     } else {
 	strcpy(str, "w points");
     }
@@ -5010,7 +5029,8 @@ enum {
     BAND_LINE,
     BAND_FILL,
     BAND_DASH,
-    BAND_BARS
+    BAND_BARS,
+    BAND_STEP
 };
 
 struct band_pm {
@@ -5300,6 +5320,8 @@ static int parse_band_style_option (int *style, char *rgb)
 		*style = BAND_LINE;
 	    } else if (!strcmp(s, "bars")) {
 		*style = BAND_BARS;
+	    } else if (!strcmp(s, "step")) {
+		*style = BAND_STEP;
 	    } else {
 		err = invalid_field_error(s);
 	    }
@@ -5313,8 +5335,10 @@ static int parse_band_style_option (int *style, char *rgb)
 		*style = BAND_DASH;
 	    } else if (!strncmp(s, "line,", 5)) {
 		*style = BAND_LINE;
-	    } else if (!strcmp(s, "bars")) {
+	    } else if (!strncmp(s, "bars,", 5)) {
 		*style = BAND_BARS;
+	    } else if (!strncmp(s, "step,", 5)) {
+		*style = BAND_STEP;
 	    } else {
 		err = invalid_field_error(s);
 	    }
@@ -5502,10 +5526,12 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	    fprintf(fp, "'-' using 1:($2):(%g*$3) w errorbars %s%s\n",
 		    pm.factor, lspec, dspec);
 	} else {
-	    fprintf(fp, "'-' using 1:($2-%g*$3) notitle w lines %s%s, \\\n",
-		    pm.factor, lspec, dspec);
-	    fprintf(fp, "'-' using 1:($2+%g*$3) notitle w lines %s%s\n",
-		    pm.factor, lspec, dspec);
+	    char *wstr = style == BAND_STEP ? "steps" : "lines";
+
+	    fprintf(fp, "'-' using 1:($2-%g*$3) notitle w %s %s%s, \\\n",
+		    pm.factor, wstr, lspec, dspec);
+	    fprintf(fp, "'-' using 1:($2+%g*$3) notitle w %s %s%s\n",
+		    pm.factor, wstr, lspec, dspec);
 	}
     }
 
@@ -5543,170 +5569,6 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 
     return err;
 }
-
-#if 0 /* old style, may want to retrieve bits of this */
-
-static int band_straddles_zero (const double *b1,
-				const double *b2,
-				int t1, int t2)
-{
-    int t, lt0 = 0, gt0 = 0;
-
-    for (t=t1; t<=t2; t++) {
-	if (b1[t] < 0 || b2[t] < 0) {
-	    lt0 = 1;
-	}
-	if (b1[t] > 0 || b2[t] > 0) {
-	    gt0 = 1;
-	}
-	if (lt0 && gt0) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static int plot_with_band (gnuplot_info *gi,
-			   const char *literal,
-			   const DATASET *dset)
-{
-    FILE *fp = NULL;
-    const double *x = NULL;
-    const double *y = NULL;
-    const double *b1 = NULL;
-    const double *b2 = NULL;
-    char yname[MAXDISP];
-    char xname[MAXDISP];
-    char rgb[10] = {0};
-    int *biglist = NULL;
-    int style = BAND_LINE;
-    int show_zero;
-    int t1 = dset->t1;
-    int t2 = dset->t2;
-    int err = 0;
-
-    if (gi->list[0] != 4) {
-	return E_DATA;
-    }
-
-    err = parse_band_style_option(&style, rgb);
-    
-    if (!err) {
-	err = list_adjust_sample(gi->list, &t1, &t2, dset, NULL);
-	if (!err && t2 - t1 < 3) {
-	    err = E_DATA;
-	}
-    }
-
-    if (err) {
-	return err;
-    }
-
-    if (style == BAND_DASH && gnuplot_version() < 5.0) {
-	/* can't do it */
-	style = BAND_LINE;
-    }
-
-    if (gi->flags & (GPT_TS | GPT_IDX)) {
-	x = gi->x;
-	*xname = '\0';
-	if (gi->flags & GPT_TS) {
-	    gi->flags |= GPT_LETTERBOX;
-	}
-    } else {
-	int xno = gi->list[gi->list[0]];
-	
-	x = dset->Z[xno];
-	strcpy(xname, series_get_graph_name(dset, xno));
-    }
-
-    fp = open_plot_input_file(PLOT_BAND, gi->flags, &err);
-    if (err) {
-	return err;
-    }
-
-    /* assemble the data we'll need */
-    y  = dset->Z[gi->list[1]];
-    b1 = dset->Z[gi->list[2]];
-    b2 = dset->Z[gi->list[3]];
-    show_zero = band_straddles_zero(b1, b2, t1, t2);
-
-    if (gi->flags & GPT_TS) {
-	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
-    }
-
-    fputs("set nokey\n", fp);
-    strcpy(yname, series_get_graph_name(dset, gi->list[1]));
-    fprintf(fp, "set ylabel \"%s\"\n", yname);
-    if (*xname != '\0') {
-	fprintf(fp, "set xlabel \"%s\"\n", xname);
-    }
-    if (show_zero && style != BAND_FILL) {
-	fputs("set xzeroaxis\n", fp);
-    }
-
-    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
-
-    fputs("plot \\\n", fp);
-
-    if (style == BAND_FILL) {
-	/* plot the confidence band first, so the other lines
-	   come out on top */
-	print_filledcurve_line(NULL, rgb, fp);
-	if (show_zero) {
-	    fputs("0 notitle w lines lt 0, \\\n", fp);
-	}
-	if (gi->flags & GPT_LINES) {
-	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1\n", yname);
-	} else {
-	    fprintf(fp, "'-' using 1:2 title '%s' lt 1\n", yname);
-	}
-    } else {
-	/* plot confidence band last */
-	char lspec[24], dspec[8];
-
-	*lspec = *dspec = '\0';
-	if (gi->flags & GPT_LINES) {
-	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n", yname);
-	} else {
-	    fprintf(fp, "'-' using 1:2 title '%s' lt 1, \\\n", yname);
-	}
-	if (*rgb != '\0') {
-	    sprintf(lspec, "lc rgb \"%s\"", rgb);
-	} else {
-	    strcpy(lspec, "lt 2");
-	}
-	if (style == BAND_DASH) {
-	    strcpy(dspec, " dt 2");
-	}
-	fprintf(fp, "'-' using 1:2 notitle w lines %s%s, \\\n", lspec, dspec);
-	fprintf(fp, "'-' using 1:2 notitle w lines %s%s\n", lspec, dspec);
-    }
-
-    /* write out the inline data, the order depending on whether
-       or not we're using fill style for the band
-    */
-
-    gretl_push_c_numeric_locale();
-
-    if (style == BAND_FILL) {
-	print_user_band_data(x, b1, b2, t1, t2, CONF_FILL, fp);
-	print_user_y_data(x, y, t1, t2, fp);
-    } else {
-	print_user_y_data(x, y, t1, t2, fp);
-	print_user_band_data(x, b1, b2, t1, t2, 0, fp);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    err = finalize_plot_input_file(fp);
-    clear_gpinfo(gi);
-
-    return err;
-}
-
-#endif /* old style */
 
 static int *get_x_sorted_order (const FITRESID *fr, 
 				const double *x,
