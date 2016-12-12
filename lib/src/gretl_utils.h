@@ -198,4 +198,10 @@ int get_openblas_details (char **s1, char **s2);
 
 gint64 gretl_monotonic_time (void);
 
+/* gzip, gunzip */
+
+int gretl_gzip (char *fname, char *zname);
+
+int gretl_gunzip (char *zname, char *fname);
+
 #endif /* GRETL_UTILS_H */

@@ -2914,3 +2914,63 @@ gint64 gretl_monotonic_time (void)
     return g_get_monotonic_time();
 #endif
 }
+
+/* implementations of gzip and gunzip for unitary files */
+
+#define GRETL_ZBUFSIZ 131072 /* 128k bytes */
+
+int gretl_gzip (char *fname, char *zname)
+{
+    char buf[GRETL_ZBUFSIZ];
+    size_t len;
+    FILE *fp;
+    gzFile fz;
+
+    fp = gretl_fopen(fname, "rb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    fz = gretl_gzopen(zname, "wb");
+    if (fz == Z_NULL) {
+	fclose(fp);
+	return E_FOPEN;
+    }
+
+    while ((len = fread(buf, 1, GRETL_ZBUFSIZ, fp)) > 0) {
+	gzwrite(fz, buf, len);
+    }
+
+    fclose(fp);
+    gzclose(fz);
+
+    return 0;
+}
+
+int gretl_gunzip (char *zname, char *fname)
+{
+    char buf[GRETL_ZBUFSIZ];
+    size_t len;
+    FILE *fp;
+    gzFile fz;
+
+    fz = gretl_gzopen(zname, "rb");
+    if (fz == Z_NULL) {
+	return E_FOPEN;
+    }
+
+    fp = gretl_fopen(fname, "wb");
+    if (fp == NULL) {
+	gzclose(fz);
+	return E_FOPEN;
+    }
+
+    while ((len = gzread(fz, buf, GRETL_ZBUFSIZ)) > 0) {
+	fwrite(buf, 1, len, fp);
+    }
+
+    gzclose(fz);
+    fclose(fp);
+
+    return 0;
+}

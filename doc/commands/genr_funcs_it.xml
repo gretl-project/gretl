@@ -1616,6 +1616,11 @@
       privo del percorso.
     </para>
     <para>
+      Il file XML vene scritto, di default, senza compressione; se
+      però <argname>fname</argname> ha l'estensione <lit>.gz</lit>,
+      allora verrà applicata la compressione gzip.
+    </para>
+    <para>
       <seelist>
         <fncref targ="bread"/>
         <fncref targ="mwrite"/>

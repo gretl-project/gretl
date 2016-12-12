@@ -1850,14 +1850,28 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 				int to_dotdir)
 {
     char fullname[FILENAME_MAX];
+    gchar *realzname = NULL;
     FILE *fp;
     int err = 0;
 
-    if (to_dotdir) {
-	build_path(fullname, gretl_dotdir(), fname, NULL);
+    if (has_suffix(fname, ".gz")) {
+	char tmp[FILENAME_MAX];
+
+	build_path(fullname, gretl_dotdir(), "_bun_tmp_.xml", NULL);
+	if (to_dotdir) {
+	    build_path(tmp, gretl_dotdir(), fname, NULL);
+	} else {
+	    strcpy(tmp, fname);
+	    gretl_maybe_switch_dir(tmp);
+	}
+	realzname = g_strdup(tmp);
     } else {
-	strcpy(fullname, fname);
-	gretl_maybe_switch_dir(fullname);
+	if (to_dotdir) {
+	    build_path(fullname, gretl_dotdir(), fname, NULL);
+	} else {
+	    strcpy(fullname, fname);
+	    gretl_maybe_switch_dir(fullname);
+	}
     }
 
     fp = gretl_fopen(fullname, "wb");
@@ -1872,6 +1886,12 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 	gretl_pop_c_numeric_locale();
     }
 
+    if (!err && realzname != NULL) {
+	gretl_gzip(fullname, realzname);
+	gretl_remove(fullname);
+	g_free(realzname);
+    }
+
     return err;
 }
 
@@ -1879,9 +1899,9 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 					   int from_dotdir,
 					   int *err)
 {
+    char fullname[FILENAME_MAX];
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
-    char fullname[FILENAME_MAX];
     gretl_bundle *b = NULL;
 
     if (from_dotdir) {
