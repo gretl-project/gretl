@@ -1696,6 +1696,11 @@
 	  argument.
 	</para>
 	<para>
+	  By default, the XML file is written uncompressed, but if
+	  <argname>fname</argname> has the extension <lit>.gz</lit>
+	  then gzip compression is applied.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="bread"/>
             <fncref targ="mwrite"/>
