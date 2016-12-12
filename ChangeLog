@@ -2,12 +2,18 @@ version 2016e, in progress
 - Remove obsolete Kalman-filter interface
 - New functions kmeier() and naalen() for nonparametric
   estimation of survival and hazard functions
+- Add normtest() function: works much like the "normtest"
+  command, but handles vectors as well as series
+- bwrite() function for writing bundles as XML: support
+  gzip compression if the filename has the ".gz" extension
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
   long variable names
 - Fix bug: the matrix-oriented version of the "restrict"
   command would fail when only the constant was restricted
+- Fix bug: reading of gzipped matrix files via mread() was
+  much slower than necessary for large matrices
 - Update documentation for inlist() function
 
 2016-11-19 version 2016d
