@@ -993,17 +993,12 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
     return err;
 }
 
-static int skip_matrix_comment (FILE *fp, gzFile fz,
-				int *rows, int *cols,
+static int skip_matrix_comment (FILE *fp, int *rows, int *cols,
 				int *err)
 {
     int c, ret = 0;
 
-    if (fz) {
-	c = gzgetc(fz);
-    } else {
-	c = fgetc(fp);
-    }
+    c = fgetc(fp);
 
     if (c == '#') {
 	char *p, test[16] = {0};
@@ -1011,11 +1006,7 @@ static int skip_matrix_comment (FILE *fp, gzFile fz,
 
 	ret = 1;
 	while (c != '\n' && c != EOF && c != -1) {
-	    if (fz) {
-		c = gzgetc(fz);
-	    } else {
-		c = fgetc(fp);
-	    }
+	    c = fgetc(fp);
 	    if (i < 15) {
 		test[i] = c;
 	    }
@@ -1030,8 +1021,6 @@ static int skip_matrix_comment (FILE *fp, gzFile fz,
 		*cols = n;
 	    }
 	}
-    } else if (fz) {
-	gzungetc(c, fz);
     } else {
 	ungetc(c, fp);
     }
@@ -1042,57 +1031,6 @@ static int skip_matrix_comment (FILE *fp, gzFile fz,
     }
 
     return ret;
-}
-
-static int get_uncompressed_size (const char *fname, int *err)
-{
-    FILE *fp = gretl_fopen(fname, "rb");
-    int len, b[4] = {0};
-    int nread = 0;
-
-    if (fp == NULL) {
-	*err = E_FOPEN;
-	return 0;
-    }
-
-    fseek(fp, -4, SEEK_END);
-
-    nread += fread(&b[3], 1, 1, fp);
-    nread += fread(&b[2], 1, 1, fp);
-    nread += fread(&b[1], 1, 1, fp);
-    nread += fread(&b[0], 1, 1, fp);
-
-    if (nread < 4) {
-	len = 0;
-	*err = E_DATA;
-    } else {
-	len = (b[0] << 24) | ((b[1] << 16) + (b[2] << 8) + b[3]);
-	if (len <= 0) {
-	    *err = E_DATA;
-	}
-    }
-
-    fclose(fp);
-
-    return len;
-}
-
-static char *decompress_matrix_buffer (gzFile fz, int ulen,
-				       int *err)
-{
-    char *buf = calloc(ulen, 1);
-    int got;
-
-    if (buf == NULL) {
-	*err = E_ALLOC;
-    } else {
-	got = gzread(fz, buf, (unsigned) ulen);
-	if (got <= 0) {
-	    *err = E_DATA;
-	}
-    }
-
-    return buf;
 }
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -1160,15 +1098,11 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 
 /* In reading matrices, accept "NA" for NaN? */
 
-static double unix_scan_NA (const char *s, FILE *fp, int *err)
+static double unix_scan_NA (FILE *fp, int *err)
 {
     char test[3] = {0};
 
-    if (s != NULL) {
-	sscanf(s, "%2s", test);
-    } else {
-	fscanf(fp, "%2s", test);
-    }
+    fscanf(fp, "%2s", test);
 
     if (!strcmp(test, "NA")) {
 	return M_NA;
@@ -1200,10 +1134,10 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 					   int import, int *err)
 {
     char fullname[FILENAME_MAX];
+    gchar *unzname = NULL;
     int r = 0, c = 0, n = 0;
-    int gz, bin = 0, ulen = 0;
+    int gz, bin = 0;
     gretl_matrix *A = NULL;
-    gzFile fz = Z_NULL;
     FILE *fp = NULL;
 
     gz = has_suffix(fname, ".gz");
@@ -1220,22 +1154,21 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     }
 
     if (gz) {
-	ulen = get_uncompressed_size(fullname, err);
-	if (*err) {
-	    return NULL;
+	char tmp[FILENAME_MAX];
+
+	build_path(tmp, gretl_dotdir(), "_unztmp_.mat", NULL);
+	*err = gretl_gunzip(fullname, tmp);
+	if (!*err) {
+	    fp = gretl_fopen(tmp, "rb");
+	    unzname = g_strdup(tmp);
 	}
-    }
-
-    if (gz) {
-	fz = gretl_gzopen(fullname, "r");
-    } else if (bin) {
-	fp = gretl_fopen(fullname, "rb");
     } else {
-	fp = gretl_fopen(fullname, "r");
+	fp = gretl_fopen(fullname, "rb");
     }
 
-    if (fz == Z_NULL && fp == NULL) {
+    if (fp == NULL) {
 	*err = E_FOPEN;
+	g_free(unzname);
 	return NULL;
     }
 
@@ -1247,7 +1180,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
        but while we go, scan for Matlab-style rows/columns
        specification.
     */
-    while (!*err && skip_matrix_comment(fp, fz, &r, &c, err)) {
+    while (!*err && skip_matrix_comment(fp, &r, &c, err)) {
 	;
     }
 
@@ -1255,12 +1188,6 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	if (r > 0 && c > 0) {
 	    /* we got dimensions from the preamble */
 	    n = 2;
-	} else if (fz) {
-	    char tmp[64];
-
-	    if (gzgets(fz, tmp, sizeof tmp) != NULL) {
-		n = sscanf(tmp, "%d %d\n", &r, &c);
-	    }
 	} else {
 	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
@@ -1277,62 +1204,40 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     }
 
     if (!*err) {
-	char *p = NULL, *zbuf = NULL;
 	long pos = 0;
 	double x;
 	int i, j;
-
-	if (fz) {
-	    p = zbuf = decompress_matrix_buffer(fz, ulen, err);
-	}
 
 	gretl_push_c_numeric_locale();
 
 	for (i=0; i<r && !*err; i++) {
 	    for (j=0; j<c && !*err; j++) {
-		if (fz) {
-		    n = sscanf(p, "%lf", &x);
-		} else {
-		    pos = ftell(fp);
-		    n = fscanf(fp, "%lf", &x);
-		}
+		pos = ftell(fp);
+		n = fscanf(fp, "%lf", &x);
 		if (n != 1) {
-		    if (!fz) {
-			fseek(fp, pos, SEEK_SET);
-		    }
+		    fseek(fp, pos, SEEK_SET);
 #ifdef WIN32
-		    if (fz) {
-			x = win32_sscan_nonfinite(p, err);
-		    } else {
-			x = win32_fscan_nonfinite(fp, err);
-		    }
+		    x = win32_fscan_nonfinite(fp, err);
 #else
-		    x = unix_scan_NA(p, fp, err);
+		    x = unix_scan_NA(fp, err);
 #endif
 		}
 		if (*err) {
 		    fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
 		} else {
 		    gretl_matrix_set(A, i, j, x);
-		    if (fz) {
-			p += strspn(p, " \t\r\n");
-			p += strcspn(p, " \t\r\n");
-		    }
 		}
 	    }
 	}
 
 	gretl_pop_c_numeric_locale();
-
-	if (zbuf != NULL) {
-	    free(zbuf);
-	}
     }
 
-    if (fz) {
-	gzclose(fz);
-    } else {
-	fclose(fp);
+    fclose(fp);
+
+    if (unzname != NULL) {
+	gretl_remove(unzname);
+	g_free(unzname);
     }
 
     if (*err && A != NULL) {

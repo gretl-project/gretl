@@ -133,6 +133,8 @@ int gretl_isdir (const char *path);
 
 char *gretl_addpath (char *fname, int script);
 
+const char *gretl_basename (const char *fname);
+
 int get_full_filename (const char *fname, char *fullname, 
 		       gretlopt opt);
 
