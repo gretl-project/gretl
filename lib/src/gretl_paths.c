@@ -926,36 +926,6 @@ int gretl_mkdir (const char *path)
     return err;
 }
 
-/**
- * gretl_basename:
- * @fname: file name, possibly with full path.
- *
- * Returns: the final (or possibly only) component of
- * @fname, following the last directory-separator, if
- * any such are present. The returned value is a pointer
- * into @fname and so should not be freed.
- */
-
-const char *gretl_basename (const char *fname)
-{
-#ifdef WIN32
-    const char *p1 = strrchr(fname, '\\');
-    const char *p2 = strrchr(fname, '/')
-
-    if (p1 != NULL && p2 != NULL) {
-	return (p2 - p1 > 0)? p2 + 1 : p1 + 1;
-    } else if (p1 != NULL) {
-	return p1 + 1;
-    } else {
-	return (p2 == NULL)? fname : p2 + 1;
-    }
-#else
-    const char *p = strrchr(fname, '/');
-
-    return (p == NULL)? fname : p + 1;
-#endif
-}
-
 static const char *gretl_readd (DIR *d)
 {
     struct dirent *e = readdir(d);
