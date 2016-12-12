@@ -8789,12 +8789,16 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *string_scrape_node (NODE *n, parser *p)
+static NODE *string_scrape_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL) {
-	ret->v.m = scrape_numerical_values(n->v.str, &p->err);
+	int comma = node_get_bool(r, p, 0);
+
+	if (!p->err) {
+	    ret->v.m = scrape_numerical_values(l->v.str, comma, &p->err);
+	}
     }
 
     return ret;
@@ -12707,10 +12711,12 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSCRAPE:
-	if (l->t == STR) {
-	    ret = string_scrape_node(l, p);
-	} else {
+	if (l->t == STR && empty_or_num(r)) {
+	    ret = string_scrape_node(l, r, p);
+	} else if (l->t != STR) {
 	    node_type_error(t->t, 0, STR, NULL, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case F_BESSEL:

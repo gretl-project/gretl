@@ -2898,18 +2898,44 @@ char *gretl_substring (const char *str, int first, int last, int *err)
     return ret;
 }
 
-gretl_matrix *scrape_numerical_values (char *text, int *err)
+gretl_matrix *scrape_numerical_values (char *text, int comma,
+				       int *err)
 {
     gretl_matrix *m = NULL;
-    const char *numstart = "-0123456789";
-    char *end, *s = text;
+    char numstart[] = ".-0123456789";
+    char *modtext = NULL;
+    char pt, *end, *s;
+    int c_pushed = 0;
     int n = 0;
 
-    gretl_push_c_numeric_locale();
+    pt = get_local_decpoint();
+
+    if (comma) {
+	if (pt == ',') {
+	    /* OK, use current locale */
+	    numstart[0] = ',';
+	} else {
+	    /* convert comma to dot */
+	    modtext = gretl_strdup(text);
+	    if (modtext == NULL) {
+		*err = E_ALLOC;
+		return NULL;
+	    }
+	    gretl_charsub(modtext, ',', '.');
+	    text = modtext;
+	}
+    } else if (pt == ',') {
+	/* force decimal dot */
+	gretl_push_c_numeric_locale();
+	c_pushed = 1;
+    }
+
+    pt = numstart[0];
+    s = text;
 
     while (*s) {
 	s += strcspn(s, numstart);
-	if (*s == '-' && !isdigit(*(s+1))) {
+	if ((*s == '-' || *s == pt) && !isdigit(*(s+1))) {
 	    /* false positive */
 	    s++;
 	} else if (*s) {
@@ -2934,7 +2960,7 @@ gretl_matrix *scrape_numerical_values (char *text, int *err)
 	s = text;
 	while (*s) {
 	    s += strcspn(s, numstart);
-	    if (*s == '-' && !isdigit(*(s+1))) {
+	    if ((*s == '-' || *s == pt) && !isdigit(*(s+1))) {
 		s++;
 	    } else if (*s) {
 		end = NULL;
@@ -2944,7 +2970,13 @@ gretl_matrix *scrape_numerical_values (char *text, int *err)
 	}
     }
 
-    gretl_pop_c_numeric_locale();
+    if (c_pushed) {
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (modtext != NULL) {
+	free(modtext);
+    }
 
     return m;
 }

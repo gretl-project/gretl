@@ -286,7 +286,6 @@ enum {
     F_STRVALS,
     F_TRAMOLIN,
     F_CNUMBER,
-    F_STRSCRAPE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COV,
     F_SDC,
@@ -373,6 +372,7 @@ enum {
     F_KMEIER,
     F_NORMTEST,
     F_COR,
+    F_STRSCRAPE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
