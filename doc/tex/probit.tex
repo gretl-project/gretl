@@ -1429,14 +1429,14 @@ is just $\exp(X\beta)$.
 
 The values we give for the accessor \dollar{uhat} are generalized
 (Cox--Snell) residuals, computed as the integrated hazard function,
-which equals the negative of the log of the survivor function:
+which equals the negative log of the survivor function:
 \[
-\hat{u}_i = \Lambda(t_i, x_i, \theta) = -\log S(t_i, x_i, \theta)
+\epsilon_i = \Lambda(t_i, x_i, \theta) = -\log S(t_i, x_i, \theta)
 \]
 Under the null of correct specification of the model these generalized
 residuals should follow the unit exponential distribution, which has
-mean and variance both equal to 1 and density $e^{-1}$. See
-\cite{cameron-trivedi05} for further discussion.
+mean and variance both equal to 1 and density $\exp(\epsilon)$. See
+chapter 18 of \cite{cameron-trivedi05} for further discussion.
 
 %%% Local Variables: 
 %%% mode: latex
