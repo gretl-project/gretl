@@ -4637,6 +4637,11 @@
 	  <optparm optional="true">varspec</optparm>
 	  <effect>usa linee verticali</effect>
         </option>
+	<option>
+	  <flag>--with-steps</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>usa segmenti orizzontali e verticali</effect>
+        </option>	
         <option>
 	  <flag>--time-series</flag>
 	  <effect>mostra rispetto al tempo</effect>
@@ -4650,33 +4655,24 @@
 	  <effect>forza l'uso di un solo asse delle ordinate</effect>
         </option>
         <option>
-	  <flag>--linear-fit</flag>
-	  <effect>mostra fit minimi quadrati</effect>
-        </option>
-        <option>
-	  <flag>--inverse-fit</flag>
-	  <effect>mostra fit inverso</effect>
-        </option>
-        <option>
-	  <flag>--quadratic-fit</flag>
-	  <effect>mostra fit quadratico</effect>
-        </option>
-        <option>
-	  <flag>--cubic-fit</flag>
-	  <effect>mostra fit cubico</effect>
-        </option>
-        <option>
-	  <flag>--loess-fit</flag>
-	  <effect>mostra fit non-parametrico</effect>
-        </option>
-        <option>
-	  <flag>--semilog-fit</flag>
-	  <effect>mostra fit semilogaritmico</effect>
-        </option>
-        <option>
 	  <flag>--dummy</flag>
 	  <effect>si veda sotto</effect>
         </option>
+        <option>
+	  <flag>--fit</flag>
+	  <optparm>fitspec</optparm>
+	  <effect>si veda sotto</effect>
+        </option>
+        <option>
+	  <flag>--band</flag>
+	  <optparm>bandspec</optparm>
+	  <effect>si veda sotto</effect>
+        </option>
+        <option>
+	  <flag>--band-style</flag>
+	  <optparm>style</optparm>
+	  <effect>si veda sotto</effect>
+        </option>	
         <option>
 	  <flag>--matrix</flag>
 	  <optparm>name</optparm>
@@ -4723,7 +4719,6 @@
 	contro <lit>x</lit>, in modo tale che <lit>y2</lit> sia
 	rappresentata da una linea ma <lit>y1</lit> da punti.
       </para>
-
       <para>
  	Usando l'opzione <opt>dummy</opt>, occorre fornire
  	esattamente tre variabili: una variabile <math>y</math>, una
@@ -4733,7 +4728,7 @@
  	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
  	1 o 0.
       </para>
-
+      <subhead>Creare un grafico da dati in una matrice</subhead>
        <para>
 	In generale è necessario specificare sia l'argomento <repl>yvars</repl> 
 	che quello <repl>xvar</repl>; entrambi devono indicare variabili
@@ -4754,7 +4749,111 @@
       <code>
 	gnuplot 2 1 --matrix=M
       </code>
+      <subhead>Mostrare una linea interpolante</subhead>
+      <para>
+	L'opzione <quote>fit</quote> si applica solo al caso di un
+	diagramma a dispersione bivariato, o quando il grafico
+	contiene un'unica serie storica. Il comportamento predefinito
+	consiste nel mostrare la linea con le stime OLS, se il
+	coefficiente di pendenza è significativo almeno al 10 per
+	cento. Azioni diverse possono essere effettuate usando questa
+	opzione con una delle seguenti specificazioni
+	<repl>fitspec</repl>. Se il grafico contiene un'unica serie
+	storica, <math>x</math> è implicitamente dato dal tempo.
 
+	Se si usa l'opzione <lit>suppress</lit> non viene
+	mostrata alcuna linea.  Se si usa l'opzione <lit>linear</lit>,
+
+	Le altre opzioni (<lit>inverse</lit>,
+	<lit>quadratic</lit> e <lit>loess</lit>) mostrano
+	rispettivamente un fit inverso (la regressione di
+	<math>y</math> su 1/<math>x</math>), un fit quadratico o un
+	fit loess (chiamato a volte anche <quote>lowess</quote>, una
+	regressione robusta con pesi locali).
+      </para>
+
+      <ilist>
+	<li>
+	  <para>
+	    <lit>linear</lit>: la linea OLS viene mostrata a
+	    prescindere dalla sua significatività.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>none</lit>: non mostrare alcuna interpolazione.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>inverse</lit>, <lit>quadratic</lit>,
+	    <lit>cubic</lit>, <lit>semilog</lit> or <lit>linlog</lit>:
+	    mostrano una linea interpolante basata su una regressione
+	    del tipo corrispondente. Per <lit>semilog</lit>, si
+	    intende una regressione del logaritmo <math>y</math> on
+	    <math>x</math>; la linea interpolante mostra la media
+	    condizionale di <math>y</math>, ottenuta per
+	    esponenziazione. Per <lit>linlog</lit>, si intende una
+	    regressione di <math>y</math> sul logaritmo di
+	    <math>x</math>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>loess</lit>: usa una regressione robusta ponderata
+	    localmente (anche nota come <quote>lowess</quote>).
+	  </para>
+	</li>	
+      </ilist>
+      <subhead>Bande</subhead>
+      <para>
+	L'opzione <opt>band</opt> si usa per mostrare zero o più serie
+	assieme ad una <quote>banda</quote> (spesso, ma non sempre,
+	associata ad un intervallo di confidenza). Questa opzione
+	richede due parametri, separati da una virgola: il nome (o
+	numero ID) di una serie con il centro della bandae il nome(o
+	numero ID) di una con la sua ampiezza: l'effetto ottenuto è
+	una banda con coordinate in ordinatauguali al centro, più o
+	meno l'ampiezza. Si può usare un terzo parametro opzionale
+	(anch'esso separato da virgola), dato da uno scalare, per
+	specificare un moltiplicatore per l'ampiezza. Ad esempio, il
+	codice che segue disegna <lit>y</lit> assieme ad una banda di
+	1.96 volte <lit>se_y</lit>:
+      </para>
+      <code>
+	gnuplot y --time-series --band=y,se_y,1.96 --with-lines
+      </code>
+      <para>
+	Assieme all'opzione <opt>band</opt>, esiste l'opzione
+	<opt>band-style</opt> per controllare l'aspetto della
+	banda. Di default, i limiti alto e basso vengono mostrati con
+	linee continue, ma i parametri <lit>fill</lit>,
+	<lit>dash</lit>, <lit>bars</lit> o <lit>step</lit> alterano
+	questa scelta, usando rispettivamente un'area, linee
+	tratteggiate, barre verticali o scalini.  In più, si può
+	aggiungere una specificazione di colore (dopo una virgola). Ad
+	esmepio:
+      </para>
+      <code>
+	gnuplot ... --band-style=fill
+	gnuplot ... --band-style=dash,0xbbddff
+	gnuplot ... --band-style=,black
+	gnuplot ... --band-style=bars,blue
+      </code>
+      <para>
+	Il primo esempio produce un'area col colore di default; il
+	secondo passa a linee tratteggiate in un azzurro grigiastro;
+	il terzo, linee continue nere, e l'ultimo barre blu. Si noti
+	che i colori possono essere dati con specifica esadecimale o
+	nomi (in inglese); la lista dei colori ammessi da gnuplotpuò
+	essere viaulizzata dando il comando <quote><lit>show
+	colornames</lit></quote> in gnuplot, o eseguendo nella console
+	di gretl il comando
+      </para>
+      <code>
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
+      </code>
+      <subhead>Controllo dell'output</subhead>
       <para>
 	In modalità interattiva il risultato è mostrato
 	immediatamente.  In modalità <quote>batch</quote>, viene
@@ -4779,21 +4878,7 @@
 	diversa da quelle appena citate viene prodotto un file di
 	comandi gnuplot.
       </para>
-
-      <para>
-	Le varie opzioni <quote>fit</quote> si applicano solo nel caso di un
-        diagramma a dispersione bivariato. Il comportamento predefinito consiste
-        nel mostrare la linea con le stime OLS, se e solo se il coefficiente di
-        pendenza è significativo almeno al 10 per cento. Se si usa l'opzione
-	<lit>suppress</lit> non viene mostrata alcuna linea.
-        Se si usa l'opzione <lit>linear</lit>, la linea OLS viene mostrata a
-        prescindere dalla sua significatività. Le altre opzioni
-        (<lit>inverse</lit>, <lit>quadratic</lit> e <lit>loess</lit>) mostrano
-        rispettivamente un fit inverso (la regressione di <math>y</math>
-        su 1/<math>x</math>), un fit quadratico o un fit loess (chiamato
-        a volte anche <quote>lowess</quote>, una regressione robusta con pesi locali).
-      </para>
-
+      <subhead>Aggiungere comandi gnuplot</subhead>
       <para>È disponibile un'ulteriore opzione per questo comando: dopo la
         specificazione delle variabili e le eventuali opzioni, è possibile
         aggiungere direttamente dei comandi gnuplot per modificare l'aspetto
