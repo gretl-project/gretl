@@ -4908,6 +4908,11 @@
 	  <effect>use vertical lines</effect>
         </option>
         <option>
+	  <flag>--with-steps</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use horizontal and vertical line segments</effect>
+        </option>	
+        <option>
 	  <flag>--time-series</flag>
 	  <effect>plot against time</effect>
         </option>
@@ -4968,9 +4973,9 @@
       </para>
       <para>
 	By default, data-points are shown as points; this can be
-	overridden by giving one of the options
-	<opt>with-lines</opt>, <opt>with-lp</opt> or
-	<opt>with-impulses</opt>. If more than one variable is to be
+	overridden by giving one of the options <opt>with-lines</opt>,
+	<opt>with-lp</opt>, <opt>with-impulses</opt> or
+	<opt>with-steps</opt>. If more than one variable is to be
 	plotted on the <math>y</math> axis, the effect of these
 	options may be confined to a subset of the variables by using
 	the <repl>varspec</repl> parameter. This should take the form
@@ -5079,11 +5084,11 @@
 	<opt>band-style</opt> can be used to control the band's
 	representation. By default the upper and lower limits are
 	shown as solid lines, but the parameters <lit>fill</lit>,
-	<lit>dash</lit> or <lit>bars</lit> cause the band to be drawn
-	as a shaded area, using dashed lines or using error bars,
-	respectively.  In addition a color specification can be
-	appended (following a comma) or substituted. Here are some
-	style examples:
+	<lit>dash</lit>, <lit>bars</lit> or <lit>step</lit> cause the
+	band to be drawn as a shaded area, using dashed lines, using
+	error bars or using steps, respectively.  In addition a color
+	specification can be appended (following a comma) or
+	substituted. Here are some style examples:
       </para>
       <code>
 	gnuplot ... --band-style=fill
@@ -9610,6 +9615,11 @@
 	  <optparm optional="true">varspec</optparm>
 	  <effect>use vertical lines</effect>
         </option>
+        <option>
+	  <flag>--with-steps</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>use horizontal and vertical line segments</effect>
+        </option>	
         <option>
 	  <flag>--time-series</flag>
 	  <effect>plot against time</effect>
