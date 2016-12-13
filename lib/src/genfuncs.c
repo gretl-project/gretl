@@ -449,6 +449,12 @@ int cum_series (const double *x, double *y, const DATASET *dset)
 {
     int t, s = dset->t1;
 
+    /* corner case: sample size of 1! */
+    if (dset->t1 == dset->t2) {
+	y[dset->t1] = x[dset->t1];
+	return 0;
+    }
+
     for (t=dset->t1; t<=dset->t2 && na(x[t]); t++) {
 	s++;
     }
