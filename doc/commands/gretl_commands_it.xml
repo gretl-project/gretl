@@ -438,16 +438,25 @@
       <para>
         Apre un file di dati e aggiunge il suo contenuto al dataset
         attuale, se i nuovi dati sono compatibili. Il programma cerca
-        di riconoscere il formato del file di dati (interno, testo semplice,
-        CSV, Gnumeric, Excel, ecc.).
+        di riconoscere il formato del file di dati (interno, testo
+        semplice, CSV, Gnumeric, Excel, ecc.).
       </para>
       <para>
-	I dati aggiunti possono avere la forma di osservazioni aggiuntive su
-        variabili già presenti nel dataset, o di nuove variabili. In
-        quest'ultimo caso occorre che il numero delle nuove osservazioni sia
-        pari a quello delle osservazioni presenti nel dataset, oppure che i
-        nuovi dati includano informazioni precise sulle osservazioni in modo che
-        gretl possa capire come aggiungere i valori.
+	I dati aggiunti possono avere la forma di osservazioni
+	aggiuntive su variabili già presenti nel dataset, o di nuove
+	variabili. In quest'ultimo caso occorre che il numero delle
+	nuove osservazioni sia pari a quello delle osservazioni
+	presenti nel dataset, oppure che i nuovi dati includano
+	informazioni precise sulle osservazioni in modo che gretl
+	possa capire come aggiungere i valori.
+      </para>
+      <para>
+	Attenzione: non è supportato il caso i nuovo dati inizino
+	prima e finiscano dopo quelli originali. Per aggiungere nuove
+	serie in tal caso bisogna usare l'opzione <opt>fixed-sample</opt>
+	option; ciò ha l'effetto di di sopprimere l'aggiunta di
+	osservazioni, e quindi restringere l'operazione all'aggiunta
+	di nuove serie.
       </para>
       <para>
 	Nel caso di aggiunta di dati a un dataset panel, c'è una
@@ -465,6 +474,22 @@
 	dati come serie storiche usando l'opzione
 	<lit>--time-series</lit> (che verrà ignorata in tutti gli
 	altri casi).
+      </para>
+      <para>
+	When a data file is selected for appending, there may be an
+	area of overlap with the existing dataset; that is, one or
+	more series may have one or more observations in common across
+	the two sources. If the option <opt>update-overlap</opt> is
+	given, the <lit>append</lit> operation will replace any
+	overlapping observations with the values from the selected
+	data file, otherwise the values currently in place will be
+	unaffected.
+      </para>
+      <para>
+	Lo opzioni specializzate aggiuntive <opt>sheet</opt>,
+	<opt>coloffset</opt>, <opt>rowoffset</opt> e
+	<opt>fixed-cols</opt> funzionan come quelle corrispondenti per
+	il comando <cmdref targ="open"/>.
       </para>
       <para>
 	Vedi anche <cmdref targ="join"/> per una gestione più
@@ -3606,14 +3631,15 @@
        </para>
  
       <para context="cli">
-	L'opzione <opt>plot</opt> (disponibile solo nel caso della stima di un
-	modello uniequazionale) consente di ottenere un file con un grafico delle 
-	previsioni. L'estensione dell'argomento <repl>filename</repl> 
-	di questa opzione controlla il formato del grafico: <lit>.eps</lit>
-	per EPS, <lit>.pdf</lit> per PDF, <lit>.png</lit> per PNG,
-	<lit>.plt</lit> per un file di comandi gnuplot. Il nome di file dummy 
-	<lit>display</lit> può essere usato per mostrare il grafico in una finestra. 
-	Per esempio, 
+	L'opzione <opt>plot</opt> (disponibile solo nel caso della
+	stima di un modello uniequazionale) consente di ottenere un
+	file con un grafico delle previsioni. L'estensione
+	dell'argomento <repl>filename</repl> di questa opzione
+	controlla il formato del grafico: <lit>.eps</lit> per EPS,
+	<lit>.pdf</lit> per PDF, <lit>.png</lit> per PNG,
+	<lit>.plt</lit> per un file di comandi gnuplot. Il nome di
+	file dummy <lit>display</lit> può essere usato per mostrare il
+	grafico in una finestra.  Per esempio,
       </para>
       <code>
 	fcast --plot=fc.pdf
@@ -4706,7 +4732,7 @@
       <para>
 	Per default, i dati sono mostrati come punti; ma questa scelta
 	può essere modificata usando una delle opzioni
-	<opt>with-lines</opt>, <opt>with-lp</opt> or
+	<opt>with-lines</opt>, <opt>with-lp</opt> o
 	<opt>with-impulses</opt>. Se il grafico contiene più di una
 	serie, l'effetto di queste opzioni può essere limitato ad un
 	sottoinsieme delle variabili usando il parametro
@@ -4758,16 +4784,6 @@
 	opzione con una delle seguenti specificazioni
 	<repl>fitspec</repl>. Se il grafico contiene un'unica serie
 	storica, <math>x</math> è implicitamente dato dal tempo.
-
-	Se si usa l'opzione <lit>suppress</lit> non viene
-	mostrata alcuna linea.  Se si usa l'opzione <lit>linear</lit>,
-
-	Le altre opzioni (<lit>inverse</lit>,
-	<lit>quadratic</lit> e <lit>loess</lit>) mostrano
-	rispettivamente un fit inverso (la regressione di
-	<math>y</math> su 1/<math>x</math>), un fit quadratico o un
-	fit loess (chiamato a volte anche <quote>lowess</quote>, una
-	regressione robusta con pesi locali).
       </para>
 
       <ilist>
@@ -4811,7 +4827,7 @@
 	richede due parametri, separati da una virgola: il nome (o
 	numero ID) di una serie con il centro della bandae il nome(o
 	numero ID) di una con la sua ampiezza: l'effetto ottenuto è
-	una banda con coordinate in ordinatauguali al centro, più o
+	una banda con coordinate in ordinata date dal centro, più o
 	meno l'ampiezza. Si può usare un terzo parametro opzionale
 	(anch'esso separato da virgola), dato da uno scalare, per
 	specificare un moltiplicatore per l'ampiezza. Ad esempio, il
@@ -4828,9 +4844,9 @@
 	linee continue, ma i parametri <lit>fill</lit>,
 	<lit>dash</lit>, <lit>bars</lit> o <lit>step</lit> alterano
 	questa scelta, usando rispettivamente un'area, linee
-	tratteggiate, barre verticali o scalini.  In più, si può
+	tratteggiate, barre verticali o scalini. In più, si può
 	aggiungere una specificazione di colore (dopo una virgola). Ad
-	esmepio:
+	esempio:
       </para>
       <code>
 	gnuplot ... --band-style=fill
@@ -4861,8 +4877,8 @@
 	usando il programma <program>gnuplot</program> (su MS Windows:
 	<program>wgnuplot</program>).  Questo comportamento può essere
 	modificato usando l'opzione
-	<opt>output=</opt><repl>filename</repl>, che controlla il
-	nome del file utilizzato e contemporaneamente permette di
+	<opt>output=</opt><repl>filename</repl>, che controlla il nome
+	del file utilizzato e contemporaneamente permette di
 	specificare un particolare formato di output usando
 	l'estensione del nome del file (le tre lettere che seguono il
 	.): <lit>.eps</lit> produce un file Encapsulated PostScript
@@ -4877,14 +4893,17 @@
 	comandi gnuplot.
       </para>
       <subhead>Aggiungere comandi gnuplot</subhead>
-      <para>È disponibile un'ulteriore opzione per questo comando: dopo la
-        specificazione delle variabili e le eventuali opzioni, è possibile
-        aggiungere direttamente dei comandi gnuplot per modificare l'aspetto
-        visivo del grafico (ad esempio, impostando il titolo e o gli intervalli
-        degli assi). Questi comandi aggiuntivi vanno inclusi tra parentesi
-        graffe e ogni comando va separato con un punto e virgola; è possibile
-        usare una barra rovesciata (<lit>\</lit>) per continuare un gruppo di
-        comandi gnuplot sulla riga successiva. Ecco un esempio della sintassi:
+      <para>
+	È disponibile un'ulteriore opzione per questo comando: dopo la
+	specificazione delle variabili e le eventuali opzioni, è
+	possibile aggiungere direttamente dei comandi gnuplot per
+	modificare l'aspetto visivo del grafico (ad esempio,
+	impostando il titolo e o gli intervalli degli assi). Questi
+	comandi aggiuntivi vanno inclusi tra parentesi graffe e ogni
+	comando va separato con un punto e virgola; è possibile usare
+	una barra rovesciata (<lit>\</lit>) per continuare un gruppo
+	di comandi gnuplot sulla riga successiva. Ecco un esempio
+	della sintassi:
       </para>
 
       <code>
