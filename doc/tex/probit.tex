@@ -1094,7 +1094,7 @@ distributions allow the hazard to vary with $t$ in a non-monotonic
 fashion.
 
 Covariates are brought into the picture by allowing them to govern one
-of the parameters of the density, so that the durations are not
+of the parameters of the density, so that durations are not
 identically distributed across cases.  For example, when using the
 log-normal distribution it is natural to make $\mu$, the expected
 value of $\log t$, depend on the covariates, $X$.  This is typically
@@ -1102,21 +1102,22 @@ done via a linear index function: $\mu = X\beta$.
 
 Note that the expressions for the log-normal density and hazard
 contain the term $(\log t - \mu)/\sigma$.  Replacing $\mu$ with
-$X\beta$ this becomes $(\log t - X\beta)/\sigma$.  It turns out that
-this constitutes a useful simplifying change of variables for all of
-the distributions discussed here. As in \cite{kalbfleisch02}, we
-define
+$X\beta$ this becomes $(\log t - X\beta)/\sigma$.  As in
+\cite{kalbfleisch02}, we define a shorthand label for this
+term:
 \begin{equation}
 \label{eq:duration-w}
 w_i \equiv (\log t_i - x_i\beta)/\sigma
 \end{equation}
-The interpretation of the scale factor, $\sigma$, in this expression
+It turns out that this constitutes a useful simplifying change of
+variables for all of the distributions discussed here.  The
+interpretation of the scale factor, $\sigma$, in the expression above
 depends on the distribution. For the log-normal, $\sigma$ represents
 the standard deviation of $\log t$; for the Weibull and the
 log-logistic it corresponds to $1/\alpha$; and for the exponential it
 is fixed at unity. For distributions other than the log-normal,
-$X\beta$ corresponds to $-\log \gamma$, or in other words $\gamma =
-\exp(-X\beta)$.
+$X\beta$ corresponds to $-\log \gamma$, or in other words
+$\gamma = \exp(-X\beta)$.
 
 With this change of variables, the density and survivor functions may
 be written compactly as follows (the exponential is the same as the
@@ -1138,8 +1139,8 @@ Log-normal & $\phi(w_i)$ & $\Phi(-w_i)$
 
 In light of the above we may think of the generic parameter vector
 $\theta$, as in $f(t, X, \theta)$, as composed of the coefficients on
-the covariates, $\beta$, plus (in all cases apart from the exponential)
-the additional parameter $\sigma$.
+the covariates, $\beta$, plus (in all cases but the exponential) the
+additional parameter $\sigma$.
 
 A complication in estimation of $\theta$ is posed by ``incomplete
 spells''. That is, in some cases the state in question may not have
