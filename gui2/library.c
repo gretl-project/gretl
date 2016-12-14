@@ -9754,6 +9754,37 @@ static int script_open_append (ExecState *s, DATASET *dset,
     return err;
 }
 
+static int try_run_include (ExecState *s, char *runfile,
+			    PRN *prn, GtkWidget *parent)
+{
+    int save_batch, orig_flags, err = 0;
+    FILE *fp;
+
+    fp = gretl_fopen(runfile, "r");
+    if (fp == NULL) {
+	err = process_command_error(s, E_FOPEN);
+	if (err || gretl_messages_on()) {
+	    pprintf(prn, _("Error reading %s\n"), runfile);
+	}
+	return err;
+    } else {
+	fclose(fp);
+    }
+
+    save_batch = gretl_in_batch_mode();
+    orig_flags = s->flags;
+    s->flags = SCRIPT_EXEC;
+    if (s->cmd->ci == INCLUDE) {
+	s->flags |= INCLUDE_EXEC;
+    }
+    err = execute_script(runfile, NULL, prn, s->flags,
+			 parent);
+    gretl_set_batch_mode(save_batch);
+    s->flags = orig_flags;
+
+    return err;
+}
+
 #define try_gui_help(c) (c->param != NULL && *c->param != '\0' && \
 			 c->parm2 == NULL && !c->opt)
 
@@ -9972,8 +10003,11 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	} else {
 	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
-	if (err) { 
-	    errmsg(err, prn);
+	if (err) {
+	    err = process_command_error(s, err);
+	    if (err || gretl_messages_on()) {
+		pprintf(prn, _("Error reading %s\n"), cmd->param);
+	    }	    
 	    break;
 	}
 	if (gretl_messages_on()) {
@@ -9982,6 +10016,10 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_XML_file(runfile, prn);
 	    if (err) {
+		err = process_command_error(s, err);
+		if (err || gretl_messages_on()) {
+		    pprintf(prn, _("Error reading %s\n"), runfile);
+		}
 		pprintf(prn, _("Error reading %s\n"), runfile);
 	    }
 	    break;
@@ -9992,19 +10030,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	} else {
-	    int save_batch = gretl_in_batch_mode();
-	    int orig_flags = s->flags;
-
-	    s->flags = SCRIPT_EXEC;
-
-	    if (cmd->ci == INCLUDE) {
-		s->flags |= INCLUDE_EXEC;
-	    }
-
-	    err = execute_script(runfile, NULL, prn, s->flags,
-				 parent);
-	    gretl_set_batch_mode(save_batch);
-	    s->flags = orig_flags;
+	    err = try_run_include(s, runfile, prn, parent);
 	}
 	break;
 

@@ -1242,8 +1242,11 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	} else {
 	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
-	if (err) { 
-	    errmsg(err, prn);
+	if (err) {
+	    err = process_command_error(s, err);
+	    if (err || gretl_messages_on()) {
+		pprintf(prn, _("Error reading %s\n"), cmd->param);
+	    }
 	    break;
 	}
 	if (gretl_messages_on()) {
@@ -1252,7 +1255,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_XML_file(runfile, prn);
 	    if (err) {
-		pprintf(prn, _("Error reading %s\n"), runfile);
+		err = process_command_error(s, err);
+		if (err || gretl_messages_on()) {
+		    pprintf(prn, _("Error reading %s\n"), runfile);
+		}
 	    } else {
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    }
@@ -1269,8 +1275,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    push_input_file(fb);
 	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
-	    pprintf(prn, _("Error reading %s\n"), runfile);
-	    err = 1;
+	    err = process_command_error(s, E_FOPEN);
+	    if (err || gretl_messages_on()) {
+		pprintf(prn, _("Error reading %s\n"), runfile);
+	    }
 	    fb = pop_input_file();
 	} else {
 	    gretl_set_current_dir(runfile);
