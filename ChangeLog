@@ -1,11 +1,12 @@
 version 2016e, in progress
 - Remove obsolete Kalman-filter interface
 - New functions kmeier() and naalen() for nonparametric
-  estimation of survival and hazard functions
+  estimation of survivor and hazard functions
 - Add normtest() function: works much like the "normtest"
   command, but handles vectors as well as series
 - bwrite() function for writing bundles as XML: support
   gzip compression if the filename has the ".gz" extension
+- "include" command: make it respect the "catch" flag
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
