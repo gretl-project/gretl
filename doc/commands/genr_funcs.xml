@@ -4481,7 +4481,7 @@
 	  returned matrix has three columns holding, respectively, the
 	  sorted unique values in <argname>d</argname>, the estimated
 	  survival function corresponding to the duration value in
-	  column 1 and the estimated (large sample) variance of the
+	  column 1 and the (large sample) standard error of the
 	  estimator, calculated via the method of <cite
 	  key="greenwood26">Greenwood (1926)</cite>.
 	</para>
@@ -5942,7 +5942,7 @@
 	  three columns holding, respectively, the sorted unique
 	  values in <argname>d</argname>, the estimated cumulated
 	  hazard function corresponding to the duration value in
-	  column 1, and the estimated variance of the estimator.
+	  column 1, and the standard error of the estimator.
 	</para>
 	<para>
 	  If the <argname>cens</argname> series is given, the value 0

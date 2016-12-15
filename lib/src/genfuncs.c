@@ -5335,7 +5335,7 @@ static int durations_squeeze (gretl_matrix **pA, gretl_matrix **pTmp,
   function.
 
   Th return value is a matrix with the (unique) duration value in the
-  first column, the estimator in the second and its estimated variance
+  first column, the estimator in the second and its standard error
   in the third. Any repeated duration values in the input data are
   squeezed out.
 
@@ -5451,7 +5451,13 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 	for (i=0; i<n; i++) {
 	    ai  = gretl_matrix_get(A, i, 1);
 	    vai = gretl_matrix_get(A, i, 2);
-	    gretl_matrix_set(A, i, 2, ai * ai * vai);
+	    gretl_matrix_set(A, i, 2, sqrt(ai * ai * vai));
+	}
+    } else {
+	/* Nelson-Aalen: convert to std error */
+	for (i=0; i<n; i++) {
+	    vai = gretl_matrix_get(A, i, 2);
+	    gretl_matrix_set(A, i, 2, sqrt(vai));
 	}
     }
 
