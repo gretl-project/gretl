@@ -476,14 +476,14 @@
 	altri casi).
       </para>
       <para>
-	When a data file is selected for appending, there may be an
-	area of overlap with the existing dataset; that is, one or
-	more series may have one or more observations in common across
-	the two sources. If the option <opt>update-overlap</opt> is
-	given, the <lit>append</lit> operation will replace any
-	overlapping observations with the values from the selected
-	data file, otherwise the values currently in place will be
-	unaffected.
+	Quando viene scelto per l'aggiunta un file di dati, potrebbe
+	esserci una parziale sovrapposizione con il dataset esistente;
+	in altre parole, una o più serie potrebbero avere
+	osservazioni in comune dalle due fonti. Se viene passata l'opzione
+	<opt>update-overlap</opt>, il comando <lit>append</lit>
+	sostituirà le osservazioni in comune con quelle provenienti
+	dal file dei dati; se no, i valori presenti nel dataset in
+	quel momento saranno lasciati inalterati.
       </para>
       <para>
 	Lo opzioni specializzate aggiuntive <opt>sheet</opt>,
@@ -586,6 +586,10 @@
 	  <flag>--no-corc</flag>
 	  <effect>non affinare i risultati con Cochrane-Orcutt</effect>
 	</option>
+	<option>
+	  <flag>--loose</flag>
+	  <effect>use looser convergence criterion</effect>
+	</option>
       </options>
       <examples>
         <example>ar1 1 0 2 4 6 7</example>
@@ -605,15 +609,8 @@
 	<cite key="ramanathan02">Ramanathan, 2002</cite>). La
 	procedura termina quando le stime successive del coefficiente
 	di autocorrelazione non differiscono per più di 0.001, oppure
-	dopo 20 iterazioni.
-      </para>
-      <para>
-	Se si usa l'opzione <opt>hilu</opt>, verrà usata la
-	procedura di ricerca di Hildreth&ndash;Lu.  I risultati sono
-	quindi ottimizzati con la procedura iterativa di
-	Cochrane&ndash;Orcutt, a meno che non si usi l'opzione
-	<lit>--no-corc</lit> (che viene ignorata se non viene
-	specificata <opt>hilu</opt>).
+	dopo 20 iterazioni. Sarà segnalato un errore se la convergenza
+	non è avvenuta dopo 100 iterazioni.
       </para>
       <para>
         Se si usa l'opzione <opt>pwe</opt>, viene usato lo stimatore di
@@ -622,6 +619,14 @@
         tralascia la prima osservazione, Prais&ndash;Winsten ne fa uso.  Per i
         dettagli, si veda per esempio il capitolo 13 di <book>Econometric
         Analysis</book> di <cite key="greene00">Greene (2000)</cite>.
+      </para>
+      <para>
+	Se si usa l'opzione <opt>hilu</opt>, verrà usata la
+	procedura di ricerca di Hildreth&ndash;Lu.  I risultati sono
+	quindi ottimizzati con la procedura iterativa di
+	Cochrane&ndash;Orcutt, a meno che non si usi l'opzione
+	<lit>--no-corc</lit> (che viene ignorata se non viene
+	specificata <opt>hilu</opt>).
       </para>
     </description>
 
@@ -2077,6 +2082,10 @@
       </arguments>
       <options>
        <option>
+	  <flag>--bartlett</flag>
+	  <effect>usa gli errori standard di Bartlett</effect>
+        </option>	
+       <option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>si veda sotto</effect>
@@ -2104,7 +2113,6 @@
 	$u_t$ è la $t$-esima osservazione della variabile e $s$ è il
 	numero dei ritardi.
       </para>
-
       <para>
 	Vengono mostrate anche le autocorrelazioni parziali (calcolate con
         l'algoritmo di Durbin&ndash;Levinson), ossia al
@@ -2115,16 +2123,31 @@
         autocorrelazione). La statistica si distribuisce asintoticamente come
         chi-quadro con gradi di libertà pari al numero di ritardi specificati.
       </para>
-
-      <para>
+      <para context="cli">
+	La significatività statistica delle singole autocorrelazioni
+	viene indicata per mezzo di asterischi. Di default, essa è
+	calcolata per mezzo della radice inversa dell'ampiezza
+	campionaria, ma con l'opzione <opt>bartlett</opt> vengono
+	usate le formule di Bartlett per l'ACF. Quest'opzione, se
+	applicabile, controlla anche la banda di confidenza mostrata
+	nel grafico.
+      </para>
+      <para context="gui">
+	La significatività statistica delle singole autocorrelazioni
+	viene indicata per mezzo di asterischi. Di default, essa è
+	calcolata per mezzo della radice inversa dell'ampiezza
+	campionaria, ma è anche possibile usare le formule di Bartlett
+	per l'ACF. Quest'opzione, se applicabile, controlla anche la
+	banda di confidenza mostrata nel grafico.
+      </para>      
+      <para context="cli">
 	Se viene specificato un valore <repl>max-ritardo</repl>, la
 	lunghezza del correlogramma viene limitata al numero di
 	ritardi specificato, altrimenti viene scelta automaticamente
 	in funzione della frequenza dei dati e del numero di
 	osservazioni.
       </para>
-
-      <para>
+      <para context="cli">
 	Di default viene mostrato un grafico del correlogramma: un grafico
 	gnuplot in modalità interattiva o un grafico ASCII in modalità batch.
 	Questo comportamento può essere modificato con l'opzione <opt>plot</opt>.
@@ -2135,7 +2158,6 @@
 	nome di un file. In quest'ultimo caso l'effetto è quello descritto
 	per l'opzione <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
       </para>
-
       <para>
 	Se il comando va a buon fine, gli accessori <fncref targ="$test"/> e
 	<fncref targ="$pvalue"/> conterranno i valori corrispondenti per la
@@ -2277,6 +2299,32 @@
       <menu-path>Finestra del modello, /Test/CUSUM(SQ)</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="daily-purge" section="Dataset" 
+	   label="Purge daily data" context="gui">
+    <description>
+      <para>
+	Se un dataset giornaliero è nominalmente a 7 giorni, ma di
+	fatto include solo quelli lavorativi, raccomandiamo di
+	cancellare le righe vuote relative ai fine settimana, e
+	convertire il data set a un calendario basato su 5 giorni.
+      </para>
+      <para>
+	Se un dataset a 5 giorni contiene un piccolo numero di righe
+	vuote (presumibilmente, festività) è consigliabile
+	eliminarle. L'effetto è quello di trattare i valori per i
+	festivi come inesistenti anziché come veri <quote>dati
+	mancanti</quote>, e trattare così la serie come continua.
+      </para>
+      <para>
+	Si noti che con ambo queste opzioni gretl continuerà a
+	preservare l'informazione relativa alla data, e la
+	riscostruzione successiva del calendario completo sarà
+	comunque possibile se necessario, attraverso il comando <cmdref
+	targ="dataset"/> con l'opzione <lit>pad-daily</lit>.
+      </para>
+    </description>
   </command>
 
   <command name="data" section="Dataset" 
@@ -13011,53 +13059,68 @@
 	  <flag>--zeros</flag>
 	  <effect>mostra i valori pari a zero</effect>
         </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>matname</optparm>
+	  <effect>usa le frequenze da una matrice</effect>
+        </option>
       </options>
     </usage>
 
     <description context="cli">
       <para>
-        Mostra la tabella di contingenza, o la
-        tabulazione incrociata, tra ogni combinazione delle variabili della
+        Mostra la tabella di contingenza, o la tabulazione incrociata,
+        tra ogni combinazione delle variabili della
         <repl>lista-y</repl>; se si indica anche una seconda lista,
-        <repl>lista-x</repl>, ogni variabile della <repl>lista-y</repl> viene
-        tabulata (per riga) rispetto ad ogni variabile della <repl>lista-x</repl>
-        (per colonna). Le variabili in queste liste possono essere referenziate per
-        nome o per numero, e devono essere state marcate come discrete.
+        <repl>lista-x</repl>, ogni variabile della
+        <repl>lista-y</repl> viene tabulata (per riga) rispetto ad
+        ogni variabile della <repl>lista-x</repl> (per colonna). Le
+        variabili in queste liste possono essere referenziate per nome
+        o per numero, e devono essere state marcate come
+        discrete. Alternativamente, con l'opzione <opt>matrix</opt>,
+        la matrice specificata verrà trattata come un insieme di
+	frequenze già calcolate e il comando si limiterà a stamparla
+	col formato appropriato.
       </para>
       <para>
-	Per impostazione predefinita le celle indicano la frequenza assoluta.
-        Le opzioni <opt>row</opt> e <opt>column</opt> (che sono mutualmente
-        esclusive) sostituiscono la frequenza assoluta con le frequenze in
-        percentuale relativamente a ciascuna riga o colonna. Le celle con valore
-        di frequenza nullo sono lasciate vuote, a meno che non venga usata l'opzione
-	<opt>zeros</opt>, che mostra esplicitamente i valori pari a zero;
-        questa opzione può essere comoda se occorre importare la tabella in un
-        altro programma, come un foglio di calcolo.
+	Per impostazione predefinita le celle indicano la frequenza
+	assoluta.  Le opzioni <opt>row</opt> e <opt>column</opt> (che
+	sono mutualmente esclusive) sostituiscono la frequenza
+	assoluta con le frequenze in percentuale relativamente a
+	ciascuna riga o colonna. Le celle con valore di frequenza
+	nullo sono lasciate vuote, a meno che non venga usata
+	l'opzione <opt>zeros</opt>, che mostra esplicitamente i valori
+	pari a zero; questa opzione può essere comoda se occorre
+	importare la tabella in un altro programma, come un foglio di
+	calcolo.
       </para>
       <para>
-        Il test chi quadro di Pearson per l'indipendenza viene mostrato
-        se la frequenza attesa nell'ipotesi di indipendenza è pari almeno a
-        1.0e-7 per tutte le celle. Una regola approssimativa usata spesso nel
-        giudicare la validità di questa statistica richiede che la frequenza
-        attesa sia superiore a 5 per almeno l'80 per cento delle celle; se
-        questa condizione non viene soddisfatta viene mostrato un messaggio di
-        avvertimento.
+        Il test chi quadro di Pearson per l'indipendenza viene
+        mostrato se la frequenza attesa nell'ipotesi di indipendenza è
+        pari almeno a 1.0e-7 per tutte le celle. Una regola
+        approssimativa usata spesso nel giudicare la validità di
+        questa statistica richiede che la frequenza attesa sia
+        superiore a 5 per almeno l'80 per cento delle celle; se questa
+        condizione non viene soddisfatta viene mostrato un messaggio
+        di avvertimento.
       </para>
       <para>
-	Se la tabella di contingenza è 2 x 2, viene calcolato il test esatto di
-        Fisher per l'indipendenza. Si noti che questo test si basa sull'ipotesi
-        che i totali per riga e colonna siano fissi; questo può essere
-        appropriato o meno a seconda di come sono stati generati i dati.
-	Il p-value sinistro va usato nel caso in cui l'ipotesi alternativa a
-        quella di indipendenza sia quella dell'associazione negativa (ossia i
-        valori tendono ad accumularsi nelle celle che non appartengono alla
-        diagonale della tabella), mentre il p-value destro va usato nell'ipotesi
-        alternativa di associazione positiva. Il p-value a due code di questo
-        test è calcolato seguendo il metodo (b) descritto in Agresti
-	(1992, capitolo 2.1): esso è la somma delle probabilità di tutte le
-        possibili tabelle che hanno i totali per riga e per colonna pari a
-        quelli della tabella data e che hanno una probabilità minore o uguale a
-        quella della tabella data.
+	Se la tabella di contingenza è 2 x 2, viene calcolato il test
+	esatto di Fisher per l'indipendenza. Si noti che questo test
+	si basa sull'ipotesi che i totali per riga e colonna siano
+	fissi; questo può essere appropriato o meno a seconda di come
+	sono stati generati i dati.  Il p-value sinistro va usato nel
+	caso in cui l'ipotesi alternativa a quella di indipendenza sia
+	quella dell'associazione negativa (ossia i valori tendono ad
+	accumularsi nelle celle che non appartengono alla diagonale
+	della tabella), mentre il p-value destro va usato nell'ipotesi
+	alternativa di associazione positiva. Il p-value a due code di
+	questo test è calcolato seguendo il metodo (b) descritto in
+	Agresti <cite key="agresti92">Agresti (1992)</cite>, (capitolo
+	2.1): esso è la somma delle probabilità di tutte le possibili
+	tabelle che hanno i totali per riga e per colonna pari a
+	quelli della tabella data e che hanno una probabilità minore o
+	uguale a quella della tabella data.
       </para>
     </description>
 
