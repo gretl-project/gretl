@@ -1930,6 +1930,7 @@ int import_na_string (const char *s)
 	    "..",
 	    "-999",
 	    "-9999",
+	    "-",
 	    NULL
 	};
 	int i;
