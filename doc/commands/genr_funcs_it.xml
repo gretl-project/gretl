@@ -472,6 +472,32 @@
       </description>
     </function>
 
+    <function name="$model" section="access" output="bundle">
+      <description>
+	<para>
+	  Deve seguire la stima di un modello ad equazione singole, e
+	  restituisce un bundle contenente svariati elementi relativi
+	  al modello. I consueti accessori sono tutti inclusi, e
+	  sono referenziati da chiavi identiche al nomce
+	  dell'accessore, meno il segno del dollaro. Ad esempio, i
+	  residui appaiono sotto la chiave <lit>uhat</lit> e la somma
+	  dei quadrati dei residui sotto <lit>ess</lit>.
+	</para>
+	<para>
+	  A seconda dello stimatore, potrebbero essere disponibili
+	  informazioni aggiuntive; le chiavi relative dovrebbero
+	  essere (si spera) relativamente auto-esplicative. Il modo
+	  più semplice per verificare il contenuto del bundle è
+	  stamporlo, come in questo esempio:
+	</para>
+	<code>
+	  ols y 0 x
+	  bundle b = $model
+	  print b
+	</code>
+      </description>
+    </function>    
+
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
@@ -4272,8 +4298,8 @@
 	  and Meier, 1958</cite>). La matrice risultato ha tre
 	  colonne, contenenti (nell'ordine) i valori in
 	  <argname>d</argname>, ordinati, la funzione di sopravvivenza
-	  stimata e la sua varianza asintotica, calcolata col metodo
-	  di <cite key="greenwood26">Greenwood (1926)</cite>.
+	  stimata e il suo errore standard asintotico, calcolato col
+	  metodo di <cite key="greenwood26">Greenwood (1926)</cite>.
 	</para>
 	<para>
 	  Se l'argomento <argname>cens</argname> non viene omesso, il
@@ -5612,7 +5638,7 @@
 	  1972</cite>; <cite key="aalen78">Aalen, 1978)</cite>). La
 	  matrice risultato ha tre colonne, contenenti (nell'ordine) i
 	  valori in <argname>d</argname>, ordinati, la funzione di
-	  sopravvivenza stimata e la sua varianza stimata.
+	  sopravvivenza stimata e la stima del suo scarto quadratico medio.
 	</para>
 	<para>
 	  Se l'argomento <argname>cens</argname> non viene omesso, il

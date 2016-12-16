@@ -588,7 +588,7 @@
 	</option>
 	<option>
 	  <flag>--loose</flag>
-	  <effect>use looser convergence criterion</effect>
+	  <effect>usa un criterio di convergenza più blando</effect>
 	</option>
       </options>
       <examples>
