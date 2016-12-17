@@ -80,21 +80,49 @@ void gretl_array_void_content (gretl_array *A)
     }
 }
 
-static int array_allocate_content (gretl_array *A)
+static int array_initialize_content (gretl_array *A)
 {
+    int i, err = 0;
+
+    for (i=0; i<A->n && !err; i++) {
+	if (A->type == GRETL_TYPE_STRINGS) {
+	    A->data[i] = gretl_strdup("");
+	} else if (A->type == GRETL_TYPE_MATRICES) {
+	    A->data[i] = gretl_null_matrix_new();
+	} else if (A->type == GRETL_TYPE_BUNDLES) {
+	    A->data[i] = gretl_bundle_new();
+	} else if (A->type == GRETL_TYPE_LISTS) {
+	    A->data[i] = gretl_null_list();
+	}
+	if (A->data[i] == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
+static int array_allocate_content (gretl_array *A, int init)
+{
+    int err = 0;
+
     A->data = malloc(A->n * sizeof *A->data);
     
     if (A->data == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
     } else {
 	int i;
-    
+
 	for (i=0; i<A->n; i++) {
 	    A->data[i] = NULL;
-	}   
+	}
 
-	return 0;
+	if (init) {
+	    err = array_initialize_content(A);
+	}
     }
+
+    return err;
 }
 
 static int array_extend_content (gretl_array *A, int plus)
@@ -154,7 +182,7 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 	A->n = n;
 	A->data = NULL;
 	if (n > 0) {
-	    *err = array_allocate_content(A);
+	    *err = array_allocate_content(A, 1);
 	    if (*err) {
 		gretl_array_destroy(A);
 		A = NULL;
@@ -693,7 +721,7 @@ int gretl_array_copy_as (const char *name, const char *copyname,
 	} else {
 	    gretl_array_void_content(A1);
 	    A1->n = A0->n;
-	    err = array_allocate_content(A1);
+	    err = array_allocate_content(A1, 0);
 	    if (!err) {
 		err = gretl_array_copy_content(A1, A0, 0);
 	    }
