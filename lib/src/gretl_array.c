@@ -223,7 +223,7 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
 
 	if (!err) {
 	    *ns = A->n;
-	    AS = A->data;
+	    AS = (char **) A->data;
 	}
     }
 
