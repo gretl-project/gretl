@@ -812,13 +812,22 @@ int umatrix_set_names_from_array (gretl_matrix *M,
 	}
     } else {
 	char **AS;
-	int ns;
+	int i, ns;
 
 	AS = gretl_array_get_strings(A, &ns);
 
 	if (ns != n) {
 	    err = E_NONCONF;
 	} else {
+	    for (i=0; i<ns && !err; i++) {
+		if (AS[i] == NULL || AS[i][0] == '\0') {
+		    fprintf(stderr, "Missing string in colnames/rownames\n");
+		    err = E_INVARG;
+		}
+	    }
+	}
+
+	if (!err) {
 	    char **S = strings_array_dup(AS, ns);
 
 	    if (S == NULL) {

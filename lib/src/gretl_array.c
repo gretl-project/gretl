@@ -80,45 +80,17 @@ void gretl_array_void_content (gretl_array *A)
     }
 }
 
-static int array_initialize_content (gretl_array *A)
+static int array_allocate_storage (gretl_array *A)
 {
     int i, err = 0;
-
-    for (i=0; i<A->n && !err; i++) {
-	if (A->type == GRETL_TYPE_STRINGS) {
-	    A->data[i] = gretl_strdup("");
-	} else if (A->type == GRETL_TYPE_MATRICES) {
-	    A->data[i] = gretl_null_matrix_new();
-	} else if (A->type == GRETL_TYPE_BUNDLES) {
-	    A->data[i] = gretl_bundle_new();
-	} else if (A->type == GRETL_TYPE_LISTS) {
-	    A->data[i] = gretl_null_list();
-	}
-	if (A->data[i] == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    return err;
-}
-
-static int array_allocate_content (gretl_array *A, int init)
-{
-    int err = 0;
 
     A->data = malloc(A->n * sizeof *A->data);
     
     if (A->data == NULL) {
 	err = E_ALLOC;
     } else {
-	int i;
-
 	for (i=0; i<A->n; i++) {
 	    A->data[i] = NULL;
-	}
-
-	if (init) {
-	    err = array_initialize_content(A);
 	}
     }
 
@@ -182,7 +154,7 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 	A->n = n;
 	A->data = NULL;
 	if (n > 0) {
-	    *err = array_allocate_content(A, 1);
+	    *err = array_allocate_storage(A);
 	    if (*err) {
 		gretl_array_destroy(A);
 		A = NULL;
@@ -217,17 +189,45 @@ gretl_array *gretl_array_from_strings (char **S, int n,
     return A;
 }
 
+/* When we're returning an array of strings, ensure
+   that any NULL elements are converted to empty
+   strings.
+*/
+
+static int strings_array_null_check (gretl_array *A)
+{
+    int i;
+
+    for (i=0; i<A->n; i++) {
+	if (A->data[i] == NULL) {
+	    A->data[i] = gretl_strdup("");
+	    if (A->data[i] == NULL) {
+		return E_ALLOC;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* note: don't modify the returned value */
 
 char **gretl_array_get_strings (gretl_array *A, int *ns)
 {
+    char **AS = NULL;
+
+    *ns = 0;
+
     if (A->type == GRETL_TYPE_STRINGS) {
-	*ns = A->n;
-	return (char **) A->data;
-    } else {
-	*ns = 0;
-	return NULL;
+	int err = strings_array_null_check(A);
+
+	if (!err) {
+	    *ns = A->n;
+	    AS = A->data;
+	}
     }
+
+    return AS;
 }
 
 void *gretl_array_get_element (gretl_array *A, int i, 
@@ -721,7 +721,7 @@ int gretl_array_copy_as (const char *name, const char *copyname,
 	} else {
 	    gretl_array_void_content(A1);
 	    A1->n = A0->n;
-	    err = array_allocate_content(A1, 0);
+	    err = array_allocate_storage(A1);
 	    if (!err) {
 		err = gretl_array_copy_content(A1, A0, 0);
 	    }
