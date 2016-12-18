@@ -34,7 +34,9 @@ typedef enum {
 typedef enum {
     GRETL_HELPFILE,
     GRETL_CMD_HELPFILE,
-    GRETL_CLI_HELPFILE
+    GRETL_CLI_HELPFILE,
+    GRETL_CLI_FNREF,
+    GRETL_GUI_FNREF
 } HelpPaths;
 
 typedef enum {

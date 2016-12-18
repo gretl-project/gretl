@@ -260,7 +260,7 @@ int cli_help (const char *hlpword, const char *param,
     }
 
     if ((noword && funhelp) || !strcmp(hlpword, "functions")) {
-	sprintf(helpfile, "%s%s", gretl_home(), _("genrcli.hlp"));
+	strcpy(helpfile, helpfile_path(GRETL_CLI_FNREF));
 	return func_help_topics(helpfile, prn); /* handled */
     }
 
@@ -281,7 +281,7 @@ int cli_help (const char *hlpword, const char *param,
     if (ok) {
 	strcpy(helpfile, helpfile_path(GRETL_CLI_HELPFILE));
     } else if (genr_function_word(hlpword)) {
-	sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
+	strcpy(helpfile, helpfile_path(GRETL_CLI_FNREF));
     } else if (gretl_is_public_user_function(hlpword)) {
 	return user_function_help(hlpword, OPT_NONE, prn);
     } else {

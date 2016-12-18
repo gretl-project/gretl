@@ -65,6 +65,8 @@ struct INTERNAL_PATHS {
     char helpfile[MAXLEN];
     char cmd_helpfile[MAXLEN];
     char cli_helpfile[MAXLEN];
+    char cli_fnref[MAXLEN];
+    char gui_fnref[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
@@ -95,6 +97,10 @@ const char *helpfile_path (int id)
 	return paths.cmd_helpfile;
     } else if (id == GRETL_CLI_HELPFILE) {
 	return paths.cli_helpfile;
+    } else if (id == GRETL_CLI_FNREF) {
+	return paths.cli_fnref;
+    } else if (id == GRETL_GUI_FNREF) {
+	return paths.gui_fnref;
     } else {
 	return "";
     }
@@ -2943,9 +2949,11 @@ static void set_helpfile_paths (gretlopt opt)
 #ifdef WIN32
 	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
 	strcpy(paths.cli_helpfile, paths.helpfile);
+	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli_hlp.txt"));
 #else
 	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli.hlp"));
 	strcpy(paths.cli_helpfile, paths.helpfile);
+	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli.hlp"));
 #endif
 	return;
     }
@@ -2955,20 +2963,28 @@ static void set_helpfile_paths (gretlopt opt)
 	sprintf(paths.helpfile, "%sgretlgui_hlp.txt", ghome);
 	sprintf(paths.cmd_helpfile, "%sgretlcmd_hlp.txt", ghome);
 	sprintf(paths.cli_helpfile, "%sgretlcli_hlp.txt", ghome);
+	sprintf(paths.cli_fnref, "%sgenrcli_hlp.txt", ghome);
+	sprintf(paths.gui_fnref, "%sgenrgui_hlp.txt", ghome);
     } else {
 	sprintf(paths.helpfile, "%s%s", ghome, _("gretlgui_hlp.txt"));
 	sprintf(paths.cmd_helpfile, "%s%s", ghome, _("gretlcmd_hlp.txt"));
 	sprintf(paths.cli_helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
+	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli_hlp.txt"));
+	sprintf(paths.gui_fnref, "%s%s", ghome, _("genrgui_hlp.txt"));
     }
 #else
     if (opt & OPT_N) {
 	sprintf(paths.helpfile, "%sgretlgui.hlp", ghome);
 	sprintf(paths.cli_helpfile, "%sgretlcli.hlp", ghome);
 	sprintf(paths.cmd_helpfile, "%sgretlcmd.hlp", ghome);
+	sprintf(paths.cli_fnref, "%sgenrcli.hlp", ghome);
+	sprintf(paths.gui_fnref, "%sgenrgui.hlp", ghome);
     } else {
 	sprintf(paths.helpfile, "%s%s", ghome, _("gretlgui.hlp"));
 	sprintf(paths.cli_helpfile, "%s%s", ghome, _("gretlcli.hlp"));
 	sprintf(paths.cmd_helpfile, "%s%s", ghome, _("gretlcmd.hlp"));
+	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli.hlp"));
+	sprintf(paths.gui_fnref, "%s%s", ghome, _("genrgui.hlp"));
     }
 #endif
 }

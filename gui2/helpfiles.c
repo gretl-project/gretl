@@ -1060,7 +1060,7 @@ static char *funcs_helpfile (void)
     static char fname[MAXLEN];
 
     if (*fname == '\0') {
-	sprintf(fname, "%s%s", gretl_home(), _("genrgui.hlp"));
+	strcpy(fname, helpfile_path(GRETL_GUI_FNREF));
     }
 
     return fname;
