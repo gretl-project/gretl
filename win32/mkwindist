@@ -262,10 +262,8 @@ add_file NEWS gretl/NEWS
 add_file ${HLPDIR}/gretlgui.hlp gretl/gretlgui_hlp.txt
 add_file ${HLPDIR}/gretlcmd.hlp gretl/gretlcmd_hlp.txt
 add_file ${HLPDIR}/gretlcli.hlp gretl/gretlcli_hlp.txt
-add_file ${HLPDIR}/genrcli.hlp gretl/genrcli.hlp
-add_file ${HLPDIR}/genrgui.hlp gretl/genrgui.hlp
-add_file ${HLPDIR}/genrcli.hlp.it gretl/genrcli.hlp.it
-add_file ${HLPDIR}/genrgui.hlp.it gretl/genrgui.hlp.it
+add_file ${HLPDIR}/genrcli.hlp gretl/genrcli_hlp.txt
+add_file ${HLPDIR}/genrgui.hlp gretl/genrgui_hlp.txt
 add_file ${HLPDIR}/gretlhelp.refs gretl/gretlhelp.refs
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
@@ -280,7 +278,14 @@ for lang in es it pt ; do
   if test -f ${HLPDIR}/gretlcli.hlp.${lang} ; then \
      add_file ${HLPDIR}/gretlcli.hlp.${lang} gretl/gretlcli_hlp_${lang}.txt
   fi
+  if test -f ${HLPDIR}/genrcli.hlp.${lang} ; then \
+     add_file ${HLPDIR}/genrcli.hlp.${lang} gretl/genrcli_hlp_${lang}.txt
+  fi
+  if test -f ${HLPDIR}/genrgui.hlp.${lang} ; then \
+     add_file ${HLPDIR}/genrgui.hlp.${lang} gretl/genrgui_hlp_${lang}.txt
+  fi
 done
+
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 
