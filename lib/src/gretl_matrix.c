@@ -12199,7 +12199,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
     n = m->rows;
 
     if (n < 2) {
-	myerr = E_DATA;
+	myerr = E_TOOFEW;
 	goto bailout;
     }
 
