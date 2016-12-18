@@ -2722,6 +2722,34 @@
       </description>
     </function>
 
+    <function name="ecdf" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Calculates the empirical CDF of <argname>y</argname>. This
+	  is returned in a matrix with two columns: the first holds
+	  the sorted unique values of <argname>y</argname> and the
+	  second holds the cumulative relative frequency, that is
+	  the count of observations whose value is less than
+	  or equal to the value in the first column, divided by
+	  the total number of observations.
+	</para>
+	<para context="tex">
+	  Calculates the empirical CDF of <argname>y</argname>. This
+	  is returned in a matrix with two columns: the first holds
+	  the sorted unique values of <argname>y</argname> and the
+	  second holds the cumulative relative frequency,
+	  \[ F(y) =
+	  \frac{1}{n} \sum_{i=1}^n I(y_i \leq y)
+	  \]
+	  where $n$ is total number of observations and $I()$ denotes
+	  the indicator function.
+	</para>
+      </description>
+    </function>    
+
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -2749,7 +2777,7 @@
 	  If a non-null second argument is given, the specified matrix
 	  will be over-written with the auxiliary result.  (It is not
 	  required that the existing matrix be of the right dimensions to
-	  receive the result.) It will be organized as follows:
+	  receive the result.) The output is organized as follows:
 	</para>
 	<ilist>
 	  <li>

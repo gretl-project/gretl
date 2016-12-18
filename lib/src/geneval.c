@@ -6424,8 +6424,8 @@ static NODE *series_matrix_node (NODE *l, NODE *r, int f, parser *p)
 
     if (starting(p)) {
 	const double *x = NULL;
-	int n, t1 = 0, t2 = 0;
-	gretlopt opt;
+	int n = 0, t1 = 0, t2 = 0;
+	gretlopt opt = OPT_NONE;
 
 	if (f == F_NORMTEST) {
 	    opt = get_normtest_option(r, p);

@@ -4,6 +4,8 @@ version 2016e, in progress
   estimation of survivor and hazard functions
 - Add normtest() function: works much like the "normtest"
   command, but handles vectors as well as series
+- Add ecdf() function to compute the empirical CDF for a
+  series or vector
 - bwrite() function for writing bundles as XML: support
   gzip compression if the filename has the ".gz" extension
 - "include" command: make it respect the "catch" flag
