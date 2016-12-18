@@ -218,4 +218,6 @@ int fill_day_of_week_array (double *dow,
 double clogit_fi (int T, int k, gretl_matrix *z, 
 		  const char *dfname, int *err);
 
+gretl_matrix *empirical_cdf (const double *y, int n, int *err);
+
 #endif /* GENFUNCS_H */

@@ -6418,33 +6418,37 @@ static gretlopt get_normtest_option (NODE *n, parser *p)
     return opt;
 }
 
-static NODE *normtest_node (NODE *l, NODE *r, parser *p)
+static NODE *series_matrix_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
 	const double *x = NULL;
-	int t1 = 0, t2 = 0;
+	int n, t1 = 0, t2 = 0;
 	gretlopt opt;
 
-	opt = get_normtest_option(r, p);
-	if (p->err) {
-	    return NULL;
+	if (f == F_NORMTEST) {
+	    opt = get_normtest_option(r, p);
+	    if (p->err) {
+		return NULL;
+	    }
 	}
 
 	if (l->t == MAT) {
-	    int n = gretl_vector_get_length(l->v.m);
-
+	    n = gretl_vector_get_length(l->v.m);
 	    if (n == 0) {
 		p->err = E_TYPES;
 	    } else {
 		x = l->v.m->val;
 		t2 = n - 1;
 	    }
-	} else {
+	} else if (f == F_NORMTEST) {
 	    x = l->v.xvec;
 	    t1 = p->dset->t1;
 	    t2 = p->dset->t2;
+	} else {
+	    x = l->v.xvec + p->dset->t1;
+	    n = sample_size(p->dset);
 	}
 
 	if (!p->err) {
@@ -6452,7 +6456,11 @@ static NODE *normtest_node (NODE *l, NODE *r, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.m = gretl_normtest_matrix(x, t1, t2, opt, &p->err);
+	    if (f == F_NORMTEST) {
+		ret->v.m = gretl_normtest_matrix(x, t1, t2, opt, &p->err);
+	    } else {
+		ret->v.m = empirical_cdf(x, n, &p->err);
+	    }
 	}
     }
 
@@ -12379,13 +12387,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, SERIES, l, p);
 	} 
 	break;
+    case F_ECDF:
     case F_NORMTEST:
-	/* series or vector plus optional string arg,
-	   returns 2-vector */
+	/* series or vector (plus optional string arg for,
+	   normtest); returns matrix */
 	if (l->t != SERIES && l->t != MAT) {
 	    p->err = E_TYPES;
 	} else if (null_or_empty(r) || r->t == STR) {
-	    ret = normtest_node(l, r, p);
+	    ret = series_matrix_node(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}

@@ -286,6 +286,7 @@ enum {
     F_STRVALS,
     F_TRAMOLIN,
     F_CNUMBER,
+    F_ECDF,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COV,
     F_SDC,

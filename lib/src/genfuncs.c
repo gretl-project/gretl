@@ -6834,3 +6834,93 @@ double clogit_fi (int T, int k, gretl_matrix *z,
 
     return ret;
 }
+
+/**
+ * empirical_cdf:
+ * @y: array to process
+ * @n: length of @y.
+ * @err: location to receive error code on failure.
+ *
+ * Calculates the empiritical CDF of @y, skipping any missing values.
+ *
+ * Returns: on successful completion, a matrix with row
+ * dimension equal to the number of unique values in @y, and two
+ * columns, the first containing the unique values of @y and the
+ * second the cumulative relative frequency. On failure, returns
+ * NULL.
+ */
+
+gretl_matrix *empirical_cdf (const double *y, int n, int *err)
+{
+    gretl_matrix *m = NULL;
+    double *sy = NULL;
+    int n_le, n_u, n_ok = 0;
+    int i, j, k, kbak;
+
+    /* count non-missing values */
+    for (i=0; i<n; i++) {
+	if (!na(y[i]) && !isnan(y[i])) {
+	    n_ok += 1;
+	}
+    }
+
+    if (n_ok == 0) {
+	*err = E_MISSDATA;
+	return NULL;
+    }
+
+    /* allocate full array for sorting */
+    sy = malloc(n_ok * sizeof *sy);
+    if (sy == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    j = 0;
+    for (i=0; i<n; i++) {
+	if (!na(y[i]) && !isnan(y[i])) {
+	    sy[j++] = y[i];
+	}
+    }
+
+    qsort(sy, n_ok, sizeof *sy, gretl_compare_doubles);
+
+    /* count unique values */
+    n_u = 1;
+    for (i=1; i<n_ok; i++) {
+	if (sy[i] != sy[i-1]) {
+	    n_u++;
+	}
+    }
+
+    m = gretl_matrix_alloc(n_u, 2);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	free(sy);
+	return NULL;
+    }
+
+    /* The first column of @m holds unique values,
+       the second cumulative relative frequency
+    */
+    j = kbak = n_le = 0;
+    for (i=0; i<n_ok; i++) {
+	if (i == 0 || sy[i] != sy[i-1]) {
+	    gretl_matrix_set(m, j, 0, sy[i]);
+	    for (k=kbak; k<n_ok; k++) {
+		if (sy[k] <= sy[i]) {
+		    n_le++;
+		} else {
+		    break;
+		}
+	    }
+	    gretl_matrix_set(m, j, 1, n_le / (double ) n_ok);
+	    j++;
+	    kbak = k;
+	}
+    }
+
+    free(sy);
+
+    return m;
+}
