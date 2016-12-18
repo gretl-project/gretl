@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-18 14:40-0500\n"
+"POT-Creation-Date: 2016-12-18 16:07-0500\n"
 "PO-Revision-Date: 2016-11-17 14:09+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
@@ -3525,11 +3525,6 @@ msgstr ""
 "Vd. tambien puede teclear 'help functions' para obtener una lista de "
 "funciones\n"
 
-#: lib/src/gretl_help.c:263 lib/src/gretl_paths.c:2956
-#: lib/src/gretl_paths.c:2986
-msgid "genrcli.hlp"
-msgstr "genrcli.hlp"
-
 #: lib/src/gretl_help.c:288
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
@@ -4034,41 +4029,23 @@ msgstr "No fue posible escribir en '%s': Gretl no funcionará bien!"
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: usando los siguientes caminos de búsqueda básicos:\n"
 
-#: lib/src/gretl_paths.c:2950 lib/src/gretl_paths.c:2971
-msgid "gretlcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
-
-#: lib/src/gretl_paths.c:2952 lib/src/gretl_paths.c:2972
-#, fuzzy
-msgid "genrcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
-
-#: lib/src/gretl_paths.c:2954 lib/src/gretl_paths.c:2984
+#: lib/src/gretl_paths.c:2949 lib/src/gretl_paths.c:2963
 msgid "gretlcli.hlp"
 msgstr "gretlcli.hlp"
 
-#: lib/src/gretl_paths.c:2969
-msgid "gretlgui_hlp.txt"
-msgstr "gretlgui_hlp.txt"
+#: lib/src/gretl_paths.c:2951 lib/src/gretl_paths.c:2965
+msgid "genrcli.hlp"
+msgstr "genrcli.hlp"
 
-#: lib/src/gretl_paths.c:2970
-msgid "gretlcmd_hlp.txt"
-msgstr "gretlcmd_hlp.txt"
-
-#: lib/src/gretl_paths.c:2973
-#, fuzzy
-msgid "genrgui_hlp.txt"
-msgstr "gretlgui_hlp.txt"
-
-#: lib/src/gretl_paths.c:2983
+#: lib/src/gretl_paths.c:2962
 msgid "gretlgui.hlp"
 msgstr "gretlgui.hlp"
 
-#: lib/src/gretl_paths.c:2985
+#: lib/src/gretl_paths.c:2964
 msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
-#: lib/src/gretl_paths.c:2987 gui2/helpfiles.c:1063
+#: lib/src/gretl_paths.c:2966
 msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
@@ -13626,7 +13603,7 @@ msgstr "MIDAS"
 msgid "Index"
 msgstr "Índice"
 
-#: gui2/helpfiles.c:852 gui2/helpfiles.c:1612 gui2/helpfiles.c:1749
+#: gui2/helpfiles.c:852 gui2/helpfiles.c:1609 gui2/helpfiles.c:1746
 msgid "Search wrapped"
 msgstr "Search wrapped"
 
@@ -13646,23 +13623,23 @@ msgstr "Buscar:"
 msgid "Sorry, no help is available"
 msgstr "Lo siento, no hay ayuda disponible"
 
-#: gui2/helpfiles.c:1455
+#: gui2/helpfiles.c:1452
 msgid "Sorry, help not found"
 msgstr "Lo siento, no se ha encontrado la ayuda"
 
-#: gui2/helpfiles.c:1882
+#: gui2/helpfiles.c:1879
 msgid "gretl: find"
 msgstr "gretl: buscar"
 
-#: gui2/helpfiles.c:1890
+#: gui2/helpfiles.c:1887
 msgid " Find what:"
 msgstr " Buscar qué:"
 
-#: gui2/helpfiles.c:1914
+#: gui2/helpfiles.c:1911
 msgid "Variable names only (case sensitive)"
 msgstr "Sólo los nombres de las variables (sensible a mayúsculas/minúsculas)"
 
-#: gui2/helpfiles.c:2169
+#: gui2/helpfiles.c:2166
 msgid "Failed to download file"
 msgstr "Fallo al descargar un fichero"
 
@@ -18023,6 +18000,23 @@ msgstr "Estadísticas/transformaciones"
 #: doc/commands/matfuncs.c:49
 msgid "Decoration"
 msgstr "Decoración"
+
+#~ msgid "gretlcli_hlp.txt"
+#~ msgstr "gretlcli_hlp.txt"
+
+#, fuzzy
+#~ msgid "genrcli_hlp.txt"
+#~ msgstr "gretlcli_hlp.txt"
+
+#~ msgid "gretlgui_hlp.txt"
+#~ msgstr "gretlgui_hlp.txt"
+
+#~ msgid "gretlcmd_hlp.txt"
+#~ msgstr "gretlcmd_hlp.txt"
+
+#, fuzzy
+#~ msgid "genrgui_hlp.txt"
+#~ msgstr "gretlgui_hlp.txt"
 
 #~ msgid "No Kalman filter is defined"
 #~ msgstr "No se ha definido ningún filtro de Kalman"

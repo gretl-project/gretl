@@ -2946,33 +2946,12 @@ static void set_helpfile_paths (gretlopt opt)
 
     if (!gretl_in_gui_mode()) {
 	/* CLI program, not GUI */
-#ifdef WIN32
-	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
-	strcpy(paths.cli_helpfile, paths.helpfile);
-	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli_hlp.txt"));
-#else
 	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli.hlp"));
 	strcpy(paths.cli_helpfile, paths.helpfile);
 	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli.hlp"));
-#endif
 	return;
     }
 
-#ifdef WIN32
-    if (opt & OPT_N) {
-	sprintf(paths.helpfile, "%sgretlgui_hlp.txt", ghome);
-	sprintf(paths.cmd_helpfile, "%sgretlcmd_hlp.txt", ghome);
-	sprintf(paths.cli_helpfile, "%sgretlcli_hlp.txt", ghome);
-	sprintf(paths.cli_fnref, "%sgenrcli_hlp.txt", ghome);
-	sprintf(paths.gui_fnref, "%sgenrgui_hlp.txt", ghome);
-    } else {
-	sprintf(paths.helpfile, "%s%s", ghome, _("gretlgui_hlp.txt"));
-	sprintf(paths.cmd_helpfile, "%s%s", ghome, _("gretlcmd_hlp.txt"));
-	sprintf(paths.cli_helpfile, "%s%s", ghome, _("gretlcli_hlp.txt"));
-	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli_hlp.txt"));
-	sprintf(paths.gui_fnref, "%s%s", ghome, _("genrgui_hlp.txt"));
-    }
-#else
     if (opt & OPT_N) {
 	sprintf(paths.helpfile, "%sgretlgui.hlp", ghome);
 	sprintf(paths.cli_helpfile, "%sgretlcli.hlp", ghome);
@@ -2986,7 +2965,6 @@ static void set_helpfile_paths (gretlopt opt)
 	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli.hlp"));
 	sprintf(paths.gui_fnref, "%s%s", ghome, _("genrgui.hlp"));
     }
-#endif
 }
 
 /* Called at start-up only: the @dirname argument is the value taken

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-18 14:40-0500\n"
+"POT-Creation-Date: 2016-12-18 16:07-0500\n"
 "PO-Revision-Date: 2014-04-28 09:53+0100\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -3530,11 +3530,6 @@ msgstr " (např. help smpl)\n"
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr "Také můžete napsat 'help functions' pro zobrazení seznamu funkcí\n"
 
-#: lib/src/gretl_help.c:263 lib/src/gretl_paths.c:2956
-#: lib/src/gretl_paths.c:2986
-msgid "genrcli.hlp"
-msgstr "genrcli.hlp"
-
 #: lib/src/gretl_help.c:288
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
@@ -4044,41 +4039,23 @@ msgstr "Nebylo možné psát do '%s': gretl nefungoval správně!"
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: jsou používány tyto základní prohledávací cesty:\n"
 
-#: lib/src/gretl_paths.c:2950 lib/src/gretl_paths.c:2971
-msgid "gretlcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
-
-#: lib/src/gretl_paths.c:2952 lib/src/gretl_paths.c:2972
-#, fuzzy
-msgid "genrcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
-
-#: lib/src/gretl_paths.c:2954 lib/src/gretl_paths.c:2984
+#: lib/src/gretl_paths.c:2949 lib/src/gretl_paths.c:2963
 msgid "gretlcli.hlp"
 msgstr "gretlcli.hlp"
 
-#: lib/src/gretl_paths.c:2969
-msgid "gretlgui_hlp.txt"
-msgstr "gretlgui_hlp.txt"
+#: lib/src/gretl_paths.c:2951 lib/src/gretl_paths.c:2965
+msgid "genrcli.hlp"
+msgstr "genrcli.hlp"
 
-#: lib/src/gretl_paths.c:2970
-msgid "gretlcmd_hlp.txt"
-msgstr "gretlcmd_hlp.txt"
-
-#: lib/src/gretl_paths.c:2973
-#, fuzzy
-msgid "genrgui_hlp.txt"
-msgstr "gretlgui_hlp.txt"
-
-#: lib/src/gretl_paths.c:2983
+#: lib/src/gretl_paths.c:2962
 msgid "gretlgui.hlp"
 msgstr "gretlgui.hlp"
 
-#: lib/src/gretl_paths.c:2985
+#: lib/src/gretl_paths.c:2964
 msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
-#: lib/src/gretl_paths.c:2987 gui2/helpfiles.c:1063
+#: lib/src/gretl_paths.c:2966
 msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
@@ -13699,7 +13676,7 @@ msgstr ""
 msgid "Index"
 msgstr "Rejstřík"
 
-#: gui2/helpfiles.c:852 gui2/helpfiles.c:1612 gui2/helpfiles.c:1749
+#: gui2/helpfiles.c:852 gui2/helpfiles.c:1609 gui2/helpfiles.c:1746
 msgid "Search wrapped"
 msgstr "Hledání ukončeno"
 
@@ -13719,23 +13696,23 @@ msgstr "Najít:"
 msgid "Sorry, no help is available"
 msgstr "Bohužel, žádná nápověda není k dispozici"
 
-#: gui2/helpfiles.c:1455
+#: gui2/helpfiles.c:1452
 msgid "Sorry, help not found"
 msgstr "Bohužel, nápověda nebyla nalezena"
 
-#: gui2/helpfiles.c:1882
+#: gui2/helpfiles.c:1879
 msgid "gretl: find"
 msgstr "gretl: hledat"
 
-#: gui2/helpfiles.c:1890
+#: gui2/helpfiles.c:1887
 msgid " Find what:"
 msgstr "Najít co:"
 
-#: gui2/helpfiles.c:1914
+#: gui2/helpfiles.c:1911
 msgid "Variable names only (case sensitive)"
 msgstr "Pouze jména proměnných (rozlišuje malá a velká písmena)"
 
-#: gui2/helpfiles.c:2169
+#: gui2/helpfiles.c:2166
 msgid "Failed to download file"
 msgstr "Nepodařilo se stáhnout soubor"
 
@@ -18163,6 +18140,23 @@ msgstr "Statistiky/transformace"
 #, fuzzy
 msgid "Decoration"
 msgstr "Trvání"
+
+#~ msgid "gretlcli_hlp.txt"
+#~ msgstr "gretlcli_hlp.txt"
+
+#, fuzzy
+#~ msgid "genrcli_hlp.txt"
+#~ msgstr "gretlcli_hlp.txt"
+
+#~ msgid "gretlgui_hlp.txt"
+#~ msgstr "gretlgui_hlp.txt"
+
+#~ msgid "gretlcmd_hlp.txt"
+#~ msgstr "gretlcmd_hlp.txt"
+
+#, fuzzy
+#~ msgid "genrgui_hlp.txt"
+#~ msgstr "gretlgui_hlp.txt"
 
 #~ msgid "No Kalman filter is defined"
 #~ msgstr "Žádný Kalmanův filtr není definován"

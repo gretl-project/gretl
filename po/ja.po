@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-18 14:40-0500\n"
+"POT-Creation-Date: 2016-12-18 16:07-0500\n"
 "PO-Revision-Date: 2016-04-19 19:41+0900\n"
 "Last-Translator: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
 "Language-Team: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
@@ -3465,11 +3465,6 @@ msgstr " (例 help smpl)\n"
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr "関数のリストについては、'help functions'でも確認できます\n"
 
-#: lib/src/gretl_help.c:263 lib/src/gretl_paths.c:2956
-#: lib/src/gretl_paths.c:2986
-msgid "genrcli.hlp"
-msgstr ""
-
 #: lib/src/gretl_help.c:288
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
@@ -3961,39 +3956,23 @@ msgstr "'%s'に書き込めませんでした: gretlは適切に機能してい�
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: これらの基本検索パスを使用する:\n"
 
-#: lib/src/gretl_paths.c:2950 lib/src/gretl_paths.c:2971
-msgid "gretlcli_hlp.txt"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2952 lib/src/gretl_paths.c:2972
-msgid "genrcli_hlp.txt"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2954 lib/src/gretl_paths.c:2984
+#: lib/src/gretl_paths.c:2949 lib/src/gretl_paths.c:2963
 msgid "gretlcli.hlp"
 msgstr ""
 
-#: lib/src/gretl_paths.c:2969
-msgid "gretlgui_hlp.txt"
+#: lib/src/gretl_paths.c:2951 lib/src/gretl_paths.c:2965
+msgid "genrcli.hlp"
 msgstr ""
 
-#: lib/src/gretl_paths.c:2970
-msgid "gretlcmd_hlp.txt"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2973
-msgid "genrgui_hlp.txt"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2983
+#: lib/src/gretl_paths.c:2962
 msgid "gretlgui.hlp"
 msgstr ""
 
-#: lib/src/gretl_paths.c:2985
+#: lib/src/gretl_paths.c:2964
 msgid "gretlcmd.hlp"
 msgstr ""
 
-#: lib/src/gretl_paths.c:2987 gui2/helpfiles.c:1063
+#: lib/src/gretl_paths.c:2966
 msgid "genrgui.hlp"
 msgstr ""
 
@@ -13416,7 +13395,7 @@ msgstr ""
 msgid "Index"
 msgstr "インデックス"
 
-#: gui2/helpfiles.c:852 gui2/helpfiles.c:1612 gui2/helpfiles.c:1749
+#: gui2/helpfiles.c:852 gui2/helpfiles.c:1609 gui2/helpfiles.c:1746
 msgid "Search wrapped"
 msgstr ""
 
@@ -13436,23 +13415,23 @@ msgstr "検索する文字列:"
 msgid "Sorry, no help is available"
 msgstr "すみません。この項目のヘルプはありません"
 
-#: gui2/helpfiles.c:1455
+#: gui2/helpfiles.c:1452
 msgid "Sorry, help not found"
 msgstr "すみません。ヘルプが見つかりません"
 
-#: gui2/helpfiles.c:1882
+#: gui2/helpfiles.c:1879
 msgid "gretl: find"
 msgstr "gretl: 検索"
 
-#: gui2/helpfiles.c:1890
+#: gui2/helpfiles.c:1887
 msgid " Find what:"
 msgstr " 検索する文字列:"
 
-#: gui2/helpfiles.c:1914
+#: gui2/helpfiles.c:1911
 msgid "Variable names only (case sensitive)"
 msgstr "変数名から検索（大文字・小文字を区別）"
 
-#: gui2/helpfiles.c:2169
+#: gui2/helpfiles.c:2166
 msgid "Failed to download file"
 msgstr "ファイルのダウンロードに失敗しました"
 

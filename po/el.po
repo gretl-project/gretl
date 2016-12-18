@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-18 14:40-0500\n"
+"POT-Creation-Date: 2016-12-18 16:07-0500\n"
 "PO-Revision-Date: 2016-04-21 19:23-0400\n"
 "Last-Translator: Ioannis Venetis <ivenetis@upatras.gr>\n"
 "Language-Team: Greek\n"
@@ -3595,11 +3595,6 @@ msgstr ""
 "Μπορείτε επίσης να πληκτρολογήσετε 'help functions' για μία λίστα των "
 "διαθέσιμων συναρτήσεων\n"
 
-#: lib/src/gretl_help.c:263 lib/src/gretl_paths.c:2956
-#: lib/src/gretl_paths.c:2986
-msgid "genrcli.hlp"
-msgstr "genrcli.hlp"
-
 #: lib/src/gretl_help.c:288
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
@@ -4118,41 +4113,23 @@ msgstr ""
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: χρήση των ακόλουθων προκαθορισμένων διαδρομών:\n"
 
-#: lib/src/gretl_paths.c:2950 lib/src/gretl_paths.c:2971
-msgid "gretlcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
-
-#: lib/src/gretl_paths.c:2952 lib/src/gretl_paths.c:2972
-#, fuzzy
-msgid "genrcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
-
-#: lib/src/gretl_paths.c:2954 lib/src/gretl_paths.c:2984
+#: lib/src/gretl_paths.c:2949 lib/src/gretl_paths.c:2963
 msgid "gretlcli.hlp"
 msgstr "gretlcli.hlp"
 
-#: lib/src/gretl_paths.c:2969
-msgid "gretlgui_hlp.txt"
-msgstr "gretlgui_hlp.txt"
+#: lib/src/gretl_paths.c:2951 lib/src/gretl_paths.c:2965
+msgid "genrcli.hlp"
+msgstr "genrcli.hlp"
 
-#: lib/src/gretl_paths.c:2970
-msgid "gretlcmd_hlp.txt"
-msgstr "gretlcmd_hlp.txt"
-
-#: lib/src/gretl_paths.c:2973
-#, fuzzy
-msgid "genrgui_hlp.txt"
-msgstr "gretlgui_hlp.txt"
-
-#: lib/src/gretl_paths.c:2983
+#: lib/src/gretl_paths.c:2962
 msgid "gretlgui.hlp"
 msgstr "gretlgui.hlp"
 
-#: lib/src/gretl_paths.c:2985
+#: lib/src/gretl_paths.c:2964
 msgid "gretlcmd.hlp"
 msgstr "gretlcmd.hlp"
 
-#: lib/src/gretl_paths.c:2987 gui2/helpfiles.c:1063
+#: lib/src/gretl_paths.c:2966
 msgid "genrgui.hlp"
 msgstr "genrgui.hlp"
 
@@ -13901,7 +13878,7 @@ msgstr ""
 msgid "Index"
 msgstr "Ευρετήριο"
 
-#: gui2/helpfiles.c:852 gui2/helpfiles.c:1612 gui2/helpfiles.c:1749
+#: gui2/helpfiles.c:852 gui2/helpfiles.c:1609 gui2/helpfiles.c:1746
 msgid "Search wrapped"
 msgstr "Η αναζήτηση αναδιπλώθηκε (έφτασε στο τέλος και ξεκίνησε από την αρχή)"
 
@@ -13921,23 +13898,23 @@ msgstr "Εύρεση:"
 msgid "Sorry, no help is available"
 msgstr "Δυστυχώς, δεν υπάρχει διαθέσιμη βοήθεια"
 
-#: gui2/helpfiles.c:1455
+#: gui2/helpfiles.c:1452
 msgid "Sorry, help not found"
 msgstr "Συγγνώμη, δεν βρέθηκε βοήθεια"
 
-#: gui2/helpfiles.c:1882
+#: gui2/helpfiles.c:1879
 msgid "gretl: find"
 msgstr "gretl: αναζήτηση"
 
-#: gui2/helpfiles.c:1890
+#: gui2/helpfiles.c:1887
 msgid " Find what:"
 msgstr " Εύρεση της:"
 
-#: gui2/helpfiles.c:1914
+#: gui2/helpfiles.c:1911
 msgid "Variable names only (case sensitive)"
 msgstr "Ονόματα μεταβλ. μόνο (διάκριση πεζών/κεφαλαίων)"
 
-#: gui2/helpfiles.c:2169
+#: gui2/helpfiles.c:2166
 msgid "Failed to download file"
 msgstr "Αποτυχία \"κατεβάσματος\" αρχείου"
 
@@ -18458,6 +18435,23 @@ msgstr "Στατιστικές/μετασχηματισμοί"
 #, fuzzy
 msgid "Decoration"
 msgstr "Διάρκεια"
+
+#~ msgid "gretlcli_hlp.txt"
+#~ msgstr "gretlcli_hlp.txt"
+
+#, fuzzy
+#~ msgid "genrcli_hlp.txt"
+#~ msgstr "gretlcli_hlp.txt"
+
+#~ msgid "gretlgui_hlp.txt"
+#~ msgstr "gretlgui_hlp.txt"
+
+#~ msgid "gretlcmd_hlp.txt"
+#~ msgstr "gretlcmd_hlp.txt"
+
+#, fuzzy
+#~ msgid "genrgui_hlp.txt"
+#~ msgstr "gretlgui_hlp.txt"
 
 #~ msgid "No Kalman filter is defined"
 #~ msgstr "Δεν έχει οριστεί φίλτρο Kalman"
