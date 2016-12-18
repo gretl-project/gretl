@@ -1967,23 +1967,23 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the condition number of the <by r="n" c="k"/> matrix
-	  <argname>X</argname>, as defined in <cite
-	  key="belsley-etal80">Belsley, Kuh and Welsch
-	  (1980)</cite>. If the columns of <argname>X</argname> are
-	  mutually orthogonal the condition number of
-	  <argname>X</argname> is unity. Conversely, a large value of
-	  the condition number is an indicator of multicollinearity;
-	  <quote>large</quote> is often taken to mean 50 or greater
-	  (sometimes 30 or greater).
+	  Retorna o número condicional da matriz <argname>X</argname> de
+	  ordem <by r="n" c="k"/>, conforme definido em <cite
+	  key="belsley-etal80">Belsley, Kuh e Welsch
+	  (1980)</cite>. Se as colunas de <argname>X</argname> forem
+	  mutuamente ortogonais o número condicional de
+	  <argname>X</argname> é a unidade. Um número condicional grande
+	  é um indicador de multicolinearidade, sendo que é considerado
+	  normalmente um valor <quote>grande</quote> algo acima de 50
+	  (ou, algumas vezes, de 30).
 	</para>
 	<para>
-	  The steps in the calculation are: (1) form a matrix
-	  <math>Z</math> whose columns are the columns of
-	  <argname>X</argname> divided by their respective Euclidean
-	  norms; (2) form <math>Z'Z</math> and obtain its eigenvalues;
-	  and (3) compute the square root of the ratio of the largest
-	  to the smallest eigenvalue.
+	  Os passos para esses cálculos são: (1) contruir uma matriz
+	  <math>Z</math> onde suas colunas são a divisão das colunas de
+	  <argname>X</argname> divididas por suas respectivas normas
+	  euclidianas; (2) construir <math>Z'Z</math> e obter seus
+	  autovalores e; (3) calcular a raiz quadrada da razão entre
+	  o maior e o menor autovalor.
 	</para>
 	<para>
 	  <seelist>
@@ -3261,30 +3261,30 @@
       </fnargs>
       <description>
 	<para>
-	  Provides the script writer with a convenient means of
-	  generating series whose names are not known in advance,
-	  and/or creating a series and appending it to a list in a
-	  single operation.
+	  Permite que sejam geradas séries cujos nomes não são conhecidos a
+	  priori e/ou que sejam criadas séries e adicionadas a uma lista
+	  utilizando apenas uma única operação.
 	</para>
 	<para>
-	  The first argument gives the name of the series to create
-	  (or modify); this can be a variável de texto (<quote>string</quote>) literal, a variável de texto
-	  variável, or an expression that evaluates to a variável de texto.  The
-	  second argument, <argname>rhs</argname> (<quote>right-hand
-	  side</quote>), defines the source series: this can be the
-	  name of an existing series or an expression that evaluates
-	  to a series, as would appear to the right of the equals sign
-	  when defining a series in the usual way.
+	  O primeiro argumento fornece o nome da série a ser criada (ou
+	  modificada) e pode ser um texto literal, uma variável de texto
+	  (<quote>string</quote>), ou uma expressão cujo resultado seja
+	  uma variável de texto. O segundo argumento, <argname>rhs</argname>
+	  (abreviação em inglês de <quote>lado direito</quote>), define
+	  a fonte da série: isto pode ser o nome de uma série existente
+	  ou uma expressão cujo resultado seja uma série, da forma que
+	  aparece do lado direito do sinal de igualdade quando se definem
+	  séries da forma usual.
 	</para>
 	<para>
-	  The return value from this function is the ID number of the
-	  series in the conjunto de dados, a value suitable for inclusion in a
-	  list (or &minus;1 on failure).
+	  O valor de retorno dessa função é o número ID das séries no conjunto
+	  de dados, um valor que pode ser utilizado para incluir as séries em
+	  uma lista (ou &minus;1 caso a execução da função falhe).
 	</para>
 	<para>
-	  Por exemplo, suppose you want to add <math>n</math> random
-	  normal series to the conjunto de dados and put them all into a named
-	  list. The following will do the job:
+	  Por exemplo, suponha que se queira adicionar <math>n</math> séries
+	  aleatórias com distribuição normal ao conjunto de dados e
+	  colocá-las em uma lista. O código a seguir fará isso:
 	</para>
 	<code>
 	  list Normals = null
@@ -3293,8 +3293,8 @@
 	  endloop
 	</code>
 	<para>
-	  On completion <lit>Normals</lit> will contain the series
-	  <lit>norm1</lit>, <lit>norm2</lit> e assim sucessivamente.
+	  Ao término da execução a lista <lit>Normals</lit> irá conter as
+	  séries <lit>norm1</lit>, <lit>norm2</lit> e assim sucessivamente.
 	</para>
       </description>
     </function>
@@ -3320,17 +3320,16 @@
       </fnargs>
       <description>
 	<para>
-	  This function is used to read successive lines from
-	  <argname>source</argname>, which should be a named variável de texto (<quote>string</quote>)
-	  variável. On each call a line from the source is written to
-	  <argname>target</argname> (which must also be a named variável de texto
-	  variável), with the newline character stripped off. The
-	  valued returned is 1 if there was anything to be read
-	  (including blank lines), 0 if the source has been exhausted.
+	  Essa função lêr sucessivamente as linhas de <argname>source</argname>, que
+	  deve ser uma variável de texto (<quote>string</quote>). A cada chamada uma
+	  linha do texto é escrita em <argname>target</argname> (que também deve ser
+	  uma variável de texto) com o caractere de nova linha removido. O valor
+	  retornado é 1, se existir algo a ser lido (incluindo-se linhas em branco),
+	  ou 0, se todas as linhas de <argname>source</argname> tiverem sido lidas.
 	</para>
 	<para>
-	  Here is an example in which the content of a text file is
-	  broken into lines:
+	  A seguir é apresentado um exemplo onde o conteúdo de um arquivo de texto é
+	  dividido em linhas:
 	</para>
 	<code>
 	  string s = readfile("data.txt")
@@ -3341,21 +3340,22 @@
 	  endloop
 	</code>
 	<para>
-	  In this example we can be sure that the source is exhausted
-	  when the loop terminates. If the source might not be
-	  exhausted you should follow your regular call(s) to
-	  <lit>getline</lit> with a <quote>clean up</quote> call, in which
-	  <argname>target</argname> is replaced by <lit>null</lit> (or
-	  omitted altogether) as in
+	  Neste exemplo pode-se ter a certeza de que o texto foi exaurido quando o
+	  loop terminar. Se não for desejado exaurir todas as linhas do texto pode-se
+	  chamar a função <lit>getline</lit>, sendo que sucessivas chamadas
+	  substituirão o conteúdo de <argname>target</argname> pela nova linha lida.
+	  Para reiniciar a leitura a partir da primeira linha de <argname>source
+	  </argname> basta utilizar <lit>null</lit> no argumento <argname>target
+	  </argname> (ou apenas deixá-lo em branco). Exemplos:
 	</para>
 	<code>
-	  getline(s, line) # get a single line
-	  getline(s, null) # clean up
+	  getline(s, line) # recupera uma única linha
+	  getline(s, null) # reinicia a leitura
 	</code>
 	<para>
-	  Note that although the reading position advances at each call
-	  to <lit>getline</lit>, <argname>source</argname> is not modified
-	  by this function, only <argname>target</argname>.
+	  Note que apesar de a posição de leitura avançar em cada chamada de <lit>
+	  getline</lit>, o argumento <argname>source</argname> não é modificado por
+	  essa função, apenas <argname>target</argname> é alterado.
 	</para>
       </description>
     </function>
