@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
 <funcref language="portuguese">
@@ -4224,12 +4224,14 @@
       </fnargs>
       <description>
 	<para>
-	  Dada uma série <argname>date</argname> contendo datas no formato ISO 8601
-	  <quote>básico</quote> (<lit>YYYYMMDD</lit>), essa função escreve os
-	  componentes ano, mês e (opcionalmente) dia em séries nomeadas pelos
-	  argumentos <argname>&year</argname>, <argname>&month</argname> e
-	  <argname>&dayecond</argname>. Um exemplo, assumindo que a série
-    <lit>dates</lit> contém os valores adequados de 8 dígitos, seria:
+	  Dada uma série <argname>date</argname> contendo datas no
+	  formato ISO 8601 <quote>básico</quote>
+	  (<lit>YYYYMMDD</lit>), essa função escreve os componentes
+	  ano, mês e (opcionalmente) dia em séries nomeadas pelos
+	  argumentos <argname>year</argname>, <argname>month</argname>
+	  e <argname>day</argname>. Um exemplo, assumindo que a série
+	  <lit>dates</lit> contém os valores adequados de 8 dígitos,
+	  seria:
 	</para>
 	<code>
 	  series y, m, d
@@ -9328,7 +9330,6 @@
 	  <argname>Y</argname> e <argname>W</argname> devem ter o
 	  mesmo tamanho e os pesos devem ser não-negativos.
 	</para>
-	<para>
 	<para context="tex">
 	  A variância amostral ponderada é calculada como:
 	  \[ s^2_w = \frac{n'}{n'-1} \,
