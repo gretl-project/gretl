@@ -142,11 +142,34 @@ const char *helpfile_path (int id, int cli, int en)
 
 int using_translated_helpfiles (void)
 {
+    int ret = 0;
+
     if (force_en_help) {
 	return 0;
-    } else {
-	return strcmp("gretlcmd.hlp", _("gretlcmd.hlp")) != 0;
     }
+
+    /* If we're not forcing English help, the criterion
+       is that gretlcmd.hlp has a "translated" filename,
+       the translation can be opened, and it's not empty.
+    */
+
+    if (strcmp("gretlcmd.hlp", _("gretlcmd.hlp"))) {
+	char test[MAXLEN];
+	FILE *fp;
+
+	force_en_help = 1; /* will be reversed if OK */
+	sprintf(test, "%s%s", paths.gretldir, _("gretlcmd.hlp"));
+	fp = gretl_fopen(test, "r");
+	if (fp != NULL) {
+	    if (fgets(test, 16, fp) != NULL) {
+		force_en_help = 0;
+		ret = 1;
+	    }
+	    fclose(fp);
+	}
+    }
+
+    return ret;
 }
 
 /* If @fname does not already have suffix @sfx, add it. 
