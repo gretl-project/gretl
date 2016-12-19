@@ -15,24 +15,24 @@ pdfdir = ../doc/tex
 INSTALL_DATA = cp -fp
 
 AUTO_HELPFILES = \
-	gretlgui.hlp \
-	gretlcmd.hlp \
-	gretlcli.hlp \
-	gretlgui.hlp.es \
-	gretlcmd.hlp.es \
-	gretlcli.hlp.es \
-	gretlgui.hlp.it \
-	gretlcmd.hlp.it \
-	gretlcli.hlp.it \
-	gretlgui.hlp.pt \
-	gretlcmd.hlp.pt \
-	gretlcli.hlp.pt \
-	genrcli.hlp \
-	genrgui.hlp \
-	genrcli.hlp.it \
-	genrgui.hlp.it \
-        genrcli.hlp.pt \
-	genrgui.hlp.pt \
+	gretl_gui_help.en \
+	gretl_gui_cmdref.en \
+	gretl_cli_cmdref.en \
+	gretl_gui_help.es \
+	gretl_gui_cmdref.es \
+	gretl_cli_cmdref.es \
+	gretl_gui_help.it \
+	gretl_gui_cmdref.it \
+	gretl_cli_cmdref.it \
+	gretl_gui_help.pt \
+	gretl_gui_cmdref.pt \
+	gretl_cli_cmdref.pt \
+	gretl_cli_fnref.en \
+	gretl_gui_fnref.en \
+	gretl_cli_fnref.it \
+	gretl_gui_fnref.it \
+        gretl_cli_fnref.pt \
+	gretl_gui_fnref.pt \
 	gretlhelp.refs
 
 ifeq ($(build_docs),yes)

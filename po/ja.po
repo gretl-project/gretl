@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-19 14:56-0500\n"
+"POT-Creation-Date: 2016-12-19 18:27-0500\n"
 "PO-Revision-Date: 2016-04-19 19:41+0900\n"
 "Last-Translator: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
 "Language-Team: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
@@ -3927,45 +3927,50 @@ msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
 "すみません。これは、サブサンプルされたデータセットに対しては実行できません"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlcli.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:101
-msgid "gretlcli.hlp"
-msgstr ""
+#, fuzzy
+msgid "gretl_cli_cmdref.en"
+msgstr "gretl: コマンド・リファレンス"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if genr_funcs.xml is translated to your language, as
-#. in genrcli.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:106
-msgid "genrcli.hlp"
-msgstr ""
+#, fuzzy
+msgid "gretl_cli_fnref.en"
+msgstr "gretl: 関数リファレンス"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlcmd.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:111
-msgid "gretlcmd.hlp"
-msgstr ""
+#, fuzzy
+msgid "gretl_gui_cmdref.en"
+msgstr "gretl: コマンド・リファレンス"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlgui.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_help.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:116
-msgid "gretlgui.hlp"
-msgstr ""
+#, fuzzy
+msgid "gretl_gui_help.en"
+msgstr "gretl: ヘルプ"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if genr_funcs.xml is translated to your language, as
-#. in genrgui.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:121
-msgid "genrgui.hlp"
-msgstr ""
+#, fuzzy
+msgid "gretl_gui_fnref.en"
+msgstr "gretl: 関数リファレンス"
 
 #: lib/src/gretl_paths.c:1941
 #, c-format
@@ -13415,7 +13420,7 @@ msgstr ""
 msgid "Index"
 msgstr "インデックス"
 
-#: gui2/helpfiles.c:825 gui2/helpfiles.c:1565 gui2/helpfiles.c:1702
+#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
 msgid "Search wrapped"
 msgstr ""
 
@@ -13435,23 +13440,23 @@ msgstr "検索する文字列:"
 msgid "Sorry, no help is available"
 msgstr "すみません。この項目のヘルプはありません"
 
-#: gui2/helpfiles.c:1408
+#: gui2/helpfiles.c:1412
 msgid "Sorry, help not found"
 msgstr "すみません。ヘルプが見つかりません"
 
-#: gui2/helpfiles.c:1835
+#: gui2/helpfiles.c:1839
 msgid "gretl: find"
 msgstr "gretl: 検索"
 
-#: gui2/helpfiles.c:1843
+#: gui2/helpfiles.c:1847
 msgid " Find what:"
 msgstr " 検索する文字列:"
 
-#: gui2/helpfiles.c:1867
+#: gui2/helpfiles.c:1871
 msgid "Variable names only (case sensitive)"
 msgstr "変数名から検索（大文字・小文字を区別）"
 
-#: gui2/helpfiles.c:2122
+#: gui2/helpfiles.c:2126
 msgid "Failed to download file"
 msgstr "ファイルのダウンロードに失敗しました"
 

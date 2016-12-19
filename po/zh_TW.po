@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-19 14:56-0500\n"
+"POT-Creation-Date: 2016-12-19 18:27-0500\n"
 "PO-Revision-Date: 2016-04-21 19:22-0400\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
@@ -4054,45 +4054,50 @@ msgstr "Error: unit %g, period %g: 有重覆樣本"
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "抱欺, 無法對子樣本資料進行此操作 "
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlcli.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:101
-msgid "gretlcli.hlp"
-msgstr "gretlcli.hlp"
+#, fuzzy
+msgid "gretl_cli_cmdref.en"
+msgstr "gretl: 指令參考說明"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if genr_funcs.xml is translated to your language, as
-#. in genrcli.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:106
-msgid "genrcli.hlp"
-msgstr "genrcli.hlp"
+#, fuzzy
+msgid "gretl_cli_fnref.en"
+msgstr "gretl: 函數參考說明"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlcmd.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:111
-msgid "gretlcmd.hlp"
-msgstr "gretlcmd.hlp"
+#, fuzzy
+msgid "gretl_gui_cmdref.en"
+msgstr "gretl: 指令參考說明"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlgui.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_help.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:116
-msgid "gretlgui.hlp"
-msgstr "gretlgui.hlp"
+#, fuzzy
+msgid "gretl_gui_help.en"
+msgstr "gretlgui_hlp.txt"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if genr_funcs.xml is translated to your language, as
-#. in genrgui.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:121
-msgid "genrgui.hlp"
-msgstr "genrgui.hlp"
+#, fuzzy
+msgid "gretl_gui_fnref.en"
+msgstr "gretl: 函數參考說明"
 
 #: lib/src/gretl_paths.c:1941
 #, fuzzy, c-format
@@ -13859,7 +13864,7 @@ msgstr ""
 msgid "Index"
 msgstr "索引 (Index)"
 
-#: gui2/helpfiles.c:825 gui2/helpfiles.c:1565 gui2/helpfiles.c:1702
+#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
 msgid "Search wrapped"
 msgstr "搜尋已完成"
 
@@ -13879,23 +13884,23 @@ msgstr "尋找:"
 msgid "Sorry, no help is available"
 msgstr "抱歉, 無任何與此有關之說明"
 
-#: gui2/helpfiles.c:1408
+#: gui2/helpfiles.c:1412
 msgid "Sorry, help not found"
 msgstr "抱歉, 找不到說明檔 (help not found)"
 
-#: gui2/helpfiles.c:1835
+#: gui2/helpfiles.c:1839
 msgid "gretl: find"
 msgstr "gretl: 尋找"
 
-#: gui2/helpfiles.c:1843
+#: gui2/helpfiles.c:1847
 msgid " Find what:"
 msgstr "輸入欲尋找之字串:"
 
-#: gui2/helpfiles.c:1867
+#: gui2/helpfiles.c:1871
 msgid "Variable names only (case sensitive)"
 msgstr "只尋找變數名稱 (注意英文大小寫是不相同的)"
 
-#: gui2/helpfiles.c:2122
+#: gui2/helpfiles.c:2126
 msgid "Failed to download file"
 msgstr "無法下載檔案"
 
@@ -18396,15 +18401,27 @@ msgstr "敘述統計(_S)"
 msgid "Decoration"
 msgstr "增加樣本(_A)"
 
+#~ msgid "gretlcli.hlp"
+#~ msgstr "gretlcli.hlp"
+
+#~ msgid "genrcli.hlp"
+#~ msgstr "genrcli.hlp"
+
+#~ msgid "gretlcmd.hlp"
+#~ msgstr "gretlcmd.hlp"
+
+#~ msgid "gretlgui.hlp"
+#~ msgstr "gretlgui.hlp"
+
+#~ msgid "genrgui.hlp"
+#~ msgstr "genrgui.hlp"
+
 #~ msgid "gretlcli_hlp.txt"
 #~ msgstr "gretlcli_hlp.txt"
 
 #, fuzzy
 #~ msgid "genrcli_hlp.txt"
 #~ msgstr "gretlcli_hlp.txt"
-
-#~ msgid "gretlgui_hlp.txt"
-#~ msgstr "gretlgui_hlp.txt"
 
 #~ msgid "gretlcmd_hlp.txt"
 #~ msgstr "gretlcmd_hlp.txt"

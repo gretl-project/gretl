@@ -259,31 +259,17 @@ add_file ${TOPDIR}/share/styles/espresso.xml gretl/gtksourceview/espresso.xml
 add_file NEWS gretl/NEWS
 
 # help files, license, logo
-add_file ${HLPDIR}/gretlgui.hlp gretl/gretlgui.hlp
-add_file ${HLPDIR}/gretlcmd.hlp gretl/gretlcmd.hlp
-add_file ${HLPDIR}/gretlcli.hlp gretl/gretlcli.hlp
-add_file ${HLPDIR}/genrcli.hlp gretl/genrcli.hlp
-add_file ${HLPDIR}/genrgui.hlp gretl/genrgui.hlp
 add_file ${HLPDIR}/gretlhelp.refs gretl/gretlhelp.refs
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
 done
-for lang in es it pt ; do
-  if test -f ${HLPDIR}/gretlgui.hlp.${lang} ; then \
-     add_file ${HLPDIR}/gretlgui.hlp.${lang} gretl/gretlgui.hlp.${lang}
-  fi
-  if test -f ${HLPDIR}/gretlcmd.hlp.${lang} ; then \
-     add_file ${HLPDIR}/gretlcmd.hlp.${lang} gretl/gretlcmd.hlp.${lang}
-  fi
-  if test -f ${HLPDIR}/gretlcli.hlp.${lang} ; then \
-     add_file ${HLPDIR}/gretlcli.hlp.${lang} gretl/gretlcli.hlp.${lang}
-  fi
-  if test -f ${HLPDIR}/genrcli.hlp.${lang} ; then \
-     add_file ${HLPDIR}/genrcli.hlp.${lang} gretl/genrcli.hlp.${lang}
-  fi
-  if test -f ${HLPDIR}/genrgui.hlp.${lang} ; then \
-     add_file ${HLPDIR}/genrgui.hlp.${lang} gretl/genrgui.hlp.${lang}
-  fi
+for lang in en es it pt ; do
+    for f in gretl_gui_help.${lang} gretl_gui_cmdref.${lang} gretl_cli_cmdref.${lang} \
+       gretl_cli_fnref.${lang} gretl_gui_fnref.${lang} ; do
+	if test -f ${HLPDIR}/${HFILE} ; then \
+	    add_file ${HLPDIR}/${HFILE} gretl/${HFILE}
+	fi
+    done
 done
 
 add_file ${TOPDIR}/COPYING gretl/COPYING

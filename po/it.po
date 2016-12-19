@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-19 14:56-0500\n"
-"PO-Revision-Date: 2016-12-18 14:42-0500\n"
+"POT-Creation-Date: 2016-12-19 18:27-0500\n"
+"PO-Revision-Date: 2016-12-19 18:30-0500\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3992,45 +3992,45 @@ msgstr "Errore: unità %g, periodo %g: osservazione duplicata"
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr "Impossibile eseguire l'operazione su un dataset sotto-campionato"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlcli.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:101
-msgid "gretlcli.hlp"
-msgstr "gretlcli.hlp.it"
+msgid "gretl_cli_cmdref.en"
+msgstr "gretl_cli_cmdref.it"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if genr_funcs.xml is translated to your language, as
-#. in genrcli.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:106
-msgid "genrcli.hlp"
-msgstr "genrcli.hlp.it"
+msgid "gretl_cli_fnref.en"
+msgstr "gretl_cli_fnref.it"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlcmd.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:111
-msgid "gretlcmd.hlp"
-msgstr "gretlcmd.hlp.it"
+msgid "gretl_gui_cmdref.en"
+msgstr "gretl_gui_cmdref.it"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if gretl_commands.xml is translated to your language, as
-#. in gretlgui.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_help.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:116
-msgid "gretlgui.hlp"
-msgstr "gretlgui.hlp.it"
+msgid "gretl_gui_help.en"
+msgstr "gretl_gui_help.it"
 
-#. TRANSLATORS: you may add a two-letter language extension
-#. if genr_funcs.xml is translated to your language, as
-#. in genrgui.hlp.pt -- otherwise leave it untranslated
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
 #: lib/src/gretl_paths.c:121
-msgid "genrgui.hlp"
-msgstr "genrgui.hlp.it"
+msgid "gretl_gui_fnref.en"
+msgstr "gretl_gui_fnref.it"
 
 #: lib/src/gretl_paths.c:1941
 #, c-format
@@ -13599,7 +13599,7 @@ msgstr "MIDAS"
 msgid "Index"
 msgstr "Indice"
 
-#: gui2/helpfiles.c:825 gui2/helpfiles.c:1565 gui2/helpfiles.c:1702
+#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
 msgid "Search wrapped"
 msgstr "La ricerca è continuata dall'inizio"
 
@@ -13619,23 +13619,23 @@ msgstr "Trova:"
 msgid "Sorry, no help is available"
 msgstr "Spiacente, aiuto non disponibile"
 
-#: gui2/helpfiles.c:1408
+#: gui2/helpfiles.c:1412
 msgid "Sorry, help not found"
 msgstr "Nessun aiuto disponibile"
 
-#: gui2/helpfiles.c:1835
+#: gui2/helpfiles.c:1839
 msgid "gretl: find"
 msgstr "gretl: trova"
 
-#: gui2/helpfiles.c:1843
+#: gui2/helpfiles.c:1847
 msgid " Find what:"
 msgstr " Trova:"
 
-#: gui2/helpfiles.c:1867
+#: gui2/helpfiles.c:1871
 msgid "Variable names only (case sensitive)"
 msgstr "Solo nomi delle variabili (attenzione a maiuscolo e minuscolo)"
 
-#: gui2/helpfiles.c:2122
+#: gui2/helpfiles.c:2126
 msgid "Failed to download file"
 msgstr "Impossibile scaricare il file"
 
@@ -18007,14 +18007,26 @@ msgstr "Statistiche/trasformazioni"
 msgid "Decoration"
 msgstr "Decorazione"
 
+#~ msgid "gretlcli.hlp"
+#~ msgstr "gretlcli.hlp.it"
+
+#~ msgid "genrcli.hlp"
+#~ msgstr "genrcli.hlp.it"
+
+#~ msgid "gretlcmd.hlp"
+#~ msgstr "gretlcmd.hlp.it"
+
+#~ msgid "gretlgui.hlp"
+#~ msgstr "gretlgui.hlp.it"
+
+#~ msgid "genrgui.hlp"
+#~ msgstr "genrgui.hlp.it"
+
 #~ msgid "gretlcli_hlp.txt"
 #~ msgstr "gretlcli_hlp_it.txt"
 
 #~ msgid "genrcli_hlp.txt"
 #~ msgstr "gretlcli_hlp_it.txt"
-
-#~ msgid "gretlgui_hlp.txt"
-#~ msgstr "gretlgui_hlp_it.txt"
 
 #~ msgid "gretlcmd_hlp.txt"
 #~ msgstr "gretlcmd_hlp_it.txt"

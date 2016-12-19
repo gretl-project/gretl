@@ -1,4 +1,5 @@
 *.refs
-*.hlp
-*.hlp.*
+*cmdref*
+*fnref*
+*help*
 *.stamp

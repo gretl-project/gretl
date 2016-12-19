@@ -37,17 +37,15 @@ TEXDIR = $(topsrc)/doc/tex
 SHAREDIR = $(topsrc)/share
 
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
-
-EN_SRC = $(CMDSDIR)/gretl_commands.xml
+EN_SRC = $(CMDSDIR)/gretl_commands_en.xml
 ES_SRC = $(CMDSDIR)/gretl_commands_es.xml
 PT_SRC = $(CMDSDIR)/gretl_commands_pt.xml
 IT_SRC = $(CMDSDIR)/gretl_commands_it.xml
 
-FNCDTD = $(CMDSDIR)/genr_funcs.dtd
-
-EN_FNSRC = $(CMDSDIR)/genr_funcs.xml
-IT_FNSRC = $(CMDSDIR)/genr_funcs_it.xml
-PT_FNSRC = $(CMDSDIR)/genr_funcs_pt.xml
+FNCDTD = $(CMDSDIR)/gretl_functions.dtd
+EN_FNSRC = $(CMDSDIR)/gretl_functions_en.xml
+IT_FNSRC = $(CMDSDIR)/gretl_functions_it.xml
+PT_FNSRC = $(CMDSDIR)/gretl_functions_pt.xml
 
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
@@ -62,15 +60,21 @@ XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
 EQNLIST = $(CMDSDIR)/eqn_list.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
 
-EN_HLPSTAMP = $(SHAREDIR)/hlp.stamp
-ES_HLPSTAMP = $(SHAREDIR)/hlp_es.stamp
-IT_HLPSTAMP = $(SHAREDIR)/hlp_it.stamp
-PT_HLPSTAMP = $(SHAREDIR)/hlp_pt.stamp
+EN_CMDREF_STAMP = $(SHAREDIR)/cmdref_en.stamp
+ES_CMDREF_STAMP = $(SHAREDIR)/cmdref_es.stamp
+IT_CMDREF_STAMP = $(SHAREDIR)/cmdref_it.stamp
+PT_CMDREF_STAMP = $(SHAREDIR)/cmdref_pt.stamp
 
-EN_GENSTAMP = $(SHAREDIR)/gen.stamp
-ES_GENSTAMP = $(SHAREDIR)/gen_es.stamp
-IT_GENSTAMP = $(SHAREDIR)/gen_it.stamp
-PT_GENSTAMP = $(SHAREDIR)/gen_pt.stamp
+EN_FNREF_STAMP = $(SHAREDIR)/fnref_en.stamp
+ES_FNREF_STAMP = $(SHAREDIR)/fnref_es.stamp
+IT_FNREF_STAMP = $(SHAREDIR)/fnref_it.stamp
+PT_FNREF_STAMP = $(SHAREDIR)/fnref_pt.stamp
+
+CLI_CMDREF = gretl_cli_cmdref
+GUI_CMDREF = gretl_gui_cmdref
+GUI_HELP   = gretl_gui_help
+CLI_FNREF  = gretl_cli_fnref
+GUI_FNREF  = gretl_gui_fnref
 
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
@@ -150,67 +154,67 @@ $(FIGSTAMP): $(EQNLIST)
 	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $@
 
 # English "online" help files
-$(EN_HLPSTAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(EN_CMDREF_STAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(EN_SRC) > en.tmp && \
-	./reflow < en.tmp > $(SHAREDIR)/gretlcli.hlp && \
+	./reflow < en.tmp > $(SHAREDIR)/$(CLI_CMDREF).en && \
 	./xsltrans --cmds --pango $(EN_SRC) > en.tmp && \
-	./reflow -m < en.tmp > $(SHAREDIR)/gretlcmd.hlp && \
+	./reflow -m < en.tmp > $(SHAREDIR)/$(GUI_CMDREF).en && \
 	./xsltrans --gui --pango $(EN_SRC) > en.tmp && \
-	./reflow -m < en.tmp > $(SHAREDIR)/gretlgui.hlp && \
+	./reflow -m < en.tmp > $(SHAREDIR)/$(GUI_HELP).en && \
 	touch $@ && rm -f en.tmp
 
 # Spanish "online" help files
-$(ES_HLPSTAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(ES_CMDREF_STAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(ES_SRC) > es.tmp && \
-	./reflow < es.tmp > $(SHAREDIR)/gretlcli.hlp.es && \
+	./reflow < es.tmp > $(SHAREDIR)/$(CLI_CMDREF).es && \
 	./xsltrans --cmds --pango $(ES_SRC) > en.tmp && \
-	./reflow -m < es.tmp > $(SHAREDIR)/gretlcmd.hlp.es && \
+	./reflow -m < es.tmp > $(SHAREDIR)/$(GUI_CMDREF).es && \
 	./xsltrans --gui --pango $(ES_SRC) > es.tmp && \
-	./reflow -m < es.tmp > $(SHAREDIR)/gretlgui.hlp.es && \
+	./reflow -m < es.tmp > $(SHAREDIR)/$(GUI_HELP).es && \
 	touch $@ && rm -f es.tmp
 
 # Italian "online" help files
-$(IT_HLPSTAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(IT_CMDREF_STAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(IT_SRC) > it.tmp && \
-	./reflow < it.tmp > $(SHAREDIR)/gretlcli.hlp.it && \
+	./reflow < it.tmp > $(SHAREDIR)/$(CLI_CMDREF).it && \
 	./xsltrans --cmds --pango $(IT_SRC) > en.tmp && \
-	./reflow -m < it.tmp > $(SHAREDIR)/gretlcmd.hlp.it && \
+	./reflow -m < it.tmp > $(SHAREDIR)/$(GUI_CMDREF).it && \
 	./xsltrans --gui --pango $(IT_SRC) > it.tmp && \
-	./reflow -m < it.tmp > $(SHAREDIR)/gretlgui.hlp.it && \
+	./reflow -m < it.tmp > $(SHAREDIR)/$(GUI_HELP).it && \
 	touch $@ && rm -f it.tmp
 
 # Portuguese "online" help files
-$(PT_HLPSTAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(PT_CMDREF_STAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(PT_SRC) > pt.tmp && \
-	./reflow < pt.tmp > $(SHAREDIR)/gretlcli.hlp.pt && \
+	./reflow < pt.tmp > $(SHAREDIR)/$(CLI_CMDREF).pt && \
 	./xsltrans --cmds --pango $(PT_SRC) > en.tmp && \
-	./reflow -m < pt.tmp > $(SHAREDIR)/gretlcmd.hlp.pt && \
+	./reflow -m < pt.tmp > $(SHAREDIR)/$(GUI_CMDREF).pt && \
 	./xsltrans --gui --pango $(PT_SRC) > pt.tmp && \
-	./reflow -m < pt.tmp > $(SHAREDIR)/gretlgui.hlp.pt && \
+	./reflow -m < pt.tmp > $(SHAREDIR)/$(GUI_HELP).pt && \
 	touch $@ && rm -f pt.tmp
 
 # English function reference files
-$(EN_GENSTAMP): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(EN_FNREF_STAMP): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --plain $(EN_FNSRC) > en.tmp && \
-	./reflow < en.tmp > $(SHAREDIR)/genrcli.hlp && \
+	./reflow < en.tmp > $(SHAREDIR)/$(CLI_FNREF).en && \
 	./xsltrans --funcs --pango $(EN_FNSRC) > en.tmp && \
-	./reflow -m < en.tmp > $(SHAREDIR)/genrgui.hlp && \
+	./reflow -m < en.tmp > $(SHAREDIR)/$(GUI_FNREF).en && \
 	touch $@ && rm -f en.tmp
 
 # Italian function reference files
-$(IT_GENSTAMP): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(IT_FNREF_STAMP): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --plain $(IT_FNSRC) > it.tmp && \
-	./reflow < it.tmp > $(SHAREDIR)/genrcli.hlp.it && \
+	./reflow < it.tmp > $(SHAREDIR)/$(CLI_FNREF).it && \
 	./xsltrans --funcs --pango $(IT_FNSRC) > it.tmp && \
-	./reflow -m < it.tmp > $(SHAREDIR)/genrgui.hlp.it && \
+	./reflow -m < it.tmp > $(SHAREDIR)/$(GUI_FNREF).it && \
 	touch $@ && rm -f it.tmp
 
 # Portuguese function reference files
-$(PT_GENSTAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+$(PT_FNREF_STAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --plain $(PT_FNSRC) > pt.tmp && \
-	./reflow < pt.tmp > $(SHAREDIR)/genrcli.hlp.pt && \
+	./reflow < pt.tmp > $(SHAREDIR)/$(CLI_FNREF).pt && \
 	./xsltrans --funcs --pango $(PT_FNSRC) > pt.tmp && \
-	./reflow -m < pt.tmp > $(SHAREDIR)/genrgui.hlp.pt && \
+	./reflow -m < pt.tmp > $(SHAREDIR)/$(GUI_FNREF).pt && \
 	touch $@ && rm -f pt.tmp
 
 # English HTML help files (experimental)
@@ -227,7 +231,7 @@ biblio.html: bbl2txt ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl --html > $@
 
 # Bibliography file
-$(HELPREFS): bbl2txt $(EN_HLPSTAMP) $(EN_GENSTAMP) ../tex/gretl-ref.bbl
+$(HELPREFS): bbl2txt $(EN_CMDREF_STAMP) $(EN_FNREF_STAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@
 
 # Guide chapter titles
@@ -334,11 +338,11 @@ topiclist_pt: topiclist $(PT_SRC)
 test: skeleton.xml
 	xmllint --valid --noout $<
 
-help-en: $(CHAPREFS) $(EN_HLPSTAMP) $(EN_GENSTAMP)
+help-en: $(CHAPREFS) $(EN_CMDREF_STAMP) $(EN_FNREF_STAMP)
 
-help-it: $(CHAPREFS) $(IT_HLPSTAMP) $(IT_GENSTAMP)
+help-it: $(CHAPREFS) $(IT_CMDREF_STAMP) $(IT_FNREF_STAMP)
 
-help-pt: $(CHAPREFS) $(PT_HLPSTAMP) $(PT_GENSTAMP)
+help-pt: $(CHAPREFS) $(PT_CMDREF_STAMP) $(PT_FNREF_STAMP)
 
 help-all: help-en help-it help-pt $(HELPREFS)
 
@@ -357,7 +361,11 @@ check-pt: validate
 	-./validate $(PT_FNSRC)
 
 docclean:
-	 rm -f *.txt *.tmp
+	rm -f $(EN_CMDREF_STAMP) $(ES_CMDREF_STAMP)
+	rm -f $(IT_CMDREF_STAMP) $(PT_CMDREF_STAMP)
+	rm -f $(EN_FNREF_STAMP) $(ES_FNREF_STAMP)
+	rm -f $(IT_FNREF_STAMP) $(PT_FNREF_STAMP)
+	rm -f *.txt *.tmp
 
 clean: docclean
 	rm -f $(CPROGS) *.o

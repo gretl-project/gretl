@@ -94,31 +94,31 @@ static void set_helpfile_option (gretlopt opt)
 }
 
 static const char *helpfiles[] = {
-    /* TRANSLATORS: you may add a two-letter language extension
-       if gretl_commands.xml is translated to your language, as
-       in gretlcli.hlp.pt -- otherwise leave it untranslated
+    /* TRANSLATORS: you may change the two-letter language code
+       if gretl_commands_en.xml has been translated for your language,
+       as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
     */
-    N_("gretlcli.hlp"),
-    /* TRANSLATORS: you may add a two-letter language extension
-       if genr_funcs.xml is translated to your language, as
-       in genrcli.hlp.pt -- otherwise leave it untranslated
+    N_("gretl_cli_cmdref.en"),
+    /* TRANSLATORS: you may change the two-letter language code
+       if gretl_functions_en.xml has been translated for your language,
+       as in gretl_cli_fnref.pt -- otherwise leave it untranslated
     */	
-    N_("genrcli.hlp"),
-    /* TRANSLATORS: you may add a two-letter language extension
-       if gretl_commands.xml is translated to your language, as
-       in gretlcmd.hlp.pt -- otherwise leave it untranslated
+    N_("gretl_cli_fnref.en"),
+    /* TRANSLATORS: you may change the two-letter language code
+       if gretl_commands_en.xml has been translated for your language,
+       as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
+    */
+    N_("gretl_gui_cmdref.en"),
+    /* TRANSLATORS: you may change the two-letter language code
+       if gretl_commands_en.xml has been translated for your language,
+       as in gretl_gui_help.pt -- otherwise leave it untranslated
     */	
-    N_("gretlcmd.hlp"),
-    /* TRANSLATORS: you may add a two-letter language extension
-       if gretl_commands.xml is translated to your language, as
-       in gretlgui.hlp.pt -- otherwise leave it untranslated
+    N_("gretl_gui_help.en"),
+    /* TRANSLATORS: you may change the two-letter language code
+       if gretl_functions_en.xml has been translated for your language,
+       as in gretl_gui_fnref.pt -- otherwise leave it untranslated
     */	
-    N_("gretlgui.hlp"),
-    /* TRANSLATORS: you may add a two-letter language extension
-       if genr_funcs.xml is translated to your language, as
-       in genrgui.hlp.pt -- otherwise leave it untranslated
-    */	
-    N_("genrgui.hlp")
+    N_("gretl_gui_fnref.en")
 };
 
 const char *helpfile_path (int id, int cli, int en)
@@ -166,8 +166,8 @@ int using_translated_helpfiles (void)
 	return 0;
     }
 
-    /* If we're not forcing English help, the criterion
-       is that gretlcmd.hlp has a "translated" filename,
+    /* If we're not forcing English help, the criterion is
+       that gretl_cli_cmdref.en has a "translated" filename,
        the translation can be opened, and it's not empty.
     */
 
