@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-18 16:07-0500\n"
+"POT-Creation-Date: 2016-12-19 14:56-0500\n"
 "PO-Revision-Date: 2016-04-19 19:41+0900\n"
 "Last-Translator: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
 "Language-Team: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
@@ -1237,7 +1237,7 @@ msgstr "観測数が制限範囲外です"
 msgid "wrote %s.gdt\n"
 msgstr "%s.gdtを書き込みました\n"
 
-#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2618 gui2/model_table.c:1431
+#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2702 gui2/model_table.c:1431
 #, c-format
 msgid "wrote %s\n"
 msgstr "%sを書き込みました\n"
@@ -1337,7 +1337,7 @@ msgid "auto-generated constant"
 msgstr "自動生成された定数"
 
 #: lib/src/dataset.c:1330 gui2/fncall.c:1572 gui2/fncall.c:1583
-#: gui2/gui_utils.c:5713 gui2/toolbar.c:1283 gui2/toolbar.c:1292
+#: gui2/gui_utils.c:5715 gui2/toolbar.c:1283 gui2/toolbar.c:1292
 msgid "Please open a data file first"
 msgstr "先にデータファイルを開いて下さい"
 
@@ -1370,7 +1370,7 @@ msgstr "いくつかのデータは利用中でした"
 msgid "variable %d duplicated in the command list."
 msgstr "変数ID %d は、コマンドリストで複製されました"
 
-#: lib/src/dataset.c:1934 gui2/gui_utils.c:5165
+#: lib/src/dataset.c:1934 gui2/gui_utils.c:5167
 msgid "dataset is subsampled"
 msgstr "データセットはサブサンプルです"
 
@@ -2531,7 +2531,7 @@ msgstr ""
 #: lib/src/genfuncs.c:5826 lib/src/gretl_func.c:4467 lib/src/plotspec.c:311
 #: lib/src/plotspec.c:325 lib/src/uservar.c:1518 lib/src/uservar.c:2455
 #: gui2/fnsave.c:2344 gui2/fnsave.c:2796 gui2/gpt_dialog.c:134
-#: gui2/gui_utils.c:3202
+#: gui2/gui_utils.c:3204
 msgid "none"
 msgstr "なし"
 
@@ -2886,7 +2886,7 @@ msgstr "%sに対する分散分解を予測する"
 msgid "VAR residuals"
 msgstr ""
 
-#: lib/src/graphing.c:6976 gui2/gui_utils.c:3468
+#: lib/src/graphing.c:6976 gui2/gui_utils.c:3470
 msgid "System residuals"
 msgstr "連立方程式の残差"
 
@@ -2894,7 +2894,7 @@ msgstr "連立方程式の残差"
 msgid "EC terms"
 msgstr ""
 
-#: lib/src/graphing.c:7054 gui2/gui_utils.c:4607
+#: lib/src/graphing.c:7054 gui2/gui_utils.c:4609
 msgid "EC term"
 msgstr ""
 
@@ -3569,7 +3569,7 @@ msgstr ""
 msgid "relationship is linear"
 msgstr ""
 
-#: lib/src/gretl_model.c:3626 gui2/gui_utils.c:4274
+#: lib/src/gretl_model.c:3626 gui2/gui_utils.c:4276
 msgid "Test for normality of residual"
 msgstr "残差の正規性の検定"
 
@@ -3688,7 +3688,7 @@ msgstr ""
 msgid "chi-square(%d) = %g at observation %s"
 msgstr ""
 
-#: lib/src/gretl_model.c:3922 lib/src/gretl_model.c:3929 gui2/textbuf.c:1202
+#: lib/src/gretl_model.c:3922 lib/src/gretl_model.c:3929 gui2/textbuf.c:1203
 msgid "failed"
 msgstr "失敗しました"
 
@@ -3927,54 +3927,74 @@ msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
 "すみません。これは、サブサンプルされたデータセットに対しては実行できません"
 
-#: lib/src/gretl_paths.c:1857
+#. TRANSLATORS: you may add a two-letter language extension
+#. if gretl_commands.xml is translated to your language, as
+#. in gretlcli.hlp.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:101
+msgid "gretlcli.hlp"
+msgstr ""
+
+#. TRANSLATORS: you may add a two-letter language extension
+#. if genr_funcs.xml is translated to your language, as
+#. in genrcli.hlp.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:106
+msgid "genrcli.hlp"
+msgstr ""
+
+#. TRANSLATORS: you may add a two-letter language extension
+#. if gretl_commands.xml is translated to your language, as
+#. in gretlcmd.hlp.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:111
+msgid "gretlcmd.hlp"
+msgstr ""
+
+#. TRANSLATORS: you may add a two-letter language extension
+#. if gretl_commands.xml is translated to your language, as
+#. in gretlgui.hlp.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:116
+msgid "gretlgui.hlp"
+msgstr ""
+
+#. TRANSLATORS: you may add a two-letter language extension
+#. if genr_funcs.xml is translated to your language, as
+#. in genrgui.hlp.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:121
+msgid "genrgui.hlp"
+msgstr ""
+
+#: lib/src/gretl_paths.c:1941
 #, c-format
 msgid "Couldn't find package %s"
 msgstr "パッケージ %s が見つかりません"
 
-#: lib/src/gretl_paths.c:1877
+#: lib/src/gretl_paths.c:1961
 #, c-format
 msgid "Couldn't find file %s for package %s"
 msgstr "ファイル %s （パッケージ %s 内）が見つかりません"
 
-#: lib/src/gretl_paths.c:2540
+#: lib/src/gretl_paths.c:2624
 msgid "User directory is not set"
 msgstr "ユーザー・ディレクトリは設定されていません"
 
-#: lib/src/gretl_paths.c:2546
+#: lib/src/gretl_paths.c:2630
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "ディレクトリ '%s'を作成できませんでした"
 
-#: lib/src/gretl_paths.c:2557
+#: lib/src/gretl_paths.c:2641
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr "'%s'に書き込めませんでした: gretlは適切に機能していません!"
 
-#: lib/src/gretl_paths.c:2785
+#: lib/src/gretl_paths.c:2869
 #, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: これらの基本検索パスを使用する:\n"
-
-#: lib/src/gretl_paths.c:2949 lib/src/gretl_paths.c:2963
-msgid "gretlcli.hlp"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2951 lib/src/gretl_paths.c:2965
-msgid "genrcli.hlp"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2962
-msgid "gretlgui.hlp"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2964
-msgid "gretlcmd.hlp"
-msgstr ""
-
-#: lib/src/gretl_paths.c:2966
-msgid "genrgui.hlp"
-msgstr ""
 
 #: lib/src/gretl_plot.c:398 lib/src/tokenize.c:2194 lib/src/tokenize.c:2251
 #: lib/src/tokenize.c:2730
@@ -4516,7 +4536,7 @@ msgstr "詳細については、\"help set\" とタイプして下さい"
 msgid "Program interaction and behavior"
 msgstr "プログラムの動作と相互作用"
 
-#: lib/src/libset.c:1432 gui2/helpfiles.c:358 doc/commands/matfuncs.c:48
+#: lib/src/libset.c:1432 gui2/helpfiles.c:316 doc/commands/matfuncs.c:48
 msgid "Numerical methods"
 msgstr "数値的解法"
 
@@ -7130,7 +7150,7 @@ msgstr "推定量"
 msgid "Ljung-Box Q'"
 msgstr ""
 
-#: lib/src/texprint.c:899 lib/src/varprint.c:737 gui2/gui_utils.c:4453
+#: lib/src/texprint.c:899 lib/src/varprint.c:737 gui2/gui_utils.c:4455
 msgid "Cross-equation covariance matrix"
 msgstr ""
 
@@ -10523,7 +10543,7 @@ msgstr "gfnファイルを保存"
 msgid "A file of this name already exists."
 msgstr "この名前のファイルは、既に存在しています"
 
-#: gui2/fnsave.c:682 gui2/gui_utils.c:5194
+#: gui2/fnsave.c:682 gui2/gui_utils.c:5196
 msgid "OK to overwrite it?"
 msgstr "上書きしても、よろしいですか？"
 
@@ -10675,7 +10695,7 @@ msgstr ""
 msgid "Insert today's date"
 msgstr "今日の日付を挿入する"
 
-#: gui2/fnsave.c:2426 gui2/gui_utils.c:2447 gui2/ssheet.c:2905
+#: gui2/fnsave.c:2426 gui2/gui_utils.c:2449 gui2/ssheet.c:2905
 #: gui2/ssheet.c:2931 gui2/toolbar.c:663
 msgid "Save changes?"
 msgstr "変更を保存しますか？"
@@ -10980,7 +11000,7 @@ msgid "Font"
 msgstr "フォント"
 
 #: gui2/gpt_control.c:3866 gui2/gpt_control.c:3942 gui2/gpt_control.c:3948
-#: gui2/gui_utils.c:1896
+#: gui2/gui_utils.c:1898
 msgid "Close"
 msgstr "閉じる"
 
@@ -11936,7 +11956,7 @@ msgstr "度数分布(_F)"
 msgid "Estimated _density plot..."
 msgstr "推定された密度プロット(_d)..."
 
-#: gui2/gretl.c:1692 gui2/gui_utils.c:3015
+#: gui2/gretl.c:1692 gui2/gui_utils.c:3017
 msgid "_Boxplot"
 msgstr "箱ひげ図(_B)"
 
@@ -12040,7 +12060,7 @@ msgstr "ハースト(_Hurst)指数"
 msgid "_Edit attributes"
 msgstr "属性を編集(_E)"
 
-#: gui2/gretl.c:1724 gui2/gui_utils.c:2864
+#: gui2/gretl.c:1724 gui2/gui_utils.c:2866
 msgid "Define _new variable..."
 msgstr "新規変数の定義(_n)..."
 
@@ -12552,7 +12572,7 @@ msgstr "列区切り記号と小数点記号に、同じ文字を使うことは
 msgid "No scalar variables are currently defined"
 msgstr "現在、スカラー変数が定義されていません"
 
-#: gui2/gui_recode.c:72 gui2/gui_utils.c:2101
+#: gui2/gui_recode.c:72 gui2/gui_utils.c:2103
 #, c-format
 msgid "Can't open %s for reading"
 msgstr "%sを読み込みのために開くことが出来ません"
@@ -12699,7 +12719,7 @@ msgstr "残差の正規性(_N)"
 msgid "_Chow test"
 msgstr "チョウ(_Chow)検定"
 
-#: gui2/gui_utils.c:267 gui2/gui_utils.c:4383
+#: gui2/gui_utils.c:267 gui2/gui_utils.c:4385
 msgid "_Autocorrelation"
 msgstr "自己相関(_A)"
 
@@ -12707,7 +12727,7 @@ msgstr "自己相関(_A)"
 msgid "_Durbin-Watson p-value"
 msgstr "ダービン=ワトソン(_Durbin-Watson) p値"
 
-#: gui2/gui_utils.c:269 gui2/gui_utils.c:4389
+#: gui2/gui_utils.c:269 gui2/gui_utils.c:4391
 msgid "A_RCH"
 msgstr ""
 
@@ -12905,312 +12925,312 @@ msgstr "gretl: 名称未設定"
 msgid "gretl: script output %d"
 msgstr "gretl: スクリプト実行結果 %d"
 
-#: gui2/gui_utils.c:1752 gui2/gui_utils.c:5368 gui2/gui_utils.c:5435
-#: gui2/gui_utils.c:5628
+#: gui2/gui_utils.c:1752 gui2/gui_utils.c:5370 gui2/gui_utils.c:5437
+#: gui2/gui_utils.c:5630
 msgid "gretl: script output"
 msgstr "gretl: スクリプト実行結果"
 
 #: gui2/gui_utils.c:1762
-msgid "gretl: help"
-msgstr "gretl: ヘルプ"
-
-#: gui2/gui_utils.c:1764
-msgid "gretl: function reference"
-msgstr "gretl: 関数リファレンス"
-
-#: gui2/gui_utils.c:1766
 msgid "gretl: command reference"
 msgstr "gretl: コマンド・リファレンス"
 
-#: gui2/gui_utils.c:1772
+#: gui2/gui_utils.c:1764
+msgid "gretl: help"
+msgstr "gretl: ヘルプ"
+
+#: gui2/gui_utils.c:1766
+msgid "gretl: function reference"
+msgstr "gretl: 関数リファレンス"
+
+#: gui2/gui_utils.c:1774
 msgid "gretl: command log"
 msgstr "gretl: コマンド・ログ"
 
-#: gui2/gui_utils.c:1789 gui2/session.c:530
+#: gui2/gui_utils.c:1791 gui2/session.c:530
 msgid "gretl: session notes"
 msgstr "gretl: セッション・ノート"
 
-#: gui2/gui_utils.c:1795 gui2/library.c:6936 gui2/library.c:6970
+#: gui2/gui_utils.c:1797 gui2/library.c:6936 gui2/library.c:6970
 #: gui2/library.c:6974
 msgid "gretl: display data"
 msgstr "gretl: データ表示"
 
-#: gui2/gui_utils.c:2216
+#: gui2/gui_utils.c:2218
 msgid "gretl console"
 msgstr "gretlコンソール"
 
-#: gui2/gui_utils.c:2518
+#: gui2/gui_utils.c:2520
 #, c-format
 msgid "model %d"
 msgstr "モデル %d"
 
-#: gui2/gui_utils.c:2524 gui2/tabwin.c:857
+#: gui2/gui_utils.c:2526 gui2/tabwin.c:857
 #, c-format
 msgid "gretl: model %d"
 msgstr "gretl: モデル%d"
 
-#: gui2/gui_utils.c:2623 gui2/gui_utils.c:2636
+#: gui2/gui_utils.c:2625 gui2/gui_utils.c:2638
 msgid "Outcome probabilities"
 msgstr ""
 
-#: gui2/gui_utils.c:2816
+#: gui2/gui_utils.c:2818
 msgid "_Fitted values"
 msgstr "理論値(_F)"
 
-#: gui2/gui_utils.c:2818
+#: gui2/gui_utils.c:2820
 msgid "_Residuals"
 msgstr "残差(_R)"
 
-#: gui2/gui_utils.c:2820
+#: gui2/gui_utils.c:2822
 msgid "_Squared residuals"
 msgstr "残差の2乗(_S)"
 
-#: gui2/gui_utils.c:2825
+#: gui2/gui_utils.c:2827
 msgid "_Error sum of squares"
 msgstr "残差平方和(_E)"
 
-#: gui2/gui_utils.c:2827
+#: gui2/gui_utils.c:2829
 msgid "_Standard error of the regression"
 msgstr "回帰の標準誤差(_S)"
 
-#: gui2/gui_utils.c:2832
+#: gui2/gui_utils.c:2834
 msgid "_R-squared"
 msgstr "決定係数(_R)"
 
-#: gui2/gui_utils.c:2833
+#: gui2/gui_utils.c:2835
 msgid "_T*R-squared"
 msgstr "標本サイズ(_T)×決定係数"
 
-#: gui2/gui_utils.c:2837
+#: gui2/gui_utils.c:2839
 msgid "_Log likelihood"
 msgstr "対数尤度(_L)"
 
-#: gui2/gui_utils.c:2842
+#: gui2/gui_utils.c:2844
 msgid "_Akaike Information Criterion"
 msgstr "赤池情報量規準(_A)"
 
-#: gui2/gui_utils.c:2844
+#: gui2/gui_utils.c:2846
 msgid "_Bayesian Information Criterion"
 msgstr "ベイズ情報量規準(_B)"
 
-#: gui2/gui_utils.c:2846
+#: gui2/gui_utils.c:2848
 msgid "_Hannan-Quinn Information Criterion"
 msgstr "_Hannan-Quinn情報量規準"
 
-#: gui2/gui_utils.c:2851
+#: gui2/gui_utils.c:2853
 msgid "_Predicted error variance"
 msgstr "予測誤差分散(_P)"
 
-#: gui2/gui_utils.c:2857
+#: gui2/gui_utils.c:2859
 msgid "Per-unit _constants"
 msgstr "ユニットごとの定数(_c)"
 
-#: gui2/gui_utils.c:3026
+#: gui2/gui_utils.c:3028
 msgid "_Against time"
 msgstr "対 時間(_A)"
 
-#: gui2/gui_utils.c:3028
+#: gui2/gui_utils.c:3030
 msgid "By _observation number"
 msgstr "観測番号による(_o)"
 
-#: gui2/gui_utils.c:3048 gui2/gui_utils.c:3069
+#: gui2/gui_utils.c:3050 gui2/gui_utils.c:3071
 #, c-format
 msgid "_Against %s"
 msgstr "対 %s (_A)"
 
-#: gui2/gui_utils.c:3082
+#: gui2/gui_utils.c:3084
 msgid "Actual vs. Fitted"
 msgstr "実績値 対 理論値"
 
-#: gui2/gui_utils.c:3092
+#: gui2/gui_utils.c:3094
 msgid "Residual _correlogram"
 msgstr "残差コレログラム(_c)"
 
-#: gui2/gui_utils.c:3096
+#: gui2/gui_utils.c:3098
 msgid "Residual _periodogram"
 msgstr "残差ピリオドグラム(_p)"
 
-#: gui2/gui_utils.c:3101
+#: gui2/gui_utils.c:3103
 #, fuzzy
 msgid "_MIDAS coefficients"
 msgstr "係数の合計(_S)"
 
-#: gui2/gui_utils.c:3111
+#: gui2/gui_utils.c:3113
 msgid "Residual _Q-Q plot"
 msgstr "残差_Q-Qプロット"
 
-#: gui2/gui_utils.c:3131
+#: gui2/gui_utils.c:3133
 #, c-format
 msgid "_Against %s and %s"
 msgstr "対 %s および %s(_A)"
 
-#: gui2/gui_utils.c:3196
+#: gui2/gui_utils.c:3198
 msgid "Separation"
 msgstr ""
 
-#: gui2/gui_utils.c:3211
+#: gui2/gui_utils.c:3213
 #, c-format
 msgid "By %s"
 msgstr ""
 
-#: gui2/gui_utils.c:3254
+#: gui2/gui_utils.c:3256
 msgid "tau sequence"
 msgstr ""
 
-#: gui2/gui_utils.c:3460
+#: gui2/gui_utils.c:3462
 msgid "gretl: VAR covariance matrix"
 msgstr "gretl: VAR共分散行列"
 
-#: gui2/gui_utils.c:3463
+#: gui2/gui_utils.c:3465
 msgid "gretl: system covariance matrix"
 msgstr "gretl: システム共分散行列"
 
-#: gui2/gui_utils.c:3469
+#: gui2/gui_utils.c:3471
 msgid "System fitted values"
 msgstr ""
 
-#: gui2/gui_utils.c:3536
+#: gui2/gui_utils.c:3538
 msgid "View X-12-ARIMA output"
 msgstr "X-12-ARIMAの出力を表示"
 
-#: gui2/gui_utils.c:3660
+#: gui2/gui_utils.c:3662
 msgid "Cholesky ordering:"
 msgstr "コレスキー順序: "
 
-#: gui2/gui_utils.c:3741
+#: gui2/gui_utils.c:3743
 msgid "include bootstrap confidence interval"
 msgstr "ブートストラップ信頼区間を含む"
 
-#: gui2/gui_utils.c:3748 gui2/gui_utils.c:4032
+#: gui2/gui_utils.c:3750 gui2/gui_utils.c:4034
 msgid "impulse responses"
 msgstr "インパルス応答"
 
-#: gui2/gui_utils.c:3753 gui2/gui_utils.c:3802 gui2/gui_utils.c:4038
+#: gui2/gui_utils.c:3755 gui2/gui_utils.c:3804 gui2/gui_utils.c:4040
 msgid "forecast horizon (periods):"
 msgstr "予測する期間数:"
 
-#: gui2/gui_utils.c:3788
+#: gui2/gui_utils.c:3790
 msgid "line graph"
 msgstr "折れ線グラフ"
 
-#: gui2/gui_utils.c:3789
+#: gui2/gui_utils.c:3791
 msgid "stacked bar graph"
 msgstr "積み上げ棒グラフ"
 
-#: gui2/gui_utils.c:3797 gui2/gui_utils.c:4466 gui2/gui_utils.c:4588
+#: gui2/gui_utils.c:3799 gui2/gui_utils.c:4468 gui2/gui_utils.c:4590
 msgid "Forecast variance decomposition"
 msgstr "分散分解を予測する"
 
-#: gui2/gui_utils.c:4033
+#: gui2/gui_utils.c:4035
 msgid "variance decompositions"
 msgstr "分散分解"
 
-#: gui2/gui_utils.c:4188 gui2/library.c:2132
+#: gui2/gui_utils.c:4190 gui2/library.c:2132
 msgid "gretl: forecasts"
 msgstr "gretl: 予測"
 
-#: gui2/gui_utils.c:4244 gui2/gui_utils.c:4255 gui2/library.c:3233
+#: gui2/gui_utils.c:4246 gui2/gui_utils.c:4257 gui2/library.c:3233
 #: gui2/library.c:3254
 msgid "gretl: autocorrelation"
 msgstr "gretl: 自己相関"
 
-#: gui2/gui_utils.c:4245 gui2/gui_utils.c:4266 gui2/library.c:2658
+#: gui2/gui_utils.c:4247 gui2/gui_utils.c:4268 gui2/library.c:2658
 #: gui2/library.c:2677
 msgid "gretl: ARCH test"
 msgstr "gretl: ARCH検定"
 
-#: gui2/gui_utils.c:4246 gui2/library.c:3234
+#: gui2/gui_utils.c:4248 gui2/library.c:3234
 msgid "Lag order for test:"
 msgstr "検定するラグ次数:"
 
-#: gui2/gui_utils.c:4395
+#: gui2/gui_utils.c:4397
 msgid "_Normality of residuals"
 msgstr "残差の正規性(_N)"
 
-#: gui2/gui_utils.c:4402
+#: gui2/gui_utils.c:4404
 msgid "Linear restrictions"
 msgstr "線型制約"
 
-#: gui2/gui_utils.c:4409
+#: gui2/gui_utils.c:4411
 msgid "Omit exogenous variables..."
 msgstr "外生変数を取り除く..."
 
-#: gui2/gui_utils.c:4415
+#: gui2/gui_utils.c:4417
 msgid "Omit time trend"
 msgstr "タイム・トレンドを取り除く"
 
-#: gui2/gui_utils.c:4421
+#: gui2/gui_utils.c:4423
 msgid "Omit seasonal dummies"
 msgstr "季節ダミーを取り除く"
 
-#: gui2/gui_utils.c:4430
+#: gui2/gui_utils.c:4432
 msgid "Residuals from equation"
 msgstr "推定式からの残差"
 
-#: gui2/gui_utils.c:4439
+#: gui2/gui_utils.c:4441
 msgid "Display residuals, all equations"
 msgstr "全ての推定式の残差を表示する"
 
-#: gui2/gui_utils.c:4446
+#: gui2/gui_utils.c:4448
 msgid "Display fitted values, all equations"
 msgstr ""
 
-#: gui2/gui_utils.c:4460
+#: gui2/gui_utils.c:4462
 msgid "Impulse responses"
 msgstr "インパルス応答"
 
-#: gui2/gui_utils.c:4474
+#: gui2/gui_utils.c:4476
 msgid "Residuals"
 msgstr "残差"
 
-#: gui2/gui_utils.c:4481
+#: gui2/gui_utils.c:4483
 msgid "Combined plot"
 msgstr "結合プロット"
 
-#: gui2/gui_utils.c:4490
+#: gui2/gui_utils.c:4492
 msgid "Multiple plots"
 msgstr "マルチ・プロット"
 
-#: gui2/gui_utils.c:4499
+#: gui2/gui_utils.c:4501
 #, c-format
 msgid "Equation %d"
 msgstr "第 %d 式"
 
-#: gui2/gui_utils.c:4512
+#: gui2/gui_utils.c:4514
 msgid "EC plot"
 msgstr "ECプロット"
 
-#: gui2/gui_utils.c:4517
+#: gui2/gui_utils.c:4519
 msgid "Combined EC plot"
 msgstr "結合ECプロット"
 
-#: gui2/gui_utils.c:4526
+#: gui2/gui_utils.c:4528
 msgid "VAR inverse roots"
 msgstr ""
 
-#: gui2/gui_utils.c:4534
+#: gui2/gui_utils.c:4536
 msgid "Impulse responses (combined)"
 msgstr "インパルス応答 (combined)"
 
-#: gui2/gui_utils.c:4564
+#: gui2/gui_utils.c:4566
 #, c-format
 msgid "Response of %s"
 msgstr "%sの応答"
 
-#: gui2/gui_utils.c:4578
+#: gui2/gui_utils.c:4580
 #, c-format
 msgid "to %s"
 msgstr "対 %s"
 
-#: gui2/gui_utils.c:4963
+#: gui2/gui_utils.c:4965
 msgid "_Save text..."
 msgstr "形式を指定してテキストを保存(_S)..."
 
-#: gui2/gui_utils.c:4970
+#: gui2/gui_utils.c:4972
 msgid "Save bundle to session as _icon"
 msgstr "バンドルをアイコンとしてセッションに保存(_i)"
 
-#: gui2/gui_utils.c:5051
+#: gui2/gui_utils.c:5053
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -13223,7 +13243,7 @@ msgstr ""
 "\n"
 "このモデルが推定された標本を復元しますか?"
 
-#: gui2/gui_utils.c:5111
+#: gui2/gui_utils.c:5113
 #, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
@@ -13234,32 +13254,32 @@ msgstr ""
 "\n"
 "このモデルが推定された標本を復元しますか?"
 
-#: gui2/gui_utils.c:5176 gui2/library.c:5110
+#: gui2/gui_utils.c:5178 gui2/library.c:5110
 #, c-format
 msgid "A series named %s already exists"
 msgstr "%sという名前の系列は既に存在しています"
 
-#: gui2/gui_utils.c:5178
+#: gui2/gui_utils.c:5180
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "%sという名前の行列は、既に存在しています"
 
-#: gui2/gui_utils.c:5180
+#: gui2/gui_utils.c:5182
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "%sという名前のスカラーは、既に存在しています"
 
-#: gui2/gui_utils.c:5182
+#: gui2/gui_utils.c:5184
 #, c-format
 msgid "A list named %s already exists"
 msgstr "%sという名前のリストは、既に存在しています"
 
-#: gui2/gui_utils.c:5184
+#: gui2/gui_utils.c:5186
 #, c-format
 msgid "A string named %s already exists"
 msgstr "%sという名前の文字列は既に存在しています"
 
-#: gui2/gui_utils.c:5220
+#: gui2/gui_utils.c:5222
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -13268,7 +13288,7 @@ msgstr ""
 "変数名 %s... は長すぎます\n"
 "(最大 %d 文字にして下さい)"
 
-#: gui2/gui_utils.c:5225
+#: gui2/gui_utils.c:5227
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -13277,7 +13297,7 @@ msgstr ""
 "名称の1文字目('%c')が不適切です\n"
 "（1文字目は必ずアルファベットにして下さい）"
 
-#: gui2/gui_utils.c:5233
+#: gui2/gui_utils.c:5235
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -13286,7 +13306,7 @@ msgstr ""
 "名称に不正な文字が含まれています(位置: %d)\n"
 "アクセントのつかない英数字とアンダースコアのみ利用できます"
 
-#: gui2/gui_utils.c:5519
+#: gui2/gui_utils.c:5521
 msgid "No command was supplied to start R"
 msgstr "Rを起動するコマンドが与えられていません"
 
@@ -13330,7 +13350,7 @@ msgstr "統計量"
 msgid "Tests"
 msgstr "検定"
 
-#: gui2/helpfiles.c:167 gui2/helpfiles.c:372 plugin/tramo_options.c:529
+#: gui2/helpfiles.c:167 gui2/helpfiles.c:330 plugin/tramo_options.c:529
 msgid "Transformations"
 msgstr "変換"
 
@@ -13338,100 +13358,100 @@ msgstr "変換"
 msgid "Utilities"
 msgstr "ユーティリティ"
 
-#: gui2/helpfiles.c:354
+#: gui2/helpfiles.c:312
 msgid "Accessors"
 msgstr "アクセス関数"
 
-#: gui2/helpfiles.c:356
+#: gui2/helpfiles.c:314
 msgid "Mathematical"
 msgstr "数学関数"
 
-#: gui2/helpfiles.c:360
+#: gui2/helpfiles.c:318
 msgid "Filters"
 msgstr "フィルター"
 
-#: gui2/helpfiles.c:362
+#: gui2/helpfiles.c:320
 msgid "Statistical"
 msgstr "統計"
 
-#: gui2/helpfiles.c:364
+#: gui2/helpfiles.c:322
 msgid "Probability"
 msgstr "確率"
 
-#: gui2/helpfiles.c:366
+#: gui2/helpfiles.c:324
 msgid "Linear algebra"
 msgstr "線型代数"
 
-#: gui2/helpfiles.c:368
+#: gui2/helpfiles.c:326
 msgid "Matrix building"
 msgstr "行列作成"
 
-#: gui2/helpfiles.c:370
+#: gui2/helpfiles.c:328
 msgid "Matrix shaping"
 msgstr "行列変形"
 
-#: gui2/helpfiles.c:374
+#: gui2/helpfiles.c:332
 msgid "Data utilities"
 msgstr "データ・ユーティリティ"
 
-#: gui2/helpfiles.c:376
+#: gui2/helpfiles.c:334
 msgid "Strings"
 msgstr "文字列"
 
-#: gui2/helpfiles.c:378
+#: gui2/helpfiles.c:336
 #, fuzzy
 msgid "State space"
 msgstr "スペース"
 
-#: gui2/helpfiles.c:380
+#: gui2/helpfiles.c:338
 msgid "Calendar"
 msgstr "カレンダー"
 
-#: gui2/helpfiles.c:382
+#: gui2/helpfiles.c:340
 msgid "MIDAS"
 msgstr ""
 
-#: gui2/helpfiles.c:422 gui2/textbuf.c:1994
+#: gui2/helpfiles.c:382 gui2/textbuf.c:1995
 msgid "Index"
 msgstr "インデックス"
 
-#: gui2/helpfiles.c:852 gui2/helpfiles.c:1609 gui2/helpfiles.c:1746
+#: gui2/helpfiles.c:825 gui2/helpfiles.c:1565 gui2/helpfiles.c:1702
 msgid "Search wrapped"
 msgstr ""
 
-#: gui2/helpfiles.c:957
+#: gui2/helpfiles.c:931
 msgid "this page"
 msgstr "現在のページ"
 
-#: gui2/helpfiles.c:958
+#: gui2/helpfiles.c:932
 msgid "all pages"
 msgstr "全てのページ"
 
-#: gui2/helpfiles.c:1014 gui2/textutil.c:284
+#: gui2/helpfiles.c:991 gui2/textutil.c:284
 msgid "Find:"
 msgstr "検索する文字列:"
 
-#: gui2/helpfiles.c:1098
+#: gui2/helpfiles.c:1064
 msgid "Sorry, no help is available"
 msgstr "すみません。この項目のヘルプはありません"
 
-#: gui2/helpfiles.c:1452
+#: gui2/helpfiles.c:1408
 msgid "Sorry, help not found"
 msgstr "すみません。ヘルプが見つかりません"
 
-#: gui2/helpfiles.c:1879
+#: gui2/helpfiles.c:1835
 msgid "gretl: find"
 msgstr "gretl: 検索"
 
-#: gui2/helpfiles.c:1887
+#: gui2/helpfiles.c:1843
 msgid " Find what:"
 msgstr " 検索する文字列:"
 
-#: gui2/helpfiles.c:1911
+#: gui2/helpfiles.c:1867
 msgid "Variable names only (case sensitive)"
 msgstr "変数名から検索（大文字・小文字を区別）"
 
-#: gui2/helpfiles.c:2166
+#: gui2/helpfiles.c:2122
 msgid "Failed to download file"
 msgstr "ファイルのダウンロードに失敗しました"
 
@@ -16178,75 +16198,75 @@ msgstr "新しいウィンドウへ移動"
 msgid "Move to tabbed window"
 msgstr "タブ・ウィンドウへ移動"
 
-#: gui2/textbuf.c:364
+#: gui2/textbuf.c:365
 msgid "No redo information available"
 msgstr "「やり直し」に利用できる情報はありません"
 
-#: gui2/textbuf.c:373
+#: gui2/textbuf.c:374
 msgid "No undo information available"
 msgstr "「元に戻す」ために利用できる情報がありません"
 
-#: gui2/textbuf.c:1198
+#: gui2/textbuf.c:1199
 msgid "OK"
 msgstr ""
 
-#: gui2/textbuf.c:1230
+#: gui2/textbuf.c:1231
 msgid "processing...\n"
 msgstr "処理中...\n"
 
-#: gui2/textbuf.c:1859
+#: gui2/textbuf.c:1860
 msgid "Gretl Command Reference"
 msgstr "Gretlコマンド・リファレンス"
 
-#: gui2/textbuf.c:1903
+#: gui2/textbuf.c:1904
 msgid "Gretl Function Reference"
 msgstr "Gretl関数リファレンス"
 
-#: gui2/textbuf.c:1995
+#: gui2/textbuf.c:1996
 msgid "Back"
 msgstr "戻る"
 
-#: gui2/textbuf.c:3306
+#: gui2/textbuf.c:3307
 msgid "Comment line"
 msgstr "この行をコメントにする"
 
-#: gui2/textbuf.c:3307
+#: gui2/textbuf.c:3308
 msgid "Uncomment line"
 msgstr "この行を非コメント行にする"
 
-#: gui2/textbuf.c:3308
+#: gui2/textbuf.c:3309
 msgid "Comment region"
 msgstr "コメント領域"
 
-#: gui2/textbuf.c:3309
+#: gui2/textbuf.c:3310
 msgid "Uncomment region"
 msgstr ""
 
-#: gui2/textbuf.c:3345
+#: gui2/textbuf.c:3346
 msgid "Execute region"
 msgstr ""
 
-#: gui2/textbuf.c:3347
+#: gui2/textbuf.c:3348
 msgid "Execute line"
 msgstr "この行を実行する"
 
-#: gui2/textbuf.c:3375
+#: gui2/textbuf.c:3376
 msgid "Auto-indent region"
 msgstr ""
 
-#: gui2/textbuf.c:3376
+#: gui2/textbuf.c:3377
 msgid "Indent region"
 msgstr ""
 
-#: gui2/textbuf.c:3385
+#: gui2/textbuf.c:3386
 msgid "Unindent region"
 msgstr ""
 
-#: gui2/textbuf.c:3393
+#: gui2/textbuf.c:3394
 msgid "Auto-indent script"
 msgstr "スクリプトの自動インデント"
 
-#: gui2/textbuf.c:3404 gui2/toolbar.c:743
+#: gui2/textbuf.c:3405 gui2/toolbar.c:743
 msgid "Preferences..."
 msgstr "設定..."
 

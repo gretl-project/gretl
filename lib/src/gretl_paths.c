@@ -93,6 +93,34 @@ static void set_helpfile_option (gretlopt opt)
     }
 }
 
+static const char *helpfiles[] = {
+    /* TRANSLATORS: you may add a two-letter language extension
+       if gretl_commands.xml is translated to your language, as
+       in gretlcli.hlp.pt -- otherwise leave it untranslated
+    */
+    N_("gretlcli.hlp"),
+    /* TRANSLATORS: you may add a two-letter language extension
+       if genr_funcs.xml is translated to your language, as
+       in genrcli.hlp.pt -- otherwise leave it untranslated
+    */	
+    N_("genrcli.hlp"),
+    /* TRANSLATORS: you may add a two-letter language extension
+       if gretl_commands.xml is translated to your language, as
+       in gretlcmd.hlp.pt -- otherwise leave it untranslated
+    */	
+    N_("gretlcmd.hlp"),
+    /* TRANSLATORS: you may add a two-letter language extension
+       if gretl_commands.xml is translated to your language, as
+       in gretlgui.hlp.pt -- otherwise leave it untranslated
+    */	
+    N_("gretlgui.hlp"),
+    /* TRANSLATORS: you may add a two-letter language extension
+       if genr_funcs.xml is translated to your language, as
+       in genrgui.hlp.pt -- otherwise leave it untranslated
+    */	
+    N_("genrgui.hlp")
+};
+
 const char *helpfile_path (int id, int cli, int en)
 {
     const char *ghome = paths.gretldir;
@@ -100,40 +128,30 @@ const char *helpfile_path (int id, int cli, int en)
 
     *hpath = '\0';
 
+    if (force_en_help) {
+	en = 1;
+    }
+
     if (cli) {
 	/* Command-line program */
-	if (en || force_en_help) {
-	    /* English forced */
-	    if (id == GRETL_CMDREF) {
-		sprintf(hpath, "%sgretlcli.hlp", ghome);
-	    } else if (id == GRETL_FUNCREF) {
-		sprintf(hpath, "%sgenrcli.hlp", ghome);
-	    }
-	} else {
-	    /* use translation if available */
-	    if (id == GRETL_CMDREF) {
-		sprintf(hpath, "%s%s", ghome, _("gretlcli.hlp"));
-	    } else if (id == GRETL_FUNCREF) {
-		sprintf(hpath, "%s%s", ghome, _("genrcli.hlp"));
-	    }	    
-	}
-    } else if (en || force_en_help) {
-	/* GUI program, English forced */
 	if (id == GRETL_CMDREF) {
-	    sprintf(hpath, "%sgretlcmd.hlp", ghome);
+	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[0] :
+		    _(helpfiles[0]));
 	} else if (id == GRETL_FUNCREF) {
-	    sprintf(hpath, "%sgenrgui.hlp", ghome);
-	} else if (id == GRETL_GUI_HELP) {
-	    sprintf(hpath, "%sgretlgui.hlp", ghome);
+	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[1] :
+		    _(helpfiles[1]));
 	}
     } else {
-	/* GUI program, use translation if available */
+	/* GUI program */
 	if (id == GRETL_CMDREF) {
-	    sprintf(hpath, "%s%s", ghome, _("gretlcmd.hlp"));
-	} else if (id == GRETL_FUNCREF) {
-	    sprintf(hpath, "%s%s", ghome, _("genrgui.hlp"));
+	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[2] :
+		    _(helpfiles[2]));
 	} else if (id == GRETL_GUI_HELP) {
-	    sprintf(hpath, "%s%s", ghome, _("gretlgui.hlp"));
+	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[3] :
+		    _(helpfiles[3]));
+	} else if (id == GRETL_FUNCREF) {
+	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[4] :
+		    _(helpfiles[4]));
 	}
     }
 
@@ -153,12 +171,12 @@ int using_translated_helpfiles (void)
        the translation can be opened, and it's not empty.
     */
 
-    if (strcmp("gretlcmd.hlp", _("gretlcmd.hlp"))) {
+    if (strcmp(helpfiles[0], _(helpfiles[0]))) {
 	char test[MAXLEN];
 	FILE *fp;
 
 	force_en_help = 1; /* will be reversed if OK */
-	sprintf(test, "%s%s", paths.gretldir, _("gretlcmd.hlp"));
+	sprintf(test, "%s%s", paths.gretldir, _(helpfiles[0]));
 	fp = gretl_fopen(test, "r");
 	if (fp != NULL) {
 	    if (fgets(test, 16, fp) != NULL) {
