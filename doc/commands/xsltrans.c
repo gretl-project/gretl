@@ -274,9 +274,9 @@ int main (int argc, char **argv)
 	get_docdir(docdir, fname);
     }
 
-    fprintf(stderr, "%s: input file '%s'\n", argv[0], fname);
-
     err = parse_commands_data(fname, content, format, docdir);
+
+    fprintf(stderr, "%s: input file '%s'; err = %d\n", argv[0], fname, err);
 
     return err;
 }

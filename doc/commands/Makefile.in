@@ -45,9 +45,9 @@ IT_SRC = $(CMDSDIR)/gretl_commands_it.xml
 
 FNCDTD = $(CMDSDIR)/genr_funcs.dtd
 
-EN_FNCSRC = $(CMDSDIR)/genr_funcs.xml
-IT_FNCSRC = $(CMDSDIR)/genr_funcs_it.xml
-PT_FNCSRC = $(CMDSDIR)/genr_funcs_pt.xml
+EN_FNSRC = $(CMDSDIR)/genr_funcs.xml
+IT_FNSRC = $(CMDSDIR)/genr_funcs_it.xml
+PT_FNSRC = $(CMDSDIR)/genr_funcs_pt.xml
 
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
@@ -151,49 +151,67 @@ $(FIGSTAMP): $(EQNLIST)
 
 # English "online" help files
 $(EN_HLPSTAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(EN_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp
-	./xsltrans --cmds --pango $(EN_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp
-	./xsltrans --gui --pango $(EN_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp
-	touch $@
+	./xsltrans --cmds --plain $(EN_SRC) > en.tmp && \
+	./reflow < en.tmp > $(SHAREDIR)/gretlcli.hlp && \
+	./xsltrans --cmds --pango $(EN_SRC) > en.tmp && \
+	./reflow -m < en.tmp > $(SHAREDIR)/gretlcmd.hlp && \
+	./xsltrans --gui --pango $(EN_SRC) > en.tmp && \
+	./reflow -m < en.tmp > $(SHAREDIR)/gretlgui.hlp && \
+	touch $@ && rm -f en.tmp
 
 # Spanish "online" help files
 $(ES_HLPSTAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(ES_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp.es
-	./xsltrans --cmds --pango $(ES_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp.es
-	./xsltrans --gui --pango $(ES_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp.es
-	touch $@
+	./xsltrans --cmds --plain $(ES_SRC) > es.tmp && \
+	./reflow < es.tmp > $(SHAREDIR)/gretlcli.hlp.es && \
+	./xsltrans --cmds --pango $(ES_SRC) > en.tmp && \
+	./reflow -m < es.tmp > $(SHAREDIR)/gretlcmd.hlp.es && \
+	./xsltrans --gui --pango $(ES_SRC) > es.tmp && \
+	./reflow -m < es.tmp > $(SHAREDIR)/gretlgui.hlp.es && \
+	touch $@ && rm -f es.tmp
 
 # Italian "online" help files
 $(IT_HLPSTAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(IT_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp.it
-	./xsltrans --cmds --pango $(IT_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp.it
-	./xsltrans --gui --pango $(IT_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp.it
-	touch $@
+	./xsltrans --cmds --plain $(IT_SRC) > it.tmp && \
+	./reflow < it.tmp > $(SHAREDIR)/gretlcli.hlp.it && \
+	./xsltrans --cmds --pango $(IT_SRC) > en.tmp && \
+	./reflow -m < it.tmp > $(SHAREDIR)/gretlcmd.hlp.it && \
+	./xsltrans --gui --pango $(IT_SRC) > it.tmp && \
+	./reflow -m < it.tmp > $(SHAREDIR)/gretlgui.hlp.it && \
+	touch $@ && rm -f it.tmp
 
 # Portuguese "online" help files
 $(PT_HLPSTAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(PT_SRC) | ./reflow > $(SHAREDIR)/gretlcli.hlp.pt
-	./xsltrans --cmds --pango $(PT_SRC) | ./reflow -m > $(SHAREDIR)/gretlcmd.hlp.pt 
-	./xsltrans --gui --pango $(PT_SRC) | ./reflow -m > $(SHAREDIR)/gretlgui.hlp.pt
-	touch $@
+	./xsltrans --cmds --plain $(PT_SRC) > pt.tmp && \
+	./reflow < pt.tmp > $(SHAREDIR)/gretlcli.hlp.pt && \
+	./xsltrans --cmds --pango $(PT_SRC) > en.tmp && \
+	./reflow -m < pt.tmp > $(SHAREDIR)/gretlcmd.hlp.pt && \
+	./xsltrans --gui --pango $(PT_SRC) > pt.tmp && \
+	./reflow -m < pt.tmp > $(SHAREDIR)/gretlgui.hlp.pt && \
+	touch $@ && rm -f pt.tmp
 
 # English function reference files
-$(EN_GENSTAMP): xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(EN_FNCSRC) | ./reflow > $(SHAREDIR)/genrcli.hlp
-	./xsltrans --funcs --pango $(EN_FNCSRC) | ./reflow -m > $(SHAREDIR)/genrgui.hlp
-	touch $@
+$(EN_GENSTAMP): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(EN_FNSRC) > en.tmp && \
+	./reflow < en.tmp > $(SHAREDIR)/genrcli.hlp && \
+	./xsltrans --funcs --pango $(EN_FNSRC) > en.tmp && \
+	./reflow -m < en.tmp > $(SHAREDIR)/genrgui.hlp && \
+	touch $@ && rm -f en.tmp
 
 # Italian function reference files
-$(IT_GENSTAMP): xsltrans reflow $(IT_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(IT_FNCSRC) | ./reflow > $(SHAREDIR)/genrcli.hlp.it
-	./xsltrans --funcs --pango $(IT_FNCSRC) | ./reflow -m > $(SHAREDIR)/genrgui.hlp.it
-	touch $@
+$(IT_GENSTAMP): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(IT_FNSRC) > it.tmp && \
+	./reflow < it.tmp > $(SHAREDIR)/genrcli.hlp.it && \
+	./xsltrans --funcs --pango $(IT_FNSRC) > it.tmp && \
+	./reflow -m < it.tmp > $(SHAREDIR)/genrgui.hlp.it && \
+	touch $@ && rm -f it.tmp
 
 # Portuguese function reference files
-$(PT_GENSTAMP): xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(PT_FNCSRC) | ./reflow > $(SHAREDIR)/genrcli.hlp.pt
-	./xsltrans --funcs --pango $(PT_FNCSRC) | ./reflow -m > $(SHAREDIR)/genrgui.hlp.pt
-	touch $@
+$(PT_GENSTAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(PT_FNSRC) > pt.tmp && \
+	./reflow < pt.tmp > $(SHAREDIR)/genrcli.hlp.pt && \
+	./xsltrans --funcs --pango $(PT_FNSRC) > pt.tmp && \
+	./reflow -m < pt.tmp > $(SHAREDIR)/genrgui.hlp.pt && \
+	touch $@ && rm -f pt.tmp
 
 # English HTML help files (experimental)
 
@@ -202,8 +220,8 @@ htmlhelp: cmdref.html funcref.html biblio.html
 cmdref.html: xsltrans reflow $(EN_SRC) $(CMDDTD) $(HTMLXSL) $(XMLSTRS)
 	./xsltrans --cmds --html $(EN_SRC) | ./reflow --html > $@
 
-funcref.html: xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(HTMLXSL) $(XMLSTRS) 
-	./xsltrans --funcs --html $(EN_FNCSRC) | ./reflow --html > $@
+funcref.html: xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HTMLXSL) $(XMLSTRS) 
+	./xsltrans --funcs --html $(EN_FNSRC) | ./reflow --html > $@
 
 biblio.html: bbl2txt ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl --html > $@
@@ -226,53 +244,53 @@ $(GRETLLIB):
 
 # generate some reference tables automatically, to ensure
 # they remain in step with the actual code
-textables: tables matfuncs $(EN_FNCSRC)
+textables: tables matfuncs $(EN_FNSRC)
 	./tables --internals > ../tex/tabinternals.tex && \
 	./tables --functions > ../tex/tabfunctions.tex && \
 	./tables --loopcmds > ../tex/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex && \
-	LANG=en_US ./matfuncs $(EN_FNCSRC) > ../tex/matfuncs.tex && \
+	LANG=en_US ./matfuncs $(EN_FNSRC) > ../tex/matfuncs.tex && \
 	touch $@
 
-textables_it: tables matfuncs $(IT_FNCSRC)
+textables_it: tables matfuncs $(IT_FNSRC)
 	./tables --internals > ../tex_it/tabinternals.tex && \
 	./tables --functions > ../tex_it/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_it/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_it/tabnonloopcmds.tex && \
-	LANG=it_IT ./matfuncs $(IT_FNCSRC) > ../tex_it/matfuncs.tex && \
+	LANG=it_IT ./matfuncs $(IT_FNSRC) > ../tex_it/matfuncs.tex && \
 	touch $@
 
-textables_es: tables matfuncs $(ES_FNCSRC)
+textables_es: tables matfuncs $(ES_FNSRC)
 	./tables --internals > ../tex_es/tabinternals.tex && \
 	./tables --functions > ../tex_es/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_es/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_es/tabnonloopcmds.tex && \
-	LANG=es_ES ./matfuncs $(ES_FNCSRC) > ../tex_es/matfuncs.tex && \
+	LANG=es_ES ./matfuncs $(ES_FNSRC) > ../tex_es/matfuncs.tex && \
 	touch $@
 
-textables_pt: tables matfuncs $(PT_FNCSRC)
+textables_pt: tables matfuncs $(PT_FNSRC)
 	./tables --internals > ../tex_pt/tabinternals.tex && \
 	./tables --functions > ../tex_pt/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_pt/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_pt/tabnonloopcmds.tex && \
-	LANG=pt_PT ./matfuncs $(PT_FNCSRC) > ../tex_pt/matfuncs.tex && \
+	LANG=pt_PT ./matfuncs $(PT_FNSRC) > ../tex_pt/matfuncs.tex && \
 	touch $@
 
-functex: xsltrans reflow $(EN_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+functex: xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex.xml && \
-	cat $(EN_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex.xml && \
+	cat $(EN_FNSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex.xml && \
 	./xsltrans --funcs --tex ftex.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex/funcbody.tex && rm ftex.xml && touch $@
 
-functex_it: xsltrans reflow $(IT_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+functex_it: xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_it.xml && \
-	cat $(IT_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_it.xml && \
+	cat $(IT_FNSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_it.xml && \
 	./xsltrans --funcs --tex ftex_it.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_it/funcbody.tex && rm ftex_it.xml && touch $@
 
-functex_pt: xsltrans reflow $(PT_FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+functex_pt: xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_pt.xml && \
-	cat $(PT_FNCSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_pt.xml && \
+	cat $(PT_FNSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_pt.xml && \
 	./xsltrans --funcs --tex ftex_pt.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_pt/funcbody.tex && rm ftex_pt.xml && touch $@
 
@@ -328,7 +346,7 @@ help-all: help-en help-it help-pt $(HELPREFS)
 # By default we check the English-language files
 check: validate 
 	-./validate $(EN_SRC)
-	-./validate $(EN_FNCSRC)
+	-./validate $(EN_FNSRC)
 
 check-it: validate 
 	-./validate $(IT_SRC)
@@ -336,10 +354,10 @@ check-it: validate
 
 check-pt: validate 
 	-./validate $(PT_SRC)
-	-./validate $(PT_FNCSRC)
+	-./validate $(PT_FNSRC)
 
 docclean:
-	 rm -f *.txt
+	 rm -f *.txt *.tmp
 
 clean: docclean
 	rm -f $(CPROGS) *.o
