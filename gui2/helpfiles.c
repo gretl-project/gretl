@@ -1246,7 +1246,9 @@ static windata_t *real_do_help (int idx, int pos, int role)
 void plain_text_cmdref (void)
 {
     real_do_help(0, 0, CMD_HELP);
-} 
+}
+
+/* called from textbuf.c */
 
 void command_help_callback (int idx, int en)
 {
@@ -1270,6 +1272,8 @@ void command_help_callback (int idx, int en)
 
     real_do_help(idx, pos, role);
 }
+
+/* called from textbuf.c */
 
 void function_help_callback (int idx, int en)
 {
