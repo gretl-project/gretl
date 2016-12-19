@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
 <funcref language="portuguese">
@@ -1743,6 +1743,7 @@
 	  da distribuição. Isso é feito da seguinte forma (note que a
 	  distribuição normal tem, por conveniência, uma função própria,
 	  <fncref targ="cnorm"/>):
+	</para>
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -3557,10 +3558,10 @@
       </fnargs>
       <description>
 	<para>
-	  Given a <cmdref targ="MIDAS_list"/>, produces a list of the
-	  same length holding high-frequency first differences. The
-	  second argument is optional and defaults to unity: it can be
-	  used to multiply the differences by some constant.
+	  Dada uma <cmdref targ="MIDAS_list"/>, produz uma lista com o mesmo
+	  tamanho contendo as primeiras diferenças de alta frequência. O
+	  segundo argumento é opcional e tem como valor padrão 1: ele pode
+	  ser utilizado para multiplicar as diferenças por alguma constante.
 	</para>
       </description>
     </function>
@@ -3572,12 +3573,12 @@
       </fnargs>
       <description>
 	<para>
-	  Given a <cmdref targ="MIDAS_list"/>, produces a list of the
-	  same length holding high-frequency log-differences. The
-	  second argument is optional and defaults to unity: it can be
-	  used to multiply the differences by some constant, for
-	  example one might give a value of 100 to produce
-	  (approximate) percentage changes.
+	  Dada uma <cmdref targ="MIDAS_list"/>, produz uma lista com o mesmo
+	  tamanho contendo as diferenças logarítmicas de alta frequência. O
+	  segundo argumento é opcional e tem como valor padrão 1: ele pode
+	  ser utilizado para multiplicar as diferenças por alguma constante.
+	  Um exemplo da utilização desse argumento é utilizar o valor 100 para
+	  obter as variações percentuais (aproximadas).
 	</para>
       </description>
     </function>
@@ -3590,19 +3591,19 @@
       </fnargs>
       <description>
 	<para>
-	  Given a <cmdref targ="MIDAS_list"/>, <repl>hfvars</repl>,
-	  produces a list holding high-frequency lags
-	  <repl>minlag</repl> to <repl>maxlag</repl>. Use positive
-	  values for actual lags, negative for leads. For example, if
-	  <repl>minlag</repl> is &minus;3 and <repl>maxlag</repl> is 5
-	  than the returned list will hold 9 series: 3 leads, the
-	  contemporary value, and 5 lags.
+	  Dada uma <cmdref targ="MIDAS_list"/>, <repl>hfvars</repl>, produz uma lista
+	  contendo as defasagens de auta frequência de <repl>minlag</repl> a <repl>
+	  maxlag</repl>. Deve-se utilizar valores positivos para defasagens (<math>
+	  t</math> - 1) e negativos para adiantamentos (<math>t</math> + 1). Por
+	  exemplo, se <repl>minlag</repl> for &minus;3 e <repl>maxlag</repl> for 5
+	  então a lista retornada irá conter 9 séries: 3 adiantamentos, o valor atual
+	  e 5 defasagens.
 	</para>
 	<para>
-	  Note that high-frequency lag 0 corresponds to the first
-	  high frequency period within a low frequency period, for
-	  example the first month of a quarter or the first day of
-	  a month.
+	  Note que a efasagem de alta frequência 0 corresponde ao primeiro
+	  período de alta frequência dentro de um período de baixa frequência,
+	  por exemplo, o primeiro mês de um trimestre ou o primeiro dia de um
+	  mês.
 	</para>
       </description>
     </function>
@@ -4224,14 +4225,12 @@
       </fnargs>
       <description>
 	<para>
-	  Dada uma série <argname>date</argname> contendo datas no
-	  formato ISO 8601 <quote>básico</quote>
-	  (<lit>YYYYMMDD</lit>), essa função escreve os componentes
-	  ano, mês e (opcionalmente) dia em séries nomeadas pelos
-	  argumentos <argname>year</argname>, <argname>month</argname>
-	  e <argname>day</argname>. Um exemplo, assumindo que a série
-	  <lit>dates</lit> contém os valores adequados de 8 dígitos,
-	  seria:
+	  Dada uma série <argname>date</argname> contendo datas no formato ISO 8601
+	  <quote>básico</quote> (<lit>YYYYMMDD</lit>), essa função escreve os
+	  componentes ano, mês e (opcionalmente) dia em séries nomeadas pelos
+	  argumentos <argname>&year</argname>, <argname>&month</argname> e
+	  <argname>&dayecond</argname>. Um exemplo, assumindo que a série
+    <lit>dates</lit> contém os valores adequados de 8 dígitos, seria:
 	</para>
 	<code>
 	  series y, m, d
@@ -8253,16 +8252,16 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a list that references the squares of the variáveis
-	  in the list <argname>L</argname>, named on the pattern
-	  <lit>sq_</lit><repl>varname</repl>.  If the optional second
-	  argument is present and has a non-zero value, the returned
-	  list also includes the cross-products of the elements of
-	  <argname>L</argname>; these are named on the pattern
-	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  In these
-	  patterns the input variável names are truncated if need be,
-	  and the output names may be adjusted in case of duplication
-	  of names in the returned list.
+	  Retorna uma lista cotendo os quadrados das variáveis na lista
+	  <argname>L</argname>. Seus elementos são nomeados de acordo
+	  com o seguinte esquema :<lit>sq_</lit><repl>varname</repl>. Se
+	  o segundo argumento (opcional) estiver presente e tiver um valor
+	  não-nulo, a lista também incluirá os produtos cruzados dos elementos
+	  de <argname>L</argname> que, por sua vez, são nomeados de acordo com
+	  o seguinte esquema: <repl>var1</repl><lit>_</lit><repl>var2</repl>.
+	  Nesses esquemas os nomes das séries de entrada serão truncados caso
+	  seja necessário e os nomes de saída podem ser ajustados em caso de
+	  de nomes duplicados na lista retornada.
 	</para>
       </description>
     </function>
@@ -9268,15 +9267,15 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna uma série <math>y</math> such that
-	  <math>y</math><sub>t</sub> is the weighted mean of the
-	  values of the variáveis in list <argname>Y</argname> at
-	  observation <math>t</math>, the respective weights given by
-	  the values of the variáveis in list <argname>W</argname> at
-	  <math>t</math>.  The weights can therefore be
-	  time-varying. The lists <argname>Y</argname> and
-	  <argname>W</argname> must be of the same length and the
-	  weights must be non-negative.
+	  Retorna uma série <math>y</math> tal que
+	  <math>y</math><sub>t</sub> é a média ponderada dos
+	  valores das variáveis na lista <argname>Y</argname> na
+	  observação <math>t</math>, com os respectivos pesos dados pelos
+	  valores das variáveis na lista <argname>W</argname> em
+	  <math>t</math>. Os pesos podem assim variar
+	  no tempo. As listas <argname>Y</argname> e
+	  <argname>W</argname> devem ter o mesmo tamanho e os
+	  pesos devem ser não-negativos.
 	</para>
 	<para>
 	  <seelist>
@@ -9294,15 +9293,15 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna uma série <math>y</math> such that
-	  <math>y</math><sub>t</sub> is the weighted sample standard
-	  deviation of the values of the variáveis in list
-	  <argname>Y</argname> at observation <math>t</math>, the
-	  respective weights given by the values of the variáveis in
-	  list <argname>W</argname> at <math>t</math>.  The weights
-	  can therefore be time-varying. The lists
-	  <argname>Y</argname> and <argname>W</argname> must be of the
-	  same length and the weights must be non-negative.
+	  Retorna uma série <math>y</math> tal que
+	  <math>y</math><sub>t</sub> é o desvio padrão amostral
+	  poderado dos valores das variáveis na lista
+	  <argname>Y</argname> na observação <math>t</math>, com os
+	  respectivos pesos dados pelos valores das variáveis na
+	  lista <argname>W</argname> em <math>t</math>. Os pesos
+	  podem assim variar no tempo. As listas
+	  <argname>Y</argname> e <argname>W</argname> devem ter o
+	  mesmo tamanho e os pesos devem ser não-negativos.
 	</para>
 	<para>
 	  <seelist>
@@ -9320,22 +9319,23 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna uma série <math>y</math> such that
-	  <math>y</math><sub>t</sub> is the weighted sample variance
-	  of the values of the variáveis in list <argname>X</argname>
-	  at observation <math>t</math>, the respective weights given
-	  by the values of the variáveis in list <argname>W</argname>
-	  at <math>t</math>.  The weights can therefore be
-	  time-varying. The lists <argname>Y</argname> and
-	  <argname>W</argname> must be of the same length and the
-	  weights must be non-negative.
+	  Retorna uma série <math>y</math> tal que
+	  <math>y</math><sub>t</sub> é a variância amostral
+	  poderada dos valores das variáveis na lista
+	  <argname>Y</argname> na observação <math>t</math>, com os
+	  respectivos pesos dados pelos valores das variáveis na
+	  lista <argname>W</argname> em <math>t</math>. Os pesos
+	  podem assim variar no tempo. As listas
+	  <argname>Y</argname> e <argname>W</argname> devem ter o
+	  mesmo tamanho e os pesos devem ser não-negativos.
 	</para>
+	<para>
 	<para context="tex">
-	  The weighted sample variance is computed as
+	  A variância amostral ponderada é calculada como:
 	  \[ s^2_w = \frac{n'}{n'-1} \,
 	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
-	  onde $n'$ is the number of non-zero weights and $\bar{x}_w$ is
-	  the weighted mean.
+	  onde $n'$ é o número de pesos não-nulos e $\bar{x}_w$ é
+	  a média ponderada.
 	</para>
 	<para>
 	  <seelist>
