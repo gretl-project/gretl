@@ -28,11 +28,11 @@ GtkWidget *context_help_button (GtkWidget *hbox, int helpcode);
 
 void command_help_callback (int cmdnum, int en);
 
-void function_help_callback (int fnum);
+void function_help_callback (int fnum, int en);
 
-void plain_text_cmdref (GtkAction *action);
+void plain_text_cmdref (void);
 
-void genr_funcs_ref (GtkAction *action);
+void genr_funcs_ref (void);
 
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin);
@@ -60,7 +60,7 @@ int add_help_navigator (windata_t *vwin, GtkWidget *hp);
 
 char *quoted_help_string (const char *s);
 
-int function_help_index_from_word (const char *s);
+int function_help_index_from_word (const char *s, int role);
 
 int extra_command_number (const char *s);
 

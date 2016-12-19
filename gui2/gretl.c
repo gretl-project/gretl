@@ -918,7 +918,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 
     if (k == GDK_F1) {
 	/* invoke help */
-	plain_text_cmdref(NULL);
+	plain_text_cmdref();
 	return TRUE;
     } else if (k == GDK_g) {
 	/* invoke genr */

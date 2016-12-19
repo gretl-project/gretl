@@ -1758,16 +1758,18 @@ static gchar *make_viewer_title (int role, const char *fname)
     gchar *title = NULL;
 
     switch (role) {
+    case CMD_HELP:
+	title = g_strdup(_("gretl: command reference")); break;
     case GUI_HELP: 
 	title = g_strdup(_("gretl: help")); break;
-    case FUNCS_HELP:
+    case FUNC_HELP:
 	title = g_strdup(_("gretl: function reference")); break;
-    case CLI_HELP:
-	title = g_strdup(_("gretl: command reference")); break;
+    case CMD_HELP_EN:
+	title = g_strdup("gretl: command reference"); break;
     case GUI_HELP_EN: 
 	title = g_strdup("gretl: help"); break;
-    case CLI_HELP_EN:
-	title = g_strdup("gretl: command reference"); break;
+    case FUNC_HELP_EN:
+	title = g_strdup("gretl: function reference"); break;
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;
     case EDIT_SCRIPT:
@@ -2283,7 +2285,7 @@ windata_t *view_help_file (const char *filename, int role)
 	hsize += 4;
     }
 
-    if (role == FUNCS_HELP) {
+    if (role == FUNC_HELP || role == FUNC_HELP_EN) {
 	vsize = 500;
     }
 
@@ -2298,8 +2300,8 @@ windata_t *view_help_file (const char *filename, int role)
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
-    if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||
-	vwin->role == FUNCS_HELP) {
+    if (vwin->role == CMD_HELP || vwin->role == CMD_HELP_EN ||
+	vwin->role == FUNC_HELP || vwin->role == FUNC_HELP_EN) {
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(help_popup_handler), 
 			 vwin);

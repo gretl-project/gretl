@@ -62,11 +62,6 @@ struct INTERNAL_PATHS {
     char plotfile[MAXLEN];
     char libpath[MAXLEN];
     char binbase[MAXLEN];
-    char helpfile[MAXLEN];
-    char cmd_helpfile[MAXLEN];
-    char cli_helpfile[MAXLEN];
-    char cli_fnref[MAXLEN];
-    char gui_fnref[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
@@ -89,20 +84,68 @@ static struct INTERNAL_PATHS paths;
 
 static char current_dir[MAXLEN];
 
-const char *helpfile_path (int id)
+static int force_en_help;
+
+static void set_helpfile_option (gretlopt opt)
 {
-    if (id == GRETL_HELPFILE) {
-	return paths.helpfile;
-    } else if (id == GRETL_CMD_HELPFILE) {
-	return paths.cmd_helpfile;
-    } else if (id == GRETL_CLI_HELPFILE) {
-	return paths.cli_helpfile;
-    } else if (id == GRETL_CLI_FNREF) {
-	return paths.cli_fnref;
-    } else if (id == GRETL_GUI_FNREF) {
-	return paths.gui_fnref;
+    if (opt & OPT_N) {
+	force_en_help = 1;
+    }
+}
+
+const char *helpfile_path (int id, int cli, int en)
+{
+    const char *ghome = paths.gretldir;
+    static char hpath[MAXLEN];
+
+    *hpath = '\0';
+
+    if (cli) {
+	/* Command-line program */
+	if (en || force_en_help) {
+	    /* English forced */
+	    if (id == GRETL_CMDREF) {
+		sprintf(hpath, "%sgretlcli.hlp", ghome);
+	    } else if (id == GRETL_FUNCREF) {
+		sprintf(hpath, "%sgenrcli.hlp", ghome);
+	    }
+	} else {
+	    /* use translation if available */
+	    if (id == GRETL_CMDREF) {
+		sprintf(hpath, "%s%s", ghome, _("gretlcli.hlp"));
+	    } else if (id == GRETL_FUNCREF) {
+		sprintf(hpath, "%s%s", ghome, _("genrcli.hlp"));
+	    }	    
+	}
+    } else if (en || force_en_help) {
+	/* GUI program, English forced */
+	if (id == GRETL_CMDREF) {
+	    sprintf(hpath, "%sgretlcmd.hlp", ghome);
+	} else if (id == GRETL_FUNCREF) {
+	    sprintf(hpath, "%sgenrgui.hlp", ghome);
+	} else if (id == GRETL_GUI_HELP) {
+	    sprintf(hpath, "%sgretlgui.hlp", ghome);
+	}
     } else {
-	return "";
+	/* GUI program, use translation if available */
+	if (id == GRETL_CMDREF) {
+	    sprintf(hpath, "%s%s", ghome, _("gretlcmd.hlp"));
+	} else if (id == GRETL_FUNCREF) {
+	    sprintf(hpath, "%s%s", ghome, _("genrgui.hlp"));
+	} else if (id == GRETL_GUI_HELP) {
+	    sprintf(hpath, "%s%s", ghome, _("gretlgui.hlp"));
+	}
+    }
+
+    return hpath;
+}
+
+int using_translated_helpfiles (void)
+{
+    if (force_en_help) {
+	return 0;
+    } else {
+	return strcmp("gretlcmd.hlp", _("gretlcmd.hlp")) != 0;
     }
 }
 
@@ -2932,41 +2975,6 @@ static void check_gretldir (char *config_path)
 
 #endif
 
-/* Setting helpfile paths: we do this once we're fairly sure we have
-   gretldir right, and on changing gretldir via the GUI (though that's
-   likely to be a disaster, isn't it?).
-
-   OPT_N (a GUI-only option) indicates that we should force use of the
-   English-language helpfiles.
-*/
-
-static void set_helpfile_paths (gretlopt opt)
-{
-    const char *ghome = paths.gretldir;
-
-    if (!gretl_in_gui_mode()) {
-	/* CLI program, not GUI */
-	sprintf(paths.helpfile, "%s%s", ghome, _("gretlcli.hlp"));
-	strcpy(paths.cli_helpfile, paths.helpfile);
-	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli.hlp"));
-	return;
-    }
-
-    if (opt & OPT_N) {
-	sprintf(paths.helpfile, "%sgretlgui.hlp", ghome);
-	sprintf(paths.cli_helpfile, "%sgretlcli.hlp", ghome);
-	sprintf(paths.cmd_helpfile, "%sgretlcmd.hlp", ghome);
-	sprintf(paths.cli_fnref, "%sgenrcli.hlp", ghome);
-	sprintf(paths.gui_fnref, "%sgenrgui.hlp", ghome);
-    } else {
-	sprintf(paths.helpfile, "%s%s", ghome, _("gretlgui.hlp"));
-	sprintf(paths.cli_helpfile, "%s%s", ghome, _("gretlcli.hlp"));
-	sprintf(paths.cmd_helpfile, "%s%s", ghome, _("gretlcmd.hlp"));
-	sprintf(paths.cli_fnref, "%s%s", ghome, _("genrcli.hlp"));
-	sprintf(paths.gui_fnref, "%s%s", ghome, _("genrgui.hlp"));
-    }
-}
-
 /* Called at start-up only: the @dirname argument is the value taken
    from the config file or registry.  In case we end up using a value
    other than the incoming one, sync back to @dirname.
@@ -3008,7 +3016,7 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 #endif
 
     if (!err) {
-	set_helpfile_paths(opt);
+	set_helpfile_option(opt);
 	set_gretl_libpath(paths.gretldir);
 	set_gretl_binbase(paths.gretldir);
     }
@@ -3140,7 +3148,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 
     if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir, 
 			      PATH_NEEDS_SLASH)) {
-	set_helpfile_paths(opt);
+	set_helpfile_option(opt);
 	set_gretl_libpath(paths.gretldir);
 	ndelta++;
     }

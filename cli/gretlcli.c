@@ -508,7 +508,7 @@ static void handle_datafile (char *filearg, char *runfile,
 
 static void check_help_file (void)
 {
-    const char *hpath = helpfile_path(GRETL_HELPFILE);
+    const char *hpath = helpfile_path(GRETL_CMDREF, 1, 0);
     FILE *fp = fopen(hpath, "r");
 
     if (fp != NULL) { 

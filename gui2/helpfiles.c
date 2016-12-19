@@ -40,13 +40,13 @@
 
 #define HDEBUG 0
 
-static int translated_helpfile = -1;
-static char *en_gui_helpfile;
-static char *en_cli_helpfile;
+#define cmdref_role(r)  (r == CMD_HELP || r == CMD_HELP_EN)
+#define funcref_role(r) (r == FUNC_HELP || r == FUNC_HELP_EN)
+
+static int translated_helpfiles;
 
 static windata_t *real_do_help (int idx, int pos, int role);
 static void en_help_callback (GtkWidget *w, windata_t *hwin);
-static char *funcs_helpfile (void);
 static void helpwin_set_topic_index (windata_t *hwin, int idx);
 
 /* searching stuff */
@@ -220,51 +220,9 @@ int extra_command_number (const char *s)
     return -1;
 }
 
-static void set_en_help_file (int h)
-{
-    char *tmp, *p;
-
-    tmp = gretl_strdup(helpfile_path(h));
-
-    if (tmp != NULL) {
-#ifdef G_OS_WIN32
-	p = strrchr(tmp, '_');
-	if (p != NULL) strcpy(p, ".txt");
-#else
-	p = strrchr(tmp, '.');
-	if (p != NULL) *p = 0;
-#endif
-	if (h == GRETL_HELPFILE) {
-	    en_gui_helpfile = tmp;
-	} else {
-	    en_cli_helpfile = tmp;
-	}
-    }
-}
-
 void helpfile_init (void)
 {
-    const char *hpath = helpfile_path(GRETL_HELPFILE);
-    char *p;
-
-    translated_helpfile = 0;
-
-#ifdef G_OS_WIN32
-    p = strrchr(hpath, '_');
-    if (p != NULL && strncmp(p, "_hlp", 4)) { 
-	translated_helpfile = 1;
-    } 
-#else
-    p = strrchr(hpath, '.');
-    if (p != NULL && strcmp(p, ".hlp")) { 
-	translated_helpfile = 1;
-    } 
-#endif
-
-    if (translated_helpfile) {
-	set_en_help_file(GRETL_CMD_HELPFILE);
-	set_en_help_file(GRETL_HELPFILE);
-    }
+    translated_helpfiles = using_translated_helpfiles();
 }
 
 char *quoted_help_string (const char *s)
@@ -396,16 +354,18 @@ static GtkTreeStore *make_help_topics_tree (int role)
     int pos = 0, idx = 0;
     int err; 
 
-    if (role == CLI_HELP) {
-	fname = helpfile_path(GRETL_CMD_HELPFILE);
+    if (role == CMD_HELP) {
+	fname = helpfile_path(GRETL_CMDREF, 0, 0);
     } else if (role == GUI_HELP) {
-	fname = helpfile_path(GRETL_HELPFILE);
-    } else if (role == FUNCS_HELP) {
-	fname = funcs_helpfile();
-    } else if (role == CLI_HELP_EN) {
-	fname = en_cli_helpfile;
+	fname = helpfile_path(GRETL_GUI_HELP, 0, 0);
+    } else if (role == FUNC_HELP) {
+	fname = helpfile_path(GRETL_FUNCREF, 0, 0);
+    } else if (role == CMD_HELP_EN) {
+	fname = helpfile_path(GRETL_CMDREF, 0, 1);
     } else if (role == GUI_HELP_EN) {
-	fname = en_gui_helpfile;
+	fname = helpfile_path(GRETL_GUI_HELP, 0, 1);
+    } else if (role == FUNC_HELP_EN) {
+	fname = helpfile_path(GRETL_FUNCREF, 0, 1);
     } else {
 	return NULL;
     } 
@@ -428,7 +388,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 	if (*s == '\n' && *(s+1) == '#' && 
 	    *(s+2) != '#' && *(s+2) != '\0') {
 	    if (sscanf(s+2, "%15s %31s", word, sect) == 2) {
-		if (role == FUNCS_HELP) {
+		if (funcref_role(role)) {
 		    heading = real_funcs_heading(sect);
 		} else {
 		    heading = _(sect);
@@ -442,7 +402,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 				       -1);
 		} 
 		gtk_tree_store_append(store, &iter, &parent);
-		if (role == FUNCS_HELP) {
+		if (funcref_role(role)) {
 		    ++idx;
 		} else if (role == GUI_HELP || role == GUI_HELP_EN) {
 		    idx = gui_help_topic_index(word);
@@ -467,23 +427,26 @@ static GtkTreeStore *make_help_topics_tree (int role)
 
 static GtkTreeStore *get_help_topics_tree (int role)
 {
-    static GtkTreeStore *cli_tree;
+    static GtkTreeStore *cmd_tree;
     static GtkTreeStore *gui_tree;
-    static GtkTreeStore *funcs_tree;
-    static GtkTreeStore *en_cli_tree;
+    static GtkTreeStore *func_tree;
+    static GtkTreeStore *en_cmd_tree;
     static GtkTreeStore *en_gui_tree;
+    static GtkTreeStore *en_func_tree;
     GtkTreeStore **ptree = NULL;
 
-    if (role == CLI_HELP) {
-	ptree = &cli_tree;
+    if (role == CMD_HELP) {
+	ptree = &cmd_tree;
     } else if (role == GUI_HELP) {
 	ptree = &gui_tree;
-    } else if (role == FUNCS_HELP) {
-	ptree = &funcs_tree;
-    } else if (role == CLI_HELP_EN) {
-	ptree = &en_cli_tree;
+    } else if (role == FUNC_HELP) {
+	ptree = &func_tree;
+    } else if (role == CMD_HELP_EN) {
+	ptree = &en_cmd_tree;
     } else if (role == GUI_HELP_EN) {
 	ptree = &en_gui_tree;
+    } else if (role == FUNC_HELP_EN) {
+	ptree = &en_func_tree;
     } else {
 	return NULL;
     }
@@ -578,14 +541,14 @@ static int help_attr_from_word (const char *word,
     return 0;
 }
 
-int function_help_index_from_word (const char *word)
+int function_help_index_from_word (const char *word, int role)
 {
-    return help_attr_from_word(word, FUNCS_HELP, INDEX_COL);
+    return help_attr_from_word(word, role, INDEX_COL);
 }
 
-static int function_help_pos_from_word (const char *word)
+static int function_help_pos_from_word (const char *word, int role)
 {
-    return help_attr_from_word(word, FUNCS_HELP, POSITION_COL);
+    return help_attr_from_word(word, role, POSITION_COL);
 }
 
 static int help_pos_from_index (int idx, int role)
@@ -680,14 +643,23 @@ static gboolean help_iter_from_index (int idx, int role,
 
 static void en_help_callback (GtkWidget *w, windata_t *hwin)
 {
-    int pos, idx = hwin->active_var;
-    int role = (hwin->role == CLI_HELP)? CLI_HELP_EN :
-	GUI_HELP_EN;
+    int idx = hwin->active_var;
+    int pos, role = 0;
+
+    if (hwin->role == CMD_HELP) {
+	role = CMD_HELP_EN;
+    } else if (hwin->role == GUI_HELP) {
+	role = GUI_HELP_EN;
+    } else if (hwin->role == FUNC_HELP) {
+	role = FUNC_HELP_EN;
+    } else {
+	return;
+    }
 
     pos = help_pos_from_index(idx, role);
 
-    if (pos < 0 && role == CLI_HELP_EN) {
-	/* missed, but we can at least show the index */
+    if (pos < 0 && role != GUI_HELP_EN) {
+	/* missed, but we can at least show the index page */
 	pos = 0;
     }
 
@@ -736,9 +708,10 @@ void notify_string_not_found (GtkWidget *entry)
 
 #endif
 
-#define help_index_ok(r) (r == CLI_HELP || \
-                          r == CLI_HELP_EN || \
-                          r == FUNCS_HELP)
+#define help_index_ok(r) (r == CMD_HELP || \
+                          r == CMD_HELP_EN || \
+                          r == FUNC_HELP || \
+			  r == FUNC_HELP_EN)
 
 static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 				    windata_t *vwin)
@@ -761,9 +734,9 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 	if (s != NULL && *s != '\0') {
 	    const char *comp = NULL;
 
-	    if (vwin->role == CLI_HELP) {
+	    if (cmdref_role(vwin->role)) {
 		comp = gretl_command_complete(s);
-	    } else if (vwin->role == FUNCS_HELP) {
+	    } else if (funcref_role(vwin->role)) {
 		comp = gretl_function_complete(s);
 	    }
 
@@ -843,7 +816,7 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     if (ok) {
 	/* text found: move to new position */
 	int idx = help_index_from_pos(newpos, hwin->role);
-	int en = (hwin->role == CLI_HELP_EN);
+	int en = (hwin->role == CMD_HELP_EN || hwin->role == FUNC_HELP_EN);
 
 	set_help_topic_buffer(hwin, newpos, en);
 	helpwin_set_topic_index(hwin, idx);
@@ -873,9 +846,9 @@ static int maybe_go_to_page (windata_t *vwin)
     gboolean ret = FALSE;
     int idx, pos = 0; 
 
-    if (vwin->role == FUNCS_HELP) {
+    if (funcref_role(vwin->role)) {
 	/* looking for a function */
-	idx = function_help_index_from_word(needle);
+	idx = function_help_index_from_word(needle, vwin->role);
 	if (idx > 0) {
 	    pos = help_pos_from_index(idx, vwin->role);
 	}
@@ -921,9 +894,10 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
 
-    if (!found && (vwin->role == CLI_HELP || 
-		   vwin->role == CLI_HELP_EN ||
-		   vwin->role == FUNCS_HELP)) {
+    if (!found && (vwin->role == CMD_HELP || 
+		   vwin->role == CMD_HELP_EN ||
+		   vwin->role == FUNC_HELP ||
+		   vwin->role == FUNC_HELP_EN)) {
 	found = maybe_go_to_page(vwin);
     }
 
@@ -993,7 +967,10 @@ void vwin_add_finder (windata_t *vwin)
     hbox = gtk_widget_get_parent(vwin->mbar);
     vwin->finder = entry = gtk_entry_new();
 
-    if (vwin->role == FUNCS_HELP || vwin->role == CLI_HELP) {
+    if (vwin->role == CMD_HELP ||
+	vwin->role == CMD_HELP_EN ||
+	vwin->role == FUNC_HELP ||
+	vwin->role == FUNC_HELP_EN) {
 	finder_add_options(hbox, entry);
     }
 
@@ -1023,8 +1000,8 @@ void vwin_add_finder (windata_t *vwin)
 }
 
 #define SHOW_FINDER(r)    (r != GUI_HELP && r != GUI_HELP_EN)
-#define SHOW_EN_BUTTON(r) (translated_helpfile && \
-                           (r == CLI_HELP || r == GUI_HELP))
+#define SHOW_EN_BUTTON(r) (translated_helpfiles && \
+                           (r == CMD_HELP || r == GUI_HELP || r == FUNC_HELP))
 
 void set_up_helpview_menu (windata_t *hwin) 
 {
@@ -1055,17 +1032,6 @@ void set_up_helpview_menu (windata_t *hwin)
     gtk_widget_show_all(hbox);
 }
 
-static char *funcs_helpfile (void)
-{
-    static char fname[MAXLEN];
-
-    if (*fname == '\0') {
-	strcpy(fname, helpfile_path(GRETL_GUI_FNREF));
-    }
-
-    return fname;
-}
-
 void show_gui_help (int helpcode)
 {
     int idx = gui_ci_to_index(helpcode);
@@ -1074,21 +1040,21 @@ void show_gui_help (int helpcode)
     /* try for GUI help first */
     pos = help_pos_from_index(idx, role);
 
-    if (pos <= 0 && translated_helpfile) {
+    if (pos <= 0 && translated_helpfiles) {
 	/* English GUI help? */
 	role = GUI_HELP_EN;
 	pos = help_pos_from_index(idx, role);
     }
 
     if (pos <= 0) {
-	/* CLI help? */
-	role = CLI_HELP;
+	/* command help? */
+	role = CMD_HELP;
 	pos = help_pos_from_index(idx, role);
     }
 
-    if (pos <= 0 && translated_helpfile) {
-	/* English CLI help? */
-	role = CLI_HELP_EN;
+    if (pos <= 0 && translated_helpfiles) {
+	/* English command help? */
+	role = CMD_HELP_EN;
 	pos = help_pos_from_index(idx, role);
     }
 
@@ -1178,10 +1144,11 @@ static void helpwin_set_topic_index (windata_t *hwin, int idx)
 static windata_t *real_do_help (int idx, int pos, int role)
 {
     static windata_t *gui_hwin;
-    static windata_t *cli_hwin;
-    static windata_t *funcs_hwin;
+    static windata_t *cmd_hwin;
+    static windata_t *func_hwin;
     static windata_t *en_gui_hwin;
-    static windata_t *en_cli_hwin;
+    static windata_t *en_cmd_hwin;
+    static windata_t *en_func_hwin;
     windata_t *hwin = NULL;
     const char *fname = NULL;
     int en = 0;
@@ -1195,30 +1162,35 @@ static windata_t *real_do_help (int idx, int pos, int role)
     fprintf(stderr, "real_do_help: idx=%d, pos=%d, role=%d\n",
 	    idx, pos, role);
     fprintf(stderr, "gui_hwin = %p\n", (void *) gui_hwin);
-    fprintf(stderr, "cli_hwin = %p\n", (void *) cli_hwin);
-    fprintf(stderr, "funcs_hwin = %p\n", (void *) funcs_hwin);
+    fprintf(stderr, "cmd_hwin = %p\n", (void *) cmd_hwin);
+    fprintf(stderr, "func_hwin = %p\n", (void *) func_hwin);
     fprintf(stderr, "en_gui_hwin = %p\n", (void *) en_gui_hwin);
-    fprintf(stderr, "en_cli_hwin = %p\n", (void *) en_cli_hwin);
+    fprintf(stderr, "en_cmd_hwin = %p\n", (void *) en_cmd_hwin);
+    fprintf(stderr, "en_func_hwin = %p\n", (void *) en_func_hwin);
 #endif
 
-    if (role == CLI_HELP) {
-	hwin = cli_hwin;
-	fname = helpfile_path(GRETL_CMD_HELPFILE);
+    if (role == CMD_HELP) {
+	hwin = cmd_hwin;
+	fname = helpfile_path(GRETL_CMDREF, 0, 0);
     } else if (role == GUI_HELP) {
 	hwin = gui_hwin;
-	fname = helpfile_path(GRETL_HELPFILE);
-    } else if (role == FUNCS_HELP) {
-	hwin = funcs_hwin;
-	fname = funcs_helpfile();
-    } else if (role == CLI_HELP_EN) {
-	hwin = en_cli_hwin;
-	fname = en_cli_helpfile;
+	fname = helpfile_path(GRETL_GUI_HELP, 0, 0);
+    } else if (role == FUNC_HELP) {
+	hwin = func_hwin;
+	fname = helpfile_path(GRETL_FUNCREF, 0, 0);
+    } else if (role == CMD_HELP_EN) {
+	hwin = en_cmd_hwin;
+	fname = helpfile_path(GRETL_CMDREF, 0, 1);
 	en = 1;
     } else if (role == GUI_HELP_EN) {
 	hwin = en_gui_hwin;
-	fname = en_gui_helpfile;
+	fname = helpfile_path(GRETL_GUI_HELP, 0, 1);
 	en = 1;
-    }
+    } else if (role == FUNC_HELP_EN) {
+	hwin = en_func_hwin;
+	fname = helpfile_path(GRETL_FUNCREF, 0, 1);
+	en = 1;
+    }	
 
     if (hwin != NULL) {
 	gtk_window_present(GTK_WINDOW(hwin->main));
@@ -1227,22 +1199,25 @@ static windata_t *real_do_help (int idx, int pos, int role)
 	if (hwin != NULL) {
 	    windata_t **phwin = NULL;
 
-	    if (role == CLI_HELP) {
-		cli_hwin = hwin;
-		phwin = &cli_hwin;
+	    if (role == CMD_HELP) {
+		cmd_hwin = hwin;
+		phwin = &cmd_hwin;
 	    } else if (role == GUI_HELP) {
 		gui_hwin = hwin;
 		phwin = &gui_hwin;
-	    } else if (role == FUNCS_HELP) {
-		funcs_hwin = hwin;
-		phwin = &funcs_hwin;
-	    } else if (role == CLI_HELP_EN) {
-		en_cli_hwin = hwin;
-		phwin = &en_cli_hwin;
+	    } else if (role == FUNC_HELP) {
+		func_hwin = hwin;
+		phwin = &func_hwin;
+	    } else if (role == CMD_HELP_EN) {
+		en_cmd_hwin = hwin;
+		phwin = &en_cmd_hwin;
 	    } else if (role == GUI_HELP_EN) {
 		en_gui_hwin = hwin;
 		phwin = &en_gui_hwin;
-	    }
+	    } else if (role == FUNC_HELP_EN) {
+		en_func_hwin = hwin;
+		phwin = &en_func_hwin;
+	    }		
 
 	    g_signal_connect(G_OBJECT(hwin->main), "destroy",
 			     G_CALLBACK(nullify_hwin), phwin);
@@ -1266,50 +1241,29 @@ static windata_t *real_do_help (int idx, int pos, int role)
     return hwin;
 }
 
-/* called from main menu in gretl.c; also used as callback from
-   help window topics menu
-*/
+/* called from main menu in gretl.c or via toolbar button */
 
-void plain_text_cmdref (GtkAction *action)
+void plain_text_cmdref (void)
 {
-    const gchar *aname = NULL;
-    int idx = 0, pos = 0;
-    int role = CLI_HELP;
- 
-    if (action != NULL) {
-	aname = gtk_action_get_name(action);
-	idx = atoi(aname);
-    }
-
-    if (idx > 0) {
-	pos = help_pos_from_index(idx, role);
-	if (pos < 0 && translated_helpfile == 1) {
-	    /* no translated entry: fall back on English */
-	    role = CLI_HELP_EN;
-	    pos = help_pos_from_index(idx, role);
-	}
-    }
-
-    /* note: pos = 0 gives index of commands */
-
-    real_do_help(idx, pos, role);
+    real_do_help(0, 0, CMD_HELP);
 } 
 
 void command_help_callback (int idx, int en)
 {
-    int role = (en)? CLI_HELP_EN : CLI_HELP;
+    int role = (en)? CMD_HELP_EN : CMD_HELP;
     int pos = 0;
 
     if (idx > NC) {
+	/* a GUI-special help item */
 	show_gui_help(idx);
 	return;
     }
     
     if (idx > 0) {
 	pos = help_pos_from_index(idx, role);
-	if (pos < 0 && !en && translated_helpfile == 1) {
+	if (pos < 0 && !en && translated_helpfiles) {
 	    /* no translated entry: fall back on English */
-	    role = CLI_HELP_EN;
+	    role = CMD_HELP_EN;
 	    pos = help_pos_from_index(idx, role);
 	}
     }
@@ -1317,23 +1271,19 @@ void command_help_callback (int idx, int en)
     real_do_help(idx, pos, role);
 }
 
-void function_help_callback (int idx)
+void function_help_callback (int idx, int en)
 {
-    int pos = help_pos_from_index(idx, FUNCS_HELP);
+    int role = (en)? FUNC_HELP_EN : FUNC_HELP;
+    int pos = help_pos_from_index(idx, role);
 
-    real_do_help(idx, pos, FUNCS_HELP); 
+    real_do_help(idx, pos, role); 
 }
 
-/* called from main menu in gretl.c; also used as callback from
-   help window topics menu
-*/
+/* called from main menu in gretl.c to launch function reference */
 
-void genr_funcs_ref (GtkAction *action)
+void genr_funcs_ref (void)
 {
-    int idx = atoi(gtk_action_get_name(action));
-    int pos = help_pos_from_index(idx, FUNCS_HELP);
-
-    real_do_help(idx, pos, FUNCS_HELP);    
+    real_do_help(0, 0, FUNC_HELP);    
 }
 
 /* below: must return > 0 to do anything useful */
@@ -1349,19 +1299,25 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     *idx = gretl_command_number(word);
     pos = help_pos_from_index(*idx, *role);
 
-    if (pos <= 0 && translated_helpfile) {
-	pos = help_pos_from_index(*idx, CLI_HELP_EN);
+    if (pos <= 0 && translated_helpfiles) {
+	pos = help_pos_from_index(*idx, CMD_HELP_EN);
 	if (pos > 0) {
-	    *role = CLI_HELP_EN;
+	    *role = CMD_HELP_EN;
 	}
     }
 
     if (pos <= 0) {
-	/* try function instead of command */
-	pos = function_help_pos_from_word(word);
+	/* try for function instead of command? */
+	pos = function_help_pos_from_word(word, FUNC_HELP);
 	if (pos > 0) {
-	    *idx = function_help_index_from_word(word);
-	    *role = FUNCS_HELP;
+	    *role = FUNC_HELP;
+	    *idx = function_help_index_from_word(word, *role);
+	} else if (translated_helpfiles) {
+	    pos = function_help_pos_from_word(word, FUNC_HELP_EN);
+	    if (pos > 0) {
+		*role = FUNC_HELP_EN;
+		*idx = function_help_index_from_word(word, *role);
+	    }
 	}
     }
 
@@ -1378,7 +1334,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	gchar *text = NULL;
 	int pos = -1;
 	int idx = 0;
-	int role = CLI_HELP;
+	int role = CMD_HELP;
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
 
@@ -1466,7 +1422,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 int gui_console_help (const char *param)
 {
-    int idx = 0, role = CLI_HELP;
+    int idx = 0, role = CMD_HELP;
     int pos, err = 0;
 
     pos = help_pos_from_string(param, &idx, &role);

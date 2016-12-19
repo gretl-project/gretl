@@ -32,11 +32,9 @@ typedef enum {
 } SearchType;
 
 typedef enum {
-    GRETL_HELPFILE,
-    GRETL_CMD_HELPFILE,
-    GRETL_CLI_HELPFILE,
-    GRETL_CLI_FNREF,
-    GRETL_GUI_FNREF
+    GRETL_CMDREF,
+    GRETL_FUNCREF,
+    GRETL_GUI_HELP,
 } HelpPaths;
 
 typedef enum {
@@ -157,7 +155,9 @@ int get_package_data_path (const char *fname, char *fullname);
 
 void set_gretl_plugin_path (const char *path);
 
-const char *helpfile_path (int id);
+const char *helpfile_path (int id, int cli, int en);
+
+int using_translated_helpfiles (void);
 
 const char *gretl_home (void);
 

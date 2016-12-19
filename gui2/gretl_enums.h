@@ -69,11 +69,12 @@ enum extra_cmds {
     EDIT_X12A,
     EDIT_SPEC,
     EDIT_MAX,
-    CLI_HELP,
+    CMD_HELP,
     GUI_HELP,
-    CLI_HELP_EN,
+    FUNC_HELP,
+    CMD_HELP_EN,
     GUI_HELP_EN,
-    FUNCS_HELP,
+    FUNC_HELP_EN,
     KERNEL_DENSITY,
     CREATE_DATASET,
     HCCME,
@@ -133,7 +134,7 @@ enum extra_cmds {
     GUI_CMD_MAX
 };
 
-#define help_role(r) (r >= CLI_HELP && r <= FUNCS_HELP)
+#define help_role(r) (r >= CMD_HELP && r <= FUNC_HELP_EN)
 
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */

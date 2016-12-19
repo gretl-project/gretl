@@ -69,6 +69,7 @@ enum {
 };
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
+#define function_help(r) (r == FUNC_HELP || r == FUNC_HELP_EN)
 #define foreign_script_role(r) (r == EDIT_GP || \
 				r == EDIT_R || \
 				r == EDIT_OX || \
@@ -1630,16 +1631,16 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 	    } else {
 		int role = object_get_int(tview, "role");
 
-		if (role == FUNCS_HELP) {
+		if (function_help(role)) {
 		    if (xref) {
 			command_help_callback(page, en); 
 		    } else {
-			function_help_callback(page);
+			function_help_callback(page, en);
 		    }
 		} else {
 		    /* commands help */
 		    if (xref) {
-			function_help_callback(page);
+			function_help_callback(page, en);
 		    } else {
 			command_help_callback(page, en); 
 		    }
@@ -1972,15 +1973,15 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
 {
     windata_t *hwin = (windata_t *) p;
     int action = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-    int en = (hwin->role == CLI_HELP_EN);
+    int en = (hwin->role == CMD_HELP_EN || hwin->role == FUNC_HELP_EN);
     int page = 0;
 
     if (action == 2) {
 	page = pop_backpage(hwin->text); 
     }
 
-    if (hwin->role == FUNCS_HELP) {
-	function_help_callback(page);
+    if (function_help(hwin->role)) {
+	function_help_callback(page, en);
     } else {
 	command_help_callback(page, en);
     }
@@ -3735,17 +3736,18 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    /* "atomic" markup */
 	    ins = get_instruction_and_string(p + 1, targ);
 	    if (ins == INSERT_REF) {
-		if (role == FUNCS_HELP) {
-		    itarg = function_help_index_from_word(targ);
+		if (function_help(role)) {
+		    /* FIXME? */
+		    itarg = function_help_index_from_word(targ, role);
 		} else {
 		    itarg = command_word_index(targ);
 		}
 		ret = insert_link(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_XREF) {
-		if (role == FUNCS_HELP) {
+		if (function_help(role)) {
 		    itarg = command_word_index(targ);
 		} else {
-		    itarg = function_help_index_from_word(targ);
+		    itarg = function_help_index_from_word(targ, FUNC_HELP);
 		}
 		ret = insert_xlink(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_URL) {
@@ -3841,7 +3843,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
 
     if (pos == 0) {
 	/* no topic selected */
-	if (hwin->role == FUNCS_HELP) {
+	if (function_help(hwin->role)) {
 	    funcref_index_page(hwin, textb, en);
 	} else {
 	    cmdref_index_page(hwin, textb, en);
@@ -3887,7 +3889,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
 						 "redtext", NULL);
     }
 
-    if (hwin->role == FUNCS_HELP) {
+    if (function_help(hwin->role)) {
 	gtk_text_buffer_insert(textb, &iter, "\n\n", 2);
     } else {
 	gtk_text_buffer_insert(textb, &iter, "\n", 1);
@@ -3916,7 +3918,7 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
 
     textb = gretl_text_buf_new();
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
-    links = insert_text_with_markup(textb, &iter, buf, FUNCS_HELP);
+    links = insert_text_with_markup(textb, &iter, buf, FUNC_HELP);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(vwin->text), textb);
     cursor_to_top(vwin);
