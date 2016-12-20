@@ -1471,18 +1471,29 @@
   <command name="chow" section="Tests" label="Test di Chow">
 
     <usage>
-      <arguments>
-        <argument>osservazione</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>chow</lit> <repl>obs</repl></altform>
+        <altform><lit>chow</lit> <repl>dummyvar</repl> <lit>--dummy</lit></altform>
+      </altforms>
       <options>
+	<option>
+	  <flag>--dummy</flag>
+	  <effect>usa una variabile dummy preesistente</effect>
+	</option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra le stime del modello aumentato</effect>
 	</option>
+	<option>
+	  <flag>--limit-to</flag>
+	  <optparm>lista</optparm>
+	  <effect>limita il test a un sottoinsieme di regressori</effect>
+	</option>	
       </options>
       <examples>
         <example>chow 25</example>
         <example>chow 1988:1</example>
+	<example>chow female --dummy</example>
       </examples>
     </usage>
 
@@ -1508,6 +1519,14 @@
         covarianza, come statistica test viene usato un valore
         chi-quadro di Wald, basato su uno stimatore robusto della
         matrice di covarianza della regressione aumentata.
+      </para>
+      <para context="cli">
+	L'opzione <opt>limit-to</opt> si può usare per limitare
+	l'insieme di regressori che verrà interagito con la dummy di
+	sottocampionamento a un sottoinsieme di quelli originali. Il
+	parametro di questa opzione dev'essere una lista pre-definita,
+	contenente un sottoinsieme delle variabili esplicative; la
+	costante non può farne parte.
       </para>
     </description>
 
@@ -2336,6 +2355,15 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--compact</flag>
+	  <optparm>metodo</optparm>
+	  <effect>specifica un metodo di aggregazione</effect>
+	</option>
+	<option>
+	  <flag>--interpolate</flag>
+	  <effect>interpola i dati a bassa frequenza</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati tranne che in caso di errore</effect>
 	</option>
@@ -2376,14 +2404,42 @@
         compattamento, come mostrato di seguito
       </para>
       <code>
-	data (compact=average) LHUR PUNEW
+	data LHUR PUNEW --compact=average
       </code>
-      <para>I quattro metodi di compattamento disponibili sono
-	<quote>average</quote> (usa la media delle osservazioni ad alta
-	frequenza), <quote>last</quote> (usa l'ultima osservazione),
-	<quote>first</quote> e <quote>sum</quote>. Se non si specifica alcun
-        metodo, verrà usata la media delle osservazioni.
+      <para>
+	I cinque metodi di compattamento disponibili sono
+	<quote>average</quote> (usa la media delle osservazioni ad
+	alta frequenza), <quote>last</quote> (usa l'ultima
+	osservazione), <quote>first</quote>, <quote>sum</quote> e
+	<quote>spread</quote>. Se non si specifica alcun metodo, verrà
+	usata la media delle osservazioni. Il metodo
+	<quote>spread</quote> è speciale: l'informazione, anziché
+	essere condensata, verrà suddivisa su più series, una per
+	sottoperiodo. Ad esempio, l'aggiunta di una serie mensile ad
+	un dataset trimestrale provoca la creazione di tre, serie, una
+	per ogni mese del trimestre; nei loro nomi compaiono i
+	suffissi <lit>m01</lit>, <lit>m02</lit> e <lit>m03</lit>.
       </para> 
+      <para>
+	Se la serie in ingresso è a frequenza più bassa di quella del
+	dataset, il default è ripetere il valore dei dati in ingresso;
+	tuttavia, con l'opzione <opt>interpolate</opt> si azionerà il
+	metodo di interpolazione di <cite key="chowlin71">Chow and Lin
+	(1971)</cite>, con costante, trend quadratico e dirsturbi
+	AR(1). Si noti, però, che questa opzione è disponibile solo
+	nel caso di conversione da trimestrale a mensile e da annua a
+	trimestrale.
+      </para>
+      <para>
+	Se il database è in formato nativo gretl, i caratteri
+	<quote>glob</quote> <lit>*</lit> e <lit>?</lit> can be used in
+	<repl>varlist</repl>, nella ricerca delle serie da
+	importare. L'esempio che segue importerà tutte le serie i cui
+	nomi comiciano per <lit>cpi</lit>:
+      </para>
+      <code>
+	data cpi*
+      </code>
 
     </description>
 
@@ -10706,17 +10762,18 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>csv_write_na</lit>: the string used to represent
-	  missing values when writing data to file in CSV format.
-	  Maximum 7 characters; the default is <lit>NA</lit>.
+	  <para><lit>csv_write_na</lit>: la stringa usata per
+	  rappresentare i valori mancanti quando si esportano dati in
+	  formato CSV. Massimo 7 caratteri; il default è
+	  <lit>NA</lit>.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>csv_read_na</lit>: the string taken to represent
-	  missing values (NAs) when reading data in CSV
-	  format. Maximum 7 characters. The default depends on whether
-	  a data column is found to contain numerical data (mostly) or
-	  string values. For numerical data the following are taken as
+	  <para><lit>csv_read_na</lit>: la stringa usata per
+	  rappresentare i valori mancanti quando si esportano dati in
+	  formato CSV. Massimo 7 caratteri; il default dipende se una
+	  colonna di dati contiene dati numerici (o per lo più tali) o
+	  stringa. For numerical data the following are taken as
 	  indicating NAs: an empty cell, or any of the strings
 	  <lit>NA</lit>, <lit>N.A.</lit>, <lit>na</lit>,
 	  <lit>n.a.</lit>, <lit>N/A</lit>, <lit>#N/A</lit>,
@@ -10732,7 +10789,7 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>csv_digits</lit>: a positive integer specifying
+	  <para><lit>csv_digits</lit>: un intero positivo specifying
 	  the number of significant digits to use when writing data in
 	  CSV format. By default up to 15 digits are used depending on
 	  the precision of the original data. Note that CSV output
@@ -10763,13 +10820,6 @@
 	    (valore predefinito).  Forza gretl a usare il carattere punto come
             separatore decimale, in un ambiente in cui il separatore standard è
             un'altro carattere (tipicamente la virgola).
-	  </para>
-	</li>
-	<li>
-	  <para><lit>halt_on_error</lit>: <lit>off</lit> o
-	  <lit>on</lit> (valore predefinito). Quando è attivo, se si verifica un
-          errore all'interno di un loop, questo si interromperà. Se si usa il
-          client a riga di comando, il programma terminerà.
 	  </para>
 	</li>
         <li>
@@ -10822,6 +10872,40 @@
           (Strumenti/Preferenze/Generali). Una volta abilitata, l'impostazione
           rimarrà attiva per le successive sessioni, fino a che non sarà
           disabilitata esplicitamente.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>bfgs_verbskip</lit>: one integer. This setting
+	  affects the behavior of the <opt>verbose</opt> option to
+	  those commands that use BFGS as an optimization algorithm and
+	  is used to compact output. if <lit>bfgs_verbskip</lit> is
+	  set to, say, 3, then the <opt>verbose</opt> switch will
+	  only print iterations 3, 6, 9 and so on.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>skip_missing</lit>: <lit>on</lit> (the default)
+	  or <lit>off</lit>. Controls gretl's behavior when
+	  contructing a matrix from data series: the default is to
+	  skip data rows that contain one or more missing values but
+	  if <lit>skip_missing</lit> is set <lit>off</lit> missing
+	  values are converted to NaNs.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>matrix_mask</lit>: the name of a series, or the
+	  keyword <lit>null</lit>. Offers greater control than 
+	  <lit>skip_missing</lit> when constructing matrices from
+	  series: the data rows selected for matrices are those
+	  with non-zero (and non-missing) values in the specified
+	  series. The selected mask remains in force until it is 
+	  replaced, or removed via the <lit>null</lit> keyword.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>huge</lit>: un numero grande positivo (di default,
+	  1.0E100). Questo settaggio controlla il valore ritornato
+	  dall'accessore <fncref targ="$huge"/>.
 	  </para>
 	</li>
       </ilist>
@@ -13010,6 +13094,13 @@
         <argument>var2</argument>
         <argument optional="true">maxlag</argument>
       </arguments>
+      <options>
+       <option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>vedi sotto</effect>
+        </option>	  
+      </options>
       <examples>
         <example>xcorrgm x y 12</example>
       </examples>
@@ -13029,6 +13120,20 @@
 	correlogramma è limitata al numero di ritardi e anticipi
 	indicati, altrimenti è determinata automaticamente in funzione
 	della frequenza dei dati e del numero di osservazioni.
+      </para>
+      <para>
+	Di default, viene prodotto un grafico del correlogramma
+	incrociato: un grafico gnuplot in modo interattivo o un
+	grafico ASCII in modalità batch. Questo comportamento può
+	essere aggiustato con l'opzione <opt>plot</opt>. Per essa, i
+	valori accettabili dei parametri sono <lit>none</lit> (pr
+	sopprimere il grafico); <lit>ascii</lit> (per produrre un
+	grafico testuale anche se in modo interattivo);
+	<lit>display</lit> (per produrre un grafico gnuplot anche se
+	in modo batch), o il nome di un file. L'effetto di
+	quest'ultima scelta è identico a quello descritto sotto
+	l'opzione <opt>output</opt> del comando <cmdref
+	targ="gnuplot"/>.
       </para>
     </description>
 
