@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-12-20 08:47-0500\n"
-"PO-Revision-Date: 2016-12-19 18:30-0500\n"
+"PO-Revision-Date: 2016-12-20 17:56+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3315,12 +3315,10 @@ msgid "generated non-finite values"
 msgstr "valori non finiti generati"
 
 #: lib/src/gretl_errors.c:220 lib/src/gretl_errors.c:223
-#, fuzzy
 msgid "In regard to function"
-msgstr "le funzioni matematiche"
+msgstr "A proposito della funzione"
 
 #: lib/src/gretl_errors.c:221
-#, fuzzy
 msgid "package"
 msgstr "Pacchetto"
 
@@ -9542,7 +9540,7 @@ msgstr "Restrizione permanente"
 
 #: gui2/dialogs.c:2367
 msgid "The current data range is too small for this option"
-msgstr ""
+msgstr "Ci sono troppo pochi dati per questa opzione"
 
 #: gui2/dialogs.c:2382
 #, c-format

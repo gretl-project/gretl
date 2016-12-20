@@ -2449,6 +2449,57 @@
 
   </command>
 
+  <command name="data-files" section="Programming" 
+	   label="Data files" context="gui">
+    <description>
+      <para>
+	Questa finestra di dialogo permette di specificare file
+	aggiuntivi da uincludere al pacchetto. Tale inclusione implica
+	che il pacchetto avrà la forma di un file zip.  Se gretl dovrà
+	occuparsi creare il file zip per voi, allora tutti i file
+	specificati qui dovrenno essere nella stessa directory del
+	file gfn. È anche possibile includere sottodirectory, nel qual
+	caso si dà per inteso che verranno inclusi nel file zip anche
+	tutti i file in esse contenuti.
+      </para>
+      <para>
+	Questa funzionalità obbedisce a due scopi: in primis, si potrà
+	includere un file di dati per l'uso con lo script di esempio
+	del pacchetto, se nessuno dei file di dati di esempio
+	normalmente presenti nella distribuzione vanno bene allo
+	scopo. In tal caso, i dati dovranno essere in formato nativo
+	(<lit>gdt</lit> o binario <lit>gdtb</lit>). In aggiunta, se il
+	pacchetto richiede l'uso di grandi matrici pre-calcolate (ad
+	esempio, contenenti i valori critici di una statistica test
+	particolare), potrebbe essere più comodo includerle come
+	file matrice (<lit>mat</lit>) anziché metterle assieme visa
+	dichiarazioni in hansl.
+      </para>
+      <para>
+	Per accedere ad un file <lit>gdt</lit> o <lit>gdtb</lit>
+	incluso in un pacchetto dallo script di esempio, si usi
+	l'opzione <opt>frompkg</opt> col comando <lit>open</lit>,
+	usando il nome del pacchetto come parametro. Ad esempio:
+      </para>
+      <code>
+	open almon.gdt --frompkg=almonreg
+      </code>
+      <para>
+	Per leggere un file matrice da un pacchetto, usare la stringa
+	predefinita <lit>$pkgdir</lit>, come ad esempio in
+      </para>
+      <code>
+	string mname = sprintf("%s/A.mat", $pkgdir)
+	matrix A = mread(mname)
+      </code>
+      <para>
+	(Si noti che il carattere <quote><lit>/</lit></quote> dovrebbe
+	funzionare tranquillamente come separatore di percorso anche
+	sotto MS Windows.)
+      </para>
+    </description>
+  </command>  
+
   <command name="dataset" section="Dataset" 
     label="Manipola il dataset" context="cli">
 
