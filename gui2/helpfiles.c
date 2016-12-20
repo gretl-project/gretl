@@ -68,7 +68,7 @@ static GtkWidget *find_entry;
 static char *needle;
 
 enum {
-    EN_ITEM = 1
+    EN_ITEM = 255
 };
 
 static GretlToolItem help_tools[] = {
