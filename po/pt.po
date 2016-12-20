@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-12-19 18:27-0500\n"
-"PO-Revision-Date: 2016-12-19 18:31-0500\n"
+"PO-Revision-Date: 2016-12-19 19:48-0500\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -4009,7 +4009,7 @@ msgstr "gretl_cli_fnref.pt"
 #.
 #: lib/src/gretl_paths.c:111
 msgid "gretl_gui_cmdref.en"
-msgstr "gretl_gui_cmref.pt"
+msgstr "gretl_gui_cmdref.pt"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
