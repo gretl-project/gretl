@@ -43,7 +43,8 @@
 #define cmdref_role(r)  (r == CMD_HELP || r == CMD_HELP_EN)
 #define funcref_role(r) (r == FUNC_HELP || r == FUNC_HELP_EN)
 
-static int translated_helpfiles;
+static int translated_cmdref;
+static int translated_fnref;
 
 static windata_t *real_do_help (int idx, int pos, int role);
 static void en_help_callback (GtkWidget *w, windata_t *hwin);
@@ -222,7 +223,8 @@ int extra_command_number (const char *s)
 
 void helpfile_init (void)
 {
-    translated_helpfiles = using_translated_helpfiles();
+    translated_cmdref = using_translated_helpfile(GRETL_CMDREF);
+    translated_fnref = using_translated_helpfile(GRETL_FUNCREF);
 }
 
 char *quoted_help_string (const char *s)
@@ -1000,8 +1002,8 @@ void vwin_add_finder (windata_t *vwin)
 }
 
 #define SHOW_FINDER(r)    (r != GUI_HELP && r != GUI_HELP_EN)
-#define SHOW_EN_BUTTON(r) (translated_helpfiles && \
-                           (r == CMD_HELP || r == GUI_HELP || r == FUNC_HELP))
+#define SHOW_EN_BUTTON(r) ((translated_cmdref && (r==CMD_HELP || r==GUI_HELP)) || \
+			   (translated_fnref && r == FUNC_HELP))
 
 void set_up_helpview_menu (windata_t *hwin) 
 {
@@ -1040,7 +1042,7 @@ void show_gui_help (int helpcode)
     /* try for GUI help first */
     pos = help_pos_from_index(idx, role);
 
-    if (pos <= 0 && translated_helpfiles) {
+    if (pos <= 0 && translated_cmdref) {
 	/* English GUI help? */
 	role = GUI_HELP_EN;
 	pos = help_pos_from_index(idx, role);
@@ -1052,7 +1054,7 @@ void show_gui_help (int helpcode)
 	pos = help_pos_from_index(idx, role);
     }
 
-    if (pos <= 0 && translated_helpfiles) {
+    if (pos <= 0 && translated_cmdref) {
 	/* English command help? */
 	role = CMD_HELP_EN;
 	pos = help_pos_from_index(idx, role);
@@ -1263,7 +1265,7 @@ void command_help_callback (int idx, int en)
     
     if (idx > 0) {
 	pos = help_pos_from_index(idx, role);
-	if (pos < 0 && !en && translated_helpfiles) {
+	if (pos < 0 && !en && translated_cmdref) {
 	    /* no translated entry: fall back on English */
 	    role = CMD_HELP_EN;
 	    pos = help_pos_from_index(idx, role);
@@ -1303,7 +1305,7 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     *idx = gretl_command_number(word);
     pos = help_pos_from_index(*idx, *role);
 
-    if (pos <= 0 && translated_helpfiles) {
+    if (pos <= 0 && translated_cmdref) {
 	pos = help_pos_from_index(*idx, CMD_HELP_EN);
 	if (pos > 0) {
 	    *role = CMD_HELP_EN;
@@ -1316,7 +1318,7 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
 	if (pos > 0) {
 	    *role = FUNC_HELP;
 	    *idx = function_help_index_from_word(word, *role);
-	} else if (translated_helpfiles) {
+	} else if (translated_fnref) {
 	    pos = function_help_pos_from_word(word, FUNC_HELP_EN);
 	    if (pos > 0) {
 		*role = FUNC_HELP_EN;

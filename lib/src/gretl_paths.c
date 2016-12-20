@@ -84,12 +84,14 @@ static struct INTERNAL_PATHS paths;
 
 static char current_dir[MAXLEN];
 
-static int force_en_help;
+static int force_en_cmdref;
+static int force_en_fnref;
 
 static void set_helpfile_option (gretlopt opt)
 {
     if (opt & OPT_N) {
-	force_en_help = 1;
+	force_en_cmdref = 1;
+	force_en_fnref = 1;
     }
 }
 
@@ -100,11 +102,6 @@ static const char *helpfiles[] = {
     */
     N_("gretl_cli_cmdref.en"),
     /* TRANSLATORS: you may change the two-letter language code
-       if gretl_functions_en.xml has been translated for your language,
-       as in gretl_cli_fnref.pt -- otherwise leave it untranslated
-    */	
-    N_("gretl_cli_fnref.en"),
-    /* TRANSLATORS: you may change the two-letter language code
        if gretl_commands_en.xml has been translated for your language,
        as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
     */
@@ -113,7 +110,12 @@ static const char *helpfiles[] = {
        if gretl_commands_en.xml has been translated for your language,
        as in gretl_gui_help.pt -- otherwise leave it untranslated
     */	
-    N_("gretl_gui_help.en"),
+    N_("gretl_gui_help.en"),    
+    /* TRANSLATORS: you may change the two-letter language code
+       if gretl_functions_en.xml has been translated for your language,
+       as in gretl_cli_fnref.pt -- otherwise leave it untranslated
+    */
+    N_("gretl_cli_fnref.en"),
     /* TRANSLATORS: you may change the two-letter language code
        if gretl_functions_en.xml has been translated for your language,
        as in gretl_gui_fnref.pt -- otherwise leave it untranslated
@@ -125,12 +127,12 @@ const char *helpfile_path (int id, int cli, int en)
 {
     const char *ghome = paths.gretldir;
     static char hpath[MAXLEN];
-    FILE *fp;
     int i = -1;
 
     *hpath = '\0';
 
-    if (force_en_help) {
+    if ((id == GRETL_CMDREF && force_en_cmdref) ||
+	(id == GRETL_FUNCREF && force_en_fnref)) {
 	en = 1;
     }
 
@@ -139,59 +141,60 @@ const char *helpfile_path (int id, int cli, int en)
 	if (id == GRETL_CMDREF) {
 	    i = 0;
 	} else if (id == GRETL_FUNCREF) {
-	    i = 1;
+	    i = 3;
 	}
     } else {
 	/* GUI program */
 	if (id == GRETL_CMDREF) {
-	    i = 2;
+	    i = 1;
 	} else if (id == GRETL_GUI_HELP) {
-	    i = 3;
+	    i = 2;
 	} else if (id == GRETL_FUNCREF) {
 	    i = 4;
 	}
     }
 
     if (i >= 0) {
-	if (en) {
-	    sprintf(hpath, "%s%s", ghome, helpfiles[i]);
-	} else {
-	    int err;
-	
-	    sprintf(hpath, "%s%s", ghome, _(helpfiles[i]));
-	    err = gretl_test_fopen(hpath, "r");
-	    if (err && strcmp(helpfiles[i], _(helpfiles[i]))) {
-		/* try untranslated fallback */
-		sprintf(hpath, "%s%s", ghome, helpfiles[i]);
-	    }
-	}
+	sprintf(hpath, "%s%s", ghome, en ? helpfiles[i] :
+		_(helpfiles[i]));
     }
 
     return hpath;
 }
 
-int using_translated_helpfiles (void)
+int using_translated_helpfile (int id)
 {
     int ret = 0;
+    int i = 0;
 
-    if (force_en_help) {
+    if (id == GRETL_CMDREF) {
+	if (force_en_cmdref) return 0;
+	i = 1;
+    } else if (id == GRETL_FUNCREF) {
+	if (force_en_fnref) return 0;
+	i = 4;
+    } else {
 	return 0;
     }
 
     /* If we're not forcing English help, the criterion is
-       that gretl_cli_cmdref.en has a "translated" filename
-       and the translation can be opened.
+       that the relevant help file has a "translated" filename
+       and the translation can actually be opened.
     */
 
-    if (strcmp(helpfiles[0], _(helpfiles[0]))) {
+    if (strcmp(helpfiles[i], _(helpfiles[i]))) {
 	char test[MAXLEN];
 	int err;
 
-	force_en_help = 1; /* will be reversed if OK */
 	sprintf(test, "%s%s", paths.gretldir, _(helpfiles[0]));
 	err = gretl_test_fopen(test, "r");
-	if (!err) {
-	    force_en_help = 0;
+	if (err) {
+	    if (id == GRETL_CMDREF) {
+		force_en_cmdref = 1;
+	    } else {
+		force_en_fnref = 1;
+	    }
+	} else {
 	    ret = 1;
 	}
     }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-19 18:27-0500\n"
+"POT-Creation-Date: 2016-12-20 08:47-0500\n"
 "PO-Revision-Date: 2016-04-21 19:23-0400\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
@@ -1281,7 +1281,7 @@ msgstr "Броят на наблюденията превишава устано
 msgid "wrote %s.gdt\n"
 msgstr "записано в %s\n"
 
-#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2702 gui2/model_table.c:1431
+#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2714 gui2/model_table.c:1431
 #, c-format
 msgid "wrote %s\n"
 msgstr "записано в %s\n"
@@ -4035,25 +4035,16 @@ msgstr ""
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:101
+#: lib/src/gretl_paths.c:103
 #, fuzzy
 msgid "gretl_cli_cmdref.en"
 msgstr "gretl: справка по команди"
 
 #. TRANSLATORS: you may change the two-letter language code
-#. if gretl_functions_en.xml has been translated for your language,
-#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
-#.
-#: lib/src/gretl_paths.c:106
-#, fuzzy
-msgid "gretl_cli_fnref.en"
-msgstr "gretl: справка по функции"
-
-#. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:111
+#: lib/src/gretl_paths.c:108
 #, fuzzy
 msgid "gretl_gui_cmdref.en"
 msgstr "gretl: справка по команди"
@@ -4062,45 +4053,54 @@ msgstr "gretl: справка по команди"
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_gui_help.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:116
+#: lib/src/gretl_paths.c:113
 #, fuzzy
 msgid "gretl_gui_help.en"
 msgstr "gretlgui_hlp.txt"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:118
+#, fuzzy
+msgid "gretl_cli_fnref.en"
+msgstr "gretl: справка по функции"
+
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
 #. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:121
+#: lib/src/gretl_paths.c:123
 #, fuzzy
 msgid "gretl_gui_fnref.en"
 msgstr "gretl: справка по функции"
 
-#: lib/src/gretl_paths.c:1941
+#: lib/src/gretl_paths.c:1953
 #, fuzzy, c-format
 msgid "Couldn't find package %s"
 msgstr "Невъзможно отварянето на %s"
 
-#: lib/src/gretl_paths.c:1961
+#: lib/src/gretl_paths.c:1973
 #, fuzzy, c-format
 msgid "Couldn't find file %s for package %s"
 msgstr "Неуспешно намиране на скрипт '%s'\n"
 
-#: lib/src/gretl_paths.c:2624
+#: lib/src/gretl_paths.c:2636
 msgid "User directory is not set"
 msgstr "Не е посочена потребителската папка"
 
-#: lib/src/gretl_paths.c:2630
+#: lib/src/gretl_paths.c:2642
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "Не може да се създаде директория '%s'"
 
-#: lib/src/gretl_paths.c:2641
+#: lib/src/gretl_paths.c:2653
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr "Невъзможно записването в '%s': gretl няма да работи правилно!"
 
-#: lib/src/gretl_paths.c:2869
+#: lib/src/gretl_paths.c:2881
 #, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: използва се следния път за търсене:\n"
@@ -4660,7 +4660,7 @@ msgstr "изпозвайте \"help set\" за повече подробност
 msgid "Program interaction and behavior"
 msgstr "Поведение на програмата"
 
-#: lib/src/libset.c:1432 gui2/helpfiles.c:316 doc/commands/matfuncs.c:48
+#: lib/src/libset.c:1432 gui2/helpfiles.c:318 doc/commands/matfuncs.c:48
 msgid "Numerical methods"
 msgstr "Коичествени методи"
 
@@ -11139,7 +11139,7 @@ msgstr ""
 msgid "Bigger"
 msgstr "По-голям"
 
-#: gui2/gpt_control.c:291 gui2/helpfiles.c:75
+#: gui2/gpt_control.c:291 gui2/helpfiles.c:76
 msgid "Smaller"
 msgstr "По-малък"
 
@@ -13616,148 +13616,148 @@ msgstr ""
 msgid "No command was supplied to start R"
 msgstr "Не са въведени команди за стартиране на R"
 
-#: gui2/helpfiles.c:74
+#: gui2/helpfiles.c:75
 msgid "Larger"
 msgstr "По-голям"
 
-#: gui2/helpfiles.c:76
+#: gui2/helpfiles.c:77
 msgid "Show English help"
 msgstr "Покажи помощта на английски език"
 
-#: gui2/helpfiles.c:159
+#: gui2/helpfiles.c:160
 msgid "Dataset"
 msgstr "Данни"
 
-#: gui2/helpfiles.c:160
+#: gui2/helpfiles.c:161
 msgid "Estimation"
 msgstr "Оценка"
 
-#: gui2/helpfiles.c:161
+#: gui2/helpfiles.c:162
 msgid "Graphs"
 msgstr "Графики"
 
-#: gui2/helpfiles.c:162
+#: gui2/helpfiles.c:163
 msgid "Prediction"
 msgstr "Прогноза"
 
-#: gui2/helpfiles.c:163
+#: gui2/helpfiles.c:164
 msgid "Printing"
 msgstr "Печат"
 
-#: gui2/helpfiles.c:164
+#: gui2/helpfiles.c:165
 msgid "Programming"
 msgstr "Програмиране"
 
-#: gui2/helpfiles.c:165
+#: gui2/helpfiles.c:166
 msgid "Statistics"
 msgstr "Статистика"
 
-#: gui2/helpfiles.c:166
+#: gui2/helpfiles.c:167
 msgid "Tests"
 msgstr "Критерии"
 
-#: gui2/helpfiles.c:167 gui2/helpfiles.c:330 plugin/tramo_options.c:529
+#: gui2/helpfiles.c:168 gui2/helpfiles.c:332 plugin/tramo_options.c:529
 msgid "Transformations"
 msgstr "Трансформация"
 
-#: gui2/helpfiles.c:168
+#: gui2/helpfiles.c:169
 msgid "Utilities"
 msgstr "Полезни добавки"
 
-#: gui2/helpfiles.c:312
+#: gui2/helpfiles.c:314
 msgid "Accessors"
 msgstr "Модификатор за достъпа"
 
-#: gui2/helpfiles.c:314
+#: gui2/helpfiles.c:316
 msgid "Mathematical"
 msgstr "Математически"
 
-#: gui2/helpfiles.c:318
+#: gui2/helpfiles.c:320
 msgid "Filters"
 msgstr "Филтри"
 
-#: gui2/helpfiles.c:320
+#: gui2/helpfiles.c:322
 msgid "Statistical"
 msgstr "Статистически"
 
-#: gui2/helpfiles.c:322
+#: gui2/helpfiles.c:324
 msgid "Probability"
 msgstr "Вероятности"
 
-#: gui2/helpfiles.c:324
+#: gui2/helpfiles.c:326
 msgid "Linear algebra"
 msgstr "Линейна алгебра"
 
-#: gui2/helpfiles.c:326
+#: gui2/helpfiles.c:328
 msgid "Matrix building"
 msgstr "Матрици"
 
-#: gui2/helpfiles.c:328
+#: gui2/helpfiles.c:330
 msgid "Matrix shaping"
 msgstr "Матрични операции"
 
-#: gui2/helpfiles.c:332
+#: gui2/helpfiles.c:334
 msgid "Data utilities"
 msgstr "Подготвяне на данните"
 
-#: gui2/helpfiles.c:334
+#: gui2/helpfiles.c:336
 msgid "Strings"
 msgstr "Редове"
 
-#: gui2/helpfiles.c:336
+#: gui2/helpfiles.c:338
 #, fuzzy
 msgid "State space"
 msgstr "интервал"
 
-#: gui2/helpfiles.c:338
+#: gui2/helpfiles.c:340
 msgid "Calendar"
 msgstr ""
 
-#: gui2/helpfiles.c:340
+#: gui2/helpfiles.c:342
 msgid "MIDAS"
 msgstr ""
 
-#: gui2/helpfiles.c:382 gui2/textbuf.c:1995
+#: gui2/helpfiles.c:384 gui2/textbuf.c:1995
 msgid "Index"
 msgstr "Индекс"
 
-#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
+#: gui2/helpfiles.c:827 gui2/helpfiles.c:1571 gui2/helpfiles.c:1708
 msgid "Search wrapped"
 msgstr "Търси отначало"
 
-#: gui2/helpfiles.c:931
+#: gui2/helpfiles.c:933
 msgid "this page"
 msgstr "в тази страница"
 
-#: gui2/helpfiles.c:932
+#: gui2/helpfiles.c:934
 msgid "all pages"
 msgstr "във всички страници"
 
-#: gui2/helpfiles.c:991 gui2/textutil.c:284
+#: gui2/helpfiles.c:993 gui2/textutil.c:284
 msgid "Find:"
 msgstr "Намери:"
 
-#: gui2/helpfiles.c:1064
+#: gui2/helpfiles.c:1066
 msgid "Sorry, no help is available"
 msgstr "Помощта не е достъпна"
 
-#: gui2/helpfiles.c:1412
+#: gui2/helpfiles.c:1414
 msgid "Sorry, help not found"
 msgstr "Помощта не е намерена"
 
-#: gui2/helpfiles.c:1839
+#: gui2/helpfiles.c:1841
 msgid "gretl: find"
 msgstr "gretl: намери"
 
-#: gui2/helpfiles.c:1847
+#: gui2/helpfiles.c:1849
 msgid " Find what:"
 msgstr "Намери:"
 
-#: gui2/helpfiles.c:1871
+#: gui2/helpfiles.c:1873
 msgid "Variable names only (case sensitive)"
 msgstr "Само имената на променливите (зависи от регистъра)"
 
-#: gui2/helpfiles.c:2126
+#: gui2/helpfiles.c:2128
 msgid "Failed to download file"
 msgstr "Неуспешно зареждане на файла"
 

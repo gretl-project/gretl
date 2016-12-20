@@ -157,7 +157,7 @@ void set_gretl_plugin_path (const char *path);
 
 const char *helpfile_path (int id, int cli, int en);
 
-int using_translated_helpfiles (void);
+int using_translated_helpfile (int id);
 
 const char *gretl_home (void);
 

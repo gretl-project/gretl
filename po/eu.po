@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-19 18:27-0500\n"
+"POT-Creation-Date: 2016-12-20 08:47-0500\n"
 "PO-Revision-Date: 2014-04-28 09:54+0100\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>\n"
 "Language-Team: \n"
@@ -1264,7 +1264,7 @@ msgstr "Behaketa kopurua bornetik kanpo"
 msgid "wrote %s.gdt\n"
 msgstr "%s.gdt idatzia\n"
 
-#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2702 gui2/model_table.c:1431
+#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2714 gui2/model_table.c:1431
 #, c-format
 msgid "wrote %s\n"
 msgstr "idatzitakoa %s\n"
@@ -3997,25 +3997,16 @@ msgstr "Barkatu, ezin hau egin datuen azpilaginarekin"
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:101
+#: lib/src/gretl_paths.c:103
 #, fuzzy
 msgid "gretl_cli_cmdref.en"
 msgstr "gretl: erreferentzi komandoa"
 
 #. TRANSLATORS: you may change the two-letter language code
-#. if gretl_functions_en.xml has been translated for your language,
-#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
-#.
-#: lib/src/gretl_paths.c:106
-#, fuzzy
-msgid "gretl_cli_fnref.en"
-msgstr "gretl: erreferentzi funtzioa"
-
-#. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:111
+#: lib/src/gretl_paths.c:108
 #, fuzzy
 msgid "gretl_gui_cmdref.en"
 msgstr "gretl: erreferentzi komandoa"
@@ -4024,45 +4015,54 @@ msgstr "gretl: erreferentzi komandoa"
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_gui_help.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:116
+#: lib/src/gretl_paths.c:113
 #, fuzzy
 msgid "gretl_gui_help.en"
 msgstr "gretlgui_hlp.txt"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:118
+#, fuzzy
+msgid "gretl_cli_fnref.en"
+msgstr "gretl: erreferentzi funtzioa"
+
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
 #. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:121
+#: lib/src/gretl_paths.c:123
 #, fuzzy
 msgid "gretl_gui_fnref.en"
 msgstr "gretl: erreferentzi funtzioa"
 
-#: lib/src/gretl_paths.c:1941
+#: lib/src/gretl_paths.c:1953
 #, fuzzy, c-format
 msgid "Couldn't find package %s"
 msgstr " %s ezin da ireki"
 
-#: lib/src/gretl_paths.c:1961
+#: lib/src/gretl_paths.c:1973
 #, fuzzy, c-format
 msgid "Couldn't find file %s for package %s"
 msgstr "Ezin da socket kontrolatzaile erabilgarria aurkitu\n"
 
-#: lib/src/gretl_paths.c:2624
+#: lib/src/gretl_paths.c:2636
 msgid "User directory is not set"
 msgstr "Erabiltzaile direktorioa ez dago ezarrita"
 
-#: lib/src/gretl_paths.c:2630
+#: lib/src/gretl_paths.c:2642
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "Ezin  da '%s' direktorioa sortu "
 
-#: lib/src/gretl_paths.c:2641
+#: lib/src/gretl_paths.c:2653
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr "'%s' -ra ezin daiteke idatzi: gretl ez da era egokian ibiliko!"
 
-#: lib/src/gretl_paths.c:2869
+#: lib/src/gretl_paths.c:2881
 #, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl:  honako oinarrizko bilaketa bideak erabiliz:\n"
@@ -4619,7 +4619,7 @@ msgstr "\"help set\" zehaztasunentzat"
 msgid "Program interaction and behavior"
 msgstr "Programaren elkareragina eta portaera "
 
-#: lib/src/libset.c:1432 gui2/helpfiles.c:316 doc/commands/matfuncs.c:48
+#: lib/src/libset.c:1432 gui2/helpfiles.c:318 doc/commands/matfuncs.c:48
 msgid "Numerical methods"
 msgstr "Metodo numerikoak"
 
@@ -11076,7 +11076,7 @@ msgstr ""
 msgid "Bigger"
 msgstr "Handiago"
 
-#: gui2/gpt_control.c:291 gui2/helpfiles.c:75
+#: gui2/gpt_control.c:291 gui2/helpfiles.c:76
 msgid "Smaller"
 msgstr "Txikiagoa"
 
@@ -13549,148 +13549,148 @@ msgstr ""
 msgid "No command was supplied to start R"
 msgstr "R hasteko ez da komandorik eskaintzen"
 
-#: gui2/helpfiles.c:74
+#: gui2/helpfiles.c:75
 msgid "Larger"
 msgstr "Handiagoa"
 
-#: gui2/helpfiles.c:76
+#: gui2/helpfiles.c:77
 msgid "Show English help"
 msgstr "Erakutsi laguntza ingelesez"
 
-#: gui2/helpfiles.c:159
+#: gui2/helpfiles.c:160
 msgid "Dataset"
 msgstr "Datu-multzoa"
 
-#: gui2/helpfiles.c:160
+#: gui2/helpfiles.c:161
 msgid "Estimation"
 msgstr "Estimazioak"
 
-#: gui2/helpfiles.c:161
+#: gui2/helpfiles.c:162
 msgid "Graphs"
 msgstr "Grafikoak"
 
-#: gui2/helpfiles.c:162
+#: gui2/helpfiles.c:163
 msgid "Prediction"
 msgstr "Aurresana"
 
-#: gui2/helpfiles.c:163
+#: gui2/helpfiles.c:164
 msgid "Printing"
 msgstr "Inprimatzen"
 
-#: gui2/helpfiles.c:164
+#: gui2/helpfiles.c:165
 msgid "Programming"
 msgstr "Programatzen"
 
-#: gui2/helpfiles.c:165
+#: gui2/helpfiles.c:166
 msgid "Statistics"
 msgstr "Estatistikoak"
 
-#: gui2/helpfiles.c:166
+#: gui2/helpfiles.c:167
 msgid "Tests"
 msgstr "Kontrasteak"
 
-#: gui2/helpfiles.c:167 gui2/helpfiles.c:330 plugin/tramo_options.c:529
+#: gui2/helpfiles.c:168 gui2/helpfiles.c:332 plugin/tramo_options.c:529
 msgid "Transformations"
 msgstr "Eraldakuntzak"
 
-#: gui2/helpfiles.c:168
+#: gui2/helpfiles.c:169
 msgid "Utilities"
 msgstr "Baliagarritasunak"
 
-#: gui2/helpfiles.c:312
+#: gui2/helpfiles.c:314
 msgid "Accessors"
 msgstr "Eranskinak"
 
-#: gui2/helpfiles.c:314
+#: gui2/helpfiles.c:316
 msgid "Mathematical"
 msgstr "Matematikoa"
 
-#: gui2/helpfiles.c:318
+#: gui2/helpfiles.c:320
 msgid "Filters"
 msgstr "Irazkiak"
 
-#: gui2/helpfiles.c:320
+#: gui2/helpfiles.c:322
 msgid "Statistical"
 msgstr "Estatistiko"
 
-#: gui2/helpfiles.c:322
+#: gui2/helpfiles.c:324
 msgid "Probability"
 msgstr "Probabilitatea"
 
-#: gui2/helpfiles.c:324
+#: gui2/helpfiles.c:326
 msgid "Linear algebra"
 msgstr "Algebra lineala"
 
-#: gui2/helpfiles.c:326
+#: gui2/helpfiles.c:328
 msgid "Matrix building"
 msgstr "Matrizea eraikitzen"
 
-#: gui2/helpfiles.c:328
+#: gui2/helpfiles.c:330
 msgid "Matrix shaping"
 msgstr "Matrizearen forma"
 
-#: gui2/helpfiles.c:332
+#: gui2/helpfiles.c:334
 msgid "Data utilities"
 msgstr "Datuen baliagarritasunak"
 
-#: gui2/helpfiles.c:334
+#: gui2/helpfiles.c:336
 msgid "Strings"
 msgstr "Kateak"
 
-#: gui2/helpfiles.c:336
+#: gui2/helpfiles.c:338
 #, fuzzy
 msgid "State space"
 msgstr "zuriune"
 
-#: gui2/helpfiles.c:338
+#: gui2/helpfiles.c:340
 msgid "Calendar"
 msgstr "Egutegia"
 
-#: gui2/helpfiles.c:340
+#: gui2/helpfiles.c:342
 msgid "MIDAS"
 msgstr ""
 
-#: gui2/helpfiles.c:382 gui2/textbuf.c:1995
+#: gui2/helpfiles.c:384 gui2/textbuf.c:1995
 msgid "Index"
 msgstr "Aurkibidea"
 
-#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
+#: gui2/helpfiles.c:827 gui2/helpfiles.c:1571 gui2/helpfiles.c:1708
 msgid "Search wrapped"
 msgstr "Bilaketa egokituta"
 
-#: gui2/helpfiles.c:931
+#: gui2/helpfiles.c:933
 msgid "this page"
 msgstr "orri hau"
 
-#: gui2/helpfiles.c:932
+#: gui2/helpfiles.c:934
 msgid "all pages"
 msgstr "orri guztiak"
 
-#: gui2/helpfiles.c:991 gui2/textutil.c:284
+#: gui2/helpfiles.c:993 gui2/textutil.c:284
 msgid "Find:"
 msgstr "Bilatu:"
 
-#: gui2/helpfiles.c:1064
+#: gui2/helpfiles.c:1066
 msgid "Sorry, no help is available"
 msgstr "Barkatu, ez dago laguntzarik"
 
-#: gui2/helpfiles.c:1412
+#: gui2/helpfiles.c:1414
 msgid "Sorry, help not found"
 msgstr "Barkatu, laguntza ez dabil "
 
-#: gui2/helpfiles.c:1839
+#: gui2/helpfiles.c:1841
 msgid "gretl: find"
 msgstr "gretl: bilatu"
 
-#: gui2/helpfiles.c:1847
+#: gui2/helpfiles.c:1849
 msgid " Find what:"
 msgstr " Zer aurkitu:"
 
-#: gui2/helpfiles.c:1871
+#: gui2/helpfiles.c:1873
 msgid "Variable names only (case sensitive)"
 msgstr "Aldagaien izenak bakarrik (bereiztu hizki larriak)"
 
-#: gui2/helpfiles.c:2126
+#: gui2/helpfiles.c:2128
 msgid "Failed to download file"
 msgstr "Fitxategia jeistean huts egin du"
 

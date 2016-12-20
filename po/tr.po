@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-19 18:27-0500\n"
+"POT-Creation-Date: 2016-12-20 08:47-0500\n"
 "PO-Revision-Date: 2016-09-09 17:41+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
@@ -1260,7 +1260,7 @@ msgstr "Gözlem sayısı sınırlar dışında"
 msgid "wrote %s.gdt\n"
 msgstr "%s.gdt yazıldı\n"
 
-#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2702 gui2/model_table.c:1431
+#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2714 gui2/model_table.c:1431
 #, c-format
 msgid "wrote %s\n"
 msgstr "%s yazıldı\n"
@@ -3970,25 +3970,16 @@ msgstr "Üzgünüm, bunu alt-örneklemeli bir veri setiyle yapamazsınız"
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:101
+#: lib/src/gretl_paths.c:103
 #, fuzzy
 msgid "gretl_cli_cmdref.en"
 msgstr "gretl: komut başvuru belgesi"
 
 #. TRANSLATORS: you may change the two-letter language code
-#. if gretl_functions_en.xml has been translated for your language,
-#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
-#.
-#: lib/src/gretl_paths.c:106
-#, fuzzy
-msgid "gretl_cli_fnref.en"
-msgstr "gretl: işlev başvuru belgesi"
-
-#. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:111
+#: lib/src/gretl_paths.c:108
 #, fuzzy
 msgid "gretl_gui_cmdref.en"
 msgstr "gretl: komut başvuru belgesi"
@@ -3997,45 +3988,54 @@ msgstr "gretl: komut başvuru belgesi"
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_gui_help.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:116
+#: lib/src/gretl_paths.c:113
 #, fuzzy
 msgid "gretl_gui_help.en"
 msgstr "gretlgui_hlp.txt"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
+#. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:118
+#, fuzzy
+msgid "gretl_cli_fnref.en"
+msgstr "gretl: işlev başvuru belgesi"
+
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_functions_en.xml has been translated for your language,
 #. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:121
+#: lib/src/gretl_paths.c:123
 #, fuzzy
 msgid "gretl_gui_fnref.en"
 msgstr "gretl: işlev başvuru belgesi"
 
-#: lib/src/gretl_paths.c:1941
+#: lib/src/gretl_paths.c:1953
 #, c-format
 msgid "Couldn't find package %s"
 msgstr "%s paketi bulunamadı"
 
-#: lib/src/gretl_paths.c:1961
+#: lib/src/gretl_paths.c:1973
 #, c-format
 msgid "Couldn't find file %s for package %s"
 msgstr "%2$s paketi için %1$s dosyası bulunamadı"
 
-#: lib/src/gretl_paths.c:2624
+#: lib/src/gretl_paths.c:2636
 msgid "User directory is not set"
 msgstr "Kullanıcı dizini saptanmış değil"
 
-#: lib/src/gretl_paths.c:2630
+#: lib/src/gretl_paths.c:2642
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "'%s' dizini oluşturulamadı"
 
-#: lib/src/gretl_paths.c:2641
+#: lib/src/gretl_paths.c:2653
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr "'%s' üzerine yazılamadı: gretl düzgün çalışmayacak!"
 
-#: lib/src/gretl_paths.c:2869
+#: lib/src/gretl_paths.c:2881
 #, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: kullanılan temel arama yolları:\n"
@@ -4589,7 +4589,7 @@ msgstr "Ayrıntılar için \"help set\""
 msgid "Program interaction and behavior"
 msgstr "Program davranış ve etkileşimleri"
 
-#: lib/src/libset.c:1432 gui2/helpfiles.c:316 doc/commands/matfuncs.c:48
+#: lib/src/libset.c:1432 gui2/helpfiles.c:318 doc/commands/matfuncs.c:48
 msgid "Numerical methods"
 msgstr "Sayısal yöntemler"
 
@@ -10999,7 +10999,7 @@ msgstr "gfn dosyası oluştur"
 msgid "Bigger"
 msgstr "Daha büyük"
 
-#: gui2/gpt_control.c:291 gui2/helpfiles.c:75
+#: gui2/gpt_control.c:291 gui2/helpfiles.c:76
 msgid "Smaller"
 msgstr "Daha küçük"
 
@@ -13445,147 +13445,147 @@ msgstr ""
 msgid "No command was supplied to start R"
 msgstr "R'yi başlatmak için sağlanmış bir komut yok"
 
-#: gui2/helpfiles.c:74
+#: gui2/helpfiles.c:75
 msgid "Larger"
 msgstr "Daha büyük"
 
-#: gui2/helpfiles.c:76
+#: gui2/helpfiles.c:77
 msgid "Show English help"
 msgstr "İngilizce yardımı göster"
 
-#: gui2/helpfiles.c:159
+#: gui2/helpfiles.c:160
 msgid "Dataset"
 msgstr "Veri seti"
 
-#: gui2/helpfiles.c:160
+#: gui2/helpfiles.c:161
 msgid "Estimation"
 msgstr "Tahmin"
 
-#: gui2/helpfiles.c:161
+#: gui2/helpfiles.c:162
 msgid "Graphs"
 msgstr "Çizimler"
 
-#: gui2/helpfiles.c:162
+#: gui2/helpfiles.c:163
 msgid "Prediction"
 msgstr "Kestirim"
 
-#: gui2/helpfiles.c:163
+#: gui2/helpfiles.c:164
 msgid "Printing"
 msgstr "Yazdırma"
 
-#: gui2/helpfiles.c:164
+#: gui2/helpfiles.c:165
 msgid "Programming"
 msgstr "Programlama"
 
-#: gui2/helpfiles.c:165
+#: gui2/helpfiles.c:166
 msgid "Statistics"
 msgstr "İstatistikler"
 
-#: gui2/helpfiles.c:166
+#: gui2/helpfiles.c:167
 msgid "Tests"
 msgstr "Sınamalar"
 
-#: gui2/helpfiles.c:167 gui2/helpfiles.c:330 plugin/tramo_options.c:529
+#: gui2/helpfiles.c:168 gui2/helpfiles.c:332 plugin/tramo_options.c:529
 msgid "Transformations"
 msgstr "Dönüştürmeler"
 
-#: gui2/helpfiles.c:168
+#: gui2/helpfiles.c:169
 msgid "Utilities"
 msgstr "Yardımcı programlar"
 
-#: gui2/helpfiles.c:312
+#: gui2/helpfiles.c:314
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#: gui2/helpfiles.c:314
+#: gui2/helpfiles.c:316
 msgid "Mathematical"
 msgstr "Matematiksel"
 
-#: gui2/helpfiles.c:318
+#: gui2/helpfiles.c:320
 msgid "Filters"
 msgstr "Süzgeçler"
 
-#: gui2/helpfiles.c:320
+#: gui2/helpfiles.c:322
 msgid "Statistical"
 msgstr "İstatistiksel"
 
-#: gui2/helpfiles.c:322
+#: gui2/helpfiles.c:324
 msgid "Probability"
 msgstr "Olasılık"
 
-#: gui2/helpfiles.c:324
+#: gui2/helpfiles.c:326
 msgid "Linear algebra"
 msgstr "Doğrusal cebir"
 
-#: gui2/helpfiles.c:326
+#: gui2/helpfiles.c:328
 msgid "Matrix building"
 msgstr "Dizey oluşturma"
 
-#: gui2/helpfiles.c:328
+#: gui2/helpfiles.c:330
 msgid "Matrix shaping"
 msgstr "Dizey şekillendirme"
 
-#: gui2/helpfiles.c:332
+#: gui2/helpfiles.c:334
 msgid "Data utilities"
 msgstr "Veri araçları"
 
-#: gui2/helpfiles.c:334
+#: gui2/helpfiles.c:336
 msgid "Strings"
 msgstr "Dizgiler"
 
-#: gui2/helpfiles.c:336
+#: gui2/helpfiles.c:338
 msgid "State space"
 msgstr "Durum-uzay"
 
-#: gui2/helpfiles.c:338
+#: gui2/helpfiles.c:340
 msgid "Calendar"
 msgstr "Takvim"
 
-#: gui2/helpfiles.c:340
+#: gui2/helpfiles.c:342
 msgid "MIDAS"
 msgstr ""
 
-#: gui2/helpfiles.c:382 gui2/textbuf.c:1995
+#: gui2/helpfiles.c:384 gui2/textbuf.c:1995
 msgid "Index"
 msgstr "Endeks"
 
-#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
+#: gui2/helpfiles.c:827 gui2/helpfiles.c:1571 gui2/helpfiles.c:1708
 msgid "Search wrapped"
 msgstr "Arama sarmalandı"
 
-#: gui2/helpfiles.c:931
+#: gui2/helpfiles.c:933
 msgid "this page"
 msgstr "bu sayfa"
 
-#: gui2/helpfiles.c:932
+#: gui2/helpfiles.c:934
 msgid "all pages"
 msgstr "tüm sayfalar"
 
-#: gui2/helpfiles.c:991 gui2/textutil.c:284
+#: gui2/helpfiles.c:993 gui2/textutil.c:284
 msgid "Find:"
 msgstr "Bul:"
 
-#: gui2/helpfiles.c:1064
+#: gui2/helpfiles.c:1066
 msgid "Sorry, no help is available"
 msgstr "Üzgünüm, elde yardım yok"
 
-#: gui2/helpfiles.c:1412
+#: gui2/helpfiles.c:1414
 msgid "Sorry, help not found"
 msgstr "Üzgünüm, yardım bulunamadı"
 
-#: gui2/helpfiles.c:1839
+#: gui2/helpfiles.c:1841
 msgid "gretl: find"
 msgstr "gretl: bul"
 
-#: gui2/helpfiles.c:1847
+#: gui2/helpfiles.c:1849
 msgid " Find what:"
 msgstr "Bulunacak dizgi:"
 
-#: gui2/helpfiles.c:1871
+#: gui2/helpfiles.c:1873
 msgid "Variable names only (case sensitive)"
 msgstr "Yalnızca değişken adları (büyük/küçük harfe duyarlı)"
 
-#: gui2/helpfiles.c:2126
+#: gui2/helpfiles.c:2128
 msgid "Failed to download file"
 msgstr "dosya indirme başarısız"
 
