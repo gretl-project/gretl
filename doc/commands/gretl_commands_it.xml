@@ -2979,7 +2979,7 @@
 
   </command>
 
-  <command name="dpanel" section="Estimation" label="Dynamic panel models">
+  <command name="dpanel" section="Estimation" label="Modelli panel dinamici">
 
     <usage>
       <arguments>
@@ -3326,6 +3326,41 @@
 
   </command>
 
+  <command name="ema-filter" section="Transformations" context="gui"
+    label="Exponential Moving Average">
+
+    <description>
+      <para>
+	La formula per la media mobile esponenziale (EMA) usata in
+	gretl è tratta da <cite key="roberts59">Roberts
+	(1959)</cite>, ossia
+      </para>
+      <para>
+	<math>s</math><sub>t</sub> =
+	&agr;<math>y</math><sub>t</sub> +
+        (1&minus;&agr;)<math>s</math><sub>t&minus;1</sub>
+      </para>
+      <para>
+	dove <math>s</math> è la EMA, <math>y</math> è la serie
+	originale, e &agr; è una costante fra 0 e 1. Valori più grandi
+	di &agr; danno più peso all'osservazione attuale; valori più
+	piccoli provocano un risultato più <quote>liscio</quote>.
+      </para>
+      <para>
+	Il <quote>valore EMA iniziale</quote>, comunque sia
+	specificato, è dato dal più recente valore antecedente
+	all'inizio del campione, ciò che implica che il calcolo del
+	filtro comincia con la prima osservazione del campione
+	attuale.
+      </para>
+      <para>
+	Per la funzionalità equivalente a linea di comando, si veda la
+	funzione <fncref targ="movavg"/>.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="end" section="Programming" 
 	   label="Chiude un blocco di comandi" context="cli">
 
@@ -3545,6 +3580,28 @@
 	un'espressione ammissibile a destra dell'operatore di
 	assegnamento.
       </para>
+      <para>
+	Si noti che un comando del tipo
+      </para>
+      <code>
+	print x^2
+      </code>
+      <para>
+	non funziona in gretl, poiché <lit>x^2</lit> non è (né può essere)
+	il nome di una variabile, ma (data una variabile scalare di nome
+	<lit>x</lit>)
+      </para>
+      <code>
+	eval x^2
+      </code>
+      <para>
+	funzionerà tranquillamente, e mostrerà il quadrato di <lit>x</lit>.
+      </para>
+      <para>
+	Vedi anche <cmdref targ="printf"/>, per il caso in cui si
+	voglia combinare testo e output numerici.
+      </para>
+      
     </description>
   </command>
 
@@ -6047,18 +6104,19 @@
     label="Bootstrap impulso-risposta">
 
     <description>
-      <para>Se si sceglie l'intervallo di confidenza bootstrap nella
-      visualizzazione delle funzioni di impulso-risposta, gretl
-      calcola un intervallo di confidenza al 95 per cento per le
-      risposte usando il metodo bootstrap. Si effettua un
-      campionamento (con reimmissione) dai residui del VAR (o VECM)
-      originale, viene costruito un dataset artificiale usando le
-      stime originali dei parametri e i residui ri-campionati, viene
-      ri-stimato il sistema e vengono ri-calcolate le funzioni di
-      impulso-risposta.  Questa procedura viene ripetuta 999 volte e
-      vengono mostrati i quantili 0.025 e 0.975 per le risposte,
-      insieme alle stime puntuali.  L'opzione bootstrap al momento non
-      è disponibile per il VECM vincolati.
+      <para>
+	Se si sceglie l'intervallo di confidenza bootstrap nella
+	visualizzazione delle funzioni di impulso-risposta, gretl
+	calcola un intervallo di confidenza al 95 per cento per le
+	risposte usando il metodo bootstrap. Si effettua un
+	campionamento (con reimmissione) dai residui del VAR (o VECM)
+	originale, viene costruito un dataset artificiale usando le
+	stime originali dei parametri e i residui ri-campionati, viene
+	ri-stimato il sistema e vengono ri-calcolate le funzioni di
+	impulso-risposta.  Questa procedura viene ripetuta 999 volte e
+	vengono mostrati i quantili 0.025 e 0.975 per le risposte,
+	insieme alle stime puntuali.  L'opzione bootstrap al momento
+	non è disponibile per il VECM vincolati.
       </para>
       <para>
 	Questo comando permette anche il riordinamento delle variabili per la
@@ -6106,6 +6164,15 @@
 	  <optparm>method</optparm>
 	  <effect>v. oltre</effect>
 	</option>
+	<option>
+	  <flag>--tkey</flag>
+	  <optparm>nome_colonna,stringa_formato</optparm>
+	  <effect>v. oltre</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>visualizza dettagli sul comando</effect>
+	</option>	
       </options>
     </usage>
 
@@ -6152,8 +6219,59 @@
 	operazioni di unione di dataset.
       </para>
     </description>
-
   </command>
+
+  <command name="join" section="Dataset" label="Aggiungi dati con controlli" 
+	   context="gui">
+    <para>
+      Questa finestra di dialogo permette di usare un buon
+      sottoinsieme delle funzionalità del comando <lit>join</lit>, per
+      una piena discussione del quale si rimanda alla guida utente
+      (<guideref targ="chap:join"/>).
+    </para>
+    <para>
+      Sulla sinistra viene visualizzata una lista di serie presenti
+      nel dataset corrente. Una di esse può essere selezionata ed
+      usata come una delle <quote>chiavi interne</quote>. Le chiavi
+      servono a stabilire una corrispondenza fra le righe del dataset
+      attuale e quello dal quale si vogliono importare i dati.
+    </para>
+    <para>
+      Sulla destra, viene visualizzata una lista di serie presenti nel
+      file selezionato. Coi bottoni freccia si sceglie da essa il nome
+      della serie da importare, e (se necessario) il nome delle serie
+      corrispondenti alle chiavi <quote>interne</quote>, da usare come
+      <quote>chiavi esterne</quote>. (Di default, si assume che le
+      chiavi interna ed esterna si chiamino allo stesso modo.)
+    </para>
+    <para>
+      Nel pannello di mezzo, vengono specificati, volendo, parametri
+      aggiuntivi per l'operazione di <quote>join</quote>:
+    </para>
+    <ilist>
+      <li>
+	<para>
+	  Un nuovo nome per la serie importata.  (Di default,si
+	  mantiene lo stesso nome del file esterno).
+	</para>
+      </li>
+      <li>
+	<para>
+	  Un'espressione filtro. Essa verrà calcolata per ogni riga
+	  del dataset esterno, e verranno importate solo le righe
+	  corrispondenti a valori non-zero.
+	</para>
+      </li>
+      <li>
+	<para>
+	  Un metodo di aggregazione. Questo non va specificato, a meno
+	  che l'accoppiamento fra chiavi interne ed esterne produca
+	  più di una riga per osservazioni interne.
+	</para>
+      </li>
+    </ilist>
+  </command>
+
 
   <command name="kpss" section="Tests" label="Test KPSS di stazionarietà">
 
@@ -10170,54 +10288,92 @@
 
   </command>
 
-  <command name="restrict" section="Tests" context="cli" label="Vincoli lineari">
+  <command name="restrict" section="Tests" context="cli"
+	   label="Test su vincoli">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampare le stime vincolate</effect>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>non stampare niente</effect>
+	</option>
+	<option>
+	  <flag>--wald</flag>
+	  <effect>solo per stimatori di sistema &ndash; vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--bootstrap</flag>
+	  <effect>se possibile, effettuare il bootstrap del test</effect>
+	</option>
+	<option>
+	  <flag>--full</flag>
+	  <effect>solo OLS e VECM, vedi sotto</effect>
+	</option>
+      </options>
+    </usage>    
 
     <description>
       <para>
 	Impone un insieme di vincoli lineari sull'ultimo modello
-        stimato o su un sistema di equazioni definito in precedenza.
-        La sintassi del comando è leggermente diversa in ognuno dei due casi.
+	stimato o su un sistema di equazioni definito in precedenza.
+	In entrambi i casi, l'insieme di vincoli deve essere racchiuso
+	tra i comandi <quote>restrict</quote> e <quote>end
+	restrict</quote>.
       </para>
-        
       <para>
-        In entrambi i casi, l'insieme di vincoli deve essere racchiuso tra i
-        comandi <quote>restrict</quote> e <quote>end restrict</quote>. Nel caso
-        della singola equazione, i vincoli sono applicati implicitamente
-        all'ultimo modello e vengono valutati appena viene terminato il comando
-        <quote>restrict</quote>. Nel caso del sistema, il comando iniziale
-        <quote>restrict</quote> deve essere seguito immediatamente dal nome di
-        un sistema di equazioni definito in precedenza (si veda <cmdref targ="system"/>).
-        I vincoli vengono valutati nella successiva stima del sistema effettuata
-        con il comando <cmdref targ="estimate"/>.
+	  Nel caso di una equazione singola, i vincoli sono applicati
+	  implicitamente all'ultimo modello e vengono valutati appena
+	  viene terminato il comando <quote>restrict</quote>.
+      </para>
+      <para>
+	Nel caso di un sistema (definito attraverso il comando <cmdref
+	targ="system"/>), il comando iniziale <quote>restrict</quote>
+	può essere seguito dal nome di un sistema di equazioni
+	definito in precedenza; altrimenti, le restrizioni si
+	applicheranno all'ultimo modello stimato.  I vincoli vengono
+	valutati nella successiva stima del sistema effettuata con il
+	comando <cmdref targ="estimate"/>. Tuttavia, se viene usata
+	l'opzione <opt>wald</opt>, il vincolo viene testato
+	immediatamenteper mezzo di un test chi quadro di Wald usando
+	la matrice di covarianze stimata. Si noti che questa opzione
+	produrrà un errore se il sistema è stato definito, ma non
+	ancora stimato.
+      </para>
+      <para>
+	A seconda del contesto, i vincoli possono essere espressi in
+	diversi modi. Quello più semplice è di esprimere ogni vincolo
+	come equazione, con una combinazione lineare dei parametri a
+	sinistra e uno scalare a destra del segno di uguale (una
+	costante o, volendo, il nome di una variabile scalare).
       </para>
 
-      <para>Ogni vincolo nell'insieme va indicato sotto forma di equazione
-	con una combinazione lineare dei parametri al primo membro e un
-        valore numerico al secondo. Nel caso della singola equazione, i
-        parametri sono indicati con la sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>,
-        dove <repl>i</repl> rappresenta la posizione nella lista dei regressori, a
-        partire da uno, oppure con <lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
-        <repl>variabile</repl> è il nome del regressore in questione.
-        estion. Nel caso del sistema, i parametri vengono indicati
-        con la sintassi <lit>b</lit> seguita da due numeri tra parentesi quadre.
-        Il primo numero rappresenta la posizione dell'equazione all'interno del
-        sistema, mentre il secondo indica la posizione nella lista dei regressori.
-        Ad esempio <lit>b[2,1]</lit> indica il primo parametro della seconda
-        equazione, mentre <lit>b[3,2]</lit> il secondo parametro della terza
-        equazione.
+      <para>
+	Nel caso della singola equazione, i parametri sono indicati
+	con la sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>, dove
+	<repl>i</repl> rappresenta la posizione nella lista dei
+	regressori, a partire da uno, oppure con
+	<lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
+	<repl>variabile</repl> è il nome del regressore in questione.
+	estion. Nel caso di sistemi, i parametri vengono indicati con
+	la sintassi <lit>b</lit> seguita da due numeri tra parentesi
+	quadre.  Il primo numero rappresenta la posizione
+	dell'equazione all'interno del sistema, mentre il secondo
+	indica la posizione nella lista dei regressori.  Ad esempio
+	<lit>b[2,1]</lit> indica il primo parametro della seconda
+	equazione, mentre <lit>b[3,2]</lit> il secondo parametro della
+	terza equazione. I termini <lit>b</lit> nell'equazione che
+	rappresenta un vincolo possono essere prefissati da un
+	moltiplicatore numerico, usando il segno <lit>*</lit> per
+	indicare la moltiplicazione, ad esempio <lit>3.5*b[4]</lit>.
       </para>
-
-      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
-      possono essere prefissati da un moltiplicatore numerico, usando il segno
-      <lit>*</lit> per indicare la moltiplicazione, ad esempio
-      <lit>3.5*b[4]</lit>.
-      </para>
-
       <para>
 	Ecco un esempio di un insieme di vincoli per un modello
 	stimato in precedenza:
       </para>
-
       <code>
 	restrict
 	 b[1] = 0
@@ -10225,13 +10381,11 @@
 	 b[4] + 2*b[5] = 1
 	end restrict
       </code>
-
       <para>
 	Ed ecco un esempio di un insieme di vincoli da applicare a un
 	sistema (se il nome del sistema non contiene spazi, è
 	possibile tralasciare le virgolette).
       </para>
-
       <code>
 	restrict "Sistema 1"
 	 b[1,1] = 0
@@ -10239,14 +10393,16 @@
 	 b[3,4] + 2*b[3,5] = 1
 	end restrict
       </code>
-
       <para>
-        Nel caso dell'equazione singola, i vincoli sono valutati attraverso un
-        test <math>F</math> di Wald, usando la matrice di covarianza dei
-        coefficienti del modello in questione. In modalità predefinita vengono
-        mostrate le stime dei coefficienti vincolati; se si desidera solo la
-        statistica test, basta aggiungere l'opzione <opt>quiet</opt> al
-        comando <lit>restrict</lit> iniziale.
+        Nel caso di un'equazione singola, i vincoli sono valutati
+        attraverso un test di Wald, usando la matrice di covarianza
+        dei coefficienti del modello in questione.  Se il metodo di
+        stima del modello originale era l'OLS, vengono mostrati i
+        coefficienti vincolati, a meno che non si sia data l'opzione
+        <opt>quiet</opt> al comando <lit>restrict</lit>.  In
+	alternativa al test di Wald, per modelli stimati con OLS o
+	WLS, si può usare l'opzione <opt>bootstrap</opt> per
+	effettuare il test della restrizione con tale metodo.
       </para>
       <para>
         Nel caso del sistema, la statistica test dipende dallo stimatore scelto:
@@ -10254,7 +10410,70 @@
         con un metodo di massima verosimiglianza, o un test
         <math>F</math> asintotico negli altri casi.
       </para>
-
+      <para>
+	Esistono due alternative alla rappresentazione dei vincoli
+	discussa sopra.  Una sfrutta la possibilità di esprimere
+	<math>g</math> restrizioni lineari su un vettore di
+	<math>k</math>parametri, &bgr;, atraverso l'espressione
+	<math>R</math>&bgr; &minus; <math>q</math> = 0, dove
+	<math>R</math> è una matrice <by r="g" c="k"/> e
+	<math>q</math> è un vettore a <math>g</math> elementi.  Le
+	restrizioni possono essere date usando i nomi di matrici
+	predefinite e conformabili da usare come <math>R</math> e
+	<math>q</math>, come ad esempio in
+      </para>
+      <code>
+	restrict 
+	  R = Rmat
+	  q = qvec
+	end restrict
+      </code>
+      <para>
+	Secondly, if you wish to test a nonlinear restriction (this is
+	currently available for single-equation models only) you should give
+	the restriction as the name of a function, preceded by
+	<quote><lit>rfunc = </lit></quote>, as in
+      </para>
+      <code>
+	restrict
+	  rfunc = myfunction
+	end restrict
+      </code>
+      <para>
+	The constraint function should take a single <lit>const matrix</lit>
+	argument; this will be automatically filled out with the parameter
+	vector.  And it should return a vector which is zero under the null
+	hypothesis, non-zero otherwise.  The length of the vector is the
+	number of restrictions. This function is used as a
+	<quote>callback</quote> by gretl's numerical Jacobian routine, which
+	calculates a Wald test statistic via the delta method.
+      </para>
+      <para>
+	Here is a simple example of a function suitable for testing one
+	nonlinear restriction, namely that two pairs of parameter values have
+	a common ratio. 
+      </para>
+      <code>
+	function matrix restr (const matrix b)
+	  matrix v = b[1]/b[2] - b[4]/b[5]
+	  return v
+	end function
+      </code>
+      <para>
+	On successful completion of the <lit>restrict</lit> command
+	the accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/> give the test statistic and its p-value.
+      </para>
+      <para>
+	When testing restrictions on a single-equation model estimated
+	via OLS, or on a VECM, the <opt>full</opt> option can be
+	used to set the restricted estimates as the <quote>last
+	model</quote> for the purposes of further testing or the use
+	of accessors such as <lit>$coeff</lit> and <lit>$vcv</lit>.
+	Note that some special considerations apply in the case of
+	testing restrictions on Vector Error Correction Models. Please
+	see <guideref targ="chap:vecm"/> for details.
+      </para>
     </description>
 
     <gui-access>
@@ -10280,21 +10499,19 @@
 	<lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
 	<repl>variabile</repl> è il nome del regressore in questione.
       </para>
-
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
         possono essere prefissati con un moltiplicatore numerico usando il
         carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
         <lit>3.5*b[4]</lit>.
       </para>
-
-      <para>Ecco ad esempio un insieme di vincoli:</para>
-
+      <para>
+	Ecco ad esempio un insieme di vincoli:
+      </para>
       <code>
 	b[1] = 0
 	b[2] - b[3] = 0
 	b[4] + 2*b[5] = 1
       </code>
-
     </description>
 
   </command>
@@ -10710,6 +10927,68 @@
     </gui-access>
 
   </command>
+
+  <command name="script-editor" section="Utilities" context="gui"
+    label="Preferenze per l'editor">
+
+    <description>
+      <para>
+	Nota: alcune di questi settaggi si applicano solo quando
+	quelli che vengono editati sono script nativi di gretl (Smart
+	Tab and Enter, Script editor uses tabs); altri si applicano
+	qualsiasi sia il tipo di script da editare (Show line numbers,
+	Highlighting style).
+      </para>
+      <para>
+	<emphasis>Smart Tab and Enter</emphasis>: If
+	this is turned on, then when you press the <lit>Tab</lit> key
+	at the start of a line in a hansl script, instead of just
+	entering a tab stop the program will try to adjust the
+	indentation level of the line consistently with other lines
+	that have been entered. Simlarly, when you press the
+	<lit>Enter</lit> key the program will try to ensure that the
+	indentation of the completed line is correct.
+      </para>
+      <para>
+	<emphasis>Show line numbers</emphasis>: Display line numbers
+	in the left margin of the script editor or viewer.
+      </para>
+      <para>
+	<emphasis>Script editor uses tabs</emphasis>: Affects program
+	behavior when you are editing more than one script at a
+	time. If this is checked then each script is shown in a
+	<quote>tab</quote> in a notebook-style window; otherwise each
+	script has its own window.
+      </para>
+      <para>
+	<emphasis>Enable auto-completion</emphasis>: If this is
+	checked, you will be offered possible completions for the word
+	you are typing, based on the words already entered in the
+	editor window or tab. To select a completion, use the up/down
+	arrow keys and the <lit>Enter</lit> key; or just keep on
+	typing to dismiss the suggested completions.
+      </para>
+      <para>
+	<emphasis>Enable auto-brackets</emphasis>: If this is checked,
+	then when you type a left parenthesis, bracket or brace at the
+	end of a line the matching right-hand delimiter will be added
+	automatically, and the cursor moved between the two
+	delimiters.
+      </para>      
+      <para>
+	<emphasis>Number of spaces per Tab</emphasis>: How wide do you
+	want a tab-stop or indentation level to be? An integer value
+	from 2 to 8.
+      </para>
+      <para>
+	<emphasis>Highlighting style</emphasis>: Provides a drop-down
+	list of syntax highlighting styles. Some of these are
+	dark-on-light and some light-on-dark: experiment and find what
+	you like.
+      </para>
+    </description>
+
+  </command>  
 
   <command name="sdiff" section="Transformations" label="Differenziazione stagionale" context="cli">
 
