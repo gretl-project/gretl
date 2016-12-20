@@ -68,6 +68,7 @@ static GtkWidget *find_entry;
 static char *needle;
 
 enum {
+    /* don't collide with the enumeration in toolbar.c */
     EN_ITEM = 255
 };
 
