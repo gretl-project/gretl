@@ -160,8 +160,8 @@ const char *helpfile_path (int id, int cli, int en)
 	
 	    sprintf(hpath, "%s%s", ghome, _(helpfiles[i]));
 	    err = gretl_test_fopen(hpath, "r");
-	    if (err) {
-		/* fallback */
+	    if (err && strcmp(helpfiles[i], _(helpfiles[i])) {
+		/* try untranslated fallback */
 		sprintf(hpath, "%s%s", ghome, helpfiles[i]);
 	    }
 	}
