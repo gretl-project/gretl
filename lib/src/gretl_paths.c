@@ -125,7 +125,6 @@ static const char *helpfiles[] = {
 
 const char *helpfile_path (int id, int cli, int en)
 {
-    const char *ghome = paths.gretldir;
     static char hpath[MAXLEN];
     int i = -1;
 
@@ -155,7 +154,7 @@ const char *helpfile_path (int id, int cli, int en)
     }
 
     if (i >= 0) {
-	sprintf(hpath, "%s%s", ghome, en ? helpfiles[i] :
+	sprintf(hpath, "%s%s", paths.gretldir, en ? helpfiles[i] :
 		_(helpfiles[i]));
     }
 
@@ -186,7 +185,7 @@ int using_translated_helpfile (int id)
 	char test[MAXLEN];
 	int err;
 
-	sprintf(test, "%s%s", paths.gretldir, _(helpfiles[0]));
+	sprintf(test, "%s%s", paths.gretldir, _(helpfiles[i]));
 	err = gretl_test_fopen(test, "r");
 	if (err) {
 	    if (id == GRETL_CMDREF) {
