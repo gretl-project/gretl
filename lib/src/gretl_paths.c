@@ -125,6 +125,8 @@ const char *helpfile_path (int id, int cli, int en)
 {
     const char *ghome = paths.gretldir;
     static char hpath[MAXLEN];
+    FILE *fp;
+    int i = -1;
 
     *hpath = '\0';
 
@@ -135,23 +137,33 @@ const char *helpfile_path (int id, int cli, int en)
     if (cli) {
 	/* Command-line program */
 	if (id == GRETL_CMDREF) {
-	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[0] :
-		    _(helpfiles[0]));
+	    i = 0;
 	} else if (id == GRETL_FUNCREF) {
-	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[1] :
-		    _(helpfiles[1]));
+	    i = 1;
 	}
     } else {
 	/* GUI program */
 	if (id == GRETL_CMDREF) {
-	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[2] :
-		    _(helpfiles[2]));
+	    i = 2;
 	} else if (id == GRETL_GUI_HELP) {
-	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[3] :
-		    _(helpfiles[3]));
+	    i = 3;
 	} else if (id == GRETL_FUNCREF) {
-	    sprintf(hpath, "%s%s", ghome, en ? helpfiles[4] :
-		    _(helpfiles[4]));
+	    i = 4;
+	}
+    }
+
+    if (i >= 0) {
+	if (en) {
+	    sprintf(hpath, "%s%s", ghome, helpfiles[i]);
+	} else {
+	    int err;
+	
+	    sprintf(hpath, "%s%s", ghome, _(helpfiles[i]));
+	    err = gretl_test_fopen(hpath, "r");
+	    if (err) {
+		/* fallback */
+		sprintf(hpath, "%s%s", ghome, helpfiles[i]);
+	    }
 	}
     }
 
@@ -167,23 +179,20 @@ int using_translated_helpfiles (void)
     }
 
     /* If we're not forcing English help, the criterion is
-       that gretl_cli_cmdref.en has a "translated" filename,
-       the translation can be opened, and it's not empty.
+       that gretl_cli_cmdref.en has a "translated" filename
+       and the translation can be opened.
     */
 
     if (strcmp(helpfiles[0], _(helpfiles[0]))) {
 	char test[MAXLEN];
-	FILE *fp;
+	int err;
 
 	force_en_help = 1; /* will be reversed if OK */
 	sprintf(test, "%s%s", paths.gretldir, _(helpfiles[0]));
-	fp = gretl_fopen(test, "r");
-	if (fp != NULL) {
-	    if (fgets(test, 16, fp) != NULL) {
-		force_en_help = 0;
-		ret = 1;
-	    }
-	    fclose(fp);
+	err = gretl_test_fopen(test, "r");
+	if (!err) {
+	    force_en_help = 0;
+	    ret = 1;
 	}
     }
 

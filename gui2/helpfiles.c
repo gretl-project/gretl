@@ -1195,6 +1195,7 @@ static windata_t *real_do_help (int idx, int pos, int role)
     if (hwin != NULL) {
 	gtk_window_present(GTK_WINDOW(hwin->main));
     } else {
+	fprintf(stderr, "help fname='%s'\n", fname);
 	hwin = view_help_file(fname, role);
 	if (hwin != NULL) {
 	    windata_t **phwin = NULL;
