@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-20 08:47-0500\n"
-"PO-Revision-Date: 2016-12-02 15:24+0100\n"
+"POT-Creation-Date: 2016-12-19 18:27-0500\n"
+"PO-Revision-Date: 2016-12-20 16:19+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -513,18 +513,19 @@ msgstr "Proba de Wald"
 #: lib/src/graphing.c:4368 lib/src/gretl_model.c:3914
 #: lib/src/gretl_model.c:3928 lib/src/gretl_model.c:3931
 #: lib/src/gretl_model.c:3956 lib/src/gretl_panel.c:4025
-#: lib/src/gretl_panel.c:4283 lib/src/modelprint.c:198 lib/src/modelprint.c:376
-#: lib/src/modelprint.c:380 lib/src/modelprint.c:470 lib/src/modelprint.c:473
-#: lib/src/modelprint.c:494 lib/src/modelprint.c:497 lib/src/modelprint.c:2517
-#: lib/src/modelprint.c:2522 lib/src/modelprint.c:2544
-#: lib/src/modelprint.c:2549 lib/src/modelprint.c:3041
-#: lib/src/modelprint.c:5294 lib/src/modelprint.c:5317 lib/src/printout.c:327
-#: lib/src/pvalues.c:2629 lib/src/pvalues.c:3294 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3389 lib/src/system.c:3411
-#: lib/src/system.c:3483 lib/src/system.c:3501 lib/src/system.c:4612
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:78 lib/src/vartest.c:820
-#: lib/src/vartest.c:1107 plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4283 lib/src/modelprint.c:198
+#: lib/src/modelprint.c:376 lib/src/modelprint.c:380 lib/src/modelprint.c:470
+#: lib/src/modelprint.c:473 lib/src/modelprint.c:494 lib/src/modelprint.c:497
+#: lib/src/modelprint.c:2517 lib/src/modelprint.c:2522
+#: lib/src/modelprint.c:2544 lib/src/modelprint.c:2549
+#: lib/src/modelprint.c:3041 lib/src/modelprint.c:5294
+#: lib/src/modelprint.c:5317 lib/src/printout.c:327 lib/src/pvalues.c:2629
+#: lib/src/pvalues.c:3294 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3389 lib/src/system.c:3411 lib/src/system.c:3483
+#: lib/src/system.c:3501 lib/src/system.c:4612 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:78 lib/src/vartest.c:820 lib/src/vartest.c:1107
+#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Chi-cadrado"
 
@@ -1145,19 +1146,20 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Fallo ao interpretar os datos como numéricos\n"
 
-#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554 plugin/excel_import.c:1742
-#: plugin/gnumeric_import.c:832 plugin/jmulti_import.c:379
-#: plugin/sas_import.c:686 plugin/spss_import.c:1975 plugin/stata_import.c:2182
+#: lib/src/csvdata.c:3589 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1742 plugin/gnumeric_import.c:832
+#: plugin/jmulti_import.c:379 plugin/sas_import.c:686
+#: plugin/spss_import.c:1975 plugin/stata_import.c:2182
 #: plugin/xlsx_import.c:1385
 msgid "warning: some variable names were duplicated\n"
 msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
 
-#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1576 plugin/gnumeric_import.c:653
-#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
-#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1880
-#: plugin/spss_import.c:1901 plugin/stata_import.c:2150
-#: plugin/stata_import.c:2161
+#: lib/src/csvdata.c:3630 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1576
+#: plugin/gnumeric_import.c:653 plugin/jmulti_import.c:350
+#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
+#: plugin/spss_import.c:1880 plugin/spss_import.c:1901
+#: plugin/stata_import.c:2150 plugin/stata_import.c:2161
 msgid "Out of memory\n"
 msgstr "Fóra de memoria\n"
 
@@ -1264,7 +1266,7 @@ msgstr "Número de observacións fóra dos límites"
 msgid "wrote %s.gdt\n"
 msgstr "Escribiuse %s.gdt\n"
 
-#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2714 gui2/model_table.c:1431
+#: lib/src/dataio.c:1179 lib/src/gretl_paths.c:2702 gui2/model_table.c:1431
 #, c-format
 msgid "wrote %s\n"
 msgstr "Escribiuse %s\n"
@@ -1535,8 +1537,8 @@ msgid "Invalid null sample"
 msgstr "Mostra nula incorrecta"
 
 #: lib/src/dbread.c:2044 lib/src/gretl_errors.c:579
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1347 lib/src/options.c:1300
-#: lib/src/options.c:1311
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1347
+#: lib/src/options.c:1300 lib/src/options.c:1311
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Campo '%s' incorrecto na instrución"
@@ -1582,7 +1584,7 @@ msgstr "Aínda non pode manexarse esta conversión!"
 #: lib/src/dbread.c:3164
 #, c-format
 msgid "%s: using default compaction method: averaging"
-msgstr "%s: utilizando o método para compactar predeterminado: promedio"
+msgstr "%s: utilizando o método para compactar predeterminado: media"
 
 #: lib/src/dbread.c:4355 lib/src/dbread.c:4421 lib/src/dbread.c:4699
 msgid "Compacted dataset would be empty"
@@ -3334,8 +3336,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2479 lib/src/gretl_func.c:2539
-#: lib/src/gretl_func.c:2619 lib/src/gretl_utils.c:1889 lib/src/interact.c:1207
-#: gui2/dialogs.c:5562 gui2/fnsave.c:5080 plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2619 lib/src/gretl_utils.c:1889
+#: lib/src/interact.c:1207 gui2/dialogs.c:5562 gui2/fnsave.c:5080
+#: plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Non se puido abrir *%s*"
@@ -3706,7 +3709,7 @@ msgstr "Proba conxunta dos regresores (agás a constante)"
 
 #: lib/src/gretl_model.c:3680
 msgid "Robust test for differing group intercepts"
-msgstr "Proba robusta para diferenciar interceptos de grupos"
+msgstr "Proba robusta para diferenciar ordenadas na orixe por grupos"
 
 #: lib/src/gretl_model.c:3683 lib/src/gretl_panel.c:4388
 msgid "Pesaran CD test for cross-sectional dependence"
@@ -3748,7 +3751,8 @@ msgstr "Graos de liberdade denominador"
 #: lib/src/gretl_model.c:4040 lib/src/modelprint.c:5363
 #: lib/src/modelprint.c:5374 lib/src/modelprint.c:5376 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2007
-#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
+#: gui2/calculator.c:2010 plugin/anova.c:85 plugin/anova.c:96
+#: plugin/anova.c:98
 msgid "df"
 msgstr "Graos de liberdade"
 
@@ -3986,72 +3990,67 @@ msgstr "Non pode facerse isto cunha submostra dun conxunto de datos"
 #. if gretl_commands_en.xml has been translated for your language,
 #. as in gretl_cli_cmdref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:103
-#, fuzzy
+#: lib/src/gretl_paths.c:101
 msgid "gretl_cli_cmdref.en"
-msgstr "Gretl: Guía de instrucións"
-
-#. TRANSLATORS: you may change the two-letter language code
-#. if gretl_commands_en.xml has been translated for your language,
-#. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
-#.
-#: lib/src/gretl_paths.c:108
-#, fuzzy
-msgid "gretl_gui_cmdref.en"
-msgstr "Gretl: Guía de instrucións"
-
-#. TRANSLATORS: you may change the two-letter language code
-#. if gretl_commands_en.xml has been translated for your language,
-#. as in gretl_gui_help.pt -- otherwise leave it untranslated
-#.
-#: lib/src/gretl_paths.c:113
-#, fuzzy
-msgid "gretl_gui_help.en"
-msgstr "gretlgui_hlp.txt"
+msgstr ""
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
 #. as in gretl_cli_fnref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:118
-#, fuzzy
+#: lib/src/gretl_paths.c:106
 msgid "gretl_cli_fnref.en"
-msgstr "Gretl: Guía de funcións"
+msgstr ""
+
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_cmdref.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:111
+msgid "gretl_gui_cmdref.en"
+msgstr ""
+
+#. TRANSLATORS: you may change the two-letter language code
+#. if gretl_commands_en.xml has been translated for your language,
+#. as in gretl_gui_help.pt -- otherwise leave it untranslated
+#.
+#: lib/src/gretl_paths.c:116
+msgid "gretl_gui_help.en"
+msgstr ""
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
 #. as in gretl_gui_fnref.pt -- otherwise leave it untranslated
 #.
-#: lib/src/gretl_paths.c:123
-#, fuzzy
+#: lib/src/gretl_paths.c:121
 msgid "gretl_gui_fnref.en"
-msgstr "Gretl: Guía de funcións"
+msgstr ""
 
-#: lib/src/gretl_paths.c:1953
+#: lib/src/gretl_paths.c:1941
 #, c-format
 msgid "Couldn't find package %s"
 msgstr "Non puido atoparse o paquete %s"
 
-#: lib/src/gretl_paths.c:1973
+#: lib/src/gretl_paths.c:1961
 #, c-format
 msgid "Couldn't find file %s for package %s"
 msgstr "Non puido atoparse o ficheiro %s para o paquete %s"
 
-#: lib/src/gretl_paths.c:2636
+#: lib/src/gretl_paths.c:2624
 msgid "User directory is not set"
 msgstr "Non se especificou o directorio de usuario"
 
-#: lib/src/gretl_paths.c:2642
+#: lib/src/gretl_paths.c:2630
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "Non puido crearse o directorio '%s'"
 
-#: lib/src/gretl_paths.c:2653
+#: lib/src/gretl_paths.c:2641
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr "Non puido escribirse en '%s': Gretl non funcionará ben!"
 
-#: lib/src/gretl_paths.c:2881
+#: lib/src/gretl_paths.c:2869
 #, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "Gretl: Usando os seguintes camiños de procura básicos:\n"
@@ -4155,7 +4154,8 @@ msgstr "Desviación típica da regresión"
 msgid "Robust chi^2"
 msgstr "Chi^2 robusto"
 
-#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3033 lib/src/system.c:1245
+#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3033
+#: lib/src/system.c:1245
 msgid "restriction"
 msgstr "restrición"
 
@@ -4607,7 +4607,7 @@ msgstr "teclee \"help set\" para ver máis detalles"
 msgid "Program interaction and behavior"
 msgstr "Interacción do programa e comportamento"
 
-#: lib/src/libset.c:1432 gui2/helpfiles.c:318 doc/commands/matfuncs.c:48
+#: lib/src/libset.c:1432 gui2/helpfiles.c:316 doc/commands/matfuncs.c:48
 msgid "Numerical methods"
 msgstr "Métodos numéricos"
 
@@ -5874,8 +5874,8 @@ msgstr "Imaxinaria"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:5078 lib/src/modelprint.c:5086 lib/src/subsample.c:3021
-#: lib/src/subsample.c:3043 lib/src/subsample.c:3098
+#: lib/src/modelprint.c:5078 lib/src/modelprint.c:5086
+#: lib/src/subsample.c:3021 lib/src/subsample.c:3043 lib/src/subsample.c:3098
 msgid "Frequency"
 msgstr "Frecuencia"
 
@@ -5971,7 +5971,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: Agardábanse %d nomes."
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:785
-#: lib/src/monte_carlo.c:1808 lib/src/monte_carlo.c:1971 lib/src/uservar.c:1786
+#: lib/src/monte_carlo.c:1808 lib/src/monte_carlo.c:1971
+#: lib/src/uservar.c:1786
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': non é un escalar"
@@ -8743,8 +8744,9 @@ msgstr "Aviso: A serie ten observacións perdidas"
 msgid "Couldn't access binary datafile"
 msgstr "Non puido accederse ao ficheiro de datos binario"
 
-#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3406
+#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163
+#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
+#: gui2/session.c:3406
 msgid "Display"
 msgstr "Amosar"
 
@@ -8923,8 +8925,8 @@ msgstr "Engadir ao menú"
 
 #: gui2/datafiles.c:1427 gui2/datafiles.c:1623 gui2/gpt_control.c:3829
 #: gui2/gpt_control.c:3831 gui2/gpt_control.c:3941 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3462 gui2/toolbar.c:758 gui2/toolbar.c:759
-#: gui2/toolbar.c:760
+#: gui2/session.c:172 gui2/session.c:3462 gui2/toolbar.c:758
+#: gui2/toolbar.c:759 gui2/toolbar.c:760
 msgid "Help"
 msgstr "Axuda"
 
@@ -11048,7 +11050,7 @@ msgstr "Crear un ficheiro gfn"
 msgid "Bigger"
 msgstr "Maior"
 
-#: gui2/gpt_control.c:291 gui2/helpfiles.c:76
+#: gui2/gpt_control.c:291 gui2/helpfiles.c:75
 msgid "Smaller"
 msgstr "Máis pequeno"
 
@@ -11063,8 +11065,8 @@ msgid "Display PDF"
 msgstr "Amosar PDF"
 
 #: gui2/gpt_control.c:295 gui2/gpt_control.c:3862 gui2/gpt_control.c:3939
-#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206 gui2/session.c:3331
-#: gui2/session.c:3370 gui2/session.c:3383
+#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206
+#: gui2/session.c:3331 gui2/session.c:3370 gui2/session.c:3383
 msgid "Edit"
 msgstr "Editar"
 
@@ -12454,7 +12456,7 @@ msgstr "A_xuda"
 
 #: gui2/gretl.c:1785 gui2/gretl.c:1788
 msgid "_Command reference"
-msgstr "Guía de _instrucións"
+msgstr "_Instrucións"
 
 #: gui2/gretl.c:1786
 msgid "_Function reference"
@@ -13121,7 +13123,7 @@ msgstr "Gretl: Resultados de guión"
 
 #: gui2/gui_utils.c:1762
 msgid "gretl: command reference"
-msgstr "Gretl: Guía de instrucións"
+msgstr "Gretl: Instrucións"
 
 #: gui2/gui_utils.c:1764
 msgid "gretl: help"
@@ -13495,147 +13497,147 @@ msgstr ""
 msgid "No command was supplied to start R"
 msgstr "Non se indicou instrución para iniciar R"
 
-#: gui2/helpfiles.c:75
+#: gui2/helpfiles.c:74
 msgid "Larger"
 msgstr "Máis grande"
 
-#: gui2/helpfiles.c:77
+#: gui2/helpfiles.c:76
 msgid "Show English help"
 msgstr "Amosar a axuda en inglés"
 
-#: gui2/helpfiles.c:160
+#: gui2/helpfiles.c:159
 msgid "Dataset"
 msgstr "Conxunto de datos"
 
-#: gui2/helpfiles.c:161
+#: gui2/helpfiles.c:160
 msgid "Estimation"
 msgstr "Estimación"
 
-#: gui2/helpfiles.c:162
+#: gui2/helpfiles.c:161
 msgid "Graphs"
 msgstr "Gráficas"
 
-#: gui2/helpfiles.c:163
+#: gui2/helpfiles.c:162
 msgid "Prediction"
 msgstr "Predición"
 
-#: gui2/helpfiles.c:164
+#: gui2/helpfiles.c:163
 msgid "Printing"
 msgstr "Impresión"
 
-#: gui2/helpfiles.c:165
+#: gui2/helpfiles.c:164
 msgid "Programming"
 msgstr "Programación"
 
-#: gui2/helpfiles.c:166
+#: gui2/helpfiles.c:165
 msgid "Statistics"
 msgstr "Estatísticas"
 
-#: gui2/helpfiles.c:167
+#: gui2/helpfiles.c:166
 msgid "Tests"
 msgstr "Probas"
 
-#: gui2/helpfiles.c:168 gui2/helpfiles.c:332 plugin/tramo_options.c:529
+#: gui2/helpfiles.c:167 gui2/helpfiles.c:330 plugin/tramo_options.c:529
 msgid "Transformations"
 msgstr "Transformacións"
 
-#: gui2/helpfiles.c:169
+#: gui2/helpfiles.c:168
 msgid "Utilities"
 msgstr "Utilidades"
 
-#: gui2/helpfiles.c:314
+#: gui2/helpfiles.c:312
 msgid "Accessors"
 msgstr "Accesorios"
 
-#: gui2/helpfiles.c:316
+#: gui2/helpfiles.c:314
 msgid "Mathematical"
 msgstr "Matemática"
 
-#: gui2/helpfiles.c:320
+#: gui2/helpfiles.c:318
 msgid "Filters"
 msgstr "Filtros"
 
-#: gui2/helpfiles.c:322
+#: gui2/helpfiles.c:320
 msgid "Statistical"
 msgstr "Estatística"
 
-#: gui2/helpfiles.c:324
+#: gui2/helpfiles.c:322
 msgid "Probability"
 msgstr "Probabilidade"
 
-#: gui2/helpfiles.c:326
+#: gui2/helpfiles.c:324
 msgid "Linear algebra"
 msgstr "Álxebra linear"
 
-#: gui2/helpfiles.c:328
+#: gui2/helpfiles.c:326
 msgid "Matrix building"
 msgstr "Construción de matriz"
 
-#: gui2/helpfiles.c:330
+#: gui2/helpfiles.c:328
 msgid "Matrix shaping"
 msgstr "Dar forma a matriz"
 
-#: gui2/helpfiles.c:334
+#: gui2/helpfiles.c:332
 msgid "Data utilities"
 msgstr "Utilidades de datos"
 
-#: gui2/helpfiles.c:336
+#: gui2/helpfiles.c:334
 msgid "Strings"
 msgstr "Cadeas de caracteres"
 
-#: gui2/helpfiles.c:338
+#: gui2/helpfiles.c:336
 msgid "State space"
 msgstr "Espazo dos estados"
 
-#: gui2/helpfiles.c:340
+#: gui2/helpfiles.c:338
 msgid "Calendar"
 msgstr "Calendario"
 
-#: gui2/helpfiles.c:342
+#: gui2/helpfiles.c:340
 msgid "MIDAS"
 msgstr "MIDAS"
 
-#: gui2/helpfiles.c:384 gui2/textbuf.c:1995
+#: gui2/helpfiles.c:382 gui2/textbuf.c:1995
 msgid "Index"
 msgstr "Índice"
 
-#: gui2/helpfiles.c:827 gui2/helpfiles.c:1571 gui2/helpfiles.c:1708
+#: gui2/helpfiles.c:825 gui2/helpfiles.c:1569 gui2/helpfiles.c:1706
 msgid "Search wrapped"
 msgstr "Procura axustada"
 
-#: gui2/helpfiles.c:933
+#: gui2/helpfiles.c:931
 msgid "this page"
 msgstr "Esta páxina"
 
-#: gui2/helpfiles.c:934
+#: gui2/helpfiles.c:932
 msgid "all pages"
 msgstr "Todas as páxinas"
 
-#: gui2/helpfiles.c:993 gui2/textutil.c:284
+#: gui2/helpfiles.c:991 gui2/textutil.c:284
 msgid "Find:"
 msgstr "Buscar:"
 
-#: gui2/helpfiles.c:1066
+#: gui2/helpfiles.c:1064
 msgid "Sorry, no help is available"
 msgstr "Non hai axuda dispoñible"
 
-#: gui2/helpfiles.c:1414
+#: gui2/helpfiles.c:1412
 msgid "Sorry, help not found"
 msgstr "Non se atopou a axuda"
 
-#: gui2/helpfiles.c:1841
+#: gui2/helpfiles.c:1839
 msgid "gretl: find"
 msgstr "Gretl: Buscar"
 
-#: gui2/helpfiles.c:1849
+#: gui2/helpfiles.c:1847
 msgid " Find what:"
 msgstr " Buscar:"
 
-#: gui2/helpfiles.c:1873
+#: gui2/helpfiles.c:1871
 msgid "Variable names only (case sensitive)"
 msgstr "Só nomes das variables (sensible a maiúsculas/minúsculas)"
 
-#: gui2/helpfiles.c:2128
+#: gui2/helpfiles.c:2126
 msgid "Failed to download file"
 msgstr "Fallo ao descargar un ficheiro"
 
@@ -15656,13 +15658,13 @@ msgstr "Editar as ordes de gráfica"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3336
-#: gui2/session.c:3374 gui2/session.c:3385
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
+#: gui2/session.c:3336 gui2/session.c:3374 gui2/session.c:3385
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3323
-#: gui2/session.c:3357 gui2/textutil.c:476
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
+#: gui2/session.c:3323 gui2/session.c:3357 gui2/textutil.c:476
 msgid "View"
 msgstr "Ver"
 
@@ -16414,7 +16416,7 @@ msgstr "Procesando...\n"
 
 #: gui2/textbuf.c:1860
 msgid "Gretl Command Reference"
-msgstr "Guía de Instrucións de Gretl"
+msgstr "Instrucións de Gretl"
 
 #: gui2/textbuf.c:1904
 msgid "Gretl Function Reference"
@@ -16659,7 +16661,7 @@ msgstr "Paquetes de funcións"
 
 #: gui2/toolbar.c:1314
 msgid "command reference"
-msgstr "Guía das instrucións"
+msgstr "Instrucións"
 
 #: gui2/toolbar.c:1315
 msgid "X-Y graph"
@@ -17122,7 +17124,8 @@ msgid "No worksheets found"
 msgstr "Non se atoparon follas de traballo"
 
 #: plugin/excel_import.c:1609 plugin/gnumeric_import.c:686
-#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140 plugin/xlsx_import.c:1200
+#: plugin/ods_import.c:1101 plugin/xlsx_import.c:1140
+#: plugin/xlsx_import.c:1200
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento incorrecto para a importación dunha folla de cálculo"
 
@@ -17564,7 +17567,7 @@ msgstr "Proba combinada ADF de Levin-Lin-Chu para *%s*\n"
 #: plugin/panurc.c:575
 #, c-format
 msgid "including %.2f lags of (1-L)%s (average)"
-msgstr "incluíndo %.2f retardos de (1-L)%s (promedio)"
+msgstr "incluíndo %.2f retardos de (1-L)%s (media)"
 
 #: plugin/panurc.c:583
 #, c-format
