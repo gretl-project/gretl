@@ -466,6 +466,7 @@ struct str_table funcs[] = {
     { F_NORMTEST,  "normtest" },
     { F_STRSCRAPE, "strscrape" },
     { F_ECDF,      "ecdf" },
+    { F_NPCORR,    "npcorr" },
     { 0,           NULL }
 };
 

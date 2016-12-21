@@ -246,21 +246,37 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     return err;
 }
 
-#if 0 /* maybe revive later with matrix return? */
-
-double spearman_rho_func (const double *x, const double *y,
-			  int n, int *err)
+gretl_matrix *spearman_rho_func (const double *x,
+				 const double *y,
+				 int n, int *err)
 {
+    gretl_matrix *ret = NULL;
     double z, rho = NADBL;
     int m = 0;
 
     *err = real_spearman_rho(x, y, n, &rho, &z,
 			     NULL, NULL, &m);
 
-    return rho;
-}
+    if (!*err) {
+	ret = gretl_matrix_alloc(1, 3);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    ret->val[0] = rho;
+	    if (!na(z)) {
+		ret->val[1] = z;
+		ret->val[2] = normal_pvalue_2(z);
+	    } else if (m > 24) {
+		ret->val[1] = rho * sqrt((m - 2) / (1 - rho*rho));
+		ret->val[2] = student_pvalue_2(m - 2, ret->val[1]);
+	    } else {
+		ret->val[1] = ret->val[2] = NADBL;
+	    }
+	}
+    }
 
-#endif
+    return ret;
+}
 
 static void print_raw_and_ranked (int vx, int vy,
 				  const double *x, const double *y,
@@ -532,11 +548,11 @@ static int real_kendall_tau (const double *x, const double *y,
     return 0;
 }
 
-#if 0 /* maybe revive later, with matrix return? */
-
-double kendall_tau_func (const double *x, const double *y,
-			 int n, int *err)
+gretl_matrix *kendall_tau_func (const double *x,
+				const double *y,
+				int n, int *err)
 {
+    gretl_matrix *ret = NULL;
     struct xy_pair *xy;
     double z, tau = NADBL;
     int i, nn = 0;
@@ -558,10 +574,19 @@ double kendall_tau_func (const double *x, const double *y,
 
     free(xy);
 
-    return tau;
-}
+    if (!*err) {
+	ret = gretl_matrix_alloc(1, 3);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    ret->val[0] = tau;
+	    ret->val[1] = z;
+	    ret->val[2] = normal_pvalue_2(z);
+	}
+    }
 
-#endif
+    return ret;
+}
 
 /**
  * kendall_tau:

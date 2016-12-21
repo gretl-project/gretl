@@ -5513,6 +5513,79 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static gretlopt get_npcorr_option (NODE *n, parser *p)
+{
+    gretlopt opt = OPT_NONE;
+
+    if (null_or_empty(n)) {
+	; /* OK */
+    } else {
+	/* screened already: must be string */
+	const char *s = n->v.str;
+
+	if (!strcmp(s, "kendall")) {
+	    opt = OPT_K;
+	} else if (!strcmp(s, "spearman")) {
+	    opt = OPT_S;
+	} else {
+	    p->err = E_INVARG;
+	}
+    }
+
+    return opt;
+}
+
+static NODE *npcorr_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const double *x = NULL, *y = NULL;
+	gretlopt opt = OPT_NONE;
+	int n1 = 0, n2 = 0;
+	
+	if (l->t == SERIES) {
+	    x = l->v.xvec + p->dset->t1;
+	    n1 = sample_size(p->dset);
+	} else {
+	    n1 = gretl_vector_get_length(l->v.m);
+	    if (n1 == 0) {
+		p->err = E_INVARG;
+	    } else {
+		x = l->v.m->val;
+	    }
+	}
+
+	if (!p->err && m->t == SERIES) {
+	    y = m->v.xvec + p->dset->t1;
+	    n2 = sample_size(p->dset);
+	} else if (!p->err) {
+	    n2 = gretl_vector_get_length(m->v.m);
+	    if (n2 == 0) {
+		p->err = E_INVARG;
+	    } else {
+		y = m->v.m->val;
+	    }
+	}
+
+	if (!p->err && n1 != n2) {
+	    p->err = E_NONCONF;
+	} else if (!p->err) {
+	    opt = get_npcorr_option(r, p);
+	}
+
+	if (!p->err) {
+	    if (opt & OPT_S) {
+		ret->v.m = spearman_rho_func(x, y, n1, &p->err);
+	    } else {
+		ret->v.m = kendall_tau_func(x, y, n1, &p->err);
+	    }
+	}
+    }
+
+    return ret;    
+}
+
 /* takes two series or two matrices as arguments */
 
 static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
@@ -12468,6 +12541,16 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, (l->t == SERIES)? 2 : 1,
 			    SERIES, (l->t == SERIES)? r : l, p);
 	} 
+	break;
+    case F_NPCORR:
+	/* two series or vectors, plus optional control string */
+	if ((l->t == SERIES || l->t == MAT) &&
+	    (m->t == SERIES || m->t == MAT) &&
+	    (null_or_empty(r) || r->t == STR)) {
+	    ret = npcorr_node(l, m, r, p);
+	} else {
+	    p->err = E_INVARG;
+	}
 	break;
     case F_MXTAB:
 	/* functions taking two series or matrices as args and returning 

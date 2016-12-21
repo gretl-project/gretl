@@ -24,9 +24,17 @@ int spearman_rho (const int *list,
 		  const DATASET *dset,
 		  gretlopt opt, PRN *prn);
 
+gretl_matrix *spearman_rho_func (const double *x,
+				 const double *y,
+				 int n, int *err);
+
 int kendall_tau (const int *list, 
 		 const DATASET *dset,
 		 gretlopt opt, PRN *prn);
+
+gretl_matrix *kendall_tau_func (const double *x,
+				const double *y,
+				int n, int *err);
 
 double lockes_test (const double *x, int t1, int t2);
 
@@ -36,11 +44,15 @@ int runs_test (int v, const DATASET *dset,
 int diff_test (const int *list, const DATASET *dset, 
 	       gretlopt opt, PRN *prn);
 
-int sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int **order,
+int sort_pairs_by_x (gretl_matrix *x,
+		     gretl_matrix *y,
+		     int **order,
 		     char **labels);
 
-gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
-			 int d, double q, gretlopt opt, int *err);
+gretl_matrix *loess_fit (const gretl_matrix *x,
+			 const gretl_matrix *y,
+			 int d, double q,
+			 gretlopt opt, int *err);
 
 #endif /* NONPARAM_H */
 
