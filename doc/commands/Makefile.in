@@ -155,67 +155,67 @@ $(FIGSTAMP): $(EQNLIST)
 
 # English "online" help files
 $(EN_CMDREF_STAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(EN_SRC) > en.tmp && \
-	./reflow < en.tmp > $(SHAREDIR)/$(CLI_CMDREF).en && \
-	./xsltrans --cmds --pango $(EN_SRC) > en.tmp && \
-	./reflow -m < en.tmp > $(SHAREDIR)/$(GUI_CMDREF).en && \
-	./xsltrans --gui --pango $(EN_SRC) > en.tmp && \
-	./reflow -m < en.tmp > $(SHAREDIR)/$(GUI_HELP).en && \
-	touch $@ && rm -f en.tmp
+	./xsltrans --cmds --plain $(EN_SRC) > en1.tmp && \
+	./reflow < en1.tmp > $(SHAREDIR)/$(CLI_CMDREF).en && \
+	./xsltrans --cmds --pango $(EN_SRC) > en1.tmp && \
+	./reflow -m < en1.tmp > $(SHAREDIR)/$(GUI_CMDREF).en && \
+	./xsltrans --gui --pango $(EN_SRC) > en1.tmp && \
+	./reflow -m < en1.tmp > $(SHAREDIR)/$(GUI_HELP).en && \
+	touch $@ && rm -f en1.tmp
 
 # Spanish "online" help files
 $(ES_CMDREF_STAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(ES_SRC) > es.tmp && \
-	./reflow < es.tmp > $(SHAREDIR)/$(CLI_CMDREF).es && \
-	./xsltrans --cmds --pango $(ES_SRC) > en.tmp && \
-	./reflow -m < es.tmp > $(SHAREDIR)/$(GUI_CMDREF).es && \
-	./xsltrans --gui --pango $(ES_SRC) > es.tmp && \
-	./reflow -m < es.tmp > $(SHAREDIR)/$(GUI_HELP).es && \
-	touch $@ && rm -f es.tmp
+	./xsltrans --cmds --plain $(ES_SRC) > es1.tmp && \
+	./reflow < es1.tmp > $(SHAREDIR)/$(CLI_CMDREF).es && \
+	./xsltrans --cmds --pango $(ES_SRC) > es1.tmp && \
+	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_CMDREF).es \
+	./xsltrans --gui --pango $(ES_SRC) > es1.tmp && \
+	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_HELP).es && \
+	touch $@ && rm -f es1.tmp
 
 # Italian "online" help files
 $(IT_CMDREF_STAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(IT_SRC) > it.tmp && \
-	./reflow < it.tmp > $(SHAREDIR)/$(CLI_CMDREF).it && \
-	./xsltrans --cmds --pango $(IT_SRC) > en.tmp && \
-	./reflow -m < it.tmp > $(SHAREDIR)/$(GUI_CMDREF).it && \
-	./xsltrans --gui --pango $(IT_SRC) > it.tmp && \
-	./reflow -m < it.tmp > $(SHAREDIR)/$(GUI_HELP).it && \
-	touch $@ && rm -f it.tmp
+	./xsltrans --cmds --plain $(IT_SRC) > it1.tmp && \
+	./reflow < it1.tmp > $(SHAREDIR)/$(CLI_CMDREF).it && \
+	./xsltrans --cmds --pango $(IT_SRC) > it1.tmp && \
+	./reflow -m < it1.tmp > $(SHAREDIR)/$(GUI_CMDREF).it && \
+	./xsltrans --gui --pango $(IT_SRC) > it1.tmp && \
+	./reflow -m < it1.tmp > $(SHAREDIR)/$(GUI_HELP).it && \
+	touch $@ && rm -f it1.tmp
 
 # Portuguese "online" help files
 $(PT_CMDREF_STAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(PT_SRC) > pt.tmp && \
-	./reflow < pt.tmp > $(SHAREDIR)/$(CLI_CMDREF).pt && \
-	./xsltrans --cmds --pango $(PT_SRC) > en.tmp && \
-	./reflow -m < pt.tmp > $(SHAREDIR)/$(GUI_CMDREF).pt && \
-	./xsltrans --gui --pango $(PT_SRC) > pt.tmp && \
-	./reflow -m < pt.tmp > $(SHAREDIR)/$(GUI_HELP).pt && \
-	touch $@ && rm -f pt.tmp
+	./xsltrans --cmds --plain $(PT_SRC) > pt1.tmp && \
+	./reflow < pt1.tmp > $(SHAREDIR)/$(CLI_CMDREF).pt && \
+	./xsltrans --cmds --pango $(PT_SRC) > pt1.tmp && \
+	./reflow -m < pt1.tmp > $(SHAREDIR)/$(GUI_CMDREF).pt && \
+	./xsltrans --gui --pango $(PT_SRC) > pt1.tmp && \
+	./reflow -m < pt1.tmp > $(SHAREDIR)/$(GUI_HELP).pt && \
+	touch $@ && rm -f pt1.tmp
 
 # English function reference files
 $(EN_FNREF_STAMP): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(EN_FNSRC) > en.tmp && \
-	./reflow < en.tmp > $(SHAREDIR)/$(CLI_FNREF).en && \
-	./xsltrans --funcs --pango $(EN_FNSRC) > en.tmp && \
-	./reflow -m < en.tmp > $(SHAREDIR)/$(GUI_FNREF).en && \
-	touch $@ && rm -f en.tmp
+	./xsltrans --funcs --plain $(EN_FNSRC) > en2.tmp && \
+	./reflow < en2.tmp > $(SHAREDIR)/$(CLI_FNREF).en && \
+	./xsltrans --funcs --pango $(EN_FNSRC) > en2.tmp && \
+	./reflow -m < en2.tmp > $(SHAREDIR)/$(GUI_FNREF).en && \
+	touch $@ && rm -f en2.tmp
 
 # Italian function reference files
 $(IT_FNREF_STAMP): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(IT_FNSRC) > it.tmp && \
-	./reflow < it.tmp > $(SHAREDIR)/$(CLI_FNREF).it && \
-	./xsltrans --funcs --pango $(IT_FNSRC) > it.tmp && \
-	./reflow -m < it.tmp > $(SHAREDIR)/$(GUI_FNREF).it && \
-	touch $@ && rm -f it.tmp
+	./xsltrans --funcs --plain $(IT_FNSRC) > it2.tmp && \
+	./reflow < it2.tmp > $(SHAREDIR)/$(CLI_FNREF).it && \
+	./xsltrans --funcs --pango $(IT_FNSRC) > it2.tmp && \
+	./reflow -m < it2.tmp > $(SHAREDIR)/$(GUI_FNREF).it && \
+	touch $@ && rm -f it2.tmp
 
 # Portuguese function reference files
 $(PT_FNREF_STAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(PT_FNSRC) > pt.tmp && \
-	./reflow < pt.tmp > $(SHAREDIR)/$(CLI_FNREF).pt && \
-	./xsltrans --funcs --pango $(PT_FNSRC) > pt.tmp && \
-	./reflow -m < pt.tmp > $(SHAREDIR)/$(GUI_FNREF).pt && \
-	touch $@ && rm -f pt.tmp
+	./xsltrans --funcs --plain $(PT_FNSRC) > pt2.tmp && \
+	./reflow < pt2.tmp > $(SHAREDIR)/$(CLI_FNREF).pt && \
+	./xsltrans --funcs --pango $(PT_FNSRC) > pt2.tmp && \
+	./reflow -m < pt2.tmp > $(SHAREDIR)/$(GUI_FNREF).pt && \
+	touch $@ && rm -f pt2.tmp
 
 # English HTML help files (experimental)
 
