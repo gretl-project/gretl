@@ -1003,10 +1003,19 @@
       <description>
     <para>
       Restituisce un valore intero che codifica la versione del
-      programma, sotto la forma <lit>x.y.z</lit> (ad esempio,
-      1.7.6).  Il valore prodotto da questo accessore è pari a
-      <lit>10000*x + 100*y + z</lit>, cosicché 1.7.6 diventa
-      10706.
+      programma, La versione attuale di gretl è data da un numero a 4
+      cifre, per l'anno, seguito da una lettera da a a j, che indica
+      la sequenza di rilasci all'interno dell'anno (ad esempio,
+      2015d). Il valore di ritorno è dato dall'anno moltiplicato per
+      10 più l'ordinale della lettera (a base a=0), cosicché 2015d
+      diventa 20153.
+    </para>
+    <para>
+      In precedenza (prima della versione 2015d) la versione era in
+      forma <lit>x.y.z</lit> (ad esempio, 1.7.6).  Il valore prodotto
+      da questo accessore è pari a <lit>10000*x + 100*y + z</lit>,
+      cosicché 1.7.6 diventa 10706. Come si vede, l'ordinamento
+      risuolta preservato dal vecchio al nuovo sistema.
     </para>
       </description>
     </function>
@@ -1931,6 +1940,38 @@
       </description>
     </function>
 
+    <function name="cnumber" section="linalg" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna il numero di condizionamento della matrice
+	  <argname>X</argname>, di dimensioni <by r="n" c="k"/>, come
+	  definito in <cite key="belsley-etal80">Belsley, Kuh and
+	  Welsch (1980)</cite>. Se le colonne di <argname>X</argname>
+	  sono ortogonali fra loro, il risultato è 1. All'opposto, un
+	  valore molto grande del numero di condizionamento è un
+	  indicatore di collinearità; per
+	  <quote>grande</quote> si intende di solito 50 o più (a
+	  volte, 30 o più).
+	</para>
+	<para>
+	  I passi del calcolo sono: (1) formare una matrice
+	  <math>Z</math> le cui colonne sono quelle di
+	  <argname>X</argname> divise per le rispettive norme
+	  euclidee; (2) calcolare gli autovalori di <math>Z'Z</math>;
+	  (3) calcolare la radice quadrata del rapporto fra
+	  l'autovalore massimo e quello minimo.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="rcond"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
+
     <function name="cnorm" section="probdist" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -2034,6 +2075,7 @@
         <fncref targ="cov"/>
         <fncref targ="mcov"/>
         <fncref targ="mcorr"/>
+	<fncref targ="npcorr"/>
       </seelist>
     </para>
       </description>
@@ -5850,7 +5892,7 @@
 	</para>
 	<para>
 	  Il secondo argomento può essere fornito con o senza
-	  virgolette. Nel socndo caso, tuttavia, se l'argomento
+	  virgolette. Nel secondo caso, tuttavia, se l'argomento
 	  corrisponde al nome di una variabile stringa esistente,
 	  verrà usato il valore di tale variabile. L'esempio seguente
 	  mostra tre modi possibili di eseguire un test di
@@ -5866,6 +5908,35 @@
 	  La matrice risultato è <by r="1" c="2"/>; contiene la
 	  statistica test statistic e il suo p-value. Vedi anche il
 	  comando <cmdref targ="normtest"/>.
+	</para>
+      </description>
+    </function>    
+
+    <function name="npcorr" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="string" optional="true">method</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola una misura di correlazione fra <argname>x</argname>
+	  e <argname>y</argname> con un metodo nonparametrico. Se il
+	  terzo argomento non viene omesso, dev'essere
+	  <lit>kendall</lit> (per la tau di Kendall, versione b, che è
+	  il metodo di default) oppure <lit>spearman</lit> (per la rho
+	  di Spearman).
+	</para>
+	<para>
+	  La funzione restituisce un vettore a 3 elementi contenente
+	  l'indice di correlazione nonché una statistica test (con
+	  p-value associato), relativa all'ipotesi di non
+	  correlazione. Si noti che se il campione è troppo piccolo,
+	  la statistica test e/o il p-value potrebbero essere
+	  <lit>NaN</lit>.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="corr"/> per la correlazione di Pearson.
 	</para>
       </description>
     </function>    
