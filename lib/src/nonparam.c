@@ -210,6 +210,10 @@ static int real_spearman_rho (const double *x, const double *y, int n,
 
     *rho = *zval = NADBL;
 
+    if (n < 2) {
+	return E_TOOFEW;
+    }
+
     err = rankcorr_get_rankings(x, y, n, &rx, &ry, &m, &ties);
     if (err) {
 	return err;
@@ -564,6 +568,11 @@ gretl_matrix *kendall_tau_func (const double *x,
 	}
     }
 
+    if (nn < 2) {
+	*err = E_TOOFEW;
+	return NULL;
+    }
+
     xy = malloc(nn * sizeof *xy);
 
     if (xy == NULL) {
@@ -631,7 +640,7 @@ int kendall_tau (const int *list, const DATASET *dset,
     }
 
     if (nn < 2) {
-	return E_MISSDATA;
+	return E_TOOFEW;
     }
 
     /* allocate */
