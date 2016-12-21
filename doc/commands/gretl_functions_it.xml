@@ -1003,10 +1003,19 @@
       <description>
     <para>
       Restituisce un valore intero che codifica la versione del
-      programma, sotto la forma <lit>x.y.z</lit> (ad esempio,
-      1.7.6).  Il valore prodotto da questo accessore è pari a
-      <lit>10000*x + 100*y + z</lit>, cosicché 1.7.6 diventa
-      10706.
+      programma, La versione attuale di gretl è data da un numero a 4
+      cifre, per l'anno, seguito da una lettera da a a j, che indica
+      la sequenza di rilasci all'interno dell'anno (ad esempio,
+      2015d). Il valore di ritorno è dato dall'anno moltiplicato per
+      10 più l'ordinale della lettera (a base a=0), cosicché 2015d
+      diventa 20153.
+    </para>
+    <para>
+      In precedenza (prima della versione 2015d) la versione era in
+      forma <lit>x.y.z</lit> (ad esempio, 1.7.6).  Il valore prodotto
+      da questo accessore è pari a <lit>10000*x + 100*y + z</lit>,
+      cosicché 1.7.6 diventa 10706. Come si vede, l'ordinamento
+      risuolta preservato dal vecchio al nuovo sistema.
     </para>
       </description>
     </function>
@@ -1467,6 +1476,69 @@
     </para>
       </description>
     </function>
+
+    <function name="BFGScmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="matrix">bounds</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg type="fncall" optional="true">g</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Massimizzazione numerica vincolata via L-BFGS-B (limited
+	  memory BFGS, see <cite key="byrd-etal95">Byrd, Lu, Nocedal
+	  and Zhu, 1995</cite>).  In ingresso, il vettore
+	  <argname>b</argname> contiene i valori iniziali di un
+	  insieme di parametri, <argname>bounds</argname> contiene i
+	  vincoli a tali parametri (vedi sotto), e
+	  <argname>f</argname> specifica la chiamata ad una funzione
+	  che ritorna il criterio (scalare) da massimizzare, dati i
+	  valori dei parametri ed altri dati rilevanti. Per un
+	  problema di minimo, basterà definire la funzione col segno
+	  cambiato.  Se la funzione va a buon fine,
+	  <lit>BFGScmax</lit> ritorna il massimo della funzione
+	  obiettivo, sotto i vincoli contenuti in
+	  <argname>bounds</argname>, mentre <argname>b</argname>
+	  conterrà i parametri che producono tale valore.
+	</para>
+	<para>
+	  La matrice <argname>bounds</argname> dovrà avere 3 colonne e
+	  tante righe quanti sono gli elementi vincolati del vettore
+	  di parametri <argname>b</argname>. Per ogni riga, il primo
+	  elemento è l'indice (a base 1) del parametro da vincolare;
+	  il secondo ed il terzo sono rispettivamente i limiti
+	  inferiore e superior. Per indicare l'assenza di vincolo in
+	  una direzione, si usiano i valori <lit>-$huge</lit> e
+	  <lit>$huge</lit>. Ad esempio, il vincolo secondo cui il
+	  secondo elemento del vettore dev'essere non-negativo si
+	  esprime come:
+	</para>
+	<code>
+	  matrix bounds = {2, 0, $huge}
+	</code>
+	<para>
+	  Il terzo argomento (opzionale) permette di formire il
+	  gradiente analitico (se assente, il gradiente sarà calcolato
+	  numericamente).  La chiamata alla funzione gradiente
+	  <argname>g</argname> deve avere come primo argomento una
+	  puntatore ad una matrice
+	  pre-definita dlle dimensioni corrette per contenere il gradiente.
+	  Inoltre, deve prendere come argomento il vettore dei
+	  parametri (come puntatore o meno). Altri argomenti sono opzionali.
+	</para>
+	<para>
+	  Per maggiori dettagli ed esempi si veda <guideref
+	  targ="chap:numerical"/>.
+	  <seelist>
+	    <fncref targ="BFGSmax"/>
+            <fncref targ="NRmax"/>
+            <fncref targ="fdjac"/>
+            <fncref targ="simann"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
 
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
@@ -1931,6 +2003,38 @@
       </description>
     </function>
 
+    <function name="cnumber" section="linalg" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna il numero di condizionamento della matrice
+	  <argname>X</argname>, di dimensioni <by r="n" c="k"/>, come
+	  definito in <cite key="belsley-etal80">Belsley, Kuh and
+	  Welsch (1980)</cite>. Se le colonne di <argname>X</argname>
+	  sono ortogonali fra loro, il risultato è 1. All'opposto, un
+	  valore molto grande del numero di condizionamento è un
+	  indicatore di collinearità; per
+	  <quote>grande</quote> si intende di solito 50 o più (a
+	  volte, 30 o più).
+	</para>
+	<para>
+	  I passi del calcolo sono: (1) formare una matrice
+	  <math>Z</math> le cui colonne sono quelle di
+	  <argname>X</argname> divise per le rispettive norme
+	  euclidee; (2) calcolare gli autovalori di <math>Z'Z</math>;
+	  (3) calcolare la radice quadrata del rapporto fra
+	  l'autovalore massimo e quello minimo.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="rcond"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
+
     <function name="cnorm" section="probdist" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -2034,6 +2138,7 @@
         <fncref targ="cov"/>
         <fncref targ="mcov"/>
         <fncref targ="mcorr"/>
+	<fncref targ="npcorr"/>
       </seelist>
     </para>
       </description>
@@ -4169,8 +4274,53 @@
 	</para>
 	<para>
 	  Per maggiori dettagli sulla sintassi JsonPath, si veda ad
-	  esempio <url>http://goessner.net/articles/JsonPath/</url>.
+	  esempio
+	  <url>http://goessner.net/articles/JsonPath/</url>. Tuttavia,
+	  si noti che il modulo di gretl per <lit>jsonget</lit> è
+	  formito dalla libreria esterna <lit>json-glib</lit>, la
+	  quale non necessariamente supporta tutti gli elementi di
+	  JsonPath. Inoltre, la funzionalità precisa di
+	  <lit>json-glib</lit> può dipendere dalla versione installata
+	  sul vostro sistema. Per maggiori dettagli, vedi
+	  <url>http://developer.gnome.org/json-glib/</url>.
 	</para>
+	<para>
+	  Ciò premesso, dovrebbe mettere a disposizione
+	  <lit>jsonget</lit> i seguenti operatori:
+	</para>
+	  <ilist>
+	    <li>
+              <para>
+		nodo radice, attraverso il carattere <lit>$</lit>
+              </para>
+	    </li>
+	    <li>
+              <para>
+		operatore di discesa ricorsiva: <lit>..</lit>
+              </para>
+	    </li>
+	    <li>
+              <para>
+		operatore wildcard: <lit>*</lit>
+              </para>
+	    </li>
+	    <li>
+              <para>
+		operatore pedice : <lit>[]</lit>
+              </para>
+	    </li>
+	    <li>
+              <para>
+		operatore di sottoinsieme, p. es. <lit>[i,j]</lit>
+              </para>
+	    </li>
+	    <li>
+              <para>
+		operatore di slice (fetta): <lit>[start:end:step]</lit>
+              </para>
+	    </li>
+	  </ilist>
+	
       </description>
     </function>    
 
@@ -5850,7 +6000,7 @@
 	</para>
 	<para>
 	  Il secondo argomento può essere fornito con o senza
-	  virgolette. Nel socndo caso, tuttavia, se l'argomento
+	  virgolette. Nel secondo caso, tuttavia, se l'argomento
 	  corrisponde al nome di una variabile stringa esistente,
 	  verrà usato il valore di tale variabile. L'esempio seguente
 	  mostra tre modi possibili di eseguire un test di
@@ -5866,6 +6016,35 @@
 	  La matrice risultato è <by r="1" c="2"/>; contiene la
 	  statistica test statistic e il suo p-value. Vedi anche il
 	  comando <cmdref targ="normtest"/>.
+	</para>
+      </description>
+    </function>    
+
+    <function name="npcorr" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="string" optional="true">method</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola una misura di correlazione fra <argname>x</argname>
+	  e <argname>y</argname> con un metodo nonparametrico. Se il
+	  terzo argomento non viene omesso, dev'essere
+	  <lit>kendall</lit> (per la tau di Kendall, versione b, che è
+	  il metodo di default) oppure <lit>spearman</lit> (per la rho
+	  di Spearman).
+	</para>
+	<para>
+	  La funzione restituisce un vettore a 3 elementi contenente
+	  l'indice di correlazione nonché una statistica test (con
+	  p-value associato), relativa all'ipotesi di non
+	  correlazione. Si noti che se il campione è troppo piccolo,
+	  la statistica test e/o il p-value potrebbero essere
+	  <lit>NaN</lit>.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="corr"/> per la correlazione di Pearson.
 	</para>
       </description>
     </function>    
@@ -7857,9 +8036,25 @@
 	<para>
 	  Ritorna una stringa contenente la stampa dei valori degli
 	  argomenti successivi, indicati dai puntini, sotto il
-	  controllo della stringa <argname>formato</argname>. Per
-	  maggiori dettagli, si veda l'help del comando <cmdref
-	  targ="printf"/>.
+	  controllo della stringa <argname>formato</argname>.
+	</para>
+	<para>
+	  Ad esempio, il codice
+	</para>	
+	<code>
+	  scalar x = sqrt(5)
+	  string claim = sprintf("la radice di %d è più o meno %6.4f.\n", 5, x)
+	  print claim
+	</code>
+	<para>
+	  darà
+	</para>
+	<code>
+	  la radice di 5 è più o meno 2.2361.
+	</code>
+	<para>
+	  Per maggiori dettagli sulla sintassi delle stringhe di
+	  formato, si veda l'help del comando <cmdref targ="printf"/>.
 	</para>
       </description>
     </function>
