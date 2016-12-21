@@ -199,8 +199,6 @@ void do_coeff_intervals (GtkAction *action, gpointer p);
 
 void do_panel_tests (GtkAction *action, gpointer p);
 
-int do_rankcorr (selector *sr);
-
 int out_of_sample_info (int add_ok, int *t2);
 
 /* variable-related functions */

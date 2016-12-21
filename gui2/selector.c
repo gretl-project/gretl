@@ -140,8 +140,7 @@ enum {
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)
 
-#define TWO_VARS_CODE(c) (c == SPEARMAN || c == ELLIPSE || c == XCORRGM || \
-	                  c == QQPLOT)
+#define TWO_VARS_CODE(c) (c == ELLIPSE || c == XCORRGM || c == QQPLOT)
 
 #define THREE_VARS_CODE(c) (c == GR_DUMMY || c == GR_XYZ || \
 			    c == GR_3D || c == ANOVA)
@@ -178,7 +177,6 @@ enum {
 			 c == REPROBIT || \
 	                 c == QUANTREG || \
 			 c == MIDASREG || \
-			 c == SPEARMAN || \
                          c == TOBIT || \
                          c == VAR || \
                          c == VECM || \
@@ -331,7 +329,7 @@ static int want_radios (selector *sr)
 
     if (c == PANEL || c == SCATTERS || c == AR1 ||
 	c == LOGIT || c == PROBIT || c == HECKIT ||
-	c == XTAB || c == SPEARMAN || c == PCA ||
+	c == XTAB || c == PCA ||
 	c == QUANTREG || c == DPANEL || 
 	c == LOGISTIC || c == VAROMIT) {
 	ret = 1;
@@ -5927,9 +5925,6 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == XTAB) {
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
-    } else if (sr->ci == SPEARMAN) {
-	tmp = gtk_check_button_new_with_label(_("Show rankings"));
-	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
     } else if (sr->ci == CORR) {	
 	tmp = gtk_check_button_new_with_label(_("Ensure uniform sample size"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_U, 0);
@@ -6138,19 +6133,6 @@ static void build_ellipse_spinner (selector *sr)
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-}
-
-static void build_rankcorr_radios (selector *sr)
-{
-    GtkWidget *b1, *b2;
-    GSList *group;
-
-    b1 = gtk_radio_button_new_with_label(NULL, _("Spearman's rho"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-    b2 = gtk_radio_button_new_with_label(group, _("Kendall's tau"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_K, 0);
 }
 
 static void build_pca_radios (selector *sr)
@@ -6617,8 +6599,6 @@ static void build_selector_radios (selector *sr)
 	build_heckit_radios(sr);
     } else if (sr->ci == XTAB) {
 	build_xtab_radios(sr);
-    } else if (sr->ci == SPEARMAN) {
-	build_rankcorr_radios(sr);
     } else if (sr->ci == PCA) {
 	build_pca_radios(sr);
     } else if (sr->ci == QUANTREG) {
@@ -7282,8 +7262,6 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to omit");
     case COEFFSUM:
 	return N_("Select coefficients to sum");
-    case SPEARMAN:
-	return N_("Select two variables");
     case QQPLOT:
 	return N_("Select one or two variables");
     case ELLIPSE:

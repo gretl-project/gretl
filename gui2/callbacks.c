@@ -446,12 +446,6 @@ void selector_callback (GtkAction *action, gpointer data)
 	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
     } else if (ci == GR_BOX) {
 	simple_selection(ci, _("gretl: define graph"), do_regular_boxplot, NULL);
-    } else if (ci == SPEARMAN) {
-	char title[64];
-	
-	strcpy(title, "gretl: ");
-	strcat(title, _("rank correlation"));
-	simple_selection(ci, title, do_rankcorr, NULL);
     } else if (ci == LOESS || ci == NADARWAT) {
 	char title[64];
 	

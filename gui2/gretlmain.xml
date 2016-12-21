@@ -263,7 +263,6 @@
       <menu action="RobustModels">
 	<menuitem action="lad"/>
 	<menuitem action="quantreg"/>
-	<menuitem action="spearman"/>
 	<menuitem action="loess"/>
 	<menuitem action="nadarwat"/>
       </menu>

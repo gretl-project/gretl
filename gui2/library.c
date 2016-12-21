@@ -1366,43 +1366,6 @@ void ur_callback (GtkAction *action)
     unit_root_test(ci);
 }
 
-int do_rankcorr (selector *sr)
-{
-    const char *buf = selector_list(sr);
-    gretlopt opt = selector_get_opts(sr);
-    PRN *prn;
-    int err;
-
-    if (buf == NULL) {
-	return 1;
-    }
-
-    lib_command_sprintf("corr%s%s", buf, print_flags(opt, CORR));
-
-    if (parse_lib_command() || bufopen(&prn)) {
-	return 1;
-    }
-
-    if (opt & OPT_K) {
-	err = kendall_tau(libcmd.list, dataset, opt, prn);
-    } else {
-	err = spearman_rho(libcmd.list, dataset, opt, prn);
-    }
-
-    if (err) {
-        gui_errmsg(err);
-        gretl_print_destroy(prn);
-    } else {
-	gchar *title = gretl_window_title(_("rank correlation"));
-
-	record_lib_command();
-	view_buffer(prn, 78, 400, title, PRINT, NULL);
-	g_free(title);
-    }
-
-    return err;
-}
-
 /* cross-correlogram: if two variables are selected in the main
    window we use those, otherwise we present a selection dialog
    (with a max of two selected variables) and use that

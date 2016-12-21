@@ -1772,7 +1772,6 @@ GtkActionEntry main_entries[] = {
     { "RobustModels", NULL, N_("_Robust estimation"), NULL, NULL, NULL },
     { "lad", NULL, N_("Least _Absolute Deviation..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "quantreg", NULL, N_("_Quantile regression..."), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "spearman", NULL, N_("_Rank correlation..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "loess", NULL, N_("_Loess..."), NULL, NULL, G_CALLBACK(selector_callback) }, 
     { "nadarwat", NULL, N_("_Nadaraya-Watson..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "nls", NULL, N_("_Nonlinear Least Squares..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 

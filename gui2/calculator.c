@@ -28,7 +28,7 @@
 #include "winstack.h"
 
 #define NTESTS 6
-#define NPTESTS 2
+#define NPTESTS 3
 #define NPVAL 8
 #define NDISTS 8
 #define NGRAPHS 7
@@ -54,6 +54,7 @@ struct CalcChild_ {
 };
 
 struct test_t_ {
+    int category;
     int code;
     GtkWidget *entry[NTESTENTRY];
     GtkWidget *combo[2];
@@ -93,7 +94,8 @@ enum {
 
 enum {
     NP_DIFF,
-    NP_RUNS
+    NP_RUNS,
+    NP_CORR
 };
 
 static void plot_cdf (GtkWidget *parent);
@@ -1450,7 +1452,7 @@ static void np_test (GtkWidget *w, test_t *test)
 	return;
     }
 
-    if (test->code == NP_DIFF) {
+    if (test->code == NP_DIFF || test->code == NP_CORR) {
 	var2 = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
 	v2 = series_index(dataset, var2);
 	if (v2 == dataset->v) {
@@ -1487,7 +1489,26 @@ static void np_test (GtkWidget *w, test_t *test)
 	    opt |= OPT_E;
 	}	
 	err = runs_test(v1, dataset, opt, prn);
-    }	
+    } else if (test->code == NP_CORR) {
+	int list[3] = { 2, v1, v2 };
+
+	if (button_is_active(test->radio[0])) {
+	    /* Kendall */
+	    opt |= OPT_K;
+	} else if (button_is_active(test->radio[1])) {
+	   /* Spearman */ 
+	    opt |= OPT_S;
+	}	
+
+	if (test->extra != NULL && button_is_active(test->extra)) {
+	    opt |= OPT_V;
+	}
+	if (opt & OPT_K) {
+	    err = kendall_tau(list, dataset, opt, prn);
+	} else {
+	    err = spearman_rho(list, dataset, opt, prn);
+	}
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -1506,6 +1527,12 @@ static void np_test (GtkWidget *w, test_t *test)
 	} else if (test->code == NP_RUNS) {
 	    lib_command_sprintf("runs %s%s", dataset->varname[v1],
 				print_flags(opt, RUNS));
+	    record_command_verbatim();
+	} else if (test->code == NP_CORR) {
+	    lib_command_sprintf("corr %s %s%s",
+				dataset->varname[v1],
+				dataset->varname[v2],
+				print_flags(opt, CORR));
 	    record_command_verbatim();
 	}
     }
@@ -2265,26 +2292,30 @@ static void populate_stats (GtkWidget *w, gpointer p)
     }	
 }
 
-static int var_is_ok (int i, int code)
+static int var_is_ok (int i, test_t *test)
 {
     int ret = 1;
 
     if (series_is_hidden(dataset, i)) {
 	ret = 0;
-    } else if ((code == ONE_PROPN || code == TWO_PROPNS) &&
-	       !gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i])) {
-	ret = 0;
+    } else {
+	int need_dummy = test->category == CALC_TEST &&
+	    (test->code == ONE_PROPN || test->code == TWO_PROPNS);
+
+	if (need_dummy) {
+	    ret = gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i]);
+	}
     }
 
     return ret;
 }
 
-static void add_vars_to_combo (GtkWidget *box, int code, int pos)
+static void add_vars_to_combo (GtkWidget *box, test_t *test, int pos)
 {
     int i, vmin = (pos > 0)? 2 : 1;
 
     for (i=vmin; i<dataset->v; i++) {
-	if (var_is_ok(i, code)) {
+	if (var_is_ok(i, test)) {
 	    combo_box_append_text(box, dataset->varname[i]);
 	}
     }
@@ -2292,7 +2323,7 @@ static void add_vars_to_combo (GtkWidget *box, int code, int pos)
     if (pos > 0) {
 	/* add first variable at the end of the list */
 	for (i=1; i<dataset->v; i++) {
-	    if (var_is_ok(i, code)) {
+	    if (var_is_ok(i, test)) {
 		combo_box_append_text(box, dataset->varname[i]);
 		break;
 	    }
@@ -2353,6 +2384,7 @@ static void add_test_var_selector (GtkWidget *tbl, gint *row,
     gtk_table_resize(GTK_TABLE(tbl), *row, 2);
     if (labelit) {
 	gchar *tmp = g_strdup_printf(_("Variable %d"), i + 1);
+	
 	label = gtk_label_new(tmp);
 	g_free(tmp);
     } else {
@@ -2383,7 +2415,7 @@ static void add_test_var_selector (GtkWidget *tbl, gint *row,
 	test->combo[0] = tmp;
     }
 
-    add_vars_to_combo(tmp, test->code, i);
+    add_vars_to_combo(tmp, test, i);
 }
 
 static void add_test_combo (GtkWidget *tbl, gint *rows, 
@@ -2420,7 +2452,7 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 	test->combo[0] = tmp;
     }
 
-    add_vars_to_combo(tmp, test->code, pos);
+    add_vars_to_combo(tmp, test, pos);
     gtk_widget_set_sensitive(tmp, FALSE);
 
     entry = gtk_bin_get_child(GTK_BIN(tmp));
@@ -2525,7 +2557,8 @@ static void make_nptest_tab (CalcChild *child, int idx)
     gint i, rows;
     const gchar *titles[] = {
 	N_("Difference test"),
-	N_("Runs test")
+	N_("Runs test"),
+	N_("Correlation")
     };
 
     box = gtk_vbox_new(FALSE, 0);
@@ -2580,6 +2613,26 @@ static void make_nptest_tab (CalcChild *child, int idx)
 	add_test_var_selector(tbl, &rows, test, 0, 0);
 	break;
 
+    case NP_CORR:
+	add_test_var_selector(tbl, &rows, test, 0, 1);
+	add_test_var_selector(tbl, &rows, test, 1, 1);
+
+	/* option radios */
+	rows += 2;
+	gtk_table_resize(GTK_TABLE(tbl), rows, 2);
+
+	test->radio[0] = gtk_radio_button_new_with_label(NULL, _("Kendall's tau"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[0], 0, 2, 
+				  rows - 2, rows - 1);
+	gtk_widget_show(test->radio[0]);
+
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[0]));
+	test->radio[1] = gtk_radio_button_new_with_label(group, _("Spearman's rho"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[1], 0, 2, 
+				  rows - 1, rows);
+	gtk_widget_show(test->radio[1]);
+	break;	
+
     default:
 	break;
     } 
@@ -2587,7 +2640,7 @@ static void make_nptest_tab (CalcChild *child, int idx)
     /* check box for extra option */
     rows += 1;
     gtk_table_resize(GTK_TABLE(tbl), rows, 2);
-    if (idx == NP_DIFF) {
+    if (idx == NP_DIFF || idx == NP_CORR) {
 	tmp = gtk_check_button_new_with_label(_("Show details"));
     } else {
 	tmp = gtk_check_button_new_with_label(_("Use first difference"));
@@ -2774,13 +2827,14 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
     free(child);
 }
 
-static test_t *test_holder_new (int i)
+static test_t *test_holder_new (int c, int i)
 {
     test_t *test = mymalloc(sizeof *test);
 
     if (test != NULL) {
 	int j;
 
+	test->category = c;
 	test->code = i;
 	test->check = NULL;
 	test->extra = NULL;
@@ -2828,7 +2882,7 @@ static int child_allocate_calcp (CalcChild *child)
 	if (test != NULL) {
 	    child->calcp = test;
 	    for (i=0; i<n && !err; i++) {
-		test[i] = test_holder_new(i);
+		test[i] = test_holder_new(c, i);
 		if (test[i] == NULL) {
 		    err = E_ALLOC;
 		} 
@@ -3065,6 +3119,7 @@ static void real_stats_calculator (int code, gpointer data)
 
     if (code == CALC_NPTEST && nv < 2) {
 	calc_disable_page(child, NP_DIFF);
+	calc_disable_page(child, NP_CORR);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), NP_RUNS);
     }
 
