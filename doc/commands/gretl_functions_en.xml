@@ -2123,6 +2123,7 @@
             <fncref targ="cov"/>
             <fncref targ="mcov"/>
             <fncref targ="mcorr"/>
+	    <fncref targ="npcorr"/>
 	  </seelist>
 	</para>
       </description>
@@ -6239,6 +6240,33 @@
 	  The returned matrix is <by r="1" c="2"/>; it holds the test
 	  statistic and its p-value. See also the <cmdref
 	  targ="normtest"/> command.
+	</para>
+      </description>
+    </function>
+
+    <function name="npcorr" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="string" optional="true">method</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calculates a measure of correlation between
+	  <argname>x</argname> and <argname>y</argname> using a
+	  nonparametric method. If given, the third argument should be
+	  either <lit>kendall</lit> (for Kendall's tau, version b, the
+	  default method) or <lit>spearman</lit> (for Spearman's rho).
+	</para>
+	<para>
+	  The return value is a 3-vector holding the correlation
+	  measure plus a test statistic and p-value for the null
+	  hypothesis of no correlation. Note that if the sample size
+	  is too small the test statistic and/or p-value may be
+	  <lit>NaN</lit> (not a number, or missing).
+	</para>
+	<para>
+	  See also <fncref targ="corr"/> for Pearson correlation.
 	</para>
       </description>
     </function>    
