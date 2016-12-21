@@ -2257,6 +2257,7 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 {
     int script = (opt & (OPT_S | OPT_I))? 1 : 0;
     char *test = NULL;
+    int err = 0;
 
     *fullname = '\0';
 
@@ -2267,19 +2268,17 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     strncat(fullname, fname, MAXLEN - 1);
 
     if (opt & OPT_W) {
-	return 0;
+	/* use original name */
+	goto test_open;
     }
 
-    /* handle tilde == HOME */
     if (fullname[0] == '~' && fullname[1] == '/') {
+	/* handle tilde == HOME */
 	substitute_homedir(fullname);
     }
 
     if (g_path_is_absolute(fullname)) {
-#if SEARCH_DEBUG
-	fprintf(stderr, "g_path_is_absolute: returning '%s'\n", fullname);
-#endif	
-	return 0;
+	goto test_open;
     }
 
     if (opt & OPT_I) {
@@ -2288,11 +2287,12 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 
 	if (ipath != NULL && *ipath != '\0') {
 	    build_path(fullname, ipath, fname, NULL);
-	    return 0;
+	    goto test_open;
 	}
     }	
 
     if (has_suffix(fullname, ".gfn") && get_gfn_special(fullname)) {
+	/* checked for existence */
 	return 0;
     }
 
@@ -2305,7 +2305,11 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     fprintf(stderr, "get_full_filename: after: '%s'\n", fullname);
 #endif
 
+    /* If @test is non-NULL that means we actually found
+       the file somewhere */
+
     if (test != NULL && (opt & OPT_S)) {
+	/* set the 'current_dir' based on script name */
 	int spos = gretl_slashpos(fullname);
 
 	if (spos) {
@@ -2318,7 +2322,17 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 	}
     }
 
-    return 0;
+ test_open:
+
+    if (!err && test == NULL) {
+	err = gretl_test_fopen(fullname, "r");
+	if (err) {
+	    /* ensure we return a gretl error code */
+	    err = E_FOPEN;
+	}
+    }
+
+    return err;
 }
 
 int has_system_prefix (const char *fname, SearchType stype)
