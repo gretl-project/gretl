@@ -6,6 +6,8 @@ version 2016e, in progress
   command, but handles vectors as well as series
 - Add ecdf() function to compute the empirical CDF for a
   series or vector
+- New function npcorr() for nonparametric correlation, 
+  either Kendall's tau or Spearman's rho
 - bwrite() function for writing bundles as XML: support
   gzip compression if the filename has the ".gz" extension
 - "include" command: make it respect the "catch" flag
