@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-12-20 08:47-0500\n"
-"PO-Revision-Date: 2016-12-20 08:50-0500\n"
+"PO-Revision-Date: 2016-12-22 22:37+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -3305,14 +3305,12 @@ msgid "generated non-finite values"
 msgstr "gerados valores não-finitos"
 
 #: lib/src/gretl_errors.c:220 lib/src/gretl_errors.c:223
-#, fuzzy
 msgid "In regard to function"
-msgstr "Selecionar função"
+msgstr "No respeitante à função"
 
 #: lib/src/gretl_errors.c:221
-#, fuzzy
 msgid "package"
-msgstr "Pacote"
+msgstr "pacote"
 
 #: lib/src/gretl_errors.c:250 lib/src/gretl_errors.c:256
 msgid "Warning"
@@ -7842,7 +7840,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 20 de dezembro de 2016."
+"Tradução de 22 de dezembro de 2016."
 
 #: gui2/about.c:203
 msgid "News"
@@ -9547,7 +9545,7 @@ msgstr "Tornar esta restrição permanente"
 
 #: gui2/dialogs.c:2367
 msgid "The current data range is too small for this option"
-msgstr ""
+msgstr "O intervalo de dados atual é demasiado pequeno para esta opção "
 
 #: gui2/dialogs.c:2382
 #, c-format
