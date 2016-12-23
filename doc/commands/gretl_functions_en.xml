@@ -1142,17 +1142,35 @@
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
 	<fnarg type="series-or-list">byvar</fnarg>
-	<fnarg type="string">funcname</fnarg>   
+	<fnarg type="string" optional="true">funcname</fnarg>
       </fnargs>
       <description>
 	<para>
-	  In the simplest version, both <argname>x</argname> and
-	  <argname>byvar</argname> are individual series. In that case
-	  this function returns a matrix with three columns: the first
-	  holds the distinct values of <argname>byvar</argname>,
-	  sorted in ascending order; the second holds the count of
-	  observations at which <argname>byvar</argname> takes on each
-	  of these values; and the third holds the values of the
+	  In the most minimal usage, <argname>x</argname> is set to
+	  <lit>null</lit> or omitted, <argname>byvar</argname> is a
+	  single series and the third argument is omitted. In that
+	  case the return value is a matrix with two columns holding,
+	  respectively, the distinct values of
+	  <argname>byvar</argname>, sorted in ascending order, and the
+	  count of observations at which <argname>byvar</argname>
+	  takes on each of these values. For example,
+	</para>
+	<code>
+	  open data4-1
+	  eval aggregate(, bedrms)
+	</code>
+	<para>
+	  will show that the series <lit>bedrms</lit> has values
+	  3 (with count 5) and 4 (with count 9).
+	</para>
+	<para>
+	  If <argname>x</argname> and <argname>byvar</argname> are
+	  both individual series and the third argument is given, the
+	  return value is a matrix with three columns holding,
+	  respectively, the distinct values of
+	  <argname>byvar</argname>, sorted in ascending order; the
+	  count of observations at which <argname>byvar</argname>
+	  takes on each of these values; and the values of the
 	  statistic specified by <argname>funcname</argname>
 	  calculated on series <argname>x</argname>, using only those
 	  observations at which <argname>byvar</argname> takes on the
