@@ -4172,6 +4172,11 @@
        e il suo p-value verranno salvati nelle variabili accessorie
        <fncref targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
+      <para>
+	Si noti che una funzione parallela a questo comando non è
+	disponibile, ma è possibile usare allo scopo la funzione
+	<fncref targ="aggregate"/>.  
+      </para>
     </description>
  
     <description context="gui">

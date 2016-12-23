@@ -4168,6 +4168,11 @@
 	used along with the <opt>plot</opt> option if you just want a
 	histogram and don't care to see the accompanying text.
       </para>
+      <para>
+	Note that gretl does not have a function that matches this
+	command, but it is possible to use the <fncref
+	targ="aggregate"/> function to achieve the same purpose.
+      </para>
     </description>
 
     <description context="gui">

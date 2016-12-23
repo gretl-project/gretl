@@ -1143,127 +1143,141 @@
 
     <function name="aggregate" section="stats" output="matrix">
       <fnargs>
-    <fnarg type="series-or-list">x</fnarg>
-    <fnarg type="series-or-list">byvar</fnarg>
-    <fnarg type="string">funcname</fnarg>   
+	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="series-or-list">byvar</fnarg>
+	<fnarg type="string">funcname</fnarg>   
       </fnargs>
       <description>
-    <para>
-      Nella versione più semplice, in cui sia <argname>x</argname>
-      sia <argname>byvar</argname> sono singole variabili, questa
-      funzione restituisce una matrice con tre colonne: la prima
-      contiene i valori distinti di <argname>byvar</argname>,
-      ordinati in senso crescente; la seconda contiene il numero
-      delle osservazioni in cui <argname>byvar</argname> assume
-      ciascuno di questi valori; la terza, infine, contiene i
-      valori della statistica specificata da
-      <argname>funcname</argname>, calcolata sulla variabile
-      <argname>x</argname> usando solo quelle osservazioni per cui
-      <argname>byvar</argname> assume il valore specificato nella
-      prima colonna.
-    </para>
-    <para>
-      Più in generale, se <argname>byvar</argname> è una lista di
-      <math>n</math> elementi, allora le prime <math>n</math>
-      colonne da sinistra contengono le combinazioni dei valori
-      distinti di ciascuna delle <math>n</math> variabili, mentre la
-      colonna immediatamente successiva contiene il numero delle
-      osservazioni in cui ciascuna combinazione ricorre. Se
-      <argname>x</argname> è una lista con <math>m</math>
-      elementi, allora le <math>m</math> colonne più a destra
-      contengono i valori della statistica specificata da
-      <argname>funcname</argname> per ciascuna delle variabili
-      <argname>x</argname>, calcolati sul sottocampione
-      individuato dalle prime colonne.
-    </para>
-    <para>
-      I seguenti valori di <argname>funcname</argname> sono
-      supportati <quote>in modo nativo</quote>: <fncref
-      targ="sum"/>, <fncref targ="sumall"/>, <fncref
-      targ="mean"/>, <fncref targ="sd"/>, <fncref targ="var"/>,
-      <fncref targ="sst"/>, <fncref targ="skewness"/>, <fncref
-      targ="kurtosis"/>, <fncref targ="min"/>, <fncref
-      targ="max"/>, <fncref targ="median"/>, <fncref targ="nobs"/>
-      e <fncref targ="gini"/>. Ciascuna di queste funzioni accetta
-      come argomento una variabile e restituisce uno scalare, e in tal
-      senso può dirsi che <quote>aggrega</quote> la variabile in un
-      qualche modo. È anche possibile inserire il nome di
-      una funzione definita dall'utente come aggregatore; come le
-      funzioni supportate in modo nativo, tale funzione deve
-      accettare come argomento una singola variabile e ritornare uno
-      scalare.
-    </para>
-    <para>
-      Si noti che, benché il conteggio dei casi sia fornito
-      automaticamente, la funzione <lit>nobs</lit> non è
-      ridondante come aggregatore, poiché fornisce il numero di
-      osservazioni valide (non-missing) in <argname>x</argname>
-      per ciascuna combinazione <argname>byvar</argname>.
-    </para>
-    <para>
-      Come semplice esempio, si supponga che <lit>region</lit> sia
-      la codifica di regioni geografiche con valori interi da 1 ad
-      <math>n</math> e <lit>income</lit> il reddito
-      familiare. Allora quanto segue produrrà una matrice <by
-      r="n" c="3"/> contenente: nella prima colonna, i codici
-      delle regioni; nella seconda, il numero delle osservazioni
-      in ciascuna regione; nella terza, il reddito familiare medio
-      per regione:
-    </para>
-    <code>
-      matrix m = aggregate(income, region, mean)
-    </code>
-    <para>
-      Per un esempio che utilizza liste, si ipotizzi che
-      <lit>gender</lit> sia una variabile dummy maschio/femmina e
-      <lit>race</lit> una variabile categoriale con tre possibili
-      valori. Allora quanto segue genererà una matrice con 6 righe
-      e 5 colonne: le prime due colonne conterranno le
-      combinazioni possibili gender/race; quella centrale
-      il numero di osservazioni di ciascuna di queste combinazioni; e 
-      le ultime due la deviazione standard campionaria di <lit>income</lit> e
-      <lit>age</lit>:
-    </para>
-    <code>
-      list BY = gender race
-      list X = income age
-      matrix m = aggregate(X, BY, sd)
-    </code>
-    <para>
-      Si noti che, nel caso in cui <argname>byvar</argname> sia
-      una lista, alcune combinazioni dei valori di
-      <argname>byvar</argname> potrebbero non essere presenti nei
-      dati (il numero di osservazioni sarà zero). In tal caso, il
-      valore delle statistiche per <argname>x</argname> viene
-      registrato come <lit>NaN</lit> (Not a Number). Nel caso si
-      voglia non considerare tali casi, si può utilizzare la
-      funzione <fncref targ="selifr"/> per selezionare solo le
-      righe associate ad un numero di osservazioni diverso da
-      zero. Nel caso in cui <argname>byvar</argname> contenga
-      <math>n</math> elementi, la colonna da testare sarà quella
-      immediatamente a destra delle prime <math>n</math> colonne
-      partendo da sinistra. Possiamo quindi eseguire il seguente
-      codice:
-    </para>
-    <code>
-      matrix m = aggregate(X, BY, sd)
-      scalar c = nelem(BY)
-      m = selifr(m, m[,c+1])
-    </code>
+	<para>
+	  Nella versione più minimale, <argname>x</argname> è dato dalla
+	  parola chiave <lit>null</lit> o addirittura omesso,
+	  <argname>byvar</argname> è una serie e il terzo argomento è
+	  omesso. In tal caso la funzione produce una matrice con due
+	  colonne contenenti rispettivamente i valori distinti di
+	  <argname>byvar</argname>, ordinati in senso ascendente e le
+	  corrispondenti frequenze assolute di
+	  <argname>byvar</argname>. Ad esempio,
+	</para>
+	open data4-1
+	eval aggregate(, bedrms)
+	<code>
+	</code>
+	<para>
+	  Se invece sia <argname>x</argname> che
+	  <argname>byvar</argname> sono singole variabili, questa
+	  funzione restituisce una matrice con tre colonne: la prima
+	  contiene i valori distinti di <argname>byvar</argname>,
+	  ordinati in senso crescente; la seconda contiene il numero
+	  delle osservazioni in cui <argname>byvar</argname> assume
+	  ciascuno di questi valori; la terza, infine, contiene i
+	  valori della statistica specificata da
+	  <argname>funcname</argname>, calcolata sulla variabile
+	  <argname>x</argname> usando solo quelle osservazioni per cui
+	  <argname>byvar</argname> assume il valore specificato nella
+	  prima colonna.
+	</para>
+	<para>
+	  Più in generale, se <argname>byvar</argname> è una lista di
+	  <math>n</math> elementi, allora le prime <math>n</math>
+	  colonne da sinistra contengono le combinazioni dei valori
+	  distinti di ciascuna delle <math>n</math> variabili, mentre la
+	  colonna immediatamente successiva contiene il numero delle
+	  osservazioni in cui ciascuna combinazione ricorre. Se
+	  <argname>x</argname> è una lista con <math>m</math>
+	  elementi, allora le <math>m</math> colonne più a destra
+	  contengono i valori della statistica specificata da
+	  <argname>funcname</argname> per ciascuna delle variabili
+	  <argname>x</argname>, calcolati sul sottocampione
+	  individuato dalle prime colonne.
+	</para>
+	<para>
+	  I seguenti valori di <argname>funcname</argname> sono
+	  supportati <quote>in modo nativo</quote>: <fncref
+	  targ="sum"/>, <fncref targ="sumall"/>, <fncref
+	  targ="mean"/>, <fncref targ="sd"/>, <fncref targ="var"/>,
+	  <fncref targ="sst"/>, <fncref targ="skewness"/>, <fncref
+	  targ="kurtosis"/>, <fncref targ="min"/>, <fncref
+	  targ="max"/>, <fncref targ="median"/>, <fncref targ="nobs"/>
+	  e <fncref targ="gini"/>. Ciascuna di queste funzioni accetta
+	  come argomento una variabile e restituisce uno scalare, e in tal
+	  senso può dirsi che <quote>aggrega</quote> la variabile in un
+	  qualche modo. È anche possibile inserire il nome di
+	  una funzione definita dall'utente come aggregatore; come le
+	  funzioni supportate in modo nativo, tale funzione deve
+	  accettare come argomento una singola variabile e ritornare uno
+	  scalare.
+	</para>
+	<para>
+	  Si noti che, benché il conteggio dei casi sia fornito
+	  automaticamente, la funzione <lit>nobs</lit> non è
+	  ridondante come aggregatore, poiché fornisce il numero di
+	  osservazioni valide (non-missing) in <argname>x</argname>
+	  per ciascuna combinazione <argname>byvar</argname>.
+	</para>
+	<para>
+	  Come semplice esempio, si supponga che <lit>region</lit> sia
+	  la codifica di regioni geografiche con valori interi da 1 ad
+	  <math>n</math> e <lit>income</lit> il reddito
+	  familiare. Allora quanto segue produrrà una matrice <by
+	  r="n" c="3"/> contenente: nella prima colonna, i codici
+	  delle regioni; nella seconda, il numero delle osservazioni
+	  in ciascuna regione; nella terza, il reddito familiare medio
+	  per regione:
+	</para>
+	<code>
+	  matrix m = aggregate(income, region, mean)
+	</code>
+	<para>
+	  Per un esempio che utilizza liste, si ipotizzi che
+	  <lit>gender</lit> sia una variabile dummy maschio/femmina e
+	  <lit>race</lit> una variabile categoriale con tre possibili
+	  valori. Allora quanto segue genererà una matrice con 6 righe
+	  e 5 colonne: le prime due colonne conterranno le
+	  combinazioni possibili gender/race; quella centrale
+	  il numero di osservazioni di ciascuna di queste combinazioni; e 
+	  le ultime due la deviazione standard campionaria di <lit>income</lit> e
+	  <lit>age</lit>:
+	</para>
+	<code>
+	  list BY = gender race
+	  list X = income age
+	  matrix m = aggregate(X, BY, sd)
+	</code>
+	<para>
+	  Si noti che, nel caso in cui <argname>byvar</argname> sia
+	  una lista, alcune combinazioni dei valori di
+	  <argname>byvar</argname> potrebbero non essere presenti nei
+	  dati (il numero di osservazioni sarà zero). In tal caso, il
+	  valore delle statistiche per <argname>x</argname> viene
+	  registrato come <lit>NaN</lit> (Not a Number). Nel caso si
+	  voglia non considerare tali casi, si può utilizzare la
+	  funzione <fncref targ="selifr"/> per selezionare solo le
+	  righe associate ad un numero di osservazioni diverso da
+	  zero. Nel caso in cui <argname>byvar</argname> contenga
+	  <math>n</math> elementi, la colonna da testare sarà quella
+	  immediatamente a destra delle prime <math>n</math> colonne
+	  partendo da sinistra. Possiamo quindi eseguire il seguente
+	  codice:
+	</para>
+	<code>
+	  matrix m = aggregate(X, BY, sd)
+	  scalar c = nelem(BY)
+	  m = selifr(m, m[,c+1])
+	</code>
       </description>
     </function>
 
     <function name="argname" section="strings" output="string">
       <fnargs>
-    <fnarg type="string">s</fnarg>
+	<fnarg type="string">s</fnarg>
       </fnargs>
       <description>
-    <para>
-      Per <argname>s</argname>, il nome di un parametro in una
-      funzione definita dall'utente, restituisce il nome del
-      corrispondente argomento, o una stringa vuota se l'argomento
-      era anonimo.
-    </para>
+	<para>
+	  Per <argname>s</argname>, il nome di un parametro in una
+	  funzione definita dall'utente, restituisce il nome del
+	  corrispondente argomento, o una stringa vuota se l'argomento
+	  era anonimo.
+	</para>
       </description>
     </function>
 
