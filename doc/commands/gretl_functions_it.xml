@@ -131,9 +131,9 @@
     <function name="$diagpval" section="access" output="scalar">
       <description>
 	<para>
-	  Deve seguire la stima di un sistema di equazioni. Returns the
-	  <math>P</math>-value associated with the <fncref
-	  targ="$diagtest"/> statistic.
+	  Deve seguire la stima di un sistema di
+	  equazioni. Restituisce il <math>P</math>-value associato
+	  alla statistica <fncref targ="$diagtest"/>.
 	</para>
       </description>
     </function>     
@@ -141,13 +141,13 @@
     <function name="$diagtest" section="access" output="scalar">
       <description>
 	<para>
-	  Deve seguire la stima di un sistema di equazioni. Returns the
-	  test statistic for the null hypothesis that the
-	  cross-equation covariance matrix is diagonal. This is the
-	  Breusch&ndash;Pagan test except when the estimator is
-	  (unrestricted) iterated SUR, in which case it is a Likelihood
-	  Ratio test. See <guideref targ="chap:system"/> for
-	  details; see also <fncref targ="$diagpval"/>.
+	  Deve seguire la stima di un sistema di
+	  equazioni. Restituisce il test per l'ipotesi che la matrice
+	  di covarianza dei disturbi sia diagonale. La statistica
+	  utilizzata è quella di Breusch&ndash;Pagan tranne nel caso
+	  del SUR iterato, nel qual caso è un test LR. si veda la
+	  <guideref targ="chap:system"/> per dettagli; see also
+	  <fncref targ="$diagpval"/>.
 	</para>
       </description>
     </function>    
@@ -415,18 +415,19 @@
     <function name="$lang" section="access" output="string">
       <description>
 	<para>
-	  Restituisce una string indicante la lingua attualmente usata
-	  da gretl, se può essere determinata. The string is composed
-	  of a two-letter ISO 639-1 language code (for example,
-	  <lit>en</lit> for English, <lit>jp</lit> for Japanese,
-	  <lit>el</lit> for Greek) followed by an underscore plus a
-	  two-letter ISO 3166-1 country code.  Thus for example
-	  Portuguese in Portugal gives <lit>pt_PT</lit> while
-	  Portuguese in Brazil gives <lit>pt_BR</lit>.
+	  Restituisce una stringa indicante la lingua attualmente
+	  usata da gretl, se può essere determinata. La stringa è data
+	  da un codice a due lettere ISO 639-1 (per esempio,
+	  <lit>en</lit> per l'inglese, <lit>jp</lit> per il
+	  giapponese, <lit>el</lit> per il greco) seguito da un
+	  trattino basso e un codice a due lettere ISO 3166-1 per il
+	  paese.  Quindi, ad esempio, il portoghese europeo è
+	  <lit>pt_PT</lit>, mentre quello brasiliano è
+	  <lit>pt_BR</lit>.
 	</para>
 	<para>
-	  If the national language cannot be determined, the string
-	  <quote><lit>unknown</lit></quote> is returned.
+	  Se la lingua di sistema non si può determinare, il risultato
+	  è la stringa <quote><lit>unknown</lit></quote>.
 	</para>
       </description>
     </function>    
@@ -645,10 +646,9 @@
     <function name="$qlrbreak" section="access" output="scalar">
       <description>
 	<para>
-	  Must follow an invocation of the <cmdref targ="qlrtest"/>
-	  command (the QLR test for a structural break at an unknown
-	  point). The value returned is the 1-based index of the
-	  observation at which the test statistic is maximized.
+	  Deve seguire il comando <cmdref targ="qlrtest"/> (test QLR
+	  per un break strutturale). Ritorna il numero ordinale (a
+	  base 1) dell'osservazione che massimizza la statistica test.
 	</para>
       </description>
     </function>    
@@ -660,8 +660,8 @@
       <description>
     <para>
       Senza argomenti, produce il coefficiente autoregressivo del
-          prim'ordine per i residui dell'ultimo modello. Dopo aver stimato un
-          modello con il comando <lit>ar</lit>, la sintassi
+      prim'ordine per i residui dell'ultimo modello. Dopo aver stimato
+      un modello con il comando <lit>ar</lit>, la sintassi
       <lit>$rho(n)</lit> produce la corrispondente stima di
       &rgr;(<math>n</math>).
     </para>
@@ -2017,6 +2017,22 @@
       </description>
     </function>
 
+    <function name="cnorm" section="probdist" output="asinput">
+      <fnargs>
+    <fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+    <para>
+      Restituisce la funzione di distribuzione cumulativa di una normale 
+      standard. 
+      <seelist>
+        <fncref targ="dnorm"/>
+        <fncref targ="qnorm"/>
+      </seelist>
+    </para>
+      </description>
+    </function>
+
     <function name="cnumber" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2048,22 +2064,6 @@
 	</para>
       </description>
     </function>    
-
-    <function name="cnorm" section="probdist" output="asinput">
-      <fnargs>
-    <fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-    <para>
-      Restituisce la funzione di distribuzione cumulativa di una normale 
-      standard. 
-      <seelist>
-        <fncref targ="dnorm"/>
-        <fncref targ="qnorm"/>
-      </seelist>
-    </para>
-      </description>
-    </function>
 
     <function name="colname" section="strings" output="string">
       <fnargs>
@@ -2761,6 +2761,32 @@
     </code>
       </description>
     </function>
+
+    <function name="ecdf" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Calcola la funzione di ripartizione empirica di
+	  <argname>y</argname>. Il risultato occupa una matrice di due
+	  colonne: nella prima ci sono i valori distinti di
+	  <argname>y</argname>, ordinati in senso crescente;
+	  nell'altra, la frequenza relativa cumulata, ossia il numero
+	  di osservazioni minore o uguale al numero nella prima
+	  colonna, diviso per il numero di osservazioni.
+	</para>
+	<para context="tex">
+	  Calcola la funzione di ripartizione empirica di
+	  <argname>y</argname>. Il risultato occupa una matrice di due
+	  colonne: nella prima ci sono i valori distinti di
+	  <argname>y</argname>, ordinati in senso crescente;
+	  nell'altra, la frequenza relativa cumulata, \[ F(y) =
+	  \frac{1}{n} \sum_{i=1}^n I(y_i \leq y) \] dove $n$ è il
+	  numero di osservazioni e $I()$ la funzione indicatrice.
+	</para>
+      </description>
+    </function>    
 
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
@@ -3606,6 +3632,92 @@
     </code>
       </description>
     </function>
+
+    <function name="hfdiff" section="midas" output="list">
+      <fnargs>
+	<fnarg type="list">mlist</fnarg>
+	<fnarg type="scalar">moltiplicatore</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Data una <cmdref targ="MIDAS_list"/>, produce una lista
+	  della stessa lunghezza con differenze prime ad alta
+	  frequenza. Il secondo argomento, che è opzionale e 1 se
+	  omesso, si usa per moltiplicare il risultato per una
+	  costante.
+	</para>
+      </description>
+    </function>
+
+    <function name="hfldiff" section="midas" output="list">
+      <fnargs>
+	<fnarg type="list">mlist</fnarg>
+	<fnarg type="scalar">moltiplicatore</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Data una <cmdref targ="MIDAS_list"/>, produce una lista
+	  della stessa lunghezza con differenze logaritmiche ad alta
+	  frequenza. Il secondo argomento, che è opzionale e 1 se
+	  omesso, si usa per moltiplicare il risultato per una
+	  costante, ad esempio 100 per variazioni percentuali
+	  approssimate.
+	</para>
+      </description>
+    </function>    
+
+    <function name="hflags" section="midas" output="list">
+      <fnargs>
+	<fnarg type="int">minlag</fnarg>
+	<fnarg type="int">maxlag</fnarg>
+	<fnarg type="list">mlist</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Data una <cmdref targ="MIDAS_list"/>, <repl>mlist</repl>,
+	  produce una lista contenente i ritardi ad alta frequenza da
+	  <repl>minlag</repl> fino a <repl>maxlag</repl>. Valori
+	  positivi indicano ritardi, valori negativi anticipi. Ad esmepio, se
+	  <repl>minlag</repl> è pari a &minus;3 e <repl>maxlag</repl> è 5
+	  la lista risultato conterrà 9 serie: 3 anticipi, il valore
+	  contemporaneo e 5 ritardi.
+	</para>
+	<para>
+	  Nota bene: il ritardo 0 ad alta frequenza corrisponde al
+	  primo sottoperiodo del periodo a bassa frequenza, ossia (ad
+	  esempio) il primo mese del trimestre o il primo giorno del
+	  mese.
+	</para>
+      </description>
+    </function>
+
+    <function name="hflist" section="midas" output="list">
+      <fnargs>
+	<fnarg type="vector">x</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg type="string">prefisso</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dato il vettore <repl>x</repl>, la funzione produce una <cmdref
+	  targ="MIDAS_list"/> di <repl>m</repl> serie, dove
+	  <repl>m</repl> è il rapporto fra la frequenza dei dati nel
+	  vettore <repl>x</repl> e la frequenza del dataset
+	  attuale. il valore di <repl>m</repl> dev'essere almeno 3 e
+	  la lunghezza di <repl>x</repl> dev'essere uguale a
+	  <repl>m</repl> per il numero di osservazioni nel
+	  sottocampione corrente.
+	</para>
+	<para>
+	  I nomi delle serie così create verranno costruiti dal
+	  <repl>prefisso</repl> (che dev'essere una stringa ASCII
+	  di 24 caratteri al massimo, obbediente ai rquisiti di un
+	  identificativo valido), più una o più cifre per il
+	  sottoperiodo. Se uno o più dei nomi così risultanti fosse
+	  già esistente, verrà segnalato un errore.
+	</para>
+      </description>
+    </function>    
 
     <function name="hpfilt" section="filters" output="series">
       <fnargs>
