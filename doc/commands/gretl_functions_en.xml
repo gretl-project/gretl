@@ -1335,6 +1335,11 @@
 	  whose tangent is <argname>x</argname>.  The result is in radians.
 	</para>
       </description>
+      <seelist>
+        <fncref targ="cos"/>
+        <fncref targ="sin"/>
+        <fncref targ="tan"/>
+      </seelist>
     </function>
 
     <function name="atanh" section="math" output="asinput">
@@ -2188,6 +2193,11 @@
 	<para>
 	  Returns the cosine of <argname>x</argname>.
 	</para>
+	<seelist>
+          <fncref targ="sin"/>
+          <fncref targ="tan"/>
+          <fncref targ="atan"/>
+	</seelist>
       </description>
     </function>
 
@@ -5253,10 +5263,11 @@
       </fnargs>
       <description>
 	<para>
-	  Let <math>k</math> denote the number of elements in the
-	  vector of hyper-parameters, <repl>theta</repl>.  This
-	  function returns a <by r="p" c="k"/> matrix holding the
-	  gradient of the vector of weights (as calculated by <fncref
+	  Analytical derivatives for MIDAS weights.  Let
+	  <math>k</math> denote the number of elements in the vector
+	  of hyper-parameters, <repl>theta</repl>.  This function
+	  returns a <by r="p" c="k"/> matrix holding the gradient of
+	  the vector of weights (as calculated by <fncref
 	  targ="mweights"/>) with respect to the elements of
 	  <repl>theta</repl>. The first argument represents the
 	  desired lag order and the last argument specifies the type

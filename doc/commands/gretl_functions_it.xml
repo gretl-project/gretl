@@ -2576,6 +2576,14 @@
       le differenze prime sono calcolate per colonna e i valori
       iniziali restituiti sono 0.
     </para>
+    <para> 
+      Quando il risultato è una lista, le variabili che ne fanno parte
+      prendono automaticamente un nome dato da <lit>d_</lit>
+      <repl>nomevar</repl> dove <repl>nomevar</repl> è il nome della
+      serie originale.  Quest'ultimo viene troncato se necessario, e
+      potrebbe subire altri aggiustamenti in caso di non-unicità dei
+      nomi così costruiti.
+    </para> 
     <para>
       <seelist>
         <fncref targ="cum"/>
@@ -5272,6 +5280,33 @@
       </description>
     </function>
 
+    <function name="mgradient" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="int">p</fnarg>
+	<fnarg type="vector">theta</fnarg>
+	<fnarg type="int">tipo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Derivate analitiche per parametrizzazioni MIDAS. Sia
+	  <math>k</math> il numero di elementi del vettore di
+	  iperparametri <repl>theta</repl>.  Questa funzione produce
+	  il gradiente dei pesi (calcolati da <fncref
+	  targ="mweights"/>) rispetto agli elementi <repl>theta</repl>
+	  in una matrice <by r="p" c="k"/>. Il primo argomento
+	  rappresenta l'ordine dei ritardi desiderato e l'ultimo il
+	  tipo di parameterizzazione. Vedi <lit>mweights</lit> per una
+	  discussione dei valori accettabili per <repl>tipo</repl>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mweights"/>
+	    <fncref targ="mlincomb"/>
+	  </seelist>
+	</para>	
+      </description>
+    </function>    
+
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
     <fnarg type="series-or-list">y</fnarg>
@@ -5790,6 +5825,37 @@
     </para>
       </description>
     </function>
+
+    <function name="mweights" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="int">p</fnarg>
+	<fnarg type="vector">theta</fnarg>
+	<fnarg type="int">tipo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produce un vettore a <math>p</math> elementi di pesi MIDAS,
+	  da applicare a <math>p</math> ritardi di una serie ad alta
+	  frequenza, partendo dal vettore di iperparametri
+	  <repl>theta</repl>.
+	</para>
+	<para>
+	  L'argomento <repl>tipo</repl> identifica il tipo di
+	  parameterizzazione, che a sua volta determina
+	  <math>k</math>, il numero di elementi di <repl>theta</repl>:
+	  1 = Almon espnenziale normalizzata (<math>k</math> almeno 1,
+	  di solito 2); 2 = beta normalzzata con zero in fondo
+	  (<math>k</math> = 2); 3 = beta normalzzata senza zero in
+	  fondo lag (<math>k</math> = 3); and 4 = polinomio di Almon
+	  (<math>k</math> at least 1).
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
+	  </seelist>
+	</para>	
+      </description>
+    </function>    
 
     <function name="mwrite" section="data-utils" output="int">
       <fnargs>
