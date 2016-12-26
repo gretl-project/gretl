@@ -2618,13 +2618,13 @@
       </fnargs>
       <description>
     <para>
-      Restituisce la funzione di densità di una normale standard in  
-      <argname>x</argname>. Per calcolare la densità di una distribuzione normale
-      non standardizzata in <math>x</math>, applicate la funzione 
-      To get the density for a non-standard <lit>dnorm</lit> allo 
-      <math>z</math>-score di <math>x</math> e moltiplicate il risultato così
-      ottenuto per lo Jacobiano della trasformazione <math>z</math>, 
-      1/&sigma;, come illustrato nell'esempio seguente:
+      Restituisce la funzione di densità di una normale standard in
+      <argname>x</argname>. Per calcolare la densità di una
+      distribuzione normale non standardizzata in <math>x</math>,
+      applicate la funzione <lit>dnorm</lit> allo <math>z</math>-score
+      di <math>x</math> e moltiplicate il risultato così ottenuto per
+      lo Jacobiano della trasformazione <math>z</math>, 1/&sigma;,
+      come illustrato nell'esempio seguente:
     </para>
     <code>
       mu = 100
@@ -7829,6 +7829,17 @@
 	  è andato a buon fine, non-zero se il file non esiste o non
 	  può essere cancellato.
 	</para>
+	<para>
+	  Se <argname>fname</argname> contiene un percorso completo,
+	  gretl proverà a cancellare quel file e ritornerà un errore
+	  se non ci riesce, perché il file non esiste o per un
+	  problema di privilegi. Se <argname>fname</argname> invece
+	  non contiene un percorso completo, gretl darà per scontato
+	  che il nome file è relativo alla <cmdref targ="workdir"/>
+	  attuale. Se il file non viene trovato o non si hanno i
+	  privilegi per cancellarlo, la rierca non si estenderà ad
+	  altre directory.
+	</para>
       </description>
     </function>
 
@@ -8316,7 +8327,22 @@
 	<para>
 	  Ritorna una stringa contenente la stampa dei valori degli
 	  argomenti successivi, indicati dai puntini, sotto il
-	  controllo della stringa <argname>formato</argname>.
+	  controllo della stringa <argname>formato</argname>. Questa
+	  funzione fornisce un metodo molto potente e flessibile per
+	  creare stringhe. la stringa <argname>formato</argname>
+	  fornisce la chiave per definire precisamente il modo con cui
+	  gli argomenti vengono stampati.
+	</para>
+	<para>
+	  In generale, <argname>formato</argname> dev'essere
+	  un'espressione che ritorna una stringa, ma di solito è una
+	  costante (una sequenza alfanumerica racchiusa fra virgolette
+	  doppie). Alcune sequenze hanno un significato speciale:
+	  quelle che cominciano con un percento (%) sono interpretate
+	  come <quote>segnaposto</quote> per gli elementi contenuti
+	  nella lista degli argomenti; inoltre, caratteri speciali
+	  come il segno di <quote>a capo</quote> vengono rappresentati
+	  con una barra rovesciata.
 	</para>
 	<para>
 	  Ad esempio, il codice
