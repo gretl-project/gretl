@@ -1471,13 +1471,14 @@
       criterio restituito.
     </para>
     <para>
-      Il terzo argomento opzionale permette di fornire le derivate analitiche
-      (in caso contrario il gradiente è calcolato numericamente). La 
-      chiamata della funzione del gradiente <argname>g</argname> deve avere
-      come primo argomento una matrice predefinita con dimensioni identiche
-      a quelle del gradiente, indicata con un puntatore. Inoltre deve 
-      accettare il vettore dei parametri fra gli argomenti (come puntatore
-      o altro). Gli altri argomenti sono opzionali.
+      Il terzo argomento opzionale permette di fornire le derivate
+      analitiche (in caso contrario il gradiente è calcolato
+      numericamente). La chiamata della funzione del gradiente
+      <argname>g</argname> deve avere come primo argomento una matrice
+      predefinita con dimensioni identiche a quelle del gradiente,
+      indicata con un puntatore. Inoltre deve accettare il vettore dei
+      parametri fra gli argomenti (come puntatore o altro). Gli altri
+      argomenti sono opzionali.
     </para>
     <para>
       Per maggiori dettagli ed esempi, si veda il capitolo sui metodi 
@@ -5450,6 +5451,46 @@
       </description>
     </function>
 
+    <function name="mlincomb" section="midas" output="series">
+      <fnargs>
+	<fnarg type="list">hfvars</fnarg>
+	<fnarg type="vector">theta</fnarg>
+	<fnarg type="int">tipo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione è pensta primariamente per la scrittura di
+	  modelli MIDAS, e combina in una sola funzione <fncref
+	  targ="lincomb"/> e <fncref targ="mweights"/>.  Data una
+	  lista <repl>hfvars</repl>, costruisce una serie con la somma
+	  ponderata degli elementi della lista, dove i pesi sono
+	  basati sul vettore di iperparametri <repl>theta</repl>, per
+	  una paramterizzazione dettata dall'argomento
+	  <repl>tipo</repl>: si veda <lit>mweights</lit> per maggiori
+	  dettagli. Si noti che una lista con le caratteristiche
+	  necessarie ad essere usate come primo argomento viene, per
+	  solito, creata usando la funzione <fncref targ="hflags"/>.
+	</para>
+	<para>
+	  Tanto per essere espliciti, la chiamata
+	</para>
+	<code>
+	  series s = mlincomb(hfvars, theta, 2)
+	</code>
+	<para>
+	  è equivalente a
+	</para>
+	<code>
+	  matrix w = mweights(nelem(hfvars), theta, 2)
+	  series s = lincomb(hfvars, w)
+	</code>
+	<para>
+	  ma l'uso di <lit>mlincomb</lit> rende il codice più snello e
+	  marginalmente più efficiente.
+	</para>
+      </description>
+    </function>    
+
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
     <fnarg type="int">r</fnarg>
@@ -6137,6 +6178,53 @@
     </code>
       </description>
     </function>
+
+    <function name="NMmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg optional="true" type="int">maxfeval</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Massimizzazione numerica col metodo del simplesso di
+	  Nelder&ndash;Mead (ameba). In ingresso, il vettore
+	  <argname>b</argname> contiene i valori iniziali di un
+	  insieme di parametri, mentre la stringa <argname>s</argname>
+	  deve specificare la chiamata a una funzione che calcola il
+	  criterio (scalare) da massimizzare, dati i valori correnti
+	  dai parametri e qualsiasi altro dato rilevante. In caso di
+	  successo, <lit>NMmax</lit> restituisce il valore
+	  massimizzato del criterio, e <argname>b</argname> contiene i
+	  valori dei parametri associati al valore del criterio
+	  restituito.
+	</para>
+	<para>
+	  Il terzo argomento opzionale permette di scegliere il numero
+	  massimo di volte che la funzione viene calcolata; se è 0, o
+	  viene omesso, si prende 2000 come default. Si può anche
+	  specificare un valore negativo per
+	  <argname>maxfeval</argname>.In questo caso, viene usato il
+	  valore assoluto, ma <lit>NMmax</lit> restituirà un errore se
+	  il valore trovato non risulta essere un ottimo
+	  globale. Altrimenti, la non convergenza non viene
+	  considerata un errore.
+	</para>
+	<para>
+	  Se l'oggetto è di fatto una minimizzazione, la funzione
+	  criterio può essere ridefinita cambiando il segno del
+	  risultato, oppure <lit>NMmax</lit> può essere chiamata col
+	  suo alias <lit>NMmin</lit>.
+	</para>
+	<para>
+	  Per ulteriori dettagli ed esempi, vedi <guideref
+	  targ="chap:numerical"/>.
+	  <seelist>
+            <fncref targ="simann"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>    
 
     <function name="nobs" section="stats" output="int">
       <fnargs>
