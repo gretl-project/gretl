@@ -1164,10 +1164,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (p->sym == P_COM) {
-	    /* empty argument slot: may be OK */
-	    child = newempty();	    
-	} else if (i < 4 && callargs && callargs[i]) {
+	if (i < 4 && callargs && callargs[i]) {
 	    /* a function-call argument: don't insist on quotation */
 	    child = get_literal_string_arg(p, 0);
 	} else if (i > 0 && i < k - 1 && (opt & MID_STR)) {
