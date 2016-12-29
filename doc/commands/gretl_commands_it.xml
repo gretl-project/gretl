@@ -13223,10 +13223,34 @@
 
   <command name="varlist" section="Dataset" label="Elenca variabili" context="cli">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--type</flag>
+	  <optparm>nometipo</optparm>
+	</option>	
+      </options>
+    </usage>
+
     <description>
       <para>
-	Mostra un elenco delle variabili disponibili.
+	Mostra un elenco delle variabili disponibili nel dataset.
 	<cmd>list</cmd> e <cmd>ls</cmd> sono sinonimi. 
+      </para>
+      <para>
+	L'opzione <opt>type</opt> deve essere seguita dal segno di
+	uguale e da una delle seguenti parole chiave:
+	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
+	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit> or
+	<lit>accessor</lit>. L'effetto è di stampare i nomi di tutti
+	gli oggetti di quel certo tipo attualmente definiti.
+      </para>
+      <para>
+	Un caso particolare è dato quando il tipo è
+	<lit>accessor</lit>: in questo caso, verrà stampato l'elenco
+	delle variabili interne di tipo <quote>accessore</quote>, come
+	ad esempio <fncref targ="$nobs"/> e <fncref targ="$uhat"/>
+	(indipendentemente dal tipo).
       </para>
     </description>
 
@@ -13524,11 +13548,9 @@
 
     <description>
       <para>
-       La <quote>directory di lavoro</quote> è quella usata da gretl in modo
-       predefinito nelle operazioni di letura o scrittura di file di dati o
-       comandi, usando i comandi Apri e Salva.
-      </para>
-      <para>
+       La <quote>directory di lavoro</quote> è quella usata da gretl
+       in modo predefinito nelle operazioni di letura o scrittura di
+       file di dati o comandi, usando i comandi Apri e Salva.
        Inoltre, la directory di lavoro è usata anche per:
       </para>
       <ilist>
@@ -13547,10 +13569,43 @@
        </li>
       </ilist>
       <para>
-       Se si è abituati ad avviare gretl da un terminale testuale
-       invece che da un menù o icona, può essere utile l'opzione che
-       permette di usare la directory attuale (determinata dalla
-       shell) al momento dell'avvio del programma.
+	La directory di lavoro può essere settata in due modi: o via
+	la finestra di dialogo che comapre cliccando <quote>Directory
+	di lavoro</quote> nel menu File, oppure usando il comando
+	<cmdref targ="set"/>, come ad esempio
+      </para>
+      <code>
+	set workdir /path/to/somewhere
+      </code>
+      <para>
+	Il valore attuale della variabile <lit>workdir</lit> si può
+	vedere o nella finestra di dialogo di cui sopra, oppure dando
+	il comando
+      </para>
+      <code>
+	eval $workdir
+      </code>      
+      <para>
+	Il valore predefinito di <lit>workdir</lit> viene preservato
+	fra una sessione e un'altra. Se però si preferisce avviare
+	gretl da un terminale testuale invece che da un menù o icona,
+	può essere utile l'opzione che permette di usare la directory
+	attuale (determinata dalla shell) al momento dell'avvio del
+	programma. Quest'opzione può essere selezionata nelle
+	Preferenza, oppure attraverso il comando
+      </para>
+      <code>
+	set use_cwd on
+      </code>
+      <para>
+	(<quote>cwd</quote> = current working directory).
+      </para>
+      <para>
+	Nella finestra di dialogo per la directory di lavoro dialog è
+	anche possibile settare il comportamento del selettore di file
+	GUI: quando si apre o si salva un file da una certa cartella,
+	quella cartella può rimanere in memoria o meno alla prossima
+	invocazione.
       </para>
     </description>
 
