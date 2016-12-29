@@ -1149,11 +1149,11 @@
       </fnargs>
       <description>
 	<para>
-	  Nella versione più minimale, <argname>x</argname> è dato dalla
-	  parola chiave <lit>null</lit> o addirittura omesso,
-	  <argname>byvar</argname> è una serie e il terzo argomento è
-	  omesso. In tal caso la funzione produce una matrice con due
-	  colonne contenenti rispettivamente i valori distinti di
+	  Nella versione più minimale, <argname>x</argname> è la
+	  parola chiave <lit>null</lit>, <argname>byvar</argname> è
+	  una serie e il terzo argomento è omesso. In tal caso la
+	  funzione produce una matrice con due colonne contenenti
+	  rispettivamente i valori distinti di
 	  <argname>byvar</argname>, ordinati in senso ascendente e le
 	  corrispondenti frequenze assolute di
 	  <argname>byvar</argname>. Ad esempio,
