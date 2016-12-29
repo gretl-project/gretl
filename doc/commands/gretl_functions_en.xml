@@ -1147,13 +1147,13 @@
       <description>
 	<para>
 	  In the most minimal usage, <argname>x</argname> is set to
-	  <lit>null</lit> or omitted, <argname>byvar</argname> is a
-	  single series and the third argument is omitted. In that
-	  case the return value is a matrix with two columns holding,
-	  respectively, the distinct values of
-	  <argname>byvar</argname>, sorted in ascending order, and the
-	  count of observations at which <argname>byvar</argname>
-	  takes on each of these values. For example,
+	  <lit>null</lit>, <argname>byvar</argname> is a single series
+	  and the third argument is omitted. In that case the return
+	  value is a matrix with two columns holding, respectively,
+	  the distinct values of <argname>byvar</argname>, sorted in
+	  ascending order, and the count of observations at which
+	  <argname>byvar</argname> takes on each of these values. For
+	  example,
 	</para>
 	<code>
 	  open data4-1
