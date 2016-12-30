@@ -1727,11 +1727,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>p1 = cdf(N, -2.5)</example>
 	<example>p2 = cdf(X, 3, 5.67)</example>
 	<example>p3 = cdf(D, 0.25, -1, 1)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Calculadora da função de distribuição acumulada. Retorna
@@ -2216,10 +2216,10 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">p</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>c1 = critical(t, 20, 0.025)</example>
 	<example>c2 = critical(F, 4, 48, 0.05)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Calculadora de valores críticos. Retorna <math>x</math> tal que
@@ -5576,10 +5576,10 @@
 	<fnarg type="int">rows</fnarg>
 	<fnarg type="int">cols</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Funciona da mesma forma que <fncref targ="randgen"/> exceto pelo
@@ -6554,11 +6554,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>f1 = pdf(N, -2.5)</example>
 	<example>f2 = pdf(X, 3, y)</example>
 	<example>f3 = pdf(W, forma, escala, y)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Calculadora da função densidade de probabilidade. Retorna a
@@ -7017,11 +7017,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>p1 = pvalue(z, 2.2)</example>
 	<example>p2 = pvalue(X, 3, 5.67)</example>
 	<example>p2 = pvalue(F, 3, 30, 5.67)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Calculadora de <math>P</math>-valores. Retorna <equation
@@ -7357,13 +7357,13 @@
 	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>series x = randgen(u, 0, 100)</example>
 	<example>series t14 = randgen(t, 14)</example>
 	<example>series y = randgen(B, 0.6, 30)</example>
 	<example>series g = randgen(G, 1, 1)</example>
 	<example>series P = randgen(P, mu)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Gerador de número aleatório de uso geral. O argumeto
@@ -7495,10 +7495,10 @@
 	<fnarg type="scalar">p1</fnarg>
 	<fnarg type="scalar" conditional="true">p2</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>scalar x = randgen1(z, 0, 1)</example>
 	<example>scalar g = randgen1(g, 3, 2.5)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Funciona da mesma forma que <fncref targ="randgen"/> exceto
