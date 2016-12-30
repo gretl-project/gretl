@@ -51,7 +51,7 @@ $(GUIDE): gretl-guide-it.tex links textables_it date.tex
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-it.tex links cmdtex functex textables_it topiclist date.tex
+$(REF): gretl-ref-it.tex links cmdtex functex textables_it topiclist date.tex \
 	date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	bibtex gretl-ref-it
