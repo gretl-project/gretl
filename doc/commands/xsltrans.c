@@ -151,6 +151,8 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 	strcpy(lang, "'es'");
     } else if (!strcmp(full_lang, "french")) {
 	strcpy(lang, "'fr'");
+    } else if (!strcmp(full_lang, "portuguese")) {
+	strcpy(lang, "'pt'");
     }
 
     return lang;

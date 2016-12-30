@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="ISO-8859-1" ?>
 <localization language="pt">
 
  <gentext          key="args" text="Argumentos: "/>
@@ -9,6 +9,7 @@
  <gentext           key="opt" text="Opção:      "/>
  <gentext      key="examples" text="Exemplos:   "/>
  <gentext       key="example" text="Exemplo:    "/>
+ <gentext       key="output"  text="Resultado:  "/>
  <gentext     key="guidebook" text="guia de utilização do Gretl"/>
  <gentext     key="funcchap"  text="manual das funções do Gretl"/>
  <gentext      key="menupath" text="Caminho de Menu:    "/>
@@ -33,7 +34,7 @@
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
  <gentext key="int"           text="número inteiro"/>
  <gentext key="bool"          text="boolean"/>
- <gentext key="séries"        text="série"/>
+ <gentext key="series"        text="série"/>
  <gentext key="vector"        text="vetor"/>
  <gentext key="matrix"        text="matriz"/>
  <gentext key="smatrix"       text="matriz quadrada"/>

@@ -1157,7 +1157,7 @@
 	</para>
 	<code>
 	  open data4-1
-	  eval aggregate(, bedrms)
+	  eval aggregate(null, bedrms)
 	</code>
 	<para>
 	  will show that the series <lit>bedrms</lit> has values

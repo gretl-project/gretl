@@ -1158,9 +1158,9 @@
 	  corrispondenti frequenze assolute di
 	  <argname>byvar</argname>. Ad esempio,
 	</para>
-	open data4-1
-	eval aggregate(, bedrms)
 	<code>
+	  open data4-1
+	  eval aggregate(null, bedrms)
 	</code>
 	<para>
 	  Se invece sia <argname>x</argname> che
