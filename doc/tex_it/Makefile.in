@@ -41,7 +41,7 @@ BIBSRC = gretl.bib gretl.bst
 
 STYSRC = $(docsrc)/gretl.sty.in
 
-all: $(GUIDE) $(REF)
+all: $(REF) # $(GUIDE)
 
 $(GUIDE): gretl-guide-it.tex links textables_it date.tex
 	pdflatex $<

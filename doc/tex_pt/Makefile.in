@@ -59,7 +59,7 @@ STYSRC = $(docsrc)/gretl.sty.in
 
 ALLSRC = $(wildcard $(docsrc)/tex_pt/*.tex) $(STYSRC)
 
-all: $(GUIDE) $(REF)
+all: $(REF) # $(GUIDE)
 
 $(GUIDE): gretl-guide-pt.tex links textables_pt date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
@@ -92,7 +92,7 @@ links:
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
 	for f in $(BIBSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 
 cmdtex:
 	$(MAKE) -C ../commands cmdtex_pt
