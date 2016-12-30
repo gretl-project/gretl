@@ -202,7 +202,7 @@ int parse_commands_data (const char *fname, int content,
 	free(tmp);
     }
 
-    apply_xslt(doc, content, format, lang, docdir);
+    err = apply_xslt(doc, content, format, lang, docdir);
 
  bailout:
 

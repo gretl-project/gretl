@@ -700,8 +700,10 @@ int main (int argc, char **argv)
 { 
     char buf[PARSIZE];
     char line[1024];
+    int bytes = 0;
     int blank = 0;
     int markup = 0;
+    int err = 0;
 
     if (argc == 2) {
 	if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "--markup")) {
@@ -714,6 +716,7 @@ int main (int argc, char **argv)
     }
 
     while (fgets(line, sizeof line, stdin)) {
+	bytes += strlen(line);
 	if (strstr(line, "[PARA]")) {
 	    process_para(line, buf, PARA, markup);
 	    blank++;
@@ -755,5 +758,12 @@ int main (int argc, char **argv)
 	}	
     }
 
-    return 0;
+    if (bytes < 8096) {
+	fprintf(stderr, "%s: short input byte-count %d\n", argv[0], bytes);
+	err = 1;
+    } else {
+	fprintf(stderr, "%s: processed %d bytes\n", argv[0], bytes);
+    }
+
+    return err;
 }
