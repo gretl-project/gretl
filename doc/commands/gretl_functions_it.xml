@@ -1847,7 +1847,7 @@
     </ilist>
     <para context="tex">
       \begin{center} 
-      \begin{tabular}{llll} 
+      \begin{tabular}{lllll} 
       \textit{Distribuzione} &amp; \textsl{c} &amp;
       \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt] 
       Normale standardizzata &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; 

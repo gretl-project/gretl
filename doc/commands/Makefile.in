@@ -288,13 +288,13 @@ functex: xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 
 functex_it: xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_it.xml && \
-	cat $(IT_FNSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_it.xml && \
+	cat $(IT_FNSRC) | grep -a -v DOCTYPE | grep -a -v 'xml version' >> ftex_it.xml && \
 	./xsltrans --funcs --tex ftex_it.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_it/funcbody.tex && rm ftex_it.xml && touch $@
 
 functex_pt: xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ftex_pt.xml && \
-	cat $(PT_FNSRC) | grep -v DOCTYPE | grep -v 'xml version' >> ftex_pt.xml && \
+	cat $(PT_FNSRC) | grep -a -v DOCTYPE | grep -a -v 'xml version' >> ftex_pt.xml && \
 	./xsltrans --funcs --tex ftex_pt.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_pt/funcbody.tex && rm ftex_pt.xml && touch $@
 
@@ -306,19 +306,19 @@ cmdtex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 
 cmdtex_it: xsltrans reflow $(IT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex_it.xml && \
-	cat $(IT_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex_it.xml && \
+	cat $(IT_SRC) | grep -a -v DOCTYPE | grep -a -v 'xml version' >> ctex_it.xml && \
 	./xsltrans --cmds --tex ctex_it.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_it/refbody.tex && rm ctex_it.xml && touch $@
 
 cmdtex_es: xsltrans reflow $(ES_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex_es.xml && \
-	cat $(ES_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex_es.xml && \
+	cat $(ES_SRC) | grep -a -v DOCTYPE | grep -a -v 'xml version' >> ctex_es.xml && \
 	./xsltrans --cmds --tex ctex_es.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_es/refbody.tex && rm ctex_es.xml && touch $@
 
 cmdtex_pt: xsltrans reflow $(PT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > ctex_pt.xml && \
-	cat $(PT_SRC) | grep -v DOCTYPE | grep -v 'xml version' >> ctex_pt.xml && \
+	cat $(PT_SRC) | grep -a -v DOCTYPE | grep -a -v 'xml version' >> ctex_pt.xml && \
 	./xsltrans --cmds --tex ctex_pt.xml --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_pt/refbody.tex && rm ctex_pt.xml && touch $@
 

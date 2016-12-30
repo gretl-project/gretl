@@ -6187,7 +6187,7 @@
 	</option>
 	<option>
 	  <flag>--tkey</flag>
-	  <optparm>nome_colonna,stringa_formato</optparm>
+	  <optparm>nome-colonna,stringa-formato</optparm>
 	  <effect>v. oltre</effect>
 	</option>
 	<option>
@@ -12461,10 +12461,10 @@
 	   label="Statistiche descrittive" context="cli">
 
     <usage>
-      <arguments>
+      <altforms>
 	<altform><lit>summary [</lit> <repl>lista</repl> ]</altform>
 	<altform><lit>summary --matrix=</lit><repl>nomematrice</repl></altform>
-      </arguments>
+      </altforms>
       <options>
         <option>
 	  <flag>--simple</flag>
