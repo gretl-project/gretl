@@ -2020,14 +2020,13 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     const char *guide_files[] = {
 	"gretl-guide.pdf",
 	"gretl-guide-a4.pdf",
-	"gretl-guide-it.pdf",
-	"gretl-guide-es.pdf"
+	"gretl-guide-it.pdf"
     };
     const char *ref_files[] = {
 	"gretl-ref.pdf",
 	"gretl-ref-a4.pdf",
 	"gretl-ref-it.pdf",
-	"gretl-ref-es.pdf"  
+	"gretl-ref-pt.pdf"
     };
     const char *kbd_files[] = {
 	"gretl-keys.pdf",
@@ -2054,9 +2053,12 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	i = 0;
     }
 
-    if (code == GRETL_KEYS || code == HANSL_PRIMER) {
-	/* no translations */
+    if (code == GRETL_KEYS || code == HANSL_PRIMER || code == GRETL_MPI) {
+	/* no (current) translations */
 	if (i > 1) i = 1;
+    } else if (code == GRETL_GUIDE) {
+	/* the only translation is Italian (and it's old) */
+	if (i > 2) i = 1;
     }
 
     if (code == GRETL_GUIDE) {

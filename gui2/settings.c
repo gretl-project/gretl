@@ -1135,7 +1135,8 @@ static const char **get_list_setting_strings (void *var, int *n)
     static const char *manpref_strs[] = {
         N_("English (US letter paper)"),
         N_("English (A4 paper)"),
-        N_("Italian")	
+        N_("Italian"),
+	N_("Portuguese")
     };    
     const char **strs = NULL;
 
