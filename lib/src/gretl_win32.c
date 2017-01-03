@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* gretl_win32.c for gretl */
@@ -36,15 +36,15 @@ static void win_print_last_error (void)
     DWORD dw = GetLastError();
     LPVOID buf;
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		  FORMAT_MESSAGE_FROM_SYSTEM | 
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		  FORMAT_MESSAGE_FROM_SYSTEM |
 		  FORMAT_MESSAGE_IGNORE_INSERTS,
 		  NULL,
 		  dw,
 		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		  (LPTSTR) &buf,
 		  0,
-		  NULL); 
+		  NULL);
 
     if (buf != NULL) {
 	fprintf(stderr, "Windows says: %s\n", (char *) buf);
@@ -56,7 +56,7 @@ static void win_print_last_error (void)
 
 /* returns 0 on success */
 
-int read_reg_val (HKEY tree, const char *base, 
+int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
@@ -161,7 +161,7 @@ void win32_cli_read_rc (char *callname)
     char dbproxy[64] = {0};
     int use_proxy = 0;
     FILE *fp;
-    
+
     /* try for a per-user rc file first */
     fp = cli_rcfile_open();
     if (fp != NULL) {
@@ -171,15 +171,15 @@ void win32_cli_read_rc (char *callname)
 
     /* read the "gretlnet" file, if present: any settings from this
        file will override those from the per-user rc file.
-    */ 
+    */
     fp = cli_gretlnet_open(callname);
     if (fp != NULL) {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy);
 	fclose(fp);
-    }	
-    
-    /* for a short list of items, if they're (still) missing, maybe we 
-       can get them from the registry 
+    }
+
+    /* for a short list of items, if they're (still) missing, maybe we
+       can get them from the registry
     */
 
     if (cpaths.gretldir[0] == '\0') {
@@ -195,7 +195,7 @@ void win32_cli_read_rc (char *callname)
     if (cpaths.tramo[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo",
 		     cpaths.tramo);
-    }	
+    }
 
     gretl_set_paths(&cpaths);
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
@@ -206,15 +206,15 @@ void win_show_last_error (void)
     DWORD dw = GetLastError();
     LPVOID buf;
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		  FORMAT_MESSAGE_FROM_SYSTEM | 
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		  FORMAT_MESSAGE_FROM_SYSTEM |
 		  FORMAT_MESSAGE_IGNORE_INSERTS,
 		  NULL,
 		  dw,
 		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		  (LPTSTR) &buf,
 		  0,
-		  NULL); 
+		  NULL);
 
     MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
     LocalFree(buf);
@@ -225,8 +225,8 @@ void win_copy_last_error (void)
     DWORD dw = GetLastError();
     LPVOID buf;
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		  FORMAT_MESSAGE_FROM_SYSTEM | 
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		  FORMAT_MESSAGE_FROM_SYSTEM |
 		  FORMAT_MESSAGE_IGNORE_INSERTS,
 		  NULL,
 		  dw,
@@ -245,7 +245,7 @@ void win_copy_last_error (void)
 */
 
 static int real_win_run_sync (char *cmdline, const char *currdir,
-			      int console_app) 
+			      int console_app)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
@@ -286,7 +286,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
 	    if (exitcode != 0) {
 		fprintf(stderr, "win_run_sync: got exit code %d\n", exitcode);
-		gretl_errmsg_sprintf("%s: exit code %d", cmdline, 
+		gretl_errmsg_sprintf("%s: exit code %d", cmdline,
 				     exitcode);
 		err = 1;
 	    }
@@ -296,7 +296,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 	    err = 1;
 	}
     }
-   
+
     CloseHandle(pinfo.hProcess);
     CloseHandle(pinfo.hThread);
 
@@ -317,7 +317,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int win_run_sync (char *cmdline, const char *currdir) 
+int win_run_sync (char *cmdline, const char *currdir)
 {
     return real_win_run_sync(cmdline, currdir, 1);
 }
@@ -329,7 +329,7 @@ int gretl_spawn (char *cmdline)
 
 /* Retrieve various special paths from the bowels of MS
    Windows.  Note that these paths will be in the locale
-   encoding, not UTF-8 
+   encoding, not UTF-8
 */
 
 static char *win_special_path (int folder)
@@ -382,7 +382,7 @@ static char *compose_command_line (const char *arg)
 {
     CHAR cmddir[MAX_PATH];
     char *cmdline = NULL;
-    
+
     GetSystemDirectory(cmddir, sizeof cmddir);
 
     if (getenv("SHELLDEBUG")) {
@@ -394,11 +394,11 @@ static char *compose_command_line (const char *arg)
     return cmdline;
 }
 
-#define BUFSIZE 4096 
- 
-static int read_from_pipe (HANDLE hwrite, HANDLE hread, 
-			   char **sout, PRN *inprn) 
-{ 
+#define BUFSIZE 4096
+
+static int read_from_pipe (HANDLE hwrite, HANDLE hread,
+			   char **sout, PRN *inprn)
+{
     DWORD dwread;
     CHAR buf[BUFSIZE];
     PRN *prn;
@@ -412,20 +412,20 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 
     /* close the write end of the pipe */
     ok = CloseHandle(hwrite);
-    
+
     if (!ok) {
-	fputs("Closing handle failed\n", stderr); 
+	fputs("Closing handle failed\n", stderr);
     } else {
 	/* read output from the child process: note that the buffer
 	   must be NUL-terminated for use with pputs() */
-	while (1) { 
+	while (1) {
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
 	    if (!ok || dwread == 0) {
 		break;
 	    }
 	    pputs(prn, buf);
-	} 
+	}
     }
 
     if (sout != NULL) {
@@ -434,18 +434,18 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     }
 
     return ok;
-} 
+}
 
 enum {
     SHELL_RUN,
     PROG_RUN
 };
 
-static int 
+static int
 run_child_with_pipe (const char *arg, const char *currdir,
-		     HANDLE hwrite, HANDLE hread, int flag) 
-{ 
-    PROCESS_INFORMATION pinfo; 
+		     HANDLE hwrite, HANDLE hread, int flag)
+{
+    PROCESS_INFORMATION pinfo;
     STARTUPINFO sinfo;
     char *cmdline = NULL;
     char *targdir = NULL;
@@ -466,7 +466,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	    targdir[n-1] = '\0';
 	}
     }
- 
+
     ZeroMemory(&pinfo, sizeof pinfo);
     ZeroMemory(&sinfo, sizeof sinfo);
 
@@ -476,8 +476,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
     sinfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     sinfo.dwFlags |= (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW);
     sinfo.wShowWindow = SW_SHOWMINIMIZED;
- 
-    ok = CreateProcess(NULL, 
+
+    ok = CreateProcess(NULL,
 		       cmdline,
 		       NULL,          /* process security attributes */
 		       NULL,          /* primary thread security attributes */
@@ -487,7 +487,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		       targdir,
 		       &sinfo,
 		       &pinfo);
-   
+
     if (!ok) {
 	win_show_last_error();
     } else {
@@ -503,34 +503,34 @@ run_child_with_pipe (const char *arg, const char *currdir,
 
 static int run_cmd_with_pipes (const char *arg, const char *currdir,
 			       char **sout, PRN *prn, int flag)
-{ 
+{
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sattr;
     int ok;
- 
+
     /* set the bInheritHandle flag so pipe handles are inherited */
     sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
     sattr.bInheritHandle = TRUE;
     sattr.lpSecurityDescriptor = NULL;
 
-    /* create pipe for the child process's STDOUT */ 
+    /* create pipe for the child process's STDOUT */
     ok = CreatePipe(&hread, &hwrite, &sattr, 0);
 
     if (!ok) {
 	win_show_last_error();
     } else {
-	/* ensure that the read handle to the child process's pipe for 
+	/* ensure that the read handle to the child process's pipe for
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
 	ok = run_child_with_pipe(arg, currdir, hwrite, hread, flag);
 	if (ok) {
 	    /* read from child's output pipe */
-	    read_from_pipe(hwrite, hread, sout, prn); 
+	    read_from_pipe(hwrite, hread, sout, prn);
 	}
     }
- 
-    return 0; 
-} 
+
+    return 0;
+}
 
 static int run_cmd_wait (const char *cmd, PRN *prn)
 {
@@ -610,7 +610,7 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, SHELL_RUN);
     } else {
 	err = run_cmd_wait(arg, prn);
-    } 
+    }
 
     return err;
 }
@@ -638,7 +638,7 @@ int win32_write_access (char *path)
     username = g_get_user_name();
 
     /* get the size of the SID and domain */
-    LookupAccountName(NULL, username, NULL, &sidsize, 
+    LookupAccountName(NULL, username, NULL, &sidsize,
 		      NULL, &dlen, &stype);
 
     sid = LocalAlloc(0, sidsize);
@@ -649,7 +649,7 @@ int win32_write_access (char *path)
 
     if (!err) {
 	/* call the function for real */
-	ret = LookupAccountName(NULL, username, sid, &sidsize, 
+	ret = LookupAccountName(NULL, username, sid, &sidsize,
 				domain, &dlen, &stype);
 	err = (ret == 0);
     }
@@ -657,9 +657,9 @@ int win32_write_access (char *path)
     if (!err) {
 	/* build a trustee and get the file's DACL */
 	BuildTrusteeWithSid(&t, sid);
-	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
-				   DACL_SECURITY_INFORMATION, 
-				   NULL, NULL, &dacl, NULL, 
+	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT,
+				   DACL_SECURITY_INFORMATION,
+				   NULL, NULL, &dacl, NULL,
 				   (PSECURITY_DESCRIPTOR) &sd);
 	err = (ret != ERROR_SUCCESS);
     }
@@ -668,7 +668,7 @@ int win32_write_access (char *path)
 	/* get the access mask for this trustee */
 	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
         if (ret != ERROR_SUCCESS) {
-            fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);   
+            fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);
             if (ret != RPC_S_SERVER_UNAVAILABLE && ret != ERROR_NO_SUCH_DOMAIN) {
                 err = 1;
             }
@@ -679,7 +679,7 @@ int win32_write_access (char *path)
 
     if (sid != NULL) {
 	LocalFree(sid);
-    }    
+    }
     if (sd != NULL) {
 	LocalFree(sd);
     }
@@ -730,9 +730,9 @@ static BOOL running_as_admin (void)
     BOOL ok, ret = FALSE;
 
     ok = AllocateAndInitializeSid(&auth, 2,
-				  SECURITY_BUILTIN_DOMAIN_RID, 
-				  DOMAIN_ALIAS_RID_ADMINS, 
-				  0, 0, 0, 0, 0, 0, 
+				  SECURITY_BUILTIN_DOMAIN_RID,
+				  DOMAIN_ALIAS_RID_ADMINS,
+				  0, 0, 0, 0, 0, 0,
 				  &admin_group);
 
     if (ok) {
@@ -742,11 +742,11 @@ static BOOL running_as_admin (void)
     if (!ok) {
 	fprintf(stderr, "running_as_admin: the check failed\n");
     }
- 
+
     if (admin_group != NULL) {
 	FreeSid(admin_group);
     }
- 
+
     return ret;
 }
 
@@ -767,7 +767,7 @@ int win32_uses_virtual_store (void)
     GetVersionEx(&osvi);
     /* VirtualStore came in with Vista */
     ret = osvi.dwMajorVersion > 5;
-    
+
     if (ret && running_as_admin()) {
 	ret = 0;
     }
@@ -807,7 +807,7 @@ static int try_for_R_path (HKEY tree, char *s)
 	char version[8], path[32];
 
 	/* new-style: path contains R version number */
-	err = read_reg_val(tree, "R-core\\R", "Current Version", 
+	err = read_reg_val(tree, "R-core\\R", "Current Version",
 			   version);
 	if (!err) {
 	    sprintf(path, "R-core\\R\\%s", version);
@@ -936,19 +936,19 @@ int win32_check_for_program (const char *prog)
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
  * 3. Neither the name of KTH nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
@@ -1032,7 +1032,7 @@ static const char *ampm[] = {
 };
 
 /*
- * tm_year is relative this year 
+ * tm_year is relative this year
  */
 const int tm_year_base = 1900;
 
@@ -1150,7 +1150,7 @@ static char *parse_iso_basic (const char *buf, struct tm *timeptr)
 	    }
 	}
     }
-    
+
     return (char *) buf;
 }
 
@@ -1184,7 +1184,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 
     if (strcmp(format, "%Y%m%d") == 0) {
 	/* the case where the format contains no punctuation
-	   is not handled correctly below 
+	   is not handled correctly below
 	*/
 	return parse_iso_basic(buf, timeptr);
     }
@@ -1428,12 +1428,12 @@ double win32_fscan_nonfinite (FILE *fp, int *err)
 
     fscanf(fp, "%4s", test);
 
-    if (!strncmp(test, "nan", 3) ||
-	!strncmp(test, "-nan", 4)) {
+    if (!g_ascii_strcasecmp(test, "nan") ||
+	!g_ascii_strcasecmp(test, "-nan")) {
 	return M_NA;
-    } else if (!strncmp(test, "inf", 3)) {
+    } else if (!g_ascii_strcasecmp(test, "inf")) {
 	return 1.0 / 0.0;
-    } else if (!strncmp(test, "-inf", 4)) {
+    } else if (!g_ascii_strcasecmp(test, "-inf")) {
 	return -1.0 / 0.0;
     } else {
 	*err = E_DATA;
@@ -1511,7 +1511,7 @@ int cli_set_win32_charset (const char *package)
     HANDLE h;
 
     h = GetStdHandle(STD_OUTPUT_HANDLE);
-    
+
     if (h != NULL) {
 	CONSOLE_FONT_INFO finfo = {0};
 
@@ -1521,9 +1521,9 @@ int cli_set_win32_charset (const char *package)
 	    ttfont = finfo.nFont >= 8;
 	}
     }
-    
+
     /* The first option below seems to work OK if the Windows console
-       is using a TrueType font (e.g. Lucida Console or Consolas) 
+       is using a TrueType font (e.g. Lucida Console or Consolas)
     */
 
     /* FIXME handling of filenames when forcing UTF-8 in the
@@ -1536,7 +1536,7 @@ int cli_set_win32_charset (const char *package)
     } else {
 	UINT CP = GetConsoleOutputCP();
 	char console_charset[16] = {0};
-	
+
 	sprintf(console_charset, "CP%d", (int) CP);
 	bind_textdomain_codeset(package, console_charset);
     }
