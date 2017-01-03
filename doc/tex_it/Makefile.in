@@ -34,12 +34,13 @@ TEXSRC = cli.tex \
 	reftables.tex \
 	cmdref.tex \
 	funcref.tex \
-	optarg.tex \
-	var.tex
+	optarg.tex
 
 BIBSRC = gretl.bib gretl.bst
 
 STYSRC = $(docsrc)/gretl.sty.in
+
+ALLSRC = $(wildcard $(docsrc)/tex_it/*.tex) $(STYSRC)
 
 all: $(REF) # $(GUIDE)
 
@@ -88,7 +89,7 @@ textables_it:
 functex:
 	$(MAKE) -C ../commands functex_it
 
-date.tex:
+date.tex: $(ALLSRC)
 	LANG=it_IT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 onepass: gretl-guide-it.tex links textables_it

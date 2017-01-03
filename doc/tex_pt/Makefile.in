@@ -106,7 +106,7 @@ textables_pt:
 functex:
 	$(MAKE) -C ../commands functex_pt
 
-date.tex:
+date.tex: $(ALLSRC)
 	LANG=pt_PT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 onepass: gretl-guide-pt.tex links textables_pt
