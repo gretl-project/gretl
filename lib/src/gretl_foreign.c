@@ -1344,13 +1344,27 @@ static int *get_send_data_list (const DATASET *dset, int *err)
     return list;
 }
 
+static int no_data_check (const DATASET *dset)
+{
+    if (dset == NULL || dset->n == 0 || dset->v == 0) {
+	return E_NODATA;
+    } else {
+	return 0;
+    }
+}
+
 static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
 {
     int *list = NULL;
     gchar *sdata = NULL;
     char save_na[8];
-    int err = 0;
+    int err;
+
+    err = no_data_check(dset);
+    if (err) {
+	return err;
+    }
 
     list = get_send_data_list(dset, &err);
     
@@ -1424,7 +1438,12 @@ static int write_data_for_octave (const DATASET *dset,
 {
     int *list = NULL;
     gchar *mdata = NULL;
-    int err = 0;
+    int err;
+
+    err = no_data_check(dset);
+    if (err) {
+	return err;
+    }
 
     list = get_send_data_list(dset, &err);
 
@@ -1493,10 +1512,16 @@ static int write_data_for_R (const DATASET *dset,
 			     gretlopt opt,
 			     FILE *fp)
 {
-    int ts = dataset_is_time_series(dset);
     int *list = NULL;
     gchar *Rdata;
-    int err = 0;
+    int ts, err;
+
+    err = no_data_check(dset);
+    if (err) {
+	return err;
+    }
+
+    ts = dataset_is_time_series(dset);
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
 
