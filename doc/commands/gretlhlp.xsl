@@ -735,6 +735,10 @@
 <!-- can't handle tables at present -->
 </xsl:template>
 
+<xsl:template match="tabular">
+<!-- reserved for TeX -->
+</xsl:template>
+
 <xsl:template match="footnote"/>
 
 <xsl:template name="nl">

@@ -51,7 +51,7 @@
 
 <!ELEMENT fnargs       (fnarg)+>
 <!ELEMENT examples     (example)+>
-<!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
+<!ELEMENT description  (para | code | pre | ilist | nlist | table | tabular)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
 <!ELEMENT fnarg (#PCDATA)>
@@ -79,10 +79,15 @@
                 by | url | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
-> 
+>
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
 <!ELEMENT code (#PCDATA)>
+
+<!ELEMENT tabular (#PCDATA)>
+<!ATTLIST tabular
+  colspec CDATA #REQUIRED
+>
 
 <!ELEMENT ilist (li)+>
 <!ELEMENT nlist (li)+>

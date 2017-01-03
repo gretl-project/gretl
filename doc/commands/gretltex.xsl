@@ -491,6 +491,19 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="tabular">
+  <xsl:text>\begin{center}&#10;</xsl:text>
+  <xsl:text>\begin{tabular}{</xsl:text>
+  <xsl:value-of select="@colspec"/>
+  <xsl:text>}&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\end{tabular}&#10;</xsl:text>
+  <xsl:text>\end{center}&#10;</xsl:text>
+  <xsl:if test="not(ancestor::entry)">
+    <xsl:text>&#10;&#10;</xsl:text>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="gfr">
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'chapter'"/>

@@ -1812,9 +1812,7 @@
 	    </para>
 	  </li>
 	</ilist>
-	<para context="tex">
-	  \begin{center}
-	  \begin{tabular}{lllll}
+	<tabular colspec="lllll">
 	  \textit{Distribution} &amp; \textsl{d} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
 	  Normal padrão &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp;
@@ -1843,9 +1841,7 @@
 	  graus de liberdade (num.) &amp; graus de liberdade (den.) &amp; não-centralidade \\
 	  $t$ não-central &amp; \texttt{nct} &amp;
 	  graus de liberdade &amp; não-centralidade &amp; -- \\
-	  \end{tabular}
-	  \end{center}
-	</para>
+	</tabular>
 	<para>
 	  Note que na maioria dos casos existem pseudônimos para ajudar na
 	  memorização dos céodigos. O caso da norma bivariada é especial: a
@@ -2262,9 +2258,7 @@
             </para>
 	  </li>
 	</ilist>
-	<para context="tex">
-	  \begin{center}
-	  \begin{tabular}{llll}
+	<tabular colspec="llll">
 	  \textit{Distribution} &amp; \textsl{c} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
 	  Normal padrão &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp;
@@ -2279,9 +2273,7 @@
 	  $p$ &amp; $n$ \\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp;
 	  $\lambda$ &amp; -- \\
-	  \end{tabular}
-	  \end{center}
-	</para>
+	</tabular>
 	<para>
 	  <seelist>
             <fncref targ="cdf"/>
@@ -3981,9 +3973,7 @@
 	    </para>
 	  </li>
 	</ilist>
-	<para context="tex">
-	  \begin{center}
-	  \begin{tabular}{lllll}
+	<tabular colspec="lllll">
 	  \textit{Distribution} &amp; \textsl{d} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
 	  Norma padrão &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp;
@@ -4008,9 +3998,7 @@
 	  graus de liberdade (num.) &amp; graus de liberdade (den.) &amp; não-centralidade \\
 	  $t$ não-central &amp; \texttt{nct} &amp;
 	  graus de liberdade &amp; não-centralidade &amp; -- \\
-	  \end{tabular}
-	  \end{center}
-	</para>
+	</tabular>
 	<para>
 	  <seelist>
             <fncref targ="cdf"/>
@@ -7458,9 +7446,7 @@
             </para>
 	  </li>
 	</ilist>
-	<para context="tex">
-	  \begin{center}
-	  \begin{tabular}{lllll}
+	<tabular colspec="lllll">
 	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
 	  Uniforme (contínua) &amp; \texttt{u} ou \texttt{U} &amp; mínimo &amp; máximo &amp; --\\
 	  Uniforme (discreta) &amp; \texttt{i} &amp; mínimo &amp; máximo &amp; --\\
@@ -7475,9 +7461,7 @@
 	  Erro Generalizado &amp; \texttt{e} ou \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma2 &amp; --\\
 	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma2
-	  \end{tabular}
-	  \end{center}
-	</para>
+	</tabular>
 	<para>
 	  <seelist>
             <fncref targ="normal"/>

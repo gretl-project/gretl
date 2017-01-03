@@ -1845,9 +1845,7 @@
 	</para>
       </li>	  
     </ilist>
-    <para context="tex">
-      \begin{center} 
-      \begin{tabular}{lllll} 
+    <tabular colspec="lllll">
       \textit{Distribuzione} &amp; \textsl{c} &amp;
       \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt] 
       Normale standardizzata &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; 
@@ -1876,9 +1874,7 @@
       gdl (num.) &amp; gdl (den.) &amp; non centralit{\`a}  \\
       $t$  non centrale &amp; \texttt{nct} &amp; 
       gdl &amp; non centralit{\`a} &amp; -- \\
-      \end{tabular}
-      \end{center}
-    </para>
+    </tabular>
     <para>
       La maggior parte delle distribuzioni usano degli alias per
       rendere più agevole la memorizzazione dei codici.  Il caso
@@ -2305,9 +2301,7 @@
         </para>
       </li>   
     </ilist>
-    <para context="tex">
-      \begin{center} 
-      \begin{tabular}{llll} 
+    <tabular colspec="llll">
       \textit{Distribuzione} &amp; \textsl{c} &amp;
       \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
       Normale standard &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
@@ -2322,9 +2316,7 @@
       $p$ &amp; $n$ \\ 
       Poisson &amp; \texttt{p} o \texttt{P} &amp; 
       $\lambda$ &amp; -- \\ 
-      \end{tabular}
-      \end{center}
-    </para>
+    </tabular>
     <para>
       <seelist>
         <fncref targ="cdf"/>
@@ -4073,9 +4065,7 @@
 	</para>
       </li>	  
      </ilist>
-    <para context="tex">
-      \begin{center} 
-      \begin{tabular}{lllll} 
+    <tabular colspec="lllll">
       \textit{Distribuzione} &amp; codice, $c$ &amp;
       \textit{Arg.} 2 &amp; \textit{Arg.} 3 &amp; \textit{Arg.} 4 \\[4pt] 
       Normale Standard &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
@@ -4099,9 +4089,7 @@
       gdl (num.) &amp; gdl (den.) &amp; non centralit{\`a}  \\
       $t$  non centrale &amp; \texttt{nct} &amp; 
       gdl &amp; non centralit{\`a} &amp; -- \\
-      \end{tabular}
-      \end{center}
-    </para>
+    </tabular>
     <para>
       <seelist>
         <fncref targ="cdf"/>
@@ -7595,9 +7583,7 @@
         </para>
       </li>
     </ilist>
-    <para context="tex">
-      \begin{center}
-      \begin{tabular}{lllll}
+    <tabular colspec="lllll">
       \textbf{Distribuzione} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
       Uniforme (continua) &amp; \texttt{u} o \texttt{U} &amp; minimo &amp; massimo &amp; --\\
       Uniforme (discreta) &amp; \texttt{i} &amp; minimo &amp; massimo &amp; --\\
@@ -7612,9 +7598,7 @@
       Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
       Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
       Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1
-      \end{tabular}
-      \end{center}
-    </para>
+    </tabular>
     <para>
       <seelist>
         <fncref targ="normal"/>

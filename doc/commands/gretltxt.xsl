@@ -108,6 +108,10 @@
 </xsl:if>
 </xsl:template>
 
+<xsl:template match="tabular">
+<!-- reserved for TeX -->
+</xsl:template>
+
 <xsl:template match="common-opt" />
 
 <xsl:template match="description">
