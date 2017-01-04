@@ -63,7 +63,7 @@
 #endif
 
 #ifndef MAC_THEMING
-# if defined(MAC_NATIVE) && defined(PKGBUILD)
+# if defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
 #   define MAC_THEMING
 # endif
 #endif

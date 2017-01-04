@@ -24,6 +24,6 @@
 #define LIBGRETL_REVISION  0
 #define LIBGRETL_AGE       0
 
-#define GRETL_VERSION "2016e-git"
+#define GRETL_VERSION "2017a-git"
 
 #endif /* GRETL__VERSION_H */

@@ -18888,6 +18888,15 @@ fi
 else
   mac_native="no"
 fi
+     if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gretl-mac-themes\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gretl-mac-themes") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  $as_echo "#define HAVE_MAC_THEMES 1" >>confdefs.h
+
+fi
   fi
 fi
 
