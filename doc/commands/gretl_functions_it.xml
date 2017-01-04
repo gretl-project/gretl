@@ -4902,6 +4902,48 @@
       </description>
     </function>
 
+    <function name="loess" section="stats" output="series">
+      <fnargs>
+    <fnarg type="series">y</fnarg>
+    <fnarg type="series">x</fnarg>
+    <fnarg optional="true" type="int">d</fnarg>
+    <fnarg optional="true" type="scalar">q</fnarg>
+    <fnarg optional="true" type="bool">robust</fnarg>
+      </fnargs>
+      <description>
+    <para>
+      Effettua una regressione polinomiale ponderata localmente e
+      restituisce una variabile contenente i valori previsti di
+      <argname>y</argname> per ogni elemento non mancante di
+      <argname>x</argname>.  Viene usato il metodo descritto in
+      <cite key="cleveland79">William Cleveland (1979)</cite>.
+    </para>
+    <para>
+      Gli argomenti opzionali <argname>d</argname> e
+      <argname>q</argname> specificano rispettivamente l'ordine
+      del polinomio in <argname>x</argname> e la proporzione di
+      punti da usare nella stima locale.  I valori predefiniti
+      sono <argname>d</argname> = 1 e <argname>q</argname> =
+      0.5. Gli altri valori consentiti per <argname>d</argname>
+      sono 0 e 2. Con <argname>d</argname> = 0 la regressione
+      locale si riduce a una forma di media mobile. Il valore di
+      <argname>q</argname> dev'essere compreso fra 0 e 1; più
+      grande è il valore, più liscia sarà la stima.
+    </para>
+    <para>
+      Assegnando all'argomento <argname>robust</argname> un valore
+      non-zero, le regressioni locali sono effettuate due volte,
+      con pesi modificati sulla base dei residui dell'iterazione
+      precedente per ridurre l'effetto degli outlier.
+    </para>
+    <para>
+      Si vedano anche <fncref targ="nadarwat"/> e <guideref
+      targ="chap:nonparam"/> per maggiori dettagli sui metodi
+      nonparametrici.
+    </para>
+      </description>
+    </function>
+
     <function name="log" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat-or-list">x</fnarg>
@@ -4944,48 +4986,6 @@
     <para>
       Logaritmo in base 2 di <argname>x</argname>; produce <lit>NA</lit> per valori
       non positivi.
-    </para>
-      </description>
-    </function>
-
-    <function name="loess" section="stats" output="series">
-      <fnargs>
-    <fnarg type="series">y</fnarg>
-    <fnarg type="series">x</fnarg>
-    <fnarg optional="true" type="int">d</fnarg>
-    <fnarg optional="true" type="scalar">q</fnarg>
-    <fnarg optional="true" type="bool">robust</fnarg>
-      </fnargs>
-      <description>
-    <para>
-      Effettua una regressione polinomiale ponderata localmente e
-      restituisce una variabile contenente i valori previsti di
-      <argname>y</argname> per ogni elemento non mancante di
-      <argname>x</argname>.  Viene usato il metodo descritto in
-      <cite key="cleveland79">William Cleveland (1979)</cite>.
-    </para>
-    <para>
-      Gli argomenti opzionali <argname>d</argname> e
-      <argname>q</argname> specificano rispettivamente l'ordine
-      del polinomio in <argname>x</argname> e la proporzione di
-      punti da usare nella stima locale.  I valori predefiniti
-      sono <argname>d</argname> = 1 e <argname>q</argname> =
-      0.5. Gli altri valori consentiti per <argname>d</argname>
-      sono 0 e 2. Con <argname>d</argname> = 0 la regressione
-      locale si riduce a una forma di media mobile. Il valore di
-      <argname>q</argname> dev'essere compreso fra 0 e 1; più
-      grande è il valore, più liscia sarà la stima.
-    </para>
-    <para>
-      Assegnando all'argomento <argname>robust</argname> un valore
-      non-zero, le regressioni locali sono effettuate due volte,
-      con pesi modificati sulla base dei residui dell'iterazione
-      precedente per ridurre l'effetto degli outlier.
-    </para>
-    <para>
-      Si vedano anche <fncref targ="nadarwat"/> e <guideref
-      targ="chap:nonparam"/> per maggiori dettagli sui metodi
-      nonparametrici.
     </para>
       </description>
     </function>
@@ -7882,28 +7882,44 @@
 	<fnarg optional="true" type="int">b</fnarg>
       </fnargs>    
       <description>
-    <para>
-      Ricampiona da <argname>x</argname> con reintroduzione. Nel
-      caso in cui l'argomento sia una variabile, ciascun valore della
-      variabile restituita, <math>y</math><sub>t</sub>, è estratto da
-      tutti i valori di <math>x</math><sub>t</sub> con uguale
-      probabilità. Quando l'argomento è una matrice, ciascuna riga
-      della matrice restituita è estratta dalle righe di
-      <argname>x</argname> con uguale probabilità.
-    </para>
-    <para>
-      L'argomento opzionale <argname>b</argname>, che deve essere
-      un numero intero maggiore o uguale a 2, indica la lunghezza
-      del blocco nel ricampionamento a blocchi mobili (moving
-      blocks). L'effetto è che l'output generato è il risultato di
-      un'estrazione casuale con reintroduzione dall'insieme di
-      tutte le possibili sequenze contigue di lunghezza
-      <argname>b</argname> nell'input. (Nel caso l'input sia una
-      matrice, i blocchi estratti sono sequenze contigue di righe
-      della matrice.) Se la lunghezza dei dati non è un multiplo
-      della lunghezza del blocco, l'ultimo blocco estratto è
-      troncato per adattarlo.
-    </para>
+	<para>
+	  La descrizione iniziale di questa funzione pertiene al caso
+	  cross-sezionale o di serie storiche; per il caso di dati
+	  panel, vedi più sotto.
+	</para>
+	<para>
+	  Ricampiona da <argname>x</argname> con reintroduzione. Nel
+	  caso in cui l'argomento sia una variabile, ciascun valore della
+	  variabile restituita, <math>y</math><sub>t</sub>, è estratto da
+	  tutti i valori di <math>x</math><sub>t</sub> con uguale
+	  probabilità. Quando l'argomento è una matrice, ciascuna riga
+	  della matrice restituita è estratta dalle righe di
+	  <argname>x</argname> con uguale probabilità.
+	</para>
+	<para>
+	  L'argomento opzionale <argname>b</argname>, che deve essere
+	  un numero intero maggiore o uguale a 2, indica la lunghezza
+	  del blocco nel ricampionamento a blocchi mobili (moving
+	  blocks). L'effetto è che l'output generato è il risultato di
+	  un'estrazione casuale con reintroduzione dall'insieme di
+	  tutte le possibili sequenze contigue di lunghezza
+	  <argname>b</argname> nell'input. (Nel caso l'input sia una
+	  matrice, i blocchi estratti sono sequenze contigue di righe
+	  della matrice.) Se la lunghezza dei dati non è un multiplo
+	  della lunghezza del blocco, l'ultimo blocco estratto è
+	  troncato per adattarlo.
+	</para>
+	<para>
+	  Se l'argomento <argname>x</argname> è una serie e il dataset
+	  è di tipo panel, il ricampionamento per blocchi mobili non è
+	  previsto. Esso è disponibile solo nella sua forma più
+	  semplice: i dati sono ricampionati <quote>per
+	  unità</quote>. Ad esempio, in un panel con 100 unità
+	  ossrervate su 5 periodi, la serie risultrante dalla funzione
+	  sarà essa stessa composta da 100 blocchi di 5 osservazioni:
+	  ogni blocco sarà estratto con pari probabilità dalle 100
+	  serie storiche individuali, preservandone l'ordine interno.
+	</para>
       </description>
     </function>
 
@@ -8349,6 +8365,25 @@
       </description>
     </function>
 
+    <function name="sqrt" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>     
+      <description>
+    <para>
+      Radice quadrata di <argname>x</argname>; genera <lit>NA</lit> in
+      caso di valori negativi.
+    </para>
+    <para>
+      Si noti che se l'argomento è una matrice l'operazione viene
+      effettuata elemento per elemento e dato che le matrici non
+      possono contenere <lit>NA</lit>, eventuali valori negativi
+      generano un errore. Per la <quote>radice quadrata
+      matriciale</quote>, v. <fncref targ="cholesky"/>.
+    </para>
+      </description>
+    </function>
+
     <function name="square" section="transforms" output="list">
       <fnargs>
 	<fnarg type="list">L</fnarg>
@@ -8368,25 +8403,6 @@
 	</para>
       </description>
     </function>    
-
-    <function name="sqrt" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>     
-      <description>
-    <para>
-      Radice quadrata di <argname>x</argname>; genera <lit>NA</lit> in
-      caso di valori negativi.
-    </para>
-    <para>
-      Si noti che se l'argomento è una matrice l'operazione viene
-      effettuata elemento per elemento e dato che le matrici non
-      possono contenere <lit>NA</lit>, eventuali valori negativi
-      generano un errore. Per la <quote>radice quadrata
-      matriciale</quote>, v. <fncref targ="cholesky"/>.
-    </para>
-      </description>
-    </function>
 
     <function name="sscanf" section="strings" output="int">
       <fnargs>
