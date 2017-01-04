@@ -730,9 +730,7 @@ int main (int argc, char **argv)
 
 #if defined(G_OS_WIN32)
     set_up_windows_look();
-#elif defined(MAC_NATIVE) && defined(PKGBUILD)
-    set_up_mac_look();
-#elif defined(MAC_THEMING)
+#elif defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
     set_up_mac_look();
 #endif
 

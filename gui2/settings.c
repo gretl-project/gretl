@@ -62,10 +62,8 @@
 # endif
 #endif
 
-#ifndef MAC_THEMING
-# if defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
-#   define MAC_THEMING
-# endif
+#if defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
+# define MAC_THEMING
 #endif
 
 static char rcfile[FILENAME_MAX];
