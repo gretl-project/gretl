@@ -53,14 +53,13 @@
 #endif 
 
 char datafile[MAXLEN];
-char cmdfile[MAXLEN];
 FILE *fb;
 int runit;
 int data_status;
 char linebak[MAXLINE];
 
 static int cli_exec_line (ExecState *s, int id, DATASET *dset, 
-			  gretlopt progopt, PRN *cmdprn);
+			  gretlopt progopt);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int cli_saved_object_action (const char *line, 
@@ -327,7 +326,6 @@ int main (int argc, char *argv[])
     int use_dcmt = 1;
     CMD cmd;
     PRN *prn = NULL;
-    PRN *cmdprn = NULL;
     int id, np;
     int err = 0;
 
@@ -421,7 +419,7 @@ int main (int argc, char *argv[])
 	sprintf(line, "run %s", runfile);
     }
     state.flags |= INIT_EXEC;
-    err = cli_exec_line(&state, id, dset, progopt, cmdprn);
+    err = cli_exec_line(&state, id, dset, progopt);
     state.flags ^= INIT_EXEC;
     if (err && fb == NULL) {
 	mpi_exit(1);
@@ -448,7 +446,7 @@ int main (int argc, char *argv[])
 		break;
 	    } else if (cmd.ci == QUIT) {
 		/* no more input available */
-		cli_exec_line(&state, id, dset, progopt, cmdprn);
+		cli_exec_line(&state, id, dset, progopt);
 		err = gretl_if_state_check(0);
 		if (err) {
 		    errmsg(err, prn);
@@ -471,7 +469,7 @@ int main (int argc, char *argv[])
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
-	err = cli_exec_line(&state, id, dset, progopt, cmdprn);
+	err = cli_exec_line(&state, id, dset, progopt);
     }
 
     /* finished main command loop */
@@ -686,38 +684,6 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     return err;
 }
 
-static void maybe_save_session_output (const char *cmdfile)
-{
-    char outfile[FILENAME_MAX];
-
-    printf(_("type a filename to store output (enter to quit): "));
-
-    *outfile = '\0';
-
-    if (fgets(outfile, sizeof outfile, stdin) != NULL) {
-	top_n_tail(outfile, 0, NULL);
-    }
-
-    if (*outfile != '\0' && *outfile != '\n' && *outfile != '\r' 
-	&& strcmp(outfile, "q")) {
-	const char *udir = gretl_workdir();
-	char *syscmd;
-
-	printf(_("writing session output to %s%s\n"), udir, outfile);
-#ifdef WIN32
-	syscmd = gretl_strdup_printf("\"%sgretlcli\" -b \"%s\" > \"%s%s\"", 
-				     gretl_home(), cmdfile, udir, outfile);
-	system(syscmd);
-#else
-	syscmd = gretl_strdup_printf("gretlcli -b \"%s\" > \"%s%s\"", 
-				     cmdfile, udir, outfile);
-	gretl_spawn(syscmd);
-#endif
-	printf("%s\n", syscmd);
-	free(syscmd);
-    }
-}
-
 #define ENDRUN (NC + 1)
 
 /* cli_exec_line: this is called to execute both interactive and
@@ -729,7 +695,7 @@ static void maybe_save_session_output (const char *cmdfile)
 */
 
 static int cli_exec_line (ExecState *s, int id, DATASET *dset, 
-			  gretlopt progopt, PRN *cmdprn)
+			  gretlopt progopt)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -883,12 +849,6 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    } else {
 		cmd->ci = ENDRUN;
 	    }
-	} else {
-	    printf(_("commands saved as %s\n"), cmdfile);
-	    gretl_print_destroy(cmdprn);
-	    if (!(cmd->opt & OPT_X)) {
-		maybe_save_session_output(cmdfile);
-	    }
 	}
 	break;
 
@@ -916,8 +876,6 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 		if (err || gretl_messages_on()) {
 		    pprintf(prn, _("Error reading %s\n"), runfile);
 		}
-	    } else {
-		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    }
 	    break;
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(runfile)) {
@@ -940,11 +898,6 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	} else {
 	    gretl_set_current_dir(runfile);
 	    strcpy(s->runfile, runfile);
-	    if (cmd->ci == INCLUDE) {
-		pprintf(cmdprn, "include \"%s\"\n", runfile);
-	    } else {
-		pprintf(cmdprn, "run \"%s\"\n", runfile);
-	    }
 	    runit++;
 	}
 	break;
