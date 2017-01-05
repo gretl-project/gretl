@@ -2949,7 +2949,7 @@
 	  Ritorna 1 se <argname>name</argname> è l'identificativo di
 	  un oggetto definito, che sia uno scalare, una serie, una
 	  matrice, lista, stringa, bundle o array; altrimenti, ritorna
-	  0.
+	  0.  Vedi anche <fncref targ="typeof"/>.
 	</para>
       </description>
     </function>    
@@ -9018,6 +9018,22 @@
       </description>
     </function>
 
+    <function name="typeof" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce un codice di tipo per <argname>nome</argname>,
+	  che è l'identificativo di un qualche oggetto. I codici sono:
+	  1 = scalare, 2 = serie, 3 = matrice, 4 = stringa, 5 = bundle
+	  e 6 = array. Se l'oggetto non è definito, ritorna 0.  Per
+	  avere la stringa corrispondente al codice, si può usare la
+	  funzione <fncref targ="typestr"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">typecode</fnarg>
@@ -9029,7 +9045,8 @@
 	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
 	  <quote>scalar</quote>, <quote>series</quote>,
 	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote> o <quote>null</quote>.
+	  <quote>bundle</quote>, <quote>array</quote> o
+	  <quote>null</quote>.
 	</para>
       </description>
     </function>
