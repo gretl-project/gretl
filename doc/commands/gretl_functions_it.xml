@@ -4447,42 +4447,42 @@
       </description>
     </function>    
 
-   <function name="kdensity" section="stats" output="matrix">
+    <function name="kdensity" section="stats" output="matrix">
       <fnargs>
-    <fnarg type="series">x</fnarg>
-    <fnarg type="scalar" optional="true">scale</fnarg>
-    <fnarg type="bool" optional="true">control</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar" optional="true">scale</fnarg>
+	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
-    <para>
-      Calcola la stima della densità kernel per la variabile 
-      <argname>x</argname>. La matrice che ne risulta ha due
-      colonne: la prima contiene un insieme di valori in ascissa
-      equispaziati e la seconda colonna riporta le stime
-      della densità in ciascuno di questi punti.
-    </para>
-    <para>
-      Il parametro opzionale <argname>scale</argname> può essere
-      utilizzato per adattare il grado di lisciaggio rispetto al
-      valore di default di 1.0 (valori più elevati producono un
-      risultato più liscio). Il parametro
-      <argname>control</argname> funziona come un booleano: si
-      utilizza il kernel Gaussiano quando
-      <argname>control</argname> è pari 0 (il valore di default);
-      con un valore diverso da zero si utilizza il kernel di
-      Epanechnikov.
-    </para>
-    <para>
-      Un grafico del risultato può essere ottenuto utilizzando il comando <cmdref
-      targ="gnuplot"/>, come segue
-    </para>
-    <code>
-      matrix d = kdensity(x)
-      gnuplot 2 1 --matrix=d --with-lines --suppress-fitted
-    </code>
+	<para>
+	  Calcola la stima della densità kernel per la variabile 
+	  <argname>x</argname>. La matrice che ne risulta ha due
+	  colonne: la prima contiene un insieme di valori in ascissa
+	  equispaziati e la seconda colonna riporta le stime
+	  della densità in ciascuno di questi punti.
+	</para>
+	<para>
+	  Il parametro opzionale <argname>scale</argname> può essere
+	  utilizzato per adattare il grado di lisciaggio rispetto al
+	  valore di default di 1.0 (valori più elevati producono un
+	  risultato più liscio). Il parametro
+	  <argname>control</argname> funziona come un booleano: si
+	  utilizza il kernel Gaussiano quando
+	  <argname>control</argname> è pari 0 (il valore di default);
+	  con un valore diverso da zero si utilizza il kernel di
+	  Epanechnikov.
+	</para>
+	<para>
+	  Un grafico del risultato può essere ottenuto utilizzando il
+	  comando <cmdref targ="gnuplot"/>, come segue
+	</para>
+	<code>
+	  matrix d = kdensity(x)
+	  gnuplot 2 1 --matrix=d --with-lines --suppress-fitted
+	</code>
       </description>
     </function>
-
+    
     <function name="kdsmooth" section="sspace" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
@@ -4490,27 +4490,27 @@
       </fnargs>
       <description>
 	<para>
-	  Performs disturbance smooting for a Kalman bundle previously
-	  set up by means of the <fncref targ="ksetup"/> and returns 0
-	  on successful completion or 1 if numerical problems are
-	  encountered.
+	  Effettua il <quote>disturbance smooting</quote> per un
+	  bundle tipo Kalman inizializzato in precedenza con la funzione
+	  <fncref targ="ksetup"/>; restituisce 0 se il comando va a
+	  buon fine e 1 se ci sono stati problemi numerici.
 	</para>
 	<para>
-	  On succession completion, the smoothed disturbances will be
-	  available as <lit>Mod.smdist</lit>.
+	  Se l'esecuzione va a buon fine, i disturbi stimati
+	  <quote>lisciati</quote> saranno disponibili sotto
+	  <lit>Mod.smdist</lit>.
 	</para>
 	<para>
-	  The optional <argname>MSE</argname> argument determines the
-	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
-	  omitted, this matrix will contain the unconditional standard
-	  errors of the smoothed residuals, which are normally used to
-	  compute the so-called <it>auxiliary
-	  residuals</it>. Otherwise, <lit>Mod.smdisterr</lit> will
-	  contain the estimated root mean square deviations of the
-	  auxiliary residuals from their true value.
+	  L'argomento opzionale <argname>MSE</argname> determina il
+	  contenuto di <lit>Mod.smdisterr</lit>. Se esso è 0 od
+	  omesso, questa matrice conterrà gli errori standard non
+	  condizionali dei disturbi, che sono dimsolito usati per
+	  produrre i cosiddetti <it>residui ausiliari</it>. Altrimenti,
+	  <lit>Mod.smdisterr</lit> conterrà la stima degli scarti
+	  quadratici medi dei reidui ausiliari dal loro vero valore.
 	</para>
 	<para>
-	  For more details see <guideref targ="chap:kalman"/>.
+	  Per più dettagli, vedi <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>

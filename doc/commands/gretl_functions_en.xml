@@ -4461,8 +4461,8 @@
 	  The optional <argname>MSE</argname> argument determines the
 	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
 	  omitted, this matrix will contain the unconditional standard
-	  errors of the smoothed residuals, which are normally used to
-	  compute the so-called <it>auxiliary
+	  errors of the smoothed disturbances, which are normally used
+	  to compute the so-called <it>auxiliary
 	  residuals</it>. Otherwise, <lit>Mod.smdisterr</lit> will
 	  contain the estimated root mean square deviations of the
 	  auxiliary residuals from their true value.
