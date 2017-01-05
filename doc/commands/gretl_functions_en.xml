@@ -8998,11 +8998,12 @@
 	<para>
 	  Returns the name of the gretl data-type corresponding to
 	  <argname>typecode</argname>. This may be used in conjunction
-	  with the function <fncref targ="inbundle"/>.  The value
-	  returned is one of <quote>scalar</quote>,
-	  <quote>series</quote>, <quote>matrix</quote>,
-	  <quote>string</quote>, <quote>bundle</quote>,
-	  <quote>array</quote> or <quote>null</quote>.
+	  with the functions <fncref targ="typeof"/> and <fncref
+	  targ="inbundle"/>.  The value returned is one of
+	  <quote>scalar</quote>, <quote>series</quote>,
+	  <quote>matrix</quote>, <quote>string</quote>,
+	  <quote>bundle</quote>, <quote>array</quote> or
+	  <quote>null</quote>.
 	</para>
       </description>
     </function>
