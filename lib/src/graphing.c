@@ -8175,15 +8175,17 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
     FILE *fp, *fq;
     int err = 0;
 
-    if (inname == NULL && *inname == '\0') {
+    if (inname == NULL || *inname == '\0') {
 	return E_DATA;
     }
 
+    /* open the user-generated file for reading */
     fp = gretl_fopen(inname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
+    /* open our own file for writing */
     fq = open_plot_input_file(PLOT_USER, 0, &err);
 
     if (err) {
