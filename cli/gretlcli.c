@@ -732,7 +732,7 @@ int main (int argc, char *argv[])
 
     /* enter main command loop */
     
-    while (cmd.ci != QUIT && fb != NULL && !xout) {
+    while (cmd.ci != QUIT && fb != NULL) {
 	if (err && gretl_error_is_fatal()) {
 	    gretl_abort(linecopy);
 	}
@@ -757,6 +757,14 @@ int main (int argc, char *argv[])
 	    }
 	}
 
+	if (xout) {
+	    /* readline Ctrl-X: get out without saving
+	       input or output */
+	    gretl_print_destroy(cmdprn);
+	    gretl_remove(cmdfile);
+	    break;
+	}
+
 	if (!state.in_comment) {
 	    if (cmd.context == FOREIGN || cmd.context == MPI ||
 		gretl_compiling_python(line)) {
@@ -768,7 +776,7 @@ int main (int argc, char *argv[])
 		    break;
 		}
 	    }
-	} 
+	}
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
@@ -1025,18 +1033,21 @@ static void maybe_save_session_output (const char *cmdfile)
 	&& strcmp(outfile, "q")) {
 	const char *udir = gretl_workdir();
 	char *syscmd;
+	int err;
 
 	printf(_("writing session output to %s%s\n"), udir, outfile);
 #ifdef WIN32
 	syscmd = gretl_strdup_printf("\"%sgretlcli\" -b \"%s\" > \"%s%s\"", 
 				     gretl_home(), cmdfile, udir, outfile);
-	system(syscmd);
+	err = system(syscmd);
 #else
 	syscmd = gretl_strdup_printf("gretlcli -b \"%s\" > \"%s%s\"", 
 				     cmdfile, udir, outfile);
-	gretl_spawn(syscmd);
+	err = system(syscmd);
 #endif
-	printf("%s\n", syscmd);
+	if (!err) {
+	    printf("%s\n", syscmd);
+	}
 	free(syscmd);
     }
 }
@@ -1227,9 +1238,11 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 		cmd->ci = ENDRUN;
 	    }
 	} else {
-	    printf(_("commands saved as %s\n"), cmdfile);
 	    gretl_print_destroy(cmdprn);
-	    if (!(cmd->opt & OPT_X)) {
+	    if (cmd->opt & OPT_X) {
+		gretl_remove(cmdfile);
+	    } else {
+		printf(_("commands saved as %s\n"), cmdfile);
 		maybe_save_session_output(cmdfile);
 	    }
 	}
