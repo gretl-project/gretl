@@ -59,6 +59,7 @@
 #include "../pixmaps/mini.join_v.xpm"
 #include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.bundle.xpm"
+#include "../pixmaps/mini.heatmap.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -152,7 +153,8 @@ void gretl_stock_icons_init (void)
 	{ mini_tools_xpm, GRETL_STOCK_TOOLS},
 	{ upsize_xpm, GRETL_STOCK_BIGGER},
 	{ downsize_xpm, GRETL_STOCK_SMALLER},
-	{ open_menu_xpm, GRETL_STOCK_MENU}
+	{ open_menu_xpm, GRETL_STOCK_MENU},
+	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
     };
     static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);
@@ -639,12 +641,23 @@ static void stickiness_callback (GtkWidget *w, windata_t *vwin)
     output_policy_dialog(vwin, vwin, 1);
 }
 
+static void do_corr_plot (windata_t *vwin)
+{
+    VMatrix *corr = vwin->data;
+    int err;
+
+    err = plot_corrmat(corr, OPT_NONE);
+    gui_graph_handler(err);
+}
+
 static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == VIEW_SERIES) {
 	series_view_graph(w, vwin);
     } else if (vwin->role == VIEW_BUNDLE) {
 	exec_bundle_plot_function(vwin->data, NULL);
+    } else if (vwin->role == CORR) {
+	do_corr_plot(vwin);
     } else {
 	do_nonparam_plot(vwin);
     }
@@ -706,6 +719,8 @@ static void set_plot_icon (GretlToolItem *item, int role)
 {
     if (role == LOESS || role == NADARWAT || role == VIEW_BUNDLE) {
 	item->icon = GRETL_STOCK_SCATTER;
+    } else if (role == CORR) {
+	item->icon = GRETL_STOCK_HMAP;
     } else if (dataset_is_time_series(dataset)) {
 	item->icon = GRETL_STOCK_TS;
     } else {
@@ -812,6 +827,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define plot_ok(r) (r == VIEW_SERIES || \
 		    r == LOESS || \
+		    r == CORR || \
 		    r == NADARWAT)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \

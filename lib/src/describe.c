@@ -5578,7 +5578,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const DATASET *dset,
  *
  * Computes pairwise correlation coefficients for the variables
  * specified in @list, skipping any constants.  If the option
- * flags contain OPT_U, a uniform sample is ensured: only those
+ * flags contain OPT_N, a uniform sample is ensured: only those
  * observations for which all the listed variables have valid
  * values are used.  If OPT_C is included, we actually calculate
  * covariances rather than correlations.
@@ -5643,10 +5643,10 @@ VMatrix *corrlist (int ci, int *list, const DATASET *dset,
     }
 
     if (ci == PCA) {
-	opt |= OPT_U;
+	opt |= OPT_N;
     }
 
-    if (opt & OPT_U) {
+    if (opt & OPT_N) {
 	/* impose uniform sample size */
 	*err = uniform_corrcov_matrix(v, dset, ci, flag);
     } else {
@@ -5747,7 +5747,8 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
  * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
  * @dset: dataset struct.
- * @opt: option flags: OPT_U means use uniform sample size.
+ * @opt: option flags: OPT_N means use uniform sample size,
+ * OPT_U controls plotting options.
  * @prn: gretl printing struct.
  *
  * Computes and prints the correlation matrix for the specified list
@@ -5779,6 +5780,9 @@ int gretl_corrmx (int *list, const DATASET *dset,
 
     if (corr != NULL) {
 	print_corrmat(corr, dset, prn);
+	if (gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
+	    err = plot_corrmat(corr, opt);
+	}
 	free_vmatrix(corr);
     }
 

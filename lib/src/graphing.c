@@ -139,6 +139,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_STACKED_BAR,    "stacked-bars" },
     { PLOT_3D,             "3-D plot" },
     { PLOT_BAND,           "band plot" },
+    { PLOT_HEATMAP,        "heatmap" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -1541,6 +1542,8 @@ static const char *plot_output_option (PlotType p, int *pci)
 	       p == PLOT_FREQ_NORMAL ||
 	       p == PLOT_FREQ_GAMMA) {
 	ci = FREQ;
+    } else if (p == PLOT_HEATMAP) {
+	ci = CORR;
     }
 
     s = get_optval_string(ci, OPT_U);
@@ -4638,6 +4641,103 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     }
 
     fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    return finalize_plot_input_file(fp);
+}
+
+/**
+ * plot_corrmat:
+ * @corr: pointer to correlation matrix struct.
+ * @opt: unused so far.
+ *
+ * Produces a heatmap plot based on a correlation matrix.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int plot_corrmat (VMatrix *corr, gretlopt opt)
+{
+    FILE *fp;
+    double rcrit = 0.0;
+    int i, j, df, n, idx;
+    int err = 0;
+
+    fp = open_plot_input_file(PLOT_HEATMAP, 0, &err);
+    if (err) {
+	return err;
+    }
+
+    df = corr->n - 2;
+    if (df > 1) {
+	double tc = student_critval(df, 0.10);
+	double t2 = tc * tc;
+	    
+	rcrit = sqrt(t2 / (t2 + df));
+    }
+
+    n = corr->dim;
+
+    gretl_push_c_numeric_locale();
+    
+    fprintf(fp, "set title '%s'\n", _("Correlation matrix"));
+    fputs("set nokey\n", fp);
+    fputs("set tics nomirror\n", fp);
+    fputs("set cbrange [-1:1]\n", fp);
+    if (rcrit > 0) {
+	/* base the white range on the critical value for rho-hat at
+	   the 20% significance level 
+	*/
+	fprintf(fp, "set palette defined (-1 'blue', %.4f 'white', %.4f 'white', 1 'red')\n", 
+		-rcrit, rcrit);
+    } else {
+	fputs("set palette defined (-1 'blue', 0 'white', 1 'red')\n", fp);
+    }
+
+    /* for grid lines */
+    fputs("set x2tics 1 format '' scale 0,0.001\n", fp);
+    fputs("set y2tics 1 format '' scale 0,0.001\n", fp);
+    fputs("set mx2tics 2\n", fp);
+    fputs("set my2tics 2\n", fp);
+
+    /* y-axis tics */
+    fputs("set ytics (", fp);
+    for (i=0; i<n; i++) {
+	fprintf(fp, "\"%s\" %d", corr->names[i], n-i-1);
+	if (i < n - 1) {
+	    fputs(", ", fp);
+	}
+    }
+    fputs(") out\n", fp);
+
+    /* x-axis tics */
+    fputs("set xtics (", fp);
+    for (i=0; i<n; i++) {
+	fprintf(fp, "\"%s\" %d", corr->names[i], i);
+	if (i < n - 1) {
+	    fputs(", ", fp);
+	}	
+    }
+    fputs(") out\n", fp);
+    fputs("set xtics rotate by 45 right\n", fp);
+
+    /* note: "set link" requires gnuplot 5 */
+    fputs("set autoscale fix\n", fp);
+    fputs("set link x\n", fp);
+    fputs("set link y\n", fp);
+    fputs("set grid front mx2tics my2tics lw 2 lt -1 lc rgb 'white'\n", fp);
+
+    /* matrix/image plot */
+    fputs("plot '-' matrix with image\n", fp);
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    idx = ijton(n-i-1, j, n);
+	    fprintf(fp, "%.4f ", corr->vec[idx]);
+	}
+	fputc('\n', fp);
+    }
+    fputs("e\ne\n", fp);
 
     gretl_pop_c_numeric_locale();
 

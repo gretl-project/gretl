@@ -2520,7 +2520,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case CORR:
-	err = incompatible_options(cmd->opt, OPT_U | OPT_S | OPT_K);
+	err = incompatible_options(cmd->opt, OPT_N | OPT_S | OPT_K);
 	if (err) {
 	    break;
 	}

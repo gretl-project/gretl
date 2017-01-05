@@ -117,6 +117,7 @@ typedef enum {
     PLOT_STACKED_BAR,
     PLOT_3D,
     PLOT_BAND,
+    PLOT_HEATMAP,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -218,6 +219,8 @@ int gnuplot_3d (int *list, const char *literal,
 		DATASET *dset, gretlopt *opt);
 
 int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt);
+
+int plot_corrmat (VMatrix *corr, gretlopt opt);
 
 int garch_resid_plot (const MODEL *pmod, const DATASET *dset); 
 
