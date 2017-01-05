@@ -114,7 +114,8 @@ enum {
     BUNDLE_ITEM,
     FIND_ITEM,
     COPY_SCRIPT_ITEM,
-    BUILD_ITEM
+    BUILD_ITEM,
+    HMAP_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -719,10 +720,6 @@ static void set_plot_icon (GretlToolItem *item, int role)
 {
     if (role == LOESS || role == NADARWAT || role == VIEW_BUNDLE) {
 	item->icon = GRETL_STOCK_SCATTER;
-    } else if (role == CORR) {
-	item->icon = GRETL_STOCK_HMAP;
-    } else if (dataset_is_time_series(dataset)) {
-	item->icon = GRETL_STOCK_TS;
     } else {
 	item->icon = GRETL_STOCK_BOX;
     }
@@ -761,6 +758,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(toolbar_plot_callback), PLOT_ITEM },
+    { N_("Heatmap"), GRETL_STOCK_HMAP, G_CALLBACK(toolbar_plot_callback), HMAP_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
     { N_("Edit values..."), GTK_STOCK_EDIT, G_CALLBACK(series_view_edit), EDITOR_ITEM },
     { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(toolbar_refresh), REFRESH_ITEM },
@@ -827,7 +825,6 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define plot_ok(r) (r == VIEW_SERIES || \
 		    r == LOESS || \
-		    r == CORR || \
 		    r == NADARWAT)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
@@ -938,6 +935,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (r != EDIT_NOTES && f == NOTES_ITEM) {
 	return NULL;
     } else if (r != VIEW_BUNDLE && f == BUNDLE_ITEM) {
+	return NULL;
+    } else if (r != CORR && f == HMAP_ITEM) {
 	return NULL;
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {
