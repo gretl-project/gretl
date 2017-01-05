@@ -224,7 +224,7 @@ enum {
     F_ISDISCR,
     F_ISDUMMY,
     F_ISNULL,
-    F_EXISTS,
+    F_TYPEOF,
     F_ISSTRING,
     F_NELEM,
     F_PDF,
@@ -275,7 +275,6 @@ enum {
     F_TYPESTR,
     F_STRSTRIP,
     F_REMOVE,
-    F_TYPEOF,
     F_ATOF,
     F_FIXNAME,
     F_MPI_RECV,
@@ -479,8 +478,7 @@ enum {
 			    s == F_OBSNUM || s == F_BACKTICK || \
 			    s == F_VARNUM || s == F_ARGNAME || \
                             s == F_REMOVE || s == F_TYPEOF || \
-			    s == F_ATOF   || s == F_ISSTRING || \
-			    s == F_EXISTS)
+			    s == F_ATOF   || s == F_ISSTRING)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \

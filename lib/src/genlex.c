@@ -316,7 +316,7 @@ struct str_table funcs[] = {
     { F_ISDISCR,  "isdiscrete" },
     { F_ISDUMMY,  "isdummy"},
     { F_ISNULL,   "isnull" },
-    { F_EXISTS,   "exists" },
+    { F_TYPEOF,   "typeof" },
     { F_ISSTRING, "isstring" },
     { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },
@@ -428,7 +428,6 @@ struct str_table funcs[] = {
     { F_REMOVE,   "remove" },
     { F_ISODATE,  "isodate" },
     { F_GETLINE,  "getline" },
-    { F_TYPEOF,   "typeof" },
     { F_ATOF,     "atof" },
     { F_FIXNAME,  "fixname" },
     { F_ISOCONV,  "isoconv" },
@@ -471,6 +470,7 @@ struct str_table funcs[] = {
 };
 
 struct str_table func_alias[] = {
+    { F_TYPEOF,   "exists" },
     { F_NMMAX,    "NMmin" },
     { F_NRMAX,    "NRmin" },
     { F_SIMANN,   "SAmin" },

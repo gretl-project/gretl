@@ -5644,13 +5644,13 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    } else if (gretl_is_user_var(s)) {
 		ret->v.xval = 0.0;
 	    }
-	} else if (f == F_EXISTS) {
-	    ret->v.xval = 0;
-	    if (gretl_is_series(s, p->dset)) {
-		ret->v.xval = 1;
-	    } else if (gretl_is_user_var(s)) {
-		ret->v.xval = 1;
-	    }	    
+	} else if (f == F_TYPEOF) {
+	    GretlType type = user_var_get_type_by_name(s);
+
+	    if (type == 0 && gretl_is_series(s, p->dset)) {
+		type = GRETL_TYPE_SERIES;
+	    }
+	    ret->v.xval = type_translate_to_int(type);
 	} else if (f == F_ISSTRING) {
 	    /* temporarily reinstated */
 	    ret->v.xval = gretl_is_string(s);
@@ -5674,15 +5674,6 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_REMOVE) {
 	    gretl_maybe_switch_dir(s);
 	    ret->v.xval = gretl_remove(s);
-	} else if (f == F_TYPEOF) {
-	    GretlType type = 0;
-
-	    if (current_series_index(p->dset, s) >= 0) {
-		type = GRETL_TYPE_SERIES;
-	    } else {
-		user_var_get_value_and_type(s, &type);
-	    }
-	    ret->v.xval = type_translate_to_int(type);
 	}
     }
 
@@ -12884,12 +12875,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_OBSNUM:
     case F_ISDISCR:	
     case F_ISNULL:
-    case F_EXISTS:
+    case F_TYPEOF:
     case F_ISSTRING:
     case F_STRLEN:
     case F_NLINES:
     case F_REMOVE:
-    case F_TYPEOF:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
