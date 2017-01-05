@@ -621,7 +621,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	    unwrap_string_arg(p);
 	} else if (sym != F_ISDISCR && 
 		   sym != F_ISNULL &&
-		   sym != F_EXISTS &&
+		   sym != F_TYPEOF &&
 		   sym != F_ISSTRING) {
 	    /* not quoted: give priority to string variables
 	       unless we need the _names_ of string variables 

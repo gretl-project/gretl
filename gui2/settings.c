@@ -62,10 +62,8 @@
 # endif
 #endif
 
-#ifndef MAC_THEMING
-# if defined(MAC_NATIVE) && defined(PKGBUILD)
-#   define MAC_THEMING
-# endif
+#if defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
+# define MAC_THEMING
 #endif
 
 static char rcfile[FILENAME_MAX];
@@ -2890,6 +2888,13 @@ void set_up_mac_look (void)
 	if (topdir != NULL) {
 	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
 				    topdir, themepref);
+	    gtk_rc_parse(gtkrc);
+	    g_free(gtkrc);
+	} else {
+	    const char *path = "/Library/Frameworks/GTK+.framework/Resources";
+	    
+	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
+				    path, themepref);
 	    gtk_rc_parse(gtkrc);
 	    g_free(gtkrc);
 	}

@@ -734,6 +734,8 @@ if test "$darwin_build" = "yes" ; then
      AC_DEFINE(MAC_NATIVE)
      mac_native="yes", 
      mac_native="no")
+     PKG_CHECK_EXISTS(gretl-mac-themes,
+     AC_DEFINE(HAVE_MAC_THEMES),)
   fi
 fi
 

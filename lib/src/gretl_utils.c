@@ -1790,8 +1790,9 @@ static int gp_fatal (const char *cmd, const char *s)
 	return 0;
     }
     
-    /* wx and C++ ABI non-issue */
-    if (strstr(s, "Warning: Mismatch")) {
+    /* wx and C++ ABI non-issue, also generic warnings */
+    if (strstr(s, "Warning: Mismatch") ||
+	strstr(s, "warning")) {
 	return 0;
     }
 
