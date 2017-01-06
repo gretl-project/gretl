@@ -45,6 +45,7 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
+#include <errno.h>
 
 enum {
     PLOT_SAVED          = 1 << 0,
@@ -2516,6 +2517,83 @@ static void linestyle_init (linestyle *ls)
     ls->rgb[0] = '\0';
 }
 
+static int push_z_row (gretl_matrix *z, int i, int n, char *line)
+{
+    char *p = line;
+    double x;
+    int j, err = 0;
+
+    errno = 0;
+
+    for (j=0; j<n && *p; j++) {
+	x = strtod(line, &p);
+	if (errno) {
+	    err = 1;
+	    break;
+	}
+	line = p;
+	gretl_matrix_set(z, i, j, x);
+    }
+
+    return err;
+}
+
+static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
+				char *line, size_t len)
+{
+    int gotplot = 0;
+    int n = 0;
+
+    while (bufgets(line, len, buf)) {
+	if (gotplot) {
+	    if (*line == 'e') {
+		break;
+	    } else {
+		n++;
+	    }
+	} else if (!strncmp(line, "plot", 4) &&
+		   strstr(line, "matrix")) {
+	    gotplot = 1;
+	}
+    }
+
+    if (n > 0) {
+	gretl_matrix *z;
+	int i = 0, err = 0;
+
+	z = gretl_matrix_alloc(n, n);
+	if (z == NULL) {
+	    return;
+	}
+	buf_rewind(buf);
+	gotplot = 0;
+
+	gretl_push_c_numeric_locale();
+
+	while (bufgets(line, len, buf) && !err) {
+	    if (gotplot) {
+		if (*line == 'e') {
+		    break;
+		} else {
+		    err = push_z_row(z, i, n, line);
+		    i++;
+		}
+	    } else if (!strncmp(line, "plot", 4) &&
+		       strstr(line, "matrix")) {
+		gotplot = 1;
+	    }
+	}
+
+	gretl_pop_c_numeric_locale();
+
+	if (err) {
+	    gretl_matrix_free(z);
+	} else {
+	    spec->auxdata = z;
+	}
+    }
+}
+
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
                            c != PLOT_PROB_DIST && \
                            c != PLOT_CURVE && \
@@ -2584,6 +2662,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	if (maybe_big_multiplot(spec->code)) {
 	    buf_rewind(buf);
 	    check_for_plot_size(spec, buf);
+	} else if (spec->code == PLOT_HEATMAP) {
+	    buf_rewind(buf);
+	    get_heatmap_matrix(spec, buf, gpline, sizeof gpline);
 	}
 	goto bailout;
     }
@@ -3278,6 +3359,20 @@ static inline int use_integer_format (int xint, double xdata)
     return (xint && fabs(xdata) < 1.0e7);
 }
 
+static void heatmap_show_z (png_plot *plot, double x, double y,
+			    gchar *label)
+{
+    gretl_matrix *z = plot->spec->auxdata;
+    int i = nearbyint(y);
+    int j = nearbyint(x);
+    int n = z->rows;
+
+    if (i >= 0 && i < n && j >= 0 && j < n) {
+	sprintf(label, "\u03C1 = %.3f", gretl_matrix_get(z, i, j));
+	gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
+    }
+}
+
 static gint
 plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 {
@@ -3317,6 +3412,13 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
 	if (na(data_x)) {
+	    return TRUE;
+	}
+
+	if (plot->spec->code == PLOT_HEATMAP) {
+	    if (plot->spec->auxdata != NULL) {
+		heatmap_show_z(plot, data_x, data_y, label);
+	    }
 	    return TRUE;
 	}
 
@@ -4764,7 +4866,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
-	    fname, (void *) spec, (ptr != NULL));
+	    fname, (void *) spec, (session_ptr != NULL));
 #endif
 
     plot = png_plot_new();
