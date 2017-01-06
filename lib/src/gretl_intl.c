@@ -151,7 +151,7 @@ int reset_local_decpoint (void)
 
     set_atof_point(decpoint);
 
-# ifdef G_OS_WIN32
+# if 0
     fprintf(stderr, "reset_local_decpoint: returning '%c'\n",
 	    decpoint);
 # endif

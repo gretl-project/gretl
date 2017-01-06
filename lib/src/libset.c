@@ -2133,10 +2133,6 @@ static void libset_set_decpoint (int on)
 	setlocale(LC_NUMERIC, "");
     }
 
-# ifdef G_OS_WIN32
-    fputs("calling reset_local_decpoint()\n", stderr);
-# endif    
-
     reset_local_decpoint();
 #endif
 }
