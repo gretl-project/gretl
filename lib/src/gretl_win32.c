@@ -378,7 +378,7 @@ char *program_files_x86_path (void)
     return win_special_path(CSIDL_PROGRAM_FILESX86);
 }
 
-static char *compose_command_line (const char *arg)
+static gchar *compose_command_line (const char *arg)
 {
     CHAR cmddir[MAX_PATH];
     char *cmdline = NULL;
@@ -447,8 +447,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
 {
     PROCESS_INFORMATION pinfo;
     STARTUPINFO sinfo;
-    char *cmdline = NULL;
-    char *targdir = NULL;
+    gchar *cmdline = NULL;
+    gchar *targdir = NULL;
     int ok;
 
     if (flag == SHELL_RUN) {
@@ -536,7 +536,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
-    char *cmdline = NULL;
+    gchar *cmdline = NULL;
     int ok, err = 0;
 
     ZeroMemory(&sinfo, sizeof sinfo);
@@ -573,6 +573,39 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     return err;
 }
 
+static int run_cmd_async (const char *cmd)
+{
+    STARTUPINFO sinfo;
+    PROCESS_INFORMATION pinfo;
+    int ok, err = 0;
+
+    ZeroMemory(&sinfo, sizeof sinfo);
+    ZeroMemory(&pinfo, sizeof pinfo);
+
+    sinfo.cb = sizeof sinfo;
+
+    ok = CreateProcess(NULL,
+		       cmd,
+		       NULL,
+		       NULL,
+		       FALSE,
+		       0,
+		       NULL,
+		       gretl_workdir(),
+		       &sinfo,
+		       &pinfo);
+
+    if (!ok) {
+	win_show_last_error();
+	err = 1;
+    } else {
+	CloseHandle(pinfo.hProcess);
+	CloseHandle(pinfo.hThread);
+    }
+
+    return err;
+}
+
 int gretl_win32_grab_output (const char *cmdline,
 			     const char *currdir,
 			     char **sout)
@@ -587,7 +620,6 @@ int gretl_shell_grab (const char *arg, char **sout)
 
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 {
-    UINT winret;
     int err = 0;
 
     if (arg == NULL || *arg == '\0') {
@@ -602,10 +634,14 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     arg += strspn(arg, " \t");
 
     if (opt & OPT_A) {
-	winret = WinExec(arg, SW_SHOWNORMAL);
+#if 1
+	err = run_cmd_async(arg);
+#else	
+	UINT winret = WinExec(arg, SW_SHOWNORMAL);
 	if (winret <= 31) {
 	    err = 1;
 	}
+#endif	
     } else if (getenv("GRETL_SHELL_NEW")) {
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, SHELL_RUN);
     } else {

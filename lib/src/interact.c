@@ -315,12 +315,20 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 
 #ifndef WIN32
 
-static int gretl_shell_async (const char *arg, PRN *prn)
+static int gretl_shell_async (const char *cmdline, PRN *prn)
 {
     GError *gerr = NULL;
+    gchar **argv = NULL;
+    gint argc = 0;
     int err = 0;
 
-    g_spawn_command_line_async(arg, &gerr);
+    g_shell_parse_argv(cmdline, &argc, &argv, &gerr);
+    if (gerr == NULL) {
+	g_spawn_async(gretl_workdir(), argv, NULL,
+		      G_SPAWN_SEARCH_PATH,
+		      NULL, NULL, NULL, &gerr);
+	g_strfreev(argv);
+    }
 
     if (gerr != NULL) {
 	pprintf(prn, "%s\n", gerr->message);
