@@ -1078,13 +1078,6 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	}
     }
 
-#ifndef PKGBUILD
-    if (addpause && gnuplot_version() <= 4.65 && !wxt_ok) {
-	/* we might have a broken qt terminal? (4.6.5) */
-	addpause = 0;
-    }
-#endif
-
     fputs(buf, fp);
 
     if (addpause) {
@@ -2526,12 +2519,20 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
     errno = 0;
 
     for (j=0; j<n && *p; j++) {
-	x = strtod(line, &p);
-	if (errno) {
-	    err = 1;
-	    break;
+	if (*p == ' ') {
+	    p++;
 	}
-	line = p;
+	if (*p == '?') {
+	    x = M_NA;
+	    p += 2;
+	} else {
+	    x = strtod(p, &p);
+	    if (errno) {
+		err = 1;
+		break;
+	    }
+	}	    
+	// line = p;
 	gretl_matrix_set(z, i, j, x);
     }
 
@@ -2541,11 +2542,13 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
 static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
 				char *line, size_t len)
 {
-    int gotplot = 0;
+    long pos = 0;
     int n = 0;
 
+    /* first count the rows of the matrix */
+
     while (bufgets(line, len, buf)) {
-	if (gotplot) {
+	if (pos > 0) {
 	    if (*line == 'e') {
 		break;
 	    } else {
@@ -2553,35 +2556,27 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
 	    }
 	} else if (!strncmp(line, "plot", 4) &&
 		   strstr(line, "matrix")) {
-	    gotplot = 1;
+	    pos = buftell(buf);
 	}
     }
 
+    /* if successful, parse the matrix out of the file */
+
     if (n > 0) {
 	gretl_matrix *z;
-	int i = 0, err = 0;
+	int i, err = 0;
 
 	z = gretl_matrix_alloc(n, n);
 	if (z == NULL) {
 	    return;
 	}
-	buf_rewind(buf);
-	gotplot = 0;
 
+	bufseek(buf, pos);
 	gretl_push_c_numeric_locale();
 
-	while (bufgets(line, len, buf) && !err) {
-	    if (gotplot) {
-		if (*line == 'e') {
-		    break;
-		} else {
-		    err = push_z_row(z, i, n, line);
-		    i++;
-		}
-	    } else if (!strncmp(line, "plot", 4) &&
-		       strstr(line, "matrix")) {
-		gotplot = 1;
-	    }
+	for (i=0; i<n && !err; i++) {
+	    bufgets(line, len, buf);
+	    err = push_z_row(z, i, n, line);
 	}
 
 	gretl_pop_c_numeric_locale();
@@ -3363,13 +3358,19 @@ static void heatmap_show_z (png_plot *plot, double x, double y,
 			    gchar *label)
 {
     gretl_matrix *z = plot->spec->auxdata;
+    double zij;
     int i = nearbyint(y);
     int j = nearbyint(x);
     int n = z->rows;
 
     if (i >= 0 && i < n && j >= 0 && j < n) {
-	sprintf(label, "\u03C1 = %.3f", gretl_matrix_get(z, i, j));
-	gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
+	zij = gretl_matrix_get(z, i, j);
+	if (isnan(zij)) {
+	    gtk_label_set_text(GTK_LABEL(plot->cursor_label), "");
+	} else {
+	    sprintf(label, "r = %.3f", zij);
+	    gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
+	}
     }
 }
 

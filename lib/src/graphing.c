@@ -923,7 +923,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
-    } else {
+    } else if (ptype != PLOT_HEATMAP) {
 	for (i=0; i<BOXCOLOR; i++) {
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
@@ -1490,8 +1490,8 @@ static int gnuplot_too_old (void)
 	gpv = gnuplot_version();
     }
 
-    if (gpv < 4.6) {
-	gretl_errmsg_set("Gnuplot is too old: must be >= version 4.6.0");
+    if (gpv < 5.0) {
+	gretl_errmsg_set("Gnuplot is too old: must be >= version 5.0");
 	return 1;
     } else {
 	return 0;
@@ -3178,11 +3178,7 @@ static void make_time_tics (gnuplot_info *gi,
     }
 
     if (gi->flags & GPT_TIMEFMT) {
-	if (gnuplot_version() < 4.7) {
-	    pputs(prn, "set xdata time # ZERO_YEAR=2000\n");
-	} else {
-	    pputs(prn, "set xdata time\n");
-	}
+	pputs(prn, "set xdata time\n");
 	strcpy(gi->timefmt, "%Y-%m-%d");
 	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
 	strcpy(gi->xfmt, "%Y-%m-%d");
@@ -4279,12 +4275,7 @@ int gnuplot_3d (int *list, const char *literal,
 	} else if (gnuplot_has_x11()) {
 	    term = "x11";
 	} else if (gnuplot_has_qt()) {
-	    if (gnuplot_version() <= 4.65) {
-		*opt &= ~OPT_I;
-		interactive = 0;
-	    } else {
-		term = "qt";
-	    }
+	    term = "qt";
 	} else {
 	    *opt &= ~OPT_I;
 	    interactive = 0;
@@ -4650,7 +4641,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 /**
  * plot_corrmat:
  * @corr: pointer to correlation matrix struct.
- * @opt: unused so far.
+ * @opt: can use OPT_T for triangular representation.
  *
  * Produces a heatmap plot based on a correlation matrix.
  *
@@ -4672,6 +4663,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 
     n = corr->dim;
 
+    /* are all the correlations non-negative? */
     for (i=0; i<n; i++) {
 	for (j=i+1; j<n; j++) {
 	    idx = ijton(i, j, n);
@@ -4684,6 +4676,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 
     df = corr->n - 2;
     if (df > 1) {
+	/* determine 20% critical value */
 	double tc = student_critval(df, 0.10);
 	double t2 = tc * tc;
 	    
@@ -4747,12 +4740,20 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("set link y\n", fp);
     fputs("set grid front mx2tics my2tics lw 2 lt -1 lc rgb 'white'\n", fp);
 
+    if (opt & OPT_T) {
+	fputs("set datafile missing '?'\n", fp);
+    }
+
     /* matrix/image plot */
     fputs("plot '-' matrix with image\n", fp);
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
-	    idx = ijton(n-i-1, j, n);
-	    fprintf(fp, "%.4f ", corr->vec[idx]);
+	    if ((opt & OPT_T) && j > n-i-1) {
+		fputs("? ", fp);
+	    } else {
+		idx = ijton(n-i-1, j, n);
+		fprintf(fp, "%.4f ", corr->vec[idx]);
+	    }
 	}
 	fputc('\n', fp);
     }
@@ -5548,11 +5549,6 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 
     if (err) {
 	return err;
-    }
-
-    if (style == BAND_DASH && gnuplot_version() < 5.0) {
-	/* can't do it */
-	style = BAND_LINE;
     }
 
     if (gi->flags & (GPT_TS | GPT_IDX)) {
@@ -8323,37 +8319,17 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
     return err;
 }
 
-/* The complication below: up till version 4.6, gnuplot used
-   a non-standard base of the year 2000 for its equivalent of
-   time_t, so it's necessary to adjust by the number of seconds
-   between the start of 1970 and the start of 2000 when
-   calling *nix time functions. With version 4.7 (CVS) gnuplot
-   switched to a base of 1970.
-*/
-
-#define GP_TIME_OFFSET 946684800
-
 void date_from_gnuplot_time (char *targ, size_t tsize, 
 			     const char *fmt, double x)
 {
 #ifdef WIN32
-    time_t etime;
+    time_t etime = (time_t) x;
 
-    if (gnuplot_version() < 4.7) {
-	x += GP_TIME_OFFSET;
-    }
-
-    etime = (time_t) x;
     strftime(targ, tsize, fmt, localtime(&etime));
 #else
     struct tm t = {0};
-    time_t etime;
+    time_t etime = (time_t) x;
 
-    if (gnuplot_version() < 4.7) {
-	x += GP_TIME_OFFSET;
-    }   
-
-    etime = (time_t) x;
     localtime_r(&etime, &t);
     strftime(targ, tsize, fmt, &t);
 #endif
@@ -8373,9 +8349,6 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 	    /* conversion went OK */
 	    etime = mktime(&t);
 	    x = (double) etime;
-	    if (gnuplot_version() < 4.7) {
-		x -= GP_TIME_OFFSET;
-	    } 
 	}
     }
 
