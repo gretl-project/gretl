@@ -4662,11 +4662,24 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     FILE *fp;
     double rcrit = 0.0;
     int i, j, df, n, idx;
+    int allpos = 1;
     int err = 0;
 
     fp = open_plot_input_file(PLOT_HEATMAP, 0, &err);
     if (err) {
 	return err;
+    }
+
+    n = corr->dim;
+
+    for (i=0; i<n; i++) {
+	for (j=i+1; j<n; j++) {
+	    idx = ijton(i, j, n);
+	    if (corr->vec[idx] < 0) {
+		allpos = 0;
+		break;
+	    }
+	}
     }
 
     df = corr->n - 2;
@@ -4677,22 +4690,28 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	rcrit = sqrt(t2 / (t2 + df));
     }
 
-    n = corr->dim;
-
     gretl_push_c_numeric_locale();
     
     fprintf(fp, "set title '%s'\n", _("Correlation matrix"));
     fputs("set nokey\n", fp);
     fputs("set tics nomirror\n", fp);
-    fputs("set cbrange [-1:1]\n", fp);
-    if (rcrit > 0) {
-	/* base the white range on the critical value for rho-hat at
-	   the 20% significance level 
-	*/
-	fprintf(fp, "set palette defined (-1 'blue', %.4f 'white', %.4f 'white', 1 'red')\n", 
-		-rcrit, rcrit);
+
+    if (allpos) {
+	fputs("set cbrange [0:1]\n", fp);
+	if (rcrit > 0) {
+	    fprintf(fp, "set palette defined (0 'white', %.4f 'white', 1 'red')\n",
+		    rcrit);
+	} else {
+	    fputs("set palette defined (0 'white', 1 'red')\n", fp);
+	}
     } else {
-	fputs("set palette defined (-1 'blue', 0 'white', 1 'red')\n", fp);
+	fputs("set cbrange [-1:1]\n", fp);
+	if (rcrit > 0) {
+	    fprintf(fp, "set palette defined (-1 'blue', %.4f 'white', %.4f 'white', 1 'red')\n",
+		    -rcrit, rcrit);
+	} else {
+	    fputs("set palette defined (-1 'blue', 0 'white', 1 'red')\n", fp);
+	}
     }
 
     /* for grid lines */
