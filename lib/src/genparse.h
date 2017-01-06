@@ -698,7 +698,7 @@ NODE *newdbl (double x);
 NODE *newempty (void);
 NODE *obs_node (parser *p);
 NODE *slice_node_direct (parser *p);
-void context_error (int c, parser *p);
+void context_error (int c, parser *p, const char *func);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t);
 const char *getsymb_full (int t, const parser *p);

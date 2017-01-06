@@ -347,7 +347,7 @@ static NODE *base (parser *p, NODE *up)
 	break;
     default: 
     deferr:
-	context_error(0, p);
+	context_error(0, p, "base");
 	break;
     }
 
@@ -1266,7 +1266,7 @@ static NODE *powterm (parser *p)
 
     if (unary_op(sym)) {
 	if (p->ch == 0) {
-	    context_error(0, p);
+	    context_error(0, p, "powterm");
 	    return NULL;
 	}
         t = newb1(sym, NULL);
@@ -1538,7 +1538,7 @@ static NODE *factor (parser *p)
 
     if (unary_op(sym) && sym != U_ADDR) {
 	if (p->ch == 0) {
-	    context_error(0, p);
+	    context_error(0, p, "factor");
 	    return NULL;
 	}
         t = newb1(sym, NULL);
