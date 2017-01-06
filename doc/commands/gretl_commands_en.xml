@@ -2051,6 +2051,15 @@
 	  <flag>--verbose</flag>
 	  <effect>print rankings</effect>
 	</option>
+        <option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -2073,28 +2082,43 @@
 
     <description context="cli">
       <para>
-	By default, prints the pairwise correlation coefficients (Pearson's
-	product-moment correlation) for the variables in <repl>varlist</repl>,
-	or for all variables in the data set if <repl>varlist</repl> is not
-	given.  The standard behavior is to use all available observations for
-	computing each pairwise coefficient, but if the <flag>--uniform</flag>
-	option is given the sample is limited (if necessary) so that the same
-	set of observations is used for all the coefficients.  This option
-	has an effect only if there are differing numbers of missing values
-	for the variables used.
+	By default, prints the pairwise correlation coefficients
+	(Pearson's product-moment correlation) for the variables in
+	<repl>varlist</repl>, or for all variables in the data set if
+	<repl>varlist</repl> is not given.  The standard behavior is
+	to use all available observations for computing each pairwise
+	coefficient, but if the <flag>--uniform</flag> option is given
+	the sample is limited (if necessary) so that the same set of
+	observations is used for all the coefficients.  This option
+	has an effect only if there are differing numbers of missing
+	values for the variables used.
       </para>
       <para>
 	The (mutually exclusive) options <opt>spearman</opt> and
 	<opt>kendall</opt> produce, respectively, Spearman's rank
-	correlation rho and Kendall's rank correlation tau in place of the
-	default Pearson coefficient.  When either of these options is given,
-	<repl>varlist</repl> should contain just two variables.
+	correlation rho and Kendall's rank correlation tau in place of
+	the default Pearson coefficient.  When either of these options
+	is given, <repl>varlist</repl> should contain just two
+	variables.
       </para>
       <para>
-	When a rank correlation is computed, the <opt>verbose</opt> option can
-	be used to print the original and ranked data (otherwise this option
-	is ignored).
+	When a rank correlation is computed, the <opt>verbose</opt>
+	option can be used to print the original and ranked data
+	(otherwise this option is ignored).
       </para>
+      <para>
+	If <repl>varlist</repl> contains more than two series and the
+	program is not in batch mode, a <quote>heatmap</quote> plot of
+	the correlation matrix is shown.  This can be adjusted via the
+	<opt>plot</opt> option. The acceptable parameters to this
+	option are <lit>none</lit> (to suppress the plot);
+	<lit>display</lit> (to display a plot even when in batch
+	mode); or a file name. The effect of providing a file name is
+	as described for the <opt>output</opt> option of the <cmdref
+	targ="gnuplot"/> command. When plotting is active the
+	additional option <opt>triangle</opt> can be used to show only
+	the lower triangle of the matrix.
+      </para>      
     </description>
 
     <gui-access>

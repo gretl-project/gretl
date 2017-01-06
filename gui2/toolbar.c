@@ -701,6 +701,11 @@ static int bundle_plot_ok (windata_t *vwin)
     return ret;
 }
 
+static int suppress_hmap (VMatrix *corr)
+{
+    return corr->dim < 3;
+}
+
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
     text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
@@ -936,8 +941,12 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_BUNDLE && f == BUNDLE_ITEM) {
 	return NULL;
-    } else if (r != CORR && f == HMAP_ITEM) {
-	return NULL;
+    } else if (f == HMAP_ITEM) {
+	if (r != CORR) {
+	    return NULL;
+	} else if (suppress_hmap(vwin->data)) {
+	    return NULL;
+	}
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {
 	    return NULL;

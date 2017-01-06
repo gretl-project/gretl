@@ -5780,7 +5780,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
 
     if (corr != NULL) {
 	print_corrmat(corr, dset, prn);
-	if (gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
+	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
 	    err = plot_corrmat(corr, opt);
 	}
 	free_vmatrix(corr);
