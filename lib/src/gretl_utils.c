@@ -1790,9 +1790,8 @@ static int gp_fatal (const char *cmd, const char *s)
 	return 0;
     }
     
-    /* wx and C++ ABI non-issue, also generic warnings */
-    if (strstr(s, "Warning: Mismatch") ||
-	strstr(s, "warning")) {
+    /* wx and C++ ABI non-issue */
+    if (strstr(s, "Warning: Mismatch")) {
 	return 0;
     }
 
@@ -1814,6 +1813,7 @@ static int gp_fatal (const char *cmd, const char *s)
 	strstr(s, "trying default") ||
 	strstr(s, "character sets not available") ||
 	strstr(s, "Warning: ") ||
+	strstr(s, "warning: ") ||
 	strstr(s, "Pango-WARNING") ||
 	strstr(s, "rid drawn") ||
 	strstr(s, "CGContextSetFont")) {
