@@ -577,6 +577,7 @@ static int run_cmd_async (const char *cmd)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
+    gchar *cmdcpy;
     int ok, err = 0;
 
     ZeroMemory(&sinfo, sizeof sinfo);
@@ -584,8 +585,9 @@ static int run_cmd_async (const char *cmd)
 
     sinfo.cb = sizeof sinfo;
 
+    cmdcpy = g_strdup(cmd); /* not supposed to be const */
     ok = CreateProcess(NULL,
-		       cmd,
+		       cmdcpy,
 		       NULL,
 		       NULL,
 		       FALSE,
@@ -594,6 +596,7 @@ static int run_cmd_async (const char *cmd)
 		       gretl_workdir(),
 		       &sinfo,
 		       &pinfo);
+    g_free(cmdcpy);
 
     if (!ok) {
 	win_show_last_error();
@@ -634,14 +637,7 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     arg += strspn(arg, " \t");
 
     if (opt & OPT_A) {
-#if 1
 	err = run_cmd_async(arg);
-#else	
-	UINT winret = WinExec(arg, SW_SHOWNORMAL);
-	if (winret <= 31) {
-	    err = 1;
-	}
-#endif	
     } else if (getenv("GRETL_SHELL_NEW")) {
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, SHELL_RUN);
     } else {
