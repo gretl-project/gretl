@@ -403,7 +403,6 @@ int maybe_rewrite_gp_file (const char *fname)
     FILE *fin, *fout;
     gchar *trbuf, *modname = NULL;
     char line[512];
-    double gpver;
     int modified = 0;
     int recoded = 0;
     int fix_xrange = 0;
@@ -423,8 +422,6 @@ int maybe_rewrite_gp_file (const char *fname)
 	return 1;
     }
 
-    gpver = gnuplot_version();
-
     while (fgets(line, sizeof line, fin)) {
 	int modline = 0;
 	
@@ -440,16 +437,10 @@ int maybe_rewrite_gp_file (const char *fname)
 		modline = 1;
 	    }
 	} else if (!strncmp(line, "set xdata time", 14)) {
-	    int zy2000 = strstr(line, "ZERO_YEAR=2000") != NULL;
-
-	    if (gpver >= 4.7 && zy2000) {
+	    if (strstr(line, "ZERO_YEAR=2000")) {
 		fputs("set xdata time\n", fout);
 		modline = 1;
 		fix_xrange = 1;
-	    } else if (gpver < 4.7 && !zy2000) {
-		fputs("set xdata time # ZERO_YEAR=2000\n", fout);
-		modline = 1;
-		fix_xrange = 2;
 	    }
 	} else if (!strncmp(line, "set xrange", 10) && fix_xrange) {
 	    do_fix_xrange(line, fix_xrange, fout);
