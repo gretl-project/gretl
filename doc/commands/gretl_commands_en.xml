@@ -2031,9 +2031,10 @@
     label="Correlation coefficients">
 
     <usage>
-      <arguments>
-        <argument optional="true">varlist</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>corr [</lit> <repl>varlist</repl> ]</altform>
+	<altform><lit>corr --matrix=</lit><repl>matname</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--uniform</flag>
@@ -2056,27 +2057,25 @@
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
         </option>
-	<option>
-	  <flag>--triangle</flag>
-	  <effect>see below</effect>
-	</option>
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
 	<example>corr ylist --uniform</example>
 	<example>corr x y --spearman</example>
+	<example>corr --matrix=X --plot=display</example>
       </examples>
     </usage>
 
     <description context="gui">
       <para>
-	Prints the pairwise correlation coefficients (Pearson's product-moment
-	correlation) for the selected variables. The default behavior is to
-	use all available observations for computing each pairwise
-	coefficient, but if the option box is checked the sample is limited (if
-	necessary) so that the same set of observations is used for all the
-	coefficients.  This option has an effect only if there are differing
-	numbers of missing values for the variables used.
+	Prints the pairwise correlation coefficients (Pearson's
+	product-moment correlation) for the selected variables. The
+	default behavior is to use all available observations for
+	computing each pairwise coefficient, but if the option box is
+	checked the sample is limited (if necessary) so that the same
+	set of observations is used for all the coefficients.  This
+	option has an effect only if there are differing numbers of
+	missing values for the variables used.
       </para>
     </description>
 
@@ -2118,6 +2117,12 @@
 	targ="gnuplot"/> command. When plotting is active the
 	additional option <opt>triangle</opt> can be used to show only
 	the lower triangle of the matrix.
+      </para>
+      <para>
+	If the alternative form is given, using a named matrix rather
+	than a list of series, the <opt>spearman</opt> and
+	<opt>kendall</opt> options are not available&mdash;but
+	see the <fncref targ="npcorr"/> function.
       </para>      
     </description>
 

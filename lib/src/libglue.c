@@ -646,6 +646,8 @@ int matrix_command_driver (int ci,
 	    err = gnuplot(collist, param, mdset, opt);
 	} else if (ci == SUMMARY) {
 	    err = list_summary(collist, 0, mdset, opt, prn);
+	} else if (ci == CORR) {
+	    err = gretl_corrmx(collist, mdset, opt, prn);
 	} else {
 	    err = E_DATA;
 	}

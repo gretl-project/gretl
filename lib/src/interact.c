@@ -323,6 +323,7 @@ static int gretl_shell_async (const char *cmdline, PRN *prn)
     int err = 0;
 
     g_shell_parse_argv(cmdline, &argc, &argv, &gerr);
+
     if (gerr == NULL) {
 	g_spawn_async(gretl_workdir(), argv, NULL,
 		      G_SPAWN_SEARCH_PATH,
@@ -2529,6 +2530,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case CORR:
 	err = incompatible_options(cmd->opt, OPT_N | OPT_S | OPT_K);
+	if (!err) {
+	    err = incompatible_options(cmd->opt, OPT_X | OPT_S | OPT_K);
+	}
 	if (err) {
 	    break;
 	}
@@ -2536,6 +2540,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = kendall_tau(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->opt & OPT_S) {
 	    err = spearman_rho(cmd->list, dset, cmd->opt, prn);
+	} else if (cmd->opt & OPT_X) {
+	    err = matrix_command_driver(CORR, cmd->list, cmd->param,
+					dset, cmd->opt, prn);
 	} else {
 	    err = gretl_corrmx(cmd->list, dset, cmd->opt, prn);
 	}
