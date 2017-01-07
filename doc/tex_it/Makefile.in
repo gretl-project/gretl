@@ -90,7 +90,7 @@ functex:
 	$(MAKE) -C ../commands functex_it
 
 date.tex: $(ALLSRC)
-	LANG=it_IT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+	LC_TIME=it_IT.UTF8 date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 onepass: gretl-guide-it.tex links textables_it
 	pdflatex gretl-guide-it
