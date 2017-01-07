@@ -2053,6 +2053,15 @@
 	  <effect>mostra i ranghi</effect>
 	</option>
       </options>
+        <option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>see below</effect>
+	</option>
       <examples>
         <example>corr y x1 x2 x3</example>
 	<example>corr ylist --uniform</example>
@@ -2075,30 +2084,47 @@
 
     <description context="cli">
       <para>
-        Per impostazione predefinita, mostra le coppie di coefficienti di
-        correlazione (la correlazione del prodotto dei momenti di Pearson)
-        per le variabili date nella <repl>lista-variabili</repl>, o
-        per tutte le variabili del dataset se non viene specificata alcuna
-        <repl>lista-variabili</repl>. Il comportamento predefinito consiste
-        nell'usare tutte le osservazioni disponibili per calcolare ognuno dei
-        coefficienti, ma se si usa l'opzione <flag>--uniform</flag> il campione
-        verrà limitato (se necessario) in modo che per tutti i coefficienti
-        venga usato lo stesso insieme di osservazioni. Questa opzione ha effetto
-        solo se le diverse variabili contengono un numero diverso di valori
-        mancanti.
+        Per impostazione predefinita, mostra le coppie di coefficienti
+        di correlazione (la correlazione del prodotto dei momenti di
+        Pearson) per le variabili date nella
+        <repl>lista-variabili</repl>, o per tutte le variabili del
+        dataset se non viene specificata alcuna
+        <repl>lista-variabili</repl>. Il comportamento predefinito
+        consiste nell'usare tutte le osservazioni disponibili per
+        calcolare ognuno dei coefficienti, ma se si usa l'opzione
+        <flag>--uniform</flag> il campione verrà limitato (se
+        necessario) in modo che per tutti i coefficienti venga usato
+        lo stesso insieme di osservazioni. Questa opzione ha effetto
+        solo se le diverse variabili contengono un numero diverso di
+        valori mancanti.
       </para>
       <para>
 	Le opzioni (mutualmente esclusive) <opt>spearman</opt> e
-	<opt>kendall</opt> producono rispettivamente, la correlazione di rango
-        di Spearman (rho) e la correlazione di rango di Kendall (tau), invece
-        del solito coefficiente di Pearson. Quando si usa una di queste opzioni,
-        la <repl>lista-variabili</repl> deve contenere solo due variabili.
+	<opt>kendall</opt> producono rispettivamente, la correlazione
+	di rango di Spearman (rho) e la correlazione di rango di
+	Kendall (tau), invece del solito coefficiente di
+	Pearson. Quando si usa una di queste opzioni, la
+	<repl>lista-variabili</repl> deve contenere solo due
+	variabili.
        </para>
       <para>
-        Quando viene calcolata la correlazione di rango, si può usare l'opzione
-        <opt>verbose</opt> per mostrare i dati originali e ordinati
-        (altrimenti questa opzione verrà ignorata).
+        Quando viene calcolata la correlazione di rango, si può usare
+        l'opzione <opt>verbose</opt> per mostrare i dati originali e
+        ordinati (altrimenti questa opzione verrà ignorata).
       </para>
+      <para>
+	Se <repl>lista-variabili</repl> contiene più di due serie e il
+	programma non è in modalità batch, verrà mostrato un grafico a
+	<quote>temperatura</quote> della matrice di correlazione,
+	regolato dall'opzione <opt>plot</opt> option. Per questa
+	opzione, i parametri possibili sono <lit>none</lit> (per non
+	averlo), <lit>display</lit> (per mostrarlo a video anche in
+	modo batch), o un nome di file. Quest'ultima scelta ha effetti
+	uguali a quelli dell'opzione <opt>output</opt> per il comando
+	<cmdref targ="gnuplot"/>. L'opzione <opt>triangle</opt> fa sì
+	che il grafico contenga solo il triangolo inferiore della
+	matrice.
+      </para>      
     </description>
 
     <gui-access>
@@ -7353,31 +7379,33 @@
 
     <description>
       <para>
-	Carries out least-squares estimation (either NLS or OLS,
-	depending on the specification) of a MIDAS (Mixed Data
-	Sampling) model. Such models include one or more independent
-	variables that are observed at a higher frequency than the
-	dependent variable; for a good brief introduction see <cite
+	Stima coi minimi quadrati (lineari o meno, a seconda della
+	specificazione) un modello MIDAS (Mixed Data Sampling), ossia
+	un modello in cui una o più delle variabili esplicative sono
+	osservate a frequenza più alta della dipendente; per una buona
+	introduzione all'argomento si veda <cite
 	key="armesto10">Armesto, Engemann and Owyang (2010)</cite>.
       </para>
       <para context="cli">
-	The variables in <repl>indepvars</repl> should be of the same
-	frequency as the dependent variable. This list should usually
-	include <lit>const</lit> or <lit>0</lit> (intercept) and
-	typically includes one or more lags of the dependent variable.
-	The high-frequency terms are given after a semicolon; each one
-	takes the form of a number of comma-separated arguments within
-	parentheses, prefixed by either <lit>mds</lit> or
+	Le variabili in <repl>indepvars</repl> devono essere alla
+	stessa frequenza della dipendente. Questa lista normalmente
+	contiene anche <lit>const</lit> o <lit>0</lit> (intercetta) e,
+	di solito, uno o più ritardi della variabile dipendente.  I
+	termini ad alta frequenza vengono formiti dopo un punto e
+	virgola; ognuno di essi, sotto forma di argomenti separati da
+	virgole fra parentesi, col prefisso <lit>mds</lit> oppure
 	<lit>mdsl</lit>.
       </para>
       <para context="gui">
-	The variables under <repl>Regressors</repl> are of the same
-	frequency as the dependent variable, and are selected from the
-	upper list on the left. MIDAS models typically include one or
-	more lags of the dependent variable; that is controlled by the
-	<quote>AR order</quote> spin button, which defaults to 1 lag.
-	To add MIDAS (high frequency) terms, select from the lower
-	left-hand list and use the lower green arrow (or right-click).
+	Le variabili in <repl>Regressori</repl> devono essere alla
+	stessa frequenza della dipendente, e sono selezionati dalla
+	lista in alto a sinistra. I modelli MIDAS normalmente
+	contengono anche <lit>const</lit> o <lit>0</lit> (intercetta)
+	e, di solito, uno o più ritardi della variabile dipendente
+	(scelti col bottone <quote>ordine AR</quote>, il cui default è
+	1). Per aggiungere termini MIDAS ad alta frequenza,
+	selezionarne dalla lista in basso a sinistra e cliccare sulla
+	freccia verde (o sul pulsante destro del mouse).
       </para>
       <para context="gui">
 	On adding a MIDAS term, a dialog pops up to let you select

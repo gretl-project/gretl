@@ -852,8 +852,13 @@ static void function_noargs_error (const char *s, parser *p)
     p->err = E_ARGS;
 }
 
-void context_error (int c, parser *p)
+void context_error (int c, parser *p, const char *func)
 {
+#if LDEBUG
+    if (func != NULL) {
+	fprintf(stderr, "context error in %s()\n", func);
+    }
+#endif
     if (c != 0) {
 	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
@@ -1311,7 +1316,7 @@ static void word_check_next_char (parser *p)
     }	
 
     if (p->err) {
-	context_error(p->ch, p);
+	context_error(p->ch, p, "word_check_next_char");
     } 
 }
 
@@ -1758,6 +1763,10 @@ void lex (parser *p)
 		return;
 	    } else if (p->ch == '"') {
 		p->idstr = get_quoted_string(p);
+		return;
+	    } else if (p->ch == '.') {
+		p->sym = BMEMB;
+		parser_getc(p);
 		return;
 	    } else {
 		parser_print_input(p);

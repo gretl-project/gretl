@@ -443,6 +443,13 @@ static int curl_get (urlinfo *u)
 
 	res = curl_easy_perform(curl);
 
+#if SSLWIN
+	if (res == CURLE_SSL_CACERT) {
+	    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+	    res = curl_easy_perform(curl);
+	}
+#endif
+
 	if (u->progfunc != NULL) {
 	    stop_progress_bar(u);
 	}
@@ -501,6 +508,10 @@ static int retrieve_url (const char *hostname,
     } else if (localfile != NULL) {
 	saveopt = SAVE_TO_FILE;
     }
+
+#if 0
+    fprintf(stderr, "retrieve_url: host='%s'\n", hostname);
+#endif
 
     urlinfo_init(&u, hostname, saveopt, localfile);
 

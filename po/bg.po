@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-12 12:01-0400\n"
-"PO-Revision-Date: 2017-01-05 09:54+0200\n"
+"PO-Revision-Date: 2017-01-06 22:06+0200\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
 "Language: bg\n"
@@ -181,7 +181,7 @@ msgstr "променлива, отразяваща влинието на вре�
 #: lib/src/adf_kpss.c:1055
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
-msgstr " Елиминиране на тренда с Обобщен МНМК: b0 = %g, b1 = %g\n"
+msgstr "Елиминиране на тренда с Обобщен МНМК: b0 = %g, b1 = %g\n"
 
 #: lib/src/adf_kpss.c:1058
 #, c-format
@@ -543,7 +543,7 @@ msgstr "F-форма"
 msgid "Robust F"
 msgstr "Устойчив F-критерий"
 
-# Критерий "Множител на Лагратж"
+# Критерий "Множител на Лагранж"
 #: lib/src/compare.c:391
 msgid "LM test"
 msgstr "LM критерий"
@@ -561,7 +561,7 @@ msgstr ""
 
 #: lib/src/compare.c:551 lib/src/vartest.c:813 lib/src/vartest.c:1100
 msgid "omit"
-msgstr "острани"
+msgstr "премахни"
 
 #: lib/src/compare.c:551
 msgid "add"
@@ -5589,38 +5589,58 @@ msgstr "Информационен критерий на Ханан-Куин"
 #.
 #: lib/src/modelprint.c:2875
 msgid "note on model statistics abbreviations here"
-msgstr "Забележки относно абревиатури на български език, изпозвани в моделите"
+msgstr ""
+"Изполвани съкращения:\n"
+"Mean dependent var - Средна на зависимата променлива\n"
+"S.D. dependent var - Стандартно отклонение на зависимата променлива\n"
+"Sum squared resid - Сума от квадратите на остатъците\n"
+"S.E. of regression - Стандартна грешка в модела\n"
+"R-squared -  Коефициент на определението\n"
+"Adjusted R-squared - Коригиран коефициент на определението\n"
+"P-value(F) - P-value за F-критерия\n"
+"Log-likelihood - Натурален логаритъм на правдоподобната функция\n"
+"Akaike criterion - Информационен критерий на Акайке\n"
+"Schwarz criterion - Информационен критерий на Шварц\n"
+"Hannan-Quinn - Информационен критерий на Ханан-Куин\n"
+"rho - автокорелационен коефициент от първи порядък\n"
+"Durbin-Watson - Критерий на Дърбин-Уотсън\n"
+"McFadden R-squared - Превдо-коефициент на определението по МакФадън\n"
+"Mean of innovations -Средна на ARMA иновациите \n"
+"S.D. of innovations - Стандартно отклонение на ARMA иновациите \n"
+"Median depend. var - Медиана на зависимата променлива \n"
+"Sum absolute resid - Абсолютна сума на остатъците\n"
+"Censored obs - Брой на цензурираните наблюдения"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2882
 msgid "Mean dependent var"
-msgstr "Средна на зависимата променлива"
+msgstr "Mean dependent var"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2884
 msgid "S.D. dependent var"
-msgstr "Стандартно отклонение на зависимата пром."
+msgstr "S.D. dependent var"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2886 lib/src/modelprint.c:3035
 msgid "Sum squared resid"
-msgstr "Сума от квадратите на остатъците"
+msgstr "Sum squared resid"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2888
 msgid "S.E. of regression"
-msgstr "Стандартна грешка в модела"
+msgstr "S.E. of regression"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2890 lib/src/modelprint.c:3289 gui2/guiprint.c:762
 #: gui2/model_table.c:806
 msgid "R-squared"
-msgstr "R-квадрат"
+msgstr "R-squared"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2892
 msgid "Adjusted R-squared"
-msgstr "Коригиран R-квадрат"
+msgstr "Adjusted R-squared"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2895
@@ -5632,22 +5652,22 @@ msgstr "P-value(F)"
 #: lib/src/texprint.c:1083 lib/src/varprint.c:1093 lib/src/varprint.c:1102
 #: gui2/library.c:6456 plugin/johansen.c:1567
 msgid "Log-likelihood"
-msgstr "Лог. правдоподобие"
+msgstr "Log-likelihood"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2899
 msgid "Akaike criterion"
-msgstr "Критерий на Акайке"
+msgstr "Akaike criterion"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2901
 msgid "Schwarz criterion"
-msgstr "Критерий на Шварц"
+msgstr "Schwarz criterion"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2903
 msgid "Hannan-Quinn"
-msgstr "Критерий на Ханан-Куин"
+msgstr "Hannan-Quinn"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2905 lib/src/modelprint.c:3053
@@ -5657,7 +5677,7 @@ msgstr "rho"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2907 gui2/library.c:3278
 msgid "Durbin-Watson"
-msgstr "Дърбин-Уотсън"
+msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2946
 msgid "Adjusted $R^2$"
@@ -5694,7 +5714,7 @@ msgstr "Псевдо $R^2$ на МакФадън"
 
 #: lib/src/modelprint.c:2988
 msgid "McFadden R-squared"
-msgstr "R-квадрат по МакФадън"
+msgstr "McFadden R-squared"
 
 #: lib/src/modelprint.c:2991
 msgid "LSDV $R^2$"
@@ -5714,19 +5734,19 @@ msgstr "Вътрешногрупов R-квадрат"
 
 #: lib/src/modelprint.c:3022
 msgid "Mean of innovations"
-msgstr "Средна на иновациите"
+msgstr "Mean of innovations"
 
 #: lib/src/modelprint.c:3024
 msgid "S.D. of innovations"
-msgstr "Станд. откл. на иновациите"
+msgstr "S.D. of innovations"
 
 #: lib/src/modelprint.c:3031
 msgid "Median depend. var"
-msgstr "Медиана  - зависима пром."
+msgstr "Median depend. var"
 
 #: lib/src/modelprint.c:3033
 msgid "Sum absolute resid"
-msgstr "Абсолютна сума на остатъците"
+msgstr "Sum absolute resid"
 
 #: lib/src/modelprint.c:3078
 msgid "Durbin's $h$"
@@ -7752,7 +7772,7 @@ msgstr "Превод на български език: Пламен Петков
 
 #: gui2/about.c:203
 msgid "News"
-msgstr "Новини"
+msgstr "Ново"
 
 #: gui2/about.c:210
 msgid "License"
@@ -11874,7 +11894,7 @@ msgstr "_Фиктивна променлива по номер на наблюд
 
 #: gui2/gretl.c:1701
 msgid "Dummies for _discrete variable..."
-msgstr "Фиктивни променливи  за _дискретни променливи"
+msgstr "Фиктивни значения  за _дискретни променливи"
 
 #: gui2/gretl.c:1703
 msgid "_Define matrix..."
@@ -12198,7 +12218,7 @@ msgstr "_Обобщение на данните..."
 
 #: gui2/gretl.c:1804
 msgid "_Duration data..."
-msgstr "Модел за_продължителност..."
+msgstr "Модел за _продължителност..."
 
 #: gui2/gretl.c:1805
 msgid "Lo_gistic..."
@@ -12226,7 +12246,7 @@ msgstr "_Рангова корелация..."
 
 #: gui2/gretl.c:1811
 msgid "_Loess..."
-msgstr "_сегментирана регресия (Loess)..."
+msgstr "_Сегментирана регресия (Loess)..."
 
 #: gui2/gretl.c:1812
 msgid "_Nadaraya-Watson..."
@@ -12623,7 +12643,7 @@ msgstr "_Графика на емпиричните и изгладените з
 
 #: gui2/gui_utils.c:243
 msgid "_Display actual, fitted, residual"
-msgstr "_Покажи емпиричните, изгладените и остътъчните значения"
+msgstr "_Покажи емпиричните, изгладените и остатъчните значения"
 
 #: gui2/gui_utils.c:245
 msgid "_Forecasts..."

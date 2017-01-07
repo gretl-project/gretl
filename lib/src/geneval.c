@@ -16034,7 +16034,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    parser_ungetc(p);
 	    c = p->ch;
 	}
-	context_error(c, p);
+	context_error(c, p, "realgen");
 	return p->err;
     }    
 
