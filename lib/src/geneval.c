@@ -15974,7 +15974,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    fprintf(stderr, "error in parser_reinit\n");
 	    return p->err;
 	} else if (p->op == INC || p->op == DEC) {
-	    /* more or less a no-op */
+	    /* more or less a no-op: the work is done by
+	       save_generated_var()
+	    */
 	    return p->err;
 	} else {
 	    goto starteval;
@@ -15995,14 +15997,17 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #endif
 
     if (p->flags & P_DECL) {
+	/* check validity of declaration(s) */
 	decl_check(p, flags);
 	return p->err;
     }
 
     if (p->op == INC || p->op == DEC) {
+	/* implemented via save_generated_var() */
 	return p->err;
     }
 
+    /* fire up the lexer */
     lex(p);
     if (p->err) {
 	fprintf(stderr, "realgen %p ('%s'): exiting on lex() error %d\n",
@@ -16010,6 +16015,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	return p->err;
     }
 
+    /* build the syntax tree */
     p->tree = expr(p);
     if (p->err) {
 	return p->err;

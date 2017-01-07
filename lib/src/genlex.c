@@ -1683,6 +1683,11 @@ void lex (parser *p)
 		p->sym = P_DOT;
 		parser_getc(p);
 		return;
+	    } else if (isalpha(*p->point)) {
+		/* 2017-01-07 */
+		p->sym = BMEMB;
+		parser_getc(p);
+		return;
 	    }
 	    parser_getc(p);
 	    if (p->ch == '*') {
@@ -1763,10 +1768,6 @@ void lex (parser *p)
 		return;
 	    } else if (p->ch == '"') {
 		p->idstr = get_quoted_string(p);
-		return;
-	    } else if (p->ch == '.') {
-		p->sym = BMEMB;
-		parser_getc(p);
 		return;
 	    } else {
 		parser_print_input(p);

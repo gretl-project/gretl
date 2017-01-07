@@ -1490,6 +1490,15 @@ static NODE *powterm (parser *p)
 		    }
 		}		
 	    }
+	} else if (p->sym == BMEMB) {
+	    t = newb2(BMEMB, t, NULL);
+	    if (t != NULL) {
+		/* uninterpreted string wanted on right */
+		p->flags |= P_GETSTR;
+		lex(p);
+		p->flags ^= P_GETSTR;
+		t->v.b2.r = base(p, NULL);
+	    }
 	}
     } else if (next == '[') {
 	/* support func(args)[slice] */
