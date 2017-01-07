@@ -443,6 +443,13 @@ static int curl_get (urlinfo *u)
 
 	res = curl_easy_perform(curl);
 
+#if SSLWIN
+	if (res == CURLE_SSL_CACERT) {
+	    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+	    res = curl_easy_perform(curl);
+	}
+#endif
+
 	if (u->progfunc != NULL) {
 	    stop_progress_bar(u);
 	}
