@@ -509,6 +509,10 @@ static int retrieve_url (const char *hostname,
 	saveopt = SAVE_TO_FILE;
     }
 
+#if 0
+    fprintf(stderr, "retrieve_url: host='%s'\n", hostname);
+#endif
+
     urlinfo_init(&u, hostname, saveopt, localfile);
 
     if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
