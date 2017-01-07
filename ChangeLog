@@ -12,7 +12,8 @@ version 2017a, in progress
   gzip compression if the filename has the ".gz" extension
 - typeof() function: document it
 - "include" command: make it respect the "catch" flag
-- "corr" command: add a --plot=filename option
+- "corr" command: add a --plot=filename option; also add
+  --matrix option to take data from a named matrix
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
