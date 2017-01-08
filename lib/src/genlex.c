@@ -1228,8 +1228,12 @@ static void maybe_treat_as_postfix (parser *p)
 static void word_check_next_char (parser *p)
 {
 #if LDEBUG
-    if (p->ch) fprintf(stderr, "word_check_next_char: ch = '%c'\n", p->ch);
-    else fprintf(stderr, "word_check_next_char: ch = NUL\n");
+    if (p->ch) {
+	fprintf(stderr, "word_check_next_char: ch='%c', sym=%d\n",
+		p->ch, p->sym);
+    } else {
+	fprintf(stderr, "word_check_next_char: ch = NUL\n");
+    }
 #endif
     p->upsym = 0;
 
@@ -1369,10 +1373,8 @@ static void getword (parser *p)
 	p->sym = CSTR;
 	p->idstr = gretl_strdup(word);
 	p->flags ^= P_GETSTR;
-	return;
-    }
-
-    if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
+	return; /* FIXME bundle-member name */
+    } else if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
     } else if (*word == '$' && word[1] == '\0' && (p->ch == '[' || p->ch == '.')) {
 	p->sym = DBUNDLE;

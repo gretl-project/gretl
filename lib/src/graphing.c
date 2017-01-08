@@ -4748,7 +4748,10 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("plot '-' matrix with image\n", fp);
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
-	    if ((opt & OPT_T) && j > n-i-1) {
+	    if (0 && j == n-i-1) {
+		/* leave diagonal blank? */
+		fputs("? ", fp);
+	    } else if ((opt & OPT_T) && j > n-i-1) {
 		fputs("? ", fp);
 	    } else {
 		idx = ijton(n-i-1, j, n);

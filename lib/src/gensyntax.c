@@ -1245,7 +1245,7 @@ static NODE *powterm (parser *p)
 	p->sym == B_ADD ? U_POS : p->sym;
     int opt = OPT_NONE;
     int next = 0;
-    NODE *t;
+    NODE *t = NULL;
 
     if (p->err) {
 	return NULL;
@@ -1372,7 +1372,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, p->upsym);
 	    lex(p);
-	    t->v.b2.r = base(p, t);
+	    t->v.b2.r = base(p, t); /* ?? */
 	}
     } else if (sym == BMEMB) {
 	t = newb2(sym, NULL, NULL);
@@ -1493,11 +1493,12 @@ static NODE *powterm (parser *p)
 	} else if (p->sym == BMEMB) {
 	    t = newb2(BMEMB, t, NULL);
 	    if (t != NULL) {
-		/* uninterpreted string wanted on right */
+		/* uninterpreted string wanted on right 
+		   (FIXME [key] notation) */
 		p->flags |= P_GETSTR;
 		lex(p);
 		p->flags ^= P_GETSTR;
-		t->v.b2.r = powterm(p);
+		t->v.b2.r = base(p, t);
 	    }
 	}
     } else if (next == '[') {
