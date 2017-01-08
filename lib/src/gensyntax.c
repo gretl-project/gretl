@@ -1497,7 +1497,7 @@ static NODE *powterm (parser *p)
 		p->flags |= P_GETSTR;
 		lex(p);
 		p->flags ^= P_GETSTR;
-		t->v.b2.r = base(p, NULL);
+		t->v.b2.r = powterm(p);
 	    }
 	}
     } else if (next == '[') {
