@@ -4740,12 +4740,10 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("set link y\n", fp);
     fputs("set grid front mx2tics my2tics lw 2 lt -1 lc rgb 'white'\n", fp);
 
-    if (opt & OPT_T) {
-	fputs("set datafile missing '?'\n", fp);
-    }
+    fputs("set datafile missing '?'\n", fp);
+    fputs("printcorr = 1\n", fp);
 
-    /* matrix/image plot */
-    fputs("plot '-' matrix with image\n", fp);
+    fputs("$data << EOD\n", fp);
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
 	    if (0 && j == n-i-1) {
@@ -4760,7 +4758,13 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	}
 	fputc('\n', fp);
     }
-    fputs("e\ne\n", fp);
+    fputs("EOD\n", fp);
+    fputs("if (printcorr) {\n", fp);
+    fputs("plot $data matrix with image, ", fp);
+    fputs("$data matrix using 1:2:(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    fputs("} else {\n", fp);
+    fputs("plot $data matrix with image\n", fp);
+    fputs("}\n", fp);
 
     gretl_pop_c_numeric_locale();
 

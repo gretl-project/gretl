@@ -2044,7 +2044,7 @@ static int plotspec_allocate_markers (GPT_SPEC *spec)
     }
 }
 
-/* Determine the number of data points in a plot.  While we're at it,
+/* Determine the number of data points in a plot. While we're at it,
    determine the type of plot, check whether there are any
    data-point markers along with the data, and see if there are
    are definitions of time-series vertical bars.
@@ -2532,7 +2532,6 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
 		break;
 	    }
 	}	    
-	// line = p;
 	gretl_matrix_set(z, i, j, x);
     }
 
@@ -2549,13 +2548,12 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
 
     while (bufgets(line, len, buf)) {
 	if (pos > 0) {
-	    if (*line == 'e') {
+	    if (!strncmp(line, "EOD", 3)) {
 		break;
 	    } else {
 		n++;
 	    }
-	} else if (!strncmp(line, "plot", 4) &&
-		   strstr(line, "matrix")) {
+	} else if (!strncmp(line, "$data <", 7)) {
 	    pos = buftell(buf);
 	}
     }
@@ -2592,7 +2590,8 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
                            c != PLOT_PROB_DIST && \
                            c != PLOT_CURVE && \
-			   c != PLOT_USER)
+			   c != PLOT_USER && \
+			   c != PLOT_HEATMAP)
 
 /* Read plotspec struct from gnuplot command file.  This is not a
    general parser for gnuplot files; it is designed specifically for
