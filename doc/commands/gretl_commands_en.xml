@@ -4940,7 +4940,7 @@
         <option>
 	  <flag>--with-steps</flag>
 	  <optparm optional="true">varspec</optparm>
-	  <effect>use horizontal and vertical line segments</effect>
+	  <effect>use perpendicular line segments</effect>
         </option>	
         <option>
 	  <flag>--time-series</flag>

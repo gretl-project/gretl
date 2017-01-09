@@ -3199,19 +3199,24 @@ size_t bufgets_peek_line_length (const char *buf)
  * bufseek:
  * @buf: char buffer.
  * @offset: offset from start of @buf.
+ * @whence: must be SEEK_SET or SEEK_CUR.
  *
- * Buffer equivalent of fseek(), with %SEEK_SET.  Note that @buf
+ * Buffer equivalent of fseek().  Note that @buf
  * must first be initialized via bufgets_init().
  * 
  * Returns: 0 on success, 1 on error.
  */
 
-int bufseek (const char *buf, long int offset)
+int bufseek (const char *buf, long int offset, int whence)
 {
     readbuf *rbuf = matching_buffer(buf);
 
-    if (rbuf != NULL) {
-	rbuf->point = rbuf->start + offset;
+    if (rbuf != NULL && (whence == SEEK_SET || whence == SEEK_CUR)) {
+	if (whence == SEEK_SET) {
+	    rbuf->point = rbuf->start + offset;
+	} else {
+	    rbuf->point += offset;
+	}
 	return 0;
     }
 
@@ -3228,7 +3233,7 @@ int bufseek (const char *buf, long int offset)
 
 void buf_rewind (const char *buf)
 {
-    bufseek(buf, 0);
+    bufseek(buf, 0, SEEK_SET);
 }
 
 /**

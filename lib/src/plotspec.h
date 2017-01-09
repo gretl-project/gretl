@@ -130,9 +130,11 @@ struct GPT_SPEC_ {
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCAST... */
     GptFlags flags;            /* bitwise OR of options */
+    int heredata;              /* plot file uses "heredoc" for data */
     FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */
     int okobs;                 /* number of fully valid observations */
+    int datacols;              /* number of data columns */
     int pd;                    /* frequency (time series data) */
     int nbars;                 /* number of time-series shaded bars */
     char xvarname[MAXDISP];    /* name of x variable */

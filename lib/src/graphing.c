@@ -4741,15 +4741,13 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("set grid front mx2tics my2tics lw 2 lt -1 lc rgb 'white'\n", fp);
 
     fputs("set datafile missing '?'\n", fp);
-    fputs("printcorr = 1\n", fp);
+    fprintf(fp, "printcorr = %d\n", n <= 16 ? 1 : 0);
 
+    fputs("# start inline data\n", fp);
     fputs("$data << EOD\n", fp);
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
-	    if (0 && j == n-i-1) {
-		/* leave diagonal blank? */
-		fputs("? ", fp);
-	    } else if ((opt & OPT_T) && j > n-i-1) {
+	    if ((opt & OPT_T) && j > n-i-1) {
 		fputs("? ", fp);
 	    } else {
 		idx = ijton(n-i-1, j, n);
@@ -4759,6 +4757,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	fputc('\n', fp);
     }
     fputs("EOD\n", fp);
+    fputs("# end inline data\n", fp);
     fputs("if (printcorr) {\n", fp);
     fputs("plot $data matrix with image, ", fp);
     fputs("$data matrix using 1:2:(sprintf(\"%.1f\",$3)) with labels\n", fp);

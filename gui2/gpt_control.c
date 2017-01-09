@@ -1393,7 +1393,7 @@ static int get_gpt_marker (const char *line, char *label,
 			p == PLOT_STACKED_BAR || \
 			p == PLOT_3D)
 
-static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers, 
+static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 			 const char *buf)
 {
     char s[MAXLEN];
@@ -1534,9 +1534,99 @@ static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers,
     }
 
 #if GPDEBUG
-    for (i=0; i<spec->nobs*datacols; i++) {
+    for (i=0; i<spec->nobs*spec->datacols; i++) {
 	fprintf(stderr, "spec->data[%d] = %g\n", i, spec->data[i]);
     }
+#endif
+
+    gretl_pop_c_numeric_locale();
+
+    return err;
+}
+
+static int get_gpt_heredata (GPT_SPEC *spec,
+			     int do_markers,
+			     long barpos,
+			     long datapos,
+			     const char *buf)
+{
+    gretl_matrix tmp = {0};
+    gretl_matrix *m = &tmp;
+    char line[MAXLEN], test[32];
+    char obsfmt[12] = {0};
+    char *s, *got = NULL;
+    double xij;
+    int i, j;
+    int err = 0;
+
+    spec->okobs = spec->nobs;
+    m->rows = spec->nobs;
+    m->cols = spec->datacols;
+    m->val = spec->data;
+
+    gretl_push_c_numeric_locale();
+
+    /* first handle "shaded bars" info, if present */
+
+    if (barpos > 0) {
+	bufseek(buf, barpos, SEEK_SET);
+	for (i=0; i<spec->nbars && !err; i++) {
+	    double y1, y2, dx[2];
+
+	    /* start date */
+	    got = bufgets(line, sizeof line, buf);
+	    if (got == NULL ||
+		sscanf(line, "%lf %lf %lf", &dx[0], &y1, &y2) != 3) {
+		err = 1;
+		break;
+	    }
+	    /* stop date */
+	    got = bufgets(line, sizeof line, buf);
+	    if (got == NULL ||
+		sscanf(line, "%lf %lf %lf", &dx[1], &y1, &y2) != 3) {
+		err = 1;
+		break;
+	    }
+	    plotspec_set_bar_info(spec, i, dx[0], dx[1]);
+	}
+    }
+
+    if (do_markers) {
+	sprintf(obsfmt, "%%%d[^\r\n]", OBSLEN - 1);
+    }
+
+    /* then get the regular plot data */
+
+    bufseek(buf, datapos, SEEK_SET);
+
+    for (i=0; i<m->rows && !err; i++) {
+	got = bufgets(line, sizeof line, buf);
+	if (got == NULL) {
+	    err = 1;
+	}
+	s = line;
+	for (j=0; j<m->cols && !err; j++) {
+	    s += strspn(s, " ");
+	    sscanf(s, "%31s", test);
+	    if (*s == '?') {
+		xij = NADBL;
+	    } else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
+		xij = gnuplot_time_from_date(test, spec->timefmt);
+	    } else {
+		xij = atof(test);
+	    }
+	    gretl_matrix_set(m, i, j, xij);
+	    s += strlen(test);
+	    if (do_markers) {
+		get_gpt_marker(s, spec->markers[i], obsfmt);
+	    }
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+#if GPDEBUG
+    gretl_matrix_print(m, "gp heredata");
 #endif
 
     gretl_pop_c_numeric_locale();
@@ -2050,11 +2140,17 @@ static int plotspec_allocate_markers (GPT_SPEC *spec)
    are definitions of time-series vertical bars.
 */
 
-static void get_plot_nobs (GPT_SPEC *spec, const char *buf, int *do_markers)
+static void get_plot_nobs (GPT_SPEC *spec,
+			   const char *buf,
+			   int *do_markers,
+			   long *barpos,
+			   long *datapos)
 {
     int n = 0, started = -1;
     int startmin = 1;
-    char line[MAXLEN], test[9];
+    long auxpos = 0;
+    char line[MAXLEN], test[12];
+    char *p = NULL;
 
     spec->code = PLOT_REGULAR;
     *do_markers = 0;
@@ -2067,81 +2163,119 @@ static void get_plot_nobs (GPT_SPEC *spec, const char *buf, int *do_markers)
 	}
 
 	if (sscanf(line, "# n_bars = %d", &spec->nbars) == 1) {
+	    /* for old-style data representation */
 	    startmin += spec->nbars;
 	    continue;
 	}
 
-	if (!strncmp(line, "plot", 4) || !strncmp(line, "splot", 5)) {
-	    started = 0;
+	if (spec->nbars > 0 && !strncmp(line, "$bars <", 7)) {
+	    *barpos = buftell(buf);
 	}
 
-	if (started == 0 && strchr(line, '\\') == NULL) {
-	    started = 1;
+	if (!strncmp(line, "# auxdata", 9)) {
+	    auxpos = buftell(buf);
+	}
+
+	if (started < 0 && !strncmp(line, "$data <", 7)) {
+	    /* new style */
+	    spec->heredata = 1;
+	    *datapos = buftell(buf);
 	    continue;
 	}
 
-	if (started > 0 && started < startmin) {
-	    if (*line == 'e') {
-		started++;
-		continue;
-	    }
-	}
-
-	if (started == startmin) {
-	    char *p;
-	    
-	    if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
+	if (spec->heredata) {
+	    if (!strncmp(line, "EOD", 3)) {
+		break;
+	    } else if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", test) == 1) {
 		    *do_markers = 1;
 		}
 	    }
-	    if (*line == 'e' || !strncmp(line, "set ", 4)) {
-		/* end of data, or onto "set print" for bounds */
-		break;
-	    }
 	    n++;
-	}
-    }
+	} else {
+	    if (!strncmp(line, "plot", 4) || !strncmp(line, "splot", 5)) {
+		started = 0;
+	    }
 
-    if (spec->code == PLOT_BOXPLOTS) {
-	/* we stopped reading at the first "e" line, but the
-	   file may contain auxiliary outlier data, in which
-	   case we need to read this into an auxiliary matrix
-	*/
-	double x, y;
-	int i, r = 0, c = 0;
-	int err = 0;
+	    if (started == 0 && strchr(line, '\\') == NULL) {
+		started = 1;
+		continue;
+	    }
 
-	while (bufgets(line, MAXLEN - 1, buf)) {
-	    if (!strncmp(line, "# auxdata", 9)) {
-		if (sscanf(line + 9, "%d %d", &r, &c) == 2 &&
-		    r > 0 && c > 0) {
-		    spec->auxdata = gretl_matrix_alloc(r, c);
-		    if (spec->auxdata != NULL) {
-			gretl_push_c_numeric_locale();
-			for (i=0; i<r && !err; i++) {
-			    if (bufgets(line, MAXLEN - 1, buf) == NULL) {
-				err = E_DATA;
-			    } else if (sscanf(line, "%lf %lf", &x, &y) != 2) {
-				err = E_DATA;
-			    } else {
-				gretl_matrix_set(spec->auxdata, i, 0, x);
-				gretl_matrix_set(spec->auxdata, i, 1, y);
-			    }
-			}
-			gretl_pop_c_numeric_locale();
-			if (err) {
-			    gretl_matrix_free(spec->auxdata);
-			    spec->auxdata = NULL;
-			}
+	    if (started > 0 && started < startmin) {
+		if (*line == 'e') {
+		    started++;
+		    continue;
+		}
+	    }
+
+	    if (started == startmin) {
+		if (*line == 'e' || !strncmp(line, "set ", 4)) {
+		    /* end of data, or onto "set print" for bounds */
+		    break;
+		} else if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
+		    if (sscanf(p + 1, "%11s", test) == 1) {
+			*do_markers = 1;
 		    }
 		}
-		break;
+		n++;
 	    }
 	}
     }
 
     spec->nobs = n;
+
+    if (spec->code == PLOT_BOXPLOTS) {
+	/* In the case of boxplots the gnuplot file may contain extra
+	   outlier data, which have to be read into an auxiliary matrix
+	*/
+	int found = 0;
+
+	if (auxpos > 0) {
+	    /* we already went past it */
+	    buf_rewind(buf);
+	}
+	while (bufgets(line, MAXLEN - 1, buf)) {
+	    if (!strncmp(line, "# auxdata", 9)) {
+		found = 1;
+	    }
+	}
+
+	if (found) {
+	    double x, y;
+	    int i, n, r = 0, c = 0;
+	    int err = 0;
+
+	    n = sscanf(line + 9, "%d %d", &r, &c);
+	    if (n == 2 && r > 0 && c == 2) {
+		spec->auxdata = gretl_matrix_alloc(r, c);
+		if (spec->auxdata != NULL) {
+		    gretl_push_c_numeric_locale();
+		    if (spec->heredata) {
+			/* skip a line: "$aux << EOA" */
+			if (bufgets(line, MAXLEN - 1, buf) == NULL) {
+			    err = E_DATA;
+			}
+		    }
+		    for (i=0; i<r && !err; i++) {
+			if (bufgets(line, MAXLEN - 1, buf) == NULL) {
+			    err = E_DATA;
+			} else if (sscanf(line, "%lf %lf", &x, &y) != 2) {
+			    err = E_DATA;
+			} else {
+			    gretl_matrix_set(spec->auxdata, i, 0, x);
+			    gretl_matrix_set(spec->auxdata, i, 1, y);
+			}
+		    }
+		    gretl_pop_c_numeric_locale();
+		    if (err) {
+			gretl_matrix_free(spec->auxdata);
+			spec->auxdata = NULL;
+		    }
+		}
+	    }
+	}
+    }
 }
 
 static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
@@ -2385,16 +2519,18 @@ static void maybe_set_add_fit_ok (GPT_SPEC *spec)
     }
 }
 
-static int 
-plot_get_data_and_markers (GPT_SPEC *spec, const char *buf, 
-			   int datacols, int do_markers)
+static int plot_get_data_and_markers (GPT_SPEC *spec,
+				      const char *buf,
+				      int do_markers,
+				      long barpos,
+				      long datapos)
 {
-    size_t dsize = spec->nobs * datacols * sizeof *spec->data;
+    size_t dsize = spec->nobs * spec->datacols * sizeof *spec->data;
     int err = 0;
 
 #if GPDEBUG
     fprintf(stderr, "allocating: nobs=%d, datacols=%d, dsize=%d\n", 
-	    (int) spec->nobs, datacols, (int) dsize);
+	    spec->nobs, spec->datacols, (int) dsize);
 #endif  
 
     /* allocate for the plot data... */
@@ -2415,7 +2551,12 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
 
     /* read the data (and perhaps markers) from the plot file */
     if (!err) {
-	err = get_gpt_data(spec, datacols, do_markers, buf);
+	if (spec->heredata) {
+	    err = get_gpt_heredata(spec, do_markers,
+				   barpos, datapos, buf);
+	} else {
+	    err = get_gpt_data(spec, do_markers, buf);
+	}
     } else {
 	free(spec->data);
 	spec->data = NULL;
@@ -2539,59 +2680,40 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
 }
 
 static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
-				char *line, size_t len)
+				char *line, size_t len,
+				long datapos)
 {
-    long pos = 0;
-    int n = 0;
+    gretl_matrix *z;
+    int n = spec->nobs;
+    int i, err = 0;
 
-    /* first count the rows of the matrix */
-
-    while (bufgets(line, len, buf)) {
-	if (pos > 0) {
-	    if (!strncmp(line, "EOD", 3)) {
-		break;
-	    } else {
-		n++;
-	    }
-	} else if (!strncmp(line, "$data <", 7)) {
-	    pos = buftell(buf);
-	}
+    z = gretl_matrix_alloc(n, n);
+    if (z == NULL) {
+	return;
     }
 
-    /* if successful, parse the matrix out of the file */
+    bufseek(buf, datapos, SEEK_SET);
 
-    if (n > 0) {
-	gretl_matrix *z;
-	int i, err = 0;
+    gretl_push_c_numeric_locale();
 
-	z = gretl_matrix_alloc(n, n);
-	if (z == NULL) {
-	    return;
-	}
+    for (i=0; i<n && !err; i++) {
+	bufgets(line, len, buf);
+	err = push_z_row(z, i, n, line);
+    }
 
-	bufseek(buf, pos);
-	gretl_push_c_numeric_locale();
+    gretl_pop_c_numeric_locale();
 
-	for (i=0; i<n && !err; i++) {
-	    bufgets(line, len, buf);
-	    err = push_z_row(z, i, n, line);
-	}
-
-	gretl_pop_c_numeric_locale();
-
-	if (err) {
-	    gretl_matrix_free(z);
-	} else {
-	    spec->auxdata = z;
-	}
+    if (err) {
+	gretl_matrix_free(z);
+    } else {
+	spec->auxdata = z;
     }
 }
 
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
                            c != PLOT_PROB_DIST && \
                            c != PLOT_CURVE && \
-			   c != PLOT_USER && \
-			   c != PLOT_HEATMAP)
+			   c != PLOT_USER)
 
 /* Read plotspec struct from gnuplot command file.  This is not a
    general parser for gnuplot files; it is designed specifically for
@@ -2603,13 +2725,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 {
     linestyle styles[MAX_STYLES];
     int do_markers = 0;
-    int datacols = 0;
     int auto_linewidth = 0;
     int reglist[4] = {0};
     int *uservec = NULL;
+    long barpos = 0;
+    long datapos = 0;
     char gpline[MAXLEN];
     gchar *buf = NULL;
     char *got = NULL;
+    int ignore = 0;
     int i, done;
     int err = 0;
 
@@ -2636,7 +2760,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* get the number of data-points, plot type, and check for 
        observation markers and time-series bars */
-    get_plot_nobs(spec, buf, &do_markers);
+    get_plot_nobs(spec, buf, &do_markers, &barpos, &datapos);
 
     if (spec->nobs == 0 && plot_needs_obs(spec->code)) {
 	/* failed reading plot data */
@@ -2647,7 +2771,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	goto bailout;
     }
 
-    if (spec->nobs > MAX_MARKERS && do_markers) {
+    if (do_markers && spec->nobs > MAX_MARKERS) {
 	do_markers = 0;
     }
 
@@ -2658,7 +2782,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    check_for_plot_size(spec, buf);
 	} else if (spec->code == PLOT_HEATMAP) {
 	    buf_rewind(buf);
-	    get_heatmap_matrix(spec, buf, gpline, sizeof gpline);
+	    get_heatmap_matrix(spec, buf, gpline, sizeof gpline, datapos);
 	}
 	goto bailout;
     }
@@ -2679,6 +2803,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	tailstrip(gpline);
 	fprintf(stderr, "gpline: '%s'\n", gpline);
 #endif
+
+	if (ignore) {
+	    if (!strncmp(gpline, "# end inline", 12)) {
+		ignore = 0;
+	    }
+	    continue;
+	}
+
+	if (!strncmp(gpline, "# start inline", 14)) {
+	    ignore = 1;
+	    continue;
+	}
 
 	if (!strncmp(gpline, "# timeseries", 12)) {
 	    if (sscanf(gpline, "# timeseries %d", &spec->pd)) {
@@ -2807,6 +2943,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     /* then get the "plot" lines */
     if (strncmp(gpline, "plot ", 5) ||
 	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {
+	fprintf(stderr, "HERE!\n");
 	err = unhandled_gp_line_error(gpline);
 	goto bailout;
     }
@@ -2871,14 +3008,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
  	if (spec->lines[i].ncols == 0) {
 	    continue;
 	}
-	if (datacols == 0) {
-	    datacols = spec->lines[i].ncols;
+	if (spec->datacols == 0) {
+	    spec->datacols = spec->lines[i].ncols;
 	} else {
-	    datacols += spec->lines[i].ncols - 1;
+	    spec->datacols += spec->lines[i].ncols - 1;
 	}
     }
 
-    err = plot_get_data_and_markers(spec, buf, datacols, do_markers);
+    err = plot_get_data_and_markers(spec, buf, do_markers,
+				    barpos, datapos);
 
     if (!err && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
@@ -2895,6 +3033,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     }   
 
  bailout:
+
+    if (err) {
+	fprintf(stderr, "read_plotspec_from_file: err = %d\n", err);
+    }
 
     bufgets_finalize(buf);
     g_free(buf);
