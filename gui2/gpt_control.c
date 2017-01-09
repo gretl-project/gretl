@@ -1569,7 +1569,7 @@ static int get_gpt_heredata (GPT_SPEC *spec,
     /* first handle "shaded bars" info, if present */
 
     if (barpos > 0) {
-	bufseek(buf, barpos, SEEK_SET);
+	bufseek(buf, barpos);
 	for (i=0; i<spec->nbars && !err; i++) {
 	    double y1, y2, dx[2];
 
@@ -1597,7 +1597,7 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 
     /* then get the regular plot data */
 
-    bufseek(buf, datapos, SEEK_SET);
+    bufseek(buf, datapos);
 
     for (i=0; i<m->rows && !err; i++) {
 	got = bufgets(line, sizeof line, buf);
@@ -2229,19 +2229,21 @@ static void get_plot_nobs (GPT_SPEC *spec,
 	/* In the case of boxplots the gnuplot file may contain extra
 	   outlier data, which have to be read into an auxiliary matrix
 	*/
-	int found = 0;
-
 	if (auxpos > 0) {
 	    /* we already went past it */
-	    buf_rewind(buf);
-	}
-	while (bufgets(line, MAXLEN - 1, buf)) {
-	    if (!strncmp(line, "# auxdata", 9)) {
-		found = 1;
+	    bufseek(buf, auxpos);
+	    buf_back_lines(buf, 1);
+	    bufgets(line, MAXLEN - 1, buf);
+	} else {
+	    /* try reading further */
+	    while (bufgets(line, MAXLEN - 1, buf)) {
+		if (!strncmp(line, "# auxdata", 9)) {
+		    auxpos = buftell(buf);
+		}
 	    }
 	}
 
-	if (found) {
+	if (auxpos > 0) {
 	    double x, y;
 	    int i, n, r = 0, c = 0;
 	    int err = 0;
@@ -2692,7 +2694,7 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
 	return;
     }
 
-    bufseek(buf, datapos, SEEK_SET);
+    bufseek(buf, datapos);
 
     gretl_push_c_numeric_locale();
 
