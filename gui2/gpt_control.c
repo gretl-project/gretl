@@ -2227,14 +2227,15 @@ static void get_plot_nobs (GPT_SPEC *spec,
 
     if (spec->code == PLOT_BOXPLOTS) {
 	/* In the case of boxplots the gnuplot file may contain extra
-	   outlier data, which have to be read into an auxiliary matrix
+	   (outlier) data, which have to be read into an auxiliary
+	   matrix.
 	*/
 	if (auxpos > 0) {
 	    /* we already went past it */
 	    bufseek(buf, auxpos);
 	    buf_back_lines(buf, 1);
 	    bufgets(line, MAXLEN - 1, buf);
-	} else {
+	} else if (!spec->heredata) {
 	    /* try reading further */
 	    while (bufgets(line, MAXLEN - 1, buf)) {
 		if (!strncmp(line, "# auxdata", 9)) {
