@@ -416,6 +416,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	gretl_chdir(gretl_dotdir());
     }
 
+    /* workdir or dotdir here? */
     err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
 
     if (sout != NULL && *sout != '\0') {
@@ -538,7 +539,8 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     GError *gerr = NULL;
     int err = 0;
 
-    g_spawn_sync(gretl_workdir(), argv, NULL, G_SPAWN_SEARCH_PATH,
+    g_spawn_sync((opt & OPT_D)? NULL : gretl_workdir(),
+		 argv, NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);
 
@@ -635,6 +637,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	   of the stata output (gretltmp.log)
 	*/
 	gretl_chdir(gretl_dotdir());
+	opt |= OPT_D; /* dotdir */
     }
 
     err = lib_run_prog_sync(argv, opt, prn);
