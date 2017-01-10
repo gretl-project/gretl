@@ -2383,6 +2383,12 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 
     s += strspn(s, " ");
 
+    /* The checks below will have to be modified if we're to
+       handle gnuplot 5 "heredoc" data correctly, since the
+       y-columns for a given "line" will not necessarily start
+       at 2.
+    */
+
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;

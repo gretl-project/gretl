@@ -292,7 +292,7 @@ double gnuplot_version (void)
 
 	if (ok && sout != NULL) {
 	    if (!strncmp(sout, "gnuplot ", 8)) {
-		/* e.g. "gnuplot 4.7 patchlevel 0" */
+		/* e.g. "gnuplot 5.0 patchlevel 0" */
 		char *s = strstr(sout, "patchlevel");
 		int plev;
 
@@ -310,21 +310,12 @@ double gnuplot_version (void)
 
 #else /* MS Windows */
 
-# ifdef WIN64
 double gnuplot_version (void)
 {
-    /* As of 2015-02-18, the package for 64-bit Windows
-       includes gnuplot 5.1 (CVS) */
+    /* As of 2015-02-18, the packages for Windows
+       include gnuplot 5.1 (CVS) */
     return 5.1;
 }
-# else
-double gnuplot_version (void)
-{
-    /* As of 2015-02-18, the package for 32-bit Windows
-       includes gnuplot 5.1 (CVS) */
-    return 5.1;
-}
-# endif
 
 #endif /* MS Windows or not */
 
@@ -1485,17 +1476,22 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 static int gnuplot_too_old (void)
 {
     static double gpv;
+    int ret = 0;
 
     if (gpv == 0.0) {
 	gpv = gnuplot_version();
     }
 
-    if (gpv < 5.0) {
-	gretl_errmsg_set("Gnuplot is too old: must be >= version 5.0");
-	return 1;
-    } else {
-	return 0;
+    if (gpv == 0.0) {
+	/* couldn't get version number? */
+	gretl_errmsg_set("Gnuplot is broken or too old: must be >= version 5.0");
+	ret = 1;
+    } else if (gpv < 5.0) {
+	gretl_errmsg_set("Gnuplot %g is too old: must be >= version 5.0", gpv);
+	ret = 1;
     }
+
+    return ret;
 }
 
 #endif

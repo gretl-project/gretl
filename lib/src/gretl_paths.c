@@ -3424,7 +3424,7 @@ static void load_default_path (char *targ)
 	*paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
 #if defined(MAC_NATIVE)
-	strcpy(targ, "Sans 13");
+	strcpy(targ, "Sans 9"); /* was 13, why? */
 #elif defined(OS_OSX)
 	strcpy(targ, "Sans 9");
 #else

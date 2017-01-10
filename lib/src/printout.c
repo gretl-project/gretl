@@ -3237,7 +3237,9 @@ void buf_rewind (const char *buf)
  * @n: number of lines.
  *
  * Applies only when @buf has been initialized with bufgets_init().
- * Moves the reading point of @buf back by @n lines, if possible.
+ * Moves the reading point of @buf for bufgets() back by @n lines,
+ * if possible, or to the start of the buffer if @n is greater than
+ * the number of previous lines.
  * 
  * Returns: 0 on success, 1 on error.
  */

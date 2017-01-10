@@ -50,11 +50,6 @@
 # include <windows.h>
 # include "gretlwin32.h"
 #else
-#if 0 /* not needed? */
-# include <sys/stat.h>
-# include <fcntl.h>
-# include <errno.h>
-#endif
 # if HAVE_GTK_FONT_CHOOSER
 #  include "fontfilter.h"
 # else
