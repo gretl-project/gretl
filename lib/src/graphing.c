@@ -1487,7 +1487,7 @@ static int gnuplot_too_old (void)
 	gretl_errmsg_set("Gnuplot is broken or too old: must be >= version 5.0");
 	ret = 1;
     } else if (gpv < 5.0) {
-	gretl_errmsg_set("Gnuplot %g is too old: must be >= version 5.0", gpv);
+	gretl_errmsg_sprintf("Gnuplot %g is too old: must be >= version 5.0", gpv);
 	ret = 1;
     }
 
