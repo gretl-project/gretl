@@ -503,7 +503,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-	err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
+	err = gretl_win32_grab_output(cmd, gretl_workdir(), &sout);
 	if (sout != NULL && *sout != '\0') {
 	    pputs(prn, sout);
 	}
@@ -538,7 +538,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     GError *gerr = NULL;
     int err = 0;
 
-    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+    g_spawn_sync(gretl_workdir(), argv, NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);
 

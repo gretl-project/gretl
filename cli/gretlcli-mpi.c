@@ -338,7 +338,9 @@ int main (int argc, char *argv[])
     win32_set_gretldir(callname);
 #endif
 
+#ifdef ENABLE_NLS
     nls_init();
+#endif
 
     dset = datainfo_new();
     if (dset == NULL) {
