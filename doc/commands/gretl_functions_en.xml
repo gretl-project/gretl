@@ -8225,6 +8225,22 @@
       </description>
     </function>
 
+    <function name="sleep" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="int">ns</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Not of any use for actual econometrics, for sure, but can be
+	  useful for testing parallelization methods. This function
+	  simply causes the current thread to
+	  <quote>sleep</quote>&mdash;that is, do nothing&mdash;for
+	  <argname>ns</argname> seconds. On wake-up, the function
+	  returns 0.
+	</para>
+      </description>
+    </function>    
+
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
