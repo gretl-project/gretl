@@ -405,15 +405,14 @@ functions:
   scatter matrix \texttt{m} using \texttt{op} \\
 \end{tabular}
 \end{center}
-By ``object'' above we mean (at present) either a matrix or a
-scalar.\footnote{A possible future extension is to support the passing
-  of bundles between processes.} Note that the scalar return value
-from these functions (apart from \texttt{mpirecv}, which returns a
-matrix or scalar depending on the context) is merely nominal: they
-return 0 if they succeed. The \texttt{root} argument to
-\texttt{mpibcast}, \texttt{mpireduce} and \texttt{mpiscatter} is
-optional, and defaults to 0; the use of this argument is discussed
-below.
+By ``object'' above we mean (at present) a matrix, scalar or bundle
+(however, for bundles only \texttt{mpisend}, \texttt{mpirevc} and
+\texttt{mpibcast} are supported).  The scalar return value from these
+functions (apart from \texttt{mpirecv}, which returns a matrix, bundle
+or scalar depending on the context) is merely nominal: they return 0
+if they succeed. The \texttt{root} argument to \texttt{mpibcast},
+\texttt{mpireduce} and \texttt{mpiscatter} is optional, and defaults
+to 0; the use of this argument is discussed below.
 
 As you might expect, \texttt{mpisend} and \texttt{mpirecv} have to be
 paired suitably, as in the following fragment which sends a matrix
@@ -455,7 +454,8 @@ method. The methods currently supported for scalars are \texttt{sum},
 \texttt{prod} (product), \texttt{max} and \texttt{min}. For matrices
 the methods are \texttt{sum}, \texttt{prod} (Hadamard product),
 \texttt{hcat} (horizontal concatenation) and \texttt{vcat} (vertical
-concatenation). For example:
+concatenation). Reduction is not supported for bundles at present.
+For example:
 \begin{code}
 matrix X
 X = mnormal(T, k)

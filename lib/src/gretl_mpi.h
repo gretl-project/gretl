@@ -74,6 +74,7 @@ double gretl_scalar_mpi_receive (int source,
 
 int gretl_mpi_receive (int source, GretlType *type, 
 		       gretl_matrix **pm,
+		       gretl_bundle **pb,
 		       double *px);
 
 void gretl_mpi_stopwatch_init (void);

@@ -160,6 +160,10 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 				const char *fname,
 				int to_dotdir);
 
+char *gretl_bundle_write_to_buffer (gretl_bundle *b,
+				    int *bytes,
+				    int *err);
+
 gretl_bundle *gretl_bundle_read_from_file (const char *fname, 
 					   int from_dotdir,
 					   int *err);

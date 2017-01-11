@@ -52,6 +52,7 @@
 static MPI_Comm mpi_comm_world;
 static MPI_Datatype mpi_double;
 static MPI_Datatype mpi_int;
+static MPI_Datatype mpi_byte;
 static MPI_Op mpi_sum;
 static MPI_Op mpi_prod;
 static MPI_Op mpi_max;
@@ -62,6 +63,7 @@ static MPI_Op mpi_min;
 # define mpi_comm_world MPI_COMM_WORLD
 # define mpi_double     MPI_DOUBLE
 # define mpi_int        MPI_INT
+# define mpi_byte       MPI_BYTE
 # define mpi_sum        MPI_SUM
 # define mpi_prod       MPI_PROD
 # define mpi_max        MPI_MAX
@@ -71,7 +73,9 @@ static MPI_Op mpi_min;
 enum {
     TAG_MATRIX_DIM = 1,
     TAG_MATRIX_VAL,
-    TAG_SCALAR_VAL
+    TAG_SCALAR_VAL,
+    TAG_BUNDLE_BYTES,
+    TAG_BUNDLE_XML
 };
 
 #define MPI_DEBUG 0
@@ -160,6 +164,7 @@ int gretl_MPI_init (void)
 	mpi_comm_world = (MPI_Comm) mpiget(MPIhandle, "ompi_mpi_comm_world", &err);
 	mpi_double     = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_double", &err);
 	mpi_int        = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_int", &err);
+	mpi_byte       = (MPI_Datatype) mpiget(MPIhandle, "ompi_mpi_byte", &err);
 	mpi_sum        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_sum", &err);
 	mpi_prod       = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_prod", &err);
 	mpi_max        = (MPI_Op) mpiget(MPIhandle, "ompi_mpi_op_max", &err);
@@ -610,6 +615,63 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
     return err;
 }
 
+static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int root)
+{
+    gretl_bundle *b = NULL;
+    char *buf = NULL;
+    int bytes = 0;
+    int id, np, err;
+
+    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_rank_error(root);
+    }
+
+    if (id == root) {
+	b = *pb;
+	buf = gretl_bundle_write_to_buffer(b, &bytes, &err);
+	if (err) {
+	    return err;
+	}	
+    }
+
+    /* broadcast the buffer size first */
+    err = mpi_bcast(&bytes, 1, mpi_int, root, mpi_comm_world);
+
+    if (!err && id != root) {
+	/* everyone but root needs to allocate space */
+	buf = malloc(bytes);
+	if (buf == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* broadcast the bundle content */
+	err = mpi_bcast(buf, bytes, mpi_byte, root, mpi_comm_world);
+    }
+
+    if (!err && id != root) {
+	/* everyone but root needs to reconstitute the bundle */
+	*pb = gretl_bundle_read_from_buffer(buf, bytes, &err);
+	if (err) {
+	    /* note: not an MPI error */
+	    free(buf);
+	    return err;
+	}
+    }
+
+    free(buf);
+
+    if (err) {
+	gretl_mpi_error(&err);
+    }
+
+    return err;
+}
+
 int gretl_scalar_mpi_bcast (double *px, int root)
 {
     int np, err;
@@ -636,9 +698,11 @@ int gretl_scalar_mpi_bcast (double *px, int root)
  * @root: the rank of the root process.
  *
  * Broadcasts the value referenced by @p to MPI_COMM_WORLD.
- * At present @type must be GRETL_TYPE_MATRIX, in which case
- * @p should be a (**gretl_matrix) pointer, or GRETL_TYPE_DOUBLE,
- * in which case @p should be a (*double) pointer.
+ * @type must be GRETL_TYPE_MATRIX, in which case
+ * @p should be a (**gretl_matrix) pointer; GRETL_TYPE_BUNDLE,
+ * in which case @p should be a (**gretl_bundle) pointer;
+ * or GRETL_TYPE_DOUBLE, in which case @p should be a (*double)
+ * pointer.
  *
  * Returns: 0 on successful completion, non-zero code otherwise.
  **/
@@ -649,6 +713,8 @@ int gretl_mpi_bcast (void *p, GretlType type, int root)
 	return gretl_scalar_mpi_bcast((double *) p, root);
     } else if (type == GRETL_TYPE_MATRIX) {
 	return gretl_matrix_mpi_bcast((gretl_matrix **) p, root);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return gretl_bundle_mpi_bcast((gretl_bundle **) p, root);
     } else {
 	return E_DATA;
     }
@@ -668,6 +734,38 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
 	err = mpi_send(m->val, n, mpi_double, dest, TAG_MATRIX_VAL,
 		       mpi_comm_world);
     }
+
+    if (err) {
+	gretl_mpi_error(&err);
+    }    
+
+    return err;
+}
+
+static int gretl_bundle_mpi_send (gretl_bundle *b, int dest)
+{
+    char *buf = NULL;
+    int bytes = 0;
+    int err = 0;
+
+    /* serialize bundle to XML buffer and get size of the
+       buffer in bytes; then send buffer size, followed by
+       the XML bytes if successful */
+
+    buf = gretl_bundle_write_to_buffer(b, &bytes, &err);
+    if (err) {
+	return err;
+    }
+
+    err = mpi_send(&bytes, 1, mpi_int, dest, TAG_BUNDLE_BYTES, 
+		   mpi_comm_world);
+
+    if (!err) {
+	err = mpi_send(buf, bytes, mpi_byte, dest, TAG_BUNDLE_XML,
+		       mpi_comm_world);
+    }
+
+    free(buf);
 
     if (err) {
 	gretl_mpi_error(&err);
@@ -718,6 +816,8 @@ int gretl_mpi_send (void *p, GretlType type, int dest)
 	return gretl_scalar_mpi_send((double *) p, dest);
     } else if (type == GRETL_TYPE_MATRIX) {
 	return gretl_matrix_mpi_send((gretl_matrix *) p, dest);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return gretl_bundle_mpi_send((gretl_bundle *) p, dest);
     } else {
 	return E_DATA;
     }
@@ -736,19 +836,56 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 	m = gretl_matrix_alloc(rc[0], rc[1]);
 	if (m == NULL) {
 	    *err = E_ALLOC;
+	    return NULL;
 	} else {
 	    int n = rc[0] * rc[1];
 
 	    *err = mpi_recv(m->val, n, mpi_double, source,
 			    TAG_MATRIX_VAL, mpi_comm_world,
 			    MPI_STATUS_IGNORE);
-	    if (*err) {
-		gretl_mpi_error(err);
-	    }
 	}
     }
 
+    if (*err) {
+	gretl_mpi_error(err);
+    }
+
     return m;
+}
+
+gretl_bundle *gretl_bundle_mpi_receive (int source, 
+					int *err)
+{
+    gretl_bundle *b = NULL;
+    int myerr = 0;
+    int bytes = 0;
+
+    myerr = mpi_recv(&bytes, 1, mpi_int, source, TAG_BUNDLE_BYTES, 
+		     mpi_comm_world, MPI_STATUS_IGNORE);
+
+    if (!myerr && bytes > 0) {
+	char *buf = malloc(bytes);
+
+	if (buf == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	} else {
+	    myerr = mpi_recv(buf, bytes, mpi_byte, source,
+			     TAG_BUNDLE_XML, mpi_comm_world,
+			     MPI_STATUS_IGNORE);
+	    if (!myerr) {
+		b = gretl_bundle_read_from_buffer(buf, bytes, err);
+	    }
+	    free(buf);
+	}
+    }
+
+    if (myerr) {
+	gretl_mpi_error(&myerr);
+	*err = myerr;
+    }
+
+    return b;
 }
 
 double gretl_scalar_mpi_receive (int source, int *err)
@@ -766,6 +903,7 @@ double gretl_scalar_mpi_receive (int source, int *err)
 
 int gretl_mpi_receive (int source, GretlType *type, 
 		       gretl_matrix **pm,
+		       gretl_bundle **pb,
 		       double *px)
 {
     MPI_Status status;
@@ -785,6 +923,9 @@ int gretl_mpi_receive (int source, GretlType *type,
     } else if (status.MPI_TAG == TAG_MATRIX_DIM) {
 	*pm = gretl_matrix_mpi_receive(source, &err);
 	*type = GRETL_TYPE_MATRIX;
+    } else if (status.MPI_TAG == TAG_BUNDLE_BYTES) {
+	*pb = gretl_bundle_mpi_receive(source, &err);
+	*type = GRETL_TYPE_BUNDLE;
     } else {
 	err = E_DATA;
     }

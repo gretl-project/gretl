@@ -1895,6 +1895,59 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     return err;
 }
 
+char *gretl_bundle_write_to_buffer (gretl_bundle *b,
+				    int *bytes,
+				    int *err)
+{
+    char fname[32] = "_mpi_bun.XXXXXX";
+    long pos;
+    char *buf = NULL;
+    FILE *fp = NULL;
+
+    *err = gretl_chdir(gretl_dotdir());
+    if (!*err) {
+	fp = gretl_mktemp(fname, "wb+");
+    }
+    
+    if (fp == NULL) {
+	*err = E_FOPEN;
+	return NULL;
+    }
+    
+    gretl_push_c_numeric_locale();
+    gretl_xml_header(fp);
+    gretl_bundle_serialize(b, NULL, fp);
+    fflush(fp);
+    fseek(fp, 0, SEEK_END);
+    pos = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    if (pos <= 0 || pos > INT_MAX) {
+	*err = E_DATA;
+    } else {
+	size_t sz = (size_t) pos;
+	
+	*bytes = (int) pos;
+	buf = malloc(sz);
+	if (buf == NULL) {
+	    *err = E_ALLOC;
+	} else if (fread(buf, 1, sz, fp) != sz) {
+	    *err = E_DATA;
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+    fclose(fp);
+    remove(fname);
+
+    if (*err && buf != NULL) {
+	free(buf);
+	buf = NULL;
+    }
+
+    return buf;
+}
+
 gretl_bundle *gretl_bundle_read_from_file (const char *fname, 
 					   int from_dotdir,
 					   int *err)
@@ -1928,7 +1981,8 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
     return b;
 }
 
-gretl_bundle *gretl_bundle_read_from_buffer (const char *buf, int len,
+gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
+					     int len,
 					     int *err)
 {
     xmlDocPtr doc = NULL;
