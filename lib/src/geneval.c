@@ -4396,6 +4396,20 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static NODE *sleep_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	int s = node_get_int(n, p);
+
+	sleep(s);
+	ret->v.xval = 0;
+    }
+
+    return ret;
+}
+
 static NODE *scalar_isnan_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -12217,6 +12231,12 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = scalar_isnan_node(l, p);
 	} else if (l->t == MAT) {
 	    ret = matrix_isnan_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
+	}
+    case F_SLEEP:
+	if (scalar_node(l)) {
+	    ret = sleep_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
 	}
