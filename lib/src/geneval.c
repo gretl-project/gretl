@@ -4403,7 +4403,7 @@ static NODE *sleep_node (NODE *n, parser *p)
     if (ret != NULL) {
 	int s = node_get_int(n, p);
 
-	sleep(s);
+	g_usleep(G_USEC_PER_SEC * s);
 	ret->v.xval = 0;
     }
 
