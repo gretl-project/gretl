@@ -1086,6 +1086,7 @@ static int node_replace_bundle (NODE *n, gretl_bundle *b)
 	} else {
 	    fprintf(stderr, "*** replace bundle: node uv of wrong type!\n");
 	}
+	err = E_DATA;
     }
 
     return err;
