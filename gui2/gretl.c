@@ -290,7 +290,9 @@ static void get_runfile (char *fname)
     strncat(tryfile, fname, MAXLEN - 1);
 #endif
 
-    if (gretl_addpath(tryfile, 1) == NULL) {
+    /* try "as is" first? */
+    if (gretl_test_fopen(tryfile, "r") != 0 &&
+	gretl_addpath(tryfile, 1) == NULL) {
 	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
 	exit(EXIT_FAILURE);
     } else {
