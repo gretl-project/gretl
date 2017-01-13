@@ -12275,6 +12275,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
 	}
+	break;
     case F_SLEEP:
 	if (scalar_node(l)) {
 	    ret = sleep_node(l, p);
