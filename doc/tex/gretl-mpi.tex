@@ -535,9 +535,10 @@ displays the results. As with \texttt{foreign}, variables defined
 within the calling gretl process are not immediately available in the
 called program, and vice versa. To send data to, or retrieve results
 from, \texttt{gretlmpi} you need to use suitable input/output, for
-instance via the functions \texttt{mwrite} and \texttt{mread}. In the
-context of an MPI block you can also use the \texttt{store} and
-\texttt{open} commands to communicate a dataset.
+instance via the functions \texttt{mwrite} and \texttt{mread} or
+\texttt{bwrite} and \texttt{bread}. In the context of an MPI block you
+can also use the \texttt{store} and \texttt{open} commands to
+communicate a dataset.
 
 The gretl \texttt{mpi} command supports five options, as follows.
 \begin{center}
