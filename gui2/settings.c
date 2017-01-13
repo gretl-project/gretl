@@ -2780,7 +2780,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     w = gtk_radio_button_new_with_label(NULL, 
 					_("remember the last-opened folder"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), keep_folder);
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     wset->keep_radio = w;
@@ -2789,6 +2788,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_radio_button_new_with_label(group, _("always start in the "
 						 "working directory"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), !keep_folder);
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
