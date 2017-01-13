@@ -1653,6 +1653,18 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_matmask(setarg, dset, prn);
 	} else if (!strcmp(setobj, "echo")) {
 	    return set_echo_status(setarg);
+	} else if (!strcmp(setobj, "verbose")) {
+	    int ret;
+	    if (!strcmp(setarg, "on")) {
+		set_gretl_messages(1);
+		ret = set_echo_status(setarg);
+	    } else if (!strcmp(setarg, "off")) {
+		set_gretl_messages(0);
+		ret = set_echo_status(setarg);
+	    } else {
+		ret = E_INVARG;
+	    }
+	    return ret;
 	}
 
 	if (libset_boolvar(setobj)) {
