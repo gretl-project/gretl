@@ -11563,7 +11563,33 @@
 	  inherited from the shell, otherwise it is set to whatever
 	  was selected in the previous gretl session.
 	  </para>
+	</li>
+	<li>
+	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Suppress or resume the echoing of commands in gretl's
+	  output.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>messages</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Suppress or resume the printing of non-error messages
+	  associated with various commands, for example when a new variable is
+	  generated or when the sample range is changed.
+         </para>
+	</li>
+	<li>
+	  <para><lit>verbose</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Acts as a <quote>master switch</quote> for
+	  <lit>echo</lit> and <lit>messages</lit> (see above), turning
+	  them both off or on simultaneously.
+         </para>
 	</li>	
+	<li>
+	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Suppress or resume the printing of warning messages
+	  issued when arithmetical operations produce non-finite values. 
+         </para>
+	</li>
 	<li>
 	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the default),
 	    <lit>space</lit>, <lit>tab</lit> or <lit>semicolon</lit>.  Sets
@@ -11619,12 +11645,6 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
-	  default). Suppress or resume the echoing of commands in gretl's
-	  output.
-	  </para>
-	</li>
-	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> or <lit>off</lit>
 	    (the default).  Force gretl to use the decimal point
 	    character, in a locale where another character (most likely
@@ -11648,19 +11668,6 @@
 	  <lit>BFGSmax</lit> and <lit>NRmax</lit> functions (see the
 	  User's Guide for details).
 	</para>
-	</li>
-	<li>
-	  <para><lit>messages</lit>: <lit>off</lit> or <lit>on</lit> (the
-	  default). Suppress or resume the printing of non-error messages
-	  associated with various commands, for example when a new variable is
-	  generated or when the sample range is changed.
-         </para>
-	</li>
-	<li>
-	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit> (the
-	  default). Suppress or resume the printing of warning messages
-	  issued when arithmetical operations produce non-finite values. 
-         </para>
 	</li>
 	<li>
 	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> or <lit>0</lit>
