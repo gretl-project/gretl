@@ -2886,7 +2886,7 @@ void set_up_mac_look (void)
 	    gtk_rc_parse(gtkrc);
 	    g_free(gtkrc);
 	} else {
-	    const char *path = "/Library/Frameworks/GTK+.framework/Resources";
+	    const char *path = "/Library/Frameworks/gretl-dev.framework/Resources";
 	    
 	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc", 
 				    path, themepref);
