@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# the directory above the source tree
+parent=/home/cottrell/stats/esl
+
+version=$(date +%Y%m%d)
+versiondir=gretl-${version}	  
+tarfile="gretl-source.tar.xz"
+
+echo "making dist file for gretl $version using filename $tarfile"
+
+# make the distribution archive
+cd $parent 
+echo "making archive..."
+mv gretl-git ${versiondir}
+rm -f $tarfile
+tar cvJfX $tarfile tar_exclude ${versiondir}
+mv ${versiondir} gretl-git
