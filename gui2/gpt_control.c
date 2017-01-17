@@ -5466,10 +5466,10 @@ void launch_gnuplot_interactive (void)
     g_free(gpline);
 #elif defined(MAC_NATIVE)
 # ifdef PKGBUILD
-    gchar *gpline = g_strdup_printf("open -a Terminal.app \"%s\"",
+    gchar *gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\"",
 				    gretl_gnuplot_path());
 # else
-    gchar *gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\"",
+    gchar *gpline = g_strdup_printf("open -a Terminal.app \"%s\"",
 				    gretl_gnuplot_path());
 # endif    
     system(gpline);
