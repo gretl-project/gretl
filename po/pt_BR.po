@@ -11,8 +11,8 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-12-20 08:47-0500\n"
-"PO-Revision-Date: 2016-12-19 19:03-0500\n"
-"Last-Translator: Henrique Andrade <henrique.andrade@ufrgs.br>\n"
+"PO-Revision-Date: 2017-01-18 21:51-0200\n"
+"Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -6323,7 +6323,7 @@ msgstr ""
 #: lib/src/nonparam.c:897
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
-msgstr "z = %g, com p-valor (bicaudal) %g\n"
+msgstr "escore-z = %g, com p-valor (bicaudal) %g\n"
 
 #: lib/src/nonparam.c:926
 msgid "Two-tailed p-value"
@@ -17542,7 +17542,7 @@ msgstr "Esperado %s mas encontrou-se %s"
 
 #: plugin/panurc.c:563
 msgid "z-score"
-msgstr "z"
+msgstr "escore-z"
 
 #: plugin/panurc.c:571
 #, c-format
