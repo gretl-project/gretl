@@ -47,19 +47,19 @@ MKNEWS = @MKNEWS@
 
 ifeq ($(have_sourceview),3.0)
   langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-3.0/language-specs
-  SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
 endif
 
 ifeq ($(have_sourceview),2.0)
   langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-2.0/language-specs
   JULIA_LANG = julia_sv2.lang
-  SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
 endif
 
-# override for building Windows and OS X packages
 ifeq ($(pkg_build),yes)
+  # special for building Windows and OS X packages
   langdir = $(prefix)/share/gretl/gtksourceview
   JULIA_LANG = julia_sv2.lang
+else
+  SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
 endif
 
 ifeq ($(CC),)

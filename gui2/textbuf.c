@@ -690,7 +690,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 
 /* Packages for Windows and OS X: gtksourceview needs to
    be told where to find its language-specs and style
-   files.
+   files: these live under gretl/share inside the package.
 
    On Windows we need to ensure that the "set_search_path"
    functions are fed a UTF-8 path, since gtksourceview uses
@@ -737,7 +737,10 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 #elif defined(OS_OSX) && defined(SVPREFIX)
 
-/* On OS X but not @PKGBUILD: use @SVPREFIX for gtksourceview */
+/* On OS X but not @PKGBUILD: use @SVPREFIX for gtksourceview.
+   Here we allow for the possibility that some people might
+   build gretl on OS X using gtk3.
+*/
 
 static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 {
@@ -749,27 +752,33 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
     if (!done && lm != NULL) {
 	GtkSourceStyleSchemeManager *mgr;
-	gchar *dirs[3] = {NULL, NULL, NULL};
+	gchar *dirs[2] = {NULL, NULL};
 
+#if USE_GTKSOURCEVIEW_3	
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-3.0/language-specs", SVPREFIX);
+#else
 	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0/language-specs", SVPREFIX);
-	dirs[1] = g_strdup_printf("%sgtksourceview", gretl_home());
+#endif
 	gtk_source_language_manager_set_search_path(lm, dirs);
+	g_free(dirs[0]);
 
 	mgr = gtk_source_style_scheme_manager_get_default();
-	g_free(dirs[0]);
+#if USE_GTKSOURCEVIEW_3
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-3.0/styles", SVPREFIX);
+#else
 	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0/styles", SVPREFIX);
-	gtk_source_style_scheme_manager_set_search_path(mgr, dirs);
+#endif
+	gtk_source_style_scheme_manager_append_search_path(mgr, dirs[0]);
 	gtk_source_style_scheme_manager_force_rescan(mgr);
-
 	g_free(dirs[0]);
-	g_free(dirs[1]);
+	
 	done = 1;
     }
 }
 
 #else
 
-/* "regular" build */
+/* a "regular" build */
 
 static void ensure_gretl_style_path (void)
 {
