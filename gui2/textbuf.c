@@ -735,7 +735,40 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
     }
 }
 
-#else /* !PKGBUILD */
+#elif defined(OS_OSX) && defined(SVPREFIX)
+
+/* On OS X but not @PKGBUILD: use @SVPREFIX for gtksourceview */
+
+static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
+{
+    static int done;
+
+    if (!done && lm == NULL) {
+	lm = gtk_source_language_manager_get_default();
+    }
+
+    if (!done && lm != NULL) {
+	GtkSourceStyleSchemeManager *mgr;
+	gchar *dirs[3] = {NULL, NULL, NULL};
+
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0", SVPREFIX);
+	dirs[1] = g_strdup_printf("%sgtksourceview", gretl_home());
+
+	gtk_source_language_manager_set_search_path(lm, dirs);
+
+	mgr = gtk_source_style_scheme_manager_get_default();
+	gtk_source_style_scheme_manager_set_search_path(mgr, dirs);
+	gtk_source_style_scheme_manager_force_rescan(mgr);
+
+	g_free(dirs[0]);
+	g_free(dirs[1]);
+	done = 1;
+    }
+}
+
+#else
+
+/* "regular" build */
 
 static void ensure_gretl_style_path (void)
 {
@@ -803,6 +836,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     if (textview_use_highlighting(vwin->role)) {
 	lm = gtk_source_language_manager_get_default();
 #ifdef PKGBUILD
+	ensure_sourceview_path(lm);
+#elif defined(OS_OSX) && defined(SVPREFIX)
 	ensure_sourceview_path(lm);
 #else
 	ensure_gretl_style_path();
@@ -900,6 +935,8 @@ GtkWidget *create_sample_source (const char *style)
     
 #ifdef PKGBUILD
     ensure_sourceview_path(lm);
+#elif defined(OS_OSX) && defined(SVPREFIX)
+    ensure_sourceview_path(lm);
 #else
     ensure_gretl_style_path();
 #endif
@@ -932,9 +969,11 @@ void update_script_editor_options (windata_t *vwin)
 {
 #ifdef PKGBUILD    
     ensure_sourceview_path(NULL);
+#elif defined(OS_OSX) && defined(SVPREFIX)
+    ensure_sourceview_path(NULL);
 #else
     ensure_gretl_style_path();
-#endif    
+#endif
     
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
 					  script_line_numbers);
@@ -3275,9 +3314,11 @@ const char **get_sourceview_style_ids (int *n)
 
 #ifdef PKGBUILD
     ensure_sourceview_path(NULL);
+#elsif defined(OS_OSX) && defined(SVPREFIX)
+    ensure_sourceview_path(NULL);
 #else
     ensure_gretl_style_path();
-#endif    
+#endif
 
     *n = 0;
 
