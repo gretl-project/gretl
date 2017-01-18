@@ -35,6 +35,7 @@ GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 GTKSOURCEVIEW_CFLAGS = @GTKSOURCEVIEW_CFLAGS@
 GTKSOURCEVIEW_LIBS = @GTKSOURCEVIEW_LIBS@
+GTKSOURCEVIEW_PREFIX = @GTKSOURCEVIEW_PREFIX@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
@@ -45,13 +46,11 @@ MKLANG = @MKLANG@
 MKNEWS = @MKNEWS@
 
 ifeq ($(have_sourceview),3.0)
-  svprefix = $(shell pkg-config --variable=prefix gtksourceview-3.0)
-  langdir = $(svprefix)/share/gtksourceview-3.0/language-specs
+  langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-3.0/language-specs
 endif
 
 ifeq ($(have_sourceview),2.0)
-  svprefix = $(shell pkg-config --variable=prefix gtksourceview-2.0)
-  langdir = $(svprefix)/share/gtksourceview-2.0/language-specs
+  langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-2.0/language-specs
   JULIA_LANG = julia_sv2.lang
 endif
 

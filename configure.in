@@ -762,6 +762,7 @@ dnl
 if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.2.2,
       AC_DEFINE(USE_GTKSOURCEVIEW_2)
+      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0",
       echo "version 2.0 >= 2.2.2 not found"
     )
@@ -779,6 +780,7 @@ dnl
 if test "$gtk_version" = "3.0" ; then
     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0,
       AC_DEFINE(USE_GTKSOURCEVIEW_3)
+      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
       have_sourceview="3.0",
       echo "version 3.0 not found"
     )
@@ -818,6 +820,7 @@ AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LIBS)
+AC_SUBST(GTKSOURCEVIEW_PREFIX)
 
 dnl Check for gdk-pixbuf support
 if test ${build_gui} = "yes" ; then
