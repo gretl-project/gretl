@@ -171,7 +171,7 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_V, "verbose", 0 },
     { CORR,     OPT_U, "plot", 2 },
     { CORR,     OPT_X, "matrix", 2 },
-    { CORR,     OPT_T, "triangle" },
+    { CORR,     OPT_T, "triangle", 0 },
     { CORRGM,   OPT_B, "bartlett", 0 },
     { CORRGM,   OPT_U, "plot", 2 },
     { CUSUM,    OPT_R, "squares", 0 },
