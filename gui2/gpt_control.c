@@ -5455,7 +5455,10 @@ static void mac_do_gp_script (const char *plotfile)
 #endif
 
 /* Callback for "Gnuplot" item in Tools menu: open a 
-   gnuplot session and let the user do whatever */
+   gnuplot session and let the user do whatever. In
+   this case we need a controlling terminal window if
+   we're not on MS Windows.
+*/
 
 void launch_gnuplot_interactive (void)
 {
@@ -5474,7 +5477,7 @@ void launch_gnuplot_interactive (void)
 # endif    
     system(gpline);
     g_free(gpline);    
-#else 
+#else /* neither WIN32 nor MAC_NATIVE */
     char term[32];
     int err;
 
