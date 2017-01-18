@@ -3314,7 +3314,7 @@ const char **get_sourceview_style_ids (int *n)
 
 #ifdef PKGBUILD
     ensure_sourceview_path(NULL);
-#elsif defined(OS_OSX) && defined(SVPREFIX)
+#elif defined(OS_OSX) && defined(SVPREFIX)
     ensure_sourceview_path(NULL);
 #else
     ensure_gretl_style_path();
