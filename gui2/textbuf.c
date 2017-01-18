@@ -751,12 +751,13 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 	GtkSourceStyleSchemeManager *mgr;
 	gchar *dirs[3] = {NULL, NULL, NULL};
 
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0", SVPREFIX);
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0/language-specs", SVPREFIX);
 	dirs[1] = g_strdup_printf("%sgtksourceview", gretl_home());
-
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
 	mgr = gtk_source_style_scheme_manager_get_default();
+	g_free(dirs[0]);
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0/styles", SVPREFIX);
 	gtk_source_style_scheme_manager_set_search_path(mgr, dirs);
 	gtk_source_style_scheme_manager_force_rescan(mgr);
 
