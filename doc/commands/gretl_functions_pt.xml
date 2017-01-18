@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
 <funcref language="portuguese">
 
@@ -1142,18 +1142,36 @@
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
 	<fnarg type="series-or-list">byvar</fnarg>
-	<fnarg type="string">funcname</fnarg>
+	<fnarg type="string" optional="true">funcname</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Na versão mais simples, tanto <argname>x</argname> quanto
-	  <argname>byvar</argname> são séries individuais. Neste caso
-	  a função retorna uma matriz com três colunas: a primeira
-	  contém os valores distintos de <argname>byvar</argname>,
-	  ordenado de forma ascendente. A segunda contém a quantidade
-	  de observações de <argname>byvar</argname> para cada um dos
-	  valores distintos. A terceira contém os valores da estatística
-	  especificada por <argname>funcname</argname> calculada na
+	  Na forma mais simples de uso, <argname>x</argname> é igual a
+	  <lit>null</lit>, <argname>byvar</argname> é uma séries individual
+	  e o terceiro argumento é omitido. Neste caso é retornada uma
+	  matriz com duas colunas contendo na primeira coluna os valores
+	  distintos de <argname>byvar</argname>, ordenados de forma crescente,
+	  e na segunda a quantidade de observações de <argname>byvar</argname>
+	  para cada um dos valores distintos.
+	  Por exemplo,
+	</para>
+	<code>
+	  open data4-1
+	  eval aggregate(null, bedrms)
+	</code>
+	<para>
+	  will show that the series <lit>bedrms</lit> has values
+	  3 (with count 5) and 4 (with count 9).
+	</para>
+	<para>
+	  If <argname>x</argname> and <argname>byvar</argname> are
+	  both individual series and the third argument is given, the
+	  return value is a matrix with three columns holding,
+	  respectively, the distinct values of
+	  <argname>byvar</argname>, sorted in ascending order; the
+	  count of observations at which <argname>byvar</argname>
+	  takes on each of these values; and the values of the
+	  estatística especificada por <argname>funcname</argname> calculada na
 	  série <argname>x</argname>, usando apenas aquelas observações
 	  nas quais <argname>byvar</argname> tem valor igual aos dados
 	  na primeira coluna.
@@ -1317,6 +1335,11 @@
 	  cuja tangente é <argname>x</argname>. Resultado em radianos.
 	</para>
       </description>
+      <seelist>
+        <fncref targ="cos"/>
+        <fncref targ="sin"/>
+        <fncref targ="tan"/>
+      </seelist>
     </function>
 
     <function name="atanh" section="math" output="asinput">
@@ -1727,11 +1750,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>p1 = cdf(N, -2.5)</example>
 	<example>p2 = cdf(X, 3, 5.67)</example>
 	<example>p3 = cdf(D, 0.25, -1, 1)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Calculadora da função de distribuição acumulada. Retorna
@@ -1813,18 +1836,18 @@
 	  </li>
 	</ilist>
 	<tabular colspec="lllll">
-	  \textit{Distribution} &amp; \textsl{d} &amp;
+	  \textit{Distribuição} &amp; \textsl{d} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
 	  Normal padrão &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp;
 	  -- &amp; -- &amp; --\\
 	  Normal bivariada &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- &amp; --\\
-	  t de Student $t$ (central) &amp; \texttt{t} &amp;
-	  graus de liberdade &amp; -- &amp; --\\
+	  $t$ de Student (central) &amp; \texttt{t} &amp;
+	  g.l. &amp; -- &amp; --\\
 	  Qui-quadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp;
-	  graus de liberdade &amp; -- &amp; --\\
-	  F de Snedecor $F$ &amp; \texttt{f} ou \texttt{F} &amp;
-	  graus de liberdade (num.) &amp; graus de liberdade (den.) &amp; --\\
+	  g.l. &amp; -- &amp; --\\
+	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp;
+	  g.l. (num.) &amp; df (den.) &amp; --\\
 	  Gama &amp; \texttt{g} ou \texttt{G} &amp;
 	  forma &amp; escala &amp; --\\
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp;
@@ -1834,19 +1857,20 @@
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp;
 	  forma &amp; escala &amp; --\\
 	  Erro Generalizado &amp; \texttt{E} &amp;
-	  forma &amp; -- &amp; --\\
+	  shape &amp; -- &amp; --\\
 	  $\chi^2$ não-central &amp; \texttt{ncX} &amp;
-	  graus de liberdade &amp; não-centralidade &amp; -- \\
+	  g.l. &amp; não-centralidade &amp; -- \\
 	  $F$ não-central &amp; \texttt{ncF} &amp;
-	  graus de liberdade (num.) &amp; graus de liberdade (den.) &amp; não-centralidade \\
-	  $t$ não-central &amp; \texttt{nct} &amp;
-	  graus de liberdade &amp; não-centralidade &amp; -- \\
+	  g.l. (num.) &amp; df (den.) &amp; não-centralidade \\
+	  Non-central $t$ &amp; \texttt{nct} &amp;
+	  g.l. &amp; não-centralidade &amp; -- \\
 	</tabular>
 	<para>
 	  Note que na maioria dos casos existem pseudônimos para ajudar na
 	  memorização dos céodigos. O caso da norma bivariada é especial: a
 	  sintaxe é <lit>x = cdf(D, rho, z1, z2)</lit> onde <lit>rho</lit>
-	  é a correlação entre as variáveis <lit>z1</lit> e <lit>z2</lit>.
+	  é a correlação entre as variáveis <lit>z1</lit>
+	  e <lit>z2</lit>.
 	</para>
 	<para context="tex">
 	  A parametrização que o \app{Gretl} usa para a a variável aleatória
@@ -1957,38 +1981,6 @@
       </description>
     </function>
 
-    <function name="cnumber" section="linalg" output="scalar">
-      <fnargs>
-    <fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Retorna o número condicional da matriz <argname>X</argname> de
-	  ordem <by r="n" c="k"/>, conforme definido em <cite
-	  key="belsley-etal80">Belsley, Kuh e Welsch
-	  (1980)</cite>. Se as colunas de <argname>X</argname> forem
-	  mutuamente ortogonais o número condicional de
-	  <argname>X</argname> é a unidade. Um número condicional grande
-	  é um indicador de multicolinearidade, sendo que é considerado
-	  normalmente um valor <quote>grande</quote> algo acima de 50
-	  (ou, algumas vezes, de 30).
-	</para>
-	<para>
-	  Os passos para esses cálculos são: (1) contruir uma matriz
-	  <math>Z</math> onde suas colunas são a divisão das colunas de
-	  <argname>X</argname> divididas por suas respectivas normas
-	  euclidianas; (2) construir <math>Z'Z</math> e obter seus
-	  autovalores e; (3) calcular a raiz quadrada da razão entre
-	  o maior e o menor autovalor.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="rcond"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2024,6 +2016,39 @@
 	</para>
       </description>
     </function>
+
+    <function name="cnumber" section="linalg" output="scalar">
+      <fnargs>
+    <fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o número condicional da matriz <argname>X</argname> de
+	  ordem <by r="n" c="k"/>, conforme definido em <cite
+	  key="belsley-etal80">Belsley, Kuh e Welsch
+	  (1980)</cite>. Se as colunas de <argname>X</argname> forem
+	  mutuamente ortogonais o número condicional de
+	  <argname>X</argname> é a unidade. Um número condicional grande
+	  é um indicador de multicolinearidade, sendo que é considerado
+	  normalmente um valor <quote>grande</quote> algo acima de 50
+	  (ou, algumas vezes, de 30).
+	</para>
+	<para>
+	  Os passos para esses cálculos são: (1) contruir uma matriz
+	  <math>Z</math> onde suas colunas são a divisão das colunas de
+	  <argname>X</argname> divididas por suas respectivas normas
+	  euclidianas; (2) construir <math>Z'Z</math> e obter seus
+	  autovalores e; (3) calcular a raiz quadrada da razão entre
+	  o maior e o menor autovalor.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="rcond"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
 
     <function name="colname" section="strings" output="string">
       <fnargs>
@@ -2118,6 +2143,7 @@
             <fncref targ="cov"/>
             <fncref targ="mcov"/>
             <fncref targ="mcorr"/>
+            <fncref targ="npcorr"/>
 	  </seelist>
 	</para>
       </description>
@@ -2131,26 +2157,28 @@
       </fnargs>
       <description>
 	<para>
-	  Se for fornecido apenas os dois primeiros argumentos a função
-	  calcula o correlograma de <argname>x</argname> para as defasagens
-	  de 1 até <argname>p</argname>. Sendo <math>k</math> o número de
-	  elementos em <argname>x</argname> (1 se <argname>x</argname> for
-	  uma série, o número de colunas se <argname>x</argname> for uma
-	  matriz ou o número de membros se <argname>x</argname> for uma
-	  lista). O valor retornado será uma matriz com <argname>p</argname>
-	  linhas e 2<math>k</math> colunas, onde as <math>k</math> primeiras
-	  colunas conterão as respectivas autocorrelações e o restante as
-	  respectivas autocorrelações parciais.
+	  Se forem fornecidos apenas os dois primeiros argumentos
+	  a função calcula o correlograma de <argname>x</argname>
+	  para as defasagens de 1 até <argname>p</argname>. Sendo
+	  <math>k</math> o número de elementos em <argname>x</argname>
+	  (igual a 1 se <argname>x</argname> for uma série, ao número
+	  de colunas se <argname>x</argname> for uma matriz ou ao
+	  número de membros se <argname>x</argname> for uma lista).
+	  O valor retornado será uma matriz com <argname>p</argname>
+	  linhas e 2<math>k</math> colunas, onde as <math>k</math>
+	  primeiras colunas conterão as respectivas autocorrelações
+	  e o restante as respectivas autocorrelações parciais.
 	</para>
 	<para>
-	  Se o terceiro argumento for fornecido a função irá computar o
-	  correlograma cruzado para cada um dos <math>k</math> elementos em
-	  <argname>x</argname> e <argname>y</argname>, partindo de <math>+
-	  </math><argname>p</argname> até <math>-</math><argname>p</argname>.
-	  A matriz retornada possui 2<math>p</math> + 1 linhas e <math>k</math>
-	  colunas. Se <argname>x</argname> for uma série ou lista e <argname>y
-	  </argname> for um vetor, <argname>y</argname> precisa ter linhas na
-	  mesma quantidade que o total de observações na amostra selecionada.
+	  Se um terceiro argumento for fornecido a função irá computar
+	  o correlograma cruzado para cada um dos <math>k</math> elementos
+	  em <argname>x</argname> e <argname>y</argname>, partindo de
+	  <math>+</math><argname>p</argname> até <math>-</math><argname>
+	  p</argname>. A matriz retornada possui 2<math>p</math> + 1 linhas
+	  e <math>k</math> colunas. Se <argname>x</argname> for uma série
+	  ou lista e <argname>y</argname> for um vetor, <argname>y</argname>
+	  precisa ter linhas na mesma quantidade que o total de observações
+	  na amostra selecionada.
 	</para>
       </description>
     </function>
@@ -2163,6 +2191,11 @@
 	<para>
 	  Retorna o cosseno de <argname>x</argname>.
 	</para>
+	<seelist>
+          <fncref targ="sin"/>
+          <fncref targ="tan"/>
+          <fncref targ="atan"/>
+	</seelist>
       </description>
     </function>
 
@@ -2212,10 +2245,10 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">p</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>c1 = critical(t, 20, 0.025)</example>
 	<example>c2 = critical(F, 4, 48, 0.05)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Calculadora de valores críticos. Retorna <math>x</math> tal que
@@ -2259,16 +2292,16 @@
 	  </li>
 	</ilist>
 	<tabular colspec="llll">
-	  \textit{Distribution} &amp; \textsl{c} &amp;
+	  \textit{Distribuição} &amp; \textsl{c} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
 	  Normal padrão &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp;
 	  -- &amp; -- \\
 	  $t$ de Student (central) &amp; \texttt{t} &amp;
 	  graus de liberdade &amp; -- \\
 	  Qui-quadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp;
-	  graus de liberdade &amp; -- \\
+	  degrees of freedom &amp; -- \\
 	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp;
-	  gl (num.) &amp; gl (den.) \\
+	  g.l. (num.) &amp; g.l. (den.) \\
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp;
 	  $p$ &amp; $n$ \\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp;
@@ -2713,6 +2746,34 @@
       </description>
     </function>
 
+    <function name="ecdf" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Calculates the empirical CDF of <argname>y</argname>. This
+	  is returned in a matrix with two columns: the first holds
+	  the sorted unique values of <argname>y</argname> and the
+	  second holds the cumulative relative frequency, that is
+	  the count of observations whose value is less than
+	  or equal to the value in the first column, divided by
+	  the total number of observations.
+	</para>
+	<para context="tex">
+	  Calculates the empirical CDF of <argname>y</argname>. This
+	  is returned in a matrix with two columns: the first holds
+	  the sorted unique values of <argname>y</argname> and the
+	  second holds the cumulative relative frequency,
+	  \[ F(y) =
+	  \frac{1}{n} \sum_{i=1}^n I(y_i \leq y)
+	  \]
+	  where $n$ is total number of observations and $I()$ denotes
+	  the indicator function.
+	</para>
+      </description>
+    </function>
+
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -2738,9 +2799,9 @@
 	</para>
 	<para>
 	  Se o segundo argumento for não-nulo, a matriz especificada será sobrescrita
-	  com o resultado auxiliar. Vale salientar que a não é necessário que a matriz
+	  com o resultado auxiliar. Vale salientar que não é necessário que a matriz
 	  existente tenha a dimensão adequada para receber o resultado. A matriz
-	  <argname>U</argname> será organizada da seguinte forma:
+	  <argname>U</argname> é organizada da seguinte forma:
 	</para>
 	<ilist>
 	  <li>
@@ -2864,9 +2925,10 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna 1 se <argname>name</argname> é o identificador de um objeto correntemente definido,
-	  seja um escalar, uma série, uma matriz, uma lista, uma variável de texto, um pacote
-	  (<quote>bundle</quote>) ou um arranjo (<quote>array</quote>). Caso contrário retorna 0.
+	  Retorna um valor não-nulo <argname>name</argname> é o identificador de um
+	  objeto correntemente definido, seja um escalar, uma série, uma matriz, uma
+	  lista, uma variável de texto, um pacote (<quote>bundle</quote>) ou um arranjo
+	  (<quote>array</quote>). Caso contrário retorna 0. Veja também <fncref targ="typeof"/>.
 	</para>
       </description>
     </function>
@@ -3974,9 +4036,9 @@
 	  </li>
 	</ilist>
 	<tabular colspec="lllll">
-	  \textit{Distribution} &amp; \textsl{d} &amp;
+	  \textit{Distribuição} &amp; \textsl{d} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
-	  Norma padrão &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp;
+	  Norma padrão &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
 	  -- &amp; --  &amp; -- \\
 	  Gama &amp; \texttt{g} ou \texttt{G} &amp;
 	  forma &amp; escala  &amp; -- \\
@@ -3985,7 +4047,7 @@
 	  Qui-quadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp;
 	  graus de liberdade &amp; --  &amp; -- \\
 	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp;
-	  graus de liberdade (num.) &amp; graus de liberdade (den.)  &amp; -- \\
+	  g.l. (num.) &amp; g.l. (den.)  &amp; -- \\
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp;
 	  $p$ &amp; $n$  &amp; -- \\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp;
@@ -3993,11 +4055,11 @@
 	  GED padronizada &amp; \texttt{E} &amp; forma &amp; --
 	  &amp; -- \\
 	  $\chi^2$ não-central &amp; \texttt{ncX} &amp;
-	  graus de liberdade &amp; não-centralidade &amp; -- \\
+	  g.l. &amp; não-centralidade &amp; -- \\
 	  $F$ não-central &amp; \texttt{ncF} &amp;
-	  graus de liberdade (num.) &amp; graus de liberdade (den.) &amp; não-centralidade \\
+	  g.l. (num.) &amp; g.l. (den.) &amp; não-centralidade \\
 	  $t$ não-central &amp; \texttt{nct} &amp;
-	  graus de liberdade &amp; não-centralidade &amp; -- \\
+	  g.l. &amp; não-centralidade &amp; -- \\
 	</tabular>
 	<para>
 	  <seelist>
@@ -4212,14 +4274,12 @@
       </fnargs>
       <description>
 	<para>
-	  Dada uma série <argname>date</argname> contendo datas no
-	  formato ISO 8601 <quote>básico</quote>
-	  (<lit>YYYYMMDD</lit>), essa função escreve os componentes
-	  ano, mês e (opcionalmente) dia em séries nomeadas pelos
-	  argumentos <argname>year</argname>, <argname>month</argname>
-	  e <argname>day</argname>. Um exemplo, assumindo que a série
-	  <lit>dates</lit> contém os valores adequados de 8 dígitos,
-	  seria:
+	  Dada uma série <argname>date</argname> contendo datas no formato ISO 8601
+	  <quote>básico</quote> (<lit>YYYYMMDD</lit>), essa função escreve os
+	  componentes ano, mês e (opcionalmente) dia em séries nomeadas pelos
+	  argumentos <argname>year</argname>, <argname>month</argname> e
+	  <argname>dayecond</argname>. Um exemplo, assumindo que a série
+    <lit>dates</lit> contém os valores adequados de 8 dígitos, seria:
 	</para>
 	<code>
 	  series y, m, d
@@ -4402,14 +4462,14 @@
 	  The optional <argname>MSE</argname> argument determines the
 	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
 	  omitted, this matrix will contain the unconditional standard
-	  errors of the smoothed residuals, which are normally used to
-	  compute the so-called <it>auxiliary
+	  errors of the smoothed disturbances, which are normally used
+	  to compute the so-called <it>auxiliary
 	  residuals</it>. Otherwise, <lit>Mod.smdisterr</lit> will
 	  contain the estimated root mean square deviations of the
 	  auxiliary residuals from their true value.
 	</para>
 	<para>
-	  Para maiores detalhes see <guideref targ="chap:kalman"/>.
+	  For more details see <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4811,6 +4871,48 @@
       </description>
     </function>
 
+    <function name="loess" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg optional="true" type="int">d</fnarg>
+	<fnarg optional="true" type="scalar">q</fnarg>
+	<fnarg optional="true" type="bool">robust</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs locally-weighted polynomial regression and returns
+	  a series holding predicted values of <argname>y</argname>
+	  for each non-missing value of <argname>x</argname>.  The
+	  method is as described by <cite key="cleveland79">William
+	  Cleveland (1979)</cite>.
+	</para>
+	<para>
+	  The optional arguments <argname>d</argname> and
+	  <argname>q</argname> specify the order of the polynomial in
+	  <argname>x</argname> and the proportion of the data points
+	  to be used in local estimation, respectively.  The default
+	  values are <argname>d</argname> = 1 and <argname>q</argname>
+	  = 0.5. The other acceptable values for <argname>d</argname>
+	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
+	  local regression to a form of moving average. The value
+	  of <argname>q</argname> must be greater than 0 and cannot
+	  exceed 1; larger values produce a smoother outcome.
+	</para>
+	<para>
+	  If a non-zero value is given for the <argname>robust</argname>
+	  argument the local regressions are iterated twice, with the
+	  weights being modified based on the residuals from the previous
+	  iteration so as to give less influence to outliers.
+	</para>
+	<para>
+	  See also <fncref targ="nadarwat"/>, and in addition see
+	  <guideref targ="chap:nonparam"/> for details on
+	  nonparametric methods.
+	</para>
+      </description>
+    </function>
+
     <function name="log" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat-or-list">x</fnarg>
@@ -4852,48 +4954,6 @@
 	<para>
 	  Retorna o logaritmo na base 2 de <argname>x</argname>. A função irá
 	  gerar <lit>NA</lit> para valores não-positivos.
-	</para>
-      </description>
-    </function>
-
-    <function name="loess" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="int">d</fnarg>
-	<fnarg optional="true" type="scalar">q</fnarg>
-	<fnarg optional="true" type="bool">robust</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Performs locally-weighted polynomial regression and returns
-	  a series holding predicted values of <argname>y</argname>
-	  for each non-missing value of <argname>x</argname>.  The
-	  method is as described by <cite key="cleveland79">William
-	  Cleveland (1979)</cite>.
-	</para>
-	<para>
-	  The optional arguments <argname>d</argname> and
-	  <argname>q</argname> specify the order of the polynomial in
-	  <argname>x</argname> and the proportion of the data points
-	  to be used in local estimation, respectively.  The default
-	  values are <argname>d</argname> = 1 and <argname>q</argname>
-	  = 0.5. The other acceptable values for <argname>d</argname>
-	  are 0 and 2. Setting <argname>d</argname> = 0 reduces the
-	  local regression to a form of moving average. The value
-	  of <argname>q</argname> must be greater than 0 and cannot
-	  exceed 1; larger values produce a smoother outcome.
-	</para>
-	<para>
-	  If a non-zero value is given para o <argname>robust</argname>
-	  argument the local regressions are iterated twice, with the
-	  weights being modified based on the residuals from the previous
-	  iteration so as to give less influence to outliers.
-	</para>
-	<para>
-	  Veja também <fncref targ="nadarwat"/>, and in addition veja
-	  <guideref targ="chap:nonparam"/> para detalhes on
-	  nonparametric methods.
 	</para>
       </description>
     </function>
@@ -5194,10 +5254,11 @@
       </fnargs>
       <description>
 	<para>
-	  Let <math>k</math> denote the number of elements in the
-	  vector of hyper-parameters, <repl>theta</repl>.  This
-	  function returns a <by r="p" c="k"/> matrix holding the
-	  gradient of the vector of weights (as calculated by <fncref
+	  Analytical derivatives for MIDAS weights.  Let
+	  <math>k</math> denote the number of elements in the vector
+	  of hyper-parameters, <repl>theta</repl>.  This function
+	  returns a <by r="p" c="k"/> matrix holding the gradient of
+	  the vector of weights (as calculated by <fncref
 	  targ="mweights"/>) with respect to the elements of
 	  <repl>theta</repl>. The first argument represents the
 	  desired lag order and the last argument specifies the type
@@ -5564,10 +5625,10 @@
 	<fnarg type="int">rows</fnarg>
 	<fnarg type="int">cols</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
 	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Funciona da mesma forma que <fncref targ="randgen"/> exceto pelo
@@ -6204,6 +6265,33 @@
       </description>
     </function>
 
+    <function name="npcorr" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="string" optional="true">method</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calculates a measure of correlation between
+	  <argname>x</argname> and <argname>y</argname> using a
+	  nonparametric method. If given, the third argument should be
+	  either <lit>kendall</lit> (for Kendall's tau, version b, the
+	  default method) or <lit>spearman</lit> (for Spearman's rho).
+	</para>
+	<para>
+	  The return value is a 3-vector holding the correlation
+	  measure plus a test statistic and p-value for the null
+	  hypothesis of no correlation. Note that if the sample size
+	  is too small the test statistic and/or p-value may be
+	  <lit>NaN</lit> (not a number, or missing).
+	</para>
+	<para>
+	  See also <fncref targ="corr"/> for Pearson correlation.
+	</para>
+      </description>
+    </function>
+
     <function name="npv" section="math" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -6542,11 +6630,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>f1 = pdf(N, -2.5)</example>
 	<example>f2 = pdf(X, 3, y)</example>
 	<example>f3 = pdf(W, forma, escala, y)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Calculadora da função densidade de probabilidade. Retorna a
@@ -7005,11 +7093,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>p1 = pvalue(z, 2.2)</example>
 	<example>p2 = pvalue(X, 3, 5.67)</example>
 	<example>p2 = pvalue(F, 3, 30, 5.67)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Calculadora de <math>P</math>-valores. Retorna <equation
@@ -7345,13 +7433,13 @@
 	<fnarg type="scalar-or-series" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>series x = randgen(u, 0, 100)</example>
 	<example>series t14 = randgen(t, 14)</example>
 	<example>series y = randgen(B, 0.6, 30)</example>
 	<example>series g = randgen(G, 1, 1)</example>
 	<example>series P = randgen(P, mu)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Gerador de número aleatório de uso geral. O argumeto
@@ -7447,14 +7535,14 @@
 	  </li>
 	</ilist>
 	<tabular colspec="lllll">
-	  \textbf{Distribution} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
+	  \textbf{Distribuição} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
 	  Uniforme (contínua) &amp; \texttt{u} ou \texttt{U} &amp; mínimo &amp; máximo &amp; --\\
 	  Uniforme (discreta) &amp; \texttt{i} &amp; mínimo &amp; máximo &amp; --\\
-	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; mean &amp; desvio padrão &amp; --\\
+	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; média &amp; desvio padrão &amp; --\\
 	  $t$ de Student &amp; \texttt{t} &amp; graus de liberdade &amp; -- &amp; --\\
 	  Qui-quadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp; graus de liberdade &amp; -- &amp; --\\
-	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp; graus de liberdade (num.) &amp; graus de liberdade (den.) &amp; --\\
-	  Gamma &amp; \texttt{g} ou \texttt{G} &amp; forma &amp; escala  &amp; --\\
+	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp; g.l. (num.) &amp; g.l. (den.) &amp; --\\
+	  Gama &amp; \texttt{g} ou \texttt{G} &amp; forma &amp; escala  &amp; --\\
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp; média &amp; --  &amp; --\\
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp; forma &amp; escala &amp; --\\
@@ -7479,10 +7567,10 @@
 	<fnarg type="scalar">p1</fnarg>
 	<fnarg type="scalar" conditional="true">p2</fnarg>
       </fnargs>
-      <examples>
+      <exemplos>
 	<example>scalar x = randgen1(z, 0, 1)</example>
 	<example>scalar g = randgen1(g, 3, 2.5)</example>
-      </examples>
+      </exemplos>
       <description>
 	<para>
 	  Funciona da mesma forma que <fncref targ="randgen"/> exceto
@@ -8137,6 +8225,21 @@
       </description>
     </function>
 
+    <function name="sleep" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="int">ns</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Not of any direct use for econometrics, but can be useful
+	  for testing parallelization methods. This function simply
+	  causes the current thread to <quote>sleep</quote>&mdash;that
+	  is, do nothing&mdash;for <argname>ns</argname> seconds. On
+	  wake-up, the function returns 0.
+	</para>
+      </description>
+    </function>
+
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -8230,6 +8333,24 @@
       </description>
     </function>
 
+    <function name="sqrt" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna a raíz quadrada positiva de <argname>x</argname>. Gera
+	  <lit>NA</lit> quando utilizada em valores negativos.
+	</para>
+	<para>
+	  Note que se o argumento for uma matriz, a operação será realizada para
+	  cada elemento. Além disso, dado que as matrizes não podem conter valores
+	  <lit>NA</lit>, a função irá gerar um erro se exitirem valores negativos.
+	  Para a <quote>raíz quadrada matricial</quote> veja <fncref targ="cholesky"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="square" section="transforms" output="list">
       <fnargs>
 	<fnarg type="list">L</fnarg>
@@ -8247,24 +8368,6 @@
 	  Nesses esquemas os nomes das séries de entrada serão truncados caso
 	  seja necessário e os nomes de saída podem ser ajustados em caso de
 	  de nomes duplicados na lista retornada.
-	</para>
-      </description>
-    </function>
-
-    <function name="sqrt" section="math" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Retorna a raíz quadrada positiva de <argname>x</argname>. Gera
-	  <lit>NA</lit> quando utilizada em valores negativos.
-	</para>
-	<para>
-	  Note que se o argumento for uma matriz, a operação será realizada para
-	  cada elemento. Além disso, dado que as matrizes não podem conter valores
-	  <lit>NA</lit>, a função irá gerar um erro se exitirem valores negativos.
-	  Para a <quote>raíz quadrada matricial</quote> veja <fncref targ="cholesky"/>.
 	</para>
       </description>
     </function>
@@ -8886,19 +8989,36 @@
       </description>
     </function>
 
+    <function name="typeof" section="data-utils" output="int">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a numeric type-code if <argname>name</argname> is
+	  the identifier of a currently defined object: 1 for scalar,
+	  2 for series, 3 for matrix, 4 for string, 5 for bundle and 6
+	  for array. Otherwise returns 0.  The function <fncref
+	  targ="typestr"/> may be used to get the string corresponding
+	  to the return value.
+	</para>
+      </description>
+    </function>
+
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">typecode</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Retorna o nome do tipo de dado no Gretl correspondente
-	  a <argname>typecode</argname>. Pode ser utilizada em
-	  conjunto com a função <fncref targ="inbundle"/>. O valor
-	  retornado pode ser <quote>scalar</quote>, <quote>series
-	  </quote>, <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote> ou <quote>
-	  null</quote>.
+	  Retorna o nome do tipo de dado correspondente a
+	  <argname>typecode</argname>. Pode ser utilizada
+	  em conjunto com as funções <fncref targ="typeof"/>
+	  e <fncref targ="inbundle"/>. O valor retornado pode
+	  ser <quote>scalar</quote>, <quote>series</quote>,
+	  <quote>matrix</quote>, <quote>string</quote>,
+	  <quote>bundle</quote>, <quote>array</quote> ou
+	  <quote>null</quote>.
 	</para>
       </description>
     </function>
