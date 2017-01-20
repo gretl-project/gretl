@@ -2638,7 +2638,10 @@ static int parse_forecast_string (const char *s,
     }	
 
     if (kstr != NULL && pk != NULL) {
-	*pk = positive_int_from_string(kstr);
+	*pk = gretl_int_from_string(kstr, &err);
+	if (err) {
+	    return err;
+	}
     }
 
     if (vstr != NULL) {
