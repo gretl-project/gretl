@@ -5024,7 +5024,7 @@ int print_function_package_sample (const char *fname, int tabwidth,
 
 int get_function_file_header (const char *fname, char **pdesc, 
 			      char **pver, char **pdate,
-			      int *pdfdoc)
+			      char **pauthor, int *pdfdoc)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -5055,6 +5055,8 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
 		} else if (pdate != NULL && !xmlStrcmp(sub->name, (XUC) "date")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pdate);
+		} else if (pauthor != NULL && !xmlStrcmp(sub->name, (XUC) "author")) {
+		    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
 		} else if (pdfdoc != NULL && !xmlStrcmp(sub->name, (XUC) "help")) {
 		    char *tmp = NULL;
 		    

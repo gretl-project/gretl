@@ -2167,11 +2167,12 @@ static int populate_gfn_registry_list (windata_t *vwin)
 
 static int get_func_info (const char *path, char **pdesc, 
 			  char **pver, char **pdate,
-			  int *pdfdoc)
+			  char **pauthor, int *pdfdoc)
 {
     int err;
 
-    err = get_function_file_header(path, pdesc, pver, pdate, pdfdoc);
+    err = get_function_file_header(path, pdesc, pver, pdate,
+				   pauthor, pdfdoc);
     if (err) {
 	gui_errmsg(err);
     }
@@ -2332,6 +2333,7 @@ static int ok_gfn_path (const char *fullname,
     char *descrip = NULL;
     char *version = NULL;
     char *date = NULL;
+    char *author = NULL;
     int pdfdoc = 0;
     int is_dup = 0;
     int err, ok = 0;
@@ -2340,7 +2342,8 @@ static int ok_gfn_path (const char *fullname,
        it may be worth performing the next action as a sanity
        check on the purported gfn.
     */
-    err = get_func_info(fullname, &descrip, &version, &date, &pdfdoc);
+    err = get_func_info(fullname, &descrip, &version, &date,
+			&author, &pdfdoc);
 
     if (!err && store != NULL) {
 	is_dup = fn_file_is_duplicate(shortname, version,
@@ -2379,6 +2382,7 @@ static int ok_gfn_path (const char *fullname,
     free(descrip);
     free(version);
     free(date);
+    free(author);
 
     return ok;
 }
