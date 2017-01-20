@@ -2292,6 +2292,7 @@ char *maybe_ellipsize_string (char *s, int maxlen)
 static void browser_insert_gfn_info (const char *pkgname,
 				     const char *version,
 				     const char *date,
+				     const char *author,
 				     char *summary,
 				     const char *dirname,
 				     int uses_subdir,
@@ -2367,6 +2368,7 @@ static int ok_gfn_path (const char *fullname,
 	    browser_insert_gfn_info(pkgname,
 				    version,
 				    date,
+				    author,
 				    descrip,
 				    dirname,
 				    subdir,
@@ -2552,6 +2554,7 @@ static int gfn_paths_match (const char *p0, const char *p1,
 static void update_gfn_browser (const char *pkgname,
 				const char *version,
 				const char *date,
+				const char *author,
 				const char *descrip,
 				const char *fname,
 				int uses_subdir,
@@ -2588,7 +2591,7 @@ static void update_gfn_browser (const char *pkgname,
 	       the browser entry and record that we're done.
 	    */
 	    fprintf(stderr, "gfn update: updating %s %s\n", pkgname, version);
-	    browser_insert_gfn_info(pkgname, version, date, summary,
+	    browser_insert_gfn_info(pkgname, version, date, author, summary,
 				    dirname, uses_subdir, pdfdoc,
 				    GTK_LIST_STORE(model), &iter);
 	    done = 1;
@@ -2611,7 +2614,7 @@ static void update_gfn_browser (const char *pkgname,
 	*/
 	fprintf(stderr, "gfn update: appending %s %s\n", pkgname, version);
 	gtk_list_store_append(GTK_LIST_STORE(model), &iter);
-	browser_insert_gfn_info(pkgname, version, date, summary,
+	browser_insert_gfn_info(pkgname, version, date, author, summary,
 				dirname, uses_subdir, pdfdoc,
 				GTK_LIST_STORE(model), &iter);
 	presort_treelist(vwin);
@@ -2630,6 +2633,7 @@ static void update_gfn_browser (const char *pkgname,
 void maybe_update_gfn_browser (const char *pkgname,
 			       const char *version,
 			       const char *date,
+			       const char *author,
 			       const char *descrip,
 			       const char *fname,
 			       int uses_subdir,
@@ -2643,7 +2647,7 @@ void maybe_update_gfn_browser (const char *pkgname,
 	    browser_delete_row_by_content(vwin, 0, pkgname,
 					  GFN_DIRNAME_COL, fname);
 	} else {
-	    update_gfn_browser(pkgname, version, date, descrip,
+	    update_gfn_browser(pkgname, version, date, author, descrip,
 			       fname, uses_subdir, pdfdoc, vwin);
 	}
     }

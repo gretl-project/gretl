@@ -4399,6 +4399,7 @@ int save_function_package (const char *fname, gpointer p)
 	maybe_update_gfn_browser(pkgname,
 				 finfo->version,
 				 finfo->date,
+				 finfo->author,
 				 finfo->pkgdesc,
 				 finfo->fname,
 				 finfo->uses_subdir,

@@ -9411,7 +9411,7 @@ static int script_delete_function_package (const char *param,
 		if (p != NULL) {
 		    *p = '\0';
 		}
-		maybe_update_gfn_browser(pkgname, NULL, NULL,
+		maybe_update_gfn_browser(pkgname, NULL, NULL, NULL,
 					 NULL, fname, 0, 0);
 	    }
 	}	
