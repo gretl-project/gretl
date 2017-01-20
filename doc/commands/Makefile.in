@@ -141,7 +141,7 @@ matfuncs.o: matfuncs.c $(GRETLHDRS)
 
 # test generation of XML skeleton from libgretl info:
 # the skeleton could be used as a template for translation
-skeleton.xml: skeleton gretl_commands.dtd
+skeleton.xml: skeleton $(CMDDTD)
 	./skeleton $(CMDSDIR) > $@
 
 $(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands.xml
