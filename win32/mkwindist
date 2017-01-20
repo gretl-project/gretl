@@ -202,11 +202,10 @@ else
   add_file ${SYSBIN}/liblapack-3.dll gretl/liblapack-3.dll
 fi
 
-# system DLLs for threads/openmp, if required
-# add_file ${SYSBIN}/mingwm10.dll gretl/mingwm10.dll
+# DLL for threads/openmp
 add_file ${SYSBIN}/pthreadGC2.dll gretl/pthreadGC2.dll
 
-# cert for cURL
+# certs for cURL
 add_file ${WINFILES}/curl-ca-bundle.crt gretl/curl-ca-bundle.crt
 
 # GTK theme files, standard
