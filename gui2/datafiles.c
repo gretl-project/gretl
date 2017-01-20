@@ -85,8 +85,8 @@ enum {
     PKG_ATTR_DOC = 1 << 1
 };
 
-#define GFN_DIRNAME_COL 4
-#define GFN_FLAGS_COL 5
+#define GFN_DIRNAME_COL 5
+#define GFN_FLAGS_COL 6
 
 #define REMOTE_ACTION(c) (c == REMOTE_DB || \
                           c == REMOTE_FUNC_FILES || \
@@ -2300,6 +2300,7 @@ static void browser_insert_gfn_info (const char *pkgname,
 				     GtkListStore *store,
 				     GtkTreeIter *iter)
 {
+    char *tmp = NULL;
     gint flags = 0;
 
     if (uses_subdir) {
@@ -2311,16 +2312,22 @@ static void browser_insert_gfn_info (const char *pkgname,
 	}
     }    
 
+    if (g_utf8_strlen(author, -1) > 26) {
+	tmp = gretl_strdup(author);
+	maybe_ellipsize_string(tmp, 26);
+    }
     maybe_ellipsize_string(summary, 68);
 
     gtk_list_store_set(store, iter, 
 		       0, pkgname, 
 		       1, version,
 		       2, date,
-		       3, summary, 
-		       4, dirname,
-		       5, flags,
+		       3, tmp ? tmp : author,
+		       4, summary, 
+		       5, dirname,
+		       6, flags,
 		       -1);
+    free(tmp);
 }
 
 static int ok_gfn_path (const char *fullname, 
@@ -2718,6 +2725,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	N_("Package"), 
 	N_("Version"),
 	N_("Date"),
+	N_("Author"),
 	N_("Summary") 
     };
     const char *remote_func_titles[] = {
@@ -2750,6 +2758,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING
     };
     GType func_types[] = {
+	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
@@ -2809,7 +2818,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	types = func_types;
 	cols = G_N_ELEMENTS(func_types);
 	hidden_cols = 2;
-	full_width = 720;
+	full_width = 760;
 	file_height = 320;
 	break;
     case REMOTE_FUNC_FILES:
