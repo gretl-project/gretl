@@ -3108,6 +3108,16 @@ static void function_package_set_auxfile (fnpkg *pkg,
     }
 }
 
+static int is_pdf_ref (const char *s)
+{
+    if (!strncmp(s, "pdfdoc:", 7)) {
+	s += 7;
+    }
+    
+    return strlen(s) < 64 && strchr(s, ' ') == NULL &&
+	has_suffix(s, ".pdf");
+}
+
 /* Having assembled and checked the function-listing for a new
    package, now retrieve the additional information from the
    spec file (named by @fname, opened as @fp).
@@ -3178,7 +3188,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	    } else if (!strncmp(line, "help", 4)) {
 		int pdfdoc = 0;
 		
-		if (has_suffix(p, ".pdf")) {
+		if (is_pdf_ref(p)) {
 		    if (!quiet) {
 			pprintf(prn, "Recording help reference %s\n", p);
 		    }
@@ -3501,7 +3511,7 @@ static int get_gfn_info_for_zip (const char *fname,
 		    char *s = NULL;
 		    
 		    gretl_xml_node_get_trimmed_string(sub, doc, &s);
-		    *pdfdoc = has_suffix(s, ".pdf");
+		    *pdfdoc = is_pdf_ref(s);
 		    free(s);
 		    found++;
 		} else if (!xmlStrcmp(sub->name, (XUC) "data-files")) {
@@ -3540,7 +3550,7 @@ static int cli_build_zip_package (const char *fname,
     if (pkg != NULL) {
 	datafiles = pkg->datafiles;
 	n_datafiles = pkg->n_files;
-	pdfdoc = has_suffix(pkg->help, ".pdf");
+	pdfdoc = is_pdf_ref(pkg->help);
     } else {
 	/* grope in the gfn file */
 	err = get_gfn_info_for_zip(gfnname,
@@ -3814,7 +3824,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    }
 	    
 	    if (!err && !strcmp(key, "help")) {
-		if (!strncmp(sval, "pdfdoc", 6) || has_suffix(sval, ".pdf")) {
+		if (!strncmp(sval, "pdfdoc", 6) || is_pdf_ref(sval)) {
 		    pkg->uses_subdir = 1;
 		}
 	    }
@@ -4490,7 +4500,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     }
 
     gretl_version_string(vstr, pkg->minver);
-    pdfdoc = has_suffix(pkg->help, ".pdf");
+    pdfdoc = is_pdf_ref(pkg->help);
 
     pprintf(prn, "<@itl=\"Package\">: %s %s (%s)\n", pkg->name, pkg->version,
 	    pkg->date);
@@ -5062,7 +5072,7 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
 		    if (tmp != NULL) {
-			if (!strncmp(tmp, "pdfdoc", 6) || has_suffix(tmp, ".pdf")) {
+			if (!strncmp(tmp, "pdfdoc", 6) || is_pdf_ref(tmp)) {
 			    *pdfdoc = 1;
 			}
 			free(tmp);
@@ -8332,7 +8342,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	} else {
 	    pputs(prn, "Help text:\n");
 	}   	
-	if (has_suffix(pkg->help, ".pdf")) {
+	if (is_pdf_ref(pkg->help)) {
 	    const char *s = strrchr(pkg->help, ':');
 
 	    if (s != NULL) {
