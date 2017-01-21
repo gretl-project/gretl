@@ -11165,6 +11165,34 @@
 	  </para>
 	</li>	
 	<li>
+	  <para><lit>echo</lit>: <lit>off</lit> o <lit>on</lit>
+	  (valore predefinito).  Sopprime o ripristina l'indicazione
+	  dei comandi eseguiti nell'output dei risultati.</para>
+	</li>
+ 	<li>
+	  <para><lit>messages</lit>: <lit>off</lit> o <lit>on</lit> (valore
+            predefinito). Sopprime o ripristina l'indicazione dei messaggi
+            informativi associati a vari comandi, ad esempio quando viene
+            generata una nuova variabile o viene modificato l'intervallo del
+            campione.
+         </para>
+	</li>
+	<li>
+	  <para><lit>verbose</lit>: <lit>off</lit> oppure
+	  <lit>on</lit> (valore predefinito). Funziona come
+	  <quote>interruttore doppio</quote> per <lit>echo</lit> e
+	  <lit>messages</lit> (vedi sopra), ponenendoli ambedue accesi
+	  o spenti. 
+         </para>
+	</li>
+	<li>
+	  <para><lit>warnings</lit>: <lit>off</lit> oppure
+	  <lit>on</lit> (valore predefinito). Sopprime o ripristina i
+	  messaggi cautelativi, emessi quando certe operazioni
+	  aritmetiche producolo valori non finiti. 
+         </para>
+	</li>
+	<li>
 	  <para><lit>csv_delim</lit>: <lit>comma</lit> (virgola,
 	  valore predefinito), <lit>space</lit> (spazio), o
 	  <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
@@ -11221,11 +11249,6 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>echo</lit>: <lit>off</lit> o <lit>on</lit>
-	  (valore predefinito).  Sopprime o ripristina l'indicazione
-	  dei comandi eseguiti nell'output dei risultati.</para>
-	</li>
-	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> o <lit>off</lit>
 	    (valore predefinito).  Forza gretl a usare il carattere punto come
             separatore decimale, in un ambiente in cui il separatore standard è
@@ -11249,20 +11272,6 @@
 	  <lit>off</lit> (valore predefinito). Attiva l'output aggiuntivo per la
           funzione <lit>BFGSmax</lit> (si veda la Guida all'uso per i dettagli).
 	  </para>
-	</li>
- 	<li>
-	  <para><lit>messages</lit>: <lit>off</lit> o <lit>on</lit> (valore
-            predefinito). Sopprime o ripristina l'indicazione dei messaggi
-            informativi associati a vari comandi, ad esempio quando viene
-            generata una nuova variabile o viene modificato l'intervallo del
-            campione.
-         </para>
-	</li>
-	<li>
-	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit> (the
-	  default). Suppress or resume the printing of warning messages
-	  issued when arithmetical operations produce non-finite values. 
-         </para>
 	</li>
  	<li>
 	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> o <lit>0</lit>
