@@ -13618,6 +13618,10 @@ static void get_lhs_substr (char *src, parser *p)
 	p->lh.substr = sub;
     }
 
+    if (p->err) {
+	fprintf(stderr, "get_lhs_substr: src='%s', err=%d\n", src, p->err);
+    }
+
     *src = '\0';
 }
 
@@ -13854,6 +13858,47 @@ static void parser_try_print (parser *p, const char *s)
     }
 }
 
+#if 1
+
+static void extract_LHS_string (const char *s, char *lhs, parser *p)
+{
+    char *alt_lhs = NULL;
+    int n;
+
+    *lhs = '\0';
+
+    if (p->targ != UNK && strchr(s, '=') == NULL) {
+	/* we got a type specification but no assignment,
+	   so should be variable declaration(s) ? 
+	*/
+	p->flags |= P_DECL;
+	p->lh.substr = gretl_strdup(s);
+	return;
+    }
+
+    n = strcspn(s, "=");
+    
+    if (n > 0) {
+	int lhlen = n;
+	
+	if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
+	    lhlen--; /* modified assignment */
+	}
+	alt_lhs = gretl_strndup(s, lhlen);
+	tailstrip(alt_lhs);
+	lhlen = strlen(alt_lhs);
+	if (lhlen < GENSTRLEN) {
+	    strncat(lhs, alt_lhs, lhlen);
+	}
+    }
+
+    if (*lhs == '\0') {
+	p->err = E_PARSE;
+    }
+}
+
+#else
+
 static void extract_LHS_string (const char *s, char *lhs, parser *p)
 {
     int n;
@@ -13904,6 +13949,8 @@ static void extract_LHS_string (const char *s, char *lhs, parser *p)
 	p->err = E_PARSE;
     }
 }
+
+#endif
 
 /* In the case of a "private" genr we allow ourselves some
    more latitude in variable names, so as not to collide
@@ -14096,7 +14143,6 @@ static void pre_process (parser *p, int flags)
 	    p->targ = BUNDLE;
 	    s += 7;
 	} else if (ok_array_decl(p, s)) {
-	    fprintf(stderr, "ok_array_decl\n");
 	    p->targ = ARRAY;
 	    s += strcspn(s, " ") + 1;
 	}
