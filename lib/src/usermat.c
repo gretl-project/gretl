@@ -587,6 +587,11 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	int j = mspec_get_col_index(spec);
 	int keep_going = 0;
 
+	/* FIXME: the check for same sign of i and j
+	   below is correct only if the subspec is
+	   truly specifying a single element?
+	*/
+
 	if (i > 0 && j > 0) {
 	    double x = matrix_get_element(M, i, j, err);
 	    

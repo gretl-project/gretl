@@ -50,14 +50,14 @@ which takes as it single argument the desired length, a positive
 integer.
 
 Each series has these basic attributes: an ID number, a name, and of
-course $n$ numerical values. In addition a series may have a
-description (which is shown in the main window and is also accessible
-via the \texttt{labels} command), a ``display name'' for use in
-graphs, a record of the compaction method used in reducing the
-variable's frequency (for time-series data only) and a flag marking
-the variable as discrete. These attributes can be edited in the GUI by
-choosing \textsf{Edit Attributes} (either under the \textsf{Variable}
-menu or via right-click), or by means of the \texttt{setinfo} command.
+course $n$ numerical values. A series may also have a description
+(which is shown in the main window and is also accessible via the
+\texttt{labels} command), a ``display name'' for use in graphs, a
+record of the compaction method used in reducing the variable's
+frequency (for time-series data only) and a flag marking the variable
+as discrete. These attributes can be edited in the GUI by choosing
+\textsf{Edit Attributes} (either under the \textsf{Variable} menu or
+via right-click), or by means of the \texttt{setinfo} command.
 
 In the context of most commands you are able to reference series by
 name or by ID number as you wish. The main exception is the definition
@@ -443,11 +443,12 @@ other supported types.
 \label{subsec:array-args}
 
 One can write hansl functions that take as arguments any of the array
-types; in addition arrays can be passed to function in ``pointerized''
-form.\footnote{With the exception of an array of lists. Our thinking
-  on how exactly to handle arrays of lists as function arguments is
-  not yet very far advanced.} In addition hansl functions may return
-any of the array types. Here is a trivial example for strings:
+types, and it is possible to pass arrays as function arguments in
+``pointerized'' form.\footnote{With the exception of an array of
+  lists. Our thinking on how exactly to handle arrays of lists as
+  function arguments is not yet very far advanced.} In addition hansl
+functions may return any of the array types. Here is a trivial example
+for strings:
 \begin{code}
 function void printstrings (strings *S)
   loop i=1..nelem(S) -q

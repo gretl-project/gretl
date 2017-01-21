@@ -34,7 +34,7 @@
 
 #define pow_sym(t) (t == B_POW || t == B_DOTPOW)
 
-static NODE *powterm (parser *p);
+static NODE *powterm (parser *p, NODE *l);
 
 #if SDEBUG
 static void notify (const char *s, NODE *n, parser *p)
@@ -807,7 +807,8 @@ static NODE *get_bundle_member_name (parser *p)
     int i, n = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_bundle_member_name: p->ch='%c'\n", p->ch);
+    fprintf(stderr, "bundle_member_name: sym='%s', ch='%c', point='%s'\n",
+	    getsymb(p->sym), p->ch, p->point);
 #endif
 
     if (p->ch == '.') {
@@ -1231,14 +1232,14 @@ static void get_ovar_ref (NODE *t, parser *p)
 	p->err = E_PARSE;
     } else if (p->sym == DMSL || p->sym == DMSTR) {
 	/* followed by '[' or '(' matrix subspec? */
-	t->v.b2.r = powterm(p);
+	t->v.b2.r = powterm(p, NULL);
     } else {
 	t->v.b2.r = newref(p, p->sym);
 	lex(p);
     }
 }
 
-static NODE *powterm (parser *p)
+static NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
     int sym = p->sym == B_SUB ? U_NEG : 
@@ -1252,9 +1253,30 @@ static NODE *powterm (parser *p)
     }
 
 #if SDEBUG
-    fprintf(stderr, "powterm: p->sym = %d ('%s'), p->ch = '%c' (%d)\n",
+    fprintf(stderr, "powterm, starting: p->sym = %d ('%s'), p->ch = '%c' (%d)\n",
 	    p->sym, getsymb(p->sym), p->ch? p->ch : '0', p->ch);
 #endif
+
+    if (l != NULL) {
+	/* powterm recursion: swallowing prior node @l */
+	if (sym == BMEMB || sym == DBMEMB) {
+	    fprintf(stderr, "*** powterm, recursing on (D)BMEMB ***\n");
+	    t = newb2(sym, l, NULL);
+	    if (t != NULL) {
+		parser_ungetc(p);
+		t->v.b2.r = get_bundle_member_name(p);
+	    }
+	} else if (sym == G_LBR) {
+	    t = newb2(OSL, l, NULL);
+	    if (t != NULL) {
+		t->v.b2.r = newb2(MSLRAW, NULL, NULL);
+		if (t->v.b2.r != NULL) {
+		    get_slice_parts(t->v.b2.r, p);
+		}
+	    }
+	}
+	goto maybe_recurse;
+    }
 
     if (string_last_func(sym)) {
 	opt |= RIGHT_STR;
@@ -1275,7 +1297,7 @@ static NODE *powterm (parser *p)
 	    if (sym == U_ADDR) {
 		t->v.b1.b = u_addr_base(p);
 	    } else {
-		t->v.b1.b = powterm(p);
+		t->v.b1.b = powterm(p, NULL);
 	    }
         }
     } else if (func2_symb(sym)) {
@@ -1470,38 +1492,9 @@ static NODE *powterm (parser *p)
 	p->flags ^= P_ALIASED;
     }
 
-    if (t != NULL && (sym == ELEMENT || sym == BMEMB || sym == DBMEMB)) {
-	if (p->sym == G_LBR) {
-	    /* followed by subspec */
-	    t = newb2(OSL, t, NULL);
-	    if (t != NULL) {
-		t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-		if (t->v.b2.r != NULL) {
-		    get_slice_parts(t->v.b2.r, p);
-		}
-	    }
-	    if ((sym == BMEMB || sym == DBMEMB) && p->sym == G_LBR) {
-		/* followed by another subspec */
-		t = newb2(OSL, t, NULL);
-		if (t != NULL) {
-		    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-		    if (t->v.b2.r != NULL) {
-			get_slice_parts(t->v.b2.r, p);
-		    }
-		}		
-	    }
-	} else if (p->sym == BMEMB) {
-	    t = newb2(BMEMB, t, NULL);
-	    if (t != NULL) {
-		/* uninterpreted string wanted on right 
-		   (FIXME [key] notation) */
-		p->flags |= P_GETSTR;
-		lex(p);
-		p->flags ^= P_GETSTR;
-		t->v.b2.r = base(p, t);
-	    }
-	}
-    } else if (next == '[') {
+ maybe_recurse:
+
+    if (t != NULL && next == '[') {
 	/* support func(args)[slice] */
 	t = newb2(MSL, t, NULL);
 	if (t != NULL) {
@@ -1510,6 +1503,12 @@ static NODE *powterm (parser *p)
 		get_slice_parts(t->v.b2.r, p);
 	    }
 	}	
+    } else if (t != NULL) {
+	if (p->sym == BMEMB || p->sym == DBMEMB) {
+	    t = powterm(p, t);
+	} else if (p->sym == G_LBR) {
+	    t = powterm(p, t);
+	}
     }
 
 #if SDEBUG
@@ -1557,7 +1556,7 @@ static NODE *factor (parser *p)
             t->v.b1.b = factor(p);
         }
     } else {
-	t = powterm(p);
+	t = powterm(p, NULL);
 	if (t != NULL) {
 	    int upsym = p->sym;
 
