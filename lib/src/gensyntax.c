@@ -1260,7 +1260,7 @@ static NODE *powterm (parser *p, NODE *l)
     if (l != NULL) {
 	/* powterm recursion: swallowing prior node @l */
 	if (sym == BMEMB || sym == DBMEMB) {
-	    fprintf(stderr, "*** powterm, recursing on (D)BMEMB ***\n");
+	    /* fprintf(stderr, "*** powterm, recursing on (D)BMEMB ***\n"); */
 	    t = newb2(sym, l, NULL);
 	    if (t != NULL) {
 		parser_ungetc(p);
