@@ -526,38 +526,59 @@ static int check_for_exclusion (const gretl_matrix *M,
 				matrix_subspec *spec,
 				int i, int j)
 {
-    if (i < 0 && j < 0) {
-	i = -i; j = -j;
-	if (i > M->rows || j > M->cols) {
-	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
-				 i > M->rows ? i : j);	    
-	    return E_DATA;
-	} else {
-	    int k, r = 1, c = 1;
+    int ipos = i > 0;
+    int jpos = j > 0;
 
-	    spec->rslice = gretl_list_new(M->rows - 1);
-	    spec->cslice = gretl_list_new(M->cols - 1);
-	    if (spec->rslice == NULL || spec->cslice == NULL) {
-		return E_ALLOC;
-	    }
+    if (!ipos) i = -i;
+    if (!jpos) j = -j;
+
+    if (i == 0 || j == 0) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
+	return E_DATA;
+    } else if (i > M->rows || j > M->cols) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+			     i > M->rows ? i : j);	    
+	return E_DATA;
+    } else {
+	int rdim = ipos ? 1 : M->rows - 1;
+	int cdim = jpos ? 1 : M->cols - 1;
+	int k, r = 1, c = 1;
+
+	spec->rslice = gretl_list_new(rdim);
+	spec->cslice = gretl_list_new(cdim);
+
+	if (spec->rslice == NULL || spec->cslice == NULL) {
+	    return E_ALLOC;
+	}
+	
+	if (ipos) {
+	    /* include specified row only */
+	    spec->rslice[1] = i;
+	} else {
+	    /* exclude specified row */
 	    for (k=1; k<M->rows; k++) {
 		if (r == i) {
 		    r++;
 		}
 		spec->rslice[k] = r++;
 	    }
+	}
+	
+	if (jpos) {
+	    /* include specified column only */
+	    spec->cslice[1] = j;
+	} else {
+	    /* exclude specified column */
 	    for (k=1; k<M->cols; k++) {
 		if (c == j) {
 		    c++;
 		}
 		spec->cslice[k] = c++;
-	    }	    
-	    return 0;
+	    }
 	}
-    } else {
-	gretl_errmsg_set("Invalid sub-matrix specification");
-	return E_DATA;
     }
+
+    return 0;
 }
 
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
@@ -586,11 +607,6 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
 	int keep_going = 0;
-
-	/* FIXME: the check for same sign of i and j
-	   below is correct only if the subspec is
-	   truly specifying a single element?
-	*/
 
 	if (i > 0 && j > 0) {
 	    double x = matrix_get_element(M, i, j, err);
