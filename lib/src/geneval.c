@@ -13875,10 +13875,10 @@ static void extract_LHS_string (const char *s, char *lhs, parser *p)
     }
 
     n = strcspn(s, "=");
-    
+
     if (n > 0) {
 	int lhlen = n;
-	
+
 	if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
 	    lhlen--; /* modified assignment */
 	}
