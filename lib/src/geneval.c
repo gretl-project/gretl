@@ -13858,8 +13858,6 @@ static void parser_try_print (parser *p, const char *s)
     }
 }
 
-#if 1
-
 static void extract_LHS_string (const char *s, char *lhs, parser *p)
 {
     char *alt_lhs = NULL;
@@ -13896,61 +13894,6 @@ static void extract_LHS_string (const char *s, char *lhs, parser *p)
 	p->err = E_PARSE;
     }
 }
-
-#else
-
-static void extract_LHS_string (const char *s, char *lhs, parser *p)
-{
-    int n;
-
-    *lhs = '\0';
-
-    if (p->targ != UNK && strchr(s, '=') == NULL) {
-	/* we got a type specification but no assignment,
-	   so should be variable declaration(s) ? 
-	*/
-	p->flags |= P_DECL;
-	p->lh.substr = gretl_strdup(s);
-	return;
-    }
-
-    n = strcspn(s, "+-*/%^~|([= ");
-
-    if (n > 0) {
-	int bracketed = 0;
-
-	if (*(s+n) == '[') {
-	    const char *q = s + n;
-
-	    while (*q) {
-		if (*q == '[') {
-		    bracketed++;
-		} else if (*q == ']') {
-		    bracketed--;
-		}
-		n++;
-		if (bracketed == 0) {
-		    break;
-		}
-		q++;
-	    }
-	}
-
-	if (bracketed != 0) {
-	    pprintf(p->prn, "> %s\n", s);
-	    pprintf(p->prn, _("Unmatched '%c'\n"), 
-		    bracketed > 0 ? '[' : ']');
-	} else if (n < GENSTRLEN) {
-	    strncat(lhs, s, n);
-	}
-    }
-
-    if (*lhs == '\0') {
-	p->err = E_PARSE;
-    }
-}
-
-#endif
 
 /* In the case of a "private" genr we allow ourselves some
    more latitude in variable names, so as not to collide
