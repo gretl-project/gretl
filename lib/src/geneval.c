@@ -87,7 +87,8 @@ enum {
     FR_TREE  = 1 << 1,
     FR_RET   = 1 << 2,
     FR_AUX   = 1 << 3,
-    FR_ERR   = 1 << 4
+    FR_ERR   = 1 << 4,
+    FR_LHS   = 1 << 5
 };
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
@@ -206,7 +207,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
     }
 }
 
-#if EDEBUG
+#if 1 || EDEBUG
 
 static void print_tree (NODE *t, parser *p, int level)
 {
@@ -217,22 +218,18 @@ static void print_tree (NODE *t, parser *p, int level)
     if (bnsym(t->t)) {
 	int i;
 
-	level++;
 	for (i=0; i<t->v.bn.n_nodes; i++) {
-	    print_tree(t->v.bn.n[i], p, level);
+	    print_tree(t->v.bn.n[i], p, level+1);
 	}
     } else if (b3sym(t->t)) {
-	level++;
-	print_tree(t->v.b3.l, p, level);
-	print_tree(t->v.b3.m, p, level);
-	print_tree(t->v.b3.r, p, level);
+	print_tree(t->v.b3.l, p, level+1);
+	print_tree(t->v.b3.m, p, level+1);
+	print_tree(t->v.b3.r, p, level+1);
     } else if (b2sym(t->t)) {
-	level++;
-	print_tree(t->v.b2.l, p, level);
-	print_tree(t->v.b2.r, p, level);
+	print_tree(t->v.b2.l, p, level+1);
+	print_tree(t->v.b2.r, p, level+1);
     } else if (b1sym(t->t)) {
-	level++;
-	print_tree(t->v.b1.b, p, level);
+	print_tree(t->v.b1.b, p, level+1);
     }
 
     if (t->vname != NULL) {
@@ -258,6 +255,8 @@ static const char *free_tree_tag (int t)
 	return (t & FR_SUB)? "sub->ret" : "p->ret";
     } else if (t & FR_AUX) {
 	return (t & FR_SUB)? "sub->aux" : "p->aux";
+    } else if (t & FR_LHS) {
+	return "p->lhs";
     } else if (t == FR_ERR) {
 	return "On error";
     } else {
@@ -13858,12 +13857,11 @@ static void parser_try_print (parser *p, const char *s)
     }
 }
 
-static void extract_LHS_string (const char *s, char *lhs, parser *p)
+static char *extract_LHS_string (const char **ps, parser *p)
 {
-    char *alt_lhs = NULL;
+    const char *s = *ps;
+    char *lhs = NULL;
     int n;
-
-    *lhs = '\0';
 
     if (p->targ != UNK && strchr(s, '=') == NULL) {
 	/* we got a type specification but no assignment,
@@ -13871,7 +13869,7 @@ static void extract_LHS_string (const char *s, char *lhs, parser *p)
 	*/
 	p->flags |= P_DECL;
 	p->lh.substr = gretl_strdup(s);
-	return;
+	return NULL;
     }
 
     n = strcspn(s, "=");
@@ -13882,17 +13880,16 @@ static void extract_LHS_string (const char *s, char *lhs, parser *p)
 	if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
 	    lhlen--; /* modified assignment */
 	}
-	alt_lhs = gretl_strndup(s, lhlen);
-	tailstrip(alt_lhs);
-	lhlen = strlen(alt_lhs);
-	if (lhlen < GENSTRLEN) {
-	    strncat(lhs, alt_lhs, lhlen);
-	}
+	lhs = gretl_strndup(s, lhlen);
+	tailstrip(lhs);
+	*ps = s + n;
     }
 
-    if (*lhs == '\0') {
+    if (lhs == NULL) {
 	p->err = E_PARSE;
     }
+
+    return lhs;
 }
 
 /* In the case of a "private" genr we allow ourselves some
@@ -14037,7 +14034,7 @@ static void pre_process (parser *p, int flags)
 {
     const char *s = p->input;
     const char *savep;
-    char test[GENSTRLEN];
+    char *lhstr = NULL;
     char *lhsub = NULL;
     char subchar = 0;
     char opstr[3] = {0};
@@ -14114,20 +14111,39 @@ static void pre_process (parser *p, int flags)
 
     /* extract LHS varname (possibly with substring)
        and test for a declaration */
-    extract_LHS_string(s, test, p);
+    lhstr = extract_LHS_string(&s, p);
     if (p->err || (p->flags & P_DECL)) {
+	free(lhstr);
 	return;
     }
 
     /* record next read position */
-    p->point = s + strlen(test);
+    p->point = s;
+
+    /* gentest: new interpolation */
+    if (strchr(lhstr, '.') || strchr(lhstr, '[')) {
+	const char *savepoint = p->point;
+
+	p->point = lhstr;
+	p->ch = parser_getc(p);
+	lex(p);
+	fprintf(stderr, "start parsing lhtree: '%s'\n", p->point);
+	p->tree = expr(p);
+	fprintf(stderr, "done parsing lhtree, err=%d\n", p->err);
+	print_tree(p->tree, p, 0);
+	free_tree(p->tree, p, FR_LHS);
+	p->tree = NULL;
+	p->point = savepoint;
+	p->ch = 0;
+	p->err = 0;
+    }
 
     /* grab LHS obs string, matrix slice, or bundle element, 
        if present
     */
-    for (i=0; test[i]; i++) {
-	if (test[i] == '.' || test[i] == '[') {
-	    lhsub = test + i;
+    for (i=0; lhstr[i]; i++) {
+	if (lhstr[i] == '.' || lhstr[i] == '[') {
+	    lhsub = lhstr + i;
 	    subchar = *lhsub;
 	    get_lhs_substr(lhsub, p);
 	    break;
@@ -14135,11 +14151,11 @@ static void pre_process (parser *p, int flags)
     }
 
     if (p->err) {
-	return;
+	goto bailout;
     }
 
 #if LHDEBUG || EDEBUG
-    fprintf(stderr, "LHS: %s", test);
+    fprintf(stderr, "LHS: %s", lhstr);
     if (p->lh.substr != NULL) {
 	fprintf(stderr, " substr: '%s'\n", p->lh.substr);
     } else {
@@ -14147,21 +14163,21 @@ static void pre_process (parser *p, int flags)
     }
 #endif
 
-    if (strlen(test) > VNAMELEN - 1) {
+    if (strlen(lhstr) > VNAMELEN - 1) {
 	pprintf(p->prn, _("'%s': name is too long (max %d characters)\n"), 
-		test, VNAMELEN - 1);
+		lhstr, VNAMELEN - 1);
 	p->err = E_DATA;
-	return;
+	goto bailout;
     }
 
     /* find out if the LHS var already exists, and if
        so, what type it is */
-    if ((v = current_series_index(p->dset, test)) >= 0) {
+    if ((v = current_series_index(p->dset, lhstr)) >= 0) {
 	p->lh.vnum = v;
 	p->lh.t = SERIES;
 	newvar = 0;
     } else {
-	user_var *uvar = get_user_var_by_name(test);
+	user_var *uvar = get_user_var_by_name(lhstr);
 
 	if (uvar != NULL) {
 	    GretlType vtype = uvar->type;
@@ -14189,7 +14205,7 @@ static void pre_process (parser *p, int flags)
 		if (p->targ != UNK && !gretl_is_array_type(p->lh.gtype)) {
 		    p->lh.gtype = bundle_type_from_gentype(p);
 		    if (p->err) {
-			return;
+			goto bailout;
 		    }
 		}
 		p->lh.t = BUNDLE;
@@ -14201,30 +14217,30 @@ static void pre_process (parser *p, int flags)
     }
 
     /* if pre-existing var, check for const-ness */
-    if (!newvar && overwrite_const_check(test, p)) {
-	return;
+    if (!newvar && overwrite_const_check(lhstr, p)) {
+	goto bailout;
     }
 
     /* if new variable, check name for legality */
     if (newvar) {
 	if (flags & P_PRIV) {
-	    p->err = check_private_varname(test);
+	    p->err = check_private_varname(lhstr);
 	} else {
-	    p->err = check_varname(test);
+	    p->err = check_varname(lhstr);
 	}
 	if (p->err) {
-	    return;
+	    goto bailout;
 	}
     }
 
     if (p->lh.substr != NULL) {
-	process_lhs_substr(test, subchar, p);
+	process_lhs_substr(lhstr, subchar, p);
 	if (p->err) {
-	    return;
+	    goto bailout;
 	}
     }
 
-    strcpy(p->lh.name, test);
+    strcpy(p->lh.name, lhstr);
 
     if (p->lh.t != 0) {
 	if (p->targ == UNK) {
@@ -14235,7 +14251,7 @@ static void pre_process (parser *p, int flags)
 	} else if (overwrite_type_check(p)) {
 	    /* don't overwrite one type with another */
 	    p->err = E_TYPES;
-	    return;
+	    goto bailout;
 	}
     }
 
@@ -14246,14 +14262,14 @@ static void pre_process (parser *p, int flags)
     /* expression ends here with no operator: a call to print? */
     if (*s == '\0') {
 	parser_try_print(p, savep);
-	return;
+	goto bailout;
     }
 
     /* operator: '=' or '+=' etc. */
     strncat(opstr, s, 2);
     if ((p->op = get_op(opstr)) == 0) {
 	p->err = E_EQN;
-	return;
+	goto bailout;
     }
 
     /* if the LHS variable does not already exist, then
@@ -14262,9 +14278,9 @@ static void pre_process (parser *p, int flags)
     */
     if (newvar && p->op != B_ASN) {
 	/* error message */
-	pprintf(p->prn, "%s: unknown variable\n", test);
+	pprintf(p->prn, "%s: unknown variable\n", lhstr);
 	p->err = E_UNKVAR;
-	return;
+	goto bailout;
     }
 
     /* matrices: we accept only a limited range of
@@ -14272,49 +14288,49 @@ static void pre_process (parser *p, int flags)
     if (p->lh.t == MAT && !ok_matrix_op(p->op)) {
 	gretl_errmsg_sprintf(_("'%s' : not implemented for matrices"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }
 
     /* lists: same story as matrices */
     if (p->lh.t == LIST && !ok_list_op(p->op)) {
 	gretl_errmsg_sprintf(_("'%s' : not implemented for lists"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }	
 
     /* strings: ditto */
     if (p->lh.t == STR && !ok_string_op(p->op)) {
 	gretl_errmsg_sprintf(_("'%s' : not implemented for strings"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }
 
     /* arrays: ditto */
     if (p->lh.t == ARRAY && !ok_array_op(p->op)) {
 	gretl_errmsg_sprintf(_("'%s' : not implemented for arrays"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }
 
     /* bundles: we can't do any sort of modified assignment (yet) */
     if (p->lh.t == BUNDLE && p->op != B_ASN) {
 	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }
 
     /* vertical concat: only OK for matrices */
     if (p->lh.t != MAT && (p->op == B_VCAT || p->op == B_DOTASN)) {
 	gretl_errmsg_sprintf(_("'%s' : only defined for matrices"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }
 
     /* horizontal concat: only OK for matrices, strings */
     if (p->lh.t != MAT && p->lh.t != STR && p->op == B_HCAT) {
 	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
 	p->err = E_PARSE;
-	return;
+	goto bailout;
     }
 
     /* string-valued series: do not overwrite wholesale */
@@ -14322,7 +14338,7 @@ static void pre_process (parser *p, int flags)
 	is_string_valued(p->dset, p->lh.vnum)) {
 	gretl_errmsg_set("Cannot overwrite entire string-valued series");
 	p->err = E_TYPES;
-	return;
+	goto bailout;
     }
 
     /* advance past operator */
@@ -14350,6 +14366,10 @@ static void pre_process (parser *p, int flags)
     if ((p->op == INC || p->op == DEC) && *s != '\0') {
 	p->err = E_PARSE;
     }
+
+ bailout:
+
+    free(lhstr);
 }
 
 /* tests for saving variable */

@@ -34,8 +34,6 @@
 
 #define pow_sym(t) (t == B_POW || t == B_DOTPOW)
 
-static NODE *powterm (parser *p, NODE *l);
-
 #if SDEBUG
 static void notify (const char *s, NODE *n, parser *p)
 {
@@ -1239,7 +1237,7 @@ static void get_ovar_ref (NODE *t, parser *p)
     }
 }
 
-static NODE *powterm (parser *p, NODE *l)
+NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
     int sym = p->sym == B_SUB ? U_NEG : 
