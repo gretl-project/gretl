@@ -299,6 +299,11 @@ GretlType gretl_array_get_type (gretl_array *A)
     return (A != NULL)? A->type : GRETL_TYPE_NONE;
 }
 
+GretlType gretl_array_get_content_type (gretl_array *A)
+{
+    return (A != NULL)? gretl_type_get_singular(A->type) : GRETL_TYPE_NONE;    
+}
+
 int gretl_array_get_length (gretl_array *A)
 {
     return (A != NULL)? A->n : 0;
@@ -549,6 +554,25 @@ int gretl_array_append_list (gretl_array *A,
 	if (!err) {
 	    err = set_list(A, A->n - 1, L, copy);
 	}
+    }
+
+    return err;
+}
+
+int gretl_array_set_element (gretl_array *A, int i, 
+			     void *ptr, GretlType type,
+			     int copy)
+{
+    int err = 0;
+    
+    if (type == GRETL_TYPE_MATRIX) {
+	err = gretl_array_set_matrix(A, i, ptr, copy);
+    } else if (type == GRETL_TYPE_STRING) {
+	err = gretl_array_set_string(A, i, ptr, copy);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	err = gretl_array_set_bundle(A, i, ptr, copy);
+    } else if (type == GRETL_TYPE_LIST) {
+	err = gretl_array_set_list(A, i, ptr, copy);
     }
 
     return err;

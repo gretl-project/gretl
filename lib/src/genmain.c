@@ -727,7 +727,7 @@ int generate (const char *line, DATASET *dset,
 
     oldv = (dset != NULL)? dset->v : 0;
 
-#if GDEBUG
+#if 1 || GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
 #endif
 

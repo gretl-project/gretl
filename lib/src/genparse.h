@@ -594,12 +594,13 @@ enum {
     SVL_NODE = 1 << 3, /* holds string-valued series */
     PAR_NODE = 1 << 4, /* exponentiation node is parenthesized */
     PRX_NODE = 1 << 5, /* aux node is proxy (don't reuse!) */
-    ALS_NODE = 1 << 6  /* node holds aliased function call */
+    ALS_NODE = 1 << 6, /* node holds aliased function call */
+    LHT_NODE = 1 << 7  /* node holds terminal of LHS */
 };
 
 struct node {
     short t;       /* type identifier */
-    char flags;    /* AUX_NODE etc., see above */
+    unsigned char flags; /* AUX_NODE etc., see above */
     int vnum;      /* associated series ID number */
     char *vname;   /* associated variable name */
     user_var *uv;  /* associated named variable */
@@ -665,9 +666,11 @@ struct parser_ {
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */
-    parser *subp;      /* left-hand side subslice tree */
-    NODE *tree;        /* parsed syntax tree */
-    NODE *ret;         /* evaluated result node */
+    parser *subp;      /* (OLD) LHS subslice parser */
+    NODE *lhtree;      /* (NEW) LHS tree */
+    NODE *lhres;       /* (NEW) result of eval() on @lhtree */
+    NODE *tree;        /* parsed RHS syntax tree */
+    NODE *ret;         /* result of eval() on @tree */
     /* below: parser state variables */
     NODE *aux;          /* convenience pointer to current auxiliary node */
     int callcount;

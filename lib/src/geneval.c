@@ -8073,30 +8073,33 @@ static double *scalar_to_series (NODE *n, parser *p)
    next.
 */
 
-static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
+static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 {
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
     GretlType lhtype = 0;
     GretlType type = 0;
+    gretl_bundle *bundle;
     void *ptr = NULL;
     char *key = NULL;
     int size = 0;
     int donate = 0;
     int err = 0;
 
-    if (p->flags & P_LHBKVAR) {
-	/* substr is the name of a string variable in [] */
-	key = get_string_by_name(p->lh.substr);
-    } else {
-	/* substr is just a plain key string */
-	key = p->lh.substr;
+    if (lh1->t != BUNDLE) {
+	return E_DATA;
     }
+
+    bundle = lh1->v.b;
+    key = lh2->v.str;
 
     if (bundle == NULL || key == NULL) {
-	err = E_DATA;
+	return E_DATA;
     }
 
-#if EDEBUG
-    fprintf(stderr, "set_bundle_value: key = '%s'\n", key);
+#if 1 || EDEBUG
+    fprintf(stderr, "set_bundle_value: bundle = %p, key = '%s'\n",
+	    (void *) bundle, key);
 #endif
 
 #if 0
@@ -8124,10 +8127,10 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
     lhtype = p->lh.gtype;
 
     if (!err) {
-	switch (n->t) {
+	switch (rhs->t) {
 	case NUM:
 	    if (lhtype == GRETL_TYPE_SERIES) {
-		ptr = scalar_to_series(n, p);
+		ptr = scalar_to_series(rhs, p);
 		if (p->err) {
 		    err = p->err;
 		} else {
@@ -8136,60 +8139,60 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 		    donate = 1;
 		}
 	    } else if (lhtype == GRETL_TYPE_MATRIX) {
-		ptr = gretl_matrix_from_scalar(n->v.xval);
+		ptr = gretl_matrix_from_scalar(rhs->v.xval);
 		type = GRETL_TYPE_MATRIX;
 		donate = 1;
 	    } else {
-		ptr = &n->v.xval;
+		ptr = &rhs->v.xval;
 		type = GRETL_TYPE_DOUBLE;
 	    }
 	    break;
 	case STR:
-	    ptr = n->v.str;
+	    ptr = rhs->v.str;
 	    type = GRETL_TYPE_STRING;
-	    donate = is_tmp_node(n);
+	    donate = is_tmp_node(rhs);
 	    break;
 	case MAT:
 	    /* FIXME assignment of (suitable) vector to series */
-	    if (lhtype == GRETL_TYPE_DOUBLE && scalar_matrix_node(n)) {
-		ptr = &n->v.m->val[0];
+	    if (lhtype == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
+		ptr = &rhs->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
 	    } else {
-		ptr = n->v.m;
+		ptr = rhs->v.m;
 		type = GRETL_TYPE_MATRIX;
-		donate = is_tmp_node(n);
+		donate = is_tmp_node(rhs);
 	    }
 	    break;
 	case U_ADDR:
-	    n = n->v.b1.b;
-	    if (umatrix_node(n)) {
-		ptr = n->v.m;
+	    rhs = rhs->v.b1.b;
+	    if (umatrix_node(rhs)) {
+		ptr = rhs->v.m;
 		type = GRETL_TYPE_MATRIX_REF;
 	    } else {
 		err = E_TYPES;
 	    }	 
 	    break;
 	case SERIES:
-	    ptr = n->v.xvec;
+	    ptr = rhs->v.xvec;
 	    type = GRETL_TYPE_SERIES;
 	    size = p->dset->n;
-	    donate = is_tmp_node(n);
+	    donate = is_tmp_node(rhs);
 	    break;
 	case BUNDLE:
-	    ptr = n->v.b;
+	    ptr = rhs->v.b;
 	    type = GRETL_TYPE_BUNDLE;
 	    break;
 	case ARRAY:
-	    ptr = n->v.a;
+	    ptr = rhs->v.a;
 	    type = GRETL_TYPE_ARRAY;
 	    if (gretl_is_array_type(lhtype)) {
 		/* don't provoke a spurious error below */
 		lhtype = GRETL_TYPE_ARRAY;
 	    }
-	    donate = is_tmp_node(n);
+	    donate = is_tmp_node(rhs);
 	    break;
 	case LIST:
-	    ptr = list_to_matrix(n->v.ivec, &err);
+	    ptr = list_to_matrix(rhs->v.ivec, &err);
 	    type = GRETL_TYPE_MATRIX;
 	    donate = 1;
 	    break;
@@ -8209,7 +8212,7 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 	    if (!err && type == GRETL_TYPE_MATRIX) {
 		p->lh.m = ptr;
 	    }
-	    n->v.ptr = NULL;
+	    rhs->v.ptr = NULL;
 	} else {
 	    /* the data must be copied into the bundle */
 	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
@@ -8219,6 +8222,145 @@ static int set_bundle_value (gretl_bundle *bundle, NODE *n, parser *p)
 	}
     }
 
+    return err;
+}
+
+static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
+{
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
+    GretlType atype = 0;
+    GretlType type = 0;
+    gretl_array *array;
+    void *ptr = NULL;
+    int idx = 0;
+    int donate = 0;
+    int err = 0;
+
+    if (lh1->t != ARRAY) {
+	return E_DATA;
+    }    
+
+    array = lh1->v.a;
+    idx = lh2->v.xval;
+
+    if (array == NULL || idx <= 0) {
+	return E_DATA;
+    }
+
+#if 1 || EDEBUG
+    fprintf(stderr, "set_array_value: array = %p, idx = %d\n",
+	    (void *) array, idx);
+#endif
+
+    atype = gretl_array_get_content_type(array);
+    /* FIXME p->lh.gtype check? */
+
+    if (!err) {
+	switch (rhs->t) {
+	case NUM:
+	    if (atype == GRETL_TYPE_MATRIX) {
+		ptr = gretl_matrix_from_scalar(rhs->v.xval);
+		type = GRETL_TYPE_MATRIX;
+		donate = 1;
+	    }
+	    break;
+	case STR:
+	    ptr = rhs->v.str;
+	    type = GRETL_TYPE_STRING;
+	    donate = is_tmp_node(rhs);
+	    break;
+	case MAT:
+	    ptr = rhs->v.m;
+	    type = GRETL_TYPE_MATRIX;
+	    donate = is_tmp_node(rhs);
+	    break;
+	case BUNDLE:
+	    ptr = rhs->v.b;
+	    type = GRETL_TYPE_BUNDLE;
+	    break;
+	case LIST:
+	    ptr = rhs->v.ivec;
+	    type = GRETL_TYPE_LIST;
+	    donate = is_tmp_node(rhs); /* ? */
+	    break;	    
+	default:
+	    err = E_TYPES;
+	    break;
+	}
+    }
+
+    if (!err && type != atype) {
+	err = E_TYPES;
+    }
+
+    if (!err) {
+	/* convert index to 0-based */
+	idx--;
+	if (donate) {
+	    /* it's OK to hand over the data pointer */
+	    err = gretl_array_set_element(array, idx, ptr, type, 0);
+	    rhs->v.ptr = NULL; /* gone! */
+	} else {
+	    /* the data must be copied into the array */
+	    err = gretl_array_set_element(array, idx, ptr, type, 1);
+	}
+    }
+
+    return err;
+}
+
+static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
+{
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
+    gretl_matrix *m;
+    matrix_subspec *spec;
+    int err = 0;
+
+    if (lh1->t != MAT) {
+	return E_DATA;
+    }    
+
+    m = lh1->v.m;
+    spec = lh2->v.mspec;
+
+    if (m == NULL || spec == NULL) {
+	return E_DATA;
+    }
+
+#if EDEBUG > 1
+    gretl_matrix_print(m, "m, in set_matrix_value");
+    print_mspec(spec);
+#endif
+
+    if (rhs->t == NUM && spec->type[0] == SEL_ELEMENT) {
+    	/* assignment (possible inflected) of a scalar value
+	   to a single element of an existing matrix
+	*/
+	int i = mspec_get_row_index(spec);
+	int j = mspec_get_col_index(spec);
+	double x = matrix_get_element(m, i, j, &p->err);
+	double y = rhs->v.xval;
+
+	if (!p->err) {
+	    if (p->op == B_ASN) {
+		x = y;
+	    } else {
+		x = xy_calc(x, y, p->op, MAT, p);
+	    }
+	    if (xna(x)) {
+		if (na(x)) {
+		    x = M_NA;
+		}
+		set_gretl_warning(W_GENNAN);
+	    }
+	    gretl_matrix_set(m, i-1, j-1, x);
+	}
+    } else {
+	err = E_DATA; /* not ready yet */
+    }
+    
     return err;
 }
 
@@ -12314,11 +12456,23 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case MSL:
 	/* user matrix plus subspec */
-	ret = submatrix_node(l, r, p);
+	if (t->flags & LHT_NODE) {
+	    t->v.b2.l = l; /* FIXME? */
+	    t->v.b2.r = r;
+	    ret = t;
+	} else {
+	    ret = submatrix_node(l, r, p);
+	}
 	break;
     case OSL:
 	/* object plus subspec */
-	ret = subobject_node(l, r, p);
+	if (t->flags & LHT_NODE) {
+	    t->v.b2.l = l; /* FIXME? */
+	    t->v.b2.r = r;
+	    ret = t;
+	} else {	    
+	    ret = subobject_node(l, r, p);
+	}
 	break;	
     case MSLRAW:
 	/* unevaluated matrix subspec */
@@ -12333,6 +12487,11 @@ static NODE *eval (NODE *t, parser *p)
 	/* list or array, plus scalar */
 	if (!scalar_node(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
+	} else if (t->flags & LHT_NODE) {
+	    fprintf(stderr, "eval ELEMENT: LHT_NODE, blocked\n");
+	    t->v.b2.l = l; /* FIXME? */
+	    t->v.b2.r = r;
+	    ret = t;
 	} else if (l->t == ARRAY) {
 	    ret = get_array_element(l, r, p);
 	} else {
@@ -12344,7 +12503,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* name of bundle plus string */
 	if (l->t == BUNDLE && r->t == STR) {
 	    if (t->t == BMEMB) {
-		ret = get_bundle_value(l, r, p);
+		if (t->flags & LHT_NODE) {
+		    fprintf(stderr, "eval BMEMB: LHT_NODE, blocked\n");
+		    t->v.b2.l = l; /* FIXME? */
+		    t->v.b2.r = r;
+		    ret = t;
+		} else {
+		    ret = get_bundle_value(l, r, p);
+		}
 	    } else {
 		ret = test_bundle_key(l, r, p);
 	    }
@@ -13590,40 +13756,6 @@ static int get_op (char *s)
     return 0;
 }
 
-/* extract a substring in [], or following a dot, on the 
-   left-hand side of an assignment expression 
-*/
-
-static void get_lhs_substr (char *src, parser *p)
-{
-    char *sub = gretl_strdup(src + 1);
-
-#if EDEBUG
-    fprintf(stderr, "get_lhs_substr: src = '%s'\n", src);
-#endif
-
-    if (sub == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	if (*src == '[') {
-	    int n = strlen(sub);
-
-	    if (sub[n-1] != ']') {
-		p->err = E_PARSE;
-	    } else {
-		sub[n-1] = '\0';
-	    }
-	}
-	p->lh.substr = sub;
-    }
-
-    if (p->err) {
-	fprintf(stderr, "get_lhs_substr: src='%s', err=%d\n", src, p->err);
-    }
-
-    *src = '\0';
-}
-
 static void add_child_parser (parser *p)
 {
     char *s = NULL;
@@ -13719,78 +13851,6 @@ static void get_lh_obsnum (parser *p)
 	p->targ = NUM;
 	p->flags |= P_OBSVAL;
     }
-}
-
-static int split_lh_subinfo (parser *p)
-{
-    char *s = strchr(p->lh.substr, '[');
-    int n = strlen(p->lh.substr);
-
-    if (p->lh.substr[n-1] != ']') {
-	p->err = E_PARSE;
-    } else {
-	*s = '\0';
-	p->lh.subvar = p->lh.substr;
-	p->lh.substr = gretl_strdup(s + 1);
-	n = strlen(p->lh.substr);
-	p->lh.substr[n-1] = '\0';
-    }
-    
-    return p->err;
-}
-
-/* check validity of "[...]" or "." on the LHS, and evaluate
-   the expression if needed */
-
-static void process_lhs_substr (const char *lname, 
-				char subchar, 
-				parser *p)
-{
-#if LHDEBUG || EDEBUG
-    fprintf(stderr, "process_lhs_substr: p->lh.t=%d, substr='%s', subchar='%c'\n", 
-	    p->lh.t, p->lh.substr, subchar);
-#endif
-
-    if (p->lh.t == SERIES) {
-	/* targetting a particular series observation */
-	get_lh_obsnum(p);
-    } else if (p->lh.t == MAT || p->lh.t == ARRAY || p->lh.t == LIST) {
-	/* targetting an element or slice of a matrix,
-	   array or list
-	*/
-	get_lh_mspec(p);
-    } else if (p->lh.t == BUNDLE) {
-	/* targetting a bundle element */
-	if (subchar == '[') {
-	    /* using [<key>] notation */
-	    if (p->lh.substr[0] == '"') {
-		/* a string literal */
-		gretl_unquote(p->lh.substr, &p->err);
-	    } else {
-		/* should be a string variable */
-		p->flags |= P_LHBKVAR;
-	    }
-	} else {
-	    /* using dot-member notation */
-	    if (strchr(p->lh.substr, '[') != NULL) {
-		/* with subspec appended */
-		split_lh_subinfo(p);
-		if (!p->err) {
-		    get_lh_mspec(p);
-		}
-	    }
-	}
-	p->targ = BMEMB;
-    } else if (p->lh.t == 0) {
-	if (lname != NULL) {
-	    undefined_symbol_error(lname, p);
-	}
-	p->err = E_UNKVAR;
-    } else {
-	gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"), 
-			     subchar);
-	p->err = E_PARSE;
-    }	
 }
 
 /* implement the declaration of new variables */
@@ -14035,10 +14095,8 @@ static void pre_process (parser *p, int flags)
     const char *s = p->input;
     const char *savep;
     char *lhstr = NULL;
-    char *lhsub = NULL;
-    char subchar = 0;
     char opstr[3] = {0};
-    int i, v, newvar = 1;
+    int v, newvar = 1;
 
     while (isspace(*s)) s++;
 
@@ -14120,49 +14178,29 @@ static void pre_process (parser *p, int flags)
     /* record next read position */
     p->point = s;
 
-    /* gentest: new interpolation */
     if (strchr(lhstr, '.') || strchr(lhstr, '[')) {
+	/* gentest: new interpolation */
 	const char *savepoint = p->point;
 
 	p->point = lhstr;
 	p->ch = parser_getc(p);
 	lex(p);
-	fprintf(stderr, "start parsing lhtree: '%s'\n", p->point);
-	p->tree = expr(p);
-	fprintf(stderr, "done parsing lhtree, err=%d\n", p->err);
-	print_tree(p->tree, p, 0);
-	free_tree(p->tree, p, FR_LHS);
-	p->tree = NULL;
+	p->lhtree = expr(p);
+	fprintf(stderr, "parsed lhtree, err=%d\n", p->err);
+	print_tree(p->lhtree, p, 0);
 	p->point = savepoint;
 	p->ch = 0;
-	p->err = 0;
-    }
-
-    /* grab LHS obs string, matrix slice, or bundle element, 
-       if present
-    */
-    for (i=0; lhstr[i]; i++) {
-	if (lhstr[i] == '.' || lhstr[i] == '[') {
-	    lhsub = lhstr + i;
-	    subchar = *lhsub;
-	    get_lhs_substr(lhsub, p);
-	    break;
+	if (p->err) {
+	    goto bailout;
 	}
     }
 
-    if (p->err) {
-	goto bailout;
+    if (p->lhtree != NULL) {
+	/* skip a good deal of stuff that assumes a straight
+	   identifier on the left */
+	goto get_operator;
     }
-
-#if LHDEBUG || EDEBUG
-    fprintf(stderr, "LHS: %s", lhstr);
-    if (p->lh.substr != NULL) {
-	fprintf(stderr, " substr: '%s'\n", p->lh.substr);
-    } else {
-	fputc('\n', stderr);
-    }
-#endif
-
+	
     if (strlen(lhstr) > VNAMELEN - 1) {
 	pprintf(p->prn, _("'%s': name is too long (max %d characters)\n"), 
 		lhstr, VNAMELEN - 1);
@@ -14233,15 +14271,7 @@ static void pre_process (parser *p, int flags)
 	}
     }
 
-    if (p->lh.substr != NULL) {
-	process_lhs_substr(lhstr, subchar, p);
-	if (p->err) {
-	    goto bailout;
-	}
-    }
-
     strcpy(p->lh.name, lhstr);
-
     if (p->lh.t != 0) {
 	if (p->targ == UNK) {
 	    /* when a result type is not specified, set this 
@@ -14254,6 +14284,8 @@ static void pre_process (parser *p, int flags)
 	    goto bailout;
 	}
     }
+
+ get_operator:
 
     /* advance past varname */
     s = p->point;
@@ -15366,6 +15398,18 @@ static int save_generated_var (parser *p, PRN *prn)
     int no_decl = 0;
     int t, v = 0;
 
+    /* NEW, gentest */
+    if (p->lhtree != NULL) {
+	p->lhtree->flags |= LHT_NODE;
+	p->flags |= P_START;
+	fprintf(stderr, "*** eval lhtree ***\n");
+	p->lhres = eval(p->lhtree, p);
+	if (p->lhres != NULL) {
+	    print_tree(p->lhres, p, 0);
+	    p->targ = p->lhres->t;
+	}
+    }
+
 #if EDEBUG
     fprintf(stderr, "save_generated_var: '%s'\n"
 	    "  callcount=%d, lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
@@ -15643,13 +15687,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } else if (p->targ == BMEMB) {
 	/* saving an object into a bundle */
-	gretl_bundle *b = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
-
-	if (p->lh.subvar != NULL) {
-	    p->err = edit_bundle_value(b, r, p);
-	} else {
-	    p->err = set_bundle_value(b, r, p);
-	}
+	p->err = set_bundle_value(p->lhres, r, p);
+    } else if (p->targ == ELEMENT) {
+	p->err = set_array_value(p->lhres, r, p);
+    } else if (p->targ == OSL) {
+	p->err = set_matrix_value(p->lhres, r, p);
     } else if (p->targ == ARRAY) {
 	if (p->lh.substr != NULL || p->op != B_ASN) {
 	    edit_array(p);
@@ -15824,6 +15866,8 @@ static void parser_init (parser *p, const char *str,
     p->targ = targtype;
     p->op = 0;
 
+    p->lhtree = NULL;
+    p->lhres = NULL;
     p->tree = NULL;
     p->ret = NULL;
 
@@ -15936,6 +15980,11 @@ void gen_cleanup (parser *p, int level)
 	if (p->subp != NULL) {
 	    parser_destroy_child(p);
 	}
+
+	if (p->lhtree) {
+	    rndebug(("freeing p->lhtree %p\n", (void *) p->lhtree));
+	    free_tree(p->lhtree, p, tag | FR_LHS);
+	}	    
 
 	if (p->ret != p->tree) {
 	    rndebug(("freeing p->tree %p\n", (void *) p->tree));
