@@ -11777,6 +11777,18 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
     }
 }
 
+static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
+				parser *p)
+{
+    /* Pass through eval'd @l and @r subnodes, but don't eval
+       the parent @t itself. FIXME should be be creating a
+       new new node to return here? */
+    t->v.b2.l = l;
+    t->v.b2.r = r;
+
+    return t;
+}
+
 /* reattach_series: on successive executions of a given
    compiled "genr", the "xvec" pointer recorded on a
    SERIES node will have become invalid if:
@@ -12457,9 +12469,7 @@ static NODE *eval (NODE *t, parser *p)
     case MSL:
 	/* user matrix plus subspec */
 	if (t->flags & LHT_NODE) {
-	    t->v.b2.l = l; /* FIXME? */
-	    t->v.b2.r = r;
-	    ret = t;
+	    ret = lhs_terminal_node(t, l, r, p);
 	} else {
 	    ret = submatrix_node(l, r, p);
 	}
@@ -12467,9 +12477,7 @@ static NODE *eval (NODE *t, parser *p)
     case OSL:
 	/* object plus subspec */
 	if (t->flags & LHT_NODE) {
-	    t->v.b2.l = l; /* FIXME? */
-	    t->v.b2.r = r;
-	    ret = t;
+	    ret = lhs_terminal_node(t, l, r, p);
 	} else {
 	    ret = subobject_node(l, r, p);
 	}
@@ -12488,10 +12496,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (!scalar_node(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else if (t->flags & LHT_NODE) {
-	    fprintf(stderr, "eval ELEMENT: LHT_NODE, blocked\n");
-	    t->v.b2.l = l; /* FIXME? */
-	    t->v.b2.r = r;
-	    ret = t;
+	    ret = lhs_terminal_node(t, l, r, p);
 	} else if (l->t == ARRAY) {
 	    ret = get_array_element(l, r, p);
 	} else {
@@ -12504,10 +12509,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == BUNDLE && r->t == STR) {
 	    if (t->t == BMEMB) {
 		if (t->flags & LHT_NODE) {
-		    fprintf(stderr, "eval BMEMB: LHT_NODE, blocked\n");
-		    t->v.b2.l = l; /* FIXME? */
-		    t->v.b2.r = r;
-		    ret = t;
+		    ret = lhs_terminal_node(t, l, r, p);
 		} else {
 		    ret = get_bundle_value(l, r, p);
 		}
