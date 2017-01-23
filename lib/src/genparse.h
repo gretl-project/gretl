@@ -648,7 +648,6 @@ struct lhinfo {
     int obsnum;            /* specific observation number in series */
     gretl_matrix *m;       /* LHS matrix (or NULL) */
     char *substr;          /* obs or matrix/array selection string */
-    char *subvar;          /* name of targetted bundle member */
     matrix_subspec *mspec; /* evaluated submatrix spec */
     GretlType gtype;       /* gretl type of LHS array, if any, or
 			      of LHS bundle member */
@@ -666,7 +665,6 @@ struct parser_ {
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */
-    parser *subp;      /* (OLD) LHS subslice parser */
     NODE *lhtree;      /* (NEW) LHS tree */
     NODE *lhres;       /* (NEW) result of eval() on @lhtree */
     NODE *tree;        /* parsed RHS syntax tree */
@@ -714,7 +712,7 @@ void set_doing_genseries (int s);
 int realgen (const char *s, parser *p, DATASET *dset, 
 	     PRN *prn, int flags, int targtype);
 void gen_save_or_print (parser *p, PRN *prn);
-void gen_cleanup (parser *p, int level);
+void gen_cleanup (parser *p);
 void parser_free_aux_nodes (parser *p);
 
 /* name lookup functions */

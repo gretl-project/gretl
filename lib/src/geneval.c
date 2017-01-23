@@ -83,12 +83,11 @@ static void real_rndebug (const char *format, ...)
 #define SERIES_ENSURE_FINITE 1  /* debatable */
 
 enum {
-    FR_SUB   = 1 << 0,
-    FR_TREE  = 1 << 1,
-    FR_RET   = 1 << 2,
-    FR_AUX   = 1 << 3,
-    FR_ERR   = 1 << 4,
-    FR_LHS   = 1 << 5
+    FR_TREE   = 1 << 0,
+    FR_RET    = 1 << 1,
+    FR_LHTREE = 1 << 2,
+    FR_LHRES  = 1 << 3,
+    FR_ERR    = 1 << 4
 };
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
@@ -140,7 +139,6 @@ static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
 static void edit_matrix (parser *p);
-static void edit_array (parser *p);
 static int node_is_true (NODE *n, parser *p);
 static gretl_matrix *list_to_matrix (const int *list, int *err);
 static gretl_matrix *series_to_matrix (const double *x,
@@ -250,13 +248,13 @@ static void print_tree (NODE *t, parser *p, int level)
 static const char *free_tree_tag (int t)
 {
     if (t & FR_TREE) {
-	return (t & FR_SUB)? "sub->tree" : "p->tree";
+	return "p->tree";
     } else if (t & FR_RET) {
-	return (t & FR_SUB)? "sub->ret" : "p->ret";
-    } else if (t & FR_AUX) {
-	return (t & FR_SUB)? "sub->aux" : "p->aux";
-    } else if (t & FR_LHS) {
-	return "p->lhs";
+	return "p->ret";
+    } else if (t & FR_LHTREE) {
+	return "p->lhtree";
+    } else if (t & FR_LHRES) {
+	return "p->lhres";
     } else if (t == FR_ERR) {
 	return "On error";
     } else {
@@ -368,8 +366,10 @@ static void free_tree (NODE *t, parser *p, int code)
 	free_tree(t->v.b3.m, p, code);
 	free_tree(t->v.b3.r, p, code);
     } else if (b2sym(t->t)) {
-	free_tree(t->v.b2.l, p, code);
-	free_tree(t->v.b2.r, p, code);
+	if (!(t->flags & LHT_NODE)) {
+	    free_tree(t->v.b2.l, p, code);
+	    free_tree(t->v.b2.r, p, code);
+	}
     } else if (b1sym(t->t)) {
 	free_tree(t->v.b1.b, p, code);
     }
@@ -910,6 +910,11 @@ static NODE *aux_array_node (parser *p)
 static NODE *array_pointer_node (parser *p)
 {
     return get_aux_node(p, ARRAY, 0, 0);
+}
+
+static NODE *aux_b2_node (parser *p)
+{
+    return get_aux_node(p, EMPTY, 0, 0);
 }
 
 static NODE *aux_any_node (parser *p)
@@ -8364,33 +8369,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     return err;
 }
 
-static int edit_bundle_value (gretl_bundle *b, NODE *n, parser *p)
-{
-    char *key = p->lh.subvar;
-    GretlType type = 0;
-
-    if (b == NULL || key == NULL) {
-	p->err = E_DATA;
-    } else {
-	type = gretl_bundle_get_member_type(b, key, &p->err);
-    }
-
-    if (!p->err) {
-	if (type == GRETL_TYPE_MATRIX) {
-	    p->lh.m = gretl_bundle_get_matrix(b, key, &p->err);
-	    if (!p->err) {
-		edit_matrix(p);
-	    }
-	} else if (type == GRETL_TYPE_ARRAY) {
-	    edit_array(p);
-	} else {
-	    p->err = E_TYPES;
-	}
-    }
-
-    return p->err;
-}
-
 static int set_bundle_note (gretl_bundle *b, const char *key,
 			    const char *note, parser *p)
 {
@@ -11781,12 +11759,15 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
 				parser *p)
 {
     /* Pass through eval'd @l and @r subnodes, but don't eval
-       the parent @t itself. FIXME should be be creating a
-       new new node to return here? */
-    t->v.b2.l = l;
-    t->v.b2.r = r;
+       the parent @t itself */
+    NODE *ret = aux_b2_node(p);
 
-    return t;
+    ret->t = t->t;   /* transcribe type */
+    ret->v.b2.l = l; /* evaluated left-hand */
+    ret->v.b2.r = r; /* evaluated right-hand */
+    ret->flags = LHT_NODE;
+
+    return ret;
 }
 
 /* reattach_series: on successive executions of a given
@@ -13758,68 +13739,6 @@ static int get_op (char *s)
     return 0;
 }
 
-static void add_child_parser (parser *p)
-{
-    char *s = NULL;
-
-    p->subp = malloc(sizeof *p->subp);
-    if (p->subp == NULL) {
-	p->err = E_ALLOC;
-    }
-
-    if (!p->err) {
-	s = malloc(strlen(p->lh.substr) + 3);
-	if (s == NULL) {
-	    p->err = E_ALLOC;
-	}
-    }
-
-    if (!p->err) {
-	int flags = (p->flags & P_COMPILE)? P_COMPILE : 0;
-
-	sprintf(s, "[%s]", p->lh.substr);
-	parser_init(p->subp, s, p->dset, p->prn, flags, MSPEC);
-	p->subp->tree = slice_node_direct(p->subp);
-	free(s);
-	p->err = p->subp->err;
-    }
-}
-
-/* Given a string [...] following a variable name of the left,
-   parse and evaluate it as a sub-matrix (or sub-array)
-   specification.
-*/
-
-static void get_lh_mspec (parser *p)
-{
-#if LHDEBUG
-    fprintf(stderr, "get_lh_mspec: %s\n", (p->flags & P_COMPILE)?
-	    "compiling" : "running");
-#endif
-
-    if (p->subp != NULL) {
-	/* we're executing a previously compiled parser */
-	parser_reinit(p->subp, p->dset, p->prn);
-    } else {
-	/* starting from scratch */
-	add_child_parser(p);
-    }
-
-    if (!p->err && !(p->flags & P_NOEXEC)) {
-	/* evaluate child parser to get a matrix subspec */
-	parser *ps = p->subp;
-
-	ps->ret = eval(ps->tree, ps);
-
-	if (ps->err) {
-	    fprintf(stderr, "Error in subp eval = %d\n", ps->err);
-	    p->err = ps->err;
-	} else {
-	    p->lh.mspec = ps->ret->v.mspec;
-	}
-    }
-}
-
 /* Given a string [...], parse and evaluate it as a series observation
    index.  This is for the case where assignment is to a specific
    observation, as in y[obs] = foo.
@@ -14943,87 +14862,46 @@ static int get_array_index (matrix_subspec *spec, int *err)
     }
 }
 
-static void edit_array (parser *p)
+static void do_array_append (parser *p)
 {
-    matrix_subspec *spec = p->lh.mspec;
     gretl_array *A = NULL;
-    NODE *r = p->ret;
-    int idx = 0, copy = 1;
+    GretlType atype;
+    NODE *rhs = p->ret;
+    void *ptr = NULL;
 
-    /* Assignment of something other than an array to an array:
-       possible valid cases are (a) setting a specified
-       element of the LHS array, or (b) doing "+=" to append
-       an element (or an array of the same type). At present
-       these are mutually exclusive: you can't do "+=" on an
-       array _element_ (yet).
-    */
-
-    /* preliminary checks */
-
-    if (p->lh.t == BUNDLE) {
-	gretl_bundle *b = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
-
-	if (b != NULL) {
-	    A = gretl_bundle_get_array(b, p->lh.subvar, &p->err);
-	}
-    } else {
-	A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
-    }
+    A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
 
     if (A == NULL) {
 	p->err = E_DATA;
-    } else if (spec != NULL) {
-	if (p->op != B_ASN) {
-	    p->err = E_TYPES;
-	} else {
-	    idx = get_array_index(spec, &p->err);
-	}
-    }
-
-    if (p->err) {
 	return;
     }
 
-    if (is_tmp_node(r)) {
-	/* it's OK to steal the result */
-	copy = 0;
-    }
+    atype = gretl_array_get_content_type(A);
 
-    if (p->op == B_ASN) {
-	/* assigning to element */
-	if (r->t == STR) {
-	    p->err = gretl_array_set_string(A, idx, r->v.str, copy);
-	} else if (r->t == MAT) {
-	    p->err = gretl_array_set_matrix(A, idx, r->v.m, copy);
-	} else if (r->t == BUNDLE) {
-	    p->err = gretl_array_set_bundle(A, idx, r->v.b, copy);
-	} else if (r->t == LIST) {
-	    p->err = gretl_array_set_list(A, idx, r->v.ivec, copy);
-	} else {
-	    p->err = E_TYPES;
-	}
+    if (atype == GRETL_TYPE_STRING && rhs->t == STR) {
+	ptr = rhs->v.str;
+    } else if (atype == GRETL_TYPE_MATRIX && rhs->t == MAT) {
+	ptr = rhs->v.m;
+    } else if (atype == GRETL_TYPE_BUNDLE && rhs->t == BUNDLE) {
+	ptr = rhs->v.b;
+    } else if (atype == GRETL_TYPE_LIST && rhs->t == LIST) {
+	ptr = rhs->v.ivec;
+    } else if (rhs->t == ARRAY) {
+	/* special: not actually appending an _element_;
+	   stick rhs array onto end of lhs array
+	*/
+	p->err = gretl_array_append_array(A, rhs->v.a);
     } else {
-	/* appending */
-	if (r->t == STR) {
-	    p->err = gretl_array_append_string(A, r->v.str, copy);
-	} else if (r->t == MAT) {
-	    p->err = gretl_array_append_matrix(A, r->v.m, copy);
-	} else if (r->t == BUNDLE) {
-	    p->err = gretl_array_append_bundle(A, r->v.b, copy);
-	} else if (r->t == LIST) {
-	    p->err = gretl_array_append_list(A, r->v.ivec, copy);
-	} else if (r->t == ARRAY) {
-	    p->err = gretl_array_append_array(A, r->v.a);
-	} else {
-	    p->err = E_TYPES;
-	}
+	p->err = E_TYPES;
     }
 
-    if (!copy && !p->err) {
-	if (r->t == STR) r->v.str = NULL;
-	else if (r->t == MAT) r->v.m = NULL;
-	else if (r->t == BUNDLE) r->v.b = NULL;
-	else if (r->t == LIST) r->v.ivec = NULL;
+    if (!p->err && ptr != NULL) {
+	int copy = !is_tmp_node(rhs);
+
+	p->err = gretl_array_append_object(A, ptr, copy);
+	if (!copy && !p->err) {
+	    rhs->v.ptr = NULL;
+	}
     }
 }
 
@@ -15695,8 +15573,8 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == OSL) {
 	p->err = set_matrix_value(p->lhres, r, p);
     } else if (p->targ == ARRAY) {
-	if (p->lh.substr != NULL || p->op != B_ASN) {
-	    edit_array(p);
+	if (p->op != B_ASN) {
+	    do_array_append(p);
 	} else if (r->t == EMPTY) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);
@@ -15842,9 +15720,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	maybe_update_lhs_uvar(p, &lhtype);
     }
 
-    if (p->subp != NULL) {
-	get_lh_mspec(p);
-    } else if (setting_obsval(p)) {
+    if (setting_obsval(p)) {
 	get_lh_obsnum(p);
     }
 
@@ -15882,13 +15758,11 @@ static void parser_init (parser *p, const char *str,
     p->lh.uv = NULL;
     p->lh.m = NULL;
     p->lh.substr = NULL;
-    p->lh.subvar = NULL;
     p->lh.mspec = NULL;
     p->lh.gtype = 0;
 
     /* auxiliary apparatus */
     p->aux = NULL;
-    p->subp = NULL;
 
     p->callcount = 0;
     p->obs = 0;
@@ -15956,17 +15830,8 @@ void gen_save_or_print (parser *p, PRN *prn)
     }
 }
 
-static void parser_destroy_child (parser *p)
+void gen_cleanup (parser *p)
 {
-    p->subp->flags = 0;
-    gen_cleanup(p->subp, 1);
-    free(p->subp);
-    p->subp = NULL;
-}
-
-void gen_cleanup (parser *p, int level)
-{
-    int tag = level > 0 ? FR_SUB : 0;
     int save = (p->flags & (P_COMPILE | P_EXEC));
 
 #if EDEBUG
@@ -15979,49 +15844,46 @@ void gen_cleanup (parser *p, int level)
     }
 
     if (!save) {
-	if (p->subp != NULL) {
-	    parser_destroy_child(p);
+	if (p->lhtree != NULL) {
+	    if (p->lhtree != p->lhres) {
+		rndebug(("freeing p->lhtree %p\n", (void *) p->lhtree));
+		free_tree(p->lhtree, p, FR_LHTREE);
+	    }
+	    if (p->lhres != NULL) {
+		rndebug(("freeing p->lhres %p\n", (void *) p->lhres));
+		free_tree(p->lhres, p, FR_LHRES);
+	    }
 	}
 
-	if (p->lhtree) {
-	    rndebug(("freeing p->lhtree %p\n", (void *) p->lhtree));
-	    free_tree(p->lhtree, p, tag | FR_LHS);
-	}
-
-	if (p->ret != p->tree) {
+	if (p->tree != p->ret) {
 	    rndebug(("freeing p->tree %p\n", (void *) p->tree));
-	    free_tree(p->tree, p, tag | FR_TREE);
+	    free_tree(p->tree, p, FR_TREE);
 	}
 
 	rndebug(("freeing p->ret %p\n", (void *) p->ret));
-	free_tree(p->ret, p, tag | FR_RET);
+	free_tree(p->ret, p, FR_RET);
 
 	free(p->lh.substr);
-	free(p->lh.subvar);
     }
 }
 
 #define LS_DEBUG 0
 
-static void real_reset_uvars (parser *p, int level)
+static void real_reset_uvars (parser *p)
 {
     if (p->err) {
 	return;
     }
 
 #if LS_DEBUG
-    if (level == 0) {
-	fprintf(stderr, "\nreal_reset_uvars (%s '%s') *\n",
-		getsymb(p->targ), p->lh.name);
-    } else {
-	fprintf(stderr, "  reset subp child\n");
-    }
+    fprintf(stderr, "\nreal_reset_uvars (%s '%s') *\n",
+	    getsymb(p->targ), p->lh.name);
 #endif
 
     clear_uvnodes(p->tree);
 
-    if (p->subp != NULL) {
-	real_reset_uvars(p->subp, 1);
+    if (p->lhtree != NULL) {
+	clear_uvnodes(p->lhtree);
     }
 
     p->lh.uv = NULL;
@@ -16030,7 +15892,7 @@ static void real_reset_uvars (parser *p, int level)
 
 void genr_reset_uvars (parser *p)
 {
-    real_reset_uvars(p, 0);
+    real_reset_uvars(p);
 }
 
 static void maybe_set_return_flags (parser *p)

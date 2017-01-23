@@ -756,7 +756,7 @@ int generate (const char *line, DATASET *dset,
 	p.err = E_PARSE;
     }
 
-    gen_cleanup(&p, 0);
+    gen_cleanup(&p);
 
 #if GDEBUG
     fprintf(stderr, "generate: returning %d\n", p.err);
@@ -801,7 +801,7 @@ static double real_generate_scalar (const char *s,
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p, 0);
+    gen_cleanup(&p);
 
     return x;
 }
@@ -858,7 +858,7 @@ double *generate_series (const char *s, DATASET *dset, PRN *prn,
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p, 0);
+    gen_cleanup(&p);
 
     return x;
 }
@@ -905,7 +905,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p, 0);
+    gen_cleanup(&p);
 
     return m;
 }
@@ -937,7 +937,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
 	*err = E_PARSE;
     }
 
-    gen_cleanup(&p, 0);
+    gen_cleanup(&p);
 
     return ret;
 }
@@ -961,7 +961,7 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	*err = p.err;
     }
 
-    gen_cleanup(&p, 0);
+    gen_cleanup(&p);
 
     return ret;
 }
@@ -1068,7 +1068,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
     } 
 
     if (p->err) {
-	gen_cleanup(p, 0);
+	gen_cleanup(p);
     }
 
 #if GDEBUG
@@ -1109,7 +1109,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 	*err = E_PARSE;
     }
 
-    gen_cleanup(p, 0);
+    gen_cleanup(p);
 
     return x;
 }
@@ -1124,7 +1124,7 @@ void destroy_genr (parser *p)
 
     if (p != NULL) {
 	p->flags = 0;
-	gen_cleanup(p, 0);
+	gen_cleanup(p);
 	free(p);
     }
 }
