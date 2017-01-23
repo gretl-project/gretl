@@ -124,8 +124,8 @@ installdirs:
 
 helpclean:
 	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done
-	for f in $(sharesrc)/hlp*.stamp ; do rm -f $$f ; done
-	for f in $(sharesrc)/gen*.stamp ; do rm -f $$f ; done
+	for f in $(sharesrc)/cmdref*.stamp ; do rm -f $$f ; done
+	for f in $(sharesrc)/fnref*.stamp ; do rm -f $$f ; done
 
 clean: $(query_clean_help)
 	$(MAKE) -C bcih clean
