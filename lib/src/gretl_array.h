@@ -35,9 +35,15 @@ void *gretl_array_get_element (gretl_array *A, int i,
 			       GretlType *type,
 			       int *err);
 
+int gretl_array_set_element (gretl_array *A, int i, 
+			     void *ptr, GretlType type,
+			     int copy);
+
 char **gretl_array_get_strings (gretl_array *A, int *ns);
 
 GretlType gretl_array_get_type (gretl_array *A);
+
+GretlType gretl_array_get_content_type (gretl_array *A);
 
 int gretl_array_get_length (gretl_array *A);
 
