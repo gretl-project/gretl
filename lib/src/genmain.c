@@ -74,8 +74,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     } else if (p->targ == MAT) {
 	gretl_matrix *m = get_matrix_by_name(p->lh.name);
 	
-	if (p->lh.t == MAT && p->lh.substr != NULL && 
-	    *p->lh.substr != '\0') {
+	if (p->lh.t == MAT && p->lh.expr != NULL && 
+	    *p->lh.expr != '\0') {
 	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
 	} else if (p->lh.t == MAT) {
 	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
@@ -155,7 +155,7 @@ static void gen_write_label (parser *p, int oldv)
 	return;
     }
 
-    if (p->lh.substr != NULL) {
+    if (p->lh.expr != NULL) {
 	/* don't touch the label if we generated a single
 	   observation in a series */
 	return;

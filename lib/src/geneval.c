@@ -86,8 +86,7 @@ enum {
     FR_TREE   = 1 << 0,
     FR_RET    = 1 << 1,
     FR_LHTREE = 1 << 2,
-    FR_LHRES  = 1 << 3,
-    FR_ERR    = 1 << 4
+    FR_LHRES  = 1 << 3
 };
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
@@ -180,10 +179,6 @@ static const char *typestr (int t)
 static void free_mspec (matrix_subspec *spec, parser *p)
 {
     if (spec != NULL) {
-	if (p != NULL && spec == p->lh.mspec) {
-	    /* avoid double-freeing */
-	    p->lh.mspec = NULL;
-	}
 	free(spec->rslice);
 	free(spec->cslice);
 	free(spec);
@@ -243,22 +238,29 @@ static void print_tree (NODE *t, parser *p, int level)
 	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d)\n",
 		level, (void *) t, t->t, getsymb(t->t), t->flags);
     }
+
+    if (t->aux != NULL) {
+	fprintf(stderr, "  aux node at %p (type %03d, %s, flags %d)\n",
+		(void *) t->aux, t->aux->t, getsymb(t->aux->t), t->aux->flags);
+    }	
 }
+
+#endif /* EDEBUG */
+
+#if EDEBUG
 
 static const char *free_tree_tag (int t)
 {
     if (t & FR_TREE) {
-	return "p->tree";
+	return "free tree";
     } else if (t & FR_RET) {
-	return "p->ret";
+	return "free ret";
     } else if (t & FR_LHTREE) {
-	return "p->lhtree";
+	return "free lhtree";
     } else if (t & FR_LHRES) {
-	return "p->lhres";
-    } else if (t == FR_ERR) {
-	return "On error";
+	return "free lhres";
     } else {
-	return "??";
+	return "free ??";
     }
 }
 
@@ -348,7 +350,7 @@ static void free_tree (NODE *t, parser *p, int code)
     }
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: starting at %p (type %03d, %s)\n",
+    fprintf(stderr, "%-11s: starting at %p (type %03d, %s)\n",
 	    free_tree_tag(code), (void *) t, t->t,
 	    getsymb(t->t));
 #endif
@@ -374,16 +376,16 @@ static void free_tree (NODE *t, parser *p, int code)
 	free_tree(t->v.b1.b, p, code);
     }
 
-    if (t->aux != NULL && t->aux != p->ret) {
+    if (t->aux != NULL && t->aux != p->ret && t->aux != p->lhres) {
 	rndebug(("freeing aux node at %p\n", (void *) t->aux));
 	free_node(t->aux, p);
     } else if (t->aux != NULL) {
-	rndebug(("not freeing aux at %p (= p->ret)\n", (void *) t->aux));
+	rndebug(("NOT freeing aux at %p (= p->ret)\n", (void *) t->aux));
 	t->aux->refcount -= 1;
     }
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %03d, %s, flags = %d)\n",
+    fprintf(stderr, "%-11s: freeing node at %p (type %03d, %s, flags = %d)\n",
 	    free_tree_tag(code), (void *) t, t->t, getsymb(t->t),
 	    t->flags);
 #endif
@@ -8070,12 +8072,12 @@ static double *scalar_to_series (NODE *n, parser *p)
 }
 
 /* Setting an object in a bundle under a given key string. We get here
-   only if p->lh.substr is non-NULL. That "substr" may be a string
+   only if p->lh.expr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
    case we wait till this point to cash out the string, since we may
    be in a context (e.g. a loop) where the value of the string
    variable changes from one invocation of the generator to the
-   next.
+   next. FIXME doc!
 */
 
 static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
@@ -11765,6 +11767,8 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
     ret->t = t->t;   /* transcribe type */
     ret->v.b2.l = l; /* evaluated left-hand */
     ret->v.b2.r = r; /* evaluated right-hand */
+
+    /* prevent double-freeing of children @l and @r */
     ret->flags = LHT_NODE;
 
     return ret;
@@ -13748,10 +13752,10 @@ static void get_lh_obsnum (parser *p)
 {
     int done = 0;
 
-    if (p->lh.substr[0] != '"') {
+    if (p->lh.expr[0] != '"') {
 	int err = 0;
 
-	p->lh.obsnum = generate_scalar(p->lh.substr, p->dset, &err);
+	p->lh.obsnum = generate_scalar(p->lh.expr, p->dset, &err);
 	if (!err) {
 	    p->lh.obsnum -= 1; /* convert to 0-based for internal use */
 	    done = 1;
@@ -13759,11 +13763,11 @@ static void get_lh_obsnum (parser *p)
     }
 
     if (!done) {
-	p->lh.obsnum = get_t_from_obs_string(p->lh.substr, p->dset);
+	p->lh.obsnum = get_t_from_obs_string(p->lh.expr, p->dset);
     }
 
     if (p->lh.obsnum < 0 || p->lh.obsnum >= p->dset->n) {
-	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
+	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.expr);
 	fprintf(stderr, "obs index = %d and dataset n = %d\n",
 		p->lh.obsnum, p->dset->n);
 	p->err = E_DATA;
@@ -13830,7 +13834,7 @@ static void do_declaration (parser *p)
 
 static void parser_try_print (parser *p, const char *s)
 {
-    if (p->lh.t != 0 && p->lh.substr == NULL) {
+    if (p->lh.t != 0 && p->lh.expr == NULL) {
 	p->flags |= P_DISCARD;
 	p->point = s;
     } else {
@@ -13838,39 +13842,87 @@ static void parser_try_print (parser *p, const char *s)
     }
 }
 
-static char *extract_LHS_string (const char **ps, parser *p)
+static int extract_lhs_and_op (const char **ps, parser *p,
+			       char *opstr)
 {
     const char *s = *ps;
-    char *lhs = NULL;
-    int n;
+    int n, err = 0;
 
     if (p->targ != UNK && strchr(s, '=') == NULL) {
 	/* we got a type specification but no assignment,
 	   so should be variable declaration(s) ?
 	*/
 	p->flags |= P_DECL;
-	p->lh.substr = gretl_strdup(s);
-	return NULL;
+	p->lh.expr = gretl_strdup(s);
+	return 0;
     }
 
+    /* count bytes preceding first '=' */
     n = strcspn(s, "=");
 
     if (n > 0) {
+	char *lhs = NULL;
 	int lhlen = n;
 
-	if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
-	    lhlen--; /* modified assignment */
+	if (s[n] == '=') {
+	    /* we actually reached an '=' */
+	    if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
+		/* preceded by a modifier: inflected assignment */
+		lhlen--;
+		opstr[0] = s[n-1];
+		opstr[1] = '=';
+	    } else {
+		/* no: straight assignment */
+		opstr[0] = '=';
+	    }
 	}
-	lhs = gretl_strndup(s, lhlen);
-	tailstrip(lhs);
-	*ps = s + n;
+
+	if (lhlen > 0) {
+	    lhs = gretl_strndup(s, lhlen);
+	    tailstrip(lhs);
+	    lhlen = strlen(lhs);
+	}
+
+	if (opstr[0] == '\0' && lhlen > 2) {
+	    /* check for postfix operator */
+	    char *test = lhs + lhlen - 2;
+
+	    if (!strcmp(test, "++") || !strcmp(test, "--")) {
+		strcpy(opstr, test);
+		*test = '\0';
+		lhlen -= 2;
+	    }
+	}
+	    
+	if (lhlen > 0) {
+	    if (lhlen == gretl_namechar_spn(lhs)) {
+		/* a straight identifier? */
+		if (lhlen >= VNAMELEN) {
+		    pprintf(p->prn, _("'%s': name is too long (max %d characters)\n"),
+			    lhs, VNAMELEN - 1);
+		    err = E_PARSE;
+		} else {
+		    strcpy(p->lh.name, lhs);
+		}
+	    } else {
+		/* treat as an expression to be evaluated */
+		p->lh.expr = lhs;
+		lhs = NULL; /* protect against freeing */
+	    }
+	} else {
+	    /* nothing relevant found */
+	    err = E_PARSE;
+	}
+
+	if (!err && opstr[0] != '\0') {
+	    p->op = get_op(opstr);
+	}
+
+	free(lhs);
+	*ps = s + n + 1;
     }
 
-    if (lhs == NULL) {
-	p->err = E_PARSE;
-    }
-
-    return lhs;
+    return err;
 }
 
 /* In the case of a "private" genr we allow ourselves some
@@ -13949,14 +14001,9 @@ static int overwrite_type_check (parser *p)
     return err;
 }
 
-static int overwrite_const_check (const char *s, parser *p)
+static int overwrite_const_check (const char *s)
 {
-    if (object_is_const(s)) {
-	p->err = overwrite_err(s);
-	return p->err;
-    } else {
-	return 0;
-    }
+    return object_is_const(s) ? overwrite_err(s) : 0;
 }
 
 static void maybe_set_matrix_target (parser *p)
@@ -13985,10 +14032,8 @@ static int ok_array_decl (parser *p, const char *s)
     return p->lh.gtype != 0;
 }
 
-static GretlType bundle_type_from_gentype (parser *p)
+static GretlType bundle_type_from_gentype (int t)
 {
-    int t = p->targ;
-
     if (t == NUM) {
 	return GRETL_TYPE_DOUBLE;
     } else if (t == STR) {
@@ -14004,20 +14049,167 @@ static GretlType bundle_type_from_gentype (parser *p)
     } else if (t == U_ADDR) {
 	return GRETL_TYPE_MATRIX_REF;
     } else {
-	p->err = E_TYPES;
 	return GRETL_TYPE_NONE;
     }
 }
 
-/* process the left-hand side of a genr formula */
+/* Given an existing LHS variable, whose type is recorded in
+   p->lh.t, check that the specified operator is supported
+   for the type. Return error code if not.
+*/
 
-static void pre_process (parser *p, int flags)
+static int check_operator_validity (parser *p, const char *opstr)
+{
+    if (p->lh.t == MAT && !ok_matrix_op(p->op)) {
+	/* matrices: we accept only a limited range of
+	   modified assignment operators */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for matrices"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t == LIST && !ok_list_op(p->op)) {
+	/* lists: same story as matrices */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for lists"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t == STR && !ok_string_op(p->op)) {
+	/* strings: ditto */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for strings"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t == ARRAY && !ok_array_op(p->op)) {
+	/* arrays: ditto */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for arrays"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t == BUNDLE && p->op != B_ASN) {
+	/* bundles: no modified assignment (yet) */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t != MAT && (p->op == B_VCAT || p->op == B_DOTASN)) {
+	/* vertical concat: only OK for matrices */
+	gretl_errmsg_sprintf(_("'%s' : only defined for matrices"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t != MAT && p->lh.t != STR && p->op == B_HCAT) {
+	/* horizontal concat: only OK for matrices, strings */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
+	return E_PARSE;
+    } else if (p->lh.t == SERIES && !setting_obsval(p) &&
+	is_string_valued(p->dset, p->lh.vnum)) {
+	/* string-valued series: do not overwrite wholesale */
+	gretl_errmsg_set("Cannot overwrite entire string-valued series");
+	return E_TYPES;
+    }
+
+    /* otherwise OK? */
+    return 0;
+}
+
+/* Do we have an inline type specification preceding the
+   statement proper? In most cases we shouldn't, since it
+   will already have been handled by the tokenizer (and
+   the type will now be recorded in p->targ). But we allow
+   for finding a typespec here in case of "genrs" within
+   nls/mle/gmm blocks, where the statement bypasses the
+   regular tokenizer. (FIXME?)
+*/
+
+static void check_for_inline_typespec (const char **ps, parser *p)
+{
+    const char *s = *ps;
+    
+    if (!strncmp(s, "scalar ", 7)) {
+	p->targ = NUM;
+	s += 7;
+    } else if (!strncmp(s, "series ", 7)) {
+	p->targ = SERIES;
+	s += 7;
+    } else if (!strncmp(s, "matrix *", 8)) {
+	p->targ = MAT;
+	p->flags |= P_LHPTR;
+	s += 8;
+	s += strspn(s, " ");
+    } else if (!strncmp(s, "matrix ", 7)) {
+	p->targ = MAT;
+	s += 7;
+    } else if (!strncmp(s, "list ", 5)) {
+	p->targ = LIST;
+	s += 5;
+    } else if (!strncmp(s, "string ", 7)) {
+	p->targ = STR;
+	s += 7;
+    } else if (!strncmp(s, "bundle ", 7)) {
+	p->targ = BUNDLE;
+	s += 7;
+    } else if (ok_array_decl(p, s)) {
+	p->targ = ARRAY;
+	s += strcspn(s, " ") + 1;
+    }
+
+    /* advance pointer */
+    *ps = s;
+}
+
+static int check_existing_lhs_type (parser *p, const char *lhstr,
+				    int *newvar)
+{
+    user_var *uvar;
+    int v, err = 0;
+
+    v = current_series_index(p->dset, lhstr);
+    if (v >= 0) {
+	p->lh.vnum = v;
+	p->lh.t = SERIES;
+	*newvar = 0;
+	return 0;
+    }
+    
+    uvar = get_user_var_by_name(lhstr);
+
+    if (uvar != NULL) {
+	GretlType vtype = uvar->type;
+
+	p->lh.uv = uvar;
+	*newvar = 0;
+
+	if (vtype == GRETL_TYPE_MATRIX) {
+	    p->lh.m = uvar->ptr;
+	    p->lh.t = MAT;
+	} else if (vtype == GRETL_TYPE_DOUBLE) {
+	    if (uvar->flags & UV_NODECL) {
+		if (p->targ == UNK) {
+		    p->flags |= P_NODECL;
+		} else {
+		    uvar->flags &= ~UV_NODECL;
+		}
+	    }
+	    p->lh.t = NUM;
+	} else if (vtype == GRETL_TYPE_LIST) {
+	    p->lh.t = LIST;
+	} else if (vtype == GRETL_TYPE_STRING) {
+	    p->lh.t = STR;
+	} else if (vtype == GRETL_TYPE_BUNDLE) {
+	    if (p->targ != UNK && !gretl_is_array_type(p->lh.gtype)) {
+		/* WTF? revisit this! */
+		p->lh.gtype = bundle_type_from_gentype(p->targ);
+		if (p->lh.gtype == GRETL_TYPE_NONE) {
+		    err = E_TYPES;
+		}
+	    }
+	    if (!err) {
+		p->lh.t = BUNDLE;
+	    }
+	} else if (vtype == GRETL_TYPE_ARRAY) {
+	    p->lh.gtype = gretl_array_get_type(uvar->ptr);
+	    p->lh.t = ARRAY;
+	}
+    }
+
+    return err;
+}
+
+/* pre-process a "genr" statement */
+
+static void gen_preprocess (parser *p, int flags)
 {
     const char *s = p->input;
-    const char *savep;
-    char *lhstr = NULL;
     char opstr[3] = {0};
-    int v, newvar = 1;
+    int newvar = 1;
 
     while (isspace(*s)) s++;
 
@@ -14033,39 +14225,11 @@ static void pre_process (parser *p, int flags)
     while (isspace(*s)) s++;
 
     if (p->targ == UNK) {
-	/* Do we have an inline type specification? In most
-	   cases we shouldn't, but allow for this in case of
-	   "genrs" within nls/mle/gmm blocks, where the
-	   statement bypasses the tokenizer. (FIXME?)
-	*/
-	if (!strncmp(s, "scalar ", 7)) {
-	    p->targ = NUM;
-	    s += 7;
-	} else if (!strncmp(s, "series ", 7)) {
-	    p->targ = SERIES;
-	    s += 7;
-	} else if (!strncmp(s, "matrix *", 8)) {
-	    p->targ = MAT;
-	    p->flags |= P_LHPTR;
-	    s += 8;
-	    s += strspn(s, " ");
-	} else if (!strncmp(s, "matrix ", 7)) {
-	    p->targ = MAT;
-	    s += 7;
-	} else if (!strncmp(s, "list ", 5)) {
-	    p->targ = LIST;
-	    s += 5;
-	} else if (!strncmp(s, "string ", 7)) {
-	    p->targ = STR;
-	    s += 7;
-	} else if (!strncmp(s, "bundle ", 7)) {
-	    p->targ = BUNDLE;
-	    s += 7;
-	} else if (ok_array_decl(p, s)) {
-	    p->targ = ARRAY;
-	    s += strcspn(s, " ") + 1;
-	}
+	check_for_inline_typespec(&s, p);
     } else if (gretl_array_type(p->targ)) {
+	/* record a plural type spec such as "matrices" under
+	   the "lh" member of @p.
+	*/
 	p->lh.gtype = p->targ;
 	p->targ = ARRAY;
     } else if (p->targ == MAT && *s == '*') {
@@ -14074,6 +14238,8 @@ static void pre_process (parser *p, int flags)
 	s++;
     }
 
+    /* check for types that cannot be generated in the
+       absence of a dataset */
     if ((p->targ == SERIES || p->targ == LIST) &&
 	(p->dset == NULL || p->dset_n == 0)) {
 	no_data_error(p);
@@ -14084,26 +14250,22 @@ static void pre_process (parser *p, int flags)
 	/* doing a simple "eval" */
 	p->point = s;
 	return;
-    } else {
-	savep = s;
     }
 
-    /* extract LHS varname (possibly with substring)
-       and test for a declaration */
-    lhstr = extract_LHS_string(&s, p);
+    /* extract LHS expression and operator, and test for a declaration */
+    p->err = extract_lhs_and_op(&s, p, opstr);
     if (p->err || (p->flags & P_DECL)) {
-	free(lhstr);
 	return;
     }
 
     /* record next read position */
     p->point = s;
 
-    if (strchr(lhstr, '.') || strchr(lhstr, '[')) {
-	/* gentest: new interpolation */
+    if (p->lh.expr != NULL) {
+	/* create syntax tree for the LHS expression */
 	const char *savepoint = p->point;
 
-	p->point = lhstr;
+	p->point = p->lh.expr;
 	p->ch = parser_getc(p);
 	lex(p);
 	p->lhtree = expr(p);
@@ -14112,87 +14274,38 @@ static void pre_process (parser *p, int flags)
 	p->point = savepoint;
 	p->ch = 0;
 	if (p->err) {
-	    goto bailout;
+	    return;
+	} else {
+	    goto get_operator;
 	}
-    }
-
-    if (p->lhtree != NULL) {
-	/* skip a good deal of stuff that assumes a straight
-	   identifier on the left */
-	goto get_operator;
-    }
-
-    if (strlen(lhstr) > VNAMELEN - 1) {
-	pprintf(p->prn, _("'%s': name is too long (max %d characters)\n"),
-		lhstr, VNAMELEN - 1);
-	p->err = E_DATA;
-	goto bailout;
     }
 
     /* find out if the LHS var already exists, and if
        so, what type it is */
-    if ((v = current_series_index(p->dset, lhstr)) >= 0) {
-	p->lh.vnum = v;
-	p->lh.t = SERIES;
-	newvar = 0;
-    } else {
-	user_var *uvar = get_user_var_by_name(lhstr);
-
-	if (uvar != NULL) {
-	    GretlType vtype = uvar->type;
-
-	    p->lh.uv = uvar;
-	    newvar = 0;
-
-	    if (vtype == GRETL_TYPE_MATRIX) {
-		p->lh.m = uvar->ptr;
-		p->lh.t = MAT;
-	    } else if (vtype == GRETL_TYPE_DOUBLE) {
-		if (uvar->flags & UV_NODECL) {
-		    if (p->targ == UNK) {
-			p->flags |= P_NODECL;
-		    } else {
-			uvar->flags &= ~UV_NODECL;
-		    }
-		}
-		p->lh.t = NUM;
-	    } else if (vtype == GRETL_TYPE_LIST) {
-		p->lh.t = LIST;
-	    } else if (vtype == GRETL_TYPE_STRING) {
-		p->lh.t = STR;
-	    } else if (vtype == GRETL_TYPE_BUNDLE) {
-		if (p->targ != UNK && !gretl_is_array_type(p->lh.gtype)) {
-		    p->lh.gtype = bundle_type_from_gentype(p);
-		    if (p->err) {
-			goto bailout;
-		    }
-		}
-		p->lh.t = BUNDLE;
-	    } else if (vtype == GRETL_TYPE_ARRAY) {
-		p->lh.gtype = gretl_array_get_type(uvar->ptr);
-		p->lh.t = ARRAY;
-	    }
-	}
+    if (!p->err) {
+	p->err = check_existing_lhs_type(p, p->lh.name, &newvar);
     }
 
-    /* if pre-existing var, check for const-ness */
-    if (!newvar && overwrite_const_check(lhstr, p)) {
-	goto bailout;
-    }
+    if (p->err) {
+	return;
+    }    
 
-    /* if new variable, check name for legality */
     if (newvar) {
+	/* new variable: check name for legality */
 	if (flags & P_PRIV) {
-	    p->err = check_private_varname(lhstr);
+	    p->err = check_private_varname(p->lh.name);
 	} else {
-	    p->err = check_varname(lhstr);
+	    p->err = check_varname(p->lh.name);
 	}
-	if (p->err) {
-	    goto bailout;
-	}
+    } else {
+	/* pre-existing var: check for const-ness */
+	p->err = overwrite_const_check(p->lh.name);
     }
 
-    strcpy(p->lh.name, lhstr);
+    if (p->err) {
+	return;
+    }
+
     if (p->lh.t != 0) {
 	if (p->targ == UNK) {
 	    /* when a result type is not specified, set this
@@ -14202,27 +14315,20 @@ static void pre_process (parser *p, int flags)
 	} else if (overwrite_type_check(p)) {
 	    /* don't overwrite one type with another */
 	    p->err = E_TYPES;
-	    goto bailout;
+	    return;
 	}
     }
 
  get_operator:
 
-    /* advance past varname */
-    s = p->point;
+    /* advance past white space */
     while (isspace(*s)) s++;
+    p->point = p->rhs = s;
 
     /* expression ends here with no operator: a call to print? */
-    if (*s == '\0') {
-	parser_try_print(p, savep);
-	goto bailout;
-    }
-
-    /* operator: '=' or '+=' etc. */
-    strncat(opstr, s, 2);
-    if ((p->op = get_op(opstr)) == 0) {
-	p->err = E_EQN;
-	goto bailout;
+    if (*s == '\0' && p->op == 0) {
+	parser_try_print(p, p->lh.name);
+	return;
     }
 
     /* if the LHS variable does not already exist, then
@@ -14231,76 +14337,15 @@ static void pre_process (parser *p, int flags)
     */
     if (newvar && p->op != B_ASN) {
 	/* error message */
-	pprintf(p->prn, "%s: unknown variable\n", lhstr);
+	pprintf(p->prn, "%s: unknown variable\n", p->lh.name);
 	p->err = E_UNKVAR;
-	goto bailout;
+	return;
     }
 
-    /* matrices: we accept only a limited range of
-       modified assignment operators */
-    if (p->lh.t == MAT && !ok_matrix_op(p->op)) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for matrices"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
+    p->err = check_operator_validity(p, opstr);
+    if (p->err) {
+	return;
     }
-
-    /* lists: same story as matrices */
-    if (p->lh.t == LIST && !ok_list_op(p->op)) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for lists"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
-    }
-
-    /* strings: ditto */
-    if (p->lh.t == STR && !ok_string_op(p->op)) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for strings"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
-    }
-
-    /* arrays: ditto */
-    if (p->lh.t == ARRAY && !ok_array_op(p->op)) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for arrays"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
-    }
-
-    /* bundles: we can't do any sort of modified assignment (yet) */
-    if (p->lh.t == BUNDLE && p->op != B_ASN) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
-    }
-
-    /* vertical concat: only OK for matrices */
-    if (p->lh.t != MAT && (p->op == B_VCAT || p->op == B_DOTASN)) {
-	gretl_errmsg_sprintf(_("'%s' : only defined for matrices"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
-    }
-
-    /* horizontal concat: only OK for matrices, strings */
-    if (p->lh.t != MAT && p->lh.t != STR && p->op == B_HCAT) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
-	p->err = E_PARSE;
-	goto bailout;
-    }
-
-    /* string-valued series: do not overwrite wholesale */
-    if (p->lh.t == SERIES && !setting_obsval(p) &&
-	is_string_valued(p->dset, p->lh.vnum)) {
-	gretl_errmsg_set("Cannot overwrite entire string-valued series");
-	p->err = E_TYPES;
-	goto bailout;
-    }
-
-    /* advance past operator */
-    s += strlen(opstr);
-    while (isspace(*s)) s++;
-
-    /* set starting point for RHS parser, and also
-       for a possible label */
-    p->point = p->rhs = s;
 
     /* if the target type is still unknown, and the RHS expression
        is wrapped in '{' and '}', make the target a matrix */
@@ -14311,7 +14356,7 @@ static void pre_process (parser *p, int flags)
     /* Set a flag if the RHS should define a list */
     if (p->targ == LIST || (p->targ == ARRAY &&
 			    p->lh.gtype == GRETL_TYPE_LISTS &&
-			    p->lh.substr != NULL)) {
+			    p->lh.expr != NULL)) {
 	p->flags |= P_LISTDEF;
     }
 
@@ -14319,10 +14364,6 @@ static void pre_process (parser *p, int flags)
     if ((p->op == INC || p->op == DEC) && *s != '\0') {
 	p->err = E_PARSE;
     }
-
- bailout:
-
-    free(lhstr);
 }
 
 /* tests for saving variable */
@@ -14727,7 +14768,7 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 
 static void edit_matrix (parser *p)
 {
-    matrix_subspec *spec;
+    matrix_subspec *spec = NULL;
     gretl_matrix *m = NULL;
     int rhs_scalar = 0;
     double y = 0;
@@ -14743,11 +14784,11 @@ static void edit_matrix (parser *p)
 	}
     }
 
+    /* FIXME: @spec is NULL!! */
+
 #if EDEBUG
     fprintf(stderr, "edit_matrix: replacement m = %p\n", (void *) m);
 #endif
-
-    spec = p->lh.mspec;
 
     /* check the validity of the subspec we got */
     p->err = check_matrix_subspec(spec, p->lh.m);
@@ -14989,7 +15030,9 @@ static int create_or_edit_string (parser *p)
 static int create_or_edit_list (parser *p)
 {
     int *list = node_get_list(p->ret, p); /* note: copied */
-    matrix_subspec *spec = p->lh.mspec;
+    matrix_subspec *spec = NULL;
+
+    /* FIXME: @spec is NULL!! */
 
 #if EDEBUG
     printlist(list, "incoming list in edit_list()");
@@ -15120,7 +15163,7 @@ static int gen_check_return_type (parser *p)
 	    msgdone = 1;
 	}
     } else if (p->targ == ARRAY) {
-	if (p->lh.substr == NULL && p->op == B_ASN) {
+	if (p->lh.expr == NULL && p->op == B_ASN) {
 	    if (r->t != ARRAY && r->t != EMPTY) {
 		err = E_TYPES;
 	    }
@@ -15286,6 +15329,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	p->lhres = eval(p->lhtree, p);
 	if (p->lhres != NULL) {
 	    print_tree(p->lhres, p, 0);
+	    fprintf(stderr, "*** lhtree post-eval ***\n");
+	    print_tree(p->lhtree, p, 0);
 	    p->targ = p->lhres->t;
 	}
     }
@@ -15517,10 +15562,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (p->lh.m == NULL) {
 	    /* there's no pre-existing left-hand side matrix */
 	    p->lh.m = matrix_from_scratch(p, 0, &prechecked);
-	} else if (p->lh.substr == NULL && p->op == B_ASN) {
+	} else if (p->lh.expr == NULL && p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
 	    p->lh.m = assign_to_matrix(p, &prechecked);
-	} else if (p->lh.substr == NULL) {
+	} else if (p->lh.expr == NULL) {
 	    /* inflected assignment to entire existing matrix */
 	    p->lh.m = assign_to_matrix_mod(p, &prechecked);
 	} else {
@@ -15757,8 +15802,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.obsnum = -1;
     p->lh.uv = NULL;
     p->lh.m = NULL;
-    p->lh.substr = NULL;
-    p->lh.mspec = NULL;
+    p->lh.expr = NULL;
     p->lh.gtype = 0;
 
     /* auxiliary apparatus */
@@ -15782,7 +15826,7 @@ static void parser_init (parser *p, const char *str,
     if (p->flags & P_VOID) {
         p->flags |= P_DISCARD;
     } else if (p->targ == UNK || !(p->flags & P_ANON)) {
-	pre_process(p, flags);
+	gen_preprocess(p, flags);
     } else if (p->targ == LIST) {
 	p->flags |= P_LISTDEF;
     }
@@ -15846,6 +15890,11 @@ void gen_cleanup (parser *p)
     if (!save) {
 	if (p->lhtree != NULL) {
 	    if (p->lhtree != p->lhres) {
+		/* we have to scrub the LHT_NODE flag on p->lhtree,
+		   or else its children will not get freed and we'll
+		   leak memory
+		*/
+		p->lhtree->flags &= ~LHT_NODE;
 		rndebug(("freeing p->lhtree %p\n", (void *) p->lhtree));
 		free_tree(p->lhtree, p, FR_LHTREE);
 	    }
@@ -15863,7 +15912,7 @@ void gen_cleanup (parser *p)
 	rndebug(("freeing p->ret %p\n", (void *) p->ret));
 	free_tree(p->ret, p, FR_RET);
 
-	free(p->lh.substr);
+	free(p->lh.expr);
     }
 }
 

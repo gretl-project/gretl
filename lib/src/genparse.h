@@ -647,8 +647,7 @@ struct lhinfo {
     user_var *uv;          /* address of pre-existing LHS variable */
     int obsnum;            /* specific observation number in series */
     gretl_matrix *m;       /* LHS matrix (or NULL) */
-    char *substr;          /* obs or matrix/array selection string */
-    matrix_subspec *mspec; /* evaluated submatrix spec */
+    char *expr;            /* expression on left */
     GretlType gtype;       /* gretl type of LHS array, if any, or
 			      of LHS bundle member */
 };
@@ -701,7 +700,6 @@ NODE *expr (parser *s);
 NODE *newdbl (double x);
 NODE *newempty (void);
 NODE *obs_node (parser *p);
-NODE *slice_node_direct (parser *p);
 void context_error (int c, parser *p, const char *func);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t);

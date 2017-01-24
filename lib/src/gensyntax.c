@@ -1793,18 +1793,3 @@ NODE *expr (parser *p)
     return t;
 }
 
-/* for use when we need to evaluate a sub-matrix or sub-array
-   specification on the left-hand side of a genr formula */
-
-NODE *slice_node_direct (parser *p)
-{
-    NODE *t;
-
-    t = newb2(MSLRAW, NULL, NULL);
-    if (t != NULL) {
-	lex(p);
-	get_slice_parts(t, p);
-    }
-
-    return t;
-}
