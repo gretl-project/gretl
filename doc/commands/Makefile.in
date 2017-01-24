@@ -235,7 +235,7 @@ $(HELPREFS): bbl2txt $(EN_CMDREF_STAMP) $(EN_FNREF_STAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@
 
 # Guide chapter titles
-$(CHAPREFS): chaprefs ../tex/gretl-guide.tex
+$(CHAPREFS): chaprefs $(TEXDIR)/gretl-guide.tex
 	./chaprefs $(TEXDIR)/gretl-guide.tex > $@
 
 $(GRETLLIB):
