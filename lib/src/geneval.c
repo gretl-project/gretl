@@ -8071,6 +8071,25 @@ static double *scalar_to_series (NODE *n, parser *p)
     return ret;
 }
 
+static GretlType gretl_type_of (int t)
+{
+    if (t == NUM) {
+	return GRETL_TYPE_DOUBLE;
+    } else if (t == SERIES) {
+	return GRETL_TYPE_SERIES;
+    } else if (t == MAT) {
+	return GRETL_TYPE_MATRIX;
+    } else if (t == STR) {
+	return GRETL_TYPE_STRING;
+    } else if (t == BUNDLE) {
+	return GRETL_TYPE_BUNDLE;
+    } else if (t == LIST) {
+	return GRETL_TYPE_LIST;
+    } else {
+	return 0;
+    }
+}
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.expr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -8080,11 +8099,11 @@ static double *scalar_to_series (NODE *n, parser *p)
    next. FIXME doc!
 */
 
-static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
+static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
+			     GretlType pretarg)
 {
     NODE *lh1 = lhs->v.b2.l;
     NODE *lh2 = lhs->v.b2.r;
-    GretlType lhtype = 0;
     GretlType type = 0;
     gretl_bundle *bundle;
     void *ptr = NULL;
@@ -8095,6 +8114,10 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (lh1->t != BUNDLE) {
 	return E_DATA;
+    } else if (p->op != B_ASN) {
+	pprintf(p->prn, "bundle member: operator not yet supported\n");
+	/* FIXME */
+	return E_TYPES;
     }
 
     bundle = lh1->v.b;
@@ -8109,17 +8132,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    (void *) bundle, key);
 #endif
 
-#if 0
-    if (!err && p->op != B_ASN) {
-	/* e.g. bundle.member += foo: note that right now we don't
-	   reach here: for bundles and their members, we choke off
-	   modified assignment at the initial parse stage.
-	   AC, 2013-05-12
-	*/
-	type = gretl_bundle_get_member_type(bundle, key, &err);
-    }
-#endif
-
     /* Note: @lhtype is the gretl type specified by the caller for
        the bundle member (if any, this need not be supplied), and
        @type is the gretl type of the object arising on the RHS.
@@ -8131,12 +8143,10 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
        easier to get a series back out again.
     */
 
-    lhtype = p->lh.gtype;
-
     if (!err) {
 	switch (rhs->t) {
 	case NUM:
-	    if (lhtype == GRETL_TYPE_SERIES) {
+	    if (pretarg == GRETL_TYPE_SERIES) {
 		ptr = scalar_to_series(rhs, p);
 		if (p->err) {
 		    err = p->err;
@@ -8145,7 +8155,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 		    size = p->dset->n;
 		    donate = 1;
 		}
-	    } else if (lhtype == GRETL_TYPE_MATRIX) {
+	    } else if (pretarg == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(rhs->v.xval);
 		type = GRETL_TYPE_MATRIX;
 		donate = 1;
@@ -8161,7 +8171,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    break;
 	case MAT:
 	    /* FIXME assignment of (suitable) vector to series */
-	    if (lhtype == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
+	    if (pretarg == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
 		ptr = &rhs->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
 	    } else {
@@ -8192,9 +8202,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	case ARRAY:
 	    ptr = rhs->v.a;
 	    type = GRETL_TYPE_ARRAY;
-	    if (gretl_is_array_type(lhtype)) {
+	    if (gretl_is_array_type(pretarg)) {
 		/* don't provoke a spurious error below */
-		lhtype = GRETL_TYPE_ARRAY;
+		pretarg = GRETL_TYPE_ARRAY;
 	    }
 	    donate = is_tmp_node(rhs);
 	    break;
@@ -8210,7 +8220,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     if (!err) {
-	if (lhtype && type != lhtype) {
+	if (pretarg && type != pretarg) {
 	    /* result is type-incompatible with user's spec */
 	    err = E_TYPES;
 	} else if (donate) {
@@ -8232,41 +8242,82 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     return err;
 }
 
-static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
+/* The following handles both array and list elements */
+
+static int set_array_value (NODE *lhs, NODE *rhs, parser *p,
+			    GretlType pretarg)
 {
     NODE *lh1 = lhs->v.b2.l;
     NODE *lh2 = lhs->v.b2.r;
     GretlType atype = 0;
     GretlType type = 0;
-    gretl_array *array;
+    gretl_array *array = NULL;
+    int *list = NULL;
     void *ptr = NULL;
     int idx = 0;
     int donate = 0;
     int err = 0;
 
-    if (lh1->t == LIST) {
-	fprintf(stderr, "set LIST element: coming soon!\n");
-	return E_DATA;
+    if (lh1->t != LIST && lh1->t != ARRAY) {
+	return E_TYPES;
+    } else if (p->op != B_ASN) {
+	pprintf(p->prn, "list or array element: operator not yet supported\n");
+	/* FIXME */
+	return E_TYPES;
     }
 
-    if (lh1->t != ARRAY) {
-	return E_DATA;
-    }
-
-    array = lh1->v.a;
-    idx = lh2->v.xval;
-
-    if (array == NULL || idx <= 0) {
-	return E_DATA;
+    if (lh1->t == ARRAY) {
+	array = lh1->v.a;
+	idx = lh2->v.xval;
+	if (array == NULL || idx <= 0) {
+	    return E_DATA;
+	}
+    } else if (lh1->t == LIST) {
+	list = lh1->v.ivec;
+	idx = lh2->v.xval;
+	if (list == NULL) {
+	    return E_DATA;
+	} else if (idx < 1 || idx > list[0]) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
+	    return E_DATA;
+	}
     }
 
 #if 1 || EDEBUG
     fprintf(stderr, "set_array_value: array = %p, idx = %d\n",
-	    (void *) array, idx);
+	    array ? (void *) array : (void *) list, idx);
 #endif
 
+    if (list != NULL) {
+	/* handle the simpler case first */
+	int v = -1;
+	
+	if (rhs->t == NUM) {
+	    v = node_get_int(rhs, p);
+	} else if (rhs->t == SERIES) {
+	    v = rhs->vnum;
+	} else {
+	    p->err = E_TYPES;
+	}
+
+	if (!p->err && (v < 0 || v >= p->dset->v)) {
+	    gretl_errmsg_set(_("Invalid list element"));
+	    p->err = E_DATA;
+	}
+
+	if (!p->err) {
+	    list[idx] = v;
+	}
+
+	return p->err;
+    }
+
     atype = gretl_array_get_content_type(array);
-    /* FIXME p->lh.gtype check? */
+
+    if (pretarg != UNK && gretl_type_of(pretarg) != atype) {
+	/* type of array disagrees with what the user specified */
+	return E_TYPES;
+    }
 
     if (!err) {
 	switch (rhs->t) {
@@ -8320,6 +8371,80 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     return err;
+}
+
+static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
+{
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
+    double **Z = p->dset->Z;
+    char *label = NULL;
+    double x = NADBL;
+    int op = p->op;
+    int v, t;
+
+    if (lh1->t != SERIES || lh2->t != NUM) {
+	return E_TYPES;
+    } else {
+	v = lh1->vnum;
+	if (v <= 0 || v >= p->dset->v) {
+	    return E_DATA;
+	}
+	t = node_get_int(lh2, p);
+	if (t < 1 || t > p->dset->n) {
+	    return E_DATA;
+	}
+	/* convert to 0-based */
+	t--;
+    }
+
+    if (rhs == NULL) {
+	if (p->op == INC) {
+	    x = 1;
+	    op = B_ADD;
+	} else if (p->op == DEC) {
+	    x = 1;
+	    op = B_SUB;
+	} else {
+	    return E_TYPES; /* ? */
+	}
+    } else if (rhs->t == STR) {
+	if (is_string_valued(p->dset, v)) {
+	    label = rhs->v.str;
+	} else {
+	    return E_TYPES;
+	}
+    } else {
+	x = node_get_scalar(rhs, p);
+	if (p->err) {
+	    return p->err;
+	}
+    }
+
+    if (is_string_valued(p->dset, v)) {
+	if (label != NULL) {
+	    if (op != B_ASN) {
+		p->err = E_TYPES;
+	    } else {
+		p->err = series_set_string_val(p->dset, v, t, label);
+	    }
+	} else {
+	    x = xy_calc(Z[v][t], x, op, NUM, p);
+	    if (!p->err) {
+		p->err = string_series_assign_value(p->dset, v, t, x);
+	    }
+	}
+    } else {
+	Z[v][t] = xy_calc(Z[v][t], x, op, NUM, p);
+    }
+    
+    if (p->err == 0) {
+	/* made a change to an element of a series */
+	p->flags |= P_OBSVAL;
+	set_dataset_is_changed();
+    }
+
+    return p->err;
 }
 
 static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
@@ -13750,41 +13875,6 @@ static int get_op (char *s)
     return 0;
 }
 
-/* Given a string [...], parse and evaluate it as a series observation
-   index.  This is for the case where assignment is to a specific
-   observation, as in y[obs] = foo.
-*/
-
-static void get_lh_obsnum (parser *p)
-{
-    int done = 0;
-
-    if (p->lh.expr[0] != '"') {
-	int err = 0;
-
-	p->lh.obsnum = generate_scalar(p->lh.expr, p->dset, &err);
-	if (!err) {
-	    p->lh.obsnum -= 1; /* convert to 0-based for internal use */
-	    done = 1;
-	}
-    }
-
-    if (!done) {
-	p->lh.obsnum = get_t_from_obs_string(p->lh.expr, p->dset);
-    }
-
-    if (p->lh.obsnum < 0 || p->lh.obsnum >= p->dset->n) {
-	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.expr);
-	fprintf(stderr, "obs index = %d and dataset n = %d\n",
-		p->lh.obsnum, p->dset->n);
-	p->err = E_DATA;
-    } else {
-	gretl_error_clear();
-	p->targ = NUM;
-	p->flags |= P_OBSVAL;
-    }
-}
-
 /* implement the declaration of new variables */
 
 static void do_declaration (parser *p)
@@ -13995,11 +14085,7 @@ static int overwrite_type_check (parser *p)
 {
     int err = 0;
 
-    if (p->lh.t == SERIES && setting_obsval(p)) {
-	; /* OK */
-    } else if (p->lh.t == BUNDLE && p->targ == BMEMB) {
-	; /* OK */
-    } else if (p->targ != p->lh.t) {
+    if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
 	err = E_TYPES;
@@ -14011,15 +14097,6 @@ static int overwrite_type_check (parser *p)
 static int overwrite_const_check (const char *s)
 {
     return object_is_const(s) ? overwrite_err(s) : 0;
-}
-
-static void maybe_set_matrix_target (parser *p)
-{
-    int n = strlen(p->rhs);
-
-    if (n > 1 && p->rhs[n-1] == '}') {
-	p->targ = MAT;
-    }
 }
 
 static int ok_array_decl (parser *p, const char *s)
@@ -14096,8 +14173,7 @@ static int check_operator_validity (parser *p, const char *opstr)
 	/* horizontal concat: only OK for matrices, strings */
 	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
 	return E_PARSE;
-    } else if (p->lh.t == SERIES && !setting_obsval(p) &&
-	is_string_valued(p->dset, p->lh.vnum)) {
+    } else if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum)) {
 	/* string-valued series: do not overwrite wholesale */
 	gretl_errmsg_set("Cannot overwrite entire string-valued series");
 	return E_TYPES;
@@ -14283,7 +14359,7 @@ static void gen_preprocess (parser *p, int flags)
 	if (p->err) {
 	    return;
 	} else {
-	    goto get_operator;
+	    goto get_rhs;
 	}
     }
 
@@ -14326,11 +14402,16 @@ static void gen_preprocess (parser *p, int flags)
 	}
     }
 
- get_operator:
+ get_rhs:
 
     /* advance past white space */
     while (isspace(*s)) s++;
     p->point = p->rhs = s;
+
+    if (p->lh.expr != NULL) {
+	/* FIXME? */
+	return;
+    }
 
     /* expression ends here with no operator: a call to print? */
     if (*s == '\0' && p->op == 0) {
@@ -14343,9 +14424,7 @@ static void gen_preprocess (parser *p, int flags)
        simple assignment, B_ASN
     */
     if (newvar && p->op != B_ASN) {
-	/* error message */
-	pprintf(p->prn, "%s: unknown variable\n", p->lh.name);
-	p->err = E_UNKVAR;
+	undefined_symbol_error(p->lh.name, p);
 	return;
     }
 
@@ -14357,19 +14436,15 @@ static void gen_preprocess (parser *p, int flags)
     /* if the target type is still unknown, and the RHS expression
        is wrapped in '{' and '}', make the target a matrix */
     if (p->targ == UNK && *p->rhs == '{') {
-	maybe_set_matrix_target(p);
+	p->targ = MAT;
     }
 
     /* Set a flag if the RHS should define a list */
     if (p->targ == LIST || (p->targ == ARRAY &&
 			    p->lh.gtype == GRETL_TYPE_LISTS &&
 			    p->lh.expr != NULL)) {
+	/* FIXME second case above */
 	p->flags |= P_LISTDEF;
-    }
-
-    /* unary increment/decrement operators */
-    if ((p->op == INC || p->op == DEC) && *s != '\0') {
-	p->err = E_PARSE;
     }
 }
 
@@ -15129,8 +15204,6 @@ static int gen_check_return_type (parser *p)
     if (p->targ == NUM) {
 	if (r->t == NUM || scalar_matrix_node(r)) {
 	    ; /* scalar or 1 x 1 matrix: OK */
-	} else if (r->t == STR && setting_obsval(p)) {
-	    ; /* a string value might be acceptable */
 	} else if (r->t == MAT && (p->flags & P_NODECL)) {
 	    ; /* morphing to matrix may be OK */
 	} else {
@@ -15322,6 +15395,7 @@ static int do_incr_decr (parser *p)
 
 static int save_generated_var (parser *p, PRN *prn)
 {
+    GretlType pretarg = p->targ;
     NODE *r = p->ret;
     double **Z = NULL;
     double x;
@@ -15355,25 +15429,24 @@ static int save_generated_var (parser *p, PRN *prn)
 	    (r == NULL)? "none" : getsymb(r->t));
 #endif
 
-    if (p->op == INC || p->op == DEC) {
-	/* FIXME compound LHS */
-	return do_incr_decr(p);
-    }
-
     if (p->lhtree != NULL) {
 	/* handle compound target first */
 	if (p->targ == BMEMB) {
-	    p->err = set_bundle_value(p->lhres, r, p);
+	    p->err = set_bundle_value(p->lhres, r, p, pretarg);
 	} else if (p->targ == ELEMENT) {
-	    p->err = set_array_value(p->lhres, r, p);
-	} else if (p->targ == OSL) {
+	    p->err = set_array_value(p->lhres, r, p, pretarg);
+	} else if (p->targ == OSL || p->targ == MSL) {
 	    p->err = set_matrix_value(p->lhres, r, p);
 	} else if (p->targ == OBS) {
-	    fprintf(stderr, "set series OBS: coming soon!\n");
-	    p->err = E_DATA;
+	    p->err = set_series_obs_value(p->lhres, r, p);
 	}
 	return p->err;
     }
+
+    if (p->op == INC || p->op == DEC) {
+	/* FIXME compound LHS */
+	return do_incr_decr(p);
+    }    
 
     if (p->callcount < 2) {
 	/* first exec: test for type mismatch errors */
@@ -15437,40 +15510,7 @@ static int save_generated_var (parser *p, PRN *prn)
 
     /* put the generated data into place */
 
-    if (p->targ == NUM && setting_obsval(p)) {
-	if (v <= 0) {
-	    gretl_errmsg_sprintf("Invalid series ID %d", v);
-	    p->err = E_DATA;
-	} else if (p->lh.obsnum < 0) {
-	    gretl_errmsg_sprintf("Invalid observation index ID %d", p->lh.obsnum);
-	    p->err = E_DATA;
-	} else {
-	    t = p->lh.obsnum;
-	    if (is_string_valued(p->dset, v)) {
-		if (r->t == STR) {
-		    if (p->op != B_ASN) {
-			p->err = E_TYPES;
-		    } else {
-			p->err = series_set_string_val(p->dset, v, t, r->v.str);
-		    }
-		} else {
-		    x = r->t == NUM ? r->v.xval : r->v.m->val[0];
-		    x = xy_calc(Z[v][t], x, p->op, NUM, p);
-		    if (!p->err) {
-			p->err = string_series_assign_value(p->dset, v, t, x);
-		    }
-		}
-	    } else if (r->t == NUM) {
-		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, NUM, p);
-	    } else if (r->t == MAT) {
-		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
-	    }
-	    if (p->err == 0) {
-		/* made a change to an element of a series */
-		set_dataset_is_changed();
-	    }
-	}
-    } else if (p->targ == NUM) {
+    if (p->targ == NUM) {
 	if (p->lh.t == NUM) {
 	    /* modifying existing scalar */
 	    x = gretl_scalar_get_value(p->lh.name, NULL);
@@ -15680,8 +15720,8 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
     void *data = NULL;
 
-    if (p->targ == SERIES || setting_obsval(p)) {
-	/* targetting a series, or an observation in a series */
+    if (p->targ == SERIES) {
+	/* targetting a series */
 	int v = p->lh.vnum;
 
 	if (v <= 0 || v >= p->dset->v) {
@@ -15740,8 +15780,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     int saveflags[] = {
 	P_NATEST, P_AUTOREG, P_SLAVE,
 	P_LHPTR, P_DISCARD, P_LHBKVAR,
-	P_NODECL, P_LISTDEF, P_OBSVAL,
-	0
+	P_NODECL, P_LISTDEF, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
@@ -15786,10 +15825,6 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	maybe_update_lhs_uvar(p, &lhtype);
     }
 
-    if (setting_obsval(p)) {
-	get_lh_obsnum(p);
-    }
-
     /* allow for change in length of dataset */
     dset_n = dset != NULL ? dset->n : 0;
     if (dset_n != p->dset_n) {
@@ -15820,7 +15855,6 @@ static void parser_init (parser *p, const char *str,
     p->lh.name[0] = '\0';
     p->lh.label[0] = '\0';
     p->lh.vnum = 0;
-    p->lh.obsnum = -1;
     p->lh.uv = NULL;
     p->lh.m = NULL;
     p->lh.expr = NULL;

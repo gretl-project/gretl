@@ -645,7 +645,6 @@ struct lhinfo {
     char label[MAXLABEL];  /* descriptive string for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
-    int obsnum;            /* specific observation number in series */
     gretl_matrix *m;       /* LHS matrix (or NULL) */
     char *expr;            /* expression on left */
     GretlType gtype;       /* gretl type of LHS array, if any, or
