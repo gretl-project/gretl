@@ -8244,6 +8244,11 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     int donate = 0;
     int err = 0;
 
+    if (lh1->t == LIST) {
+	fprintf(stderr, "set LIST element: coming soon!\n");
+	return E_DATA;
+    }
+
     if (lh1->t != ARRAY) {
 	return E_DATA;
     }
@@ -12447,6 +12452,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, SERIES, l, p);
 	} else if (!scalar_node(r) && r->t != STR) {
 	    node_type_error(t->t, 2, NUM, r, p);
+	} else if (t->flags & LHT_NODE) {
+	    ret = lhs_terminal_node(t, l, r, p);
 	} else {
 	    ret = series_obs(l, r, p);
 	}
@@ -15333,6 +15340,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	    print_tree(p->lhtree, p, 0);
 	    p->targ = p->lhres->t;
 	}
+	if (p->err) {
+	    return p->err;
+	}
+	fprintf(stderr, "save_generated_var: type = %s\n",
+		getsymb(p->lhres->t));
     }
 
 #if EDEBUG
@@ -15344,7 +15356,23 @@ static int save_generated_var (parser *p, PRN *prn)
 #endif
 
     if (p->op == INC || p->op == DEC) {
+	/* FIXME compound LHS */
 	return do_incr_decr(p);
+    }
+
+    if (p->lhtree != NULL) {
+	/* handle compound target first */
+	if (p->targ == BMEMB) {
+	    p->err = set_bundle_value(p->lhres, r, p);
+	} else if (p->targ == ELEMENT) {
+	    p->err = set_array_value(p->lhres, r, p);
+	} else if (p->targ == OSL) {
+	    p->err = set_matrix_value(p->lhres, r, p);
+	} else if (p->targ == OBS) {
+	    fprintf(stderr, "set series OBS: coming soon!\n");
+	    p->err = E_DATA;
+	}
+	return p->err;
     }
 
     if (p->callcount < 2) {
@@ -15610,13 +15638,6 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	}
-    } else if (p->targ == BMEMB) {
-	/* saving an object into a bundle */
-	p->err = set_bundle_value(p->lhres, r, p);
-    } else if (p->targ == ELEMENT) {
-	p->err = set_array_value(p->lhres, r, p);
-    } else if (p->targ == OSL) {
-	p->err = set_matrix_value(p->lhres, r, p);
     } else if (p->targ == ARRAY) {
 	if (p->op != B_ASN) {
 	    do_array_append(p);

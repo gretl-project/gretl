@@ -664,9 +664,9 @@ struct parser_ {
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */
-    NODE *lhtree;      /* (NEW) LHS tree */
-    NODE *lhres;       /* (NEW) result of eval() on @lhtree */
-    NODE *tree;        /* parsed RHS syntax tree */
+    NODE *lhtree;      /* LHS syntax tree, if needed */
+    NODE *lhres;       /* result of eval() on @lhtree */
+    NODE *tree;        /* RHS syntax tree */
     NODE *ret;         /* result of eval() on @tree */
     /* below: parser state variables */
     NODE *aux;          /* convenience pointer to current auxiliary node */
