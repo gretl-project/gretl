@@ -137,7 +137,6 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
-static void edit_matrix (parser *p);
 static int node_is_true (NODE *n, parser *p);
 static gretl_matrix *list_to_matrix (const int *list, int *err);
 static gretl_matrix *series_to_matrix (const double *x,
@@ -200,7 +199,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
     }
 }
 
-#if 1 || EDEBUG
+#if EDEBUG
 
 static void print_tree (NODE *t, parser *p, int level)
 {
@@ -1053,7 +1052,7 @@ static int gen_edit_list (parser *p, int *list, int op)
 	err = replace_list_by_data(u, list);
     } else if (op == B_ADD) {
 	err = append_to_list_by_data(u, list);
-    } else { /* B_SUB */
+    } else { /* must be B_SUB */
 	err = subtract_from_list_by_data(u, list);
     }
 
@@ -4139,6 +4138,7 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	if (l->t == MAT) {
 	    a = matrix_get_submatrix(l->v.m, spec, 0, &p->err);
 	} else if (l->t == STR) {
+	    /* FIXME never reached? */
 	    a = user_matrix_get_submatrix(l->v.str, spec, &p->err);
 	} else {
 	    p->err = E_TYPES;
@@ -8142,7 +8142,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	return E_DATA;
     }
 
-#if 1 || EDEBUG
+#if LHDEBUG
     fprintf(stderr, "set_bundle_value: bundle = %p, key = '%s'\n",
 	    (void *) bundle, key);
 #endif
@@ -8305,7 +8305,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	}
     }
 
-#if 1 || EDEBUG
+#if LHDEBUG
     fprintf(stderr, "set_array_value: array = %p, idx = %d\n",
 	    array ? (void *) array : (void *) list, idx);
 #endif
@@ -8466,38 +8466,57 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
+/* Here we're replacing a sub-matrix of the original LHS matrix, by
+   either straight or inflected assignment. The value that we're
+   using for replacement will be either a matrix or a scalar.
+*/
+
 static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 {
     NODE *lh1 = lhs->v.b2.l;
     NODE *lh2 = lhs->v.b2.r;
-    gretl_matrix *m;
+    gretl_matrix *m1, *m2 = NULL;
     matrix_subspec *spec;
+    double y = NADBL;
+    int rhs_scalar = 0;
     int err = 0;
 
     if (lh1->t != MAT) {
+	fprintf(stderr, "set_matrix_value: got %s, not matrix!\n",
+		getsymb(lh1->t));
 	return E_DATA;
     }
 
-    m = lh1->v.m;
+    m1 = lh1->v.m;
     spec = lh2->v.mspec;
 
-    if (m == NULL || spec == NULL) {
+    if (m1 == NULL || spec == NULL) {
 	return E_DATA;
     }
 
 #if EDEBUG > 1
-    gretl_matrix_print(m, "m, in set_matrix_value");
+    gretl_matrix_print(m1, "m1, in set_matrix_value");
     print_mspec(spec);
 #endif
 
-    if (rhs->t == NUM && spec->type[0] == SEL_ELEMENT) {
-    	/* assignment (possible inflected) of a scalar value
+    if (scalar_node(rhs)) {
+	/* single value on RHS */
+	y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
+	rhs_scalar = 1;
+    } else if (rhs->t == MAT) {
+	/* not a scalar: get the RHS matrix */
+	m2 = rhs->v.m;
+    } else {
+	return E_TYPES;
+    }
+
+    if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
+    	/* assignment (possibly inflected) of a scalar value
 	   to a single element of an existing matrix
 	*/
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
-	double x = matrix_get_element(m, i, j, &p->err);
-	double y = rhs->v.xval;
+	double x = matrix_get_element(m1, i, j, &p->err);
 
 	if (!p->err) {
 	    if (p->op == B_ASN) {
@@ -8511,11 +8530,67 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		}
 		set_gretl_warning(W_GENNAN);
 	    }
-	    gretl_matrix_set(m, i-1, j-1, x);
+	    gretl_matrix_set(m1, i-1, j-1, x);
 	}
-    } else {
-	err = E_DATA; /* not ready yet */
+	return p->err; /* note, we're done */
+    }    
+
+    if (rhs_scalar && p->op == B_ASN) {
+	/* straight assignment of a scalar value to a
+	   non-scalar submatrix */
+	if (xna(y)) {
+	    if (na(y)) {
+		y = M_NA;
+	    }
+	    set_gretl_warning(W_GENNAN);
+	}
+	p->err = assign_scalar_to_submatrix(m1, y, spec);
+	return p->err; /* note, we're done */
     }
+
+    if (p->op != B_ASN) {
+	/* Here we're doing '+=' or some such, in which case a new
+	   submatrix must be calculated using the original
+	   submatrix @a and the newly generated matrix (or
+	   scalar value).
+	*/
+	gretl_matrix *a = matrix_get_submatrix(m1, spec, 1, &p->err);
+
+	if (!p->err) {
+	    if (rhs_scalar) {
+		int i, n = a->rows * a->cols;
+
+		for (i=0; i<n; i++) {
+		    a->val[i] = xy_calc(a->val[i], y, p->op, MAT, p);
+		}
+		/* assign computed matrix to m2 */
+		m2 = a;
+	    } else {
+		gretl_matrix *b = NULL;
+
+		p->err = real_matrix_calc(a, m2, p->op, &b);
+		gretl_matrix_free(a);
+		/* replace RHS m2 with computed result */
+		m2 = b;
+	    }
+	}
+    }
+
+    if (!p->err) {
+	/* Write new submatrix @m2 into place: note that we come here
+	   directly if none of the special conditions above are
+	   satisfied -- for example, if the newly generated value
+	   is a matrix and the task is straight assignment. Also
+	   check for numerical "breakage" in the replacement
+	   submatrix.
+	*/
+	p->err = matrix_replace_submatrix(m1, m2, spec);
+#if MATRIX_NA_CHECK
+	if (!p->err && gretl_matrix_xna_check(m2)) {
+	    set_gretl_warning(W_GENNAN);
+	}
+#endif
+    }  
 
     return err;
 }
@@ -13964,6 +14039,8 @@ static int extract_lhs_and_op (const char **ps, parser *p,
     const char *s = *ps;
     int n, err = 0;
 
+    fprintf(stderr, "HERE 1, s='%s'\n", s);
+
     if (p->targ != UNK && strchr(s, '=') == NULL) {
 	/* we got a type specification but no assignment,
 	   so should be variable declaration(s) ?
@@ -13998,6 +14075,8 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 	    tailstrip(lhs);
 	    lhlen = strlen(lhs);
 	}
+
+	fprintf(stderr, "HERE 2, lhs='%s'\n", lhs);
 
 	if (opstr[0] == '\0' && lhlen > 2) {
 	    /* check for postfix operator */
@@ -14116,6 +14195,24 @@ static int overwrite_type_check (parser *p)
 static int overwrite_const_check (const char *s)
 {
     return object_is_const(s) ? overwrite_err(s) : 0;
+}
+
+static int compound_const_check (NODE *lhs)
+{
+    NODE *n = lhs;
+    int err = 0;
+
+    while (n->t == MSL || n->t == OBS || n->t == BMEMB ||
+	   n->t == ELEMENT || n->t == OSL) {
+	n = n->v.b2.l;
+    }
+
+    /* do we have a const object at the tip of the tree? */
+    if (n->vname != NULL) {
+	err = overwrite_const_check(n->vname);
+    }
+
+    return err;
 }
 
 static int ok_array_decl (parser *p, const char *s)
@@ -14371,10 +14468,15 @@ static void gen_preprocess (parser *p, int flags)
 	p->ch = parser_getc(p);
 	lex(p);
 	p->lhtree = expr(p);
+#if LHDEBUG
 	fprintf(stderr, "parsed lhtree, err=%d\n", p->err);
 	print_tree(p->lhtree, p, 0);
+#endif
 	p->point = savepoint;
 	p->ch = 0;
+	if (!p->err) {
+	    p->err = compound_const_check(p->lhtree);
+	}
 	if (p->err) {
 	    return;
 	} else {
@@ -14862,135 +14964,6 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
     return m;
 }
 
-/* Here we're replacing a sub-matrix of the original LHS matrix, by
-   either straight or inflected assignment. The value that we're
-   using for replacement will be either a matrix or a scalar.
-*/
-
-static void edit_matrix (parser *p)
-{
-    matrix_subspec *spec = NULL;
-    gretl_matrix *m = NULL;
-    int rhs_scalar = 0;
-    double y = 0;
-
-    if (scalar_node(p->ret)) {
-	y = (p->ret->t == NUM)? p->ret->v.xval: p->ret->v.m->val[0];
-	rhs_scalar = 1;
-    } else {
-	/* not a scalar: get the replacement matrix */
-	m = grab_or_copy_matrix_result(p, NULL);
-	if (m == NULL) {
-	    return;
-	}
-    }
-
-    /* FIXME: @spec is NULL!! */
-
-#if EDEBUG
-    fprintf(stderr, "edit_matrix: replacement m = %p\n", (void *) m);
-#endif
-
-    /* check the validity of the subspec we got */
-    p->err = check_matrix_subspec(spec, p->lh.m);
-    if (p->err) {
-	return;
-    }
-
-    if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
-	/* Assignment of a scalar value to a single element
-	   of an existing matrix
-	*/
-	int i = mspec_get_row_index(spec);
-	int j = mspec_get_col_index(spec);
-	double x = matrix_get_element(p->lh.m, i, j, &p->err);
-
-	if (!p->err) {
-	    if (p->op == B_ASN) {
-		x = y;
-	    } else {
-		x = xy_calc(x, y, p->op, MAT, p);
-	    }
-	    if (xna(x)) {
-		if (na(x)) {
-		    x = M_NA;
-		}
-		set_gretl_warning(W_GENNAN);
-	    }
-	    gretl_matrix_set(p->lh.m, i-1, j-1, x);
-	}
-	return; /* note, we're done */
-    }
-
-    if (rhs_scalar && p->op == B_ASN) {
-	/* Straight assignment of a scalar value to non-scalar
-	   submatrix */
-	if (xna(y)) {
-	    if (na(y)) {
-		y = M_NA;
-	    }
-	    set_gretl_warning(W_GENNAN);
-	}
-	p->err = assign_scalar_to_submatrix(p->lh.m, y, spec);
-	return; /* note, we're done */
-    }
-
-    if (p->op != B_ASN) {
-	/* Here we're doing '+=' or some such, in which case a new
-	   submatrix must be calculated using the original
-	   submatrix 'a' and the newly generated matrix (or
-	   scalar value).
-	*/
-	gretl_matrix *a = matrix_get_submatrix(p->lh.m, spec,
-					       1, &p->err);
-
-	if (!p->err) {
-	    if (rhs_scalar) {
-		int i, n = a->rows * a->cols;
-
-		for (i=0; i<n; i++) {
-		    a->val[i] = xy_calc(a->val[i], y, p->op, MAT, p);
-		}
-		/* assign computed matrix to m */
-		m = a;
-	    } else {
-		gretl_matrix *b = NULL;
-
-		p->err = real_matrix_calc(a, m, p->op, &b);
-		gretl_matrix_free(a);
-		/* replace existing m with computed result */
-		gretl_matrix_free(m);
-		m = b;
-	    }
-	}
-    }
-
-    if (!p->err) {
-	/* Write new submatrix @m into place: note that we come here
-	   directly if none of the special conditions above are
-	   satisfied -- for example, if the newly generated value
-	   is a matrix and the task is straight assignment. Also
-	   check for numerical "breakage" in the replacement
-	   submatrix.
-	*/
-	if (p->targ == BMEMB) {
-	    /* matrix inside a bundle */
-	    p->err = matrix_replace_submatrix(p->lh.m, m, spec);
-	} else {
-	    p->err = user_matrix_replace_submatrix(p->lh.name, m, spec);
-	}
-#if MATRIX_NA_CHECK
-	if (!p->err && gretl_matrix_xna_check(m)) {
-	    set_gretl_warning(W_GENNAN);
-	}
-#endif
-	gretl_matrix_free(m);
-	if (p->ret->t == MAT) {
-	    p->ret->v.m = NULL; /* avoid double-freeing */
-	}
-    }
-}
-
 static int get_array_index (matrix_subspec *spec, int *err)
 {
     if (spec->type[0] == SEL_RANGE &&
@@ -15131,42 +15104,12 @@ static int create_or_edit_string (parser *p)
 static int create_or_edit_list (parser *p)
 {
     int *list = node_get_list(p->ret, p); /* note: copied */
-    matrix_subspec *spec = NULL;
-
-    /* FIXME: @spec is NULL!! */
 
 #if EDEBUG
     printlist(list, "incoming list in edit_list()");
 #endif
 
-    if (!p->err && spec != NULL) {
-	/* replacing a single member */
-	if (p->lh.t != LIST || p->op != B_ASN) {
-	    p->err = E_TYPES;
-	} else if (list[0] > 1) {
-	    /* at present we'll replace only one list member */
-	    p->err = E_TYPES;
-	} else {
-	    int *orig = gen_get_lhs_var(p, GRETL_TYPE_LIST);
-	    int idx = get_array_index(spec, &p->err) + 1;
-
-	    if (!p->err && (idx < 1 || idx > orig[0])) {
-		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
-		p->err = E_DATA;
-	    } else {
-		/* FIXME we're in a function and the list was
-		   provided as an argument */
-		int repl = list[1];
-
-		free(list);
-		list = gretl_list_copy(orig);
-		list[idx] = repl;
-		p->err = gen_edit_list(p, list, B_ASN);
-	    }
-	}
-    }
-
-    if (!p->err && spec == NULL) {
+    if (!p->err) {
 	if (p->lh.t != LIST) {
 	    /* no pre-existing LHS list: must be simple assignment */
 	    p->err = remember_list(list, p->lh.name, NULL);
@@ -15384,6 +15327,9 @@ static int assign_null_to_array (parser *p)
     return err;
 }
 
+/* apply postfix '++' or '--' to LHS scalar, or '++' to
+   LHS string */
+
 static int do_incr_decr (parser *p)
 {
     if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_DOUBLE) {
@@ -15435,19 +15381,25 @@ static int save_generated_var (parser *p, PRN *prn)
 	
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
+#if LHDEBUG	
 	fprintf(stderr, "*** eval lhtree ***\n");
+#endif
 	p->lhres = eval(p->lhtree, p);
+#if LHDEBUG	
 	if (p->lhres != NULL) {
 	    print_tree(p->lhres, p, 0);
 	    fprintf(stderr, "*** lhtree post-eval ***\n");
 	    print_tree(p->lhtree, p, 0);
 	}
+#endif
 	if (p->err) {
 	    return p->err;
 	}
 	compound_t = p->lhres->t;
+#if LHDEBUG
 	fprintf(stderr, "save_generated_var: type = %s\n",
 		getsymb(compound_t));
+#endif
 	if (compound_t == BMEMB) {
 	    p->err = set_bundle_value(p->lhres, r, p);
 	} else if (compound_t == ELEMENT) {
@@ -15456,8 +15408,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->err = set_matrix_value(p->lhres, r, p);
 	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
+	} else {
+	    p->err = E_TYPES;
 	}
-	return p->err;
+	return p->err; /* done */
     }
 
     if (p->op == INC || p->op == DEC) {
@@ -15646,16 +15600,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (p->lh.m == NULL) {
 	    /* there's no pre-existing left-hand side matrix */
 	    p->lh.m = matrix_from_scratch(p, 0, &prechecked);
-	} else if (p->lh.expr == NULL && p->op == B_ASN) {
+	} else if (p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
 	    p->lh.m = assign_to_matrix(p, &prechecked);
-	} else if (p->lh.expr == NULL) {
+	} else {
 	    /* inflected assignment to entire existing matrix */
 	    p->lh.m = assign_to_matrix_mod(p, &prechecked);
-	} else {
-	    /* assignment to submatrix of original */
-	    edit_matrix(p);
-	    prechecked = 1;
 	}
 #if MATRIX_NA_CHECK
 	if (!p->err && !prechecked && p->lh.m != NULL &&

@@ -55,7 +55,23 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	return;
     }
 
-    if (p->targ == NUM) {
+    if (p->lhres != NULL) {
+	NODE *lhs = p->lhres;
+	
+	if (lhs->t == BMEMB) {
+	    pprintf(prn, _("Modified bundle"));
+	} else if (lhs->t == MSL) {
+	    pprintf(prn, _("Modified matrix"));
+	} else if (lhs->t == ELEMENT) {
+	    if (lhs->v.b2.l->t == LIST) {
+		pprintf(prn, _("Modified list"));
+	    } else {
+		pprintf(prn, _("Modified array"));
+	    }
+	} else if (lhs->t == OBS) {
+	    pprintf(prn, _("Modified series"));
+	}
+    } else if (p->targ == NUM) {
 	if (setting_obsval(p)) {
 	    /* setting specific observation in series */
 	    pprintf(prn, _("Modified series %s (ID %d)"),
@@ -727,7 +743,7 @@ int generate (const char *line, DATASET *dset,
 
     oldv = (dset != NULL)? dset->v : 0;
 
-#if 1 || GDEBUG
+#if GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
     fprintf(stderr, "    gtype = %d, targtype = %d\n", gtype, targtype);
 #endif

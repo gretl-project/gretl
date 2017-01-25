@@ -1369,11 +1369,7 @@ NODE *powterm (parser *p, NODE *l)
     } else if (sym == MSL || sym == DMSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    if (p->sym == MSL) {
-		t->v.b2.l = newstr(p->idstr);
-	    } else {
-		t->v.b2.l = newref(p, MVAR);
-	    }
+	    t->v.b2.l = newref(p, p->upsym);
 	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
 	    if (t->v.b2.r != NULL) {
 		lex(p);
