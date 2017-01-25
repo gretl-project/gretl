@@ -7232,7 +7232,9 @@ void do_boxplot_var (int varnum, gretlopt opt)
 	return;
     }
 
-    if (!(opt & OPT_S) && dataset_is_panel(dataset)) {
+    if (opt & OPT_P) {
+	plotopt = OPT_P;
+    } else if (!(opt & OPT_S) && dataset_is_panel(dataset)) {
 	/* note: OPT_S enforces a single plot */
 	if (do_per_unit_plots(varnum)) {
 	    plotopt = OPT_P;
