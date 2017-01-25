@@ -729,6 +729,7 @@ int generate (const char *line, DATASET *dset,
 
 #if 1 || GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
+    fprintf(stderr, "    gtype = %d, targtype = %d\n", gtype, targtype);
 #endif
 
     if (is_genr_special(line, vname, &subline)) {

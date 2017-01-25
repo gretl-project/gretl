@@ -302,7 +302,7 @@ static int bundled_item_replace_data (bundled_item *item,
 	    item->data = ptr;
 	}
     } else if (item->type == GRETL_TYPE_ARRAY) {
-	gretl_array_destroy((gretl_array*) item->data);
+	gretl_array_destroy((gretl_array *) item->data);
 	if (copy) {
 	    item->data = gretl_array_copy((gretl_array *) ptr, &err);
 	} else {

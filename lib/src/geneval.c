@@ -8085,6 +8085,21 @@ static GretlType gretl_type_of (int t)
 	return GRETL_TYPE_BUNDLE;
     } else if (t == LIST) {
 	return GRETL_TYPE_LIST;
+    } else if (t >= GRETL_TYPE_STRINGS &&
+	       t <= GRETL_TYPE_LISTS) {
+	return (GretlType) t;
+    } else {
+	return 0;
+    }
+}
+
+static int lhs_type_check (GretlType spec, GretlType got)
+{
+    if (spec != 0 && spec != got) {
+	gretl_errmsg_sprintf(_("Expected %s but got %s"),
+			     gretl_type_get_name(spec),
+			     gretl_type_get_name(got));
+	return E_TYPES;
     } else {
 	return 0;
     }
@@ -8099,11 +8114,11 @@ static GretlType gretl_type_of (int t)
    next. FIXME doc!
 */
 
-static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
-			     GretlType pretarg)
+static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 {
     NODE *lh1 = lhs->v.b2.l;
     NODE *lh2 = lhs->v.b2.r;
+    GretlType targ = 0;
     GretlType type = 0;
     gretl_bundle *bundle;
     void *ptr = NULL;
@@ -8132,21 +8147,27 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
 	    (void *) bundle, key);
 #endif
 
-    /* Note: @lhtype is the gretl type specified by the caller for
+    /* Note: @targ is the gretl type specified by the caller for
        the bundle member (if any, this need not be supplied), and
        @type is the gretl type of the object arising on the RHS.
-       It's an error if @lhtype is non-zero and @type does not
-       agree with it -- except for the case where @lhtype is given
+       It's an error if @targ is non-zero and @type does not
+       agree with it -- except for the case where @targ is given
        as "series" and we get a suitable matrix on the right. As
        of 2015-10-03, when we get a request to put a series into
        a bundle we actually put in a matrix, which in fact makes it
        easier to get a series back out again.
     */
 
+    if (p->targ == ARRAY) {
+	targ = p->lh.gtype;
+    } else {
+	targ = gretl_type_of(p->targ);
+    }
+
     if (!err) {
 	switch (rhs->t) {
 	case NUM:
-	    if (pretarg == GRETL_TYPE_SERIES) {
+	    if (targ == GRETL_TYPE_SERIES) {
 		ptr = scalar_to_series(rhs, p);
 		if (p->err) {
 		    err = p->err;
@@ -8155,7 +8176,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
 		    size = p->dset->n;
 		    donate = 1;
 		}
-	    } else if (pretarg == GRETL_TYPE_MATRIX) {
+	    } else if (targ == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(rhs->v.xval);
 		type = GRETL_TYPE_MATRIX;
 		donate = 1;
@@ -8171,7 +8192,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
 	    break;
 	case MAT:
 	    /* FIXME assignment of (suitable) vector to series */
-	    if (pretarg == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
+	    if (targ == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
 		ptr = &rhs->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
 	    } else {
@@ -8201,11 +8222,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
 	    break;
 	case ARRAY:
 	    ptr = rhs->v.a;
-	    type = GRETL_TYPE_ARRAY;
-	    if (gretl_is_array_type(pretarg)) {
-		/* don't provoke a spurious error below */
-		pretarg = GRETL_TYPE_ARRAY;
-	    }
+	    type = gretl_array_get_type(rhs->v.a);
 	    donate = is_tmp_node(rhs);
 	    break;
 	case LIST:
@@ -8220,21 +8237,26 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
     }
 
     if (!err) {
-	if (pretarg && type != pretarg) {
-	    /* result is type-incompatible with user's spec */
-	    err = E_TYPES;
-	} else if (donate) {
+	/* check for result type-incompatible with user's spec */
+	err = lhs_type_check(targ, type);
+    }
+
+    if (!err) {
+	if (gretl_is_array_type(targ)) {
+	    type = GRETL_TYPE_ARRAY;
+	}
+	if (donate) {
 	    /* it's OK to hand over the data pointer */
 	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
 	    if (!err && type == GRETL_TYPE_MATRIX) {
-		p->lh.m = ptr;
+		p->lh.m = ptr; /* ?? */
 	    }
 	    rhs->v.ptr = NULL;
 	} else {
 	    /* the data must be copied into the bundle */
 	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
 	    if (!err && type == GRETL_TYPE_MATRIX) {
-		p->lh.m = ptr;
+		p->lh.m = ptr; /* ?? */
 	    }
 	}
     }
@@ -8244,13 +8266,13 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p,
 
 /* The following handles both array and list elements */
 
-static int set_array_value (NODE *lhs, NODE *rhs, parser *p,
-			    GretlType pretarg)
+static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 {
     NODE *lh1 = lhs->v.b2.l;
     NODE *lh2 = lhs->v.b2.r;
     GretlType atype = 0;
     GretlType type = 0;
+    GretlType targ = 0;
     gretl_array *array = NULL;
     int *list = NULL;
     void *ptr = NULL;
@@ -8289,7 +8311,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p,
 #endif
 
     if (list != NULL) {
-	/* handle the simpler case first */
+	/* list: handle the simpler case first */
 	int v = -1;
 	
 	if (rhs->t == NUM) {
@@ -8313,11 +8335,8 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p,
     }
 
     atype = gretl_array_get_content_type(array);
-
-    if (pretarg != UNK && gretl_type_of(pretarg) != atype) {
-	/* type of array disagrees with what the user specified */
-	return E_TYPES;
-    }
+    targ = gretl_type_of(p->targ);
+    err = lhs_type_check(targ, atype);
 
     if (!err) {
 	switch (rhs->t) {
@@ -15395,15 +15414,25 @@ static int do_incr_decr (parser *p)
 
 static int save_generated_var (parser *p, PRN *prn)
 {
-    GretlType pretarg = p->targ;
     NODE *r = p->ret;
     double **Z = NULL;
     double x;
     int no_decl = 0;
     int t, v = 0;
 
-    /* NEW, gentest */
+#if EDEBUG
+    fprintf(stderr, "save (%s): '%s'\n  callcount=%d\n"
+	    "lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
+	    p->lhtree != NULL ? "compound" : "unitary",
+	    p->lh.name, p->callcount, getsymb(p->lh.t),
+	    getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
+	    (r == NULL)? "none" : getsymb(r->t));
+#endif    
+
     if (p->lhtree != NULL) {
+	/* handle compound target first */
+	int compound_t;
+	
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
 	fprintf(stderr, "*** eval lhtree ***\n");
@@ -15412,39 +15441,26 @@ static int save_generated_var (parser *p, PRN *prn)
 	    print_tree(p->lhres, p, 0);
 	    fprintf(stderr, "*** lhtree post-eval ***\n");
 	    print_tree(p->lhtree, p, 0);
-	    p->targ = p->lhres->t;
 	}
 	if (p->err) {
 	    return p->err;
 	}
+	compound_t = p->lhres->t;
 	fprintf(stderr, "save_generated_var: type = %s\n",
-		getsymb(p->lhres->t));
-    }
-
-#if EDEBUG
-    fprintf(stderr, "save_generated_var: '%s'\n"
-	    "  callcount=%d, lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
-	    p->lh.name, p->callcount, getsymb(p->lh.t),
-	    getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
-	    (r == NULL)? "none" : getsymb(r->t));
-#endif
-
-    if (p->lhtree != NULL) {
-	/* handle compound target first */
-	if (p->targ == BMEMB) {
-	    p->err = set_bundle_value(p->lhres, r, p, pretarg);
-	} else if (p->targ == ELEMENT) {
-	    p->err = set_array_value(p->lhres, r, p, pretarg);
-	} else if (p->targ == OSL || p->targ == MSL) {
+		getsymb(compound_t));
+	if (compound_t == BMEMB) {
+	    p->err = set_bundle_value(p->lhres, r, p);
+	} else if (compound_t == ELEMENT) {
+	    p->err = set_array_value(p->lhres, r, p);
+	} else if (compound_t == OSL || compound_t == MSL) {
 	    p->err = set_matrix_value(p->lhres, r, p);
-	} else if (p->targ == OBS) {
+	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
 	}
 	return p->err;
     }
 
     if (p->op == INC || p->op == DEC) {
-	/* FIXME compound LHS */
 	return do_incr_decr(p);
     }    
 
