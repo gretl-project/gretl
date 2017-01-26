@@ -144,6 +144,7 @@ static gretl_matrix *series_to_matrix (const double *x,
 static NODE *object_var_node (NODE *t, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
+static char *get_opstr (int op);
 
 static const char *typestr (int t)
 {
@@ -8130,8 +8131,8 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     if (lh1->t != BUNDLE) {
 	return E_DATA;
     } else if (p->op != B_ASN) {
-	pprintf(p->prn, "bundle member: operator not yet supported\n");
-	/* FIXME */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
+			     get_opstr(p->op));
 	return E_TYPES;
     }
 
@@ -8283,8 +8284,8 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     if (lh1->t != LIST && lh1->t != ARRAY) {
 	return E_TYPES;
     } else if (p->op != B_ASN) {
-	pprintf(p->prn, "list or array element: operator not yet supported\n");
-	/* FIXME */
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
+			     get_opstr(p->op));
 	return E_TYPES;
     }
 
@@ -13967,6 +13968,35 @@ static int get_op (char *s)
     }
 
     return 0;
+}
+
+static char *get_opstr (int op)
+{
+    if (op == INC) {
+	return "++";
+    } else if (op == DEC) {
+	return "--";
+    } else if (op == B_ADD) {
+	return "+=";
+    } else if (op == B_SUB) {
+	return "-=";
+    } else if (op == B_MUL) {
+	return "*=";
+    } else if (op == B_DIV) {
+	return "/=";
+    } else if (op == B_MOD) {
+	return "%=";
+    } else if (op == B_POW) {
+	return "^=";
+    } else if (op == B_HCAT) {
+	return "~=";
+    } else if (op == B_VCAT) {
+	return "|=";
+    } else if (op == B_DOTASN) {
+	return ".=";
+    } else {
+	return "??";
+    }
 }
 
 /* implement the declaration of new variables */
