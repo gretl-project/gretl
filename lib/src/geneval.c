@@ -16031,7 +16031,7 @@ static void autoreg_error (parser *p, int t)
 int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	     int flags, int targtype)
 {
-#if 1 || LHDEBUG || EDEBUG || AUX_NODES_DEBUG
+#if LHDEBUG || EDEBUG || AUX_NODES_DEBUG
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
