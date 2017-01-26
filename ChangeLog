@@ -1,5 +1,7 @@
 version 2017a, in progress
 - Remove obsolete Kalman-filter interface
+- No longer accept "=" as synonymous for "==", when the
+  boolean operator "is equal to" is required
 - New functions kmeier() and naalen() for nonparametric
   estimation of survivor and hazard functions
 - Add normtest() function: works much like the "normtest"
@@ -14,6 +16,10 @@ version 2017a, in progress
 - "include" command: make it respect the "catch" flag
 - "corr" command: add a --plot=filename option; also add
   --matrix option to take data from a named matrix
+- "fcast" command: in the case of the --rolling option,
+  accept the name of a scalar variable for the steps-ahead
+  argument; also respect the last observation specification
+  in all cases
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
