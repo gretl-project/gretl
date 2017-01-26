@@ -200,7 +200,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
     }
 }
 
-#if EDEBUG
+#if EDEBUG || LHDEBUG
 
 static void print_tree (NODE *t, parser *p, int level)
 {
@@ -3998,13 +3998,22 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 static void print_mspec (matrix_subspec *mspec)
 {
+    const char *mstypes[] = {
+	"SEL_RANGE",
+	"SEL_ELEMENT",
+	"SEL_MATRIX",
+	"SEL_DIAG",
+	"SEL_ALL",
+	"SEL_NULL"
+    };
+
     fprintf(stderr, "mspec at %p:\n", (void *) mspec);
 
     if (mspec != NULL) {
 	int i;
 
 	for (i=0; i<2; i++) {
-	    fprintf(stderr, "type[%d] = %d\n", i, mspec->type[i]);
+	    fprintf(stderr, "type[%d] = %s\n", i, mstypes[mspec->type[i]]);
 	    if (mspec->type[i] == SEL_RANGE) {
 		fprintf(stderr, "sel[%d].range[0] = %d\n",
 			i, mspec->sel[i].range[0]);
@@ -8525,6 +8534,15 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (m1 == NULL || spec == NULL) {
 	return E_DATA;
+    }
+
+    /* check the validity of the subspec we got, and
+       adjust it if need be in the light of the
+       dimensions of @m.
+    */
+    err = check_matrix_subspec(spec, m1);
+    if (err) {
+	return err;
     }
 
 #if EDEBUG > 1
@@ -14151,9 +14169,9 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 		} else {
 		    strcpy(p->lh.name, lhs);
 		}
-	    } else if ((p->flags & P_PRIV) && *lhs == '$' &&
+	    } else if ((p->flags & P_PRIV) && (*lhs == '$' || *lhs == '_') &&
 		       gretl_namechar_spn(lhs + 1) == lhlen - 1) {
-		/* "private" genr of the form $foo = expr */
+		/* "private" genr of the form $foo=expr or _foo=expr */
 		strcpy(p->lh.name, lhs);
 	    } else {
 		/* treat as an expression to be evaluated */
@@ -15396,7 +15414,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
 #if LHDEBUG	
-	fprintf(stderr, "*** eval lhtree ***\n");
+	fprintf(stderr, "*** eval lhtree -> lhres ***\n");
 #endif
 	p->lhres = eval(p->lhtree, p);
 #if LHDEBUG	
