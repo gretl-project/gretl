@@ -15405,6 +15405,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
 	} else {
+	    gretl_errmsg_set(_("Invalid left-hand side expression"));
 	    p->err = E_TYPES;
 	}
 	return p->err; /* done */
