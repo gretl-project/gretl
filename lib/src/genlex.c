@@ -1606,13 +1606,11 @@ void lex (parser *p)
         case '=': 
 	    parser_getc(p);
 	    if (p->ch == '=') {
-		/* insist on "==" for "is equal to" */
 		parser_getc(p);
-		p->sym = B_EQ;
 	    } else {
-		gretl_errmsg_set(_("Invalid use of '=': did you mean '=='?"));
-		p->err = E_PARSE;
+		gretl_warnmsg_set(_("obsolete use of '=': did you mean '=='?"));
 	    }
+	    p->sym = B_EQ;
 	    return;
         case '>': 
 	    parser_getc(p);

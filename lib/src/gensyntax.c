@@ -1258,13 +1258,18 @@ NODE *powterm (parser *p, NODE *l)
     if (l != NULL) {
 	/* powterm recursion: swallowing prior node @l */
 	if (sym == BMEMB || sym == DBMEMB) {
-	    /* fprintf(stderr, "*** powterm, recursing on (D)BMEMB ***\n"); */
 	    t = newb2(sym, l, NULL);
 	    if (t != NULL) {
 		parser_ungetc(p);
 		t->v.b2.r = get_bundle_member_name(p);
 	    }
 	} else if (sym == G_LBR) {
+	    /* "OSL": we're being somewhat agnostic here regarding
+	       the type of object of which we're taking a slice.
+	       That will be sorted out at eval() time, and if the
+	       object is not a matrix the "slice" will be mapped
+	       down to a single index value, if possible.
+	    */
 	    t = newb2(OSL, l, NULL);
 	    if (t != NULL) {
 		t->v.b2.r = newb2(MSLRAW, NULL, NULL);

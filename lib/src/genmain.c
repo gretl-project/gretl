@@ -70,6 +70,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    }
 	} else if (lhs->t == OBS) {
 	    pprintf(prn, _("Modified series"));
+	} else {
+	    pprintf(prn, _("Modified object"));
 	}
     } else if (p->targ == NUM) {
 	if (setting_obsval(p)) {
@@ -682,6 +684,11 @@ static int is_genr_special (const char *s, char *spec, const char **rem)
     return 0;
 }
 
+static int maybe_unassigned_fncall (const char *s)
+{
+    return s[strlen(s)-1] == ')';
+}
+
 #define gen_verbose(f) (!(f & P_DISCARD) && \
                         !(f & P_PRIV) && \
                         !(f & P_QUIET) && \
@@ -737,8 +744,12 @@ int generate (const char *line, DATASET *dset,
 
     if (opt & OPT_O) {
 	/* special for function call, no assignment */
-	targtype = EMPTY;
-        flags |= P_VOID;
+	if (maybe_unassigned_fncall(line)) {
+	    targtype = EMPTY;
+	    flags |= P_VOID;
+	} else {
+	    return E_PARSE;
+	}
     }
 
     oldv = (dset != NULL)? dset->v : 0;

@@ -8265,6 +8265,22 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     return err;
 }
 
+static int array_index_from_mspec (matrix_subspec *spec, int *err)
+{
+    int idx = 0;
+
+    if (spec->type[0] == SEL_RANGE &&
+	spec->type[1] == SEL_NULL &&
+	spec->sel[0].range[0] == spec->sel[0].range[1]) {
+	idx = spec->sel[0].range[0];
+    } else {
+	gretl_errmsg_set("Invalid left-hand side index value");
+	*err = E_TYPES;
+    }
+
+    return idx;
+}
+
 /* The following handles both array and list elements */
 
 static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
@@ -8289,15 +8305,23 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	return E_TYPES;
     }
 
+    if (lh2->t == MSPEC) {
+	/* FIXME allow a range here? */
+	idx = array_index_from_mspec(lh2->v.mspec, &err);
+	if (err) {
+	    return err;
+	}
+    } else {
+	idx = lh2->v.xval;
+    }
+
     if (lh1->t == ARRAY) {
 	array = lh1->v.a;
-	idx = lh2->v.xval;
 	if (array == NULL || idx <= 0) {
 	    return E_DATA;
 	}
     } else if (lh1->t == LIST) {
 	list = lh1->v.ivec;
-	idx = lh2->v.xval;
 	if (list == NULL) {
 	    return E_DATA;
 	} else if (idx < 1 || idx > list[0]) {
@@ -8467,6 +8491,10 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
+#define ok_submatrix_op(o) (o == B_ASN  || o == B_DOTASN || \
+			    o == B_ADD  || o == B_SUB ||    \
+			    o == B_MUL  || o == B_DIV)
+
 /* Here we're replacing a sub-matrix of the original LHS matrix, by
    either straight or inflected assignment. The value that we're
    using for replacement will be either a matrix or a scalar.
@@ -8482,7 +8510,11 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     int rhs_scalar = 0;
     int err = 0;
 
-    if (lh1->t != MAT) {
+    if (!ok_submatrix_op(p->op)) {
+	gretl_errmsg_sprintf(_("The operator '%s' is not valid in this context"),
+			     get_opstr(p->op));
+	return E_TYPES;
+    } else if (lh1->t != MAT) {
 	fprintf(stderr, "set_matrix_value: got %s, not matrix!\n",
 		getsymb(lh1->t));
 	return E_DATA;
@@ -13907,13 +13939,12 @@ static void printnode (NODE *t, parser *p, int value)
 }
 
 /* which modified assignment operators of the type '+='
-   will we accept, when generating a matrix? */
-
-#define ok_matrix_op(o) (o == B_ASN || o == B_ADD || \
-			 o == B_SUB || o == B_MUL || \
-			 o == B_DIV || o == INC || \
-			 o == DEC || o == B_HCAT || \
-                         o == B_VCAT || o == B_DOTASN)
+   will we accept, when generating various types of
+   result? */
+#define ok_matrix_op(o) (o == B_ASN  || o == B_DOTASN || \
+			 o == B_ADD  || o == B_SUB || \
+			 o == B_MUL  || o == B_DIV || \
+			 o == B_HCAT || o == B_VCAT)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD || \
 			 o == B_HCAT || o == INC)
@@ -13939,7 +13970,7 @@ struct mod_assign m_assign[] = {
     { 0, 0}
 };
 
-/* read operator from "genr" formula: this is either
+/* read operator from formula: this is either
    simple assignment or something like '+=' */
 
 static int get_op (char *s)
@@ -13972,29 +14003,24 @@ static int get_op (char *s)
 
 static char *get_opstr (int op)
 {
-    if (op == INC) {
+    static char opstr[3] = {0};
+
+    if (op == B_ASN) {
+	return "=";
+    } else if (op == INC) {
 	return "++";
     } else if (op == DEC) {
 	return "--";
-    } else if (op == B_ADD) {
-	return "+=";
-    } else if (op == B_SUB) {
-	return "-=";
-    } else if (op == B_MUL) {
-	return "*=";
-    } else if (op == B_DIV) {
-	return "/=";
-    } else if (op == B_MOD) {
-	return "%=";
-    } else if (op == B_POW) {
-	return "^=";
-    } else if (op == B_HCAT) {
-	return "~=";
-    } else if (op == B_VCAT) {
-	return "|=";
-    } else if (op == B_DOTASN) {
-	return ".=";
     } else {
+	int i;
+
+	for (i=0; m_assign[i].c; i++) {
+	    if (op == m_assign[i].op) {
+		opstr[0] = m_assign[i].c;
+		opstr[1] = '=';
+		return opstr;
+	    }
+	}
 	return "??";
     }
 }
@@ -14125,6 +14151,10 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 		} else {
 		    strcpy(p->lh.name, lhs);
 		}
+	    } else if ((p->flags & P_PRIV) && *lhs == '$' &&
+		       gretl_namechar_spn(lhs + 1) == lhlen - 1) {
+		/* "private" genr of the form $foo = expr */
+		strcpy(p->lh.name, lhs);
 	    } else {
 		/* treat as an expression to be evaluated */
 		p->lh.expr = lhs;
@@ -14141,33 +14171,6 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 
 	free(lhs);
 	*ps = s + n + 1;
-    }
-
-    return err;
-}
-
-/* In the case of a "private" genr we allow ourselves some
-   more latitude in variable names, so as not to collide
-   with userspace names: specifically, we can use '$'.
-*/
-
-static int check_private_varname (const char *s)
-{
-    const char *ok = "abcdefghijklmnopqrstuvwxyz"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"0123456789_$";
-    int n = 0, err = 0;
-
-    if (strlen(s) >= VNAMELEN) {
-	return E_DATA;
-    }
-
-    if (isalpha(*s) || *s == '$') {
-	n = strspn(s, ok);
-    }
-
-    if (n != strlen(s)) {
-	err = E_PARSE;
     }
 
     return err;
@@ -14522,9 +14525,7 @@ static void gen_preprocess (parser *p, int flags)
 
     if (newvar) {
 	/* new variable: check name for legality */
-	if (flags & P_PRIV) {
-	    p->err = check_private_varname(p->lh.name);
-	} else {
+	if (!(flags & P_PRIV)) {
 	    p->err = check_varname(p->lh.name);
 	}
     } else {
@@ -14990,19 +14991,6 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
     return m;
 }
 
-static int get_array_index (matrix_subspec *spec, int *err)
-{
-    if (spec->type[0] == SEL_RANGE &&
-	spec->type[1] == SEL_NULL &&
-	spec->sel[0].range[0] == spec->sel[0].range[1]) {
-	/* convert to zero-based */
-	return spec->sel[0].range[0] - 1;
-    } else {
-	*err = E_TYPES;
-	return 0;
-    }
-}
-
 static void do_array_append (parser *p)
 {
     gretl_array *A = NULL;
@@ -15354,7 +15342,7 @@ static int assign_null_to_array (parser *p)
 }
 
 /* apply postfix '++' or '--' to LHS scalar, or '++' to
-   LHS string */
+   LHS string (only) */
 
 static int do_incr_decr (parser *p)
 {
@@ -15430,8 +15418,16 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->err = set_bundle_value(p->lhres, r, p);
 	} else if (compound_t == ELEMENT) {
 	    p->err = set_array_value(p->lhres, r, p);
-	} else if (compound_t == OSL || compound_t == MSL) {
+	} else if (compound_t == MSL) {
 	    p->err = set_matrix_value(p->lhres, r, p);
+	} else if (compound_t == OSL) {
+	    NODE *lh1 = p->lhres->v.b2.l;
+
+	    if (lh1->t == MAT) {
+		p->err = set_matrix_value(p->lhres, r, p);
+	    } else if (lh1->t == ARRAY || lh1->t == LIST) {
+		p->err = set_array_value(p->lhres, r, p);
+	    }
 	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
 	} else {
@@ -16035,7 +16031,7 @@ static void autoreg_error (parser *p, int t)
 int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	     int flags, int targtype)
 {
-#if LHDEBUG || EDEBUG || AUX_NODES_DEBUG
+#if 1 || LHDEBUG || EDEBUG || AUX_NODES_DEBUG
     fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
     if (s != NULL) {
