@@ -1,7 +1,6 @@
 version 2017a, in progress
 - Remove obsolete Kalman-filter interface
-- No longer accept "=" as synonymous for "==", when the
-  boolean operator "is equal to" is required
+- Deprecate "=" as synonym for boolean "==" 
 - New functions kmeier() and naalen() for nonparametric
   estimation of survivor and hazard functions
 - Add normtest() function: works much like the "normtest"

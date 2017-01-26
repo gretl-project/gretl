@@ -1606,8 +1606,9 @@ void lex (parser *p)
         case '=': 
 	    parser_getc(p);
 	    if (p->ch == '=') {
-		/* allow "==" as synonym for "=" */
 		parser_getc(p);
+	    } else {
+		gretl_warnmsg_set(_("obsolete use of '=': did you mean '=='?"));
 	    }
 	    p->sym = B_EQ;
 	    return;
