@@ -1606,10 +1606,12 @@ void lex (parser *p)
         case '=': 
 	    parser_getc(p);
 	    if (p->ch == '=') {
-		/* allow "==" as synonym for "=" */
+		/* insist on "==" for "is equal to" */
 		parser_getc(p);
+		p->sym = B_EQ;
+	    } else {
+		p->err = E_PARSE;
 	    }
-	    p->sym = B_EQ;
 	    return;
         case '>': 
 	    parser_getc(p);

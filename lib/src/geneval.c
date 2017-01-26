@@ -14039,8 +14039,6 @@ static int extract_lhs_and_op (const char **ps, parser *p,
     const char *s = *ps;
     int n, err = 0;
 
-    fprintf(stderr, "HERE 1, s='%s'\n", s);
-
     if (p->targ != UNK && strchr(s, '=') == NULL) {
 	/* we got a type specification but no assignment,
 	   so should be variable declaration(s) ?
@@ -14075,8 +14073,6 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 	    tailstrip(lhs);
 	    lhlen = strlen(lhs);
 	}
-
-	fprintf(stderr, "HERE 2, lhs='%s'\n", lhs);
 
 	if (opstr[0] == '\0' && lhlen > 2) {
 	    /* check for postfix operator */
