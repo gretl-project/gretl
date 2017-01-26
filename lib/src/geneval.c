@@ -976,6 +976,62 @@ static user_var *gen_get_lhs_uvar (parser *p, GretlType type)
     return uv;
 }
 
+static int gen_type_from_gretl_type (GretlType t)
+{
+    switch (t) {
+    case GRETL_TYPE_DOUBLE:
+	return NUM;
+	break;
+    case GRETL_TYPE_MATRIX:
+	return MAT;
+	break;
+    case GRETL_TYPE_LIST:
+	return LIST;
+	break;
+    case GRETL_TYPE_STRING:
+	return STR;
+	break;
+    case GRETL_TYPE_BUNDLE:
+	return BUNDLE;
+	break;
+    case GRETL_TYPE_ARRAY:
+	return ARRAY;
+	break;
+    default:
+	return UNDEF;
+	break;
+    }
+}
+
+static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
+{
+    int v = current_series_index(p->dset, n->vname);
+    user_var *uv = NULL;
+
+    if (v >= 0) {
+	n->t = SERIES;
+	n->vnum = v;
+	n->v.xvec = p->dset->Z[v];
+	if (is_string_valued(p->dset, n->vnum)) {
+	    n->flags |= SVL_NODE;
+	}
+    } else if ((uv = get_user_var_by_name(n->vname)) != NULL) {
+	GretlType type = user_var_get_type(uv);
+
+	n->t = gen_type_from_gretl_type(type);
+	n->uv = uv;
+	if (type == GRETL_TYPE_DOUBLE) {
+	    n->v.xval = *(double *) uv->ptr;
+	} else {
+	    n->v.ptr = uv->ptr;
+	}
+    } else {
+	undefined_symbol_error(n->vname, p);
+    }
+
+    return n;
+}
+
 static int gen_add_or_replace (parser *p, GretlType type, void *data)
 {
     int err = 0, done = 0;
@@ -10986,8 +11042,12 @@ static NODE *eval_query (NODE *t, parser *p)
 #if EDEBUG
     fprintf(stderr, "eval_query: t=%p, l=%p, m=%p, r=%p\n", 
 	    (void *) t, (void *) t->v.b3.l, (void *) t->v.b3.m,
-	    (void *) t->v.b3.r);    
-    fprintf(stderr, " condition type=%d (%s)\n", c->t, getsymb(c->t));
+	    (void *) t->v.b3.r);
+    if (c->t == NUM) {
+	fprintf(stderr, " condition type=NUM, value=%g\n", c->v.xval);
+    } else {
+	fprintf(stderr, " condition type=%s\n", getsymb(c->t));
+    }
 #endif
 
     if (!p->err) {
@@ -11007,10 +11067,6 @@ static NODE *eval_query (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
     }
-
-    if (p->err) {
-	return NULL;
-    }    
 
 #if EDEBUG
     fprintf(stderr, "eval_query return: ret = %p\n", (void *) ret);
@@ -11937,7 +11993,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = t;
 	break;
     case UNDEF:
-	undefined_symbol_error(t->vname, p);
+	ret = maybe_rescue_undef_node(t, p);
 	break;
     case U_ADDR:
 	if (!uvar_node(t->v.b1.b)) {
