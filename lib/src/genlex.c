@@ -1608,7 +1608,8 @@ void lex (parser *p)
 	    if (p->ch == '=') {
 		parser_getc(p);
 	    } else {
-		gretl_warnmsg_set(_("obsolete use of '=': did you mean '=='?"));
+		gretl_warnmsg_set(_("obsolete use of \"=\" as Boolean test: "
+				    "please use \"==\""));
 	    }
 	    p->sym = B_EQ;
 	    return;
