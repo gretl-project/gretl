@@ -368,8 +368,6 @@ void gretl_warnmsg_set (const char *str)
     *gretl_warnmsg = '\0';
     strncat(gretl_warnmsg, str, ERRLEN - 1);
     gretl_warnnum = W_MAX;
-    /* fputs(str, stderr); */
-    fputc('\n', stderr);
 }
 
 /**
