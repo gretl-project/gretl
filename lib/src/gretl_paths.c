@@ -2860,6 +2860,7 @@ void gretl_set_current_dir (const char *s)
     if (spos) {
 	*current_dir = '\0';
 	strncat(current_dir, s, spos + 1);
+	fprintf(stderr, "current dir = '%s'\n", current_dir);
     }
 }
 
@@ -3662,6 +3663,19 @@ int gretl_normalize_path (char *path)
     if (*path == '\0' || strstr(path, SLASHSTR) == NULL) {
 	/* no-op */
 	return 0;
+    }
+
+    if (*path == '.') {
+	/* absolutize the path first, if necessary */
+	char *ret, dirname[FILENAME_MAX];
+
+	*dirname = '\0';
+	ret = getcwd(dirname, FILENAME_MAX - 1);
+	if (ret != NULL) {
+	    ret = g_strdup(path);
+	    build_path(path, dirname, ret, NULL);
+	    g_free(ret);
+	}
     }
 
     pcpy = gretl_strdup(path);
