@@ -2860,7 +2860,6 @@ void gretl_set_current_dir (const char *s)
     if (spos) {
 	*current_dir = '\0';
 	strncat(current_dir, s, spos + 1);
-	fprintf(stderr, "current dir = '%s'\n", current_dir);
     }
 }
 
