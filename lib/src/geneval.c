@@ -8573,7 +8573,8 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     matrix_subspec *spec;
     double y = NADBL;
     int rhs_scalar = 0;
-    int err = 0;
+    int prechecked = 0;
+    int free_m2 = 0;
 
     if (!ok_submatrix_op(p->op)) {
 	gretl_errmsg_sprintf(_("The operator '%s' is not valid in this context"),
@@ -8596,9 +8597,9 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
        adjust it if need be in the light of the
        dimensions of @m.
     */
-    err = check_matrix_subspec(spec, m1);
-    if (err) {
-	return err;
+    p->err = check_matrix_subspec(spec, m1);
+    if (p->err) {
+	return p->err;
     }
 
 #if EDEBUG > 1
@@ -8613,8 +8614,17 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     } else if (rhs->t == MAT) {
 	/* not a scalar: get the RHS matrix */
 	m2 = rhs->v.m;
+    } else if (rhs->t == SERIES) {
+	/* legacy: this has long been accepted */
+	m2 = tmp_matrix_from_series(rhs, p);
+	prechecked = 1;
+	free_m2 = 1;
     } else {
-	return E_TYPES;
+	p->err = E_TYPES;
+    }
+
+    if (p->err) {
+	return p->err;
     }
 
     if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
@@ -8670,14 +8680,21 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		for (i=0; i<n; i++) {
 		    a->val[i] = xy_calc(a->val[i], y, p->op, MAT, p);
 		}
-		/* assign computed matrix to m2 */
+		/* assign computed matrix to m2, and mark it for
+		   freeing */
 		m2 = a;
+		free_m2 = 1;
+		prechecked = 1;
 	    } else {
 		gretl_matrix *b = NULL;
 
 		p->err = real_matrix_calc(a, m2, p->op, &b);
 		gretl_matrix_free(a);
 		/* replace RHS m2 with computed result */
+		if (free_m2) {
+		    /* m2 was temp result of series conversion */
+		    gretl_matrix_free(m2);
+		}
 		m2 = b;
 	    }
 	}
@@ -8693,13 +8710,17 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	*/
 	p->err = matrix_replace_submatrix(m1, m2, spec);
 #if MATRIX_NA_CHECK
-	if (!p->err && gretl_matrix_xna_check(m2)) {
+	if (!p->err && !prechecked && gretl_matrix_xna_check(m1)) {
 	    set_gretl_warning(W_GENNAN);
 	}
 #endif
-    }  
+    }
 
-    return err;
+    if (free_m2) {
+	gretl_matrix_free(m2);
+    }
+
+    return p->err;
 }
 
 static int set_bundle_note (gretl_bundle *b, const char *key,
@@ -14163,11 +14184,24 @@ static void parser_try_print (parser *p, const char *s)
     }
 }
 
+/* Here we try to parse out the LHS of the statement
+   and also the operator. If we find a unitary LHS
+   (simply an indentifier) we write it into p->lh.name,
+   but if we find a compound LHS (such as a sub-matrix
+   specification) we save it as p->lh.expr. The
+   content of @ps is advanced to the first position
+   beyond the operator.
+*/
+
 static int extract_lhs_and_op (const char **ps, parser *p,
 			       char *opstr)
 {
     const char *s = *ps;
     int n, err = 0;
+
+#if LHDEBUG
+    fprintf(stderr, "extract: input='%s'\n", s);
+#endif
 
     if (p->targ != UNK && strchr(s, '=') == NULL) {
 	/* we got a type specification but no assignment,
@@ -14175,7 +14209,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 	*/
 	p->flags |= P_DECL;
 	p->lh.expr = gretl_strdup(s);
-	return 0;
+	goto done;
     }
 
     /* count bytes preceding first '=' */
@@ -14196,6 +14230,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 		/* no: straight assignment */
 		opstr[0] = '=';
 	    }
+	    n++; /* add one for '=' */
 	}
 
 	if (lhlen > 0) {
@@ -14244,8 +14279,15 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 	}
 
 	free(lhs);
-	*ps = s + n + 1;
+	*ps = s + n;
     }
+
+ done:
+
+#if LHDEBUG
+    fprintf(stderr, "extract: name='%s', expr='%s', op='%s', err=%d,\n s='%s'\n",
+	    p->lh.name, p->lh.expr ? p->lh.expr : "nil", opstr, err, *ps);
+#endif    
 
     return err;
 }
@@ -14593,6 +14635,10 @@ static void gen_preprocess (parser *p, int flags)
 	p->err = check_existing_lhs_type(p, p->lh.name, &newvar);
     }
 
+#if LHDEBUG
+    fprintf(stderr, "newvar=%d, err=%d\n", newvar, p->err);
+#endif
+
     if (p->err) {
 	return;
     }    
@@ -14650,9 +14696,11 @@ static void gen_preprocess (parser *p, int flags)
 	return;
     }
 
-    p->err = check_operator_validity(p, opstr);
-    if (p->err) {
-	return;
+    if (p->op) {
+	p->err = check_operator_validity(p, opstr);
+	if (p->err) {
+	    return;
+	}
     }
 
     /* if the target type is still unknown, and the RHS expression

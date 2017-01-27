@@ -1608,8 +1608,9 @@ void lex (parser *p)
 	    if (p->ch == '=') {
 		parser_getc(p);
 	    } else {
-		gretl_warnmsg_set(_("obsolete use of \"=\" as Boolean test: "
-				    "please use \"==\""));
+		gretl_warnmsg_sprintf("\"%s\"\n %s\n", p->rhs,
+				      _("obsolete use of \"=\" as Boolean test: "
+					"please use \"==\""));
 	    }
 	    p->sym = B_EQ;
 	    return;
