@@ -49,71 +49,90 @@ static void write_scalar_message (const parser *p, PRN *prn)
     }
 }
 
+/* Note: p->lh.name may be empty but it's never NULL, while
+   the vname member of a NODE may be NULL.
+*/
+
 static void gen_write_message (const parser *p, int oldv, PRN *prn)
 {
-    if (prn == NULL || !gretl_messages_on()) {
-	return;
-    }
+    const char *name = p->lh.name;
+    int targ = p->targ;
+    int vnum = p->lh.vnum;
+    int t = p->lh.t;
 
     if (p->lhres != NULL) {
+	/* compound LHS object */
 	NODE *lhs = p->lhres;
-	
-	if (lhs->t == BMEMB) {
-	    pprintf(prn, _("Modified bundle"));
-	} else if (lhs->t == MSL) {
-	    pprintf(prn, _("Modified matrix"));
-	} else if (lhs->t == ELEMENT) {
-	    if (lhs->v.b2.l->t == LIST) {
-		pprintf(prn, _("Modified list"));
-	    } else {
-		pprintf(prn, _("Modified array"));
+	NODE *lh1 = lhs->v.b2.l;
+
+	if (lh1->vname != NULL) {
+	    /* not an "embedded" object */
+	    name = lh1->vname;
+	    t = targ = lh1->t;
+	    if (t == SERIES) {
+		vnum = lh1->vnum;
+		targ = NUM;
 	    }
-	} else if (lhs->t == OBS) {
-	    pprintf(prn, _("Modified series"));
 	} else {
-	    pprintf(prn, _("Modified object"));
+	    if (lhs->t == BMEMB) {
+		pprintf(prn, _("Modified bundle"));
+	    } else if (lhs->t == MSL) {
+		pprintf(prn, _("Modified matrix"));
+	    } else if (lhs->t == ELEMENT || lhs->t == OSL) {
+		if (lh1->t == LIST) {
+		    pprintf(prn, _("Modified list"));
+		} else if (lh1->t == ARRAY) {
+		    pprintf(prn, _("Modified array"));
+		} else {
+		    pprintf(prn, _("Modified object"));
+		}
+	    }
+	    return;
 	}
-    } else if (p->targ == NUM) {
+    }
+
+    if (targ == NUM) {
 	if (setting_obsval(p)) {
 	    /* setting specific observation in series */
 	    pprintf(prn, _("Modified series %s (ID %d)"),
-		    p->lh.name, p->lh.vnum);
+		    name, vnum);
 	} else {
 	    write_scalar_message(p, prn);
 	}
-    } else if (p->targ == SERIES) {
-	if (p->lh.vnum < oldv) {
-	    pprintf(prn, _("Replaced series %s (ID %d)"),
-		    p->lh.name, p->lh.vnum);
+    } else if (targ == SERIES) {
+	if (vnum < oldv) {
+	    pprintf(prn, _("Replaced series %s (ID %d)"), name, vnum);
 	} else {
-	    pprintf(prn, _("Generated series %s (ID %d)"),
-		    p->lh.name, p->lh.vnum);
+	    pprintf(prn, _("Generated series %s (ID %d)"), name, vnum);
 	}
-    } else if (p->targ == MAT) {
-	gretl_matrix *m = get_matrix_by_name(p->lh.name);
+    } else if (targ == MAT) {
+	gretl_matrix *m = get_matrix_by_name(name);
 	
-	if (p->lh.t == MAT && p->lh.expr != NULL && 
-	    *p->lh.expr != '\0') {
-	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
-	} else if (p->lh.t == MAT) {
-	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
+	if (p->lhres != NULL) {
+	    pprintf(prn, _("Modified matrix %s"), name);
+	} else if (t == MAT) {
+	    pprintf(prn, _("Replaced matrix %s"), name);
 	} else {
-	    pprintf(prn, _("Generated matrix %s"), p->lh.name);
+	    pprintf(prn, _("Generated matrix %s"), name);
 	}
 	if (m != NULL && m->rows == 1 && m->cols == 1) {
 	    pprintf(prn, " = {%g}", m->val[0]);
 	}
-    } else if (p->targ == LIST) {
-	if (p->lh.t == LIST) {
-	    pprintf(prn, _("Replaced list %s"), p->lh.name);
+    } else if (targ == LIST) {
+	if (p->lhres != NULL) {
+	    pprintf(prn, _("Modified list %s"), name);
+	} else if (t == LIST) {
+	    pprintf(prn, _("Replaced list %s"), name);
 	} else {
-	    pprintf(prn, _("Generated list %s"), p->lh.name);
+	    pprintf(prn, _("Generated list %s"), name);
 	}
-    } else if (p->targ == STR) {
-	if (p->lh.t == STR) {
-	    pprintf(prn, _("Replaced string %s"), p->lh.name);
+    } else if (targ == STR) {
+	if (p->lhres != NULL) {
+	    pprintf(prn, _("Modified string %s"), name);
+	} else if (t == STR) {
+	    pprintf(prn, _("Replaced string %s"), name);
 	} else {
-	    pprintf(prn, _("Generated string %s"), p->lh.name);
+	    pprintf(prn, _("Generated string %s"), name);
 	}
     } else {
 	return;
@@ -602,7 +621,9 @@ static int gen_special (const char *s, const char *line,
 	p->flags = 0;
 	p->err = 0;
 	p->prn = prn;
-	gen_write_message(p, orig_v, prn);
+	if (prn != NULL && gretl_messages_on()) {
+	    gen_write_message(p, orig_v, prn);
+	}
     }
 
     if (dset->v > orig_v) {
@@ -771,7 +792,7 @@ int generate (const char *line, DATASET *dset,
 	gen_save_or_print(&p, prn);
 	if (!p.err && gen_verbose(p.flags)) {
 	    gen_write_label(&p, oldv);
-	    if (!(opt & OPT_Q)) {
+	    if (gretl_messages_on() && prn != NULL && !(opt & OPT_Q)) {
 		gen_write_message(&p, oldv, prn);
 	    }
 	}
