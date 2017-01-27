@@ -741,6 +741,8 @@ static void maybe_switch_node_type (NODE *n, int type,
 	n->t = MAT;
 	n->v.m = NULL;
 	n->flags = flags;
+    } else if (type == EMPTY) {
+	; /* LHS mechanism: OK */
     } else {
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
@@ -12121,7 +12123,7 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
     ret->v.b2.r = r; /* evaluated right-hand */
 
     /* prevent double-freeing of children @l and @r */
-    ret->flags = LHT_NODE;
+    ret->flags |= LHT_NODE;
 
     return ret;
 }
@@ -15923,6 +15925,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     p->data = NULL;
 
     p->ret = NULL;
+    p->lhres = NULL;
     p->err = 0;
 
 #if EDEBUG
