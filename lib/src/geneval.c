@@ -8290,6 +8290,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    break;
 	case ARRAY:
 	    ptr = rhs->v.a;
+	    /* get more specific type for comparison with
+	       what the user specified (if anything)
+	    */
 	    type = gretl_array_get_type(rhs->v.a);
 	    donate = is_tmp_node(rhs);
 	    break;
@@ -8310,22 +8313,17 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     if (!err) {
-	if (gretl_is_array_type(targ)) {
+	if (gretl_is_array_type(type)) {
+	    /* revert to generic array type for the functions below */
 	    type = GRETL_TYPE_ARRAY;
 	}
 	if (donate) {
 	    /* it's OK to hand over the data pointer */
 	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
-	    if (!err && type == GRETL_TYPE_MATRIX) {
-		p->lh.m = ptr; /* ?? */
-	    }
-	    rhs->v.ptr = NULL;
+	    rhs->v.ptr = NULL; /* avoid freeing */
 	} else {
 	    /* the data must be copied into the bundle */
 	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
-	    if (!err && type == GRETL_TYPE_MATRIX) {
-		p->lh.m = ptr; /* ?? */
-	    }
 	}
     }
 
