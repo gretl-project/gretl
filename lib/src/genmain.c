@@ -60,7 +60,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     int vnum = p->lh.vnum;
     int t = p->lh.t;
 
-    if (p->lhres != NULL) {
+    if (p != NULL && p->lhres != NULL) {
 	/* compound LHS object */
 	NODE *lhs = p->lhres;
 	NODE *lh1 = lhs->v.b2.l;
@@ -619,6 +619,7 @@ static int gen_special (const char *s, const char *line,
 	p->dset = dset;
 	p->targ = SERIES;
 	p->flags = 0;
+	p->lhres = NULL;
 	p->err = 0;
 	p->prn = prn;
 	if (prn != NULL && gretl_messages_on()) {
