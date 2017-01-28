@@ -61,7 +61,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     int vnum = p->lh.vnum;
     int t = p->lh.t;
 
-    if (p != NULL && p->lhres != NULL) {
+    if (p->lhres != NULL) {
 	/* compound LHS object */
 	NODE *lhs = p->lhres;
 	NODE *lh1 = lhs->v.b2.l;
@@ -75,19 +75,11 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 		targ = NUM;
 	    }
 	} else {
-	    if (lhs->t == BMEMB) {
-		pprintf(prn, _("Modified bundle"));
-	    } else if (lhs->t == MSL) {
-		pprintf(prn, _("Modified matrix"));
-	    } else if (lhs->t == ELEMENT || lhs->t == OSL) {
-		if (lh1->t == LIST) {
-		    pprintf(prn, _("Modified list"));
-		} else if (lh1->t == ARRAY) {
-		    pprintf(prn, _("Modified array"));
-		} else {
-		    pprintf(prn, _("Modified object"));
-		}
-	    }
+	    return;
+	}
+	if (t != SERIES && t != LIST && t != MAT) {
+	    /* we'll not print a message for modification
+	       of container types (bundle, array) */
 	    return;
 	}
     }
