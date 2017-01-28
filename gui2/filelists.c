@@ -315,6 +315,10 @@ void mkfilelist (int filetype, char *fname)
 
     gretl_normalize_path(fname);
 
+#if FDEBUG
+    fprintf(stderr, "after normalize_path: '%s'\n", fname);
+#endif
+
     filep = get_file_list(filetype);
     if (filep == NULL) {
 	return;

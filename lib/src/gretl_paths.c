@@ -3664,6 +3664,19 @@ int gretl_normalize_path (char *path)
 	return 0;
     }
 
+    if (*path == '.') {
+	/* absolutize the path first, if necessary */
+	char *ret, dirname[FILENAME_MAX];
+
+	*dirname = '\0';
+	ret = getcwd(dirname, FILENAME_MAX - 1);
+	if (ret != NULL) {
+	    ret = g_strdup(path);
+	    build_path(path, dirname, ret, NULL);
+	    g_free(ret);
+	}
+    }
+
     pcpy = gretl_strdup(path);
     if (pcpy == NULL) {
 	return E_ALLOC;

@@ -8,7 +8,7 @@ function series mlogitlogprobs(series y, matrix X, matrix theta)
 
   loop for i=1..n --quiet
     series x = tmp[,i]
-    ret += (y=$i) ? x : 0 
+    ret += (y==i) ? x : 0 
   endloop
 
   return ret
@@ -23,7 +23,7 @@ open keane.gdt
 # for the manual variant the dep. var. must be 0-based
 status = status - 1
 # and we must exclude NAs
-smpl (year=87 && ok(status)) --restrict
+smpl (year==87 && ok(status)) --restrict
 
 matrix X = { const, educ, exper, expersq, black }
 scalar k = cols(X)
@@ -37,6 +37,6 @@ end mle --verbose --hessian
 # status to be 0-based, and NAs are handled correctly)
 smpl full
 status = status + 1
-smpl (year=87) --restrict
+smpl (year==87) --restrict
 logit status 0 educ exper expersq black --multinomial
 

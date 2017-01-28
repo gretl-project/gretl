@@ -787,10 +787,6 @@ int main (int argc, char **argv)
     fprintf(stderr, "calling gtk_main()\n");
 #endif
 
-#if 0 /* defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX) */
-    gui_check_blas_threading();
-#endif    
-
     /* Enter the event loop */
     gtk_main();
 

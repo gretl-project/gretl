@@ -25,7 +25,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
       endif
 
       series DU = (time > Tb)
-      series DT = (time = (Tb + 1))
+      series DT = (time == (Tb + 1))
       scalar kstar = 0
 
       # Try trimming the list of lags
@@ -48,7 +48,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
       endloop
 
       # Re-run the regression with zero lags if need be
-      if kstar = 0
+      if kstar == 0
          ols y 0 DU time DT y_1 --quiet
       endif
    

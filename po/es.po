@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-12-20 08:47-0500\n"
-"PO-Revision-Date: 2016-12-20 08:48-0500\n"
+"PO-Revision-Date: 2017-01-26 11:28+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -3318,12 +3318,10 @@ msgid "generated non-finite values"
 msgstr "se han generado valores no finitos"
 
 #: lib/src/gretl_errors.c:220 lib/src/gretl_errors.c:223
-#, fuzzy
 msgid "In regard to function"
-msgstr "Elegir Función"
+msgstr "Con respecto a la función"
 
 #: lib/src/gretl_errors.c:221
-#, fuzzy
 msgid "package"
 msgstr "Paquete"
 
@@ -4006,7 +4004,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:103
 msgid "gretl_cli_cmdref.en"
-msgstr ""
+msgstr "gretl_cli_cmdref.en"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
@@ -4014,7 +4012,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:108
 msgid "gretl_gui_cmdref.en"
-msgstr ""
+msgstr "gretl_gui_cmdref.en"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
@@ -4022,7 +4020,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:113
 msgid "gretl_gui_help.en"
-msgstr ""
+msgstr "gretl_gui_cmdref.en"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
@@ -4030,7 +4028,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:118
 msgid "gretl_cli_fnref.en"
-msgstr ""
+msgstr "gretl_cli_fnref.en"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
@@ -4038,7 +4036,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:123
 msgid "gretl_gui_fnref.en"
-msgstr ""
+msgstr "gretl_gui_fnref.en"
 
 #: lib/src/gretl_paths.c:1953
 #, c-format
@@ -9573,7 +9571,7 @@ msgstr "Hacer que esta restricción sea permanente"
 
 #: gui2/dialogs.c:2367
 msgid "The current data range is too small for this option"
-msgstr ""
+msgstr "Para esta opción, el dominio actual de los datos es demasiado corto "
 
 #: gui2/dialogs.c:2382
 #, c-format

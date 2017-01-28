@@ -2495,7 +2495,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	    if (!na(fr->fitted[t])) {
 		nf++;
 	    }	    
-	} else if (t >= fr->t0 && t >= pmod->t1 && t <= pmod->t2) {
+	} else if (t >= fr->t0 && t >= pmod->t1 &&
+		   t <= pmod->t2 && t <= fr->t2) {
 	    if (integrate) {
 		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
 		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];

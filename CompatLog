@@ -2,6 +2,10 @@ version 2017a, in progress
 
 The old interface to the Kalman filter has now been removed.
 
+Use of the single character '=' to represent the boolean
+operator "is equal to" is deprecated: '==' should be used for
+this purpose.
+
 2016-11-19 version 2016d
 
 New code in the Ziggurat mechanism (for greater speed and better
