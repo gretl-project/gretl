@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "genr_optim.h"
+#include "gretl_typemap.h"
 
 #include <errno.h>
 
@@ -778,7 +779,8 @@ int generate (const char *line, DATASET *dset,
 
 #if GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
-    fprintf(stderr, "    gtype = %d, targtype = %d\n", gtype, targtype);
+    fprintf(stderr, "    gtype=%s, targtype=%s\n", gretl_type_get_name(gtype),
+	    getsymb(targtype));
 #endif
 
     if (is_genr_special(line, vname, &subline)) {

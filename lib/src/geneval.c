@@ -14197,7 +14197,9 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 			       char *opstr)
 {
     const char *s = *ps;
-    int n, err = 0;
+    int quoted = 0;
+    int i, n = 0;
+    int err = 0;
 
 #if LHDEBUG
     fprintf(stderr, "extract: input='%s'\n", s);
@@ -14212,8 +14214,19 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 	goto done;
     }
 
-    /* count bytes preceding first '=' */
-    n = strcspn(s, "=");
+    /* Count bytes preceding first unquoted '='. Note that
+       the "unquoted" condition is required only because
+       a string-literal bundle key might contain an equals
+       sign, as in b["foo=bar"] = ...
+    */
+    for (i=0; s[i] != '\0'; i++) {
+	if (s[i] == '"') {
+	    quoted = !quoted;
+	} else if (!quoted && s[i] == '=') {
+	    break;
+	}
+	n++;
+    }
 
     if (n > 0) {
 	char *lhs = NULL;
