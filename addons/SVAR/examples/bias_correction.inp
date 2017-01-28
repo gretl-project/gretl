@@ -22,6 +22,7 @@ end function
 /* ------------------------------------------------------ */
 
 nulldata 200
+set seed 54321
 setobs 1 1 --special-time-series
 list Y = GenerateExampleData(0.95, $nobs)
 
