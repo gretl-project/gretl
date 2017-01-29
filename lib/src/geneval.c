@@ -8205,6 +8205,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     if (lh1->t != BUNDLE) {
 	return E_DATA;
     } else if (p->op != B_ASN) {
+	/* FIXME */
 	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
 			     get_opstr(p->op));
 	return E_TYPES;
@@ -15100,6 +15101,9 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 
     if (!p->err) {
 	if (p->op == B_DOTASN) {
+	    /* ".=" : we need a scalar on the RHS -- but
+	       FIXME: a 1 x 1 matrix should also be OK
+	    */
 	    if (p->ret->t == NUM) {
 		double x = p->ret->v.xval;
 
@@ -15114,7 +15118,7 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 		p->err = E_TYPES;
 	    }
 	} else {
-	    /* we need to start by retrieving a matrix result in @b */
+	    /* we start by retrieving a matrix result in @tmp */
 	    gretl_matrix *tmp;
 
 	    tmp = matrix_from_scratch(p, 1, NULL);
@@ -15284,18 +15288,19 @@ static int create_or_edit_list (parser *p)
     return p->err;
 }
 
-#define array_element_type(t) (t == STR || t == MAT || \
-			       t == BUNDLE || t == LIST)
-
-#define ok_return_type(t) (t == NUM || t == SERIES || t == MAT || \
-			   t == LIST || t == DUM || t == EMPTY || \
-                           t == STR || t == BUNDLE || t == ARRAY || \
+#define ok_return_type(t) (t == NUM || t == SERIES || t == MAT ||	\
+			   t == LIST || t == DUM || t == EMPTY ||	\
+                           t == STR || t == BUNDLE || t == ARRAY ||	\
 			   t == U_ADDR || t == DBUNDLE)
+
+/* Note: we're doing this only in relation to "primary" types
+   (excluding bundle members, array elements, matrix sub-
+   specs).
+*/
 
 static int gen_check_return_type (parser *p)
 {
     NODE *r = p->ret;
-    int msgdone = 0;
     int err = 0;
 
     if (r == NULL) {
@@ -15347,28 +15352,36 @@ static int gen_check_return_type (parser *p)
 	    err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
-	if (r->t != BUNDLE && r->t != DBUNDLE && r->t != EMPTY) {
-	    err = E_TYPES;
-	}
-    } else if (p->targ == BMEMB) {
-	if (r->t == LIST && p->lh.gtype == GRETL_TYPE_MATRIX) {
-	    ; /* OK, we can handle this */
-	} else if (!ok_bundled_type(r->t)) {
-	    err = E_TYPES;
-	    maybe_do_type_errmsg(r->vname, r->t);
-	    msgdone = 1;
+	if (p->op == B_ASN) {
+	    /* plain assignment: bundle or null */
+	    if (r->t != BUNDLE && r->t != DBUNDLE && r->t != EMPTY) {
+		err = E_TYPES;
+	    }
+	} else {
+	    /* the only other assignment possibility is "+=",
+	       in which case we'll only accept a bundle
+	    */
+	    if (r->t != BUNDLE) {
+		err = E_TYPES;
+	    }
 	}
     } else if (p->targ == ARRAY) {
-	if (p->lh.expr == NULL && p->op == B_ASN) {
+	if (p->op == B_ASN) {
+	    /* plain assignment: array or null */
 	    if (r->t != ARRAY && r->t != EMPTY) {
 		err = E_TYPES;
 	    }
-	} else if (r->t != ARRAY && !array_element_type(r->t)) {
-	    err = E_TYPES;
+	} else {
+	    /* the only other assignment possibility is "+=",
+	       in which case we'll only accept an array
+	    */
+	    if (r->t != ARRAY) {
+		err = E_TYPES;
+	    }
 	}
     }
 
-    if (!msgdone && err == E_TYPES) {
+    if (err == E_TYPES) {
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
     }
 
