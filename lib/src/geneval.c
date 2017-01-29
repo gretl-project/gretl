@@ -8618,7 +8618,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	/* legacy: this has long been accepted */
 	m2 = tmp_matrix_from_series(rhs, p);
 	prechecked = 1;
-	free_m2 = 1;
+	free_m2 = 1; /* flag temporary status */
     } else {
 	p->err = E_TYPES;
     }
@@ -8695,6 +8695,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		    /* m2 was temp result of series conversion */
 		    gretl_matrix_free(m2);
 		}
+		free_m2 = 1;
 		m2 = b;
 	    }
 	}
