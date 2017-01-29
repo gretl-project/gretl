@@ -1750,11 +1750,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
-      <exemplos>
+      <examples>
 	<example>p1 = cdf(N, -2.5)</example>
 	<example>p2 = cdf(X, 3, 5.67)</example>
 	<example>p3 = cdf(D, 0.25, -1, 1)</example>
-      </exemplos>
+      </examples>
       <description>
 	<para>
 	  Calculadora da função de distribuição acumulada. Retorna
