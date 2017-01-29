@@ -139,8 +139,8 @@ static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
 static int node_is_true (NODE *n, parser *p);
 static gretl_matrix *list_to_matrix (const int *list, int *err);
-static gretl_matrix *series_to_matrix (const double *x,
-				       parser *p);
+static gretl_matrix *series_to_matrix (const double *x, parser *p,
+				       int *prechecked);
 static NODE *object_var_node (NODE *t, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
