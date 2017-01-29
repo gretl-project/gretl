@@ -8161,12 +8161,19 @@ static GretlType gretl_type_of (int t)
     }
 }
 
-static int lhs_type_check (GretlType spec, GretlType got)
+static int lhs_type_check (GretlType spec, GretlType got,
+			   int t)
 {
     if (spec != 0 && spec != got) {
-	gretl_errmsg_sprintf(_("Expected %s but got %s"),
-			     gretl_type_get_name(spec),
-			     gretl_type_get_name(got));
+	if (t == BUNDLE) {
+	    gretl_errmsg_sprintf(_("Expected %s but got %s"),
+				 gretl_type_get_name(spec),
+				 gretl_type_get_name(got));
+	} else {
+	    gretl_errmsg_sprintf(_("Specified type %s does not match array type %s"),
+				 gretl_type_get_name(spec),
+				 gretl_type_get_name(got));
+	}
 	return E_TYPES;
     } else {
 	return 0;
@@ -8309,7 +8316,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (!err) {
 	/* check for result type-incompatible with user's spec */
-	err = lhs_type_check(targ, type);
+	err = lhs_type_check(targ, type, BUNDLE);
     }
 
     if (!err) {
@@ -8426,7 +8433,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 
     atype = gretl_array_get_content_type(array);
     targ = gretl_type_of(p->targ);
-    err = lhs_type_check(targ, atype);
+    err = lhs_type_check(targ, atype, ARRAY);
 
     if (!err) {
 	switch (rhs->t) {
