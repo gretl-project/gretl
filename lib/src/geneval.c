@@ -14901,7 +14901,8 @@ static gretl_matrix *list_to_matrix (const int *list, int *err)
 }
 
 static gretl_matrix *series_to_matrix (const double *x,
-				       parser *p)
+				       parser *p,
+				       int *prechecked)
 {
     int i, n = sample_size(p->dset);
     gretl_matrix *v;
@@ -14914,7 +14915,11 @@ static gretl_matrix *series_to_matrix (const double *x,
     } else {
 	for (i=0; i<n; i++) {
 	    xi = x[i + p->dset->t1];
-	    v->val[i] = na(xi) ? M_NA : xi;
+	    if (na(xi)) {
+		set_gretl_warning(W_GENNAN);
+		xi = M_NA;
+	    }
+	    v->val[i] = xi;
 	}
 	gretl_matrix_set_t1(v, p->dset->t1);
 	gretl_matrix_set_t2(v, p->dset->t2);
@@ -14935,8 +14940,16 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
 
     if (r->t == NUM) {
 	m = gretl_matrix_from_scalar(r->v.xval);
+	if (m == NULL) {
+	    p->err = E_ALLOC;
+	} else if (na(r->v.xval)) {
+	    set_gretl_warning(W_GENNAN);
+	    if (prechecked != NULL) {
+		*prechecked = 1;
+	    }
+	}
     } else if (r->t == SERIES) {
-	m = series_to_matrix(r->v.xvec, p);
+	m = series_to_matrix(r->v.xvec, p, prechecked);
     } else if (r->t == LIST) {
 	m = list_to_matrix(r->v.ivec, &p->err);
     } else if (r->t == MAT && is_tmp_node(r)) {
@@ -14983,25 +14996,9 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
 static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
 					  int *prechecked)
 {
-    gretl_matrix *m = NULL;
+    gretl_matrix *m;
 
-#if EDEBUG
-    fprintf(stderr, "matrix_from_scratch\n");
-#endif
-
-    if (p->ret->t == NUM) {
-	m = gretl_matrix_from_scalar(p->ret->v.xval);
-	if (m == NULL) {
-	    p->err = E_ALLOC;
-	} else if (xna(m->val[0])) {
-	    set_gretl_warning(W_GENNAN);
-	    if (prechecked != NULL) {
-		*prechecked = 1;
-	    }
-	}
-    } else {
-	m = grab_or_copy_matrix_result(p, prechecked);
-    }
+    m = grab_or_copy_matrix_result(p, prechecked);
 
     if (!tmp && !p->err) {
 	p->err = user_var_add(p->lh.name, GRETL_TYPE_MATRIX, m);
