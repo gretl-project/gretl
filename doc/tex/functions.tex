@@ -463,19 +463,18 @@ function scalar b(const matrix *X)
   return rows(X)
 end function
 
-set echo off
-set messages off
+set verbose off
 X = zeros(2000,2000)
 scalar r
 
 set stopwatch
-loop 500
+loop 500 -q
   r = a(X)
 endloop
 fa = $stopwatch
 
 set stopwatch
-loop 500
+loop 500 -q
   r = b(&X)
 endloop
 fb = $stopwatch
