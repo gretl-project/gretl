@@ -146,6 +146,8 @@ int strings_array_diff (char **strs1, int n1,
 			char **strs2, int n2,
 			char ***extra, int *n_extra);
 
+char **strings_array_reverse (char **strs, int nstrs);
+
 void strings_array_free (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATASET *dset);

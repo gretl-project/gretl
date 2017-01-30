@@ -1953,6 +1953,36 @@ int strings_array_diff (char **strs1, int n1,
 }
 
 /**
+ * strings_array_reverse:
+ * @strs: array of allocated strings.
+ * @nstrs: number of strings in array.
+ *
+ * Returns: an array of strings with @nstrs in which the
+ * strings are those in @strs, in reverse order -- or
+ * NULL on failure.
+ */
+
+char **strings_array_reverse (char **strs, int nstrs)
+{
+    char **S = NULL;
+    int i;
+
+    S = strings_array_new(nstrs);
+
+    if (S != NULL) {
+	for (i=0; i<nstrs; i++) {
+	    S[i] = gretl_strdup(strs[nstrs-i-1]);
+	    if (S[i] == NULL) {
+		strings_array_free(S, nstrs);
+		break;
+	    }
+	}
+    }
+
+    return S;
+}
+
+/**
  * strings_array_free:
  * @strs: array of allocated strings.
  * @nstrs: number of strings in array.

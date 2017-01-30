@@ -1024,6 +1024,39 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
     return err;
 }
 
+static void maybe_preserve_names (gretl_matrix *targ,
+				  const gretl_matrix *src,
+				  int cols, int reverse)
+{
+    char **srcnames;
+    int n, err = 0;
+    
+    if (src->info != NULL) {
+	if (cols) {
+	    srcnames = src->info->colnames;
+	    n = src->cols;
+	} else {
+	    srcnames = src->info->rownames;
+	    n = src->rows;
+	}
+	if (srcnames != NULL) {
+	    char **S = reverse ? strings_array_reverse(srcnames, n) :
+		strings_array_dup(srcnames, n);
+
+	    if (S != NULL) {
+		if (cols) {
+		    err = gretl_matrix_set_colnames(targ, S);
+		} else {
+		    err = gretl_matrix_set_rownames(targ, S);
+		}
+		if (err) {
+		    strings_array_free(S, n);
+		}
+	    }
+	}
+    }
+}
+
 /**
  * gretl_matrix_reverse_rows:
  * @m: source matrix whose rows are to be reversed.
@@ -1053,6 +1086,9 @@ gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
 	    gretl_matrix_copy_row(ret, i, m, r-i-1);
 	}
     }
+
+    maybe_preserve_names(ret, m, 0, 1);
+    maybe_preserve_names(ret, m, 1, 0);
 
     return ret;
 }
@@ -1097,6 +1133,9 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
         x += r;
         y -= r;
     }
+
+    maybe_preserve_names(ret, m, 1, 1);
+    maybe_preserve_names(ret, m, 0, 0);
 
     return ret;
 }
