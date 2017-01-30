@@ -450,12 +450,11 @@ gretl,\footnote{Note that you will have to modify such a
   otherwise they will be taken as numerical data.}  the program
 will interpret the columns as distinct variables, so the data will not
 be usable ``as is.''  But there is a mechanism for correcting the
-situation, namely the \cmd{stack} function within the \cmd{genr}
-command.
+situation, namely the \cmd{stack} function.
 
 Consider the first data column in the fragment above: the first 50 rows
 of this column constitute a cross-section for the variable \varname{x1}
-in the year 1965.  If we could create a new variable by stacking the
+in the year 1965.  If we could create a new series by stacking the
 first 50 entries in the second column underneath the first 50 entries
 in the first, we would be on the way to making a data set ``by
 observation'' (in the first of the two forms mentioned above, stacked
@@ -472,8 +471,8 @@ variables, but in the first instance we ``pretend'' that they are.)
 
 \begin{code}
 open panel.txt
-genr x1 = stack(v1..v5) --length=50
-genr x2 = stack(v1..v5) --offset=50 --length=50
+series x1 = stack(v1..v5) --length=50
+series x2 = stack(v1..v5) --offset=50 --length=50
 setobs 50 1:1 --stacked-cross-section
 store panel.gdt x1 x2
 \end{code}
@@ -491,7 +490,7 @@ to stack a non-contiguous set of columns you can give a
 comma-separated list of variable names, as in
 %
 \begin{code}
-genr x = stack(v1,v3,v5)
+series x = stack(v1,v3,v5)
 \end{code}
 %
 or you can provide within the parentheses the name of a previously
@@ -515,8 +514,8 @@ periods), but with 20 variables rather than 2.
 \begin{code}
 open panel.txt
 loop i=1..20
-  genr k = ($i - 1) * 50
-  genr x$i = stack(v1..v5) --offset=k --length=50
+  scalar k = (i - 1) * 50
+  series x$i = stack(v1..v5) --offset=k --length=50
 endloop
 setobs 50 1.01 --stacked-cross-section
 store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
@@ -540,7 +539,7 @@ observation.  To rectify this we could do:
 
 \begin{code}
 genr time
-genr year = 1960 + (5 * time)
+series year = 1960 + (5 * time)
 genr markers = "%s:%d", marker, year
 \end{code}
 
@@ -608,7 +607,7 @@ thereafter, 0 otherwise, do
 %
 \begin{code}
 genr index 
-genr dum = ((index-1) % 30) = 0
+series dum = ((index-1) % 30) == 0
 \end{code}
 
 \subsection{Lags, differences, trends}
@@ -649,7 +648,7 @@ time-series observations on each of $N$ units or groups.  Then the
 command
 %
 \begin{code}
-genr pmx = pmean(x)
+series pmx = pmean(x)
 \end{code}
 %
 creates a series of this form: the first 8 values (corresponding to
@@ -670,12 +669,12 @@ to form a sub-sample of a panel that contains only those units for
 which the variable \varname{x} is time-varying, you can either use 
 %
 \begin{code}
-smpl (pmin(x) < pmax(x)) --restrict
+smpl pmin(x) < pmax(x) --restrict
 \end{code}
 or
 %
 \begin{code}
-smpl (psd(x) > 0) --restrict
+smpl psd(x) > 0 --restrict
 \end{code}
 
 \section{Missing data values}
