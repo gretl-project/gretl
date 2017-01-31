@@ -18,7 +18,7 @@ and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
 \label{tab:ops}
 \begin{center}
 \begin{tabular}{lllllllll}
-\verb|()| & \verb|[]| & \verb|{}| \\
+\verb|()| & \verb|[]| & \texttt{.} & \verb|{}| \\
 \texttt{!} & \texttt{++} & \verb|--| & \verb|^| & \verb|'| \\
 \texttt{*} & \texttt{/} & \texttt{\%} & \verb+\+ & \texttt{**} \\
 \texttt{+} & \texttt{-} & \verb|~| & \verb+|+ & \\
@@ -53,6 +53,7 @@ noted.
 \begin{longtable}{ll}
 \verb|()| & Function call \\
 \verb|[]|  & Subscripting \\
+\texttt{.} & Bundle membership (see below) \\
 \verb|{}|  & Matrix definition \\
 \texttt{!} & Unary logical NOT \\
 \texttt{++} & Increment (unary) \\
@@ -80,6 +81,11 @@ noted.
 \texttt{?:} & Conditional expression \\
 \end{longtable}
 
+The interpretation of ``\texttt{.}'' as the bundle membership operator
+is confined to the case where it is immediately preceded by the
+identifier for a bundle, and immediately followed by a valid
+identifier (key).
+
 Details on the use of the matrix-related operators (including the dot
 operators) can be found in the chapter on matrices in the
 \textit{Gretl User's Guide}.
@@ -88,7 +94,7 @@ operators) can be found in the chapter on matrices in the
 
 The operators mentioned above are all intended for use on the
 right-hand side of an expression which assigns a value to a variable
-(or which just computes and displays a value --- see the \texttt{eval}
+(or which just computes and displays a value---see the \texttt{eval}
 command). In addition we have the assignment operator itself,
 ``\texttt{=}''. In effect this has the lowest precedence of all: the
 entire right-hand side is evaluated before assignment takes place.

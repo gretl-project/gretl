@@ -14929,14 +14929,14 @@ static gretl_matrix *series_to_matrix (const double *x,
     return v;
 }
 
-static gretl_matrix *grab_or_copy_matrix_result (parser *p,
-						 int *prechecked)
+static gretl_matrix *retrieve_matrix_result (parser *p,
+					     int *prechecked)
 {
     NODE *r = p->ret;
     gretl_matrix *m = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "grab_or_copy_matrix_result: r->t = %d\n", r->t);
+    fprintf(stderr, "retrieve_matrix_result: r->t = %d\n", r->t);
 #endif
 
     if (r->t == NUM) {
@@ -14987,22 +14987,6 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p,
     } else {
 	fprintf(stderr, "Looking for matrix, but r->t = %d\n", r->t);
 	p->err = E_TYPES;
-    }
-
-    return m;
-}
-
-/* generating a matrix, no pre-existing matrix of that name */
-
-static gretl_matrix *matrix_from_scratch (parser *p, int tmp,
-					  int *prechecked)
-{
-    gretl_matrix *m;
-
-    m = grab_or_copy_matrix_result(p, prechecked);
-
-    if (!tmp && !p->err) {
-	p->err = user_var_add(p->lh.name, GRETL_TYPE_MATRIX, m);
     }
 
     return m;
@@ -15075,7 +15059,7 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 #if EDEBUG
 	fprintf(stderr, "assign_to_matrix: replacing\n");
 #endif
-	m = grab_or_copy_matrix_result(p, prechecked);
+	m = retrieve_matrix_result(p, prechecked);
 	if (!p->err) {
 	    p->err = gen_replace_matrix(p, m);
 	}
@@ -15119,9 +15103,8 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 	    }
 	} else {
 	    /* we start by retrieving a matrix result in @tmp */
-	    gretl_matrix *tmp;
+	    gretl_matrix *tmp = retrieve_matrix_result(p, prechecked);
 
-	    tmp = matrix_from_scratch(p, 1, NULL);
 	    if (tmp != NULL) {
 		p->err = real_matrix_calc(a, tmp, p->op, &m);
 		gretl_matrix_free(tmp);
@@ -15775,7 +15758,10 @@ static int save_generated_var (parser *p, PRN *prn)
 
 	if (p->lh.m == NULL) {
 	    /* there's no pre-existing left-hand side matrix */
-	    p->lh.m = matrix_from_scratch(p, 0, &prechecked);
+	    p->lh.m = retrieve_matrix_result(p, &prechecked);
+	    if (!p->err) {
+		p->err = user_var_add(p->lh.name, GRETL_TYPE_MATRIX, p->lh.m);
+	    }	    
 	} else if (p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
 	    p->lh.m = assign_to_matrix(p, &prechecked);

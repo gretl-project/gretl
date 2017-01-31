@@ -759,11 +759,11 @@ end function
 /* compute log probabilities for the zero-inflated Poisson model */
 function series ln_zip_prob(series y, list X, matrix beta, scalar p0)
     # check if the probability is in [0,1]; otherwise, return NA
-    if (p0>1) || (p0<0)
+    if p0 > 1 || p0 < 0
         series ret = NA
     else
         series ret = ln_poi_prob(y, X, beta) + ln(1-p0)
-        series ret = (y=0) ? ln(p0 + exp(ret)) : ret
+        series ret = y==0 ? ln(p0 + exp(ret)) : ret
     endif
     return ret
 end function  
@@ -772,7 +772,7 @@ end function
 function matrix zip_estimate(series y, list X)
     # initialize alpha to a "sensible" value: half the frequency
     # of zeros in the sample
-    scalar alpha = mean(y=0)/2
+    scalar alpha = mean(y==0)/2
     # initialize the coeffs (we assume the first explanatory 
     # variable is the constant here)
     matrix coef = zeros(nelem(X), 1)
