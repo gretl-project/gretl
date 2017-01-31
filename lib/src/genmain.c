@@ -1199,12 +1199,13 @@ int genr_get_output_varnum (const parser *p)
 gretl_matrix *genr_get_output_matrix (parser *p)
 {
     if (p->targ == MAT) {
-	return p->lh.m;
-    } else if (p->targ == BMEMB) {
-	gretl_matrix *m = p->lh.m;
+	return p->lh.mret;
+    } else {
+	/* matrix under bundle or array? */
+	gretl_matrix *m = p->lh.mret;
 
-	/* in case the member-type changes */
-	p->lh.m = NULL;
+	/* in case the type changes */
+	p->lh.mret = NULL;
 	return m;
     }
 

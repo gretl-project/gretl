@@ -700,7 +700,8 @@ user_var *get_user_var_by_data (const void *data)
     int i, d = gretl_function_depth();
 
     for (i=0; i<n_vars; i++) {
-	if (uvars[i]->level == d && uvars[i]->ptr == data) {
+	if (uvars[i] != NULL && uvars[i]->level == d &&
+	    uvars[i]->ptr == data) {
 	    return uvars[i];
 	}
     }
@@ -1617,9 +1618,8 @@ int gretl_scalar_add_mutable (const char *name, double val)
     return real_scalar_add(name, val, OPT_C);
 }
 
-int gretl_scalar_convert (const char *name, gretl_matrix **pm)
+int gretl_scalar_convert_to_matrix (user_var *u)
 {
-    user_var *u = get_user_var_by_name(name);
     gretl_matrix *m = NULL;
 
     if (u == NULL) {
@@ -1638,16 +1638,12 @@ int gretl_scalar_convert (const char *name, gretl_matrix **pm)
     u->ptr = m;
     u->type = GRETL_TYPE_MATRIX;
 
-    if (pm != NULL) {
-	*pm = m;
-    }
-
     if (gretl_function_depth() == 0) {
 	if (scalar_edit_callback != NULL) {
 	    (*scalar_edit_callback)();
 	}
 	if (user_var_callback != NULL) {
-	    (*user_var_callback)(name, GRETL_TYPE_MATRIX, UVAR_ADD);
+	    (*user_var_callback)(u->name, GRETL_TYPE_MATRIX, UVAR_ADD);
 	}
     }
 

@@ -1,4 +1,3 @@
-
 /* 
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
@@ -645,10 +644,10 @@ struct lhinfo {
     char label[MAXLABEL];  /* descriptive string for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
-    gretl_matrix *m;       /* LHS matrix (or NULL) */
     char *expr;            /* expression on left */
     GretlType gtype;       /* gretl type of LHS array, if any, or
 			      of LHS bundle member */
+    gretl_matrix *mret;    /* matrix output (possibly under bundle or array) */
 };
 
 typedef struct parser_ parser;

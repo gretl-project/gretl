@@ -965,25 +965,6 @@ static void *gen_get_lhs_var (parser *p, GretlType type)
     return data;
 }
 
-static user_var *gen_get_lhs_uvar (parser *p, GretlType type)
-{
-    user_var *uv = NULL;
-
-    if (p->lh.uv != NULL && p->lh.uv->type == type) {
-	uv = p->lh.uv;
-    } else {
-	if (p->lh.uv == NULL) {
-	    fprintf(stderr, "*** get: LHS %s '%s': uvar is NULL!\n",
-		    gretl_type_get_name(type), p->lh.name);
-	} else {
-	    fprintf(stderr, "*** get: LHS uvar of wrong type!\n");
-	}
-	uv = get_user_var_of_type_by_name(p->lh.name, type);
-    }
-
-    return uv;
-}
-
 static int gen_type_from_gretl_type (GretlType t)
 {
     switch (t) {
@@ -1053,9 +1034,26 @@ static int gen_add_or_replace (parser *p, GretlType type, void *data)
     return err;
 }
 
-static int gen_replace_matrix (parser *p, gretl_matrix *m)
+static int gen_replace_lhs (parser *p, GretlType type, void *data)
 {
-    return user_var_replace_value(p->lh.uv, m, GRETL_TYPE_MATRIX);
+    if (p->lh.uv == NULL) {
+	fputs("*** gen_replace_lhs: lhs user_var is NULL ***\n", stderr);
+	fprintf(stderr, " (type is specified as %s)\n",
+		gretl_type_get_name(type));
+	return E_DATA;
+    } else {
+	return user_var_replace_value(p->lh.uv, data, type);
+    }
+}
+
+static int gen_add_uvar (parser *p, GretlType type, void *data)
+{
+    int err;
+    
+    err = user_var_add(p->lh.name, type, data);
+
+    /* FIXME attach lh.uv pointer? */
+    return err;
 }
 
 static int gen_edit_list (parser *p, int *list, int op)
@@ -8292,6 +8290,10 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    /* the data must be copied into the bundle */
 	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
 	}
+	if (!err && type == GRETL_TYPE_MATRIX) {
+	    /* for use by genr_get_output_matrix() */
+	    p->lh.mret = ptr;
+	}
     }
 
     return err;
@@ -8443,6 +8445,10 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	} else {
 	    /* the data must be copied into the array */
 	    err = gretl_array_set_element(array, idx, ptr, type, 1);
+	}
+	if (!err && type == GRETL_TYPE_MATRIX) {
+	    /* for use by genr_get_output_matrix() */
+	    p->lh.mret = ptr;
 	}
     }
 
@@ -14358,27 +14364,6 @@ static int ok_array_decl (parser *p, const char *s)
     return p->lh.gtype != 0;
 }
 
-static GretlType bundle_type_from_gentype (int t)
-{
-    if (t == NUM) {
-	return GRETL_TYPE_DOUBLE;
-    } else if (t == STR) {
-	return GRETL_TYPE_STRING;
-    } else if (t == MAT) {
-	return GRETL_TYPE_MATRIX;
-    } else if (t == SERIES) {
-	return GRETL_TYPE_SERIES;
-    } else if (t == BUNDLE) {
-	return GRETL_TYPE_BUNDLE;
-    } else if (t == ARRAY) {
-	return GRETL_TYPE_ARRAY;
-    } else if (t == U_ADDR) {
-	return GRETL_TYPE_MATRIX_REF;
-    } else {
-	return GRETL_TYPE_NONE;
-    }
-}
-
 /* Given an existing LHS variable, whose type is recorded in
    p->lh.t, check that the specified operator is supported
    for the type. Return error code if not.
@@ -14444,11 +14429,6 @@ static void check_for_inline_typespec (const char **ps, parser *p)
     } else if (!strncmp(s, "series ", 7)) {
 	p->targ = SERIES;
 	s += 7;
-    } else if (!strncmp(s, "matrix *", 8)) {
-	p->targ = MAT;
-	p->flags |= P_LHPTR;
-	s += 8;
-	s += strspn(s, " ");
     } else if (!strncmp(s, "matrix ", 7)) {
 	p->targ = MAT;
 	s += 7;
@@ -14470,13 +14450,18 @@ static void check_for_inline_typespec (const char **ps, parser *p)
     *ps = s;
 }
 
-static int check_existing_lhs_type (parser *p, const char *lhstr,
-				    int *newvar)
+/* Check @p->lh.name for the name of an existing series or 
+   user_var of some kind. If found, record the relevant
+   info in p->lh.t, and also either p->lh.vnum (series) or
+   p->lh.uv (other types).
+*/
+
+static int check_existing_lhs_type (parser *p, int *newvar)
 {
     user_var *uvar;
     int v, err = 0;
 
-    v = current_series_index(p->dset, lhstr);
+    v = current_series_index(p->dset, p->lh.name);
     if (v >= 0) {
 	p->lh.vnum = v;
 	p->lh.t = SERIES;
@@ -14484,7 +14469,7 @@ static int check_existing_lhs_type (parser *p, const char *lhstr,
 	return 0;
     }
     
-    uvar = get_user_var_by_name(lhstr);
+    uvar = get_user_var_by_name(p->lh.name);
 
     if (uvar != NULL) {
 	GretlType vtype = uvar->type;
@@ -14493,7 +14478,6 @@ static int check_existing_lhs_type (parser *p, const char *lhstr,
 	*newvar = 0;
 
 	if (vtype == GRETL_TYPE_MATRIX) {
-	    p->lh.m = uvar->ptr;
 	    p->lh.t = MAT;
 	} else if (vtype == GRETL_TYPE_DOUBLE) {
 	    if (uvar->flags & UV_NODECL) {
@@ -14509,16 +14493,7 @@ static int check_existing_lhs_type (parser *p, const char *lhstr,
 	} else if (vtype == GRETL_TYPE_STRING) {
 	    p->lh.t = STR;
 	} else if (vtype == GRETL_TYPE_BUNDLE) {
-	    if (p->targ != UNK && !gretl_is_array_type(p->lh.gtype)) {
-		/* WTF? revisit this! */
-		p->lh.gtype = bundle_type_from_gentype(p->targ);
-		if (p->lh.gtype == GRETL_TYPE_NONE) {
-		    err = E_TYPES;
-		}
-	    }
-	    if (!err) {
-		p->lh.t = BUNDLE;
-	    }
+	    p->lh.t = BUNDLE;
 	} else if (vtype == GRETL_TYPE_ARRAY) {
 	    p->lh.gtype = gretl_array_get_type(uvar->ptr);
 	    p->lh.t = ARRAY;
@@ -14613,7 +14588,7 @@ static void gen_preprocess (parser *p, int flags)
     /* find out if the LHS var already exists, and if
        so, what type it is */
     if (!p->err) {
-	p->err = check_existing_lhs_type(p, p->lh.name, &newvar);
+	p->err = check_existing_lhs_type(p, &newvar);
     }
 
 #if LHDEBUG
@@ -14940,7 +14915,7 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 		p->err = E_ALLOC;
 	    }
 	}
-	if (p->err == 0 && prechecked != NULL) {
+	if (!p->err && prechecked != NULL) {
 	    *prechecked = 1;
 	}
     } else {
@@ -14954,23 +14929,14 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 /* Check to see if the existing LHS matrix is of the
    same dimensions as the RHS result */
 
-static int LHS_matrix_reusable (parser *p)
+static int LHS_matrix_reusable (parser *p, gretl_matrix **pm)
 {
     gretl_matrix *m = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
     int ok = 0;
 
-#if 0
-    fprintf(stderr, "LHS_matrix_reusable: m=%p, p->lh.m=%p\n",
-	    (void *) m, (void *) p->lh.m);
-#endif
-
-    p->lh.m = m;
     if (m == NULL) {
-	/* impossible? */
 	return 0;
-    }
-
-    if (p->ret->t == NUM) {
+    } else if (p->ret->t == NUM) {
 	ok = (m->rows == 1 && m->cols == 1);
     } else if (p->ret->t == SERIES) {
 	int T = sample_size(p->dset);
@@ -14984,6 +14950,8 @@ static int LHS_matrix_reusable (parser *p)
 	      m->cols == rm->cols);
     }
 
+    *pm = m;
+
     return ok;
 }
 
@@ -14996,7 +14964,7 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
     gretl_matrix *m = NULL;
     double x;
 
-    if (LHS_matrix_reusable(p)) {
+    if (LHS_matrix_reusable(p, &m)) {
 	/* The result is of the same dimensions as the LHS matrix:
 	   this means that we don't need to construct an RHS
 	   matrix if it doesn't already exist as such, nor do we
@@ -15005,7 +14973,6 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 #if EDEBUG
 	fprintf(stderr, "assign_to_matrix: reusing LHS\n");
 #endif
-	m = p->lh.m;
 	if (p->ret->t == NUM) {
 	    /* using RHS scalar */
 	    x = p->ret->v.xval;
@@ -15031,7 +14998,7 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 #endif
 	m = retrieve_matrix_result(p, prechecked);
 	if (!p->err) {
-	    p->err = gen_replace_matrix(p, m);
+	    p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);
 	}
     }
 
@@ -15039,20 +15006,17 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 }
 
 /* Assigning to an existing (whole) LHS matrix, but using '+='
-   or some such modified/inflected assignment. The return value
-   here gets assigned to p->lh.m in save_generated_var(), which
-   is the only caller.
+   or some such modified/inflected assignment. Note that
+   save_generated_var() is the only caller.
 */
 
-static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
+static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
+					   parser *p,
+					   int *prechecked)
 {
-    gretl_matrix *m1 = NULL;
     gretl_matrix *m2 = NULL;
-    user_var *uvar;
 
-    uvar = gen_get_lhs_uvar(p, GRETL_TYPE_MATRIX);
-
-    if (uvar == NULL || (m1 = uvar->ptr) == NULL) {
+    if (m1 == NULL) {
 	p->err = E_DATA;
     }
 
@@ -15073,15 +15037,11 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 		p->err = E_TYPES;
 	    }
 	} else {
-	    /* We start by retrieving a matrix result in @tmp. */
 	    gretl_matrix *tmp = retrieve_matrix_result(p, prechecked);
 
 	    if (tmp != NULL) {
 		p->err = real_matrix_calc(m1, tmp, p->op, &m2);
 		gretl_matrix_free(tmp);
-	    }
-	    if (!p->err) {
-		p->err = user_var_replace_value(uvar, m2, GRETL_TYPE_MATRIX);
 	    }
 	}
     }
@@ -15179,7 +15139,7 @@ static int create_or_edit_string (parser *p)
 	    if (newstr == NULL) {
 		p->err = E_ALLOC;
 	    } else {
-		user_var_replace_value(uvar, newstr, GRETL_TYPE_STRING);
+		gen_replace_lhs(p, GRETL_TYPE_STRING, newstr);
 	    }
 	}
     } else if (src == NULL) {
@@ -15190,9 +15150,9 @@ static int create_or_edit_string (parser *p)
 	if (newstr == NULL) {
 	    p->err = E_ALLOC;
 	} else if (uvar == NULL) {
-	    user_var_add(p->lh.name, GRETL_TYPE_STRING, newstr);
+	    gen_add_uvar(p, GRETL_TYPE_STRING, newstr);
 	} else {
-	    user_var_replace_value(uvar, newstr, GRETL_TYPE_STRING);
+	    gen_replace_lhs(p, GRETL_TYPE_STRING, newstr);
 	}
     } else if (p->op == B_HCAT || p->op == B_ADD) {
 	/* string concatenation */
@@ -15205,7 +15165,7 @@ static int create_or_edit_string (parser *p)
 	    } else {
 		strcpy(newstr, orig);
 		strcat(newstr, src);
-		user_var_replace_value(uvar, newstr, GRETL_TYPE_STRING);
+		gen_replace_lhs(p, GRETL_TYPE_STRING, newstr);
 	    }
 	}
     }
@@ -15423,7 +15383,7 @@ static int assign_null_to_bundle (parser *p)
 	if (b == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = user_var_add(p->lh.name, GRETL_TYPE_BUNDLE, b);
+	    err = gen_add_uvar(p, GRETL_TYPE_BUNDLE, b);
 	}
     }
 
@@ -15441,7 +15401,7 @@ static int assign_null_to_array (parser *p)
     } else {
 	a = gretl_array_new(p->lh.gtype, 0, &err);
 	if (!err) {
-	    err = user_var_add(p->lh.name, p->lh.gtype, a);
+	    err = gen_add_uvar(p, p->lh.gtype, a);
 	}
     }
 
@@ -15469,7 +15429,7 @@ static int do_incr_decr (parser *p)
 	    if (*s != '\0') {
 		char *smod = gretl_strdup(s + 1);
 
-		user_var_replace_value(p->lh.uv, smod, GRETL_TYPE_STRING);
+		gen_replace_lhs(p, GRETL_TYPE_STRING, smod);
 	    }
 	}
     } else {
@@ -15578,7 +15538,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->targ = MAT;
 	} else if (p->lh.t == NUM) {
 	    /* type-convert existing scalar */
-	    p->err = gretl_scalar_convert(p->lh.name, &p->lh.m);
+	    p->err = gretl_scalar_convert_to_matrix(p->lh.uv);
 	    if (!p->err) {
 		p->targ = MAT;
 	    }
@@ -15725,24 +15685,32 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } else if (p->targ == MAT) {
 	/* we're writing a matrix */
+	gretl_matrix *m = NULL;
 	int prechecked = 0;
 
-	if (p->lh.m == NULL) {
+	if (p->lh.uv == NULL) {
 	    /* there's no pre-existing left-hand side matrix */
-	    p->lh.m = retrieve_matrix_result(p, &prechecked);
+	    m = retrieve_matrix_result(p, &prechecked);
 	    if (!p->err) {
-		p->err = user_var_add(p->lh.name, GRETL_TYPE_MATRIX, p->lh.m);
+		p->err = gen_add_uvar(p, GRETL_TYPE_MATRIX, m);
 	    }	    
 	} else if (p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
-	    p->lh.m = assign_to_matrix(p, &prechecked);
+	    m = assign_to_matrix(p, &prechecked);
 	} else {
 	    /* inflected assignment to entire existing matrix */
-	    p->lh.m = assign_to_matrix_mod(p, &prechecked);
+	    gretl_matrix *m1 = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
+	    
+	    m = assign_to_matrix_mod(m1, p, &prechecked);
+	    if (!p->err) {
+		p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);
+	    }
 	}
+	/* note: for use by genr_get_output_matrix() */
+	p->lh.mret = m;
 #if MATRIX_NA_CHECK
-	if (!p->err && !prechecked && p->lh.m != NULL &&
-	    gretl_matrix_xna_check(p->lh.m)) {
+	if (!p->err && !prechecked && m != NULL &&
+	    gretl_matrix_xna_check(m)) {
 	    set_gretl_warning(W_GENNAN);
 	    prechecked = 1;
 	}
@@ -15808,8 +15776,8 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
 #if EDEBUG
-    fprintf(stderr, "save_generated_var: lh.m = %p, returning p->err = %d\n",
-	    (void *) p->lh.m, p->err);
+    fprintf(stderr, "save_generated_var: returning p->err = %d\n",
+	    p->err);
 #endif
 
     return p->err;
@@ -15817,8 +15785,6 @@ static int save_generated_var (parser *p, PRN *prn)
 
 static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 {
-    void *data = NULL;
-
     if (p->targ == SERIES) {
 	/* targetting a series */
 	int v = p->lh.vnum;
@@ -15837,7 +15803,6 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
     }
 
     if (p->lh.uv != NULL) {
-	data = p->lh.uv->ptr;
 	*type = p->lh.uv->type;
     }
 
@@ -15847,7 +15812,6 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	break;
     case GRETL_TYPE_MATRIX:
 	p->lh.t = MAT;
-	p->lh.m = data;
 	if (p->targ == NUM) {
 	    p->targ = MAT;
 	}
@@ -15866,7 +15830,6 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	break;
     default:
 	p->lh.t = 0;
-	p->lh.m = NULL;
 	break;
     }
 }
@@ -15956,9 +15919,9 @@ static void parser_init (parser *p, const char *str,
     p->lh.label[0] = '\0';
     p->lh.vnum = 0;
     p->lh.uv = NULL;
-    p->lh.m = NULL;
     p->lh.expr = NULL;
     p->lh.gtype = 0;
+    p->lh.mret = NULL;
 
     /* auxiliary apparatus */
     p->aux = NULL;
