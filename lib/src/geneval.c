@@ -1042,29 +1042,11 @@ static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
 
 static int gen_add_or_replace (parser *p, GretlType type, void *data)
 {
-    int err = 0, done = 0;
-
-    /* In this case we may be adding a new user_var, so it's
-       not too exciting if p->lh.uv is NULL.
-    */
+    int err;
 
     if (p->lh.uv != NULL) {
-	if (p->lh.uv->type == GRETL_TYPE_ARRAY &&
-	    gretl_array_get_type(p->lh.uv->ptr) == type) {
-	    err = user_var_replace_value(p->lh.uv, data);
-	    done = 1;
-	} else if (p->lh.uv->type == type) {
-	    err = user_var_replace_value(p->lh.uv, data);
-	    done = 1;
-	} else {
-	    fprintf(stderr, "*** set: LHS uv '%s' is of wrong type: "
-		    "expected %s, got %s\n", p->lh.name,
-		    gretl_type_get_name(type),
-		    gretl_type_get_name(p->lh.uv->type));
-	}
-    }
-
-    if (!done) {
+	err = user_var_replace_value(p->lh.uv, data, type);
+    } else {
 	err = user_var_add_or_replace(p->lh.name, type, data);
     }
 
@@ -1073,22 +1055,7 @@ static int gen_add_or_replace (parser *p, GretlType type, void *data)
 
 static int gen_replace_matrix (parser *p, gretl_matrix *m)
 {
-    int err;
-
-    if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_MATRIX) {
-	err = user_var_replace_value(p->lh.uv, m);
-    } else {
-	if (p->lh.uv == NULL) {
-	    fprintf(stderr, "*** replace matrix: LHS uv '%s' is NULL!\n",
-		    p->lh.name);
-	} else {
-	    fprintf(stderr, "*** replace matrix: LHS uv '%s' of wrong type!\n",
-		    p->lh.name);
-	}
-	err = user_matrix_replace_matrix_by_name(p->lh.name, m);
-    }
-
-    return err;
+    return user_var_replace_value(p->lh.uv, m, GRETL_TYPE_MATRIX);
 }
 
 static int gen_edit_list (parser *p, int *list, int op)
@@ -1124,14 +1091,10 @@ static int node_replace_matrix (NODE *n, gretl_matrix *m)
 {
     int err;
 
-    if (n->uv != NULL && n->uv->type == GRETL_TYPE_MATRIX) {
-	err = user_var_replace_value(n->uv, m);
+    if (n->uv != NULL) {
+	err = user_var_replace_value(n->uv, m, GRETL_TYPE_MATRIX);
     } else {
-	if (n->uv == NULL) {
-	    fprintf(stderr, "*** replace matrix: node uv is NULL!\n");
-	} else {
-	    fprintf(stderr, "*** replace matrix: node uv of wrong type!\n");
-	}
+	fprintf(stderr, "*** replace matrix: node uv is NULL!\n");
 	err = user_matrix_replace_matrix_by_name(n->vname, m);
     }
 
@@ -1142,14 +1105,10 @@ static int node_replace_bundle (NODE *n, gretl_bundle *b)
 {
     int err;
 
-    if (n->uv != NULL && n->uv->type == GRETL_TYPE_BUNDLE) {
-	err = user_var_replace_value(n->uv, b);
+    if (n->uv != NULL) {
+	err = user_var_replace_value(n->uv, b, GRETL_TYPE_BUNDLE);
     } else {
-	if (n->uv == NULL) {
-	    fprintf(stderr, "*** replace bundle: node uv is NULL!\n");
-	} else {
-	    fprintf(stderr, "*** replace bundle: node uv of wrong type!\n");
-	}
+	fprintf(stderr, "*** replace bundle: node uv is NULL!\n");
 	err = E_DATA;
     }
 
@@ -14992,6 +14951,9 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
     return m;
 }
 
+/* Check to see if the existing LHS matrix is of the
+   same dimensions as the RHS result */
+
 static int LHS_matrix_reusable (parser *p)
 {
     gretl_matrix *m = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
@@ -15004,6 +14966,7 @@ static int LHS_matrix_reusable (parser *p)
 
     p->lh.m = m;
     if (m == NULL) {
+	/* impossible? */
 	return 0;
     }
 
@@ -15034,16 +14997,22 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
     double x;
 
     if (LHS_matrix_reusable(p)) {
-	/* result is conformable with original matrix */
+	/* The result is of the same dimensions as the LHS matrix:
+	   this means that we don't need to construct an RHS
+	   matrix if it doesn't already exist as such, nor do we
+	   need to copy it if it does already exist.
+	*/
 #if EDEBUG
 	fprintf(stderr, "assign_to_matrix: reusing LHS\n");
 #endif
 	m = p->lh.m;
 	if (p->ret->t == NUM) {
+	    /* using RHS scalar */
 	    x = p->ret->v.xval;
 	    m->val[0] = na(x)? M_NA : x;
 	    *prechecked = 1;
 	} else if (p->ret->t == SERIES) {
+	    /* using RHS series */
 	    int i, s = p->dset->t1;
 
 	    for (i=0; i<m->rows; i++) {
@@ -15052,10 +15021,11 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 	    }
 	    *prechecked = 1;
 	} else {
+	    /* using RHS matrix: just copy data across */
 	    p->err = gretl_matrix_copy_data(m, p->ret->v.m);
 	}
     } else {
-	/* replace the old matrix with result */
+	/* Dimensions diff: replace the LHS matrix */
 #if EDEBUG
 	fprintf(stderr, "assign_to_matrix: replacing\n");
 #endif
@@ -15068,26 +15038,27 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
     return m;
 }
 
-/* assigning to an existing (whole) LHS matrix, but using '+=',
-   '*=' or some such modified/inflected assignment */
+/* Assigning to an existing (whole) LHS matrix, but using '+='
+   or some such modified/inflected assignment. The return value
+   here gets assigned to p->lh.m in save_generated_var(), which
+   is the only caller.
+*/
 
 static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 {
-    gretl_matrix *m = NULL;
+    gretl_matrix *m1 = NULL;
+    gretl_matrix *m2 = NULL;
     user_var *uvar;
-    gretl_matrix *a;
 
     uvar = gen_get_lhs_uvar(p, GRETL_TYPE_MATRIX);
 
-    if (uvar == NULL || (a = uvar->ptr) == NULL) {
+    if (uvar == NULL || (m1 = uvar->ptr) == NULL) {
 	p->err = E_DATA;
     }
 
     if (!p->err) {
 	if (p->op == B_DOTASN) {
-	    /* ".=" : we need a scalar on the RHS -- but
-	       FIXME: a 1 x 1 matrix should also be OK
-	    */
+	    /* ".=" : we need a scalar on the RHS */
 	    if (p->ret->t == NUM) {
 		double x = p->ret->v.xval;
 
@@ -15095,27 +15066,27 @@ static gretl_matrix *assign_to_matrix_mod (parser *p, int *prechecked)
 		    x = M_NA;
 		    set_gretl_warning(W_GENNAN);
 		}
-		gretl_matrix_fill(a, x);
+		gretl_matrix_fill(m1, x);
 		*prechecked = 1;
-		m = a;
+		m2 = m1; /* no change in matrix pointer */
 	    } else {
 		p->err = E_TYPES;
 	    }
 	} else {
-	    /* we start by retrieving a matrix result in @tmp */
+	    /* We start by retrieving a matrix result in @tmp. */
 	    gretl_matrix *tmp = retrieve_matrix_result(p, prechecked);
 
 	    if (tmp != NULL) {
-		p->err = real_matrix_calc(a, tmp, p->op, &m);
+		p->err = real_matrix_calc(m1, tmp, p->op, &m2);
 		gretl_matrix_free(tmp);
 	    }
 	    if (!p->err) {
-		p->err = user_var_replace_value(uvar, m);
+		p->err = user_var_replace_value(uvar, m2, GRETL_TYPE_MATRIX);
 	    }
 	}
     }
 
-    return m;
+    return m2;
 }
 
 static void do_array_append (parser *p)
@@ -15208,7 +15179,7 @@ static int create_or_edit_string (parser *p)
 	    if (newstr == NULL) {
 		p->err = E_ALLOC;
 	    } else {
-		user_var_replace_value(uvar, newstr);
+		user_var_replace_value(uvar, newstr, GRETL_TYPE_STRING);
 	    }
 	}
     } else if (src == NULL) {
@@ -15221,7 +15192,7 @@ static int create_or_edit_string (parser *p)
 	} else if (uvar == NULL) {
 	    user_var_add(p->lh.name, GRETL_TYPE_STRING, newstr);
 	} else {
-	    user_var_replace_value(uvar, newstr);
+	    user_var_replace_value(uvar, newstr, GRETL_TYPE_STRING);
 	}
     } else if (p->op == B_HCAT || p->op == B_ADD) {
 	/* string concatenation */
@@ -15234,7 +15205,7 @@ static int create_or_edit_string (parser *p)
 	    } else {
 		strcpy(newstr, orig);
 		strcat(newstr, src);
-		user_var_replace_value(uvar, newstr);
+		user_var_replace_value(uvar, newstr, GRETL_TYPE_STRING);
 	    }
 	}
     }
@@ -15498,7 +15469,7 @@ static int do_incr_decr (parser *p)
 	    if (*s != '\0') {
 		char *smod = gretl_strdup(s + 1);
 
-		user_var_replace_value(p->lh.uv, smod);
+		user_var_replace_value(p->lh.uv, smod, GRETL_TYPE_STRING);
 	    }
 	}
     } else {

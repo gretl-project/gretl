@@ -941,6 +941,7 @@ int n_user_bundles (void)
  * user_var_replace_value:
  * @uvar: user variable.
  * @value: the new value to place as the value or @uvar.
+ * @type: the typf of the replacement value.
  *
  * Replaces the value of @uvar; the existing value is
  * freed first.
@@ -948,10 +949,16 @@ int n_user_bundles (void)
  * Returns: 0 on success, non-zero on error.
  */
 
-int user_var_replace_value (user_var *uvar, void *value)
+int user_var_replace_value (user_var *uvar, void *value,
+			    GretlType type)
 {
     if (uvar == NULL) {
 	return E_UNKVAR;
+    } else if (type != uvar->type) {
+	fputs("*** user_var_replace_value: type mismatch ***\n", stderr);
+	fprintf(stderr, " (expected %s but got %s)\n",
+		gretl_type_get_name(uvar->type), gretl_type_get_name(type));
+	return E_TYPES;
     }
 
     if (value != uvar->ptr) {
@@ -1027,7 +1034,7 @@ int user_var_add_or_replace (const char *name,
 	    err = E_TYPES;
 	}
 	if (!err) {
-	    err = user_var_replace_value(u, value);
+	    err = user_var_replace_value(u, value, type);
 	}
     } else {
 	err = real_user_var_add(name, type, value, OPT_NONE);
@@ -1076,8 +1083,8 @@ int user_matrix_replace_matrix_by_name (const char *name,
 {
     user_var *u = get_user_var_by_name(name);
 
-    if (u != NULL && u->type == GRETL_TYPE_MATRIX) {
-	return user_var_replace_value(u, m);
+    if (u != NULL) {
+	return user_var_replace_value(u, m, GRETL_TYPE_MATRIX);
     } else {
 	return E_DATA;
     }

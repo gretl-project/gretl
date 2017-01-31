@@ -1428,7 +1428,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
 
     if (!err) {
 	if (prev) {
-	    err = user_var_replace_value(u, b1);
+	    err = user_var_replace_value(u, b1, GRETL_TYPE_BUNDLE);
 	} else {
 	    err = user_var_add(copyname, GRETL_TYPE_BUNDLE, b1);
 	}

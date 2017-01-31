@@ -214,7 +214,7 @@ int append_to_list_by_data (void *ptr, const int *add)
 	} else {
 	    err = gretl_list_add_list(&tmp, add);
 	    if (!err) {
-		user_var_replace_value(u, tmp);
+		user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	    }
 	}
     } 
@@ -245,7 +245,7 @@ int subtract_from_list_by_data (void *ptr, const int *sub)
 	int *tmp = gretl_list_drop(list, sub, &err);
 
 	if (!err) {
-	    user_var_replace_value(u, tmp);
+	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	}
     } 
 
@@ -276,7 +276,7 @@ int replace_list_by_data (void *ptr, const int *src)
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    user_var_replace_value(u, tmp);
+	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	}	    
     }
 
@@ -312,7 +312,7 @@ int remember_list (const int *list, const char *name, PRN *prn)
 
 	if (orig != NULL) {
 	    /* replace existing list of same name */
-	    user_var_replace_value(orig, lcpy);
+	    user_var_replace_value(orig, lcpy, GRETL_TYPE_LIST);
 	    if (prn != NULL && gretl_messages_on() &&
 		!gretl_looping_quietly()) {
 		pprintf(prn, _("Replaced list '%s'\n"), name);
