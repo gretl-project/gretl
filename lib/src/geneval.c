@@ -83,10 +83,11 @@ static void real_rndebug (const char *format, ...)
 #define SERIES_ENSURE_FINITE 1  /* debatable */
 
 enum {
-    FR_TREE   = 1 << 0,
-    FR_RET    = 1 << 1,
-    FR_LHTREE = 1 << 2,
-    FR_LHRES  = 1 << 3
+    FR_TREE = 1,
+    FR_RET,
+    FR_LHTREE,
+    FR_LHRES,
+    FR_ARET
 };
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
@@ -251,16 +252,16 @@ static void print_tree (NODE *t, parser *p, int level)
 
 static const char *free_tree_tag (int t)
 {
-    if (t & FR_TREE) {
+    if (t == FR_TREE) {
 	return "free tree";
-    } else if (t & FR_RET) {
+    } else if (t == FR_RET) {
 	return "free ret";
-    } else if (t & FR_LHTREE) {
+    } else if (t == FR_LHTREE) {
 	return "free lhtree";
-    } else if (t & FR_LHRES) {
+    } else if (t == FR_LHRES) {
 	return "free lhres";
     } else {
-	return "free ??";
+	return "free other";
     }
 }
 
@@ -8110,9 +8111,8 @@ static GretlType gretl_type_of (int t)
 	return GRETL_TYPE_BUNDLE;
     } else if (t == LIST) {
 	return GRETL_TYPE_LIST;
-    } else if (t >= GRETL_TYPE_STRINGS &&
-	       t <= GRETL_TYPE_LISTS) {
-	return (GretlType) t;
+    } else if (t == ARRAY) {
+	return GRETL_TYPE_ARRAY;
     } else {
 	return 0;
     }
@@ -8135,6 +8135,134 @@ static int lhs_type_check (GretlType spec, GretlType got,
     } else {
 	return 0;
     }
+}
+
+static void *get_mod_assign_result (void *lp, GretlType ltype,
+				    NODE *r, parser *p)
+{
+    void *ret = NULL;
+    NODE *l, *op;
+
+    l = newempty();
+    op = newb2(p->op, l, r);
+    
+    if (op == NULL || l == NULL) {
+	p->err = E_ALLOC;
+    } else if (ltype == GRETL_TYPE_MATRIX) {
+	l->t = MAT;
+	l->v.m = lp;
+    } else if (ltype == GRETL_TYPE_DOUBLE) {
+	l->t = NUM;
+	l->v.xval = *(double *) lp;
+    } else if (ltype == GRETL_TYPE_STRING) {
+	l->t = STR;
+	l->v.str = lp;
+    } else if (ltype == GRETL_TYPE_BUNDLE) {
+	l->t = BUNDLE;
+	l->v.b = lp;
+    } else if (ltype == GRETL_TYPE_ARRAY) {
+	l->t = ARRAY;
+	l->v.a = lp;
+    } else if (ltype == GRETL_TYPE_LIST) {
+	l->t = LIST;
+	l->v.ivec = lp;
+    } else if (ltype == GRETL_TYPE_SERIES) {
+	l->t = SERIES;
+	l->v.xvec = lp;
+    } else {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err) {
+	/* FIXME p state variables? */
+	int saveflags = p->flags;
+	int savetarg = p->targ;
+	NODE *ev;
+
+#if LHDEBUG
+	fputs("*** op tree, before ***\n", stderr);
+	print_tree(op, p, 0);
+#endif
+	p->targ = l->t;
+	p->flags = P_START;
+	ev = eval(op, p);
+#if LHDEBUG
+	fputs("*** ev tree, after ***\n", stderr);
+	print_tree(ev, p, 0);
+#endif
+
+	if (!p->err) {
+	    /* get @ret off node @ev and clean up */
+	    if (ev->t == MAT) {
+		ret = ev->v.m;
+		ev->v.m = NULL;
+	    } else if (ev->t == BUNDLE) {
+		ret = ev->v.b;
+		ev->v.b = NULL;
+	    } else if (ev->t == STR) {
+		ret = ev->v.str;
+		ev->v.str = NULL;
+	    } else if (ev->t == ARRAY) {
+		ret = ev->v.a;
+		ev->v.a = NULL;
+	    } else if (ev->t == LIST) {
+		ret = ev->v.ivec;
+		ev->v.ivec = NULL;
+	    } else if (ev->t == SERIES) {
+		/* FIXME sample range and size? */
+		ret = ev->v.xvec;
+		ev->v.xvec = NULL;
+	    } else if (ev->t == NUM) {
+		ret = lp;
+		*(double *) lp = ev->v.xval;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+
+	p->targ = savetarg;
+	p->flags = saveflags;
+	free_tree(ev, p, 0);
+    }
+
+    /* thought: if @p is reusable, should we try preserving the
+       nodes allocated here?
+    */
+
+    /* trash temporary nodes */
+    free(op);
+    free(l);
+
+    if (ret == NULL && !p->err) {
+	p->err = E_DATA;
+    }
+
+    return ret;
+}
+
+/* ".=" : we need a scalar on the RHS */
+
+static int dot_assign_to_matrix (gretl_matrix *m, parser *p,
+				 int *prechecked)
+{
+    int err = 0;
+    
+    if (p->ret->t == NUM) {
+	double x = p->ret->v.xval;
+
+	if (na(x)) {
+	    x = M_NA;
+	    set_gretl_warning(W_GENNAN);
+	}
+	gretl_matrix_fill(m, x);
+	if (prechecked != NULL) {
+	    *prechecked = 1;
+	}
+    } else {
+	err = E_TYPES;
+    }
+
+    return err;
 }
 
 /* Setting an object in a bundle under a given key string. We get here
@@ -8161,6 +8289,11 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (lh1->t != BUNDLE) {
 	return E_DATA;
+    } else if (0 && p->op != B_ASN) {
+	/* FIXME */
+	gretl_errmsg_sprintf(_("'%s' : not yet implemented for this case"),
+			     get_opstr(p->op));
+	return E_TYPES;
     }
 
     bundle = lh1->v.b;
@@ -8174,6 +8307,44 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     fprintf(stderr, "set_bundle_value: bundle = %p, key = '%s'\n",
 	    (void *) bundle, key);
 #endif
+
+    if (p->op != B_ASN) {
+	/* We must have an existing bundle member under @key, and
+	   its type will determine the type of the result of
+	   inflected assignment.
+	*/
+	GretlType ltype = 0;
+	int sz = 0;
+	void *lp;
+
+	lp = gretl_bundle_get_data(bundle, key, &ltype, &sz, &err);
+	if (!err) {
+	    targ = gretl_type_of(p->targ);
+	    err = lhs_type_check(targ, ltype, BUNDLE);	    
+	}
+	if (p->op == B_DOTASN) {
+	    if (!err) {
+		if (ltype == GRETL_TYPE_MATRIX) {
+		    err = dot_assign_to_matrix(lp, p, NULL);
+		} else {
+		    err = E_TYPES;
+		}
+	    }
+	    return err; /* handled */
+	}
+	if (!err) {
+	    ptr = get_mod_assign_result(lp, ltype, rhs, p);
+	    err = p->err;
+	}
+	if (!err) {
+	    type = ltype;
+	    donate = 1;
+	    if (ptr != lp) {
+		donate = 1; /* always right? */
+	    }
+	}
+	goto push_data;
+    }    
 
     /* Note: @targ is the gretl type specified by the caller for
        the bundle member (if any, this need not be supplied), and
@@ -8219,6 +8390,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case MAT:
+	    /* FIXME assignment of (suitable) vector to series */
 	    if (targ == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
 		ptr = &rhs->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
@@ -8267,10 +8439,12 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	}
     }
 
-    if (!err) {
+     if (!err) {
 	/* check for result type-incompatible with user's spec */
 	err = lhs_type_check(targ, type, BUNDLE);
     }
+
+ push_data:
 
     if (!err) {
 	if (gretl_is_array_type(type)) {
@@ -8280,7 +8454,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	if (donate) {
 	    /* it's OK to hand over the data pointer */
 	    err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
-	    rhs->v.ptr = NULL; /* avoid freeing */
+	    if (ptr == rhs->v.ptr) {
+		rhs->v.ptr = NULL; /* avoid freeing! */
+	    }
 	} else {
 	    /* the data must be copied into the bundle */
 	    err = gretl_bundle_set_data(bundle, key, ptr, type, size);
@@ -8329,7 +8505,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     if (lh1->t != LIST && lh1->t != ARRAY) {
 	return E_TYPES;
     } else if (p->op != B_ASN) {
-	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
+	gretl_errmsg_sprintf(_("'%s' : not yet implemented for this case"),
 			     get_opstr(p->op));
 	return E_TYPES;
     }
@@ -15017,22 +15193,8 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 
     if (!p->err) {
 	if (p->op == B_DOTASN) {
-	    /* ".=" : we need a scalar on the RHS */
-	    if (p->ret->t == NUM) {
-		double x = p->ret->v.xval;
-
-		if (na(x)) {
-		    x = M_NA;
-		    set_gretl_warning(W_GENNAN);
-		}
-		gretl_matrix_fill(m1, x);
-		if (prechecked != NULL) {
-		    *prechecked = 1;
-		}
-		m2 = m1; /* no change in matrix pointer */
-	    } else {
-		p->err = E_TYPES;
-	    }
+	    p->err = dot_assign_to_matrix(m1, p, prechecked);
+	    m2 = m1; /* no change in matrix pointer */
 	} else {
 	    gretl_matrix *tmp = retrieve_matrix_result(p, prechecked);
 
@@ -15436,46 +15598,6 @@ static int do_incr_decr (parser *p)
     return p->err;
 }
 
-static int assign_to_bundle_member (parser *p)
-{
-    NODE *lhs = p->lhres;
-    NODE *lh1 = lhs->v.b2.l;
-    NODE *lh2 = lhs->v.b2.r;
-    gretl_bundle *bundle;
-    const char *key;
-    int err;
-
-    if (lh1->t != BUNDLE) {
-	return E_DATA;
-    }
-
-    bundle = lh1->v.b;
-    key = lh2->v.str;
-
-    if (bundle == NULL || key == NULL) {
-	return E_DATA;
-    }
-    
-    if (p->op == B_ASN) {
-	err = set_bundle_value(p->lhres, p->ret, p);
-    } else {
-	/* inflected assignment */
-	GretlType type;
-	
-	type = gretl_bundle_get_member_type(bundle, key, &err);
-	if (!err) {
-	    if (type == GRETL_TYPE_MATRIX) {
-		fprintf(stderr, "bundled matrix: should be able able to handle!\n");
-	    }
-	}
-	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
-			     get_opstr(p->op));
-	err = E_TYPES;
-    }
-
-    return err;
-}
-
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -15519,9 +15641,8 @@ static int save_generated_var (parser *p, PRN *prn)
 		getsymb(compound_t));
 #endif
 	if (compound_t == BMEMB) {
-	    p->err = assign_to_bundle_member(p);
+	    p->err = set_bundle_value(p->lhres, r, p);
 	} else if (compound_t == ELEMENT) {
-	    /* FIXME inflected assignment? */
 	    p->err = set_array_value(p->lhres, r, p);
 	} else if (compound_t == MSL) {
 	    p->err = set_matrix_value(p->lhres, r, p);

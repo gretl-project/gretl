@@ -168,7 +168,7 @@ static NODE *newb1 (int t, NODE *b)
 
 /* node for binary operator or two-argument function */
 
-static NODE *newb2 (int t, NODE *l, NODE *r)
+NODE *newb2 (int t, NODE *l, NODE *r)
 {  
     NODE *n = new_node(t);
 

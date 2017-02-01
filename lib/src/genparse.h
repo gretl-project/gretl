@@ -697,6 +697,7 @@ NODE *new_node (int t);
 NODE *expr (parser *s);
 NODE *newdbl (double x);
 NODE *newempty (void);
+NODE *newb2 (int t, NODE *l, NODE *r);
 NODE *obs_node (parser *p);
 void context_error (int c, parser *p, const char *func);
 void undefined_symbol_error (const char *s, parser *p);
