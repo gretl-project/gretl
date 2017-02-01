@@ -8161,11 +8161,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (lh1->t != BUNDLE) {
 	return E_DATA;
-    } else if (p->op != B_ASN) {
-	/* FIXME */
-	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
-			     get_opstr(p->op));
-	return E_TYPES;
     }
 
     bundle = lh1->v.b;
@@ -8224,7 +8219,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case MAT:
-	    /* FIXME assignment of (suitable) vector to series */
 	    if (targ == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
 		ptr = &rhs->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
@@ -8235,6 +8229,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    }
 	    break;
 	case U_ADDR:
+	    /* FIXME now redundant? */
 	    rhs = rhs->v.b1.b;
 	    if (umatrix_node(rhs)) {
 		ptr = rhs->v.m;
@@ -15031,7 +15026,9 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 		    set_gretl_warning(W_GENNAN);
 		}
 		gretl_matrix_fill(m1, x);
-		*prechecked = 1;
+		if (prechecked != NULL) {
+		    *prechecked = 1;
+		}
 		m2 = m1; /* no change in matrix pointer */
 	    } else {
 		p->err = E_TYPES;
@@ -15439,6 +15436,46 @@ static int do_incr_decr (parser *p)
     return p->err;
 }
 
+static int assign_to_bundle_member (parser *p)
+{
+    NODE *lhs = p->lhres;
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
+    gretl_bundle *bundle;
+    const char *key;
+    int err;
+
+    if (lh1->t != BUNDLE) {
+	return E_DATA;
+    }
+
+    bundle = lh1->v.b;
+    key = lh2->v.str;
+
+    if (bundle == NULL || key == NULL) {
+	return E_DATA;
+    }
+    
+    if (p->op == B_ASN) {
+	err = set_bundle_value(p->lhres, p->ret, p);
+    } else {
+	/* inflected assignment */
+	GretlType type;
+	
+	type = gretl_bundle_get_member_type(bundle, key, &err);
+	if (!err) {
+	    if (type == GRETL_TYPE_MATRIX) {
+		fprintf(stderr, "bundled matrix: should be able able to handle!\n");
+	    }
+	}
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
+			     get_opstr(p->op));
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -15482,8 +15519,9 @@ static int save_generated_var (parser *p, PRN *prn)
 		getsymb(compound_t));
 #endif
 	if (compound_t == BMEMB) {
-	    p->err = set_bundle_value(p->lhres, r, p);
+	    p->err = assign_to_bundle_member(p);
 	} else if (compound_t == ELEMENT) {
+	    /* FIXME inflected assignment? */
 	    p->err = set_array_value(p->lhres, r, p);
 	} else if (compound_t == MSL) {
 	    p->err = set_matrix_value(p->lhres, r, p);
