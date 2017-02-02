@@ -1435,6 +1435,47 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 }
 
 /**
+ * gretl_list_plus:
+ * @l1: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @l2: list of variables to be added.
+ * @err: location to receive error code.
+ *
+ * Creates a list containing all elements of @l1 followed
+ * by all elements of @l2. This differs from gretl_list_union()
+ * in that some elements may end up being repeated in the
+ * returned list.
+ *
+ * Returns: new list on success, NULL on error.
+ */
+
+int *gretl_list_plus (const int *l1, const int *l2, int *err)
+{
+    int n1 = l1[0];
+    int n2 = l2[0];
+    int i, j;
+    int *ret;
+
+    ret = gretl_list_new(n1 + n2);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    j = 1;
+
+    for (i=1; i<=n1; i++) {
+	ret[j++] = l1[i];
+    }
+
+    for (i=1; i<=n2; i++) {
+	ret[j++] = l2[i];
+    }
+
+    return ret;
+}
+
+/**
  * gretl_list_union:
  * @l1: list of integers.
  * @l2: list of integers.

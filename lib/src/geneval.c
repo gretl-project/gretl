@@ -107,6 +107,8 @@ enum {
 			 n->t == MAT || n->t == EMPTY || \
 			 (n->t == SERIES && n->vnum >= 0))
 
+#define list1_node(n) (n->t == LIST && n->v.ivec[0] == 1)
+
 #define uscalar_node(n) ((n->t == NUM && n->vname != NULL) || postfix_node(n))
 
 #define umatrix_node(n) (n->t == MAT && n->vname != NULL)
@@ -2353,23 +2355,37 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static double *list_node_get_series (NODE *n, parser *p)
+{
+    if (n->v.ivec[0] == 1) {
+	int v = n->v.ivec[1];
+
+	if (v >= 0 && v < p->dset->v) {
+	    return p->dset->Z[v];
+	}
+    }
+
+    p->err = E_INVARG;
+    return NULL;
+}
+
 /* At least one of the nodes is a series; the other may be a
    scalar or 1 x 1 matrix */
 
 static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret;
+    NODE *ret = aux_series_node(p);
     const double *x = NULL, *y = NULL;
     double xt = 0, yt = 0;
-    int t, t1, t2;
 
-    ret = aux_series_node(p);
     if (ret == NULL) {
 	return NULL;
     }
 
     if (l->t == SERIES) {
 	x = l->v.xvec;
+    } else if (l->t == LIST) {
+	x = list_node_get_series(l, p);
     } else if (l->t == NUM) {
 	xt = l->v.xval;
     } else if (l->t == MAT) {
@@ -2378,23 +2394,28 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 
     if (r->t == SERIES) {
 	y = r->v.xvec;
+    } else if (r->t == LIST) {
+	y = list_node_get_series(r, p);
     } else if (r->t == NUM) {
 	yt = r->v.xval;
     } else if (r->t == MAT) {
 	yt = r->v.m->val[0];
     }
 
-    t1 = (autoreg(p))? p->obs : p->dset->t1;
-    t2 = (autoreg(p))? p->obs : p->dset->t2;
+    if (!p->err) {
+	int t1 = (autoreg(p))? p->obs : p->dset->t1;
+	int t2 = (autoreg(p))? p->obs : p->dset->t2;
+	int t;
 
-    for (t=t1; t<=t2; t++) {
-	if (x != NULL) {
-	    xt = x[t];
+	for (t=t1; t<=t2; t++) {
+	    if (x != NULL) {
+		xt = x[t];
+	    }
+	    if (y != NULL) {
+		yt = y[t];
+	    }
+	    ret->v.xvec[t] = xy_calc(xt, yt, f, SERIES, p);
 	}
-	if (y != NULL) {
-	    yt = y[t];
-	}
-	ret->v.xvec[t] = xy_calc(xt, yt, f, SERIES, p);
     }
 
     return ret;
@@ -4227,6 +4248,24 @@ static NODE *array_element_node (gretl_array *a, int i,
     return ret;
 }
 
+static NODE *list_member_node (int *list, int i, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (i < 1 || i > list[0]) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
+	p->err = E_INVARG;
+    }
+
+    if (!p->err) {
+	ret = aux_list_node(p);
+	ret->v.ivec = gretl_list_new(1);
+	ret->v.ivec[1] = list[i];
+    }
+
+    return ret;
+}
+
 static int mspec_get_series_index (matrix_subspec *s,
 				   parser *p)
 {
@@ -4274,11 +4313,15 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
     if (starting(p)) {
 	if (l->t == MAT && r->t == MSPEC) {
 	    return submatrix_node(l, r, p);
-	} else if (l->t == ARRAY && r->t == MSPEC) {
+	} else if ((l->t == ARRAY || l->t == LIST) && r->t == MSPEC) {
 	    int i = mspec_get_simple_index(r->v.mspec, p);
 
 	    if (!p->err) {
-		ret = array_element_node(l->v.a, i, p);
+		if (l->t == ARRAY) {
+		    ret = array_element_node(l->v.a, i, p);
+		} else {
+		    ret = list_member_node(l->v.ivec, i, p);
+		}
 	    }
 	} else if (l->t == SERIES && r->t == MSPEC) {
 	    int t = mspec_get_series_index(r->v.mspec, p);
@@ -5085,6 +5128,8 @@ static NODE *list_list_op (NODE *l, NODE *r, int f, parser *p)
 		list = gretl_list_drop(llist, rlist, &p->err);
 	    } else if (f == B_POW) {
 		list = gretl_list_product(llist, rlist, p->dset, &p->err);
+	    } else if (f == B_ADD) {
+		list = gretl_list_plus(llist, rlist, &p->err);
 	    }
 	}
 	ret->v.ivec = list;
@@ -8232,7 +8277,7 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 
 	p->targ = savetarg;
 	p->flags = saveflags;
-	free(ev); // free_tree(ev, p, 0);
+	free(ev);
     }
 
     /* thought: if @p is reusable, should we try preserving the
@@ -8276,12 +8321,7 @@ static int dot_assign_to_matrix (gretl_matrix *m, parser *p,
 }
 
 /* Setting an object in a bundle under a given key string. We get here
-   only if p->lh.expr is non-NULL. That "substr" may be a string
-   literal, or it may be the name of a string variable. In the latter
-   case we wait till this point to cash out the string, since we may
-   be in a context (e.g. a loop) where the value of the string
-   variable changes from one invocation of the generator to the
-   next. FIXME doc!
+   only if p->lh.expr is non-NULL.
 */
 
 static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
@@ -8319,15 +8359,15 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	   inflected assignment.
 	*/
 	GretlType ltype = 0;
-	int sz = 0;
 	void *lp;
 
-	lp = gretl_bundle_get_data(bundle, key, &ltype, &sz, &err);
+	lp = gretl_bundle_get_data(bundle, key, &ltype, &size, &err);
 	if (!err) {
 	    targ = gretl_type_of(p->targ);
 	    err = lhs_type_check(targ, ltype, BUNDLE);	    
 	}
 	if (p->op == B_DOTASN) {
+	    /* accepted only for matrices */
 	    if (!err) {
 		if (ltype == GRETL_TYPE_MATRIX) {
 		    err = dot_assign_to_matrix(lp, p, NULL);
@@ -8397,10 +8437,15 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case MAT:
-	    /* FIXME assignment of (suitable) vector to series */
 	    if (targ == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
 		ptr = &rhs->v.m->val[0];
 		type = GRETL_TYPE_DOUBLE;
+	    } else if (targ == GRETL_TYPE_SERIES) {
+		ptr = (double *) get_colvec_as_series(rhs, 0, p);
+		if (!p->err) {
+		    type = GRETL_TYPE_SERIES;
+		    size = p->dset->n;
+		}
 	    } else {
 		ptr = rhs->v.m;
 		type = GRETL_TYPE_MATRIX;
@@ -12300,9 +12345,10 @@ static int series_calc_nodes (NODE *l, NODE *r)
     int ret = 0;
 
     if (l->t == SERIES) {
-	ret = (r->t == SERIES || r->t == NUM || scalar_matrix_node(r));
+	ret = (r->t == SERIES || r->t == NUM ||
+	       scalar_matrix_node(r) || list1_node(r));
     } else if (r->t == SERIES) {
-	ret = scalar_node(l);
+	ret = scalar_node(l) || list1_node(l);
     }
 
     return ret;
@@ -12460,6 +12506,11 @@ static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p)
 {
     const char *nstr;
+
+    if (ntype == 0) {
+	p->err = E_TYPES;
+	return;
+    }
 
     if (ntype == LAG) {
 	nstr = (goodt == NUM)? "lag order" : "lag variable";
@@ -12718,7 +12769,8 @@ static NODE *eval (NODE *t, parser *p)
 		   ((l->t == SERIES && r->t == STR) ||
 		    (l->t == STR && r->t == SERIES))) {
 	    ret = series_string_calc(l, r, t->t, p);
-	} else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
+	} else if ((t->t == B_AND || t->t == B_OR ||
+		    t->t == B_SUB || t->t == B_ADD) &&
 		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_list_op(l, r, t->t, p);
 	} else if (t->t == B_POW && ok_list_node(l) && ok_list_node(r)) {
@@ -14565,14 +14617,26 @@ static int overwrite_const_check (const char *s)
     return object_is_const(s) ? overwrite_err(s) : 0;
 }
 
-static int compound_const_check (NODE *lhs)
+/* Check that we're not trying to modify a const object
+   via a compound LHS expression; and while we're at
+   it, check whether we should be generating a list
+   (an element of an array of lists).
+*/
+
+static int compound_const_check (NODE *lhs, parser *p)
 {
     NODE *n = lhs;
-    int err = 0;
+    int i = 0, err = 0;
 
     while (n->t == MSL || n->t == OBS || n->t == BMEMB ||
 	   n->t == ELEMENT || n->t == OSL) {
 	n = n->v.b2.l;
+	if (i == 0 && lhs->t == ELEMENT && n->t == ARRAY) {
+	    if (gretl_array_get_type(n->v.a) == GRETL_TYPE_LISTS) {
+		p->flags |= P_LISTDEF;
+	    }
+	}
+	i++;
     }
 
     /* do we have a const object at the tip of the tree? */
@@ -14812,7 +14876,7 @@ static void gen_preprocess (parser *p, int flags)
 	p->point = savepoint;
 	p->ch = 0;
 	if (!p->err) {
-	    p->err = compound_const_check(p->lhtree);
+	    p->err = compound_const_check(p->lhtree, p);
 	}
 	if (p->err) {
 	    return;
@@ -14869,8 +14933,7 @@ static void gen_preprocess (parser *p, int flags)
     p->point = p->rhs = s;
 
     if (p->lh.expr != NULL) {
-	/* FIXME? */
-	return;
+	goto alt_set_targ;
     }
 
     /* expression ends here with no operator: a call to print? */
@@ -14895,17 +14958,16 @@ static void gen_preprocess (parser *p, int flags)
 	}
     }
 
-    /* if the target type is still unknown, and the RHS expression
-       is wrapped in '{' and '}', make the target a matrix */
-    if (p->targ == UNK && *p->rhs == '{') {
-	p->targ = MAT;
-    }
+ alt_set_targ:
 
-    /* Set a flag if the RHS should define a list */
-    if (p->targ == LIST || (p->targ == ARRAY &&
-			    p->lh.gtype == GRETL_TYPE_LISTS &&
-			    p->lh.expr != NULL)) {
-	/* FIXME second case above */
+    if (p->targ == UNK && *p->rhs == '{') {
+	/* if the target type is still unknown and the RHS
+	   expression is wrapped in '{' and '}', make the target
+	   a matrix
+	*/
+	p->targ = MAT;
+    } else if (p->targ == LIST) {
+	/* flag list target to parses */
 	p->flags |= P_LISTDEF;
     }
 }
