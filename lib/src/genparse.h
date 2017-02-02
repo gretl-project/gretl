@@ -626,16 +626,15 @@ enum parser_flags {
     P_SLICING = 1 << 14, /* state: calculating object slice (temporary) */
     P_LAGPRSE = 1 << 15, /* state: parsing lag spec (temporary) */
     P_DELTAN  = 1 << 16, /* flag for change in series length */
-    P_LHBKVAR = 1 << 17, /* LHS bundle key is string variable */
-    P_CATCH   = 1 << 18, /* "catch" is in force */
-    P_NODECL  = 1 << 19, /* type of result was not specified */
-    P_LISTDEF = 1 << 20, /* expression defines a list */
-    P_ANON    = 1 << 21, /* generating an anonymous object */
-    P_VOID    = 1 << 22, /* function call, no assignment */
-    P_NOEXEC  = 1 << 23, /* just compile, don't evaluate */
-    P_MSAVE   = 1 << 24, /* trying for reuse of an aux matrix */
-    P_OBSVAL  = 1 << 25, /* generating value of observation in series */
-    P_ALIASED = 1 << 26  /* state: handling aliased object (temporary) */
+    P_CATCH   = 1 << 17, /* "catch" is in force */
+    P_NODECL  = 1 << 18, /* type of result was not specified */
+    P_LISTDEF = 1 << 19, /* expression defines a list */
+    P_ANON    = 1 << 20, /* generating an anonymous object */
+    P_VOID    = 1 << 21, /* function call, no assignment */
+    P_NOEXEC  = 1 << 22, /* just compile, don't evaluate */
+    P_MSAVE   = 1 << 23, /* trying for reuse of an aux matrix */
+    P_OBSVAL  = 1 << 24, /* generating value of observation in series */
+    P_ALIASED = 1 << 25  /* state: handling aliased object (temporary) */
 };
 
 struct lhinfo {

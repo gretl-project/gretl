@@ -8190,7 +8190,7 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
     }
 
     if (!p->err) {
-	/* FIXME p state variables? */
+	/* FIXME parser state variables? */
 	int saveflags = p->flags;
 	int savetarg = p->targ;
 	NODE *ev;
@@ -8211,23 +8211,17 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 	    /* get @ret off node @ev and clean up */
 	    if (ev->t == MAT) {
 		ret = ev->v.m;
-		ev->v.m = NULL;
 	    } else if (ev->t == BUNDLE) {
 		ret = ev->v.b;
-		ev->v.b = NULL;
 	    } else if (ev->t == STR) {
 		ret = ev->v.str;
-		ev->v.str = NULL;
 	    } else if (ev->t == ARRAY) {
 		ret = ev->v.a;
-		ev->v.a = NULL;
 	    } else if (ev->t == LIST) {
 		ret = ev->v.ivec;
-		ev->v.ivec = NULL;
 	    } else if (ev->t == SERIES) {
 		/* FIXME sample range and size? */
 		ret = ev->v.xvec;
-		ev->v.xvec = NULL;
 	    } else if (ev->t == NUM) {
 		ret = lp;
 		*(double *) lp = ev->v.xval;
@@ -8238,7 +8232,7 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 
 	p->targ = savetarg;
 	p->flags = saveflags;
-	free_tree(ev, p, 0);
+	free(ev); // free_tree(ev, p, 0);
     }
 
     /* thought: if @p is reusable, should we try preserving the
@@ -16079,8 +16073,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     */
     int saveflags[] = {
 	P_NATEST, P_AUTOREG, P_SLAVE,
-	P_LHPTR, P_DISCARD, P_LHBKVAR,
-	P_NODECL, P_LISTDEF, 0
+	P_LHPTR, P_DISCARD, P_NODECL,
+	P_LISTDEF, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
