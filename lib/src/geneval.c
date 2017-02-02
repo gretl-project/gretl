@@ -8143,6 +8143,22 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
     void *ret = NULL;
     NODE *l, *op;
 
+    if (p->op == INC || p->op == DEC) {
+	/* handle increment/decrement postfix operator */
+	if (ltype == GRETL_TYPE_DOUBLE) {
+	    double x = *(double *) lp;
+
+	    if (!na(x)) {
+		x += (p->op == INC)? 1 : -1;
+		*(double *) lp = x;
+	    }
+	    ret = lp;
+	} else {
+	    p->err = E_TYPES;
+	}
+	return ret;
+    }
+
     l = newempty();
     op = newb2(p->op, l, r);
     
@@ -8289,11 +8305,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (lh1->t != BUNDLE) {
 	return E_DATA;
-    } else if (0 && p->op != B_ASN) {
-	/* FIXME */
-	gretl_errmsg_sprintf(_("'%s' : not yet implemented for this case"),
-			     get_opstr(p->op));
-	return E_TYPES;
     }
 
     bundle = lh1->v.b;
@@ -8335,12 +8346,14 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	if (!err) {
 	    ptr = get_mod_assign_result(lp, ltype, rhs, p);
 	    err = p->err;
+	    if (p->op == INC || p->op == DEC) {
+		return err; /* handled */
+	    }
 	}
 	if (!err) {
 	    type = ltype;
-	    donate = 1;
 	    if (ptr != lp) {
-		donate = 1; /* always right? */
+		donate = 1; /* donate: always right? */
 	    }
 	}
 	goto push_data;
@@ -8429,6 +8442,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case LIST:
+	    /* FIXME list/matrix equivocation? */
 	    ptr = list_to_matrix(rhs->v.ivec, &err);
 	    type = GRETL_TYPE_MATRIX;
 	    donate = 1;
@@ -8496,17 +8510,12 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     GretlType type = 0;
     GretlType targ = 0;
     gretl_array *array = NULL;
-    int *list = NULL;
     void *ptr = NULL;
     int idx = 0;
     int donate = 0;
     int err = 0;
 
-    if (lh1->t != LIST && lh1->t != ARRAY) {
-	return E_TYPES;
-    } else if (p->op != B_ASN) {
-	gretl_errmsg_sprintf(_("'%s' : not yet implemented for this case"),
-			     get_opstr(p->op));
+    if (lh1->t != ARRAY) {
 	return E_TYPES;
     }
 
@@ -8520,53 +8529,55 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	idx = lh2->v.xval;
     }
 
-    if (lh1->t == ARRAY) {
-	array = lh1->v.a;
-	if (array == NULL || idx <= 0) {
-	    return E_DATA;
-	}
-    } else if (lh1->t == LIST) {
-	list = lh1->v.ivec;
-	if (list == NULL) {
-	    return E_DATA;
-	} else if (idx < 1 || idx > list[0]) {
-	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
-	    return E_DATA;
-	}
+    array = lh1->v.a;
+    if (array == NULL) {
+	return E_DATA;
+    } else if (idx <= 0 || idx > gretl_array_get_length(array)) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
+	return E_DATA;
     }
 
 #if LHDEBUG
     fprintf(stderr, "set_array_value: array = %p, idx = %d\n",
-	    array ? (void *) array : (void *) list, idx);
+	    (void *) array, idx);
 #endif
-
-    if (list != NULL) {
-	/* list: handle the simpler case first */
-	int v = -1;
-	
-	if (rhs->t == NUM) {
-	    v = node_get_int(rhs, p);
-	} else if (rhs->t == SERIES) {
-	    v = rhs->vnum;
-	} else {
-	    p->err = E_TYPES;
-	}
-
-	if (!p->err && (v < 0 || v >= p->dset->v)) {
-	    gretl_errmsg_set(_("Invalid list element"));
-	    p->err = E_DATA;
-	}
-
-	if (!p->err) {
-	    list[idx] = v;
-	}
-
-	return p->err;
-    }
 
     atype = gretl_array_get_content_type(array);
     targ = gretl_type_of(p->targ);
     err = lhs_type_check(targ, atype, ARRAY);
+
+    idx--; /* convert index to 0-based */
+
+    if (!err && p->op != B_ASN) {
+	GretlType ltype = 0;
+	void *lp;
+
+	lp = gretl_array_get_element(array, idx, &ltype, &err);	
+	if (p->op == B_DOTASN) {
+	    if (!err) {
+		if (ltype == GRETL_TYPE_MATRIX) {
+		    err = dot_assign_to_matrix(lp, p, NULL);
+		} else {
+		    err = E_TYPES;
+		}
+	    }
+	    return err; /* handled */
+	}
+	if (!err) {
+	    ptr = get_mod_assign_result(lp, ltype, rhs, p);
+	    err = p->err;
+	    if (p->op == INC || p->op == DEC) {
+		return err; /* handled */
+	    }
+	}
+	if (!err) {
+	    type = ltype;
+	    if (ptr != lp) {
+		donate = 1; /* donate: always right? */
+	    }
+	}
+	goto push_data;
+    }
 
     if (!err) {
 	switch (rhs->t) {
@@ -8606,13 +8617,15 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	err = E_TYPES;
     }
 
+ push_data:
+
     if (!err) {
-	/* convert index to 0-based */
-	idx--;
 	if (donate) {
 	    /* it's OK to hand over the data pointer */
 	    err = gretl_array_set_element(array, idx, ptr, type, 0);
-	    rhs->v.ptr = NULL; /* gone! */
+	    if (ptr == rhs->v.ptr) {
+		rhs->v.ptr = NULL; /* gone! */
+	    }
 	} else {
 	    /* the data must be copied into the array */
 	    err = gretl_array_set_element(array, idx, ptr, type, 1);
@@ -8624,6 +8637,64 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     return err;
+}
+
+/* setting member of list: only straight assignment is accepted */
+
+static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
+{
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
+    int *list = NULL;
+    int idx = 0, v = -1;
+    int err = 0;
+
+    if (p->op != B_ASN) {
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
+			     get_opstr(p->op));
+	return E_TYPES;
+    }
+
+    if (lh2->t == MSPEC) {
+	idx = array_index_from_mspec(lh2->v.mspec, &err);
+	if (err) {
+	    return err;
+	}
+    } else {
+	idx = lh2->v.xval;
+    }
+
+    list = lh1->v.ivec;
+    if (list == NULL) {
+	return E_DATA;
+    } else if (idx < 1 || idx > list[0]) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
+	return E_DATA;
+    }
+
+#if LHDEBUG
+    fprintf(stderr, "set_list_value: list = %p, idx = %d\n",
+	    (void *) list, idx);
+#endif
+
+    if (rhs->t == NUM) {
+	v = node_get_int(rhs, p);
+    } else if (rhs->t == SERIES) {
+	v = rhs->vnum;
+    } else {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err && (v < 0 || v >= p->dset->v)) {
+	gretl_errmsg_set(_("Invalid list element"));
+	p->err = E_DATA;
+    }
+
+    if (!p->err) {
+	list[idx] = v;
+    }
+
+    return p->err;
 }
 
 static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
@@ -15643,7 +15714,13 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (compound_t == BMEMB) {
 	    p->err = set_bundle_value(p->lhres, r, p);
 	} else if (compound_t == ELEMENT) {
-	    p->err = set_array_value(p->lhres, r, p);
+	    NODE *lh1 = p->lhres->v.b2.l;
+
+	    if (lh1->t == ARRAY) {
+		p->err = set_array_value(p->lhres, r, p);
+	    } else if (lh1->t == LIST) {
+		p->err = set_list_value(p->lhres, r, p);
+	    }
 	} else if (compound_t == MSL) {
 	    p->err = set_matrix_value(p->lhres, r, p);
 	} else if (compound_t == OSL) {
@@ -15651,8 +15728,10 @@ static int save_generated_var (parser *p, PRN *prn)
 
 	    if (lh1->t == MAT) {
 		p->err = set_matrix_value(p->lhres, r, p);
-	    } else if (lh1->t == ARRAY || lh1->t == LIST) {
+	    } else if (lh1->t == ARRAY) {
 		p->err = set_array_value(p->lhres, r, p);
+	    } else if (lh1->t == LIST) {
+		p->err = set_list_value(p->lhres, r, p);
 	    }
 	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
