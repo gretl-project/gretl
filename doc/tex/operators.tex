@@ -159,6 +159,20 @@ After the second line, \texttt{k} has the value 3 and \texttt{i} has
 value 4. The last line assigns the value 1 to element 4 of
 matrix \texttt{M} and sets \texttt{i} = 5.
 
+\textit{Warning}: as in the C programming language, the unary
+increment or decrement operator should be not be applied to a
+variable in conjunction with regular reference to the same variable in
+a single statement. This is because the order of evaluation is not
+guaranteed, giving rise to ambiguity. Consider the following:
+%
+\begin{code}
+M[i++] = i # don't do this!
+\end{code}
+%
+This is supposed to assign the value of \texttt{i} to \texttt{M[i]},
+but is it the original or the incremented value? This is not actually
+defined. 
+
 
 
 
