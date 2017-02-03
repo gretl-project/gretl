@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-12-20 08:47-0500\n"
-"PO-Revision-Date: 2016-12-20 18:32+0100\n"
+"PO-Revision-Date: 2017-02-03 19:35+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1020,7 +1020,7 @@ msgstr ""
 "indicadores:\n"
 "  nese caso a súa primeira entrada na ringleira debe ser en branco, ou "
 "expresar 'obs' ou 'data'\n"
-"- O resto do ficheiro debe ser unha formación rectangular de datos\n"
+"- O resto do ficheiro debe ser un arranxo rectangular de datos\n"
 
 #: lib/src/csvdata.c:2531
 #, c-format
@@ -2356,7 +2356,7 @@ msgstr "\"catch\" non debe usarse para invocar funcións definidas polo usuario"
 
 #: lib/src/geneval.c:10561
 msgid "array: no type was specified"
-msgstr "Serie: Non se especificou ningún tipo"
+msgstr "Arranxo: Non se especificou ningún tipo"
 
 #: lib/src/geneval.c:11246
 #, c-format
@@ -2452,7 +2452,7 @@ msgstr "'%s' : non está preparado para cadeas de caracteres"
 #: lib/src/geneval.c:14170
 #, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s' : non está preparado para series"
+msgstr "'%s' : non está preparado para arranxos"
 
 #: lib/src/geneval.c:14177 lib/src/geneval.c:14191
 #, c-format
@@ -3028,7 +3028,7 @@ msgstr "con axuste de mínimos-cadrados"
 #: lib/src/gretl_array.c:826
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr "Serie de %s, longura %d\n"
+msgstr "Arranxo de %s, longura %d\n"
 
 #: lib/src/gretl_bfgs.c:403 lib/src/gretl_bfgs.c:442
 msgid "Failed to compute numerical Hessian"
@@ -3709,7 +3709,7 @@ msgstr "Proba conxunta dos regresores (agás a constante)"
 
 #: lib/src/gretl_model.c:3680
 msgid "Robust test for differing group intercepts"
-msgstr "Proba robusta para diferenciar ordenadas na orixe por grupos"
+msgstr "Proba robusta para diferenciar as ordenadas na orixe dos grupos"
 
 #: lib/src/gretl_model.c:3683 lib/src/gretl_panel.c:4388
 msgid "Pesaran CD test for cross-sectional dependence"
@@ -5074,7 +5074,7 @@ msgstr "MMX en dúas etapas"
 
 #: lib/src/modelprint.c:1007 lib/src/modelprint.c:1011
 msgid "Iterated GMM"
-msgstr "MMX iterados"
+msgstr "MMX reiterados"
 
 #: lib/src/modelprint.c:1013
 msgid "1-step GMM"
@@ -7234,7 +7234,7 @@ msgstr "%s: Non se especificou ningún sistema"
 #: lib/src/system.c:2420 lib/src/system.c:2422
 #, c-format
 msgid "iterated %s"
-msgstr "%s iterado"
+msgstr "%s reiterado"
 
 #: lib/src/system.c:3395
 msgid ""
@@ -10282,7 +10282,7 @@ msgstr "Filtro de Hodrick-Prescott"
 
 #: gui2/filters.c:100
 msgid "Baxter-King Band-pass filter"
-msgstr "Filtro pasabanda de Baxter-King"
+msgstr "Filtro de paso-banda de Baxter-King"
 
 #: gui2/filters.c:102
 msgid "Butterworth filter"
@@ -15198,7 +15198,7 @@ msgstr "Omitir as probas de Dickey-Fuller iniciais"
 
 #: gui2/selector.c:5915
 msgid "Iterated weighted least squares"
-msgstr "Mínimos cadrados ponderados iterados"
+msgstr "Mínimos cadrados ponderados reiterados"
 
 #: gui2/selector.c:5918 gui2/selector.c:5921
 msgid "Include time dummies"
