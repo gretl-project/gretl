@@ -214,7 +214,7 @@ int append_to_list_by_data (void *ptr, const int *add)
 	} else {
 	    err = gretl_list_add_list(&tmp, add);
 	    if (!err) {
-		user_var_replace_value(u, tmp);
+		user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	    }
 	}
     } 
@@ -245,7 +245,7 @@ int subtract_from_list_by_data (void *ptr, const int *sub)
 	int *tmp = gretl_list_drop(list, sub, &err);
 
 	if (!err) {
-	    user_var_replace_value(u, tmp);
+	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	}
     } 
 
@@ -276,7 +276,7 @@ int replace_list_by_data (void *ptr, const int *src)
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    user_var_replace_value(u, tmp);
+	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	}	    
     }
 
@@ -312,7 +312,7 @@ int remember_list (const int *list, const char *name, PRN *prn)
 
 	if (orig != NULL) {
 	    /* replace existing list of same name */
-	    user_var_replace_value(orig, lcpy);
+	    user_var_replace_value(orig, lcpy, GRETL_TYPE_LIST);
 	    if (prn != NULL && gretl_messages_on() &&
 		!gretl_looping_quietly()) {
 		pprintf(prn, _("Replaced list '%s'\n"), name);
@@ -1432,6 +1432,47 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
     }
 
     return big;
+}
+
+/**
+ * gretl_list_plus:
+ * @l1: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @l2: list of variables to be added.
+ * @err: location to receive error code.
+ *
+ * Creates a list containing all elements of @l1 followed
+ * by all elements of @l2. This differs from gretl_list_union()
+ * in that some elements may end up being repeated in the
+ * returned list.
+ *
+ * Returns: new list on success, NULL on error.
+ */
+
+int *gretl_list_plus (const int *l1, const int *l2, int *err)
+{
+    int n1 = l1[0];
+    int n2 = l2[0];
+    int i, j;
+    int *ret;
+
+    ret = gretl_list_new(n1 + n2);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    j = 1;
+
+    for (i=1; i<=n1; i++) {
+	ret[j++] = l1[i];
+    }
+
+    for (i=1; i<=n2; i++) {
+	ret[j++] = l2[i];
+    }
+
+    return ret;
 }
 
 /**

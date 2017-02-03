@@ -3639,12 +3639,12 @@ int check_declarations (char ***pS, parser *p)
 
     gretl_error_clear();
 
-    if (p->lh.substr == NULL) {
+    if (p->lh.expr == NULL) {
 	p->err = E_ALLOC;
 	return 0;
     }
 
-    s = p->lh.substr;
+    s = p->lh.expr;
     s += strspn(s, " ");
 
     while (*s) {
@@ -3663,7 +3663,7 @@ int check_declarations (char ***pS, parser *p)
 	return 0;
     }
 
-    s = p->lh.substr;
+    s = p->lh.expr;
     for (i=0; i<n && !p->err; i++) {
 	S[i] = gretl_word_strdup(s, &s, OPT_S, &p->err);
     }

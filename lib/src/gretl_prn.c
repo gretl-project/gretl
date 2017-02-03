@@ -1304,7 +1304,7 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
 	}
 
 	if (!err) {
-	    err = user_var_replace_value(uv, buf);
+	    err = user_var_replace_value(uv, buf, GRETL_TYPE_STRING);
 	}
     }
 
