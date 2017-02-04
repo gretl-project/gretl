@@ -77,8 +77,6 @@ int gretl_list_min_max (const int *list, int *lmin, int *lmax);
 
 int *gretl_list_add (const int *orig, const int *add, int *err);
 
-int *gretl_list_plus (const int *l1, const int *l2, int *err);
-
 int *gretl_list_union (const int *l1, const int *l2, int *err);
 
 int *gretl_list_intersection (const int *l1, const int *l2, int *err);

@@ -1045,7 +1045,7 @@ scan_string (char *targ, const char **psrc, int width,
 	    if (conv == NULL) {
 		err = E_ALLOC;
 	    } else {
-		user_var_replace_value(uvar, conv, GRETL_TYPE_STRING);
+		user_var_replace_value(uvar, conv);
 		*psrc += n;
 	    }
 	    if (!err) {

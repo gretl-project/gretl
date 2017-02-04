@@ -1,3 +1,4 @@
+
 /* 
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
@@ -593,13 +594,12 @@ enum {
     SVL_NODE = 1 << 3, /* holds string-valued series */
     PAR_NODE = 1 << 4, /* exponentiation node is parenthesized */
     PRX_NODE = 1 << 5, /* aux node is proxy (don't reuse!) */
-    ALS_NODE = 1 << 6, /* node holds aliased function call */
-    LHT_NODE = 1 << 7  /* node holds terminal of LHS */
+    ALS_NODE = 1 << 6  /* node holds aliased function call */
 };
 
 struct node {
     short t;       /* type identifier */
-    unsigned char flags; /* AUX_NODE etc., see above */
+    char flags;    /* AUX_NODE etc., see above */
     int vnum;      /* associated series ID number */
     char *vname;   /* associated variable name */
     user_var *uv;  /* associated named variable */
@@ -626,15 +626,16 @@ enum parser_flags {
     P_SLICING = 1 << 14, /* state: calculating object slice (temporary) */
     P_LAGPRSE = 1 << 15, /* state: parsing lag spec (temporary) */
     P_DELTAN  = 1 << 16, /* flag for change in series length */
-    P_CATCH   = 1 << 17, /* "catch" is in force */
-    P_NODECL  = 1 << 18, /* type of result was not specified */
-    P_LISTDEF = 1 << 19, /* expression defines a list */
-    P_ANON    = 1 << 20, /* generating an anonymous object */
-    P_VOID    = 1 << 21, /* function call, no assignment */
-    P_NOEXEC  = 1 << 22, /* just compile, don't evaluate */
-    P_MSAVE   = 1 << 23, /* trying for reuse of an aux matrix */
-    P_OBSVAL  = 1 << 24, /* generating value of observation in series */
-    P_ALIASED = 1 << 25  /* state: handling aliased object (temporary) */
+    P_LHBKVAR = 1 << 17, /* LHS bundle key is string variable */
+    P_CATCH   = 1 << 18, /* "catch" is in force */
+    P_NODECL  = 1 << 19, /* type of result was not specified */
+    P_LISTDEF = 1 << 20, /* expression defines a list */
+    P_ANON    = 1 << 21, /* generating an anonymous object */
+    P_VOID    = 1 << 22, /* function call, no assignment */
+    P_NOEXEC  = 1 << 23, /* just compile, don't evaluate */
+    P_MSAVE   = 1 << 24, /* trying for reuse of an aux matrix */
+    P_OBSVAL  = 1 << 25, /* generating value of observation in series */
+    P_ALIASED = 1 << 26  /* state: handling aliased object (temporary) */
 };
 
 struct lhinfo {
@@ -643,10 +644,13 @@ struct lhinfo {
     char label[MAXLABEL];  /* descriptive string for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
-    char *expr;            /* expression on left */
+    int obsnum;            /* specific observation number in series */
+    gretl_matrix *m;       /* LHS matrix (or NULL) */
+    char *substr;          /* obs or matrix/array selection string */
+    char *subvar;          /* name of targetted bundle member */
+    matrix_subspec *mspec; /* evaluated submatrix spec */
     GretlType gtype;       /* gretl type of LHS array, if any, or
 			      of LHS bundle member */
-    gretl_matrix *mret;    /* matrix output (possibly under bundle or array) */
 };
 
 typedef struct parser_ parser;
@@ -661,10 +665,9 @@ struct parser_ {
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */
-    NODE *lhtree;      /* LHS syntax tree, if needed */
-    NODE *lhres;       /* result of eval() on @lhtree */
-    NODE *tree;        /* RHS syntax tree */
-    NODE *ret;         /* result of eval() on @tree */
+    parser *subp;      /* left-hand side subslice tree */
+    NODE *tree;        /* parsed syntax tree */
+    NODE *ret;         /* evaluated result node */
     /* below: parser state variables */
     NODE *aux;          /* convenience pointer to current auxiliary node */
     int callcount;
@@ -691,13 +694,12 @@ int parser_char_index (parser *p, int c);
 int parser_next_nonspace_char (parser *p, int skip);
 int parser_print_input (parser *p);
 void lex (parser *s);
-NODE *powterm (parser *p, NODE *l);
 NODE *new_node (int t);
 NODE *expr (parser *s);
 NODE *newdbl (double x);
 NODE *newempty (void);
-NODE *newb2 (int t, NODE *l, NODE *r);
 NODE *obs_node (parser *p);
+NODE *slice_node_direct (parser *p);
 void context_error (int c, parser *p, const char *func);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t);
@@ -708,7 +710,7 @@ void set_doing_genseries (int s);
 int realgen (const char *s, parser *p, DATASET *dset, 
 	     PRN *prn, int flags, int targtype);
 void gen_save_or_print (parser *p, PRN *prn);
-void gen_cleanup (parser *p);
+void gen_cleanup (parser *p, int level);
 void parser_free_aux_nodes (parser *p);
 
 /* name lookup functions */

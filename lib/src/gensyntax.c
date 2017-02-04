@@ -34,6 +34,8 @@
 
 #define pow_sym(t) (t == B_POW || t == B_DOTPOW)
 
+static NODE *powterm (parser *p, NODE *l);
+
 #if SDEBUG
 static void notify (const char *s, NODE *n, parser *p)
 {
@@ -168,7 +170,7 @@ static NODE *newb1 (int t, NODE *b)
 
 /* node for binary operator or two-argument function */
 
-NODE *newb2 (int t, NODE *l, NODE *r)
+static NODE *newb2 (int t, NODE *l, NODE *r)
 {  
     NODE *n = new_node(t);
 
@@ -1237,7 +1239,7 @@ static void get_ovar_ref (NODE *t, parser *p)
     }
 }
 
-NODE *powterm (parser *p, NODE *l)
+static NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
     int sym = p->sym == B_SUB ? U_NEG : 
@@ -1258,18 +1260,13 @@ NODE *powterm (parser *p, NODE *l)
     if (l != NULL) {
 	/* powterm recursion: swallowing prior node @l */
 	if (sym == BMEMB || sym == DBMEMB) {
+	    /* fprintf(stderr, "*** powterm, recursing on (D)BMEMB ***\n"); */
 	    t = newb2(sym, l, NULL);
 	    if (t != NULL) {
 		parser_ungetc(p);
 		t->v.b2.r = get_bundle_member_name(p);
 	    }
 	} else if (sym == G_LBR) {
-	    /* "OSL": we're being somewhat agnostic here regarding
-	       the type of object of which we're taking a slice.
-	       That will be sorted out at eval() time, and if the
-	       object is not a matrix the "slice" will be mapped
-	       down to a single index value, if possible.
-	    */
 	    t = newb2(OSL, l, NULL);
 	    if (t != NULL) {
 		t->v.b2.r = newb2(MSLRAW, NULL, NULL);
@@ -1374,7 +1371,11 @@ NODE *powterm (parser *p, NODE *l)
     } else if (sym == MSL || sym == DMSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, p->upsym);
+	    if (p->sym == MSL) {
+		t->v.b2.l = newstr(p->idstr);
+	    } else {
+		t->v.b2.l = newref(p, MVAR);
+	    }
 	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
 	    if (t->v.b2.r != NULL) {
 		lex(p);
@@ -1794,3 +1795,18 @@ NODE *expr (parser *p)
     return t;
 }
 
+/* for use when we need to evaluate a sub-matrix or sub-array
+   specification on the left-hand side of a genr formula */
+
+NODE *slice_node_direct (parser *p)
+{
+    NODE *t;
+
+    t = newb2(MSLRAW, NULL, NULL);
+    if (t != NULL) {
+	lex(p);
+	get_slice_parts(t, p);
+    }
+
+    return t;
+}
