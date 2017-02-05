@@ -427,9 +427,7 @@
 	  <flag>--update-overlap</flag>
 	  <effect>ver abaixo</effect>
 	</option>
-	<option>
-	  <note>Ver abaixo para opções especializadas adicionais</note>
-	</option>
+	<optnote>Ver abaixo para opções especializadas adicionais</optnote>
       </options>
     </usage>
 
@@ -2025,11 +2023,11 @@
         <argument optional="true">ordem</argument>
       </arguments>
       <options>
-       <option>
+	<option>
 	  <flag>--bartlett</flag>
 	  <effect>use Bartlett standard errors</effect>
         </option>	
-       <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>modo ou nome-de-ficheiro</optparm>
 	  <effect>ver abaixo</effect>
@@ -8307,9 +8305,7 @@
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
 	</option>
-	<option>
-	  <note>See below for additional specialized options</note>
-	</option>
+	<optnote>See below for additional specialized options</optnote>
       </options>
       <examples>
         <example>open data4-1</example>

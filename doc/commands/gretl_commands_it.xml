@@ -2052,7 +2052,6 @@
 	  <flag>--verbose</flag>
 	  <effect>mostra i ranghi</effect>
 	</option>
-      </options>
         <option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
@@ -2062,6 +2061,7 @@
 	  <flag>--triangle</flag>
 	  <effect>see below</effect>
 	</option>
+      </options>
       <examples>
         <example>corr y x1 x2 x3</example>
 	<example>corr ylist --uniform</example>
@@ -3615,12 +3615,11 @@
     <description>
       <para>
 	Con questo comando, gretl diventa una specie di grande
-	calcolatrice. Il programma valuta
-	l'<argname>espressione</argname> e stampa il
-	risultato. L'argomento può essere il nome di una variabile, o
-	qualcosa di più complicato. In ogni caso, dev'essere
-	un'espressione ammissibile a destra dell'operatore di
-	assegnamento.
+	calcolatrice. Il programma valuta l'<repl>espressione</repl> e
+	stampa il risultato. L'argomento può essere il nome di una
+	variabile, o qualcosa di più complicato. In ogni caso,
+	dev'essere un'espressione ammissibile a destra dell'operatore
+	di assegnamento.
       </para>
       <para>
 	Si noti che un comando del tipo
@@ -3812,7 +3811,7 @@
     </usage>
 
     <description>
-      <para contest="gui">
+      <para context="gui">
 	Deve seguire un comando di stima.  Calcola previsioni
         per l'intervallo specificato. A seconda del tipo di modello, calcola
         anche gli errori standard (si veda oltre).
@@ -6270,6 +6269,7 @@
 
   <command name="join" section="Dataset" label="Aggiungi dati con controlli" 
 	   context="gui">
+    <description>
     <para>
       Questa finestra di dialogo permette di usare un buon
       sottoinsieme delle funzionalità del comando <lit>join</lit>, per
@@ -6317,6 +6317,7 @@
 	</para>
       </li>
     </ilist>
+    </description>
   </command>
 
 
@@ -7850,11 +7851,13 @@
         <argument>nomi</argument>
 	<argument optional="true">stat</argument>
       </arguments>
-      <option>
-	<flag>--output</flag>
-	<optparm>filename</optparm>
-	<effect>invia l'output al file specificato</effect>
-      </option>
+      <options>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>invia l'output al file specificato</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -8771,9 +8774,7 @@
 	  <flag>--www</flag>
 	  <effect>usa un database sul server di gretl</effect>
 	</option>
-	<option>
-	  <note>Si veda oltre per le opzioni specifiche per i fogli elettronici</note>
-	</option>
+	<optnote>Si veda oltre per le opzioni specifiche per i fogli elettronici</optnote>
       </options>
       <examples>
         <example>open data4-1</example>
@@ -9017,13 +9018,17 @@
 	print "Ancora fuori"
 	outfile --close
       </code>
-      produrrà un file di nome <quote>outer.txt</quote> contenente le
-      due linee
+      <para>
+	produrrà un file di nome <quote>outer.txt</quote> contenente le
+	due linee
+      </para>
       <code>
 	Fuori
 	Ancora fuori
       </code>
-      e un file di nome <quote>inner.txt</quote> contenente la linea
+      <para>
+	e un file di nome <quote>inner.txt</quote> contenente la linea
+      </para>
       <code>
 	Dentro
       </code>
@@ -12027,12 +12032,12 @@
       <altforms>
 	<altform><lit>smpl</lit> <repl>oss-iniziale oss-finale</repl></altform>
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
-	<altform><lit>smpl</lit> <repl>variabile-dummy</repl> <opt>dummy</opt></altform>
-	<altform><lit>smpl</lit> <repl>condizione</repl> <opt>restrict</opt></altform>
+	<altform><lit>smpl</lit> <repl>variabile-dummy</repl> <lit>--dummy</lit></altform>
+	<altform><lit>smpl</lit> <repl>condizione</repl> <lit>--restrict</lit></altform>
 	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <lit>--no-all-missing [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
- 	<altform><lit>smpl</lit> <repl>n</repl> <opt>random</opt></altform>
+ 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
       <options>
@@ -13265,6 +13270,7 @@
 	<option>
 	  <flag>--type</flag>
 	  <optparm>nometipo</optparm>
+	  <effect/>
 	</option>	
       </options>
     </usage>

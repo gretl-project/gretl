@@ -276,6 +276,13 @@
   <xsl:text>&lt;/td&gt;&lt;/tr&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="optnote">
+  <xsl:text>&#10;&lt;tr&gt;&lt;td&gt;&lt;/td&gt;</xsl:text>
+  <xsl:text>&lt;td&gt;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&lt;/td&gt;&lt;/tr&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="optparm">
   <xsl:if test="(@optional)">[</xsl:if>  
   <xsl:text>=&lt;i&gt;</xsl:text>
@@ -378,10 +385,6 @@
   <xsl:text> (</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>)</xsl:text>
-</xsl:template>
-
-<xsl:template match="note">
-  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="funcref">

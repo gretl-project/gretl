@@ -444,9 +444,7 @@
 	  <flag>--update-overlap</flag>
 	  <effect>see below</effect>
 	</option>
-	<option>
-	  <note>See below for additional specialized options</note>
-	</option>
+	<optnote>See below for additional specialized options</optnote>
       </options>
     </usage>
 
@@ -6336,10 +6334,11 @@
 
   <command name="join" section="Dataset" label="Append data with controls" 
 	   context="gui">
+    <description>
     <para>
       This dialog gives you access to some, but not all, of the
-      functionality of the <lit>join</lit> command. For full
-      details see <guideref targ="chap:join"/>.
+      functionality of the <lit>join</lit> command. For full details
+      see <guideref targ="chap:join"/>.
     </para>
     <para>
       On the left you should see a listing of series in the current
@@ -6382,6 +6381,7 @@
 	</para>
       </li>
     </ilist>
+    </description>
   </command>
 
 
@@ -8006,11 +8006,13 @@
         <argument>names</argument>
 	<argument optional="true">addstats</argument>
       </arguments>
-      <option>
-	<flag>--output</flag>
-	<optparm>filename</optparm>
-	<effect>send output to specified file</effect>
-      </option>
+      <options>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -8970,9 +8972,7 @@
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
 	</option>
-	<option>
-	  <note>See below for additional specialized options</note>
-	</option>
+	<optnote>See below for additional specialized options</optnote>
       </options>
       <examples>
         <example>open data4-1</example>
@@ -13793,6 +13793,7 @@
 	<option>
 	  <flag>--type</flag>
 	  <optparm>typename</optparm>
+	  <effect>scope of listing</effect>
 	</option>	
       </options>
     </usage>

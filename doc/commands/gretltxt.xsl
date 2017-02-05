@@ -199,6 +199,11 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="optnote">
+  <xsl:text>&#xa;            </xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="optparm">
   <xsl:if test="(@optional)">[</xsl:if> 
   <xsl:text>=</xsl:text>
@@ -277,10 +282,6 @@
   <xsl:text> (</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>)</xsl:text>
-</xsl:template>
-
-<xsl:template match="note">
-  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="repl">

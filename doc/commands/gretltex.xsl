@@ -250,6 +250,12 @@
   <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
+<xsl:template match="optnote">
+  <xsl:text> &amp; </xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text> \\&#10;</xsl:text>
+</xsl:template>
+
 <xsl:template match="example">
   <xsl:variable name="escape">
     <xsl:call-template name="needs-verb">
@@ -337,12 +343,6 @@
   <xsl:text> (</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>) \\</xsl:text>
-</xsl:template>
-
-<xsl:template match="note">
-  <xsl:text> </xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text> \\</xsl:text>
 </xsl:template>
 
 <xsl:template match="demos">
