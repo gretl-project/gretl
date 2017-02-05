@@ -1334,12 +1334,14 @@
 	  Returns the arc tangent of <argname>x</argname>, that is, the value
 	  whose tangent is <argname>x</argname>.  The result is in radians.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="cos"/>
+            <fncref targ="sin"/>
+            <fncref targ="tan"/>
+	  </seelist>
+	</para>
       </description>
-      <seelist>
-        <fncref targ="cos"/>
-        <fncref targ="sin"/>
-        <fncref targ="tan"/>
-      </seelist>
     </function>
 
     <function name="atanh" section="math" output="asinput">
@@ -2190,12 +2192,12 @@
       <description>
 	<para>
 	  Returns the cosine of <argname>x</argname>.
+	  <seelist>
+            <fncref targ="sin"/>
+            <fncref targ="tan"/>
+            <fncref targ="atan"/>
+	  </seelist>
 	</para>
-	<seelist>
-          <fncref targ="sin"/>
-          <fncref targ="tan"/>
-          <fncref targ="atan"/>
-	</seelist>
       </description>
     </function>
 
@@ -4463,10 +4465,10 @@
 	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
 	  omitted, this matrix will contain the unconditional standard
 	  errors of the smoothed disturbances, which are normally used
-	  to compute the so-called <it>auxiliary
-	  residuals</it>. Otherwise, <lit>Mod.smdisterr</lit> will
-	  contain the estimated root mean square deviations of the
-	  auxiliary residuals from their true value.
+	  to compute the so-called <emphasis>auxiliary
+	  residuals</emphasis>. Otherwise, <lit>Mod.smdisterr</lit>
+	  will contain the estimated root mean square deviations of
+	  the auxiliary residuals from their true value.
 	</para>
 	<para>
 	  For more details see <guideref targ="chap:kalman"/>.

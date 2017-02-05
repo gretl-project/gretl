@@ -41,7 +41,7 @@
    targ    CDATA #IMPLIED
    section (data-utils | filters | linalg | math | matbuild | 
             matshape | numerical | probdist | stats | sspace | strings | 
-            transforms | access | calendar) "math" 
+            transforms | access | calendar | midas) "math" 
    output  (scalar | series | matrix | smatrix | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int |
             scalar-or-matrix | matrix-or-bundle | bundle |

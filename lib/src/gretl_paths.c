@@ -2911,18 +2911,13 @@ static char *rightmost (char *s1, char *s2)
     }
 }
 
-/* This aims to be general enough to handle the case where there
-   are no gretl entries in the registry; @progname is argv[0] at
-   startup.
-*/
+/* note: @progname is argv[0] at startup */
 
 void win32_set_gretldir (const char *progname)
 {
     int done = 0;
 
     *paths.gretldir = '\0';
-
-    /* try using @progname (= argv[0] when gretl was started) */
 
     if (g_path_is_absolute(progname)) {
 	strncat(paths.gretldir, progname, MAXLEN - 1);
@@ -3666,14 +3661,13 @@ int gretl_normalize_path (char *path)
 
     if (*path == '.') {
 	/* absolutize the path first, if necessary */
-	char *ret, dirname[FILENAME_MAX];
+	char dirname[FILENAME_MAX];
 
-	*dirname = '\0';
-	ret = getcwd(dirname, FILENAME_MAX - 1);
-	if (ret != NULL) {
-	    ret = g_strdup(path);
-	    build_path(path, dirname, ret, NULL);
-	    g_free(ret);
+	if (getcwd(dirname, FILENAME_MAX - 1) != NULL) {
+	    gchar *tmp = g_strdup(path);
+	    
+	    build_path(path, dirname, tmp, NULL);
+	    g_free(tmp);
 	}
     }
 

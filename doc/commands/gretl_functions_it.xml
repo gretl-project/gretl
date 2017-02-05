@@ -4505,9 +4505,10 @@
 	  contenuto di <lit>Mod.smdisterr</lit>. Se esso è 0 od
 	  omesso, questa matrice conterrà gli errori standard non
 	  condizionali dei disturbi, che sono dimsolito usati per
-	  produrre i cosiddetti <it>residui ausiliari</it>. Altrimenti,
-	  <lit>Mod.smdisterr</lit> conterrà la stima degli scarti
-	  quadratici medi dei reidui ausiliari dal loro vero valore.
+	  produrre i cosiddetti <emphasis>residui
+	  ausiliari</emphasis>. Altrimenti, <lit>Mod.smdisterr</lit>
+	  conterrà la stima degli scarti quadratici medi dei reidui
+	  ausiliari dal loro vero valore.
 	</para>
 	<para>
 	  Per più dettagli, vedi <guideref targ="chap:kalman"/>.
