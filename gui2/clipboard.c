@@ -235,8 +235,8 @@ static void gretl_clipboard_set (int fmt, int imgtype)
     }
 
 #if CLIPDEBUG
-    fprintf(stderr, "gretl_clipboard_set: fmt = %d, imgtype = %d\n",
-	    fmt, imgtype);
+    fprintf(stderr, "gretl_clipboard_set: fmt=%d, imgtype=%d, n_targs=%d\n",
+	    fmt, imgtype, n_targs);
 #endif
 
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
