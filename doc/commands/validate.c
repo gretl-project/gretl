@@ -530,7 +530,7 @@ int main (int argc, char **argv)
     }
 
     strcpy(reffile, argv[1]);
-    if (strstr(reffile, "genr_funcs")) {
+    if (strstr(reffile, "gretl_functions")) {
 	type = GRETL_FUNCTIONS;
     }
 

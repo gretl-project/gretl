@@ -244,7 +244,7 @@ $(GRETLLIB):
 ../tex/gretl-ref.bbl:
 	$(MAKE) -C ../tex gretl-ref.pdf
 
-.PHONY: test
+.PHONY: test xmlcheck
 
 # generate some reference tables automatically, to ensure
 # they remain in step with the actual code
@@ -359,6 +359,9 @@ check-it: validate
 check-pt: validate 
 	-./validate $(PT_SRC)
 	-./validate $(PT_FNSRC)
+
+xmlcheck:
+	cd $(CMDSDIR) && ./checkxml.sh
 
 docclean:
 	rm -f $(EN_CMDREF_STAMP) $(ES_CMDREF_STAMP)
