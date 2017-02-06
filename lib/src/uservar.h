@@ -114,7 +114,8 @@ int arg_add_as_shell (const char *name,
 int *copy_list_as_arg (const char *param_name, int *list,
 		       int *err);
 
-int user_var_replace_value (user_var *uvar, void *value);
+int user_var_replace_value (user_var *uvar, void *value,
+			    GretlType type);
 
 int user_matrix_replace_matrix_by_name (const char *name, 
 					gretl_matrix *m);
@@ -164,7 +165,7 @@ int gretl_scalar_add (const char *name, double val);
 
 int gretl_scalar_add_mutable (const char *name, double val);
 
-int gretl_scalar_convert (const char *name, gretl_matrix **pm);
+int gretl_scalar_convert_to_matrix (user_var *uvar);
 
 int private_scalar_add (double val, const char *name);
 
