@@ -982,7 +982,7 @@ band---see Figure~\ref{fig:tvar}.
   \label{script:PhCurve}
 \begin{scode}
 function void at_each_step(bundle *b)
-    b.obsymat = b.mX[b.t,]'
+    b.obsymat = transp(b.mX[b.t,])
 end function
 
 open AWM.gdt --quiet
