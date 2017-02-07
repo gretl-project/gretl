@@ -1831,7 +1831,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     show = !user_func_is_noprint(cinfo->func);
 
-#if FCDEBUG
+#if 1 || FCDEBUG
     fprintf(stderr, "show = %d, grab_bundle = %d\n", show, grab_bundle);
 #endif    
 
@@ -1847,6 +1847,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	/* execute "invisibly" */
 	err = gui_exec_line(&state, dataset, NULL);
     }
+
+    fprintf(stderr, "exec done, err=%d\n", err);
 
     if (!err && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
@@ -2802,7 +2804,7 @@ void destroy_gui_package_info (void)
 
 static int gpkg_name_match (char *s1, const char *s2)
 {
-    return s1 != NULL && strcmp(s1, s2) == 0;
+    return s1 != NULL && s2 != NULL && strcmp(s1, s2) == 0;
 }
 
 static gui_package_info *get_gpi_entry (const gchar *pkgname)
