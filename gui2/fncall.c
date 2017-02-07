@@ -1523,7 +1523,6 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->vwin != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(cinfo->dlg), 
 				     GTK_WINDOW(cinfo->vwin->main));
-	gtk_window_set_destroy_with_parent(GTK_WINDOW(cinfo->dlg), TRUE);
     }
 
     gtk_widget_show_all(cinfo->dlg);
@@ -1831,7 +1830,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     show = !user_func_is_noprint(cinfo->func);
 
-#if 1 || FCDEBUG
+#if FCDEBUG
     fprintf(stderr, "show = %d, grab_bundle = %d\n", show, grab_bundle);
 #endif    
 
@@ -1847,8 +1846,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	/* execute "invisibly" */
 	err = gui_exec_line(&state, dataset, NULL);
     }
-
-    fprintf(stderr, "exec done, err=%d\n", err);
 
     if (!err && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
