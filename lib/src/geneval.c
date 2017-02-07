@@ -4248,19 +4248,68 @@ static NODE *array_element_node (gretl_array *a, int i,
     return ret;
 }
 
-static NODE *list_member_node (int *list, int i, parser *p)
+static NODE *real_list_series_node (int *list, int i, parser *p)
 {
     NODE *ret = NULL;
+    int v = 0;
 
     if (i < 1 || i > list[0]) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
 	p->err = E_INVARG;
+    } else {
+	v = list[i];
+	if (v < 0 || v >= p->dset->v) {
+	    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
+	    p->err = E_DATA;
+	}
     }
 
     if (!p->err) {
-	ret = aux_list_node(p);
-	ret->v.ivec = gretl_list_new(1);
-	ret->v.ivec[1] = list[i];
+	ret = aux_empty_series_node(p);
+	if (!p->err) {
+	    /* scrub TMP_NODE, because using dset->Z member! */
+	    ret->flags = AUX_NODE;
+	    ret->vnum = v;
+	    ret->v.xvec = p->dset->Z[v];
+	}
+    }
+
+    return ret;
+}
+
+/* coming from a context where we have @list and @i */
+
+static NODE *list_member_node (int *list, int i, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	ret = real_list_series_node(list, i, p);
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
+/* coming from a context where @list and @i have to be
+   resolved from nodes @l and @r respectively
+*/
+
+static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	int *list = node_get_list(l, p);
+	int i = node_get_int(r, p);
+
+	if (!p->err) {
+	    ret = real_list_series_node(list, i, p);
+	}
+	free(list);
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -5135,38 +5184,6 @@ static NODE *list_list_op (NODE *l, NODE *r, int f, parser *p)
 	ret->v.ivec = list;
 	free(llist);
 	free(rlist);
-    }
-
-    return ret;
-}
-
-static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_empty_series_node(p);
-
-    if (ret != NULL && starting(p)) {
-	int *list = node_get_list(l, p);
-	int i = node_get_int(r, p);
-
-	if (!p->err) {
-	    if (i < 1 || i > list[0]) {
-		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
-		p->err = E_DATA;
-	    } else {
-		int v = list[i];
-
-		if (v < 0 || v >= p->dset->v) {
-		    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), v);
-		    p->err = E_DATA;
-		} else {
-		    /* not TMP_NODE, because using dset->Z member! */
-		    ret->flags = AUX_NODE;
-		    ret->vnum = v;
-		    ret->v.xvec = p->dset->Z[v];
-		}
-	    }
-	}
-	free(list);
     }
 
     return ret;
