@@ -942,7 +942,7 @@ int n_user_bundles (void)
  * user_var_replace_value:
  * @uvar: user variable.
  * @value: the new value to place as the value or @uvar.
- * @type: the typf of the replacement value.
+ * @type: the type of the replacement value.
  *
  * Replaces the value of @uvar; the existing value is
  * freed first.
@@ -953,16 +953,26 @@ int n_user_bundles (void)
 int user_var_replace_value (user_var *uvar, void *value,
 			    GretlType type)
 {
+    int err = 0;
+    
     if (uvar == NULL) {
-	return E_UNKVAR;
+	err = E_UNKVAR;
     } else if (type != uvar->type) {
-	fputs("*** user_var_replace_value: type mismatch ***\n", stderr);
-	fprintf(stderr, " (expected %s but got %s)\n",
-		gretl_type_get_name(uvar->type), gretl_type_get_name(type));
-	return E_TYPES;
+	err = E_TYPES; /* assume the worst */
+	if (uvar->type == GRETL_TYPE_ARRAY && uvar->ptr != NULL) {
+	    /* but we might be OK */
+	    if (type == gretl_array_get_type(uvar->ptr)) {
+		err = 0;
+	    }
+	}
+	if (err) {
+	    fputs("*** user_var_replace_value: type mismatch ***\n", stderr);
+	    fprintf(stderr, " (expected %s but got %s)\n",
+		    gretl_type_get_name(uvar->type), gretl_type_get_name(type));
+	}
     }
 
-    if (value != uvar->ptr) {
+    if (!err && value != uvar->ptr) {
 	if (uvar->ptr != NULL) {
 	    int free_val = 1;
 
@@ -977,7 +987,7 @@ int user_var_replace_value (user_var *uvar, void *value,
 	uvar->ptr = value;
     }
 
-    return 0;
+    return err;
 }
 
 char *user_string_resize (const char *name, size_t len, int *err)
