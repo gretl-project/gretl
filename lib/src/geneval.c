@@ -12347,6 +12347,8 @@ static NODE *scalar_postfix_node (NODE *n, parser *p)
     return ret;
 }
 
+#if 0
+
 static int series_calc_nodes (NODE *l, NODE *r)
 {
     int ret = 0;
@@ -12360,6 +12362,23 @@ static int series_calc_nodes (NODE *l, NODE *r)
 
     return ret;
 }
+
+#else /* reverting for now, 2017-02-06 */
+
+static int series_calc_nodes (NODE *l, NODE *r)
+{
+    int ret = 0;
+
+    if (l->t == SERIES) {
+	ret = (r->t == SERIES || r->t == NUM || scalar_matrix_node(r));
+    } else if (r->t == SERIES) {
+	ret = scalar_node(l);
+    }
+
+    return ret;
+}
+
+#endif
 
 static int cast_series_to_list (parser *p, NODE *n, short f)
 {
@@ -12776,8 +12795,7 @@ static NODE *eval (NODE *t, parser *p)
 		   ((l->t == SERIES && r->t == STR) ||
 		    (l->t == STR && r->t == SERIES))) {
 	    ret = series_string_calc(l, r, t->t, p);
-	} else if ((t->t == B_AND || t->t == B_OR ||
-		    t->t == B_SUB || t->t == B_ADD) &&
+	} else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
 		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_list_op(l, r, t->t, p);
 	} else if (t->t == B_POW && ok_list_node(l) && ok_list_node(r)) {
