@@ -103,7 +103,7 @@ enum {
 
 #define postfix_node(n) (n->t == NUM_P || n->t == NUM_M)
 
-#define ok_list_node(n) (n->t == LIST || n->t == WLIST || n->t == NUM || \
+#define ok_list_node(n) (n->t == LIST || n->t == NUM || \
 			 n->t == MAT || n->t == EMPTY || \
 			 (n->t == SERIES && n->vnum >= 0))
 
@@ -5099,9 +5099,6 @@ int *node_get_list (NODE *n, parser *p)
 
     if (n->t == LIST) {
 	list = gretl_list_copy(n->v.ivec);
-    } else if (n->t == WLIST) {
-	/* handle wildcard */
-	list = varname_match_list(p->dset, n->v.str, &p->err);
     } else if (n->t == SERIES || n->t == NUM) {
 	v = (n->t == SERIES)? n->vnum : node_get_int(n, p);
 	if (!p->err) {
@@ -13242,7 +13239,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DROPCOLL:
 	/* list argument is required on left, optional scalar
 	   on the right */
-	if (l->t == LIST || l->t == WLIST) {
+	if (l->t == LIST) {
 	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, LIST, l, p);
