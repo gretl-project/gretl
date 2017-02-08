@@ -5772,6 +5772,8 @@ static int type_translate_to_int (GretlType type)
 	return 5;
     } else if (type == GRETL_TYPE_ARRAY) {
 	return 6;
+    } else if (type == GRETL_TYPE_LIST) {
+	return 7;
     } else {
 	return 0;
     }
@@ -5825,6 +5827,42 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_remove(s);
 	}
     }
+
+    return ret;
+}
+
+static NODE *generic_typeof_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+    int i = 0;
+
+    switch (n->t) {
+    case NUM:
+	i = type_translate_to_int(GRETL_TYPE_DOUBLE);
+	break;
+    case SERIES:
+	i = type_translate_to_int(GRETL_TYPE_SERIES);
+	break;
+    case MAT:
+	i = type_translate_to_int(GRETL_TYPE_MATRIX);
+	break;
+    case STR:
+	i = type_translate_to_int(GRETL_TYPE_STRING);
+	break;
+    case BUNDLE:
+	i = type_translate_to_int(GRETL_TYPE_BUNDLE);
+	break;
+    case ARRAY:
+	i = type_translate_to_int(GRETL_TYPE_ARRAY);
+	break;
+    case LIST:
+	i = type_translate_to_int(GRETL_TYPE_LIST);
+	break;
+    default:
+	break;
+    }
+	
+    ret->v.xval = i;
 
     return ret;
 }
@@ -8122,6 +8160,8 @@ static NODE *type_string_node (NODE *n, parser *p)
 		s = "bundle";
 	    } else if (t == 6) {
 		s = "array";
+	    } else if (t == 7) {
+		s = "list";
 	    }
 
 	    ret->v.str = gretl_strdup(s);
@@ -13747,7 +13787,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_OBSNUM:
     case F_ISDISCR:
     case F_ISNULL:
-    case F_TYPEOF:
     case F_ISSTRING:
     case F_STRLEN:
     case F_NLINES:
@@ -13756,6 +13795,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = object_status(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 1, STR, l, p);
+	}
+	break;
+    case F_TYPEOF:
+	if (l->t == STR) {
+	    ret = object_status(l, t->t, p);
+	} else {
+	    ret = generic_typeof_node(l, p);
 	}
 	break;
     case F_NELEM:
