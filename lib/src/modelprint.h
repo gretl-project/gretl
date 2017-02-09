@@ -34,6 +34,7 @@ struct model_coeff_ {
     double slope;
     double lo;
     double hi;
+    int show_tval;
     int show_pval;
     int df_pval;
     int multi;

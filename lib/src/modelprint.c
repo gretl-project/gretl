@@ -76,6 +76,7 @@ void model_coeff_init (model_coeff *mc)
     mc->pval = NADBL;
     mc->slope = NADBL; 
     mc->lo = mc->hi = NADBL;
+    mc->show_tval = 1;
     mc->show_pval = 1;
     mc->df_pval = 0;
     mc->multi = 0;
@@ -3512,6 +3513,14 @@ prepare_model_coeff (const MODEL *pmod, const DATASET *dset,
 	mc->se = pmod->sderr[i];
     }
 
+    if (pmod->ci == DURATION && i > 0 && !strcmp(mc->name, "sigma")) {
+	mc->tval = NADBL;
+	mc->pval = NADBL;
+	mc->show_tval = 0;
+	mc->show_pval = 0;
+	return gotnan;
+    }
+
     if (!na(mc->b) && !na(mc->se) && mc->se > 0.0) {
 	mc->tval = mc->b / mc->se;
 	if (xna(mc->tval)) {
@@ -3552,11 +3561,11 @@ static void rtf_print_double (double xx, PRN *prn)
     xx = screen_zero(xx);
 
     if (xx < 0 && gretl_print_has_minus(prn)) {
-	sprintf(numstr, "%.*g", get_gretl_digits(), fabs(xx));
+	sprintf(numstr, "%#.*g", get_gretl_digits(), fabs(xx));
 	gretl_fix_exponent(numstr);
 	pprintf(prn, " \\qc −%s\\cell", numstr);
     } else {
-	sprintf(numstr, "%.*g", get_gretl_digits(), xx);
+	sprintf(numstr, "%#.*g", get_gretl_digits(), xx);
 	gretl_fix_exponent(numstr);
 	pprintf(prn, " \\qc %s\\cell", numstr);
     }
@@ -3599,6 +3608,8 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 	} else {
 	    pprintf(prn, " \\qc %.4f\\cell", mc->tval);
 	}
+    } else if (!mc->show_tval) {
+	pputs(prn, " \\qc \\cell");
     } else {
 	pprintf(prn, " \\qc %s\\cell", A_("undefined"));
     }
@@ -3628,6 +3639,8 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 		pputs(prn, " \\ql \\cell");
 	    }
 	} 
+    } else {
+	pputs(prn, " \\qc \\cell \\ql \\cell");
     }
 
  rtf_finish:
@@ -3663,6 +3676,8 @@ static void csv_print_coeff (const model_coeff *mc, PRN *prn)
 
     if (!na(mc->tval)) {
 	pprintf(prn, "%c%.15g", d, mc->tval);
+    } else if (!mc->show_tval) {
+	pputs(prn, "%c\n");
     } else {
 	pprintf(prn, "%c\"%s\"\n", d, A_("undefined"));
     }

@@ -626,7 +626,11 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	}
 	/* t-ratio */
 	if (na(mc->tval)) {
-	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+	    if (mc->show_tval) {
+		pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+	    } else {
+		pprintf(prn, "\\multicolumn{1}{c}{}");
+	    }
 	} else {
 	    sprintf(fmt, "$%s$", colspec[2]);
 	    pprintf(prn, fmt, mc->tval);
@@ -741,7 +745,11 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
 	}
 
 	if (na(mc->tval)) {
-	    sprintf(col3, "\\multicolumn{2}{c}{\\rm %s}", A_("undefined"));
+	    if (mc->show_tval) {
+		sprintf(col3, "\\multicolumn{2}{c}{\\rm %s}", A_("undefined"));
+	    } else {
+		strcpy(col3, "\\multicolumn{2}{c}{}");
+	    }
 	} else {
 	    tex_rl_float(mc->tval, col3, 4);
 	}
