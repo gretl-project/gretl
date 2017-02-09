@@ -1651,6 +1651,13 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_initvals(setarg, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
 	    return set_matmask(setarg, dset, prn);
+	} else if (!strcmp(setobj, "gretl_digits")) {
+	    if (gretl_function_depth() > 0) {
+		pprintf(prn, "'%s': cannot be set inside a function\n");
+		return E_INVARG;
+	    } else {
+		return set_gretl_digits(atoi(setarg));
+	    }
 	} else if (!strcmp(setobj, "echo")) {
 	    return set_echo_status(setarg);
 	} else if (!strcmp(setobj, "verbose")) {

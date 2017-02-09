@@ -4333,7 +4333,7 @@ int fractint (int varno, int order, const DATASET *dset,
     return err;
 }
 
-static void printf15 (double x, PRN *prn)
+static void printf15 (double x, int d, PRN *prn)
 {
     if (na(x)) {
 	pputc(prn, ' ');
@@ -4341,9 +4341,9 @@ static void printf15 (double x, PRN *prn)
     } else {
 	pputc(prn, ' ');
 #if 1
-	pprintf(prn, "%#14.5g", x);
+	pprintf(prn, "%#14.*g", d, x);
 #else
-	gretl_print_fullwidth_double(x, 5, prn);
+	gretl_print_fullwidth_double(x, d, prn);
 #endif	
     }
 }
@@ -4557,12 +4557,16 @@ void print_summary (const Summary *summ,
 		    const DATASET *dset,
 		    PRN *prn)
 {
+    int d = get_gretl_digits();
     int len, maxlen = 0;
     int i, vi;
 
     if (summ->list == NULL || summ->list[0] == 0) {
 	return;
     }
+
+    /* backward compatibility */
+    d = d > 5 ? 5 : d;
 
     if (summ->weight_var > 0) {
 	pputc(prn, '\n');
@@ -4606,10 +4610,10 @@ void print_summary (const Summary *summ,
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
-	    printf15(summ->mean[i], prn);
-	    printf15(summ->sd[i], prn);
-	    printf15(summ->low[i], prn);
-	    printf15(summ->high[i], prn);
+	    printf15(summ->mean[i], d, prn);
+	    printf15(summ->sd[i], d, prn);
+	    printf15(summ->low[i], d, prn);
+	    printf15(summ->high[i], d, prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -4645,10 +4649,10 @@ void print_summary (const Summary *summ,
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
-	    printf15(summ->mean[i], prn);
-	    printf15(summ->median[i], prn);
-	    printf15(summ->low[i], prn);
-	    printf15(summ->high[i], prn);
+	    printf15(summ->mean[i], d, prn);
+	    printf15(summ->median[i], d, prn);
+	    printf15(summ->low[i], d, prn);
+	    printf15(summ->high[i], d, prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -4673,10 +4677,10 @@ void print_summary (const Summary *summ,
 		cv = fabs(summ->sd[i] / summ->mean[i]);
 	    } 
 
-	    printf15(summ->sd[i], prn);
-	    printf15(cv, prn);
-	    printf15(summ->skew[i], prn);
-	    printf15(summ->xkurt[i], prn);
+	    printf15(summ->sd[i], d, prn);
+	    printf15(cv, d, prn);
+	    printf15(summ->skew[i], d, prn);
+	    printf15(summ->xkurt[i], d, prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -4709,10 +4713,10 @@ void print_summary (const Summary *summ,
 	    vi = summ->list[i + 1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
-		printf15(summ->perc05[i], prn);
-		printf15(summ->perc95[i], prn);
+		printf15(summ->perc05[i], d, prn);
+		printf15(summ->perc95[i], d, prn);
 	    }
-	    printf15(summ->iqr[i], prn);
+	    printf15(summ->iqr[i], d, prn);
 	    pprintf(prn, "%15d", (int) summ->misscount[i]);
 	    pputc(prn, '\n');
 	}

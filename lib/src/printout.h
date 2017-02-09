@@ -19,7 +19,6 @@
 
 /* printout.h for gretl */
 
-#define GRETL_DIGITS 6
 #define GRETL_MP_DIGITS 12
 #define NAMETRUNC 18
 
@@ -96,6 +95,10 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn);
 void gretl_sprint_fullwidth_double (double x, int digits, char *targ, PRN *prn);
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
+
+int set_gretl_digits (int d);
+
+int get_gretl_digits (void);
 
 void gretl_print_value (double x, PRN *prn);
 

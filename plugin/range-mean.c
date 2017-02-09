@@ -187,6 +187,7 @@ int range_mean_graph (int vnum, DATASET *dset,
     char startdate[OBSLEN], enddate[OBSLEN];
     int t1 = dset->t1;
     int t2 = dset->t2;
+    int digits;
     int err = 0;
 
     rm_adjust_sample(vnum, dset, &t1, &t2);
@@ -224,6 +225,8 @@ int range_mean_graph (int vnum, DATASET *dset,
 	pprintf(prn, "%30s%16s\n", _("range"), _("mean"));
     }
 
+    digits = get_gretl_digits();
+
     /* find sub-sample means and ranges */
 
     for (t=0; t<m; t++) {
@@ -254,8 +257,8 @@ int range_mean_graph (int vnum, DATASET *dset,
 	    ntodate(enddate, end, dset);
 	    len = pprintf(prn, "%s - %s", startdate, enddate);
 	    bufspace(20 - len, prn);
-	    gretl_print_fullwidth_double(range, GRETL_DIGITS, prn);
-	    gretl_print_fullwidth_double(mean, GRETL_DIGITS, prn);
+	    gretl_print_fullwidth_double(range, digits, prn);
+	    gretl_print_fullwidth_double(mean, digits, prn);
 	    pputc(prn, '\n');
 	}
     }

@@ -35,7 +35,7 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define RTFTAB "\\par \\ql \\tab "
 
-#define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : GRETL_DIGITS)
+#define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : get_gretl_digits())
 
 #define FDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : 5)
 
@@ -139,7 +139,7 @@ static void print_model_stats_table (const double *stats,
 				     int ns, PRN *prn)
 {
     char tmp1[32], tmp2[32];
-    int i;
+    int i, d;
 
     if (plain_format(prn)) {
 	pputc(prn, '\n');
@@ -148,9 +148,11 @@ static void print_model_stats_table (const double *stats,
 	pputs(prn, "\\begin{tabular}{lr@{.}l}\n");
     }
 
+    d = get_gretl_digits();
+
     for (i=0; i<ns; i++) {
 	if (plain_format(prn)) {
-	    plain_print_double(tmp1, GRETL_DIGITS, stats[i], prn);
+	    plain_print_double(tmp1, d, stats[i], prn);
 	    pprintf(prn, "  %s = %s\n", names[i], tmp1);
 	} else if (tex_format(prn)) {
 	    tex_escape_special(tmp1, names[i]);
@@ -181,6 +183,7 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 {
     const char *varstr = N_("Unconditional error variance");
     double v = pmod->sigma * pmod->sigma;
+    int d = get_gretl_digits();
 
     ensure_vsep(prn);
 
@@ -188,7 +191,7 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 	double LR = gretl_model_get_double(pmod, "garch_LR");
 	int LRdf = gretl_model_get_int(pmod, "garch_LR_df");
 	
-	pprintf(prn, "%s = %.*g\n", _(varstr), GRETL_DIGITS, v);
+	pprintf(prn, "%s = %.*g\n", _(varstr), d, v);
 	if (pmod->opt & OPT_Z) {
 	    pprintf(prn, "%s\n", _("The residuals are standardized"));
 	}
@@ -222,6 +225,7 @@ static void print_intreg_info (const MODEL *pmod,
     int nl = gretl_model_get_int(pmod, "n_left");
     int nr = gretl_model_get_int(pmod, "n_right");
     int nb = -1, np = -1, nfp = -1;
+    int digits = get_gretl_digits();
     double llim = 0, rlim = NADBL;
     double se_sigma;
 
@@ -263,7 +267,7 @@ static void print_intreg_info (const MODEL *pmod,
     se_sigma = gretl_model_get_double(pmod, "se_sigma");
 
     if (plain_format(prn)) {  
-	pprintf(prn, "%s = %.*g", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	pprintf(prn, "%s = %.*g", _("sigma"), digits, pmod->sigma);
 	if (!na(se_sigma)) {
 	    pprintf(prn, " (%g)", se_sigma);
 	}
@@ -1172,6 +1176,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
     const char *head = N_("Weak instrument test");
     double F = gretl_model_get_double(pmod, "stage1-F");
     double g = gretl_model_get_double(pmod, "gmin");
+    int digits = get_gretl_digits();
     int got_critvals = 0;
     int dfn = 0, dfd = 0;
 
@@ -1194,7 +1199,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 
 	if (plain_format(prn)) {
 	    pprintf(prn, "  %s (%d, %d) = %.*g\n", _("First-stage F-statistic"),
-		    dfn, dfd, GRETL_DIGITS, F);
+		    dfn, dfd, digits, F);
 	} else if (tex_format(prn)) {
 	    char x1str[32];
 
@@ -1208,7 +1213,7 @@ static void maybe_print_weak_insts_test (const MODEL *pmod, PRN *prn)
 	/* got minimum eigenvalue test statistic */
 	if (plain_format(prn)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Cragg-Donald minimum eigenvalue"),
-		    GRETL_DIGITS, g);
+		    digits, g);
 	} else if (tex_format(prn)) {
 	    char x1str[32];
 
@@ -3547,11 +3552,11 @@ static void rtf_print_double (double xx, PRN *prn)
     xx = screen_zero(xx);
 
     if (xx < 0 && gretl_print_has_minus(prn)) {
-	sprintf(numstr, "%.*g", GRETL_DIGITS, fabs(xx));
+	sprintf(numstr, "%.*g", get_gretl_digits(), fabs(xx));
 	gretl_fix_exponent(numstr);
 	pprintf(prn, " \\qc −%s\\cell", numstr);
     } else {
-	sprintf(numstr, "%.*g", GRETL_DIGITS, xx);
+	sprintf(numstr, "%.*g", get_gretl_digits(), xx);
 	gretl_fix_exponent(numstr);
 	pprintf(prn, " \\qc %s\\cell", numstr);
     }
@@ -4252,7 +4257,7 @@ static int plain_print_aux_coeffs (const double *b,
 	for (j=0; j<4; j++) {
 	    if (j < 2) {
 		/* coeff, standard error */
-		d = GRETL_DIGITS;
+		d = get_gretl_digits();
 		vals[i][j].x = (j==0)? b[i] : se[i];
 	    } else if (j == 2) {
 		/* t-ratio */
@@ -4565,6 +4570,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     double *xb = NULL;
     double *xse = NULL;
     int seppos = -1, cblock = 0;
+    int coeff_digits;
     int lmax[4] = {0};
     int rmax[4] = {0};
     int w[4], addoff[4] = {0};
@@ -4644,6 +4650,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 	}
     }
 
+    coeff_digits = get_gretl_digits();
+
     for (i=0; i<nc; i++) {
 	if (xna(b[i])) {
 	    err = E_NAN;
@@ -4672,12 +4680,12 @@ static int plain_print_coeffs (const MODEL *pmod,
 	for (j=0; j<ncols; j++) {
 	    if (j < 2) {
 		/* coeff, standard error or lower c.i. limit */
-		d = GRETL_DIGITS;
+		d = coeff_digits;
 		vals[i][j].x = (j==0)? b[i] : se[i];
 	    } else if (j == 2) {
 		/* t-ratio or upper c.i. limit */
 		if (intervals) {
-		    d = GRETL_DIGITS;
+		    d = coeff_digits;
 		    vals[i][j].x = se[i + nc];
 		} else {
 		    d = 4;

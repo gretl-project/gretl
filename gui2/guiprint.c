@@ -552,9 +552,10 @@ static void printf_rtf (double x, PRN *prn, int endrow)
     }
 
     if (endrow) {
-	pprintf(prn, "\\qc %#.*g\\cell\\intbl \\row\n", GRETL_DIGITS, x);
+	pprintf(prn, "\\qc %#.*g\\cell\\intbl \\row\n",
+		get_gretl_digits(), x);
     } else {
-	pprintf(prn, "\\qc %#.*g\\cell", GRETL_DIGITS, x);
+	pprintf(prn, "\\qc %#.*g\\cell", get_gretl_digits(), x);
     }
 }
 
@@ -1667,7 +1668,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     double maxerr, tval = 0;
     double conf = 100 * (1 - fr->alpha);
     char tmp[128];
-    int t;
+    int d, t;
 
     if (fr->asymp) {
 	tval = normal_critval(fr->alpha / 2);
@@ -1694,6 +1695,8 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    A_("std. error"),
 	    tmp);
 
+    d = get_gretl_digits();
+
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
 	maxerr = tval * fr->sderr[t];
@@ -1705,8 +1708,8 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	} else {
 	    maxerr = tval * fr->sderr[t];
 	    pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n", 
-		    GRETL_DIGITS, fr->fitted[t] - maxerr, 
-		    GRETL_DIGITS, fr->fitted[t] + maxerr);
+		    d, fr->fitted[t] - maxerr,
+		    d, fr->fitted[t] + maxerr);
 	}
     }
 
@@ -1798,6 +1801,8 @@ static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 static void 
 rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
+    int d = get_gretl_digits();
+
     pprintf(prn, "\\qc %s\\cell", cf->names[i]);
 
     printf_rtf(cf->coeff[i], prn, 0);
@@ -1806,8 +1811,8 @@ rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 	pprintf(prn, "\\qc %s\\cell ", A_("undefined"));
     } else {
 	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ", 
-		GRETL_DIGITS, cf->coeff[i] - cf->maxerr[i], 
-		GRETL_DIGITS, cf->coeff[i] + cf->maxerr[i]);
+		d, cf->coeff[i] - cf->maxerr[i], 
+		d, cf->coeff[i] + cf->maxerr[i]);
     }
     pputs(prn, " \\intbl \\row\n");
 }

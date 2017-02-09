@@ -1959,7 +1959,7 @@ static int print_restricted_estimates (MODEL *pmod,
 
     pputc(prn, '\n');
     pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 
-	    GRETL_DIGITS, sqrt(s2));
+	    get_gretl_digits(), sqrt(s2));
     
     strings_array_free(names, nc);
     free(se);

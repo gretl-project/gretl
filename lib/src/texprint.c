@@ -272,6 +272,7 @@ char *tex_modify_exponent (char *s)
 
 char *tex_rl_double (double x, char *s)
 {
+    int d = get_gretl_digits();
     char *p;
 
     if (na(x)) {
@@ -281,9 +282,9 @@ char *tex_rl_double (double x, char *s)
     x = screen_zero(x);
 
     if (x < 0) {
-	sprintf(s, "$-$%#.*g", GRETL_DIGITS, -x);
+	sprintf(s, "$-$%#.*g", d, -x);
     } else {
-	sprintf(s, "%#.*g", GRETL_DIGITS, x);
+	sprintf(s, "%#.*g", d, x);
     }
 
     if (strchr(s, 'e') != NULL) {
@@ -363,6 +364,8 @@ static char *tex_sprint_math_double_digits (double x, char *s, int dig)
 
 char *tex_sprint_double (double x, char *s)
 {
+    int d = get_gretl_digits();
+
     if (na(x)) {
 	return strcpy(s, " ");
     }
@@ -370,9 +373,9 @@ char *tex_sprint_double (double x, char *s)
     x = screen_zero(x);
 
     if (x < 0.0) {
-	sprintf(s, "$-$%#.*g", GRETL_DIGITS, -x);
+	sprintf(s, "$-$%#.*g", d, -x);
     } else {
-	sprintf(s, "%#.*g", GRETL_DIGITS, x);
+	sprintf(s, "%#.*g", d, x);
     }
 
     if (strchr(s, 'e') != NULL) {

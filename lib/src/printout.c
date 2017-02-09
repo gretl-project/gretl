@@ -32,6 +32,8 @@
 
 #define PDEBUG 0
 
+static int gretl_digits = 6;
+
 void bufspace (int n, PRN *prn)
 {
     while (n-- > 0) {
@@ -53,7 +55,7 @@ static void printxx (const double xx, char *str, int ci)
 {
     int d = (ci == PRINT)? 8 : 6;
 
-    sprintf(str, "%#*.*g", d, GRETL_DIGITS, xx);
+    sprintf(str, "%#*.*g", d, gretl_digits, xx);
 }
 
 static void covhdr (PRN *prn)
@@ -995,9 +997,28 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     pputs(prn, final);
 }
 
+int get_gretl_digits (void)
+{
+    return gretl_digits;
+}
+
+int set_gretl_digits (int d)
+{
+    if (d > 2 && d <= 6) {
+	gretl_digits = d;
+	return 0;
+    } else {
+	/* in the contexts where we're using @gretl_digits
+	   we don't want it to be less than 3 or greater
+	   than 6
+	*/
+	return E_INVARG;
+    }
+}
+
 void gretl_print_value (double x, PRN *prn)
 {
-    gretl_print_fullwidth_double(x, GRETL_DIGITS, prn);  
+    gretl_print_fullwidth_double(x, gretl_digits, prn);
 }
 
 /**
@@ -1270,7 +1291,7 @@ static int fit_resid_head (const FITRESID *fr,
 	    pprintf(prn, "%s\n", _("The residuals are standardized"));
 	} else if (!na(fr->sigma)) {
 	    pprintf(prn, "%s = %.*g\n", _("Standard error of the regression"), 
-		    GRETL_DIGITS, fr->sigma);
+		    gretl_digits, fr->sigma);
 	}
     }
 
@@ -1414,9 +1435,9 @@ static void print_series_by_var (const DATASET *dset, int v, PRN *prn)
     }
 
     if (anyneg) {
-	sprintf(format, "%% #.%dg  ", GRETL_DIGITS);
+	sprintf(format, "%% #.%dg  ", gretl_digits);
     } else {
-	sprintf(format, "%%#.%dg  ", GRETL_DIGITS);
+	sprintf(format, "%%#.%dg  ", gretl_digits);
     }
 
     for (t=dset->t1; t<=dset->t2; t++) {
@@ -1426,11 +1447,11 @@ static void print_series_by_var (const DATASET *dset, int v, PRN *prn)
 	x = z[t];
 
 	if (na(x)) {
-	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NA");
+	    sprintf(str, "%*s  ", gretl_digits + 1 + anyneg, "NA");
 	} else if (isnan(x)) {
-	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NaN");
+	    sprintf(str, "%*s  ", gretl_digits + 1 + anyneg, "NaN");
 	} else if (isinf(x)) {
-	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, 
+	    sprintf(str, "%*s  ", gretl_digits + 1 + anyneg,
 		    (x < 0)? "-inf" : "inf");
 	} else {
 	    sprintf(str, format, x);
