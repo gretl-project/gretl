@@ -1243,15 +1243,17 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
 #else /* ! MS Windows */
 
 static GPT_SPEC *copyspec;
-static int cb_image_mono;
+static gboolean cb_image_mono;
 
 /* Here we're just posting the information that an image
-   should be available for pasting */
+   should be available for pasting (and also recording
+   if the user wanted it to be monochrome).
+*/
 
 static void set_plot_for_copy (png_plot *plot)
 {
     copyspec = plot->spec;
-    cb_image_mono = plot->spec->flags & GPT_MONO;
+    cb_image_mono = copyspec->flags & GPT_MONO ? 1 : 0;
     flag_image_available();
 }
 
@@ -1266,15 +1268,17 @@ int write_plot_for_copy (int target)
     char outname[FILENAME_MAX];
     char inpname[FILENAME_MAX];
     char setterm[MAXLEN];
+    GptFlags saveflags;
     double savescale;
     int saveterm;
     int err = 0;
 
-    if (copyspec == NULL) {
+    if (spec == NULL) {
 	fprintf(stderr, "retrieve_plot_for_copy: no data\n");
 	return 1;
     }
 
+    saveflags = spec->flags;
     saveterm = spec->termtype;
     savescale = spec->scale;
     
@@ -1293,6 +1297,10 @@ int write_plot_for_copy (int target)
 	fprintf(stderr, "write_plot_for_copy: unsupported type\n");
 	return 1;
     }
+
+    if (cb_image_mono) {
+	spec->flags |= GPT_MONO;
+    }
     
     get_full_term_string(spec, setterm);
 
@@ -1300,6 +1308,7 @@ int write_plot_for_copy (int target)
     build_path(outname, gretl_dotdir(), "gptout.tmp", NULL);
     err = revise_plot_file(spec, inpname, outname, setterm);
 
+    spec->flags = saveflags;
     spec->termtype = saveterm;
     spec->scale = savescale;
 

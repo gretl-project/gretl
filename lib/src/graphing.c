@@ -1122,8 +1122,13 @@ static const char *real_png_term_line (PlotType ptype,
     write_gnuplot_font_string(font_string, ptype, specfont, scale);
     write_png_size_string(size_string, ptype, flags, scale);
 
-    sprintf(png_term_line, "set term pngcairo%s%s noenhanced",
-	    font_string, size_string);
+    if (flags & GPT_MONO) {
+	sprintf(png_term_line, "set term pngcairo mono%s%s noenhanced",
+		font_string, size_string);
+    } else {
+	sprintf(png_term_line, "set term pngcairo%s%s noenhanced",
+		font_string, size_string);
+    }
     strcat(png_term_line, "\nset encoding utf8");
 
 #if GP_DEBUG
