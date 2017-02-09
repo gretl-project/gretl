@@ -4340,11 +4340,18 @@ static void printf15 (double x, int d, PRN *prn)
 	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
     } else {
 	pputc(prn, ' ');
-#if 1
 	pprintf(prn, "%#14.*g", d, x);
-#else
-	gretl_print_fullwidth_double(x, d, prn);
-#endif	
+    }
+}
+
+static void printf11 (double x, int d, PRN *prn)
+{
+    if (na(x)) {
+	pputc(prn, ' ');
+	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 10), _("NA"));
+    } else {
+	pputc(prn, ' ');
+	pprintf(prn, "%#10.*g", d, x);
     }
 }
 
@@ -4596,24 +4603,30 @@ void print_summary (const Summary *summ,
 	/* the "simple" option */
 	const char *h[] = {
 	    N_("Mean"),
-	    N_("Std. Dev."),
-	    N_("Minimum"),
-	    N_("Maximum"),
+	    N_("Median"),
+	    /* TRANSLATORS: 'S.D.' means Standard Deviation */
+	    N_("S.D."),
+	    N_("Min"),
+	    N_("Max"),
 	};
 
-	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
-		UTF_WIDTH(_(h[0]), 15), _(h[0]),
-		UTF_WIDTH(_(h[0]), 15), _(h[1]),
-		UTF_WIDTH(_(h[0]), 15), _(h[2]),
-		UTF_WIDTH(_(h[0]), 15), _(h[3]));
+	d = 3; /* is this OK? */
+
+	pprintf(prn, "%*s%*s%*s%*s%*s%*s\n", len, " ",
+		UTF_WIDTH(_(h[0]), 11), _(h[0]),
+		UTF_WIDTH(_(h[1]), 11), _(h[1]),
+		UTF_WIDTH(_(h[2]), 11), _(h[2]),
+		UTF_WIDTH(_(h[3]), 11), _(h[3]),
+		UTF_WIDTH(_(h[4]), 11), _(h[4]));
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
-	    printf15(summ->mean[i], d, prn);
-	    printf15(summ->sd[i], d, prn);
-	    printf15(summ->low[i], d, prn);
-	    printf15(summ->high[i], d, prn);
+	    printf11(summ->mean[i], d, prn);
+	    printf11(summ->median[i], d, prn);
+	    printf11(summ->sd[i], d, prn);
+	    printf11(summ->low[i], d, prn);
+	    printf11(summ->high[i], d, prn);
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
@@ -5221,6 +5234,9 @@ Summary *get_summary (const int *list, const DATASET *dset,
 			  pskew, pkurt, 0);
 	}
 
+	/* included in both simple and full variants */
+	s->median[i] = gretl_median(t1, t2, x);
+
 	if (!(opt & OPT_S)) {
 	    int err;
 
@@ -5231,7 +5247,6 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(t1, t2, x);
 	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
 	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
 	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
