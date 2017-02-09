@@ -520,7 +520,7 @@ void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 {
     const char *obs;
 
-    if (pdinfo->markers) { 
+    if (pdinfo->markers) {
 	obs = pdinfo->S[t];
     } else {
 	char tmp[OBSLEN]; 
@@ -552,7 +552,7 @@ static void printf_rtf (double x, PRN *prn, int endrow)
     }
 
     if (endrow) {
-	pprintf(prn, "\\qc %#.*g\\cell\\intbl \\row\n",
+	pprintf(prn, "\\qc %#.*g\\cell \\intbl \\row\n",
 		get_gretl_digits(), x);
     } else {
 	pprintf(prn, "\\qc %#.*g\\cell", get_gretl_digits(), x);
@@ -569,16 +569,69 @@ static void printk_rtf (int k, PRN *prn, int endrow)
 }
 
 #define SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                   "\\cellx1600\\cellx3200\\cellx4800\\cellx6400" \
-                   "\\cellx8000\n"
+                  "\\cellx1600\\cellx3200\\cellx4800\\cellx6400" \
+                  "\\cellx8000\n"
 
 #define VAR_SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                       "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
 
+#define SUMM_ROW_S  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                    "\\cellx1600\\cellx2800\\cellx4000\\cellx5200" \
+                    "\\cellx6400\\cellx7200\n"
+
 static void 
-rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[128];
+    int save_digits = get_gretl_digits();
+    int i, vi;
+
+    ntodate(date1, pdinfo->t1, pdinfo);
+    ntodate(date2, pdinfo->t2, pdinfo);
+
+    sprintf(tmp, A_("Summary Statistics, using the observations %s - %s"),
+	    date1, date2);
+
+    pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
+    
+    if (summary_has_missing_values(summ)) {
+	strcpy(tmp, A_("(missing values were skipped)"));
+	pprintf(prn, "%s\\par\n\n", tmp); /* FIXME */
+    }
+    pprintf(prn, "{" SUMM_ROW_S
+	    "\\intbl \\qc %s\\cell", A_("Variable"));
+
+    pprintf(prn, 
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n",
+	    A_("Mean"), A_("Median"), A_("S.D."), A_("Min"), A_("Max"));
+
+    set_gretl_digits(3);
+
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
+	pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
+	printf_rtf(summ->mean[i], prn, 0);
+	printf_rtf(summ->median[i], prn, 0);
+	printf_rtf(summ->sd[i], prn, 0);
+	printf_rtf(summ->low[i], prn, 0);
+	printf_rtf(summ->high[i], prn, 1);
+    }
+
+    set_gretl_digits(save_digits);
+
+    pputs(prn, "}}\n");
+}
+
+static void 
+rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+{
+    char date1[OBSLEN], date2[OBSLEN], tmp[128];
+    int save_digits = get_gretl_digits();
     int i, vi;
 
     ntodate(date1, pdinfo->t1, pdinfo);
@@ -601,6 +654,10 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	}
 	pprintf(prn, "{" SUMM_ROW
 		"\\intbl \\qc %s\\cell", A_("Variable"));
+    }
+
+    if (save_digits > 5) {
+	set_gretl_digits(5);
     }
 
     pprintf(prn, 
@@ -665,6 +722,8 @@ rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	printf_rtf(summ->iqr[i], prn, 0);
 	printk_rtf(summ->misscount[i], prn, 1);
     }
+
+    set_gretl_digits(save_digits);
 
     pputs(prn, "}}\n");
 }
@@ -893,10 +952,62 @@ static void printk_tex (int k, PRN *prn, int endrow)
 }
 
 static void 
-texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char pt = get_local_decpoint();
     char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
+    int save_digits = get_gretl_digits();
+    int i, vi;
+
+    ntodate(date1, pdinfo->t1, pdinfo);
+    ntodate(date2, pdinfo->t2, pdinfo);
+
+    sprintf(tmp, A_("Summary Statistics, using the observations %s--%s"),
+	    date1, date2);
+
+    pprintf(prn, "\\begin{center}\n%s\\\\\n", tmp);
+    
+    if (summary_has_missing_values(summ)) {
+	pprintf(prn, "%s\\\\[8pt]\n\n", A_("(missing values were skipped)"));
+    } else {
+	pputs(prn, "\n\\vspace{8pt}\n\n");
+    }
+    pprintf(prn, "\\begin{tabular}{lr@{%c}lr@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
+	    pt, pt, pt, pt, pt);
+    pprintf(prn, "%s &", A_("Variable"));
+
+    pprintf(prn, " \\multicolumn{2}{c}{%s}\n"
+	    " & \\multicolumn{2}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s}\n"
+	    "   & \\multicolumn{2}{c}{%s}\n"
+	    "    & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
+	    A_("Mean"), A_("Median"), A_("S.D."), A_("Min"), A_("Max"));
+
+    set_gretl_digits(3);
+
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
+	tex_escape(vname, pdinfo->varname[vi]);
+	pprintf(prn, "%s & ", vname);
+	printf_tex(summ->mean[i], prn, 0);
+	printf_tex(summ->median[i], prn, 0);
+	printf_tex(summ->sd[i], prn, 0);
+	printf_tex(summ->low[i], prn, 0);
+	printf_tex(summ->high[i], prn, 1);
+	pputc(prn, '\n');
+    }
+
+    set_gretl_digits(save_digits);
+
+    pputs(prn, "\\end{tabular}\n\\end{center}\n");
+}
+
+static void 
+texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+{
+    char pt = get_local_decpoint();
+    char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
+    int save_digits = get_gretl_digits();
     int i, vi;
 
     ntodate(date1, pdinfo->t1, pdinfo);
@@ -923,6 +1034,10 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pprintf(prn, "\\begin{tabular}{lr@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
 		pt, pt, pt, pt);
 	pprintf(prn, "%s &", A_("Variable"));
+    }
+
+    if (save_digits > 5) {
+	set_gretl_digits(5);
     }
 
     pprintf(prn, " \\multicolumn{2}{c}{%s}\n"
@@ -1003,6 +1118,8 @@ texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	pputc(prn, '\n');
     }
 
+    set_gretl_digits(save_digits);
+
     pputs(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
@@ -1012,9 +1129,17 @@ void special_print_summary (const Summary *summ, const DATASET *pdinfo,
     set_alt_gettext_mode(prn);
 
     if (tex_format(prn)) {
-	texprint_summary(summ, pdinfo, prn);
+	if (summ->opt & OPT_S) {
+	    texprint_simple_summary(summ, pdinfo, prn);
+	} else {
+	    texprint_summary_full(summ, pdinfo, prn);
+	}
     } else if (rtf_format(prn)) {
-	rtfprint_summary(summ, pdinfo, prn);
+	if (summ->opt & OPT_S) {
+	    rtfprint_simple_summary(summ, pdinfo, prn);
+	} else {
+	    rtfprint_summary_full(summ, pdinfo, prn);
+	}
     }
 }
 

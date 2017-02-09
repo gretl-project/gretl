@@ -661,6 +661,29 @@ static const char *selected_varname (void)
     return dataset->varname[mdata_active_var()];
 }
 
+static int get_summary_stats_option (gretlopt *popt)
+{
+    static int deflt = 0;
+    const char *opts[] = {
+	N_("Show main statistics"),
+	N_("Show full statistics")
+    };
+    int resp;
+    
+    resp = radio_dialog(NULL, NULL, opts, 2, deflt,
+			0, mdata->main);
+
+    if (resp >= 0) {
+	deflt = resp;
+    }
+
+    if (resp == 0) {
+	*popt = OPT_S;
+    }
+
+    return resp;
+}
+
 void do_menu_op (int ci, const char *liststr, gretlopt opt)
 {
     PRN *prn;
@@ -676,14 +699,25 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	flagstr = print_flags(opt, ci);
     }
 
+    if (ci == ALL_SUMMARY || ci == SUMMARY) {
+	/* all series or listed series */
+	int resp = get_summary_stats_option(&opt);
+
+	if (resp == GRETL_CANCEL) return;
+    }
+
     if (ci == ALL_CORR) {
 	/* correlation matrix, all series */
 	lib_command_strcpy("corr");
 	strcat(title, _("correlation matrix"));
 	ci = CORR;
     } else if (ci == ALL_SUMMARY) {
-	/* summary stats, all series */
-	lib_command_strcpy("summary");
+	/* summary stats, all series or list */
+	if (opt & OPT_S) {
+	    lib_command_strcpy("summary --simple");
+	} else {
+	    lib_command_strcpy("summary");
+	}
 	strcat(title, _("summary statistics"));
 	ci = SUMMARY;
     } else if (ci == VAR_SUMMARY) {
@@ -722,7 +756,11 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	    vsize = 340;
 	    break;
 	case SUMMARY:
-	    lib_command_sprintf("summary%s", liststr);
+	    if (opt & OPT_S) {
+		lib_command_sprintf("summary%s --simple", liststr);
+	    } else {
+		lib_command_sprintf("summary%s", liststr);
+	    }
 	    strcat(title, _("summary statistics"));
 	    break;
 	default:
@@ -771,7 +809,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 				  prn, &err);
 	break;
     case SUMMARY:
-	obj = get_summary(libcmd.list, dataset, OPT_NONE, prn, &err);
+	obj = get_summary(libcmd.list, dataset, opt, prn, &err);
 	if (!err) {
 	    print_summary(obj, dataset, prn);
 	}
