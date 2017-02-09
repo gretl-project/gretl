@@ -1243,6 +1243,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
 #else /* ! MS Windows */
 
 static GPT_SPEC *copyspec;
+static int cb_image_mono;
 
 /* Here we're just posting the information that an image
    should be available for pasting */
@@ -1250,6 +1251,7 @@ static GPT_SPEC *copyspec;
 static void set_plot_for_copy (png_plot *plot)
 {
     copyspec = plot->spec;
+    cb_image_mono = plot->spec->flags & GPT_MONO;
     flag_image_available();
 }
 
@@ -3831,12 +3833,16 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
 				  plot->spec, plot->shell);
-    } 
+    } else if (!strcmp(menu_string, _("Copy to clipboard"))) {
+#ifdef G_OS_WIN32
+	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
+#else
+	set_plot_for_copy(plot);
+#endif
+    }
 
 #ifdef G_OS_WIN32
-    else if (!strcmp(menu_string, _("Copy to clipboard"))) {
-	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
-    } else if (!strcmp(menu_string, _("Print"))) {
+    else if (!strcmp(menu_string, _("Print"))) {
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
 #endif    
@@ -4097,13 +4103,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	repaint_png(plot, PNG_UNZOOM);
     } else if (!strcmp(item_string, _("Replace full view"))) {
 	zoom_replaces_plot(plot);
-    }
-#ifndef G_OS_WIN32
-    else if (!strcmp(item_string, _("Copy to clipboard"))) {
-	set_plot_for_copy(plot);
-    }
-#endif 
-    else if (!strcmp(item_string, _("Display PDF"))) { 
+    } else if (!strcmp(item_string, _("Display PDF"))) { 
 	graph_display_pdf(plot->spec);
     } else if (!strcmp(item_string, _("OLS estimates"))) { 
 	if (plot->spec != NULL) {
@@ -4293,8 +4293,8 @@ static void build_plot_menu (png_plot *plot)
 	    colorpop = 1;
 	}
 #else
-	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...")) {
-	    /* FIXME clipboard */
+	if (!strcmp(plot_items[i], "Copy to clipboard") ||
+	    !strcmp(plot_items[i], "Save as Windows metafile (EMF)...")) {
 	    colorpop = 1;
 	}
 #endif
