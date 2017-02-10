@@ -90,6 +90,7 @@ typedef enum {
 #define ROBUST_Z         "robust_z"
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
+#define STRSUB_ON        "string_subst"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
@@ -177,6 +178,7 @@ int gretl_messages_on (void);
 
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
+int gretl_strsub_on (void);
 
 void set_data_export_decimal_comma (int s);
 char get_data_export_decpoint (void);

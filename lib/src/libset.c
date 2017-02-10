@@ -73,7 +73,8 @@ enum {
     STATE_OPENMP_ON       = 1 << 19, /* using openmp */
     STATE_ROBUST_Z        = 1 << 20, /* use z- not t-score with HCCM/HAC */
     STATE_MWRITE_G        = 1 << 21, /* use %g format with mwrite() */
-    STATE_ECHO_SPACE      = 1 << 22  /* preserve vertical space in output */
+    STATE_ECHO_SPACE      = 1 << 22, /* preserve vertical space in output */
+    STATE_STRSUB_ON       = 1 << 23  /* string substitution activated */
 };    
 
 /* for values that really want a non-negative integer */
@@ -157,6 +158,7 @@ struct set_vars_ {
 			   !strcmp(s, USE_DCMT) || \
 			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, MWRITE_G) || \
+			   !strcmp(s, STRSUB_ON) || \
 			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
@@ -575,7 +577,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
-	STATE_SKIP_MISSING;
+	STATE_SKIP_MISSING | STATE_STRSUB_ON;
 #if defined(_OPENMP)
     if (openmp_by_default()) {
 	sv->flags |= STATE_OPENMP_ON;
@@ -681,6 +683,12 @@ int gretl_warnings_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, STATE_WARN_ON);
+}
+
+int gretl_strsub_on (void)
+{
+    if (check_for_state()) return 1;
+    return flag_to_bool(state, STATE_STRSUB_ON);
 }
 
 int gretl_debugging_on (void)
