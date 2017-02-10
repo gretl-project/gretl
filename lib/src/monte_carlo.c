@@ -297,7 +297,7 @@ static double controller_get_val (controller *clr,
 	} else {
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
 	} 
-    } else if (clr->expr != NULL) {
+    } else if (clr->expr != NULL && gretl_strsub_on()) {
 	int done = 0;
 
 	if (strchr(clr->expr, '@')) {
@@ -330,6 +330,9 @@ static double controller_get_val (controller *clr,
 	if (!*err && !done) {
 	    clr->val = generate_scalar(clr->expr, dset, err);
 	}
+    } else if (clr->expr != NULL) {
+	/* with no string substitution */
+	clr->val = generate_scalar(clr->expr, dset, err);
     }
 
 #if LOOP_DEBUG > 1
@@ -960,7 +963,10 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
     int *list = NULL;
     int err = 0;
 
-    if (strchr(loop->eachname, '$') != NULL) {
+    if (!gretl_strsub_on()) {
+	/* not doing string substitution */
+	list = get_list_by_name(loop->eachname);
+    } else if (strchr(loop->eachname, '$') != NULL) {
 	/* $-string substitution required */
 	char lname[VNAMELEN];
 
@@ -1059,7 +1065,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     while (isspace(*s)) s++;
     tailstrip(s);
 
-    if (*s == '@') {
+    if (gretl_strsub_on() && *s == '@') {
 	/* tricksy: got a list-name that needs string subst? */
 	*loop->eachname = '\0';
 	strncat(loop->eachname, s, VNAMELEN - 1);
@@ -1563,7 +1569,11 @@ static void controller_init (controller *clr)
     clr->expr = NULL;
 #if SAVE_TOPGEN
     clr->genr = NULL;
-    clr->subst = -1;
+    if (gretl_strsub_on()) {
+	clr->subst = -1;
+    } else {
+	clr->subst = 0;
+    }
 #endif
 }
 
@@ -1603,8 +1613,12 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
 	loop->cmds[i].line = NULL;
 	loop->cmds[i].ci = 0;
 	loop->cmds[i].opt = 0;
-	loop->cmds[i].flags = 0;
 	loop->cmds[i].genr = NULL;
+	if (!gretl_strsub_on()) {
+	    loop->cmds[i].flags = LOOP_CMD_NOSUB | LOOP_CMD_NODOL;
+	} else {
+	    loop->cmds[i].flags = 0;
+	}
     }
 }
 

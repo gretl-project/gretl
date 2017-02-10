@@ -578,6 +578,11 @@ static void state_vars_init (set_vars *sv)
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
 	STATE_SKIP_MISSING | STATE_STRSUB_ON;
+#if 1
+    if (getenv("GRETL_STRSUB_OFF")) {
+	sv->flags &= ~STATE_STRSUB_ON;
+    }
+#endif
 #if defined(_OPENMP)
     if (openmp_by_default()) {
 	sv->flags |= STATE_OPENMP_ON;
