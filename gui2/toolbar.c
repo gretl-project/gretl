@@ -115,7 +115,8 @@ enum {
     FIND_ITEM,
     COPY_SCRIPT_ITEM,
     BUILD_ITEM,
-    HMAP_ITEM
+    HMAP_ITEM,
+    MODEL_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -262,6 +263,41 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
     }
 
     file_save(vwin, u);
+}
+
+/* Adjust the number of significant figures used in printing
+   coefficients and standard errors in a model viewer window.
+   Also record the number of digits for use via Copy.
+*/
+
+static void model_digits_callback (GtkWidget *w, windata_t *vwin)
+{
+    int wdigits = widget_get_int(vwin->text, "digits");
+    int save_digits = get_gretl_digits();
+    int digits, resp;
+
+    digits = wdigits > 0 ? wdigits : save_digits;
+
+    resp = spin_dialog(NULL, NULL, &digits,
+		       _("Number of digits to show for coefficients"),
+		       3, 6, 0, vwin_toplevel(vwin));
+
+    if (resp != GRETL_CANCEL && digits != wdigits) {
+	MODEL *pmod = vwin->data;
+	const char *buf;
+	int save_digits;
+	PRN *prn;
+
+	if (bufopen(&prn)) return;
+	save_digits = get_gretl_digits();
+	set_gretl_digits(digits);
+	printmodel(pmod, dataset, OPT_NONE, prn);
+	buf = gretl_print_get_trimmed_buffer(prn);
+	textview_set_text(vwin->text, buf);
+	gretl_print_destroy(prn);
+	set_gretl_digits(save_digits);
+	widget_set_int(vwin->text, "digits", digits);
+    }
 }
 
 static void mail_script_callback (GtkWidget *w, windata_t *vwin)
@@ -775,7 +811,8 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
-    { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM }
+    { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
+    { N_("Digits..."), NULL, G_CALLBACK(NULL), MODEL_ITEM }
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -1240,6 +1277,8 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    } else {
 		func = NULL;
 	    }
+	} else if (vwin->role == VIEW_MODEL && item->flag == MODEL_ITEM) {
+	    func = G_CALLBACK(model_digits_callback);
 	} else {
 	    func = tool_item_get_callback(item, vwin, 0, 0, 0, 0);
 	}

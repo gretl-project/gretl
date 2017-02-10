@@ -401,13 +401,22 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 
 	if (pmod->errcode) { 
 	    err = pmod->errcode;
-	} else if (tex_format(prn)) {
-	    err = tex_print_model(pmod, dataset, 
-				  get_tex_eqn_opt(), 
-				  prn);
 	} else {
-	    /* RTF or CSV */
-	    err = printmodel(pmod, dataset, OPT_NONE, prn);
+	    int wdigits = widget_get_int(vwin->text, "digits");
+	    int dsave = get_gretl_digits();
+
+	    if (wdigits > 0 && wdigits != dsave) {
+		set_gretl_digits(wdigits);
+	    }
+	    if (tex_format(prn)) {
+		err = tex_print_model(pmod, dataset,
+				      get_tex_eqn_opt(),
+				      prn);
+	    } else {
+		/* RTF or CSV */
+		err = printmodel(pmod, dataset, OPT_NONE, prn);
+	    }
+	    set_gretl_digits(dsave);
 	}
     } else if (cmd == VAR || cmd == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;

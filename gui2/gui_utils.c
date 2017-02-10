@@ -2550,6 +2550,9 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     textview_set_text(vwin->text, buf);
     gretl_print_destroy(prn);
 
+    /* record digits in force */
+    widget_set_int(vwin->text, "digits", get_gretl_digits());
+
     /* sync number of model tests */
     vwin->n_model_tests = pmod->ntests;
 
