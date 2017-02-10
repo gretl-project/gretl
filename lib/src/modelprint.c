@@ -3604,9 +3604,9 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 
     if (!na(mc->tval)) {
 	if (mc->tval < 0 && gretl_print_has_minus(prn)) {
-	    pprintf(prn, " \\qc −%.4f\\cell", -mc->tval);
+	    pprintf(prn, " \\qc −%#.4g\\cell", -mc->tval);
 	} else {
-	    pprintf(prn, " \\qc %.4f\\cell", mc->tval);
+	    pprintf(prn, " \\qc %#.4g\\cell", mc->tval);
 	}
     } else if (!mc->show_tval) {
 	pputs(prn, " \\qc \\cell");
@@ -4708,7 +4708,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 		}
 	    } else {
 		/* p-value or slope */
-		d = (show_slope)? 6 : -4;
+		d = (show_slope)? coeff_digits : -4;
 		vals[i][j].x = pval;
 	    }
 	    if (show_slope && j == 3 && pmod->list[i+2] == 0) {
@@ -4935,10 +4935,8 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
     }
 
     for (i=0; i<nc; i++) {
-
 	err = prepare_model_coeff(pmod, dset, i, adfnum, &mc, prn);
 	if (err) gotnan = 1;
-
 	if (separator_wanted(i, seppos, &sepstr, pmod)) {
 	    if (pmod->ci == BIPROBIT) {
 		print_coeff_left_string(sepstr, prn);
@@ -4946,13 +4944,11 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 		print_coeff_separator(sepstr, cols, prn);
 	    }
 	}
-
 	if (intervals != NULL) {
 	    mc.lo = gretl_matrix_get(intervals, i, 0);
 	    mc.hi = gretl_matrix_get(intervals, i, 1);
 	    mc.show_pval = 0;
 	}
-
 	alt_print_coeff(&mc, prn);
     }
 

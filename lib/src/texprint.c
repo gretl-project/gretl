@@ -260,19 +260,8 @@ char *tex_modify_exponent (char *s)
     return s;
 }
 
-/* Print the floating point number @x into the string @s, using the C
-   format "%#*.g", with GRETL_DIGITS of precision.  This is intended
-   for use with the LaTeX tabular column format "r@{.}l", so the
-   decimal point is replaced by '&'.  In addition, it is presumed that
-   we're _not_ in TeX math mode, so the leading minus sign, if
-   present, is "mathized" as "$-$".
-
-   NADBL is handled by printing a blank "r@{.}l" value.
-*/
-
-char *tex_rl_double (double x, char *s)
+static char *tex_rl_double_dig (double x, char *s, int d)
 {
-    int d = get_gretl_digits();
     char *p;
 
     if (na(x)) {
@@ -304,6 +293,21 @@ char *tex_rl_double (double x, char *s)
     }
 
     return s;
+}
+
+/* Print the floating point number @x into the string @s, using the C
+   format "%#*.g", with GRETL_DIGITS of precision.  This is intended
+   for use with the LaTeX tabular column format "r@{.}l", so the
+   decimal point is replaced by '&'.  In addition, it is presumed that
+   we're _not_ in TeX math mode, so the leading minus sign, if
+   present, is "mathized" as "$-$".
+
+   NADBL is handled by printing a blank "r@{.}l" value.
+*/
+
+char *tex_rl_double (double x, char *s)
+{
+    return tex_rl_double_dig(x, s, get_gretl_digits());
 }
 
 /* Print the floating point number @x into the string @s, using the C
@@ -751,7 +755,8 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
 		strcpy(col3, "\\multicolumn{2}{c}{}");
 	    }
 	} else {
-	    tex_rl_float(mc->tval, col3, 4);
+	    /* note: was tex_rl_float(mc->tval, col3, 4) */
+	    tex_rl_double_dig(mc->tval, col3, 4);
 	}
     }
 
@@ -1348,6 +1353,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
     int i, nc = pmod->ncoeff;
     int split = 0, offvar = 0;
     int cchars = 0, ccount = 0;
+    int se_digits;
     int sderr_ok = 1;
 
     if (pmod->ci == HECKIT) {
@@ -1398,6 +1404,9 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	nc = pmod->list[0] - 1;
     }
 
+    se_digits = get_gretl_digits();
+    se_digits = se_digits > 5 ? 5 : se_digits;
+
     /* coefficients times indep vars */
     for (i=0; i<nc; i++) {
 	if (offvar > 0 && i == nc - 1) {
@@ -1410,12 +1419,14 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 			(i > 0)? "+" : "");
 	    } else if (sderr_ok) {
 		if (opt & OPT_T) {
+		    /* t-ratios */
 		    x = pmod->coeff[i] / pmod->sderr[i];
 		    pprintf(prn, "%s\\underset{(%.3f)}{", 
 			    (pmod->coeff[i] < 0.0)? "-" :
 			    (i > 0)? "+" : "", x);
 		} else {
-		    tex_sprint_math_double_digits(pmod->sderr[i], tmp, 5);
+		    /* standard errors */
+		    tex_sprint_math_double_digits(pmod->sderr[i], tmp, se_digits);
 		    pprintf(prn, "%s\\underset{(%s)}{", 
 			    (pmod->coeff[i] < 0.0)? "-" :
 			    (i > 0)? "+" : "", tmp);
@@ -1475,7 +1486,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
 		    x, pmod->coeff[r]);
 	} else {
-	    tex_sprint_math_double_digits(pmod->sderr[r], tmp, 5);
+	    tex_sprint_math_double_digits(pmod->sderr[r], tmp, se_digits);
 	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%s)}{%g} ", /* FIXME? */
 		    tmp, pmod->coeff[r]);
 	}	    
@@ -1486,7 +1497,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 		pprintf(prn, "%s\\underset{(%.3f)}{", 
 			(pmod->coeff[r+i] < 0.0)? "-" : "+", x);
 	    } else {
-		tex_sprint_math_double_digits(pmod->sderr[r+i], tmp, 5);
+		tex_sprint_math_double_digits(pmod->sderr[r+i], tmp, se_digits);
 		pprintf(prn, "%s\\underset{(%s)}{", 
 			(pmod->coeff[r+i] < 0.0)? "-" : "+", tmp);
 	    }		
@@ -1501,7 +1512,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 		pprintf(prn, "%s\\underset{(%.3f)}{", 
 			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", x);
 	    } else {
-		tex_sprint_math_double_digits(pmod->sderr[q+r+i], tmp, 5);
+		tex_sprint_math_double_digits(pmod->sderr[q+r+i], tmp, se_digits);
 		pprintf(prn, "%s\\underset{(%s)}{", 
 			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", tmp);
 	    }		
@@ -1519,7 +1530,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
     if (pmod->ci == LAD) { 
 	x = gretl_model_get_double(pmod, "ladsum");
 	if (!na(x)) {
-	    tex_sprint_math_double_digits(x, tmp, 6);
+	    tex_sprint_math_double_digits(x, tmp, 5);
 	    pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s ", tmp);
 	}
     } else {
