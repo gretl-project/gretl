@@ -13181,49 +13181,39 @@
     <usage>
       <options>
         <option>
-	  <flag>--format="f1|f2|f3|f4"</flag>
-	  <effect>Specify a custom format</effect>
-        </option>
-        <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
         </option>	
-
-	<!-- -rtf, -csv, and -complete options removed from the
-	     docs on their way to deprecation -->
-
+        <option>
+	  <flag>--format="f1|f2|f3|f4"</flag>
+	  <effect>Specify custom TeX format</effect>
+        </option>
+	<option>
+	  <flag>--complete</flag>
+	  <effect>TeX-related, see below</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Must follow the estimation of a model.  Prints the estimated
-	model in tabular form &mdash; by default as &latex;, but as
-	RTF if the <opt>rtf</opt> flag is given or as CSV is the
-	<opt>csv</opt> flag is given.  If a filename is specified
-	using the <opt>output</opt> option output goes to that file,
-	otherwise it goes to a file with a name of the form
-	<filename>model_N</filename> followed by the extension
-	<lit>tex</lit>, <lit>rtf</lit> or <lit>csv</lit>, where
-	<lit>N</lit> is the number of models estimated to date in the
-	current session.
-      </para>
-      <para>
-	The output file will be written in the currently set <cmdref
-	targ="workdir"/>, unless the <repl>filename</repl> string
+	Must follow the estimation of a model.  Prints the model in
+	tabular form. The format is governed by the extension of the
+	specified <repl>filename</repl>:
+	<quote><lit>.tex</lit></quote> for &latex;,
+	<quote><lit>.rtf</lit></quote> for RTF (Microsoft's Rich Text
+	Format), or <quote><lit>.csv</lit></quote> for
+	comma-separated.  The file will be written in the currently
+	set <cmdref targ="workdir"/>, unless <repl>filename</repl>
 	contains a full path specification.
       </para>
       <para> 
 	If CSV format is selected, values are comma-separated unless
 	the decimal comma is in force, in which case the separator is
-	the semicolon. Note that CSV output may be less complete than
-	the other formats.
+	the semicolon.
       </para>
-      <para>
-	The further options discussed below are available only when
-	printing the model as &latex;.
-      </para>
+      <subhead>Options specific to &latex; output</subhead>
       <para>
 	If the <opt>complete</opt> flag is given the &latex; file is
 	a complete document, ready for processing; otherwise it must
