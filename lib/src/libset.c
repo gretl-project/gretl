@@ -2079,6 +2079,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_ROBUST_Z;
     } else if (!strcmp(s, MWRITE_G)) {
 	return STATE_MWRITE_G;
+    } else if (!strcmp(s, STRSUB_ON)) {
+	return STATE_STRSUB_ON;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	
