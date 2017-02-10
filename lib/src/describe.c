@@ -4610,7 +4610,7 @@ void print_summary (const Summary *summ,
 	    N_("Max"),
 	};
 
-	d = 3; /* is this OK? */
+	d = 4; /* is this OK? */
 
 	pprintf(prn, "%*s%*s%*s%*s%*s%*s\n", len, " ",
 		UTF_WIDTH(_(h[0]), 11), _(h[0]),
@@ -5119,15 +5119,14 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    s->skew[i] = NADBL;
 	    s->xkurt[i] = NADBL;
 	    s->cv[i] = NADBL;
-	    s->median[i] = NADBL;
 	} else {
 	    pskew = &s->skew[i];
 	    pkurt = &s->xkurt[i];
 	}
 
 	gretl_minmax(t1, t2, x, &s->low[i], &s->high[i]);
-	
 	gretl_moments(t1, t2, x, NULL, &s->mean[i], &s->sd[i], pskew, pkurt, 1);
+	s->median[i] = gretl_median(t1, t2, x);
 
 	if (!(opt & OPT_S)) {
 	    int err;
@@ -5139,7 +5138,6 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(t1, t2, x);
 	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
 	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
 	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
