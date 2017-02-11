@@ -251,24 +251,6 @@ static void graph_shrink_callback (GtkWidget *w, png_plot *plot)
     plot_do_rescale(plot, -1);
 }
 
-#if 0
-
-static void graph_copy_callback (GtkWidget *w, png_plot *plot)
-{
-#ifdef G_OS_WIN32
-    win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);    
-#else    
-    set_plot_for_copy(plot);
-#endif    
-}
-
-static void show_pdf_callback (GtkWidget *w, png_plot *plot)
-{
-    graph_display_pdf(plot->spec);
-}
-
-#endif
-
 static void graph_edit_callback (GtkWidget *w, png_plot *plot)
 {
     start_editing_png_plot(plot);
