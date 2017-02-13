@@ -229,7 +229,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 	    if (type == 1) || (type == 2) || (type == 4) 
 		bobj.S1 = K
 		Spar_mat[i,] = vec(K)'
-	    elif type = 3
+	    elif type == 3
 		matrix aSs = imp2exp(Rd2)
 		matrix bSs = imp2exp(Rd1)
 		ABmat_exp(theta, aSs, bSs, &bmA, &bmB)

@@ -3,25 +3,25 @@ function string s_modeltype(bundle *mod)
     scalar p    = mod.p
     scalar q    = mod.q
     
-    if type =  0
+    if type ==  0
         return sprintf("ARCH(%d) [Engle]", p)
-    elif type =  1
+    elif type ==  1
         return sprintf("GARCH(%d,%d) [Bollerslev]", p, q)
-    elif type =  2
+    elif type ==  2
         return sprintf("Taylor/Schwert's GARCH(%d,%d)", p, q)
-    elif type =  3
+    elif type ==  3
         return sprintf("GJR(%d,%d) [Glosten et al.]", p, q)
-    elif type =  4
+    elif type ==  4
         return sprintf("TARCH(%d,%d) [Zakoian]", p, q)
-    elif type =  5
+    elif type ==  5
         return sprintf("NARCH(%d,%d) [Higgins and Bera]", p, q)
-    elif type =  6
+    elif type ==  6
         return sprintf("APARCH(%d,%d) [Ding]", p, q)
-    elif type =  7
+    elif type ==  7
         return sprintf("EGARCH(%d,%d) [Nelson]", p, q)
-    elif type =  8
+    elif type ==  8
         return sprintf("GARCH-in-mean(%d,%d) [Engle]", p, q)
-    elif type =  9
+    elif type ==  9
         return sprintf("free-APARCH(%d,%d)", p, q)
     endif
 end function			    
@@ -45,15 +45,15 @@ function void gig_printHeader(bundle *mod)
 
     # DISTRIBUTIONS ordered by no. of extra params
 
-    if dtype =  0
+    if dtype ==  0
         printf " (Normal)" 
-    elif dtype =  1
+    elif dtype ==  1
         printf " (Student's t)"
-    elif dtype =  2
+    elif dtype ==  2
         printf " (GED)"
-    elif dtype =  3
+    elif dtype ==  3
         printf " (Skewed T)"
-    elif dtype =  4
+    elif dtype ==  4
         printf " (Skewed GED)"
     endif
 
@@ -70,9 +70,9 @@ function void gig_printHeader(bundle *mod)
 
     printf ", VCV method: "
 
-    if vtype =  0
+    if vtype ==  0
         printf "Robust" 
-    elif vtype =  1
+    elif vtype ==  1
         printf "Hessian"
     else
         printf "OPG"
@@ -110,7 +110,7 @@ function void GJR_alt_param(matrix coeff, matrix vcv, scalar p, scalar q,
 
     cs = c_om ~ sqrt(diag(v_om))
 
-    if q = 1 
+    if q == 1 
 	parNames += ",alpha,gamma"
     else
 	loop for i=1..q --quiet
@@ -138,7 +138,7 @@ function void GJR_alt_param(matrix coeff, matrix vcv, scalar p, scalar q,
     v_ag2 = qform(J, v_ag)
     cs |= (c_ag2 ~ sqrt(diag(v_ag2)))
 
-    if p = 1
+    if p == 1
 	parNames += ",beta"
     else	
 	loop for i=1..p --quiet
@@ -200,7 +200,7 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
 
     #ALPHAS
     counter = nmX+nvX
-    if q = 1 
+    if q == 1 
 	parNames += ",alpha"
     else
 	loop for i=1..q --quiet
@@ -211,7 +211,7 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
 
     #GAMMAS
     if has_asymm_fx(type)
-	if q = 1 
+	if q == 1 
 	    parNames += ",gamma"
 	else		
 	    loop for i=1..q --quiet
@@ -223,7 +223,7 @@ function void maybe_gig_print(bundle *mod, scalar verbose[0:3:0])
 
     #BETAS
     if type>0
-	if p = 1
+	if p == 1
 	    parNames += ",beta"
 	else	
 	    loop for i=1..p --quiet

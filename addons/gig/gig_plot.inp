@@ -191,17 +191,17 @@ function void gig_dplot(bundle *model)
     ncoef = rows(theta)
     e = X[,1]
 
-    if dtype = 0 # Normal
+    if dtype == 0 # Normal
         matrix d = pdf(z, e)
 	string descstr = "Std Normal"
 
-    elif dtype = 1 # Student's t
+    elif dtype == 1 # Student's t
 	scalar ni = theta[ncoef]
 	scalar hadj = sqrt(1-2/ni)
         matrix d = pdf(t, ni, e/hadj)/hadj
 	descstr = sprintf("t(%g)", ni)
 
-    elif dtype = 2 # GED
+    elif dtype == 2 # GED
 	scalar ni = theta[ncoef]
 	scalar p = 1/ni
 	scalar lg1 = lngamma(p)
@@ -213,13 +213,13 @@ function void gig_dplot(bundle *model)
 	matrix d = exp(lC - 0.5*(u.^ni))
 	descstr = sprintf("GED(%g)", ni)
 	
-    elif dtype = 3 # Skewed-T
+    elif dtype == 3 # Skewed-T
 	scalar ni = theta[ncoef-1]
 	scalar alpha = tanh(theta[ncoef])
 	matrix d = pdf_skt(&e, ni, alpha)
 	descstr = sprintf("Skewed t(%g, %g)", ni, alpha)
 
-    elif dtype = 4 # Skewed-GED
+    elif dtype == 4 # Skewed-GED
 	scalar ni = theta[ncoef-1]
 	scalar alpha = tanh(theta[ncoef])
 	matrix d = pdf_skged(&e, ni, alpha)
