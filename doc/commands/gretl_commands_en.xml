@@ -4517,14 +4517,15 @@
       </para>
 
       <para>
-	The available <emphasis>Boolean operators</emphasis> are (again,
-	in order of precedence): <lit>!</lit> (negation),
-	<lit>&amp;&amp;</lit> (logical AND), <lit>||</lit> (logical OR),
-	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>, <lit>&gt;=</lit>
-	(greater than or equal), <lit>&lt;=</lit> (less than or equal) and
-	<lit>!=</lit> (not equal).  The Boolean operators can be used in
-	constructing dummy variables: for instance <lit>(x > 10)</lit>
-	returns 1 if <lit>x</lit> &gt; 10, 0 otherwise.
+	The available <emphasis>Boolean operators</emphasis> are
+	(again, in order of precedence): <lit>!</lit> (negation),
+	<lit>&amp;&amp;</lit> (logical AND), <lit>||</lit> (logical
+	OR), <lit>&gt;</lit>, <lit>&lt;</lit>, <lit>==</lit> (is equal
+	to), <lit>&gt;=</lit> (greater than or equal),
+	<lit>&lt;=</lit> (less than or equal) and <lit>!=</lit> (not
+	equal).  The Boolean operators can be used in constructing
+	dummy variables: for instance <lit>(x > 10)</lit> returns 1 if
+	<lit>x</lit> &gt; 10, 0 otherwise.
       </para>
 
       <para>
@@ -4600,13 +4601,13 @@
 
       <para>
 	The special variable <lit>obs</lit> serves as an index of the
-	observations.  For instance <lit>series dum = (obs=15)</lit> will
+	observations.  For instance <lit>series dum = (obs==15)</lit> will
 	generate a dummy variable that has value 1 for observation 15, 0
 	otherwise.  You can also use this variable to pick out particular
 	observations by date or name.  For example, 
 	<lit>series d = (obs&gt;1986:4)</lit>, 
 	<lit>series d = (obs&gt;"2008-04-01")</lit>, or
-	<lit>series d = (obs="CA")</lit>.  If daily dates or observation labels
+	<lit>series d = (obs=="CA")</lit>.  If daily dates or observation labels
 	are used in this context, they should be enclosed in double quotes.
 	Quarterly and monthly dates (with a colon) may be used unquoted. Note
 	that in the case of annual time series data, the year is not
