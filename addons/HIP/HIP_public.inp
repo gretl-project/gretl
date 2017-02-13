@@ -21,10 +21,10 @@ function bundle HIP_setup(series y, list EXOG, list ENDOG[null], \
     
     scalar id = nelem(ENDOG) - nelem(ADDIN)
 
-    if (nelem(ADDIN)!=0 && nelem(ENDOG)=0)	
+    if (nelem(ADDIN)!=0 && nelem(ENDOG)==0)	
 	printf "No endogenous variables specified. Are you sure this is what you want?\n"
 	return ret
-    elif (nelem(ADDIN)=0 && nelem(ENDOG)!=0)	 
+    elif (nelem(ADDIN)==0 && nelem(ENDOG)!=0)	 
 	scalar w = nelem(ENDOG)
 	printf "At least %g additional instruments need to be specified.\n", w
 	return ret

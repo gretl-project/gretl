@@ -7,7 +7,7 @@ function void gig_packResults(bundle *mod, scalar err, matrix thetahat,
 
     mod.errcode = err
 
-    if (err = 0)
+    if (err == 0)
 	theta = mod.coeff
 	sel = mod.active
 	theta[sel] = thetahat

@@ -89,7 +89,7 @@ function matrix nonstdAB_init(matrix E, matrix aRd, matrix bRd)
   endif
   matrix sb = bSs[,kb+1]
 
-  if startA = 1
+  if startA == 1
     matrix giSb = invpd(Sb'Sb)*Sb'
     matrix tmp = giSb*(C' ** I(n))
     if ka>0

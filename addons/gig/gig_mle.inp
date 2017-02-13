@@ -51,13 +51,13 @@ function series gig_loglik(series *e, series *h, scalar distrType,
     dh = NA
     dd = {}
 
-    if distrType = 0 # Normal
+    if distrType == 0 # Normal
 	series u = e/h
         ret = -.91893853320467274177 - 0.5*(log(h) + e*u)
 	de = -u
 	dh = -0.5/h * (1 - e*u)
 
-    elif distrType = 1 # Student's t
+    elif distrType == 1 # Student's t
 	scalar ni = addpar[1]
 	if (ni>2)
 
@@ -80,7 +80,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 	    matrix dd = 0.5*(k1 + s1 - s2)
 	endif
 
-    elif distrType = 2 # GED
+    elif distrType == 2 # GED
 	scalar ni = addpar[1]
 	if (ni>0) 
 	    scalar p = 1/ni
@@ -93,7 +93,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 	    ret = lC - 0.5*(u^ni + ln(h))
 	endif
 	
-    elif distrType = 3 # Skewed-T
+    elif distrType == 3 # Skewed-T
 	scalar ni = addpar[1]
 	if (ni>2) 
 	    series u = e/sqrt(h)
@@ -101,7 +101,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 	    ret      = ln_pdf_skt(&u, ni, alpha) - 0.5*ln(h)
 	endif
 
-    elif distrType = 4 # Skewed-GED
+    elif distrType == 4 # Skewed-GED
 	scalar ni = addpar[1]
 	if (ni>0) 
 	    series u = e/sqrt(h)
@@ -166,7 +166,7 @@ function scalar aparchFilter(series *depVar, series *h, series *e,
 
    minh = 0
 
-   if err = 0
+   if err == 0
        # handle the conditional mean first
        if nmX > 0
            series e = depVar - (mReg * parameters[1:nmX])
@@ -319,13 +319,13 @@ function scalar egarchFilter(series *y, series *h, series *u, \
     series d = (e>0)
     series ae = abs(e)
     
-    if (p = 0) && (q<3)
-    	if q = 1
+    if (p == 0) && (q<3)
+    	if q == 1
     	    scalar g = params[base+1]
     	    scalar a = params[base+2]
     	    series tmp = d(-1) ? (g+a) : (g-a)
     	    series logh = omega + tmp*ae(-1)/exp(logh(-1)*0.5)
-    	elif q = 2
+    	elif q == 2
     	    scalar g1 = params[base+1]
     	    scalar g2 = params[base+2]
     	    scalar a1 = params[base+3]
@@ -335,8 +335,8 @@ function scalar egarchFilter(series *y, series *h, series *u, \
     	    series logh = omega + tmp1*ae(-1)/exp(logh(-1)*0.5) \
     		+ tmp2*ae(-2)/exp(logh(-2)*0.5)
     	endif
-    elif (p = 1) && (q<3)
-    	if q = 1
+    elif (p == 1) && (q<3)
+    	if q == 1
     	    scalar g = params[base+1]
     	    scalar a = params[base+2]
     	    scalar b = params[base+3]
@@ -347,7 +347,7 @@ function scalar egarchFilter(series *y, series *h, series *u, \
 		err = 1
 	    endif
 
-    	elif q = 2
+    	elif q == 2
     	    scalar g1 = params[base+1]
     	    scalar g2 = params[base+2]
     	    scalar a1 = params[base+3]
