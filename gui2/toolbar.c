@@ -750,6 +750,8 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 
 static int edit_script_popup_item (GretlToolItem *item)
 {
+    if (item->icon == NULL) return 0;
+    
     return !strcmp(item->icon, GTK_STOCK_COPY) ||
 	!strcmp(item->icon, GTK_STOCK_PASTE) ||
 	!strcmp(item->icon, GTK_STOCK_FIND) ||
@@ -900,6 +902,11 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	    return NULL;
 	}
     } else if (f == BUILD_ITEM) {
+	return NULL;
+    }
+
+    /* popup use only */
+    if (f == MODEL_ITEM) {
 	return NULL;
     }
 
@@ -1266,10 +1273,12 @@ GtkWidget *build_text_popup (windata_t *vwin)
 
     for (i=0; i<n_viewbar_items; i++) {
 	item = &viewbar_items[i];
+	func = G_CALLBACK(NULL);
 	if (item->flag == SPLIT_H_ITEM || item->flag == SPLIT_V_ITEM) {
 	    continue;
-	}
-	if (vwin->role == EDIT_SCRIPT) {
+	} else if (item->flag == MODEL_ITEM && vwin->role == VIEW_MODEL) {
+	    func = G_CALLBACK(model_digits_callback);
+	} else if (vwin->role == EDIT_SCRIPT) {
 	    /* the script editor popup may have some special stuff
 	       added: don't clutter it up */
 	    if (edit_script_popup_item(item)) {
@@ -1277,8 +1286,6 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    } else {
 		func = NULL;
 	    }
-	} else if (vwin->role == VIEW_MODEL && item->flag == MODEL_ITEM) {
-	    func = G_CALLBACK(model_digits_callback);
 	} else {
 	    func = tool_item_get_callback(item, vwin, 0, 0, 0, 0);
 	}
