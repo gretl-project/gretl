@@ -1,7 +1,7 @@
 CC = gcc -O2 -Wall
 
-fixeq: fixeq.c
+scriptfix: scriptfix.c
 	$(CC) -o $@ $<
 
 clean:
-	rm fixeq *~
+	rm scriptfix *~
