@@ -11,6 +11,10 @@ This directory contains:
 
 * Apparatus for installing a gretl-mode file for editing gretl
   scripts in emacs in ./emacs.
+  
+* A C program to revise gfn files or hansl scripts -- at present,
+  to replace "=" with "==" when a test for equality is required;
+  in ./scriptfix.
 
 Allin Cottrell
 cottrell@wfu.edu
