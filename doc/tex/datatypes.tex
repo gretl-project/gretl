@@ -173,12 +173,12 @@ exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. Two forms of syntax are
-acceptable in this context. The currently recommended syntax is
-\textsl{bundlename}.\textsl{key}; that is, the name of the bundle
-followed by a dot, then the key. Both the bundle name and the key must
-be valid gretl identifiers.\footnote{As a reminder: 31 characters
-  maximum, starting with a letter and composed of just letters,
-  numbers or underscore.} For example, the statement
+acceptable in this context. The currently recommended syntax (for most
+uses) is \textsl{bundlename}.\textsl{key}; that is, the name of the
+bundle followed by a dot, then the key. Both the bundle name and the
+key must be valid gretl identifiers.\footnote{As a reminder: 31
+  characters maximum, starting with a letter and composed of just
+  letters, numbers or underscore.} For example, the statement
 %
 \begin{code}
 foo.matrix1 = m
@@ -194,17 +194,27 @@ brackets, as in
 foo["matrix1"] = m
 \end{code}
 %
-While the old syntax is still acceptable, we suggest that it be used
-only if you wish to preserve compatibility with gretl version 1.9.11
-(December, 2012) or earlier.
+This syntax is still acceptable, and it offers greater flexibility in
+that the key string does not have to be a valid identifier (for
+example it can include spaces) though it still must adhere to the
+31-character limit. In addition, when using the square bracket syntax
+it is possible to use a string variable to define or access the key in
+question. For example:
+%
+\begin{code}
+string s = "matrix 1"
+foo[s] = m # matrix is added under key "matrix 1"
+\end{code}
 
 To get an item out of a bundle, again use the name of the bundle
 followed by the key, as in
 
 \begin{code}
 matrix bm = foo.matrix1
-# or using the old notation
+# or using the alternative notation
 matrix bm = foo["matrix1"]
+# or using a string variable
+matrix bm = foo[s]
 \end{code}
 
 Note that the key identifying an object within a given bundle is
