@@ -1004,13 +1004,13 @@ int get_gretl_digits (void)
 
 int set_gretl_digits (int d)
 {
-    if (d > 2 && d <= 6) {
+    if (d >= 3 && d <= 6) {
 	gretl_digits = d;
 	return 0;
     } else {
-	/* in the contexts where we're using @gretl_digits
+	/* In the contexts where we're using @gretl_digits
 	   we don't want it to be less than 3 or greater
-	   than 6
+	   than 6.
 	*/
 	return E_INVARG;
     }
