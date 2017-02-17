@@ -216,7 +216,7 @@ typedef struct _series_table series_table;
  */
 #define calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
                           (p->pd == 5 || p->pd == 6 || p->pd == 7 \
-                           || p->pd == 52) && p->sd0 > 10000.0) 
+                           || p->pd == 52) && strchr(p->stobs, '-'))
 
 /**
  * quarterly_or_monthly:

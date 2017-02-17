@@ -1401,7 +1401,7 @@ static int try_for_daily_subset (char *selected,
 				 gretlopt *optp)
 {
     char datestr[OBSLEN];
-    long ed, ed0 = 0, edbak = 0;
+    guint32 ed, ed0 = 0, edbak = 0;
     int t, wd, ngaps = 0;
     int delta, mon_delta;
     int delta_max = 0;

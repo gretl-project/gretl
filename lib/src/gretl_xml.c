@@ -3502,9 +3502,9 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 	gretl_charsub(obstr, ':', '.');
 	
 	if (likely_calendar(obstr) && caldata) {
-	    long ed = get_epoch_day((char *) tmp);
+	    guint32 ed = get_epoch_day((char *) tmp);
 
-	    if (ed < 0) {
+	    if (ed <= 0) {
 		err = 1;
 	    } else {
 		*sd0 = ed;
@@ -3540,9 +3540,11 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
 
     if (tmp != NULL) {
 	if (caldata) {
-	    long ed = get_epoch_day((char *) tmp);
+	    guint32 ed = get_epoch_day((char *) tmp);
 
-	    if (ed < 0) err = 1;
+	    if (ed <= 0) {
+		err = 1;
+	    }
 	} else {
 	    double x;
 

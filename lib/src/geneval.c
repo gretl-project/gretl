@@ -6388,11 +6388,11 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 
 		if (!as_string && xna(x)) {
 		    ret->v.xval = NADBL;
-		} else if (x >= 1 && x <= LONG_MAX) {
+		} else if (x >= 1 && x <= UINT_MAX) {
 		    if (as_string) {
-			ret->v.str = ymd_extended_from_epoch_day((long) x, &p->err);
+			ret->v.str = ymd_extended_from_epoch_day((guint32) x, &p->err);
 		    } else {
-			ret->v.xval = ymd_basic_from_epoch_day((long) x, &p->err);
+			ret->v.xval = ymd_basic_from_epoch_day((guint32) x, &p->err);
 		    }
 		} else {
 		    p->err = E_INVARG;
@@ -6410,7 +6410,7 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 		    if (na(xt)) {
 			ret->v.xvec[t] = NADBL;
 		    } else if (xt >= 1 && xt <= LONG_MAX) {
-			ret->v.xvec[t] = ymd_basic_from_epoch_day((long) xt, &p->err);
+			ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt, &p->err);
 		    } else {
 			p->err = E_INVARG;
 			break;
@@ -9739,7 +9739,7 @@ static int x_to_period (double x, char c, int *err)
 	    ret = -1;
 	}
 
-	if (ret < 0) {
+	if (ret <= 0) {
 	    fprintf(stderr, "epochday: got %c = %d!\n", c, k);
 	    *err = E_INVARG;
 	}

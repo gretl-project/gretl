@@ -30,49 +30,49 @@
 
 #define FOUR_DIGIT_YEAR(y) ((y < 50)? y + 2000 : y + 1900)
 
-long epoch_day_from_ymd (int y, int m, int d);
+guint32 epoch_day_from_ymd (int y, int m, int d);
 
-char *ymd_extended_from_epoch_day (long ed, int *err);
+char *ymd_extended_from_epoch_day (guint32 ed, int *err);
 
-double ymd_basic_from_epoch_day (long ed, int *err);
+double ymd_basic_from_epoch_day (guint32 ed, int *err);
 
-int ymd_bits_from_epoch_day (long ed, int *y, int *m, int *d);
+int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d);
 
 int iso_basic_to_extended (const double *b, double *y, double *m, 
 			   double *d, int n);
 
-long get_epoch_day (const char *date);
+guint32 get_epoch_day (const char *datestr);
 
-long epoch_day_from_t (int t, const DATASET *dset);
+guint32 epoch_day_from_t (int t, const DATASET *dset);
 
-int weekday_from_date (const char *date);
+int weekday_from_date (const char *datestr);
 
-int weekday_from_epoch_day (long ed);
+int weekday_from_epoch_day (guint32 ed);
 
 int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 
 int day_ends_month (int d, int m, int y, int wkdays);
 
-int get_days_in_month (int mon, int yr, int wkdays);
+int get_days_in_month (int m, int y, int wkdays);
 
-int days_in_month_before (int yr, int mon, int day, int wkdays);
+int days_in_month_before (int y, int m, int d, int wkdays);
 
-int days_in_month_after (int yr, int mon, int day, int wkdays);
+int days_in_month_after (int y, int m, int d, int wkdays);
 
-int date_to_daily_index (const char *date, int wkdays);
+int date_to_daily_index (const char *datestr, int wkdays);
 
-int daily_index_to_date (char *date, int y, int m, int idx,
+int daily_index_to_date (char *targ, int y, int m, int idx,
 			 int wkdays);
 
-int calendar_obs_number (const char *date, const DATASET *dset);
+int calendar_obs_number (const char *datestr, const DATASET *dset);
 
-int calendar_date_string (char *str, int t, const DATASET *dset);
+int calendar_date_string (char *targ, int t, const DATASET *dset);
 
-int MS_excel_date_string (char *date, int mst, int pd, int d1904);
+int MS_excel_date_string (char *targ, int mst, int pd, int d1904);
 
-double get_dec_date (const char *date);
+double get_dec_date (const char *datestr);
 
-double day_of_week (int yr, int mo, int day, int *err);
+double day_of_week (int y, int m, int d, int *err);
 
 int n_hidden_missing_obs (const DATASET *dset);
 

@@ -76,9 +76,9 @@ double get_date_x (int pd, const char *obs)
 
     if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) && strlen(obs) > 4) { 
 	/* calendar data */
-	long ed = get_epoch_day(obs);
+	guint32 ed = get_epoch_day(obs);
 
-	if (ed >= 0) {
+	if (ed > 0) {
 	    x = ed;
 	}
     } else {
@@ -441,8 +441,8 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
     double x;
 
 #if 0
-    fprintf(stderr, "ntodate: t=%d, pd=%d, sd0=%g\n",
-	    t, dset->pd, dset->sd0);
+    fprintf(stderr, "ntodate: t=%d, pd=%d, sd0=%g, incoming stobs='%s'\n",
+	    t, dset->pd, dset->sd0, dset->stobs);
 #endif
 
     if (calendar_data(dset)) {

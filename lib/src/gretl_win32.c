@@ -1171,7 +1171,7 @@ static char *parse_iso_basic (const char *buf, struct tm *timeptr)
 	    int y = (int) floor(x / 10000);
 	    int m = (int) floor((x - 10000*y) / 100);
 	    int d = (int) (x - 10000*y - 100*m);
-	    long ed = epoch_day_from_ymd(y, m, d);
+	    guint32 ed = epoch_day_from_ymd(y, m, d);
 
 	    if (ed > 0) {
 		memset(timeptr, 0, sizeof *timeptr);

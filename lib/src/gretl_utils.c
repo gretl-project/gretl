@@ -929,7 +929,7 @@ static int invalid_stobs (const char *s)
     return E_DATA;
 }
 
-static void maybe_fix_daily_start (long *ed, int pd)
+static void maybe_fix_daily_start (guint32 *ed, int pd)
 {
     int wday = weekday_from_epoch_day(*ed);
     int fix = 0;
@@ -961,7 +961,7 @@ static void maybe_fix_daily_start (long *ed, int pd)
 
 static int process_starting_obs (const char *stobs_in, int pd, 
 				 int *pstructure, double *psd0,
-				 int *pdated)
+				 guint32 *ped0)
 {
     char stobs[OBSLEN];
     int structure = *pstructure;
@@ -994,15 +994,16 @@ static int process_starting_obs (const char *stobs_in, int pd,
     if (dated) {
 	if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
 	    /* calendar-dated data, daily or weekly */
-	    long ed0 = get_epoch_day(stobs);
+	    guint32 ed0 = get_epoch_day(stobs);
 
-	    if (ed0 < 0) {
+	    if (ed0 <= 0) {
 		return invalid_stobs(stobs);
 	    } else {
 		if (pd < 7) {
 		    maybe_fix_daily_start(&ed0, pd);
 		}
 		sd0 = ed0;
+		*ped0 = ed0;
 		structure = TIME_SERIES;
 	    }
 	} else {
@@ -1054,7 +1055,6 @@ static int process_starting_obs (const char *stobs_in, int pd,
     if (!err) {
 	*pstructure = structure;
 	*psd0 = sd0;
-	*pdated = dated;
     }
 
     return err;
@@ -1083,8 +1083,8 @@ int set_obs (const char *parm1, const char *parm2,
     const char *stobs = NULL;
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
-    int pd, dated = 0;
-    int panel = 0;
+    guint32 ed0 = 0;
+    int pd, panel = 0;
     int err = 0;
 
     if (dset == NULL) {
@@ -1163,7 +1163,7 @@ int set_obs (const char *parm1, const char *parm2,
 	return 1;
     }
 
-    err = process_starting_obs(stobs, pd, &structure, &sd0, &dated);
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0);
 
     if (err) {
 	return err;
@@ -1185,7 +1185,7 @@ int set_obs (const char *parm1, const char *parm2,
 	return E_DATA;
     }
 
-    if (dated) {
+    if (ed0 > 0) {
 	/* replace any existing markers with date strings */
 	dataset_destroy_obs_markers(dset);
     } else if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
@@ -1197,8 +1197,13 @@ int set_obs (const char *parm1, const char *parm2,
     dset->structure = structure;
     dset->sd0 = sd0;
 
-    ntodate(dset->stobs, 0, dset); 
-    ntodate(dset->endobs, dset->n - 1, dset);
+    if (ed0 > 0) {
+	calendar_date_string(dset->stobs, 0, dset);
+	calendar_date_string(dset->endobs, dset->n - 1, dset);
+    } else {
+	ntodate(dset->stobs, 0, dset); 
+	ntodate(dset->endobs, dset->n - 1, dset);
+    }
 
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form
@@ -1207,7 +1212,7 @@ int set_obs (const char *parm1, const char *parm2,
 	err = switch_panel_orientation(dset);
     }
 
-#if 0
+#if 1
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
 	    dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
 #endif    
@@ -1232,7 +1237,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 {
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
-    int dated = 0;
+    guint32 ed0 = 0;
     int panel = 0;
     int err = 0;
 
@@ -1253,7 +1258,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 	structure = TIME_SERIES;
     }
 
-    err = process_starting_obs(stobs, pd, &structure, &sd0, &dated);
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0);
 
     if (err) {
 	return err;
@@ -1269,7 +1274,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 	return E_DATA;
     }
 
-    if (dated) {
+    if (ed0 > 0) {
 	/* replace any existing markers with date strings */
 	dataset_destroy_obs_markers(dset);
     } else if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
@@ -1281,8 +1286,13 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
     dset->structure = structure;
     dset->sd0 = sd0;
 
-    ntodate(dset->stobs, 0, dset); 
-    ntodate(dset->endobs, dset->n - 1, dset);
+    if (ed0 > 0) {
+	calendar_date_string(dset->stobs, 0, dset);
+	calendar_date_string(dset->endobs, dset->n - 1, dset);
+    } else {
+	ntodate(dset->stobs, 0, dset); 
+	ntodate(dset->endobs, dset->n - 1, dset);
+    }
 
     if (dset->structure == STACKED_CROSS_SECTION) {
 	err = switch_panel_orientation(dset);

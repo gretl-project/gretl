@@ -4541,7 +4541,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 {
     DATASET *bigset = NULL;
     char datestr[OBSLEN];
-    long ed, ed0 = 0, edbak = 0;
+    guint32 ed, ed0 = 0, edbak = 0;
     int wd, skip, totskip = 0;
     int t, err = 0;
 

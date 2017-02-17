@@ -625,18 +625,18 @@ static int check_daily_dates (DATASET *dset, int *pd,
     int alt_pd = 0;
     int oldpd = dset->pd;
     double oldsd0 = dset->sd0;
-    long ed1, ed2;
+    guint32 ed1, ed2;
     int nmiss = 0, err = 0;
 
     *pd = 0;
     
     ed1 = get_epoch_day(lbl1);
-    if (ed1 < 0) {
+    if (ed1 <= 0) {
 	err = 1;
     }
 
 #if DAY_DEBUG    
-    fprintf(stderr, "S[0] = '%s', ed1 = %ld\n", lbl1, ed1);
+    fprintf(stderr, "S[0] = '%s', ed1 = %d\n", lbl1, ed1);
 #endif
 
     dset->pd = guess_daily_pd(dset);
@@ -648,7 +648,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
 
     if (!err) {
 	ed2 = get_epoch_day(lbl2);
-	if (ed2 < 0) {
+	if (ed2 <= 0) {
 	    err = 1;
 	} else if (ed2 < ed1) {
 #if DAY_DEBUG    
@@ -4043,9 +4043,9 @@ static int read_iso_basic (joiner *jr, int j, int i)
 	int y = (int) floor(x / 10000);
 	int m = (int) floor((x - 10000*y) / 100);
 	int d = (int) (x - 10000*y - 100*m);
-	long ed = epoch_day_from_ymd(y, m, d);
+	guint32 ed = epoch_day_from_ymd(y, m, d);
 
-	if (ed < 0) {
+	if (ed <= 0) {
 	    gretl_errmsg_sprintf("'%.8g' is not a valid date", x);
 	    err = E_DATA;
 	} else if (calendar_data(jr->l_dset)) {
