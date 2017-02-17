@@ -337,6 +337,7 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
     GDate date;
     int y, m, d;
     guint32 d0, dt = 0;
+    int err = 0;
 
     *targ = '\0';
     d0 = (guint32) dset->sd0;
@@ -358,27 +359,17 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
 	dt = t_to_epoch_day(t, d0, dset->pd);
     }
 
-    if (!g_date_valid_julian(dt)) {
-	gretl_errmsg_set(_("Error calculating calendar date"));
-	return E_DATA;
+    err = ymd_bits_from_ymd(dt, &y, &m, &d);
+
+    if (!err) {
+	if (strlen(dset->stobs) == 8) {
+	    sprintf(targ, YMD_WRITE_Y2_FMT, y % 100, m, d);
+	} else {
+	    sprintf(targ, YMD_WRITE_Y4_FMT, y, m, d);
+	}
     }
 
-    /* FIXME use ymd_bits... */
-
-    g_date_clear(&date, 1);
-    g_date_set_julian(&date, dt);
-
-    y = g_date_get_year(&date);
-    m = g_date_get_month(&date);
-    d = g_date_get_day(&date);
-
-    if (strlen(dset->stobs) == 8) {
-	sprintf(targ, YMD_WRITE_Y2_FMT, y % 100, m, d);
-    } else {
-	sprintf(targ, YMD_WRITE_Y4_FMT, y, m, d);
-    }
-
-    return 0;
+    return err;
 }
 
 /**
