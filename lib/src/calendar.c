@@ -54,31 +54,9 @@
  * license (reproduced in the libgretl source file calendar.c).
  */
 
-#define PROLEPTIC 0 /* not yet */
+int proleptic = 0; /* using proleptic Gregorian calendar? */
 
-#if PROLEPTIC
-# define leap_year(yr) ((!((yr) % 4) && ((yr) % 100)) || !((yr) % 400))
-
-/* number of centuries since 0, not inclusive */
-# define centuries_since_0(yr) \
-	((yr) > 99 ? (yr) / 100 : 0)
-
-/* number of centuries since 0 whose modulo of 400 is 0 */
-# define quad_centuries_since_0(yr) \
-	((yr) > 399 ? (yr) / 400 : 0)
-
-/* number of leap years between year 1 and this year, not inclusive */
-# define leap_years_since_year_1(yr) \
-	((yr) / 4 - centuries_since_0(yr) + quad_centuries_since_0(yr))
-
-#define	SATURDAY             6  /* 1 Jan 1 was a Saturday */
-#define	NUMBER_MISSING_DAYS  0  /* no correction */
-
-#else
-/* leap year -- account for gregorian reformation in 1752 */
-# define leap_year(yr) \
-	((yr) <= 1752 ? !((yr) % 4) : \
-	(!((yr) % 4) && ((yr) % 100)) || !((yr) % 400))
+/* macros for historical calendar (Julian till 1752) */
 
 /* number of centuries since 1700, not inclusive */
 # define centuries_since_1700(yr) \
@@ -88,14 +66,7 @@
 # define quad_centuries_since_1700(yr) \
 	((yr) > 1600 ? ((yr) - 1600) / 400 : 0)
 
-/* number of leap years between year 1 and this year, not inclusive */
-# define leap_years_since_year_1(yr) \
-	((yr) / 4 - centuries_since_1700(yr) + quad_centuries_since_1700(yr))
-
-#define	SATURDAY             1  /* 1 Jan 1 was a Monday */
-#define	NUMBER_MISSING_DAYS 11  /* 11 day correction */
-
-#endif /* PROLEPTIC or not */
+/* end macros for historical calendar */
 
 static int days_in_month[2][13] = {
     {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
@@ -103,6 +74,26 @@ static int days_in_month[2][13] = {
 };
 
 int week1stday = 0; /* 1 for Monday, 0 for Sunday */
+
+static int leap_years_since_year_1 (int yr)
+{
+    if (proleptic) {
+	return yr / 4 - yr / 100 + yr / 400;
+    } else {
+	return yr / 4 - centuries_since_1700(yr) +
+	    quad_centuries_since_1700(yr);
+    }
+}
+
+static int leap_year (int yr)
+{
+    if (proleptic) {
+	return (!(yr % 4) && (yr % 100)) || !(yr % 400);
+    } else {
+	return yr <= 1752 ? !(yr % 4) :
+	    (!(yr % 4) && (yr % 100)) || !(yr % 400);
+    }
+}
 
 static int day_in_year (int day, int month, int year)
 {
@@ -115,36 +106,38 @@ static int day_in_year (int day, int month, int year)
     return day;
 }
 
-static int day_of_week_from_ymd (int yr, int mo, int day)
+/* Schwerdtfeger's method */
+
+static int day_of_week_from_ymd (int y, int m, int d)
 {
-    int c, d, ret;
+    int e[]  = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+    int jf[] = {5, 4, 3, 2, 1, 0, 6};
+    int gf[] = {0, 5, 3, 1};
+    int gregorian;
+    int c, g, f;
 
-    /* Uspensky and Heaslet, Elementary Number Theory (1939) */
+    gregorian = proleptic || y > 1752 || (y == 1752 && m == 9 && d >= 14);
 
-    if (mo < 3) {
-	yr--;
-	mo += 10;
+    if (y < 0 || m < 1 || d < 1 || m > 12 ||
+	d > days_in_month[leap_year(y)][m]) {
+	gretl_errmsg_sprintf("Invalid date (y=%d, m=%d, d=%d)", y, m, d);
+	return -1;
+    } else if (!gregorian && y == 1752 && m == 9 && d > 2) {
+	gretl_errmsg_sprintf("Invalid historical date (y=%d, m=%d, d=%d)", y, m, d);
+	return -1;
+    }	
+    
+    y = m >= 3 ? y : y - 1;
+    c = y / 100;
+    g = y - 100*c;
+
+    if (gregorian) {
+	f = gf[c % 4];
     } else {
-	mo -= 2;
+	f = jf[c % 7];
     }
 
-    c = yr / 100;
-    d = yr % 100;
-
-#if PROLEPTIC /* not yet */
-    ret = (int) (day + floor(2.6*mo - 0.2) + d + floor(d/4.0) + floor(c/4.0)
-	   - 2*c) % 7;
-#else
-    ret = ((day % 7) + ((int) floor(2.6 * mo - 0.2) % 7) + 
-	    (d % 7) + ((int) floor(d / 4.0) % 7) + ((int) floor(c / 4.0) % 7)
-	    - ((2 * c) % 7)) % 7;
-
-    if (ret < 0) {
-	ret += 7;
-    }
-#endif
-
-    return ret;
+    return (d + e[m-1] + f + g + g/4) % 7;
 }
 
 /**
@@ -394,18 +387,22 @@ int calendar_obs_number (const char *date, const DATASET *dset)
 {
     long ed0 = (long) dset->sd0;
     long t = get_epoch_day(date);
+    int n_missing_days, day1;
 
     if (t == -1) return -1;
     
     /* subtract starting day for dataset */
     t -= ed0;
 
+    n_missing_days = proleptic ? 0 : 11;
+    day1 = proleptic ? 6 : 1;
+
     if (dset->pd == 52) {
 	/* weekly data */
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) { 
 	/* daily, 5- or 6-day week: subtract number of irrelevant days */
-	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
+	int startday = ((ed0 - 1 + day1) - n_missing_days) % 7;
 	int wkends = (t + startday - 1) / 7;
 
 #ifdef CAL_DEBUG
@@ -425,7 +422,9 @@ int calendar_obs_number (const char *date, const DATASET *dset)
 
 static int t_to_epoch_day (int t, long start, int wkdays)
 {
-    int startday = (((start - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
+    int n_missing_days = proleptic ? 0 : 11;
+    int day1 = proleptic ? 6 : 1;
+    int startday = ((start - 1 + day1) - n_missing_days) % 7;
     int wkends = (t + startday - 1) / wkdays;
 
     if (wkdays == 5) wkends *= 2;
@@ -483,7 +482,7 @@ int calendar_date_string (char *str, int t, const DATASET *dset)
     } else if (dset->pd == 7) {
 	dfind = d0 + t;
     } else {
-	/* 5- or 6-day data */
+	/* 5-day data */
 	if (t == 0 && dset->pd == 5) {
 	    int wday = weekday_from_epoch_day(d0);
 
@@ -496,11 +495,11 @@ int calendar_date_string (char *str, int t, const DATASET *dset)
 	dfind = t_to_epoch_day(t, d0, dset->pd);
     }
 
-#if PROLEPTIC
-    yr = 1 + (double) dfind / 365.2425;
-#else
-    yr = 1 + (double) dfind / 365.248;
-#endif
+    if (proleptic) {
+	yr = 1 + (double) dfind / 365.2425;
+    } else {
+	yr = 1 + (double) dfind / 365.248;
+    }
 
     yrstart = (long)(yr - 1) * 365 + leap_years_since_year_1(yr - 1);
     rem = dfind - yrstart;
@@ -513,12 +512,20 @@ int calendar_date_string (char *str, int t, const DATASET *dset)
 
     while (modays < rem) {
 	mo++;
-	add = days_in_month[leap_year(yr)][mo];
+	if (!proleptic && yr == 1752 && mo == 9) {
+	    add = 19;
+	} else {
+	    add = days_in_month[leap_year(yr)][mo];
+	}
 	if (modays + add < rem) modays += add;
 	else break;
     }
 
     day = rem - modays;
+
+    if (!proleptic && yr == 1752 && mo == 9 && day > 2) {
+	day += 11;
+    }
 
     if (strlen(dset->stobs) == 8) {
 	sprintf(str, YMD_WRITE_Y2_FMT, yr % 100, mo, day);
@@ -690,27 +697,25 @@ double get_dec_date (const char *date)
 
 double day_of_week (int yr, int mo, int day, int *err)
 {
-    if (yr < 0 || mo <= 0 || day <= 0) {
-	*err = E_DATA;
+    int W;
+    
+    if (yr < 0 || mo <= 0 || day <= 0 || mo > 12) {
+	*err = E_INVARG;
 	return NADBL;
     }
-
-    if (mo > 12 || day > 31) {
-
-	*err = E_DATA;
-	return NADBL;
-    } 
-
-    if (day > days_in_month[leap_year(yr)][mo]) {
-	*err = E_DATA;
-	return NADBL;
-    }	
 
     if (yr < 100) {
 	yr = FOUR_DIGIT_YEAR(yr);
     }
 
-    return day_of_week_from_ymd(yr, mo, day);
+    W = day_of_week_from_ymd(yr, mo, day);
+
+    if (W < 0) {
+	*err = E_INVARG;
+	return NADBL;
+    } else {
+	return (double) W;
+    }
 }
 
 #define day_in_calendar(w, d) ((w == 6 && d != 0) || \
