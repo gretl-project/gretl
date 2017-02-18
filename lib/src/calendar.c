@@ -38,6 +38,16 @@ static int days_in_month[2][13] = {
 /* Jan 1, 0001, was a Saturday on the proleptic Gregorian calendar */
 #define DAY1 6
 
+/* Note on the GLib API used below: where "julian" occurs in the names
+   of GLib calendrical functions it refers to the "Julian day"; that is,
+   the number of days since some fixed starting point, as used by
+   astronomers. This is quite distinct from the Julian calendar. 
+   However, GLib takes the starting point as the first of January in
+   AD 1, as opposed to the astronomical starting point in 4714 BC,
+   so these are not strictly Julian days, and in our own functions
+   we call them "epoch days".
+*/
+
 static int leap_year (int yr)
 {
     return (!(yr % 4) && (yr % 100)) || !(yr % 400);
@@ -124,7 +134,7 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
  * offices of the United Kingdom and United States, 1961), via the Wikipedia page
  * https://en.wikipedia.org/wiki/Conversion_between_Julian_and_Gregorian_calendars
  *
- * The are other algorithms set out on the internet but they are mostly
+ * There are other algorithms set out on the internet but they are mostly
  * wrong (at least, not right for all dates).
  *
  * Returns: 0 on success, non-zero on error.
@@ -199,7 +209,7 @@ int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
 /**
  * ymd_extended_from_epoch_day:
  * @ed: epoch day (ed >= 1).
- * @julian: non-zero to Use Julian calendar, otherwise Gregorian.
+ * @julian: non-zero to use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
  * 
  * Returns: a string on the pattern YYYY-MM-DD (ISO 8601 extended 
@@ -238,7 +248,7 @@ char *ymd_extended_from_epoch_day (guint32 ed, int julian, int *err)
 /**
  * ymd_basic_from_epoch_day:
  * @ed: epoch day (ed >= 1).
- * @julian: non-zero to Use Julian calendar, otherwise Gregorian.
+ * @julian: non-zero to use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
  * 
  * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
