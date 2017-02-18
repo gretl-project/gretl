@@ -113,8 +113,93 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
 }
 
 /**
+ * julian_ymd_bits_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * @y: location to receive year.
+ * @m: location to receive month.
+ * @m: location to receive day.
+ * 
+ * The method is abstracted from "Explanatory Supplement to the Astronomical
+ * Ephemeris and the American Ephemeris and Nautical Almanac" (Nautical almanac
+ * offices of the United Kingdom and United States, 1961), via the Wikipedia page
+ * https://en.wikipedia.org/wiki/Conversion_between_Julian_and_Gregorian_calendars
+ *
+ * The are other algorithms set out on the internet but they are mostly
+ * wrong (at least, not right for all dates).
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
+				    int *pm, int *pd)
+{
+    /* Array of epoch days on which the divergence between
+       the Julian and Gregorian calendars increased by one
+       day, starting from assumed zero prior to 300 CE.
+       (This is a simplification which ignores the unruly
+       Julian stuff that happened earlier than 300, and
+       it's only good until the 22nd century.)
+    */
+    guint32 jdiff[] = {109267, 182317, 218842, 255367, 328417,
+		       364942, 401467, 474517, 511042, 547567,
+		       620607, 657131, 693655, 766704};   
+    GDate date;
+    int y, m, d, leap;
+    int i, cd = 0;
+
+    if (!g_date_valid_julian(ed)) {
+	return E_INVARG;
+    }
+
+    g_date_clear(&date, 1);
+    g_date_set_julian(&date, ed);
+
+    /* get the Gregorian y, m, d */
+    y = g_date_get_year(&date);
+    m = g_date_get_month(&date);
+    d = g_date_get_day(&date);
+
+    if (y > 2199) {
+	/* we're not tracking this any further */
+	return E_INVARG;
+    }
+
+    /* find out how many days of calendrical divergence,
+       @cd, there were on the given epoch day */
+    for (i=0; i<14; i++) {
+	if (ed < jdiff[i]) {
+	    cd = i;
+	    break;
+	}
+    }
+
+    /* work backwards from the Gregorian date to the
+       Julian one */
+    while (cd > 0) {
+	if (d > 1) {
+	    d--;
+	} else if (m > 1) {
+	    leap = y % 4 == 0; /* Julian leap year */
+	    m--;
+	    d = days_in_month[leap][m];
+	} else if (y > 1) {
+	    y--;
+	    m = 12;
+	}
+	cd--;
+    }
+
+    *py = y;
+    *pm = m;
+    *pd = d;
+ 
+    return 0;
+}
+
+/**
  * ymd_extended_from_epoch_day:
  * @ed: epoch day (ed >= 1).
+ * @julian: non-zero to Use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
  * 
  * Returns: a string on the pattern YYYY-MM-DD (ISO 8601 extended 
@@ -122,13 +207,17 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
  * first of January in the year 1 AD, or NULL on error.
  */
 
-char *ymd_extended_from_epoch_day (guint32 ed, int *err)
+char *ymd_extended_from_epoch_day (guint32 ed, int julian, int *err)
 {
     char *ret = NULL;
     int y, m, d;
     int myerr;
 
-    myerr = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    if (julian) {
+	myerr = julian_ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    } else {
+	myerr = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    }
 
     if (!myerr) {
 	ret = calloc(12, 1);
@@ -149,6 +238,7 @@ char *ymd_extended_from_epoch_day (guint32 ed, int *err)
 /**
  * ymd_basic_from_epoch_day:
  * @ed: epoch day (ed >= 1).
+ * @julian: non-zero to Use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
  * 
  * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
@@ -156,11 +246,15 @@ char *ymd_extended_from_epoch_day (guint32 ed, int *err)
  * first of January in the year 1 AD, or #NADBL on error.
  */
 
-double ymd_basic_from_epoch_day (guint32 ed, int *err)
+double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err)
 {
     int y = 0, m = 0, d = 0;
 
-    *err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    if (julian) {
+	*err = julian_ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    } else {
+	*err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    }
     
     if (*err) {
 	return NADBL;
@@ -1035,77 +1129,3 @@ double easterdate (int year)
     return month + day * 0.01;
 }
 
-/**
- * julian_ymd_basic_from_epoch_day:
- * @ed: epoch day (ed >= 1).
- * @err: location to receive error code.
- * 
- * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
- * date format) on the Julian calendar, given the epoch day number,
- * which equals 1 for the first of January in the year 1 AD -- or #NADBL
- * on error.
- * 
- * The method is abstracted from "Explanatory Supplement to the Astronomical
- * Ephemeris and the American Ephemeris and Nautical Almanac" (Nautical almanac
- * offices of the United Kingdom and United States, 1961), via the Wikipedia page
- * https://en.wikipedia.org/wiki/Conversion_between_Julian_and_Gregorian_calendars
- *
- * The are other algorithms set out on the internet but they are mostly
- * wrong (at least, not right for all dates).
- */
-
-double julian_ymd_basic_from_epoch_day (guint32 ed, int *err)
-{
-    /* Vector of epoch days on which the divergence between
-       the Julian and Gregorian calendars increased by one
-       day, starting from assumed zero prior to 300 CE.
-       (This is a simplification which ignores the unruly
-       Julian stuff that happened earlier than 300, and
-       it's only good until the 22nd century.)
-    */
-    int jdiff[] = {109267, 182317, 218842, 255367, 328417,
-		   364942, 401467, 474517, 511042, 547567,
-		   620607, 657131, 693655, 766704};   
-    GDate date;
-    int y, m, d, leap;
-    int i, cd = 0;
-
-    if (!g_date_valid_julian(ed)) {
-	return NADBL;
-    }
-
-    g_date_clear(&date, 1);
-    g_date_set_julian(&date, ed);
-
-    /* get the Gregorian y, m, d */
-    y = g_date_get_year(&date);
-    m = g_date_get_month(&date);
-    d = g_date_get_day(&date);
-
-    /* find out how many days of calendrical divergence,
-       @cd, there were on the given epoch day */
-    for (i=0; i<14; i++) {
-	if (ed <= jdiff[i]) {
-	    cd = i + 1;
-	    break;
-	}
-    }
-
-    /* work backwards from the Gregorian date to the
-       Julian one */
-    while (cd > 0) {
-	if (d > 1) {
-	    d--;
-	} else if (m > 1) {
-	    leap = y % 4 == 0; /* Julian leap year */
-	    m--;
-	    d = days_in_month[leap][m];
-	} else if (y > 1) {
-	    y--;
-	    m = 12;
-	}
-	cd--;
-    }
- 
-    return 10000*y + 100*m + d;
-}

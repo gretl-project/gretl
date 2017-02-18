@@ -353,6 +353,7 @@ enum {
     F_BREAD,
     F_GETLINE,
     F_ISODATE,
+    F_JULDATE,
     F_READFILE,
     F_PRINTF,
     F_SPRINTF,

@@ -834,7 +834,7 @@ static int set_time_info (DATASET *dset, int tv, int pd)
 	    ; /* got excess precision: handled above */
 	} else if (pd > 0) {
 	    long ed0 = t1 + STATA_DAY_OFFSET;
-	    char *ymd = ymd_extended_from_epoch_day(ed0, &err);
+	    char *ymd = ymd_extended_from_epoch_day(ed0, 0, &err);
 
 	    if (!err) {
 		strcpy(dset->stobs, ymd);

@@ -6365,17 +6365,19 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static NODE *isodate_node (NODE *l, NODE *r, parser *p)
+static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (!scalar_node(l) && l->t != SERIES) {
-	node_type_error(F_ISODATE, 1, NUM, l, p);
+	node_type_error(f, 1, NUM, l, p);
     } else if (!scalar_node(r) && r->t != EMPTY) {
-	node_type_error(F_ISODATE, 2, NUM, r, p);
+	node_type_error(f, 2, NUM, r, p);
     }
 
     if (!p->err) {
+	int julian = (f == F_JULDATE);
+	
 	if (scalar_node(l)) {
 	    /* epoch day node is scalar */
 	    int as_string = scalar_node(r)? node_get_int(r, p) : 0;
@@ -6390,9 +6392,11 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 		    ret->v.xval = NADBL;
 		} else if (x >= 1 && x <= UINT_MAX) {
 		    if (as_string) {
-			ret->v.str = ymd_extended_from_epoch_day((guint32) x, &p->err);
+			ret->v.str = ymd_extended_from_epoch_day((guint32) x,
+								 julian, &p->err);
 		    } else {
-			ret->v.xval = ymd_basic_from_epoch_day((guint32) x, &p->err);
+			ret->v.xval = ymd_basic_from_epoch_day((guint32) x,
+							       julian, &p->err);
 		    }
 		} else {
 		    p->err = E_INVARG;
@@ -6409,8 +6413,9 @@ static NODE *isodate_node (NODE *l, NODE *r, parser *p)
 		    xt = l->v.xvec[t];
 		    if (na(xt)) {
 			ret->v.xvec[t] = NADBL;
-		    } else if (xt >= 1 && xt <= LONG_MAX) {
-			ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt, &p->err);
+		    } else if (xt >= 1 && xt <= UINT_MAX) {
+			ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
+								  julian, &p->err);
 		    } else {
 			p->err = E_INVARG;
 			break;
@@ -13983,7 +13988,8 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_ISODATE:
-	ret = isodate_node(l, r, p);
+    case F_JULDATE:
+	ret = isodate_node(l, r, t->t, p);
 	break;
     case F_ATOF:
 	if (l->t == STR) {

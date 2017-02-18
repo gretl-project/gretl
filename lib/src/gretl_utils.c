@@ -946,7 +946,7 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 	char *fixed, *msg;
 
 	*ed += fix;
-	fixed = ymd_extended_from_epoch_day(*ed, NULL);
+	fixed = ymd_extended_from_epoch_day(*ed, 0, NULL);
 	msg = gretl_strdup_printf("the starting date was corrected to Monday %s",
 				  fixed);
 	gretl_warnmsg_set(msg);

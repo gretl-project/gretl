@@ -427,6 +427,7 @@ struct str_table funcs[] = {
     { F_AGGRBY,   "aggregate" },
     { F_REMOVE,   "remove" },
     { F_ISODATE,  "isodate" },
+    { F_JULDATE,  "juldate" },
     { F_GETLINE,  "getline" },
     { F_ATOF,     "atof" },
     { F_FIXNAME,  "fixname" },

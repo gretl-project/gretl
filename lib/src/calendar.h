@@ -32,11 +32,13 @@
 
 guint32 epoch_day_from_ymd (int y, int m, int d);
 
-char *ymd_extended_from_epoch_day (guint32 ed, int *err);
+char *ymd_extended_from_epoch_day (guint32 ed, int julian, int *err);
 
-double ymd_basic_from_epoch_day (guint32 ed, int *err);
+double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err);
 
 int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d);
+
+int julian_ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d);
 
 int iso_basic_to_extended (const double *b, double *y, double *m, 
 			   double *d, int n);
@@ -79,7 +81,5 @@ int n_hidden_missing_obs (const DATASET *dset);
 int guess_daily_pd (const DATASET *dset);
 
 double easterdate (int year);
-
-double julian_ymd_basic_from_epoch_day (guint32 ed, int *err);
 
 #endif /* CALENDAR_H */ 
