@@ -4307,7 +4307,8 @@
 	  type as <argname>ed</argname> &mdash; is an 8-digit number,
 	  or a series of such numbers, on the pattern
 	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
-	  giving the calendar date corresponding to the epoch day.
+	  giving the Gregorian calendar date corresponding to the
+	  epoch day.
 	</para>
 	<para>
 	  If <argname>ed</argname> is a scalar (only) and the optional
@@ -4317,7 +4318,8 @@
 	  <quote>extended</quote> format).
 	</para>
 	<para>
-	  For the inverse function, see <fncref targ="epochday"/>.
+	  For the inverse function, see <fncref targ="epochday"/>;
+	  also see <fncref targ="juldate"/>.
 	</para>
       </description>
     </function>
@@ -4409,6 +4411,37 @@
               </para>
 	    </li>
 	  </ilist>
+      </description>
+    </function>
+
+    <function name="juldate" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="bool" optional="true">as-string</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>ed</argname> is interpreted as an
+	  epoch day (which equals 1 for the first of January in the
+	  year 1 AD). The default return value &mdash; of the same
+	  type as <argname>ed</argname> &mdash; is an 8-digit number,
+	  or a series of such numbers, on the pattern
+	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
+	  giving the Julian calendar date corresponding to the epoch
+	  day. These values are accurate from AD 300 to 2199. The
+	  behavior of the Julian calendar before 300 was complicated
+	  and is not tracked by this function.
+	</para>
+	<para>
+	  If <argname>ed</argname> is a scalar (only) and the optional
+	  second argument <argname>as-string</argname> is non-zero,
+	  the return value is not numeric but rather a string on the
+	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format).
+	</para>
+	<para>
+	  See also <fncref targ="isodate"/>.
+	</para>
       </description>
     </function>    
 
