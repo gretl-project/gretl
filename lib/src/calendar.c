@@ -753,13 +753,17 @@ int days_in_month_after (int y, int m, int d, int wkdays)
     if (wkdays == 7) {
 	ret = dm - d;
     } else {
-	int i, idx = day_of_week_from_ymd(y, m, dm);
+	int i, wd = day_of_week_from_ymd(y, m, dm);
 
 	for (i=dm; i>d; i--) {
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, wd)) {
 		ret++;
 	    }
-	    idx--;
+	    if (wd > 0) {
+		wd--;
+	    } else {
+		wd = 6;
+	    }
 	}
     }
 
