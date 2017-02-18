@@ -80,4 +80,6 @@ int guess_daily_pd (const DATASET *dset);
 
 double easterdate (int year);
 
+double julian_ymd_basic_from_epoch_day (guint32 ed, int *err);
+
 #endif /* CALENDAR_H */ 

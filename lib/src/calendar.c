@@ -334,9 +334,8 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
 
 int calendar_date_string (char *targ, int t, const DATASET *dset)
 {
-    GDate date;
-    int y, m, d;
     guint32 d0, dt = 0;
+    int y, m, d;
     int err = 0;
 
     *targ = '\0';
@@ -359,7 +358,7 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
 	dt = t_to_epoch_day(t, d0, dset->pd);
     }
 
-    err = ymd_bits_from_ymd(dt, &y, &m, &d);
+    err = ymd_bits_from_epoch_day(dt, &y, &m, &d);
 
     if (!err) {
 	if (strlen(dset->stobs) == 8) {
@@ -383,98 +382,101 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
  * Writes to @targ the calendar representation of the date of
  * observation @mst, in the form YYYY-MM-DD if @pd is 0, 5,
  * 6, 7 or 52 (unknown, daily, or weekly frequency), otherwise 
- * in the appropriate format for annual, quarterly or monthly data.
+ * in the appropriate format for annual, quarterly or monthly
+ * according to @pd.
  * 
  * Returns: 0.
  */
 
 int MS_excel_date_string (char *targ, int mst, int pd, int d1904)
 {
-    int yr = (d1904)? 1904 : 1900;
-    int day = (d1904)? 2 : 1;
-    int mo = 1;
+    int y = (d1904)? 1904 : 1900;
+    int d = (d1904)? 2 : 1;
+    int m = 1;
     int leap, drem;
 
     *targ = '\0';
 
     if (mst == 0) {
+	/* date coincident with base */
 	if (d1904) {
-	    day = 1;
+	    d = 1;
 	} else {
-	    yr = 1899;
-	    mo = 12;
-	    day = 31;
+	    y = 1899;
+	    m = 12;
+	    d = 31;
 	}
     } else if (mst > 0) {
+	/* date subsequent to base */
 	drem = mst + d1904;
 
 	while (1) {
-	    int yd = 365 + leap_year(yr);
+	    int yd = 365 + leap_year(y);
 
-	    /* MS tomfoolery */
-	    if (yr == 1900) yd++;
+	    /* MS nincompoopery */
+	    if (y == 1900) yd++;
 
 	    if (drem > yd) {
 		drem -= yd;
-		yr++;
+		y++;
 	    } else {
 		break;
 	    }
 	}
 
-	leap = leap_year(yr) + (yr == 1900);
+	leap = leap_year(y) + (y == 1900);
 
-	for (mo=1; mo<13; mo++) {
-	    int md = days_in_month[leap][mo];
+	for (m=1; m<=12; m++) {
+	    int md = days_in_month[leap][m];
 
 	    if (drem > md) {
 		drem -= md;
 	    } else {
-		day = drem;
+		d = drem;
 		break;
 	    }
 	}
     } else {
 	/* mst < 0, date prior to base */
-	drem = - (mst + d1904);
+	drem = -(mst + d1904);
 
-	yr = (d1904)? 1903 : 1899;
+	y = (d1904)? 1903 : 1899;
 
 	while (1) {
-	    int yd = 365 + leap_year(yr);
+	    int yd = 365 + leap_year(y);
 
 	    if (drem > yd) {
 		drem -= yd;
-		yr--;
+		y--;
 	    } else {
 		break;
 	    }
 	}
 
-	leap = leap_year(yr);
+	leap = leap_year(y);
 
-	for (mo=12; mo>0; mo--) {
-	    int md = days_in_month[leap][mo];
+	for (m=12; m>0; m--) {
+	    int md = days_in_month[leap][m];
 
 	    if (drem >= md) {
 		drem -= md;
 	    } else {
-		day = md - drem;
+		d = md - drem;
 		break;
 	    }
 	}
     }
 
     if (pd == 1) {
-	sprintf(targ, "%d", yr);
+	sprintf(targ, "%d", y);
     } else if (pd == 12) {
-	sprintf(targ, "%d:%02d", yr, mo);
+	sprintf(targ, "%d:%02d", y, m);
     } else if (pd == 4) {
-	int qtr = 1 + mo / 3.25;
+	int q = 1 + m / 3.25;
 
-	sprintf(targ, "%d:%d", yr, qtr);
+	sprintf(targ, "%d:%d", y, q);
     } else {
-	sprintf(targ, YMD_WRITE_Y4_FMT, yr, mo, day);
+	sprintf(targ, YMD_WRITE_Y4_FMT, y, m, d);
     }
 
     return 0;
@@ -552,8 +554,8 @@ double day_of_week (int y, int m, int d, int *err)
     return wd == G_DATE_SUNDAY ? 0 : wd;
 }
 
-#define day_in_calendar(w, d) ((w == 6 && d != 0) || \
-                               (w == 5 && d != 0 && d != 6))
+#define day_in_calendar(w, d) (((w) == 6 && d != 0) || \
+			       ((w) == 5 && d != 0 && d != 6))
 
 /**
  * weekday_from_date:
@@ -565,14 +567,18 @@ double day_of_week (int y, int m, int d, int *err)
 int weekday_from_date (const char *datestr)
 {
     int y, m, d;
-
-    /* FIXME years before 0100 */
+    int ydigits;
 
     if (sscanf(datestr, YMD_READ_FMT, &y, &m, &d) != 3) {
 	return -1;
     }
 
-    if (y < 100) {
+    ydigits = strcspn(datestr, "-");
+    if (ydigits != 4 && ydigits != 2) {
+	return -1;
+    }
+
+    if (ydigits == 2) {
 	y = FOUR_DIGIT_YEAR(y);
     }
 
@@ -607,13 +613,13 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
 	}
     } else {
 	/* 5- or 6-day week: check for first weekday or non-Sunday */
-	int i, wd;
-
-	/* FIXME efficiency */
+	int i, idx = day_of_week_from_ymd(y, m, 1);
 
 	for (i=1; i<6; i++) {
-	   wd = day_of_week_from_ymd(y, m, i); 
-	   if (day_in_calendar(wkdays, wd)) break;
+	   if (day_in_calendar(wkdays, idx % 7)) {
+	       break;
+	   }
+	   idx++;
 	}
 	if (d == i) {
 	    ret = 1;
@@ -648,13 +654,13 @@ int day_ends_month (int d, int m, int y, int wkdays)
 	ret = (d == dm);
     } else {
 	/* 5- or 6-day week: check for last weekday or non-Sunday */
-	int i, wd;
+	int i, idx = day_of_week_from_ymd(y, m, dm);
 
 	for (i=dm; i>0; i--) {
-	    wd = day_of_week_from_ymd(y, m, i);
-	    if (day_in_calendar(wkdays, wd)) {
+	    if (day_in_calendar(wkdays, idx % 7)) {
 		break;
 	    }
+	    idx--;
 	}
 	ret = (d == i);	
     } 
@@ -681,12 +687,10 @@ int get_days_in_month (int m, int y, int wkdays)
     if (wkdays == 7) {
 	ret = dm;
     } else {
-	int idx = day_of_week_from_ymd(y, m, 1);
-	int i, wd;
+	int i, idx = day_of_week_from_ymd(y, m, 1);
 
 	for (i=0; i<dm; i++) {
-	    wd = idx % 7;
-	    if (day_in_calendar(wkdays, wd)) {
+	    if (day_in_calendar(wkdays, idx % 7)) {
 		ret++;
 	    }
 	    idx++;
@@ -776,32 +780,31 @@ int days_in_month_after (int y, int m, int d, int wkdays)
 
 int date_to_daily_index (const char *datestr, int wkdays)
 {
-    int y, m, d;
-    int idx = 0;
+    int y, m, d, seq = 0;
 
     if (sscanf(datestr, YMD_READ_FMT, &y, &m, &d) != 3) {
 	return -1;
     }
 
     if (wkdays == 7) {
-	idx = d - 1;
+	seq = d - 1;
     } else {
 	int leap = leap_year(y);
 	int n = days_in_month[leap][m];
-	int i, wd;
+	int i, idx = day_of_week_from_ymd(y, m, 1);
 
 	for (i=1; i<=n; i++) {
 	    if (d == i) {
 		break;
 	    }
-	    wd = day_of_week_from_ymd(y, m, i);
-	    if (day_in_calendar(wkdays, wd)) {
-		idx++;
+	    if (day_in_calendar(wkdays, idx % 7)) {
+		seq++;
 	    }
+	    idx++;
 	}	
     } 
 
-    return idx; 
+    return seq; 
 }
 
 /**
@@ -813,7 +816,7 @@ int date_to_daily_index (const char *datestr, int wkdays)
  * @wkdays: number of days in week (7, 6 or 5)
  *
  * Fills out @targ with the calendar data implied by
- * the specification of @y, @m, @idx and @wkdays,
+ * the specification of @y, @m, @seq and @wkdays,
  * provided this specification corresponds to an actual
  * calendar date.
 
@@ -829,9 +832,9 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
     *targ = '\0';
 
     if (m < 1 || m > 12 || idx < 0 || idx > 30) {
-	fprintf(stderr, "daily_index_to_date: y=%d, m=%d, idx=%d\n",
+	fprintf(stderr, "daily_index_to_date: y=%d, m=%d, seq=%d\n",
 		y, m, idx);
-	return E_DATA;
+	return E_INVARG;
     }
 
     if (wkdays == 7) {
@@ -839,17 +842,18 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
     } else {
 	int leap = leap_year(y);
 	int n = days_in_month[leap][m];
-	int i, wd, seq = 0;
+	int wd = day_of_week_from_ymd(y, m, 1);
+	int i, seq = 0;
 
 	for (i=1; i<=n; i++) {
-	    wd = day_of_week_from_ymd(y, m, i);
-	    if (day_in_calendar(wkdays, wd)) {
+	    if (day_in_calendar(wkdays, wd % 7)) {
 		if (seq == idx) {
 		    day = i;
 		    break;
 		}
 		seq++;
 	    }
+	    wd++;
 	}	
     }
 
@@ -997,11 +1001,11 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
  * @year: year for which we want Easter date (Gregorian).
  *
  * Algorithm taken from Wikipedia page 
- * "https://en.wikipedia.org/wiki/Computus"
+ * https://en.wikipedia.org/wiki/Computus
  * under the heading "Anonymous Gregorian algorithm".
  *
  * Returns the date of Easter in the Gregorian calendar as 
- * (month + day/100). Note that April the 10th, is, under
+ * (month + day/100). Note that April the 10th is, under
  * this convention, 4.1; hence, 4.2 is April the 20th, not
  * April the 2nd (which would be 4.02).
  */
@@ -1027,3 +1031,56 @@ double easterdate (int year)
     return month + day * 0.01;
 }
 
+/**
+ * julian_ymd_basic_from_epoch_day:
+ * @ed: epoch day (ed >= 1).
+ * @err: location to receive error code.
+ * 
+ * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
+ * date format), but on the Julian calendar, given the epoch day number,
+ * which equals 1 for the first of January in the year 1 AD, or #NADBL
+ * on error.
+ */
+
+double julian_ymd_basic_from_epoch_day (guint32 ed, int *err)
+{
+    int jdiff[] = {109267, 182317, 218842, 255367, 328417,
+		   364942, 401467, 474517, 511042, 547567,
+		   620607, 657131, 693655, 766704};   
+    GDate date;
+    int y, m, d, leap;
+    int i, cd = 0;
+
+    if (!g_date_valid_julian(ed)) {
+	return NADBL;
+    }
+
+    g_date_clear(&date, 1);
+    g_date_set_julian(&date, ed);
+    y = g_date_get_year(&date);
+    m = g_date_get_month(&date);
+    d = g_date_get_day(&date);
+
+    for (i=0; i<14; i++) {
+	if (ed <= jdiff[i]) {
+	    cd = i + 1;
+	    break;
+	}
+    }
+
+    while (cd > 0) {
+	if (d > 1) {
+	    d--;
+	} else if (m > 1) {
+	    leap = y % 4 == 0;
+	    m--;
+	    d = days_in_month[leap][m];
+	} else if (y > 1) {
+	    y--;
+	    m = 12;
+	}
+	cd--;
+    }
+ 
+    return 10000*y + 100*m + d;
+}
