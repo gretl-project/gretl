@@ -9725,8 +9725,13 @@ static NODE *string_scrape_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static int x_to_period (double x, char c, int *err)
+static int x_to_period (double x, char c, int *julian, int *err)
 {
+    if (julian != NULL && c == 'y' && x < 0) {
+	*julian = 1;
+	x = -x;
+    }
+    
     if (na(x)) {
 	return -1;
     } else if (x < 0 || fabs(x) > INT_MAX) {
@@ -9760,6 +9765,7 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
     double *x[3] = {NULL, NULL, NULL};
     int ymd[3] = {-1, -1, -1};
     const char *code = "ymd";
+    int julian = 0;
     double sval;
     int i;
 
@@ -9772,7 +9778,7 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 	if (scalar_node(nodes[i])) {
 	    sval = node_get_scalar(nodes[i], p);
 	    if (!p->err) {
-		ymd[i] = x_to_period(sval, code[i], &p->err);
+		ymd[i] = x_to_period(sval, code[i], &julian, &p->err);
 	    }
 	} else if (nodes[i]->t == SERIES) {
 	    x[i] = nodes[i]->v.xvec;
@@ -9798,7 +9804,11 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 		if (y < 0 || m < 0 || d < 0) {
 		    ret->v.xval = NADBL;
 		} else {
-		    ret->v.xval = epoch_day_from_ymd(y, m, d);
+		    if (julian) {
+			ret->v.xval = epoch_day_from_julian_ymd(y, m, d);
+		    } else {
+			ret->v.xval = epoch_day_from_ymd(y, m, d);
+		    }
 		    if (ret->v.xval < 0) {
 			p->err = E_INVARG;
 		    }
@@ -9810,16 +9820,20 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 		int t;
 
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    y = (x[0] == NULL)? y : x_to_period(x[0][t], 'y', &p->err);
-		    m = (x[1] == NULL)? m : x_to_period(x[1][t], 'm', &p->err);
-		    d = (x[2] == NULL)? d : x_to_period(x[2][t], 'd', &p->err);
+		    y = (x[0] == NULL)? y : x_to_period(x[0][t], 'y', NULL, &p->err);
+		    m = (x[1] == NULL)? m : x_to_period(x[1][t], 'm', NULL, &p->err);
+		    d = (x[2] == NULL)? d : x_to_period(x[2][t], 'd', NULL, &p->err);
 		    if (p->err) {
 			break;
 		    } else if (y < 0 || m < 0 || d < 0) {
 			/* got an NA somewhere */
 			ret->v.xvec[t] = NADBL;
 		    } else {
-			ret->v.xvec[t] = epoch_day_from_ymd(y, m, d);
+			if (julian) {
+			    ret->v.xvec[t] = epoch_day_from_julian_ymd(y, m, d);
+			} else {
+			    ret->v.xvec[t] = epoch_day_from_ymd(y, m, d);
+			}
 			if (ret->v.xvec[t] < 0) {
 			    p->err = E_INVARG;
 			}

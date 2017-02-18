@@ -32,6 +32,8 @@
 
 guint32 epoch_day_from_ymd (int y, int m, int d);
 
+guint32 epoch_day_from_julian_ymd (int y, int m, int d);
+
 char *ymd_extended_from_epoch_day (guint32 ed, int julian, int *err);
 
 double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err);

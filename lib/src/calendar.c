@@ -42,10 +42,10 @@ static int days_in_month[2][13] = {
    of GLib calendrical functions it refers to the "Julian day"; that is,
    the number of days since some fixed starting point, as used by
    astronomers. This is quite distinct from the Julian calendar. 
-   However, GLib takes the starting point as the first of January in
+   However, GLib takes Julian day 1 to be the first of January in
    AD 1, as opposed to the astronomical starting point in 4714 BC,
    so these are not strictly Julian days, and in our own functions
-   we call them "epoch days".
+   which use the same concept we call them "epoch days".
 */
 
 static int leap_year (int yr)
@@ -122,6 +122,32 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
     return 0;
 }
 
+static int cal_divergence (guint32 ed)
+{
+    /* Array of epoch days on which the divergence between
+       the Julian and Gregorian calendars increased by one
+       day, starting from assumed zero prior to 300 CE.
+       (This is a simplification which ignores the unruly
+       Julian stuff that happened earlier than 300, and
+       it's only good until the 22nd century.)
+    */
+    guint32 jdiff[] = {109267, 182317, 218842, 255367, 328417,
+		       364942, 401467, 474517, 511042, 547567,
+		       620607, 657131, 693655, 766704};
+    int i, cd = 14; /* after March 1, 2100 */
+
+     /* find out how many days of calendrical divergence,
+       @cd, there were on the given epoch day */
+    for (i=0; i<14; i++) {
+	if (ed < jdiff[i]) {
+	    cd = i;
+	    break;
+	}
+    }
+
+    return cd;
+}
+
 /**
  * julian_ymd_bits_from_epoch_day:
  * @ed: epoch day (ed >= 1).
@@ -143,19 +169,9 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
 int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
 				    int *pm, int *pd)
 {
-    /* Array of epoch days on which the divergence between
-       the Julian and Gregorian calendars increased by one
-       day, starting from assumed zero prior to 300 CE.
-       (This is a simplification which ignores the unruly
-       Julian stuff that happened earlier than 300, and
-       it's only good until the 22nd century.)
-    */
-    guint32 jdiff[] = {109267, 182317, 218842, 255367, 328417,
-		       364942, 401467, 474517, 511042, 547567,
-		       620607, 657131, 693655, 766704};   
     GDate date;
     int y, m, d, leap;
-    int i, cd = 0;
+    int cd = 0;
 
     if (!g_date_valid_julian(ed)) {
 	return E_INVARG;
@@ -174,14 +190,7 @@ int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
 	return E_INVARG;
     }
 
-    /* find out how many days of calendrical divergence,
-       @cd, there were on the given epoch day */
-    for (i=0; i<14; i++) {
-	if (ed < jdiff[i]) {
-	    cd = i;
-	    break;
-	}
-    }
+    cd = cal_divergence(ed);
 
     /* work backwards from the Gregorian date to the
        Julian one */
@@ -204,6 +213,75 @@ int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
     *pd = d;
  
     return 0;
+}
+
+static int prior_to (int y0, int m0, int d0, int y1, int m1, int d1)
+{
+    return 10000*y1 + 100*m1 + d1 < 10000*y0 + 100*m0 + d0;
+}
+
+/**
+ * epoch_day_from_julian_ymd:
+ * @y: year (1 <= y <= 2199).
+ * @m: month (1 <= m <= 12).
+ * @d: day of month (1 <= d <= 31).
+ * 
+ * Returns: the epoch day number, which equals 1 for the first of
+ * January in the year AD 1, or 0 on error.
+ */
+
+guint32 epoch_day_from_julian_ymd (int y, int m, int d)
+{
+    guint32 ret = 0;
+    int add = 0;
+    int err = 0;
+
+    if (y > 2199) {
+	err = E_INVARG;
+	return 0;
+    }
+
+    if (!g_date_valid_dmy(d, m, y)) {
+	/* note: this check is on the Gregorian calendar */
+	err = E_INVARG;
+    }
+
+    if (err && y > 0 && m == 2 && d == 29 && y % 4 == 0) {
+	/* valid Julian leap day: move day back and cancel error */
+	d = 28;
+	add = 1;
+	err = 0;
+    }
+
+    if (!err) {
+	GDate date;
+	guint32 ged;
+	int jy, jm, jd;
+	
+	g_date_clear(&date, 1);
+	g_date_set_dmy(&date, d, m, y);
+	/* get epoch day, taking the date as Gregorian */
+	ged = g_date_get_julian(&date);
+	/* get number of days of divergence */
+	ret = ged + cal_divergence(ged);
+
+	/* iterate to correctness if need be */
+	while (1) {
+	    julian_ymd_bits_from_epoch_day(ret, &jy, &jm, &jd);
+	    if (jy == y && jm == m && jd == d) {
+		/* correct round-trip */
+		break;
+	    }
+	    if (prior_to(y, m, d, jy, jm, jd)) {
+		ret++;
+	    } else {
+		ret--;
+	    }
+	}
+	ret += add;
+    }
+
+    return ret;
 }
 
 /**
