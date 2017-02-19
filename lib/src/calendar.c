@@ -122,46 +122,21 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
     return 0;
 }
 
-static int cal_divergence (guint32 ed)
-{
-    /* Array of epoch days on which the divergence between
-       the Julian and Gregorian calendars increased by one
-       day, starting from assumed zero prior to 300 CE.
-       (This is a simplification which ignores the unruly
-       Julian stuff that happened earlier than 300, and
-       it's only good until the 22nd century.)
-    */
-    guint32 jdiff[] = {109267, 182317, 218842, 255367, 328417,
-		       364942, 401467, 474517, 511042, 547567,
-		       620607, 657131, 693655, 766704};
-    int i, cd = 14; /* after March 1, 2100 */
-
-     /* find out how many days of calendrical divergence,
-       @cd, there were on the given epoch day */
-    for (i=0; i<14; i++) {
-	if (ed < jdiff[i]) {
-	    cd = i;
-	    break;
-	}
-    }
-
-    return cd;
-}
-
 /**
  * julian_ymd_bits_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  * @y: location to receive year.
  * @m: location to receive month.
  * @m: location to receive day.
- * 
- * The method is abstracted from "Explanatory Supplement to the Astronomical
- * Ephemeris and the American Ephemeris and Nautical Almanac" (Nautical almanac
- * offices of the United Kingdom and United States, 1961), via the Wikipedia page
- * https://en.wikipedia.org/wiki/Conversion_between_Julian_and_Gregorian_calendars
  *
- * There are other algorithms set out on the internet but they are mostly
- * wrong (at least, not right for all dates).
+ * Follows the algorithm of E.G. Richards (2013), "Calendars," In S.E. 
+ * Urban & P.K. Seidelmann, eds. Explanatory Supplement to the Astronomical
+ * Almanac, 3rd ed. (pp. 585-624), Mill Valley, CA: University Science Books
+ * (as set out on https://en.wikipedia.org/wiki/Julian_day).
+ *
+ * There are other algorithms for this purpose on the internet but they are
+ * mostly wrong (at least, not right for all dates); many of them fail
+ * the round-trip test (date -> epoch day -> date) for some dates.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -169,119 +144,57 @@ static int cal_divergence (guint32 ed)
 int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
 				    int *pm, int *pd)
 {
-    GDate date;
-    int y, m, d, leap;
-    int cd = 0;
+    int y = 4716;
+    int p = 1461;
+    int f = ed + 1721425 + 1401;
+    int e = 4 * f + 3;
+    int g = (e % p)/4;
+    int h = 5 * g + 2;
 
-    if (!g_date_valid_julian(ed)) {
-	return E_INVARG;
-    }
+    /* The addition of 1721425 above translates from our
+       "epoch day" to Julian Day Number; the addition of 1401
+       to the JDN is specified by Richards' algorithm.
+    */
 
-    g_date_clear(&date, 1);
-    g_date_set_julian(&date, ed);
-
-    /* get the Gregorian y, m, d */
-    y = g_date_get_year(&date);
-    m = g_date_get_month(&date);
-    d = g_date_get_day(&date);
-
-    if (y > 2199) {
-	/* we're not tracking this any further */
-	return E_INVARG;
-    }
-
-    cd = cal_divergence(ed);
-
-    /* work backwards from the Gregorian date to the
-       Julian one */
-    while (cd > 0) {
-	if (d > 1) {
-	    d--;
-	} else if (m > 1) {
-	    leap = y % 4 == 0; /* Julian leap year */
-	    m--;
-	    d = days_in_month[leap][m];
-	} else if (y > 1) {
-	    y--;
-	    m = 12;
-	}
-	cd--;
-    }
-
-    *py = y;
-    *pm = m;
-    *pd = d;
+    *pd = (h % 153)/5 + 1;
+    *pm = (h/153 + 2) % 12 + 1;
+    *py = e/p - y + (14 - *pm)/12;
  
     return 0;
 }
 
-static int prior_to (int y0, int m0, int d0, int y1, int m1, int d1)
-{
-    return 10000*y1 + 100*m1 + d1 < 10000*y0 + 100*m0 + d0;
-}
-
 /**
  * epoch_day_from_julian_ymd:
- * @y: year (1 <= y <= 2199).
+ * @y: year (y >= 1).
  * @m: month (1 <= m <= 12).
  * @d: day of month (1 <= d <= 31).
+ *
+ * The @y, @m and @d arguments are assumed to refer to a date on
+ * the Julian calendar. The conversion algorithm is taken from
+ * https://en.wikipedia.org/wiki/Julian_day, where it appears to
+ * be credited to the Department of Computer Science at UT, Austin.
  * 
  * Returns: the epoch day number, which equals 1 for the first of
- * January in the year AD 1, or 0 on error.
+ * January in the year AD 1 on the proleptic Gregorian calendar, 
+ * or 0 on error.
  */
 
 guint32 epoch_day_from_julian_ymd (int y, int m, int d)
 {
-    guint32 ret = 0;
-    int add = 0;
-    int err = 0;
+    int a = (14 - m)/12;
+    int jd;
+    
+    y = y + 4800 - a;
+    m = m + 12*a - 3;
 
-    if (y > 2199) {
-	err = E_INVARG;
+    jd = d + (153*m + 2)/5 + 365*y + y/4 - 32083;
+
+    if (jd <= 1721425) {
+	/* prior to AD 1 */
 	return 0;
+    } else {
+	return (guint32) jd - 1721425;
     }
-
-    if (!g_date_valid_dmy(d, m, y)) {
-	/* note: this check is on the Gregorian calendar */
-	err = E_INVARG;
-    }
-
-    if (err && y > 0 && m == 2 && d == 29 && y % 4 == 0) {
-	/* valid Julian leap day: move day back and cancel error */
-	d = 28;
-	add = 1;
-	err = 0;
-    }
-
-    if (!err) {
-	GDate date;
-	guint32 ged;
-	int jy, jm, jd;
-	
-	g_date_clear(&date, 1);
-	g_date_set_dmy(&date, d, m, y);
-	/* get epoch day, taking the date as Gregorian */
-	ged = g_date_get_julian(&date);
-	/* get number of days of divergence */
-	ret = ged + cal_divergence(ged);
-
-	/* iterate to correctness if need be */
-	while (1) {
-	    julian_ymd_bits_from_epoch_day(ret, &jy, &jm, &jd);
-	    if (jy == y && jm == m && jd == d) {
-		/* correct round-trip */
-		break;
-	    }
-	    if (prior_to(y, m, d, jy, jm, jd)) {
-		ret++;
-	    } else {
-		ret--;
-	    }
-	}
-	ret += add;
-    }
-
-    return ret;
 }
 
 /**
