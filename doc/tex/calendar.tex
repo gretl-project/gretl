@@ -7,12 +7,12 @@
 Any software that aims to handle time-series data must have a good
 built-in calendar. This is fairly straightforward in the current era,
 with the Gregorian calendar now used universally for the dating of
-socioeconomic observations. It is not so straightforward, however, if
-when dealing with historical data that date back to before the
-adoption of the Gregorian calendar in place of the Julian (an event
-which first occurred in the principal Catholic countries in 1582 but
-which took place at different dates in different countries over a span
-of several centuries).
+socioeconomic observations. It is not so straightforward, however,
+when dealing with historical data recorded prior to the adoption of
+the Gregorian calendar in place of the Julian, an event which first
+occurred in the principal Catholic countries in 1582 but which took
+place at different dates in different countries over a span of several
+centuries.
 
 Gretl, like most data-oriented software, uses the Gregorian calendar
 by default for all dates, thereby ensuring that dates are all
@@ -44,13 +44,17 @@ September 2 was directly followed by Thursday September 14.
 In comparing calendars one wants to refer to a given day in terms that
 are not specific to either calendar---but how to define a ``given
 day''? This is accomplished by a count of days following some definite
-event. Astronomers use the ``Julian day,'' whose count starts with a
-particular confluence of astronomical events in the year known to the
+event. Astronomers use the ``Julian Day,'' whose count starts with a
+particular coincidence of astronomical cycles in the year known to the
 Gregorian calendar (if one extrapolates it backward in time) as 4714
 BC. Gretl uses a similar construction as a fulcrum, but the count of
-what we call the ``epoch day'' starts at 1 on January 1, AD 1.  (This
-is also the convention used by the \textsf{GLib} library, on which
-gretl depends for most of its calendrical calculation.)
+what we call the ``epoch day'' starts at 1 on January 1, AD 1 (that
+is, the first day of the Common Era), on the proleptic Gregorian
+calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
+  indicates that it is extrapolated backwards or forwards relative to
+  its period of actual historical use.} (This is also the convention
+used by the \textsf{GLib} library, on which gretl depends for most of
+its calendrical calculation.)
 
 \section{Calendrical functions}
 \label{cal-functions}
@@ -62,31 +66,36 @@ Suppose we're working with historical data from eighteenth century
 Britain (the same considerations would apply to sixteenth century
 Spain or Italy). And we'd like to set up an historical calendar so
 that we're sure we're putting archival data in the correct place.
-Listing~\ref{ex:britain-1700s} shows how this can be done.
+For the purposes of this exercise we'll home in on the year 1752,
+or more precisely the January to December period beginning on January
+1, 1752 according to the Julian calendar that was in force at that
+date. Listing~\ref{ex:britain-1752} shows how this can be done.
 
 The first step is to find the epoch day corresponding to the Julian
 date 1752-01-01 (which turns out to be 639551). Then we can build a
 consistent series of epoch days, from which we can get both Julian and
-Gregorian dates for 366 days starting on epoch day 639551. Finally, we
-can construct a series, \texttt{hcal}, which switches calendar at the
-right historical point.
+Gregorian dates for 355 days starting on epoch day 639551. Note, 355
+days because this was a short year: it was a leap year, but 11 days
+were skipped in September in making the transition to the Gregorian
+calendar. We can then construct a series, \texttt{hcal}, which
+switches calendar at the right historical point.
 
 
 \begin{script}[htbp]
-  \caption{Make historical calendar for Britain in the 1700s}
-  \label{ex:britain-1700s}
+  \caption{Historical calendar for Britain in 1752}
+  \label{ex:britain-1752}
 \begin{scode}
-# 1752 was a leap year
-nulldata 366
-# give negative year to indicate Julian date
+# 1752 was a short year on the British calendar!
+nulldata 355
+# give a negative year to indicate Julian date
 ed0 = epochday(-1752,1,1)
 # consistent series of epoch day values
 series ed = ed0 + index - 1
-# Julian dates as ISO 8601 basic
+# Julian dates as YYYYMMDD basic
 series jdate = juldate(ed)
-# Gregorian dates as ISO 8601 basic
+# Gregorian dates as YYYYMMDD
 series gdate = isodate(ed)
-# Historical: switchover in September
+# Historical: cut-over in September
 series hcal = ed > epochday(-1752,9,2) ? gdate : jdate
 # And let's take a look
 print ed jdate gdate hcal -o
@@ -94,18 +103,47 @@ print ed jdate gdate hcal -o
 \end{script}
 
 Partial output from this script is shown below.
-
+%
 \begin{code}
               ed        jdate        gdate         hcal
 
   1       639551     17520101     17520112     17520101
   2       639552     17520102     17520113     17520102
-  3       639553     17520103     17520114     17520103
-  ...
-244       639794     17520831     17520911     17520831
+...
 245       639795     17520901     17520912     17520901
 246       639796     17520902     17520913     17520902
 247       639797     17520903     17520914     17520914
 248       639798     17520904     17520915     17520915
-249       639799     17520905     17520916     17520916
+...
+355       639905     17521220     17521231     17521231
+\end{code}
+
+Notice that the observation labels (in the first column) are still
+just index numbers. Perhaps we would prefer to have historical dates
+in that role. To achieve this we can decompose the \texttt{hcal}
+series into year, month and day, then use the special \texttt{genr
+  markers} apparatus (see chapter~\ref{chap:datafiles}). Suitable
+code is as follows:
+\begin{code}
+series y = floor(hcal/10000)
+series m = floor((hcal-10000*y)/100)
+series d = hcal - 10000*y - 100*m
+genr markers = "%04d-%02d-%02d", y, m, d
+print ed jdate gdate hcal -o
+\end{code}
+
+After running this, we see (again, partial output)
+%
+\begin{code}
+                     ed        jdate        gdate         hcal
+
+1752-01-01       639551     17520101     17520112     17520101
+1752-01-02       639552     17520102     17520113     17520102
+...
+1752-09-01       639795     17520901     17520912     17520901
+1752-09-02       639796     17520902     17520913     17520902
+1752-09-14       639797     17520903     17520914     17520914
+1752-09-15       639798     17520904     17520915     17520915
+...
+1752-12-31       639905     17521220     17521231     17521231
 \end{code}

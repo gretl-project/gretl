@@ -43,7 +43,7 @@ static int days_in_month[2][13] = {
    the number of days since some fixed starting point, as used by
    astronomers. This is quite distinct from the Julian calendar. 
    However, GLib takes Julian day 1 to be the first of January in
-   AD 1, as opposed to the astronomical starting point in 4714 BC,
+   AD 1, as opposed to the astronomical starting point in 4713 BC,
    so these are not strictly Julian days, and in our own functions
    which use the same concept we call them "epoch days".
 */
