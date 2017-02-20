@@ -50,6 +50,8 @@
 #define NENTRIES 5
 #define N_FILE_ENTRIES 4
 #define N_SPECIALS (UFUN_ROLE_MAX - 1)
+#define HELPWIDTH 80
+#define HELPHEIGHT 400
 
 enum {
     NO_WINDOW,
@@ -2726,7 +2728,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 	pputc(prn, '\n');
     } 
 
-    finfo->gui_helpwin = view_buffer(prn, 76, 400, title,
+    finfo->gui_helpwin = view_buffer(prn, HELPWIDTH, HELPHEIGHT, title,
 				     EDIT_PKG_GHLP, finfo);
     g_object_set_data(G_OBJECT(finfo->gui_helpwin->main), "finfo",
 		      finfo);
@@ -2759,7 +2761,7 @@ static void regular_help_text_callback (GtkButton *b, function_info *finfo)
 	pputc(prn, '\n');
     } 
 
-    finfo->helpwin = view_buffer(prn, 76, 400, title,
+    finfo->helpwin = view_buffer(prn, HELPWIDTH, HELPHEIGHT, title,
 				 EDIT_PKG_HELP, finfo);
     g_object_set_data(G_OBJECT(finfo->helpwin->main), "finfo",
 		      finfo);

@@ -879,6 +879,25 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
     return err;
 }
 
+static int get_info_width (const char *buf)
+{
+    char line[1024];
+    int n, width = 68;
+    
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	n = strlen(line);
+	if (n > width && n <= 80) {
+	    width = n;
+	}
+    }
+
+    bufgets_finalize(buf);
+
+    return width + 1;
+}
+
 windata_t *display_function_package_data (const char *pkgname,
 					  const char *path, 
 					  int role)
@@ -913,8 +932,9 @@ windata_t *display_function_package_data (const char *pkgname,
 
 	if (role == VIEW_PKG_INFO) {
 	    char *buf = gretl_print_steal_buffer(prn);
+	    int width = get_info_width(buf);
 	    
-	    vwin = view_formatted_text_buffer(title, buf, 76, 350, role);
+	    vwin = view_formatted_text_buffer(title, buf, width, 350, role);
 	    free(buf);
 	    gretl_print_destroy(prn);
 	} else {
