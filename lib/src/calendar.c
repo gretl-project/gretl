@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -41,7 +41,7 @@ static int days_in_month[2][13] = {
 /* Note on the GLib API used below: where "julian" occurs in the names
    of GLib calendrical functions it refers to the "Julian day"; that is,
    the number of days since some fixed starting point, as used by
-   astronomers. This is quite distinct from the Julian calendar. 
+   astronomers. This is quite distinct from the Julian calendar.
    However, GLib takes Julian day 1 to be the first of January in
    AD 1, as opposed to the astronomical starting point in 4713 BC,
    so these are not strictly Julian days, and in our own functions
@@ -75,7 +75,7 @@ static int day_of_week_from_ymd (int y, int m, int d)
  * @y: year (1 <= y <= 9999).
  * @m: month (1 <= m <= 12).
  * @d: day of month (1 <= d <= 31).
- * 
+ *
  * Returns: the epoch day number, which equals 1 for the first of
  * January in the year 1 AD, or 0 on error.
  */
@@ -100,7 +100,7 @@ guint32 epoch_day_from_ymd (int y, int m, int d)
  * @y: location to receive year.
  * @m: location to receive month.
  * @m: location to receive day.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -129,7 +129,7 @@ int ymd_bits_from_epoch_day (guint32 ed, int *y, int *m, int *d)
  * @m: location to receive month.
  * @m: location to receive day.
  *
- * Follows the algorithm of E.G. Richards (2013), "Calendars," In S.E. 
+ * Follows the algorithm of E.G. Richards (2013), "Calendars," In S.E.
  * Urban & P.K. Seidelmann, eds. Explanatory Supplement to the Astronomical
  * Almanac, 3rd ed. (pp. 585-624), Mill Valley, CA: University Science Books
  * (as set out on https://en.wikipedia.org/wiki/Julian_day).
@@ -159,7 +159,7 @@ int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
     *pd = (h % 153)/5 + 1;
     *pm = (h/153 + 2) % 12 + 1;
     *py = e/p - y + (14 - *pm)/12;
- 
+
     return 0;
 }
 
@@ -173,9 +173,9 @@ int julian_ymd_bits_from_epoch_day (guint32 ed, int *py,
  * the Julian calendar. The conversion algorithm is taken from
  * https://en.wikipedia.org/wiki/Julian_day, where it appears to
  * be credited to the Department of Computer Science at UT, Austin.
- * 
+ *
  * Returns: the epoch day number, which equals 1 for the first of
- * January in the year AD 1 on the proleptic Gregorian calendar, 
+ * January in the year AD 1 on the proleptic Gregorian calendar,
  * or 0 on error.
  */
 
@@ -183,7 +183,7 @@ guint32 epoch_day_from_julian_ymd (int y, int m, int d)
 {
     int a = (14 - m)/12;
     int jd;
-    
+
     y = y + 4800 - a;
     m = m + 12*a - 3;
 
@@ -202,8 +202,8 @@ guint32 epoch_day_from_julian_ymd (int y, int m, int d)
  * @ed: epoch day (ed >= 1).
  * @julian: non-zero to use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
- * 
- * Returns: a string on the pattern YYYY-MM-DD (ISO 8601 extended 
+ *
+ * Returns: a string on the pattern YYYY-MM-DD (ISO 8601 extended
  * date format) given the epoch day number, which equals 1 for the
  * first of January in the year 1 AD, or NULL on error.
  */
@@ -241,8 +241,8 @@ char *ymd_extended_from_epoch_day (guint32 ed, int julian, int *err)
  * @ed: epoch day (ed >= 1).
  * @julian: non-zero to use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
- * 
- * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic 
+ *
+ * Returns: an 8-digit number on the pattern YYYYMMDD (ISO 8601 basic
  * date format) given the epoch day number, which equals 1 for the
  * first of January in the year 1 AD, or #NADBL on error.
  */
@@ -256,7 +256,7 @@ double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err)
     } else {
 	*err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
     }
-    
+
     if (*err) {
 	return NADBL;
     } else {
@@ -267,7 +267,7 @@ double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err)
 /**
  * weekday_from_epoch_day:
  * @ed: epoch day (ed >= 1).
- * 
+ *
  * Returns: the weekday (Sunday = 0) corrsponding to @ed,
  * or -1 on error.
  */
@@ -292,7 +292,7 @@ int weekday_from_epoch_day (guint32 ed)
  * get_epoch_day:
  * @datestr: string representation of calendar date, in form
  * YY[YY]-MM-DD.
- * 
+ *
  * Returns: the epoch day number, or -1 on failure.
  */
 
@@ -338,7 +338,7 @@ guint32 get_epoch_day (const char *datestr)
  * @datestr: string representation of calendar date, in form
  * YY[YY]/MM/DD.
  * @dset: pointer to dataset information.
- * 
+ *
  * Returns: The zero-based observation number for the given
  * date within the current data set.
  */
@@ -351,20 +351,20 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
     if (t <= 0) {
 	return -1;
     }
-    
+
     /* subtract starting day for dataset */
     t -= ed0;
 
     if (dset->pd == 52) {
 	/* weekly data */
 	t /= 7;
-    } else if (dset->pd == 5 || dset->pd == 6) { 
+    } else if (dset->pd == 5 || dset->pd == 6) {
 	/* daily, 5- or 6-day week: subtract number of irrelevant days */
 	int startday = (ed0 - 1 + DAY1) % 7;
 	int wkends = (t + startday - 1) / 7;
 
 #ifdef CAL_DEBUG
-	printf("calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n", 
+	printf("calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n",
 	       (int) ed0, date, (int) t, startday, wkends);
 #endif
 
@@ -410,7 +410,7 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
 	dt = d0 + t;
     } else {
 	dt = t_to_epoch_day(t, d0, dset->pd);
-    }    
+    }
 
     return dt;
 }
@@ -420,7 +420,7 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
  * @targ: string to be filled out.
  * @t: zero-based index of observation.
  * @dset: pointer to dataset.
- * 
+ *
  * Writes to @targ the calendar representation of the date of
  * observation @t, in the form YY[YY]/MM/DD.
  *
@@ -473,13 +473,13 @@ int calendar_date_string (char *targ, int t, const DATASET *dset)
  * @pd: periodicity of data (or 0 if unknown).
  * @d1904: set to 1 if the base is 1904/01/01; otherwise
  * the base is assumed to be 1899/12/31.
- * 
+ *
  * Writes to @targ the calendar representation of the date of
  * observation @mst, in the form YYYY-MM-DD if @pd is 0, 5,
- * 6, 7 or 52 (unknown, daily, or weekly frequency), otherwise 
+ * 6, 7 or 52 (unknown, daily, or weekly frequency), otherwise
  * in the appropriate format for annual, quarterly or monthly
  * according to @pd.
- * 
+ *
  * Returns: 0.
  */
 
@@ -580,7 +580,7 @@ int MS_excel_date_string (char *targ, int mst, int pd, int d1904)
 /**
  * get_dec_date:
  * @datestr: calendar representation of date: YYYY-MM-DD.
- * 
+ *
  * Returns: representation of date as year plus fraction of year.
  */
 
@@ -629,7 +629,7 @@ double get_dec_date (const char *datestr)
  * @err: location to receive error code.
  *
  * Returns: the day of the week for the supplied date
- * (Sunday = 0, Monday = 1, ...) or %NADBL on failure 
+ * (Sunday = 0, Monday = 1, ...) or %NADBL on failure
  * (the date is invalid).
  */
 
@@ -655,7 +655,7 @@ double day_of_week (int y, int m, int d, int *err)
 /**
  * weekday_from_date:
  * @datestr: calendar representation of date, [YY]YY/MM/DD
- * 
+ *
  * Returns: day of week as integer, Sunday = 0.
  */
 
@@ -688,9 +688,9 @@ int weekday_from_date (const char *datestr)
  * @wkdays: number of days in week (7, 6 or 5)
  * @pad: location to receive 1 if the first day of the month
  * can reasonably be padded by a missing value (Jan 1), or NULL.
- * 
- * Returns: 1 if the day is the "first day of the month", 
- * allowance made for the possibility of a 5- or 6-day week, 
+ *
+ * Returns: 1 if the day is the "first day of the month",
+ * allowance made for the possibility of a 5- or 6-day week,
  * else 0.
  */
 
@@ -724,7 +724,7 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
 	    ret = 1;
 	}
     }
-    
+
     return ret;
 }
 
@@ -734,8 +734,8 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
  * @m: month number, 1-based
  * @y: 4-digit year
  * @wkdays: number of days in week (7, 6 or 5)
- * 
- * Returns: 1 if the day is the "last day of the month", 
+ *
+ * Returns: 1 if the day is the "last day of the month",
  * allowance made for the possibility of a 5- or 6-day week, else 0.
  */
 
@@ -757,8 +757,8 @@ int day_ends_month (int d, int m, int y, int wkdays)
 	    }
 	    idx--;
 	}
-	ret = (d == i);	
-    } 
+	ret = (d == i);
+    }
 
     return ret;
 }
@@ -768,7 +768,7 @@ int day_ends_month (int d, int m, int y, int wkdays)
  * @m: month number, 1-based
  * @y: 4-digit year
  * @wkdays: number of days in week (7, 6 or 5)
- * 
+ *
  * Returns: the number of (relevant) days in the month, allowance
  * made for the possibility of a 5- or 6-day week.
  */
@@ -789,8 +789,8 @@ int get_days_in_month (int m, int y, int wkdays)
 		ret++;
 	    }
 	    idx++;
-	}	
-    } 
+	}
+    }
 
     return ret;
 }
@@ -801,9 +801,9 @@ int get_days_in_month (int m, int y, int wkdays)
  * @m: month number, 1-based
  * @d: day in month.
  * @wkdays: number of days in week (7, 6 or 5)
- * 
+ *
  * Returns: the number of relevant days in the month prior to
- * the supplied date, allowing for the possibility of a 5- or 
+ * the supplied date, allowing for the possibility of a 5- or
  * 6-day week.
  */
 
@@ -821,10 +821,10 @@ int days_in_month_before (int y, int m, int d, int wkdays)
 		ret++;
 	    }
 	    idx++;
-	}	
-    } 
+	}
+    }
 
-    return ret;    
+    return ret;
 }
 
 /**
@@ -833,9 +833,9 @@ int days_in_month_before (int y, int m, int d, int wkdays)
  * @m: month number, 1-based
  * @d: day in month.
  * @wkdays: number of days in week (7, 6 or 5)
- * 
+ *
  * Returns: the number of relevant days in the month after
- * the supplied date, allowing for the possibility of a 5- or 
+ * the supplied date, allowing for the possibility of a 5- or
  * 6-day week.
  */
 
@@ -862,14 +862,14 @@ int days_in_month_after (int y, int m, int d, int wkdays)
 	}
     }
 
-    return ret;    
+    return ret;
 }
 
 /**
  * date_to_daily_index:
  * @datestr: date in format YYYY-MM-DD.
  * @wkdays: number of days in week (7, 6 or 5)
- * 
+ *
  * Returns: the zero-based index of the specified day
  * within the specified month and year. In the case
  * of 5- or 6-day data index zero does not necessarily
@@ -900,10 +900,10 @@ int date_to_daily_index (const char *datestr, int wkdays)
 		seq++;
 	    }
 	    idx++;
-	}	
-    } 
+	}
+    }
 
-    return seq; 
+    return seq;
 }
 
 /**
@@ -953,7 +953,7 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
 		seq++;
 	    }
 	    wd++;
-	}	
+	}
     }
 
     if (day <= 0) {
@@ -968,11 +968,11 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
  * n_hidden_missing_obs:
  * @dset: dataset information.
  *
- * For daily data with user-supplied data strings, 
+ * For daily data with user-supplied data strings,
  * determine the number of "hidden" missing observations,
  * i.e. the difference between the actual number of
  * observations and the number that should be there,
- * according to the calendar. Allowance is made for 
+ * according to the calendar. Allowance is made for
  * 5- or 6-day data, via the data frequency given
  * in @dset.
  *
@@ -987,7 +987,7 @@ int n_hidden_missing_obs (const DATASET *dset)
     if (!dated_daily_data(dset) || dset->S == NULL) {
 	return 0;
     }
-    
+
     t1 = calendar_obs_number(dset->S[0], dset);
     t2 = calendar_obs_number(dset->S[dset->n - 1], dset);
 
@@ -1002,7 +1002,7 @@ int n_hidden_missing_obs (const DATASET *dset)
  *
  * Based on user-supplied daily date strings recorded in
  * @dset, try to guess whether the number of observations
- * per week is 5, 6 or 7 (given that some observations 
+ * per week is 5, 6 or 7 (given that some observations
  * may be missing).
  *
  * Returns: best quess at data frequency.
@@ -1054,6 +1054,20 @@ int guess_daily_pd (const DATASET *dset)
     return pd;
 }
 
+static int validate_ymd (int y, int m, int d, int julian)
+{
+    int ok = 1;
+    
+    if (!g_date_valid_dmy(d, m, y)) {
+	ok = 0;
+	if (julian && y > 0 && m == 2 && d == 29 && y%4 == 0) {
+	    ok = 1;
+	}
+    }
+	
+    return ok;
+}
+
 /**
  * iso_basic_to_extended:
  * @b: source array of YYYYMMDD values.
@@ -1069,13 +1083,14 @@ int guess_daily_pd (const DATASET *dset)
  * Returns: 0.
  */
 
-int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
-			   int n)
+int iso_basic_to_extended (const double *b, double *y, double *m,
+			   double *d, int n)
 {
-    int bi, yi, mi;
-    int i;
+    int bi, yi, mi, di;
+    int i, julian;
 
     for (i=0; i<n; i++) {
+	julian = 0;
 	if (na(b[i])) {
 	    y[i] = m[i] = NADBL;
 	    if (d != NULL) {
@@ -1083,11 +1098,25 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
 	    }
 	} else {
 	    bi = (int) b[i];
+	    if (bi < 0) {
+		julian = 1;
+		bi = -bi;
+	    }
 	    yi = bi / 10000;
 	    mi = (bi - 10000*yi) / 100;
-	    y[i] = yi; m[i] = mi;
-	    if (d != NULL) {
-		d[i] = bi - 10000*yi - 100*mi;
+	    di = bi - 10000*yi - 100*mi;
+	    /* now check for legit date */
+	    if (!validate_ymd(yi, mi, di, julian)) {
+		y[i] = m[i] = NADBL;
+		if (d != NULL) {
+		    d[i] = NADBL;
+		}
+	    } else {
+		y[i] = yi;
+		m[i] = mi;
+		if (d != NULL) {
+		    d[i] = di;
+		}
 	    }
 	}
     }
@@ -1099,11 +1128,11 @@ int iso_basic_to_extended (const double *b, double *y, double *m, double *d,
  * easterdate:
  * @year: year for which we want Easter date (Gregorian).
  *
- * Algorithm taken from Wikipedia page 
+ * Algorithm taken from Wikipedia page
  * https://en.wikipedia.org/wiki/Computus
  * under the heading "Anonymous Gregorian algorithm".
  *
- * Returns the date of Easter in the Gregorian calendar as 
+ * Returns the date of Easter in the Gregorian calendar as
  * (month + day/100). Note that April the 10th is, under
  * this convention, 4.1; hence, 4.2 is April the 20th, not
  * April the 2nd (which would be 4.02).
@@ -1129,4 +1158,3 @@ double easterdate (int year)
 
     return month + day * 0.01;
 }
-

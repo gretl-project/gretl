@@ -22,24 +22,25 @@ for dates and times).\footnote{Gretl was not consistent in this regard
   the Julian calendar prior to the adoption of the Gregorian calendar
   by Britain and its colonies in 1752.}
 
-As you probably know, the Julian calendar adds a leap day (February
-29) on each year that is divisible by 4 with no remainder. But this
-over-compensates for the fact that a 365-day year is too short to keep
-the calendar synchronized with the seasons. The Gregorian calendar
-introduced a more complex rule which maintains better synchronization,
-namely, each year divisible by 4 with no remainder is a leap year
-\textit{unless} it's a centurial year (e.g.\ 1900) in which case it's
-a leap year only if it is divisible by 400 with no remainder.  So the
-years 1600 and 2000 were leap years on both calendars, but 1700, 1800,
-and 1900 were leap years only on the Julian calendar.
+As readers probably know, the Julian calendar adds a leap day
+(February 29) on each year that is divisible by 4 with no
+remainder. But this over-compensates for the fact that a 365-day year
+is too short to keep the calendar synchronized with the seasons. The
+Gregorian calendar introduced a more complex rule which maintains
+better synchronization, namely, each year divisible by 4 with no
+remainder is a leap year \textit{unless} it's a centurial year (e.g.\
+1900) in which case it's a leap year only if it is divisible by 400
+with no remainder.  So the years 1600 and 2000 were leap years on both
+calendars, but 1700, 1800, and 1900 were leap years only on the Julian
+calendar.
 
 The fact that the Julian calendar inserts leap days more frequently
 means that the Julian date progressively (although very slowly) falls
 behind the Gregorian date. For example, February 18 2017 (Gregorian)
-is February 5 2017 on the Julian calendar. This further means that on
-adoption of the Gregorian calendar it was necessary to skip several
-days. In England, where the transition occurred in 1752, Wednesday
-September 2 was directly followed by Thursday September 14.
+is February 5 2017 on the Julian calendar. On adoption of the
+Gregorian calendar it was therefore necessary to skip several days. In
+England, where the transition occurred in 1752, Wednesday September 2
+was directly followed by Thursday September 14.
 
 In comparing calendars one wants to refer to a given day in terms that
 are not specific to either calendar---but how to define a ``given
@@ -58,6 +59,62 @@ its calendrical calculation.)
 
 \section{Calendrical functions}
 \label{cal-functions}
+
+Gretl's calendrical functions are documented in the \GCR{}. In this
+section we say a bit more about how these functions relate to each
+other, and how they may be used to carry out some specific tasks.
+
+A first point to note is that a daily date has three possible
+representations within gretl. Two are associated with the ISO 8601
+standard, namely the ``extended'' representation, \texttt{YYYY-MM-DD},
+as for example \texttt{2017-02-19}, and the ``basic'' representation,
+\texttt{YYYYMMDD} (for example \texttt{20170219}). As mentioned above,
+such dates are by default taken to be relative to the (possibly
+proleptic) Gregorian calendar. The third representation is as an
+``epoch day'' (see above), for example \texttt{736379}, which is
+calendar-independent and can therefore be used in converting from one
+calendar to another.
+
+\subsection{Decomposing a series of ``basic'' dates}
+
+To generate from a series of dates in ISO 8601 basic format distinct
+series hoding year, month and day, the function \texttt{isoconv} can
+be used. This function should be passed the original series followed
+by ``pointers to'' the series to be filled out. For example, if we
+have a series named \texttt{dates} in the prescribed format we might
+do
+%
+\begin{code}
+series y, m, d
+isoconv(dates, &y, &m, &d)
+\end{code}
+
+This is mostly just a convenience function: provided the
+\texttt{dates} input is valid on the (possibly proleptic) Gregorian
+calendar it is equivalent to:
+%
+\begin{code}
+series y = floor(dates/10000)
+series m = floor((dates-10000*y)/100)
+series d = dates - 10000*y - 100*m
+\end{code}
+
+However, there is some ``value added'': \texttt{isoconv} checks the
+validity of the \texttt{dates} values. If the implied year, month and
+day values for any \texttt{dates} observation do not correspond to a
+valid Gregorian date in the Common Era, then all the derived series
+will have value \texttt{NA} at that observation. (For example, the
+implied month is not in the range 1--12, or the implied day is not in
+the range of 1 to the number of days in the month, taking account of
+Gregorian leap years.)
+
+
+\subsection{Obtaining epoch days}
+
+To convert from a Gregorian or Julian date to the corresponding epoch
+day, you can use the \texttt{epochday} function\dots\ CONTINUE
+
+
 
 \section{Working with pre-Gregorian dates}
 \label{cal-conversion}
@@ -125,9 +182,8 @@ series into year, month and day, then use the special \texttt{genr
   markers} apparatus (see chapter~\ref{chap:datafiles}). Suitable
 code is as follows:
 \begin{code}
-series y = floor(hcal/10000)
-series m = floor((hcal-10000*y)/100)
-series d = hcal - 10000*y - 100*m
+series y m d
+isoconv(hcal, &y, &m, &d)
 genr markers = "%04d-%02d-%02d", y, m, d
 print ed jdate gdate hcal -o
 \end{code}
