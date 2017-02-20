@@ -2773,6 +2773,18 @@ static int is_unclaimed (const char *s, char **S, int n)
     return 1;
 }
 
+static void strip_cr (gchar *s)
+{
+    while (*s) {
+	if (*s == 0x0d && *(s+1) == 0x0a) {
+	    /* CR + LF -> LF */
+	    memmove(s, s+1, strlen(s));
+	    s++;
+	}
+	s++;
+    }
+}
+
 static gchar *pkg_aux_content (const char *fname, int *err)
 {
     gchar *ret = NULL;
@@ -2785,6 +2797,8 @@ static gchar *pkg_aux_content (const char *fname, int *err)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	*err = E_FOPEN;
+    } else if (strchr(ret, '\r')) {
+	strip_cr(ret);
     }
 
     return ret;
