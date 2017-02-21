@@ -2,7 +2,7 @@
 \label{chap:calendar}
 
 \section{Introduction}
-\label{cal-intro}
+\label{sec:cal-intro}
 
 Any software that aims to handle time-series data must have a good
 built-in calendar. This is fairly straightforward in the current era,
@@ -57,11 +57,11 @@ calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
   its period of actual historical use.} This is also the convention
 used by the \textsf{GLib} library, on which gretl depends for most of
 its calendrical calculation. Since \textsf{GLib} represents epoch days
-as unsigned (32-bit) integers, this means that gretl does not support
-dates prior to the Common---or, if you prefer, Christian---Era.
+as unsigned integers, this means that gretl does not support dates
+prior to the Common---or, if you prefer, Christian---Era.
 
 \section{Calendrical functions}
-\label{cal-functions}
+\label{sec:cal-functions}
 
 Gretl's calendrical functions are documented in the \GCR{}. In this
 section we say a bit more about how these functions relate to each
@@ -176,57 +176,76 @@ Answer: \texttt{17401116}; Guy Fawkes night in 1740 occurred on
 November 16 from the Italian point of view.
 
 A further---and perhaps more practical---use of epoch days is checking
-whether daily data is complete. Suppose we have what purports to be
+whether daily data are complete. Suppose we have what purport to be
 7-day daily data on the Gregorian calendar with a starting date of
 2015-01-01 and an ending date of 2016-12-31. How many observations
-should there be? We can use the \texttt{dayspan} function, providing
-as arguments the epoch-day values for the first and last dates and the
-number of days per week.
+should there be?
+%
 \begin{code}
 ed1 = epochday(2015,1,1)
 ed2 = epochday(2016,12,31)
-n = dayspan(ed1, ed2, 7)
+n = ed2 - ed1 + 1
+\end{code}
+We find that there should be \texttt{n} = 731 observations; if there
+are fewer, there's something missing. If the data are supposed to be
+on a 5-day week (skipping Saturday and Sunday) or 6-day week (skipping
+Sunday alone) the calculation is more complicated; in this case we can
+use the \texttt{dayspan} function, providing as arguments the
+epoch-day values for the first and last dates and the number of days
+per week:
+\begin{code}
+ed1 = epochday(2015,1,1)
+ed2 = epochday(2016,12,30)
+n = dayspan(ed1, ed2, 5)
 \end{code}
 %
-We are told there should be \texttt{n} = 731 observations; if there
-are fewer, there's something missing. If the days per week is less
-than 7 (6 means skipping Sundays, 5 means skipping both Saturdays and
-Sundays), \texttt{dayspan} returns the number of relevant days.
+We discover that there were \texttt{n} = 522 weekdays in this period.
 
+Note that while ISO 8601 basic dates can be used for easy comparison
+(which of two dates, on a given calendar, refers to a later day?),
+one needs epoch days to carry out fully fledged ``dates arithmetic.''
+Epoch days are always consecutive by construction, but 8-digit
+basic dates are consecutive only within a given month; they advance by
+101 minus (days in previous month) at the start of each month and by
+8870 at the start of each year.
 
 \section{Working with pre-Gregorian dates}
-\label{cal-conversion}
+\label{sec:cal-conversion}
 
-Suppose we're working with historical data from eighteenth century
-Britain (the same considerations would apply to sixteenth century
-Spain or Italy). And we'd like to set up an historical calendar so
-that we're sure we're putting archival data in the correct place.
-For the purposes of this exercise we'll home in on the year 1752,
-or more precisely the January to December period beginning on January
-1, 1752 according to the Julian calendar that was in force at that
-date. Listing~\ref{ex:britain-1752} shows how this can be done.
+In this section we address the problem of constructing within gretl a
+calendar which agrees with the actual historical calendar prior to
+the switch to Gregorian dating. Most people will have no use for
+this, but researchers working with achival data may find it helpful:
+it would be tricky and error-prone to enter on the Gregorian calendar
+data whose dates are given on the Julian at source.
+
+We'll consider the trickiest case, namely a calendar which includes
+the day on which the Julian to Gregorian switch occurred. If we can
+handle this, it should be relatively simple to handle a purely Julian
+calendar. Our illustration will be England in 1752 (a similar analysis
+could be done for Spain in 1582 or Greece in 1923). A solution
+is presented in Listing~\ref{ex:britain-1752}.
 
 The first step is to find the epoch day corresponding to the Julian
-date 1752-01-01 (which turns out to be 639551). Then we can build a
-consistent series of epoch days, from which we can get both Julian and
-Gregorian dates for 355 days starting on epoch day 639551. Note, 355
-days because this was a short year: it was a leap year, but 11 days
-were skipped in September in making the transition to the Gregorian
+date 1752-01-01 (which turns out to be 639551). Then we can create a
+series of epoch days, from which we get both Julian and Gregorian
+dates for 355 days starting on epoch day 639551. Note, 355 days
+because this was a short year: it was a leap year, but 11 days were
+skipped in September in making the transition to the Gregorian
 calendar. We can then construct a series, \texttt{hcal}, which
 switches calendar at the right historical point.
-
 
 \begin{script}[htbp]
   \caption{Historical calendar for Britain in 1752}
   \label{ex:britain-1752}
-\begin{scode}
+\begin{scodebit}
 # 1752 was a short year on the British calendar!
 nulldata 355
 # give a negative year to indicate Julian date
 ed0 = epochday(-1752,1,1)
 # consistent series of epoch day values
 series ed = ed0 + index - 1
-# Julian dates as YYYYMMDD basic
+# Julian dates as YYYYMMDD
 series jdate = juldate(ed)
 # Gregorian dates as YYYYMMDD
 series gdate = isodate(ed)
@@ -234,12 +253,9 @@ series gdate = isodate(ed)
 series hcal = ed > epochday(-1752,9,2) ? gdate : jdate
 # And let's take a look
 print ed jdate gdate hcal -o
-\end{scode}
-\end{script}
-
-Partial output from this script is shown below.
-%
-\begin{code}
+\end{scodebit}
+Partial output:
+\begin{scodebit}
               ed        jdate        gdate         hcal
 
   1       639551     17520101     17520112     17520101
@@ -251,24 +267,30 @@ Partial output from this script is shown below.
 248       639798     17520904     17520915     17520915
 ...
 355       639905     17521220     17521231     17521231
-\end{code}
+\end{scodebit}
+\end{script}
 
-Notice that the observation labels (in the first column) are still
-just index numbers. Perhaps we would prefer to have historical dates
-in that role. To achieve this we can decompose the \texttt{hcal}
-series into year, month and day, then use the special \texttt{genr
-  markers} apparatus (see chapter~\ref{chap:datafiles}). Suitable
-code is as follows:
-\begin{code}
-series y m d
+Notice that although the series \texttt{hcal} contains the correct
+historical calendar (in ``basic'' form), the observation labels (in
+the first column of the output) are still just index numbers. It may
+be preferable to have historical dates in that role. To achieve this
+we can decompose the \texttt{hcal} series into year, month and day,
+then use the special \texttt{genr markers} apparatus (see
+chapter~\ref{chap:datafiles}). Suitable code along with partial output
+is shown in Listing~\ref{ex:britain-1752a}.
+
+\begin{script}[htbp]
+  \caption{Continuation of Britain 1752 example}
+  \label{ex:britain-1752a}
+Additional input:
+\begin{scodebit}
+series y, m, d
 isoconv(hcal, &y, &m, &d)
 genr markers = "%04d-%02d-%02d", y, m, d
 print ed jdate gdate hcal -o
-\end{code}
-
-After running this, we see (again, partial output)
-%
-\begin{code}
+\end{scodebit}
+Partial output:
+\begin{scodebit}
                      ed        jdate        gdate         hcal
 
 1752-01-01       639551     17520101     17520112     17520101
@@ -280,4 +302,5 @@ After running this, we see (again, partial output)
 1752-09-15       639798     17520904     17520915     17520915
 ...
 1752-12-31       639905     17521220     17521231     17521231
-\end{code}
+\end{scodebit}
+\end{script}
