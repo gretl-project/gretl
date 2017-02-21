@@ -2439,6 +2439,28 @@
       </description>
     </function>
 
+    <function name="dayspan" section="calendar" output="int">
+      <fnargs>
+	<fnarg type="int">ed1</fnarg>
+	<fnarg type="int">ed2</fnarg>
+	<fnarg type="int">weeklen</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the number of (relevant) days between the epoch days
+	  <argname>ed1</argname> and <argname>ed2</argname>,
+	  inclusive. The <argname>weeklen</argname>, which must equal
+	  5, 6 or 7, gives the number of days in the week that should
+	  be counted (a value of 6 omits Sundays, and a value of 5
+	  omits both Saturdays and Sundays).
+	</para>
+	<para>
+	  To obtain epoch days from the more familiar form of dates,
+	  see <fncref targ="epochday"/>.
+	</para>
+      </description>
+    </function>    
+
     <function name="defarray" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="varargs"/>
@@ -2898,12 +2920,21 @@
 	<para>
 	  Returns the number of the day in the current epoch specified
 	  by year, month and day. The epoch day equals 1 for the first
-	  of January in the year 1 AD; it stood at 733786 on
-	  2010-01-01. If any of the arguments are given as series the
-	  value returned is a series, otherwise it is a scalar.
+	  of January in the year AD 1 on the proleptic Gregorian
+	  calendar; it stood at 733786 on 2010-01-01. If any of the
+	  arguments are given as series the value returned is a
+	  series, otherwise it is a scalar.
 	</para>
 	<para>
-	  For the inverse function, see <fncref targ="isodate"/>.
+	  By default the <argname>year</argname>,
+	  <argname>month</argname> and <argname>day</argname> values
+	  are assumed to be given relative to the Gregorian calendar,
+	  but if the year is a negative value the interpretation
+	  switches to the Julian calendar.
+	</para>
+	<para>
+	  For the inverse function, see <fncref targ="isodate"/> and
+	  also (for the Julian calendar) <fncref targ="juldate"/>.
 	</para>
       </description>
     </function>
@@ -4302,13 +4333,13 @@
       <description>
 	<para>
 	  The argument <argname>ed</argname> is interpreted as an
-	  epoch day (which equals 1 for the first of January in the
-	  year 1 AD). The default return value &mdash; of the same
-	  type as <argname>ed</argname> &mdash; is an 8-digit number,
-	  or a series of such numbers, on the pattern
-	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
-	  giving the Gregorian calendar date corresponding to the
-	  epoch day.
+	  epoch day, which equals 1 for the first of January in the
+	  year AD 1 on the proleptic Gregorian calendar. The default
+	  return value &mdash; of the same type as
+	  <argname>ed</argname> &mdash; is an 8-digit number, or a
+	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
+	  (ISO 8601 <quote>basic</quote> format), giving the Gregorian
+	  calendar date corresponding to the epoch day.
 	</para>
 	<para>
 	  If <argname>ed</argname> is a scalar (only) and the optional
@@ -4422,15 +4453,13 @@
       <description>
 	<para>
 	  The argument <argname>ed</argname> is interpreted as an
-	  epoch day (which equals 1 for the first of January in the
-	  year 1 AD). The default return value &mdash; of the same
-	  type as <argname>ed</argname> &mdash; is an 8-digit number,
-	  or a series of such numbers, on the pattern
-	  <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote> format),
-	  giving the Julian calendar date corresponding to the epoch
-	  day. These values are accurate from AD 300 to 2199. The
-	  behavior of the Julian calendar before 300 was complicated
-	  and is not tracked by this function.
+	  epoch day, which equals 1 for the first of January in the
+	  year AD 1 on the proleptic Gregorian calendar. The default
+	  return value &mdash; of the same type as
+	  <argname>ed</argname> &mdash; is an 8-digit number, or a
+	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
+	  (ISO 8601 <quote>basic</quote> format), giving the Julian
+	  calendar date corresponding to the epoch day.
 	</para>
 	<para>
 	  If <argname>ed</argname> is a scalar (only) and the optional
@@ -5556,10 +5585,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of (relevant) days in the specified month in
-	  the specified year; <argname>weeklen</argname>, which must equal
-	  5, 6 or 7, gives the number of days in the week that should be
-	  counted (a value of 6 omits Sundays, and a value of 5 omits both
+	  Returns the number of (relevant) days in the specified month
+	  in the specified year, on the proleptic Gregorian calendar;
+	  <argname>weeklen</argname>, which must equal 5, 6 or 7,
+	  gives the number of days in the week that should be counted
+	  (a value of 6 omits Sundays, and a value of 5 omits both
 	  Saturdays and Sundays).
 	</para>
       </description>
