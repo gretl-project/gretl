@@ -23,6 +23,7 @@
 #include "version.h"
 #include "gretl_xml.h"
 #include "importer.h"
+#include "gretl_string_table.h"
 #include "csvdata.h"
 
 #include <gtk/gtk.h>

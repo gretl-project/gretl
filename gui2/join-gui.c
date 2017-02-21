@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "dlgutils.h"
 #include "arrows.h"
+#include "gretl_string_table.h"
 #include "csvdata.h"
 #include "cmd_private.h"
 #include "gretl_xml.h"

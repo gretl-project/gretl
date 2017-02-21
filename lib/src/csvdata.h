@@ -30,6 +30,8 @@ typedef enum {
     AGGR_SEQ
 } AggrType;
 
+#define NON_NUMERIC 1.0e99
+
 void import_na_init (void);
 
 int import_na_string (const char *s);
@@ -40,6 +42,10 @@ int test_markers_for_dates (DATASET *dset,
 			    int *reversed, 
 			    char *skipstr, 
 			    PRN *prn);
+
+int non_numeric_check (DATASET *dset, int **plist,
+		       gretl_string_table **pst,
+		       PRN *prn);
 
 void reverse_data (DATASET *dset, PRN *prn);
 

@@ -36,7 +36,6 @@
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
-#define NON_NUMERIC 1.0e99
 
 enum {
     CSV_HAVEDATA = 1 << 0,
@@ -1995,19 +1994,21 @@ static void revise_non_numeric_values (csvdata *c)
     }
 }
 
-static int non_numeric_check (csvdata *c, PRN *prn)
+int non_numeric_check (DATASET *dset, int **plist,
+		       gretl_string_table **pst,
+		       PRN *prn)
 {
     int *list = NULL;
     int i, j, t, nn = 0;
     int err = 0;
 
 #if CDEBUG > 1
-    fprintf(stderr, "non_numeric_check: testing %d series\n", c->dset->v - 1);
+    fprintf(stderr, "non_numeric_check: testing %d series\n", dset->v - 1);
 #endif
 
-    for (i=1; i<c->dset->v; i++) {
-	for (t=0; t<c->dset->n; t++) {
-	    if (c->dset->Z[i][t] == NON_NUMERIC) {
+    for (i=1; i<dset->v; i++) {
+	for (t=0; t<dset->n; t++) {
+	    if (dset->Z[i][t] == NON_NUMERIC) {
 		nn++;
 		break;
 	    }
@@ -2024,9 +2025,9 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     }
 
     j = 1;
-    for (i=1; i<c->dset->v; i++) {
-	for (t=0; t<c->dset->n; t++) {
-	    if (c->dset->Z[i][t] == NON_NUMERIC) {
+    for (i=1; i<dset->v; i++) {
+	for (t=0; t<dset->n; t++) {
+	    if (dset->Z[i][t] == NON_NUMERIC) {
 		list[j++] = i;
 		break;
 	    }
@@ -2044,23 +2045,23 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 	int tn = 0;
 	int v = list[i];
 
-	series_set_flag(c->dset, v, VAR_DISCRETE);
+	series_set_flag(dset, v, VAR_DISCRETE);
 
-	for (t=0; t<c->dset->n; t++) {
-	    if (c->dset->Z[v][t] == NON_NUMERIC) {
+	for (t=0; t<dset->n; t++) {
+	    if (dset->Z[v][t] == NON_NUMERIC) {
 		if (tn == 0) {
 		    /* record the first non-numeric obs */
 		    tn = t + 1;
 		}
 		nnon++;
-	    } else if (!na(c->dset->Z[v][t])) {
+	    } else if (!na(dset->Z[v][t])) {
 		nok++;
 	    }
 	}
 
 	nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
 	pprintf(prn, "variable %d (%s): non-numeric values = %d "
-		"(%.2f percent)\n", v, c->dset->varname[v], 
+		"(%.2f percent)\n", v, dset->varname[v], 
 		nnon, 100 * nnfrac);
 	if (nnon < 2 || nnfrac < 0.01) {
 	    /* if we got just a few non-numeric values, we'll assume
@@ -2068,20 +2069,39 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 	    */
 	    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
 			    "non-numeric value\n"), 
-		    v, c->dset->varname[v], tn);
+		    v, dset->varname[v], tn);
 	    err = E_DATA;
 	}
     }
 
     if (!err) {
 	pputs(prn, "allocating string table\n");
-	c->st = gretl_string_table_new(list);
-	if (c->st == NULL) {
+	*pst = gretl_string_table_new(list);
+	if (*pst == NULL) {
 	    err = E_ALLOC;
-	    free(list);
-	} else {
-	    c->codelist = list;
 	}
+    }
+
+    if (err) {
+	free(list);
+    } else {
+	*plist = list;
+    }
+
+    return err;
+}
+
+static int csv_non_numeric_check (csvdata *c, PRN *prn)
+{
+    gretl_string_table *st = NULL;
+    int *nlist = NULL;
+    int err = 0;
+
+    err = non_numeric_check(c->dset, &nlist, &st, prn);
+
+    if (!err) {
+	c->codelist = nlist;
+	c->st = st;
     }
 
     return err;
@@ -3510,7 +3530,7 @@ static int real_import_csv (const char *fname,
     }
 
     if (!err && !probing(c)) {
-	err = non_numeric_check(c, prn);
+	err = csv_non_numeric_check(c, prn);
 	if (!err && csv_has_non_numeric(c)) {
 	    /* try once more */
 	    err = csv_read_data(c, fp, prn, NULL);

@@ -50,6 +50,7 @@
 #include "gretl_help.h"
 #include "gretl_zip.h"
 #include "uservar.h"
+#include "gretl_string_table.h"
 #include "csvdata.h"
 #include "matrix_extra.h"
 #include "gretl_typemap.h"

@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "version.h"
+#include "gretl_string_table.h"
 #include "csvdata.h"
 
 #ifdef WIN32

@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
+#include "gretl_string_table.h"
 #include "csvdata.h"
 #include "usermat.h"
 

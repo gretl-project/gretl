@@ -31,6 +31,7 @@
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"
 #include "uservar.h"
+#include "gretl_string_table.h"
 #include "csvdata.h"
 #include "kalman.h"
 
@@ -1018,7 +1019,8 @@ static void finalize_data_open (const char *fname, int ftype,
 {
     if (import) {
 	if (ftype == GRETL_CSV || ftype == GRETL_DTA || 
-	    ftype == GRETL_SAV || ftype == GRETL_SAS) {
+	    ftype == GRETL_SAV || ftype == GRETL_SAS ||
+	    ftype == GRETL_XLSX) {
 	    maybe_display_string_table();
 	}
 	data_status |= IMPORT_DATA;
