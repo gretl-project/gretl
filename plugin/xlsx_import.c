@@ -44,8 +44,6 @@
 #define XDEBUG 0
 #define DATE_DEBUG 0
 
-#define NON_NUMERIC 1.0e99
-
 struct xlsx_info_ {
     int flags;
     int trydates;
