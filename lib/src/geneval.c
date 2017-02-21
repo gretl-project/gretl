@@ -9398,7 +9398,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int mo = node_get_int(l, p);
 	    int yr = node_get_int(m, p);
 	    int wk = node_get_int(r, p);
-	    int julian = 0;
 
 	    if (p->err) {
 		; /* from node_get_int() */
