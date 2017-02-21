@@ -43,6 +43,9 @@
 #define XDEBUG 0
 #define DATE_DEBUG 0
 
+#define NON_NUMERIC 1.0e99
+#define STRVALS 0
+
 struct xlsx_info_ {
     int flags;
     int trydates;
@@ -61,6 +64,7 @@ struct xlsx_info_ {
     int n_strings;
     char **strings;
     DATASET *dset;
+    int *nonlist;
 };
 
 typedef struct xlsx_info_ xlsx_info;
@@ -84,6 +88,7 @@ static void xlsx_info_init (xlsx_info *xinfo)
     xinfo->n_strings = 0;
     xinfo->strings = NULL;
     xinfo->dset = NULL;
+    xinfo->nonlist = NULL;
 }
 
 static void xlsx_info_free (xlsx_info *xinfo)
@@ -93,6 +98,7 @@ static void xlsx_info_free (xlsx_info *xinfo)
 	strings_array_free(xinfo->filenames, xinfo->n_sheets);
 	strings_array_free(xinfo->strings, xinfo->n_strings);
 	destroy_dataset(xinfo->dset);
+	free(xinfo->nonlist);
     }
 }
 
@@ -393,7 +399,19 @@ static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
     }
 }
 
-static int xlsx_handle_stringval (const char *s, int r, int c, 
+static int xlsx_handle_stringval3 (xlsx_info *xinfo,
+				   int i, int t,
+				   const char *s)
+{
+    int err = 0;
+    
+    fprintf(stderr, "xlsx_handle_stringval3: i=%d, t=%d, s='%s'\n", i, t, s);
+
+    return err;
+}
+
+static int xlsx_handle_stringval (xlsx_info *xinfo, int i, int t,
+				  const char *s, int r, int c, 
 				  PRN *prn)
 {
     if (import_na_string(s)) {
@@ -401,9 +419,20 @@ static int xlsx_handle_stringval (const char *s, int r, int c,
     } else if (*s == '\0') {
 	return 0; /* sigh */
     } else {
+#if STRVALS
+	if (i < 1 || i >= xinfo->dset->v ||
+	    t < 0 || t >= xinfo->dset->n) {
+	    fprintf(stderr, "error in xlsx_handle_stringval: i = %d, t = %d\n", i, t);
+	    return E_DATA;
+	} else {
+	    xinfo->dset->Z[i][t] = NON_NUMERIC;
+	    return 0;
+	}
+#else
 	pprintf(prn, _("Expected numeric data, found string:\n"
 		       "'%s' at row %d, column %d\n"), s, r, c);
 	return E_DATA;
+#endif
     }
 }
 
@@ -553,7 +582,13 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
     int pass, empty = 1;
     int err = 0;
 
-    pass = xinfo->dset == NULL ? 1 : 2;
+    if (xinfo->nonlist != NULL) {
+	pass = 3;
+    } else if (xinfo->dset != NULL) {
+	pass = 2;
+    } else {
+	pass = 1;
+    }
 
 #if XDEBUG
     myprn = prn;
@@ -669,15 +704,20 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		int i = xlsx_var_index(xinfo, col);
 		int t = xlsx_obs_index(xinfo, row);
 
-		/* here we're on the second pass, with a dataset allocated */
+		/* here we're on the second or possibly third pass,
+		   with a dataset allocated */
 
-		if (stringcell) {
+		if (pass == 3) {
+		    if (stringcell && in_gretl_list(xinfo->nonlist, i)) {
+			xlsx_handle_stringval3(xinfo, i, t, strval);
+		    }
+		} else if (stringcell) {
 		    if (row == xinfo->namerow) {
 			err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
 		    } else if (col == xinfo->obscol) {
 			err = xlsx_set_obs_string(xinfo, row, col, t, strval, prn);
 		    } else if (strval != NULL) {
-			err = xlsx_handle_stringval(strval, row, col, prn);
+			err = xlsx_handle_stringval(xinfo, i, t, strval, row, col, prn);
 		    }
 		    if (stringcell == 2) {
 			/* finished with copy of string literal */
@@ -770,6 +810,42 @@ static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
     return err;
 }
 
+static int xlsx_check_non_numeric (xlsx_info *xinfo)
+{
+    DATASET *dset = xinfo->dset;
+    int *nonlist = NULL;
+    double nonfrac;
+    int i, t, nnon;
+    int err = 0;
+
+    for (i=1; i<dset->v && !err; i++) {
+	nnon = 0;
+	for (t=0; t<dset->n; t++) {
+	    if (dset->Z[i][t] == NON_NUMERIC) {
+		nnon++;
+	    }
+	}
+	if (nnon == dset->n) {
+	    /* got a fully non-numeric series */
+	    nonlist = gretl_list_append_term(&nonlist, i);
+	    if (nonlist == NULL) {
+		err = E_ALLOC;
+	    }
+	} else if (nnon > 0) {
+	    /* broken? */
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	xinfo->nonlist = nonlist;
+    } else {
+	free(nonlist);
+    }
+		
+    return err;
+}
+
 static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn) 
 {
     xmlDocPtr doc = NULL;
@@ -825,6 +901,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     if (!err && xinfo->dset == NULL) {
 	err = xlsx_check_dimensions(xinfo, prn);
 	if (!err) {
+	    /* second pass: get actual data */
 	    gretl_push_c_numeric_locale();
 	    c1 = data_node;
 	    while (c1 != NULL && !err) {
@@ -836,6 +913,22 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	    gretl_pop_c_numeric_locale();
 	}
     }
+
+#if STRVALS
+    if (!err) {
+	err = xlsx_check_non_numeric(xinfo);
+	if (!err && xinfo->nonlist != NULL) {
+	    /* third pass, if needed: get string-valued vars */
+	    c1 = data_node;
+	    while (c1 != NULL && !err) {
+		if (!xmlStrcmp(c1->name, (XUC) "row")) {
+		    err = xlsx_read_row(c1, xinfo, prn);
+		}
+		c1 = c1->next;
+	    }
+	}
+    }
+#endif
 
     xmlFreeDoc(doc);
 
