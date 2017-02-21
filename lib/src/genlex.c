@@ -467,6 +467,7 @@ struct str_table funcs[] = {
     { F_STRSCRAPE, "strscrape" },
     { F_ECDF,      "ecdf" },
     { F_NPCORR,    "npcorr" },
+    { F_DAYSPAN,   "dayspan" },
     { F_SLEEP,     "sleep" },
     { 0,           NULL }
 };

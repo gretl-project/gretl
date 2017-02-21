@@ -419,6 +419,7 @@ enum {
     F_HFLIST,
     F_NMMAX,
     F_NPCORR,
+    F_DAYSPAN,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

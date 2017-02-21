@@ -9351,6 +9351,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    p->err = E_TYPES;
 	}
+    } else if (f == F_DAYSPAN) {
+	post_process = 0;
+	if (l->t == NUM && m->t == NUM && r->t == NUM) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		int ed1 = l->v.xval;
+		int ed2 = m->v.xval;
+		int wkdays = r->v.xval;
+
+		ret->v.xval = day_span(ed1, ed2, wkdays, &p->err);
+	    }
+	} else {
+	    p->err = E_TYPES;
+	}	
     } else if (f == F_KDENSITY) {
 	if (l->t != SERIES && l->t != MAT) {
 	    node_type_error(f, 1, SERIES, l, p);
@@ -13675,6 +13689,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_REPLACE:
     case F_STRNCMP:
     case F_WEEKDAY:
+    case F_DAYSPAN:
     case F_MONTHLEN:
     case F_EPOCHDAY:
     case F_KDENSITY:

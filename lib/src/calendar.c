@@ -1132,7 +1132,7 @@ int iso_basic_to_extended (const double *b, double *y, double *m,
  * https://en.wikipedia.org/wiki/Computus
  * under the heading "Anonymous Gregorian algorithm".
  *
- * Returns the date of Easter in the Gregorian calendar as
+ * Returns: the date of Easter in the Gregorian calendar as
  * (month + day/100). Note that April the 10th is, under
  * this convention, 4.1; hence, 4.2 is April the 20th, not
  * April the 2nd (which would be 4.02).
@@ -1157,4 +1157,49 @@ double easterdate (int year)
     int day = ((h + L - 7 * m + 114) % 31) + 1;
 
     return month + day * 0.01;
+}
+
+/**
+ * dayspan:
+ * @ed1: first epoch day.
+ * @ed2: last epoch day.
+ * @wkdays: relevant days per week (5, 6 or 7).
+ * @err: location to receive error code.
+ *
+ * Returns: The number of days in the interval @ed1 to
+ * @ed2, inclusive, taking account of the number of daily
+ * observations per week, @wkdays. If @wkdays = 6 Sundays
+ * are disregarded; if @wkdays = 5 both Saturdays and
+ * Sundays are disregarded.
+ */
+
+int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
+{
+    int n = 0;
+    
+    if (!g_date_valid_julian(ed1) ||
+	!g_date_valid_julian(ed2) ||
+	ed2 < ed1) {
+	*err = E_INVARG;
+    } else if (wkdays == 7) {
+	/* simple! */
+	n = ed2 - ed1 + 1;
+    } else {
+	GDate date;
+	guint32 i;
+	int idx;
+
+	g_date_clear(&date, 1);
+	g_date_set_julian(&date, ed1);
+	idx = g_date_get_weekday(&date) - 1;
+	
+	for (i=ed1; i<=ed2; i++) {
+	    if (day_in_calendar(wkdays, idx % 7)) {
+		n++;
+	    }
+	    idx++;
+	}
+    }
+
+    return n;
 }

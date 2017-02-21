@@ -84,4 +84,6 @@ int guess_daily_pd (const DATASET *dset);
 
 double easterdate (int year);
 
+int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err);
+
 #endif /* CALENDAR_H */ 
