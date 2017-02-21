@@ -53,17 +53,39 @@ static int leap_year (int yr)
     return (!(yr % 4) && (yr % 100)) || !(yr % 400);
 }
 
-static int day_of_week_from_ymd (int y, int m, int d)
+static int valid_ymd (int y, int m, int d, int julian)
+{
+    int ok = 1;
+    
+    if (!g_date_valid_dmy(d, m, y)) {
+	ok = 0;
+	if (julian && y > 0 && m == 2 && d == 29 && y%4 == 0) {
+	    ok = 1;
+	}
+    }
+	
+    return ok;
+}
+
+static int day_of_week_from_ymd (int y, int m, int d, int julian)
 {
     GDate date;
     int wd;
 
-    if (!g_date_valid_dmy(d, m, y)) {
+    if (!valid_ymd(y, m, d, julian)) {
 	return -1;
     }
 
     g_date_clear(&date, 1);
-    g_date_set_dmy(&date, d, m, y);
+
+    if (julian) {
+	guint32 ed = epoch_day_from_julian_ymd(y, m, d);
+	
+	g_date_set_julian(&date, ed);
+    } else {
+	g_date_set_dmy(&date, d, m, y);
+    }
+
     wd = g_date_get_weekday(&date);
 
     /* switch to Sunday == 0 */
@@ -77,7 +99,8 @@ static int day_of_week_from_ymd (int y, int m, int d)
  * @d: day of month (1 <= d <= 31).
  *
  * Returns: the epoch day number, which equals 1 for the first of
- * January in the year 1 AD, or 0 on error.
+ * January in the year AD 1 on the proleptic Gregorian calendar,
+ * or 0 on error.
  */
 
 guint32 epoch_day_from_ymd (int y, int m, int d)
@@ -623,9 +646,10 @@ double get_dec_date (const char *datestr)
 
 /**
  * day_of_week:
- * @y: year, preferably 4-digit.
+ * @y: year.
  * @m: month, 1 to 12.
  * @d: day in month, 1 to 31.
+ * @julian: non-zero to use Julian calendar, otherwise Gregorian.
  * @err: location to receive error code.
  *
  * Returns: the day of the week for the supplied date
@@ -633,20 +657,11 @@ double get_dec_date (const char *datestr)
  * (the date is invalid).
  */
 
-double day_of_week (int y, int m, int d, int *err)
+double day_of_week (int y, int m, int d, int julian, int *err)
 {
-    GDate date;
-    int wd;
+    int wd = day_of_week_from_ymd(y, m, d, julian);
 
-    if (!g_date_valid_dmy(d, m, y)) {
-	return NADBL;
-    }
-
-    g_date_clear(&date, 1);
-    g_date_set_dmy(&date, d, m, y);
-    wd = g_date_get_weekday(&date);
-
-    return wd == G_DATE_SUNDAY ? 0 : wd;
+    return wd < 0 ? NADBL : wd;
 }
 
 #define day_in_calendar(w, d) (((w) == 6 && d != 0) || \
@@ -677,7 +692,7 @@ int weekday_from_date (const char *datestr)
 	y = FOUR_DIGIT_YEAR(y);
     }
 
-    return day_of_week_from_ymd(y, m, d);
+    return day_of_week_from_ymd(y, m, d, 0);
 }
 
 /**
@@ -708,7 +723,7 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
 	}
     } else {
 	/* 5- or 6-day week: check for first weekday or non-Sunday */
-	int i, idx = day_of_week_from_ymd(y, m, 1);
+	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<6; i++) {
 	   if (day_in_calendar(wkdays, idx % 7)) {
@@ -749,7 +764,7 @@ int day_ends_month (int d, int m, int y, int wkdays)
 	ret = (d == dm);
     } else {
 	/* 5- or 6-day week: check for last weekday or non-Sunday */
-	int i, idx = day_of_week_from_ymd(y, m, dm);
+	int i, idx = day_of_week_from_ymd(y, m, dm, 0);
 
 	for (i=dm; i>0; i--) {
 	    if (day_in_calendar(wkdays, idx % 7)) {
@@ -768,21 +783,26 @@ int day_ends_month (int d, int m, int y, int wkdays)
  * @m: month number, 1-based
  * @y: 4-digit year
  * @wkdays: number of days in week (7, 6 or 5)
+ * @julian: non-zero for Julian calendar, otherwise Gregorian.
  *
  * Returns: the number of (relevant) days in the month, allowance
  * made for the possibility of a 5- or 6-day week.
  */
 
-int get_days_in_month (int m, int y, int wkdays)
+int get_days_in_month (int m, int y, int wkdays, int julian)
 {
-    int leap = (m == 2)? leap_year(y) : 0;
-    int dm = days_in_month[leap][m];
+    int dm, leap = 0;
     int ret = 0;
+
+    if (m == 2) {
+	leap = julian ? (y%4 == 0) : leap_year(y);
+    }
+    dm = days_in_month[leap][m];
 
     if (wkdays == 7) {
 	ret = dm;
     } else {
-	int i, idx = day_of_week_from_ymd(y, m, 1);
+	int i, idx = day_of_week_from_ymd(y, m, 1, julian);
 
 	for (i=0; i<dm; i++) {
 	    if (day_in_calendar(wkdays, idx % 7)) {
@@ -814,7 +834,7 @@ int days_in_month_before (int y, int m, int d, int wkdays)
     if (wkdays == 7) {
 	ret = d - 1;
     } else {
-	int i, idx = day_of_week_from_ymd(y, m, 1);
+	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<d; i++) {
 	    if (day_in_calendar(wkdays, idx % 7)) {
@@ -848,7 +868,7 @@ int days_in_month_after (int y, int m, int d, int wkdays)
     if (wkdays == 7) {
 	ret = dm - d;
     } else {
-	int i, wd = day_of_week_from_ymd(y, m, dm);
+	int i, wd = day_of_week_from_ymd(y, m, dm, 0);
 
 	for (i=dm; i>d; i--) {
 	    if (day_in_calendar(wkdays, wd)) {
@@ -890,7 +910,7 @@ int date_to_daily_index (const char *datestr, int wkdays)
     } else {
 	int leap = leap_year(y);
 	int n = days_in_month[leap][m];
-	int i, idx = day_of_week_from_ymd(y, m, 1);
+	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
 
 	for (i=1; i<=n; i++) {
 	    if (d == i) {
@@ -941,7 +961,7 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
     } else {
 	int leap = leap_year(y);
 	int n = days_in_month[leap][m];
-	int wd = day_of_week_from_ymd(y, m, 1);
+	int wd = day_of_week_from_ymd(y, m, 1, 0);
 	int i, seq = 0;
 
 	for (i=1; i<=n; i++) {
@@ -1054,20 +1074,6 @@ int guess_daily_pd (const DATASET *dset)
     return pd;
 }
 
-static int validate_ymd (int y, int m, int d, int julian)
-{
-    int ok = 1;
-    
-    if (!g_date_valid_dmy(d, m, y)) {
-	ok = 0;
-	if (julian && y > 0 && m == 2 && d == 29 && y%4 == 0) {
-	    ok = 1;
-	}
-    }
-	
-    return ok;
-}
-
 /**
  * iso_basic_to_extended:
  * @b: source array of YYYYMMDD values.
@@ -1106,7 +1112,7 @@ int iso_basic_to_extended (const double *b, double *y, double *m,
 	    mi = (bi - 10000*yi) / 100;
 	    di = bi - 10000*yi - 100*mi;
 	    /* now check for legit date */
-	    if (!validate_ymd(yi, mi, di, julian)) {
+	    if (!valid_ymd(yi, mi, di, julian)) {
 		y[i] = m[i] = NADBL;
 		if (d != NULL) {
 		    d[i] = NADBL;

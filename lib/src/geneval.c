@@ -9332,11 +9332,19 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	if (l->t == NUM && m->t == NUM && r->t == NUM) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
-		int yr = l->v.xval;
-		int mo = m->v.xval;
-		int day = r->v.xval;
+		int yr = node_get_int(l, p);
+		int mo = node_get_int(m, p);
+		int day = node_get_int(r, p);
 
-		ret->v.xval = day_of_week(yr, mo, day, &p->err);
+		if (!p->err) {
+		    int julian = 0;
+		    
+		    if (yr < 0) {
+			yr = -yr;
+			julian = 1;
+		    }
+		    ret->v.xval = day_of_week(yr, mo, day, julian, &p->err);
+		}
 	    }
 	} else if (l->t == SERIES && m->t == SERIES && r->t == SERIES) {
 	    reset_p_aux(p, save_aux);
@@ -9390,17 +9398,24 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int mo = node_get_int(l, p);
 	    int yr = node_get_int(m, p);
 	    int wk = node_get_int(r, p);
+	    int julian = 0;
 
 	    if (p->err) {
 		; /* from node_get_int() */
-	    } else if (yr < 0 || mo < 1 || mo > 12 ||
+	    } else if (mo < 1 || mo > 12 ||
 		(wk != 5 && wk != 6 && wk != 7)) {
 		p->err = E_INVARG;
 	    } else {
 		reset_p_aux(p, save_aux);
 		ret = aux_scalar_node(p);
 		if (!p->err) {
-		    ret->v.xval = get_days_in_month(mo, yr, wk);
+		    int julian = 0;
+
+		    if (yr < 0) {
+			yr = -yr;
+			julian = 1;
+		    }
+		    ret->v.xval = get_days_in_month(mo, yr, wk, julian);
 		}
 	    }
 	}
@@ -9741,9 +9756,13 @@ static NODE *string_scrape_node (NODE *l, NODE *r, parser *p)
 
 static int x_to_period (double x, char c, int *julian, int *err)
 {
-    if (julian != NULL && c == 'y' && x < 0) {
-	*julian = 1;
-	x = -x;
+    if (julian != NULL && c == 'y') {
+	if (x < 0) {
+	    *julian = 1;
+	    x = -x;
+	} else {
+	    *julian = 0;
+	}
     }
     
     if (na(x)) {
@@ -9834,7 +9853,9 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 		int t;
 
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    y = (x[0] == NULL)? y : x_to_period(x[0][t], 'y', NULL, &p->err);
+		    if (x[0] != NULL) {
+			y = x_to_period(x[0][t], 'y', &julian, &p->err);
+		    }
 		    m = (x[1] == NULL)? m : x_to_period(x[1][t], 'm', NULL, &p->err);
 		    d = (x[2] == NULL)? d : x_to_period(x[2][t], 'd', NULL, &p->err);
 		    if (p->err) {

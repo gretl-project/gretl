@@ -57,7 +57,7 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 
 int day_ends_month (int d, int m, int y, int wkdays);
 
-int get_days_in_month (int m, int y, int wkdays);
+int get_days_in_month (int m, int y, int wkdays, int julian);
 
 int days_in_month_before (int y, int m, int d, int wkdays);
 
@@ -76,7 +76,7 @@ int MS_excel_date_string (char *targ, int mst, int pd, int d1904);
 
 double get_dec_date (const char *datestr);
 
-double day_of_week (int y, int m, int d, int *err);
+double day_of_week (int y, int m, int d, int julian, int *err);
 
 int n_hidden_missing_obs (const DATASET *dset);
 

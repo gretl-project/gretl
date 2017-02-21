@@ -6683,14 +6683,20 @@ int fill_day_of_week_array (double *dow,
 			    const double *d,
 			    const DATASET *dset)
 {
-    int yr, mo, day;
+    int yt, mt, dt;
+    int julian;
     int t, err = 0;
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
-	yr = (int) y[t];
-	mo = (int) m[t];
-	day = (int) d[t];
-	dow[t] = day_of_week(yr, mo, day, &err);
+	julian = 0;
+	yt = (int) y[t];
+	if (yt < 0) {
+	    yt = -yt;
+	    julian = 1;
+	}
+	mt = (int) m[t];
+	dt = (int) d[t];
+	dow[t] = day_of_week(yt, mt, dt, julian, &err);
     }
 	
     return err;

@@ -209,13 +209,34 @@ basic dates are consecutive only within a given month; they advance by
 101 minus (days in previous month) at the start of each month and by
 8870 at the start of each year.
 
+\subsection{Miscellaneous functions}
+
+Two additional functions that by default operate on the Gregorian
+calendar can be induced to work on the Julian by the trick mentioned
+above, namely giving the negative of the year. These are
+\texttt{weekday} (which takes arguments year, month and day) and
+\texttt{monthlen} (which takes arguments month, year and days per
+week). Thus for example
+%
+\begin{code}
+eval weekday(-1700,2,29)
+\end{code}
+%
+gives 4, indicating that Julian February 29, 1700 was a Thursday. And
+%
+\begin{code}
+eval monthlen(2,-1900,5)
+\end{code}
+gives 21, indicating that there were 21 weekdays in Julian February
+1900.
+
 \section{Working with pre-Gregorian dates}
 \label{sec:cal-conversion}
 
 In this section we address the problem of constructing within gretl a
 calendar which agrees with the actual historical calendar prior to
 the switch to Gregorian dating. Most people will have no use for
-this, but researchers working with achival data may find it helpful:
+this, but researchers working with archival data may find it helpful:
 it would be tricky and error-prone to enter on the Gregorian calendar
 data whose dates are given on the Julian at source.
 
@@ -302,5 +323,48 @@ Partial output:
 1752-09-15       639798     17520904     17520915     17520915
 ...
 1752-12-31       639905     17521220     17521231     17521231
+\end{scodebit}
+\end{script}
+
+\section{Year numbering}
+\label{sec:cal-yearnum}
+
+A further complication in dealing with archival data is that the year
+number has not always been advanced on January 1; for example in
+Britain prior to 1752, March 25 was taken as the start of the new
+year. On gretl's calendar (whether Julian or Gregorian) the year
+number \textit{always} advances on January 1, but it's possible to
+construct observation markers following the old scheme. This is
+illustrated for the year 1751 (as we would now call it) in
+Listing~\ref{ex:britain-1751}.
+
+\begin{script}[htbp]
+  \caption{Historical calendar for England in 1751}
+  \label{ex:britain-1751}
+Input:
+\begin{scodebit}
+nulldata 365 # a common year
+ed0 = epochday(-1751,1,1)
+ed1 = epochday(-1751,3,25)
+series ed = ed0 + index - 1
+series jdate = juldate(ed)
+series y, m, d
+isoconv(jdate, &y, &m, &d)
+y = ed < ed1 ? y-1 : y
+genr markers = "%04d-%02d-%02d", y, m, d
+print index -o
+\end{scodebit}
+Partial output:
+\begin{scodebit}
+1750-01-01            1
+1750-01-02            2
+1750-01-03            3
+...
+1750-03-23           82
+1750-03-24           83
+1751-03-25           84
+1751-03-26           85
+...
+1751-12-31          365
 \end{scodebit}
 \end{script}

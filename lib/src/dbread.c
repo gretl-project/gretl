@@ -3779,7 +3779,7 @@ daily_series_to_monthly (DATASET *dset, int i,
 	eop_t = offset - 1;
     } else {
 	/* the first obs starts a month */
-	eop_t = get_days_in_month(mon, yr, dset->pd) - 1;
+	eop_t = get_days_in_month(mon, yr, dset->pd, 0) - 1;
     }
 
 #if DMDEBUG
@@ -3789,7 +3789,7 @@ daily_series_to_monthly (DATASET *dset, int i,
 
     for (t=0; t<nm; t++) {
 	/* loop across the months in the compacted data */
-	int mdays = get_days_in_month(mon, yr, dset->pd);
+	int mdays = get_days_in_month(mon, yr, dset->pd, 0);
 
 	if (t > 0) {
 	    eop_t += mdays;
