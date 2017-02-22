@@ -276,8 +276,8 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
 		}
 	    }
 	    if (i == sheet->row_offset && j == sheet->col_offset) {
+		topleft_found = 1;
 		err = inspect_top_left(p, obscol);
-		topleft_found = 0;
 	    }
 	}
 	p = p->next;
@@ -285,7 +285,7 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
 
     if (!err) {
 	if (!topleft_found) {
-	    /* no top-left cell at all: sign of observations column */
+	    /* no top-left cell at all: sign of observations column? */
 	    *obscol = 1;
 	}
 	fprintf(stderr, "wsheet_get_real_size: maxrow=%d, maxcol=%d\n",
@@ -424,7 +424,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
     }
 
     if (gotlabels && sheet->colheads == 1) {
-	/* rough notion here: if there's only one heading, it's
+	/* rough notion here: if there's only one "heading", it's
 	   probably not really a variable name, but rather
 	   a first observation label 
 	*/
@@ -855,7 +855,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	}
 
 	if (!err && !dataset_is_time_series(newset) && newset->S != NULL) {
-	    /* we didn't time series info above, but it's possible
+	    /* we didn't get time series info above, but it's possible
 	       the observation strings carry such info
 	    */
 	    import_ts_check(newset);
@@ -885,4 +885,3 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
     return err;
 }
-
