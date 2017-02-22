@@ -1,6 +1,10 @@
 version 2017a, in progress
 - Improved parsing for the member-of relation, on both
-  the left- and right-hand side of hansl statements 
+  the left- and right-hand side of hansl statements
+- Calendar: ensure that the Gregorian calendar is used
+  consistently but add some optional support for handling
+  Julian dates (also add a User's Guide chapter on this)
+- xlsx and ods data importers: handle string-valued data
 - Remove obsolete Kalman-filter interface
 - Deprecate "=" as obsolete synonym for boolean "==" 
 - New functions kmeier() and naalen() for nonparametric
