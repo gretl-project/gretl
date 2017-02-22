@@ -44,6 +44,21 @@ typedef enum {
 
 #include "import_common.c"
 
+typedef struct wsheet_ wsheet;
+
+struct wsheet_ {
+    int maxcol, maxrow;
+    int text_cols, text_rows;
+    int col_offset, row_offset;
+    int colheads;
+    int ID;
+    BookFlag flags;
+    char *name;
+    double **Z;
+    char **varname;
+    char **label;
+};
+
 static void wsheet_init (wsheet *sheet)
 {
     sheet->col_offset = sheet->row_offset = 0;

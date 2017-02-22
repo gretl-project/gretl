@@ -18,7 +18,6 @@
  */
 
 typedef struct wbook_ wbook;
-typedef struct wsheet_ wsheet;
 
 typedef enum {
     BOOK_NUMERIC_DATES   = 1 << 0,
@@ -70,16 +69,4 @@ struct wbook_ {
     void *data;
 };
 
-struct wsheet_ {
-    int maxcol, maxrow;
-    int text_cols, text_rows;
-    int col_offset, row_offset;
-    int colheads;
-    int ID;
-    BookFlag flags;
-    char *name;
-    double **Z;
-    char **varname;
-    char **label;
-};
 
