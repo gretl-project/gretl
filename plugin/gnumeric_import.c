@@ -28,7 +28,7 @@
 
 #include <gtk/gtk.h>
 
-#define IDEBUG 0
+#define IDEBUG 1
 
 /* from gnumeric's value.h */
 typedef enum {
@@ -248,6 +248,7 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
 				     int *obscol)
 {
     xmlNodePtr p = node->xmlChildrenNode;
+    int topleft_found = 0;
     char *tmp;
     int err = 0;
 
@@ -276,12 +277,17 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
 	    }
 	    if (i == sheet->row_offset && j == sheet->col_offset) {
 		err = inspect_top_left(p, obscol);
+		topleft_found = 0;
 	    }
 	}
 	p = p->next;
     }
 
     if (!err) {
+	if (!topleft_found) {
+	    /* no top-left cell at all: sign of observations column */
+	    *obscol = 1;
+	}
 	fprintf(stderr, "wsheet_get_real_size: maxrow=%d, maxcol=%d\n",
 		sheet->maxrow, sheet->maxcol);
     }
