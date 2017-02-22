@@ -1212,7 +1212,7 @@ int set_obs (const char *parm1, const char *parm2,
 	err = switch_panel_orientation(dset);
     }
 
-#if 1
+#if 0
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
 	    dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
 #endif    
