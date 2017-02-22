@@ -29,7 +29,8 @@ typedef enum {
     BOOK_OBS_BLANK       = 1 << 5,
     BOOK_DEBUG           = 1 << 6,
     BOOK_DATA_REVERSED   = 1 << 7,
-    BOOK_TOP_LEFT_EMPTY  = 1 << 8
+    BOOK_TOP_LEFT_EMPTY  = 1 << 8,
+    BOOK_NON_NUMERIC     = 1 << 9
 } BookFlag;
 
 enum {

@@ -74,6 +74,8 @@ struct ods_sheet_ {
     int xoffset;           /* col offset chosen by user */
     int yoffset;           /* row offset chosen by user */
     DATASET *dset;         /* dataset struct */
+    int *codelist;          /* list of string-valued variables */
+    gretl_string_table *st; /* table for the above */
 };
 
 static ods_table *ods_table_new (xmlNodePtr node, int *err)
@@ -137,6 +139,8 @@ static ods_sheet *ods_sheet_new (xmlDocPtr doc, int *err)
 	sheet->xoffset = 0;
 	sheet->yoffset = 0;
 	sheet->dset = NULL;
+	sheet->codelist = NULL;
+	sheet->st = NULL;
     } else {
 	*err = E_ALLOC;
     }
@@ -165,6 +169,10 @@ static void ods_sheet_free (ods_sheet *sheet)
 	}
 
 	destroy_dataset(sheet->dset);
+	free(sheet->codelist);
+	if (sheet->st != NULL) {
+	    gretl_string_table_destroy(sheet->st);
+	}	
 
 	free(sheet);
     }
@@ -252,6 +260,22 @@ static int get_ods_value_type (xmlNodePtr node)
     free(s);
 
     return ret;
+}
+
+static int ods_non_numeric_check (ods_sheet *sheet, PRN *prn)
+{
+    gretl_string_table *st = NULL;
+    int *nlist = NULL;
+    int err = 0;
+
+    err = non_numeric_check(sheet->dset, &nlist, &st, prn);
+
+    if (!err) {
+	sheet->codelist = nlist;
+	sheet->st = st;
+    }
+
+    return err;
 }
 
 static int p_content_NA (xmlNodePtr cur)
@@ -391,7 +415,6 @@ static const char *ods_name (int t)
 static int ods_error (ods_sheet *sheet,
 		      int i, int j, 
 		      int etype, int vtype,
-		      const char *badval, 
 		      PRN *prn)
 {
     int si = i + sheet->yoffset + 1;
@@ -413,15 +436,38 @@ static int ods_error (ods_sheet *sheet,
 
     pprintf(prn, _("expected %s but found %s"),
 	    ods_name(etype), ods_name(vtype));
-    if (badval != NULL) {
-	pprintf(prn, ": '%s'\n", badval);
-    }
+    pputc(prn, '\n');
     
     return E_DATA; 
 }
 
+static int ods_handle_stringval (ods_sheet *sheet,
+				 int i, int t,
+				 const char *s,
+				 int nr,
+				 PRN *prn)
+{
+    int err = 0;
+
+    if (sheet->dset->Z[i][t] == NON_NUMERIC) {
+	int j, vj, ix;
+
+	for (j=0, vj=i; j<nr && vj<sheet->dset->v; j++, vj++) {
+	    ix = gretl_string_table_index(sheet->st, s, vj, 0, prn);
+	    if (ix > 0) {
+		sheet->dset->Z[vj][t] = (double) ix;
+	    } else {
+		err = E_DATA;
+		break;
+	    }
+	}	
+    }
+
+    return err;
+}
+
 static int real_read_cell (xmlNodePtr cur, 
-			   ods_sheet *sheet, 
+			   ods_sheet *sheet, int pass,
 			   int iread, int *preadcol,
 			   PRN *prn)
 {
@@ -431,7 +477,6 @@ static int real_read_cell (xmlNodePtr cur,
     int verbose = 0;
 #endif    
     char *val = NULL;
-    char *badval = NULL;
     int jread = *preadcol;
     int obscol = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
     int blank0 = (sheet->flags & BOOK_OBS_BLANK)? 1 : 0;
@@ -458,6 +503,20 @@ static int real_read_cell (xmlNodePtr cur,
 	    iread, jread, v, t);
 #endif
 
+    if (pass == 2) {
+	/* just going after string-valued variables */
+	if (iread == 0 && vnames) {
+	    return 0;
+	} else if (jread == 0 && obscol) {
+	    return 0;
+	} else if (vtype == ODS_STRING && in_gretl_list(sheet->codelist, v)) {
+	    val = get_ods_string_value(cur);
+	    err = ods_handle_stringval(sheet, v, t, val, nr, prn);
+	    free(val);
+	}
+	return err;
+    }
+
     /* reading a variable name? */
 
     if (iread == 0 && vnames) {
@@ -476,11 +535,11 @@ static int real_read_cell (xmlNodePtr cur,
 		free(val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING, 
-				ODS_NONE, NULL, prn);
+				ODS_NONE, prn);
 	    }
 	} else if (vtype != ODS_NONE) {
 	    err = ods_error(sheet, iread, jread, ODS_STRING, 
-			    vtype, NULL, prn);
+			    vtype, prn);
 	}
 	return err;
     }
@@ -496,7 +555,7 @@ static int real_read_cell (xmlNodePtr cur,
 		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING,
-				ODS_NONE, NULL, prn);
+				ODS_NONE, prn);
 	    }
 	} else if (vtype == ODS_DATE) {
 	    val = (char *) xmlGetProp(cur, (XUC) "date-value");
@@ -506,7 +565,7 @@ static int real_read_cell (xmlNodePtr cur,
 		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_DATE,
-				ODS_NONE, NULL, prn);
+				ODS_NONE, prn);
 	    }
 	} else if (vtype == ODS_NUMERIC) {
 	    val = (char *) xmlGetProp(cur, (XUC) "value");
@@ -516,11 +575,11 @@ static int real_read_cell (xmlNodePtr cur,
 		}
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_NUMERIC,
-				ODS_NONE, NULL, prn);		
+				ODS_NONE, prn);		
 	    }
 	} else {
 	    err = ods_error(sheet, iread, jread, ODS_DATE,
-			    vtype, NULL, prn);
+			    vtype, prn);
 	}
 
 	if (!err) {
@@ -555,9 +614,9 @@ static int real_read_cell (xmlNodePtr cur,
 	    fprintf(stderr, " string: NA?\n");
 #endif	    
 	    free(val);
-	} else {
-	    err = E_DATA;
-	    badval = val;
+	} else if (val != NULL && *val != '\0') {
+	    x = NON_NUMERIC;
+	    sheet->flags |= BOOK_NON_NUMERIC;
 	}
     } else {
 	fprintf(stderr, " vtype = %d??\n", vtype); 
@@ -565,8 +624,7 @@ static int real_read_cell (xmlNodePtr cur,
     }
 
     if (err) {
-	ods_error(sheet, iread, jread, ODS_NUMERIC, vtype, badval, prn);
-	free(badval);
+	ods_error(sheet, iread, jread, ODS_NUMERIC, vtype, prn);
     } else {
 	for (j=0, vj=v; j<nr && vj<sheet->dset->v; j++, vj++) {
 	    sheet->dset->Z[vj][t] = x;
@@ -578,7 +636,8 @@ static int real_read_cell (xmlNodePtr cur,
 
 static int read_data_row (xmlNodePtr cur, 
 			  ods_table *tab,
-			  ods_sheet *sheet, 
+			  ods_sheet *sheet,
+			  int pass,
 			  int readrow,
 			  PRN *prn)
 {
@@ -591,7 +650,7 @@ static int read_data_row (xmlNodePtr cur,
     while (cur != NULL && !err && readcol < readmax) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-cell")) {
 	    if (tabcol >= sheet->xoffset) {
-		err = real_read_cell(cur, sheet, 
+		err = real_read_cell(cur, sheet, pass,
 				     readrow, &readcol, 
 				     prn);
 	    }
@@ -772,9 +831,10 @@ static int repeat_data_row (ods_sheet *sheet, int iread,
 static int read_table_content (ods_sheet *sheet, PRN *prn)
 {
     ods_table *tab;
-    xmlNodePtr cur;
+    xmlNodePtr top, cur;
     int i, nr, maxrow;
     int tabrow = 0, readrow = 0;
+    int pass = 1;
     int err = 0;
 
 #if ODEBUG
@@ -797,7 +857,7 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     }
 
     maxrow = tab->rows - sheet->yoffset;
-    cur = tab->node->xmlChildrenNode;
+    top = cur = tab->node->xmlChildrenNode;
 
     gretl_push_c_numeric_locale();
 
@@ -805,11 +865,13 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     fprintf(stderr, "starting read_data_row loop\n");
 #endif
 
+ tryagain:
+
     while (cur != NULL && !err && readrow < maxrow) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
 	    nr = ods_row_height(cur);
 	    if (tabrow >= sheet->yoffset) {
-		err = read_data_row(cur, tab, sheet, readrow++, prn);
+		err = read_data_row(cur, tab, sheet, pass, readrow++, prn);
 		for (i=1; i<nr && !err; i++) {
 		    err = repeat_data_row(sheet, readrow++, prn);
 		}
@@ -817,7 +879,17 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
 	    tabrow += nr;
 	}
 	cur = cur->next;
-    } 
+    }
+
+    if (pass == 1 && (sheet->flags & BOOK_NON_NUMERIC)) {
+	err = ods_non_numeric_check(sheet, prn);
+	if (sheet->codelist != NULL) {
+	    tabrow = readrow = 0;
+	    cur = top;
+	    pass = 2;
+	    goto tryagain;
+	}
+    }
 
     gretl_pop_c_numeric_locale();
 
@@ -1214,6 +1286,15 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 
     if (!err) {
 	err = read_table_content(sheet, prn);
+    }
+
+    if (!err && sheet->st != NULL) {
+	err = gretl_string_table_validate(sheet->st);
+	if (err) {
+	    pputs(prn, A_("Failed to interpret the data as numeric\n"));
+	} else {
+	    gretl_string_table_print(sheet->st, sheet->dset, fname, prn);
+	}
     }
 
     if (!err) {
