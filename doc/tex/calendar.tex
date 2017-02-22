@@ -202,12 +202,12 @@ n = dayspan(ed1, ed2, 5)
 We discover that there were \texttt{n} = 522 weekdays in this period.
 
 Note that while ISO 8601 basic dates can be used for easy comparison
-(which of two dates, on a given calendar, refers to a later day?),
-one needs epoch days to carry out fully fledged ``dates arithmetic.''
-Epoch days are always consecutive by construction, but 8-digit
-basic dates are consecutive only within a given month; they advance by
-101 minus (days in previous month) at the start of each month and by
-8870 at the start of each year.
+(which of two dates, on a given calendar, refers to a later day?), one
+needs epoch days to carry out fully fledged ``dates arithmetic.''
+Epoch days are always consecutive by construction, but 8-digit basic
+dates are consecutive only within a given month; they advance by 101
+minus (days in previous month) at the start of each month other than
+January and by 8870 at the start of each year.
 
 \subsection{Miscellaneous functions}
 
