@@ -867,10 +867,7 @@ static void gui_record_data_opening (const char *fname,
     record_command_verbatim();
 
     if (*datafile != '\0') {
-	char tmp[FILENAME_MAX];
-
-	strcpy(tmp, datafile);
-	mkfilelist(FILE_LIST_DATA, tmp);
+	mkfilelist(FILE_LIST_DATA, datafile);
     }
 }
 

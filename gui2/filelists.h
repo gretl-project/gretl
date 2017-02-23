@@ -3,7 +3,7 @@
 
 #define MAXRECENT 6
 
-void mkfilelist (int filetype, char *newfile);
+void mkfilelist (int filetype, const char *fname);
 
 void init_fileptrs (void);
 

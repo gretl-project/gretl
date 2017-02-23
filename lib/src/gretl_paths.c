@@ -3664,10 +3664,10 @@ int gretl_normalize_path (char *path)
 	char dirname[FILENAME_MAX];
 
 	if (getcwd(dirname, FILENAME_MAX - 1) != NULL) {
-	    gchar *tmp = g_strdup(path);
-	    
-	    build_path(path, dirname, tmp, NULL);
-	    g_free(tmp);
+	    char *tmp2 = gretl_strdup(path);
+
+	    build_path(path, dirname, tmp2, NULL);
+	    free(tmp2);
 	}
     }
 

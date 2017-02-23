@@ -5020,11 +5020,7 @@ void edit_function_package (const char *fname)
 	delete_from_filelist(FILE_LIST_GFN, fname);
     } else {
 	/* record opening */
-	gchar *tmp = g_strdup(fname);
-
-	mkfilelist(FILE_LIST_GFN, tmp);
-	g_free(tmp);
-	
+	mkfilelist(FILE_LIST_GFN, fname);
 	/* and go for it */
 	finfo_dialog(finfo);
     }

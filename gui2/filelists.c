@@ -302,8 +302,9 @@ int fnamecmp (const char *f1, const char *f2)
 
 #endif
 
-void mkfilelist (int filetype, char *fname)
+void mkfilelist (int filetype, const char *fname)
 {
+    char fullname[FILENAME_MAX];
     char *tmp[MAXRECENT-1];
     char **filep;
     int i, pos = -1;
@@ -313,10 +314,12 @@ void mkfilelist (int filetype, char *fname)
 	    filetype, fname);
 #endif
 
-    gretl_normalize_path(fname);
+    *fullname = '\0';
+    strncat(fullname, fname, FILENAME_MAX-1);
+    gretl_normalize_path(fullname);
 
 #if FDEBUG
-    fprintf(stderr, "after normalize_path: '%s'\n", fname);
+    fprintf(stderr, "after normalize_path: '%s'\n", fullname);
 #endif
 
     filep = get_file_list(filetype);
@@ -326,7 +329,7 @@ void mkfilelist (int filetype, char *fname)
 
     /* see if this file is already on the list */
     for (i=0; i<MAXRECENT; i++) {
-        if (!fnamecmp(filep[i], fname)) {
+        if (!fnamecmp(filep[i], fullname)) {
             pos = i;
 #if FDEBUG
 	    fprintf(stderr, "file already on list at pos %d\n", i);
@@ -353,7 +356,7 @@ void mkfilelist (int filetype, char *fname)
 	/* look for an empty slot */
         for (i=1; i<MAXRECENT; i++) {
             if (filep[i][0] == '\0') {
-                strcpy(filep[i], fname);
+                strcpy(filep[i], fullname);
                 pos = i;
                 break;
 	    }
@@ -361,7 +364,7 @@ void mkfilelist (int filetype, char *fname)
 	if (pos == -1) {
 	    /* no empty slot available */
 	    pos = MAXRECENT - 1;
-	    strcpy(filep[pos], fname);
+	    strcpy(filep[pos], fullname);
 	}
     } 
 
