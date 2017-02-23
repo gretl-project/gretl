@@ -648,7 +648,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		pprintf(myprn, "(%d, %d)", row, col);
 	    }
 
-	    if (pass == 2 && row > xinfo->maxrow) {
+	    if (pass >= 2 && row > xinfo->maxrow) {
 		goto skipit;
 	    }
 
