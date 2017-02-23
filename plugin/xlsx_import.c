@@ -45,7 +45,7 @@
 #define DATE_DEBUG 0
 
 struct xlsx_info_ {
-    int flags;
+    BookFlag flags;
     int trydates;
     int maxrow;
     int maxcol;
@@ -443,7 +443,8 @@ static int xlsx_handle_stringval (xlsx_info *xinfo, int i, int t,
 
     if (i < 1 || i >= xinfo->dset->v ||
 	t < 0 || t >= xinfo->dset->n) {
-	fprintf(stderr, "error in xlsx_handle_stringval: i = %d, t = %d\n", i, t);
+	fprintf(stderr, "error in xlsx_handle_stringval: i=%d, t=%d, s='%s'\n",
+		i, t, s);
 	err = E_DATA;
     } else {
 	xinfo->dset->Z[i][t] = xit;
@@ -601,6 +602,12 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
     if (xinfo->codelist != NULL) {
 	pass = 3;
     } else if (xinfo->dset != NULL) {
+	/* if we never found anything in the (possibly notional)
+	   top-left cell, set the observations column number
+	*/
+	if (xinfo->flags & BOOK_TOP_LEFT_EMPTY) {
+	    xinfo->obscol = xinfo->xoffset + 1;
+	}
 	pass = 2;
     } else {
 	pass = 1;
@@ -1579,6 +1586,8 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
     if (save_errmsg != NULL) {
 	gretl_errmsg_set(save_errmsg);
 	free(save_errmsg);
+    } else if (err > 0) {
+	pputs(prn, "Error reading xlsx data\n");
     }
 
     return err;
