@@ -933,7 +933,7 @@ windata_t *display_function_package_data (const char *pkgname,
 	if (role == VIEW_PKG_INFO) {
 	    char *buf = gretl_print_steal_buffer(prn);
 	    int width = get_info_width(buf);
-	    
+
 	    vwin = view_formatted_text_buffer(title, buf, width, 350, role);
 	    free(buf);
 	    gretl_print_destroy(prn);

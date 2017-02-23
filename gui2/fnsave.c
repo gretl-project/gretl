@@ -4530,9 +4530,9 @@ static int maybe_write_aux_file (function_info *finfo,
 		s = strrchr(tmp, SLASH);
 		*(s + 1) = '\0';
 		strcat(tmp, auxname);
-		fp = gretl_fopen(tmp, "w");
+		fp = gretl_fopen(tmp, "wb"); /* 21017-02-22: was "w" */
 	    } else {
-		fp = gretl_fopen(auxname, "w");
+		fp = gretl_fopen(auxname, "wb"); /* 21017-02-22: was "w" */
 	    }
 	    
 	    if (fp != NULL) {
@@ -5032,7 +5032,7 @@ void edit_function_package (const char *fname)
 
 gboolean edit_specified_package (const char *fname)
 {
-    FILE *fp = gretl_fopen(fname, "r");
+    FILE *fp = gretl_fopen(fname, "rb"); /* 2017-02-22: was "r" */
     gboolean ret = FALSE;
     
     if (fp == NULL) {
@@ -5078,7 +5078,7 @@ void build_package_from_spec_file (windata_t *vwin)
     int resp, err = 0;
 
     switch_ext(inpname, vwin->fname, "inp");
-    err = gretl_test_fopen(inpname, "r");
+    err = gretl_test_fopen(inpname, "rb"); /* 2017-02-22: was "r" */
     if (err) {
 	gchar *msg = g_strdup_printf(_("Couldn't open %s"), inpname);
 	

@@ -2474,7 +2474,7 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
 
     trname = g_strdup_printf("%s-i18n.c", pkg->name);
 
-    fp = gretl_fopen(trname, "w");
+    fp = gretl_fopen(trname, "wb");
     if (fp == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
 	g_free(trname);
@@ -2534,7 +2534,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 
     idxname = g_strdup_printf("%s.xml", pkg->name);
 
-    fp = gretl_fopen(idxname, "w");
+    fp = gretl_fopen(idxname, "wb");
     if (fp == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't open %s"), idxname);
 	g_free(idxname);
@@ -2614,7 +2614,8 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     int i, err = 0;
 
     if (standalone) {
-	fp = gretl_fopen(pkg->fname, "w");
+	/* 2017-02-22: switch mode to "wb" to avoid CR+LF on Windows */
+	fp = gretl_fopen(pkg->fname, "wb");
 	if (fp == NULL) {
 	    gretl_errmsg_sprintf(_("Couldn't open %s"), pkg->fname);
 	    return E_FOPEN;
@@ -3325,7 +3326,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     }
 
     switch_ext(fname, gfnname, "spec");
-    fp = gretl_fopen(fname, "r");
+    fp = gretl_fopen(fname, "r"); /* "rb" ? */
 
     if (fp == NULL) {
 	*err = E_FOPEN;
@@ -3620,7 +3621,7 @@ int create_and_write_function_package (const char *fname,
 	FILE *fp;
 
 	switch_ext(gfnname, fname, "gfn");
-	fp = gretl_fopen(gfnname, "r");
+	fp = gretl_fopen(gfnname, "rb"); /* 2017-02-22: was "r" */
 	if (fp != NULL) {
 	    /* gfn is already made */
 	    build_gfn = 0;
@@ -4196,7 +4197,7 @@ int write_session_functions_file (const char *fname)
 	return 0;
     }
 
-    fp = gretl_fopen(fname, "w");
+    fp = gretl_fopen(fname, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
