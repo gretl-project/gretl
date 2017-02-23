@@ -55,6 +55,7 @@ enum {
 #define book_unset_time_series(b) ((b)->flags &= ~BOOK_TIME_SERIES)
 
 struct wbook_ {
+    BookFlag flags;
     int version;
     int nsheets;
     int selected;
@@ -64,7 +65,6 @@ struct wbook_ {
     guint32 *byte_offsets;
     void *colspin, *rowspin;
     int *xf_list;
-    BookFlag flags;
     int (*get_min_offset)();
     void *data;
 };
