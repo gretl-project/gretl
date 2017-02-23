@@ -6014,6 +6014,8 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 
 	if (scalar_node(n)) {
 	    i = node_get_int(n, p);
+	} else if (n->t == SERIES && f == F_VARNAME) {
+	    i = n->vnum;
 	} else {
 	    node_type_error(f, 0, NUM, n, p);
 	    return NULL;
@@ -13975,7 +13977,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_VARNAME:
-	if (l->t == NUM || l->t == MAT) {
+	if (l->t == NUM || l->t == MAT || l->t == SERIES) {
 	    ret = int_to_string_func(l, t->t, p);
 	} else if (l->t == LIST) {
 	    ret = list_to_string_func(l, t->t, p);

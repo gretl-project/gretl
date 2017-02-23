@@ -1495,7 +1495,7 @@ NODE *powterm (parser *p, NODE *l)
 
     if (t != NULL && next == '[') {
 	/* support func(args)[slice] */
-	t = newb2(MSL, t, NULL);
+	t = newb2(OSL, t, NULL);
 	if (t != NULL) {
 	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
 	    if (t->v.b2.r != NULL) {

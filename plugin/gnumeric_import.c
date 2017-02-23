@@ -225,7 +225,9 @@ static int node_get_vtype_and_content (xmlNodePtr p, int *vtype,
     if (tmp != NULL) {
 	*vtype = atoi(tmp);
 	free(tmp);
-	*content = (char *) xmlNodeGetContent(p);
+	if (content != NULL) {
+	    *content = (char *) xmlNodeGetContent(p);
+	}
     } else { 
 	err = E_DATA;
     }
@@ -263,9 +265,10 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
 				     int *obscol)
 {
     xmlNodePtr p = node->xmlChildrenNode;
-    int topleft_found = 0;
     char *tmp;
-    int err = 0;
+    int topleft_found = 0;
+    int c1strings = 0;
+    int vtype, err = 0;
 
     sheet->maxrow = 0;
     sheet->maxcol = 0;
@@ -293,13 +296,19 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet,
 	    if (i == sheet->row_offset && j == sheet->col_offset) {
 		topleft_found = 1;
 		err = inspect_top_left(p, obscol);
+	    } else if (j == sheet->col_offset) {
+		/* regular first-column cell: obs string? */
+		err = node_get_vtype_and_content(p, &vtype, NULL);
+		if (!err && vtype == VALUE_STRING) {
+		    c1strings++;
+		}
 	    }
 	}
 	p = p->next;
     }
 
     if (!err) {
-	if (!topleft_found) {
+	if (*obscol == 0 && !topleft_found) {
 	    /* no top-left cell at all: sign of observations column? */
 	    *obscol = 1;
 	}
