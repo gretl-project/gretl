@@ -593,7 +593,7 @@ static const char *DF_test_string (int i)
 	N_("test without constant"),
 	N_("test with constant"),
 	N_("with constant and trend"),
-	N_("with constant and quadratic trend")
+	N_("with constant, linear and quadratic trend")
     };
 
     if (i >= 0 && i < 4) {
