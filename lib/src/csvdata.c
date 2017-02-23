@@ -630,26 +630,24 @@ static int check_daily_dates (DATASET *dset, int *pd,
     *pd = 0;
     
     ed1 = get_epoch_day(lbl1);
-    if (ed1 <= 0) {
+    ed2 = get_epoch_day(lbl2);
+    if (ed1 <= 0 || ed2 <= 0) {
 	err = 1;
     }
 
 #if DAY_DEBUG    
-    fprintf(stderr, "S[0] = '%s', ed1 = %d\n", lbl1, ed1);
+    fprintf(stderr, "S[0] = '%s', ed1=%d, ed2=%d\n", lbl1, ed1, ed2);
 #endif
 
     dset->pd = guess_daily_pd(dset);
     dset->structure = TIME_SERIES;
 
 #if DAY_DEBUG    
-    fprintf(stderr, "guessed daily pd = %d\n", dset->pd);
+    fprintf(stderr, "guessed at daily pd = %d\n", dset->pd);
 #endif
 
     if (!err) {
-	ed2 = get_epoch_day(lbl2);
-	if (ed2 <= 0) {
-	    err = 1;
-	} else if (ed2 < ed1) {
+	if (ed2 < ed1) {
 #if DAY_DEBUG    
 	    fprintf(stderr, "check_daily_dates: data are reversed?\n");
 #endif
@@ -666,8 +664,8 @@ static int check_daily_dates (DATASET *dset, int *pd,
     nbak = 0;
 
     if (!err) {
-	int n1 = calendar_obs_number((*reversed)? lbl2 : lbl1, dset);
-	int n2 = calendar_obs_number((*reversed)? lbl1 : lbl2, dset);
+	guint32 n1 = (*reversed)? ed2 : ed1;
+	guint32 n2 = (*reversed)? ed1 : ed2;
 
 	fulln = n2 - n1 + 1;
 
@@ -720,7 +718,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
 	if (n < t) {
 	    pprintf(prn, "Daily dates error at t = %d:\n"
 		    "  calendar_obs_number() for '%s' = %d but t = %d\n", 
-		    t, dset->S[t], n, t);
+		    t, dset->S[s], n, t);
 	    err = 1;
 	} else if (n > fulln - 1) {
 	    pprintf(prn, "Error: date '%s' out of bounds\n", dset->S[s]);

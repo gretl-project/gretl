@@ -113,11 +113,9 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
     return err;
 }
 
-#if 0 /* may want to reinstate? */
-
 static void check_for_date_format (wsheet *sheet, const char *fmt)
 {
-#if 0
+#if 1
     fprintf(stderr, "check_for_date_format: fmt = '%s'\n", fmt);
 #endif
 
@@ -127,8 +125,6 @@ static void check_for_date_format (wsheet *sheet, const char *fmt)
 	book_set_numeric_dates(sheet);
     }
 }
-
-#endif
 
 static int node_get_vtype_and_content (xmlNodePtr p, int *vtype,
 				       char **content)
@@ -273,7 +269,7 @@ static int cell_get_data2 (wsheet *sheet,
 {
     int err = 0;
 
-    if (sheet->dset->Z[i][t] == NON_NUMERIC) {
+    if (i > 0 && t > 0 && sheet->dset->Z[i][t] == NON_NUMERIC) {
 	int ix = gretl_string_table_index(sheet->st, s, i, 0, prn);
 
 	if (ix > 0) {
@@ -402,6 +398,14 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 		; /* obs labels heading, ignore */
 	    } else if (pass == 1 && i == 0 && have_labels) {
 		/* should be obs label */
+		if (VTYPE_IS_NUMERIC(vtype) && real_t == 0) {
+		    char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
+
+		    if (fmt != NULL) {
+			check_for_date_format(sheet, fmt);
+			free(fmt);
+		    }
+		}
 		if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 		    gretl_utf8_strncat_trim(sheet->dset->S[real_t], tmp, OBSLEN - 1);
 		}
@@ -421,7 +425,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 		if (!err) {
 		    sheet->dset->Z[real_i][real_t] = x;
 		}
-	    } else {
+	    } else if (in_gretl_list(sheet->codelist, real_i)) {
 		/* second pass for strings */
 		err = cell_get_data2(sheet, real_i, real_t, tmp, prn);
 	    }

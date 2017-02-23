@@ -731,8 +731,10 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		   with a dataset allocated */
 
 		if (pass == 3) {
-		    if (stringcell && in_gretl_list(xinfo->codelist, i)) {
-			xlsx_handle_stringval3(xinfo, i, t, strval, prn);
+		    if (i > 0 && t > 0) {
+			if (stringcell && in_gretl_list(xinfo->codelist, i)) {
+			    xlsx_handle_stringval3(xinfo, i, t, strval, prn);
+			}
 		    }
 		} else if (stringcell) {
 		    if (row == xinfo->namerow) {

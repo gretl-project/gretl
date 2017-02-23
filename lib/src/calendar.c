@@ -371,12 +371,21 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
     guint32 ed0 = (guint32) dset->sd0;
     guint32 t = get_epoch_day(datestr);
 
+#ifdef CAL_DEBUG
+    fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %u\n",
+	    datestr, t);
+#endif
+
     if (t <= 0) {
 	return -1;
     }
 
     /* subtract starting day for dataset */
     t -= ed0;
+
+    if (t <= 0) {
+	return (int) t;
+    }
 
     if (dset->pd == 52) {
 	/* weekly data */
