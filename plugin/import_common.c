@@ -125,7 +125,7 @@ static void import_ts_check (DATASET *dset)
     } 
 
 #if ODEBUG
-    fprintf(stderr, "xinfo->dset->pd = %d\n", xinfo->dset->pd);
+    fprintf(stderr, "dset->pd = %d\n", dset->pd);
 #endif
 
     if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
