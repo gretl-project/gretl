@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS
@@ -33,7 +33,7 @@
 /* from gnumeric's value.h */
 typedef enum {
     VALUE_EMPTY     = 10,
-    VALUE_BOOLEAN   = 20, 
+    VALUE_BOOLEAN   = 20,
     VALUE_INTEGER   = 30,
     VALUE_FLOAT     = 40,
     VALUE_ERROR     = 50,
@@ -42,6 +42,7 @@ typedef enum {
     VALUE_ARRAY     = 80
 } ValueType;
 
+#define GNUMERIC_IMPORTER
 #include "import_common.c"
 
 typedef struct wsheet_ wsheet;
@@ -55,9 +56,9 @@ struct wsheet_ {
     int colheads;
     int ID;
     char *name;
-    double **Z;
-    char **varname;
-    char **label;
+    DATASET *dset;
+    int *codelist;
+    gretl_string_table *st;
 };
 
 static void wsheet_init (wsheet *sheet)
@@ -69,81 +70,20 @@ static void wsheet_init (wsheet *sheet)
     sheet->colheads = 0;
     sheet->ID = 0;
     sheet->name = NULL;
-    sheet->Z = NULL;
-    sheet->varname = NULL;
-    sheet->label = NULL;
+    sheet->dset = NULL;
+    sheet->codelist = NULL;
+    sheet->st = NULL;
 }
 
 static void wsheet_free (wsheet *sheet)
 {
-    int rows = sheet->maxrow + 1 - sheet->row_offset;
-    int cols = sheet->maxcol + 1 - sheet->col_offset;
-    int i;
-
-    for (i=0; i<cols; i++) {
-	if (sheet->varname != NULL) {
-	    free(sheet->varname[i]);
-	}
-	if (sheet->Z != NULL) {
-	    free(sheet->Z[i]);
-	}
-    }
-
-    free(sheet->varname);
-    free(sheet->Z);
-
-    if (sheet->label != NULL) { 
-	for (i=0; i<rows; i++) {
-	    free(sheet->label[i]);
-	}
-	free(sheet->label);
-    }
-
+    destroy_dataset(sheet->dset);
     free(sheet->name);
-
-    wsheet_init(sheet);
-}
-
-static void wsheet_print_info (wsheet *sheet)
-{
-    int cols = sheet->maxcol + 1 - sheet->col_offset;
-    int i;
-#if IDEBUG
-    int rows = sheet->maxrow + 1 - sheet->row_offset;
-    int t;
-#endif
-
-    fputs("*** wsheet info after reading cells ***\n", stderr);
-    fprintf(stderr, " maxcol = %d\n", sheet->maxcol);
-    fprintf(stderr, " maxrow = %d\n", sheet->maxrow);
-    fprintf(stderr, " text_cols = %d\n", sheet->text_cols);
-    fprintf(stderr, " col_offset = %d\n", sheet->col_offset);
-    fprintf(stderr, " row_offset = %d\n", sheet->row_offset);
-    fputs(" varnames?\n", stderr);
-
-    for (i=0; i<cols; i++) {
-	fprintf(stderr, "  %d: '%s'\n", i, sheet->varname[i]);
-    }	
-
-#if IDEBUG
-    fputs(" observations?\n", stderr);
-    for (t=0; t<rows; t++) {
-	fprintf(stderr, "  %d: ", t);
-	if (sheet->text_cols) {
-	    fprintf(stderr, "label='%s', ", sheet->label[t]);
-	}
-	for (i=0; i<cols; i++) {
-	    if (na(sheet->Z[i][t])) {
-		fprintf(stderr, "NA%c", (i == cols - 1)? '\n' : ' ');
-	    } else {
-		fprintf(stderr, "%g%c", sheet->Z[i][t],
-			(i == cols - 1)? '\n' : ' ');
-	    }
-	}
+    free(sheet->codelist);
+    if (sheet->st != NULL) {
+	gretl_string_table_destroy(sheet->st);
     }
-#endif
-
-    fputs("*** end wsheet info ***\n", stderr);
+    wsheet_init(sheet);
 }
 
 #define VTYPE_IS_NUMERIC(v) ((v) == VALUE_BOOLEAN || \
@@ -152,36 +92,28 @@ static void wsheet_print_info (wsheet *sheet)
 
 static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 {
-    int i, t;
+    int labels = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
+    int nvars = cols + 1 - labels;
+    int nobs = rows - sheet->colheads;
+    int err = 0;
 
-#if 1
-    fprintf(stderr, "wsheet_allocate: allocating %d variables, each %d obs\n",
-	    cols, rows);
-#endif
+    sheet->dset = create_new_dataset(nvars, nobs, labels);
 
-    sheet->Z = doubles_array_new(cols, rows);
-    if (sheet->Z == NULL) {
-	return 1;
-    }
+    if (sheet->dset == NULL) {
+	err = E_ALLOC;
+    } else if (!sheet->colheads) {
+	/* write fallback variable names */
+	int i;
 
-    for (i=0; i<cols; i++) {
-	for (t=0; t<rows; t++) {
-	    sheet->Z[i][t] = NADBL;
+	for (i=1; i<nvars; i++) {
+	    sprintf(sheet->dset->varname[i], "v%d", i);
 	}
     }
 
-    sheet->varname = strings_array_new_with_length(cols, VNAMELEN);
-    if (sheet->varname == NULL) {
-	return 1;
-    }
-
-    sheet->label = strings_array_new_with_length(rows, VNAMELEN);
-    if (sheet->label == NULL) {
-	return 1;
-    }
-
-    return 0;
+    return err;
 }
+
+#if 0 /* may want to reinstate? */
 
 static void check_for_date_format (wsheet *sheet, const char *fmt)
 {
@@ -189,30 +121,14 @@ static void check_for_date_format (wsheet *sheet, const char *fmt)
     fprintf(stderr, "check_for_date_format: fmt = '%s'\n", fmt);
 #endif
 
-    if (strchr(fmt, '/') || 
-	(strstr(fmt, "mm") && !(strchr(fmt, ':'))) || 
+    if (strchr(fmt, '/') ||
+	(strstr(fmt, "mm") && !(strchr(fmt, ':'))) ||
 	strstr(fmt, "yy")) {
 	book_set_numeric_dates(sheet);
     }
 }
 
-static int stray_numeric (int vtype, char *tmp, double *x)
-{
-    if (vtype == VALUE_STRING) {
-	if (string_is_blank(tmp)) {
-	    *x = NADBL;
-	    return 1;
-	} else if (import_na_string(tmp)) {
-	    *x = NADBL;
-	    return 1;
-	} else if (numeric_string(tmp)) {
-	    *x = atof(tmp);
-	    return 1;
-	}
-    }
-
-    return 0;
-}
+#endif
 
 static int node_get_vtype_and_content (xmlNodePtr p, int *vtype,
 				       char **content)
@@ -228,7 +144,7 @@ static int node_get_vtype_and_content (xmlNodePtr p, int *vtype,
 	if (content != NULL) {
 	    *content = (char *) xmlNodeGetContent(p);
 	}
-    } else { 
+    } else {
 	err = E_DATA;
     }
 
@@ -251,7 +167,7 @@ static int inspect_top_left (xmlNodePtr p, wsheet *sheet)
 	    }
 	}
     }
-	
+
     free(content);
 
     return err;
@@ -334,6 +250,67 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet)
     return err;
 }
 
+static int gnumeric_non_numeric_check (wsheet *sheet, PRN *prn)
+{
+    gretl_string_table *st = NULL;
+    int *nlist = NULL;
+    int err = 0;
+
+    err = non_numeric_check(sheet->dset, &nlist, &st, prn);
+
+    if (!err) {
+	sheet->codelist = nlist;
+	sheet->st = st;
+    }
+
+    return err;
+}
+
+static int cell_get_data2 (wsheet *sheet,
+			   int i, int t,
+			   const char *s,
+			   PRN *prn)
+{
+    int err = 0;
+
+    if (sheet->dset->Z[i][t] == NON_NUMERIC) {
+	int ix = gretl_string_table_index(sheet->st, s, i, 0, prn);
+
+	if (ix > 0) {
+	    sheet->dset->Z[i][t] = (double) ix;
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
+static double cell_get_data (int vtype, const char *s,
+			     int *any_nonnum, int *err)
+{
+    double x = NADBL;
+
+    if (VTYPE_IS_NUMERIC(vtype)) {
+	x = atof(s);
+    } else if (vtype == VALUE_STRING) {
+	if (string_is_blank(s)) {
+	    ; /* OK, NA */
+	} else if (import_na_string(s)) {
+	    ; /* OK, NA */
+	} else if (numeric_string(s)) {
+	    x = atof(s);
+	} else {
+	    *any_nonnum = 1;
+	    x = NON_NUMERIC;
+	}
+    } else if (vtype != VALUE_EMPTY) {
+	*err = E_DATA;
+    }
+
+    return x;
+}
+
 /* Note that below we're being agnostic regarding the presence/absence
    of observation labels in the first column. We're writing first
    column values into sheet->labels if they're of string type and
@@ -341,16 +318,18 @@ static int wsheet_get_real_size_etc (xmlNodePtr node, wsheet *sheet)
    we can decide what to do with the first column and the labels.
 */
 
-static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, 
+static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 			       PRN *prn)
 {
-    xmlNodePtr p = node->xmlChildrenNode;
+    xmlNodePtr p, top = node->xmlChildrenNode;
     char *tmp;
-    double x;
     int vtype = 0;
+    int any_nonnum = 0;
     int have_labels;
     int cols, rows;
     int i, t, r, c;
+    int ioffset;
+    int pass = 1;
     int err = 0;
 
     cols = sheet->maxcol + 1 - sheet->col_offset;
@@ -360,21 +339,27 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 	pputs(prn, _("Starting row is out of bounds.\n"));
 	return 1;
     }
-    
+
     if (cols < 1) {
 	pputs(prn, _("Starting column is out of bounds.\n"));
 	return 1;
-    }	
+    }
 
     if (wsheet_allocate(sheet, cols, rows)) {
 	return 1;
     }
 
     have_labels = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
+    ioffset = (have_labels == 0)? 1 : 0;
+
+ tryagain:
+
+    p = top;
 
     while (p != NULL && !err) {
 	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
-	    x = NADBL;
+	    int real_i, real_t;
+
 	    c = r = 0;
 	    i = t = -1;
 
@@ -410,59 +395,55 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 		break;
 	    }
 
-	    if (tmp != NULL) {
+	    real_i = i + ioffset;
+	    real_t = t - sheet->colheads;
+
+	    if (i == 0 && t == 0 && have_labels) {
+		; /* obs labels heading, ignore */
+	    } else if (pass == 1 && i == 0 && have_labels) {
+		/* should be obs label */
 		if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
-		    if (i == 0) {
-			/* first column: write content to labels */
-			gretl_utf8_strncat_trim(sheet->label[t], tmp, OBSLEN - 1);
-		    }
+		    gretl_utf8_strncat_trim(sheet->dset->S[real_t], tmp, OBSLEN - 1);
 		}
-
-		if (i == 0 && t == 1 && VTYPE_IS_NUMERIC(vtype)) {
-		    char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
-
-		    if (fmt) {
-			check_for_date_format(sheet, fmt);
-			free(fmt);
-		    }
+	    } else if (pass == 1 && t == 0 && sheet->colheads) {
+		/* should be varname */
+		if (vtype == VALUE_STRING) {
+		    strncat(sheet->dset->varname[real_i], tmp, VNAMELEN - 1);
+		    err = check_imported_varname(sheet->dset->varname[i],
+						 i, r, c, prn);
+		} else {
+		    err = E_DATA;
 		}
+	    } else if (pass == 1) {
+		/* should be actual data */
+		double x = cell_get_data(vtype, tmp, &any_nonnum, &err);
 
-		if (VTYPE_IS_NUMERIC(vtype)) {
-		    x = atof(tmp);
-		    sheet->Z[i][t] = x;
-		} else if (i > 0 && stray_numeric(vtype, tmp, &x)) {
-		    sheet->Z[i][t] = x;
-		} else if (vtype == VALUE_STRING) {
-		    if (t == 0) {
-			/* first row: look for varnames */
-			strncat(sheet->varname[i], tmp, VNAMELEN - 1);
-			if (i == 0 && have_labels) {
-			    ; /* keep going */
-			} else {
-			    err = check_imported_varname(sheet->varname[i],
-							 i, r, c, prn);
-			}
-		    } else if (i == 0 && have_labels) {
-			/* first column, not first row */
-			sheet->text_cols = 1;
-		    } else {
-			pprintf(prn, _("Expected numeric data, found string:\n"
-				       "'%s' at row %d, column %d\n"), 
-				tmp, r+1, c+1);
-			err = 1;
-		    }
+		if (!err) {
+		    sheet->dset->Z[real_i][real_t] = x;
 		}
-		free(tmp);
+	    } else {
+		/* second pass for strings */
+		err = cell_get_data2(sheet, real_i, real_t, tmp, prn);
 	    }
+
+	    free(tmp);
 	}
 	p = p->next;
+    }
+
+    if (pass == 1 && !err && any_nonnum) {
+	pass = 2;
+	err = gnumeric_non_numeric_check(sheet, prn);
+	if (!err && sheet->st != NULL) {
+	    goto tryagain;
+	}
     }
 
     return err;
 }
 
-static int wsheet_get_data (const char *fname, wsheet *sheet, 
-			    PRN *prn) 
+static int wsheet_get_data (const char *fname, wsheet *sheet,
+			    PRN *prn)
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -545,8 +526,8 @@ static int wbook_record_name (char *name, wbook *book)
 }
 
 static int wbook_get_info (const char *fname, const int *list,
-			   char *sheetname, wbook *book, 
-			   PRN *prn) 
+			   char *sheetname, wbook *book,
+			   PRN *prn)
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -554,7 +535,7 @@ static int wbook_get_info (const char *fname, const int *list,
     int got_index = 0;
     int err = 0;
 
-    err = gretl_xml_open_doc_root(fname, "Workbook", 
+    err = gretl_xml_open_doc_root(fname, "Workbook",
 				  &doc, &cur);
     if (err) {
 	return err;
@@ -601,72 +582,34 @@ static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 	sheet->ID = n;
 	sheet->col_offset = book->col_offset;
 	sheet->row_offset = book->row_offset;
-    }   
-    
+    }
+
     return err;
 }
 
-static int wsheet_labels_complete (wsheet *sheet)
+static int finalize_gnumeric_import (DATASET *dset,
+				     wsheet *sheet,
+				     const char *fname,
+				     gretlopt opt,
+				     PRN *prn)
 {
-    int rmin = (sheet->colheads)? 1 : 0;
-    int rmax = sheet->maxrow + 1 - sheet->row_offset;
-    int i, ret = 1;
-    
-    for (i=rmin; i<rmax; i++) {
-	if (sheet->label[i][0] == '\0') {
-	    ret = 0;
-	    break;
-	}
+    int err = import_prune_columns(sheet->dset);
+    int merge = (dset->Z != NULL);
+
+    if (!err && sheet->dset->S != NULL) {
+	import_ts_check(sheet->dset);
     }
 
-    return ret;
-}
-
-static void 
-sheet_time_series_setup (wsheet *sheet, wbook *book, DATASET *newinfo, int pd)
-{
-    newinfo->pd = pd;
-    newinfo->structure = TIME_SERIES;
-
-    fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
-    newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
-    fprintf(stderr, "sd0=%g\n", newinfo->sd0);
-
-    sheet->text_cols = 1;
-    book_set_time_series(book);
-    book_unset_obs_labels(book);
-}
-
-/* check that a given column doesn't contain all NAs */
-
-static int column_is_blank (wsheet *sheet, int k, int n)
-{
-    int t, s = (sheet->colheads)? 1 : 0;
-
-    for (t=0; t<n; t++) {
-	if (!na(sheet->Z[k][s++])) {
-	    return 0;
-	}
+    if (!err) {
+	err = merge_or_replace_data(dset, &sheet->dset,
+				    opt, prn);
     }
 
-    return 1;
-}
+    if (!err && !merge) {
+	dataset_add_import_info(dset, fname, GRETL_GNUMERIC);
+    }
 
-static int labels_are_index (char **S, int n)
-{
-    int t;
-
-    /* note: the first label will be blank or "obs" or similar */
-
-    for (t=1; t<=n; t++) {
-	if (!integer_string(S[t])) {
-	    return 0;
-	} else if (atoi(S[t]) != t) {
-	    return 0;
-	}
-    }  
-
-    return 1;
+    return err;
 }
 
 int gnumeric_get_data (const char *fname, int *list, char *sheetname,
@@ -678,14 +621,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     wsheet gsheet;
     wsheet *sheet = &gsheet;
     int sheetnum = -1;
-    DATASET *newset;
     int err = 0;
-
-    newset = datainfo_new();
-    if (newset == NULL) {
-	pputs(prn, _("Out of memory\n"));
-	return 1;
-    }
 
     wsheet_init(sheet);
 
@@ -695,7 +631,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
 	goto getout;
-    } 
+    }
 
     wbook_print_info(book);
 
@@ -737,162 +673,22 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    if (err) {
 		fprintf(stderr, "wsheet_get_data returned %d\n", err);
 	    } else {
-		wsheet_print_info(sheet);
 		book->flags |= sheet->flags;
-	    } 
+	    }
 	}
     }
 
-    if (err) {
-	goto getout;
-    } else {
-	int r0 = 1; /* the first data row */
-	int i, j, t;
-	int ts_markers = 0;
-	int merge = (dset->Z != NULL);
-	char **ts_S = NULL;
-	int blank_cols = 0;
-	int missvals = 0;
-	int pd = 0;
-
-	if (sheet->flags & BOOK_OBS_LABELS) {
-	    book_set_obs_labels(book);
-	    if (sheet->text_cols == 0) {
-		sheet->text_cols = 1;
-	    }
-	} else if (sheet->text_cols > 0) {
-	    /* string-valued variable? */
-	    fprintf(stderr, "Problem: sheet->text_cols = %d\n", sheet->text_cols);
-	}
-
-	if (sheet->colheads == 0) {
-	    book_set_auto_varnames(book);
-	    r0 = 0;
-	}
-
-	if (book_numeric_dates(book)) {
-	    fputs("found calendar dates in first imported column\n", stderr);
-	} else if (book_obs_labels(book)) {
-	    fprintf(stderr, "found label strings in first imported column (text_cols = %d)\n",
-		    sheet->text_cols);
-	} else if (sheet->text_cols > 0) {
-	    fputs("found string-valued variable in first imported column?\n", stderr);
-	} else {
-	    fputs("check for label strings in first imported column: not found\n", stderr);
-	}
-
-	newset->n = sheet->maxrow - sheet->row_offset;
-
-	if (!sheet->colheads) {
-	    pputs(prn, _("it seems there are no variable names\n"));
-	    newset->n += 1;
-	}
-
-	if (book_numeric_dates(book) || book_obs_labels(book)) {
-	    pd = importer_dates_check(sheet->label + r0, &book->flags,
-				      newset, prn, &err);
-	    if (pd > 0) {
-		/* got time-series info from dates/labels */
-		sheet_time_series_setup(sheet, book, newset, pd);
-		ts_markers = newset->markers;
-		ts_S = newset->S;
-	    } else if (!book_numeric_dates(book)) {
-		if (labels_are_index(sheet->label, newset->n)) {
-		    /* trash the labels */
-		    book_unset_obs_labels(book);
-		}
-	    }
-	}
-
-	newset->v = sheet->maxcol + 2 - sheet->col_offset - sheet->text_cols;
-	fprintf(stderr, "newset->v = %d, newset->n = %d\n",
-		newset->v, newset->n);
-
-	/* create import dataset */
-	err = worksheet_start_dataset(newset);
+    if (!err && sheet->st != NULL) {
+	err = gretl_string_table_validate(sheet->st);
 	if (err) {
-	    goto getout;
-	}
-
-	if (book_time_series(book)) {
-	    newset->markers = ts_markers;
-	    newset->S = ts_S;
+	    pputs(prn, A_("Failed to interpret the data as numeric\n"));
 	} else {
-	    dataset_obs_info_default(newset);
-	} 
-
-	j = 1;
-	for (i=1; i<newset->v; i++) {
-	    int s = (sheet->colheads)? 1 : 0;
-	    int k = i - 1 + sheet->text_cols;
-	    double zkt;
-
-	    if (column_is_blank(sheet, k, newset->n)) {
-		blank_cols++;
-		continue;
-	    } 
-
-	    if (sheet->colheads && *sheet->varname[k] != '\0') {
-		strcpy(newset->varname[j], sheet->varname[k]);
-	    } else {
-		sprintf(newset->varname[j], "v%d", j);
-	    }
-	    for (t=0; t<newset->n; t++) {
-		zkt = sheet->Z[k][s++];
-		if (zkt == -999 || zkt == -9999) {
-		    newset->Z[j][t] = NADBL;
-		} else {
-		    newset->Z[j][t] = zkt;
-		}
-		if (na(newset->Z[j][t])) {
-		    missvals = 1;
-		}
-	    }
-	    j++;
+	    gretl_string_table_print(sheet->st, sheet->dset, fname, prn);
 	}
+    }
 
-	if (blank_cols > 0) {
-	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
-		    blank_cols);
-	    dataset_drop_last_variables(newset, blank_cols);
-	}
-
-	if (missvals) {
-	    pputs(prn, _("Warning: there were missing values\n"));
-	}
-
-	if (fix_varname_duplicates(newset)) {
-	    pputs(prn, _("warning: some variable names were duplicated\n"));
-	}
-
-	if (book_obs_labels(book) && wsheet_labels_complete(sheet)) {
-	    int offset = (sheet->colheads)? 1 : 0;
-
-	    dataset_allocate_obs_markers(newset);
-	    if (newset->S != NULL) {
-		for (t=0; t<newset->n; t++) {
-		    strcpy(newset->S[t], sheet->label[t+offset]);
-		}
-	    }
-	}
-
-	if (book->flags & BOOK_DATA_REVERSED) {
-	    reverse_data(newset, prn);
-	}
-
-	if (!err && !dataset_is_time_series(newset) && newset->S != NULL) {
-	    /* we didn't get time series info above, but it's possible
-	       the observation strings carry such info
-	    */
-	    import_ts_check(newset);
-	}
-
-	err = merge_or_replace_data(dset, &newset, opt, prn);
-
-	if (!err && !merge) {
-	    dataset_add_import_info(dset, fname, GRETL_GNUMERIC);
-	}
-
+    if (!err) {
+	err = finalize_gnumeric_import(dset, sheet, fname, opt, prn);
 	if (!err && gui) {
 	    wbook_record_params(book, list);
 	}
@@ -904,10 +700,6 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     wsheet_free(sheet);
 
     gretl_pop_c_numeric_locale();
-
-    if (err && newset != NULL) {
-	destroy_dataset(newset);
-    }
 
     return err;
 }

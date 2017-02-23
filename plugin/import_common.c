@@ -137,6 +137,38 @@ static void import_ts_check (DATASET *dset)
 
 #endif /* !EXCEL_IMPORTER */
 
+#if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER) || defined(GNUMERIC_IMPORTER)
+
+/* check for spurious empty columns at the right of the sheet */
+
+static int import_prune_columns (DATASET *dset)
+{
+    int allmiss = 1, ndel = 0;
+    int i, t, err = 0;
+
+    for (i=dset->v-1; i>0 && allmiss; i--) {
+	for (t=0; t<dset->n; t++) {
+	    if (!na(dset->Z[i][t])) {
+		allmiss = 0;
+		break;
+	    }
+	}
+	if (allmiss) ndel++;
+    }
+
+    if (ndel == dset->v - 1) {
+	gretl_errmsg_set(_("No numeric data were found"));
+	err = E_DATA;
+    } else if (ndel > 0) {
+	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
+	err = dataset_drop_last_variables(dset, ndel);
+    }
+
+    return err;
+}
+
+#endif
+
 #if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER)
 
 /* we want this for unzipping purposes */
@@ -285,35 +317,9 @@ static int open_import_zipfile (const char *fname, char *dname,
     return err;
 }
 
-/* check for spurious empty columns at the right of the sheet */
-
-static int import_prune_columns (DATASET *dset)
-{
-    int allmiss = 1, ndel = 0;
-    int i, t, err = 0;
-
-    for (i=dset->v-1; i>0 && allmiss; i--) {
-	for (t=0; t<dset->n; t++) {
-	    if (!na(dset->Z[i][t])) {
-		allmiss = 0;
-		break;
-	    }
-	}
-	if (allmiss) ndel++;
-    }
-
-    if (ndel == dset->v - 1) {
-	gretl_errmsg_set(_("No numeric data were found"));
-	err = E_DATA;
-    } else if (ndel > 0) {
-	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
-	err = dataset_drop_last_variables(dset, ndel);
-    }
-
-    return err;
-}
-
 #else /* !ODS, !XLSX */
+
+# ifndef GNUMERIC_IMPORTER
 
 static int worksheet_start_dataset (DATASET *newinfo)
 {
@@ -380,6 +386,8 @@ importer_dates_check (char **labels, BookFlag *pflags,
 
     return ret;
 }
+
+# endif /* !gnumeric */
 
 static void wbook_print_info (wbook *book) 
 {
