@@ -446,6 +446,8 @@ void plugins_cleanup (void)
 {
     int i, n = sizeof(plugins) / sizeof(plugins[0]);
 
+    /* note: plugins[0] is a dummy entry */
+
     for (i=1; i<n; i++) {
 	if (plugins[i].handle != NULL) {
 	    close_plugin(plugins[i].handle);

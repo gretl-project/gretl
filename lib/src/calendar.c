@@ -376,15 +376,17 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	    datestr, t);
 #endif
 
-    if (t <= 0) {
+    if (t <= 0 || t < ed0) {
 	return -1;
+    } else if (t == ed0) {
+	return 0;
     }
 
     /* subtract starting day for dataset */
     t -= ed0;
 
     if (t <= 0) {
-	return (int) t;
+	return -1;
     }
 
     if (dset->pd == 52) {

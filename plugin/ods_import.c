@@ -613,11 +613,11 @@ static int real_read_cell (xmlNodePtr cur,
 #if ODEBUG	    
 	    fprintf(stderr, " string: NA?\n");
 #endif	    
-	    free(val);
 	} else if (val != NULL && *val != '\0') {
 	    x = NON_NUMERIC;
 	    sheet->flags |= BOOK_NON_NUMERIC;
 	}
+	free(val);
     } else {
 	fprintf(stderr, " vtype = %d??\n", vtype); 
 	err = E_DATA;
