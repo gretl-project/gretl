@@ -50,7 +50,6 @@ typedef struct wsheet_ wsheet;
 struct wsheet_ {
     BookFlag flags;
     int maxcol, maxrow;
-    int text_cols;
     int col_offset;
     int row_offset;
     int colheads;
@@ -66,7 +65,6 @@ static void wsheet_init (wsheet *sheet)
     sheet->flags = 0;
     sheet->col_offset = sheet->row_offset = 0;
     sheet->maxcol = sheet->maxrow = 0;
-    sheet->text_cols = 0;
     sheet->colheads = 0;
     sheet->ID = 0;
     sheet->name = NULL;
@@ -111,19 +109,6 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
     }
 
     return err;
-}
-
-static void check_for_date_format (wsheet *sheet, const char *fmt)
-{
-#if 1
-    fprintf(stderr, "check_for_date_format: fmt = '%s'\n", fmt);
-#endif
-
-    if (strchr(fmt, '/') ||
-	(strstr(fmt, "mm") && !(strchr(fmt, ':'))) ||
-	strstr(fmt, "yy")) {
-	book_set_numeric_dates(sheet);
-    }
 }
 
 static int node_get_vtype_and_content (xmlNodePtr p, int *vtype,
@@ -307,6 +292,46 @@ static double cell_get_data (int vtype, const char *s,
     return x;
 }
 
+static int gnumeric_set_obs_label (wsheet *sheet, int real_t,
+				   xmlNodePtr p, int vtype,
+				   const char *s)
+{
+    int err = 0;
+
+    if (VTYPE_IS_NUMERIC(vtype)) {
+	char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
+	int done = 0;
+
+	/* can we read the numeric value as a Microsoft-style
+	   date? */
+
+	if (fmt != NULL) {
+	    if (strchr(fmt, '/') ||
+		(strstr(fmt, "mm") && !(strchr(fmt, ':'))) ||
+		strstr(fmt, "yy")) {
+		char targ[12];
+		int mst = atoi(s);
+
+		MS_excel_date_string(targ, mst, 0, 0);
+		strcpy(sheet->dset->S[real_t], targ);
+		done = 1;
+	    }
+	    free(fmt);
+	}
+	if (done) {
+	    return 0;
+	}
+    }
+
+    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
+	gretl_utf8_strncat_trim(sheet->dset->S[real_t], s, OBSLEN - 1);
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 /* Note that below we're being agnostic regarding the presence/absence
    of observation labels in the first column. We're writing first
    column values into sheet->labels if they're of string type and
@@ -398,17 +423,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 		; /* obs labels heading, ignore */
 	    } else if (pass == 1 && i == 0 && have_labels) {
 		/* should be obs label */
-		if (VTYPE_IS_NUMERIC(vtype) && real_t == 0) {
-		    char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
-
-		    if (fmt != NULL) {
-			check_for_date_format(sheet, fmt);
-			free(fmt);
-		    }
-		}
-		if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
-		    gretl_utf8_strncat_trim(sheet->dset->S[real_t], tmp, OBSLEN - 1);
-		}
+		err = gnumeric_set_obs_label(sheet, real_t, p, vtype, tmp);
 	    } else if (pass == 1 && t == 0 && sheet->colheads) {
 		/* should be varname */
 		if (vtype == VALUE_STRING) {
