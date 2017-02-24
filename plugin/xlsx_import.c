@@ -648,6 +648,9 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		pprintf(myprn, "(%d, %d)", row, col);
 	    }
 
+	    /* FIXME check here and skip if the cell is outside of the
+	       specified reading area */
+
 	    if (pass >= 2 && row > xinfo->maxrow) {
 		goto skipit;
 	    }
