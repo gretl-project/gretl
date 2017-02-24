@@ -1270,34 +1270,51 @@ check_data_block (wbook *book, xls_info *xi, struct string_err *err)
     err->str = NULL;
 
     for (j=startcol; j<xi->totcols; j++) {
+	int strvals = 0;
+
+	dbprintf("data_block: col=%d\n", j);
 	if (xi->blank_col[j]) {
 	    continue;
 	}
 	for (i=startrow; i<xi->nrows; i++) {
-	    dbprintf("data_block: looking at rows[%d], end = %d\n", i, 
-		     xi->rows[i].end);
+	    dbprintf(" rows[%d], end = %d\n", i, xi->rows[i].end);
 	    if (xi->rows[i].cells  == NULL) {
-		dbprintf("data_block: rows[%d].cells = NULL\n", i);
+		dbprintf("  rows[%d].cells = NULL\n", i);
 		ret = -1;
 	    } else if (j >= xi->rows[i].end) {
-		dbprintf("data_block: short row, fell off the end\n");
+		dbprintf("  short row, fell off the end\n");
 		ret = -1;
 	    } else if (xls_cell(xi, i, j) == NULL) {
-		dbprintf("data_block: rows[%d].cells[%d] = NULL\n", i, j);
+		dbprintf("  rows[%d].cells[%d] = NULL\n", i, j);
 		xi->rows[i].cells[j] = g_strdup("-999");
 		ret = -1;
 	    } else if (IS_STRING(xls_cell(xi, i, j))) {
 		if (missval_string(xls_cell(xi, i, j))) {
+		    dbprintf("  rows[%d].cells[%d] = missval\n", i, j);
 		    g_free(xi->rows[i].cells[j]);
 		    xi->rows[i].cells[j] = g_strdup("-999");
 		    ret = -1;
 		} else {
-		    err->row = i + 1;
-		    err->column = j + 1;
-		    err->str = g_strdup(xls_cell(xi, i, j));
-		    return 1;
+		    dbprintf("  rows[%d].cells[%d]: %s (string)\n",
+			     i, j, xls_cell(xi, i, j));
+		    strvals++;
+		    if (err->row == 0) {
+			err->row = i + 1;
+			err->column = j + 1;
+			err->str = g_strdup(xls_cell(xi, i, j));
+		    }
 		}
+	    } else {
+		dbprintf("  rows[%d].cells[%d]: %s (numeric?)\n",
+			 i, j, xls_cell(xi, i, j));
 	    }
+	}
+	if (strvals > 0) {
+	    dbprintf(" col %d: %d string values\n", j, strvals);
+	    if (strvals == xi->nrows - startrow) {
+		fprintf(stderr, "col %d: all strings -> should accept?\n", j);
+	    }
+	    return 1; /* FIXME */
 	}
     }
 
