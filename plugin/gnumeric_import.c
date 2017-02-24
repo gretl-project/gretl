@@ -254,7 +254,7 @@ static int cell_get_data2 (wsheet *sheet,
 {
     int err = 0;
 
-    if (i > 0 && t > 0 && sheet->dset->Z[i][t] == NON_NUMERIC) {
+    if (i > 0 && t >= 0 && sheet->dset->Z[i][t] == NON_NUMERIC) {
 	int ix = gretl_string_table_index(sheet->st, s, i, 0, prn);
 
 	if (ix > 0) {

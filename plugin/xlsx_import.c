@@ -364,6 +364,9 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
 	fprintf(stderr, "error in xlsx_set_obs_string: t = %d\n", t);
 	err = E_DATA;
     } else {
+#if XDEBUG
+	fprintf(stderr, "xlsx_set_obs_string: t=%d, s='%s', setting\n", t, s);
+#endif	
 	xlsx_real_set_obs_string(xinfo, t, s);
     }
 
@@ -648,8 +651,11 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		pprintf(myprn, "(%d, %d)", row, col);
 	    }
 
-	    /* FIXME check here and skip if the cell is outside of the
-	       specified reading area */
+	    if (0 /* row <= xinfo->yoffset || col <= xinfo->xoffset */) {
+		/* outside of the specified reading area (checking needed) */
+		fprintf(stderr, "skipping %s (row %d, col %d)\n", cref, row, col);
+		goto skipit;
+	    }
 
 	    if (pass >= 2 && row > xinfo->maxrow) {
 		goto skipit;
@@ -734,7 +740,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		   with a dataset allocated */
 
 		if (pass == 3) {
-		    if (i > 0 && t > 0) {
+		    if (i > 0 && t >= 0) {
 			if (stringcell && in_gretl_list(xinfo->codelist, i)) {
 			    xlsx_handle_stringval3(xinfo, i, t, strval, prn);
 			}
