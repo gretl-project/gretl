@@ -56,7 +56,7 @@
 #endif /* ! _WIN32 */
 
 /* experimental, AC 2013-10-25 */
-#define USE_TIMEFMT 0 /* cancel for now since it can lead to segfault */
+#define USE_TIMEFMT 0 /* 2017-02-25: cancel for now since it can lead to segfault */
 
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
@@ -4889,20 +4889,10 @@ static void print_user_pm_data (const double *x,
     int t;
  
     for (t=t1; t<=t2; t++) {
-	if (x == NULL) {
-	    /* FIXME proper dates!! */
-	    sprintf(date, "%d", t);
-	    if (xna(c[t]) || xna(w[t])) {
-		fprintf(fp, "%s ? ?\n", date);
-	    } else {
-		fprintf(fp, "%s %.10g %.10g\n", date, c[t], w[t]);
-	    }	    
+	if (xna(c[t]) || xna(w[t])) {
+	    fprintf(fp, "%.10g ? ?\n", x[t]);
 	} else {
-	    if (xna(c[t]) || xna(w[t])) {
-		fprintf(fp, "%.10g ? ?\n", x[t]);
-	    } else {
-		fprintf(fp, "%.10g %.10g %.10g\n", x[t], c[t], w[t]);
-	    }
+	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], c[t], w[t]);
 	}
     }
 
