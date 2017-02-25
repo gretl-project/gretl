@@ -4885,7 +4885,6 @@ static void print_user_pm_data (const double *x,
 				int t1, int t2, 
 				FILE *fp)
 {
-    char date[OBSLEN];
     int t;
  
     for (t=t1; t<=t2; t++) {
