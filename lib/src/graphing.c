@@ -55,8 +55,8 @@
 # endif
 #endif /* ! _WIN32 */
 
-/* experimental, AC 2013-10-25 */
-#define USE_TIMEFMT 0 /* 2017-02-26: needs more work! */
+/* 2017-02-26: somewhat experimental, watch out for bad results! */
+#define USE_TIMEFMT 1
 
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
@@ -567,16 +567,21 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 static void printvars (FILE *fp, int t, 
 		       const int *list, 
 		       const DATASET *dset,
-		       const double *x, 
+		       gnuplot_info *gi,
 		       const char *label, 
 		       double offset)
 {
+    const double *x = (gi != NULL)? gi->x : NULL;
     double xt;
     int i;
 
     if (x != NULL) {
 	xt = x[t] + offset;
-	fprintf(fp, "%.10g ", xt);
+	if (gi->flags & GPT_TIMEFMT) {
+	    fprintf(fp, "%.0f ", xt);
+	} else {
+	    fprintf(fp, "%.10g ", xt);
+	}
     }
 
     for (i=1; i<=list[0]; i++) {
@@ -2241,7 +2246,11 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     fprintf(fp, " %s", fitline);
 
     for (t=gi->t1; t<=gi->t2; t++) {
-	fprintf(fp, "%.10g %.10g\n", gi->x[t], yvar[t]);
+	if (gi->flags & GPT_TIMEFMT) {
+	    fprintf(fp, "%.0f %.10g\n", gi->x[t], yvar[t]);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", gi->x[t], yvar[t]);
+	}
     }
     fputs("e\n", fp);
 
@@ -2380,17 +2389,16 @@ static void print_x_range_from_list (gnuplot_info *gi,
     }
 }
 
-static void 
-print_x_range (gnuplot_info *gi, const double *x, FILE *fp)
+static void print_x_range (gnuplot_info *gi, FILE *fp)
 {
-    if (gretl_isdummy(gi->t1, gi->t2, x)) {
+    if (gretl_isdummy(gi->t1, gi->t2, gi->x)) {
 	fputs("set xrange [-1:2]\n", fp);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fp);
 	gi->xrange = 3;
     } else {
 	double xmin0, xmin, xmax0, xmax;
 
-	gretl_minmax(gi->t1, gi->t2, x, &xmin0, &xmax0);
+	gretl_minmax(gi->t1, gi->t2, gi->x, &xmin0, &xmax0);
 	gi->xrange = xmax0 - xmin0;
 	xmin = xmin0 - gi->xrange * .025;
 	if (xmin0 >= 0.0 && xmin < 0.0) {
@@ -2635,7 +2643,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		maybe_print_panel_jot(t, dset, fp);
 	    }
 
-	    printvars(fp, t, datlist, dset, gi->x, label, xoff);
+	    printvars(fp, t, datlist, dset, gi, label, xoff);
 	}
 
 	fputs("e\n", fp);
@@ -3509,7 +3517,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (set_xrange) {
 	if (gi.x != NULL) {
-	    print_x_range(&gi, gi.x, fp);
+	    print_x_range(&gi, fp);
 	} else {
 	    print_x_range_from_list(&gi, dset, list, fp);
 	}
@@ -5585,6 +5593,8 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     if (show_zero && style != BAND_FILL) {
 	fputs("set xzeroaxis\n", fp);
     }
+
+    print_x_range(gi, fp);
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
     gretl_push_c_numeric_locale();

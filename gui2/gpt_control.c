@@ -1493,11 +1493,6 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 		if (test[j][0] == '?') {
 		    x[j][t] = NADBL;
 		    missing++;
-		} else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
-		    x[j][t] = gnuplot_time_from_date(test[j], spec->timefmt);
-		    if (na(x[j][t])) {
-			err = E_DATA;
-		    }
 		} else {
 		    x[j][t] = atof(test[j]);
 		}
@@ -1603,8 +1598,6 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 	    sscanf(s, "%31s", test);
 	    if (*s == '?') {
 		xij = NADBL;
-	    } else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
-		xij = gnuplot_time_from_date(test, spec->timefmt);
 	    } else {
 		xij = atof(test);
 	    }
@@ -3575,13 +3568,11 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	if (do_label) {
 	    if (plot->pd == 4 || plot->pd == 12) {
 		x_to_date(data_x, plot->pd, label);
+	    } else if (plot->spec->flags & GPT_TIMEFMT) {
+		date_from_gnuplot_time(label, sizeof label,
+				       "%Y-%m-%d", data_x);
 	    } else if (xfmt != NULL) {
-		if (plot->spec->flags & GPT_TIMEFMT) {
-		    date_from_gnuplot_time(label, sizeof label, 
-					   xfmt, data_x);
-		} else {
-		    sprintf(label, xfmt, data_x);
-		}
+		sprintf(label, xfmt, data_x);
 	    } else if (use_integer_format(plot->xint, data_x)) {
 		sprintf(label, "%7d", (int) data_x);
 	    } else {

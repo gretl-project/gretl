@@ -1059,7 +1059,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
 
     for (i=0; i<spec->n_lines; i++) {
 	int ncols = gp_line_data_columns(spec, i);
-	char date[OBSLEN];
 
 	if (ncols == 0) {
 	    /* no (regular) data to print */
@@ -1087,9 +1086,7 @@ static void plotspec_print_data (GPT_SPEC *spec,
 		fputs("? ", fp);
 		*miss = 1;
 	    } else if (spec->flags & GPT_TIMEFMT) {
-		date_from_gnuplot_time(date, sizeof date,
-				       spec->timefmt, x[0][t]);
-		fprintf(fp, "%s ", date);
+		fprintf(fp, "%.0f ", x[0][t]);
 	    } else {
 		fprintf(fp, "%.10g ", x[0][t]);
 	    }
@@ -1160,7 +1157,6 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 {
     gretl_matrix tmp = {0};
     gretl_matrix *m = &tmp;
-    char date[OBSLEN];
     double xt, yt;
     int i, j, k, t;
 
@@ -1197,9 +1193,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 	    fputs("? ", fp);
 	    *miss = 1;
 	} else if (spec->flags & GPT_TIMEFMT) {
-	    date_from_gnuplot_time(date, sizeof date,
-				   spec->timefmt, xt);
-	    fprintf(fp, "%s ", date);
+	    fprintf(fp, "%.0f ", xt);
 	} else {
 	    fprintf(fp, "%.10g ", xt);
 	}
@@ -1369,11 +1363,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     /* using time format for x-axis? */
     if (*spec->timefmt != '\0') {
-	if (gnuplot_version() < 4.7) {
-	    fputs("set xdata time # ZERO_YEAR=2000\n", fp);
-	} else {
-	    fputs("set xdata time\n", fp);
-	}	
+	fputs("set xdata time\n", fp);
 	fprintf(fp, "set timefmt \"%s\"\n", spec->timefmt);
     }
 

@@ -3152,13 +3152,14 @@ typedef enum {
     PLOTVAR_QUARTERS,
     PLOTVAR_MONTHS,
     PLOTVAR_CALENDAR,
+    PLOTVAR_GPTIME,
     PLOTVAR_DECADES,
     PLOTVAR_HOURLY,
     PLOTVAR_PANEL,
     PLOTVAR_MAX
 } plotvar_type; 
 
-static int plotvar_code (const DATASET *dset)
+static int plotvar_code (const DATASET *dset, gretlopt opt)
 {
     if (!dataset_is_time_series(dset)) {
 	return PLOTVAR_INDEX;
@@ -3171,7 +3172,7 @@ static int plotvar_code (const DATASET *dset)
     } else if (dset->pd == 24) {
 	return PLOTVAR_HOURLY;
     } else if (calendar_data(dset)) {
-	return PLOTVAR_CALENDAR;
+	return (opt & OPT_T)? PLOTVAR_GPTIME : PLOTVAR_CALENDAR;
     } else if (dataset_is_decennial(dset)) {
 	return PLOTVAR_DECADES;
     } else {
@@ -3228,7 +3229,6 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     int new_ptype = 0;
     int panvar = 0;
     int failed = 0;
-    int gptime = 0;
     double sd0 = 0;
     float rm;
 
@@ -3261,7 +3261,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 
     if (new_ptype == 0) {
 	/* not already determined */
-	new_ptype = plotvar_code(dset);
+	new_ptype = plotvar_code(dset, opt);
     }
     if (T == 0) {
 	/* not already determined */
@@ -3289,10 +3289,6 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 
     if (x == NULL || new_ptype == PLOTVAR_PANEL) {
 	return x;
-    }
-
-    if (opt & OPT_T) {
-	gptime = 1;
     }
 
  try_again:
@@ -3329,9 +3325,10 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	}
 	break;
     case PLOTVAR_CALENDAR:
+    case PLOTVAR_GPTIME:
 	for (t=0; t<T; t++) {
 	    if (dset->S != NULL) {
-		if (gptime) {
+		if (ptype == PLOTVAR_GPTIME) {
 		    x[t] = gnuplot_time_from_date(dset->S[t], "%Y-%m-%d");
 		} else {
 		    x[t] = get_dec_date(dset->S[t]);
@@ -3340,7 +3337,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 		char datestr[OBSLEN];
 		    
 		calendar_date_string(datestr, t, dset);
-		if (gptime) {
+		if (ptype == PLOTVAR_GPTIME) {
 		    x[t] = gnuplot_time_from_date(datestr, "%Y-%m-%d");
 		} else {
 		    x[t] = get_dec_date(datestr);
