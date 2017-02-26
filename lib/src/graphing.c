@@ -56,7 +56,7 @@
 #endif /* ! _WIN32 */
 
 /* experimental, AC 2013-10-25 */
-#define USE_TIMEFMT 0 /* 2017-02-25: cancel for now since it can lead to segfault */
+#define USE_TIMEFMT 0 /* 2017-02-26: needs more work! */
 
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
@@ -569,15 +569,12 @@ static void printvars (FILE *fp, int t,
 		       const DATASET *dset,
 		       const double *x, 
 		       const char *label, 
-		       const char *date,
 		       double offset)
 {
     double xt;
     int i;
 
-    if (date != NULL) {
-	fprintf(fp, "%s ", date);
-    } else if (x != NULL) {
+    if (x != NULL) {
 	xt = x[t] + offset;
 	fprintf(fp, "%.10g ", xt);
     }
@@ -2405,26 +2402,6 @@ print_x_range (gnuplot_info *gi, const double *x, FILE *fp)
     }
 }
 
-static void 
-print_x_range_from_dates (gnuplot_info *gi, const DATASET *dset,
-			  FILE *fp)
-{
-    char obs[OBSLEN];
-    double xmin, xmax;
-
-    ntodate(obs, gi->t1, dset);
-    xmin = gnuplot_time_from_date(obs, gi->timefmt);
-    ntodate(obs, gi->t2, dset);
-    xmax = gnuplot_time_from_date(obs, gi->timefmt);
-
-    gi->xrange = xmax - xmin;
-    xmin -= gi->xrange * .025;
-    xmax += gi->xrange * .025;
-
-    fprintf(fp, "set xrange [%.12g:%.12g]\n", xmin, xmax);
-    gi->xrange = xmax - xmin;
-}
-
 /* two or more y vars plotted against some x: test to see if we want
    to use two y axes */
 
@@ -2610,11 +2587,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 	offset = 0.10 * gi->xrange / n;
     }
 
-    if (gi->flags & GPT_TIMEFMT) {
-	lmax = gi->list[0];
-	datlist[0] = 1;
-	ynum = 1;
-    } else if (gi->x != NULL) {
+    if (gi->x != NULL) {
 	lmax = gi->list[0] - 1;
 	datlist[0] = 1;
 	ynum = 1;
@@ -2637,7 +2610,6 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 
 	for (t=gi->t1; t<=gi->t2; t++) {
 	    const char *label = NULL;
-	    const char *date = NULL;
 	    char obs[OBSLEN];
 
 	    if (in_gretl_list(na_skiplist, datlist[ynum]) &&
@@ -2645,10 +2617,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		continue;
 	    }
 
-	    if (gi->flags & GPT_TIMEFMT) {
-		ntodate(obs, t, dset);
-		date = obs;
-	    } else if (gi->x == NULL && 
+	    if (gi->x == NULL && 
 		all_graph_data_missing(gi->list, t, (const double **) dset->Z)) {
 		continue;
 	    }
@@ -2666,7 +2635,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		maybe_print_panel_jot(t, dset, fp);
 	    }
 
-	    printvars(fp, t, datlist, dset, gi->x, label, date, xoff);
+	    printvars(fp, t, datlist, dset, gi->x, label, xoff);
 	}
 
 	fputs("e\n", fp);
@@ -2926,6 +2895,7 @@ static int graph_list_adjust_sample (int *list,
 static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 			    const DATASET *dset)
 {
+    gretlopt xopt = OPT_NONE;
     int k = gi->list[0];
     int add0 = 0;
 
@@ -2946,13 +2916,13 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	    if (sample_size(dset) < 300) {
 		/* experimental */
 		gi->flags |= GPT_TIMEFMT;
-		return 0;
+		xopt = OPT_T;
 	    }
 	}
     }
 #endif
 
-    gi->x = gretl_plotx(dset, OPT_NONE);
+    gi->x = gretl_plotx(dset, xopt);
     if (gi->x == NULL) {
 	return E_ALLOC;
     }
@@ -3163,6 +3133,20 @@ static int multiple_groups (const DATASET *dset, int t1, int t2)
     return ret;
 }
 
+static int single_year_sample (const DATASET *dset,
+			       int t1, int t2)
+{
+    char obs[OBSLEN];
+    int y1, y2;
+
+    ntodate(obs, t1, dset);
+    y1 = atoi(obs);
+    ntodate(obs, t2, dset);
+    y2 = atoi(obs);
+    
+    return y2 == y1;
+}
+
 /* special tics for time series plots */
 
 static void make_time_tics (gnuplot_info *gi,
@@ -3180,10 +3164,15 @@ static void make_time_tics (gnuplot_info *gi,
 
     if (gi->flags & GPT_TIMEFMT) {
 	pputs(prn, "set xdata time\n");
-	strcpy(gi->timefmt, "%Y-%m-%d");
+	strcpy(gi->timefmt, "%s");
 	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
-	strcpy(gi->xfmt, "%Y-%m-%d");
+	if (single_year_sample(dset, gi->t1, gi->t2)) {
+	    strcpy(gi->xfmt, "%m-%d");
+	} else {
+	    strcpy(gi->xfmt, "%Y-%m-%d");
+	}
 	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
+	pputs(prn, "set xtics rotate by -45\n");
 	return;
     }
 
@@ -3333,7 +3322,7 @@ int gnuplot (const int *plotlist, const char *literal,
     char fit_line[128] = {0};
     int time_fit = 0;
     int oddman = 0;
-    int lmin, many = 0;
+    int many = 0;
     int set_xrange = 1;
     PlotType ptype;
     gnuplot_info gi;
@@ -3410,11 +3399,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-    /* the minimum number of plotlist elements */
-    lmin = (gi.flags & GPT_TIMEFMT) ? 1 : 2;
-
     /* adjust sample range, and reject if it's empty */
-    err = graph_list_adjust_sample(list, &gi, dset, lmin);
+    err = graph_list_adjust_sample(list, &gi, dset, 2);
     if (err) {
 	goto bailout;
     }
@@ -3491,8 +3477,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	    make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]), 
 			NULL, fp);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
-	} else if (gi.flags & GPT_TIMEFMT) {
-	    no_key = 0;
 	} else {
 	    print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
 	}
@@ -3523,9 +3507,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    if (gi.flags & GPT_TIMEFMT) {
-	print_x_range_from_dates(&gi, dset, fp);
-    } else if (set_xrange) {
+    if (set_xrange) {
 	if (gi.x != NULL) {
 	    print_x_range(&gi, gi.x, fp);
 	} else {
@@ -3627,7 +3609,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s\n", _("fitted"), withstr);	
     } else {
 	/* all other cases */
-	int lmax = (gi.flags & GPT_TIMEFMT)? list[0] : list[0] - 1;
+	int lmax = list[0] - 1;
 
 	for (i=1; i<=lmax; i++)  {
 	    set_lwstr(dset, list[i], lwstr);
@@ -4334,7 +4316,7 @@ int gnuplot_3d (int *list, const char *literal,
 	if (dset->markers) {
 	    label = dset->S[t];
 	}
-	printvars(fp, t, datlist, dset, NULL, label, NULL, 0.0);
+	printvars(fp, t, datlist, dset, NULL, label, 0.0);
     }	
     fputs("e\n", fp);
 
@@ -5584,7 +5566,12 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     show_zero = band_straddles_zero(c, w, pm.factor, t1, t2);
 
     if (gi->flags & GPT_TS) {
+	PRN *prn = gretl_print_new_with_stream(fp);
+	
 	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
+	make_time_tics(gi, dset, 0, NULL, prn);
+	gretl_print_detach_stream(prn);
+	gretl_print_destroy(prn);
     }
 
     if (n_yvars == 1) {

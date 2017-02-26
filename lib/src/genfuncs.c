@@ -3206,7 +3206,8 @@ static int panel_plotvar_code (const DATASET *dset)
 /**
  * gretl_plotx:
  * @dset: data information struct.
- * @opt: can include OPT_P for panel time-series plot.
+ * @opt: can include OPT_P for panel time-series plot,
+ * OPT_T to use gnuplot time (seconds of unix epoch).
  *
  * Finds or creates a special dummy variable for use on the
  * x-axis in plotting; this will have the full length of the
@@ -3227,6 +3228,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     int new_ptype = 0;
     int panvar = 0;
     int failed = 0;
+    int gptime = 0;
     double sd0 = 0;
     float rm;
 
@@ -3289,6 +3291,10 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	return x;
     }
 
+    if (opt & OPT_T) {
+	gptime = 1;
+    }
+
  try_again:
 
     Tbak = T;
@@ -3325,12 +3331,20 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     case PLOTVAR_CALENDAR:
 	for (t=0; t<T; t++) {
 	    if (dset->S != NULL) {
-		x[t] = get_dec_date(dset->S[t]);
+		if (gptime) {
+		    x[t] = gnuplot_time_from_date(dset->S[t], "%Y-%m-%d");
+		} else {
+		    x[t] = get_dec_date(dset->S[t]);
+		}
 	    } else {
 		char datestr[OBSLEN];
 		    
 		calendar_date_string(datestr, t, dset);
-		x[t] = get_dec_date(datestr);
+		if (gptime) {
+		    x[t] = gnuplot_time_from_date(datestr, "%Y-%m-%d");
+		} else {
+		    x[t] = get_dec_date(datestr);
+		}
 	    }
 	    if (na(x[t])) {
 		failed++;
