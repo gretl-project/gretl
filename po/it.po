@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-02-10 09:50-0500\n"
-"PO-Revision-Date: 2016-12-20 17:56+0100\n"
+"PO-Revision-Date: 2017-02-27 11:48+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1878,21 +1878,19 @@ msgstr "Variabile peso: %s\n"
 #. TRANSLATORS: 'S.D.' means Standard Deviation
 #: lib/src/describe.c:4608 gui2/guiprint.c:611 gui2/guiprint.c:984
 msgid "S.D."
-msgstr ""
+msgstr "SQM"
 
 #: lib/src/describe.c:4609 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Min"
-msgstr "Principale"
+msgstr "Min"
 
 #: lib/src/describe.c:4610 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Max"
-msgstr "Massimo"
+msgstr "Max"
 
 #: lib/src/describe.c:4642 gui2/guiprint.c:691
 msgid "Std. Dev."
-msgstr "Dev. Std."
+msgstr "SQM"
 
 #: lib/src/describe.c:4649
 #, no-c-format
@@ -2380,14 +2378,14 @@ msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr "\"catch\" non può essere usato su funzioni definite dall'utente"
 
 #: lib/src/geneval.c:8225
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %s but got %s"
 msgstr "Al posto di %s è stato trovato %s"
 
 #: lib/src/geneval.c:8229
-#, fuzzy, c-format
+#, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "La lunghezza della serie non coincide col dataset"
+msgstr "Il tipo %s non coincide col tipo di array (%s)"
 
 #: lib/src/geneval.c:8753 lib/src/geneval.c:14778 lib/src/geneval.c:14786
 #, c-format
@@ -2395,14 +2393,13 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : non implementato per questo tipo"
 
 #: lib/src/geneval.c:8789
-#, fuzzy
 msgid "Invalid list element"
-msgstr "Argomento non valido"
+msgstr "Elemento di lista non valido"
 
 #: lib/src/geneval.c:8895
-#, fuzzy, c-format
+#, c-format
 msgid "The operator '%s' is not valid in this context"
-msgstr "Il simbolo '%s' non è valido in questo contesto\n"
+msgstr "L'operatore '%s' non è valido in questo contesto"
 
 #: lib/src/geneval.c:11469
 msgid "array: no type was specified"
@@ -2499,9 +2496,8 @@ msgid "'%s' : only defined for matrices"
 msgstr "'%s' : definito solo per le matrici"
 
 #: lib/src/geneval.c:15885
-#, fuzzy
 msgid "Invalid left-hand side expression"
-msgstr "Espressione incompleta\n"
+msgstr "Espressione a sinistra non valida"
 
 #: lib/src/geneval.c:16463
 msgid "Bare declarations are not allowed here"
@@ -2672,7 +2668,7 @@ msgstr "Osservazione vuota []\n"
 
 #: lib/src/genlex.c:1612
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
-msgstr ""
+msgstr "uso obsoleto di \"=\" come operatore booleano: è necessario usare \"==\""
 
 #: lib/src/genlex.c:1781
 #, c-format
@@ -2715,9 +2711,9 @@ msgid "Generated matrix %s"
 msgstr "Generata la matrice %s"
 
 #: lib/src/genmain.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Modified list %s"
-msgstr "Modificata la matrice %s"
+msgstr "Modificata la lista %s"
 
 #: lib/src/genmain.c:118
 #, c-format
@@ -2730,9 +2726,9 @@ msgid "Generated list %s"
 msgstr "Generata la lista %s"
 
 #: lib/src/genmain.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "Modified string %s"
-msgstr "Modificata la matrice %s"
+msgstr "Modificata la stringa %s"
 
 #: lib/src/genmain.c:126
 #, c-format
@@ -8287,9 +8283,8 @@ msgid "Runs test"
 msgstr "Test delle successioni"
 
 #: gui2/calculator.c:2561
-#, fuzzy
 msgid "Correlation"
-msgstr "Correlazioni"
+msgstr "Correlazione"
 
 #: gui2/calculator.c:2594
 msgid "Sign test"
@@ -13722,14 +13717,12 @@ msgid "forecast of %s"
 msgstr "previsione di %s"
 
 #: gui2/library.c:668
-#, fuzzy
 msgid "Show main statistics"
-msgstr "Statistiche descrittive"
+msgstr "Solo statistiche principali"
 
 #: gui2/library.c:669
-#, fuzzy
 msgid "Show full statistics"
-msgstr "Statistiche descrittive"
+msgstr "Statistiche descrittive complete"
 
 #: gui2/library.c:712 gui2/library.c:742 gui2/library.c:900
 #: gui2/menustate.c:668
@@ -16171,7 +16164,7 @@ msgstr "Italiano"
 
 #: gui2/settings.c:1132
 msgid "Portuguese"
-msgstr ""
+msgstr "Portoghese"
 
 #: gui2/settings.c:1298 plugin/tramo_options.c:371
 msgid "General"
@@ -16669,7 +16662,7 @@ msgstr "LaTeX"
 
 #: gui2/toolbar.c:766
 msgid "Heatmap"
-msgstr ""
+msgstr "Mappa di calore"
 
 #: gui2/toolbar.c:767
 msgid "Reformat..."
