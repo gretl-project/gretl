@@ -31,13 +31,16 @@
 
 struct flag_info {
     GtkWidget *dialog;
+    GtkAdjustment *adj;
     gint *flag;
+    gint *nsave;
 };
 
 enum pca_flags {
     PCA_SAVE_NONE,
     PCA_SAVE_MAIN,
-    PCA_SAVE_ALL
+    PCA_SAVE_ALL,
+    PCA_SAVE_N
 };
 
 static gboolean destroy_pca_dialog (GtkWidget *w, struct flag_info *finfo)
@@ -64,15 +67,26 @@ static gboolean cancel_set_flag (GtkWidget *w, struct flag_info *finfo)
 
 static gboolean pca_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
 {
+    if (*(finfo->flag) == PCA_SAVE_N) {
+	*(finfo->nsave) = gtk_adjustment_get_value(finfo->adj);
+    }
     gtk_widget_destroy(finfo->dialog);
     return FALSE;
 }
 
-static gretlopt pca_flag_dialog (void)
+static void sensitize_spin (GtkWidget *b, GtkWidget *w)
+{
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b));
+
+    gtk_widget_set_sensitive(w, s);
+}
+
+static gretlopt pca_flag_dialog (VMatrix *cmat, int *nsave)
 {
     struct flag_info *finfo;
     GtkWidget *dialog, *tmp, *button, *hbox;
     GtkWidget *vbox, *internal_vbox;
+    GtkWidget *spin;
     GSList *group;
     gint flag = PCA_SAVE_MAIN;
 
@@ -83,6 +97,7 @@ static gretlopt pca_flag_dialog (void)
 
     finfo->dialog = dialog;
     finfo->flag = &flag;
+    finfo->nsave = nsave;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     
@@ -112,13 +127,29 @@ static gretlopt pca_flag_dialog (void)
     g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN)); 
 
     /* All components */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("All components"));
-    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_pca_flag), finfo);
-    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_ALL)); 
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_ALL));
+
+    /* The top n components */
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON(button));
+    hbox = gtk_hbox_new(FALSE, 0);
+    button = gtk_radio_button_new_with_label(group, _("The n most important components"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    finfo->adj = (GtkAdjustment *) gtk_adjustment_new(1, 1, cmat->dim, 1, 1, 0);
+    spin = gtk_spin_button_new(finfo->adj, 1, 0);
+    gtk_widget_set_sensitive(spin, FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), FALSE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_pca_flag), finfo);
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_N));
+    g_signal_connect(G_OBJECT(button), "toggled", G_CALLBACK(sensitize_spin), spin);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
@@ -151,6 +182,8 @@ static gretlopt pca_flag_dialog (void)
 	return OPT_O;
     } else if (flag == PCA_SAVE_ALL) {
 	return OPT_A;
+    } else if (flag == PCA_SAVE_N) {
+	return OPT_N;
     } else {
 	return OPT_NONE;
     }
@@ -378,7 +411,7 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
     int err = 0;
 
     if (opt & OPT_D) { 
-	saveopt = pca_flag_dialog();
+	saveopt = pca_flag_dialog(cmat, &nsave);
 	if (saveopt == OPT_NONE) {
 	    /* canceled */
 	    return 0; 
