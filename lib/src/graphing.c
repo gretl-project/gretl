@@ -3177,7 +3177,7 @@ static void make_time_tics (gnuplot_info *gi,
 	if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
 	} else {
-	    strcpy(gi->xfmt, "%Y-%m-%d");
+	    strcpy(gi->xfmt, "%y-%m-%d"); /* two-digit year */
 	}
 	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
 	pputs(prn, "set xtics rotate by -45\n");
@@ -5576,7 +5576,6 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     if (gi->flags & GPT_TS) {
 	PRN *prn = gretl_print_new_with_stream(fp);
 	
-	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
 	make_time_tics(gi, dset, 0, NULL, prn);
 	gretl_print_detach_stream(prn);
 	gretl_print_destroy(prn);
@@ -8343,16 +8342,21 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 {
     double x = NADBL;
 
-    if (fmt != NULL && *fmt != '\0') {
-	struct tm t = {0};
-	time_t etime;
-	char *test;
+    if (fmt != NULL) {
+	if (strcmp(fmt, "%s") == 0) {
+	    /* already in seconds since epoch start */
+	    x = atof(s);
+	} else if (*fmt != '\0') {
+	    struct tm t = {0};
+	    time_t etime;
+	    char *test;
 	
-	test = strptime(s, fmt, &t);
-	if (test != NULL && *test == '\0') {
-	    /* conversion went OK */
-	    etime = mktime(&t);
-	    x = (double) etime;
+	    test = strptime(s, fmt, &t);
+	    if (test != NULL && *test == '\0') {
+		/* conversion went OK */
+		etime = mktime(&t);
+		x = (double) etime;
+	    }
 	}
     }
 

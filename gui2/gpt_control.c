@@ -1493,6 +1493,12 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 		if (test[j][0] == '?') {
 		    x[j][t] = NADBL;
 		    missing++;
+		} else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
+		    /* allow for backward compatibility */
+		    x[j][t] = gnuplot_time_from_date(test[j], spec->timefmt);
+		    if (na(x[j][t])) {
+			err = E_DATA;
+		    }
 		} else {
 		    x[j][t] = atof(test[j]);
 		}
@@ -1598,6 +1604,8 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 	    sscanf(s, "%31s", test);
 	    if (*s == '?') {
 		xij = NADBL;
+	    } else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
+		xij = gnuplot_time_from_date(test, spec->timefmt);
 	    } else {
 		xij = atof(test);
 	    }
@@ -2641,6 +2649,21 @@ static void check_for_plot_size (GPT_SPEC *spec, gchar *buf)
     }
 }
 
+static void check_for_plot_time_data (GPT_SPEC *spec, gchar *buf)
+{
+    char line[128];
+
+    while (bufgets(line, sizeof line, buf)) {
+	if (!strncmp(line, "set timefmt \"%s\"", 16)) {
+	    spec->flags |= GPT_TIMEFMT;
+	} else if (*line == '#' && strstr(line, "letterbox")) {
+	    spec->flags |= GPT_LETTERBOX;
+	} else if (!strncmp(line, "plot", 4)) {
+	    break;
+	}
+    }
+}
+
 static void linestyle_init (linestyle *ls)
 {
     ls->rgb[0] = '\0';
@@ -2775,6 +2798,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	if (maybe_big_multiplot(spec->code)) {
 	    buf_rewind(buf);
 	    check_for_plot_size(spec, buf);
+	} else if (spec->code == PLOT_BAND) {
+	    buf_rewind(buf);
+	    check_for_plot_time_data(spec, buf);
 	} else if (spec->code == PLOT_HEATMAP) {
 	    buf_rewind(buf);
 	    get_heatmap_matrix(spec, buf, gpline, sizeof gpline, datapos);
