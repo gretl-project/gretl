@@ -55,6 +55,8 @@ struct xls_info_ {
     int nrows;
     struct sheetrow *rows;
     char *blank_col;
+    int *codelist;
+    gretl_string_table *st;
 };
 
 static void free_xls_info (xls_info *xi);
@@ -1092,6 +1094,8 @@ static void xls_info_init (xls_info *xi)
     xi->nrows = 0;
     xi->rows = NULL;
     xi->blank_col = NULL;
+    xi->codelist = NULL;
+    xi->st = NULL;
 }
 
 static void free_xls_info (xls_info *xi) 
@@ -1130,6 +1134,10 @@ static void free_xls_info (xls_info *xi)
     }
 
     free(xi->blank_col);
+    free(xi->codelist);
+    if (xi->st != NULL) {
+	gretl_string_table_destroy(xi->st);
+    }
 }
 
 #define IS_STRING(v) ((v[0] == '"'))
@@ -1255,21 +1263,23 @@ struct string_err {
 /* check for invalid data in the selected data block */
 
 static int 
-check_data_block (wbook *book, xls_info *xi, struct string_err *err)
+check_data_block (wbook *book, xls_info *xi, int *missvals,
+		  struct string_err *strerr)
 {
+    int *codelist = NULL;
     int startcol = book->col_offset;
     int startrow = book->row_offset + 1;
-    int j, i, ret = 0;
+    int j, i, err = 0;
 
     if (book_obs_labels(book) || book_numeric_dates(book)) {
 	startcol++;
     }
 
-    err->row = 0;
-    err->column = 0;
-    err->str = NULL;
+    strerr->row = 0;
+    strerr->column = 0;
+    strerr->str = NULL;
 
-    for (j=startcol; j<xi->totcols; j++) {
+    for (j=startcol; j<xi->totcols && !err; j++) {
 	int strvals = 0;
 
 	dbprintf("data_block: col=%d\n", j);
@@ -1280,28 +1290,28 @@ check_data_block (wbook *book, xls_info *xi, struct string_err *err)
 	    dbprintf(" rows[%d], end = %d\n", i, xi->rows[i].end);
 	    if (xi->rows[i].cells  == NULL) {
 		dbprintf("  rows[%d].cells = NULL\n", i);
-		ret = -1;
+		*missvals = 1;
 	    } else if (j >= xi->rows[i].end) {
 		dbprintf("  short row, fell off the end\n");
-		ret = -1;
+		*missvals = 1;
 	    } else if (xls_cell(xi, i, j) == NULL) {
 		dbprintf("  rows[%d].cells[%d] = NULL\n", i, j);
 		xi->rows[i].cells[j] = g_strdup("-999");
-		ret = -1;
+		*missvals = 1;
 	    } else if (IS_STRING(xls_cell(xi, i, j))) {
 		if (missval_string(xls_cell(xi, i, j))) {
 		    dbprintf("  rows[%d].cells[%d] = missval\n", i, j);
 		    g_free(xi->rows[i].cells[j]);
 		    xi->rows[i].cells[j] = g_strdup("-999");
-		    ret = -1;
+		    *missvals = 1;
 		} else {
 		    dbprintf("  rows[%d].cells[%d]: %s (string)\n",
 			     i, j, xls_cell(xi, i, j));
 		    strvals++;
-		    if (err->row == 0) {
-			err->row = i + 1;
-			err->column = j + 1;
-			err->str = g_strdup(xls_cell(xi, i, j));
+		    if (strerr->row == 0) {
+			strerr->row = i + 1;
+			strerr->column = j + 1;
+			strerr->str = g_strdup(xls_cell(xi, i, j));
 		    }
 		}
 	    } else {
@@ -1312,13 +1322,26 @@ check_data_block (wbook *book, xls_info *xi, struct string_err *err)
 	if (strvals > 0) {
 	    dbprintf(" col %d: %d string values\n", j, strvals);
 	    if (strvals == xi->nrows - startrow) {
-		fprintf(stderr, "col %d: all strings -> should accept?\n", j);
+		int k = j - startcol + 1;
+
+		fprintf(stderr, "col %d: all strings -> accept\n", j);
+		codelist = gretl_list_append_term(&codelist, k);
+	    } else {
+		err = E_DATA;
 	    }
-	    return 1; /* FIXME */
 	}
     }
 
-    return ret;
+    if (codelist != NULL) {
+	printlist(codelist, "codelist");
+	if (err) {
+	    free(codelist);
+	} else {
+	    xi->codelist = codelist;
+	}
+    }
+
+    return err;
 }
 
 /* determine the number of actual data columns, starting from a
@@ -1358,10 +1381,18 @@ transcribe_data (wbook *book, xls_info *xi, DATASET *dset,
 
     if (book_obs_labels(book) || book_time_series(book)) {
 	startcol++;
-    } 
+    }
 
-    for (i=startcol; i<xi->totcols; i++) {
-	int ts;
+    if (xi->codelist != NULL) {
+	xi->st = gretl_string_table_new(xi->codelist);
+	if (xi->st == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    for (i=startcol; i<xi->totcols && !err; i++) {
+	const char *val = NULL;
+	int ts, strvals = 0;
 
 	if (xi->blank_col[i]) {
 	    continue;
@@ -1396,21 +1427,40 @@ transcribe_data (wbook *book, xls_info *xi, DATASET *dset,
 
 	dbprintf("set varname[%d] = '%s'\n", j, dset->varname[j]);
 
-	for (t=0; t<dset->n; t++) {
+	if (in_gretl_list(xi->codelist, j)) {
+	    strvals = 1;
+	}
+
+	for (t=0; t<dset->n && !err; t++) {
 	    ts = t + 1 + roff;
 	    if (xi->rows[ts].cells == NULL || i >= xi->rows[ts].end ||
 		xi->rows[ts].cells[i] == NULL) {
 		continue;
 	    }
 
-	    dbprintf("accessing rows[%d].cells[%d] at %p\n", ts, i,
-		     (void *) xi->rows[ts].cells[i]);
-	    dbprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
-		     "= '%s'\n", j, t, i, ts, xi->rows[ts].cells[i]);
+	    val = xi->rows[ts].cells[i];
+	    if (val != NULL && *val == '"') {
+		val++;
+	    }
 
-	    dset->Z[j][t] = atof(xls_cell(xi, ts, i));
-	    if (dset->Z[j][t] == -999 || dset->Z[j][t] == -9999) {
-		dset->Z[j][t] = NADBL;
+	    dbprintf("accessing rows[%d].cells[%d] at %p\n", ts, i,
+		     (void *) val);
+	    dbprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
+		     "= '%s'\n", j, t, i, ts, val);
+
+	    if (strvals) {
+		int xjt = gretl_string_table_index(xi->st, val, j, 0, prn);
+
+		if (xjt > 0) {
+		    dset->Z[j][t] = xjt;
+		} else {
+		    err = E_DATA;
+		}
+	    } else {
+		dset->Z[j][t] = atof(val);
+		if (dset->Z[j][t] == -999 || dset->Z[j][t] == -9999) {
+		    dset->Z[j][t] = NADBL;
+		}
 	    }
 	}
 
@@ -1572,6 +1622,17 @@ static char **labels_array (xls_info *xi, int row_offset, int j,
     return labels;
 }
 
+static void maybe_revise_xls_codelist (xls_info *xi)
+{
+    if (xi->codelist != NULL) {
+	int i;
+
+	for (i=1; i<=xi->codelist[0]; i++) {
+	    xi->codelist[i] += 1;
+	}
+    }
+}
+
 int xls_get_data (const char *fname, int *list, char *sheetname,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
@@ -1583,6 +1644,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     DATASET *newset;
     struct string_err strerr;
     int ts_markers = 0;
+    int missvals = 0;
     char **ts_S = NULL;
     int r0, c0;
     int merge = (dset->Z != NULL);
@@ -1693,18 +1755,17 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     if (err) goto getout; 
 
     /* any bad data? */
-    err = check_data_block(book, xi, &strerr);
+    err = check_data_block(book, xi, &missvals, &strerr);
 
-    if (err == 1) {
+    if (err) {
 	pprintf(prn, _("Expected numeric data, found string:\n"
 		       "%s\" at row %d, column %d\n"),
 		strerr.str, strerr.row, strerr.column);
 	g_free(strerr.str);
 	pputs(prn, _(adjust_rc));
 	goto getout; 
-    } else if (err == -1) {
+    } else if (missvals) {
 	pputs(prn, _("Warning: there were missing values\n"));
-	err = 0;
     }
 
     r0 = book->row_offset;
@@ -1729,6 +1790,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 		   alpha_cell(xls_cell(xi, r0, c0)) && 
 		   col0_is_numeric(xi, r0, c0)) {
 	    book_unset_obs_labels(book);
+	    maybe_revise_xls_codelist(xi);
 	}
     }
 
@@ -1777,6 +1839,15 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     if (book->flags & BOOK_DATA_REVERSED) {
 	reverse_data(newset, prn);
+    }
+
+    if (!err && xi->st != NULL) {
+	err = gretl_string_table_validate(xi->st);
+	if (err) {
+	    pputs(prn, A_("Failed to interpret the data as numeric\n"));
+	} else {
+	    gretl_string_table_print(xi->st, newset, fname, prn);
+	}
     }
 
     err = merge_or_replace_data(dset, &newset, opt, prn);

@@ -1018,7 +1018,7 @@ static void finalize_data_open (const char *fname, int ftype,
 	if (ftype == GRETL_CSV || ftype == GRETL_DTA || 
 	    ftype == GRETL_SAV || ftype == GRETL_SAS ||
 	    ftype == GRETL_XLSX || ftype == GRETL_ODS ||
-	    ftype == GRETL_GNUMERIC) {
+	    ftype == GRETL_GNUMERIC || ftype == GRETL_XLS) {
 	    maybe_display_string_table();
 	}
 	data_status |= IMPORT_DATA;
