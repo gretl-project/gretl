@@ -1258,6 +1258,14 @@ struct string_err {
     char *str;
 };
 
+static void clear_string_err (struct string_err *strerr)
+{
+    strerr->row = 0;
+    strerr->column = 0;
+    free(strerr->str);
+    strerr->str = NULL;
+}
+
 #define xls_cell(x,i,j) (x->rows[i].cells[j])
 
 /* check for invalid data in the selected data block */
@@ -1326,6 +1334,7 @@ check_data_block (wbook *book, xls_info *xi, int *missvals,
 
 		fprintf(stderr, "col %d: all strings -> accept\n", j);
 		codelist = gretl_list_append_term(&codelist, k);
+		clear_string_err(strerr);
 	    } else {
 		err = E_DATA;
 	    }
