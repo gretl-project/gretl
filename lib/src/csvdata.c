@@ -1861,18 +1861,32 @@ static int join_wants_col_zero (csvdata *c, const char *s)
 
 static void check_first_field (const char *line, csvdata *c, PRN *prn)
 {
-    if (c->delim != ' ' && *line == c->delim) {
+    const char *s;
+
+ tryagain:
+    s = line;
+
+    if (c->delim != ' ' && *s == c->delim) {
 	csv_set_blank_column(c);
     } else {
 	char field1[OBSLEN];
 	int i = 0;
 
-	if (c->delim == ' ' && *line == ' ') line++;
-
-	while (*line && i < sizeof field1) {
-	    if (*line == c->delim) break;
-	    field1[i++] = *line++;
+	if (c->delim == ' ' && *s == ' ') {
+	    s++;
 	}
+
+	while (*s && i < sizeof field1) {
+	    if (*s == c->delim) {
+		break;
+	    } else if (*s == '\t') {
+		/* presence of a tab must indicate tab-separation? */
+		c->delim = '\t';
+		goto tryagain;
+	    }
+	    field1[i++] = *s++;
+	}
+
 	field1[i] = '\0';
 	iso_to_ascii(field1);
 
