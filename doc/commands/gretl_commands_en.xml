@@ -11634,6 +11634,17 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>display_digits</lit>: an integer from 3
+	  to 6, specifying the number of significant digits to use
+	  when displaying regression coefficients and standard errors
+	  (the default being 6). This setting can also be used to
+	  limit the number of digits shown by the <cmdref
+	  targ="summary"/> command; in this case the default (and also
+	  the maximum) is 5, or 4 when the <opt>simple</opt> option
+	  is given.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
 	  (the default). When writing a matrix to file as text, gretl
 	  by default uses scientific notation with 18-digit precision,

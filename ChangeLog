@@ -4,7 +4,7 @@ version 2017a, in progress
 - Calendar: ensure that the Gregorian calendar is used
   consistently but add some optional support for handling
   Julian dates (also add a User's Guide chapter on this)
-- xlsx, ods and gnumeric data importers: handle string
+- xls, xlsx, ods and gnumeric data importers: handle string
   data (facility extended from CSV importer)
 - Remove obsolete Kalman-filter interface
 - Deprecate "=" as obsolete synonym for boolean "==" 
@@ -27,6 +27,8 @@ version 2017a, in progress
   accept the name of a scalar variable for the steps-ahead
   argument; also respect the last observation specification
   in all cases
+- Principal Components window in GUI: support selection of
+  a specific number of components to save as series
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
@@ -39,6 +41,8 @@ version 2017a, in progress
   on Windows when they contained NaN values
 - Fix bug: closing the function package browser while a
   package is running could cause a crash
+- Fix bug: possibly misaligned labels when doing a group-
+  means scatterplot using panel data
 - Update documentation for inlist() function
 - Update translated Command Reference PDF files for Italian
   and Portuguese
