@@ -1399,6 +1399,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, " csv_delim = %s\n", arg_from_delim(data_delim));
 	pprintf(prn, " csv_write_na = %s\n", get_csv_na_write_string());
 	pprintf(prn, " csv_read_na = %s\n", get_csv_na_read_string());
+	pprintf(prn, " display_digits = %d\n", get_gretl_digits());
     } else {
 	const char *dl = arg_from_delim(data_delim);
 
@@ -1562,6 +1563,9 @@ static int libset_query_settings (const char *s, PRN *prn)
     } else if (!strcmp(s, "csv_read_na")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		state->csv_read_na);
+    } else if (!strcmp(s, "display_digits")) {
+	pprintf(prn, "%s: integer, currently %d\n", s,
+		get_gretl_digits());
     } else if (!strcmp(s, "stopwatch")) {
 	err = 0;
     } else {
@@ -1664,7 +1668,7 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_initvals(setarg, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
 	    return set_matmask(setarg, dset, prn);
-	} else if (!strcmp(setobj, "gretl_digits")) {
+	} else if (!strcmp(setobj, "display_digits")) {
 	    if (gretl_function_depth() > 0) {
 		pprintf(prn, "'%s': cannot be set inside a function\n");
 		return E_INVARG;

@@ -116,7 +116,7 @@ enum {
     COPY_SCRIPT_ITEM,
     BUILD_ITEM,
     HMAP_ITEM,
-    MODEL_ITEM
+    DIGITS_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -266,11 +266,12 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 }
 
 /* Adjust the number of significant figures used in printing
-   coefficients and standard errors in a model viewer window.
-   Also record the number of digits for use via Copy.
+   coefficients and standard errors in a model viewer window,
+   or descriptive statistics in a "summary" window. Also record
+   the number of digits for use via Copy.
 */
 
-static void model_digits_callback (GtkWidget *w, windata_t *vwin)
+static void display_digits_callback (GtkWidget *w, windata_t *vwin)
 {
     int wdigits = widget_get_int(vwin->text, "digits");
     int save_digits = get_gretl_digits();
@@ -278,12 +279,23 @@ static void model_digits_callback (GtkWidget *w, windata_t *vwin)
 
     digits = wdigits > 0 ? wdigits : save_digits;
 
-    resp = spin_dialog(NULL, NULL, &digits,
-		       _("Number of digits to show for coefficients"),
-		       3, 6, 0, vwin_toplevel(vwin));
+    if (vwin->role == SUMMARY) {
+	/* desciptive statistics window */
+	Summary *s = vwin->data;
+	int dmax = (s->opt & OPT_S)? 4 : 5;
+ 
+	digits = (digits > dmax)? dmax : digits;
+	resp = spin_dialog(NULL, NULL, &digits,
+			   _("Number of digits to show for statistics"),
+			   3, dmax, 0, vwin_toplevel(vwin));
+    } else {
+	/* model window */
+	resp = spin_dialog(NULL, NULL, &digits,
+			   _("Number of digits to show for coefficients"),
+			   3, 6, 0, vwin_toplevel(vwin));
+    }
 
     if (resp != GRETL_CANCEL && digits != wdigits) {
-	MODEL *pmod = vwin->data;
 	const char *buf;
 	int save_digits;
 	PRN *prn;
@@ -291,7 +303,11 @@ static void model_digits_callback (GtkWidget *w, windata_t *vwin)
 	if (bufopen(&prn)) return;
 	save_digits = get_gretl_digits();
 	set_gretl_digits(digits);
-	printmodel(pmod, dataset, OPT_NONE, prn);
+	if (vwin->role == SUMMARY) {
+	    print_summary(vwin->data, dataset, prn);
+	} else {
+	    printmodel(vwin->data, dataset, OPT_NONE, prn);
+	}
 	buf = gretl_print_get_trimmed_buffer(prn);
 	textview_set_text(vwin->text, buf);
 	gretl_print_destroy(prn);
@@ -814,7 +830,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
-    { N_("Digits..."), NULL, G_CALLBACK(NULL), MODEL_ITEM }
+    { N_("Digits..."), NULL, G_CALLBACK(NULL), DIGITS_ITEM }
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -906,7 +922,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     }
 
     /* popup use only */
-    if (f == MODEL_ITEM) {
+    if (f == DIGITS_ITEM) {
 	return NULL;
     }
 
@@ -1276,8 +1292,9 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	func = G_CALLBACK(NULL);
 	if (item->flag == SPLIT_H_ITEM || item->flag == SPLIT_V_ITEM) {
 	    continue;
-	} else if (item->flag == MODEL_ITEM && vwin->role == VIEW_MODEL) {
-	    func = G_CALLBACK(model_digits_callback);
+	} else if (item->flag == DIGITS_ITEM &&
+		   (vwin->role == VIEW_MODEL || vwin->role == SUMMARY)) {
+	    func = G_CALLBACK(display_digits_callback);
 	} else if (vwin->role == EDIT_SCRIPT) {
 	    /* the script editor popup may have some special stuff
 	       added: don't clutter it up */

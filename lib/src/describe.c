@@ -4564,16 +4564,13 @@ void print_summary (const Summary *summ,
 		    const DATASET *dset,
 		    PRN *prn)
 {
-    int d = get_gretl_digits();
+    int dmax, d = get_gretl_digits();
     int len, maxlen = 0;
     int i, vi;
 
     if (summ->list == NULL || summ->list[0] == 0) {
 	return;
     }
-
-    /* backward compatibility */
-    d = d > 5 ? 5 : d;
 
     if (summ->weight_var > 0) {
 	pputc(prn, '\n');
@@ -4585,6 +4582,10 @@ void print_summary (const Summary *summ,
 	print_summary_single(summ, 0, 0, dset, prn);
 	return;
     }
+
+    /* number of significant figures to use */
+    dmax = (summ->opt & OPT_S)? 4 : 5;
+    d = d > dmax ? dmax : d;
     
     maxlen = max_namelen_in_list(summ->list, dset);
     len = maxlen <= 8 ? 10 : (maxlen + 1);
@@ -4609,8 +4610,6 @@ void print_summary (const Summary *summ,
 	    N_("Min"),
 	    N_("Max"),
 	};
-
-	d = 4; /* is this OK? */
 
 	pprintf(prn, "%*s%*s%*s%*s%*s%*s\n", len, " ",
 		UTF_WIDTH(_(h[0]), 11), _(h[0]),

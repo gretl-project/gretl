@@ -2013,6 +2013,8 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
+    } else if (role == SUMMARY) {
+	widget_set_int(vwin->text, "digits", get_gretl_digits());
     }
 
     if (role == BUILD_PKG) {
