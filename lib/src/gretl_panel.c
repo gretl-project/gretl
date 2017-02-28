@@ -5441,6 +5441,10 @@ static int maybe_use_strval_series (DATASET *dset,
 
     series_table_get_strings(st, &ns);
 
+#if 0
+    fprintf(stderr, "maybe_use_strval_series (%s, ID %d, ns=%d)\n", vname, v, ns);
+#endif    
+
     if (ns < ng) {
 	gretl_errmsg_sprintf("The series %s holds %d strings but %d "
 			     "are needed", vname, ns, ng);

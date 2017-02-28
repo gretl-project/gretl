@@ -6244,6 +6244,7 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 	double yit, ysum = 0.0;
 	double xit, xsum = 0.0;
 	int ny = 0, nx = 0;
+	int s0 = s;
 
 	for (t=0; t<T; t++) {
 	    yit = dset->Z[yvar][s];
@@ -6261,7 +6262,7 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 	gset->Z[1][i] = ny == 0 ? NADBL : ysum / ny;
 	gset->Z[2][i] = nx == 0 ? NADBL : xsum / nx;
 	if (gset->S != NULL) {
-	    strcpy(gset->S[i], get_panel_group_name(dset, s));
+	    strcpy(gset->S[i], get_panel_group_name(dset, s0));
 	}
     }
 
