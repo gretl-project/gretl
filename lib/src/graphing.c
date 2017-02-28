@@ -5593,7 +5593,10 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	fputs("set xzeroaxis\n", fp);
     }
 
-    print_x_range(gi, fp);
+    if (gi->x != NULL) {
+	/* FIXME case of gi->x == NULL? */
+	print_x_range(gi, fp);
+    }
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
     gretl_push_c_numeric_locale();
