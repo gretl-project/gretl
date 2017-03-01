@@ -22,7 +22,9 @@
 
 void edit_function_package (const char *fname);
 
-void edit_new_function_package (gchar *pkgname);
+void edit_new_function_package (gchar *pkgname,
+				char **pubnames, int npub,
+				char **privnames, int npriv);
 
 int save_function_package (const char *fname, gpointer p);
 
@@ -54,7 +56,8 @@ gboolean edit_specified_package (const char *fname);
 
 void upload_specified_package (const char *fname);
 
-void revise_function_package (void *p);
+void revise_function_package (void *p, char **pubnames, int npub,
+			      char **privnames, int npriv);
 
 int query_package_editor (GtkWidget *w, const char *pkgname);
 

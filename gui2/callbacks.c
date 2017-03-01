@@ -392,12 +392,12 @@ void selector_callback (GtkAction *action, gpointer data)
     ci = selector_callback_code(s);
 
     if (ci == COINT || ci == COINT2) {
-	selection_dialog(ci, _("gretl: cointegration test"), do_coint);
+	selection_dialog(ci, _("gretl: cointegration test"), NULL, do_coint);
     } else if (ci == VAR || ci == VECM) {
 	selection_dialog(ci, (ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
-			 do_vector_model);
+			 NULL, do_vector_model);
     } else if (ci == VLAGSEL) {
-	selection_dialog(ci, _("gretl: VAR lag selection"), do_vector_model);
+	selection_dialog(ci, _("gretl: VAR lag selection"), NULL, do_vector_model);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
 	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
 	       ci == GR_FBOX) {
@@ -426,7 +426,7 @@ void selector_callback (GtkAction *action, gpointer data)
 	default:
 	    return;
 	}
-	selection_dialog(ci, _("gretl: define graph"), selfunc);
+	selection_dialog(ci, _("gretl: define graph"), NULL, selfunc);
     } else if (ci == ADD || ci == OMIT) {
 	simple_selection_for_viewer(ci, _("gretl: model tests"), 
 				    do_add_omit, vwin);
@@ -451,7 +451,7 @@ void selector_callback (GtkAction *action, gpointer data)
 	
 	strcpy(title, "gretl: ");
 	strcat(title, (ci == LOESS)? _("Loess") : _("Nadaraya-Watson"));
-	selection_dialog(ci, title, do_nonparam_model);
+	selection_dialog(ci, title, NULL, do_nonparam_model);
     } else {
 	errbox("selector_callback: code was not recognized");
     }
@@ -597,7 +597,7 @@ void menu_boxplot_callback (int varnum)
     } else if (ret == 2) {
 	selector_set_varnum(varnum);
 	selection_dialog(GR_FBOX, _("gretl: define graph"), 
-			 do_factorized_boxplot);
+			 NULL, do_factorized_boxplot);
     }
 }
 

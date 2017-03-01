@@ -1621,41 +1621,22 @@ static char **get_function_names (const int *list, int *err)
     return names;
 }
 
-/* Convert from lists of functions by index numbers, @publist and
-   @privlist, to arrays of public and private functions by name.
-   Record in the @changed location whether or not there's any change
-   relative to the existing lists of function names in @finfo.
-*/
-
 static int finfo_reset_function_names (function_info *finfo,
-				       const int *pub_ids,
-				       const int *priv_ids,
+				       char **pubnames, int npub,
+				       char **privnames, int npriv,
 				       int *changed)
 {
-    char **pubnames = NULL;
-    char **privnames = NULL;
-    int npub = pub_ids[0];
-    int npriv = (priv_ids == NULL)? 0 : priv_ids[0];
-    int err = 0;
-
     *changed = 0;
 
-    pubnames = get_function_names(pub_ids, &err);
-    if (!err && npriv > 0) {
-	privnames = get_function_names(priv_ids, &err);
-    }
-
-    if (!err) {
-	if (npub != finfo->n_pub || npriv != finfo->n_priv) {
-	    /* we know that something has changed */
-	    *changed = 1;
-	} else {
-	    /* we'll have to check the arrays for any changes */
-	    *changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
-	    if (*changed == 0 && npriv > 0) {
-		*changed = strings_array_cmp(privnames, finfo->privnames,
-					     npriv);
-	    }
+    if (npub != finfo->n_pub || npriv != finfo->n_priv) {
+	/* we know that something has changed */
+	*changed = 1;
+    } else {
+	/* we'll have to check the arrays for any changes */
+	*changed = strings_array_cmp(pubnames, finfo->pubnames, npub);
+	if (*changed == 0 && npriv > 0) {
+	    *changed = strings_array_cmp(privnames, finfo->privnames,
+					 npriv);
 	}
     }
 
@@ -1663,7 +1644,7 @@ static int finfo_reset_function_names (function_info *finfo,
 	/* trash the new function-name arrays */
 	strings_array_free(pubnames, npub);
 	strings_array_free(privnames, npriv);
-    } else if (!err) {
+    } else {
 	/* replace the old function-name arrays */
 	strings_array_free(finfo->pubnames, finfo->n_pub);
 	finfo->pubnames = pubnames;
@@ -1674,7 +1655,7 @@ static int finfo_reset_function_names (function_info *finfo,
 	finfo->active = finfo->pubnames[0];
     }
 
-    return err;
+    return 0;
 }
 
 static int finfo_set_function_names (function_info *finfo,
@@ -4757,69 +4738,24 @@ int set_package_pdfname (const char *fname, gpointer p)
     return 0;
 }
 
-static int get_lists_from_selector (int **l1, int **l2)
-{
-    gchar *liststr = get_selector_storelist();
-    int err = 0;
-
-    if (liststr == NULL) {
-	err = E_DATA;
-    } else {
-	int *list = gretl_list_from_string(liststr, &err);
-    
-	if (list != NULL) {
-	    if (gretl_list_has_separator(list)) {
-		err = gretl_list_split_on_separator(list, l1, l2);
-	    } else {
-		*l1 = list;
-		list = NULL;
-	    }
-	    free(list);
-	}
-	g_free(liststr);
-    }
-
-    return err;
-}
-
 /* Called from function selection dialog: a name has been specified
    anda set of functions has been selected -- now we need to add info
    on author, version, etc, etc.
 */
 
-void edit_new_function_package (gchar *pkgname)
+void edit_new_function_package (gchar *pkgname,
+				char **pubnames, int npub,
+				char **privnames, int npriv)
 {
-    function_info *finfo;
-    int *publist = NULL;
-    int *privlist = NULL;
-    int err = 0;
+    function_info *finfo = finfo_new();
 
-    err = get_lists_from_selector(&publist, &privlist);
-    if (err) {
-	return;
-    }
+    if (finfo != NULL) {
+	finfo->ininame = pkgname;
+	finfo->pubnames = pubnames;
+	finfo->n_pub = npub;
+	finfo->privnames = privnames;
+	finfo->n_priv = npriv;
 
-    finfo = finfo_new();
-    if (finfo == NULL) {
-	return;
-    }
-
-    finfo->ininame = pkgname;
-
-    if (!err) {
-	err = finfo_set_function_names(finfo, publist, privlist);
-	if (err) {
-	    gretl_errmsg_set("Couldn't find the requested functions");
-	}
-    }
-
-    free(publist);
-    free(privlist);
-
-    if (err) {
-	gui_errmsg(err);
-	free(finfo);
-    } else {
 	/* set up dialog to do the actual editing */
 	finfo_dialog(finfo);
     }
@@ -4828,32 +4764,23 @@ void edit_new_function_package (gchar *pkgname)
 /* callback from GUI selector to add/remove functions 
    when editing a package */
 
-void revise_function_package (void *p)
+void revise_function_package (void *p, char **pubnames, int npub,
+			      char **privnames, int npriv)
 {
     function_info *finfo = p;
-    int *pub_ids = NULL;
-    int *priv_ids = NULL;
     int changed = 0;
     int err = 0;
 
-    err = get_lists_from_selector(&pub_ids, &priv_ids);
-    if (err) {
-	return;
-    }
-
-#if PKG_DEBUG
-    printlist(pub_ids, "new pub_ids");
-    printlist(priv_ids, "new priv_ids");
-#endif
-
-    fprintf(stderr, "original: finfo->n_pub=%d, finfo->n_priv=%d\n", 
+    fprintf(stderr, "original: n_pub=%d, n_priv=%d\n",
 	    finfo->n_pub, finfo->n_priv);
 
-    err = finfo_reset_function_names(finfo, pub_ids, priv_ids,
+    err = finfo_reset_function_names(finfo,
+				     pubnames, npub,
+				     privnames, npriv,
 				     &changed);
 
-    fprintf(stderr, "revised: finfo->n_pub=%d, finfo->n_priv=%d\n", 
-	    finfo->n_pub, finfo->n_priv);
+    fprintf(stderr, "revised: n_pub=%d, n_priv=%d (changed=%d)\n",
+	    finfo->n_pub, finfo->n_priv, changed);
 
     if (!err && changed) {
 	depopulate_combo_box(GTK_COMBO_BOX(finfo->codesel));
@@ -4869,9 +4796,6 @@ void revise_function_package (void *p)
 	}
 	finfo_set_modified(finfo, TRUE);
     }
-
-    free(pub_ids);
-    free(priv_ids);
 }
 
 static void finfo_set_menuwin (function_info *finfo)

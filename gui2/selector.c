@@ -303,7 +303,7 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
 static gint listvar_midas_click (GtkWidget *widget, GdkEventButton *event, 
 				 selector *sr);
 static int list_show_var (int v, int ci, int show_lags);
-static void available_functions_list (selector *sr, void *p);
+static void available_functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
@@ -512,7 +512,7 @@ void selector_set_varnum (int v)
 
 void modelspec_dialog (int ci)
 {
-    selection_dialog(ci, _("gretl: specify model"), do_model);
+    selection_dialog(ci, _("gretl: specify model"), NULL, do_model);
 }
 
 static int varnum_from_keystring (MODEL *pmod, const char *key)
@@ -893,7 +893,7 @@ void selector_from_model (windata_t *vwin)
 	}
 
 	selection_dialog(ci, (ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
-			 do_vector_model);
+			 NULL, do_vector_model);
     } else if (ci == SYSTEM) {
 	revise_system_model(ptr, vwin_toplevel(vwin));
     }
@@ -3861,10 +3861,6 @@ static void compose_cmdlist (selector *sr)
 	warnbox(_("You must select a dependent variable"));
 	sr->error = 1;
 	return;
-    } else if (FNPKG_CODE(sr->ci) && rows < 1) {
-	warnbox(_("You must specify a public interface"));
-	sr->error = 1;
-	return;
     } else if (MODEL_NEEDS_X(sr->ci) && rows < 1) {
 	warnbox(_("You must specify an independent variable"));
 	sr->error = 1;
@@ -3889,7 +3885,7 @@ static void compose_cmdlist (selector *sr)
     if (sr->ci == MIDASREG) {
 	/* read special material from lower right */
 	get_midas_specs(sr);
-    } else if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
+    } else if (USE_ZLIST(sr->ci) || USE_VECXLIST(sr->ci)) {
 	/* cases with a (possibly optional) secondary RHS list */
 	rows = varlist_row_count(sr, SR_RVARS2, &realrows);
 	if (rows > 0) {
@@ -6647,7 +6643,10 @@ static void lag_selector_button (selector *sr)
 
 static void selector_doit (GtkWidget *w, selector *sr)
 {
-    compose_cmdlist(sr);
+    if (!FNPKG_CODE(sr->ci)) {
+	/* we don't need this when gathering function names */
+	compose_cmdlist(sr);
+    }
 
     if (sr->error == 0) {
 	int err = 0;
@@ -7085,7 +7084,8 @@ static void no_midas_data (GtkWidget *parent)
     gtk_widget_destroy(dialog);
 }
 
-selector *selection_dialog (int ci, const char *title, int (*callback)())
+selector *selection_dialog (int ci, const char *title,
+			    void *data, int (*callback)())
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -7110,7 +7110,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
 	return NULL;
     }
 
-    selector_init(sr, ci, title, callback, NULL, NULL, SELECTOR_FULL);
+    selector_init(sr, ci, title, callback, NULL, data, SELECTOR_FULL);
     selection_dialog_add_top_label(sr);
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
@@ -7124,7 +7124,7 @@ selector *selection_dialog (int ci, const char *title, int (*callback)())
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     if (FNPKG_CODE(ci)) {
-	available_functions_list(sr, NULL);
+	available_functions_list(sr);
     } else {
 	for (i=0; i<dataset->v; i++) {
 	    if (i == 1 && (MODEL_CODE(ci) || VEC_CODE(ci))) {
@@ -7386,7 +7386,7 @@ static int add_omit_list (gpointer p, selector *sr)
     return nvars;
 }
 
-static void available_functions_list (selector *sr, void *p)
+static void available_functions_list (selector *sr)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -7399,7 +7399,7 @@ static void available_functions_list (selector *sr, void *p)
 
     function_names_init();
     
-    while ((fnname = next_available_function_name(p, &idx)) != NULL) {
+    while ((fnname = next_available_function_name(sr->data, &idx)) != NULL) {
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter,
 			   COL_ID, idx, COL_LAG, 0,
@@ -7844,15 +7844,59 @@ void set_selector_storelist (const char *s)
     }
 }
 
+static int get_selected_function_names (selector *sr,
+					char ***S1, int *n1,
+					char ***S2, int *n2)
+{
+    GtkTreeModel *src;
+    GtkTreeIter iter;
+    gchar *fname;
+
+    /* public function names are in top right list */
+    src = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
+    if (gtk_tree_model_get_iter_first(src, &iter)) {
+	do {
+	    gtk_tree_model_get(src, &iter, COL_NAME, &fname, -1);
+	    strings_array_add(S1, n1, gretl_strdup(fname));
+	    g_free(fname);
+        } while (gtk_tree_model_iter_next(src, &iter));
+    }
+
+    if (*n1 == 0) {
+	warnbox(_("You must specify a public interface"));
+	return 1;
+    }
+
+    /* private function names are in lower right list */
+    src = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
+    gtk_tree_model_get_iter_first(src, &iter);
+    if (gtk_tree_model_get_iter_first(src, &iter)) {
+	do {
+	    gtk_tree_model_get(src, &iter, COL_NAME, &fname, -1);
+	    strings_array_add(S2, n2, gretl_strdup(fname));
+	    g_free(fname);
+        } while (gtk_tree_model_iter_next(src, &iter));
+    }
+
+    return 0;
+}
+
 static int pkg_add_remove_callback (selector *sr)
 {
     void *p = sr->data;
+    char **pubnames = NULL;
+    char **privnames = NULL;
+    int npub = 0;
+    int npriv = 0;
+    int err;
 
-    set_selector_storelist(sr->cmdlist);
-    gtk_widget_destroy(sr->dlg);
-    revise_function_package(p);
+    err = get_selected_function_names(sr, &pubnames, &npub,
+				      &privnames, &npriv);
+    if (!err) {
+	revise_function_package(p, pubnames, npub, privnames, npriv);
+    }
 
-    return 0;
+    return err;
 }
 
 static int check_pkgname (const char *name,
@@ -7886,36 +7930,36 @@ static int check_pkgname (const char *name,
 static int functions_selected_callback (selector *sr)
 {
     GtkWidget *entry = sr->extra[0];
-    gchar *pkgname;
+    char **pubnames = NULL;
+    char **privnames = NULL;
+    int npub = 0;
+    int npriv = 0;
     const char *s;
+    int err = 0;
     
-    if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
-	/* nothing selected (can't happen?) */
-	return 0;
-    }
-
     s = gtk_entry_get_text(GTK_ENTRY(entry));
 
     if (s == NULL || *s == '\0' || check_pkgname(s, sr->dlg)) {
 	gtk_widget_grab_focus(entry);
-	return 1;
+	err = 1;
+    } else {
+	err = get_selected_function_names(sr, &pubnames, &npub,
+					  &privnames, &npriv);
     }
 
-    if (sr->cmdlist != NULL) {
-	set_selector_storelist(sr->cmdlist);
+    if (!err) {
+	gchar *pkgname = g_strdup(s);
+
+	if (has_suffix(pkgname, ".gfn")) {
+	    char *p = strrchr(pkgname, '.');
+
+	    *p = '\0';
+	}
+	edit_new_function_package(pkgname, pubnames, npub,
+				  privnames, npriv);
     }
 
-    pkgname = g_strdup(s);
-    if (has_suffix(pkgname, ".gfn")) {
-	char *p = strrchr(pkgname, '.');
-
-	*p = '\0';
-    }
-    
-    gtk_widget_destroy(sr->dlg);
-    edit_new_function_package(pkgname);
-
-    return 0;
+    return err;
 }
 
 static int data_export_selection_callback (selector *sr)
@@ -7996,14 +8040,13 @@ void functions_selection_wrapper (GtkWidget *parent)
     int err;
 
     set_selector_storelist(NULL);
-
     err = no_user_functions_check(parent);
 
     if (!err) {
 	selector *sr;
 
 	sr = selection_dialog(SAVE_FUNCTIONS, _("Select functions"), 
-			      functions_selected_callback);
+			      NULL, functions_selected_callback);
 	if (sr != NULL) {
 	    selector_set_blocking(sr, 1);
 	}
@@ -8027,8 +8070,11 @@ void add_remove_functions_dialog (char **pubnames, int npub,
 	title = _("Edit package list");
     }
 
-    sr = selection_dialog(EDIT_FUNCTIONS, title, 
-			  pkg_add_remove_callback); 
+    /* to start with, set @pkg as sr->data to enable the correct
+       LHS listing of functions for the package */
+
+    sr = selection_dialog(EDIT_FUNCTIONS, title,
+			  pkg, pkg_add_remove_callback);
 
     if (sr != NULL) {
 	GtkTreeModel *model;
@@ -8036,6 +8082,7 @@ void add_remove_functions_dialog (char **pubnames, int npub,
 	GtkTreeIter iter;
 	int i, idx;
 
+	/* switch sr->data to point to the current 'editor' */
 	sr->data = finfo;
 
 	/* put current @pubnames into top right list box */
@@ -8071,9 +8118,6 @@ void add_remove_functions_dialog (char **pubnames, int npub,
 		}
 	    }
 	}
-
-	/* put names of available functions on the left */
-	available_functions_list(sr, pkg);
 	
 	selector_set_blocking(sr, 1);
     }    

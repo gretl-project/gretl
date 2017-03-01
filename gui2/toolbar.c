@@ -1364,7 +1364,7 @@ static void tbar_xy_graph (void)
 	    plot_from_selection(GR_XY);
 	} else {
 	    selection_dialog(GR_XY, _("gretl: define graph"), 
-			     do_graph_from_selector);
+			     NULL, do_graph_from_selector);
 	}
     } else {
 	warnbox(_("Please open a data file first"));
@@ -1374,7 +1374,7 @@ static void tbar_xy_graph (void)
 static void tbar_model (void)
 {
     if (data_status) {
-	selection_dialog(OLS, _("gretl: specify model"), do_model);
+	selection_dialog(OLS, _("gretl: specify model"), NULL, do_model);
     } else {
 	warnbox(_("Please open a data file first"));
     }

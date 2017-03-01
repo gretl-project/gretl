@@ -51,7 +51,8 @@ struct gui_midas_spec_ {
 
 void clear_selector (void);
 
-selector *selection_dialog (int ci, const char *title, int (*callback)());
+selector *selection_dialog (int ci, const char *title,
+			    void *data, int (*callback)());
 
 selector *simple_selection (int ci, const char *title, int (*callback)(), 
 			    GtkWidget *parent);
