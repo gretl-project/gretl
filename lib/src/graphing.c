@@ -1863,25 +1863,39 @@ static void print_axis_label (char axis, const char *s, FILE *fp)
     }
 }
 
-static void literal_line_out (const char *s, int len, FILE *fp)
+static int literal_line_out (const char *s, int len, FILE *fp)
 {
     char *q, *p = malloc(len + 1);
+    int n, warn = 0;
 
     if (p != NULL) {
 	*p = '\0';
 	strncat(p, s, len);
 	q = p + strspn(p, " \t");
-	if (*q != '\0') {
-	    fprintf(fp, "%s\n", q);
+	n = strlen(q);
+	if (n > 0) {
+	    if (!strncmp(q, "set term", 8)) {
+		gretl_warnmsg_set("'set term' should not be used in a gnuplot "
+				  "literal block");
+		warn = 1;
+	    } else {
+		fputs(q, fp);
+		if (q[n-1] != '\n') {
+		    fputc('\n', fp);
+		}
+	    }
 	}
 	free(p);
     }
+
+    return warn;
 }
 
-static void gnuplot_literal_from_string (const char *s,
-					 FILE *fp)
+static int gnuplot_literal_from_string (const char *s,
+					FILE *fp)
 {
     const char *p;
+    int wi, warn = 0;
 
     s += strspn(s, " \t{");
     p = s;
@@ -1890,13 +1904,18 @@ static void gnuplot_literal_from_string (const char *s,
 
     while (*s && *s != '}') {
 	if (*s == ';') {
-	    literal_line_out(p, s - p, fp);
+	    wi = literal_line_out(p, s - p, fp);
+	    if (wi && !warn) {
+		warn = 1;
+	    }
 	    p = s + 1;
 	}
 	s++;
     }
 
     fputs("# end literal lines\n", fp);
+
+    return warn;
 }
 
 static char **literal_strings_from_opt (int ci, int *ns,
@@ -1929,10 +1948,11 @@ static char **literal_strings_from_opt (int ci, int *ns,
     return S;
 }
 
-static void gnuplot_literal_from_opt (int ci, FILE *fp)
+static int gnuplot_literal_from_opt (int ci, FILE *fp)
 {
-    char **S;
+    char *s, **S;
     int ns, real_ns;
+    int warn = 0;
 
     S = literal_strings_from_opt(ci, &ns, &real_ns);
 
@@ -1942,28 +1962,46 @@ static void gnuplot_literal_from_opt (int ci, FILE *fp)
 	fputs("# start literal lines\n", fp);
 	for (i=0; i<ns; i++) {
 	    if (S[i] != NULL) {
-		n = strlen(S[i]);
+		s = S[i];
+		s += strspn(s, " \t");
+		n = strlen(s);
 		if (n > 0) {
-		    fputs(S[i], fp);
-		    if (S[i][n-1] != '\n') {
-			fputc('\n', fp);
+		    if (!strncmp(s, "set term", 8)) {
+			gretl_warnmsg_set("'set term' should not be used in a gnuplot "
+					  "literal block");
+			warn = 1;
+		    } else {
+			fputs(s, fp);
+			if (s[n-1] != '\n') {
+			    fputc('\n', fp);
+			}
 		    }
 		}
 	    }
 	}
 	fputs("# end literal lines\n", fp);
     }
+
+    return warn;
 }
 
-void print_gnuplot_literal_lines (const char *s,
-				  int ci, gretlopt opt,
-				  FILE *fp)
+int print_gnuplot_literal_lines (const char *s,
+				 int ci, gretlopt opt,
+				 FILE *fp)
 {
+    int warn = 0;
+
     if (s != NULL && *s != '\0') {
-	gnuplot_literal_from_string(s, fp);
+	warn = gnuplot_literal_from_string(s, fp);
     } else if (opt & OPT_K) {
-	gnuplot_literal_from_opt(ci, fp);
+	warn = gnuplot_literal_from_opt(ci, fp);
     }
+
+    if (warn) {
+	set_gretl_warning(1);
+    }
+
+    return warn;
 }
 
 static void print_extra_literal_lines (char **S,

@@ -2902,6 +2902,19 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 		}
 	    }
 	    continue;
+	} else if (!strncmp(gpline, "# start literal lines", 21) &&
+		   spec->literal == NULL) {
+	    for (i=0; ; i++) {
+		if (!bufgets(gpline, MAXLEN - 1, buf)) {
+		    errbox(_("Plot file is corrupted"));
+		} else if (!strncmp(gpline, "# end literal lines", 19)) {
+		    break;
+		} else {
+		    top_n_tail(gpline, 0, NULL);
+		    strings_array_add(&spec->literal, &spec->n_literal,
+				      gpline);
+		}
+	    }
 	}
 
 	if (strstr(gpline, "automatic fit")) {
