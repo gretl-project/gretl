@@ -3,14 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
-# Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010, 2013, 2014, 2015, 2016.
+# Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010, 2013, 2014, 2015, 2016, 2017.
 # Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-02-10 09:50-0500\n"
-"PO-Revision-Date: 2016-12-22 22:37+0100\n"
+"PO-Revision-Date: 2017-03-01 22:37+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -1875,17 +1875,15 @@ msgstr "Variável peso: %s\n"
 #. TRANSLATORS: 'S.D.' means Standard Deviation
 #: lib/src/describe.c:4608 gui2/guiprint.c:611 gui2/guiprint.c:984
 msgid "S.D."
-msgstr ""
+msgstr "D.P."
 
 #: lib/src/describe.c:4609 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Min"
-msgstr "Principal"
+msgstr "Min"
 
 #: lib/src/describe.c:4610 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Max"
-msgstr "Máximo"
+msgstr "Máx"
 
 #: lib/src/describe.c:4642 gui2/guiprint.c:691
 msgid "Std. Dev."
@@ -2376,14 +2374,14 @@ msgstr ""
 "utilizador"
 
 #: lib/src/geneval.c:8225
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %s but got %s"
-msgstr "Esperado %s mas encontrou-se %s"
+msgstr "Esperado %s mas obteve-se %s"
 
 #: lib/src/geneval.c:8229
-#, fuzzy, c-format
+#, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "O comprimento da série não é o mesmo que o do conjunto de dados"
+msgstr "O tipo de série %s não corresponde ao tipo de vetor %s"
 
 #: lib/src/geneval.c:8753 lib/src/geneval.c:14778 lib/src/geneval.c:14786
 #, c-format
@@ -2391,14 +2389,13 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : não está implementado para este tipo"
 
 #: lib/src/geneval.c:8789
-#, fuzzy
 msgid "Invalid list element"
-msgstr "Argumento inválido"
+msgstr "Elemento de lista inválido"
 
 #: lib/src/geneval.c:8895
-#, fuzzy, c-format
+#, c-format
 msgid "The operator '%s' is not valid in this context"
-msgstr "O símbolo '%s' não é válido neste contexto\n"
+msgstr "O operador '%s' não é válido neste contexto"
 
 #: lib/src/geneval.c:11469
 msgid "array: no type was specified"
@@ -2495,9 +2492,8 @@ msgid "'%s' : only defined for matrices"
 msgstr "'%s' : apenas definido para matrizes"
 
 #: lib/src/geneval.c:15885
-#, fuzzy
 msgid "Invalid left-hand side expression"
-msgstr "Expressão incompleta\n"
+msgstr "Lado esquerdo da expressão inválido"
 
 #: lib/src/geneval.c:16463
 msgid "Bare declarations are not allowed here"
@@ -2668,7 +2664,7 @@ msgstr "Observação vazia []\n"
 
 #: lib/src/genlex.c:1612
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
-msgstr ""
+msgstr "uso obsoleto de \"=\" como teste Booleano: por favor use \"==\""
 
 #: lib/src/genlex.c:1781
 #, c-format
@@ -2711,9 +2707,9 @@ msgid "Generated matrix %s"
 msgstr "Matriz %s gerada"
 
 #: lib/src/genmain.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Modified list %s"
-msgstr "Matriz %s modificada"
+msgstr "Lista %s modificada"
 
 #: lib/src/genmain.c:118
 #, c-format
@@ -2726,9 +2722,9 @@ msgid "Generated list %s"
 msgstr "Gerada a lista %s"
 
 #: lib/src/genmain.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "Modified string %s"
-msgstr "Matriz %s modificada"
+msgstr "Texto %s modificado"
 
 #: lib/src/genmain.c:126
 #, c-format
@@ -7902,7 +7898,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 22 de dezembro de 2016."
+"Tradução de 1 de março de 2017."
 
 #: gui2/about.c:203
 msgid "News"
@@ -8293,9 +8289,8 @@ msgid "Runs test"
 msgstr "Teste de Aleatoriedade"
 
 #: gui2/calculator.c:2561
-#, fuzzy
 msgid "Correlation"
-msgstr "Correlações"
+msgstr "Correlação"
 
 #: gui2/calculator.c:2594
 msgid "Sign test"
@@ -13716,14 +13711,12 @@ msgid "forecast of %s"
 msgstr "predição de %s"
 
 #: gui2/library.c:668
-#, fuzzy
 msgid "Show main statistics"
-msgstr "Estatísticas Descritivas"
+msgstr "Mostrar as estatísticas principais"
 
 #: gui2/library.c:669
-#, fuzzy
 msgid "Show full statistics"
-msgstr "Estatísticas Descritivas"
+msgstr "Mostrar todas as estatísticas"
 
 #: gui2/library.c:712 gui2/library.c:742 gui2/library.c:900
 #: gui2/menustate.c:668
@@ -16155,7 +16148,7 @@ msgstr "Italiano"
 
 #: gui2/settings.c:1132
 msgid "Portuguese"
-msgstr ""
+msgstr "Português"
 
 #: gui2/settings.c:1298 plugin/tramo_options.c:371
 msgid "General"
@@ -16653,7 +16646,7 @@ msgstr "LaTeX"
 
 #: gui2/toolbar.c:766
 msgid "Heatmap"
-msgstr ""
+msgstr "Heatmap"
 
 #: gui2/toolbar.c:767
 msgid "Reformat..."
