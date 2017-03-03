@@ -4335,22 +4335,32 @@ int fractint (int varno, int order, const DATASET *dset,
 
 static void printf15 (double x, int d, PRN *prn)
 {
+    pputc(prn, ' ');
     if (na(x)) {
-	pputc(prn, ' ');
 	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 14), _("NA"));
+    } else if (x > 999 && x < 100000) {
+	int p = 1 + floor(log10(x));
+
+	d -= p;
+	if (d < 0) d = 0;
+	pprintf(prn, "%14.*f", d, x);	
     } else {
-	pputc(prn, ' ');
 	pprintf(prn, "%#14.*g", d, x);
     }
 }
 
 static void printf11 (double x, int d, PRN *prn)
 {
+    pputc(prn, ' ');
     if (na(x)) {
-	pputc(prn, ' ');
 	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 10), _("NA"));
+    } else if (x > 999 && x < 100000) {
+	int p = 1 + floor(log10(x));
+
+	d -= p;
+	if (d < 0) d = 0;
+	pprintf(prn, "%10.*f", d, x);
     } else {
-	pputc(prn, ' ');
 	pprintf(prn, "%#10.*g", d, x);
     }
 }
