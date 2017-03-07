@@ -6858,7 +6858,7 @@ double clogit_fi (int T, int k, gretl_matrix *z,
  * @n: length of @y.
  * @err: location to receive error code on failure.
  *
- * Calculates the empiritical CDF of @y, skipping any missing values.
+ * Calculates the empirical CDF of @y, skipping any missing values.
  *
  * Returns: on successful completion, a matrix with row
  * dimension equal to the number of unique values in @y, and two
