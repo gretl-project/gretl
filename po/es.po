@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-03-03 08:29-0500\n"
-"PO-Revision-Date: 2017-01-26 11:28+0100\n"
+"PO-Revision-Date: 2017-03-07 16:51+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -102,7 +102,6 @@ msgid "with constant and trend"
 msgstr "con constante y tendencia"
 
 #: lib/src/adf_kpss.c:596
-#, fuzzy
 msgid "with constant, linear and quadratic trend"
 msgstr "con constante y tendencia cuadrática"
 
@@ -1875,17 +1874,15 @@ msgstr "Variable de ponderaciones: %s\n"
 #. TRANSLATORS: 'S.D.' means Standard Deviation
 #: lib/src/describe.c:4609 gui2/guiprint.c:611 gui2/guiprint.c:984
 msgid "S.D."
-msgstr ""
+msgstr "D. T."
 
 #: lib/src/describe.c:4610 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Min"
-msgstr "Principal"
+msgstr "Mín"
 
 #: lib/src/describe.c:4611 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Max"
-msgstr "Máximo"
+msgstr "Máx"
 
 #: lib/src/describe.c:4641 gui2/guiprint.c:691
 msgid "Std. Dev."
@@ -2375,14 +2372,16 @@ msgstr ""
 "usuario"
 
 #: lib/src/geneval.c:8232
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %s but got %s"
-msgstr "se esperaba %s pero se encontró %s"
+msgstr "Se esperaba %s  pero se encontró %s"
 
 #: lib/src/geneval.c:8236
-#, fuzzy, c-format
+#, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "El tamaño de la serie no casa con el del conjunto de datos"
+msgstr ""
+"El tipo que se ha especificado %s no se corresponde con el tipo de "
+"estructura(array) %s"
 
 #: lib/src/geneval.c:8760 lib/src/geneval.c:14835 lib/src/geneval.c:14843
 #, c-format
@@ -2390,14 +2389,13 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : no está preparado para este tipo"
 
 #: lib/src/geneval.c:8796
-#, fuzzy
 msgid "Invalid list element"
-msgstr "argumento no válido"
+msgstr "elemento de lista no válido"
 
 #: lib/src/geneval.c:8902
-#, fuzzy, c-format
+#, c-format
 msgid "The operator '%s' is not valid in this context"
-msgstr "El símbolo '%s' no es válido en este contexto\n"
+msgstr "El operador '%s' no es válido en este contexto"
 
 #: lib/src/geneval.c:11524
 msgid "array: no type was specified"
@@ -2494,9 +2492,8 @@ msgid "'%s' : only defined for matrices"
 msgstr "'%s' : sólo está definido para matrices"
 
 #: lib/src/geneval.c:15942
-#, fuzzy
 msgid "Invalid left-hand side expression"
-msgstr "Expresión incompleta\n"
+msgstr "Expresión del lado izquierdo no válida"
 
 #: lib/src/geneval.c:16520
 msgid "Bare declarations are not allowed here"
@@ -2670,6 +2667,8 @@ msgstr "Observación vacía []\n"
 #: lib/src/genlex.c:1614
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
 msgstr ""
+"la utilización de  \"=\" como condición booleana está obsoleta, por favor "
+"use \"==\""
 
 #: lib/src/genlex.c:1783
 #, c-format
@@ -2712,9 +2711,9 @@ msgid "Generated matrix %s"
 msgstr "Se ha generado la matriz %s"
 
 #: lib/src/genmain.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Modified list %s"
-msgstr "Se ha modificado la matriz %s"
+msgstr "Se ha modificado la lista %s"
 
 #: lib/src/genmain.c:118
 #, c-format
@@ -2727,9 +2726,9 @@ msgid "Generated list %s"
 msgstr "Se ha generado la lista %s"
 
 #: lib/src/genmain.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "Modified string %s"
-msgstr "Se ha modificado la matriz %s"
+msgstr "Se ha modificado la cadena de caracteres %s"
 
 #: lib/src/genmain.c:126
 #, c-format
@@ -8316,9 +8315,8 @@ msgid "Runs test"
 msgstr "Contraste de rachas"
 
 #: gui2/calculator.c:2561
-#, fuzzy
 msgid "Correlation"
-msgstr "Correlaciones"
+msgstr "Correlación"
 
 #: gui2/calculator.c:2594
 msgid "Sign test"
@@ -13745,14 +13743,12 @@ msgid "forecast of %s"
 msgstr "predicción de %s"
 
 #: gui2/library.c:669
-#, fuzzy
 msgid "Show main statistics"
-msgstr "Estadísticos principales"
+msgstr "Mostrar los estadísticos más importantes"
 
 #: gui2/library.c:670
-#, fuzzy
 msgid "Show full statistics"
-msgstr "Estadísticos principales"
+msgstr "Mostrar todos los estadísticos"
 
 #: gui2/library.c:713 gui2/library.c:743 gui2/library.c:901
 #: gui2/menustate.c:668
@@ -16191,7 +16187,7 @@ msgstr "Italiano"
 
 #: gui2/settings.c:1132
 msgid "Portuguese"
-msgstr ""
+msgstr "Portugués"
 
 #: gui2/settings.c:1298 plugin/tramo_options.c:371
 msgid "General"
@@ -16593,12 +16589,11 @@ msgstr "Guardar texto"
 
 #: gui2/toolbar.c:289
 msgid "Number of digits to show for statistics"
-msgstr ""
+msgstr "Número de dígitos a mostrar en los estadísticos"
 
 #: gui2/toolbar.c:294
-#, fuzzy
 msgid "Number of digits to show for coefficients"
-msgstr "Suma de los coeficientes AR"
+msgstr "Número de dígitos de los coeficientes a presentar"
 
 #: gui2/toolbar.c:322
 msgid "Nothing to send"
@@ -16697,7 +16692,7 @@ msgstr "LaTeX"
 
 #: gui2/toolbar.c:820
 msgid "Heatmap"
-msgstr ""
+msgstr "Mapa de calor"
 
 #: gui2/toolbar.c:821
 msgid "Reformat..."
@@ -16732,9 +16727,8 @@ msgid "Help on command"
 msgstr "Ayuda sobre instrucción"
 
 #: gui2/toolbar.c:833
-#, fuzzy
 msgid "Digits..."
-msgstr "retardos..."
+msgstr "Dígitos..."
 
 #: gui2/toolbar.c:1189
 msgid "New tab"
@@ -17684,7 +17678,7 @@ msgstr "Todos los componentes"
 
 #: plugin/pca.c:141
 msgid "The n most important components"
-msgstr ""
+msgstr "Los n componentes más importantes"
 
 #: plugin/pca.c:213
 msgid "Eigenanalysis of the Correlation Matrix"
