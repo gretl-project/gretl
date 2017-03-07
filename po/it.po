@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-03-03 08:29-0500\n"
-"PO-Revision-Date: 2017-02-27 11:48+0100\n"
+"PO-Revision-Date: 2017-03-07 12:08+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -101,9 +101,8 @@ msgid "with constant and trend"
 msgstr "Con costante e trend"
 
 #: lib/src/adf_kpss.c:596
-#, fuzzy
 msgid "with constant, linear and quadratic trend"
-msgstr "Con costante e trend quadratico"
+msgstr "Con costante, trend lineare e quadratico"
 
 #: lib/src/adf_kpss.c:623 lib/src/adf_kpss.c:628 lib/src/adf_kpss.c:2209
 #: lib/src/adf_kpss.c:2211 lib/src/bootstrap.c:694 lib/src/compare.c:365
@@ -16569,12 +16568,11 @@ msgstr "Salva testo"
 
 #: gui2/toolbar.c:289
 msgid "Number of digits to show for statistics"
-msgstr ""
+msgstr "Numero di cifre decimali nelle statistiche"
 
 #: gui2/toolbar.c:294
-#, fuzzy
 msgid "Number of digits to show for coefficients"
-msgstr "Somma dei coefficienti AR"
+msgstr "Numerio di cifre per i coefficienti"
 
 #: gui2/toolbar.c:322
 msgid "Nothing to send"
@@ -16711,9 +16709,8 @@ msgid "Help on command"
 msgstr "Aiuto sul comando"
 
 #: gui2/toolbar.c:833
-#, fuzzy
 msgid "Digits..."
-msgstr "Ritardi..."
+msgstr "Cifre..."
 
 #: gui2/toolbar.c:1189
 msgid "New tab"
@@ -17662,7 +17659,7 @@ msgstr "Tutte le componenti"
 
 #: plugin/pca.c:141
 msgid "The n most important components"
-msgstr ""
+msgstr "Le prime n componenti"
 
 #: plugin/pca.c:213
 msgid "Eigenanalysis of the Correlation Matrix"
