@@ -457,7 +457,7 @@ genr lravgprs = log(ravgprs)
 genr perinc = income / (pop*cpi)
 genr lperinc = log(perinc)
 # restrict sample to 1995 observations
-smpl --restrict year=1995
+smpl --restrict year==1995
 # Equation (10.16) by tsls
 list xlist = const lravgprs lperinc
 list zlist = const rtaxso rtax lperinc
