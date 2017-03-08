@@ -144,7 +144,7 @@ double last_model_get_boot_pval (int cnum,
 				 int *err);
 
 void *last_model_get_data (const char *key, GretlType *type, 
-			   int *size, int *err);
+			   int *size, int *copied, int *err);
 
 char *last_model_get_vcv_type (void);
 

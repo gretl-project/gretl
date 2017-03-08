@@ -68,6 +68,9 @@ struct CoeffSep_ {
 
 #define PNAMELEN 16 /* for parameter names */
 
+static gretl_bundle *bundlize_test (const ModelTest *src,
+				    const char **key);
+
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
     test->type = ttype;
@@ -618,15 +621,23 @@ int gretl_model_get_cluster_var (const MODEL *pmod)
  * gretl_model_get_data_full:
  * @pmod: pointer to model.
  * @key: key string.
+ * @copied: location to receive flag indicating whether the
+ * return value is an allocated copy of the original data:
  * @type: location to receive data type.
  * @sz: location to receive the size of the data.
  *
  * Returns: the data pointer identified by @key, or %NULL on failure.
+ * If a non-zero value is written to @copied this indicates that the
+ * return value is a copy of the original (and therefore it is the
+ * caller's responsibility to free the data when it is no longer
+ * required.
  */
 
 void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
-				 GretlType *type, size_t *sz)
+				 GretlType *type, int *copied,
+				 size_t *sz)
 {
+    void *ret = NULL;
     int i;
 
     if (pmod == NULL) {
@@ -645,7 +656,28 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 	}
     }
 
-    return NULL;
+    if (pmod->tests != NULL) {
+	const ModelTest *test;
+	const char *tkey;
+	gretl_bundle *b;
+
+	for (i=0; i<pmod->ntests; i++) {
+	    test = &pmod->tests[i];
+	    tkey = test_type_key(test->type);
+	    if (tkey != NULL && !strcmp(key, tkey)) {
+		b = bundlize_test(test, NULL);
+		if (b != NULL) {
+		    ret = b;
+		    *type = GRETL_TYPE_BUNDLE;
+		    *copied = 1;
+		    *sz = 0;
+		}
+		break;
+	    }
+	}
+    }   
+
+    return ret;
 }
 
 /**
@@ -658,7 +690,7 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key)
 {
-    return gretl_model_get_data_full(pmod, key, NULL, NULL);
+    return gretl_model_get_data_full(pmod, key, NULL, NULL, NULL);
 }
 
 /**
@@ -3329,10 +3361,11 @@ static gretl_bundle *bundlize_test (const ModelTest *src,
 {
     gretl_bundle *b;
 
-    *key = test_type_key(src->type);
-    
-    if (*key == NULL) {
-	return NULL;
+    if (key != NULL) {
+	*key = test_type_key(src->type);
+	if (*key == NULL) {
+	    return NULL;
+	}
     }
 
     b = gretl_bundle_new();

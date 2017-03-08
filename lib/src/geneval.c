@@ -7866,7 +7866,7 @@ static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
     return m;
 }
 
-static NODE *mvar_from_bundle (const char *key, parser *p)
+static NODE *model_var_via_accessor (const char *key, parser *p)
 {
     NODE *ret = NULL;
     gchar *dkey;
@@ -7900,6 +7900,7 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
     GretlType type;
+    int copied = 0;
     int size = 0;
     void *val = NULL;
     NODE *ret = NULL;
@@ -7920,11 +7921,11 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	       (a named item of model data that's not represented
 	       by a regular accessor).
 	    */
-	    ret = mvar_from_bundle(key, p);
+	    ret = model_var_via_accessor(key, p);
 	    if (ret != NULL || p->err) {
 		return ret;
 	    } else {
-		val = last_model_get_data(key, &type, &size, &p->err);
+		val = last_model_get_data(key, &type, &size, &copied, &p->err);
 	    }
 	} else if (l->v.idnum == B_SYSINFO) {
 	    val = sysinfo_bundle_get_data(key, &type, &p->err);
@@ -7971,7 +7972,11 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    ret->flags |= PTR_NODE;
 	}
     } else if (type == GRETL_TYPE_BUNDLE) {
-	ret = bundle_pointer_node(p);
+	if (copied) {
+	    ret = aux_bundle_node(p);
+	} else {
+	    ret = bundle_pointer_node(p);
+	}
 	if (ret != NULL) {
 	    ret->v.b = (gretl_bundle *) val;
 	}

@@ -1436,7 +1436,7 @@ double last_model_get_boot_pval (int cnum,
 }
 
 void *last_model_get_data (const char *key, GretlType *type, 
-			   int *size, int *err)
+			   int *size, int *copied, int *err)
 {
     stacker *smatch = find_smatch(NULL);
     void *ret = NULL;
@@ -1447,7 +1447,7 @@ void *last_model_get_data (const char *key, GretlType *type,
 	const MODEL *pmod = smatch->ptr;
 	size_t sz = 0;
 
-	ret = gretl_model_get_data_full(pmod, key, type, &sz);
+	ret = gretl_model_get_data_full(pmod, key, type, copied, &sz);
 	if (ret == NULL) {
 	    *err = E_DATA;
 	} else {
