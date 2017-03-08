@@ -541,7 +541,6 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     int t2 = pmod->t2;
     int ninst = instlist[0];
     int i, t, err = 0;
-
     MODEL smod;
     int *OT_list = NULL;
     int nv = dset->v;
@@ -1769,13 +1768,13 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	tsls_extra_stats(&tsls, reglist[1], OverIdRank, dset);
     }
 
-    if (!sysest && !no_tests && nendo > 0) {
-	if (hatlist != NULL) {
+    if (!sysest && !no_tests) {
+	if (nendo > 0 && hatlist != NULL) {
 	    tsls_hausman_test(&tsls, reglist, hatlist, dset);
 	}
 	if (OverIdRank > 0) {
 	    ivreg_sargan_test(&tsls, OverIdRank, instlist, dset);
-	} else {
+	} else if (nendo > 0) {
 	    tsls_loglik(&tsls, nendo, reglist, instlist, dset);
 	}
     }

@@ -27,6 +27,9 @@ version 2017a, in progress
   accept the name of a scalar variable for the steps-ahead
   argument; also respect the last observation specification
   in all cases
+- "tsls" command: calculate Sargan test in overidentified
+  case even when there are no endogenous regressors, to allow
+  "difference in Sargan" test
 - Principal Components window in GUI: support selection of
   a specific number of components to save as series
 - Fix bug: functions failing to return loop-index value
