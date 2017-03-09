@@ -559,6 +559,7 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 	return err;
     }
 
+    /* add the @pmod residual to the dataset */
     for (t=t1; t<=t2; t++) {
 	dset->Z[nv][t] = pmod->uhat[t];
     }
@@ -578,7 +579,20 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     fprintf(stderr, "running regression for Sargan test\n");
 #endif
 
+    /* OLS: the dependent variable is the residual from @pmod;
+       the regressors are the (full set of) instruments
+    */
     smod = lsq(OT_list, dset, OLS, OPT_A);
+
+#if TDEBUG
+    if (!smod.errcode) {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+	strcpy(dset->varname[nv], "IV uhat");
+	printmodel(&smod, dset, OPT_NONE, prn);
+	gretl_print_destroy(prn);
+    }
+#endif
 
     if (smod.errcode) {
 	fprintf(stderr, "ivreg_sargan_test: smod.errcode = %d\n", smod.errcode);
