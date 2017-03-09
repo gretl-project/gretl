@@ -8702,7 +8702,7 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 {
     GtkWidget *listw[2] = { NULL, NULL };
-    gint ynum = 0;
+    gint ynum = -1;
     int nv[2] = {0};
     int nset, nsep;
     int context;
@@ -8750,40 +8750,37 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 
     /* first pass: figure out how many elements the list should have */
 
-    if (nv[0] > 0) {
+    if (nv[0] > 0 || ynum > 0) {
 	*pcontext = LAG_X;
-	nset += nv[0] + 1; /* the Xs plus their defaults */
+	if (nv[0] > 0) {
+	    nset += nv[0]; /* the Xs */
+	    if (nv[0] > 1) {
+		nset++; /* default X lags */
+	    }
+	}
 	if (ynum > 0) {
 	    nsep++; /* depvar heading */
 	    nset++; /* depvar row */
 	}
     }
 
-    if (nv[1] > 0) {
-	if (nv[0] > 0) {
+    if (nv[1] > 0 || ynum > 0) {
+	if (nv[0] > 0 || ynum > 0) {
 	    nsep++; /* separator from Xs */
 	} else {
 	    *pcontext = LAG_W;
 	}
 	nsep++;            /* "instruments" heading */
-	nset += nv[1] + 1; /* instruments plus their defaults */
+	if (nv[1] > 0) {
+	    nset += nv[1]; /* instruments */
+	    if (nv[1] > 1) {
+		nset++; /* default W lags */
+	    }
+	}
 	if (ynum > 0) {
 	    nsep++; /* depvar heading */
 	    nset++; /* depvar row */
 	}	    
-    }
-
-    if (nv[0] == 0 && nv[1] == 0) {
-	/* only the dependent variable is present */
-	*pcontext = LAG_Y_X;
-	nsep++; /* depvar heading */
-	nset++; /* depvar row */
-	if (USE_ZLIST(sr->ci)) {
-	    nsep++; /* list separator for insts */
-	    nsep++; /* "instruments" heading */
-	    nsep++; /* depvar heading */
-	    nset++; /* depvar row */
-	}
     }
 
     /* allocate the list */
@@ -8799,34 +8796,21 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 
     i = 1;
     for (j=0; j<2; j++) {
-	if (listw[j] == NULL) {
-	    continue;
-	}
 	context = (j == 1)? LAG_W : LAG_X;
 	if (j == 1) {
-	    if (nv[0] > 0) {
+	    if (nv[0] > 0 || ynum > 0) {
 		slist[i++] = LISTSEP;
 	    }
 	    slist[i++] = LAG_W;
 	}
-	slist[i++] = VDEFLT;
-	get_laggable_vars(listw[j], context, slist, &i);
+	if (listw[j] != NULL) {
+	    if (nv[j] > 1) {
+		slist[i++] = VDEFLT;
+	    }
+	    get_laggable_vars(listw[j], context, slist, &i);
+	}
 	if (ynum > 0) {
 	    slist[i++] = (j > 0)? LAG_Y_W : LAG_Y_X;
-	    slist[i++] = ynum;
-	}
-    }
-
-    /* special case where the dependent variable is the only laggable
-       variable selected so far */
-
-    if (nv[0] == 0 && nv[1] == 0) {
-	slist[i++] = LAG_Y_X;
-	slist[i++] = ynum;
-	if (USE_ZLIST(sr->ci)) {
-	    slist[i++] = LISTSEP;
-	    slist[i++] = LAG_W;
-	    slist[i++] = LAG_Y_W;
 	    slist[i++] = ynum;
 	}
     }
