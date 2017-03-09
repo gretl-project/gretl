@@ -1391,7 +1391,9 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 
 static void graph_font_selector (GtkButton *button, gpointer p)
 {
-    real_graph_font_selector(button, p, 0, NULL);
+    plot_editor *ed = p;
+
+    real_graph_font_selector(button, p, 0, ed->spec->fontstr);
 }
 
 void pdf_font_selector (GtkButton *button, gpointer p)
@@ -1963,7 +1965,11 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 			      rows-1, rows);  
     gtk_widget_show(hsep);
 
-    title = g_strdup_printf(_("font: %s"), gretl_png_font());
+    if (spec->fontstr != NULL) {
+	title = g_strdup_printf(_("font: %s"), spec->fontstr);
+    } else {
+	title = g_strdup_printf(_("font: %s"), gretl_png_font());
+    }
     button = gtk_button_new_with_label(title);
     table_add_row(tbl, &rows, TAB_MAIN_COLS);
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, TAB_MAIN_COLS, 

@@ -2862,6 +2862,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	} else if (!strncmp(gpline, "# auto linewidth", 16)) {
 	    auto_linewidth = 1;
 	    continue;
+	} else if (!strncmp(gpline, "# fontspec: ", 12)) {
+	    free(spec->fontstr);
+	    spec->fontstr = gretl_strdup(gpline + 12);
+	    tailstrip(spec->fontstr);
 	} else if (!strncmp(gpline, "# boxplots", 10)) {
 	    continue;
 	}

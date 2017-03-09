@@ -299,9 +299,8 @@ int xy_plot_with_control (const int *list, const char *literal,
 
 int gnuplot_process_file (gretlopt opt, PRN *prn);
 
-int print_gnuplot_literal_lines (const char *s,
-				 int ci, gretlopt opt,
-				 FILE *fp);
+int print_gnuplot_literal_lines (const char *s, int ci,
+				 gretlopt opt, FILE *fp);
 
 int is_auto_fit_string (const char *s);
 

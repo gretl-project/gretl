@@ -62,6 +62,8 @@ static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
 static double default_png_scale = 1.0;
 
+static char ad_hoc_font[64];
+
 typedef struct gnuplot_info_ gnuplot_info;
 
 struct gnuplot_info_ {
@@ -863,18 +865,28 @@ static void maybe_set_small_font (int nplots)
 }
 
 static void 
-write_gnuplot_font_string (char *fstr, PlotType ptype,
-			   const char *grfont, double scale)
+write_gnuplot_font_string (char *fstr,
+			   char *ad_hoc_fontspec,
+			   PlotType ptype,
+			   const char *grfont,
+			   double scale)
 {
+    int adhoc = 0;
+    
     if (grfont == NULL) {
-	grfont = gretl_png_font();
+	if (ad_hoc_font[0] != '\0') {
+	    adhoc = 1;
+	    grfont = ad_hoc_font;
+	} else {
+	    grfont = gretl_png_font();
+	}
     }
 
     if (*grfont == '\0') {
 	grfont = getenv("GRETL_PNG_GRAPH_FONT");
     }
 
-    if (grfont == NULL || *grfont == '\0') {
+    if (*grfont == '\0') {
 	*fstr = '\0';
 	return;
     } else {
@@ -893,6 +905,11 @@ write_gnuplot_font_string (char *fstr, PlotType ptype,
 	} else if (nf == 1) {
 	    sprintf(fstr, " font \"%s\"", fname);
 	}
+	if (adhoc) {
+	    strcpy(ad_hoc_fontspec, grfont);
+	}
+	/* ensure this setting doesn't outstay its welcome */
+	ad_hoc_font[0] = '\0';
     }
 }
 
@@ -1116,12 +1133,14 @@ static const char *real_png_term_line (PlotType ptype,
 				       double scale)
 {
     static char png_term_line[256];
+    char ad_hoc_fontspec[128];
     char font_string[128];
     char size_string[16];
 
-    *font_string = *size_string = '\0';
+    *font_string = *size_string = *ad_hoc_fontspec = '\0';
 
-    write_gnuplot_font_string(font_string, ptype, specfont, scale);
+    write_gnuplot_font_string(font_string, ad_hoc_fontspec,
+			      ptype, specfont, scale);
     write_png_size_string(size_string, ptype, flags, scale);
 
     if (flags & GPT_MONO) {
@@ -1132,6 +1151,11 @@ static const char *real_png_term_line (PlotType ptype,
 		font_string, size_string);
     }
     strcat(png_term_line, "\nset encoding utf8");
+
+    if (*ad_hoc_fontspec != '\0') {
+	strcat(png_term_line, "\n# fontspec: ");
+	strcat(png_term_line, ad_hoc_fontspec);
+    }
 
 #if GP_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
@@ -1863,7 +1887,26 @@ static void print_axis_label (char axis, const char *s, FILE *fp)
     }
 }
 
-static int literal_line_out (const char *s, int len, FILE *fp)
+static void maybe_record_font_choice (const char *s)
+{
+    if (strstr(s, " font ") != NULL) {
+	const char *p, *q;
+
+	s += 6;
+	p = strchr(s, '"');
+	if (p != NULL) {
+	    q = strchr(p + 1, '"');
+	    if (q != NULL && q - p > 4) {
+		ad_hoc_font[0] = '\0';
+		strncat(ad_hoc_font, p+1, q-p-1);
+		gretl_charsub(ad_hoc_font, ',', ' ');
+	    }
+	}
+    }
+}
+
+static int literal_line_out (const char *s, int len,
+			     FILE *fp)
 {
     char *q, *p = malloc(len + 1);
     int n, warn = 0;
@@ -1875,10 +1918,11 @@ static int literal_line_out (const char *s, int len, FILE *fp)
 	n = strlen(q);
 	if (n > 0) {
 	    if (!strncmp(q, "set term", 8)) {
-		gretl_warnmsg_set("'set term' should not be used in a gnuplot "
-				  "literal block");
+		if (fp == NULL) {
+		    maybe_record_font_choice(q);
+		}
 		warn = 1;
-	    } else {
+	    } else if (fp != NULL) {
 		fputs(q, fp);
 		if (q[n-1] != '\n') {
 		    fputc('\n', fp);
@@ -1900,7 +1944,9 @@ static int gnuplot_literal_from_string (const char *s,
     s += strspn(s, " \t{");
     p = s;
 
-    fputs("# start literal lines\n", fp);
+    if (fp != NULL) {
+	fputs("# start literal lines\n", fp);
+    }
 
     while (*s && *s != '}') {
 	if (*s == ';') {
@@ -1913,7 +1959,9 @@ static int gnuplot_literal_from_string (const char *s,
 	s++;
     }
 
-    fputs("# end literal lines\n", fp);
+    if (fp != NULL) {
+	fputs("# end literal lines\n", fp);
+    }
 
     return warn;
 }
@@ -1958,8 +2006,10 @@ static int gnuplot_literal_from_opt (int ci, FILE *fp)
 
     if (real_ns > 0) {
 	int i, n;
-	
-	fputs("# start literal lines\n", fp);
+
+	if (fp != NULL) {
+	    fputs("# start literal lines\n", fp);
+	}
 	for (i=0; i<ns; i++) {
 	    if (S[i] != NULL) {
 		s = S[i];
@@ -1967,10 +2017,11 @@ static int gnuplot_literal_from_opt (int ci, FILE *fp)
 		n = strlen(s);
 		if (n > 0) {
 		    if (!strncmp(s, "set term", 8)) {
-			gretl_warnmsg_set("'set term' should not be used in a gnuplot "
-					  "literal block");
+			if (fp == NULL) {
+			    maybe_record_font_choice(s);
+			}
 			warn = 1;
-		    } else {
+		    } else if (fp != NULL) {
 			fputs(s, fp);
 			if (s[n-1] != '\n') {
 			    fputc('\n', fp);
@@ -1979,29 +2030,29 @@ static int gnuplot_literal_from_opt (int ci, FILE *fp)
 		}
 	    }
 	}
-	fputs("# end literal lines\n", fp);
+	if (fp != NULL) {
+	    fputs("# end literal lines\n", fp);
+	}
     }
 
     return warn;
 }
 
-int print_gnuplot_literal_lines (const char *s,
-				 int ci, gretlopt opt,
-				 FILE *fp)
+int print_gnuplot_literal_lines (const char *s, int ci,
+				 gretlopt opt, FILE *fp)
 {
-    int warn = 0;
-
     if (s != NULL && *s != '\0') {
-	warn = gnuplot_literal_from_string(s, fp);
+	gnuplot_literal_from_string(s, fp);
     } else if (opt & OPT_K) {
-	warn = gnuplot_literal_from_opt(ci, fp);
+	gnuplot_literal_from_opt(ci, fp);
     }
 
-    if (warn) {
-	set_gretl_warning(1);
-    }
+    return 0;
+}
 
-    return warn;
+static void check_literals_for_font (const char *s)
+{
+    print_gnuplot_literal_lines(s, GNUPLOT, OPT_NONE, NULL);
 }
 
 static void print_extra_literal_lines (char **S,
@@ -3484,8 +3535,12 @@ int gnuplot (const int *plotlist, const char *literal,
 	make_time_tics(&gi, dset, many, xlabel, prn);
     }
 
-    /* open file and dump the prn into it: we delay writing
-       the file header till we know a bit more about the plot
+    if (literal != NULL && *literal != '\0') {
+	check_literals_for_font(literal);
+    }
+
+    /* open file and, if that goes OK, dump the prn into it
+       after writing the header
     */
     fp = open_plot_input_file(ptype, gi.flags, &err);
     if (err) {
