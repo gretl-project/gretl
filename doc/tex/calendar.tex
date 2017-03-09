@@ -105,11 +105,11 @@ series d = dates - 10000*y - 100*m
 However, there is some ``value added'': \texttt{isoconv} checks the
 validity of the \texttt{dates} values. If the implied year, month and
 day values for any \texttt{dates} observation do not correspond to a
-valid Gregorian date in the Common Era, then all the derived series
-will have value \texttt{NA} at that observation. (For example, the
-implied month is not in the range 1--12, or the implied day is not in
-the range of 1 to the number of days in the month, taking account of
-Gregorian leap years.)
+valid Gregorian date in the Common Era,\footnote{For example, the
+  implied month is not in the range 1--12, or the implied day is not
+  in the range of 1 to the number of days in the month, taking account
+  of Gregorian leap years.} then all the derived series will have
+value \texttt{NA} at that observation.
 
 The \texttt{isoconv} function can also handle Julian dates, should
 anyone have need for that facility. The convention is that if the

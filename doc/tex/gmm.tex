@@ -412,11 +412,11 @@ instruments and one endogenous variable the model is over-identified.
 In the GMM context, this happens when you have more orthogonality
 conditions than parameters to estimate. If so, asymptotic efficiency
 gains can be expected by iterating the procedure once or more. This is
-accomplished ny specifying, after the \cmd{end gmm} statement, two
+accomplished by specifying, after the \cmd{end gmm} statement, two
 mutually exclusive options: \option{two-step} or \option{iterate},
-whose meaning should be obvious.  Note that, when the problem is
+whose meaning should be obvious.  Note that when the problem is
 over-identified, the weights matrix will influence the solution you
-get from the 1- and 2- step procedure.
+get from the 1- and 2-step procedures.
 
 \tip{In cases other than one-step estimation the specified weights
   matrix will be overwritten with the \emph{final} weights on
@@ -435,8 +435,6 @@ identical results.\footnote{The data file used in this example is
 After the \texttt{end gmm} statement two mutually
 exclusive options can be specified: \option{two-step} or
 \option{iterate}, whose meaning should be obvious.
-
-
 
 \begin{script}[htbp]
   \caption{TSLS via GMM}
