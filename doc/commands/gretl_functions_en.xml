@@ -1506,7 +1506,7 @@
 	</para>
 	<para>
 	  The <argname>bounds</argname> matrix must have 3 columns and
-	  as many rows are there are constrained elements in the
+	  as many rows as there are constrained elements in the
 	  parameter vector. The first element on a given row is the
 	  (1-based) index of the constrained parameter; the second and
 	  third are the lower and upper bounds, respectively. The
@@ -1520,7 +1520,7 @@
 	  matrix bounds = {2, 0, $huge}
 	</code>
 	<para>
-	  The optional third argument provides a means of supplying
+	  The optional fourth argument provides a means of supplying
 	  analytical derivatives (otherwise the gradient is computed
 	  numerically).  The gradient function call
 	  <argname>g</argname> must have as its first argument a
@@ -1936,7 +1936,7 @@
       </fnargs>
       <description>
 	<para>
-	  Peforms a Cholesky decomposition of the matrix
+	  Performs a Cholesky decomposition of the matrix
 	  <argname>A</argname>, which is assumed to be symmetric and
 	  positive definite. The result is a lower-triangular matrix
 	  <math>L</math> which satisfies <equation status="inline"
@@ -2091,7 +2091,7 @@
 	  series; the list must have <math>k</math> members. If
 	  <argname>S</argname> is an array of strings, it should
 	  contain <math>k</math> elements. For backward
-	  caompatibility, a single string may also be given as the
+	  compatibility, a single string may also be given as the
 	  second argument; in that case it should contain
 	  <math>k</math> space-separated substrings.
 	</para>
@@ -3126,7 +3126,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="series">
+    <function name="filter" section="filters" output="series-or-mat">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
@@ -3578,7 +3578,7 @@
 	  Returns an <by r="m" c="r"/> matrix containing
 	  <math>m</math> Halton sequences of length <math>r</math>;
 	  <math>m</math> is limited to a maximum of 40. The sequences
-	  are contructed using the first <math>m</math> primes. By
+	  are constructed using the first <math>m</math> primes. By
 	  default the first 10 elements of each sequence are
 	  discarded, but this figure can be adjusted via the optional
 	  <argname>offset</argname> argument, which should be a
@@ -3682,7 +3682,7 @@
 	  <repl>minlag</repl> to <repl>maxlag</repl>. Use positive
 	  values for actual lags, negative for leads. For example, if
 	  <repl>minlag</repl> is &minus;3 and <repl>maxlag</repl> is 5
-	  than the returned list will hold 9 series: 3 leads, the
+	  then the returned list will hold 9 series: 3 leads, the
 	  contemporary value, and 5 lags.
 	</para>
 	<para>
@@ -3847,7 +3847,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the column indices of the mimima of the rows of
+	  Returns the column indices of the minima of the rows of
 	  <math>X</math>. 
 	</para>
 	<para>
@@ -4171,11 +4171,11 @@
 	  the estimated response of the <argname>target</argname>
 	  variable to an impulse of one standard deviation in the
 	  <argname>shock</argname> variable. These variables are
-	  identified by their position in the VAR specification: for
+	  identified by their position in the model specification: for
 	  example, if <argname>target</argname> and
 	  <argname>shock</argname> are given as 1 and 3 respectively,
 	  the returned matrix gives the response of the first variable
-	  in the VAR for a shock to the third variable.
+	  in the system for a shock to the third variable.
 	</para>
 	<para>
 	  If the optional <argname>alpha</argname> argument is given,
@@ -4292,7 +4292,7 @@
 	  list, string or bundle; otherwise returns 1.
 	</para>
 	<para>
-	  This function is deprecated: the recommended replacment is
+	  This function is deprecated: the recommended replacement is
 	  (the negation of) <fncref targ="exists"/>.
 	</para>
       </description>
@@ -4773,7 +4773,7 @@
 	  example, <lit>seq(3,7)</lit>, hence omitting the first and
 	  second lags. However, it is OK to give a vector with gaps,
 	  as in <lit>{3,5,7}</lit>, although the lags should always
-	  be given is ascending order.
+	  be given in ascending order.
 	</para>
 	<para> 
 	  The generated variables are automatically named according to
@@ -5140,7 +5140,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="imaxc"/>
+            <fncref targ="imaxr"/>
             <fncref targ="maxc"/> 
             <fncref targ="minr"/>
 	  </seelist>
@@ -5647,8 +5647,8 @@
 	</para>
 	<para context="tex">
 	  If $0 &lt; p &lt; 1$, an exponential moving average is
-	  computed: \[y_t = p x_t + (1-p)y_{t-1}\]. (This is the formula
-	  of <cite key="roberts59">Roberts (1959)</cite>.) By default
+	  computed: \[y_t = p x_t + (1-p)y_{t-1}\] This is the formula
+	  of <cite key="roberts59">Roberts, 1959</cite>. By default
 	  the output series $y$ is initialized using the first valid
 	  value of $x$, but the <argname>control</argname> parameter
 	  may be used to specify the number of initial observations
@@ -5982,7 +5982,7 @@
 	  <li>
 	    <para>
 	      If <argname>fname</argname> has the suffix
-	      <quote><lit>.gz</lit></quote> the the file is written
+	      <quote><lit>.gz</lit></quote> then the file is written
 	      with gzip compression.
 	    </para>
 	  </li>
@@ -6053,7 +6053,7 @@
 	  <argname>cens</argname>, computes the Nelson&ndash;Aalen
 	  nonparametric estimator of the hazard function (<cite
 	  key="nelson72">Nelson, 1972</cite>; <cite
-	  key="aalen78">Aalen, 1978)</cite>.  The returned matrix has
+	  key="aalen78">Aalen, 1978</cite>).  The returned matrix has
 	  three columns holding, respectively, the sorted unique
 	  values in <argname>d</argname>, the estimated cumulated
 	  hazard function corresponding to the duration value in
@@ -6091,7 +6091,7 @@
 	  <argname>x</argname>. It returns a series holding the
 	  nonparametric estimate of
 	  <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
-	  for each nonmissing element of the series
+	  for each non-missing element of the series
 	  <argname>x</argname>.
 	</para>
 	<para context="tex">
@@ -6798,7 +6798,7 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Only applicable if the currentl dataset has a panel
+	  Only applicable if the current dataset has a panel
 	  structure. Returns a series holding the time-mean of
 	  variable <argname>y</argname> for each cross-sectional unit,
 	  the values being repeated for each period. Missing
@@ -6966,7 +6966,7 @@
 	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] 
 	  where $Z_{ti}$ is the standardized value
 	  of variable $i$ at observation $t$, $Z_{ti} = (X_{ti} -
-	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is the $j$th
+	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}_i$ is the $j$th
 	  eigenvector of the correlation (or covariance) matrix of the
 	  $X_i$s, with the eigenvectors ordered by decreasing value 
 	  of the corresponding eigenvalues.
@@ -7172,10 +7172,10 @@
 	  <argname>c</argname> and <argname>x</argname>, zero or more
 	  additional arguments are required to specify the parameters
 	  of the distribution; see <fncref targ="cdf"/> for details.
-	  The distributions supported by the <lit>pval</lit> function
-	  are the standard normal, <math>t</math>, Chi square,
-	  <math>F</math>, gamma, binomial, Poisson, Weibull and
-	  Generalized Error.
+	  The distributions supported by the <lit>pvalue</lit>
+	  function are the standard normal, <math>t</math>, Chi
+	  square, <math>F</math>, gamma, binomial, Poisson, Weibull
+	  and Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -7969,7 +7969,7 @@
 	  series; the list must have <math>m</math> members. If
 	  <argname>S</argname> is an array of strings, it should
 	  contain <math>m</math> elements. For backward
-	  caompatibility, a single string may also be given as the
+	  compatibility, a single string may also be given as the
 	  second argument; in that case it should contain
 	  <math>m</math> space-separated substrings.
 	</para>
@@ -8801,7 +8801,7 @@
 	<para>
 	  Returns the sum of the observations of <argname>x</argname>
 	  over the current sample range, or <lit>NA</lit> if there are
-	  any missing values. Use <fncref targ="sum"/> is you want
+	  any missing values. Use <fncref targ="sum"/> if you want
 	  missing values to be skipped.
 	</para>
       </description>
