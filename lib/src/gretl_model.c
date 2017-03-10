@@ -68,8 +68,7 @@ struct CoeffSep_ {
 
 #define PNAMELEN 16 /* for parameter names */
 
-static gretl_bundle *bundlize_test (const ModelTest *src,
-				    const char **key);
+static gretl_bundle *bundlize_test (const ModelTest *src);
 
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
@@ -638,7 +637,10 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 				 size_t *sz)
 {
     void *ret = NULL;
-    int i;
+    GretlType itype = 0;
+    size_t isize = 0;
+    int alloced = 0;
+    int i, found = 0;
 
     if (pmod == NULL) {
 	return NULL;
@@ -646,17 +648,27 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 
     for (i=0; i<pmod->n_data_items; i++) {
 	if (!strcmp(key, pmod->data_items[i]->key)) {
-	    if (type != NULL) {
-		*type = pmod->data_items[i]->type;
-	    }	    
-	    if (sz != NULL) {
-		*sz = pmod->data_items[i]->size;
+	    ret = pmod->data_items[i]->ptr;
+	    itype = pmod->data_items[i]->type;
+	    isize = pmod->data_items[i]->size;
+	    if (itype == GRETL_TYPE_LIST) {
+		gretl_matrix *m = gretl_list_to_matrix(ret);
+
+		if (m == NULL) {
+		    ret = NULL;
+		} else {
+		    ret = m;
+		    itype = GRETL_TYPE_MATRIX;
+		    isize = 0;
+		    alloced = 1;
+		}
 	    }
-	    return pmod->data_items[i]->ptr;
+	    found = 1;
+	    break;
 	}
     }
 
-    if (pmod->tests != NULL) {
+    if (!found && pmod->tests != NULL) {
 	const ModelTest *test;
 	const char *tkey;
 	gretl_bundle *b;
@@ -665,17 +677,28 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 	    test = &pmod->tests[i];
 	    tkey = test_type_key(test->type);
 	    if (tkey != NULL && !strcmp(key, tkey)) {
-		b = bundlize_test(test, NULL);
+		b = bundlize_test(test);
 		if (b != NULL) {
 		    ret = b;
-		    *type = GRETL_TYPE_BUNDLE;
-		    *copied = 1;
-		    *sz = 0;
+		    itype = GRETL_TYPE_BUNDLE;
+		    alloced = 1;
 		}
 		break;
 	    }
 	}
-    }   
+    }
+
+    if (ret != NULL) {
+	if (type != NULL) {
+	    *type = itype;
+	}
+	if (sz != NULL) {
+	    *sz = isize;
+	}
+	if (copied != NULL) {
+	    *copied = alloced;
+	}
+    }
 
     return ret;
 }
@@ -3356,19 +3379,10 @@ static void serialize_test (const ModelTest *src, FILE *fp)
     fputs("/>\n", fp);
 }
 
-static gretl_bundle *bundlize_test (const ModelTest *src,
-				    const char **key)
+static gretl_bundle *bundlize_test (const ModelTest *src)
 {
-    gretl_bundle *b;
+    gretl_bundle *b = gretl_bundle_new();
 
-    if (key != NULL) {
-	*key = test_type_key(src->type);
-	if (*key == NULL) {
-	    return NULL;
-	}
-    }
-
-    b = gretl_bundle_new();
     if (b == NULL) {
 	return NULL;
     }
@@ -4449,7 +4463,7 @@ static char *item_key_to_bundle_key (char *targ,
     return gretl_charsub(targ, '-', '_');
 }
 
-int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
+int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 {
     gretl_bundle *b = (gretl_bundle *) ptr;
     model_data_item *item;
@@ -4460,23 +4474,21 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 
     for (i=0; i<pmod->n_data_items && !err; i++) {
 	item = pmod->data_items[i];
-	if (item->type == GRETL_TYPE_INT) {
-	    item_key_to_bundle_key(bkey, item->key);
+	item_key_to_bundle_key(bkey, item->key);
+	if (gretl_bundle_has_key(b, bkey)) {
+	    continue; /* item already present */
+	} else if (item->type == GRETL_TYPE_INT) {
 	    ival = *(int *) item->ptr;
 	    err = gretl_bundle_set_scalar(b, bkey, ival);
 	} else if (item->type == GRETL_TYPE_DOUBLE) {
-	    item_key_to_bundle_key(bkey, item->key);
 	    xval = *(double *) item->ptr;
 	    err = gretl_bundle_set_scalar(b, bkey, xval);
 	} else if (item->type == GRETL_TYPE_MATRIX) {
-	    /* experiment: include matrices here */
-	    item_key_to_bundle_key(bkey, item->key);
 	    err = gretl_bundle_set_matrix(b, bkey, item->ptr);
 	} else if (item->type == GRETL_TYPE_LIST) {
 	    /* convert lists to matrices */
 	    gretl_matrix *m;
 
-	    item_key_to_bundle_key(bkey, item->key);
 	    m = gretl_list_to_matrix((int *) item->ptr);
 	    err = gretl_bundle_donate_data(b, bkey, m,
 					   GRETL_TYPE_MATRIX, 0);
@@ -4484,24 +4496,30 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
     }
 
     if (!err && pmod->tests != NULL) {
+	const ModelTest *test;
+	const char *tkey;
 	gretl_bundle *bt;
-	const char *key;
 	
 	for (i=0; i<pmod->ntests && !err; i++) {
-	    bt = bundlize_test(&pmod->tests[i], &key);
-	    if (bt != NULL) {
-		err = gretl_bundle_donate_data(b, key, bt,
-					       GRETL_TYPE_BUNDLE, 0);
+	    test = &pmod->tests[i];
+	    tkey = test_type_key(test->type);
+	    if (!gretl_bundle_has_key(b, tkey)) {
+		bt = bundlize_test(test);
+		if (bt != NULL) {
+		    err = gretl_bundle_donate_data(b, tkey, bt,
+						   GRETL_TYPE_BUNDLE, 0);
+		}
 	    }
 	}
     }
 
-    if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+    if (pmod->ci == PANEL && (pmod->opt & OPT_F) &&
+	!gretl_bundle_has_key(b, "within_rsq")) {
 	/* fixed effects: add within R-squared */
 	gretl_bundle_set_scalar(b, "within_rsq", pmod->adjrsq);
     }
 
-    if (!na(pmod->dw)) {
+    if (!na(pmod->dw) && !gretl_bundle_has_key(b, "dw")) {
 	/* add Durbin-Watson statistic if available */
 	gretl_bundle_set_scalar(b, "dw", pmod->dw);
     }

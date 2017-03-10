@@ -675,6 +675,29 @@ GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_has_key:
+ * @bundle: bundle to access.
+ * @key: name of key to test.
+ *
+ * Returns: 1 if there is an item under the given @key in the
+ * specified @bundle, 0 otherwise.
+ */
+
+int gretl_bundle_has_key (gretl_bundle *bundle,
+			  const char *key)
+{
+    int ret = 0;
+
+    if (bundle != NULL) {
+	gpointer p = g_hash_table_lookup(bundle->ht, key);
+
+	ret = (p != NULL);
+    }
+
+    return ret;
+}
+
+/**
  * gretl_bundle_get_matrix:
  * @bundle: bundle to access.
  * @key: name of key to access.
@@ -2197,7 +2220,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     if (!*err) {
-	*err = bundlize_model_data_scalars(pmod, b);
+	*err = bundlize_model_data_items(pmod, b);
     }
 
     free(x);

@@ -60,6 +60,9 @@ GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
 					const char *key,
 					int *err);
 
+int gretl_bundle_has_key (gretl_bundle *bundle,
+			  const char *key);
+
 gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
 				       const char *key,
 				       int *err);
