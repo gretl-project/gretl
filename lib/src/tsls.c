@@ -1831,6 +1831,8 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	    /* save list of endogenous regressors on model */
 	    gretl_model_set_list_as_data(&tsls, "endolist", endolist);
 	    endolist = NULL; /* model takes ownership */
+	    gretl_model_set_list_as_data(&tsls, "instlist", instlist);
+	    instlist = NULL; /* ditto */
 	}
     } 
 

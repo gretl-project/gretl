@@ -1025,6 +1025,30 @@ char *gretl_list_to_string (const int *list,
 }
 
 /**
+ * gretl_list_to_matrix:
+ * @list: array of integers.
+ * 
+ * Returns: allocated representation of @list as a row vector.
+ */
+
+gretl_matrix *gretl_list_to_matrix (const int *list)
+{
+    gretl_matrix *m = NULL;
+    int i;
+
+    if (list != NULL && list[0] > 0) {
+	m = gretl_matrix_alloc(1, list[0]);
+	if (m != NULL) {
+	    for (i=0; i<list[0]; i++) {
+		m->val[i] = list[i+1];
+	    }
+	}
+    }
+
+    return m;
+}
+
+/**
  * gretl_list_get_names:
  * @list: array of integers.
  * @dset: dataset information.

@@ -4472,6 +4472,14 @@ int bundlize_model_data_scalars (const MODEL *pmod, void *ptr)
 	    /* experiment: include matrices here */
 	    item_key_to_bundle_key(bkey, item->key);
 	    err = gretl_bundle_set_matrix(b, bkey, item->ptr);
+	} else if (item->type == GRETL_TYPE_LIST) {
+	    /* convert lists to matrices */
+	    gretl_matrix *m;
+
+	    item_key_to_bundle_key(bkey, item->key);
+	    m = gretl_list_to_matrix((int *) item->ptr);
+	    err = gretl_bundle_donate_data(b, bkey, m,
+					   GRETL_TYPE_MATRIX, 0);
 	}
     }
 

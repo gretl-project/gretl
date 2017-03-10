@@ -2078,23 +2078,6 @@ void *sysinfo_bundle_get_data (const char *key, GretlType *type,
     return ret;
 }
 
-static gretl_matrix *matrix_from_list (const int *list)
-{
-    gretl_matrix *m = NULL;
-    int i;
-    
-    if (list != NULL && list[0] > 0) {
-	m = gretl_matrix_alloc(1, list[0]);
-	if (m != NULL) {
-	    for (i=0; i<list[0]; i++) {
-		m->val[i] = list[i+1];
-	    }
-	}
-    }
-
-    return m;
-}
-
 /* For a single-equation model, create a bundle containing
    all the data available via $-accessors.
 */
@@ -2189,7 +2172,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	}
 	if (list != NULL) {
 	    /* convert list to matrix for bundling */
-	    m = matrix_from_list(list);
+	    m = gretl_list_to_matrix(list);
 	    if (m != NULL) {
 		key = mvarname(i) + 1;
 		*err = gretl_bundle_donate_data(b, key, m,
