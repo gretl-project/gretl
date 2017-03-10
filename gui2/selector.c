@@ -6173,7 +6173,7 @@ static void build_scatters_radios (selector *sr)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Use lines"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_L, 0);
+    pack_switch(b2, sr, FALSE, FALSE, OPT_O, 0);
 }
 
 static void auto_omit_restrict_callback (GtkWidget *w, selector *sr)

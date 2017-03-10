@@ -458,6 +458,17 @@ static int get_fit_type (gnuplot_info *gi)
     return err;
 }
 
+static void maybe_record_font_choice (gretlopt opt)
+{
+    const char *s = get_optval_string(plot_ci, opt);
+
+    if (s != NULL) {
+	ad_hoc_font[0] = '\0';
+	strcat(ad_hoc_font, s);
+	gretl_charsub(ad_hoc_font, ',', ' ');
+    }
+}
+
 static int get_gp_flags (gnuplot_info *gi, gretlopt opt, 
 			 const int *list, const DATASET *dset)
 {
@@ -477,6 +488,11 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	gi->flags |= GPT_FIT_OMIT;
 	gi->band = 1;
 	goto linespec;
+    }
+
+    if (opt & OPT_W) {
+	/* --font=<fontspec> */
+	maybe_record_font_choice(OPT_W);
     }
 
     if (opt & OPT_S) {
@@ -1887,24 +1903,6 @@ static void print_axis_label (char axis, const char *s, FILE *fp)
     }
 }
 
-static void maybe_record_font_choice (const char *s)
-{
-    if (strstr(s, " font ") != NULL) {
-	const char *p, *q;
-
-	s += 6;
-	p = strchr(s, '"');
-	if (p != NULL) {
-	    q = strchr(p + 1, '"');
-	    if (q != NULL && q - p > 4) {
-		ad_hoc_font[0] = '\0';
-		strncat(ad_hoc_font, p+1, q-p-1);
-		gretl_charsub(ad_hoc_font, ',', ' ');
-	    }
-	}
-    }
-}
-
 static int literal_line_out (const char *s, int len,
 			     FILE *fp)
 {
@@ -1918,11 +1916,8 @@ static int literal_line_out (const char *s, int len,
 	n = strlen(q);
 	if (n > 0) {
 	    if (!strncmp(q, "set term", 8)) {
-		if (fp == NULL) {
-		    maybe_record_font_choice(q);
-		}
 		warn = 1;
-	    } else if (fp != NULL) {
+	    } else {
 		fputs(q, fp);
 		if (q[n-1] != '\n') {
 		    fputc('\n', fp);
@@ -1944,9 +1939,7 @@ static int gnuplot_literal_from_string (const char *s,
     s += strspn(s, " \t{");
     p = s;
 
-    if (fp != NULL) {
-	fputs("# start literal lines\n", fp);
-    }
+    fputs("# start literal lines\n", fp);
 
     while (*s && *s != '}') {
 	if (*s == ';') {
@@ -1959,12 +1952,21 @@ static int gnuplot_literal_from_string (const char *s,
 	s++;
     }
 
-    if (fp != NULL) {
-	fputs("# end literal lines\n", fp);
-    }
+    fputs("# end literal lines\n", fp);
 
     return warn;
 }
+
+/* Alternative (undocumented!) means of supplying "literal"
+   lines to the "gnuplot" command (as opposed to the time-
+   honored "{...}" mechanism). Syntax is
+
+   gnuplot <args> --tweaks=<name-of-array-of-strings>
+
+   FIXME: document this or get rid of it! Although this
+   mechanism has something going for it, maybe it's too
+   late to substitute it for the old method.
+*/
 
 static char **literal_strings_from_opt (int ci, int *ns,
 					int *real_ns)
@@ -2007,9 +2009,8 @@ static int gnuplot_literal_from_opt (int ci, FILE *fp)
     if (real_ns > 0) {
 	int i, n;
 
-	if (fp != NULL) {
-	    fputs("# start literal lines\n", fp);
-	}
+	fputs("# start literal lines\n", fp);
+
 	for (i=0; i<ns; i++) {
 	    if (S[i] != NULL) {
 		s = S[i];
@@ -2017,11 +2018,8 @@ static int gnuplot_literal_from_opt (int ci, FILE *fp)
 		n = strlen(s);
 		if (n > 0) {
 		    if (!strncmp(s, "set term", 8)) {
-			if (fp == NULL) {
-			    maybe_record_font_choice(s);
-			}
 			warn = 1;
-		    } else if (fp != NULL) {
+		    } else {
 			fputs(s, fp);
 			if (s[n-1] != '\n') {
 			    fputc('\n', fp);
@@ -2030,9 +2028,8 @@ static int gnuplot_literal_from_opt (int ci, FILE *fp)
 		}
 	    }
 	}
-	if (fp != NULL) {
-	    fputs("# end literal lines\n", fp);
-	}
+
+	fputs("# end literal lines\n", fp);
     }
 
     return warn;
@@ -2048,11 +2045,6 @@ int print_gnuplot_literal_lines (const char *s, int ci,
     }
 
     return 0;
-}
-
-static void check_literals_for_font (const char *s)
-{
-    print_gnuplot_literal_lines(s, GNUPLOT, OPT_NONE, NULL);
 }
 
 static void print_extra_literal_lines (char **S,
@@ -3535,10 +3527,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	make_time_tics(&gi, dset, many, xlabel, prn);
     }
 
-    if (literal != NULL && *literal != '\0') {
-	check_literals_for_font(literal);
-    }
-
     /* open file and, if that goes OK, dump the prn into it
        after writing the header
     */
@@ -3818,7 +3806,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
  * multi_scatters:
  * @list: list of variables to plot, by ID number.
  * @dset: dataset struct.
- * @opt: can include %OPT_L to use lines, %OPT_U to
+ * @opt: can include %OPT_O to use lines, %OPT_U to
  * direct output to a named file.
  *
  * Writes a gnuplot plot file to display up to 16 small graphs
@@ -3842,7 +3830,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     FILE *fp = NULL;
     int i, t, err = 0;
 
-    if (opt & OPT_L) {
+    if (opt & OPT_O) {
 	flags |= GPT_LINES;
     }
 
@@ -4045,7 +4033,7 @@ static double get_obsx (const double *obs, int t, int s)
  * @m: matrix containing data to plot.
  * @list: list of columns to plot, or NULL.
  * @dset: dataset pointer, or NULL.
- * @opt: can include %OPT_L to use lines, %OPT_U to
+ * @opt: can include %OPT_O to use lines, %OPT_U to
  * direct output to a named file.
  *
  * Writes a gnuplot plot file to display up to 16 small graphs
@@ -4077,7 +4065,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	return E_DATA;
     }
 
-    if (opt & OPT_L) {
+    if (opt & OPT_O) {
 	flags |= GPT_LINES;
     }
 

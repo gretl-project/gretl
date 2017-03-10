@@ -7307,7 +7307,7 @@ int do_scatters (selector *sr)
 
     if (buf == NULL) return 1;
 
-    if (opt & OPT_L) {
+    if (opt & OPT_O) {
 	lib_command_sprintf("scatters %s --with-lines", buf);
     } else {
 	lib_command_sprintf("scatters %s", buf);
@@ -7567,6 +7567,7 @@ void plot_from_selection (int code)
 {
     gretlopt opt = OPT_G;
     int pan_between = 0;
+    int multiplot = 0;
     char *liststr;
     int cancel = 0;
 
@@ -7616,7 +7617,8 @@ void plot_from_selection (int code)
 	    } else if (ret == 0) {
 		opt |= (OPT_T | OPT_O);
 	    } else if (ret == 1) {
-		opt |= OPT_L;
+		multiplot = 1;
+		opt |= OPT_O;
 	    }
 	} else {
 	    opt |= (OPT_T | OPT_O);
@@ -7626,7 +7628,7 @@ void plot_from_selection (int code)
     if (!cancel) {
 	int err;
 
-	if (opt & OPT_L) {
+	if (multiplot) {
 	    lib_command_sprintf("scatters %s --with-lines", liststr);
 	} else {
 	    /* FIXME pan_between and CLI? */
@@ -7637,7 +7639,7 @@ void plot_from_selection (int code)
 	err = parse_lib_command();
 
 	if (!err) {
-	    if (opt & OPT_L) {
+	    if (multiplot) {
 		err = multi_scatters(libcmd.list, dataset, opt);
 	    } else if (pan_between) {
 		err = panel_means_XY_scatter(libcmd.list, dataset, opt);
