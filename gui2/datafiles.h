@@ -34,6 +34,8 @@ enum {
     VIEW_PKG_DOC
 };
 
+#define HELP_WIDTH 80
+
 void browser_open_data (GtkWidget *w, gpointer data);
 
 void browser_open_ps (GtkWidget *w, gpointer data);

@@ -882,13 +882,13 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 static int get_info_width (const char *buf)
 {
     char line[1024];
-    int n, width = 68;
+    int n, width = 66;
     
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf)) {
 	n = strlen(line);
-	if (n > width && n <= 80) {
+	if (n > width && n <= HELP_WIDTH) {
 	    width = n;
 	}
     }

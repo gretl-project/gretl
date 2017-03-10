@@ -4021,8 +4021,10 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     vwin->text = w;
 
     /* in which cases should we do text wrapping? */
+
     if (help_role(role) || role == VIEW_PKG_INFO ||
-	role == VIEW_BIBITEM || role == VIEW_CODEBOOK) {
+	role == VIEW_BIBITEM || role == VIEW_CODEBOOK ||
+	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     } else {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
