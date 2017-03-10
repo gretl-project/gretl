@@ -10,15 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-03 08:29-0500\n"
-"PO-Revision-Date: 2017-01-18 21:51-0200\n"
+"POT-Creation-Date: 2017-03-09 22:18-0300\n"
+"PO-Revision-Date: 2017-03-09 22:18-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 1.8.12\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -106,9 +106,8 @@ msgid "with constant and trend"
 msgstr "com constante e tendência"
 
 #: lib/src/adf_kpss.c:596
-#, fuzzy
 msgid "with constant, linear and quadratic trend"
-msgstr "com constante e tendência quadrática"
+msgstr "com constante e tendência linear e quadrática"
 
 #: lib/src/adf_kpss.c:623 lib/src/adf_kpss.c:628 lib/src/adf_kpss.c:2209
 #: lib/src/adf_kpss.c:2211 lib/src/bootstrap.c:694 lib/src/compare.c:365
@@ -1843,11 +1842,11 @@ msgstr "Obs. ausentes"
 
 #: lib/src/describe.c:4436
 msgid "Within s.d."
-msgstr "Dentro s.d."
+msgstr "S.D. por dentro"
 
 #: lib/src/describe.c:4437
 msgid "Between s.d."
-msgstr "Entre s.d."
+msgstr "Entre d.p."
 
 #: lib/src/describe.c:4454 lib/src/describe.c:4597 gui2/menustate.c:491
 msgid "Summary statistics"
@@ -1876,17 +1875,15 @@ msgstr "Variável peso: %s\n"
 #. TRANSLATORS: 'S.D.' means Standard Deviation
 #: lib/src/describe.c:4609 gui2/guiprint.c:611 gui2/guiprint.c:984
 msgid "S.D."
-msgstr ""
+msgstr "D.P."
 
 #: lib/src/describe.c:4610 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Min"
-msgstr "Principal"
+msgstr "Mín"
 
 #: lib/src/describe.c:4611 gui2/guiprint.c:611 gui2/guiprint.c:984
-#, fuzzy
 msgid "Max"
-msgstr "Máximo"
+msgstr "Máx"
 
 #: lib/src/describe.c:4641 gui2/guiprint.c:691
 msgid "Std. Dev."
@@ -2379,14 +2376,14 @@ msgstr ""
 "usuário"
 
 #: lib/src/geneval.c:8232
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %s but got %s"
 msgstr "Esperado %s mas encontrou-se %s"
 
 #: lib/src/geneval.c:8236
-#, fuzzy, c-format
+#, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "O tamanho da série não corresponde ao conjunto de dados"
+msgstr "Tipo %s especificado não corresponde ao tipo \"array\" %s"
 
 #: lib/src/geneval.c:8760 lib/src/geneval.c:14835 lib/src/geneval.c:14843
 #, c-format
@@ -2394,14 +2391,13 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s' : não está implementado para este tipo"
 
 #: lib/src/geneval.c:8796
-#, fuzzy
 msgid "Invalid list element"
-msgstr "Argumento inválido"
+msgstr "Elemento de lista inválido"
 
 #: lib/src/geneval.c:8902
-#, fuzzy, c-format
+#, c-format
 msgid "The operator '%s' is not valid in this context"
-msgstr "O símbolo '%s' não é válido neste contexto\n"
+msgstr "O operador '%s' não é válido neste contexto"
 
 # I'm not sure about translating the term "array" to Portuguese.
 #: lib/src/geneval.c:11524
@@ -2500,9 +2496,8 @@ msgid "'%s' : only defined for matrices"
 msgstr "'%s' : apenas definido para matrizes"
 
 #: lib/src/geneval.c:15942
-#, fuzzy
 msgid "Invalid left-hand side expression"
-msgstr "Expressão incompleta\n"
+msgstr "Expressão inválida no lado esquerdo"
 
 #: lib/src/geneval.c:16520
 msgid "Bare declarations are not allowed here"
@@ -2673,7 +2668,7 @@ msgstr "Observação vazia []\n"
 
 #: lib/src/genlex.c:1614
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
-msgstr ""
+msgstr "o uso de \"=\" como operador booleano está obsoleto, favor usar \"==\""
 
 #: lib/src/genlex.c:1783
 #, c-format
@@ -2716,9 +2711,9 @@ msgid "Generated matrix %s"
 msgstr "Matriz %s gerada"
 
 #: lib/src/genmain.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Modified list %s"
-msgstr "Matriz %s modificada"
+msgstr "Lista %s modificada"
 
 #: lib/src/genmain.c:118
 #, c-format
@@ -2731,9 +2726,9 @@ msgid "Generated list %s"
 msgstr "Gerada a lista %s"
 
 #: lib/src/genmain.c:124
-#, fuzzy, c-format
+#, c-format
 msgid "Modified string %s"
-msgstr "Matriz %s modificada"
+msgstr "Variável de texto %s modificada"
 
 #: lib/src/genmain.c:126
 #, c-format
@@ -4883,11 +4878,11 @@ msgstr "Aviso: hessiana não positiva definida (mas ainda não singular)"
 
 #: lib/src/modelprint.c:727 lib/src/modelprint.c:753 lib/src/modelprint.c:763
 msgid "'Between' variance"
-msgstr "'Por entre' a variância"
+msgstr "Variância 'entre'"
 
 #: lib/src/modelprint.c:728 lib/src/modelprint.c:754 lib/src/modelprint.c:764
 msgid "'Within' variance"
-msgstr "'Por dentro' da variância"
+msgstr "Variância 'por dentro'"
 
 #: lib/src/modelprint.c:730 lib/src/modelprint.c:756 lib/src/modelprint.c:766
 msgid "theta used for quasi-demeaning"
@@ -5866,11 +5861,11 @@ msgstr "R-quadrado LSDV"
 
 #: lib/src/modelprint.c:3067
 msgid "Within $R^2$"
-msgstr "Dentro $R^2$"
+msgstr "$R^2$ por dentro"
 
 #: lib/src/modelprint.c:3067
 msgid "Within R-squared"
-msgstr "Dentro de R-quadrado"
+msgstr "R-quadrado por dentro"
 
 #: lib/src/modelprint.c:3097
 msgid "Mean of innovations"
@@ -8291,9 +8286,8 @@ msgid "Runs test"
 msgstr "Teste de sequências"
 
 #: gui2/calculator.c:2561
-#, fuzzy
 msgid "Correlation"
-msgstr "Correlações"
+msgstr "Correlação"
 
 #: gui2/calculator.c:2594
 msgid "Sign test"
@@ -11962,7 +11956,7 @@ msgstr "Marcadores de _observações..."
 
 #: gui2/gretl.c:1609
 msgid "_Variable labels..."
-msgstr "Rótulos de _variáveis"
+msgstr "Descrições das _variáveis"
 
 #: gui2/gretl.c:1610
 msgid "Dataset _structure..."
@@ -12411,7 +12405,7 @@ msgstr "Mínimos quadrados _ponderados..."
 
 #: gui2/gretl.c:1749
 msgid "_Between model..."
-msgstr "_Entre modelos..."
+msgstr "Modelo _entre-grupos..."
 
 #: gui2/gretl.c:1750
 msgid "_Dynamic panel model..."
@@ -13715,14 +13709,12 @@ msgid "forecast of %s"
 msgstr "previsão de %s"
 
 #: gui2/library.c:669
-#, fuzzy
 msgid "Show main statistics"
-msgstr "Estatísticas descritivas"
+msgstr "Mostrar as estatísticas principais"
 
 #: gui2/library.c:670
-#, fuzzy
 msgid "Show full statistics"
-msgstr "Estatísticas descritivas"
+msgstr "Mostrar todas as estatísticas"
 
 #: gui2/library.c:713 gui2/library.c:743 gui2/library.c:901
 #: gui2/menustate.c:668
@@ -13931,18 +13923,18 @@ msgstr ""
 
 #: gui2/library.c:1919
 msgid "Export the labels to file"
-msgstr "Exportar rótulos para o arquivo"
+msgstr "Exportar as descrições para um arquivo de texto"
 
 #: gui2/library.c:1920
 msgid "Remove the labels"
-msgstr "Remover rótulos"
+msgstr "Remover as descrições"
 
 #: gui2/library.c:1924
 msgid ""
 "The dataset has variable labels.\n"
 "Would you like to:"
 msgstr ""
-"O conjunto de dados possui rótulos de variáveis.\n"
+"O conjunto de dados possui descrição das variáveis.\n"
 "Gostaria de:"
 
 #: gui2/library.c:1933
@@ -13950,8 +13942,8 @@ msgid ""
 "The dataset has no variable labels.\n"
 "Add some from file now?"
 msgstr ""
-"O conjunto de dados não possui rótulos.\n"
-"Adicionar algum a partir de um arquivo agora?"
+"Os dados não possuem descrição.\n"
+"Deseja adicionar a partir de um arquivo agora?"
 
 #: gui2/library.c:1944
 msgid ""
@@ -16155,7 +16147,7 @@ msgstr "Italiano"
 
 #: gui2/settings.c:1132
 msgid "Portuguese"
-msgstr ""
+msgstr "Português"
 
 #: gui2/settings.c:1298 plugin/tramo_options.c:371
 msgid "General"
@@ -16556,12 +16548,11 @@ msgstr "Salvar texto"
 
 #: gui2/toolbar.c:289
 msgid "Number of digits to show for statistics"
-msgstr ""
+msgstr "Número de dígitos para serem exibidos nas estatísticas"
 
 #: gui2/toolbar.c:294
-#, fuzzy
 msgid "Number of digits to show for coefficients"
-msgstr "Soma dos coeficientes AR"
+msgstr "Número de dígitos para serem exibidos nos coeficientes"
 
 #: gui2/toolbar.c:322
 msgid "Nothing to send"
@@ -16662,7 +16653,7 @@ msgstr "LaTeX"
 
 #: gui2/toolbar.c:820
 msgid "Heatmap"
-msgstr ""
+msgstr "Mapa de calor"
 
 #: gui2/toolbar.c:821
 msgid "Reformat..."
@@ -16697,9 +16688,8 @@ msgid "Help on command"
 msgstr "Ajuda sobre o comando"
 
 #: gui2/toolbar.c:833
-#, fuzzy
 msgid "Digits..."
-msgstr "defasagens..."
+msgstr "Dígitos..."
 
 #: gui2/toolbar.c:1189
 msgid "New tab"
@@ -16939,7 +16929,7 @@ msgstr "t"
 
 #: plugin/addons-i18n.c:37
 msgid "Between model"
-msgstr "Entre modelos"
+msgstr "Modelo entre-grupos"
 
 #: plugin/addons-i18n.c:39
 msgid "G2SLS"
@@ -17649,7 +17639,7 @@ msgstr "Todos os componentes"
 
 #: plugin/pca.c:141
 msgid "The n most important components"
-msgstr ""
+msgstr "Os n componentes mais importantes"
 
 #: plugin/pca.c:213
 msgid "Eigenanalysis of the Correlation Matrix"
