@@ -726,7 +726,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	myopt |= retrieve_dpanel_opts(orig);
     } else if (orig->ci == DPANEL) {
 	param = gretl_model_get_data(orig, "istr");
-	laglist = gretl_model_get_data(orig, "ylags");
+	laglist = gretl_model_get_list(orig, "ylags");
 	myopt |= retrieve_dpanel_opts(orig);
     } else if (orig->ci == ARCH) {
 	order = gretl_model_get_int(orig, "arch_order");

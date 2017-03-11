@@ -381,7 +381,7 @@ int gretl_model_set_array_as_data (MODEL *pmod, const char *key,
  * @list: list to attach.
  *
  * Attaches @list to @pmod as data, recoverable via the key @key 
- * using gretl_model_get_data().  Note that the model takes
+ * using gretl_model_get_list().  Note that the model takes
  * ownership of the supplied list.
  *
  * Returns: 0 on success, 1 on failure.
@@ -651,7 +651,7 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 	    ret = pmod->data_items[i]->ptr;
 	    itype = pmod->data_items[i]->type;
 	    isize = pmod->data_items[i]->size;
-	    if (itype == GRETL_TYPE_LIST) {
+	    if (copied != NULL && itype == GRETL_TYPE_LIST) {
 		gretl_matrix *m = gretl_list_to_matrix(ret);
 
 		if (m == NULL) {
@@ -1909,7 +1909,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    }
 	}
     } else if (pmod->ci == MIDASREG) {
-	int *lfx = gretl_model_get_data(pmod, "lfxlist");
+	int *lfx = gretl_model_get_list(pmod, "lfxlist");
 
 	if (lfx != NULL) {
 	    list = gretl_list_copy(lfx);

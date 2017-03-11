@@ -524,7 +524,7 @@ MODEL bp_preliminary_ols (const int *list, DATASET *dset)
     }
 
     mod = lsq(tmplist, dset, OLS, OPT_A);
-    if (gretl_model_get_data(&mod, "droplist")) {
+    if (gretl_model_get_list(&mod, "droplist")) {
 	gretl_model_destroy_data_item(&mod, "droplist");
     }
     free(tmplist);

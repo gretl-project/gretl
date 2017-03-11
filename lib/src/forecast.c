@@ -378,7 +378,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
 
 static const int *model_xlist (MODEL *pmod)
 {
-    int *xlist = (int *) gretl_model_get_data(pmod, "xlist");
+    int *xlist = gretl_model_get_list(pmod, "xlist");
 
     if (xlist == NULL) {
 	xlist = gretl_model_get_x_list(pmod);

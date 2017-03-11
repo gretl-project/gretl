@@ -988,7 +988,7 @@ int midas_forecast_setup (const MODEL *pmod,
     }
 
     if (!err && gretl_model_get_int(pmod, "no_lfx") == 0) {
-	xlist = gretl_model_get_data(pmod, "lfxlist");
+	xlist = gretl_model_get_list(pmod, "lfxlist");
 	if (xlist == NULL) {
 	    err = E_DATA;
 	} else {

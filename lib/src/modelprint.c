@@ -1292,7 +1292,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 static int 
 print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
-    const char *strs[] = {
+    const char *labels[] = {
 	N_("Instrumented"),
 	N_("Instruments")
     };
@@ -1303,13 +1303,17 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 
     jmin = (pmod->aux)? 1 : 0;
 
+    /* below: first print list of endogenous variables, then
+       list of instruments */
+
     for (j=jmin; j<2; j++) {
 	int ccount, nv = 0;
 
 	if (j == 0) {
-	    list = (const int *) gretl_model_get_data(pmod, "endolist");
-	    imin = list == NULL ? -1 : 1;
+	    list = gretl_model_get_list(pmod, "endolist");
+	    imin = (list == NULL)? -1 : 1;
 	} else {
+	    /* j = 1: instruments */
 	    list = pmod->list;
 	    imin = gretl_list_separator_position(list);
 	    if (imin > 0) {
@@ -1323,7 +1327,7 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	    continue;
 	}
 
-	ccount = pprintf(prn, "%s: ", A_(strs[j]));
+	ccount = pprintf(prn, "%s: ", A_(labels[j]));
     
 	for (i=imin; i<=list[0]; i++) {
 	    vi = list[i];
@@ -1651,7 +1655,7 @@ static void print_model_zerolist (const MODEL *pmod,
 				  const DATASET *dset,
 				  PRN *prn)
 {
-    const int *zlist = gretl_model_get_data(pmod, "zerolist");
+    const int *zlist = gretl_model_get_list(pmod, "zerolist");
     const char *tag = N_("Omitted because all values were zero:");
 
     if (pmod->ci == PANEL && (pmod->opt & OPT_B)) {
@@ -1665,7 +1669,7 @@ static void print_model_droplist (const MODEL *pmod,
 				  const DATASET *dset,
 				  PRN *prn)
 {
-    const int *dlist = gretl_model_get_data(pmod, "droplist");
+    const int *dlist = gretl_model_get_list(pmod, "droplist");
     const char *tag = N_("Omitted due to exact collinearity:");
 
     print_extra_list(tag, dlist, dset, prn);
@@ -1675,7 +1679,7 @@ static void print_ivreg_droplist (const MODEL *pmod,
 				  const DATASET *dset,
 				  PRN *prn)
 {
-    const int *dlist = gretl_model_get_data(pmod, "inst_droplist");
+    const int *dlist = gretl_model_get_list(pmod, "inst_droplist");
     int i, v;
 
     pputs(prn, A_("Redundant instruments:"));
@@ -2224,16 +2228,16 @@ static void print_model_heading (const MODEL *pmod,
 
     /* IVREG: message about redundant instruments */
     if (plain_format(prn) && pmod->ci == IVREG &&
-	gretl_model_get_data(pmod, "inst_droplist") != NULL) {
+	gretl_model_get_list(pmod, "inst_droplist") != NULL) {
 	print_ivreg_droplist(pmod, dset, prn);
     }  
 
     /* messages about collinear and/or zero regressors */
     if (plain_format(prn)) {
-	if (gretl_model_get_data(pmod, "zerolist") != NULL) {
+	if (gretl_model_get_list(pmod, "zerolist") != NULL) {
 	    print_model_zerolist(pmod, dset, prn);
 	}
-	if (gretl_model_get_data(pmod, "droplist") != NULL) {
+	if (gretl_model_get_list(pmod, "droplist") != NULL) {
 	    print_model_droplist(pmod, dset, prn);
 	}
     } 
@@ -4548,7 +4552,7 @@ static int separator_wanted (int i, int seppos,
 	/* the straightforward criterion */
 	ret = 1;
     } else if (pmod->ci == MIDASREG) {
-	const int *seplist = gretl_model_get_data(pmod, "seplist");
+	const int *seplist = gretl_model_get_list(pmod, "seplist");
 	int j = 0;
 
 	if (seplist != NULL && (j = in_gretl_list(seplist, i)) > 0) {

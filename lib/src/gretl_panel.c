@@ -1406,7 +1406,7 @@ static int save_between_model (MODEL *pmod, const int *blist,
 
     gretl_model_add_panel_varnames(pmod, gset, NULL);
 
-    droplist = gretl_model_get_data(pmod, "droplist");
+    droplist = gretl_model_get_list(pmod, "droplist");
 
     /* replace both the model's regression list and its list of
        dropped variables, if any, with the ID numbers of the

@@ -1036,7 +1036,7 @@ static int reglist_remove_redundant_vars (const MODEL *tmod,
 					  int *endolist,
 					  int *hatlist)
 {
-    int *dlist = gretl_model_get_data(tmod, "droplist");
+    int *dlist = gretl_model_get_list(tmod, "droplist");
     int i, pos;
 
     if (dlist == NULL) {
@@ -1638,7 +1638,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
 #if TDEBUG
-    printlist(endolist, "endolist");
+    printlist(endolist, "endolist, in tsls");
 #endif
 
     if (endolist != NULL) {

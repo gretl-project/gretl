@@ -958,7 +958,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    break;
 	} 
 
-	idroplist = gretl_model_get_data(pmod, "inst_droplist");
+	idroplist = gretl_model_get_list(pmod, "inst_droplist");
 	if (idroplist != NULL) {
 	    drop_redundant_instruments(sys, idroplist, i);
 	}
