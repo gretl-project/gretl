@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-02-10 09:50-0500\n"
-"PO-Revision-Date: 2017-02-10 17:37+0100\n"
+"PO-Revision-Date: 2017-03-11 10:36-0500\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -4073,7 +4073,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:118
 msgid "gretl_cli_fnref.en"
-msgstr ""
+msgstr "gretl_cli_fnref.gl"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
@@ -4081,7 +4081,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:123
 msgid "gretl_gui_fnref.en"
-msgstr ""
+msgstr "gretl_gui_fnref.gl"
 
 #: lib/src/gretl_paths.c:1952
 #, c-format

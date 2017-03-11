@@ -33,6 +33,8 @@ AUTO_HELPFILES = \
 	gretl_gui_fnref.it \
         gretl_cli_fnref.pt \
 	gretl_gui_fnref.pt \
+        gretl_cli_fnref.gl \
+	gretl_gui_fnref.gl \
 	gretlhelp.refs
 
 ifeq ($(build_docs),yes)

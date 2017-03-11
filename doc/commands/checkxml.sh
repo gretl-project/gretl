@@ -17,7 +17,7 @@ for lang in en it pt ; do
   fi
 done
 
-for lang in en it pt ; do
+for lang in en it pt gl ; do
   if xmllint --noout --dtdvalid gretl_functions.dtd gretl_functions_${lang}.xml ; then
     echo "gretl_functions_${lang}.xml validated OK"
   else

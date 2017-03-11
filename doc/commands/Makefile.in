@@ -46,6 +46,7 @@ FNCDTD = $(CMDSDIR)/gretl_functions.dtd
 EN_FNSRC = $(CMDSDIR)/gretl_functions_en.xml
 IT_FNSRC = $(CMDSDIR)/gretl_functions_it.xml
 PT_FNSRC = $(CMDSDIR)/gretl_functions_pt.xml
+GL_FNSRC = $(CMDSDIR)/gretl_functions_gl.xml
 
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
@@ -55,7 +56,8 @@ TEXXSL = $(CMDSDIR)/gretltex.xsl
 HTMLXSL = $(CMDSDIR)/gretlhtml.xsl
 
 XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
-  $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_pt.xml $(CMDSDIR)/hlpstrs_it.xml
+  $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_pt.xml \
+  $(CMDSDIR)/hlpstrs_it.xml $(CMDSDIR)/hlpstrs_gl.xml
 
 EQNLIST = $(CMDSDIR)/eqn_list.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
@@ -69,6 +71,7 @@ EN_FNREF_STAMP = $(SHAREDIR)/fnref_en.stamp
 ES_FNREF_STAMP = $(SHAREDIR)/fnref_es.stamp
 IT_FNREF_STAMP = $(SHAREDIR)/fnref_it.stamp
 PT_FNREF_STAMP = $(SHAREDIR)/fnref_pt.stamp
+GL_FNREF_STAMP = $(SHAREDIR)/fnref_gl.stamp
 
 CLI_CMDREF = gretl_cli_cmdref
 GUI_CMDREF = gretl_gui_cmdref
@@ -217,6 +220,14 @@ $(PT_FNREF_STAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(
 	./reflow -m < pt2.tmp > $(SHAREDIR)/$(GUI_FNREF).pt && \
 	touch $@ && rm -f pt2.tmp
 
+# Galician function reference files
+$(GL_FNREF_STAMP): xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(GL_FNSRC) > gl2.tmp && \
+	./reflow < gl2.tmp > $(SHAREDIR)/$(CLI_FNREF).gl && \
+	./xsltrans --funcs --pango $(GL_FNSRC) > gl2.tmp && \
+	./reflow -m < gl2.tmp > $(SHAREDIR)/$(GUI_FNREF).gl && \
+	touch $@ && rm -f gl2.tmp
+
 # English HTML help files (experimental)
 
 htmlhelp: cmdref.html funcref.html biblio.html
@@ -344,7 +355,9 @@ help-it: $(CHAPREFS) $(IT_CMDREF_STAMP) $(IT_FNREF_STAMP)
 
 help-pt: $(CHAPREFS) $(PT_CMDREF_STAMP) $(PT_FNREF_STAMP)
 
-help-all: help-en help-it help-pt $(HELPREFS)
+help-gl: $(CHAPREFS) $(GL_FNREF_STAMP)
+
+help-all: help-en help-it help-pt help-gl $(HELPREFS)
 
 # Validate the commands "master" XML files against libgretl
 # By default we check the English-language files
@@ -360,6 +373,9 @@ check-pt: validate
 	-./validate $(PT_SRC)
 	-./validate $(PT_FNSRC)
 
+check-gl: validate 
+	-./validate $(GL_FNSRC)
+
 xmlcheck:
 	cd $(CMDSDIR) && ./checkxml.sh
 
@@ -367,7 +383,7 @@ docclean:
 	rm -f $(EN_CMDREF_STAMP) $(ES_CMDREF_STAMP)
 	rm -f $(IT_CMDREF_STAMP) $(PT_CMDREF_STAMP)
 	rm -f $(EN_FNREF_STAMP) $(ES_FNREF_STAMP)
-	rm -f $(IT_FNREF_STAMP) $(PT_FNREF_STAMP)
+	rm -f $(IT_FNREF_STAMP) $(PT_FNREF_STAMP) $(GL_FNREF_STAMP)
 	rm -f *.txt *.tmp
 
 clean: docclean

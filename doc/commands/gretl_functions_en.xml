@@ -3126,7 +3126,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="series-or-mat">
+    <function name="filter" section="filters" output="seebelow">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>

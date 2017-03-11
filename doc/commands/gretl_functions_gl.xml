@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -2192,12 +2192,12 @@
       <description>
 	<para>
 	  Devolve un resultado (do tipo do argumento) co coseno de <argname>x</argname>.
+	  <seelist>
+            <fncref targ="sin"/>
+            <fncref targ="tan"/>
+            <fncref targ="atan"/>
+	  </seelist>
 	</para>
-	<seelist>
-          <fncref targ="sin"/>
-          <fncref targ="tan"/>
-          <fncref targ="atan"/>
-	</seelist>
       </description>
     </function>
 
@@ -4527,7 +4527,7 @@
 	  da chave <lit>Mod.smdisterr</lit>. Cando é 0 ou se omite, esta
 	  matriz vai estar composta das desviacións típicas incondicionais
 	  das perturbacións suavizadas, que habitualmente se utilizan para
-	  calcular os denominados <it>erros auxiliares</it>. Mais no caso
+	  calcular os denominados <emphasis>erros auxiliares</emphasis>. Mais no caso
 	  contrario, <lit>Mod.smdisterr</lit> vai conter as raíces das
 	  desviacións cadradas medias entre os erros auxiliares e os seus
 	  valores verdadeiros.
