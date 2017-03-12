@@ -823,7 +823,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	if (gretl_model_get_int(orig, "rq")) {
 	    rep = quantreg_driver(altparm, list, dset, myopt, NULL);
 	} else {
-	    rep = lad(list, dset);
+	    rep = lad_model(list, dset, myopt);
 	}
 	break;
     case POISSON:
@@ -892,7 +892,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     /* if the model count went up for an aux regression,
        bring it back down */
     if ((myopt & OPT_A) && get_model_count() > mc) {
-	model_count_minus();
+	model_count_minus(NULL);
     }
 
     return rep;

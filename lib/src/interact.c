@@ -2138,8 +2138,14 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
 	    /* fallback */
 	    const char *sfx = (opt & OPT_R)? "rtf" :
 		(opt & OPT_C)? "csv" : "tex";
-	    
-	    sprintf(fname, "model_%d.%s", pmod->ID, sfx);
+
+	    if (pmod->ID > 0) {
+		sprintf(fname, "model_%d.%s", pmod->ID, sfx);
+	    } else {
+		/* FIXME: this needs to be checked! */
+		sprintf(fname, "model_%" G_GINT64_FORMAT ".%s",
+			pmod->esttime, sfx);
+	    }
 	}
 
 	if (opt & OPT_R) {
@@ -2906,7 +2912,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	
     case MPOLS:
 	clear_model(model);
-	*model = mp_ols(cmd->list, dset);
+	*model = mp_ols(cmd->list, dset, cmd->opt);
 	err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	break;
 
@@ -2969,7 +2975,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == IVREG) {
 	    *model = ivreg(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == LAD) {
-	    *model = lad(cmd->list, dset);
+	    *model = lad_model(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == QUANTREG) {
 	    *model = quantreg_driver(cmd->param, cmd->list, dset,
 				     cmd->opt, prn);

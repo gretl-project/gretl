@@ -23,6 +23,7 @@
 #include "gretl_xml.h"
 #include "matrix_extra.h"
 #include "libset.h"
+#include "gretl_func.h"
 
 /**
  * SECTION:gretl_model
@@ -5676,13 +5677,25 @@ int model_count_plus (void)
     return ++gretl_model_count;
 }
 
-void model_count_minus (void)
+void model_count_minus (MODEL *pmod)
 {
-    --gretl_model_count;
+    if (pmod == NULL) {
+	--gretl_model_count;
+    } else if (pmod->ID > 0) {
+	gretl_model_count = pmod->ID - 1;
+	pmod->ID = 0;
+    }
 }
 
-void set_model_id (MODEL *pmod)
+void set_model_id (MODEL *pmod, gretlopt opt)
 {
+    /* experimental */
+    if (opt & (OPT_A | OPT_Q)) {
+	return;
+    } else if (gretl_function_depth() > 0) {
+	return;
+    }
+
     if (pmod->errcode == 0) {
 	pmod->ID = ++gretl_model_count;
 	pmod->esttime = gretl_monotonic_time();

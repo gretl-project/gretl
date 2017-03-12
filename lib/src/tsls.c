@@ -1847,7 +1847,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     free(s2list);
 
     if ((opt & OPT_A) || tsls.errcode) {
-	model_count_minus();
+	model_count_minus(&tsls);
     }
 
     /* restore original sample range */

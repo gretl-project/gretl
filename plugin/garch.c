@@ -587,7 +587,7 @@ garch_init_by_arma (const MODEL *pmod, const int *glist,
 	amod = arma(list, NULL, dset, OPT_C, NULL);
 	err = amod.errcode;
 	if (!err) {
-	    model_count_minus();
+	    model_count_minus(&amod);
 	    garchpar_from_armapar(amod.coeff, p, q, vparm);
 	    for (i=0; i<q+p+1; i++) {
 		fprintf(stderr, "from ARMA: vparm_init[%d] = %#12.6g\n", i, 

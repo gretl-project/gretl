@@ -2631,7 +2631,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 	    if (model_print_deferred(opt)) {
 		MODEL *pmod = loop->models[j++];
 
-		set_model_id(pmod);
+		set_model_id(pmod, OPT_NONE);
 		printmodel(pmod, dset, opt, prn);
 	    }	    
 	}
@@ -3265,7 +3265,7 @@ static int model_command_post_process (ExecState *s,
 	    swap_models(s->model, pmod);
 	    pmod->ID = j + 1;
 	    set_as_last_model(pmod, GRETL_OBJ_EQN);
-	    model_count_minus();
+	    model_count_minus(NULL);
 	}
     } else {
 	loop_print_save_model(s->model, dset, s->prn, s);

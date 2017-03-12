@@ -1639,7 +1639,7 @@ static int cond_ols_GNR (MODEL *pmod,
 	    pmod->errcode = err;
 	}
 	if (!pmod->errcode) {
-	    set_model_id(pmod);
+	    set_model_id(pmod, opt);
 	}
     }
 

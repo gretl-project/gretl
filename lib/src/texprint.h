@@ -41,14 +41,14 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn);
 
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn);
 
-int texprint (MODEL *pmod, const DATASET *dset, char *fname, 
-	      gretlopt opt);
+int texprint (MODEL *pmod, const DATASET *dset,
+	      const char *fname, gretlopt opt);
 
-int rtfprint (MODEL *pmod, const DATASET *dset, char *fname, 
-	      gretlopt opt);
+int rtfprint (MODEL *pmod, const DATASET *dset,
+	      const char *fname, gretlopt opt);
 
-int csvprint (MODEL *pmod, const DATASET *dset, char *fname, 
-	      gretlopt opt);
+int csvprint (MODEL *pmod, const DATASET *dset,
+	      const char *fname, gretlopt opt);
 
 char *tex_escape (char *targ, const char *src);
 

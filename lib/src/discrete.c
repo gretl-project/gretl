@@ -1273,7 +1273,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
 	dataset_drop_last_variables(dset, dset->v - orig_v);
     }
 
-    set_model_id(&model);
+    set_model_id(&model, opt);
 
     return model;
 }
@@ -2104,7 +2104,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 	    }
 	}
 	mn_logit_yhat(pmod, mnl, yvals);
-	set_model_id(pmod);
+	set_model_id(pmod, opt);
     }
 
     if (!pmod->errcode) {
@@ -2301,7 +2301,7 @@ MODEL biprobit_model (int *list, DATASET *dset,
     }
 
     bpmod = (*biprobit_estimate) (list, dset, opt, prn);
-    set_model_id(&bpmod);
+    set_model_id(&bpmod, opt);
 
     return bpmod;
 }
@@ -2890,7 +2890,7 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 	if (opt & OPT_A) {
 	    pmod->aux = AUX_AUX;
 	} else {
-	    pmod->ID = model_count_plus();
+	    set_model_id(pmod, opt);
 	}
 	gretl_model_set_int(pmod, "binary", 1);
     }
@@ -3341,7 +3341,7 @@ MODEL logistic_model (const int *list, double lmax,
     lmod = lsq(llist, dset, OLS, OPT_A);
     if (!lmod.errcode) {
 	rewrite_logistic_stats(dset, &lmod, dv, real_lmax);
-	set_model_id(&lmod);
+	set_model_id(&lmod, OPT_NONE);
     }
 
     dataset_drop_last_variables(dset, 1);
@@ -3516,7 +3516,7 @@ MODEL interval_model (int *list, DATASET *dset,
     }
 
     intmod = (*interval_estimate) (list, dset, opt, prn);
-    set_model_id(&intmod);
+    set_model_id(&intmod, opt);
 
     return intmod;
 }
@@ -3556,7 +3556,7 @@ MODEL tobit_model (const int *list, double llim, double rlim,
     }
 
     tmod = (*tobit_estimate) (list, llim, rlim, dset, opt, prn);
-    set_model_id(&tmod);
+    set_model_id(&tmod, opt);
 
     return tmod;
 }
@@ -3680,7 +3680,7 @@ MODEL duration_model (const int *list, DATASET *dset,
     }
 
     (*duration_estimate) (&dmod, censvar, dset, opt, prn);
-    set_model_id(&dmod);
+    set_model_id(&dmod, opt);
 
     return dmod;
 }
@@ -3760,7 +3760,7 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
     }
 
     (*count_data_estimate) (&cmod, ci, offvar, dset, opt, prn);
-    set_model_id(&cmod);
+    set_model_id(&cmod, opt);
 
     return cmod;
 }
@@ -3797,7 +3797,7 @@ MODEL heckit_model (const int *list, DATASET *dset,
     }
 
     model = (*heckit_estimate) (list, dset, opt, prn);
-    set_model_id(&model);
+    set_model_id(&model, opt);
 
     return model;
 }
@@ -3841,7 +3841,7 @@ MODEL reprobit_model (const int *list, DATASET *dset,
     }
 
     model = (*reprobit_estimate) (list, dset, opt, prn);
-    set_model_id(&model);
+    set_model_id(&model, opt);
 
     return model;
 }

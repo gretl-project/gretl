@@ -4096,7 +4096,7 @@ static int real_do_model (int action)
 	*pmod = logistic_driver(libcmd.list, dataset, libcmd.opt);
 	break;	
     case LAD:
-	*pmod = lad(libcmd.list, dataset);
+	*pmod = lad_model(libcmd.list, dataset, libcmd.opt);
 	break;	
     case QUANTREG:
 	*pmod = quantreg_driver(libcmd.param, libcmd.list, dataset, 
@@ -4106,7 +4106,7 @@ static int real_do_model (int action)
 	*pmod = interval_model(libcmd.list, dataset, libcmd.opt, prn);
 	break;	
     case MPOLS:
-	*pmod = mp_ols(libcmd.list, dataset);
+	*pmod = mp_ols(libcmd.list, dataset, libcmd.opt);
 	break;
     case MIDASREG:
 	*pmod = midas_model(libcmd.list, libcmd.param, dataset,

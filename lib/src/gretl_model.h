@@ -415,9 +415,9 @@ void set_model_count (int c);
 
 int model_count_plus (void);
 
-void model_count_minus (void);
+void model_count_minus (MODEL *pmod);
 
-void set_model_id (MODEL *pmod);
+void set_model_id (MODEL *pmod, gretlopt opt);
 
 ModelTest *model_test_new (ModelTestType ttype);
 void model_test_free (ModelTest *test);

@@ -2542,7 +2542,7 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
     compose_panel_droplist(pmod, pan);
 
     if (!(pan->opt & OPT_A)) {
-	set_model_id(pmod);
+	set_model_id(pmod, pan->opt);
     }  
 
     if (pan->opt & OPT_F) {
@@ -3346,7 +3346,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     add_panel_obs_info(pmod, pan);
 
     if (!(pan->opt & OPT_A)) {
-	set_model_id(pmod);
+	set_model_id(pmod, pan->opt);
     }
 
     if (pan->opt & OPT_R) {
@@ -3983,7 +3983,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     if (!mdl.errcode) {
 	mdl.ci = PANEL;
 	if (!(opt & OPT_A)) {
-	    set_model_id(&mdl);
+	    set_model_id(&mdl, pan.opt);
 	}
 	gretl_model_set_int(&mdl, "n_included_units", pan.effn);
 	mdl.opt |= OPT_H; /* --unit-weights */

@@ -1939,7 +1939,8 @@ static void print_model_heading (const MODEL *pmod,
 	pputc(prn, '\n');
 	break;
     default:
-	if (pmod->ID < 0 || (opt & OPT_S)) {
+	/* 2017-03-12: first test was 'pmod->ID < 0' */
+	if (pmod->ID <= 0 || (opt & OPT_S)) {
 	    if (!csv) {
 		pputc(prn, '\n');
 	    }

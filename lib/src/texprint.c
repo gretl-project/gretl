@@ -1109,23 +1109,15 @@ void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
     pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", A_("HQC"), var->HQC);
 }
 
-static PRN *make_tex_prn (int ID, char *fname,
-			  int eqn, int doc, int *err)
+static PRN *make_tex_prn (const char *fname,
+			  int eqn, int doc,
+			  int *err)
 {
-    char texfile[FILENAME_MAX];
     PrnFormat fmt = GRETL_FORMAT_TEX;
     PRN *prn;
 
-    if (*fname == '\0') {
-	sprintf(texfile, "%s%s_%d.tex", gretl_workdir(),
-		(eqn)? "equation" : "model", ID);
-	strcpy(fname, texfile);
-    } else {
-	gretl_maybe_switch_dir(fname);
-	strcpy(texfile, fname);       
-    }
-
-    prn = gretl_print_new_with_filename(texfile, err);
+    gretl_maybe_switch_dir(fname);
+    prn = gretl_print_new_with_filename(fname, err);
 
     if (prn != NULL) {
 	if (eqn) {
@@ -1643,8 +1635,8 @@ int tex_print_model (MODEL *pmod, const DATASET *dset,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int texprint (MODEL *pmod, const DATASET *dset, char *fname, 
-	      gretlopt opt)
+int texprint (MODEL *pmod, const DATASET *dset,
+	      const char *fname, gretlopt opt)
 {
     PRN *prn;
     int eqn = (opt & OPT_E);
@@ -1655,7 +1647,7 @@ int texprint (MODEL *pmod, const DATASET *dset, char *fname,
 	return E_NOTIMP;
     }
 
-    prn = make_tex_prn(pmod->ID, fname, eqn, doc, &err);
+    prn = make_tex_prn(fname, eqn, doc, &err);
 
     if (!err) {
 	err = tex_print_model(pmod, dset, opt, prn);
@@ -1663,20 +1655,6 @@ int texprint (MODEL *pmod, const DATASET *dset, char *fname,
     }
 
     return err;
-}
-
-static void make_full_model_filename (char *fullname,
-				      char *fname,
-				      int ID,
-				      const char *ext)
-{
-    if (*fname == '\0') {
-	sprintf(fullname, "%smodel_%d.%s", gretl_workdir(), ID, ext);
-	strcpy(fname, fullname);
-    } else {
-	gretl_maybe_switch_dir(fname);
-	strcpy(fullname, fname);       
-    }
 }
 
 static void out_crlf (const char *buf, FILE *fp)
@@ -1698,8 +1676,8 @@ static void out_crlf (const char *buf, FILE *fp)
 #endif
 }
 
-int rtfprint (MODEL *pmod, const DATASET *dset, char *fname, 
-	      gretlopt opt)
+int rtfprint (MODEL *pmod, const DATASET *dset,
+	      const char *fname, gretlopt opt)
 {
     const char *buf = NULL;
     char *trbuf = NULL;
@@ -1733,12 +1711,10 @@ int rtfprint (MODEL *pmod, const DATASET *dset, char *fname,
 	/* now send to file, converting LF to CR + LF
 	   as we go, if required 
 	*/
-	char fullname[FILENAME_MAX];
 	FILE *fp;
 
-	make_full_model_filename(fullname, fname, pmod->ID, 
-				 "rtf");
-	fp = gretl_fopen(fullname, "w");
+	gretl_maybe_switch_dir(fname);
+	fp = gretl_fopen(fname, "w");
 
 	if (fp == NULL) {
 	    err = E_FOPEN;
@@ -1778,8 +1754,8 @@ static void out_native (const char *buf, FILE *fp)
     fputs(buf, fp);
 }
 
-int csvprint (MODEL *pmod, const DATASET *dset, char *fname, 
-	      gretlopt opt)
+int csvprint (MODEL *pmod, const DATASET *dset,
+	      const char *fname, gretlopt opt)
 {
     PRN *prn;
     int err = 0;
@@ -1799,12 +1775,10 @@ int csvprint (MODEL *pmod, const DATASET *dset, char *fname,
     if (!err) {
 	/* then send to file */
 	const char *buf = gretl_print_get_buffer(prn);
-	char fullname[FILENAME_MAX];
 	FILE *fp;
 
-	make_full_model_filename(fullname, fname, pmod->ID, 
-				 "csv");
-	fp = gretl_fopen(fullname, "w");
+	gretl_maybe_switch_dir(fname);
+	fp = gretl_fopen(fname, "w");
 
 	if (fp == NULL) {
 	    err = E_FOPEN;

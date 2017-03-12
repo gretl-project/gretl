@@ -1376,7 +1376,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     if (!(opt & OPT_A)) {
 	/* if it's not an auxiliary regression, set an ID number
 	   on the model */
-	set_model_id(&mdl);
+	set_model_id(&mdl, opt);
     }
 
     return mdl;
@@ -3641,7 +3641,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
     clear_model(&rhomod);
 
-    set_model_id(&ar);
+    set_model_id(&ar, opt);
 
  bailout:
 
@@ -4136,9 +4136,10 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
 }
 
 /**
- * lad:
+ * lad_model:
  * @list: dependent variable plus list of regressors.
  * @dset: dataset struct.
+ * @opt: may include OPT_Q for quiet operation.
  *
  * Estimate the model given in @list using the method of Least
  * Absolute Deviation (LAD).
@@ -4146,7 +4147,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lad (const int *list, DATASET *dset)
+MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
 {
     MODEL mod;
     int (*lad_driver) (MODEL *, DATASET *);
@@ -4170,7 +4171,7 @@ MODEL lad (const int *list, DATASET *dset)
     }
 
     (*lad_driver) (&mod, dset);
-    set_model_id(&mod);
+    set_model_id(&mod, opt);
 
     return mod;
 }
@@ -4224,7 +4225,7 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
     }
 
     (*rq_driver) (tau, &mod, dset, opt, prn);
-    set_model_id(&mod);
+    set_model_id(&mod, opt);
 
     return mod;
 }
@@ -4379,7 +4380,7 @@ MODEL arma (const int *list, const int *pqlags,
 	return armod;
     }
 
-    set_model_id(&armod);
+    set_model_id(&armod, opt);
 
     return armod;
 } 
@@ -4421,7 +4422,7 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
     }
 
     mod = (*garch_model) (list, dset, myprn, opt);
-    set_model_id(&mod);
+    set_model_id(&mod, opt);
 
     return mod;
 } 
@@ -4430,6 +4431,7 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
  * mp_ols:
  * @list: specification of variables to use.
  * @dset: dataset struct.
+ * @opt: maye include OPT_Q for quiet operation.
  *
  * Estimate an OLS model using multiple-precision arithmetic
  * via the GMP library.
@@ -4437,7 +4439,7 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL mp_ols (const int *list, DATASET *dset)
+MODEL mp_ols (const int *list, DATASET *dset, gretlopt opt)
 {
     int (*mplsq)(const int *, const int *, const int *, 
 		 DATASET *, MODEL *, 
@@ -4470,7 +4472,7 @@ MODEL mp_ols (const int *list, DATASET *dset)
 				 &mpmod, OPT_S); 
     }
 
-    set_model_id(&mpmod);
+    set_model_id(&mpmod, opt);
 
     return mpmod;
 }
@@ -4619,7 +4621,7 @@ MODEL arbond_model (const int *list, const char *ispec,
     }
 
     mod = (*arbond_estimate)(list, ispec, dset, opt, prn);
-    set_model_id(&mod);
+    set_model_id(&mod, opt);
 
     return mod;    
 }
@@ -4657,7 +4659,7 @@ MODEL dpd_model (const int *list, const int *laglist,
     }
 
     mod = (*dpd_estimate)(list, laglist, ispec, dset, opt, prn);
-    set_model_id(&mod);
+    set_model_id(&mod, opt);
 
     return mod;    
 }

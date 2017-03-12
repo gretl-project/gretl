@@ -7961,7 +7961,11 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    }
 	}
     } else if (type == GRETL_TYPE_MATRIX) {
-	ret = matrix_pointer_node(p);
+	if (copied) {
+	    ret = aux_matrix_node(p);
+	} else {
+	    ret = matrix_pointer_node(p);
+	}
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
 	}

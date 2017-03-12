@@ -2124,7 +2124,7 @@ static int save_restricted_model (ExecState *state,
     if (err) {
 	gretl_model_free(rmod);
     } else {
-	set_model_id(rmod);
+	set_model_id(rmod, OPT_NONE);
 	gretl_exec_state_set_model(state, rmod);
     } 
 

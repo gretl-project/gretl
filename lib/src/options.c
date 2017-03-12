@@ -43,7 +43,6 @@
 			 c == CORRGM ||		\
 			 c == CUSUM ||		\
 			 c == DATA ||		\
-			 c == DPANEL ||		\
 			 c == ESTIMATE ||	\
 			 c == FCAST ||		\
 			 c == FOREIGN ||	\

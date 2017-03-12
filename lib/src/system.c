@@ -4679,7 +4679,7 @@ static void finalize_liml_model (MODEL *pmod, equation_system *sys)
     pmod->opt |= OPT_L;
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->fstt = NADBL;
-    set_model_id(pmod);
+    set_model_id(pmod, OPT_NONE);
 }
 
 /* implement the --liml option to "tsls" */

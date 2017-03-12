@@ -3399,6 +3399,12 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
     double *ret = NULL;
     int t;
 
+    /* note: this is called only from the GUI, and in that
+       context @vname will be shown as the default name
+       for the saved series, though the user can change
+       it if she chooses
+    */
+
     if (idx == M_H) {
 	src = gretl_model_get_data(pmod, "garch_h");
     } else if (idx == M_AHAT) {
