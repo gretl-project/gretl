@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="gl">
 
  <gentext key="args"          text="Argumentos:  "/>
@@ -20,6 +20,7 @@
  <gentext key="anyfloat"      text="escalar, serie ou matriz"/>
  <gentext key="series-or-vec" text="serie ou vector"/>
  <gentext key="series-or-mat" text="serie ou matriz"/>
+ <gentext key="series-list-or-mat" text="serie, lista ou matriz"/>
  <gentext key="scalar-or-series" text="escalar ou serie"/>
  <gentext key="int-or-list"   text="enteiro ou lista"/>
  <gentext key="series-or-list" text="serie ou lista"/>
@@ -27,6 +28,7 @@
  <gentext key="scalar-or-matrix" text="escalar ou matriz"/>
  <gentext key="anyfloat-or-list" text="escalar, serie, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou cadea nomeada"/>
+ <gentext key="list-or-mat"    text="lista ou matriz"/>
  <gentext key="matrix-or-bundle" text="matriz ou paquete"/>
  <gentext key="asinput"       text="mesmo tipo que o introducido"/>
  <gentext key="bundle"        text="paquete"/> 

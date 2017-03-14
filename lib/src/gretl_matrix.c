@@ -10062,6 +10062,7 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
  * gretl_matrix_lag:
  * @m: source matrix.
  * @k: vector of lag orders (> 0 for lags, < 0 for leads).
+ * @opt: use OPT_L to arrange multiple lags by lag rather than by variable.
  * @missval: value to represent missing observations.
  * 
  * Returns: A matrix of the same dimensions as @m, containing lags
@@ -10070,7 +10071,8 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
  */
 
 gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, 
-				const gretl_vector *k, 
+				const gretl_vector *k,
+				gretlopt opt,
 				double missval)
 {
     gretl_matrix *a;
@@ -10087,23 +10089,44 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
 	return NULL;
     }
 
-    n = 0;
-    for (j=0; j<l; j++) {
-	kj = gretl_vector_get(k, j);
-	for (t=0; t<m->rows; t++) {
-	    s = t - kj;
-	    if (s < 0 || s >= m->rows) {
-		for (i=0; i<m->cols; i++) {
-		    gretl_matrix_set(a, t, n+i, missval);
-		}
-	    } else {
-		for (i=0; i<m->cols; i++) {
-		    x = gretl_matrix_get(m, s, i);
-		    gretl_matrix_set(a, t, n+i, x);
+    if (opt & OPT_L) {
+	/* by lag */
+	n = 0;
+	for (j=0; j<l; j++) {
+	    kj = gretl_vector_get(k, j);
+	    for (t=0; t<m->rows; t++) {
+		s = t - kj;
+		if (s < 0 || s >= m->rows) {
+		    for (i=0; i<m->cols; i++) {
+			gretl_matrix_set(a, t, n+i, missval);
+		    }
+		} else {
+		    for (i=0; i<m->cols; i++) {
+			x = gretl_matrix_get(m, s, i);
+			gretl_matrix_set(a, t, n+i, x);
+		    }
 		}
 	    }
+	    n += m->cols;
 	}
-	n += m->cols;
+    } else {
+	/* by variable */
+	n = 0;
+	for (i=0; i<m->cols; i++) {
+	    for (j=0; j<l; j++) {
+		kj = gretl_vector_get(k, j);
+		for (t=0; t<m->rows; t++) {
+		    s = t - kj;
+		    if (s < 0 || s >= m->rows) {
+			gretl_matrix_set(a, t, n+j, missval);
+		    } else {
+			x = gretl_matrix_get(m, s, i);
+			gretl_matrix_set(a, t, n+j, x);
+		    }
+		}
+	    }
+	    n += l;
+	}
     }
 
     return a;

@@ -45,7 +45,7 @@
    output  (scalar | series | matrix | smatrix | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int |
             scalar-or-matrix | matrix-or-bundle | bundle |
-	    strings | string-or-strings) "series"
+	    strings | string-or-strings | list-or-mat) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
@@ -56,13 +56,14 @@
 
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
-    type      (scalar | series | vector | rvec | cvec | matrix | smatrix | symmat | 
-               matrixref | seriesref | bundleref | anyfloat | scalar-or-series | 
-	       series-or-vec | series-or-mat | list | coeffname | string | char | sslist | 
-               series-or-list | smlist | pscalar | seebelow | fncall |
-               anyfloat-or-list | list-or-string | listetc | scalar-or-vec |
-               int-or-list | scalar-or-matrix | int | bool | pdmat |
-               strings | strings-or-list | bundle | varargs) "series"
+    type (scalar | series | vector | rvec | cvec | matrix | smatrix |
+	  symmat | matrixref | seriesref | bundleref | anyfloat |
+	  scalar-or-series | series-or-vec | series-or-mat | list |
+	  coeffname | string | char | sslist | series-or-list | smlist
+	  | pscalar | seebelow | fncall | anyfloat-or-list |
+	  list-or-string | listetc | scalar-or-vec | int-or-list |
+	  scalar-or-matrix | int | bool | pdmat | strings |
+	  strings-or-list | bundle | series-list-or-mat | varargs) "series"
     optional  (true | false) "false"
     conditional (true | false) "false"
 >

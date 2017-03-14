@@ -609,7 +609,8 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
 				    double missval, int *err);
 
 gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, 
-				const gretl_vector *k, 
+				const gretl_vector *k,
+				gretlopt opt,
 				double missval);
 
 int gretl_matrix_inplace_lag (gretl_matrix *targ,

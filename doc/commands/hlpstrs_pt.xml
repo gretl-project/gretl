@@ -20,6 +20,7 @@
  <gentext key="anyfloat"      text="escalar, série ou matriz"/>
  <gentext key="series-or-vec" text="série ou vetor"/>
  <gentext key="series-or-mat" text="série ou matriz"/>
+ <gentext key="series-list-or-mat" text="série, lista ou matriz"/>
  <gentext key="scalar-or-series" text="escalar ou série"/>
  <gentext key="int-or-list"   text="número inteiro ou lista"/>
  <gentext key="series-or-list" text="série ou lista"/>
@@ -27,6 +28,7 @@
  <gentext key="scalar-or-matrix" text="escalar ou matriz"/>
  <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou texto"/>
+ <gentext key="list-or-mat"    text="lista ou matriz"/>
  <gentext key="matrix-or-bundle" text="matriz ou bundle"/>
  <gentext key="asinput"       text="o mesmo tipo que o argumento"/>
  <gentext key="scalar"        text="escalar"/>

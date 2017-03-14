@@ -4769,14 +4769,11 @@ static NODE *matrix_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
-    fprintf(stderr, "HERE, matrix_make_lags\n");
-
     if (ret != NULL && starting(p)) {
 	gretlopt opt = OPT_NONE;
 	gretl_matrix *kvec = NULL;
 	gretl_matrix *src = NULL;
 
-	/* FIXME: ordering of the results? */
 	if (node_get_bool(r, p, 0) > 0 && !p->err) {
 	    opt = OPT_L; /* by lags */
 	}
@@ -4808,7 +4805,7 @@ static NODE *matrix_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.m = gretl_matrix_lag(src, kvec, 0.0);
+	    ret->v.m = gretl_matrix_lag(src, kvec, opt, 0.0);
 	}
 
 	if (kvec != l->v.m) {
@@ -9569,7 +9566,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    } else {
 		mm = m->v.m;
 	    }
-	    A = gretl_matrix_lag(l->v.m, mm, missval);
+	    A = gretl_matrix_lag(l->v.m, mm, OPT_L, missval);
 	    if (m->t == NUM && mm != NULL) {
 		gretl_matrix_free(mm);
 	    }
