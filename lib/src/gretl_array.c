@@ -137,11 +137,18 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
     if (type != GRETL_TYPE_STRINGS &&
 	type != GRETL_TYPE_MATRICES &&
 	type != GRETL_TYPE_BUNDLES &&
-	type != GRETL_TYPE_LISTS) {
+	type != GRETL_TYPE_LISTS &&
+	type != GRETL_TYPE_ANY) {
 	*err = E_TYPES;
 	return NULL;
     } else if (n < 0) {
 	*err = E_DATA;
+	return NULL;
+    } else if (type == GRETL_TYPE_ANY && n > 0) {
+	/* an array of unspecified type must be
+	   empty in the first instance
+	*/
+	*err = E_TYPES;
 	return NULL;
     }
 
@@ -292,6 +299,21 @@ gretl_bundle *gretl_array_get_bundle (gretl_array *A, int i)
     }
 
     return b;
+}
+
+int gretl_array_set_type (gretl_array *A, GretlType type)
+{
+    if (A == NULL || A->n > 0) {
+	return E_DATA;
+    } else if (type != GRETL_TYPE_STRINGS &&
+	       type != GRETL_TYPE_MATRICES &&
+	       type != GRETL_TYPE_BUNDLES &&
+	       type != GRETL_TYPE_LISTS) {
+	return E_TYPES;
+    } else {
+	A->type = type;
+	return 0;
+    }
 }
 
 GretlType gretl_array_get_type (gretl_array *A)

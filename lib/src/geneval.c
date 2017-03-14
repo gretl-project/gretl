@@ -10187,15 +10187,16 @@ static GretlType lh_array_type (parser *p)
 	}
     }
 
-    if (!gretl_is_array_type(gtype)) {
+    if (gtype != GRETL_TYPE_NONE && !gretl_is_array_type(gtype)) {
 	p->err = E_TYPES;
     }
 
     return gtype;
 }
 
-static int check_array_element_type (NODE *n, GretlType t)
+static int check_array_element_type (NODE *n, GretlType *pt, int i)
 {
+    GretlType t = *pt;
     int ok = 0;
 
     if (t == GRETL_TYPE_MATRICES) {
@@ -10206,6 +10207,25 @@ static int check_array_element_type (NODE *n, GretlType t)
 	ok = n->t == BUNDLE;
     } else if (t == GRETL_TYPE_LISTS) {
 	ok = n->t == LIST;
+    } else if (i == 0 && t == GRETL_TYPE_ANY) {
+	/* The array type is not yet determinate: this is OK
+	   only when we're looking at the first element: if
+	   this element is of an acceptable type we use it
+	   to determine the array type.
+	*/
+	*pt = 0;
+	if (n->t == MAT) {
+	    *pt = GRETL_TYPE_MATRICES;
+	} else if (n->t == STR) {
+	    *pt = GRETL_TYPE_STRINGS;
+	} else if (n->t == BUNDLE) {
+	    *pt = GRETL_TYPE_BUNDLES;
+	} else if (n->t == LIST) {
+	    *pt = GRETL_TYPE_LISTS;
+	}
+	if (*pt != 0) {
+	    ok = 1;
+	}
     }
 
     return ok ? 0 : E_TYPES;
@@ -10948,7 +10968,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_DEFARRAY) {
 	GretlType gtype = lh_array_type(p);
 	gretl_array *A = NULL;
+	int anon = 0;
 	void *ptr;
+
+	if (gtype == GRETL_TYPE_NONE) {
+	    /* type remains to be determined */
+	    gtype = GRETL_TYPE_ANY;
+	    anon = 1;
+	}
 
 	if (!p->err) {
 	    A = gretl_array_new(gtype, 0, &p->err);
@@ -10958,9 +10985,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    for (i=0; i<k && !p->err; i++) {
 		e = eval(n->v.bn.n[i], p);
 		if (!p->err) {
-		    p->err = check_array_element_type(e, gtype);
+		    p->err = check_array_element_type(e, &gtype, i);
 		}
 		if (!p->err) {
+		    if (anon) {
+			gretl_array_set_type(A, gtype);
+			anon = 0;
+		    }
 		    ptr = node_get_ptr(e);
 		    if (is_tmp_node(e)) {
 			p->err = gretl_array_append_object(A, ptr, 0);
