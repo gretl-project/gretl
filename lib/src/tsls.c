@@ -601,6 +601,11 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 	ModelTest *test = model_test_new(GRETL_TEST_SARGAN);
 	double OTest = smod.rsq * smod.nobs;
 
+#if TDEBUG
+	fprintf(stderr, "Otest = %g * %d = %g\n", smod.rsq, smod.nobs,
+		smod.rsq * smod.nobs);
+#endif
+
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_LM);
 	    model_test_set_dfn(test, Orank);
