@@ -4765,6 +4765,60 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *matrix_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    fprintf(stderr, "HERE, matrix_make_lags\n");
+
+    if (ret != NULL && starting(p)) {
+	gretlopt opt = OPT_NONE;
+	gretl_matrix *kvec = NULL;
+	gretl_matrix *src = NULL;
+
+	/* FIXME: ordering of the results? */
+	if (node_get_bool(r, p, 0) > 0 && !p->err) {
+	    opt = OPT_L; /* by lags */
+	}
+
+	if (!p->err) {
+	    /* max lag order or vector */
+	    if (scalar_node(l)) {
+		int i, k = node_get_int(l, p);
+
+		if (!p->err && k <= 0) {
+		    p->err = E_INVARG;
+		} else if (!p->err) {
+		    kvec = gretl_vector_alloc(k);
+		    if (kvec == NULL) {
+			p->err = E_ALLOC;
+		    } else {
+			for (i=0; i<k; i++) {
+			    kvec->val[i] = i+1;
+			}
+		    }
+		}
+	    } else {
+		kvec = l->v.m;
+	    }
+	}
+
+	if (!p->err) {
+	    src = m->v.m;
+	}
+
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_lag(src, kvec, 0.0);
+	}
+
+	if (kvec != l->v.m) {
+	    gretl_matrix_free(kvec);
+	}
+    }
+
+    return ret;
+}
+
 /* args are minlag, maxlag, MIDAS-list-to-lag */
 
 static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
@@ -13065,8 +13119,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-	if ((scalar_node(l) || l->t == MAT) && ok_list_node(m)) {
+	if ((scalar_node(l) || l->t == MAT) && m->t != MAT && ok_list_node(m)) {
 	    ret = list_make_lags(l, m, r, p);
+	} else if ((scalar_node(l) || l->t == MAT) && m->t == MAT) {
+	    ret = matrix_make_lags(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
