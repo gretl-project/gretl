@@ -35,8 +35,8 @@ static int days_in_month[2][13] = {
     {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 };
 
-/* Jan 1, 0001, was a Saturday on the proleptic Gregorian calendar */
-#define DAY1 6
+/* Jan 1, 0001, was a Monday on the proleptic Gregorian calendar */
+#define DAY1 1
 
 /* Note on the GLib API used below: where "julian" occurs in the names
    of GLib calendrical functions it refers to the "Julian day"; that is,
@@ -411,6 +411,8 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 
     return (int) t;
 }
+
+/* convert from $t in dataset to epoch day */
 
 static int t_to_epoch_day (int t, guint32 start, int wkdays)
 {
