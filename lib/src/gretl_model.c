@@ -5812,6 +5812,28 @@ int mle_criteria (MODEL *pmod, int addk)
     return err;
 }
 
+int model_use_zscore (const MODEL *pmod)
+{
+    if (pmod == NULL) {
+	/* modprint */
+	return 1;
+    } else if (gretl_model_get_int(pmod, "dfcorr")) {
+	/* override ASYMPTOTIC_MODEL if need be */
+	return 0;
+    } else if (pmod->ci == OLS && (pmod->opt & OPT_N)) {
+	/* OLS with --no-df-corr */
+	return 1;
+    } else if (ASYMPTOTIC_MODEL(pmod->ci)) {
+	return 1;
+    } else if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
+	return 1;
+    } else if ((pmod->opt & OPT_R) && libset_get_bool("robust_z")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 double coeff_pval (int ci, double x, int df)
 {
     double p = NADBL;
@@ -5832,9 +5854,7 @@ double model_coeff_pval (const MODEL *pmod, double x)
     double p = NADBL;
 
     if (!xna(x)) {
-	if (ASYMPTOTIC_MODEL(pmod->ci) ||
-	    (pmod->ci == PANEL && (pmod->opt & OPT_U)) ||
-	    ((pmod->opt & OPT_R) && libset_get_bool("robust_z"))) {
+	if (model_use_zscore(pmod)) {
 	    p = normal_pvalue_2(x);
 	} else if (pmod->ci == AR) {
 	    /* backward compat (?) */

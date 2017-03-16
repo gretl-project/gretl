@@ -451,6 +451,8 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 
 int mle_criteria (MODEL *pmod, int addk);
 
+int model_use_zscore (const MODEL *pmod);
+
 double coeff_pval (int ci, double x, int df);
 
 double model_coeff_pval (const MODEL *pmod, double x);

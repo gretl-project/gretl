@@ -1858,6 +1858,10 @@ static void regress (MODEL *pmod, double *xpy,
 	pmod->fstt = NADBL;
     } else if (pmod->rsq == 1.0) {
 	pmod->fstt = NADBL;
+    } else if (pmod->opt & OPT_N) {
+	/* for consistency with no-df-corr */
+	pmod->fstt = NADBL;
+	pmod->chisq = (rss - zz * ifc) / s2;
     } else {
 	pmod->fstt = (rss - zz * ifc) / (s2 * pmod->dfn);
 	if (pmod->fstt < 0.0) {
@@ -3810,7 +3814,6 @@ static void print_arch_regression (const gretl_matrix *b,
 	}
 
 	/* is a df correction wanted here? */
-
 	print_coeffs(b->val, se, (const char **) names, 
 		     k, T - k, ARCH, prn);
     }
