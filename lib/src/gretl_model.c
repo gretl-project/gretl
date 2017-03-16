@@ -5689,8 +5689,15 @@ void model_count_minus (MODEL *pmod)
 
 void set_model_id (MODEL *pmod, gretlopt opt)
 {
-    /* experimental */
-    if (opt & (OPT_A | OPT_Q)) {
+    /* experimental: limit setting of sequential model
+       number to "visible" models estimated in main
+       script or session (not in functions)
+    */
+    if (opt & OPT_A) {
+	/* an auxiliary model */
+	return;
+    } else if ((opt & OPT_Q) && !(opt & OPT_W)) {
+	/* --quiet and not --window, so "invisible" */
 	return;
     } else if (gretl_function_depth() > 0) {
 	return;

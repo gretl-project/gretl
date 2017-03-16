@@ -2991,16 +2991,19 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 				  PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
-    
+
     if (!err) {
+	int havename = *s->cmd->savename != '\0';
+	int window = (s->cmd->opt & OPT_W) != 0;
+
 	set_gretl_errno(0);
 	if (!(s->cmd->opt & OPT_Q)) {
 	    printmodel(pmod, dset, s->cmd->opt, prn);
 	}
 	attach_subsample_to_model(pmod, dset);
 	s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
-	if (!err && s->callback != NULL && *s->cmd->savename != '\0' &&
-	    gretl_in_gui_mode()) {
+	if (!err && gretl_in_gui_mode() && s->callback != NULL &&
+	    (havename || window)) {
 	    s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	}
     } 

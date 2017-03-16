@@ -5,8 +5,11 @@ version 2017a, in progress
   consistently but add some optional support for handling
   Julian dates (also add a User's Guide chapter on this)
 - xls, xlsx, ods and gnumeric data importers: handle string
-  data (facility extended from CSV importer)
+  data (this facility extended from the CSV importer)
 - Remove obsolete Kalman-filter interface
+- Sequential numbering of models: skip models estimated
+  with the --quiet flag and also those estimated within
+  functions
 - Deprecate "=" as obsolete synonym for boolean "==" 
 - New functions kmeier() and naalen() for nonparametric
   estimation of survivor and hazard functions
