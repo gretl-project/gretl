@@ -636,7 +636,8 @@ static int check_daily_dates (DATASET *dset, int *pd,
     }
 
 #if DAY_DEBUG    
-    fprintf(stderr, "S[0] = '%s', ed1=%d, ed2=%d\n", lbl1, ed1, ed2);
+    fprintf(stderr, "check_daily_dates: '%s' -> %d, '%s' -> %d\n",
+	    lbl1, (int) ed1, lbl2, (int) ed2);
 #endif
 
     dset->pd = guess_daily_pd(dset);
