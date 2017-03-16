@@ -4797,6 +4797,9 @@
 	  ordered by lag: lag 1 of all the input series or columns,
 	  then lag 2 of all the series or columns, and so on.
 	</para>
+	<para>
+	  See also <fncref targ="mlag"/> for use with matrices.
+	</para>
       </description>
     </function>
 
@@ -5480,6 +5483,9 @@
 	  If $p$ is a vector, the above operation is carried out for
 	  each element in $p$, joining the resulting matrices
 	  horizontally.
+	</para>
+	<para>
+	  See also <fncref targ="lags"/>.
 	</para>
       </description>
     </function>

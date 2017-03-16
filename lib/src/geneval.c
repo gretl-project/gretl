@@ -4784,6 +4784,7 @@ static NODE *matrix_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 		int i, k = node_get_int(l, p);
 
 		if (!p->err && k <= 0) {
+		    /* scalar k must be positive */
 		    p->err = E_INVARG;
 		} else if (!p->err) {
 		    kvec = gretl_vector_alloc(k);
