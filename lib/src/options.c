@@ -295,6 +295,7 @@ struct gretl_option gretl_opts[] = {
     { IVREG,    OPT_G, "gmm", 0 },
     { IVREG,    OPT_I, "iterate", 0 },
     { IVREG,    OPT_L, "liml", 0 },
+    { IVREG,    OPT_N, "no-df-corr", 0 },
     { IVREG,    OPT_R, "robust", 0 },  
     { IVREG,    OPT_S, "save", 0 },
     { IVREG,    OPT_T, "two-step", 0 },

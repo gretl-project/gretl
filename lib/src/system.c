@@ -1484,9 +1484,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     /* by default, apply a df correction for single-equation methods */
 
     if (sys->method == SYS_METHOD_OLS || 
-	sys->method == SYS_METHOD_WLS ||
-	sys->method == SYS_METHOD_TSLS || 
-	sys->method == SYS_METHOD_LIML) {
+	sys->method == SYS_METHOD_TSLS) {
 	if (!(opt & OPT_N)) {
 	    sys->flags |= SYSTEM_DFCORR;
 	}

@@ -131,8 +131,8 @@ of normally distributed errors).
 
 \section{Beyond OLS}
 
-The situation is different when we move beyond estimation of
-the classical linear model via OLS.  We may wish to estimate nonlinear
+The situation is different when we move beyond estimation of the
+classical linear model via OLS.  We may wish to estimate nonlinear
 models (sometimes by least squares), and many models of interest to
 econometricians are commonly estimated via maximization of a
 likelihood function, or via the generalized method of moments (GMM).
@@ -165,8 +165,9 @@ the criterion function and in forming likelihood-ratio tests.
 On the other hand, pragmatic arguments for doing df adjustment are (a)
 that it makes for closer comparability between regular OLS estimates
 and nonlinear ones, and (b) that it provides a ``pinch of salt'' in
-relation to small-sample results, even if it lacks rigorous
-justification.  
+relation to small-sample results---that is, inflates standard errors,
+confidence intervals and $p$-values somewhat---even if it lacks
+rigorous justification.
 
 Note that even for fairly small samples, the difference between the
 biased and unbiased estimators in equations (\ref{eq:sigma-hat}) and
@@ -181,7 +182,7 @@ larger.\footnote{A fairly typical situation in time-series
   observations, and to be estimating up to maybe 30 parameters
   including lags.  In this case df correction would make a difference
   to standard errors on the order of 10 percent.}  One might therefore
-make a case for ``inflating'' the standard errors obtained via
+make a case for inflating the standard errors obtained via
 nonlinear estimators as a precaution against taking results to be
 ``more precise than they really are''.
 
@@ -197,7 +198,6 @@ $N(0,1)$ for $H_0: \beta_i = 0$---if and only if the conditions for
 appealing to asymptotic results can be taken to be met.  From this
 point of view df adjustment may be seen as providing a false sense of
 security.  
-
 
 \section{Consistency and ``grey'' cases}
 
@@ -233,7 +233,6 @@ Cochrane--Orcutt.  These depart from the classical linear model, and
 the theoreretical basis for inference in such models is asymptotic,
 yet according to econometric tradition standard errors are generally
 df adjusted.
-
 
 \section{What gretl does}
 

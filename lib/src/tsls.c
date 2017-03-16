@@ -1852,7 +1852,11 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     free(s2list);
 
     if ((opt & OPT_A) || tsls.errcode) {
-	model_count_minus(&tsls);
+	model_count_minus(&tsls); /* OK? */
+    }
+
+    if (!tsls.errcode && !(opt & OPT_N)) {
+	gretl_model_set_int(&tsls, "dfcorr", 1);
     }
 
     /* restore original sample range */
@@ -1861,5 +1865,3 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     return tsls;
 }
-
-

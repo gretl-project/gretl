@@ -802,14 +802,14 @@ static int drop_redundant_instruments (equation_system *sys,
     return err;
 }
 
-/* options to be passed in running initial 2sls */
+/* options to be passed in running initial 2SLS */
 
 static gretlopt sys_tsls_opt (const equation_system *sys)
 {
     gretlopt opt = (OPT_E | OPT_A);
 
-    if (sys->method == SYS_METHOD_LIML) {
-	opt |= OPT_N; /* ML: no df correction */
+    if (!(sys->flags & SYSTEM_DFCORR)) {
+	opt |= OPT_N; /* suppress df correction */
     }
 
     if (sys->flags & SYSTEM_LIML1) {

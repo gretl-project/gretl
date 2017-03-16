@@ -2270,8 +2270,8 @@ static int use_zscore (const MODEL *pmod)
     if (pmod == NULL) {
 	/* modprint */
 	return 1;
-    } else if (0 && gretl_model_get_int(pmod, "dfcorr")) {
-	/* override ASYMPTOTIC_MODEL in system case? */
+    } else if (gretl_model_get_int(pmod, "dfcorr")) {
+	/* override ASYMPTOTIC_MODEL if need be */
 	return 0;
     } else if (ASYMPTOTIC_MODEL(pmod->ci)) {
 	return 1;

@@ -113,7 +113,7 @@ When estimation is via TSLS or 3SLS it is possible to specify a
 particular set of instruments for each equation. This is done by
 giving the \texttt{equation} lists in the format used with the
 \cmd{tsls} command: first the dependent variable, then the
-regressors, then a semicolon, then the instruments, as in
+regressors, then a semicolon followed by the instruments, as in
 
 \begin{code}
 system method=3sls
@@ -123,13 +123,12 @@ end system
 \end{code}
 
 An alternative way of specifying instruments is to insert an extra
-line starting with \texttt{instr}, followed by the list of 
-variables acting as instruments. This is especially useful for 
-specifying the system with the \texttt{equations} keyword, see the 
-following subsection.  
-As in \cmd{tsls}, any regressors that are not also
-listed as instruments are treated as endogenous, so in the example
-above \texttt{x11} and \texttt{x21} are treated as exogenous while
+line starting with \texttt{instr}, followed by the list of variables
+acting as instruments. This is especially useful for specifying the
+system with the \texttt{equations} keyword; see the following
+subsection.  As in \cmd{tsls}, any regressors that are not also listed
+as instruments are treated as endogenous, so in the example above
+\texttt{x11} and \texttt{x21} are treated as exogenous while
 \texttt{x21} and \texttt{x22} are endogenous, and instrumented by
 \texttt{z1} and \texttt{z2} respectively.
 
@@ -189,8 +188,8 @@ end system
 As mentioned above, the option of assigning a specific name to a
 system is not available within functions, but the generic identifier
 \verb|$system| can be used to similar effect. The following example
-shows how one can define a system, estimate it via two methods, apply
-a restriction, then re-estimate it subject to the restriction.
+illustrates how one can define a system, estimate it via two methods,
+apply a restriction, then re-estimate it subject to the restriction.
 
 \begin{code}
 function void anonsys(series x, series y)
