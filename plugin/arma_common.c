@@ -991,3 +991,60 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
 }
 
 #endif /* X12A_CODE not defined */
+
+gretl_matrix *armaspec(gretl_matrix *param, double s2, int T, int *err)
+{
+
+    /*
+      computes 
+       s2    C(exp(i*omega)) * C(exp(-i*omega))
+      ---- * ----------------------------------
+      2*pi   A(exp(i*omega)) * A(exp(-i*omega))
+
+      for omega that goes from 0 to pi in T steps; 
+      the "param" matrix should contain the AR parameters
+      in column 0 and the MA parameters in column 1
+     */
+    
+    int i, n, t;
+    double num, den, nre_t, nim_t, dre_t, dim_t, xt;
+    double c, s;
+    double ar, ma;
+    double scale = s2/M_2PI;
+    
+    n = param->rows;
+    gretl_vector *ret = NULL;
+    ret = gretl_matrix_alloc(T+1,2);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+    
+    for (t=0; t<=T; t++) {
+	xt = t * M_PI / T;
+	ar = gretl_matrix_get(param,0,0);
+	ma = gretl_matrix_get(param,0,1);
+	nre_t = ma * ma;
+	dre_t = ar * ar;
+	nim_t = dim_t = 0;
+	
+	for (i=1; i<n; i++) {
+	    ar = gretl_matrix_get(param,i,0);
+	    ma = gretl_matrix_get(param,i,1);
+	    c = cos(i * xt);
+	    s = sin(i * xt);
+	    nre_t += c * ma;
+	    nim_t += s * ma;
+	    dre_t += c * ar;
+	    dim_t += s * ar;
+	}
+	
+	num = nre_t * nre_t + nim_t * nim_t;
+	den = dre_t * dre_t + dim_t * dim_t;
+	gretl_matrix_set(ret, t, 0, xt);
+	gretl_matrix_set(ret, t, 1, scale * num/den);
+    }
+
+    return ret;
+}
