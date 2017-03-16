@@ -3044,7 +3044,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = VAR_omit_driver(cmd, dset, prn);
 	} else if (add_omit_save(cmd)) {
 	    MODEL mymod;
-	    
+
 	    gretl_model_init(&mymod, dset);
 	    if (cmd->ci == ADD) {
 		err = add_test_full(model, &mymod, cmd->list, 

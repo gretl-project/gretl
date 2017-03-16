@@ -344,11 +344,11 @@ static void print_compare (struct COMPARE *cmp,
 			   PRN *prn)
 {
     if (opt & OPT_Q) {
-	if (cmp->model_id >= 0) {
+	if (cmp->model_id > 0) {
 	    pprintf(prn, _("Test on Model %d:"), cmp->model_id);
 	    pputc(prn, '\n');
 	}
-    } else if (cmp->model_id >= 0) {
+    } else if (cmp->model_id > 0) {
 	if (opt & OPT_A) {
 	    /* --auto-omit: add vertical space */
 	    pputc(prn, '\n');
@@ -1211,7 +1211,13 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	   method; use OPT_Z to suppress the elimination of perfectly
 	   collinear variables.
 	*/
-	umod = replicate_estimator(orig, biglist, dset, OPT_Z, prn);
+	gretlopt ropt = OPT_Z;
+
+	if (opt & (OPT_Q | OPT_I)) {
+	    /* not printing @umod, so pass along OPT_Q */
+	    ropt |= OPT_Q;
+	}
+	umod = replicate_estimator(orig, biglist, dset, ropt, prn);
     }
 
     if (umod.errcode) {
@@ -1466,7 +1472,13 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 
     if (!err) {
 	/* re-estimate the final model without the auxiliary flag */
-	omod = replicate_estimator(orig, tmplist, dset, OPT_NONE, prn);
+	gretlopt ropt = OPT_NONE;
+
+	if (opt & (OPT_Q | OPT_I)) {
+	    /* not printing @omod, so pass along OPT_Q */
+	    ropt |= OPT_Q;
+	}
+	omod = replicate_estimator(orig, tmplist, dset, ropt, prn);
     }
 
     free(tmplist);
@@ -1600,7 +1612,13 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     if (opt & OPT_A) {
 	rmod = auto_omit(orig, omitvars, dset, opt, prn);
     } else {
-	rmod = replicate_estimator(orig, tmplist, dset, OPT_NONE, prn);
+	gretlopt ropt = OPT_NONE;
+
+	if (opt & (OPT_Q | OPT_I)) {
+	    /* not printing @rmod, so pass along OPT_Q */
+	    ropt |= OPT_Q;
+	}
+	rmod = replicate_estimator(orig, tmplist, dset, ropt, prn);
     }
 
     err = rmod.errcode;
