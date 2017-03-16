@@ -3367,7 +3367,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 
 #define estimator_specified(o) (o & (OPT_F|OPT_U|OPT_B|OPT_P))
 
-/* real_panel_model:
+/**
+ * real_panel_model:
  * @list: list containing model specification.
  * @dset: dataset struct.
  * @opt: may include %OPT_U for the random effects model;

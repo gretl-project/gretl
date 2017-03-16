@@ -440,7 +440,6 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_N, "nerlove", 0 },
     { PANEL,    OPT_P, "pooled", 0 },
     { PANEL,    OPT_R, "robust", 0 },
-    { PANEL,    OPT_S, "silent", 0 },
     { PANEL,    OPT_U, "random-effects", 0 },
     { PANEL,    OPT_V, "verbose", 0 },
     { PANEL,    OPT_H, "unit-weights", 0 },
