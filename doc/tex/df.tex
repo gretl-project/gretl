@@ -11,7 +11,11 @@ regard.  We also explain how to supplement the results produced
 automatically by \app{gretl} if you want to apply such a correction
 where \app{gretl} does not, or vice versa.
 
+The first few sections are quite basic; experts are invited to skip to
+section~\ref{sec:df-grey}.
+
 \section{Back to basics}
+\label{sec:df-basics}
 
 It's well known that given a sample, $\{x_i\}$, of size $n$ from a
 normally distributed population, the Maximum Likelihood (ML) estimator
@@ -22,9 +26,9 @@ of the population variance, $\sigma^2$, is
 \hat{\sigma}^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \bar{x})^2
 \end{equation}
 %
-where $\bar{x}$ is the sample mean, $n^{-1} \sum_{i=1}^n x_i$.
-It's also well known that $\hat{\sigma}^2$, while consistent,
-is a biased estimator, and is commonly replaced by the ``sample
+where $\bar{x}$ is the sample mean, $n^{-1} \sum_{i=1}^n x_i$.  It's
+also well known that $\hat{\sigma}^2$, while it is a consistent
+estimator, is biased, and it is commonly replaced by the ``sample
 variance'', namely,
 %
 \begin{equation}
@@ -32,7 +36,7 @@ variance'', namely,
 s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2
 \end{equation}
 
-The intuition behind the bias in (\ref{eq:sigma-hat}) is quite
+The intuition behind the bias in (\ref{eq:sigma-hat}) is
 straightforward.  First, the quantity we seek to estimate is defined
 as
 %
@@ -63,6 +67,7 @@ of information since the $n$th value can always be deduced via the
 formula for $\bar{x}$.
 
 \section{Application to OLS regression}
+\label{sec:df-ols}
 
 The argument above carries over into the usual calculation of standard
 errors in the context of OLS regression as applied to the linear model
@@ -107,7 +112,7 @@ estimated, the sampling distribution of the OLS coefficients is not,
 strictly speaking, normal.  But if the \textit{disturbances} are
 normally distributed (besides being IID) then, even in small samples,
 the parameter estimates will follow a distribution that can be
-specified exactly, namely the Student's $t$ distribution with degrees
+specified exactly, namely the Student $t$ distribution with degrees
 of freedom equal to the value given above, $\nu = n-k$.
 
 That is, besides using a df correction in computing the standard
@@ -115,7 +120,7 @@ errors of the OLS coefficients, one uses the same $\nu$ in selecting
 the particular distribution to which the ``$t$-ratio'',
 $(\hat{\beta}_i-\beta^0)/s_{\hat{\beta}_i}$, should be referred in
 order to determine the marginal significance level or $p$-value for
-the null hypothesis $H_0: \beta_i = \beta^0$.  This is the real
+the null hypothesis that $\beta_i = \beta^0$.  This is the real
 payoff to df correction: we get test statistics that follow a 
 known distribution in small samples.  (In big enough samples
 the point is moot, since the quantitative distinction between
@@ -130,6 +135,7 @@ of such statistics in small samples depends on the assumption
 of normally distributed errors).
 
 \section{Beyond OLS}
+\label{sec:df-beyond}
 
 The situation is different when we move beyond estimation of the
 classical linear model via OLS.  We may wish to estimate nonlinear
@@ -155,19 +161,19 @@ The question arises, should we or should we not apply a df
 for models that depart from the classical linear specification?
 
 One argument against applying df adjustment is that it lacks a
-theoretical basis in relation to hypothesis testing, in that it does
-not produce test statistics that follow any known distribution in
-small samples.  In addition, if parameter estimates are obtained via
-ML, it makes sense to report ML estimates of variances even if these
-are biased, since it is the ML quantities that are used in computing
-the criterion function and in forming likelihood-ratio tests.
+theoretical basis: it does not produce test statistics that follow any
+known distribution in small samples.  In addition, if parameter
+estimates are obtained via ML, it makes sense to report ML estimates
+of variances even if these are biased, since it is the ML quantities
+that are used in computing the criterion function and in forming
+likelihood-ratio tests.
 
 On the other hand, pragmatic arguments for doing df adjustment are (a)
 that it makes for closer comparability between regular OLS estimates
 and nonlinear ones, and (b) that it provides a ``pinch of salt'' in
-relation to small-sample results---that is, inflates standard errors,
-confidence intervals and $p$-values somewhat---even if it lacks
-rigorous justification.
+relation to small-sample results---that is, it inflates standard
+errors, confidence intervals and $p$-values somewhat---even if it
+lacks rigorous justification.
 
 Note that even for fairly small samples, the difference between the
 biased and unbiased estimators in equations (\ref{eq:sigma-hat}) and
@@ -200,6 +206,7 @@ point of view df adjustment may be seen as providing a false sense of
 security.  
 
 \section{Consistency and ``grey'' cases}
+\label{sec:df-grey}
 
 Consistency (in the ordinary sense of uniformity of treatment) is a
 bugbear when dealing with this issue.  To give a simple example,
@@ -217,23 +224,71 @@ Here is a more awkward case.  An unrestricted vector autoregression
 (VAR) is a system of equations, but the ML estimate of this system,
 given normal errors, is equivalent to equation-by-equation OLS.
 Should df correction be applied to VARs? Consistency with OLS argues
-Yes. But wait\dots{} a popular extension of the VAR methodology is the
-vector error-correction model (VECM).  VECMs are closely related to
-VARs and one might well be interested in making comparisons across the
-two, but a VECM is a nonlinear system and the cointegrating vectors
-that lie at the heart of this model must be estimated via ML.  So
+Yes. However, a popular extension of the VAR methodology is the vector
+error-correction model (VECM).  VECMs are closely related to VARs and
+one might well be interested in making comparisons across the two, but
+a VECM is a nonlinear system and the cointegrating vectors that lie at
+the heart of this model must be estimated via Maximum Likelihood.  So
 perhaps VAR results should \textit{not} be df adjusted, for
 comparability with VECMs.
 
-Another ``grey area'' is the class of single-equation Feasible
-Generalized Least Squares (FGLS) estimators---for example, weighted
-least squares following the estimation of a skedastic function, or
-estimators designed to handle first-order autocorrelation such as
+Another ``grey area'' is the class of Feasible Generalized Least
+Squares (FGLS) estimators---for example, weighted least squares
+following the estimation of a skedastic function, or estimators
+designed to handle first-order autocorrelation, such as
 Cochrane--Orcutt.  These depart from the classical linear model, and
 the theoreretical basis for inference in such models is asymptotic,
 yet according to econometric tradition standard errors are generally
 df adjusted.
 
 \section{What gretl does}
+\label{sec:df-policy}
 
-To be written.
+First of all, the third column in gretl model output---following
+``coefficient'' and ``std.\ error'' is labeled either ``t-ratio'' or
+``z.'' This is your signal: ``t-ratio'' indicates that the estimated
+standard error employs a degrees of freedom adjustment and the
+reported $p$-value is obtained from the Student $t$ distribution,
+while ``z'' indicates that no such adjustment is applied and the
+$p$-value comes from the standard normal distribution.
+
+If you see that gretl is applying a df adjustment but you don't want
+this, the first point to check is whether you can switch to the
+asymptotic variant by using an option flag or other command.
+\begin{itemize}
+\item The \texttt{ols} and \texttt{tsls} commands support a
+  \option{no-df-corr} option to suppress degrees of freedom
+  adjustment.
+\item The \texttt{estimate} command, for systems of equations, also
+  supports the \option{no-df-corr} option when the specified
+  estimation method is OLS or TSLS.
+\item You can can specify that $p$-values be calculated using the
+  standard normal distribution whenever the \option{robust} option is
+  passed to an estimation command via the ``set'' command
+%
+\begin{code}
+set robust_z on
+\end{code}
+\end{itemize}
+
+If these possibilities do not apply, it is fairly straightforward to
+``purge'' regression results of df correction, as illustrated in the
+following script fragment. We assume that a model has just been
+estimated, so that the model-related accessors
+(\verb|$stderr|, \verb|$coeff| and so on) are available.
+%
+\begin{code}
+matrix se = $stderr * sqrt($df/$T)
+matrix zscore = $coeff ./ se
+matrix pv = 2 * pvalue(z, abs(zscore))
+matrix M = $coeff ~ se ~ zscore ~ pv
+colnames(M, "coeff stderr z p-value")
+print M
+\end{code}
+
+This will print the original coefficient estimates along with
+asymptotic standard errors and the associated
+$z$-scores and (two-sided) normal $p$-values. The converse case is
+left as an exercise for the reader.
+
+
