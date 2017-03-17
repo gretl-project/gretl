@@ -51,8 +51,8 @@ prefectly good estimator would be
 \bar{\sigma}^2 = \frac{1}{N} \sum_{i=1}^n (x_i - \mu)^2
 \]
 %
-for a population of size $N$. However, in real-life cases, this is not
-a viable option, since $\mu$ is unobservable and must be estimated;
+for a population of size $N$. But this is not a practical option
+since $\mu$ is generally unobservable and must be estimated;
 therefore, we use $\bar{x}$ as an estimator of $\mu$: it is easily
 shown that $\bar{x}$ is the least-squares estimator, and also
 (assuming normality) the ML estimator.  It is unbiased, but is of
@@ -70,9 +70,9 @@ The proof that $s^2$ is indeed the unbiased estimator can be found in
 any good statistics textbook, where we also learn that the magnitude
 $n-1$ in (\ref{eq:sample-variance}) can be brought under a general
 description as the ``degrees of freedom'' of the calculation at
-hand. Given $\bar{x}$, the $n$ sample values provide only $n-1$ items
-of information since the $n$th value can always be deduced via the
-formula for $\bar{x}$.
+hand. (Given $\bar{x}$, the $n$ sample values provide only $n-1$ items
+of information since the $n^{\rm th}$ value can always be deduced via the
+formula for $\bar{x}$.)
 
 \section{Application to OLS regression}
 \label{sec:df-ols}
@@ -108,11 +108,11 @@ s^2 = \frac{1}{n-k} \sum_{i=1}^n \hat{u}_i^2
 in which $n - k$ is the number of degrees of freedom given $n$
 residuals from a regression where $k$ parameters are estimated.
 
-The standard estimator of the variance of $\hat\beta$ in the
-context of OLS is then $V = s^2 (X'X)^{-1}$.  And the standard errors
-of the individual parameter estimates, $s_{\hat{\beta}_i}$, being the
-square roots of the diagonal elements of $V$, inherit a ``degrees of
-freedom correction'' or df correction from the estimator $s^2$.
+The standard estimator of the variance of $\hat\beta$ in the context
+of OLS is then $V = s^2 (X'X)^{-1}$.  And the standard errors of the
+individual parameter estimates, $s_{\hat{\beta}_i}$, being the square
+roots of the diagonal elements of $V$, inherit a degrees of freedom
+correction from the estimator $s^2$.
 
 Going one step further, consider hypothesis testing in the context of
 OLS.  Since the variance of $\hat\beta$ is unknown and must itself be
@@ -128,19 +128,18 @@ errors of the OLS coefficients, one uses the same $\nu$ in selecting
 the particular distribution to which the ``$t$-ratio'',
 $(\hat{\beta}_i-\beta^0)/s_{\hat{\beta}_i}$, should be referred in
 order to determine the marginal significance level or $p$-value for
-the null hypothesis that $\beta_i = \beta^0$.  This is the real
-payoff to df correction: we get test statistics that follow a 
-known distribution in small samples.  (In big enough samples
-the point is moot, since the quantitative distinction between
-$\hat\sigma^2$ and $s^2$ vanishes.)
+the null hypothesis that $\beta_i = \beta^0$.  This is the payoff to
+df correction: we get test statistics that follow a known distribution
+in small samples.  (In big enough samples the point is moot, since the
+quantitative distinction between $\hat\sigma^2$ and $s^2$ vanishes.)
 
-So far, so good.  Everyone expects df correction in OLS standard
-errors, just as we expect division by $n-1$ in the sample variance.
+So far, so good.  Everyone expects df correction in plain OLS standard
+errors just as we expect division by $n-1$ in the sample variance.
 And users of econometric software expect that the $p$-values reported
-for OLS coefficients will be based on the $t(\nu)$ distribution
-(although they are not always sufficiently aware that the validity
-of such statistics in small samples depends on the assumption
-of normally distributed errors).
+for OLS coefficients will be based on the $t(\nu)$
+distribution---although they are not always sufficiently aware that
+the validity of such statistics in small samples depends on the
+assumption of normally distributed errors.
 
 \section{Beyond OLS}
 \label{sec:df-beyond}
@@ -168,7 +167,7 @@ The question arises, should we or should we not apply a df
 ``correction'' in reporting variance estimates and standard errors
 for models that depart from the classical linear specification?
 
-One argument against applying df adjustment is that it lacks a
+The argument against applying df adjustment is that it lacks a
 theoretical basis: it does not produce test statistics that follow any
 known distribution in small samples.  In addition, if parameter
 estimates are obtained via ML, it makes sense to report ML estimates
@@ -195,25 +194,25 @@ larger.\footnote{A fairly typical situation in time-series
   macroeconometrics would be have between 100 and 200 quarterly
   observations, and to be estimating up to maybe 30 parameters
   including lags.  In this case df correction would make a difference
-  to standard errors on the order of 10 percent.}  One might therefore
-make a case for inflating the standard errors obtained via
-nonlinear estimators as a precaution against taking results to be
-``more precise than they really are''.
+  to standard errors on the order of 10 percent.}  One can make a case
+for inflating the standard errors obtained via nonlinear estimators as
+a precaution against taking results to be ``more precise than they
+really are''.
 
 In rejoinder to the last point, one might equally say that savvy
 econometricians should know to apply a discount factor (albeit an
 imprecise one) to small-sample estimates outside of the classical,
 normal linear model---or even that they should distrust such results
 and insist on large samples before making inferences. This line of
-thinking suggests that test statistics such as $z =
-\hat{\beta}_i/\hat\sigma_{\hat{\beta}_i}$ should be referred to the
-distribution to which they conform asymptotically---in this case
+thinking suggests that test statistics such as
+$z = \hat{\beta}_i/\hat\sigma_{\hat{\beta}_i}$ should be referred to
+the distribution to which they conform asymptotically---in this case
 $N(0,1)$ for $H_0: \beta_i = 0$---if and only if the conditions for
-appealing to asymptotic results can be taken to be met.  From this
+appealing to asymptotic results can be considered as met.  From this
 point of view df adjustment may be seen as providing a false sense of
-security.  
+security.
 
-\section{Consistency and ``grey'' cases}
+\section{Consistency and awkward cases}
 \label{sec:df-grey}
 
 Consistency (in the ordinary sense of uniformity of treatment) is a
@@ -224,7 +223,7 @@ course, free to estimate the classical, normal linear model via ML, in
 which case $\hat\beta$ should be numerically identical to that
 obtained via OLS.  But the user of the software will obtain two
 different sets of standard errors depending on the estimation method.
-This example is not very troublesome, however; presumably one would
+Admittedly, this example is not very troublesome; presumably one would
 apply ML to the classical linear model only to make a pedagogical
 point.
 
@@ -249,11 +248,26 @@ the theoreretical basis for inference in such models is asymptotic,
 yet according to econometric tradition standard errors are generally
 df adjusted.
 
+Yet another awkward case: ``robust'' (heteroskedasticity- and/or
+autocorrelation-consistent) standard errors in the context of OLS.
+Such estimators are justified by asymptotic arguments and in general
+we cannot determine their small-sample distributions. That would argue
+for referring the associated test statistics to the normal
+distribution. But comparability with classical standard errors pulls
+in the other direction. Suppose in a particular case a robust
+estimator produces a standard error that is numerically
+indistinguishable from the classical one: if the former is referred to
+the normal distribution and the latter to the $t$ distribution,
+switching to robust standard errors will give a smaller $p$-value for
+the coefficient in question, making it appear ``more significant,''
+and arguably this is misleading.
+
+
 \section{What gretl does}
 \label{sec:df-policy}
 
 First of all, the third column in gretl model output---following
-``coefficient'' and ``std.\ error'' is labeled either ``t-ratio'' or
+``coefficient'' and ``std.\ error''---is labeled either ``t-ratio'' or
 ``z.'' This is your signal: ``t-ratio'' indicates that the estimated
 standard error employs a degrees of freedom adjustment and the
 reported $p$-value is obtained from the Student $t$ distribution,
@@ -266,13 +280,21 @@ asymptotic variant by using an option flag or other command.
 \begin{itemize}
 \item The \texttt{ols} and \texttt{tsls} commands support a
   \option{no-df-corr} option to suppress degrees of freedom
-  adjustment.
+  adjustment. In the case of Two-Stage Least Squares it's certainly
+  arguable that df correction should not be performed by default,
+  however gretl does this, largely for comparability with other
+  software (for example \textsf{Stata}'s \texttt{ivreg} command).  But
+  you can override the default if you wish.
 \item The \texttt{estimate} command, for systems of equations, also
   supports the \option{no-df-corr} option when the specified
-  estimation method is OLS or TSLS.
-\item You can can specify that $p$-values be calculated using the
-  standard normal distribution whenever the \option{robust} option is
-  passed to an estimation command via the ``set'' command
+  estimation method is OLS or TSLS. (For other estimators supported by
+  gretl's \texttt{system} command no df adjustment is applied by
+  default.)
+\item By default gretl uses the $t$ distribution for statistics based
+  on robust standard errors under OLS. However, users can specify that
+  $p$-values be calculated using the standard normal distribution
+  whenever the \option{robust} option is passed to an estimation
+  command, by means of the following``set'' command
 %
 \begin{code}
 set robust_z on
