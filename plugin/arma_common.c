@@ -993,6 +993,85 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
 #endif /* X12A_CODE not defined */
 
 /*
+  Builds a 2-column matrix containing the ar coefficients in column 0
+  and the ma coefficients in column 1
+ */
+
+gretl_matrix *armaparam (const double *coeff,
+			 arma_info *ainfo, int *err) {
+
+    int pd = ainfo->pd;
+    int pmax = ainfo->p + pd * ainfo->P;
+    int qmax = ainfo->q + pd * ainfo->Q;
+    
+    int n = (pmax > qmax) ? pmax : qmax;
+
+    gretl_matrix *ret = NULL;
+    ret = gretl_zero_matrix_new(n+1, 2);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+    
+    int i, j, l;
+    double w;
+    const double *phi =   coeff + ainfo->ifc;
+    const double *Phi =     phi + ainfo->np;
+    const double *theta =   Phi + ainfo->P;
+    const double *Theta = theta + ainfo->nq;
+    
+    gretl_matrix_set(ret, 0, 0, 1);
+    gretl_matrix_set(ret, 0, 1, 1);
+    
+#if 0    
+    fprintf(stderr, "n = %d\n", n);
+    fprintf(stderr, "p = %d, pd = %d, P = %d\n",
+	    ainfo->p, ainfo->pd, ainfo->P);
+    fprintf(stderr, "q = %d, pd = %d, Q = %d\n",
+	    ainfo->q, ainfo->pd, ainfo->Q);
+#endif
+    
+    if (pmax>0) {
+	/* first column: AR coefficients */
+	for (i=0; i<ainfo->p; i++) {
+	    gretl_matrix_set(ret, i+1, 0, -phi[i]);
+	}
+
+	for (i=0; i<ainfo->P; i++) {
+	    l = (i+1)*pd;
+	    w = gretl_matrix_get(ret, l, 0);
+	    gretl_matrix_set(ret, l, 0, w - Phi[i]);
+	    for (j=0; j<ainfo->p; j++) {
+		l = (i+1)*pd + (j+1);
+		w = gretl_matrix_get(ret, l, 0);
+		gretl_matrix_set(ret, l, 0, w + phi[j] * Phi[i]);
+	    }
+	}
+    }
+
+    if (qmax>0) {
+	/* second column: MA coefficients */
+	for (i=0; i<ainfo->q; i++) {
+	    gretl_matrix_set(ret, i+1, 1, theta[i]);
+	}
+
+	for (i=0; i<ainfo->Q; i++) {
+	    l = (i+1)*pd;
+	    w = gretl_matrix_get(ret, l, 1);
+	    gretl_matrix_set(ret, l, 1, w + Theta[i]);
+	    for (j=0; j<ainfo->q; j++) {
+		l = (i+1)*pd + (j+1);
+		w = gretl_matrix_get(ret, l, 1);
+		gretl_matrix_set(ret, l, 1, w + theta[j] * Theta[i]);
+	    }
+	}
+    }
+
+    return ret;
+}
+       
+/*
   armaspec (ARMA spectrum) computes
 
    s2    C(exp(i*omega)) * C(exp(-i*omega))
@@ -1050,3 +1129,4 @@ gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
 
     return ret;
 }
+
