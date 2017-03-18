@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-03-03 08:29-0500\n"
-"PO-Revision-Date: 2017-03-01 22:37+0100\n"
+"PO-Revision-Date: 2017-03-18 20:02+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -106,9 +106,8 @@ msgid "with constant and trend"
 msgstr "com constante e tendência"
 
 #: lib/src/adf_kpss.c:596
-#, fuzzy
 msgid "with constant, linear and quadratic trend"
-msgstr "com constante e tendência quadrática"
+msgstr "com constante e tendência quadrática e linear"
 
 #: lib/src/adf_kpss.c:623 lib/src/adf_kpss.c:628 lib/src/adf_kpss.c:2209
 #: lib/src/adf_kpss.c:2211 lib/src/bootstrap.c:694 lib/src/compare.c:365
@@ -7897,7 +7896,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 1 de março de 2017."
+"Tradução de 18 de março de 2017."
 
 #: gui2/about.c:203
 msgid "News"
@@ -16552,12 +16551,11 @@ msgstr "Gravar texto"
 
 #: gui2/toolbar.c:289
 msgid "Number of digits to show for statistics"
-msgstr ""
+msgstr "Número de dígitos a mostrar em estatísticas"
 
 #: gui2/toolbar.c:294
-#, fuzzy
 msgid "Number of digits to show for coefficients"
-msgstr "Soma dos coeficientes AR"
+msgstr "Número de dígitos a mostrar nos coeficientes"
 
 #: gui2/toolbar.c:322
 msgid "Nothing to send"
@@ -16693,9 +16691,8 @@ msgid "Help on command"
 msgstr "Ajuda sobre o comando"
 
 #: gui2/toolbar.c:833
-#, fuzzy
 msgid "Digits..."
-msgstr "desfasamentos..."
+msgstr "Dígitos..."
 
 #: gui2/toolbar.c:1189
 msgid "New tab"
@@ -17645,7 +17642,7 @@ msgstr "Todas as componentes"
 
 #: plugin/pca.c:141
 msgid "The n most important components"
-msgstr ""
+msgstr "Os n componentes mais importantes"
 
 #: plugin/pca.c:213
 msgid "Eigenanalysis of the Correlation Matrix"
