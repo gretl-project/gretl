@@ -3,6 +3,7 @@
 "armaloop","ARMA using command loop","artificial data"
 "bbond98","Dynamic panel model (GMM-SYS)","UK employment data"
 "biprobit","Bivariate probit (William Greene)","credit rating"
+"biprobit_via_ghk","Bivariate probit using simulated ML","credit rating"
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
 "camtriv","Count Data (Cameron and Trivedi)","doctor visits"
 "convolve","Fast Fourier Transform","artificial data"
