@@ -962,18 +962,13 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 }
 
-#define TSLS_CORR_RSQ 1
-
 static void tsls_extra_stats (MODEL *pmod, int yno, int overid, 
-			      const DATASET *dset)
+			      gretlopt opt, const DATASET *dset)
 {
     double r;
 
-#if TSLS_CORR_RSQ
+    /* squared correlation between y and yhat */
     pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], pmod->yhat);
-#else
-    pmod->rsq = 1 - pmod->ess / pmod->tss;
-#endif
 
     r = 1 - pmod->rsq;
     pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1) / pmod->dfd);
@@ -981,7 +976,7 @@ static void tsls_extra_stats (MODEL *pmod, int yno, int overid,
     pmod->fstt = pmod->chisq = NADBL;
 
     if (pmod->ncoeff > 1) {
-	if (overid && pmod->ncoeff == 2) {
+	if ((opt & OPT_N) || (overid && pmod->ncoeff == 2)) {
 	    pmod->chisq = wald_omit_chisq(NULL, pmod);
 	} else {	
 	    pmod->fstt = wald_omit_F(NULL, pmod);
@@ -1784,7 +1779,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     if (nendo > 0) {
 	/* compute additional statistics (R^2, F, etc.) */
-	tsls_extra_stats(&tsls, reglist[1], OverIdRank, dset);
+	tsls_extra_stats(&tsls, reglist[1], OverIdRank, opt, dset);
     }
 
     if (!sysest && !no_tests) {
