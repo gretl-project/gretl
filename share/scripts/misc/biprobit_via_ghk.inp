@@ -1,0 +1,71 @@
+# This example illustrates the usage of the ghk() 
+# function by estimating a bivariate probit model; it 
+# uses the same dataset and model as the sample
+# file "biprobit.inp" 
+
+set verbose off
+
+open greene25_1.gdt
+# regressors for first equation
+list x1 = const age avgexp
+# regressors for second equation
+list x2 = const age income ownrent selfempl
+
+# parameter initialization 
+y1 = anydrg
+probit y1 x1 --quiet
+b1 = $coeff
+u1 = $uhat
+
+y2 = cardhldr
+probit y2 x2 --quiet
+b2 = $coeff
+u2 = $uhat
+
+a = atanh(corr(u1, u2))
+
+# GHK draws
+set seed 180317
+r = 64
+n = $nobs
+U = muniform(2, r)
+
+mle llik = ln(P)
+    ndx1 = -lincomb(x1, b1)
+    ndx2 = -lincomb(x2, b2)
+
+    top1 = y1 ? $huge : ndx1
+    bot1 = y1 ? ndx1: -$huge
+    top2 = y2 ? $huge : ndx2
+    bot2 = y2 ? ndx2: -$huge
+    Top = {top1, top2}
+    Bot = {bot1, bot2}
+    scalar rho = tanh(a)
+    C = {1, rho; rho, 1}
+
+    P = ghk(cholesky(C), Bot, Top, U)
+    params b1 b2 a
+end mle
+
+printf "rho = %g\n", tanh(a)
+
+# compare with built-in estimator:
+#
+#              coefficient    std. error      z      p-value 
+#   ---------------------------------------------------------
+#  anydrg:
+#   const      −1.27448       0.136070      −9.366   7.51e-21 ***
+#   age         0.0108521     0.00381405     2.845   0.0044   ***
+#   avgexp      0.000344085   0.000131483    2.617   0.0089   ***
+# 
+#  cardhldr:
+#   const       0.695534      0.140359       4.955   7.22e-07 ***
+#   age        −0.00924682    0.00414828    −2.229   0.0258   **
+#   income      0.0767592     0.0233697      3.285   0.0010   ***
+#   ownrent     0.348705      0.0796141      4.380   1.19e-05 ***
+#   selfempl   −0.260395      0.129342      −2.013   0.0441   **
+# 
+# Log-likelihood      −1220.874   Akaike criterion     2459.748
+# Schwarz criterion    2506.410   Hannan-Quinn         2477.243
+# 
+# rho = -0.714603
