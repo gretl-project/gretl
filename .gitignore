@@ -2,3 +2,9 @@
 *.gmo
 *.hlp*
 *.refs
+*.a
+*.o
+*.la
+*.lo
+*.aux
+

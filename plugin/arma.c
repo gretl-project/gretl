@@ -1757,6 +1757,11 @@ MODEL arma_model (const int *list, const int *pqspec,
 	gretl_model_smpl_init(&armod, dset);
     }
 
+#if 0
+    pgm_vs_spec_plot_data(ainfo, &armod);
+#endif
+    
+    
     free(coeff);
     arma_info_cleanup(ainfo);
 

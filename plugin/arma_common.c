@@ -17,6 +17,7 @@
  */
 
 #include "usermat.h"
+#include "gretl_fft.h"
 
 #define MAX_ARMA_ORDER 128
 #define MAX_ARIMA_DIFF 2
@@ -1092,7 +1093,7 @@ gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
     double scale;
     int i, n, t;
     
-    ret = gretl_matrix_alloc(T+1, 2);
+    ret = gretl_matrix_alloc(T, 2);
 
     if (ret == NULL) {
 	*err = E_ALLOC;
@@ -1102,8 +1103,8 @@ gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
     n = param->rows;
     scale = s2/M_2PI;
     
-    for (t=0; t<=T; t++) {
-	xt = t * M_PI / T;
+    for (t=0; t<T; t++) {
+	xt = t * M_PI / (T-1);
 	ar = gretl_matrix_get(param, 0, 0);
 	ma = gretl_matrix_get(param, 0, 1);
 	nre_t = ma * ma;
@@ -1130,3 +1131,56 @@ gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
     return ret;
 }
 
+int pgm_vs_spec_plot_data(arma_info *ainfo, MODEL *armod)
+{
+    int i, err = 0;
+
+    gretl_matrix *parm = NULL;
+    gretl_matrix *spec = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *pergm = NULL;
+    
+    int nobs = armod->nobs;
+    int grid = (nobs-1)/2;
+    int t1 = armod->t1;
+    int t2 = armod->t2;
+    double s2 = armod->sigma * armod->sigma;
+    
+    parm = armaparam(armod->coeff, ainfo, &err);
+    if (err) {
+	return err;
+    }
+    
+    spec = armaspec(parm, s2, grid, &err);
+    if (err) {
+	return err;
+    }
+    
+    y = gretl_matrix_alloc(t2-t1+1, 1);
+
+    for (i=t1; i<=t2; i++) {
+	gretl_matrix_set(y, i-t1, 0, ainfo->y[i]);
+    }
+    
+    pergm = gretl_matrix_fft(y, &err);
+    if (err) {
+	return err;
+    }
+
+    double px, pRe, pIm, scale = nobs * M_2PI;
+    for (i=0; i<grid; i++) {
+	pRe = gretl_matrix_get(pergm, i+1, 0);
+	pIm = gretl_matrix_get(pergm, i+1, 1);
+	px = (pRe * pRe + pIm * pIm) / scale;
+	fprintf(stderr, "%7.5f %12.7f%12.7f\n",
+		gretl_matrix_get(spec, i, 0), 
+		log(gretl_matrix_get(spec, i, 1)), log(px));
+    }
+    
+    gretl_matrix_free(spec);
+    gretl_matrix_free(parm);
+    gretl_matrix_free(y);
+    gretl_matrix_free(pergm);
+
+    return err;
+}
