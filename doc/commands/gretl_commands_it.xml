@@ -11194,7 +11194,7 @@
 	  <para><lit>warnings</lit>: <lit>off</lit> oppure
 	  <lit>on</lit> (valore predefinito). Sopprime o ripristina i
 	  messaggi cautelativi, emessi quando certe operazioni
-	  aritmetiche producolo valori non finiti. 
+	  aritmetiche producono valori non finiti. 
          </para>
 	</li>
 	<li>
@@ -11216,29 +11216,41 @@
 	  rappresentare i valori mancanti quando si esportano dati in
 	  formato CSV. Massimo 7 caratteri; il default dipende se una
 	  colonna di dati contiene dati numerici (o per lo più tali) o
-	  stringa. For numerical data the following are taken as
-	  indicating NAs: an empty cell, or any of the strings
-	  <lit>NA</lit>, <lit>N.A.</lit>, <lit>na</lit>,
-	  <lit>n.a.</lit>, <lit>N/A</lit>, <lit>#N/A</lit>,
-	  <lit>NaN</lit>, <lit>.NaN</lit>, <lit>.</lit>,
-	  <lit>..</lit>, <lit>-999</lit>, and <lit>-9999</lit>.  For
-	  string-valued data only a blank cell, or a cell containing
-	  an empty string, is counted as NA. These defaults can be
-	  reimposed by giving <lit>default</lit> as the value for
-	  <lit>csv_read_na</lit>. To specify that only empty cells
-	  are read as NAs, give a value of <lit>""</lit>. Note that
-	  empty cells are always read as NAs regardless of the setting
-	  of this variable.
+	  stringa. Per dati numerici, i valori seguenti sono tutti
+	  sinomimi di <quote>dato mancant</quote>: una cella vuota, or
+	  una qualunque delle stringhe <lit>NA</lit>, <lit>N.A.</lit>,
+	  <lit>na</lit>, <lit>n.a.</lit>, <lit>N/A</lit>,
+	  <lit>#N/A</lit>, <lit>NaN</lit>, <lit>.NaN</lit>,
+	  <lit>.</lit>, <lit>..</lit>, <lit>-999</lit>, and
+	  <lit>-9999</lit>.  Per valori stringa, si conta come
+	  mancante una cella vuota o una contenente una stringa
+	  vuota. Questi valori di default possono essere reimpostati
+	  dando <lit>default</lit> come valore per
+	  <lit>csv_read_na</lit>. Per specificare che siano
+	  considerate mancanti solo celle vuote, va dato un valore di
+	  <lit>""</lit>. Si noti comunque che celle vuote vengono
+	  lette come valori mancanti indipendentemente da questo
+	  settaggio.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>csv_digits</lit>: un intero positivo specifying
-	  the number of significant digits to use when writing data in
-	  CSV format. By default up to 15 digits are used depending on
-	  the precision of the original data. Note that CSV output
-	  employs the C library's <lit>fprintf</lit> function with
-	  <quote><lit>%g</lit></quote> conversion, which means that
-	  trailing zeros are dropped.
+	  <para><lit>csv_digits</lit>: un intero positivo contenente
+	  il numero di cifre significative da usare quando si salva in
+	  formato CSV. Di default, si usano fino a 15 cifre (a seconda
+	  della precisione dei dati originali). Si noti che l'output
+	  in CSV usa la funzione <lit>fprintf</lit> della libreria C
+	  con la conversione <quote><lit>%g</lit></quote>, il che
+	  implica che gli zeri in fondi non vengono stampati.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>display_digits</lit>: un intero da 3 a 6,
+	  specificante il numero di cifre significative da usare
+	  nell'output di coefficienti di regressione e corrispondenti
+	  errori standard (il default è 6). Questo settaggio è anche
+	  attivo sul numero di cifre usato dal comando <cmdref
+	  targ="summary"/>; in questo caso, il default (che è anche il
+	  massimo) è 5, o 4 con l'opzione <opt>simple</opt>.
 	  </para>
 	</li>
 	<li>
@@ -11380,16 +11392,35 @@
 	  </para>
 	</li>	  
 	<li>	  
-	  <para><lit>bfgs_toler</lit>: un valore in virgola mobile, o la stringa
-	    <lit>default</lit>. Viene usato nella routine BFGS di gretl per
-            controllare se si è raggiunta la convergenza. L'algoritmo si ferma
-            appena l'incremento relativo nella funzione obiettivo tra
-            un'iterazione e l'altra è minore di
-	    <lit>bfgs_toler</lit>.  Il valore predefinito è pari alla precisione
-            della macchina elevata alla potenza 3/4; questo valore può essere
-            re-impostato usando la stringa <lit>default</lit> invece di un valore numerico.
+	  <para><lit>bfgs_toler</lit>: un valore in virgola mobile, o
+	  la stringa <lit>default</lit>. Viene usato nella routine
+	  BFGS di gretl per controllare se si è raggiunta la
+	  convergenza. L'algoritmo si ferma appena l'incremento
+	  relativo nella funzione obiettivo tra un'iterazione e
+	  l'altra è minore di <lit>bfgs_toler</lit>.  Il valore
+	  predefinito è pari alla precisione della macchina elevata
+	  alla potenza 3/4; questo valore può essere re-impostato
+	  usando la stringa <lit>default</lit> invece di un valore
+	  numerico.
  	  </para>
 	</li>	  
+	<li>	  
+	  <para><lit>bfgs_maxgrad</lit>: one floating point value. This is
+	    used in gretl's BFGS routine to check if the norm of the gradient
+	    is reasonably close to zero when the <lit>bfgs_toler</lit>
+	    criterion is met.  A warning is printed if the norm of the
+	    gradient exceeds 1; an error is flagged if the norm exceeds
+	    <lit>bfgs_maxgrad</lit>. At present the default is the 
+	    permissive value of 5.0.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>bfgs_richardson</lit>: <lit>on</lit> or
+	  <lit>off</lit> (the default). Use Richardson extrapolation
+	  when computing numerical derivatives in the context of BFGS
+	  maximization.
+	  </para>
+	</li>
 	<li>	  
           <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
             impostare manualmente le stime dei parametri ARMA. Per i dettagli,
@@ -11403,6 +11434,12 @@
           massimizzare non è globalmente concava.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>lbfgs_mem</lit>: un intero da 3 a 20 (il default
+	  è 8). Determina il numero di correzioni usate nella matrice
+	  di memoria limitata quando si usa il metodo L-BFGS-B.
+	  </para>
+	</li>
         <li>
 	<para>
 	  <lit>nls_toler</lit>: un valore in virgola mobile (il valore
@@ -11413,14 +11450,26 @@
 	</para>
         </li>
 	<li>
-	  <para><lit>svd</lit>:
-	  <lit>on</lit> o <lit>off</lit> (valore predefinito).
-	    Usa la decomposizione SVD invece di quella di Cholesky o della QR nel
-            calcolo delle stime OLS. Questa opzione si applica alla funzione
-            <lit>mols</lit> e a vari altri calcoli eseguiti internamente, ma non
-            al comando <cmdref targ="ols"/>.
+	  <para><lit>svd</lit>: <lit>on</lit> o <lit>off</lit> (valore
+	  predefinito).  Usa la decomposizione SVD invece di quella di
+	  Cholesky o della QR nel calcolo delle stime OLS. Questa
+	  opzione si applica alla funzione <lit>mols</lit> e a vari
+	  altri calcoli eseguiti internamente, ma non al comando
+	  <cmdref targ="ols"/>.
           </para>
 	</li>
+	<li>
+	  <para>
+	    <lit>force_qr</lit>: <lit>on</lit> or <lit>off</lit> (the
+	    default). This applies to the <cmdref targ="ols"/>
+	    command. By default this command computes OLS estimates
+	    using Cholesky decomposition (the fastest method), with a
+	    fallback to QR if the data seem too ill-conditioned. You
+	    can use <lit>force_qr</lit> to skip the Cholesky step; in
+	    <quote>doubtful</quote> cases this may ensure greater
+	    accuracy.
+	  </para>
+	</li>	
 	<li>
           <para><lit>fcp</lit>: <lit>on</lit> o <lit>off</lit> (valore
           predefinito). Usa l'algoritmo di Fiorentini, Calzolari e Panattoni
@@ -11498,31 +11547,39 @@
 	  invece <lit>force_hc</lit> a <quote>on</quote>, si forza
 	  l'uso della matrice di covarianza coerente con
 	  l'eteroschedasticità (che non tiene conto
-	  dell'autocorrelazione).
+	  dell'autocorrelazione). Si noti che i VAR costituiscono un
+	  caso particolare: con l'opzione <opt>robust</opt> il metodo
+	  di default è lo HCCM, ma si può forzare l'uso di uno
+	  stimatore HAC con l'opzione <opt>robust-hac</opt>.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>hac_lag</lit>:
-	  <lit>nw1</lit> (valore predefinito), <lit>nw2</lit>,
-	    <lit>nw3</lit>, o un intero.  Imposta il massimo valore di
-            ritardo, o la larghezza di banda, <math>p</math>, usato nel calcolo degli
-            errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
-	    con l'approccio Newey-West, per le serie storiche.
-            <lit>nw1</lit> e <lit>nw2</lit> rappresentano due varianti
-            di calcolo automatico basate sulla dimensione del campione,
-	    <math>T</math>: per nw1, 
-            <equation status="inline"
-              tex="$p = 0.75 \times T^{1/3}$"
-              ascii="p = 0.75 * T^(1/3)"
-              graphic="nw1"/>,
-              e per nw2, 
-            <equation status="inline"
-              tex="$p = 4 \times (T/100)^{2/9}$"
-              ascii="p = 4 * (T/100)^(2/9)"
-              graphic="nw2"/>.
-            <lit>nw3</lit> permette di selezionare la larghezza di banda
-            basandosi sui dati.  Si veda anche <lit>qs_bandwidth</lit> e
-            <lit>hac_prewhiten</lit>.
+	  <para><lit>robust_z</lit>: <lit>off</lit> (the default) or
+	  <lit>on</lit>. This controls the distribution used when
+	  calculating p-values based on robust standard errors in
+	  the context of least-squares estimators. By default gretl
+	  uses the Student <math>t</math> distribution but if
+	  <lit>robust_z</lit> is turned on the normal distribution
+	  is used.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (valore
+	  predefinito), <lit>nw2</lit>, <lit>nw3</lit>, o un intero.
+	  Imposta il massimo valore di ritardo, o la larghezza di
+	  banda, <math>p</math>, usato nel calcolo degli errori
+	  standard HAC (Heteroskedasticity and Autocorrelation
+	  Consistent) con l'approccio Newey-West, per le serie
+	  storiche.  <lit>nw1</lit> e <lit>nw2</lit> rappresentano due
+	  varianti di calcolo automatico basate sulla dimensione del
+	  campione, <math>T</math>: per nw1, <equation status="inline"
+	  tex="$p = 0.75 \times T^{1/3}$" ascii="p = 0.75 * T^(1/3)"
+	  graphic="nw1"/>, e per nw2, <equation status="inline"
+	  tex="$p = 4 \times (T/100)^{2/9}$" ascii="p = 4 *
+	  (T/100)^(2/9)" graphic="nw2"/>.  <lit>nw3</lit> permette di
+	  selezionare la larghezza di banda basandosi sui dati.  Si
+	  veda anche <lit>qs_bandwidth</lit> e
+	  <lit>hac_prewhiten</lit>.
 	  </para>
 	</li>
 	<li>
@@ -11572,37 +11629,6 @@
 	</li>
       </ilist>
 
-      <para>
-	<emphasis>Filtri</emphasis>
-      </para>
-
-      <ilist>
-	<li>
-	  <para><lit>hp_lambda</lit>:
-	  <lit>auto</lit> (valore predefinito), o un
-          valore numerico. Imposta il parametro di livellamento per
-          il filtro di Hodrick&ndash;Prescott (si veda la funzione
-          <lit>hpfilt</lit> sotto il comando <lit>genr</lit>). Il valore
-          predefinito è 100 volte il quadrato della periodicità, ossia
-          100 per i dati annuali, 1600 per i dati trimestrali e così
-          via.</para>
-	</li>
-        <li>
-          <para><lit>bkbp_limits</lit>:
-          due interi, il secondo maggiore del primo
-           (i valori predefiniti sono 8 e 32). Imposta i limiti di
-           frequenza per il filtro passa-banda di Baxter&ndash;King
-           (si veda la funzione <lit>bkfilt</lit> nel comando <lit>genr</lit>).
-         </para>
-        </li>
-        <li>
-          <para><lit>bkbp_k</lit>:
-          un intero (il valore predefinito è 8). Imposta
-            l'ordine di approssimazione per il filtro passa-banda di
-            Baxter&ndash;King.
-          </para>
-        </li>
-      </ilist>
 
       <para>
 	<emphasis>Serie storiche</emphasis>
@@ -11626,6 +11652,30 @@
 	  </para>
 	</li>
       </ilist>
+
+      <para>
+	<emphasis>Interazione con R</emphasis>
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>R_lib</lit>: <lit>on </lit>(the default) or
+	    <lit>off</lit>.  When sending instructions to be executed by R,
+	    use the R shared library by preference to the R executable, if the
+	    library is available.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>R_functions</lit>: <lit>off</lit> (the default) or
+	    <lit>on</lit>. Recognize functions defined in R as if they were
+	    native functions (the namespace prefix
+	    <quote><lit>R.</lit></quote> is required). See <guideref
+	      targ="chap:gretlR"/> for details on this and the
+	    previous item.
+	  </para>
+	</li>
+      </ilist>
+
 
     </description>
   </command>
@@ -11924,7 +11974,7 @@
   </command>
 
   <command name="setopt" section="Programming" context="cli"
-    label="Set options for next command">
+    label="Indica le opzioni per il comando seguente">
 
     <usage>
       <arguments>
@@ -11942,7 +11992,7 @@
     <description>
       <para>
 	Questo comando abilita la preselezione di opzioni per un
-	comando dato. Di solito questo non è necessario, ma potrebbe
+	dato comando. Di solito questo non è necessario, ma potrebbe
 	essere utile per chi scrive funzioni in hansl, quando certe
 	opzioni devono essere rese condizionali a un argomento fornito
 	dal livello chiamante.
@@ -11960,31 +12010,33 @@
 	ols ...
       </code>
       <para>
-	The <opt>quiet</opt> option will then be applied to the
-	next <lit>ols</lit> command if and only if the variable
-	<lit>quiet</lit> has a non-zero value.
+	L'opzione <opt>quiet</opt> verrà applicata al comando
+	<lit>ols</lit> seguente se e solo se la variabile
+	<lit>quiet</lit> è non-zero.
       </para>
       <para>
-	By default, options set in this way apply only to the
-	following instance of <repl>command</repl>; they are not
-	persistent. However if you give <lit>persist</lit> as the
-	value for <repl>action</repl> the options will continue to
-	apply to the given command until further notice.  The antidote
-	to the <lit>persist</lit> action is <lit>clear</lit>: this
-	erases any stored setting for the specified command.
+	Di default, le opzioni specificate in questo modo si applicano
+	solo alla prima invocazione del comando a cui si riferiscono;
+	non sono persistenti. Tuttavia, usando <lit>persist</lit> come
+	valore per <repl>action</repl>, le opzioni scelte saranno
+	attive fino a nuovo ordine.  L'antidoto a <lit>persist</lit> è
+	<lit>clear</lit>, che ha l'effetto di cancellare tutte le
+	opzioni stabilite in precedenza.
       </para>
       <para>
-	It should be noted that options set via <lit>setopt</lit> are
-	compounded with any options attached to the target command
-	directly. So for example one might append the
-	<opt>hessian</opt> option to an <lit>mle</lit> command
-	unconditionally but use <lit>setopt</lit> to add
-	<opt>quiet</opt> conditionally.
+	Si noti che le opzioni fissate con <lit>setopt</lit> si
+	sommano a qualsiasi altra opzione data al comando
+	direttamente. Per esempio, si può dare l'opzione
+	<opt>hessian</opt> a un comando <lit>mle</lit>
+	incondizionatamente e allo stesso tempo usare
+	<lit>setopt</lit> per aggiungere <opt>quiet</opt>
+	condizionalmente.
       </para>
     </description> 
   </command>
 
-<command name="shell" section="Utilities" label="Esegue comandi shell" context="cli">
+  <command name="shell" section="Utilities"
+	   label="Esegue comandi shell" context="cli">
 
     <usage>
       <arguments>
