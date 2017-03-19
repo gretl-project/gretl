@@ -4778,7 +4778,7 @@
 	  be given in ascending order.
 	</para>
 	<para> 
-	  In the caee of list output, the generated variables are
+	  In the case of list output, the generated variables are
 	  automatically named according to the template
 	  <repl>varname</repl> <lit>_</lit> <repl>i</repl> where
 	  <repl>varname</repl> is the name of the original series and

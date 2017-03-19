@@ -2091,20 +2091,22 @@
     <function name="colnames" section="matbuild" output="scalar">
       <fnargs>
     <fnarg type="matrix">M</fnarg>
-    <fnarg type="list-or-string">s</fnarg>
+    <fnarg type="list-or-string">S</fnarg>
       </fnargs>
       <description>
     <para>
       Attribuisce dei nomi alle colonne della matrice
-      <argname>M</argname> di dimensioni <by r="T" c="k"/>. 
-      Se <argname>s</argname> è una lista, i
-      nomi sono copiati da quelli delle variabili; la lista deve
-      avere tanti elementi quante sono le colonne di
-      <argname>M</argname>. Se <argname>s</argname> è una stringa,
-      deve contenere un numero appropriato di sub-stringhe
-      separate da spazi.  Restituisce 0 se la funzione è andata a
-      buon fine, non-zero altrimenti. Si veda anche <fncref
-      targ="rownames"/>.
+      <argname>M</argname> di dimensioni <by r="T" c="k"/>.  Se
+      <argname>S</argname> è una lista, i nomi sono copiati da quelli
+      delle variabili; la lista deve avere tanti elementi quante sono
+      le colonne di <argname>M</argname>. Se <argname>S</argname> è un
+      array di stringhe, deve contenere <math>k</math> elementi; se
+      invece è una sola stringa, deve contenere <math>k</math>
+      sub-stringhe separate da spazi.
+    </para>
+    <para>
+      Restituisce 0 se la funzione è andata a buon fine, non-zero
+      altrimenti. Si veda anche <fncref targ="rownames"/>.
     </para>
     <para>
       Esempio:
@@ -2937,14 +2939,22 @@
       </fnargs>
       <description>
     <para>
-      Ha come argomenti l'anno, il mese e il giorno e restituisce
-      il numero di giorni nell'epoca corrente (che è uguale ad 1
-      per il 1 gennaio dell'anno 1 d.C.), ed è pari a 733786 al
-      01-01-2010. Se qualcuno degli argomenti è fornito sotto forma di variabile
-      il valore restituito è una variabile, in caso contrario uno scalare.
+      Ha come argomenti l'anno, il mese e il giorno e restituisce il
+      numero di giorni nell'epoca corrente (che è uguale ad 1 per il 1
+      gennaio dell'anno 1 d.C.), ed è pari a 733786 al 01-01-2010. Se
+      qualcuno degli argomenti è fornito sotto forma di variabile il
+      valore restituito è una variabile, in caso contrario uno
+      scalare.
     </para>
     <para>
-      Per la funzione inversa, v. <fncref targ="isodate"/>.
+      Gli argomenti <argname>anno</argname>, <argname>mese</argname> e
+      <argname>giorno</argname> sono riferiti al calendario
+      gregoriano, a meno che l'anno sia negativo, nel qual caso si fa
+      riferimento al calendario giuliano.
+    </para>
+    <para>
+      Per la funzione inversa, vedi <fncref targ="isodate"/> e anche
+      (per il calendario giuliano) <fncref targ="juldate"/>.
     </para>
       </description>
     </function>
@@ -4790,7 +4800,7 @@
       </description>
     </function>
 
-    <function name="lags" section="transforms" output="list">
+    <function name="lags" section="transforms" output="list-or-mat">
       <fnargs>
     <fnarg type="int">p</fnarg>
     <fnarg type="series-or-list">y</fnarg>
@@ -4798,31 +4808,47 @@
       </fnargs>
       <description>
     <para>
-      Genera i ritardi da 1 a <argname>p</argname> della variabile
-      <argname>y</argname>, o se <argname>y</argname> è una lista, di tutte le variabili
-      nella lista.  Se <argname>p</argname> = 0, il numero massimo di ritardi
-      è scelto sulla base della periodicità dei dati; altrimenti 
-      <argname>p</argname> deve essere positivo.
+      Se il primo argomento è uno scalare, genera i ritardi da 1 a
+      <argname>p</argname> della variabile <argname>y</argname>, o se
+      <argname>y</argname> è una lista, di tutte le variabili nella
+      lista.  Se <argname>p</argname> = 0, e <argname>y</argname> è
+      una serie o una lista, il ritardo massimo è pari alla
+      periodicità dei dati; altrimenti, <argname>p</argname> deve
+      essere positivo.
+    </para>
+    <para>
+      Se il primo argomento è un vettore, vengono generati i ritardi
+      specificati in esso. Ad esempio, un tipico uso di questa
+      possibilità sarebbe specificare <argname>p</argname> come
+      <lit>seq(3,7)</lit>, il che equivale ad omettere il primo e il
+      secondo ritardo. Non c'è problema nell'usare vettori con
+      <quote>buchi</quote>, come ad esempio in <lit>{3,5,7}</lit>, ma
+      in questi case i ritardi devono essere dati in ordine
+      ascendente.
     </para>
     <para> 
-      Alle variabili così generate è automaticamente attribuito un
-      nome sulla base del formato
+      Nel caso l'output sia una lista, alle variabili così generate è
+      automaticamente attribuito un nome sulla base del formato
       <repl>varname</repl><lit>_</lit><repl>i</repl> dove
       <repl>varname</repl> è il nome della variabile originale e
-      <repl>i</repl> è il valore del ritardo.  Se necessario la parte originale
-      del nome è troncata e può essere aggiustata
-      in caso di ripetizioni nell'insieme dei nomi delle variabili
-      così costruite.
+      <repl>i</repl> è il valore del ritardo.  Se necessario la parte
+      originale del nome è troncata e può essere aggiustata in caso di
+      ripetizioni nell'insieme dei nomi delle variabili così
+      costruite.
     </para>
     <para>
       Quando <argname>y</argname> è una lista e l'ordine di ritardo è
       maggiore di 1, l'ordinamento di default dei termini della lista
-      che ne risulta è per variabile: tutti i ritardi della prima variabile
-      nella lista in input sono seguiti da tutti i ritardi della seconda variabile,
-      e così via. Il terzo argomento (opzionale) può essere utilizzato
-      per cambiare tale impostazione: se <argname>bylag</argname> è diverso da zero
-      i termini sono ordinati per ritardo: il primo ritardo di tutte le variabili in input,
-      poi il secondo ritardo, e così via.
+      che ne risulta è per variabile: tutti i ritardi della prima
+      variabile nella lista in input sono seguiti da tutti i ritardi
+      della seconda variabile, e così via. Il terzo argomento
+      (opzionale) può essere utilizzato per cambiare tale
+      impostazione: se <argname>bylag</argname> è diverso da zero i
+      termini sono ordinati per ritardo: il primo ritardo di tutte le
+      variabili in input, poi il secondo ritardo, e così via.
+    </para>
+    <para>
+      Vedi anche <fncref targ="mlag"/> per l'uso con matrici.
     </para>
       </description>
     </function>
@@ -5624,52 +5650,63 @@
       </fnargs>
       <description>
     <para>
-      A seconda del parametro 
-      <argname>p</argname>, calcola una media mobile semplice o con pesi 
-      esponenziali della variabile input
+      A seconda del parametro <argname>p</argname>, calcola una media
+      mobile semplice o con pesi esponenziali della variabile input
       <argname>x</argname>.
     </para>
     <para context="notex">
-      Se <argname>p</argname> &gt; 1, viene calcolata una media
-      mobile semplice a <argname>p</argname> termini; in altre
-      parole, la media aritmetica da x(t) a x(t+p-1). Se viene
-      indicato un valore non nullo per il parametro opzionale
-      <argname>control</argname> la media mobile è centrata, in
-      caso contrario è <quote>retrospettiva</quote> (usa solo
-      l'osservazione corrente e quelle passate, ma non quelle
-      future).
+      Se <argname>p</argname> &gt; 1, viene calcolata una media mobile
+      semplice a <argname>p</argname> termini; in altre parole, la
+      media aritmetica da x(t) a x(t+p-1). Se viene indicato un valore
+      non nullo per il parametro opzionale <argname>control</argname>
+      la media mobile è centrata, in caso contrario è
+      <quote>retrospettiva</quote> (usa solo l'osservazione corrente e
+      quelle passate, ma non quelle future). L'argomento opzionale
+      <argname>y0</argname> viene ignorato.
     </para>
     <para context="tex">
       Se $p&gt;1$, viene calcolata una media mobile semplice a
-      <argname>p</argname> termini, in altre parole $\frac{1}{p}
-      \sum_{i=0}^{p-1} x_{t-i}$. Se viene indicato un valore non
-      nullo per il parametro opzionale <argname>control</argname>
-      la media mobile è centrata, altrimenti è
-      <quote>retrospettiva</quote> (usa solo l'osservazione
-      corrente e quelle passate, ma non quelle future).
+      <argname>p</argname> termini, ossia $\frac{1}{p}
+      \sum_{i=0}^{p-1} x_{t-i}$. Se viene indicato un valore non nullo
+      per il parametro opzionale <argname>control</argname> la media
+      mobile è centrata, altrimenti è <quote>retrospettiva</quote>
+      (usa solo l'osservazione corrente e quelle passate, ma non
+      quelle future). L'argomento opzionale <argname>y0</argname>
+      viene ignorato.
     </para>
     <para context="notex">
       Se <argname>p</argname> è una frazione positiva viene
-      calcolata una media mobile esponenziale: y(t) = p*x(t) +
-      (1-p)*y(t-1). Di default la variabile calcolata, y, è
+      calcolata una media mobile esponenziale:
+    </para>
+    <para context="notex">
+      <math>y(t) = p*x(t) + (1-p)*y(t-1)</math>
+    </para>
+    <para context="notex">
+      Di default la variabile risultato, <math>y</math>, è
       inizializzata usando il primo valore valido di
-      <argname>x</argname>, ma il parametro
-      <argname>control</argname> può essere usato per specificare
-      il numero di osservazioni iniziali che dovrebbero essere
-      incluse nella media usata per calcolare y(0).  Un valore
-      nullo di <argname>control</argname> indica che dovrebbero
-      essere usate tutte le osservazioni.
+      <argname>x</argname>, ma il parametro <argname>control</argname>
+      può essere usato per specificare il numero di osservazioni
+      iniziali che dovrebbero essere incluse nella media usata per
+      calcolare <math>y(0)</math>.  Un valore nullo di
+      <argname>control</argname> indica che dovrebbero essere usate
+      tutte le osservazioni. In alternativa, si può specificare un
+      valore iniziale con l'argomento opzionale <argname>y0</argname>;
+      in tal caso, l'argomento <argname>control</argname> viene
+      ignorato.
     </para>
     <para context="tex">
       Se $0 &lt; p &lt; 1$, viene calcolata una media mobile
-      esponenziale: $y_t = p x_t + (1-p)y_{t-1}$. Di default la
-      variabile calcolata, $y$, è inizializzata usando il primo
-      valore valido di $x$, ma il parametro
-      <argname>control</argname> può essere usato per specificare
-      il numero di osservazioni iniziali che dovrebbero essere
-      incluse nella media usata per calcolare $y_0$.  Un valore
-      nullo di <argname>control</argname> indica che devono essere
-      usate tutte le osservazioni.
+      esponenziale: \[y_t = p x_t + (1-p)y_{t-1}\] (vedi <cite
+      key="roberts59">Roberts, 1959</cite>). Di default, la variabile
+      calcolata, $y$, è inizializzata usando il primo valore valido di
+      $x$, ma il parametro <argname>control</argname> può essere usato
+      per specificare il numero di osservazioni iniziali che
+      dovrebbero essere incluse nella media usata per calcolare $y_0$.
+      Un valore nullo di <argname>control</argname> indica che devono
+      essere usate tutte le osservazioni. In alternativa, si può
+      specificare un valore iniziale con l'argomento opzionale
+      <argname>y0</argname>; in tal caso, l'argomento
+      <argname>control</argname> viene ignorato.
       </para>   
     </description>
     </function>
@@ -8010,20 +8047,22 @@
     <function name="rownames" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="list-or-string">s</fnarg>
+	<fnarg type="list-or-string">S</fnarg>
       </fnargs>
       <description>
     <para>
       Attribuisce dei nomi alle righe della matrice
-      <argname>M</argname> di dimensioni <by r="m" c="n"/>. 
-      Se <argname>s</argname> è una lista, i
-      nomi sono copiati da quelli delle variabili; la lista deve
-      avere tanti elementi quante sono le righe di
-      <argname>M</argname>. Se <argname>s</argname> è una stringa,
-      deve contenere un numero appropriato di sub-stringhe
-      separate da spazi.  Restituisce 0 se la funzione è andata a
-      buon fine, non-zero altrimenti. Si veda anche <fncref
-      targ="colnames"/>.
+      <argname>M</argname> di dimensioni <by r="m" c="n"/>.  Se
+      <argname>s</argname> è una lista, i nomi sono copiati da quelli
+      delle variabili; la lista deve avere tanti elementi quante sono
+      le righe di <argname>M</argname>. Se <argname>S</argname> è un
+      array di stringhe, deve contenere <math>k</math> elementi; se
+      invece è una sola stringa, deve contenere <math>k</math>
+      sub-stringhe separate da spazi.
+    </para>
+    <para>
+      Restituisce 0 se la funzione è andata a buon fine, non-zero
+      altrimenti. Si veda anche <fncref targ="colnames"/>.
     </para>
     <para>
       Esempio:
@@ -8435,6 +8474,16 @@
 	<code>
 	  la radice di 5 è più o meno 2.2361.
 	</code>
+	<para>
+	  dove <lit>%d</lit> indica che vogliamo un intero in quel
+	  punto dell'output; poiché tale espressione è il
+	  <quote>percento</quote> più a sinistra, essa viene associata
+	  al primo argomento, ossia 5. La seconda sequenza speciale è
+	  <lit>%6.4f</lit>, che indica un valore decimale con 4 cifre
+	  dopo il separatore decimale e larga almeno 6 cifre. Il
+	  numero di tali sequenza deve coincidere col numero di
+	  argomenti dopo la stringa di formato.
+	</para>
 	<para>
 	  Per maggiori dettagli sulla sintassi delle stringhe di
 	  formato, si veda l'help del comando <cmdref targ="printf"/>.
@@ -9103,10 +9152,24 @@
 	<para>
 	  Restituisce un codice di tipo per <argname>nome</argname>,
 	  che è l'identificativo di un qualche oggetto. I codici sono:
-	  1 = scalare, 2 = serie, 3 = matrice, 4 = stringa, 5 = bundle
-	  e 6 = array. Se l'oggetto non è definito, ritorna 0.  Per
-	  avere la stringa corrispondente al codice, si può usare la
-	  funzione <fncref targ="typestr"/>.
+	  1 = scalare, 2 = serie, 3 = matrice, 4 = stringa, 5 =
+	  bundle, 6 = array e 7 = lista. Se l'oggetto non è definito,
+	  ritorna 0.  Per avere la stringa corrispondente al codice,
+	  si può usare la funzione <fncref targ="typestr"/>.
+	</para>
+	<para>
+	  Questa funzione si può anche usare per stabilire il tipo di
+	  un elemento di un bundle o di un array. Ad esempio:
+	</para>
+	<code>
+	  matrices M = array(1)
+	  eval typestr(typeof(M))
+	  eval typestr(typeof(M[1]))
+	</code>
+	<para>
+	  Il risultato della prima <lit>eval</lit> è
+	  <quote>array</quote> e quello della seconda è
+	  <quote>matrice</quote>.
 	</para>
       </description>
     </function>
