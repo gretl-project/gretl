@@ -2451,6 +2451,28 @@
       </description>
     </function>
 
+    <function name="dayspan" section="calendar" output="int">
+      <fnargs>
+	<fnarg type="int">ed1</fnarg>
+	<fnarg type="int">ed2</fnarg>
+	<fnarg type="int">weeklen</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce il numero di giorni rilevanti tra le date
+	  epocali <argname>ed1</argname> e <argname>ed2</argname>,
+	  estremi inclusi. L'argomento <argname>weeklen</argname> deve
+	  essere 5, 6 o 7, e si riferisce al numero di giorni della
+	  settimana da contare (il valore 6 omette le domeniche; il
+	  valore 5 omette sabati e domeniche).
+	</para>
+	<para>
+	  Per convertire date formato epocale, vedi <fncref
+	  targ="epochday"/>.
+	</para>
+      </description>
+    </function>    
+
     <function name="defarray" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="varargs"/>
@@ -3512,6 +3534,17 @@
 
       series Q = ghk(C, {inf1, inf2}, {sup1, sup2}, U)
     </code>
+    	<para>
+	  L'argomento opzionale <argname>dP</argname> contiene, se
+	  usato, la matrice <by r="n" c="k"/> di derivate delle
+	  probabilità, dove <math>k</math> è pari a 2<math>m</math> +
+	  <math>m</math>(<math>m</math> + 1)/2. Le prime
+	  <math>m</math> colonne contengono le derivate rispetto ai
+	  limiti inferiori e le seguenti <math>m</math> quelle rispetto
+	  ai limiti superiori; quelle restanti sono le derivate
+	  rispetto agli elementi unici della matrice <math>C</math>
+	  (in ordine <quote>vech</quote>).
+	</para>
       </description>
     </function>
 
@@ -4444,6 +4477,34 @@
 	    </li>
 	  </ilist>
 	
+      </description>
+    </function>    
+
+    <function name="juldate" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="bool" optional="true">come-stringa</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  L'argomento <argname>ed</argname> viene interpretato come
+	  data epocale, pari a 1 per il 1° gennaio 1 d.C. nel
+	  calendario gregoriano prolettico. Il valore ritornato
+	  &mdash; dello stesso tipo di <argname>ed</argname> &mdash; è
+	  un numero di 8 cifre, o una serie di numeri siffatti,
+	  codificati come <lit>AAAAMMGG</lit> (il formato <quote>base</quote>
+	  nella specifica ISO 8601), con le date corrispondenti nel
+	  calendario giuliano.
+	</para>
+	<para>
+	  Nel solo caso in cui <argname>ed</argname> sia uno scalare e
+	  l'argomento <argname>come-stringa</argname> sia non-zero, il
+	  valore ritornato non è numerico, ma una stringa del tipo
+	  <lit>AAAA-MM-GG</lit> (il formato ISO 8601 <quote>esteso</quote>).
+	</para>
+	<para>
+	  Vedi anche <fncref targ="isodate"/>.
+	</para>
       </description>
     </function>    
 
@@ -8282,6 +8343,21 @@
     </para>
       </description>
     </function>
+
+    <function name="sleep" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="int">ns</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Funzione probabilmente inutile in circostanze normali, ma
+	  non per testare metodi parallelizzati. Questa funzione
+	  <quote>narcotizza</quote> il thread corrente per
+	  <argname>ns</argname> secondi. Al risveglio, la funzione
+	  restituisce 0.
+	</para>
+      </description>
+    </function>    
 
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
