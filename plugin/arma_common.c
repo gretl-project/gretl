@@ -1131,7 +1131,7 @@ gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
     return ret;
 }
 
-int pgm_vs_spec_plot_data(arma_info *ainfo, MODEL *armod)
+int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
 {
     int i, err = 0;
 

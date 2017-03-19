@@ -7691,11 +7691,13 @@ static int roundup_mod (int i, double x)
 /* options: OPT_R use radians as unit
             OPT_D use degrees as unit
             OPT_L use log scale
+	    OPT_A plotting ARMA spectrum
 */
 
 static int real_pergm_plot (const char *vname,
 			    int T, int L, 
 			    const double *x,
+			    const double *x2,
 			    gretlopt opt,
 			    FILE *fp)
 {
@@ -7730,7 +7732,9 @@ static int real_pergm_plot (const char *vname,
     /* open gnuplot title string */
     fputs("set title '", fp);
 
-    if (vname == NULL) {
+    if (opt & OPT_A) {
+	fputs(_("Spectrum vs sample periodogram"), fp);
+    } else if (vname == NULL) {
 	fputs(_("Residual spectrum"), fp);
     } else {
 	sprintf(s, _("Spectrum of %s"), vname);
@@ -7774,7 +7778,13 @@ static int real_pergm_plot (const char *vname,
 	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
     }
 
-    fputs("plot '-' using 1:2 w lines\n", fp);
+    if (x2 != NULL) {
+	fputs("plot \\\n", fp);
+	fputs("'-' using 1:2 w lines, \\\n", fp);
+	fputs("'-' using 1:2 w lines\n", fp);
+    } else {
+	fputs("plot '-' using 1:2 w lines\n", fp);
+    }
 
     for (t=1; t<=T2; t++) {
 	if (opt & OPT_R) {
@@ -7786,10 +7796,23 @@ static int real_pergm_plot (const char *vname,
 	}
 	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x[t]) : x[t]);
     }
+    fputs("e\n", fp);
+
+    if (x2 != NULL) {
+	for (t=1; t<=T2; t++) {
+	    if (opt & OPT_R) {
+		ft = M_PI * (double) t / T2;
+	    } else if (opt & OPT_D) {
+		ft = 180 * (double) t / T2;
+	    } else {
+		ft = t;
+	    }
+	    fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x2[t]) : x2[t]);
+	}
+	fputs("e\n", fp);
+    }
 
     gretl_pop_c_numeric_locale();
-
-    fputs("e\n", fp);
 
     return err;
 }
@@ -7804,7 +7827,30 @@ int periodogram_plot (const char *vname,
     fp = open_plot_input_file(PLOT_PERIODOGRAM, 0, &err);
 
     if (!err) {
-	real_pergm_plot(vname, T, L, x, opt, fp);
+	real_pergm_plot(vname, T, L, x, NULL, opt, fp);
+	err = finalize_plot_input_file(fp);
+    }
+
+    return err;
+}
+
+int arma_spectrum_plot (MODEL *pmod)
+{
+    gretl_matrix *pdata = NULL;
+    FILE *fp;
+    int err = 0;
+
+    // FIXME not hooked up yet!
+    // pdata = pgm_vs_spec_plot_data();
+
+    fp = open_plot_input_file(PLOT_PERIODOGRAM, 0, &err);
+
+    if (!err) {
+	const double *x = pdata->val;
+	const double *x2 = pdata->val + pdata->rows;
+	gretlopt opt = OPT_R | OPT_L | OPT_A;
+
+	real_pergm_plot(NULL, pmod->nobs, 0, x, x2, opt, fp);
 	err = finalize_plot_input_file(fp);
     }
 
