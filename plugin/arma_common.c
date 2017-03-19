@@ -996,35 +996,34 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
 /*
   Builds a 2-column matrix containing the ar coefficients in column 0
   and the ma coefficients in column 1
- */
+*/
 
-gretl_matrix *armaparam (const double *coeff,
-			 arma_info *ainfo, int *err) {
-
+static gretl_matrix *armaparam (const double *coeff,
+				arma_info *ainfo,
+				int *err)
+{
+    gretl_matrix *ret = NULL;
     int pd = ainfo->pd;
     int pmax = ainfo->p + pd * ainfo->P;
     int qmax = ainfo->q + pd * ainfo->Q;
-    
+    const double *phi =   coeff + ainfo->ifc;
+    const double *Phi =     phi + ainfo->np;
+    const double *theta =   Phi + ainfo->P;
+    const double *Theta = theta + ainfo->nq;
     int n = (pmax > qmax) ? pmax : qmax;
+    int i, j, l;
+    double w;
 
-    gretl_matrix *ret = NULL;
     ret = gretl_zero_matrix_new(n+1, 2);
 
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return ret;
     }
-    
-    int i, j, l;
-    double w;
-    const double *phi =   coeff + ainfo->ifc;
-    const double *Phi =     phi + ainfo->np;
-    const double *theta =   Phi + ainfo->P;
-    const double *Theta = theta + ainfo->nq;
-    
+
     gretl_matrix_set(ret, 0, 0, 1);
     gretl_matrix_set(ret, 0, 1, 1);
-    
+
 #if 0    
     fprintf(stderr, "n = %d\n", n);
     fprintf(stderr, "p = %d, pd = %d, P = %d\n",
@@ -1032,8 +1031,8 @@ gretl_matrix *armaparam (const double *coeff,
     fprintf(stderr, "q = %d, pd = %d, Q = %d\n",
 	    ainfo->q, ainfo->pd, ainfo->Q);
 #endif
-    
-    if (pmax>0) {
+
+    if (pmax > 0) {
 	/* first column: AR coefficients */
 	for (i=0; i<ainfo->p; i++) {
 	    gretl_matrix_set(ret, i+1, 0, -phi[i]);
@@ -1051,7 +1050,7 @@ gretl_matrix *armaparam (const double *coeff,
 	}
     }
 
-    if (qmax>0) {
+    if (qmax > 0) {
 	/* second column: MA coefficients */
 	for (i=0; i<ainfo->q; i++) {
 	    gretl_matrix_set(ret, i+1, 1, theta[i]);
@@ -1084,7 +1083,9 @@ gretl_matrix *armaparam (const double *coeff,
   in column 0 and the MA parameters in column 1.
 */
 
-gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
+static gretl_matrix *armaspec (gretl_matrix *param,
+			       double s2, int T,
+			       int *err)
 {
     gretl_vector *ret = NULL;
     double num, den, nre_t, nim_t, dre_t, dim_t, xt;
@@ -1133,18 +1134,16 @@ gretl_matrix *armaspec (gretl_matrix *param, double s2, int T, int *err)
 
 int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
 {
-    int i, err = 0;
-
     gretl_matrix *parm = NULL;
     gretl_matrix *spec = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *pergm = NULL;
-    
     int nobs = armod->nobs;
     int grid = (nobs-1)/2;
     int t1 = armod->t1;
     int t2 = armod->t2;
     double s2 = armod->sigma * armod->sigma;
+    int i, err = 0;
     
     parm = armaparam(armod->coeff, ainfo, &err);
     if (err) {
@@ -1163,37 +1162,8 @@ int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
     }
     
     pergm = gretl_matrix_fft(y, &err);
-    if (err) {
-	return err;
-    }
 
-    double px, pRe, pIm, scale = nobs * M_2PI;
-
-    /* header */
-
-    fprintf(stderr, "set xzeroaxis\n");
-    fprintf(stderr, "set nokey\n");
-    fprintf(stderr, "set title 'Sample periodogram vs ARMA Spectrum (log scale)'\n");
-    fprintf(stderr, "plot '-' using 1:2 with lines t 'spectrum', \\\n");	
-    fprintf(stderr, "'-' using 1:2 with lines t 'periodogram'\n");   
-
-    for (i=0; i<grid; i++) {
-	fprintf(stderr, "%7.5f %12.7f\n", gretl_matrix_get(spec, i, 0),
-		log(gretl_matrix_get(spec, i, 1)));
-    }
-    fprintf(stderr, "e\n");   
-
-    for (i=0; i<grid; i++) {
-	pRe = gretl_matrix_get(pergm, i+1, 0);
-	pIm = gretl_matrix_get(pergm, i+1, 1);
-	px = (pRe * pRe + pIm * pIm) / scale;
-	fprintf(stderr, "%7.5f %12.7f\n", gretl_matrix_get(spec, i, 0), 
-		log(px));
-    }
-    fprintf(stderr, "e\n");
-
-    if (1) {
-	/* stick the matrices onto the model */
+    if (!err) {
 	gretl_matrix *pdata = gretl_matrix_alloc(grid, 4);
 
 	if (pdata != NULL) {

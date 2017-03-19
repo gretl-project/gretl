@@ -7691,13 +7691,11 @@ static int roundup_mod (int i, double x)
 /* options: OPT_R use radians as unit
             OPT_D use degrees as unit
             OPT_L use log scale
-	    OPT_A plotting ARMA spectrum
 */
 
 static int real_pergm_plot (const char *vname,
 			    int T, int L, 
 			    const double *x,
-			    const double *x2,
 			    gretlopt opt,
 			    FILE *fp)
 {
@@ -7732,9 +7730,7 @@ static int real_pergm_plot (const char *vname,
     /* open gnuplot title string */
     fputs("set title '", fp);
 
-    if (opt & OPT_A) {
-	fputs(_("Spectrum vs sample periodogram"), fp);
-    } else if (vname == NULL) {
+    if (vname == NULL) {
 	fputs(_("Residual spectrum"), fp);
     } else {
 	sprintf(s, _("Spectrum of %s"), vname);
@@ -7778,13 +7774,7 @@ static int real_pergm_plot (const char *vname,
 	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
     }
 
-    if (x2 != NULL) {
-	fputs("plot \\\n", fp);
-	fputs("'-' using 1:2 w lines, \\\n", fp);
-	fputs("'-' using 1:2 w lines\n", fp);
-    } else {
-	fputs("plot '-' using 1:2 w lines\n", fp);
-    }
+    fputs("plot '-' using 1:2 w lines\n", fp);
 
     for (t=1; t<=T2; t++) {
 	if (opt & OPT_R) {
@@ -7797,20 +7787,6 @@ static int real_pergm_plot (const char *vname,
 	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x[t]) : x[t]);
     }
     fputs("e\n", fp);
-
-    if (x2 != NULL) {
-	for (t=1; t<=T2; t++) {
-	    if (opt & OPT_R) {
-		ft = M_PI * (double) t / T2;
-	    } else if (opt & OPT_D) {
-		ft = 180 * (double) t / T2;
-	    } else {
-		ft = t;
-	    }
-	    fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x2[t]) : x2[t]);
-	}
-	fputs("e\n", fp);
-    }
 
     gretl_pop_c_numeric_locale();
 
@@ -7827,7 +7803,7 @@ int periodogram_plot (const char *vname,
     fp = open_plot_input_file(PLOT_PERIODOGRAM, 0, &err);
 
     if (!err) {
-	real_pergm_plot(vname, T, L, x, NULL, opt, fp);
+	real_pergm_plot(vname, T, L, x, opt, fp);
 	err = finalize_plot_input_file(fp);
     }
 
@@ -7847,12 +7823,14 @@ int arma_spectrum_plot (MODEL *pmod)
 
     fp = open_plot_input_file(PLOT_PERIODOGRAM, 0, &err);
 
-#if 1
     if (!err) {
 	double px, pRe, pIm, scale = pmod->nobs * M_2PI;
 	int i, grid = pdata->rows;
 
-	// fputs("set logscale y 2.7181718\n", fp);
+	fprintf(fp, "set xrange [0:%g]\n", M_PI);
+	/* fputs("set logscale y exp(1)\n", fp); */
+	fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
+	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
 	fputs("set title 'Sample periodogram vs ARMA Spectrum (log scale)'\n", fp);
 	fputs("plot '-' using 1:2 with lines t 'spectrum', \\\n", fp);
 	fputs("'-' using 1:2 with lines t 'periodogram'\n", fp);
@@ -7869,24 +7847,13 @@ int arma_spectrum_plot (MODEL *pmod)
 	    pRe = gretl_matrix_get(pdata, i, 2);
 	    pIm = gretl_matrix_get(pdata, i, 3);
 	    px = (pRe * pRe + pIm * pIm) / scale;
-	    fprintf(fp, "%7.5f %12.7f\n", gretl_matrix_get(pdata, i, 0),
-		    log(px));
+	    fprintf(fp, "%7.5f %12.7f\n", gretl_matrix_get(pdata, i, 0), log(px));
 	}
 	fprintf(stderr, "e\n");
 
 	gretl_pop_c_numeric_locale();
 	err = finalize_plot_input_file(fp);
     }
-#else
-    if (!err) {
-	const double *x = pdata->val;
-	const double *x2 = pdata->val + pdata->rows;
-	gretlopt opt = OPT_R | OPT_L | OPT_A;
-
-	real_pergm_plot(NULL, pmod->nobs, 0, x, x2, opt, fp);
-	err = finalize_plot_input_file(fp);
-    }
-#endif
 
     return err;
 }
