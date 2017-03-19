@@ -1168,14 +1168,30 @@ int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
     }
 
     double px, pRe, pIm, scale = nobs * M_2PI;
+
+    /* header */
+
+    fprintf(stderr, "set xzeroaxis\n");
+    fprintf(stderr, "set nokey\n");
+    fprintf(stderr, "set title 'Sample periodogram vs ARMA Spectrum (log scale)'\n");
+    fprintf(stderr, "plot '-' using 1:2 with lines t 'spectrum', \\\n");	
+    fprintf(stderr, "'-' using 1:2 with lines t 'periodogram'\n");   
+
+    for (i=0; i<grid; i++) {
+	fprintf(stderr, "%7.5f %12.7f\n", gretl_matrix_get(spec, i, 0),
+		log(gretl_matrix_get(spec, i, 1)));
+    }
+    fprintf(stderr, "e\n");   
+
     for (i=0; i<grid; i++) {
 	pRe = gretl_matrix_get(pergm, i+1, 0);
 	pIm = gretl_matrix_get(pergm, i+1, 1);
 	px = (pRe * pRe + pIm * pIm) / scale;
-	fprintf(stderr, "%7.5f %12.7f%12.7f\n",
-		gretl_matrix_get(spec, i, 0), 
-		log(gretl_matrix_get(spec, i, 1)), log(px));
+	fprintf(stderr, "%7.5f %12.7f\n", gretl_matrix_get(spec, i, 0), 
+		log(px));
     }
+    fprintf(stderr, "e\n");   
+
     
     gretl_matrix_free(spec);
     gretl_matrix_free(parm);
