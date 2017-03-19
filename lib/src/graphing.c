@@ -7840,11 +7840,44 @@ int arma_spectrum_plot (MODEL *pmod)
     FILE *fp;
     int err = 0;
 
-    // FIXME not hooked up yet!
-    // pdata = pgm_vs_spec_plot_data();
+    pdata = gretl_model_get_data(pmod, "arma-pergm-data");
+    if (pdata == NULL) {
+	return E_DATA;
+    }
 
     fp = open_plot_input_file(PLOT_PERIODOGRAM, 0, &err);
 
+#if 1
+    if (!err) {
+	double px, pRe, pIm, scale = pmod->nobs * M_2PI;
+	int i, grid = pdata->rows;
+
+	// fputs("set logscale y 2.7181718\n", fp);
+	fputs("set title 'Sample periodogram vs ARMA Spectrum (log scale)'\n", fp);
+	fputs("plot '-' using 1:2 with lines t 'spectrum', \\\n", fp);
+	fputs("'-' using 1:2 with lines t 'periodogram'\n", fp);
+
+	gretl_push_c_numeric_locale();
+
+	for (i=0; i<grid; i++) {
+	    fprintf(fp, "%7.5f %12.7f\n", gretl_matrix_get(pdata, i, 0),
+		    log(gretl_matrix_get(pdata, i, 1)));
+	}
+	fputs("e\n", fp);
+
+	for (i=0; i<grid; i++) {
+	    pRe = gretl_matrix_get(pdata, i, 2);
+	    pIm = gretl_matrix_get(pdata, i, 3);
+	    px = (pRe * pRe + pIm * pIm) / scale;
+	    fprintf(fp, "%7.5f %12.7f\n", gretl_matrix_get(pdata, i, 0),
+		    log(px));
+	}
+	fprintf(stderr, "e\n");
+
+	gretl_pop_c_numeric_locale();
+	err = finalize_plot_input_file(fp);
+    }
+#else
     if (!err) {
 	const double *x = pdata->val;
 	const double *x2 = pdata->val + pdata->rows;
@@ -7853,6 +7886,7 @@ int arma_spectrum_plot (MODEL *pmod)
 	real_pergm_plot(NULL, pmod->nobs, 0, x, x2, opt, fp);
 	err = finalize_plot_input_file(fp);
     }
+#endif
 
     return err;
 }

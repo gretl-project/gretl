@@ -2783,11 +2783,10 @@ static void arma_spectrum_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int err = 0;
+    int err = arma_spectrum_plot(pmod);
 
-    dummy_call(); /* FIXME */
+    gui_graph_handler(err);
 }
-
 
 #define intervals_model(m) (m->ci == LAD && \
 			    gretl_model_get_data(m, "coeff_intervals"))
@@ -3113,7 +3112,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	entry.label = _("Residual _periodogram");
 	entry.callback = G_CALLBACK(residual_periodogram_callback);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
-	if (pmod->ci == ARMA) {
+	if (gretl_model_get_data(pmod, "arma-pergm-data") != NULL) {
 	    entry.name = "ARMAspectrum";
 	    entry.label = _("_Spectrum vs sample periodogram");
 	    entry.callback = G_CALLBACK(arma_spectrum_callback);

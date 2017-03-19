@@ -1190,8 +1190,22 @@ int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
 	fprintf(stderr, "%7.5f %12.7f\n", gretl_matrix_get(spec, i, 0), 
 		log(px));
     }
-    fprintf(stderr, "e\n");   
+    fprintf(stderr, "e\n");
 
+    if (1) {
+	/* stick the matrices onto the model */
+	gretl_matrix *pdata = gretl_matrix_alloc(grid, 4);
+
+	if (pdata != NULL) {
+	    for (i=0; i<grid; i++) {
+		gretl_matrix_set(pdata, i, 0, gretl_matrix_get(spec, i, 0));
+		gretl_matrix_set(pdata, i, 1, gretl_matrix_get(spec, i, 1));
+		gretl_matrix_set(pdata, i, 2, gretl_matrix_get(pergm, i+1, 0));
+		gretl_matrix_set(pdata, i, 3, gretl_matrix_get(pergm, i+1, 1));
+	    }
+	    gretl_model_set_matrix_as_data(armod, "arma-pergm-data", pdata);
+	}
+    }
     
     gretl_matrix_free(spec);
     gretl_matrix_free(parm);
