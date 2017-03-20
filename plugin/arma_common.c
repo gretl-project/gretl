@@ -1068,6 +1068,10 @@ static gretl_matrix *armaparam (const double *coeff,
 	}
     }
 
+#if 0
+    gretl_matrix_print(ret, "coeffs");
+#endif
+
     return ret;
 }
        

@@ -1486,6 +1486,16 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 		}
 	    }
 	}
+
+	if (0) {
+	    /* just checking */
+	    int n = MAX(pstar, qmax);
+
+	    for (i=0; i<=n; i++) {
+		fprintf(stderr, "%g ", i <= pstar ? ac[i]: 0.0);
+		fprintf(stderr, "%g\n", i <= qmax ? mc[i]: 0.0);
+	    }
+	}
     }
 
     if (!err) {
