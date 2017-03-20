@@ -993,23 +993,68 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
 
 #endif /* X12A_CODE not defined */
 
+static int transcribe_extra_info(arma_info *ainfo, MODEL *armod)
+{
+    int err = 0;
+    gretl_vector *ainfo_vec = NULL;
+
+    ainfo_vec = gretl_vector_alloc(8);
+    if (ainfo_vec == NULL) {
+	return E_ALLOC;
+    }
+
+    ainfo_vec->val[0] = ainfo->ifc;
+    ainfo_vec->val[1] = ainfo->pd;
+    ainfo_vec->val[2] = ainfo->p;
+    ainfo_vec->val[3] = ainfo->q;
+    ainfo_vec->val[4] = ainfo->P;
+    ainfo_vec->val[5] = ainfo->Q;
+    ainfo_vec->val[6] = ainfo->np;
+    ainfo_vec->val[7] = ainfo->nq;
+
+    err = gretl_model_set_matrix_as_data(armod, "ainfo", ainfo_vec);
+    
+    return err;
+}
+
+
 /*
   Builds a 2-column matrix containing the ar coefficients in column 0
   and the ma coefficients in column 1
 */
 
 static gretl_matrix *armaparam (const double *coeff,
-				arma_info *ainfo,
+				gretl_vector *ainfo,
 				int *err)
 {
     gretl_matrix *ret = NULL;
-    int pd = ainfo->pd;
-    int pmax = ainfo->p + pd * ainfo->P;
-    int qmax = ainfo->q + pd * ainfo->Q;
-    const double *phi =   coeff + ainfo->ifc;
-    const double *Phi =     phi + ainfo->np;
-    const double *theta =   Phi + ainfo->P;
-    const double *Theta = theta + ainfo->nq;
+
+    int ifc = gretl_vector_get(ainfo, 0);
+    int pd  = gretl_vector_get(ainfo, 1); 
+    int p   = gretl_vector_get(ainfo, 2);  
+    int q   = gretl_vector_get(ainfo, 3);  
+    int P   = gretl_vector_get(ainfo, 4);  
+    int Q   = gretl_vector_get(ainfo, 5);  
+    int np  = gretl_vector_get(ainfo, 6); 
+    int nq  = gretl_vector_get(ainfo, 7); 
+
+#if 0    
+    fprintf(stderr, "ifc = %d", ifc);
+    fprintf(stderr, "pd  = %d", pd);
+    fprintf(stderr, "p	 = %d", p);
+    fprintf(stderr, "q	 = %d", q);
+    fprintf(stderr, "P	 = %d", P);
+    fprintf(stderr, "Q	 = %d", Q);
+    fprintf(stderr, "np	 = %d", np);
+    fprintf(stderr, "nq	 = %d", nq);
+#endif
+
+    int pmax = p + pd * P;
+    int qmax = q + pd * Q;
+    const double *phi =   coeff + ifc;
+    const double *Phi =	    phi + np;
+    const double *theta =   Phi + P;
+    const double *Theta = theta + nq;
     int n = (pmax > qmax) ? pmax : qmax;
     int i, j, l;
     double w;
@@ -1024,25 +1069,17 @@ static gretl_matrix *armaparam (const double *coeff,
     gretl_matrix_set(ret, 0, 0, 1);
     gretl_matrix_set(ret, 0, 1, 1);
 
-#if 0    
-    fprintf(stderr, "n = %d\n", n);
-    fprintf(stderr, "p = %d, pd = %d, P = %d\n",
-	    ainfo->p, ainfo->pd, ainfo->P);
-    fprintf(stderr, "q = %d, pd = %d, Q = %d\n",
-	    ainfo->q, ainfo->pd, ainfo->Q);
-#endif
-
     if (pmax > 0) {
 	/* first column: AR coefficients */
-	for (i=0; i<ainfo->p; i++) {
+	for (i=0; i<p; i++) {
 	    gretl_matrix_set(ret, i+1, 0, -phi[i]);
 	}
 
-	for (i=0; i<ainfo->P; i++) {
+	for (i=0; i<P; i++) {
 	    l = (i+1)*pd;
 	    w = gretl_matrix_get(ret, l, 0);
 	    gretl_matrix_set(ret, l, 0, w - Phi[i]);
-	    for (j=0; j<ainfo->p; j++) {
+	    for (j=0; j<p; j++) {
 		l = (i+1)*pd + (j+1);
 		w = gretl_matrix_get(ret, l, 0);
 		gretl_matrix_set(ret, l, 0, w + phi[j] * Phi[i]);
@@ -1052,15 +1089,15 @@ static gretl_matrix *armaparam (const double *coeff,
 
     if (qmax > 0) {
 	/* second column: MA coefficients */
-	for (i=0; i<ainfo->q; i++) {
+	for (i=0; i<q; i++) {
 	    gretl_matrix_set(ret, i+1, 1, theta[i]);
 	}
 
-	for (i=0; i<ainfo->Q; i++) {
+	for (i=0; i<Q; i++) {
 	    l = (i+1)*pd;
 	    w = gretl_matrix_get(ret, l, 1);
 	    gretl_matrix_set(ret, l, 1, w + Theta[i]);
-	    for (j=0; j<ainfo->q; j++) {
+	    for (j=0; j<q; j++) {
 		l = (i+1)*pd + (j+1);
 		w = gretl_matrix_get(ret, l, 1);
 		gretl_matrix_set(ret, l, 1, w + theta[j] * Theta[i]);
@@ -1148,8 +1185,10 @@ int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
     int t2 = armod->t2;
     double s2 = armod->sigma * armod->sigma;
     int i, err = 0;
+
+    gretl_vector *ainfo_vec = gretl_model_get_data(armod, "ainfo");
     
-    parm = armaparam(armod->coeff, ainfo, &err);
+    parm = armaparam(armod->coeff, ainfo_vec, &err);
     if (err) {
 	return err;
     }

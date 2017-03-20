@@ -1739,6 +1739,10 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
+	err = transcribe_extra_info(ainfo, &armod);
+    }
+    
+    if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 	    kalman_arma(coeff, dset, ainfo, &armod, opt);
