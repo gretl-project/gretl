@@ -879,6 +879,44 @@ real_arima_difference_series (double *dx, const double *x,
     }
 }
 
+static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
+{
+    int *ainfo_list = gretl_list_new(9);
+    int err = 0;
+
+    if (ainfo_list == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* wrap up a bunch of relevant integers */
+	ainfo_list[1] = ainfo->p;
+	ainfo_list[2] = ainfo->q;
+	ainfo_list[3] = ainfo->P;
+	ainfo_list[4] = ainfo->Q;
+	ainfo_list[5] = ainfo->np;
+	ainfo_list[6] = ainfo->nq;
+	ainfo_list[7] = ainfo->d;
+	ainfo_list[8] = ainfo->D;
+	ainfo_list[9] = ainfo->pd;
+	err = gretl_model_set_list_as_data(armod, "ainfo", ainfo_list);
+    }
+
+    if (!err && arima_ydiff(ainfo)) {
+	/* save the differenced y while we're at it */
+	gretl_vector *y = gretl_column_vector_alloc(armod->nobs);
+
+	if (y != NULL) {
+	    int t;
+
+	    for (t=0; t<armod->nobs; t++) {
+		gretl_vector_set(y, t, ainfo->y[t+ainfo->t1]);
+	    }
+	    gretl_model_set_matrix_as_data(armod, "yvec", y);
+	}
+    }
+
+    return err;
+}
+
 #ifndef X12A_CODE
 
 /* Add to the ainfo struct a full-length series y holding 
@@ -890,7 +928,8 @@ real_arima_difference_series (double *dx, const double *x,
    ainfo->T but if fullX = 0 it equals ainfo->t2 + 1.
 */
 
-int arima_difference (arma_info *ainfo, const DATASET *dset, 
+int arima_difference (arma_info *ainfo,
+		      const DATASET *dset,
 		      int fullX)
 {
     const double *y = dset->Z[ainfo->yno];
@@ -988,46 +1027,6 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
     }
 
     unset_arima_ydiff(ainfo);
-}
-
-/* FIXME: hook up for x12a? */
-
-static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
-{
-    int *ainfo_list = gretl_list_new(9);
-    int err = 0;
-
-    if (ainfo_list == NULL) {
-	err = E_ALLOC;
-    } else {
-	/* wrap up a bunch of relevant integers */
-	ainfo_list[1] = ainfo->p;
-	ainfo_list[2] = ainfo->q;
-	ainfo_list[3] = ainfo->P;
-	ainfo_list[4] = ainfo->Q;
-	ainfo_list[5] = ainfo->np;
-	ainfo_list[6] = ainfo->nq;
-	ainfo_list[7] = ainfo->d;
-	ainfo_list[8] = ainfo->D;
-	ainfo_list[9] = ainfo->pd;
-	err = gretl_model_set_list_as_data(armod, "ainfo", ainfo_list);
-    }
-
-    if (!err && arima_ydiff(ainfo)) {
-	/* save the differenced y while we're at it */
-	gretl_vector *y = gretl_column_vector_alloc(armod->nobs);
-
-	if (y != NULL) {
-	    int t;
-
-	    for (t=0; t<armod->nobs; t++) {
-		gretl_vector_set(y, t, ainfo->y[t+ainfo->t1]);
-	    }
-	    gretl_model_set_matrix_as_data(armod, "yvec", y);
-	}
-    }
-    
-    return err;
 }
 
 #endif /* X12A_CODE not defined */

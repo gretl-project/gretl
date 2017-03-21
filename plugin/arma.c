@@ -1748,7 +1748,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
-	err = transcribe_extra_info(ainfo, &armod);
+	transcribe_extra_info(ainfo, &armod);
     }
 
  bailout:

@@ -911,6 +911,10 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 	close_down_verbose_printer(ainfo->prn);
     }
 
+    if (armod.errcode == 0) {
+	transcribe_extra_info(ainfo, &armod);
+    }
+
  bailout:
 
     arma_info_cleanup(ainfo);
