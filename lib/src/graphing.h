@@ -246,7 +246,8 @@ int periodogram_plot (const char *vname,
 		      int T, int L, const double *x,
 		      gretlopt opt);
 
-int arma_spectrum_plot (MODEL *pmod);
+int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
+			gretlopt opt);
 
 int theil_forecast_plot (const int *plotlist, const DATASET *dset, 
 			 gretlopt opt);

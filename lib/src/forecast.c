@@ -38,11 +38,6 @@
  *
  */
 
-#ifdef max
-# undef max
-#endif
-#define max(x,y) (((x) > (y))? (x) : (y))
-
 /* estimators where a simple X*b does _not_ give the
    predicted value of the dependent variable */
 
@@ -1004,7 +999,7 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
     alpha = pmod->coeff + xvars;
     beta = alpha + q + 1;
 
-    lmax = max(p, q);
+    lmax = MAX(p, q);
 
     for (t=t1; t<=t2 && !err; t++) {
 	s = t - t1;
@@ -1443,8 +1438,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		       const DATASET *dset)
 {
     double *psi = NULL;
-    double *phi = NULL;
-    double *theta = NULL;
+    gretl_vector *phi = NULL;
+    gretl_vector *theta = NULL;
     double *phi0 = NULL;
     double *Xb = NULL;
     const double *beta;
@@ -1489,18 +1484,10 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     xvars = (xlist != NULL)? xlist[0] : 0;
 
-    err = arma_model_integrated_AR_MA_coeffs(pmod, &phi, &theta);
+    err = arma_model_AR_MA_coeffs(pmod, &phi, &theta, OPT_I);
     if (err) {
 	goto bailout;
     }
-
-#if 0
-    if (theta != NULL) {
-	for (i=0; i<=q; i++) {
-	    fprintf(stderr, "integrated theta[%d] = %g\n", i, theta[i]);
-	}
-    }
-#endif
 
     beta = arma_model_get_x_coeffs(pmod);
 
@@ -1550,8 +1537,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	ar_smax = fc->t2;
 	ma_smax = pmod->t2;
     } else if (fc->method == FC_DYNAMIC) {
-	ar_smax = max(fc->t1 - 1, p - 1);
-	ma_smax = max(fc->t1 - 1, q);
+	ar_smax = MAX(fc->t1 - 1, p - 1);
+	ma_smax = MAX(fc->t1 - 1, q);
     } else {
 	ar_smax = pmod->t2;
 	ma_smax = pmod->t2;
@@ -1620,7 +1607,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	/* AR contribution (incorporating any differencing) */
 
 	for (i=1; i<=p && !miss; i++) {
-	    if (phi[i] == 0.0) {
+	    if (phi->val[i] == 0.0) {
 		continue;
 	    }
 	    s = t - i;
@@ -1637,19 +1624,19 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		DPRINTF(("  AR: lag %d, missing value\n", i));
 		miss = 1;
 	    } else {
-		DPRINTF(("  AR: lag %d, using coeff %#.8g\n", i, phi[i]));
+		DPRINTF(("  AR: lag %d, using coeff %#.8g\n", i, phi->val[i]));
 		if (!regarma && Xb != NULL) {
 		    if (na(Xb[s])) {
 			miss = 1;
 		    } else {
-			yh += phi[i] * (yval - Xb[s]);
+			yh += phi->val[i] * (yval - Xb[s]);
 		    }
 		} else if (!regarma && !na(mu)) {
 		    DPRINTF(("    !regarma && !na(mu): yh += %g * (%g - %g)\n",
-			     phi[i], yval, mu)); 
-		    yh += phi[i] * (yval - mu);
+			     phi->val[i], yval, mu));
+		    yh += phi->val[i] * (yval - mu);
 		} else {
-		    yh += phi[i] * yval;
+		    yh += phi->val[i] * yval;
 		}
 	    }
 	}
@@ -1659,13 +1646,13 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	/* MA contribution */
 
 	for (i=1; i<=q && !miss; i++) {
-	    if (theta[i] == 0.0) {
+	    if (theta->val[i] == 0.0) {
 		continue;
 	    }
 	    s = t - i;
 	    if (s >= pmod->t1 && s <= ma_smax) {
 		DPRINTF(("  MA: lag %d, e[%d] = %g, theta[%d] = %g\n", i, s, 
-			 pmod->uhat[s], i, theta[i]));
+			 pmod->uhat[s], i, theta->val[i]));
 		if (na(pmod->uhat[s])) {
 		    char obsstr[OBSLEN];
 		    
@@ -1673,12 +1660,12 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		    fprintf(stderr, "Uh oh, pmod->uhat[%d] is missing! (%s)\n", 
 			    s, obsstr);
 		} else {
-		    yh += theta[i] * pmod->uhat[s];
+		    yh += theta->val[i] * pmod->uhat[s];
 		}
 	    } else if (fc->eps != NULL) {
 		DPRINTF(("  MA: lag %d, ehat[%d] = %g, theta[%d] = %g\n", i, s, 
-			 fc->eps[s], i, theta[i]));
-		yh += theta[i] * fc->eps[s];
+			 fc->eps[s], i, theta->val[i]));
+		yh += theta->val[i] * fc->eps[s];
 	    }
 	}
 
@@ -1699,7 +1686,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* forecast error variance */
 	if (psi != NULL) {
-	    vl = arma_variance(phi, p, theta, q, psi, npsi, t - fcstart + 1);
+	    vl = arma_variance(phi->val, p, theta->val, q,
+			       psi, npsi, t - fcstart + 1);
 	    fc->sderr[t] = pmod->sigma * sqrt(vl);
 	}
     }
@@ -1707,10 +1695,11 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
  bailout:
 
     free(psi);
-    free(phi);
-    free(theta);
     free(Xb);
     free(phi0);
+
+    gretl_vector_free(phi);
+    gretl_vector_free(theta);
 
     return err;
 }

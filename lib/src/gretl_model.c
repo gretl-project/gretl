@@ -24,6 +24,7 @@
 #include "matrix_extra.h"
 #include "libset.h"
 #include "gretl_func.h"
+#include "gretl_fft.h"
 
 /**
  * SECTION:gretl_model
@@ -1375,61 +1376,61 @@ static int arma_MA_lags (const MODEL *pmod)
 }
 
 /**
- * arma_model_integrated_AR_MA_coeffs:
+ * arma_model_AR_MA_coeffs:
  * @pmod: pointer to gretl model.
  * @phi_star: pointer to receive AR coeff vector.
  * @theta_star: pointer to receive MA coeff vector.
+ * @opt: use OPT_I to get the "integrated" variant, which
+ * handles differencing.
  *
  * Creates consolidated versions of the AR and MA coefficient vectors
  * from @pmod.  If @pmod includes seasonal ARMA terms, the vectors are
  * suitably expanded to include the interactions between seasonal and
- * non-seasonal terms.  If the dependent variable has been
- * differenced, the AR coefficients are integrated to account for the
- * differencing.  These are the \Phi^* and \Theta^* as used by Box and
- * Jenkins for forecasting.
- *
- * The length of these vectors can be determined using 
- * gretl_arma_model_get_max_AR_lag() and 
- * gretl_arma_model_get_max_MA_lag() respectively.
+ * non-seasonal terms.  If OPT_I is given and the dependent variable
+ * has been differenced, the AR coefficients are integrated to account
+ * for the differencing.  These are the \Phi^* and \Theta^* as used by
+ * Box and Jenkins for forecasting.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
-					double **phi_star,
-					double **theta_star)
+int arma_model_AR_MA_coeffs (const MODEL *pmod,
+			     gretl_vector **phi_star,
+			     gretl_vector **theta_star,
+			     gretlopt opt)
 {
-    double *ac = NULL;
-    double *mc = NULL;
+    gretl_vector *ac = NULL;
+    gretl_vector *mc = NULL;
+    int *ainfo;
     int err = 0;
 
     if (pmod->ci != ARMA) {
+	err = 1;
+    } else if ((ainfo = gretl_model_get_data(pmod, "ainfo")) == NULL) {
 	err = 1;
     } else {
 	const double *phi = NULL, *Phi = NULL;
 	const double *theta = NULL, *Theta = NULL;
 	const char *pmask = gretl_model_get_data(pmod, "pmask");
 	const char *qmask = gretl_model_get_data(pmod, "qmask");
-	int p = arma_model_nonseasonal_AR_order(pmod);
-	int q = arma_model_nonseasonal_MA_order(pmod);
-	int np = arma_included_lags(p, pmask);
-	int nq = arma_included_lags(q, qmask);
-	int P = gretl_model_get_int(pmod, "arma_P");
-	int Q = gretl_model_get_int(pmod, "arma_Q");
-	int d = gretl_model_get_int(pmod, "arima_d");
-	int D = gretl_model_get_int(pmod, "arima_D");
-	int s = gretl_model_get_int(pmod, "arma_pd");
-	int pmax, pstar, qmax;
+	int p  = ainfo[1];
+	int q  = ainfo[2];
+	int P  = ainfo[3];
+	int Q  = ainfo[4];
+	int np = ainfo[5];
+	int nq = ainfo[6];
+	int d  = ainfo[7];
+	int D  = ainfo[8];
+	int s  = ainfo[9];
+	int pmax = p + s * P;
+	int pstar = pmax + d + s * D;
+	int qmax = q + s * Q;
 	double x, y;
 	int i, j, k, ii;
 
-	pmax = p + s * P;
-	pstar = pmax + d + s * D;
-	qmax = q + s * Q;
-	
 	if (pstar > 0) {
 	    /* we have some AR terms */
-	    ac = malloc((pstar + 1) * sizeof *ac);
+	    ac = gretl_zero_matrix_new(pstar + 1, 1);
 	    if (ac == NULL) {
 		err = E_ALLOC;
 	    }
@@ -1437,9 +1438,9 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 
 	if (!err && qmax > 0) {
 	    /* we have some MA terms */
-	    mc = malloc((qmax + 1) * sizeof *ac);
+	    mc = gretl_zero_matrix_new(qmax + 1, 1);
 	    if (mc == NULL) {
-		free(ac);
+		gretl_vector_free(ac);
 		ac = NULL;
 		err = E_ALLOC;
 	    }
@@ -1453,9 +1454,6 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	}
 
 	if (ac != NULL) {
-	    for (i=0; i<=pstar; i++) {
-		ac[i] = 0.0;
-	    }
 	    for (j=0; j<=P; j++) {
 		x = (j == 0)? -1 : Phi[j-1];
 		k = 0;
@@ -1463,18 +1461,15 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 		    y = (i == 0)? -1 : 
 			(arma_included(pmask, i-1))? phi[k++] : 0;
 		    ii = i + s * j;
-		    ac[ii] -= x * y;
+		    ac->val[ii] -= x * y;
 		}
 	    }
-	    if (D > 0 || d > 0) {
-		ar_coeff_integrate(ac, d, D, s, pmax);
+	    if ((opt & OPT_I) && (D > 0 || d > 0)) {
+		ar_coeff_integrate(ac->val, d, D, s, pmax);
 	    }
 	}	
 
 	if (mc != NULL) {
-	    for (i=0; i<=qmax; i++) {
-		mc[i] = 0.0;
-	    }
 	    for (j=0; j<=Q; j++) {
 		x = (j == 0)? 1 : Theta[j-1];
 		k = 0;
@@ -1482,18 +1477,8 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 		    y = (i == 0)? 1 : 
 			(arma_included(qmask, i-1))? theta[k++] : 0;
 		    ii = i + s * j;
-		    mc[ii] += x * y;
+		    mc->val[ii] += x * y;
 		}
-	    }
-	}
-
-	if (0) {
-	    /* just checking */
-	    int n = MAX(pstar, qmax);
-
-	    for (i=0; i<=n; i++) {
-		fprintf(stderr, "%g ", i <= pstar ? ac[i]: 0.0);
-		fprintf(stderr, "%g\n", i <= qmax ? mc[i]: 0.0);
 	    }
 	}
     }
@@ -1504,6 +1489,155 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
     }
 
     return err;
+}
+
+/*
+  arma_model_spectrum computes
+
+   s2    C(exp(i*omega)) * C(exp(-i*omega))
+  ---- * ----------------------------------
+  2*pi   A(exp(i*omega)) * A(exp(-i*omega))
+
+  for omega that goes from 0 to pi in T steps. The
+  @param matrix should contain the AR parameters
+  in column 0 and the MA parameters in column 1.
+*/
+
+static gretl_matrix *arma_model_spectrum (gretl_matrix *phi,
+					  gretl_matrix *theta,
+					  double s2, int T,
+					  int *err)
+{
+    gretl_vector *ret = NULL;
+    double num, den, nre_t, nim_t, dre_t, dim_t, xt;
+    double c, s;
+    double ar, ma;
+    double scale;
+    int nar, nma;
+    int i, n, t;
+
+    ret = gretl_matrix_alloc(T, 2);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+
+    nar = phi != NULL ? phi->rows : 0;
+    nma = theta != NULL ? theta->rows : 0;
+
+    n = MAX(nar, nma);
+    scale = s2/M_2PI;
+
+    for (t=0; t<T; t++) {
+	xt = t * M_PI / (T-1);
+	ar = nar > 0 ? gretl_vector_get(phi, 0) : 0.0;
+	ma = nma > 0 ? gretl_vector_get(theta, 0) : 0.0;
+	nre_t = ma * ma;
+	dre_t = ar * ar;
+	nim_t = dim_t = 0;
+
+	for (i=1; i<n; i++) {
+	    ar = i < nar ? gretl_vector_get(phi, i) : 0.0;
+	    ma = i < nma ? gretl_vector_get(theta, i) : 0.0;
+	    c = cos(i * xt);
+	    s = sin(i * xt);
+	    nre_t += c * ma;
+	    nim_t += s * ma;
+	    dre_t += c * ar;
+	    dim_t += s * ar;
+	}
+
+	num = nre_t * nre_t + nim_t * nim_t;
+	den = dre_t * dre_t + dim_t * dim_t;
+	gretl_matrix_set(ret, t, 0, xt);
+	gretl_matrix_set(ret, t, 1, scale * num/den);
+    }
+
+    return ret;
+}
+
+gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
+				       const DATASET *dset)
+{
+    gretl_matrix *pdata = NULL;
+    gretl_matrix *phi = NULL;
+    gretl_matrix *theta = NULL;
+    gretl_matrix *spec = NULL;
+    gretl_matrix *pergm = NULL;
+    gretl_matrix *y = NULL;
+    int T = pmod->nobs;
+    int grid = (T-1)/2;
+    int t1 = pmod->t1;
+    double s2 = pmod->sigma * pmod->sigma;
+    int free_y = 0;
+    int i, err;
+
+    err = arma_model_AR_MA_coeffs(pmod, &phi, &theta, OPT_NONE);
+    if (err) {
+	return NULL;
+    }
+
+    /* different sign convention from forecasting */
+    if (phi != NULL) {
+	gretl_matrix_multiply_by_scalar(phi, -1.0);
+    }
+
+    gretl_matrix_print(phi, "phi");
+    gretl_matrix_print(theta, "theta");
+
+    spec = arma_model_spectrum(phi, theta, s2, grid, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    /* in case this is an ARIMA model */
+    y = gretl_model_get_data(pmod, "yvec");
+
+    if (y == NULL) {
+	/* otherwise get y from the dataset */
+	int yno = gretl_model_get_depvar(pmod);
+
+	y = gretl_matrix_alloc(T, 1);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<T; i++) {
+		gretl_vector_set(y, i, dset->Z[yno][i+t1]);
+	    }
+	    free_y = 1;
+	}
+    }
+
+    if (!err) {
+	pergm = gretl_matrix_fft(y, &err);
+    }
+
+    if (!err) {
+	pdata = gretl_matrix_alloc(grid, 4);
+	if (pdata == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<grid; i++) {
+		gretl_matrix_set(pdata, i, 0, gretl_matrix_get(spec, i, 0));
+		gretl_matrix_set(pdata, i, 1, gretl_matrix_get(spec, i, 1));
+		gretl_matrix_set(pdata, i, 2, gretl_matrix_get(pergm, i+1, 0));
+		gretl_matrix_set(pdata, i, 3, gretl_matrix_get(pergm, i+1, 1));
+	    }
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(phi);
+    gretl_matrix_free(theta);
+    gretl_matrix_free(spec);
+    gretl_matrix_free(pergm);
+    if (free_y) {
+	gretl_matrix_free(y);
+    }
+
+    return pdata;
 }
 
 /**

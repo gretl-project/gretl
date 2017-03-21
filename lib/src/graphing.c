@@ -7810,13 +7810,14 @@ int periodogram_plot (const char *vname,
     return err;
 }
 
-int arma_spectrum_plot (MODEL *pmod)
+int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
+			gretlopt opt)
 {
     gretl_matrix *pdata = NULL;
     FILE *fp;
     int err = 0;
 
-    pdata = gretl_model_get_data(pmod, "arma-pergm-data");
+    pdata = arma_spectrum_plot_data(pmod, dset);
     if (pdata == NULL) {
 	return E_DATA;
     }

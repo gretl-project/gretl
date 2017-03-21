@@ -17,7 +17,6 @@
  */
 
 #include "usermat.h"
-#include "gretl_fft.h"
 
 #define MAX_ARMA_ORDER 128
 #define MAX_ARIMA_DIFF 2
@@ -991,239 +990,44 @@ void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
     unset_arima_ydiff(ainfo);
 }
 
-#endif /* X12A_CODE not defined */
+/* FIXME: hook up for x12a? */
 
-static int transcribe_extra_info(arma_info *ainfo, MODEL *armod)
+static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
 {
+    int *ainfo_list = gretl_list_new(9);
     int err = 0;
-    gretl_vector *ainfo_vec = NULL;
 
-    ainfo_vec = gretl_vector_alloc(8);
-    if (ainfo_vec == NULL) {
-	return E_ALLOC;
+    if (ainfo_list == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* wrap up a bunch of relevant integers */
+	ainfo_list[1] = ainfo->p;
+	ainfo_list[2] = ainfo->q;
+	ainfo_list[3] = ainfo->P;
+	ainfo_list[4] = ainfo->Q;
+	ainfo_list[5] = ainfo->np;
+	ainfo_list[6] = ainfo->nq;
+	ainfo_list[7] = ainfo->d;
+	ainfo_list[8] = ainfo->D;
+	ainfo_list[9] = ainfo->pd;
+	err = gretl_model_set_list_as_data(armod, "ainfo", ainfo_list);
     }
 
-    ainfo_vec->val[0] = ainfo->ifc;
-    ainfo_vec->val[1] = ainfo->pd;
-    ainfo_vec->val[2] = ainfo->p;
-    ainfo_vec->val[3] = ainfo->q;
-    ainfo_vec->val[4] = ainfo->P;
-    ainfo_vec->val[5] = ainfo->Q;
-    ainfo_vec->val[6] = ainfo->np;
-    ainfo_vec->val[7] = ainfo->nq;
+    if (!err && arima_ydiff(ainfo)) {
+	/* save the differenced y while we're at it */
+	gretl_vector *y = gretl_column_vector_alloc(armod->nobs);
 
-    err = gretl_model_set_matrix_as_data(armod, "ainfo", ainfo_vec);
+	if (y != NULL) {
+	    int t;
+
+	    for (t=0; t<armod->nobs; t++) {
+		gretl_vector_set(y, t, ainfo->y[t+ainfo->t1]);
+	    }
+	    gretl_model_set_matrix_as_data(armod, "yvec", y);
+	}
+    }
     
     return err;
 }
 
-
-/*
-  Builds a 2-column matrix containing the ar coefficients in column 0
-  and the ma coefficients in column 1
-*/
-
-static gretl_matrix *armaparam (const double *coeff,
-				gretl_vector *ainfo,
-				int *err)
-{
-    gretl_matrix *ret = NULL;
-
-    int ifc = gretl_vector_get(ainfo, 0);
-    int pd  = gretl_vector_get(ainfo, 1); 
-    int p   = gretl_vector_get(ainfo, 2);  
-    int q   = gretl_vector_get(ainfo, 3);  
-    int P   = gretl_vector_get(ainfo, 4);  
-    int Q   = gretl_vector_get(ainfo, 5);  
-    int np  = gretl_vector_get(ainfo, 6); 
-    int nq  = gretl_vector_get(ainfo, 7); 
-
-#if 0    
-    fprintf(stderr, "ifc = %d", ifc);
-    fprintf(stderr, "pd  = %d", pd);
-    fprintf(stderr, "p	 = %d", p);
-    fprintf(stderr, "q	 = %d", q);
-    fprintf(stderr, "P	 = %d", P);
-    fprintf(stderr, "Q	 = %d", Q);
-    fprintf(stderr, "np	 = %d", np);
-    fprintf(stderr, "nq	 = %d", nq);
-#endif
-
-    int pmax = p + pd * P;
-    int qmax = q + pd * Q;
-    const double *phi =   coeff + ifc;
-    const double *Phi =	    phi + np;
-    const double *theta =   Phi + P;
-    const double *Theta = theta + nq;
-    int n = (pmax > qmax) ? pmax : qmax;
-    int i, j, l;
-    double w;
-
-    ret = gretl_zero_matrix_new(n+1, 2);
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
-	return ret;
-    }
-
-    gretl_matrix_set(ret, 0, 0, 1);
-    gretl_matrix_set(ret, 0, 1, 1);
-
-    if (pmax > 0) {
-	/* first column: AR coefficients */
-	for (i=0; i<p; i++) {
-	    gretl_matrix_set(ret, i+1, 0, -phi[i]);
-	}
-
-	for (i=0; i<P; i++) {
-	    l = (i+1)*pd;
-	    w = gretl_matrix_get(ret, l, 0);
-	    gretl_matrix_set(ret, l, 0, w - Phi[i]);
-	    for (j=0; j<p; j++) {
-		l = (i+1)*pd + (j+1);
-		w = gretl_matrix_get(ret, l, 0);
-		gretl_matrix_set(ret, l, 0, w + phi[j] * Phi[i]);
-	    }
-	}
-    }
-
-    if (qmax > 0) {
-	/* second column: MA coefficients */
-	for (i=0; i<q; i++) {
-	    gretl_matrix_set(ret, i+1, 1, theta[i]);
-	}
-
-	for (i=0; i<Q; i++) {
-	    l = (i+1)*pd;
-	    w = gretl_matrix_get(ret, l, 1);
-	    gretl_matrix_set(ret, l, 1, w + Theta[i]);
-	    for (j=0; j<q; j++) {
-		l = (i+1)*pd + (j+1);
-		w = gretl_matrix_get(ret, l, 1);
-		gretl_matrix_set(ret, l, 1, w + theta[j] * Theta[i]);
-	    }
-	}
-    }
-
-#if 0
-    gretl_matrix_print(ret, "coeffs");
-#endif
-
-    return ret;
-}
-       
-/*
-  armaspec (ARMA spectrum) computes
-
-   s2    C(exp(i*omega)) * C(exp(-i*omega))
-  ---- * ----------------------------------
-  2*pi   A(exp(i*omega)) * A(exp(-i*omega))
-
-  for omega that goes from 0 to pi in T steps. The
-  @param matrix should contain the AR parameters
-  in column 0 and the MA parameters in column 1.
-*/
-
-static gretl_matrix *armaspec (gretl_matrix *param,
-			       double s2, int T,
-			       int *err)
-{
-    gretl_vector *ret = NULL;
-    double num, den, nre_t, nim_t, dre_t, dim_t, xt;
-    double c, s;
-    double ar, ma;
-    double scale;
-    int i, n, t;
-    
-    ret = gretl_matrix_alloc(T, 2);
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
-	return ret;
-    }
-
-    n = param->rows;
-    scale = s2/M_2PI;
-    
-    for (t=0; t<T; t++) {
-	xt = t * M_PI / (T-1);
-	ar = gretl_matrix_get(param, 0, 0);
-	ma = gretl_matrix_get(param, 0, 1);
-	nre_t = ma * ma;
-	dre_t = ar * ar;
-	nim_t = dim_t = 0;
-	
-	for (i=1; i<n; i++) {
-	    ar = gretl_matrix_get(param, i, 0);
-	    ma = gretl_matrix_get(param, i, 1);
-	    c = cos(i * xt);
-	    s = sin(i * xt);
-	    nre_t += c * ma;
-	    nim_t += s * ma;
-	    dre_t += c * ar;
-	    dim_t += s * ar;
-	}
-	
-	num = nre_t * nre_t + nim_t * nim_t;
-	den = dre_t * dre_t + dim_t * dim_t;
-	gretl_matrix_set(ret, t, 0, xt);
-	gretl_matrix_set(ret, t, 1, scale * num/den);
-    }
-
-    return ret;
-}
-
-int pgm_vs_spec_plot_data (arma_info *ainfo, MODEL *armod)
-{
-    gretl_matrix *parm = NULL;
-    gretl_matrix *spec = NULL;
-    gretl_matrix *y = NULL;
-    gretl_matrix *pergm = NULL;
-    int nobs = armod->nobs;
-    int grid = (nobs-1)/2;
-    int t1 = armod->t1;
-    int t2 = armod->t2;
-    double s2 = armod->sigma * armod->sigma;
-    int i, err = 0;
-
-    gretl_vector *ainfo_vec = gretl_model_get_data(armod, "ainfo");
-    
-    parm = armaparam(armod->coeff, ainfo_vec, &err);
-    if (err) {
-	return err;
-    }
-    
-    spec = armaspec(parm, s2, grid, &err);
-    if (err) {
-	return err;
-    }
-    
-    y = gretl_matrix_alloc(t2-t1+1, 1);
-
-    for (i=t1; i<=t2; i++) {
-	gretl_matrix_set(y, i-t1, 0, ainfo->y[i]);
-    }
-    
-    pergm = gretl_matrix_fft(y, &err);
-
-    if (!err) {
-	gretl_matrix *pdata = gretl_matrix_alloc(grid, 4);
-
-	if (pdata != NULL) {
-	    for (i=0; i<grid; i++) {
-		gretl_matrix_set(pdata, i, 0, gretl_matrix_get(spec, i, 0));
-		gretl_matrix_set(pdata, i, 1, gretl_matrix_get(spec, i, 1));
-		gretl_matrix_set(pdata, i, 2, gretl_matrix_get(pergm, i+1, 0));
-		gretl_matrix_set(pdata, i, 3, gretl_matrix_get(pergm, i+1, 1));
-	    }
-	    gretl_model_set_matrix_as_data(armod, "arma-pergm-data", pdata);
-	}
-    }
-    
-    gretl_matrix_free(spec);
-    gretl_matrix_free(parm);
-    gretl_matrix_free(y);
-    gretl_matrix_free(pergm);
-
-    return err;
-}
+#endif /* X12A_CODE not defined */

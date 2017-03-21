@@ -342,9 +342,10 @@ int arma_model_max_AR_lag (const MODEL *pmod);
 
 int arma_model_max_MA_lag (const MODEL *pmod);
 
-int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
-					double **phi_star,
-					double **theta_star);
+int arma_model_AR_MA_coeffs (const MODEL *pmod,
+			     gretl_vector **phi_star,
+			     gretl_vector **theta_star,
+			     gretlopt opt);
 
 int regarma_model_AR_coeffs (const MODEL *pmod,
 			     double **phi0,
@@ -359,6 +360,9 @@ int regarima_model_get_AR_coeffs (const MODEL *pmod,
 				  int *pp);
 
 int *arima_delta_coeffs (int d, int D, int s);
+
+gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
+				       const DATASET *dset);
 
 int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos);
 

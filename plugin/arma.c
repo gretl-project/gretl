@@ -1739,16 +1739,16 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
-	err = transcribe_extra_info(ainfo, &armod);
-    }
-    
-    if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 	    kalman_arma(coeff, dset, ainfo, &armod, opt);
 	} else {
 	    bhhh_arma(coeff, dset, ainfo, &armod, opt);
 	}
+    }
+
+    if (!err) {
+	err = transcribe_extra_info(ainfo, &armod);
     }
 
  bailout:
@@ -1761,11 +1761,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 	gretl_model_smpl_init(&armod, dset);
     }
 
-    if(getenv("SPECPLOT") != NULL) {
-	pgm_vs_spec_plot_data(ainfo, &armod);
-    }
-    
-    
     free(coeff);
     arma_info_cleanup(ainfo);
 

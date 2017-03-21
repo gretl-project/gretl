@@ -2783,7 +2783,9 @@ static void arma_spectrum_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int err = arma_spectrum_plot(pmod);
+    int err;
+
+    err = arma_spectrum_plot(pmod, dataset, OPT_NONE);
 
     gui_graph_handler(err);
 }
@@ -3112,7 +3114,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	entry.label = _("Residual _periodogram");
 	entry.callback = G_CALLBACK(residual_periodogram_callback);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
-	if (gretl_model_get_data(pmod, "arma-pergm-data") != NULL) {
+	if (gretl_model_get_data(pmod, "ainfo") != NULL) {
 	    entry.name = "ARMAspectrum";
 	    entry.label = _("_Spectrum vs sample periodogram");
 	    entry.callback = G_CALLBACK(arma_spectrum_callback);
