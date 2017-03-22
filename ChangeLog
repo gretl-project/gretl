@@ -35,6 +35,8 @@ version 2017a, in progress
   "difference in Sargan" test
 - Principal Components window in GUI: support selection of
   a specific number of components to save as series
+- ARMA models in GUI: add menu item to view plot of spectrum
+  versus sample periodogram
 - Fix bug: functions failing to return loop-index value
 - Fix bug: couldn't assign to an array member of a bundle
 - Fix bug: multiple X-Y scatterplots could fail when using
