@@ -7867,7 +7867,7 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 	    px = (pRe * pRe + pIm * pIm) / scale;
 	    fprintf(fp, "%7.5f %12.7f\n", gretl_matrix_get(pdata, i, 0), log(px));
 	}
-	fprintf(stderr, "e\n");
+	fputs("e\n", fp);
 
 	gretl_pop_c_numeric_locale();
 	err = finalize_plot_input_file(fp);
