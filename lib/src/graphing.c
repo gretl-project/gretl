@@ -7829,7 +7829,6 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 	int i, grid = pdata->rows;
 
 	fprintf(fp, "set xrange [0:%g]\n", M_PI);
-	/* fputs("set logscale y exp(1)\n", fp); */
 	switch (dset->pd) {
 	case 12:
 	    fputs("set xtics (\"0\" 0, \"π/6\" pi/6, " 
@@ -7849,9 +7848,10 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 	    fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
 		  "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
 	}
-	fputs("set title 'Sample periodogram vs ARMA Spectrum (log scale)'\n", fp);
-	fputs("plot '-' using 1:2 with lines t 'spectrum' lw 2, \\\n", fp);
-	fputs("'-' using 1:2 with lines t 'periodogram' lw 0.5\n", fp);
+	fprintf(fp, "set title \"%s (%s)\"\n", _("Sample periodogram vs ARMA Spectrum"),
+		_("log scale"));
+	fprintf(fp, "plot '-' using 1:2 w lines title '%s' lw 2, \\\n", _("spectrum"));
+	fprintf(fp, "'-' using 1:2 w lines title '%s' lw 0.5\n", _("periodogram"));
 
 	gretl_push_c_numeric_locale();
 
