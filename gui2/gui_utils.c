@@ -2797,7 +2797,7 @@ static int can_do_spectrum (MODEL *pmod)
     if (gretl_model_get_data(pmod, "ainfo") != NULL) {
 	if (arma_by_x12a(pmod) && gretl_is_arima_model(pmod)) {
 	    /* right now we can't graph the spectrum when a
-	       a model that specifies differencing is estimated
+	       model that specifies differencing is estimated
 	       via X-12-ARIMA
 	    */
 	    ret = 0;
