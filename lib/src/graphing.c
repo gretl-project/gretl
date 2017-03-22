@@ -7830,11 +7830,28 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 
 	fprintf(fp, "set xrange [0:%g]\n", M_PI);
 	/* fputs("set logscale y exp(1)\n", fp); */
-	fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
-	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
+	switch (dset->pd) {
+	case 12:
+	    fputs("set xtics (\"0\" 0, \"π/6\" pi/6, " 
+		  "\"π/3\" pi/3, \"π/2\" pi/2, \"2π/3\" 2*pi/3, "
+		  "\"5π/6\" 5*pi/6, \"π\" pi)\n", fp);
+	    break;
+	case 6:
+	    fputs("set xtics (\"0\" 0, \"π/3\" pi/3, " 
+		  "\"2π/3\" 2*pi/3, \"π\" pi)\n", fp);
+	    break;
+	case 5:
+	    fputs("set xtics (\"0\" 0, \"π/5\" pi/5, " 
+		  "\"2π/5\" 2*pi/5, \"3π/5\" 3*pi/5, "
+		  "\"4π/5\" 4*pi/5, \"π\" pi)\n", fp);
+	    break;
+	default:
+	    fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
+		  "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
+	}
 	fputs("set title 'Sample periodogram vs ARMA Spectrum (log scale)'\n", fp);
-	fputs("plot '-' using 1:2 with lines t 'spectrum', \\\n", fp);
-	fputs("'-' using 1:2 with lines t 'periodogram'\n", fp);
+	fputs("plot '-' using 1:2 with lines t 'spectrum' lw 2, \\\n", fp);
+	fputs("'-' using 1:2 with lines t 'periodogram' lw 0.5\n", fp);
 
 	gretl_push_c_numeric_locale();
 
