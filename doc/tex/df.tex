@@ -321,4 +321,52 @@ asymptotic standard errors and the associated
 $z$-scores and (two-sided) normal $p$-values. The converse case is
 left as an exercise for the reader.
 
+\subsection{VARs and VECMs}
 
+As mentioned above, Vector Autoregressions and Vector Error Correction
+Models (VARs and VECMs) constitute a particularly awkward case, with
+considerations of consistency of treatment pulling in two opposite
+directions. For that reason gretl has adopted an ``agnostic'' policy
+in relation to such systems. We do not offer a \dollar{vcv} accessor,
+but instead accessors named \dollar{xtxinv} (the matrix $X'X^{-1}$ for
+the system as a whole) and \dollar{sigma} (an estimate of the
+cross-equation variance--covariance matrix, $\Sigma$). It's then up to
+the user to build an estimate of the variance matrix of the parameter
+estimates, $V$, should that be required.
+
+Note that \dollar{sigma} gives the Maximum Likelihood Estimator
+(without a degrees of freedom adjustment) so if you do
+%
+\begin{code}
+matrix Vml = $sigma ** $xtxinv
+\end{code}
+%
+(where ``\texttt{**}'' represents Kronecker product) you obtain the
+MLE of the variance matrix of the parameter estimates. But if you want
+the unbiased estimator you can do
+%
+\begin{code}
+matrix S = $sigma * $T/($T-$ncoeff)
+matrix Vu = S ** $xtxinv
+\end{code}
+%
+to employ a suitably inflated variant of the $\Sigma$ estimate. (For
+VARs and VECMs, \dollar{ncoeff} gives the number of coefficients per
+equation.)
+
+In the case of VARs, the second variant is such that the vector of
+standard errors produced by
+%
+\begin{code}
+matrix SE = sqrt(diag(Vu))
+\end{code}
+%
+agrees with the standard errors printed as part of the per-equation
+VAR output.
+
+In the case of VECMs it's more complex\dots{}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
