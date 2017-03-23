@@ -1532,7 +1532,7 @@ static gretl_matrix *arma_model_spectrum (gretl_matrix *phi,
     for (t=0; t<T; t++) {
 	xt = t * M_PI / (T-1);
 	ar = nar > 0 ? gretl_vector_get(phi, 0) : 1.0;
-	ma = nma > 0 ? gretl_vector_get(theta, 0) : 0.0;
+	ma = nma > 0 ? gretl_vector_get(theta, 0) : 1.0;
 	nre_t = ma * ma;
 	dre_t = ar * ar;
 	nim_t = dim_t = 0;
