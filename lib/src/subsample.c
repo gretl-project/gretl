@@ -2512,7 +2512,9 @@ static int get_sample_limit (const char *s, DATASET *dset, int code)
 	}
     } else {
 	/* absolute form */
-	ret = get_t_from_obs_string(s, dset);
+	if (!integer_string(s)) {
+	    ret = get_t_from_obs_string(s, dset);
+	}
 	if (ret < 0) {
 	    gretl_error_clear();
 	    ret = smpl_get_int(s, dset, &err);
