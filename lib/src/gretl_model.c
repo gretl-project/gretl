@@ -1499,8 +1499,8 @@ int arma_model_AR_MA_coeffs (const MODEL *pmod,
   2*pi   A(exp(i*omega)) * A(exp(-i*omega))
 
   for omega that goes from 0 to pi in T steps. The
-  @param matrix should contain the AR parameters
-  in column 0 and the MA parameters in column 1.
+  @phi matrix should contain the AR parameters and
+  the @theta matrix the MA parameters.
 */
 
 static gretl_matrix *arma_model_spectrum (gretl_matrix *phi,
@@ -1531,7 +1531,7 @@ static gretl_matrix *arma_model_spectrum (gretl_matrix *phi,
 
     for (t=0; t<T; t++) {
 	xt = t * M_PI / (T-1);
-	ar = nar > 0 ? gretl_vector_get(phi, 0) : 0.0;
+	ar = nar > 0 ? gretl_vector_get(phi, 0) : 1.0;
 	ma = nma > 0 ? gretl_vector_get(theta, 0) : 0.0;
 	nre_t = ma * ma;
 	dre_t = ar * ar;
@@ -1594,7 +1594,8 @@ static gretl_vector *get_arma_yvec (const MODEL *pmod,
 }
 
 gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
-				       const DATASET *dset)
+				       const DATASET *dset,
+				       int *err)
 {
     gretl_matrix *pdata = NULL;
     gretl_matrix *phi = NULL;
@@ -1605,11 +1606,10 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
     int T = pmod->nobs;
     int grid = (T-1)/2;
     double s2 = pmod->sigma * pmod->sigma;
-    int free_y = 0;
-    int i, err;
+    int i, free_y = 0;
 
-    err = arma_model_AR_MA_coeffs(pmod, &phi, &theta, OPT_NONE);
-    if (err) {
+    *err = arma_model_AR_MA_coeffs(pmod, &phi, &theta, OPT_NONE);
+    if (*err) {
 	return NULL;
     }
 
@@ -1618,21 +1618,21 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
 	gretl_matrix_multiply_by_scalar(phi, -1.0);
     }
 
-    spec = arma_model_spectrum(phi, theta, s2, grid, &err);
-    if (err) {
+    spec = arma_model_spectrum(phi, theta, s2, grid, err);
+    if (*err) {
 	goto bailout;
     }
 
-    y = get_arma_yvec(pmod, dset, &free_y, &err);
+    y = get_arma_yvec(pmod, dset, &free_y, err);
 
-    if (!err) {
-	pergm = gretl_matrix_fft(y, &err);
+    if (!*err) {
+	pergm = gretl_matrix_fft(y, err);
     }
 
-    if (!err) {
+    if (!*err) {
 	pdata = gretl_matrix_alloc(grid, 4);
 	if (pdata == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	} else {
 	    for (i=0; i<grid; i++) {
 		gretl_matrix_set(pdata, i, 0, gretl_matrix_get(spec, i, 0));

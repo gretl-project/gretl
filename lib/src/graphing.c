@@ -7817,9 +7817,9 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
     FILE *fp;
     int err = 0;
 
-    pdata = arma_spectrum_plot_data(pmod, dset);
-    if (pdata == NULL) {
-	return E_DATA;
+    pdata = arma_spectrum_plot_data(pmod, dset, &err);
+    if (err) {
+	return err;
     }
 
     fp = open_plot_input_file(PLOT_PERIODOGRAM, 0, &err);
