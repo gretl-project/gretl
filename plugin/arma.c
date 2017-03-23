@@ -899,7 +899,9 @@ static double kalman_arma_ll (const double *b, void *data)
     int err = 0;
 
 #if ARMA_DEBUG
-    debug_print_theta(theta, Theta, ainfo);
+    if (ainfo->q > 0 || ainfo->Q > 0) {
+	debug_print_theta(theta, Theta, ainfo);
+    }
 #endif
 
     if (kalman_do_ma_check && ma_out_of_bounds(ainfo, theta, Theta)) {
@@ -912,7 +914,7 @@ static double kalman_arma_ll (const double *b, void *data)
     if (!err) {
 	err = kalman_forecast(K, NULL);
 	ll = kalman_get_loglik(K);
-#if ARMA_DEBUG
+#if ARMA_DEBUG > 1
 	fprintf(stderr, "kalman_arma_ll: kalman_forecast gave %d, "
 		"loglik = %#.12g\n", err, ll);
 #endif
@@ -1018,7 +1020,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 
 #if ARMA_DEBUG
     fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
-	    (do_hess)? "Hessian" : "OPG");
+	    (do_opg)? "OPG" : "Hessian");
 #endif
 
     if (!do_opg) { 
@@ -1235,7 +1237,7 @@ static int kalman_arma (double *coeff, const DATASET *dset,
     }
 
 #if ARMA_DEBUG
-    fputs("initial coefficients:\n", stderr);
+    fputs("kalman_arma: initial coefficients:\n", stderr);
     for (i=0; i<ainfo->nc; i++) {
 	fprintf(stderr, " b[%d] = % .10E\n", i, b[i]);
     }
@@ -1346,6 +1348,10 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 	    fprintf(stderr, "kalman_arma: optimizer returned %d\n", err);
 	} 
     }
+
+#if ARMA_DEBUG
+    fprintf(stderr, "undo_scaling? yscale = %g\n", ainfo->yscale);
+#endif
 
     if (!err && ainfo->yscale != 1.0) {
 	kalman_undo_y_scaling(ainfo, y, b, K);
@@ -1545,6 +1551,9 @@ static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
     return err;
 }
 
+/* calculate info criteria for compatibility with ML? */
+#define ML_COMPAT 1 /* 2017-03-23 */
+
 static int arma_via_OLS (arma_info *ainfo, const double *coeff, 
 			 const DATASET *dset, MODEL *pmod)
 {
@@ -1566,7 +1575,11 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 	pmod->full_n = dset->n;
 	write_arma_model_stats(pmod, ainfo, dset);
 	if (arma_exact_ml(ainfo)) {
+#if ML_COMPAT
+	    mle_criteria(pmod, 1);
+#else
 	    ls_criteria(pmod);
+#endif
 	} else {
 	    arma_model_add_roots(pmod, ainfo, pmod->coeff);
 	}

@@ -349,7 +349,6 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
     int t;
 
     pmod->ci = ARMA;
-
     ainfo_data_to_model(ainfo, pmod);
 
     free(pmod->list);
