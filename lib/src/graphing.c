@@ -961,7 +961,20 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 static void reslash_filename (char *buf, const char *src)
 {
-    strcpy(buf, src);
+    gchar *tmp = NULL;
+
+    /* For gnuplot 5.1, with "set encoding utf8", ensure
+       that filename is encoded in UTF-8 */
+    if (!gretl_is_ascii(src)) {
+	tmp = g_locale_to_utf8(src, -1, NULL, NULL, NULL);
+    }
+
+    if (tmp != NULL) {
+	strcpy(buf, tmp);
+	g_free(tmp);
+    } else {
+	strcpy(buf, src);
+    }
 
     while (*buf) {
 	if (*buf == '\\') *buf = '/';
