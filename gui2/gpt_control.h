@@ -69,8 +69,7 @@ int gp_term_code (gpointer p, int action);
 
 void save_graph_to_file (gpointer p, const char *fname);
 
-void filter_gnuplot_file (int latin, int mono,
-			  FILE *fpin, FILE *fpout);
+void filter_gnuplot_file (int mono, FILE *fpin, FILE *fpout);
 
 void run_gnuplot_script (gchar *buf);
 

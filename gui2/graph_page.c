@@ -427,7 +427,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fprintf(fq, "set output '%s'\n", fname);
 
-    filter_gnuplot_file(0, gpage.mono, fp, fq);
+    filter_gnuplot_file(gpage.mono, fp, fq);
 
     fclose(fp);
     fclose(fq);

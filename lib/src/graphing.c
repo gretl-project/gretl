@@ -58,6 +58,9 @@
 /* 2017-02-26: somewhat experimental, watch out for bad results! */
 #define USE_TIMEFMT 1
 
+/* length of buffer for "set term ..." */
+#define TERMLEN 256
+
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
 static double default_png_scale = 1.0;
@@ -166,6 +169,10 @@ static int plot_with_band (int mode,
 			   const char *literal,
 			   DATASET *dset,
 			   gretlopt opt);
+
+static char *gretl_emf_term_line (char *term_line,
+				  PlotType ptype,
+				  GptFlags flags);
     
 #ifndef WIN32
 
@@ -1044,75 +1051,86 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
     }    
 }
 
+static void append_gp_encoding (char *s)
+{
+    strcat(s, "\nset encoding utf8");
+}
+
 /* In @pdf_term_line and @eps_term_line: should "dashed" be
    appended when "mono" is specified? Try experimenting?
 */
 
-const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags)
+static char *gretl_pdf_term_line (char *term_line,
+				  PlotType ptype,
+				  GptFlags flags)
 {
-    static char pdf_term_line[128];
     int ptsize;
 
     ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
 
     if (flags & GPT_MONO) {
-	sprintf(pdf_term_line,
+	sprintf(term_line,
 		"set term pdfcairo noenhanced mono font \"sans,%d\"", 
 		ptsize);
     } else {
-	sprintf(pdf_term_line,
+	sprintf(term_line,
 		"set term pdfcairo noenhanced font \"sans,%d\"", 
 		ptsize);
     }
 
-    maybe_set_eps_pdf_dims(pdf_term_line, ptype, flags);
+    maybe_set_eps_pdf_dims(term_line, ptype, flags);
+    append_gp_encoding(term_line);
 
-    return pdf_term_line;
+    return term_line;
 }
 
-const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags)
+static char *gretl_eps_term_line (char *term_line,
+				  PlotType ptype,
+				  GptFlags flags)
 {
-    static char eps_term_line[128];
     int ptsize;
 
     ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
     
     if (flags & GPT_MONO) {
-	sprintf(eps_term_line,
+	sprintf(term_line,
 		"set term epscairo noenhanced mono font \"sans,%d\"", 
 		ptsize);
     } else {
-	sprintf(eps_term_line,
+	sprintf(term_line,
 		"set term epscairo noenhanced font \"sans,%d\"", 
 		ptsize);
     }
 
-    maybe_set_eps_pdf_dims(eps_term_line, ptype, flags);
+    maybe_set_eps_pdf_dims(term_line, ptype, flags);
+    append_gp_encoding(term_line);
 
-    return eps_term_line;
+    return term_line;
 }
 
-const char *get_gretl_tex_term_line (PlotType ptype, GptFlags flags)
+static char *gretl_tex_term_line (char *term_line,
+				  PlotType ptype,
+				  GptFlags flags)
 {
-    static char tex_term_line[128];
-
-    /* FIXME */
+    /* FIXME? */
 
     if (gnuplot_has_tikz()) {
 	if (flags & GPT_MONO) {
-	    strcpy(tex_term_line, "set term tikz mono");
+	    strcpy(term_line, "set term tikz mono");
 	} else {
-	    strcpy(tex_term_line, "set term tikz");
+	    strcpy(term_line, "set term tikz");
 	}
     } else {
 	if (flags & GPT_MONO) {
-	    strcpy(tex_term_line, "set term cairolatex mono");
+	    strcpy(term_line, "set term cairolatex mono");
 	} else {
-	    strcpy(tex_term_line, "set term cairolatex");
+	    strcpy(term_line, "set term cairolatex");
 	}
     }
 
-    return tex_term_line;
+    append_gp_encoding(term_line);
+
+    return term_line;
 }
 
 void plot_get_scaled_dimensions (int *width, int *height, double scale)
@@ -1156,12 +1174,12 @@ static void write_png_size_string (char *s, PlotType ptype,
     sprintf(s, " size %d,%d", w, h);
 }
 
-static const char *real_png_term_line (PlotType ptype, 
-				       GptFlags flags,
-				       const char *specfont,
-				       double scale)
+static char *real_png_term_line (char *term_line,
+				 PlotType ptype,
+				 GptFlags flags,
+				 const char *specfont,
+				 double scale)
 {
-    static char png_term_line[256];
     char ad_hoc_fontspec[128];
     char font_string[128];
     char size_string[16];
@@ -1173,51 +1191,87 @@ static const char *real_png_term_line (PlotType ptype,
     write_png_size_string(size_string, ptype, flags, scale);
 
     if (flags & GPT_MONO) {
-	sprintf(png_term_line, "set term pngcairo mono%s%s noenhanced",
+	sprintf(term_line, "set term pngcairo mono%s%s noenhanced",
 		font_string, size_string);
     } else {
-	sprintf(png_term_line, "set term pngcairo%s%s noenhanced",
+	sprintf(term_line, "set term pngcairo%s%s noenhanced",
 		font_string, size_string);
     }
-    strcat(png_term_line, "\nset encoding utf8");
+
+    append_gp_encoding(term_line);
 
     if (*ad_hoc_fontspec != '\0') {
-	strcat(png_term_line, "\n# fontspec: ");
-	strcat(png_term_line, ad_hoc_fontspec);
+	strcat(term_line, "\n# fontspec: ");
+	strcat(term_line, ad_hoc_fontspec);
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
+    fprintf(stderr, "png term line:\n'%s'\n", term_line);
 #endif
 
-    return png_term_line;
+    return term_line;
 }
 
-/**
- * get_gretl_png_term_line:
- * @ptype: indication of the sort of plot to be made, which
- * may made a difference to the color palette chosen.
- * @flags: plot option flags.
- *
- * Constructs a suitable line for sending to gnuplot to invoke
- * the PNG "terminal".  Checks the environment for setting of 
- * %GRETL_PNG_GRAPH_FONT.  Also appends a color-specification string 
- * if the gnuplot PNG driver supports this.
- *
- * Returns: the terminal string, "set term png ..."
- */
-
-const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
+static char *gretl_png_term_line (char *term_line,
+				  PlotType ptype,
+				  GptFlags flags)
 {
     double s = default_png_scale;
 
-    return real_png_term_line(ptype, flags, NULL, s);
+    return real_png_term_line(term_line, ptype, flags, NULL, s);
+}
+
+/**
+ * gretl_gnuplot_term_line:
+ * @ttype: code for the gnuplot "terminal" type.
+ * @ptype: indication of the sort of plot to be made, which
+ * may make a difference to the color palette chosen.
+ * @flags: plot option flags.
+ *
+ * Constructs a suitable line for sending to gnuplot to invoke
+ * the specified "terminal".
+ *
+ * Returns: a static char * pointer.
+ */
+
+const char *gretl_gnuplot_term_line (TermType ttype,
+				     PlotType ptype,
+				     GptFlags flags)
+{
+    static char term_line[TERMLEN];
+
+    *term_line = '\0';
+
+    if (ttype == GP_TERM_PNG) {
+	double s = default_png_scale;
+
+	real_png_term_line(term_line, ptype, flags, NULL, s);
+    } else if (ttype == GP_TERM_PDF) {
+	gretl_pdf_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_EPS) {
+	gretl_eps_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_EMF) {
+	gretl_emf_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_SVG) {
+	strcpy(term_line, "set term svg noenhanced");
+	append_gp_encoding(term_line);
+    } else if (ttype == GP_TERM_FIG) {
+	strcpy(term_line, "set term fig");
+	append_gp_encoding(term_line);
+    } else if (ttype == GP_TERM_TEX) {
+	gretl_tex_term_line(term_line, ptype, flags);
+    }
+
+    return term_line;
 }
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec)
 {
-    return real_png_term_line(spec->code, spec->flags, 
-			      spec->fontstr, spec->scale);
+    static char term_line[TERMLEN];
+
+    real_png_term_line(term_line, spec->code, spec->flags,
+		       spec->fontstr, spec->scale);
+    return term_line;
 }
 
 void gnuplot_png_set_default_scale (double s)
@@ -1249,37 +1303,29 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
     }
 }
 
-/**
- * get_gretl_emf_term_line:
- * @ptype: indication of the sort of plot to be made.
- * @flags: plot option flags.
- *
- * Constructs a suitable line for sending to gnuplot to invoke
- * the EMF "terminal".  
- *
- * Returns: the term string, "set term emf ..."
- */
-
-const char *get_gretl_emf_term_line (PlotType ptype, GptFlags flags)
+static char *gretl_emf_term_line (char *term_line,
+				  PlotType ptype,
+				  GptFlags flags)
 {
-    static char tline[256];
     const char *grfont = NULL;
     
-    strcpy(tline, "set term emf ");
+    strcpy(term_line, "set term emf ");
 
     if (flags & GPT_MONO) {
-	strcat(tline, "mono dash noenhanced ");
+	strcat(term_line, "mono dash noenhanced ");
     } else {
-	strcat(tline, "color noenhanced ");
+	strcat(term_line, "color noenhanced ");
     }
 
     /* font spec */
     grfont = gretl_png_font();
     if (grfont != NULL && *grfont != '\0') {
-	png_font_to_emf(grfont, tline);
+	png_font_to_emf(grfont, term_line);
     }
 
-    return tline;
+    append_gp_encoding(term_line);
+
+    return term_line;
 }
 
 /**
@@ -1335,26 +1381,28 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
 static void print_term_string (int ttype, PlotType ptype,
 			       GptFlags flags, FILE *fp)
 {
-    const char *tstr = NULL;
+    char term_line[TERMLEN];
+
+    *term_line = '\0';
 
     if (ttype == GP_TERM_EPS) {
-	tstr = get_gretl_eps_term_line(ptype, flags);
+	gretl_eps_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_PDF) {
-	tstr = get_gretl_pdf_term_line(ptype, flags);
+	gretl_pdf_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_PNG) {
-	tstr = get_gretl_png_term_line(ptype, flags);
+	gretl_png_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_EMF) {
-	tstr = get_gretl_emf_term_line(ptype, flags);
+	gretl_emf_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_FIG) {
-	tstr = "set term fig noenhanced";
+	strcpy(term_line, "set term fig\nset encoding utf8");
     } else if (ttype == GP_TERM_SVG) {
-	tstr = "set term svg noenhanced";
+	strcpy(term_line, "set term svg noenhanced\nset encoding utf8");
     } else if (ttype == GP_TERM_TEX) {
-	tstr = get_gretl_tex_term_line(ptype, flags);
+	gretl_tex_term_line(term_line, ptype, flags);
     }
 
-    if (tstr != NULL) {
-	fprintf(fp, "%s\n", tstr);
+    if (*term_line != '\0') {
+	fprintf(fp, "%s\n", term_line);
 	if (!(flags & GPT_MONO)) {
 	    write_plot_line_styles(ptype, fp);
 	}
@@ -1513,7 +1561,8 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	set_gretl_plotfile(fname);
 	if (gui) {
 	    /* set up for PNG output */
-	    fprintf(fp, "%s\n", get_gretl_png_term_line(ptype, flags));
+	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_PNG,
+							ptype, flags));
 	    if (default_png_scale != 1.0) {
 		gretl_push_c_numeric_locale();
 		fprintf(fp, "# scale = %.1f\n", default_png_scale);

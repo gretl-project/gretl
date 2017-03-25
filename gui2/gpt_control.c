@@ -479,7 +479,9 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	} else if (spec != NULL) {
 	    fprintf(ftmp, "%s\n", get_png_line_for_plotspec(spec));
 	} else {
-	    fprintf(ftmp, "%s\n", get_gretl_png_term_line(PLOT_REGULAR, flags));
+	    fprintf(ftmp, "%s\n", gretl_gnuplot_term_line(GP_TERM_PNG,
+							  PLOT_REGULAR,
+							  flags));
 	}
 	write_plot_output_line(NULL, ftmp);
 
@@ -605,139 +607,9 @@ int gp_term_code (gpointer p, int action)
     return spec->termtype;
 }
 
-static void get_full_term_string (const GPT_SPEC *spec, char *termstr) 
-{
-    if (spec->termtype == GP_TERM_EPS) {
-	strcpy(termstr, get_gretl_eps_term_line(spec->code, spec->flags));
-    } else if (spec->termtype == GP_TERM_PDF) {
-	strcpy(termstr, get_gretl_pdf_term_line(spec->code, spec->flags));
-    } else if (spec->termtype == GP_TERM_PNG) { 
-	strcpy(termstr, get_png_line_for_plotspec(spec)); 
-    } else if (spec->termtype == GP_TERM_EMF) {
-	strcpy(termstr, get_gretl_emf_term_line(spec->code, spec->flags));
-    } else if (spec->termtype == GP_TERM_FIG) {
-	strcpy(termstr, "set term fig");
-    } else if (spec->termtype == GP_TERM_SVG) {
-	strcpy(termstr, "set term svg noenhanced");
-    } else if (spec->termtype == GP_TERM_TEX) {
-	strcpy(termstr, get_gretl_tex_term_line(spec->code, spec->flags));
-    }
-}
-
-/* Sometimes we want to put \pi into tic-marks or a graph
-   title. We just use the UTF-8 character, but if we're writing
-   a plot in EPS format this has to be changed to {/Symbol p}.
-*/
-
-static char *eps_replace_pi (unsigned char *s)
-{
-    char *repl = NULL;
-    int i, picount = 0;
-
-    for (i=0; s[i] != '\0'; i++) {
-	if (s[i] == 0xcf && s[i+1] == 0x80) {
-	    picount++;
-	}
-    }
-
-    if (picount > 0) {
-	i = picount * 9 + strlen((const char *) s) + 1;
-	repl = calloc(i, 1);
-    }
-
-    if (repl != NULL) {
-	i = 0;
-	while (*s) {
-	    if (*s == 0xcf && *(s+1) == 0x80) {
-		strcat(repl, "{/Symbol p}");
-		i += 11;
-		s++;
-	    } else {
-		repl[i++] = *s;
-	    }
-	    s++;
-	}
-    }
-
-    return repl;
-}
-
-/* for postscript output, e.g. in Latin-2 */
-
-static int maybe_recode_gp_line (char *s, FILE *fp)
-{
-    int err = 0;
-
-    if (!gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
-	char *repl = eps_replace_pi((unsigned char *) s);
-	char *tmp;
-
-	if (repl != NULL) {
-	    tmp = utf8_to_latin(repl);
-	    free(repl);
-	} else {
-	    tmp = utf8_to_latin(s);
-	}
-
-	if (tmp == NULL) {
-	    err = 1;
-	} else {
-	    fputs(tmp, fp);
-	    free(tmp);
-	}
-    } else {
-	fputs(s, fp);
-    }
-
-    return err;
-}
-
-/* Check for non-ASCII strings in plot file: these may
-   require special treatment. */
-
-static int non_ascii_gp_file (FILE *fp)
+void filter_gnuplot_file (int mono, FILE *fpin, FILE *fpout)
 {
     char pline[512];
-    int ret = 0;
-
-    while (fgets(pline, sizeof pline, fp)) {
-	if (set_print_line(pline)) {
-	    break;
-	}
-	if (*pline == '#') {
-	    continue;
-	}
-	if (!gretl_is_ascii(pline)) {
-	    ret = 1;
-	    break;
-	}
-    }
-
-    rewind(fp);
-
-    return ret;
-}
-
-static int term_uses_utf8 (int ttype)
-{
-    if (ttype == GP_TERM_PNG ||
-	ttype == GP_TERM_PDF ||
-	ttype == GP_TERM_EPS ||
-	ttype == GP_TERM_SVG ||
-	ttype == GP_TERM_EMF ||
-	ttype == GP_TERM_TEX ||
-	ttype == GP_TERM_PLT) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-void filter_gnuplot_file (int latin, int mono,
-			  FILE *fpin, FILE *fpout)
-{
-    char pline[512];
-    int err, err_shown = 0;
 
     while (fgets(pline, sizeof pline, fpin)) {
 	if (set_print_line(pline)) {
@@ -760,40 +632,23 @@ void filter_gnuplot_file (int latin, int mono,
 	    }
 	}
 
-	if (latin && *pline != '#') {
-	    err = maybe_recode_gp_line(pline, fpout);
-	    if (err && !err_shown) {
-		gui_errmsg(err);
-		err_shown = 1;
-	    }
-	} else {
-	    fputs(pline, fpout);
-	} 
+	fputs(pline, fpout);
     }
 }
 
-/* for non-UTF-8 plot formats: print a "set encoding" string
-   if appropriate, but only if gnuplot won't choke on it.
+/* note @termstr will be non-NULL only if we're being
+   called from the interactive PDF/EPS preview or save
+   context
 */
-
-static void maybe_print_gp_encoding (int latin, FILE *fp)
-{
-    if (latin == 1 || latin == 2 || latin == 15 || latin == 9) {
-	/* supported by gnuplot >= 4.4.0 */
-	fprintf(fp, "set encoding iso_8859_%d\n", latin);
-    }
-} 
 
 static int revise_plot_file (GPT_SPEC *spec, 
 			     const char *inpname,
 			     const char *outname,
-			     const char *setterm)
+			     const char *termstr)
 {
     FILE *fpin = NULL;
     FILE *fpout = NULL;
     int mono = (spec->flags & GPT_MONO);
-    int ttype = spec->termtype;
-    int latin = 0;
     int err = 0;
 
     fpin = gretl_fopen(spec->fname, "r");
@@ -809,22 +664,17 @@ static int revise_plot_file (GPT_SPEC *spec,
 	return 1;
     }
 
-    if (non_ascii_gp_file(fpin)) {
-	/* plot contains UTF-8 strings */
-	if (term_uses_utf8(ttype)) {
-	    fputs("set encoding utf8\n", fpout);
-	} else {
-	    latin = iso_latin_version();
-	    maybe_print_gp_encoding(latin, fpout);
-	}
-    }
-
     if (outname != NULL && *outname != '\0') {
-	fprintf(fpout, "%s\n", setterm);
+	if (termstr == NULL) {
+	    termstr = gretl_gnuplot_term_line(spec->termtype,
+					      spec->code,
+					      spec->flags);
+	}
+	fprintf(fpout, "%s\n", termstr);
 	write_plot_output_line(outname, fpout);
     }	
 
-    filter_gnuplot_file(latin, mono, fpin, fpout);
+    filter_gnuplot_file(mono, fpin, fpout);
 
     fclose(fpin);
     fclose(fpout);
@@ -836,13 +686,10 @@ void save_graph_to_file (gpointer data, const char *fname)
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
     char pltname[FILENAME_MAX];
-    char setterm[MAXLEN];
     int err = 0;
 
-    get_full_term_string(spec, setterm);
-
     sprintf(pltname, "%sgptout.tmp", gretl_dotdir());
-    err = revise_plot_file(spec, pltname, fname, setterm);
+    err = revise_plot_file(spec, pltname, fname, NULL);
 
     if (!err) {
 	gchar *plotcmd;
@@ -866,18 +713,14 @@ static void graph_display_pdf (GPT_SPEC *spec)
 {
     char pdfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    char setterm[128];
     gchar *plotcmd;
     int err = 0;
 
     spec->termtype = GP_TERM_PDF;
-
-    strcpy(setterm, get_gretl_pdf_term_line(spec->code, spec->flags));
-
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     build_path(pdfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
 
-    err = revise_plot_file(spec, plttmp, pdfname, setterm);
+    err = revise_plot_file(spec, plttmp, pdfname, NULL);
     if (err) {
 	return;
     }
@@ -953,7 +796,6 @@ int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
     int err;
 
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
-
     err = revise_plot_file(spec, plttmp, fname, termstr);
 
     if (!err) {
@@ -1191,15 +1033,13 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     char emfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
     gchar *plotcmd;
-    const char *setterm;
     int err = 0;
 
+    spec->termtype = GP_TERM_EMF;
     build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
 
-    setterm = get_gretl_emf_term_line(spec->code, spec->flags);
-    
-    err = revise_plot_file(spec, plttmp, emfname, setterm);
+    err = revise_plot_file(spec, plttmp, emfname, NULL);
     if (err) {
 	return;
     }
@@ -1249,7 +1089,6 @@ int write_plot_for_copy (int target)
     GPT_SPEC *spec = copyspec;
     char outname[FILENAME_MAX];
     char inpname[FILENAME_MAX];
-    char setterm[MAXLEN];
     GptFlags saveflags;
     double savescale;
     int saveterm;
@@ -1284,11 +1123,9 @@ int write_plot_for_copy (int target)
 	spec->flags |= GPT_MONO;
     }
     
-    get_full_term_string(spec, setterm);
-
     build_path(inpname, gretl_dotdir(), "gptinp.tmp", NULL);
     build_path(outname, gretl_dotdir(), "gptout.tmp", NULL);
-    err = revise_plot_file(spec, inpname, outname, setterm);
+    err = revise_plot_file(spec, inpname, outname, NULL);
 
     spec->flags = saveflags;
     spec->termtype = saveterm;

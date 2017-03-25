@@ -155,19 +155,13 @@ typedef enum {
 
 #define set_png_output(p) (p->flags |= GPT_PNG_OUTPUT)
 #define get_png_output(p) (p->flags & GPT_PNG_OUTPUT)
-#define unset_png_output(p) (p->flags &= ~GPT_PNG_OUTPUT) 
-    
-const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
+#define unset_png_output(p) (p->flags &= ~GPT_PNG_OUTPUT)
+
+const char *gretl_gnuplot_term_line (TermType ttype,
+				     PlotType ptype,
+				     GptFlags flags);
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec);
-
-const char *get_gretl_emf_term_line (PlotType ptype, GptFlags flags);
-
-const char *get_gretl_pdf_term_line (PlotType ptype, GptFlags flags);
-
-const char *get_gretl_eps_term_line (PlotType ptype, GptFlags flags);
-
-const char *get_gretl_tex_term_line (PlotType ptype, GptFlags flags);
 
 const char *gp_justification_string (int j);
 
