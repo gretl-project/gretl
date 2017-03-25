@@ -899,18 +899,8 @@ static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
 	err = gretl_model_set_list_as_data(armod, "ainfo", ainfo_list);
     }
 
-    if (!err && arima_ydiff(ainfo)) {
-	/* save the differenced y while we're at it */
-	gretl_vector *y = gretl_column_vector_alloc(armod->nobs);
-
-	if (y != NULL) {
-	    int t;
-
-	    for (t=0; t<armod->nobs; t++) {
-		gretl_vector_set(y, t, ainfo->y[t+ainfo->t1]);
-	    }
-	    gretl_model_set_matrix_as_data(armod, "yvec", y);
-	}
+    if (!err && arma_xdiff(ainfo)) {
+	gretl_model_set_int(armod, "xdiff", 1);
     }
 
     return err;

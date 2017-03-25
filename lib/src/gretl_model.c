@@ -1557,37 +1557,111 @@ static gretl_matrix *arma_model_spectrum (gretl_matrix *phi,
     return ret;
 }
 
+static double arima_difference (const double *x, int t,
+				int *delta, int k, int *err)
+{
+    double dxt = x[t];
+    int i, p;
+
+    for (i=0; i<k && !*err; i++) {
+	if (delta[i] != 0) {
+	    p = t - i - 1;
+	    if (p < 0 || na(x[p])) {
+		dxt = NADBL;
+		*err = E_MISSDATA;
+	    } else {
+		dxt -= delta[i] * x[p];
+	    }
+	}
+    }
+
+    return dxt;
+}
+
 static gretl_vector *get_arma_yvec (const MODEL *pmod,
 				    const DATASET *dset,
-				    int *free_y, int *err)
+				    int *err)
 {
-    gretl_vector *y;
+    gretl_vector *y = NULL;
+    const double *beta = NULL;
+    double yt, xti;
+    int *xlist = NULL;
+    int *delta = NULL;
+    int yno = gretl_model_get_depvar(pmod);
+    int T = pmod->nobs;
+    int i, j, t, t1 = pmod->t1;
+    int s, d, D, nx = 0;
+    int k = 0, xdiff = 0;
 
-    /* in case this is an ARIMA model: try to retrieve
-       differenced series stuck onto model
-    */
-    y = gretl_model_get_data(pmod, "yvec");
+    if (yno < 1 || yno >= dset->v) {
+	*err = E_DATA;
+	return NULL;
+    }
 
-    if (y == NULL) {
-	/* otherwise get y from the dataset */
-	int yno = gretl_model_get_depvar(pmod);
-	int T = pmod->nobs;
-	int t, t1 = pmod->t1;
+    xlist = gretl_model_get_x_list(pmod);
 
-	if (yno < 1 || yno >= dset->v) {
-	    *err = E_DATA;
-	    return NULL;
+    if (xlist != NULL) {
+	for (i=1; i<=xlist[0]; i++) {
+	    if (xlist[i] != 0) {
+		nx++;
+	    }
 	}
+	if (nx > 0) {
+	    beta = arma_model_get_x_coeffs(pmod);
+	}
+    }
 
+    d = gretl_model_get_int(pmod, "arima_d");
+    D = gretl_model_get_int(pmod, "arima_D");
+
+    if (d > 0 || D > 0) {
+	delta = arima_delta_coeffs(d, D, dset->pd);
+	if (delta == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    k = d + dset->pd * D;
+	    xdiff = gretl_model_get_int(pmod, "xdiff");
+	}
+    }
+
+    if (!*err) {
 	y = gretl_matrix_alloc(T, 1);
 	if (y == NULL) {
 	    *err = E_ALLOC;
-	} else {
-	    for (t=0; t<T; t++) {
-		gretl_vector_set(y, t, dset->Z[yno][t+t1]);
-	    }
-	    *free_y = 1;
 	}
+    }
+
+    if (!*err) {
+	for (t=0; t<T && !*err; t++) {
+	    s = t + t1;
+	    if (delta != NULL) {
+		yt = arima_difference(dset->Z[yno], s, delta, k, err);
+	    } else {
+		yt = dset->Z[yno][s];
+	    }
+	    if (beta != NULL) {
+		for (i=1, j=0; i<=xlist[0]; i++) {
+		    if (xlist[i] != 0) {
+			if (xdiff) {
+			    xti = arima_difference(dset->Z[xlist[i]], s,
+						   delta, k, err);
+			} else {
+			    xti = dset->Z[xlist[i]][s];
+			}
+			yt -= beta[j++] * xti;
+		    }
+		}
+	    }
+	    gretl_vector_set(y, t, yt);
+	}
+    }
+
+    free(xlist);
+    free(delta);
+
+    if (*err) {
+	gretl_matrix_free(y);
+	y = NULL;
     }
 
     return y;
@@ -1603,10 +1677,9 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
     gretl_matrix *spec = NULL;
     gretl_matrix *pergm = NULL;
     gretl_matrix *y = NULL;
-    int T = pmod->nobs;
+    int i, T = pmod->nobs;
     int grid = (T-1)/2;
     double s2 = pmod->sigma * pmod->sigma;
-    int i, free_y = 0;
 
     *err = arma_model_AR_MA_coeffs(pmod, &phi, &theta, OPT_NONE);
     if (*err) {
@@ -1623,7 +1696,7 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
 	goto bailout;
     }
 
-    y = get_arma_yvec(pmod, dset, &free_y, err);
+    y = get_arma_yvec(pmod, dset, err);
 
     if (!*err) {
 	pergm = gretl_matrix_fft(y, err);
@@ -1649,9 +1722,7 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
     gretl_matrix_free(theta);
     gretl_matrix_free(spec);
     gretl_matrix_free(pergm);
-    if (free_y) {
-	gretl_matrix_free(y);
-    }
+    gretl_matrix_free(y);
 
     return pdata;
 }
