@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-03-23 10:42-0400\n"
-"PO-Revision-Date: 2017-03-07 12:08+0100\n"
+"PO-Revision-Date: 2017-03-26 11:16+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3068,14 +3068,12 @@ msgid "log scale"
 msgstr "Scala logaritmica"
 
 #: lib/src/graphing.c:7851
-#, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
-msgstr "Periodogramma nel campione"
+msgstr "Periodogramma e spettro ARMA"
 
 #: lib/src/graphing.c:7853
-#, fuzzy
 msgid "spectrum"
-msgstr "Spettro"
+msgstr "spettro"
 
 #: lib/src/graphing.c:7854 gui2/library.c:5817
 msgid "periodogram"
@@ -9918,7 +9916,7 @@ msgstr "gretl: periodogramma"
 
 #: gui2/dialogs.c:4854
 msgid "Sample periodogram"
-msgstr "Periodogramma nel campione"
+msgstr "Periodogramma"
 
 #: gui2/dialogs.c:4859
 msgid "Bartlett window, bandwidth:"
@@ -13305,9 +13303,8 @@ msgid "Residual _periodogram"
 msgstr "_Periodogramma dei residui"
 
 #: gui2/gui_utils.c:3138
-#, fuzzy
 msgid "_Spectrum vs sample periodogram"
-msgstr "Periodogramma nel campione"
+msgstr "_Spettro e periodogramma"
 
 #: gui2/gui_utils.c:3143
 msgid "_MIDAS coefficients"
