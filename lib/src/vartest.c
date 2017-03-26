@@ -107,6 +107,99 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
     return err;
 }
 
+#if 0 /* not yet */
+
+int gretl_VAR_autocorrelation_test2 (GRETL_VAR *var, int H, 
+				     DATASET *dset, gretlopt opt,
+				     PRN *prn)
+{
+    const gretl_matrix *U;
+    gretl_matrix *tests, *pvals;
+    gretl_matrix *B, *E;
+    gretl_matrix *S, *X;
+    double s, FRao;
+    double detUU, detEE;
+    double N, dfn, dfd;
+    /* int i, quiet = (opt & OPT_Q); */
+    int h, h2, K = var->neqns;
+    int nx, K2 = K * K;
+    int p = var->order;
+    int T = var->T;
+    int err = 0;
+
+    if (H == 0) {
+	H = dset->pd;
+    }
+
+    tests = gretl_column_vector_alloc(K);
+    pvals = gretl_column_vector_alloc(K);
+
+    if (tests == NULL || pvals == NULL) {
+	return E_ALLOC;
+    }
+
+    /* get VAR residuals in U */
+    U = gretl_VAR_get_residual_matrix(var);
+
+    /* and determinant of cross-equation Sigma */
+    S = gretl_matrix_copy(var->S);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    /* maximal number of cols in X below */
+    nx = var->ncoeff + H;
+
+    /* allocate E, B, X */
+    E = gretl_matrix_alloc(T, K);
+    B = gretl_matrix_alloc(nx, K);
+    X = gretl_matrix_alloc(T, nx);
+    
+    detUU = gretl_matrix_determinant(S, &err);
+
+    for (h=1; h<=H && !err; h++) {
+	nx = var->ncoeff + h;
+	gretl_matrix_reuse(B, nx, K);
+	gretl_matrix_reuse(X, T, nx);
+	h2 = h * h;
+	/* now fill/adjust the X matrix! */
+	/* X = mlag(mU, seq(1,h)) ~ {Ylags} ~ {X} ~ ones(T,1) */
+	err = gretl_matrix_multi_ols(U, X, B, E, NULL);
+	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+				  E, GRETL_MOD_NONE,
+				  S, GRETL_MOD_NONE);
+	gretl_matrix_divide_by_scalar(S, T);
+	/* calculate the statistic */
+	s = sqrt((pow(K, 4) * h2 - 4.0) / (K2 + K2 * h2 - 5.0));
+	N = T - K*p - 1 - K*h - (K - K*h + 1) / 2.0;
+	dfn = K2 * h;
+	dfd = N*s - 0.5*(K2 * h) + 1;
+	detEE = gretl_matrix_determinant(S, &err);
+	if (!err) {
+	    FRao = pow(detUU / detEE, 1/s) - 1.0;
+	    FRao *= dfd / dfn;
+	    tests->val[h-1] = FRao;
+	    pvals->val[h-1] = snedecor_cdf_comp(dfn, dfd, FRao);
+	}
+    }
+
+    gretl_matrix_free(E);
+    gretl_matrix_free(B);
+    gretl_matrix_free(X);
+    gretl_matrix_free(S);
+
+    if (!err) {
+	record_matrix_test_result(tests, pvals);
+    } else {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
+    }
+
+    return err;
+}
+
+#endif
+
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
 			 DATASET *dset, gretlopt opt,
 			 PRN *prn)
