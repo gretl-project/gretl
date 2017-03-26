@@ -1563,6 +1563,10 @@ static double arima_difference (const double *x, int t,
     double dxt = x[t];
     int i, p;
 
+    if (na(dxt)) {
+	*err = E_MISSDATA;
+    }
+
     for (i=0; i<k && !*err; i++) {
 	if (delta[i] != 0) {
 	    p = t - i - 1;
