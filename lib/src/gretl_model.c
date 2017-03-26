@@ -1582,6 +1582,15 @@ static double arima_difference (const double *x, int t,
     return dxt;
 }
 
+/* get_arma_yvec: here we reconstruct the dependent variable from an
+   ARMA model, differencing as we go in the ARIMA case.  If the model
+   includes any regressors besides the constant we have to net out
+   their effect in order to produce a periodogram that is comparable
+   with the ARMA spectrum. A complication is that in the ARIMAX case
+   the regressors may also have to be differenced: this is indicated
+   by the presence of the "xdiff" flag on the model.
+*/
+
 static gretl_vector *get_arma_yvec (const MODEL *pmod,
 				    const DATASET *dset,
 				    int *err)
@@ -1606,13 +1615,21 @@ static gretl_vector *get_arma_yvec (const MODEL *pmod,
 
     if (xlist != NULL) {
 	for (i=1; i<=xlist[0]; i++) {
-	    if (xlist[i] != 0) {
+	    if (xlist[i] >= dset->v) {
+		*err = E_DATA;
+		break;
+	    } else if (xlist[i] != 0) {
 		nx++;
 	    }
 	}
-	if (nx > 0) {
+	if (!*err && nx > 0) {
 	    beta = arma_model_get_x_coeffs(pmod);
 	}
+    }
+
+    if (*err) {
+	free(xlist);
+	return NULL;
     }
 
     d = gretl_model_get_int(pmod, "arima_d");
@@ -1644,6 +1661,7 @@ static gretl_vector *get_arma_yvec (const MODEL *pmod,
 		yt = dset->Z[yno][s];
 	    }
 	    if (beta != NULL) {
+		/* ARMAX: net out X_t\beta */
 		for (i=1, j=0; i<=xlist[0]; i++) {
 		    if (xlist[i] != 0) {
 			if (xdiff) {
