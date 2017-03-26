@@ -41,135 +41,124 @@ int gretl_VAR_normality_test (const GRETL_VAR *var,
     return err;
 }
 
-int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
+int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 				    DATASET *dset, gretlopt opt,
 				    PRN *prn)
 {
-    MODEL *pmod;
-    gretl_matrix *tests, *pvals;
-    double lb;
-    int i, quiet = (opt & OPT_Q);
-    int err = 0;
-
-    if (order == 0) {
-	order = dset->pd;
-    }
-
-    tests = gretl_column_vector_alloc(var->neqns);
-    pvals = gretl_column_vector_alloc(var->neqns);
-
-    if (tests == NULL || pvals == NULL) {
-	err = E_ALLOC;
-    }
-
-    for (i=0; i<var->neqns && !err; i++) {
-	pmod = var->models[i];
-	if (!quiet) {
-	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
-	}
-	if (pmod->list[0] == 1) {
-	    /* only the dependent variable is recorded */
-	    lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
-	    if (!err) {
-		tests->val[i] = lb;
-		pvals->val[i] = chisq_cdf_comp(order, lb);
-		if (!(opt & OPT_Q)) {
-		    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-			    lb, _("with p-value"), _("Chi-square"), order,
-			    lb, pvals->val[i]);
-		    pputc(prn, '\n');
-		}
-	    }
-	} else {
-	    if (quiet) {
-		err = autocorr_test(pmod, order, dset, OPT_Q, prn);
-	    } else {
-		err = autocorr_test(pmod, order, dset, OPT_Q | OPT_S, prn);
-	    }
-	    if (!err) {
-		tests->val[i] = get_last_test_statistic(NULL);
-		pvals->val[i] = get_last_pvalue(NULL);
-		if (!quiet) {
-		    gretl_model_test_print(var->models[i], 0, prn);
-		    gretl_model_destroy_tests(var->models[i]);
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	record_matrix_test_result(tests, pvals);
-    } else {
-	gretl_matrix_free(tests);
-	gretl_matrix_free(pvals);
-    }
-
-    return err;
-}
-
-#if 0 /* not yet */
-
-int gretl_VAR_autocorrelation_test2 (GRETL_VAR *var, int H, 
-				     DATASET *dset, gretlopt opt,
-				     PRN *prn)
-{
     const gretl_matrix *U;
     gretl_matrix *tests, *pvals;
-    gretl_matrix *B, *E;
-    gretl_matrix *S, *X;
-    double s, FRao;
+    gretl_matrix *B = NULL;
+    gretl_matrix *E = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *S = NULL;
+    double *targ;
+    double ulag, s, FRao;
     double detUU, detEE;
     double N, dfn, dfd;
-    /* int i, quiet = (opt & OPT_Q); */
+    int quiet = (opt & OPT_Q);
     int h, h2, K = var->neqns;
-    int nx, K2 = K * K;
+    int i, t, nx, K2 = K * K;
+    int g, lagcol;
     int p = var->order;
     int T = var->T;
     int err = 0;
 
+    /* we need var->X and var->S below */
+    if (var == NULL || var->X == NULL || var->S == NULL) {
+	return E_DATA;
+    }
+
+    /* and also the matrix of residuals */
+    U = gretl_VAR_get_residual_matrix(var);
+    if (U == NULL) {
+	return E_DATA;
+    }
+
     if (H == 0) {
+	/* default lag horizon */
 	H = dset->pd;
     }
 
-    tests = gretl_column_vector_alloc(K);
-    pvals = gretl_column_vector_alloc(K);
+    tests = gretl_column_vector_alloc(H);
+    pvals = gretl_column_vector_alloc(H);
 
     if (tests == NULL || pvals == NULL) {
 	return E_ALLOC;
     }
 
-    /* get VAR residuals in U */
-    U = gretl_VAR_get_residual_matrix(var);
-
-    /* and determinant of cross-equation Sigma */
+    /* calculate determinant of cross-equation Sigma */
     S = gretl_matrix_copy(var->S);
     if (S == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	detUU = gretl_matrix_determinant(S, &err);
     }
 
-    /* maximal number of cols in X below */
-    nx = var->ncoeff + H;
+    if (err) {
+	goto bailout;
+    }
 
-    /* allocate E, B, X */
+    g = var->ncoeff;
+    if (!var->ifc) {
+	g++; /* we'll have to add an intercept */
+    }
+
+    /* the maximal number of columns in X below */
+    nx = g + K * H;
+
+    /* allocate E, B, X to max size */
     E = gretl_matrix_alloc(T, K);
     B = gretl_matrix_alloc(nx, K);
     X = gretl_matrix_alloc(T, nx);
-    
-    detUU = gretl_matrix_determinant(S, &err);
+
+    if (E == NULL || B == NULL || X == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (var->ifc) {
+	targ = X->val;
+    } else {
+	/* insert constant */
+	for (t=0; t<T; t++) {
+	    X->val[t] = 1.0;
+	}
+	targ = X->val + T;
+    }
+
+    /* copy the original regressors into X */
+    memcpy(targ, var->X->val, var->ncoeff * T * sizeof(double));
+
+    if (!quiet) {
+	pputc(prn, '\n');
+	bufspace(11, prn);
+	pputs(prn, "Rao F  Approx p-value\n");
+    }
 
     for (h=1; h<=H && !err; h++) {
-	nx = var->ncoeff + h;
+	nx = var->ncoeff + K * h;
 	gretl_matrix_reuse(B, nx, K);
 	gretl_matrix_reuse(X, T, nx);
 	h2 = h * h;
-	/* now fill/adjust the X matrix! */
-	/* X = mlag(mU, seq(1,h)) ~ {Ylags} ~ {X} ~ ones(T,1) */
+	/* add next lag of U to the X matrix */
+	for (i=0; i<K; i++) {
+	    lagcol = g + i;
+	    for (t=0; t<T; t++) {
+		ulag = (t - h < 0)? 0.0 : gretl_matrix_get(U, t-h, i);
+		gretl_matrix_set(X, t, lagcol, ulag);
+	    }
+	}
+	/* adjust for next write */
+	g += K;
 	err = gretl_matrix_multi_ols(U, X, B, E, NULL);
+	if (err) {
+	    break;
+	}
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				  E, GRETL_MOD_NONE,
 				  S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(S, T);
-	/* calculate the statistic */
+	/* calculate the test statistic */
 	s = sqrt((pow(K, 4) * h2 - 4.0) / (K2 + K2 * h2 - 5.0));
 	N = T - K*p - 1 - K*h - (K - K*h + 1) / 2.0;
 	dfn = K2 * h;
@@ -180,8 +169,18 @@ int gretl_VAR_autocorrelation_test2 (GRETL_VAR *var, int H,
 	    FRao *= dfd / dfn;
 	    tests->val[h-1] = FRao;
 	    pvals->val[h-1] = snedecor_cdf_comp(dfn, dfd, FRao);
+	    if (!quiet) {
+		pprintf(prn, "lag %d %#10.5g %11.4f\n", h, FRao,
+		    pvals->val[h-1]);
+	    }
 	}
     }
+
+    if (!quiet) {
+	pputc(prn, '\n');
+    }
+
+ bailout:
 
     gretl_matrix_free(E);
     gretl_matrix_free(B);
@@ -197,8 +196,6 @@ int gretl_VAR_autocorrelation_test2 (GRETL_VAR *var, int H,
 
     return err;
 }
-
-#endif
 
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
 			 DATASET *dset, gretlopt opt,
