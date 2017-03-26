@@ -1764,10 +1764,10 @@ end function
 \end{script}
 %$
 
-It's not necessary that such functions print anything. But anything
-they do print goes to \texttt{stderr}. This can be useful for
-debugging, but probably should not be retained in the ``production''
-version of a package.
+Anything printed by a \texttt{gui-precheck} function goes to
+\texttt{stderr}. This can be useful for debugging, but in the
+``production'' version of a package the checker should operate
+silently.
 
 \subsection{Example: bandplot}
 \label{sec:bandplot}
