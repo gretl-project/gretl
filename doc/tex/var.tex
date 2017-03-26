@@ -321,10 +321,20 @@ maximum tested order is 6.
 \section{Structural VARs}
 \label{sec:svar}
 
-Gretl does not currently provide a native implementation for the
-general class of models known as ``Structural VARs''; however, it
-provides an implementation of the Cholesky decomposition-based
-approach, the classic and most popular SVAR variant.
+Gretl's built-in \cmd{var} command does not support the general class
+of models known as ``Structural VARs''---though it does support the
+Cholesky decomposition-based approach, the classic and most popular
+SVAR variant. If you wish to go beyond that there is a gretl ``addon''
+named \app{SVAR} which will likely meet your needs. \app{SVAR} is
+supplied as part of the gretl package, you can find its documentation
+(which is quite detailed) as follows: under the \textsf{Tools} menu in
+the gretl main window, go to ``Function packages/On local machine.''
+(Or use the ``$fx$'' button on the toolbar at the foot of the main
+window.) In the function packages window either scroll down or use the
+search box to find \textsf{SVAR}. Then right-click and select
+``Info.'' This opens a window which gives basic information on the
+package, including a link to \texttt{SVAR.pdf}, the full
+documentation.
 
 \subsection{IRF and FEVD}
 

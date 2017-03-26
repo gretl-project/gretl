@@ -321,18 +321,18 @@ asymptotic standard errors and the associated
 $z$-scores and (two-sided) normal $p$-values. The converse case is
 left as an exercise for the reader.
 
-\subsection{VARs and VECMs}
+\subsection{VARs}
 
-As mentioned above, Vector Autoregressions and Vector Error Correction
-Models (VARs and VECMs) constitute a particularly awkward case, with
-considerations of consistency of treatment pulling in two opposite
-directions. For that reason gretl has adopted an ``agnostic'' policy
-in relation to such systems. We do not offer a \dollar{vcv} accessor,
-but instead accessors named \dollar{xtxinv} (the matrix $X'X^{-1}$ for
-the system as a whole) and \dollar{sigma} (an estimate of the
-cross-equation variance--covariance matrix, $\Sigma$). It's then up to
-the user to build an estimate of the variance matrix of the parameter
-estimates, $V$, should that be required.
+As mentioned above, Vector Autoregressions constitute a particularly
+awkward case, with considerations of consistency of treatment pulling
+in two opposite directions. For that reason gretl has adopted an
+``agnostic'' policy in relation to such systems. We do not offer a
+\dollar{vcv} accessor, but instead accessors named \dollar{xtxinv}
+(the matrix $X'X^{-1}$ for the system as a whole) and \dollar{sigma}
+(an estimate of the cross-equation variance--covariance matrix,
+$\Sigma$). It's then up to the user to build an estimate of the
+variance matrix of the parameter estimates---call it $V$---should that
+be required.
 
 Note that \dollar{sigma} gives the Maximum Likelihood Estimator
 (without a degrees of freedom adjustment) so if you do
@@ -350,12 +350,12 @@ matrix S = $sigma * $T/($T-$ncoeff)
 matrix Vu = S ** $xtxinv
 \end{code}
 %
-to employ a suitably inflated variant of the $\Sigma$ estimate. (For
-VARs and VECMs, \dollar{ncoeff} gives the number of coefficients per
-equation.)
+to employ a suitably inflated variant of the
+$\Sigma$ estimate. (For VARs, and also VECMs, \dollar{ncoeff} gives
+the number of coefficients per equation.)
 
-In the case of VARs, the second variant is such that the vector of
-standard errors produced by
+The second variant above is such that the vector of standard errors
+produced by
 %
 \begin{code}
 matrix SE = sqrt(diag(Vu))
@@ -364,7 +364,60 @@ matrix SE = sqrt(diag(Vu))
 agrees with the standard errors printed as part of the per-equation
 VAR output.
 
-In the case of VECMs it's more complex\dots{}
+A fuller example of usage of the \dollar{xtxinv} accessor is given in
+Listing~\ref{GCtest}: this shows how one can replicate the $F$-tests
+for Granger causality that are displayed by default by the \cmd{var}
+command, with the refinement that, depending on the setting of the
+\verb|USE_F| flag, these tests can be done using a small sample
+correction as in gretl's output or in asymptotic ($\chi^2$) form.
+
+\begin{script}[htbp]
+  \caption{Computing statistics to test for Granger causality}
+  \label{GCtest}
+\begin{scode}
+open denmark.gdt
+list LST = LRM LRY IBO IDE
+scalar p = 2 # lags in VAR
+scalar USE_F = 1 # small sample correction?
+
+var p LST --quiet
+
+k = nelem(LST)
+matrix theta = vec($coeff)
+matrix V = $sigma ** $xtxinv
+if USE_F
+  scalar df = $T - $ncoeff
+  V *= $T/df
+endif
+
+matrix GC = zeros(k, k)
+colnames(GC, LST)
+rownames(GC, LST)
+
+matrix idx = seq(1,p) + 1
+loop i = 1..k -q
+  loop j = 1..k -q
+    GC[i,j] = qform(theta[idx]', invpd(V[idx,idx]))
+    idx += (j==k)? p+1 : p
+  endloop
+endloop
+
+if USE_F
+  GC /= p
+  matrix pvals = pvalue(F, p, df, GC)
+else
+  matrix pvals = pvalue(X, p, GC)
+endif
+
+colnames(pvals, LST)
+rownames(pvals, LST)
+print GC pvals
+\end{scode}
+\end{script}
+
+Vector Error Correction Models are more complex than VARs in this
+respect, since we employ Johansen's variance estimator for the
+``$\beta$'' terms. FIXME expand on this.
 
 %%% Local Variables:
 %%% mode: latex
