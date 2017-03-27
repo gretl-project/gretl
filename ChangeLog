@@ -33,6 +33,9 @@ version 2017a, in progress
 - "tsls" command: calculate Sargan test in overidentified
   case even when there are no endogenous regressors, to allow
   "difference in Sargan" test
+- "modtest" command with --autocorr option, as applied to
+  VARs: switch from per-equation tests to multivariate test
+  as described by Lutkepohl
 - Principal Components window in GUI: support selection of
   a specific number of components to save as series
 - ARMA models in GUI: add menu item to view plot of spectrum
@@ -51,9 +54,13 @@ version 2017a, in progress
   package is running could cause a crash
 - Fix bug: possibly misaligned labels when doing a group-
   means scatterplot using panel data
+- Fix bug: "outfile" command with --buffer option was
+  failing on MS Windows
 - Update documentation for inlist() function
 - Update translated Command Reference PDF files for Italian
   and Portuguese
+- Add Galician (Galego) translation of the online Function
+  Reference
 - Build for Mac OS X: update the bundled GTK stack
 
 2016-11-19 version 2016d
