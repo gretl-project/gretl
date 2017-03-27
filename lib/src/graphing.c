@@ -7890,6 +7890,8 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 	double px, pRe, pIm, scale = pmod->nobs * M_2PI;
 	int i, grid = pdata->rows;
 
+	gretl_push_c_numeric_locale();
+
 	fprintf(fp, "set xrange [0:%g]\n", M_PI);
 	switch (dset->pd) {
 	case 12:
@@ -7914,8 +7916,6 @@ int arma_spectrum_plot (MODEL *pmod, const DATASET *dset,
 		_("log scale"));
 	fprintf(fp, "plot '-' using 1:2 w lines title '%s' lw 2, \\\n", _("spectrum"));
 	fprintf(fp, "'-' using 1:2 w lines title '%s' lw 0.5\n", _("periodogram"));
-
-	gretl_push_c_numeric_locale();
 
 	for (i=0; i<grid; i++) {
 	    fprintf(fp, "%7.5f %12.7f\n", gretl_matrix_get(pdata, i, 0),
