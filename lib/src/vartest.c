@@ -41,6 +41,11 @@ int gretl_VAR_normality_test (const GRETL_VAR *var,
     return err;
 }
 
+/* Multivariate version of Breusch-Godfrey test, as per
+   H. Lutkepohl, New Introduction to Multiple Time Series
+   Analysis (Springer, 2005) section 4.4, pp. 173-4.
+*/
+
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 				    DATASET *dset, gretlopt opt,
 				    PRN *prn)
@@ -136,7 +141,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     }
 
     for (h=1; h<=H && !err; h++) {
-	nx = var->ncoeff + K * h;
+	nx = g + K * h;
 	gretl_matrix_reuse(B, nx, K);
 	gretl_matrix_reuse(X, T, nx);
 	h2 = h * h;
