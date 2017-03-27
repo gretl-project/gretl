@@ -10766,7 +10766,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
-    } 
+    }
 
     /* get actual solution */
     dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,

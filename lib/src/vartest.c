@@ -51,6 +51,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 				    PRN *prn)
 {
     const gretl_matrix *U;
+    char Fspec[16];
     gretl_matrix *tests, *pvals;
     gretl_matrix *B = NULL;
     gretl_matrix *E = NULL;
@@ -152,7 +153,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     if (!quiet) {
 	pputc(prn, '\n');
 	bufspace(11, prn);
-	pputs(prn, "Rao F  Approx p-value\n");
+	pputs(prn, "Rao F   Approx dist.  p-value\n");
     }
 
     for (h=1; h<=H && !err; h++) {
@@ -162,27 +163,27 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 	h2 = h * h;
 	/* add next lag of U to the X matrix */
 	for (i=0; i<K; i++) {
-	    lagcol = g + i;
+	    lagcol = g + K*(h-1) + i;
 	    for (t=0; t<T; t++) {
 		ulag = (t - h < 0)? 0.0 : gretl_matrix_get(U, t-h, i);
 		gretl_matrix_set(X, t, lagcol, ulag);
 	    }
 	}
-	/* adjust for next write */
-	g += K;
-	err = gretl_matrix_multi_ols(U, X, B, E, NULL);
+	err = gretl_matrix_multi_SVD_ols(U, X, B, E, NULL);
+	if (!err) {
+	    err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+					    E, GRETL_MOD_NONE,
+					    S, GRETL_MOD_NONE);
+	}
 	if (err) {
 	    break;
 	}
-	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
-				  E, GRETL_MOD_NONE,
-				  S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(S, T);
 	/* calculate the test statistic */
 	s = sqrt((pow(K, 4) * h2 - 4.0) / (K2 + K2 * h2 - 5.0));
 	N = T - K*p - 1 - K*h - (K - K*h + 1) / 2.0;
 	dfn = K2 * h;
-	dfd = N*s - 0.5*(K2 * h) + 1;
+	dfd = floor(N*s - 0.5*(K2 * h) + 1);
 	detEE = gretl_matrix_determinant(S, &err);
 	if (!err) {
 	    FRao = pow(detUU / detEE, 1/s) - 1.0;
@@ -190,8 +191,9 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 	    tests->val[h-1] = FRao;
 	    pvals->val[h-1] = snedecor_cdf_comp(dfn, dfd, FRao);
 	    if (!quiet) {
-		pprintf(prn, "lag %d %#10.5g %11.4f\n", h, FRao,
-		    pvals->val[h-1]);
+		sprintf(Fspec, "F(%g, %g)", dfn, dfd);
+		pprintf(prn, "lag %d %10.3f    %-13s %5.4f\n", h, FRao,
+			Fspec, pvals->val[h-1]);
 	    }
 	}
     }
