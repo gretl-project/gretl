@@ -61,6 +61,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     double detUU, detEE;
     double N, dfn, dfd;
     int quiet = (opt & OPT_Q);
+    int autoH = (H == 0);
     int h, h2, K = var->neqns;
     int i, t, nx, K2 = K * K;
     int g, lagcol;
@@ -79,9 +80,31 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 	return E_DATA;
     }
 
-    if (H == 0) {
-	/* default lag horizon */
+    if (autoH) {
+	/* the default lag horizon */
 	H = dset->pd;
+    }
+
+    /* how many regressors are we going to have at max? */
+    g = var->ncoeff;
+    if (!var->ifc) {
+	/* we'll have to add an intercept */
+	g++;
+    }
+    nx = g + K * H;
+
+    if (nx >= T) {
+	/* not enough data to do this? */
+	if (autoH) {
+	    H = floor((T - 1 - g) / (double) K);
+	    if (H <= 0) {
+		return E_TOOFEW;
+	    } else {
+		nx = g + K * H;
+	    }
+	} else {
+	    return E_TOOFEW;
+	}
     }
 
     tests = gretl_column_vector_alloc(H);
@@ -102,14 +125,6 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     if (err) {
 	goto bailout;
     }
-
-    g = var->ncoeff;
-    if (!var->ifc) {
-	g++; /* we'll have to add an intercept */
-    }
-
-    /* the maximal number of columns in X below */
-    nx = g + K * H;
 
     /* allocate E, B, X to max size */
     E = gretl_matrix_alloc(T, K);
