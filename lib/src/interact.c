@@ -986,7 +986,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 	if (opt & OPT_A) {
 	    fp = gretl_fopen(tmp, "a");
 	} else if (opt & OPT_B) {
-	    fp = gretl_fopen(tmp, "w+");
+	    fp = gretl_fopen(tmp, "wb+");
 	} else {
 	    fp = gretl_fopen(tmp, "w");
 	}
