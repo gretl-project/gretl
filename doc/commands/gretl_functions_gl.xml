@@ -246,7 +246,7 @@
       <description>
 	<para>
 	  Se pode calcularse, debe executarse logo de procesar a instrución
-	  <cmdref targ="fcast"/> e devolve unha matriz cas desviacións típicas
+	  <cmdref targ="fcast"/> e devolve unha matriz cas desviacións padrón
 	  das predicións. Se o modelo que se utiliza para facer as predicións é
 	  un sistema de ecuacións, a matriz está formada por unha columna para
 	  cada ecuación; noutro caso é un vector columna.
@@ -490,7 +490,7 @@
 	  Dependendo do estimador, podes dispoñer de información adicional. As
 	  claves para tal información é de agardar que sexan explicativas por si
 	  mesmas. Para ver o que está dispoñible podes gardar unha copia do
-	  paquete e imprimir o seu contido, como por exemplo co código:
+	  paquete e mostrar o seu contido, como por exemplo co código:
 	</para>
 	<code>
 	  ols y 0 x
@@ -721,8 +721,8 @@
       <description>
 	<para>
 	  Se o último modelo estimado foi uniecuacional, devolve un escalar coa
-	  Desviación Típica da regresión (S, ou noutras palabras, a desviación
-	  típica dos erros do modelo coa oportuna corrección dos graos de
+	  Desviación Padrón da regresión (S, ou noutras palabras, a desviación
+	  padrón dos erros do modelo coa oportuna corrección dos graos de
 	  liberdade). Se o último modelo estimado foi un sistema de ecuacións,
 	  devolve unha matriz coas varianzas-covarianzas dos erros das ecuacións
 	  do sistema.
@@ -737,7 +737,7 @@
       <description>
 	<para>
 	  Cando se utiliza sen argumentos, <lit>$stderr</lit> devolve un vector
-	  columna que contén as desviacións típicas dos coeficientes do último
+	  columna que contén as desviacións padrón dos coeficientes do último
 	  modelo estimado. Co argumento opcional <lit>(nome dun regresor)</lit>
 	  devolve un escalar co valor do parámetro estimado dese regresor.
 	  <argname>s</argname>.
@@ -1239,7 +1239,7 @@
 	  6 distintas combinacións dos valores de xénero e raza; a columna
 	  do medio contén o reconto do número de casos para cada unha desas
 	  combinacións; e as dúas columnas máis á dereita conteñen as
-	  desviacións típicas mostrais de <lit>renda</lit> e <lit>idade</lit>.
+	  desviacións padrón mostrais de <lit>renda</lit> e <lit>idade</lit>.
 	</para>
 	<para>
 	  Observa que se <argname>byvar</argname> é unha lista de variables,
@@ -1641,14 +1641,14 @@
 	</para>
 	<para>
 	  Se o nome do ficheiro non contén a especificación completa do
-	  camiño ao directorio que o contén, entón vai procurarse en varias
+	  camiño ao cartafol que o contén, entón vai procurarse en varias
 	  localizacións <quote>probables</quote>, comezando no establecido
 	  como <cmdref targ="workdir"/> actual. Agora ben, cando se
 	  proporciona un valor non nulo para o argumento opcional
-	  <argname>import</argname>, o ficheiro vai procurarse no directorio
+	  <argname>import</argname>, o ficheiro vai procurarse no cartafol
 	  <quote>dot</quote> do usuario. Neste caso o argumento
 	  <argname>fname</argname> deberá ser un nome simple de ficheiro,
-	  sen a inclusión do camiño ao directorio.
+	  sen a inclusión do camiño ao cartafol.
 	</para>
 	<para>
 	  Se ocorre algún erro (por exemplo que o ficheiro estea mal formatado
@@ -1711,14 +1711,14 @@
 	  de sobrescribir o ficheiro, a función devolve un valor non nulo.
 	</para>
 	<para>
-	  O ficheiro de saída gárdase no directorio <cmdref targ="workdir"/>
+	  O ficheiro de saída gárdase no cartafol <cmdref targ="workdir"/>
 	  actual agás que a cadea <argname>fname</argname> conteña o camiño
-	  completo co directorio onde vai ser gardado. Agora ben, cando se indica
+	  completo co cartafol onde vai ser gardado. Agora ben, cando se indica
 	  un valor non nulo para o argumento <argname>export</argname>,
-	  o ficheiro de saída vaise gardar no directorio <quote>dot</quote>
+	  o ficheiro de saída vaise gardar no cartafol <quote>dot</quote>
 	  do usuario. Neste caso o argumento <argname>fname</argname> deberá
 	  de ser un nome simple de ficheiro, sen a inclusión do camiño ao
-	  directorio.
+	  cartafol.
 	</para>
 	<para>
 	  Por defecto, o ficheiro XML gárdase sen comprimir, mais se o
@@ -1974,7 +1974,7 @@
 	</para>
 	<para>
 	  Os regresores que se utilizan por defecto son unha constante e unha
-	  tendencia cuadrática. Cando se proporciona <argname>X</argname>, as
+	  tendencia cadrada. Cando se proporciona <argname>X</argname>, as
 	  súas columnas utilízanse como regresores adicionais. A función
 	  devolve un erro se o número de filas de <argname>X</argname> non
 	  é igual a <argname>xfac</argname> veces o número de filas de
@@ -3126,7 +3126,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="series">
+    <function name="filter" section="filters" output="seebelow">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
@@ -4170,12 +4170,12 @@
 	  un VAR ou un VECM. Como resultado, devolve unha matriz que contén
 	  a resposta estimada da variable <argname>target</argname> ante un
 	  impulso na variable <argname>shock</argname> de magnitude igual a
-	  unha vez a súa desviación típica. Estas dúas variables identifícanse
-	  tendo en conta as súas posicións na especificación do VAR/VECM: por
+	  unha vez a súa desviación padrón. Estas dúas variables identifícanse
+	  tendo en conta as súas posicións na especificación do modelo: por
 	  exemplo, cando indicas os argumentos <argname>target</argname>
 	  e <argname>shock</argname> cos valores 1 e 3, respectivamente, a
 	  matriz que se devolve proporciona a resposta da primeira variable
-	  do VAR/VECM ante un impulso da terceira variable.
+	  do sistema ante un impulso da terceira variable.
 	</para>
 	<para>
 	  Se indicas o terceiro argumento <argname>alpha</argname> (opcional),
@@ -4525,7 +4525,7 @@
 	<para>
 	  O argumento <argname>MSE</argname> (opcional) determina o contido
 	  da chave <lit>Mod.smdisterr</lit>. Cando é 0 ou se omite, esta
-	  matriz vai estar composta das desviacións típicas incondicionais
+	  matriz vai estar composta das desviacións padrón incondicionais
 	  das perturbacións suavizadas, que habitualmente se utilizan para
 	  calcular os denominados <emphasis>erros auxiliares</emphasis>. Mais no caso
 	  contrario, <lit>Mod.smdisterr</lit> vai conter as raíces das
@@ -4594,7 +4594,7 @@
 	  A matriz que se devolve ten tres columnas que conteñen,
 	  respectivamente: os valores únicos ordenados en <argname>d</argname>,
 	  a estimación da función de supervivencia que se corresponde cos
-	  valores de duración da columna 1, e o erro típico (para mostras
+	  valores de duración da columna 1, e a desviación padrón (para mostras
 	  grandes) do estimador, calculados por medio do método de
 	  <cite key="greenwood26">Greenwood (1926)</cite>.
 	</para>
@@ -4751,20 +4751,22 @@
       </description>
     </function>
 
-    <function name="lags" section="transforms" output="list">
+    <function name="lags" section="transforms" output="list-or-mat">
       <fnargs>
 	<fnarg type="scalar-or-vec">p</fnarg>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="series-list-or-mat">y</fnarg>
 	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha lista. Cando o primeiro argumento é un escalar xera os
-	  retardos do 1 ao <argname>p</argname> da serie <argname>y</argname>
-	  ou, se <argname>y</argname> é unha lista, de todas as series que
-	  contén esa lista. No caso de que <argname>p</argname> = 0, o retardo
-	  máximo toma por defecto a periodicidade dos datos; aparte diso
-	  <argname>p</argname> deberá de ser positivo.
+	  Cando o primeiro argumento é un escalar, xera os retardos do 1 ao
+	  <argname>p</argname> da serie <argname>y</argname> ou. Cando
+	  <argname>y</argname> é unha lista, xera eses retardos para todas as
+	  series que contén esa lista. Cando <argname>y</argname> é unha matriz,
+	  xera eses retardos para todas as columnas da matriz. No caso de que
+	  <argname>p</argname> = 0, e <argname>y</argname> sexa unha serie
+	  ou unha lista, o retardo máximo toma por defecto a periodicidade dos
+	  datos; aparte diso <argname>p</argname> deberá de ser positivo.
 	</para>
 	<para>
 	  Cando o primeiro argumento é un vector, os retardos xerados son os
@@ -4776,24 +4778,27 @@
 	  en orde ascendente.
 	</para>
 	<para>
-	  As variables que se van crear, noméanse automaticamente de acordo
-	  co padrón <repl>varname</repl><lit>_</lit><repl>i</repl> onde
-	  <repl>varname</repl> estará indicando o nome da serie orixinal
-	  e <repl>i</repl> estará expresando o retardo concreto de cada
-	  caso. A parte orixinal do nome vai tronzarse cando así resulte
-	  necesario, e mesmo poderá axustarse oportunamente para garantir
-	  que resulte único dentro do conxunto de nomes que así se vaian
-	  construír.
+	  No caso de que o resultado sexa unha lista, noménase automaticamente as
+	  variables xeradas co padrón <repl>varname</repl><lit>_</lit><repl>i</repl>
+	  onde <repl>varname</repl> estará indicando o nome da serie orixinal e
+	  <repl>i</repl> expresará o retardo concreto de cada caso. A parte
+	  orixinal do nome vaise tronzar cando así resulte necesario, e mesmo
+	  poderá axustarse oportunamente para garantir que resulte único dentro
+	  do conxunto de nomes que así se vaian construír.
 	</para>
 	<para>
-	  Cando o segundo argumento <argname>y</argname> é unha lista e a orde
-	  de retardo é maior ca 1, a disposición por defecto dos elementos na
-	  lista que se devolve é por orde de variable: primeiro se devolven
-	  todos os retardos da primeira serie contida nese argumento, seguidos
-	  de todos os da segunda serie, e así de forma sucesiva. O terceiro
-	  argumento (opcional) podes usalo para cambiar isto: se é non nulo
-	  <argname>bylag</argname>, entón os elementos ordénanse por retardo: o
-	  primeiro retardo de todas as series, logo o segundo de todas, etc.
+	  Cando o segundo argumento <argname>y</argname> é unha lista ou unha
+	  matriz con máis dunha columna, e a orde de retardo é maior ca 1, a
+	  disposición por defecto dos elementos na lista que se devolve é por orde
+	  de variable: primeiro se devolven todos os retardos da primeira serie
+	  ou columna contida nese argumento, seguidos de todos os da segunda, e
+	  así de forma sucesiva. O terceiro argumento (opcional) podes usalo para
+	  cambiar isto: se é non nulo <argname>bylag</argname>, entón os elementos
+	  ordénanse por retardo: o primeiro retardo de todas as series ou columnas,
+	  logo o segundo retardo de todas as series ou columnas, etc.
+	</para>
+	<para>
+	  Consulta tamén <fncref targ="mlag"/> para a utilización con matrices.
 	</para>
       </description>
     </function>
@@ -5226,7 +5231,7 @@
       <description>
 	<para>
 	  Se <argname>x</argname> é unha serie, a función devolve un escalar
-	  coa súa media mostral, ignorando calquera observación ausente.
+	  coa súa media na mostra, ignorando calquera observación ausente.
 	</para>
 	<para>
 	  Se <argname>x</argname> é unha lista, a función devolve unha serie
@@ -5276,7 +5281,7 @@
       <description>
 	<para>
 	  Se <argname>x</argname> é unha serie, a función devolve un escalar
-	  coa súa mediana mostral, ignorando calquera observación ausente.
+	  coa súa mediana na mostra, ignorando calquera observación ausente.
 	</para>
 	<para>
 	  Se <argname>x</argname> é unha lista, a función devolve unha serie
@@ -5479,6 +5484,9 @@
 	  realízase con cada un dos elementos de $p$ xuntando horizontalmente
 	  as matrices resultantes.
 	</para>
+	<para>
+	  Consulta tamén <fncref targ="lags"/>.
+	</para>
       </description>
     </function>
 
@@ -5647,8 +5655,8 @@
 	</para>
 	<para context="tex">
 	  Cando $0 &lt; p &lt; 1$, a función calcula unha media móbil
-	  exponencial: \[y_t = p x_t + (1-p)y_{t-1}\]. (Esta é a fórmula de
-	  <cite key="roberts59">Roberts (1959)</cite>.) Por defecto, a serie
+	  exponencial: \[y_t = p x_t + (1-p)y_{t-1}\]. Esta é a fórmula de
+	  <cite key="roberts59">Roberts (1959)</cite>. Por defecto, a serie
 	  $y$ que se devolve, iníciase utilizando o primeiro valor válido de
 	  $x$. Pero podes utilizar o parámetro <argname>control</argname>
 	  para especificar o número de observacións iniciais que deben de
@@ -5766,11 +5774,11 @@
 	<para>
 	  Se no primeiro argumento non está especificado o camiño completo
 	  ata o ficheiro, vaise procurar en algunhas localizacións que se
-	  consideren <quote>probables</quote>, empezando polo directorio de
+	  consideren <quote>probables</quote>, empezando polo cartafol de
 	  traballo actualmente establecido en <cmdref targ="workdir"/>. Non
 	  obstante, cando se indica un valor non nulo para o segundo argumento
 	  <argname>import</argname> (opcional) da función, o ficheiro
-	  procúrase no directorio <quote>dot</quote> do usuario. Isto ten a
+	  procúrase no cartafol <quote>dot</quote> do usuario. Isto ten a
 	  intención de que se use esta función xunto coas que exportan matrices
 	  e que se ofrecen o contexto da instrución <cmdref targ="foreign"/>.
 	  Nese caso o argumento <argname>fname</argname> debe de ser un nome
@@ -5958,16 +5966,16 @@
 	  acontece un erro (por exemplo se non se pode sobrescribir o ficheiro).
 	</para>
 	<para>
-	  O ficheiro cos resultados vai escribirse no directorio establecido
+	  O ficheiro cos resultados vai escribirse no cartafol establecido
 	  como actual, <cmdref targ="workdir"/>, agás que a cadea de texto
-	  do argumento <repl>fname</repl> especifique o directorio co
+	  do argumento <repl>fname</repl> especifique o cartafol co
 	  camiño completo. Non obstante, se indicas un valor non nulo para o
 	  argumento <argname>export</argname>, o ficheiro cos resultados vai
-	  escribirse no directorio <quote>dot</quote> do usuario, onde estará
+	  escribirse no cartafol <quote>dot</quote> do usuario, onde estará
 	  accesible por defecto por medio das funcións para cargar matrices
 	  que se ofrecen no contexto da instrución <cmdref targ="foreign"/>.
 	  Neste caso, debes de indicar un simple nome de ficheiro para o
-	  segundo argumento, sen a parte que expresa o camiño ao directorio.
+	  segundo argumento, sen a parte que expresa o camiño ao cartafol.
 	</para>
 	<para>
 	  As matrices gardadas mediante a forma que ten por defecto a función
@@ -6056,8 +6064,8 @@
 	  A matriz que devolve a función ten tres columnas que conteñen,
 	  respectivamente: os valores únicos ordenados en
 	  <argname>d</argname>, a estimación da función de risco acumulado
-	  que se corresponde cos valores de duración da columna 1, e o erro
-	  típico do estimador.
+	  que se corresponde cos valores de duración da columna 1, e a desviación
+	  padrón do estimador.
 	</para>
 	<para>
 	  Cando indicas a serie <argname>cens</argname>, utilízase o valor 0
@@ -6278,7 +6286,7 @@
       <description>
 	<para>
 	  Devolve unha serie xerada cunha variable pseudoaleatoria gaussiana
-	  de media &mu; e desviación típica &sigma;. Se non indicas ningún
+	  de media &mu; e desviación padrón &sigma;. Se non indicas ningún
 	  argumento, os valores que se devolven son os dunha variable con
 	  distribución de probabilidade Normal estándar, <math>N</math>(0,1).
 	  Os valores prodúcense utilizando o método Ziggurat
@@ -6727,8 +6735,8 @@
       </fnargs>
       <description>
 	<para>
-	  Se só se indica a serie ou vector do primeiro argumento, calcula o
-	  seu periodograma mostral. Se indicas o escalar do segundo argumento,
+	  Se só se indica a serie ou vector do primeiro argumento, calcula o seu
+	  periodograma na mostra. Se indicas o escalar do segundo argumento,
 	  calcula a estimación do espectro de <argname>x</argname> cunha fiestra
 	  de retardos de Bartlett cun ancho de banda igual a ese escalar, ata un
 	  máximo igual á metade do número de observacións (<math>T</math>/2).
@@ -7022,8 +7030,8 @@
       <description>
 	<para context="notex">
 	  Aplícase tan só se o conxunto de datos actual ten unha estrutura de
-	  panel, e devolve unha serie que contén a desviación típica mostral
-	  da variable <math>y</math> en cada unidade de corte transversal
+	  panel, e devolve unha serie que contén a desviación padrón da variable
+	  <math>y</math> na mostra en cada unidade de corte transversal
 	  (repetindo cada valor nos períodos temporais de cada unha destas).
 	  O denominador que se utiliza é o tamaño da mostra en cada unidade
 	  menos 1, agás que só haxa 1 única observación válida para unha
@@ -7032,8 +7040,8 @@
 	</para>
 	<para context="tex">
 	  Aplícase tan só se o conxunto de datos actual ten unha estrutura de
-	  panel, e devolve unha serie que contén a desviación típica mostral da
-	  variable <math>y</math> en cada unidade de corte transversal, é dicir,
+	  panel, e devolve unha serie que contén a desviación padrón da variable
+	  <math>y</math> na mostra, en cada unidade de corte transversal, é dicir,
 	  \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} (y_{i,t} -
 	  \bar{y}_i)^2 } \]. Esta fórmula aplícase cando $T_i \ge 2$, onde
 	  $T_i$ representa o número de observacións válidas para a unidade
@@ -7432,7 +7440,7 @@
 	  xogan papeis diferentes: poden utilizarse para substituír a forma
 	  por defecto de <math>W</math>(<math>x</math>) pola distribución
 	  Normal de probabilidade con media <argname>a</argname> e desviación
-	  típica <argname>b</argname> (coa que está estreitamente emparentada).
+	  padrón <argname>b</argname> (coa que está estreitamente emparentada).
 	  Por exemplo, se indicas os valores de 0 e 1 para estes parámetros,
 	  respectivamente, vas provocar que <math>W</math>(<math>x</math>)
 	  sexa a función de densidade de probabilidade Normal estándar, o
@@ -7444,7 +7452,7 @@
 	  No caso de Hermite, <argname>a</argname> e <argname>b</argname>
 	  xogan papeis diferentes: poden utilizarse para substituír a forma
 	  por defecto de $W(x)$ pola distribución Normal de probabilidade con
-	  media <argname>a</argname> e desviación típica <argname>b</argname>
+	  media <argname>a</argname> e desviación padrón <argname>b</argname>
 	  (coa que está estreitamente emparentada). Por exemplo, se indicas
 	  os valores de 0 e 1 para estes parámetros, respectivamente, vas
 	  provocar que $W(x)$ sexa a función de densidade de probabilidade
@@ -7545,7 +7553,7 @@
 	  </li>
 	  <li>
             <para>
-              Normal (z, n ou N): media, desviación típica
+              Normal (z, n ou N): media, desviación padrón
             </para>
 	  </li>
 	  <li>
@@ -7603,7 +7611,7 @@
 	  \textbf{Distribución} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
 	  Uniforme (continua) &amp; \texttt{u} ou \texttt{U} &amp; mínimo &amp; máximo &amp; --\\
 	  Uniforme (discreta) &amp; \texttt{i} &amp; mínimo &amp; máximo &amp; --\\
-	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; media &amp; desviación típica &amp; --\\
+	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; media &amp; desviación padrón &amp; --\\
 	  $t$ de Student &amp; \texttt{t} &amp; graos de liberdade &amp; -- &amp; --\\
 	  Khi-cadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp; graos de liberdade &amp; -- &amp; --\\
 	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp; gl (num.) &amp; gl (den.) &amp; --\\
@@ -7833,10 +7841,10 @@
 	  ficheiro non existe ou non pode eliminarse por algún motivo (por
 	  exemplo, por non ter suficientes privilexios para poder facelo).
 	  Cando <argname>fname</argname> non contén o camiño completo,
-	  entón asúmese que o ficheiro ao que se refire, está no directorio
+	  entón asúmese que o ficheiro ao que se refire, está no cartafol
 	  de traballo establecido (<cmdref targ="workdir"/>). Se o ficheiro
 	  non existe ou non pode gardarse, non se vai procurar en ningún
-	  outro directorio.
+	  outro cartafol.
 	</para>
       </description>
     </function>
@@ -8017,12 +8025,12 @@
       <description>
 	<para>
 	  Se <argname>x</argname> é unha serie, a función devolve un escalar
-	  coa desviación típica mostral, descartando as observacións ausentes.
+	  coa desviación padrón na mostra, descartando as observacións ausentes.
 	</para>
 	<para>
 	  Se <argname>x</argname> é unha lista, a función devolve unha serie
 	  <math>y</math> tal que <math>y</math><sub>t</sub> representa a
-	  desviación típica mostral dos valores das variables da lista, na
+	  desviación padrón na mostra dos valores das variables da lista, na
 	  observación <math>t</math>; ou <lit>NA</lit> se existe algún valor
 	  ausente para a observación <math>t</math>.
 	</para>
@@ -8041,7 +8049,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila coas desviacións típicas das columnas da
+	  Devolve un vector fila coas desviacións padrón das columnas da
 	  matriz <argname>X</argname>. Se <argname>df</argname> é positivo,
 	  utilízase como divisor para as varianzas das columnas, noutro caso
 	  o divisor é igual ao número de filas que ten <argname>X</argname>
@@ -8172,7 +8180,7 @@
 	<para>
 	  Se indicas o terceiro argumento <argname>k</argname> (opcional),
 	  a función vai devolver un vector fila coa secuencia iniciada en
-	  <argname>a</argname> e incrementada (ou diminuída no caso inverso de
+	  <argname>a</argname> e ampliada (ou diminuída no caso inverso de
 	  que <argname>a</argname> sexa maior ca <argname>b</argname>), en
 	  <argname>k</argname> unidades a cada paso. A secuencia remata no
 	  maior valor posible que sexa menor ou igual a <argname>b</argname>
@@ -8349,11 +8357,11 @@
       <description>
 	<para>
 	  Devolve unha cadea de texto (<quote>string</quote>) que se constrúe
-	  imprimindo os valores dos argumentos (indicados polos puntos de
+	  representando os valores dos argumentos (indicados polos puntos de
 	  arriba) que acompañan á instrución, baixo o control do argumento
 	  <argname>format</argname>. Ten a intención de darte gran flexibilidade
 	  para crear cadeas de texto. Utiliza o <argname>format</argname> para
-	  indicar o xeito preciso no que queres que se impriman os argumentos.
+	  indicar o xeito preciso no que queres que se presenten os argumentos.
 	</para>
 	<para>
 	  En xeral, o argumento <argname>format</argname> debe de ser unha
@@ -8382,7 +8390,7 @@
 	</code>
 	<para>
 	  onde <lit>%d</lit> indica que se quere un número enteiro nese
-	  preciso lugar da saída que se vai imprimir, dado que esa é a
+	  preciso lugar da saída que se vai presentar, dado que esa é a
 	  expresión co símbolo <quote>por cento</quote> que está máis á
 	  esquerda, polo que se emparella co primeiro argumento, é dicir 5.
 	  A segunda secuencia especial é <lit>%6.4f</lit>, e representa un
@@ -9208,8 +9216,8 @@
 	  potencialmente cointegradas, se comprobas a cointegración (ou 1 se fas
 	  unha proba univariante de raíces unitarias); e <argname>itv</argname>
 	  é un código que especifica o tipo modelo (1 = sen constante, 2 = con
-	  constante, 3 = con constante e tendencia linear, 4 = con constante e
-	  tendencia cuadrática).
+	  constante, 3 = con constante máis tendencia linear, 4 = con constante máis
+	  tendencia linear e cadrada).
 	</para>
 	<para>
 	  Ten en conta que debes de darlle un valor de 0 a <argname>n</argname>
@@ -9253,12 +9261,12 @@
       <description>
 	<para>
 	  Cando <argname>x</argname> é unha serie, devolve un escalar coa
-	  súa varianza mostral, descartando calquera observación ausente.
+	  súa varianza na mostra, descartando calquera observación ausente.
 	</para>
 	<para>
 	  Cando <argname>x</argname> é unha lista, devolve unha serie
 	  <math>y</math> na que cada valor <math>y</math><sub>t</sub> indica
-	  a varianza mostral dos valores das variables da lista na observación
+	  a varianza na mostra dos valores das variables da lista na observación
 	  <math>t</math>, ou <lit>NA</lit> se algún deses valores está ausente
 	  en <math>t</math>.
 	</para>
@@ -9477,8 +9485,8 @@
       <description>
 	<para>
 	  Devolve unha serie <math>y</math> calculada de forma que cada
-	  <math>y</math><sub>t</sub> indica a desviación típica mostral
-	  ponderada dos valores (na observación <math>t</math>) das variables
+	  <math>y</math><sub>t</sub> indica a desviación padrón ponderada
+	  na mostra, dos valores (na observación <math>t</math>) das variables
 	  presentes na lista <argname>Y</argname>, coas respectivas ponderacións
 	  sinaladas polos valores das variables da lista <argname>W</argname>
 	  en cada <math>t</math>. As ponderacións poden así variar no tempo.
@@ -9503,8 +9511,8 @@
       <description>
 	<para>
 	  Devolve unha serie <math>y</math> calculada de forma que cada
-	  <math>y</math><sub>t</sub> indica a varianza mostral ponderada dos
-	  valores (na observación <math>t</math>) das variables presentes na
+	  <math>y</math><sub>t</sub> indica a varianza ponderada na mostra,
+	  dos valores (na observación <math>t</math>) das variables presentes na
 	  lista <argname>Y</argname>, coas respectivas ponderacións sinaladas
 	  polos valores das variables que forman a lista <argname>W</argname>
 	  en cada <math>t</math>. As ponderacións poden así variar no tempo.
@@ -9513,7 +9521,7 @@
 	  negativas.
 	</para>
 	<para context="tex">
-	  A varianza mostral ponderada calcúlase mediante
+	  A varianza ponderada na mostra calcúlase mediante
 	  \[ s^2_w = \frac{n'}{n'-1} \,
 	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
 	  onde $n'$ indica o número de ponderacións non nulas e $\bar{x}_w$
