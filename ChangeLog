@@ -61,6 +61,8 @@ version 2017a, in progress
   and Portuguese
 - Add Galician (Galego) translation of the online Function
   Reference
+- User's Guide: add a chapter on degrees of freedom
+  correction for standard errors and related statistics
 - Build for Mac OS X: update the bundled GTK stack
 
 2016-11-19 version 2016d
