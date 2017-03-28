@@ -553,13 +553,17 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 
     /* Note: by "vertical" here we mean that the split runs vertically,
        dividing the pane into left- and right-hand sections; otherwise
-       the split runs horizontally.
+       the split runs horizontally. In a "gnuplot commands" window we
+       only offer a horizontal split, which means that @vb ("vertical
+       button") may be NULL.
     */
 
     if (g_object_get_data(G_OBJECT(vwin->vbox), "sw") != NULL) {
 	/* currently in single-view mode: so split */
 	viewer_split_pane(vwin, vertical);
-	gtk_widget_set_sensitive(vb, vertical);
+	if (vb != NULL) {
+	    gtk_widget_set_sensitive(vb, vertical);
+	}
 	gtk_widget_set_sensitive(hb, !vertical);
 	if (vertical) {
 	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb), 
@@ -578,7 +582,9 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 	    vertical = GTK_IS_HPANED(paned);
 	    viewer_close_pane(vwin);
 	    gtk_widget_set_sensitive(hb, TRUE);
-	    gtk_widget_set_sensitive(vb, TRUE);
+	    if (vb != NULL) {
+		gtk_widget_set_sensitive(vb, TRUE);
+	    }
 	    if (vertical) {
 		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb), 
 					     GRETL_STOCK_SPLIT_V);

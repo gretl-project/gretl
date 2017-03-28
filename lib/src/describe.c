@@ -457,7 +457,7 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 
 int gretl_array_quantiles (double *a, int n, double *p, int k)
 {
-    double N, xmin, xmax = NADBL;
+    double N, xmin = 0, xmax = NADBL;
     int nl, nh, i;
     int err = 0;
 
