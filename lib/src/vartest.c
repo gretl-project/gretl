@@ -259,7 +259,7 @@ static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
     gretl_matrix *vU, *B, *X;
     gretl_matrix *E, *S, *SS;
     gretl_matrix *iC0, *ut, *uu;
-    double tr, df, LM, K24;
+    double df, LM, K24;
     int quiet = (opt & OPT_Q);
     int h, K = var->neqns;
     int i, t, nx, KK1;
@@ -376,8 +376,7 @@ static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
 	} else {
 	    /* calculate the test statistic */
 	    gretl_matrix_multiply(S, iC0, SS);
-	    tr = gretl_matrix_trace(SS);
-	    LM = T * KK1 / 2.0 - T * tr;
+	    LM = T * (KK1 / 2.0 - gretl_matrix_trace(SS));
 	    df = floor(h * K24);
 	    tests->val[h-1] = LM;
 	    pvals->val[h-1] = chisq_cdf_comp(df, LM);
@@ -419,7 +418,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     }
 
     if (opt & OPT_M) {
-	/* --multivariate */
+	/* --multivariate version */
 	int autoH = (order == 0);
 
 	return multivariate_arch_test(var, h, autoH, opt, prn);
