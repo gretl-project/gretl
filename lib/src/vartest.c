@@ -220,6 +220,8 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     return err;
 }
 
+/* write the vech of @src into row @t of @targ */
+
 static void vech_into_row (gretl_matrix *targ, int t,
 			   const gretl_matrix *src)
 {
@@ -233,6 +235,12 @@ static void vech_into_row (gretl_matrix *targ, int t,
 	}
     }
 }
+
+/* write from @src into @targ, with a lag of @h,
+   starting at column @inicol and implicitly
+   discarding rows of @src that would go off the
+   end of @targ
+*/
 
 static void inscribe_lag (gretl_matrix *targ,
 			  const gretl_matrix *src,
