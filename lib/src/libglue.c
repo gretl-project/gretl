@@ -141,6 +141,10 @@ int model_test_driver (int order, DATASET *dset,
 	if (type == GRETL_OBJ_EQN) {
 	    err = arch_test(ptr, k, dset, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
+	    if (opt & OPT_M) {
+		/* --mutivariate */
+		testopt |= OPT_M;
+	    }
 	    err = gretl_VAR_arch_test(ptr, k, dset, 
 				      testopt, prn);
 	} else if (type == GRETL_OBJ_SYS) {

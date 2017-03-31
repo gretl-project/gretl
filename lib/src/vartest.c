@@ -220,15 +220,209 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     return err;
 }
 
+static void vech_into_row (gretl_matrix *targ, int t,
+			   const gretl_matrix *src)
+{
+    double vij;
+    int j, i, k = 0;
+
+    for (j=0; j<src->cols; j++) {
+	for (i=0; i<=j; i++) {
+	    vij = gretl_matrix_get(src, i, j);
+	    gretl_matrix_set(targ, t, k++, vij);
+	}
+    }
+}
+
+static void inscribe_lag (gretl_matrix *targ,
+			  const gretl_matrix *src,
+			  int h, int inicol)
+{
+    double xij;
+    int j, t, k = inicol;
+
+    for (j=0; j<src->cols; j++) {
+	for (t=h; t<targ->rows; t++) {
+	    xij = gretl_matrix_get(src, t-h, j);
+	    gretl_matrix_set(targ, t, k, xij);
+	}
+	k++;
+    }
+}
+
+static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
+				   gretlopt opt, PRN *prn)
+{
+    const gretl_matrix *U;
+    gretl_matrix_block *Bk;
+    gretl_matrix *tests, *pvals;
+    gretl_matrix *vU, *B, *X;
+    gretl_matrix *E, *S, *SS;
+    gretl_matrix *iC0, *ut, *uu;
+    double tr, df, LM, K24;
+    int quiet = (opt & OPT_Q);
+    int h, K = var->neqns;
+    int i, t, nx, KK1;
+    int vdim, inicol;
+    int hw = 0;
+    int T = var->T;
+    int err = 0;
+
+    if (var == NULL) {
+	return E_DATA;
+    }
+
+    U = gretl_VAR_get_residual_matrix(var);
+    if (U == NULL) {
+	return E_DATA;
+    }
+
+    /* dimension of vech of variance */
+    vdim = (K * (K + 1)) / 2;
+
+    /* how many regressors are we going to have at max? */
+    nx = 1 + vdim * H;
+
+    if (nx >= T) {
+	/* not enough data to do this? */
+	if (autoH) {
+	    H = floor((T - 1) / (double) vdim);
+	    if (H <= 0) {
+		return E_TOOFEW;
+	    } else {
+		nx = 1 + vdim * H;
+	    }
+	} else {
+	    return E_TOOFEW;
+	}
+    }
+
+    tests = gretl_column_vector_alloc(H);
+    pvals = gretl_column_vector_alloc(H);
+
+    if (tests == NULL || pvals == NULL) {
+	return E_ALLOC;
+    }
+
+    Bk = gretl_matrix_block_new(&vU, T, vdim,
+				&B, nx, vdim,
+				&E, T, vdim,
+				&X, T, nx,
+				&ut, 1, K,
+				&uu, K, K,
+				&S, vdim, vdim,
+				&SS, vdim, vdim,
+				&iC0, vdim, vdim,
+				NULL);
+    if (Bk == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* construct LHS (vU) */
+    for (t=0; t<T; t++) {
+	for (i=0; i<K; i++) {
+	    ut->val[i] = gretl_matrix_get(U, t, i);
+	}
+	gretl_matrix_multiply_mod(ut, GRETL_MOD_TRANSPOSE,
+				  ut, GRETL_MOD_NONE,
+				  uu, GRETL_MOD_NONE);
+	vech_into_row(vU, t, uu);
+    }
+
+    /* initial setup of  X */
+    gretl_matrix_zero(X);
+    for (t=0; t<T; t++) {
+	X->val[t] = 1.0;
+    }
+
+    /* useful constants */
+    KK1 = K * (K+1);
+    K24 = KK1 * KK1 / 4.0;
+
+    if (!quiet) {
+	hw = ceil(log10(H));
+	pputc(prn, '\n');
+	bufspace(10 + hw, prn);
+	pputs(prn, "LM       df     p-value\n");
+    }
+
+    inicol = 1;
+
+    for (h=0; h<=H && !err; h++) {
+	nx = 1 + vdim * h;
+	gretl_matrix_reuse(B, nx, vdim);
+	gretl_matrix_reuse(X, T, nx);
+	if (h > 0) {
+	    /* add next lag of vU to the X matrix */
+	    inscribe_lag(X, vU, h, inicol);
+	    inicol += vdim;
+	}
+	/* run aux regression */
+	err = gretl_matrix_multi_SVD_ols(vU, X, B, E, NULL);
+	if (!err) {
+	    err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+					    E, GRETL_MOD_NONE,
+					    S, GRETL_MOD_NONE);
+	}
+	if (err) {
+	    break;
+	}
+	gretl_matrix_divide_by_scalar(S, T);
+	if (h == 0) {
+	    /* record baseline: inv(Cov0) */
+	    gretl_matrix_copy_values(iC0, S);
+	    err = gretl_invert_symmetric_matrix(iC0);
+	} else {
+	    /* calculate the test statistic */
+	    gretl_matrix_multiply(S, iC0, SS);
+	    tr = gretl_matrix_trace(SS);
+	    LM = T * KK1 / 2.0 - T * tr;
+	    df = floor(h * K24);
+	    tests->val[h-1] = LM;
+	    pvals->val[h-1] = chisq_cdf_comp(df, LM);
+	    if (!quiet) {
+		pprintf(prn, "lag %*d %9.3f %6d %11.4f\n", hw, h,
+			LM, (int) df, pvals->val[h-1]);
+	    }
+	}
+    }
+
+    if (!quiet) {
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    gretl_matrix_block_destroy(Bk);
+
+    if (!err) {
+	record_matrix_test_result(tests, pvals);
+    } else {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
+    }
+
+    return err;
+}
+
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
 			 DATASET *dset, gretlopt opt,
 			 PRN *prn)
 {
     gretl_matrix *tests, *pvals;
+    int h = order;
     int i, err = 0;
 
     if (order == 0) {
-	order = dset->pd;
+	h = dset->pd;
+    }
+
+    if (opt & OPT_M) {
+	/* --multivariate */
+	int autoH = (order == 0);
+
+	return multivariate_arch_test(var, h, autoH, opt, prn);
     }
 
     tests = gretl_column_vector_alloc(var->neqns);
@@ -237,8 +431,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     if (tests == NULL || pvals == NULL) {
 	err = E_ALLOC;
     } else if (!(opt & OPT_I)) {
-	pprintf(prn, "%s %d\n\n", _("Test for ARCH of order"), 
-		order);
+	pprintf(prn, "%s %d\n\n", _("Test for ARCH of order"), h);
     }
 
     for (i=0; i<var->neqns && !err; i++) {
@@ -246,8 +439,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
 	}
 	/* add OPT_M for multi-equation output */
-	err = arch_test(var->models[i], order, dset, 
-			opt | OPT_M, prn);
+	err = arch_test(var->models[i], h, dset, opt | OPT_M, prn);
 	if (!err) {
 	    tests->val[i] = get_last_test_statistic(NULL);
 	    pvals->val[i] = get_last_pvalue(NULL);
