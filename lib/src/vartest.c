@@ -65,7 +65,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     int autoH = (H == 0);
     int h, h2, K = var->neqns;
     int i, t, nx, K2 = K * K;
-    int g, lagcol;
+    int g, lagcol, hw = 0;
     int p = var->order;
     int T = var->T;
     int err = 0;
@@ -151,8 +151,9 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     memcpy(targ, var->X->val, var->ncoeff * T * sizeof(double));
 
     if (!quiet) {
+	hw = ceil(log10(H));
 	pputc(prn, '\n');
-	bufspace(11, prn);
+	bufspace(9 + hw, prn);
 	pputs(prn, "Rao F   Approx dist.  p-value\n");
     }
 
@@ -192,8 +193,8 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
 	    pvals->val[h-1] = snedecor_cdf_comp(dfn, dfd, FRao);
 	    if (!quiet) {
 		sprintf(Fspec, "F(%g, %g)", dfn, dfd);
-		pprintf(prn, "lag %d %10.3f    %-13s %5.4f\n", h, FRao,
-			Fspec, pvals->val[h-1]);
+		pprintf(prn, "lag %*d %9.3f    %-13s %5.4f\n", hw, h,
+			FRao, Fspec, pvals->val[h-1]);
 	    }
 	}
     }
