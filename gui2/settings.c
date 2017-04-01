@@ -2694,7 +2694,16 @@ struct wdir_setter {
 
 void set_working_dir_callback (GtkWidget *w, char *path)
 {
-    set_combo_box_default_text(GTK_COMBO_BOX(w), path);
+    if (!g_utf8_validate(path, -1, NULL)) {
+	gchar *u = my_filename_to_utf8(path);
+
+	if (u != NULL) {
+	    set_combo_box_default_text(GTK_COMBO_BOX(w), u);
+	    g_free(u);
+	}
+    } else {
+	set_combo_box_default_text(GTK_COMBO_BOX(w), path);
+    }
 }
 
 static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
@@ -2812,6 +2821,11 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	strncat(tmp, str, MAXLEN - 2);
 	g_free(str);
     }
+
+#ifdef G_OS_WIN32
+    /* the filename obtained from GTK will be in UTF-8 */
+    my_filename_from_utf8(tmp);
+#endif
 
     err = set_gretl_work_dir(tmp);
 
