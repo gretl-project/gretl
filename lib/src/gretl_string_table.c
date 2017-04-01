@@ -657,7 +657,7 @@ void gretl_string_table_add_extra (gretl_string_table *gst, PRN *prn)
 
 struct built_in_string_ {
     char name[VNAMELEN];
-    char *s;
+    gchar *s;
 };
 
 typedef struct built_in_string_ built_in_string;
@@ -681,7 +681,7 @@ void builtin_strings_cleanup (void)
     int i, n = sizeof built_ins / sizeof built_ins[0];
 
     for (i=0; i<n; i++) {
-	free(built_ins[i].s);
+	g_free(built_ins[i].s);
     }    
 }
 
@@ -697,20 +697,33 @@ void builtin_strings_cleanup (void)
 void gretl_insert_builtin_string (const char *name, const char *s)
 {
     int i, n = sizeof built_ins / sizeof built_ins[0];
+    int m, gui = gretl_in_gui_mode();
 
     for (i=0; i<n; i++) {
 	if (!strcmp(name, built_ins[i].name)) {
-	    free(built_ins[i].s);
+	    g_free(built_ins[i].s);
 	    if (s == NULL) {
 		built_ins[i].s = NULL;
-	    } else {
-		int m = strlen(s);
+	    } else if (gui && !g_utf8_validate(s, -1, NULL)) {
+		/* handle non-ASCII Windows paths */
+		gsize bytes;
+		gchar *u;
 
+		u = g_locale_to_utf8(s, -1, NULL, &bytes, NULL);
+		if (u != NULL) {
+		    m = strlen(u);
+		    if (u[m-1] == SLASH) {
+			u[m-1] = '\0';
+		    }
+		}
+		built_ins[i].s = u;
+	    } else {
+		m = strlen(s);
 		if (s[m-1] == SLASH) {
 		    /* drop trailing dir separator for paths */
-		    built_ins[i].s = gretl_strndup(s, m - 1);
+		    built_ins[i].s = g_strndup(s, m - 1);
 		} else {
-		    built_ins[i].s = gretl_strdup(s);
+		    built_ins[i].s = g_strdup(s);
 		}
 	    }
 	    return;

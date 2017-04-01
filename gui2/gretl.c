@@ -475,7 +475,7 @@ static GtkosxApplication *theApp;
 
 static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
 {
-    // return exit_check();
+    /* return exit_check(); */
     return FALSE;
 }
 

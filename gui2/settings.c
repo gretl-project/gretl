@@ -2717,6 +2717,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     GtkWidget *entry;
     GSList *group = NULL;
     GList *list = NULL;
+    gchar *deflt;
     char tmp[MAXLEN];
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -2728,12 +2729,13 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 
     strcpy(tmp, gretl_workdir()); 
     trim_slash(tmp);
+    deflt = my_filename_to_utf8(tmp);
  
     /* combo + browse button for current working dir */
     w = combo_box_text_new_with_entry();
     gtk_container_add(GTK_CONTAINER(hbox), w);
     set_combo_box_strings_from_list(w, list);
-    set_combo_box_default_text(GTK_COMBO_BOX(w), tmp);
+    set_combo_box_default_text(GTK_COMBO_BOX(w), deflt);
     entry = gtk_bin_get_child(GTK_BIN(w));
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
@@ -2742,7 +2744,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(wdir_browse_callback), wset);
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5); 
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
 
     vbox_add_hsep(vbox);
 
@@ -2794,6 +2796,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 
     g_list_foreach(list, (GFunc) free_fname, NULL);
     g_list_free(list);
+    g_free(deflt);
 }
 
 static void 

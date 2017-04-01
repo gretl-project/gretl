@@ -338,7 +338,7 @@ static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
 	vech_into_row(vU, t, uu);
     }
 
-    /* initial setup of  X */
+    /* initial setup of RHS (X) */
     gretl_matrix_zero(X);
     for (t=0; t<T; t++) {
 	X->val[t] = 1.0;
