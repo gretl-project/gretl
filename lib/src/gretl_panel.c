@@ -2652,7 +2652,7 @@ static void save_hausman_result (panelmod_t *pan)
 {
     ModelTest *test;
 
-    if (pan->realmod == NULL) {
+    if (pan->realmod == NULL || pan->nbeta == 0) {
 	return;
     }
 
@@ -3394,6 +3394,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     gretlopt pan_opt = opt;
     gretlopt ols_opt = OPT_A;
     int *olslist = NULL;
+    int nerlove = 0;
     int ntdum = 0;
     int err = 0;
 
@@ -3492,6 +3493,10 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	goto bailout;
     }
 
+    if (opt & OPT_U) {
+	nerlove = (opt & OPT_N)? 1 : 0;
+    }
+
     calculate_Tbar(&pan);
 
     if (opt & OPT_U) {
@@ -3499,9 +3504,11 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	int xdf = pan.effn - (mod.ncoeff - pan.ntdum);
 
 	if (xdf <= 0) {
-	    gretl_errmsg_set(_("Couldn't estimate group means regression"));
-	    err = mod.errcode = E_DF;
-	    goto bailout;
+	    if (!nerlove) {
+		gretl_errmsg_set(_("Couldn't estimate group means regression"));
+		err = mod.errcode = E_DF;
+		goto bailout;
+	    }
 	} else {
 	    err = hausman_allocate(&pan);
 	    if (err) {
@@ -3527,7 +3534,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    err = between_variance(&pan, gset);
 	}
 
-	if (err) { 
+	if (err && !nerlove) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
 	    err = random_effects(&pan, dset, gset, prn);
