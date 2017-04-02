@@ -342,7 +342,7 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_W, "white", 0 },
     { MODTEST,  OPT_X, "white-nocross", 0 },
     { MODTEST,  OPT_I, "silent", 0 },
-    { MODTEST,  OPT_M, "multivariate", 0 },
+    { MODTEST,  OPT_U, "univariate", 0 },
     { MPI,      OPT_F, "send-functions", 0 },
     { MPI,      OPT_L, "local", 0 },
     { MPI,      OPT_N, "np", 2},

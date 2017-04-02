@@ -46,9 +46,10 @@ int gretl_VAR_normality_test (const GRETL_VAR *var,
    Analysis (Springer, 2005) section 4.4, pp. 173-4.
 */
 
-int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
-				    DATASET *dset, gretlopt opt,
-				    PRN *prn)
+static int
+multivariate_autocorr_test (GRETL_VAR *var, int H,
+			    int autoH, gretlopt opt,
+			    PRN *prn)
 {
     const gretl_matrix *U;
     char Fspec[16];
@@ -62,7 +63,6 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     double detUU, detEE;
     double N, dfn, dfd;
     int quiet = (opt & OPT_Q);
-    int autoH = (H == 0);
     int h, h2, K = var->neqns;
     int i, t, nx, K2 = K * K;
     int g, lagcol, hw = 0;
@@ -79,11 +79,6 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     U = gretl_VAR_get_residual_matrix(var);
     if (U == NULL) {
 	return E_DATA;
-    }
-
-    if (autoH) {
-	/* the default lag horizon */
-	H = dset->pd;
     }
 
     /* how many regressors are we going to have at max? */
@@ -151,6 +146,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     memcpy(targ, var->X->val, var->ncoeff * T * sizeof(double));
 
     if (!quiet) {
+	pprintf(prn, "%s %d\n", _("Test for autocorrelation of order up to"), H);
 	hw = ceil(log10(H));
 	pputc(prn, '\n');
 	bufspace(9 + hw, prn);
@@ -220,6 +216,79 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int H,
     return err;
 }
 
+static int
+univariate_autocorr_test (GRETL_VAR *var, int order,
+			  DATASET *dset, gretlopt opt,
+			  PRN *prn)
+{
+    MODEL *pmod;
+    gretl_matrix *tests, *pvals;
+    double lb;
+    int i, quiet = (opt & OPT_Q);
+    int err = 0;
+
+    tests = gretl_column_vector_alloc(var->neqns);
+    pvals = gretl_column_vector_alloc(var->neqns);
+
+    if (tests == NULL || pvals == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!quiet) {
+	pprintf(prn, "%s %d\n\n", _("Test for autocorrelation of order"),
+		order);
+    }
+
+    for (i=0; i<var->neqns && !err; i++) {
+	pmod = var->models[i];
+	if (!quiet) {
+	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	}
+	lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
+	if (!err) {
+	    tests->val[i] = lb;
+	    pvals->val[i] = chisq_cdf_comp(order, lb);
+	    if (!(opt & OPT_Q)) {
+		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n",
+			lb, _("with p-value"), _("Chi-square"), order,
+			lb, pvals->val[i]);
+		pputc(prn, '\n');
+	    }
+	}
+    }
+
+    if (!err) {
+	record_matrix_test_result(tests, pvals);
+    } else {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
+    }
+
+    return err;
+}
+
+int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
+				    DATASET *dset, gretlopt opt,
+				    PRN *prn)
+{
+    int h = order;
+    int err;
+
+    if (order == 0) {
+	h = dset->pd;
+    }
+
+    if (opt & OPT_U) {
+	err = univariate_autocorr_test(var, h, dset, opt, prn);
+    } else {
+	int autoH = (order == 0);
+
+	err = multivariate_autocorr_test(var, h, autoH, opt, prn);
+    }
+
+    return err;
+}
+
 /* write the vech of @src into row @t of @targ */
 
 static void vech_into_row (gretl_matrix *targ, int t,
@@ -258,8 +327,9 @@ static void inscribe_lag (gretl_matrix *targ,
     }
 }
 
-static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
-				   gretlopt opt, PRN *prn)
+static int multivariate_arch_test (GRETL_VAR *var, int H,
+				   int autoH, gretlopt opt,
+				   PRN *prn)
 {
     const gretl_matrix *U;
     gretl_matrix_block *Bk;
@@ -349,6 +419,7 @@ static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
     K24 = KK1 * KK1 / 4.0;
 
     if (!quiet) {
+	pprintf(prn, "%s %d\n", _("Test for ARCH of order up to"), H);
 	hw = ceil(log10(H));
 	pputc(prn, '\n');
 	bufspace(10 + hw, prn);
@@ -413,24 +484,12 @@ static int multivariate_arch_test (GRETL_VAR *var, int H, int autoH,
     return err;
 }
 
-int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
-			 DATASET *dset, gretlopt opt,
-			 PRN *prn)
+static int univariate_arch_test (GRETL_VAR *var, int order,
+				 DATASET *dset, gretlopt opt,
+				 PRN *prn)
 {
     gretl_matrix *tests, *pvals;
-    int h = order;
     int i, err = 0;
-
-    if (order == 0) {
-	h = dset->pd;
-    }
-
-    if (opt & OPT_M) {
-	/* --multivariate version */
-	int autoH = (order == 0);
-
-	return multivariate_arch_test(var, h, autoH, opt, prn);
-    }
 
     tests = gretl_column_vector_alloc(var->neqns);
     pvals = gretl_column_vector_alloc(var->neqns);
@@ -438,7 +497,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     if (tests == NULL || pvals == NULL) {
 	err = E_ALLOC;
     } else if (!(opt & OPT_I)) {
-	pprintf(prn, "%s %d\n\n", _("Test for ARCH of order"), h);
+	pprintf(prn, "%s %d\n\n", _("Test for ARCH of order"), order);
     }
 
     for (i=0; i<var->neqns && !err; i++) {
@@ -446,7 +505,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
 	}
 	/* add OPT_M for multi-equation output */
-	err = arch_test(var->models[i], h, dset, opt | OPT_M, prn);
+	err = arch_test(var->models[i], order, dset, opt | OPT_M, prn);
 	if (!err) {
 	    tests->val[i] = get_last_test_statistic(NULL);
 	    pvals->val[i] = get_last_pvalue(NULL);
@@ -458,6 +517,28 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     } else {
 	gretl_matrix_free(tests);
 	gretl_matrix_free(pvals);
+    }
+
+    return err;
+}
+
+int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
+			 DATASET *dset, gretlopt opt,
+			 PRN *prn)
+{
+    int h = order;
+    int err;
+
+    if (order == 0) {
+	h = dset->pd;
+    }
+
+    if (opt & OPT_U) {
+	err = univariate_arch_test(var, h, dset, opt, prn);
+    } else {
+	int autoH = (order == 0);
+
+	err = multivariate_arch_test(var, h, autoH, opt, prn);
     }
 
     return err;
