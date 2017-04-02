@@ -986,28 +986,32 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
    in its matrix formulation.
 */
 
-static int hausman_allocate (panelmod_t *pan)
+static int matrix_hausman_allocate (panelmod_t *pan)
 {
     int k = pan->vlist[0] - 2;
-
-    pan->nbeta = k;
+    int err = 0;
 
     if (pan->opt & OPT_M) {
 	/* array to hold differences between coefficient estimates */
 	pan->bdiff = gretl_vector_alloc(k);
 	if (pan->bdiff == NULL) {
-	    return E_ALLOC;
-	}
-	/* array to hold covariance matrix */
-	pan->Sigma = gretl_matrix_alloc(k, k);
-	if (pan->Sigma == NULL) {
-	    gretl_matrix_free(pan->bdiff);
-	    pan->bdiff = NULL;
-	    return E_ALLOC; 
+	    err = E_ALLOC;
+	} else {
+	    /* array to hold covariance matrix */
+	    pan->Sigma = gretl_matrix_alloc(k, k);
+	    if (pan->Sigma == NULL) {
+		gretl_matrix_free(pan->bdiff);
+		pan->bdiff = NULL;
+		err = E_ALLOC;
+	    }
 	}
     }
 
-    return 0;
+    if (!err) {
+	pan->nbeta = k;
+    }
+
+    return err;
 }   
 
 /* printing routines for the "panel diagnostics" test */
@@ -1202,7 +1206,7 @@ random_effects_dataset (const DATASET *dset,
 	/* Apparatus for regression version of Hausman test:
 	   note that we shouldn't include time dummies here
 	   since the de-meaned versions would be perfectly
-	   collinear with the quasi-demaned ones.
+	   collinear with the quasi-demeaned ones.
 	*/
 	int hmax = pan->vlist[0] - pan->ntdum;
 	    
@@ -2652,7 +2656,7 @@ static void save_hausman_result (panelmod_t *pan)
 {
     ModelTest *test;
 
-    if (pan->realmod == NULL || pan->nbeta == 0) {
+    if (pan->realmod == NULL || na(pan->H) || pan->nbeta == 0) {
 	return;
     }
 
@@ -2684,7 +2688,7 @@ static double hausman_regression_result (panelmod_t *pan,
     double ret = NADBL;
     int *biglist = NULL;
     int err = 0;
-    
+
     biglist = gretl_list_add(relist, hlist, &err);
 
     if (biglist != NULL) {
@@ -2708,6 +2712,10 @@ static double hausman_regression_result (panelmod_t *pan,
     }
     
     free(biglist);
+
+    if (!na(ret)) {
+	pan->nbeta = hlist[0];
+    }
 
     return ret;
 }
@@ -3147,7 +3155,7 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 
     /* can we do the Hausman test or not? */
     if (xdf > 0) {
-	err = hausman_allocate(&pan);
+	err = matrix_hausman_allocate(&pan);
 	if (err) {
 	    goto bailout;
 	}
@@ -3503,19 +3511,18 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	/* trying to do random effects */
 	int xdf = pan.effn - (mod.ncoeff - pan.ntdum);
 
-	if (xdf <= 0) {
-	    if (!nerlove) {
-		gretl_errmsg_set(_("Couldn't estimate group means regression"));
-		err = mod.errcode = E_DF;
-		goto bailout;
-	    }
-	} else {
-	    err = hausman_allocate(&pan);
+	if (xdf <= 0 && !nerlove) {
+	    gretl_errmsg_set(_("Couldn't estimate group means regression"));
+	    err = mod.errcode = E_DF;
+	    goto bailout;
+	} else if (pan.opt & OPT_M) {
+	    /* matrix version of Hausman test */
+	    err = matrix_hausman_allocate(&pan);
 	    if (err) {
 		goto bailout;
 	    }
 	}
-    } 
+    }
 
     err = within_variance(&pan, dset, prn);
     if (err) {
