@@ -1443,12 +1443,14 @@ int gretl_version_number (const char *version)
     int vnum = 0;
     
     if (atoi(version) >= 2015) {
+	/* as in "2015d" and subsequent releases */
 	int Y;
 	char c;
 
 	sscanf(version, "%d%c", &Y, &c);
 	vnum = 10 * Y + letter_to_int(c);
     } else {
+	/* old style: "1.9.14" or whatever */
 	int x, y, z;
 
 	sscanf(version, "%d.%d.%d", &x, &y, &z);

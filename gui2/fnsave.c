@@ -770,10 +770,20 @@ static int finfo_save (function_info *finfo)
 	} 
     }
 
-    if (!finfo->pdfdoc && (finfo->help == NULL || *finfo->help == '\0')) {
-	warnbox(_("Please add some help text for this package"));
-	regular_help_text_callback(NULL, finfo);
-	return 1;
+    if (!finfo->pdfdoc) {
+	int fixit = 0;
+
+	if (finfo->help == NULL || *finfo->help == '\0') {
+	    warnbox(_("Please add some help text for this package"));
+	    fixit = 1;
+	} else if (strstr(finfo->help, "pdfdoc:") != NULL) {
+	    warnbox(_("Please delete the \"pdfdoc:\" line from the help text"));
+	    fixit = 1;
+	}
+	if (fixit) {
+	    regular_help_text_callback(NULL, finfo);
+	    return 1;
+	}
     }
 
     if (finfo->sample == NULL) {
@@ -804,6 +814,8 @@ static int finfo_save (function_info *finfo)
 	if (finfo->n_files > 0 || finfo->pdfdoc) {
 	    finfo->uses_subdir = 1;
 	}
+    } else if (finfo->n_files == 0 && !finfo->pdfdoc) {
+	finfo->uses_subdir = 0;
     }
 
     if (finfo->fname == NULL) {
