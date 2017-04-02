@@ -1139,9 +1139,13 @@ static void save_var_vecm (ExecState *s)
 {
     maybe_stack_var(s->var, s->cmd);
 
-    if (s->callback != NULL && *s->cmd->savename != '\0' &&
-	gretl_in_gui_mode()) {
-	s->callback(s, s->var, GRETL_OBJ_VAR);
+    if (gretl_in_gui_mode() && s->callback != NULL) {
+	int havename = *s->cmd->savename != '\0';
+	int window = (s->cmd->opt & OPT_W) != 0;
+
+	if (havename || window) {
+	    s->callback(s, s->var, GRETL_OBJ_VAR);
+	}
     }    
 }
 

@@ -36,6 +36,8 @@ version 2017a, in progress
 - "modtest" command with --autocorr option, as applied to
   VARs: switch from per-equation tests to multivariate test
   as described by Lutkepohl
+- "var" and "vecm": enable the --window (-w) option to show
+  results in a window from script execution
 - "hausman" command: add options --nerlove and --matrix-diff
   to inflect the random effects estimator and calculation
   of the Hausman test statistic

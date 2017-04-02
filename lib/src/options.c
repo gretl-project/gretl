@@ -29,7 +29,7 @@
 
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
-#define window_opt_ok(c) (MODEL_COMMAND(c))
+#define window_opt_ok(c) (MODEL_COMMAND(c) || c == VAR || c == VECM)
 
 /* commands for which --quiet (= OPT_Q) is applicable */
 
