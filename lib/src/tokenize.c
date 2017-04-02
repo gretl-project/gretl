@@ -1238,7 +1238,7 @@ static int check_command_options (CMD *c)
 	    for (j=0; j<n && !err; j++) {
 		opt = valid_short_opt(c->ci, tok->s[j]);
 		if (opt == OPT_NONE) {
-		    gretl_errmsg_sprintf(_("Invalid option '-%c'"), tok->s[j]);
+		    /* error message handled in options.c */
 		    err = E_BADOPT;
 		} else {
 		    c->opt |= opt;
