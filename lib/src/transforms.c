@@ -1885,9 +1885,9 @@ int list_resample (int *list, DATASET *dset)
 int list_dropcoll (int *list, double eps, DATASET *dset)
 {
     double eps_default = 1.0e-8;
-    gretl_matrix *R;
-    gretl_matrix *X;
-    int n, err = 0;
+    gretl_matrix *R = NULL;
+    gretl_matrix *X = NULL;
+    int m, n, err = 0;
 
     if (list == NULL) {
 	return E_DATA;
@@ -1908,13 +1908,19 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 	return err;
     }
 
-    n = list[0];
-    R = gretl_matrix_alloc(n, n);
+    m = X->rows;
+    n = X->cols;
     
-    if (R == NULL) {
-	err = E_ALLOC;
+    if (n > m) {
+	gretl_errmsg_sprintf(_("A minimum of %d observations is required"), n);
+	err = E_TOOFEW;
     } else {
-	err = gretl_matrix_QR_decomp(X, R);
+	R = gretl_matrix_alloc(n, n);
+	if (R == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_matrix_QR_decomp(X, R);
+	}
     }
     
     if (!err) {
