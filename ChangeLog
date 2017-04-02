@@ -36,6 +36,9 @@ version 2017a, in progress
 - "modtest" command with --autocorr option, as applied to
   VARs: switch from per-equation tests to multivariate test
   as described by Lutkepohl
+- "hausman" command: add options --nerlove and --matrix-diff
+  to inflect the random effects estimator and calculation
+  of the Hausman test statistic
 - Principal Components window in GUI: support selection of
   a specific number of components to save as series
 - ARMA models in GUI: add menu item to view plot of spectrum

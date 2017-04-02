@@ -5580,7 +5580,18 @@
   </command>   
  
   <command name="hausman" section="Tests" label="Panel diagnostics">
-
+    <usage>
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>use Nerlove method for random effects</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>use matrix-difference method for Hausman test</effect>
+	</option>
+      </options>
+    </usage>
     <description>
       <para>
 	This test is available only after estimating an OLS model
@@ -5588,7 +5599,6 @@
 	simple pooled model against the principal alternatives, the fixed
 	effects and random effects models.
       </para>
-
       <para>
 	The fixed effects model allows the intercept of the regression to
 	vary across the cross-sectional units.  An
@@ -5602,7 +5612,6 @@
 	tests the null hypothesis that the pooled OLS estimator is
 	adequate against the random effects alternative.
       </para>
-
       <para>
 	The pooled OLS model may be rejected against both of the
 	alternatives, fixed effects and random effects. Provided the
@@ -5615,6 +5624,14 @@
 	correlated (and therefore the random effects model is
 	preferable).  A low p-value for this test counts against the
 	random effects model and in favor of fixed effects.
+      </para>
+      <para>
+	The two options for this command pertain to the random effects
+	model. By default the method of Swamy and Arora is used, and
+	the Hausman test statistic is calculated using the regression
+	method. The options enable the use of Nerlove's alternative
+	variance estimator and/or the matrix-difference approach to
+	the Hausman statistic.
       </para>
     </description>
 

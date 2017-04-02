@@ -68,7 +68,7 @@ struct panelmod_t_ {
     char *varying;        /* array to record properties of pooled-model regressors */
     int *vlist;           /* list of time-varying variables from pooled model */
     int balanced;         /* 1 if the model dataset is balanced, else 0 */
-    int nbeta;            /* number of slope coeffs for Hausman test */
+    int dfH;              /* number of coeffs for Hausman test */
     int Fdfn;             /* numerator df, F for differing intercepts */
     double Fdfd;          /* denominator df, F for differing intercepts */
     double theta;         /* quasi-demeaning coefficient */
@@ -163,7 +163,6 @@ static void panelmod_init (panelmod_t *pan)
     pan->opt = OPT_NONE;
 
     pan->balanced = 1;
-    pan->nbeta = 0;
     pan->theta = NADBL;
     pan->theta_bar = NADBL;
 
@@ -173,6 +172,7 @@ static void panelmod_init (panelmod_t *pan)
 
     pan->BP = NADBL;
     pan->H = NADBL;
+    pan->dfH = 0;
 
     pan->bdiff = NULL;
     pan->Sigma = NULL;
@@ -991,28 +991,26 @@ static int matrix_hausman_allocate (panelmod_t *pan)
     int k = pan->vlist[0] - 2;
     int err = 0;
 
-    if (pan->opt & OPT_M) {
-	/* array to hold differences between coefficient estimates */
-	pan->bdiff = gretl_vector_alloc(k);
-	if (pan->bdiff == NULL) {
+    /* array to hold differences between coefficient estimates */
+    pan->bdiff = gretl_vector_alloc(k);
+    if (pan->bdiff == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* array to hold covariance matrix */
+	pan->Sigma = gretl_matrix_alloc(k, k);
+	if (pan->Sigma == NULL) {
+	    gretl_matrix_free(pan->bdiff);
+	    pan->bdiff = NULL;
 	    err = E_ALLOC;
-	} else {
-	    /* array to hold covariance matrix */
-	    pan->Sigma = gretl_matrix_alloc(k, k);
-	    if (pan->Sigma == NULL) {
-		gretl_matrix_free(pan->bdiff);
-		pan->bdiff = NULL;
-		err = E_ALLOC;
-	    }
 	}
     }
 
     if (!err) {
-	pan->nbeta = k;
+	pan->dfH = k;
     }
 
     return err;
-}   
+}
 
 /* printing routines for the "panel diagnostics" test */
 
@@ -1519,7 +1517,7 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
     int sj, si = 0;
     double x;
 
-    for (i=0; i<pan->nbeta; i++) {
+    for (i=0; i<pan->dfH; i++) {
 	if (vcv_skip(pmod, mi, pan, op)) {
 	    i--;
 	    mi++;
@@ -1527,7 +1525,7 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
 	}
 	mj = mi;
 	sj = si;
-	for (j=i; j<pan->nbeta; j++) {
+	for (j=i; j<pan->dfH; j++) {
 	    if (vcv_skip(pmod, mj, pan, op)) {
 		j--;
 		mj++;
@@ -2644,8 +2642,7 @@ static void print_hausman_result (panelmod_t *pan, PRN *prn)
     } else {
 	pprintf(prn, _("\nHausman test statistic:\n"
 		       " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
-		pan->H, pan->nbeta, pan->H, 
-		chisq_cdf_comp(pan->nbeta, pan->H));
+		pan->H, pan->dfH, pan->H, chisq_cdf_comp(pan->dfH, pan->H));
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		     "the random effects\nmodel is consistent, in favor of the fixed "
 		     "effects model.)\n"));
@@ -2656,7 +2653,7 @@ static void save_hausman_result (panelmod_t *pan)
 {
     ModelTest *test;
 
-    if (pan->realmod == NULL || na(pan->H) || pan->nbeta == 0) {
+    if (pan->realmod == NULL || na(pan->H) || pan->dfH == 0) {
 	return;
     }
 
@@ -2664,15 +2661,41 @@ static void save_hausman_result (panelmod_t *pan)
 
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
-	model_test_set_dfn(test, pan->nbeta);
+	model_test_set_dfn(test, pan->dfH);
 	model_test_set_value(test, pan->H);
 	if (na(pan->H)) {
 	    model_test_set_pvalue(test, NADBL);
 	} else {
-	    model_test_set_pvalue(test, chisq_cdf_comp(pan->nbeta, pan->H));
+	    model_test_set_pvalue(test, chisq_cdf_comp(pan->dfH, pan->H));
 	}
 	maybe_add_test_to_model(pan->realmod, test);
     }	    
+}
+
+/* handle the case where collinear terms were dropped
+   when doing the Hausman test via the regression
+   method in robust mode
+*/
+
+static double robust_hausman_fixup (const int *hlist,
+				    MODEL *pmod)
+{
+    int *wlist = gretl_list_copy(hlist);
+    double H = NADBL;
+
+    if (wlist != NULL) {
+	int i;
+
+	for (i=wlist[0]; i>0; i--) {
+	    if (!in_gretl_list(pmod->list, wlist[i])) {
+		gretl_list_delete_at_pos(wlist, i);
+	    }
+	}
+	H = wald_omit_chisq(wlist, pmod);
+	free(wlist);
+    }
+
+    return H;
 }
 
 /* Estimate the augmented GLS model for the Hausman test;
@@ -2683,7 +2706,8 @@ static void save_hausman_result (panelmod_t *pan)
 static double hausman_regression_result (panelmod_t *pan,
 					 const int *relist,
 					 const int *hlist,
-					 DATASET *rset)
+					 DATASET *rset,
+					 PRN *prn)
 {
     double ret = NADBL;
     int *biglist = NULL;
@@ -2696,26 +2720,34 @@ static double hausman_regression_result (panelmod_t *pan,
 
 	gretl_model_init(&hmod, NULL);
 	hmod = lsq(biglist, rset, OLS, OPT_A);
+#if PDEBUG > 1
+	pputs(prn, "Hausman test regression\n");
+	printmodel(&hmod, rset, OPT_NONE, prn);
+#endif
 	if (hmod.errcode == 0) {
-	    if (pan->opt & OPT_R) {
-		/* do robust Wald test */
-		panel_robust_vcv(&hmod, pan, (const double **) rset->Z);
-		if (hmod.vcv != NULL) {
-		    ret = wald_omit_chisq(hlist, &hmod);
+	    /* number of extra regressors actually used */
+	    pan->dfH = hlist[0] - (biglist[0] - hmod.list[0]);
+	    if (pan->dfH > 0) {
+		if (pan->opt & OPT_R) {
+		    /* do robust Wald test */
+		    panel_robust_vcv(&hmod, pan, (const double **) rset->Z);
+		    if (hmod.vcv != NULL) {
+			if (pan->dfH < hlist[0]) {
+			    ret = robust_hausman_fixup(hlist, &hmod);
+			} else {
+			    ret = wald_omit_chisq(hlist, &hmod);
+			}
+		    }
+		} else {
+		    /* just record the unrestricted SSR */
+		    ret = hmod.ess;
 		}
-	    } else {
-		/* just record unrestricted SSR */
-		ret = hmod.ess;
 	    }
 	}
 	clear_model(&hmod);
     }
     
     free(biglist);
-
-    if (!na(ret)) {
-	pan->nbeta = hlist[0];
-    }
 
     return ret;
 }
@@ -2765,6 +2797,10 @@ static int random_effects (panelmod_t *pan,
     */
     if (!(pan->opt & OPT_N)) {
 	pan->s2v = pan->s2b - pan->s2e / pan->Tbar;
+#if PDEBUG
+	fprintf(stderr, "Swamy-Arora: initial s2v = %g - %g = %g\n",
+		pan->s2b, pan->s2e / pan->Tbar, pan->s2v);
+#endif
 	if (pan->s2v < 0) {
 	    pan->s2v = 0.0;
 	}
@@ -2787,7 +2823,7 @@ static int random_effects (panelmod_t *pan,
     }
 
     if (hlist != NULL) {
-	hres = hausman_regression_result(pan, relist, hlist, rset);
+	hres = hausman_regression_result(pan, relist, hlist, rset, prn);
     }	
 
     /* regular random-effects model */
@@ -3105,17 +3141,30 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 int panel_diagnostics (MODEL *pmod, DATASET *dset, 
 		       gretlopt opt, PRN *prn)
 {
+    int nerlove = 0;
     panelmod_t pan;
     int xdf, err = 0;
 
 #if PDEBUG
     fputs("\n*** Starting panel_diagnostics ***\n", stderr);
+    fprintf(stderr, " OPT_M? %s\n", (opt & OPT_M)? "yes" : "no");
 #endif
 
     if (pmod->ifc == 0) {
 	/* at many points we assume the base regression has an
 	   intercept included */
 	return E_NOCONST;
+    }
+
+#if PDEBUG /* not really ready yet! */
+    if (pmod->opt & OPT_R) {
+	/* forward the robust option */
+	opt |= OPT_R;
+    }
+#endif
+
+    if (opt & OPT_N) {
+	nerlove = 1;
     }
 
     /* add OPT_V to make the fixed and random effects functions verbose */
@@ -3153,13 +3202,15 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	    pan.nunits, pan.T, pan.effn, pan.Tmax, xdf);
 #endif
 
-    /* can we do the Hausman test or not? */
-    if (xdf > 0) {
+    if (xdf <= 0 && !nerlove) {
+	; /* can't do Random Effects */
+    } else if (pan.opt & OPT_M) {
+	/* matrix version of Hausman test */
 	err = matrix_hausman_allocate(&pan);
 	if (err) {
 	    goto bailout;
 	}
-    } 
+    }
 
     if (pan.balanced) {
 	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
@@ -3172,8 +3223,6 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
     if (err) {
 	goto bailout;
     }
-
-    breusch_pagan_LM(&pan, prn);
 
     if (xdf <= 0) {
 	pprintf(prn, "Omitting group means regression: "
@@ -3199,6 +3248,10 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	    }
 	} else {
 	    random_effects(&pan, dset, gset, prn);
+	    if (pan.theta > 0) {
+		/* this test hardly makes sense if GLS = OLS */
+		breusch_pagan_LM(&pan, prn);
+	    }
 	    finalize_hausman_test(&pan, prn);
 	}
 

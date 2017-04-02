@@ -274,6 +274,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_W, "font", 2 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
+    { HAUSMAN,  OPT_M, "matrix-diff", 0 },
+    { HAUSMAN,  OPT_N, "nerlove", 0 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_G, "opg", 0 },
     { HECKIT,   OPT_R, "robust", 0 },
