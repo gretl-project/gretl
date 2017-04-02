@@ -33,9 +33,10 @@ version 2017a, in progress
 - "tsls" command: calculate Sargan test in overidentified
   case even when there are no endogenous regressors, to allow
   "difference in Sargan" test
-- "modtest" command with --autocorr option, as applied to
-  VARs: switch from per-equation tests to multivariate test
-  as described by Lutkepohl
+- "modtest" command with --autocorr or --arch option, as
+  applied to VAR/VECM: switch from per-equation tests to
+  multivariate tests as described in Lutkepohl's 2005 book,
+  but add a --univariate option to give per-equation tests
 - "var" and "vecm": enable the --window (-w) option to show
   results in a window from script execution
 - "hausman" command: add options --nerlove and --matrix-diff
