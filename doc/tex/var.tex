@@ -462,9 +462,9 @@ FIXME: todo
 
 Three diagnostic tests based on residuals are available after
 estimating a VAR---for normality, autocorrelation and ARCH
-(Autoregressice Conditional Heteroskedasticity). These are implemented
+(Autoregressive Conditional Heteroskedasticity). These are implemented
 by the \cmd{modtest} command, using the options \option{normality},
-\option{autocorr} and \option{arch} respectively.
+\option{autocorr} and \option{arch}, respectively.
 
 The (multivariate) normality test is that of \cite{doornik-hansen94};
 it is based on the skewness and kurtosis of the VAR residuals.
@@ -479,7 +479,68 @@ of degrees of freedom in small samples. As a fallback, the
 \option{univariate} option can be used to specify that the tests
 be run per-equation rather than in multivariate mode.
 
+Listing~\ref{script:var-autocorr} illustrates the VAR autocorrelation
+tests, replicating an example given by \citet[p.\ 174]{Lutkepohl05}.
+Note the difference in the interpretation of the \textsl{order}
+argument to \cmd{modtest} with the \option{autocorr} option (this also
+applies to the ARCH test): in the multivariate version \textsl{order}
+is taken as the \textit{maximum} lag order and tests are run from lag
+1 up to the maximum; but in the univariate version a single test is
+run for each equation using just the specified lag order. The example
+also exposes what exactly is returned by the \dollar{test} and
+\dollar{pvalue} accessors in the two variants.
 
+\begin{script}[htbp]
+  \caption{VAR autocorrelation test from L\"utkepohl}
+  \label{script:var-autocorr}
+Input:
+\begin{scodebit}
+open wgmacro.gdt --quiet
+list Y = investment income consumption
+list dlnY = ldiff(Y)
+smpl 1960:4 1978:4
+var 2 dlnY
+modtest 4 --autocorr
+eval $test ~ $pvalue
+modtest 4 --autocorr --univariate
+eval $test ~ $pvalue
+\end{scodebit}
+%$
+Output from tests:
+\begin{scodebit}
+? modtest 4 --autocorr
+Test for autocorrelation of order up to 4
+
+          Rao F   Approx dist.  p-value
+lag 1     0.615    F(9, 148)     0.7827
+lag 2     0.754    F(18, 164)    0.7507
+lag 3     1.143    F(27, 161)    0.2982
+lag 4     1.254    F(36, 154)    0.1743
+
+? eval $test ~ $pvalue
+     0.61524      0.78269 
+     0.75397      0.75067 
+      1.1429      0.29820 
+      1.2544      0.17431 
+
+? modtest 4 --autocorr --univariate
+Test for autocorrelation of order 4
+
+Equation 1:
+Ljung-Box Q' = 6.11506 with p-value = P(Chi-square(4) > 6.11506) = 0.191
+
+Equation 2:
+Ljung-Box Q' = 1.67136 with p-value = P(Chi-square(4) > 1.67136) = 0.796
+
+Equation 3:
+Ljung-Box Q' = 1.59931 with p-value = P(Chi-square(4) > 1.59931) = 0.809
+
+? eval $test ~ $pvalue
+      6.1151      0.19072 
+      1.6714      0.79591 
+      1.5993      0.80892 
+\end{scodebit}
+\end{script}
 
 %%% Local Variables: 
 %%% mode: latex
