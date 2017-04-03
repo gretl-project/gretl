@@ -456,7 +456,29 @@ FIXME: show all the nice stuff we have under the GUI.
 
 \subsection{IRF bootstrap}
 
-FIXME: todo 
+FIXME: todo
+
+\section{Residual-based diagnostic tests}
+
+Three diagnostic tests based on residuals are available after
+estimating a VAR---for normality, autocorrelation and ARCH
+(Autoregressice Conditional Heteroskedasticity). These are implemented
+by the \cmd{modtest} command, using the options \option{normality},
+\option{autocorr} and \option{arch} respectively.
+
+The (multivariate) normality test is that of \cite{doornik-hansen94};
+it is based on the skewness and kurtosis of the VAR residuals.
+
+The autocorrelation and ARCH test are also by default multivariate;
+they are described in detail by \cite{Lutkepohl05} (see sections 4.4.4
+and 16.5.1). Both tests are of the LM type, although the
+autocorrelation test statistic is referred to a Rao $F$ distribution
+\citep{Rao73}. These tests may involve estimation of a large number of
+parameters, depending on the lag horizon chosen, and can fail for lack
+of degrees of freedom in small samples. As a fallback, the
+\option{univariate} option can be used to specify that the tests
+be run per-equation rather than in multivariate mode.
+
 
 
 %%% Local Variables: 
