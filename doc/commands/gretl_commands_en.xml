@@ -8146,10 +8146,16 @@
 
     <description>
       <para>
-	Must immediately follow an estimation command. Depending on
-	the option given, this command carries out one of the
-	following: the Doornik&ndash;Hansen test for the normality of
-	the error term; a Lagrange Multiplier test for nonlinearity
+	Must immediately follow an estimation command. The discussion
+	below applies to usage of the command following estimation of
+	a single-equation model; see <guideref targ="chap:var"/> for
+	an account of how \cmd{modtest} operates after estimation of a
+	VAR.
+      </para>
+      <para>
+	Depending on the option given, this command carries out one of
+	the following: the Doornik&ndash;Hansen test for the normality
+	of the error term; a Lagrange Multiplier test for nonlinearity
 	(logs or squares); White's test (with or without
 	cross-products) or the Breusch&ndash;Pagan test (<cite
 	key="breusch-pagan79">Breusch and Pagan, 1979</cite>) for
