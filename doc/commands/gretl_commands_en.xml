@@ -8149,8 +8149,8 @@
 	Must immediately follow an estimation command. The discussion
 	below applies to usage of the command following estimation of
 	a single-equation model; see <guideref targ="chap:var"/> for
-	an account of how \cmd{modtest} operates after estimation of a
-	VAR.
+	an account of how <cmd>modtest</cmd> operates after estimation
+	of a VAR.
       </para>
       <para>
 	Depending on the option given, this command carries out one of

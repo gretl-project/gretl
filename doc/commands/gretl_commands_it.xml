@@ -7409,12 +7409,12 @@
 	freccia verde (o sul pulsante destro del mouse).
       </para>
       <para context="gui">
-	On adding a MIDAS term, a dialog pops up to let you select
-	the range of lags, the parameterization type, and (for
-	types that do not have a fixed number of parameters) the
-	number of hyper-parameters. You can bring this dialog up
-	again to revise a specification by right-clicking on a
-	MIDAS term on the right.
+	Quando si aggiunge un termine MIDAS, si apre una finestra per
+	la selezione dei ritardi, il tipo di parametrizzazione e (per
+	i tipi che non hanno un numero fisso di parametri) il numero
+	di iperparametri. Per riattivare questa finestra e rivedere la
+	specificazione, basta cliccare col pulsante destro su un
+	termine MIDAS sulla destra.
       </para>      
       <para context="cli">
 	<lit>mds</lit>: this variant generally requires 5 arguments,
@@ -7961,21 +7961,27 @@
 
     <description>
       <para>
-        Deve seguire immediatamente un comando di stima. A seconda
-        dell'opzione usata, il comando esegue uno dei test seguenti:
-        test di Doornik&ndash;Hansen per la normalità del termine di
-        errore; test dei moltiplicatori di Lagrange per la
-        non-linearità (logaritmi o quadrati); test di White (con o
-        senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
-        l'eteroschedasticità (<cite key="breusch-pagan79">Breusch and
-        Pagan, 1979</cite>), test LMF per la correlazione seriale (si
-        veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
-        test per il modello ARCH (Autoregressive Conditional
-        Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
-        o restrizione a fattore comune, (solo modelli AR1). La maggior
-        parte delle opzioni sono disponibili solo per modelli stimati
-        con OLS, ma si veda oltre per alcuni dettagli riguardanti la
-        stima con i minimi quadrati a due stadi.
+        Deve seguire immediatamente un comando di stima. La
+        discussione che segue è relativa all'esecuzione del comando
+        dopo la stima di un modello ad equazione singola; si veda
+        <guideref targ="chap:var"/> per una descrizione di come
+        funziona <cmd>modtest</cmd>  dopo la stima di un VAR
+      </para>
+      <para>
+	A seconda dell'opzione usata, il comando esegue uno dei test
+	seguenti: test di Doornik&ndash;Hansen per la normalità del
+	termine di errore; test dei moltiplicatori di Lagrange per la
+	non-linearità (logaritmi o quadrati); test di White (con o
+	senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
+	l'eteroschedasticità (<cite key="breusch-pagan79">Breusch and
+	Pagan, 1979</cite>), test LMF per la correlazione seriale (si
+	veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
+	test per il modello ARCH (Autoregressive Conditional
+	Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
+	o restrizione a fattore comune, (solo modelli AR1). La maggior
+	parte delle opzioni sono disponibili solo per modelli stimati
+	con OLS, ma si veda oltre per alcuni dettagli riguardanti la
+	stima con i minimi quadrati a due stadi.
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
@@ -7998,10 +8004,12 @@
         fra le unità cross section).
       </para>
       <para>
-	L'opzione <opt>comfac</opt> è disponibile solo quando il modello è stimato
-	usando un metodo AR(1), come quello di Hildreth&ndash;Lu. La regressione ausiliaria
-	ha la struttura di un modello dinamico relativamente poco vincolato ed è usata
-	per verificare il vincolo di fattori comuni implicito nella specificazione AR(1).
+	L'opzione <opt>comfac</opt> è disponibile solo quando il
+	modello è stimato usando un metodo AR(1), come quello di
+	Hildreth&ndash;Lu. La regressione ausiliaria ha la struttura
+	di un modello dinamico relativamente poco vincolato ed è usata
+	per verificare il vincolo di fattori comuni implicito nella
+	specificazione AR(1).
       </para>
       <para>
 	Per impostazione predefinita, il programma mostra la regressione
@@ -8011,11 +8019,11 @@
         e <fncref targ="$pvalue"/>.
       </para>
       <para>
-        Nel caso di modelli stimati col metodo dei minimi quadrati a due stadi
-        (si veda <cmdref targ="tsls"/>), non è possibile usare il test LM, quindi
-        gretl offre alcuni test equivalenti; in questo caso, l'opzione
-        <flag>--autocorr</flag> calcola il test di Godfrey per
-        l'autocorrelazione (si veda Godfrey 1994),
+        Nel caso di modelli stimati col metodo dei minimi quadrati a
+        due stadi (si veda <cmdref targ="tsls"/>), non è possibile
+        usare il test LM, quindi gretl offre alcuni test equivalenti;
+        in questo caso, l'opzione <flag>--autocorr</flag> calcola il
+        test di Godfrey per l'autocorrelazione (si veda Godfrey 1994),
         mentre l'opzione <flag>--white</flag> produce il test HET1 per
         l'eteroschedasticità (si veda Pesaran e Taylor 1999).
       </para>
@@ -8800,14 +8808,14 @@
 	semplice, CSV, MS Excel, Stata, ecc).
       </para>
       <para>
-	If the <opt>frompkg</opt> option is used, gretl will look for
-	the specified data file in the subdirectory associated with
-	the function package specified by <repl>pkgname</repl>.
+	Usando l'opzione <opt>frompkg</opt>, <program>gretl</program>
+	cercherà il file di dati specificato nella sottodirectory
+	associata al pacchetto <repl>pkgname</repl>.
       </para>
       <para>
-	If the <repl>filename</repl> argument takes the form of a
-	URI starting with <lit>http://</lit>, then gretl will attempt
-	to download the indicated data file before opening it.
+	Se l'argomento <repl>nome-file</repl> è un URI che inizia con
+	<lit>http://</lit>, allora <program>gretl</program> cercherà
+	di scaricare il file dalla rete prima di aprirlo.
       </para>
       <para>
 	By default, opening a new data file clears the current gretl
