@@ -78,9 +78,9 @@ struct panelmod_t_ {
     double H;             /* Hausman test statistic */
     gretl_matrix *bdiff;  /* array of coefficient differences */
     gretl_matrix *Sigma;  /* Hausman covariance matrix */
-    double s2b;           /* "between" error variance */
-    double s2e;           /* \hat{sigma}^2_e, from fixed-effects estimator */
-    double s2v;           /* \hat{sigma}^2_v measure */
+    double s2b;           /* residual variance, group means regression */
+    double s2e;           /* residual variance, fixed-effects regression */
+    double s2v;           /* estimate of between variance */
     int *small2big;       /* data indexation array */
     int *big2small;       /* reverse data indexation array */
     MODEL *pooled;        /* reference model (pooled OLS) */

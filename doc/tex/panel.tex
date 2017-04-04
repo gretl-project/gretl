@@ -185,18 +185,22 @@ $\sigma^2_v$.  (These are often referred to as the ``within'' and
 variation within each cross-sectional unit and the latter to variation
 between the units).  Several means of estimating these magnitudes have
 been suggested in the literature \citep[see][]{baltagi95}; by default
-gretl uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$
-is estimated by the residual variance from the fixed effects model,
-and the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as
-$T_i$ times the residual variance from the ``between'' estimator,
+gretl uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$ is
+estimated by the residual variance from the fixed effects model, and
+the sum $\sigma^2_v + \sigma^2_\varepsilon/T$ is estimated by the
+residual variance from the ``between'' estimator,
 \[
 \bar{y}_i = \bar{X}_i \beta + e_i
 \]
 The latter regression is implemented by constructing a data set
 consisting of the group means of all the relevant variables.
+An estimate of $\sigma^2_v$ can then be obtained by subtracting
+$1/T$ times the estimate of $\sigma^2_\varepsilon$. 
+
 Alternatively, if the \option{nerlove} option is given, gretl
 uses the method suggested by \cite{nerlove71}. In this case
 $\sigma^2_v$ is estimated as the sample variance of the fixed effects,
+$\alpha_i$,
 \[
 \hat{\sigma}^2_v = \frac{1}{n-1} \sum_{i=1}^n 
   \left(\alpha_i - \bar{\alpha}\right)^2 
@@ -231,19 +235,21 @@ issues must be taken into account.
   dummies.  When using the approach of subtracting the group means,
   the issue is that after de-meaning these variables are nothing but
   zeros.
-\item A somewhat analogous prohibition applies to the random effects
-  estimator.  This estimator is in effect a matrix-weighted average of
-  pooled OLS and the ``between'' estimator.  Suppose we have
-  observations on $n$ units or individuals and there are $k$
-  independent variables of interest.  If $k>n$, the ``between''
-  estimator is undefined---since we have only $n$ effective
-  observations---and hence so is the random effects estimator.
+\item A somewhat analogous issue arises with the random effects
+  estimator.  The default Swamy--Arora method requires that the
+  group-means model be estimated to obtain a measure of the between
+  variance. Suppose we have observations on $n$ units or individuals
+  and there are $k$ independent variables of interest.  If $k>n$, the
+  group-means model cannot be estimated---since we have only $n$
+  effective observations---and hence Swamy--Arora estimates cannot be
+  obtained. In this case, however, it is possible to use Nerlove's
+  method instead.
 \end{enumerate}
 
-If one does not fall foul of one or other of the prohibitions
-mentioned above, the choice between fixed effects and random effects
-may be expressed in terms of the two econometric \textit{desiderata},
-efficiency and consistency.  
+If both fixed effects and random effects are feasible for a given
+specification and dataset, the choice between these estimators may
+be expressed in terms of the two econometric \textit{desiderata},
+efficiency and consistency.
 
 From a purely statistical viewpoint, we could say that there is a
 tradeoff between robustness and efficiency. In the fixed effects
