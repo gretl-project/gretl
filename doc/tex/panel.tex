@@ -187,15 +187,15 @@ between the units).  Several means of estimating these magnitudes have
 been suggested in the literature \citep[see][]{baltagi95}; by default
 gretl uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$ is
 estimated by the residual variance from the fixed effects model, and
-the sum $\sigma^2_v + \sigma^2_\varepsilon/T$ is estimated by the
-residual variance from the ``between'' estimator,
+$\sigma^2_v$ is estimated by means of a regression using the
+group means of all the relevant variables, that is,
 \[
 \bar{y}_i = \bar{X}_i \beta + e_i
 \]
-The latter regression is implemented by constructing a data set
-consisting of the group means of all the relevant variables.
-An estimate of $\sigma^2_v$ can then be obtained by subtracting
-$1/T$ times the estimate of $\sigma^2_\varepsilon$. 
+The residual variance from this regression, $s^2_e$, can be shown to
+estimate the sum $\sigma^2_v + \sigma^2_\varepsilon/T$.  An estimate
+of $\sigma^2_v$ can therefore be obtained by subtracting $1/T$ times
+the estimate of $\sigma^2_\varepsilon$ from $s^2_e$.
 
 Alternatively, if the \option{nerlove} option is given, gretl
 uses the method suggested by \cite{nerlove71}. In this case
@@ -236,11 +236,11 @@ issues must be taken into account.
   the issue is that after de-meaning these variables are nothing but
   zeros.
 \item A somewhat analogous issue arises with the random effects
-  estimator.  The default Swamy--Arora method requires that the
-  group-means model be estimated to obtain a measure of the between
-  variance. Suppose we have observations on $n$ units or individuals
-  and there are $k$ independent variables of interest.  If $k>n$, the
-  group-means model cannot be estimated---since we have only $n$
+  estimator.  As mentioned above, the default Swamy--Arora method
+  relies on the group-means regression to obtain a measure of the
+  between variance. Suppose we have observations on $n$ units or
+  individuals and there are $k$ independent variables of interest.  If
+  $k>n$, this regression cannot be run---since we have only $n$
   effective observations---and hence Swamy--Arora estimates cannot be
   obtained. In this case, however, it is possible to use Nerlove's
   method instead.
