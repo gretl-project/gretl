@@ -3000,7 +3000,7 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 
 	set_gretl_errno(0);
 	if (!(s->cmd->opt & OPT_Q)) {
-	    gretlopt popt = get_printmodel_opt(s->cmd->opt);
+	    gretlopt popt = get_printmodel_opt(pmod, s->cmd->opt);
 
 	    printmodel(pmod, dset, popt, prn);
 	}
