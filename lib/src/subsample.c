@@ -2484,6 +2484,16 @@ static int smpl_get_int (const char *s, DATASET *dset, int *err)
     return k;
 }
 
+/* take integer_string(s) as given here */
+
+static int probably_year (const char *s, DATASET *dset)
+{
+    int sval = atoi(s);
+
+    return (annual_data(dset) && dset->sd0 > 1700 &&
+	    sval > 1700 && sval > dset->n);
+}
+
 static int get_sample_limit (const char *s, DATASET *dset, int code)
 {
     int ret = -1;
@@ -2512,7 +2522,7 @@ static int get_sample_limit (const char *s, DATASET *dset, int code)
 	}
     } else {
 	/* absolute form */
-	if (!integer_string(s)) {
+	if (!integer_string(s) || probably_year(s, dset)) {
 	    ret = get_t_from_obs_string(s, dset);
 	}
 	if (ret < 0) {
