@@ -1099,7 +1099,7 @@ static gretlopt modelprint_options (MODEL *pmod, gretlopt opt)
 	ret |= OPT_Q; /* quiet: no output */
     }
     if (pmod->ci == OLS && (opt & OPT_V)) {
-	ret |= OPT_Q; /* anova (OLS only) */
+	ret |= OPT_V; /* anova (OLS only) */
     }
 
     return ret;
@@ -1138,7 +1138,7 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	if (!gretl_looping_currently() || loop_force) {
 	    int havename = *s->cmd->savename != '\0';
 	    int window = (opt & OPT_W) != 0;
-	    gretlopt popt = OPT_NONE;
+	    gretlopt popt;
 
 	    if (havename) {
 		gretl_model_set_name(pmod, s->cmd->savename);
