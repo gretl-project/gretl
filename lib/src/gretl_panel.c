@@ -1012,44 +1012,6 @@ static int matrix_hausman_allocate (panelmod_t *pan)
     return err;
 }
 
-/* printing routines for the "panel diagnostics" test */
-
-static void print_panel_coeff (const MODEL *pmod,
- 			       const char *vname,
- 			       int i, int maxlen,
-			       PRN *prn)
-{
-    double tstat = pmod->coeff[i] / pmod->sderr[i];
-    char errstr[18];
-    char pvstr[18];
- 
-    sprintf(errstr, "(%.5g)", pmod->sderr[i]);
-    sprintf(pvstr, "[%.5f]", student_pvalue_2(pmod->dfd, tstat));
-    pprintf(prn, "%*s: %14.5g %15s %15s\n", maxlen, vname,
- 	    pmod->coeff[i], errstr, pvstr);
-}
-
-static void print_re_model_top (const panelmod_t *pan, PRN *prn)
-{
-    pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->s2v);
-    pprintf(prn, " within = %g\n", pan->s2e);
-
-    if (pan->balanced) {
-	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
-    } else {
-	pputs(prn, "Panel is unbalanced: theta varies across units\n");
-    }
-    pputc(prn, '\n');
-
-    pputs(prn,
-	  _("                         Random effects estimator\n"
-	    "           allows for a unit-specific component to the "
-	    "error term\n"
-	    "           (standard errors in parentheses, p-values in brackets)\n\n"));
-
-}
-
 static int *real_varying_list (panelmod_t *pan)
 {
     int *vlist = gretl_list_copy(pan->vlist);
@@ -1588,48 +1550,65 @@ static void panel_df_correction (MODEL *pmod, int k)
     }
 }
 
-/* The function below is used in the context of the "panel diagnostics"
-   test (only): print the fixed-effects or "within" model in simple
-   form.
+/* used for printing fixed- or random-effects estimates
+   in the context of the "panel diagnostics" routine
 */
+
+static void simple_print_panel_model (MODEL *pmod,
+				      DATASET *dset,
+				      const int *xlist,
+				      PRN *prn)
+{
+    int *savelist = gretl_list_copy(pmod->list);
+    int i;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	pmod->list[i+2] = xlist[i+2];
+    }
+    printmodel(pmod, dset, OPT_P, prn);
+    free(pmod->list);
+    pmod->list = savelist;
+}
+
+static void print_re_results (panelmod_t *pan,
+			      MODEL *pmod,
+			      DATASET *dset,
+			      PRN *prn)
+{
+    pputs(prn, "Variance estimators:\n");
+    pprintf(prn, " between = %g\n", pan->s2v);
+    pprintf(prn, " within = %g\n", pan->s2e);
+
+    if (pan->balanced) {
+	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
+    } else {
+	pputs(prn, "Panel is unbalanced: theta varies across units\n");
+    }
+    pputc(prn, '\n');
+
+    pputs(prn, _("Random effects estimator\n"
+		 "allows for a unit-specific component to the error term\n"));
+    pputc(prn, '\n');
+
+    simple_print_panel_model(pmod, dset, pan->pooled->list, prn);
+}
 
 static int print_fe_results (panelmod_t *pan, 
 			     MODEL *pmod,
 			     DATASET *dset,
 			     PRN *prn)
 {
-    int n, maxlen = 0;
-    int dfn, i, vi;
+    int dfn = pan->effn - 1;
 
-    pputs(prn, 
-	  _("Fixed effects estimator\n"
-	    "allows for differing intercepts by cross-sectional unit\n"
-	    "slope standard errors in parentheses, p-values in brackets\n"));
+    pputs(prn, _("Fixed effects estimator\n"
+		 "allows for differing intercepts by cross-sectional unit\n"));
     pputc(prn, '\n');
 
-    for (i=0; i<pmod->ncoeff; i++) {
-	vi = pan->vlist[i+2];
-	n = strlen(dset->varname[vi]);
-	if (n > maxlen) {
-	    maxlen = n;
-	}
-    }
+    simple_print_panel_model(pmod, dset, pan->vlist, prn);
 
-    maxlen = maxlen < 12 ? 12 : maxlen;
-
-    /* print the slope coefficients, for varying regressors */
-    for (i=0; i<pmod->ncoeff; i++) {
-	vi = pan->vlist[i+2];
-	print_panel_coeff(pmod, dset->varname[vi], i, maxlen, prn);
-    }
-    pputc(prn, '\n');   
-
-    pprintf(prn, _("%d group means were subtracted from the data"), pan->effn);
-    pputc(prn, '\n');
-
-    dfn = pan->effn - 1;
-    pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
+    pprintf(prn, _("Residual variance: %g/(%d - %d) = %g\n"),
 	    pmod->ess, pmod->nobs, pan->vlist[0] - 1 + dfn, pan->s2e);
+    pputc(prn, '\n');
 
     if (!na(pan->Ffe)) {
 	pprintf(prn, _("Joint significance of differing group means:\n"));
@@ -2636,11 +2615,11 @@ static int within_variance (panelmod_t *pan,
 static void print_hausman_result (panelmod_t *pan, PRN *prn)
 {
     if (na(pan->H)) {
-	pputs(prn, _("\nHausman test matrix is not positive definite (this "
+	pputs(prn, _("Hausman test matrix is not positive definite (this "
 		     "result may be treated as\n\"fail to reject\" the random effects "
 		     "specification).\n"));
     } else {
-	pprintf(prn, _("\nHausman test statistic:\n"
+	pprintf(prn, _("Hausman test statistic:\n"
 		       " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
 		pan->H, pan->dfH, pan->H, chisq_cdf_comp(pan->dfH, pan->H));
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
@@ -2836,23 +2815,16 @@ static int random_effects (panelmod_t *pan,
 	pputs(prn, _("Error estimating random effects model\n"));
 	errmsg(err, prn);
     } else {
-	if (pan->opt & OPT_V) {
-	    print_re_model_top(pan, prn);
-	}
-
 #if PDEBUG > 1
 	for (i=0; i<20 && i<remod.nobs; i++) {
 	    fprintf(stderr, "remod uhat[%d] = %g\n", i+1, remod.uhat[i]);
 	}
 #endif
-	
+
 	k = 0;
 	for (i=0; i<remod.ncoeff; i++) {
 	    int vi = pan->pooled->list[i+2];
 
-	    if (pan->opt & OPT_V) {
-		print_panel_coeff(&remod, dset->varname[vi], i, 15, prn);
-	    }
 	    if (pan->bdiff != NULL && var_is_varying(pan, vi)) {
 		pan->bdiff->val[k++] -= remod.coeff[i];
 	    }
@@ -2862,6 +2834,10 @@ static int random_effects (panelmod_t *pan,
 	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
 	} else {
 	    makevcv(&remod, remod.sigma);
+	}
+
+	if (pan->opt & OPT_V) {
+	    print_re_results(pan, &remod, dset, prn);
 	}
 
 	if (!na(hres)) {
@@ -2931,8 +2907,8 @@ static int breusch_pagan_LM (panelmod_t *pan, PRN *prn)
     }
 
     if (print_means) {
-	pputs(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
-		     "units:\n\n"));
+	pputs(prn, _("Means of pooled OLS residuals for cross-sectional units:"));
+	pputs(prn, "\n\n");
     }
 
     for (i=0; i<pan->nunits; i++) {
@@ -2959,7 +2935,8 @@ static int breusch_pagan_LM (panelmod_t *pan, PRN *prn)
     pan->BP = ((double) n * n /(2.0 * (M - n))) * pow((A / pan->pooled->ess) - 1.0, 2);
 
     if (pan->opt & OPT_V) {
-	pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
+	pputc(prn, '\n');
+	pprintf(prn, _("Breusch-Pagan test statistic:\n"
 		       " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
 		pan->BP, pan->BP, chisq_cdf_comp(1, pan->BP));
 
@@ -3212,12 +3189,11 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    if (pan.balanced) {
-	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
-		       "cross-sectional units\n "
-		       "                        observed over %d periods\n\n"), 
-		pan.effn, pan.Tmax);
-    }
+    /* header */
+    pputc(prn, '\n');
+    pprintf(prn, _("Diagnostics: using n = %d cross-sectional units\n"),
+	    pan.effn);
+    pputc(prn, '\n');
 
     err = within_variance(&pan, dset, prn);
     if (err) {

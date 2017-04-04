@@ -3269,7 +3269,8 @@ static void set_csv_delim (PRN *prn)
  * @dset: data information struct.
  * @opt: may contain %OPT_O to print covariance matrix, %OPT_S
  * to get a "simple" print (just coefficients and standard
- * errors).
+ * errors), %OPT_P for printing model in the context of panel
+ * diagnostics only.
  * @prn: gretl printing struct.
  *
  * Print to @prn the estimates in @pmod plus associated statistics.
@@ -3296,7 +3297,9 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
     model_format_start(prn);
 
-    print_model_heading(pmod, dset, opt, prn);
+    if (!(opt & OPT_P)) {
+	print_model_heading(pmod, dset, opt, prn);
+    }
 
     if (plain_format(prn)) {
 	gotnan = plain_print_coefficients(pmod, dset, prn);
@@ -3315,6 +3318,8 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
     }
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_RESET) {
+	goto close_format;
+    } else if (opt & OPT_P) {
 	goto close_format;
     }
 
