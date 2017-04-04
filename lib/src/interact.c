@@ -1085,6 +1085,26 @@ static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
     }
 }
 
+static gretlopt modelprint_options (MODEL *pmod, gretlopt opt)
+{
+    gretlopt ret = OPT_NONE;
+
+    if (opt & OPT_O) {
+	ret |= OPT_O; /* show covariance matrix */
+    }
+    if (opt & OPT_S) {
+	ret |= OPT_S; /* "simple": reduced output */
+    }
+    if (opt & OPT_Q) {
+	ret |= OPT_Q; /* quiet: no output */
+    }
+    if (pmod->ci == OLS && (opt & OPT_V)) {
+	ret |= OPT_Q; /* anova (OLS only) */
+    }
+
+    return ret;
+}
+
 /* After estimating a model, check its errcode member to see
    if anything went wrong, and reset gretl_errno to zero.
 
@@ -1118,11 +1138,13 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	if (!gretl_looping_currently() || loop_force) {
 	    int havename = *s->cmd->savename != '\0';
 	    int window = (opt & OPT_W) != 0;
+	    gretlopt popt = OPT_NONE;
 
 	    if (havename) {
 		gretl_model_set_name(pmod, s->cmd->savename);
 	    }
-	    printmodel(pmod, dset, opt, prn);
+	    popt = modelprint_options(pmod, opt);
+	    printmodel(pmod, dset, popt, prn);
 	    attach_subsample_to_model(pmod, dset);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
 	    if (!err && gretl_in_gui_mode() && s->callback != NULL && 
