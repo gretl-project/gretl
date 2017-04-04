@@ -967,7 +967,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	    if (opt & OPT_Q) {
 		nonlin_test_header(aux_code, prn);
 	    } else {
-		printmodel(&aux, dset, opt, prn);
+		printmodel(&aux, dset, OPT_NONE, prn);
 		pputc(prn, '\n');
 	    }
 	    pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);

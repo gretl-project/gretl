@@ -1420,7 +1420,7 @@ static int print_step_1 (MODEL *pmod, ddset *dpd,
     if (!err) {
 	dpd->flags &= ~DPD_TWOSTEP;
 	pmod->ID = -1;
-	printmodel(pmod, dset, opt, prn);
+	printmodel(pmod, dset, OPT_NONE, prn);
 	pmod->ID = 0;
 	dpd->flags |= (DPD_TWOSTEP | DPD_REDO);
     }

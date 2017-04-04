@@ -61,4 +61,7 @@ int print_model_from_matrices (const gretl_matrix *cs,
 			       const gretl_matrix *adds, 
 			       const char *s, PRN *prn);
 
+gretlopt get_printmodel_opt (const MODEL *pmod,
+			     gretlopt opt);
+
 #endif /* MODELPRINT_H */

@@ -5539,3 +5539,30 @@ int print_model_from_matrices (const gretl_matrix *cs,
 
     return err;
 }
+
+gretlopt get_printmodel_opt (const MODEL *pmod,
+			     gretlopt opt)
+{
+    gretlopt ret = OPT_NONE;
+
+    /* Screen out any irrelevant and possible confusing
+       options given with an estimation command, leaving
+       only options that are intended for the printing
+       routine.
+    */
+
+    if (opt & OPT_O) {
+	ret |= OPT_O; /* show covariance matrix */
+    }
+    if (opt & OPT_S) {
+	ret |= OPT_S; /* "simple": reduced output */
+    }
+    if (opt & OPT_Q) {
+	ret |= OPT_Q; /* quiet: no output */
+    }
+    if (pmod->ci == OLS && (opt & OPT_V)) {
+	ret |= OPT_V; /* anova (OLS only) */
+    }
+
+    return ret;
+}

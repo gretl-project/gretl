@@ -2630,9 +2630,11 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 	if (!loop_is_progressive(loop) && ci == OLS) {
 	    if (model_print_deferred(opt)) {
 		MODEL *pmod = loop->models[j++];
+		gretlopt popt;
 
 		set_model_id(pmod, OPT_NONE);
-		printmodel(pmod, dset, opt, prn);
+		popt = get_printmodel_opt(pmod, opt);
+		printmodel(pmod, dset, popt, prn);
 	    }	    
 	}
 
@@ -2998,7 +3000,9 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 
 	set_gretl_errno(0);
 	if (!(s->cmd->opt & OPT_Q)) {
-	    printmodel(pmod, dset, s->cmd->opt, prn);
+	    gretlopt popt = get_printmodel_opt(s->cmd->opt);
+
+	    printmodel(pmod, dset, popt, prn);
 	}
 	attach_subsample_to_model(pmod, dset);
 	s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
