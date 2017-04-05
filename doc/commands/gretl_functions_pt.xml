@@ -2449,7 +2449,7 @@
 	<para>
 	  Retorna o número de dias (relevantes) entre os dias
 	  <argname>dia1</argname> e <argname>dia2</argname>,
-	  inclusive. Os <argname>dias por semana<</argname>, que têm que ser
+	  inclusive. Os <argname>dias por semana</argname>, que têm que ser
 	  5, 6 ou 7, dão o número de dias na semana que devem contar
 	  (um valor de 6, ignora domingos, e um valor de 5
 	  ignora sábados e domingos).
