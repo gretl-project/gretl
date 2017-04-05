@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-04-04 16:47-0400\n"
-"PO-Revision-Date: 2017-03-26 11:16+0200\n"
+"PO-Revision-Date: 2017-04-05 00:26+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -3872,32 +3872,25 @@ msgid "Invalid MPI rank %d"
 msgstr "Rango MPI non valido %d"
 
 #: lib/src/gretl_panel.c:1589
-#, fuzzy
 msgid ""
 "Random effects estimator\n"
 "allows for a unit-specific component to the error term\n"
 msgstr ""
-"                      Stimatore a effetti casuali\n"
-"   Consente che il termine di errore sia specifico per ogni unità\n"
-"      (errori standard tra parentesi tonde, p-value tra quadre)\n"
-"\n"
+"Stimatore a effetti casuali\n"
+"comprende una componente specifica per ogni unità del termine di errore\n"
 
 #: lib/src/gretl_panel.c:1603
-#, fuzzy
 msgid ""
 "Fixed effects estimator\n"
 "allows for differing intercepts by cross-sectional unit\n"
 msgstr ""
 "Stimatore a effetti fissi\n"
-"Consente intercette diverse per ogni unità cross section\n"
-"Errori standard della pendenza tra parentesi tonde, p-value tra quadre\n"
+"implica intercette diverse per ogni unità longitudinale\n"
 
 #: lib/src/gretl_panel.c:1609
-#, fuzzy, c-format
+#, c-format
 msgid "Residual variance: %g/(%d - %d) = %g\n"
-msgstr ""
-"\n"
-"Varianza dei residui: %g/(%d - %d) = %g\n"
+msgstr "Varianza dei residui: %g/(%d - %d) = %g\n"
 
 #: lib/src/gretl_panel.c:1614
 msgid "Joint significance of differing group means:\n"
@@ -3927,22 +3920,19 @@ msgid "Inadequate data for panel estimation"
 msgstr "Dati inadeguati per stima panel"
 
 #: lib/src/gretl_panel.c:2618
-#, fuzzy
 msgid ""
 "Hausman test matrix is not positive definite (this result may be treated as\n"
 "\"fail to reject\" the random effects specification).\n"
 msgstr ""
-"\n"
-"La matrice del test di Hausman non è definita positiva (può essere indice\n"
-"di un fallimento nel rifiutare la specificazione con effetti casuali).\n"
+"La matrice del test di Hausman non è definita positiva (si può essere\n"
+"inclini a rifiutare la specificazione con effetti casuali).\n"
 
 #: lib/src/gretl_panel.c:2622
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Hausman test statistic:\n"
 " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"
 msgstr ""
-"\n"
 "Statistica test di Hausman:\n"
 " H = %g con p-value = prob(chi-quadro(%d) > %g) = %g\n"
 
@@ -3961,12 +3951,8 @@ msgid "Error estimating random effects model\n"
 msgstr "Errore nella stima del modello a effetti casuali\n"
 
 #: lib/src/gretl_panel.c:2910
-#, fuzzy
 msgid "Means of pooled OLS residuals for cross-sectional units:"
-msgstr ""
-"\n"
-"Medie dei residui pooled OLS per le unità cross section:\n"
-"\n"
+msgstr "Medie dei residui pooled OLS per le unità cross section:"
 
 #: lib/src/gretl_panel.c:2927
 #, c-format
@@ -3974,12 +3960,11 @@ msgid " unit %2d: %13.5g\n"
 msgstr " unità %2d: %13.5g\n"
 
 #: lib/src/gretl_panel.c:2939
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Breusch-Pagan test statistic:\n"
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
-"\n"
 "Statistica test di Breusch-Pagan:\n"
 " LM = %g con p-value = prob(chi-quadro(1) > %g) = %g\n"
 
@@ -3998,9 +3983,9 @@ msgid "Hausman test matrix is not positive definite"
 msgstr "La matrice del test di Hausman non è definita positiva"
 
 #: lib/src/gretl_panel.c:3194
-#, fuzzy, c-format
+#, c-format
 msgid "Diagnostics: using n = %d cross-sectional units\n"
-msgstr "Incluse %d unità cross section"
+msgstr "Diagnostiche: incluse n = %d unità longitudinali\n"
 
 #: lib/src/gretl_panel.c:3220 lib/src/gretl_panel.c:3574
 msgid "Couldn't estimate group means regression\n"
@@ -7418,9 +7403,9 @@ msgid "dummy for %s = %g"
 msgstr "dummy per %s = %g"
 
 #: lib/src/transforms.c:1915
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "Numero di osservazioni usate"
+msgstr "Sono necessarie almeno %d osservazioni"
 
 #: lib/src/transforms.c:2035
 msgid "dummify: no suitable variables were found"
@@ -7658,17 +7643,14 @@ msgid "Lag order %*d"
 msgstr "Ordine dei ritardi %*d"
 
 #: lib/src/vartest.c:149
-#, fuzzy
 msgid "Test for autocorrelation of order up to"
-msgstr "Test per l'autocorrelazione fino all'ordine %d"
+msgstr "Test per l'autocorrelazione fino all'ordine"
 
 #: lib/src/vartest.c:238
-#, fuzzy
 msgid "Test for autocorrelation of order"
-msgstr "Test per l'autocorrelazione fino all'ordine %d"
+msgstr "Test per l'autocorrelazione fino all'ordine"
 
 #: lib/src/vartest.c:422
-#, fuzzy
 msgid "Test for ARCH of order up to"
 msgstr "Test per ARCH di ordine"
 
@@ -10794,7 +10776,7 @@ msgstr "Aggiungere un testo di help per questo pacchetto"
 
 #: gui2/fnsave.c:780
 msgid "Please delete the \"pdfdoc:\" line from the help text"
-msgstr ""
+msgstr "Eliminare la linea \"pdfdoc:\" dal testo di help"
 
 #: gui2/fnsave.c:790
 msgid "Please add a sample script for this package"
