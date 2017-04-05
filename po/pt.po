@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-04-04 16:47-0400\n"
-"PO-Revision-Date: 2017-03-25 22:03+0100\n"
+"PO-Revision-Date: 2017-04-05 22:24+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -3858,32 +3858,25 @@ msgid "Invalid MPI rank %d"
 msgstr "Ordem MPI %d inválida"
 
 #: lib/src/gretl_panel.c:1589
-#, fuzzy
 msgid ""
 "Random effects estimator\n"
 "allows for a unit-specific component to the error term\n"
 msgstr ""
-"                         Estimador de efeitos aleatórios\n"
-"           permite para uma unidade-específica no termo do erro\n"
-"           (erros padrão em parentesis, valores p em chavetas)\n"
-"\n"
+"Estimador de efeitos aleatórios\n"
+"permite uma componente de unidade-específica no termo do erro\n"
 
 #: lib/src/gretl_panel.c:1603
-#, fuzzy
 msgid ""
 "Fixed effects estimator\n"
 "allows for differing intercepts by cross-sectional unit\n"
 msgstr ""
 "Estimador de efeitos fixos\n"
-"permite diferenciar intercepções no eixo x=0 por unidade de secção-cruzada\n"
-"erros padrão dos declives em parentesis, valores p em chavetas\n"
+"permite diferenciar intercepções por unidade de secção-cruzada\n"
 
 #: lib/src/gretl_panel.c:1609
-#, fuzzy, c-format
+#, c-format
 msgid "Residual variance: %g/(%d - %d) = %g\n"
-msgstr ""
-"\n"
-"Variância dos resíduos: %g/(%d - %d) = %g\n"
+msgstr "Variância dos resíduos: %g/(%d - %d) = %g\n"
 
 #: lib/src/gretl_panel.c:1614
 msgid "Joint significance of differing group means:\n"
@@ -3915,23 +3908,19 @@ msgid "Inadequate data for panel estimation"
 msgstr "Dados inadequados para estimação de painel"
 
 #: lib/src/gretl_panel.c:2618
-#, fuzzy
 msgid ""
 "Hausman test matrix is not positive definite (this result may be treated as\n"
 "\"fail to reject\" the random effects specification).\n"
 msgstr ""
-"\n"
 "A matriz teste de Hausman não é definida positiva (este resultado pode ser\n"
-"interpretado como \"falha na rejeição\" da especificação do efeito "
-"aleatório).\n"
+"interpretado como \"falha na rejeição\" da especificação do efeito aleatório).\n"
 
 #: lib/src/gretl_panel.c:2622
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Hausman test statistic:\n"
 " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"
 msgstr ""
-"\n"
 "Estatística de teste de Hausman:\n"
 " H = %g com valor p = prob(qui-quadrado(%d) > %g) = %g\n"
 
@@ -3950,13 +3939,10 @@ msgid "Error estimating random effects model\n"
 msgstr "Erro ao estimar o modelo de efeitos aleatórios\n"
 
 #: lib/src/gretl_panel.c:2910
-#, fuzzy
 msgid "Means of pooled OLS residuals for cross-sectional units:"
 msgstr ""
-"\n"
-"Médias do resíduos Mínimos Quadrados (OLS) agrupados (pooled) para unidades "
-"de secções-cruzadas:\n"
-"\n"
+"Médias do resíduos Mínimos Quadrados (OLS) ponderados (pooled) para unidades "
+"de secções-cruzadas:"
 
 #: lib/src/gretl_panel.c:2927
 #, c-format
@@ -3964,12 +3950,11 @@ msgid " unit %2d: %13.5g\n"
 msgstr " unidade %2d: %13.5g\n"
 
 #: lib/src/gretl_panel.c:2939
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Breusch-Pagan test statistic:\n"
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
-"\n"
 "Estatística de teste Breusch-Pagan:\n"
 " LM = %g com valor p = prob(qui-quadrado(1) > %g) = %g\n"
 
@@ -3990,9 +3975,9 @@ msgid "Hausman test matrix is not positive definite"
 msgstr "A matriz de teste Hausman não é definida positiva"
 
 #: lib/src/gretl_panel.c:3194
-#, fuzzy, c-format
+#, c-format
 msgid "Diagnostics: using n = %d cross-sectional units\n"
-msgstr "Incluídas %d unidades de secção-cruzada"
+msgstr "Diagnósticos: usando n = %d unidades de secção-cruzada\n"
 
 #: lib/src/gretl_panel.c:3220 lib/src/gretl_panel.c:3574
 msgid "Couldn't estimate group means regression\n"
@@ -7424,9 +7409,9 @@ msgid "dummy for %s = %g"
 msgstr "auxiliar para %s = %g"
 
 #: lib/src/transforms.c:1915
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "Número de observações na média:"
+msgstr "É necessário um mínimo de %d observações"
 
 #: lib/src/transforms.c:2035
 msgid "dummify: no suitable variables were found"
@@ -7663,19 +7648,16 @@ msgid "Lag order %*d"
 msgstr "Ordem de desfasamento %*d"
 
 #: lib/src/vartest.c:149
-#, fuzzy
 msgid "Test for autocorrelation of order up to"
-msgstr "Teste para autocorrelação até à ordem %d"
+msgstr "Teste para autocorrelação de ordem até"
 
 #: lib/src/vartest.c:238
-#, fuzzy
 msgid "Test for autocorrelation of order"
-msgstr "Teste para autocorrelação até à ordem %d"
+msgstr "Teste para autocorrelação de ordem"
 
 #: lib/src/vartest.c:422
-#, fuzzy
 msgid "Test for ARCH of order up to"
-msgstr "Teste para ARCH de ordem"
+msgstr "Teste para ARCH de ordem até"
 
 #: lib/src/vartest.c:681
 #, c-format
@@ -7905,7 +7887,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 25 de março de 2017."
+"Tradução de 5 de abril de 2017."
 
 #: gui2/about.c:203
 msgid "News"
@@ -10794,7 +10776,7 @@ msgstr "Por favor acrescente um texto de ajuda acerca deste pacote"
 
 #: gui2/fnsave.c:780
 msgid "Please delete the \"pdfdoc:\" line from the help text"
-msgstr ""
+msgstr "Por favor remova do texto de ajuda a linha \"pdfdoc:\""
 
 #: gui2/fnsave.c:790
 msgid "Please add a sample script for this package"
