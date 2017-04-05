@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-04-04 16:47-0400\n"
-"PO-Revision-Date: 2017-03-27 17:33+0100\n"
+"PO-Revision-Date: 2017-04-05 12:18+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -25,33 +25,33 @@ msgstr "Diferenzas retardadas"
 
 #: lib/src/adf_kpss.c:506
 msgid "modified BIC, Perron-Qu"
-msgstr "criterio de inf. de Bayes modificado Perron-Qu"
+msgstr "BIC modificado, Perron-Qu"
 
 #: lib/src/adf_kpss.c:508
 msgid "modified AIC, Perron-Qu"
-msgstr "criterio de inf. de Akaike modificado Perron-Qu"
+msgstr "AIC de Akaike modificado, Perron-Qu"
 
 #: lib/src/adf_kpss.c:514 gui2/library.c:999
 msgid "modified BIC"
-msgstr "criterio de inf. de Bayes modificado"
+msgstr "BIC modificado"
 
 #: lib/src/adf_kpss.c:514 lib/src/modelprint.c:3230 lib/src/texprint.c:1108
 #: lib/src/varprint.c:1098 lib/src/varprint.c:1106 gui2/library.c:1002
 msgid "BIC"
-msgstr "criterio de inf. de Bayes"
+msgstr "BIC"
 
 #: lib/src/adf_kpss.c:516 gui2/library.c:1003
 msgid "t-statistic"
-msgstr "estatístico t"
+msgstr "Estatístico t"
 
 #: lib/src/adf_kpss.c:519 gui2/library.c:998
 msgid "modified AIC"
-msgstr "criterio de inf. de Akaike modificado"
+msgstr "AIC de Akaike modificado"
 
 #: lib/src/adf_kpss.c:519 lib/src/modelprint.c:3230 lib/src/texprint.c:1107
 #: lib/src/varprint.c:1097 lib/src/varprint.c:1105 gui2/library.c:1001
 msgid "AIC"
-msgstr "criterio de inf. de Akaike "
+msgstr "AIC de Akaike "
 
 #: lib/src/adf_kpss.c:532
 #, c-format
@@ -86,7 +86,7 @@ msgstr "con %d retardos de (1-L)%s"
 #: lib/src/adf_kpss.c:551
 #, c-format
 msgid "(max was %d, criterion %s)"
-msgstr "(o máximo foi=%d, o criterio %s)"
+msgstr "(O máximo retardo era %d e o criterio foi %s)"
 
 #: lib/src/adf_kpss.c:593 gui2/library.c:1020 gui2/library.c:1260
 #: gui2/selector.c:6469 plugin/panurc.c:234
@@ -216,7 +216,7 @@ msgstr "Unidade"
 
 #: lib/src/adf_kpss.c:1610 lib/src/gretl_model.c:4344 gui2/selector.c:8435
 msgid "lag order"
-msgstr "Orde de retardo"
+msgstr "Nivel de retardo"
 
 #: lib/src/adf_kpss.c:1717
 msgid "H0: all groups have unit root"
@@ -513,18 +513,19 @@ msgstr "Proba de Wald"
 #: lib/src/graphing.c:4496 lib/src/gretl_model.c:4215
 #: lib/src/gretl_model.c:4229 lib/src/gretl_model.c:4232
 #: lib/src/gretl_model.c:4257 lib/src/gretl_panel.c:4069
-#: lib/src/gretl_panel.c:4327 lib/src/modelprint.c:202 lib/src/modelprint.c:381
-#: lib/src/modelprint.c:385 lib/src/modelprint.c:475 lib/src/modelprint.c:478
-#: lib/src/modelprint.c:499 lib/src/modelprint.c:502 lib/src/modelprint.c:2509
-#: lib/src/modelprint.c:2514 lib/src/modelprint.c:2536
-#: lib/src/modelprint.c:2541 lib/src/modelprint.c:3033
-#: lib/src/modelprint.c:5304 lib/src/modelprint.c:5327 lib/src/printout.c:329
-#: lib/src/pvalues.c:2629 lib/src/pvalues.c:3294 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3387 lib/src/system.c:3409
-#: lib/src/system.c:3481 lib/src/system.c:3499 lib/src/system.c:4610
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:253 lib/src/vartest.c:1213
-#: lib/src/vartest.c:1500 plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4327 lib/src/modelprint.c:202
+#: lib/src/modelprint.c:381 lib/src/modelprint.c:385 lib/src/modelprint.c:475
+#: lib/src/modelprint.c:478 lib/src/modelprint.c:499 lib/src/modelprint.c:502
+#: lib/src/modelprint.c:2509 lib/src/modelprint.c:2514
+#: lib/src/modelprint.c:2536 lib/src/modelprint.c:2541
+#: lib/src/modelprint.c:3033 lib/src/modelprint.c:5304
+#: lib/src/modelprint.c:5327 lib/src/printout.c:329 lib/src/pvalues.c:2629
+#: lib/src/pvalues.c:3294 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3387 lib/src/system.c:3409 lib/src/system.c:3481
+#: lib/src/system.c:3499 lib/src/system.c:4610 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:253 lib/src/vartest.c:1213 lib/src/vartest.c:1500
+#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Khi-cadrado"
 
@@ -1147,17 +1148,19 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Fallo ao interpretar os datos como numéricos\n"
 
-#: lib/src/csvdata.c:3622 plugin/eviews_import.c:554 plugin/excel_import.c:1831
-#: plugin/jmulti_import.c:379 plugin/sas_import.c:686 plugin/spss_import.c:1975
+#: lib/src/csvdata.c:3622 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1831 plugin/jmulti_import.c:379
+#: plugin/sas_import.c:686 plugin/spss_import.c:1975
 #: plugin/stata_import.c:2182 plugin/xlsx_import.c:1501
 msgid "warning: some variable names were duplicated\n"
 msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
 
-#: lib/src/csvdata.c:3663 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1665 plugin/jmulti_import.c:350
-#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
-#: plugin/spss_import.c:1880 plugin/spss_import.c:1901
-#: plugin/stata_import.c:2150 plugin/stata_import.c:2161
+#: lib/src/csvdata.c:3663 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1665
+#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
+#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1880
+#: plugin/spss_import.c:1901 plugin/stata_import.c:2150
+#: plugin/stata_import.c:2161
 msgid "Out of memory\n"
 msgstr "Fóra de memoria\n"
 
@@ -1535,8 +1538,8 @@ msgid "Invalid null sample"
 msgstr "Mostra nula incorrecta"
 
 #: lib/src/dbread.c:2044 lib/src/gretl_errors.c:577
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1364 lib/src/options.c:1306
-#: lib/src/options.c:1317
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1364
+#: lib/src/options.c:1306 lib/src/options.c:1317
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Campo '%s' incorrecto na instrución"
@@ -1636,7 +1639,7 @@ msgstr "A matriz *%s* non representa unha táboa de continxencia"
 #: lib/src/var.c:686
 #, c-format
 msgid "Invalid lag order %d"
-msgstr "Orde de retardo %d incorrecta"
+msgstr "Nivel de retardo %d incorrecto"
 
 #: lib/src/describe.c:2921 gui2/menustate.c:496
 msgid "Correlogram"
@@ -2276,7 +2279,7 @@ msgstr ""
 #: lib/src/estimate.c:3886 lib/src/estimate.c:4030
 #, c-format
 msgid "Invalid lag order for arch (%d)"
-msgstr "Nº de retardos incorrecto para ARCH (%d)"
+msgstr "Nivel de retardo incorrecto para ARCH (%d)"
 
 #: lib/src/estimate.c:4358 lib/src/genfuncs.c:1036 plugin/tramo-x12a.c:1432
 #, c-format
@@ -3403,8 +3406,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2479 lib/src/gretl_func.c:2539
-#: lib/src/gretl_func.c:2620 lib/src/gretl_utils.c:1902 lib/src/interact.c:1224
-#: gui2/dialogs.c:5562 gui2/fnsave.c:5014 plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2620 lib/src/gretl_utils.c:1902
+#: lib/src/interact.c:1224 gui2/dialogs.c:5562 gui2/fnsave.c:5014
+#: plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Non se puido abrir *%s*"
@@ -3818,7 +3822,8 @@ msgstr "Graos de liberdade denominador"
 #: lib/src/gretl_model.c:4341 lib/src/modelprint.c:5373
 #: lib/src/modelprint.c:5384 lib/src/modelprint.c:5386 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2034
-#: gui2/calculator.c:2037 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
+#: gui2/calculator.c:2037 plugin/anova.c:85 plugin/anova.c:96
+#: plugin/anova.c:98
 msgid "df"
 msgstr "Graos de liberdade"
 
@@ -3862,32 +3867,25 @@ msgid "Invalid MPI rank %d"
 msgstr "Rango MPI %d incorrecto"
 
 #: lib/src/gretl_panel.c:1589
-#, fuzzy
 msgid ""
 "Random effects estimator\n"
 "allows for a unit-specific component to the error term\n"
 msgstr ""
-"                         O estimador de efectos aleatorios\n"
-"           permite unha compoñente específica unitaria no termo de erro\n"
-"           (desviacións padrón en parénteses, valores p en corchetes)\n"
-"\n"
+"O estimador de efectos aleatorios\n"
+"permite unha compoñente específica unitaria no termo de erro\n"
 
 #: lib/src/gretl_panel.c:1603
-#, fuzzy
 msgid ""
 "Fixed effects estimator\n"
 "allows for differing intercepts by cross-sectional unit\n"
 msgstr ""
 "O estimador de efectos fixos\n"
 "permite distintas ordenadas na orixe para as unidades de sección cruzada\n"
-"(desviacións padrón entre parénteses, valores p entre corchetes)\n"
 
 #: lib/src/gretl_panel.c:1609
-#, fuzzy, c-format
+#, c-format
 msgid "Residual variance: %g/(%d - %d) = %g\n"
-msgstr ""
-"\n"
-"Varianza dos erros: %g/(%d - %d) = %g\n"
+msgstr "Varianza dos erros: %g/(%d - %d) = %g\n"
 
 #: lib/src/gretl_panel.c:1614
 msgid "Joint significance of differing group means:\n"
@@ -3918,23 +3916,20 @@ msgid "Inadequate data for panel estimation"
 msgstr "Datos inadecuados para estimación de panel"
 
 #: lib/src/gretl_panel.c:2618
-#, fuzzy
 msgid ""
 "Hausman test matrix is not positive definite (this result may be treated as\n"
 "\"fail to reject\" the random effects specification).\n"
 msgstr ""
-"\n"
-"A matriz da proba de Hausman non é definida positiva (isto pode considerarse "
-"como\n"
-"un \"Non rexeite\" da especificación de efectos aleatorios).\n"
+"A matriz da proba de Hausman non é definida positiva (isto pode "
+"considerarse\n"
+"coma un \"Non rexeite\" da especificación de efectos aleatorios).\n"
 
 #: lib/src/gretl_panel.c:2622
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Hausman test statistic:\n"
 " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"
 msgstr ""
-"\n"
 "Estatístico da proba de Hausman:\n"
 " H = %g con valor p = prob(Khi-cadrado(%d) > %g) = %g\n"
 
@@ -3952,12 +3947,8 @@ msgid "Error estimating random effects model\n"
 msgstr "Erro ao estimar o modelo de efectos aleatorios\n"
 
 #: lib/src/gretl_panel.c:2910
-#, fuzzy
 msgid "Means of pooled OLS residuals for cross-sectional units:"
-msgstr ""
-"\n"
-"Medias dos erros MCO combinados para as unidades de sección cruzada:\n"
-"\n"
+msgstr "Medias dos erros MCO combinados para as unidades de sección cruzada:"
 
 #: lib/src/gretl_panel.c:2927
 #, c-format
@@ -3965,13 +3956,12 @@ msgid " unit %2d: %13.5g\n"
 msgstr " unidade %2d: %13.5g\n"
 
 #: lib/src/gretl_panel.c:2939
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Breusch-Pagan test statistic:\n"
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
-"\n"
-"Estatístico de proba de Breusch-Pagan\n"
+"Estatístico de proba de Breusch-Pagan:\n"
 " ML = %g con valor p = prob(Khi-cadrado(1) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2943
@@ -3990,9 +3980,9 @@ msgid "Hausman test matrix is not positive definite"
 msgstr "A matriz da proba de Hausman non é definida positiva"
 
 #: lib/src/gretl_panel.c:3194
-#, fuzzy, c-format
+#, c-format
 msgid "Diagnostics: using n = %d cross-sectional units\n"
-msgstr "Incluíronse %d unidades de sección cruzada"
+msgstr "Diagnóstico: utilizando n = %d unidades de sección cruzada\n"
 
 #: lib/src/gretl_panel.c:3220 lib/src/gretl_panel.c:3574
 msgid "Couldn't estimate group means regression\n"
@@ -4201,7 +4191,8 @@ msgstr "Desviación padrón da regresión"
 msgid "Robust chi^2"
 msgstr "Khi^2 robusto"
 
-#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3045 lib/src/system.c:1245
+#: lib/src/gretl_restrict.c:2274 lib/src/subsample.c:3045
+#: lib/src/system.c:1245
 msgid "restriction"
 msgstr "restrición"
 
@@ -4822,7 +4813,7 @@ msgstr "Proba de Sargan"
 #: lib/src/modelprint.c:514 lib/src/modelprint.c:517 lib/src/modelprint.c:525
 #: lib/src/modelprint.c:527 lib/src/printout.c:2920
 msgid "GMM criterion"
-msgstr "Criterio MMX"
+msgstr "Criterio MXM"
 
 #: lib/src/modelprint.c:564
 #, c-format
@@ -5013,7 +5004,7 @@ msgstr "MV"
 
 #: lib/src/modelprint.c:944
 msgid "GMM"
-msgstr "MMX"
+msgstr "MXM"
 
 #: lib/src/modelprint.c:945 gui2/selector.c:4054
 msgid "Logistic"
@@ -5117,15 +5108,15 @@ msgstr "Panel dinámico nunha etapa"
 
 #: lib/src/modelprint.c:1010 lib/src/modelprint.c:1014
 msgid "2-step GMM"
-msgstr "MMX en dúas etapas"
+msgstr "MXM en dúas etapas"
 
 #: lib/src/modelprint.c:1012 lib/src/modelprint.c:1016
 msgid "Iterated GMM"
-msgstr "MMX reiterados"
+msgstr "MXM reiterados"
 
 #: lib/src/modelprint.c:1018
 msgid "1-step GMM"
-msgstr "MMX nunha etapa"
+msgstr "MXM nunha etapa"
 
 #: lib/src/modelprint.c:1022 gui2/selector.c:4038
 msgid "Ordered Logit"
@@ -5393,7 +5384,7 @@ msgstr "Desviacións padrón asintóticas supoñendo erros IID"
 
 #: lib/src/modelprint.c:1659
 msgid "Omitted because all values were zero:"
-msgstr "Omitido porque todos os valores eran cero."
+msgstr "Omitido porque tódolos valores eran cero."
 
 #: lib/src/modelprint.c:1673
 msgid "Omitted due to exact collinearity:"
@@ -5920,8 +5911,8 @@ msgstr "Imaxinaria"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:5088 lib/src/modelprint.c:5096 lib/src/subsample.c:3033
-#: lib/src/subsample.c:3055 lib/src/subsample.c:3110
+#: lib/src/modelprint.c:5088 lib/src/modelprint.c:5096
+#: lib/src/subsample.c:3033 lib/src/subsample.c:3055 lib/src/subsample.c:3110
 msgid "Frequency"
 msgstr "Frecuencia"
 
@@ -6017,7 +6008,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: Agardábanse %d nomes."
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:788
-#: lib/src/monte_carlo.c:1822 lib/src/monte_carlo.c:1985 lib/src/uservar.c:1799
+#: lib/src/monte_carlo.c:1822 lib/src/monte_carlo.c:1985
+#: lib/src/uservar.c:1799
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': Non é un escalar"
@@ -6210,7 +6202,7 @@ msgstr "MC non lineais: Non se acadou a converxencia logo de %d iteracións"
 
 #: lib/src/nls.c:2857
 msgid "Analytical derivatives cannot be used with GMM"
-msgstr "Non poden utilizarse as derivadas analíticas con MMX"
+msgstr "Non poden utilizarse as derivadas analíticas con MXM"
 
 #: lib/src/nls.c:2943
 #, c-format
@@ -6744,7 +6736,7 @@ msgid ""
 "This is truly a forecast only if all the stochastic regressors\n"
 "are in fact lagged values."
 msgstr ""
-"Isto é realmente unha predición só se todos os regresores\n"
+"Isto é realmente unha predición só se tódolos regresores\n"
 "estocásticos son, de feito, variables retardadas."
 
 #: lib/src/printout.c:1287 gui2/guiprint.c:871
@@ -7409,9 +7401,9 @@ msgid "dummy for %s = %g"
 msgstr "variable ficticia para *%s* = %g"
 
 #: lib/src/transforms.c:1915
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "Número de observacións en media:"
+msgstr "Requírese un mínimo de %d observacións"
 
 #: lib/src/transforms.c:2035
 msgid "dummify: no suitable variables were found"
@@ -7493,7 +7485,7 @@ msgstr "Número de ecuacións"
 
 #: lib/src/var.c:2962
 msgid "Lag order"
-msgstr "Orde do retardo"
+msgstr "Nivel de retardo"
 
 #: lib/src/var.c:2963
 msgid "Estimation period"
@@ -7596,12 +7588,12 @@ msgstr "Todas as variables, retardo %d"
 #: lib/src/varprint.c:1048
 #, c-format
 msgid "VECM system, lag order %d"
-msgstr "Sistema VECM, orde do retardo %d"
+msgstr "Sistema VECM, nivel de retardo %d"
 
 #: lib/src/varprint.c:1050
 #, c-format
 msgid "VAR system, lag order %d"
-msgstr "Sistema VAR, orde do retardo %d"
+msgstr "Sistema VAR, nivel de retardo %d"
 
 #: lib/src/varprint.c:1056
 #, c-format
@@ -7649,27 +7641,24 @@ msgstr "Comparación de criterios de información"
 #: lib/src/varprint.c:1271 lib/src/varprint.c:1275
 #, c-format
 msgid "Lag order %*d"
-msgstr "Orde de retardos %*d"
+msgstr "Nivel de retardo %*d"
 
 #: lib/src/vartest.c:149
-#, fuzzy
 msgid "Test for autocorrelation of order up to"
-msgstr "Proba de autocorrelación ata a orde %d"
+msgstr "Proba de autocorrelación de orde ata %d"
 
 #: lib/src/vartest.c:238
-#, fuzzy
 msgid "Test for autocorrelation of order"
-msgstr "Proba de autocorrelación ata a orde %d"
+msgstr "Proba de autocorrelación de orde %d"
 
 #: lib/src/vartest.c:422
-#, fuzzy
 msgid "Test for ARCH of order up to"
-msgstr "Proba de ARCH de orde"
+msgstr "Proba de ARCH de orde ata"
 
 #: lib/src/vartest.c:681
 #, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr "Sistema VAR, máxima orde de retardos %d"
+msgstr "Sistema VAR, máximo nivel de retardo %d"
 
 #: lib/src/vartest.c:684
 msgid ""
@@ -8590,11 +8579,11 @@ msgstr "Inserir o valor para ler como \"ausente\":"
 
 #: gui2/callbacks.c:527 gui2/callbacks.c:618
 msgid "gretl: GMM"
-msgstr "Gretl: MMX"
+msgstr "Gretl: MXM"
 
 #: gui2/callbacks.c:528 gui2/callbacks.c:619
 msgid "GMM: Specify function and orthogonality conditions:"
-msgstr "MMX: Especificar a función e as condicións de ortogonalidade:"
+msgstr "MXM: Especificar a función e as condicións de ortogonalidade:"
 
 #: gui2/callbacks.c:534 gui2/callbacks.c:623
 msgid "gretl: maximum likelihood"
@@ -8809,8 +8798,9 @@ msgstr "Aviso: A serie ten observacións ausentes"
 msgid "Couldn't access binary datafile"
 msgstr "Non puido accederse ao ficheiro de datos binario"
 
-#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3406
+#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163
+#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
+#: gui2/session.c:3406
 msgid "Display"
 msgstr "Amosar"
 
@@ -8989,8 +8979,8 @@ msgstr "Engadir ao menú"
 
 #: gui2/datafiles.c:1447 gui2/datafiles.c:1643 gui2/gpt_control.c:3951
 #: gui2/gpt_control.c:3953 gui2/gpt_control.c:4057 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3462 gui2/toolbar.c:836 gui2/toolbar.c:837
-#: gui2/toolbar.c:838
+#: gui2/session.c:172 gui2/session.c:3462 gui2/toolbar.c:836
+#: gui2/toolbar.c:837 gui2/toolbar.c:838
 msgid "Help"
 msgstr "Axuda"
 
@@ -10205,11 +10195,11 @@ msgstr "Ficheiros de datos Gretl (*.gdt, *.gdtb)"
 
 #: gui2/fileselect.c:855
 msgid "CSV files (*.csv)"
-msgstr "ficheiros CSV (*.csv)"
+msgstr "Ficheiros CSV (*.csv)"
 
 #: gui2/fileselect.c:856 gui2/fileselect.c:878
 msgid "ASCII files (*.txt)"
-msgstr "ficheiros ASCII (*.txt)"
+msgstr "Ficheiros ASCII (*.txt)"
 
 #: gui2/fileselect.c:857
 msgid "Gnumeric files (*.gnumeric)"
@@ -10221,11 +10211,11 @@ msgstr "Ficheiros de folla de cálculo de Open Document (*.ods)"
 
 #: gui2/fileselect.c:859
 msgid "Excel files (*.xls)"
-msgstr "ficheiros Excel (*.xls)"
+msgstr "Ficheiros Excel (*.xls)"
 
 #: gui2/fileselect.c:860
 msgid "Excel files (*.xlsx)"
-msgstr "ficheiros Excel (*.xlsx)"
+msgstr "Ficheiros Excel (*.xlsx)"
 
 #: gui2/fileselect.c:861
 msgid "Stata files (*.dta)"
@@ -10253,7 +10243,7 @@ msgstr "Ficheiros JMulTi files (*.dat)"
 
 #: gui2/fileselect.c:867 gui2/fileselect.c:879 gui2/fileselect.c:888
 msgid "all files (*.*)"
-msgstr "todos os ficheiros (*.*)"
+msgstr "Todos os ficheiros (*.*)"
 
 #: gui2/fileselect.c:869 gui2/fileselect.c:885
 msgid "gretl script files (*.inp)"
@@ -10314,7 +10304,7 @@ msgstr "Abrir o ficheiro %s"
 
 #: gui2/fileselect.c:1007
 msgid "select directory"
-msgstr "Escoller un caratfol"
+msgstr "Escoller un cartafol"
 
 #: gui2/fileselect.c:1016
 msgid "select PDF file"
@@ -10789,7 +10779,7 @@ msgstr ""
 
 #: gui2/fnsave.c:765
 msgid "Please complete all fields"
-msgstr "Completa todos os campos"
+msgstr "Completa tódolos campos"
 
 #: gui2/fnsave.c:777
 msgid "Please add some help text for this package"
@@ -10797,7 +10787,7 @@ msgstr "Engade algún texto de axuda para este paquete"
 
 #: gui2/fnsave.c:780
 msgid "Please delete the \"pdfdoc:\" line from the help text"
-msgstr ""
+msgstr "Quita a liña \"pdfdoc:\" do texto de axuda"
 
 #: gui2/fnsave.c:790
 msgid "Please add a sample script for this package"
@@ -11133,8 +11123,8 @@ msgid "Display PDF"
 msgstr "Amosar PDF"
 
 #: gui2/gpt_control.c:278 gui2/gpt_control.c:3978 gui2/gpt_control.c:4055
-#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206 gui2/session.c:3331
-#: gui2/session.c:3370 gui2/session.c:3383
+#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206
+#: gui2/session.c:3331 gui2/session.c:3370 gui2/session.c:3383
 msgid "Edit"
 msgstr "Editar"
 
@@ -12340,7 +12330,7 @@ msgstr "Máxima _Verosim. Inform. Lim. ..."
 
 #: gui2/gretl.c:1728 gui2/gretl.c:1775
 msgid "_GMM..."
-msgstr "Método Momentos _Xeralizado..."
+msgstr "Método _Xeralizado Momentos..."
 
 #: gui2/gretl.c:1729
 msgid "Other _linear models"
@@ -13399,7 +13389,7 @@ msgstr "Gretl: Proba ARCH"
 
 #: gui2/gui_utils.c:4269 gui2/library.c:3236
 msgid "Lag order for test:"
-msgstr "Orde do retardo para a proba:"
+msgstr "Nivel de retardo para a proba:"
 
 #: gui2/gui_utils.c:4418
 msgid "_Normality of residuals"
@@ -13774,7 +13764,7 @@ msgstr "criterio"
 
 #: gui2/library.c:1019 gui2/library.c:1035 gui2/library.c:1119
 msgid "test down from maximum lag order"
-msgstr "Probar desde a máxima orde de retardos cara abaixo"
+msgstr "Probar desde o máximo nivel de retardo cara abaixo"
 
 #: gui2/library.c:1021 gui2/library.c:1032 gui2/library.c:1261
 msgid "with constant"
@@ -13807,7 +13797,7 @@ msgstr "Amosar os resultados das probas individuais"
 
 #: gui2/library.c:1072 gui2/library.c:1152 gui2/library.c:1271
 msgid "Lag order for ADF test:"
-msgstr "Orde do retardo para a proba ADF:"
+msgstr "Nivel de retardo para a proba ADF:"
 
 #: gui2/library.c:1120
 msgid "use Perron-Qu method"
@@ -13820,7 +13810,7 @@ msgstr "Incluír unha tendencia"
 
 #: gui2/library.c:1229
 msgid "Lag order for KPSS test:"
-msgstr "Orde do retardo para a proba KPSS:"
+msgstr "Nivel de retardo para a proba KPSS:"
 
 #: gui2/library.c:1290
 msgid "gretl: ADF test"
@@ -13840,7 +13830,7 @@ msgstr "Gretl: Proba Levin-Lin-Chu"
 
 #: gui2/library.c:1439 gui2/library.c:5860
 msgid "Lag order:"
-msgstr "Orde do retardo:"
+msgstr "Nivel de retardo:"
 
 #: gui2/library.c:1478
 msgid "gretl: add info"
@@ -14033,7 +14023,7 @@ msgstr "Gretl: Dependencia de sección cruzada"
 
 #: gui2/library.c:2661
 msgid "Lag order for ARCH test:"
-msgstr "Orde do retardo para a proba ARCH:"
+msgstr "Nivel de retardo para a proba ARCH:"
 
 #: gui2/library.c:2708
 msgid "gretl: panel model diagnostics"
@@ -14247,7 +14237,7 @@ msgstr "Gretl: Covarianzas dos coeficientes"
 
 #: gui2/library.c:6005 gui2/library.c:6032
 msgid "Encode all values"
-msgstr "Codificar todos os valores"
+msgstr "Codificar tódolos valores"
 
 #: gui2/library.c:6006 gui2/library.c:6033
 msgid "Skip the lowest value"
@@ -14378,7 +14368,7 @@ msgstr "Variable do eixe X"
 
 #: gui2/library.c:7583
 msgid "Plot all data"
-msgstr "Representar todos os datos"
+msgstr "Representar tódolos datos"
 
 #: gui2/library.c:7584
 msgid "Plot group means"
@@ -15098,7 +15088,7 @@ msgstr "Variable dependente 1"
 
 #: gui2/selector.c:4584
 msgid "lag order:"
-msgstr "Orde do retardo:"
+msgstr "Nivel de retardo:"
 
 #: gui2/selector.c:4585
 msgid "rank:"
@@ -15254,7 +15244,7 @@ msgstr "Incluír variables ficticias estacionais"
 
 #: gui2/selector.c:5904
 msgid "Test down from maximum lag order"
-msgstr "Probar desde a máxima orde de retardos cara abaixo"
+msgstr "Probar desde o máximo nivel de retardo cara abaixo"
 
 #: gui2/selector.c:5906
 msgid "Skip initial DF tests"
@@ -15270,7 +15260,7 @@ msgstr "Incluír variables ficticias temporais"
 
 #: gui2/selector.c:5917
 msgid "Include levels equations (GMM-SYS)"
-msgstr "Incluír as ecuacións en niveis (MMX-SYS)"
+msgstr "Incluír as ecuacións en niveis (MXM-SYS)"
 
 #: gui2/selector.c:5922
 msgid "Show zeros explicitly"
@@ -15654,7 +15644,7 @@ msgstr "Retardos da variable dependente"
 
 #: gui2/selector.c:8506
 msgid "default"
-msgstr "por defecto"
+msgstr "Por defecto"
 
 #: gui2/series_view.c:371 gui2/series_view.c:418
 msgid "Original order"
@@ -15718,13 +15708,13 @@ msgstr "Editar as ordes de gráfica"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3336
-#: gui2/session.c:3374 gui2/session.c:3385
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
+#: gui2/session.c:3336 gui2/session.c:3374 gui2/session.c:3385
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3323
-#: gui2/session.c:3357 gui2/textutil.c:485
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
+#: gui2/session.c:3323 gui2/session.c:3357 gui2/textutil.c:485
 msgid "View"
 msgstr "Ver"
 
@@ -15968,7 +15958,7 @@ msgstr ""
 
 #: gui2/settings.c:219
 msgid "File selector remembers folder"
-msgstr "O selector de ficheiros lembra o directorio"
+msgstr "O selector de ficheiros lembra o cartafol"
 
 #: gui2/settings.c:222
 msgid "Language preference"
@@ -16240,7 +16230,7 @@ msgstr "O diálogo de selección de ficheiro debe de:"
 
 #: gui2/settings.c:2792
 msgid "remember the last-opened folder"
-msgstr "Lembrar o último directorio que se abriu"
+msgstr "Lembrar o último cartafol que se abriu"
 
 #: gui2/settings.c:2800
 msgid "always start in the working directory"
@@ -17204,7 +17194,8 @@ msgid "No worksheets found"
 msgstr "Non se atoparon follas de traballo"
 
 #: plugin/excel_import.c:1698 plugin/gnumeric_import.c:674
-#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1256 plugin/xlsx_import.c:1316
+#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1256
+#: plugin/xlsx_import.c:1316
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento incorrecto para a importación dunha folla de cálculo"
 
@@ -17953,7 +17944,7 @@ msgstr "Gardar datos"
 
 #: plugin/tramo-x12a.c:328
 msgid "Show full output"
-msgstr "Amosar todos os resultados"
+msgstr "Amosar tódolos resultados"
 
 #: plugin/tramo-x12a.c:337
 msgid "Execute X-12-ARIMA directly"

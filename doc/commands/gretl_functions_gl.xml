@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -289,8 +289,8 @@
     <function name="$gmmcrit" section="access" output="scalar">
       <description>
 	<para>
-	  Debe executarse logo dun bloque <lit>gmm</lit> (do Método dos Momentos
-	  Xeneralizado) e devolve un escalar co mínimo da función obxectivo.
+	  Debe executarse logo dun bloque <lit>gmm</lit> (do Método Xeneralizado
+	  dos Momentos) e devolve un escalar co mínimo da función obxectivo.
 	</para>
       </description>
     </function>
@@ -995,7 +995,7 @@
 	  Debe executarse logo de estimar un VECM e devolve unha matriz na que
 	  as matrices Gamma (cos coeficientes das diferenzas retardadas das
 	  variables cointegradas) se agrupan unhas ao lado das outras. Cada fila
-	  indica unha ecuación; para un VECM de orde de retardo <math>p</math>
+	  indica unha ecuación; para un VECM con nivel de retardo <math>p</math>
 	  existen <math>p</math> &minus; 1 submatrices.
 	</para>
       </description>
@@ -4588,7 +4588,7 @@
 	<para>
 	  Devolve unha matriz co cálculo do estimador non paramétrico
 	  de Kaplan&ndash;Meier da función de supervivencia
-	  (<cite key="kaplan-meier">Kaplan and Meier, 1958</cite>), dada unha
+	  (<cite key="kaplan-meier">Kaplan e Meier, 1958</cite>), dada unha
 	  mostra <argname>d</argname> de datos de duración, posiblemente
 	  acompañada dun rexistro de estado de censura, <argname>cens</argname>.
 	  A matriz que se devolve ten tres columnas que conteñen,
@@ -4788,7 +4788,7 @@
 	</para>
 	<para>
 	  Cando o segundo argumento <argname>y</argname> é unha lista ou unha
-	  matriz con máis dunha columna, e a orde de retardo é maior ca 1, a
+	  matriz con máis dunha columna, e o nivel de retardo é maior ca 1, a
 	  disposición por defecto dos elementos na lista que se devolve é por orde
 	  de variable: primeiro se devolven todos os retardos da primeira serie
 	  ou columna contida nese argumento, seguidos de todos os da segunda, e
@@ -4912,9 +4912,9 @@
       <description>
 	<para>
 	  Devolve un escalar co cálculo do estatístico Q de Ljung&ndash;Box
-	  para a serie <argname>y</argname>, utilizando a orde de retardo
+	  para a serie <argname>y</argname>, utilizando o nivel de retardo
 	  <argname>p</argname>, ao longo da mostra actualmente seleccionada.
-	  A orde de retardo debe de ser maior ou igual a 1, e menor ca o número
+	  O nivel de retardo debe de ser maior ou igual a 1, e menor ca o número
 	  de observacións dispoñibles.
 	</para>
 	<para>
@@ -5201,7 +5201,7 @@
 	  vector <argname>u</argname> de orde <math>T</math> (opcional,
 	  que adoita conter erros), un vector <argname>w</argname> de orde
 	  <math>p</math>+1 (opcional, que contén unhas ponderacións), e un
-	  número enteiro <argname>p</argname> que indica a orde de retardo
+	  número enteiro <argname>p</argname> que indica o nivel de retardo
 	  e debe de ser maior ou igual a 0.
 	</para>
 	<para context="tex">
@@ -5329,7 +5329,7 @@
 	  matriz de orde <by r="p" c="k"/> que contén o gradiente do vector de
 	  ponderacións (tal como o calcula a función <fncref targ="mweights"/>)
 	  con respecto a os elementos de <repl>theta</repl>. O primeiro
-	  argumento representa a orde de retardo desexada e o derradeiro
+	  argumento representa o nivel de retardo desexado e o derradeiro
 	  argumento especifica o tipo de parametrización. Consulta a función
 	  <lit>mweights</lit> para ter unha relación dos valores admisibles
 	  para <repl>type</repl>.
@@ -6290,7 +6290,7 @@
 	  argumento, os valores que se devolven son os dunha variable con
 	  distribución de probabilidade Normal estándar, <math>N</math>(0,1).
 	  Os valores prodúcense utilizando o método Ziggurat
-	  (<cite key="marsaglia00" p="true">Marsaglia and Tsang, 2000</cite>).
+	  (<cite key="marsaglia00" p="true">Marsaglia e Tsang, 2000</cite>).
 	</para>
 	<para>
 	  <seelist>
@@ -7410,13 +7410,13 @@
 	  <math>w</math><sub>i</sub>
 	  <math>f</math>(<math>x</math><sub>i</sub>) vaise aproximar á
 	  integral desexada. Para isto vaise utilizar o método de
-	  <cite key="golub69">Golub and Welsch (1969)</cite>.
+	  <cite key="golub69">Golub e Welsch (1969)</cite>.
 	</para>
 	<para context="tex">
 	  Para cada especificación de $W(x)$, pode calcularse un conxunto de
 	  nodos, $x_i$, e un conxunto de ponderacións, $w_i$, de tal xeito que
 	  $\sum_{i=1}^n f(x_i) w_i$ vaise aproximar á integral desexada. Vaise
-	  usar o método de <cite key="golub69">Golub and Welsch (1969)</cite>.
+	  usar o método de <cite key="golub69">Golub e Welsch (1969)</cite>.
 	</para>
 	<para context="notex">
 	  Cando se selecciona o tipo de Gauss&ndash;Legendre, podes utilizar
@@ -7431,7 +7431,7 @@
 	  Cando se selecciona o tipo de Gauss&ndash;Legendre, podes utilizar
 	  os argumentos opcionais <argname>a</argname> e <argname>b</argname>
 	  para controlar os límites inferior e superior da integración, sendo
-	  neste caso os valores por defecto o $-1$ and 1. (Na cuadratura
+	  neste caso os valores por defecto o $-1$ e 1. (Na cuadratura
 	  de Hermite, os límites están fixados no $-\infty$ e $+\infty$;
 	  mentres que no caso de Laguerre, están fixados no 0 e $\infty$.)
 	</para>
@@ -9121,7 +9121,7 @@
 	  <argname>b</argname>) ou, se non indicas eses argumentos, no
 	  intervalo (0,1). O algoritmo que se utiliza por defecto é o
 	  <quote>SIMD-oriented Fast Mersenne Twister</quote> desenvolvido por 
-	  <cite key="saito_matsumoto08">Saito and Matsumoto (2008)</cite>.
+	  <cite key="saito_matsumoto08">Saito e Matsumoto (2008)</cite>.
 	</para>
 	<para>
 	  <seelist>
