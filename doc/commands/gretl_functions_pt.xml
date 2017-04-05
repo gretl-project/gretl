@@ -570,7 +570,7 @@
       <description>
 	<para>
 	  É aplicável quando as observações no conjunto de dados corrente
-	  têm uma estrutura menor:maior:micro, como em séries temporais
+	  têm uma estrutura maior:menor:micro, como em séries temporais
 	  datadas diárias (ano:mês:dia). Retorna uma série contendo o
 	  componente micro, ou de maior frequência, de cada observação
 	  (por exemplo, o dia).
@@ -1247,7 +1247,7 @@
 	  estatísticas para <argname>x</argname> são considerados como <lit>NaN</lit>
 	  (ou seja, não são números). Caso seja desejado ignorar esses
 	  casos é possível utilizar a função <fncref targ="selifr"/> para
-	  selecionar apenas aquelas colunas que não possuam uma contagem igual a
+	  selecionar apenas aquelas linhas que não possuam uma contagem igual a
 	  zero. A coluna a ser testada estará uma posição à direita após o número
 	  de variáveis de <argname>byvar</argname>, assim, pode-seutilizar o
 	  seguinte código:
@@ -1335,11 +1335,11 @@
 	  cuja tangente é <argname>x</argname>. Resultado em radianos.
 	</para>
 	<para>
-	  <seelist>
-            <fncref targ="cos"/>
-            <fncref targ="sin"/>
-            <fncref targ="tan"/>
-	  </seelist>
+      <seelist>
+        <fncref targ="cos"/>
+        <fncref targ="sin"/>
+        <fncref targ="tan"/>
+      </seelist>
 	</para>
       </description>
     </function>
@@ -1509,7 +1509,7 @@
 	  número de linhas igual ao número de elementos restritos no
 	  vetor de parâmetros. O primeiro elemento de uma dada linha
 	  é o índice (de base 1) do parâmetro restrito, o segundo e o
-	  terceiro são os limites superiores e inferiores, respectivamente.
+	  terceiro são os limites inferiores e superiores, respectivamente.
 	  Os valores <lit>-$huge</lit> e <lit>$huge</lit> devem ser
 	  usados para indicar que o parâmetro não possui restrições
 	  inferiores ou superiores, respectivamente. Por exemplo, a
@@ -1520,7 +1520,7 @@
 	  matrix bounds = {2, 0, $huge}
 	</code>
 	<para>
-	  O terceiro argumento, opcional, estabelece uma maneira de
+	  O quarto argumento, opcional, estabelece uma maneira de
 	  fornecer derivadas analíticas (caso contrário o gradiente
 	  será computado numericamente). A função gradiente <argname>
 	  g</argname> deve ter como primeiro argumento uma matriz
@@ -1849,7 +1849,7 @@
 	  Qui-quadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp;
 	  g.l. &amp; -- &amp; --\\
 	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp;
-	  g.l. (num.) &amp; df (den.) &amp; --\\
+	  g.l. (num.) &amp; g.l. (den.) &amp; --\\
 	  Gama &amp; \texttt{g} ou \texttt{G} &amp;
 	  forma &amp; escala &amp; --\\
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp;
@@ -1859,17 +1859,17 @@
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp;
 	  forma &amp; escala &amp; --\\
 	  Erro Generalizado &amp; \texttt{E} &amp;
-	  shape &amp; -- &amp; --\\
+	  forma &amp; -- &amp; --\\
 	  $\chi^2$ não-central &amp; \texttt{ncX} &amp;
 	  g.l. &amp; não-centralidade &amp; -- \\
 	  $F$ não-central &amp; \texttt{ncF} &amp;
-	  g.l. (num.) &amp; df (den.) &amp; não-centralidade \\
+	  g.l. (num.) &amp; g.l. (den.) &amp; não-centralidade \\
 	  Non-central $t$ &amp; \texttt{nct} &amp;
 	  g.l. &amp; não-centralidade &amp; -- \\
 	</tabular>
 	<para>
 	  Note que na maioria dos casos existem pseudônimos para ajudar na
-	  memorização dos céodigos. O caso da norma bivariada é especial: a
+	  memorização dos códigos. O caso da norma bivariada é especial: a
 	  sintaxe é <lit>x = cdf(D, rho, z1, z2)</lit> onde <lit>rho</lit>
 	  é a correlação entre as variáveis <lit>z1</lit>
 	  e <lit>z2</lit>.
@@ -2192,11 +2192,11 @@
       <description>
 	<para>
 	  Retorna o cosseno de <argname>x</argname>.
-	  <seelist>
-            <fncref targ="sin"/>
-            <fncref targ="tan"/>
-            <fncref targ="atan"/>
-	  </seelist>
+	<seelist>
+          <fncref targ="sin"/>
+          <fncref targ="tan"/>
+          <fncref targ="atan"/>
+	</seelist>
 	</para>
       </description>
     </function>
@@ -2279,7 +2279,7 @@
 	  </li>
 	  <li>
             <para>
-              F de Snedecor (f ou F): gl (num.); gl (den.)
+              F de Snedecor (f ou F): g.l. (num.); g.l. (den.)
             </para>
 	  </li>
 	  <li>
@@ -2325,21 +2325,21 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Acumula <argname>x</argname> (isto é, cria uma soma
-	  móvel). Quando <argname>x</argname> for uma série, produz uma
-	  série <math>y</math> onde cada um de seus elementos é igual a soma
-	  dos valores de <argname>x</argname> até a observação correspondente. O ponto
-	  de partida para a acumulação é a primeira observação não-ausente
-	  da amostra selecionada corrente. Quando <argname>x</argname>
+	  Acumula <argname>x</argname> (isto é, cria uma soma móvel).
+	  Quando <argname>x</argname> for uma série, produz uma série
+	  <math>y</math> onde cada um de seus elementos é igual a soma
+	  dos valores de <argname>x</argname> até a observação correspondente.
+	  O ponto de partida para a acumulação é a primeira observação
+	  não-ausente da amostra selecionada corrente. Quando <argname>x</argname>
 	  for uma matriz, seus elementos são acumulados por colunas.
 	</para>
 	<para context="tex">
 	  Acumula <argname>x</argname>. Quando <math>x</math> or uma série,
-	  produz uma série $y_t = \sum_{s=m}^t x_s$. O ponto de partida para a
-	  acumulação, <math>m</math>, é a primeira observação não-ausente
-	  a amostra selecionada corrente. Se forem encontrados valores ausentes em
-	  <math>x</math>, os valores subsequentes de <math>y</math>
-	  serão definidos como valor ausente. Quando <argname>x</argname>for uma
+	  produz uma série $y_t = \sum_{s=m}^t x_s$. O ponto de partida para
+	  a acumulação, <math>m</math>, é a primeira observação não-ausente
+	  a amostra selecionada corrente. Se forem encontrados valores ausentes
+	  em <math>x</math>, os valores subsequentes de <math>y</math> serão
+	  definidos como valor ausente. Quando <argname>x</argname>for uma
 	  matriz, seus elementos são acumulados por colunas.
 	</para>
 	<para>
@@ -2356,12 +2356,12 @@
       </fnargs>
       <description>
 	<para>
-	  Fornece uma maneira relativamente flexível de se obter um buffer de texto
-	  contendo dados de um servidor de internet utilizando a biblioteca libcurl.
-	  O argumento <argname>b</argname>, do tipo pacote (<quote>bundle</quote>),
-	  deve conter uma variável de texto (<quote>string</quote>) chamada <lit>URL</lit>
-	  que fornece o endereço completo do recurso no host alvo.
-	  Outros elementos opcionais são apresentados a seguir.
+	  Fornece uma maneira relativamente flexível de se obter um buffer de
+	  texto contendo dados de um servidor de internet utilizando a biblioteca
+	  libcurl. O argumento <argname>b</argname>, do tipo pacote (<quote>
+	  bundle</quote>), deve conter uma variável de texto (<quote>string</quote>)
+	  chamada <lit>URL</lit> que fornece o endereço completo do recurso
+	  no host alvo. Outros elementos opcionais são apresentados a seguir.
 	</para>
 	<ilist>
 	  <li>
@@ -2435,6 +2435,28 @@
 	<para>
 	  Veja também a função <fncref targ="jsonget"/> para
 	  processamento de dados recebidos no formato JSON.
+	</para>
+      </description>
+    </function>
+
+    <function name="dayspan" section="calendar" output="int">
+      <fnargs>
+	<fnarg type="int">dia1</fnarg>
+	<fnarg type="int">dia2</fnarg>
+	<fnarg type="int">dias por semana</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o número de dias (relevantes) entre os dias
+	  <argname>dia1</argname> e <argname>dia2</argname>,
+	  inclusive. Os <argname>dias por semana<</argname>, que têm que ser
+	  5, 6 ou 7, dão o número de dias na semana que devem contar
+	  (um valor de 6, ignora domingos, e um valor de 5
+	  ignora sábados e domingos).
+	</para>
+	<para>
+	  Para obter dias de períodos a partir das formas mais familiares de datas,
+	  ver <fncref targ="epochday"/>.
 	</para>
       </description>
     </function>
@@ -2628,21 +2650,21 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna uma lista com os mesmo elementos de
-	  <argname>X</argname>, mas excluindo as séries
-	  colineares. Assim, se todas as séries em <argname>X</argname>
-	  forem linearmente independentes, a lista resultante será simplesmente
-	  uma cópia de <argname>X</argname>.
+	  Retorna uma lista com os mesmo elementos de <argname>X</argname>,
+	  mas excluindo as séries colineares. Assim, se todas as séries em
+	  <argname>X</argname> forem linearmente independentes, a lista
+	  resultante será simplesmente uma cópia de
+	  <argname>X</argname>.
 	</para>
 	<para>
 	  O algoritmo utiliza a decomposição QR (tranformação de Householder),
-	  de forma que está sujeita a erro de precisão finita.
-	  Para avaliar a sensibilidade do algoritmo, um
-	  segundo parâmetro (opcional) <argname>epsilon</argname> pode ser
-	  especificado para tornar o teste de colinearidade mais ou menos estrito,
-	  conforme desejado. O valor padrão para <argname>epsilon</argname>
-	  é 1.0e-8. Ajustando <argname>epsilon</argname> para um maior
-	  valor eleva a probabilidade de uma série ser descartada.
+	  de forma que está sujeita a erro de precisão finita. Para avaliar
+	  a sensibilidade do algoritmo, um segundo parâmetro (opcional)
+	  <argname>epsilon</argname> pode ser especificado para tornar o
+	  teste de colinearidade mais ou menos estrito, conforme desejado.
+	  O valor padrão para <argname>epsilon</argname> é 1.0e-8. Ajustando
+	  <argname>epsilon</argname> para um maior valor eleva a probabilidade
+	  de uma série ser descartada.
 	</para>
 	<para>
 	  Exemplo:
@@ -2754,24 +2776,25 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Calculates the empirical CDF of <argname>y</argname>. This
-	  is returned in a matrix with two columns: the first holds
-	  the sorted unique values of <argname>y</argname> and the
-	  second holds the cumulative relative frequency, that is
-	  the count of observations whose value is less than
-	  or equal to the value in the first column, divided by
-	  the total number of observations.
+	  Calcula a função distribuição acumulada (FDA) empírica de
+	  <argname>y</argname>. Esta é retornada em uma matriz com
+	  duas colunas: a primeira contém os valores únicos e ordenados
+	  de <argname>y</argname> e a segunda a frequência relativa
+	  cumulativa, isto é, a quantidade de vezes em que o valor da
+	  observação é menor ou igual ao valor na primeira coluna,
+	  dividida pelo número total deobservações.
 	</para>
 	<para context="tex">
-	  Calculates the empirical CDF of <argname>y</argname>. This
-	  is returned in a matrix with two columns: the first holds
-	  the sorted unique values of <argname>y</argname> and the
-	  second holds the cumulative relative frequency,
+	  Calcula a função distribuição acumulada (FDA) empírica de <argname>
+	  y</argname>. Esta é retornada em uma matriz com duas colunas:
+	  a primeira contém os valores únicos e ordenados de <argname>
+	  y</argname> e a segunda a frequência relativa
+	acumulada,
 	  \[ F(y) =
 	  \frac{1}{n} \sum_{i=1}^n I(y_i \leq y)
 	  \]
-	  where $n$ is total number of observations and $I()$ denotes
-	  the indicator function.
+	  onde $n$ é o número total de observações e $I()$ representa
+	  a função indicadora.
 	</para>
       </description>
     </function>
@@ -2890,20 +2913,29 @@
 
     <function name="epochday" section="calendar" output="scalar-or-series">
       <fnargs>
-	<fnarg type="scalar-or-series">year</fnarg>
-	<fnarg type="scalar-or-series">month</fnarg>
-	<fnarg type="scalar-or-series">day</fnarg>
+	<fnarg type="scalar-or-series">ano</fnarg>
+	<fnarg type="scalar-or-series">mês</fnarg>
+	<fnarg type="scalar-or-series">dia</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Retorna o número do dia na época corrente especificada pelo ano, mês
 	  e dia. O número do dia é igual a 1 para o dia 1 de janeiro do ano 1
-	  depois de Cristo e 733786 na data 2010-01-01. Se algum dos argumentos
-	  for uma séries, os valores retornados também terão a forma de uma série,
-	  caso contrário será retornado um escalar.
+	  depois de Cristo, no calendário gregoriano proléptico, e 733786 na
+	  data 2010-01-01. Se algum dos argumentos for uma série, os valores
+	  retornados também terão a forma de uma série, caso contrário será
+	  retornado um escalar.
 	</para>
 	<para>
-	  Para a inversa dessa função, veja <fncref targ="isodate"/>.
+	  Por omissão os valores do <argname>ano</argname>,
+	  <argname>mês</argname> e <argname>dia</argname> assumem-se
+	  serem relativos ao calendário gregoriano,
+	  mas se o ano fôr um valor negativo a interpretação
+	  muda para o calendário juliano.
+	</para>
+	<para>
+	  Para a inversa dessa função, veja <fncref targ="isodate"/>. Veja
+	  também a função <fncref targ="juldate"/> para o calendário juliano.
 	</para>
       </description>
     </function>
@@ -2927,10 +2959,10 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna um valor não-nulo <argname>name</argname> é o identificador de um
-	  objeto correntemente definido, seja um escalar, uma série, uma matriz, uma
-	  lista, uma variável de texto, um pacote (<quote>bundle</quote>) ou um arranjo
-	  (<quote>array</quote>). Caso contrário retorna 0. Veja também <fncref targ="typeof"/>.
+	  Retorna um valor não-nulo se <argname>name</argname> é o identificador de
+	  um objeto existente, seja um escalar, uma série, uma matriz, uma lista, uma
+	  variável de texto, um pacote (<quote>bundle</quote>) ou um arranjo (<quote>
+	  array</quote>). Caso contrário retorna 0. Veja também <fncref targ="typeof"/>.
 	</para>
       </description>
     </function>
@@ -2955,8 +2987,8 @@
       </fnargs>
       <description>
 	<para>
-	  Produz um vetor coluna contendo várias estatísticas que podem ser utilizadas
-	  para avaliar a série <argname>f</argname>, que consiste na
+	  Produz um vetor coluna contendo várias estatísticas que podem ser
+	  utilizadas para avaliar a série <argname>f</argname>, que consiste na
 	  previsão da série <argname>y</argname>, ao longo da amostra
 	  selecionada. Dois vetores de mesmo tamanho podem ser utilizados
 	  no lugar das duas séries.
@@ -2990,24 +3022,24 @@
       </fnargs>
       <description>
 	<para>
-	  Calculates a numerical approximation to the Jacobian
-	  associated with the <math>n</math>-vector
-	  <argname>b</argname> and the transformation function
-	  specified by the argument <argname>fcall</argname>.  The
-	  function call should take <argname>b</argname> as its first
-	  argument (either straight or in pointer form), followed by
-	  any additional arguments that may be needed, and it should
-	  return an <by r="m" c="1"/> matrix. On successful completion
-	  <lit>fdjac</lit> returns an <by r="m" c="n"/> matrix holding
-	  the Jacobian. Exemplo:
+	  Calcula uma aproximação numérica para a jacobiana associada ao vetor
+	  <argname>b</argname> de ordem <math>n</math> e a função de transformação
+	  especificada pelo argumento <argname>fcall</argname>. A chamada da
+	  função deve ter <argname>b</argname> como primeiro argumento
+	  (tanto na forma direta quanto na forma de ponteiro),
+	  seguido por quaisquer argumentos adicionais que podem ser necessários
+	  e o valor retornado deverá ser uma matriz de ordem <by r="m" c="1"/>.
+	  Se executada com sucesso, <lit>fdjac</lit> retorna uma matriz de ordem
+	  <by r="m" c="n"/> contendo a jacobiana.
+	  Exemplo:
 	</para>
 	<code>
 	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
 	</code>
 	<para>
-	  The function can use three different methods: simple
-	  forward-difference, bilateral difference or 4-nodes
-	  Richardson extrapolation. Respectively:
+	  A função pode utilizar três diferentes métodos: diferença anterior,
+	  diferença bilateral ou extrapolação de Richardson com 4 nós.
+	  Respectivamente:
 	</para>
 	<para context="tex">
 	  \[ J_0 = \frac{f(x + h) - f(x)}{h} \]
@@ -3029,14 +3061,14 @@
 	  (f(x+2h) - f(x-2h))] /12h</math>
 	</para>
 	<para>
-	  The three alternatives above provide, generally, a trade-off
-	  between accuracy and speed. You can choose among methods by
-	  using the <cmdref targ="set"/> command and specify the value
-	  0, 1 or 2 para a <lit>fdjac_quality</lit> variável.
+	  As três alternativas acima trazem, geralmente, um dilema
+	  entre acurácia e velocidade. É possível escolher os métodos
+	  através do comando <cmdref targ="set"/>, ajustando a variável
+	  <lit>fdjac_quality</lit> em 0, 1 ou 2.
 	</para>
 	<para>
-	  Para maiores detalhes and exemplos see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  Para maiores detalhes e exemplos veja o capítulo sobre métodos
+	  numéricos no <guideref targ="chap:numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -3053,16 +3085,16 @@
       </fnargs>
       <description>
 	<para>
-	  Discrete real Fourier transform. If the input matrix
-	  <argname>X</argname> has <math>n</math> columns, the output has
-	  2<math>n</math> columns, onde the real parts are stored in the
-	  odd columns and the complex parts in the even ones.
+	  Calcula a transformada de Fourier real discreta. Se a matriz de
+	  entrada <argname>X</argname> tiver <math>n</math> colunas, a saída
+	  terá 2<math>n</math> colunas, onde as partes reais são armazenadas
+	  nas colunas ímpares e as complexas nas pares.
 	</para>
 	<para>
-	  Should it be necessary to compute the Fourier transform on several
-	  vectors with the same number of elements, it is numerically more
-	  efficient to group them into a matrix rather than invoking
-	  <lit>fft</lit> for each vector separately.
+	  Quando seja necessário calcular a transformada de Fourier em vários
+	  vetores com o mesmo número de elementos, é mais eficiente, do ponto
+	  de vista numérico, agrupar esses vetores em uma única matriz ao invés
+	  de aplicar a função <lit>fft</lit> em cada vetor de forma separada.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -3076,18 +3108,18 @@
       </fnargs>
       <description>
 	<para>
-	  Inverse discrete real Fourier transform. It is assumed that
-	  <argname>X</argname> contains <math>n</math> complex column
-	  vectors, with the real part in the odd columns and the imaginary
-	  part in the even ones, so the total number of columns should be
-	  2<math>n</math>. A matrix with <math>n</math> columns is
+	  Calcula a inversa da transformada de Fourier real discreta. Assume-se
+	  que <argname>X</argname> contém <math>n</math> colunas complexas, com
+	  a parte real nas colunas ímpares e a parte real nas pares. Assim, o
+	  número total de colunas deverá ser 2<math>n</math>.
+	  Uma matriz com <math>n</math> colunas é retornada.
 	  returned.
 	</para>
 	<para>
-	  Should it be necessary to compute the inverse Fourier transform on
-	  several vectors with the same number of elements, it is
-	  numerically more efficient to group them into a matrix rather
-	  than invoking <lit>ffti</lit> for each vector separately.
+	  Quando seja necessário calcular a inversa da transformada de Fourier em
+	  vários vetores com o mesmo número de elementos, é mais eficiente, do ponto
+	  de vista numérico, agrupar esses vetores em uma única matriz ao invés de
+	  aplicar a função <lit>fft</lit> em cada vetor de forma separada.
 	  <seelist>
             <fncref targ="fft"/>
 	  </seelist>
@@ -3095,7 +3127,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="series">
+    <function name="filter" section="filters" output="seebelow">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
@@ -3128,9 +3160,9 @@
 	  a filtragem sendo realizada coluna por coluna.
 	</para>
 	<para>
-	  Os argumentos <argname>a</argname> e
-	  <argname>b</argname> são opcionais. Eles podem ser escalares,
-	  vetores ou a palavra-chave <lit>null</lit>.
+	  Os argumentos <argname>a</argname> e <argname>b</argname>
+	  são opcionais. Eles podem ser escalares, vetores ou a
+	  palavra-chave <lit>null</lit>.
 	</para>
 	<para>
 	  Se <argname>a</argname> for um escalar, isto é usado como
@@ -3245,8 +3277,8 @@
 	  1. Remover quaisquer caracteres que não sejam letras no início do nome.
 	</para>
 	<para>
-	  2. No caso de se ultrapassar o limite de 31 caracteres ou a entrada ter
-	  sido exaurida: transcreve os caracteres <quote>legais</quote>, omite
+	  2. Até o limite de 31 caracteres não ter sido ultrapassado ou a entrada
+	  tiver sido exaurida: transcreve os caracteres <quote>legais</quote>, omite
 	  os caracteres <quote>ilegais</quote>, com exceção dos espaços, e
 	  substitui os espaços por traços inferiores. Se o
 	  o caractere anterior for um traço inferior o espaço será
@@ -3376,7 +3408,7 @@
       </fnargs>
       <description>
 	<para>
-	  Essa função lêr sucessivamente as linhas de <argname>source</argname>, que
+	  Essa função lê sucessivamente as linhas de <argname>source</argname>, que
 	  deve ser uma variável de texto (<quote>string</quote>). A cada chamada uma
 	  linha do texto é escrita em <argname>target</argname> (que também deve ser
 	  uma variável de texto) com o caractere de nova linha removido. O valor
@@ -3426,34 +3458,34 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the GHK (Geweke, Hajivassiliou, Keane) approximation to the
-	  multivariate normal distribution function; see por exemplo <cite
-	  key="geweke91">Geweke (1991)</cite>. The value returned is an <by
-	  r="n" c="1"/> vector of probabilities.
+	  Calcula a aproximação GHK (Geweke, Hajivassiliou, Keane) para a
+	  função de distribuição normal multivariada. Veja, por exemplo, <cite
+	  key="geweke91">Geweke (1991)</cite>. O valor retornado é um vetor de
+	  probabilidades de ordem <by r="n" c="1"/>.
 	</para>
 	<para>
-	  The argument <argname>C</argname> (<by r="m" c="m"/>) should give
-	  the Cholesky factor (lower triangular) of the covariance
-	  matrix of <math>m</math> normal variates.  The arguments
-	  <argname>A</argname> and <argname>B</argname> should both be <by
-	  r="n" c="m"/>, giving respectively the lower and upper bounds
-	  applying to the variates at each of <math>n</math>
-	  observações. Where variates are unbounded, this should be indicated
-	  using the built-in constant <fncref targ="$huge"/> or its negative.
+	  O argumento <argname>C</argname> (<by r="m" c="m"/>) deve fornecer o
+	  fator de Cholesky (triangular inferior) da matriz de covariância de
+	  <math>m</math> variáveis normais. Ambos os argumentos <argname>A</argname>
+	  e <argname>B</argname> devem ser de ordem <by r="n" c="m"/>, fornecendo,
+	  respectivamente, os limites inferior e superior aplicados às variáveis
+	  em cada uma das <math>n</math> observações. Quando as variáveis não
+	  possuírem limites é necessário que tal característica seja indicada
+	  através da constante <fncref targ="$huge"/> ou de sua negativa.
 	</para>
 	<para>
-	  The matrix <argname>U</argname> should be <by r="m" c="r"/>, with
-	  <math>r</math> the number of pseudo-random draws from the uniform
-	  distribution; suitable functions for creating <argname>U</argname>
-	  are <fncref targ="muniform"/> and <fncref targ="halton"/>.
+	  A matriz <argname>U</argname> deve ter ordem <by r="m" c="r"/>, sendo
+	  <math>r</math> o número de elementos pseudo-aleatórios extraídos da
+	  distribuição uniforme. Funções convenientes para a criação de <argname>
+	  U</argname> são <fncref targ="muniform"/> e <fncref targ="halton"/>.
 	</para>
 	<para>
-	  We illustrate below with a relatively simple case onde the
-	  multivariate probabilities can be calculated
-	  analytically. The series <lit>P</lit> and <lit>Q</lit>
-	  should be numerically very similar to one another,
-	  <lit>P</lit> being the <quote>true</quote> probability and
-	  <lit>Q</lit> its GHK approximation:
+	  A seguir encontra-se um caso relativamente simples onde as
+	  probabilidades multivariadas podem ser calculada de forma
+	  analítica. As séries <lit>P</lit> e <lit>Q</lit> devem ser
+	  numericamente muito similares entre si, sendo <lit>P</lit>
+	  a probabilidade <quote>verdadeira</quote> e <lit>Q</lit>
+	  sua aproximação GHK:
 	</para>
 	<code>
 	  nulldata 20
@@ -3474,15 +3506,15 @@
 	  series Q = ghk(C, {inf1, inf2}, {sup1, sup2}, U)
 	</code>
 	<para>
-	  The optional <argname>dP</argname> argument can be used to
-	  retrieve the <by r="n" c="k"/> matrix of derivatives of the
-	  probabilities, onde <math>k</math> equals 2<math>m</math> +
-	  <math>m</math>(<math>m</math> + 1)/2. The first
-	  <math>m</math> columns hold the derivatives with respect to
-	  the lower bounds, the next <math>m</math> those with respect
-	  to the upper bounds, and the remainder the derivatives with
-	  respect to the unique elements of the <math>C</math> matrix
-	  in <quote>vech</quote> order.
+	  O argumento opcional <argname>dP</argname> pode ser usado para
+	  recuperar a matriz <by r="n" c="k"/> de derivadas das probabilidades,
+	  onde <math>k</math> é igual a 2<math>m</math> + <math>m</math>
+	  (<math>m</math> + 1)/2. As primeiras <math>m</math> colunas
+	  contêm as derivadas em relação aos limites inferiores, as próximas
+	  <math>m</math> as derivadas em relação aos limites superiores e as
+	  colunas restantes as derivadas em relação aos elementos únicos da
+	  matriz <math>C</math> na ordem
+	  <quote>vech</quote>.
 	</para>
       </description>
     </function>
@@ -3564,32 +3596,32 @@
       </fnargs>
       <description>
 	<para>
-	  Horizontal direct product. The two arguments must have the
-	  same number of rows, <math>r</math>. The return value is a
-	  matrix with <math>r</math> rows, in which the
-	  <math>i</math>-th row is the Kronecker product of the
-	  corresponding rows of <argname>X</argname> and
-	  <argname>Y</argname>.
+	  Calcula o produto direto horizontal. Os dois argumentos
+	  devem ter o mesmo número de linhas, <math>r</math>. O valor
+	  retornado é uma matriz com <math>r</math> linhas, onde a
+	  <math>i</math>-ésima linha corresponde ao produto de
+	  Kronecker das linhas correspondentes de <argname>X</argname>
+	  e <argname>Y</argname>.
 	</para>
 	<para context="tex">
-	  In other words, if $X$ is an $r \times k$ matrix, $Y$ is an
-	  $r \times m$ matrix and $Z$ is the result matrix of the
-	  horizontal direct product of $X$ times $Y$, then $Z$ will
-	  have $r$ rows and $k\cdot m$ columns; moreover,
+	  Em outras palavras, se $X$ é uma matriz $r \times k$, $Y$ é uma
+	  matriz $r \times m$ e $Z$ é a matriz resultante do
+	  produto direto horizontal de $X$ vezes $Y$, logo $Z$ terá
+	  $r$ linhas e $k\cdot m$ colunas. Além disso,
 	  \[
 	  Z_{in} = X_{ij} Y_{il}
 	  \]
 	  onde $n = (j-1) m + l$.
 	</para>
 	<para>
-	  This operation is called <quote>horizontal direct
-	  product</quote> in conformity to its implementation in the
-	  GAUSS programming language. Its equivalent in standard
-	  matrix algebra would be called the row-wise Khatri-Rao
-	  product.
+	  Esta operação é chamada de <quote>produto horizontal
+	  direto</quote> em conformidade com sua implementação na
+	  linguagem de programação GAUSS. Sua equivalente na álgebra
+	  linear padrão seria chamada de produto linha a linha de
+	  Khatri-Rao.
 	</para>
 	<para>
-	  Exemplo: the code
+	  Exemplo: o código
 	</para>
 	<code>
 	  A = {1,2,3; 4,5,6}
@@ -3597,7 +3629,7 @@
 	  C = hdprod(A, B)
 	</code>
 	<para>
-	  produces the following matrix:
+	  produz a seguinte matriz:
 	</para>
 	<code>
           0    1    0    2    0    3
@@ -3671,21 +3703,21 @@
       </fnargs>
       <description>
 	  <para>
-	  Produces from the vector <repl>x</repl> a <cmdref
-	  targ="MIDAS_list"/> of <repl>m</repl> series, where
-	  <repl>m</repl> is the ratio of the frequency of observation
-	  for the variable in <repl>x</repl> to the base frequency of
-	  the current dataset. The value of <repl>m</repl> must be at
-	  least 3 and the length of <repl>x</repl> must be
-	  <repl>m</repl> times the length of the current sample range.
+	  Produz a partir de um vetor <repl>x</repl> uma lista MIDAS
+	  (<cmdref targ="MIDAS_list"/>) de <repl>m</repl> séries, onde
+	  <repl>m</repl> é a razão entre a frequência das observações
+	  para a variável em <repl>x</repl> em relação a frequência base
+	  do conjunto de dados corrente. O valor de <repl>m</repl> deve
+	  ser ao menos 3 e o comprimento de <repl>x</repl> deve ser
+	  <repl>m</repl> vezes o comprimento da amostra selecionada corrente.
     </para>
     <para>
-	  The names of the series in the returned list are constructed
-	  from the given <repl>prefix</repl> (which must be an ASCII
-	  string of 24 characters or less, and valid as a gretl
-	  identifier), plus one or more digits representing the
-	  sub-period of the observation. An error is flagged if any of
-	  these names duplicate names of existing objects.
+	  Os nomes das séries na lista retornada são definidos a partir de um
+	  dado prefixo, dado pelo argumento <repl>prefix</repl> (este deve ser
+	  um texto ASCII com 24 ou menos caracteres e que seja um identificador
+	  válido para o Gretl) mais 1 ou mais prefixos representando o subperíodo
+	  da observação. Um erro será apresentado se algum desses nomes seja
+	  idêntico a nomes de objetos já existentes.
     </para>
       </description>
     </function>
@@ -3702,7 +3734,7 @@
 	  <argname>lambda</argname> não for fornecido o Gretl usará valores
 	  padrão com base na periodicidade dos dados. O parâmetro será igual
 	  a 100 vezes o quadrado da periodicidade (100 para dados anuais, 1600
-	  para dados mensais, etc.).
+	  para dados trimestrais, etc.).
 	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
@@ -3768,20 +3800,20 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes Prob(<math>u'Au</math> &lt; <math>x</math>) for a quadratic
-	  form in standard normal variates, <math>u</math>, using the procedure
-	  developed by <cite key="imhof61">Imhof (1961)</cite>.
+	  Calcula Prob(<math>u'Au</math> &lt; <math>x</math>) para uma forma
+	  quadrática em variáveis normais padrão, <math>u</math>, utilizando o
+	  procedimento desenvolvido por <cite key="imhof61">Imhof (1961)</cite>.
 	</para>
 	<para context="tex">
-	  Computes ${\rm Prob}(u'Au &lt; x)$ for a quadratic form in standard
-	  normal variates, $u$, using the procedure developed by
+	  Computes ${\rm Prob}(u'Au &lt; x)$ para uma forma quadrática em variáveis
+	  normais padrão, $u$, utilizando o procedimento desenvolvido por
 	  <cite key="imhof61">Imhof (1961)</cite>.
 	</para>
 	<para>
-	  If the first argument, <argname>M</argname>, is a square matrix it
-	  is taken to specify <math>A</math>, otherwise if it's a column
-	  vector it is taken to be the precomputed autovalores of
-	  <math>A</math>, otherwise an error is flagged.
+	  Se o primeiro argumento, <argname>M</argname>, for uma matriz quadrada ela
+	  será utilizada para especificar <math>A</math>, caso contrário, se for
+	  um vetor coluna, será utilizada como sendo os autovalores pré-calculados
+	  de <math>A</math>, caso contrário um erro será apresentado.
 	</para>
 	<para>
 	  <seelist>
@@ -3853,13 +3885,13 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Retorna a infinity-norm of <argname>X</argname>, that is,
-	  the maximum across the rows of <argname>X</argname> of
-	  the sum of absolute values of the row elements.
+	  Retorna a norma infinito de <argname>X</argname>, isto é,
+	  o máximo ao longo das linhas de <argname>X</argname> da
+	  soma dos valores absolutos dos elementos da linha.
 	</para>
 	<para context="tex">
-	  Retorna a $\infty$-norm of the $r\times c$ matrix
-	  <argname>X</argname>, namely,
+	  Retorna a norma-$\infty$ da matriz <argname>X</argname> de
+	  ordem $r\times c$ matrix, ou seja:
           \[\| X \|_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|\]
 	</para>
 	<para>
@@ -4140,10 +4172,10 @@
 	  as respostas estimadas da variável <argname>target</argname> a
 	  um impulso (choque) de 1 desvio padrão na variável
 	  <argname>shock</argname>. Essas variáveis são identificadas de
-	  acordo com suas posições na especificação do VAR/VEC: por exemplo,
+	  acordo com suas posições na especificação do modelo: por exemplo,
 	  se para <argname>target</argname> e <argname>shock</argname> são
 	  dados os valores 1 e 3, respectivamente, a matriz que será
-	  retornada fornece as respostas da primeira variável no VAR/VEC
+	  retornada fornece as respostas da primeira variável no sistema
 	  a um choque na terceira variável.
 	</para>
 	<para>
@@ -4257,8 +4289,8 @@
       <description>
 	<para>
 	  Retorna 0 se <argname>name</argname> for o identificador de um objeto
-	  correntemente definido, seja um escalar, uma série, uma matriz, uma lista, uma
-	  variável de texto ou um pacote  (<quote>bundle</quote>). Caso contrário 1.
+	  correntemente definido, seja um escalar, uma série, uma matriz, uma lista,
+	  uma variável de texto ou um pacote (<quote>bundle</quote>). Caso contrário 1.
 	</para>
 	<para>
 	  Esta função é considerada obsoleta e recomenda-se substituí-la pela
@@ -4303,11 +4335,12 @@
 	<para>
 	  O argumento <argname>ed</argname> é interpretado como um dia na
 	  época corrente (que por sua vez é igual a 1 para o primeiro dia
-	  de janeiro do ano 1 depois de Cristo). O valor padrão de retorno
-	  &mdash; de mesmo tipo que o de <argname>ed</argname> &mdash; é
-	  um número com 8 dígitos, ou uma série composta por tais números,
-	  seguindo o padrão <lit>YYYYMMDD</lit> (formato <quote>básico</quote>
-	  ISO 8601), fornecendo a data correspondente no calendário ao dia na época.
+	  de janeiro do ano 1 depois de Cristo, no calendário gregoriano
+	  proléptico). O valor padrão de retorno &mdash; de mesmo tipo que
+	  o de <argname>ed</argname> &mdash; é um número com 8 dígitos, ou
+	  uma série composta por tais números, seguindo o padrão <lit>
+	  YYYYMMDD</lit> (formato ISO 8601 <quote>básico</quote>), fornecendo
+	  a data correspondente no calendário gregoriano ao dia na época.
 	</para>
 	<para>
 	  Se <argname>ed</argname> for (apenas) um escalar e o segundo argumento
@@ -4317,7 +4350,8 @@
 	  <quote>estendido</quote>).
 	</para>
 	<para>
-	  Para a função inversa veja <fncref targ="epochday"/>.
+	  Para a função inversa veja <fncref targ="epochday"/>. Veja
+	  também a função <fncref targ="juldate"/>.
 	</para>
       </description>
     </function>
@@ -4374,23 +4408,23 @@
 	  need details.
 	</para>
 	<para>
-	  That said, the following operators should be available
-	  to <lit>jsonget</lit>:
+	  Dito isto, os seguintes operadores deverão estar disponíveis
+	  para <lit>jsonget</lit>:
 	</para>
 	  <ilist>
 	    <li>
               <para>
-		root node, via the <lit>$</lit> character
+		root node, via caracter <lit>$</lit>
               </para>
 	    </li>
 	    <li>
               <para>
-		recursive descent operator: <lit>..</lit>
+		operador descendente recursivo: <lit>..</lit>
               </para>
 	    </li>
 	    <li>
               <para>
-		wildcard operator: <lit>*</lit>
+		operador wildcard: <lit>*</lit>
               </para>
 	    </li>
 	    <li>
@@ -4409,6 +4443,35 @@
               </para>
 	    </li>
 	  </ilist>
+      </description>
+    </function>
+
+    <function name="juldate" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="bool" optional="true">as-string</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>ed</argname> is interpreted as an
+	  epoch day, which equals 1 for the first of January in the
+	  year AD 1 on the proleptic Gregorian calendar. The default
+	  return value &mdash; of the same type as
+	  <argname>ed</argname> &mdash; is an 8-digit number, or a
+	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
+	  (ISO 8601 <quote>basic</quote> format), giving the Julian
+	  calendar date corresponding to the epoch day.
+	</para>
+	<para>
+	  If <argname>ed</argname> is a scalar (only) and the optional
+	  second argument <argname>as-string</argname> is non-zero,
+	  the return value is not numeric but rather a string on the
+	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format).
+	</para>
+	<para>
+	  See also <fncref targ="isodate"/>.
+	</para>
       </description>
     </function>
 
@@ -4471,7 +4534,7 @@
 	  the auxiliary residuals from their true value.
 	</para>
 	<para>
-	  For more details see <guideref targ="chap:kalman"/>.
+	  Para maiores detalhes veja <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4663,8 +4726,8 @@
 	<para>
 	  On successful completion, the smoothed states will be
 	  available as <lit>Mod.state</lit> and the sequence of their
-	  covariance matrizes as <lit>Mod.stvar</lit>.  For more
-	  details see <guideref targ="chap:kalman"/>.
+	  covariance matrizes as <lit>Mod.stvar</lit>. Para maiores detalhes
+	  veja <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4689,49 +4752,54 @@
       </description>
     </function>
 
-    <function name="lags" section="transforms" output="list">
+    <function name="lags" section="transforms" output="list-or-mat">
       <fnargs>
 	<fnarg type="scalar-or-vec">p</fnarg>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="series-list-or-mat">y</fnarg>
 	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If the first argument is a scalar, generates lags 1 to
-	  <argname>p</argname> of the series <argname>y</argname>, or
-	  if <argname>y</argname> is a list, of all series in the
-	  list.  If <argname>p</argname> = 0, the maximum lag defaults
-	  to the periodicity of the data; otherwise
-	  <argname>p</argname> must be positive.
+	  Se o primeiro argumento for um escalar, gera as defasagens
+	  de 1 até <argname>p</argname> da série <argname>y</argname>,
+	  se <argname>y</argname> for uma lista, retorna as defasagens
+	  de todas as séries na lista e se for uma matriz, retorna as
+	  defasagens de todas as colunas na matriz. Se <argname>
+	  p</argname> = 0 e <argname>y</argname> for uma série ou lista,
+	  são geradas defasagens até o máximo da periodicidade dos dados.
+	  Caso contrário, o valor de <argname>p</argname> deve ser positivo.
 	</para>
 	<para>
-	  If a vector is given as the first argument, the lags
-	  generated are those specified in the vector. Common usage
-	  in this case would be to give <argname>p</argname> as, for
-	  example, <lit>seq(3,7)</lit>, hence omitting the first and
-	  second lags. However, it is OK to give a vector with gaps,
-	  as in <lit>{3,5,7}</lit>, although the lags should always
-	  be given is ascending order.
+	  Se o primeiro argumento for um vetor, as defasagens serão
+	  aquelas especificadas no vetor. Um uso típico neste caso
+	  seria fornecer <argname>p</argname> como, por exemplo,
+	  <lit>seq(3,7)</lit>, omitindo assim a primeira e a segunda
+	  defasagens. Entretanto  ambém é possível fornecer um vetor
+	  não contínuo como em <lit>{3,5,7}</lit>, contanto que as
+	  defasagens estejam sempre ordenadas de forma crescente.
 	</para>
 	<para>
-	  The generated variáveis are automatically named according to
-	  the template <repl>varname</repl>
-	  <lit>_</lit>
-	  <repl>i</repl> onde
-	  <repl>varname</repl> is the name of the original series and
-	  <repl>i</repl> is the specific lag.  The original portion of the
-	  name is truncated if necessary, and may be adjusted in case of
-	  non-uniqueness in the set of names thus constructed.
+	  Quando o valor retornado for uma lista, as variáveis geradas
+	  são nomeadas automaticamente de acordo com o esquema
+	  <repl>varname</repl><lit>_</lit><repl>i</repl>, onde
+	  <repl>varname</repl> é o nome da série original e <repl>i</repl>
+	  é a defasagem específica. A parte original do nome é truncada,
+	  caso necessário, e pode ser ajustada no caso de não-singularidade
+	  no conjunto de nomes assim construído.
 	</para>
 	<para>
-	  When <argname>y</argname> is a list and the lag order is
-	  greater than 1, the default ordering of the terms in the
-	  returned list is by variável: all lags of the first series
-	  in the input list followed by all lags of the second series,
-	  e assim sucessivamente. The optional third argument can be used to
-	  change this: if <argname>bylag</argname> is non-zero then
-	  the terms are ordered by lag: lag 1 of all the input series,
-	  then lag 2 of all the series, and e assim sucessivamente.
+	  Quando <argname>y</argname> for uma lista, ou uma matriz com mais de uma
+	  coluna, e a ordem de defasagem for maior que 1, a ordenação padrão dos
+	  termos no valor retornado pelafunção é feita por variável: todas as
+	  defasagens da primeira série ou coluna seguida por todas as defasagens da
+	  segunda e assim sucessivamente. O terceiro argumento (opcional)
+	  pode ser utilizado para alterar esse comportamento: se
+	  <argname>bylag</argname> for não-nulo então os termos são ordenados por
+	  defasagem: defasagem 1 de todas as séries ou colunas, seguida pela
+	  defasagem 2 de todas as séries e colunas e assim sucessivamente.
+	</para>
+	<para>
+	  Veja também <fncref targ="mlag"/> para o uso com matrizes.
 	</para>
       </description>
     </function>
@@ -4776,12 +4844,12 @@
       </fnargs>
       <description>
 	<para>
-	  Calculas as diferenças logarítmicas. Os valores iniciais são
-	  considerados como <lit>NA</lit>.
+	  Calcula as diferenças logarítmicas. Os valores iniciais
+	  são considerados como <lit>NA</lit>.
 	</para>
 	<para>
-	  Quando uma lista for retornada, as variáveis individuais são
-	  automaticamente nomeadas de acordo com o modelo
+	  Quando uma lista for retornada, as variáveis individuais
+	  são automaticamente nomeadas de acordo com o esquema
 	  <lit>ld_</lit><repl>varname</repl>, onde <repl>varname</repl>
 	  é o nome da série original. Se necessário, o nome será
 	  truncado e poderá ser ajustado caso o nome resultante já
@@ -4908,9 +4976,9 @@
 	  iteration so as to give less influence to outliers.
 	</para>
 	<para>
-	  See also <fncref targ="nadarwat"/>, and in addition see
-	  <guideref targ="chap:nonparam"/> for details on
-	  nonparametric methods.
+	  Veja também <fncref targ="nadarwat"/>. Adicionalmente,
+	  para detalhes acerca de métodos não-paramétricos veja
+	  <guideref targ="chap:nonparam"/>..
 	</para>
       </description>
     </function>
@@ -5078,7 +5146,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="imaxc"/>
+            <fncref targ="imaxr"/>
             <fncref targ="maxc"/>
             <fncref targ="minr"/>
 	  </seelist>
@@ -5129,30 +5197,30 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna a matrix covariogram for a <by r="T" c="k"/> matrix
-	  <argname>X</argname> (typically contendo regressors), an
-	  (optional) <math>T
-	  </math>-vector <argname>u</argname> (typically
-	  contendo residuals), an (optional) (<math>p</math>+1)-vector
-	  of weights <argname>w</argname>, and a lag order
-	  <argname>p</argname>, which must be greater than or equal to 0.
+	  Retorna uma matriz covariograma para uma matriz <argname>
+	  X</argname> de ordem <by r="T" c="k"/> (normalmente contendo
+	  regressores), um vetor <argname>u</argname> (opcional) com
+	  <math>T</math> elementos (normalmente contendo resíduos),
+	  um vetor de pesos <argname>w</argname> (optional) com <math>
+	  p</math>+1 elementos e uma ordem de defasagem <argname>
+	  p</argname>, que deve ser maior ou igual a 0.
 	</para>
 	<para context="tex">
-	  The returned matrix is given by
+	  A matriz retornada é dada por
 	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t
 	  u_{t-j} X_{t-j})\]
 	</para>
 	<para context="notex">
-	  The returned matrix is given by
+	  A matriz retornada é dada por
 	</para>
 	<para context="notex">
 	  sum_{j=-p}^p sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
 	</para>
 	<para>
-	  If <argname>u</argname> is given as <lit>null</lit> the
-	  <math>u</math> terms are omitted, and if
-	  <argname>w</argname> is given as <lit>null</lit> all the weights
-	  are taken to be 1.0.
+	  Se <argname>u</argname> for dado como <lit>null</lit> os termos
+	  <math>u</math> são omitidos e se
+	  <argname>w</argname> for dado como <lit>null</lit> todos o pesos
+	  são considerados iguais a 1.
 	</para>
       </description>
     </function>
@@ -5414,8 +5482,11 @@
 	</para>
 	<para context="tex">
 	  If $p$ is a vector, the above operation is carried out for
-	  each element in $p$, joining the resulting matrizes
+	  each element in $p$, joining the resulting matrices
 	  horizontally.
+	</para>
+	<para>
+	  See also <fncref targ="lags"/>.
 	</para>
       </description>
     </function>
@@ -5523,11 +5594,12 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna o número de dias (relevantes) no mês e ano especificados.
-	  O argumento <argname>dias na semana</argname>, que pode ser igual
-	  a 5, 6 ou 7, indica o número de dias da semana que devem ser
-	  considerados (se for escolhido 6 os domingos são omitidos e se
-	  for escolhido 5 os sábados e os domingos serão omitidos).
+	  Retorna o número de dias (relevantes) no mês e ano especificados
+	  (no calendário gregoriano proléptico). O argumento <argname>dias
+	  na semana</argname>, que pode ser igual a 5, 6 ou 7, indica o
+	  número de dias da semana que devem ser considerados (se for
+	  escolhido 6 os domingos são omitidos e se for escolhido 5 os
+	  sábados e os domingos serão omitidos).
 	</para>
       </description>
     </function>
@@ -6903,7 +6975,7 @@
 	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]
 	  onde $Z_{ti}$ is the standardized value
 	  of variável $i$ at observation $t$, $Z_{ti} = (X_{ti} -
-	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is the $j$th
+	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}_i$ is the $j$th
 	  eigenvector of the correlation (or covariance) matrix of the
 	  $X_i$s, with the eigenvectors ordered by decreasing value
 	  of the corresponding autovalores.
@@ -7110,7 +7182,7 @@
 	  argumentos adicionais são necessários para que especifique
 	  os parâmetros da distribuição. Veja <fncref targ="cdf"/>
 	  para detalhes. As distribuições suportadas pela função
-	  <lit>pval</lit> são: normal padrão, <math>t</math>,
+	  <lit>pvalue</lit> são: normal padrão, <math>t</math>,
 	  qui-quadrada, <math>F</math>, gama, binomial, Poisson,
 	  Weibull e Erro Generalizado.
 	</para>
@@ -7628,21 +7700,21 @@
       </fnargs>
       <description>
 	<para>
-	  Retorna uma série or vector with the ranks of
-	  <math>y</math>. The rank for observation <math>i</math> is
-	  the number of elements that are less than
-	  <math>y</math><sub>i</sub> plus one half the number of
-	  elements that are equal to
-	  <math>y</math><sub>i</sub>. (Intuitively, you may think of
-	  chess points, onde victory gives you one point and a draw
-	  gives you half a point.) One is added so the lowest rank is
-	  1 instead of 0.
+	  Retorna uma série ou vetor com os ranks de <math>
+	  y</math>. O rank para a observação <math>i</math>
+	  é o número de elementos que são menores que <math>
+	  y</math><sub>i</sub> mais 1. Se houver números
+	  iguais a <math>y</math><sub>i</sub> adiciona-se 0,5.
+	  Intuitivamente, pode-se pensar em uma partida de
+	  xadrez, onde uma vitória vale 1 ponto e um empate
+	  vale 0,5 pontos). É adicionado 1 ao rank de forma
+	  que o menor rank possível é 1 ao invés de 0.
 	</para>
 	<para context="tex">
-	  Formally,
+	  Formalmente tem-se,
 	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
 	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \]
-	  onde $I$ denotes the indicator function.
+	  onde $I$ representa a função indicadora.
 	</para>
 	<para>
 	  <seelist>
@@ -7660,7 +7732,7 @@
       <description>
 	<para>
 	  Retorna o reciprocal condition number for <argname>A</argname>
-	  with respect to the 1-norm.  In many circumstances, this is a better
+	  with respect to the 1-norm. In many circumstances, this is a better
 	  measure of the sensitivity of <argname>A</argname> to numerical
 	  operations such as inversion than the determinant.
 	</para>
@@ -7691,29 +7763,29 @@
       </fnargs>
       <description>
 	<para>
-	  If a file by the name of <argname>fname</argname> exists and
-	  is readable, returns um texto (<quote>string</quote>) contendo the content of this
-	  file, otherwise flags an error.  If <argname>fname</argname>
-	  does not contain a full path specification, it will be
-	  looked for in several <quote>likely</quote> locations,
-	  beginning with the currently set <cmdref targ="workdir"/>.
+	  Se um arquivo com o nome <argname>fname</argname> existir e puder
+	  ser lido, a função retorna um texto (<quote>string</quote>) com o
+	  conteúdo desse arquivo, caso contrário retorna um erro. Se <argname>
+	  fname</argname> não contiver o caminho completo até o arquivo, ele
+	  será procurado em algumas localizações <quote>prováveis</quote>,
+	  começando pelo <cmdref targ="workdir"/> corrente.
 	</para>
 	<para>
-	  If <argname>fname</argname> starts with the identifier of a
-	  supported internet protocol (<lit>http://</lit>,
-	  <lit>ftp://</lit> or <lit>https://</lit>), libcurl is invoked to
-	  download the resource. See also <fncref targ="curl"/> for
-	  more elaborate downloading operations.
+	  Se <argname>fname</argname> começar com o identificador de um
+	  protocolo de internet suportado (<lit>http://</lit>,
+	  <lit>ftp://</lit> ou <lit>https://</lit>), libcurl será utilizado
+	  para baixar o arquivo. Veja também <fncref targ="curl"/> para
+	  baixar arquivos de forma mais elaborada.
 	</para>
 	<para>
-	  If the text to be read is not encoded in UTF-8, gretl will
-	  try recoding it from the current locale codeset if that is
-	  not UTF-8, or from ISO-8859-15 otherwise. If this simple
-	  default does not meet your needs you can use the optional
-	  second argument to specify a codeset. Por exemplo, if you
-	  want to read text in Microsoft codepage 1251 and that is not
-	  your locale codeset, you should give a second argument of
-	  <lit>"cp1251"</lit>.
+	  Se o texto a ser lido não estiver codificado como UTF-8, Gretl
+	  tentará recodificá-lo a partir da codificação corrente se esta
+	  não for UTF-8, ou, caso contrário, a partir da codificação
+	  ISO-8859-15. Se essa estratégia padrão não funcionar é possível
+	  utilizar o segundo argumento (que é opcional) para especificar a
+	  codificação. Por exemplo, caso seja desejada a leitura de texto
+	  com codificação Microsoft 1251 e esta não seja a configuração local,
+	  pode-se fornecer o segundo argumento <lit>"cp1251"</lit>.
 	</para>
     <para>
         Exemplos:
@@ -7726,8 +7798,8 @@
         print current_settings
     </code>
 	<para>
-	  Also see the <fncref targ="sscanf"/> and <fncref
-	  targ="getline"/> functions.
+	  Veja também as funções <fncref targ="sscanf"/> e <fncref
+	  targ="getline"/>.
 	</para>
       </description>
     </function>
@@ -8999,10 +9071,23 @@
 	<para>
 	  Returns a numeric type-code if <argname>name</argname> is
 	  the identifier of a currently defined object: 1 for scalar,
-	  2 for series, 3 for matrix, 4 for string, 5 for bundle and 6
-	  for array. Otherwise returns 0.  The function <fncref
-	  targ="typestr"/> may be used to get the string corresponding
-	  to the return value.
+	  2 for series, 3 for matrix, 4 for string, 5 for bundle, 6
+	  for array and 7 for list. Otherwise returns 0.  The function
+	  <fncref targ="typestr"/> may be used to get the string
+	  corresponding to the return value.
+	</para>
+	<para>
+	  This function can also be used to retrieve the type of
+	  a bundle member or array element. For example:
+	</para>
+	<code>
+	  matrices M = array(1)
+	  eval typestr(typeof(M))
+	  eval typestr(typeof(M[1]))
+	</code>
+	<para>
+	  The first <lit>eval</lit> result is <quote>array</quote> and
+	  the second is <quote>matrix</quote>.
 	</para>
       </description>
     </function>
