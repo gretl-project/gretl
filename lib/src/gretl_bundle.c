@@ -66,18 +66,6 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 int size, int copy,
 				 const char *note);
 
-int gretl_bundle_set_name (gretl_bundle *b, const char *name)
-{
-    user_var *u = get_user_var_by_data(b);
-    
-    if (u == NULL) {
-	return E_UNKVAR;
-    } else {
-	user_var_set_name(u, name);
-	return 0;
-    }
-}
-
 int gretl_bundle_is_stacked (gretl_bundle *b)
 {
     user_var *u = get_user_var_by_data(b);

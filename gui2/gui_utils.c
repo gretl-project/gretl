@@ -5205,6 +5205,10 @@ static gchar *exists_string (const char *name, GretlType t)
 	s = g_strdup_printf(_("A list named %s already exists"), name);
     } else if (t == GRETL_TYPE_STRING) {
 	s = g_strdup_printf(_("A string named %s already exists"), name);
+    } else if (t == GRETL_TYPE_BUNDLE) {
+	s = g_strdup_printf(_("A bundle named %s already exists"), name);
+    } else if (t == GRETL_TYPE_ARRAY) {
+	s = g_strdup_printf(_("An array named %s already exists"), name);
     }
 
     return s;

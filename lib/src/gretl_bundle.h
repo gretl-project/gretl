@@ -128,8 +128,6 @@ int gretl_bundle_copy_as (const char *name, const char *copyname);
 
 gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err);
 
-int gretl_bundle_set_name (gretl_bundle *b, const char *name);
-
 int gretl_bundle_set_creator (gretl_bundle *b, const char *name);
 
 int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);

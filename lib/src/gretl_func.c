@@ -6273,7 +6273,7 @@ static int localize_const_matrix (fn_arg *arg, fn_param *fp)
 	   don't need to copy the data
 	*/
 	user_var_adjust_level(u, 1);
-	user_var_set_name(u, fp->name);
+	user_var_set_name(u, fp->name, NULL);
     }
 
     if (!err) {
@@ -7035,7 +7035,7 @@ function_assign_returns (fncall *call, int rtype,
 
 	    if (u != NULL) {
 		user_var_adjust_level(u, -1);
-		user_var_set_name(u, arg->upname);
+		user_var_set_name(u, arg->upname, NULL);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, arg, NULL, dset);

@@ -2578,6 +2578,7 @@ static void maybe_sync_model_window_name (SESSION_MODEL *sm)
 
 static int rename_session_object (gui_obj *obj, const char *newname)
 {
+    int err_shown = 0;
     int err = 0;
 
     if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_SYS || 
@@ -2594,7 +2595,8 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	    strncat(sm->name, newname, MAXSAVENAME - 1);
 	    maybe_sync_model_window_name(sm);
 	}
-    } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+    } else if (obj->sort == GRETL_OBJ_GRAPH ||
+	       obj->sort == GRETL_OBJ_PLOT) {
 	SESSION_GRAPH *sg;
 
 	sg = get_session_graph_by_name(newname);
@@ -2604,10 +2606,13 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	    sg = obj->data;
 	    rename_session_graph(sg, newname);
 	}
-    } else if (obj->sort == GRETL_OBJ_MATRIX) {
-	user_var_set_name(obj->data, newname);
-    } else if (obj->sort == GRETL_OBJ_BUNDLE) {
-	gretl_bundle_set_name(obj->data, newname);
+    } else if (obj->sort == GRETL_OBJ_MATRIX ||
+	       obj->sort == GRETL_OBJ_BUNDLE) {
+	err = user_var_set_name(obj->data, newname, dataset);
+	if (err) {
+	    gui_errmsg(err);
+	    err_shown = 1;
+	}
     } else if (obj->sort == GRETL_OBJ_TEXT) {
 	SESSION_TEXT *st;
 
@@ -2621,10 +2626,10 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	}
     }
 
-    if (err) {
+    if (err && !err_shown) {
 	errbox_printf(_("'%s': there is already an object of this name"), 
 		      newname);
-    } else {
+    } else if (!err) {
 	free(obj->name);
 	obj->name = g_strdup(newname);
     }
