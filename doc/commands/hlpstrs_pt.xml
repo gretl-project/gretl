@@ -32,10 +32,10 @@
  <gentext key="matrix-or-bundle" text="matriz ou bundle"/>
  <gentext key="asinput"       text="o mesmo tipo que o argumento"/>
  <gentext key="scalar"        text="escalar"/>
- <gentext key="bundle"        text="bundle"/>
+ <gentext key="bundle"        text="lote"/>
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
  <gentext key="int"           text="número inteiro"/>
- <gentext key="bool"          text="boolean"/>
+ <gentext key="bool"          text="booleano"/>
  <gentext key="series"        text="série"/>
  <gentext key="vector"        text="vetor"/>
  <gentext key="matrix"        text="matriz"/>
@@ -44,17 +44,17 @@
  <gentext key="pdmat"         text="matriz positiva definida"/>
  <gentext key="matrixref"     text="referência a matriz"/>
  <gentext key="seriesref"     text="referência a série"/>
- <gentext key="bundleref"     text="referência a bundle"/>
+ <gentext key="bundleref"     text="referência a lote"/>
  <gentext key="cvec"          text="vetor coluna"/>
  <gentext key="rvec"          text="vetor linha"/>
  <gentext key="list"          text="lista"/>
  <gentext key="string"        text="texto"/>
- <gentext key="listetc"       text="list, matrix, bundle or array"/>
- <gentext key="strings"       text="array of strings"/>
- <gentext key="matrices"      text="array of matrices"/>
- <gentext key="bundles"       text="array of bundles"/>
- <gentext key="string-or-strings"  text="string or array of strings"/>
- <gentext key="strings-or-list"  text="array of strings or list"/>
+ <gentext key="listetc"       text="lista, matriz, lote ou cadeia"/>
+ <gentext key="strings"       text="cadeia de texto"/>
+ <gentext key="matrices"      text="cadeia de matrizes"/>
+ <gentext key="bundles"       text="cadeia de lotes"/>
+ <gentext key="string-or-strings"  text="texto ou cadeia de texto"/>
+ <gentext key="strings-or-list"  text="cadeia de texto ou lista"/>
  <gentext key="char"          text="caractere"/>
  <gentext key="coeffname"     text="nome do coeficiente"/>
  <gentext key="sslist"        text="escalar, série ou lista"/>
