@@ -539,17 +539,17 @@ static void DF_header (const char *s, int p, int pmax,
 	} else {
 	    pprintf(prn, _("Augmented Dickey-Fuller test for %s\n"), s);
 	}
-	if (p == 1) {
-	    pprintf(prn, _("including one lag of (1-L)%s"), s);
-	} else {
-	    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
-	}
-	if (pmax >= p) {
+	if (test_down) {
 	    const char *critstr = test_down_string(test_down, opt);
 
-	    pputc(prn, '\n');
-	    pprintf(prn, _("(max was %d, criterion %s)"), 
+	    pprintf(prn, _("testing down from %d lags, criterion %s"),
 		    pmax, critstr);
+	} else {
+	    if (p == 1) {
+		pprintf(prn, _("including one lag of (1-L)%s"), s);
+	    } else {
+		pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
+	    }
 	}
 	pputc(prn, '\n');
     }
@@ -653,6 +653,16 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	    pputs(prn, _("plus seasonal dummies"));
 	}
 	pputc(prn, '\n');
+	if (test_down) {
+	    pputs(prn, "  ");
+	    if (ainfo->order == 1) {
+		pprintf(prn, _("including one lag of (1-L)%s"), ainfo->vname);
+	    } else {
+		pprintf(prn, _("including %d lags of (1-L)%s"),
+			ainfo->order, ainfo->vname);
+	    }
+	    pputc(prn, '\n');
+	}
 	pprintf(prn, "  %s: %s\n", _("model"), 
 		(ainfo->order > 0)? ADF_model_string(i) :
 		DF_model_string(i));

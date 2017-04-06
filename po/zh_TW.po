@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-04 16:47-0400\n"
+"POT-Creation-Date: 2017-04-06 15:51-0400\n"
 "PO-Revision-Date: 2016-04-21 19:22-0400\n"
 "Last-Translator: Yi-Nung Yang <yinung@cycu.edu.tw>\n"
 "Language-Team: gretl <gretl-users@lists.wfu.edu>\n"
@@ -71,20 +71,22 @@ msgstr "%s 之 ADF-GLS 檢定\n"
 msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "%s 之 ADF 檢定 (Augmented Dickey-Fuller test)\n"
 
-#: lib/src/adf_kpss.c:543 plugin/panurc.c:577
+#: lib/src/adf_kpss.c:545
+#, fuzzy, c-format
+msgid "testing down from %d lags, criterion %s"
+msgstr ""
+"自動選擇 (從指定的最大落後階次往下選)\n"
+"(test down from max. lag order)"
+
+#: lib/src/adf_kpss.c:549 lib/src/adf_kpss.c:659 plugin/panurc.c:577
 #, c-format
 msgid "including one lag of (1-L)%s"
 msgstr "包含落後 1 期 的 (1-L)%s"
 
-#: lib/src/adf_kpss.c:545 plugin/panurc.c:579
+#: lib/src/adf_kpss.c:551 lib/src/adf_kpss.c:661 plugin/panurc.c:579
 #, c-format
 msgid "including %d lags of (1-L)%s"
 msgstr "包含落後 %d 期 的 (1-L)%s"
-
-#: lib/src/adf_kpss.c:551
-#, c-format
-msgid "(max was %d, criterion %s)"
-msgstr "(最大落後階次: %d, 使用準則: %s)"
 
 #: lib/src/adf_kpss.c:593 gui2/library.c:1020 gui2/library.c:1260
 #: gui2/selector.c:6469 plugin/panurc.c:234
@@ -105,10 +107,10 @@ msgstr "含常數項及趨勢項 (trend)"
 msgid "with constant, linear and quadratic trend"
 msgstr "含常數項及二次趨勢項 (quadratic trend)"
 
-#: lib/src/adf_kpss.c:623 lib/src/adf_kpss.c:628 lib/src/adf_kpss.c:2209
-#: lib/src/adf_kpss.c:2211 lib/src/bootstrap.c:694 lib/src/compare.c:365
+#: lib/src/adf_kpss.c:623 lib/src/adf_kpss.c:628 lib/src/adf_kpss.c:2219
+#: lib/src/adf_kpss.c:2221 lib/src/bootstrap.c:694 lib/src/compare.c:365
 #: lib/src/compare.c:372 lib/src/compare.c:379 lib/src/compare.c:385
-#: lib/src/compare.c:390 lib/src/compare.c:394 lib/src/gretl_model.c:4348
+#: lib/src/compare.c:390 lib/src/compare.c:394 lib/src/gretl_model.c:4349
 #: lib/src/modelprint.c:2350 lib/src/modelprint.c:2366
 #: lib/src/modelprint.c:2386 lib/src/modelprint.c:3036
 #: lib/src/modelprint.c:4226 lib/src/modelprint.c:4565
@@ -137,7 +139,7 @@ msgstr "樣本大小 %d\n"
 msgid "unit-root null hypothesis: a = 1"
 msgstr "單根檢定之虛無假設 H0: a = 1"
 
-#: lib/src/adf_kpss.c:647 lib/src/adf_kpss.c:656 lib/src/adf_kpss.c:1664
+#: lib/src/adf_kpss.c:647 lib/src/adf_kpss.c:666 lib/src/adf_kpss.c:1674
 #: gui2/cmdstack.c:387
 msgid "model"
 msgstr "模型"
@@ -146,102 +148,102 @@ msgstr "模型"
 msgid "plus seasonal dummies"
 msgstr "加季節虛擬變數 seasonal dummies"
 
-#: lib/src/adf_kpss.c:669 lib/src/adf_kpss.c:1613
+#: lib/src/adf_kpss.c:679 lib/src/adf_kpss.c:1623
 msgid "estimated value of (a - 1)"
 msgstr "(a - 1) 的估計值"
 
-#: lib/src/adf_kpss.c:670 lib/src/adf_kpss.c:1614 lib/src/describe.c:4020
-#: lib/src/describe.c:4046 lib/src/gretl_model.c:4346 gui2/calculator.c:593
+#: lib/src/adf_kpss.c:680 lib/src/adf_kpss.c:1624 lib/src/describe.c:4020
+#: lib/src/describe.c:4046 lib/src/gretl_model.c:4347 gui2/calculator.c:593
 msgid "test statistic"
 msgstr "檢定統計值"
 
-#: lib/src/adf_kpss.c:676 lib/src/adf_kpss.c:679 lib/src/adf_kpss.c:1451
+#: lib/src/adf_kpss.c:686 lib/src/adf_kpss.c:689 lib/src/adf_kpss.c:1461
 #: plugin/stats_tables.c:239
 msgid "Critical values"
 msgstr "臨界值\t\t"
 
-#: lib/src/adf_kpss.c:685
+#: lib/src/adf_kpss.c:695
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "1 階自我相關係數 for e "
 
-#: lib/src/adf_kpss.c:1022
+#: lib/src/adf_kpss.c:1032
 msgid "squared time trend variable"
 msgstr "squared time trend variable"
 
-#: lib/src/adf_kpss.c:1025 lib/src/genfuncs.c:3083
+#: lib/src/adf_kpss.c:1035 lib/src/genfuncs.c:3083
 msgid "time trend variable"
 msgstr "time trend 變數"
 
-#: lib/src/adf_kpss.c:1055
+#: lib/src/adf_kpss.c:1065
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:1058
+#: lib/src/adf_kpss.c:1068
 #, fuzzy, c-format
 msgid "GLS estimate of b0: %g\n"
 msgstr "OLS estimates"
 
-#: lib/src/adf_kpss.c:1152
+#: lib/src/adf_kpss.c:1162
 msgid "Invalid option"
 msgstr "錯誤的選項"
 
-#: lib/src/adf_kpss.c:1224 lib/src/adf_kpss.c:1991 lib/src/boxplots.c:840
+#: lib/src/adf_kpss.c:1234 lib/src/adf_kpss.c:2001 lib/src/boxplots.c:840
 #: lib/src/describe.c:1656 lib/src/describe.c:3035 lib/src/describe.c:3589
 #: lib/src/describe.c:4160 lib/src/graphing.c:8078
 #, c-format
 msgid "%s is a constant"
 msgstr "%s 不是一個常數"
 
-#: lib/src/adf_kpss.c:1598
+#: lib/src/adf_kpss.c:1608
 #, fuzzy
 msgid "Choi meta-tests:"
 msgstr "gretl: 無母數檢定(_N)"
 
-#: lib/src/adf_kpss.c:1599
+#: lib/src/adf_kpss.c:1609
 #, fuzzy
 msgid "Inverse chi-square"
 msgstr "共變數矩陣的反矩陣"
 
-#: lib/src/adf_kpss.c:1601
+#: lib/src/adf_kpss.c:1611
 #, fuzzy
 msgid "Inverse normal test"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/adf_kpss.c:1603
+#: lib/src/adf_kpss.c:1613
 #, fuzzy
 msgid "Logit test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/adf_kpss.c:1609
+#: lib/src/adf_kpss.c:1619
 #, fuzzy
 msgid "Unit"
 msgstr "/新增變數/_Unit dummies"
 
-#: lib/src/adf_kpss.c:1610 lib/src/gretl_model.c:4344 gui2/selector.c:8435
+#: lib/src/adf_kpss.c:1620 lib/src/gretl_model.c:4345 gui2/selector.c:8435
 msgid "lag order"
 msgstr "落後期l數"
 
-#: lib/src/adf_kpss.c:1717
+#: lib/src/adf_kpss.c:1727
 msgid "H0: all groups have unit root"
 msgstr "H0: 所有的變數皆有單根 (all groups have unit root)"
 
-#: lib/src/adf_kpss.c:1779 lib/src/compare.c:2644 lib/src/compare.c:2678
+#: lib/src/adf_kpss.c:1789 lib/src/compare.c:2644 lib/src/compare.c:2678
 #: lib/src/estimate.c:4171 lib/src/estimate.c:4225 lib/src/estimate.c:4381
 #: lib/src/genfuncs.c:2168 lib/src/genfuncs.c:4073 lib/src/genfuncs.c:4284
 #: lib/src/gretl_func.c:7624 lib/src/pvalues.c:1664
 msgid "Couldn't load plugin function\n"
 msgstr "無法載入 plugin 函數\n"
 
-#: lib/src/adf_kpss.c:2117
+#: lib/src/adf_kpss.c:2127
 msgid "Robust estimate of variance"
 msgstr "穩健變異數估計值 (Robust estimate of variance)"
 
-#: lib/src/adf_kpss.c:2118
+#: lib/src/adf_kpss.c:2128
 msgid "Sum of squares of cumulated residuals"
 msgstr "累計殘差平方和 (Sum of sq. of cum. residuals)"
 
-#: lib/src/adf_kpss.c:2131
+#: lib/src/adf_kpss.c:2141
 #, c-format
 msgid ""
 "\n"
@@ -250,7 +252,7 @@ msgstr ""
 "\n"
 "變數 %s 的KPSS 檢定結果"
 
-#: lib/src/adf_kpss.c:2134
+#: lib/src/adf_kpss.c:2144
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
@@ -258,7 +260,7 @@ msgstr ""
 " (含趨勢項及季節性)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2136
+#: lib/src/adf_kpss.c:2146
 msgid ""
 " (including trend)\n"
 "\n"
@@ -266,7 +268,7 @@ msgstr ""
 " (含趨勢項)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2140
+#: lib/src/adf_kpss.c:2150
 msgid ""
 " (including seasonals)\n"
 "\n"
@@ -274,16 +276,16 @@ msgstr ""
 " (含季節項)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2147 lib/src/adf_kpss.c:2193
+#: lib/src/adf_kpss.c:2157 lib/src/adf_kpss.c:2203
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "落後期 (lag truncation parameter) = %d\n"
 
-#: lib/src/adf_kpss.c:2148 lib/src/compare.c:387 lib/src/compare.c:973
+#: lib/src/adf_kpss.c:2158 lib/src/compare.c:387 lib/src/compare.c:973
 #: lib/src/compare.c:1900 lib/src/compare.c:2119 lib/src/compare.c:2348
 #: lib/src/compare.c:3564 lib/src/describe.c:6007 lib/src/estimate.c:2948
 #: lib/src/estimate.c:2961 lib/src/estimate.c:2969 lib/src/estimate.c:3782
-#: lib/src/estimate.c:3785 lib/src/gretl_intl.c:117 lib/src/gretl_model.c:4386
+#: lib/src/estimate.c:3785 lib/src/gretl_intl.c:117 lib/src/gretl_model.c:4387
 #: lib/src/gretl_panel.c:4320 lib/src/gretl_panel.c:4433
 #: lib/src/gretl_restrict.c:2250 lib/src/gretl_restrict.c:2259
 #: lib/src/modelprint.c:2507 lib/src/modelprint.c:2511
@@ -294,16 +296,16 @@ msgstr "落後期 (lag truncation parameter) = %d\n"
 msgid "Test statistic"
 msgstr "Test statistic"
 
-#: lib/src/adf_kpss.c:2151 lib/src/adf_kpss.c:2153 gui2/dialogs.c:1143
+#: lib/src/adf_kpss.c:2161 lib/src/adf_kpss.c:2163 gui2/dialogs.c:1143
 msgid "P-value"
 msgstr "p值 (p-value)"
 
-#: lib/src/adf_kpss.c:2155
+#: lib/src/adf_kpss.c:2165
 #, fuzzy
 msgid "Interpolated p-value"
 msgstr "查P值(_P)"
 
-#: lib/src/adf_kpss.c:2191
+#: lib/src/adf_kpss.c:2201
 #, c-format
 msgid ""
 "\n"
@@ -313,34 +315,34 @@ msgstr ""
 "變數 %s %s 之 KPSS 檢定結果\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2192
+#: lib/src/adf_kpss.c:2202
 msgid "(including trend)"
 msgstr "(包含趨勢項)"
 
-#: lib/src/adf_kpss.c:2192
+#: lib/src/adf_kpss.c:2202
 msgid "(without trend)"
 msgstr "(無趨勢項)"
 
-#: lib/src/adf_kpss.c:2213
+#: lib/src/adf_kpss.c:2223
 #, fuzzy
 msgid "interpolated p-value"
 msgstr "查P值(_P)"
 
-#: lib/src/adf_kpss.c:2254
+#: lib/src/adf_kpss.c:2264
 msgid "H0: all groups are stationary"
 msgstr "H0: 所有變數皆為定態 (all groups are stationary)"
 
-#: lib/src/adf_kpss.c:2556 lib/src/adf_kpss.c:2599
+#: lib/src/adf_kpss.c:2566 lib/src/adf_kpss.c:2609
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "步驟 %d: 對變數 %s 進行單根檢定(unit root test)\n"
 
-#: lib/src/adf_kpss.c:2566
+#: lib/src/adf_kpss.c:2576
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "步驟 %d: 跑共整合迴歸 (cointegrating regression)\n"
 
-#: lib/src/adf_kpss.c:2617
+#: lib/src/adf_kpss.c:2627
 #, fuzzy
 msgid ""
 "\n"
@@ -468,7 +470,7 @@ msgstr "依變數名稱(_n)"
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr "Regression residuals (= observed - fitted %s)"
 
-#: lib/src/calendar.c:485
+#: lib/src/calendar.c:483
 #, fuzzy, c-format
 msgid "Invalid starting date for %d-day data"
 msgstr "ARCH 落後階次有誤 (%d)"
@@ -479,8 +481,8 @@ msgid "Null hypothesis: the regression parameter is zero for %s"
 msgstr "虛無假設 H0: 迴歸自變數  %s 之係數 = 0"
 
 #: lib/src/compare.c:279 lib/src/compare.c:282 lib/src/compare.c:285
-#: lib/src/describe.c:6005 lib/src/gretl_model.c:4149
-#: lib/src/gretl_model.c:4152 lib/src/gretl_model.c:4159
+#: lib/src/describe.c:6005 lib/src/gretl_model.c:4150
+#: lib/src/gretl_model.c:4153 lib/src/gretl_model.c:4160
 #: lib/src/nonparam.c:1061 lib/src/nonparam.c:1198 lib/src/varprint.c:1249
 #: lib/src/varprint.c:1255 lib/src/varprint.c:1263
 msgid "Null hypothesis"
@@ -527,9 +529,9 @@ msgstr "Wald test"
 #: lib/src/compare.c:393 lib/src/compare.c:975 lib/src/compare.c:2184
 #: lib/src/compare.c:2355 lib/src/compare.c:2361 lib/src/compare.c:2982
 #: lib/src/describe.c:1587 lib/src/estimate.c:2973 lib/src/estimate.c:3788
-#: lib/src/graphing.c:4496 lib/src/gretl_model.c:4215
-#: lib/src/gretl_model.c:4229 lib/src/gretl_model.c:4232
-#: lib/src/gretl_model.c:4257 lib/src/gretl_panel.c:4069
+#: lib/src/graphing.c:4496 lib/src/gretl_model.c:4216
+#: lib/src/gretl_model.c:4230 lib/src/gretl_model.c:4233
+#: lib/src/gretl_model.c:4258 lib/src/gretl_panel.c:4069
 #: lib/src/gretl_panel.c:4327 lib/src/modelprint.c:202 lib/src/modelprint.c:381
 #: lib/src/modelprint.c:385 lib/src/modelprint.c:475 lib/src/modelprint.c:478
 #: lib/src/modelprint.c:499 lib/src/modelprint.c:502 lib/src/modelprint.c:2509
@@ -601,7 +603,7 @@ msgstr "非線性檢定 - 對數項 (log terms)"
 #: lib/src/compare.c:2360 lib/src/compare.c:2983 lib/src/compare.c:2985
 #: lib/src/compare.c:2989 lib/src/describe.c:4021 lib/src/describe.c:4047
 #: lib/src/describe.c:6963 lib/src/describe.c:6966 lib/src/estimate.c:2950
-#: lib/src/estimate.c:2973 lib/src/estimate.c:3788 lib/src/gretl_model.c:4402
+#: lib/src/estimate.c:2973 lib/src/estimate.c:3788 lib/src/gretl_model.c:4403
 #: lib/src/gretl_panel.c:1616 lib/src/gretl_panel.c:4070
 #: lib/src/gretl_panel.c:4321 lib/src/gretl_panel.c:4326
 #: lib/src/gretl_panel.c:4434 lib/src/modelprint.c:2509
@@ -629,12 +631,12 @@ msgstr "逐次消去法 (使用雙尾顯著水準 alpha = %.2f)"
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " 消去 %-16s (p 值 %.3f)\n"
 
-#: lib/src/compare.c:1810 lib/src/estimate.c:2965 lib/src/gretl_model.c:4014
-#: lib/src/gretl_model.c:4020 lib/src/modelprint.c:877 gui2/library.c:3150
+#: lib/src/compare.c:1810 lib/src/estimate.c:2965 lib/src/gretl_model.c:4015
+#: lib/src/gretl_model.c:4021 lib/src/modelprint.c:877 gui2/library.c:3150
 msgid "squares only"
 msgstr "只含平方項"
 
-#: lib/src/compare.c:1813 lib/src/gretl_model.c:4016 gui2/library.c:3151
+#: lib/src/compare.c:1813 lib/src/gretl_model.c:4017 gui2/library.c:3151
 msgid "cubes only"
 msgstr "只含三次方項"
 
@@ -642,7 +644,7 @@ msgstr "只含三次方項"
 msgid "squares and cubes"
 msgstr "含平方項和三次方項"
 
-#: lib/src/compare.c:1891 lib/src/gretl_model.c:3933
+#: lib/src/compare.c:1891 lib/src/gretl_model.c:3934
 msgid "RESET test for specification"
 msgstr "RESET 模型設定檢定"
 
@@ -735,12 +737,12 @@ msgstr "最大值 F(%d, %d) = %g 出現在樣本位置 %s"
 msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
 msgstr "漸近 (asymptotic) p-值 = %.4g for 卡方分配 chi-square(%d) = %g"
 
-#: lib/src/compare.c:2972 lib/src/gretl_model.c:3912
+#: lib/src/compare.c:2972 lib/src/gretl_model.c:3913
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Chow 結構轉變檢定, 依虛擬變數:  %s"
 
-#: lib/src/compare.c:2976 lib/src/gretl_model.c:3909
+#: lib/src/compare.c:2976 lib/src/gretl_model.c:3910
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Chow 檢定, 結構轉變位置:  %s"
@@ -812,7 +814,7 @@ msgstr "累計殘差平方和"
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' 表示其值超過 95% 信賴區間)"
 
-#: lib/src/compare.c:3561 lib/src/gretl_model.c:3966
+#: lib/src/compare.c:3561 lib/src/gretl_model.c:3967
 #, fuzzy
 msgid "Test of common factor restriction"
 msgstr "gretl: 無母數檢定(_N)"
@@ -1005,7 +1007,7 @@ msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
 msgstr " (%d) 是二進位 (binary) 資料 (line %d:%d): 這不是一個一般的文字檔\n"
 
-#: lib/src/csvdata.c:1708 lib/src/dataio.c:2493
+#: lib/src/csvdata.c:1708 lib/src/dataio.c:2497
 msgid "Data file is empty\n"
 msgstr "資料檔中無資料 (Data file is empty)\n"
 
@@ -1097,7 +1099,7 @@ msgstr "似乎沒有定義變數名稱\n"
 msgid "At row %d, column %d:\n"
 msgstr "在第 %d 列 (row) , 第 %d 列 (column):\n"
 
-#: lib/src/csvdata.c:2998 lib/src/dataio.c:2998 lib/src/dataio.c:3041
+#: lib/src/csvdata.c:2998 lib/src/dataio.c:3002 lib/src/dataio.c:3045
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- 沒有任何數值轉換被執行!"
@@ -1116,11 +1118,11 @@ msgstr "尋找列 (row) 資料之標記...\n"
 msgid "scanning for row labels and data...\n"
 msgstr "尋找列 (row) 資料之標記...\n"
 
-#: lib/src/csvdata.c:3198 lib/src/csvdata.c:3201 lib/src/dataio.c:2516
+#: lib/src/csvdata.c:3198 lib/src/csvdata.c:3201 lib/src/dataio.c:2520
 msgid "parsing"
 msgstr "進行資料剖析 (parsing)..."
 
-#: lib/src/csvdata.c:3347 lib/src/dataio.c:2722 lib/src/dataio.c:2793
+#: lib/src/csvdata.c:3347 lib/src/dataio.c:2726 lib/src/dataio.c:2797
 #: lib/src/dbread.c:1792
 #, c-format
 msgid "Couldn't open %s\n"
@@ -1135,12 +1137,12 @@ msgstr "使用固定長度欄位\n"
 msgid "using delimiter '%c'\n"
 msgstr "使用之分隔符號 (delimiter): '%c'\n"
 
-#: lib/src/csvdata.c:3443 lib/src/dataio.c:2530
+#: lib/src/csvdata.c:3443 lib/src/dataio.c:2534
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   最長的一行有 %d 字元 (characters)\n"
 
-#: lib/src/csvdata.c:3470 lib/src/dataio.c:2613
+#: lib/src/csvdata.c:3470 lib/src/dataio.c:2617
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "   匯入 %d 變數\n"
@@ -1150,7 +1152,7 @@ msgstr "   匯入 %d 變數\n"
 msgid "   number of non-blank lines: %d\n"
 msgstr "   非空白行數: %d\n"
 
-#: lib/src/csvdata.c:3474 lib/src/dataio.c:2588 lib/src/dataio.c:2668
+#: lib/src/csvdata.c:3474 lib/src/dataio.c:2592 lib/src/dataio.c:2672
 msgid "Invalid data file\n"
 msgstr "資料檔格式錯誤\n"
 
@@ -1228,7 +1230,7 @@ msgstr "資料長度與資料檔不符"
 msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr ""
 
-#: lib/src/csvdata.c:6222 lib/src/dataio.c:2000 gui2/gui_utils.c:1257
+#: lib/src/csvdata.c:6222 lib/src/dataio.c:2004 gui2/gui_utils.c:1257
 #: gui2/join-gui.c:918
 msgid "Data appended OK\n"
 msgstr "資料已新增成功\n"
@@ -1283,30 +1285,30 @@ msgstr "日期中有錯誤的字元: '%c'"
 msgid "Bad character %d in date string"
 msgstr "日期中有錯誤的字元: %d "
 
-#: lib/src/dataio.c:328 lib/src/dataio.c:333 lib/src/dataio.c:346
+#: lib/src/dataio.c:332 lib/src/dataio.c:337 lib/src/dataio.c:350
 #, c-format
 msgid "'%s': invalid observation index"
 msgstr "'%s':樣本指標錯誤"
 
-#: lib/src/dataio.c:365 lib/src/forecast.c:2524 lib/src/genfuncs.c:3639
+#: lib/src/dataio.c:369 lib/src/forecast.c:2527 lib/src/genfuncs.c:3639
 msgid "Observation number out of bounds"
 msgstr "樣本數超出範圍 (out of bounds)"
 
-#: lib/src/dataio.c:1178
+#: lib/src/dataio.c:1182
 #, fuzzy, c-format
 msgid "wrote %s.gdt\n"
 msgstr "寫入 %s\n"
 
-#: lib/src/dataio.c:1180 lib/src/gretl_paths.c:2727 gui2/model_table.c:1431
+#: lib/src/dataio.c:1184 lib/src/gretl_paths.c:2727 gui2/model_table.c:1431
 #, c-format
 msgid "wrote %s\n"
 msgstr "寫入 %s\n"
 
-#: lib/src/dataio.c:1356 lib/src/dataio.c:2229 lib/src/gretl_xml.c:3671
+#: lib/src/dataio.c:1360 lib/src/dataio.c:2233 lib/src/gretl_xml.c:3671
 msgid "index variable"
 msgstr "指標變數 (index variable)"
 
-#: lib/src/dataio.c:1364 lib/src/gretl_xml.c:3646
+#: lib/src/dataio.c:1368 lib/src/gretl_xml.c:3646
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1315,77 +1317,77 @@ msgstr ""
 "periodicity: %d, 最大樣本數: %d\n"
 "樣本區間範圍: 從 %s 到 %s\n"
 
-#: lib/src/dataio.c:1519
+#: lib/src/dataio.c:1523
 msgid "append: don't know how to align the new series!"
 msgstr ""
 
-#: lib/src/dataio.c:1672 lib/src/dataio.c:1916 lib/src/dataio.c:1928
-#: lib/src/dataio.c:2597 lib/src/dataio.c:2606 cli/gretlcli.c:229
+#: lib/src/dataio.c:1676 lib/src/dataio.c:1920 lib/src/dataio.c:1932
+#: lib/src/dataio.c:2601 lib/src/dataio.c:2610 cli/gretlcli.c:229
 #: cli/gretlcli-mpi.c:168 gui2/gretl.c:277
 msgid "Out of memory!\n"
 msgstr "記憶體不足\n"
 
-#: lib/src/dataio.c:1854
+#: lib/src/dataio.c:1858
 msgid "Data frequency does not match\n"
 msgstr "資料頻率不相符\n"
 
-#: lib/src/dataio.c:1888
+#: lib/src/dataio.c:1892
 msgid "New data not conformable for appending\n"
 msgstr "資料格式不符而無法新增\n"
 
-#: lib/src/dataio.c:1894
+#: lib/src/dataio.c:1898
 msgid "Inconsistency in observation markers\n"
 msgstr "樣本資料註記不一致\n"
 
-#: lib/src/dataio.c:2415
+#: lib/src/dataio.c:2419
 msgid "No markers are available for writing"
 msgstr "無資料註記可寫入"
 
-#: lib/src/dataio.c:2485
+#: lib/src/dataio.c:2489
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr " (%d) 是二進位 (binary) 資料: 這不是一個一般的文字檔\n"
 
-#: lib/src/dataio.c:2571
+#: lib/src/dataio.c:2575
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
 msgstr "   找到矩陣 '%s'  含 %d 列 (rows), %d 行 (columns)\n"
 
-#: lib/src/dataio.c:2614
+#: lib/src/dataio.c:2618
 #, c-format
 msgid "   number of observations: %d\n"
 msgstr "   樣本數: %d\n"
 
-#: lib/src/dataio.c:2615
+#: lib/src/dataio.c:2619
 #, c-format
 msgid "   number of data blocks: %d\n"
 msgstr "   data blocks 之數目: %d\n"
 
-#: lib/src/dataio.c:2745 lib/src/dataio.c:2809 gui2/gui_utils.c:1119
+#: lib/src/dataio.c:2749 lib/src/dataio.c:2813 gui2/gui_utils.c:1119
 msgid "Unrecognized data type"
 msgstr "無法辨識之資料型態"
 
-#: lib/src/dataio.c:3004 lib/src/dataio.c:3047
+#: lib/src/dataio.c:3008 lib/src/dataio.c:3051
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr "資料中有奇怪的字元: '%c' "
 
-#: lib/src/dataio.c:3006 lib/src/dataio.c:3049
+#: lib/src/dataio.c:3010 lib/src/dataio.c:3053
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr "資料中有奇怪的字元 (0x%x)"
 
-#: lib/src/dataio.c:3012 lib/src/dataio.c:3055
+#: lib/src/dataio.c:3016 lib/src/dataio.c:3059
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr "'%s' -- 超過樣本範圍"
 
-#: lib/src/dataio.c:3208
+#: lib/src/dataio.c:3212
 #, c-format
 msgid "Data imported from %s file '%s', %s\n"
 msgstr "已從 %s 檔 '%s', 匯入資料 %s \n"
 
-#: lib/src/dataio.c:3211
+#: lib/src/dataio.c:3215
 #, c-format
 msgid "Data imported from %s, %s\n"
 msgstr "已從 %s, 匯入資料 %s\n"
@@ -1395,7 +1397,7 @@ msgid "auto-generated constant"
 msgstr "由 gretl 自動產生之常數 (auto-generated constant)"
 
 #: lib/src/dataset.c:1330 gui2/fncall.c:1571 gui2/fncall.c:1582
-#: gui2/gui_utils.c:5736 gui2/toolbar.c:1376 gui2/toolbar.c:1385
+#: gui2/gui_utils.c:5740 gui2/toolbar.c:1376 gui2/toolbar.c:1385
 msgid "Please open a data file first"
 msgstr "請先開啟資料檔"
 
@@ -2277,11 +2279,11 @@ msgstr ""
 msgid "%s: rho = %g, error is unbounded"
 msgstr ""
 
-#: lib/src/estimate.c:2947 lib/src/gretl_model.c:3963 lib/src/modelprint.c:882
+#: lib/src/estimate.c:2947 lib/src/gretl_model.c:3964 lib/src/modelprint.c:882
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/estimate.c:2957 lib/src/gretl_model.c:3942 lib/src/modelprint.c:880
+#: lib/src/estimate.c:2957 lib/src/gretl_model.c:3943 lib/src/modelprint.c:880
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr ""
 
@@ -2289,7 +2291,7 @@ msgstr ""
 msgid "with Koenker robust variance estimator"
 msgstr ""
 
-#: lib/src/estimate.c:2963 lib/src/gretl_model.c:3939 lib/src/modelprint.c:875
+#: lib/src/estimate.c:2963 lib/src/gretl_model.c:3940 lib/src/modelprint.c:875
 #, fuzzy
 msgid "White's test for heteroskedasticity"
 msgstr ""
@@ -2350,16 +2352,16 @@ msgstr "'if' 沒有確定其條件"
 msgid "Unmatched \"%s\""
 msgstr " \"%s\" 未成對出現"
 
-#: lib/src/forecast.c:3039
+#: lib/src/forecast.c:3042
 msgid "predicted values"
 msgstr "預測值 (predicted values)"
 
-#: lib/src/forecast.c:3043 lib/src/genmain.c:97
+#: lib/src/forecast.c:3046 lib/src/genmain.c:97
 #, c-format
 msgid "Replaced series %s (ID %d)"
 msgstr "變數 %s 已被置換 (變數代碼 %d)"
 
-#: lib/src/forecast.c:3046 lib/src/genmain.c:99
+#: lib/src/forecast.c:3049 lib/src/genmain.c:99
 #, c-format
 msgid "Generated series %s (ID %d)"
 msgstr "已產生變數 %s (變數代碼 %d)"
@@ -2658,7 +2660,7 @@ msgid "model-related"
 msgstr "model-related"
 
 #: lib/src/genfuncs.c:5843 lib/src/gretl_func.c:4492 lib/src/plotspec.c:314
-#: lib/src/plotspec.c:328 lib/src/uservar.c:1536 lib/src/uservar.c:2468
+#: lib/src/plotspec.c:328 lib/src/uservar.c:1545 lib/src/uservar.c:2477
 #: gui2/fnsave.c:2338 gui2/fnsave.c:2790 gui2/gpt_dialog.c:134
 #: gui2/gui_utils.c:3225
 msgid "none"
@@ -3224,17 +3226,17 @@ msgstr "警告: 無法改善 criterion\n"
 msgid "Initial value of objective function is not finite"
 msgstr "目標函數之起始值 (initial value) 並非有限值 (not finite)"
 
-#: lib/src/gretl_bundle.c:542 lib/src/gretl_bundle.c:614
-#: lib/src/gretl_bundle.c:668 lib/src/kalman.c:4281 lib/src/objstack.c:1459
+#: lib/src/gretl_bundle.c:530 lib/src/gretl_bundle.c:602
+#: lib/src/gretl_bundle.c:656 lib/src/kalman.c:4281 lib/src/objstack.c:1459
 msgid "no such item"
 msgstr "沒有這個項目"
 
-#: lib/src/gretl_bundle.c:2018
+#: lib/src/gretl_bundle.c:2006
 #, fuzzy
 msgid "xmlParseMemory failed"
 msgstr "xmlParseFile 錯誤 on %s"
 
-#: lib/src/gretl_bundle.c:2024
+#: lib/src/gretl_bundle.c:2012
 msgid "xmlDocGetRootElement failed"
 msgstr ""
 
@@ -3695,262 +3697,262 @@ msgstr "變數 %d 並未定義在原來的變數集 (list) 之中"
 msgid "Can't do this: some vars in original model have been redefined"
 msgstr "無法執行: 有些變數在原始模型中已被重新定義過"
 
-#: lib/src/gretl_model.c:3900
+#: lib/src/gretl_model.c:3901
 msgid "Test for addition of variables"
 msgstr "新增自變數檢定"
 
-#: lib/src/gretl_model.c:3901 lib/src/gretl_model.c:3931
+#: lib/src/gretl_model.c:3902 lib/src/gretl_model.c:3932
 msgid "parameters are zero for the variables"
 msgstr "這些變數之參數是 0"
 
-#: lib/src/gretl_model.c:3903
+#: lib/src/gretl_model.c:3904
 #, fuzzy, c-format
 msgid "Test for ARCH of order %s"
 msgstr "ADF 檢定落後階次 (lag order):"
 
-#: lib/src/gretl_model.c:3904
+#: lib/src/gretl_model.c:3905
 msgid "no ARCH effect is present"
 msgstr "無ARCH 異質變異現象 (No ARCH)"
 
-#: lib/src/gretl_model.c:3906
+#: lib/src/gretl_model.c:3907
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr "LM 檢定 for autocorrelation up to order %s"
 
-#: lib/src/gretl_model.c:3907
+#: lib/src/gretl_model.c:3908
 #, fuzzy
 msgid "no autocorrelation"
 msgstr "殘差自我相關函數"
 
-#: lib/src/gretl_model.c:3910 lib/src/gretl_model.c:3919
+#: lib/src/gretl_model.c:3911 lib/src/gretl_model.c:3920
 msgid "no structural break"
 msgstr "無結構轉變 (no structural break)"
 
-#: lib/src/gretl_model.c:3913
+#: lib/src/gretl_model.c:3914
 #, fuzzy
 msgid "no structural difference"
 msgstr "用一階差分"
 
-#: lib/src/gretl_model.c:3915
+#: lib/src/gretl_model.c:3916
 msgid "CUSUM test for parameter stability"
 msgstr "CUSUM 檢定 (結構轉變檢定)"
 
-#: lib/src/gretl_model.c:3916
+#: lib/src/gretl_model.c:3917
 msgid "no change in parameters"
 msgstr "參數並無結構轉變"
 
-#: lib/src/gretl_model.c:3918
+#: lib/src/gretl_model.c:3919
 msgid "QLR test for structural break"
 msgstr "Quandt 結構轉變檢定 (移動式 Chow 檢定)"
 
-#: lib/src/gretl_model.c:3921
+#: lib/src/gretl_model.c:3922
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr ""
 "概似值比例檢定 (Likelihood ratio test) for 分組異質性 (groupwise "
 "heteroskedasticity)"
 
-#: lib/src/gretl_model.c:3922
+#: lib/src/gretl_model.c:3923
 msgid "the units have a common error variance"
 msgstr ""
 
-#: lib/src/gretl_model.c:3924
+#: lib/src/gretl_model.c:3925
 msgid "Non-linearity test (logs)"
 msgstr "非線性檢定: 加入取對數項 (logs)"
 
-#: lib/src/gretl_model.c:3925 lib/src/gretl_model.c:3937
+#: lib/src/gretl_model.c:3926 lib/src/gretl_model.c:3938
 #, fuzzy
 msgid "relationship is linear"
 msgstr "其它線性模型(_l)"
 
-#: lib/src/gretl_model.c:3927 gui2/gui_utils.c:4297
+#: lib/src/gretl_model.c:3928 gui2/gui_utils.c:4297
 msgid "Test for normality of residual"
 msgstr "殘差的常態性檢定 (normality test)"
 
-#: lib/src/gretl_model.c:3928
+#: lib/src/gretl_model.c:3929
 msgid "error is normally distributed"
 msgstr "殘差是常態分配"
 
-#: lib/src/gretl_model.c:3930
+#: lib/src/gretl_model.c:3931
 #, fuzzy
 msgid "Test for omission of variables"
 msgstr ""
 "\n"
 "DF 檢定 對變數 %s\n"
 
-#: lib/src/gretl_model.c:3934
+#: lib/src/gretl_model.c:3935
 #, fuzzy
 msgid "specification is adequate"
 msgstr "殘差是常態分配"
 
-#: lib/src/gretl_model.c:3936
+#: lib/src/gretl_model.c:3937
 msgid "Non-linearity test (squares)"
 msgstr "非線性檢定: 加入平方項 (sqiares)"
 
-#: lib/src/gretl_model.c:3940 lib/src/gretl_model.c:3943
-#: lib/src/gretl_model.c:3964
+#: lib/src/gretl_model.c:3941 lib/src/gretl_model.c:3944
+#: lib/src/gretl_model.c:3965
 #, fuzzy
 msgid "heteroskedasticity not present"
 msgstr "   %s: 可能不是1年\n"
 
-#: lib/src/gretl_model.c:3945 lib/src/modelprint.c:432
+#: lib/src/gretl_model.c:3946 lib/src/modelprint.c:432
 msgid "Sargan over-identification test"
 msgstr ""
 
-#: lib/src/gretl_model.c:3946
+#: lib/src/gretl_model.c:3947
 msgid "all instruments are valid"
 msgstr ""
 
-#: lib/src/gretl_model.c:3948 lib/src/gretl_model.c:3951
+#: lib/src/gretl_model.c:3949 lib/src/gretl_model.c:3952
 #, fuzzy
 msgid "Hausman test"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/gretl_model.c:3949
+#: lib/src/gretl_model.c:3950
 msgid "OLS estimates are consistent"
 msgstr ""
 
-#: lib/src/gretl_model.c:3952
+#: lib/src/gretl_model.c:3953
 msgid "GLS estimates are consistent"
 msgstr ""
 
-#: lib/src/gretl_model.c:3954
+#: lib/src/gretl_model.c:3955
 msgid "Test for differing group intercepts"
 msgstr ""
 
-#: lib/src/gretl_model.c:3955 lib/src/gretl_model.c:3982
+#: lib/src/gretl_model.c:3956 lib/src/gretl_model.c:3983
 #, fuzzy
 msgid "The groups have a common intercept"
 msgstr "假設母體標準差相同"
 
-#: lib/src/gretl_model.c:3957
+#: lib/src/gretl_model.c:3958
 #, fuzzy
 msgid "Breusch-Pagan test"
 msgstr "基本假設檢定(_T)"
 
-#: lib/src/gretl_model.c:3958
+#: lib/src/gretl_model.c:3959
 msgid "Variance of the unit-specific error = 0"
 msgstr ""
 
-#: lib/src/gretl_model.c:3960
+#: lib/src/gretl_model.c:3961
 #, fuzzy
 msgid "Wald joint test on time dummies"
 msgstr "加上季節虛擬變數"
 
-#: lib/src/gretl_model.c:3961
+#: lib/src/gretl_model.c:3962
 #, fuzzy
 msgid "No time effects"
 msgstr "固定效果"
 
-#: lib/src/gretl_model.c:3967
+#: lib/src/gretl_model.c:3968
 #, fuzzy
 msgid "restriction is acceptable"
 msgstr "殘差是常態分配"
 
-#: lib/src/gretl_model.c:3969
+#: lib/src/gretl_model.c:3970
 #, fuzzy
 msgid "Test of independence"
 msgstr "常態性檢定(_N)"
 
-#: lib/src/gretl_model.c:3970
+#: lib/src/gretl_model.c:3971
 msgid "rho = 0"
 msgstr "rho = 0"
 
-#: lib/src/gretl_model.c:3972
+#: lib/src/gretl_model.c:3973
 #, fuzzy
 msgid "LR test for rho = 0"
 msgstr ""
 "\n"
 "DF 檢定 對變數 %s\n"
 
-#: lib/src/gretl_model.c:3975 lib/src/gretl_model.c:3978
+#: lib/src/gretl_model.c:3976 lib/src/gretl_model.c:3979
 #, fuzzy
 msgid "Joint test on named regressors"
 msgstr "選擇VAR落後期(_V)"
 
-#: lib/src/gretl_model.c:3981
+#: lib/src/gretl_model.c:3982
 #, fuzzy
 msgid "Robust test for differing group intercepts"
 msgstr "隨機性檢定 (連檢定, runs test)(一階差分)"
 
-#: lib/src/gretl_model.c:3984 lib/src/gretl_panel.c:4432
+#: lib/src/gretl_model.c:3985 lib/src/gretl_panel.c:4432
 msgid "Pesaran CD test for cross-sectional dependence"
 msgstr ""
 
-#: lib/src/gretl_model.c:3985
+#: lib/src/gretl_model.c:3986
 #, fuzzy
 msgid "No cross-sectional dependence"
 msgstr "For 橫斷面資料"
 
-#: lib/src/gretl_model.c:3992 lib/src/gretl_panel.c:4068
+#: lib/src/gretl_model.c:3993 lib/src/gretl_panel.c:4068
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/gretl_model.c:4024
+#: lib/src/gretl_model.c:4025
 #, fuzzy
 msgid "robust variant"
 msgstr "穩健估計法"
 
-#: lib/src/gretl_model.c:4190
+#: lib/src/gretl_model.c:4191
 #, fuzzy, c-format
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "要選擇的樣本數 (最多 %d)"
 
-#: lib/src/gretl_model.c:4223 lib/src/gretl_model.c:4230 gui2/textbuf.c:1252
+#: lib/src/gretl_model.c:4224 lib/src/gretl_model.c:4231 gui2/textbuf.c:1252
 msgid "failed"
 msgstr "failed"
 
-#: lib/src/gretl_model.c:4334
+#: lib/src/gretl_model.c:4335
 #, fuzzy
 msgid "parameter"
 msgstr "Parameters: "
 
-#: lib/src/gretl_model.c:4338 gui2/calculator.c:2040
+#: lib/src/gretl_model.c:4339 gui2/calculator.c:2040
 msgid "dfn"
 msgstr "自由度(分子)"
 
-#: lib/src/gretl_model.c:4339 gui2/calculator.c:2041
+#: lib/src/gretl_model.c:4340 gui2/calculator.c:2041
 msgid "dfd"
 msgstr "自由度(分母)"
 
-#: lib/src/gretl_model.c:4341 lib/src/modelprint.c:5373
+#: lib/src/gretl_model.c:4342 lib/src/modelprint.c:5373
 #: lib/src/modelprint.c:5384 lib/src/modelprint.c:5386 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2034
 #: gui2/calculator.c:2037 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
 msgid "df"
 msgstr "自由度"
 
-#: lib/src/gretl_model.c:4355 lib/src/gretl_model.c:4415
-#: lib/src/gretl_model.c:4418 lib/src/gretl_model.c:4421
+#: lib/src/gretl_model.c:4356 lib/src/gretl_model.c:4416
+#: lib/src/gretl_model.c:4419 lib/src/gretl_model.c:4422
 #, c-format
 msgid "%g percent critical value"
 msgstr "%g percent 臨界值"
 
-#: lib/src/gretl_model.c:4385
+#: lib/src/gretl_model.c:4386
 msgid "Asymptotic test statistic"
 msgstr "漸進統計值 (asymptotic test statistic)"
 
-#: lib/src/gretl_model.c:4402
+#: lib/src/gretl_model.c:4403
 #, fuzzy
 msgid "with asymptotic p-value"
 msgstr "gretl: 查 P 值"
 
-#: lib/src/gretl_model.c:6719
+#: lib/src/gretl_model.c:6720
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "無法取得殘差 (uhat): 資料檔已變更"
 
-#: lib/src/gretl_model.c:6721
+#: lib/src/gretl_model.c:6722
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "無法取得預測值 (yhat): 資料檔已變更"
 
-#: lib/src/gretl_model.c:6723
+#: lib/src/gretl_model.c:6724
 msgid "Can't retrieve ht: data set has changed"
 msgstr "無法取得條件變異數 (h): 資料檔已變更"
 
-#: lib/src/gretl_model.c:6724
+#: lib/src/gretl_model.c:6725
 msgid "Can't retrieve series: data set has changed"
 msgstr "無法取得資料變數 (series): 資料檔已變更"
 
-#: lib/src/gretl_model.c:7200 gui2/library.c:426
+#: lib/src/gretl_model.c:7201 gui2/library.c:426
 msgid "The model exhibits an exact linear fit"
 msgstr "此模型出現完全線性重合"
 
@@ -6208,7 +6210,7 @@ msgid "modprint: expected %d names"
 msgstr "變數名稱衝突"
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:788
-#: lib/src/monte_carlo.c:1822 lib/src/monte_carlo.c:1985 lib/src/uservar.c:1799
+#: lib/src/monte_carlo.c:1822 lib/src/monte_carlo.c:1985 lib/src/uservar.c:1808
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': 不是數值 (scalar)"
@@ -7636,7 +7638,7 @@ msgstr "共變數矩陣的反矩陣"
 msgid "Matrix decomposition failed"
 msgstr "矩陣分解 (decomposition) 錯誤"
 
-#: lib/src/uservar.c:1698
+#: lib/src/uservar.c:1707
 #, fuzzy, c-format
 msgid "The variable %s is currently read-only"
 msgstr "變數 %s 是 read-only"
@@ -8969,7 +8971,7 @@ msgid "Couldn't access binary datafile"
 msgstr "無法存取二進位 (binary) 型式之資料檔"
 
 #: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3406
+#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3417
 msgid "Display"
 msgstr "顯示 "
 
@@ -8984,8 +8986,8 @@ msgstr "匯入資料 "
 
 #: gui2/database.c:872 gui2/database.c:895 gui2/menustate.c:504
 #: gui2/session.c:159 gui2/session.c:178 gui2/session.c:185 gui2/session.c:210
-#: gui2/session.c:217 gui2/session.c:3345 gui2/session.c:3361
-#: gui2/session.c:3441 gui2/ssheet.c:2675
+#: gui2/session.c:217 gui2/session.c:3356 gui2/session.c:3372
+#: gui2/session.c:3452 gui2/ssheet.c:2675
 msgid "Delete"
 msgstr "刪除"
 
@@ -9152,7 +9154,7 @@ msgstr "加入選單"
 
 #: gui2/datafiles.c:1447 gui2/datafiles.c:1643 gui2/gpt_control.c:3951
 #: gui2/gpt_control.c:3953 gui2/gpt_control.c:4057 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3462 gui2/toolbar.c:836 gui2/toolbar.c:837
+#: gui2/session.c:172 gui2/session.c:3473 gui2/toolbar.c:836 gui2/toolbar.c:837
 #: gui2/toolbar.c:838
 msgid "Help"
 msgstr "說明"
@@ -9280,7 +9282,7 @@ msgid "File"
 msgstr "檔案"
 
 #: gui2/datafiles.c:2723 gui2/datafiles.c:2749 gui2/datafiles.c:2756
-#: gui2/session.c:3634
+#: gui2/session.c:3645
 msgid "Summary"
 msgstr "摘要 (summary)"
 
@@ -11008,7 +11010,7 @@ msgstr "存入檔案"
 msgid "A file of this name already exists."
 msgstr "你輸入的變數集名稱和已存在的變數集 (list) %s 同名"
 
-#: gui2/fnsave.c:683 gui2/gui_utils.c:5217
+#: gui2/fnsave.c:683 gui2/gui_utils.c:5221
 msgid "OK to overwrite it?"
 msgstr "是否取代已存在之變數?"
 
@@ -11356,7 +11358,7 @@ msgid "Smaller"
 msgstr "縮小"
 
 #: gui2/gpt_control.c:276 gui2/session.c:186 gui2/session.c:211
-#: gui2/session.c:3347 gui2/session.c:3472 gui2/textutil.c:486
+#: gui2/session.c:3358 gui2/session.c:3483 gui2/textutil.c:486
 #: gui2/toolbar.c:812
 msgid "Copy"
 msgstr "複製"
@@ -11366,12 +11368,12 @@ msgid "Display PDF"
 msgstr "顯示 PDF 檔"
 
 #: gui2/gpt_control.c:278 gui2/gpt_control.c:3978 gui2/gpt_control.c:4055
-#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206 gui2/session.c:3331
-#: gui2/session.c:3370 gui2/session.c:3383
+#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206 gui2/session.c:3342
+#: gui2/session.c:3381 gui2/session.c:3394
 msgid "Edit"
 msgstr "編輯"
 
-#: gui2/gpt_control.c:280 gui2/session.c:151 gui2/session.c:3303
+#: gui2/gpt_control.c:280 gui2/session.c:151 gui2/session.c:3314
 #: gui2/winstack.c:1281
 msgid "Windows"
 msgstr "切換視窗"
@@ -11852,7 +11854,7 @@ msgstr "繪圖區已滿"
 msgid "Failed to process TeX file"
 msgstr "無法處理 TeX 檔"
 
-#: gui2/graph_page.c:691 gui2/graph_page.c:801 gui2/session.c:3193
+#: gui2/graph_page.c:691 gui2/graph_page.c:801 gui2/session.c:3204
 msgid "The graph page is empty"
 msgstr "繪圖區是空的"
 
@@ -13441,8 +13443,8 @@ msgstr "gretl: 尚未命名 untitled"
 msgid "gretl: script output %d"
 msgstr "gretl: 指令檔執行結果"
 
-#: gui2/gui_utils.c:1752 gui2/gui_utils.c:5391 gui2/gui_utils.c:5458
-#: gui2/gui_utils.c:5651
+#: gui2/gui_utils.c:1752 gui2/gui_utils.c:5395 gui2/gui_utils.c:5462
+#: gui2/gui_utils.c:5655
 msgid "gretl: script output"
 msgstr "gretl: 指令檔執行結果"
 
@@ -13813,7 +13815,17 @@ msgstr "你輸入的變數集名稱和已存在的變數集 (list) %s 同名"
 msgid "A string named %s already exists"
 msgstr "你輸入的變數名稱和已存在的字串變數 %s 同名"
 
-#: gui2/gui_utils.c:5243
+#: gui2/gui_utils.c:5209
+#, fuzzy, c-format
+msgid "A bundle named %s already exists"
+msgstr "你輸入的變數集名稱和已存在的變數集 (list) %s 同名"
+
+#: gui2/gui_utils.c:5211
+#, fuzzy, c-format
+msgid "An array named %s already exists"
+msgstr "你輸入的變數名稱和已存在的矩陣變數 %s 同名"
+
+#: gui2/gui_utils.c:5247
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -13822,7 +13834,7 @@ msgstr ""
 "變數名稱 %s... 太長\n"
 "(變數名稱最長允許 %d 字元)"
 
-#: gui2/gui_utils.c:5248
+#: gui2/gui_utils.c:5252
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -13831,7 +13843,7 @@ msgstr ""
 "變數名稱第一個字 ('%c') 不符命名規則\n"
 "(第一個字必須為英文字母)"
 
-#: gui2/gui_utils.c:5256
+#: gui2/gui_utils.c:5260
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -13840,7 +13852,7 @@ msgstr ""
 "變數名稱包含了不符規則的字元 (位置: %d)\n"
 "只能用字母, 數字 和 底線"
 
-#: gui2/gui_utils.c:5542
+#: gui2/gui_utils.c:5546
 msgid "No command was supplied to start R"
 msgstr "沒有指令可啟動 R"
 
@@ -16028,60 +16040,60 @@ msgstr "gretl: 資料格式"
 msgid "Select data format"
 msgstr "選擇數字顯示格式"
 
-#: gui2/session.c:148 gui2/session.c:3289 gui2/session.c:3713
+#: gui2/session.c:148 gui2/session.c:3300 gui2/session.c:3724
 msgid "Save session"
 msgstr "儲存分析檔"
 
-#: gui2/session.c:149 gui2/session.c:3299
+#: gui2/session.c:149 gui2/session.c:3310
 msgid "Arrange icons"
 msgstr "重新排列圖示 (icons)"
 
-#: gui2/session.c:150 gui2/session.c:3301
+#: gui2/session.c:150 gui2/session.c:3312
 #, fuzzy
 msgid "Add matrix..."
 msgstr "新增為矩陣..."
 
-#: gui2/session.c:152 gui2/session.c:3305
+#: gui2/session.c:152 gui2/session.c:3316
 msgid "Close window"
 msgstr "關閉視窗"
 
-#: gui2/session.c:157 gui2/session.c:3450
+#: gui2/session.c:157 gui2/session.c:3461
 msgid "Add to model table"
 msgstr "新增至模型比較表 (model table)"
 
 #: gui2/session.c:158 gui2/session.c:177 gui2/session.c:184 gui2/session.c:209
-#: gui2/session.c:216 gui2/session.c:3343 gui2/session.c:3359
-#: gui2/session.c:3439
+#: gui2/session.c:216 gui2/session.c:3354 gui2/session.c:3370
+#: gui2/session.c:3450
 msgid "Rename"
 msgstr "更名"
 
-#: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3456
+#: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3467
 msgid "Clear"
 msgstr "清除"
 
-#: gui2/session.c:170 gui2/session.c:3468
+#: gui2/session.c:170 gui2/session.c:3479
 msgid "Save as TeX..."
 msgstr "另存為 TeX 檔..."
 
-#: gui2/session.c:183 gui2/session.c:3421
+#: gui2/session.c:183 gui2/session.c:3432
 msgid "Edit plot commands"
 msgstr "編輯 GNU plot 指令 "
 
-#: gui2/session.c:191 gui2/session.c:3372
+#: gui2/session.c:191 gui2/session.c:3383
 msgid "Export as CSV..."
 msgstr "匯出為 CSV 檔..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3336
-#: gui2/session.c:3374 gui2/session.c:3385
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3347
+#: gui2/session.c:3385 gui2/session.c:3396
 msgid "Copy as CSV..."
 msgstr "複製為 CSV 檔..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3323
-#: gui2/session.c:3357 gui2/textutil.c:485
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3334
+#: gui2/session.c:3368 gui2/textutil.c:485
 msgid "View"
 msgstr "檢視(View)"
 
-#: gui2/session.c:207 gui2/session.c:3333
+#: gui2/session.c:207 gui2/session.c:3344
 msgid "Properties"
 msgstr ""
 
@@ -16127,16 +16139,16 @@ msgstr ""
 msgid "Bundle is empty"
 msgstr "Bundle 是空的"
 
-#: gui2/session.c:2625 gui2/session.c:2651
+#: gui2/session.c:2635 gui2/session.c:2661
 #, c-format
 msgid "'%s': there is already an object of this name"
 msgstr ""
 
-#: gui2/session.c:2704
+#: gui2/session.c:2714
 msgid "Failed to copy object"
 msgstr "無法複製 object"
 
-#: gui2/session.c:2730 gui2/session.c:2772
+#: gui2/session.c:2740 gui2/session.c:2783
 #, fuzzy, c-format
 msgid ""
 "Enter new name\n"
@@ -16145,136 +16157,136 @@ msgstr ""
 "變數名稱 %s... 太長\n"
 "(變數名稱最長允計 %d characters)"
 
-#: gui2/session.c:2732
+#: gui2/session.c:2742
 #, fuzzy
 msgid "gretl: copy object"
 msgstr "複製資料"
 
-#: gui2/session.c:2774
+#: gui2/session.c:2785
 msgid "gretl: rename object"
 msgstr "gretl: 更名"
 
-#: gui2/session.c:3619
+#: gui2/session.c:3630
 msgid "Data set"
 msgstr "資料變數(Data set)"
 
-#: gui2/session.c:3622
+#: gui2/session.c:3633
 msgid "Scalars"
 msgstr "數值變數 (Scalars)"
 
-#: gui2/session.c:3625
+#: gui2/session.c:3636
 msgid "Data info"
 msgstr "資料說明(Data info)"
 
-#: gui2/session.c:3628
+#: gui2/session.c:3639
 msgid "Notes"
 msgstr "附註說明"
 
-#: gui2/session.c:3631
+#: gui2/session.c:3642
 msgid "Correlations"
 msgstr "相關係數"
 
-#: gui2/session.c:3637
+#: gui2/session.c:3648
 msgid "Model table"
 msgstr "模型比較表(model table)"
 
-#: gui2/session.c:3640
+#: gui2/session.c:3651
 msgid "Graph page"
 msgstr "繪圖區"
 
-#: gui2/session.c:3858 gui2/winstack.c:519
+#: gui2/session.c:3869 gui2/winstack.c:519
 msgid "icon view"
 msgstr "分析檔圖示(icon view)"
 
-#: gui2/session.c:4088
+#: gui2/session.c:4099
 #, c-format
 msgid "Properties of matrix %s"
 msgstr "矩陣  %s 之性質"
 
-#: gui2/session.c:4092 gui2/session.c:4101
+#: gui2/session.c:4103 gui2/session.c:4112
 #, fuzzy, c-format
 msgid "Null matrix, %d x %d\n"
 msgstr "相關係數矩陣(_C)"
 
-#: gui2/session.c:4095
+#: gui2/session.c:4106
 #, fuzzy, c-format
 msgid "Scalar matrix, value %g\n"
 msgstr "gretl: 查 P 值"
 
-#: gui2/session.c:4098
+#: gui2/session.c:4109
 #, fuzzy, c-format
 msgid "Identity matrix, order %d\n"
 msgstr "共變數矩陣的反矩陣"
 
-#: gui2/session.c:4105
+#: gui2/session.c:4116
 msgid "Rows"
 msgstr ""
 
-#: gui2/session.c:4106
+#: gui2/session.c:4117
 msgid "Columns"
 msgstr ""
 
-#: gui2/session.c:4107 plugin/johansen.c:1578 plugin/johansen.c:1598
+#: gui2/session.c:4118 plugin/johansen.c:1578 plugin/johansen.c:1598
 #: plugin/johansen.c:1624
 msgid "Rank"
 msgstr ""
 
-#: gui2/session.c:4112
+#: gui2/session.c:4123
 #, fuzzy
 msgid "Square"
 msgstr "卡方分配"
 
-#: gui2/session.c:4116
+#: gui2/session.c:4127
 msgid "Diagonal"
 msgstr ""
 
-#: gui2/session.c:4118
+#: gui2/session.c:4129
 msgid "Lower triangular"
 msgstr ""
 
-#: gui2/session.c:4120
+#: gui2/session.c:4131
 msgid "Upper triangular"
 msgstr ""
 
-#: gui2/session.c:4122
+#: gui2/session.c:4133
 msgid "Symmetric"
 msgstr "對稱 (symmetric)"
 
-#: gui2/session.c:4127
+#: gui2/session.c:4138
 msgid "Positive definite"
 msgstr "正確定 (Positive definite)"
 
-#: gui2/session.c:4129
+#: gui2/session.c:4140
 #, fuzzy
 msgid "Not positive definite"
 msgstr "   %s: 可能不是1年\n"
 
-#: gui2/session.c:4148
+#: gui2/session.c:4159
 msgid "Idempotent"
 msgstr "Idempotent"
 
-#: gui2/session.c:4150
+#: gui2/session.c:4161
 #, fuzzy
 msgid "Not idempotent"
 msgstr "   %s: 可能不是1年\n"
 
-#: gui2/session.c:4156
+#: gui2/session.c:4167
 msgid "1-norm"
 msgstr ""
 
-#: gui2/session.c:4157
+#: gui2/session.c:4168
 msgid "Infinity-norm"
 msgstr ""
 
-#: gui2/session.c:4162
+#: gui2/session.c:4173
 msgid "Trace"
 msgstr "Trace"
 
-#: gui2/session.c:4171
+#: gui2/session.c:4182
 msgid "Determinant"
 msgstr "矩陣行列式 (determinant)"
 
-#: gui2/session.c:4179
+#: gui2/session.c:4190
 msgid "Eigenvalues"
 msgstr "Eigenvalues"
 
@@ -18505,6 +18517,9 @@ msgstr "敘述統計(_S)"
 #, fuzzy
 msgid "Decoration"
 msgstr "增加樣本(_A)"
+
+#~ msgid "(max was %d, criterion %s)"
+#~ msgstr "(最大落後階次: %d, 使用準則: %s)"
 
 #, fuzzy
 #~ msgid "Invalid option '-%c'"
