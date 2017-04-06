@@ -1405,9 +1405,10 @@ int arma_model_AR_MA_coeffs (const MODEL *pmod,
     int err = 0;
 
     if (pmod->ci != ARMA) {
-	err = 1;
+	err = E_DATA;
     } else if ((ainfo = gretl_model_get_data(pmod, "ainfo")) == NULL) {
-	err = 1;
+	fprintf(stderr, "AR_MA_coeffs: no 'ainfo' available!\n");
+	err = E_DATA;
     } else {
 	const double *phi = NULL, *Phi = NULL;
 	const double *theta = NULL, *Theta = NULL;

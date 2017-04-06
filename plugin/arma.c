@@ -1760,11 +1760,11 @@ MODEL arma_model (const int *list, const int *pqspec,
 	}
     }
 
+ bailout:
+
     if (!err) {
 	transcribe_extra_info(ainfo, &armod);
     }
-
- bailout:
 
     if (err && !armod.errcode) {
 	armod.errcode = err;

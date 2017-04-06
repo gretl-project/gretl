@@ -1686,7 +1686,10 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* forecast error variance */
 	if (psi != NULL) {
-	    vl = arma_variance(phi->val, p, theta->val, q,
+	    const double *arvec = (phi != NULL)? phi->val : NULL;
+	    const double *mavec = (theta != NULL)? theta->val : NULL;
+
+	    vl = arma_variance(arvec, p, mavec, q,
 			       psi, npsi, t - fcstart + 1);
 	    fc->sderr[t] = pmod->sigma * sqrt(vl);
 	}
