@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-04-06 15:51-0400\n"
-"PO-Revision-Date: 2017-04-05 00:26+0200\n"
+"PO-Revision-Date: 2017-04-06 22:01+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -72,9 +72,9 @@ msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "Test Dickey-Fuller aumentato per %s\n"
 
 #: lib/src/adf_kpss.c:545
-#, fuzzy, c-format
+#, c-format
 msgid "testing down from %d lags, criterion %s"
-msgstr "test dal massimo ordine di ritardi all'indietro"
+msgstr "test all'indietro da %d ritardi, criterio %s"
 
 #: lib/src/adf_kpss.c:549 lib/src/adf_kpss.c:659 plugin/panurc.c:577
 #, c-format
@@ -13510,7 +13510,7 @@ msgstr "Esiste già uno scalare di nome %s"
 #: gui2/gui_utils.c:5205
 #, c-format
 msgid "A list named %s already exists"
-msgstr "Esiste già una lista di nome%s"
+msgstr "Esiste già una lista di nome %s"
 
 #: gui2/gui_utils.c:5207
 #, c-format
@@ -13518,14 +13518,14 @@ msgid "A string named %s already exists"
 msgstr "Esiste già una stringa di nome %s"
 
 #: gui2/gui_utils.c:5209
-#, fuzzy, c-format
+#, c-format
 msgid "A bundle named %s already exists"
-msgstr "Esiste già una lista di nome%s"
+msgstr "Esiste già un bundle di nome %s"
 
 #: gui2/gui_utils.c:5211
-#, fuzzy, c-format
+#, c-format
 msgid "An array named %s already exists"
-msgstr "Esiste già una matrice di nome %s"
+msgstr "Esiste già un array di nome %s"
 
 #: gui2/gui_utils.c:5247
 #, c-format
