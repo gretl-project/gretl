@@ -90,8 +90,7 @@ int user_var_set_flag (user_var *uvar, UVFlags flag);
 
 void user_var_privatize_by_name (const char *name);
 
-int user_var_set_name (user_var *uvar, const char *name,
-		       const DATASET *dset);
+int user_var_set_name (user_var *uvar, const char *name);
 
 int user_var_adjust_level (user_var *uvar, int adj);
 

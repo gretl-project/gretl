@@ -799,81 +799,19 @@ int user_var_adjust_level (user_var *uvar, int adj)
     }
 }
 
-static void var_exists_message (const char *name, GretlType t)
-{
-    if (t == GRETL_TYPE_SERIES) {
-	gretl_errmsg_sprintf(_("A series named %s already exists"), name);
-    } else if (t == GRETL_TYPE_MATRIX) {
-	gretl_errmsg_sprintf(_("A matrix named %s already exists"), name);
-    } else if (t == GRETL_TYPE_DOUBLE) {
-	gretl_errmsg_sprintf(_("A scalar named %s already exists"), name);
-    } else if (t == GRETL_TYPE_LIST) {
-	gretl_errmsg_sprintf(_("A list named %s already exists"), name);
-    } else if (t == GRETL_TYPE_STRING) {
-	gretl_errmsg_sprintf(_("A string named %s already exists"), name);
-    } else if (t == GRETL_TYPE_BUNDLE) {
-	gretl_errmsg_sprintf(_("A bundle named %s already exists"), name);
-    } else if (t == GRETL_TYPE_ARRAY) {
-	gretl_errmsg_sprintf(_("An array named %s already exists"), name);
-    }
-}
+/* Note: the following should be called only from internal
+   contexts in which we know that the attempted renaming
+   is not broken (e.g. trying to assign to @uvar a name
+   that is already taken by some other object).
+*/
 
-int user_var_set_name (user_var *uvar, const char *name,
-		       const DATASET *dset)
+int user_var_set_name (user_var *uvar, const char *name)
 {
     int err = 0;
 
     if (uvar == NULL) {
-	err = E_UNKVAR;
+	err = E_DATA;
     } else {
-	int i, n = strlen(name);
-	char namebit[VNAMELEN];
-	unsigned char c;
-
-	*namebit = '\0';
-
-	if (n > VNAMELEN - 1) {
-	    strncat(namebit, name, VNAMELEN - 1);
-	    gretl_errmsg_sprintf(_("Variable name %s... is too long\n"
-				   "(the max is %d characters)"), namebit,
-				 VNAMELEN - 1);
-	    err = 1;
-	} else if (!(isalpha(*name))) {
-	    gretl_errmsg_sprintf(_("First char of name ('%c') is bad\n"
-				   "(first must be alphabetical)"), *name);
-	    err = 1;
-	} else {
-	    for (i=1; i<n && !err; i++) {
-		c = (unsigned char) name[i];
-
-		if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
-		    gretl_errmsg_sprintf(_("Name contains an illegal char (in place %d)\n"
-					   "Use only unaccented letters, digits and underscore"),
-					 i + 1);
-		    err = 1;
-		}
-	    }
-	}
-
-	if (!err) {
-	    /* check for variable type collisions */
-	    GretlType t = gretl_type_from_name(name, dset);
-
-	    if (t != GRETL_TYPE_NONE) {
-		/* there's already a variable of this name */
-		if (get_user_var_by_name(name) == uvar) {
-		    /* don't disallow "renaming" a user_var with
-		       its original name */
-		    ;
-		} else {
-		    var_exists_message(name, t);
-		    err = 1;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
 	*uvar->name = '\0';
 	strncat(uvar->name, name, VNAMELEN - 1);
     }
@@ -929,7 +867,7 @@ int user_var_localize (const char *origname,
     if (u == NULL) {
 	err = E_DATA;
     } else {
-	user_var_set_name(u, localname, NULL);
+	user_var_set_name(u, localname);
 	u->level += 1;
     }
 
@@ -969,7 +907,7 @@ int user_var_unlocalize (const char *localname,
     if (u == NULL) {
 	err = E_DATA;
     } else {
-	user_var_set_name(u, origname, NULL);
+	user_var_set_name(u, origname);
 	u->level -= 1;
     }
 

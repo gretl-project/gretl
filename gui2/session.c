@@ -2576,7 +2576,8 @@ static void maybe_sync_model_window_name (SESSION_MODEL *sm)
     }
 }
 
-static int rename_session_object (gui_obj *obj, const char *newname)
+static int rename_session_object (gui_obj *obj, const char *newname,
+				  GtkWidget *parent)
 {
     int err_shown = 0;
     int err = 0;
@@ -2608,10 +2609,14 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	}
     } else if (obj->sort == GRETL_OBJ_MATRIX ||
 	       obj->sort == GRETL_OBJ_BUNDLE) {
-	err = user_var_set_name(obj->data, newname, dataset);
+	GretlType type = (obj->sort == GRETL_OBJ_MATRIX)?
+	    GRETL_TYPE_MATRIX : GRETL_TYPE_BUNDLE;
+
+	err = gui_validate_varname_strict(newname, type, parent);
 	if (err) {
-	    gui_errmsg(err);
 	    err_shown = 1;
+	} else {
+	    user_var_set_name(obj->data, newname);
 	}
     } else if (obj->sort == GRETL_OBJ_TEXT) {
 	SESSION_TEXT *st;
@@ -2750,9 +2755,10 @@ static void rename_object_callback (GtkWidget *widget, dialog_t *dlg)
 
     if (newname != NULL && *newname != '\0' &&
 	strcmp(newname, obj->name)) {
+	GtkWidget *parent = edit_dialog_get_window(dlg);
 	gchar str[SHOWNAMELEN + 1];
 
-	err = rename_session_object(obj, newname);
+	err = rename_session_object(obj, newname, parent);
 	if (!err) {
 	    make_short_label_string(str, obj->name);
 	    gtk_label_set_text(GTK_LABEL(obj->label), str);

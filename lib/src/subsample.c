@@ -2490,8 +2490,8 @@ static int probably_year (const char *s, DATASET *dset)
 {
     int sval = atoi(s);
 
-    return (annual_data(dset) && dset->sd0 > 1700 &&
-	    sval > 1700 && sval > dset->n);
+    return (annual_data(dset) && dset->sd0 > 1000 &&
+	    sval > 1000 && sval > dset->n);
 }
 
 static int get_sample_limit (const char *s, DATASET *dset, int code)
