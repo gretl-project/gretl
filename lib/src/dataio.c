@@ -278,7 +278,11 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	    return -1;
 	} else {
 	    /* automatic calendar dates */
-	    n = calendar_obs_number(date, dset);
+	    if (isdigit(date[0])) {
+		/* no point in trying this unless @date at least
+		   starts with a number */
+		n = calendar_obs_number(date, dset);
+	    }
 	    handled = 1;
 	} 
     } else if (dataset_is_daily(dset) ||

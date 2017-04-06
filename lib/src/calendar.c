@@ -337,7 +337,6 @@ guint32 get_epoch_day (const char *datestr)
     }
 
     if (nf != 3 || (ydigits != 4 && ydigits != 2)) {
-	fprintf(stderr, "Invalid date '%s'\n", datestr);
 	return 0;
     }
 
@@ -346,7 +345,6 @@ guint32 get_epoch_day (const char *datestr)
     }
 
     if (!g_date_valid_dmy(d, m, y)) {
-	fprintf(stderr, "Invalid date '%s'\n", datestr);
 	return 0;
     }
 

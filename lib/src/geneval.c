@@ -16696,8 +16696,10 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     /* fire up the lexer */
     lex(p);
     if (p->err) {
+#if EDEBUG
 	fprintf(stderr, "realgen %p ('%s'): exiting on lex() error %d\n",
 		(void *) p, s, p->err);
+#endif
 	return p->err;
     }
 
