@@ -315,10 +315,10 @@ struct str_table funcs[] = {
     { F_OBSNUM,   "obsnum" },
     { F_ISDISCR,  "isdiscrete" },
     { F_ISDUMMY,  "isdummy"},
-    { F_ISNULL,   "isnull" },
+    { F_ISNULL,   "isnull" },   /* deprecated */
     { F_TYPEOF,   "typeof" },
     { F_EXISTS,   "exists" },
-    { F_ISSTRING, "isstring" },
+    { F_ISSTRING, "isstring" }, /* deprecated */
     { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },
     { F_CDF,      "cdf" },
@@ -615,17 +615,54 @@ static const char *funname (int t)
 
 /* for external purposes (.lang file, manual) */
 
+static int deprecated_func (int id)
+{
+    if (id == F_ISNULL || id == F_ISSTRING) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* return the number of built-in functions, disregarding
+   any that are "blacklisted" (deprecated)
+*/
+
 int gen_func_count (void)
 {
-    int i;
+    int i, n = 0;
 
-    for (i=0; funcs[i].id != 0; i++) ;
-    return i;
+    for (i=0; funcs[i].id != 0; i++) {
+	if (!deprecated_func(funcs[i].id)) {
+	    n++;
+	}
+    }
+
+    return n;
 }
+
+/* return the name of function @i, where this index skips
+   any deprecated functions
+*/
 
 const char *gen_func_name (int i)
 {
-    return funcs[i].str;
+    int j, id = 0;
+
+    if (i == 0) {
+	return funcs[i].str;
+    }
+
+    for (j=0; funcs[j].id != 0; j++) {
+	if (!deprecated_func(funcs[j].id)) {
+	    id++;
+	}
+	if (id == i) {
+	    return funcs[i].str;
+	}
+    }
+
+    return NULL;
 }
 
 int model_var_count (void)

@@ -4281,23 +4281,6 @@
       </description>
     </function>
 
-    <function name="isnull" section="data-utils" output="int">
-      <fnargs>
-	<fnarg type="string">name</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns 0 if <argname>name</argname> is the identifier for a
-	  currently defined object, be it a scalar, a series, a matrix,
-	  list, string or bundle; otherwise returns 1.
-	</para>
-	<para>
-	  This function is deprecated: the recommended replacement is
-	  (the negation of) <fncref targ="exists"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="isoconv" section="calendar" output="scalar">
       <fnargs>
 	<fnarg type="series">date</fnarg>
