@@ -5844,7 +5844,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    } else if (gretl_is_user_var(s)) {
 		ret->v.xval = 0.0;
 	    }
-	} else if (f == F_TYPEOF) {
+	} else if (f == F_TYPEOF || f == F_EXISTS) {
 	    GretlType type = user_var_get_type_by_name(s);
 
 	    if (type == 0 && gretl_is_series(s, p->dset)) {
@@ -13945,6 +13945,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_TYPEOF:
+    case F_EXISTS:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {

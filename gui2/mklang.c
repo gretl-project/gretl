@@ -141,7 +141,6 @@ void output_emacs_block (void)
     int nopts;
     int i, n;
 
-    /* gretl commands */
     n = 1;
     fputs("(defvar gretl-command-words\n '(", stdout);
     for (i=1; i<NC; i++) {
@@ -164,9 +163,8 @@ void output_emacs_block (void)
 	}
 	n++;
     }	
-    puts(")\n  \"Commands in Gretl (these names are also reserved).\")\n");
+    puts(")\n  \"Commands in gretl.\")\n");
 
-    /* functions in "genr" command */
     fputs("(defvar gretl-genr-functions\n '(", stdout);
     n = gen_func_count();
     for (i=0; i<n; i++) {
@@ -180,9 +178,8 @@ void output_emacs_block (void)
 	}
     }
 
-    puts(")\n  \"Builtin functions for Gretl's genr command.\")\n");
+    puts(")\n  \"Built-in functions in gretl.\")\n");
 
-    /* option strings */
     strs = get_all_option_strings(&nopts);
     if (strs != NULL) {
 	n = 1;
@@ -202,7 +199,7 @@ void output_emacs_block (void)
 	strings_array_free(strs, nopts);
     }
 
-    /* internal "dollar" variables */
+    /* "dollar" variables */
     fputs("(defvar gretl-internal-vars\n '(", stdout);
 
     strs = make_var_name_list(&n);

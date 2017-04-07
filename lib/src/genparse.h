@@ -225,6 +225,7 @@ enum {
     F_ISDUMMY,
     F_ISNULL,
     F_TYPEOF,
+    F_EXISTS,
     F_ISSTRING,
     F_NELEM,
     F_PDF,
