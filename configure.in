@@ -66,6 +66,7 @@ have_odbc="no"
 try_mpi="yes"
 try_libR="yes"
 have_libR="no"
+try_bc="yes"
 check_gnuplot="yes"
 use_curl="yes"
 darwin_build="no"
@@ -310,6 +311,14 @@ then
 fi,
 try_odbc=no)
 
+AC_ARG_WITH(bash-completion,
+[  --with-bash-completion install bash-completion script [[default=auto]]],
+if test "$withval" = "no"
+then
+  try_bc=no
+fi,
+try_bc=yes)
+
 AC_ARG_WITH(audio,
 [  --with-audio           include audio graph support (experimental)],
 if test "$withval" = "yes"
@@ -531,6 +540,15 @@ if test "$try_odbc" = "yes" ; then
       )
     ;;
   esac
+fi
+
+dnl
+dnl Check for bash-completion?
+dnl
+if test "$try_bc" = "yes" ; then
+  PKG_CHECK_MODULES([BASH_COMPLETION], [bash-completion >= 2.0],
+  [BASH_COMPLETION_DIR="`pkg-config --variable=completionsdir bash-completion`"],
+  [BASH_COMPLETION_DIR="$datadir/bash-completion/completions"])
 fi
 
 dnl
@@ -821,6 +839,7 @@ AC_SUBST(GTK_LIBS)
 AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LIBS)
 AC_SUBST(GTKSOURCEVIEW_PREFIX)
+AC_SUBST(BASH_COMPLETION_DIR)
 
 dnl Check for gdk-pixbuf support
 if test ${build_gui} = "yes" ; then
