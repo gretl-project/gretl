@@ -29,7 +29,7 @@ function scalar max_eval(matrix A)
   return maxmod
 end function
 
-function matrix bias_correction(scalar H, matrix Ahat, matrix mu, 
+function matrix bias_correction(scalar H, matrix Ahat, const matrix mu, 
                                 const matrix E, const matrix X, 
                                 matrix Y0, matrix *BC)
 
