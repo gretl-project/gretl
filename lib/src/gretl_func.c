@@ -839,6 +839,7 @@ double fn_param_step (const ufunc *fun, int i)
 static int arg_may_be_optional (GretlType t)
 {
     return gretl_ref_type(t) ||
+	t == GRETL_TYPE_SERIES ||
 	t == GRETL_TYPE_MATRIX ||
 	t == GRETL_TYPE_BUNDLE ||
 	t == GRETL_TYPE_LIST ||
@@ -6441,6 +6442,12 @@ static int duplicated_pointer_arg_check (fn_arg *args, int argc)
     return err;
 }
 
+/* Note that if we reach here we've already successfully
+   negotiated check_function_args(): now we're actually
+   making the argument objects (if any) available within
+   the function.
+*/
+
 static int allocate_function_args (fncall *call, DATASET *dset)
 {
     ufunc *fun = call->fun;
@@ -6470,8 +6477,10 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    if (arg->type == GRETL_TYPE_USERIES) {
+		/* an existing named series */
 		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
-	    } else {
+	    } else if (arg->type != GRETL_TYPE_NONE) {
+		/* an on-the-fly constructed series */
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
@@ -6485,10 +6494,15 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		}
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    err = copy_as_arg(fp->name, fp->type, arg->val.b);
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = copy_as_arg(fp->name, fp->type, arg->val.b);
+	    }
 	} else if (gretl_array_type(fp->type)) {
-	    err = copy_as_arg(fp->name, fp->type, arg->val.a);
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = copy_as_arg(fp->name, fp->type, arg->val.a);
+	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
+	    /* special: handles all relevant cases */
 	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -7308,19 +7322,19 @@ static int check_function_args (fncall *call, PRN *prn)
 	if ((fp->flags & ARG_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
 	    ; /* this is OK */
 	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
-	    ; /* OK */
+	    ; /* OK: types match */
 	} else if (fp->type == GRETL_TYPE_SERIES && arg->type == GRETL_TYPE_USERIES) {
-	    ; /* OK */
+	    ; /* OK: types match */
 	} else if (gretl_scalar_type(fp->type) && 
 		   arg->type == GRETL_TYPE_MATRIX &&
 		   gretl_matrix_is_scalar(arg->val.m)) {
-	    ; /* OK */
+	    ; /* OK: either types match or we can convert */
 	} else if (fp->type == GRETL_TYPE_MATRIX && arg->type == GRETL_TYPE_DOUBLE) {
-	    ; /* ought to be OK */
+	    ; /* OK, we can convert */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
-	    ; /* OK */
+	    ; /* OK, we'll handle it (create singleton list) */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_NONE) {
-	    ; /* OK ("null" was passed as argument) */
+	    ; /* OK (special: "null" was passed as argument) */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
 		    u->name, i + 1, gretl_type_get_name(arg->type), 
@@ -7329,6 +7343,7 @@ static int check_function_args (fncall *call, PRN *prn)
 	}
 
 	if (!err && fp->type == GRETL_TYPE_DOUBLE) {
+	    /* check for out-of-bounds scalar value */
 	    x = arg_get_double_val(arg);
 	    if ((!na(fp->min) && x < fp->min) ||
 		(!na(fp->max) && x > fp->max)) {
