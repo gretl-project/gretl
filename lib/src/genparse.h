@@ -482,7 +482,7 @@ enum {
 			    s == F_OBSNUM || s == F_BACKTICK || \
 			    s == F_VARNUM || s == F_ARGNAME || \
                             s == F_REMOVE || s == F_TYPEOF || \
-			    s == F_ISSTRING)
+			    s == F_ISSTRING || s == F_EXISTS)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \

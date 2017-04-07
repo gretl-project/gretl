@@ -381,9 +381,8 @@ functions as a sort of array for subsets of the series in a dataset.
 An array can be brought into existence in any of four ways: bare
 declaration, assignment from \texttt{null}, or using one of the
 functions \texttt{array()} or \texttt{defarray()}.  In each case one
-of the specific type-words \texttt{strings}, \texttt{matrices},
-\texttt{bundles} or \texttt{lists} must be used. Here are some
-examples:
+of the specific type-words \texttt{strings}, \texttt{matrices} or
+\texttt{bundles} must be used. Here are some examples:
 
 \begin{code}
 # make an empty array of strings
@@ -403,10 +402,10 @@ used to destroy the content of an existing array and reduce it to size
 zero). The \texttt{array()} function expects a positive integer
 argument and can be used to create an array of pre-given size; in this
 case the elements are initialized appropriately as empty strings, null
-matrices, or empty bundles or lists. The \texttt{defarray()} function
-takes a variable number of arguments (one or more), each of which
-may be the name of a variable of the appropriate type or an expression
-which evaluates to an object of the appropriate type.
+matrices or empty bundles. The \texttt{defarray()} function takes a
+variable number of arguments (one or more), each of which may be the
+name of a variable of the appropriate type or an expression which
+evaluates to an object of the appropriate type.
 
 \subsection{Setting and getting elements}
 
@@ -454,11 +453,8 @@ other supported types.
 
 One can write hansl functions that take as arguments any of the array
 types, and it is possible to pass arrays as function arguments in
-``pointerized'' form.\footnote{With the exception of an array of
-  lists. Our thinking on how exactly to handle arrays of lists as
-  function arguments is not yet very far advanced.} In addition hansl
-functions may return any of the array types. Here is a trivial example
-for strings:
+``pointerized'' form. In addition hansl functions may return any of
+the array types. Here is a trivial example for strings:
 \begin{code}
 function void printstrings (strings *S)
   loop i=1..nelem(S) -q

@@ -840,8 +840,12 @@ static int arg_may_be_optional (GretlType t)
 {
     return gretl_ref_type(t) ||
 	t == GRETL_TYPE_MATRIX ||
+	t == GRETL_TYPE_BUNDLE ||
 	t == GRETL_TYPE_LIST ||
-	t == GRETL_TYPE_STRING;	
+	t == GRETL_TYPE_STRING ||
+	t == GRETL_TYPE_MATRICES ||
+	t == GRETL_TYPE_BUNDLES ||
+	t == GRETL_TYPE_STRINGS;
 }
 
 /**

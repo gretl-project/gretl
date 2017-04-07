@@ -5883,35 +5883,35 @@ static NODE *object_status (NODE *n, int f, parser *p)
 static NODE *generic_typeof_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    int i = 0;
+    GretlType t = GRETL_TYPE_NONE;
 
     switch (n->t) {
     case NUM:
-	i = type_translate_to_int(GRETL_TYPE_DOUBLE);
+	t = GRETL_TYPE_DOUBLE;
 	break;
     case SERIES:
-	i = type_translate_to_int(GRETL_TYPE_SERIES);
+	t = GRETL_TYPE_SERIES;
 	break;
     case MAT:
-	i = type_translate_to_int(GRETL_TYPE_MATRIX);
+	t = GRETL_TYPE_MATRIX;
 	break;
     case STR:
-	i = type_translate_to_int(GRETL_TYPE_STRING);
+	t = GRETL_TYPE_STRING;
 	break;
     case BUNDLE:
-	i = type_translate_to_int(GRETL_TYPE_BUNDLE);
+	t = GRETL_TYPE_BUNDLE;
 	break;
     case ARRAY:
-	i = type_translate_to_int(GRETL_TYPE_ARRAY);
+	t = GRETL_TYPE_ARRAY;
 	break;
     case LIST:
-	i = type_translate_to_int(GRETL_TYPE_LIST);
+	t = GRETL_TYPE_LIST;
 	break;
     default:
 	break;
     }
 	
-    ret->v.xval = i;
+    ret->v.xval = type_translate_to_int(t);
 
     return ret;
 }
