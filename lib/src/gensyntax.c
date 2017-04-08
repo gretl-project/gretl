@@ -1146,7 +1146,6 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     }
 
     callargs = get_callargs(f);
-
     lex(p);
 
     while (((k > 0 && i < k) || p->ch) && !p->err) {
@@ -1163,7 +1162,11 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	}
 
 	/* get the next argument */
-	if (i < 4 && callargs && callargs[i]) {
+
+	if (p->sym == P_COM) {
+	    /* 2017-04-08: implies an empty argument slot */
+	    child = newempty();
+	} else if (i < 4 && callargs && callargs[i]) {
 	    /* a function-call argument: don't insist on quotation */
 	    child = get_literal_string_arg(p, 0);
 	} else if (i > 0 && i < k - 1 && (opt & MID_STR)) {
@@ -1174,7 +1177,9 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    child = expr(p);
 	}
 
-	attach_child(t, child, k, i++, p);
+	if (!p->err) {
+	    attach_child(t, child, k, i++, p);
+	}
 
 	if (p->err || p->sym == G_RPR) {
 	    break;

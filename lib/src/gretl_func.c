@@ -6265,16 +6265,40 @@ static int localize_bundle_as_shell (fn_arg *arg,
     return err;
 }
 
-static int localize_const_matrix (fn_arg *arg, fn_param *fp)
+static void *arg_get_data (fn_arg *arg)
 {
-    user_var *u = get_user_var_by_data(arg->val.m);
+    void *data = NULL;
+
+    if (arg->type == GRETL_TYPE_MATRIX) {
+	data = arg->val.m;
+    } else if (arg->type == GRETL_TYPE_BUNDLE) {
+	data = arg->val.b;
+    } else if (arg->type == GRETL_TYPE_STRING) {
+	data = arg->val.str;
+    } else if (gretl_is_array_type(arg->type)) {
+	data = arg->val.a;
+    }
+
+    return data;
+}
+
+static int localize_const_object (fn_arg *arg, fn_param *fp)
+{
+    void *data = arg_get_data(arg);
+    user_var *u = NULL;
     int err = 0;
 
-    if (u == NULL) {
-	/* the const argument is an anonymous matrix */
-	err = arg_add_as_shell(fp->name, GRETL_TYPE_MATRIX, arg->val.m);
+    if (data == NULL) {
+	err = E_TYPES;
     } else {
-	/* a named matrix: in view of its "const-ness" we
+	u = get_user_var_by_data(data);
+    }
+
+    if (u == NULL) {
+	/* the const argument is an anonymous object */
+	err = arg_add_as_shell(fp->name, arg->type, data);
+    } else {
+	/* a named object: in view of its "const-ness" we
 	   don't need to copy the data
 	*/
 	user_var_adjust_level(u, 1);
@@ -6483,31 +6507,23 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		/* an on-the-fly constructed series */
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }	    
-	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    if (arg->type == GRETL_TYPE_DOUBLE) {
-		err = do_scalar_matrix_cast(arg, fp);
-	    } else if (arg->type != GRETL_TYPE_NONE) {
+	} else if (fp->type == GRETL_TYPE_MATRIX &&
+		   arg->type == GRETL_TYPE_DOUBLE) {
+	    err = do_scalar_matrix_cast(arg, fp);
+	} else if (fp->type == GRETL_TYPE_MATRIX ||
+		   fp->type == GRETL_TYPE_BUNDLE ||
+		   fp->type == GRETL_TYPE_STRING ||
+		   gretl_array_type(fp->type)) {
+	    if (arg->type != GRETL_TYPE_NONE) {
 		if (fp->flags & ARG_CONST) {
-		    err = localize_const_matrix(arg, fp);
+		    err = localize_const_object(arg, fp);
 		} else {
-		    err = copy_as_arg(fp->name, fp->type, arg->val.m);
+		    err = copy_as_arg(fp->name, fp->type, arg_get_data(arg));
 		}
 	    }
-	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = copy_as_arg(fp->name, fp->type, arg->val.b);
-	    }
-	} else if (gretl_array_type(fp->type)) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = copy_as_arg(fp->name, fp->type, arg->val.a);
-	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    /* special: handles all relevant cases */
+	    /* special: handles all relevant cases for lists */
 	    err = localize_list(call, arg, fp, dset);
-	} else if (fp->type == GRETL_TYPE_STRING) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = copy_as_arg(fp->name, fp->type, arg->val.str); 
-	    }
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
 		err = localize_series_ref(call, arg, fp, dset);
