@@ -7061,15 +7061,18 @@ function_assign_returns (fncall *call, int rtype,
 	    } else if (gretl_ref_type(arg->type)) {
 		user_var_unlocalize(fp->name, arg->upname, fp->type);
 	    } 
-	} else if (fp->type == GRETL_TYPE_MATRIX && 
-		   (fp->flags & ARG_CONST) && 
-		   arg->upname[0] != '\0') {
-	    /* non-pointerized const matrix argument */
-	    user_var *u = get_user_var_by_data(arg->val.m);
+	} else if ((fp->type == GRETL_TYPE_MATRIX ||
+		    fp->type == GRETL_TYPE_BUNDLE ||
+		    fp->type == GRETL_TYPE_STRING ||
+		    gretl_array_type(fp->type))) {
+	    if ((fp->flags & ARG_CONST) && arg->upname[0] != '\0') {
+		/* non-pointerized const object argument */
+		user_var *u = get_user_var_by_data(arg_get_data(arg));
 
-	    if (u != NULL) {
-		user_var_adjust_level(u, -1);
-		user_var_set_name(u, arg->upname);
+		if (u != NULL) {
+		    user_var_adjust_level(u, -1);
+		    user_var_set_name(u, arg->upname);
+		}
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, arg, NULL, dset);

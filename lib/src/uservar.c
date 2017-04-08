@@ -699,6 +699,10 @@ user_var *get_user_var_by_data (const void *data)
 {
     int i, d = gretl_function_depth();
 
+    if (data == NULL) {
+	return NULL;
+    }
+
     for (i=0; i<n_vars; i++) {
 	if (uvars[i] != NULL && uvars[i]->level == d &&
 	    uvars[i]->ptr == data) {

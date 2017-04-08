@@ -620,6 +620,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	} else if (sym != F_ISDISCR && 
 		   sym != F_ISNULL &&
 		   sym != F_TYPEOF &&
+		   sym != F_EXISTS &&
 		   sym != F_ISSTRING) {
 	    /* not quoted: give priority to string variables
 	       unless we need the _names_ of string variables 
@@ -759,7 +760,7 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 			close = i + 1;
 			break;
 		    } else if (*s == ',') {
-			/* leave comma */
+			/* don't include comma */
 			close = i;
 			break;
 		    }
@@ -1187,7 +1188,12 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
 	    /* lex unless next arg needs special handling */
-	    if (!next_arg_is_string(i, callargs, k, opt)) {
+	    if (next_arg_is_string(i, callargs, k, opt)) {
+		/* don't let P_COM trip the newempty() call above,
+		   or else we'll get a spurious "too many args" error
+		*/
+		p->sym = EMPTY;
+	    } else {
 		lex(p);
 	    }
 	} else {
