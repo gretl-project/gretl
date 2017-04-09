@@ -12,7 +12,7 @@ program's graphical interface.
 The syntax for defining a function looks like this:
 
 \begin{raggedright}
-\texttt{function} \textsl{return-type} \textsl{function-name}
+\texttt{function} \textsl{type} \textsl{funcname}
 \texttt{(}\textsl{parameters}\texttt{)} \\
 \qquad  \textsl{function body} \\
 \texttt{end function}
@@ -23,12 +23,13 @@ strict order:
 
 \begin{enumerate}
 \item The keyword \texttt{function}.
-\item \textsl{return-type}, which states the type of value returned by
-  the function, if any.  This must be one of \texttt{void} (if the
+\item \textsl{type}, which states the type of value returned by the
+  function, if any.  This must be one of \texttt{void} (if the
   function does not return anything), \texttt{scalar},
-  \texttt{series}, \texttt{matrix}, \texttt{list}, \texttt{string} or
-  \texttt{bundle}.
-\item \textsl{function-name}, the unique identifier for the function.
+  \texttt{series}, \texttt{matrix}, \texttt{list}, \texttt{string},
+  \texttt{bundle} or one of gretl's array types, \texttt{matrices},
+  \texttt{bundles}, \texttt{strings} (see section~\ref{sec:arrays}).
+\item \textsl{funcname}, the unique identifier for the function.
   Function names have a maximum length of 31 characters; they must
   start with a letter and can contain only letters, numerals and the
   underscore character.  You will get an error if you try to define a
@@ -58,7 +59,11 @@ below.\footnote{An additional parameter type is available for GUI use,
 \texttt{list}   & named list of series \\
 \texttt{matrix} & matrix or vector \\
 \texttt{string} & string variable or string literal \\
-\texttt{bundle} & all-purpose container (see section~\ref{sec:Bundles})
+\texttt{bundle} & all-purpose container (see
+                  section~\ref{sec:Bundles}) \\
+\texttt{matrices} & array of matrices \\
+\texttt{bundles}  & array of bundles \\
+\texttt{strings}  & array of strings
 \end{tabular}
 \end{center}
 
@@ -79,8 +84,8 @@ function scalar myfunc (series *y, scalar *b)
 \end{code}
 
 The meaning of this modification is explained below (see section
-\ref{funscope}); it is related to the use of pointer arguments in the
-C programming language.
+\ref{sec:funscope}); it is related to the use of pointer arguments in
+the C programming language.
 
 \subsection{Function parameters: optional refinements}
 
@@ -115,9 +120,9 @@ each of the options.
 const matrix M
 \end{code} 
 %
-This constitutes a promise that the corresponding argument will not be
-modified within the function; gretl will flag an error if
-the function attempts to modify the argument.
+  This constitutes a promise that the corresponding argument will not
+  be modified within the function; gretl will flag an error if the
+  function attempts to modify the argument.
 
 \item Minimum, maximum and default values for \texttt{scalar} or
   \texttt{int} types: These values should directly follow the name of
@@ -130,27 +135,27 @@ the function attempts to modify the argument.
 int order[1:12:4]
 \end{code} 
 %
-If you wish to omit any of the three specifiers, leave the
-corresponding field empty.  For example \texttt{[1::4]} would specify
-a minimum of 1 and a default of 4 while leaving the maximum
-unlimited. However, as a special case, it is acceptable to give just
-one value, with no colons: in that case the value is interpreted as a
-default. So for example
+  If you wish to omit any of the three specifiers, leave the
+  corresponding field empty.  For example \texttt{[1::4]} would
+  specify a minimum of 1 and a default of 4 while leaving the maximum
+  unlimited. However, as a special case, it is acceptable to give just
+  one value, with no colons, in which case the value is interpreted as
+  a default. So for example
 %    
 \begin{code}
 int k[0]
 \end{code}
 %
-designates a default value of 0 for the parameter \texttt{k}, with no
-minimum or maximum specified. If you wished to specify a minimum of
-zero with no maximum or default you would have to write
+  designates a default value of 0 for the parameter \texttt{k}, with
+  no minimum or maximum specified. If you wished to specify a minimum
+  of zero with no maximum or default you would have to write
 %    
 \begin{code}
 int k[0::]
 \end{code}
 
-For a parameter of type \texttt{bool} (whose values are just zero or
-non-zero), you can specify a default of 1 (true) or 0 (false), as in
+  For a parameter of type \texttt{bool} (whose values are just zero or
+  non-zero), you can specify a default of 1 (true) or 0 (false), as in
 %    
 \begin{code}
 bool verbose[0]
@@ -167,14 +172,14 @@ series y "dependent variable"
 \end{code} 
 
 \item Value labels: These may be used only with \texttt{int}
-  parameters for which minimum and maximum values have been specified,
-  so there is a fixed number of admissible values, and the number of
-  labels must match the number of values. They will show up in the
-  graphical interface in the form of a drop-down list, making the
-  function writer's intent clearer when an integer argument represents
-  a categorical selection. A set of value labels must be enclosed in
-  braces, and the individual labels must be enclosed in double quotes
-  and separated by commas or spaces.  For example:
+  parameters for which minimum and maximum values have been specified
+  (so that there is a fixed number of admissible values) and the
+  number of labels must match the number of values. They will show up
+  in the graphical interface in the form of a drop-down list, making
+  the function writer's intent clearer when an integer argument
+  represents a categorical selection. A set of value labels must be
+  enclosed in braces, and the individual labels must be enclosed in
+  double quotes and separated by commas or spaces.  For example:
 %
 \begin{code}
 int case[1:3:1] {"Fixed effects", "Between model", "Random effects"}
@@ -184,10 +189,10 @@ int case[1:3:1] {"Fixed effects", "Between model", "Random effects"}
 
 If two or more of the trailing optional fields are given in a
 parameter specification, they must be given in the order shown above:
-min--max--default, description, value labels. Note that there is no
+min/max/default, description, value labels. Note that there is no
 facility for ``escaping'' characters within descriptive strings or
 value labels; these may contain spaces but they cannot contain the
-double-quote character.  
+double-quote character.
 
 Here is an example of a well-formed function specification using all
 the elements mentioned above:
@@ -234,7 +239,7 @@ section~\ref{func-details}.
 
 A user function is called by typing its name followed by zero or more
 arguments enclosed in parentheses.  If there are two or more arguments
-these should be separated by commas.  
+they must be separated by commas.
 
 There are automatic checks in place to ensure that the number of
 arguments given in a function call matches the number of parameters,
@@ -247,23 +252,21 @@ check is that the number of arguments is at least equal to the number
 of \textit{required} parameters, and is no greater than the total
 number of parameters.
 
-A scalar, series or matrix argument to a function may be given either
-as the name of a pre-existing variable or as an expression which
-evaluates to a variable of the appropriate type.  Scalar arguments may
-also be given as numerical values.  List arguments must be specified
-by name.
+In general, an argument to a function may be given either as the name
+of a pre-existing variable or as an expression which evaluates to a
+variable of the appropriate type.
 
 The following trivial example illustrates a function call that
-correctly matches the function definition.
+correctly matches the corresponding function definition.
     
 \begin{code}
 # function definition
-function scalar ols_ess(series y, list xvars)
+function scalar ols_ess (series y, list xvars)
   ols y 0 xvars --quiet
-  scalar myess = $ess
-  printf "ESS = %g\n", myess
-  return myess
+  printf "ESS = %g\n", $ess
+  return $ess
 end function
+
 # main script
 open data4-1
 list xlist = 2 3 4
@@ -273,7 +276,7 @@ ols_ess(price, xlist)
 %$
 The function call gives two arguments: the first is a data series
 specified by name and the second is a named list of regressors.  Note
-that while the function offers the variable \verb+myess+ as a return
+that while the function offers the Error Sum of Squares as a return
 value, it is ignored by the caller in this instance.  (As a side note
 here, if you want a function to calculate some value having to do with
 a regression, but are not interested in the full results of the
@@ -285,11 +288,11 @@ a return value to a variable in the caller:
     
 \begin{code}
 # function definition
-function series get_uhat(series y, list xvars)
+function series get_uhat (series y, list xvars)
   ols y 0 xvars --quiet
-  series uh = $uhat
-  return uh
+  return $uhat
 end function
+
 # main script
 open data4-1
 list xlist = 2 3 4
@@ -317,28 +320,45 @@ so it should rarely be necessary to delete functions explicitly.
 \label{func-details}
 
 \subsection{Variables versus pointers}
-\label{funscope}
+\label{sec:funscope}
 
-Series, scalar, matrix, bundle, as well as array arguments to
-functions can be passed in two ways: ``as they are'', or as
-pointers. For example, consider the following:
+Series, scalar, matrix, bundle and array arguments to functions can be
+passed in two ways: ``as they are'', or via pointers. First consider
+the following rather artificial example:
 \begin{code}
-function series triple1(series x)
+function series triple1 (series x)
   return 3*x
 end function
   
-function series triple2(series *x)
-  return 3*x
+function void triple2 (series *x)
+  x *= 3
 end function
+
+nulldata 10
+series y = normal()
+series y3 = triple1(y)
+print y3
+triple2(&y)
+print y
 \end{code}
 
-These two functions are nearly identical (and yield the same result);
-the only difference is that you need to feed a series into
-\texttt{triple1}, as in \texttt{triple1(myseries)}, while
-\texttt{triple2} must be supplied a \emph{pointer} to a series, as in
-\texttt{triple2(\&myseries)}. 
+These two functions produce essentially the same result---the two
+\texttt{print} statements in the caller will show the same
+values---but in quite different ways. The first explicitly returns a
+modified version of its input (which must be a plain series): after
+the call to \texttt{triple1}, \texttt{y} is unaltered; it would have
+been altered only if the return value were assigned back to \texttt{y}
+rather than \texttt{y3}. The second function modifies its input (given
+as a pointer to a series) in place without actually \textit{returning}
+anything.
 
-Why make the distinction? There are two main reasons for doing so:
+It's worth noting that \texttt{triple2} as it stands would
+\textit{not} be considered idiomatic as a gretl function (although
+it's formally OK). The point here is just to illustrate the
+distinction between passing an argument in the default way and in
+pointer form.
+
+Why make this distinction? There are two main reasons for doing so:
 modularity and performance.
 
 By modularity we mean the insulation of a function from the rest of
@@ -347,24 +367,29 @@ is that your functions are easily reusable in other contexts.  To
 achieve modularity, \emph{variables created within a function are
   local to that function, and are destroyed when the function exits},
 unless they are made available as return values and these values are
-``picked up'' or assigned by the caller.
-    
-In addition, functions do not have access to variables in ``outer
-scope'' (that is, variables that exist in the script from which the
-function is called) except insofar as these are explicitly passed to
-the function as arguments.
+``picked up'' or assigned by the caller.  In addition, functions do
+not have access to variables in ``outer scope'' (that is, variables
+that exist in the script from which the function is called) except
+insofar as these are explicitly passed to the function as arguments.
 
 By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
-modified by anything that goes on inside the function.  But the use of
-pointers allows a function and its caller to cooperate such that an
-outer variable can be modified by the function.  In effect, this
-allows a function to ``return'' more than one value (although only one
-variable can be returned directly---see below).  The parameter in
-question is marked with a prefix of \texttt{*} in the function
-definition, and the corresponding argument is marked with the
-complementary prefix \verb+&+ in the caller.  For example,
+modified by anything that goes on inside the function. This means that
+you can pass arguments to a function without worrying about possible
+side effects; at the same time the function writer can use argument
+variables as workspace without fear of disruptive effects at the level
+of the caller.
+
+The use of pointers, however, allows a function and its caller to
+cooperate such that an outer variable \textit{can} be modified by the
+function.  In effect, this allows a function to ``return'' more than
+one value (although only one variable can be returned directly---see
+below).  To indicate that a particular object is to be passed as a
+pointer, the parameter in question is marked with a prefix of
+\texttt{*} in the function definition, and the corresponding argument
+is marked with the complementary prefix \verb+&+ in the caller.  For
+example,
 %
 \begin{code}
 function series get_uhat_and_ess(series y, list xvars, scalar *ess)
@@ -373,10 +398,9 @@ function series get_uhat_and_ess(series y, list xvars, scalar *ess)
   series uh = $uhat
   return uh
 end function
-# main script
+
 open data4-1
 list xlist = 2 3 4
-# function call
 scalar SSR
 series resid = get_uhat_and_ess(price, xlist, &SSR)
 \end{code}
@@ -384,10 +408,10 @@ series resid = get_uhat_and_ess(price, xlist, &SSR)
 In the above, we may say that the function is given the \emph{address}
 of the scalar variable \texttt{SSR}, and it assigns a value to that
 variable (under the local name \texttt{ess}).  (For anyone used to
-programming in C: note that it is not necessary, or even possible, to
-``dereference'' the variable in question within the function using the
-\texttt{*} operator.  Unadorned use of the name of the variable is
-sufficient to access the variable in outer scope.)
+programming in \textsf{C}: note that it is not necessary, or even
+possible, to ``dereference'' the variable in question within the
+function using the \texttt{*} operator.  Unadorned use of the name of
+the variable is sufficient to access the variable in outer scope.)
 
 An ``address'' parameter of this sort can be used as a means of
 offering optional information to the caller.  (That is, the
@@ -423,87 +447,6 @@ may be omitted, so the following would also be a valid call:
 series resid = get_uhat_and_ess(price, xlist)
 \end{code}
 
-Pointer arguments may also be useful for optimizing performance: even if
-a variable is not modified inside the function, it may be a good idea
-to pass it as a pointer if it occupies a lot of memory. Otherwise, the
-time gretl spends transcribing the value of the variable to the
-local copy may be non-negligible, compared to the time the function
-spends doing the job it was written for.
-
-Listing \ref{ex:perf-pointers} takes this to the extreme.  We define
-two functions which return the number of rows of a matrix (a pretty
-fast operation).  Function \texttt{a()} gets a matrix as argument;
-function \texttt{b()} gets a pointer to a matrix.  The functions are
-evaluated 500 times on a matrix with 2000 rows and 2000 columns; on a
-typical system floating-point numbers take 8 bytes of memory, so the
-total size of the matrix is roughly 32 megabytes.
-
-Running the code in example \ref{ex:perf-pointers} will produce output
-similar to the following (the actual numbers of course depend on the
-machine you're using):
-\begin{code}
-Elapsed time:
-        a: without pointers (copy) = 3.3274 seconds,
-        b: with pointers (no copy) = 0.00463796 seconds,
-\end{code}
-
-\begin{script}[htbp]
-  \caption{Performance comparison: values versus pointer}
-  \label{ex:perf-pointers}
-  \begin{scode}
-function scalar a(matrix X)
-  return rows(X)
-end function
-
-function scalar b(const matrix *X)
-  return rows(X)
-end function
-
-set verbose off
-X = zeros(2000,2000)
-scalar r
-
-set stopwatch
-loop 500 -q
-  r = a(X)
-endloop
-fa = $stopwatch
-
-set stopwatch
-loop 500 -q
-  r = b(&X)
-endloop
-fb = $stopwatch
-
-printf "Elapsed time:\n\
-\ta: without pointers (copy) = %g seconds,\n \
-\tb: with pointers (no copy) = %g seconds,\n", fa, fb
-\end{scode}
-%$
-\end{script}
-
-If a pointer argument is used for this sort of purpose---and the
-object to which the pointer points is not modified (is treated as
-read-only) by the function---one can signal this to the user by adding
-the \texttt{const} qualifier, as shown for function \texttt{b()} in
-Listing~\ref{ex:perf-pointers}.  When a pointer argument is qualified
-in this way, any attempt to modify the object within the function will
-generate an error. 
-
-However, combining the \texttt{const} flag with the pointer mechanism
-is technically redundant for the following reason: if you mark a
-matrix argument as \texttt{const} then gretl will in fact pass it in
-pointer mode internally (since it can't be modified within the
-function there's no downside to simply making it available to the
-function rather than copying it). So in the example we could give the
-signature of the \texttt{b()} function as simply
-\begin{code}
-function scalar b(const matrix X)
-\end{code}
-and call it via \texttt{r = b(X)}, for the same speed-up relative to
-function \texttt{a()}.  Nonetheless, the version of \texttt{b()} shown
-in the example has the virtue of making clearer what is going on.
-
 One limitation on the use of pointer-type arguments should be noted:
 you cannot supply a given variable as a pointer argument more than
 once in any given function call. For example, suppose we have a
@@ -523,6 +466,108 @@ pointfunc(&x, &x) # will not work
 will generate an error. That's because the situation inside the
 function would become too confusing, with what is really the same
 object existing under two names.
+
+\subsection{Const parameters}
+\label{sec:const-args}
+
+Pointer-type arguments may also be useful for optimizing performance.
+Even if a variable is not modified inside the function, it may be a
+good idea to pass it as a pointer if it occupies a lot of
+memory. Otherwise, the time gretl spends transcribing the value of the
+variable to the local copy may be non-negligible compared to the time
+the function spends doing the job it was written for.
+
+Listing \ref{ex:perf-pointers} takes this to the extreme.  We define
+two functions which return the number of rows of a matrix (a pretty
+fast operation).  The first gets a matrix as argument while the second
+gets a pointer to a matrix.  The functions are evaluated 500 times on
+a matrix with 2000 rows and 2000 columns; on a typical system
+floating-point numbers take 8 bytes of memory, so the total size of
+the matrix is roughly 32 megabytes.
+
+Running the code in example \ref{ex:perf-pointers} will produce output
+similar to the following (the actual numbers of course depend on the
+machine you're using):
+\begin{code}
+Elapsed time:
+without pointers (copy) = 3.3274 seconds,
+with pointers (no copy) = 0.00463796 seconds
+\end{code}
+
+\begin{script}[htbp]
+  \caption{Performance comparison: values versus pointer}
+  \label{ex:perf-pointers}
+  \begin{scode}
+function scalar rowcount1 (matrix X)
+  return rows(X)
+end function
+
+function scalar rowcount2 (const matrix *X)
+  return rows(X)
+end function
+
+set verbose off
+X = zeros(2000,2000)
+scalar r
+
+set stopwatch
+loop 500 -q
+  r = rowcount1(X)
+endloop
+e1 = $stopwatch
+
+set stopwatch
+loop 500 -q
+  r = rowcount2(&X)
+endloop
+e2 = $stopwatch
+
+printf "Elapsed time:\n\
+without pointers (copy) = %g seconds,\n \
+with pointers (no copy) = %g seconds\n", e1, e2
+\end{scode}
+%$
+\end{script}
+
+If a pointer argument is used for this sort of purpose---and the
+object to which the pointer points is not modified (is treated as
+read-only) by the function---one can signal this to the user by adding
+the \texttt{const} qualifier, as shown for function \texttt{rowcount2}
+in Listing~\ref{ex:perf-pointers}.  When a pointer argument is
+qualified in this way, any attempt to modify the object within the
+function will generate an error.
+
+However, combining the \texttt{const} flag with the pointer mechanism
+is technically redundant for the following reason: if you mark a
+matrix argument as \texttt{const} then gretl will in fact pass it in
+pointer mode internally (since it can't be modified within the
+function there's no downside to simply making it available to the
+function rather than copying it). So in the example above we could
+revise the signature of the second function as
+\begin{code}
+function scalar rowcount2a (const matrix X)
+\end{code}
+and call it with \texttt{r = rowcount2a(X)}, for the same speed-up
+relative to \texttt{rowcount1}.
+
+From the caller's point of view the second option---using the
+\texttt{const} modifier \textit{without} pointer notation---is
+preferable, as it allows the caller to pass an object created ``on the
+fly''. Suppose the caller has two matrices, \texttt{A} and \texttt{B},
+in scope, and wishes to pass their vertical concatenation as an
+argument. The following call would work fine:
+\begin{code}
+r = rowcount2a(A|B)
+\end{code}
+To use \texttt{rowcount2}, on the other hand, the caller would have to
+create a named variable first (since you cannot give the ``address''
+of a anonymous object such as \verb+A|B+):
+\begin{code}
+matrix AB = A|B
+r = rowcount2(&AB)
+\end{code}
+This requires an extra line of code, and leaves \texttt{AB} occupying
+memory after the call.
 
 \subsection{List arguments}
 
@@ -668,13 +713,12 @@ returns 0, no name was found.
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable---a scalar, series, list, matrix,
-string, or bundle (see section~\ref{sec:Bundles}).  The return value,
-if any, is specified via a statement within the function body
-beginning with the keyword \texttt{return}, followed by either the
-name of a variable (which must be of the type announced on the first
-line of the function definition) or an expression which produces a
-value of the correct type.
+they can return a single variable.  The return value, if any, is
+specified via a statement within the function body beginning with the
+keyword \texttt{return}, followed by either the name of a variable
+(which must be of the type announced on the first line of the function
+definition) or an expression which produces a value of the correct
+type.
 
 Having a function return a list or bundle is a way of permitting the
 ``return'' of more than one variable.  For example, you can define
