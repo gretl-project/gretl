@@ -32,7 +32,7 @@ static struct type_map gretl_type_map[] = {
       GRETL_TYPE_MATRICES, GRETL_TYPE_MATRICES_REF},
     { GRETL_TYPE_BUNDLE,   GRETL_TYPE_BUNDLE_REF, 
       GRETL_TYPE_BUNDLES,  GRETL_TYPE_BUNDLES_REF},
-    { GRETL_TYPE_STRING,   0,
+    { GRETL_TYPE_STRING,   GRETL_TYPE_STRING_REF,
       GRETL_TYPE_STRINGS,  GRETL_TYPE_STRINGS_REF},
     { GRETL_TYPE_LIST,     0, 
       GRETL_TYPE_LISTS,    GRETL_TYPE_LISTS_REF},
@@ -141,6 +141,7 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
     case GRETL_TYPE_BUNDLE_REF: return "bundle *";
     case GRETL_TYPE_STRING:     return "string";
+    case GRETL_TYPE_STRING_REF: return "string *";
 
     case GRETL_TYPE_STRINGS:      return "strings";
     case GRETL_TYPE_MATRICES:     return "matrices";
@@ -210,6 +211,8 @@ GretlType gretl_type_from_string (const char *s)
 	    }
 	} else if (*p == '\0') {
 	    return GRETL_TYPE_STRING;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_STRING_REF;
 	}
     } else if (!strncmp(s, "matrices", 8)) {
 	p = s + 8;

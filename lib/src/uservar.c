@@ -902,6 +902,8 @@ int user_var_unlocalize (const char *localname,
 	type = GRETL_TYPE_MATRIX;
     } else if (type == GRETL_TYPE_BUNDLE_REF) {
 	type = GRETL_TYPE_BUNDLE;
+    } else if (type == GRETL_TYPE_STRING_REF) {
+	type = GRETL_TYPE_STRING;
     } else if (array_ref_type(type)) {
 	type = GRETL_TYPE_ARRAY;
     }

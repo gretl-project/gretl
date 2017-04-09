@@ -120,6 +120,7 @@ typedef enum {
     GRETL_TYPE_SCALAR_REF,
     GRETL_TYPE_SERIES_REF,
     GRETL_TYPE_MATRIX_REF,
+    GRETL_TYPE_STRING_REF,
     GRETL_TYPE_USERIES,
     GRETL_TYPE_DATE,
     GRETL_TYPE_BUNDLE,
@@ -147,6 +148,7 @@ typedef enum {
 	                   t == GRETL_TYPE_SERIES_REF ||   \
 	                   t == GRETL_TYPE_MATRIX_REF ||   \
 	                   t == GRETL_TYPE_BUNDLE_REF ||   \
+			   t == GRETL_TYPE_STRING_REF ||   \
 			   t == GRETL_TYPE_STRINGS_REF ||  \
 			   t == GRETL_TYPE_MATRICES_REF || \
 			   t == GRETL_TYPE_BUNDLES_REF || \

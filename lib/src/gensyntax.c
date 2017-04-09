@@ -394,6 +394,7 @@ static NODE *u_addr_base (parser *p)
 	case MAT:
 	case BUNDLE:
 	case ARRAY:
+	case STR:
 	    if (t->uv == NULL) {
 		p->err = E_TYPES;
 	    }

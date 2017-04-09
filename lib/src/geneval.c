@@ -7531,7 +7531,7 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
 	*type = ref ? GRETL_TYPE_ARRAY_REF : GRETL_TYPE_ARRAY;
 	data = n->v.a;
     } else if (n->t == STR) {
-	*type = GRETL_TYPE_STRING;
+	*type = ref ? GRETL_TYPE_STRING_REF : GRETL_TYPE_STRING;
 	data = n->v.str;
     } else if (n->t == LIST) {
 	*type = GRETL_TYPE_LIST;

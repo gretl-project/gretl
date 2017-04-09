@@ -176,6 +176,7 @@ struct fnpkg_ {
 				 t == GRETL_TYPE_SERIES_REF ||		\
 				 t == GRETL_TYPE_MATRIX_REF ||		\
 				 t == GRETL_TYPE_BUNDLE_REF ||		\
+				 t == GRETL_TYPE_STRING_REF ||		\
 				 t == GRETL_TYPE_STRINGS ||		\
 				 t == GRETL_TYPE_MATRICES ||		\
 				 t == GRETL_TYPE_BUNDLES||		\
@@ -362,7 +363,8 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     } else if (type == GRETL_TYPE_MATRIX || 
 	       type == GRETL_TYPE_MATRIX_REF) {
 	arg->val.m = (gretl_matrix *) p;
-    } else if (type == GRETL_TYPE_STRING) {
+    } else if (type == GRETL_TYPE_STRING ||
+	       type == GRETL_TYPE_STRING_REF) {
 	arg->val.str = (char *) p;
     } else if (type == GRETL_TYPE_LIST) {
 	arg->val.list = (int *) p;
@@ -1378,6 +1380,8 @@ static const char *arg_type_xml_string (int t)
 	return "matrixref";
     } else if (t == GRETL_TYPE_BUNDLE_REF) {
 	return "bundleref";
+    } else if (t == GRETL_TYPE_STRING_REF) {
+	return "stringref";
     } else if (t == GRETL_TYPE_STRINGS_REF) {
 	return "stringsref";
     } else if (t == GRETL_TYPE_MATRICES_REF) {
@@ -1385,7 +1389,7 @@ static const char *arg_type_xml_string (int t)
     } else if (t == GRETL_TYPE_BUNDLES_REF) {
 	return "bundlesref";
     } else if (t == GRETL_TYPE_LISTS_REF) {
-	return "listsref";
+	return "listsref"; /* not actually allowed */
     } else {
 	return gretl_type_get_name(t);
     }
