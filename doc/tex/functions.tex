@@ -322,9 +322,10 @@ so it should rarely be necessary to delete functions explicitly.
 \subsection{Variables versus pointers}
 \label{sec:funscope}
 
-Series, scalar, matrix, bundle and array arguments to functions can be
-passed in two ways: ``as they are'', or via pointers. First consider
-the following rather artificial example:
+Most arguments to functions can be passed in two ways: ``as they
+are'', or via pointers (the exception is the list type, which cannot
+be passed as a pointer). First consider the following rather
+artificial example:
 \begin{code}
 function series triple1 (series x)
   return 3*x
@@ -568,6 +569,12 @@ r = rowcount2(&AB)
 \end{code}
 This requires an extra line of code, and leaves \texttt{AB} occupying
 memory after the call.
+
+We have illusrated using a matrix parameter, but the \texttt{const}
+modifier may be used with the same effect---namely, the argument is
+passed directly, without being copied, but is protected against
+modification within the function---for all the types that support
+the pointer apparatus
 
 \subsection{List arguments}
 
