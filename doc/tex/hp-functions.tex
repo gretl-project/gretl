@@ -10,9 +10,7 @@ functions.
 Here's what a user-defined function looks like:
 \begin{flushleft}
 \texttt{function \emph{type} \emph{funcname}(\emph{parameters})}\\
-   \quad \ldots\\
    \quad \texttt{\emph{function body}}\\
-   \quad \ldots \\
 \texttt{end function}
 \end{flushleft}
 
@@ -52,13 +50,16 @@ Function parameters can be of any of the types shown below.
   \texttt{list}   & named list of series  (see section~\ref{sec:lists})\\
   \texttt{matrix} & matrix or vector \\
   \texttt{string} & string variable or string literal \\
-  \texttt{bundle} & all-purpose container
+  \texttt{bundle} & all-purpose container \\
+  \texttt{matrices} & array of matrices \\
+  \texttt{bundles}  & array of bundles \\
+  \texttt{strings}  & array of strings
 \end{tabular}
 \end{center}
 
-Each element in parameter list must include two terms: a type
-specifier, and the name by which the parameter shall be known within
-the function.
+Each element in the listing of parameter must include two terms: a
+type specifier, and the name by which the parameter shall be known
+within the function.
 
 The \emph{function body} contains (almost) arbitrary hansl code, which
 should compute the \emph{return value}, that is the value the function
@@ -79,11 +80,11 @@ to. The function definition must end with the expression
 In order to get a feel for how functions work in practice, here's a
 simple example:
 \begin{code}
-function scalar quasi_log(scalar x)
+function scalar quasi_log (scalar x)
    /* popular approximation to the natural logarithm
      via Padé polynomials 
    */
-   if (x<0)
+   if x < 0
       scalar ret = NA
    else 
       scalar ret = 2*(x-1)/(x+1)
@@ -111,11 +112,11 @@ neighborhood of 1. Some comments on the code:
 \item On the next line the function definition begins; the body
   includes a comment and an \cmd{if} block.
 \item The function ends by returning the computed value, \texttt{ret}.
-\item The following lines give a simple example of usage. Note that in
-  the \cmd{printf} command, the two functions \cmd{ln()} and
-  \cmd{quasi\_log()} are indistinguishable from a purely syntactic
-  viewpoint, although the former is native and the latter is
-  user-defined.
+\item The lines below the function definition give a simple example of
+  usage. Note that in the \cmd{printf} command, the two functions
+  \cmd{ln()} and \cmd{quasi\_log()} are indistinguishable from a
+  purely syntactic viewpoint, although the former is native and the
+  latter is user-defined.
 \end{enumerate}
 
 In ambitious uses of hansl you may end up writing several functions,
@@ -139,10 +140,10 @@ Moreover, \cmd{include} commands can be nested.
 \section{Parameter passing and return values}
 \label{sec:params-returns}
 
-In hansl, parameters are passed \emph{by value}, so what is used
-inside the function is a copy of the original argument. You may modify
-it, but you'll be just modifying the copy. The following example
-should make this point clear:
+In hansl, parameters are by default passed \emph{by value}, so what is
+used inside the function is a copy of the original argument. You may
+modify it, but you'll be just modifying the copy. The following
+example should make this point clear:
 \begin{code}
 function void f(scalar x)
     x = x*2
@@ -167,9 +168,9 @@ use pointers.
 
 \subsection{Pointers}
 
-Each of the type-specifiers, with the exception of \texttt{list} and
-\texttt{string}, may be modified by prepending an asterisk to the
-associated parameter name, as in
+Each of the type-specifiers, with the exception of \texttt{list}, may
+be modified by prepending an asterisk to the associated parameter
+name, as in
 %    
 \begin{code}
 function scalar myfunc (matrix *y)
