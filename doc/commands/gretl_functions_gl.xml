@@ -188,18 +188,18 @@
     <function name="$error" section="access" output="scalar">
       <description>
 	<para>
-	  Devolve un escalar cun dos códigos internos de erro do programa. Ese
-	  código é un valor non nulo cando ocorre un erro pero é capturado usando
+	  Devolve un escalar cun dos códigos internos de fallo do programa. Ese
+	  código é un valor non nulo cando ocorre un fallo pero é capturado usando
 	  a función <cmdref targ="catch"/>. Cae na conta de ao utilizar este
-	  accesorio, o código interno de erro vólvese novamente cero. Se desexas
-	  obter a mensaxe de erro asociada a un <lit>$error</lit> en concreto,
+	  accesorio, o código interno de fallo vólvese novamente cero. Se desexas
+	  obter a mensaxe de fallo asociada a un <lit>$error</lit> en concreto,
 	  é preciso gardar o seu valor nunha variable provisional, por exemplo
 	  utilizando o código:
 	</para>
 	<code>
 	  err = $error
 	  if (err)
-	      printf "Obtido erro %d (%s)\n", err, errmsg(err);
+	      printf "Obtívose o fallo %d (%s)\n", err, errmsg(err);
 	  endif
 	</code>
 	<para>
@@ -712,7 +712,7 @@
 	  da proba de Sobreidentificación de Sargan, os correspondentes graos
 	  de liberdade e a probabilidade asociada ao valor do estatístico. Se o
 	  modelo está exactamente identificado, o estatístico non se pode
-	  calcular e tratar de facelo provoca un erro.
+	  calcular e tratar de facelo provoca un fallo.
 	</para>
       </description>
     </function>
@@ -1651,8 +1651,8 @@
 	  sen a inclusión do camiño ao cartafol.
 	</para>
 	<para>
-	  Se ocorre algún erro (por exemplo que o ficheiro estea mal formatado
-	  ou sexa inaccesible), devólvese un erro por medio do accesorio
+	  Se ocorre algún fallo (por exemplo que o ficheiro estea mal formatado
+	  ou sexa inaccesible), devólvese o fallo por medio do accesorio
 	  <fncref targ="$error"/>.
 	</para>
 	<para>
@@ -1707,7 +1707,7 @@
 	  ficheiro denominado <argname>fname</argname>, vaise sobrescribir.
 	  Para unha descrición concisa do seu formato, consulta
 	  <fncref targ="bread"/>. Esta función devolve o valor 0 no caso de
-	  conclusión con éxito; se ocorren erros, tales como a imposibilidade
+	  conclusión con éxito; se ocorren fallos, tales como a imposibilidade
 	  de sobrescribir o ficheiro, a función devolve un valor non nulo.
 	</para>
 	<para>
@@ -1976,7 +1976,7 @@
 	  Os regresores que se utilizan por defecto son unha constante e unha
 	  tendencia cadrada. Cando se proporciona <argname>X</argname>, as
 	  súas columnas utilízanse como regresores adicionais. A función
-	  devolve un erro se o número de filas de <argname>X</argname> non
+	  devolve un fallo se o número de filas de <argname>X</argname> non
 	  é igual a <argname>xfac</argname> veces o número de filas de
 	  <argname>Y</argname>.
 	</para>
@@ -2063,7 +2063,7 @@
 	  matriz <argname>M</argname>. Se as columnas de <argname>M</argname>
 	  non teñen nome, entón devólvese unha cadea baleira; e se
 	  <argname>col</argname> está fóra dos límites do número de columnas
-	  desta matriz, amósase un erro. Consulta tamén
+	  desta matriz, amósase un fallo. Consulta tamén
 	  <fncref targ="colnames"/>.
 	</para>
 	<para>
@@ -2398,11 +2398,11 @@
 	  <quote><lit>output</lit></quote>.
 	</para>
 	<para>
-	  A función vai fallar se hai un erro ao formular a solicitude (por
-	  exemplo, se non existe a <lit>URL</lit> na entrada); noutro caso
+	  A función vai fallar se hai unha equivocación ao formular a solicitude
+	  (por exemplo, se non existe a <lit>URL</lit> na entrada); noutro caso
 	  vai devolver o valor 0 se a solicitude prospera, ou un valor non
 	  nulo se non o fai. Neste último caso, engádese a mensaxe de
-	  erro da biblioteca curl ao paquete, co identificador 
+	  fallo da biblioteca curl ao paquete, co identificador 
 	  <quote><lit>errmsg</lit></quote>. Cae na conta, porén, que
 	  <quote>éxito</quote> neste senso non significa necesariamente
 	  que obtés os datos que desexabas; en realidade significa tan só 
@@ -2945,7 +2945,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea de texto coa mensaxe de erro do Gretl asociada
+	  Devolve unha cadea de texto coa mensaxe de fallo do Gretl asociada
 	  ao <argname>errno</argname>, que debe ser un número enteiro.
 	  Consulta tamén <fncref targ="$error"/>.
 	</para>
@@ -3716,7 +3716,7 @@
 	  dunha lonxitude máxima de 24 caracteres ASCII e válida como
 	  identificador de Gretl), á que se engade un ou máis díxitos que
 	  representan o subperíodo da observación. Se algún deses nomes duplica
-	  o de algún obxecto xa existente, amósase un erro.
+	  o de algún obxecto xa existente, amósase un fallo.
   </para>
       </description>
     </function>
@@ -3812,7 +3812,7 @@
 	  Se o primeiro argumento <argname>M</argname> é unha matriz cadrada,
 	  tómase para que represente a <math>A</math>. Se é un vector columna,
 	  tómanse os seus elementos como se fosen os autovalores calculados
-	  previamente de <math>A</math>, e noutro caso preséntase un erro.
+	  previamente de <math>A</math>, e noutro caso preséntase un fallo.
 	</para>
 	<para>
 	  <seelist>
@@ -3964,7 +3964,7 @@
       <description>
 	<para>
 	  Devolve a matriz inversa de <argname>A</argname>. Cando esta última
-	  é unha matriz singular ou non cadrada, prodúcese unha mensaxe de erro
+	  é unha matriz singular ou non cadrada, prodúcese unha mensaxe de fallo
 	  e non se devolve nada. Cae na conta de que o Gretl comproba
 	  automaticamente a estrutura de <argname>A</argname> e utiliza o 
 	  procedemento numérico máis eficiente para realizar a inversión.
@@ -4281,23 +4281,6 @@
       </description>
     </function>
 
-    <function name="isnull" section="data-utils" output="int">
-      <fnargs>
-	<fnarg type="string">name</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Devolve o enteiro 0 se <argname>name</argname> é unha cadea de texto
-	  que indica un obxecto xa definido, sexa un escalar, unha serie, unha
-	  matriz, unha lista, unha cadea ou un paquete; noutro caso devolve 1.
-	</para>
-	<para>
-	  Esta función non se aconsella: recoméndase substituíla pola
-	  (negación de) <fncref targ="exists"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="isoconv" section="calendar" output="scalar">
       <fnargs>
 	<fnarg type="series">date</fnarg>
@@ -4320,7 +4303,7 @@
 	</code>
 	<para>
 	  Esta función devolve o escalar 0 no caso de completarse con éxito,
-	  e un escalar non nulo en caso de erro.
+	  e un escalar non nulo en caso de fallo.
 	</para>
       </description>
     </function>
@@ -5963,7 +5946,7 @@
 	  Cando xa existe un ficheiro chamado <argname>fname</argname>, vaise
 	  sobrescribir. A execución da función devolve un enteiro igual a 0 se
 	  non se completa con éxito; e devolve un enteiro que non é cero cando
-	  acontece un erro (por exemplo se non se pode sobrescribir o ficheiro).
+	  acontece un fallo (por exemplo se non se pode sobrescribir o ficheiro).
 	</para>
 	<para>
 	  O ficheiro cos resultados vai escribirse no cartafol establecido
@@ -6245,10 +6228,10 @@
 	  a cero, o máximo tómase por defecto igual a 2000. Como indicación
 	  especial para esta función, podes poñer un valor negativo para o
 	  argumento <argname>maxfeval</argname>. Nese caso, tómase o seu
-	  valor absoluto e <lit>NMmax</lit> amosa un erro se o mellor valor
+	  valor absoluto e <lit>NMmax</lit> amosa un fallo se o mellor valor
 	  atopado para a función obxectivo despois de realizar o máximo número
 	  de avaliacións da función, non é un óptimo local. Por outra parte,
-	  neste senso a non converxencia non se trata coma un erro.
+	  neste senso a non converxencia non se trata coma un fallo.
 	</para>
 	<para>
 	  Cando o teu obxectivo realmente é unha minimización, ou ben executas
@@ -7081,7 +7064,7 @@
 	  <argname>A</argname> do argumento, unha variante xeneralizada da
 	  descomposición de Cholesky. A matriz do argumento debe de ser
 	  semidefinida positiva (aínda que pode ser singular) pero, se non é
-	  cadrada, amósase unha mensaxe de erro. A simetría asúmese e non se
+	  cadrada, amósase unha mensaxe de fallo. A simetría asúmese e non se
 	  comproba; só se le o triángulo inferior de <argname>A</argname>.
 	  O resultado é unha matriz triangular inferior, <math>L</math>, que
 	  cumpre <equation status="inline" ascii="A = LL'" tex="$A = LL'$"/>.
@@ -7280,7 +7263,7 @@
 	<para>
 	Se <argname>x</argname> e <argname>A</argname> non son matrices
 	conformables, ou se <argname>A</argname> non é simétrica, a función
-	devolve un erro.
+	devolve un fallo.
 	</para>
       </description>
     </function>
@@ -7764,7 +7747,7 @@
 	<para>
 	  Se existe un ficheiro co nome do argumento <argname>fname</argname>, e
 	  pode lerse, a función devolve unha cadea de texto que inclúe o contido
-	  dese ficheiro; noutro caso amosa un erro. Se <argname>fname</argname>
+	  dese ficheiro; noutro caso amosa un fallo. Se <argname>fname</argname>
 	  non indica unha especificación da ruta completa ao ficheiro, vaise
 	  procurar en distintas localizacións <quote>probables</quote>,
 	  comezando pola establecida actualmente, <cmdref targ="workdir"/>.
@@ -7837,7 +7820,7 @@
 	</para>
 	<para>
 	  Cando <argname>fname</argname> contén o camiño completo ata o
-	  ficheiro, Gretl tratará de eliminalo, e devolverá un erro se ese
+	  ficheiro, Gretl tratará de eliminalo, e devolverá un fallo se ese
 	  ficheiro non existe ou non pode eliminarse por algún motivo (por
 	  exemplo, por non ter suficientes privilexios para poder facelo).
 	  Cando <argname>fname</argname> non contén o camiño completo,
@@ -7983,7 +7966,7 @@
 	</para>
 	<para>
 	  Devolve o valor enteiro 0 se as filas se nomean con éxito, e un valor
-	  non nulo en caso de erro. Consulta tamén <fncref targ="colnames"/>.
+	  non nulo en caso de fallo. Consulta tamén <fncref targ="colnames"/>.
 	</para>
 	<para>
 	  Exemplo:
@@ -8209,7 +8192,7 @@
 	  <argname>key</argname>, dentro dun paquete <argname>b</argname>.
 	  Vaise amosar esa nota cando se utilice a instrución <lit>print</lit>
 	  co paquete. Esta función devolve un enteiro igual a 0 no caso de
-	  executarse con éxito, e un valor non nulo no caso de erro (por
+	  executarse con éxito, e un valor non nulo no caso de fallo (por
 	  exemplo, se non existe ningún obxecto <argname>key</argname> no
 	  paquete <argname>b</argname>).
 	</para>
@@ -8418,7 +8401,7 @@
 	<para>
 	  Advirte que, se o argumento é unha matriz, realízase a operación para
 	  cada elemento e, posto que esta non pode conter valores <lit>NA</lit>,
-	  a función xera un erro se a matriz ten algún valor negativo. Para a
+	  a función xera un fallo se a matriz ten algún valor negativo. Para a
 	  <quote>raíz cadrada matricial</quote> mira <fncref targ="cholesky"/>.
 	</para>
       </description>
@@ -8518,7 +8501,7 @@
 	<para>
 	  Se a cadea de texto da orixe non coincide (exactamente) co formato,
 	  o número de conversións pode quedarse curta a respecto do número
-	  de argumentos indicados. Isto non é por si mesmo un erro no que
+	  de argumentos indicados. Isto non é por si mesmo un fallo no que
 	  atinxe a Gretl. Así e todo, poderías querer comprobar o número de
 	  conversións que se completaron; isto indícase no valor que se
 	  devolve.
@@ -8576,7 +8559,7 @@
 	</para>
 	<para>
 	  O valor que devolve esta función é cero no caso de completarse con
-	  éxito, ou un código de erro positivo no caso de fallar.
+	  éxito, ou un código de fallo positivo no caso de fallar.
 	</para>
       </description>
     </function>
@@ -8641,7 +8624,7 @@
 	  Cando se proporciona un segundo argumento, devolve o elemento
 	  <argname>i</argname> da cadea de texto <argname>s</argname> do
 	  argumento, numerado considerando os espazos de separación para elo.
-	  O índice <argname>i</argname> está en base 1 e, indica un erro cando
+	  O índice <argname>i</argname> está en base 1 e, indica un fallo cando
 	  <argname>i</argname> sexa menor ca 1. No caso de que o argumento
 	  <argname>s</argname> non conteña espazos e <argname> i</argname> sexa
 	  igual a 1, a función devolve unha copia completa da cadea de texto do
@@ -8949,7 +8932,7 @@
 	  cando <equation status="inline" ascii="i&lt;=j" tex="$i\le j$"/>.
 	  Ten en conta que os primeiros elementos dos dous vectores
 	  <math>c</math> e <math>r</math> deben de ser iguais, pois
-	  noutro caso se devolve un erro. Cando se completa con éxito,
+	  noutro caso se devolve un fallo. Cando se completa con éxito,
 	  a execución desta función permite obter o vector
 	  <math>x</math>.
 	</para>
@@ -8958,7 +8941,7 @@
 	  matriz <math>T</math>, que o fai moito máis eficiente ca outros
 	  algoritmos non especializados, particularmente para problemas moi
 	  longos. Advertencia: Nalgúns casos a función podería suxerir
-	  falsamente un erro de singularidade na matriz <math>T</math> cando
+	  falsamente un fallo na singularidade da matriz <math>T</math> cando
 	  realmente non é singular; de calquera xeito, este problema non
 	  poderá xurdir cando a matriz <math>T</math> sexa definida
 	  positiva.
@@ -9293,7 +9276,7 @@
 	<para>
 	  Cando se indica un número enteiro como argumento, a función devolve
 	  unha cadea de texto co nome da variable que ten un número ID igual a
-	  <argname>v</argname>, ou xera un erro se esa variable non existe.
+	  <argname>v</argname>, ou xera un fallo se esa variable non existe.
 	</para>
 	<para>
 	  Cando se indica unha lista como argumento, devolve unha cadea de
