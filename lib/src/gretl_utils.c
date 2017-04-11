@@ -1460,6 +1460,45 @@ int gretl_version_number (const char *version)
     return vnum;
 }
 
+/* Mapping from new-style version numbers, based on
+   year, to old style based on maj.min.pl. This
+   covers gretl 1.9.4 to 1.10.2.
+*/
+
+static int old_style_gretl_version_number (int v)
+{
+    const int vtrans[17][2] = {
+	{10904, 20110},
+	{10905, 20111},
+	{10906, 20112},
+	{10907, 20113},
+	{10908, 20120},
+	{10909, 20121},
+	{10910, 20122},
+	{10911, 20123},
+	{10912, 20130},
+	{10913, 20131},
+	{10914, 20132},
+	{10990, 20140},
+	{10991, 20141},
+	{10992, 20142},
+	{11000, 20150},
+	{11001, 20151},
+	{11002, 20152}
+    };
+    int i;
+
+    for (i=0; i<17; i++) {
+	if (v == vtrans[i][1]) {
+	    return vtrans[i][0];
+	}
+    }
+
+    /* default to 1.9.4 */
+
+    return vtrans[0][0];
+}
+
 /**
  * gretl_version_string:
  * @targ: string into which to write (9 bytes minimum).
@@ -1470,7 +1509,8 @@ int gretl_version_number (const char *version)
 
 char *gretl_version_string (char *targ, int vnum)
 {
-    if (vnum >= 20150) {
+    if (vnum >= 20153) {
+	/* "2105d" or higher */
 	const char *s = "abcdefghij";
 	int y, idx;
 	char c;
@@ -1487,6 +1527,11 @@ char *gretl_version_string (char *targ, int vnum)
 	sprintf(targ, "%d%c", y, c);
     } else {
 	int x, y, z;
+
+	if (vnum > 20000) {
+	    /* translate back to old-style */
+	    vnum = old_style_gretl_version_number(vnum);
+	}
 
 	x = vnum / 10000;
 	y = (vnum - x * 10000) / 100;
