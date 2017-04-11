@@ -8,6 +8,7 @@
 \newcommand{\scriptname}{Listing}
 \newcommand{\GCR}{\textit{Gretl Command Reference}{}}
 \newcommand{\GUG}{the \textit{Gretl User's Guide}{}}
+\newcommand{\PKGBOOK}{\textit{Gretl Function Package Guide}{}}
 
 \newcommand{\gtitle}[1]{\vspace*{1in}
    {\Huge \sffamily #1}\par

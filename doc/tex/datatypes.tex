@@ -298,12 +298,12 @@ bundle b:
 \subsection{What are bundles good for?}
 
 Bundles are unlikely to be of interest in the context of standalone
-gretl scripts, but they can be very useful in the context of
-complex function packages where a good deal of information has to be
-passed around between the component functions. Instead of using a
-lengthy list of individual arguments, function $A$ can bundle up the
-required data and pass it to functions $B$ and $C$, where relevant
-information can be extracted via a mnemonic key.
+gretl scripts, but they can be very useful in the context of complex
+function packages where a good deal of information has to be passed
+around between the component functions \citep[see][]{GFPG}. Instead of
+using a lengthy list of individual arguments, function $A$ can bundle
+up the required data and pass it to functions $B$ and $C$, where
+relevant information can be extracted via a mnemonic key.
 
 In this context bundles should be passed in ``pointer'' form
 (see chapter~\ref{chap:functions}) as illustrated in the following
@@ -364,9 +364,9 @@ arguments or that return arrays; further development can be expected.
 A gretl array is, as you might expect, a container which can hold zero
 or more objects of a certain type, indexed by consecutive integers
 starting at 1. It is one-dimensional. This type is implemented by a
-quite ``generic'' back-end. The types of object that can be
-put into arrays are strings, matrices, bundles and lists; a given
-array can hold only one of these types. 
+quite ``generic'' back-end. The types of object that can be put into
+arrays are strings, matrices and bundles; a given array can hold only
+one of these types.
 
 Of gretl's ``primary'' types, then, neither scalars nor series are
 supported by the array mechanism. There would be little point in
