@@ -6195,10 +6195,14 @@ static int localize_list (fncall *call, fn_arg *arg,
     int err = 0;
 
     if (arg == NULL || arg->type == GRETL_TYPE_NONE) {
-	/* empty arg -> gives an empty list */
-	int tmp[] = {0};
+	/* empty arg -> gives an empty list? */
+	if (dset == NULL || dset->n == 0) {
+	    err = E_NODATA;
+	} else {
+	    int tmp[] = {0};
 
-	list = copy_list_as_arg(fp->name, tmp, &err);
+	    list = copy_list_as_arg(fp->name, tmp, &err);
+	}
     } else if (arg->type == GRETL_TYPE_LIST) {
 	/* actual list arg -> copy to function level */
 	list = arg->val.list;
