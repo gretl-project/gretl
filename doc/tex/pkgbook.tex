@@ -899,11 +899,11 @@ properly. For details on the specification keys used here (e.g.\
 section~\ref{sec:spec-basic}.
 
 In fact, writing a \textsf{spec} from scratch may be tricky. Some may
-prefer adapting a pre-existing template \textsf{spec} file, instead;
-you can find one at
-\url{https://sourceforge.net/projects/gretl/files/misc/template.spec}. Nevertheless,
-you still may want to refer to chapter \ref{chap:specfile} for a
-fuller description of the various entries.
+prefer adapting a pre-existing template \textsf{spec} file; you can
+find one at
+\url{https://sourceforge.net/projects/gretl/files/misc/template.spec}.
+Regardless, you still may want to refer to chapter \ref{chap:specfile}
+for a fuller description of the various entries.
 
 Now, assuming all the required files are in place, how do we actually
 build the package? Simple: the shell command
@@ -1253,6 +1253,9 @@ selected PDF documentation, however, you can use the \textsf{Select}
 button (see Figure~\ref{fig:package_editor}) to check where gretl is
 finding the file, or to update it from another location.
 
+Please note: PDF help is an \textit{alternative} to plain text
+help; you cannot combine the two (not at present, anyway).
+
 \subsection{Saving a zip file}
 \label{sec:save-zip}
 
@@ -1480,7 +1483,7 @@ model. In the background the full \texttt{MODEL} is ``attached'' to
 the window, and the menu items in the window call functions that
 access the underlying data structure to display things not shown by
 default (e.g.\ the residuals), to make graphs (e.g.\ the residual
-correlogram), to calculate diagnostic tests, and so on.
+correlogram), to carry out diagnostic tests, and so on.
 
 A function that returns a bundle can do just this sort of thing, and
 wherever it's appropriate we recommend that this facility be
@@ -1601,7 +1604,7 @@ this function is no-print, and will see if the \textsf{bunret} package
 has a bundle-printer function. Since it does, it will call that
 function on the bundle and put the result into the output window,
 which will therefore no longer be blank. Your package's bundle window
-is now quite like a gretl model window: it shows you some stuff and
+is now somewhat like a gretl model window: it shows you some stuff and
 allows you the possibility of saving some or all of it.
 
 In addition, if the user decides to save your bundle ``as an icon,''
