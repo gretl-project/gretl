@@ -1467,7 +1467,7 @@ int gretl_version_number (const char *version)
 
 static int old_style_gretl_version_number (int v)
 {
-    const int vtrans[17][2] = {
+    const int vtrans[18][2] = {
 	{10904, 20110},
 	{10905, 20111},
 	{10906, 20112},
@@ -1484,12 +1484,13 @@ static int old_style_gretl_version_number (int v)
 	{10992, 20142},
 	{11000, 20150},
 	{11001, 20151},
-	{11002, 20152}
+	{11002, 20152},
+	{11003, 20153}
     };
     int i;
 
     for (i=0; i<17; i++) {
-	if (v == vtrans[i][1]) {
+	if (v == vtrans[i][1] || v < vtrans[i+1][1]) {
 	    return vtrans[i][0];
 	}
     }
