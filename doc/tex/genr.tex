@@ -72,12 +72,12 @@ Suppose you're interested in the left tail of the $\chi^2$ distribution
 with 50 degrees of freedom: you'd like to know the CDF value for $x =
 0.9$.  Take a look at the following interactive session: 
 \begin{code}
-? genr p1 = cdf(X, 50, 0.9)
-Generated scalar p1 (ID 2) = 8.94977e-35
-? genr p2 = pvalue(X, 50, 0.9)
-Generated scalar p2 (ID 3) = 1
-? genr test = 1 - p2
-Generated scalar test (ID 4) = 0
+? scalar p1 = cdf(X, 50, 0.9)
+Generated scalar p1 = 8.94977e-35
+? scalar p2 = pvalue(X, 50, 0.9)
+Generated scalar p2 = 1
+? scalar test = 1 - p2
+Generated scalar test = 0
 \end{code}
 
 The \cmd{cdf} function has produced an accurate value, but the
@@ -93,12 +93,12 @@ too far off into one or other tail of the distribution, the \cmd{cdf}
 and \cmd{pvalue} functions will in fact produce complementary
 answers, as shown below:
 \begin{code}
-? genr p1 = cdf(X, 50, 30)
-Generated scalar p1 (ID 2) = 0.0111648
-? genr p2 = pvalue(X, 50, 30)
-Generated scalar p2 (ID 3) = 0.988835
-? genr test = 1 - p2
-Generated scalar test (ID 4) = 0.0111648
+? scalar p1 = cdf(X, 50, 30)
+Generated scalar p1 = 0.0111648
+? scalar p2 = pvalue(X, 50, 30)
+Generated scalar p2 = 0.988835
+? scalar test = 1 - p2
+Generated scalar test = 0.0111648
 \end{code}
 But the moral is that if you want to examine extreme values
 you should be careful in selecting the function you need, in the
@@ -185,10 +185,8 @@ unit-root null hypothesis: a = 1
   test statistic: t = -1.83491
   asymptotic p-value 0.3638
 P-values based on MacKinnon (JAE, 1996)
-? genr pv = $pvalue
-Generated scalar pv (ID 13) = 0.363844
-? label pv    
-  pv=Dickey-Fuller pvalue (scalar)
+? scalar pv = $pvalue
+Generated scalar pv = 0.363844
 \end{code}
 %$
 
@@ -240,11 +238,11 @@ the input to the \texttt{fft} function is understood to be real.
 Conversely, \texttt{ffti} takes a complex argument and delivers a real
 result. For example:
 \begin{code}
-x1 = { 1 ; 2 ; 3 }
+matrix x1 = { 1 ; 2 ; 3 }
 # perform the transform
-f = fft(a)
+matrix f = fft(a)
 # perform the inverse transform
-x2 = ffti(f)
+matrix x2 = ffti(f)
 \end{code}
 yields
 \[
