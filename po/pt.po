@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-04-06 15:51-0400\n"
-"PO-Revision-Date: 2017-04-05 23:02+0100\n"
+"PO-Revision-Date: 2017-04-12 01:01+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -77,9 +77,9 @@ msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "Teste Aumentado de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:545
-#, fuzzy, c-format
+#, c-format
 msgid "testing down from %d lags, criterion %s"
-msgstr "testar para baixo a partir da ordem máxima de desfasamento"
+msgstr "testar para baixo a partir de %d desfasamentos, critério %s"
 
 #: lib/src/adf_kpss.c:549 lib/src/adf_kpss.c:659 plugin/panurc.c:577
 #, c-format
@@ -2379,7 +2379,7 @@ msgstr "Esperado %s mas obteve-se %s"
 #: lib/src/geneval.c:8297
 #, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "O tipo de série %s não corresponde ao tipo de vetor %s"
+msgstr "O tipo de série %s não corresponde ao tipo de vetor (\"array\") %s"
 
 #: lib/src/geneval.c:8821 lib/src/geneval.c:14929 lib/src/geneval.c:14937
 #, c-format
@@ -2482,7 +2482,7 @@ msgstr "'%s' : não está implementado para cadeias de texto"
 #: lib/src/geneval.c:14925
 #, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s' : não está implementado para arrays"
+msgstr "'%s' : não está implementado para vetores (\"arrays\")"
 
 #: lib/src/geneval.c:14933
 #, c-format
@@ -3094,7 +3094,7 @@ msgstr "com ajuste de mínimos quadrados"
 #: lib/src/gretl_array.c:872
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr "Array de %s, comprimento %d\n"
+msgstr "Vetor (\"array\") de %s, comprimento %d\n"
 
 #: lib/src/gretl_bfgs.c:403 lib/src/gretl_bfgs.c:442
 msgid "Failed to compute numerical Hessian"
@@ -7888,7 +7888,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de abril de 2017."
+"Tradução de 12 de abril de 2017."
 
 #: gui2/about.c:203
 msgid "News"
@@ -13512,14 +13512,14 @@ msgid "A string named %s already exists"
 msgstr "Já existe uma variável de texto com o nome %s"
 
 #: gui2/gui_utils.c:5209
-#, fuzzy, c-format
+#, c-format
 msgid "A bundle named %s already exists"
-msgstr "Já existe uma lista com o nome %s"
+msgstr "Já existe um \"bundle\" com o nome %s"
 
 #: gui2/gui_utils.c:5211
-#, fuzzy, c-format
+#, c-format
 msgid "An array named %s already exists"
-msgstr "Já existe uma matriz com o nome %s"
+msgstr "Já existe um vetor (\"array\") com o nome %s"
 
 #: gui2/gui_utils.c:5247
 #, c-format
@@ -15759,7 +15759,7 @@ msgstr "versus"
 
 #: gui2/session.c:2265
 msgid "Bundle is empty"
-msgstr "O \"Bundle\" está vazio"
+msgstr "O \"bundle\" está vazio"
 
 #: gui2/session.c:2635 gui2/session.c:2661
 #, c-format
