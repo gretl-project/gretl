@@ -3120,7 +3120,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		    gpkgs[n].merge_id = 0;
 		    gpkgs[n].ag = NULL;
 		    n++;
-		} 
+		}
 	    }
 	    if (freeit) {
 		free(name);
@@ -3135,7 +3135,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-    }    
+    }
 
     *pn = n;
 
@@ -3148,7 +3148,7 @@ static void destroy_gpi_ui (gui_package_info *gpi)
     gtk_ui_manager_remove_ui(mdata->ui, gpi->merge_id);
     gtk_ui_manager_remove_action_group(mdata->ui, gpi->ag);
     g_object_unref(gpi->ag);
-    
+
     gpi->merge_id = 0;
     gpi->ag = NULL;
 }
@@ -3162,8 +3162,8 @@ static void clear_gpi_entry (gui_package_info *gpi)
 {
     if (gpi->merge_id > 0) {
 	destroy_gpi_ui(gpi);
-    }    
-    
+    }
+
     free(gpi->pkgname);
     free(gpi->label);
     free(gpi->menupath);
