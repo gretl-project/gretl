@@ -49,6 +49,20 @@ const char *gretl_data_types[] = {
     NULL
 };
 
+const char *builtin_strings[] = {
+    "gretldir",
+    "dotdir",
+    "workdir",
+    "gnuplot",
+    "x12a",
+    "x12adir",
+    "tramo",
+    "tramodir",
+    "seats",
+    "pkgdir",
+    "lang"
+};
+
 /* Similar to strcmp, except that in case two strings match
    to the length of the shorter one, we order the longer
    one first. This is needed to avoid the shorter string
@@ -397,9 +411,13 @@ void output_lang2_file (void)
     strs = make_var_name_list(&n);
     if (strs != NULL) {
 	for (i=0; i<n; i++) {
-	   printf("      <keyword>%s</keyword>\n", strs[i]); 
+	   printf("      <keyword>%s</keyword>\n", strs[i]);
 	}
 	strings_array_free(strs, n);
+    }
+    strs = (char **) builtin_strings;
+    for (i=0; strs[i] != NULL; i++) {
+	printf("      <keyword>%s</keyword>\n", strs[i]);
     }
     puts("    </context>\n");
 
