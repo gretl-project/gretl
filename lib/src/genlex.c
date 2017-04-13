@@ -1267,19 +1267,40 @@ static void maybe_treat_as_postfix (parser *p)
 
 static void word_check_next_char (parser *p)
 {
+    char chk[2] = {p->ch, '\0'};
+
 #if LDEBUG
     if (p->ch) {
-	fprintf(stderr, "word_check_next_char: ch='%c', sym=%d\n",
-		p->ch, p->sym);
+	fprintf(stderr, "word_check_next_char: ch='%c', sym='%s'\n",
+		p->ch, getsymb(p->sym));
     } else {
 	fprintf(stderr, "word_check_next_char: ch = NUL\n");
     }
 #endif
     p->upsym = 0;
 
+    /* Here we're checking for validity and syntactical implications
+       of one of "([.+-" immediately following a 'word' of some kind.
+    */
+
+    if (strspn(chk, "([.+-") == 0) {
+	/* none of the above */
+	return;
+    } else if (p->sym == UNDEF) {
+	if (p->idstr != NULL && p->idstr[0] != '\0') {
+	    undefined_symbol_error(p->idstr, p);
+	    return;
+	}
+    }
+
     if (p->ch == '(') {
-	/* series (lag) or function */
-	if (p->sym == SERIES) {
+	/* series or list (lag), or function */
+	if (p->sym == UNDEF) {
+	    if (p->idstr != NULL && p->idstr[0] != '\0') {
+		undefined_symbol_error(p->idstr, p);
+		return;
+	    }
+	} else if (p->sym == SERIES) {
 	    if (p->idnum > 0 && p->idnum == p->lh.vnum) {
 		p->flags |= P_AUTOREG;
 	    }

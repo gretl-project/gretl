@@ -1788,12 +1788,16 @@ NODE *expr (parser *p)
 	if (t != NULL) {
 	    set_parsing_query(1);
 	    lex(p);
-	    t->v.b3.m = expr(p);
-	    if (p->sym == P_COL) {
-		lex(p);
-		t->v.b3.r = expr(p);
-	    } else {
-		expected_symbol_error(':', p);
+	    if (!p->err) {
+		t->v.b3.m = expr(p);
+		if (p->sym == P_COL) {
+		    lex(p);
+		    if (!p->err) {
+			t->v.b3.r = expr(p);
+		    }
+		} else {
+		    expected_symbol_error(':', p);
+		}
 	    }
 	    set_parsing_query(0);
 	}
