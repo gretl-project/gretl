@@ -29,6 +29,7 @@
 #include "treeutils.h"
 #include "session.h"
 #include "gretl_ipc.h"
+#include "fncall.h"
 #include "menustate.h"
 
 void refresh_data (void)
@@ -129,6 +130,26 @@ static void view_items_state (gboolean s)
 	 data_status && dataset_is_time_series(dataset));
 }
 
+static void gfn_menuitems_state (void)
+{
+    GtkActionGroup *ag;
+    GList *aglist;
+    DataReq dreq;
+    int err;
+
+    aglist = gtk_ui_manager_get_action_groups(mdata->ui);
+
+    while (aglist != NULL) {
+	ag = aglist->data;
+	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ag), "datareq"))) {
+	    dreq = pkg_get_data_requirement(ag);
+	    err = check_function_needs(dataset, dreq, 0);
+	    gtk_action_group_set_sensitive(ag, !err);
+	}
+	aglist = aglist->next;
+    }
+}
+
 void dataset_menubar_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;
@@ -146,6 +167,7 @@ void dataset_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/Model", s);
 
     view_items_state(s);
+    gfn_menuitems_state();
 
     if (s || !have_session_objects()) {
 	/* Either we're enabling dataset items, in which
@@ -199,9 +221,9 @@ void time_series_menu_state (gboolean s)
 	return;
     }
 
-    /* FIXME: we (may) need to enable/disable function
-       packages that have menu attachments here.
-    */
+    /* enable/disable function packages that have menu
+       attachments */
+    gfn_menuitems_state();
 
     /* unit-root tests: require time-series or panel data,
        and a time series length greater than 5
@@ -263,6 +285,7 @@ void panel_menu_state (gboolean s)
 	if (s && dataset->pd <= 2) {
 	    flip(mdata->ui, "/menubar/Model/PanelModels/dpanel", 0);
 	}
+	gfn_menuitems_state();
     }
 }
 

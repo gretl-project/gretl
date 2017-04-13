@@ -122,7 +122,7 @@ struct function_info_ {
     gchar *menulabel;      /* label for menu attachment, if any */
     int menuwin;           /* code for none/main/model window */
     char *active;          /* name of 'active' function */
-    FuncDataReq dreq;      /* data requirement of package */
+    DataReq dreq;          /* data requirement of package */
     GretlCmdIndex mreq;    /* model requirement of package */
     int minver;            /* minimum gretl version, package */
     gboolean modified;     /* anything changed in package? */
@@ -4410,7 +4410,8 @@ int save_function_package (const char *fname, gpointer p)
 				       finfo->fname,
 				       finfo->menulabel,
 				       finfo->menupath,
-				       finfo->uses_subdir);
+				       finfo->uses_subdir,
+				       finfo->dreq);
     }
 
     return err;

@@ -151,7 +151,7 @@ struct fnpkg_ {
     char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
     int uses_subdir;  /* lives in subdirectory (0/1) */
-    FuncDataReq dreq; /* data requirement */
+    DataReq dreq;     /* data requirement */
     int modelreq;     /* required model type, if applicable */
     ufunc **pub;      /* pointers to public interfaces */
     ufunc **priv;     /* pointers to private functions */
@@ -535,7 +535,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->tags = NULL;
     pkg->label = NULL;
     pkg->mpath = NULL;
-    pkg->dreq = 0;
+    pkg->dreq = FN_NEEDS_DATA;
     pkg->modelreq = 0;
     pkg->minver = 0;
     pkg->uses_subdir = 0;
@@ -4489,7 +4489,7 @@ static int real_load_package (fnpkg *pkg)
     return err;
 }
 
-static const char *data_needs_string (FuncDataReq dr)
+static const char *data_needs_string (DataReq dr)
 {
     if (dr == FN_NEEDS_TS) {
 	return N_("Time-series data");
@@ -6602,7 +6602,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
  * (or lack thereof) does not satisfy @dreq; 1 otherwise.
  */
 
-int check_function_needs (const DATASET *dset, FuncDataReq dreq,
+int check_function_needs (const DATASET *dset, DataReq dreq,
 			  int minver)
 {
     static int thisver = 0;

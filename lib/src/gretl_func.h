@@ -23,11 +23,12 @@
 #include "usermat.h"
 
 typedef enum {
-    FN_NEEDS_TS = 1, /* function requires time-series data */
-    FN_NEEDS_QM,     /* function requires quarterly or monthly data */
-    FN_NEEDS_PANEL,  /* function requires panel data */
-    FN_NODATA_OK     /* function does not require a dataset */
-} FuncDataReq;
+    FN_NEEDS_DATA,  /* needs some (any) sort of dataset */
+    FN_NEEDS_TS,    /* function requires time-series data */
+    FN_NEEDS_QM,    /* function requires quarterly or monthly data */
+    FN_NEEDS_PANEL, /* function requires panel data */
+    FN_NODATA_OK    /* function does not require a dataset */
+} DataReq;
 
 typedef enum {
     UFUN_ROLE_NONE,
@@ -203,7 +204,7 @@ int function_ok_for_package_role (const char *name,
 
 const char *package_role_get_key (int flag);
 
-int check_function_needs (const DATASET *dset, FuncDataReq dreq,
+int check_function_needs (const DATASET *dset, DataReq dreq,
 			  int minver);
 
 int package_version_ok (int minver, char *reqstr);

@@ -20,6 +20,8 @@
 #ifndef FNCALL_H
 #define FNCALL_H
 
+#include "gretl_func.h"
+
 int open_function_package (const char *pkgname,
 			   const char *fname,
 			   windata_t *vwin);
@@ -57,7 +59,10 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
 				    const gchar *fname,
 				    const gchar *label,
 				    const gchar *mpath,
-				    gboolean uses_subdir);
+				    gboolean uses_subdir,
+				    DataReq dreq);
+
+DataReq pkg_get_data_requirement (GtkActionGroup *ag);
 
 int n_registered_packages (void);
 
