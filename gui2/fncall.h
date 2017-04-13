@@ -60,7 +60,8 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
 				    const gchar *label,
 				    const gchar *mpath,
 				    gboolean uses_subdir,
-				    DataReq dreq);
+				    DataReq dreq,
+				    int mreq);
 
 DataReq pkg_get_data_requirement (GtkActionGroup *ag);
 

@@ -4411,7 +4411,8 @@ int save_function_package (const char *fname, gpointer p)
 				       finfo->menulabel,
 				       finfo->menupath,
 				       finfo->uses_subdir,
-				       finfo->dreq);
+				       finfo->dreq,
+				       finfo->mreq);
     }
 
     return err;

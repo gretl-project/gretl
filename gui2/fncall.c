@@ -70,7 +70,7 @@ struct call_info_ {
     int flags;           /* misc. info on package */
     const ufunc *func;   /* the function we're calling */
     DataReq dreq;        /* the function's data requirement */
-    int mreq;            /* the function's model (command) requirement */
+    int modelreq;        /* the function's model (command) requirement */
     int minver;          /* minimum gretl version for pkg */
     int n_params;        /* its number of parameters */
     char rettype;        /* its return type */
@@ -167,7 +167,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
     cinfo->ret = NULL;
 
     cinfo->dreq = FN_NEEDS_DATA;
-    cinfo->mreq = 0;
+    cinfo->modelreq = 0;
     cinfo->label = NULL;
 
     return cinfo;
@@ -2161,7 +2161,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   "version", &cinfo->pkgver,
 					   "gui-publist", &cinfo->publist,
 					   "data-requirement", &cinfo->dreq,
-					   "model-requirement", &cinfo->mreq,
+					   "model-requirement", &cinfo->modelreq,
 					   "min-version", &cinfo->minver,
 					   NULL);
 
@@ -2662,7 +2662,7 @@ struct gui_package_info_ {
     char *menupath; /* @path element from packages.xml */
     char *filepath; /* actual filesystem path */
     DataReq dreq;   /* data requirement */
-    int mreq;       /* model (command number) requirement */
+    int modelreq;   /* model (command number) requirement */
     GpiFlags flags; /* state flags */
     guint merge_id; /* created at runtime when added to GUI */
     GtkActionGroup *ag; /* run-time UI thing */
@@ -2719,7 +2719,7 @@ static void gpi_entry_init (gui_package_info *gpi)
     gpi->menupath = NULL;
     gpi->filepath = NULL;
     gpi->dreq = FN_NEEDS_DATA;
-    gpi->mreq = 0;
+    gpi->modelreq = 0;
     gpi->flags = 0;
     gpi->merge_id = 0;
     gpi->ag = NULL;
@@ -2736,7 +2736,7 @@ static gchar *packages_xml_path (int which)
     }
 }
 
-static const char *mreq_string (int ci)
+static const char *modelreq_string (int ci)
 {
     if (ci == 0 ) {
 	return "any";
@@ -2771,7 +2771,7 @@ static void write_packages_xml (void)
 		if (gpkgs[i].flags & GPI_MODELWIN) {
 		    fputs(" model-window=\"true\"", fp);
 		    fprintf(fp, " model-requirement=\"%s\"",
-			    mreq_string(gpkgs[i].mreq));
+			    modelreq_string(gpkgs[i].modelreq));
 		}
 		fprintf(fp, " path=\"%s\"", gpkgs[i].menupath);
 		if (!(gpkgs[i].flags & GPI_SUBDIR)) {
@@ -3110,7 +3110,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 	    int mw = gretl_xml_get_prop_as_bool(cur, "model-window");
 	    int top = gretl_xml_get_prop_as_bool(cur, "toplev");
 	    xmlChar *name, *desc, *path;
-	    int dreq, mreq = 0, need_dr = 0;
+	    int dreq, modelreq = 0, need_dr = 0;
 	    int freeit = 1;
 
 	    name = xmlGetProp(cur, (XUC) "name");
@@ -3118,8 +3118,8 @@ static int read_packages_file (const char *fname, int *pn, int which)
 	    path = xmlGetProp(cur, (XUC) "path");
 
 	    if (mw) {
-		if (!gretl_xml_get_prop_as_int(cur, "model-requirement", &mreq)) {
-		    mreq = discover_gfn_requirement((const char *) name, top, 1);
+		if (!gretl_xml_get_prop_as_int(cur, "model-requirement", &modelreq)) {
+		    modelreq = discover_gfn_requirement((const char *) name, top, 1);
 		    gpkgs_changed = 1;
 		}
 	    } else {
@@ -3146,7 +3146,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		    gpi_set_flags(&gpkgs[n], which, !top, mw, need_dr);
 		    gpkgs[n].dreq = (DataReq) dreq;
 		    if (mw) {
-			gpkgs[n].mreq = mreq;
+			gpkgs[n].modelreq = modelreq;
 		    }
 		    gpkgs[n].merge_id = 0;
 		    gpkgs[n].ag = NULL;
@@ -3206,7 +3206,7 @@ static void clear_gpi_entry (gui_package_info *gpi)
     gpi->filepath = NULL;
 
     gpi->dreq = FN_NEEDS_DATA;
-    gpi->mreq = 0;
+    gpi->modelreq = 0;
     gpi->flags = 0;
 
     gpkgs_changed = 1;
@@ -3220,6 +3220,7 @@ static int fill_gpi_entry (gui_package_info *gpi,
 			   int modelwin,
 			   int uses_subdir,
 			   DataReq dreq,
+			   int modelreq,
 			   int replace)
 {
     int need_dr = 0;
@@ -3239,7 +3240,9 @@ static int fill_gpi_entry (gui_package_info *gpi,
 	sprintf(gpi->menupath, "/menubar%s", relpath);
     }
     gpi->filepath = gretl_strdup(fname);
-    if (!modelwin) {
+    if (modelwin) {
+	gpi->modelreq = modelreq;
+    } else {
 	need_dr = need_gfn_data_req(gpi->menupath);
     }
     gpi_set_flags(gpi, USER_PACKAGES, uses_subdir, modelwin, need_dr);
@@ -3324,7 +3327,8 @@ static int update_gui_package_info (const char *pkgname,
 				    const char *relpath,
 				    int modelwin,
 				    int uses_subdir,
-				    DataReq dreq)
+				    DataReq dreq,
+				    int modelreq)
 {
     gui_package_info *gpi;
     int menu_update = 0;
@@ -3350,6 +3354,8 @@ static int update_gui_package_info (const char *pkgname,
 	    update = 1;
 	} else if (dreq != gpi->dreq) {
 	    update = 1;
+	} else if (modelreq != gpi->modelreq) {
+	    update = 1;
 	}
     } else {
 	gpi = get_new_package_info(&err);
@@ -3374,6 +3380,7 @@ static int update_gui_package_info (const char *pkgname,
 			     modelwin,
 			     uses_subdir,
 			     dreq,
+			     modelreq,
 			     replace);
     }
 
@@ -3517,12 +3524,12 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 				windata_t *vwin)
 {
     MODEL *pmod = vwin->data;
-    int dreq, mreq, minver = 0;
+    int dreq, modelreq, minver = 0;
     gchar *precheck = NULL;
     fnpkg *pkg;
     int err = 0;
 
-    if (gpi->mreq > 0 && pmod->ci != gpi->mreq) {
+    if (gpi->modelreq > 0 && pmod->ci != gpi->modelreq) {
 	return 0;
     }
 
@@ -3541,7 +3548,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
     if (!err) {
 	err = function_package_get_properties(pkg,
 					      "data-requirement", &dreq,
-					      "model-requirement", &mreq,
+					      "model-requirement", &modelreq,
 					      "min-version", &minver,
 					      "gui-precheck", &precheck,
 					      NULL);
@@ -3552,10 +3559,8 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	   with the current model */
 	int skip = 0;
 	
-	if (mreq > 0) {
-	    MODEL *pmod = vwin->data;
-
-	    skip = pmod->ci != mreq;
+	if (modelreq > 0) {
+	    skip = pmod->ci != modelreq;
 	}
 	if (!skip) {
 	    skip = check_function_needs(dataset, dreq, minver);
@@ -3711,7 +3716,8 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
 				    const gchar *label,
 				    const gchar *mpath,
 				    gboolean uses_subdir,
-				    DataReq dreq)
+				    DataReq dreq,
+				    int modelreq)
 {
     gui_package_info *gpi;
     int has_attachment = 0;
@@ -3754,7 +3760,8 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
 				      relpath,
 				      modelwin,
 				      uses_subdir,
-				      dreq);
+				      dreq,
+				      modelreq);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -3834,14 +3841,17 @@ static int gui_function_pkg_register (const char *fname,
 #endif       
 
     if (!err) {
-	DataReq dreq = 0;
 	int uses_subdir = 0;
+	DataReq dreq = 0;
+	int modelreq = 0;
 
 	err = function_package_get_properties(pkg,
 					      "lives-in-subdir",
 					      &uses_subdir,
 					      "data-requirement",
 					      &dreq,
+					      "model-requirement",
+					      &modelreq,
 					      NULL);
 
 	if (!err && !uses_subdir) {
@@ -3863,7 +3873,8 @@ static int gui_function_pkg_register (const char *fname,
 					  relpath,
 					  modelwin,
 					  uses_subdir,
-					  dreq);
+					  dreq,
+					  modelreq);
 	}
     }
 
