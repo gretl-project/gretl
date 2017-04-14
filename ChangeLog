@@ -23,7 +23,8 @@ version 2017a, in progress
   gzip compression if the filename has the ".gz" extension
 - typeof() function: document it, and extend it to cover
   members of bundles and arrays
-- "include" command: make it respect the "catch" flag
+- "include" command: make it respect the "catch" flag, and
+  add a --force option to force re-reading of gfn files
 - "corr" command: add a --plot=filename option; also add
   --matrix option to take data from a named matrix
 - "fcast" command: in the case of the --rolling option,
@@ -70,6 +71,7 @@ version 2017a, in progress
 - User's Guide: add a chapter on degrees of freedom
   correction for standard errors and related statistics
 - Build for Mac OS X: update the bundled GTK stack
+- Builds for MS Windows: update compiler to gcc 5.4.0
 
 2016-11-19 version 2016d
 - New commands to support MIDAS: "midasreg" and "hfplot"
