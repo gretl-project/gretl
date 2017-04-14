@@ -385,27 +385,22 @@ void check_var_labels_state (GtkMenuItem *item, gpointer p)
     flip(mdata->ui, "/menubar/Data/VarLabels", s);
 }
 
-static int missvals_in_selection (void)
+static int missvals_in_selection (const int *list)
 {
-    int *list = main_window_selection_as_list();
-    int miss = 0;
+    int i, vi, t;
+    int ret = 0;
 
-    if (list != NULL) {
-	int i, vi, t;
-
-	for (i=1; i<=list[0] && !miss; i++) {
-	    vi = list[i];
-	    for (t=dataset->t1; t<=dataset->t2; t++) {
-		if (na(dataset->Z[vi][t])) {
-		    miss = 1;
-		    break;
-		}
+    for (i=1; i<=list[0] && !ret; i++) {
+	vi = list[i];
+	for (t=dataset->t1; t<=dataset->t2; t++) {
+	    if (na(dataset->Z[vi][t])) {
+		ret = 1;
+		break;
 	    }
 	}
-	free(list);
     }
 
-    return miss;
+    return ret;
 }
 
 static int uniform_corr_option (const gchar *title, gretlopt *popt)
@@ -421,10 +416,38 @@ static int uniform_corr_option (const gchar *title, gretlopt *popt)
 			      &uniform, CORR, NULL);
 
     if (!canceled(resp) && uniform) {
-	*popt = OPT_U;
+	*popt = OPT_N;
     }
 
     return resp;
+}
+
+static void right_click_corr (void)
+{
+    int *list = main_window_selection_as_list();
+    gretlopt opt = OPT_NONE;
+    char *buf;
+
+    if (list != NULL && list[0] > 2 && missvals_in_selection(list)) {
+	gchar *title;
+	int resp;
+
+	title = g_strdup_printf("gretl: %s", _("correlation matrix"));
+	resp = uniform_corr_option(title, &opt);
+	g_free(title);
+
+	if (canceled(resp)) {
+	    return;
+	}
+    }
+
+    free(list);
+    buf = main_window_selection_as_string();
+
+    if (buf != NULL) {
+	do_menu_op(CORR, buf, opt);
+	free(buf);
+    }
 }
 
 static int series_is_dummifiable (int v)
@@ -687,21 +710,8 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	ci = CORR;
     }
 
-    if (ci == CORR && missvals_in_selection()) {
-	gchar *title = g_strdup_printf("gretl: %s", _("correlation matrix"));
-	gretlopt opt = OPT_NONE;
-	int resp;
-
-	resp = uniform_corr_option(title, &opt);
-	if (!canceled(resp)) {
-	    char *buf = main_window_selection_as_string();
-
-	    if (buf != NULL) {
-		do_menu_op(ci, buf, opt);
-		free(buf);
-	    }
-	}	    
-	g_free(title);
+    if (ci == CORR) {
+	right_click_corr();
     } else if (ci != 0) {
 	char *buf = main_window_selection_as_string();
 	

@@ -310,6 +310,30 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 static void reset_arma_spinners (selector *sr);
 static void clear_midas_spec (void);
 
+static int set_or_get_n_rvars1 (selector *sr, int n)
+{
+    static int nv;
+
+    if (n >= 0) {
+	nv = n;
+	if (sr != NULL && sr->ci == CORR && sr->extra[0] != NULL) {
+	    gtk_widget_set_sensitive(sr->extra[0], n > 2);
+	}
+    }
+
+    return nv;
+}
+
+static void set_n_rvars1 (selector *sr, int n)
+{
+    set_or_get_n_rvars1(sr, n);
+}
+
+static int get_n_rvars1 (void)
+{
+    return set_or_get_n_rvars1(NULL, -1);
+}
+
 static int want_combo (selector *sr)
 {
     return (sr->ci == ARMA ||
@@ -1957,6 +1981,10 @@ static void real_add_generic (GtkTreeModel *srcmodel,
 	gtk_widget_set_sensitive(sr->add_button, FALSE);
     }
 
+    if (locus == SR_RVARS1 && sr->ci == CORR) {
+	set_n_rvars1(sr, nvars);
+    }
+
     if (nvars > 0) {
 	if (lags_button_relevant(sr, locus)) {
 	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
@@ -2167,6 +2195,10 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 	!gtk_widget_is_sensitive(sr->add_button) &&
 	!selection_at_max(sr, nrows)) {
 	gtk_widget_set_sensitive(sr->add_button, TRUE);
+    }
+
+    if (sr->ci == CORR) {
+	set_n_rvars1(sr, nrows);
     }
 
     if (nrows == 0) {
@@ -3747,6 +3779,10 @@ static void selector_cancel_unavailable_options (selector *sr)
     if (sr->ci == ARMA) {
 	if ((sr->opts & OPT_H) && !gtk_widget_is_sensitive(sr->hess_button)) {
 	    sr->opts ^= OPT_H;
+	}
+    } else if (sr->ci == CORR) {
+	if (sr->opts & OPT_N && !gtk_widget_is_sensitive(sr->extra[0])) {
+	    sr->opts ^= OPT_N;
 	}
     }
 }
@@ -5922,8 +5958,9 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
     } else if (sr->ci == CORR) {	
-	tmp = gtk_check_button_new_with_label(_("Ensure uniform sample size"));
-	pack_switch(tmp, sr, verbose, FALSE, OPT_U, 0);
+	sr->extra[0] = gtk_check_button_new_with_label(_("Ensure uniform sample size"));
+	pack_switch(sr->extra[0], sr, verbose, FALSE, OPT_N, 0);
+	gtk_widget_set_sensitive(sr->extra[0], get_n_rvars1() > 2);
     } else if (sr->ci == GR_3D) {
 	tmp = gtk_check_button_new_with_label(_("Make plot interactive"));
 	pack_switch(tmp, sr, TRUE, FALSE, OPT_I, 0);
@@ -7607,6 +7644,10 @@ static void maybe_prefill_RHS (selector *sr)
 	for (i=1; i<=list[0]; i++) {
 	    list_append_var_simple(store, &iter, list[i]);
 	}
+
+	if (sr->ci == CORR) {
+	    set_n_rvars1(sr, list[0]);
+	}
     }
 
     free(list);
@@ -7673,6 +7714,11 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 
     right_box = gtk_vbox_new(FALSE, 5);
     sr->rvars1 = var_list_box_new(GTK_BOX(right_box), sr, SR_RVARS1);
+
+    if (sr->ci == CORR) {
+	/* ensure that RHS var count is set to zero */
+	set_n_rvars1(sr, 0);
+    }
 
     /* pre-fill RHS box? Only if we have 2 or more vars selected in the
        main window and if the command is "suitable"
