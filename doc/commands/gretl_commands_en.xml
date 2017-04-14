@@ -6033,6 +6033,12 @@
       <arguments>
         <argument>filename</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--force</flag>
+	  <effect>force re-reading from file</effect>
+        </option>
+      </options>
       <examples>
         <example>include myfile.inp</example>
         <example>include sols.gfn</example>
@@ -6042,10 +6048,18 @@
     <description>
       <para>
 	Intended for use in a command script, primarily for including
-	definitions of functions.  Executes the commands in
-	<repl>filename</repl> then returns control to the main script. To
-	include a packaged function, be sure to include the filename
-	extension.
+	definitions of functions.  <repl>filename</repl> should have
+	the extension <lit>inp</lit> (a plain-text script) or
+	<lit>gfn</lit> (a gretl function package). The commands in
+	<repl>filename</repl> are executed then control is returned to
+	the main script.
+      </para>
+      <para>
+	The <opt>force</opt> option is specific to <lit>gfn</lit>
+	files: its effect is to force gretl to re-read the function
+	package from file even if it is already loaded into memory.
+	(Plain <lit>inp</lit> files are always read and processed in
+	response to this command.)
       </para>
       <para>
 	See also <cmdref targ="run"/>.

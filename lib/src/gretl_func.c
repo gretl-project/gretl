@@ -4837,7 +4837,7 @@ int function_package_is_loaded (const char *fname,
 }
 
 /** 
- * function_package_is_loaded:
+ * gfn_is_loaded:
  * @gfnname: basename of gfn file, including suffix.
  *
  * Returns: 1 if the function package with basename @gfnname is
@@ -4866,6 +4866,9 @@ int gfn_is_loaded (const char *gfnname)
 /** 
  * load_function_package_by_filename:
  * @fname: full path to gfn file.
+ * @opt: may include OPT_F to force loading even when
+ * the package is already loaded.
+ * @prn: gretl printer.
  *
  * Loads the function package located by @fname into
  * memory, if possible. Supports gretl's "include" command
@@ -4874,16 +4877,28 @@ int gfn_is_loaded (const char *gfnname)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int load_function_package_by_filename (const char *fname, PRN *prn)
+int load_function_package_by_filename (const char *fname,
+				       gretlopt opt,
+				       PRN *prn)
 {
-    fnpkg *pkg = NULL;
+    fnpkg *pkg;
     int err = 0;
 
-    if (function_package_is_loaded(fname, NULL)) {
-	/* already loaded: no-op */
-	fprintf(stderr, "load_function_package_by_filename:\n"
-		" '%s' is already loaded\n", fname);
-    } else {
+    pkg = get_loaded_pkg_by_filename(fname, NULL);
+
+    if (pkg != NULL) {
+	if (opt & OPT_F) {
+	    /* force re-reading from file */
+	    real_function_package_unload(pkg, 1);
+	    pkg = NULL;
+	} else {
+	    /* already loaded: no-op */
+	    fprintf(stderr, "load_function_package_by_filename:\n"
+		    " '%s' is already loaded\n", fname);
+	}
+    }
+
+    if (pkg == NULL) {
 	pkg = read_package_file(fname, &err);
 	if (!err) {
 	    err = real_load_package(pkg);

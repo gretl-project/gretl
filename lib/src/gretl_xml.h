@@ -164,7 +164,7 @@ int gretl_read_gdt_varnames (const char *fname,
 
 char *gretl_get_gdt_description (const char *fname, int *err);
 
-int load_user_XML_file (const char *fname, PRN *prn);
+int load_XML_functions_file (const char *fname, gretlopt opt, PRN *prn);
 
 #ifndef __GTK_DOC_IGNORE__
 

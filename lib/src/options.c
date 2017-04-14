@@ -288,6 +288,7 @@ struct gretl_option gretl_opts[] = {
     { HFPLOT,   OPT_U, "output", 2 },
     { HSK,      OPT_N, "no-squares", 0 },
     { HURST,    OPT_U, "plot", 2 },
+    { INCLUDE,  OPT_F, "force", 0 },
     { INSTALL,  OPT_L, "local", 0 },
     { INSTALL,  OPT_R, "remove", 0 },
     { INSTALL,  OPT_P, "purge", 0 },

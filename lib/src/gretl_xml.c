@@ -4406,7 +4406,7 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
    if we detect that the named file is XML.
 */
 
-int load_user_XML_file (const char *fname, PRN *prn)
+int load_XML_functions_file (const char *fname, gretlopt opt, PRN *prn)
 {
     char *rootname = NULL;
     int err = 0;
@@ -4418,7 +4418,7 @@ int load_user_XML_file (const char *fname, PRN *prn)
 
     if (!strcmp(rootname, "gretl-functions")) {
 	if (has_suffix(fname, ".gfn")) {
-	    err = load_function_package_by_filename(fname, prn);
+	    err = load_function_package_by_filename(fname, opt, prn);
 	} else {
 	    err = read_session_functions_file(fname);
 	}

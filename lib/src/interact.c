@@ -3238,7 +3238,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    pprintf(prn, " %s\n", readfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(readfile)) {
-	    err = load_user_XML_file(readfile, prn);
+	    err = load_XML_functions_file(readfile, cmd->opt, prn);
 	    break;
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(readfile)) {
 	    break;
