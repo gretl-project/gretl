@@ -3010,7 +3010,8 @@ static void gpi_set_flags (gui_package_info *gpi,
 }
 
 /* Use libxml2 to peek inside package and determine its data
-   requirement, without having to load the package into memory.
+   or model requirement, without having to load the package
+   into memory.
 */
 
 static int gfn_peek_requirement (const char *fname, int model)
@@ -3077,13 +3078,14 @@ static int discover_gfn_requirement (const char *pkgname,
 }
 
 /* Figure out whether we need to pay attention to the data requirement
-   of a function package. We don't need to do this if it has a
-   model-window menu attachment, since the package will be shown only
-   if it matches its model-type specification. Neither do we need to
-   do so if the package attaches under the Model menu, since in that
-   case its sensitivity will be governed by the code that polices the
-   overall sensitivity of that menu and its sub-menus (time-series,
-   panel).
+   of a function package in order to set its sensitivity ("grayed out"
+   or not). We don't need to do this if it has a model-window
+   attachment (the package will be added to a model-window menu only
+   if its model-type specification is matched). Neither do we need
+   this if the package attaches under the main-window Model menu: in
+   that case its sensitivity will be governed by the code that sets
+   the overall sensitivity of the Model menu and its sub-menus
+   (time-series, panel).
 */
 
 static int need_gfn_data_req (const char *path)
@@ -3118,11 +3120,13 @@ static int read_packages_file (const char *fname, int *pn, int which)
 	    path = xmlGetProp(cur, (XUC) "path");
 
 	    if (mw) {
+		/* package with a model-window attachment */
 		if (!gretl_xml_get_prop_as_int(cur, "model-requirement", &modelreq)) {
 		    modelreq = discover_gfn_requirement((const char *) name, top, 1);
 		    gpkgs_changed = 1;
 		}
 	    } else {
+		/* a main-window package */
 		need_dr = need_gfn_data_req((const char *) path);
 	    }
 

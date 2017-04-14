@@ -7207,8 +7207,8 @@ static void do_panel_plot (int varnum)
     }
 }
 
-/* time-series plot if appropriate, else frequency
-   plot */
+/* time-series plot or panel plot if appropriate, else
+   frequency plot */
 
 void do_graph_var (int varnum)
 {
