@@ -4901,6 +4901,16 @@ int load_function_package_by_filename (const char *fname,
     if (pkg == NULL) {
 	pkg = read_package_file(fname, &err);
 	if (!err) {
+	    /* Let's double-check that we don't have a
+	       colliding package (it would have to be
+	       with a different filename).
+	    */
+	    fnpkg *oldpkg;
+
+	    oldpkg = get_function_package_by_name(pkg->name);
+	    if (oldpkg != NULL) {
+		real_function_package_unload(oldpkg, 1);
+	    }
 	    err = real_load_package(pkg);
 	} 
     }
@@ -5356,7 +5366,7 @@ static int skip_private_func (ufunc *ufun)
     return skip;
 }
 
-static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
+static int check_func_name (const char *name, ufunc **pfun, PRN *prn)
 {
     int i, err = 0;
 
@@ -5364,20 +5374,21 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
     fprintf(stderr, "check_func_name: '%s'\n", fname);
 #endif
 
-    if (!isalpha((unsigned char) *fname)) {
+    if (!isalpha((unsigned char) *name)) {
 	gretl_errmsg_set(_("Function names must start with a letter"));
 	err = 1;
-    } else if (gretl_command_number(fname)) {
+    } else if (gretl_command_number(name)) {
 	gretl_errmsg_sprintf(_("'%s' is the name of a gretl command"),
-			     fname);
+			     name);
 	err = 1;
-    } else if (function_lookup(fname)) {
+    } else if (function_lookup(name)) {
 	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
-			     fname);
+			     name);
 	err = 1;
     } else {
+	/* @name is OK, now check for existing function of the same name */
 	for (i=0; i<n_ufuns; i++) {
-	    if (!skip_private_func(ufuns[i]) && !strcmp(fname, ufuns[i]->name)) {
+	    if (!skip_private_func(ufuns[i]) && !strcmp(name, ufuns[i]->name)) {
 #if FN_DEBUG
 		fprintf(stderr, "'%s': found an existing function of this name\n", fname);
 #endif
@@ -5976,7 +5987,7 @@ static int get_two_words (const char *s, char *w1, char *w2,
  * @line: command line.
  * @prn: printing struct for feedback.
  *
- * Responds to a command of the form "function ...".  In most
+ * Responds to a statement of the form "function ...".  In most
  * cases, embarks on compilation of a function, but this
  * also handles the construction "function foo delete".
  *
@@ -5991,7 +6002,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     int rettype = 0;
     char s1[FN_NAMELEN];
     char s2[FN_NAMELEN];
-    char *p = NULL, *fname = NULL;
+    char *p = NULL, *name = NULL;
     int err = 0;
 
     if (gretl_function_depth() > 0) {
@@ -6016,11 +6027,12 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
        name.
     */
 
-    fname = s2;
+    name = s2;
     rettype = return_type_from_string(s1, &err);
 
     if (!err) {
-	err = check_func_name(fname, &fun, prn);
+	/* note: this handles a name collision */
+	err = check_func_name(name, &fun, prn);
     }
 
     if (!err) {
@@ -6035,7 +6047,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     if (!err) {
 	err = parse_function_parameters(p, &params, &n_params, 
-					fname, prn);
+					name, prn);
     }
 
     if (err) {
@@ -6043,7 +6055,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     }
 
     if (!err && fun == NULL) {
-	fun = add_ufunc(fname);
+	fun = add_ufunc(name);
 	if (fun == NULL) {
 	    free_params_array(params, n_params);
 	    err = E_ALLOC;
@@ -6056,7 +6068,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 #endif
 
     if (!err) {
-	strcpy(fun->name, fname);
+	strcpy(fun->name, name);
 	fun->params = params;
 	fun->n_params = n_params;
 	fun->rettype = rettype;
