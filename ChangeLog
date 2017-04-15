@@ -1,4 +1,4 @@
-version 2017a, in progress
+2017-04-15 version 2017a
 - Improved parsing for the member-of relation, on both
   the left- and right-hand side of hansl statements
 - Calendar: ensure that the Gregorian calendar is used
