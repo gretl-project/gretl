@@ -27,6 +27,7 @@ version 2017a, in progress
   add a --force option to force re-reading of gfn files
 - "corr" command: add a --plot=filename option; also add
   --matrix option to take data from a named matrix
+- "gnuplot" and "plot" commands: add a --font option
 - "fcast" command: in the case of the --rolling option,
   accept the name of a scalar variable for the steps-ahead
   argument; also respect the last observation specification

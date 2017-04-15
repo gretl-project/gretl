@@ -4959,6 +4959,11 @@
 	  <effect>see below</effect>
         </option>
         <option>
+	  <flag>--font</flag>
+	  <optparm>fontspec</optparm>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--band</flag>
 	  <optparm>bandspec</optparm>
 	  <effect>see below</effect>
@@ -5161,6 +5166,23 @@
 	shown on screen as in interactive mode. If a filename with any
 	extension other than those just mentioned is given, a gnuplot
 	command file is written.
+      </para>
+      <subhead>Specifying a font</subhead>
+      <para>
+	The <opt>font</opt> option can be used to specify a particular
+	font for the plot. The <repl>fontspec</repl> parameter should
+	take the form of the name of a font, optionally followed by
+	a size in points separated from the name by a comma or space,
+	all wrapped in double quotes, as in
+      </para>
+      <code>
+	--font="serif,12"
+      </code>
+      <para>
+	Note that the fonts available to gnuplot will vary by
+	platform, and if you're writing a plot command that is
+	intended to be portable it is best to restrict the font name
+	to the generic <lit>sans</lit> or <lit>serif</lit>.
       </para>
       <subhead>Adding gnuplot commands</subhead>
       <para>

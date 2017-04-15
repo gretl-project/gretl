@@ -473,6 +473,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_Z, "dummy", 0 },
     { PLOT,     OPT_N, "band", 2 },
     { PLOT,     OPT_J, "band-style", 2 },
+    { PLOT,     OPT_W, "font", 2 },
     { PRINT,    OPT_O, "byobs", 0 },
     { PRINT,    OPT_L, "list", 0 },
     { PRINT,    OPT_D, "no-dates", 0 },

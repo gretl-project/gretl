@@ -217,6 +217,19 @@ static int check_plot_data_source (const char *s,
     return err;
 }
 
+static void maybe_unquote_param (char *s)
+{
+    if (*s == '"') {
+	int n;
+
+	shift_string_left(s, 1);
+	n = strlen(s);
+	if (s[n-1] == '"') {
+	    s[n-1] = '\0';
+	}
+    }
+}
+
 static int check_plot_option (const char *s)
 {
     const char *p = NULL;
@@ -259,6 +272,10 @@ static int check_plot_option (const char *s)
     } else {
 	plot.opt |= opt;
 	if (param != NULL) {
+	    if (opt == OPT_W) {
+		/* --font=whatever */
+		maybe_unquote_param(param);
+	    }
 	    err = push_option_param(PLOT, opt, param);
 	    if (err) {
 		fprintf(stderr, "plot option: error pushing param: '%s'\n", s);
