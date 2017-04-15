@@ -120,14 +120,16 @@ gretlcli-mpi.o: gretlcli-mpi.c
 
 .PHONY :
 
-install: $(CLI) installdirs $(INSTALL_MPI) $(INSTALL_BC)
+install: install-cli $(INSTALL_MPI) $(INSTALL_BC)
+
+install-cli: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
 install-mpi: $(MPICLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(MPICLI) $(DESTDIR)$(bindir)/$(MPICLI)
 
 install-bc: makebcdir
-	$(INSTALL) -m 644 $(topsrc)/cli/gretlcli.bc $(DESTDIR)$(bcdir)/gretlcli
+	-$(INSTALL) -m 644 $(topsrc)/cli/gretlcli.bc $(DESTDIR)$(bcdir)/gretlcli
 
 install-strip: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(DESTDIR)$(bindir)/$(CLI)
