@@ -887,12 +887,11 @@ static void maybe_set_small_font (int nplots)
     gp_small_font_size = (nplots > 4)? 6 : 0;
 }
 
-static void 
-write_gnuplot_font_string (char *fstr,
-			   char *ad_hoc_fontspec,
-			   PlotType ptype,
-			   const char *grfont,
-			   double scale)
+static void write_png_font_string (char *fstr,
+				   char *ad_hoc_fontspec,
+				   PlotType ptype,
+				   const char *grfont,
+				   double scale)
 {
     int adhoc = 0;
     
@@ -933,6 +932,26 @@ write_gnuplot_font_string (char *fstr,
 	}
 	/* ensure this setting doesn't outstay its welcome */
 	ad_hoc_font[0] = '\0';
+    }
+}
+
+/* for gnuplot pdfcairo, epscairo output */
+
+static void write_other_font_string (char *fstr, int stdsize)
+{
+    if (ad_hoc_font[0] != '\0') {
+	char fname[128];
+	int nf, fsize = 0;
+
+	nf = split_graph_fontspec(ad_hoc_font, fname, &fsize);
+	if (nf == 2) {
+	    sprintf(fstr, "%s,%d", fname, fsize);
+	} else if (nf == 1) {
+	    sprintf(fstr, "%s,%d", fname, stdsize);
+	}
+	ad_hoc_font[0] = '\0';
+    } else {
+	sprintf(fstr, "sans,%d", stdsize);
     }
 }
 
@@ -1064,18 +1083,22 @@ static char *gretl_pdf_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
+    char font_string[128];
     int ptsize;
 
     ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
 
+    *font_string = '\0';
+    write_other_font_string(font_string, ptsize);
+
     if (flags & GPT_MONO) {
 	sprintf(term_line,
-		"set term pdfcairo noenhanced mono font \"sans,%d\"", 
-		ptsize);
+		"set term pdfcairo noenhanced mono font \"%s\"",
+		font_string);
     } else {
 	sprintf(term_line,
-		"set term pdfcairo noenhanced font \"sans,%d\"", 
-		ptsize);
+		"set term pdfcairo noenhanced font \"%s\"",
+		font_string);
     }
 
     maybe_set_eps_pdf_dims(term_line, ptype, flags);
@@ -1088,18 +1111,22 @@ static char *gretl_eps_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
+    char font_string[128];
     int ptsize;
 
     ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
-    
+
+    *font_string = '\0';
+    write_other_font_string(font_string, ptsize);
+
     if (flags & GPT_MONO) {
 	sprintf(term_line,
-		"set term epscairo noenhanced mono font \"sans,%d\"", 
-		ptsize);
+		"set term epscairo noenhanced mono font \"%s\"",
+		font_string);
     } else {
 	sprintf(term_line,
-		"set term epscairo noenhanced font \"sans,%d\"", 
-		ptsize);
+		"set term epscairo noenhanced font \"%s\"",
+		font_string);
     }
 
     maybe_set_eps_pdf_dims(term_line, ptype, flags);
@@ -1186,8 +1213,8 @@ static char *real_png_term_line (char *term_line,
 
     *font_string = *size_string = *ad_hoc_fontspec = '\0';
 
-    write_gnuplot_font_string(font_string, ad_hoc_fontspec,
-			      ptype, specfont, scale);
+    write_png_font_string(font_string, ad_hoc_fontspec,
+			  ptype, specfont, scale);
     write_png_size_string(size_string, ptype, flags, scale);
 
     if (flags & GPT_MONO) {
@@ -1281,25 +1308,39 @@ void gnuplot_png_set_default_scale (double s)
     }
 }
 
-static void png_font_to_emf (const char *pngfont, char *emfline)
+static void write_emf_font_string (char *fstr)
 {
-    char name[128];
-    int pt;
+    const char *src = NULL;
+    int stdsize = 16;
+    int adhoc = 0;
 
-    if (split_graph_fontspec(pngfont, name, &pt) == 2) {
-	char ptstr[8];
+    if (ad_hoc_font[0] != '\0') {
+	src = ad_hoc_font;
+	adhoc = 1;
+    } else {
+	src = gretl_png_font();
+    }
 
-	if (pt <= 8) {
-	    pt = 12;
-	} else {
-	    pt = 16;
+    if (src != NULL) {
+	char fname[128];
+	int nf, fsize = 0;
+
+	nf = split_graph_fontspec(src, fname, &fsize);
+	if (nf == 2) {
+	    if (adhoc) {
+		/* go with what the user specified */
+		sprintf(fstr, "font \"%s,%d\"", fname, fsize);
+	    } else {
+		/* adjust size to avoid tiny text? */
+		fsize = (fsize <= 8)? 12 : 16;
+		sprintf(fstr, "font \"%s,%d\"", fname, fsize);
+	    }
+	} else if (nf == 1) {
+	    sprintf(fstr, "font \"%s,%d\"", fname, stdsize);
 	}
-
-	strcat(emfline, "'");
-	strcat(emfline, name);
-	strcat(emfline, "' ");
-	sprintf(ptstr, "%d ", pt);
-	strcat(emfline, ptstr);
+	ad_hoc_font[0] = '\0';
+    } else {
+	sprintf(fstr, "font \"sans,%d\"", stdsize);
     }
 }
 
@@ -1307,20 +1348,19 @@ static char *gretl_emf_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
-    const char *grfont = NULL;
-    
-    strcpy(term_line, "set term emf ");
+    char font_string[128];
+
+    *font_string = '\0';
+    write_emf_font_string(font_string);
 
     if (flags & GPT_MONO) {
-	strcat(term_line, "mono dash noenhanced ");
+	strcat(term_line, "set term emf mono dash noenhanced ");
     } else {
-	strcat(term_line, "color noenhanced ");
+	strcat(term_line, "set term emf color noenhanced ");
     }
 
-    /* font spec */
-    grfont = gretl_png_font();
-    if (grfont != NULL && *grfont != '\0') {
-	png_font_to_emf(grfont, term_line);
+    if (*font_string != '\0') {
+	strcat(term_line, font_string);
     }
 
     append_gp_encoding(term_line);
