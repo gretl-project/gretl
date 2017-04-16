@@ -7545,10 +7545,17 @@ static void set_func_error_message (int err, ufunc *u,
 				    int lineno)
 {
     if (err == E_FUNCERR) {
-	/* let the function writer set the message */
-	gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
-			     get_funcerr_message(state));
-    } else if (err == E_STOP) {
+	/* let the function writer set the message? */
+	const char *msg = get_funcerr_message(state);
+
+	if (msg != NULL && strcmp(msg, "none")) {
+	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
+				 get_funcerr_message(state));
+	    return;
+	}
+    }
+
+    if (err == E_STOP) {
 	; /* no-op */
     } else {
 	/* we'll handle this here */

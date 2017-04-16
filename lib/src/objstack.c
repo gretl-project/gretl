@@ -43,6 +43,7 @@ static int n_sys;
 static int n_vars;
 
 static stacker last_model;
+static stacker genr_model;
 
 static GretlObjType get_stacked_type_by_data (void *ptr)
 {
@@ -410,6 +411,13 @@ void set_as_last_model (void *ptr, GretlObjType type)
 	if (ptr != NULL) {
 	    gretl_object_ref(ptr, type);
 	}
+    }
+
+    /* Note: ensure that a newly estimated model supercedes
+       the "genr_model" set by the GUI (fncall.c), if present.
+    */
+    if (ptr != NULL && genr_model.ptr != NULL && genr_model.ptr != ptr) {
+	unset_genr_model();
     }
 
 #if ODEBUG
@@ -1148,8 +1156,6 @@ real_get_obj_string (void *p, GretlObjType type, int idx,
 
     return str;
 }
-
-static stacker genr_model;
 
 void set_genr_model (void *ptr, GretlObjType type)
 {

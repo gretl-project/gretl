@@ -1351,7 +1351,7 @@ static void function_call_dialog (call_info *cinfo)
 	int spinnable = 0;
 	gchar *argtxt;
 
-	if (i == 0) {
+	if (i == 0 && cinfo->n_params > 1) {
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
 	}
 

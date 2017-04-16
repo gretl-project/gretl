@@ -2107,16 +2107,17 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     int i, t, berr;
 
     if (pmod == NULL) {
-	/* get the "last model" */
 	GretlObjType type = 0;
-	void *p = get_last_model(&type);
+	void *p = get_genr_model(&type);
 
 	if (p == NULL || type != GRETL_OBJ_EQN) {
-	    *err = E_DATA;
-	    return NULL;
-	} else {
-	    pmod = p;
+	    p = get_last_model(&type);
+	    if (p == NULL || type != GRETL_OBJ_EQN) {
+		*err = E_DATA;
+		return NULL;
+	    }
 	}
+	pmod = p;
     }
 
     x = malloc(dset->n * sizeof *x);
