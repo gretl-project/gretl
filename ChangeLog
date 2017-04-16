@@ -1,3 +1,7 @@
+version 2017b, in progress
+- "gnuplot" and "plot" commands: support --font option
+  for PDF, EPS and EMF output
+
 2017-04-15 version 2017a
 - Improved parsing for the member-of relation, on both
   the left- and right-hand side of hansl statements
