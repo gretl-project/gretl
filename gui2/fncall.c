@@ -174,7 +174,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
     return cinfo;
 }
 
-static int *mylist;
+static int *mylist; /* custom list constructed by gfn */
 
 static int lmaker_error (ufunc *func, call_info *cinfo)
 {
