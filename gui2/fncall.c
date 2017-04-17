@@ -1496,6 +1496,12 @@ static void function_call_dialog (call_info *cinfo)
 	    sel = combo_arg_selector(cinfo, ptype, i, prior_val);
 	}
 
+	if (sel == NULL) {
+	    /* panic! */
+	    gtk_widget_destroy(cinfo->dlg);
+	    return;
+	}
+
 	add_table_cell(tbl, sel, 1, 2, row);
 
 	/* hook up signals and "+" add buttons for the
