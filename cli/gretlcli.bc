@@ -4,12 +4,12 @@ _gretlcli()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="batch run makepkg instpkg help version quiet tool"
+    opts="batch run makepkg instpkg help version english quiet tool"
     
     case "${prev}" in
         '-b'|'--batch'|'-r'|'--run')
-            local names=$(for x in `ls -1 *.inp`; do echo ${x} ; done )
-            COMPREPLY=( $(compgen -W "${names}" -- ${cur}) )
+            local names=$(for x in `ls -1 *.inp 2>/dev/null`; do echo ${x} ; done)
+            COMPREPLY=($(compgen -W "${names}" -- ${cur}))
             return 0
             ;;
         *)
@@ -26,13 +26,13 @@ _gretlcli()
 				--english
 				--quiet
 				--tool"
-			COMPREPLY=( $(compgen -W "${OPTS[*]}" -- $cur) )
+			COMPREPLY=($(compgen -W "${OPTS[*]}" -- $cur))
 			return 0
 			;;
     esac
     local IFS=$'\n'
     compopt -o filenames
-    COMPREPLY=( $(compgen -f -- $cur) )
+    COMPREPLY=($(compgen -f -- $cur))
     return 0
 }
 complete -F _gretlcli gretlcli
