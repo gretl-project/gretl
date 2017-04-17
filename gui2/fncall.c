@@ -176,7 +176,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 
 static int *mylist; /* custom list constructed by gfn */
 
-static int lmaker_error (ufunc *func, call_info *cinfo)
+static int lmaker_run (ufunc *func, call_info *cinfo)
 {
     PRN *prn;
     int *list = NULL;
@@ -191,6 +191,10 @@ static int lmaker_error (ufunc *func, call_info *cinfo)
 			      dataset, &list, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);
+
+    if (err) {
+	gui_errmsg(err);
+    }
 
     if (!err && list == NULL) {
 	err = 1;
@@ -948,7 +952,7 @@ static GtkWidget *mylist_int_selector (call_info *cinfo, int i)
 	    if (func == NULL) {
 		err = 1;
 	    } else {
-		err = lmaker_error(func, cinfo);
+		err = lmaker_run(func, cinfo);
 	    }
 	}
     }
@@ -1376,7 +1380,7 @@ static gchar *cinfo_pkg_title (call_info *cinfo)
 			   cinfo->pkgver);
 }
 
-static void function_call_dialog (call_info *cinfo)
+static int function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
     GtkWidget *sel, *tbl = NULL;
@@ -1390,13 +1394,13 @@ static void function_call_dialog (call_info *cinfo)
 
     if (open_fncall_dlg != NULL) {
 	gtk_window_present(GTK_WINDOW(open_fncall_dlg));
-	return;
+	return 0;
     }
 
     err = cinfo_args_init(cinfo);
     if (err) {
 	gui_errmsg(err);
-	return;
+	return err;
     }
 
     cinfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1498,8 +1502,8 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (sel == NULL) {
 	    /* panic! */
-	    gtk_widget_destroy(cinfo->dlg);
-	    return;
+	    err = 1;
+	    break;
 	}
 
 	add_table_cell(tbl, sel, 1, 2, row);
@@ -1548,6 +1552,14 @@ static void function_call_dialog (call_info *cinfo)
 			     G_CALLBACK(launch_list_maker),
 			     entry);
 	} 
+    }
+
+    if (err) {
+	/* failed to build all selectors */
+	gtk_widget_destroy(tbl);
+	gtk_widget_destroy(cinfo->dlg);
+	errbox("Setup of function failed");
+	return err;
     }
 	
     if (show_ret) {
@@ -1624,6 +1636,8 @@ static void function_call_dialog (call_info *cinfo)
     }
 
     gtk_widget_show_all(cinfo->dlg);
+
+    return 0;
 }
 
 /* called when defining a matrix for use as an argument:
@@ -2344,7 +2358,7 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
 	    fncall_exec_callback(NULL, cinfo);
 	} else {
 	    /* put up a dialog to collect arguments */
-	    function_call_dialog(cinfo);
+	    err = function_call_dialog(cinfo);
 	}
     } else {
 	cinfo_free(cinfo);
