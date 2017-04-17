@@ -27,6 +27,7 @@
 #define BUNDLE_EXTRA "bundle-extra"
 #define GUI_MAIN     "gui-main"
 #define GUI_PRECHECK "gui-precheck"
+#define LIST_MAKER   "list-maker"
 
 typedef enum {
     BUNDLE_PLAIN,

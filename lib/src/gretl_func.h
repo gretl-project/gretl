@@ -39,6 +39,7 @@ typedef enum {
     UFUN_BUNDLE_EXTRA,
     UFUN_GUI_MAIN,
     UFUN_GUI_PRECHECK,
+    UFUN_LIST_MAKER,
     UFUN_ROLE_MAX
 } UfunRole;
 
@@ -102,6 +103,8 @@ double fn_param_step (const ufunc *fun, int i);
 int fn_param_optional (const ufunc *fun, int i);
 
 int fn_param_uses_xlist (const ufunc *fun, int i);
+
+int fn_param_uses_mylist (const ufunc *fun, int i);
 
 int user_func_get_return_type (const ufunc *fun);
 

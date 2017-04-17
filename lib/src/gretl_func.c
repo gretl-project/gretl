@@ -52,6 +52,7 @@
 #define DDEBUG 0        /* debug the debugger */
 
 #define INT_USE_XLIST (-999)
+#define INT_USE_MYLIST (-777)
 
 typedef struct fn_param_ fn_param;
 typedef struct fn_arg_ fn_arg;
@@ -245,6 +246,7 @@ static struct flag_and_key pkg_lookups[] = {
     { UFUN_BUNDLE_EXTRA, BUNDLE_EXTRA },
     { UFUN_GUI_MAIN,     GUI_MAIN },
     { UFUN_GUI_PRECHECK, GUI_PRECHECK },
+    { UFUN_LIST_MAKER,   LIST_MAKER },
     { -1,                NULL }
 };
 
@@ -874,7 +876,7 @@ int fn_param_optional (const ufunc *fun, int i)
  * fn_param_uses_xlist:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: 1 if parameter @i of function @fun is
  * designed to select an integer based on a gretl
  * model's list of regressors, otherwise 0.
@@ -888,6 +890,26 @@ int fn_param_uses_xlist (const ufunc *fun, int i)
 
     return (fun->params[i].type == GRETL_TYPE_INT &&
 	    fun->params[i].deflt == INT_USE_XLIST);
+}
+
+/**
+ * fn_param_uses_mylist:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ *
+ * Returns: 1 if parameter @i of function @fun is
+ * designed to select an integer based on a custom
+ * list, constructed by the function, otherwise 0.
+ */
+
+int fn_param_uses_mylist (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return 0;
+    }
+
+    return (fun->params[i].type == GRETL_TYPE_INT &&
+	    fun->params[i].deflt == INT_USE_MYLIST);
 }
 
 /**
@@ -2958,6 +2980,27 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	/* not found */
 	pprintf(prn, "%s: %s: no such private function\n", attr, name);
 	return E_DATA;
+    } else if (role == UFUN_LIST_MAKER) {
+	/* this too must be a private function */
+	for (i=0; i<pkg->n_priv; i++) {
+	    if (!strcmp(name, pkg->priv[i]->name)) {
+		u = pkg->priv[i];
+		if (u->rettype != GRETL_TYPE_LIST) {
+		    pprintf(prn, "%s: must return a list\n", attr);
+		    err = E_TYPES;
+		} else if (u->n_params > 0) {
+		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		    err = E_TYPES;
+		}
+		if (!err) {
+		    u->pkg_role = role;
+		}
+		return err; /* found */
+	    }
+	}
+	/* not found */
+	pprintf(prn, "%s: %s: no such private function\n", attr, name);
+	return E_DATA;
     }
 
     for (i=0; i<pkg->n_pub; i++) {
@@ -3037,6 +3080,13 @@ int function_ok_for_package_role (const char *name,
 
     if (role == UFUN_GUI_PRECHECK) {
 	if (u->rettype != GRETL_TYPE_DOUBLE) {
+	    err = E_TYPES;
+	} else if (u->n_params > 0) {
+	    err = E_TYPES;
+	}
+	return !err; /* found */
+    } else if (role == UFUN_LIST_MAKER) {
+	if (u->rettype != GRETL_TYPE_LIST) {
 	    err = E_TYPES;
 	} else if (u->n_params > 0) {
 	    err = E_TYPES;
@@ -3933,7 +3983,7 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
     return list;
 }
 
-static char *pkg_get_special_func (fnpkg *pkg, int role)
+static char *pkg_get_special_func (fnpkg *pkg, UfunRole role)
 {
     int i;
 
@@ -3946,7 +3996,7 @@ static char *pkg_get_special_func (fnpkg *pkg, int role)
     return NULL;
 }
 
-static int pkg_get_special_func_id (fnpkg *pkg, int role)
+static int pkg_get_special_func_id (fnpkg *pkg, UfunRole role)
 {
     int i;
 
@@ -4103,6 +4153,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, GUI_PRECHECK)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_GUI_PRECHECK);
+	} else if (!strcmp(key, LIST_MAKER)) {
+	    ps = (char **) ptr;
+	    *ps = pkg_get_special_func(pkg, UFUN_LIST_MAKER);
 	} else if (!strcmp(key, "gui-attrs")) {
 	    unsigned char *s = (unsigned char *) ptr;
 	    
@@ -5526,6 +5579,8 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	}
     } else if (!strncmp(p, "[$xlist]", 8)) {
 	param->deflt = INT_USE_XLIST;
+    } else if (!strncmp(p, "[$mylist]", 9)) {
+	param->deflt = INT_USE_MYLIST;
     } else {
 	int i, len, nf = colon_count(p) + 1;
 	char *test, valstr[32];

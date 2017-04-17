@@ -93,6 +93,7 @@ static gboolean close_on_OK = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
 static void maybe_record_include (const char *pkgname, int model_id);
+static void set_genr_model_from_vwin (windata_t *vwin);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -171,6 +172,38 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
     cinfo->label = NULL;
 
     return cinfo;
+}
+
+static int *mylist;
+
+static int lmaker_error (ufunc *func, call_info *cinfo)
+{
+    PRN *prn;
+    int *list = NULL;
+    int err = 0;
+
+    free(mylist);
+    mylist = NULL;
+
+    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+    set_genr_model_from_vwin(cinfo->vwin);
+    err = gretl_function_exec(func, GRETL_TYPE_LIST,
+			      dataset, &list, NULL, prn);
+    unset_genr_model();
+    gretl_print_destroy(prn);
+
+    if (!err && list == NULL) {
+	err = 1;
+    }
+
+    if (!err) {
+	mylist = list;
+	list = NULL;
+    }
+
+    free(list);
+
+    return err;
 }
 
 static int cinfo_args_init (call_info *cinfo)
@@ -536,14 +569,14 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 
 static int combo_list_index (const gchar *s, GList *list)
 {
-    GList *mylist = list;
+    GList *tmp = list;
     int i;
 
-    for (i=0; mylist != NULL; i++) {
-	if (!strcmp(s, (gchar *) mylist->data)) {
+    for (i=0; tmp != NULL; i++) {
+	if (!strcmp(s, (gchar *) tmp->data)) {
 	    return i;
 	}
-	mylist = mylist->next;
+	tmp = tmp->next;
     }
     
     return -1;
@@ -849,8 +882,8 @@ static void update_xlist_arg (GtkComboBox *combo,
 static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
 {
     MODEL *pmod;
-    int *xlist;
     GtkWidget *combo;
+    int *xlist;
 
     if (cinfo->vwin == NULL || cinfo->vwin->data == NULL) {
 	return NULL;
@@ -879,6 +912,61 @@ static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 	free(xlist);
     } 
+
+    return combo;
+}
+
+static void update_mylist_arg (GtkComboBox *combo,
+			       call_info *cinfo)
+{
+    int i = widget_get_int(combo, "argnum");
+    int k = gtk_combo_box_get_active(combo);
+
+    g_free(cinfo->args[i]);
+    cinfo->args[i] = g_strdup_printf("%d", mylist[k+1]);
+}
+
+static GtkWidget *mylist_int_selector (call_info *cinfo, int i)
+{
+    GtkWidget *combo = NULL;
+    int err = 0;
+
+    if (cinfo->vwin == NULL || cinfo->vwin->data == NULL ||
+	!(cinfo->flags & MODEL_CALL)) {
+	return NULL;
+    } else {
+	const char *lmaker;
+	ufunc *func;
+
+	function_package_get_properties(cinfo->pkg,
+					"list-maker", &lmaker,
+					NULL);
+	if (lmaker == NULL) {
+	    err = 1;
+	} else {
+	    func = get_function_from_package(lmaker, cinfo->pkg);
+	    if (func == NULL) {
+		err = 1;
+	    } else {
+		err = lmaker_error(func, cinfo);
+	    }
+	}
+    }
+
+    if (!err) {
+	const char *s;
+	int j;
+
+	combo = gtk_combo_box_text_new();
+	widget_set_int(combo, "argnum", i);
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(update_mylist_arg), cinfo);
+	for (j=1; j<=mylist[0]; j++) {
+	    s = dataset->varname[mylist[j]];
+	    combo_box_append_text(combo, s);
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    }
 
     return combo;
 }
@@ -1098,7 +1186,7 @@ static void arg_combo_set_default (call_info *cinfo,
 				   GList *list,
 				   int ptype)
 {
-    GList *mylist = g_list_first(list);
+    GList *tmp = g_list_first(list);
     const char *targname = NULL;
     int i, v, k = 0;
 
@@ -1113,12 +1201,12 @@ static void arg_combo_set_default (call_info *cinfo,
 	if (has_single_arg_of_type(cinfo, ptype) &&
 	    mdata_selection_count() > 1) {
 	    targname = SELNAME;
-	    mylist = g_list_prepend(mylist, SELNAME);
+	    tmp = g_list_prepend(tmp, SELNAME);
 	}
     }    
 
-    for (i=0; mylist != NULL; i++) {
-	gchar *name = mylist->data;
+    for (i=0; tmp != NULL; i++) {
+	gchar *name = tmp->data;
 	int ok = 0;
 
 	if (targname != NULL) {
@@ -1136,7 +1224,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	    k = i;
 	    break;
 	} else {
-	    mylist = g_list_next(mylist);
+	    tmp = g_list_next(tmp);
 	}
     }
  
@@ -1395,6 +1483,8 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (fn_param_uses_xlist(cinfo->func, i)) {
 	    sel = xlist_int_selector(cinfo, i);
+	} else if (fn_param_uses_mylist(cinfo->func, i)) {
+	    sel = mylist_int_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i, prior_val);
 	} else if (ptype == GRETL_TYPE_INT ||
@@ -3559,7 +3649,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
     }
 
     if (!err) {
-	/* "skip" = skip this package 'cos it won't work
+	/* "skip" = skip this package, since it won't work
 	   with the current model */
 	int skip = 0;
 	
@@ -3575,7 +3665,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	    if (func == NULL || precheck_error(func, vwin)) {
 		skip = 1;
 	    }
-	} 
+	}
 	if (!skip) {
 	    add_package_to_menu(gpi, vwin);
 	}
