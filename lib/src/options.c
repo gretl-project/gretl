@@ -61,6 +61,7 @@
 			 c == OMIT ||		\
 			 c == OPEN ||		\
 			 c == QLRTEST ||        \
+			 c == RENAME ||		\
 			 c == RESET ||		\
 			 c == RESTRICT ||	\
 			 c == RMPLOT ||		\
