@@ -324,6 +324,7 @@ int iso_latin_version (void)
 	(gretl_cset_min == 1 || 
 	 gretl_cset_min == 2 ||
 	 gretl_cset_min == 5 ||
+	 gretl_cset_min == 7 ||
 	 gretl_cset_min == 9 ||
 	 gretl_cset_min == 15)) {
 	return gretl_cset_min;
@@ -331,12 +332,19 @@ int iso_latin_version (void)
 
 #ifdef WIN32
     if (gretl_cpage == 1252) {
+	/* Western European */
 	return 1;
     } else if (gretl_cpage == 1250) {
+	/* Central European */
 	return 2;
     } else if (gretl_cpage == 1251) {
+	/* Cyrillic */
 	return 5;
+    } else if (gretl_cpage == 1253) {
+	/* Greek */
+	return 7;
     } else if (gretl_cpage == 1254) {
+	/* Turkish */
 	return 9;
     }
 #endif
@@ -348,6 +356,8 @@ int iso_latin_version (void)
 	    return 2;
 	} else if (!strncmp(lang, "ru", 2)) {
 	    return 5;
+	} else if (!strncmp(lang, "el", 2)) {
+	    return 7;
 	} else if (!strncmp(lang, "tr", 2)) {
 	    return 9;
 	} else if (!strncmp(lang, "uk", 2)) {
