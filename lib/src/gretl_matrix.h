@@ -763,7 +763,7 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   gretlopt opt, int *err);
 
 gretl_matrix *gretl_matrix_shape (const gretl_matrix *A, 
-				  int r, int c);
+				  int r, int c, int *err);
 
 gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A, 
 				      int ttop, int tbot,

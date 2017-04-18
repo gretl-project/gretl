@@ -12548,17 +12548,23 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
  */
 
 gretl_matrix *gretl_matrix_shape (const gretl_matrix *A, 
-				  int r, int c)
+				  int r, int c, int *err)
 {
     gretl_matrix *B;
     int i, k, nA, nB;
 
-    if (r <= 0 || c <= 0 || gretl_is_null_matrix(A)) {
+    if (gretl_is_null_matrix(A) || r < 0 || c < 0) {
+	*err = E_INVARG;
 	return NULL;
+    }
+
+    if (r == 0 && c == 0) {
+	return gretl_null_matrix_new();
     }
     
     B = gretl_matrix_alloc(r, c);
     if (B == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 

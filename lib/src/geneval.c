@@ -9298,7 +9298,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		if (l->t == NUM) {
 		    A = mshape_scalar(l->v.xval, k1, k2, &p->err);
 		} else {
-		    A = gretl_matrix_shape(l->v.m, k1, k2);
+		    A = gretl_matrix_shape(l->v.m, k1, k2, &p->err);
 		}
 	    }
 	}
