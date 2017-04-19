@@ -117,16 +117,16 @@ enum {
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
+	      UNDEF,      /* undefined (allowed in "query" context only) */
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
-	      UFUN,	  /* user-defined function */
-  /* 90 */    RFUN,       /* GNU R function */
+  /* 90 */    UFUN,	  /* user-defined function */
+	      RFUN,       /* GNU R function */
 	      IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
-	      UNDEF,      /* undefined (allowed in "query" context only) */
 	      PTR,        /* miscellaneous pointer */
 	      EOT,	  /* end of transmission */
  /* 100 */    UNK 
