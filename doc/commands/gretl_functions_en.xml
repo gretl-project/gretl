@@ -2493,10 +2493,11 @@
       </fnargs>
       <description>
 	<para>
-	  Defines a list (of named series). Each argument must be
-	  either a named series (given by name or integer ID number),
-	  or a list (given by the name of a previously named list or
-	  by an expression which evaluates to a list).
+	  Defines a list (of named series), given one or more suitable
+	  arguments. Each argument must be either a named series
+	  (given by name or integer ID number) or a list (given by
+	  the name of a previously named list or by an expression
+	  which evaluates to a list).
 	</para>
 	<para>
 	  One point to note: this function simply concatenates the
