@@ -220,7 +220,6 @@ int main (int argc, char **argv)
     char arch[8];
     char *path;
     int x64 = 0;
-    int snapshot = 0;
     int i, n;
 
     if (fgets(line, sizeof line, stdin) == NULL) {
@@ -251,10 +250,6 @@ int main (int argc, char **argv)
     } else {
 	fprintf(stderr, "Making installer script for gretl version %s...\n",
 		version);
-    }
-
-    if (strstr(version, "git")) {
-	snapshot = 1;
     }
 
     preamble(version, x64);
