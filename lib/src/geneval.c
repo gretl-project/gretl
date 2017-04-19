@@ -11064,6 +11064,34 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.a = A;
 	    }
 	}
+    } else if (t->t == F_DEFLIST) {
+	int *li, *full_list = gretl_list_new(0);
+
+	for (i=0; i<k && !p->err; i++) {
+	    li = NULL;
+	    e = eval(n->v.bn.n[i], p);
+	    if (!p->err) {
+		if (ok_list_node(e)) {
+		    li = node_get_list(e, p);
+		} else {
+		    p->err = E_TYPES;
+		}
+	    }
+	    if (!p->err && li[0] > 0) {
+		gretl_list_append_list(&full_list, li, &p->err);
+	    }
+	    free(li);
+	}
+
+	if (p->err) {
+	    free(full_list);
+	} else {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_list_node(p);
+	    if (ret != NULL) {
+		ret->v.ivec = full_list;
+	    }
+	}
     }
 
     return ret;
@@ -13889,6 +13917,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTPVAL:
     case F_MOVAVG:
     case F_DEFARRAY:
+    case F_DEFLIST:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

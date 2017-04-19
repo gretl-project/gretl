@@ -442,6 +442,7 @@ enum {
     F_BOOTPVAL,
     F_MOVAVG,
     F_DEFARRAY,
+    F_DEFLIST,
     F_KSETUP,
     F_BFGSCMAX,
     HF_CLOGFI,

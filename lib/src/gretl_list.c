@@ -1576,6 +1576,54 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
 }
 
 /**
+ * gretl_list_append_list:
+ * @pl1: pointer to priginal list.
+ * @l2: list to append.
+ * @err: location to receive error code
+ *
+ * Creates a list holding the intersection of @l1 and @l2.
+ *
+ * Returns: new list on success, NULL on error.
+ */
+
+int *gretl_list_append_list (int **pl1, const int *l2, int *err)
+{
+    int *tmp, *l1 = NULL;
+    int n, n1, n2;
+
+    if (pl1 == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    l1 = *pl1;
+    n1 = l1 == NULL ? 0 : l1[0];
+    n2 = l2 == NULL ? 0 : l2[0];
+    n = n1 + n2;
+
+    if (n2 == 0) {
+	/* nothing to be appended */
+	return l1;
+    }
+
+    tmp = realloc(l1, (n + 1) * sizeof *tmp);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    } else {
+	int i, j = n1 + 1;
+
+	tmp[0] = n;
+	for (i=1; i<=n1; i++) {
+	    tmp[j++] = l2[i];
+	}
+	*pl1 = tmp;
+    }
+
+    return *pl1;
+}
+
+/**
  * gretl_list_intersection:
  * @l1: list of integers.
  * @l2: list of integers.

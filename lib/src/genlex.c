@@ -453,6 +453,7 @@ struct str_table funcs[] = {
     { F_BOOTPVAL,  "bootpval" },
     { F_SEASONALS, "seasonals" },
     { F_DEFARRAY,  "defarray" },
+    { F_DEFLIST,   "deflist" },
     { F_KSETUP,    "ksetup" },
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },

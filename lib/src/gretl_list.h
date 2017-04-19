@@ -85,6 +85,8 @@ int *gretl_list_union (const int *l1, const int *l2, int *err);
 
 int *gretl_list_intersection (const int *l1, const int *l2, int *err);
 
+int *gretl_list_append_list (int **pl1, const int *l2, int *err);
+
 int *gretl_list_product (const int *X, const int *Y, 
 			 DATASET *dset, int *err);
 
