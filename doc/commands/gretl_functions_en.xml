@@ -2487,7 +2487,7 @@
       </description>
     </function>
 
-    <function name="deflist" section="data-utils" output="seebelow">
+    <function name="deflist" section="data-utils" output="list">
       <fnargs>
 	<fnarg type="varargs"/>
       </fnargs>
@@ -2497,6 +2497,14 @@
 	  either a named series (given by name or integer ID number),
 	  or a list (given by the name of a previously named list or
 	  by an expression which evaluates to a list).
+	</para>
+	<para>
+	  One point to note: this function simply concatenates the
+	  series and/or lists given as arguments to produce the list
+	  that it returns. If the intent is that the return value does
+	  not contain duplicates (does not reference any given series
+	  more than once), it is up to the caller to ensure that
+	  requirement is satisfied.
 	</para>
       </description>
     </function>
