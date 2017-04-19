@@ -2485,7 +2485,21 @@
 	  See also <fncref targ="array"/>.
 	</para>
       </description>
-    </function>        
+    </function>
+
+    <function name="deflist" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Defines a list (of named series). Each argument must be
+	  either a named series (given by name or integer ID number),
+	  or a list (given by the name of a previously named list or
+	  by an expression which evaluates to a list).
+	</para>
+      </description>
+    </function>
 
     <function name="deseas" section="filters" output="series">
       <fnargs>
