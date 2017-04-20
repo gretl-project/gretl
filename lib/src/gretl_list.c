@@ -1614,7 +1614,7 @@ int *gretl_list_append_list (int **pl1, const int *l2, int *err)
 	int i, j = n1 + 1;
 
 	tmp[0] = n;
-	for (i=1; i<=n1; i++) {
+	for (i=1; i<=n2; i++) {
 	    tmp[j++] = l2[i];
 	}
 	*pl1 = tmp;
