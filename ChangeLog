@@ -1,9 +1,12 @@
 version 2017b, in progress
-- "gnuplot" and "plot" commands: support --font option
-  for PDF, EPS and EMF output
-- "rename" command: add --quiet option
+- "gnuplot" and "plot" commands: support --font option for
+  PDF, EPS and EMF output
+- "rename" command: add a --quiet option
 - New function deflist() for defining a list (of named
   series)
+- Fix bug: ensure that the $model accessior (bundle) is
+  available to function packages that attach to a model
+  window
 
 2017-04-15 version 2017a
 - Improved parsing for the member-of relation, on both
