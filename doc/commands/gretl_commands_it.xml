@@ -815,7 +815,7 @@
     </gui-access>
   </command>
 
-  <command name="arima" section="Estimation" label="Stima ARMA/ARIMA">
+  <command name="arima" section="Estimation" label="Modello ARIMA">
 
     <usage>
       <arguments>
@@ -882,6 +882,11 @@
     </usage>
 
     <description>
+
+      <para>
+	Nota: <lit>arma</lit> è un sinomimo di questo comando.
+      </para>
+
       <para context="cli">
 	Se non viene fornita una lista di
 	<repl>variabili-indipendenti</repl>, stima un modello
@@ -1083,6 +1088,12 @@
 
   </command>
  
+  <command name="arma" section="Estimation" label="ARMA model">
+    <para>
+      Vedi <cmdref targ="arima"/>; <lit>arma</lit> è un alias.
+    </para>
+  </command>
+
   <command name="bfgs-config" section="Estimation" label="BFGS options"
     context="gui">
     <description>
@@ -7207,6 +7218,27 @@
 	da creare e deve avere estensione <lit>.gfn</lit>. Si veda
 	<guideref targ="chap:functions"/> per dettagli.
       </para>
+      <subhead>Modalità gfn</subhead>
+      <para>
+	Crea un file gfn. Si assume che sia accessibile un file di
+	specificazione del pacchetto, con lo stesso nome di
+	<repl>filename</repl> ma con estensione <lit>.spec</lit>;
+	devono anche esistere tutti gli eventuali file ausiliatri in
+	esso menzionati. Infone, si assume che tutte le funzioni da
+	inserire nel pacchetto siano presenti in memoria.
+      </para>
+      <subhead>Modalità zip</subhead>
+      <para>
+	Scrive un pacchetto di tipo zip (gfn più materiale extra). Se
+	viene trovato un file gfn con lo stesso nome di
+	<repl>filename</repl>, gretl cercherà due file corrispondenti
+	con estensione <lit>inp</lit> e
+	<lit>spec</lit>: se vengono trovati entrambi e almeno uno di
+	essi è più recente del file gfn, allora quest'ultimo viene
+	ricreato, altrimenti viene usato quello esistente. Se il file
+	non esiste, gretl creerà il file gfn come prima cosa.
+      </para>
+      <subhead>Opzioni gfn</subhead>
       <para>
 	Le opzioni consentono la scrittura di file ausiliari per l'uso
 	con gli <quote>addon</quote> di gretl. Il file indice è un
@@ -7215,8 +7247,14 @@
 	estensione <lit>.xml</lit>. Il file di traduzioni contiene le
 	stringhe da tradurre del pacchetto, in formato C; per il
 	pacchetto <lit>pippo</lit> questo file deve chiamarsi
-	<lit>pippo-i18n.c</lit>.
+	<lit>pippo-i18n.c</lit>. Questi file non vengono prodotti in
+	modalità zip ed esiste un file gfn precedente.
       </para>
+      <para>
+	Per maggiori dettagli, consultare la <book>Gretl Function
+	Package Guide</book>.
+      </para>
+      
     </description>
 
     <gui-access>
