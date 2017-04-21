@@ -826,7 +826,7 @@
 
   </command>
 
-  <command name="arima" section="Estimation" label="ARMA model">
+  <command name="arima" section="Estimation" label="ARIMA model">
 
     <usage>
       <arguments>
@@ -893,6 +893,10 @@
     </usage>
 
     <description>
+
+      <para>
+	Note: <lit>arma</lit> is an acceptable alias for this command.
+      </para>
 
       <para context="cli">
 	If no <repl>indepvars</repl> list is given, estimates a
@@ -1092,6 +1096,12 @@
       <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
+  </command>
+
+  <command name="arma" section="Estimation" label="ARMA model">
+    <para>
+      See <cmdref targ="arima"/>; <lit>arma</lit> is an alias.
+    </para>
   </command>
 
   <command name="bfgs-config" section="Estimation" label="BFGS options"
