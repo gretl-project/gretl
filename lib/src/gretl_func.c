@@ -3652,6 +3652,41 @@ static int cli_build_zip_package (const char *fname,
     return err;
 }
 
+static int should_rebuild_gfn (const char *gfnname)
+{
+    char testname[FILENAME_MAX];
+    struct stat b1, b2, b3;
+    int err;
+
+    err = gretl_stat(gfnname, &b1);
+    if (err) {
+	/* gfn not found: so have to rebuild */
+	return 1;
+    }
+
+    switch_ext(testname, gfnname, "inp");
+    err = gretl_stat(testname, &b2);
+    if (err) {
+	/* no corresponding inp: can't rebuild */
+	return 0;
+    }
+
+    switch_ext(testname, gfnname, "spec");
+    err = gretl_stat(testname, &b3);
+    if (err) {
+	/* no corresponding spec: can't rebuild */
+	return 0;
+    }
+
+    if (b2.st_mtime > b1.st_mtime ||
+	b3.st_mtime > b1.st_mtime) {
+	/* inp or spec is newer than gfn */
+	return 1;
+    }
+
+    return 0;
+}
+
 /**
  * create_and_write_function_package:
  * @fname: filename for function package.
@@ -3677,15 +3712,8 @@ int create_and_write_function_package (const char *fname,
 
     if (has_suffix(fname, ".zip")) {
 	/* building a zip package */
-	FILE *fp;
-
 	switch_ext(gfnname, fname, "gfn");
-	fp = gretl_fopen(gfnname, "rb"); /* 2017-02-22: was "r" */
-	if (fp != NULL) {
-	    /* gfn is already made */
-	    build_gfn = 0;
-	    fclose(fp);
-	}
+	build_gfn = should_rebuild_gfn(gfnname);
 	build_zip = 1;
     } else {
 	/* just building a gfn file */

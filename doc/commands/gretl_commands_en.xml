@@ -7380,11 +7380,13 @@
       </para>
       <subhead>Zip mode</subhead>
       <para>
-	Writes a zip package file (gfn plus other materials). If
-	a gfn file of the same basename as <repl>filename</repl>
-	is found, it forms the basis of the zip package. If no
-	gfn file is found, the program first attempts to build
-	the gfn, as described above.
+	Writes a zip package file (gfn plus other materials).  If a
+	gfn file of the same basename as <repl>filename</repl> is
+	found, gretl checks for corresponding <lit>inp</lit> and
+	<lit>spec</lit> files: if these are both found and at least
+	one of them is newer than the gfn file then the gfn is
+	rebuilt, otherwise the existing gfn is used. If no such file
+	is found, gretl first attempts to build the gfn.
       </para>
       <subhead>Gfn options</subhead>
       <para>
