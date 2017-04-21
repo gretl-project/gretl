@@ -5408,22 +5408,19 @@ static void build_arma_spinners (selector *sr)
     GtkAdjustment *adj;
     gdouble vmax, val;
     gboolean freeform;
-#if 0
-    const char *strs[] = {
-	N_("AR"),
-	N_("I"),
-	N_("MA")
-    };
-#else
     const char *strs[] = {
 	N_("AR order:"),
 	N_("Difference:"),
 	N_("MA order:")
     };
-#endif
+    const char *sstrs[] = {
+	N_("AR"),
+	N_("I"),
+	N_("MA")
+    };
     int i, j;
 
-    if (dataset->pd > 1) {
+    if (0 && dataset->pd > 1) {
 	vbox_add_vwedge(sr->vbox);
 	lbl = arma_aux_label(0);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
@@ -5487,13 +5484,11 @@ static void build_arma_spinners (selector *sr)
 
     if (dataset->pd > 1) {
 	vbox_add_vwedge(sr->vbox);
-
-	lbl = arma_aux_label(1);
-	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
-
 	hbox = gtk_hbox_new(FALSE, 5);
+	lbl = arma_aux_label(1);
+	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
 	for (i=0; i<3; i++) {
-	    lbl = gtk_label_new(_(strs[i]));
+	    lbl = gtk_label_new(_(sstrs[i]));
 	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
 	    val = (i==0)? arma_P : (i==1)? arima_D : arma_Q;
 	    vmax = (i == 1)? 2 : 4;
@@ -5903,15 +5898,18 @@ static void build_selector_switches (selector *sr)
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     }
 
-    if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||
+    if (sr->ci == ARMA) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	vbox_add_vwedge(sr->vbox);
+	tmp = gtk_check_button_new_with_label(_("Include a constant"));
+	pack_switch_in(hbox, tmp, sr, arma_const, TRUE, OPT_N, 0);
+	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+	pack_switch_in(hbox, tmp, sr, verbose, FALSE, OPT_V, 0);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    } else if (sr->ci == TOBIT || sr->ci == GARCH ||
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT ||
 	sr->ci == BIPROBIT || sr->ci == REPROBIT) {
-	if (sr->ci == ARMA) {
-	    vbox_add_vwedge(sr->vbox);
-	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
-	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
-	}
 	if (sr->ci == GARCH) {
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, garch_const, TRUE, OPT_N, 0);
