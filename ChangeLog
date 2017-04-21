@@ -7,6 +7,7 @@ version 2017b, in progress
 - Fix bug: ensure that the $model accessior (bundle) is
   available to function packages that attach to a model
   window
+- Validate $-bundles as legitimate function arguments
 
 2017-04-15 version 2017a
 - Improved parsing for the member-of relation, on both

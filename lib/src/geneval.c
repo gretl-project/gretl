@@ -8203,6 +8203,17 @@ static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
     return b;
 }
 
+static NODE *dollar_bundle_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_bundle_node(p);
+
+    if (ret != NULL) {
+	ret->v.b = bvar_get_bundle(n, p);
+    }
+
+    return ret;
+}
+
 static NODE *type_string_node (NODE *n, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -12925,10 +12936,12 @@ static NODE *eval (NODE *t, parser *p)
     p->aux = t->aux;
 
     switch (t->t) {
-    case DBUNDLE:
     case MSPEC:
     case EMPTY:
 	ret = t;
+	break;
+    case DBUNDLE:
+	ret = dollar_bundle_node(t, p);
 	break;
     case NUM:
     case SERIES:
