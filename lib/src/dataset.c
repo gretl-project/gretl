@@ -1772,7 +1772,6 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 		pprintf(prn, _("Deleted %d variables"), d1);
 	    }
 	    pprintf(prn, " (%s)\n", _("some data were in use"));
-	    
 	}
     }
 

@@ -9926,6 +9926,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 		if (maybe_prune_delete_list(cmd->list)) {
 		    if (cmd->list[0] == 0) {
 			pputs(prn, _("No series were deleted"));
+			pputc(prn, '\n');
 			if (cmd->param == NULL) {
 			    break;
 			}
