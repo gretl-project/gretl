@@ -2893,8 +2893,10 @@ void gretl_list_print (const int *list, const DATASET *dset,
     int testlen = 62;
     int i, li, len = 0;
 
-    if (list == NULL || list[0] == 0) {
+    if (list == NULL) {
 	pputs(prn, "null\n");
+    } else if (list[0] == 0) {
+	pputs(prn, "empty\n");
     } else {
 	for (i=1; i<=list[0]; i++) {
 	    li = list[i];
