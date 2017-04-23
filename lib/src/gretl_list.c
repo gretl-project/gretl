@@ -3054,6 +3054,8 @@ int *list_from_matrix (const gretl_matrix *m, const DATASET *dset,
 	    for (i=0; i<k && !*err; i++) {
 		v = gretl_int_from_double(m->val[i], err);
 		if (!*err && (v < 0 || v >= dset->v)) {
+		    gretl_errmsg_sprintf("list from vector: series ID %d "
+					 "is out of bounds", v);
 		    *err = E_UNKVAR;
 		}
 	    }
