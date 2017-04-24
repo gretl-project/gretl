@@ -8296,23 +8296,35 @@ static GretlType gretl_type_of (int t)
     }
 }
 
-static int lhs_type_check (GretlType spec, GretlType got,
-			   int t)
+/* note: we come here only if we setting a bundle-member or
+   an element of an array
+*/
+
+static int lhs_type_check (GretlType spec, GretlType rhs,
+			   GretlType rhs_orig, int t)
 {
-    if (spec != 0 && spec != got) {
+    int err = 0;
+
+    if (spec != 0 && spec != rhs) {
 	if (t == BUNDLE) {
-	    gretl_errmsg_sprintf(_("Expected %s but got %s"),
-				 gretl_type_get_name(spec),
-				 gretl_type_get_name(got));
+	    if (spec == GRETL_TYPE_LIST && rhs_orig == spec &&
+		rhs == GRETL_TYPE_MATRIX) {
+		gretl_warnmsg_set(_("storing list as row vector"));
+	    } else {
+		gretl_errmsg_sprintf(_("Expected %s but got %s"),
+				     gretl_type_get_name(spec),
+				     gretl_type_get_name(rhs));
+		err = E_TYPES;
+	    }
 	} else {
 	    gretl_errmsg_sprintf(_("Specified type %s does not match array type %s"),
 				 gretl_type_get_name(spec),
-				 gretl_type_get_name(got));
+				 gretl_type_get_name(rhs));
+	    err = E_TYPES;
 	}
-	return E_TYPES;
-    } else {
-	return 0;
     }
+
+    return err;
 }
 
 static void *get_mod_assign_result (void *lp, GretlType ltype,
@@ -8470,6 +8482,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     NODE *lh2 = lhs->v.b2.r;
     GretlType targ = 0;
     GretlType type = 0;
+    GretlType orig = 0;
     gretl_bundle *bundle;
     void *ptr = NULL;
     char *key = NULL;
@@ -8504,7 +8517,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	lp = gretl_bundle_get_data(bundle, key, &ltype, &size, &err);
 	if (!err) {
 	    targ = gretl_type_of(p->targ);
-	    err = lhs_type_check(targ, ltype, BUNDLE);	    
+	    err = lhs_type_check(targ, ltype, orig, BUNDLE);
 	}
 	if (p->op == B_DOTASN) {
 	    /* accepted only for matrices */
@@ -8621,8 +8634,8 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case LIST:
-	    /* FIXME list/matrix equivocation? */
 	    ptr = list_to_matrix(rhs->v.ivec, &err);
+	    orig = GRETL_TYPE_LIST;
 	    type = GRETL_TYPE_MATRIX;
 	    donate = 1;
 	    break;
@@ -8632,9 +8645,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	}
     }
 
-     if (!err) {
+    if (!err) {
 	/* check for result type-incompatible with user's spec */
-	err = lhs_type_check(targ, type, BUNDLE);
+	err = lhs_type_check(targ, type, orig, BUNDLE);
     }
 
  push_data:
@@ -8723,7 +8736,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 
     atype = gretl_array_get_content_type(array);
     targ = gretl_type_of(p->targ);
-    err = lhs_type_check(targ, atype, ARRAY);
+    err = lhs_type_check(targ, atype, 0, ARRAY);
 
     idx--; /* convert index to 0-based */
 
