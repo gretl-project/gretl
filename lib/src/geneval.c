@@ -5169,7 +5169,7 @@ int *node_get_list (NODE *n, parser *p)
     } else if (dataset_dum(n)) {
 	list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
-	list = list_from_matrix(n->v.m, p->dset, &p->err);
+	list = gretl_list_from_vector(n->v.m, p->dset, &p->err);
     } else {
 	p->err = E_TYPES;
     }
@@ -8338,27 +8338,21 @@ static GretlType gretl_type_of (int t)
 */
 
 static int lhs_type_check (GretlType spec, GretlType rhs,
-			   GretlType rhs_orig, int t)
+			   int t)
 {
     int err = 0;
 
     if (spec != 0 && spec != rhs) {
 	if (t == BUNDLE) {
-	    if (spec == GRETL_TYPE_LIST && rhs_orig == spec &&
-		rhs == GRETL_TYPE_MATRIX) {
-		gretl_warnmsg_set(_("storing list as row vector"));
-	    } else {
-		gretl_errmsg_sprintf(_("Expected %s but got %s"),
-				     gretl_type_get_name(spec),
-				     gretl_type_get_name(rhs));
-		err = E_TYPES;
-	    }
+	    gretl_errmsg_sprintf(_("Expected %s but got %s"),
+				 gretl_type_get_name(spec),
+				 gretl_type_get_name(rhs));
 	} else {
 	    gretl_errmsg_sprintf(_("Specified type %s does not match array type %s"),
 				 gretl_type_get_name(spec),
 				 gretl_type_get_name(rhs));
-	    err = E_TYPES;
 	}
+	err = E_TYPES;
     }
 
     return err;
@@ -8519,7 +8513,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     NODE *lh2 = lhs->v.b2.r;
     GretlType targ = 0;
     GretlType type = 0;
-    GretlType orig = 0;
     gretl_bundle *bundle;
     void *ptr = NULL;
     char *key = NULL;
@@ -8554,7 +8547,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	lp = gretl_bundle_get_data(bundle, key, &ltype, &size, &err);
 	if (!err) {
 	    targ = gretl_type_of(p->targ);
-	    err = lhs_type_check(targ, ltype, orig, BUNDLE);
+	    err = lhs_type_check(targ, ltype, BUNDLE);
 	}
 	if (p->op == B_DOTASN) {
 	    /* accepted only for matrices */
@@ -8636,6 +8629,12 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 		    type = GRETL_TYPE_SERIES;
 		    size = p->dset->n;
 		}
+	    } else if (targ == GRETL_TYPE_LIST) {
+		ptr = gretl_list_from_vector(rhs->v.m, p->dset, &p->err);
+		if (!p->err) {
+		    type = GRETL_TYPE_LIST;
+		    donate = 1;
+		}
 	    } else {
 		ptr = rhs->v.m;
 		type = GRETL_TYPE_MATRIX;
@@ -8671,9 +8670,17 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case LIST:
-	    ptr = rhs->v.ivec;
-	    type = GRETL_TYPE_LIST;
-	    donate = is_tmp_node(rhs);
+	    if (targ == GRETL_TYPE_MATRIX) {
+		ptr = gretl_list_to_vector(rhs->v.ivec, &p->err);
+		if (!p->err) {
+		    type = GRETL_TYPE_MATRIX;
+		    donate = 1;
+		}
+	    } else {
+		ptr = rhs->v.ivec;
+		type = GRETL_TYPE_LIST;
+		donate = is_tmp_node(rhs);
+	    }
 	    break;
 	default:
 	    err = E_TYPES;
@@ -8683,7 +8690,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (!err) {
 	/* check for result type-incompatible with user's spec */
-	err = lhs_type_check(targ, type, orig, BUNDLE);
+	err = lhs_type_check(targ, type, BUNDLE);
     }
 
  push_data:
@@ -8772,7 +8779,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 
     atype = gretl_array_get_content_type(array);
     targ = gretl_type_of(p->targ);
-    err = lhs_type_check(targ, atype, 0, ARRAY);
+    err = lhs_type_check(targ, atype, ARRAY);
 
     idx--; /* convert index to 0-based */
 
@@ -13443,9 +13450,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case DBMEMB:
 	/* name of $ bundle plus string */
-	if (l->t == DBUNDLE && r->t == STR) {
+	if ((l->t == DBUNDLE || l->t == BUNDLE) && r->t == STR) {
 	    ret = get_bundle_value(l, r, p);
-	} else if (l->t == DBUNDLE) {
+	} else if (l->t == DBUNDLE || l->t == BUNDLE) {
 	    node_type_error(t->t, 1, STR, r, p);
 	} else {
 	    node_type_error(t->t, 0, DBUNDLE, l, p);
@@ -15481,7 +15488,7 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
     } else if (r->t == SERIES) {
 	m = series_to_matrix(r->v.xvec, p, prechecked);
     } else if (r->t == LIST) {
-	m = gretl_list_to_matrix(r->v.ivec, &p->err);
+	m = gretl_list_to_vector(r->v.ivec, &p->err);
     } else if (r->t == MAT && is_tmp_node(r)) {
 	/* result matrix is newly allocated, steal it */
 #if EDEBUG

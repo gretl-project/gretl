@@ -46,11 +46,16 @@ int *gretl_list_copy_from_pos (const int *src, int pos);
 
 int *gretl_list_from_string (const char *str, int *err);
 
-int *gretl_list_from_vector (const gretl_vector *v, int *err);
-
 int *gretl_list_from_varnames (const char *str, 
 			       const DATASET *dset,
 			       int *err);
+
+int *gretl_list_from_vector (const gretl_matrix *v, 
+			     const DATASET *dset,
+			     int *err);
+
+int *gretl_auxlist_from_vector (const gretl_matrix *v, 
+				int *err);
 
 char *gretl_list_to_numeric_string (const int *list);
 
@@ -58,7 +63,7 @@ char *gretl_list_to_string (const int *list,
 			    const DATASET *dset,
 			    int *err);
 
-gretl_matrix *gretl_list_to_matrix (const int *list, int *err);
+gretl_matrix *gretl_list_to_vector (const int *list, int *err);
 
 char *gretl_list_to_lags_string (const int *list, int *err);
 
@@ -154,10 +159,6 @@ int remember_list (const int *list, const char *name, PRN *prn);
 void gretl_list_print (const int *list, 
 		       const DATASET *dset,
 		       PRN *prn);
-
-int *list_from_matrix (const gretl_matrix *m, 
-		       const DATASET *dset,
-		       int *err);
 
 int *varname_match_list (const DATASET *dset, 
 			 const char *pattern,

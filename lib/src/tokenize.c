@@ -1740,7 +1740,7 @@ static int *get_auxlist (cmd_token *tok, int *err)
     } else {
 	gretl_matrix *m = get_matrix_by_name(tok->s);
 
-	alist = gretl_list_from_vector(m, err);
+	alist = gretl_auxlist_from_vector(m, err);
     }
 
     return alist;

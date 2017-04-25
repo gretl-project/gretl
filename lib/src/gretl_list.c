@@ -861,36 +861,6 @@ int *gretl_list_from_varnames (const char *str,
     return list;
 }
 
-/**
- * gretl_list_from_vector:
- * @v: source vector.
- *
- * Returns: a newly allocated gretl list containing the values
- * in @v, or NULL on failure. Note that it is an error if
- * @v is NULL, or is not a vector.
- */
-
-int *gretl_list_from_vector (const gretl_vector *v, int *err)
-{
-    int i, n = gretl_vector_get_length(v);
-    int *list = NULL;
-
-    if (n == 0) {
-	*err = E_DATA;
-    } else {
-	list = gretl_list_new(n);
-	if (list == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    for (i=0; i<n; i++) {
-		list[i+1] = (int) v->val[i];
-	    }
-	}
-    }
-
-    return list;
-}
-
 #define LN_10 2.30258509299404590
 
 static int integer_length (int k)
@@ -1025,7 +995,7 @@ char *gretl_list_to_string (const int *list,
 }
 
 /**
- * gretl_list_to_matrix:
+ * gretl_list_to_vector:
  * @list: array of integers.
  * @err: location to receive error code.
  * 
@@ -1033,7 +1003,7 @@ char *gretl_list_to_string (const int *list,
  * or NULL on failure.
  */
 
-gretl_matrix *gretl_list_to_matrix (const int *list, int *err)
+gretl_matrix *gretl_list_to_vector (const int *list, int *err)
 {
     gretl_vector *v = NULL;
 
@@ -3037,41 +3007,42 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 
 /**
  * list_from_matrix:
- * @m: matrix (must be a vector).
+ * @v: matrix (must be a vector).
  * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
- * Tries to interpret the matrix @m as a list of ID
- * numbers of series. This can work only if @m is a
+ * Tries to interpret the matrix @v as a list of ID
+ * numbers of series. This can work only if @v is a
  * vector, and all its elements have integer values
  * k satisfying 0 <= k < v, where v is the number
- * of series in @dset. In the special case where @m
+ * of series in @dset. In the special case where @v
  * is a null matrix, an empty list is returned.
  *
  * Returns: a gretl list, or NULL on failure.
  */
 
-int *list_from_matrix (const gretl_matrix *m, const DATASET *dset,
-		       int *err)
+int *gretl_list_from_vector (const gretl_matrix *v,
+			     const DATASET *dset,
+			     int *err)
 {
     int *list = NULL;
 
-    if (gretl_is_null_matrix(m)) {
+    if (gretl_is_null_matrix(v)) {
 	list = gretl_null_list();
 	if (list == NULL) {
 	    *err = E_ALLOC;
 	}
     } else {
-	int i, v, k = gretl_vector_get_length(m);
+	int i, vi, k = gretl_vector_get_length(v);
 
 	if (k == 0) {
 	    *err = E_TYPES;
 	} else {
 	    for (i=0; i<k && !*err; i++) {
-		v = gretl_int_from_double(m->val[i], err);
-		if (!*err && (v >= dset->v || (v < 0 && v != LISTSEP))) {
+		vi = gretl_int_from_double(v->val[i], err);
+		if (!*err && (vi >= dset->v || (vi < 0 && vi != LISTSEP))) {
 		    gretl_errmsg_sprintf("list from vector: series ID %d "
-					 "is out of bounds", v);
+					 "is out of bounds", vi);
 		    *err = E_UNKVAR;
 		}
 	    }
@@ -3081,9 +3052,44 @@ int *list_from_matrix (const gretl_matrix *m, const DATASET *dset,
 		    *err = E_ALLOC;
 		} else {
 		    for (i=0; i<k; i++) {
-			list[i+1] = (int) m->val[i];
+			list[i+1] = (int) v->val[i];
 		    }
 		}
+	    }
+	}
+    }
+
+    return list;
+}
+
+/**
+ * gretl_auxlist_from_vector:
+ * @v: source vector.
+ * @err: location to receive error code.
+ *
+ * Unlike gretl_list_from_vector() this function does not
+ * require that the elements of @v are valid series IDs. They
+ * may represent a set of orders.
+ *
+ * Returns: a newly allocated gretl list containing the values
+ * in @v, or NULL on failure. Note that it is an error if
+ * @v is NULL, or is not a vector.
+ */
+
+int *gretl_auxlist_from_vector (const gretl_vector *v, int *err)
+{
+    int i, n = gretl_vector_get_length(v);
+    int *list = NULL;
+
+    if (n == 0) {
+	*err = E_DATA;
+    } else {
+	list = gretl_list_new(n);
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		list[i+1] = (int) v->val[i];
 	    }
 	}
     }

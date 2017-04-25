@@ -265,12 +265,12 @@ int llc_test_driver (const char *param, const int *list,
     } else if (*param == '{') {
 	m = generate_matrix(param, dset, &err);
 	if (!err) {
-	    plist = gretl_list_from_vector(m, &err);
+	    plist = gretl_auxlist_from_vector(m, &err);
 	}
 	gretl_matrix_free(m);
     } else if (gretl_is_matrix(param)) {
 	m = get_matrix_by_name(param);
-	plist = gretl_list_from_vector(m, &err);
+	plist = gretl_auxlist_from_vector(m, &err);
     } else if (integer_string(param)) {
 	p0 = atoi(param);
     } else if (gretl_is_scalar(param)) {
