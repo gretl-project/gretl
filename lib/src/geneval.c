@@ -8098,7 +8098,7 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    p->err = E_DATA;
 	}
     } else if (type == GRETL_TYPE_LIST) {
-	int *list = (int *) val;
+	const int *list = (const int *) val;
 
 	p->err = bundled_list_check(list, p->dset);
 	if (!p->err) {
