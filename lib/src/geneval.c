@@ -5170,6 +5170,40 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+int *list_from_strings_array (gretl_array *a, parser *p)
+{
+    GretlType type = gretl_array_get_type(a);
+    int *list = NULL;
+
+    if (type != GRETL_TYPE_STRINGS) {
+	p->err = E_TYPES;
+    } else {
+	int i, vi, n = 0;
+	char **S = gretl_array_get_strings(a, &n);
+
+	for (i=0; i<n && !p->err; i++) {
+	    vi = current_series_index(p->dset, S[i]);
+	    if (vi < 0) {
+		gretl_errmsg_sprintf("'%s' is not a known series", S[i]);
+		p->err = E_UNKVAR;
+	    }
+	}
+
+	if (!p->err) {
+	    list = gretl_list_new(n);
+	    if (list == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    list[i+1] = current_series_index(p->dset, S[i]);
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
 /* get an *int list from node @n: note that the list is always
    newly allocated, and so should be freed by the caller if
    it's just for temporary use
@@ -11143,7 +11177,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    li = NULL;
 	    e = eval(n->v.bn.n[i], p);
 	    if (!p->err) {
-		if (ok_list_node(e)) {
+		if (k == 1 && e->t == ARRAY) {
+		    li = list_from_strings_array(e->v.a, p);
+		} else if (ok_list_node(e)) {
 		    li = node_get_list(e, p);
 		} else {
 		    p->err = E_TYPES;
