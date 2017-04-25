@@ -4205,6 +4205,33 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static int stored_list_check (const int *list, const DATASET *dset)
+{
+    int badv = 0;
+    int err = 0;
+
+    if (dset == NULL || dset->n == 0) {
+	err = E_NODATA;
+    } else {
+	int i;
+
+	for (i=1; i<=list[0] && !err; i++) {
+	    if (list[i] >= dset->v ||
+		(list[i] < 0 && list[i] != LISTSEP)) {
+		badv = list[i];
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (badv != 0) {
+	gretl_errmsg_sprintf("list check: series ID %d "
+			     "is out of bounds", badv);
+    }
+
+    return err;
+}
+
 static NODE *array_element_node (gretl_array *a, int i,
 				 parser *p)
 {
@@ -4236,10 +4263,15 @@ static NODE *array_element_node (gretl_array *a, int i,
 		ret->v.b = data;
 	    }
 	} else if (type == GRETL_TYPE_LIST) {
-	    ret = aux_list_node(p);
-	    if (ret != NULL) {
-		/* aux list node must be robust */
-		ret->v.ivec = gretl_list_copy(data);
+	    const int *list = (const int *) data;
+
+	    p->err = stored_list_check(list, p->dset);
+	    if (!p->err) {
+		ret = aux_list_node(p);
+		if (ret != NULL) {
+		    /* aux list node must be robust */
+		    ret->v.ivec = gretl_list_copy(list);
+		}
 	    }
 	}
     }
@@ -7942,33 +7974,6 @@ static NODE *model_var_via_accessor (const char *key, parser *p)
     return ret;
 }
 
-static int bundled_list_check (const int *list, const DATASET *dset)
-{
-    int badv = 0;
-    int err = 0;
-
-    if (dset == NULL || dset->n == 0) {
-	err = E_NODATA;
-    } else {
-	int i;
-
-	for (i=1; i<=list[0] && !err; i++) {
-	    if (list[i] >= dset->v ||
-		(list[i] < 0 && list[i] != LISTSEP)) {
-		badv = list[i];
-		err = E_DATA;
-	    }
-	}
-    }
-
-    if (badv != 0) {
-	gretl_errmsg_sprintf("list from bundle: series ID %d "
-			     "is out of bounds", badv);
-    }
-
-    return err;
-}
-
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content.
@@ -8100,7 +8105,7 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_LIST) {
 	const int *list = (const int *) val;
 
-	p->err = bundled_list_check(list, p->dset);
+	p->err = stored_list_check(list, p->dset);
 	if (!p->err) {
 	    ret = aux_list_node(p);
 	    if (ret != NULL) {
