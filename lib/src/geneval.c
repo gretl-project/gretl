@@ -8104,7 +8104,7 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	if (!p->err) {
 	    ret = aux_list_node(p);
 	    if (ret != NULL) {
-		ret->v.ivec = list;
+		ret->v.ivec = gretl_list_copy(list);
 	    }
 	}
     } else {
