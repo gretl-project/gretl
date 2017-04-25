@@ -1456,7 +1456,7 @@ void *last_model_get_data (const char *key, GretlType *type,
 	ret = gretl_model_get_data_full(pmod, key, type, copied, &sz);
 	if (ret == NULL) {
 	    *err = E_DATA;
-	} else {
+	} else if (size != NULL) {
 	    *size = sz;
 	}
     }

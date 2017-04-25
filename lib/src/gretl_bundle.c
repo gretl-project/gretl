@@ -39,7 +39,7 @@
  */
 
 struct gretl_bundle_ {
-    BundleType type; /* see enum above */
+    BundleType type; /* see enum in gretl_bundle.h */
     GHashTable *ht;  /* holds key/value pairs */
     char *creator;   /* name of function that built the bundle */
     void *data;      /* holds pointer to struct for some uses */
@@ -131,7 +131,8 @@ int type_can_be_bundled (GretlType type)
 	    type == GRETL_TYPE_MATRIX_REF ||
 	    type == GRETL_TYPE_SERIES ||
 	    type == GRETL_TYPE_BUNDLE ||
-	    type == GRETL_TYPE_ARRAY);
+	    type == GRETL_TYPE_ARRAY ||
+	    type == GRETL_TYPE_LIST);
 }
 
 /* allocate and fill out a 'value' (type plus data pointer) that will
@@ -193,6 +194,13 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 	    }
 	    item->size = size;
 	    break;
+	case GRETL_TYPE_LIST:
+	    if (copy) {
+		item->data = gretl_list_copy((const int *) ptr);
+	    } else {
+		item->data = ptr;
+	    }
+	    break;  
 	case GRETL_TYPE_BUNDLE:
 	    if (copy) {
 		item->data = gretl_bundle_copy((gretl_bundle *) ptr, err);
@@ -282,6 +290,13 @@ static int bundled_item_replace_data (bundled_item *item,
 	    item->data = ptr;
 	}
 	item->size = size;
+    } else if (item->type == GRETL_TYPE_LIST) {
+	free(item->data);
+	if (copy) {
+	    item->data = gretl_list_copy((const int *) ptr);
+	} else {
+	    item->data = ptr;
+	}
     } else if (item->type == GRETL_TYPE_BUNDLE) {
 	gretl_bundle_destroy((gretl_bundle *) item->data);
 	if (copy) {
@@ -330,6 +345,7 @@ static void bundled_item_destroy (gpointer data)
     case GRETL_TYPE_INT:	
     case GRETL_TYPE_STRING:
     case GRETL_TYPE_SERIES:
+    case GRETL_TYPE_LIST:
 	free(item->data);
 	break;
     case GRETL_TYPE_MATRIX:
@@ -1181,6 +1197,26 @@ int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 {
     return gretl_bundle_set_data(bundle, key, (void *) x, 
 				 GRETL_TYPE_SERIES, n);
+}
+
+/**
+ * gretl_bundle_set_list:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @list: gretl list.
+ *
+ * Sets @list as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_list (gretl_bundle *bundle, const char *key,
+			   const int *list)
+{
+    return gretl_bundle_set_data(bundle, key, (void *) list,
+				 GRETL_TYPE_LIST, 0);
 }
 
 /**
@@ -2183,15 +2219,10 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	    list = gretl_model_get_y_list(pmod);
 	}
 	if (list != NULL) {
-	    /* convert list to matrix for bundling */
-	    m = gretl_list_to_matrix(list);
-	    if (m != NULL) {
-		key = mvarname(i) + 1;
-		*err = gretl_bundle_donate_data(b, key, m,
-						GRETL_TYPE_MATRIX,
-						0);
-	    }
-	    free(list);
+	    key = mvarname(i) + 1;
+	    *err = gretl_bundle_donate_data(b, key, list,
+					    GRETL_TYPE_LIST,
+					    0);
 	}
     }
 

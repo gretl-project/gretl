@@ -1027,25 +1027,41 @@ char *gretl_list_to_string (const int *list,
 /**
  * gretl_list_to_matrix:
  * @list: array of integers.
+ * @err: location to receive error code.
  * 
- * Returns: allocated representation of @list as a row vector.
+ * Returns: allocated representation of @list as a row vector
+ * or NULL on failure.
  */
 
-gretl_matrix *gretl_list_to_matrix (const int *list)
+gretl_matrix *gretl_list_to_matrix (const int *list, int *err)
 {
-    gretl_matrix *m = NULL;
-    int i;
+    gretl_vector *v = NULL;
 
-    if (list != NULL && list[0] > 0) {
-	m = gretl_matrix_alloc(1, list[0]);
-	if (m != NULL) {
-	    for (i=0; i<list[0]; i++) {
-		m->val[i] = list[i+1];
+    if (list == NULL) {
+	*err = E_DATA;
+    } else {
+	int i, n = list[0];
+
+	if (n == 0) {
+	    v = gretl_null_matrix_new();
+	    if (v == NULL) {
+		*err = E_ALLOC;
 	    }
+	} else if (n > 0) {
+	    v = gretl_vector_alloc(n);
+	    if (v == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    v->val[i] = list[i+1];
+		}
+	    }
+	} else {
+	    *err = E_DATA;
 	}
     }
 
-    return m;
+    return v;
 }
 
 /**
@@ -3053,7 +3069,7 @@ int *list_from_matrix (const gretl_matrix *m, const DATASET *dset,
 	} else {
 	    for (i=0; i<k && !*err; i++) {
 		v = gretl_int_from_double(m->val[i], err);
-		if (!*err && (v < 0 || v >= dset->v)) {
+		if (!*err && (v >= dset->v || (v < 0 && v != LISTSEP))) {
 		    gretl_errmsg_sprintf("list from vector: series ID %d "
 					 "is out of bounds", v);
 		    *err = E_UNKVAR;

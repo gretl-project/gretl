@@ -141,7 +141,6 @@ static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
 static int node_is_true (NODE *n, parser *p);
-static gretl_matrix *list_to_matrix (const int *list, int *err);
 static gretl_matrix *series_to_matrix (const double *x, parser *p,
 				       int *prechecked);
 static NODE *object_var_node (NODE *t, parser *p);
@@ -7943,6 +7942,33 @@ static NODE *model_var_via_accessor (const char *key, parser *p)
     return ret;
 }
 
+static int bundled_list_check (const int *list, const DATASET *dset)
+{
+    int badv = 0;
+    int err = 0;
+
+    if (dset == NULL || dset->n == 0) {
+	err = E_NODATA;
+    } else {
+	int i;
+
+	for (i=1; i<=list[0] && !err; i++) {
+	    if (list[i] >= dset->v ||
+		(list[i] < 0 && list[i] != LISTSEP)) {
+		badv = list[i];
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (badv != 0) {
+	gretl_errmsg_sprintf("list from bundle: series ID %d "
+			     "is out of bounds", badv);
+    }
+
+    return err;
+}
+
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content.
@@ -8042,6 +8068,7 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    ret->v.a = (gretl_array *) val;
 	}
     } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
+	/* note: unused at present */
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    ret->v.m = complex_array_to_matrix((cmplx *) val, size, p);
@@ -8069,6 +8096,16 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    }
 	} else {
 	    p->err = E_DATA;
+	}
+    } else if (type == GRETL_TYPE_LIST) {
+	int *list = (int *) val;
+
+	p->err = bundled_list_check(list, p->dset);
+	if (!p->err) {
+	    ret = aux_list_node(p);
+	    if (ret != NULL) {
+		ret->v.ivec = list;
+	    }
 	}
     } else {
 	p->err = E_DATA;
@@ -8634,10 +8671,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    donate = is_tmp_node(rhs);
 	    break;
 	case LIST:
-	    ptr = list_to_matrix(rhs->v.ivec, &err);
-	    orig = GRETL_TYPE_LIST;
-	    type = GRETL_TYPE_MATRIX;
-	    donate = 1;
+	    ptr = rhs->v.ivec;
+	    type = GRETL_TYPE_LIST;
+	    donate = is_tmp_node(rhs);
 	    break;
 	default:
 	    err = E_TYPES;
@@ -15394,37 +15430,6 @@ static void gen_check_errvals (parser *p)
     }
 }
 
-static gretl_matrix *list_to_matrix (const int *list, int *err)
-{
-    gretl_matrix *v = NULL;
-
-    if (list == NULL) {
-	*err = E_DATA;
-    } else {
-	int i, n = list[0];
-
-	if (n == 0) {
-	    v = gretl_null_matrix_new();
-	    if (v == NULL) {
-		*err = E_ALLOC;
-	    }
-	} else if (n > 0) {
-	    v = gretl_vector_alloc(n);
-	    if (v == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		for (i=0; i<n; i++) {
-		    v->val[i] = list[i+1];
-		}
-	    }
-	} else {
-	    *err = E_DATA;
-	}
-    }
-
-    return v;
-}
-
 static gretl_matrix *series_to_matrix (const double *x,
 				       parser *p,
 				       int *prechecked)
@@ -15476,7 +15481,7 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
     } else if (r->t == SERIES) {
 	m = series_to_matrix(r->v.xvec, p, prechecked);
     } else if (r->t == LIST) {
-	m = list_to_matrix(r->v.ivec, &p->err);
+	m = gretl_list_to_matrix(r->v.ivec, &p->err);
     } else if (r->t == MAT && is_tmp_node(r)) {
 	/* result matrix is newly allocated, steal it */
 #if EDEBUG

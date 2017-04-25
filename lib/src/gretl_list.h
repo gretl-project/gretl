@@ -58,7 +58,7 @@ char *gretl_list_to_string (const int *list,
 			    const DATASET *dset,
 			    int *err);
 
-gretl_matrix *gretl_list_to_matrix (const int *list);
+gretl_matrix *gretl_list_to_matrix (const int *list, int *err);
 
 char *gretl_list_to_lags_string (const int *list, int *err);
 

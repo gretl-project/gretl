@@ -653,18 +653,6 @@ void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
 	    ret = pmod->data_items[i]->ptr;
 	    itype = pmod->data_items[i]->type;
 	    isize = pmod->data_items[i]->size;
-	    if (copied != NULL && itype == GRETL_TYPE_LIST) {
-		gretl_matrix *m = gretl_list_to_matrix(ret);
-
-		if (m == NULL) {
-		    ret = NULL;
-		} else {
-		    ret = m;
-		    itype = GRETL_TYPE_MATRIX;
-		    isize = 0;
-		    alloced = 1;
-		}
-	    }
 	    found = 1;
 	    break;
 	}
@@ -4741,12 +4729,7 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    err = gretl_bundle_set_matrix(b, bkey, item->ptr);
 	} else if (item->type == GRETL_TYPE_LIST) {
-	    /* convert lists to matrices */
-	    gretl_matrix *m;
-
-	    m = gretl_list_to_matrix((int *) item->ptr);
-	    err = gretl_bundle_donate_data(b, bkey, m,
-					   GRETL_TYPE_MATRIX, 0);
+	    err = gretl_bundle_set_list(b, bkey, item->ptr);
 	}
     }
 

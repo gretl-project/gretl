@@ -115,6 +115,9 @@ int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
 int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
 			     const double *x, int n);
 
+int gretl_bundle_set_list (gretl_bundle *bundle, const char *key,
+			   const int *list);
+
 int gretl_bundle_set_matrix (gretl_bundle *bundle, const char *key,
 			     const gretl_matrix *m);
 
