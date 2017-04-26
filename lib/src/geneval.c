@@ -207,6 +207,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
 static void print_tree (NODE *t, parser *p, int level)
 {
     if (t == NULL) {
+	fputs("null\n", stderr);
 	return;
     }
 
@@ -8446,6 +8447,10 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
     } else if (ltype == GRETL_TYPE_LIST) {
 	l->t = LIST;
 	l->v.ivec = lp;
+	if (p->op == B_ADD) {
+	    /* reinterpret '+' when appending to a list */
+	    op->t = B_LCAT;
+	}
     } else if (ltype == GRETL_TYPE_SERIES) {
 	l->t = SERIES;
 	l->v.xvec = lp;
@@ -8774,8 +8779,6 @@ static int array_index_from_mspec (matrix_subspec *spec, int *err)
     return idx;
 }
 
-/* The following handles both array and list elements */
-
 static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 {
     NODE *lh1 = lhs->v.b2.l;
@@ -8811,14 +8814,15 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	return E_DATA;
     }
 
-#if LHDEBUG
-    fprintf(stderr, "set_array_value: array = %p, idx = %d\n",
-	    (void *) array, idx);
-#endif
-
     atype = gretl_array_get_content_type(array);
     targ = gretl_type_of(p->targ);
     err = lhs_type_check(targ, atype, ARRAY);
+
+#if LHDEBUG
+    fprintf(stderr, "set_array_value: array %p, idx=%d, atype=%s, targ=%s, err=%d\n",
+	    (void *) array, idx, gretl_type_get_name(atype),
+	    gretl_type_get_name(targ), err);
+#endif
 
     idx--; /* convert index to 0-based */
 
@@ -8854,12 +8858,20 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     if (!err) {
+	/* FIXME: handle the atype = LIST case separately */
 	switch (rhs->t) {
 	case NUM:
 	    if (atype == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(rhs->v.xval);
 		type = GRETL_TYPE_MATRIX;
 		donate = 1;
+	    } else if (atype == GRETL_TYPE_LIST) {
+		ptr = node_get_list(rhs, p);
+		err = p->err;
+		if (!err) {
+		    type = GRETL_TYPE_LIST;
+		    donate = 1;
+		}
 	    }
 	    break;
 	case STR:
@@ -8879,7 +8891,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	case LIST:
 	    ptr = rhs->v.ivec;
 	    type = GRETL_TYPE_LIST;
-	    donate = is_tmp_node(rhs); /* ? */
+	    donate = is_tmp_node(rhs);
 	    break;
 	default:
 	    err = E_TYPES;
