@@ -8857,21 +8857,20 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	goto push_data;
     }
 
-    if (!err) {
-	/* FIXME: handle the atype = LIST case separately */
+    if (!err && atype == GRETL_TYPE_LIST) {
+	ptr = node_get_list(rhs, p);
+	err = p->err;
+	if (!err) {
+	    type = GRETL_TYPE_LIST;
+	    donate = 1;
+	}
+    } else if (!err) {
 	switch (rhs->t) {
 	case NUM:
 	    if (atype == GRETL_TYPE_MATRIX) {
 		ptr = gretl_matrix_from_scalar(rhs->v.xval);
 		type = GRETL_TYPE_MATRIX;
 		donate = 1;
-	    } else if (atype == GRETL_TYPE_LIST) {
-		ptr = node_get_list(rhs, p);
-		err = p->err;
-		if (!err) {
-		    type = GRETL_TYPE_LIST;
-		    donate = 1;
-		}
 	    }
 	    break;
 	case STR:
