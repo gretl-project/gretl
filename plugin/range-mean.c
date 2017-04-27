@@ -285,7 +285,7 @@ int range_mean_graph (int vnum, DATASET *dset,
 	    if (bse > 0) {
 		tstat = b->val[1] / bse;
 		pv = student_pvalue_2(m - 2, tstat);
-		record_test_result(tstat, pv, _("range-mean test"));
+		record_test_result(tstat, pv);
 		if (!quiet) {
 		    pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), pv);
 		}

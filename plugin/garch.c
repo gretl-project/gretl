@@ -704,8 +704,8 @@ int garch_pretest (MODEL *pmod, DATASET *dset,
 			OPT_S | OPT_Q, NULL);
 
     if (!err) {
-	*LMF = get_last_test_statistic(NULL);
-	*pvF = get_last_pvalue(NULL);
+	*LMF = get_last_test_statistic();
+	*pvF = get_last_pvalue();
     } 
 
     return err;

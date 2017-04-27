@@ -3129,7 +3129,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 	    }	  
 	}
 
-	record_test_result(z, pval, _("HET_1"));
+	record_test_result(z, pval);
     }
 
     clear_model(&ptmod);
@@ -3398,11 +3398,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	    }	  
 	}
 
-	if (BP) {
-	    record_test_result(LM, pval, "Breusch-Pagan");
-	} else {
-	    record_test_result(LM, pval, _("White's"));
-	}
+	record_test_result(LM, pval);
     }
 
     clear_model(&white);
@@ -3830,7 +3826,7 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
     double LM = T * rsq;
     double pv = chisq_cdf_comp(order, LM);
 
-    record_test_result(LM, pv, "ARCH");
+    record_test_result(LM, pv);
 
     if (!(opt & OPT_I)) {
 	if (V != NULL) {

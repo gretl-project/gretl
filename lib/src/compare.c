@@ -549,9 +549,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
     }
 
     if (!err) {
-	const char *tstr = (cmp.ci == OMIT)? N_("omit") : N_("add");
-
-	record_test_result(cmp.test, cmp.pval, _(tstr));
+	record_test_result(cmp.test, cmp.pval);
 
 	if (opt & OPT_S) {
 	    /* attach test to model */
@@ -989,7 +987,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	    }
 	}
 
-	record_test_result(trsq, pval, _("non-linearity"));
+	record_test_result(trsq, pval);
     } 
 
  bailout:
@@ -1923,7 +1921,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	    }	    
 	}
 
-	record_test_result(RF, pval, "RESET");
+	record_test_result(RF, pval);
     }
 
     free(newlist);
@@ -2120,7 +2118,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		order, aux.nobs - pmod->ncoeff, x, pval);
 	pputc(prn, '\n');
-	record_test_result(x / order, pval, _("autocorrelation"));
+	record_test_result(x / order, pval);
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
@@ -2183,7 +2181,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 	pprintf(prn, "%s = P(%s(%d) > %g) = %#.4g\n", _("with p-value"), 
 		_("Chi-square"), df, lb, chisq_cdf_comp(df, lb));
 	pputc(prn, '\n');
-	record_test_result(lb, pval, _("autocorrelation"));
+	record_test_result(lb, pval);
     }
 
     if (!err && (opt & OPT_S)) {
@@ -2364,7 +2362,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	    pputc(prn, '\n');
 	}
 
-	record_test_result(LMF, pval, _("autocorrelation"));
+	record_test_result(LMF, pval);
 
 	if (opt & OPT_S) {
 	    /* save the test onto @pmod */
@@ -2993,7 +2991,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		    save_chow_test(pmod, chowstr, test, pval, dfn, dfd, opt);
 		}
 
-		record_test_result(test, pval, "Chow");
+		record_test_result(test, pval);
 	    } 
 	}
 	clear_model(&chow_mod);
@@ -3279,7 +3277,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
 	}
     }
 
-    record_test_result(hct, pval, "Harvey-Collier");
+    record_test_result(hct, pval);
 }
 
 /**
@@ -3581,7 +3579,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 	    }
 	}
 
-	record_test_result(Ftest, pval, _("common factor restriction"));
+	record_test_result(Ftest, pval);
     }
 
     if (clearit) {

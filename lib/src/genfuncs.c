@@ -5846,7 +5846,7 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
     pprintf(prn, "\n%s\n", _("other"));
 
     for (i=1; i<R_SCALAR_MAX; i++) {
-	double x = dvar_get_scalar(i, dset, NULL);
+	double x = dvar_get_scalar(i, dset);
 
 	if (!na(x)) {
 	    pprintf(prn, " %s (scalar: %g)\n", dvarname(i), x);

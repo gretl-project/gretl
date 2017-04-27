@@ -507,8 +507,8 @@ static int univariate_arch_test (GRETL_VAR *var, int order,
 	/* add OPT_M for multi-equation output */
 	err = arch_test(var->models[i], order, dset, opt | OPT_M, prn);
 	if (!err) {
-	    tests->val[i] = get_last_test_statistic(NULL);
-	    pvals->val[i] = get_last_pvalue(NULL);
+	    tests->val[i] = get_last_test_statistic();
+	    pvals->val[i] = get_last_pvalue();
 	}
     }
 
@@ -1203,7 +1203,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
     df = orig->neqns * nr;
     pval = chisq_cdf_comp(df, LR);
 
-    record_test_result(LR, pval, _("omit"));
+    record_test_result(LR, pval);
 
     pprintf(prn, "%s:\n", _("Test on the original VAR"));
 
@@ -1490,7 +1490,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	if (!err) {
 	    double pval = chisq_cdf_comp(nr, test);
 
-	    record_test_result(test, pval, _("omit"));
+	    record_test_result(test, pval);
 
 	    if (!(opt & OPT_I)) {
 		/* not silent */

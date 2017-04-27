@@ -339,9 +339,7 @@ void print_freq_test (const FreqDist *freq, PRN *prn)
     pputc(prn, '\n');
 
     if (!na(pval)) {
-	record_test_result(freq->test, pval, 
-			   (freq->dist == D_NORMAL)? 
-			   "normality" : "gamma");
+	record_test_result(freq->test, pval);
     }
 }
 

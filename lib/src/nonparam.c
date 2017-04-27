@@ -933,7 +933,7 @@ int runs_test (int v, const DATASET *dset,
 
     pputc(prn, '\n');
 
-    record_test_result(z, pval, "runs");
+    record_test_result(z, pval);
 
     free(x);
 
@@ -1341,7 +1341,7 @@ int diff_test (const int *list, const DATASET *dset,
 	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
     }
 
-    record_test_result(result[0], result[1], "diff");
+    record_test_result(result[0], result[1]);
 
     return err;
 }

@@ -330,7 +330,7 @@ static void anova_add_F_stat (struct anova *v)
 	v->pval = snedecor_cdf_comp(dfn, dfd, v->F);
     }
 
-    record_test_result(v->F, v->pval, NULL);    
+    record_test_result(v->F, v->pval);
 }
 
 #define anova_obs_ok(y,x,z,t) (!na(y[t]) && !na(x[t]) && \

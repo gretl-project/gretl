@@ -156,23 +156,22 @@ int ls_criteria (MODEL *pmod);
 
 int get_last_test_type (void);
 
-void record_test_result (double teststat, double pval, char *blurb);
+void record_test_result (double teststat, double pval);
 
 void record_matrix_test_result (gretl_matrix *tests, 
 				gretl_matrix *pvals);
 
-void record_LR_test_result (double teststat, double pval, double lnl,
-			    char *blurb);
+void record_LR_test_result (double teststat, double pval, double lnl);
 
 void record_QLR_test_result (double teststat, double pval, double brk);
 
-double get_last_test_statistic (char *blurb);
+double get_last_test_statistic (void);
 
-double get_last_pvalue (char *blurb);
+double get_last_pvalue (void);
 
-double get_last_lnl (char *blurb);
+double get_last_lnl (void);
 
-double get_last_break (char *blurb);
+double get_last_break (void);
 
 gretl_matrix *get_last_test_matrix (int *err);
 

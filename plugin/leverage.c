@@ -487,7 +487,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	gretl_matrix_set(S, j, 1, f);
     }
 
-    record_test_result(Xvalcrit, NADBL, _("Cross-validation criterion"));
+    record_test_result(Xvalcrit, NADBL);
 
     /* put studentized residuals into S[,2] */
     studentized_residuals(pmod, S);

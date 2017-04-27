@@ -3818,7 +3818,7 @@ int gretl_model_get_normality_test (const MODEL *pmod, PRN *prn)
     if (test == NULL) {
 	err = E_BADSTAT;
     } else {
-	record_test_result(test->value, test->pvalue, "Normality");
+	record_test_result(test->value, test->pvalue);
 	gretl_model_test_print(pmod, i, prn);
     }
 

@@ -1431,7 +1431,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     if (!err) {
 	if (!(ainfo->flags & (ADF_EG_TEST | ADF_PANEL)) ||
 	    (ainfo->flags & ADF_EG_RESIDS)) {
-	    record_test_result(ainfo->tau, ainfo->pval, "Dickey-Fuller");
+	    record_test_result(ainfo->tau, ainfo->pval);
 	}
     }
 
@@ -2172,7 +2172,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	    /* invalidate for record_test_result */
 	    pval = NADBL;
 	}
-	record_test_result(teststat, pval, "KPSS");
+	record_test_result(teststat, pval);
     }
 
     clear_model(&KPSSmod);

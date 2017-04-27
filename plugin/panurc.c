@@ -596,7 +596,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 			w[0], delta, w[1], td, w[2], z, pval);
 	    }
 
-	    record_test_result(z, pval, "Levin-Lin-Chu");
+	    record_test_result(z, pval);
 	}
     }
 

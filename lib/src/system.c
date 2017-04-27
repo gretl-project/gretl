@@ -1242,7 +1242,7 @@ static int real_system_wald_test (const equation_system *sys,
 	    pval = snedecor_cdf_comp(dfn, dfu, test);
 	}
 
-	record_test_result(test, pval, _("restriction"));
+	record_test_result(test, pval);
 
 	if (!(opt & OPT_Q)) {
 	    if (opt & OPT_W) {

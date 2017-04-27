@@ -549,9 +549,6 @@ enum {
    location */
 #define m_return(s) (s == F_SVD)
 
-#define dollar_node(n) (n->t == DVAR || n->t == MVAR || \
-                        (n->t == MSL && n->v.b2.l->v.str[0] == '$'))
-
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 
 typedef struct node NODE;
@@ -737,8 +734,7 @@ int x_sectional_weighted_stat (double *x, const int *list,
 			       int f);
 
 /* in geneval.c, used only internally */
-double dvar_get_scalar (int i, const DATASET *dset,
-			char *label);
+double dvar_get_scalar (int i, const DATASET *dset);
 int *node_get_list (NODE *n, parser *p);
 
 /* helper functions for manual, gretl.lang file */

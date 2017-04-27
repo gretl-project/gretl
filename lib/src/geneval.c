@@ -12108,8 +12108,7 @@ static NODE *eval_query (NODE *t, parser *p)
 
 #define no_data(p) (p == NULL || p->n == 0)
 
-double dvar_get_scalar (int i, const DATASET *dset,
-			char *label)
+double dvar_get_scalar (int i, const DATASET *dset)
 {
     switch (i) {
     case R_NOBS:
@@ -12126,13 +12125,13 @@ double dvar_get_scalar (int i, const DATASET *dset,
     case R_DATATYPE:
 	return (no_data(dset))? NADBL : dataset_get_structure(dset);
     case R_TEST_PVAL:
-	return get_last_pvalue(label);
+	return get_last_pvalue();
     case R_TEST_STAT:
-	return get_last_test_statistic(label);
+	return get_last_test_statistic();
     case R_TEST_LNL:
-	return get_last_lnl(label);
+	return get_last_lnl();
     case R_TEST_BRK:
-	return get_last_break(label);
+	return get_last_break();
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_WINDOWS:
@@ -12317,8 +12316,7 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	} else if (dvar_scalar(idx)) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
-		ret->v.xval = dvar_get_scalar(idx, p->dset,
-					      p->lh.label);
+		ret->v.xval = dvar_get_scalar(idx, p->dset);
 	    }
 	} else if (dvar_series(idx)) {
 	    ret = aux_series_node(p);
@@ -12337,8 +12335,7 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 		/* scalar or none */
 		ret = aux_scalar_node(p);
 		if (ret != NULL) {
-		    ret->v.xval = dvar_get_scalar(idx, p->dset,
-						  p->lh.label);
+		    ret->v.xval = dvar_get_scalar(idx, p->dset);
 		}
 	    }
 	}

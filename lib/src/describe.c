@@ -1587,7 +1587,7 @@ multivariate_normality_test (const gretl_matrix *E,
 	    pprintf(prn, "\n %s(%d) = %g [%.4f]\n\n", _("Chi-square"), 2 * p, 
 		    X2, pv);
 	}
-	record_test_result(X2, pv, "Normality");
+	record_test_result(X2, pv);
     }
 
  bailout:
@@ -1976,9 +1976,7 @@ static void record_freq_test (const FreqDist *freq)
     }	
 
     if (!na(pval)) {
-	record_test_result(freq->test, pval, 
-			   (freq->dist == D_NORMAL)? 
-			   "normality" : "gamma");
+	record_test_result(freq->test, pval);
     }
 }
 
@@ -2650,9 +2648,7 @@ static int just_record_freq_test (const FreqDist *freq)
     if (na(pval)) {
 	return E_NAN;
     } else {
-	record_test_result(freq->test, pval, 
-			   (freq->dist == D_NORMAL)? 
-			   "normality" : "gamma");
+	record_test_result(freq->test, pval);
 	return 0;
     }
 }
@@ -3185,7 +3181,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     pputc(prn, '\n');
 
     if (lbox > 0 && !na(pval)) {
-	record_test_result(lbox, pval, "Ljung-Box");
+	record_test_result(lbox, pval);
     }
     
     if (use_gnuplot) {
@@ -4010,7 +4006,7 @@ static int finalize_fractint (const double *x,
 	    double z = ft.d / ft.se;
 	    double pv = normal_pvalue_2(z);
 
-	    record_test_result(z, pv, _("fractional integration"));
+	    record_test_result(z, pv);
 	    if (do_print) {
 		pprintf(prn, "%s (m = %d)\n"
 			"  %s = %g (%g)\n"
@@ -4034,7 +4030,7 @@ static int finalize_fractint (const double *x,
 	    double pv = student_pvalue_2(df, tval);
 
 	    if (GPH_only) {
-		record_test_result(tval, pv, _("fractional integration"));
+		record_test_result(tval, pv);
 	    }
 
 	    if (do_print) {
@@ -5926,7 +5922,7 @@ int means_test (const int *list, const DATASET *dset,
     if (pval > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
-    record_test_result(t, pval, _("difference of means"));
+    record_test_result(t, pval);
 
     free(x);
     free(y);
@@ -6009,7 +6005,7 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
     if (snedecor_cdf_comp(dfn, dfd, F) > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
-    record_test_result(F, pval, _("difference of variances"));
+    record_test_result(F, pval);
 
     free(x);
     free(y);
@@ -7066,7 +7062,7 @@ int gretl_normality_test (int varno, const DATASET *dset,
     }
 
     if (!na(trec) && !na(pvrec)) {
-	record_test_result(trec, pvrec, "Normality");
+	record_test_result(trec, pvrec);
     }
     
     return err;

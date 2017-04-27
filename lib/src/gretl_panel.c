@@ -4146,7 +4146,7 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 	    }
 	}
 
-	record_test_result(W, pval, _("groupwise heteroskedasticity"));
+	record_test_result(W, pval);
     }
 
     free(pan.unit_obs);
@@ -4447,7 +4447,7 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 	    }	    
 	}
 
-	record_test_result(CD, pval, _("cross sectional dependence"));
+	record_test_result(CD, pval);
     }    
 
     return err;

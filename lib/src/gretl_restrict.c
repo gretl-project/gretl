@@ -2271,7 +2271,7 @@ static void print_or_save_result (ExecState *state,
     }
 
     if (!(rset->opt & OPT_C)) {
-	record_test_result(rset->test, rset->pval, _("restriction"));
+	record_test_result(rset->test, rset->pval);
     }
 
     if (pmod != NULL && pmod->ci == OLS && 
@@ -2855,7 +2855,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 	    }
 	    pprintf(prn, "   t(%d) = %g ", pmod->dfd, test);
 	    pprintf(prn, _("with p-value = %g\n"), r->pval);
-	    record_test_result(test, r->pval, _("sum")); 
+	    record_test_result(test, r->pval);
 	} else if (r->code == GRETL_STAT_WALD_CHISQ) {
 	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
 	    test = sqrt(r->test);
@@ -2865,7 +2865,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 	    r->pval = normal_pvalue_2(test);
 	    pprintf(prn, "   z = %g ", test);
 	    pprintf(prn, _("with p-value = %g\n"), r->pval);
-	    record_test_result(test, r->pval, _("sum")); 
+	    record_test_result(test, r->pval);
 	}	    
 
 	destroy_restriction_set(r);
@@ -2953,6 +2953,5 @@ void rset_add_results (gretl_restriction *rset,
 
 void rset_record_LR_result (gretl_restriction *rset)
 {
-    record_LR_test_result(rset->test, rset->pval, rset->lnl,
-			  "LR");
+    record_LR_test_result(rset->test, rset->pval, rset->lnl);
 }

@@ -1352,7 +1352,7 @@ static int real_bootstrap (boot *bs, gretl_matrix *ci, PRN *prn)
 	    bs_calc_ci(bs, r, ci);
 	} else if (bs->flags & BOOT_PVAL) {
 	    bs->pval = (double) tail / bs->B;
-	    record_test_result(bs->test0, bs->pval, _("bootstrap test"));
+	    record_test_result(bs->test0, bs->pval);
 	}
 	if (!(bs->flags & BOOT_SILENT)) {
 	    bs_print_result(bs, r, tail, prn);
