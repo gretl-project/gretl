@@ -704,10 +704,7 @@ static int maybe_unassigned_fncall (const char *s)
     return s[strlen(s)-1] == ')';
 }
 
-#define gen_verbose(f) (!(f & P_DISCARD) && \
-                        !(f & P_PRIV) && \
-                        !(f & P_QUIET) && \
-                        !(f & P_DECL))
+#define gen_silent(f) (f & (P_DISCARD | P_PRIV | P_DECL))
 
 int generate (const char *line, DATASET *dset,
 	      GretlType gtype, gretlopt opt, 
@@ -785,7 +782,7 @@ int generate (const char *line, DATASET *dset,
 
     if (!p.err && targtype != EMPTY) {
 	gen_save_or_print(&p, prn);
-	if (!p.err && gen_verbose(p.flags)) {
+	if (!p.err && !gen_silent(p.flags)) {
 	    gen_write_label(&p, oldv);
 	    if (gretl_messages_on() && prn != NULL && !(opt & OPT_Q)) {
 		gen_write_message(&p, oldv, prn);

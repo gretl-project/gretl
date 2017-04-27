@@ -7694,11 +7694,11 @@ static int handle_return_statement (fncall *call,
     ufunc *fun = call->fun;
     int err = 0;
 
+    s += strspn(s, " ");
+
 #if EXEC_DEBUG
     fprintf(stderr, "%s: return: s = '%s'\n", fun->name, s);
 #endif
-
-    s += strspn(s, " ");
 
     if (fun->rettype == GRETL_TYPE_VOID) {
 	if (*s == '\0') {
