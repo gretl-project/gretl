@@ -6812,7 +6812,8 @@ static int handle_scalar_return (const char *vname, void *ptr)
 }
 
 static int handle_series_return (const char *vname, void *ptr,
-				 DATASET *dset, int copy)
+				 DATASET *dset, int copy,
+				 char **label)
 {
     int v = series_index(dset, vname);
     double *x = NULL;
@@ -6821,6 +6822,7 @@ static int handle_series_return (const char *vname, void *ptr,
     if (!copy && v == 0) {
 	copy = 1;
     }
+
     if (v >= 0 && v < dset->v) {
 	if (copy) {
 	    x = copyvec(dset->Z[v], dset->n);
@@ -6836,6 +6838,10 @@ static int handle_series_return (const char *vname, void *ptr,
     }
 
     *(double **) ptr = x;
+
+    if (!err && label != NULL) {
+	*label = gretl_strdup(series_get_label(dset, v));
+    }
 
     return err;
 }
@@ -7055,20 +7061,6 @@ static int handle_string_return (const char *sname, void *ptr)
     return err;
 }
 
-static void 
-maybe_set_return_description (fncall *call, int rtype, 
-			      DATASET *dset, 
-			      char **descrip)
-{
-    if (rtype == GRETL_TYPE_SERIES) {
-	int v = series_index(dset, call->retname);
-
-	if (v < dset->v) {
-	    *descrip = gretl_strdup(series_get_label(dset, v));
-	}
-    }
-}
-
 static int is_pointer_arg (fncall *call, int rtype)
 {
     ufunc *u = call->fun;
@@ -7098,7 +7090,7 @@ static int is_pointer_arg (fncall *call, int rtype)
 static int 
 function_assign_returns (fncall *call, int rtype, 
 			 DATASET *dset, void *ret,
-			 char **descrip, PRN *prn,
+			 char **label, PRN *prn,
 			 int *perr)
 {
     ufunc *u = call->fun;
@@ -7128,7 +7120,7 @@ function_assign_returns (fncall *call, int rtype,
 	if (rtype == GRETL_TYPE_DOUBLE) {
 	    err = handle_scalar_return(call->retname, ret);
 	} else if (rtype == GRETL_TYPE_SERIES) {
-	    err = handle_series_return(call->retname, ret, dset, copy);
+	    err = handle_series_return(call->retname, ret, dset, copy, label);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    err = handle_matrix_return(call->retname, ret, copy);
 	} else if (rtype == GRETL_TYPE_LIST) {
@@ -7151,10 +7143,6 @@ function_assign_returns (fncall *call, int rtype,
 	}
 
 	*perr = err;
-
-	if (!err && dset != NULL && descrip != NULL) {
-	    maybe_set_return_description(call, rtype, dset, descrip);
-	}
     }
 
     /* "Indirect return" values and other pointerized args: 
