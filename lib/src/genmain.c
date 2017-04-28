@@ -177,8 +177,7 @@ static int maybe_record_lag_info (parser *p)
 
 static void gen_write_label (parser *p, int oldv)
 {
-    char tmp[MAXLABEL];
-    const char *src = "";
+    const char *src = NULL;
 
     if (p->targ != SERIES) {
 	/* this is relevant only for series */
@@ -197,27 +196,29 @@ static void gen_write_label (parser *p, int oldv)
 	series_set_mtime(p->dset, p->lh.vnum);
     }
 
-    if (*p->lh.label != '\0' && (p->flags & P_UFRET)) {
+    if (p->lh.label != NULL && (p->flags & P_UFRET)) {
 	src = p->lh.label;
     } else if (p->rhs != NULL && strcmp(p->rhs, "NA")) {
 	src = p->rhs;
     }
 
-    *tmp = '\0';
+    if (src != NULL && *src != '\0') {
+	if (strlen(src) > MAXLABEL - 1) {
+	    /* truncate if necessary */
+	    char tmp[MAXLABEL];
 
-    if (strlen(src) > MAXLABEL - 1) {
-	strncat(tmp, src, MAXLABEL - 4);
-	strcat(tmp, "...");
-    } else {
-	strncat(tmp, src, MAXLABEL - 1);
+	    *tmp = '\0';
+	    strncat(tmp, src, MAXLABEL - 4);
+	    strcat(tmp, "...");
+	    series_set_label(p->dset, p->lh.vnum, tmp);
+	} else {
+	    series_set_label(p->dset, p->lh.vnum, src);
+	}
+	if (src == p->rhs) {
+	    /* in case the label is a formula */
+	    series_set_flag(p->dset, p->lh.vnum, VAR_GENERATED);
+	}
     }
-
-    series_set_label(p->dset, p->lh.vnum, tmp);
-    series_set_flag(p->dset, p->lh.vnum, VAR_GENERATED);
-
-#if GDEBUG
-    fprintf(stderr, "varlabel: '%s'\n", series_get_label(p->dset, p->lh.vnum));
-#endif
 }
 
 /**

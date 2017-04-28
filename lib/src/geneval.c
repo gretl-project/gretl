@@ -7749,7 +7749,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* try sending args to function */
 
     if (!p->err) {
-	char *descrip = NULL;
 	char **pdescrip = NULL;
 	double xret = NADBL;
 	double *Xret = NULL;
@@ -7793,7 +7792,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	if ((p->flags & P_UFRET) && rtype == GRETL_TYPE_SERIES) {
 	    /* pick up description of generated series, if any */
-	    pdescrip = &descrip;
+	    pdescrip = &p->lh.label;
 	}
 
 	p->err = gretl_function_exec(uf, rtype, p->dset, retp,
@@ -7844,11 +7843,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		ret->t = ARRAY;
 		ret->v.a = aret;
 	    }
-	}
-
-	if (descrip != NULL) {
-	    strcpy(p->lh.label, descrip);
-	    free(descrip);
 	}
     }
 
@@ -16568,7 +16562,7 @@ static void parser_init (parser *p, const char *str,
     /* left-hand side info */
     p->lh.t = 0;
     p->lh.name[0] = '\0';
-    p->lh.label[0] = '\0';
+    p->lh.label = NULL;
     p->lh.vnum = 0;
     p->lh.uv = NULL;
     p->lh.expr = NULL;
@@ -16652,6 +16646,11 @@ void gen_cleanup (parser *p)
     fprintf(stderr, "gen cleanup on %p: save = %d\n",
 	    p, save ? 1 : 0);
 #endif
+
+    if (p->lh.label != NULL) {
+	free(p->lh.label);
+	p->lh.label = NULL;
+    }
 
     if (p->err && (p->flags & P_COMPILE)) {
 	save = 0;
