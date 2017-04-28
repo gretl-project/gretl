@@ -1536,6 +1536,9 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 	pprintf(prn, " %s (%s: length %d)", kstr, 
 		gretl_type_get_name(item->type), item->size);
 	break;
+    case GRETL_TYPE_LIST:
+	pprintf(prn, " %s (%s)", kstr, gretl_type_get_name(item->type));
+	break;
     case GRETL_TYPE_ARRAY:
 	a = item->data;
 	{
@@ -1714,6 +1717,10 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 	gretl_array *a = (gretl_array *) item->data;
 
 	gretl_array_serialize(a, fp);
+    } else if (item->type == GRETL_TYPE_LIST) {
+	int *list = (int *) item->data;
+
+	gretl_list_serialize(list, NULL, fp);
     } else {
 	fprintf(stderr, "bundle -> XML: skipping %s\n", key);
     }
@@ -1826,6 +1833,18 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 			a = gretl_array_deserialize(child, doc, &err);
 			if (!err) {
 			    err = gretl_bundle_donate_data(b, key, a, type, size);
+			}
+		    }
+		} else if (type == GRETL_TYPE_LIST) {
+		    xmlNodePtr child = cur->xmlChildrenNode;
+		    int *list;
+
+		    if (child == NULL) {
+			err = E_DATA;
+		    } else {
+			list = gretl_xml_get_list(child, doc, &err);
+			if (!err) {
+			    err = gretl_bundle_donate_data(b, key, list, type, size);
 			}
 		    }
 		} else {
