@@ -2487,6 +2487,52 @@
       </description>
     </function>
 
+    <function name="defbundle" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Enables the initialization of a bundle variable <emphasis>in
+	  extenso</emphasis>, by providing zero or more pairs of the
+	  form <repl>key</repl>, <repl>member</repl>. If we count the
+	  arguments from 1, every odd-numbered argument must evaluate
+	  to a string (key) and every even-numbered argument must
+	  evaluate to an object of a type that can be included in a
+	  bundle.
+	</para>
+	<para>
+	  A couple of simple examples:
+	</para>
+	<code>
+	  bundle b1 = defbundle("s", "Sample string", "m", I(3))
+	  bundle b2 = defbundle("yn", normal(), "x", 5)
+	</code>
+	<para>
+	  The first example creates a bundle with members a string and
+	  a matrix; the second, a bundle with a series member and a
+	  scalar member. Note that you cannot specify a type for each
+	  argument when using using this function, so you must accept
+	  the <quote>natural</quote> type of the argument in question.
+	  If you wanted to add a series with constant value 5 to a
+	  bundle named <lit>b1</lit> it would be necessary to do
+	  something like the following (after declaring <lit>b1</lit>):
+	</para>
+	<code>
+	  series b1.s5 = 5
+	</code>
+	<para>
+	  If no arguments are given to this function it is
+	  equivalent to creating an empty bundle (or to emptying an
+	  existing bundle of its content), as could also be done
+	  via
+	</para>
+	<code>
+	  bundle b = null
+	</code>
+      </description>
+    </function>
+
     <function name="deflist" section="data-utils" output="list">
       <fnargs>
 	<fnarg type="varargs"/>
