@@ -995,6 +995,33 @@ static int gen_type_from_gretl_type (GretlType t)
     }
 }
 
+static GretlType gretl_type_from_gen_type (int t)
+{
+    switch (t) {
+    case NUM:
+	return GRETL_TYPE_DOUBLE;
+	break;
+    case MAT:
+	return GRETL_TYPE_MATRIX;
+	break;
+    case LIST:
+	return GRETL_TYPE_LIST;
+	break;
+    case STR:
+	return GRETL_TYPE_STRING;
+	break;
+    case BUNDLE:
+	return GRETL_TYPE_BUNDLE;
+	break;
+    case ARRAY:
+	return GRETL_TYPE_ARRAY;
+	break;
+    default:
+	return GRETL_TYPE_NONE;
+	break;
+    }
+}
+
 static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
 {
     int v = current_series_index(p->dset, n->vname);
@@ -7955,29 +7982,6 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 #endif
 
-static gretl_matrix *complex_array_to_matrix (cmplx *c, int sz,
-					      parser *p)
-{
-    gretl_matrix *m = NULL;
-    int i, n = sz / sizeof *c;
-
-    if (n <= 0) {
-	p->err = E_DATA;
-    } else {
-	m = gretl_matrix_alloc(n, 2);
-	if (m == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    for (i=0; i<n; i++) {
-		gretl_matrix_set(m, i, 0, c[i].r);
-		gretl_matrix_set(m, i, 1, c[i].i);
-	    }
-	}
-    }
-
-    return m;
-}
-
 static NODE *model_var_via_accessor (const char *key, parser *p)
 {
     NODE *ret = NULL;
@@ -8100,12 +8104,6 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	ret = array_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.a = (gretl_array *) val;
-	}
-    } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
-	/* note: unused at present */
-	ret = aux_matrix_node(p);
-	if (ret != NULL) {
-	    ret->v.m = complex_array_to_matrix((cmplx *) val, size, p);
 	}
     } else if (type == GRETL_TYPE_SERIES) {
 	const double *x = val;
@@ -10394,21 +10392,55 @@ static int check_array_element_type (NODE *n, GretlType *pt, int i)
     return ok ? 0 : E_TYPES;
 }
 
-static void *node_get_ptr (NODE *n)
-{
-    if (n->t == MAT)    return n->v.m;
-    if (n->t == STR)    return n->v.str;
-    if (n->t == BUNDLE) return n->v.b;
-    if (n->t == LIST)   return n->v.ivec;
-    return NULL;
-}
-
 static void node_nullify_ptr (NODE *n)
 {
     if (n->t == MAT)    n->v.m = NULL;
     if (n->t == STR)    n->v.str = NULL;
     if (n->t == BUNDLE) n->v.b = NULL;
     if (n->t == LIST)   n->v.ivec = NULL;
+    if (n->t == ARRAY)  n->v.a = NULL;
+    if (n->t == SERIES) n->v.xvec = NULL;
+}
+
+/* serves retrieval of data for candidate array elements
+   or bundle members
+*/
+
+static void *node_get_ptr (NODE *n, int f, int *donate)
+{
+    void *ptr = NULL;
+
+    /* default to copying the data */
+    *donate = 0;
+
+    /* common to array elements, bundle members */
+    if (n->t == MAT) {
+	ptr = n->v.m;
+    } else if (n->t == STR) {
+	ptr = n->v.str;
+    } else if (n->t == BUNDLE) {
+	ptr = n->v.b;
+    } else if (n->t == LIST) {
+	ptr = n->v.ivec;
+    } else if (f == F_DEFBUNDLE) {
+	/* additional possibilities for bundle members */
+	if (n->t == ARRAY) {
+	    ptr = n->v.a;
+	} else if (n->t == SERIES) {
+	    ptr = n->v.xvec;
+	} else if (n->t == NUM) {
+	    ptr = &n->v.xval;
+	}
+    }
+
+    if (n->t == NUM) {
+	*donate = 1;
+    } else if (is_tmp_node(n)) {
+	*donate = 1;
+	node_nullify_ptr(n);
+    }
+
+    return ptr;
 }
 
 /* given an FARGS node, detect if the first argument
@@ -11146,6 +11178,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (!p->err) {
 	    for (i=0; i<k && !p->err; i++) {
+		int donate = 0;
+
 		e = eval(n->v.bn.n[i], p);
 		if (!p->err) {
 		    p->err = check_array_element_type(e, &gtype, i);
@@ -11155,10 +11189,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			gretl_array_set_type(A, gtype);
 			anon = 0;
 		    }
-		    ptr = node_get_ptr(e);
-		    if (is_tmp_node(e)) {
+		    ptr = node_get_ptr(e, t->t, &donate);
+		    if (donate) {
+			/* copy not required */
 			p->err = gretl_array_append_object(A, ptr, 0);
-			node_nullify_ptr(e);
 		    } else {
 			p->err = gretl_array_append_object(A, ptr, 1);
 		    }
@@ -11173,6 +11207,64 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_array_node(p);
 	    if (ret != NULL) {
 		ret->v.a = A;
+	    }
+	}
+    } else if (t->t == F_DEFBUNDLE) {
+	gretl_bundle *b;
+	GretlType gtype;
+	char *key = NULL;
+	void *ptr;
+	int donate;
+
+	if (k % 2 != 0) {
+	    p->err = E_PARSE;
+	} else {
+	    b = gretl_bundle_new();
+	    if (b == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+
+	if (!p->err) {
+	    for (i=0; i<k && !p->err; i++) {
+		ptr = NULL;
+		e = eval(n->v.bn.n[i], p);
+		if (i == 0 || i % 2 == 0) {
+		    /* we need a key string */
+		    if (e->t == STR) {
+			key = e->v.str;
+		    } else {
+			p->err = E_TYPES;
+		    }
+		} else {
+		    /* we need some valid content */
+		    gtype = gretl_type_from_gen_type(e->t);
+		    if (type_can_be_bundled(gtype)) {
+			int size = 0;
+
+			if (e->t == SERIES) {
+			    size = p->dset->n;
+			}
+			ptr = node_get_ptr(e, t->t, &donate);
+			if (donate) {
+			    gretl_bundle_donate_data(b, key, ptr, gtype, size);
+			} else {
+			    gretl_bundle_set_data(b, key, ptr, gtype, size);
+			}
+		    } else {
+			p->err = E_TYPES;
+		    }
+		}
+	    }
+	}
+
+	if (p->err) {
+	    gretl_bundle_destroy(b);
+	} else {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_bundle_node(p);
+	    if (ret != NULL) {
+		ret->v.b = b;
 	    }
 	}
     } else if (t->t == F_DEFLIST) {
@@ -14029,6 +14121,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTPVAL:
     case F_MOVAVG:
     case F_DEFARRAY:
+    case F_DEFBUNDLE:
     case F_DEFLIST:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
