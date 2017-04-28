@@ -887,6 +887,7 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
 {
     GretlType type;
     const char *subname;
+    void *ptr;
     int i;
 
     type = gretl_type_get_singular(A->type);
@@ -896,20 +897,17 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
 	    gretl_type_get_name(A->type), A->n); 
 
     for (i=0; i<A->n; i++) {
-	if (A->data[i] == NULL) {
+	ptr = A->data[i];
+	if (ptr == NULL) {
 	    fprintf(fp, "<%s placeholder=\"true\"/>\n", subname);
 	} else if (type == GRETL_TYPE_STRING) {
-	    gretl_xml_put_tagged_string("string", 
-					A->data[i],
-					fp);
+	    gretl_xml_put_tagged_string("string", ptr, fp);
 	} else if (type == GRETL_TYPE_MATRIX) {
-	    gretl_matrix_serialize(A->data[i], NULL, fp);
+	    gretl_matrix_serialize(ptr, NULL, fp);
 	} else if (type == GRETL_TYPE_BUNDLE) {
-	    gretl_bundle_serialize(A->data[i], NULL, fp);
+	    gretl_bundle_serialize(ptr, NULL, fp);
 	} else if (type == GRETL_TYPE_LIST) {
-	    gretl_xml_put_tagged_list("list", 
-				      A->data[i],
-				      fp);
+	    gretl_xml_put_tagged_list("list", ptr, fp);
 	}
     }	    
 
