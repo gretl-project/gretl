@@ -10409,31 +10409,39 @@ static void node_nullify_ptr (NODE *n)
 static void *node_get_ptr (NODE *n, int f, int *donate)
 {
     void *ptr = NULL;
+    int t = n->t;
 
     /* default to copying the data */
     *donate = 0;
 
-    /* common to array elements, bundle members */
-    if (n->t == MAT) {
-	ptr = n->v.m;
-    } else if (n->t == STR) {
-	ptr = n->v.str;
-    } else if (n->t == BUNDLE) {
-	ptr = n->v.b;
-    } else if (n->t == LIST) {
-	ptr = n->v.ivec;
-    } else if (f == F_DEFBUNDLE) {
-	/* additional possibilities for bundle members */
-	if (n->t == ARRAY) {
+    if (f == F_DEFBUNDLE) {
+	/* bundle-specific possibilities */
+	if (t == ARRAY) {
 	    ptr = n->v.a;
-	} else if (n->t == SERIES) {
+	} else if (t == SERIES) {
 	    ptr = n->v.xvec;
-	} else if (n->t == NUM) {
+	} else if (t == NUM) {
 	    ptr = &n->v.xval;
+	} else if (scalar_matrix_node(n)) {
+	    ptr = n->v.m->val;
+	    t = NUM;
 	}
     }
 
-    if (n->t == NUM) {
+    if (ptr == NULL) {
+	/* common to array elements, bundle members */
+	if (t == MAT) {
+	    ptr = n->v.m;
+	} else if (t == STR) {
+	    ptr = n->v.str;
+	} else if (t == BUNDLE) {
+	    ptr = n->v.b;
+	} else if (t == LIST) {
+	    ptr = n->v.ivec;
+	}
+    }
+
+    if (t == NUM) {
 	*donate = 1;
     } else if (is_tmp_node(n)) {
 	*donate = 1;
@@ -11244,6 +11252,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 			if (e->t == SERIES) {
 			    size = p->dset->n;
+			} else if (scalar_matrix_node(e)) {
+			    gtype = GRETL_TYPE_DOUBLE;
 			}
 			ptr = node_get_ptr(e, t->t, &donate);
 			if (donate) {
