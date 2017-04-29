@@ -38,36 +38,32 @@ is to empty it---while the first may only be used once in a given
 exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
-the name of the bundle followed by the key. Two forms of syntax are
-acceptable in this context. The first form requires that the key be
-given as a quoted string literal enclosed in square brackets.  For
-example, the statement
+the name of the bundle followed by the key. The most common way to do
+this is to join the key to the bundle name with a dot, as in
 \begin{code}
-foo["matrix1"] = m
+  foo.matrix1 = m
 \end{code}
-adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. 
+which adds an object called \texttt{m} (presumably a matrix) to bundle
+\texttt{foo} under the key \texttt{matrix1}. The key must satisfy the
+rules for a \app{gretl} variable name (31 characters maximum, starting
+with a letter and composed of just letters, numbers or underscore)
 
-A simpler syntax is also available, \emph{provided} the key satisfies
-the rules for a \app{gretl} variable name (31 characters maximum,
-starting with a letter and composed of just letters, numbers or
-underscore).\footnote{When using the more elaborate syntax, keys do
-  not have to be valid as variable names---for example, they can
-  include spaces---but they are still limited to 31 characters.}  In
-that case you can simply join the key to the bundle name with a dot,
-as in
-
+An alternative way to achieve the same effect is to give the key as a
+quoted string literal enclosed in square brackets, as in
 \begin{code}
-foo.matrix1 = m
+  foo["matrix1"] = m
 \end{code}
+When using the more elaborate syntax, keys do not have to be valid as
+variable names---for example, they can include spaces---but they are
+still limited to 31 characters.
 
 To get an item out of a bundle, again use the name of the bundle
 followed by the key, as in
 
 \begin{code}
-matrix bm = foo["matrix1"]
-# or using the dot notation
-matrix m = foo.matrix1
+matrix bm = foo.matrix1
+# or using the long-hand notation
+matrix m = foo["matrix1"]
 \end{code}
 
 Note that the key identifying an object within a given bundle is
@@ -76,10 +72,19 @@ the effect is to replace the object which was previously stored under
 the given key. It is not required that the type of the replacement
 object is the same as that of the original.
 
-Also note that when you add an object to a bundle, what in fact
-happens is that the bundle acquires a copy of the object. The external
-object retains its own identity and is unaffected if the bundled
-object is replaced by another. Consider the following script fragment:
+A quicker way, introduced in gretl 2017b, is to use the
+\cmd{defbundle} function, as in
+\begin{code}
+  bundle b = defbundle("s", "Sample string", "m", I(3))
+\end{code}
+in which every odd-numbered argument must evaluate to a string (key)
+and every even-numbered argument must evaluate to an object of a type
+that can be included in a bundle.
+
+Note that when you add an object to a bundle, what in fact happens is
+that the bundle acquires a copy of the object. The external object
+retains its own identity and is unaffected if the bundled object is
+replaced by another. Consider the following script fragment:
 
 \begin{code}
 bundle foo
@@ -143,8 +148,8 @@ estimates an OLS regression and stores all the results in a bundle.
 /* assume y and X are given T x 1 and T x k matrices */
 
 bundle my_model = null               # initialization
-my_model["T"] = rows(X)              # sample size
-my_model["k"] = cols(X)              # number of regressors
+my_model.T = rows(X)                 # sample size
+my_model.k = cols(X)                 # number of regressors
 matrix e                             # will hold the residuals
 b = mols(y, X, &e)                   # perform OLS via native function
 s2 = meanc(e.^2)                     # compute variance estimator
@@ -152,10 +157,10 @@ matrix V = s2 .* invpd(X'X)          # compute covariance matrix
 
 /* now store estimated quantities into the bundle */
 
-my_model["betahat"] = b
-my_model["s2"] = s2
-my_model["vcv"] = V
-my_model["stderr"] = sqrt(diag(V))
+my_model.betahat = b
+my_model.s2 = s2
+my_model.vcv = V
+my_model.stderr = sqrt(diag(V))
 \end{code}
 
 The bundle so obtained is a container that can be used for all sort of
@@ -176,8 +181,8 @@ where $CI$ is the (approximate) 95 percent confidence interval. The
 above formulae translate into
 \begin{code}
   x = { 10, 1, -3, 0.5 }
-  scalar ypred    = x * my_model["betahat"]
-  scalar varpred  = my_model["s2"] + qform(x, my_model["vcv"])
+  scalar ypred    = x * my_model.betahat
+  scalar varpred  = my_model.s2 + qform(x, my_model.vcv)
   scalar sepred   = sqrt(varpred)
   matrix CI_95    = ypred + {-1, 1} .* (1.96*sepred)
   print ypred CI_95

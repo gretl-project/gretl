@@ -2500,6 +2500,72 @@
       </description>
     </function>        
 
+    <function name="defbundle" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Permette la definizione di una variabile bundle per
+	  esteso; questo avviene specificando zero o più coppie di
+	  argomenti nella forma <repl>chiave</repl>,
+	  <repl>valore</repl>. Contando gli argomenti da 1, gli
+	  argomenti di posto dispari (le chiavi) devono essere
+	  espressioni che restituiscono una stringa, mentre quelli di
+	  posto pari devono contenere un'espressione che possa essere
+	  inclusa in un bundle.
+	</para>
+	<para>
+	  Due semplici esempi:
+	</para>
+	<code>
+	  bundle b1 = defbundle("s", "Una stringa", "m", I(3))
+	  bundle b2 = defbundle("yn", normal(), "x", 5)
+	</code>
+	<para>
+	  Il primo esempio crea un bundle contentente una stringa e
+	  una matrice; il secondo, un bundle con una serie e uno
+	  scalare. Si noti che, con questa funzione, non è possibile
+	  specificare un tipo per gli argomenti, ma bisogna accettare
+	  il tipo <quote>naturale</quote> per l'argomento in
+	  questione.  Se, ad esempio, si volesse includere in un
+	  bundle <lit>b1</lit> una serie costante in cui tutti gli
+	  elementi sono uguali a 5 bisognerebbe fare qualcosa del
+	  genere (dopo aver dichiarato <lit>b1</lit>):
+	</para>
+	<code>
+	  series b1.s5 = 5
+	</code>
+	<para>
+	  Se alla funzione non vengono dati argomenti, verrà creato un
+	  bundle vuoto, allo stesso modo di
+	</para>
+	<code>
+	  bundle b = null
+	</code>
+      </description>
+    </function>
+
+    <function name="deflist" section="data-utils" output="list">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Definisce una lista (di serie), dati uno o più argomenti
+	  appropriati. Ogni argomento deve essere una serie
+	  (identificata dal nome o dal suo numero ID) o una lista
+	  (data dal nome di una lista preesistente o da un'espressione
+	  che resitutisce una lista).
+	</para>
+	<para>
+	  Si noti: questa funzione non fa altro che concatenare la
+	  erie e/o liste fornite come argomenti. È responsabilità
+	  dell'utente assicurarsi che non ci siano duplicazioni.
+	</para>
+      </description>
+    </function>
+
     <function name="deseas" section="filters" output="series">
       <fnargs>
     <fnarg type="series">x</fnarg>
