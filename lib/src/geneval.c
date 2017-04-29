@@ -11218,7 +11218,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_DEFBUNDLE) {
-	gretl_bundle *b;
+	gretl_bundle *b = NULL;
 	GretlType gtype;
 	char *key = NULL;
 	void *ptr;
