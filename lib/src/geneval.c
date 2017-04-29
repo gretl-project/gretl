@@ -10394,12 +10394,12 @@ static int check_array_element_type (NODE *n, GretlType *pt, int i)
 
 static void node_nullify_ptr (NODE *n)
 {
-    if (n->t == MAT)    n->v.m = NULL;
-    if (n->t == STR)    n->v.str = NULL;
-    if (n->t == BUNDLE) n->v.b = NULL;
-    if (n->t == LIST)   n->v.ivec = NULL;
-    if (n->t == ARRAY)  n->v.a = NULL;
-    if (n->t == SERIES) n->v.xvec = NULL;
+    if      (n->t == MAT)    n->v.m = NULL;
+    else if (n->t == STR)    n->v.str = NULL;
+    else if (n->t == BUNDLE) n->v.b = NULL;
+    else if (n->t == LIST)   n->v.ivec = NULL;
+    else if (n->t == ARRAY)  n->v.a = NULL;
+    else if (n->t == SERIES) n->v.xvec = NULL;
 }
 
 /* serves retrieval of data for candidate array elements
@@ -10411,11 +10411,11 @@ static void *node_get_ptr (NODE *n, int f, int *donate)
     void *ptr = NULL;
     int t = n->t;
 
-    /* default to copying the data */
+    /* default to copying the node's data */
     *donate = 0;
 
     if (f == F_DEFBUNDLE) {
-	/* bundle-specific possibilities */
+	/* specific to bundles */
 	if (t == ARRAY) {
 	    ptr = n->v.a;
 	} else if (t == SERIES) {
@@ -10429,7 +10429,7 @@ static void *node_get_ptr (NODE *n, int f, int *donate)
     }
 
     if (ptr == NULL) {
-	/* common to array elements, bundle members */
+	/* common to arrays and bundles */
 	if (t == MAT) {
 	    ptr = n->v.m;
 	} else if (t == STR) {
