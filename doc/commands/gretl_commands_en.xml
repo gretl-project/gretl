@@ -7782,6 +7782,11 @@
 	  <effect>QML covariance matrix</effect>
 	</option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>cluster-robust covariance matrix</effect>
+        </option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
