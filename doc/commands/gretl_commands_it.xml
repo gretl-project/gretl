@@ -7604,6 +7604,11 @@
 	  <effect>matrice di covarianza QML</effect>
 	</option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>errori standard clusterizzati</effect>
+        </option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
@@ -8889,33 +8894,34 @@
         foglio, a partire dalla prima in alto a sinistra.
       </para>
       <para>
-	With plain text files, gretl generally expects to find the data
-	columns delimited in some standard manner.  But there is also a
-	special facility for reading <quote>fixed format</quote> files, in
-	which there are no delimiters but there is a known specification of
-	the form, &eg;, <quote>variable <math>k</math> occupies 8 columns
-	starting at column 24</quote>.  To read such files, you should append
-	a string <opt>fixed-cols=</opt><repl>colspec</repl>, where
-	<repl>colspec</repl> is composed of comma-separated integers.  These
-	integers are interpreted as a set of pairs.  The first element of each
-	pair denotes a starting column, measured in bytes from the beginning
-	of the line with 1 indicating the first byte; and the second element
-	indicates how many bytes should be read for the given field.  So, for
-	example, if you say
+	Con file di testo, gretl in genere si aspetta di trovare le
+	colonne di dati separate da un qualche carattere
+	standard. Tuttavia, c'è anche modo di leggere dati in
+	<quote>formato fisso</quote>, dove non ci sono delimitatori ma
+	esiste una specifica del formato; ad esempio, <quote>la
+	variabile <math>k</math> occupa 8 caratteri a partire dal
+	24esimo</quote>.  Per leggere file siffatti, va aggiunta la
+	stringa <opt>fixed-cols=</opt><repl>colspec</repl>, dove
+	<repl>colspec</repl> si compone di interi separati da virgole.
+	Essi vengono interpretati a coppie, in cui il primo elemento
+	denota la colonna di partenza, misurata in byte dall'inizio
+	della riga (dove 1 indica il primo byte); il secondo elemento indica quanti byte
+	vanno letti per quel dato campo. Facciamo un esempio: il comando
       </para>
       <code>
 	open fixed.txt --fixed-cols=1,6,20,3
       </code>
       <para>
-	then for variable 1 gretl will read 6 bytes starting at column 1; and
-	for variable 2, 3 bytes starting at column 20.  Lines that are blank,
-	or that begin with <lit>#</lit>, are ignored, but otherwise the
-	column-reading template is applied, and if anything other than a valid
-	numerical value is found an error is flagged.  If the data are read
-	successfully, the variables will be named <lit>v1</lit>,
-	<lit>v2</lit>, etc.  It's up to the user to provide meaningful names
-	and/or descriptions using the commands <cmdref targ="rename"/> and/or 
-	<cmdref targ="setinfo"/>.
+	farà sì che vengano letti 6 byte a partire dalla colonna 1 per
+	la prima variabile; per la seconda, 3 byte a partire dalla
+	colonna 20.  Linee vuote, o che iniziano con <lit>#</lit>,
+	vengono ignorate; per tutte le altre si applica la regola del
+	formato, e se viene trovato qualcosa non interpretabile come
+	numero, viene segnalato un errore.  Se i dati sono letti senza
+	problemi, le variabili avranno per nome <lit>v1</lit>,
+	<lit>v2</lit>, ecc.  Sta all'utente dare alle variabili nomi e
+	descrizioni informative tramite i comandi <cmdref
+	targ="rename"/> e/o <cmdref targ="setinfo"/>.
       </para>
     </description>
 
