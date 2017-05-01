@@ -1567,10 +1567,12 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	gretl_matrix *G = ml_gradient_matrix(spec, &err);
 
 	if (!err) {
-	    if ((spec->opt & OPT_R) && spec->Hinv != NULL) {
-		/* robust option -> QML */
+	    if ((spec->opt & (OPT_R | OPT_C)) && spec->Hinv != NULL) {
+		/* robust option -> QML, possibly clustered */
+		gretlopt opt = (spec->opt & OPT_C)? OPT_C : OPT_NONE;
+
 		err = gretl_model_add_QML_vcv(pmod, MLE, spec->Hinv,
-					      G, NULL, OPT_R, NULL);
+					      G, spec->dset, opt, NULL);
 	    } else {
 		err = gretl_model_add_OPG_vcv(pmod, G);
 	    }
@@ -2595,7 +2597,7 @@ static int mle_calculate (nlspec *s, PRN *prn)
 		       NULL, s->opt, s->prn);
     }
 
-    if (!err && (s->opt & (OPT_H | OPT_R))) {
+    if (!err && (s->opt & (OPT_H | OPT_R | OPT_C))) {
 	/* doing Hessian or QML covariance matrix */
 	if (hessfunc != NULL) {
 	    s->Hinv = mle_hessian_inverse(s, &err);

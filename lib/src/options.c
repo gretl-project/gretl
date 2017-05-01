@@ -378,6 +378,7 @@ struct gretl_option gretl_opts[] = {
     { MLE,      OPT_L, "lbfgs", 0 },
     { MLE,      OPT_N, "numerical", 0 },
     { MLE,      OPT_R, "robust", 0 },
+    { MLE,      OPT_C, "cluster", 1 },
     { MLE,      OPT_V, "verbose", 0 },
     { MODPRINT, OPT_A, "addstats", 2 },
     { MODPRINT, OPT_O, "output", 2 },
