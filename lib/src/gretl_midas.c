@@ -1120,13 +1120,13 @@ static int midas_beta_init (midas_info *mi)
 
 /* L-BFGS-B apparatus */
 
-static int midas_bfgs_setup (midas_info *mi, DATASET *dset)
+static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
+			     gretlopt opt)
 {
     double eps = pow(2.0, -52);
     double *src, *targ = NULL;
     int i, j, k, ii, vi;
     int nb, bound_rows = 0;
-    int clamp = 0;
     midas_term *mt;
 
     mi->u = gretl_column_vector_alloc(mi->nobs);
@@ -1190,10 +1190,10 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset)
 		for (ii=0; ii<2; ii++) {
 		    /* columns: index, minimum, maximum */
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
-		    if (clamp && j == 0) {
-			/* clamp to 1.0 */
-			gretl_matrix_set(mi->bounds, j, 1, 1.0);
-			gretl_matrix_set(mi->bounds, j, 2, 1.0);
+		    if (ii == 0 && (opt & OPT_C)) {
+			fprintf(stderr, "OPT_C: clamping theta1 = %g\n", mt->theta->val[0]);
+			gretl_matrix_set(mi->bounds, j, 1, mt->theta->val[0]);
+			gretl_matrix_set(mi->bounds, j, 2, mt->theta->val[0]);
 		    } else {
 			gretl_matrix_set(mi->bounds, j, 1, eps);
 			gretl_matrix_set(mi->bounds, j, 2, 500);
@@ -1288,6 +1288,13 @@ static double bfgs_ols_callback (double *theta, double *g,
     int i, j, k, t, s;
     int vj, xcol;
     int err = 0;
+
+#if 0
+    fprintf(stderr, "bfgs_ols_callback: starting\n");
+    for (i=0; i<n; i++) {
+	fprintf(stderr, " theta[%d] = %g\n", i, theta[i]);
+    }
+#endif
 
     if (mi->nalmonp > 0) {
 	/* reset mi->y, it may have been altered */
@@ -1505,6 +1512,10 @@ static int cond_ols_GNR (MODEL *pmod,
     int nc, zcol, vi;
     int i, j, k, t, s, v;
     int err = 0;
+
+#if 0
+    fprintf(stderr, "cond_ols_GNR, starting\n");
+#endif
 
     /* total number of coefficients in the GNR */
     nc = mi->b->rows + mi->theta->rows;
@@ -2452,7 +2463,7 @@ MODEL midas_model (const int *list,
 	}	
     } else if (!err) {
 	/* estimation using L-BFGS-B */
-	err = midas_bfgs_setup(mi, dset);
+	err = midas_bfgs_setup(mi, dset, opt);
 	if (!err) {
 	    err = midas_bfgs_run(&mod, mi, opt, prn);
 	}

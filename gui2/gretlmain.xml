@@ -241,19 +241,19 @@
 	<menuitem action="intreg"/>
       </menu>
       <menu action="TSModels">
-	<menuitem action="ar1"/>
-	<menuitem action="ar"/>
 	<menuitem action="arima"/>
 	<menuitem action="garch"/>
 	<menuitem action="midasreg"/>
+	<menu action="AR-GLS">
+	  <menuitem action="ar1"/>
+	  <menuitem action="ar"/>
+	</menu>
 	<menu action="TSMulti">
 	  <menuitem action="var"/>
 	  <menuitem action="VLAGSEL"/>
 	  <menuitem action="vecm"/>
-	  <menu action="CointMenu">
-	    <menuitem action="coint"/>
-	    <menuitem action="coint2"/>
-	  </menu>
+	  <menuitem action="coint2"/>
+	  <menuitem action="coint"/>
 	</menu>
       </menu>
       <menu action="PanelModels">

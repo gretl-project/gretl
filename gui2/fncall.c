@@ -3221,41 +3221,48 @@ static int read_packages_file (const char *fname, int *pn, int which)
         if (!xmlStrcmp(cur->name, (XUC) "package")) {
 	    int mw = gretl_xml_get_prop_as_bool(cur, "model-window");
 	    int top = gretl_xml_get_prop_as_bool(cur, "toplev");
-	    xmlChar *name, *desc, *path;
+	    char *name, *desc, *path;
 	    int dreq, modelreq = 0, need_dr = 0;
 	    int freeit = 1;
 
-	    name = xmlGetProp(cur, (XUC) "name");
-	    desc = xmlGetProp(cur, (XUC) "label");
-	    path = xmlGetProp(cur, (XUC) "path");
+	    name = (char *) xmlGetProp(cur, (XUC) "name");
+	    desc = (char *) xmlGetProp(cur, (XUC) "label");
+	    path = (char *) xmlGetProp(cur, (XUC) "path");
+
+	    if (!strcmp(name, "SVAR") &&
+		!strcmp(path, "/menubar/Model/TSModels")) {
+		/* update menu path */
+		free(path);
+		path = gretl_strdup("/menubar/Model/TSModels/TSMulti");
+	    }
 
 	    if (mw) {
 		/* package with a model-window attachment */
 		if (!gretl_xml_get_prop_as_int(cur, "model-requirement", &modelreq)) {
-		    modelreq = discover_gfn_requirement((const char *) name, top, 1);
+		    modelreq = discover_gfn_requirement(name, top, 1);
 		    gpkgs_changed = 1;
 		}
 	    } else {
 		/* a main-window package */
-		need_dr = need_gfn_data_req((const char *) path);
+		need_dr = need_gfn_data_req(path);
 	    }
 
 	    if (need_dr && !gretl_xml_get_prop_as_int(cur, "data-requirement", &dreq)) {
-		dreq = discover_gfn_requirement((const char *) name, top, 0);
+		dreq = discover_gfn_requirement(name, top, 0);
 		gpkgs_changed = 1;
 	    }
 
 	    if (name == NULL || desc == NULL || path == NULL) {
 		err = E_DATA;
-	    } else if (package_is_unseen((const char *) name, n)) {
+	    } else if (package_is_unseen(name, n)) {
 		gpkgs = myrealloc(gpkgs, (n+1) * sizeof *gpkgs);
 		if (gpkgs == NULL) {
 		    err = E_ALLOC;
 		} else {
 		    freeit = 0;
-		    gpkgs[n].pkgname = (char *) name;
-		    gpkgs[n].label = (char *) desc;
-		    gpkgs[n].menupath = (char *) path;
+		    gpkgs[n].pkgname = name;
+		    gpkgs[n].label = desc;
+		    gpkgs[n].menupath = path;
 		    gpkgs[n].filepath = NULL;
 		    gpi_set_flags(&gpkgs[n], which, !top, mw, need_dr);
 		    gpkgs[n].dreq = (DataReq) dreq;

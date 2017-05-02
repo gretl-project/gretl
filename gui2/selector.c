@@ -4071,7 +4071,7 @@ static char *est_str (int cmdnum)
     case HSK:
 	return N_("Heteroskedasticity corrected");
     case AR1:
-	return N_("AR(1)");
+	return N_("AR(1) errors");
     case LOGIT:
 	return N_("Logit");
     case OLOGIT:
@@ -4113,7 +4113,7 @@ static char *est_str (int cmdnum)
     case IV_GMM:
 	return N_("Generalized method of moments");
     case AR:
-	return N_("Autoregressive model");
+	return N_("Autoregressive errors");
     case ARMA:
 	return N_("ARIMA");
     case ARCH:
@@ -4133,8 +4133,9 @@ static char *est_str (int cmdnum)
     case INTREG:
 	return N_("Interval regression");
     case COINT:
+	return N_("Cointegration (Engle-Granger)");
     case COINT2:
-	return N_("Cointegration");
+	return N_("Cointegration (Johansen)");
     case MPOLS:
 	return N_("Multiple precision OLS");
     case LOESS:
