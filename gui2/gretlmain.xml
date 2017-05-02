@@ -245,14 +245,16 @@
 	<menuitem action="ar"/>
 	<menuitem action="arima"/>
 	<menuitem action="garch"/>
-	<menuitem action="var"/>
-	<menuitem action="VLAGSEL"/>
-	<menuitem action="vecm"/>
-	<menu action="CointMenu">
-	  <menuitem action="coint"/>
-	  <menuitem action="coint2"/>
-	</menu>
 	<menuitem action="midasreg"/>
+	<menu action="TSMulti">
+	  <menuitem action="var"/>
+	  <menuitem action="VLAGSEL"/>
+	  <menuitem action="vecm"/>
+	  <menu action="CointMenu">
+	    <menuitem action="coint"/>
+	    <menuitem action="coint2"/>
+	  </menu>
+	</menu>
       </menu>
       <menu action="PanelModels">
 	<menuitem action="panel"/>
