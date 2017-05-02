@@ -5985,7 +5985,9 @@
 	  typically 2); 2 = normalized beta with zero last
 	  (<math>k</math> = 2); 3 = normalized beta with non-zero last
 	  lag (<math>k</math> = 3); and 4 = Almon polynomial
-	  (<math>k</math> at least 1).
+	  (<math>k</math> at least 1). Note that in the normalized
+	  beta case the first two elements of <repl>theta</repl>
+	  must be positive.
 	</para>
 	<para>
 	  <seelist>

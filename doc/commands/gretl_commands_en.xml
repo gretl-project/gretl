@@ -7571,6 +7571,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
         </option>
+        <option>
+	  <flag>--levenberg</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>midasreg y 0 y(-1) ; mds(X, 1, 9, 1, theta)</example>
@@ -7689,6 +7693,26 @@
 	  </para>
 	</li>
       </ilist>
+      <para context="cli">
+	The estimation method used by this command depends on the
+	specification of the high-frequency terms. In the case of
+	U-MIDAS the method is OLS, otherwise it is nonlinear least
+	squares (NLS). When the normalized exponential Almon or
+	normalized beta parameterization is specified, the default
+	NLS method is a combination of constrained BFGS and OLS, but
+	the <opt>levenverg</opt> option can be given to force use
+	of the Levenberg&ndash;Marquardt algorithm.
+      </para>
+      <para context="gui">
+	The estimation method used by this command depends on the
+	specification of the high-frequency terms. In the case of
+	U-MIDAS the method is OLS, otherwise it is nonlinear least
+	squares (NLS). When the normalized exponential Almon or
+	normalized beta parameterization is specified, the NLS method
+	is a combination of constrained BFGS and OLS, unless you check
+	the box labeled <quote>Prefer NLS via
+	Levenberg-Marquardt</quote>.
+      </para>
     </description>
 
     <gui-access>

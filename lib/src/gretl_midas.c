@@ -1126,6 +1126,7 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset)
     double *src, *targ = NULL;
     int i, j, k, ii, vi;
     int nb, bound_rows = 0;
+    int clamp = 0;
     midas_term *mt;
 
     mi->u = gretl_column_vector_alloc(mi->nobs);
@@ -1189,8 +1190,14 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset)
 		for (ii=0; ii<2; ii++) {
 		    /* columns: index, minimum, maximum */
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
-		    gretl_matrix_set(mi->bounds, j, 1, eps);
-		    gretl_matrix_set(mi->bounds, j, 2, 500);
+		    if (clamp && j == 0) {
+			/* clamp to 1.0 */
+			gretl_matrix_set(mi->bounds, j, 1, 1.0);
+			gretl_matrix_set(mi->bounds, j, 2, 1.0);
+		    } else {
+			gretl_matrix_set(mi->bounds, j, 1, eps);
+			gretl_matrix_set(mi->bounds, j, 2, 500);
+		    }
 		    j++;
 		}
 	    } else if (mt->type == MIDAS_NEALMON) {
@@ -1925,6 +1932,7 @@ static int finalize_midas_model (MODEL *pmod,
 	free(pmod->list);
 	pmod->list = gretl_list_copy(mi->list);
 	if (mi->method == MDS_BFGS) {
+	    /* distinguish this from Levenberg-Marquardt */
 	    gretl_model_set_int(pmod, "BFGS", 1);
 	}
     }

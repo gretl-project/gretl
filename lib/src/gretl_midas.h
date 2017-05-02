@@ -26,6 +26,7 @@ typedef enum {
     MIDAS_BETA0,    /* normalized beta, last lag 0 */
     MIDAS_BETAN,    /* normalized beta, non-zero last lag */
     MIDAS_ALMONP,   /* plain Almon polynomial */
+    MIDAS_BETA1,    /* one-parameter beta */
     MIDAS_MAX       /* sentinel */
 } MidasType;
 
