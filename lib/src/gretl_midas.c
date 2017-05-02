@@ -432,6 +432,7 @@ static void midas_term_init (midas_term *mt)
 
    (1) mds(list, minlag, maxlag, type, theta)
    (2) mds(list, minlag, maxlag, 0)
+
    (3) mdsl(list, type, theta)
    (4) mdsl(list, 0)
 
@@ -1180,6 +1181,7 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset)
 	    if (beta_type(mt->type)) {
 		/* set up beta minima and maxima */
 		for (ii=0; ii<2; ii++) {
+		    /* columns: index, minimum, maximum */
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
 		    gretl_matrix_set(mi->bounds, j, 1, eps);
 		    gretl_matrix_set(mi->bounds, j, 2, 500);
@@ -1784,7 +1786,7 @@ static int model_add_mterms_array (MODEL *pmod,
 }
 
 /* Retrieve from array @A, which was earlier attached to
-   a model, information on the inidividual MIDAS terms
+   a model, information on the individual MIDAS terms
    for the purpose of forecasting.
 */
 

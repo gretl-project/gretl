@@ -1291,7 +1291,7 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
 	    fprintf(stderr, "lbfgs_bounds: out-of-bounds index %d\n", j);
 	    err = E_INVARG;
 	} else {
-	    j--;
+	    j--; /* convert to zero-based */
 	    l[j] = gretl_matrix_get(m, i, 1);
 	    u[j] = gretl_matrix_get(m, i, 2);
 	    if (l[j] > u[j]) {
