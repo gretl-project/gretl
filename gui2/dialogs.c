@@ -6434,9 +6434,11 @@ int midas_term_dialog (const char *name, int m,
 		     G_CALLBACK(set_midas_lag), &msync);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
-    /* param-type signal */
+    /* set param-type callback */
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(set_midas_ptype), &msync);
+    /* and trigger it to ensure kspin is right */
+    set_midas_ptype(GTK_COMBO_BOX(combo), &msync);
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));

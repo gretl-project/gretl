@@ -706,6 +706,10 @@ static void retrieve_midas_info (MODEL *pmod)
     gretl_array *A;
     int err = 0;
 
+    if (pmod->opt & OPT_L) {
+	model_opt |= OPT_L;
+    }
+
     A = gretl_model_get_data(pmod, "midas_info");
 
     if (A != NULL) {
@@ -5991,6 +5995,9 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == MPOLS) {
 	hbox = mpols_bits_selector();
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+    } else if (sr->ci == MIDASREG) {
+	tmp = gtk_check_button_new_with_label(_("Prefer NLS via Levenberg-Marquardt"));
+	pack_switch(tmp, sr, (model_opt & OPT_L), FALSE, OPT_L, 0);
     }
 } 
 
