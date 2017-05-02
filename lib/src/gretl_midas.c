@@ -17,18 +17,17 @@
  * 
  */
 
-/* Note, 2016-09-26: to avoid clutter and unclarity, this version
-   of gretl_midas.c, switches fully to "conditional OLS" for
-   estimation of MIDAS models that comprise one or more beta or
-   normalized exponential Almon (nealmon) terms. By this we mean
-   a combination of L-BFGS-B (with constraints on the beta and/or
-   nealmon hyper-parameters) and OLS: all coefficients other than
-   the hyper-parameters are estimated via OLS conditional on the
-   "theta" vector of hyper-parameters as optimized by L-BFGS-B.
+/* Note, 2016-09-26: to avoid clutter and unclarity, this version of
+   gretl_midas.c defaults to "conditional OLS" for estimation of MIDAS
+   models that comprise one or more beta or normalized exponential
+   Almon (nealmon) terms. By this we mean a combination of L-BFGS-B
+   (with constraints on the beta and/or nealmon hyper-parameters) and
+   OLS: all coefficients other than the hyper-parameters are estimated
+   via OLS conditional on the "theta" vector of hyper-parameters as
+   optimized by L-BFGS-B.
 
-   In case this proves to be a bad idea, we can go back to commit
-   8aa2c9, the step before we started working towards conditional
-   OLS.
+   In case this proves to be a bad idea, we could go back to commit
+   8aa2c9, the step before we started working towards conditional OLS.
 */
 
 #include "libgretl.h"
@@ -583,6 +582,10 @@ static int umidas_check (midas_info *mi, int n_umidas)
 /* Parse the @spec string, which should contain one or more
    MIDAS specifications. For details on what exactly we're
    looking for, see the comment on parse_midas_term() above.
+   This function also potentially revises the estimation
+   method: to OLS if we have nothing but UMIDAS terms; to
+   MDS_BFGS if we "boxed" terms and the --levenberg option
+   has not been specified.
 */
 
 static int 
@@ -606,7 +609,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
     }
 
     if (n_spec == 0) {
-	/* spec is junk */
+	/* spec is junk! */
 	err = E_PARSE;
     } else {
 	/* allocate info structs */
@@ -616,6 +619,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	}
     }
 
+    /* number of slope coeffs on high-frequency terms */
     mi->hfslopes = 0;
 
     if (!err) {
@@ -663,11 +667,13 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	mi->nmidas = n_spec;
 	mi->nalmonp = n_almonp;
 	if (n_boxed > 0) {
+	    /* prefer LBFGS, but respect OPT_L if it's given */
 	    if (!(opt & OPT_L)) {
-		/* ! levenberg */
+		/* ! --levenberg */
 		mi->method = MDS_BFGS;
 	    }
 	} else if (n_umidas > 0) {
+	    /* note: switch to MDS_OLS if appropriate */
 	    err = umidas_check(mi, n_umidas);
 	}
     }
@@ -1914,6 +1920,9 @@ static int finalize_midas_model (MODEL *pmod,
 	pmod->depvar = gretl_strdup(dset->varname[mi->list[1]]);
 	free(pmod->list);
 	pmod->list = gretl_list_copy(mi->list);
+	if (mi->method == MDS_BFGS) {
+	    gretl_model_set_int(pmod, "BFGS", 1);
+	}
     }
 
     pmod->ci = MIDASREG;
@@ -2219,6 +2228,12 @@ static int add_param_names (midas_info *mi,
     return 0;
 }
 
+/* Allocate and initialize midas_info struct, and set
+   MDS_NLS (Levenberg-Marquardt) as the default estimation
+   method -- but this will be subject to revision when we
+   digest the user's specification.
+*/
+
 static midas_info *midas_info_new (const int *list,
 				   DATASET *dset)
 {
@@ -2236,6 +2251,13 @@ static midas_info *midas_info_new (const int *list,
     return mi;
 }
 
+/* When using Levenberg-Marquardt NLS, check to see if
+   we have any terms that call for a "small" step in
+   the optimizer (to try to head off numerical
+   problems). This applies to the "highly nonlinear"
+   parameterizations.
+*/
+
 static int any_smallstep_terms (midas_info *mi)
 {
     midas_term *mt;
@@ -2252,6 +2274,8 @@ static int any_smallstep_terms (midas_info *mi)
 
     return 0;
 }
+
+/* General setup for NLS via Levenverg-Marquardt */
 
 static int midas_nls_setup (midas_info *mi, DATASET *dset,
 			    gretlopt opt, PRN *prn)
@@ -2333,7 +2357,7 @@ static int midas_nls_setup (midas_info *mi, DATASET *dset,
     }
 
     if (opt & OPT_P) {
-	pputs(prn, "=== end nls specification ===\n");
+	pputs(prn, "=== end nls specification ===\n\n");
     }
 
     if (!err && any_smallstep_terms(mi)) {

@@ -947,6 +947,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == INTREG) return N_("Interval estimates");
     else if (ci == DPANEL) return N_("Dynamic panel");
     else if (ci == BIPROBIT) return N_("Bivariate probit");
+    else if (ci == MIDASREG) return N_("MIDAS");
     else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
@@ -1879,6 +1880,20 @@ static void make_obs_sep (char *targ, const char *obs, int tex)
     }
 }
 
+static void maybe_show_midas_method (const MODEL *pmod, PRN *prn)
+{
+    if (gretl_model_get_int(pmod, "umidas") == 0) {
+	gretl_prn_newline(prn);
+	if (gretl_model_get_int(pmod, "BFGS")) {
+	    pputs(prn, A_("Using L-BFGS-B with conditional OLS"));
+	} else if (tex_format(prn)) {
+	    pputs(prn, A_("Using Levenberg--Marquardt algorithm"));
+	} else {
+	    pputs(prn, A_("Using Levenberg-Marquardt algorithm"));
+	}
+    }
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATASET *dset, 
 				 gretlopt opt, 
@@ -1992,6 +2007,10 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, A_(fmt), A_(estr), startdate, 
 		    datesep, enddate);
 	    maybe_print_T(pmod, dset, startdate, prn);
+	}
+
+	if (pmod->ci == MIDASREG) {
+	    maybe_show_midas_method(pmod, prn);
 	}
 
 	if (gretl_model_get_int(pmod, "binary_obs_dropped")) {
