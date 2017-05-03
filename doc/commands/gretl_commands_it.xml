@@ -7395,15 +7395,19 @@
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <effect>stampa la matrice di covarianze</effect>
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>errori standard robusti</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of results</effect>
+	  <effect>non stampa i risultati</effect>
+        </option>
+        <option>
+	  <flag>--levenberg</flag>
+	  <effect>vedi sotto</effect>
         </option>
       </options>
       <examples>
@@ -7469,14 +7473,14 @@
 	mds(X, 3, 11, 1, theta)
       </code>
       <para context="cli">
-	<lit>mdsl</lit>: generally requires 3 arguments: the name of a
-	list of MIDAS lags, an integer to specify the type of
-	parameterization and the name of an initialization vector. In
-	this case the minimum and maximum lags are implicit in the
-	initial list argument. In the example below <lit>Xlags</lit>
-	should be a list which already holds all the required lags;
-	such a list can be constructed using the <fncref
-	targ="hflags"/> function.
+	<lit>mdsl</lit>: in gnere richiede 3 argomenti: il nome di una
+	lista di ritardi MIDAS, un intero per il tipo di
+	parametrizzazione e il nome di un vettore di valori
+	iniziali. In questo caso i ritardi minimo e massimo sono
+	impliciti nell'argomento lista iniziale. Nell'esempio seguente
+	<lit>Xlags</lit> dev'essere una lista che contiene già i
+	ritardi necessari; essa può essere costruita tramite la
+	funzione <fncref targ="hflags"/> function.
       </para>
       <code context="cli">
 	mdsl(XLags, 1, theta)
@@ -7523,6 +7527,27 @@
 	  </para>
 	</li>
       </ilist>
+      <para context="cli">
+	Il metodo di stima usato da questo comando dipende dalla
+	specificazione dei termini ad alta frequenza. Nel caso U-MIDAS
+	il metodo è l'OLS; in tutti gli altri casi si usano i minimi
+	quadrati non lineari (NLS). Quando si specificano le
+	parametrizzazioni Almon esponenziale normalizzata oppure beta
+	normalizzata, il metodo NLS di default è una combinazione di
+	BFGS vincolato e OLS, ma per forzare l'uso dell'algoritmo di
+	Levenberg&ndash;Marquardt si può usare l'opzione
+	<opt>levenverg</opt>.
+      </para>
+      <para context="gui">
+	Il metodo di stima usato da questo comando dipende dalla
+	specificazione dei termini ad alta frequenza. Nel caso U-MIDAS
+	il metodo è l'OLS; in tutti gli altri casi si usano i minimi
+	quadrati non lineari (NLS). Quando si specificano le
+	parametrizzazioni Almon esponenziale normalizzata oppure beta
+	normalizzata, il metodo NLS di default è una combinazione di
+	BFGS vincolato e OLS, a meno che non si selezioni la casella
+	<quote>Usa Levenberg-Marquardt per NLS</quote>.
+      </para>
     </description>
 
     <gui-access>
