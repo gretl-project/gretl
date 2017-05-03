@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-03 08:49-0400\n"
-"PO-Revision-Date: 2017-05-03 08:56-0400\n"
+"PO-Revision-Date: 2017-05-03 10:46-0400\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "Language: German\n"
@@ -12322,9 +12322,8 @@ msgid "VAR _lag selection"
 msgstr "VAR Lag-Auswahl"
 
 #: gui2/gretl.c:1744
-#, fuzzy
 msgid "V_ECM"
-msgstr "V_ECM..."
+msgstr "V_ECM"
 
 #: gui2/gretl.c:1745
 #, fuzzy
