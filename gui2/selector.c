@@ -111,6 +111,17 @@ enum {
     MCOL_K
 };
 
+enum {
+    ARMA_p,
+    ARIMA_d,
+    ARMA_q,
+    ARMA_plist,
+    ARMA_qlist,
+    ARMA_P,
+    ARIMA_D,
+    ARMA_Q
+};
+
 #define EXTRA_LAGS (N_EXTRA - 1)
 
 #define VNAME_WIDTH 18
@@ -1827,14 +1838,14 @@ static int arima_selected (selector *sr)
 {
     int ret = 0;
 
-    if (sr->extra[2] != NULL) {
+    if (sr->extra[ARIMA_d] != NULL) {
 	/* the arima_d spinner */
-	ret = spinner_get_int(sr->extra[2]);
+	ret = spinner_get_int(sr->extra[ARIMA_d]);
     }
 
-    if (!ret && sr->extra[6] != NULL) {
+    if (!ret && sr->extra[ARIMA_D] != NULL) {
 	/* the seasonal arima_D spinner */
-	ret = spinner_get_int(sr->extra[6]);
+	ret = spinner_get_int(sr->extra[ARIMA_D]);
     } 
 
     return ret;
@@ -2833,39 +2844,39 @@ static void arma_spec_to_cmdlist (selector *sr)
     free(malags);
     malags = NULL;
 
-    if (gtk_widget_is_sensitive(sr->extra[1])) {
+    if (gtk_widget_is_sensitive(sr->extra[ARMA_plist])) {
 	/* "gappy" AR lags activated */
-	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[1]));
+	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[ARMA_plist]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt)); 
 	arlags = gretl_strdup(txt);
     } else {
 	/* regular max AR lag */
-	arma_p = spinner_get_int(sr->extra[0]);
+	arma_p = spinner_get_int(sr->extra[ARMA_p]);
 	sprintf(s, "%d ", arma_p);
 	add_to_cmdlist(sr, s);
     } 
 
-    arima_d = spinner_get_int(sr->extra[2]);
+    arima_d = spinner_get_int(sr->extra[ARIMA_d]);
     sprintf(s, "%d ", arima_d);
     add_to_cmdlist(sr, s);
 
-    if (gtk_widget_is_sensitive(sr->extra[4])) {
+    if (gtk_widget_is_sensitive(sr->extra[ARMA_qlist])) {
 	/* "gappy" MA lags activated */
-	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[4]));
+	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[ARMA_qlist]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt));
 	add_to_cmdlist(sr, "; ");
 	malags = gretl_strdup(txt);
     } else {
 	/* regular max MA lag */
-	arma_q = spinner_get_int(sr->extra[3]);
+	arma_q = spinner_get_int(sr->extra[ARMA_q]);
 	sprintf(s, "%d ; ", arma_q);
 	add_to_cmdlist(sr, s);
     } 
 
-    if (sr->extra[5] != NULL) {
-	arma_P = spinner_get_int(sr->extra[5]);
-	arima_D = spinner_get_int(sr->extra[6]);
-	arma_Q = spinner_get_int(sr->extra[7]);
+    if (sr->extra[ARMA_P] != NULL) {
+	arma_P = spinner_get_int(sr->extra[ARMA_P]);
+	arima_D = spinner_get_int(sr->extra[ARIMA_D]);
+	arma_Q = spinner_get_int(sr->extra[ARMA_Q]);
 
 	if (arma_P > 0 || arima_D > 0 || arma_Q > 0) {
 	    sprintf(s, "%d %d %d ; ", arma_P, arima_D, arma_Q);
@@ -5374,7 +5385,8 @@ static GtkWidget *arma_aux_label (int i)
     GtkWidget *lbl;
     const char *strs[] = {
 	N_("Non-seasonal"),
-	N_("Seasonal")
+	N_("Seasonal"),
+	N_("Orders")
     };
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -5388,16 +5400,16 @@ static void toggle_p (GtkWidget *w, selector *sr)
 {
     gboolean s = button_is_active(w);
 
-    gtk_widget_set_sensitive(sr->extra[0], !s);
-    gtk_widget_set_sensitive(sr->extra[1], s);
+    gtk_widget_set_sensitive(sr->extra[ARMA_p], !s);
+    gtk_widget_set_sensitive(sr->extra[ARMA_plist], s);
 }
 
 static void toggle_q (GtkWidget *w, selector *sr)
 {
     gboolean s = button_is_active(w);
 
-    gtk_widget_set_sensitive(sr->extra[3], !s);
-    gtk_widget_set_sensitive(sr->extra[4], s);
+    gtk_widget_set_sensitive(sr->extra[ARMA_q], !s);
+    gtk_widget_set_sensitive(sr->extra[ARMA_qlist], s);
 }
 
 static void arima_callback (GtkWidget *w, selector *sr)
@@ -5409,92 +5421,82 @@ static void arima_callback (GtkWidget *w, selector *sr)
 static void build_arma_spinners (selector *sr)
 {
     GtkWidget *lbl, *chk, *tab;
-    GtkWidget *hbox;
     GtkAdjustment *adj;
     gdouble vmax, val;
     gboolean freeform;
     const char *strs[] = {
-	N_("AR order:"),
-	N_("Difference:"),
-	N_("MA order:")
-    };
-    const char *sstrs[] = {
 	N_("AR"),
 	N_("I"),
 	N_("MA")
     };
-    int i, j;
+    int nrows, ncols = 7;
+    int seasonals;
+    int c, i, j;
 
-    if (0 && dataset->pd > 1) {
-	vbox_add_vwedge(sr->vbox);
-	lbl = arma_aux_label(0);
-	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
-    }
+    seasonals = dataset->pd > 1;
+    nrows = seasonals ? 3 : 2;
 
-    tab = gtk_table_new(3, 4, FALSE);
+    tab = gtk_table_new(nrows, ncols, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tab), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tab), 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), tab, FALSE, FALSE, 0);
 
-    /* AR lags */
-    lbl = gtk_label_new(_(strs[0]));
+    lbl = arma_aux_label(seasonals? 0 : 2);
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
-    adj = (GtkAdjustment *) gtk_adjustment_new(arma_p, 0, 10, 1, 1, 0);
-    sr->extra[0] = gtk_spin_button_new(adj, 1, 0);
-    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[0], 1, 2, 0, 1);
-    chk = gtk_check_button_new_with_label(_("or specific lags"));
-    g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_p), sr);
-    gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 0, 1);
+    c = 1;
 
-    /* or free-form lags */
-    sr->extra[1] = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(sr->extra[1]), 16);
-    freeform = maybe_set_entry_text(sr->extra[1], arlags);
-    gtk_widget_set_sensitive(sr->extra[1], FALSE);
-    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[1], 3, 4, 0, 1);
-    if (freeform) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
+    /* non-seasonal AR, I, MA spin-buttons */
+    for (i=0; i<3; i++) {
+	lbl = gtk_label_new(_(strs[i]));
+	gtk_table_attach_defaults(GTK_TABLE(tab), lbl, c, c+1, 0, 1);
+	c++;
+	val = (i==0)? arma_p : (i==1)? arima_d : arma_q;
+	vmax = (i == 1)? 2 : 10;
+	adj = (GtkAdjustment *) gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
+	sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
+	if (i == 1) {
+	    g_signal_connect(G_OBJECT(sr->extra[i]), "value-changed",
+			     G_CALLBACK(arima_callback), sr);
+	}
+	gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[i], c, c+1, 0, 1);
+	c++;
     }
 
-    /* order for differencing */
-    lbl = gtk_label_new(_(strs[1]));
+    lbl = gtk_label_new(_("specific lags"));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
-    adj = (GtkAdjustment *) gtk_adjustment_new(arima_d, 0, 2, 1, 1, 0);
-    sr->extra[2] = gtk_spin_button_new(adj, 1, 0);
-    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[2], 1, 2, 1, 2);
-    g_signal_connect(G_OBJECT(sr->extra[2]), "value-changed",
-		     G_CALLBACK(arima_callback), sr);
 
-    /* MA lags */
-    lbl = gtk_label_new(_(strs[2]));
-    gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
-    adj = (GtkAdjustment *) gtk_adjustment_new(arma_q, 0, 10, 1, 1, 0);
-    sr->extra[3] = gtk_spin_button_new(adj, 1, 0);
-    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[3], 1, 2, 2, 3);
-    chk = gtk_check_button_new_with_label(_("or specific lags"));
-    g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_q), sr);
-    gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 2, 3);
+    c = 1;
+    j = 3;
 
-    /* or free-form lags */
-    sr->extra[4] = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
-    freeform = maybe_set_entry_text(sr->extra[4], malags);
-    gtk_widget_set_sensitive(sr->extra[4], FALSE);
-    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[4], 3, 4, 2, 3);
-    if (freeform) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
+    /* check buttons and entries for free-form lags */
+    for (i=0; i<2; i++) {
+	GCallback cb = (i == 0)? G_CALLBACK(toggle_p) : G_CALLBACK(toggle_q);
+	char *fill = (i == 0)? arlags : malags;
+
+	chk = gtk_check_button_new();
+	g_signal_connect(G_OBJECT(chk), "clicked", cb, sr);
+	gtk_table_attach_defaults(GTK_TABLE(tab), chk, c, c+1, 1, 2);
+	c++;
+	sr->extra[j] = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(sr->extra[j]), 16);
+	gtk_entry_set_width_chars(GTK_ENTRY(sr->extra[j]), 8);
+	gtk_widget_set_sensitive(sr->extra[j], FALSE);
+	freeform = maybe_set_entry_text(sr->extra[j], fill);
+	gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[j], c, c+1, 1, 2);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), freeform);
+	j++;
+	c += 3;
     }
 
-    j = 5;
-
-    if (dataset->pd > 1) {
-	vbox_add_vwedge(sr->vbox);
-	hbox = gtk_hbox_new(FALSE, 5);
+    if (seasonals) {
+	gtk_table_set_row_spacing(GTK_TABLE(tab), 1, 10);
 	lbl = arma_aux_label(1);
-	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
+	gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
+	c = 1;
 	for (i=0; i<3; i++) {
-	    lbl = gtk_label_new(_(sstrs[i]));
-	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
+	    lbl = gtk_label_new(_(strs[i]));
+	    gtk_table_attach_defaults(GTK_TABLE(tab), lbl, c, c+1, 2, 3);
+	    c++;
 	    val = (i==0)? arma_P : (i==1)? arima_D : arma_Q;
 	    vmax = (i == 1)? 2 : 4;
 	    adj = (GtkAdjustment *) gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
@@ -5503,51 +5505,42 @@ static void build_arma_spinners (selector *sr)
 		g_signal_connect(G_OBJECT(sr->extra[j]), "value-changed",
 				 G_CALLBACK(arima_callback), sr);
 	    }
-	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[j++], FALSE, FALSE, 5);
+	    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[j++], c, c+1, 2, 3);
+	    c++;
 	}
-
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
     }
 }
 
 static void reset_arma_spinners (selector *sr)
 {
-    if (sr->extra[0] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[0])) {
-	/* non-seasonal AR maxlag */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[0]), 
+    if (sr->extra[ARMA_p] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARMA_p])) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARMA_p]),
 				  (gdouble) arma_p);
     } 
-    if (sr->extra[1] != NULL && GTK_IS_ENTRY(sr->extra[1])) {
-	/* non-seasonal AR specific lags */
-	gtk_entry_set_text(GTK_ENTRY(sr->extra[1]), "");
-    } 
-    if (sr->extra[2] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[2])) {
-	/* non-seasonal diff */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[2]), 
+    if (sr->extra[ARIMA_d] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARIMA_d])) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARIMA_d]),
 				  (gdouble) arima_d);
     } 
-    if (sr->extra[3] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[3])) {
-	/* non-seasonal MA maxlag */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[3]), 
+    if (sr->extra[ARMA_q] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARMA_q])) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARMA_q]),
 				  (gdouble) arma_q);
+    }
+    if (sr->extra[ARMA_plist] != NULL && GTK_IS_ENTRY(sr->extra[ARMA_plist])) {
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[ARMA_plist]), "");
     } 
-    if (sr->extra[4] != NULL && GTK_IS_ENTRY(sr->extra[4])) {
-	/* non-seasonal MA specific lags */
-	gtk_entry_set_text(GTK_ENTRY(sr->extra[4]), "");
+    if (sr->extra[ARMA_qlist] != NULL && GTK_IS_ENTRY(sr->extra[ARMA_qlist])) {
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[ARMA_qlist]), "");
     } 
-    if (sr->extra[5] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[5])) {
-	/* seasonal AR maxlag */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[5]), 
+    if (sr->extra[ARMA_P] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARMA_P])) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARMA_P]),
 				  (gdouble) arma_P);
     } 
-    if (sr->extra[6] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[6])) {
-	/* seasonal diff */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[6]), 
+    if (sr->extra[ARIMA_D] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARIMA_D])) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARIMA_D]),
 				  (gdouble) arima_D);
     } 
-    if (sr->extra[7] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[7])) {
-	/* seasonal MA maxlag */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[7]), 
+    if (sr->extra[ARMA_Q] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[ARMA_Q])) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[ARMA_Q]),
 				  (gdouble) arma_Q);
     } 
 }
