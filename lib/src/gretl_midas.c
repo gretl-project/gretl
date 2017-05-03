@@ -1107,8 +1107,8 @@ static int midas_beta_init (midas_info *mi)
 	if (best_idx >= 0) {
 	    mi->theta->val[0] = theta[best_idx][0];
 	    mi->theta->val[1] = theta[best_idx][1];
-#if 0
-	    fprintf(stderr, "best_idx = %d, SSRmin=%g\n",
+#if MIDAS_DEBUG
+	    fprintf(stderr, "midas_beta_init: best_idx = %d, SSRmin=%g\n",
 		    best_idx, SSRmin);
 	    gretl_matrix_print(mi->theta, "best theta");
 #endif
@@ -1127,7 +1127,17 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
     double *src, *targ = NULL;
     int i, j, k, ii, vi;
     int nb, bound_rows = 0;
+    int clamp = (opt & OPT_C);
     midas_term *mt;
+
+    if (clamp) {
+	/* check for valid use of OPT_C, --clamp-beta */
+	if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
+	    ; /* OK */
+	} else {
+	    return E_BADOPT;
+	}
+    }
 
     mi->u = gretl_column_vector_alloc(mi->nobs);
     mi->y = gretl_column_vector_alloc(mi->nobs);
@@ -1190,8 +1200,7 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
 		for (ii=0; ii<2; ii++) {
 		    /* columns: index, minimum, maximum */
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
-		    if (ii == 0 && (opt & OPT_C)) {
-			fprintf(stderr, "OPT_C: clamping theta1 = %g\n", mt->theta->val[0]);
+		    if (ii == 0 && clamp) {
 			gretl_matrix_set(mi->bounds, j, 1, mt->theta->val[0]);
 			gretl_matrix_set(mi->bounds, j, 2, mt->theta->val[0]);
 		    } else {
@@ -1289,7 +1298,7 @@ static double bfgs_ols_callback (double *theta, double *g,
     int vj, xcol;
     int err = 0;
 
-#if 0
+#if MIDAS_DEBUG > 1
     fprintf(stderr, "bfgs_ols_callback: starting\n");
     for (i=0; i<n; i++) {
 	fprintf(stderr, " theta[%d] = %g\n", i, theta[i]);
@@ -1511,9 +1520,10 @@ static int cond_ols_GNR (MODEL *pmod,
     gretl_matrix *w, *G;
     int nc, zcol, vi;
     int i, j, k, t, s, v;
+    int cpos = 0;
     int err = 0;
 
-#if 0
+#if MIDAS_DEBUG
     fprintf(stderr, "cond_ols_GNR, starting\n");
 #endif
 
@@ -1636,7 +1646,12 @@ static int cond_ols_GNR (MODEL *pmod,
 	    for (ii=0; ii<mt->nparm; ii++) {
 		glist[0] += 1;
 		glist[glist[0]] = pos + ii;
-		sprintf(gdset->varname[pos+ii], "grad%d", ii+1);
+		if (ii == 0 && (opt & OPT_C)) {
+		    cpos = glist[0];
+		    sprintf(gdset->varname[pos+ii], "grad%dc", ii+1);
+		} else {
+		    sprintf(gdset->varname[pos+ii], "grad%d", ii+1);
+		}
 	    }
 	    zcol += mt->nparm;
 	}
@@ -1649,6 +1664,11 @@ static int cond_ols_GNR (MODEL *pmod,
 
     *pmod = GNR(glist, gdset, opt, prn);
 
+#if MIDAS_DEBUG
+    pprintf(prn, "MIDAS GNR, cpos = %d\n", cpos);
+    printmodel(pmod, gdset, opt, prn);
+#endif
+
     if (pmod->errcode == 0 || pmod->errcode == E_JACOBIAN) {
 	nlspec spec = {0};
 
@@ -1659,6 +1679,10 @@ static int cond_ols_GNR (MODEL *pmod,
 	err = transcribe_to_nlspec(&spec, mi, opt);
 	if (!err) {
 	    err = finalize_nls_model(pmod, &spec, 0, glist);
+	    if (!err && cpos > 0) {
+		/* invalidate std error of clamped coeff */
+		pmod->sderr[cpos-2] = NADBL;
+	    }
 	}
 
 	if (err && !pmod->errcode) {
