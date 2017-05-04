@@ -462,7 +462,7 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
 
 #define ALT_OPG 0
 
-/* build the T x k G matrix, given a set of coefficient estimates,
+/* build the T x k matrix G, given a set of coefficient estimates,
    @b, and a function for calculating the per-observation contributions
    to the loglikelihood, @lltfun
 */

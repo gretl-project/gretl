@@ -2,10 +2,12 @@ version 2017b, in progress
 - "gnuplot" and "plot" commands: support --font option for
   PDF, EPS and EMF output
 - "rename" command: add a --quiet option
-- "mle" command: support the --cluster option
+- "mle" command: support the --cluster robust option
 - New function deflist() for defining a list (of named
   series)
 - New function defbundle() for initializing a bundle
+- GUI: revamp Time series model menu and ARIMA specification
+  dialog
 - Fix bug: ensure that the $model accessior (bundle) is
   available to function packages that attach to a model
   window

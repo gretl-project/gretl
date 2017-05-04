@@ -862,6 +862,27 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     return err;
 }
 
+static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H, kalman *K,
+			 double *b, double s2, int k, int T,
+			 PRN *prn)
+{
+    gretl_matrix *G;
+    int err = 0;
+
+    G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
+			       K, &err);
+
+    if (!err) {
+	gretl_matrix_divide_by_scalar(G, sqrt(s2));
+	err = gretl_model_add_QML_vcv(pmod, ARMA, H, G,
+				      NULL, OPT_NONE, NULL);
+    }
+
+    gretl_matrix_free(G);
+
+    return err;
+}
+
 #if ARMA_DEBUG
 
 static void debug_print_theta (const double *theta,
@@ -976,6 +997,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     khelper *kh = kalman_get_data(K);
     int do_opg = arma_use_opg(opt);
     int kopt, i, t, k = ainfo->nc;
+    int QML = (opt & OPT_R);
     double s2;
     int err;
 
@@ -1020,11 +1042,11 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 
 #if ARMA_DEBUG
     fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
-	    (do_opg)? "OPG" : "Hessian");
+	    (opt & OPT_R)? "QML" : (do_opg)? "OPG" : "Hessian");
 #endif
 
     if (!do_opg) { 
-	/* base covariance matrix on Hessian */
+	/* base covariance matrix on Hessian (perhaps QML) */
 	gretl_matrix *Hinv;
 
 	kalman_do_ma_check = 0;
@@ -1035,9 +1057,13 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    if (kopt & KALMAN_AVG_LL) {
 		gretl_matrix_divide_by_scalar(Hinv, ainfo->T);
 	    }
-	    err = gretl_model_write_vcv(pmod, Hinv);
-	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+	    if (QML) {
+		err = arma_QML_vcv(pmod, Hinv, K, b, s2, k, ainfo->T, prn);
+	    } else {
+		err = gretl_model_write_vcv(pmod, Hinv);
+		if (!err) {
+		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+		}
 	    }
 	} else if (err == E_NOTPD && !(opt & OPT_H)) {
 	    /* try falling back to OPG, if use of the Hessian has not
@@ -1634,7 +1660,17 @@ static int check_arma_options (gretlopt opt)
     if (!err) {
 	/* nor --save-ehat with X-12-ARIMA */
 	err = incompatible_options(opt, OPT_E | OPT_X);
-    }      
+    }
+
+    if (!err) {
+	/* nor --robust with conditional ML */
+	err = incompatible_options(opt, OPT_R | OPT_C);
+    }
+
+    if (!err) {
+	/* nor --robust with X-12-ARIMA */
+	err = incompatible_options(opt, OPT_R | OPT_X);
+    }
 
     return err;
 }

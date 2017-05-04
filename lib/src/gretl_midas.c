@@ -1944,8 +1944,7 @@ static int finalize_midas_model (MODEL *pmod,
     int i, err = 0;
 
     /* in case we monkeyed with the incoming sample range */
-    pmod->smpl.t1 = dset->t1;
-    pmod->smpl.t2 = dset->t2;
+    gretl_model_smpl_init(pmod, dset);
 
     gretl_model_set_string_as_data(pmod, "midas_spec",
 				   gretl_strdup(param));
