@@ -3626,11 +3626,18 @@
 
     <function name="gini" section="stats" output="scalar">
       <fnargs>
-    <fnarg type="series">y</fnarg>
+    <fnarg type="series-or-vec">y</fnarg>
       </fnargs>    
       <description>
     <para>
-      Produce l'indice di Gini per la variabile <argname>y</argname>.
+      Produce l'indice di Gini per la serie od il vettore
+      <argname>y</argname>, che devono contenere valori
+      non-negativi. Un risultato pari a 0 indica uguaglianza
+      perfetta. Il valore massimo per l'indice, con una serie
+      contentente <math>n</math> membri è (<math>n</math> &minus;
+      1)/<math>n</math>, che si ha quando un solo elemento ha valore
+      positivo; il valore 1.0 è, pertanto, il limite a cui tende una
+      serie molto grande con massima disuguaglianza.
     </para>
       </description>
     </function>
