@@ -471,7 +471,7 @@ static int parse_midas_term (const char *s,
 	    err = E_PARSE;
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
-	/* list already hold lags */
+	/* list already holds lags */
 	mt->flags |= M_PRELAG;
 	s += 5;
 	sprintf(fmt, "%%%d[^, ] , %%d, %%%d[^) ])",
@@ -1200,9 +1200,14 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
 		for (ii=0; ii<2; ii++) {
 		    /* columns: index, minimum, maximum */
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
-		    if (ii == 0 && clamp) {
-			gretl_matrix_set(mi->bounds, j, 1, mt->theta->val[0]);
-			gretl_matrix_set(mi->bounds, j, 2, mt->theta->val[0]);
+		    if (clamp) {
+			if (ii == 0) {
+			    gretl_matrix_set(mi->bounds, j, 1, mt->theta->val[0]);
+			    gretl_matrix_set(mi->bounds, j, 2, mt->theta->val[0]);
+			} else {
+			    gretl_matrix_set(mi->bounds, j, 1, 1.0 + eps);
+			    gretl_matrix_set(mi->bounds, j, 2, 500);
+			}
 		    } else {
 			gretl_matrix_set(mi->bounds, j, 1, eps);
 			gretl_matrix_set(mi->bounds, j, 2, 500);
