@@ -6695,7 +6695,9 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
     }
 }
 
-/* functions taking a series as argument and returning a scalar */
+/* Functions taking a series or vector as argument and returning
+   a scalar.
+*/
 
 static NODE *
 series_scalar_func (NODE *n, int f, parser *p)
