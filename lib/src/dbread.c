@@ -2713,7 +2713,7 @@ int db_get_series (const char *line, DATASET *dset,
 
     strings_array_free(vnames, nnames);
 
-    if (!err && !(opt & OPT_Q)) {
+    if (!err && !(opt & OPT_Q) && gretl_messages_on()) {
 	pprintf(prn, _("Series imported OK"));
 	pputc(prn, '\n');
 	if (from_scratch) {
