@@ -3589,12 +3589,17 @@
 
     <function name="gini" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>    
       <description>
 	<para>
-	  Returns Gini's inequality index for the series
-	  <argname>y</argname>.
+	  Returns Gini's inequality index for the (non-negative)
+	  series or vector <argname>y</argname>. A Gini value of zero
+	  indicates perfect equality. The maximum Gini value for a
+	  series with <math>n</math> members is (<math>n</math>
+	  &minus; 1)/<math>n</math>, occurring when only one member
+	  has a positive value; a Gini of 1.0 is therefore the limit
+	  approached by a large series with maximal inequality.
 	</para>
       </description>
     </function>
