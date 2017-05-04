@@ -2423,6 +2423,15 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     return err;
 }
 
+static void report_sample (DATASET *dset, PRN *prn)
+{
+    int save_state = gretl_messages_on();
+
+    set_gretl_messages(1);
+    print_smpl(dset, get_full_length_n(), prn);
+    set_gretl_messages(save_state);
+}
+
 static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)
 {
     if (gretl_function_depth() > 0) {
@@ -2873,7 +2882,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->opt) {
 	    err = restrict_sample(cmd->param, cmd->list, dset, 
 				  s, cmd->opt, prn, NULL);
-	} else { 
+	} else if (cmd->param == NULL && cmd->parm2 == NULL) {
+	    /* no args given: give a report */
+	    report_sample(dset, prn);
+	    break;
+	} else {
 	    err = set_sample(cmd->param, cmd->parm2, dset);
 	}
 	if (!err) {

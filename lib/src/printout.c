@@ -706,7 +706,8 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 
 void print_smpl (const DATASET *dset, int fulln, PRN *prn)
 {
-    if (!gretl_messages_on() || dset->v == 0 || gretl_looping_quietly()) {
+    if (dset == NULL || !gretl_messages_on() ||
+	dset->v == 0 || gretl_looping_quietly()) {
 	return;
     }
 
