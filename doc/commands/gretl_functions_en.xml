@@ -2512,11 +2512,11 @@
 	  The first example creates a bundle with members a string and
 	  a matrix; the second, a bundle with a series member and a
 	  scalar member. Note that you cannot specify a type for each
-	  argument when using using this function, so you must accept
-	  the <quote>natural</quote> type of the argument in question.
-	  If you wanted to add a series with constant value 5 to a
-	  bundle named <lit>b1</lit> it would be necessary to do
-	  something like the following (after declaring <lit>b1</lit>):
+	  argument when using this function, so you must accept the
+	  <quote>natural</quote> type of the argument in question.  If
+	  you wanted to add a series with constant value 5 to a bundle
+	  named <lit>b1</lit> it would be necessary to do something
+	  like the following (after declaring <lit>b1</lit>):
 	</para>
 	<code>
 	  series b1.s5 = 5

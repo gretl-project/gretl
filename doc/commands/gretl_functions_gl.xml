@@ -1875,8 +1875,8 @@
 	  e <lit>z2</lit>.
 	</para>
 	<para context="tex">
-	  A parametrización que o \app{Gretl} usa para a variable aleatoria
-	  Gamma implica que a súa función de densidade pode escribirse
+	  A disposición de parámetros que o \app{Gretl} usa para a variable
+	  aleatoria Gamma implica que a súa función de densidade pode escribirse
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
 	  \]
@@ -2483,6 +2483,75 @@
 	</code>
 	<para>
 	  Consulta tamén <fncref targ="array"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="defbundle" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Te permite a carga inicial dunha variable de paquete
+	  <emphasis>extensamente</emphasis>, proporcionando cero ou
+	  máis pares co formato <repl>key</repl>, <repl>member</repl>.
+	  Se contamos os argumentos desde 1, cada argumento numerado
+	  impar debe de avaliar unha cadea de texto (chave) e cada
+	  argumento numerado par debe de avaliar un obxecto dun tipo
+	  que poida incluírse nun paquete.
+	</para>
+	<para>
+	  Un par de exemplos sinxelos:
+	</para>
+	<code>
+	  bundle b1 = defbundle("s", "Sample string", "m", I(3))
+	  bundle b2 = defbundle("yn", normal(), "x", 5)
+	</code>
+	<para>
+	  O primeiro exemplo xera un paquete cuxos elementos son unha cadea
+	  de texto e unha matriz; o segundo, un paquete cun elemento que é
+	  unha serie e outro que é escalar. Ten en conta que non podes
+	  especificar un tipo de cada argumento cando utilizas esta función,
+	  entón debes de aceptar o tipo <quote>natural</quote> de argumento
+	  en cuestión. Se queres engadir unha serie cun valor constante de 5
+	  a un paquete chamado <lit>b1</lit> sería necesario facer algo como
+	  o seguinte (despois de enunciar <lit>b1</lit>):
+	</para>
+	<code>
+	  series b1.s5 = 5
+	</code>
+	<para>
+	  Se non indicas ningún argumento para esta función, iso
+	  equivale a xerar un paquete baleiro (ou a baleirar un
+	  paquete existente do seu contido), como podería facer
+	  mediante
+	</para>
+	<code>
+	  bundle b = null
+	</code>
+      </description>
+    </function>
+
+    <function name="deflist" section="data-utils" output="list">
+      <fnargs>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Xera unha lista (de series xa definidas) dados un ou máis argumentos
+	  apropiados. Cada argumento debe de ser, ben unha serie xa definida
+	  (indicada polo seu nome ou número enteiro ID) ou ben unha lista
+	  (indicada polo nome dunha lista definida previamente ou por unha
+	  expresión que se corresponda cunha lista).
+	</para>
+	<para>
+	  Un punto a ter en conta é que esta función simplemente encadea
+	  as series e/ou listas indicadas como argumentos, para producir a
+	  lista que devolve. Cando se pretende que o valor que devolva non
+	  teña duplicados (que non se refira a ningunha serie máis dunha
+	  vez), depende do solicitante asegurarse de que se satisfaga ese
+	  requirimento.
 	</para>
       </description>
     </function>
@@ -5313,9 +5382,9 @@
 	  ponderacións (tal como o calcula a función <fncref targ="mweights"/>)
 	  con respecto a os elementos de <repl>theta</repl>. O primeiro
 	  argumento representa o nivel de retardo desexado e o derradeiro
-	  argumento especifica o tipo de parametrización. Consulta a función
-	  <lit>mweights</lit> para ter unha relación dos valores admisibles
-	  para <repl>type</repl>.
+	  argumento especifica o tipo de disposición de parámetros. Consulta
+	  a función <lit>mweights</lit> para ter unha relación dos valores
+	  admisibles para <repl>type</repl>.
 	</para>
 	<para>
 	  <seelist>
@@ -5485,11 +5554,11 @@
 	  <fncref targ="lincomb"/> e <fncref targ="mweights"/>. Dada a lista
 	  <repl>hfvars</repl>, elabora unha serie que é unha suma ponderada
 	  dos elementos desa lista. As ponderacións baséanse no vector
-	  <repl>theta</repl> de hiperparámetros e no tipo de parametrización:
-	  consulta a función <lit>mweights</lit> para obter máis detalles.
-	  Cae na conta de que <fncref targ="hflags"/> xeralmente é o mellor
-	  xeito de crear unha lista apropiada para que sexa o primeiro
-	  argumento desta función.
+	  <repl>theta</repl> de hiperparámetros e no tipo de disposición de
+	  parámetros: consulta a función <lit>mweights</lit> para obter máis
+	  detalles. Cae na conta de que <fncref targ="hflags"/> xeralmente
+	  é o mellor xeito de crear unha lista apropiada para que sexa o
+	  primeiro argumento desta función.
 	</para>
 	<para>
 	  Para ser máis explícitos, a orde
@@ -5909,14 +5978,16 @@
 	  frecuencia, baseado no vector <repl>theta</repl> de hiperparámetros.
 	</para>
 	<para>
-	  O argumento <repl>type</repl> identifica o tipo de parametrización
-	  que vai regular o número <math>k</math> de elementos que se solicitan
-	  para <repl>theta</repl>: 1 = para Almon exponencial normalizado
-	  (<math>k</math> debe de ser cando menos igual a1, habitualmente 2);
-	  2 = Beta normalizado co retardo final nulo (<math>k</math> = 2);
-	  3 = Beta normalizado co retardo final non nulo (<math>k</math> = 3);
-	  e 4 = Almon polinómico (<math>k</math> debe de ser cando menos
-	  igual a 1).
+	  O argumento <repl>type</repl> identifica o tipo de disposición de
+	  parámetros que vai regular o número <math>k</math> de elementos
+	  que se solicitan para <repl>theta</repl>: 1 = para Almon exponencial
+	  normalizado (<math>k</math> debe de ser cando menos igual a1,
+	  habitualmente 2); 2 = para Beta normalizado co retardo final nulo
+	  (<math>k</math> = 2); 3 = para Beta normalizado co retardo final
+	  non nulo (<math>k</math> = 3); e 4 = para Almon polinómico
+	  (<math>k</math> debe de ser cando menos igual a 1). Ten en conta
+	  que no caso Beta normalizado, os dous primeiros elementos de
+	  <repl>theta</repl> deben de ser positivos.
 	</para>
 	<para>
 	  <seelist>
@@ -7309,7 +7380,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un resultado (do tipo do argumento) cos cuantiles dunha
+	  Devolve un resultado (do tipo do argumento) cos cuantís dunha
 	  Normal estándar que se corresponden con cada valor do argumento. Se
 	  <argname>x</argname> non está entre 0 e 1, devólvese <lit>NA</lit>.
 	  <seelist>
@@ -7459,7 +7530,7 @@
 	</para>
 	<para>
 	  Se <argname>y</argname> é unha matriz, devolve un vector fila que
-	  contén os <argname>p</argname> cuantiles das diferentes columnas
+	  contén os <argname>p</argname> cuantís das diferentes columnas
 	  de <argname>y</argname>; é dicir, cada unha das súas columnas
 	  trátase como una serie.
 	</para>
