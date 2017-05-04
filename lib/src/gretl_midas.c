@@ -1773,15 +1773,16 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
 			   gretlopt opt, PRN *prn)
 {
     int n = gretl_vector_get_length(mi->theta);
+    double *theta = mi->theta->val;
     int fncount = 0, grcount = 0;
     int err;
 
-    if (opt & OPT_C) {
-	err = midas_gss(mi->theta->val, n, mi, &fncount);
+    if (theta[0] == 1.0 && (opt & OPT_C)) {
+	err = midas_gss(theta, n, mi, &fncount);
     } else {
 	double reltol = libset_get_double(BFGS_TOLER);
 
-	err = LBFGS_max(mi->theta->val, n, 1000, reltol,
+	err = LBFGS_max(theta, n, 1000, reltol,
 			&fncount, &grcount, NULL,
 			C_SSR, NULL, cond_ols_callback,
 			mi, mi->bounds, opt, prn);
