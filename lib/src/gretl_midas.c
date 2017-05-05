@@ -335,15 +335,16 @@ DATASET *midas_aux_dataset (const int *list,
     return mset;
 }
 
-static gretl_matrix *make_auto_theta (char *name, int i,
+static gretl_matrix *make_auto_theta (char *mstr, int i,
 				      int ptype, int k,
-				      int m1, int m2)
+				      int m1, int m2,
+				      int *err)
 {
     gretl_matrix *theta = NULL;
 
     if (k == 0) {
 	/* we have to infer k */
-	if (!strcmp(name, "null")) {
+	if (!strcmp(mstr, "null")) {
 	    /* OK if we know how many parameters are needed? */
 	    if (ptype == MIDAS_BETA0) {
 		k = 2;
@@ -352,12 +353,16 @@ static gretl_matrix *make_auto_theta (char *name, int i,
 	    } else if (ptype == MIDAS_U) {
 		k = m2 - m1 + 1;
 	    }
-	} else if (integer_string(name)) {
-	    int chk = atoi(name);
+	} else if (integer_string(mstr)) {
+	    /* does @mstr give the number of params? */
+	    int chk = atoi(mstr);
 
 	    if (chk >= 1 && chk < 100) {
 		k = chk;
 	    }
+	} else {
+	    /* try treating @mstr as matrix definition? */
+	    theta = generate_matrix(mstr, NULL, err);
 	}
     }
 
@@ -368,9 +373,16 @@ static gretl_matrix *make_auto_theta (char *name, int i,
 		theta->val[0] = 1;
 		theta->val[1] = 10; /* optimize somehow? */
 	    }
-	    sprintf(name, "theta___%d", i+1);
-	    private_matrix_add(theta, name);
+	} else {
+	    *err = E_ALLOC;
 	}
+    }
+
+    if (theta != NULL) {
+	sprintf(mstr, "theta___%d", i+1);
+	private_matrix_add(theta, mstr);
+    } else if (!*err) {
+	*err = E_PARSE;
     }
 
 #if MIDAS_DEBUG
@@ -504,11 +516,14 @@ static int parse_midas_term (const char *s,
 	    } else {
 		/* create automatic initializer */
 		mt->flags |= M_AUTO;
-		mt->theta = make_auto_theta(mname, i, type, 0, p1, p2);
+		mt->theta = make_auto_theta(mname, i, type, 0,
+					    p1, p2, &err);
 	    }
 	}
 
-	if (!umidas && mt->theta == NULL) {
+	if (err) {
+	    ; /* leave it alone */
+	} else if (!umidas && mt->theta == NULL) {
 	    err = E_ALLOC;
 	} else if (prelag(mt) && list == NULL) {
 	    err = E_INVARG;
@@ -578,10 +593,7 @@ static int umidas_check (midas_info *mi, int n_umidas)
 	if (mt->type == MIDAS_U && mt->theta == NULL) {
 	    mt->flags |= M_AUTO;
 	    mt->theta = make_auto_theta(mt->mname, i, MIDAS_U,
-					mt->nparm, 0, 0);
-	    if (mt->theta == NULL) {
-		err = E_DATA;
-	    }
+					mt->nparm, 0, 0, &err);
 	}
     }
 
