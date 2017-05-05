@@ -42,8 +42,8 @@ void print_freq_test (const FreqDist *freq, PRN *prn);
 void print_xtab (const Xtab *tab, const DATASET *dset,
 		 gretlopt opt, PRN *prn);
 
-void print_smpl (const DATASET *dset, 
-		 int fulln, PRN *prn); 
+void print_smpl (const DATASET *dset, int fulln,
+		 gretlopt opt, PRN *prn); 
 
 void
 print_contemp_covariance_matrix (const gretl_matrix *m, 

@@ -699,15 +699,23 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
  * @dset: data information struct
  * @fulln: full length of data series, if dataset is
  * subsampled, or 0 if not applicable/known.
+ * @opt: may include OPT_F to force showing the sample
+ * range even when "messages" are turned off.
  * @prn: gretl printing struct.
  *
  * Prints the current sample information to @prn.
  */
 
-void print_smpl (const DATASET *dset, int fulln, PRN *prn)
+void print_smpl (const DATASET *dset, int fulln,
+		 gretlopt opt, PRN *prn)
 {
-    if (dset == NULL || !gretl_messages_on() ||
-	dset->v == 0 || gretl_looping_quietly()) {
+    if (dset == NULL || dset->v == 0 || prn == NULL) {
+	return;
+    }
+
+    if (!(opt & OPT_F) && (!gretl_messages_on() ||
+			   gretl_looping_quietly())) {
+	/* hush */
 	return;
     }
 

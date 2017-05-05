@@ -2717,7 +2717,7 @@ int db_get_series (const char *line, DATASET *dset,
 	pprintf(prn, _("Series imported OK"));
 	pputc(prn, '\n');
 	if (from_scratch) {
-	    print_smpl(dset, 0, prn);
+	    print_smpl(dset, 0, OPT_NONE, prn);
 	}
     }
 

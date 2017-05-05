@@ -9913,7 +9913,9 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         if (!err) { 
 	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
-            list_series(dset, prn);
+	    if (gretl_messages_on()) {
+		list_series(dset, prn);
+	    }
         }
 	break;
 
@@ -10037,7 +10039,13 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
  	if (cmd->opt == OPT_F) {
  	    gui_restore_sample(dset);
 	} else if (!cmd->opt) {
-	    err = set_sample(cmd->param, cmd->parm2, dset);
+	    if (cmd->param == NULL && cmd->parm2 == NULL) {
+		/* no args, just report */
+		print_smpl(dset, get_full_length_n(), OPT_F, prn);
+		break;
+	    } else {
+		err = set_sample(cmd->param, cmd->parm2, dset);
+	    }
  	} else {
 	    int n_dropped = 0;
 	    int cancel = 0;
@@ -10060,7 +10068,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
   	if (err) {
   	    errmsg(err, prn);
   	} else {
-  	    print_smpl(dset, get_full_length_n(), prn);
+ 	    print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
 	    if (cmd->opt & OPT_T) {
 		mark_dataset_as_modified();
 	    } else {
