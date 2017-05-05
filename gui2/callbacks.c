@@ -325,11 +325,68 @@ void model_stat_callback (GtkAction *action, gpointer data)
     add_model_stat(pmod, code, vwin);
 }
 
+static int have_midas_data (void)
+{
+    int i, m, got_midas = 0;
+
+    for (i=1; i<dataset->v; i++) {
+	m = series_is_midas_anchor(dataset, i);
+	if (m > 0 && i + m <= dataset->v) {
+	    int is_midas = 1;
+	    int j, p, p0 = m;
+
+	    for (j=i+1; j<i+m; j++) {
+		p = series_get_midas_period(dataset, j);
+		if (p != p0 - 1) {
+		    is_midas = 0;
+		    break;
+		} else {
+		    p0 = p;
+		}
+	    }
+	    if (is_midas) {
+		got_midas = 1;
+		break;
+	    }
+	}
+    }
+
+    if (!got_midas) {
+	const gchar *title = N_("gretl: warning");
+	GtkWidget *dialog, *hbox, *help;
+	const gchar *msg;
+
+	msg = N_("No MIDAS data were found in the current dataset");
+	dialog = gtk_message_dialog_new(GTK_WINDOW(mdata->main),
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_MESSAGE_WARNING,
+					GTK_BUTTONS_CLOSE,
+					"%s", msg);
+	g_signal_connect_swapped(dialog, "response",
+				 G_CALLBACK(gtk_widget_destroy),
+				 dialog);
+	hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+	help = context_help_button(hbox, MIDAS_LIST);
+	g_signal_connect_swapped(help, "clicked",
+				 G_CALLBACK(gtk_widget_destroy),
+				 dialog);
+	gtk_widget_show(help);
+	gtk_window_set_title(GTK_WINDOW(dialog), _(title));
+	gtk_widget_show(dialog);
+    }
+
+    return got_midas;
+}
+
 void model_callback (GtkAction *action, gpointer data) 
 {
     int code = model_action_code(action);
 
-    modelspec_dialog(code);
+    if (code == MIDASREG && !have_midas_data()) {
+	return;
+    } else {
+	modelspec_dialog(code);
+    }
 }
 
 void model_genr_callback (GtkAction *action, gpointer data)
