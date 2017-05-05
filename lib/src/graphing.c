@@ -5189,7 +5189,8 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
     } else {
 	t1 = (fr->t0 >= 0)? fr->t0 : 0;
-	yhmin = t1;
+	/* was: yhmin = t1; */
+	yhmin = (opt & OPT_H)? t1 : fr->t1;
     }
 
     /* don't graph empty trailing portion of forecast */
@@ -5254,6 +5255,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     }
 
     fputs("set key left top\n", fp);
+    fputs("set xzeroaxis\n", fp);
     fputs("plot \\\n", fp);
 
     if (do_errs) {
