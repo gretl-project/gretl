@@ -3,6 +3,9 @@ version 2017b, in progress
   PDF, EPS and EMF output
 - "rename" command: add a --quiet option
 - "mle" command: support the --cluster robust option
+- "midasreg" command: several fixes and enhancements
+- fcstats() function: expand the accepted set of arguments
+  (mix series and vectors, handle multiple forecasts)
 - New function deflist() for defining a list (of named
   series)
 - New function defbundle() for initializing a bundle

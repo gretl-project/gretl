@@ -5727,6 +5727,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
+	gretl_matrix *Fmat = NULL;
 	const double *x = NULL, *y = NULL;
 	int n = 0, n2 = 0;
 
@@ -5759,7 +5760,11 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 		/* must be matrix on right */
 		n2 = gretl_vector_get_length(r->v.m);
 		if (n2 != n) {
-		    p->err = E_NONCONF;
+		    if (f == F_FCSTATS && r->v.m->rows == n) {
+			Fmat = r->v.m;
+		    } else {
+			p->err = E_NONCONF;
+		    }
 		} else {
 		    y = r->v.m->val;
 		}
@@ -5791,7 +5796,11 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.xval = gretl_covar(0, n, x, y, NULL);
 	    break;
 	case F_FCSTATS:
-	    ret->v.m = forecast_stats(x, y, 0, n, OPT_D, &p->err);
+	    if (Fmat != NULL) {
+		ret->v.m = matrix_fc_stats(x, Fmat, OPT_D, &p->err);
+	    } else {
+		ret->v.m = forecast_stats(x, y, 0, n, OPT_D, &p->err);
+	    }
 	    break;
 	case F_NAALEN:
 	    ret->v.m = duration_func(x, y, 0, n, OPT_NONE, &p->err);
@@ -13835,8 +13844,7 @@ static NODE *eval (NODE *t, parser *p)
 		   (t->t == F_NAALEN || t->t == F_KMEIER)) {
 	    ret = series_2_func(l, NULL, t->t, p);
 	} else {
-	    node_type_error(t->t, (l->t == SERIES)? 2 : 1,
-			    SERIES, (l->t == SERIES)? r : l, p);
+	    p->err = E_INVARG;
 	}
 	break;
     case F_NPCORR:

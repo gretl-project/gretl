@@ -167,6 +167,11 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 			      int t1, int t2, gretlopt opt,
 			      int *err);
 
+gretl_matrix *matrix_fc_stats (const double *y,
+			       const gretl_matrix *F,
+			       gretlopt opt,
+			       int *err);
+
 gretl_matrix *duration_func (const double *y, const double *cens,
 			     int t1, int t2, gretlopt opt,
 			     int *err);

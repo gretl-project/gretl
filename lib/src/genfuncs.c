@@ -5117,13 +5117,12 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 static int theil_decomp (double *m, double MSE,
 			 const double *y,
 			 const double *f,
-			 int t1, int t2)
+			 int T)
 {
     double da, dp;
     double Abar, Pbar;
     double sa, sp, r;
-    int t, T = t2 - t1 + 1;
-    int err = 0;
+    int t, err = 0;
 
     if (MSE <= 0.0) {
 	m[0] = m[1] = m[2] = M_NA;
@@ -5132,7 +5131,7 @@ static int theil_decomp (double *m, double MSE,
 
     Abar = Pbar = 0.0;
 
-    for (t=t1; t<=t2; t++) {
+    for (t=0; t<T; t++) {
 	Abar += y[t];
 	Pbar += f[t];
     }
@@ -5142,7 +5141,7 @@ static int theil_decomp (double *m, double MSE,
 
     sa = sp = r = 0.0;
 
-    for (t=t1; t<=t2; t++) {
+    for (t=0; t<T; t++) {
 	da = y[t] - Abar;
 	sa += da * da;
 	dp = f[t] - Pbar;
@@ -5172,26 +5171,108 @@ static int theil_decomp (double *m, double MSE,
     return err;
 }
 
-/* 
-   Forecast evaluation statistics: @y is the data series, @f the
-   forecast.
-
-   cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
-   by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
-
-   OPT_D indicates that we should include the Theil decomposition.
-*/
-
-gretl_matrix *forecast_stats (const double *y, const double *f,
-			      int t1, int t2, gretlopt opt,
-			      int *err)
+static int fill_fcstats_column (gretl_matrix *m,
+				const double *y,
+				const double *f,
+				int T,
+				gretlopt opt,
+				int col)
 {
-    gretl_matrix *m = NULL;
     double ME, MSE, MAE, MPE, MAPE, U;
     double x, u[2];
-    char **rownames = NULL;
-    int nstats = (opt & OPT_D)? 9 : 6;
-    int t, T;
+    int t, err = 0;
+
+    ME = MSE = MAE = MPE = MAPE = U = 0.0;
+    u[0] = u[1] = 0.0;
+
+    for (t=0; t<T; t++) {
+	if (xna(y[t]) || xna(f[t])) {
+	    err = E_MISSDATA;
+	    break;
+	}
+	x = y[t] - f[t];
+	ME += x;
+	MSE += x * x;
+	MAE += fabs(x);
+	if (y[t] == 0.0) {
+	    MPE = MAPE = U = M_NA;
+	} else {
+	    MPE += 100 * x / y[t];
+	    MAPE += 100 * fabs(x / y[t]);
+	    if (t < T-1) {
+		x = (f[t+1] - y[t+1]) / y[t];
+		u[0] += x * x;
+		x = (y[t+1] - y[t]) / y[t];
+		u[1] += x * x;
+	    }
+	}
+    }
+
+    if (!err) {
+	ME /= T;
+	MSE /= T;
+	MAE /= T;
+
+	if (!isnan(MPE)) {
+	    MPE /= T;
+	}
+
+	if (!isnan(MAPE)) {
+	    MAPE /= T;
+	}
+
+	if (!isnan(U) && u[1] > 0.0) {
+	    U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	}
+
+	gretl_matrix_set(m, 0, col, ME);
+	gretl_matrix_set(m, 1, col, sqrt(MSE));
+	gretl_matrix_set(m, 2, col, MAE);
+	gretl_matrix_set(m, 3, col, MPE);
+	gretl_matrix_set(m, 4, col, MAPE);
+	gretl_matrix_set(m, 5, col, U);
+
+	if (opt & OPT_D) {
+	    double *targ = m->val + col * m->rows + 6;
+
+	    theil_decomp(targ, MSE, y, f, T);
+	}
+    }
+
+    return err;
+}
+
+static void add_fcstats_rownames (gretl_matrix *m)
+{
+    int ns = m->rows;
+    char **rownames;
+
+    rownames = strings_array_new(ns);
+
+    if (rownames != NULL) {
+	rownames[0] = gretl_strdup("ME");
+	rownames[1] = gretl_strdup("RMSE");
+	rownames[2] = gretl_strdup("MAE");
+	rownames[3] = gretl_strdup("MPE");
+	rownames[4] = gretl_strdup("MAPE");
+	rownames[5] = gretl_strdup("U");
+	if (ns == 9) {
+	    rownames[6] = gretl_strdup("UM");
+	    rownames[7] = gretl_strdup("UR");
+	    rownames[8] = gretl_strdup("UD");
+	}
+	gretl_matrix_set_rownames(m, rownames);
+    }
+}
+
+static int fcstats_sample_check (const double *y,
+				 const double *f,
+				 int *pt1,
+				 int *pt2)
+{
+    int t1 = *pt1;
+    int t2 = *pt2;
+    int t, err = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t]) || na(f[t])) {
@@ -5209,92 +5290,94 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	}
     }
 
-    T = t2 - t1 + 1;
-    if (T < 1) {
-	*err = E_MISSDATA;
+    if (t2 - t1 + 1 < 1) {
+	err = E_MISSDATA;
+    } else {
+	for (t=t1; t<=t2; t++) {
+	    if (na(y[t]) || na(f[t])) {
+		err = E_MISSDATA;
+		break;
+	    }
+	}
+    }
+
+    *pt1 = t1;
+    *pt2 = t2;
+
+    return err;
+}
+
+/* 
+   Forecast evaluation statistics: @y is the data series, @f the
+   forecast.
+
+   cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
+   by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
+
+   OPT_D indicates that we should include the Theil decomposition.
+*/
+
+gretl_matrix *forecast_stats (const double *y, const double *f,
+			      int t1, int t2, gretlopt opt,
+			      int *err)
+{
+    int ns = (opt & OPT_D)? 9 : 6;
+    gretl_matrix *m = NULL;
+
+    *err = fcstats_sample_check(y, f, &t1, &t2);
+    if (*err) {
 	return NULL;
     }
 
-    m = gretl_column_vector_alloc(nstats);
+    m = gretl_column_vector_alloc(ns);
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int T = t2 - t1 + 1;
+
+	*err = fill_fcstats_column(m, y + t1, f + t1, T, opt, 0);
+    }
+
+    if (*err) {
+	gretl_matrix_free(m);
+	m = NULL;
+    } else {
+	add_fcstats_rownames(m);
+    }
+
+    return m;
+}
+
+gretl_matrix *matrix_fc_stats (const double *y,
+			       const gretl_matrix *F,
+			       gretlopt opt,
+			       int *err)
+{
+    int ns = (opt & OPT_D)? 9 : 6;
+    gretl_matrix *m = NULL;
+    const double *f;
+    int j, T = F->rows;
+
+    m = gretl_matrix_alloc(ns, F->cols);
     if (m == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    ME = MSE = MAE = MPE = MAPE = U = 0.0;
-    u[0] = u[1] = 0.0;
-
-    for (t=t1; t<=t2; t++) {
-	if (na(y[t]) || na(f[t])) {
-	    *err = E_MISSDATA;
+    for (j=0; j<F->cols; j++) {
+	f = F->val + T * j;
+	*err = fill_fcstats_column(m, y, f, T, opt, j);
+	if (*err) {
 	    break;
-	}
-	x = y[t] - f[t];
-	ME += x;
-	MSE += x * x;
-	MAE += fabs(x);
-	if (y[t] == 0.0) {
-	    MPE = MAPE = U = M_NA;
-	} else {
-	    MPE += 100 * x / y[t];
-	    MAPE += 100 * fabs(x / y[t]);
-	    if (t < t2) {
-		x = (f[t+1] - y[t+1]) / y[t];
-		u[0] += x * x;
-		x = (y[t+1] - y[t]) / y[t];
-		u[1] += x * x;
-	    }
 	}
     }
 
     if (*err) {
 	gretl_matrix_free(m);
-	return NULL;
-    }
-
-    ME /= T;
-    MSE /= T;
-    MAE /= T;
-
-    if (!isnan(MPE)) {
-	MPE /= T;
-    }
-
-    if (!isnan(MAPE)) {
-	MAPE /= T;
-    }
-
-    if (!isnan(U) && u[1] > 0.0) {
-	U = sqrt(u[0] / T) / sqrt(u[1] / T);
-    }
-
-    gretl_vector_set(m, 0, ME);
-    gretl_vector_set(m, 1, sqrt(MSE));
-    gretl_vector_set(m, 2, MAE);
-    gretl_vector_set(m, 3, MPE);
-    gretl_vector_set(m, 4, MAPE);
-    gretl_vector_set(m, 5, U);
-
-    if (opt & OPT_D) {
-	theil_decomp(m->val + 6, MSE, y, f, t1, t2);
-	rownames = strings_array_new(9);
+	m = NULL;
     } else {
-	rownames = strings_array_new(6);
-    }
-
-    if (rownames != NULL) {
-	rownames[0] = gretl_strdup("ME");
-	rownames[1] = gretl_strdup("RMSE");
-	rownames[2] = gretl_strdup("MAE");
-	rownames[3] = gretl_strdup("MPE");
-	rownames[4] = gretl_strdup("MAPE");
-	rownames[5] = gretl_strdup("U");
-	if (opt & OPT_D) {
-	    rownames[6] = gretl_strdup("UM");
-	    rownames[7] = gretl_strdup("UR");
-	    rownames[8] = gretl_strdup("UD");
-	}
-	gretl_matrix_set_rownames(m, rownames);
+	add_fcstats_rownames(m);
     }
 
     return m;
