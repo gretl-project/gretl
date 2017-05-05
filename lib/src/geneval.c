@@ -5728,38 +5728,40 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 
     if (starting(p)) {
 	const double *x = NULL, *y = NULL;
-	int t1 = 0, t2 = 0;
+	int n = 0, n2 = 0;
 
 	if (l->t == SERIES) {
 	    /* series on left */
-	    x = l->v.xvec;
-	    t1 = p->dset->t1;
-	    t2 = p->dset->t2;
-	    if (null_or_empty(r)) {
-		; /* OK for duration funcs */
-	    } else {
-		y = r->v.xvec;
-	    }
+	    n = sample_size(p->dset);
+	    x = l->v.xvec + p->dset->t1;
 	} else {
-	    /* matrix on left */
-	    int n1 = gretl_vector_get_length(l->v.m);
-	    int n2 = 0;
-
-	    if (n1 == 0) {
+	    /* must be matrix on left */
+	    n = gretl_vector_get_length(l->v.m);
+	    if (n == 0) {
 		p->err = E_TYPES;
 	    } else {
 		x = l->v.m->val;
-		t1 = 0;
-		t2 = n1 - 1;
-		if (null_or_empty(r)) {
-		    ; /* OK for duration funcs */
+	    }
+	}
+
+	if (!p->err) {
+	    if (null_or_empty(r)) {
+		; /* OK for duration funcs */
+	    } else if (r->t == SERIES) {
+		/* series on right */
+		n2 = sample_size(p->dset);
+		if (n2 != n) {
+		    p->err = E_NONCONF;
 		} else {
-		    n2 = gretl_vector_get_length(r->v.m);
-		    if (n2 != n1) {
-			p->err = E_NONCONF;
-		    } else {
-			y = r->v.m->val;
-		    }
+		    y = r->v.xvec + p->dset->t1;
+		}
+	    } else {
+		/* must be matrix on right */
+		n2 = gretl_vector_get_length(r->v.m);
+		if (n2 != n) {
+		    p->err = E_NONCONF;
+		} else {
+		    y = r->v.m->val;
 		}
 	    }
 	}
@@ -5778,21 +5780,24 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    return NULL;
 	}
 
+	/* n is taken as inclusive below */
+	n--;
+
 	switch (f) {
 	case F_COR:
-	    ret->v.xval = gretl_corr(t1, t2, x, y, NULL);
+	    ret->v.xval = gretl_corr(0, n, x, y, NULL);
 	    break;
 	case F_COV:
-	    ret->v.xval = gretl_covar(t1, t2, x, y, NULL);
+	    ret->v.xval = gretl_covar(0, n, x, y, NULL);
 	    break;
 	case F_FCSTATS:
-	    ret->v.m = forecast_stats(x, y, t1, t2, OPT_D, &p->err);
+	    ret->v.m = forecast_stats(x, y, 0, n, OPT_D, &p->err);
 	    break;
 	case F_NAALEN:
-	    ret->v.m = duration_func(x, y, t1, t2, OPT_NONE, &p->err);
+	    ret->v.m = duration_func(x, y, 0, n, OPT_NONE, &p->err);
 	    break;
 	case F_KMEIER:
-	    ret->v.m = duration_func(x, y, t1, t2, OPT_K, &p->err);
+	    ret->v.m = duration_func(x, y, 0, n, OPT_K, &p->err);
 	    break;
 	default:
 	    break;
@@ -13822,9 +13827,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_NAALEN:
     case F_KMEIER:
 	/* functions taking two series/vectors as args */
-	if (l->t == SERIES && r->t == SERIES) {
-	    ret = series_2_func(l, r, t->t, p);
-	} else if (l->t == MAT && r->t == MAT) {
+	if ((l->t == SERIES || l->t == MAT) &&
+	    (r->t == SERIES || r->t == MAT)) {
 	    ret = series_2_func(l, r, t->t, p);
 	} else if ((l->t == SERIES || l->t == MAT) &&
 		   null_or_empty(r) &&
