@@ -1449,7 +1449,9 @@ static double cond_ols_callback (double *theta, double *g,
  skip_gradient:
 
     if (err) {
-	fprintf(stderr, "cond_ols_callback: err=%d\n", err);
+	const char *s = errmsg_get_with_default(err);
+
+	fprintf(stderr, "cond_ols_callback: err=%d (%s)\n", err, s);
 	return NADBL;
     }
 
