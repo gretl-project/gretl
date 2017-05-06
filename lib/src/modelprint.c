@@ -5470,93 +5470,61 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
  * print_model_from_matrices:
  * @cs: k x 2 matrix containing coefficients and standard errors.
  * @adds: matrix containing an additional p statistics, or NULL.
- * @s: string containing all required names, space-separated.
+ * @names: array of strings containing all required names.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics
  * for a model estimated "by hand". Mainly useful for user-written functions.
  *
- * The number of space-separated "words" in the string @s must be k + p, where 
- * k is the number of coefficients and p the number of additional statistics 
+ * The number of string in the array @names must be >= k + p, where k is
+ * the number of coefficients and p the number of additional statistics
  * given in @adds.
  * 
  * Returns: 0 on success, non-zero on failure.
  */
 
 int print_model_from_matrices (const gretl_matrix *cs, 
-			       const gretl_matrix *adds, 
-			       const char *s, PRN *prn)
+			       const gretl_matrix *adds,
+			       gretl_array *names,
+			       PRN *prn)
 {
-    int ncoef = gretl_matrix_rows(cs);
-    int nadd = gretl_vector_get_length(adds);
-    int ntot = ncoef + nadd;
-    const char *sep = ",";
-    char *tmp, **names = NULL;
-    int i, err = 0;
+    int k = gretl_matrix_rows(cs);
+    int p = gretl_vector_get_length(adds);
+    const double *b = cs->val;
+    const double *se = b + k;
+    char **S;
+    int ns = 0;
 
-    /* copy the user-defined string @s before applying strtok */
-    tmp = gretl_strdup(s);
-    if (tmp == NULL) {
-	return E_ALLOC;
+    S = gretl_array_get_strings(names, &ns);
+    if (S == NULL || ns < k + p) {
+	return E_NONCONF;
     }
 
-    names = malloc(ntot * sizeof *names);
-    if (names == NULL) {
-	free(tmp);
-	return E_ALLOC;
+    set_alt_gettext_mode(prn);
+
+    if (plain_format(prn)) {
+	/* newline here is useless for TeX and makes RTF choke */
+	pputc(prn, '\n'); 
+    } else if (csv_format(prn)) {
+	set_csv_delim(prn);
     }
 
-    if (strchr(s, ',') == NULL) {
-	sep = " ";
+    model_format_start(prn);
+
+    print_coeffs(b, se, (const char **) S, k, 0, MODPRINT, prn);
+
+    if (p > 0) {
+	print_model_stats_table(adds->val, (const char **) S + k,
+				p, prn);
     }
 
-    for (i=0; i<ntot && !err; i++) {
-	char *name = strtok((i == 0)? tmp : NULL, sep);
-
-	if (name == NULL) {
-	    gretl_errmsg_sprintf(_("modprint: expected %d names"), ntot);
-	    err = E_DATA;
-	} else {
-	    while (isspace(*name)) {
-		name++;
-	    }
-	    names[i] = name;
-	}
+    if (plain_format(prn)) {
+	pputc(prn, '\n');
     }
 
-    if (!err) {
-	const double *b = cs->val;
-	const double *se = b + ncoef;
+    model_format_end(prn);
 
-	set_alt_gettext_mode(prn);
-
-	if (plain_format(prn)) {
-	    /* newline here is useless for TeX and makes RTF choke */
-	    pputc(prn, '\n'); 
-	} else if (csv_format(prn)) {
-	    set_csv_delim(prn);
-	}
-
-	model_format_start(prn);
-
-	print_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
-
-	if (nadd > 0) {
-	    print_model_stats_table(adds->val, (const char **) names + ncoef, 
-				    nadd, prn);
-	}
-
-	if (plain_format(prn)) {
-	    pputc(prn, '\n'); 
-	} 
-
-	model_format_end(prn);
-    }
-
-    free(names);
-    free(tmp);
-
-    return err;
+    return 0;
 }
 
 gretlopt get_printmodel_opt (const MODEL *pmod,

@@ -59,7 +59,8 @@ int print_coeffs (const double *b,
 
 int print_model_from_matrices (const gretl_matrix *cs, 
 			       const gretl_matrix *adds, 
-			       const char *s, PRN *prn);
+			       gretl_array *names,
+			       PRN *prn);
 
 gretlopt get_printmodel_opt (const MODEL *pmod,
 			     gretlopt opt);

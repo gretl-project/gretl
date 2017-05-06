@@ -415,6 +415,54 @@ MODEL tobit_driver (const int *list, DATASET *dset,
     return tobit_model(list, llim, rlim, dset, opt, prn);
 }
 
+static gretl_array *names_array_from_string (const char *s,
+					     int n, int *err)
+{
+    gretl_array *names = NULL;
+    const char *sep = ",";
+    char *tmp;
+    int i;
+
+    /* copy the user-defined string @s before applying strtok */
+    tmp = gretl_strdup(s);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    names = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
+    if (*err) {
+	free(tmp);
+	return NULL;
+    }
+
+    if (strchr(s, ',') == NULL) {
+	sep = " ";
+    }
+
+    for (i=0; i<n && !*err; i++) {
+	char *name = strtok((i == 0)? tmp : NULL, sep);
+
+	if (name == NULL) {
+	    gretl_errmsg_sprintf(_("modprint: expected %d names"), n);
+	    *err = E_DATA;
+	} else {
+	    while (isspace(*name)) {
+		name++;
+	    }
+	    gretl_array_set_element(names, i, name,
+				    GRETL_TYPE_STRING, 1);
+	}
+    }
+
+    if (*err) {
+	gretl_array_destroy(names);
+	names = NULL;
+    }
+
+    return names;
+}
+
 /*
  * do_modprint:
  * @line: command line.
@@ -445,7 +493,10 @@ int do_modprint (const char *mname, const char *names,
 {
     gretl_matrix *coef_se = NULL;
     gretl_matrix *addstats = NULL;
-    const char *parnames = NULL;
+    gretl_array *parnames = NULL;
+    const char *parstr = NULL;
+    int free_parnames = 0;
+    int nnames = 0;
     int err = 0;
 
     if (mname == NULL || names == NULL) {
@@ -459,18 +510,23 @@ int do_modprint (const char *mname, const char *names,
     } else if (gretl_matrix_cols(coef_se) != 2) {
 	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
 	err = E_DATA;
+    } else {
+	nnames = coef_se->rows;
     }
  
     if (!err) {
 	/* second: string containing names */
 	if (opt & OPT_L) {
 	    /* treat as string _L_iteral */
-	    parnames = names;
+	    parstr = names;
 	} else {
 	    /* FIXME accept array of strings */
-	    parnames = get_string_by_name(names);
-	    if (parnames == NULL) {
-		err = E_PARSE;
+	    parstr = get_string_by_name(names);
+	    if (parstr == NULL) {
+		parnames = get_array_by_name(names);
+		if (parnames == NULL) {
+		    err = E_TYPES;
+		}
 	    }
 	}
     }
@@ -482,8 +538,19 @@ int do_modprint (const char *mname, const char *names,
 	if (aname != NULL) {
 	    addstats = get_matrix_by_name(aname);
 	    if (addstats == NULL) {
-		err = E_UNKVAR;
-	    }	    
+		err = E_TYPES;
+	    } else {
+		nnames += gretl_vector_get_length(addstats);
+	    }
+	}
+    }
+
+    if (!err) {
+	if (parnames == NULL) {
+	    parnames = names_array_from_string(parstr, nnames, &err);
+	    free_parnames = 1;
+	} else if (gretl_array_get_length(parnames) < nnames) {
+	    err = E_NONCONF;
 	}
     }
 
@@ -529,6 +596,10 @@ int do_modprint (const char *mname, const char *names,
 	    gretl_print_set_format(prn, fmt);
 	    err = print_model_from_matrices(coef_se, addstats, parnames, prn);
 	}
+    }
+
+    if (free_parnames) {
+	gretl_array_destroy(parnames);
     }
 
     return err;
