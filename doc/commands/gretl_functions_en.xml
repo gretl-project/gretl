@@ -3051,18 +3051,26 @@
     <function name="fcstats" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="series-or-vec">f</fnarg>
+	<fnarg type="series-or-mat">f</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Produces a column vector holding several statistics which may be
-	  used for evaluating the series <argname>f</argname> as a
-	  forecast of the series <argname>y</argname> over the current
-	  sample range. Two vectors of the same length may be given in
-	  place of two series arguments.
+	  Produces a matrix holding several statistics which serve to
+	  evaluate <argname>f</argname> as a forecast of the observed
+	  data <argname>y</argname>.
 	</para>
 	<para>
-	  The layout of the returned vector is as follows:
+	  If either of the arguments is a series the length of the
+	  input is set by the current sample range (and if one of the
+	  inputs is a matrix it must have a matching number of rows).
+	  If <argname>f</argname> is a series or vector the output is
+	  a column vector; if <argname>f</argname> is a <by r="T"
+	  c="k"/> matrix the output has <math>k</math> columns, each
+	  of which holds statistics for the corresponding column of
+	  <argname>f</argname> as a forecast of <argname>y</argname>.
+	</para>
+	<para>
+	  The rows of the returned matrix are as follows:
 	</para>
 	<code>
 	  1  Mean Error (ME)

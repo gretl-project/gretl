@@ -8119,20 +8119,21 @@
       <para>
 	The argument <repl>coeffmat</repl> should be a <math>k</math>
 	by 2 matrix containing <math>k</math> coefficients and
-	<math>k</math> associated standard errors, and
-	<repl>names</repl> should be a string containing at least
-	<math>k</math> names for the coefficients, separated by commas
-	or spaces. (The <repl>names</repl> argument may be either the
-	name of a string variable or a literal string, enclosed in
-	double quotes.)
+	<math>k</math> associated standard errors. The
+	<repl>names</repl> argument should supply at least
+	<math>k</math> names for labeling the coefficients; it can
+	take the form of a string literal (in double quotes) or string
+	variable, in which case the names should be separated by
+	commas or spaces, or it may be given as a named array of
+	strings.
       </para>
       <para>
 	The optional argument <repl>addstats</repl> is a vector
 	containing <math>p</math> additional statistics to be printed
 	under the coefficient table.  If this argument is given, then
-	<repl>names</repl> should contain <math>k + p</math>
-	comma-separated strings, the additional <math>p</math> strings
-	to be associated with the additional statistics.
+	<repl>names</repl> should contain <math>k + p</math> names,
+	the additional <math>p</math> names to be associated with
+	the extra statistics.
       </para>
       <para>
 	To put the output into a file, use the flag <opt>output=</opt>

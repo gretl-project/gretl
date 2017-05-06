@@ -4,6 +4,8 @@ version 2017b, in progress
 - "rename" command: add a --quiet option
 - "mle" command: support the --cluster robust option
 - "midasreg" command: several fixes and enhancements
+- "modprint" command: accept an array of strings as the
+  "names" argument
 - fcstats() function: expand the accepted set of arguments
   (mix series and vectors, handle multiple forecasts)
 - New function deflist() for defining a list (of named
@@ -11,7 +13,7 @@ version 2017b, in progress
 - New function defbundle() for initializing a bundle
 - GUI: revamp Time series model menu and ARIMA specification
   dialog
-- Fix bug: ensure that the $model accessior (bundle) is
+- Fix bug: ensure that the $model accessor (bundle) is
   available to function packages that attach to a model
   window
 - Validate $-bundles as legitimate function arguments
