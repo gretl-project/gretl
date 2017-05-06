@@ -415,15 +415,20 @@ MODEL tobit_driver (const int *list, DATASET *dset,
     return tobit_model(list, llim, rlim, dset, opt, prn);
 }
 
-static gretl_array *names_array_from_string (const char *s,
-					     int n, int *err)
+static gretl_array *strings_array_from_string (const char *s,
+					       int n, int *err)
 {
     gretl_array *names = NULL;
     const char *sep = ",";
     char *tmp;
     int i;
 
-    /* copy the user-defined string @s before applying strtok */
+    if (s == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    /* copy the incoming string @s before applying strtok */
     tmp = gretl_strdup(s);
     if (tmp == NULL) {
 	*err = E_ALLOC;
@@ -443,7 +448,7 @@ static gretl_array *names_array_from_string (const char *s,
     for (i=0; i<n && !*err; i++) {
 	char *name = strtok((i == 0)? tmp : NULL, sep);
 
-	if (name == NULL) {
+	if (name == NULL || *name == '\0') {
 	    gretl_errmsg_sprintf(_("modprint: expected %d names"), n);
 	    *err = E_DATA;
 	} else {
@@ -503,7 +508,7 @@ int do_modprint (const char *mname, const char *names,
 	return E_ARGS;
     }
 
-    /* first: name of k x 2 matrix */
+    /* k x 2 matrix: coeffs and standard errors */
     coef_se = get_matrix_by_name(mname);
     if (coef_se == NULL) {
 	err = E_UNKVAR;
@@ -515,16 +520,17 @@ int do_modprint (const char *mname, const char *names,
     }
  
     if (!err) {
-	/* second: string containing names */
+	/* names for coeffs: string literal, string variable,
+	   or array of strings */
 	if (opt & OPT_L) {
 	    /* treat as string _L_iteral */
 	    parstr = names;
 	} else {
-	    /* FIXME accept array of strings */
 	    parstr = get_string_by_name(names);
 	    if (parstr == NULL) {
 		parnames = get_array_by_name(names);
-		if (parnames == NULL) {
+		if (parnames == NULL ||
+		    gretl_array_get_type(parnames) != GRETL_TYPE_STRINGS) {
 		    err = E_TYPES;
 		}
 	    }
@@ -532,7 +538,7 @@ int do_modprint (const char *mname, const char *names,
     }
 
     if (!err && (opt & OPT_A)) {
-	/* optional third field: extra matrix */
+	/* optional third field: extra statistics */
 	const char *aname = get_optval_string(MODPRINT, OPT_A);
 
 	if (aname != NULL) {
@@ -547,7 +553,8 @@ int do_modprint (const char *mname, const char *names,
 
     if (!err) {
 	if (parnames == NULL) {
-	    parnames = names_array_from_string(parstr, nnames, &err);
+	    /* we need to construct the strings array */
+	    parnames = strings_array_from_string(parstr, nnames, &err);
 	    free_parnames = 1;
 	} else if (gretl_array_get_length(parnames) < nnames) {
 	    err = E_NONCONF;
