@@ -352,6 +352,8 @@ static gretl_matrix *make_auto_theta (char *mstr, int i,
 		k = 3;
 	    } else if (ptype == MIDAS_U) {
 		k = m2 - m1 + 1;
+	    } else {
+		*err = E_INVARG;
 	    }
 	} else if (integer_string(mstr)) {
 	    /* does @mstr give the number of params? */
@@ -504,7 +506,11 @@ static int parse_midas_term (const char *s,
 	int k = 0;
 
 	if (!umidas) {
-	    gretl_matrix *theta = get_matrix_by_name(mname);
+	    gretl_matrix *theta = NULL;
+
+	    if (!isdigit(*mname) && strcmp(mname, "null")) {
+		theta = get_matrix_by_name(mname);
+	    }
 
 	    if (theta != NULL) {
 		/* copy, don't clobber, the user's initializer */
