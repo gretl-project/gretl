@@ -3762,9 +3762,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
     }
 
     err = gui_run_genr(libline, dataset, OPT_NONE, prn);
-
     unset_genr_model();
-
     gbuf = gretl_print_get_buffer(prn);
 
     if (err) {
@@ -3782,7 +3780,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	    record_command_verbatim();
 	}
 
-	if (gentype == GRETL_TYPE_SERIES) {
+	if (gentype == GRETL_TYPE_SERIES || gentype == GRETL_TYPE_LIST) {
 	    populate_varlist();
 	    mark_dataset_as_modified();
 	} else if (gentype == GRETL_TYPE_DOUBLE) {

@@ -1181,7 +1181,13 @@ int genr_get_output_type (const parser *p)
 	    t = GRETL_TYPE_SERIES;
 	} else if (p->targ == MAT) {
 	    t = GRETL_TYPE_MATRIX;
-	} 
+	} else if (p->targ == LIST) {
+	    t = GRETL_TYPE_LIST;
+	} else if (p->targ == BUNDLE) {
+	    t = GRETL_TYPE_BUNDLE;
+	} else if (p->targ == ARRAY) {
+	    t = GRETL_TYPE_ARRAY;
+	}
     }
 
     return t;
