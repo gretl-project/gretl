@@ -7507,23 +7507,23 @@
 	parametro
       </para>
       <para context="cli">
-	When the parameterization is U-MIDAS, the final initializer
-	argument is not required with <lit>mds</lit> or
-	<lit>mdsl</lit>. In other cases you can request an automatic
-	initialization by substituting one or other of these two
-	forms for the name of an initial parameter vector:
+	Quando la parametrizzazione è U-MIDAS, l'argomento di
+	inzializzazione non è necessario con <lit>mds</lit> or
+	<lit>mdsl</lit>. In altri casi, si può richiedere
+	un'inizializzazione automatica sostituendo una di queste due
+	forme col nome di un vettore di parametri iniziali:
       </para>
       <ilist context="cli">
 	<li>
 	  <para>
-	    La parola chiave <lit>null</lit>: this is acceptable only if the
-	    parameterization has a fixed number of terms (the beta cases,
-	    2 or 3).
+	    La parola chiave <lit>null</lit>: accettabile solo se la
+	    parameterizzazione scelta ha un numero fisso di termini (i
+	    casi beta, 2 or 3).
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    An integer value giving the required number of parameters.
+	    Un intero col numero di parametri richiesto.
 	  </para>
 	</li>
       </ilist>
@@ -7928,23 +7928,28 @@
 
     <description>
       <para>
-        Stampa la tabella dei coefficienti e le statistiche aggiuntive opzionali
-        per un modello stimato <quote>a mano</quote>. Utile principalmente per
-        le funzioni definite dall'utente.
+        Stampa la tabella dei coefficienti e le statistiche aggiuntive
+        opzionali per un modello stimato <quote>a mano</quote>. Utile
+        principalmente per le funzioni definite dall'utente.
       </para>
       <para>
-	L'argomento <repl>matcoeff</repl> deve essere una matrice <math>k</math> per 2
-	che contiene <math>k</math> coefficienti e <math>k</math> errori
-        standard associati, mentre <repl>nomi</repl> deve essere una stringa che
-        contiene almeno <math>k</math> nomi, separati da virgole, per i
-        coefficienti.
+	L'argomento <repl>matcoeff</repl> deve essere una matrice
+	<math>k</math> per 2 che contiene <math>k</math> coefficienti
+	e i <math>k</math> relativi errori standard
+	associati. L'argomento <repl>nomi</repl> deve fornire almeno
+	<math>k</math> etichette per i coefficienti. Può avere la
+	forma di una stringa fissa (fra virgolette doppie) o di una
+	variabile di tipo stringa, nel qual caso le etichette vanno
+	separate con spazi oppure virgole. Alternativamente, si può
+	usare allo scopo un array di stringhe.
       </para>
       <para>
-	L'argomento opzionale <repl>stat</repl> è un vettore che contiene
-	<math>p</math> statistiche aggiuntive da stampare sotto la tabella dei
-        coefficienti. Se si usa questo argomento, <repl>nomi</repl> deve
-        contenere <math>k + p</math> stringhe separate da virgola, di cui le
-        ultime <math>p</math> sono associate alle statistiche aggiuntive.
+	L'argomento opzionale <repl>stat</repl> è un vettore che
+	contiene <math>p</math> statistiche aggiuntive da stampare
+	sotto la tabella dei coefficienti. Se si usa questo argomento,
+	<repl>nomi</repl> deve contenere <math>k + p</math> stringhe
+	di cui le ultime <math>p</math> sono relative alle statistiche
+	aggiuntive.
       </para>
       <para>
 	Per inviare l'output ad un file, usate l'opzione
@@ -9501,10 +9506,10 @@
 	time-series plot is wanted; otherwise an error is flagged.
       </para>
       <para>
-	The starting line may be prefixed with
-	the <quote><repl>savename</repl> <lit>&lt;-</lit></quote>
-	apparatus to save a plot as an icon in the GUI program.
-	The block ends with <lit>end plot</lit>.
+	La linea iniziale può essere dotata del prefisso
+	<quote><repl>nome</repl> <lit>&lt;-</lit></quote>
+	per salvare il grafico come icona nel programma GUI. Il blocco
+	si chiude con <lit>end plot</lit>.
       </para>
       <para>
 	All'interno del blocco si possono avere zero o più linee di
@@ -10589,10 +10594,10 @@
 	end restrict
       </code>
       <para>
-	Secondly, if you wish to test a nonlinear restriction (this is
-	currently available for single-equation models only) you should give
-	the restriction as the name of a function, preceded by
-	<quote><lit>rfunc = </lit></quote>, as in
+	Se si deve testare un vincolo non lineare (possibilità al
+	momento prevista solo per i modelli ad equazione singola)
+	bisogna dare al vincolo in nome di una funzione, preceduto da
+	<quote><lit>rfunc = </lit></quote>, come ad esempio in
       </para>
       <code>
 	restrict

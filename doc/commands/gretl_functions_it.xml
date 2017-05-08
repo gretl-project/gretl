@@ -3070,19 +3070,27 @@
     <function name="fcstats" section="stats" output="matrix">
       <fnargs>
     <fnarg type="series-or-vec">y</fnarg>
-    <fnarg type="series-or-vec">f</fnarg>
+    <fnarg type="series-or-mat">f</fnarg>
       </fnargs>
       <description>
     <para>
       Restituisce un vettore colonna contenente diverse
       statistiche utili per valutare la variabile <argname>f</argname>
-      come previsione della variabile <argname>y</argname> nel
-      campione corrente. Al posto delle due variabili, la funzione
-      accetta come argomenti anche due vettori della stessa
-      lunghezza.
+      come previsione della variabile <argname>y</argname>.
     </para>
     <para>
-      La struttura del vettore restituito è la seguente:
+      Se uno degli argomenti è una serie, la dimensione dell'input è
+      data dal campione corrente (il che implica che se uno degli
+      argomenti è una matrice, essa deve avere un numero appropriato
+      di righe). Se <argname>f</argname> è una serie o un vettore,
+      l'output sarà un vettore colonna; se <argname>f</argname> è una
+      matrice <by r="T" c="k"/>, l'output avrà <math>k</math>
+      colonne, ognuna delle quali conterrà le statistiche relative
+      alla colonna corrispondente di <argname>f</argname> come
+      previsore di <argname>y</argname>.
+    </para>
+    <para>
+      La struttura dell'output è la seguente:
     </para>
     <code>
       1  Errore Medio (Mean Error, ME)
