@@ -905,8 +905,6 @@ do_outfile_command (gretlopt opt, const char *fname,
     int rlevel = 0;
     int err = 0;
 
-    fprintf(stderr, "do_outfile_command: fname='%s'\n", fname);
-
     if (prn == NULL) {
 	return 0;
     }

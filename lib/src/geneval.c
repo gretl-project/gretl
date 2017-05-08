@@ -6631,10 +6631,7 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *buf = l->v.str;
 
-	if (l->vname == NULL) {
-	    gretl_errmsg_set("getline: the source must be a string variable");
-	    p->err = E_TYPES;
-	} else if (null_or_empty(r)) {
+	if (null_or_empty(r)) {
 	    bufgets_finalize(buf);
 	} else if (r->vname == NULL) {
 	    gretl_errmsg_set("getline: the target must be a string variable");
