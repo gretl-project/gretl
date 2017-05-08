@@ -3087,6 +3087,13 @@ static int check_end_command (CMD *cmd)
 {
     int endci = gretl_command_number(cmd->param);
 
+    if (endci == OUTFILE) {
+	/* special case, alias */
+	cmd->ci = OUTFILE;
+	cmd->opt = OPT_C;
+	return 0;
+    }
+
     if (endci != cmd->context) {
 	gretl_errmsg_sprintf("end: invalid parameter '%s'", cmd->param);
 	cmd->err = E_DATA;
