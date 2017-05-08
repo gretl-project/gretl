@@ -208,6 +208,7 @@ void percent_change_dialog (int v);
 int midas_term_dialog (const char *name, int m,
 		       int *minlag, int *maxlag,
 		       int *ptype, int *ncoef,
+		       gboolean no_beta1,
 		       GtkWidget *parent);
 
 #endif /* DIALOGS_H */

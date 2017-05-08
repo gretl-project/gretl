@@ -6358,6 +6358,7 @@ static void set_midas_lag (GtkSpinButton *w, struct midas_sync *msync)
 int midas_term_dialog (const char *name, int m,
 		       int *minlag, int *maxlag,
 		       int *ptype, int *ncoef,
+		       gboolean no_beta1,
 		       GtkWidget *parent)
 {
     const char *opts[] = {
@@ -6365,13 +6366,14 @@ int midas_term_dialog (const char *name, int m,
 	N_("Normalized exponential Almon"),
 	N_("Normalized beta (zero last lag)"),
 	N_("Normalized beta (non-zero last lag)"),
-	N_("Almon polynomial")
+	N_("Almon polynomial"),
+	N_("Normalized beta, one parameter")
     };
     struct midas_sync msync;
     GtkWidget *dialog, *combo;
     GtkWidget *vbox, *hbox, *tmp;
     gchar *msg;
-    int i, hcode = 0; /* FIXME */
+    int i, np, hcode = 0; /* FIXME */
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -6393,6 +6395,11 @@ int midas_term_dialog (const char *name, int m,
     g_free(msg);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
+    np = G_N_ELEMENTS(opts);
+    if (no_beta1) {
+	np--;
+    }
+
     /* param type selection */
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -6400,7 +6407,7 @@ int midas_term_dialog (const char *name, int m,
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     combo = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-    for (i=0; i<G_N_ELEMENTS(opts); i++) {
+    for (i=0; i<np; i++) {
 	combo_box_append_text(combo, opts[i]);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), *ptype);

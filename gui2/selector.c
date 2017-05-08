@@ -38,6 +38,7 @@
 #include "uservar.h"
 #include "johansen.h"
 #include "gretl_bfgs.h"
+#include "gretl_midas.h"
 
 /* for graphical selector buttons */
 #include "arrows.h"
@@ -320,6 +321,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 static void reset_arma_spinners (selector *sr);
 static void clear_midas_spec (void);
+static int check_midas_rvars2 (GtkTreeModel *model, gboolean *have_beta1);
 
 static int set_or_get_n_rvars1 (selector *sr, int n)
 {
@@ -2016,6 +2018,9 @@ static void real_add_generic (GtkTreeModel *srcmodel,
     }
 }
 
+/* shift a MIDAS term from one location in the selection
+   dialog to another */
+
 static void move_midas_term (GtkTreeModel *src,
 			     GtkTreeIter *srciter,
 			     selector *sr)
@@ -2033,21 +2038,38 @@ static void move_midas_term (GtkTreeModel *src,
     /* append to target */
     src_cols = gtk_tree_model_get_n_columns(src);
     if (src_cols == 3) {
-	/* going left to right: defaults */
+	/* going left to right (selecting): defaults */
+	gboolean have_beta1 = 0;
+	gboolean no_beta1 = 0;
 	int lmin = 1, lmax = 2*m;
 	int ptype = mds_quad[2];
 	int k = mds_quad[3];
+	int nterms;
 
 	if (mds_quad[0] < mds_quad[1]) {
 	    lmin = mds_quad[0];
 	    lmax = mds_quad[1];
 	}
 
+	targ = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
+
+	/* If we have a beta1 term in place on the right,
+	   don't allow adding anything else. And if there's
+	   anything in place already, don't allow adding a
+	   beta1 term.
+	*/
+	nterms = check_midas_rvars2(targ, &have_beta1);
+	if (have_beta1) {
+	    warnbox("A one-parameter beta term cannot be combined with others");
+	    return;
+	} else if (nterms > 0) {
+	    no_beta1 = 1;
+	}
+
 	if (midas_term_dialog(vname, m, &lmin, &lmax, &ptype,
-			      &k, sr->dlg) < 0) {
+			      &k, no_beta1, sr->dlg) < 0) {
 	    return;
 	}
-	targ = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
 	gtk_list_store_append(GTK_LIST_STORE(targ), &iter);
 	gtk_list_store_set(GTK_LIST_STORE(targ), &iter, 
 			   COL_ID, v, MCOL_M, m, MCOL_NAME, vname,
@@ -2055,7 +2077,7 @@ static void move_midas_term (GtkTreeModel *src,
 			   MCOL_TYPE, ptype, MCOL_K, k,
 			   -1);
     } else {
-	/* going right to left */
+	/* going right to left (deselecting) */
 	targ = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars2));
 	gtk_list_store_append(GTK_LIST_STORE(targ), &iter);
 	gtk_list_store_set(GTK_LIST_STORE(targ), &iter, 
@@ -2345,6 +2367,10 @@ static gint listvar_flagcol_click (GtkWidget *widget,
     return FALSE;
 }
 
+/* Below: we're allowing the user to revise the MIDAS
+   parameterization of a previously selected term
+*/
+
 static gint listvar_midas_click (GtkWidget *widget, 
 				 GdkEventButton *event, 
 				 selector *sr)
@@ -2358,12 +2384,14 @@ static gint listvar_midas_click (GtkWidget *widget,
 	if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
 	    int m, lmin, lmax, ptype, k, resp;
 	    gchar *vname = NULL;
-	    
+	    gboolean no_beta1;
+
+	    no_beta1 = (check_midas_rvars2(model, NULL) > 1);
 	    gtk_tree_model_get(model, &iter, MCOL_M, &m, MCOL_NAME, &vname,
 			       MCOL_MINLAG, &lmin, MCOL_MAXLAG, &lmax,
 			       MCOL_TYPE, &ptype, MCOL_K, &k, -1);
 	    resp = midas_term_dialog(vname, m, &lmin, &lmax, &ptype,
-				     &k, sr->dlg);
+				     &k, no_beta1, sr->dlg);
 	    if (resp != GRETL_CANCEL) {
 		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 				   MCOL_MINLAG, lmin, MCOL_MAXLAG, lmax, 
@@ -3308,7 +3336,6 @@ static void get_midas_specs (selector *sr)
 	return;
     }
 
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
     gtk_tree_model_get_iter_first(model, &iter);
 
     for (i=0; i<rows; i++) {
@@ -3342,6 +3369,29 @@ static void get_midas_specs (selector *sr)
     }
 
     sr->extra_data = specs;
+}
+
+static int check_midas_rvars2 (GtkTreeModel *model,
+			       gboolean *have_beta1)
+{
+    GtkTreeIter iter;
+    int ptype = -1;
+    int nterms = 0;
+
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	do {
+	    nterms++;
+	    if (have_beta1 != NULL) {
+		gtk_tree_model_get(model, &iter, MCOL_TYPE,
+				   &ptype, -1);
+		if (ptype == MIDAS_BETA1) {
+		    *have_beta1 = 1;
+		}
+	    }
+	} while (gtk_tree_model_iter_next(model, &iter));
+    }
+
+    return nterms;
 }
 
 static void read_quantreg_extras (selector *sr)

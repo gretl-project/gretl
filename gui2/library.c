@@ -4146,22 +4146,39 @@ static int real_do_model (int action)
     return err;
 }
 
-static gchar *compose_midas_param (gpointer p)
+static gchar *compose_midas_param (gpointer p,
+				   gretlopt *addopt,
+				   int *err)
 {
     gui_midas_spec *si, *specs = p;
     char *tmp, *buf = NULL;
     int *list = NULL;
+    int any_beta1 = 0;
     int umidas = 1;
     int i;
 
     if (specs == NULL) {
+	*err = E_DATA;
 	return NULL;
     }
 
     for (i=0; i<specs[0].nterms; i++) {
 	if (specs[i].ptype != MIDAS_U) {
 	    umidas = 0;
-	    break;
+	}
+	if (specs[i].ptype == MIDAS_BETA1) {
+	    any_beta1 = 1;
+	}
+    }
+
+    if (any_beta1) {
+	if (specs[0].nterms > 1) {
+	    errbox("One-parameter beta term cannot be combined with others");
+	    *err = E_DATA;
+	    return NULL;
+	} else {
+	    specs[0].ptype = MIDAS_BETA0;
+	    *addopt |= OPT_C;
 	}
     }
 
@@ -4215,7 +4232,7 @@ int do_model (selector *sr)
     const char *buf;
     const char *flagstr;
     gchar *pbuf = NULL;
-    int ci;
+    int ci, err = 0;
 
     if (selector_error(sr)) {
 	return 1;
@@ -4272,7 +4289,11 @@ int do_model (selector *sr)
 	    ci = POISSON;
 	}
     } else if (ci == MIDASREG) {
-	pbuf = compose_midas_param(extra_data);
+	pbuf = compose_midas_param(extra_data, &addopt, &err);
+    }
+
+    if (err) {
+	return err;
     }
 	
     strcpy(estimator, gretl_command_word(ci));
