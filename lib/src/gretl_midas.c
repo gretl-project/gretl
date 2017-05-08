@@ -2031,12 +2031,13 @@ const char *get_midas_term_line (const MODEL *pmod, int i)
 static int finalize_midas_model (MODEL *pmod,
 				 midas_info *mi,
 				 const char *param,
+				 gretlopt opt,
 				 const DATASET *dset)
 {
     int type0, mixed = 0;
     int i, err = 0;
 
-    /* in case we monkeyed with the incoming sample range */
+    /* ensure that the incoming sample range is recorded */
     gretl_model_smpl_init(pmod, dset);
 
     gretl_model_set_string_as_data(pmod, "midas_spec",
@@ -2053,14 +2054,18 @@ static int finalize_midas_model (MODEL *pmod,
 	}
 	gretl_model_set_int(pmod, "umidas", 1);
     } else {
-	/* @pmod is the result of NLS estimation */
+	/* @pmod is the result of some sort of NLS estimation */
 	free(pmod->depvar);
 	pmod->depvar = gretl_strdup(dset->varname[mi->list[1]]);
 	free(pmod->list);
 	pmod->list = gretl_list_copy(mi->list);
 	if (mi->method == MDS_BFGS) {
 	    /* distinguish this from Levenberg-Marquardt */
-	    gretl_model_set_int(pmod, "BFGS", 1);
+	    if (opt & OPT_C) {
+		gretl_model_set_int(pmod, "GSS", 1);
+	    } else {
+		gretl_model_set_int(pmod, "BFGS", 1);
+	    }
 	}
     }
 
@@ -2612,7 +2617,7 @@ MODEL midas_model (const int *list,
     }
 
     if (!mod.errcode) {
-	finalize_midas_model(&mod, mi, param, dset);
+	finalize_midas_model(&mod, mi, param, opt, dset);
     }
 
     destroy_private_uvars();

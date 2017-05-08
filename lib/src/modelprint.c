@@ -1884,7 +1884,9 @@ static void maybe_show_midas_method (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "umidas") == 0) {
 	gretl_prn_newline(prn);
-	if (gretl_model_get_int(pmod, "BFGS")) {
+	if (gretl_model_get_int(pmod, "GSS")) {
+	    pputs(prn, A_("Using line search with conditional OLS"));
+	} else if (gretl_model_get_int(pmod, "BFGS")) {
 	    pputs(prn, A_("Using L-BFGS-B with conditional OLS"));
 	} else if (tex_format(prn)) {
 	    pputs(prn, A_("Using Levenberg--Marquardt algorithm"));
