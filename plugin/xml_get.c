@@ -32,8 +32,8 @@ static xmlXPathObjectPtr getnodeset (xmlDocPtr doc, xmlChar *xpath,
     xmlXPathObjectPtr result;
 
     result = xmlXPathEvalExpression(xpath, context);
-    
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+
+    if (result == NULL || xmlXPathNodeSetIsEmpty(result->nodesetval)) {
 	xmlXPathFreeObject(result);
 	gretl_errmsg_set("Failed to retrieve XML nodeset");
 	return NULL;
