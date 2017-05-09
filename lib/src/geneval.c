@@ -6387,6 +6387,16 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	    } else {
 		ret->v.str = jfunc(l->v.str, r->v.str, NULL, &p->err);
 	    }
+	} else if (f == F_XMLGET) {
+	    char *(*xfunc) (const char *, const char *,
+			    int *, int *);
+
+	    xfunc = get_plugin_function("xml_get");
+	    if (xfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret->v.str = xfunc(l->v.str, r->v.str, NULL, &p->err);
+	    }
 	} else {
 	    p->err = E_DATA;
 	}
@@ -14357,6 +14367,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_STRSTR:
     case F_JSONGET:
+    case F_XMLGET:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {

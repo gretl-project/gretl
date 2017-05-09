@@ -172,7 +172,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/biprobit.dll \
 	plugins/reprobit.dll \
 	plugins/panurc.dll \
-	plugins/json_get.dll
+	plugins/json_get.dll \
+	plugins/xml_get.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -570,6 +571,10 @@ plugins/panurc.dll: panurc.o dllinit.o
 plugins/json_get.dll: json_get.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(JSON_LIB)
+
+plugins/xml_get.dll: xml_get.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2.dll $(GRETLLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

@@ -363,6 +363,7 @@ enum {
     F_ALLREDUCE,
     F_GENSERIES,
     F_JSONGET,
+    F_XMLGET,
     F_KPSSCRIT,
     F_STRINGIFY,
     F_SQUARE,

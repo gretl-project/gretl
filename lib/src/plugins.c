@@ -91,6 +91,7 @@ enum {
     P_REPROBIT,
     P_PANURC,
     P_JSON_GET,
+    P_XML_GET,
     P_STATA_EXPORT
 } plugin_codes;
 
@@ -149,6 +150,7 @@ struct plugin_info plugins[] = {
     { P_REPROBIT,        "reprobit",        NULL },
     { P_PANURC,          "panurc",          NULL },
     { P_JSON_GET,        "json_get",        NULL },
+    { P_XML_GET,         "xml_get",         NULL },
     { P_STATA_EXPORT,    "stata_export",    NULL }
 };  
 
@@ -281,6 +283,9 @@ struct plugin_function_info plugin_functions[] = {
 
     /* parsing JSON data */
     { "json_get", P_JSON_GET},
+
+    /* parsing XML data */
+    { "xml_get", P_XML_GET},
 
     /* exporting data in dta format */
     { "stata_export", P_STATA_EXPORT},
