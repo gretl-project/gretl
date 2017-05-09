@@ -17,7 +17,7 @@
  * 
  */
 
-/* parsing of XML buffer using libxml2 */
+/* parsing of XML buffer using XPath via libxml2 */
 
 #include "libgretl.h"
 #include "version.h"
@@ -26,12 +26,11 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
-static xmlXPathObjectPtr getnodeset (xmlDocPtr doc, xmlChar *xpath)
+static xmlXPathObjectPtr getnodeset (xmlDocPtr doc, xmlChar *xpath,
+				     xmlXPathContextPtr context)
 {
-    xmlXPathContextPtr context;
     xmlXPathObjectPtr result;
 
-    context = xmlXPathNewContext(doc);
     result = xmlXPathEvalExpression(xpath, context);
     
     if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
@@ -39,8 +38,6 @@ static xmlXPathObjectPtr getnodeset (xmlDocPtr doc, xmlChar *xpath)
 	gretl_errmsg_set("Failed to retrieve XML nodeset");
 	return NULL;
     }
-
-    xmlXPathFreeContext(context);
 
     return result;
 }
@@ -71,9 +68,62 @@ static int real_xml_get (xmlDocPtr doc, xmlXPathObjectPtr op,
     return err;
 }
 
+static int real_xml_get_multi (xmlDocPtr doc,
+			       xmlXPathObjectPtr *oparr,
+			       int nop, int *nobj,
+			       PRN *prn)
+{
+    xmlNodeSetPtr ns;
+    xmlNodePtr np;
+    xmlChar *str;
+    int nrmax = 0;
+    int i, j, err = 0;
+
+    for (j=0; j<nop; j++) {
+	ns = oparr[j]->nodesetval;
+	if (ns->nodeNr > nrmax) {
+	    nrmax = ns->nodeNr;
+	}
+    }
+
+    if (nrmax == 0) {
+	return E_DATA;
+    }
+
+    for (i=0; i<nrmax && !err; i++) {
+	for (j=0; j<nop; j++) {
+	    ns = oparr[j]->nodesetval;
+	    if (i < ns->nodeNr) {
+		np = ns->nodeTab[i];
+		str = xmlNodeListGetString(doc, np->xmlChildrenNode, 1);
+		if (str != NULL) {
+		    if (strchr((char *) str, ',') || strchr((char *) str, ' ')) {
+			pprintf(prn, "\"%s\"", str);
+		    } else {
+			pprintf(prn, "%s", str);
+		    }
+		    xmlFree(str);
+		} else {
+		    err = E_DATA;
+		}
+	    }
+	    pputc(prn, (j == nop - 1)? '\n' : ',');
+	}
+    }
+
+    if (!err) {
+	*nobj = nrmax;
+    }
+
+    return err;
+}
+
 /*
   @data: XML buffer.
-  @path: Xpath specification.
+  @path: either a single string containing an XPath specification,
+   or an array of such strings
+  @ptype: either GRETL_TYPE_STRING or GRETL_TYPE_STRINGS, depending
+  on the type of the second argument.
   @n_objects: location to receive the number of pieces
   of information retrieved, or NULL.
   @err: location to receive error code.
@@ -85,15 +135,17 @@ static int real_xml_get (xmlDocPtr doc, xmlXPathObjectPtr op,
   is returned (using the C locale for doubles).
 */
 
-char *xml_get (const char *data, const char *path, int *n_objects,
+char *xml_get (const char *data, void *ppath,
+	       GretlType ptype, int *n_objects,
 	       int *err)
 {
-    xmlXPathObjectPtr op;
+    xmlXPathContextPtr context;
     xmlDocPtr doc = NULL;
     char *ret = NULL;
+    PRN *prn = NULL;
     int n = 0;
 
-    if (data == NULL || path == NULL) {
+    if (data == NULL || ppath == NULL) {
 	if (n_objects != NULL) {
 	    *n_objects = 0;
 	}
@@ -108,23 +160,65 @@ char *xml_get (const char *data, const char *path, int *n_objects,
 	return NULL;
     }
 
-    op = getnodeset(doc, (xmlChar *) path);
+    context = xmlXPathNewContext(doc);
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
-    if (op == NULL) {
-	gretl_errmsg_set("xmlget: no results");
-	*err = 1;
-    } else {
-	PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
+    if (ptype == GRETL_TYPE_STRING) {
+	/* a single XPath spec */
+	xmlXPathObjectPtr optr;
+	char *path = (char *) ppath;
 
-	if (!*err) {
-	    *err = real_xml_get(doc, op, &n, prn);
+	optr = getnodeset(doc, (xmlChar *) path, context);
+	if (optr == NULL) {
+	    gretl_errmsg_set("xmlget: no results");
+	    *err = 1;
+	} else {
+	    *err = real_xml_get(doc, optr, &n, prn);
 	    if (!*err) {
 		ret = gretl_print_steal_buffer(prn);
 	    }
-	    gretl_print_destroy(prn);
+	    xmlXPathFreeObject(optr);
 	}
-	xmlXPathFreeObject(op);
+    } else {
+	/* an array of XPath specs */
+	xmlXPathObjectPtr *oparr = NULL;
+	gretl_array *a = (gretl_array *) ppath;
+	char **paths;
+	int i, ns;
+
+	paths = gretl_array_get_strings(a, &ns);
+	if (paths == NULL) {
+	    *err = E_DATA;
+	} else {
+	    oparr = malloc(ns * sizeof *oparr);
+	    if (oparr == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (i=0; i<ns; i++) {
+		    oparr[i] = NULL;
+		}
+	    }
+	}
+	for (i=0; i<ns && !*err; i++) {
+	    oparr[i] = getnodeset(doc, (xmlChar *) paths[i], context);
+	    if (oparr[i] == NULL) {
+		gretl_errmsg_set("xmlget: no results");
+		*err = 1;
+	    }
+	}
+	if (!*err) {
+	    *err = real_xml_get_multi(doc, oparr, ns, &n, prn);
+	    if (!*err) {
+		ret = gretl_print_steal_buffer(prn);
+	    }
+	}
+	for (i=0; i<ns; i++) {
+	    xmlXPathFreeObject(oparr[i]);
+	}
+	free(oparr);
     }
+
+    gretl_print_destroy(prn);
 
     if (*err) {
 	fprintf(stderr, "xml_get: err = %d\n", *err);
@@ -134,6 +228,7 @@ char *xml_get (const char *data, const char *path, int *n_objects,
 	*n_objects = n;
     }
 
+    xmlXPathFreeContext(context);
     xmlFreeDoc(doc);
 
     return ret;
