@@ -68,10 +68,10 @@ static int real_xml_get (xmlDocPtr doc, xmlXPathObjectPtr op,
     return err;
 }
 
-static int real_xml_get_multi (xmlDocPtr doc,
-			       xmlXPathObjectPtr *oparr,
-			       int nop, int *nobj,
-			       PRN *prn)
+static int xml_get_multi (xmlDocPtr doc,
+			  xmlXPathObjectPtr *oparr,
+			  int nop, int *nobj,
+			  PRN *prn)
 {
     xmlNodeSetPtr ns;
     xmlNodePtr np;
@@ -207,7 +207,7 @@ char *xml_get (const char *data, void *ppath,
 	    }
 	}
 	if (!*err) {
-	    *err = real_xml_get_multi(doc, oparr, ns, &n, prn);
+	    *err = xml_get_multi(doc, oparr, ns, &n, prn);
 	    if (!*err) {
 		ret = gretl_print_steal_buffer(prn);
 	    }
