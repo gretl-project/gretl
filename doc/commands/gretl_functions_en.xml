@@ -2433,8 +2433,9 @@
 	  endif
 	</code>
 	<para>
-	  See also the <fncref targ="jsonget"/> function for means of
-	  processing JSON data received.
+	  See also the functions <fncref targ="jsonget"/> and <fncref
+	  targ="xmlget"/> for means of processing JSON and XML data
+	  received, respectively.
 	</para>
       </description>
     </function>
@@ -9642,6 +9643,48 @@
             <fncref targ="min"/>
 	  </seelist>
 	</para> 
+      </description>
+    </function>
+
+    <function name="xmlget" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="string-or-strings">path</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>buf</argname> should be an XML buffer,
+	  as may be retrieved from a suitable website via the <fncref
+	  targ="curl"/> function (or read from file via <fncref
+	  targ="readfile"/>), and the <argname>path</argname> argument
+	  should be either a single XPath specification or an array
+	  of such.
+	</para>
+	<para>
+	  This function returns a string representing the data found
+	  in the XML buffer at the specified path. If multiple nodes
+	  match the path expression the items of data are printed one
+	  per line in the returned string. If an array of paths is
+	  given as the second argument the returned string takes the
+	  form of a comma-separated buffer, with column <math>i</math>
+	  holding the matches from path <math>i</math>. In this case
+	  if a string obtained from the XML buffer contains any spaces
+	  or commas it is wrapped in double quotes.
+	</para>
+	<para>
+	  A good introduction to XPath usage and syntax can be found
+	  at
+	  <url>https://www.w3schools.com/xml/xml_xpath.asp</url>. The
+	  back-end for <lit>xmlget</lit> is provided by the xpath
+	  module of libxml2, which supports XPath 1.0 but not XPath
+	  2.0.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="jsonget"/>
+	    <fncref targ="readfile"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 

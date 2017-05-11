@@ -1621,7 +1621,8 @@ static void open_external_link (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
-	if (strncmp(name, "http://", 7)) {
+	if (strncmp(name, "http://", 7) &&
+	    strncmp(name, "https://", 8)) {
 	    gchar *url = g_strdup_printf("http://%s", name);
 
 	    browser_open(url);

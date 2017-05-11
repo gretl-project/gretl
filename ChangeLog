@@ -11,6 +11,8 @@ version 2017b, in progress
 - New function deflist() for defining a list (of named
   series)
 - New function defbundle() for initializing a bundle
+- New function xmlget() for extracting data from an XML
+  buffer (similar to jsonget)
 - GUI: revamp Time series model menu and ARIMA specification
   dialog
 - Fix bug: ensure that the $model accessor (bundle) is
