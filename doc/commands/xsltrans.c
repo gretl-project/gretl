@@ -359,6 +359,10 @@ int main (int argc, char **argv)
     }
 
     if (format == FORMAT_TEX) {
+	/* some preprocessing is needed: make the temp
+	   filename case-specific to avoid breaking a
+	   parallel build
+	*/
 	char c = (content == CONTENT_FUNCS)? 'f' : 'c';
 
 	sprintf(textemp, "%ctex_%s.xml", c, lang);
