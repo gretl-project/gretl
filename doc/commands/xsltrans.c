@@ -50,8 +50,10 @@ enum {
 
 #define UTF const xmlChar *
 
+char textemp[16];
+
 static void 
-get_full_styname (char *targ, const char *dir, const char *fname)
+get_full_filename (char *targ, const char *dir, const char *fname)
 {
     if (dir == NULL || *dir == '\0') {
 	strcpy(targ, fname);
@@ -122,13 +124,13 @@ int apply_xslt (xmlDocPtr doc, int content, int format,
     xmlIndentTreeOutput = 1;
 
     if (format == FORMAT_PANGO) {
-	get_full_styname(styname, docdir, "gretlhlp.xsl");
+	get_full_filename(styname, docdir, "gretlhlp.xsl");
     } else if (format == FORMAT_TEX) {
-	get_full_styname(styname, docdir, "gretltex.xsl");
+	get_full_filename(styname, docdir, "gretltex.xsl");
     } else if (format == FORMAT_HTML) {
-	get_full_styname(styname, docdir, "gretlhtml.xsl");
+	get_full_filename(styname, docdir, "gretlhtml.xsl");
     } else {
-	get_full_styname(styname, docdir, "gretltxt.xsl");
+	get_full_filename(styname, docdir, "gretltxt.xsl");
     }
 
     style = xsltParseStylesheetFile((const xmlChar *) styname);
@@ -158,8 +160,8 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
     return lang;
 }
 
-int parse_commands_data (const char *fname, int content, 
-			 int format, const char *docdir)
+int process_xml_file (const char *fname, int content,
+		      int format, const char *docdir)
 {
     const char *rootnode = "commandref";
     xmlDocPtr doc;
@@ -212,6 +214,83 @@ int parse_commands_data (const char *fname, int content,
     return err;
 }
 
+/* Combine a common XML help file with the special entities
+   needed for TeX output, writing the result to a temporary
+   file.
+*/
+
+static int revise_xml_for_tex (const char *fname,
+			       int content,
+			       const char *docdir)
+{
+    char ftmp[FILENAME_MAX];
+    char line[1024];
+    const char *dtdname;
+    FILE *f1, *f2, *f3;
+
+    f1 = fopen(fname, "r");
+    if (f1 == NULL) {
+	fprintf(stderr, "Couldn't read from %s\n", fname);
+	return 1;
+    }
+
+    get_full_filename(ftmp, docdir, "tex.entities");
+    f2 = fopen(ftmp, "r");
+    if (f2 == NULL) {
+	fprintf(stderr, "Couldn't read from %s\n", ftmp);
+	fclose(f1);
+	return 1;
+    }
+
+    f3 = fopen(textemp, "w");
+    if (f3 == NULL) {
+	fprintf(stderr, "Couldn't write to %s\n", textemp);
+	fclose(f1);
+	fclose(f2);
+	return 1;
+    }
+
+    /* output the first line of the XML help file,
+       which includes the encoding info */
+    while (fgets(line, sizeof line, f1)) {
+	if (strstr(line, "<?xml")) {
+	    fputs(line, f3);
+	    break;
+	}
+    }
+
+    /* select the appropriate DTD */
+    dtdname = (content == CONTENT_FUNCS)? "gretl_functions.dtd" :
+	"gretl_commands.dtd";
+
+    /* insert the correct DOCTYPE spec */
+    get_full_filename(ftmp, docdir, dtdname);
+    fprintf(f3, "<!DOCTYPE %s SYSTEM \"%s\" [\n",
+	    content == CONTENT_FUNCS ? "funcref" : "commandref",
+	    ftmp);
+
+    /* then dump the TeX entity definitions and close preamble */
+    while (fgets(line, sizeof line, f2)) {
+	if (strstr(line, "<!ENTITY")) {
+	    fputs(line, f3);
+	}
+    }
+    fputs("]>\n", f3);
+
+    /* finally, dump the remainder of the help file */
+    while (fgets(line, sizeof line, f1)) {
+	if (strstr(line, "<!DOCTYPE") == NULL) {
+	    fputs(line, f3);
+	}
+    }
+
+    fclose(f1);
+    fclose(f2);
+    fclose(f3);
+
+    return 0;
+}
+
 static char *get_docdir (char *ddir, const char *fname)
 {
     char *p;
@@ -236,6 +315,7 @@ int main (int argc, char **argv)
 {
     const char *fname = NULL;
     char docdir[FILENAME_MAX];
+    char lang[8];
     int content = 0;
     int format = 0;
     int i, err;
@@ -244,7 +324,7 @@ int main (int argc, char **argv)
 	usage();
     }
 
-    *docdir = '\0';
+    *docdir = *lang = '\0';
 
     for (i=1; i<argc; i++) {
 	if (!strcmp(argv[i], "--plain")) {
@@ -263,6 +343,8 @@ int main (int argc, char **argv)
 	    content = CONTENT_GUI;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
+	} else if (!strncmp(argv[i], "--lang=", 7)) {
+	    strcpy(lang, argv[i] + 7);
 	} else {
 	    fname = argv[i];
 	}
@@ -276,7 +358,18 @@ int main (int argc, char **argv)
 	get_docdir(docdir, fname);
     }
 
-    err = parse_commands_data(fname, content, format, docdir);
+    if (format == FORMAT_TEX) {
+	char c = (content == CONTENT_FUNCS)? 'f' : 'c';
+
+	sprintf(textemp, "%ctex_%s.xml", c, lang);
+	err = revise_xml_for_tex(fname, content, docdir);
+	if (!err) {
+	    err = process_xml_file(textemp, content, format, docdir);
+	}
+	remove(textemp);
+    } else {
+	err = process_xml_file(fname, content, format, docdir);
+    }
 
     fprintf(stderr, "%s: input file '%s'; err = %d\n", argv[0], fname, err);
 
