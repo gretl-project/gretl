@@ -5715,6 +5715,25 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static gretl_matrix *fc_matrix_from_list (NODE *n, int n1,
+					  parser *p)
+{
+    gretl_matrix *ret = NULL;
+
+    if (sample_size(p->dset) != n1) {
+	p->err = E_NONCONF;
+    } else {
+	ret = gretl_matrix_data_subset(n->v.ivec,
+				       p->dset,
+				       p->dset->t1,
+				       p->dset->t2,
+				       M_MISSING_OK,
+				       &p->err);
+    }
+
+    return ret;
+}
+
 /* Functions taking two series as arguments and returning a scalar
    or matrix result. We also accept as arguments two matrices if
    they are vectors of the same length. In the case of F_NAALEN
@@ -5729,6 +5748,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     if (starting(p)) {
 	gretl_matrix *Fmat = NULL;
 	const double *x = NULL, *y = NULL;
+	int free_Fmat = 0;
 	int n = 0, n2 = 0;
 
 	if (l->t == SERIES) {
@@ -5756,8 +5776,8 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 		} else {
 		    y = r->v.xvec + p->dset->t1;
 		}
-	    } else {
-		/* must be matrix on right */
+	    } else if (r->t == MAT) {
+		/* matrix on right */
 		n2 = gretl_vector_get_length(r->v.m);
 		if (n2 != n) {
 		    if (f == F_FCSTATS && r->v.m->rows == n) {
@@ -5768,6 +5788,14 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 		} else {
 		    y = r->v.m->val;
 		}
+	    } else if (r->t == LIST && f == F_FCSTATS) {
+		/* a list may work for fcstats */
+		Fmat = fc_matrix_from_list(r, n, p);
+		if (!p->err) {
+		    free_Fmat = 1;
+		}
+	    } else {
+		p->err = E_TYPES;
 	    }
 	}
 
@@ -5810,6 +5838,10 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    break;
 	default:
 	    break;
+	}
+
+	if (free_Fmat) {
+	    gretl_matrix_free(Fmat);
 	}
     } else {
 	ret = aux_any_node(p);
@@ -13856,6 +13888,9 @@ static NODE *eval (NODE *t, parser *p)
 		   null_or_empty(r) &&
 		   (t->t == F_NAALEN || t->t == F_KMEIER)) {
 	    ret = series_2_func(l, NULL, t->t, p);
+	} else if ((l->t == SERIES || l->t == MAT) &&
+		   r->t == LIST && t->t == F_FCSTATS) {
+	    ret = series_2_func(l, r, t->t, p);
 	} else {
 	    p->err = E_INVARG;
 	}
