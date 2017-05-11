@@ -26,6 +26,14 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
+static void report_xml_error (xmlError *xerr)
+{
+    if (xerr->code) {
+	fprintf(stderr, "xmlError: domain %d, code %d, '%s'\n",
+		xerr->domain, xerr->code, xerr->message);
+    }
+}
+
 static xmlXPathObjectPtr getnodeset (xmlDocPtr doc, xmlChar *xpath,
 				     xmlXPathContextPtr context)
 {
@@ -34,8 +42,9 @@ static xmlXPathObjectPtr getnodeset (xmlDocPtr doc, xmlChar *xpath,
     result = xmlXPathEvalExpression(xpath, context);
 
     if (result == NULL || xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+	report_xml_error(&context->lastError);
 	xmlXPathFreeObject(result);
-	gretl_errmsg_set("Failed to retrieve XML nodeset");
+	gretl_errmsg_set("xmlget: got no results");
 	return NULL;
     }
 
@@ -153,7 +162,6 @@ char *xml_get (const char *data, void *ppath,
     }
 
     doc = xmlParseMemory(data, strlen(data));
-
     if (doc == NULL) {
 	gretl_errmsg_set("xmlParseMemory returned NULL");
 	*err = 1;
@@ -161,16 +169,22 @@ char *xml_get (const char *data, void *ppath,
     }
 
     context = xmlXPathNewContext(doc);
+    if (context == NULL) {
+	gretl_errmsg_set("xmlXPathNewContext returned NULL");
+	*err = 1;
+	xmlFreeDoc(doc);
+	return NULL;
+    }
+
     prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
-    if (ptype == GRETL_TYPE_STRING) {
+    if (!*err && ptype == GRETL_TYPE_STRING) {
 	/* a single XPath spec */
 	xmlXPathObjectPtr optr;
 	char *path = (char *) ppath;
 
 	optr = getnodeset(doc, (xmlChar *) path, context);
 	if (optr == NULL) {
-	    gretl_errmsg_set("xmlget: no results");
 	    *err = 1;
 	} else {
 	    *err = real_xml_get(doc, optr, &n, prn);
@@ -179,7 +193,7 @@ char *xml_get (const char *data, void *ppath,
 	    }
 	    xmlXPathFreeObject(optr);
 	}
-    } else {
+    } else if (!*err) {
 	/* an array of XPath specs */
 	xmlXPathObjectPtr *oparr = NULL;
 	gretl_array *a = (gretl_array *) ppath;
@@ -202,7 +216,6 @@ char *xml_get (const char *data, void *ppath,
 	for (i=0; i<ns && !*err; i++) {
 	    oparr[i] = getnodeset(doc, (xmlChar *) paths[i], context);
 	    if (oparr[i] == NULL) {
-		gretl_errmsg_set("xmlget: no results");
 		*err = 1;
 	    }
 	}
