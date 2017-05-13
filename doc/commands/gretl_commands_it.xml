@@ -7385,6 +7385,55 @@
     </description>
   </command>
   
+  <command name="MIDAS_parm" section="Stima"
+	   label="iperprametri MIDAS" context="gui">
+    <description>
+      <para>
+	In questa finestra di dialogo viene selezionato il tipo di
+	parametrizzazione per un insieme di termini ad alta frequenza,
+	insieme al relativo intervallo di ritardi. Le
+	parametrizzazioni disponibili sono:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    U-MIDAS o <quote>MIDAS non vincolato</quote>: a ogni
+	    ritardo corrisponde un coefficiente.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Almon esponenziale normalizzato: richiede almeno un
+	    parametro e di solito ne usa due.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Beta normalizzato con zero finale; richiede due parametri.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Beta normalizzato senza zero finale; richiede tre parametri.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Polinomio di Almon; richiede almeno un parametro.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Beta normalizzato, un parametro: questa è una variante
+	    della parametrizzazione Beta normalizzata con zero finale,
+	    in cui il primo parametro è fisso a 1.0. Il secondo è
+	    stimato sotto la restrizione che sia almeno pari a 1.0.
+	  </para>
+	</li>
+      </ilist>
+    </description>
+  </command>
+
   <command name="midasreg" section="Estimation" label="MIDAS regression">
     <usage>
       <arguments>
@@ -9494,11 +9543,11 @@
 	matrice, o una serie singola.
       </para>
       <para>
-	If a list or matrix is given, the last element (list) or
-	column (matrix) is assumed to be the <math>x</math>-axis
-	variable and the other(s) the <math>y</math>-axis variable(s),
-	unless the <opt>time-series</opt> option is given in which
-	case all the specified data go on the <math>y</math> axis.
+	Se viene fornita una lista o una matrice, l'ultimo elemento
+	(se lista) o l'ultima colonna (se matrice) è preso come asse
+	delle ascisse e le altre come ordinata,
+	a meno che non venga usata l'opzione <opt>time-series</opt>,
+	nel qual caso tutte le variabili vanno in ordinata.
       </para>
       <para>
 	The option of supplying a single series name is restricted to
@@ -10605,18 +10654,19 @@
 	end restrict
       </code>
       <para>
-	The constraint function should take a single <lit>const matrix</lit>
-	argument; this will be automatically filled out with the parameter
-	vector.  And it should return a vector which is zero under the null
-	hypothesis, non-zero otherwise.  The length of the vector is the
-	number of restrictions. This function is used as a
-	<quote>callback</quote> by gretl's numerical Jacobian routine, which
-	calculates a Wald test statistic via the delta method.
+	La funzione vincolo deve avere, come unico argomento, una
+	<lit>const matrix</lit>, che verrà automaticamente riempita
+	col vettore dei parametri.  La funzione deve ritornare un
+	vettore zero sotto lipotesi nulla e non-zero altrimenti.
+	La lunghezza del vettore è il numero di vincoli. Questa
+	funzione è usata come <quote>callback</quote> dalla routine
+	interna di calcolo dello jacobiano, che calcola un test di
+	Wald per mezzo del <quote>delta method</quote>.
       </para>
       <para>
-	Here is a simple example of a function suitable for testing one
-	nonlinear restriction, namely that two pairs of parameter values have
-	a common ratio. 
+	Quello che segue è un semplice esempio di funzione atta allo
+	scopo di testare una restrizione non-lineare, cioè che due
+	coppie di parametri stiano nello stesso rapporto fra loro.
       </para>
       <code>
 	function matrix restr (const matrix b)
