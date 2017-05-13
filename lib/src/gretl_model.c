@@ -5926,6 +5926,9 @@ void model_count_minus (MODEL *pmod)
 
 void set_model_id (MODEL *pmod, gretlopt opt)
 {
+    /* record model estimation time regardless */
+    pmod->esttime = gretl_monotonic_time();
+
     /* Experimental: limit setting of sequential model
        number to "visible" models estimated in main
        script or session (not in functions).
@@ -5949,7 +5952,6 @@ void set_model_id (MODEL *pmod, gretlopt opt)
 
     if (pmod->errcode == 0) {
 	pmod->ID = ++gretl_model_count;
-	pmod->esttime = gretl_monotonic_time();
     }
 }
 
