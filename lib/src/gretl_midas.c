@@ -350,6 +350,9 @@ static gretl_matrix *make_auto_theta (char *mstr, int i,
 		k = 2;
 	    } else if (ptype == MIDAS_BETAN) {
 		k = 3;
+	    } else if (ptype == MIDAS_NEALMON) {
+		/* we'll default to 2 */
+		k = 2;
 	    } else if (ptype == MIDAS_U) {
 		k = m2 - m1 + 1;
 	    } else {
@@ -507,8 +510,9 @@ static int parse_midas_term (const char *s,
 
 	if (!umidas) {
 	    gretl_matrix *theta = NULL;
+	    char c = mname[0];
 
-	    if (!isdigit(*mname) && strcmp(mname, "null")) {
+	    if (!isdigit(c) && c != '{' && strcmp(mname, "null")) {
 		theta = get_matrix_by_name(mname);
 	    }
 

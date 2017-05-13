@@ -6373,7 +6373,7 @@ int midas_term_dialog (const char *name, int m,
     GtkWidget *dialog, *combo;
     GtkWidget *vbox, *hbox, *tmp;
     gchar *msg;
-    int i, np, hcode = 0; /* FIXME */
+    int i, np, hcode = MIDAS_PARM;
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {

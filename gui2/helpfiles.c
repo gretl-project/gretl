@@ -151,6 +151,7 @@ static struct gui_help_item gui_help_items[] = {
     { PKG_FILES,      "data-files" },
     { EDITOR,         "script-editor" },
     { MIDAS_LIST,     "MIDAS_list" },
+    { MIDAS_PARM,     "MIDAS_parm" },
     { -1,             NULL },
 };
 

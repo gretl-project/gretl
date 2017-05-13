@@ -7550,6 +7550,58 @@
       </para>
     </description>
   </command>
+
+  <command name="MIDAS_parm" section="Estimation"
+	   label="MIDAS hyper-parameters" context="gui">
+    <description>
+      <para>
+	In this dialog you are asked to select the type of
+	parameterization for a set of high-frequency terms, as well as
+	the range of lags of these terms.  The supported types of
+	parameterization are:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    U-MIDAS or <quote>unrestricted MIDAS</quote>: each lag has
+	    its own coefficient.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Normalized exponential Almon: this requires at least one
+	    parameter and commonly uses two.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Normalized beta with a zero last lag; requires exactly two
+	    parameters.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Normalized beta with non-zero last lag; requires exactly
+	    three parameters.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Almon polynomial; requires at least one parameter.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Normalized beta, one parameter: this is a variant of the
+	    normalized beta with a zero last lag, in which the first
+	    parameter is fixed at 1.0. The second parameter is
+	    estimated subject to the restriction that it be at least
+	    1.0.
+	  </para>
+	</li>
+      </ilist>
+    </description>
+  </command>
   
   <command name="midasreg" section="Estimation" label="MIDAS regression">
     <usage>
@@ -7682,9 +7734,10 @@
       <ilist context="cli">
 	<li>
 	  <para>
-	    The keyword <lit>null</lit>: this is acceptable only if the
-	    parameterization has a fixed number of terms (the beta cases,
-	    2 or 3).
+	    The keyword <lit>null</lit>: this is accepted if the
+	    parameterization has a fixed number of terms (the beta
+	    cases, 2 or 3). It's also accepted for the exponential
+	    Almon case, implying the default of 2 parameters.
 	  </para>
 	</li>
 	<li>
