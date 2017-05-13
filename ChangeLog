@@ -15,6 +15,9 @@ version 2017b, in progress
   buffer (similar to jsonget)
 - GUI: revamp Time series model menu and ARIMA specification
   dialog
+- Fix bug: some operations that check status of a model's
+  list of regressors failing inside functions, or when a
+  model was estimated with no printed output
 - Fix bug: ensure that the $model accessor (bundle) is
   available to function packages that attach to a model
   window
