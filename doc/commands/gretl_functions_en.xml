@@ -3654,6 +3654,60 @@
       </description>
     </function>
 
+    <function name="GSSmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  One-dimensional maximization via the Golden Section Search
+	  method. The matrix <argname>b</argname> should be a
+	  3-vector. On input the first element is ignored; the second
+	  and third elements set the lower and upper bounds on the
+	  search. The <argname>fncall</argname> argument should be a
+	  call to a function that returns the value of the maximand;
+	  element 1 of <argname>b</argname> will hold the current
+	  value of the adjustable parameter and should be given as the
+	  first argument; any other required arguments may then
+	  follow. The function in question should be unimodal (should
+	  have no local maxima other than the global maximum) over the
+	  stipulated range, or GSS is not sure to find the maximum.
+	</para>
+	<para>
+	  On successful completion this function returns the optimum
+	  value of the maximand, while <argname>b</argname> holds the
+	  optimal parameter value along with the limits of its
+	  bracket.
+	</para>
+	<para>
+	  The optional third argument may be used to set the tolerance
+	  for convergence, that is, the maximum acceptable width of
+	  the final bracket for the parameter. If this argument is not
+	  given a value of 0.0001 is used.
+	</para>
+	<para>
+	  If the object is in fact minimization, either the function
+	  call should return the negative of the criterion or
+	  alternatively <lit>GSSmax</lit> may be called under the
+	  alias <lit>GSSmin</lit>.
+	</para>
+	<para>
+	  Here is a simple example of usage:
+	</para>
+	<code>
+	  function scalar trigfunc (scalar theta)
+	      return 4 * sin(theta) * (1 + cos(theta))
+	  end function
+
+	  matrix m = {0, 0, $pi/2}
+	  eval GSSmax(&amp;m, trigfunc(m[1]))
+	  printf "\n%10.7f", m
+	</code>
+      </description>
+    </function>
+
     <function name="halton" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">m</fnarg>
@@ -6336,7 +6390,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="nobs" section="stats" output="int">
       <fnargs>

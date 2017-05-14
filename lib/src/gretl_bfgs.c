@@ -33,7 +33,7 @@
 
 #define BFGS_MAXITER_DEFAULT 600
 
-static int gretl_gss (double *b, int n, int maxit,
+static int gretl_gss (double *b, int n, double tol,
 		      BFGS_CRIT_FUNC cfunc, void *data,
 		      gretlopt opt, PRN *prn);
 
@@ -1982,6 +1982,7 @@ double deriv_free_optimize (MaxMethod method,
 			    gretl_matrix *b,
 			    const char *fncall,
 			    int maxit,
+			    double tol,
 			    int minimize,
 			    DATASET *dset,
 			    PRN *prn, int *err)
@@ -2027,7 +2028,7 @@ double deriv_free_optimize (MaxMethod method,
 			    user_get_criterion, u,
 			    opt, prn);
     } else if (method == GSS_MAX) {
-	*err = gretl_gss(b->val, u->ncoeff, maxit,
+	*err = gretl_gss(b->val, u->ncoeff, tol,
 			 user_get_criterion, u,
 			 opt, prn);
     }
@@ -3127,7 +3128,7 @@ int gretl_amoeba (double *theta, int n, int maxit,
     return err;
 }
 
-static int gretl_gss (double *theta, int n, int maxit,
+static int gretl_gss (double *theta, int n, double tol,
 		      BFGS_CRIT_FUNC cfunc, void *data,
 		      gretlopt opt, PRN *prn)
 {
@@ -3136,10 +3137,13 @@ static int gretl_gss (double *theta, int n, int maxit,
     double b = theta[2];
     double c = b - (b - a) / gr;
     double d = a + (b - a) / gr;
-    double tol = 1.0e-4; /* FIXME make configurable */
     double fc, fd;
     int minimize = (opt & OPT_I);
     int iter = 1, err = 0;
+
+    if (na(tol)) {
+	tol = 1.0e-4; /* ?? */
+    }
 
     while (fabs(c - d) > tol) {
 	theta[0] = c;

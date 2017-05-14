@@ -3249,6 +3249,7 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
     if (starting(p)) {
 	gretl_matrix *b;
 	const char *sf = m->v.str;
+	double tol = NADBL;
 	int maxit = 0;
 
 	b = node_get_matrix(l, p);
@@ -3263,7 +3264,11 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 
 	if (!p->err) {
 	    if (scalar_node(r)) {
-		maxit = node_get_int(r, p);
+		if (t->t == F_GSSMAX) {
+		    tol = r->v.xval;
+		} else {
+		    maxit = node_get_int(r, p);
+		}
 	    } else if (!null_or_empty(r)) {
 		p->err = E_TYPES;
 	    }
@@ -3286,8 +3291,9 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 	    }
 
 	    ret->v.xval =
-		deriv_free_optimize(method, b, sf, maxit, minimize,
-				    p->dset, p->prn, &p->err);
+		deriv_free_optimize(method, b, sf, maxit, tol,
+				    minimize, p->dset, p->prn,
+				    &p->err);
 	}
     } else {
 	ret = aux_scalar_node(p);
