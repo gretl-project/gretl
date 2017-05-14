@@ -420,6 +420,7 @@ enum {
     F_MLINCOMB,
     F_HFLIST,
     F_NMMAX,
+    F_GSSMAX,
     F_NPCORR,
     F_DAYSPAN,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
@@ -505,11 +506,12 @@ enum {
 /* functions taking one or more "fncall" (string) arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 			s == F_FDJAC || s == F_SIMANN || \
-			s == F_BFGSCMAX || s == F_NMMAX)
+			s == F_BFGSCMAX || s == F_NMMAX || \
+			s == F_GSSMAX)
 
 #define max_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 		     s == F_SIMANN || s == F_BFGSCMAX || \
-		     s == F_NMMAX)
+		     s == F_NMMAX || s == F_GSSMAX)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

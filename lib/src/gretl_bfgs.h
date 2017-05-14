@@ -25,7 +25,8 @@ typedef enum {
     BFGS_MAX,
     LBFGS_MAX,
     SIMANN_MAX,
-    NM_MAX
+    NM_MAX,
+    GSS_MAX
 } MaxMethod;
 
 typedef double (*BFGS_CRIT_FUNC) (const double *, void *);

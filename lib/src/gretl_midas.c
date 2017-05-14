@@ -1738,7 +1738,7 @@ static int cond_ols_GNR (MODEL *pmod,
 }
 
 /* Golden Section search for one-dimensional optimization:
-   faster, though somewhat less robust, than using L_BFGS-B.
+   faster (though somewhat less robust?) than using L_BFGS-B.
 */
 
 static int midas_gss (double *theta, int n, midas_info *mi,

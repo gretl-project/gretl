@@ -33,6 +33,10 @@
 
 #define BFGS_MAXITER_DEFAULT 600
 
+static int gretl_gss (double *b, int n, int maxit,
+		      BFGS_CRIT_FUNC cfunc, void *data,
+		      gretlopt opt, PRN *prn);
+
 void BFGS_defaults (int *maxit, double *tol, int ci)
 {
     *maxit = libset_get_int(BFGS_MAXITER);
@@ -2022,6 +2026,10 @@ double deriv_free_optimize (MaxMethod method,
 	*err = gretl_amoeba(b->val, u->ncoeff, maxit,
 			    user_get_criterion, u,
 			    opt, prn);
+    } else if (method == GSS_MAX) {
+	*err = gretl_gss(b->val, u->ncoeff, maxit,
+			 user_get_criterion, u,
+			 opt, prn);
     }
 
     if (!*err) {
@@ -3115,6 +3123,54 @@ int gretl_amoeba (double *theta, int n, int maxit,
 
     free(step);
     free(xmin);
+
+    return err;
+}
+
+static int gretl_gss (double *theta, int n, int maxit,
+		      BFGS_CRIT_FUNC cfunc, void *data,
+		      gretlopt opt, PRN *prn)
+{
+    double gr = (sqrt(5.0) + 1) / 2.0;
+    double a = theta[1];
+    double b = theta[2];
+    double c = b - (b - a) / gr;
+    double d = a + (b - a) / gr;
+    double tol = 1.0e-4; /* FIXME make configurable */
+    double fc, fd;
+    int minimize = (opt & OPT_I);
+    int iter = 1, err = 0;
+
+    while (fabs(c - d) > tol) {
+	theta[0] = c;
+	fc = cfunc(theta, data);
+	theta[0] = d;
+	fd = cfunc(theta, data);
+	if (opt & OPT_V) {
+	    pprintf(prn, "%d: bracket={%g,%g}, values={%g,%g}\n",
+		    iter, c, d, fc, fd);
+	}
+	if (xna(fc) || xna(fd)) {
+	    err = E_NAN;
+	    break;
+	}
+	if ((minimize && fc < fd) || fc > fd) {
+            b = d;
+        } else {
+            a = c;
+	}
+	/* recompute c and d to preserve precision */
+	c = b - (b - a) / gr;
+	d = a + (b - a) / gr;
+	iter++;
+    }
+
+    if (!err) {
+	/* record the optimum and the bracket */
+	theta[0] = (b + a) / 2;
+	theta[1] = a;
+	theta[2] = b;
+    }
 
     return err;
 }

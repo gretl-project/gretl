@@ -3276,8 +3276,14 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 	ret = aux_scalar_node(p);
 
 	if (ret != NULL) {
-	    MaxMethod method = (t->t == F_SIMANN)? SIMANN_MAX : NM_MAX;
 	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
+	    MaxMethod method = SIMANN_MAX;
+
+	    if (t->t == F_NMMAX) {
+		method = NM_MAX;
+	    } else if (t->t == F_GSSMAX) {
+		method = GSS_MAX;
+	    }
 
 	    ret->v.xval =
 		deriv_free_optimize(method, b, sf, maxit, minimize,
@@ -14053,6 +14059,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SIMANN:
     case F_NMMAX:
+    case F_GSSMAX:
 	/* matrix-pointer, plus string and int args */
 	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
 	    ret = deriv_free_node(l, m, r, p, t);
