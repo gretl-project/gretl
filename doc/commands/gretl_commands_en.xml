@@ -191,7 +191,7 @@
       </para>
 
       <para context="cli">
-	Computes a set of Dickey&ndash;Fuller tests on each of the the
+	Computes a set of Dickey&ndash;Fuller tests on each of the
 	listed variables, the null hypothesis being that the variable in
 	question has a unit root.  (But if the <opt>difference</opt>
 	flag is given, the first difference of the variable is taken prior
@@ -570,7 +570,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Autoregressive estimation</menu-path>
+      <menu-path>/Model/Time series/AR Errors (GLS)</menu-path>
     </gui-access>
 
   </command>
@@ -629,7 +629,7 @@
       </para>
       <para>
 	If the <opt>pwe</opt> option is given, the
-	Prais&ndash;Winsten estimator is used.  This involves an an
+	Prais&ndash;Winsten estimator is used.  This involves an
 	iteration similar to Cochrane&ndash;Orcutt; the difference is
 	that while Cochrane&ndash;Orcutt discards the first
 	observation, Prais&ndash;Winsten makes use of it. See, for
@@ -647,7 +647,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/AR(1)</menu-path>
+      <menu-path>/Model/Time series/AR Errors (GLS)</menu-path>
     </gui-access>
 
   </command>
@@ -1742,7 +1742,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Cointegration test/Engle-Granger</menu-path>
+      <menu-path>/Model/Time series/Multivariate/Cointegration test</menu-path>
     </gui-access>
 
   </command>
@@ -3734,7 +3734,7 @@
 	If you wish to export data by copying to the clipboard rather than
 	writing to a file on disk, select the series you want to copy in
 	the main window, right-click, and select <quote>Copy to
-	clibboard</quote>. (Only CSV format is supported in this
+	clipboard</quote>. (Only CSV format is supported in this
 	context.) 
       </para>
     </description>
@@ -5536,7 +5536,7 @@
       <para>
 	The sub-sampling restriction must be placed in parentheses following the
 	selected variable, and in general the restriction takes the form "var2
-	op value," where var2 is the name of a variable in the current data set,
+	op val," where var2 is the name of a variable in the current data set,
 	val is a numerical value, and op is a comparison operator chosen from =,
 	!=, &lt;, &gt;, &lt;= or &gt;= (respectively equality, inequality, less
 	than, greater than, less than or equal, and greater than or equal).  The
