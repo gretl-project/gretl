@@ -1677,6 +1677,9 @@ static int add_partial_std_errs_to_model (MODEL *pmod,
     pmod->vcv = NULL;
     free(dlist);
 
+    /* and record the breakage */
+    gretl_model_set_int(pmod, "broken-vcv", 1);
+
     fprintf(stderr, "added partial standard errors\n");
 
     return 0;
@@ -1687,9 +1690,9 @@ static int add_GNR_std_errs_to_model (MODEL *pmod, const int *list)
     int err;
     
     if (pmod->errcode == E_JACOBIAN) {
-	err = add_partial_std_errs_to_model(pmod, list);
+	pmod->errcode = err = add_partial_std_errs_to_model(pmod, list);
     } else {    
-	err = add_full_std_errs_to_model(pmod);
+	pmod->errcode = err = add_full_std_errs_to_model(pmod);
     }
 
     return err;
