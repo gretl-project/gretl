@@ -3139,7 +3139,8 @@ static int gretl_gss (double *theta, int n, double tol,
     double d = a + (b - a) / gr;
     double fc, fd;
     int minimize = (opt & OPT_I);
-    int iter = 1, err = 0;
+    int cond, iter = 1;
+    int err = 0;
 
     if (na(tol)) {
 	tol = 1.0e-4; /* ?? */
@@ -3158,7 +3159,8 @@ static int gretl_gss (double *theta, int n, double tol,
 	    err = E_NAN;
 	    break;
 	}
-	if ((minimize && fc < fd) || fc > fd) {
+	cond = minimize ? fc < fd : fc > fd;
+	if (cond) {
             b = d;
         } else {
             a = c;
