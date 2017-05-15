@@ -4211,12 +4211,14 @@ static int alt_print_aux_coeffs (const double *b, const double *se,
 
     /* print row values */
     for (i=0; i<nc; i++) {
+	double sei = isnan(se[i]) ? NADBL : se[i];
+
 	mc.b = b[i];
-	mc.se = se[i];
-	if (na(se[i]) || se[i] <= 0) {
+	mc.se = sei;
+	if (na(sei) || sei <= 0) {
 	    mc.tval = mc.pval = NADBL;
 	} else {
-	    mc.tval = b[i] / se[i];
+	    mc.tval = b[i] / sei;
 	    mc.pval = coeff_pval(ci, mc.tval, df);
 	}
 	if (tex_format(prn)) {
@@ -4267,6 +4269,8 @@ static int plain_print_aux_coeffs (const double *b,
     }
 
     for (i=0; i<nc; i++) {
+	double sei = isnan(se[i]) ? NADBL : se[i];
+
 	if (xna(b[i])) {
 	    err = E_NAN;
 	    goto bailout;
@@ -4275,17 +4279,17 @@ static int plain_print_aux_coeffs (const double *b,
 	if (n > namelen) {
 	    namelen = n;
 	}
-	if (na(se[i]) || se[i] <= 0) {
+	if (na(sei) || sei <= 0) {
 	    tval = pval = NADBL;
 	} else {
-	    tval = b[i] / se[i];
+	    tval = b[i] / sei;
 	    pval = coeff_pval(ci, tval, df);
 	}
 	for (j=0; j<4; j++) {
 	    if (j < 2) {
 		/* coeff, standard error */
 		d = get_gretl_digits();
-		vals[i][j].x = (j==0)? b[i] : se[i];
+		vals[i][j].x = (j==0)? b[i] : sei;
 	    } else if (j == 2) {
 		/* t-ratio */
 		d = 4;
@@ -4305,7 +4309,6 @@ static int plain_print_aux_coeffs (const double *b,
     }
 
     /* figure appropriate column separation */
-
     for (j=0; j<4; j++) {
 	w[j] = lmax[j] + rmax[j];
 	head = _(headings[j]);
@@ -4315,11 +4318,9 @@ static int plain_print_aux_coeffs (const double *b,
 	    w[j] = hlen;
 	}
     }
-
     figure_colsep(namelen, 4, w, &colsep);
 
     /* print headings */
-
     bufspace(namelen + 2 + colsep, prn);
     for (j=0; j<4; j++) {
 	print_padded_head(_(headings[j]), w[j], prn);
@@ -4332,7 +4333,6 @@ static int plain_print_aux_coeffs (const double *b,
     print_sep_row(namelen, 4, w, colsep, prn);
 
     /* print row values */
-
     for (i=0; i<nc; i++) {
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);
