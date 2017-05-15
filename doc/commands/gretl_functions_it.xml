@@ -3688,6 +3688,62 @@
       </description>
     </function>
 
+    <function name="GSSmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Massimizzazione unidimensionale col metodo della sezione
+	  aurea. La matrice <argname>b</argname> deve essere un
+	  vettore a tre elementi. In input, il primo viene ignorato,
+	  mentre gli altri due identificano l'intervallo in cui
+	  effettuare la ricerca.. L'argomento
+	  <argname>fncall</argname> deve essere il nome di una
+	  funzione che ritorna il valore da massimizzare; l'elemento 1
+	  di <argname>b</argname> conterrà il valore corrente del
+	  parametro da calibrare e deve essere dato come primo
+	  argomento; altri eventuali parametri possono essere presenti
+	  come secondo, terzo argomento eccetera. Affinché il metodo
+	  trovi l'effettivo massimo con sicurezza, è necessario che la
+	  funzione da massimizzare sia unimodale all'interno
+	  dell'intervallo indicato.
+	</para>
+	<para>
+	  Se la funzione va a buon fine, essa ritornerà il valore
+	  della funzione nel punto di massimo, mentre
+	  <argname>b</argname> conterrà il massimo trovato
+	  numericamente, e un intervallo che lo contiene.
+	</para>
+	<para>
+	  Il terzo parametro (opzionale) può essere utilizzato per
+	  indicare la tolleranza dell'algoritmo, ossia l'ampiezza
+	  massima dell'intervallo finale. Per default, è pari a
+	  0.0001.
+	</para>
+	<para>
+	  Se la funzione obiettivo va minimizzata, su può usare una
+	  funzione che ritorna il negativo dell'obiettivo, o
+	  alternativamente usare l'alias <lit>GSSmin</lit> anziché
+	  <lit>GSSmax</lit>.
+	</para>
+	<para>
+	  Un semplice esempio di uso:
+	</para>
+	<code>
+	  function scalar trigfunc (scalar theta)
+	      return 4 * sin(theta) * (1 + cos(theta))
+	  end function
+
+	  matrix m = {0, 0, $pi/2}
+	  eval GSSmax(&amp;m, trigfunc(m[1]))
+	  printf "\n%10.7f", m
+	</code>
+      </description>
+    </function>
+    
     <function name="halton" section="stats" output="matrix">
       <fnargs>
     <fnarg type="int">m</fnarg>
