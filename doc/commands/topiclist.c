@@ -168,15 +168,9 @@ static int section_already_recorded (sectlist *s, const char *name)
 
 static int ref_cmd_in_gretl (const char *cmdword)
 {
-    int i;
+    int n = gretl_command_number(cmdword);
 
-    for (i=1; i<NC; i++) {
-	if (!strcmp(cmdword, gretl_command_word(i))) {
-	    return 1;
-	}
-    }
-
-    return 0;
+    return n > 0;
 }
 
 static int gui_only (xmlNodePtr node)
