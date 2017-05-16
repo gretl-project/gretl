@@ -1089,9 +1089,11 @@
   </command>
  
   <command name="arma" section="Estimation" label="ARMA model">
-    <para>
-      Vedi <cmdref targ="arima"/>; <lit>arma</lit> è un alias.
-    </para>
+    <description>
+      <para>
+	Vedi <cmdref targ="arima"/>; <lit>arma</lit> è un alias.
+      </para>
+    </description>
   </command>
 
   <command name="bfgs-config" section="Estimation" label="BFGS options"
@@ -7385,7 +7387,7 @@
     </description>
   </command>
   
-  <command name="MIDAS_parm" section="Stima"
+  <command name="MIDAS_parm" section="Estimation"
 	   label="iperprametri MIDAS" context="gui">
     <description>
       <para>

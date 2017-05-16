@@ -1095,9 +1095,11 @@
   </command>
 
   <command name="arma" section="Estimation" label="ARMA model">
-    <para>
-      See <cmdref targ="arima"/>; <lit>arma</lit> is an alias.
-    </para>
+    <description>
+      <para>
+	See <cmdref targ="arima"/>; <lit>arma</lit> is an alias.
+      </para>
+    </description>
   </command>
 
   <command name="bfgs-config" section="Estimation" label="BFGS options"
