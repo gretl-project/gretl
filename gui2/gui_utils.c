@@ -2595,9 +2595,10 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	if (bufopen(&prn)) {
 	    gretl_matrix_free(P);
 	} else {
-	    const int *yvals = gretl_model_get_data(pmod, "yvals");
+	    gretl_matrix *yvals = gretl_model_get_data(pmod, "yvals");
 	    int obslen = max_obs_marker_length(dataset);
 	    int i, j, t = gretl_matrix_get_t1(P);
+	    int n = gretl_vector_get_length(yvals);
 	    double x;
 
 	    pprintf(prn, "\nEstimated outcome probabilities for %s\n\n",
@@ -2605,8 +2606,8 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 
 	    /* case values */
 	    bufspace(obslen, prn);
-	    for (j=1; j<=yvals[0]; j++) {
-		pprintf(prn, "%9d", yvals[j]);
+	    for (j=0; j<n; j++) {
+		pprintf(prn, "%9g", yvals->val[j]);
 	    }
 	    pputc(prn, '\n');
 
