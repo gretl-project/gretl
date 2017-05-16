@@ -2090,6 +2090,7 @@ static int finalize_midas_model (MODEL *pmod,
     }
 
     if (mi->ldepvar) {
+	gretl_model_set_int(pmod, "ldepvar", 1);
 	gretl_model_set_int(pmod, "dynamic", 1);
     }
 
