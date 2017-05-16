@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-03 08:49-0400\n"
-"PO-Revision-Date: 2017-05-04 12:16+0100\n"
+"PO-Revision-Date: 2017-05-15 18:40+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -993,9 +993,9 @@ msgstr ""
 "Chamada:\n"
 "- A primeira ringleira do ficheiro CSV debe de conter os nomes das "
 "variables.\n"
-"- A primeira columna pode conter opcionalmente cadeas de datas ou outros "
-"indicadores:\n"
-"  nese caso a súa primeira entrada na ringleira debe ser en branco, ou "
+"- A primeira columna pode conter opcionalmente cadeas de texto con datas ou "
+"outros marcadores:\n"
+"  nese caso a súa primeira anotación na ringleira debe ser en branco, ou "
 "expresar 'obs' ou 'data'\n"
 "- O resto do ficheiro debe ser un arranxo rectangular de datos\n"
 
@@ -1281,7 +1281,7 @@ msgstr "Os novos datos non teñen a estrutura axeitada para engadilos\n"
 
 #: lib/src/dataio.c:1898
 msgid "Inconsistency in observation markers\n"
-msgstr "Inconsistencia nos indicadores de observación\n"
+msgstr "Inconsistencia nos marcadores de observación\n"
 
 #: lib/src/dataio.c:2419
 msgid "No markers are available for writing"
@@ -6248,11 +6248,11 @@ msgstr "Tau de Kendall"
 
 #: lib/src/nonparam.c:911
 msgid "Runs test (first difference)"
-msgstr "Proba de rachas (primeiras diferenzas)"
+msgstr "Proba de ringleiras (primeiras diferenzas)"
 
 #: lib/src/nonparam.c:913
 msgid "Runs test (level)"
-msgstr "Proba de rachas (niveis)"
+msgstr "Proba de ringleiras (niveis)"
 
 #: lib/src/nonparam.c:916
 #, c-format
@@ -6261,7 +6261,7 @@ msgid ""
 "Number of runs (R) in the variable '%s' = %d\n"
 msgstr ""
 "\n"
-"Número de rachas (R) na variable *%s* = %d\n"
+"Número de ringleiras (R) na variable *%s* = %d\n"
 
 #: lib/src/nonparam.c:920
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
@@ -7893,11 +7893,11 @@ msgstr "Desviacións padrón"
 
 #: gui2/calculator.c:950
 msgid "Incomplete entry"
-msgstr "Entrada incompleta"
+msgstr "Anotación incompleta"
 
 #: gui2/calculator.c:1021 gui2/dialogs.c:1023
 msgid "Invalid entry"
-msgstr "Entrada incorrecta"
+msgstr "Anotación incorrecta"
 
 #: gui2/calculator.c:1073
 #, no-c-format
@@ -8223,7 +8223,7 @@ msgstr "Proba de diferenzas"
 
 #: gui2/calculator.c:2560
 msgid "Runs test"
-msgstr "Proba de rachas"
+msgstr "Proba de ringleiras"
 
 #: gui2/calculator.c:2561
 msgid "Correlation"
@@ -8557,7 +8557,7 @@ msgstr "Especificar as restricións:"
 
 #: gui2/callbacks.c:561 gui2/callbacks.c:669
 msgid "gretl: command entry"
-msgstr "Gretl: Entrada de instrución"
+msgstr "Gretl: Anotación de instrución"
 
 #: gui2/callbacks.c:562 gui2/callbacks.c:670
 msgid "Type a command:"
@@ -10040,19 +10040,19 @@ msgstr "Non restrinxido (U-MIDAS)"
 
 #: gui2/dialogs.c:6365
 msgid "Normalized exponential Almon"
-msgstr "ALMON exponencial normalizado"
+msgstr "Almon exponencial normalizada"
 
 #: gui2/dialogs.c:6366
 msgid "Normalized beta (zero last lag)"
-msgstr "Beta normalizado (último retardo nulo)"
+msgstr "Beta normalizada (último retardo nulo)"
 
 #: gui2/dialogs.c:6367
 msgid "Normalized beta (non-zero last lag)"
-msgstr "Beta normalizado (último retardo non nulo)"
+msgstr "Beta normalizada (último retardo non nulo)"
 
 #: gui2/dialogs.c:6368
 msgid "Almon polynomial"
-msgstr "Polinomio de ALMON "
+msgstr "Polinomio de Almon "
 
 #: gui2/dialogs.c:6391
 #, c-format
@@ -11142,7 +11142,7 @@ msgstr "Gardar como postscript (EPS)..."
 
 #: gui2/gpt_control.c:3949 gui2/gpt_control.c:4043 gui2/toolbar.c:226
 msgid "Save to session as icon"
-msgstr "Gardar a sesión como icona"
+msgstr "Gardar na sesión como icona"
 
 #: gui2/gpt_control.c:3955 gui2/gpt_control.c:4044
 msgid "Freeze data labels"
@@ -11647,7 +11647,7 @@ msgstr "Gardar datos _como..."
 
 #: gui2/gretl.c:1531
 msgid "_Export data..."
-msgstr "Expor_tar datos..."
+msgstr "E_xportar datos..."
 
 #: gui2/gretl.c:1532 gui2/toolbar.c:821
 msgid "Send To..."
@@ -11731,7 +11731,7 @@ msgstr "_Bancos de datos"
 
 #: gui2/gretl.c:1558
 msgid "_Gretl native..."
-msgstr "Pr_opio de Gretl..."
+msgstr "Propio de _Gretl..."
 
 #: gui2/gretl.c:1559
 msgid "_RATS 4..."
@@ -11755,7 +11755,7 @@ msgstr "_Puntos críticos"
 
 #: gui2/gretl.c:1568
 msgid "_P-value finder"
-msgstr "_Buscador do valor P"
+msgstr "Buscador do _valor P"
 
 #: gui2/gretl.c:1569
 msgid "_Distribution graphs"
@@ -11771,7 +11771,7 @@ msgstr "_Calculadora de probas"
 
 #: gui2/gretl.c:1572
 msgid "_Nonparametric tests"
-msgstr "Probas  _non paramétricas"
+msgstr "Pro_bas  non paramétricas"
 
 #: gui2/gretl.c:1573
 msgid "_Seed for random numbers"
@@ -11795,7 +11795,7 @@ msgstr "Iniciar GNU _R"
 
 #: gui2/gretl.c:1578
 msgid "_Function packages"
-msgstr "Paquetes de _funcións"
+msgstr "Pa_quetes de funcións"
 
 #: gui2/gretl.c:1579
 msgid "On _local machine..."
@@ -11815,15 +11815,15 @@ msgstr "_Novo paquete..."
 
 #: gui2/gretl.c:1583
 msgid "_Upload package..."
-msgstr "_Subir paquete..."
+msgstr "S_ubir paquete..."
 
 #: gui2/gretl.c:1584
 msgid "Edit spec file..."
-msgstr "Editar ficheiro específico..."
+msgstr "Editar _ficheiro específico..."
 
 #: gui2/gretl.c:1585
 msgid "_NIST test suite"
-msgstr "Con_xunto de probas NIST"
+msgstr "Conxunto de probas _NIST"
 
 #: gui2/gretl.c:1586
 msgid "_Basic"
@@ -11847,7 +11847,7 @@ msgstr "_Xeral..."
 
 #: gui2/gretl.c:1592
 msgid "_Fixed font..."
-msgstr "Tipo de letra _fixa..."
+msgstr "_Tipo de letra fixa..."
 
 #: gui2/gretl.c:1594 gui2/gretl.c:1892
 msgid "_Menu font..."
@@ -11859,7 +11859,7 @@ msgstr "_Datos"
 
 #: gui2/gretl.c:1599
 msgid "Select _all"
-msgstr "Escoller _todo"
+msgstr "_Escoller todo"
 
 #: gui2/gretl.c:1600
 msgid "_Find variable..."
@@ -11867,11 +11867,11 @@ msgstr "_Buscar variable..."
 
 #: gui2/gretl.c:1601
 msgid "Define or edit _list..."
-msgstr "_Definir ou editar unha lista de variables..."
+msgstr "Definir ou editar unha _lista de variables..."
 
 #: gui2/gretl.c:1602
 msgid "_Set selection from list..."
-msgstr "_Escoller variables desde unha lista..."
+msgstr "Escoller _variables desde unha lista..."
 
 #: gui2/gretl.c:1603 gui2/gretl.c:1683
 msgid "_Display values"
@@ -11879,7 +11879,7 @@ msgstr "_Amosar valores"
 
 #: gui2/gretl.c:1604
 msgid "_Edit values"
-msgstr "_Editar os valores"
+msgstr "E_ditar os valores"
 
 #: gui2/gretl.c:1605
 msgid "_Add observations..."
@@ -11887,7 +11887,7 @@ msgstr "E_ngadir observacións..."
 
 #: gui2/gretl.c:1606
 msgid "_Remove extra observations"
-msgstr "E_liminar observacións extra"
+msgstr "Eli_minar observacións extra"
 
 #: gui2/gretl.c:1607
 msgid "_Dataset info"
@@ -11895,19 +11895,19 @@ msgstr "In_formación do conxunto de datos"
 
 #: gui2/gretl.c:1608
 msgid "_Observation markers..."
-msgstr "Índ_ices das observacións..."
+msgstr "_Marcadores das observacións..."
 
 #: gui2/gretl.c:1609
 msgid "_Variable labels..."
-msgstr "Etiq_uetas de variables..."
+msgstr "Eti_quetas de variables..."
 
 #: gui2/gretl.c:1610
 msgid "Dataset _structure..."
-msgstr "Est_rutura do conxunto de datos..."
+msgstr "Estrutura do _conxunto de datos..."
 
 #: gui2/gretl.c:1611
 msgid "_Compact data..."
-msgstr "Co_mpactar datos..."
+msgstr "Com_pactar datos..."
 
 #: gui2/gretl.c:1612
 msgid "_Expand data..."
@@ -11915,7 +11915,7 @@ msgstr "E_xpandir datos..."
 
 #: gui2/gretl.c:1613
 msgid "_Transpose data..."
-msgstr "Traspo_ñer datos..."
+msgstr "_Traspoñer datos..."
 
 #: gui2/gretl.c:1614
 msgid "_Sort data..."
@@ -11923,7 +11923,7 @@ msgstr "_Ordenar os datos..."
 
 #: gui2/gretl.c:1615 gui2/gretl.c:1719
 msgid "Set missing _value code..."
-msgstr "Establecer código de '_valor ausente'..."
+msgstr "E_stablecer código de 'valor ausente'..."
 
 #: gui2/gretl.c:1618 gui2/gui_utils.c:331 gui2/gui_utils.c:376
 #: gui2/ssheet.c:175
@@ -11932,11 +11932,11 @@ msgstr "_Ver"
 
 #: gui2/gretl.c:1619
 msgid "_Icon view"
-msgstr "Vista de _iconas"
+msgstr "_Vista de iconas"
 
 #: gui2/gretl.c:1620
 msgid "_Graph specified vars"
-msgstr "Gráfica de _variables indicadas"
+msgstr "_Gráfica de variables indicadas"
 
 #: gui2/gretl.c:1621
 msgid "_Time series plot..."
@@ -11968,7 +11968,7 @@ msgstr "Gráfica _de caixa con factor de separación..."
 
 #: gui2/gretl.c:1628
 msgid "_Q-Q plot..."
-msgstr "G_ráfica Q-Q..."
+msgstr "Gráfica _Q-Q..."
 
 #: gui2/gretl.c:1629
 msgid "_3D plot..."
@@ -12000,7 +12000,7 @@ msgstr "_Tabulación cruzada"
 
 #: gui2/gretl.c:1636
 msgid "_Principal components"
-msgstr "C_ompoñentes principais"
+msgstr "Compoñentes _principais"
 
 #: gui2/gretl.c:1637
 msgid "_Mahalanobis distances"
@@ -12052,7 +12052,7 @@ msgstr "_Tendencia temporal"
 
 #: gui2/gretl.c:1655
 msgid "_Panel unit index"
-msgstr "Índice de unidades en _panel"
+msgstr "Í_ndice de unidades en panel"
 
 #: gui2/gretl.c:1656
 msgid "_Random variable..."
@@ -12060,7 +12060,7 @@ msgstr "Variable _aleatoria..."
 
 #: gui2/gretl.c:1657
 msgid "_Periodic dummies"
-msgstr "_Variables ficticias periódicas"
+msgstr "Variables _ficticias periódicas"
 
 #: gui2/gretl.c:1658
 msgid "_Unit dummies"
@@ -12072,15 +12072,15 @@ msgstr "Variables ficticias de t_empo"
 
 #: gui2/gretl.c:1660
 msgid "_Observation range dummy"
-msgstr "Variable ficticia de rango de _observación"
+msgstr "Variable ficticia de ran_go de observación"
 
 #: gui2/gretl.c:1661
 msgid "Dummies for _discrete variable..."
-msgstr "Variables ficticias para variable _discreta"
+msgstr "Varia_bles ficticias para variable discreta"
 
 #: gui2/gretl.c:1663
 msgid "_Define matrix..."
-msgstr "Definir _matriz..."
+msgstr "Definir matri_z..."
 
 #: gui2/gretl.c:1666
 msgid "_Sample"
@@ -12088,11 +12088,11 @@ msgstr "M_ostra"
 
 #: gui2/gretl.c:1667
 msgid "_Set range..."
-msgstr "Establecer _rango..."
+msgstr "_Establecer rango..."
 
 #: gui2/gretl.c:1668
 msgid "_Restore full range"
-msgstr "Restablecer o rango _completo"
+msgstr "_Restablecer o rango completo"
 
 #: gui2/gretl.c:1669
 msgid "_Show status"
@@ -12100,7 +12100,7 @@ msgstr "_Ver o status actual"
 
 #: gui2/gretl.c:1670
 msgid "_Restrict, based on criterion..."
-msgstr "R_estrinxir, a partir do criterio..."
+msgstr "Restrin_xir, a partir do criterio..."
 
 #: gui2/gretl.c:1672
 msgid "R_andom sub-sample..."
@@ -12112,15 +12112,15 @@ msgstr "Renovar a mostra con _substitución..."
 
 #: gui2/gretl.c:1675
 msgid "Drop observations with _missing values..."
-msgstr "Prescindir das observacións con _valores ausentes..."
+msgstr "_Prescindir das observacións con valores ausentes..."
 
 #: gui2/gretl.c:1677
 msgid "Make current subsample permanent..."
-msgstr "Facer permanente a submostra actual"
+msgstr "_Facer permanente a submostra actual"
 
 #: gui2/gretl.c:1679
 msgid "_Count missing values"
-msgstr "_Contar valores ausentes"
+msgstr "Conta_r valores ausentes"
 
 #: gui2/gretl.c:1682
 msgid "_Variable"
@@ -12144,7 +12144,7 @@ msgstr "Gráfica de _caixa"
 
 #: gui2/gretl.c:1689
 msgid "Normal _Q-Q plot..."
-msgstr "G_ráfica Q-Q normal..."
+msgstr "Gráfica _Q-Q normal..."
 
 #: gui2/gretl.c:1690
 msgid "_Gini coefficient"
@@ -12168,7 +12168,7 @@ msgstr "Probas de raíz _unitaria"
 
 #: gui2/gretl.c:1695
 msgid "_Augmented Dickey-Fuller test"
-msgstr "Proba _ampliada de Dickey-Fuller"
+msgstr "Proba ampliada de _Dickey-Fuller"
 
 #: gui2/gretl.c:1696
 msgid "ADF-GLS test"
@@ -12240,11 +12240,11 @@ msgstr "Expoñente de _Hurst"
 
 #: gui2/gretl.c:1718
 msgid "_Edit attributes"
-msgstr "Editar _atributos"
+msgstr "Edita_r atributos"
 
 #: gui2/gretl.c:1720 gui2/gui_utils.c:2882
 msgid "Define _new variable..."
-msgstr "Definir _nova variable..."
+msgstr "Definir n_ova variable..."
 
 #: gui2/gretl.c:1723
 msgid "_Model"
@@ -12280,16 +12280,16 @@ msgstr "Mínimos Cadrados _Ponderados"
 
 #: gui2/gretl.c:1731
 msgid "H_eteroskedasticity corrected"
-msgstr "Con corrección de _heterocedasticidade"
+msgstr "Con Corrección de _Heterocedasticidade"
 
 #: gui2/gretl.c:1732
 msgid "High _precision OLS"
-msgstr "MCO lineais de _alta precisión"
+msgstr "MCO Lineais de _Alta Precisión"
 
 #: gui2/gretl.c:1733 gui2/library.c:3998 gui2/library.c:5972
 #: gui2/selector.c:6896
 msgid "ANOVA"
-msgstr "ANOVA"
+msgstr "A_NOVA"
 
 #: gui2/gretl.c:1734
 msgid "_Time series"
@@ -12297,7 +12297,7 @@ msgstr "_Series temporais"
 
 #: gui2/gretl.c:1735
 msgid "ARI_MA"
-msgstr "AR_IMA"
+msgstr "_ARIMA"
 
 #: gui2/gretl.c:1736
 msgid "_GARCH"
@@ -12313,15 +12313,15 @@ msgstr "_AR(1)"
 
 #: gui2/gretl.c:1740
 msgid "_AR (general)"
-msgstr "_AR (xeral)"
+msgstr "AR(_Xeral)"
 
 #: gui2/gretl.c:1741
 msgid "_Multivariate"
-msgstr "Bi_variante"
+msgstr "_Multivariante"
 
 #: gui2/gretl.c:1742
 msgid "_Vector Autoregression"
-msgstr "_VAR (Autorregresión vectorial)"
+msgstr "VAR (_Autorregresión de vectores)"
 
 #: gui2/gretl.c:1743
 msgid "VAR _lag selection"
@@ -12385,11 +12385,11 @@ msgstr "_Probit"
 
 #: gui2/gretl.c:1761
 msgid "Bi_variate"
-msgstr "Bi_variante"
+msgstr "_Bivariante"
 
 #: gui2/gretl.c:1762
 msgid "_Random effects"
-msgstr "Efectos _aleatorios"
+msgstr "_Efectos aleatorios"
 
 #: gui2/gretl.c:1763
 msgid "To_bit"
@@ -12413,7 +12413,7 @@ msgstr "Lo_xística"
 
 #: gui2/gretl.c:1768
 msgid "_Interval regression"
-msgstr "Regresión de _intervalos"
+msgstr "Regresión por _intervalos"
 
 #: gui2/gretl.c:1769
 msgid "_Robust estimation"
@@ -12441,11 +12441,11 @@ msgstr "Mínimos Cadrados _Non Lineais"
 
 #: gui2/gretl.c:1775
 msgid "_Maximum likelihood"
-msgstr "Má_xima verosimilitude"
+msgstr "Máxima _Verosimilitude"
 
 #: gui2/gretl.c:1777
 msgid "_Simultaneous equations"
-msgstr "Ecuacións _Simultáneas"
+msgstr "_Ecuacións Simultáneas"
 
 #: gui2/gretl.c:1780
 msgid "_Help"
@@ -12473,7 +12473,7 @@ msgstr "Manual básico de _Hansl"
 
 #: gui2/gretl.c:1787
 msgid "_Function package guide"
-msgstr "Manual de paquetes de _funcións"
+msgstr "Manual de _paquetes de funcións"
 
 #: gui2/gretl.c:1788
 msgid "_gretl + MPI"
@@ -12485,11 +12485,11 @@ msgstr "_Buscar actualizacións"
 
 #: gui2/gretl.c:1790
 msgid "Check for _addons"
-msgstr "_Buscar complementos"
+msgstr "Buscar _complementos"
 
 #: gui2/gretl.c:1791
 msgid "_About gretl"
-msgstr "Sobre _Gretl"
+msgstr "_Sobre Gretl"
 
 #: gui2/gretl.c:1866 gui2/gui_utils.c:243 gui2/gui_utils.c:368
 msgid "_Analysis"
@@ -12775,7 +12775,7 @@ msgstr "_Gardar como..."
 
 #: gui2/gui_utils.c:226 gui2/gui_utils.c:357
 msgid "Save to session as _icon"
-msgstr "Gardar a _sesión como icona"
+msgstr "Gardar na _sesión como icona"
 
 #: gui2/gui_utils.c:227 gui2/gui_utils.c:358
 msgid "Save as icon and cl_ose"
@@ -12857,7 +12857,7 @@ msgstr "_Multicolinearidade"
 
 #: gui2/gui_utils.c:252
 msgid "_Influential observations"
-msgstr "Observacións _influíntes"
+msgstr "Observacións _influentes"
 
 #: gui2/gui_utils.c:253
 msgid "_ANOVA"
@@ -13419,7 +13419,7 @@ msgstr "_Gardar texto..."
 
 #: gui2/gui_utils.c:4993
 msgid "Save bundle to session as _icon"
-msgstr "Gardar a sesión como _icona"
+msgstr "Gardar o feixe na sesión como _icona"
 
 #: gui2/gui_utils.c:5074
 msgid ""
@@ -13470,7 +13470,7 @@ msgstr "Xa existe unha cadea con nome *%s*"
 #: gui2/gui_utils.c:5209
 #, c-format
 msgid "A bundle named %s already exists"
-msgstr "Xa existe un paquete co nome *%s*"
+msgstr "Xa existe un feixe co nome *%s*"
 
 #: gui2/gui_utils.c:5211
 #, c-format
@@ -13861,18 +13861,18 @@ msgstr "Gretl: Información de valores ausentes"
 
 #: gui2/library.c:1846
 msgid "Export the markers to file"
-msgstr "Exportar as etiquetas a un ficheiro"
+msgstr "Exportar os marcadores a un ficheiro"
 
 #: gui2/library.c:1847
 msgid "Remove the markers"
-msgstr "Quitar as etiquetas"
+msgstr "Quitar os marcadores"
 
 #: gui2/library.c:1851
 msgid ""
 "The dataset has observation markers.\n"
 "Would you like to:"
 msgstr ""
-"O conxunto de datos ten etiquetas das observacións.\n"
+"O conxunto de datos ten marcadores das observacións.\n"
 "Desexarías:"
 
 #: gui2/library.c:1864
@@ -13880,8 +13880,8 @@ msgid ""
 "The dataset has no observation markers.\n"
 "Add some from file now?"
 msgstr ""
-"O conxunto de datos non ten etiquetas das observacións.\n"
-"Engadir algunhas agora?"
+"O conxunto de datos non ten marcadores das observacións.\n"
+"Engadir algúns agora?"
 
 #: gui2/library.c:1919
 msgid "Export the labels to file"
@@ -14921,7 +14921,7 @@ msgstr "Regresión de cuantil"
 
 #: gui2/selector.c:4134
 msgid "Interval regression"
-msgstr "Regresión de intervalos"
+msgstr "Regresión por intervalos"
 
 #: gui2/selector.c:4136
 msgid "Cointegration (Engle-Granger)"
@@ -15715,7 +15715,7 @@ msgstr "fronte a"
 
 #: gui2/session.c:2265
 msgid "Bundle is empty"
-msgstr "O paquete está baldeiro"
+msgstr "O feixe está baldeiro"
 
 #: gui2/session.c:2635 gui2/session.c:2661
 #, c-format
@@ -16059,7 +16059,7 @@ msgstr "Utilizar por defecto unha matriz robusta de covarianzas"
 
 #: gui2/settings.c:327
 msgid "Use the normal distribution for robust p-values"
-msgstr "Utilizar a distribución normal para valores p robustos"
+msgstr "Utilizar a distribución Normal para valores p robustos"
 
 #: gui2/settings.c:329
 msgid "For cross-sectional data"
@@ -16083,7 +16083,7 @@ msgstr "Preferencia de manual en PDF"
 
 #: gui2/settings.c:525
 msgid "This change will apply to newly opened windows"
-msgstr "Este cambio aplicarase a fiestras abertas recentemente"
+msgstr "Este cambio aplicarase a xanelas abertas recentemente"
 
 #: gui2/settings.c:850
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -16255,12 +16255,12 @@ msgid ""
 "Enter case marker for new obs\n"
 "(max. %d characters)"
 msgstr ""
-"Inserir a etiqueta caso para a nova observación\n"
+"Inserir o marcador de caso para a nova observación\n"
 "(máx. %d caracteres)"
 
 #: gui2/ssheet.c:1016
 msgid "gretl: case marker"
-msgstr "Gretl: Marcador de caixa"
+msgstr "Gretl: Marcador de caso"
 
 #: gui2/ssheet.c:1056
 msgid "gretl: name column"
@@ -16916,7 +16916,7 @@ msgstr "regresores"
 
 #: plugin/addons-i18n.c:46
 msgid "Structural VARs"
-msgstr "VARs estructural"
+msgstr "_VARs estructural"
 
 #: plugin/addons-i18n.c:47
 msgid "AB-model"
@@ -17028,7 +17028,7 @@ msgstr "Simple (Cholesky)"
 
 #: plugin/addons-i18n.c:81
 msgid "IV/Heteroskedastic"
-msgstr "VI/Heterocedástico"
+msgstr "_VI/Heterocedástico"
 
 #: plugin/addons-i18n.c:82
 msgid "Covariance matrix estimation"

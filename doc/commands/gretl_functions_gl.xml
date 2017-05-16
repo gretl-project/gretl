@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -20,7 +20,7 @@
 	<para>
 	  Se pode calcularse, devolve un escalar co valor do Criterio de
 	  Información de Akaike (AIC) do último modelo estimado. Máis detalles
-	  sobre o cálculo en <guideref targ="chap:criteria"/>.
+	  sobre o cálculo no <guideref targ="chap:criteria"/>.
 	</para>
       </description>
     </function>
@@ -30,7 +30,7 @@
 	<para>
 	  Se pode calcularse, devolve un escalar co valor do Criterio de
 	  Información Bayesiano (BIC) de Schwarz do último modelo estimado.
-	  Máis detalles sobre o cálculo en <guideref targ="chap:criteria"/>.
+	  Máis detalles sobre o cálculo no <guideref targ="chap:criteria"/>.
 	</para>
       </description>
     </function>
@@ -148,8 +148,8 @@
 	  nula de que a matriz de varianzas-covarianzas dos erros das ecuacións
 	  do sistema, é diagonal. Esta é a proba de Breusch-Pagan, agás cando
 	  o estimador é o dun SUR reiterado (sen restricións), pois nese caso é
-	  unha proba de Razón de Verosimilitudes. Para ver máis detalles, véxase
-	  <guideref targ="chap:system"/>  (tamén <fncref targ="$diagpval"/>).
+	  unha proba de Razón de Verosimilitudes. Para obter máis detalles, véxase
+	  o <guideref targ="chap:system"/>  (tamén <fncref targ="$diagpval"/>).
 	</para>
       </description>
     </function>
@@ -321,7 +321,7 @@
 	<para>
 	  Se pode calcularse, devolve un escalar co valor do Criterio de
 	  Información de Hannan-Quinn para o último modelo estimado. Para
-	  detalles sobre o cálculo, consulta <guideref targ="chap:criteria"/>.
+	  detalles sobre o cálculo, consulta o <guideref targ="chap:criteria"/>.
 	</para>
       </description>
     </function>
@@ -478,8 +478,8 @@
     <function name="$model" section="access" output="bundle">
       <description>
 	<para>
-	  Debe executarse logo de estimar modelos con unha única ecuación e
-	  devolve un paquete (<quote>bundle</quote>) que contén varios feixes de
+	  Debe executarse logo de estimar modelos cunha única ecuación e
+	  devolve un feixe (<quote>bundle</quote>) que contén varias unidades de
 	  datos pertencentes ao modelo. Inclúense todos os accesorios habituais
 	  dos modelos, que son designados mediante claves iguais aos nomes
 	  deses accesorios habituais menos o signo dólar inicial. Por exemplo,
@@ -490,7 +490,7 @@
 	  Dependendo do estimador, podes dispoñer de información adicional. As
 	  claves para tal información é de agardar que sexan explicativas por si
 	  mesmas. Para ver o que está dispoñible podes gardar unha copia do
-	  paquete e mostrar o seu contido, como por exemplo co código:
+	  feixe e mostrar o seu contido, como por exemplo co código:
 	</para>
 	<code>
 	  ols y 0 x
@@ -630,8 +630,8 @@
 	<para>
 	  Devolve a probabilidade asociada ao valor do estatístico de proba que
 	  foi xerado pola última instrución explícita de proba de hipóteses (por
-	  exemplo: <lit>chow</lit>). Consulta <guideref targ="chap:genr"/> para
-	  ver detalles.
+	  exemplo: <lit>chow</lit>). Consulta o <guideref targ="chap:genr"/>
+	  para obter máis detalles.
 	</para>
 	<para>
 	  Xeralmente devolve un escalar, mais nalgúns casos devolve unha
@@ -808,9 +808,9 @@
     <function name="$sysinfo" section="access" output="bundle">
       <description>
 	<para>
-	  Devolve un paquete (<quote>bundle</quote>) que contén información das
+	  Devolve un feixe (<quote>bundle</quote>) que contén información das
 	  capacidades do Gretl e do sistema operativo no que está executándose.
-	  Os elementos do paquete indícanse deseguido:
+	  Os elementos do feixe indícanse deseguido:
 	</para>
 	<ilist>
 	  <li>
@@ -865,9 +865,9 @@
 	  </li>
 	</ilist>
 	<para>
-	  Fíxate en que pode accederse a elementos individuais do paquete
+	  Fíxate en que pode accederse a elementos individuais do feixe
 	  mediante a notación <quote>dot</quote> sen necesidade de copiar o
-	  paquete enteiro cun nome de usuario específico. Por exemplo co código:
+	  feixe enteiro cun nome de usuario específico. Por exemplo co código:
 	</para>
 	<code>
 	  if $sysinfo.os == "linux"
@@ -909,8 +909,8 @@
 	<para>
 	  Devolve o valor do estatístico de proba que foi xerado pola última
 	  instrución explícita para unha proba de hipóteses (por exemplo:
-	  <lit>chow</lit>). Consulta <guideref targ="chap:genr"/> para outros
-	  detalles.
+	  <lit>chow</lit>). Consulta o <guideref targ="chap:genr"/> para
+	  obter máis detalles.
 	</para>
 	<para>
 	  Xeralmente devolve un escalar, mais nalgúns casos devolve unha
@@ -1030,7 +1030,7 @@
 	  Debe executarse logo de estimar un VAR ou un VECM e devolve unha
 	  matriz que contén a representación VMA ata a orde especificada por
 	  medio da instrución <lit>set horizon</lit>. Para ter máis detalles,
-	  consulta <guideref targ="chap:var"/>.
+	  consulta o <guideref targ="chap:var"/>.
 	</para>
       </description>
     </function>
@@ -1468,7 +1468,7 @@
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos en <guideref targ="chap:numerical"/>.
+	  numéricos no <guideref targ="chap:numerical"/>.
 	  <seelist>
 	          <fncref targ="BFGScmax"/>
             <fncref targ="NRmax"/>
@@ -1531,7 +1531,7 @@
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos en <guideref targ="chap:numerical"/>.
+	  numéricos no <guideref targ="chap:numerical"/>.
 	  <seelist>
 	          <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>
@@ -1616,9 +1616,9 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve a lectura dun paquete (<quote>bundle</quote>) a partir
+	  Devolve a lectura dun feixe (<quote>bundle</quote>) a partir
 	  dun ficheiro de texto. A cadea de texto debe de conter o nome do
-	  ficheiro do cal se le o paquete. Se ese nome ten a extensión
+	  ficheiro do cal se le o feixe. Se ese nome ten a extensión
 	  <quote><lit>.gz</lit></quote> asúmese que se aplicou a compresión
 	  gzip cando se gardou ese ficheiro.
 	</para>
@@ -1684,8 +1684,8 @@
 	</para>
 	<para>
 	  A inspección preliminar do periodograma da serie de interese é moi
-	  útil cando se desexa aplicar esta función. Para obter máis detalles
-	  Consulta <guideref targ="chap:tsfilter"/>.
+	  útil cando se desexa aplicar esta función. Para obter máis detalles,
+	  consulta o <guideref targ="chap:tsfilter"/>.
 	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="hpfilt"/>
@@ -1702,7 +1702,7 @@
       </fnargs>
       <description>
 	<para>
-	  Escribe o paquete (<quote>bundle</quote>) <argname>B</argname> nun
+	  Escribe o feixe (<quote>bundle</quote>) <argname>B</argname> nun
 	  ficheiro XML con nome <argname>fname</argname>. Se xa existe un
 	  ficheiro denominado <argname>fname</argname>, vaise sobrescribir.
 	  Para unha descrición concisa do seu formato, consulta
@@ -2356,9 +2356,9 @@
       </fnargs>
       <description>
 	<para>
-	  Ofrece un medio bastante flexible de obter un <quote>buffer</quote>
-	  de texto que contén datos dun servidor de internet, utilizando a
-	  biblioteca libcurl. O argumento de tipo paquete <argname>b</argname>,
+	  Ofrece un medio bastante flexible de obter un <quote>buffer</quote> de
+	  texto que contén datos dun servidor de internet, utilizando a biblioteca
+	  libcurl. Ao escribila, o argumento de tipo feixe <argname>b</argname>,
 	  debe de conter unha cadea de texto chamada <lit>URL</lit> que indica
 	  o enderezo completo do recurso no host de destino. Outros elementos
 	  opcionais preséntanse deseguido:
@@ -2387,14 +2387,14 @@
 	  simple.)
 	</para>
 	<para>
-	  Recoñécese outro elemento opcional do paquete: se está presente
+	  Recoñécese outro elemento opcional do feixe: se está presente
 	  un escalar chamado <lit>include</lit> e ten un valor non nulo, isto
 	  enténdese como unha solicitude para incluír o header recibido do
 	  host, no corpo da saída.
 	</para>
 	<para>
 	  Ao completarse a solicitude, o texto recibido do servidor
-	  engádese ao paquete e recibe o nome de
+	  engádese ao feixe e recibe o nome de
 	  <quote><lit>output</lit></quote>.
 	</para>
 	<para>
@@ -2402,7 +2402,7 @@
 	  (por exemplo, se non existe a <lit>URL</lit> na entrada); noutro caso
 	  vai devolver o valor 0 se a solicitude prospera, ou un valor non
 	  nulo se non o fai. Neste último caso, engádese a mensaxe de
-	  fallo da biblioteca curl ao paquete, co identificador 
+	  fallo da biblioteca curl ao feixe, co identificador 
 	  <quote><lit>errmsg</lit></quote>. Cae na conta, porén, que
 	  <quote>éxito</quote> neste senso non significa necesariamente
 	  que obtés os datos que desexabas; en realidade significa tan só 
@@ -2433,8 +2433,9 @@
 	  endif
 	</code>
 	<para>
-	  Consulta tamén a función <fncref targ="jsonget"/> para ver xeitos
-	  de procesamento de datos recibidos no formato JSON.
+	  Consulta tamén as funcións <fncref targ="jsonget"/> e
+	  <fncref targ="xmlget"/> para ver xeitos de procesamento
+	  de datos recibidos no formato JSON e XML, respectivamente.
 	</para>
       </description>
     </function>
@@ -2493,13 +2494,13 @@
       </fnargs>
       <description>
 	<para>
-	  Te permite a carga inicial dunha variable de paquete
+	  Te permite a carga inicial dunha variable feixe
 	  <emphasis>extensamente</emphasis>, proporcionando cero ou
 	  máis pares co formato <repl>key</repl>, <repl>member</repl>.
 	  Se contamos os argumentos desde 1, cada argumento numerado
 	  impar debe de avaliar unha cadea de texto (chave) e cada
 	  argumento numerado par debe de avaliar un obxecto dun tipo
-	  que poida incluírse nun paquete.
+	  que poida incluírse nun feixe.
 	</para>
 	<para>
 	  Un par de exemplos sinxelos:
@@ -2509,13 +2510,13 @@
 	  bundle b2 = defbundle("yn", normal(), "x", 5)
 	</code>
 	<para>
-	  O primeiro exemplo xera un paquete cuxos elementos son unha cadea
-	  de texto e unha matriz; o segundo, un paquete cun elemento que é
+	  O primeiro exemplo xera un feixe cuxos elementos son unha cadea
+	  de texto e unha matriz; o segundo, un feixe cun elemento que é
 	  unha serie e outro que é escalar. Ten en conta que non podes
 	  especificar un tipo de cada argumento cando utilizas esta función,
 	  entón debes de aceptar o tipo <quote>natural</quote> de argumento
 	  en cuestión. Se queres engadir unha serie cun valor constante de 5
-	  a un paquete chamado <lit>b1</lit> sería necesario facer algo como
+	  a un feixe chamado <lit>b1</lit> sería necesario facer algo como
 	  o seguinte (despois de enunciar <lit>b1</lit>):
 	</para>
 	<code>
@@ -2523,8 +2524,8 @@
 	</code>
 	<para>
 	  Se non indicas ningún argumento para esta función, iso
-	  equivale a xerar un paquete baleiro (ou a baleirar un
-	  paquete existente do seu contido), como podería facer
+	  equivale a xerar un feixe baleiro (ou a baleirar un
+	  feixe existente do seu contido), como podería facer
 	  mediante
 	</para>
 	<code>
@@ -3029,7 +3030,7 @@
 	<para>
 	  Devolve un escalar non nulo se <argname>name</argname> é o nome que
 	  identifica un obxecto que xa se definiu, sexa un escalar, unha serie,
-	  unha matriz, unha lista, unha cadea de texto, un paquete ou un arranxo.
+	  unha matriz, unha lista, unha cadea de texto, un feixe ou un arranxo.
 	  Noutro caso devolve 0. Consulta tamén <fncref targ="typeof"/>.
 	</para>
       </description>
@@ -3051,18 +3052,30 @@
     <function name="fcstats" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="series-or-vec">f</fnarg>
+	<fnarg type="series-list-or-mat">f</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector columna que contén varios estatísticos que podes
-	  utilizar para avaliar a calidade da serie <argname>f</argname>,
-	  considerada como predición da serie <argname>y</argname> ao longo
-	  da mostra actual. Tamén podes utilizar dous vectores do mesmo
-	  tamaño, en troques das dúas series.
+	  Xera unha matriz que contén varios estatísticos que serven
+	  para avaliar a <argname>f</argname> como predición dos datos
+	  observados <argname>y</argname>.
 	</para>
 	<para>
-	  O vector está formado polos seguintes estatísticos:
+	  Cando <argname>f</argname> é unha serie ou un vector, o resultado
+	  é un vector columna. Cando <argname>f</argname> é unha lista con
+	  <math>k</math> elementos ou unha matriz de dimensión <by r="T" c="k"/>,
+	  o resultado ten <math>k</math> columnas nas que cada unha contén
+	  os estatísticos do termo correspondente (serie da lista ou columna
+	  da matriz) como predición de <argname>y</argname>.
+	</para>
+	<para>
+	  En tódolos casos, a dimensión <quote>vertical</quote> dos datos
+	  introducidos (o longo da mostra vixente para unha serie ou unha
+	  lista, e o número de filas para unha matriz) debe de coincidir entre
+	  os dous argumentos.
+	</para>
+	<para>
+	  As filas da matriz que se devolve son como se indica deseguido:
 	</para>
 	<code>
 	  1  Erro Medio (ME)
@@ -3136,7 +3149,7 @@
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos en <guideref targ="chap:numerical"/>.
+	  numéricos no <guideref targ="chap:numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -3589,12 +3602,17 @@
 
     <function name="gini" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un escalar co índice de desigualdade de Gini para a serie
-	  <argname>y</argname>.
+	  Devolve un escalar co índice de desigualdade de Gini para a serie ou
+	  vector (non negativos) <argname>y</argname>. Un valor de Gini igual a
+	  cero indica igualdade perfecta. O máximo valor de Gini para unha serie
+	  con <math>n</math> elementos é (<math>n</math> &minus; 1)/<math>n</math>,
+	  o que acontece cando unicamente un elemento ten un valor positivo;
+	  polo tanto, un valor de Gini igual a 1.0 é o límite que se acada cando
+	  unha serie moi longa ten máxima desigualdade.
 	</para>
       </description>
     </function>
@@ -3633,6 +3651,60 @@
             <fncref targ="svd"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="GSSmax" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Maximización unidimensional mediante o método Golden Section Search
+	  (GSS). A matriz <argname>b</argname>do argumento debe de ser un
+	  vector de 3 elementos. Ao definila, o primeiro elemento ignórase; o
+	  segundo e terceiro elementos establecen os límites inferior e superior
+	  da procura. O argumento <argname>fncall</argname> deberá de ser unha
+	  chamada á función que devolve o valor do concepto a maximizar; o termo
+	  1 de <argname>b</argname> conterá o valor vixente do parámetro que se
+	  axusta e debe de indicarse como primeiro argumento; calquera outro
+	  argumento requirido pode ir entón a continuación. A función en cuestión
+	  debe de ser unimodal (non debe de ter outro máximo local que non sexa
+	  o máximo global) no rango estipulado, pois do contrario non se asegura
+	  que GSS atope o máximo.
+	</para>
+	<para>
+	  Ao completarse con éxito, esta función devolverá o valor
+	  óptimo do concepto que se quere maximizar, mentres que
+	  <argname>b</argname> conterá o valor óptimo do parámetro
+	  xunto cos límites da súa fiestra de valores.
+	</para>
+	<para>
+	  O terceiro argumento (opcional) pode utilizarse para establecer
+	  a tolerancia para acadar a converxencia; é dicir, a amplitude
+	  máxima admisible da fiestra final de valores do parámetro.
+	  Se non indicas este argumento, utilízase o valor 0.0001.
+	</para>
+	<para>
+	  Se o teu obxectivo realmente é acada un mínimo, podes
+	  ben trocar a función considerando o negativo do criterio,
+	  ou ben, alternativamente, podes invocar a función
+	  <lit>GSSmax</lit>baixo o alcume <lit>GSSmin</lit>.
+	</para>
+	<para>
+	  Aquí tes un exemplo sinxelo de utilización:
+	</para>
+	<code>
+	  function scalar trigfunc (scalar theta)
+	      return 4 * sin(theta) * (1 + cos(theta))
+	  end function
+
+	  matrix m = {0, 0, $pi/2}
+	  eval GSSmax(&amp;m, trigfunc(m[1]))
+	  printf "\n%10.7f", m
+	</code>
       </description>
     </function>
 
@@ -3936,11 +4008,11 @@
       </fnargs>
       <description>
 	<para>
-	  Comproba se o paquete (<quote>bundle</quote>) <argname>b</argname>
+	  Comproba se o feixe (<quote>bundle</quote>) <argname>b</argname>
 	  contén un elemento co nome <argname>key</argname>. Devolve un enteiro
 	  co código do tipo de elemento: 0 no caso de non achalo e, no caso de
 	  atopalo, 1 para un escalar, 2 para unha serie, 3 para unha matriz, 4
-	  para unha cadea de texto, 5 para un paquete e 6 para un arranxo. En
+	  para unha cadea de texto, 5 para un feixe e 6 para un arranxo. En
 	  base ao valor do seu código, a función <fncref targ="typestr"/> pódese
 	  usar para obter a cadea de texto que expresa o tipo de elemento que é.
 	</para>
@@ -4049,7 +4121,7 @@
 	  unicamente necesitas calcular, por exemplo, unha expresión da forma
 	  <math>A</math><sup>-1</sup><math>B</math>, é preferible que
 	  utilices os operadores de <quote>división</quote>: <lit>\</lit> e
-	  <lit>/</lit>. Para obter máis detalles, podes consultar
+	  <lit>/</lit>. Para obter máis detalles, podes consultar o
 	  <guideref targ="chap:matrices"/>.
 	</para>
 	<para>
@@ -4565,7 +4637,7 @@
       </fnargs>
       <description>
 	<para>
-	  Realiza o suavizado das perturbacións dun paquete de Kalman,
+	  Realiza o suavizado das perturbacións dun feixe de Kalman,
 	  configurado previamente mediante a instrución <fncref targ="ksetup"/>,
 	  e devolve o escalar 0 cando se completa con éxito, ou o escalar 1
 	  cando se atopan problemas numéricos.
@@ -4585,7 +4657,7 @@
 	  valores verdadeiros.
 	</para>
 	<para>
-	  Para obter máis detalles consulta <guideref targ="chap:kalman"/>.
+	  Para obter máis detalles, consulta o <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4604,7 +4676,7 @@
       </fnargs>
       <description>
 	<para>
-	  Realiza o filtrado cara adiante dun paquete de Kalman configurado
+	  Realiza o filtrado cara adiante dun feixe de Kalman configurado
 	  previamente mediante a instrución <fncref targ="ksetup"/>, e
 	  devolve o escalar 0 cando se completa con éxito, ou o escalar 1
 	  cando se atopan problemas numéricos.
@@ -4618,7 +4690,7 @@
 	  de cada observación.
 	</para>
 	<para>
-	  Para obter máis detalles consulta <guideref targ="chap:kalman"/>.
+	  Para obter máis detalles, consulta o <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4701,7 +4773,7 @@
       </fnargs>
       <description>
 	<para>
-	  Configura un paquete de Kalman, é dicir un obxecto que contén toda
+	  Configura un feixe de Kalman, é dicir un obxecto que contén toda
 	  a información necesaria para definir un modelo de espazo dos estados
 	  linear, da forma
 	  <equation status="display"
@@ -4728,7 +4800,7 @@
 	  de modelos variantes no tempo, de modelos con precedentes difusos
 	  e con variable esóxena na ecuación de medida, e de modelos con
 	  innovacións con correlacións cruzadas. Para obter máis detalles,
-	  consulta <guideref targ="chap:kalman"/>.
+	  consulta o <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4747,11 +4819,11 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un escalar. Utiliza un paquete de tipo Kalman previamente
+	  Devolve un escalar. Utiliza un feixe de tipo Kalman previamente
 	  definido coa a función <fncref targ="ksetup"/> para simular datos.
 	</para>
 	<para>
-	  Para obter máis detalles, consulta <guideref targ="chap:kalman"/>.
+	  Para obter máis detalles, consulta o <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -4769,7 +4841,7 @@
       </fnargs>
       <description>
 	<para>
-	  Realiza un suavizado de punto fixo (cara atrás) dun paquete de
+	  Realiza un suavizado de punto fixo (cara atrás) dun feixe de
 	  Kalman previamente configurado mediante <fncref targ="ksetup"/>
 	  e devolve un 0 cando se executa con éxito, ou un 1 cando se atopan
 	  problemas de tipo numérico.
@@ -4778,7 +4850,7 @@
 	  Cando se completa con éxito, vas ter á túa disposición o estado xa
 	  suavizado como <lit>Mod.state</lit> e a secuencia das súas matrices
 	  de varianzas-covarianzas como <lit>Mod.stvar</lit>. Para obter máis
-	  detalles, consulta <guideref targ="chap:kalman"/>.
+	  detalles, consulta o <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -5028,7 +5100,7 @@
 	</para>
 	<para>
 	  Revisa tamén a función <fncref targ="nadarwat"/> e, por engadido,
-	  consulta <guideref targ="chap:nonparam"/> para obter máis detalles
+	  consulta o <guideref targ="chap:nonparam"/> para obter máis detalles
 	  sobre métodos non paramétricos.
 	</para>
       </description>
@@ -5129,9 +5201,9 @@
 	<para>
 	  Devolve un escalar coa varianza de longo prazo do argumento
 	  <argname>y</argname>, que se calcula utilizando un núcleo
-	  (<quote>kernel</quote>) de Bartlett con tamaño de fiestra igual a
+	  (<quote>kernel</quote>) de Bartlett con tamaño de xanela igual a
 	  <argname>k</argname>. Podes seleccionar o tamaño por defecto da
-	  fiestra, é dicir a parte enteira da raíz cúbica do tamaño da mostra,
+	  xanela, é dicir a parte enteira da raíz cúbica do tamaño da mostra,
 	  se lle das un valor negativo a <argname>k</argname>.
 	</para>
 	<para context="tex">
@@ -5981,12 +6053,12 @@
 	  O argumento <repl>type</repl> identifica o tipo de disposición de
 	  parámetros que vai regular o número <math>k</math> de elementos
 	  que se solicitan para <repl>theta</repl>: 1 = para Almon exponencial
-	  normalizado (<math>k</math> debe de ser cando menos igual a1,
-	  habitualmente 2); 2 = para Beta normalizado co retardo final nulo
-	  (<math>k</math> = 2); 3 = para Beta normalizado co retardo final
+	  normalizada (<math>k</math> debe de ser cando menos igual a1,
+	  habitualmente 2); 2 = para Beta normalizada co retardo final nulo
+	  (<math>k</math> = 2); 3 = para Beta normalizada co retardo final
 	  non nulo (<math>k</math> = 3); e 4 = para Almon polinómico
 	  (<math>k</math> debe de ser cando menos igual a 1). Ten en conta
-	  que no caso Beta normalizado, os dous primeiros elementos de
+	  que no caso Beta normalizada, os dous primeiros elementos de
 	  <repl>theta</repl> deben de ser positivos.
 	</para>
 	<para>
@@ -6034,7 +6106,7 @@
 	<para>
 	  As matrices gardadas mediante a forma que ten por defecto a función
 	  <lit>mwrite</lit>, poden lerse doadamente con outros programas.
-	  Consulta <guideref targ="chap:matrices"/> para obter máis detalles.
+	  Consulta o <guideref targ="chap:matrices"/> para obter máis detalles.
 	</para>
 	<para>
 	  Dúas matizacións, que se exclúen mutuamente, desta función están
@@ -6178,7 +6250,7 @@
 	  banda ou \emph{bandwidth}, é un parámetro que determina o usuario
 	  cun número real positivo. Habitualmente este é un número pequeno
 	  pois valores máis grandes de $h$ fan que $m(x)$ sexa máis suave;
-	  unha escolla popular é $n^{-0.2}$. Podes obter máis detalles en
+	  unha escolla popular é $n^{-0.2}$. Podes obter máis detalles no
 	  <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="notex">
@@ -6187,7 +6259,7 @@
 	  cun número real positivo. Habitualmente este é un número pequeno pois
 	  valores máis grandes de <argname>h</argname> fan que <math>m(x)</math>
 	  sexa máis suave; unha escolla popular é <math>n</math><sup>-0.2</sup>.
-	  Podes obter máis detalles en <guideref targ="chap:nonparam"/>.
+	  Podes obter máis detalles no <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="tex">
 	  O escalar $\tau$ utilízase para previr problemas numéricos cando se
@@ -6234,7 +6306,7 @@
       <description>
 	<para>
 	  Devolve un enteiro co número de elementos que hai no argumento;
-	  este pode ser unha lista, unha matriz, un paquete ou un arranxo
+	  este pode ser unha lista, unha matriz, un feixe ou un arranxo
 	  (pero non unha serie).
 	</para>
       </description>
@@ -6305,14 +6377,14 @@
 	  neste senso a non converxencia non se trata coma un fallo.
 	</para>
 	<para>
-	  Cando o teu obxectivo realmente é unha minimización, ou ben executas
-	  a función facendo que devolva o negativo do criterio obxectivo, ou
-	  alternativamente, podes executar a función <lit>NMmax</lit> baixo o
-	  alcume <lit>NMmin</lit>.
+	  Se o teu obxectivo realmente é acadar un mínimo, podes
+	  ben trocar a función considerando o negativo do criterio,
+	  ou ben, alternativamente, podes invocar a función
+	  <lit>NMmax</lit>baixo o alcume <lit>NMmin</lit>..
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos en <guideref targ="chap:numerical"/>.
+	  numéricos no <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="simann"/>
 	  </seelist>
@@ -6484,7 +6556,7 @@
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos en <guideref targ="chap:numerical"/>.
+	  numéricos no <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="fdjac"/>
@@ -6602,7 +6674,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve a etiqueta da observación <argname>t</argname>, onde
+	  Devolve o marcador da observación <argname>t</argname>, onde
 	  <argname>t</argname> é un número enteiro positivo que representa
 	  a esta observación. A operación inversa pódese facer mediante a
 	  función <fncref targ="obsnum"/>.
@@ -6791,7 +6863,7 @@
 	<para>
 	  Se só se indica a serie ou vector do primeiro argumento, calcula o seu
 	  periodograma na mostra. Se indicas o escalar do segundo argumento,
-	  calcula a estimación do espectro de <argname>x</argname> cunha fiestra
+	  calcula a estimación do espectro de <argname>x</argname> cunha xanela
 	  de retardos de Bartlett cun ancho de banda igual a ese escalar, ata un
 	  máximo igual á metade do número de observacións (<math>T</math>/2).
 	</para>
@@ -8260,12 +8332,12 @@
       <description>
 	<para>
 	  Insire unha nota descritiva para un obxecto que se identifica por
-	  <argname>key</argname>, dentro dun paquete <argname>b</argname>.
+	  <argname>key</argname>, dentro dun feixe <argname>b</argname>.
 	  Vaise amosar esa nota cando se utilice a instrución <lit>print</lit>
-	  co paquete. Esta función devolve un enteiro igual a 0 no caso de
+	  co feixe. Esta función devolve un enteiro igual a 0 no caso de
 	  executarse con éxito, e un valor non nulo no caso de fallo (por
 	  exemplo, se non existe ningún obxecto <argname>key</argname> no
-	  paquete <argname>b</argname>).
+	  feixe <argname>b</argname>).
 	</para>
       </description>
     </function>
@@ -8294,7 +8366,7 @@
 	</para>
 	<para>
 	  Para ter máis detalles e un exemplo, consulta o capítulo sobre
-	  métodos numéricos en <guideref targ="chap:numerical"/>.
+	  métodos numéricos no <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>
@@ -9125,13 +9197,13 @@
 	  Devolve un código de tipo numérico cando <argname>name</argname>
 	  é unha cadea de texto que identifica un obxecto actualmente definido:
 	  1 para un escalar, 2 para unha serie, 3 para unha matriz, 4 para unha
-	  cadea de texto, 5 para un paquete, 6 para un arranxo e 7 para unha
+	  cadea de texto, 5 para un feixe, 6 para un arranxo e 7 para unha
 	  lista; noutro caso devolve 0. Para obter a cadea de texto que concorda
 	  co valor que se devolve, podes usar a función <fncref targ="typestr"/>.
 	</para>
 	<para>
 	  Tamén podes utilizar esta función para obter que tipo de elemento é
-	  un compoñente dun paquete ou dun arranxo. Por exemplo...
+	  un compoñente dun feixe ou dun arranxo. Por exemplo...
 	</para>
 	<code>
 	  matrices M = array(1)
@@ -9627,6 +9699,48 @@
             <fncref targ="xmax"/>
             <fncref targ="max"/>
             <fncref targ="min"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="xmlget" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="string-or-strings">path</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  O argumento <argname>buf</argname> debe de ser un búfer
+	  XML, tal como pode recuperarse dun lugar web adecuado
+	  mediante a función <fncref targ="curl"/> (or lerse dun
+	  ficheiro mediante a función <fncref targ="readfile"/>),
+	  e o argumento <argname>path</argname> debe de ser ben
+	  unha especificación XPath sinxela ou un arranxo delas.
+	</para>
+	<para>
+	  Esta función devolve unha cadea de texto que representa os datos
+	  atopados no búfer XML na ruta especificada. Se hai múltiples nodos
+	  que coincidan coa expresión da ruta, as unidades de datos se
+	  presentan unha por cada liña da cadea que se devolve. Cando indicas
+	  un arranxo de rutas como segundo argumento, a cadea que se devolve
+	  ten a forma dun búfer separado con comas, cuxa columna <math>i</math>
+	  contén as coincidencias da ruta <math>i</math>. Neste caso, se unha
+	  cadea obtida do búfer XML contén algún espazo ou coma, contórnase
+	  entre comiñas.
+	</para>
+	<para>
+	  Podes atopar unha boa introdución ao uso e á sintaxe de
+	  XPath en
+	  <url>https://www.w3schools.com/xml/xml_xpath.asp</url>.
+	  O programa de soporte (back-end) para <lit>xmlget</lit>
+	  o proporciona o módulo xpath de libxml2, que admite
+	  XPath 1.0 pero non XPath 2.0.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="jsonget"/>
+	    <fncref targ="readfile"/>
 	  </seelist>
 	</para>
       </description>
