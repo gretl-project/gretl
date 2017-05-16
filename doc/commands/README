@@ -1,7 +1,7 @@
 This directory contains the mechanism for auto-generating the 
 gretl "online" helpfiles and the command reference section of the
-gretl manual, from an XML "database" of gretl commands,
-gretl_commands.xml.
+gretl manual, from XML "databases" of gretl commands,
+gretl_commands_en.xml, and functions, gretl_functions_en.xml
 
 ----------
 
