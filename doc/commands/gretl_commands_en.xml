@@ -5497,48 +5497,62 @@
 
     <description>
       <para>
-	Gretl's test calculator computes test statistics and p-values for
-	various common hypothesis tests concerning one or two populations.  The
-	required input takes the form of sample statistics derived from one or
-	two samples, depending on the test chosen.  These statistics can be
-	typed in as numerical values.  Alternatively, if you have a data file
-	open, you can get gretl to calculate sample statistics for a selected
-	variable or variables (in the case of means and variances, but not in
-	the case of proportions).
+	Gretl's test calculator computes test statistics and
+	<math>p</math>-values for various common hypothesis tests
+	concerning one or two populations.  The required input takes
+	the form of sample statistics derived from one or two samples,
+	depending on the test chosen.  These statistics can be typed
+	in as numerical values.  Alternatively, if you have a data
+	file open, you can get gretl to calculate sample statistics
+	for a selected variable or variables (in the case of means and
+	variances, but not in the case of proportions).
       </para>
-
       <para>
-	If you want to base your test on a variable in the data set, first
-	activate this option by checking the box titled "Use variable from
-	dataset".  Then the drop-down list of variables will become active and
-	you can select a variable.  When you select a variable from the list,
-	the relevant statistics are automatically entered in the boxes below.
+	If you want to base your test on a variable in the data set,
+	first activate this option by checking the box titled
+	<quote>Use variable from dataset</quote>.  Then the drop-down
+	list of variables will become active and you can select a
+	variable.  When you select a variable from the list, the
+	relevant statistics are automatically entered in the boxes
+	below.
       </para>
-
       <para>
-	In addition to the simple selection of a variable, you have the option
-	of specifying a restriction on the selected variable (that is, defining
-	a sub-sample).   For example, suppose you have wage data in a variable
-	called "wage" and you also have a dummy variable called "gender" that
-	equals 1 for males and 0 for females (or vice versa). Then, in the test
-	for the difference of two means, you could select "wage" in both slots,
-	but add to the top slot "(gender=0)" and to the bottom "(gender=1)".
-	This would then give you a test for the difference between mean male
-	income and mean female income.  Note that when you type a restriction in
-	this way, you must then press the Enter key to have the sample statistics
-	calculated.  
+	In addition to the simple selection of a variable, you have
+	the option of specifying a restriction on the selected
+	variable (that is, defining a sub-sample).  For example,
+	suppose you have wage data in a variable called
+	<lit>wage</lit> and you also have a dummy variable
+	<lit>gender</lit> that equals 1 for males and 0 for females
+	(or vice versa). Then, in the test for the difference of two
+	means, you could select <lit>wage</lit> in both slots, but add
+	to the top slot <lit>(gender=0)</lit> and to the bottom
+	<lit>(gender=1)</lit>.  This would then give you a test for
+	the difference between mean male income and mean female
+	income.  Note that when you type a restriction in this way,
+	you must then press the Enter key to have the sample
+	statistics calculated.
       </para>
-
       <para>
-	The sub-sampling restriction must be placed in parentheses following the
-	selected variable, and in general the restriction takes the form "var2
-	op val," where var2 is the name of a variable in the current data set,
-	val is a numerical value, and op is a comparison operator chosen from =,
-	!=, &lt;, &gt;, &lt;= or &gt;= (respectively equality, inequality, less
-	than, greater than, less than or equal, and greater than or equal).  The
-	spaces around the operator are optional.
+	The sub-sampling restriction must be placed in parentheses
+	following the selected variable, and in general the
+	restriction takes the form
       </para>
-
+      <code>
+	var2 op val
+      </code>
+      <para>
+	where <lit>var2</lit> is the name of a variable in the current
+	data set, <lit>val</lit> is a numerical value, and
+	<lit>op</lit> is one of the following comparison operators:
+      </para>
+      <code>
+	==  !=  &lt;  &gt;  &lt;=  &gt;=
+      </code>
+      <para>
+	(respectively equality, inequality, less than, greater than,
+	less than or equal, and greater than or equal).  The spaces
+	around the operator are optional.
+      </para>
     </description>
   </command>
 
@@ -5547,51 +5561,73 @@
 
     <description>
       <para>
-	Under the <quote>Difference test</quote> tab you can carry out a
-	nonparametric test for a difference between two populations or
-	groups, the specific test depending on the option selected.
+	Three sorts of nonparametric test are available via this
+	dialog: for a difference between groups, for randomness,
+	and for (rank) correlation.
       </para>
+
+      <subhead>Difference tests</subhead>
       <para>
-	Sign test: This test is based on the fact that if two samples,
-	<math>x</math> and <math>y</math>, are drawn randomly
-	from the same distribution, the probability that
-	<math>x</math><sub>i</sub> &gt;
-	<math>y</math><sub>i</sub>, for each observation
-	<math>i</math>, should equal 0.5.  The test statistic is
-	<math>w</math>, the number of observations for which
-	<math>x</math><sub>i</sub> &gt;
-	<math>y</math><sub>i</sub>. Under the null hypothesis this
-	follows the Binomial distribution with parameters
-	(<math>n</math>, 0.5), where <math>n</math> is the
-	number of observations.
+	Under the <quote>Difference test</quote> tab you can carry out
+	a nonparametric test for a difference between two populations
+	or groups, the specific test depending on the option selected.
       </para>
-      <para>
-	Rank sum test: The Wilcoxon rank-sum test is performed.  This test
-	proceeds by ranking the observations from both samples jointly,
-	from smallest to largest, then finding the sum of the ranks of the
-	observations from one of the samples.  The two samples do not have
-	to be of the same size, and if they differ the smaller sample is
-	used in calculating the rank-sum.  Under the null hypothesis that
-	the samples are drawn from populations with the same median, the
-	probability distribution of the rank-sum can be computed for any
-	given sample sizes; and for reasonably large samples a close
-	Normal approximation exists.
-      </para>
-      <para>
-	Signed rank test: The Wilcoxon signed-rank test is performed.
-	This is designed for matched data pairs such as, for example, the
-	values of a variable for a sample of individuals before and after
-	some treatment.  The test proceeds by finding the differences
-	between the paired observations, <math>x</math><sub>i</sub>
-	&minus; <math>y</math><sub>i</sub>, ranking these
-	differences by absolute value, then assigning to each pair a
-	signed rank, the sign agreeing with the sign of the difference.
-	One then calculates <math>W</math><sub>+</sub>, the sum of
-	the positive signed ranks.  As with the rank-sum test, this
-	statistic has a well-defined distribution under the null that the
-	median difference is zero, which converges to the Normal for
-	samples of reasonable size.
-      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <emphasis>Sign test</emphasis>: This test is based on the
+	    fact that if two samples, <math>x</math> and
+	    <math>y</math>, are drawn randomly from the same
+	    distribution, the probability that
+	    <math>x</math><sub>i</sub> &gt;
+	    <math>y</math><sub>i</sub>, for each observation
+	    <math>i</math>, should equal 0.5.  The test statistic is
+	    <math>w</math>, the number of observations for which
+	    <math>x</math><sub>i</sub> &gt;
+	    <math>y</math><sub>i</sub>. Under the null hypothesis this
+	    follows the Binomial distribution with parameters
+	    (<math>n</math>, 0.5), where <math>n</math> is the number
+	    of observations.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <emphasis>Rank sum test</emphasis>: The Wilcoxon rank-sum
+	    test is performed.  This test proceeds by ranking the
+	    observations from both samples jointly, from smallest to
+	    largest, then finding the sum of the ranks of the
+	    observations from one of the samples.  The two samples do
+	    not have to be of the same size, and if they differ the
+	    smaller sample is used in calculating the rank-sum.  Under
+	    the null hypothesis that the samples are drawn from
+	    populations with the same median, the probability
+	    distribution of the rank-sum can be computed for any given
+	    sample sizes; and for reasonably large samples a close
+	    Normal approximation exists.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <emphasis>Signed rank test</emphasis>: The Wilcoxon
+	    signed-rank test is performed.  This is designed for
+	    matched data pairs such as, for example, the values of a
+	    variable for a sample of individuals before and after some
+	    treatment.  The test proceeds by finding the differences
+	    between the paired observations,
+	    <math>x</math><sub>i</sub> &minus;
+	    <math>y</math><sub>i</sub>, ranking these differences by
+	    absolute value, then assigning to each pair a signed rank,
+	    the sign agreeing with the sign of the difference.  One
+	    then calculates <math>W</math><sub>+</sub>, the sum of the
+	    positive signed ranks.  As with the rank-sum test, this
+	    statistic has a well-defined distribution under the null
+	    that the median difference is zero, which converges to the
+	    Normal for samples of reasonable size.
+	  </para>
+	</li>
+      </ilist>
+
+      <subhead>Randomness</subhead>
       <para>
 	Under the <quote>Runs test</quote> tab you can carry out a test
 	for the randomness of a given variable, based on the number of
@@ -5602,6 +5638,12 @@
 	original variable.  The test statistic is based on a normal
 	approximation to the distribution of the number of runs under
 	the null of randomness.
+      </para>
+
+      <subhead>Correlation</subhead>
+      <para>
+	Under the <quote>Correlation</quote> tab you have Spearman's
+	rank correlation rho and Kendall's rank correlation tau.
       </para>
 
     </description>
