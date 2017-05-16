@@ -1479,6 +1479,15 @@
       </description>
     </function>
 
+    <function name="BFGSmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  An alias for <fncref targ="BFGSmax"/>; if called under this
+	  name the function acts as a minimizer.
+	</para>
+      </description>
+    </function>
+
     <function name="BFGScmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>
@@ -1540,7 +1549,16 @@
 	  </seelist>
 	</para>
       </description>
-    </function>    
+    </function>
+
+    <function name="BFGScmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  An alias for <fncref targ="BFGScmax"/>; if called under this
+	  name the function acts as a minimizer.
+	</para>
+      </description>
+    </function>
 
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
@@ -6579,6 +6597,15 @@
             <fncref targ="BFGSmax"/>
             <fncref targ="fdjac"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="NRmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  An alias for <fncref targ="NRmax"/>; if called under this
+	  name the function acts as a minimizer.
 	</para>
       </description>
     </function>

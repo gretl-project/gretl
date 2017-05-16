@@ -480,7 +480,6 @@ struct str_table funcs[] = {
 struct str_table func_alias[] = {
     { F_NMMAX,    "NMmin" },
     { F_NRMAX,    "NRmin" },
-    { F_SIMANN,   "SAmin" },
     { F_BFGSMAX,  "BFGSmin" },
     { F_BFGSCMAX, "BFGScmin" },
     { F_GSSMAX,   "GSSmin" },
@@ -554,7 +553,7 @@ static int real_function_lookup (const char *s, int aliases,
 {
     static GHashTable *fht;
     gpointer fnp;
- 
+
     if (s == NULL) {
 	/* cleanup signal */
 	if (fht != NULL) {
@@ -567,7 +566,7 @@ static int real_function_lookup (const char *s, int aliases,
     if (fht == NULL) {
 	fht = gretl_function_hash_init();
     }
-    
+
     fnp = g_hash_table_lookup(fht, s);
     if (fnp != NULL) {
 	return GPOINTER_TO_INT(fnp);
@@ -584,7 +583,7 @@ static int real_function_lookup (const char *s, int aliases,
 		return func_alias[i].id;
 	    }
 	} 
-    }   
+    }
 
     return 0;
 }
@@ -629,6 +628,15 @@ static int deprecated_func (int id)
     }
 }
 
+static int show_alias (int i)
+{
+    if (strstr(func_alias[i].str, "min")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* return the number of built-in functions, disregarding
    any that are "blacklisted" (deprecated)
 */
@@ -643,27 +651,39 @@ int gen_func_count (void)
 	}
     }
 
+    for (i=0; func_alias[i].id != 0; i++) {
+	if (show_alias(i)) {
+	    n++;
+	}
+    }
+
     return n;
 }
 
 /* return the name of function @i, where this index skips
-   any deprecated functions
+   any deprecated functions, but including non-deprecated
+   aliases
 */
 
 const char *gen_func_name (int i)
 {
-    int j, id = 0;
-
-    if (i == 0) {
-	return funcs[i].str;
-    }
+    int j, seq = -1;
 
     for (j=0; funcs[j].id != 0; j++) {
 	if (!deprecated_func(funcs[j].id)) {
-	    id++;
+	    seq++;
 	}
-	if (id == i) {
+	if (seq == i) {
 	    return funcs[i].str;
+	}
+    }
+
+    for (j=0; func_alias[j].id != 0; j++) {
+	if (show_alias(j)) {
+	    seq++;
+	}
+	if (seq == i) {
+	    return func_alias[j].str;
 	}
     }
 
