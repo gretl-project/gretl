@@ -3708,6 +3708,15 @@
       </description>
     </function>
 
+    <function name="GSSmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  An alias for <fncref targ="GSSmax"/>; if called under this
+	  name the function acts as a minimizer.
+	</para>
+      </description>
+    </function>
+
     <function name="halton" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">m</fnarg>
@@ -6388,6 +6397,15 @@
 	  <seelist>
             <fncref targ="simann"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="NMmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  An alias for <fncref targ="NMmax"/>; if called under this
+	  name the function acts as a minimizer.
 	</para>
       </description>
     </function>
