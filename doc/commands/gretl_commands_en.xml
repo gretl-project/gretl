@@ -820,10 +820,6 @@
       </para>
     </description>
 
-    <gui-access>
-      <menu-path>/Model/Time series/ARCH</menu-path>
-    </gui-access>
-
   </command>
 
   <command name="arima" section="Estimation" label="ARIMA model">
@@ -1742,7 +1738,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Multivariate/Cointegration test</menu-path>
+      <menu-path>/Model/Time series/Multivariate</menu-path>
     </gui-access>
 
   </command>
@@ -1940,7 +1936,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Cointegration test/Johansen</menu-path>
+      <menu-path>/Model/Time series/Multivariate</menu-path>
     </gui-access>
 
   </command>
@@ -3344,7 +3340,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Limited dependent variable/Duration data...</menu-path>
+      <menu-path>/Model/Limited dependent variable/Duration data</menu-path>
     </gui-access>
 
   </command>  
@@ -7134,7 +7130,7 @@
 	respect to each of the independent variables are calculated (at
 	the means of those variables) and these slopes replace the usual
 	p-values in the regression output.  This behavior can be
-	suppressed my giving the <opt>p-values</opt> option. The
+	suppressed by giving the <opt>p-values</opt> option. The
 	chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
@@ -7781,7 +7777,7 @@
 	Set a numerical value that will be interpreted as
 	<quote>missing</quote> or <quote>not available</quote>, either for
 	a particular data series (under the Variable menu) or globally for
-	the entire data set (under the Sample menu).
+	the entire data set (under the Data menu).
       </para> 
       <para>
 	Gretl has its own internal coding for missing values, but
@@ -8073,43 +8069,62 @@
       </para>
 
       <nlist>
-	<li><para>Estimate a model which you wish to include in the
-	    table, and in the model display window, under the File
-	    menu, select <quote>Save to session as icon</quote> or
-	    <quote>Save as icon and close</quote>.</para>
+	<li>
+	  <para>
+	    Estimate a model which you wish to include in the table,
+	    and in the model display window, under the File menu,
+	    select <quote>Save to session as icon</quote> or
+	    <quote>Save as icon and close</quote>.
+	  </para>
 	</li>
-	<li><para>Repeat step 1 for the other models to be included in
-	    the table (up to a total of six models).</para>
+	<li>
+	  <para>
+	    Repeat step 1 for the other models to be included in the
+	    table (up to a total of six models).
+	  </para>
 	</li>
-	<li><para>When you are done estimating the models, open the
-	    icon view of your gretl session (by selecting <quote>icon
-	      view</quote> under the Session menu in the main gretl
-	    window, or by clicking the <quote>session icon
-	      view</quote> icon on the gretl toolbar).</para>
+	<li>
+	  <para>
+	    When you are done estimating the models, open the icon
+	    view of your gretl session (by selecting <quote>icon
+	    view</quote> under the View menu in the main gretl window,
+	    or by clicking the <quote>session icon view</quote> icon
+	    on the gretl toolbar).
+	  </para>
 	</li>
-	<li><para>In session icon view, there is an icon labeled
+	<li>
+	  <para>
+	    In session icon view, there is an icon labeled
 	    <quote>Model table</quote>. Decide which model you wish to
 	    appear in the left-most column of the model table and add
 	    it to the table, either by dragging its icon onto the
 	    Model table icon, or by right-clicking on the model icon
 	    and selecting <quote>Add to model table</quote> from the
-	    pop-up menu.</para>
+	    pop-up menu.
+	  </para>
 	</li>
-	<li><para>Repeat step 4 for the other models you wish to
-	    include in the table.  The second model selected will
-	    appear in the second column from the left, and so
-	    on.</para>
+	<li>
+	  <para>
+	    Repeat step 4 for the other models you wish to include in
+	    the table.  The second model selected will appear in the
+	    second column from the left, and so on.
+	  </para>
 	</li>
-	<li><para>When you are finished composing the model table,
-	    display it by double-clicking on its icon.  Under the Edit
-	    menu in the window which appears, you have the option of
-	    copying the table to the clipboard in various
-	    formats.</para>
+	<li>
+	  <para>
+	    When you are finished composing the model table, display
+	    it by double-clicking on its icon. Via the Copy button in
+	    the window which appears, you have the option of copying
+	    the table to the clipboard in various formats.
+	  </para>
 	</li>
-	<li><para>If the ordering of the models in the table is not
-	    what you wanted, right-click on the model table icon and
-	    select <quote>Clear table</quote>.  Then go back to step 4
-	    above and try again.</para>
+	<li>
+	  <para>
+	    If the ordering of the models in the table is not what you
+	    wanted, right-click on the model table icon and select
+	    <quote>Clear table</quote>.  Then go back to step 4 above
+	    and try again.
+	  </para>
 	</li>
       </nlist>
     </description>
@@ -8516,7 +8531,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Limited dependent variable/Count data...</menu-path>
+      <menu-path>/Model/Limited dependent variable/Count data</menu-path>
     </gui-access>
   </command>
 
@@ -10079,7 +10094,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Limited dependent variable/Count data...</menu-path>
+      <menu-path>/Model/Limited dependent variable/Count data</menu-path>
     </gui-access>
 
   </command>
@@ -11579,7 +11594,7 @@
 	at the start of a line in a hansl script, instead of just
 	entering a tab stop the program will try to adjust the
 	indentation level of the line consistently with other lines
-	that have been entered. Simlarly, when you press the
+	that have been entered. Similarly, when you press the
 	<lit>Enter</lit> key the program will try to ensure that the
 	indentation of the completed line is correct.
       </para>
@@ -12636,11 +12651,11 @@
 	(asynchronous operation), use <cmd>launch</cmd> instead.
       </para>
       <para>
-	For reasons of security this facility is not enabled by default.
-	To activate it, check the box titled <quote>Allow shell
-	commands</quote> under the File, Preferences menu in the GUI
-	program.  This also makes shell commands available in the
-	command-line program (and is the only way to do so).
+	For reasons of security this facility is not enabled by
+	default.  To activate it, check the box titled <quote>Allow
+	shell commands</quote> under Tools/Preferences/General in
+	the GUI program.  This also makes shell commands available in
+	the command-line program (and is the only way to do so).
       </para>
     </description>
 
@@ -12872,7 +12887,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Robust estimation/Rank correlation</menu-path>
+      <menu-path>/Tools/Nonparametric tests/Correlation</menu-path>
     </gui-access>
 
   </command>
@@ -13902,7 +13917,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Vector autoregression</menu-path>
+      <menu-path>/Model/Time series/Multivariate</menu-path>
     </gui-access>
 
   </command>
@@ -14203,7 +14218,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/VECM</menu-path>
+      <menu-path>/Model/Time series/Multivariate</menu-path>
     </gui-access>
 
   </command>
@@ -14568,7 +14583,7 @@
 	If the contingency table is 2 by 2, Fisher's Exact Test for
 	independence is computed.  Note that this test is based on the
 	assumption that the row and column totals are fixed, which may or
-	may not be approriate depending on how the data were generated.
+	may not be appropriate depending on how the data were generated.
 	The left p-value should be used when the alternative to
 	independence is negative association (values tend to cluster in
 	the lower left and upper right cells); the right p-value should be
