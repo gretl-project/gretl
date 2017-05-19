@@ -10,15 +10,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-03 08:49-0400\n"
-"PO-Revision-Date: 2017-04-13 14:00-0300\n"
+"POT-Creation-Date: 2017-05-19 15:17-0300\n"
+"PO-Revision-Date: 2017-05-19 15:21-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -5398,15 +5398,15 @@ msgstr "T"
 
 #: lib/src/modelprint.c:1888
 msgid "Using L-BFGS-B with conditional OLS"
-msgstr ""
+msgstr "Usando L-BFGS-B com MQO condicional"
 
 #: lib/src/modelprint.c:1890
 msgid "Using Levenberg--Marquardt algorithm"
-msgstr ""
+msgstr "Usando o algoritmo de Levenberg--Marquardt"
 
 #: lib/src/modelprint.c:1892
 msgid "Using Levenberg-Marquardt algorithm"
-msgstr ""
+msgstr "Usando o algoritmo de Levenberg-Marquardt"
 
 #: lib/src/modelprint.c:1945 lib/src/modelprint.c:1948
 #: lib/src/modelprint.c:1951 lib/src/system.c:4604 lib/src/system.c:4630
@@ -12241,23 +12241,20 @@ msgid "_Model"
 msgstr "_Modelo"
 
 #: gui2/gretl.c:1724
-#, fuzzy
 msgid "_Ordinary Least Squares"
-msgstr "Mínimos Quadrados Ordinários"
+msgstr "Mínimos Quadrados _Ordinários"
 
 #: gui2/gretl.c:1725
 msgid "_Instrumental variables"
 msgstr "Variáveis _instrumentais"
 
 #: gui2/gretl.c:1726
-#, fuzzy
 msgid "_Two-Stage Least Squares"
-msgstr "Mínimos Quadrados em Dois Estágios"
+msgstr "Mínimos Quadrados em Dois Es_tágios"
 
 #: gui2/gretl.c:1727
-#, fuzzy
 msgid "_LIML"
-msgstr "LIML"
+msgstr "_LIML"
 
 #: gui2/gretl.c:1728 gui2/gretl.c:1776
 msgid "_GMM"
@@ -12268,14 +12265,12 @@ msgid "Other _linear models"
 msgstr "Outros modelos _lineares"
 
 #: gui2/gretl.c:1730
-#, fuzzy
 msgid "_Weighted Least Squares"
-msgstr "Mínimos Quadrados Ponderados"
+msgstr "Mínimos Quadrados _Ponderados"
 
 #: gui2/gretl.c:1731
-#, fuzzy
 msgid "H_eteroskedasticity corrected"
-msgstr "Heteroscedasticidade corrigida"
+msgstr "H_eteroscedasticidade corrigida"
 
 #: gui2/gretl.c:1732
 msgid "High _precision OLS"
@@ -12295,50 +12290,44 @@ msgid "ARI_MA"
 msgstr "ARI_MA"
 
 #: gui2/gretl.c:1736
-#, fuzzy
 msgid "_GARCH"
-msgstr "GARCH"
+msgstr "_GARCH"
 
 #: gui2/gretl.c:1738
 msgid "_AR errors (GLS)"
-msgstr ""
+msgstr "Erros _AR (GLS)"
 
 #: gui2/gretl.c:1739
-#, fuzzy
 msgid "_AR(1)"
-msgstr "AR(1)"
+msgstr "_AR(1)"
 
 #: gui2/gretl.c:1740
-#, fuzzy
 msgid "_AR (general)"
-msgstr "AR (sazonal)"
+msgstr "_AR (geral)"
 
 #: gui2/gretl.c:1741
 msgid "_Multivariate"
-msgstr "Bi_variado"
+msgstr "_Multivariado"
 
 #: gui2/gretl.c:1742
 msgid "_Vector Autoregression"
 msgstr "_VAR"
 
 #: gui2/gretl.c:1743
-#, fuzzy
 msgid "VAR _lag selection"
-msgstr "Seleção de defasagens VAR"
+msgstr "Se_leção de defasagens VAR"
 
 #: gui2/gretl.c:1744
 msgid "V_ECM"
 msgstr "V_ECM"
 
 #: gui2/gretl.c:1745
-#, fuzzy
 msgid "Cointegration test (_Johansen)"
-msgstr "Testes de _cointegração"
+msgstr "Teste de cointegração (_Johansen)"
 
 #: gui2/gretl.c:1746
-#, fuzzy
 msgid "Cointegration test (_Engle-Granger)"
-msgstr "Testes de _cointegração"
+msgstr "Teste de cointegração (_Engle-Granger)"
 
 #: gui2/gretl.c:1747
 msgid "_Panel"
@@ -12349,19 +12338,16 @@ msgid "_Fixed or random effects"
 msgstr "Efeitos _fixos ou aleatórios"
 
 #: gui2/gretl.c:1749
-#, fuzzy
 msgid "_Weighted least squares"
-msgstr "Mínimos quadrados ponderados"
+msgstr "Mínimos quadrados _ponderados"
 
 #: gui2/gretl.c:1750
-#, fuzzy
 msgid "_Between model"
-msgstr "Modelo entre-grupos"
+msgstr "Modelo _entre-grupos"
 
 #: gui2/gretl.c:1751
-#, fuzzy
 msgid "_Dynamic panel model"
-msgstr "Modelo de painel dinâmico"
+msgstr "Modelo de painel _dinâmico"
 
 #: gui2/gretl.c:1753
 msgid "_Limited dependent variable"
@@ -12392,18 +12378,16 @@ msgid "Bi_variate"
 msgstr "Bi_variado"
 
 #: gui2/gretl.c:1762
-#, fuzzy
 msgid "_Random effects"
-msgstr "Efeitos aleatórios"
+msgstr "Efeitos aleató_rios"
 
 #: gui2/gretl.c:1763
 msgid "To_bit"
 msgstr "To_bit"
 
 #: gui2/gretl.c:1764
-#, fuzzy
 msgid "_Heckit"
-msgstr "Heckit"
+msgstr "_Heckit"
 
 #: gui2/gretl.c:1765
 msgid "_Count data"
@@ -12414,14 +12398,12 @@ msgid "_Duration data"
 msgstr "_Dados de duração"
 
 #: gui2/gretl.c:1767
-#, fuzzy
 msgid "Lo_gistic"
-msgstr "Logístico"
+msgstr "Lo_gístico"
 
 #: gui2/gretl.c:1768
-#, fuzzy
 msgid "_Interval regression"
-msgstr "Regressão por intervalo"
+msgstr "Regressão por _intervalo"
 
 #: gui2/gretl.c:1769
 msgid "_Robust estimation"
@@ -12432,28 +12414,24 @@ msgid "Least _Absolute Deviation"
 msgstr "Mínimo desvio absoluto (LAD)"
 
 #: gui2/gretl.c:1771
-#, fuzzy
 msgid "_Quantile regression"
-msgstr "Regressão quantílica"
+msgstr "Regressão _quantílica"
 
 #: gui2/gretl.c:1772
-#, fuzzy
 msgid "_Loess"
-msgstr "Loess"
+msgstr "_Loess"
 
 #: gui2/gretl.c:1773
-#, fuzzy
 msgid "_Nadaraya-Watson"
-msgstr "Nadaraya-Watson"
+msgstr "_Nadaraya-Watson"
 
 #: gui2/gretl.c:1774
 msgid "_Nonlinear Least Squares"
 msgstr "Mínimos Quadrados Não-Linear (NLS)"
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Maximum likelihood"
-msgstr "Máxima verossimilhança"
+msgstr "_Máxima verossimilhança"
 
 #: gui2/gretl.c:1777
 msgid "_Simultaneous equations"
@@ -14866,9 +14844,8 @@ msgid "Heteroskedasticity corrected"
 msgstr "Heteroscedasticidade corrigida"
 
 #: gui2/selector.c:4074
-#, fuzzy
 msgid "AR(1) errors"
-msgstr "Testar erros AR(%d):"
+msgstr "erros AR(1)"
 
 #: gui2/selector.c:4086
 msgid "Random effects (binary) probit"
@@ -14915,9 +14892,8 @@ msgid "Generalized method of moments"
 msgstr "Método generalizado dos momentos"
 
 #: gui2/selector.c:4116
-#, fuzzy
 msgid "Autoregressive errors"
-msgstr "Modelo autorregressivo"
+msgstr "Erros autorregressivos"
 
 #: gui2/selector.c:4126
 msgid "VAR lag selection"
@@ -14932,14 +14908,12 @@ msgid "Interval regression"
 msgstr "Regressão por intervalo"
 
 #: gui2/selector.c:4136
-#, fuzzy
 msgid "Cointegration (Engle-Granger)"
-msgstr "Ordem de cointegração"
+msgstr "Cointegração (Engle-Granger)"
 
 #: gui2/selector.c:4138
-#, fuzzy
 msgid "Cointegration (Johansen)"
-msgstr "Ordem de cointegração"
+msgstr "Cointegração (Johansen)"
 
 #: gui2/selector.c:4140
 msgid "Multiple precision OLS"
@@ -15259,7 +15233,7 @@ msgstr "Usar o algoritmo de Fiorentini et al"
 
 #: gui2/selector.c:6000
 msgid "Prefer NLS via Levenberg-Marquardt"
-msgstr ""
+msgstr "Preferir NLS via Levenberg-Marquardt"
 
 #: gui2/selector.c:6032
 msgid "Show lagged variables"
