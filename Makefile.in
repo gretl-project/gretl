@@ -82,11 +82,11 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(libdir) $(includedir) $(bindir)
 
 install: $(SUBDIRS) installdirs install-man
-	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install || exit 1; done
 	$(MAKE) -C share install
 
 install-strip: $(SUBDIRS) installdirs install-man	
-	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip; done
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip || exit 1; done
 	$(MAKE) -C share install-strip
 
 install-man:
