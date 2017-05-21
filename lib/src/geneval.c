@@ -5348,11 +5348,15 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_array *a = l->v.a;
 	int i = node_get_int(r, p);
+	NODE *e = l;
 
+	if (compiled(p) && uvar_node(l)) {
+	    e = eval(l, p);
+	    fprintf(stderr, "get_array_element: compiled(p)\n");
+	}
 	if (!p->err) {
-	    ret = array_element_node(a, i, p);
+	    ret = array_element_node(e->v.a, i, p);
 	}
     } else {
 	ret = aux_any_node(p);
@@ -9614,6 +9618,21 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		int wkdays = r->v.xval;
 
 		ret->v.xval = day_span(ed1, ed2, wkdays, &p->err);
+	    }
+	} else {
+	    p->err = E_TYPES;
+	}
+    } else if (f == F_SMPLSPAN) {
+	post_process = 0;
+	if (l->t == STR && m->t == STR && r->t == NUM) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		int pd = node_get_int(r, p);
+
+		if (!p->err) {
+		    ret->v.xval = sample_span(l->v.str, m->v.str,
+					      pd, &p->err);
+		}
 	    }
 	} else {
 	    p->err = E_TYPES;
@@ -14123,6 +14142,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRNCMP:
     case F_WEEKDAY:
     case F_DAYSPAN:
+    case F_SMPLSPAN:
     case F_MONTHLEN:
     case F_EPOCHDAY:
     case F_KDENSITY:

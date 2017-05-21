@@ -473,6 +473,7 @@ struct str_table funcs[] = {
     { F_ECDF,      "ecdf" },
     { F_NPCORR,    "npcorr" },
     { F_DAYSPAN,   "dayspan" },
+    { F_SMPLSPAN,  "smplspan" },
     { F_SLEEP,     "sleep" },
     { 0,           NULL }
 };

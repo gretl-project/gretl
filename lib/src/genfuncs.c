@@ -7030,3 +7030,76 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 
     return m;
 }
+
+int sample_span (const char *stobs, const char *endobs,
+		 int pd, int *err)
+{
+    DATASET dset = {0};
+    int t2, span = -1;
+
+    if (pd == 1 || pd == 12 || (pd >= 4 && pd <= 7) || pd == 52) {
+	; /* OK, supported frequency */
+    } else {
+	*err = E_INVARG;
+	return -1;
+    }
+
+    strcpy(dset.stobs, stobs);
+    dset.pd = pd;
+    dset.structure = TIME_SERIES;
+
+    if (strchr(stobs, '-') && ((pd >= 5 && pd <= 7) || pd == 52)) {
+	/* validate daily data */
+	int nf, y, m, d;
+	int ed1 = 0, ed2 = 0;
+
+	nf = sscanf(stobs, "%d-%d-%d", &y, &m, &d);
+	if (nf == 3) {
+	    ed1 = epoch_day_from_ymd(y, m, d);
+	    nf = sscanf(endobs, "%d-%d-%d", &y, &m, &d);
+	    if (nf == 3) {
+		ed2 = epoch_day_from_ymd(y, m, d);
+	    }
+	}
+
+	if (ed1 > 0 && ed2 > 0 && (pd == 5 || pd == 6)) {
+	    /* validate days-of-week */
+	    int wd1 = weekday_from_epoch_day(ed1);
+	    int wd2 = weekday_from_epoch_day(ed2);
+
+	    if (pd == 5 && (wd1 < 1 || wd1 > 5)) {
+		ed1 = 0;
+	    } else if (pd == 5 && (wd2 < 1 || wd2 > 5)) {
+		ed2 = 0;
+	    } else if (pd == 6) {
+		if (wd1 < 1) {
+		    ed1 = 0;
+		} else if (wd2 < 1) {
+		    ed2 = 0;
+		}
+	    }
+	}
+
+	if (ed1 == 0) {
+	    gretl_errmsg_sprintf("Invalid observation %s", stobs);
+	    *err = E_INVARG;
+	} else if (ed2 == 0) {
+	    gretl_errmsg_sprintf("Invalid observation %s", endobs);
+	    *err = E_INVARG;
+	}
+    }
+
+    if (*err) {
+	span = -1;
+    } else {
+	t2 = dateton(endobs, &dset);
+	if (t2 >= 0) {
+	    span = t2 + 1; /* t2 is 0-based */
+	} else {
+	    *err = E_INVARG;
+	    span = -1;
+	}
+    }
+
+    return span;
+}

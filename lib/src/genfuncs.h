@@ -225,4 +225,7 @@ double clogit_fi (int T, int k, gretl_matrix *z,
 
 gretl_matrix *empirical_cdf (const double *y, int n, int *err);
 
+int sample_span (const char *stobs, const char *endobs,
+		 int pd, int *err);
+
 #endif /* GENFUNCS_H */
