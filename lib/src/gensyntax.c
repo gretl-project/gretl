@@ -134,6 +134,7 @@ static NODE *newstr (char *s)
 	n = new_node(STR);
 	if (n != NULL) {
 	    n->v.str = s;
+	    n->flags = TMP_NODE;
 	}
     }
 

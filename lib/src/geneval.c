@@ -297,12 +297,12 @@ static void free_node (NODE *t, parser *p)
 	    gretl_bundle_destroy(t->v.b);
 	} else if (t->t == ARRAY) {
 	    gretl_array_destroy(t->v.a);
+	} else if (t->t == STR) {
+	    free(t->v.str);
 	}
     }
 
     if (t->t == UOBJ || t->t == WLIST) {
-	free(t->v.str);
-    } else if (t->t == STR && t->vname == NULL) {
 	free(t->v.str);
     }
 
@@ -317,7 +317,7 @@ static void free_node (NODE *t, parser *p)
     free(t);
 }
 
-/* A word on "aux" nodes. These come in two "flavors" which
+/* A word on "aux" nodes. These come in two sorts, which
    might be described as "robust" and "fragile" respectively.
 
    A robust node (identified by the TMP_NODE flag) is one
@@ -338,12 +338,6 @@ static void free_node (NODE *t, parser *p)
    is that they cut down on wasteful deep-copying of objects
    that may be used in calculation, without being modified,
    on the fly.
-
-   Note that the way we have things at present aux string
-   nodes are always supposed to be robust. So if a function
-   here "acquires" a string that in fact belongs to some
-   persistent object, it must be strdup'd before it's placed
-   on an aux string node.
 */
 
 static void free_tree (NODE *t, parser *p, int code)
@@ -636,12 +630,12 @@ static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
     return p->err;
 }
 
-static NODE *newstring (void)
+static NODE *newstring (int flags)
 {
     NODE *n = new_node(STR);
 
     if (n != NULL) {
-	n->flags = TMP_NODE;
+	n->flags = flags;
 	n->v.str = NULL;
     }
 
@@ -804,7 +798,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	} else if (t == LIST) {
 	    ret = newlist();
 	} else if (t == STR) {
-	    ret = newstring();
+	    ret = newstring(flags);
 	} else if (t == BUNDLE) {
 	    ret = newbundle(flags);
 	} else if (t == ARRAY) {
@@ -897,6 +891,11 @@ static NODE *aux_mspec_node (parser *p)
 static NODE *aux_string_node (parser *p)
 {
     return get_aux_node(p, STR, 0, TMP_NODE);
+}
+
+static NODE *string_pointer_node (parser *p)
+{
+    return get_aux_node(p, STR, 0, 0);
 }
 
 static NODE *aux_bundle_node (parser *p)
@@ -4287,10 +4286,10 @@ static NODE *array_element_node (gretl_array *a, int i,
 
     if (!p->err) {
 	if (type == GRETL_TYPE_STRING) {
-	    ret = aux_string_node(p);
+	    ret = string_pointer_node(p);
 	    if (ret != NULL) {
-		/* aux string node must be robust */
-		ret->v.str = gretl_strdup(data);
+		/* revised 2017-05-21 */
+		ret->v.str = data;
 	    }
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    ret = matrix_pointer_node(p);
@@ -5349,14 +5348,9 @@ static NODE *get_array_element (NODE *l, NODE *r, parser *p)
 
     if (starting(p)) {
 	int i = node_get_int(r, p);
-	NODE *e = l;
 
-	if (compiled(p) && uvar_node(l)) {
-	    e = eval(l, p);
-	    fprintf(stderr, "get_array_element: compiled(p)\n");
-	}
 	if (!p->err) {
-	    ret = array_element_node(e->v.a, i, p);
+	    ret = array_element_node(l->v.a, i, p);
 	}
     } else {
 	ret = aux_any_node(p);
@@ -6706,7 +6700,7 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
 
 		if (len == 0) {
 		    bufgets_finalize(buf);
-		    strcpy(r->v.str, "");
+		    r->v.str = user_string_reset(r->vname, &p->err);
 		    ret->v.xval = 0;
 		} else {
 		    r->v.str = user_string_resize(r->vname, len, &p->err);
@@ -8146,12 +8140,9 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    ret->v.xval = *dp;
 	}
     } else if (type == GRETL_TYPE_STRING) {
-	ret = aux_string_node(p);
+	ret = string_pointer_node(p);
 	if (ret != NULL) {
-	    ret->v.str = gretl_strdup((char *) val);
-	    if (ret->v.str == NULL) {
-		p->err = E_ALLOC;
-	    }
+	    ret->v.str = (char *) val;
 	}
     } else if (type == GRETL_TYPE_MATRIX) {
 	if (copied) {
@@ -15933,12 +15924,13 @@ static int create_or_edit_string (parser *p)
     char *newstr = NULL;
     user_var *uvar;
 
-    if (p->ret->t == NUM && p->op != B_ADD) {
-	p->err = E_TYPES;
-	return p->err;
-    }
-
-    if (p->ret->t == EMPTY) {
+    if (p->ret->t == NUM) {
+	/* OK only in case of "+=" */
+	if (p->op != B_ADD) {
+	    p->err = E_TYPES;
+	    return p->err;
+	}
+    } else if (p->ret->t == EMPTY) {
 	src = "";
     } else {
 	src = p->ret->v.str;
@@ -15953,13 +15945,13 @@ static int create_or_edit_string (parser *p)
     if (uvar != NULL) {
 	orig = uvar->ptr;
     } else if (p->op != B_ASN) {
-	/* without a left-hand string we can only assign */
+	/* without an existing LHS string we can only assign */
 	p->err = E_DATA;
 	return p->err;
     }
 
     if (p->ret->t == NUM) {
-	/* taking an offset into an existing string ("+=") */
+	/* taking an offset into an existing string */
 	int len = strlen(orig);
 	int adj = p->ret->v.xval;
 
