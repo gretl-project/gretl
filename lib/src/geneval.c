@@ -594,13 +594,13 @@ static NODE *newmspec (void)
 
 /* new node to hold a list */
 
-static NODE *newlist (void)
+static NODE *newlist (int flags)
 {
     NODE *n = new_node(LIST);
 
     if (n != NULL) {
-	n->flags = TMP_NODE;
-	n->v.str = NULL;
+	n->flags = flags;
+	n->v.ivec = NULL;
     }
 
     return n;
@@ -788,15 +788,13 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	} else if (t == IVEC) {
 	    ret = newivec(n, IVEC);
 	} else if (t == LIST) {
-	    ret = newivec(n, LIST);
+	    ret = newlist(flags);
 	} else if (t == MAT) {
 	    ret = newmat(flags);
 	} else if (t == MSPEC) {
 	    ret = newmspec();
 	} else if (t == MDEF) {
 	    ret = newmdef(n);
-	} else if (t == LIST) {
-	    ret = newlist();
 	} else if (t == STR) {
 	    ret = newstring(flags);
 	} else if (t == BUNDLE) {
@@ -865,6 +863,16 @@ static NODE *aux_list_node (parser *p)
 	return NULL;
     } else {
 	return get_aux_node(p, LIST, 0, TMP_NODE);
+    }
+}
+
+static NODE *list_pointer_node (parser *p)
+{
+    if (p->dset == NULL || p->dset->n == 0) {
+	no_data_error(p);
+	return NULL;
+    } else {
+	return get_aux_node(p, LIST, 0, 0);
     }
 }
 
@@ -4286,9 +4294,9 @@ static NODE *array_element_node (gretl_array *a, int i,
 
     if (!p->err) {
 	if (type == GRETL_TYPE_STRING) {
+	    /* revised 2017-05-21 */
 	    ret = string_pointer_node(p);
 	    if (ret != NULL) {
-		/* revised 2017-05-21 */
 		ret->v.str = data;
 	    }
 	} else if (type == GRETL_TYPE_MATRIX) {
@@ -4302,14 +4310,12 @@ static NODE *array_element_node (gretl_array *a, int i,
 		ret->v.b = data;
 	    }
 	} else if (type == GRETL_TYPE_LIST) {
-	    const int *list = (const int *) data;
-
-	    p->err = stored_list_check(list, p->dset);
+	    /* revised 2017-05-21 */
+	    p->err = stored_list_check((const int *) data, p->dset);
 	    if (!p->err) {
-		ret = aux_list_node(p);
+		ret = list_pointer_node(p);
 		if (ret != NULL) {
-		    /* aux list node must be robust */
-		    ret->v.ivec = gretl_list_copy(list);
+		    ret->v.ivec = data;
 		}
 	    }
 	}
@@ -8083,7 +8089,7 @@ static NODE *model_var_via_accessor (const char *key, parser *p)
    key to look up to get content.
 */
 
-static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
+static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
     GretlType type;
@@ -8094,9 +8100,11 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 
 #if EDEBUG
     if (l->t == DBUNDLE) {
-	fprintf(stderr, "get_bundle_value: %s[\"%s\"]\n", bvarname(l->v.idnum), key);
+	fprintf(stderr, "get_bundle_member: %s[\"%s\"]\n",
+		bvarname(l->v.idnum), key);
     } else {
-	fprintf(stderr, "get_bundle_value: %s[\"%s\"]\n", l->vname, key);
+	fprintf(stderr, "get_bundle_member: %s[\"%s\"]\n",
+		l->vname, key);
     }
 #endif
 
@@ -8198,14 +8206,16 @@ static NODE *get_bundle_value (NODE *l, NODE *r, parser *p)
 	    p->err = E_DATA;
 	}
     } else if (type == GRETL_TYPE_LIST) {
-	const int *list = (const int *) val;
-
-	p->err = stored_list_check(list, p->dset);
+	p->err = stored_list_check((const int *) val, p->dset);
 	if (!p->err) {
-	    ret = aux_list_node(p);
-	    if (ret != NULL) {
-		ret->v.ivec = gretl_list_copy(list);
+	    if (copied) {
+		ret = aux_list_node(p);
+	    } else {
+		ret = list_pointer_node(p);
 	    }
+	}
+	if (!p->err) {
+	    ret->v.ivec = (int *) val;
 	}
     } else {
 	p->err = E_DATA;
@@ -13665,7 +13675,7 @@ static NODE *eval (NODE *t, parser *p)
 		if (t->flags & LHT_NODE) {
 		    ret = lhs_terminal_node(t, l, r, p);
 		} else {
-		    ret = get_bundle_value(l, r, p);
+		    ret = get_bundle_member(l, r, p);
 		}
 	    } else {
 		ret = test_bundle_key(l, r, p);
@@ -13679,7 +13689,7 @@ static NODE *eval (NODE *t, parser *p)
     case DBMEMB:
 	/* name of $ bundle plus string */
 	if ((l->t == DBUNDLE || l->t == BUNDLE) && r->t == STR) {
-	    ret = get_bundle_value(l, r, p);
+	    ret = get_bundle_member(l, r, p);
 	} else if (l->t == DBUNDLE || l->t == BUNDLE) {
 	    node_type_error(t->t, 1, STR, r, p);
 	} else {
