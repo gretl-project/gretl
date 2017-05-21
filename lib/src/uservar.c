@@ -1007,10 +1007,12 @@ int user_var_replace_value (user_var *uvar, void *value,
 
 char *user_string_resize (const char *name, size_t len, int *err)
 {
-    user_var *u = get_user_var_by_name(name);
+    user_var *u;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_STRING);
 
     if (u == NULL) {
-	*err = E_UNKVAR;
+	*err = E_INVARG;
 	return NULL;
     } else {
 	char *orig = u->ptr;
@@ -1027,6 +1029,22 @@ char *user_string_resize (const char *name, size_t len, int *err)
     }
 
     return (char *) u->ptr;
+}
+
+char *user_string_reset (const char *name, int *err)
+{
+    user_var *u;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_STRING);
+
+    if (u == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    } else {
+	free(u->ptr);
+	u->ptr = gretl_strdup("");
+	return (char *) u->ptr;
+    }
 }
 
 static int check_array_type_compat (GretlType type,
