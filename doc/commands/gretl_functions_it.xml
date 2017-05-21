@@ -8535,6 +8535,72 @@
       </description>
     </function>    
 
+    <function name="smplspan" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">inizio</fnarg>
+	<fnarg type="string">fine</fnarg>
+	<fnarg type="int">pd</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna il numero di osservazioni che separano
+	  <argname>inizio</argname> da <argname>fine</argname>
+	  (estremi inclusi) per un dataset di serie storiche con
+	  frequenza <argname>pd</argname>.
+	</para>
+	<para>
+	  I primi due argomenti devono essere forniti nella forma
+	  usata in gretl per dati annuali, trimestrali o mensili
+	  &mdash; ad esempio, <lit>1970</lit>, <lit>1970:1</lit> o
+	  <lit>1970:01</lit>, rispettivamente; in alternativa, possono
+	  essere usate date in formato ISO 8601,
+	  <lit>YYYY-MM-DD</lit>.
+	</para>
+	<para>
+	  L'argomento <argname>pd</argname> può essere pari a 1, 4 o
+	  12 (annuale, trimestrale, mensile), una delle frequenze
+	  giornaliere (5, 6, 7), oppure 52 (settimanale). Se
+	  <argname>pd</argname> è 1, 4 o 12, date ISO 8601 sono
+	  accettate come primi due argomenti solo se indicano l'inizio
+	  del periodo in questione. Ad esempio,
+	  <lit>2015-04-01</lit> è un sostituto accettabile di
+	  <lit>2015:2</lit> per il secondo trimestre 2015.
+	</para>
+	<para>
+	  Se si ha già un dataset di periodicità <argname>pd</argname>
+	  con abbastanza osservazioni, il risultato di questa funzione
+	  può essere facilmente emulato usando  <fncref
+	  targ="obsnum"/>. Il vantaggio di <lit>smplspan</lit> sta nel
+	  fatto che è facile calcolare il risultato anche senza avere
+	  un dataset aperto, cosa che può essere comoda nel creare
+	  dataset vuoti o artificiali. Segue un esempio:
+	</para>
+	<code>
+	  scalar T = smplspan("2010-01-01", "2015-12-31", 7)
+	  nulldata T --preserve
+	  setobs 7 2010-01-01
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+	  ? scalar T = smplspan("2010-01-01", "2015-12-31", 5)
+	  Sostituito lo scalare T = 1565
+	  ? nulldata T --preserve
+	  Periodicità: 1, oss. max.: 1565
+	  Intervallo delle osservazioni: 1-1565
+	  ? setobs 5 2010-01-01
+	  Campione completo dei dati: 2010-01-01 - 2015-12-31 (n = 1565)
+	</code>
+	<para>
+	  Dove il fatto che l'ultima osservazione creata dal comando
+	  <cmdref targ="nulldata"/> sia <lit>2015-12-31</lit> è
+	  garantito per costruzione. Si noti che il numero 1565 non
+	  sarebbe stato banale da calcolare con altri metodi.
+	</para>
+      </description>
+    </function>
+
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>

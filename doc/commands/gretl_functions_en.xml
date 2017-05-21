@@ -8525,14 +8525,28 @@
 	  dataset) in place. An example follows:
 	</para>
 	<code>
-	  scalar T = smplspan("1975:03", "2001:09", 12)
+	  scalar T = smplspan("2010-01-01", "2015-12-31", 7)
 	  nulldata T --preserve
-	  setobs 12 1975:03
+	  setobs 7 2010-01-01
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+	  ? scalar T = smplspan("2010-01-01", "2015-12-31", 5)
+	  Replaced scalar T = 1565
+	  ? nulldata T --preserve
+	  periodicity: 1, maxobs: 1565
+	  observations range: 1 to 1565
+	  ? setobs 5 2010-01-01
+	  Full data range: 2010-01-01 - 2015-12-31 (n = 1565)
 	</code>
 	<para>
 	  After the above, you can be confident that the last
 	  observation in the dataset created via <cmdref
-	  targ="nulldata"/> will be <lit>2001:09</lit>.
+	  targ="nulldata"/> will be <lit>2015-12-31</lit>. Note that
+	  the number 1565 would have been rather tricky to compute
+	  otherwise.
 	</para>
       </description>
     </function>
