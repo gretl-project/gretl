@@ -7031,6 +7031,10 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
     return m;
 }
 
+/* Convert from ISO 8601 (daily) dates to year, quarter or month
+   (discarding excess precision), if possible.
+*/
+
 static int handle_excess_precision (int *ymd1, int *ymd2, int pd,
 				    char *obs1, char *obs2)
 {
@@ -7044,7 +7048,7 @@ static int handle_excess_precision (int *ymd1, int *ymd2, int pd,
     *obs1 = *obs2 = '\0';
 
     if (pd == 1) {
-	/* annual: month must be 1 */
+	/* annual: the month must be 1 */
 	if (ymd1[1] != 1 || ymd1[2] != 1) {
 	    err = E_INVARG;
 	} else {
@@ -7052,7 +7056,7 @@ static int handle_excess_precision (int *ymd1, int *ymd2, int pd,
 	    sprintf(obs2, "%d", ymd2[0]);
 	}
     } else if (pd == 4) {
-	/* annual: month must start a quarter */
+	/* quarterly: the month must start a quarter */
 	int m1 = ymd1[1], m2 = ymd2[1];
 
 	if ((m1 != 1 && m1 != 4 && m1 != 7 && m1 != 10) ||
@@ -7104,7 +7108,7 @@ int sample_span (const char *stobs, const char *endobs,
     strcpy(obs2, endobs);
     
     if (n == 10) {
-	/* should be ISO-8601 dates */
+	/* should be ISO 8601 dates */
 	nf = sscanf(obs1, "%d-%d-%d", &ymd1[0], &ymd1[1], &ymd1[2]);
 	if (nf != 3) {
 	    *err = E_INVARG;
