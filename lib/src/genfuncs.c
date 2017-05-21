@@ -7031,11 +7031,59 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
     return m;
 }
 
+static int handle_excess_precision (int *ymd1, int *ymd2, int pd,
+				    char *obs1, char *obs2)
+{
+    int err = 0;
+
+    if (ymd1[2] != 1 || ymd2[2] != 1) {
+	/* day-of-month must be 1 in all cases */
+	return E_INVARG;
+    }
+
+    *obs1 = *obs2 = '\0';
+
+    if (pd == 1) {
+	/* annual: month must be 1 */
+	if (ymd1[1] != 1 || ymd1[2] != 1) {
+	    err = E_INVARG;
+	} else {
+	    sprintf(obs1, "%d", ymd1[0]);
+	    sprintf(obs2, "%d", ymd2[0]);
+	}
+    } else if (pd == 4) {
+	/* annual: month must start a quarter */
+	int m1 = ymd1[1], m2 = ymd2[1];
+
+	if ((m1 != 1 && m1 != 4 && m1 != 7 && m1 != 10) ||
+	    (m2 != 1 && m2 != 4 && m2 != 7 && m2 != 10)) {
+	    err = E_INVARG;
+	} else {
+	    sprintf(obs1, "%d:%d", ymd1[0], 1 + (m1-1)/3);
+	    sprintf(obs2, "%d:%d", ymd2[0], 1 + (m2-1)/3);
+	}
+    } else {
+	/* pd == 12: monthly */
+	int m1 = ymd1[1], m2 = ymd2[1];
+
+	if (m1 < 1 || m1 > 12 || m2 < 1 || m2 > 12) {
+	    err = E_INVARG;
+	} else {
+	    sprintf(obs1, "%d:%02d", ymd1[0], m1);
+	    sprintf(obs2, "%d:%02d", ymd2[0], m2);
+	}
+    }
+
+    return err;
+}
+
 int sample_span (const char *stobs, const char *endobs,
 		 int pd, int *err)
 {
+    char obs1[12], obs2[12];
     DATASET dset = {0};
-    int t2, span = -1;
+    int ymd1[3], ymd2[3];
+    int n, nf, t2, span = -1;
 
     if (pd == 1 || pd == 12 || (pd >= 4 && pd <= 7) || pd == 52) {
 	; /* OK, supported frequency */
@@ -7044,23 +7092,47 @@ int sample_span (const char *stobs, const char *endobs,
 	return -1;
     }
 
-    strcpy(dset.stobs, stobs);
+    n = strlen(stobs);
+
+    if (n > 10 || strlen(endobs) != n) {
+	/* invalid and/or inconsistent observation strings */
+	*err = E_INVARG;
+	return -1;
+    }
+
+    strcpy(obs1, stobs);
+    strcpy(obs2, endobs);
+    
+    if (n == 10) {
+	/* should be ISO-8601 dates */
+	nf = sscanf(obs1, "%d-%d-%d", &ymd1[0], &ymd1[1], &ymd1[2]);
+	if (nf != 3) {
+	    *err = E_INVARG;
+	} else {
+	    nf = sscanf(obs2, "%d-%d-%d", &ymd2[0], &ymd2[1], &ymd2[2]);
+	    if (nf != 3) {
+		*err = E_INVARG;
+	    }
+	}
+	if (!*err && (pd == 1 || pd == 4 || pd == 12)) {
+	    *err = handle_excess_precision(ymd1, ymd2, pd, obs1, obs2);
+	}
+    }
+
+    if (*err) {
+	return -1;
+    }
+
+    strcpy(dset.stobs, obs1);
     dset.pd = pd;
     dset.structure = TIME_SERIES;
 
-    if (strchr(stobs, '-') && ((pd >= 5 && pd <= 7) || pd == 52)) {
+    if (n == 10 && ((pd >= 5 && pd <= 7) || pd == 52)) {
 	/* validate daily data */
-	int nf, y, m, d;
-	int ed1 = 0, ed2 = 0;
+	int ed1, ed2;
 
-	nf = sscanf(stobs, "%d-%d-%d", &y, &m, &d);
-	if (nf == 3) {
-	    ed1 = epoch_day_from_ymd(y, m, d);
-	    nf = sscanf(endobs, "%d-%d-%d", &y, &m, &d);
-	    if (nf == 3) {
-		ed2 = epoch_day_from_ymd(y, m, d);
-	    }
-	}
+	ed1 = epoch_day_from_ymd(ymd1[0], ymd1[1], ymd1[2]);
+	ed2 = epoch_day_from_ymd(ymd2[0], ymd2[1], ymd2[2]);
 
 	if (ed1 > 0 && ed2 > 0 && (pd == 5 || pd == 6)) {
 	    /* validate days-of-week */
@@ -7086,13 +7158,15 @@ int sample_span (const char *stobs, const char *endobs,
 	} else if (ed2 == 0) {
 	    gretl_errmsg_sprintf("Invalid observation %s", endobs);
 	    *err = E_INVARG;
+	} else {
+	    dset.sd0 = (double) ed1;
 	}
     }
 
     if (*err) {
 	span = -1;
     } else {
-	t2 = dateton(endobs, &dset);
+	t2 = dateton(obs2, &dset);
 	if (t2 >= 0) {
 	    span = t2 + 1; /* t2 is 0-based */
 	} else {
