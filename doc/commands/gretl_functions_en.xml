@@ -4486,8 +4486,8 @@
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day, which equals 1 for the first of January in the
 	  year AD 1 on the proleptic Gregorian calendar. The default
-	  return value &mdash; of the same type as
-	  <argname>ed</argname> &mdash; is an 8-digit number, or a
+	  return value&mdash;of the same type as
+	  <argname>ed</argname>&mdash;is an 8-digit number, or a
 	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
 	  (ISO 8601 <quote>basic</quote> format), giving the Gregorian
 	  calendar date corresponding to the epoch day.
@@ -4606,8 +4606,8 @@
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day, which equals 1 for the first of January in the
 	  year AD 1 on the proleptic Gregorian calendar. The default
-	  return value &mdash; of the same type as
-	  <argname>ed</argname> &mdash; is an 8-digit number, or a
+	  return value&mdash;of the same type as
+	  <argname>ed</argname>&mdash;is an 8-digit number, or a
 	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
 	  (ISO 8601 <quote>basic</quote> format), giving the Julian
 	  calendar date corresponding to the epoch day.
@@ -8482,7 +8482,60 @@
 	  wake-up, the function returns 0.
 	</para>
       </description>
-    </function>    
+    </function>
+
+    <function name="smplspan" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">startobs</fnarg>
+	<fnarg type="string">endobs</fnarg>
+	<fnarg type="int">pd</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the number of observations from
+	  <argname>startobs</argname> to <argname>endobs</argname>
+	  (inclusive) for time-series data with frequency
+	  <argname>pd</argname>.
+	</para>
+	<para>
+	  The first two arguments must be given in the form preferred
+	  by gretl for annual, quarterly or monthly data&mdash;for
+	  example, <lit>1970</lit>, <lit>1970:1</lit> or
+	  <lit>1970:01</lit> for each of these frequencies,
+	  respectively&mdash;or as ISO 8601 dates,
+	  <lit>YYYY-MM-DD</lit>.
+	</para>
+	<para>
+	  The <argname>pd</argname> argument must be 1, 4 or 12
+	  (annual, quarterly, monthly); one of the daily frequencies
+	  (5, 6, 7); or 52 (weekly). If <argname>pd</argname> equals
+	  1, 4 or 12, then ISO 8601 dates are acceptable for the
+	  first two arguments only if they indicate the start of
+	  the period in question. For example, <lit>2015-04-01</lit>
+	  is acceptable in place of <lit>2015:2</lit> to represent
+	  the second quarter of 2015.
+	</para>
+	<para>
+	  If you already have a dataset of frequency
+	  <argname>pd</argname> in place, with a sufficient range of
+	  observations, then the result of this function could easily
+	  be emulated using <fncref targ="obsnum"/>. The advantange of
+	  <lit>smplspan</lit> is that you can calculate the number of
+	  observations without having a suitable dataset (or any
+	  dataset) in place. An example follows:
+	</para>
+	<code>
+	  scalar T = smplspan("1975:03", "2001:09", 12)
+	  nulldata T --preserve
+	  setobs 12 1975:03
+	</code>
+	<para>
+	  After the above, you can be confident that the last
+	  observation in the dataset created via <cmdref
+	  targ="nulldata"/> will be <lit>2001:09</lit>.
+	</para>
+      </description>
+    </function>
 
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
@@ -9327,7 +9380,7 @@
 	<para>
 	  Returns an <by r="n" c="n"/> symmetric matrix obtained by
 	  rearranging the elements of <math>v</math>. The number of elements
-	  in <math>v</math> must be a triangular integer &mdash; &ie;, a
+	  in <math>v</math> must be a triangular integer&mdash;&ie;, a
 	  number <math>k</math> such that an integer <math>n</math> exists
 	  with the property <equation
           status="inline" ascii="k = n(n+1)/2" 
