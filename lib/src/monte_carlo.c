@@ -3055,6 +3055,10 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 	err = 0;
     }
 
+#if LOOP_DEBUG
+    fprintf(stderr, " returning err = %d\n", err);
+#endif
+
     return err;
 }
 
@@ -3578,7 +3582,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	handle_err:
 
 	    if (err) {
-		err = loop_process_error(loop, j, err, prn);
+		cmd_info_to_loop(loop, j, cmd, &subst);
+		cmd->err = err = loop_process_error(loop, j, err, prn);
 		if (err) {
 		    break;
 		} else {
