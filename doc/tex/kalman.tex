@@ -37,17 +37,15 @@ gretl's ``bundle'' type.\footnote{If anyone needs documentation for
   \url{http://gretl.sourceforge.net/papers/kalman_old.pdf}.}  In 2016
 it struck the gretl authors that the bundle type could be used to
 advantage in reformulating the user interface; we suspect people will
-find the new interface a good deal easier to use. Moreover, the new
-interface makes it much more practical to split long portions of code
-into smaller, dedicated functions, which are arguably easier to debug
-and maintain; hopefully, this may lead to more function packages using
-gretl's native state space facilities. And finally, the new interface
-is designed in such a way that certain operations, that would have
-required a great deal of low-level coding under the old regime, are
-simple, fast and natural with the new one. This is the case of
-``disturbance smoothing'' (see section \ref{sec:kdsmooth}) or the case
-when system matrices are time-varying (see section
-\ref{sec:tvarying}).
+find the new interface substantially easier to use. The new interface
+makes it more practical to split long portions of code into smaller,
+dedicated functions, which are arguably easier to debug and maintain;
+hopefully this may lead to more function packages using gretl's native
+state space facilities. Moreover, the new design is such that certain
+operations that would have required a good deal of low-level coding
+under the old regime are now simple, fast and natural---for example,
+``disturbance smoothing'' (see section \ref{sec:kdsmooth}) or setting
+up time-varying system matrices (see section \ref{sec:tvarying}).
 
 Technically, a gretl bundle is an associative array; that is, an
 all-purpose container into which you can put matrices, scalars,
