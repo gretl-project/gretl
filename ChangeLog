@@ -1,6 +1,6 @@
 version 2017b, in progress
 - "gnuplot" and "plot" commands: support --font option for
-  PDF, EPS and EMF output
+   PDF, EPS and EMF output
 - "rename" command: add a --quiet option
 - "mle" command: support the --cluster robust option
 - "midasreg" command: several fixes and enhancements
@@ -13,6 +13,8 @@ version 2017b, in progress
 - New function defbundle() for initializing a bundle
 - New function xmlget() for extracting data from an XML
   buffer (similar to jsonget)
+- New function smplspan() to determine the number of
+  observations within a specified time-series range
 - GUI: revamp Time series model menu and ARIMA specification
   dialog
 - Fix bug: some operations that check status of a model's

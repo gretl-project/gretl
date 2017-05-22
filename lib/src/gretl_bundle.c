@@ -1587,13 +1587,6 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
     }
 }
 
-static gboolean match_by_data (gpointer key, gpointer value, gpointer p)
-{
-    bundled_item *item = value;
-
-    return item->data == p;
-}
-
 /* Called from gretl_func.c on return, to remove
    a given bundle from the stack of named bundles in
    preparation for handing it over to the caller,
