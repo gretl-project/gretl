@@ -542,11 +542,11 @@ static NODE *newseries (int n, int flags)
     return b;
 }
 
-/* new node to hold array of ints */
+/* new node to hold array of @n ints */
 
-static NODE *newivec (int n, int type)
+static NODE *newivec (int n)
 {
-    NODE *b = new_node(type);
+    NODE *b = new_node(IVEC);
 
     if (b != NULL) {
 	b->flags = TMP_NODE;
@@ -786,7 +786,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	} else if (t == SERIES) {
 	    ret = newseries(n, flags);
 	} else if (t == IVEC) {
-	    ret = newivec(n, IVEC);
+	    ret = newivec(n);
 	} else if (t == LIST) {
 	    ret = newlist(flags);
 	} else if (t == MAT) {
