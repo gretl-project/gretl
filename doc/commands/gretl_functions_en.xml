@@ -2475,7 +2475,8 @@
 	</para>
 	<para>
 	  To obtain epoch days from the more familiar form of dates,
-	  see <fncref targ="epochday"/>.
+	  see <fncref targ="epochday"/>. Related: see <fncref
+	  targ="smplspan"/>.
 	</para>
       </description>
     </function>    
@@ -8498,10 +8499,10 @@
 	  <argname>pd</argname>.
 	</para>
 	<para>
-	  The first two arguments must be given in the form preferred
-	  by gretl for annual, quarterly or monthly data&mdash;for
-	  example, <lit>1970</lit>, <lit>1970:1</lit> or
-	  <lit>1970:01</lit> for each of these frequencies,
+	  The first two arguments should be given in the form
+	  preferred by gretl for annual, quarterly or monthly
+	  data&mdash;for example, <lit>1970</lit>, <lit>1970:1</lit>
+	  or <lit>1970:01</lit> for each of these frequencies,
 	  respectively&mdash;or as ISO 8601 dates,
 	  <lit>YYYY-MM-DD</lit>.
 	</para>
@@ -8509,11 +8510,11 @@
 	  The <argname>pd</argname> argument must be 1, 4 or 12
 	  (annual, quarterly, monthly); one of the daily frequencies
 	  (5, 6, 7); or 52 (weekly). If <argname>pd</argname> equals
-	  1, 4 or 12, then ISO 8601 dates are acceptable for the
-	  first two arguments only if they indicate the start of
-	  the period in question. For example, <lit>2015-04-01</lit>
-	  is acceptable in place of <lit>2015:2</lit> to represent
-	  the second quarter of 2015.
+	  1, 4 or 12, then ISO 8601 dates are acceptable for the first
+	  two arguments if they indicate the start of the period in
+	  question. For example, <lit>2015-04-01</lit> is acceptable
+	  in place of <lit>2015:2</lit> to represent the second
+	  quarter of 2015.
 	</para>
 	<para>
 	  If you already have a dataset of frequency
@@ -8525,17 +8526,17 @@
 	  dataset) in place. An example follows:
 	</para>
 	<code>
-	  scalar T = smplspan("2010-01-01", "2015-12-31", 7)
-	  nulldata T --preserve
+	  scalar T = smplspan("2010-01-01", "2015-12-31", 5)
+	  nulldata T
 	  setobs 7 2010-01-01
 	</code>
 	<para>
-	  produces
+	  This produces:
 	</para>
 	<code>
 	  ? scalar T = smplspan("2010-01-01", "2015-12-31", 5)
-	  Replaced scalar T = 1565
-	  ? nulldata T --preserve
+	  Generated scalar T = 1565
+	  ? nulldata T
 	  periodicity: 1, maxobs: 1565
 	  observations range: 1 to 1565
 	  ? setobs 5 2010-01-01

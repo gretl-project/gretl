@@ -8576,8 +8576,8 @@
 	  dataset vuoti o artificiali. Segue un esempio:
 	</para>
 	<code>
-	  scalar T = smplspan("2010-01-01", "2015-12-31", 7)
-	  nulldata T --preserve
+	  scalar T = smplspan("2010-01-01", "2015-12-31", 5)
+	  nulldata T
 	  setobs 7 2010-01-01
 	</code>
 	<para>
@@ -8585,8 +8585,8 @@
 	</para>
 	<code>
 	  ? scalar T = smplspan("2010-01-01", "2015-12-31", 5)
-	  Sostituito lo scalare T = 1565
-	  ? nulldata T --preserve
+	  Generato lo scalare T = 1565
+	  ? nulldata T
 	  Periodicità: 1, oss. max.: 1565
 	  Intervallo delle osservazioni: 1-1565
 	  ? setobs 5 2010-01-01
