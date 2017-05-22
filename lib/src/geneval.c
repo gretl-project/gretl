@@ -107,8 +107,6 @@ enum {
 			 n->t == MAT || n->t == EMPTY || \
 			 (n->t == SERIES && n->vnum >= 0))
 
-#define list1_node(n) (n->t == LIST && n->v.ivec[0] == 1)
-
 #define uscalar_node(n) ((n->t == NUM && n->vname != NULL) || postfix_node(n))
 
 #define umatrix_node(n) (n->t == MAT && n->vname != NULL)
@@ -890,11 +888,6 @@ static NODE *aux_mspec_node (parser *p)
 {
     return get_aux_node(p, MSPEC, 0, 0);
 }
-
-/* note: a string placed on an aux_string_node
-   should always be strdup'd; the node takes
-   ownership unconditionally
-*/
 
 static NODE *aux_string_node (parser *p)
 {
@@ -12865,24 +12858,6 @@ static NODE *scalar_postfix_node (NODE *n, parser *p)
     return ret;
 }
 
-#if 0
-
-static int series_calc_nodes (NODE *l, NODE *r)
-{
-    int ret = 0;
-
-    if (l->t == SERIES) {
-	ret = (r->t == SERIES || r->t == NUM ||
-	       scalar_matrix_node(r) || list1_node(r));
-    } else if (r->t == SERIES) {
-	ret = scalar_node(l) || list1_node(l);
-    }
-
-    return ret;
-}
-
-#else /* reverting for now, 2017-02-06 */
-
 static int series_calc_nodes (NODE *l, NODE *r)
 {
     int ret = 0;
@@ -12895,8 +12870,6 @@ static int series_calc_nodes (NODE *l, NODE *r)
 
     return ret;
 }
-
-#endif
 
 static int cast_series_to_list (parser *p, NODE *n, short f)
 {
