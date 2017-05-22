@@ -2,10 +2,12 @@ version 2017b, in progress
 - "gnuplot" and "plot" commands: support --font option for
    PDF, EPS and EMF output
 - "rename" command: add a --quiet option
+- "arma" command: support --robust (QML) option
 - "mle" command: support the --cluster robust option
 - "midasreg" command: several fixes and enhancements
 - "modprint" command: accept an array of strings as the
   "names" argument
+- Allow adding lists as such to bundles
 - fcstats() function: expand the accepted set of arguments
   (mix series and vectors, handle multiple forecasts)
 - New function deflist() for defining a list (of named
@@ -25,6 +27,8 @@ version 2017b, in progress
 - Fix bug: ensure that the $model accessor (bundle) is
   available to function packages that attach to a model
   window
+- Fix bug: breakage in column headings for the printout of
+  multinomial outcome probabilities in GUI
 - Validate $-bundles as legitimate function arguments
 
 2017-04-15 version 2017a
