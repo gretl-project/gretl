@@ -1760,6 +1760,7 @@ static int get_VAR_order (CMD *c, int k)
 	    if (x > 0 && x < INT_MAX) {
 		ret = x;
 	    } else {
+		gretl_errmsg_sprintf(_("Invalid lag order %g"), x);
 		c->err = E_INVARG;
 	    }
 	} else {
