@@ -684,7 +684,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 
     if ((ci == VAR && order < 1) || (ci == VECM && order < 0)) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
-	*errp = E_DATA;
+	*errp = E_INVARG;
 	return NULL;
     }
 
