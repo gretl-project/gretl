@@ -50,8 +50,6 @@ static int n_vars;
 static int n_alloc;
 static int scalar_imin;
 
-static int data_is_bundled (void *ptr, const char *msg);
-
 /* callback for the benefit of the edit scalars window
    in the gretl GUI */
 
@@ -105,7 +103,8 @@ static user_var *user_var_new (const char *name, int type,
 
 	    if (m == NULL) {
 		u->ptr = gretl_null_matrix_new();
-	    } else if (matrix_is_saved(m)) {
+	    } else if (get_user_var_by_data(m) != NULL) {
+		/* this check should be redundant? */
 		u->ptr = gretl_matrix_copy(m);
 	    } else {
 		u->ptr = value;
@@ -229,8 +228,6 @@ static void uvar_hash_destroy (void)
 
 static void user_var_destroy (user_var *u)
 {
-    int free_val = 1;
-
 #if HDEBUG
     fprintf(stderr, "user_var_destroy: '%s' (level %d)\n", u->name, u->level);
 #endif
@@ -246,20 +243,7 @@ static void user_var_destroy (user_var *u)
 # endif
     }
 
-    if (var_is_shell(u)) {
-	free_val = 0;
-    } else if (u->type == GRETL_TYPE_MATRIX) {
-	/* At this point only matrices have to be checked in this
-	   manner: note that in geneval.c, all other types are
-	   unconditionally copied out of bundles, while matrices
-	   may be subject to pointer-sharing.
-	*/
-	if (data_is_bundled(u->ptr, "user_var_destroy")) {
-	    free_val = 0;
-	}
-    }
-
-    if (free_val) {
+    if (!var_is_shell(u)) {
 	uvar_free_value(u);
     }
 
@@ -989,15 +973,7 @@ int user_var_replace_value (user_var *uvar, void *value,
 
     if (!err && value != uvar->ptr) {
 	if (uvar->ptr != NULL) {
-	    int free_val = 1;
-
-	    if (uvar->type == GRETL_TYPE_MATRIX &&
-		data_is_bundled(uvar->ptr, "user_var_replace_value")) {
-		free_val = 0;
-	    }
-	    if (free_val) {
-		uvar_free_value(uvar);
-	    }
+	    uvar_free_value(uvar);
 	}	
 	uvar->ptr = value;
     }
@@ -1938,51 +1914,6 @@ int is_user_string (const char *name)
     }
 
     if (get_user_var_of_type_by_name(name, GRETL_TYPE_STRING) != NULL) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-/**
- * data_is_bundled:
- * @ptr: pointer to check.
- *
- * Returns: 1 if @ptr corresponds to an object that is
- * contained within a currently-defined gretl bundle,
- * otherwise 0.
- */
-
-static int data_is_bundled (void *ptr, const char *msg)
-{
-    int i, ret = 0;
-
-    if (ptr == NULL) {
-	return 0;
-    }
-    
-    for (i=0; i<n_vars && !ret; i++) {
-	if (uvars[i] != NULL && 
-	    uvars[i]->type == GRETL_TYPE_BUNDLE &&
-	    uvars[i]->ptr != NULL) {
-	    ret = bundle_contains_data(uvars[i]->ptr, ptr);
-	}
-    }
-
-#if 0
-    if (ret) {
-	fprintf(stderr, "*** data_is_bundled! (%s) ***\n", msg);
-    }
-#endif
-
-    return ret;
-}
-
-int matrix_is_saved (const gretl_matrix *m)
-{
-    if (get_user_var_by_data(m) != NULL) {
-	return 1;
-    } else if (data_is_bundled((void *) m, "matrix_is_saved")) {
 	return 1;
     } else {
 	return 0;

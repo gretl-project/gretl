@@ -595,12 +595,11 @@ union val {
 enum {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
-    PTR_NODE = 1 << 2, /* node is compatible with P_LHPTR */
-    SVL_NODE = 1 << 3, /* holds string-valued series */
-    PAR_NODE = 1 << 4, /* exponentiation node is parenthesized */
-    PRX_NODE = 1 << 5, /* aux node is proxy (don't reuse!) */
-    ALS_NODE = 1 << 6, /* node holds aliased function call */
-    LHT_NODE = 1 << 7  /* node holds terminal of LHS */
+    SVL_NODE = 1 << 2, /* holds string-valued series */
+    PAR_NODE = 1 << 3, /* exponentiation node is parenthesized */
+    PRX_NODE = 1 << 4, /* aux node is proxy (don't reuse!) */
+    ALS_NODE = 1 << 5, /* node holds aliased function call */
+    LHT_NODE = 1 << 6  /* node holds terminal of LHS */
 };
 
 struct node {
@@ -627,20 +626,19 @@ enum parser_flags {
     P_QUIET   = 1 <<  9, /* don't print any messages or labels */
     P_GETSTR  = 1 << 10, /* state: flag acceptance of plain strings */
     P_SLAVE   = 1 << 11, /* running as "slave" of NLS/MLE/GMM */
-    P_LHPTR   = 1 << 12, /* left-hand side: pointer type wanted */
-    P_MMASK   = 1 << 13, /* genr result is masked matrix */
-    P_SLICING = 1 << 14, /* state: calculating object slice (temporary) */
-    P_LAGPRSE = 1 << 15, /* state: parsing lag spec (temporary) */
-    P_DELTAN  = 1 << 16, /* flag for change in series length */
-    P_CATCH   = 1 << 17, /* "catch" is in force */
-    P_NODECL  = 1 << 18, /* type of result was not specified */
-    P_LISTDEF = 1 << 19, /* expression defines a list */
-    P_ANON    = 1 << 20, /* generating an anonymous object */
-    P_VOID    = 1 << 21, /* function call, no assignment */
-    P_NOEXEC  = 1 << 22, /* just compile, don't evaluate */
-    P_MSAVE   = 1 << 23, /* trying for reuse of an aux matrix */
-    P_OBSVAL  = 1 << 24, /* generating value of observation in series */
-    P_ALIASED = 1 << 25  /* state: handling aliased object (temporary) */
+    P_MMASK   = 1 << 12, /* genr result is masked matrix */
+    P_SLICING = 1 << 13, /* state: calculating object slice (temporary) */
+    P_LAGPRSE = 1 << 14, /* state: parsing lag spec (temporary) */
+    P_DELTAN  = 1 << 15, /* flag for change in series length */
+    P_CATCH   = 1 << 16, /* "catch" is in force */
+    P_NODECL  = 1 << 17, /* type of result was not specified */
+    P_LISTDEF = 1 << 18, /* expression defines a list */
+    P_ANON    = 1 << 19, /* generating an anonymous object */
+    P_VOID    = 1 << 20, /* function call, no assignment */
+    P_NOEXEC  = 1 << 21, /* just compile, don't evaluate */
+    P_MSAVE   = 1 << 22, /* trying for reuse of an aux matrix */
+    P_OBSVAL  = 1 << 23, /* generating value of observation in series */
+    P_ALIASED = 1 << 24  /* state: handling aliased object (temporary) */
 };
 
 struct lhinfo {

@@ -8161,12 +8161,6 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
 	}
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
-	ret = matrix_pointer_node(p);
-	if (ret != NULL) {
-	    ret->v.m = (gretl_matrix *) val;
-	    ret->flags |= PTR_NODE;
-	}
     } else if (type == GRETL_TYPE_BUNDLE) {
 	if (copied) {
 	    ret = aux_bundle_node(p);
@@ -8753,16 +8747,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 		ptr = rhs->v.m;
 		type = GRETL_TYPE_MATRIX;
 		donate = is_tmp_node(rhs);
-	    }
-	    break;
-	case U_ADDR:
-	    /* FIXME now redundant? */
-	    rhs = rhs->v.b1.b;
-	    if (umatrix_node(rhs)) {
-		ptr = rhs->v.m;
-		type = GRETL_TYPE_MATRIX_REF;
-	    } else {
-		err = E_TYPES;
 	    }
 	    break;
 	case SERIES:
@@ -15412,10 +15396,6 @@ static void gen_preprocess (parser *p, int flags)
 	*/
 	p->lh.gtype = p->targ;
 	p->targ = ARRAY;
-    } else if (p->targ == MAT && *s == '*') {
-	/* this is on crack? */
-	p->flags |= P_LHPTR;
-	s++;
     }
 
     /* check for types that cannot be generated in the
@@ -15743,24 +15723,16 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 	m = r->v.m;
 	r->v.m = NULL; /* avoid double-freeing */
     } else if (r->t == MAT) {
-	/* r->v.m is an existing user matrix (or bundled matrix) */
-	if (p->flags & P_LHPTR) {
-	    if (r->flags & PTR_NODE) {
-		/* OK, we'll share the matrix pointer */
-		m = r->v.m;
-	    } else {
-		p->err = E_TYPES;
-	    }
-	} else {
-	    /* must make a copy to keep pointers distinct */
-	    m = gretl_matrix_copy(r->v.m);
+	/* r->v.m is an existing user matrix (or bundled matrix):
+	   must make a copy to keep pointers distinct
+	*/
+	m = gretl_matrix_copy(r->v.m);
 #if EDEBUG
-	    fprintf(stderr, "matrix result (%p) is pre-existing, copied to %p\n",
-		    (void *) r->v.m, (void *) m);
+	fprintf(stderr, "matrix result (%p) is pre-existing, copied to %p\n",
+		(void *) r->v.m, (void *) m);
 #endif
-	    if (m == NULL) {
-		p->err = E_ALLOC;
-	    }
+	if (m == NULL) {
+	    p->err = E_ALLOC;
 	}
 	if (!p->err && prechecked != NULL) {
 	    *prechecked = 1;
@@ -16690,8 +16662,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     */
     int saveflags[] = {
 	P_NATEST, P_AUTOREG, P_SLAVE,
-	P_LHPTR, P_DISCARD, P_NODECL,
-	P_LISTDEF, 0
+	P_DISCARD, P_NODECL, P_LISTDEF,
+	0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;

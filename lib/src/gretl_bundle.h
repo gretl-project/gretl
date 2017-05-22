@@ -177,8 +177,6 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 					     int len,
 					     int *err);
 
-int bundle_contains_data (gretl_bundle *b, void *data);
-
 gretl_bundle *get_sysinfo_bundle (int *err);
 
 void *sysinfo_bundle_get_data (const char *key,

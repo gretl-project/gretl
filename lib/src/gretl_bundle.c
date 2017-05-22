@@ -128,7 +128,6 @@ int type_can_be_bundled (GretlType type)
     return (type == GRETL_TYPE_DOUBLE ||
 	    type == GRETL_TYPE_STRING ||
 	    type == GRETL_TYPE_MATRIX ||
-	    type == GRETL_TYPE_MATRIX_REF ||
 	    type == GRETL_TYPE_SERIES ||
 	    type == GRETL_TYPE_BUNDLE ||
 	    type == GRETL_TYPE_ARRAY ||
@@ -183,9 +182,6 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 		item->data = ptr;
 	    }
 	    break;
-	case GRETL_TYPE_MATRIX_REF:
-	    item->data = ptr;
-	    break;
 	case GRETL_TYPE_SERIES:
 	    if (copy) {
 		item->data = copyvec((const double *) ptr, size);
@@ -234,19 +230,6 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     return item;
 }
 
-static void release_matrix_pointer (gretl_matrix **pm)
-{
-    const void *data = *pm;
-
-    if (get_user_var_by_data(data) == NULL) {
-	/* the bundle now has the only pointer to
-	   this matrix */
-	gretl_matrix_free(*pm);
-    }
-
-    *pm = NULL;
-}
-
 static int bundled_item_replace_data (bundled_item *item,
 				      GretlType type, void *ptr, 
 				      int size, int copy)
@@ -279,9 +262,6 @@ static int bundled_item_replace_data (bundled_item *item,
 	} else {
 	    item->data = ptr;
 	}
-    } else if (item->type == GRETL_TYPE_MATRIX_REF) {
-	release_matrix_pointer((gretl_matrix **) &item->data);
-	item->data = ptr;
     } else if (item->type == GRETL_TYPE_SERIES) {
 	free(item->data);
 	if (copy) {
@@ -350,9 +330,6 @@ static void bundled_item_destroy (gpointer data)
 	break;
     case GRETL_TYPE_MATRIX:
 	gretl_matrix_free((gretl_matrix *) item->data);
-	break;
-    case GRETL_TYPE_MATRIX_REF:
-	release_matrix_pointer((gretl_matrix **) &item->data);
 	break;
     case GRETL_TYPE_BUNDLE:
 	gretl_bundle_destroy((gretl_bundle *) item->data);
@@ -721,8 +698,8 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
     int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_MATRIX && 
-	type != GRETL_TYPE_MATRIX_REF) {
+
+    if (ptr != NULL && type != GRETL_TYPE_MATRIX) {
 	myerr = E_TYPES;
     }
 
@@ -1522,7 +1499,6 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 		gretl_type_get_name(item->type));
 	break;
     case GRETL_TYPE_MATRIX:
-    case GRETL_TYPE_MATRIX_REF:
 	m = item->data;
 	if (m->rows == 1 && m->cols == 1) {
 	    pprintf(prn, " %s = %g", kstr, m->val[0]);
@@ -1616,11 +1592,6 @@ static gboolean match_by_data (gpointer key, gpointer value, gpointer p)
     bundled_item *item = value;
 
     return item->data == p;
-}
-
-int bundle_contains_data (gretl_bundle *b, void *data)
-{
-    return g_hash_table_find(b->ht, match_by_data, data) != NULL;
 }
 
 /* Called from gretl_func.c on return, to remove
