@@ -29,6 +29,7 @@ version 2017b, in progress
   window
 - Fix bug: breakage in column headings for the printout of
   multinomial outcome probabilities in GUI
+- Fix bug: "catch" failing in loops under certain conditions
 - Validate $-bundles as legitimate function arguments
 
 2017-04-15 version 2017a
