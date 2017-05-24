@@ -2226,8 +2226,9 @@ maybe_get_model_data (MODEL *pmod, gretlopt opt, int *err)
 	if (pmod->dataset != NULL) {
 	    dset = pmod->dataset;
 	} else {
-	    fprintf(stderr, "between model, fail\n");
-	    *err = 1;
+	    gretl_errmsg_set("The group-means dataset is not available");
+	    *err = E_DATA;
+	    gui_errmsg(*err);
 	}
     } else if (model_sample_problem(pmod, dataset)) {
 	*err = add_dataset_to_model(pmod, dataset, opt);

@@ -361,7 +361,13 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
     }
     
     if (dv < 0) {
-	strcpy(fr->depvar, "implicit y");
+	const char *dvname = pmod->depvar;
+
+	if (dvname != NULL) {
+	    strcpy(fr->depvar, dvname);
+	} else {
+	    strcpy(fr->depvar, "implicit y");
+	}
     } else {
 	strcpy(fr->depvar, dset->varname[dv]);
     }

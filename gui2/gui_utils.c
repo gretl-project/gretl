@@ -2826,6 +2826,9 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* can we relax this later? */
 	flip(vwin->ui, "/menubar/Graphs", FALSE);
+    } else if (gretl_is_between_model(pmod) &&
+	       pmod->dataset == NULL) {
+	flip(vwin->ui, "/menubar/Graphs", FALSE);
     }
 
     if (pmod->ci == GMM || pmod->ci == BIPROBIT) {
