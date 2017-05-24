@@ -2222,7 +2222,14 @@ maybe_get_model_data (MODEL *pmod, gretlopt opt, int *err)
 {
     DATASET *dset = NULL;
 
-    if (model_sample_problem(pmod, dataset)) { 
+    if (gretl_is_between_model(pmod)) {
+	if (pmod->dataset != NULL) {
+	    dset = pmod->dataset;
+	} else {
+	    fprintf(stderr, "between model, fail\n");
+	    *err = 1;
+	}
+    } else if (model_sample_problem(pmod, dataset)) {
 	*err = add_dataset_to_model(pmod, dataset, opt);
 	if (*err) {
 	    gui_errmsg(*err);
@@ -2240,8 +2247,10 @@ maybe_get_model_data (MODEL *pmod, gretlopt opt, int *err)
 static void trim_dataset (MODEL *pmod, int origv)
 {
     if (pmod != NULL && pmod->dataset != NULL) {
-	destroy_dataset(pmod->dataset);
-	pmod->dataset = NULL;
+	if (!gretl_is_between_model(pmod)) {
+	    destroy_dataset(pmod->dataset);
+	    pmod->dataset = NULL;
+	}
     } else if (origv > 0) {
 	dataset_drop_last_variables(dataset, dataset->v - origv); 
     }

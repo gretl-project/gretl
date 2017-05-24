@@ -2824,6 +2824,17 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
     char *mask = NULL;
     int maxv, sn = 0;
 
+    if (gretl_is_between_model(pmod)) {
+	/* special case: we can't reconstruct the dataset here,
+	   but it may already be attached to @pmod.
+	*/
+	if (pmod->dataset != NULL) {
+	    return 0;
+	} else {
+	    return E_DATA;
+	}
+    }
+
     if (pmod->dataset != NULL) {
 	/* FIXME? */
 	destroy_dataset(pmod->dataset);
@@ -2939,7 +2950,9 @@ int model_sample_problem (const MODEL *pmod, const DATASET *dset)
 {
     int ret = 1;
 
-    if (pmod->submask == NULL) {
+    if (pmod->ci == PANEL && (pmod->opt & OPT_B)) {
+	; /* special case: panel "between" model */
+    } else if (pmod->submask == NULL) {
 	/* the model has no sub-sampling info recorded */
 	if (dset->submask == NULL) {
 	    /* data set is not sub-sampled either, OK */

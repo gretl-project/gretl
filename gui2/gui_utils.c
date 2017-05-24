@@ -5096,6 +5096,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     MODEL *pmod = vwin->data;
     GtkAction *action;
     int resampled = 0;
+    int between = 0;
     gboolean s, ok = TRUE;
 
     if (RQ_SPECIAL_MODEL(pmod)) {
@@ -5119,9 +5120,11 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     if (model_sample_problem(pmod, dataset)) {
 	resampled = (pmod->submask == RESAMPLED);
+	between = gretl_is_between_model(pmod);
 	ok = FALSE;
     }
 
+    /* check current menu state */
     action = gtk_ui_manager_get_action(vwin->ui, "/menubar/Save/uhat");
     s = gtk_action_is_sensitive(action);
 
@@ -5134,7 +5137,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	if (resampled) {
 	    infobox(_("The model sample differs from the dataset sample,\n"
 		      "so some menu options will be disabled."));
-	} else {
+	} else if (!between) {
+	    /* give option to restore model sample */
 	    ok = maybe_set_sample_from_model(vwin);
 	    if (ok) {
 		return FALSE;

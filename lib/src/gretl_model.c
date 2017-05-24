@@ -1172,6 +1172,15 @@ int gretl_is_arima_model (const MODEL *pmod)
     return (d > 0 || D > 0);
 }
 
+int gretl_is_between_model (const MODEL *pmod)
+{
+    if (pmod->ci == PANEL && (pmod->opt & OPT_B)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 #define arma_included(m,i) (m == NULL || m[i] == '1')
 
 /**
@@ -4785,7 +4794,7 @@ void display_model_data_items (const MODEL *pmod)
     }
 }
 
-static int copy_model (MODEL *targ, const MODEL *src)
+static int copy_model (MODEL *targ, /* const */ MODEL *src)
 {
     int k = src->ncoeff;
     int m = k * (k + 1) / 2;
@@ -4886,9 +4895,13 @@ static int copy_model (MODEL *targ, const MODEL *src)
     if (src->list != NULL && 
 	(targ->list = gretl_list_copy(src->list)) == NULL) {
 	return 1;
-    } 
+    }
 
-    /* src->dataset? */
+    if (src->dataset != NULL) {
+	/* FIXME?? */
+	targ->dataset = src->dataset;
+	src->dataset = NULL;
+    }
 
     return 0;
 }
@@ -5639,7 +5652,7 @@ MODEL *gretl_model_copy (const MODEL *pmod)
 #endif
 
     if (new != NULL) {
-	int err = copy_model(new, pmod);
+	int err = copy_model(new, (MODEL *) pmod);
 
 	if (err) {
 	    clear_model(new);
@@ -5695,6 +5708,7 @@ void swap_models (MODEL *targ, MODEL *src)
 int command_ok_for_model (int test_ci, gretlopt opt, 
 			  const MODEL *pmod)
 {
+    int between = 0;
     int mci = pmod->ci;
     int ok = 1;
 
@@ -5718,6 +5732,8 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 		(mci != MLE && normality_test(test_ci, opt)));
     }
 
+    between = gretl_is_between_model(pmod);
+
     switch (test_ci) {
 
     case ADD:
@@ -5735,8 +5751,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     case OMIT:
 	if (mci == ARMA || mci == GARCH || mci == INTREG) {
 	    ok = 0;
-	} else if (mci == PANEL && (pmod->opt & OPT_B)) {
-	    /* the "between" model */
+	} else if (between) {
 	    ok = 0;
 	}
 	break;
@@ -5763,7 +5778,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    ok = (mci == AR1);
 	} else if (opt & OPT_D) {
 	    /* x-sectional dependence */
-	    ok = 1;
+	    ok = !between;
 	} else if (opt & OPT_N) {
 	    /* normality */
 	    if (mci == LOGIT || mci == HECKIT || mci == DURATION) {

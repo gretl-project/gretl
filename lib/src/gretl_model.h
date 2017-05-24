@@ -410,6 +410,8 @@ int gretl_is_simple_OLS (const MODEL *pmod);
 
 int gretl_is_arima_model (const MODEL *pmod);
 
+int gretl_is_between_model (const MODEL *pmod);
+
 int get_first_model_stat (const char **word, const char **desc);
 
 int get_next_model_stat (const char **word, const char **desc);
