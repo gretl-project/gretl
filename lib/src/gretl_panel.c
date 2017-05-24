@@ -1369,12 +1369,11 @@ static int save_between_model (MODEL *pmod, const int *blist,
     pmod->dw = NADBL;
 
     gretl_model_add_panel_varnames(pmod, gset, NULL);
-
     droplist = gretl_model_get_list(pmod, "droplist");
 
     /* replace both the model's regression list and its list of
        dropped variables, if any, with the ID numbers of the
-       corresponding variables in the main dataset 
+       corresponding variables in the main dataset (??)
     */
     j = 1;
     for (i=1; i<=pmod->list[0]; i++) {
@@ -3249,14 +3248,18 @@ static int between_model (panelmod_t *pan, const DATASET *dset)
     int err = 0;
 
     gset = group_means_dataset(pan, dset);
+
     if (gset == NULL) {
 	err = E_ALLOC;
     } else {
 	err = between_variance(pan, gset);
-    }
-
-    if (gset != NULL) {
-	destroy_dataset(gset);
+	if (1 /* err */) {
+	    /* FIXME maybe return to this */
+	    destroy_dataset(gset);
+	} else {
+	    fprintf(stderr, "attaching gset to between_model\n");
+	    pan->realmod->dataset = gset;
+	}
     }
 
     return err;
