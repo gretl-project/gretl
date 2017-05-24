@@ -2696,6 +2696,9 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
     } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
 	/* random effects probit */
 	flip(ui, "/menubar/Tests/modtest:n", FALSE);
+    } else if (gretl_is_between_model(pmod)) {
+	flip(ui, "/menubar/Tests/coeffsum", FALSE);
+	flip(ui, "/menubar/Tests/Hsk", FALSE);
     }
 }
 
@@ -3138,20 +3141,33 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 
     /* 3-D fitted versus actual plot? */
     if (xlist != NULL) {
-	v1 = v2 = 0;
+	int parnames = pmod->dataset != NULL;
+
+	v1 = v2 = -1;
 	if (pmod->ifc && xlist[0] == 3) {
-	    v1 = xlist[2];
-	    v2 = xlist[3];
+	    v1 = parnames ? 1 : xlist[2];
+	    v2 = parnames ? 2 : xlist[3];
 	} else if (!pmod->ifc && xlist[0] == 2) {
-	    v1 = xlist[1];
-	    v2 = xlist[2];
+	    v1 = parnames ? 0 : xlist[1];
+	    v2 = parnames ? 1 : xlist[2];
 	}
-	if (v1 > 0 && v2 > 0) {
+	if (v1 >= 0 && v2 >= 0) {
 	    char tmp2[VNAMELEN2];
 
+	    if (parnames) {
+		char pname[VNAMELEN];
+
+		gretl_model_get_param_name(pmod, pmod->dataset,
+					   v1, pname);
+		double_underscores(tmp, pname);
+		gretl_model_get_param_name(pmod, pmod->dataset,
+					   v2, pname);
+		double_underscores(tmp2, pname);
+	    } else {
+		double_underscores(tmp, dataset->varname[v1]);
+		double_underscores(tmp2, dataset->varname[v2]);
+	    }
 	    vwin_menu_add_separator(vwin, mpath[1]);
-	    double_underscores(tmp, dataset->varname[v1]);
-	    double_underscores(tmp2, dataset->varname[v2]);
 	    alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);	
 	    entry.name = "splot";
 	    entry.label = alabel;
@@ -5144,7 +5160,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 		return FALSE;
 	    }
 	}
-    } 
+    }
 
     flip(vwin->ui, "/menubar/Analysis/Forecasts", ok);
     flip(vwin->ui, "/menubar/Save/yhat", ok);
@@ -5157,6 +5173,10 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(vwin->ui, "/menubar/Analysis/DisplayAFR", FALSE);
 	flip(vwin->ui, "/menubar/Analysis/Bootstrap", FALSE);
 	flip(vwin->ui, "/menubar/Graphs", FALSE);
+    }
+
+    if (between) {
+	flip(vwin->ui, "/menubar/Edit/Revise", FALSE);
     }
 
     return FALSE;

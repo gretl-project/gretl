@@ -4898,7 +4898,9 @@ static int copy_model (MODEL *targ, /* const */ MODEL *src)
     }
 
     if (src->dataset != NULL) {
-	/* FIXME?? */
+	/* special for "between" panel model: transfer the
+	   group-means dataset to @targ (FIXME?)
+	*/
 	targ->dataset = src->dataset;
 	src->dataset = NULL;
     }
@@ -5775,6 +5777,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    /* ARCH */
 	    ok = (mci != ARCH && mci != GARCH);
 	} else if (opt & OPT_C) {
+	    /* common factor restriction */
 	    ok = (mci == AR1);
 	} else if (opt & OPT_D) {
 	    /* x-sectional dependence */
