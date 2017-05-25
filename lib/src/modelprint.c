@@ -2618,8 +2618,6 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 
 #define random_effects_model(m) (m->ci == PANEL && (m->opt & OPT_U))
 
-#define between_model(m) (m->ci == PANEL && (m->opt & OPT_B))
-
 #define weighted_model(m) (m->ci == HSK || m->ci == ARCH || \
 			   (m->ci == WLS && !gretl_model_get_int(m, "wt_dummy")) || \
                            (m->ci == PANEL && (m->opt & OPT_H)))

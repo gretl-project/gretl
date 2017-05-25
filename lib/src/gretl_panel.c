@@ -3601,6 +3601,9 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    mod = *pan.realmod;
 	    mod.missmask = mask;
 	} else if (!(opt & OPT_P)) {
+	    /* not the pooled model, in which case @mod would
+	       already hold the correct model
+	    */
 	    clear_model(&mod);
 	    mod = *pan.realmod;
 	}
