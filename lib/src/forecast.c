@@ -311,6 +311,8 @@ static int special_depvar (const MODEL *pmod)
 FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset, 
 			 int *err)
 {
+    double *uhat = pmod->uhat;
+    double *yhat = pmod->yhat;
     FITRESID *fr;
     int t, dv = -1;
 
@@ -319,6 +321,19 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
 	if (dv < 0 || dv >= dset->v) {
 	    *err = E_DATA;
 	    return NULL;
+	}
+    }
+
+    if (uhat == NULL || yhat == NULL) {
+	gretl_matrix *uh = gretl_model_get_data(pmod, "uhat");
+	gretl_matrix *yh = gretl_model_get_data(pmod, "yhat");
+
+	if (uh == NULL || yh == NULL) {
+	    *err = E_DATA;
+	    return NULL;
+	} else {
+	    uhat = uh->val;
+	    yhat = yh->val;
 	}
     }
 
@@ -342,16 +357,16 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
 
     for (t=0; t<fr->nobs; t++) {
 	if (dv < 0) {
-	    if (na(pmod->yhat[t]) || na(pmod->uhat[t])) {
+	    if (na(yhat[t]) || na(uhat[t])) {
 		fr->actual[t] = NADBL;
 	    } else {
-		fr->actual[t] = pmod->yhat[t] + pmod->uhat[t];
+		fr->actual[t] = yhat[t] + uhat[t];
 	    }
 	} else {
 	    fr->actual[t] = dset->Z[dv][t];
 	}
-	fr->fitted[t] = pmod->yhat[t];
-	fr->resid[t] = pmod->uhat[t];
+	fr->fitted[t] = yhat[t];
+	fr->resid[t] = uhat[t];
     }
 
     if (dv < 0) {

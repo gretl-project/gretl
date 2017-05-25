@@ -4897,9 +4897,9 @@ static int copy_model (MODEL *targ, /* const */ MODEL *src)
 	return 1;
     }
 
-    if (src->dataset != NULL) {
+    if (gretl_is_between_model(src) && src->dataset != NULL) {
 	/* special for "between" panel model: transfer the
-	   group-means dataset to @targ (FIXME?)
+	   group-means dataset to @targ
 	*/
 	targ->dataset = src->dataset;
 	src->dataset = NULL;
@@ -6988,14 +6988,17 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	return NULL;
     }
 
-    if ((idx == M_UHAT || idx == M_YHAT) && pmod->ci == BIPROBIT) {
-	/* special: matrices with 2 columns */
+    if ((idx == M_UHAT || idx == M_YHAT) &&
+	(pmod->ci == BIPROBIT || gretl_is_between_model(pmod))) {
+	/* special: uhat and yhat are matrices */
+	const char *utag = pmod->ci == BIPROBIT ? "bp_uhat" : "uhat";
+	const char *ytag = pmod->ci == BIPROBIT ? "bp_yhat" : "yhat";
 	gretl_matrix *P;
 
 	if (idx == M_UHAT) {
-	    P = gretl_model_get_data(pmod, "bp_uhat");
+	    P = gretl_model_get_data(pmod, utag);
 	} else {
-	    P = gretl_model_get_data(pmod, "bp_yhat");
+	    P = gretl_model_get_data(pmod, ytag);
 	}
 
 	if (P == NULL) {

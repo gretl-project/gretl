@@ -1355,42 +1355,38 @@ static DATASET *group_means_dataset (panelmod_t *pan,
     return gset;
 }
 
-#define SAVE_BETWEEN_DATA 1
-
 /* spruce up the between model and attach it to pan */
 
 static int save_between_model (MODEL *pmod, const int *blist,
 			       DATASET *gset, panelmod_t *pan)
 {
-    int err = 0;
+    gretl_matrix *uh, *yh;
+    int i, err = 0;
 
     pmod->ci = PANEL;
     pmod->opt |= OPT_B;
     pmod->dw = NADBL;
     gretl_model_add_panel_varnames(pmod, gset, NULL);
 
-#if !SAVE_BETWEEN_DATA
-    if (1) {
-	/* Replace both the model's regression list and its list of
-	   dropped variables, if any, with the ID numbers of the
-	   corresponding variables in the main dataset.
-	*/
-	int *droplist;
-	int i, j, dpos;
+    uh = gretl_column_vector_alloc(pmod->nobs);
+    yh = gretl_column_vector_alloc(pmod->nobs);
 
-	droplist = gretl_model_get_list(pmod, "droplist");
-
-	j = 1;
-	for (i=1; i<=pmod->list[0]; i++) {
-	    if (i > 1 && droplist != NULL) {
-		while ((dpos = in_gretl_list(droplist, blist[j]))) {
-		    droplist[dpos] = pan->pooled->list[j];
-		    j++;
-		}
-	    }
-	    pmod->list[i] = pan->pooled->list[j++];
+    if (uh == NULL || yh == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<pmod->nobs; i++) {
+	    uh->val[i] = pmod->uhat[i];
+	    yh->val[i] = pmod->yhat[i];
 	}
+	gretl_model_set_matrix_as_data(pmod, "uhat", uh);
+	gretl_model_set_matrix_as_data(pmod, "yhat", yh);
     }
+
+#if 0
+    /* this is risky at present: too many functions want
+       to read pmod->uhat directly */
+    free(pmod->uhat); free(pmod->yhat);
+    pmod->uhat = pmod->yhat = NULL;
 #endif
 
     *pan->realmod = *pmod;
@@ -3260,16 +3256,11 @@ static int between_model (panelmod_t *pan, const DATASET *dset)
 	err = E_ALLOC;
     } else {
 	err = between_variance(pan, gset);
-#if SAVE_BETWEEN_DATA
 	if (err) {
 	    destroy_dataset(gset);
 	} else {
-	    fprintf(stderr, "attaching gset to between_model\n");
 	    pan->realmod->dataset = gset;
 	}
-#else
-	destroy_dataset(gset);
-#endif
     }
 
     return err;

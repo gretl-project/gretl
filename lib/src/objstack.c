@@ -1224,27 +1224,31 @@ static stacker *find_smatch (const char *oname)
     return smatch;
 }
 
-/* Retrieve the type of a named model, or of the last model if @name
-   is NULL.  If it's a single-equation model and @ci is non-NULL,
-   also retrieve the model's command index in @ci.
-*/
-
-GretlObjType gretl_model_get_type_and_ci (const char *name,
-					  int *ci)
+GretlType saved_object_get_data_type (const char *name,
+				      ModelDataIndex idx)
 {
     stacker *smatch = find_smatch(name);
-    GretlObjType ret = GRETL_OBJ_NULL;
+    GretlType ret = GRETL_TYPE_NONE;
 
-    if (ci != NULL) {
-	*ci = 0;
-    }
+    /* note: handles M_UHAT, M_YHAT, M_SIGMA */
 
     if (smatch != NULL) {
-	ret = smatch->type;
-	if (ret == GRETL_OBJ_EQN && ci != NULL) {
-	    MODEL *pmod = smatch->ptr;
+	if (smatch->type == GRETL_OBJ_EQN) {
+	    if (idx == M_SIGMA) {
+		ret = GRETL_TYPE_DOUBLE;
+	    } else {
+		MODEL *pmod = smatch->ptr;
 
-	    *ci = pmod->ci;
+		if (pmod->ci == BIPROBIT ||
+		    gretl_is_between_model(pmod)) {
+		    ret = GRETL_TYPE_MATRIX;
+		} else {
+		    ret = GRETL_TYPE_SERIES;
+		}
+	    }
+	} else {
+	    /* VAR, VECM, system */
+	    ret = GRETL_TYPE_MATRIX;
 	}
     }
 

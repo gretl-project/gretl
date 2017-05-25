@@ -1659,7 +1659,7 @@ static void print_model_zerolist (const MODEL *pmod,
     const int *zlist = gretl_model_get_list(pmod, "zerolist");
     const char *tag = N_("Omitted because all values were zero:");
 
-    if (pmod->ci == PANEL && (pmod->opt & OPT_B)) {
+    if (gretl_is_between_model(pmod)) {
 	return;
     }
 
@@ -1672,6 +1672,12 @@ static void print_model_droplist (const MODEL *pmod,
 {
     const int *dlist = gretl_model_get_list(pmod, "droplist");
     const char *tag = N_("Omitted due to exact collinearity:");
+
+    if (gretl_is_between_model(pmod) && pmod->dataset == NULL) {
+	/* any droplist references will probably be wrong,
+	   and may be out of bounds */
+	return;
+    }
 
     print_extra_list(tag, dlist, dset, prn);
 }
@@ -3314,7 +3320,11 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
     if (plain_format(prn)) {
 	print_model_iter_info(pmod, prn);
-    } 
+    }
+
+    if (gretl_is_between_model(pmod) && pmod->dataset != NULL) {
+	dset = pmod->dataset;
+    }
 
     model_format_start(prn);
 

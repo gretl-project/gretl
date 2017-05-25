@@ -5883,14 +5883,7 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 	    if (err) {
 		if (i == M_UHAT || i == M_YHAT || i == M_SIGMA) {
 		    /* maybe the result is a matrix? */
-		    int ci = 0;
-		    GretlObjType otype = gretl_model_get_type_and_ci(NULL, &ci);
-
-		    if (otype != GRETL_OBJ_EQN) {
-			type = GRETL_TYPE_MATRIX;
-		    } else if ((i == M_UHAT || i == M_YHAT) && ci == BIPROBIT) {
-			type = GRETL_TYPE_MATRIX;
-		    }
+		    type = saved_object_get_data_type(NULL, i);
 		    if (type == GRETL_TYPE_MATRIX) {
 			m = saved_object_get_matrix(NULL, i, &err);
 		    }
