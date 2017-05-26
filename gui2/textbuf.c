@@ -1187,7 +1187,7 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	}
 
 	if (ends_with_backslash(readbuf)) {
-	    nextcolor = BLUE_TEXT;
+	    nextcolor = thiscolor;
 	} else {
 	    nextcolor = PLAIN_TEXT;
 	}

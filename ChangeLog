@@ -1,3 +1,6 @@
+version 2017b, in progress
+- Fix buglet re. text coloring in script output window
+
 2017-05-26 version 2017b
 - "gnuplot" and "plot" commands: support --font option for
    PDF, EPS and EMF output
