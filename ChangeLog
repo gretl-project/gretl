@@ -30,6 +30,8 @@ version 2017b, in progress
 - Fix bug: breakage in column headings for the printout of
   multinomial outcome probabilities in GUI
 - Fix bug: "catch" failing in loops under certain conditions
+- Fix bug: plot with the --band option could fail in locales
+  that use the decimal comma
 - Validate $-bundles as legitimate function arguments
 
 2017-04-15 version 2017a
