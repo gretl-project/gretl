@@ -1,5 +1,7 @@
 version 2017b, in progress
 - Fix buglet re. text coloring in script output window
+- Tweak naming of auto-generated list for midasreg in the
+  GUI program
 
 2017-05-26 version 2017b
 - "gnuplot" and "plot" commands: support --font option for
