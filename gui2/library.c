@@ -4154,6 +4154,32 @@ static int real_do_model (int action)
     return err;
 }
 
+static void compose_midas_listname (gui_midas_spec *si, int i)
+{
+    char *vname = dataset->varname[si->leadvar];
+    char *p = strrchr(vname, '_');
+
+    *si->listname = '\0';
+
+    if (p != NULL && strlen(p) == 3) {
+	char tmp[VNAMELEN];
+
+	strcpy(tmp, vname);
+	p = strrchr(tmp, '_');
+	*p = '\0';
+	if (current_series_index(dataset, tmp) < 0 &&
+	    get_user_var_by_name(tmp) == NULL) {
+	    /* no collision? */
+	    strcpy(si->listname, tmp);
+	}
+    }
+
+    if (*si->listname == '\0') {
+	/* fallback */
+	sprintf(si->listname, "HFL___%d", i+1);
+    }
+}
+
 static gchar *compose_midas_param (gpointer p,
 				   gretlopt *addopt,
 				   int *err)
@@ -4161,7 +4187,7 @@ static gchar *compose_midas_param (gpointer p,
     gui_midas_spec *si, *specs = p;
     char *tmp, *buf = NULL;
     int *list = NULL;
-    int any_beta1 = 0;
+    int nt, any_beta1 = 0;
     int umidas = 1;
     int i;
 
@@ -4170,7 +4196,9 @@ static gchar *compose_midas_param (gpointer p,
 	return NULL;
     }
 
-    for (i=0; i<specs[0].nterms; i++) {
+    nt = specs[0].nterms;
+
+    for (i=0; i<nt; i++) {
 	if (specs[i].ptype != MIDAS_U) {
 	    umidas = 0;
 	}
@@ -4180,7 +4208,7 @@ static gchar *compose_midas_param (gpointer p,
     }
 
     if (any_beta1) {
-	if (specs[0].nterms > 1) {
+	if (nt > 1) {
 	    errbox("One-parameter beta term cannot be combined with others");
 	    *err = E_DATA;
 	    return NULL;
@@ -4190,14 +4218,18 @@ static gchar *compose_midas_param (gpointer p,
 	}
     }
 
-    for (i=0; i<specs[0].nterms; i++) {
+    for (i=0; i<nt; i++) {
 	si = &specs[i];
 	if (si->listname[0] == '\0') {
 	    /* we'll have to construct a list */
 	    int lmax = si->leadvar + si->fratio - 1;
-	    
+
 	    list = gretl_consecutive_list_new(si->leadvar, lmax);
-	    sprintf(si->listname, "HFL___%d", i+1);
+	    if (nt == 1) {
+		compose_midas_listname(si, i);
+	    } else {
+		sprintf(si->listname, "HFL___%d", i+1);
+	    }
 	    remember_list(list, si->listname, NULL);
 	    user_var_privatize_by_name(si->listname);
 	    
