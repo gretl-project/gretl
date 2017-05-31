@@ -846,7 +846,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 			   int n, int offset)
 {
     int startfrac = 0;
-    char pdstr[4] = {0}; 
+    char pdstr[8] = {0};
     int err = 0;
 
     if (dinfo_sanity_check(dinfo)) {
@@ -3524,7 +3524,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     k = 1;
     for (i=1; i<dset->v; i++) {
 	double *xtmp;
-	char sfx[6];
+	char sfx[16];
 	int p;
 
 	/* switch data order */

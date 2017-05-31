@@ -13553,7 +13553,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = get_lag_list(l, r, p);
 	    break;
 	}
-	/* note: otherwise fall through */
+	/* else falls through */
     case F_LJUNGBOX:
     case F_POLYFIT:
 	/* series on left, scalar on right */
@@ -14658,7 +14658,7 @@ int parser_next_nonspace_char (parser *p, int skip)
 {
     int i, offset = skip ? 1 : 0;
 
-    if (p->point == '\0') {
+    if (*p->point == '\0') {
 	return 0;
     }
 

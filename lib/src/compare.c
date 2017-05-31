@@ -3508,7 +3508,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 	lag = series_get_lag(dset, src);
 	parent = series_get_parent_id(dset, src);
 	if (lag > 0 && parent > 0) {
-	    char tmp[8];
+	    char tmp[16];
 
 	    sprintf(tmp, "_%d", lag + 1);
 	    strcpy(dset->varname[k], dset->varname[parent]);

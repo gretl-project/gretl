@@ -1418,7 +1418,7 @@ static int maybe_add_matrix_labels (gretl_matrix *m,
 
     n = (byrow)? m->rows : m->cols;
 
-    if (s != NULL && s != '\0') {
+    if (s != NULL && *s != '\0') {
 	char **S;
 	int ns;
 

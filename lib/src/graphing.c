@@ -3611,7 +3611,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    const char *xname = dset->varname[list[2]];
 	    const char *yname = dset->varname[list[1]];
 
-	    if (*xname != '\0' && yname != '\0') {
+	    if (*xname != '\0' && *yname != '\0') {
 		pprintf(prn, "# X = '%s' (%d)\n", xname, list[2]);
 		pprintf(prn, "# Y = '%s' (%d)\n", yname, list[1]);
 	    }
@@ -8385,7 +8385,7 @@ int hf_plot (const int *list, const char *literal,
     */
     plotpd = pd_from_compfac(dset, cfac, stobs);
     if (plotpd > 0) {
-	char numstr[8];
+	char numstr[12];
 
 	sprintf(numstr, "%d", plotpd);
 	set_obs(numstr, stobs, hset, OPT_T);

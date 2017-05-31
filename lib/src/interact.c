@@ -2952,7 +2952,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    gretl_errmsg_set(_("This estimator requires panel data"));
 	    err = E_DATA;
 	    break;
-	}
+	} /* otherwise falls through */
     case GARCH:
     case HECKIT:
     case HSK:

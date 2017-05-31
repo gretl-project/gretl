@@ -4295,7 +4295,7 @@ static void maybe_adjust_label (DATASET *dset, int v,
 
     if (len < MAXLABEL) {
 	char *s = dset->varinfo[v]->label;
-	char bit[8];
+	char bit[16];
 
 	*s = '\0';
 	for (i=0; i<ns; i++) {
