@@ -1833,6 +1833,7 @@ void lex (parser *p)
 		return;
 	    } else {
 		/* not a "dot operator", so back up */
+		parser_ungetc(p);
 	    }
 	    /* Falls through. */
         default: 
