@@ -647,18 +647,30 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     }
 
     if (S != NULL) {
-	int i, j, k, l;
-	int mi, mj;
-	double x;
+	int j, mj;
 
-	k = 0;
-	for (i=0; i<r && !*err; i++) {
-	    mi = (spec->rslice == NULL)? k++ : spec->rslice[i+1] - 1;
-	    l = 0;
-	    for (j=0; j<c && !*err; j++) {
-		mj = (spec->cslice == NULL)? l++ : spec->cslice[j+1] - 1;
-		x = gretl_matrix_get(M, mi, mj);
-		gretl_matrix_set(S, i, j, x);
+	if (spec->cslice != NULL && spec->rslice == NULL) {
+	    /* copying entire columns */
+	    double *dest = S->val;
+	    size_t rsize = r * sizeof *dest;
+
+	    for (j=0; j<c; j++) {
+		mj = spec->cslice[j+1] - 1;
+		memcpy(dest, M->val + mj * r, rsize);
+		dest += r;
+	    }
+	} else {
+	    int i, mi, l, k = 0;
+	    double x;
+
+	    for (j=0; j<c; j++) {
+		mj = (spec->cslice == NULL)? k++ : spec->cslice[j+1] - 1;
+		l = 0;
+		for (i=0; i<r; i++) {
+		    mi = (spec->rslice == NULL)? l++ : spec->rslice[i+1] - 1;
+		    x = gretl_matrix_get(M, mi, mj);
+		    gretl_matrix_set(S, i, j, x);
+		}
 	    }
 	}
     }
@@ -753,7 +765,7 @@ static char **expand_names (const char *s, int n, int *err)
     if (S == NULL) {
 	*err = E_ALLOC;
     } else {
-	char tmp[10];
+	char tmp[12];
 	int i, m;
 
 	for (i=0; i<n && !*err; i++) {
