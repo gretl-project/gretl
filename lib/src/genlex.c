@@ -1833,9 +1833,8 @@ void lex (parser *p)
 		return;
 	    } else {
 		/* not a "dot operator", so back up */
-		parser_ungetc(p);
-		/* Falls through. */
 	    }
+	    /* Falls through. */
         default: 
 	    if (defining_list(p) && lag_range_sym(p)) {
 		p->sym = B_RANGE;
