@@ -738,12 +738,18 @@ static gretl_matrix *gretl_filled_matrix_new (int r, int c,
 	    m->cols = c;
 	}
     } else {
-	int i, n = r * c;
+	int n = r * c;
 
 	m = gretl_matrix_alloc(r, c);
 	if (m != NULL) {
-	    for (i=0; i<n; i++) {
-		m->val[i] = val;
+	    if (val == 0.0) {
+		memset(m->val, 0, n * sizeof *m->val);
+	    } else {
+		int i;
+
+		for (i=0; i<n; i++) {
+		    m->val[i] = val;
+		}
 	    }
 	}
     }
