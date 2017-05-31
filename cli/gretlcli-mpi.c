@@ -911,7 +911,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    err = cli_renumber_series(cmd->list, cmd->parm2, dset, prn);
 	    break;
 	}
-	/* else fall-through intended */
+	/* Falls through. */
 
     default:
 	err = gretl_cmd_exec(s, dset);

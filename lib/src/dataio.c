@@ -479,7 +479,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
         sprintf(datestr, "%d", (int) x);
     } else {
 	int pdp = dset->pd, len = 1;
-	char fmt[8];
+	char fmt[10];
 
 	while ((pdp = pdp / 10)) len++;
 	sprintf(fmt, "%%.%df", len);

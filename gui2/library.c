@@ -10159,7 +10159,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    err = script_renumber_series(cmd->list, cmd->parm2, dset, prn);
 	    break;
 	}
-	/* else fall-through intended */
+	/* Falls through. */
 
     default:
 	err = gretl_cmd_exec(s, dset);
