@@ -478,7 +478,8 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
     if (dset->pd == 1) {
         sprintf(datestr, "%d", (int) x);
     } else {
-	int pdp = dset->pd, len = 1;
+	int pdp = dset->pd;
+	short len = 1;
 	char fmt[10];
 
 	while ((pdp = pdp / 10)) len++;
