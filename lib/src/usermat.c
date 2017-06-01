@@ -652,11 +652,11 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	if (spec->cslice != NULL && spec->rslice == NULL) {
 	    /* copying entire columns */
 	    double *dest = S->val;
-	    size_t rsize = r * sizeof *dest;
+	    size_t csize = r * sizeof *dest;
 
 	    for (j=0; j<c; j++) {
 		mj = spec->cslice[j+1] - 1;
-		memcpy(dest, M->val + mj * r, rsize);
+		memcpy(dest, M->val + mj * r, csize);
 		dest += r;
 	    }
 	} else {
