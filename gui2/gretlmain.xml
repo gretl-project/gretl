@@ -63,17 +63,6 @@
       <menuitem action="Gnuplot"/>
       <menuitem action="StartR"/>
       <separator/>
-      <menu action="FunctionFiles">
-	<menuitem action="LocalGfn"/>
-	<menuitem action="RemoteGfn"/>
-	<separator/>
-	<menuitem action="EditGfn"/>
-	<menuitem action="NewGfn"/>
-	<menuitem action="UploadGfn"/>
-	<menuitem action="EditSpec"/>
-	<separator/>
-	<placeholder name="RecentGfns"/>
-      </menu>
       <menu action="NistTest">
 	<menuitem action="NistBasic"/>
 	<menuitem action="NistVerbose"/>
@@ -272,6 +261,17 @@
       <menuitem action="mle"/>
       <menuitem action="gmm"/>
       <menuitem action="system"/>
+    </menu>
+    <menu action="Package">
+      <menuitem action="LocalGfn"/>
+      <menuitem action="RemoteGfn"/>
+      <separator/>
+      <menuitem action="EditGfn"/>
+      <menuitem action="NewGfn"/>
+      <menuitem action="UploadGfn"/>
+      <menuitem action="EditSpec"/>
+      <separator/>
+      <placeholder name="RecentGfns"/>
     </menu>
     <menu action="Help">
       <menuitem action="TextCmdRef"/>

@@ -1107,7 +1107,7 @@ void populate_varlist (void)
     GtkTreeStore *store = GTK_TREE_STORE(model);
     GtkTreeSelection *select;
     GtkTreeIter iter;    
-    char id[8];
+    char id[12];
     int i, pos = 0;
 
     if (store != NULL) {
@@ -1575,13 +1575,6 @@ GtkActionEntry main_entries[] = {
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_console) },
     { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(launch_gnuplot_interactive) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
-    { "FunctionFiles", NULL, N_("_Function packages"), NULL, NULL, NULL },
-    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
-    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
-    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
-    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
@@ -1749,7 +1742,6 @@ GtkActionEntry main_entries[] = {
     { "PANEL_WLS", NULL, N_("_Weighted least squares"), NULL, NULL, G_CALLBACK(model_callback) },
     { "PANEL_B", NULL, N_("_Between model"), NULL, NULL, G_CALLBACK(model_callback) },
     { "dpanel", NULL, N_("_Dynamic panel model"), NULL, NULL, G_CALLBACK(model_callback) },
-
     { "LimdepModels", NULL, N_("_Limited dependent variable"), NULL, NULL, NULL },
     { "logit", NULL, N_("_Logit"), NULL, NULL, NULL }, 
     { "blogit", NULL, N_("_Binary"), NULL, NULL, G_CALLBACK(model_callback) }, 
@@ -1775,6 +1767,15 @@ GtkActionEntry main_entries[] = {
     { "mle", NULL, N_("_Maximum likelihood"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
+
+    /* Package */
+    { "Package", NULL, N_("_Package"), NULL, NULL, NULL },
+    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
+    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
+    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
+    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
