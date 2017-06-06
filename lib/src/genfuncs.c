@@ -7077,7 +7077,7 @@ static int handle_excess_precision (int *ymd1, int *ymd2, int pd,
 int sample_span (const char *stobs, const char *endobs,
 		 int pd, int *err)
 {
-    char obs1[12], obs2[12];
+    char obs1[16], obs2[16];
     DATASET dset = {0};
     int ymd1[3], ymd2[3];
     int n, nf, t2, span = -1;

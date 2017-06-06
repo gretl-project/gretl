@@ -377,6 +377,7 @@ enum {
     F_NORMTEST,
     F_COR,
     F_STRSCRAPE,
+    HF_CEIGH,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

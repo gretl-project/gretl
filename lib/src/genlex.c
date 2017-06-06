@@ -495,6 +495,7 @@ struct str_table func_alias[] = {
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
+    { HF_CEIGH,    "_ceigh" },
     { 0,           NULL }
 };
 
@@ -544,7 +545,7 @@ static GHashTable *gretl_function_hash_init (void)
     for (i=0; hidden_funcs[i].str != NULL; i++) {
 	g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str, 
 			    GINT_TO_POINTER(hidden_funcs[i].id));
-    }    
+    }
 
     return ht;
 }
@@ -612,6 +613,12 @@ static const char *funname (int t)
     for (i=0; funcs[i].id != 0; i++) {
 	if (t == funcs[i].id) {
 	    return funcs[i].str;
+	}
+    }
+
+    for (i=0; hidden_funcs[i].id != 0; i++) {
+	if (t == hidden_funcs[i].id) {
+	    return hidden_funcs[i].str;
 	}
     }
 
@@ -1427,7 +1434,7 @@ static void getword (parser *p)
     char word[32];
     int i = 0;
 
-    /* we know the first char is acceptable (and might be '$') */
+    /* we know the first char is acceptable (and might be '$' or '_') */
     word[i++] = p->ch;
     parser_getc(p);
 

@@ -111,6 +111,7 @@ enum {
 
 #define umatrix_node(n) (n->t == MAT && n->vname != NULL)
 #define ubundle_node(n) (n->t == BUNDLE && n->vname != NULL)
+#define uarray_node(n)  (n->t == ARRAY && n->vname != NULL)
 #define ulist_node(n)   (n->t == LIST && n->vname != NULL)
 #define ustring_node(n) (n->t == STR && n->vname != NULL)
 #define uarray_node(n)  (n->t == ARRAY && n->vname != NULL)
@@ -126,9 +127,8 @@ enum {
 #define empty_or_string(n) (n == NULL || n->t == EMPTY || n->t == STR)
 #define null_or_empty(n) (n == NULL || n->t == EMPTY)
 
-#define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
-			    t == SERIES || t == BUNDLE || t == U_ADDR || \
-			    t == ARRAY)
+#define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || t == LIST || \
+			    t == SERIES || t == BUNDLE || t == ARRAY)
 
 #define compiled(p) (p->flags & P_EXEC)
 
@@ -3993,6 +3993,71 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	case F_EIGGEN:
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
 	    break;
+	}
+
+    finalize:
+
+	if (ret->v.m == NULL) {
+	    matrix_error(p);
+	}
+    }
+
+    return ret;
+}
+
+extern gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err);
+
+static NODE *array_to_matrix_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_array *V = NULL;
+	gretl_array *A = l->v.a;
+	const char *rname = NULL;
+
+	if (gretl_array_get_type(A) != GRETL_TYPE_MATRICES ||
+	    gretl_array_get_length(A) != 2) {
+	    p->err = E_INVARG;
+	    goto finalize;
+	}
+
+	gretl_error_clear();
+
+	/* on the right: address of array or null */
+	if (null_or_empty(r)) {
+	    rname = "null";
+	} else {
+	    /* note: switch to the 'content' sub-node */
+	    r = r->v.b1.b;
+	    if (uarray_node(r)) {
+		rname = r->vname;
+		V = r->v.a;
+		if (gretl_array_get_type(V) != GRETL_TYPE_MATRICES) {
+		    p->err = E_INVARG;
+		} else if (gretl_array_get_length(V) != 2) {
+		    /* resize needed */
+		    V = gretl_array_new(GRETL_TYPE_MATRICES, 2, &p->err);
+		}
+	    } else {
+		p->err = E_INVARG;
+	    }
+	    if (p->err) {
+		if (p->err == E_INVARG) {
+		    gretl_errmsg_set("Expected the address of an array of matrices");
+		}
+		return ret;
+	    }
+	}
+
+	switch (f) {
+	case HF_CEIGH:
+	    ret->v.m = gretl_zheev(A, V, &p->err);
+	    break;
+	}
+
+	if (!p->err && V != NULL) {
+	    p->err = user_var_add_or_replace(rname, GRETL_TYPE_ARRAY, V);
 	}
 
     finalize:
@@ -14000,6 +14065,15 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 2, U_ADDR, r, p);
 	} else {
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
+	}
+	break;
+    case HF_CEIGH:
+	if (l->t != ARRAY) {
+	    node_type_error(t->t, 1, ARRAY, l, p);
+	} else if (r->t != U_ADDR && r->t != EMPTY) {
+	    node_type_error(t->t, 2, U_ADDR, r, p);
+	} else {
+	    ret = array_to_matrix_func(l, r, t->t, p);
 	}
 	break;
     case F_FDJAC:
