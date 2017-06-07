@@ -3,6 +3,11 @@
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
 
+/* Get two matrices out of array @A, checking that they
+   of the same dimensions, and if @square is non-zero
+   that they are square.
+*/
+
 static int get_two_matrices (gretl_array *A,
 			     gretl_matrix **pmr,
 			     gretl_matrix **pmi,
@@ -36,6 +41,10 @@ static int get_two_matrices (gretl_array *A,
     return err;
 }
 
+/* Put two matrices into array @A (real part, imaginary part)
+   given dimensions @r and @c and complex source @cx
+*/
+
 static int complex_mat_into_array (cmplx *cx, int r, int c,
 				   gretl_array *A)
 {
@@ -64,6 +73,10 @@ static int complex_mat_into_array (cmplx *cx, int r, int c,
     return err;
 }
 
+/* Write the content of matrices @mr (real part) and @mi
+   (imaginary part) into complex array @cx
+*/
+
 static void matrices_into_complex (const gretl_matrix *mr,
 				   const gretl_matrix *mi,
 				   cmplx *cx)
@@ -82,7 +95,9 @@ static void matrices_into_complex (const gretl_matrix *mr,
     }
 }
 
-/* eigenvalues and optionally eigenvectors of a Hermitian matrix */
+/* Compute eigenvalues (and optionally eigenvectors, if @V is non-NULL)
+   of a Hermitian matrix, using Lapack.
+*/
 
 gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
 {
@@ -160,8 +175,10 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
     return ret;
 }
 
-/* inverse of complex matrix via LU decomposition;
-   uses zgetrf(), zgetri() */
+/* Compute the inverse of a complex matrix represented by the array
+   @A via LU decomposition; uses the Lapack functions zgetrf() and
+   zgetri().
+*/
 
 gretl_array *gretl_zgetri (gretl_array *A, int *err)
 {
@@ -226,6 +243,8 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     return Ainv;
 }
 
+/* Multiplication of complex matrices via Lapack's zgemm(). */
+
 gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err)
 {
     gretl_array *C = NULL;
@@ -251,7 +270,7 @@ gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err)
 	return NULL;
     }
 
-    /* FIXME allow for transposition */
+    /* FIXME allow for transposition? */
 
     m = ar->rows;
     k = ar->cols;
