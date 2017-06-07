@@ -36,6 +36,7 @@
 #include "csvdata.h"
 #include "uservar_priv.h"
 #include "genr_optim.h"
+#include "gretl_cmatrix.h"
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -4005,8 +4006,6 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
-extern gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err);
-
 static NODE *array_to_matrix_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -4064,6 +4063,28 @@ static NODE *array_to_matrix_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *array_to_array_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_array *A = n->v.a;
+
+	if (gretl_array_get_type(A) != GRETL_TYPE_MATRICES ||
+	    gretl_array_get_length(A) != 2) {
+	    p->err = E_INVARG;
+	} else {
+	    switch (f) {
+	    case HF_CINV:
+		ret->v.a = gretl_zgetri(A, &p->err);
+		break;
+	    }
 	}
     }
 
@@ -14076,6 +14097,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = array_to_matrix_func(l, r, t->t, p);
 	}
 	break;
+    case HF_CINV:
+	if (l->t != ARRAY) {
+	    node_type_error(t->t, 1, ARRAY, l, p);
+	} else {
+	    ret = array_to_array_func(l, t->t, p);
+	}
+	break;	
     case F_FDJAC:
     case F_MWRITE:
 	/* matrix, with string as second arg */
