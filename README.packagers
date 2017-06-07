@@ -1,7 +1,8 @@
 The information below is intended to help those who are packaging
 gretl for Linux distributions. It describes certain options to the
 configure script which may affect the usability and/or functionality
-of a gretl build on various platforms.
+of a gretl build on various platforms, under the three headings
+"CPU and openmp functionality", "MPI support" and "XDG tools".
 
 1. CPU and openmp functionality
 
@@ -56,7 +57,28 @@ users of your package can either get MPI support "out of the box"
 (if they already have MPI installed) or can install an MPI package
 later and thereby get MPI support on demand.
 
+3. XDG tools
+
+By default, gretl checks for the presence of the XDG tools
+(xdg-desktop-menu, xdg-mime, xdg-icon-resource) and if they are
+found, uses them to install gretl's XDG-related files. This
+includes the gtksourceview "lang" files. This supports "make
+install" as executed by a regular user who may not have
+permission to install under /usr, and also the case where a
+user chooses to install gretl under (say) /opt: in this case
+files that will not be found under /opt (such as the
+aforementioned gtksourceview files) will be installed into the
+correct location.
+
+However, a packager who wants to ensure that _everything_ goes
+into the location specified by DESTDIR will have to override
+gretl's attempt at "cleverness". This can be done by adding
+
+--disable-xdg-utils
+
+when invoking gretl's configure script.
+
 Allin Cottrell
 Department of Economics
 Wake Forest University
-2016-08-14
+2017-06-07
