@@ -2936,7 +2936,7 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
 static void read_ellipse_alpha (selector *sr)
 {
     if (sr->extra[0] != NULL) {
-	char s[8];
+	char s[16];
 	double cval;
 
 	cval = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
