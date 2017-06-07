@@ -24,4 +24,6 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err);
 
 gretl_array *gretl_zgetri (gretl_array *A, int *err);
 
+gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err);
+
 #endif /* GRETL_CMATRIX_H */

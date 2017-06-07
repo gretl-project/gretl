@@ -4069,20 +4069,34 @@ static NODE *array_to_matrix_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *array_to_array_func (NODE *n, int f, parser *p)
+static NODE *array_to_array_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_array_node(p);
 
     if (ret != NULL && starting(p)) {
-	gretl_array *A = n->v.a;
+	gretl_array *A = l->v.a;
+	gretl_array *B = NULL;
 
 	if (gretl_array_get_type(A) != GRETL_TYPE_MATRICES ||
 	    gretl_array_get_length(A) != 2) {
 	    p->err = E_INVARG;
-	} else {
+	}
+
+	if (f == HF_CMMULT) {
+	    B = r->v.a;
+	    if (gretl_array_get_type(B) != GRETL_TYPE_MATRICES ||
+		gretl_array_get_length(B) != 2) {
+		p->err = E_INVARG;
+	    }
+	}
+
+	if (!p->err) {
 	    switch (f) {
 	    case HF_CINV:
 		ret->v.a = gretl_zgetri(A, &p->err);
+		break;
+	    case HF_CMMULT:
+		ret->v.a = gretl_zgemm(A, B, &p->err);
 		break;
 	    }
 	}
@@ -14098,10 +14112,13 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case HF_CINV:
+    case HF_CMMULT:
 	if (l->t != ARRAY) {
 	    node_type_error(t->t, 1, ARRAY, l, p);
+	} else if (r != NULL && r->t != ARRAY) {
+	    node_type_error(t->t, 2, ARRAY, r, p);
 	} else {
-	    ret = array_to_array_func(l, t->t, p);
+	    ret = array_to_array_func(l, r, t->t, p);
 	}
 	break;	
     case F_FDJAC:

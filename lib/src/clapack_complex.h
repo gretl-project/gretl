@@ -13,4 +13,10 @@ void zgetrf_ (integer *m, integer *n, cmplx *a, integer *lda,
 void zgetri_ (integer *n, cmplx *a, integer *lda, integer *ipiv,
 	      cmplx *work, integer *lwork, integer *info);
 
+void zgemm_ (const char *transa, const char *transb,
+	     integer *m, integer *n, integer *k,
+	     cmplx *alpha, cmplx *a, integer *lda,
+	     cmplx *b, integer *ldb, cmplx *beta,
+	     cmplx *c, integer *ldc);
+
 #endif /* CLAPACK_COMPLEX_H */

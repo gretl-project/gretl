@@ -36,11 +36,11 @@ static int get_two_matrices (gretl_array *A,
     return err;
 }
 
-static int complex_mat_into_array (cmplx *a, int n,
+static int complex_mat_into_array (cmplx *cx, int r, int c,
 				   gretl_array *A)
 {
-    gretl_matrix *mr = gretl_matrix_alloc(n, n);
-    gretl_matrix *mi = gretl_matrix_alloc(n, n);
+    gretl_matrix *mr = gretl_matrix_alloc(r, c);
+    gretl_matrix *mi = gretl_matrix_alloc(r, c);
     int i, j, k;
     int err = 0;
 
@@ -48,21 +48,38 @@ static int complex_mat_into_array (cmplx *a, int n,
 	return E_ALLOC;
     }
 	
-    /* read out the eigenvectors */
-    for (i=0; i<n; i++) {
-	k = i * n;
-	for (j=0; j<n; j++) {
-	    gretl_matrix_set(mr, j, i, a[k].r);
-	    gretl_matrix_set(mi, j, i, a[k].i);
+    for (j=0; j<c; j++) {
+	k = j * r;
+	for (i=0; i<r; i++) {
+	    gretl_matrix_set(mr, i, j, cx[k].r);
+	    gretl_matrix_set(mi, i, j, cx[k].i);
 	    k++;
 	}
     }
 
-    /* note: array takes ownership of mr, mi */
+    /* note: array takes ownership of these matrices */
     gretl_array_set_matrix(A, 0, mr, 0);
     gretl_array_set_matrix(A, 1, mi, 0);    
 
     return err;
+}
+
+static void matrices_into_complex (const gretl_matrix *mr,
+				   const gretl_matrix *mi,
+				   cmplx *cx)
+{
+    int r = mr->rows;
+    int c = mr->cols;
+    int i, j, k;
+
+    for (j=0; j<c; j++) {
+	k = j * r;
+	for (i=0; i<r; i++) {
+	    cx[k].r = gretl_matrix_get(mr, i, j);
+	    cx[k].i = gretl_matrix_get(mi, i, j);
+	    k++;
+	}
+    }
 }
 
 /* eigenvalues and optionally eigenvectors of a Hermitian matrix */
@@ -99,9 +116,9 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
     w = ret->val;
 
     /* write upper triangle of complex matrix into @a */
-    for (i=0; i<n; i++) {
-	k = i * n;
-	for (j=0; j<=i; j++) {
+    for (j=0; j<n; j++) {
+	k = j * n;
+	for (i=0; i<n; i++) { /* FIXME triangle */
 	    a[k].r = gretl_matrix_get(mr, i, j);
 	    a[k].i = gretl_matrix_get(mi, i, j);
 	    k++;
@@ -126,7 +143,7 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
 	fprintf(stderr, "zheev: info = %d\n", info);
 	*err = E_DATA;
     } else if (V != NULL) {
-	*err = complex_mat_into_array(a, n, V);
+	*err = complex_mat_into_array(a, n, n, V);
     }
 
  bailout:
@@ -155,7 +172,6 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     integer *ipiv;
     cmplx *work, *a;
     integer n, info;
-    int i, j, k;
 
     *err = get_two_matrices(A, &mr, &mi, 1); /* square? */
     if (*err) {
@@ -166,22 +182,14 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     lwork = 10 * n;
 
     a = malloc(n * n *sizeof *a);
-    ipiv = malloc(2 * n *sizeof *ipiv);
+    ipiv = malloc(2 * n * sizeof *ipiv);
     work = malloc(lwork * sizeof *work);
     if (a == NULL || ipiv == NULL || work == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    /* write complex matrix into @a */
-    for (i=0; i<n; i++) {
-	k = i * n;
-	for (j=0; j<n; j++) {
-	    a[k].r = gretl_matrix_get(mr, i, j);
-	    a[k].i = gretl_matrix_get(mi, i, j);
-	    k++;
-	}
-    }    
+    matrices_into_complex(mr, mi, a);
 
     zgetrf_(&n, &n, a, &n, ipiv, &info);
     if (info != 0) {
@@ -200,7 +208,7 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     if (!*err) {
 	Ainv = gretl_array_new(GRETL_TYPE_MATRICES, 2, err);
 	if (!*err) {
-	    *err = complex_mat_into_array(a, n, Ainv);
+	    *err = complex_mat_into_array(a, n, n, Ainv);
 	}
     }
 
@@ -216,4 +224,76 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     }
 
     return Ainv;
+}
+
+gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err)
+{
+    gretl_array *C = NULL;
+    gretl_matrix *ar = NULL;
+    gretl_matrix *ai = NULL;
+    gretl_matrix *br = NULL;
+    gretl_matrix *bi = NULL;
+    cmplx *a = NULL, *b = NULL;
+    cmplx *c = NULL;
+    cmplx alpha = {1, 0};
+    cmplx beta = {0, 0};
+    char transa = 'N';
+    char transb = 'N';
+    integer m, n, k;
+
+    *err = get_two_matrices(A, &ar, &ai, 0);
+    if (*err) {
+	return NULL;
+    }
+
+    *err = get_two_matrices(B, &br, &bi, 0);
+    if (*err) {
+	return NULL;
+    }
+
+    /* FIXME allow for transposition */
+
+    m = ar->rows;
+    k = ar->cols;
+    n = br->cols;
+
+    a = malloc(m * k * sizeof *a);
+    b = malloc(k * n * sizeof *b);
+    c = malloc(m * n * sizeof *c);
+
+    if (a == NULL || b == NULL || c == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	matrices_into_complex(ar, ai, a);
+	matrices_into_complex(br, bi, b);
+    }
+
+    if (!*err) {
+	integer lda = m;
+	integer ldb = k;
+	integer ldc = m;
+
+	zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda,
+	       b, &ldb, &beta, c, &ldc);
+    }
+
+    if (!*err) {
+	C = gretl_array_new(GRETL_TYPE_MATRICES, 2, err);
+	if (!*err) {
+	    *err = complex_mat_into_array(c, m, n, C);
+	}
+    }
+
+    free(a);
+    free(b);
+    free(c);
+
+    if (*err && C != NULL) {
+	gretl_array_destroy(C);
+	C = NULL;
+    }
+
+    return C;
 }
