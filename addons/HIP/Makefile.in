@@ -41,7 +41,7 @@ $(PKG).zip: $(PKG).gfn pdfdoc
 
 .PHONY : pdfdoc check install installdirs clean
 
-pdfdoc: 
+pdfdoc: $(PKG).gfn
 	$(MAKE) -C doc
 
 check: $(PKG).gfn
