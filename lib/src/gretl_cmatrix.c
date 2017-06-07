@@ -18,15 +18,31 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
     *err = 0;
 
     mr = gretl_array_get_element(A, 0, NULL, err);
-    mi = gretl_array_get_element(A, 1, NULL, err);
-    n = mr->rows;
+    if (!*err) {
+	mi = gretl_array_get_element(A, 1, NULL, err);
+    }
 
-    ret = gretl_matrix_alloc(n, 1);
+    if (!*err) {
+	n = mr->rows;
+	if (n == 0 || mr->cols != n || mi->rows != n || mi->cols != n) {
+	    *err = E_NONCONF;
+	} else {
+	    ret = gretl_matrix_alloc(n, 1);
+	    work = malloc(sizeof *work);
+	    a = malloc(n * n * sizeof *a);
+	    if (ret == NULL || work == NULL || a == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (*err) {
+	goto bailout;
+    }
+
     w = ret->val;
-    work = malloc(sizeof *work);
-    a = malloc(n * n * sizeof *a);
 
-    /* write upper triangle of complex matrix */
+    /* write upper triangle of complex matrix into @a */
     for (i=0; i<n; i++) {
 	k = i * n;
 	for (j=0; j<=i; j++) {
@@ -36,20 +52,31 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
 	}
     }
 
+    /* get optimal workspace size */
     lwork = -1;
     zheev_(&jobz, &uplo, &n, a, &n, w, work, &lwork, rwork, &info);
 
     lwork = (integer) work[0].r;
     work = realloc(work, lwork * sizeof *work);
     rwork = malloc((3 * n - 2) * sizeof *rwork);
+    if (work == NULL || rwork == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
 
+    /* do the actual eigen decomposition */
     zheev_(&jobz, &uplo, &n, a, &n, w, work, &lwork, rwork, &info);
     if (info != 0) {
 	fprintf(stderr, "zheev: info = %d\n", info);
-	*err = 1;
+	*err = E_DATA;
     } else if (V != NULL) {
 	mr = gretl_matrix_alloc(n, n);
 	mi = gretl_matrix_alloc(n, n);
+
+	if (mr == NULL || mi == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
 	
 	/* read out the eigenvectors */
 	for (i=0; i<n; i++) {
@@ -61,13 +88,21 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
 	    }
 	}
 
+	/* note: array takes ownership of mr, mi */
 	gretl_array_set_matrix(V, 0, mr, 0);
 	gretl_array_set_matrix(V, 1, mi, 0);
-    }	
+    }
+
+ bailout:
 
     free(rwork);
     free(work);
     free(a);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
 
     return ret;
 }
