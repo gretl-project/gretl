@@ -61,14 +61,12 @@ later and thereby get MPI support on demand.
 
 By default, gretl checks for the presence of the XDG tools
 (xdg-desktop-menu, xdg-mime, xdg-icon-resource) and if they are
-found, uses them to install gretl's XDG-related files. This
-includes the gtksourceview "lang" files. This supports "make
-install" as executed by a regular user who may not have
-permission to install under /usr, and also the case where a
-user chooses to install gretl under (say) /opt: in this case
-files that will not be found under /opt (such as the
-aforementioned gtksourceview files) will be installed into the
-correct location.
+found, uses them to install gretl's XDG-related files. This supports
+"make install" as executed by a regular user who may not have
+permission to install under /usr, and also the case where a user
+chooses to install gretl under (say) /opt: in that case files that
+would not be found under /opt will be installed into the correct
+location.
 
 However, a packager who wants to ensure that _everything_ goes
 into the location specified by DESTDIR will have to override
