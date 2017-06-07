@@ -13618,7 +13618,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = get_lag_list(l, r, p);
 	    break;
 	}
-	/* else falls through */
+	/* Falls through. */
     case F_LJUNGBOX:
     case F_POLYFIT:
 	/* series on left, scalar on right */

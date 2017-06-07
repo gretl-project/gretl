@@ -3522,7 +3522,7 @@ static void read_tobit_limits (selector *sr)
 
 static void read_np_extras (selector *sr)
 {
-    char s[16];
+    char s[32];
 
     if (sr->ci == LOESS) {
 	int d = spinner_get_int(sr->extra[1]);
@@ -5824,7 +5824,7 @@ static void gui_set_mp_bits (GtkComboBox *cb, gpointer p)
 static GtkWidget *mpols_bits_selector (void)
 {
     GtkWidget *w, *hbox, *combo;
-    char bstr[8];
+    char bstr[16];
     int bits = get_mp_bits();
     int b, i, deflt = 0;
 

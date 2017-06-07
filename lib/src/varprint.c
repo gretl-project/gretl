@@ -609,7 +609,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 {
     JohansenInfo *jv = jvar->jinfo;
     int rtf = rtf_format(prn);
-    char namefmt[8];
+    char namefmt[16];
     char s[16], vname[32];
     int rows = gretl_matrix_rows(jv->Beta);
     int nwid;

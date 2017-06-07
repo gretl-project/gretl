@@ -106,7 +106,7 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	strcpy(vname, "sq_");
 	strncat(vname, orig, len - 3);
     } else if (ci == LAGS) {
-	char ext[8];
+	char ext[12];
 
 	if (aux >= 0) {
 	    /* an actual lag (or contemporaneous value) */

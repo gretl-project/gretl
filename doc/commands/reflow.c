@@ -542,7 +542,7 @@ static char *code_get_line (char *line, char **pbuf)
     if (*buf == '\n') buf++;
     *pbuf = buf;
 
-    return line == '\0' ? "\n" : line;
+    return *line == '\0' ? "\n" : line;
 }
 
 static void format_code_buf (char *buf, int ptype)

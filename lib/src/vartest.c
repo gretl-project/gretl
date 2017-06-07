@@ -52,7 +52,7 @@ multivariate_autocorr_test (GRETL_VAR *var, int H,
 			    PRN *prn)
 {
     const gretl_matrix *U;
-    char Fspec[16];
+    char Fspec[32];
     gretl_matrix *tests, *pvals;
     gretl_matrix *B = NULL;
     gretl_matrix *E = NULL;

@@ -2260,7 +2260,7 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
 void gretl_VAR_param_names (GRETL_VAR *v, char **params, 
 			    const DATASET *dset)
 {
-    char lagstr[8];
+    char lagstr[12];
     int i, j, n, k = 0;
 
     if (v->detflags & DET_CONST) {
