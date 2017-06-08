@@ -21,11 +21,15 @@ static int get_two_matrices (gretl_array *A,
 	mi = gretl_array_get_element(A, 1, NULL, &err);
     }
 
+    if (!err && (gretl_is_null_matrix(mr) || gretl_is_null_matrix(mi))) {
+	err = E_INVARG;
+    }
+
     if (!err) {
 	int r = mr->rows;
 	int c = mr->cols;
 
-	if (r == 0 || c == 0 || mi->rows != r || mi->cols != c) {
+	if (mi->rows != r || mi->cols != c) {
 	    err = E_NONCONF;
 	}
 	if (!err && square && r != c) {
@@ -41,8 +45,8 @@ static int get_two_matrices (gretl_array *A,
     return err;
 }
 
-/* Put two matrices into array @A (real part, imaginary part)
-   given dimensions @r and @c and complex source @cx
+/* Put two matrices (real part, imaginary part) into array @A
+   given dimensions @r and @c and complex source @cx.
 */
 
 static int complex_mat_into_array (cmplx *cx, int r, int c,
@@ -74,7 +78,7 @@ static int complex_mat_into_array (cmplx *cx, int r, int c,
 }
 
 /* Write the content of matrices @mr (real part) and @mi
-   (imaginary part) into complex array @cx
+   (imaginary part) into complex array @cx.
 */
 
 static void matrices_into_complex (const gretl_matrix *mr,
@@ -108,6 +112,7 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
     double *rwork = NULL;
     cmplx *a = NULL;
     cmplx *work = NULL;
+    cmplx wsz;
     char jobz = V != NULL ? 'V' : 'N';
     char uplo = 'U';
     int i, j, k;
@@ -117,9 +122,8 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
     if (!*err) {
 	n = mr->rows;
 	ret = gretl_matrix_alloc(n, 1);
-	work = malloc(sizeof *work);
 	a = malloc(n * n * sizeof *a);
-	if (ret == NULL || work == NULL || a == NULL) {
+	if (ret == NULL || a == NULL) {
 	    *err = E_ALLOC;
 	}
     }
@@ -142,10 +146,10 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
 
     /* get optimal workspace size */
     lwork = -1;
-    zheev_(&jobz, &uplo, &n, a, &n, w, work, &lwork, rwork, &info);
+    zheev_(&jobz, &uplo, &n, a, &n, w, &wsz, &lwork, rwork, &info);
 
-    lwork = (integer) work[0].r;
-    work = realloc(work, lwork * sizeof *work);
+    lwork = (integer) wsz.r;
+    work = malloc(lwork * sizeof *work);
     rwork = malloc((3 * n - 2) * sizeof *rwork);
     if (work == NULL || rwork == NULL) {
 	*err = E_ALLOC;
@@ -185,9 +189,9 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     gretl_array *Ainv = NULL;
     gretl_matrix *mr = NULL;
     gretl_matrix *mi = NULL;
-    integer lwork;
+    integer lwork = -1;
     integer *ipiv;
-    cmplx *work, *a;
+    cmplx *a, *work = NULL;
     integer n, info;
 
     *err = get_two_matrices(A, &mr, &mi, 1); /* square? */
@@ -196,12 +200,10 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     }
 
     n = mr->rows;
-    lwork = 10 * n;
 
     a = malloc(n * n *sizeof *a);
     ipiv = malloc(2 * n * sizeof *ipiv);
-    work = malloc(lwork * sizeof *work);
-    if (a == NULL || ipiv == NULL || work == NULL) {
+    if (a == NULL || ipiv == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -215,6 +217,19 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     }
 
     if (!*err) {
+	/* workspace size query */
+	cmplx wsz;
+
+	zgetri_(&n, a, &n, ipiv, &wsz, &lwork, &info);
+	lwork = (integer) wsz.r;
+	work = malloc(lwork * sizeof *work);
+	if (work == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	/* actual computation */
 	zgetri_(&n, a, &n, ipiv, work, &lwork, &info);
 	if (info != 0) {
 	    printf("zgetri: info = %d\n", info);
