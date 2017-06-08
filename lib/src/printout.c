@@ -1867,7 +1867,8 @@ void maybe_list_series (const DATASET *dset, PRN *prn)
 }
 
 static int print_listed_objects (const char *s, 
-				 const DATASET *dset, 
+				 const DATASET *dset,
+				 gretlopt opt,
 				 PRN *prn)
 {
     char *name;
@@ -1883,7 +1884,7 @@ static int print_listed_objects (const char *s,
     }
 
     while ((name = gretl_word_strdup(s, &s, OPT_S, &err)) != NULL) {
-	err = print_user_var_by_name(name, dset, prn);
+	err = print_user_var_by_name(name, dset, opt, prn);
 	free(name);
 	if (err) {
 	    break;
@@ -2248,7 +2249,7 @@ int printdata (const int *list, const char *mstr,
  endprint:
 
     if (!err && mstr != NULL) {
-	err = print_listed_objects(mstr, dset, prn);
+	err = print_listed_objects(mstr, dset, opt, prn);
     }
 
     free(plist);

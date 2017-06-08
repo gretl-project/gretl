@@ -205,6 +205,7 @@ int deserialize_user_vars (const char *dirname);
 
 int print_user_var_by_name (const char *name,
 			    const DATASET *dset,
+			    gretlopt opt,
 			    PRN *prn);
 
 int list_user_vars_of_type (const DATASET *dset,

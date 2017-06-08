@@ -29,6 +29,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 #include "uservar_priv.h"
+#include "gretl_cmatrix.h"
 
 /* varname hashing: should be OK, but here's
    where you can turn it off 
@@ -2361,9 +2362,11 @@ int deserialize_user_vars (const char *dirname)
 
 int print_user_var_by_name (const char *name,
 			    const DATASET *dset,
+			    gretlopt opt,
 			    PRN *prn)
 {
     user_var *u = get_user_var_by_name(name);
+    int err = 0;
 
     if (u == NULL || u->ptr == NULL) {
 	return E_DATA;
@@ -2376,7 +2379,11 @@ int print_user_var_by_name (const char *name,
     } else if (u->type == GRETL_TYPE_BUNDLE) {
 	gretl_bundle_print(u->ptr, prn);
     } else if (u->type == GRETL_TYPE_ARRAY) {
-	gretl_array_print(u->ptr, prn);
+	if (opt & OPT_C) {
+	    err = complex_matrix_print(u->ptr, prn);
+	} else {
+	    gretl_array_print(u->ptr, prn);
+	}
     } else if (u->type == GRETL_TYPE_LIST) {
 	gretl_list_print(u->ptr, dset, prn);
     } else if (u->type == GRETL_TYPE_STRING) {
@@ -2384,7 +2391,7 @@ int print_user_var_by_name (const char *name,
 	pputc(prn, '\n');
     }
 
-    return 0;
+    return err;
 }
 
 int list_user_vars_of_type (const DATASET *dset,

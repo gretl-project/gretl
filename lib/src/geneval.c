@@ -115,9 +115,8 @@ enum {
 #define uarray_node(n)  (n->t == ARRAY && n->vname != NULL)
 #define ulist_node(n)   (n->t == LIST && n->vname != NULL)
 #define ustring_node(n) (n->t == STR && n->vname != NULL)
-#define uarray_node(n)  (n->t == ARRAY && n->vname != NULL)
 #define useries_node(n) (n->t == SERIES && n->vnum >= 0)
-#define uvar_node(n) (n->vname != NULL)
+#define uvar_node(n)    (n->vname != NULL)
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 #define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))

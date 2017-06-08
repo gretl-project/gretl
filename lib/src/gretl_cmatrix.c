@@ -331,3 +331,37 @@ gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err)
 
     return C;
 }
+
+int complex_matrix_print (gretl_array *A, PRN *prn)
+{
+    gretl_matrix *mr = NULL;
+    gretl_matrix *mi = NULL;
+    double re, im;
+    char s[4] = "   ";
+    int r, c, i, j;
+    int err = 0;
+
+    err = get_two_matrices(A, &mr, &mi, 0);
+    if (err) {
+	return err;
+    }
+
+    r = mr->rows;
+    c = mr->cols;
+
+    for (i=0; i<r; i++) {
+	for (j=0; j<c; j++) {
+	    re = gretl_matrix_get(mr, i, j);
+	    im = gretl_matrix_get(mi, i, j);
+	    s[1] = (im >= 0) ? '+' : '-';
+	    pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
+	    if (j < c - 1) {
+		pputs(prn, "  ");
+	    }
+        }
+        pputc(prn, '\n');
+    }
+    pputc(prn, '\n');
+
+    return 0;
+}

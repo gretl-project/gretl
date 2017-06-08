@@ -1084,7 +1084,7 @@ static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 	}
 
 	if (!err) {
-	    char rstr[48];
+	    char rstr[64];
 
 	    for (t=0; t<T; t++) {
 		W->val[T+t] = t;
