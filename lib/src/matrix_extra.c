@@ -1096,7 +1096,7 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 
 #ifndef WIN32
 
-/* In reading matrices, accept "NA" for NaN? */
+/* In reading matrices, accept "NA" and "." (Stata) for NaN? */
 
 static double unix_scan_NA (FILE *fp, int *err)
 {
@@ -1104,9 +1104,10 @@ static double unix_scan_NA (FILE *fp, int *err)
 
     fscanf(fp, "%2s", test);
 
-    if (!strcmp(test, "NA")) {
+    if (!strcmp(test, "NA") || !strcmp(test, ".")) {
 	return M_NA;
     } else {
+	gretl_errmsg_sprintf("Invalid field '%s'", test);
 	*err = E_DATA;
 	return 0;
     }

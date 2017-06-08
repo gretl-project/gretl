@@ -1461,7 +1461,8 @@ double win32_fscan_nonfinite (FILE *fp, int *err)
     fscanf(fp, "%4s", test);
 
     if (!g_ascii_strcasecmp(test, "nan") ||
-	!g_ascii_strcasecmp(test, "-nan")) {
+	!g_ascii_strcasecmp(test, "-nan") ||
+	!strcmp(test, ".")) {
 	return M_NA;
     } else if (!g_ascii_strcasecmp(test, "inf")) {
 	return 1.0 / 0.0;
