@@ -1107,7 +1107,7 @@ static double unix_scan_NA (FILE *fp, int *err)
     if (!strcmp(test, "NA") || !strcmp(test, ".")) {
 	return M_NA;
     } else {
-	gretl_errmsg_sprintf("Invalid field '%s'", test);
+	gretl_errmsg_sprintf(_("got invalid field '%s'"), test);
 	*err = E_DATA;
 	return 0;
     }

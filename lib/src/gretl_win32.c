@@ -1456,7 +1456,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 
 double win32_fscan_nonfinite (FILE *fp, int *err)
 {
-    char test[5];
+    char test[5] = {0};
 
     fscanf(fp, "%4s", test);
 
@@ -1469,6 +1469,7 @@ double win32_fscan_nonfinite (FILE *fp, int *err)
     } else if (!g_ascii_strcasecmp(test, "-inf")) {
 	return -1.0 / 0.0;
     } else {
+	gretl_errmsg_sprintf(_("got invalid field '%s'"), test);
 	*err = E_DATA;
 	return 0;
     }
