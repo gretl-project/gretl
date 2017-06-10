@@ -2120,6 +2120,7 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 	pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
     }
 
+    /* Nerlove */
     pan->s2v /= pan->effn - 1;
 
     free(ahat);
@@ -2581,7 +2582,8 @@ static int within_variance (panelmod_t *pan,
 	fprintf(stderr, "nT = %d, n = %d, K = %d\n", femod.nobs,
 		pan->effn, pan->vlist[0] - 2);
 	fprintf(stderr, "pan->s2e = %g / %d = %g\n", femod.ess,
-	       den, pan->s2e);
+		den, pan->s2e);
+	fprintf(stderr, "sqrt(pan->s2e) = %g\n", sqrt(pan->s2e));
 #endif
 
 	if (!(pan->opt & OPT_R)) {
