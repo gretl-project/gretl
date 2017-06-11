@@ -636,7 +636,7 @@ int run_gretl_mp_comparison (DATASET *dset,
 		"%44s%24s\n\n", certvals->ncoeff, "certified", "libgretl");
 
 	for (i=0; i<certvals->ncoeff; i++) {
-	    char label[16];
+	    char label[24];
 
 	    if (!na(certvals->coeff[i])) {
 		sprintf(label, "B[%d] estimate", i);

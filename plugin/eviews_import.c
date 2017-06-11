@@ -448,7 +448,7 @@ static int parse_wf1_header (FILE *fp, int ftype, DATASET *dset,
 	    int p10 = log(pd) / log(10.0);
 
 	    if (p10 > 0) {
-		char fmt[16];
+		char fmt[24];
 
 		sprintf(fmt, "%%d:%%0%dd", p10 + 1);
 		sprintf(dset->stobs, fmt, startyr, startper);
