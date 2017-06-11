@@ -81,6 +81,7 @@ struct panelmod_t_ {
     double s2b;           /* residual variance, group means regression */
     double s2e;           /* residual variance, fixed-effects regression */
     double s2v;           /* estimate of between variance */
+    double ubPub;         /* for use in unbalanced Swamy-Arora */
     int *small2big;       /* data indexation array */
     int *big2small;       /* reverse data indexation array */
     MODEL *pooled;        /* reference model (pooled OLS) */
@@ -165,6 +166,7 @@ static void panelmod_init (panelmod_t *pan)
     pan->balanced = 1;
     pan->theta = NADBL;
     pan->theta_bar = NADBL;
+    pan->ubPub = NADBL;
 
     pan->Ffe = NADBL;
     pan->Fdfn = 0;
@@ -1394,6 +1396,24 @@ static int save_between_model (MODEL *pmod, const int *blist,
     return err;
 }
 
+static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
+			      int step)
+{
+    int i, j, Ti, t = 0;
+    double adj;
+
+    for (i=0; i<pan->nunits; i++) {
+	Ti = pan->unit_obs[i];
+	if (Ti > 0) {
+	    adj = step == 0 ? sqrt(Ti) : 1.0/sqrt(Ti);
+	    for (j=0; j<gset->v; j++) {
+		gset->Z[j][t] *= adj;
+	    }
+	    t++;
+	}
+    }
+}
+
 /* calculate the group means or "between" regression and its error
    variance */
 
@@ -1439,6 +1459,23 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
     if (!err && (pan->opt & OPT_B)) {
 	err = save_between_model(&bmod, blist, gset, pan);
     } else {
+	if (!err && !pan->balanced && (pan->opt & OPT_U) &&
+	    (pan->opt & OPT_X) && !(pan->opt & OPT_N)) {
+	    /* Prepare for Swamy-Arora in the unbalanced case:
+	       run modified Between regression and save its
+	       residual sum of squares as pan->upPub.
+	    */
+	    /* multiply all data by sqrt(Ti) */
+	    adjust_gset_data(pan, gset, 0);
+	    clear_model(&bmod);
+	    bmod = lsq(blist, gset, OLS, OPT_A);
+	    /* put the original data back */
+	    adjust_gset_data(pan, gset, 1);
+	    err = bmod.errcode;
+	    if (!err) {
+		pan->ubPub = bmod.ess;
+	    }
+	}
 	clear_model(&bmod);
     }
 
@@ -2735,6 +2772,91 @@ static double hausman_regression_result (panelmod_t *pan,
     return ret;
 }
 
+/* Computation of s2_v in the manner of Swamy and Arora, for an
+   unbalanced panel. See Baltagi, Econometric Analysis of Panel
+   Data, 3e, section 9.2.1. */
+
+static int unbalanced_SA_s2v (panelmod_t *pan,
+			      DATASET *dset)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *ZmZ = NULL;
+    gretl_matrix *PZ = NULL;
+    gretl_matrix *Z = NULL;
+    gretl_matrix *ZPZ = NULL;
+    gretl_matrix *D2 = NULL;
+    gretl_matrix *trmat = NULL;
+    int k = pan->pooled->ncoeff;
+    double zjt, z, tr;
+    int i, j, s, t, p;
+    int bigt, got;
+    int err = 0;
+
+    B = gretl_matrix_block_new(&ZmZ, pan->effn, k,
+			       &PZ,  pan->NT, k,
+			       &Z,   pan->NT, k,
+			       &ZPZ, k, k,
+			       &D2,  k, k, NULL);
+
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    s = p = 0;
+    for (i=0; i<pan->nunits; i++) {
+	int Ti = pan->unit_obs[i];
+
+	if (Ti == 0) {
+	    continue;
+	}
+
+	for (j=0; j<k; j++) {
+	    zjt = 0.0;
+	    got = 0;
+	    /* cumulate sum of observations for unit */
+	    for (t=0; t<pan->T && got<Ti; t++) {
+		bigt = panel_index(i, t);
+		if (!panel_missing(pan, bigt)) {
+		    z = dset->Z[pan->pooled->list[j+2]][bigt];
+		    zjt += z;
+		    gretl_matrix_set(Z, p + got, j, z);
+		    got++;
+		}
+	    }
+	    gretl_matrix_set(ZmZ, s, j, zjt);
+	    for (t=0; t<Ti; t++) {
+		gretl_matrix_set(PZ, p + t, j, zjt / Ti);
+	    }
+	}
+	s++;
+	p += Ti;
+    }
+
+    gretl_matrix_multiply_mod(Z, GRETL_MOD_TRANSPOSE,
+			      PZ, GRETL_MOD_NONE,
+			      ZPZ, GRETL_MOD_NONE);
+    gretl_invert_symmetric_matrix(ZPZ);
+
+    gretl_matrix_multiply_mod(ZmZ, GRETL_MOD_TRANSPOSE,
+			      ZmZ, GRETL_MOD_NONE,
+			      D2, GRETL_MOD_NONE);
+
+    trmat = gretl_matrix_reuse(PZ, k, k);
+    gretl_matrix_multiply(ZPZ, D2, trmat);
+    tr = gretl_matrix_trace(trmat);
+
+    pan->s2v = (pan->ubPub - (pan->effn - k + 1) * pan->s2e) / (pan->NT - tr);
+
+#if PDEBUG
+    fprintf(stderr, "S-A: ubPub = %#.7g, trace = %#.7g, s2v = %#.7g\n",
+	    pan->ubPub, tr, pan->s2v);
+#endif
+
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
 /* Calculate the random effects regression.  Print the results
    here if we're doing the "panel diagnostics" test, otherwise
    save the results.
@@ -2775,15 +2897,19 @@ static int random_effects (panelmod_t *pan,
        we're using the Swamy and Arora method, and pan->s2v still 
        needs to be computed.
 
-       Note: for unbalanced panels, theta will actually vary across 
-       the units in the final calculation.
+       Note: for unbalanced panels, theta will vary across the
+       units in the final calculation.
     */
     if (!(pan->opt & OPT_N)) {
-	pan->s2v = pan->s2b - pan->s2e / pan->Tbar;
+	if (!pan->balanced && !na(pan->ubPub)) {
+	    err = unbalanced_SA_s2v(pan, dset);
+	} else {
+	    pan->s2v = pan->s2b - pan->s2e / pan->Tbar;
 #if PDEBUG
-	fprintf(stderr, "Swamy-Arora: initial s2v = %g - %g = %g\n",
-		pan->s2b, pan->s2e / pan->Tbar, pan->s2v);
+	    fprintf(stderr, "Swamy-Arora: initial s2v = %g - %g = %g\n",
+		    pan->s2b, pan->s2e / pan->Tbar, pan->s2v);
 #endif
+	}
 	if (pan->s2v < 0) {
 	    pan->s2v = 0.0;
 	}
@@ -3419,8 +3545,15 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * and pooled OLS only); %OPT_M to use the matrix-difference 
  * version of the Hausman test (random effects only); %OPT_B for 
  * the "between" model; %OPT_P for pooled OLS; and %OPT_D to 
- * include time dummies. If and only if %OPT_P is given, %OPT_C
- * (clustered standard errors) is accepted.
+ * include time dummies.
+ * If and only if %OPT_P is given, %OPT_C (clustered standard
+ * errors) is accepted.
+ * If %OPT_U is given, either of the mutually incompatible options
+ * %OPT_N and %OPT_X may be given to inflect the calculation of the
+ * variance of the individual effects: %OPT_N means use Nerlove's
+ * method, %OPT_X means use the special "exact" method of Swamy
+ * and Arora in the case of an unbalanced panel. The default is
+ * to use the "generic" Swamy-Arora method.
  * @prn: printing struct.
  *
  * Estimates a panel model, by default the fixed effects model.

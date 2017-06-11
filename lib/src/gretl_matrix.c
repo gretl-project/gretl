@@ -529,7 +529,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
  * is performed.  If you "reuse" with an excessive number of rows
  * or columns you will surely crash your program or smash the
  * stack. Note also that the matrix-pointer returned is not really 
- * new, and the when the matrix is to be freed, gretl_matrix_free()
+ * new, and when the matrix is to be freed, gretl_matrix_free()
  * should be applied only once. 
  *
  * Returns: pointer to the "resized" gretl_matrix.
