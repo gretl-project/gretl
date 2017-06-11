@@ -639,6 +639,7 @@ plugsub
 GTK_HUSH
 use_gsf
 swap_ends
+deb_build
 pkg_build
 quiet_build
 build_addons
@@ -860,6 +861,7 @@ enable_xdg
 enable_json
 enable_xdg_utils
 enable_pkgbuild
+enable_debbuild
 enable_gnuplot_checks
 enable_gnuplot_3d
 enable_www
@@ -1569,6 +1571,7 @@ Optional Features:
   --disable-json          Don't try to include JSON support
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
+  --enable-debbuild       For building Debian package
   --disable-gnuplot-checks do not run checks for gnuplot
   --disable-gnuplot-3d     assume gnuplot can't do interactive 3D plots
   --disable-www           do not link to libcurl for http
@@ -2856,6 +2859,7 @@ darwin_build="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
+deb_build="no"
 mac_native="no"
 have_mac_integration="no"
 gui_disabled="no"
@@ -6567,6 +6571,15 @@ then
   $as_echo "#define PKGBUILD 1" >>confdefs.h
 
   pkg_build="yes"
+fi
+fi
+
+
+# Check whether --enable-debbuild was given.
+if test "${enable_debbuild+set}" = set; then :
+  enableval=$enable_debbuild; if test "$enableval" = "yes"
+then
+  deb_build="yes"
 fi
 fi
 
@@ -19845,6 +19858,7 @@ if test "${build_addons}" = "yes" ; then
       echo "*** Can't build gretl addons: pdflatex not found"
    fi
 fi
+
 
 
 

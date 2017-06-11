@@ -19,6 +19,7 @@ have_sourceview = @have_sourceview@
 have_zlib = @have_zlib@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
+deb_build = @deb_build@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
 
@@ -35,7 +36,6 @@ GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 GTKSOURCEVIEW_CFLAGS = @GTKSOURCEVIEW_CFLAGS@
 GTKSOURCEVIEW_LIBS = @GTKSOURCEVIEW_LIBS@
-GTKSOURCEVIEW_PREFIX = @GTKSOURCEVIEW_PREFIX@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
@@ -44,6 +44,12 @@ GTKMAC_CFLAGS = @GTKMAC_CFLAGS@
 GTKMAC_LIBS = @GTKMAC_LIBS@
 MKLANG = @MKLANG@
 MKNEWS = @MKNEWS@
+
+ifeq ($(deb_build),yes)
+  GTKSOURCEVIEW_PREFIX = @prefix@
+else
+  GTKSOURCEVIEW_PREFIX = @GTKSOURCEVIEW_PREFIX@
+endif
 
 ifeq ($(have_sourceview),3.0)
   langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-3.0/language-specs
@@ -58,7 +64,7 @@ ifeq ($(pkg_build),yes)
   # special for building Windows and OS X packages
   langdir = $(prefix)/share/gretl/gtksourceview
   JULIA_LANG = julia_sv2.lang
-else
+else ifeq ($(deb_build),no)
   SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
 endif
 
