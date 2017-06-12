@@ -31,9 +31,11 @@
 #endif
 
 #ifdef USE_GTKSOURCEVIEW_3
+# define SVVER 3
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 # define COMPLETION_OK 1
 #else /* using GtkSourceView 2 */
+# define SVVER 2
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
@@ -723,7 +725,6 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 	    } 
 	}
 # endif
-
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
 	mgr = gtk_source_style_scheme_manager_get_default();
@@ -754,20 +755,14 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 	GtkSourceStyleSchemeManager *mgr;
 	gchar *dirs[2] = {NULL, NULL};
 
-#if USE_GTKSOURCEVIEW_3	
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-3.0/language-specs", SVPREFIX);
-#else
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0/language-specs", SVPREFIX);
-#endif
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-%d.0/language-specs",
+				  SVPREFIX, SVVER);
 	gtk_source_language_manager_set_search_path(lm, dirs);
 	g_free(dirs[0]);
 
 	mgr = gtk_source_style_scheme_manager_get_default();
-#if USE_GTKSOURCEVIEW_3
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-3.0/styles", SVPREFIX);
-#else
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-2.0/styles", SVPREFIX);
-#endif
+	dirs[0] = g_strdup_printf("%s/share/gtksourceview-%d.0/styles",
+				  SVPREFIX, SVVER);
 	gtk_source_style_scheme_manager_append_search_path(mgr, dirs[0]);
 	gtk_source_style_scheme_manager_force_rescan(mgr);
 	g_free(dirs[0]);
