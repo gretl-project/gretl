@@ -41,6 +41,7 @@ EN_SRC = $(CMDSDIR)/gretl_commands_en.xml
 ES_SRC = $(CMDSDIR)/gretl_commands_es.xml
 PT_SRC = $(CMDSDIR)/gretl_commands_pt.xml
 IT_SRC = $(CMDSDIR)/gretl_commands_it.xml
+GL_SRC = $(CMDSDIR)/gretl_commands_gl.xml
 
 FNCDTD = $(CMDSDIR)/gretl_functions.dtd
 EN_FNSRC = $(CMDSDIR)/gretl_functions_en.xml
@@ -66,6 +67,7 @@ EN_CMDREF_STAMP = $(SHAREDIR)/cmdref_en.stamp
 ES_CMDREF_STAMP = $(SHAREDIR)/cmdref_es.stamp
 IT_CMDREF_STAMP = $(SHAREDIR)/cmdref_it.stamp
 PT_CMDREF_STAMP = $(SHAREDIR)/cmdref_pt.stamp
+GL_CMDREF_STAMP = $(SHAREDIR)/cmdref_gl.stamp
 
 EN_FNREF_STAMP = $(SHAREDIR)/fnref_en.stamp
 ES_FNREF_STAMP = $(SHAREDIR)/fnref_es.stamp
@@ -196,6 +198,16 @@ $(PT_CMDREF_STAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(C
 	./reflow -m < pt1.tmp > $(SHAREDIR)/$(GUI_HELP).pt && \
 	touch $@ && rm -f pt1.tmp
 
+# Galego "online" help files
+$(GL_CMDREF_STAMP): xsltrans reflow $(GL_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(GL_SRC) > gl1.tmp && \
+	./reflow < gl1.tmp > $(SHAREDIR)/$(CLI_CMDREF).gl && \
+	./xsltrans --cmds --pango $(GL_SRC) > gl1.tmp && \
+	./reflow -m < gl1.tmp > $(SHAREDIR)/$(GUI_CMDREF).gl && \
+	./xsltrans --gui --pango $(GL_SRC) > gl1.tmp && \
+	./reflow -m < gl1.tmp > $(SHAREDIR)/$(GUI_HELP).gl && \
+	touch $@ && rm -f gl1.tmp
+
 # English function reference files
 $(EN_FNREF_STAMP): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --plain $(EN_FNSRC) > en2.tmp && \
@@ -220,7 +232,7 @@ $(PT_FNREF_STAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(
 	./reflow -m < pt2.tmp > $(SHAREDIR)/$(GUI_FNREF).pt && \
 	touch $@ && rm -f pt2.tmp
 
-# Galician function reference files
+# Galego function reference files
 $(GL_FNREF_STAMP): xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --plain $(GL_FNSRC) > gl2.tmp && \
 	./reflow < gl2.tmp > $(SHAREDIR)/$(CLI_FNREF).gl && \
@@ -341,7 +353,7 @@ help-it: $(CHAPREFS) $(IT_CMDREF_STAMP) $(IT_FNREF_STAMP)
 
 help-pt: $(CHAPREFS) $(PT_CMDREF_STAMP) $(PT_FNREF_STAMP)
 
-help-gl: $(CHAPREFS) $(GL_FNREF_STAMP)
+help-gl: $(CHAPREFS) $(GL_CMDREF_STAMP) $(GL_FNREF_STAMP)
 
 help-all: help-en help-it help-pt help-gl $(HELPREFS)
 
@@ -359,7 +371,8 @@ check-pt: validate
 	-./validate $(PT_SRC)
 	-./validate $(PT_FNSRC)
 
-check-gl: validate 
+check-gl: validate
+	-./validate $(GL_SRC)
 	-./validate $(GL_FNSRC)
 
 xmlcheck:
@@ -367,7 +380,7 @@ xmlcheck:
 
 docclean:
 	rm -f $(EN_CMDREF_STAMP) $(ES_CMDREF_STAMP)
-	rm -f $(IT_CMDREF_STAMP) $(PT_CMDREF_STAMP)
+	rm -f $(IT_CMDREF_STAMP) $(PT_CMDREF_STAMP) $(GL_CMDREF_STAMP)
 	rm -f $(EN_FNREF_STAMP) $(ES_FNREF_STAMP)
 	rm -f $(IT_FNREF_STAMP) $(PT_FNREF_STAMP) $(GL_FNREF_STAMP)
 	rm -f *.txt *.tmp
