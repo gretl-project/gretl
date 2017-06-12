@@ -1089,7 +1089,6 @@
 
     <gui-access>
       <menu-path>/Model/Time series/ARIMA</menu-path>
-      <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
   </command>
@@ -10380,7 +10379,7 @@
 	respect to each of the independent variables are calculated (at
 	the means of those variables) and these slopes replace the usual
 	p-values in the regression output.  This behavior can be
-	suppressed my giving the <opt>p-values</opt> option. The
+	suppressed by giving the <opt>p-values</opt> option. The
 	chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
@@ -11446,12 +11445,12 @@
 	quotes.
       </para>
       <para>
-	One point should be noted about defining a sample based on a dummy
-	variable, a Boolean expression, or on the missing values criterion:
-	Any <quote>structural</quote> information in the data header file
-	(regarding the time series or panel nature of the data) is lost.  You
-	may reimpose structure with <quote>Sample/Set frequency,
-	  startobs...</quote>.
+	One point should be noted about defining a sample based on a
+	dummy variable, a Boolean expression, or on the missing values
+	criterion: Any <quote>structural</quote> information in the
+	data header file (regarding the time series or panel nature of
+	the data) is lost.  You may reimpose structure via the
+	<quote>Dataset structure</quote> item under the Data menu.
       </para>
       <para>
 	Please see <guideref targ="chap:sampling"/> for further details.
@@ -12424,7 +12423,8 @@
 	Set a numerical value that will be interpreted as "missing" or
 	"not applicable", either for a particular data series (under
 	the Variable menu) or globally for the entire data set (under
-	the Sample menu).</para> 
+	the Data menu).
+      </para> 
       
       <para context="gui">
 	Gretl has its own internal coding for missing values, but
