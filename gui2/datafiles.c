@@ -2547,7 +2547,7 @@ static gint populate_gfn_list (windata_t *vwin)
     if (nfn == 0) {
 	/* we didn't find any gfn files */
 	warnbox(_("No gretl function packages were found on this computer.\n"
-		  "Please try /Package/On server"));
+		  "Please try /File/Functions packages/On server"));
 	err = 1;
     } else {
 	presort_treelist(vwin);

@@ -46,10 +46,26 @@
 	<menuitem action="PcGiveDB"/>
 	<menuitem action="RemoteDB"/>
       </menu>
+      <menu action="Packages">
+	<menuitem action="LocalGfn"/>
+	<menuitem action="RemoteGfn"/>
+	<separator/>
+	<menuitem action="EditGfn"/>
+	<menuitem action="NewGfn"/>
+	<menuitem action="UploadGfn"/>
+	<menuitem action="EditSpec"/>
+	<separator/>
+	<placeholder name="RecentGfns"/>
+      </menu>
       <separator/>
       <menuitem action="Quit"/>
     </menu>
     <menu action="Tools">
+      <menu action="Preferences">
+	<menuitem action="PrefsGeneral"/>
+	<menuitem action="FixedFont"/>
+      </menu>
+      <separator/>
       <menuitem action="StatsTables"/>
       <menuitem action="PValues"/>
       <menuitem action="DistGraphs"/>
@@ -67,10 +83,6 @@
 	<menuitem action="NistBasic"/>
 	<menuitem action="NistVerbose"/>
 	<menuitem action="NistVVerbose"/>
-      </menu>
-      <menu action="Preferences">
-	<menuitem action="PrefsGeneral"/>
-	<menuitem action="FixedFont"/>
       </menu>
     </menu>
     <menu action="Data">
@@ -261,17 +273,6 @@
       <menuitem action="mle"/>
       <menuitem action="gmm"/>
       <menuitem action="system"/>
-    </menu>
-    <menu action="Package">
-      <menuitem action="LocalGfn"/>
-      <menuitem action="RemoteGfn"/>
-      <separator/>
-      <menuitem action="EditGfn"/>
-      <menuitem action="NewGfn"/>
-      <menuitem action="UploadGfn"/>
-      <menuitem action="EditSpec"/>
-      <separator/>
-      <placeholder name="RecentGfns"/>
     </menu>
     <menu action="Help">
       <menuitem action="TextCmdRef"/>

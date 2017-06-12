@@ -1397,8 +1397,8 @@ static void make_main_window (void)
 
     if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {
 	/* set default window size */
-	mainwin_width = 580 * gui_scale;
-	mainwin_height = 420 * gui_scale;
+	mainwin_width = 650 * gui_scale;
+	mainwin_height = 460 * gui_scale;
 	set_main_window_scale();
     }
 
@@ -1560,10 +1560,25 @@ GtkActionEntry main_entries[] = {
     { "PcGiveDB", GTK_STOCK_OPEN, N_("_PcGive..."), "", NULL, G_CALLBACK(open_data) },
     { "RemoteDB", GTK_STOCK_NETWORK, N_("On database _server..."), NULL, NULL, G_CALLBACK(show_files) },
 
+    { "Packages", NULL, N_("_Function packages"), NULL, NULL, NULL },
+    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
+    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
+    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
+    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
+
     { "Quit", GTK_STOCK_QUIT, NULL, NULL, NULL,  G_CALLBACK(menu_exit_check)},
 
     /* Tools */
     { "Tools", NULL, N_("_Tools"), NULL, NULL, NULL },
+    { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },
+    { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL,
+      G_CALLBACK(prefs_dialog_callback) },
+    { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL,
+      G_CALLBACK(font_selector) },
+    { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL,
+      G_CALLBACK(font_selector) },
     { "StatsTables", NULL, N_("_Statistical tables"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "PValues", NULL, N_("_P-value finder"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "DistGraphs", NULL, N_("_Distribution graphs"), NULL, NULL, G_CALLBACK(stats_calculator) },
@@ -1579,13 +1594,6 @@ GtkActionEntry main_entries[] = {
     { "NistBasic", NULL, N_("_Basic"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVVerbose", NULL, N_("V_ery verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
-    { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },
-    { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL, 
-      G_CALLBACK(prefs_dialog_callback) },
-    { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL, 
-      G_CALLBACK(font_selector) },
-    { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL, 
-      G_CALLBACK(font_selector) },
 
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
@@ -1768,14 +1776,6 @@ GtkActionEntry main_entries[] = {
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
 
-    /* Package */
-    { "Package", NULL, N_("_Package"), NULL, NULL, NULL },
-    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
-    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
-    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
-    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },

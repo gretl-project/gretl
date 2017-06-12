@@ -461,7 +461,7 @@ static void real_add_files_to_menus (int ftype)
 	"/menubar/File/OpenDataMenu/RecentData",
 	"/menubar/File/SessionFiles/RecentSessions",
 	"/menubar/File/ScriptFiles/RecentScripts",
-	"/menubar/Package/RecentGfns"
+	"/menubar/File/Packages/RecentGfns"
     };
     gchar *aname, *alabel;
     int jmin = 0, jmax = NFILELISTS - 1;
@@ -502,7 +502,6 @@ static void real_add_files_to_menus (int ftype)
 	}	    
 
 	/* See if there are any files to add */
-
 	if (filep == NULL || *filep[0] == '\0') {
 	    continue;
 	}

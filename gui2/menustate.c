@@ -369,7 +369,6 @@ void main_menus_enable (gboolean s)
 	flip(mdata->ui, "/menubar/Sample", s);
 	flip(mdata->ui, "/menubar/Variable", s);
 	flip(mdata->ui, "/menubar/Model", s);
-	flip(mdata->ui, "/menubar/Package", s);
     }
 }
 
