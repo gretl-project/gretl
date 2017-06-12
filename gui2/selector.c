@@ -8767,7 +8767,7 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 {
     GtkWidget *listw[2] = { NULL, NULL };
-    gint ynum = -1;
+    gint ynum = 0;
     int nv[2] = {0};
     int nset, nsep;
     int context;
@@ -8787,6 +8787,7 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
     } 
 
     if (listw[0] != NULL) {
+	/* number of laggable regressors */
 	nv[0] = get_laggable_vars(listw[0], LAG_X, NULL, NULL);
 	if (nv[0] == 0) {
 	    listw[0] = NULL;
@@ -8794,13 +8795,12 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
     }
 
     if (listw[1] != NULL) {
+	/* number of laggable instrumentsm if applicable */
 	nv[1] = get_laggable_vars(listw[1], LAG_W, NULL, NULL);
 	if (nv[1] == 0) {
 	    listw[1] = NULL;
 	}	
     }    
-
-    nset = nsep = 0;
 
 #if LDEBUG
     fprintf(stderr, "sr_get_stoch_list: ynum = %d, nv[0] = %d, nv[1] = %d\n",
@@ -8808,47 +8808,57 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 #endif
 
     if (ynum < 0 && nv[0] == 0 && nv[1] == 0) {
-	/* no vars to deal with */
+	/* nothing relevant was found */
 	errbox("Please add some variables to the model first");
 	return NULL;
     }
 
+    /* initialize number of setters and separators */
+    nset = nsep = 0;
+
     /* first pass: figure out how many elements the list should have */
 
-    if (nv[0] > 0 || ynum > 0) {
+    if (nv[0] > 0) {
+	/* regressors */
 	*pcontext = LAG_X;
-	if (nv[0] > 0) {
-	    nset += nv[0]; /* the Xs */
-	    if (nv[0] > 1) {
-		nset++; /* default X lags */
-	    }
-	}
+	nset += nv[0] + (nv[0] > 1); /* the Xs plus their defaults */
 	if (ynum > 0) {
 	    nsep++; /* depvar heading */
 	    nset++; /* depvar row */
 	}
     }
 
-    if (nv[1] > 0 || ynum > 0) {
-	if (nv[0] > 0 || ynum > 0) {
+    if (nv[1] > 0) {
+	/* instruments */
+	if (nv[0] > 0) {
 	    nsep++; /* separator from Xs */
 	} else {
 	    *pcontext = LAG_W;
 	}
 	nsep++;            /* "instruments" heading */
-	if (nv[1] > 0) {
-	    nset += nv[1]; /* instruments */
-	    if (nv[1] > 1) {
-		nset++; /* default W lags */
-	    }
-	}
+	nset += nv[1] + (nv[1] > 1); /* instruments plus their defaults */
 	if (ynum > 0) {
-	    nsep++; /* depvar heading */
+	    nsep++; /* depvar (as instrument) heading */
 	    nset++; /* depvar row */
 	}	    
     }
 
+    if (nv[0] == 0 && nv[1] == 0) {
+	/* only the dependent variable is present */
+	*pcontext = LAG_Y_X;
+	nsep++; /* depvar heading */
+	nset++; /* depvar row */
+	if (USE_ZLIST(sr->ci)) {
+	    nsep++; /* list separator for insts */
+	    nsep++; /* "instruments" heading */
+	    nsep++; /* depvar heading */
+	    nset++; /* depvar row */
+	}
+    }
+
     /* allocate the list */
+
+    fprintf(stderr, "nset=%d, nsep=%d\n", nset, nsep);
 
     slist = gretl_list_new(nset + nsep);
     if (slist == NULL) {
@@ -8856,26 +8866,42 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
     }
 
     /* second pass: actually build the list, inserting special
-       separators if needed
+       list separators if needed
     */
 
     i = 1;
     for (j=0; j<2; j++) {
+	if (listw[j] == NULL) {
+	    continue;
+	}
 	context = (j == 1)? LAG_W : LAG_X;
 	if (j == 1) {
-	    if (nv[0] > 0 || ynum > 0) {
+	    if (nv[0] > 0) {
 		slist[i++] = LISTSEP;
 	    }
 	    slist[i++] = LAG_W;
 	}
-	if (listw[j] != NULL) {
-	    if (nv[j] > 1) {
-		slist[i++] = VDEFLT;
-	    }
-	    get_laggable_vars(listw[j], context, slist, &i);
+	if (nv[j] > 1) {
+	    /* insert default only if we have more than one entry */
+	    slist[i++] = VDEFLT;
 	}
+	get_laggable_vars(listw[j], context, slist, &i);
 	if (ynum > 0) {
 	    slist[i++] = (j > 0)? LAG_Y_W : LAG_Y_X;
+	    slist[i++] = ynum;
+	}
+    }
+
+    /* special case where the dependent variable is the only laggable
+       variable selected so far */
+
+    if (nv[0] == 0 && nv[1] == 0) {
+	slist[i++] = LAG_Y_X;
+	slist[i++] = ynum;
+	if (USE_ZLIST(sr->ci)) {
+	    slist[i++] = LISTSEP;
+	    slist[i++] = LAG_W;
+	    slist[i++] = LAG_Y_W;
 	    slist[i++] = ynum;
 	}
     }
