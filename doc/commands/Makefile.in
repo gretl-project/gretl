@@ -303,6 +303,14 @@ textables_pt: tables matfuncs $(PT_FNSRC)
 	LANG=pt_PT ./matfuncs $(PT_FNSRC) > ../tex_pt/matfuncs.tex && \
 	touch $@
 
+textables_gl: tables matfuncs $(GL_FNSRC)
+	./tables --internals > ../tex_gl/tabinternals.tex && \
+	./tables --functions > ../tex_gl/tabfunctions.tex && \
+	./tables --loopcmds > ../tex_gl/tabloopcmds.tex && \
+	./tables --nonloopcmds > ../tex_gl/tabnonloopcmds.tex && \
+	LANG=gl_ES ./matfuncs $(GL_FNSRC) > ../tex_gl/matfuncs.tex && \
+	touch $@
+
 functex: xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --tex $(EN_FNSRC) --lang=en --docdir=$(CMDSDIR) | \
 	./reflow > ../tex/funcbody.tex && touch $@
@@ -314,6 +322,10 @@ functex_it: xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREF
 functex_pt: xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --tex $(PT_FNSRC) --lang=pt --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_pt/funcbody.tex && touch $@
+
+functex_gl: xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --tex $(GL_FNSRC) --lang=gl --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_gl/funcbody.tex && touch $@
 
 cmdtex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --tex $(EN_SRC) --lang=en --docdir=$(CMDSDIR) | \
@@ -331,17 +343,24 @@ cmdtex_pt: xsltrans reflow $(PT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --tex $(PT_SRC) --lang=pt --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_pt/refbody.tex && touch $@
 
+cmdtex_gl: xsltrans reflow $(GL_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --tex $(GL_SRC) --lang=gl --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_gl/refbody.tex && touch $@
+
 topiclist_en: topiclist $(EN_SRC)
 	LANG=en_US ./topiclist $(EN_SRC) > ../tex/cmdtopics.tex && touch $@
 
 topiclist_it: topiclist $(IT_SRC)
-	LANG=it_IT ./topiclist $(IT_SRC) > ../tex_it/cmdtopics.tex && touch $@ 
+	LANG=it_IT ./topiclist $(IT_SRC) > ../tex_it/cmdtopics.tex && touch $@
 
 topiclist_es: topiclist $(ES_SRC)
-	LANG=es_ES ./topiclist $(ES_SRC) > ../tex_es/cmdtopics.tex && touch $@ 
+	LANG=es_ES ./topiclist $(ES_SRC) > ../tex_es/cmdtopics.tex && touch $@
 
 topiclist_pt: topiclist $(PT_SRC)
-	LANG=pt_PT ./topiclist $(PT_SRC) > ../tex_pt/cmdtopics.tex && touch $@ 
+	LANG=pt_PT ./topiclist $(PT_SRC) > ../tex_pt/cmdtopics.tex && touch $@
+
+topiclist_gl: topiclist $(GL_SRC)
+	LANG=gl_ES ./topiclist $(GL_SRC) > ../tex_gl/cmdtopics.tex && touch $@
 
 # test validity of skeleton.xml
 test: skeleton.xml
