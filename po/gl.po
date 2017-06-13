@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-03 08:49-0400\n"
-"PO-Revision-Date: 2017-05-15 18:40+0100\n"
+"PO-Revision-Date: 2017-06-13 12:20+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -3977,7 +3977,7 @@ msgstr "Non pode facerse isto cunha submostra dun conxunto de datos"
 #.
 #: lib/src/gretl_paths.c:103
 msgid "gretl_cli_cmdref.en"
-msgstr ""
+msgstr "gretl_cli_cmdref.gl"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
@@ -3985,7 +3985,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:108
 msgid "gretl_gui_cmdref.en"
-msgstr ""
+msgstr "gretl_gui_cmdref.gl"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_commands_en.xml has been translated for your language,
@@ -3993,7 +3993,7 @@ msgstr ""
 #.
 #: lib/src/gretl_paths.c:113
 msgid "gretl_gui_help.en"
-msgstr ""
+msgstr "gretl_gui_help.gl"
 
 #. TRANSLATORS: you may change the two-letter language code
 #. if gretl_functions_en.xml has been translated for your language,
