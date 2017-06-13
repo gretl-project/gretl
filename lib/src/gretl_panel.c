@@ -1396,6 +1396,39 @@ static int save_between_model (MODEL *pmod, const int *blist,
     return err;
 }
 
+#define EMULATE_STATA 1
+
+#if EMULATE_STATA
+
+/* Compute @ubPub as the Ti-weighted sum of the squared
+   residuals from the Between model.
+*/
+
+static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
+			  DATASET *gset)
+{
+    int i, Ti, t = 0;
+
+    pan->ubPub = 0.0;
+
+    for (i=0; i<pan->nunits; i++) {
+	Ti = pan->unit_obs[i];
+	if (Ti > 0) {
+	    pan->ubPub += Ti * bmod->uhat[t] * bmod->uhat[t];
+	    t++;
+	}
+    }
+
+    return 0;
+}
+
+#else
+
+/* Do what Baltagi 3e (sect. 9.2.1, p. 169) seems to suggest;
+   that is, make @ubPub the SSR of a Ti-weighted version of
+   the Between model.
+*/
+
 static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
 			      int step)
 {
@@ -1413,6 +1446,27 @@ static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
 	}
     }
 }
+
+static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
+			  DATASET *gset)
+{
+    int err;
+
+    /* multiply all data by sqrt(Ti) */
+    adjust_gset_data(pan, gset, 0);
+    clear_model(bmod);
+    *bmod = lsq(blist, gset, OLS, OPT_A);
+    /* put the original data back */
+    adjust_gset_data(pan, gset, 1);
+    err = bmod->errcode;
+    if (!err) {
+	pan->ubPub = bmod->ess;
+    }
+
+    return err;
+}
+
+#endif /* emulate Stata or not */
 
 /* calculate the group means or "between" regression and its error
    variance */
@@ -1461,20 +1515,9 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
     } else {
 	if (!err && !pan->balanced && (pan->opt & OPT_U) &&
 	    (pan->opt & OPT_X) && !(pan->opt & OPT_N)) {
-	    /* Prepare for Swamy-Arora in the unbalanced case:
-	       run modified Between regression and save its
-	       residual sum of squares as pan->upPub.
-	    */
-	    /* multiply all data by sqrt(Ti) */
-	    adjust_gset_data(pan, gset, 0);
-	    clear_model(&bmod);
-	    bmod = lsq(blist, gset, OLS, OPT_A);
-	    /* put the original data back */
-	    adjust_gset_data(pan, gset, 1);
-	    err = bmod.errcode;
-	    if (!err) {
-		pan->ubPub = bmod.ess;
-	    }
+	    /* Prepare for "exact" Swamy-Arora in the case of
+	       an unbalanced panel */
+	    err = compute_ubPub(pan, &bmod, gset);
 	}
 	clear_model(&bmod);
     }
@@ -2845,11 +2888,12 @@ static int unbalanced_SA_s2v (panelmod_t *pan,
     gretl_matrix_multiply(ZPZ, D2, trmat);
     tr = gretl_matrix_trace(trmat);
 
-    pan->s2v = (pan->ubPub - (pan->effn - k + 1) * pan->s2e) / (pan->NT - tr);
+    pan->s2v = (pan->ubPub - (pan->effn - k) * pan->s2e) / (pan->NT - tr);
 
-#if PDEBUG
-    fprintf(stderr, "S-A: ubPub = %#.7g, trace = %#.7g, s2v = %#.7g\n",
-	    pan->ubPub, tr, pan->s2v);
+#if 1 || PDEBUG
+    /* agrees with Stata if EMULATE_STATA defined */
+    fprintf(stderr, "S-A: ubPub=%#.8g, tr=%#.8g, s2v=%#.8g, sv=%#.8g\n",
+	    pan->ubPub, tr, pan->s2v, sqrt(pan->s2v));
 #endif
 
     gretl_matrix_block_destroy(B);
