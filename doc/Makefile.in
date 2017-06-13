@@ -1,5 +1,5 @@
-# Note: three translation subdirs are present: tex_es, tex_it
-# and tex_pt. These can be added to SUBDIRS if wanted.
+# Note: four translation subdirs are present: tex_es, tex_it
+# tex_pt and tex_gl. These can be added to SUBDIRS if wanted.
 
 SUBDIRS = tex
 

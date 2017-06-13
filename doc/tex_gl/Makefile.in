@@ -1,0 +1,60 @@
+topsrc = @top_srcdir@
+docsrc = $(topsrc)/doc
+
+MAKE = @MAKE@
+
+REF = gretl-ref-gl.pdf
+
+BIBSRC = gretl.bib gretl.bst
+
+STYSRC = $(docsrc)/gretl.sty.in
+
+ALLSRC = $(wildcard $(docsrc)/tex_gl/*.tex) $(STYSRC)
+
+all: $(REF)
+
+$(REF): gretl-ref-gl.tex links cmdtex functex textables_gl topiclist \
+	date.tex $(STYSRC) $(BIBSRC)
+	pdflatex $<
+	bibtex gretl-ref-gl
+	pdflatex $<
+	bibtex gretl-ref-gl
+	pdflatex $<
+	pdflatex $<
+
+gretl-ref-gl.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_gl/$@ . ; fi
+
+.PHONY : links cmdtex_gl functex_gl textables_gl refpass topiclist clean
+
+links:
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	for f in $(BIBSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
+
+cmdtex:
+	$(MAKE) -C ../commands cmdtex_gl
+
+topiclist:
+	$(MAKE) -C ../commands topiclist_gl
+
+textables_gl:
+	$(MAKE) -C ../commands textables_gl
+
+functex:
+	$(MAKE) -C ../commands functex_gl
+
+date.tex: $(ALLSRC)
+	LANG=gl_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+
+refpass: gretl-ref-gl.tex links cmdtex_gl functex_gl textables_gl topiclist
+	 pdflatex $<
+
+bibpass: refpass
+	bibtex gretl-ref-gl
+
+clean:
+	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
+	rm -f refbody.tex funcbody.tex cmdtopics.tex
+	rm -f ../commands/textables_gl ../commands/topiclist_gl
+	rm -f ../commands/cmdtex_gl ../commands/functex_gl
