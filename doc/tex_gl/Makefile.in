@@ -31,6 +31,7 @@ links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
+	rm -f figures && ln -s $(docsrc)/figures .
 
 cmdtex:
 	$(MAKE) -C ../commands cmdtex_gl
