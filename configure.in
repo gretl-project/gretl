@@ -73,7 +73,6 @@ darwin_build="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
-deb_build="no"
 mac_native="no"
 have_mac_integration="no"
 gui_disabled="no"
@@ -179,13 +178,6 @@ AC_ARG_ENABLE(pkgbuild,
 then
   AC_DEFINE(PKGBUILD)
   pkg_build="yes"
-fi])
-
-AC_ARG_ENABLE(debbuild,
-[  --enable-debbuild       For building Debian package ],
-[if test "$enableval" = "yes"
-then
-  deb_build="yes"
 fi])
 
 AC_ARG_ENABLE(gnuplot-checks,
@@ -926,7 +918,6 @@ AC_SUBST(build_docs)
 AC_SUBST(build_addons)
 AC_SUBST(quiet_build)
 AC_SUBST(pkg_build)
-AC_SUBST(deb_build)
 AC_SUBST(swap_ends)
 AC_SUBST(use_gsf)
 
