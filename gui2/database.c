@@ -2301,7 +2301,7 @@ void maybe_update_pkgview (const char *filename,
 	populate_filelist(vwin, NULL);
     }
 
-   /* update remote package browser? */ 
+    /* update remote package browser? */ 
     vwin = get_browser_for_role(REMOTE_FUNC_FILES); 
     if (vwin != NULL && find_package_in_viewer(vwin, pkgname)) {
 	list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
@@ -2404,7 +2404,7 @@ int write_db_description (const char *binname, const char *descrip)
     FILE *fnew, *fbak;
     char idxname[FILENAME_MAX];
     char idxtmp[FILENAME_MAX];
-    char tmp[64];
+    char tmp[72];
     char *p;
     int err = 0;
     
@@ -2575,11 +2575,13 @@ static int read_remote_filetime (char *line, char *fname, time_t *date,
 	if (!strcmp(month, months[i])) {
 	    mon = i;
 	}
-    }    
+    }
 
     if (buf != NULL) {
 	sprintf(buf, "%d-%02d-%02d", yr, mon + 1, mday);
-    } else {
+    }
+
+    if (date != NULL) {
 	struct tm mytime;
 
 	hrs[2] = 0;
