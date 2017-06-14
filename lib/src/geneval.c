@@ -8594,6 +8594,10 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
     } else if (ltype == GRETL_TYPE_STRING) {
 	l->t = STR;
 	l->v.str = lp;
+	if (p->op == B_ADD) {
+	    /* reinterpret '+' when appending to a string */
+	    op->t = B_HCAT;
+	}
     } else if (ltype == GRETL_TYPE_BUNDLE) {
 	l->t = BUNDLE;
 	l->v.b = lp;
@@ -9022,7 +9026,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	case STR:
 	    ptr = rhs->v.str;
 	    type = GRETL_TYPE_STRING;
-	    donate = is_tmp_node(rhs);
+	    donate = !reusable(p) && is_tmp_node(rhs);
 	    break;
 	case MAT:
 	    ptr = rhs->v.m;
