@@ -8817,7 +8817,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	case STR:
 	    ptr = rhs->v.str;
 	    type = GRETL_TYPE_STRING;
-	    donate = is_tmp_node(rhs);
+	    donate = !reusable(p) && is_tmp_node(rhs);
 	    break;
 	case MAT:
 	    if (targ == GRETL_TYPE_DOUBLE && scalar_matrix_node(rhs)) {
@@ -8845,7 +8845,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    ptr = rhs->v.xvec;
 	    type = GRETL_TYPE_SERIES;
 	    size = p->dset->n;
-	    donate = is_tmp_node(rhs);
+	    donate = !reusable(p) && is_tmp_node(rhs);
 	    break;
 	case BUNDLE:
 	    ptr = rhs->v.b;
@@ -8857,7 +8857,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	       what the user specified (if anything)
 	    */
 	    type = gretl_array_get_type(rhs->v.a);
-	    donate = is_tmp_node(rhs);
+	    donate = !reusable(p) && is_tmp_node(rhs);
 	    break;
 	case LIST:
 	    if (targ == GRETL_TYPE_MATRIX) {
@@ -10575,7 +10575,7 @@ static void node_nullify_ptr (NODE *n)
    or bundle members
 */
 
-static void *node_get_ptr (NODE *n, int f, int *donate)
+static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
 {
     void *ptr = NULL;
     int t = n->t;
@@ -10612,7 +10612,7 @@ static void *node_get_ptr (NODE *n, int f, int *donate)
 
     if (t == NUM) {
 	*donate = 1;
-    } else if (is_tmp_node(n)) {
+    } else if (!reusable(p) && is_tmp_node(n)) {
 	*donate = 1;
 	node_nullify_ptr(n);
     }
@@ -11366,7 +11366,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			gretl_array_set_type(A, gtype);
 			anon = 0;
 		    }
-		    ptr = node_get_ptr(e, t->t, &donate);
+		    ptr = node_get_ptr(e, t->t, p, &donate);
 		    if (donate) {
 			/* copy not required */
 			p->err = gretl_array_append_object(A, ptr, 0);
@@ -11424,7 +11424,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			} else if (scalar_matrix_node(e)) {
 			    gtype = GRETL_TYPE_DOUBLE;
 			}
-			ptr = node_get_ptr(e, t->t, &donate);
+			ptr = node_get_ptr(e, t->t, p, &donate);
 			if (donate) {
 			    gretl_bundle_donate_data(b, key, ptr, gtype, size);
 			} else {

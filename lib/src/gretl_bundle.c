@@ -1059,6 +1059,11 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 int gretl_bundle_donate_data (gretl_bundle *bundle, const char *key,
 			      void *ptr, GretlType type, int size)
 {
+    if (key != NULL && ptr == NULL) {
+	gretl_errmsg_sprintf("'%s': got NULL data value", key);
+	return E_DATA;
+    }
+
     return real_bundle_set_data(bundle, key, ptr, type, size, 0, NULL);
 }
 
