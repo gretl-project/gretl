@@ -3,9 +3,18 @@ docsrc = $(topsrc)/doc
 
 MAKE = @MAKE@
 
+TEXSRC = cmdref.tex \
+	comments.tex \
+	funcref.tex \
+	gretl-ref-gl.tex \
+	operators.tex \
+	optarg.tex \
+	optshort.tex \
+	reftables.tex
+
 REF = gretl-ref-gl.pdf
 
-BIBSRC = gretl.bib gretl.bst
+BIBSRC = gretl.bib gretl.bst biblio.tex
 
 STYSRC = $(docsrc)/gretl.sty.in
 
@@ -31,6 +40,8 @@ links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
+	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_gl/$$f . ; fi ; done
 	rm -f figures && ln -s $(docsrc)/figures .
 
 cmdtex:

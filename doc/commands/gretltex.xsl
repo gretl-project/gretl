@@ -57,7 +57,7 @@
                     contains($src,'$') or contains($src,'^') or
                     contains($src,'%') or contains($src,'&amp;') or
                     contains($src,'#') or contains($src,'{') or
-                    contains($src, '--')">
+                    contains($src,'&lt;') or contains($src, '--')">
       <xsl:text>yes</xsl:text>
     </xsl:when>    
     <xsl:otherwise>

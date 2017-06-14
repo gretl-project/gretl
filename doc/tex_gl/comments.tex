@@ -1,0 +1,105 @@
+\chapter{Comments in scripts}
+\label{chap:comments}
+
+When a script does anything non-obvious, it's a good idea to add
+comments explaining what's going on.  This is particularly useful if
+you plan to share the script with others, but it's also useful as a
+reminder to yourself --- when you revisit a script some months later
+and wonder what it was supposed to be doing.
+
+The comment mechanism can also be helpful when you're developing a
+script.  There may come a point where you want to execute a script,
+but bypass execution of some portion of it.  Obviously you could
+delete the portion you wish to bypass, but rather than lose that
+section you can ``comment it out'' so that it is ignored by
+\app{gretl}.
+
+Two sorts of comments are supported by \app{gretl}.  The simpler one
+is this:
+
+\begin{itemize}
+\item If a hash mark, \texttt{\#}, is encountered in a \app{gretl} script, 
+  everything from that point to the end of the current line is treated as a 
+  comment, and ignored.
+\end{itemize}
+
+If you wish to ``comment out'' several lines using this mode, you'll
+have to place a hash mark at the start of each line.
+
+The second sort of comment is patterned after the C programming language:
+
+\begin{itemize}
+\item If the sequence \texttt{/*} is encountered in a script, all the
+  following input is treated as a comment until the sequence \texttt{*/}
+  is found.
+\end{itemize}
+
+Comments of this sort can extend over several lines.  Using this mode
+it is easy to add lengthy explanatory text, or to get \app{gretl} to
+ignore substantial blocks of commands.  As in C, comments of this
+type cannot be nested.
+
+How do these two comment modes interact?  You can think of
+\app{gretl} as starting at the top of a script and trying to decide at
+each point whether it should or should not be in ``ignore mode''.  In
+doing so it follows these rules:
+
+\begin{itemize}
+\item If we're not in ignore mode, then \texttt{\#} puts us into ignore
+  mode till the end of the current line.
+\item If we're not in ignore mode, then \texttt{/*} puts us into ignore
+  mode until \texttt{*/} is found.
+\end{itemize}
+
+This means that each sort of comment can be masked by the other.  
+
+\begin{itemize}
+\item If \texttt{/*} follows \texttt{\#} on a given line which does
+  not already start in ignore mode, then there's nothing special about
+  \texttt{/*}, it's just part of a \texttt{\#}-style comment.
+\item If \texttt{\#} occurs when we're already in ignore mode, it is
+  just part of a comment.
+\end{itemize}
+
+A few examples follow.
+%
+\begin{code}
+/* multi-line comment
+   # hello
+   # hello */
+\end{code}
+%
+In the above example the hash marks are not special; in particular
+the hash mark on the third line does not prevent the multi-line
+comment from terminating at \texttt{*/}.
+%
+\begin{code}
+# single-line comment /* hello
+\end{code}
+%
+Assuming we were not in ignore mode before the line shown above, it is
+just a single-line comment: the \texttt{/*} is masked, and does not
+open a multi-line comment.
+
+You can append a comment to a command:
+%
+\begin{code}
+ols 1 0 2 3 # estimate the baseline model
+\end{code}
+%
+Example of ``commenting out'':
+%
+\begin{code}
+/*
+# let's skip this for now
+ols 1 0 2 3 4
+omit 3 4
+*/
+\end{code}
+%
+
+
+
+
+
+
