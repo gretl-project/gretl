@@ -75,6 +75,9 @@ static int read_gretlrc (void);
 #endif
 
 /* font handling */
+
+static int tmpfontscale;
+
 #if defined(G_OS_WIN32)
 static char fixedfontname[MAXLEN] = "Courier New 10";
 #elif defined(MAC_NATIVE)
@@ -94,6 +97,8 @@ static char appfontname[MAXLEN] = "sans 10";
 #endif
 
 PangoFontDescription *fixed_font;
+
+/* end font handling */
 
 static int usecwd;
 static int shellok;
@@ -284,7 +289,7 @@ RCVAR rc_vars[] = {
       USERSET, sizeof http_proxy, TAB_NET, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
       BOOLSET, 1, TAB_NET, NULL },
-    { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
+    { "Fixed_font", N_("Monospaced font"), NULL, fixedfontname,
       USERSET, sizeof fixedfontname, TAB_NONE, NULL },
     { "App_font", N_("Menu font"), NULL, appfontname, 
       USERSET, sizeof appfontname, TAB_NONE, NULL },
@@ -510,7 +515,7 @@ void force_english_help (void)
     gretl_update_paths(&paths, update_paths_opt);
 }
 
-void set_fixed_font (const char *fontname)
+void set_fixed_font (const char *fontname, int remember)
 {
     if (fontname == NULL) {
 	/* initial set-up */
@@ -520,8 +525,10 @@ void set_fixed_font (const char *fontname)
 	if (fixed_font != NULL) {
 	    pango_font_description_free(fixed_font);
 	}
-	strcpy(fixedfontname, fontname);
-	fixed_font = pango_font_description_from_string(fixedfontname);
+	fixed_font = pango_font_description_from_string(fontname);
+	if (remember) {
+	    strcpy(fixedfontname, fontname);
+	}
 	infobox(_("This change will apply to newly opened windows"));
     }
 }
@@ -541,7 +548,7 @@ const char *get_fixed_fontname (void)
     return fixedfontname;
 }
 
-void set_app_font (const char *fontname)
+void set_app_font (const char *fontname, int remember)
 {
     GtkSettings *settings;
     gchar *deffont;
@@ -593,9 +600,11 @@ void set_app_font (const char *fontname)
 
 	if (font != NULL) {
 	    /* OK, found it */
-	    strcpy(appfontname, fontname);
-	    fprintf(stderr, "set_app_font: setting '%s'\n", appfontname);
-	    g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
+	    if (remember) {
+		strcpy(appfontname, fontname);
+	    }
+	    fprintf(stderr, "set_app_font: setting '%s'\n", fontname);
+	    g_object_set(G_OBJECT(settings), "gtk-font-name", fontname, NULL);
 	    g_object_unref(font);
 	}
 
@@ -2403,10 +2412,10 @@ void font_selector (GtkAction *action)
 
     if (*fontname != '\0') {
 	if (which == FIXED_FONT_SELECTION) {
-	    set_fixed_font(fontname);
+	    set_fixed_font(fontname, 1);
 	    write_rc();
 	} else {
-	    set_app_font(fontname);
+	    set_app_font(fontname, 1);
 	    write_rc();
 	} 	    
     }
@@ -2459,10 +2468,10 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 	int mono = widget_get_int(fc, "mono");
 
 	if (mono) {
-	    set_fixed_font(fontname);
+	    set_fixed_font(fontname, 1);
 	    write_rc();
 	} else {
-	    set_app_font(fontname);
+	    set_app_font(fontname, 1);
 	    write_rc();
 	}
     }
@@ -2550,10 +2559,10 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 	int filter = gtk_fontsel_hack_dialog_get_filter(fs); 
 
 	if (filter == FONT_HACK_LATIN_MONO) {
-	    set_fixed_font(fontname);
+	    set_fixed_font(fontname, 1);
 	    write_rc();
 	} else if (filter == FONT_HACK_LATIN) {
-	    set_app_font(fontname);
+	    set_app_font(fontname, 1);
 	    write_rc();
 	}
     }
@@ -2607,6 +2616,77 @@ void font_selector (GtkAction *action)
 }
 
 #endif /* end font selection dialog switch */
+
+static void impose_font_scale (int scale, int remember)
+{
+    char fontname[64];
+    int i, n;
+
+    n = strlen(fixedfontname);
+    for (i=n-1; i>2; i--) {
+	if (fixedfontname[i] == ' ') {
+	    break;
+	}
+    }
+
+    *fontname = '\0';
+    strncat(fontname, fixedfontname, i+1);
+    sprintf(fontname + i + 1, "%d", scale);
+    set_fixed_font(fontname, remember);
+
+#ifdef G_OS_WIN32
+    if (*appfontname == '\0') {
+	get_default_windows_app_font(appfontname);
+    }
+#endif
+
+    n = strlen(appfontname);
+    for (i=n-1; i>2; i--) {
+	if (appfontname[i] == ' ') {
+	    break;
+	}
+    }
+
+    *fontname = '\0';
+    strncat(fontname, appfontname, i+1);
+    sprintf(fontname + i + 1, "%d", scale);
+    set_app_font(fontname, remember);
+}
+
+void font_scale_selector (GtkAction *action)
+{
+    const char *opt = "Remember this setting";
+    int fscale = tmpfontscale;
+    int resp, remember = 0;
+
+    if (fscale == 0) {
+	int i, n = strlen(fixedfontname);
+
+	for (i=n-1; i>2; i--) {
+	    if (fixedfontname[i] == ' ') {
+		fscale = atoi(fixedfontname + i);
+		break;
+	    }
+	}
+    }
+
+    resp = checks_dialog(_("gretl: font scale"),
+			 _("Scale for both monospaced and menu fonts"),
+			 &opt,
+			 1, &remember,
+			 0, 0,
+			 0, NULL,
+			 &fscale, NULL,
+			 8, 24,
+			 0, mdata->main);
+
+    if (resp == GRETL_CANCEL) {
+	return;
+    } else if (fscale > 0) {
+	tmpfontscale = fscale;
+	impose_font_scale(fscale, remember);
+    }
+}
 
 void update_persistent_graph_colors (void)
 {

@@ -4425,9 +4425,12 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    label = gtk_label_new(spintxt);
-    gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    if (spintxt != NULL) {
+	label = gtk_label_new(spintxt);
+	gtk_widget_show(label);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    }
+
     adj = (GtkAdjustment *) gtk_adjustment_new(*spinvar, spinmin, spinmax, 
 					       step, step, 0);
     button = gtk_spin_button_new(adj, 1, 0);

@@ -137,12 +137,12 @@ build_checks_dialog (const char *title, const char *blurb,
 		     int hcode, GtkWidget *parent, int *ret);
 
 int checks_dialog (const char *title, const char *blurb,
-		   const char **opts, 
-		   int nopts, int *active, 
+		   const char **opts,
+		   int nopts, int *active,
 		   int check_min, int check_max,
 		   int nradios, int *rvar,
-		   int *spinvar, const char *spintxt, 
-		   int spinmin, int spinmax, 
+		   int *spinvar, const char *spintxt,
+		   int spinmin, int spinmax,
 		   int hcode, GtkWidget *parent);
 
 int checks_only_dialog (const char *title, const char *blurb,

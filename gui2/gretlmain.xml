@@ -63,6 +63,7 @@
     <menu action="Tools">
       <menu action="Preferences">
 	<menuitem action="PrefsGeneral"/>
+	<menuitem action="FontScale"/>
 	<menuitem action="FixedFont"/>
       </menu>
       <separator/>

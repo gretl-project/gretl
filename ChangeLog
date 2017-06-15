@@ -2,6 +2,10 @@ version 2017c, in progress
 - Fix buglet re. text coloring in script output window
 - Tweak naming of auto-generated list for midasreg in the
   GUI program
+- Fix bug: failure on repeated assignment of a constant
+  string under a bundle key in a loop
+- Fix bug: "Up to date" indicator for function packages got
+  broken
 
 2017-05-26 version 2017b
 - "gnuplot" and "plot" commands: support --font option for

@@ -1472,14 +1472,14 @@ static void make_main_window (void)
 #endif
 
     /* get a monospaced font for various windows */
-    set_fixed_font(NULL);
+    set_fixed_font(NULL, 1);
 
 #if GUI_DEBUG
     fprintf(stderr, "  set_fixed_font done\n");
 #endif
 
     /* and a proportional font for menus, etc. */
-    set_app_font(NULL);
+    set_app_font(NULL, 1);
 
 #if GUI_DEBUG
     fprintf(stderr, "  set_app_font done\n");
@@ -1575,7 +1575,9 @@ GtkActionEntry main_entries[] = {
     { "Preferences", NULL, N_("_Preferences"), NULL, NULL, NULL },
     { "PrefsGeneral", GTK_STOCK_PREFERENCES, N_("_General..."), NULL, NULL,
       G_CALLBACK(prefs_dialog_callback) },
-    { "FixedFont", GTK_STOCK_SELECT_FONT, N_("_Fixed font..."), NULL, NULL,
+    { "FontScale", GTK_STOCK_ZOOM_IN, N_("Font _scale..."), NULL, NULL,
+      G_CALLBACK(font_scale_selector) },
+    { "FixedFont", GTK_STOCK_SELECT_FONT, N_("Monospaced _font..."), NULL, NULL,
       G_CALLBACK(font_selector) },
     { "MenuFont", GTK_STOCK_SELECT_FONT, N_("_Menu font..."), NULL, NULL,
       G_CALLBACK(font_selector) },

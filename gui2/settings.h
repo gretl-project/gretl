@@ -80,13 +80,15 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent);
 
 void font_selector (GtkAction *action);
 
-void set_fixed_font (const char *fontname);
+void font_scale_selector (GtkAction *action);
+
+void set_fixed_font (const char *fontname, int remember);
 
 void update_persistent_graph_colors (void);
 
 void update_persistent_graph_font (void);
 
-void set_app_font (const char *fontname);
+void set_app_font (const char *fontname, int remember);
 
 const char *get_app_fontname (void);
 
