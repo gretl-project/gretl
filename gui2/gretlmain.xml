@@ -278,6 +278,7 @@
     <menu action="Help">
       <menuitem action="TextCmdRef"/>
       <menuitem action="FuncRef"/>
+      <menuitem action="PkgHelp"/>
       <separator/>
       <menuitem action="UserGuide"/>
       <menuitem action="PDFCmdRef"/>

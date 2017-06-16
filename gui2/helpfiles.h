@@ -30,9 +30,7 @@ void command_help_callback (int cmdnum, int en);
 
 void function_help_callback (int fnum, int en);
 
-void plain_text_cmdref (void);
-
-void genr_funcs_ref (void);
+void display_text_help (GtkAction *action);
 
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin);

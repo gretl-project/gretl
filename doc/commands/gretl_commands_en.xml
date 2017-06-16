@@ -6224,7 +6224,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Tools/Function packages/On server</menu-path>
+      <menu-path>/File/Function packages/On server</menu-path>
     </gui-access>
 
   </command>  
@@ -7457,7 +7457,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Tools/Function packages/New package</menu-path>
+      <menu-path>/File/Function packages/New package</menu-path>
     </gui-access>
 
   </command>
@@ -9475,6 +9475,39 @@
       </para>
     </description>
 
+  </command>
+
+  <command name="packages" section="Utilities" label="Function packages" context="gui">
+    <description>
+      <para>
+	Gretl's functionality can be extended by the use of function
+	packages. These come in two sorts: official
+	<quote>Addons</quote> and contributed packages. Jointly, they
+	cover many estimators and utilities not available as built-in
+	commands or functions.
+      </para>
+      <para>
+	The official Addons are included in the gretl installers for
+	Windows and Mac. On Linux if they are not preinstalled then
+	they are downloaded on demand (for example, if you select the
+	menu item /Model/Time series/GARCH variants, gretl will
+	download the <lit>gig</lit> (GARCH in gretl) Addon. You can
+	check that your Addons are up to date via
+	<mnu>PkgHelp:SFAddons</mnu> in the Help menu.
+      </para>
+      <para>
+	You can browse the contributed packages installed on your
+	computer via the menu item <mnu>PkgHelp:LocalGfn</mnu>, and
+	if you are online you can access a listing of available
+	packages via the item <mnu>PkgHelp:RemoteGfn</mnu>. Both
+	items are found under /File/Function packages.
+      </para>
+      <para>
+	For details on installing and working with function packages,
+	see the <mnu>PkgHelp:Pkgbook</mnu> (under the Help menu). This
+	guide also contains details on writing function packages.
+      </para>
+    </description>
   </command>
 
   <command name="panel" section="Estimation" label="Panel models">

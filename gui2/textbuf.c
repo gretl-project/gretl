@@ -25,6 +25,7 @@
 #include "tabwin.h"
 #include "guiprint.h"
 #include "gretl_func.h"
+#include "datafiles.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h" /* for browser_open() */
@@ -63,6 +64,7 @@
 #define BIB_PAGE    996
 #define EXT_PAGE    995
 #define PDF_PAGE    994
+#define MNU_PAGE    993
 
 enum {
     PLAIN_TEXT,
@@ -1419,6 +1421,29 @@ void textview_insert_from_tempfile (windata_t *vwin, PRN *prn)
     }
 }
 
+static char *get_pkghelp_string (const char *key)
+{
+    const char *p = strchr(key, ':');
+
+    if (p != NULL) {
+	p++;
+    } else {
+	p = key;
+    }
+
+    if (!strcmp(p, "LocalGfn")) {
+	return "On local machine";
+    } else if (!strcmp(p, "RemoteGfn")) {
+	return "On server";
+    } else if (!strcmp(p, "Pkgbook")) {
+	return "Function package guide";
+    } else if (!strcmp(p, "SFAddons")) {
+	return "Check for addons";
+    } else {
+	return (char *) p;
+    }
+}
+
 #define TAGLEN 128
 
 static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
@@ -1428,6 +1453,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
     gchar *show = NULL;
+    int free_show = 0;
     gchar tagname[TAGLEN];
 
     if (page == GUIDE_PAGE) {
@@ -1436,9 +1462,13 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	if (p != NULL) {
 	    show = g_strndup(text, p - text);
 	    strcpy(tagname, p + 1);
+	    free_show = 1;
 	} else {
 	    strcpy(tagname, "tag:guide");
 	}
+    } else if (page == MNU_PAGE) {
+	show = get_pkghelp_string(text);
+	strcpy(tagname, text);
     } else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	*tagname = '\0';
 	strncat(tagname, text, TAGLEN-1);
@@ -1466,7 +1496,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     tag = gtk_text_tag_table_lookup(tab, tagname);
 
     if (tag == NULL) {
-	if (page == GUIDE_PAGE || page == BIB_PAGE) {
+	if (page == GUIDE_PAGE || page == BIB_PAGE || page == MNU_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", helpfont, NULL);
 	} else if (page == SCRIPT_PAGE || page == EXT_PAGE ||
@@ -1484,7 +1514,9 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     if (show != NULL) {
 	gtk_text_buffer_insert_with_tags(tbuf, iter, show, -1, tag, NULL);
-	g_free(show);
+	if (free_show) {
+	    g_free(show);
+	}
     } else {
 	gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
     }
@@ -1629,6 +1661,31 @@ static void open_external_link (GtkTextTag *tag)
     }
 }
 
+static void open_menu_item (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	if (!strcmp(name, "PkgHelp:RemoteGfn")) {
+	    display_files(REMOTE_FUNC_FILES, NULL);
+	} else if (!strcmp(name, "PkgHelp:LocalGfn")) {
+	    display_files(FUNC_FILES, NULL);
+	} else if (!strcmp(name, "PkgHelp:SFAddons")) {
+	    display_files(REMOTE_ADDONS, NULL);
+	} else if (!strcmp(name, "PkgHelp:Pkgbook")) {
+	    static GtkAction *action;
+
+	    if (action == NULL) {
+		action = gtk_action_new("Pkgbook", NULL, NULL, NULL);
+	    }
+	    display_pdf_help(action);
+	}
+	g_free(name);
+    }
+}
+
 static void open_pdf_file (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -1673,6 +1730,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_external_link(tag);
 	    } else if (page == PDF_PAGE) {
 		open_pdf_file(tag);
+	    } else if (page == MNU_PAGE) {
+		open_menu_item(tag);
 	    } else {
 		int role = object_get_int(tview, "role");
 
@@ -3524,6 +3583,7 @@ enum {
     INSERT_GFRLINK,
     INSERT_BIBLINK,
     INSERT_ADBLINK,
+    INSERT_MNULINK,
     INSERT_BOLD
 };
 
@@ -3693,6 +3753,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_BIBLINK;
     } else if (!strncmp(p, "adb", 3)) {
 	ins = INSERT_ADBLINK;
+    } else if (!strncmp(p, "mnu", 3)) {
+	ins = INSERT_MNULINK;
     } else if (!strncmp(p, "hd1", 3)) {
 	ins = INSERT_BOLD;
     }
@@ -3809,6 +3871,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		ret = insert_xlink(tbuf, iter, targ, GFR_PAGE, indent);
 	    } else if (ins == INSERT_ADBLINK) {
 		ret = insert_link(tbuf, iter, targ, PDF_PAGE, indent);
+	    } else if (ins == INSERT_MNULINK) {
+		ret = insert_link(tbuf, iter, targ, MNU_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins == INSERT_MATH) {

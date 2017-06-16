@@ -914,7 +914,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 
     if (k == GDK_F1) {
 	/* invoke help */
-	plain_text_cmdref();
+	display_text_help(NULL);
 	return TRUE;
     } else if (k == GDK_g) {
 	/* invoke genr */
@@ -1778,11 +1778,11 @@ GtkActionEntry main_entries[] = {
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
 
-
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
-    { "TextCmdRef", GTK_STOCK_HELP, N_("_Command reference"), HELPKEY, NULL, G_CALLBACK(plain_text_cmdref) },
-    { "FuncRef",   GTK_STOCK_HELP, N_("_Function reference"), "", NULL, G_CALLBACK(genr_funcs_ref) },
+    { "TextCmdRef", GTK_STOCK_HELP, N_("_Command reference"), HELPKEY, NULL, G_CALLBACK(display_text_help) },
+    { "FuncRef", GTK_STOCK_HELP, N_("_Function reference"), "", NULL, G_CALLBACK(display_text_help) },
+    { "PkgHelp", GTK_STOCK_HELP, N_("_Packages"), "", NULL, G_CALLBACK(display_text_help) },
     { "UserGuide", GRETL_STOCK_PDF, N_("_User's guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "PDFCmdRef", GRETL_STOCK_PDF, N_("_Command reference"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "KbdRef", GRETL_STOCK_PDF, N_("_Keyboard shortcuts"), NULL, NULL, G_CALLBACK(display_pdf_help) },

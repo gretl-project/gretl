@@ -541,6 +541,16 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="mnu">
+  <xsl:choose>
+    <xsl:when test="$fmt='pango'">
+      <xsl:text>&lt;@mnu="</xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>"&gt;</xsl:text>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="equation">
   <xsl:if test="(@status='display')">
     <xsl:text>[/PARA]&#xa;&#xa;&#xa;  </xsl:text>

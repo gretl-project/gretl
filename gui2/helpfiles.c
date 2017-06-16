@@ -152,6 +152,7 @@ static struct gui_help_item gui_help_items[] = {
     { EDITOR,         "script-editor" },
     { MIDAS_LIST,     "MIDAS_list" },
     { MIDAS_PARM,     "MIDAS_parm" },
+    { PKGHELP,        "packages" },
     { -1,             NULL },
 };
 
@@ -1245,11 +1246,22 @@ static windata_t *real_do_help (int idx, int pos, int role)
     return hwin;
 }
 
-/* called from main menu in gretl.c or via toolbar button */
-
-void plain_text_cmdref (void)
+void display_text_help (GtkAction *action)
 {
-    real_do_help(0, 0, CMD_HELP);
+    if (action != NULL) {
+	const char *aname = gtk_action_get_name(action);
+
+	if (!strcmp(aname, "TextCmdRef")) {
+	    real_do_help(0, 0, CMD_HELP);
+	} else if (!strcmp(aname, "FuncRef")) {
+	    real_do_help(0, 0, FUNC_HELP);
+	} else if (!strcmp(aname, "PkgHelp")) {
+	    show_gui_help(PKGHELP);
+	}
+    } else {
+	/* default: commands help */
+	real_do_help(0, 0, CMD_HELP);
+    }
 }
 
 /* called from textbuf.c */
@@ -1285,13 +1297,6 @@ void function_help_callback (int idx, int en)
     int pos = help_pos_from_index(idx, role);
 
     real_do_help(idx, pos, role); 
-}
-
-/* called from main menu in gretl.c to launch function reference */
-
-void genr_funcs_ref (void)
-{
-    real_do_help(0, 0, FUNC_HELP);    
 }
 
 /* below: must return > 0 to do anything useful */
@@ -2027,7 +2032,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-ref.pdf",
 	"gretl-ref-a4.pdf",
 	"gretl-ref-it.pdf",
-	"gretl-ref-pt.pdf"
+	"gretl-ref-pt.pdf",
+	"gretl-ref-gl.pdf"
     };
     const char *kbd_files[] = {
 	"gretl-keys.pdf",
@@ -2050,7 +2056,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     int gotit = 0;
     int err = 0;
 
-    if (i < 0 || i > 3) {
+    if (i < 0 || i > 4) {
 	i = 0;
     }
 
@@ -2162,15 +2168,17 @@ void display_pdf_help (GtkAction *action)
     int err, code = GRETL_GUIDE;
 
     if (action != NULL) {
-	if (!strcmp(gtk_action_get_name(action), "PDFCmdRef")) {
+	const char *aname = gtk_action_get_name(action);
+
+	if (!strcmp(aname, "PDFCmdRef")) {
 	    code = GRETL_REF;
-	} else if (!strcmp(gtk_action_get_name(action), "KbdRef")) {
+	} else if (!strcmp(aname, "KbdRef")) {
 	    code = GRETL_KEYS;
-	} else if (!strcmp(gtk_action_get_name(action), "Primer")) {
+	} else if (!strcmp(aname, "Primer")) {
 	    code = HANSL_PRIMER;
-	} else if (!strcmp(gtk_action_get_name(action), "Pkgbook")) {
+	} else if (!strcmp(aname, "Pkgbook")) {
 	    code = PKGBOOK;
-	} else if (!strcmp(gtk_action_get_name(action), "gretlMPI")) {
+	} else if (!strcmp(aname, "gretlMPI")) {
 	    code = GRETL_MPI;
 	}
     }

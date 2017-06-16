@@ -132,6 +132,7 @@ enum extra_cmds {
     EDITOR,
     MIDAS_LIST,
     MIDAS_PARM,
+    PKGHELP,
     GUI_CMD_MAX
 };
 

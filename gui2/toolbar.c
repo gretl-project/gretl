@@ -1358,7 +1358,7 @@ static void tbar_open_data (void)
 
 static void tbar_command_ref (void)
 {
-    plain_text_cmdref();
+    display_text_help(NULL);
 }
 
 static void tbar_xy_graph (void)
