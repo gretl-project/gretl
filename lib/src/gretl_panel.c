@@ -1396,7 +1396,7 @@ static int save_between_model (MODEL *pmod, const int *blist,
     return err;
 }
 
-#define EMULATE_STATA 1
+#define EMULATE_STATA 1 /* pending further investigation */
 
 #if EMULATE_STATA
 
@@ -1405,7 +1405,7 @@ static int save_between_model (MODEL *pmod, const int *blist,
 */
 
 static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
-			  DATASET *gset)
+			  int *blist, DATASET *gset)
 {
     int i, Ti, t = 0;
 
@@ -1426,7 +1426,8 @@ static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
 
 /* Do what Baltagi 3e (sect. 9.2.1, p. 169) seems to suggest;
    that is, make @ubPub the SSR of a Ti-weighted version of
-   the Between model.
+   the Between model. (The same formulation appears in Baltagi
+   and Chang, Journal of Econometrics, 1994.)
 */
 
 static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
@@ -1448,7 +1449,7 @@ static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
 }
 
 static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
-			  DATASET *gset)
+			  int *blist, DATASET *gset)
 {
     int err;
 
@@ -1517,7 +1518,7 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
 	    (pan->opt & OPT_X) && !(pan->opt & OPT_N)) {
 	    /* Prepare for "exact" Swamy-Arora in the case of
 	       an unbalanced panel */
-	    err = compute_ubPub(pan, &bmod, gset);
+	    err = compute_ubPub(pan, &bmod, blist, gset);
 	}
 	clear_model(&bmod);
     }
