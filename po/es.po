@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-03 08:49-0400\n"
-"PO-Revision-Date: 2017-04-03 15:29+0200\n"
+"PO-Revision-Date: 2017-06-16 17:18+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -73,9 +73,9 @@ msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "Contraste aumentado de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:545
-#, fuzzy, c-format
+#, c-format
 msgid "testing down from %d lags, criterion %s"
-msgstr "Contrastar desde el máximo orden de retardos hacia abajo"
+msgstr "contrastar desde %d retardos, con el criterio %s"
 
 #: lib/src/adf_kpss.c:549 lib/src/adf_kpss.c:659 plugin/panurc.c:577
 #, c-format
@@ -3833,33 +3833,26 @@ msgid "Invalid MPI rank %d"
 msgstr "Rango de MPI no válido %d"
 
 #: lib/src/gretl_panel.c:1589
-#, fuzzy
 msgid ""
 "Random effects estimator\n"
 "allows for a unit-specific component to the error term\n"
 msgstr ""
-"                      Estimador de efectos aleatorios\n"
-"     permite un componente específico de la unidad en el término de error\n"
-"    (entre paréntesis las desviaciones típicas, los valores p entre "
-"corchetes)\n"
+"Estimador de efectos aleatorios\n"
+"permite un componente específico de la unidad en el término de error\n"
+"\n"
 
 #: lib/src/gretl_panel.c:1603
-#, fuzzy
 msgid ""
 "Fixed effects estimator\n"
 "allows for differing intercepts by cross-sectional unit\n"
 msgstr ""
 "Estimador de efectos fijos\n"
 "permite interceptos distintos para las unidades de sección cruzada\n"
-"entre paréntesis las desviaciones típicas. de las pendientes,\n"
-" los valores p entre corchetes\n"
 
 #: lib/src/gretl_panel.c:1609
-#, fuzzy, c-format
+#, c-format
 msgid "Residual variance: %g/(%d - %d) = %g\n"
-msgstr ""
-"\n"
-"Varianza de los residuos: %g/(%d - %d) = %g\n"
+msgstr "Varianza de los residuos: %g/(%d - %d) = %g\n"
 
 #: lib/src/gretl_panel.c:1614
 msgid "Joint significance of differing group means:\n"
@@ -3889,23 +3882,20 @@ msgid "Inadequate data for panel estimation"
 msgstr "Los datos no son adecuados para una estimación de panel"
 
 #: lib/src/gretl_panel.c:2618
-#, fuzzy
 msgid ""
 "Hausman test matrix is not positive definite (this result may be treated as\n"
 "\"fail to reject\" the random effects specification).\n"
 msgstr ""
-"\n"
 "La matriz del contraste de Hausman no es definida positiva (esto puede "
 "considerarse como\n"
 "un \"No rechazo\" de la especificación de efectos aleatorios).\n"
 
 #: lib/src/gretl_panel.c:2622
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Hausman test statistic:\n"
 " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"
 msgstr ""
-"\n"
 "Estadístico de contraste de Hausman:\n"
 " H = %g con valor p = prob(Chi-cuadrado(%d) > %g) = %g\n"
 "\n"
@@ -3924,13 +3914,10 @@ msgid "Error estimating random effects model\n"
 msgstr "Error al estimar el modelo de efectos aleatorios\n"
 
 #: lib/src/gretl_panel.c:2910
-#, fuzzy
 msgid "Means of pooled OLS residuals for cross-sectional units:"
 msgstr ""
-"\n"
 "Medias de los residuos de MCO combinados para las unidades de sección "
-"cruzada:\n"
-"\n"
+"cruzada:"
 
 #: lib/src/gretl_panel.c:2927
 #, c-format
@@ -3938,12 +3925,11 @@ msgid " unit %2d: %13.5g\n"
 msgstr " unidad %2d: %13.5g\n"
 
 #: lib/src/gretl_panel.c:2939
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Breusch-Pagan test statistic:\n"
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
-"\n"
 "Estadístico de contraste de Breusch-Pagan:\n"
 " LM = %g con valor p = prob(chi-cuadrado(1) > %g) = %g\n"
 
@@ -3962,9 +3948,9 @@ msgid "Hausman test matrix is not positive definite"
 msgstr "La matriz del contraste de Hausman no es definida positiva"
 
 #: lib/src/gretl_panel.c:3194
-#, fuzzy, c-format
+#, c-format
 msgid "Diagnostics: using n = %d cross-sectional units\n"
-msgstr "Se han incluido %d unidades de sección cruzada"
+msgstr "Diagnósticos: utilizando %d unidades de sección cruzada\n"
 
 #: lib/src/gretl_panel.c:3220 lib/src/gretl_panel.c:3574
 msgid "Couldn't estimate group means regression\n"
@@ -5430,15 +5416,15 @@ msgstr "T"
 
 #: lib/src/modelprint.c:1888
 msgid "Using L-BFGS-B with conditional OLS"
-msgstr ""
+msgstr "Usando L-BFGS-B con MCO condicionales"
 
 #: lib/src/modelprint.c:1890
 msgid "Using Levenberg--Marquardt algorithm"
-msgstr ""
+msgstr "Utilizando el algoritmo de Levenberg--Marquardt"
 
 #: lib/src/modelprint.c:1892
 msgid "Using Levenberg-Marquardt algorithm"
-msgstr ""
+msgstr "Utilizando el algoritmo de Levenberg--Marquardt"
 
 #: lib/src/modelprint.c:1945 lib/src/modelprint.c:1948
 #: lib/src/modelprint.c:1951 lib/src/system.c:4604 lib/src/system.c:4630
@@ -7386,9 +7372,9 @@ msgid "dummy for %s = %g"
 msgstr "variable ficticia para %s = %g"
 
 #: lib/src/transforms.c:1915
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "Número de observaciones en media:"
+msgstr "Se requiere un mínimo de %d observaciones"
 
 #: lib/src/transforms.c:2035
 msgid "dummify: no suitable variables were found"
@@ -7626,19 +7612,16 @@ msgid "Lag order %*d"
 msgstr "Orden de retardos %*d"
 
 #: lib/src/vartest.c:149
-#, fuzzy
 msgid "Test for autocorrelation of order up to"
-msgstr "Contraste de autocorrelación hasta el orden %d"
+msgstr "Contraste de autocorrelación hasta el orden"
 
 #: lib/src/vartest.c:238
-#, fuzzy
 msgid "Test for autocorrelation of order"
-msgstr "Contraste de autocorrelación hasta el orden %d"
+msgstr "Contraste de autocorrelación de orden"
 
 #: lib/src/vartest.c:422
-#, fuzzy
 msgid "Test for ARCH of order up to"
-msgstr "Contraste de ARCH de orden"
+msgstr "Contraste de ARCH de orden hasta"
 
 #: lib/src/vartest.c:681
 #, c-format
@@ -10762,7 +10745,7 @@ msgstr "Por favor, añada algún texto de ayuda para este paquete de funciones"
 
 #: gui2/fnsave.c:780
 msgid "Please delete the \"pdfdoc:\" line from the help text"
-msgstr ""
+msgstr "Por favor, borre la línea \"pdfdoc:\" del texto de ayuda"
 
 #: gui2/fnsave.c:790
 msgid "Please add a sample script for this package"
@@ -12290,23 +12273,20 @@ msgid "_Model"
 msgstr "M_odelo"
 
 #: gui2/gretl.c:1724
-#, fuzzy
 msgid "_Ordinary Least Squares"
-msgstr "Mínimos Cuadrados Ordinarios"
+msgstr "Mínimos Cuadrados _Ordinarios"
 
 #: gui2/gretl.c:1725
 msgid "_Instrumental variables"
 msgstr "Variables _instrumentales"
 
 #: gui2/gretl.c:1726
-#, fuzzy
 msgid "_Two-Stage Least Squares"
-msgstr "Mínimos cuadrados en dos etapas"
+msgstr "Mínimos cuadrados en dos e_tapas"
 
 #: gui2/gretl.c:1727
-#, fuzzy
 msgid "_LIML"
-msgstr "MVIL"
+msgstr "MVI_L"
 
 #: gui2/gretl.c:1728 gui2/gretl.c:1776
 msgid "_GMM"
@@ -12317,14 +12297,12 @@ msgid "Other _linear models"
 msgstr "Otros modelos _lineales"
 
 #: gui2/gretl.c:1730
-#, fuzzy
 msgid "_Weighted Least Squares"
-msgstr "Mínimos cuadrados ponderados"
+msgstr "Mínimos cuadrados _ponderados"
 
 #: gui2/gretl.c:1731
-#, fuzzy
 msgid "H_eteroskedasticity corrected"
-msgstr "con corrección de heterocedasticidad\t"
+msgstr "con corrección de _heterocedasticidad"
 
 #: gui2/gretl.c:1732
 msgid "High _precision OLS"
@@ -12344,23 +12322,20 @@ msgid "ARI_MA"
 msgstr "ARI_MA"
 
 #: gui2/gretl.c:1736
-#, fuzzy
 msgid "_GARCH"
-msgstr "GARCH"
+msgstr "_GARCH"
 
 #: gui2/gretl.c:1738
 msgid "_AR errors (GLS)"
-msgstr ""
+msgstr "Errores _AR (MCG)"
 
 #: gui2/gretl.c:1739
-#, fuzzy
 msgid "_AR(1)"
-msgstr "AR(1)"
+msgstr "_AR(1)"
 
 #: gui2/gretl.c:1740
-#, fuzzy
 msgid "_AR (general)"
-msgstr "AR (estacional)"
+msgstr "_AR (general)"
 
 #: gui2/gretl.c:1741
 msgid "_Multivariate"
@@ -12371,23 +12346,20 @@ msgid "_Vector Autoregression"
 msgstr "Autorregresión _vectorial (VAR)"
 
 #: gui2/gretl.c:1743
-#, fuzzy
 msgid "VAR _lag selection"
-msgstr "Selección del orden del VAR"
+msgstr "Selección del _orden del VAR"
 
 #: gui2/gretl.c:1744
 msgid "V_ECM"
 msgstr "V_ECM"
 
 #: gui2/gretl.c:1745
-#, fuzzy
 msgid "Cointegration test (_Johansen)"
-msgstr "Contraste de c_ointegración"
+msgstr "Contraste de cointegración (_Johansen)"
 
 #: gui2/gretl.c:1746
-#, fuzzy
 msgid "Cointegration test (_Engle-Granger)"
-msgstr "Contraste de c_ointegración"
+msgstr "Contraste de cointegración (_Engle-Granger)"
 
 #: gui2/gretl.c:1747
 msgid "_Panel"
@@ -12398,19 +12370,16 @@ msgid "_Fixed or random effects"
 msgstr "Efectos _fijos o efectos aleatorios"
 
 #: gui2/gretl.c:1749
-#, fuzzy
 msgid "_Weighted least squares"
-msgstr "Mínimos cuadrados ponderados"
+msgstr "Mínimos cuadrados _ponderados"
 
 #: gui2/gretl.c:1750
-#, fuzzy
 msgid "_Between model"
-msgstr "Modelo \"entre\" (Between Model)"
+msgstr "Modelo \"entre\" (_Between Model)"
 
 #: gui2/gretl.c:1751
-#, fuzzy
 msgid "_Dynamic panel model"
-msgstr "Modelo de panel dinámico"
+msgstr "Modelo de panel _dinámico"
 
 #: gui2/gretl.c:1753
 msgid "_Limited dependent variable"
@@ -12441,18 +12410,16 @@ msgid "Bi_variate"
 msgstr "Bi_variante"
 
 #: gui2/gretl.c:1762
-#, fuzzy
 msgid "_Random effects"
-msgstr "Efectos aleatorios"
+msgstr "Efectos _aleatorios"
 
 #: gui2/gretl.c:1763
 msgid "To_bit"
 msgstr "To_bit"
 
 #: gui2/gretl.c:1764
-#, fuzzy
 msgid "_Heckit"
-msgstr "Heckit"
+msgstr "_Heckit"
 
 #: gui2/gretl.c:1765
 msgid "_Count data"
@@ -12463,14 +12430,12 @@ msgid "_Duration data"
 msgstr "Datos de _duración"
 
 #: gui2/gretl.c:1767
-#, fuzzy
 msgid "Lo_gistic"
-msgstr "Logística"
+msgstr "Lo_gística"
 
 #: gui2/gretl.c:1768
-#, fuzzy
 msgid "_Interval regression"
-msgstr "Regresión de intervalos"
+msgstr "Regresión de _intervalos"
 
 #: gui2/gretl.c:1769
 msgid "_Robust estimation"
@@ -12481,28 +12446,24 @@ msgid "Least _Absolute Deviation"
 msgstr "Mínima desviación _absoluta"
 
 #: gui2/gretl.c:1771
-#, fuzzy
 msgid "_Quantile regression"
-msgstr "Regresión de cuantil"
+msgstr "Regresión de _cuantil"
 
 #: gui2/gretl.c:1772
-#, fuzzy
 msgid "_Loess"
-msgstr "Loess"
+msgstr "_Loess"
 
 #: gui2/gretl.c:1773
-#, fuzzy
 msgid "_Nadaraya-Watson"
-msgstr "Nadaraya-Watson"
+msgstr "_Nadaraya-Watson"
 
 #: gui2/gretl.c:1774
 msgid "_Nonlinear Least Squares"
 msgstr "Mínimos cuadrados _no lineales"
 
 #: gui2/gretl.c:1775
-#, fuzzy
 msgid "_Maximum likelihood"
-msgstr "Máxima Verosimilitud"
+msgstr "_Máxima Verosimilitud"
 
 #: gui2/gretl.c:1777
 msgid "_Simultaneous equations"
@@ -13528,14 +13489,14 @@ msgid "A string named %s already exists"
 msgstr "Ya hay una cadena con nombre %s"
 
 #: gui2/gui_utils.c:5209
-#, fuzzy, c-format
+#, c-format
 msgid "A bundle named %s already exists"
-msgstr "Ya hay una lista con nombre %s"
+msgstr "Ya hay una 'bundle' con nombre %s"
 
 #: gui2/gui_utils.c:5211
-#, fuzzy, c-format
+#, c-format
 msgid "An array named %s already exists"
-msgstr "Ya hay una matriz con nombre %s"
+msgstr "Ya hay un 'array' con nombre %s"
 
 #: gui2/gui_utils.c:5247
 #, c-format
@@ -14923,9 +14884,8 @@ msgid "Heteroskedasticity corrected"
 msgstr "con corrección de heterocedasticidad\t"
 
 #: gui2/selector.c:4074
-#, fuzzy
 msgid "AR(1) errors"
-msgstr "Contraste de errores AR(%d):"
+msgstr "Errores AR(1)"
 
 #: gui2/selector.c:4086
 msgid "Random effects (binary) probit"
@@ -14972,9 +14932,8 @@ msgid "Generalized method of moments"
 msgstr "Método de los momentos generalizado"
 
 #: gui2/selector.c:4116
-#, fuzzy
 msgid "Autoregressive errors"
-msgstr "Modelo autorregresivo"
+msgstr "Errores autorregresivos"
 
 #: gui2/selector.c:4126
 msgid "VAR lag selection"
@@ -14989,14 +14948,12 @@ msgid "Interval regression"
 msgstr "Regresión de intervalos"
 
 #: gui2/selector.c:4136
-#, fuzzy
 msgid "Cointegration (Engle-Granger)"
-msgstr "Rango de cointegración"
+msgstr "Cointegración (Engle-Granger)"
 
 #: gui2/selector.c:4138
-#, fuzzy
 msgid "Cointegration (Johansen)"
-msgstr "Rango de cointegración"
+msgstr "Cointegración (Johansen)"
 
 #: gui2/selector.c:4140
 msgid "Multiple precision OLS"
@@ -15316,7 +15273,7 @@ msgstr "Usar el algoritmo de Fiorentini et al."
 
 #: gui2/selector.c:6000
 msgid "Prefer NLS via Levenberg-Marquardt"
-msgstr ""
+msgstr "Prefiere NLS via Levenberg-Marquardt"
 
 #: gui2/selector.c:6032
 msgid "Show lagged variables"
@@ -16756,7 +16713,7 @@ msgstr "gráfico X-Y"
 
 #: gui2/toolbar.c:1409
 msgid "OLS model"
-msgstr "MCO"
+msgstr "modelo MCO"
 
 #: gui2/toolbar.c:1410
 msgid "gretl database"
