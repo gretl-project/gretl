@@ -1396,16 +1396,15 @@ static int save_between_model (MODEL *pmod, const int *blist,
     return err;
 }
 
-#define EMULATE_STATA 1 /* pending further investigation */
-
-#if EMULATE_STATA
-
 /* Compute @ubPub as the Ti-weighted sum of the squared
-   residuals from the Between model.
+   residuals from the Between model, as per Stata and Baltagi
+   2013 (leaving aside the erroneous statement in Baltagi
+   and Chang, 1994, repeated in Baltagi 2013, that this
+   quantity can be obtained via a Ti-weighted Between
+   regression).
 */
 
-static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
-			  int *blist, DATASET *gset)
+static int compute_ubPub (panelmod_t *pan, MODEL *bmod)
 {
     int i, Ti, t = 0;
 
@@ -1421,53 +1420,6 @@ static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
 
     return 0;
 }
-
-#else
-
-/* Do what Baltagi 3e (sect. 9.2.1, p. 169) seems to suggest;
-   that is, make @ubPub the SSR of a Ti-weighted version of
-   the Between model. (The same formulation appears in Baltagi
-   and Chang, Journal of Econometrics, 1994.)
-*/
-
-static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
-			      int step)
-{
-    int i, j, Ti, t = 0;
-    double adj;
-
-    for (i=0; i<pan->nunits; i++) {
-	Ti = pan->unit_obs[i];
-	if (Ti > 0) {
-	    adj = step == 0 ? sqrt(Ti) : 1.0/sqrt(Ti);
-	    for (j=0; j<gset->v; j++) {
-		gset->Z[j][t] *= adj;
-	    }
-	    t++;
-	}
-    }
-}
-
-static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
-			  int *blist, DATASET *gset)
-{
-    int err;
-
-    /* multiply all data by sqrt(Ti) */
-    adjust_gset_data(pan, gset, 0);
-    clear_model(bmod);
-    *bmod = lsq(blist, gset, OLS, OPT_A);
-    /* put the original data back */
-    adjust_gset_data(pan, gset, 1);
-    err = bmod->errcode;
-    if (!err) {
-	pan->ubPub = bmod->ess;
-    }
-
-    return err;
-}
-
-#endif /* emulate Stata or not */
 
 /* calculate the group means or "between" regression and its error
    variance */
@@ -1516,9 +1468,10 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
     } else {
 	if (!err && !pan->balanced && (pan->opt & OPT_U) &&
 	    (pan->opt & OPT_X) && !(pan->opt & OPT_N)) {
-	    /* Prepare for "exact" Swamy-Arora in the case of
-	       an unbalanced panel */
-	    err = compute_ubPub(pan, &bmod, blist, gset);
+	    /* Prepare for the Baltagi-Chang take on Swamy-Arora
+	       in the case of an unbalanced panel
+	    */
+	    err = compute_ubPub(pan, &bmod);
 	}
 	clear_model(&bmod);
     }
@@ -2891,8 +2844,8 @@ static int unbalanced_SA_s2v (panelmod_t *pan,
 
     pan->s2v = (pan->ubPub - (pan->effn - k) * pan->s2e) / (pan->NT - tr);
 
-#if 1 || PDEBUG
-    /* agrees with Stata if EMULATE_STATA defined */
+#if PDEBUG
+    /* agrees with Stata */
     fprintf(stderr, "S-A: ubPub=%#.8g, tr=%#.8g, s2v=%#.8g, sv=%#.8g\n",
 	    pan->ubPub, tr, pan->s2v, sqrt(pan->s2v));
 #endif
@@ -3275,6 +3228,12 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 	pan->realmod = malloc(sizeof *pan->realmod);
 	if (pan->realmod == NULL) {
 	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && (opt & OPT_X)) {
+	if (!(pan->opt & OPT_U)) {
+	    err = E_BADOPT;
 	}
     }
     
