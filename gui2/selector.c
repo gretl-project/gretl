@@ -6621,7 +6621,7 @@ static void build_data_export_combo (selector *sr)
 	N_("gretl datafile (.gdt)"),
 	N_("gretl binary datafile (.gdtb)"),
 	N_("gretl database (.bin)"),
-	N_("GNU R"),
+	N_("space separated (R-friendly)"),
 	N_("Octave"),
 	N_("Stata"),
 	N_("JMulTi"),

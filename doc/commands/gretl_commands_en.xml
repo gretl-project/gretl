@@ -3709,22 +3709,36 @@
 	gretl databases.
       </para>
       <para>
-	You may also export data in a format suitable for use with
-	the following programs:
+	You may also export data in a plain text format suitable for
+	use with the following programs:
       </para>
       <ilist>
 	<li>
-	  <para>GNU R (<url>www.r-project.org</url>)</para>
-	</li>
-	<li>
-	  <para>GNU octave (<url>www.gnu.org/software/octave</url>)
+	  <para>
+	    GNU R (<url>www.r-project.org</url>): we write the data in
+	    a space-separated format that is easily digested by R's
+	    <lit>read.table</lit> function. Default filename
+	    suffix: <lit>.txt</lit>
 	  </para>
 	</li>
 	<li>
-	  <para>JMulTi (<url>www.jmulti.de</url>)</para>
+	  <para>
+	    GNU Octave (<url>www.gnu.org/software/octave</url>): the
+	    data are written as a matrix in Octave's preferred format.
+	    Default filename suffix: <lit>.m</lit>
+	  </para>
 	</li>
 	<li>
-	  <para>PcGive (<url>www.pcgive.com</url>)</para>
+	  <para>
+	    JMulTi (<url>www.jmulti.de</url>). Default filename
+	    suffix: <lit>.dat</lit>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    PcGive (<url>www.pcgive.com</url>). Default filename
+	    suffix: <lit>.dat</lit>
+	  </para>
 	</li>
       </ilist>
       <para>
@@ -13052,7 +13066,7 @@
         </option>
         <option>
 	  <flag>--gnu-R</flag>
-	  <effect>use GNU R format</effect>
+	  <effect>format friendly for read.table</effect>
         </option>
         <option>
 	  <flag>--gzipped</flag>
@@ -13101,9 +13115,9 @@
 	contains a full path specification.
       </para>
       <para>
-	The format in which the data are written may be controlled in
-	the first instance by the extension or suffix of
-	<repl>filename</repl>, as follows:
+	The format in which the data are written may be controlled to
+	a degree by the extension or suffix of <repl>filename</repl>,
+	as follows:
       </para>
       <ilist>
 	<li>
@@ -13131,12 +13145,7 @@
 	</li>	
 	<li>
 	  <para>
-	    <lit>.R</lit>: GNU R format.
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.m</lit>: GNU Octave format.
+	    <lit>.m</lit>: GNU Octave matrix format.
 	  </para>
 	</li>
 	<li>

@@ -77,7 +77,7 @@ static struct extmap action_map[] = {
     { SAVE_GFN_SPEC,     ".spec" },
     { SAVE_GFN_ZIP,      ".zip" },
     { EXPORT_CSV,        ".csv" },
-    { EXPORT_R,          ".R" },
+    { EXPORT_R,          ".txt" },
     { EXPORT_OCTAVE,     ".m" },
     { EXPORT_DAT,        ".dat" },
     { EXPORT_DTA,        ".dta" },
@@ -445,7 +445,7 @@ static char *suggested_exportname (const char *fname, int action)
 	    test = ".m";
 	    break;
 	case EXPORT_R:
-	    test = ".R";
+	    test = ".txt";
 	    break;
 	case EXPORT_CSV:
 	    test = ".csv";
