@@ -9517,9 +9517,16 @@
 	items are found under /File/Function packages.
       </para>
       <para>
-	For details on installing and working with function packages,
-	see the <mnu>PkgHelp:Pkgbook</mnu> (under the Help menu). This
-	guide also contains details on writing function packages.
+	Many packages offer to attach themselves to GUI menus. You can
+	inspect these attachments via the <mnu>PkgHelp:Registry</mnu>
+	(access via the Preferences button in the browser for
+	installed packages).
+      </para>
+      <para>
+	For full details on installing and working with function
+	packages, see the <mnu>PkgHelp:Pkgbook</mnu> (under the Help
+	menu). This guide also contains details on writing function
+	packages.
       </para>
     </description>
   </command>

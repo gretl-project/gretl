@@ -1439,6 +1439,8 @@ static char *get_pkghelp_string (const char *key)
 	return "Function package guide";
     } else if (!strcmp(p, "SFAddons")) {
 	return "Check for addons";
+    } else if (!strcmp(p, "Registry")) {
+	return "package registry";
     } else {
 	return (char *) p;
     }
@@ -1674,6 +1676,8 @@ static void open_menu_item (GtkTextTag *tag)
 	    display_files(FUNC_FILES, NULL);
 	} else if (!strcmp(name, "PkgHelp:SFAddons")) {
 	    display_files(REMOTE_ADDONS, NULL);
+	} else if (!strcmp(name, "PkgHelp:Registry")) {
+	    display_files(PKG_REGISTRY, NULL);
 	} else if (!strcmp(name, "PkgHelp:Pkgbook")) {
 	    static GtkAction *action;
 
