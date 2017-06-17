@@ -515,12 +515,41 @@ void force_english_help (void)
     gretl_update_paths(&paths, update_paths_opt);
 }
 
+static int fontname_get_size (const char *fontname)
+{
+    char *p = strrchr(fontname, ' ');
+
+    return (p != NULL)? atoi(p+1) : 10;
+}
+
+static void fontname_set_size (char *fontname, int size)
+{
+    char *p = strrchr(fontname, ' ');
+
+    if (p != NULL) {
+	sprintf(p, " %d", size);
+    }
+}
+
+static int font_is_changed (const char *f_new,
+			    const char *f_old)
+{
+    if (strcmp(f_new, f_old)) {
+	return 1;
+    } else if (tmpfontscale > 0 &&
+	       fontname_get_size(f_new) != tmpfontscale) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 void set_fixed_font (const char *fontname, int remember)
 {
     if (fontname == NULL) {
 	/* initial set-up */
 	fixed_font = pango_font_description_from_string(fixedfontname);
-    } else if (strcmp(fontname, fixedfontname)) {
+    } else if (font_is_changed(fontname, fixedfontname)) {
 	/* changed via the GUI */
 	if (fixed_font != NULL) {
 	    pango_font_description_free(fixed_font);
@@ -574,7 +603,7 @@ void set_app_font (const char *fontname, int remember)
 	const char *test = fontname ? fontname : appfontname;
 	int noop = 0;
 
-	if (strcmp(deffont, test) == 0) {
+	if (!font_is_changed(test, deffont)) {
 	    noop = 1;
 	}
 	g_free(deffont);
@@ -2620,18 +2649,9 @@ void font_selector (GtkAction *action)
 static void impose_font_scale (int scale, int remember)
 {
     char fontname[64];
-    int i, n;
 
-    n = strlen(fixedfontname);
-    for (i=n-1; i>2; i--) {
-	if (fixedfontname[i] == ' ') {
-	    break;
-	}
-    }
-
-    *fontname = '\0';
-    strncat(fontname, fixedfontname, i+1);
-    sprintf(fontname + i + 1, "%d", scale);
+    strcpy(fontname, fixedfontname);
+    fontname_set_size(fontname, scale);
     set_fixed_font(fontname, remember);
 
 #ifdef G_OS_WIN32
@@ -2640,16 +2660,8 @@ static void impose_font_scale (int scale, int remember)
     }
 #endif
 
-    n = strlen(appfontname);
-    for (i=n-1; i>2; i--) {
-	if (appfontname[i] == ' ') {
-	    break;
-	}
-    }
-
-    *fontname = '\0';
-    strncat(fontname, appfontname, i+1);
-    sprintf(fontname + i + 1, "%d", scale);
+    strcpy(fontname, appfontname);
+    fontname_set_size(fontname, scale);
     set_app_font(fontname, remember);
 }
 
@@ -2660,14 +2672,7 @@ void font_scale_selector (GtkAction *action)
     int resp, remember = 0;
 
     if (fscale == 0) {
-	int i, n = strlen(fixedfontname);
-
-	for (i=n-1; i>2; i--) {
-	    if (fixedfontname[i] == ' ') {
-		fscale = atoi(fixedfontname + i);
-		break;
-	    }
-	}
+	fscale = fontname_get_size(fixedfontname);
     }
 
     resp = checks_dialog(_("gretl: font scale"),
@@ -2683,8 +2688,8 @@ void font_scale_selector (GtkAction *action)
     if (resp == GRETL_CANCEL) {
 	return;
     } else if (fscale > 0) {
-	tmpfontscale = fscale;
 	impose_font_scale(fscale, remember);
+	tmpfontscale = fscale;
     }
 }
 
