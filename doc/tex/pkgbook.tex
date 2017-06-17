@@ -190,14 +190,14 @@ quite a lot in the following, let us be clear up front about the two
 package browser windows in gretl and how they are accessed. 
 
 One of these windows shows the packages installed on your own
-computer. To open it, either select the menu item ``Tools, Function
+computer. To open it, either select the menu item ``File, Function
 packages, On local machine'' or use the short-cut button labeled
 ``$fx$'' on the toolbar at the foot of the main gretl
 window. With a new installation of gretl there will not be much to see
 in this window at first.
 
 The other browser shows all the packages available from the gretl
-server. It can be opened via the menu item ``Tools, Function packages,
+server. It can be opened via the menu item ``File, Function packages,
 On server.'' The same listing can be accessed via a web
 interface,\footnote{See
   \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.}
@@ -245,7 +245,7 @@ unit-root tests \citep{Ignacio-HEGY} and you'd like to use his
 results. You were told a gretl package is available. Here's what you
 do. (We assume you have an Internet connection.)
 
-Open gretl, and select ``Tools, Function packages, On server''. Since
+Open gretl, and select ``File, Function packages, On server''. Since
 the package deals with seasonal unit roots, you'll probably want to
 look for the word ``seasonal''. After typing \texttt{seasonal} in the
 top-right search box and hitting the \textsf{Enter} key a few times,
@@ -571,8 +571,8 @@ menus. We'll now explain how.
 Again, start from the browser for installed packages. One of the
 buttons on the toolbar is a ``\textsf{+}'' icon (with tooltip ``Add to
 menu''). This button should be active when you select a package which
-(a) offers a menu attachment but (b) is not currently attached. Click
-it and you'll get the sort of dialog shown in
+offers a menu attachment but is not currently attached. Click it and
+you'll get the sort of dialog shown above in
 Figure~\ref{fig:ghegy-menu}; say ``Yes'' to attach the package to the
 specified menu.
 
@@ -695,7 +695,7 @@ you may copy material and paste it into a script of your own.
 
 Making changes to an existing package, however, cannot be done via the
 package browser window: it's necessary to go via the main-window menu
-item ``Tools, Function packages, Edit package.'' This route will let
+item ``File, Function packages, Edit package.'' This route will let
 you edit a package only if you have write permission on the file in
 question.  Here's a plausible scenario: you have package \textsf{XYZ}
 installed, and you don't want to (or don't have permission to) mess
@@ -703,7 +703,7 @@ with the installed version, but at the same time you'd like to do some
 exploration and/or experimentation. Solution: go to the web interface
 to gretl packages mentioned in section~\ref{sec:browsers} and download
 a copy of \textsf{XYZ}, placing it somewhere other than one of the
-standard gretl function directories. Then go to ``Tools, Function
+standard gretl function directories. Then go to ``File, Function
 packages, Edit package...'' and navigate to find the \texttt{gfn}
 file. (If the package is in zip format you'll have to unzip it first.)
 
@@ -1127,7 +1127,7 @@ proceed to the next step.
 \subsection{Create your package}
 \label{sec:gui-create}
 
-In the gretl main window, go to the ``Tools, Function packages'' menu,
+In the gretl main window, go to the ``File, Function packages'' menu,
 and select ``New package.''  A first dialog should appear (see
 Figure~\ref{fig:startpkg}), in which the left-hand panel lists all the
 functions you have available for packaging; you must specify the name
@@ -1287,7 +1287,7 @@ you should do so now. Use the ``Save...'' button in the GUI package
 editor or see section~\ref{sec:cli-install} for other options.
 
 Once your package is in the right place, close gretl then reopen it.
-Now go to ``Tools, Function packages, On local machine''. If all has
+Now go to ``File, Function packages, On local machine''. If all has
 gone OK so far, you should see the file you packaged and saved, with
 its short description.  If you click on ``Info'' you get a window with
 all the information gretl has gleaned from the package.  If you click
@@ -1315,7 +1315,7 @@ among the sample datasets, under the \textsf{Gretl} tab). We'll
 compute the rate of change for the variable \texttt{iprod} via your
 new function and store the result in a series named \texttt{foo}.
 
-Return to ``Tools, Function packages, On local machine,'' find your
+Return to ``File, Function packages, On local machine,'' find your
 package, and double-click on it. A window similar to that shown in
 Figure~\ref{fig:function_call} will appear.  Notice that the
 description string ``Series to process,'' supplied with the function
@@ -1936,14 +1936,14 @@ the shell, though this may not be convenient on MS Windows.
 
 \textit{First gretl method}: open your package's \textsf{gfn} file in
 the GUI package editor (you can get there via the package browser, or
-via the main-window menu item ``Tools, Function packages, Edit
+via the main-window menu item ``File, Function packages, Edit
 package'').  On clicking the \textsf{Save...} button you'll find an
 item titled \textsf{Upload to server}. This will ask for your login
 information then perform the upload. If your package specification is
 such that a zip package is needed, gretl will take care of building an
 up-to-date zip file and uploading that.
 
-\textit{Second gretl method}: In the main gretl window, go to ``Tools,
+\textit{Second gretl method}: In the main gretl window, go to ``File,
 Function packages, Upload package'' and choose the package to
 upload. The file selection dialog will offer a choice of looking for
 \textsf{gfn} or \textsf{zip} files. If you select a gfn file
