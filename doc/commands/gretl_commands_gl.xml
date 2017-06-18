@@ -1089,7 +1089,6 @@
 
     <gui-access>
       <menu-path>/Modelar/Series temporais/ARIMA</menu-path>
-      <other-access>Fiestra principal: Menú emerxente (selección única)</other-access>
     </gui-access>
 
   </command>
@@ -6225,7 +6224,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Ferramentas/Paquetes de funcións/No servidor</menu-path>
+      <menu-path>/Ficheiro/Paquetes de funcións/No servidor</menu-path>
     </gui-access>
 
   </command>
@@ -7458,7 +7457,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Ferramentas/Paquetes de funcións/Novo paquete</menu-path>
+      <menu-path>/Ficheiro/Paquetes de funcións/Novo paquete</menu-path>
     </gui-access>
 
   </command>
@@ -9478,6 +9477,39 @@
 
   </command>
 
+  <command name="packages" section="Utilities" label="Paquetes de funcións" context="gui">
+    <description>
+      <para>
+	Podes ampliar as prestacións de Gretl mediante a utilización de
+	paquetes de función que son de dúas clases: os <quote>Engadidos</quote>
+	oficiais e os paquetes de contribucións. En conxunto, cobren moitos
+	estimadores e utilidades que non están dispoñibles como instrucións
+	ou funcións integradas no programa.
+      </para>
+      <para>
+	Os 'Engadidos' oficiais están incluídos nos instaladores de Gretl
+	para Windows e para Mac. Para Linux, se non se instalan previamente
+	entón descárganse cando se solicite (por exemplo, se escolles o
+	elemento do menú /Modelar/Series temporais/GARCH, entón Gretl
+	vai descargar o 'Engadido' <lit>gig</lit> (GARCH in Gretl). Podes
+	verificar que os teus 'Engadidos' están actualizados mediante
+	<mnu>PkgHelp:SFAddons</mnu> no menú Axuda.
+      </para>
+      <para>
+	Podes botar unha ollada aos paquetes de contribucións instalados no
+	teu ordenador mediante o elemento do menú <mnu>PkgHelp:LocalGfn</mnu>
+	e, se estás conectado á rede, podes acceder  a unha lista de paquetes
+	dispoñibles mediante o elemento <mnu>PkgHelp:RemoteGfn</mnu>. Ambos
+	elementos atópanse baixo o elemento /Ficheiro/Paquetes de funcións.
+      </para>
+      <para>
+	Para obter detalles sobre a instalación e o traballo con paquetes de
+	funcións, consulta <mnu>PkgHelp:Pkgbook</mnu> (baixo o menú Axuda).
+	Esta guía tamén contén detalles sobre como escribir paquetes de funcións.
+      </para>
+    </description>
+  </command>
+  
   <command name="panel" section="Estimation" label="Modelos de panel">
 
     <usage>
@@ -11449,9 +11481,9 @@
 	Debes de ter en conta a seguinte cuestión en relación á definición dunha
 	mostra en base a unha variable ficticia, a unha expresión booleana ou ao
 	criterio de valores ausentes. Calquera información <quote>estrutural</quote>
-	no ficheiro cabeceira dos datos pérdese (en relación á temporalidade das
-	series ou á natureza de panel dos datos). Pero podes volver forzar a
-	estrutura con <quote>Datos/Estrutura do conxunto de datos</quote>.
+	no ficheiro cabeceira dos datos pérdese (en relación á temporalidade das series
+	ou á natureza de panel dos datos). Pero podes volver forzar a estrutura co elemento
+	<quote>Estrutura do conxunto de datos</quote> do menú de Datos.
       </para>
       <para>
 	Consulta o <guideref targ="chap:sampling"/> para obter outros detalles.
@@ -12422,8 +12454,9 @@
       
       <para context="gui">
 	Establece un valor numérico que vai interpretarse como 'ausente' ou
-	'non aplicable', ben para unha serie de datos en concreto (baixo o menú
-	Variable) ou globalmente para todo o conxunto de datos (baixo o menú Datos).
+	'non aplicable', ben para unha serie de datos en concreto (baixo o
+	menú Variable) ou globalmente para todo o conxunto de datos (baixo
+	o menú Datos).
 	    </para>
       
       <para context="gui">
