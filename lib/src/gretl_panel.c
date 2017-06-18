@@ -2101,15 +2101,16 @@ static int *real_FE_list (panelmod_t *pan)
     return list;
 }
 
-/* computation of $\hat{\sigma}^2_u$ a la Nerlove, if wanted */
+/* computation of $\hat{\sigma}^2_v$ a la Nerlove, if wanted */
 
 static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 			panelmod_t *pan)
 {
-    double amean, *ahat;
+    double a, amean, *ahat;
+    double wmean, *wi = NULL;
     const double *x;
     int i, j, t, k, bigt;
-    int *list;
+    int *list = NULL;
     int err = 0;
 
     ahat = malloc(pan->effn * sizeof *ahat);
@@ -2117,19 +2118,29 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 	return E_ALLOC;
     }
 
+    if (pan->opt & OPT_X) {
+	wi = malloc(pan->effn * sizeof *wi);
+	if (wi == NULL) {
+	    free(ahat);
+	    return E_ALLOC;
+	}
+    }
+
     list = real_FE_list(pan);
     if (list == NULL) {
 	free(ahat);
+	free(wi);
 	return E_ALLOC;
     }    
 
-    amean = 0.0;
+    wmean = amean = 0.0;
     k = 0;
 
     for (i=0; i<pan->nunits; i++) {
-	if (pan->unit_obs[i] > 0) {
-	    double a = 0.0;
+	int Ti = pan->unit_obs[i];
 
+	if (Ti > 0) {
+	    a = 0.0;
 	    for (t=0; t<pan->T; t++) {
 		bigt = panel_index(i, t);
 		if (!na(pan->pooled->uhat[bigt])) {
@@ -2140,25 +2151,38 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 		    }
 		}
 	    }
-
-	    a /= pan->unit_obs[i];
-	    ahat[k++] = a;
+	    a /= Ti;
+	    ahat[k] = a;
 	    amean += a;
+	    if (wi != NULL) {
+		wi[k] = Ti / (double) pmod->nobs;
+		wmean += wi[k] * a;
+	    }
+	    k++;
 	}
     }
 
-    amean /= pan->effn;
     pan->s2v = 0.0;
 
-    for (i=0; i<pan->effn; i++) {
-	pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
+    if (wi != NULL) {
+	for (i=0; i<pan->effn; i++) {
+	    pan->s2v += wi[i] * (ahat[i] - wmean) * (ahat[i] - wmean);
+	}
+	pan->s2v /= (pan->effn - 1.0) / (double) pan->effn;
+	free(wi);
+    } else {
+	amean /= pan->effn;
+	for (i=0; i<pan->effn; i++) {
+	    pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
+	}
+	pan->s2v /= pan->effn - 1;
     }
-
-    /* Nerlove */
-    pan->s2v /= pan->effn - 1;
 
     free(ahat);
     free(list);
+    if (wi == NULL) {
+	free(wi);
+    }
 
     return err;
 }
