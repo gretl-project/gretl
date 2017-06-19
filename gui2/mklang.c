@@ -46,6 +46,7 @@ const char *gretl_data_types[] = {
     "lists",
     "null",
     "void",
+    "const",
     NULL
 };
 
