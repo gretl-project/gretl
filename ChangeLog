@@ -6,6 +6,8 @@ version 2017c, in progress
   string under a bundle key in a loop
 - Fix bug: "Up to date" indicator for function packages got
   broken
+- Fix bug: "boxplot" command with matrix argument: should
+  default to plotting all columns
 - MS Windows: update to mkstemp() for tmp file creation (was
   missing from mingw)
 
