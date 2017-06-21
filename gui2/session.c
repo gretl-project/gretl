@@ -4060,7 +4060,7 @@ static int is_idempotent (const gretl_matrix *m,
 static void print_int_formatted (char *s, int k, PRN *prn)
 {
     int len = 12, n = strlen(s) - g_utf8_strlen(s, -1);
-    char fmt[16];
+    char fmt[24];
 
     if (n > 0) {
 	len += n;
@@ -4073,7 +4073,7 @@ static void print_int_formatted (char *s, int k, PRN *prn)
 static void print_double_formatted (char *s, double x, PRN *prn)
 {
     int len = 16, n = strlen(s) - g_utf8_strlen(s, -1);
-    char fmt[16];
+    char fmt[24];
 
     if (n > 0) {
 	len += n;

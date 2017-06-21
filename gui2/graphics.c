@@ -270,7 +270,7 @@ void pdf_ps_saver_set_fontname (gpointer p, const char *fontname)
 static void 
 saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
 {
-    char fontstr[72];
+    char fontstr[84];
     char lwstr[32];
     const char *ttype;
 

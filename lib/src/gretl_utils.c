@@ -815,7 +815,7 @@ real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {
     if (pd >= 10) {
 	int pdp = pd / 10, minlen = 2;
-	char fmt[16];
+	char fmt[18];
 
 	while ((pdp = pdp / 10)) minlen++;
 	sprintf(fmt, "%%d%c%%0%dd", sep, minlen);

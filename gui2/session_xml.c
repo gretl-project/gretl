@@ -611,7 +611,7 @@ static void trash_old_session_files (const char *path)
 
     if (sdir != NULL) {
 	struct dirent *dirent;
-	char tmp[128];
+	char tmp[MAXLEN];
 	int fnum;
 	
 	while ((dirent = readdir(sdir)) != NULL) {
