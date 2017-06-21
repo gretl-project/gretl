@@ -389,35 +389,15 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     return fp;
 }
 
-#ifdef G_OS_WIN32
-
-/* We'll not attempt to use mkstemp(), which is not supported
-   by mingw
-*/
-
-static FILE *win32_mktemp (char *tmpl, const char *mode)
-{
-    char *fname = mktemp(tmpl);
-    FILE *fp = NULL;
-
-    if (fname != NULL) {
-	fp = gretl_fopen(fname, mode);
-    }
-
-    return fp;
-}
-
-#endif
-
 /**
  * gretl_mktemp:
  * @pattern: template for filename; must end with "XXXXXX".
  * @mode: e.g. "w" for text use or "wb" for binary mode.
  *
  * A wrapper for the combination of mkstemp() and fdopen(),
- * making allowance for the possibility that @template has to 
+ * making allowance for the possibility that @pattern has to
  * be converted from UTF-8 to the locale encoding or vice versa.
- * On successful exit @template holds the name of the newly
+ * On successful exit @pattern holds the name of the newly
  * created file.
  *
  * Returns: file pointer, or %NULL on failure.
@@ -425,21 +405,30 @@ static FILE *win32_mktemp (char *tmpl, const char *mode)
 
 FILE *gretl_mktemp (char *pattern, const char *mode)
 {
+    gchar *fconv = NULL;
     FILE *fp = NULL;
-    int fd = -1;
+    int err;
 
     gretl_error_clear();
+    err = maybe_recode_path(pattern, &fconv, -1);
 
-#ifdef G_OS_WIN32
-    fp = win32_mktemp(pattern, mode);
-#else
-    fd = mkstemp(pattern); 
-#endif
+    if (!err) {
+	int fd;
 
-    if (errno != 0) {
-	gretl_errmsg_set_from_errno(NULL);
-    } else if (fd != -1) {
-	fp = fdopen(fd, mode);
+	if (fconv != NULL) {
+	    fd = mkstemp(fconv);
+	} else {
+	    fd = mkstemp(pattern);
+	}
+
+	if (errno != 0) {
+	    gretl_errmsg_set_from_errno(NULL);
+	} else if (fd != -1) {
+	    if (fconv != NULL) {
+		strcpy(pattern, fconv);
+	    }
+	    fp = fdopen(fd, mode);
+	}
     }
 
 #if 0
