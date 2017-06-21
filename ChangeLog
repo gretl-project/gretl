@@ -6,6 +6,8 @@ version 2017c, in progress
   string under a bundle key in a loop
 - Fix bug: "Up to date" indicator for function packages got
   broken
+- MS Windows: update to mkstemp() for tmp file creation (was
+  missing from mingw)
 
 2017-05-26 version 2017b
 - "gnuplot" and "plot" commands: support --font option for

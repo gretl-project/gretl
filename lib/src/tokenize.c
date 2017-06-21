@@ -3510,6 +3510,9 @@ static void handle_option_inflections (CMD *cmd)
 	if (cmd->opt & OPT_Z) {
 	    /* factorized: two variables wanted */
 	    cmd->ciflags |= CI_LLEN2;
+	} else if (cmd->opt & OPT_X) {
+	    /* with --matrix, default to all columns */
+	    cmd->ciflags |= CI_DOALL;
 	}
     } else if (cmd->ci == SMPL) {
 	if (cmd->opt & (OPT_M | OPT_A | OPT_C)) {
