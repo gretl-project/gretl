@@ -396,7 +396,7 @@ int gretl_model_write_coeffs (MODEL *pmod, double *b, int k);
 
 int gretl_model_add_arinfo (MODEL *pmod, int nterms);
 
-MODEL *gretl_model_copy (const MODEL *pmod);
+MODEL *gretl_model_copy (MODEL *pmod);
 
 void swap_models (MODEL *targ, MODEL *src);
 

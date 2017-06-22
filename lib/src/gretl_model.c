@@ -4795,7 +4795,7 @@ void display_model_data_items (const MODEL *pmod)
     }
 }
 
-static int copy_model (MODEL *targ, /* const */ MODEL *src)
+static int copy_model (MODEL *targ, MODEL *src)
 {
     int k = src->ncoeff;
     int m = k * (k + 1) / 2;
@@ -5645,7 +5645,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
  * Returns: the copied model, or %NULL on failure.
  */
 
-MODEL *gretl_model_copy (const MODEL *pmod)
+MODEL *gretl_model_copy (MODEL *pmod)
 {
     MODEL *new = malloc(sizeof *new);
 
@@ -5655,7 +5655,7 @@ MODEL *gretl_model_copy (const MODEL *pmod)
 #endif
 
     if (new != NULL) {
-	int err = copy_model(new, (MODEL *) pmod);
+	int err = copy_model(new, pmod);
 
 	if (err) {
 	    clear_model(new);

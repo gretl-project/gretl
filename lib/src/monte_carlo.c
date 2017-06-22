@@ -1701,7 +1701,7 @@ static void loop_model_init (LOOP_MODEL *lmod, int lno)
 /* Start up a LOOP_MODEL struct: copy @pmod into place and
    allocate storage */
 
-static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
+static int loop_model_start (LOOP_MODEL *lmod, MODEL *pmod)
 {
     int nc = pmod->ncoeff;
     int err = 0;
