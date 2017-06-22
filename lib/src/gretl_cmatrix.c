@@ -17,7 +17,7 @@
  *
  */
 
-/* complex matrices */
+/* some complex matrix functions */
 
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
@@ -25,7 +25,7 @@
 #include <fftw3.h>
 
 /* Get two matrices out of array @A, checking that they
-   of the same dimensions, and if @square is non-zero
+   of the same dimensions -- and if @square is non-zero,
    that they are square.
 */
 
