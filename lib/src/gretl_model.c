@@ -25,6 +25,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "gretl_fft.h"
+#include "gretl_panel.h"
 
 /**
  * SECTION:gretl_model
@@ -6715,7 +6716,7 @@ int gretl_model_get_series (double *x, MODEL *pmod,
 			    ModelDataIndex idx)
 {
     const double *src = NULL;
-    int t;
+    int t, err = 0;
 
     if (pmod->t2 - pmod->t1 + 1 > dset->n || 
 	model_sample_problem(pmod, dset)) {
@@ -6744,6 +6745,8 @@ int gretl_model_get_series (double *x, MODEL *pmod,
 	src = gretl_model_get_data(pmod, "ahat");
     } else if (idx == M_H) {
 	src = gretl_model_get_data(pmod, "garch_h");
+    } else if (idx == M_VHAT) {
+	src = get_individual_effects(pmod, dset, &err);
     }
 
     if (src == NULL && idx != M_SAMPLE) {

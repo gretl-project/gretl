@@ -500,8 +500,9 @@ $\bar{u}_i$ that is due to $v_i$, namely
  1 - (1-\theta_i)^2
 \]
 
-After random effects estimation in gretl you can construct a series
-containing the $\hat{v}_i$s as follows:
+After random effects estimation in gretl you can access a series
+containing the $\hat{v}_i$s under the name \dollar{vhat}. This series
+is calculated as follows:
 %
 \begin{code}
 # case 1: balanced panel

@@ -75,6 +75,10 @@ int tramo_linearize_series (const double *x, double *y,
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k, const double *mask);
 
+int get_panel_Ti (const double *src, double *targ, const DATASET *dset);
+
+int get_panel_mean (const double *src, double *targ, const DATASET *dset);
+
 gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
 			    int *err);
 

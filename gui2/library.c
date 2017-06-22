@@ -6426,7 +6426,7 @@ int save_fit_resid (windata_t *vwin, int code)
 	return err;
     }
 
-     name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, descrip, vwin, &cancel);
 
     if (cancel) {
 	free(x);
@@ -6448,6 +6448,8 @@ int save_fit_resid (windata_t *vwin, int code)
 	    lib_command_sprintf("series %s = $h", vname);
 	} else if (code == M_AHAT) {
 	    lib_command_sprintf("series %s = $ahat", vname);
+	} else if (code == M_VHAT) {
+	    lib_command_sprintf("series %s = $vhat", vname);
 	}
 
 	record_model_command_verbatim(pmod->ID);

@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "genfuncs.h"
 
 /**
  * SECTION:gretl_panel
@@ -3790,6 +3791,92 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }
 
     return mod;    
+}
+
+/* retrieve the estimates of the individual effects from a random
+   effects panel-data model
+*/
+
+double *get_individual_effects (const MODEL *pmod, DATASET *dset, int *err)
+{
+    double *ret = NULL;
+    int t, balanced = 0;
+    double theta;
+
+    if (pmod->full_n != dset->n) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    theta = gretl_model_get_double(pmod, "theta");
+    if (!na(theta)) {
+	balanced = 1;
+    } else {
+	theta = gretl_model_get_double(pmod, "theta_bar");
+	if (na(theta)) {
+	    *err = E_BADSTAT;
+	    return NULL;
+	}
+    }
+
+    ret = malloc(dset->n * sizeof *ret);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (balanced) {
+	double mult = 1.0 - theta;
+
+	mult = 1.0 - mult * mult;
+	*err = get_panel_mean(pmod->uhat, ret, dset);
+	for (t=0; t<dset->n; t++) {
+	    if (na(pmod->uhat[t])) {
+		ret[t] = NADBL;
+	    } else {
+		ret[t] = ret[t] * mult;
+	    }
+	}
+    } else {
+	double s2v = gretl_model_get_double(pmod, "s2v");
+	double s2e = gretl_model_get_double(pmod, "s2e");
+
+	if (na(s2v) || na(s2e)) {
+	    *err = E_BADSTAT;
+	} else {
+	    double *Ti;
+
+	    Ti = malloc(dset->n * sizeof *ret);
+	    if (Ti == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		*err = get_panel_Ti(pmod->uhat, Ti, dset);
+	    }
+	    if (!*err) {
+		*err = get_panel_mean(pmod->uhat, ret, dset);
+	    }
+	    if (!*err) {
+		double frac;
+
+		for (t=0; t<dset->n; t++) {
+		    if (na(pmod->uhat[t])) {
+			ret[t] = NADBL;
+		    } else {
+			frac = s2v / (s2v + s2e / Ti[t]);
+			ret[t] = frac * ret[t];
+		    }
+		}
+	    }
+	    free(Ti);
+	}
+    }
+
+    if (*err) {
+	free(ret);
+	ret = NULL;
+    }
+
+    return ret;
 }
 
 /* Called from qr_estimate.c in case robust VCV estimation is called
