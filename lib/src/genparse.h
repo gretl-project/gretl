@@ -290,6 +290,7 @@ enum {
     F_SLEEP,
     HF_CINV,
     HF_CFFT,
+    HF_CFFTI,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COV,
     F_SDC,

@@ -387,12 +387,13 @@ int complex_matrix_print (gretl_array *A, PRN *prn)
     return 0;
 }
 
-gretl_array *gretl_complex_fft (gretl_array *A, int *err)
+gretl_array *gretl_complex_fft (gretl_array *A, int inverse, int *err)
 {
     gretl_array *B = NULL;
     gretl_matrix *mr, *mi;
     fftw_complex *tmp, *ptr;
     fftw_plan p;
+    int sign;
     int r, c, j;
 
     *err = get_two_matrices(A, &mr, &mi, 0);
@@ -410,22 +411,32 @@ gretl_array *gretl_complex_fft (gretl_array *A, int *err)
     }
 
     matrices_into_complex(mr, mi, (cmplx *) tmp);
+    sign = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
 
     ptr = tmp;
     for (j=0; j<c; j++) {
-	/* FIXME avoid redoing plan somehow? */
-	p = fftw_plan_dft_1d(r, ptr, ptr, FFTW_FORWARD, FFTW_ESTIMATE);
+	p = fftw_plan_dft_1d(r, ptr, ptr, sign, FFTW_ESTIMATE);
 	fftw_execute(p);
 	fftw_destroy_plan(p);
 	/* advance pointer to next column */
 	ptr += r;
     }
 
-    if (!*err) {
-	B = gretl_array_new(GRETL_TYPE_MATRICES, 2, err);
-	if (!*err) {
-	    *err = complex_mat_into_array((cmplx *) tmp, r, c, B);
+    if (inverse) {
+	/* "FFTW computes an unnormalized transform: computing a
+	    forward followed by a backward transform (or vice versa)
+	    will result in the original data multiplied by the size of
+	    the transform (the product of the dimensions)."
+	*/
+	for (j=0; j<r*c; j++) {
+	    tmp[j][0] = tmp[j][0] / r;
+	    tmp[j][1] = tmp[j][1] / r;
 	}
+    }
+
+    B = gretl_array_new(GRETL_TYPE_MATRICES, 2, err);
+    if (!*err) {
+	*err = complex_mat_into_array((cmplx *) tmp, r, c, B);
     }
 
     fftw_free(tmp);
