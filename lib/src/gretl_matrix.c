@@ -831,8 +831,13 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
 	return NULL;
     }
 
-    if (step == 1) {
-	n = reverse ? start - end + 1 : end - start + 1;
+    if (step == 1.0) {
+	if(reverse) {
+	    n = start - end + 1;
+	    step = -step;
+	} else {
+	    n = end - start + 1;
+	}
     } else if (reverse) {
 	step = -step;
 	while (k >= end) {
@@ -850,16 +855,19 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
 	*err = E_DATA;
 	return NULL;
     }	
-
     v = gretl_vector_alloc(n);
 
     if (v == NULL) {
 	*err = E_ALLOC;
     } else {
 	k = start;
-	if (step == 1) {
+	if (step == 1.0) {
 	    for (i=0; i<n; i++) {
 		v->val[i] = k++;
+	    }
+	} else if (step == -1.0) {
+	    for (i=0; i<n; i++) {
+		v->val[i] = k--;
 	    }
 	} else {
 	    for (i=0; i<n; i++) {
