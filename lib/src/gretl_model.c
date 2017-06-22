@@ -6745,8 +6745,6 @@ int gretl_model_get_series (double *x, MODEL *pmod,
 	src = gretl_model_get_data(pmod, "ahat");
     } else if (idx == M_H) {
 	src = gretl_model_get_data(pmod, "garch_h");
-    } else if (idx == M_VHAT) {
-	src = get_individual_effects(pmod, dset, &err);
     }
 
     if (src == NULL && idx != M_SAMPLE) {

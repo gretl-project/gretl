@@ -120,7 +120,6 @@ struct str_table mvars[] = {
     { M_YHAT,    "$yhat" },
     { M_LLT,     "$llt" },
     { M_AHAT,    "$ahat" },
-    { M_VHAT,    "$vhat" },
     { M_SAMPLE,  "$sample" },
     { M_H,       "$h" },
     { M_COEFF,   "$coeff" },

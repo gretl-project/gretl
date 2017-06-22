@@ -8,10 +8,9 @@
     <function name="$ahat" section="access" output="series">
       <description>
 	<para>
-	  Must follow the estimation of a fixed-effect panel data
-	  model.  Returns a series containing the estimates of the
-	  individual fixed effects (per-unit intercepts). See also
-	  <fncref targ="$vhat"/>.
+	  Must follow the estimation of a fixed-effects or
+	  random-effects panel data model.  Returns a series
+	  containing the estimates of the individual effects.
 	</para>
       </description>
     </function>
@@ -1021,16 +1020,6 @@
 	  the old scheme) translates as 11002. Numerical order of
 	  <lit>$version</lit> values is therefore preserved across the
 	  change in versioning scheme.
-	</para>
-      </description>
-    </function>
-
-    <function name="$vhat" section="access" output="series">
-      <description>
-	<para>
-	  Must follow the estimation of a random-effect panel data
-	  model.  Returns a series containing the estimates of the
-	  individual effects. See also <fncref targ="$ahat"/>.
 	</para>
       </description>
     </function>

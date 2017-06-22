@@ -40,8 +40,6 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 
 int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset);
 
-double *get_individual_effects (const MODEL *pmod, DATASET *dset, int *err);
-
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset);
 
 int set_panel_structure_from_varnames (const char *uname, 

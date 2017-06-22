@@ -501,8 +501,8 @@ $\bar{u}_i$ that is due to $v_i$, namely
 \]
 
 After random effects estimation in gretl you can access a series
-containing the $\hat{v}_i$s under the name \dollar{vhat}. This series
-is calculated as follows:
+containing the $\hat{v}_i$s under the name \dollar{ahat}. This series
+can be calculated by hand as follows:
 %
 \begin{code}
 # case 1: balanced panel
@@ -513,11 +513,11 @@ series vhat = (1 - (1 - theta)^2) * pmean($uhat)
 scalar s2v = $["s2v"]
 scalar s2e = $["s2e"]
 series frac = s2v / (s2v + s2e/pnobs($uhat))
-series vhat = frac * pmean($uhat)
+series ahat = frac * pmean($uhat)
 \end{code}
 %
-Having found \texttt{vhat}, an estimate of $\varepsilon_{it}$ can then
-be obtained by subtraction from \dollar{uhat}.
+If an estimate of $\varepsilon_{it}$ is wanted, it can then be
+obtained by subtraction from \dollar{uhat}.
 
 \section{Autoregressive panel models}
 \label{panel-auto}

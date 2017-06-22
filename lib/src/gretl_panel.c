@@ -27,7 +27,6 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
-#include "genfuncs.h"
 
 /**
  * SECTION:gretl_panel
@@ -1944,53 +1943,91 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     return err;
 }
 
-/* Fixed-effects model: add the per-unit intercept estimates ("ahat")
-   to the model in case the user wants to retrieve them.  By this
-   point the model -- even if it been estimated on a short dataset --
-   should have a full-length residual series.
+/* Fixed-effects model: add the per-unit intercept estimates
+   to the model in case the user wants to retrieve them. 
+   Random-effects model: add estimate of the individual effects.
+
+   By this point the model -- even if it been estimated on a short
+   dataset -- should have a full-length residual series.
 */
 
-static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
-			      panelmod_t *pan)
+static int panel_model_add_ahat (MODEL *pmod, const DATASET *dset,
+				 panelmod_t *pan)
 {
     double *ahat = NULL;
     const double *x;
     int i, j, t, bigt;
-    int err = 0;
+    int n, err = 0;
 
-    ahat = malloc(dset->n * sizeof *ahat);
+    n = pmod->full_n;
+
+    ahat = malloc(n * sizeof *ahat);
     if (ahat == NULL) {
 	return E_ALLOC;
     }
 
-    for (t=0; t<dset->n; t++) {
+    for (t=0; t<n; t++) {
 	ahat[t] = NADBL;
     }
 
-    for (i=0; i<pan->nunits; i++) {
-	if (pan->unit_obs[i] > 0) {
-	    double a = 0.0;
+    if (pan->opt & OPT_F) {
+	/* fixed effects */
+	for (i=0; i<pan->nunits; i++) {
+	    if (pan->unit_obs[i] > 0) {
+		double a = 0.0;
 
-	    /* a = y - Xb, where the 'b' is based on de-meaned data */
+		/* a = y - Xb, where the 'b' is based on de-meaned data */
 
-	    a = 0.0;
-	    for (t=0; t<pan->T; t++) {
-		bigt = panel_index(i, t);
-		if (!na(pmod->uhat[bigt])) {
-		    a += dset->Z[pmod->list[1]][bigt];
-		    for (j=1; j<pmod->ncoeff; j++) {
-			x = dset->Z[pmod->list[j+2]];
-			a -= pmod->coeff[j] * x[bigt];
+		for (t=0; t<pan->T; t++) {
+		    bigt = panel_index(i, t);
+		    if (!na(pmod->uhat[bigt])) {
+			a += dset->Z[pmod->list[1]][bigt];
+			for (j=1; j<pmod->ncoeff; j++) {
+			    x = dset->Z[pmod->list[j+2]];
+			    a -= pmod->coeff[j] * x[bigt];
+			}
+		    }
+		}
+
+		a /= pan->unit_obs[i];
+
+		for (t=0; t<pan->T; t++) {
+		    bigt = panel_index(i, t);
+		    if (!na(pmod->uhat[bigt])) {
+			ahat[bigt] = a;
 		    }
 		}
 	    }
+	}
+    } else {
+	/* random effects */
+	double uhbar, frac = 0;
 
-	    a /= pan->unit_obs[i];
+	if (pan->balanced) {
+	    frac = 1.0 - pan->theta;
+	    frac = 1.0 - frac * frac;
+	}
 
-	    for (t=0; t<pan->T; t++) {
-		bigt = panel_index(i, t);
-		if (!na(pmod->uhat[bigt])) {
-		    ahat[bigt] = a;
+	for (i=0; i<pan->nunits; i++) {
+	    if (pan->unit_obs[i] > 0) {
+		/* get mean residual */
+		uhbar = 0.0;
+		for (t=0; t<pan->T; t++) {
+		    bigt = panel_index(i, t);
+		    if (!na(pmod->uhat[bigt])) {
+			uhbar += pmod->uhat[bigt];
+		    }
+		}
+		uhbar /= pan->unit_obs[i];
+		/* ahat = frac * uhbar */
+		if (!pan->balanced) {
+		    frac = pan->s2v / (pan->s2v + pan->s2e / pan->unit_obs[i]);
+		}
+		for (t=0; t<pan->T; t++) {
+		    bigt = panel_index(i, t);
+		    if (!na(pmod->uhat[bigt])) {
+			ahat[bigt] = frac * uhbar;
+		    }
 		}
 	    }
 	}
@@ -1998,7 +2035,7 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 
     err = gretl_model_set_data(pmod, "ahat", ahat, 
 			       GRETL_TYPE_DOUBLE_ARRAY, 
-			       dset->n * sizeof *ahat);
+			       n * sizeof *ahat);
 
     return err;
 }
@@ -2559,7 +2596,7 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	ulist = fe_units_list(pan);
 	gretl_model_add_panel_varnames(pmod, dset, ulist);
 	free(ulist);
-	fe_model_add_ahat(pmod, dset, pan);
+	panel_model_add_ahat(pmod, dset, pan);
 	save_fixed_effects_F(pan, pmod);
     } else {
 	/* random effects */
@@ -2575,6 +2612,7 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	gretl_model_add_panel_varnames(pmod, dset, NULL);
 	fix_panel_hatvars(pmod, pan, Z);
 	fix_gls_stats(pmod, pan);
+	panel_model_add_ahat(pmod, dset, pan);
 	if (pan->opt & OPT_N) {
 	    /* record use of Nerlove transformation */
 	    pmod->opt |= OPT_N;
@@ -3791,92 +3829,6 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }
 
     return mod;    
-}
-
-/* retrieve the estimates of the individual effects from a random
-   effects panel-data model
-*/
-
-double *get_individual_effects (const MODEL *pmod, DATASET *dset, int *err)
-{
-    double *ret = NULL;
-    int t, balanced = 0;
-    double theta;
-
-    if (pmod->full_n != dset->n) {
-	*err = E_BADSTAT;
-	return NULL;
-    }
-
-    theta = gretl_model_get_double(pmod, "theta");
-    if (!na(theta)) {
-	balanced = 1;
-    } else {
-	theta = gretl_model_get_double(pmod, "theta_bar");
-	if (na(theta)) {
-	    *err = E_BADSTAT;
-	    return NULL;
-	}
-    }
-
-    ret = malloc(dset->n * sizeof *ret);
-    if (ret == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    if (balanced) {
-	double mult = 1.0 - theta;
-
-	mult = 1.0 - mult * mult;
-	*err = get_panel_mean(pmod->uhat, ret, dset);
-	for (t=0; t<dset->n; t++) {
-	    if (na(pmod->uhat[t])) {
-		ret[t] = NADBL;
-	    } else {
-		ret[t] = ret[t] * mult;
-	    }
-	}
-    } else {
-	double s2v = gretl_model_get_double(pmod, "s2v");
-	double s2e = gretl_model_get_double(pmod, "s2e");
-
-	if (na(s2v) || na(s2e)) {
-	    *err = E_BADSTAT;
-	} else {
-	    double *Ti;
-
-	    Ti = malloc(dset->n * sizeof *ret);
-	    if (Ti == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		*err = get_panel_Ti(pmod->uhat, Ti, dset);
-	    }
-	    if (!*err) {
-		*err = get_panel_mean(pmod->uhat, ret, dset);
-	    }
-	    if (!*err) {
-		double frac;
-
-		for (t=0; t<dset->n; t++) {
-		    if (na(pmod->uhat[t])) {
-			ret[t] = NADBL;
-		    } else {
-			frac = s2v / (s2v + s2e / Ti[t]);
-			ret[t] = frac * ret[t];
-		    }
-		}
-	    }
-	    free(Ti);
-	}
-    }
-
-    if (*err) {
-	free(ret);
-	ret = NULL;
-    }
-
-    return ret;
 }
 
 /* Called from qr_estimate.c in case robust VCV estimation is called

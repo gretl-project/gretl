@@ -1,6 +1,6 @@
 version 2017c, in progress
-- New accessor $vhat, to obtain individual effects from
-  random effects panel data model
+- Extend the $ahat accessor to support retrieval of the
+  individual effects from random effects panel data models
 - Add "Packages" item under the Help menu: basic info on
   Addons and contributed function packages
 - Fix buglet re. text coloring in script output window

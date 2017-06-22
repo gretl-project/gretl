@@ -6448,8 +6448,6 @@ int save_fit_resid (windata_t *vwin, int code)
 	    lib_command_sprintf("series %s = $h", vname);
 	} else if (code == M_AHAT) {
 	    lib_command_sprintf("series %s = $ahat", vname);
-	} else if (code == M_VHAT) {
-	    lib_command_sprintf("series %s = $vhat", vname);
 	}
 
 	record_model_command_verbatim(pmod->ID);

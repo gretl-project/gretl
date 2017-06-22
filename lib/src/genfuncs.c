@@ -1332,20 +1332,6 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
     return err;
 }
 
-/* convenience functions for use in gretl_panel.c */
-
-int get_panel_Ti (const double *src, double *targ, const DATASET *dset)
-{
-    return panel_statistic(src, targ, dset, F_PNOBS, NULL);
-}
-
-int get_panel_mean (const double *src, double *targ, const DATASET *dset)
-{
-    return panel_statistic(src, targ, dset, F_PMEAN, NULL);
-}
-
-/* end convenience functions for gretl_panel.c */
-
 /**
  * panel_shrink:
  * @x: panel-data source series.
@@ -3427,8 +3413,6 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 	src = pmod->uhat;
     } else if (idx == M_YHAT) {
 	src = pmod->yhat;
-    } else if (idx == M_VHAT) {
-	src = get_individual_effects(pmod, dset, err);
     }
 
     if (src == NULL) {
@@ -3478,13 +3462,13 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 	/* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
 	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
-    } else if (idx == M_AHAT) { 
-	/* fixed-effects constants */
+    } else if (idx == M_AHAT) {
 	sprintf(vname, "ahat%d", pmod->ID);
-	sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
-    } else if (idx == M_VHAT) {
-	sprintf(vname, "vhat%d", pmod->ID);
-	sprintf(vlabel, _("individual effects from model %d"), pmod->ID);
+	if (pmod->opt & OPT_U) {
+	    sprintf(vlabel, _("individual effects from model %d"), pmod->ID);
+	} else {
+	    sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
+	}
     }
 
     return ret;

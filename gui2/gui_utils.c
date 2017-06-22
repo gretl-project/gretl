@@ -2888,7 +2888,7 @@ static GtkActionEntry fixed_effects_data_items[] = {
 };
 
 static GtkActionEntry random_effects_data_items[] = {
-    { "vhat", NULL, N_("Individual effects"), NULL, NULL,
+    { "ahat", NULL, N_("Individual effects"), NULL, NULL,
       G_CALLBACK(fit_resid_callback)
     }
 };
@@ -2921,11 +2921,13 @@ static void add_model_dataset_items (windata_t *vwin)
 			G_N_ELEMENTS(model_data_base_items));
 			
     if (gretl_model_get_data(pmod, "ahat") != NULL) {
-	vwin_menu_add_items(vwin, path, fixed_effects_data_items,
-			    G_N_ELEMENTS(fixed_effects_data_items));
-    } else if (pmod->ci == PANEL && pmod->opt & OPT_U) {
-	vwin_menu_add_items(vwin, path, random_effects_data_items,
-			    G_N_ELEMENTS(random_effects_data_items));
+	if (pmod->opt & OPT_U) {
+	    vwin_menu_add_items(vwin, path, random_effects_data_items,
+				G_N_ELEMENTS(random_effects_data_items));
+	} else {
+	    vwin_menu_add_items(vwin, path, fixed_effects_data_items,
+				G_N_ELEMENTS(fixed_effects_data_items));
+	}
     }
 
     if (pmod->ci != GARCH && !(pmod->ci == LOGIT && (pmod->opt & OPT_M))) {

@@ -288,8 +288,6 @@ void fit_resid_callback (GtkAction *action, gpointer data)
 	code = M_H;
     } else if (!strcmp(s, "ahat")) {
 	code = M_AHAT;
-    } else if (!strcmp(s, "vhat")) {
-	code = M_VHAT;
     }
 
     save_fit_resid(vwin, code);

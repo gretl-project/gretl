@@ -80,8 +80,7 @@ typedef enum {
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
     M_LLT,        /* per-observation loglikelihood */
-    M_AHAT,       /* per-unit intercepts (fixed effects) in panel model */
-    M_VHAT,       /* individual (random) effects in panel model */
+    M_AHAT,       /* individual effects in panel model */
     M_H,          /* GARCH predicted variances */
     M_SAMPLE,     /* observations used in estimation */
     M_UHAT2,      /* squared residuals */
