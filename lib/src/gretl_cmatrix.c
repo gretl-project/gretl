@@ -393,7 +393,7 @@ gretl_array *gretl_complex_fft (gretl_array *A, int *err)
     gretl_matrix *mr, *mi;
     fftw_complex *tmp, *ptr;
     fftw_plan p;
-    int r, c, i, j;
+    int r, c, j;
 
     *err = get_two_matrices(A, &mr, &mi, 0);
     if (*err) {
