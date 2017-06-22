@@ -1,7 +1,28 @@
+/*
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 /* complex matrices */
 
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
+
+#include <fftw3.h>
 
 /* Get two matrices out of array @A, checking that they
    of the same dimensions, and if @square is non-zero
@@ -364,4 +385,50 @@ int complex_matrix_print (gretl_array *A, PRN *prn)
     pputc(prn, '\n');
 
     return 0;
+}
+
+gretl_array *gretl_complex_fft (gretl_array *A, int *err)
+{
+    gretl_array *B = NULL;
+    gretl_matrix *mr, *mi;
+    fftw_complex *tmp, *ptr;
+    fftw_plan p;
+    int r, c, i, j;
+
+    *err = get_two_matrices(A, &mr, &mi, 0);
+    if (*err) {
+	return NULL;
+    }
+
+    r = mr->rows;
+    c = mr->cols;
+
+    tmp = fftw_malloc(r * c * sizeof *tmp);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    matrices_into_complex(mr, mi, (cmplx *) tmp);
+
+    ptr = tmp;
+    for (j=0; j<c; j++) {
+	/* FIXME avoid redoing plan somehow? */
+	p = fftw_plan_dft_1d(r, ptr, ptr, FFTW_FORWARD, FFTW_ESTIMATE);
+	fftw_execute(p);
+	fftw_destroy_plan(p);
+	/* advance pointer to next column */
+	ptr += r;
+    }
+
+    if (!*err) {
+	B = gretl_array_new(GRETL_TYPE_MATRICES, 2, err);
+	if (!*err) {
+	    *err = complex_mat_into_array((cmplx *) tmp, r, c, B);
+	}
+    }
+
+    fftw_free(tmp);
+
+    return B;
 }
