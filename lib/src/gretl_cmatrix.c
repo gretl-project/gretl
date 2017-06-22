@@ -427,6 +427,7 @@ gretl_array *gretl_complex_fft (gretl_array *A, int inverse, int *err)
 	    forward followed by a backward transform (or vice versa)
 	    will result in the original data multiplied by the size of
 	    the transform (the product of the dimensions)."
+	    So should we do the following?
 	*/
 	for (j=0; j<r*c; j++) {
 	    tmp[j][0] = tmp[j][0] / r;
