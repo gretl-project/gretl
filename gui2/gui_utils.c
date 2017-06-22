@@ -674,6 +674,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		/* Ctrl-S: save */
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
+	    } else if (Alt && upkey == GDK_Q) {
+		/* let GTK handle this */
+		return FALSE;
 	    } else if (upkey == GDK_Q || upkey == GDK_W) {
 		if (!window_is_tab(vwin)) {
 		    /* Ctrl-Q or Ctrl-W, quit: but not for tabbed windows */
@@ -2859,27 +2862,33 @@ static GtkActionEntry r_squared_items[] = {
 }; 
 
 static GtkActionEntry lnl_data_items[] = {
-    { "lnL", NULL, N_("_Log likelihood"), NULL, NULL, 
+    { "lnL", NULL, N_("_Log likelihood"), NULL, NULL,
       G_CALLBACK(model_stat_callback) }
 };
 
 static GtkActionEntry criteria_items[] = {
-    { "AIC", NULL, N_("_Akaike Information Criterion"), NULL, NULL, 
+    { "AIC", NULL, N_("_Akaike Information Criterion"), NULL, NULL,
       G_CALLBACK(model_stat_callback) },
-    { "BIC", NULL, N_("_Bayesian Information Criterion"), NULL, NULL, 
+    { "BIC", NULL, N_("_Bayesian Information Criterion"), NULL, NULL,
       G_CALLBACK(model_stat_callback) },
-    { "HQC", NULL, N_("_Hannan-Quinn Information Criterion"), NULL, NULL, 
+    { "HQC", NULL, N_("_Hannan-Quinn Information Criterion"), NULL, NULL,
       G_CALLBACK(model_stat_callback) }
 };
 
 static GtkActionEntry garch_data_items[] = {
-    { "h", NULL, N_("_Predicted error variance"), NULL, NULL, 
+    { "h", NULL, N_("_Predicted error variance"), NULL, NULL,
       G_CALLBACK(fit_resid_callback)
     }
 };
 
 static GtkActionEntry fixed_effects_data_items[] = {
-    { "ahat", NULL, N_("Per-unit _constants"), NULL, NULL, 
+    { "ahat", NULL, N_("Per-unit _constants"), NULL, NULL,
+      G_CALLBACK(fit_resid_callback)
+    }
+};
+
+static GtkActionEntry random_effects_data_items[] = {
+    { "vhat", NULL, N_("Individual effects"), NULL, NULL,
       G_CALLBACK(fit_resid_callback)
     }
 };
@@ -2914,6 +2923,9 @@ static void add_model_dataset_items (windata_t *vwin)
     if (gretl_model_get_data(pmod, "ahat") != NULL) {
 	vwin_menu_add_items(vwin, path, fixed_effects_data_items,
 			    G_N_ELEMENTS(fixed_effects_data_items));
+    } else if (pmod->ci == PANEL && pmod->opt & OPT_U) {
+	vwin_menu_add_items(vwin, path, random_effects_data_items,
+			    G_N_ELEMENTS(random_effects_data_items));
     }
 
     if (pmod->ci != GARCH && !(pmod->ci == LOGIT && (pmod->opt & OPT_M))) {
