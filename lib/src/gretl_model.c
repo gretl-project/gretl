@@ -6716,7 +6716,7 @@ int gretl_model_get_series (double *x, MODEL *pmod,
 			    ModelDataIndex idx)
 {
     const double *src = NULL;
-    int t, err = 0;
+    int t;
 
     if (pmod->t2 - pmod->t1 + 1 > dset->n || 
 	model_sample_problem(pmod, dset)) {
