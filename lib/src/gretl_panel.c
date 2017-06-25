@@ -95,6 +95,8 @@ struct {
     int offset; /* sampling offset into full dataset */
 } panidx;
 
+int full_weighting;
+
 static int varying_vars_list (const DATASET *dset, panelmod_t *pan);
 
 /* translate from (i = unit, t = time period for that unit) to
@@ -1421,6 +1423,43 @@ static int compute_ubPub (panelmod_t *pan, MODEL *bmod)
     return 0;
 }
 
+static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
+			      int step)
+{
+    int i, j, Ti, t = 0;
+    double adj;
+
+    for (i=0; i<pan->nunits; i++) {
+	Ti = pan->unit_obs[i];
+	if (Ti > 0) {
+	    adj = step == 0 ? sqrt(Ti) : 1.0/sqrt(Ti);
+	    for (j=0; j<gset->v; j++) {
+		gset->Z[j][t] *= adj;
+	    }
+	    t++;
+	}
+    }
+}
+
+static int alt_compute_ubPub (panelmod_t *pan, MODEL *bmod,
+			      int *blist, DATASET *gset)
+{
+    int err;
+
+    /* multiply all data by sqrt(Ti) */
+    adjust_gset_data(pan, gset, 0);
+    clear_model(bmod);
+    *bmod = lsq(blist, gset, OLS, OPT_A);
+    err = bmod->errcode;
+    if (!err) {
+	pan->ubPub = bmod->ess;
+    }
+    /* put the original data back */
+    adjust_gset_data(pan, gset, 1);
+
+    return err;
+}
+
 /* calculate the group means or "between" regression and its error
    variance */
 
@@ -1471,7 +1510,11 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
 	    /* Prepare for the Baltagi-Chang take on Swamy-Arora
 	       in the case of an unbalanced panel
 	    */
-	    err = compute_ubPub(pan, &bmod);
+	    if (full_weighting) {
+		err = alt_compute_ubPub(pan, &bmod, blist, gset);
+	    } else {
+		err = compute_ubPub(pan, &bmod);
+	    }
 	}
 	clear_model(&bmod);
     }
@@ -2201,15 +2244,19 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
     }
 
     pan->s2v = 0.0;
+    amean /= pan->effn;
 
     if (wi != NULL) {
+	if (full_weighting) {
+	    amean = wmean;
+	}
 	for (i=0; i<pan->effn; i++) {
-	    pan->s2v += wi[i] * (ahat[i] - wmean) * (ahat[i] - wmean);
+	    pan->s2v += wi[i] * (ahat[i] - amean) * (ahat[i] - amean);
 	}
 	pan->s2v /= (pan->effn - 1.0) / (double) pan->effn;
 	free(wi);
     } else {
-	amean /= pan->effn;
+	// amean /= pan->effn;
 	for (i=0; i<pan->effn; i++) {
 	    pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
 	}
@@ -3294,11 +3341,23 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 	}
     }
 
+#if 1
+    if (!err && (opt & OPT_X)) {
+	if (!(pan->opt & OPT_U)) {
+	    err = E_BADOPT;
+	} else {
+	    int tmp = get_optval_int(PANEL, OPT_X, &err);
+
+	    full_weighting = tmp == 2;
+	}
+    }
+#else    
     if (!err && (opt & OPT_X)) {
 	if (!(pan->opt & OPT_U)) {
 	    err = E_BADOPT;
 	}
     }
+#endif    
     
     if (err && pan->unit_obs != NULL) {
 	free(pan->unit_obs);
