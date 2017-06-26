@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h" /* for testing */
 
 /**
  * SECTION:gretl_panel
@@ -96,6 +97,7 @@ struct {
 } panidx;
 
 int full_weighting;
+int IGLS;
 
 static int varying_vars_list (const DATASET *dset, panelmod_t *pan);
 
@@ -2182,6 +2184,25 @@ static int *real_FE_list (panelmod_t *pan)
     return list;
 }
 
+static int read_true_variances (panelmod_t *pan)
+{
+    /* get population values */
+    char matname[10];
+    gretl_matrix *m;
+    int err = 0;
+
+    sprintf(matname, "reV%d.mat", IGLS);
+    m = gretl_matrix_read_from_file(matname, 0, &err);
+    if (m == NULL) {
+	fprintf(stderr, "IGLS: no matrix!\n");
+    } else {
+	pan->s2v = m->val[0];
+	pan->s2e = m->val[1];
+    }
+
+    return err;
+}
+
 /* computation of $\hat{\sigma}^2_v$ a la Nerlove, if wanted */
 
 static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
@@ -2256,7 +2277,6 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 	pan->s2v /= (pan->effn - 1.0) / (double) pan->effn;
 	free(wi);
     } else {
-	// amean /= pan->effn;
 	for (i=0; i<pan->effn; i++) {
 	    pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
 	}
@@ -2265,9 +2285,6 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
 
     free(ahat);
     free(list);
-    if (wi == NULL) {
-	free(wi);
-    }
 
     return err;
 }
@@ -2459,7 +2476,11 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 		femod_regular_vcv(&femod);
 	    }
 	} else if (pan->opt & OPT_N) {
-	    femod.errcode = nerlove_s2v(&femod, dset, pan);
+	    if (IGLS > 0) {
+		read_true_variances(pan);
+	    } else {
+		femod.errcode = nerlove_s2v(&femod, dset, pan);
+	    }
 	}
     }
 
@@ -3009,7 +3030,10 @@ static int random_effects (panelmod_t *pan,
        units in the final calculation.
     */
     if (!(pan->opt & OPT_N)) {
-	if (!pan->balanced && !na(pan->ubPub)) {
+	if (IGLS > 0) {
+	    /* get population values */
+	    err = read_true_variances(pan);
+	} else if (!pan->balanced && !na(pan->ubPub)) {
 	    err = unbalanced_SA_s2v(pan, dset);
 	} else {
 	    pan->s2v = pan->s2b - pan->s2e / pan->Tbar;
@@ -3341,6 +3365,8 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 	}
     }
 
+    IGLS = full_weighting = 0;
+
 #if 1
     if (!err && (opt & OPT_X)) {
 	if (!(pan->opt & OPT_U)) {
@@ -3348,7 +3374,11 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 	} else {
 	    int tmp = get_optval_int(PANEL, OPT_X, &err);
 
-	    full_weighting = tmp == 2;
+	    if (tmp == 1994) {
+		full_weighting = 1;
+	    } else if (tmp > 0) {
+		IGLS = tmp;
+	    }
 	}
     }
 #else    
