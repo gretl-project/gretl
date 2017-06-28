@@ -2272,18 +2272,15 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
     }
 
     pan->s2v = 0.0;
-    amean /= pan->effn;
 
     if (wi != NULL) {
-	if (full_weighting) {
-	    amean = wmean;
-	}
 	for (i=0; i<pan->effn; i++) {
-	    pan->s2v += wi[i] * (ahat[i] - amean) * (ahat[i] - amean);
+	    pan->s2v += wi[i] * (ahat[i] - wmean) * (ahat[i] - wmean);
 	}
 	pan->s2v /= (pan->effn - 1.0) / (double) pan->effn;
 	free(wi);
     } else {
+	amean /= pan->effn;
 	for (i=0; i<pan->effn; i++) {
 	    pan->s2v += (ahat[i] - amean) * (ahat[i] - amean);
 	}
