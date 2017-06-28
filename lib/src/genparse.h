@@ -289,8 +289,6 @@ enum {
     F_ECDF,
     F_SLEEP,
     HF_CINV,
-    HF_CFFT,
-    HF_CFFTI,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COV,
     F_SDC,
@@ -382,6 +380,7 @@ enum {
     F_STRSCRAPE,
     HF_CEIGH,
     HF_CMMULT,
+    HF_CFFT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

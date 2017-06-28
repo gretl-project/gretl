@@ -4098,10 +4098,7 @@ static NODE *array_to_array_func (NODE *l, NODE *r, int f, parser *p)
 		ret->v.a = gretl_zgemm(A, B, &p->err);
 		break;
 	    case HF_CFFT:
-		ret->v.a = gretl_complex_fft(A, 0, &p->err);
-		break;
-	    case HF_CFFTI:
-		ret->v.a = gretl_complex_fft(A, 1, &p->err);
+		ret->v.a = gretl_complex_fft(A, node_get_int(r, p), &p->err);
 		break;
 	    }
 	}
@@ -14122,12 +14119,19 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case HF_CINV:
     case HF_CMMULT:
-    case HF_CFFT:
-    case HF_CFFTI:
 	if (l->t != ARRAY) {
 	    node_type_error(t->t, 1, ARRAY, l, p);
 	} else if (r != NULL && r->t != ARRAY) {
 	    node_type_error(t->t, 2, ARRAY, r, p);
+	} else {
+	    ret = array_to_array_func(l, r, t->t, p);
+	}
+	break;	
+    case HF_CFFT:
+	if (l->t != ARRAY) {
+	    node_type_error(t->t, 1, ARRAY, l, p);
+	} else if (r != NULL && r->t != NUM) {
+	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
 	    ret = array_to_array_func(l, r, t->t, p);
 	}
