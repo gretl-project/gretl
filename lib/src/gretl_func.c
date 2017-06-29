@@ -34,6 +34,7 @@
 #include "flow_control.h"
 #include "system.h"
 #include "genr_optim.h"
+#include "gretl_mpi.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -227,6 +228,7 @@ static void free_args_array (fn_arg *args, int n);
 static int compiling;    /* boolean: are we compiling a function currently? */
 static int fn_executing; /* depth of function call stack */
 static int compiling_python;
+static char mpi_caller[FN_NAMELEN];
 
 #define function_is_private(f)   (f->flags & UFUN_PRIVATE)
 #define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
@@ -1114,8 +1116,21 @@ int gretl_function_recursing (void)
     }
 }
 
+static fnpkg *find_caller_package (const char *name)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (!strcmp(name, ufuns[i]->name)) {
+	    return ufuns[i]->pkg;
+	}
+    }
+
+    return NULL;
+}
+
 /**
- * get_ufunc_by_name:
+ * get_user_function_by_name:
  * @name: name to test.
  *
  * Returns: pointer to a user-function, if there exists a
@@ -1140,6 +1155,8 @@ ufunc *get_user_function_by_name (const char *name)
 	if (fun != NULL) {
 	    pkg = fun->pkg;
 	    fun = NULL;
+	} else if (*mpi_caller != '\0') {
+	    pkg = find_caller_package(mpi_caller);
 	}
     }
 
@@ -1148,7 +1165,6 @@ ufunc *get_user_function_by_name (const char *name)
        only its member functions.  Try to optimize by putting the
        cheapest comparisons first.
     */
-
     for (i=0; i<n_ufuns; i++) {
 	if ((pkg == NULL && !function_is_private(ufuns[i])) || ufuns[i]->pkg == pkg) {
 	    if (!strcmp(name, ufuns[i]->name)) { 
@@ -1162,7 +1178,6 @@ ufunc *get_user_function_by_name (const char *name)
        functions or functions from other packages, so long as they're
        not private.
     */
-
     if (fun == NULL && pkg != NULL) {
 	for (i=0; i<n_ufuns; i++) {
 	    if (!function_is_private(ufuns[i]) && !strcmp(name, ufuns[i]->name)) {
@@ -4275,10 +4290,10 @@ static int validate_function_package (fnpkg *pkg)
     return 1;
 }
 
-/* for session file use: dump all currently defined functions,
-   packaged or not, into a single XML file */
+/* for session file use, and also MPI: dump all currently defined
+   functions, packaged or not, into a single XML file */
 
-int write_session_functions_file (const char *fname)
+int write_loaded_functions_file (const char *fname, int mpicall)
 {
     FILE *fp;
     int i;
@@ -4295,7 +4310,18 @@ int write_session_functions_file (const char *fname)
     gretl_xml_header(fp);  
     fputs("<gretl-functions>\n", fp);
 
-    /* first write any loaded function packages */
+    if (mpicall) {
+	/* if we're launching MPI, record the name of the
+	   currently executing function, if any
+	*/
+	ufunc *u = currently_called_function();
+
+	if (u != NULL) {
+	    fprintf(fp, "<caller>%s</caller>\n", u->name);
+	}
+    }
+
+    /* write any loaded function packages */
 
     for (i=0; i<n_pkgs; i++) {
 	if (validate_function_package(pkgs[i])) {
@@ -4814,6 +4840,7 @@ int read_session_functions_file (const char *fname)
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr cur;
+    int get_caller = 0;
     int err = 0;
 
 #if PKG_DEBUG
@@ -4825,7 +4852,11 @@ int read_session_functions_file (const char *fname)
 	return err;
     }
 
-    /* first get any function packages from this file */
+    if (gretl_mpi_rank() >= 0) {
+	get_caller = 1;
+    }
+
+    /* get any function packages from this file */
     cur = node->xmlChildrenNode;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
@@ -4833,7 +4864,18 @@ int read_session_functions_file (const char *fname)
 	    if (!err) {
 		err = real_load_package(pkg);
 	    }
-	} 
+	} else if (get_caller && !xmlStrcmp(cur->name, (XUC) "caller")) {
+	    /* are these functions being loaded from within a
+	       function that's calling mpi?
+	    */
+	    char *caller = gretl_xml_get_string(cur, doc);
+
+	    if (caller != NULL) {
+		strcpy(mpi_caller, caller);
+		free(caller);
+	    }
+	    get_caller = 0;
+	}
 	cur = cur->next;
     }
 

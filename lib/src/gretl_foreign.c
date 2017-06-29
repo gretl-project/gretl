@@ -1262,7 +1262,7 @@ static int mpi_send_funcs_setup (FILE *fp)
     int err;
 
     fname = g_strdup_printf("%smpi-funcs-tmp.xml", dotdir);
-    err = write_session_functions_file(fname);
+    err = write_loaded_functions_file(fname, 1);
 
     if (!err) {
 	fprintf(fp, "include \"%s\"\n", fname);
