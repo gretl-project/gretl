@@ -34,7 +34,10 @@
 #include "flow_control.h"
 #include "system.h"
 #include "genr_optim.h"
-#include "gretl_mpi.h"
+
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
 
 #include <errno.h>
 #include <glib.h>
@@ -54,10 +57,6 @@
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
-
-#ifdef HAVE_MPI
-# include "gretl_mpi.h"
-#endif
 
 typedef struct fn_param_ fn_param;
 typedef struct fn_arg_ fn_arg;
@@ -232,7 +231,9 @@ static void free_args_array (fn_arg *args, int n);
 static int compiling;    /* boolean: are we compiling a function currently? */
 static int fn_executing; /* depth of function call stack */
 static int compiling_python;
+#ifdef HAVE_MPI
 static char mpi_caller[FN_NAMELEN];
+#endif
 
 #define function_is_private(f)   (f->flags & UFUN_PRIVATE)
 #define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
@@ -1120,6 +1121,8 @@ int gretl_function_recursing (void)
     }
 }
 
+#ifdef HAVE_MPI
+
 static fnpkg *find_caller_package (const char *name)
 {
     int i;
@@ -1132,6 +1135,8 @@ static fnpkg *find_caller_package (const char *name)
 
     return NULL;
 }
+
+#endif
 
 /**
  * get_user_function_by_name:
@@ -1159,10 +1164,14 @@ ufunc *get_user_function_by_name (const char *name)
 	if (fun != NULL) {
 	    pkg = fun->pkg;
 	    fun = NULL;
-	} else if (*mpi_caller != '\0') {
-	    pkg = find_caller_package(mpi_caller);
 	}
     }
+
+#ifdef HAVE_MPI
+    if (pkg == NULL && *mpi_caller != '\0') {
+	pkg = find_caller_package(mpi_caller);
+    }
+#endif
 
     /* First pass: if there's no active function package, match any
        non-private function, but if there is an active package match
@@ -4315,7 +4324,6 @@ int write_loaded_functions_file (const char *fname, int mpicall)
     fputs("<gretl-functions>\n", fp);
 
 #ifdef HAVE_MPI
-
     if (mpicall) {
 	/* if we're launching MPI, record the name of the
 	   currently executing function, if any
@@ -4326,7 +4334,6 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 	    fprintf(fp, "<caller>%s</caller>\n", u->name);
 	}
     }
-
 #endif
     
     /* write any loaded function packages */
@@ -4848,7 +4855,9 @@ int read_session_functions_file (const char *fname)
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr cur;
+#ifdef HAVE_MPI
     int get_caller = 0;
+#endif
     int err = 0;
 
 #if PKG_DEBUG
@@ -4861,11 +4870,9 @@ int read_session_functions_file (const char *fname)
     }
 
 #ifdef HAVE_MPI
-
     if (gretl_mpi_rank() >= 0) {
 	get_caller = 1;
     }
-
 #endif
 
     /* get any function packages from this file */
@@ -4876,7 +4883,9 @@ int read_session_functions_file (const char *fname)
 	    if (!err) {
 		err = real_load_package(pkg);
 	    }
-	} else if (get_caller && !xmlStrcmp(cur->name, (XUC) "caller")) {
+	}
+#ifdef HAVE_MPI
+	else if (get_caller && !xmlStrcmp(cur->name, (XUC) "caller")) {
 	    /* are these functions being loaded from within a
 	       function that's calling mpi?
 	    */
@@ -4888,6 +4897,7 @@ int read_session_functions_file (const char *fname)
 	    }
 	    get_caller = 0;
 	}
+#endif
 	cur = cur->next;
     }
 
