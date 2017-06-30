@@ -14,9 +14,13 @@ links.stamp: Makefile
 	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
 	@if [ ! -f gretl.bib ] ; then ln -sf $(TEXDIR)/gretl.bib . ; fi
 	@if [ ! -f gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
-	@if [ ! -f $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
-	@if [ ! -f $(FIG) ] ; then ln -sf $(DOCDIR)/$(FIG) . ; fi
 	@touch $@
+
+$(PKG).tex:
+	@if [ ! -f $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
+
+$(FIG):
+	@if [ ! -f $(FIG) ] ; then ln -sf $(DOCDIR)/$(FIG) . ; fi
 
 clean:
 	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf links.stamp
