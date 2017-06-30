@@ -728,7 +728,7 @@ static int add_series_from_file (const char *path, int src,
 {
     FILE *fp;
     char line[128], sfname[MAXLEN];
-    char varname[VNAMELEN], date[8];
+    char varname[VNAMELEN], date[16];
     char label[MAXLABEL];
     double x;
     int d, yr, per, err = 0;
@@ -873,7 +873,7 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
 				   int prog, const char *path)
 {
     FILE *fp;
-    char line[128], sfname[MAXLEN], date[8];
+    char line[128], sfname[MAXLEN], date[16];
     double yt;
     int d, yr, per, err = 0;
     int t;
@@ -1093,7 +1093,7 @@ static int write_tramo_file (const char *fname,
 {
     int startyr, startper;
     int T = dset->t2 - dset->t1 + 1; 
-    char *p, tmp[8];
+    char *p, tmp[16];
     double x;
     FILE *fp;
     int t;
@@ -1162,7 +1162,7 @@ static int write_spc_file (const char *fname, const double *y,
 			   x12a_opts *xopt)
 {
     int startyr, startper;
-    char *p, tmp[8];
+    char *p, tmp[16];
     double x;
     FILE *fp;
     int i, t;
