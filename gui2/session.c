@@ -666,7 +666,7 @@ static void ensure_unique_text_name (char *tname)
     }
 
     if (idmax > 0) {
-	char num[8];
+	char num[16];
 
 	sprintf(num, "(%d)", ++idmax);
 	n = MAXSAVENAME - strlen(num) - 1;

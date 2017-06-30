@@ -195,7 +195,7 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 		       gretl_matrix *C, PRN *prn)
 {
     double cum, esum;
-    char pcname[8];
+    char pcname[16];
     int nl, namelen = 8;
     int n = cmat->dim;
     int done, todo;
