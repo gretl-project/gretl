@@ -667,7 +667,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     tbar = gretl_toolbar_new(NULL);
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
-    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_apply), vset);
+    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_apply), vset);
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->apply = GTK_WIDGET(item);
@@ -675,14 +675,14 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     gtk_widget_set_sensitive(vset->apply, FALSE);
 
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
-    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_up_down), vset);
+    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->up = GTK_WIDGET(item);
     gretl_tooltips_add(vset->up, _("Previous series"));
     
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
-    g_signal_connect(G_OBJECT(item), "clicked", G_CALLBACK(varinfo_up_down), vset);
+    g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->down = GTK_WIDGET(item);
@@ -723,8 +723,7 @@ void varinfo_dialog (int varnum)
 	vset->use_formula = 1;
     }
 
-    g_signal_connect(G_OBJECT(vset->dlg), "destroy", 
-		     G_CALLBACK(free_vsettings), vset);
+    g_signal_connect(vset->dlg, "destroy", G_CALLBACK(free_vsettings), vset);
 
     /* name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -737,7 +736,7 @@ void varinfo_dialog (int varnum)
     gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), VNAMELEN+3);
     gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
 		       dataset->varname[varnum]);
-    g_signal_connect(G_OBJECT(vset->name_entry), "changed", 
+    g_signal_connect(vset->name_entry, "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     
     gtk_box_pack_start(GTK_BOX(hbox), 
@@ -767,7 +766,7 @@ void varinfo_dialog (int varnum)
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), varnum);
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	    gtk_widget_show(tmp);
-	    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+	    g_signal_connect(tmp, "value-changed", 
 			     G_CALLBACK(varinfo_id_changed), vset);
 	    vset->id_spin = tmp;
 	}
@@ -795,7 +794,7 @@ void varinfo_dialog (int varnum)
     combo_box_append_text(tmp, _("Description:"));
     combo_box_append_text(tmp, _("Formula:"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
-    g_signal_connect(G_OBJECT(tmp), "changed", 
+    g_signal_connect(tmp, "changed", 
 		     G_CALLBACK(vset_toggle_formula), vset);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     vset->label_combo = tmp;
@@ -817,7 +816,7 @@ void varinfo_dialog (int varnum)
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
 		       series_get_label(dataset, varnum));
-    g_signal_connect(G_OBJECT(vset->label_entry), "changed", 
+    g_signal_connect(vset->label_entry, "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
     gtk_widget_show(vset->label_entry);
@@ -842,7 +841,7 @@ void varinfo_dialog (int varnum)
 			      MAXDISP+4);
     gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
 		       series_get_display_name(dataset, varnum));
-    g_signal_connect(G_OBJECT(vset->display_entry), "changed", 
+    g_signal_connect(vset->display_entry, "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->display_entry, FALSE, FALSE, 5);
@@ -874,7 +873,7 @@ void varinfo_dialog (int varnum)
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
 				 method);
-	g_signal_connect(G_OBJECT(vset->compaction_menu), "changed",
+	g_signal_connect(vset->compaction_menu, "changed",
 			 G_CALLBACK(varinfo_compact_changed), vset);
 	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);
 	gtk_widget_show(vset->compaction_menu); 
@@ -894,7 +893,7 @@ void varinfo_dialog (int varnum)
 	if (!d && !gretl_isdiscrete(0, dataset->n - 1, dataset->Z[varnum])) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	} 
-	g_signal_connect(G_OBJECT(tmp), "toggled",
+	g_signal_connect(tmp, "toggled",
 			 G_CALLBACK(varinfo_discrete_changed), vset);
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -908,13 +907,13 @@ void varinfo_dialog (int varnum)
 
     /* Cancel/Close button */
     tmp = close_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
+    g_signal_connect(tmp, "clicked", 
 		     G_CALLBACK(varinfo_cancel), vset);
     gtk_widget_show(tmp);
 
     /* "OK" button */
     tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
+    g_signal_connect(tmp, "clicked",
 		     G_CALLBACK(really_set_variable_info), vset);
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
@@ -951,7 +950,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     make_varname_unique(vname, 0, dataset);
     name_setter_init(nset, vname, descrip, cancel);
 
-    g_signal_connect(G_OBJECT(nset->dlg), "destroy", 
+    g_signal_connect(nset->dlg, "destroy", 
 		     G_CALLBACK(free_name_setter), nset);
 
     /* read/set name of variable */
@@ -964,7 +963,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     gtk_entry_set_max_length(GTK_ENTRY(nset->name_entry), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(nset->name_entry), VNAMELEN+3);
     gtk_entry_set_text(GTK_ENTRY(nset->name_entry), nset->vname);
-    g_signal_connect(G_OBJECT(nset->name_entry), "changed", 
+    g_signal_connect(nset->name_entry, "changed", 
 		     G_CALLBACK(nset_text_changed), nset);
     
     gtk_box_pack_start(GTK_BOX(hbox), 
@@ -989,7 +988,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     nset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(nset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(nset->label_entry), nset->descrip);
-    g_signal_connect(G_OBJECT(nset->label_entry), "changed", 
+    g_signal_connect(nset->label_entry, "changed", 
 		     G_CALLBACK(nset_text_changed), nset);
     gtk_box_pack_start(GTK_BOX(hbox), nset->label_entry, TRUE, TRUE, 5);
     gtk_widget_show(nset->label_entry);
@@ -1005,13 +1004,13 @@ void name_new_series_dialog (char *vname, char *descrip,
 
     /* Cancel button */
     tmp = cancel_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
+    g_signal_connect(tmp, "clicked", 
 		     G_CALLBACK(name_setter_cancel), nset);
     gtk_widget_show(tmp);
 
     /* "OK" button */
     tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
+    g_signal_connect(tmp, "clicked",
 		     G_CALLBACK(set_series_name_and_desc), nset);
 
     gtk_widget_grab_default(tmp);
