@@ -55,6 +55,10 @@
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 typedef struct fn_param_ fn_param;
 typedef struct fn_arg_ fn_arg;
 typedef struct fn_line_ fn_line;
@@ -4310,6 +4314,8 @@ int write_loaded_functions_file (const char *fname, int mpicall)
     gretl_xml_header(fp);  
     fputs("<gretl-functions>\n", fp);
 
+#ifdef HAVE_MPI
+
     if (mpicall) {
 	/* if we're launching MPI, record the name of the
 	   currently executing function, if any
@@ -4321,6 +4327,8 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 	}
     }
 
+#endif
+    
     /* write any loaded function packages */
 
     for (i=0; i<n_pkgs; i++) {
@@ -4852,9 +4860,13 @@ int read_session_functions_file (const char *fname)
 	return err;
     }
 
+#ifdef HAVE_MPI
+
     if (gretl_mpi_rank() >= 0) {
 	get_caller = 1;
     }
+
+#endif
 
     /* get any function packages from this file */
     cur = node->xmlChildrenNode;
