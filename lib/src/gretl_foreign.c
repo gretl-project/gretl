@@ -24,6 +24,7 @@
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
+# include "gretl_xml.h"
 #endif
 
 #ifdef USE_RLIB
@@ -498,7 +499,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 			      mpiexec, hostbit, npbit, gretl_home(), rngbit,
 			      qopt, gretl_mpi_filename());
 
-	if (opt & OPT_D) {
+	if (opt & OPT_V) {
 	    pputs(prn, "gretl mpi command:\n ");
 	    pputs(prn, cmd);
 	    pputc(prn, '\n');
@@ -531,7 +532,8 @@ static char *win32_dotpath (void)
 
 #else /* !G_OS_WIN32 */
 
-static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
+static int lib_run_prog_sync (char **argv, gretlopt opt,
+			      int use_dotdir, PRN *prn)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
@@ -539,7 +541,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt, PRN *prn)
     GError *gerr = NULL;
     int err = 0;
 
-    g_spawn_sync((opt & OPT_D)? NULL : gretl_workdir(),
+    g_spawn_sync(use_dotdir ? NULL : gretl_workdir(),
 		 argv, NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);
@@ -601,12 +603,13 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	NULL
     };
 
-    return lib_run_prog_sync(argv, opt, prn);
+    return lib_run_prog_sync(argv, opt, 0, prn);
 }
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
     char *argv[6];
+    int use_dotdir = 0;
     int err;
 
     if (foreign_lang == LANG_OX) {
@@ -637,10 +640,10 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	   of the stata output (gretltmp.log)
 	*/
 	gretl_chdir(gretl_dotdir());
-	opt |= OPT_D; /* dotdir */
+	use_dotdir = 1;
     }
 
-    err = lib_run_prog_sync(argv, opt, prn);
+    err = lib_run_prog_sync(argv, opt, use_dotdir, prn);
 
     return err;
 }
@@ -737,11 +740,11 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	argv[i++] = (char *) gretl_mpi_filename();
 	argv[i] = NULL;
 
-	if (opt & OPT_D) {
+	if (opt & OPT_V) {
 	    print_mpi_command(argv, prn);
 	}
 
-	err = lib_run_prog_sync(argv, opt, prn);
+	err = lib_run_prog_sync(argv, opt, 0, prn);
 	g_free(mpiprog);
     }
 
@@ -1253,7 +1256,80 @@ int write_gretl_julia_file (const char *buf, gretlopt opt, const char **pfname)
     return 0;    
 }
 
+static int no_data_check (const DATASET *dset)
+{
+    if (dset == NULL || dset->n == 0 || dset->v == 0) {
+	return E_NODATA;
+    } else {
+	return 0;
+    }
+}
+
+static int *get_send_data_list (const DATASET *dset, int ci, int *err)
+{
+    const char *lname = get_optval_string(FOREIGN, OPT_D);
+    int *list = NULL;
+
+    if (lname != NULL) {
+	list = get_list_by_name(lname);
+	if (list == NULL) {
+	    *err = E_DATA;
+	} else {
+	    int i;
+
+	    for (i=1; i<=list[0] && !*err; i++) {
+		if (list[i] < 0 || list[i] >= dset->v) {
+		    *err = E_DATA;
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
 #ifdef HAVE_MPI
+
+static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
+{
+    const char *dotdir = gretl_dotdir();
+    int *list = NULL;
+    size_t datasize;
+    int nvars;
+    gchar *fname;
+    int err;
+
+    err = no_data_check(dset);
+    if (err) {
+	return err;
+    }
+
+    list = get_send_data_list(dset, MPI, &err);
+    if (list != NULL) {
+	nvars = list[0];
+    } else {
+	nvars = dset->v;
+    }
+
+    datasize = dset->n * nvars;
+
+    if (datasize > 10000) {
+	/* write "big" data as binary? */
+	fname = g_strdup_printf("%smpi-data.gdtb", dotdir);
+    } else {
+	fname = g_strdup_printf("%smpi-data.gdt", dotdir);
+    }
+
+    err = gretl_write_gdt(fname, list, dset, OPT_NONE, 0);
+
+    if (!err) {
+	fprintf(fp, "open \"%s\"\n", fname);
+    }
+
+    g_free(fname);
+
+    return err;
+}
 
 static int mpi_send_funcs_setup (FILE *fp)
 {
@@ -1273,7 +1349,7 @@ static int mpi_send_funcs_setup (FILE *fp)
     return err;
 }
 
-static int write_gretl_mpi_file (gretlopt opt)
+static int write_gretl_mpi_file (gretlopt opt, const DATASET *dset)
 {
     const gchar *fname = gretl_mpi_filename();
     FILE *fp = gretl_fopen(fname, "w");
@@ -1281,6 +1357,11 @@ static int write_gretl_mpi_file (gretlopt opt)
 
     if (fp == NULL) {
 	return E_FOPEN;
+    }
+
+    if (opt & OPT_D) {
+	/* honor the --send-data option */
+	err = mpi_send_data_setup(dset, fp);
     }
 
     if (opt & OPT_F) {
@@ -1324,38 +1405,6 @@ static int write_gretl_mpi_file (gretlopt opt)
 
 #endif /* HAVE_MPI */
 
-static int *get_send_data_list (const DATASET *dset, int *err)
-{
-    const char *lname = get_optval_string(FOREIGN, OPT_D);
-    int *list = NULL;
-
-    if (lname != NULL) {
-	list = get_list_by_name(lname);
-	if (list == NULL) {
-	    *err = E_DATA;
-	} else {
-	    int i;
-
-	    for (i=1; i<=list[0] && !*err; i++) {
-		if (list[i] < 0 || list[i] >= dset->v) {
-		    *err = E_DATA;
-		}
-	    }
-	}
-    }
-
-    return list;
-}
-
-static int no_data_check (const DATASET *dset)
-{
-    if (dset == NULL || dset->n == 0 || dset->v == 0) {
-	return E_NODATA;
-    } else {
-	return 0;
-    }
-}
-
 static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
 {
@@ -1369,7 +1418,7 @@ static int write_data_for_stata (const DATASET *dset,
 	return err;
     }
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(dset, FOREIGN, &err);
     
     if (!err) {
 	*save_na = '\0';
@@ -1448,7 +1497,7 @@ static int write_data_for_octave (const DATASET *dset,
 	return err;
     }
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
 	mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
@@ -1528,7 +1577,7 @@ static int write_data_for_R (const DATASET *dset,
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
 	err = write_data(Rdata, list, dset, OPT_R, NULL);
@@ -2624,7 +2673,7 @@ int foreign_execute (const DATASET *dset,
 
 #ifdef HAVE_MPI
     if (foreign_lang == LANG_MPI) {
-	err = write_gretl_mpi_file(foreign_opt);
+	err = write_gretl_mpi_file(foreign_opt, dset);
 	if (err) {
 	    delete_gretl_mpi_file();
 	} else {
