@@ -7846,7 +7846,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     NODE *ret = NULL;
     const char *funname = l->vname;
     ufunc *uf = l->v.ptr;
+    fncall *fc = NULL;
     GretlType rtype = 0;
+    int exec_done = 0;
     int i, nparam, argc = 0;
 
     rtype = user_func_get_return_type(uf);
@@ -7892,6 +7894,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     }
 #endif
 
+    fc = fncall_new(uf);
+    if (fc == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
     /* evaluate the function argument nodes */
 
     for (i=0; i<argc && !p->err; i++) {
@@ -7920,8 +7928,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
 
 #if EDEBUG
-	fprintf(stderr, "%s: arg %d is of type %d (err=%d)\n", funname, i,
-		arg == NULL? -1 : arg->t, p->err);
+	fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n", funname, i,
+		arg == NULL ? "?" : getsymb(arg->t), p->err);
 #endif
 
 	if (!p->err && arg->t == U_ADDR) {
@@ -7937,7 +7945,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	if (!p->err) {
 	    /* assemble info and push argument */
 	    data = arg_get_data(arg, reftype, &argt);
-	    p->err = push_function_arg(uf, arg->vname, argt, data);
+	    p->err = push_function_arg(fc, arg->vname, argt, data);
 	}
 
 	if (p->err) {
@@ -7994,8 +8002,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    pdescrip = &p->lh.label;
 	}
 
-	p->err = gretl_function_exec(uf, rtype, p->dset, retp,
+	p->err = gretl_function_exec(fc, rtype, p->dset, retp,
 				     pdescrip, p->prn);
+	exec_done = 1;
 
 	if (!p->err && retp != NULL) {
 	    reset_p_aux(p, save_aux);
@@ -8045,8 +8054,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
     }
 
-    if (p->err) {
-	function_clear_args(uf);
+    if (!exec_done) {
+	/* avoid leaking memory */
+	fncall_destroy(fc);
     }
 
 #if EDEBUG

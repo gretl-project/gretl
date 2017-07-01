@@ -187,7 +187,7 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(cinfo->vwin);
-    err = gretl_function_exec(func, GRETL_TYPE_LIST,
+    err = gretl_function_exec(fncall_new(func), GRETL_TYPE_LIST,
 			      dataset, &list, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);
@@ -2460,7 +2460,8 @@ void function_call_cleanup (void)
 
 int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 {
-    ufunc *func;
+    ufunc *func = NULL;
+    fncall *fc = NULL;
     char funname[32];
     int iopt = -1;
     int err = 0;
@@ -2494,7 +2495,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
 		(void *) b, bname);
 #endif
-	err = push_function_arg(func, bname, GRETL_TYPE_BUNDLE_REF, b);
+	fc = fncall_new(func);
+	err = push_function_arg(fc, bname, GRETL_TYPE_BUNDLE_REF, b);
 
 	if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
@@ -2502,7 +2504,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
 	    if (!na(minv)) {
 		iopt += (int) minv;
-		err = push_function_arg(func, NULL, GRETL_TYPE_INT, &iopt);
+		err = push_function_arg(fc, NULL, GRETL_TYPE_INT, &iopt);
 	    }
 	}
     }
@@ -2513,13 +2515,14 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
-	err = gretl_function_exec(func, GRETL_TYPE_NONE,
+	err = gretl_function_exec(fc, GRETL_TYPE_NONE,
 				  dataset, NULL, NULL, prn);
 	gretl_print_destroy(prn);
+    } else {
+	fncall_destroy(fc);
     }
 
     if (err) {
-	function_clear_args(func);
 	gui_errmsg(err);
     } 
 
@@ -3629,7 +3632,7 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
-    err = gretl_function_exec(func, GRETL_TYPE_DOUBLE,
+    err = gretl_function_exec(fncall_new(func), GRETL_TYPE_DOUBLE,
 			      dataset, &check_err, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);

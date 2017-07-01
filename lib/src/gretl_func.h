@@ -70,6 +70,7 @@ typedef enum {
 				    r == GRETL_TYPE_VOID)
 
 typedef struct ufunc_ ufunc;
+typedef struct fncall_ fncall;
 typedef struct fnpkg_ fnpkg;
 
 int n_user_functions (void);
@@ -79,6 +80,10 @@ int n_free_functions (void);
 ufunc *get_user_function_by_name (const char *name);
 
 const ufunc *get_user_function_by_index (int idx);
+
+fncall *fncall_new (ufunc *fun);
+
+void fncall_destroy (fncall *call);
 
 int fn_n_params (const ufunc *fun);
 
@@ -142,7 +147,7 @@ int gretl_function_append_line (const char *line);
 
 int gretl_is_public_user_function (const char *name);
 
-int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
+int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn);
 
 int attach_loop_to_function (void *ptr);
@@ -272,9 +277,7 @@ int package_needs_zipping (const char *fname,
 
 void gretl_functions_cleanup (void);
 
-void function_clear_args (ufunc *fun);
-
-int push_function_arg (ufunc *fun, const char *name,
+int push_function_arg (fncall *fc, const char *name,
 		       GretlType type, void *value);
 
 void adjust_indent (const char *line, int *this_indent,

@@ -62,7 +62,6 @@ typedef struct fn_param_ fn_param;
 typedef struct fn_arg_ fn_arg;
 typedef struct fn_line_ fn_line;
 typedef struct obsinfo_ obsinfo;
-typedef struct fncall_ fncall;
 
 /* structure representing a parameter of a user-defined function */
 
@@ -128,8 +127,6 @@ struct ufunc_ {
     fn_line *lines;        /* array of lines of code */
     int n_params;          /* number of parameters */
     fn_param *params;      /* parameter info array */
-    int argc;              /* argument count (call-dependent) */
-    fn_arg *args;          /* argument array */
     int rettype;           /* return type (if any) */
     int debug;             /* are we debugging this function? */
 };
@@ -224,7 +221,6 @@ static fnpkg *current_pkg;  /* pointer to package currently being edited */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
-static void free_args_array (fn_arg *args, int n);
 
 /* record of state, and communication of state with outside world */
 
@@ -394,20 +390,21 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     return err;
 }
 
-static int ufunc_add_args_array (ufunc *u)
+static int fncall_add_args_array (fncall *fc)
 {
-    int i, err = 0;
+    int i, np = fc->fun->n_params;
+    int err = 0;
     
-    u->args = malloc(u->n_params * sizeof *u->args);
+    fc->args = malloc(np * sizeof *fc->args);
 
-    if (u->args == NULL) {
+    if (fc->args == NULL) {
 	err = E_ALLOC;
     } else {
-	for (i=0; i<u->n_params; i++) {
-	    u->args[i].type = 0;
-	    u->args[i].flags = 0;
-	    u->args[i].name = NULL;
-	    u->args[i].upname[0] = '\0';
+	for (i=0; i<np; i++) {
+	    fc->args[i].type = 0;
+	    fc->args[i].flags = 0;
+	    fc->args[i].name = NULL;
+	    fc->args[i].upname[0] = '\0';
 	}
     }
 
@@ -416,7 +413,7 @@ static int ufunc_add_args_array (ufunc *u)
 
 /**
  * push_function_arg:
- * @fun: pointer to function.
+ * @fc: pointer to function call.
  * @name: name of variable (or NULL for anonymous)
  * @type: type of argument to add.
  * @value: pointer to value to add.
@@ -427,46 +424,30 @@ static int ufunc_add_args_array (ufunc *u)
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_function_arg (ufunc *fun, const char *name, GretlType type, 
+int push_function_arg (fncall *fc, const char *name, GretlType type,
 		       void *value)
 {
     int err = 0;
 
-    if (fun == NULL) {
+    if (fc == NULL || fc->fun == NULL) {
 	err = E_DATA;
-    } else if (fun->argc >= fun->n_params) {
+    } else if (fc->argc >= fc->fun->n_params) {
 	fprintf(stderr, "function %s has %d parameters but argc = %d\n",
-		fun->name, fun->n_params, fun->argc);
+		fc->fun->name, fc->fun->n_params, fc->argc);
 	err = E_DATA;
-    } else if (fun->args == NULL) {
-	err = ufunc_add_args_array(fun);
+    } else if (fc->args == NULL) {
+	err = fncall_add_args_array(fc);
     }
 
     if (!err) {
-	err = fn_arg_set_data(&fun->args[fun->argc], name, type, value);
-	fun->argc += 1;
+	err = fn_arg_set_data(&fc->args[fc->argc], name, type, value);
+	fc->argc += 1;
     }
 
     return err;
 }
 
-void function_clear_args (ufunc *fun)
-{
-    if (fun != NULL && fun->args != NULL) {
-	int i;
-
-	for (i=0; i<fun->argc; i++) {
-	    fun->args[i].type = 0;
-	    fun->args[i].flags = 0;
-	    fun->args[i].name = NULL;
-	    fun->args[i].upname[0] = '\0';
-	}
-
-	fun->argc = 0;
-    }
-}
-
-static fncall *fncall_new (ufunc *fun)
+fncall *fncall_new (ufunc *fun)
 {
     fncall *call = malloc(sizeof *call);
 
@@ -475,34 +456,18 @@ static fncall *fncall_new (ufunc *fun)
 	call->ptrvars = NULL;
 	call->listvars = NULL;
 	call->retname = NULL;
-	/* Allow for recursion: transfer the arg list
-	   from @fun to @call so that it doesn't
-	   overflow if @fun is called again. 
-	*/
-	call->argc = fun->argc;
-	call->args = fun->args;
+	call->argc = 0;
+	call->args = NULL;
 	call->recursing = 0;
-	fun->args = NULL;
-	fun->argc = 0;
     }
 
     return call;
 }
 
-static void fncall_free (fncall *call)
+void fncall_destroy (fncall *call)
 {
     if (call != NULL) {
-	if (call->fun != NULL && call->args != NULL) {
-	    if (call->recursing) {
-		/* free (duplicate) args array */
-		free_args_array(call->args, call->argc);
-	    } else {
-		/* hand args array back to @fun for
-		   possible reuse */
-		call->fun->args = call->args;
-		function_clear_args(call->fun);
-	    }
-	}
+	free(call->args);
 	free(call->ptrvars);
 	free(call->listvars);
 	free(call->retname);
@@ -607,7 +572,7 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 	pprintf(prn, "exiting function %s, ", call->fun->name);
     }
 
-    fncall_free(call);
+    fncall_destroy(call);
 
     if (fn_executing > 0) {
 	GList *tmp = g_list_last(callstack);
@@ -1282,8 +1247,6 @@ static ufunc *ufunc_new (void)
 
     fun->n_params = 0;
     fun->params = NULL;
-    fun->argc = 0;
-    fun->args = NULL;
 
     fun->rettype = GRETL_TYPE_NONE;
 
@@ -1322,27 +1285,17 @@ static void free_params_array (fn_param *params, int n)
     free(params);
 }
 
-static void free_args_array (fn_arg *args, int n)
-{
-    if (args != NULL) {
-	free(args);
-    }
-}
-
 static void clear_ufunc_data (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
-    free_args_array(fun->args, fun->n_params);
     
     fun->lines = NULL;
     fun->params = NULL;
-    fun->args = NULL;
 
     fun->n_lines = 0;
     fun->line_idx = 1;
     fun->n_params = 0;
-    fun->argc = 0;
 
     fun->rettype = GRETL_TYPE_NONE;
 }
@@ -1351,8 +1304,6 @@ static void ufunc_free (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
-    free_args_array(fun->args, fun->n_params);
-
     free(fun);
 }
 
@@ -8051,13 +8002,13 @@ static int get_return_line (ExecState *state)
     }
 }
 
-int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
+int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn)
 {
     DEBUG_READLINE get_line = NULL;
     DEBUG_OUTPUT put_func = NULL;
+    ufunc *u = call->fun;
     ExecState state;
-    fncall *call = NULL;
     MODEL *model = NULL;
     char line[MAXLINE];
     CMD cmd;
@@ -8080,7 +8031,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
     err = maybe_check_function_needs(dset, u);
     if (err) {
-	function_clear_args(u);
+	fncall_destroy(call);
 	return err;
     }
 
@@ -8099,11 +8050,6 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
     if (!function_is_plugin(u)) {
 	/* precaution */
 	function_state_init(&cmd, &state, &indent0);
-	call = fncall_new(u);
-	if (call == NULL) {
-	    fprintf(stderr, "fncall_new() returned NULL\n");
-	    return E_ALLOC;
-	}
     }
 
     err = check_function_args(call, prn);
@@ -8112,7 +8058,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	if (!err) {
 	    err = handle_plugin_call(call, dset, ret, prn);
 	}
-	fncall_free(call);
+	fncall_destroy(call);
 	return err;
     }
 
@@ -8122,7 +8068,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 
     if (err) {
 	/* get out before allocating further storage */
-	fncall_free(call);
+	fncall_destroy(call);
 	return err;
     }  
 
@@ -8327,7 +8273,7 @@ int gretl_function_exec (ufunc *u, int rtype, DATASET *dset,
 	    err = stoperr;
 	}
     } else {
-	fncall_free(call);
+	fncall_destroy(call);
     }
 
 #if EXEC_DEBUG || GLOBAL_TRACE

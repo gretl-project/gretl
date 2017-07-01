@@ -1589,6 +1589,7 @@ static int check_for_matrix_updates (kalman *K, ufunc *uf)
 static int kalman_update_matrices (kalman *K, PRN *prn)
 {
     ufunc *uf;
+    fncall *fc;
     int err = 0;
 
     uf = get_user_function_by_name(K->matcall);
@@ -1602,10 +1603,11 @@ static int kalman_update_matrices (kalman *K, PRN *prn)
 	check_for_matrix_updates(K, uf);
     }
 
-    err = push_function_arg(uf, NULL, GRETL_TYPE_BUNDLE_REF, K->b);
+    fc = fncall_new(uf);
+    err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE_REF, K->b);
 
     if (!err) {
-	err = gretl_function_exec(uf, GRETL_TYPE_NONE, NULL, NULL,
+	err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL, NULL,
 				  NULL, prn);
     }
     
