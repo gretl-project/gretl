@@ -153,6 +153,7 @@ struct fnpkg_ {
     char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
     int uses_subdir;  /* lives in subdirectory (0/1) */
+    int prechecked;   /* already checked for data requirement */
     DataReq dreq;     /* data requirement */
     int modelreq;     /* required model type, if applicable */
     ufunc **pub;      /* pointers to public interfaces */
@@ -513,6 +514,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->modelreq = 0;
     pkg->minver = 0;
     pkg->uses_subdir = 0;
+    pkg->prechecked = 0;
     
     pkg->pub = pkg->priv = NULL;
     pkg->n_pub = pkg->n_priv = 0;
@@ -1094,6 +1096,7 @@ static fnpkg *find_caller_package (const char *name)
 
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(name, ufuns[i]->name)) {
+	    ufuns[i]->pkg->prechecked = 1;
 	    return ufuns[i]->pkg;
 	}
     }
@@ -6802,7 +6805,7 @@ int package_version_ok (int minver, char *reqstr)
 static int maybe_check_function_needs (const DATASET *dset,
 				       const ufunc *fun)
 {
-    if (fun->pkg == NULL) {
+    if (fun->pkg == NULL || fun->pkg->prechecked) {
 	return 0;
     } else {
 	return check_function_needs(dset, fun->pkg->dreq, 
