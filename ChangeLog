@@ -1,8 +1,18 @@
 version 2017c, in progress
 - Extend the $ahat accessor to support retrieval of the
   individual effects from random effects panel data models
-- Add "Packages" item under the Help menu: basic info on
+- GUI: add "Packages" item under the Help menu: basic info on
   Addons and contributed function packages
+- GUI: add an easy way to scale both the menu font and the
+  monospaced font for formatted output
+- GUI: move the file-related function-package items from
+  the Tools menu to the File menu
+- GUI: move the Preferences submenu to the top of the Tools
+  menu
+- library: add some internal functions to support operations
+  on complex matrices using LAPACK
+- library: add functionality to make use of an mpi block
+  from a script as seamless as possible
 - Fix buglet re. text coloring in script output window
 - Tweak naming of auto-generated list for midasreg in the
   GUI program
@@ -12,6 +22,9 @@ version 2017c, in progress
   broken
 - Fix bug: "boxplot" command with matrix argument: should
   default to plotting all columns
+- Fix bug: nested calls to a given function were failing in
+  cases where the inner call occurred at the second or higher
+  argument slot
 - MS Windows: update to mkstemp() for tmp file creation (was
   missing from mingw)
 
