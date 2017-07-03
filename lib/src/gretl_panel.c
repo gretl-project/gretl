@@ -2692,6 +2692,16 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	    /* record use of Nerlove transformation */
 	    pmod->opt |= OPT_N;
 	}
+	if ((pan->opt & OPT_X) && !IGLS) {
+	    /* record use of special unbalanced ANOVA */
+	    pmod->opt |= OPT_X;
+	    if (!(pan->opt & OPT_N)) {
+		const char *meth = stata_sa ? "stata" : "bc";
+
+		gretl_model_set_string_as_data(pmod, "anova_method",
+					       gretl_strdup(meth));
+	    }
+	}
     }
 
     /* compose list of dropped variables, if any */

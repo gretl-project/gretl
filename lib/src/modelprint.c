@@ -1902,6 +1902,20 @@ static void maybe_show_midas_method (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void maybe_show_SA_method (const MODEL *pmod, PRN *prn)
+{
+    const char *s = gretl_model_get_data(pmod, "anova_method");
+
+    if (s != NULL) {
+	gretl_prn_newline(prn);
+	if (!strcmp(s, "stata")) {
+	    pputs(prn, A_("Using Swamy-Arora as per Stata"));
+	} else {
+	    pputs(prn, A_("Using Swamy-Arora as per Baltagi-Chang"));
+	}
+    }
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATASET *dset, 
 				 gretlopt opt, 
@@ -2043,10 +2057,22 @@ static void print_model_heading (const MODEL *pmod,
 
 	pprintf(prn, A_("%s, using %d observations"),
 		A_(estimator_string(pmod, prn)), pmod->nobs);
-	if ((pmod->opt & OPT_U) && (pmod->opt & OPT_N)) {
-	    gretl_prn_newline(prn);
-	    pprintf(prn, A_("Using Nerlove's transformation"));
+
+	if (pmod->opt & OPT_U) {
+	    /* random effects */
+	    if (pmod->opt & OPT_N) {
+		gretl_prn_newline(prn);
+		if (pmod->opt & OPT_X) {
+		    pputs(prn, A_("Using weighted Nerlove transformation"));
+		} else {
+		    pputs(prn, A_("Using Nerlove's transformation"));
+		}
+	    } else if (pmod->opt & OPT_X) {
+		/* Swamy-Arora special */
+		maybe_show_SA_method(pmod, prn);
+	    }
 	}
+
 	if (effn > 0) {
 	    gretl_prn_newline(prn);
 	    pprintf(prn, A_("Included %d cross-sectional units"), effn);
