@@ -23,7 +23,7 @@
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_panel.h"
-#include "gretl_fft.h"
+#include "gretl_cmatrix.h"
 #include "gretl_typemap.h"
 #include "gretl_midas.h"
 #include "estim_private.h"

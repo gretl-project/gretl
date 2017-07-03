@@ -30,4 +30,8 @@ int complex_matrix_print (gretl_array *A, PRN *prn);
 
 gretl_array *gretl_complex_fft (gretl_array *A, int inverse, int *err);
 
+gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
+
+gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err);
+
 #endif /* GRETL_CMATRIX_H */

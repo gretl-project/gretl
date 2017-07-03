@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
-#include "gretl_fft.h"
+#include "gretl_cmatrix.h"
 #include "matrix_extra.h"
 #include "gretl_panel.h"
 #include "libset.h"

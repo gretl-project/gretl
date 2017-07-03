@@ -24,7 +24,7 @@
 #include "matrix_extra.h"
 #include "libset.h"
 #include "gretl_func.h"
-#include "gretl_fft.h"
+#include "gretl_cmatrix.h"
 #include "gretl_panel.h"
 
 /**

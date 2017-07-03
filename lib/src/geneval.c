@@ -27,7 +27,6 @@
 #include "usermat.h"
 #include "uservar.h"
 #include "gretl_bfgs.h"
-#include "gretl_fft.h"
 #include "gretl_normal.h"
 #include "gretl_panel.h"
 #include "kalman.h"
