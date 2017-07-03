@@ -9577,8 +9577,13 @@
         </option>
         <option>
 	  <flag>--matrix-diff</flag>
-	  <effect>use matrix-difference method for Hausman test</effect>
+	  <effect>compute Hausman test via matrix difference</effect>
         </option>
+	<option>
+	  <flag>--unbalanced</flag>
+	  <optparm>method</optparm>
+	  <effect>random effects only, see below</effect>
+	</option>
         <option>
 	  <flag>--quiet</flag>
 	  <effect>less verbose output</effect>
@@ -9623,19 +9628,31 @@
 	regression using the group means).
       </para>
       <para context="cli">
-	The <opt>robust</opt> option is available only for fixed
-	effects models. The default variant is the Arellano HAC
-	estimator, but Beck&ndash;Katz <quote>Panel Corrected Standard
-	Errors</quote> can be selected via the command <lit>set pcse
-	on</lit>. When the robust option is specified the joint
-	<math>F</math> test on the fixed effects is performed using
-	the robust method of <cite key="welch51">Welch (1951)</cite>.
+	The default means of calculating robust standard errors in
+	panel-data models is the Arellano HAC estimator, but
+	Beck&ndash;Katz <quote>Panel Corrected Standard Errors</quote>
+	can be selected via the command <lit>set pcse on</lit>. When
+	the robust option is specified the joint <math>F</math> test
+	on the fixed effects is performed using the robust method of
+	<cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
 	(GLS) estimates are computed. By default the method of Swamy
 	and Arora is used for the GLS transformation, but the Nerlove
 	method is available as an option.
+      </para>
+      <para context="cli">
+	The <opt>unbalanced</opt> option is available only for random
+	effects models: it can be used to choose an ANOVA method for
+	use with an unbalanced panel. By default gretl uses the
+	Swamy&ndash;Arora method as for balanced panels, except that
+	the harmonic mean of the individual time-series lengths is
+	used in place of a common <math>T</math>. Under this option
+	you can specify either <lit>bc</lit>, to use the method of
+	<cite key="baltagi-chang94">Baltagi and Chang (1994)</cite>,
+	or <lit>stata</lit>, to emulate the <lit>sa</lit> option to
+	the <lit>xtreg</lit> command in Stata.
       </para>
       <para>
 	For more details on panel estimation, please see <guideref
