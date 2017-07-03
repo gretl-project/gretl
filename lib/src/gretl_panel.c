@@ -97,7 +97,7 @@ struct {
 } panidx;
 
 /* for testing purposes */
-int full_weighting;
+int stata_sa;
 int IGLS;
 char glsmat[MAXLEN];
 
@@ -1403,14 +1403,11 @@ static int save_between_model (MODEL *pmod, const int *blist,
 }
 
 /* Compute @ubPub as the Ti-weighted sum of the squared
-   residuals from the Between model, as per Stata and Baltagi
-   2013 (leaving aside the erroneous statement in Baltagi
-   and Chang, 1994, repeated in Baltagi 2013, that this
-   quantity can be obtained via a Ti-weighted Between
-   regression).
+   residuals from the Between model, as per Stata (but
+   in disagreement with Baltagi and Chang, 1994).
 */
 
-static int compute_ubPub (panelmod_t *pan, MODEL *bmod)
+static int alt_compute_ubPub (panelmod_t *pan, MODEL *bmod)
 {
     int i, Ti, t = 0;
 
@@ -1445,8 +1442,13 @@ static void adjust_gset_data (panelmod_t *pan, DATASET *gset,
     }
 }
 
-static int alt_compute_ubPub (panelmod_t *pan, MODEL *bmod,
-			      int *blist, DATASET *gset)
+/* Compute @ubPub as the sum of squared residuals from a
+   Ti-weighted Between regression, as per Baltagi and Chang,
+   1994, and also Baltagi, 2013.
+*/
+
+static int compute_ubPub (panelmod_t *pan, MODEL *bmod,
+			  int *blist, DATASET *gset)
 {
     int err;
 
@@ -1514,10 +1516,10 @@ static int between_variance (panelmod_t *pan, DATASET *gset)
 	    /* Prepare for the Baltagi-Chang take on Swamy-Arora
 	       in the case of an unbalanced panel
 	    */
-	    if (full_weighting) {
-		err = alt_compute_ubPub(pan, &bmod, blist, gset);
+	    if (stata_sa) {
+		err = alt_compute_ubPub(pan, &bmod);
 	    } else {
-		err = compute_ubPub(pan, &bmod);
+		err = compute_ubPub(pan, &bmod, blist, gset);
 	    }
 	}
 	clear_model(&bmod);
@@ -2228,6 +2230,7 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
     }
 
     if (pan->opt & OPT_X) {
+	/* --unbalanced */
 	wi = malloc(pan->effn * sizeof *wi);
 	if (wi == NULL) {
 	    free(ahat);
@@ -3369,22 +3372,28 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 	}
     }
 
-    IGLS = full_weighting = 0;
+    IGLS = stata_sa = 0;
 
     if (!err && (opt & OPT_X)) {
 	if (!(pan->opt & OPT_U)) {
-	    /* --exact requires --random-effects */
+	    /* --unbalanced --random-effects */
 	    err = E_BADOPT;
 	} else {
-	    /* probe optional argument to --exact */
+	    /* probe optional argument to --unbalanced */
 	    const char *s = get_optval_string(PANEL, OPT_X);
 
 	    if (s != NULL) {
-		if (!strcmp(s, "2")) {
-		    full_weighting = 1;
-		} else {
+		if (!strcmp(s, "stata")) {
+		    stata_sa = 1;
+		} else if (!strcmp(s, "bc")) {
+		    stata_sa = 0;
+		} else if (has_suffix(s, ".mat")) {
+		    /* hidden testing option */
 		    strcpy(glsmat, s);
 		    IGLS = 1;
+		} else {
+		    gretl_errmsg_sprintf(_("%s: invalid option argument"), s);
+		    err = E_INVARG;
 		}
 	    }
 	}
