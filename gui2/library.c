@@ -7728,15 +7728,25 @@ void plot_from_selection (int code)
 
 static int all_missing (int v)
 {
-    int t;
+    int t, os = 0;
     
-    for (t=dataset->t1; t<=dataset->t2; t++) {
+    for (t=0; t<dataset->n; t++) {
 	if (!na(dataset->Z[v][t])) {
-	    return 0;
-	} 
+	    if (t >= dataset->t1 && t <= dataset->t2) {
+		return 0;
+	    } else {
+		os++;
+	    }
+	}
     }
 
-    warnbox_printf(_("%s: no valid values"), dataset->varname[v]);
+    if (os > 0) {
+	warnbox_printf(_("%s: no valid values in current sample"),
+		       dataset->varname[v]);
+    } else {
+	warnbox_printf(_("%s: no valid values"), dataset->varname[v]);
+    }
+
     return 1;
 }
 
