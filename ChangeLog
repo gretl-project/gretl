@@ -1,6 +1,8 @@
 version 2017c, in progress
 - Extend the $ahat accessor to support retrieval of the
   individual effects from random effects panel data models
+- Rename the $fcerr accessor as $fcse (but keep $fcerr as an
+  alias)
 - GUI: add "Packages" item under the Help menu: basic info on
   Addons and contributed function packages
 - GUI: add an easy way to scale both the menu font and the
@@ -10,6 +12,8 @@ version 2017c, in progress
 - GUI: move the Preferences submenu to the top of the Tools
   menu
 - GUI: increase the default size of the main window somewhat
+- GUI: forecast window, add button: enable saving of forecast
+  standard errors when available
 - library: add some internal functions to support operations
   on complex matrices using LAPACK
 - library: add functionality to make use of an mpi block
