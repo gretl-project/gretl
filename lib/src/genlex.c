@@ -145,7 +145,7 @@ struct str_table mvars[] = {
     { M_SYSA,    "$sysA" },
     { M_SYSB,    "$sysB" },
     { M_FCAST,   "$fcast" },
-    { M_FCERR,   "$fcerr" },
+    { M_FCSE,    "$fcse" },
     { M_COEFF_CI,"$coeff_ci" },
     { M_EHAT,    "$ehat" },
     { M_MNLPROBS, "$mnlprobs" },
@@ -836,9 +836,12 @@ int mvar_lookup (const char *s)
 	}
     }
 
+    /* aliases */
+
     if (!strcmp(s, "$nrsq")) {
-	/* alias */
 	return M_TRSQ;
+    } else if (!strcmp(s, "$fcerr")) {
+	return M_FCSE;
     }
 
     return 0;

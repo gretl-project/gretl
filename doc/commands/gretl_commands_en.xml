@@ -3856,7 +3856,7 @@
 	to produce forecasts for all the endogenous variables). In the
 	system case, or if <repl>vname</repl> is not given, the forecast
 	values can be retrieved using the accessor <lit>$fcast</lit>, and
-	the standard errors, if available, via <lit>$fcerr</lit>.
+	the standard errors, if available, via <lit>$fcse</lit>.
       </para>
 
       <para>

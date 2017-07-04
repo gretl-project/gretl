@@ -105,7 +105,7 @@ typedef enum {
     M_SYSA,       /* Parameter matrix A (simultaneous systems) */
     M_SYSB,       /* Parameter matrix B (simultaneous systems) */
     M_FCAST,      /* last forecast generated via fcast command */
-    M_FCERR,      /* standard errors associated with M_FCAST */
+    M_FCSE,       /* standard errors associated with M_FCAST */
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
     M_EHAT,       /* ARMA: vector of estimated innovations */
     M_PMANTEAU,   /* VAR portmanteau test plus 's' value */

@@ -1001,15 +1001,15 @@
 	A opción <opt>y-diff-only</opt> é específica da estimación de modelos
 	ARIMAX (modelos cunha orde de integración non nula, nos que se inclúen
 	regresores esóxenos) e aplícase só cando se utiliza a Máxima Verosimilitude
-	exacta propio de Gretl. Para eses modelo, o comportamento por defecto
+	exacta propia de Gretl. Para eses modelo, o comportamento por defecto
 	consiste en calcular as primeiras diferenzas tanto da variable dependente
 	como dos regresores, pero cando indicas esta opción, só se calcula para
 	a variable dependente, quedando os regresores en niveis.
       </para>
 
       <para context="cli">
-	A opción <opt>save-ehat</opt> só pode aplicarse cando se utiliza
-	a estimación Máximo Verosímil exacta propia. O seu efecto consiste
+	A opción <opt>save-ehat</opt> só pode aplicarse cando se utiliza a
+	estimación Máximo Verosímil exacta propia de Gretl. O seu efecto consiste
 	en que te permite dispoñer dun vector que contén a estimación óptima
 	ata o período <math>t</math> da perturbación ou innovación de data
 	<math>t</math>, e que podes recuperar co accesorio <lit>$ehat</lit>.
@@ -3705,26 +3705,40 @@
 	Tamén tes a opción de exportar datos co formato dun ficheiro
 	de datos <quote>propio</quote> de Gretl, ou de exportalos a
 	un banco de datos de Gretl (se os datos son axeitados). Consulta
-	<url>gretl.sourceforge.net/gretl_data.html</url> para ver unha
-	exposición das bases de datos de Gretl.
+	<url>gretl.sourceforge.net/gretl_data.html</url> para ver un
+	relatorio dos bancos de datos de Gretl.
       </para>
       <para>
-	Podes tamén exportar datos nun formato apropiado para usalos
-	cos seguintes programas:
+	Podes tamén exportar datos nun formato de texto plano axeitado para
+	usalos cos seguintes programas:
       </para>
       <ilist>
 	<li>
-	    <para>GNU R (<url>www.r-project.org</url>)</para>
+	  <para>
+	    GNU R (<url>www.r-project.org</url>): Escríbense os datos co formato
+	    que utiliza espazos separados e que a función <lit>read.table</lit>
+	    de R pode asimilar doadamente. Sufixo, por defecto, do nome de
+	    ficheiro: <lit>.txt</lit>
+	  </para>
 	</li>
 	<li>
-	    <para>GNU octave (<url>www.gnu.org/software/octave</url>)
-	    </para>
+	  <para>
+	    GNU octave (<url>www.gnu.org/software/octave</url>): Os datos se
+	    escriben como unha matriz no formato favorito de Octave. Sufixo,
+	    por defecto, do nome de ficheiro: <lit>.m</lit>
+	  </para>
 	</li>
 	<li>
-	    <para>JMulTi (<url>www.jmulti.de</url>)</para>
+	  <para>
+	    JMulTi (<url>www.jmulti.de</url>): Sufixo, por defecto, do nome de
+	    ficheiro: <lit>.dat</lit>
+    </para>
 	</li>
 	<li>
-	    <para>PcGive (<url>www.pcgive.com</url>)</para>
+	  <para>
+	    PcGive (<url>www.pcgive.com</url>): Sufixo, por defecto, do nome de
+	    ficheiro: <lit>.dat</lit>
+    </para>
 	</li>
       </ilist>
       <para>
@@ -3842,7 +3856,7 @@
 	defecto xéranse as predicións para todas as variables endóxenas). No
 	caso dun sistema ou se non indicas <repl>nomev</repl>, podes recuperar
 	os valores de predición utilizando o accesorio <lit>$fcast</lit> e, se
-	están dispoñibles, as desviacións padrón mediante <lit>$fcerr</lit>.
+	están dispoñibles, as desviacións padrón mediante <lit>$fcse</lit>.
       </para>
 
       <para>
@@ -9503,9 +9517,16 @@
 	elementos atópanse baixo o elemento /Ficheiro/Paquetes de funcións.
       </para>
       <para>
-	Para obter detalles sobre a instalación e o traballo con paquetes de
-	funcións, consulta <mnu>PkgHelp:Pkgbook</mnu> (baixo o menú Axuda).
-	Esta guía tamén contén detalles sobre como escribir paquetes de funcións.
+	Moitos paquetes propoñen anexarse por si mesmos aos menús da Interface
+	Gráfica de Usuario (GUI). Podes revisar estas anexións mediante
+	<mnu>PkgHelp:Registry</mnu> (accede mediante o botón de Preferencias
+	no navegador para paquetes instalados).
+      </para>
+      <para>
+	Para obter detalles completos sobre a instalación e o traballo con
+	paquetes de funcións, consulta <mnu>PkgHelp:Pkgbook</mnu> (baixo
+	o menú Axuda). Esta guía tamén contén detalles sobre como escribir
+	paquetes de funcións.
       </para>
     </description>
   </command>
@@ -9556,7 +9577,12 @@
         </option>
         <option>
 	  <flag>--matrix-diff</flag>
-	  <effect>Utiliza o método da matriz-diferenza para a proba de Hausman</effect>
+	  <effect>Calcula a proba de Hausman mediante a matriz-diferenza</effect>
+        </option>
+        <option>
+	  <flag>--unbalanced</flag>
+	  <optparm>método</optparm>
+	  <effect>Só efectos aleatorios; mira abaixo</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -9602,12 +9628,12 @@
 	utilizando as medias dos grupos).
       </para>
       <para context="cli">
-	A opción <opt>robust</opt> está dispoñible só para modelos de efectos
-	fixos. A variante por defecto é a do estimador HAC de Arellano, pero
-	mediante a instrución <lit>set pcse on</lit> podes seleccionar as
-	<quote>Desviacións padrón corrixidas de panel</quote> de Beck&ndash;Katz.
-	Cando especificas a opción robusta, realízase a proba conxunta
-	<math>F</math> de efectos fixos utilizando o método robusto de
+	O procedemento por defecto para calcular desviacións padrón robustas
+	en modelos con datos de panel, é o estimador HAC de Arellano HAC, pero
+	podes escoller as <quote>Desviacións Padrón Corrixidas de Panel</quote>
+	de Beck&ndash;Katz mediante a instrución <lit>set pcse on</lit>. Cando
+	especificas a opción robusta, execútase a proba conxunta <math>F</math>
+	sobre os efectos fixos utilizando o método robusto de
 	<cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
@@ -9615,6 +9641,18 @@
 	(MCX) de efectos aleatorios. Por defecto, utilízase o método de Swamy
 	e Arora para a transformación MCX, pero está dispoñible o método de
 	Nerlove como opción.
+      </para>
+      <para context="cli">
+	A opción <opt>unbalanced</opt> está dispoñible só para modelos
+	con efectos aleatorios e podes usala para elixir o método ANOVA
+	que empregar cun panel desequilibrado. Por defecto, Gretl emprega
+	o método de Swamy&ndash;Arora igual se fai que para os paneis
+	equilibrados, agás que utiliza a media armónica das longuras das
+	series de tempo individuais en vez da <math>T</math> habitual.
+	Baixo esta opción podes especificar ben <lit>bc</lit> para usar o
+	método de <cite key="baltagi-chang94">Baltagi e Chang (1994)</cite>,
+	ou ben usar <lit>stata</lit> para emular a opción <lit>sa</lit> da
+	instrución <lit>xtreg</lit> de Stata.
       </para>
       <para>
 	Para obter máis detalles sobre a estimación dun panel, consulta o
@@ -13052,7 +13090,7 @@
         </option>
         <option>
 	  <flag>--gnu-R</flag>
-	  <effect>Utiliza o formato GNU R</effect>
+	  <effect>Formato tratable con read.table</effect>
         </option>
         <option>
 	  <flag>--gzipped</flag>
@@ -13101,8 +13139,8 @@
 	conteña unha especificación completa da ruta.
       </para>
       <para>
-	Podes controlar o formato no que se escriben os datos, en primeiro
-	lugar mediante a extensión ou sufixo de <repl>nomeficheiro</repl>,
+	Ata certo punto, podes controlar o formato no que se escriben os
+	datos mediante a extensión ou sufixo de <repl>nomeficheiro</repl>,
 	como se indica deseguido:
       </para>
       <ilist>
@@ -13131,12 +13169,7 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>.R</lit>: Formato GNU R.
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.m</lit>: Formato GNU Octave.
+	    <lit>.m</lit>: Formato matricial GNU Octave.
 	  </para>
 	</li>
 	<li>

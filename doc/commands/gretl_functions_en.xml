@@ -242,7 +242,7 @@
       </description>
     </function>
 
-    <function name="$fcerr" section="access" output="matrix">
+    <function name="$fcse" section="access" output="matrix">
       <description>
 	<para>
 	  Must follow the <cmdref targ="fcast"/> forecasting command;

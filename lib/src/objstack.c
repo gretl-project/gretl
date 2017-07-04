@@ -1338,7 +1338,7 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
 {
     gretl_matrix *M = NULL;
 
-    if (idx == M_FCAST || idx == M_FCERR) {
+    if (idx == M_FCAST || idx == M_FCSE) {
 	M = get_forecast_matrix(idx, err);
     } else {
 	stacker *smatch = find_smatch(oname);

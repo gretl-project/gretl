@@ -3647,7 +3647,7 @@
 	ou se não tiver sido dado o <repl>nome-de-variável</repl>, os 
 	valores de predição podem ser obtidos usando o acessor 
 	<lit>$fcast</lit>, e os erros padrão, se disponíveis, pelo 
-	<lit>$fcerr</lit>.
+	<lit>$fcse</lit>.
       </para>
 
       <para>

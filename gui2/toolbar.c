@@ -480,7 +480,7 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == MAHAL) {
 	add_mahalanobis_data(vwin);
     } else if (vwin->role == FCAST) {
-	add_fcast_data(vwin, 0);
+	add_fcast_data(vwin, M_FCAST);
     } else if (vwin->role == LOESS || vwin->role == NADARWAT) {
 	add_nonparam_data(vwin);
     }
@@ -1028,9 +1028,11 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 static void fcast_save_call (GtkAction *action, gpointer p)
 {
     const char *s = gtk_action_get_name(action);
-    int sderrs = (strcmp(s, "SaveSderr") == 0);
+    ModelDataIndex idx;
 
-    add_fcast_data((windata_t *) p, sderrs);
+    idx = (strcmp(s, "SaveSderr") == 0)? M_FCSE : M_FCAST;
+
+    add_fcast_data((windata_t *) p, idx);
 }
 
 static GtkWidget *make_fcast_save_menu (windata_t *vwin)

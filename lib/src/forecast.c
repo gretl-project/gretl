@@ -2778,7 +2778,7 @@ gretl_matrix *get_forecast_matrix (int idx, int *err)
 
     if (idx == M_FCAST) {
 	M = fcast_matrix;
-    } else if (idx == M_FCERR) {
+    } else if (idx == M_FCSE) {
 	M = fcerr_matrix;
     } 
 

@@ -242,7 +242,7 @@
       </description>
     </function>
 
-    <function name="$fcerr" section="access" output="matrix">
+    <function name="$fcse" section="access" output="matrix">
       <description>
 	<para>
 	  Se pode calcularse, debe executarse logo de procesar a instrución

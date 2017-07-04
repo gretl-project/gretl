@@ -243,7 +243,7 @@
       </description>
     </function>
 
-    <function name="$fcerr" section="access" output="matrix">
+    <function name="$fcse" section="access" output="matrix">
       <description>
     <para>
       Deve seguire il comando <cmdref targ="fcast"/>; restituisce gli

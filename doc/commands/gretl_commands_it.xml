@@ -3855,7 +3855,7 @@
         sistema, o se non viene specificata <repl>nome-variabile</repl>, i
         valori della previsione possono essere recuperati usando la varaiabile
         accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
-        disponibili, con <fncref targ="$fcerr"/>.
+        disponibili, con <fncref targ="$fcse"/>.
       </para>
       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
