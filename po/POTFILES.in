@@ -25,16 +25,17 @@ lib/src/graphing.c
 lib/src/gretl_array.c
 lib/src/gretl_bfgs.c
 lib/src/gretl_bundle.c
+lib/src/gretl_cmatrix.c
 lib/src/gretl_commands.c
 lib/src/gretl_data_io.c
 lib/src/gretl_errors.c
-lib/src/gretl_fft.c
 lib/src/gretl_foreign.c
 lib/src/gretl_func.c
 lib/src/gretl_help.c
 lib/src/gretl_intl.c
 lib/src/gretl_list.c
 lib/src/gretl_matrix.c
+lib/src/gretl_midas.c
 lib/src/gretl_model.c
 lib/src/gretl_mpi.c
 lib/src/gretl_normal.c
@@ -201,6 +202,7 @@ plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c
 plugin/xlsx_import.c
+plugin/xml_get.c
 doc/commands/bbl2txt.c
 doc/commands/chaprefs.c
 doc/commands/matfuncs.c
