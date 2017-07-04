@@ -9,6 +9,7 @@ version 2017c, in progress
   the Tools menu to the File menu
 - GUI: move the Preferences submenu to the top of the Tools
   menu
+- GUI: increase the default size of the main window somewhat
 - library: add some internal functions to support operations
   on complex matrices using LAPACK
 - library: add functionality to make use of an mpi block
@@ -26,7 +27,7 @@ version 2017c, in progress
   cases where the inner call occurred at the second or higher
   argument slot
 - Fix bug: the seq() function not producing correct output with
-  decreasing arguments.
+  decreasing arguments
 - MS Windows: update to mkstemp() for tmp file creation (was
   missing from mingw)
 

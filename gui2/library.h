@@ -376,7 +376,7 @@ void add_mahalanobis_data (windata_t *vwin);
 
 void add_pca_data (windata_t *vwin);
 
-void add_fcast_data (windata_t *vwin);
+void add_fcast_data (windata_t *vwin, int sderrs);
 
 void add_nonparam_data (windata_t *vwin);
 

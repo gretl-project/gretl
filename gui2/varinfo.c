@@ -944,7 +944,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     }
 
     flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
-    nset->dlg = gretl_dialog_new(_("gretl: variable attributes"), 
+    nset->dlg = gretl_dialog_new(_("gretl: save series"),
 				 vwin_toplevel(vwin), flags);
 
     make_varname_unique(vname, 0, dataset);
@@ -955,7 +955,7 @@ void name_new_series_dialog (char *vname, char *descrip,
 
     /* read/set name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new (_("Name of variable:"));
+    tmp = gtk_label_new (_("Name:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 

@@ -621,7 +621,7 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
 
 /* note: called from add_data_callback() */
 
-void add_fcast_data (windata_t *vwin)
+void add_fcast_data (windata_t *vwin, int sderrs)
 {
     FITRESID *fr = (FITRESID *) vwin->data;
     char vname[VNAMELEN];
@@ -629,31 +629,40 @@ void add_fcast_data (windata_t *vwin)
     int cancel = 0;
     int err = 0;
 
-    strcpy(vname, fr->depvar); 
-    gretl_trunc(vname, 5);
-    if (strlen(vname) < 5) {
-	strcat(vname, "_hat");
-    } else {
-	strcat(vname, "hat");
-    }    
+    strcpy(vname, fr->depvar);
+    gretl_trunc(vname, 10);
 
-    sprintf(descrip, _("forecast of %s"), fr->depvar);
+    if (sderrs) {
+	strcat(vname, "_err");
+	sprintf(descrip, _("forecast std errors of %s"), fr->depvar);
+    } else {
+	strcat(vname, "_hat");
+	sprintf(descrip, _("forecast of %s"), fr->depvar);
+    }    
 
     name_new_series_dialog(vname, descrip, vwin, &cancel);
     if (cancel) {
 	return;
     }
 
-    err = add_or_replace_series(fr->fitted, vname, descrip,
-				DS_COPY_VALUES);
+    err = add_or_replace_series(sderrs ? fr->sderr : fr->fitted,
+				vname, descrip, DS_COPY_VALUES);
 
     if (!err) {
 	char stobs[OBSLEN], endobs[OBSLEN];
 
 	ntodate(stobs, fr->t1, dataset);
 	ntodate(endobs, fr->t2, dataset);
-	lib_command_sprintf("fcast %s %s %s", stobs, endobs, vname);
-	record_model_command_verbatim(fr->model_ID);
+	if (sderrs) {
+	    lib_command_sprintf("fcast %s %s --quiet", stobs, endobs);
+	    record_model_command_verbatim(fr->model_ID);
+	    lib_command_sprintf("series %s = $fcerr", vname);
+	    record_model_command_verbatim(fr->model_ID);
+	} else {
+	    lib_command_sprintf("fcast %s %s %s", stobs, endobs, vname);
+	    record_model_command_verbatim(fr->model_ID);
+	}
+	refresh_data();
     }
 }
 

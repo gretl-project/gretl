@@ -38,6 +38,7 @@
 #include "toolbar.h"
 
 #include "uservar.h"
+#include "forecast.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -479,7 +480,7 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == MAHAL) {
 	add_mahalanobis_data(vwin);
     } else if (vwin->role == FCAST) {
-	add_fcast_data(vwin);
+	add_fcast_data(vwin, 0);
     } else if (vwin->role == LOESS || vwin->role == NADARWAT) {
 	add_nonparam_data(vwin);
     }
@@ -1024,6 +1025,35 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     return func;
 }
 
+static void fcast_save_call (GtkAction *action, gpointer p)
+{
+    const char *s = gtk_action_get_name(action);
+    int sderrs = (strcmp(s, "SaveSderr") == 0);
+
+    add_fcast_data((windata_t *) p, sderrs);
+}
+
+static GtkWidget *make_fcast_save_menu (windata_t *vwin)
+{
+    GtkWidget *menu = gtk_menu_new();
+    GtkAction *action;
+    GtkWidget *item;
+    int i;
+
+    for (i=0; i<2; i++) {
+	action = gtk_action_new(i == 0 ? "SaveFcast" : "SaveSderr",
+				i == 0 ? _("_Save forecast...") :
+				_("Save standard errors..."),
+				NULL, NULL);
+	g_signal_connect(G_OBJECT(action), "activate",
+			 G_CALLBACK(fcast_save_call), vwin);
+	item = gtk_action_create_menu_item(action);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
+
+    return menu;
+}
+
 static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 {
     GtkWidget *menu = NULL;
@@ -1038,6 +1068,12 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 	    if (menu != NULL) {
 		item->tip = N_("Save...");
 	    }
+	}
+    } else if (vwin->role == FCAST && item->flag == ADD_DATA_ITEM) {
+	FITRESID *fr = vwin->data;
+
+	if (fr->sderr != NULL) {
+	    menu = make_fcast_save_menu(vwin);
 	}
     }
 
