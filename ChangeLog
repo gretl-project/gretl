@@ -27,7 +27,6 @@ version 2017c, in progress
   argument slot
 - Fix bug: the seq() function not producing correct output with
   decreasing arguments.
-- Fix bug: evaluation of f(x, f(x,x)), with f a user-written function
 - MS Windows: update to mkstemp() for tmp file creation (was
   missing from mingw)
 
