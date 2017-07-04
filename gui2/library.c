@@ -638,7 +638,7 @@ void add_fcast_data (windata_t *vwin, ModelDataIndex idx)
     } else {
 	strcat(vname, "_hat");
 	sprintf(descrip, _("forecast of %s"), fr->depvar);
-    }    
+    }
 
     name_new_series_dialog(vname, descrip, vwin, &cancel);
     if (cancel) {
