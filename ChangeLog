@@ -17,7 +17,7 @@ version 2017c, in progress
 - library: add some internal functions to support operations
   on complex matrices using LAPACK
 - library: add functionality to make use of an mpi block
-  from a script as seamless as possible
+  from a function package as seamless as possible
 - Fix buglet re. text coloring in script output window
 - Tweak naming of auto-generated list for midasreg in the
   GUI program

@@ -5178,7 +5178,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     int depvar_present = 0;
     int use_fill = 0, use_lines = 0;
     int do_errs = (maxerr != NULL);
-    char cistr[64];
+    gchar *cistr = NULL;
     int t2 = fr->t2;
     int t1, yhmin;
     int t, n, err = 0;
@@ -5259,7 +5259,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     fputs("plot \\\n", fp);
 
     if (do_errs) {
-	sprintf(cistr, _("%g percent interval"), 100 * (1 - fr->alpha));
+	cistr = g_strdup_printf(_("%g percent interval"), 100 * (1 - fr->alpha));
     }
 
     if (use_fill) {
@@ -5293,6 +5293,8 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	    fputc('\n', fp);
 	}
     }
+
+    g_free(cistr);
 
     gretl_push_c_numeric_locale();
 
