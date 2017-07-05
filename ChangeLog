@@ -32,6 +32,8 @@ version 2017c, in progress
   argument slot
 - Fix bug: the seq() function not producing correct output with
   decreasing arguments
+- Fix bug: crash when viewing forecasts with confidence
+  intervals under Russian translation
 - MS Windows: update to mkstemp() for tmp file creation (was
   missing from mingw)
 
