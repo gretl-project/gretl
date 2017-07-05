@@ -822,7 +822,7 @@ void copy_format_dialog (windata_t *vwin, int action)
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new((action == W_COPY)? _("Copy as:") : _("Save as"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 2);
 
 #ifdef G_OS_WIN32
     /* Windows: put RTF option first */
@@ -868,7 +868,7 @@ void copy_format_dialog (windata_t *vwin, int action)
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 2);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
