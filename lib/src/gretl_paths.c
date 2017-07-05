@@ -370,7 +370,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	if (fconv != NULL) {
 	    fp = fopen(fconv, mode);
 #if FDEBUG
-            fprintf(stderr, "using fconv, fp = %p\n", (void *) fp);
+            fprintf(stderr, "  using fconv, fp = %p\n", (void *) fp);
 #endif
 	    g_free(fconv);
 	} else {
@@ -379,11 +379,14 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     }
 
 #if FDEBUG
-    fprintf(stderr, "after fopen, errno = %d\n", errno);
+    fprintf(stderr, "  after fopen, errno = %d\n", errno);
 #endif
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname);
+#if FDEBUG
+	fprintf(stderr, "  message: '%s'\n", gretl_errmsg_get());
+#endif
     }
 
     return fp;

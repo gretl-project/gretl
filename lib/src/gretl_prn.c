@@ -171,7 +171,7 @@ static int prn_add_tempfile (PRN *prn)
     }
 
     sprintf(prn->fname, "%sprntmp.XXXXXX", dotdir);
-    prn->fp = gretl_mktemp(prn->fname, "w");
+    prn->fp = gretl_mktemp(prn->fname, "w+");
 
 #if PRN_DEBUG
     fprintf(stderr, "prn_add_tempfile: '%s' at %p\n",
@@ -701,57 +701,48 @@ int gretl_print_replace_buffer (PRN *prn, char *buf)
 /**
  * gretl_print_read_tempfile:
  * @prn: printing struct.
+ * @err: location to receive error code.
  *
- * Obtain a read handle to the tempfile stream associated with
- * with @prn, if any.  This should be matched with a call to
- * gretl_print_stop_tempfile_read() once you're finished with
- * reading.
+ * Obtain a copy of the content of the temp file associated
+ * with @prn, if any.
  *
- * Returns: %FILE pointer, or NULL on failure.
+ * Returns: allocated buffer, or NULL on failure.
  */
 
-FILE *gretl_print_read_tempfile (PRN *prn)
+char *gretl_print_read_tempfile (PRN *prn, int *err)
 {
-    FILE *fp = NULL;
+    size_t chk, bsize;
+    long pos0;
+    char *buf = NULL;
 
-    if (prn->fp != NULL) {
-	fflush(prn->fp);
+    if (prn == NULL || prn->fp == NULL || prn->fname == NULL) {
+	fprintf(stderr, "gretl_print_read_tempfile: no temp file to read!\n");
+	*err = E_DATA;
+	return NULL;
     }
 
-    if (prn->fname != NULL) {
-	fp = gretl_fopen(prn->fname, "r");
-	if (fp != NULL && prn->savepos > 0) {
-	    fseek(fp, (long) prn->savepos, SEEK_SET);
+    pos0 = ftell(prn->fp);
+    bsize = pos0 - prn->savepos;
+    buf = calloc(bsize + 1, 1);
+
+    if (buf == NULL) {
+	*err = E_ALLOC;
+    } else {
+	fseek(prn->fp, (long) prn->savepos, SEEK_SET);
+	chk = fread(buf, 1, bsize, prn->fp);
+	if (chk != bsize) {
+	    fprintf(stderr, "gretl_print_read_tempfile: bsize=%d but chk=%d\n",
+		    (int) bsize, (int) chk);
+	    *err = E_DATA;
+	    free(buf);
+	    buf = NULL;
 	}
+	/* get back to where we were */
+	fseek(prn->fp, pos0, SEEK_SET);
+	prn->savepos = ftell(prn->fp);
     }
 
-    return fp;
-}
-
-/**
- * gretl_print_stop_tempfile_read:
- * @prn: printing struct.
- * @fp: auxiliary stream.
- *
- * For @prn with tempfile attached, stops reading
- * of the tempfile and closes @fp (recording the
- * position at which reading stopped).
- *
- * Returns: 0 on success, error code if @prn is not
- * connected to a tempfile.
- */
-
-int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp)
-{
-    if (prn == NULL || prn->fp == NULL ||
-	prn->fname == NULL || fp == NULL) {
-	return E_DATA;
-    }
-
-    prn->savepos = ftell(fp);
-    fclose(fp);
-
-    return 0;
+    return buf;
 }
 
 /**
