@@ -89,8 +89,6 @@ int gretl_print_replace_buffer (PRN *prn, char *buf);
 
 void gretl_print_get_size (PRN *prn, int *width, int *height);
 
-char *gretl_print_read_tempfile (PRN *prn, int *err);
-
 int gretl_print_set_save_position (PRN *prn);
 
 void gretl_print_unset_save_position (PRN *prn);
@@ -155,9 +153,5 @@ char prn_delim (PRN *prn);
 int gretl_print_has_buffer (PRN *prn);
 
 int gretl_print_alloc (PRN *prn, size_t s);
-
-PRN *set_up_verbose_printer (gretlopt opt, PRN *prn);
-
-void close_down_verbose_printer (PRN *vprn);
 
 #endif /* GRETL_PRN_H */

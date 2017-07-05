@@ -93,8 +93,6 @@ void textview_set_text_report (GtkWidget *view, const char *buf);
 
 void textview_insert_file (windata_t *vwin, const char *fname);
 
-void textview_insert_from_tempfile (windata_t *vwin, PRN *prn);
-
 void create_text (windata_t *vwin, int hsize, int vsize, 
 		  int nlines, gboolean editable);
 

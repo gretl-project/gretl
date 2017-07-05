@@ -699,53 +699,6 @@ int gretl_print_replace_buffer (PRN *prn, char *buf)
 }
 
 /**
- * gretl_print_read_tempfile:
- * @prn: printing struct.
- * @err: location to receive error code.
- *
- * Obtain a copy of the content of the temp file associated
- * with @prn, if any.
- *
- * Returns: allocated buffer, or NULL on failure.
- */
-
-char *gretl_print_read_tempfile (PRN *prn, int *err)
-{
-    size_t chk, bsize;
-    long pos0;
-    char *buf = NULL;
-
-    if (prn == NULL || prn->fp == NULL || prn->fname == NULL) {
-	fprintf(stderr, "gretl_print_read_tempfile: no temp file to read!\n");
-	*err = E_DATA;
-	return NULL;
-    }
-
-    pos0 = ftell(prn->fp);
-    bsize = pos0 - prn->savepos;
-    buf = calloc(bsize + 1, 1);
-
-    if (buf == NULL) {
-	*err = E_ALLOC;
-    } else {
-	fseek(prn->fp, (long) prn->savepos, SEEK_SET);
-	chk = fread(buf, 1, bsize, prn->fp);
-	if (chk != bsize) {
-	    fprintf(stderr, "gretl_print_read_tempfile: bsize=%d but chk=%d\n",
-		    (int) bsize, (int) chk);
-	    *err = E_DATA;
-	    free(buf);
-	    buf = NULL;
-	}
-	/* get back to where we were */
-	fseek(prn->fp, pos0, SEEK_SET);
-	prn->savepos = ftell(prn->fp);
-    }
-
-    return buf;
-}
-
-/**
  * gretl_print_set_save_position:
  * @prn: printing struct.
  *
@@ -1628,46 +1581,4 @@ int gretl_print_alloc (PRN *prn, size_t s)
     }
 
     return err;
-}
-
-/**
- * set_up_verbose_printer:
- * @opt: %OPT_V for verbosity.
- * @prn: currently active printing struct.
- *
- * Returns: printing struct for verbose output.
- */
-
-PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
-{
-    PRN *vprn = NULL;
-
-    if (opt & OPT_V) {
-	/* verbose printing is wanted */
-	if (iter_print_func_installed()) {
-	    int err;
-
-	    vprn = gretl_print_new_with_tempfile(&err);
-	} else {
-	    vprn = prn;
-	}
-    }
-
-    return vprn;
-}
-
-/**
- * close_down_verbose_printer:
- * @vprn: prn pointer obtained via set_up_verbose_printer().
- *
- * Turns off verbose printing and frees the resources
- * associated with @vprn.
- */
-
-void close_down_verbose_printer (PRN *vprn)
-{
-    if (vprn != NULL) {
-	iter_print_callback(-1, NULL);
-	gretl_print_destroy(vprn);
-    }
 }

@@ -1688,7 +1688,10 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt, pqspec, dset);
-    ainfo->prn = set_up_verbose_printer(opt, prn);
+
+    if (opt & OPT_V) {
+	ainfo->prn = prn;
+    }
 
     gretl_model_init(&armod, dset);
 
@@ -1815,10 +1818,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     /* cleanup in MA roots checker */
     bounds_checker_cleanup();
-
-    if (ainfo->prn != prn) {
-	close_down_verbose_printer(ainfo->prn);
-    }
 
     return armod;
 }

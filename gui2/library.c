@@ -120,38 +120,11 @@ int get_original_n (void)
     return original_n;
 } 
 
-static int gui_iter_print (int i, PRN *prn)
-{
-    static windata_t *iwin;
-
-    if (i < 0) {
-	/* finish signal */
-	iwin = NULL;
-	return 0;
-    }
-
-    if (!gretl_print_has_tempfile(prn)) {
-	return 0;
-    }
-
-    if (iwin == NULL) {
-	iwin = view_buffer(NULL, 80, 350, _("gretl: iteration info"), 
-			   PRINT, NULL);
-    }
-
-    if (iwin != NULL) {
-	textview_insert_from_tempfile(iwin, prn);
-    }
-
-    return 0;
-}
-
 /* the following two functions are called from gretl.c,
    at start-up and at exit respectively */
 
 void library_command_init (void)
 {
-    set_iter_print_func(gui_iter_print);
     gretl_cmd_init(&libcmd);
 }
 
@@ -9234,7 +9207,6 @@ int execute_script (char *runfile, const char *buf,
     }
 
     gretl_exec_state_init(&state, 0, line, &libcmd, model, prn);
-    set_iter_print_func(NULL);
     indent0 = gretl_if_state_record();
 
     while (libcmd.ci != QUIT) {
@@ -9326,7 +9298,6 @@ int execute_script (char *runfile, const char *buf,
 
     refresh_data();
     sync_scalars_window();
-    set_iter_print_func(gui_iter_print);
 
     if (exec_err) {
 	gretl_if_state_clear();

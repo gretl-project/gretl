@@ -2977,13 +2977,6 @@ print_iter_info (int iter, double crit, int type, int k,
 	    pputc(prn, '\n');
 	}
     }
-
-    if (b != NULL && g != NULL) {
-	if (iter < 0 || (iter % 20 == 0)) {
-	    /* experimental */
-	    iter_print_callback((iter < 0)? 0 : iter, prn);
-	}
-    }
 }
 
 int in_usa (void)

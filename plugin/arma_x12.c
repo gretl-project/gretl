@@ -835,7 +835,9 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt | OPT_X, pqspec, dset);
-    ainfo->prn = set_up_verbose_printer(opt, prn);
+    if (opt & OPT_V) {
+	ainfo->prn = prn;
+    }
     gretl_model_init(&armod, dset); 
 
     ainfo->alist = gretl_list_copy(list);
@@ -904,11 +906,6 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
     if (armod.errcode && ainfo->prn != NULL) {
 	sprintf(path, "%s%c%s.err", workdir, SLASH, yname);
 	print_x12a_error_file(path, ainfo->prn);
-    }
-
-    if (ainfo->prn != NULL && ainfo->prn != prn) {
-	iter_print_callback(0, ainfo->prn);
-	close_down_verbose_printer(ainfo->prn);
     }
 
     if (armod.errcode == 0) {

@@ -92,7 +92,6 @@ typedef enum {
 #define MWRITE_G         "mwrite_g"
 #define STRSUB_ON        "string_subst"
 
-typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
 typedef int (*DEBUG_OUTPUT) (void *);
@@ -194,10 +193,6 @@ int set_csv_na_read_string (const char *s);
 
 int execute_set (const char *setobj, const char *setarg,
 		 DATASET *dset, gretlopt opt, PRN *prn);
-
-void set_iter_print_func (ITER_PRINT_FUNC func);
-int iter_print_callback (int i, PRN *prn);
-int iter_print_func_installed (void);
 
 void set_show_activity_func (SHOW_ACTIVITY_FUNC func);
 void show_activity_callback (void);

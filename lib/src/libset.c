@@ -2534,31 +2534,6 @@ int gretl_in_tool_mode (void)
     return tool_mode;
 }
 
-/* mechanism to support callback for printing iteration info */
-
-static ITER_PRINT_FUNC ifunc;
-
-void set_iter_print_func (ITER_PRINT_FUNC func)
-{
-    ifunc = func;
-}
-
-int iter_print_func_installed (void)
-{
-    return ifunc != NULL;
-}
-
-int iter_print_callback (int i, PRN *prn)
-{
-    int ret = 0;
-
-    if (ifunc != NULL) {
-	ret = (*ifunc)(i, prn);
-    }
-
-    return ret;
-}
-
 /* mechanism to support callback for representing ongoing 
    activity in the GUI */
 
