@@ -950,6 +950,67 @@ void copy_format_dialog (windata_t *vwin, int action)
     gtk_widget_show_all(dialog);
 }
 
+#if 0 /* not yet */
+
+static void copy_menu_call (GtkAction *action, windata_t *vwin)
+{
+    const char *s = gtk_action_get_name(action);
+    PrnFormat fmt = GRETL_FORMAT_TXT;
+
+    if (!strcmp(s, "CopyTSV")) {
+	fmt = GRETL_FORMAT_TAB;
+    } else if (!strcmp(s, "CopyCSV")) {
+	fmt = GRETL_FORMAT_CSV;
+    } else if (!strcmp(s, "CopyTeX")) {
+	fmt = GRETL_FORMAT_TEX;
+    } else if (!strcmp(s, "CopyRTF")) {
+	if (multiple_formats_ok(vwin) || can_do_tabbed(finfo->vwin)) {
+	    fmt = GRETL_FORMAT_RTF;
+	} else {
+	    fmt = GRETL_FORMAT_RTF_TXT;
+	}
+    }
+
+    fprintf(stderr, "s = %s, fmt = %d\n", s, fmt);
+}
+
+GtkWidget *make_copy_menu (windata_t *vwin, int task)
+{
+    const char *options[] = {
+	"CopyPlain", "CopyTSV", "CopyCSV",
+	"CopyTeX", "CopyRTF", NULL
+    };
+    const char *labels[] = {
+	N_("Copy as plain text"),
+	N_("Copy as tab-separated"),
+	N_("Copy as comma-separated"),
+	N_("Copy as LaTeX"),
+	N_("Copy as RTF")
+    };
+    GtkWidget *menu = gtk_menu_new();
+    GtkAction *action;
+    GtkWidget *item;
+    int i;
+
+    for (i=0; options[i] != NULL; i++) {
+	if ((i == 1 && !can_do_tabbed(vwin)) ||
+	    (i == 2 && !can_do_csv(vwin)) ||
+	    (i == 3 && !multiple_formats_ok(vwin))) {
+	    continue;
+	}
+	action = gtk_action_new(options[i], _(labels[i]),
+				NULL, NULL);
+	g_signal_connect(G_OBJECT(action), "activate",
+			 G_CALLBACK(copy_menu_call), vwin);
+	item = gtk_action_create_menu_item(action);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
+
+    return menu;
+}
+
+#endif
+
 enum {
     SET_CI = 1,
     SET_PVAL,

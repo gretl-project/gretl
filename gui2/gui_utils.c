@@ -518,9 +518,8 @@ static gboolean not_space (gunichar c, gpointer p)
     return !g_unichar_isspace(c);
 }
 
-static int vwin_subselection_present (gpointer p)
+int vwin_subselection_present (windata_t *vwin)
 {
-    windata_t *vwin = (windata_t *) p;
     GtkTextIter selstart, selend;
     GtkTextBuffer *buf;
     int ret = 0;
