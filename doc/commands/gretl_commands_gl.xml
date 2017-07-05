@@ -1001,7 +1001,7 @@
 	A opción <opt>y-diff-only</opt> é específica da estimación de modelos
 	ARIMAX (modelos cunha orde de integración non nula, nos que se inclúen
 	regresores esóxenos) e aplícase só cando se utiliza a Máxima Verosimilitude
-	exacta propia de Gretl. Para eses modelo, o comportamento por defecto
+	exacta propia de Gretl. Para eses modelos, o comportamento por defecto
 	consiste en calcular as primeiras diferenzas tanto da variable dependente
 	como dos regresores, pero cando indicas esta opción, só se calcula para
 	a variable dependente, quedando os regresores en niveis.

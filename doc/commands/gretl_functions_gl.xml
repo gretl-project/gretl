@@ -8,9 +8,9 @@
     <function name="$ahat" section="access" output="series">
       <description>
 	<para>
-	  Debe executarse logo de que o último modelo se estimase con datos de
-	  panel de efectos fixos. Devolve unha serie coas estimacións dos
-	  efectos fixos individuais (con ordenadas na orixe, por unidade).
+	  Debe de executarse logo de que o último modelo se estimase con datos de
+	  panel de efectos fixos ou de efectos aleatorios. Devolve unha serie que
+	  contén as estimacións dos efectos individuais.
 	</para>
       </description>
     </function>
@@ -1479,6 +1479,15 @@
       </description>
     </function>
 
+    <function name="BFGSmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Un alcume de <fncref targ="BFGSmax"/>. Se invocas a función baixo
+	  este nome, execútase facendo unha minimización.
+	</para>
+      </description>
+    </function>
+
     <function name="BFGScmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>
@@ -1538,6 +1547,15 @@
             <fncref targ="fdjac"/>
             <fncref targ="simann"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="BFGScmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Un alcume de <fncref targ="BFGScmax"/>. Se invocas a función baixo
+	  este nome, execútase facendo unha minimización.
 	</para>
       </description>
     </function>
@@ -2255,7 +2273,7 @@
 	<para>
 	  Permite calcular valores críticos e devolve un resultado do mesmo tipo
 	  que o introducido. O valor <math>x</math> que se devolve vai cumprir
-	  <equation status="inline" ascii="P(X &gt; x) = p" tex="$P(X &gt; x) = p$"/>,
+	  <equation status="inline" ascii="P(X &gt; x) = p" tex="$P(X \gt x) = p$"/>,
 	  onde a distribución <math>X</math> determínase pola letra
 	  <argname>c</argname>. Entre os argumentos <argname>d</argname> e
 	  <argname>x</argname>, pode necesitarse algún outro adicional (escalar)
@@ -2335,7 +2353,7 @@
 	</para>
 	<para context="tex">
 	  Acumula <argname>x</argname>. Cando <math>x</math> é unha serie,
-	  produce unha serie $y_t = \sum_{s=m}^t x_s$, na que o punto de partida
+	  produce unha serie y_t = \sum_{s=m}^t x_s$, na que o punto de partida
 	  <math>m</math> para a acumulación, é a primeira observación
 	  non ausente da mostra provisionalmente seleccionada. Ao atopar valores
 	  ausentes en <math>x</math>, os valores posteriores de <math>y</math>
@@ -2457,7 +2475,8 @@
 	</para>
 	<para>
 	  Para obter os días de época no formato máis familiar das datas,
-	  consulta <fncref targ="epochday"/>.
+	  consulta <fncref targ="epochday"/>. Relacionado con isto, consulta
+	  <fncref targ="smplspan"/>.
 	</para>
       </description>
     </function>
@@ -2952,7 +2971,7 @@
 	  grande, é preferible calculala a través do operador <lit>X'X</lit> en
 	  lugar de utilizar a sintaxe máis xeral <lit>X'*X</lit>. A primeira
 	  expresión utiliza un algoritmo especializado que ten unha dobre
-	  avantaxe pois é máis eficiente dende o punto de vista do cómputo,
+	  vantaxe pois é máis eficiente dende o punto de vista do cómputo,
 	  e garante que o resultado, por construción, está libre de artefactos
 	  de precisión de máquina que poden convertela en numericamente non 
 	  simétrica.
@@ -3145,7 +3164,7 @@
 	  Estas tres alternativas xeralmente proporcionan unha transacción
 	  entre precisión e velocidade. Podes elixir entre os distintos
 	  métodos utilizando a instrución <cmdref targ="set"/> e especificando
-	  o valor 0, 1 or 2 para a variable <lit>fdjac_quality</lit>.
+	  o valor 0, 1 ou 2 para a variable <lit>fdjac_quality</lit>.
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
@@ -3705,6 +3724,15 @@
 	  eval GSSmax(&amp;m, trigfunc(m[1]))
 	  printf "\n%10.7f", m
 	</code>
+      </description>
+    </function>
+
+    <function name="GSSmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Un alcume de <fncref targ="GSSmax"/>. Se invocas a función baixo
+	  este nome, execútase facendo unha minimización.
+	</para>
       </description>
     </function>
 
@@ -4290,7 +4318,7 @@
 	  onde <math>X</math> é unha matriz moi grande, é preferible que a
 	  calcules por medio do operador principal <lit>X'X</lit> en lugar
 	  de usar a sintaxe máis xeral <lit>X'*X</lit>. A primeira expresión
-	  utiliza un algoritmo especializado que ten unha dobre avantaxe:
+	  utiliza un algoritmo especializado que ten unha dobre vantaxe:
 	  resulta máis eficiente desde o punto de vista do cómputo, e vai
 	  garantir que a matriz resultante estea libre, por construción, dos
 	  artefactos de precisión de máquina que puideran convertela en
@@ -6392,6 +6420,15 @@
       </description>
     </function>
 
+    <function name="NMmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Un alcume de <fncref targ="NMmax"/>. Se invocas a función baixo
+	  este nome, execútase facendo unha minimización.
+	</para>
+      </description>
+    </function>
+
     <function name="nobs" section="stats" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -6561,6 +6598,15 @@
             <fncref targ="BFGSmax"/>
             <fncref targ="fdjac"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="NRmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Un alcume de <fncref targ="NRmax"/>. Se invocas a función baixo
+	  este nome, execútase facendo unha minimización.
 	</para>
       </description>
     </function>
@@ -8433,8 +8479,75 @@
 	  Esta función non ten ningún uso directo en Econometría, mais pode
 	  ser de utilidade para comprobar métodos de computación en paralelo.
 	  Simplemente provoca que se <quote>durma</quote> a liña de cómputo
-	  actual &mdash;é dicir, que se pare&mdash; durante <argname>ns</argname>
-	  segundos. Ao <quote>espertar</quote>, a función devolve o escalar 0.
+	  actual (é dicir, que se pare) durante <argname>ns</argname> segundos.
+	  Ao <quote>espertar</quote>, a función devolve o escalar 0.
+	</para>
+      </description>
+    </function>
+
+    <function name="smplspan" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">startobs</fnarg>
+	<fnarg type="string">endobs</fnarg>
+	<fnarg type="int">pd</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve o número de observacións que hai contando desde
+	  <argname>startobs</argname> ata <argname>endobs</argname>
+	  (ambas incluídas), para datos de series temporais que teñen
+	  unha frecuencia <argname>pd</argname>.
+	</para>
+	<para>
+	  Deberías de indicar os dous primeiros argumentos no formato
+	  que prefire Gretl para datos de tipo anual, trimestral ou
+	  mensual (por exemplo, <lit>1970</lit>, <lit>1970:1</lit>
+	  ou <lit>1970:01</lit> para cada unha desas frecuencias,
+	  respectivamente) ou como datas no formato ISO 8601,
+	  <lit>YYYY-MM-DD</lit>.
+	</para>
+	<para>
+	  O argumento <argname>pd</argname> debe de ser ben 1, 4
+	  ou 12 (datos anuais, trimestrais ou mensuais), ben unha
+	  das frecuencias diarias (5, 6, 7), ou ben 52 (semanal).
+	  Se <argname>pd</argname> é igual a 1, 4 ou 12, entón as
+	  datas ISO 8601 acéptanse para os dous primeiros argumentos
+	  se indican o comezo do período en cuestión. Por exemplo,
+	  <lit>2015-04-01</lit> admítese en troques de <lit>2015:2</lit>
+	  para representar o segundo trimestre de 2015.
+	</para>
+	<para>
+	  Se xa tes un conxunto de datos con frecuencia <argname>pd</argname>
+	  preparado, e cun rango suficiente de observacións, entón podes
+	  imitar doadamente o comportamento desta función utilizando
+	  a función <fncref targ="obsnum"/>. A vantaxe de <lit>smplspan</lit>
+	  consiste en que podes calcular o número de observacións sen
+	  necesidade de ter preparado un conxunto apropiado de datos
+	  (nin ningún conxunto de datos). Deseguido, un exemplo:
+	</para>
+	<code>
+	  scalar T = smplspan("2010-01-01", "2015-12-31", 5)
+	  nulldata T
+	  setobs 7 2010-01-01
+	</code>
+	<para>
+	  Isto xera
+	</para>
+	<code>
+	  ? scalar T = smplspan("2010-01-01", "2015-12-31", 5)
+	  Xerouse o escalar T = 1565
+	  ? nulldata T
+	  Periodicidade: 1, máx. obs: 1565
+	  Rango de observacións: 1 ata 1565
+	  ? setobs 5 2010-01-01
+	  Rango completo de datos: 2010-01-01 - 2015-12-31 (n = 1565)
+	</code>
+	<para>
+	  Despois do anterior, podes ter confianza en que a derradeira
+	  observación do conxunto de datos que se vai xerar por medio
+	  de <cmdref targ="nulldata"/> vai ser <lit>2015-12-31</lit>.
+	  Cae na conta de que o número 1565 sería máis ben complicado
+	  calculalo doutro xeito.
 	</para>
       </description>
     </function>
