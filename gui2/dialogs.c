@@ -745,109 +745,25 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
 }
 
 static GtkWidget *
-TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 int pref)
+copy_item_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+		  int format, const char *label, int pref)
 {
     GtkWidget *button;
 
-    button = gtk_radio_button_new_with_label(group, "LaTeX");
+    button = gtk_radio_button_new_with_label(group, label);
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", 
-		      GINT_TO_POINTER(GRETL_FORMAT_TEX));
+		      GINT_TO_POINTER(format));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
-				 (pref == GRETL_FORMAT_TEX));
+				 (pref == format));
 
     return button;
 }  
 
 #define can_do_tabbed(v) ((v->role == PRINT && v->data != NULL) || \
 		           v->role == VIEW_SERIES)
-
-static GtkWidget *
-RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 int pref)
-{
-    GtkWidget *button;
-
-#ifdef G_OS_WIN32
-    button = gtk_radio_button_new_with_label(group, "RTF (MS Word)");
-#else
-    button = gtk_radio_button_new_with_label(group, "RTF");
-#endif
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    if (finfo->multi || can_do_tabbed(finfo->vwin)) {
-	g_object_set_data(G_OBJECT(button), "format", 
-			  GINT_TO_POINTER(GRETL_FORMAT_RTF));  
-    } else {
-	g_object_set_data(G_OBJECT(button), "format", 
-			  GINT_TO_POINTER(GRETL_FORMAT_RTF_TXT));
-    }
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
-				 (pref == GRETL_FORMAT_RTF || 
-				  pref == GRETL_FORMAT_RTF_TXT));
-
-    return button;
-}
-
-static GtkWidget *
-tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 int pref)
-{
-    GtkWidget *button;
-
-    button = gtk_radio_button_new_with_label(group, _("Tab separated"));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", 
-		      GINT_TO_POINTER(GRETL_FORMAT_TAB)); 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
-				 (pref == GRETL_FORMAT_TAB));
-
-    return button;
-}
-
-static GtkWidget *
-csv_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 int pref)
-{
-    GtkWidget *button;
-
-    button = gtk_radio_button_new_with_label(group, _("Comma separated"));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", 
-		      GINT_TO_POINTER(GRETL_FORMAT_CSV));  
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
-				 (pref == GRETL_FORMAT_CSV));
-
-    return button;
-}
-
-static GtkWidget *
-plain_text_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		   int pref)
-{
-    GtkWidget *button;
-
-    button = gtk_radio_button_new_with_label (group, _("plain text"));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", 
-		      GINT_TO_POINTER(GRETL_FORMAT_TXT));
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
-				 (pref == GRETL_FORMAT_TXT));
-
-    return button;
-}
 
 #define can_do_csv(v) ((v->role == PRINT && v->data != NULL) || \
 		        v->role == VIEW_SERIES || \
@@ -865,6 +781,8 @@ void copy_format_dialog (windata_t *vwin, int action)
     GtkWidget *vbox;
     GSList *group = NULL;
     struct format_info *finfo;
+    const char *rtf_label;
+    int rtf_format;
     int pref;
 
     if (maybe_raise_dialog()) {
@@ -876,8 +794,7 @@ void copy_format_dialog (windata_t *vwin, int action)
 
     dialog = gretl_dialog_new(_("gretl: select format"), 
 			      vwin_toplevel(vwin), 
-			      GRETL_DLG_BLOCK);
-
+			      GRETL_DLG_BLOCK | GRETL_DLG_UNDECORATED);
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 
@@ -888,7 +805,19 @@ void copy_format_dialog (windata_t *vwin, int action)
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_format_dialog), finfo);
 
-    vbox = gtk_vbox_new(FALSE, 5);
+    /* set RTF params */
+#ifdef G_OS_WIN32
+    rtf_label = "RTF (MS Word)";
+#else
+    rtf_label = "RTF";
+#endif
+    if (finfo->multi || can_do_tabbed(finfo->vwin)) {
+	rtf_format = GRETL_FORMAT_RTF;
+    } else {
+	rtf_format = GRETL_FORMAT_RTF_TXT;
+    }
+
+    vbox = gtk_vbox_new(FALSE, 2);
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new((action == W_COPY)? _("Copy as:") : _("Save as"));
@@ -897,35 +826,41 @@ void copy_format_dialog (windata_t *vwin, int action)
 
 #ifdef G_OS_WIN32
     /* Windows: put RTF option first */
-    button = RTF_copy_button(group, vbox, finfo, pref);
+    button = copy_item_button(group, vbox, finfo, rtf_format,
+			      rtf_label, pref);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 #endif
 
     if (can_do_tabbed(vwin)) {
 	/* tab-separated option */
-	button = tab_copy_button(group, vbox, finfo, pref);
+	button = copy_item_button(group, vbox, finfo, GRETL_FORMAT_TAB,
+				  _("Tab separated"), pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }    
 
     if (can_do_csv(vwin)) {
 	/* comma-separated option */
-	button = csv_copy_button(group, vbox, finfo, pref);
+	button = copy_item_button(group, vbox, finfo, GRETL_FORMAT_CSV,
+				  _("Comma separated"), pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
     /* plain text option */
-    button = plain_text_button(group, vbox, finfo, pref);
+    button = copy_item_button(group, vbox, finfo, GRETL_FORMAT_TXT,
+			      _("plain text"), pref);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
     /* LaTeX option? */
     if (finfo->multi) {
-	button = TeX_copy_button(group, vbox, finfo, pref);
+	button = copy_item_button(group, vbox, finfo, GRETL_FORMAT_TEX,
+				  "LaTeX", pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }    
 
 #ifndef G_OS_WIN32
     /* not Windows: put RTF option last */
-    button = RTF_copy_button(group, vbox, finfo, pref);
+    button = copy_item_button(group, vbox, finfo, rtf_format,
+			      rtf_label, pref);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 #endif
 
@@ -952,10 +887,14 @@ void copy_format_dialog (windata_t *vwin, int action)
 
 #if 0 /* not yet */
 
-static void copy_menu_call (GtkAction *action, windata_t *vwin)
+static void copy_menu_call (GtkAction *action, GtkWidget *menu)
 {
+    windata_t *vwin = g_object_get_data(G_OBJECT(menu), "vwin");
     const char *s = gtk_action_get_name(action);
     PrnFormat fmt = GRETL_FORMAT_TXT;
+    int task;
+
+    task = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menu), "task"));
 
     if (!strcmp(s, "CopyTSV")) {
 	fmt = GRETL_FORMAT_TAB;
@@ -964,14 +903,14 @@ static void copy_menu_call (GtkAction *action, windata_t *vwin)
     } else if (!strcmp(s, "CopyTeX")) {
 	fmt = GRETL_FORMAT_TEX;
     } else if (!strcmp(s, "CopyRTF")) {
-	if (multiple_formats_ok(vwin) || can_do_tabbed(finfo->vwin)) {
+	if (multiple_formats_ok(vwin) || can_do_tabbed(vwin)) {
 	    fmt = GRETL_FORMAT_RTF;
 	} else {
 	    fmt = GRETL_FORMAT_RTF_TXT;
 	}
     }
 
-    fprintf(stderr, "s = %s, fmt = %d\n", s, fmt);
+    fprintf(stderr, "s = %s, fmt = %d, task = %d\n", s, fmt, task);
 }
 
 GtkWidget *make_copy_menu (windata_t *vwin, int task)
@@ -980,17 +919,29 @@ GtkWidget *make_copy_menu (windata_t *vwin, int task)
 	"CopyPlain", "CopyTSV", "CopyCSV",
 	"CopyTeX", "CopyRTF", NULL
     };
-    const char *labels[] = {
+    const char *copy_menu_labels[] = {
 	N_("Copy as plain text"),
 	N_("Copy as tab-separated"),
 	N_("Copy as comma-separated"),
 	N_("Copy as LaTeX"),
 	N_("Copy as RTF")
     };
+    const char *save_menu_labels[] = {
+	N_("Save as plain text"),
+	N_("Save as tab-separated"),
+	N_("Save as comma-separated"),
+	N_("Save as LaTeX"),
+	N_("Save as RTF")
+    };
+    const char **labels;
     GtkWidget *menu = gtk_menu_new();
     GtkAction *action;
     GtkWidget *item;
     int i;
+
+    g_object_set_data(G_OBJECT(menu), "task", GINT_TO_POINTER(task));
+    g_object_set_data(G_OBJECT(menu), "vwin", vwin);
+    labels = (task == W_SAVE)? save_menu_labels : copy_menu_labels;
 
     for (i=0; options[i] != NULL; i++) {
 	if ((i == 1 && !can_do_tabbed(vwin)) ||
@@ -1001,7 +952,7 @@ GtkWidget *make_copy_menu (windata_t *vwin, int task)
 	action = gtk_action_new(options[i], _(labels[i]),
 				NULL, NULL);
 	g_signal_connect(G_OBJECT(action), "activate",
-			 G_CALLBACK(copy_menu_call), vwin);
+			 G_CALLBACK(copy_menu_call), menu);
 	item = gtk_action_create_menu_item(action);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }

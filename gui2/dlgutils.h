@@ -25,6 +25,7 @@ enum {
     GRETL_DLG_BLOCK       = 1 << 1,
     GRETL_DLG_RESIZE      = 1 << 2,
     GRETL_DLG_QUASI_MODAL = 1 << 3,
+    GRETL_DLG_UNDECORATED = 1 << 4
 };
 
 typedef enum {

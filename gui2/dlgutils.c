@@ -239,7 +239,9 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     GtkWidget *d = gtk_dialog_new();
     GtkWidget *ca, *aa;
 
-    if (title != NULL) {
+    if (flags & GRETL_DLG_UNDECORATED) {
+	gtk_window_set_decorated(GTK_WINDOW(d), FALSE);
+    } else if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(d), title);
     } else {
 	gtk_window_set_title(GTK_WINDOW(d), "gretl");
