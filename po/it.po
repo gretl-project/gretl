@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-07-04 09:41-0400\n"
-"PO-Revision-Date: 2017-05-04 17:55+0200\n"
+"PO-Revision-Date: 2017-07-06 16:31+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2537,9 +2537,9 @@ msgid "fitted variance from model %d"
 msgstr "Varianza stimata del modello %d"
 
 #: lib/src/genfuncs.c:3468
-#, fuzzy, c-format
+#, c-format
 msgid "individual effects from model %d"
-msgstr "Residuo del modello %d"
+msgstr "Effetti individuali dal modello %d"
 
 #: lib/src/genfuncs.c:3470
 #, c-format
@@ -3585,9 +3585,9 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr "Errore: alcune variabili del modello originale sono state ridefinite"
 
 #: lib/src/gretl_midas.c:2021
-#, fuzzy, c-format
+#, c-format
 msgid "MIDAS list %s, high-frequency lags %d to %d"
-msgstr "= differenza logaritmica ad alta frequenza di %s"
+msgstr "Lista MIDAS %s, ritardi ad alta frequenza da %d a %d"
 
 #: lib/src/gretl_model.c:3899
 msgid "Test for addition of variables"
@@ -5414,9 +5414,8 @@ msgid "T"
 msgstr "T"
 
 #: lib/src/modelprint.c:1894
-#, fuzzy
 msgid "Using line search with conditional OLS"
-msgstr "Tramite L-BFGS-B con OLS condizionale"
+msgstr "Tramite ricerca lineare con OLS condizionale"
 
 #: lib/src/modelprint.c:1896
 msgid "Using L-BFGS-B with conditional OLS"
@@ -5432,11 +5431,11 @@ msgstr "Con algoritmo di Levenberg-Marquardt"
 
 #: lib/src/modelprint.c:1912
 msgid "Using Swamy-Arora as per Stata"
-msgstr ""
+msgstr "Con metodo di Swamy-Arora secondo Stata"
 
 #: lib/src/modelprint.c:1914
 msgid "Using Swamy-Arora as per Baltagi-Chang"
-msgstr ""
+msgstr "Con metodo di Swamy-Arora secondo Baltagi-Chang"
 
 #: lib/src/modelprint.c:1967 lib/src/modelprint.c:1970
 #: lib/src/modelprint.c:1973 lib/src/system.c:4604 lib/src/system.c:4630
@@ -5469,9 +5468,8 @@ msgid "%s, using %d observations"
 msgstr "%s, usando %d osservazioni"
 
 #: lib/src/modelprint.c:2066
-#, fuzzy
 msgid "Using weighted Nerlove transformation"
-msgstr "Con trasformazione di Nerlove"
+msgstr "Con trasformazione di Nerlove ponderata"
 
 #: lib/src/modelprint.c:2068
 msgid "Using Nerlove's transformation"
@@ -7312,9 +7310,9 @@ msgid "Invalid option '--%s'"
 msgstr "Opzione non valida '--%s'"
 
 #: lib/src/tokenize.c:1763
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid lag order %g"
-msgstr "Ordine di ritardo non valido %d"
+msgstr "Ordine di ritardo non valido %g"
 
 #: lib/src/tokenize.c:3173
 #, c-format
@@ -9050,13 +9048,12 @@ msgid "gretl: packages on menus"
 msgstr "gretl: pacchetti sui menu"
 
 #: gui2/datafiles.c:2549
-#, fuzzy
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Please try /File/Functions packages/On server"
 msgstr ""
 "Non sono stati trovati pacchetti di funzioni sul computer.\n"
-"Prova su /Strumenti/Pacchetti di funzioni/Sul server"
+"Prova su /File/Pacchetti di funzioni/Sul server"
 
 #: gui2/datafiles.c:2722 gui2/datafiles.c:2726
 msgid "File"
@@ -10077,9 +10074,8 @@ msgid "Almon polynomial"
 msgstr "Polinomio di Almon"
 
 #: gui2/dialogs.c:6373
-#, fuzzy
 msgid "Normalized beta, one parameter"
-msgstr "Beta normalizzata (ultimo ritardo non-zero)"
+msgstr "Beta normalizzata a un parametro"
 
 #: gui2/dialogs.c:6396
 #, c-format
@@ -11813,14 +11809,12 @@ msgid "_General..."
 msgstr "_Generali..."
 
 #: gui2/gretl.c:1578
-#, fuzzy
 msgid "Font _scale..."
-msgstr "X-Y a _dispersione..."
+msgstr "Scala del _font..."
 
 #: gui2/gretl.c:1580
-#, fuzzy
 msgid "Monospaced _font..."
-msgstr "Carattere menù..."
+msgstr "Carattere a larghezza unica..."
 
 #: gui2/gretl.c:1582 gui2/gretl.c:1895
 msgid "_Menu font..."
@@ -12351,7 +12345,7 @@ msgstr "AR (generale)"
 
 #: gui2/gretl.c:1744
 msgid "_Multivariate"
-msgstr "_Bivariata"
+msgstr "_Multivariate"
 
 #: gui2/gretl.c:1745
 msgid "_Vector Autoregression"
@@ -12494,9 +12488,8 @@ msgid "_Function reference"
 msgstr "Guida _funzioni"
 
 #: gui2/gretl.c:1785
-#, fuzzy
 msgid "_Packages"
-msgstr "Pacchetto"
+msgstr "_Pacchetti"
 
 #: gui2/gretl.c:1786
 msgid "_User's guide"
@@ -13255,9 +13248,8 @@ msgid "Per-unit _constants"
 msgstr "_Costanti per unità"
 
 #: gui2/gui_utils.c:2891
-#, fuzzy
 msgid "Individual effects"
-msgstr "Effetti fissi"
+msgstr "Effetti individuali"
 
 #: gui2/gui_utils.c:3065
 msgid "_Against time"
@@ -13715,9 +13707,9 @@ msgid "Error adding variables"
 msgstr "Errore nell'aggiunta delle variabili"
 
 #: gui2/library.c:637
-#, fuzzy, c-format
+#, c-format
 msgid "forecast std errors of %s"
-msgstr "errori standard della previsione"
+msgstr "errori standard della previsione di %s"
 
 #: gui2/library.c:640
 #, c-format
@@ -14389,9 +14381,9 @@ msgid "Plot the series"
 msgstr "Disegna le serie"
 
 #: gui2/library.c:7744
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values in current sample"
-msgstr "%s: nessun valore valido"
+msgstr "%s: nessun valore valido nel campione attuale"
 
 #: gui2/library.c:7747
 #, c-format
@@ -15219,9 +15211,8 @@ msgid "Seasonal"
 msgstr "Stagionale"
 
 #: gui2/selector.c:5439
-#, fuzzy
 msgid "Orders"
-msgstr "Ordine:"
+msgstr "Ordini"
 
 #: gui2/selector.c:5479
 msgid "I"
@@ -15482,7 +15473,7 @@ msgstr "gretl file database (.bin)"
 
 #: gui2/selector.c:6624
 msgid "space separated (R-friendly)"
-msgstr ""
+msgstr "separato da spazi (buono per R)"
 
 #: gui2/selector.c:6625
 msgid "Octave"
@@ -16069,9 +16060,8 @@ msgid "Use HTTP proxy"
 msgstr "Usa il proxy HTTP"
 
 #: gui2/settings.c:292
-#, fuzzy
 msgid "Monospaced font"
-msgstr "spazio per commenti"
+msgstr "Font a larghezza fissa"
 
 #: gui2/settings.c:294
 msgid "Menu font"
@@ -16218,13 +16208,12 @@ msgid "Font for menus and labels"
 msgstr "Carattere per i menù e le etichette"
 
 #: gui2/settings.c:2678
-#, fuzzy
 msgid "gretl: font scale"
-msgstr "gretl: modifica campione"
+msgstr "gretl: scala dei font"
 
 #: gui2/settings.c:2679
 msgid "Scale for both monospaced and menu fonts"
-msgstr ""
+msgstr "Scala per i font di menu e a larghezza fissa"
 
 #: gui2/settings.c:2821
 msgid "Working directory:"
@@ -16726,14 +16715,12 @@ msgid "Digits..."
 msgstr "Cifre..."
 
 #: gui2/toolbar.c:1047
-#, fuzzy
 msgid "_Save forecast..."
-msgstr "Sa_lva come..."
+msgstr "Sa_lva previsione..."
 
 #: gui2/toolbar.c:1048
-#, fuzzy
 msgid "Save standard errors..."
-msgstr "Errori standard"
+msgstr "Salva errori standard..."
 
 #: gui2/toolbar.c:1233
 msgid "New tab"
@@ -16856,9 +16843,8 @@ msgid "Treat this variable as discrete"
 msgstr "Tratta questa variabile come discreta"
 
 #: gui2/varinfo.c:947
-#, fuzzy
 msgid "gretl: save series"
-msgstr "gretl: salva matrice"
+msgstr "gretl: salva serie"
 
 #: gui2/winstack.c:309
 msgid "Main window"
