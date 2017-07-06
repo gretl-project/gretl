@@ -1,4 +1,6 @@
 version 2017c, in progress
+- "panel" command: add an --unbalanced option to inflect
+  random effects estimation for unbalanced panels
 - Extend the $ahat accessor to support retrieval of the
   individual effects from random effects panel data models
 - Rename the $fcerr accessor as $fcse (but keep $fcerr as an
@@ -34,7 +36,7 @@ version 2017c, in progress
   decreasing arguments
 - Fix bug: crash when viewing forecasts with confidence
   intervals under Russian translation
-- MS Windows: update to mkstemp() for tmp file creation (was
+- MS Windows: upgrade to mkstemp() for tmp file creation (was
   missing from mingw)
 
 2017-05-26 version 2017b
