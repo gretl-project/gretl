@@ -1583,6 +1583,18 @@ int gretl_print_alloc (PRN *prn, size_t s)
     return err;
 }
 
+/**
+ * gretl_print_read_tempfile:
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Retrieves a copy of the content of @prn, if it takes
+ * the form of a temporary file that has been opened
+ * in "w+" mode.
+ *
+ * Returns: allocated buffer, or NULL on failure.
+ */
+
 char *gretl_print_read_tempfile (PRN *prn, int *err)
 {
     size_t chk, bsize;
