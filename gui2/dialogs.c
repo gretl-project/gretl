@@ -794,7 +794,7 @@ void copy_format_dialog (windata_t *vwin, int action)
 
     dialog = gretl_dialog_new(_("gretl: select format"), 
 			      vwin_toplevel(vwin), 
-			      GRETL_DLG_BLOCK | GRETL_DLG_UNDECORATED);
+			      GRETL_DLG_BLOCK);
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 
