@@ -3312,6 +3312,7 @@ static int model_output (MODEL *pmod, PRN *prn)
 	err = 1;
     } else {
 	printmodel(pmod, dataset, OPT_NONE, prn);
+	warnmsg(prn); /* just in case */
     }
 
     return err;
