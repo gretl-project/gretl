@@ -1043,27 +1043,26 @@ sample ranges to see what happens.
 \subsection{The algorithm converges, but the maximum is outside the
   admissible region!}
 
-In the fuzzy and comfortable world of GARCH(1,1), the constraints
-$\alpha > 0$, $\beta \ge 0$ and $\alpha + \beta < 1$ are natural,
-because you want your conditional variances $h_t$ to be positive and
-finite for all $t$. Note that each of those requirements has a slight
-different reason: for example, $\alpha = 0$ would make the model
-underidentified, so it's an absolute must. On the other hand, the
-requirement $\alpha + \beta < 1$ applies to the \emph{true}
-parameters, whereas their \emph{estimates} may happily violate that
-requirement in a finite sample: for example, the point in the
-parameter space which maximises the likelihood may well be outside the
-admissible range just because your dataset ends with a massive
-volatility burst. A similar argument goes for models with $q>1$; the
-second-lag ARCH parameter $\alpha_2$, for instance, must be positive to
-ensure that $h_t$ can never be negative, but in a finite sample you
-can have that the sequence of conditional variances that maximise the
-likelihood is the one associated with a small negative value for
+In the comfortable world of GARCH(1,1), the constraints $\alpha > 0$,
+$\beta \ge 0$ and $\alpha + \beta < 1$ are natural, because you want
+your conditional variances $h_t$ to be positive and finite for all
+$t$. Note that each of those requirements has a slightly different
+reason. First, $\alpha = 0$ would make the model underidentified, so
+$\alpha > 0$ is an absolute must. On the other hand, the requirement
+$\alpha + \beta < 1$ applies to the \emph{true} parameters, whereas
+their \emph{estimates} may well violate that requirement in a finite
+sample. For example, the point in the parameter space which maximises
+the likelihood may be outside the admissible range just because your
+dataset ends with a massive volatility burst. A similar argument goes
+for models with $q>1$; the second-lag ARCH parameter $\alpha_2$, for
+instance, must be positive to ensure that $h_t$ can never be negative,
+but in a finite sample the sequence of conditional variances that
+maximises the likelihood may include a small negative value for
 $\alpha_2$.
 
-Besides, you should also handle the case, which is frequent in
-practice, of parameters which go outside the admissible region during
-maximisation and eventually go back into it because the maximum is
+Besides, a good algorithm should handle the case, which is frequent in
+practice, where parameters go outside the admissible region during
+maximisation but eventually go back into it because the maximum is
 inside that region after all.
 
 In such a situation, surely you wouldn't want the software to hide the
@@ -1071,23 +1070,22 @@ problem from you, so just printing out something like
 \begin{code}
   I'm sorry, your estimates are outside the admissible region
 \end{code}
-would be a pathetically patronising decision from the software (that
-is, from us). In our opinion, the best policy is to treat these
-results for what they are: a finite-sample oddity if your model is
-right or (more likely) an indication that perhaps your model wasn't
-the best choice after all.
+would be a patronising decision from the software (that is, from
+us). In our opinion, the best policy is to treat such results for
+what they are: a finite-sample oddity if your model is right or (more
+likely) an indication that perhaps your model wasn't the best choice
+after all.
 
 So, the current state of things in \gig\ is: no constraints are put on
 the parameters. In the future, we'll issue a warning if the algorithm
-stops at some unorthodox point. This is easy for a GARCH(1,1) model:
-for GARCH($p$,$q$) models, this is more complex, but still
-possible\footnote{Again, a little help with the coding of the
-  Nelson-Cao conditions would not be unwelcome.}
-\citep{NelCao92}. However, it's not clear what to do with models with
-exogenous variables in the volatility equation or non-GARCH models. We
-are not aware of a generalisation of the Nelson-Cao conditions for the
-APARCH model; pointers would be appreciated, if any of you know of
-any.
+stops at some unorthodox point. This is easy for a GARCH(1,1) model;
+for GARCH($p$,$q$) models it's more complex, but still possible
+\citep{NelCao92}.\footnote{Again, a little help with the coding of the
+  Nelson--Cao conditions would be welcome.}  However, it's not clear
+what to do with models with exogenous variables in the volatility
+equation or non-GARCH models. We are not aware of a generalisation of
+the Nelson--Cao conditions for the APARCH model; pointers would be
+appreciated, if any of you know of any.
 
 \bibliography{gig}
 
