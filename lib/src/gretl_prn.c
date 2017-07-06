@@ -1582,3 +1582,39 @@ int gretl_print_alloc (PRN *prn, size_t s)
 
     return err;
 }
+
+char *gretl_print_read_tempfile (PRN *prn, int *err)
+{
+    size_t chk, bsize;
+    long pos0;
+    char *buf = NULL;
+
+    if (prn == NULL || prn->fp == NULL || prn->fname == NULL) {
+	fprintf(stderr, "gretl_print_read_tempfile: no temp file to read!\n");
+	*err = E_DATA;
+	return NULL;
+    }
+
+    fflush(prn->fp);
+    pos0 = ftell(prn->fp);
+    bsize = pos0;
+    buf = calloc(bsize + 1, 1);
+
+    if (buf == NULL) {
+	*err = E_ALLOC;
+    } else {
+	rewind(prn->fp);
+	chk = fread(buf, 1, bsize, prn->fp);
+	if (chk != bsize) {
+	    fprintf(stderr, "gretl_print_read_tempfile: bsize=%d but chk=%d\n",
+		    (int) bsize, (int) chk);
+	    *err = E_DATA;
+	    free(buf);
+	    buf = NULL;
+	}
+	/* get back to where we were */
+	fseek(prn->fp, pos0, SEEK_SET);
+    }
+
+    return buf;
+}

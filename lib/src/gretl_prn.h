@@ -154,4 +154,6 @@ int gretl_print_has_buffer (PRN *prn);
 
 int gretl_print_alloc (PRN *prn, size_t s);
 
+char *gretl_print_read_tempfile (PRN *prn, int *err);
+
 #endif /* GRETL_PRN_H */

@@ -79,6 +79,8 @@ void view_command_log (void)
     if (logview != NULL) {
 	gtk_window_present(GTK_WINDOW(logview));
     } else {
+	char *logbuf = NULL;
+	PRN *tmp = NULL;
 	windata_t *vwin;
 	int err = 0;
 
@@ -87,7 +89,22 @@ void view_command_log (void)
 	}
 
 	if (!err) {
-	    vwin = view_file(logname, 0, 0, 78, 370, VIEW_LOG);
+	    /* get text buffer from the tempfile */
+	    logbuf = gretl_print_read_tempfile(logprn, &err);
+	}
+
+	if (!err) {
+	    /* stick the buffer onto a temporary PRN */
+	    tmp = gretl_print_new_with_buffer(logbuf);
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    vwin = view_buffer(tmp, 78, 370, NULL, VIEW_LOG, NULL);
 	    logview = vwin->main;
 	    g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			     G_CALLBACK(gtk_widget_destroyed), &logview);

@@ -1820,6 +1820,7 @@ static void attach_content_changed_signal (windata_t *vwin)
 
 #define viewing_source(r) (r == VIEW_PKG_CODE || \
 			   r == EDIT_PKG_CODE || \
+			   r == VIEW_LOG ||      \
 			   r == EDIT_PKG_SAMPLE || \
 			   r == VIEW_PKG_SAMPLE)
 
@@ -1951,6 +1952,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
     } else if (role == VIEW_PKG_CODE ||
 	       role == VIEW_PKG_SAMPLE ||
+	       role == VIEW_LOG ||
 	       role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
@@ -1967,6 +1969,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     if (role != VIEW_PKG_CODE && 
 	role != EDIT_PKG_CODE &&
 	role != VIEW_PKG_SAMPLE &&
+	role != VIEW_LOG &&
 	role != EDIT_PKG_HELP &&
 	role != EDIT_PKG_GHLP &&
 	role != SCRIPT_OUT) {
@@ -1976,7 +1979,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	}	
     }
 
-    if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE) {
+    if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
 	create_source(vwin, hsize, vsize, FALSE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);
@@ -2134,11 +2137,9 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	if (editable) {
 	    vflags = VIEWBAR_EDITABLE;
 	}
-
 	if (text_out_ok(role)) {
 	    vflags |= VIEWBAR_HAS_TEXT;
 	}
-
 	vwin_add_viewbar(vwin, vflags);
     }
 
