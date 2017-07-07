@@ -4499,8 +4499,6 @@ static int load_public_function (ufunc *fun)
     int i, done = 0;
     int err = 0;
 
-    fprintf(stderr, "*** load_public_function %s ***\n", targ);
-
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(targ, ufuns[i]->name)) {
 	    if (ufuns[i]->pkg == fun->pkg) {
