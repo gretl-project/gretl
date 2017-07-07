@@ -646,12 +646,12 @@ static void set_source_tabs (GtkWidget *w, int cw)
 			  r == EDIT_PKG_CODE ||	\
 			  r == EDIT_PKG_SAMPLE)
 
-/* Special keystrokes in script window: Ctrl-Return sends the current
-   line for execution; Ctrl-R sends the whole script for execution
-   (i.e. is the keyboard equivalent of the "execute" icon).
+/* Special keystrokes in native script window: Ctrl-Return sends the
+   current line for execution; Ctrl-R sends the whole script for
+   execution (i.e. is the keyboard equivalent of the "execute" icon).
 */
 
-static gint 
+static gint
 script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 {
     guint keyval = event->keyval;
@@ -686,6 +686,22 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 	    }
 	}
     } 
+
+    return ret;
+}
+
+static gint
+foreign_script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
+{
+    guint keyval = event->keyval;
+    gboolean ret = FALSE;
+
+    if (event->state & GDK_CONTROL_MASK) {
+	if (keyval == GDK_r)  {
+	    do_run_script(w, vwin);
+	    ret = TRUE;
+	}
+    }
 
     return ret;
 }
@@ -908,6 +924,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     } else if (foreign_script_role(vwin->role)) {
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
+			 G_CALLBACK(foreign_script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(script_popup_handler), 
 			 vwin);
