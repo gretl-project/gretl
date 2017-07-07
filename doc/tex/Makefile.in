@@ -25,6 +25,7 @@ TEXSRC = cli.tex \
 	graphs.tex \
 	modes.tex \
 	persistent.tex \
+	string_series.tex \
 	sampling.tex \
 	trouble.tex \
 	looping.tex \

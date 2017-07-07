@@ -1,0 +1,437 @@
+\chapter{String-valued series}
+\label{chap:strval-series}
+
+\section{Introduction}
+
+Gretl's support for data series with string values has gone through
+three phases:
+\begin{enumerate}
+\item No support: we simply rejected non-numerical values when reading
+  data from file.
+\item Numeric encoding only: we would read a string-valued series from
+  a delimited text data file (provided the series didn't mix numerical
+  values and strings) but the representation of the data within gretl
+  was purely numerical. We printed a ``string table'' showing the
+  mapping between the original strings and gretl's encoding and it was
+  up to the user to keep track of this mapping.
+\item Preservation of string values: the string table that we
+  construct in reading a string-valued series is now stored as a
+  component of the dataset so it's possible to display and manipulate
+  these values within gretl.
+\end{enumerate}
+
+The third phase has now been in effect for several years, with a
+series of gradual refinements. This chapter gives an account of the
+status quo. It explains how to create string-valued series and
+describes the operations that are supported for such series.
+
+\section{Creating a string-valued series}
+
+This can be done in two ways: first, by reading such a series from a
+suitable source file and second, by taking a suitable numerical series
+within gretl and adding string values using the \texttt{stringify()}
+function. In either case string values will now be preserved when such
+a series is saved in a gretl-native data file.
+
+\subsection{Reading string-valued series}
+\label{sec:reading}
+
+The primary ``suitable source'' for string-valued series is a
+delimited text data file (but see section\ref{sec:other-imports}
+below). Here's a little example. The following is the content of a
+file named \texttt{gc.csv}:
+%
+\begin{code}
+city,year
+"Bilbao",2009
+"Toruń",2011
+"Oklahoma City",2013
+"Berlin",2015
+"Athens",2017
+\end{code}
+%
+and here's a script:
+%
+\begin{code}
+open gc.csv --quiet
+print --byobs
+print city --byobs --numeric
+printf "The third gretl conference took place in %s.\n", city[3]
+\end{code}
+
+The output from the script is:
+%
+\begin{code}
+? print --byobs
+
+          city         year
+
+1       Bilbao         2009
+2        Toruń         2011
+3 Oklahoma C..         2013
+4       Berlin         2015
+5       Athens         2017
+
+? print city --byobs --numeric
+
+          city
+
+1            1
+2            2
+3            3
+4            4
+5            5
+
+The third gretl conference took place in Oklahoma City.
+\end{code}
+
+From this we can see a few things. 
+\begin{itemize}
+\item By default the \texttt{print} command shows us the string values
+  of the series \texttt{city}, and it handles non-ASCII characters
+  provided they're in UTF-8 (but it doesn't handle longer strings
+  very elegantly).
+\item The \verb|--numeric| option to \texttt{print} exposes the
+  numeric codes for a string-valued series.
+\item The syntax \texttt{seriesname[obs]} gives a string when a series
+  is string-valued.
+\end{itemize}
+
+Suppose you want to access the numeric code for a particular
+string-valued observation: you can get that by ``casting'' the series
+to a vector. Thus
+\begin{code}
+printf "The code for '%s' is %d.\n", city[3], {city}[3]
+\end{code}
+gives
+\begin{code}
+The code for 'Oklahoma City' is 3.
+\end{code}
+
+The numeric codes for string-valued series are always assigned thus:
+reading the data file row by row, the first string value is assigned
+1, the next \textit{distinct} string value is assigned 2, and so on.
+
+\subsection{Assigning string values to an existing series}
+\label{sec:stringify}
+
+This is done via the \texttt{stringify()} function, which takes two
+arguments, the name of a series and an array of strings. For this to
+work two conditions must be met:
+
+\begin{enumerate}
+\item The series must have only integer values and the smallest value
+  must be 1 or greater.
+\item The array of strings must have at least $n$ members, where $n$
+  is the largest value found in the series.
+\end{enumerate}
+
+The logic of these conditions is that we're looking to create a
+mapping as described above, from a 1-based sequence of integers to a
+set of strings. However, we're allowing for the possibility that the
+series in question is an incomplete sample from an associated
+population. Suppose we have a series that goes 2, 3, 5, 9, 10. This is
+taken to be a sample from a population that has at least 10 discrete
+values, 1, 2, \dots{}, 10, and so requires at least 10 value-strings.
+
+One aspect of \texttt{stringify()} is debatable. At present the
+function returns 0 on success, otherwise an integer error code; it
+doesn't explicitly ``fail'' if the required conditions are not met,
+and it's up to the user to check if things went OK. Maybe it should
+just fail on error?
+
+Here's (a simplified version of) an example that one of the authors
+has had cause to use: deriving US-style ``letter grades'' from a
+series containing percentage scores for students. Call the percentage
+series $x$, and say we want to create a series with values \texttt{A}
+for $x \geq 90$, \texttt{B} for $80 \leq x <90$, and so on down to
+\texttt{F} for $x<60$. Then we can do:
+\begin{code}
+series grade = 1 # F, the least value
+grade += x >= 60 # D
+grade += x >= 70 # C
+grade += x >= 80 # B
+grade += x >= 90 # A
+stringify(grade, strsplit("F D C B A"))
+\end{code}
+%
+The way the \texttt{grade} series is constructed is not the most
+compact, but it's nice and explicit, and easy to amend if one wants to
+adjust the threshold values. Note the use of \texttt{strsplit()} to
+create an on-the-fly array of strings from a string literal; this is
+convenient when the array contains a moderate number of elements with
+no embedded spaces.
+
+We should also mention that we have a function to perform the inverse
+operation of \texttt{stringify()}: the \texttt{strvals()} function
+retrieves the array of string values from a series. (It returns an
+empty array if the series is not string-valued.)
+
+\section{Permitted operations}
+
+One question that arises with string-valued series is, what are you
+allowed to do with them and what is banned? This may be another
+debatable point, but here we set out the current state of things.
+
+\subsection{Setting values per observation}
+
+You can set particular values in a string-valued series either by
+string or numeric code. For example, suppose (in relation to the
+example in section~\ref{sec:stringify}) that for some reason student
+number 31 with a percentage score of 88 nonetheless merits an
+\texttt{A} grade. We could do
+\begin{code}
+grade[31] = "A"
+\end{code}
+or, if we're confident about the mapping,
+\begin{code}
+grade[31] = 5
+\end{code}
+Or to raise the student's grade by one letter:
+\begin{code}
+grade[31] += 1
+\end{code}
+
+What you're \textit{not} allowed to do here is make a numerical
+adjustment that would put the value out of bounds in relation to the
+set of string values. For example, if we tried \texttt{grade[31] = 6}
+we'd get an error. 
+
+On the other hand, you \textit{can} implicitly extend the set of
+string values. This wouldn't make sense for the letter grades example
+but it might for, say, city names. Returning to the example in
+section~\ref{sec:reading} suppose we try
+%
+\begin{code}
+dataset addobs 1
+year[6] = 2019
+city[6] = "Naples?"
+\end{code}
+%
+This will work OK: we're implicitly adding another member to the
+string table for \texttt{city}; the associated numeric code will be
+the next available integer.\footnote{Admittedly there is a downside to
+  this feature: one may inadvertently add a new string value by
+  mistyping a string that's already present.}
+
+\subsection{Assignment to an entire series}
+
+This is disallowed: you can't execute an assignment of any sort with
+the name of a string-valued series \textit{per se} on the left-hand
+side. Put differently, you cannot overwrite an entire string-valued
+series at once. This may be debatable, but it's much the easiest way
+of ensuring that we never end up with a broken mapping. If anyone can
+come up with a really good reason for wanting to do this we might
+reconsider.
+
+Besides assigning an out-of-bounds numerical value to a particular
+observation, this sort of assignment is in fact the only operation
+that is banned for string-valued series.
+
+\subsection{Missing values}
+
+We support one exception to the general rule, never break the mapping
+between strings and numeric codes for string-valued series: you can
+mark particular observations as missing. This is done in the usual
+way, e.g.,
+\begin{code}
+grade[31] = NA
+\end{code}
+Note, however, that on importing a string series from a delimited text
+file any non-blank strings (including ``NA'') will be interpreted as
+valid values; any missing values in such a file should therefore be
+represented by blank cells.
+
+\subsection{Copying a string-valued series}
+
+If you make a copy of a string-valued series, as in
+\begin{code}
+series foo = city
+\end{code}
+the string values are \textit{not} copied over: you get a purely
+numerical series holding the codes of the original series. But if you
+want a full copy with the string values that can easily be arranged:
+\begin{code}
+series citycopy = city
+stringify(citycopy, strvals(city))
+\end{code}
+
+\subsection{String-valued series in other contexts}
+
+String-valued series can be used on the right-hand side of assignment
+statements at will, and in that context their numerical values are
+taken. For example,
+%
+\begin{code}
+series y = sqrt(city)
+\end{code}
+%
+will elicit no complaint and generate a numerical series 1, 1.41421,
+\dots{}. It's up to the user to judge whether this sort of thing
+makes any sense.
+
+Similarly, it's up to the user to decide if it makes sense to use a
+string-valued series ``as is'' in a regression model, whether as
+regressand or regressor---again, the numerical values of the series
+are taken. Often this will not make sense, but sometimes it may: the
+numerical values may by design form an ordinal, or even a cardinal,
+scale (as in the ``grade'' example in section~\ref{sec:stringify}).
+
+More likely, one would want to use \texttt{dummify} on a string-valued
+series before using it in statistical modeling. In that context
+gretl's series labels are suitably informative. For example, suppose
+we have a series \texttt{race} with numerical values 1, 2 and 3 and
+associated strings ``White'', ``Black'' and ``Other''. Then the hansl
+code
+\begin{code}
+list D = dummify(race)
+labels
+\end{code}
+will show these labels:
+\begin{code}
+Drace_2: dummy for race = 'Black'
+Drace_3: dummy for race = 'Other'
+\end{code}
+
+Given such a series you can use string values in a sample restriction,
+as in
+\begin{code}
+smpl race == "Black" --restrict
+\end{code}
+(although \texttt{race == 2} would also be acceptable).
+
+There may be other contexts that we haven't yet thought of where it
+would be good to have string values displayed and/or accepted on
+input; suggestions are welcome.
+
+\section{String-valued series and functions}
+
+User-defined hansl functions can deal with string-valued series,
+although there are a few points to note.
+
+If you supply such a series as an argument to a hansl function its
+string values will be accessible within the function. One can test
+whether a given series \texttt{arg} is string-valued as follows:
+\begin{code}
+if nelem(strvals(arg)) > 0
+  # yes
+else
+  # no
+endif
+\end{code}
+
+Now suppose one wanted to put something like the code that generated
+the \texttt{grade} series in section~\ref{sec:stringify} into a
+function. That can be done, but \textit{not} in the form of a function
+that directly returns the desired series---that is, something like
+\begin{code}
+function series letter_grade (series x)
+  series grade
+  # define grade based on x and stringify it, as shown above
+  return grade
+end function
+\end{code}
+%
+Unfortunately the above will \emph{not} work: the caller will get the
+\texttt{grade} series OK but it won't be string-valued. At first sight
+this may seem to be a bug but it's defensible as a consequence of the
+way series work in gretl.
+
+The point is that series have, so to speak, two grades of
+existence. They can exist as fully-fledged members of a dataset, or
+they can have a fleeting existence as simply anonymous arrays of
+numbers that are of the same length as dataset series. Consider the
+statement
+\begin{code}
+series rootx1 = sqrt(x+1)
+\end{code}
+On the right-hand side we have the ``series'' \texttt{x+1}, which is
+called into existence as part of a calculation but has no name and
+cannot have string values. Similarly, consider
+\begin{code}
+series grade = letter_grade(x)
+\end{code}
+The return value from \verb|letter_grade()| is likewise an anonymous
+array,\footnote{A proper named series, with string values, existed
+  while the function was executing but it ceased to exist as soon as
+  the function was finished.} incapable of holding string values
+\textit{until} it gets assigned to the named series
+\texttt{grade}. The solution is to define \texttt{grade} as a series,
+at the level of the caller, before calling \verb|letter_grade()|, as
+in
+%
+\begin{code}
+function void letter_grade (series x, series *grade)
+  # define grade based on x and stringify it
+  # this version will work!
+end function
+
+# caller
+...
+series grade
+letter_grade(x, &grade)
+\end{code}
+
+As you'll see from the account above, we don't offer any very fancy
+facilities for string-valued series. We'll read them from suitable
+sources and we'll create them natively via \texttt{stringify}---and
+we'll try to ensure that they retain their integrity---but we don't,
+for example, take the specification of a string-valued series as a
+regressor as an implicit request to include the dummification of its
+distinct values. Besides laziness, this reflects the fact that in
+gretl a string-valued series \textit{may} be usable ``as is'',
+depending on how it's defined; you can use \texttt{dummify} if you
+need it.
+
+\section{Other import formats}
+\label{sec:other-imports}
+
+In section~\ref{sec:reading} we illustrated the reading of
+string-valued series with reference to a delimited text data
+file. Gretl can also handle some other sources of string-valued data.
+
+We should first point out that gretl's spreadsheet importers (for
+\texttt{xls}, \texttt{xlsx}, \texttt{gnumeric} and \texttt{ods} files)
+\textit{cannot} handle string-valued variables (although they can deal
+with ``observation marker'' strings in the first column). This is not
+a serious limitation since all spreadsheet programs can write out data
+as delimited text, which is very much easier to process than the
+native spreadsheet formats.
+
+\subsection{Stata files}
+
+Stata supports two relevant sorts of variables: (1) those that are of
+``string type'' and (2) variables of one or other numeric type that
+have ``value labels'' defined. Neither of these is exactly equivalent
+to what we call a ``string-valued series'' in gretl.
+
+Stata variables of string type have no numeric representation; their
+values are literally strings, and that's all. Stata's numeric
+variables with value labels do not have to be integer-valued and their
+least value does not have to be 1; however, you can't define a label
+for a value that is not an integer. Thus in Stata you can have a
+series that comprises both integer and non-integer values, but only
+the integer values can be labeled.\footnote{Verified in Stata 12.}
+
+This means that on import to gretl we can readily handle variables of
+string type from Stata's \texttt{dta} files. We give them a 1-based
+numeric encoding; this is arbitrary but does not conflict with any
+information in the \texttt{dta} file. On the other hand, in general
+we're not able to handle Stata's numeric variables with value labels;
+currently we report the value labels to the user but do not attempt to
+store them in the gretl dataset. We could check such variables and
+import them as string-valued series if they satisfy the criteria
+stated in section~\ref{sec:stringify} but we don't at present.
+
+\subsection{SAS and SPSS files}
+
+Gretl is able to read and preserve string values associated with
+variables from SAS ``export'' (\texttt{xpt}) files, and also from SPSS
+\texttt{sav} files. Such variables seem to be on the same pattern as
+Stata variables of string type.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
+
