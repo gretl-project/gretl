@@ -265,6 +265,10 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname);
 
 int function_package_has_gui_help (fnpkg *pkg);
 
+void function_package_set_editor (fnpkg *pkg, void *editor);
+
+void *function_package_get_editor (fnpkg *pkg);
+
 int package_has_menu_attachment (const char *fname,
 				 char **pkgname,
 				 char **attach,

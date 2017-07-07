@@ -847,6 +847,10 @@ static int finfo_save (function_info *finfo)
 
 static void finfo_destroy (GtkWidget *w, function_info *finfo)
 {
+    if (finfo != NULL && finfo->pkg != NULL) {
+	function_package_set_editor(finfo->pkg, NULL);
+    }
+
     finfo_free(finfo);
 }
 
@@ -3573,6 +3577,10 @@ static void finfo_dialog (function_info *finfo)
     gtk_window_set_title(GTK_WINDOW(finfo->dlg), title);
     g_free(title);
 
+    if (finfo->pkg != NULL) {
+	function_package_set_editor(finfo->pkg, finfo->dlg);
+    }
+
     g_object_set_data(G_OBJECT(finfo->dlg), "finfo", finfo);
     gtk_widget_set_name(finfo->dlg, "pkg-editor");
     g_signal_connect(G_OBJECT(finfo->dlg), "delete-event",
@@ -4317,6 +4325,7 @@ int save_function_package (const char *fname, gpointer p)
 	finfo->pkg = function_package_new(fname, finfo->pubnames, finfo->n_pub,
 					  finfo->privnames, finfo->n_priv,
 					  &err);
+	function_package_set_editor(finfo->pkg, finfo->dlg);
     } else {
 	/* revising an existing package */
 	err = function_package_connect_funcs(finfo->pkg, finfo->pubnames, finfo->n_pub,
@@ -4868,6 +4877,7 @@ static int is_pdf_reference (const char *s)
 
 void edit_function_package (const char *fname)
 {
+    GtkWidget *editor;
     function_info *finfo = NULL;
     int *publist = NULL;
     int *privlist = NULL;
@@ -4878,6 +4888,13 @@ void edit_function_package (const char *fname)
     if (err) {
 	gui_errmsg(err);
 	goto bailout;
+    }
+
+    editor = function_package_get_editor(pkg);
+    if (editor != NULL) {
+	/* don't open a second editor for a given package */
+	gtk_window_present(GTK_WINDOW(editor));
+	return;
     }
 
     finfo = finfo_new();

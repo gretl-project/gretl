@@ -162,6 +162,7 @@ struct fnpkg_ {
     int n_priv;       /* number of private functions */
     char **datafiles; /* names of packaged data files */
     int n_files;      /* number of data files */
+    void *editor;     /* for GUI use */
 };
 
 /* acceptable types for parameters of user-defined functions */
@@ -520,6 +521,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_pub = pkg->n_priv = 0;
     pkg->datafiles = NULL;
     pkg->n_files = 0;
+    pkg->editor = NULL;
 
     return pkg;
 }
@@ -4497,6 +4499,8 @@ static int load_public_function (ufunc *fun)
     int i, done = 0;
     int err = 0;
 
+    fprintf(stderr, "*** load_public_function %s ***\n", targ);
+
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(targ, ufuns[i]->name)) {
 	    if (ufuns[i]->pkg == fun->pkg) {
@@ -4920,7 +4924,7 @@ static fnpkg *read_package_file (const char *fname, int *err)
 /** 
  * function_package_is_loaded:
  * @fname: full path to gfn file.
- * @version: locaate to receive version info, or NULL.
+ * @version: location to receive version info, or NULL.
  *
  * Returns: 1 if the function package with filename @fname is
  * loaded in memory, otherwise 0.
@@ -5038,7 +5042,7 @@ int load_function_package_by_filename (const char *fname,
 fnpkg *get_function_package_by_filename (const char *fname, int *err)
 {
     fnpkg *pkg = NULL;
-    int i;
+    int i, myerr = 0;
 
     for (i=0; i<n_pkgs; i++) {
 	if (!strcmp(fname, pkgs[i]->fname)) {
@@ -5048,14 +5052,18 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
     }
 
     if (pkg == NULL) {
-	pkg = read_package_file(fname, err);
-	if (!*err) {
-	    *err = real_load_package(pkg);
-	    if (*err) {
+	pkg = read_package_file(fname, &myerr);
+	if (!myerr) {
+	    myerr = real_load_package(pkg);
+	    if (myerr) {
 		pkg = NULL;
 	    }
 	}
-    } 	
+    }
+
+    if (err != NULL) {
+	*err = myerr;
+    }
 
     return pkg;
 }
@@ -8631,6 +8639,18 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 int function_package_has_gui_help (fnpkg *pkg)
 {
     return pkg->gui_help != NULL && !string_is_blank(pkg->gui_help);
+}
+
+void function_package_set_editor (fnpkg *pkg, void *editor)
+{
+    if (pkg != NULL) {
+	pkg->editor = editor;
+    }
+}
+
+void *function_package_get_editor (fnpkg *pkg)
+{
+    return pkg == NULL ? NULL : pkg->editor;
 }
 
 /**

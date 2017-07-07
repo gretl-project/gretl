@@ -2350,6 +2350,39 @@ static void browser_insert_gfn_info (const char *pkgname,
     free(tmp);
 }
 
+static void check_loaded_gfn (const char *pkgname,
+			      const char *fullname)
+{
+    const char *path;
+
+    path = get_function_package_path_by_name(pkgname);
+
+    if (path != NULL && strcmp(path, fullname)) {
+	/* Watch out, there's a package of the same name already
+	   loaded from a different location.
+	*/
+	fnpkg *pkg = get_function_package_by_filename(path, NULL);
+	GtkWidget *editor = function_package_get_editor(pkg);
+
+	if (editor != NULL) {
+	    /* warn, don't unload the package being edited */
+	    gchar *msg;
+
+	    msg = g_strdup_printf("%s: package in new browser window may\n"
+				  "conflict with package editor", pkgname);
+	    gtk_window_present(GTK_WINDOW(editor));
+	    msgbox(msg, GTK_MESSAGE_WARNING, editor);
+	    g_free(msg);
+	} else {
+	    function_package_unload_full_by_filename(path);
+	}
+    }
+}
+
+/* Run various checks on @fullname: if all is OK, return 1; if
+   something is amiss, return 0.
+*/
+
 static int ok_gfn_path (const char *fullname, 
 			const char *shortname,
 			const char *dirname,
@@ -2386,10 +2419,11 @@ static int ok_gfn_path (const char *fullname,
     if (!err && !is_dup) {
 	if (store != NULL && iter != NULL) {
 	    /* actually enter the file into the browser */
-	    gchar *pkgname = g_strdup(shortname);
+	    gchar *pkgname = g_strndup(shortname, strlen(shortname) - 4);
 
-	    /* chop off ".gfn" for display */
-	    pkgname[strlen(pkgname) - 4] = '\0';
+	    if (gfn_is_loaded(shortname)) {
+		check_loaded_gfn(pkgname, fullname);
+	    }
 
 	    gtk_list_store_append(store, iter);
 	    browser_insert_gfn_info(pkgname,
