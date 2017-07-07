@@ -9840,6 +9840,19 @@ static int try_run_include (ExecState *s, char *runfile,
     return err;
 }
 
+static int run_include_error (ExecState *s, const char *param,
+			      int err, PRN *prn)
+{
+    const char *msg = gretl_errmsg_get();
+
+    pprintf(prn, _("Error reading %s\n"), param);
+    if (*msg != '\0') {
+	pprintf(prn, "%s\n", msg);
+    }
+
+    return process_command_error(s, err);
+}
+
 #define try_gui_help(c) (c->param != NULL && *c->param != '\0' && \
 			 c->parm2 == NULL && !c->opt)
 
@@ -10062,8 +10075,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
 	if (err) {
-	    pprintf(prn, _("Error reading %s\n"), cmd->param);
-	    err = process_command_error(s, err);
+	    err = run_include_error(s, cmd->param, err, prn);
 	    break;
 	}
 	if (gretl_messages_on()) {
@@ -10072,8 +10084,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_XML_functions_file(runfile, cmd->opt, prn);
 	    if (err) {
-		pprintf(prn, _("Error reading %s\n"), runfile);
-		err = process_command_error(s, err);
+		err = run_include_error(s, runfile, err, prn);
 	    }
 	    break;
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(runfile)) {

@@ -1737,11 +1737,6 @@ static void real_function_package_unload (fnpkg *pkg, int full)
     }
 }
 
-static void function_package_unload_full (fnpkg *pkg)
-{
-    real_function_package_unload(pkg, 1);
-}
-
 /* Append a pointer to @fun to the array of child-pointers in @pkg: we
    do this when reading the definition of a packaged function from an
    XML file.  Note that this action does not add the functions to the
@@ -4492,8 +4487,8 @@ static int load_private_function (ufunc *fun)
 
 /* When loading a public, packaged function we want to avoid conflicts
    with any non-private functions of the same name.  In case we get a
-   conflict with a public member of another package we'd best delete
-   the entire conflicting package.
+   conflict with a public member of an already loaded distinct package
+   we'll flag an error (otherwise things will get too confusing).
 */
 
 static int load_public_function (ufunc *fun)
@@ -4505,7 +4500,7 @@ static int load_public_function (ufunc *fun)
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(targ, ufuns[i]->name)) {
 	    if (ufuns[i]->pkg == fun->pkg) {
-		/* name duplication in package */
+		/* name duplication in single package */
 		err = broken_package_error(fun->pkg);
 	    } else if (ufuns[i]->pkg == NULL) {
 		/* conflicting unpackaged function */
@@ -4514,10 +4509,10 @@ static int load_public_function (ufunc *fun)
 		done = 1;
 	    } else if (!function_is_private(ufuns[i])) {
 		/* got a conflicting package */
-		fprintf(stderr, "unloading conflicting package '%s'\n",
-			ufuns[i]->pkg->name);
-		fprintf(stderr, "(filename '%s')\n", ufuns[i]->pkg->fname); 
-		function_package_unload_full(ufuns[i]->pkg);
+		gretl_errmsg_sprintf("The function %s is already defined "
+				     "by package '%s'", targ,
+				     ufuns[i]->pkg->name);
+		err = E_DATA;
 		break;
 	    } 
 	}
@@ -4545,17 +4540,19 @@ static int real_load_package (fnpkg *pkg)
     fprintf(stderr, "real_load_package:\n loading '%s'\n", pkg->fname);
 #endif
 
-    if (pkg->priv != NULL) {
-	for (i=0; i<pkg->n_priv && !err; i++) {
-	    err = load_private_function(pkg->priv[i]);
-	}
-    }
+    gretl_error_clear();
 
     if (!err && pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub && !err; i++) {
 	    err = load_public_function(pkg->pub[i]);
 	}
-    } 
+    }
+
+    if (!err && pkg->priv != NULL) {
+	for (i=0; i<pkg->n_priv && !err; i++) {
+	    err = load_private_function(pkg->priv[i]);
+	}
+    }
 
     if (!err) {
 	/* add to array of loaded packages */
@@ -5489,9 +5486,15 @@ static int check_func_name (const char *name, ufunc **pfun, PRN *prn)
 	for (i=0; i<n_ufuns; i++) {
 	    if (!skip_private_func(ufuns[i]) && !strcmp(name, ufuns[i]->name)) {
 #if FN_DEBUG
-		fprintf(stderr, "'%s': found an existing function of this name\n", fname);
+		fprintf(stderr, "'%s': found an existing function of this name\n", name);
 #endif
-		if (pfun != NULL) {
+		if (ufuns[i]->pkg != NULL && ufuns[i]->pkg != current_pkg) {
+		    /* don't allow overwriting */
+		    gretl_errmsg_sprintf("The function %s is already defined "
+					 "by package '%s'", name,
+					 ufuns[i]->pkg->name);
+		    err = E_DATA;
+		} else if (pfun != NULL) {
 		    clear_ufunc_data(ufuns[i]);
 		    *pfun = ufuns[i];
 		} else {

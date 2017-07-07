@@ -686,6 +686,19 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     return err;
 }
 
+static int run_include_error (ExecState *s, const char *param,
+			      int err, PRN *prn)
+{
+    const char *msg = gretl_errmsg_get();
+
+    pprintf(prn, _("Error reading %s\n"), param);
+    if (*msg != '\0') {
+	pprintf(prn, "%s\n", msg);
+    }
+
+    return process_command_error(s, err);
+}
+
 #define ENDRUN (NC + 1)
 
 /* cli_exec_line: this is called to execute both interactive and
@@ -862,8 +875,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    err = get_full_filename(cmd->param, runfile, OPT_S);
 	}
 	if (err) {
-	    pprintf(prn, _("Error reading %s\n"), cmd->param);
-	    err = process_command_error(s, err);
+	    err = run_include_error(s, cmd->param, err, prn);
 	    break;
 	}
 	if (gretl_messages_on() && !(s->flags & INIT_EXEC)) {
@@ -872,8 +884,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_XML_functions_file(runfile, cmd->opt, prn);
 	    if (err) {
-		pprintf(prn, _("Error reading %s\n"), runfile);
-		err = process_command_error(s, err);
+		err = run_include_error(s, runfile, err, prn);
 	    }
 	    break;
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(runfile)) {
