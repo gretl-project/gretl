@@ -29,7 +29,7 @@ describes the operations that are supported for such series.
 
 This can be done in two ways: first, by reading such a series from a
 suitable source file and second, by taking a suitable numerical series
-within gretl and adding string values using the \texttt{stringify()}
+within gretl and adding string values using the \cmd{stringify()}
 function. In either case string values will now be preserved when such
 a series is saved in a gretl-native data file.
 
@@ -87,11 +87,11 @@ The third gretl conference took place in Oklahoma City.
 
 From this we can see a few things. 
 \begin{itemize}
-\item By default the \texttt{print} command shows us the string values
+\item By default the \cmd{print} command shows us the string values
   of the series \texttt{city}, and it handles non-ASCII characters
   provided they're in UTF-8 (but it doesn't handle longer strings
   very elegantly).
-\item The \verb|--numeric| option to \texttt{print} exposes the
+\item The \verb|--numeric| option to \cmd{print} exposes the
   numeric codes for a string-valued series.
 \item The syntax \texttt{seriesname[obs]} gives a string when a series
   is string-valued.
@@ -115,7 +115,7 @@ reading the data file row by row, the first string value is assigned
 \subsection{Assigning string values to an existing series}
 \label{sec:stringify}
 
-This is done via the \texttt{stringify()} function, which takes two
+This is done via the \cmd{stringify()} function, which takes two
 arguments, the name of a series and an array of strings. For this to
 work two conditions must be met:
 
@@ -134,7 +134,7 @@ population. Suppose we have a series that goes 2, 3, 5, 9, 10. This is
 taken to be a sample from a population that has at least 10 discrete
 values, 1, 2, \dots{}, 10, and so requires at least 10 value-strings.
 
-One aspect of \texttt{stringify()} is debatable. At present the
+One aspect of \cmd{stringify()} is debatable. At present the
 function returns 0 on success, otherwise an integer error code; it
 doesn't explicitly ``fail'' if the required conditions are not met,
 and it's up to the user to check if things went OK. Maybe it should
@@ -157,13 +157,19 @@ stringify(grade, strsplit("F D C B A"))
 %
 The way the \texttt{grade} series is constructed is not the most
 compact, but it's nice and explicit, and easy to amend if one wants to
-adjust the threshold values. Note the use of \texttt{strsplit()} to
+adjust the threshold values. Note the use of \cmd{strsplit()} to
 create an on-the-fly array of strings from a string literal; this is
 convenient when the array contains a moderate number of elements with
-no embedded spaces.
+no embedded spaces. An alternative way to get the same result is to
+define the array of strings via the \cmd{defarray()} function, as in
+\begin{code}
+stringify(grade,defarray("F","D","C","B","A"))
+\end{code}
+
+
 
 We should also mention that we have a function to perform the inverse
-operation of \texttt{stringify()}: the \texttt{strvals()} function
+operation of \cmd{stringify()}: the \cmd{strvals()} function
 retrieves the array of string values from a series. (It returns an
 empty array if the series is not string-valued.)
 
@@ -277,7 +283,7 @@ are taken. Often this will not make sense, but sometimes it may: the
 numerical values may by design form an ordinal, or even a cardinal,
 scale (as in the ``grade'' example in section~\ref{sec:stringify}).
 
-More likely, one would want to use \texttt{dummify} on a string-valued
+More likely, one would want to use \cmd{dummify} on a string-valued
 series before using it in statistical modeling. In that context
 gretl's series labels are suitably informative. For example, suppose
 we have a series \texttt{race} with numerical values 1, 2 and 3 and
@@ -374,13 +380,13 @@ letter_grade(x, &grade)
 
 As you'll see from the account above, we don't offer any very fancy
 facilities for string-valued series. We'll read them from suitable
-sources and we'll create them natively via \texttt{stringify}---and
+sources and we'll create them natively via \cmd{stringify}---and
 we'll try to ensure that they retain their integrity---but we don't,
 for example, take the specification of a string-valued series as a
 regressor as an implicit request to include the dummification of its
 distinct values. Besides laziness, this reflects the fact that in
 gretl a string-valued series \textit{may} be usable ``as is'',
-depending on how it's defined; you can use \texttt{dummify} if you
+depending on how it's defined; you can use \cmd{dummify} if you
 need it.
 
 \section{Other import formats}
