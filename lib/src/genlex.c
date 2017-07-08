@@ -498,7 +498,9 @@ struct str_table hidden_funcs[] = {
     { HF_CEIGH,    "_ceigh" },
     { HF_CINV,     "_cinv" },
     { HF_CMMULT,   "_cmmult" },
+    { HF_CMMULT2,  "_cmmult2" },
     { HF_CFFT,     "_cfft" },
+    { HF_CMATRIX,  "_cmatrix" },
     { 0,           NULL }
 };
 

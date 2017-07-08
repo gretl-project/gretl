@@ -611,3 +611,105 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 
     return ft;
 }
+
+#define cmatrix_get_re(m,i,j) (m->val[(j)*m->rows+(i)*2])
+#define cmatrix_get_im(m,i,j) (m->val[(j)*m->rows+(i)*2+1])
+
+int cmatrix_print (gretl_matrix *A, PRN *prn)
+{
+    double re, im;
+    char s[4] = "   ";
+    int r, c, i, j;
+
+    if (A->rows % 2 != 0) {
+	return E_INVARG;
+    }
+
+    r = A->rows / 2;
+    c = A->cols;
+
+    for (i=0; i<r; i++) {
+	for (j=0; j<c; j++) {
+	    re = cmatrix_get_re(A, i, j);
+	    im = cmatrix_get_im(A, i, j);
+	    s[1] = (im >= 0) ? '+' : '-';
+	    pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
+	    if (j < c - 1) {
+		pputs(prn, "  ");
+	    }
+        }
+        pputc(prn, '\n');
+    }
+    pputc(prn, '\n');
+
+    return 0;
+}
+
+gretl_matrix *test_zgemm (gretl_matrix *A, gretl_matrix *B, int *err)
+{
+    gretl_matrix *C;
+    cmplx *a, *b, *c;
+    cmplx alpha = {1, 0};
+    cmplx beta = {0, 0};
+    char transa = 'N';
+    char transb = 'N';
+    integer m, n, k;
+
+    m = A->rows / 2;
+    n = B->cols;
+    k = A->cols;
+
+    C = gretl_matrix_alloc(A->rows, B->cols);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    a = (cmplx *) A->val;
+    b = (cmplx *) B->val;
+    c = (cmplx *) C->val;
+
+    if (1) {
+	integer lda = A->rows / 2;
+	integer ldb = B->rows / 2;
+	integer ldc = C->rows / 2;
+
+	zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda,
+	       b, &ldb, &beta, c, &ldc);
+    }
+
+    return C;
+}
+
+gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
+			     const gretl_matrix *Im,
+			     int *err)
+{
+    gretl_matrix *C = NULL;
+    int i, ic, n;
+
+    if (gretl_is_null_matrix(Re) ||
+	gretl_is_null_matrix(Im) ||
+	Re->rows != Im->rows ||
+	Re->cols != Im->cols) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    n = Re->rows * Re->cols;
+
+    C = gretl_matrix_alloc(2*Re->rows, Re->cols);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    ic = 0;
+    for (i=0; i<n; i++) {
+	C->val[ic] = Re->val[i];
+	C->val[ic+1] = Im->val[i];
+	ic += 2;
+    }
+
+    return C;
+}

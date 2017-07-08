@@ -3874,6 +3874,12 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    matrix_minmax_indices(f, &a, &b, &c);
 	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
 	    break;
+	case HF_CMATRIX:
+	    ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
+	    break;
+	case HF_CMMULT2:
+	    ret->v.m = test_zgemm(m, r->v.m, &p->err);
+	    break;
 	default:
 	    break;
 	}
@@ -14143,6 +14149,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
 	    ret = array_to_array_func(l, r, t->t, p);
+	}
+	break;
+    case HF_CMATRIX:
+    case HF_CMMULT2:
+	if (l->t == MAT && r->t == MAT) {
+	    ret = matrix_to_matrix_func(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;	
     case F_FDJAC:

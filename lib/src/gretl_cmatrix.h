@@ -34,4 +34,12 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err);
 
+gretl_matrix *test_zgemm (gretl_matrix *A, gretl_matrix *B, int *err);
+
+gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
+			     const gretl_matrix *Im,
+			     int *err);
+
+int cmatrix_print (gretl_matrix *A, PRN *prn);
+
 #endif /* GRETL_CMATRIX_H */
