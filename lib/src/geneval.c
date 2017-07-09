@@ -3725,6 +3725,9 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
+#define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT2 || \
+		       f == HF_CINV2 || f == HF_CFFT2 || f == HF_CTRAN)
+
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -3735,13 +3738,20 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	int a = 0, b, c;
 
 	if (n->t == NUM) {
-	    /* FIXME HF_* */
-	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
-	    tmpmat = 1;
+	    if (cmplx_func(f)) {
+		p->err = E_INVARG;
+	    } else {
+		m = gretl_matrix_from_scalar(node_get_scalar(n, p));
+		tmpmat = 1;
+	    }
 	} else {
 	    /* the following may be dangerous? */
 	    tmpmat = is_tmp_node(n);
 	    m = n->v.m;
+	}
+
+	if (p->err) {
+	    goto finalize;
 	}
 
 	if (gretl_is_null_matrix(m) && !nullmat_ok(f)) {
