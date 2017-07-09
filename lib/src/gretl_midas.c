@@ -405,6 +405,8 @@ static int lag_info_from_prelag_list (midas_term *mt,
     int p1 = series_get_midas_period(dset, list[1]);
     int i, p, maxp = 0;
 
+    /* FIXME this does not always deliver correct results */
+
     if (p1 > 0) {
 	for (i=1; i<=list[0]; i++) {
 	    p = series_get_midas_period(dset, list[i]);
@@ -1886,7 +1888,7 @@ static int add_midas_plot_matrix (MODEL *pmod,
 
 /* Add to @pmod an array of bundles holding information
    on the individual MIDAS terms (although in most cases
-   there will probably be just one such bundle).
+   there will be just one such bundle).
 */
 
 static int model_add_mterms_array (MODEL *pmod,
