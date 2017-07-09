@@ -383,6 +383,7 @@ enum {
     HF_CMMULT2,
     HF_CFFT,
     HF_CMATRIX,
+    HF_CXTRACT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

@@ -713,3 +713,37 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 
     return C;
 }
+
+gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
+			    int *err)
+{
+
+    /* extract the real part (if im==0) or the imaginary part
+       (if im==1)
+    */
+    
+    gretl_matrix *C = NULL;
+    int i, j, r, n;
+
+    if (gretl_is_null_matrix(A)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    r = A->rows / 2;
+    n = r * A->cols;
+
+    C = gretl_matrix_alloc(r, A->cols);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    j = im != 0; 
+    for (i=0; i<n; i++) {
+	C->val[i] = A->val[j];
+	j += 2;
+    }
+
+    return C;
+}

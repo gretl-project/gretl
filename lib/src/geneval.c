@@ -3411,7 +3411,10 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
 	if (f == F_MSORTBY) {
 	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
+	} else if (f == HF_CXTRACT) {
+	    ret->v.m = gretl_cxtract(m, k, &p->err);
 	}
+          
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -13515,6 +13518,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
+    case HF_CXTRACT:	
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
