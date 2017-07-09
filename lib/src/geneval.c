@@ -3735,7 +3735,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	int a = 0, b, c;
 
 	if (n->t == NUM) {
-	    /* FIXME HF_CINV2, HF_CFFT2 */
+	    /* FIXME HF_* */
 	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
 	    tmpmat = 1;
 	} else {
@@ -3891,6 +3891,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case HF_CFFT2:
 	    ret->v.m = test_complex_fft(m, a, &p->err);
+	    break;
+	case HF_CTRAN:
+	    ret->v.m = gretl_ctran(m, &p->err);
 	    break;
 	default:
 	    break;
@@ -14102,6 +14105,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_POLROOTS:
     case HF_CINV2:
     case HF_CFFT2:
+    case HF_CTRAN:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);

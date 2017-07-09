@@ -505,6 +505,7 @@ struct str_table hidden_funcs[] = {
     { HF_CFFT2,    "_cfft2" },
     { HF_CMATRIX,  "_cmatrix" },
     { HF_CXTRACT,  "_cxtract" },
+    { HF_CTRAN,    "_ctran" },
     { 0,           NULL }
 };
 

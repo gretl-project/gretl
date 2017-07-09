@@ -216,10 +216,26 @@ gretl_matrix *test_zheev (const gretl_matrix *A, gretl_matrix *V,
     char jobz = V != NULL ? 'V' : 'N';
     char uplo = 'U';
 
-    Acpy = gretl_matrix_copy(A);
-    if (Acpy == NULL) {
-	*err = E_ALLOC;
+    if (gretl_is_null_matrix(A)) {
+	*err = E_INVARG;
 	return NULL;
+    }
+
+    if (V != NULL && V->rows * V->cols == A->rows * A->cols) {
+	/* we can use V->val for the calculation */
+	V->rows = A->rows;
+	V->cols = A->cols;
+	/* FIXME V->info? */
+	gretl_matrix_copy_values(V, A);
+	a = (cmplx *) V->val;
+    } else {
+	/* we need a copy for calculation */
+	Acpy = gretl_matrix_copy(A);
+	if (Acpy == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+	a = (cmplx *) Acpy->val;
     }
 
     n = A->rows / 2;
@@ -230,7 +246,6 @@ gretl_matrix *test_zheev (const gretl_matrix *A, gretl_matrix *V,
 	goto bailout;
     }
 
-    a = (cmplx *) Acpy->val;
     w = ret->val;
 
     /* get optimal workspace size */
@@ -250,7 +265,7 @@ gretl_matrix *test_zheev (const gretl_matrix *A, gretl_matrix *V,
     if (info != 0) {
 	fprintf(stderr, "zheev: info = %d\n", info);
 	*err = E_DATA;
-    } else if (V != NULL) {
+    } else if (V != NULL && Acpy != NULL) {
 	/* FIXME? */
 	free(V->val);
 	V->rows = A->rows;
@@ -263,7 +278,9 @@ gretl_matrix *test_zheev (const gretl_matrix *A, gretl_matrix *V,
 
     free(rwork);
     free(work);
-    gretl_matrix_free(Acpy);
+    if (Acpy != NULL) {
+	gretl_matrix_free(Acpy);
+    }
 
     if (*err) {
 	gretl_matrix_free(ret);
@@ -421,7 +438,7 @@ gretl_matrix *test_zgetri (const gretl_matrix *A, int *err)
     return Ainv;
 }
 
-/* Multiplication of complex matrices via Lapack's zgemm(). */
+/* Multiplication of complex matrices via Lapack's zgemm() */
 
 gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err)
 {
@@ -840,6 +857,7 @@ gretl_matrix *test_zgemm (const gretl_matrix *A, gretl_matrix *B,
     cmplx beta = {0, 0};
     char transa = 'N';
     char transb = 'N';
+    integer lda, ldb, ldc;
     integer m, n, k;
 
     m = A->rows / 2;
@@ -856,14 +874,12 @@ gretl_matrix *test_zgemm (const gretl_matrix *A, gretl_matrix *B,
     b = (cmplx *) B->val;
     c = (cmplx *) C->val;
 
-    if (1) {
-	integer lda = A->rows / 2;
-	integer ldb = B->rows / 2;
-	integer ldc = C->rows / 2;
+    lda = A->rows / 2;
+    ldb = B->rows / 2;
+    ldc = C->rows / 2;
 
-	zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda,
-	       b, &ldb, &beta, c, &ldc);
-    }
+    zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda,
+	   b, &ldb, &beta, c, &ldc);
 
     return C;
 }
@@ -885,7 +901,7 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 
     n = Re->rows * Re->cols;
 
-    C = gretl_matrix_alloc(2*Re->rows, Re->cols);
+    C = gretl_matrix_alloc(2 * Re->rows, Re->cols);
     if (C == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -901,7 +917,7 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
     return C;
 }
 
-/* extract the real part of @A (if im==0) or the imaginary part
+/* Extract the real part of @A (if im==0) or the imaginary part
    (if im==1)
 */
 
@@ -929,6 +945,41 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
     for (i=0; i<n; i++) {
 	C->val[i] = A->val[j];
 	j += 2;
+    }
+
+    return C;
+}
+
+/* Return conjugate transpose of complex matrix @A */
+
+gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
+{
+    gretl_matrix *C = NULL;
+    cmplx *a, *c, aij;
+    int i, j, ra, rc;
+
+    if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    C = gretl_matrix_alloc(2 * A->cols, A->rows / 2);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    a = (cmplx*) A->val;
+    c = (cmplx*) C->val;
+    ra = A->rows / 2;
+    rc = C->rows / 2;
+
+    for (j=0; j<A->cols; j++) {
+	for (i=0; i<ra; i++) {
+	    aij = a[j*ra+i];
+	    aij.i = -aij.i;
+	    c[i*rc+j] = aij;
+	}
     }
 
     return C;
