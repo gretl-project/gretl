@@ -3414,7 +3414,6 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	} else if (f == HF_CXTRACT) {
 	    ret->v.m = gretl_cxtract(m, k, &p->err);
 	}
-          
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -3733,9 +3732,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = NULL;
 	int tmpmat = 0;
-	int a, b, c;
+	int a = 0, b, c;
 
 	if (n->t == NUM) {
+	    /* FIXME HF_CINV2, HF_CFFT2 */
 	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
 	    tmpmat = 1;
 	} else {
@@ -3752,6 +3752,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    if (!empty_or_num(r)) {
 		node_type_error(f, 2, NUM, r, p);
 	    }
+	} else if (f == HF_CFFT2) {
+	    /* we need a scalar (boolean) on the right */
+	    a = node_get_bool(r, p, 0);
 	} else if (f == F_RANKING) {
 	    if (gretl_vector_get_length(m) == 0) {
 		/* m must be a vector */
@@ -3883,6 +3886,12 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case HF_CMMULT2:
 	    ret->v.m = test_zgemm(m, r->v.m, &p->err);
 	    break;
+	case HF_CINV2:
+	    ret->v.m = test_zgetri(m, &p->err);
+	    break;
+	case HF_CFFT2:
+	    ret->v.m = test_complex_fft(m, a, &p->err);
+	    break;
 	default:
 	    break;
 	}
@@ -4000,6 +4009,16 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_EIGGEN:
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
+	    break;
+	case HF_CEIGH2:
+	    {
+		gretl_matrix *V = NULL;
+
+		if (r->t != EMPTY) {
+		    V = r->v.m;
+		}
+		ret->v.m = test_zheev(m, V, &p->err);
+	    }
 	    break;
 	}
 
@@ -13518,7 +13537,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
-    case HF_CXTRACT:	
+    case HF_CXTRACT:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
@@ -14081,6 +14100,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFT:
     case F_FFTI:
     case F_POLROOTS:
+    case HF_CINV2:
+    case HF_CFFT2:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
@@ -14118,6 +14139,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_QR:
     case F_EIGSYM:
     case F_EIGGEN:
+    case HF_CEIGH2:
 	/* matrix -> matrix functions, with indirect return */
 	if (l->t != MAT) {
 	    node_type_error(t->t, 1, MAT, l, p);

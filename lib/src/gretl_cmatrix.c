@@ -202,6 +202,77 @@ gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err)
     return ret;
 }
 
+gretl_matrix *test_zheev (const gretl_matrix *A, gretl_matrix *V,
+			  int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *Acpy = NULL;
+    integer n, info, lwork;
+    double *w = NULL;
+    double *rwork = NULL;
+    cmplx *a = NULL;
+    cmplx *work = NULL;
+    cmplx wsz;
+    char jobz = V != NULL ? 'V' : 'N';
+    char uplo = 'U';
+
+    Acpy = gretl_matrix_copy(A);
+    if (Acpy == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    n = A->rows / 2;
+
+    ret = gretl_matrix_alloc(n, 1);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    a = (cmplx *) Acpy->val;
+    w = ret->val;
+
+    /* get optimal workspace size */
+    lwork = -1;
+    zheev_(&jobz, &uplo, &n, a, &n, w, &wsz, &lwork, rwork, &info);
+
+    lwork = (integer) wsz.r;
+    work = malloc(lwork * sizeof *work);
+    rwork = malloc((3 * n - 2) * sizeof *rwork);
+    if (work == NULL || rwork == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* do the actual eigen decomposition */
+    zheev_(&jobz, &uplo, &n, a, &n, w, work, &lwork, rwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zheev: info = %d\n", info);
+	*err = E_DATA;
+    } else if (V != NULL) {
+	/* FIXME? */
+	free(V->val);
+	V->rows = A->rows;
+	V->cols = A->cols;
+	V->val = Acpy->val;
+	Acpy->val = NULL;
+    }
+
+ bailout:
+
+    free(rwork);
+    free(work);
+    gretl_matrix_free(Acpy);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 /* Compute the inverse of a complex matrix represented by the array
    @A via LU decomposition; uses the Lapack functions zgetrf() and
    zgetri().
@@ -268,13 +339,82 @@ gretl_array *gretl_zgetri (gretl_array *A, int *err)
     }
 
  bailout:
-    
+
     free(work);
     free(ipiv);
     free(a);
 
     if (*err && Ainv != NULL) {
 	gretl_array_destroy(Ainv);
+	Ainv = NULL;
+    }
+
+    return Ainv;
+}
+
+gretl_matrix *test_zgetri (const gretl_matrix *A, int *err)
+{
+    gretl_matrix *Ainv = NULL;
+    integer lwork = -1;
+    integer *ipiv;
+    cmplx *a, *work = NULL;
+    integer n, info;
+
+    if (gretl_is_null_matrix(A) || A->rows != 2 * A->cols) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    Ainv = gretl_matrix_copy(A);
+    if (Ainv == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    n = A->cols;
+
+    ipiv = malloc(2 * n * sizeof *ipiv);
+    if (ipiv == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    a = (cmplx *) Ainv->val;
+
+    zgetrf_(&n, &n, a, &n, ipiv, &info);
+    if (info != 0) {
+	printf("zgetrf: info = %d\n", info);
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	/* workspace size query */
+	cmplx wsz;
+
+	zgetri_(&n, a, &n, ipiv, &wsz, &lwork, &info);
+	lwork = (integer) wsz.r;
+	work = malloc(lwork * sizeof *work);
+	if (work == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	/* actual computation */
+	zgetri_(&n, a, &n, ipiv, work, &lwork, &info);
+	if (info != 0) {
+	    printf("zgetri: info = %d\n", info);
+	    *err = E_DATA;
+	}
+    }
+
+ bailout:
+    
+    free(work);
+    free(ipiv);
+
+    if (*err && Ainv != NULL) {
+	gretl_matrix_free(Ainv);
 	Ainv = NULL;
     }
 
@@ -443,6 +583,52 @@ gretl_array *gretl_complex_fft (gretl_array *A, int inverse, int *err)
     }
 
     fftw_free(tmp);
+
+    return B;
+}
+
+gretl_matrix *test_complex_fft (const gretl_matrix *A, int inverse,
+				int *err)
+{
+    gretl_matrix *B = NULL;
+    fftw_complex *tmp, *ptr;
+    fftw_plan p;
+    int sign;
+    int r, c, j;
+
+    B = gretl_matrix_copy(A);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    r = A->rows / 2;
+    c = A->cols;
+
+    tmp = (fftw_complex *) B->val;
+    sign = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
+
+    ptr = tmp;
+    for (j=0; j<c; j++) {
+	p = fftw_plan_dft_1d(r, ptr, ptr, sign, FFTW_ESTIMATE);
+	fftw_execute(p);
+	fftw_destroy_plan(p);
+	/* advance pointer to next column */
+	ptr += r;
+    }
+
+    if (inverse) {
+	/* "FFTW computes an unnormalized transform: computing a
+	    forward followed by a backward transform (or vice versa)
+	    will result in the original data multiplied by the size of
+	    the transform (the product of the dimensions)."
+	    So should we do the following?
+	*/
+	for (j=0; j<r*c; j++) {
+	    tmp[j][0] = tmp[j][0] / r;
+	    tmp[j][1] = tmp[j][1] / r;
+	}
+    }
 
     return B;
 }
@@ -645,7 +831,8 @@ int cmatrix_print (gretl_matrix *A, PRN *prn)
     return 0;
 }
 
-gretl_matrix *test_zgemm (gretl_matrix *A, gretl_matrix *B, int *err)
+gretl_matrix *test_zgemm (const gretl_matrix *A, gretl_matrix *B,
+			  int *err)
 {
     gretl_matrix *C;
     cmplx *a, *b, *c;
@@ -714,14 +901,13 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
     return C;
 }
 
-gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
-			    int *err)
-{
+/* extract the real part of @A (if im==0) or the imaginary part
+   (if im==1)
+*/
 
-    /* extract the real part (if im==0) or the imaginary part
-       (if im==1)
-    */
-    
+gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
+			     int *err)
+{
     gretl_matrix *C = NULL;
     int i, j, r, n;
 
@@ -739,7 +925,7 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 	return NULL;
     }
 
-    j = im != 0; 
+    j = im != 0;
     for (i=0; i<n; i++) {
 	C->val[i] = A->val[j];
 	j += 2;

@@ -1624,8 +1624,8 @@ static void maybe_eigen_trim (gretl_matrix *E)
 }
 
 gretl_matrix *
-user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
-			    int *err)
+user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname,
+			    int symm, int *err)
 {
     gretl_matrix *C = NULL;
     gretl_matrix *E = NULL;
