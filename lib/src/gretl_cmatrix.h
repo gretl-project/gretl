@@ -54,6 +54,6 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 
 gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err);
 
-int cmatrix_print (gretl_matrix *A, PRN *prn);
+int cmatrix_print (gretl_matrix *A, const char *name, PRN *prn);
 
 #endif /* GRETL_CMATRIX_H */

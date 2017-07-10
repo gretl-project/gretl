@@ -818,7 +818,7 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 #define cmatrix_get_re(m,i,j) (m->val[(j)*m->rows+(i)*2])
 #define cmatrix_get_im(m,i,j) (m->val[(j)*m->rows+(i)*2+1])
 
-int cmatrix_print (gretl_matrix *A, PRN *prn)
+int cmatrix_print (gretl_matrix *A, const char *name, PRN *prn)
 {
     double re, im;
     char s[4] = "   ";
@@ -830,6 +830,11 @@ int cmatrix_print (gretl_matrix *A, PRN *prn)
 
     r = A->rows / 2;
     c = A->cols;
+
+    if (name != NULL && *name != '\0') {
+	pprintf(prn, "%s (%d x %d)", name, r, c);
+	pputs(prn, "\n\n");
+    }
 
     for (i=0; i<r; i++) {
 	for (j=0; j<c; j++) {

@@ -2376,7 +2376,7 @@ int print_user_var_by_name (const char *name,
 	print_scalar_by_name(name, prn);
     } else if (u->type == GRETL_TYPE_MATRIX) {
 	if (opt & OPT_C) {
-	    err = cmatrix_print(u->ptr, prn);
+	    err = cmatrix_print(u->ptr, name, prn);
 	} else {
 	    gretl_matrix_print_to_prn(u->ptr, name, prn);
 	}
