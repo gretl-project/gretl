@@ -140,6 +140,22 @@ int midas_days_per_period (int days_per_week, int pd)
     return (pd == 12)? ret : 3 * ret;
 }
 
+static int midas_days_to_freq (int pd, int m)
+{
+    int days[] = {22, 26, 30};
+    int freq[] = {5, 6, 7};
+    int i;
+
+    for (i=0; i<3; i++) {
+	if ((pd == 12 && m == days[i]) ||
+	    (pd == 4 && m == 3 * days[i])) {
+	    return freq[i];
+	}
+    }
+
+    return 0;
+}
+
 /* Could @m be a valid frequency ratio (= number of members
    of a valid "MIDAS list"), given the periodicity of @dset?
    If so, return 1; if not, return 0.
@@ -162,6 +178,35 @@ int is_valid_midas_frequency_ratio (const DATASET *dset, int m)
 	} else if (m == midas_days_per_period(7, dset->pd)) {
 	    return 1;
 	}
+    }
+
+    return 0;
+}
+
+int get_midas_frequency (const DATASET *dset, int m)
+{
+    if (dset->pd == 1 && (m == 4 || m == 12)) {
+	/* lf = annual -> hf quarterly or monthly */
+	return m;
+    } else if (dset->pd == 4 && m == 3) {
+	/* lf = quarterly -> hf monthly */
+	return 12;
+    } else if (dset->pd == 4 || dset->pd == 12) {
+	/* hf daily 5, 6 or 7? */
+	return midas_days_to_freq(dset->pd, m);
+    }
+
+    return 0;
+}
+
+static int midas_m_from_freq (const DATASET *dset, int freq)
+{
+    if (dset->pd == 1 && (freq == 4 || freq == 12)) {
+	return freq;
+    } else if (dset->pd == 4 && freq == 12) {
+	return 3;
+    } else if (dset->pd == 4 || dset->pd == 12) {
+	return midas_days_per_period(freq, dset->pd);
     }
 
     return 0;
@@ -401,13 +446,16 @@ static int lag_info_from_prelag_list (midas_term *mt,
 				      const int *list,
 				      const DATASET *dset)
 {
+    int mf = series_get_midas_freq(dset, list[1]);
     int m1 = series_get_lag(dset, list[1]);
     int p1 = series_get_midas_period(dset, list[1]);
     int i, p, maxp = 0;
 
-    /* FIXME this does not always deliver correct results */
+    if (mf > 0) {
+	maxp = midas_m_from_freq(dset, mf);
+    }
 
-    if (p1 > 0) {
+    if (maxp == 0 && p1 > 0) {
 	for (i=1; i<=list[0]; i++) {
 	    p = series_get_midas_period(dset, list[i]);
 	    if (p > maxp) {

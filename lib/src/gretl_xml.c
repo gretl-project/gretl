@@ -2354,8 +2354,16 @@ static int real_write_gdt (const char *fname, const int *list,
 		gzprintf(fz, "\n midas_period=\"%d\"", mpd);
 	    } else {
 		fprintf(fp, "\n midas_period=\"%d\"", mpd);
-	    }	    
-	}	
+	    }
+	}
+
+	if ((mpd = series_get_midas_freq(dset, v)) > 0) {
+	    if (gz) {
+		gzprintf(fz, "\n midas_freq=\"%d\"", mpd);
+	    } else {
+		fprintf(fp, "\n midas_freq=\"%d\"", mpd);
+	    }
+	}
 
 	alt_puts("\n/>\n", fp, fz);
     }
@@ -2671,18 +2679,23 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		    series_set_midas_anchor(dset, i);
 		}
 		free(tmp);
-	    }	 	    
+	    }
 	    tmp = xmlGetProp(cur, (XUC) "midas_period");
 	    if (tmp != NULL) {
 		int mpd = atoi((char *) tmp);
-		
+
 		if (mpd > 0) {
 		    series_set_midas_period(dset, i, mpd);
 		}
 		free(tmp);
 	    }
-	    tmp = xmlGetProp(cur, (XUC) "role");
+	    tmp = xmlGetProp(cur, (XUC) "midas_freq");
 	    if (tmp != NULL) {
+		int mpc = atoi((char *) tmp);
+
+		if (mpc > 0) {
+		    series_set_midas_freq(dset, i, mpc);
+		}
 		free(tmp);
 	    }
 	    i++;
@@ -2910,16 +2923,21 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		free(tmp);
 	    }
 
+	    tmp = xmlGetProp(cur, (XUC) "midas_freq");
+	    if (tmp != NULL) {
+		int mpf = atoi((char *) tmp);
+
+		if (mpf > 0) {
+		    series_set_midas_freq(dset, k, mpf);
+		}
+		free(tmp);
+	    }
+
 	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
 		    series_set_midas_anchor(dset, k);
 		}
-		free(tmp);
-	    }	    
-
-	    tmp = xmlGetProp(cur, (XUC) "role");
-	    if (tmp != NULL) {
 		free(tmp);
 	    }
 

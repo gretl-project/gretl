@@ -1317,6 +1317,7 @@ static int process_hf_lags_input (int hf_min, int hf_max,
  * @lmax: maximum lag to include (or 0 for automatic).
  * @lvec: (alternative to @lmin, @lmax) vector holding lags to generate.
  * @dset: dataset struct.
+ * @compfac: compaction factor (for MIDAS lists only, otherwise give 0).
  * @opt: may contain OPT_L to order the list by lag rather than
  * by variable. 
  *
@@ -1390,9 +1391,9 @@ int list_laggenr (int **plist, int lmin, int lmax,
     }
 
     /* Note: at this point @lmin and @lmax are defined in terms of
-       the frequency of @dset, even when we're handling midas data.
+       the frequency of @dset, even when we're handling MIDAS data.
        In the regular case, @n_terms holds the number of lag terms
-       wanted per series in the input @list, but in the midas case
+       wanted per series in the input @list, but in the MIDAS case
        @n_terms is the total number of hf lag terms wanted (since
        the input @list actually represents a single series).
     */    
@@ -1418,7 +1419,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
     j = 1;
 
     if (compfac > 0) {
-	/* midas high-frequency lags, by lags */
+	/* MIDAS high-frequency lags, by lags */
 	int hfpmax = n_terms + skip_first;
 	int mp, hfp = 0;
 
@@ -1436,6 +1437,8 @@ int list_laggenr (int **plist, int lmin, int lmax,
 		if (lv > 0) {
 		    mp = series_get_midas_period(dset, v);
 		    series_set_midas_period(dset, lv, mp);
+		    mp = series_get_midas_freq(dset, v);
+		    series_set_midas_freq(dset, lv, mp);
 		    laglist[j++] = lv;
 		    l0++;
 		}

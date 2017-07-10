@@ -564,6 +564,11 @@ int series_get_midas_period (const DATASET *dset, int i);
 void series_set_midas_period (const DATASET *dset, int i,
 			      int period);
 
+int series_get_midas_freq (const DATASET *dset, int i);
+
+int series_set_midas_freq (const DATASET *dset, int i,
+			   int freq);
+
 int series_is_midas_anchor (const DATASET *dset, int i);
 
 void series_set_midas_anchor (const DATASET *dset, int i);

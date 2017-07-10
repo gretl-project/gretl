@@ -175,11 +175,15 @@ int gretl_list_set_midas (const int *list, DATASET *dset)
 	}
 
 	if (!err) {
+	    int freq = get_midas_frequency(dset, m);
+
 	    series_set_midas_anchor(dset, list[1]);
 	    series_set_midas_period(dset, list[1], m);
+	    series_set_midas_freq(dset, list[1], freq);
 
 	    for (i=2; i<=list[0]; i++) {
 		series_set_midas_period(dset, list[i], m - i + 1);
+		series_set_midas_freq(dset, list[i], freq);
 	    }
 	}
     }

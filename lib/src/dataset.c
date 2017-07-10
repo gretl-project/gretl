@@ -42,6 +42,7 @@ struct VARINFO_ {
     short lag;
     short stack_level;
     short midas_period;
+    char midas_freq;
     series_table *st;
 };
 
@@ -305,6 +306,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->transform = 0;
     vinfo->lag = 0;
     vinfo->midas_period = 0;
+    vinfo->midas_freq = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
@@ -332,6 +334,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->transform = src->transform;
     targ->lag = src->lag;
     targ->midas_period = src->midas_period;
+    targ->midas_freq = src->midas_freq;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
     if (src->st != NULL) {
@@ -4624,6 +4627,33 @@ void series_set_midas_period (const DATASET *dset, int i,
     if (i > 0 && i < dset->v) {
 	dset->varinfo[i]->midas_period = period;
     }
+}
+
+int series_get_midas_freq (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->midas_freq;
+    }
+
+    return 0;
+}
+
+int series_set_midas_freq (const DATASET *dset, int i,
+			   int freq)
+{
+    int err = 0;
+
+    if (i > 0 && i < dset->v) {
+	if (freq < 5 || freq > 12) {
+	    err = E_DATA;
+	} else {
+	    dset->varinfo[i]->midas_freq = freq;
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
 }
 
 int series_is_midas_anchor (const DATASET *dset, int i)

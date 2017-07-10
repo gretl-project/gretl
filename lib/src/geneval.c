@@ -5028,7 +5028,7 @@ static NODE *matrix_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-/* args are minlag, maxlag, MIDAS-list-to-lag */
+/* args are minlag, maxlag, MIDAS-list-to-be-lagged */
 
 static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 {

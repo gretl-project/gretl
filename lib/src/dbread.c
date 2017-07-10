@@ -3692,6 +3692,7 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 		    p0, compfac - j, p1);
 	    series_record_label(cset, k+j, label);
 	    series_set_midas_period(cset, k+j, compfac - j);
+	    series_set_midas_freq(cset, k+j, oldpd);
 	    if (j == 0) {
 		series_set_midas_anchor(cset, k+j);
 	    }
