@@ -2175,6 +2175,7 @@ static void remove_from_right (GtkWidget *w, selector *sr,
     GtkTreePath *path;
     GtkTreeIter iter, last;
     int context = 0;
+    int v, lag;
     int *sellist = NULL;
     int ridx, nrows = 0;
 
@@ -2215,8 +2216,6 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 	if (gtk_tree_model_get_iter(model, &last, path) &&
 	    in_gretl_list(sellist, ridx)) {
 	    if (context) {
-		gint v, lag;
-
 		gtk_tree_model_get(model, &last, COL_ID, &v, COL_LAG, &lag, -1);
 		remove_specific_lag(v, lag, context);
 	    }
@@ -2245,6 +2244,15 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 	}
 	if (GTK_WIDGET(view) == sr->rvars1 && sr->ci == ARMA) {
 	    xdiff_button_set_sensitive(sr, FALSE);
+	}
+    } else if (sr->ci == MIDASREG && context && nrows == 1) {
+	/* If only the constant remains, lag selection
+	   for X-vars should be turned off
+	*/
+	gtk_tree_model_get_iter_first(model, &iter);
+	gtk_tree_model_get(model, &iter, COL_ID, &v, -1);
+	if (v == 0) {
+	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
 	}
     }
 
