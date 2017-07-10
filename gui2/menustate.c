@@ -504,6 +504,7 @@ enum MDSIdx_ {
     MDS_DIFF,
     MDS_SEPAR,
     MDS_CDISP,
+    MDS_CPLOT,
     MDS_CEDIT,
     MDS_CDEL,
     MDS_GENR,
@@ -567,6 +568,7 @@ struct mpopup_entries midas_pop_entries[] = {
     { MDS_DIFF,  N_("Add differences...") },
     { MDS_SEPAR, NULL },
     { MDS_CDISP, N_("Display components") },
+    { MDS_CPLOT, N_("Plot components") },
     { MDS_CEDIT, N_("Edit components") },
     { MDS_CDEL,  N_("Delete components") },
     { MDS_SEPAR, NULL },
@@ -804,6 +806,8 @@ static gint midas_popup_click (GtkWidget *w, gpointer p)
 	add_logs_etc(i == MDS_LOGS ? LOGS : DIFF, 0, 1);
     } else if (i == MDS_CDISP) {
 	display_selected();
+    } else if (i == MDS_CPLOT) {
+	plot_from_selection(GR_PLOT);
     } else if (i == MDS_CEDIT) {
 	show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MDS_CDEL) {

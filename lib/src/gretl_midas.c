@@ -199,6 +199,26 @@ int get_midas_frequency (const DATASET *dset, int m)
     return 0;
 }
 
+const char *midas_pdstr (const DATASET *dset, int cfac)
+{
+    const char *pdstrs[] = {
+	N_("quarterly"),
+	N_("monthly"),
+	N_("daily")
+    };
+    int f = get_midas_frequency(dset, cfac);
+
+    if (f == 4) {
+	return pdstrs[0];
+    } else if (f == 12) {
+	return pdstrs[1];
+    } else if (f == 5 || f == 6 || f == 7) {
+	return pdstrs[2];
+    } else {
+	return "unknown frequency";
+    }
+}
+
 static int midas_m_from_freq (const DATASET *dset, int freq)
 {
     if (dset->pd == 1 && (freq == 4 || freq == 12)) {

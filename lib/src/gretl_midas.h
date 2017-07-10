@@ -36,6 +36,8 @@ int is_valid_midas_frequency_ratio (const DATASET *dset, int m);
 
 int get_midas_frequency (const DATASET *dset, int m);
 
+const char *midas_pdstr (const DATASET *dset, int cfac);
+
 DATASET *midas_aux_dataset (const int *list,
 			    const DATASET *dset,
 			    int *err);

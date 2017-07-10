@@ -31,6 +31,7 @@
 #include "missing_private.h"
 #include "gretl_string_table.h"
 #include "uservar.h"
+#include "gretl_midas.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -8304,6 +8305,7 @@ int hf_plot (const int *list, const char *literal,
     int *gplist = NULL;
     int *hflist = NULL;
     int *lflist = NULL;
+    gchar *mylit = NULL;
     char *p;
     gretlopt plotopt = OPT_T;
     int plotpd = 0;
@@ -8400,15 +8402,26 @@ int hf_plot (const int *list, const char *literal,
 	plotopt |= OPT_U;
     }
 
+    if (literal == NULL) {
+	const char *pdstr = midas_pdstr(dset, cfac);
+	gchar *title;
+
+	title = g_strdup_printf("%s (%s)", hset->varname[1], _(pdstr));
+	mylit = g_strdup_printf("{ set ylabel ''; set title '%s'; }", title);
+	g_free(title);
+    }
+
     set_effective_plot_ci(HFPLOT);
     na_skiplist = lflist; /* file-scope global */
-    err = gnuplot(gplist, literal, hset, plotopt);
+    err = gnuplot(gplist, literal != NULL ? literal : mylit,
+		  hset, plotopt);
     na_skiplist = NULL;
     set_effective_plot_ci(GNUPLOT);
 
     free(gplist);
     free(hflist);
     free(lflist);
+    g_free(mylit);
 
     destroy_dataset(hset);
 

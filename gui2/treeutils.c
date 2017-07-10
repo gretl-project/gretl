@@ -283,6 +283,14 @@ static gboolean maybe_do_meta_click (GdkEventButton *event,
 
 #endif
 
+/* The idea here is that when the user clicks on a series
+   that is a component of a MIDAS list, the whole list
+   becomes selected, so we can offer high-frequency options
+   in the right-click popup, such as displaying or plotting
+   the underlying high-frequency data at their native
+   frequency.
+*/
+
 static int extend_midas_selection (GtkTreeView *view,
 				   GtkTreePath *path,
 				   int vnum, int p0)
@@ -305,7 +313,7 @@ static int extend_midas_selection (GtkTreeView *view,
 
     for (i=vnum+1, j=1; i<dataset->v; i++, j++) {
 	p = series_get_midas_period(dataset, i);
-	if (p != p0 - j) {
+	if (p == 0 || p != p0 - j) {
 	    break;
 	}
 	gtk_tree_path_next(path1);
