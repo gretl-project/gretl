@@ -134,7 +134,6 @@ struct ufunc_ {
 /* structure representing a function package */
 
 struct fnpkg_ {
-    int ID;           /* unique ID (time stamp) */
     char name[FN_NAMELEN]; /* package name */
     char *fname;      /* filename */
     char *author;     /* author's name */
@@ -495,7 +494,6 @@ static fnpkg *function_package_alloc (const char *fname)
     fprintf(stderr, "function_package_alloc: fname='%s'\n", fname);
 #endif    
 
-    pkg->ID = (int) time(NULL);
     pkg->name[0] = '\0';
     pkg->author = NULL;
     pkg->email = NULL;
@@ -2640,7 +2638,6 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     name_package_from_filename(pkg); /* ? */
 
     fprintf(fp, " name=\"%s\"", pkg->name);
-    fprintf(fp, " ID=\"%d\"", pkg->ID);
 
     if (pkg->dreq == FN_NEEDS_TS) {
 	fprintf(fp, " %s=\"true\"", NEEDS_TS);
@@ -4698,7 +4695,6 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     xmlNodePtr cur;
     fnpkg *pkg;
     char *tmp = NULL;
-    int id;
 
 #if PKG_DEBUG
     fprintf(stderr, "real_read_package: fname='%s'\n", fname);
@@ -4740,10 +4736,6 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
 	pkg->minver = gretl_version_number(tmp);
 	free(tmp);
-    }
-
-    if (gretl_xml_get_prop_as_int(node, "ID", &id)) {
-	pkg->ID = id;
     }
 
     pkg->uses_subdir = gretl_xml_get_prop_as_bool(node, "lives-in-subdir");
