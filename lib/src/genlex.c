@@ -1431,7 +1431,8 @@ static int is_word_char (parser *p)
 {
     if (strchr(wordchars, p->ch) != NULL) {
 	return 1;
-    } else if (defining_list(p) && !doing_genseries && p->ch == '*') {
+    } else if (defining_list(p) && !doing_genseries &&
+	       (p->ch == '*' || p->ch == '?')) {
 	return 1;
     } 
 
@@ -1604,6 +1605,17 @@ static void parse_number (parser *p)
     }
 }
 
+static void wildcard_special (parser *p)
+{
+    if (*(p->point - 2) == ' ' &&
+	(bare_data_type(p->sym) || closing_sym(p->sym) ||
+	 (p->sym == LAG))) {
+	p->sym = B_LCAT;
+    } else {
+	getword(p);
+    }
+}
+
 #define word_start_special(c) (c == '$' || c == '_')
 
 #define lag_range_sym(p) ((p->flags & P_LAGPRSE) && p->ch == 't' && \
@@ -1641,13 +1653,7 @@ void lex (parser *p)
         case '*':
 	    if (defining_list(p) && !doing_genseries) {
 		/* allow for '*' as wildcard */
-		if (*(p->point - 2) == ' ' &&
-		    (bare_data_type(p->sym) || closing_sym(p->sym) ||
-		     (p->sym == LAG))) {
-		    p->sym = B_LCAT;
-		} else {
-		    getword(p);
-		}
+		wildcard_special(p);
 		return;
 	    }
 	    parser_getc(p);
@@ -1782,7 +1788,12 @@ void lex (parser *p)
 	    p->sym = P_COL;
 	    parser_getc(p);
 	    return;
-        case '?': 
+        case '?':
+	    if (defining_list(p) && !doing_genseries) {
+		/* allow for '?' as wildcard */
+		wildcard_special(p);
+		return;
+	    }
 	    p->sym = QUERY;
 	    parser_getc(p);
 	    return;
