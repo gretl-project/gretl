@@ -1,10 +1,13 @@
 version 2017c, in progress
+- MIDAS support: several small fixes and refinements
 - "panel" command: add an --unbalanced option to inflect
   random effects estimation for unbalanced panels
 - Extend the $ahat accessor to support retrieval of the
   individual effects from random effects panel data models
 - Rename the $fcerr accessor as $fcse (but keep $fcerr as an
   alias)
+- Creation of lists: support '?' as wildcard standing for a
+  single character
 - GUI: add "Packages" item under the Help menu: basic info on
   Addons and contributed function packages
 - GUI: add an easy way to scale both the menu font and the
