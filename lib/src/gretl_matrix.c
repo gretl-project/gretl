@@ -656,6 +656,34 @@ gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
 }
 
 /**
+ * gretl_matrix_replace_content:
+ * @targ: matrix to receive new content.
+ * @donor: matrix to donate content.
+ *
+ * Moves the content of @donor into @targ; @donor becomes
+ * a null matrix in consequence.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_matrix_replace_content (gretl_matrix *targ, 
+				  gretl_matrix *donor)
+{
+    if (is_block_matrix(targ) || is_block_matrix(donor)) {
+	matrix_block_error("gretl_matrix_replace_content");
+	return E_DATA;
+    } else {
+	gretl_matrix_destroy_info(targ);
+	free(targ->val);
+	targ->rows = donor->rows;
+	targ->cols = donor->cols;
+	targ->val = donor->val;
+	donor->val = NULL;    
+	return 0;
+    }
+}
+
+/**
  * gretl_identity_matrix_new:
  * @n: desired number of rows and columns in the matrix.
  *

@@ -222,6 +222,9 @@ void gretl_matrix_init (gretl_matrix *m);
 gretl_matrix *gretl_matrix_replace (gretl_matrix **pa, 
 				    gretl_matrix *b);
 
+int gretl_matrix_replace_content (gretl_matrix *targ, 
+				  gretl_matrix *donor);    
+
 void gretl_matrix_block_destroy (gretl_matrix_block *B);
 
 void gretl_matrix_block_zero (gretl_matrix_block *B);
@@ -402,7 +405,8 @@ int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
 				      gretl_matrix *c,
 				      GretlMatrixMod cmod);    
 
-int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
+int gretl_matrix_multiply (const gretl_matrix *a,
+			   const gretl_matrix *b,
 			   gretl_matrix *c);
 
 int gretl_matrix_multiply_single (const gretl_matrix *a,
@@ -414,7 +418,8 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 					 int *err);
 
 int
-gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
+gretl_matrix_kronecker_product (const gretl_matrix *A,
+				const gretl_matrix *B,
 				gretl_matrix *K);
 
 gretl_matrix *
