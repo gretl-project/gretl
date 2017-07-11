@@ -23,6 +23,7 @@
 #include "gretl_cmatrix.h"
 
 #include <fftw3.h>
+#include <complex.h>
 
 /* helper function for fftw-based real FFT functions */
 
@@ -453,6 +454,96 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
     }
 
     return B;
+}
+
+gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
+				   const gretl_matrix *B,
+				   int *err)
+{
+    gretl_matrix *C = NULL;
+    const gretl_matrix *L = A;
+    const gretl_matrix *R = B;
+    complex double *a;
+    complex double *b;
+    complex double *c;
+    int match = 0;
+    int i, j, k;
+    int cr, cc;
+
+    if (gretl_is_null_matrix(A) || A->rows % 2 != 0 ||
+	gretl_is_null_matrix(B) || B->rows % 2 != 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    cr = A->rows;
+    cc = A->cols;
+
+    if (A->rows == B->rows && A->cols == B->cols) {
+	match = 1; /* fine */
+    } else if (A->rows == B->rows) {
+	if (B->cols == 1) {
+	    cc = A->cols;
+	    match = 2;
+	} else if (A->cols == 1) {
+	    cc = B->cols;
+	    L = B;
+	    R = A;
+	    match = 2;
+	}
+    } else if (A->cols == B->cols) {
+	if (B->rows == 2) {
+	    match = 3;
+	} else if (A->rows == 2) {
+	    cr = B->rows;
+	    L = B;
+	    R = A;
+	    match = 3;
+	}
+    }
+
+    if (match == 0) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    C = gretl_matrix_alloc(cr, cc);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    cr /= 2; /* rows of 16-byte values */
+
+    a = (complex double *) L->val;
+    b = (complex double *) R->val;
+    c = (complex double *) C->val;
+
+    if (match == 1) {
+	int n = cr * cc;
+
+	for (k=0; k<n; k++) {
+	    c[k] = a[k] * b[k];
+	}
+    } else if (match == 2) {
+	/* b has just one column */
+	k = 0;
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		c[k++] = a[j*cr+i] * b[i];
+	    }
+	}
+    } else {
+	/* b has just one row */
+	k = 0;
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		c[k++] = a[j*cr+i] * b[j];
+	    }
+	}
+    }
+
+    return C;
 }
 
 #define cmatrix_get_re(m,i,j) (m->val[(j)*m->rows+(i)*2])

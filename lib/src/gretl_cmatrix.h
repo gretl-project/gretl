@@ -35,6 +35,10 @@ gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
 gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
 				 int *err);
 
+gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
+				   const gretl_matrix *B,
+				   int *err);
+
 gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 			     const gretl_matrix *Im,
 			     int *err);
