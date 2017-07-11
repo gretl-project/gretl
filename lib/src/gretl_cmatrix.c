@@ -486,7 +486,7 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
     cc = A->cols;
 
     if (A->rows == B->rows && A->cols == B->cols) {
-	match = 1; /* fine */
+	match = 1;
     } else if (A->rows == B->rows) {
 	if (B->cols == 1) {
 	    cc = A->cols;
@@ -579,6 +579,43 @@ int complex_matrix_print (gretl_matrix *A, const char *name, PRN *prn)
 	    im = cmatrix_get_im(A, i, j);
 	    s[1] = (im >= 0) ? '+' : '-';
 	    pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
+	    if (j < c - 1) {
+		pputs(prn, "  ");
+	    }
+        }
+        pputc(prn, '\n');
+    }
+    pputc(prn, '\n');
+
+    return 0;
+}
+
+int complex_matrix_printf (gretl_matrix *A, const char *fmt, PRN *prn)
+{
+    double re, im;
+    char fmtstr[32];
+    char s[3] = "  ";
+    int r, c, i, j;
+
+    if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
+	return E_INVARG;
+    }
+
+    if (fmt == NULL) {
+	fmt = "%7.4f";
+    }
+
+    sprintf(fmtstr, "%s%%s%si", fmt, fmt);
+
+    r = A->rows / 2;
+    c = A->cols;
+
+    for (i=0; i<r; i++) {
+	for (j=0; j<c; j++) {
+	    re = cmatrix_get_re(A, i, j);
+	    im = cmatrix_get_im(A, i, j);
+	    s[1] = (im >= 0) ? '+' : '-';
+	    pprintf(prn, fmtstr, re, s, fabs(im));
 	    if (j < c - 1) {
 		pputs(prn, "  ");
 	    }

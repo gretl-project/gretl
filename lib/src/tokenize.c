@@ -3304,6 +3304,12 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    /* string substitution not yet done */
 	    n = 1;
 	    skipped = 1;
+	} else if (*s == '_') {
+	    /* unassigned call to a hidden function? */
+	    n = 1 + namechar_spn(s+1);
+	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
+	    strncat(tok, s, m);
+	    err = push_string_token(cmd, tok, s, pos);
 	} else {
 	    err = unexpected_symbol_error(*s);
 	}

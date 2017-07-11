@@ -3105,6 +3105,22 @@ static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *cmatrix_printf (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	const char *s = NULL;
+
+	if (r != NULL && r->t == STR) {
+	    s = r->v.str;
+	}
+	ret->v.xval = complex_matrix_printf(l->v.m, s, p->prn);
+    }
+
+    return ret;
+}
+
 static gretl_matrix *node_get_matrix (NODE *n, parser *p)
 {
     if (n->t == U_ADDR) {
@@ -14078,12 +14094,15 @@ static NODE *eval (NODE *t, parser *p)
 	break;	
     case F_FDJAC:
     case F_MWRITE:
+    case HF_CPRINTF:
 	/* matrix, with string as second arg */
 	if (t->t == F_FDJAC && l->t == MAT && r->t == STR) {
 	    ret = numeric_jacobian(l, r, p);
 	} else if (t->t == F_MWRITE && l->t == MAT &&
 		   m->t == STR && empty_or_num(r)) {
 	    ret = matrix_file_write(l, m, r, p);
+	} else if (t->t == HF_CPRINTF && empty_or_string(r)) {
+	    ret = cmatrix_printf(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
