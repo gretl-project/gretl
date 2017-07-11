@@ -611,7 +611,7 @@ static void trash_old_session_files (const char *path)
 
     if (sdir != NULL) {
 	struct dirent *dirent;
-	char tmp[MAXLEN];
+	char tmp[2*MAXLEN];
 	int fnum;
 	
 	while ((dirent = readdir(sdir)) != NULL) {
@@ -639,8 +639,8 @@ static void trash_old_session_files (const char *path)
 static int write_session_xml (const char *datname)
 {
     MODEL *pmod;
-    char fname[MAXLEN];
-    char tmpname[MAXLEN];
+    char fname[2*MAXLEN];
+    char tmpname[2*MAXLEN];
     char *objname, *xmlname;
     FILE *fp, *fq;
     int nmodels;

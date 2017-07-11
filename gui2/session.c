@@ -1314,7 +1314,7 @@ static void sinfo_free_data (struct sample_info *sinfo)
 
 static int set_session_dirname (const char *zdirname)
 {
-    char test[MAXLEN];
+    char test[2*MAXLEN];
     FILE *fp;
     int err = 0;
 
