@@ -456,6 +456,12 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
     return B;
 }
 
+/* Hadamard product for complex matrices that match by both
+   row and column dimension, or we have a row match and one
+   matrix has a single column, or we have a column match and
+   one matrix has a single (complex) row.
+*/
+
 gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 				   const gretl_matrix *B,
 				   int *err)
