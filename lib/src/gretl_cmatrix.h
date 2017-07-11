@@ -20,30 +20,20 @@
 #ifndef GRETL_CMATRIX_H
 #define GRETL_CMATRIX_H
 
-gretl_matrix *gretl_zheev (gretl_array *A, gretl_array *V, int *err);
-
-gretl_array *gretl_zgetri (gretl_array *A, int *err);
-
-gretl_array *gretl_zgemm (gretl_array *A, gretl_array *B, int *err);
-
-int complex_matrix_print (gretl_array *A, PRN *prn);
-
-gretl_array *gretl_complex_fft (gretl_array *A, int inverse, int *err);
-
 gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err);
 
-gretl_matrix *test_zgemm (const gretl_matrix *A, gretl_matrix *B,
-			  int *err);
+gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
+			   int *err);
 
-gretl_matrix *test_zgetri (const gretl_matrix *A, int *err);
+gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err);
 
-gretl_matrix *test_zheev (const gretl_matrix *A, gretl_matrix *V,
-			  int *err);
+gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
+			   int *err);
 
-gretl_matrix *test_complex_fft (const gretl_matrix *A, int inverse,
-				int *err);
+gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
+				 int *err);
 
 gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 			     const gretl_matrix *Im,
@@ -54,6 +44,8 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 
 gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err);
 
-int cmatrix_print (gretl_matrix *A, const char *name, PRN *prn);
+int complex_matrix_print (gretl_matrix *A, const char *name, PRN *prn);
+
+int complex_matrix_printf (gretl_matrix *A, const char *fmt, PRN *prn);
 
 #endif /* GRETL_CMATRIX_H */

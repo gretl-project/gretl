@@ -2376,18 +2376,14 @@ int print_user_var_by_name (const char *name,
 	print_scalar_by_name(name, prn);
     } else if (u->type == GRETL_TYPE_MATRIX) {
 	if (opt & OPT_C) {
-	    err = cmatrix_print(u->ptr, name, prn);
+	    err = complex_matrix_print(u->ptr, name, prn);
 	} else {
 	    gretl_matrix_print_to_prn(u->ptr, name, prn);
 	}
     } else if (u->type == GRETL_TYPE_BUNDLE) {
 	gretl_bundle_print(u->ptr, prn);
     } else if (u->type == GRETL_TYPE_ARRAY) {
-	if (opt & OPT_C) {
-	    err = complex_matrix_print(u->ptr, prn);
-	} else {
-	    gretl_array_print(u->ptr, prn);
-	}
+	gretl_array_print(u->ptr, prn);
     } else if (u->type == GRETL_TYPE_LIST) {
 	gretl_list_print(u->ptr, dset, prn);
     } else if (u->type == GRETL_TYPE_STRING) {

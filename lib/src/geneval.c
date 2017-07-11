@@ -3725,8 +3725,8 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
-#define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT2 || \
-		       f == HF_CINV2 || f == HF_CFFT2 || f == HF_CTRAN)
+#define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT || \
+		       f == HF_CINV || f == HF_CFFT || f == HF_CTRAN)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -3762,8 +3762,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    if (!empty_or_num(r)) {
 		node_type_error(f, 2, NUM, r, p);
 	    }
-	} else if (f == HF_CFFT2) {
-	    /* we need a scalar (boolean) on the right */
+	} else if (f == HF_CFFT) {
+	    /* optional scalar (boolean) on the right */
 	    a = node_get_bool(r, p, 0);
 	} else if (f == F_RANKING) {
 	    if (gretl_vector_get_length(m) == 0) {
@@ -3893,14 +3893,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case HF_CMATRIX:
 	    ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
 	    break;
-	case HF_CMMULT2:
-	    ret->v.m = test_zgemm(m, r->v.m, &p->err);
+	case HF_CMMULT:
+	    ret->v.m = gretl_zgemm(m, r->v.m, &p->err);
 	    break;
-	case HF_CINV2:
-	    ret->v.m = test_zgetri(m, &p->err);
+	case HF_CINV:
+	    ret->v.m = gretl_zgetri(m, &p->err);
 	    break;
-	case HF_CFFT2:
-	    ret->v.m = test_complex_fft(m, a, &p->err);
+	case HF_CFFT:
+	    ret->v.m = gretl_complex_fft(m, a, &p->err);
 	    break;
 	case HF_CTRAN:
 	    ret->v.m = gretl_ctran(m, &p->err);
@@ -4023,14 +4023,14 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	case F_EIGGEN:
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
 	    break;
-	case HF_CEIGH2:
+	case HF_CEIGH:
 	    {
 		gretl_matrix *V = NULL;
 
 		if (r->t != EMPTY) {
 		    V = r->v.m;
 		}
-		ret->v.m = test_zheev(m, V, &p->err);
+		ret->v.m = gretl_zheev(m, V, &p->err);
 	    }
 	    break;
 	}
@@ -4039,108 +4039,6 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
-	}
-    }
-
-    return ret;
-}
-
-static NODE *array_to_matrix_func (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL && starting(p)) {
-	gretl_array *V = NULL;
-	gretl_array *A = l->v.a;
-	const char *rname = NULL;
-
-	if (gretl_array_get_type(A) != GRETL_TYPE_MATRICES ||
-	    gretl_array_get_length(A) != 2) {
-	    p->err = E_INVARG;
-	    goto finalize;
-	}
-
-	gretl_error_clear();
-
-	/* on the right: address of array or null */
-	if (null_or_empty(r)) {
-	    rname = "null";
-	} else {
-	    /* note: switch to the 'content' sub-node */
-	    r = r->v.b1.b;
-	    if (uarray_node(r)) {
-		rname = r->vname;
-		V = r->v.a;
-		if (gretl_array_get_type(V) != GRETL_TYPE_MATRICES) {
-		    p->err = E_INVARG;
-		} else if (gretl_array_get_length(V) != 2) {
-		    /* resize needed */
-		    V = gretl_array_new(GRETL_TYPE_MATRICES, 2, &p->err);
-		}
-	    } else {
-		p->err = E_INVARG;
-	    }
-	    if (p->err) {
-		if (p->err == E_INVARG) {
-		    gretl_errmsg_set("Expected the address of an array of matrices");
-		}
-		return ret;
-	    }
-	}
-
-	switch (f) {
-	case HF_CEIGH:
-	    ret->v.m = gretl_zheev(A, V, &p->err);
-	    break;
-	}
-
-	if (!p->err && V != NULL) {
-	    p->err = user_var_add_or_replace(rname, GRETL_TYPE_ARRAY, V);
-	}
-
-    finalize:
-
-	if (ret->v.m == NULL) {
-	    matrix_error(p);
-	}
-    }
-
-    return ret;
-}
-
-static NODE *array_to_array_func (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = aux_array_node(p);
-
-    if (ret != NULL && starting(p)) {
-	gretl_array *A = l->v.a;
-	gretl_array *B = NULL;
-
-	if (gretl_array_get_type(A) != GRETL_TYPE_MATRICES ||
-	    gretl_array_get_length(A) != 2) {
-	    p->err = E_INVARG;
-	}
-
-	if (f == HF_CMMULT) {
-	    B = r->v.a;
-	    if (gretl_array_get_type(B) != GRETL_TYPE_MATRICES ||
-		gretl_array_get_length(B) != 2) {
-		p->err = E_INVARG;
-	    }
-	}
-
-	if (!p->err) {
-	    switch (f) {
-	    case HF_CINV:
-		ret->v.a = gretl_zgetri(A, &p->err);
-		break;
-	    case HF_CMMULT:
-		ret->v.a = gretl_zgemm(A, B, &p->err);
-		break;
-	    case HF_CFFT:
-		ret->v.a = gretl_complex_fft(A, node_get_int(r, p), &p->err);
-		break;
-	    }
 	}
     }
 
@@ -13554,8 +13452,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
+	} else if (l->t == MAT) {
+	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
-	    p->err = E_TYPES;
+	    node_type_error(t->t, 1, MAT, l, p);
 	}
 	break;
     case F_LLAG:
@@ -14113,8 +14013,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFT:
     case F_FFTI:
     case F_POLROOTS:
-    case HF_CINV2:
-    case HF_CFFT2:
+    case HF_CINV:
+    case HF_CFFT:
     case HF_CTRAN:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
@@ -14153,7 +14053,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_QR:
     case F_EIGSYM:
     case F_EIGGEN:
-    case HF_CEIGH2:
+    case HF_CEIGH:
 	/* matrix -> matrix functions, with indirect return */
 	if (l->t != MAT) {
 	    node_type_error(t->t, 1, MAT, l, p);
@@ -14163,36 +14063,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
-    case HF_CEIGH:
-	if (l->t != ARRAY) {
-	    node_type_error(t->t, 1, ARRAY, l, p);
-	} else if (r->t != U_ADDR && r->t != EMPTY) {
-	    node_type_error(t->t, 2, U_ADDR, r, p);
-	} else {
-	    ret = array_to_matrix_func(l, r, t->t, p);
-	}
-	break;
-    case HF_CINV:
-    case HF_CMMULT:
-	if (l->t != ARRAY) {
-	    node_type_error(t->t, 1, ARRAY, l, p);
-	} else if (r != NULL && r->t != ARRAY) {
-	    node_type_error(t->t, 2, ARRAY, r, p);
-	} else {
-	    ret = array_to_array_func(l, r, t->t, p);
-	}
-	break;	
-    case HF_CFFT:
-	if (l->t != ARRAY) {
-	    node_type_error(t->t, 1, ARRAY, l, p);
-	} else if (r != NULL && r->t != NUM) {
-	    node_type_error(t->t, 2, NUM, r, p);
-	} else {
-	    ret = array_to_array_func(l, r, t->t, p);
-	}
-	break;
     case HF_CMATRIX:
-    case HF_CMMULT2:
+    case HF_CMMULT:
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {

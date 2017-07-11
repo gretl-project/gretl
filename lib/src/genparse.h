@@ -289,7 +289,6 @@ enum {
     F_ECDF,
     F_SLEEP,
     HF_CINV,
-    HF_CINV2,
     HF_CTRAN,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COV,
@@ -309,7 +308,7 @@ enum {
     F_QR,
     F_EIGSYM,	 
     F_EIGGEN,
-    HF_CEIGH2,
+    HF_CEIGH,
     F_FDJAC,
     F_LRVAR,
     F_QUANTILE,
@@ -381,11 +380,8 @@ enum {
     F_NORMTEST,
     F_COR,
     F_STRSCRAPE,
-    HF_CEIGH,
     HF_CMMULT,
-    HF_CMMULT2,
     HF_CFFT,
-    HF_CFFT2,
     HF_CMATRIX,
     HF_CXTRACT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
