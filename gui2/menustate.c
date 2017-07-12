@@ -1097,6 +1097,7 @@ void set_workdir_label (void)
 				      wdir);
 	gtk_label_set_markup(GTK_LABEL(wlabel), buf);
 	g_free(buf);
+	g_free(wdir);
     }
 }
 
