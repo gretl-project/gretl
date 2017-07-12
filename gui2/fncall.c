@@ -39,6 +39,7 @@
 #include "winstack.h"
 #include "treeutils.h"
 #include "gfn_arglists.h"
+#include "fnsave.h"
 #include "fncall.h"
 
 #include <errno.h>
