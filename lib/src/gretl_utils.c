@@ -2011,6 +2011,38 @@ static int maybe_delete_bundle_value (const char *s, PRN *prn)
     return err;
 }
 
+static int maybe_unload_function_package (const char *s,
+					  PRN *prn)
+{
+    char *p, pkgname[FN_NAMELEN+4];
+    const char *path;
+    fnpkg *pkg;
+    int done = 0;
+
+    *pkgname = '\0';
+    strncat(pkgname, s, FN_NAMELEN+3);
+    p = strrchr(pkgname, '.');
+    *p = '\0';
+
+    pkg = get_function_package_by_name(pkgname);
+
+    if (pkg != NULL) {
+	path = get_function_package_path_by_name(pkgname);
+	if (path != NULL) {
+	    function_package_unload_full_by_filename(path);
+	    done = 1;
+	}
+    }
+
+    if (done) {
+	pprintf(prn, "Unloaded package %s\n", pkgname);
+    } else {
+	pprintf(prn, "Package %s was not loaded\n", pkgname);
+    }
+
+    return 0;
+}
+
 /* note: this is not used for series */
 
 int gretl_delete_var_by_name (const char *s, PRN *prn)
@@ -2026,7 +2058,9 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
 	return E_DATA;
     }
 
-    if (gretl_is_user_var(s)) {
+    if (has_suffix(s, ".gfn")) {
+	err = maybe_unload_function_package(s, prn);
+    } else if (gretl_is_user_var(s)) {
 	err = user_var_delete_by_name(s, prn);
     } else {
 	err = maybe_delete_bundle_value(s, prn);

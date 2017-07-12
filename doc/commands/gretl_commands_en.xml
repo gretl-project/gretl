@@ -2728,6 +2728,7 @@
         <altform><lit>delete</lit> <repl>varlist</repl></altform>
         <altform><lit>delete</lit> <repl>varname</repl></altform>
 	<altform><lit>delete --type=</lit><repl>type-name</repl></altform>
+	<altform><lit>delete</lit> <repl>pkgname</repl></altform>
       </altforms>
       <options>
 	<option>
@@ -2739,9 +2740,8 @@
 
     <description>
       <para>
-	This command is an all-purpose destructor for named variables
-	(whether series, scalars, matrices, strings or bundles). It
-	should be used with caution; no confirmation is asked.
+	This command is an all-purpose destructor. It should be used
+	with caution; no confirmation is asked.
       </para>
       <para>
 	In the first form above, <repl>varlist</repl> is a list of
@@ -2768,6 +2768,18 @@
 	<lit>list</lit>, <lit>scalar</lit> or <lit>array</lit>. The
 	effect is to delete all variables of the given type. In this
 	case no argument other than the option should be given.
+      </para>
+      <para>
+	The fourth form can be used to unload a function package.
+	In this case the <lit>.gfn</lit> suffix must be supplied, as
+	in
+      </para>
+      <code>
+	delete somepkg.gfn
+      </code>
+      <para>
+	Note that this does not delete the package file, it just
+	unloads the package from memory.
       </para>
     </description>
 
