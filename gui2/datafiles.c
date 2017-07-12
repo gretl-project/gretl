@@ -826,7 +826,7 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
     gchar *msg = NULL;
     int resp, err = 0;
 
-    if (package_being_edited(pkgname)) {
+    if (package_being_edited(pkgname, NULL)) {
 	warnbox_printf(_("%s: please close this object's window first"),
 		       pkgname);
 	return 0;

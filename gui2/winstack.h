@@ -49,7 +49,8 @@ GtkWidget *get_window_for_data (const gpointer data);
 
 GtkWidget *get_window_for_plot (void *session_plot);
 
-gboolean package_being_edited (const char *pkgname);
+gboolean package_being_edited (const char *pkgname,
+			       GtkWidget **pw);
 
 int get_script_output_number (void);
 

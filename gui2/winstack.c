@@ -1076,7 +1076,7 @@ GtkWidget *get_window_for_plot (void *session_plot)
     return ret;
 }
 
-gboolean package_being_edited (const char *pkgname)
+gboolean package_being_edited (const char *pkgname, GtkWidget **pw)
 {
     gboolean ret = FALSE;
 
@@ -1088,6 +1088,9 @@ gboolean package_being_edited (const char *pkgname)
 	    w = window_from_action((GtkAction *) list->data);
 	    if (window_is_package_editor(w)) {
 		ret = query_package_editor(w, pkgname);
+		if (ret && pw != NULL) {
+		    *pw = w;
+		}
 	    }
 	    list = list->next;
 	}

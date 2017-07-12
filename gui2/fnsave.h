@@ -61,6 +61,8 @@ void revise_function_package (void *p, char **pubnames, int npub,
 
 int query_package_editor (GtkWidget *w, const char *pkgname);
 
+void *package_editor_get_pkg (GtkWidget *w);
+
 int package_editor_exit_check (GtkWidget *w);
 
 void build_package_from_spec_file (windata_t *vwin);

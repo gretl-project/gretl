@@ -3955,10 +3955,17 @@ static int gui_function_pkg_register (const char *fname,
 				      const char *relpath,
 				      int modelwin)
 {
-    fnpkg *pkg;
+    GtkWidget *editor;
+    fnpkg *pkg = NULL;
     int err = 0;
 
-    pkg = get_function_package_by_filename(fname, &err);
+    if (package_being_edited(pkgname, &editor)) {
+	pkg = package_editor_get_pkg(editor);
+    }
+
+    if (pkg == NULL) {
+	pkg = get_function_package_by_filename(fname, &err);
+    }
 
 #if PKG_DEBUG
     fprintf(stderr, "gui_function_pkg_register: %s: err = %d\n", fname, err);

@@ -3528,6 +3528,19 @@ int query_package_editor (GtkWidget *w, const char *pkgname)
     return FALSE;
 }
 
+void *package_editor_get_pkg (GtkWidget *w)
+{
+    function_info *finfo;
+
+    finfo = g_object_get_data(G_OBJECT(w), "finfo");
+
+    if (finfo != NULL && finfo->pkg != NULL) {
+	return (void *) finfo->pkg;
+    }
+
+    return NULL;
+}
+
 static void delete_dlg_callback (GtkWidget *button, function_info *finfo) 
 {
     gint resp = 0;
