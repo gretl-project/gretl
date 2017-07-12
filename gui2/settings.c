@@ -109,6 +109,7 @@ static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor;
 static int tabbed_models;
+static int display_wdir;
 static int script_output_policy;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
@@ -217,63 +218,65 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "tabmodels", N_("Model viewer uses tabs"), NULL, &tabbed_models, 
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt, 
+    { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt,
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
+    { "display_workdir", N_("Display working directory"), NULL, &display_wdir,
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
+    { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
-    { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder, 
+    { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
 #ifdef ENABLE_NLS
-    { "langpref", N_("Language preference"), NULL, langpref, 
+    { "langpref", N_("Language preference"), NULL, langpref,
       LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
     { "graph_scale", N_("Default graph scale"), NULL, &graph_scale,
       LISTSET | FLOATSET, 0, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32 
-    { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
+    { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot,
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
 #endif
-    { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
+    { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32 
-    { "Rbin", N_("Path to R.exe"), NULL, paths.rbinpath, 
+    { "Rbin", N_("Path to R.exe"), NULL, paths.rbinpath,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
-    { "latex", N_("Command to compile TeX files"), NULL, latex, 
+    { "latex", N_("Command to compile TeX files"), NULL, latex,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
-    { "viewps", N_("Command to view postscript files"), NULL, viewps, 
+    { "viewps", N_("Command to view postscript files"), NULL, viewps,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
-    { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf, 
+    { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
-    { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
+    { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer,
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
-    { "calculator", N_("Calculator"), NULL, calculator, 
+    { "calculator", N_("Calculator"), NULL, calculator,
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
-    { "x12a", N_("Path to x12arima"), NULL, paths.x12a, 
+    { "x12a", N_("Path to x12arima"), NULL, paths.x12a,
       MACHSET | BROWSER, sizeof paths.x12a, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
-    { "tramo", N_("Path to tramo"), NULL, paths.tramo, 
+    { "tramo", N_("Path to tramo"), NULL, paths.tramo,
       MACHSET | BROWSER, sizeof paths.tramo, TAB_PROGS, NULL},
 #endif
 #ifdef USE_RLIB
-    { "Rlib", N_("Path to R library"), NULL, paths.rlibpath, 
+    { "Rlib", N_("Path to R library"), NULL, paths.rlibpath,
       MACHSET | BROWSER, sizeof paths.rlibpath, TAB_PROGS, NULL},
 #endif
-    { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath, 
+    { "ox", N_("Path to oxl executable"), NULL, paths.oxlpath,
       MACHSET | BROWSER, sizeof paths.oxlpath, TAB_PROGS, NULL},
-    { "octave", N_("Path to octave executable"), NULL, paths.octpath, 
+    { "octave", N_("Path to octave executable"), NULL, paths.octpath,
       MACHSET | BROWSER, sizeof paths.octpath, TAB_PROGS, NULL},
     { "stata", N_("Path to Stata executable"), NULL, paths.statapath, 
       MACHSET | BROWSER, sizeof paths.statapath, TAB_PROGS, NULL},
-    { "python", N_("Path to Python executable"), NULL, paths.pypath, 
+    { "python", N_("Path to Python executable"), NULL, paths.pypath,
       MACHSET | BROWSER, sizeof paths.pypath, TAB_PROGS, NULL},
-    { "julia", N_("Path to Julia executable"), NULL, paths.jlpath, 
+    { "julia", N_("Path to Julia executable"), NULL, paths.jlpath,
       MACHSET | BROWSER, sizeof paths.jlpath, TAB_PROGS, NULL},
 #ifdef HAVE_MPI
     { "mpiexec", N_("Path to mpiexec"), NULL, paths.mpiexec, 
@@ -442,6 +445,11 @@ int session_prompt_on (void)
 void set_session_prompt (int val)
 {
     session_prompt = val;
+}
+
+int display_workdir (void)
+{
+    return display_wdir;
 }
 
 int get_keep_folder (void)

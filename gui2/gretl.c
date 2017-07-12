@@ -1398,7 +1398,7 @@ static void make_main_window (void)
 	G_TYPE_STRING,
 	G_TYPE_STRING
     };
-    int show_wdir = 1;
+    int show_wdir = display_workdir();
 
     mdata = gretl_viewer_new(MAINWIN, "gretl", NULL);
     if (mdata == NULL) {
