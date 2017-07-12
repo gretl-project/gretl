@@ -506,6 +506,16 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	    R = A;
 	    match = 3;
 	}
+    } else if ((A->cols == 1 && B->rows == 2) ||
+	       (B->cols == 1 && A->rows == 2)) {
+	if (B->cols == 1) {
+	    cr = B->rows;
+	    L = B;
+	    R = A;
+	} else {
+	    cc = B->cols;
+	}
+	match = 4;
     }
 
     if (match == 0) {
@@ -539,12 +549,20 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 		c[k++] = a[j*cr+i] * b[i];
 	    }
 	}
-    } else {
+    } else if (match == 3) {
 	/* b has just one row */
 	k = 0;
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
 		c[k++] = a[j*cr+i] * b[j];
+	    }
+	}
+    } else {
+	/* col vector times row vector */
+	k = 0;
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		c[k++] = a[i] * b[j];
 	    }
 	}
     }
