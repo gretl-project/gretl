@@ -1370,12 +1370,23 @@ static void set_main_window_scale (void)
     }
 }
 
+void show_link_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+    GdkCursor *c;
+
+    c = gdk_cursor_new(GDK_HAND2);
+    gdk_window_set_cursor(window, c);
+    gdk_cursor_unref(c);
+}
+
 static void make_main_window (void) 
 {
 #ifdef MAC_INTEGRATION
     GtkUIManager *mac_mgr;
 #endif
     GtkWidget *box, *dlabel;
+    GtkWidget *wlabel = NULL;
     GtkWidget *align;
     const char *titles[] = {
 	N_("ID #"), 
@@ -1387,6 +1398,7 @@ static void make_main_window (void)
 	G_TYPE_STRING,
 	G_TYPE_STRING
     };
+    int show_wdir = 1;
 
     mdata = gretl_viewer_new(MAINWIN, "gretl", NULL);
     if (mdata == NULL) {
@@ -1426,16 +1438,34 @@ static void make_main_window (void)
     mac_mgr = add_mac_menu();
 #endif
 
+    /* this will hold the list of variables */
+    box = gtk_vbox_new(FALSE, 0);
+
     /* label for name of datafile */
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
     g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
-    /* this will hold the list of variables */
-    box = gtk_vbox_new(FALSE, 0);
+    /* label for working directory? */
+    if (show_wdir) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *ebox = gtk_event_box_new();
 
-    align = gtk_alignment_new(0, 0, 0, 0);
-    gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(align), dlabel);
+	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
+	wlabel = gtk_label_new("");
+	gtk_widget_set_tooltip_text(wlabel, _("Working directory"));
+	g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
+	gtk_container_add(GTK_CONTAINER(ebox), wlabel);
+	gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
+	g_signal_connect(ebox, "button-press-event",
+			 G_CALLBACK(working_dir_dialog), NULL);
+	g_signal_connect(ebox, "enter-notify-event",
+			 G_CALLBACK(show_link_cursor), NULL);
+    } else {
+	align = gtk_alignment_new(0, 0, 0, 0);
+	gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(align), dlabel);
+    }
 
 #if GUI_DEBUG
     fprintf(stderr, " adding main-window listbox...\n");
@@ -1504,6 +1534,10 @@ static void make_main_window (void)
 
     if (winsize && main_x >= 0 && main_y >= 0) {
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
+    }
+
+    if (wlabel != NULL) {
+	set_workdir_label();
     }
 
 #if GUI_DEBUG

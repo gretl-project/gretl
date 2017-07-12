@@ -2763,6 +2763,7 @@ int gui_set_working_dir (char *dirname)
 	delete_from_filelist(FILE_LIST_WDIR, dirname);
     } else {
 	mkfilelist(FILE_LIST_WDIR, dirname);
+	set_workdir_label();
     }
 
     return err;
@@ -2928,6 +2929,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     if (!err) {
 	gtk_widget_destroy(wset->dialog);
+	set_workdir_label();
     }
 }
 
@@ -2956,17 +2958,14 @@ void working_dir_dialog (void)
     add_wdir_content(dialog, &wset);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
-
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-
     button = ok_button(hbox);
     gtk_widget_grab_default(button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_wdir_changes), &wset);
-
     context_help_button(hbox, WORKDIR);
 
     gtk_widget_show_all(dialog);

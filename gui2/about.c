@@ -72,16 +72,6 @@ static void relnotes_callback (GtkWidget *w, gpointer p)
     g_free(fname);
 }
 
-static void show_link_cursor (GtkWidget *w, gpointer p)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-    GdkCursor *c;
-
-    c = gdk_cursor_new(GDK_HAND2);
-    gdk_window_set_cursor(window, c);
-    gdk_cursor_unref(c);
-}
-
 static void show_website (GtkWidget *w, gpointer p)
 {
     if (browser_open(website)) {

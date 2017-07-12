@@ -1080,6 +1080,26 @@ void set_sample_label (DATASET *dset)
     console_record_sample(dataset);
 }
 
+void set_workdir_label (void)
+{
+    GtkWidget *wlabel;
+
+    wlabel = g_object_get_data(G_OBJECT(mdata->main), "wlabel");
+
+    if (wlabel != NULL) {
+	char tmp[MAXLEN];
+	gchar *wdir, *buf;
+
+	strcpy(tmp, gretl_workdir());
+	trim_slash(tmp);
+	wdir = my_filename_to_utf8(tmp);
+	buf = g_markup_printf_escaped("<span color=\"blue\">%s</span>",
+				      wdir);
+	gtk_label_set_markup(GTK_LABEL(wlabel), buf);
+	g_free(buf);
+    }
+}
+
 void action_entry_init (GtkActionEntry *entry)
 {
     entry->stock_id = NULL;
