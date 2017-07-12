@@ -338,24 +338,7 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 
 static void file_open_callback (GtkWidget *w, windata_t *vwin)
 {
-    int tabbed = window_is_tab(vwin);
-    
-    if (!tabbed) {
-	/* Don't proceed unconditionally if there's unsaved
-	   text in a single-script window; this doesn't
-	   apply if we're just opening another tab.
-	*/
-	if (query_save_text(NULL, NULL, vwin)) {
-	    return;
-	}
-    }
-
     file_selector(OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
-
-    if (!tabbed && (vwin->flags & VWIN_CONTENT_CHANGED)) {
-	mark_vwin_content_saved(vwin);
-	vwin_set_filename(vwin, tryfile);
-    }
 }
 
 static void open_pkg_sample (GtkWidget *w, windata_t *vwin)

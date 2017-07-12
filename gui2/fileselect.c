@@ -321,6 +321,63 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
     }
 }
 
+static void script_open_choice (const char *fname, windata_t *vwin,
+				int role, int foreign)
+{
+    gchar *opts[] = {
+	NULL, NULL,
+    };
+    char origname[MAXLEN];
+    char newname[MAXLEN];
+    int save = 0;
+    int *cptr = NULL;
+    gchar *chktext = NULL;
+    int resp;
+
+    gretl_basename(newname, fname, 0);
+    gretl_basename(origname, vwin->fname, 0);
+    opts[0] = g_strdup_printf(_("Open %s in new window"), newname);
+    opts[1] = g_strdup_printf(_("Replace %s"), origname);
+
+    if (vwin_content_changed(vwin)) {
+	save = 1;
+	cptr = &save;
+	chktext = g_strdup_printf(_("Save changes to %s"), origname);
+    }
+
+    resp = radio_dialog_with_check(NULL, _("Open script"),
+				   (const char **) opts, 2, 0, 0,
+				   cptr, _(chktext),
+				   vwin->main);
+
+    if (resp == 0) {
+	/* new window */
+	if (foreign) {
+	    view_script(fname, 1, role);
+	} else {
+	    strcpy(tryfile, fname);
+	    if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
+		strcpy(scriptfile, tryfile);
+		mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+		gretl_set_current_dir(scriptfile);
+	    }
+	}
+    } else if (resp == 1) {
+	/* replace */
+	if (save) {
+	    vwin_save_callback(NULL, vwin);
+	}
+	sourceview_insert_file(vwin, fname);
+	vwin->role = role;
+	mark_vwin_content_saved(vwin);
+	vwin_set_filename(vwin, fname);
+    }
+
+    g_free(opts[0]);
+    g_free(opts[1]);
+    g_free(chktext);
+}
+
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
     int role = EDIT_SCRIPT;
@@ -352,11 +409,11 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
     }
     
     if (vwin != NULL && !window_is_tab(vwin)) {
-	/* we're called from an existing (and untabbed) script 
-	   editor window */
-	strcpy(tryfile, fname);
-	sourceview_insert_file(vwin, fname);
-	vwin->role = role;
+	/* We're called from an existing (and untabbed) script
+	   editor window: give choice of opening a new window
+	   or replacing the current file.
+	*/
+	script_open_choice(fname, vwin, role, foreign);
     } else if (foreign) {
 	view_script(fname, 1, role);
     } else {
@@ -807,17 +864,18 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
     }
 }
 
-static void filesel_add_filter (GtkWidget *filesel,
-				const char *desc, 
-				const char *pat)
+static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
+					  const char *desc,
+					  const char *pat)
 {
     GtkFileFilter *filt = gtk_file_filter_new();
 
     gtk_file_filter_set_name(filt, _(desc));
     gtk_file_filter_add_pattern(filt, pat);
     maybe_upcase_filter_pattern(filt, pat);
-
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
+
+    return filt;
 }
 
 static void filesel_add_native_data_filter (GtkWidget *filesel)
@@ -830,6 +888,28 @@ static void filesel_add_native_data_filter (GtkWidget *filesel)
     gtk_file_filter_add_pattern(filt, "*.gdtb");
 
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
+}
+
+static int script_filter_index (int role)
+{
+    int filtmap[7][2] = {
+	{EDIT_R, 1},
+	{EDIT_GP, 2},
+	{EDIT_OCTAVE, 3},
+	{EDIT_PYTHON, 4},
+	{EDIT_JULIA, 5},
+	{EDIT_OX, 6},
+	{EDIT_STATA, 7},
+    };
+    int i;
+
+    for (i=0; i<7; i++) {
+	if (role == filtmap[i][0]) {
+	    return filtmap[i][1];
+	}
+    }
+
+    return 0;
 }
 
 /* return non-zero if we add more than one selectable filter */
@@ -866,14 +946,21 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("JMulTi files (*.dat)"), "*.dat");
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
     } else if (action == OPEN_SCRIPT) {
-	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
-	filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R");
-	filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt");
-	filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m");
-	filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py");
-	filesel_add_filter(filesel, N_("Julia files (*.jl)"), "*.jl");
-	filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
-	filesel_add_filter(filesel, N_("Stata files (*.do)"), "*.do");
+	GtkFileFilter *flt[8] = {0};
+	int fidx;
+
+	flt[0] = filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
+	flt[1] = filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R");
+	flt[2] = filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt");
+	flt[3] = filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m");
+	flt[4] = filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py");
+	flt[5] = filesel_add_filter(filesel, N_("Julia files (*.jl)"), "*.jl");
+	flt[6] = filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
+	flt[7] = filesel_add_filter(filesel, N_("Stata files (*.do)"), "*.do");
+	fidx = script_filter_index(role);
+	if (fidx > 0) {
+	    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt[fidx]);
+	}
     } else if (action == OPEN_LABELS || action == OPEN_BARS) {
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
