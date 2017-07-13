@@ -2782,6 +2782,7 @@ struct wdir_setter {
     GtkWidget *wdir_combo;
     GtkWidget *cwd_radio;
     GtkWidget *keep_radio;
+    GtkWidget *show_check;
 };
 
 /* callback from the file selector */
@@ -2897,6 +2898,16 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
+    /* check box for show working dir in main */
+    vbox_add_hsep(vbox);
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_check_button_new_with_label(_("Show working directory in "
+					  "main window"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), display_wdir);
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    wset->show_check = w;
+
     g_list_foreach(list, (GFunc) free_fname, NULL);
     g_list_free(list);
     g_free(deflt);
@@ -2934,6 +2945,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));
     keep_folder = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->keep_radio));
+    display_wdir = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->show_check));
 
     if (!err) {
 	gtk_widget_destroy(wset->dialog);
