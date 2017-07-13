@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-07-13 11:45-0400\n"
-"PO-Revision-Date: 2017-07-06 10:54-0300\n"
+"PO-Revision-Date: 2017-07-13 14:25-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1449,8 +1449,7 @@ msgstr "O comando 'dataset' não pode ser utilizado dentro de funções"
 
 #: lib/src/dataset.c:3372
 msgid "Sorry, this command is not available in loop mode\n"
-msgstr ""
-"Infelizmente este comando não está disponível em modo de ciclo (\"loop\").\n"
+msgstr "Infelizmente este comando não está disponível em modo de loop.\n"
 
 #: lib/src/dataset.c:3387
 msgid "The data set is currently sub-sampled"
@@ -1714,7 +1713,7 @@ msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
 msgstr ""
-"omega  frequência escalada  períodos  logaritmo da densidade espectral\n"
+" omega  frequência escalada  períodos  logaritmo da densidade espectral\n"
 "\n"
 
 #: lib/src/describe.c:3949
@@ -1722,7 +1721,7 @@ msgid ""
 " omega  scaled frequency  periods  spectral density\n"
 "\n"
 msgstr ""
-"omega frequência em escala períodos densidade espectral\n"
+" omega frequência em escala períodos densidade espectral\n"
 "\n"
 
 #: lib/src/describe.c:4014
@@ -2036,7 +2035,7 @@ msgstr "Distâncias gravadas como '%s'"
 
 #: lib/src/describe.c:6286
 msgid "illegal negative value"
-msgstr "valor negativo ilegal "
+msgstr "valor negativo ilegal"
 
 #: lib/src/describe.c:6393
 msgid "Lorenz curve"
@@ -3235,7 +3234,7 @@ msgstr "Erro ao gerar variáveis defasadas"
 
 #: lib/src/gretl_errors.c:64
 msgid "Attempting to take square root of negative number"
-msgstr "Tentando obter raiz quadrada de número negativo "
+msgstr "Tentando obter raiz quadrada de número negativo"
 
 #: lib/src/gretl_errors.c:65
 msgid "Excessive exponent in genr formula"
@@ -3691,7 +3690,7 @@ msgstr "Teste de não-linearidade (quadrados)"
 #: lib/src/gretl_model.c:3939 lib/src/gretl_model.c:3942
 #: lib/src/gretl_model.c:3963
 msgid "heteroskedasticity not present"
-msgstr "sem heteroscedasticidade "
+msgstr "sem heteroscedasticidade"
 
 #: lib/src/gretl_model.c:3944 lib/src/modelprint.c:432
 msgid "Sargan over-identification test"
@@ -4527,7 +4526,7 @@ msgstr "Modelo escrito em %s\n"
 
 #: lib/src/interact.c:2591
 msgid "You can't end a loop here, you haven't started one\n"
-msgstr "Não pode terminar um ciclo (\"loop\") aqui, nenhum foi iniciado\n"
+msgstr "Não pode terminar um loop aqui, nenhum foi iniciado\n"
 
 #: lib/src/interact.c:2856
 #, c-format
@@ -4549,7 +4548,7 @@ msgstr "Não foi possível formatar o modelo\n"
 #: lib/src/interact.c:3252 cli/gretlcli.c:1290 cli/gretlcli-mpi.c:894
 #: gui2/library.c:10094
 msgid "Infinite loop detected in script\n"
-msgstr "Ciclo (\"loop\") infinito detectado no script\n"
+msgstr "Loop infinito detectado no script\n"
 
 #: lib/src/interact.c:3291 cli/gretlcli.c:846 cli/gretlcli-mpi.c:527
 #, c-format
@@ -5258,7 +5257,7 @@ msgstr "Não foi possível calcular os erros padrão de Beck-Katz"
 
 #: lib/src/modelprint.c:1435
 msgid "Could not compute robust standard errors"
-msgstr "Não foi possível "
+msgstr "Não foi possível"
 
 #: lib/src/modelprint.c:1443
 msgid "Bartlett kernel"
@@ -5270,7 +5269,7 @@ msgstr "Núcleo de Parzen"
 
 #: lib/src/modelprint.c:1445
 msgid "QS kernel"
-msgstr "Núcleo QS "
+msgstr "Núcleo QS"
 
 #: lib/src/modelprint.c:1449
 #, c-format
@@ -5997,7 +5996,7 @@ msgstr "'%s': não é um escalar"
 #: lib/src/monte_carlo.c:356 lib/src/monte_carlo.c:402
 #: lib/src/monte_carlo.c:440 lib/src/monte_carlo.c:2854
 msgid "error evaluating loop condition"
-msgstr "erro ao avaliar a condição de ciclo (\"loop\")"
+msgstr "erro ao avaliar a condição de loop"
 
 #: lib/src/monte_carlo.c:717
 #, c-format
@@ -6010,7 +6009,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:1413
 msgid "No valid loop condition was given."
-msgstr "Não foi dada uma condição válida para o ciclo (\"loop\")."
+msgstr "Não foi dada uma condição válida para o loop."
 
 #: lib/src/monte_carlo.c:1502 lib/src/monte_carlo.c:1510
 #, c-format
@@ -6024,12 +6023,11 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:2173
 msgid "progressive loop: model must be of constant size"
-msgstr "Ciclo (\"loop\") progressivo: modelo deve ser de tamanho constante"
+msgstr "Loop progressivo: modelo deve ser de tamanho constante"
 
 #: lib/src/monte_carlo.c:2354
 msgid "Sorry, this command is not available in loop mode"
-msgstr ""
-"Lamentamos, mas este comando não está disponível em modo de ciclo (\"loop\")"
+msgstr "Lamentamos, mas este comando não está disponível em modo de loop"
 
 #: lib/src/monte_carlo.c:2489
 #, c-format
@@ -6095,7 +6093,7 @@ msgstr "deletar %s: não permitido\n"
 #: lib/src/monte_carlo.c:3659
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
-msgstr "'%s' : não está implementado em ciclos (\"loop\") 'progressivos'"
+msgstr "'%s' : não está implementado em loops 'progressivos'"
 
 #: lib/src/nls.c:256
 #, c-format
@@ -6448,7 +6446,7 @@ msgstr "A opção '--%s' requer um parâmetro"
 #: lib/src/options.c:1718
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
-msgstr "Aviso: opção%s ignorada fora do ciclo (\"loop\")"
+msgstr "Aviso: opção%s ignorada fora do loop"
 
 #: lib/src/options.c:1828
 #, c-format
@@ -6793,7 +6791,7 @@ msgstr "previsão"
 
 #: lib/src/printout.c:2806
 msgid " std. error"
-msgstr "erro padrão"
+msgstr " erro padrão"
 
 #: lib/src/printout.c:2807
 #, c-format
@@ -7037,7 +7035,7 @@ msgstr "o conjunto de dados é subamostrado, o modelo não\n"
 
 #: lib/src/subsample.c:2968 lib/src/subsample.c:2969
 msgid "model is subsampled, dataset is not\n"
-msgstr " o modelo é subamostrado, o conjunto de dados não\n"
+msgstr "o modelo é subamostrado, o conjunto de dados não\n"
 
 #: lib/src/subsample.c:2976
 msgid "model and dataset subsamples not the same\n"
@@ -7782,8 +7780,7 @@ msgstr "O comando '%s' foi ignorado; não é válido em um sistema de equações
 
 #: cli/gretlcli.c:1168 gui2/library.c:9951
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr ""
-"Inserir instruções para ciclo (\"loop\"). Escrever 'endloop' para sair\n"
+msgstr "Inserir instruções para loop. Escrever 'endloop' para sair\n"
 
 #: cli/gretlcli.c:1209 gui2/library.c:7163 gui2/library.c:10014
 msgid "Take note: variables have been renumbered"
@@ -7990,7 +7987,7 @@ msgstr ""
 #: gui2/calculator.c:1560 gui2/calculator.c:1570
 #, c-format
 msgid " standard error of mean = %g\n"
-msgstr "erro padrão da média = %g\n"
+msgstr " erro padrão da média = %g\n"
 
 #: gui2/calculator.c:1562 gui2/calculator.c:1572
 #, c-format
@@ -9448,54 +9445,44 @@ msgid "plain text"
 msgstr "texto simples"
 
 #: gui2/dialogs.c:923
-#, fuzzy
 msgid "Copy as plain text"
-msgstr "texto simples"
+msgstr "Copiar como texto simples"
 
 #: gui2/dialogs.c:924
-#, fuzzy
 msgid "Copy as tab-separated"
-msgstr "Separado por vírgulas"
+msgstr "Copiar como arquivo separado por vírgulas"
 
 #: gui2/dialogs.c:925
-#, fuzzy
 msgid "Copy as comma-separated"
-msgstr "Separado por vírgulas"
+msgstr "Copiar como arquivo separado por vírgulas"
 
 #: gui2/dialogs.c:926
-#, fuzzy
 msgid "Copy as LaTeX"
-msgstr "Copiar como:"
+msgstr "Copiar como LaTex"
 
 #: gui2/dialogs.c:927
-#, fuzzy
 msgid "Copy as RTF"
-msgstr "Copiar como:"
+msgstr "Copiar como RTF"
 
 #: gui2/dialogs.c:930
-#, fuzzy
 msgid "Save as plain text"
-msgstr "texto simples"
+msgstr "Salvar como texto simples"
 
 #: gui2/dialogs.c:931
-#, fuzzy
 msgid "Save as tab-separated"
-msgstr "Separado por tabulações"
+msgstr "Salvar como arquivo separado por tabulações"
 
 #: gui2/dialogs.c:932
-#, fuzzy
 msgid "Save as comma-separated"
-msgstr "Separado por vírgulas"
+msgstr "Salvar como arquivo separado por vírgulas"
 
 #: gui2/dialogs.c:933
-#, fuzzy
 msgid "Save as LaTeX"
-msgstr "Salvar como TeX..."
+msgstr "Salvar como LaTeX"
 
 #: gui2/dialogs.c:934
-#, fuzzy
 msgid "Save as RTF"
-msgstr "Salvar como"
+msgstr "Salvar como RTF"
 
 #: gui2/dialogs.c:1111 gui2/library.c:2156
 msgid "gretl: bootstrap analysis"
@@ -10209,24 +10196,23 @@ msgid "right-click for some shortcuts"
 msgstr "clique com o botão direito para acessar atalhos"
 
 #: gui2/fileselect.c:339
-#, fuzzy, c-format
+#, c-format
 msgid "Open %s in new window"
-msgstr "﻿Ir para uma nova janela"
+msgstr "Abri %s em uma nova janela"
 
 #: gui2/fileselect.c:340
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "Substituído"
+msgstr "Substituir %s"
 
 #: gui2/fileselect.c:345
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to %s"
-msgstr "Salvar alterações?"
+msgstr "Salvar alterações para %s"
 
 #: gui2/fileselect.c:348
-#, fuzzy
 msgid "Open script"
-msgstr "Abrir arquivo de comandos (\"script\")"
+msgstr "Abrir script"
 
 #: gui2/fileselect.c:883
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
@@ -11226,7 +11212,7 @@ msgstr "gretl: dados do diagrama de caixa"
 
 #: gui2/gpt_control.c:3926
 msgid " Drag to define zoom rectangle"
-msgstr "Arrastar para definir área de ampliação"
+msgstr " Arrastar para definir área de ampliação"
 
 #: gui2/gpt_control.c:3937 gui2/gpt_control.c:4032
 msgid "Add another curve..."
@@ -11726,12 +11712,11 @@ msgstr "Descrição"
 
 #: gui2/gretl.c:1445 gui2/menustate.c:878
 msgid " No datafile loaded "
-msgstr " Nenhum arquivo de dados carregado"
+msgstr " Nenhum arquivo de dados carregado "
 
 #: gui2/gretl.c:1456
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "Diretório de trabalho:"
+msgstr "Diretório de trabalho: clique para configurar"
 
 #: gui2/gretl.c:1561 gui2/gretl.c:1573
 msgid "_User file..."
@@ -12827,14 +12812,14 @@ msgstr "Obs."
 msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
-msgstr " Para intervalos de confiança de %g\\%%, $z(%g) = %.2f\n"
+msgstr "Para intervalos de confiança de %g\\%%, $z(%g) = %.2f\n"
 
 #: gui2/guiprint.c:1696
 #, c-format
 msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
-msgstr " Para intervalos de confiança de %g\\%%, t(%d, %g) = %.3f\n"
+msgstr "Para intervalos de confiança de %g\\%%, t(%d, %g) = %.3f\n"
 
 #: gui2/guiprint.c:1716
 #, c-format
@@ -13090,7 +13075,7 @@ msgstr "Opções de _equações"
 
 #: gui2/gui_utils.c:341
 msgid "_Tabular options..."
-msgstr "Opções de _tabulações"
+msgstr "Opções de _tabulação"
 
 #: gui2/gui_utils.c:345
 msgid "Show _standard errors"
@@ -14685,9 +14670,8 @@ msgid "Display components"
 msgstr "Mostrar componentes"
 
 #: gui2/menustate.c:571
-#, fuzzy
 msgid "Plot components"
-msgstr "Todos os componentes"
+msgstr "Gráfico dos componentes"
 
 #: gui2/menustate.c:572
 msgid "Edit components"
@@ -14723,7 +14707,7 @@ msgstr "%s: Intervalo completo %s - %s"
 
 #: gui2/menustate.c:1069
 msgid " Unsaved data "
-msgstr "Dados não gravados"
+msgstr " Dados não gravados"
 
 #: gui2/model_table.c:82
 msgid "Model table is full"
@@ -16017,9 +16001,8 @@ msgid "Prompt to save session"
 msgstr "Avisar para salvar sessão"
 
 #: gui2/settings.c:223
-#, fuzzy
 msgid "Display working directory"
-msgstr "gretl: diretório de trabalho"
+msgstr "Mostrar diretório de trabalho"
 
 #: gui2/settings.c:225
 msgid "Set working directory from shell"
@@ -16313,14 +16296,12 @@ msgid "always start in the working directory"
 msgstr "sempre iniciar no diretório de trabalho"
 
 #: gui2/settings.c:2916
-#, fuzzy
 msgid "Show working directory in main window"
-msgstr "Definir o diretório de trabalho a partir da linha de comandos"
+msgstr "Mostrar diretório de trabalho na janela principal"
 
 #: gui2/settings.c:2926
-#, fuzzy
 msgid "Open working directory"
-msgstr "diretório de trabalho atual"
+msgstr "Abrir diretório de trabalho"
 
 #: gui2/settings.c:2995
 msgid "gretl: working directory"
