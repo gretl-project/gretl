@@ -2918,7 +2918,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 { 
     char tmp[MAXLEN];
     gchar *str;
-    int err;
+    int dw, err;
 
     str = combo_box_get_active_text(GTK_COMBO_BOX(wset->wdir_combo));
     *tmp = '\0';
@@ -2945,7 +2945,12 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));
     keep_folder = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->keep_radio));
-    display_wdir = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->show_check));
+    dw = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->show_check));
+
+    if (dw != display_wdir) {
+	display_wdir = dw;
+	infobox(_("This change will take effect when you restart gretl"));
+    }
 
     if (!err) {
 	gtk_widget_destroy(wset->dialog);
