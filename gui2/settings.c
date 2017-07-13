@@ -2783,6 +2783,7 @@ struct wdir_setter {
     GtkWidget *cwd_radio;
     GtkWidget *keep_radio;
     GtkWidget *show_check;
+    GtkWidget *ok_button;
 };
 
 /* callback from the file selector */
@@ -2807,6 +2808,17 @@ static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
 
     file_selector_with_parent(SET_WDIR, FSEL_DATA_MISC, combo, 
 			      wset->dialog);
+}
+
+static void open_wdir (GtkButton *b, gpointer p)
+{
+#if defined(G_OS_WIN32)
+    win32_open_file(gretl_workdir());
+#elif defined(OS_OSX)
+    osx_open_file(gretl_workdir());
+#else
+    gretl_fork("xdg-open", gretl_workdir(), NULL);
+#endif
 }
 
 static void free_fname (gchar *s, gpointer p)
@@ -2908,6 +2920,14 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     wset->show_check = w;
 
+    /* button to open working directory via OS */
+    vbox_add_hsep(vbox);
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_button_new_with_label(_("Open working directory"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    g_signal_connect(w, "clicked", G_CALLBACK(open_wdir), NULL);
+
     g_list_foreach(list, (GFunc) free_fname, NULL);
     g_list_free(list);
     g_free(deflt);
@@ -2953,7 +2973,9 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     }
 
     if (!err) {
-	gtk_widget_destroy(wset->dialog);
+	if (w == wset->ok_button) {
+	    gtk_widget_destroy(wset->dialog);
+	}
 	set_workdir_label();
     }
 }
@@ -2983,14 +3005,21 @@ void working_dir_dialog (void)
     add_wdir_content(dialog, &wset);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    button = apply_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(apply_wdir_changes), &wset);
+
     button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-    button = ok_button(hbox);
+
+    wset.ok_button = button = ok_button(hbox);
     gtk_widget_grab_default(button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_wdir_changes), &wset);
+
     context_help_button(hbox, WORKDIR);
 
     gtk_widget_show_all(dialog);
