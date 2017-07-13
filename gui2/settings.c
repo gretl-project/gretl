@@ -109,7 +109,7 @@ static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor;
 static int tabbed_models;
-static int display_wdir;
+static int display_wdir = 1;
 static int wdir_tooltip = 1;
 static int script_output_policy;
 char gpcolors[64];
