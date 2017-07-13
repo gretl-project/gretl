@@ -1089,10 +1089,16 @@ void set_workdir_label (void)
     if (wlabel != NULL) {
 	char tmp[MAXLEN];
 	gchar *wdir, *buf;
+	int len;
 
 	strcpy(tmp, gretl_workdir());
 	trim_slash(tmp);
 	wdir = my_filename_to_utf8(tmp);
+	len = g_utf8_strlen(wdir, -1);
+	if (len > 40) {
+	    gretl_utf8_truncate(wdir, 37);
+	    strncat(wdir, "...", 3);
+	}
 	buf = g_markup_printf_escaped("<span color=\"blue\">%s</span>",
 				      wdir);
 	gtk_label_set_markup(GTK_LABEL(wlabel), buf);
