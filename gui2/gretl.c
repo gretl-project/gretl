@@ -1453,7 +1453,8 @@ static void make_main_window (void)
 	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
 	wlabel = gtk_label_new("");
-	gtk_widget_set_tooltip_text(wlabel, _("Working directory"));
+	gtk_widget_set_tooltip_text(wlabel, _("Working directory: click "
+					      "to configure"));
 	g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
 	gtk_container_add(GTK_CONTAINER(ebox), wlabel);
 	gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
