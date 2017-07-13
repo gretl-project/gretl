@@ -62,6 +62,8 @@ void set_session_prompt (int val);
 
 int display_workdir (void);
 
+int show_workdir_tooltip (void);
+
 int get_keep_folder (void);
 
 void set_script_output_policy (int p, windata_t *vwin);
@@ -98,7 +100,9 @@ const char *get_fixed_fontname (void);
 
 void get_default_dir_for_action (char *s, int action);
 
-void working_dir_dialog (void);
+void workdir_dialog0 (void);
+
+void workdir_dialog1 (void);
 
 int gui_set_working_dir (char *dirname);
 

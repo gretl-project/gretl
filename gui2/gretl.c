@@ -1453,13 +1453,15 @@ static void make_main_window (void)
 	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
 	wlabel = gtk_label_new("");
-	gtk_widget_set_tooltip_text(wlabel, _("Working directory: click "
-					      "to configure"));
+	if (show_workdir_tooltip()) {
+	    gtk_widget_set_tooltip_text(wlabel, _("Working directory: "
+						  "click to configure"));
+	}
 	g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
 	gtk_container_add(GTK_CONTAINER(ebox), wlabel);
 	gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
 	g_signal_connect(ebox, "button-press-event",
-			 G_CALLBACK(working_dir_dialog), NULL);
+			 G_CALLBACK(workdir_dialog1), NULL);
 	g_signal_connect(ebox, "enter-notify-event",
 			 G_CALLBACK(show_link_cursor), NULL);
     } else {
@@ -1568,7 +1570,7 @@ GtkActionEntry main_entries[] = {
     { "NewData", GTK_STOCK_NEW, N_("_New data set"), NULL, NULL, G_CALLBACK(newdata_callback) },
     { "ClearData", GTK_STOCK_CLEAR, N_("C_lear data set"), NULL, NULL, G_CALLBACK(verify_clear_data) },
 
-    { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(working_dir_dialog) },
+    { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(workdir_dialog0) },
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
     { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },

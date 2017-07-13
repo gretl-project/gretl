@@ -110,6 +110,7 @@ static int keep_folder = 1;
 static int tabbed_editor;
 static int tabbed_models;
 static int display_wdir;
+static int wdir_tooltip = 1;
 static int script_output_policy;
 char gpcolors[64];
 static char datapage[24] = "Gretl";
@@ -222,6 +223,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "display_workdir", N_("Display working directory"), NULL, &display_wdir,
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
+    { "workdir_tooltip", N_("Working directory tooltip"), NULL, &wdir_tooltip,
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
@@ -450,6 +453,11 @@ void set_session_prompt (int val)
 int display_workdir (void)
 {
     return display_wdir;
+}
+
+int show_workdir_tooltip (void)
+{
+    return wdir_tooltip;
 }
 
 int get_keep_folder (void)
@@ -2980,7 +2988,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     }
 }
 
-void working_dir_dialog (void) 
+static void workdir_dialog (int from_wlabel)
 {
     static GtkWidget *dialog;
     struct wdir_setter wset;
@@ -3022,7 +3030,25 @@ void working_dir_dialog (void)
 
     context_help_button(hbox, WORKDIR);
 
+    /* We'll assume that once the user has called this dialog
+       by clicking on the working dir label, the toolip for
+       that label becomes redundant.
+    */
+    if (from_wlabel) {
+	wdir_tooltip = 0;
+    }
+
     gtk_widget_show_all(dialog);
+}
+
+void workdir_dialog0 (void)
+{
+    workdir_dialog(0);
+}
+
+void workdir_dialog1 (void)
+{
+    workdir_dialog(1);
 }
 
 #if defined(MAC_THEMING)
