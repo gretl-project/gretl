@@ -955,6 +955,39 @@ static int libset_get_scalar (const char *var, const char *arg,
     return err;
 }
 
+static int libset_get_unsigned (const char *arg, unsigned int *pu)
+{
+    unsigned long lu = 0;
+    char *test = NULL;
+    double x = NADBL;
+    int err = 0;
+
+    errno = 0;
+    lu = strtoul(arg, &test, 10);
+
+    if (*test == '\0' && errno == 0) {
+	if (lu <= UINT_MAX) {
+	    *pu = (unsigned) lu;
+	    return 0;
+	} else {
+	    return E_DATA;
+	}
+    }
+
+    x = get_scalar_value_by_name(arg, &err);
+    if (err) {
+	return err;
+    }
+
+    if (x < 0.0 || na(x) || x > (double) UINT_MAX) {
+	err = E_DATA;
+    } else {
+	*pu = (unsigned) x;
+    }
+
+    return err;
+}
+
 static int parse_hc_variant (const char *s)
 {
     int i;
@@ -1629,6 +1662,7 @@ int execute_set (const char *setobj, const char *setarg,
 		 DATASET *dset, gretlopt opt, PRN *prn)
 {
     int k, argc, err;
+    unsigned int u;
 
     check_for_state();
 
@@ -1724,14 +1758,14 @@ int execute_set (const char *setobj, const char *setarg,
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "seed")) {
-	    err = libset_get_scalar(NULL, setarg, &k, NULL);
+	    err = libset_get_unsigned(setarg, &u);
 	    if (!err) {
-		gretl_rand_set_seed((unsigned int) k);
+		gretl_rand_set_seed(u);
 		if (gretl_messages_on() && !gretl_looping_quietly()) {
 		    pprintf(prn, 
-			    _("Pseudo-random number generator seeded with %d\n"), k);
+			    _("Pseudo-random number generator seeded with %u\n"), u);
 		}
-		state->seed = k;
+		state->seed = u;
 		seed_is_set = 1;
 	    }
 	} else if (!strcmp(setobj, HORIZON)) {
