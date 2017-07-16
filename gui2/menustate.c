@@ -1090,7 +1090,7 @@ void set_workdir_label (void)
 	char tmp[MAXLEN];
 	gchar *wdir, *buf;
 	int len;
-	const char fmt[] = "<span color=\"blue\" underline=\"single\">%s</span>";
+	const char fmt[] = "<span color=\"blue\">%s</span>";
 	strcpy(tmp, gretl_workdir());
 	trim_slash(tmp);
 	wdir = my_filename_to_utf8(tmp);
