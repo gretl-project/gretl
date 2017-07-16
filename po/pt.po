@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-07-13 11:45-0400\n"
-"PO-Revision-Date: 2017-07-08 18:39+0100\n"
+"PO-Revision-Date: 2017-07-14 22:42+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: PT\n"
 "Language: pt\n"
@@ -3590,7 +3590,7 @@ msgstr "mensal"
 
 #: lib/src/gretl_midas.c:207
 msgid "daily"
-msgstr ""
+msgstr "diária"
 
 #: lib/src/gretl_midas.c:2091
 #, c-format
@@ -7862,7 +7862,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 8 de julho de 2017."
+"Tradução de 14 de julho de 2017."
 
 #: gui2/about.c:193
 msgid "News"
@@ -9451,54 +9451,45 @@ msgid "plain text"
 msgstr "texto simples"
 
 #: gui2/dialogs.c:923
-#, fuzzy
 msgid "Copy as plain text"
-msgstr "texto simples"
+msgstr "Copiar como texto simples"
 
 #: gui2/dialogs.c:924
-#, fuzzy
 msgid "Copy as tab-separated"
-msgstr "Separado por vírgulas"
+msgstr "Copiar como separado por tabulações"
 
 #: gui2/dialogs.c:925
-#, fuzzy
 msgid "Copy as comma-separated"
-msgstr "Separado por vírgulas"
+msgstr "Copiar como separado por vírgulas"
 
 #: gui2/dialogs.c:926
-#, fuzzy
 msgid "Copy as LaTeX"
-msgstr "Copiar como:"
+msgstr "Copiar como LaTeX"
 
 #: gui2/dialogs.c:927
 #, fuzzy
 msgid "Copy as RTF"
-msgstr "Copiar como:"
+msgstr "Copiar como RTF"
 
 #: gui2/dialogs.c:930
-#, fuzzy
 msgid "Save as plain text"
-msgstr "texto simples"
+msgstr "Gravar como texto simples"
 
 #: gui2/dialogs.c:931
-#, fuzzy
 msgid "Save as tab-separated"
-msgstr "Separado por tabulações"
+msgstr "Gravar como separado por tabulações"
 
 #: gui2/dialogs.c:932
-#, fuzzy
 msgid "Save as comma-separated"
-msgstr "Separado por vírgulas"
+msgstr "Gravar como separado por vírgulas"
 
 #: gui2/dialogs.c:933
-#, fuzzy
 msgid "Save as LaTeX"
-msgstr "Gravar como TeX..."
+msgstr "Gravar como LaTeX"
 
 #: gui2/dialogs.c:934
-#, fuzzy
 msgid "Save as RTF"
-msgstr "Gravar como"
+msgstr "Gravar como RTF"
 
 #: gui2/dialogs.c:1111 gui2/library.c:2156
 msgid "gretl: bootstrap analysis"
@@ -10212,24 +10203,23 @@ msgid "right-click for some shortcuts"
 msgstr "clicar com o botão direito para alguns atalhos"
 
 #: gui2/fileselect.c:339
-#, fuzzy, c-format
+#, c-format
 msgid "Open %s in new window"
-msgstr "Ir para uma nova janela"
+msgstr "Abrir %s numa nova janela"
 
 #: gui2/fileselect.c:340
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "Substituído"
+msgstr "Substituir %s"
 
 #: gui2/fileselect.c:345
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to %s"
-msgstr "Gravar alterações?"
+msgstr "Gravar alterações em %s"
 
 #: gui2/fileselect.c:348
-#, fuzzy
 msgid "Open script"
-msgstr "nova sequência de comandos"
+msgstr "Abrir sequência de comandos"
 
 #: gui2/fileselect.c:883
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
@@ -11731,9 +11721,8 @@ msgid " No datafile loaded "
 msgstr " Nenhum ficheiro de dados carregado"
 
 #: gui2/gretl.c:1456
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "Directoria de trabalho:"
+msgstr "Directoria de trabalho: clicar para configurar"
 
 #: gui2/gretl.c:1561 gui2/gretl.c:1573
 msgid "_User file..."
@@ -14688,9 +14677,8 @@ msgid "Display components"
 msgstr "Mostrar componentes"
 
 #: gui2/menustate.c:571
-#, fuzzy
 msgid "Plot components"
-msgstr "Todas as componentes"
+msgstr "Desenhar componentes"
 
 #: gui2/menustate.c:572
 msgid "Edit components"
@@ -16022,9 +16010,8 @@ msgid "Prompt to save session"
 msgstr "Perguntar se se deve gravar a sessão"
 
 #: gui2/settings.c:223
-#, fuzzy
 msgid "Display working directory"
-msgstr "gretl: directoria de trabalho"
+msgstr "Mostrar a directoria de trabalho"
 
 #: gui2/settings.c:225
 msgid "Set working directory from shell"
@@ -16318,14 +16305,12 @@ msgid "always start in the working directory"
 msgstr "iniciar sempre na directoria de trabalho"
 
 #: gui2/settings.c:2916
-#, fuzzy
 msgid "Show working directory in main window"
-msgstr "Definir a directoria de trabalho a partir da linha de comandos"
+msgstr "Mostrar a directoria de trabalho na janela principal"
 
 #: gui2/settings.c:2926
-#, fuzzy
 msgid "Open working directory"
-msgstr "diretoria de trabalho atual"
+msgstr "Abrir a diretoria de trabalho"
 
 #: gui2/settings.c:2995
 msgid "gretl: working directory"

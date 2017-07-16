@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-07-13 11:45-0400\n"
-"PO-Revision-Date: 2017-07-06 16:31+0200\n"
+"PO-Revision-Date: 2017-07-15 16:28+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -9441,54 +9441,44 @@ msgid "plain text"
 msgstr "Testo semplice"
 
 #: gui2/dialogs.c:923
-#, fuzzy
 msgid "Copy as plain text"
-msgstr "/Modifica/Copia tutto/Come _testo semplice"
+msgstr "Copia come testo semplice"
 
 #: gui2/dialogs.c:924
-#, fuzzy
 msgid "Copy as tab-separated"
-msgstr "Separato da virgola"
+msgstr "Copia come separato da tab"
 
 #: gui2/dialogs.c:925
-#, fuzzy
 msgid "Copy as comma-separated"
-msgstr "Separato da virgola"
+msgstr "Copia come separato da virgola"
 
 #: gui2/dialogs.c:926
-#, fuzzy
 msgid "Copy as LaTeX"
-msgstr "/Modifica/Copia tutto/Come _LaTeX"
+msgstr "Copia come LaTeX"
 
 #: gui2/dialogs.c:927
-#, fuzzy
 msgid "Copy as RTF"
-msgstr "Copia come:"
+msgstr "Copia come RTF"
 
 #: gui2/dialogs.c:930
-#, fuzzy
 msgid "Save as plain text"
-msgstr "Testo semplice"
+msgstr "Salva come testo semplice"
 
 #: gui2/dialogs.c:931
-#, fuzzy
 msgid "Save as tab-separated"
-msgstr "Separato da tab"
+msgstr "Salva come eparato da tab"
 
 #: gui2/dialogs.c:932
-#, fuzzy
 msgid "Save as comma-separated"
-msgstr "Separato da virgola"
+msgstr "Salva come separato da virgola"
 
 #: gui2/dialogs.c:933
-#, fuzzy
 msgid "Save as LaTeX"
-msgstr "Salva come TeX..."
+msgstr "Salva come LaTeX"
 
 #: gui2/dialogs.c:934
-#, fuzzy
 msgid "Save as RTF"
-msgstr "Salva come"
+msgstr "Salva come RTF"
 
 #: gui2/dialogs.c:1111 gui2/library.c:2156
 msgid "gretl: bootstrap analysis"
@@ -10204,22 +10194,21 @@ msgid "right-click for some shortcuts"
 msgstr " Fare clic destro per alcune scorciatoie"
 
 #: gui2/fileselect.c:339
-#, fuzzy, c-format
+#, c-format
 msgid "Open %s in new window"
-msgstr "Vai a nuova finestra"
+msgstr "Apri %s in una nuova finestra"
 
 #: gui2/fileselect.c:340
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "Sostituito"
+msgstr "Sostituisci %s"
 
 #: gui2/fileselect.c:345
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to %s"
-msgstr "Salva le modifiche?"
+msgstr "Salva le modifiche in %s"
 
 #: gui2/fileselect.c:348
-#, fuzzy
 msgid "Open script"
 msgstr "Apri file script"
 
@@ -11721,9 +11710,8 @@ msgid " No datafile loaded "
 msgstr " Nessun file dati caricato"
 
 #: gui2/gretl.c:1456
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "Directory di lavoro:"
+msgstr "Directory di lavoro: clicca per configurare"
 
 #: gui2/gretl.c:1561 gui2/gretl.c:1573
 msgid "_User file..."
@@ -14693,9 +14681,8 @@ msgid "Display components"
 msgstr "Mostra le componenti"
 
 #: gui2/menustate.c:571
-#, fuzzy
 msgid "Plot components"
-msgstr "Tutte le componenti"
+msgstr "Grafico delle componenti"
 
 #: gui2/menustate.c:572
 msgid "Edit components"
@@ -16035,9 +16022,8 @@ msgid "Prompt to save session"
 msgstr "Avvisa di salvare la sessione"
 
 #: gui2/settings.c:223
-#, fuzzy
 msgid "Display working directory"
-msgstr "gretl: directory di lavoro"
+msgstr "Mostra la directory di lavoro"
 
 #: gui2/settings.c:225
 msgid "Set working directory from shell"
@@ -16328,14 +16314,12 @@ msgid "always start in the working directory"
 msgstr "aprire sempre la directory di lavoro di gretl"
 
 #: gui2/settings.c:2916
-#, fuzzy
 msgid "Show working directory in main window"
-msgstr "Imposta la directory di lavoro dalla shell"
+msgstr "Mostra la directory di lavoro nella finestra principale"
 
 #: gui2/settings.c:2926
-#, fuzzy
 msgid "Open working directory"
-msgstr "directory di lavoro attuale"
+msgstr "Apri la directory di lavoro"
 
 #: gui2/settings.c:2995
 msgid "gretl: working directory"

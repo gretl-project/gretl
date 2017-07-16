@@ -1090,7 +1090,7 @@ void set_workdir_label (void)
 	char tmp[MAXLEN];
 	gchar *wdir, *buf;
 	int len;
-
+	const char fmt[] = "<span color=\"blue\" underline=\"single\">%s</span>";
 	strcpy(tmp, gretl_workdir());
 	trim_slash(tmp);
 	wdir = my_filename_to_utf8(tmp);
@@ -1099,8 +1099,7 @@ void set_workdir_label (void)
 	    gretl_utf8_truncate(wdir, 45);
 	    strncat(wdir, "...", 3);
 	}
-	buf = g_markup_printf_escaped("<span color=\"blue\">%s</span>",
-				      wdir);
+	buf = g_markup_printf_escaped(fmt, wdir);
 	gtk_label_set_markup(GTK_LABEL(wlabel), buf);
 	g_free(buf);
 	g_free(wdir);
