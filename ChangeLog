@@ -1,4 +1,4 @@
-version 2017c, in progress
+2017-07-18 version 2017c
 - MIDAS support: several small fixes and refinements
 - "panel" command: add an --unbalanced option to inflect
   random effects estimation for unbalanced panels
@@ -19,6 +19,9 @@ version 2017c, in progress
 - GUI: increase the default size of the main window somewhat
 - GUI: forecast window, add button: enable saving of forecast
   standard errors when available
+- GUI: add display of name of working directory
+- GUI editor for "foreign" scripts: some usability enhance-
+  ments
 - library: add some internal functions to support operations
   on complex matrices using LAPACK
 - library: add functionality to make use of an mpi block
