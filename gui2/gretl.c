@@ -304,7 +304,7 @@ static void get_runfile (char *fname)
 static int script_type (const char *fname)
 {
     if (has_suffix(fname, ".inp")) {
-	return EDIT_SCRIPT;
+	return EDIT_HANSL;
     } else if (has_suffix(fname, ".R")) {
 	return EDIT_R;
     } else if (has_suffix(fname, ".plt") ||

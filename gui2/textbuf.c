@@ -642,7 +642,7 @@ static void set_source_tabs (GtkWidget *w, int cw)
 		     k == GDK_bracketleft || \
 		     k == GDK_braceleft)
 
-#define editing_hansl(r) (r == EDIT_SCRIPT || \
+#define editing_hansl(r) (r == EDIT_HANSL || \
 			  r == EDIT_PKG_CODE ||	\
 			  r == EDIT_PKG_SAMPLE)
 
@@ -842,7 +842,7 @@ void set_style_for_textview (GtkWidget *text, const char *id)
     }
 }
 
-#define gretl_script_role(r) (r == EDIT_SCRIPT || \
+#define gretl_script_role(r) (r == EDIT_HANSL || \
 			      r == VIEW_SCRIPT || \
 			      r == EDIT_PKG_CODE || \
 			      r == EDIT_PKG_SAMPLE || \

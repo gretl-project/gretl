@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -35,7 +35,7 @@
 #endif
 
 /* Note 2015-07-06: gtk 3.14 and 3.16 crash on dragging a
-   script or model tab out of a tabbed viewer, unless the 
+   script or model tab out of a tabbed viewer, unless the
    special function gtk_notebook_detach_tab() is used in
    place of gtk_container_remove(). Since this function is
    new in 3.16, we have to disable "drag to root window"
@@ -45,7 +45,7 @@
 #define TDEBUG 0
 
 struct tabwin_t_ {
-    int role;             /* what's tabwin doing? */ 
+    int role;             /* what's tabwin doing? */
     GtkWidget *main;      /* top-level GTK window */
     GtkWidget *hbox;      /* horizontal box to hold menu bar */
     GtkWidget *mbar;      /* menu bar */
@@ -58,18 +58,23 @@ GtkTargetEntry tabwin_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
 };
 
-/* We support a tabbed editor for gretl scripts and also
-   a tabbed viewer for models */
+/* We support a tabbed editor for hansl scripts, one for
+   "alt" (foreign) scripts, and also a tabbed viewer for
+   gretl models.
+*/
 
-static tabwin_t *tabedit;
+static tabwin_t *tabhansl;
+static tabwin_t *tabalt;
 static tabwin_t *tabmod;
 
 static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
 
 static void tabwin_destroy (GtkWidget *w, tabwin_t *tabwin)
 {
-    if (tabwin == tabedit) {
-	tabedit = NULL;
+    if (tabwin == tabhansl) {
+	tabhansl = NULL;
+    } else if (tabwin == tabalt) {
+	tabalt = NULL;
     } else if (tabwin == tabmod) {
 	tabmod = NULL;
     }
@@ -104,7 +109,7 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 
 	if (page != NULL) {
 	    windata_t *vwin = g_object_get_data(G_OBJECT(page), "vwin");
-    
+
 	    if (vwin_content_changed(vwin)) {
 		gtk_window_present(GTK_WINDOW(parent));
 		ret = query_save_text(NULL, NULL, vwin);
@@ -122,32 +127,34 @@ gboolean tabwin_exit_check (GtkWidget *w)
 {
     tabwin_t *tabwin = g_object_get_data(G_OBJECT(w), "tabwin");
 
-    if (tabwin->role != EDIT_SCRIPT) {
+    if (tabwin->role != EDIT_HANSL &&
+	!editing_alt_script(tabwin->role)) {
 	return FALSE;
-    }    
+    }
 
     return maybe_block_tabedit_quit(tabwin, w);
 }
 
 /* called on delete-event: @w is the top-level */
 
-static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event, 
+static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event,
 				    tabwin_t *tabwin)
 {
-    if (tabwin->role != EDIT_SCRIPT) {
+    if (tabwin->role != EDIT_HANSL &&
+	!editing_alt_script(tabwin->role)) {
 	return FALSE;
     }
-    
+
     return maybe_block_tabedit_quit(tabwin, w);
 }
 
 /* activate or de-activate a tab's closer button */
 
 static void viewer_tab_show_closer (GtkNotebook *notebook,
-				    GtkWidget *tab, 
+				    GtkWidget *tab,
 				    gboolean show)
 {
-    GtkWidget *lbl = gtk_notebook_get_tab_label(notebook, tab);    
+    GtkWidget *lbl = gtk_notebook_get_tab_label(notebook, tab);
     GtkWidget *button = g_object_get_data(G_OBJECT(lbl), "closer");
 
     if (button != NULL) {
@@ -162,10 +169,10 @@ static void viewer_tab_show_closer (GtkNotebook *notebook,
 static void tabwin_remove_toolbar (tabwin_t *tabwin)
 {
 #if TDEBUG
-    fprintf(stderr, "*** tabwin_remove_toolbar: removing toolbar at %p\n", 
+    fprintf(stderr, "*** tabwin_remove_toolbar: removing toolbar at %p\n",
 	    (void *) tabwin->mbar);
 #endif
-    gtk_container_remove(GTK_CONTAINER(tabwin->hbox), 
+    gtk_container_remove(GTK_CONTAINER(tabwin->hbox),
 			 tabwin->mbar);
     tabwin->mbar = NULL;
 }
@@ -173,10 +180,10 @@ static void tabwin_remove_toolbar (tabwin_t *tabwin)
 static void tabwin_insert_toolbar (tabwin_t *tabwin, windata_t *vwin)
 {
 #if TDEBUG
-    fprintf(stderr, "*** tabwin_insert_toolbar: inserting toolbar at %p\n", 
+    fprintf(stderr, "*** tabwin_insert_toolbar: inserting toolbar at %p\n",
 	    (void *) vwin->mbar);
 #endif
-    gtk_box_pack_start(GTK_BOX(tabwin->hbox), vwin->mbar, 
+    gtk_box_pack_start(GTK_BOX(tabwin->hbox), vwin->mbar,
 		       TRUE, TRUE, 0);
     gtk_widget_show_all(vwin->mbar);
     tabwin->mbar = vwin->mbar;
@@ -195,7 +202,7 @@ static void page_removed_callback (GtkNotebook *notebook,
 
     if (np < 5) {
 	gtk_notebook_popup_disable(notebook);
-    }    
+    }
 
     if (np == 1) {
 	/* only one tab left after removal: this page should
@@ -224,9 +231,9 @@ static void page_added_callback (GtkNotebook *notebook,
     if (np > 1) {
 	for (i=0; i<np; i++) {
 	    tab = gtk_notebook_get_nth_page(notebook, i);
-#ifndef GTK_DETACH_BROKEN	    
+#ifndef GTK_DETACH_BROKEN
 	    gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
-#endif	    
+#endif
 	    viewer_tab_show_closer(notebook, tab, TRUE);
 	}
     } else {
@@ -256,7 +263,9 @@ static void tabwin_tab_close (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    if (tabwin->role == EDIT_SCRIPT && vwin_content_changed(vwin)) {
+    if ((tabwin->role == EDIT_HANSL ||
+	 editing_alt_script(tabwin->role)) &&
+	vwin_content_changed(vwin)) {
 	gint cancel = query_save_text(NULL, NULL, vwin);
 
 	if (cancel) {
@@ -288,7 +297,7 @@ void tabwin_tab_destroy (windata_t *vwin)
 #if TDEBUG
     fprintf(stderr, "*** tabwin_tab_destroy: vwin = %p\n", (void *) vwin);
 #endif
-    
+
     if (gtk_notebook_get_n_pages(notebook) > 1) {
 	gint pg = gtk_notebook_page_num(notebook, vwin->main);
 
@@ -333,7 +342,7 @@ static gboolean switch_page_callback (GtkNotebook *tabs,
 	    /* a "new" toolbar should be shown */
 	    tabwin_insert_toolbar(tabwin, vwin);
 	}
-    }    
+    }
 
     return FALSE;
 }
@@ -386,16 +395,16 @@ static void no_button_padding (GtkWidget *w)
 static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
 {
     GtkWidget *img, *button;
-	
-    img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
+
+    img = gtk_image_new_from_stock(GTK_STOCK_CLOSE,
 				   GTK_ICON_SIZE_MENU);
     button = gtk_button_new();
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     gtk_container_set_border_width(GTK_CONTAINER(button), 0);
     no_button_padding(button);
     gtk_container_add(GTK_CONTAINER(button), img);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(tabwin_tab_close), 
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(tabwin_tab_close),
 		     vwin);
     gtk_container_add(GTK_CONTAINER(tab), button);
     g_object_set_data(G_OBJECT(tab), "closer", button);
@@ -430,8 +439,8 @@ static gchar *untitled_title (tabwin_t *tabwin)
 
 /* create and add tab with filename and closer button */
 
-static GtkWidget *make_viewer_tab (tabwin_t *tabwin, 
-				   windata_t *vwin, 
+static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
+				   windata_t *vwin,
 				   const gchar *info)
 {
     GtkNotebook *notebook;
@@ -443,11 +452,11 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     tab = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(tab), 0);
 
-    if (tabwin->role == EDIT_SCRIPT) {
+    if (tabwin->role == EDIT_HANSL || editing_alt_script(tabwin->role)) {
 	if (strstr(info, "script_tmp") != NULL) {
 	    title = untitled_title(tabwin);
 	} else {
-	    title = title_from_filename(info, EDIT_SCRIPT, FALSE);
+	    title = title_from_filename(info, tabwin->role, FALSE);
 	}
     } else if (info != NULL) {
 	title = g_strdup(info);
@@ -467,13 +476,13 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     gtk_widget_show_all(tab);
 
     notebook = GTK_NOTEBOOK(tabwin->tabs);
-    gtk_notebook_append_page_menu(notebook, vwin->main, 
+    gtk_notebook_append_page_menu(notebook, vwin->main,
 				  tab, mlabel);
 
     return tab;
 }
 
-static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key, 
+static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
 			      tabwin_t *tabwin)
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
@@ -484,7 +493,7 @@ static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
     return catch_viewer_key(w, key, vwin);
 }
 
-static void  
+static void
 tabwin_handle_drag  (GtkWidget *widget,
 		     GdkDragContext *context,
 		     gint x,
@@ -508,7 +517,7 @@ tabwin_handle_drag  (GtkWidget *widget,
     }
 
     /* ignore the wrong sort of data */
-    if (data == NULL || (dfname = (gchar *) seldata) == NULL || 
+    if (data == NULL || (dfname = (gchar *) seldata) == NULL ||
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
 	return;
     }
@@ -520,7 +529,7 @@ tabwin_handle_drag  (GtkWidget *widget,
 
     /* there may be multiple files: we ignore all but the first */
     *tmp = 0;
-    if ((pos = gretl_charpos('\r', dfname)) > 0 || 
+    if ((pos = gretl_charpos('\r', dfname)) > 0 ||
 	(pos = gretl_charpos('\n', dfname) > 0)) {
 	strncat(tmp, dfname + skip, pos - skip);
     } else {
@@ -536,8 +545,8 @@ tabwin_handle_drag  (GtkWidget *widget,
     strcpy(tryfile, tmp);
 #endif
 
-    if (has_suffix(tryfile, ".inp")) {
-	do_open_script(EDIT_SCRIPT);
+    if (has_suffix(tryfile, ".inp")) { /* FIXME generalize? */
+	do_open_script(EDIT_HANSL);
     }
 }
 
@@ -560,15 +569,20 @@ static tabwin_t *make_tabbed_viewer (int role)
 
     /* top-level window */
     tabwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    if (role == EDIT_SCRIPT) {
-	gtk_window_set_title(GTK_WINDOW(tabwin->main), 
+    if (role == EDIT_HANSL) {
+	gtk_window_set_title(GTK_WINDOW(tabwin->main),
 			     _("gretl: script editor"));
+ 	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
+			 G_CALLBACK(tabedit_quit_check), tabwin);
+    } else if (editing_alt_script(role)) {
+	gtk_window_set_title(GTK_WINDOW(tabwin->main),
+			     _("gretl: foreign script editor"));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _("gretl: models"));
-    }	
-    g_signal_connect(G_OBJECT(tabwin->main), "destroy", 
+    }
+    g_signal_connect(G_OBJECT(tabwin->main), "destroy",
 		     G_CALLBACK(tabwin_destroy), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
 
@@ -588,10 +602,10 @@ static tabwin_t *make_tabbed_viewer (int role)
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabwin->tabs), TRUE);
     g_signal_connect(G_OBJECT(tabwin->tabs), "switch-page",
 		     G_CALLBACK(switch_page_callback), tabwin);
-#ifndef GTK_DETACH_BROKEN    
+#ifndef GTK_DETACH_BROKEN
     g_signal_connect(G_OBJECT(tabwin->tabs), "create-window",
 		     G_CALLBACK(detach_tab_callback), tabwin);
-#endif    
+#endif
     g_signal_connect(G_OBJECT(tabwin->tabs), "page-added",
 		     G_CALLBACK(page_added_callback), tabwin);
     g_signal_connect(G_OBJECT(tabwin->tabs), "page-removed",
@@ -609,12 +623,19 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 {
     tabwin_t *tabwin = NULL;
 
-    if (role == EDIT_SCRIPT) {
-	if (tabedit != NULL) {
-	    tabwin = tabedit;
+    if (role == EDIT_HANSL) {
+	if (tabhansl != NULL) {
+	    tabwin = tabhansl;
 	} else {
 	    *starting = 1;
-	    tabedit = tabwin = make_tabbed_viewer(role);
+	    tabhansl = tabwin = make_tabbed_viewer(role);
+	}
+    } else if (editing_alt_script(role)) {
+	if (tabalt != NULL) {
+	    tabwin = tabalt;
+	} else {
+	    *starting = 1;
+	    tabalt = tabwin = make_tabbed_viewer(role);
 	}
     } else if (role == VIEW_MODEL) {
 	if (tabmod != NULL) {
@@ -623,7 +644,7 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 	    *starting = 1;
 	    tabmod = tabwin = make_tabbed_viewer(role);
 	}
-    }	
+    }
 
     return tabwin;
 }
@@ -654,13 +675,13 @@ windata_t *viewer_tab_new (int role, const char *info,
     vwin->flags = VWIN_TABBED;
     vwin->main = gtk_hbox_new(FALSE, 0);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-    handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+    handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy",
 				  G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "destroy-id",
 		      GUINT_TO_POINTER(handler_id));
 
 #if TDEBUG
-    fprintf(stderr, "*** viewer_tab_new: vwin=%p, main hbox=%p\n", 
+    fprintf(stderr, "*** viewer_tab_new: vwin=%p, main hbox=%p\n",
 	    (void *) vwin, (void *) vwin->main);
 #endif
 
@@ -673,9 +694,9 @@ windata_t *viewer_tab_new (int role, const char *info,
 
     if (starting) {
 	window_list_add(tabwin->main, role);
-	g_signal_connect(G_OBJECT(tabwin->main), "key-press-event", 
+	g_signal_connect(G_OBJECT(tabwin->main), "key-press-event",
 			 G_CALLBACK(catch_tabwin_key), tabwin);
-    } 
+    }
 
     return vwin;
 }
@@ -697,7 +718,7 @@ void tabwin_register_toolbar (windata_t *vwin)
     */
     g_object_ref(vwin->mbar);
     handler_id = g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
-				  G_CALLBACK(gtk_widget_destroyed), 
+				  G_CALLBACK(gtk_widget_destroyed),
 				  &vwin->mbar);
     g_object_set_data(G_OBJECT(vwin->mbar), "destroy-id",
 		      GUINT_TO_POINTER(handler_id));
@@ -716,8 +737,8 @@ void tabwin_register_toolbar (windata_t *vwin)
     tabwin_insert_toolbar(tabwin, vwin);
 }
 
-/* This is used, inter alia, for an "untitled" tab: 
-   to set its real filename when it is saved 
+/* This is used, inter alia, for an "untitled" tab:
+   to set its real filename when it is saved
 */
 
 void tabwin_tab_set_title (windata_t *vwin, const char *title)
@@ -725,7 +746,7 @@ void tabwin_tab_set_title (windata_t *vwin, const char *title)
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     GtkWidget *tab, *label;
 
-    tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabwin->tabs), 
+    tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabwin->tabs),
 				     vwin->main);
 
     label = g_object_get_data(G_OBJECT(tab), "label");
@@ -740,7 +761,7 @@ void tabwin_tab_set_title (windata_t *vwin, const char *title)
 }
 
 /* set or unset the "modified flag" (trailing asterisk on
-   the filename) for the tab label for a page in tabbed 
+   the filename) for the tab label for a page in tabbed
    editor
 */
 
@@ -752,7 +773,7 @@ void tabwin_tab_set_status (windata_t *vwin)
     const gchar *text, *p;
     gchar *modtext = NULL;
 
-    tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabwin->tabs), 
+    tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabwin->tabs),
 				     vwin->main);
     label = g_object_get_data(G_OBJECT(tab), "label");
 
@@ -800,7 +821,7 @@ void show_tabbed_viewer (windata_t *vwin)
     }
 #endif
 
-    if (vwin->role == EDIT_SCRIPT) {
+    if (vwin->role == EDIT_HANSL) {
 	gtk_drag_dest_set(vwin->text,
 			  GTK_DEST_DEFAULT_ALL,
 			  tabwin_drag_targets, 1,
@@ -835,7 +856,7 @@ static void size_new_toplevel (windata_t *vwin)
     int cw = get_char_width(vwin->text);
     int hsize, vsize;
 
-    if (vwin->role == EDIT_SCRIPT) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	hsize = SCRIPT_WIDTH;
 	vsize = SCRIPT_HEIGHT;
     } else {
@@ -846,7 +867,7 @@ static void size_new_toplevel (windata_t *vwin)
     hsize *= cw;
     hsize += 48;
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);    
+    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize);
 }
 
 static gchar *title_from_vwin (windata_t *vwin)
@@ -877,7 +898,7 @@ void script_editor_show_new_open (windata_t *vwin, gboolean show)
     } else {
 	gtk_widget_hide(GTK_WIDGET(item0));
 	gtk_widget_hide(GTK_WIDGET(item1));
-    }	
+    }
 }
 
 /* response to pulling a script or model out of the tabbed
@@ -912,7 +933,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     fprintf(stderr, "*** undock_tabbed_viewer: w = %p, vwin = %p, page = %p\n",
 	    (void *) w, (void *) vwin, page);
     fprintf(stderr, "    handler_id from mbar: %lu\n", handler_id);
-#endif    
+#endif
     if (handler_id > 0) {
 	g_signal_handler_disconnect(vwin->mbar, handler_id);
 	g_object_steal_data(G_OBJECT(vwin->mbar), "destroy-id");
@@ -925,9 +946,9 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), page);
 #else
     gtk_container_remove(GTK_CONTAINER(notebook), page);
-#endif    
+#endif
 
-#if GTK_MAJOR_VERSION == 2    
+#if GTK_MAJOR_VERSION == 2
     /* tweak vbox params */
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
@@ -938,7 +959,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     title = title_from_vwin(vwin);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);
-    handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+    handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy",
 				  G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "destroy-id",
 		      GUINT_TO_POINTER(handler_id));
@@ -946,7 +967,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     size_new_toplevel(vwin);
 
 #if TDEBUG
-    fprintf(stderr, "    undock: new main=%p, mbar=%p\n", 
+    fprintf(stderr, "    undock: new main=%p, mbar=%p\n",
 	    (void *) vwin->main, (void *) vwin->mbar);
     fprintf(stderr, "    new handler_id for main destruction: %lu\n",
 	    handler_id);
@@ -961,11 +982,11 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     g_object_unref(vwin->mbar);
     vwin->flags &= ~VWIN_TABBED;
 
-    if (vwin->role == EDIT_SCRIPT) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	/* invalidate some menubar items */
 	script_editor_show_new_open(vwin, FALSE);
 	/* connect delete signal for single-script window */
-	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
+	g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			 G_CALLBACK(query_save_text), vwin);
     }
 
@@ -977,7 +998,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     window_list_add(vwin->main, vwin->role);
 
     /* add key-catcher for single-item window */
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
 
 #ifndef G_OS_WIN32
@@ -1000,7 +1021,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     gulong handler_id;
     gchar *info = NULL;
 
-    tabwin = (vwin->role == VIEW_MODEL)? tabmod : tabedit;
+    tabwin = (vwin->role == VIEW_MODEL)? tabmod : tabhansl;
     if (tabwin == NULL) {
 	return;
     }
@@ -1027,7 +1048,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 					 vwin);
 
     /* grab info for title */
-    if (vwin->role == EDIT_SCRIPT) {
+    if (vwin->role == EDIT_HANSL) {
 	info = g_strdup(vwin->fname);
     } else {
 	const gchar *tmp = gtk_window_get_title(GTK_WINDOW(oldmain));
@@ -1036,7 +1057,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 	    tmp += 7;
 	}
 	info = g_strdup(tmp);
-    }    
+    }
 
     /* extract vwin->vbox from oldmain and trash oldmain */
     g_object_ref(vwin->vbox);
@@ -1044,11 +1065,11 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     gtk_widget_destroy(oldmain);
 
 #if TDEBUG
-    fprintf(stderr, "dock_viewer: vwin->vbox at %p\n", 
+    fprintf(stderr, "dock_viewer: vwin->vbox at %p\n",
 	    (void *) vwin->vbox);
 #endif
 
-    if (vwin->role == EDIT_SCRIPT) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	script_editor_show_new_open(vwin, TRUE);
     }
 
@@ -1061,7 +1082,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     /* create new vwin->main, etc. */
     vwin->main = gtk_hbox_new(FALSE, 0);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-    handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+    handler_id = g_signal_connect(G_OBJECT(vwin->main), "destroy",
 				  G_CALLBACK(free_windata), vwin);
     g_object_set_data(G_OBJECT(vwin->main), "destroy-id",
 		      GUINT_TO_POINTER(handler_id));
@@ -1105,7 +1126,7 @@ gboolean window_is_undockable (windata_t *vwin)
 gboolean window_is_dockable (windata_t *vwin)
 {
     if (vwin->topmain == NULL) {
-	if (vwin->role == EDIT_SCRIPT && tabedit != NULL) {
+	if (vwin->role == EDIT_HANSL && tabhansl != NULL) {
 	    return TRUE;
 	} else if (vwin->role == VIEW_MODEL && tabmod != NULL) {
 	    return TRUE;
@@ -1144,8 +1165,8 @@ windata_t *tabwin_get_editor_for_file (const char *filename,
 {
     windata_t *ret = NULL;
 
-    if (tabedit != NULL && w == tabedit->main) {
-	GtkNotebook *notebook = GTK_NOTEBOOK(tabedit->tabs);
+    if (tabhansl != NULL && w == tabhansl->main) {
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabhansl->tabs);
 	int i, n = gtk_notebook_get_n_pages(notebook);
 	GtkWidget *tab;
 	windata_t *vwin;
@@ -1189,7 +1210,7 @@ windata_t *get_tab_for_data (const gpointer data,
 
 void tabwin_tab_present (windata_t *vwin)
 {
-    tabwin_t *tabwin = g_object_get_data(G_OBJECT(vwin->topmain), 
+    tabwin_t *tabwin = g_object_get_data(G_OBJECT(vwin->topmain),
 					 "tabwin");
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
     int i, n = gtk_notebook_get_n_pages(notebook);
@@ -1217,7 +1238,7 @@ void tabwin_close_models_viewer (GtkWidget *w)
 
 static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 {
-    if (tabwin != NULL && (tabwin == tabmod || tabwin == tabedit)) {
+    if (tabwin != NULL && (tabwin == tabmod || tabwin == tabhansl)) {
 	/* @tabwin will be an invalid pointer if it
 	   got a delete-event before execution gets
 	   here
@@ -1234,20 +1255,20 @@ static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 	    gtk_widget_set_sensitive(GTK_WIDGET(vwin->mbar), TRUE);
 #ifndef GTK_DETACH_BROKEN
 	    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
-	    
+
 	    if (gtk_notebook_get_n_pages(notebook) > 1) {
 		gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
 	    }
-#endif	    
+#endif
 	    tabwin->dlg_owner = NULL;
 	}
 	tabwin->dialog = NULL;
     }
 }
 
-/* Called when a tabbed viewer spawns a dialog that becomes 
-   invalid if the currently active tab is destroyed. We make 
-   make the current tab undestroyable and undetachable for the 
+/* Called when a tabbed viewer spawns a dialog that becomes
+   invalid if the currently active tab is destroyed. We make
+   make the current tab undestroyable and undetachable for the
    duration.
 */
 
@@ -1260,7 +1281,7 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
     windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
 
 #if TDEBUG
-    fprintf(stderr, "*** tabwin_register_dialog: w = %p, tab=%p\n", 
+    fprintf(stderr, "*** tabwin_register_dialog: w = %p, tab=%p\n",
 	    (void *) w, (void *) tab);
 #endif
 
@@ -1271,11 +1292,11 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
     tabwin->dlg_owner = tab;
 
     g_signal_connect(G_OBJECT(w), "destroy",
-		     G_CALLBACK(tabwin_unregister_dialog), 
+		     G_CALLBACK(tabwin_unregister_dialog),
 		     tabwin);
 }
 
-int viewer_n_siblings (windata_t *vwin) 
+int viewer_n_siblings (windata_t *vwin)
 {
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     int n = 0;
@@ -1288,7 +1309,7 @@ int viewer_n_siblings (windata_t *vwin)
     return n;
 }
 
-int highest_numbered_var_in_tabwin (tabwin_t *tabwin, 
+int highest_numbered_var_in_tabwin (tabwin_t *tabwin,
 				    const DATASET *dset)
 {
     int vmax = 0;
@@ -1300,7 +1321,7 @@ int highest_numbered_var_in_tabwin (tabwin_t *tabwin,
 	windata_t *vwin;
 	GtkWidget *tab;
 	int i, m_vmax;
-	
+
 	for (i=0; i<n; i++) {
 	    tab = gtk_notebook_get_nth_page(notebook, i);
 	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
@@ -1323,7 +1344,7 @@ void list_add_tabwin_models (tabwin_t *tabwin, GList **plist)
 	windata_t *vwin;
 	GtkWidget *tab;
 	int i;
-	
+
 	for (i=0; i<n; i++) {
 	    tab = gtk_notebook_get_nth_page(notebook, i);
 	    vwin = g_object_get_data(G_OBJECT(tab), "vwin");
@@ -1334,7 +1355,7 @@ void list_add_tabwin_models (tabwin_t *tabwin, GList **plist)
     }
 }
 
-windata_t *window_get_active_vwin (GtkWidget *window) 
+windata_t *window_get_active_vwin (GtkWidget *window)
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(window), "vwin");
 

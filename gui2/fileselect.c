@@ -356,7 +356,7 @@ static void script_open_choice (const char *fname, windata_t *vwin,
 	    view_script(fname, 1, role);
 	} else {
 	    strcpy(tryfile, fname);
-	    if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
+	    if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
 		strcpy(scriptfile, tryfile);
 		mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 		gretl_set_current_dir(scriptfile);
@@ -380,7 +380,7 @@ static void script_open_choice (const char *fname, windata_t *vwin,
 
 static void filesel_open_script (const char *fname, windata_t *vwin)
 {
-    int role = EDIT_SCRIPT;
+    int role = EDIT_HANSL;
     int foreign = 0;
 
     if (vwin != NULL && vwin->role == EDIT_PKG_SAMPLE) {
@@ -418,7 +418,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	view_script(fname, 1, role);
     } else {
 	strcpy(tryfile, fname);
-	if (view_script(tryfile, 1, EDIT_SCRIPT) != NULL) {
+	if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
 	    strcpy(scriptfile, tryfile);
 	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	    gretl_set_current_dir(scriptfile);
@@ -439,7 +439,7 @@ static void filesel_open_session (const char *fname)
 	if (has_system_prefix(tryfile, SCRIPT_SEARCH)) {
 	    vwin = view_script(tryfile, 0, VIEW_SCRIPT);
 	} else {
-	    vwin = view_script(tryfile, 1, EDIT_SCRIPT);
+	    vwin = view_script(tryfile, 1, EDIT_HANSL);
 	}
 
 	if (vwin != NULL) {

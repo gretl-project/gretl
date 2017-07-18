@@ -20,7 +20,7 @@
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
-#define vwin_editing_script(r) (r == EDIT_SCRIPT || \
+#define vwin_editing_script(r) (r == EDIT_HANSL ||  \
 				r == EDIT_GP ||	    \
 				r == EDIT_R ||	    \
 				r == EDIT_OX ||     \

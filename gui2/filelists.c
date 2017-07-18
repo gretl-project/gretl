@@ -442,7 +442,7 @@ static void open_file_from_filelist (GtkAction *action)
 	verify_open_data(NULL, 0);
     } else if (!strcmp(ftype, "Script")) {
 	strcpy(tryfile, scriptp[i]);
-	do_open_script(EDIT_SCRIPT);
+	do_open_script(EDIT_HANSL);
     } else if (!strcmp(ftype, "Session")) {
 	strcpy(tryfile, sessionp[i]);
 	verify_open_session();
