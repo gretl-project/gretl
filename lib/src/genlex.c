@@ -1607,8 +1607,18 @@ static void parse_number (parser *p)
     }
 }
 
-static void wildcard_special (parser *p)
+static int wildcard_special (parser *p)
 {
+    if (p->ch == '?') {
+	char cprev = *(p->point - 2);
+	char cnext = *p->point;
+
+	if ((cprev == ' ' || cprev == ')') && cnext == ' ') {
+	    /* '?' is presumably ternary operator */
+	    return 0;
+	}
+    }
+
     if (*(p->point - 2) == ' ' &&
 	(bare_data_type(p->sym) || closing_sym(p->sym) ||
 	 (p->sym == LAG))) {
@@ -1616,6 +1626,8 @@ static void wildcard_special (parser *p)
     } else {
 	getword(p);
     }
+
+    return 1;
 }
 
 #define word_start_special(c) (c == '$' || c == '_')
@@ -1793,8 +1805,9 @@ void lex (parser *p)
         case '?':
 	    if (defining_list(p) && !doing_genseries) {
 		/* allow for '?' as wildcard */
-		wildcard_special(p);
-		return;
+		if (wildcard_special(p)) {
+		    return;
+		}
 	    }
 	    p->sym = QUERY;
 	    parser_getc(p);
