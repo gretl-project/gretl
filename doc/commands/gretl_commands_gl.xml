@@ -2727,7 +2727,8 @@
       <altforms>
         <altform><lit>delete</lit> <repl>listavariables</repl></altform>
         <altform><lit>delete</lit> <repl>nomevar</repl></altform>
-	<altform><lit>delete --type=</lit><repl>tipo</repl></altform>
+	      <altform><lit>delete --type=</lit><repl>tipo</repl></altform>
+	      <altform><lit>delete</lit><repl>nomepaquete</repl></altform>
       </altforms>
       <options>
 	<option>
@@ -2739,9 +2740,8 @@
 
     <description>
       <para>
-	Esta instrución é un destrutor multiuso de variables xa definidas
-	(tanto series como escalares, matrices, cadeas de texto ou feixes).
-	Deberías de utilizala con precaución pois non se pide confirmación.
+	Esta instrución é un destrutor. Deberías de utilizala con precaución
+	pois non se pide confirmación.
       </para>
       <para>
 	Na primeira variante de arriba, <repl>listavariables</repl> é unha lista de
@@ -2768,6 +2768,18 @@
 	ou <lit>array</lit>; e o seu efecto consiste en eliminar tódalas
 	variables do tipo indicado. Neste caso non debes de indicar ningún
 	argumento que non sexa a opción.
+      </para>
+      <para>
+	Podes usar a cuarta variante para descargar un paquete de función.
+	Neste caso, debes de proporcionar o sufixo <lit>.gfn</lit> como
+	en
+      </para>
+      <code>
+	delete somepkg.gfn
+      </code>
+      <para>
+	Cae na conta de que isto non elimina o ficheiro de paquete; unicamente
+	descarga o paquete da memoria.
       </para>
     </description>
 
