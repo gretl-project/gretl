@@ -1609,8 +1609,9 @@ static void parse_number (parser *p)
 
 static int wildcard_special (parser *p)
 {
+    char cprev = *(p->point - 2);
+
     if (p->ch == '?') {
-	char cprev = *(p->point - 2);
 	char cnext = *p->point;
 
 	if ((cprev == ' ' || cprev == ')') && cnext == ' ') {
@@ -1619,7 +1620,7 @@ static int wildcard_special (parser *p)
 	}
     }
 
-    if (*(p->point - 2) == ' ' &&
+    if (cprev == ' ' &&
 	(bare_data_type(p->sym) || closing_sym(p->sym) ||
 	 (p->sym == LAG))) {
 	p->sym = B_LCAT;
