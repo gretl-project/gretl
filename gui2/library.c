@@ -8236,7 +8236,24 @@ static void ensure_newline_termination (gchar **ps)
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     gboolean selection = FALSE;
+    const char *fname = vwin->fname;
     gchar *buf = NULL;
+
+    if (editing_alt_script(vwin->role) &&
+	fname != NULL && *fname != '\0' &&
+	strstr(fname, "script_tmp") == NULL) {
+	/* There's a "real" (alt) filename in place: maybe we
+	   should chdir to its location?
+	*/
+	char *p, scriptdir[MAXLEN];
+
+	strcpy(scriptdir, fname);
+	p = strrchr(scriptdir, SLASH);
+	if (p != NULL) {
+	    *p = '\0';
+	    gretl_chdir(scriptdir);
+	}
+    }
 
     if (vwin->role == EDIT_GP || 
 	vwin->role == EDIT_R || 

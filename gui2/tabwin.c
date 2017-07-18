@@ -59,12 +59,12 @@ GtkTargetEntry tabwin_drag_targets[] = {
 };
 
 /* We support a tabbed editor for hansl scripts, one for
-   "other" (foreign) scripts, and also a tabbed viewer
-   for models.
+   "alt" (foreign) scripts, and also a tabbed viewer for
+   gretl models.
 */
 
 static tabwin_t *tabhansl;
-static tabwin_t *tabother;
+static tabwin_t *tabalt;
 static tabwin_t *tabmod;
 
 static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
@@ -73,8 +73,8 @@ static void tabwin_destroy (GtkWidget *w, tabwin_t *tabwin)
 {
     if (tabwin == tabhansl) {
 	tabhansl = NULL;
-    } else if (tabwin == tabother) {
-	tabother = NULL;
+    } else if (tabwin == tabalt) {
+	tabalt = NULL;
     } else if (tabwin == tabmod) {
 	tabmod = NULL;
     }
@@ -128,7 +128,7 @@ gboolean tabwin_exit_check (GtkWidget *w)
     tabwin_t *tabwin = g_object_get_data(G_OBJECT(w), "tabwin");
 
     if (tabwin->role != EDIT_HANSL &&
-	!editing_other_script(tabwin->role)) {
+	!editing_alt_script(tabwin->role)) {
 	return FALSE;
     }
 
@@ -141,7 +141,7 @@ static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event,
 				    tabwin_t *tabwin)
 {
     if (tabwin->role != EDIT_HANSL &&
-	!editing_other_script(tabwin->role)) {
+	!editing_alt_script(tabwin->role)) {
 	return FALSE;
     }
 
@@ -264,7 +264,7 @@ static void tabwin_tab_close (GtkWidget *w, windata_t *vwin)
     }
 
     if ((tabwin->role == EDIT_HANSL ||
-	 editing_other_script(tabwin->role)) &&
+	 editing_alt_script(tabwin->role)) &&
 	vwin_content_changed(vwin)) {
 	gint cancel = query_save_text(NULL, NULL, vwin);
 
@@ -452,7 +452,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     tab = gtk_hbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(tab), 0);
 
-    if (tabwin->role == EDIT_HANSL || editing_other_script(tabwin->role)) {
+    if (tabwin->role == EDIT_HANSL || editing_alt_script(tabwin->role)) {
 	if (strstr(info, "script_tmp") != NULL) {
 	    title = untitled_title(tabwin);
 	} else {
@@ -569,9 +569,14 @@ static tabwin_t *make_tabbed_viewer (int role)
 
     /* top-level window */
     tabwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    if (role == EDIT_HANSL || editing_other_script(role)) {
+    if (role == EDIT_HANSL) {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main),
 			     _("gretl: script editor"));
+ 	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
+			 G_CALLBACK(tabedit_quit_check), tabwin);
+    } else if (editing_alt_script(role)) {
+	gtk_window_set_title(GTK_WINDOW(tabwin->main),
+			     _("gretl: foreign script editor"));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else {
@@ -625,12 +630,12 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 	    *starting = 1;
 	    tabhansl = tabwin = make_tabbed_viewer(role);
 	}
-    } else if (editing_other_script(role)) {
-	if (tabother != NULL) {
-	    tabwin = tabother;
+    } else if (editing_alt_script(role)) {
+	if (tabalt != NULL) {
+	    tabwin = tabalt;
 	} else {
 	    *starting = 1;
-	    tabother = tabwin = make_tabbed_viewer(role);
+	    tabalt = tabwin = make_tabbed_viewer(role);
 	}
     } else if (role == VIEW_MODEL) {
 	if (tabmod != NULL) {
@@ -851,7 +856,7 @@ static void size_new_toplevel (windata_t *vwin)
     int cw = get_char_width(vwin->text);
     int hsize, vsize;
 
-    if (vwin->role == EDIT_HANSL || editing_other_script(vwin->role)) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	hsize = SCRIPT_WIDTH;
 	vsize = SCRIPT_HEIGHT;
     } else {
@@ -977,7 +982,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     g_object_unref(vwin->mbar);
     vwin->flags &= ~VWIN_TABBED;
 
-    if (vwin->role == EDIT_HANSL || editing_other_script(vwin->role)) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	/* invalidate some menubar items */
 	script_editor_show_new_open(vwin, FALSE);
 	/* connect delete signal for single-script window */
@@ -1064,7 +1069,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 	    (void *) vwin->vbox);
 #endif
 
-    if (vwin->role == EDIT_HANSL || editing_other_script(vwin->role)) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	script_editor_show_new_open(vwin, TRUE);
     }
 

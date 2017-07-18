@@ -2115,6 +2115,9 @@ view_file_with_title (const char *filename, int editable, int del_file,
 
     if (role == EDIT_HANSL && use_tabbed_editor()) {
 	vwin = viewer_tab_new(role, filename, NULL);
+    } else if (0 && editing_alt_script(role) && use_tabbed_editor()) {
+	/* not yet! */
+	vwin = viewer_tab_new(role, filename, NULL);
     } else if (given_title != NULL) {
 	vwin = gretl_viewer_new(role, given_title, NULL);
     } else {
