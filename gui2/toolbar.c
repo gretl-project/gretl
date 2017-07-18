@@ -101,7 +101,7 @@ enum {
     SORT_BY_ITEM,
     FORMAT_ITEM,
     INDEX_ITEM,
-    EDIT_SCRIPT_ITEM,
+    EDIT_HANSL_ITEM,
     STICKIFY_ITEM,
     ALPHA_ITEM,
     REFRESH_ITEM,
@@ -204,13 +204,13 @@ static void copy_to_editor (GtkWidget *w, windata_t *vwin)
 	    gchar *modbuf;
 
 	    modbuf = g_strdup_printf("# logged commands\n%s", s);
-	    do_new_script(EDIT_SCRIPT, modbuf);
+	    do_new_script(EDIT_HANSL, modbuf);
 	    g_free(modbuf);
 	} else {
-	    do_new_script(EDIT_SCRIPT, buf);
+	    do_new_script(EDIT_HANSL, buf);
 	}
     } else {
-	do_new_script(EDIT_SCRIPT, buf);
+	do_new_script(EDIT_HANSL, buf);
     }
     
     g_free(buf);
@@ -238,7 +238,7 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	} else {
 	    u = SAVE_OUTPUT;
 	}
-    } else if (vwin->role == EDIT_SCRIPT) {
+    } else if (vwin->role == EDIT_HANSL) {
 	u = SAVE_SCRIPT;
     } else if (vwin->role == EDIT_GP) {
 	u = SAVE_GP_CMDS;
@@ -801,7 +801,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_toggle_sort), SORT_ITEM },    
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(multi_series_view_sort_by), SORT_BY_ITEM },
-    { N_("Preferences..."), GTK_STOCK_PREFERENCES, G_CALLBACK(editor_prefs_callback), EDIT_SCRIPT_ITEM },
+    { N_("Preferences..."), GTK_STOCK_PREFERENCES, G_CALLBACK(editor_prefs_callback), EDIT_HANSL_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
@@ -856,7 +856,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 		    r == RMPLOT || \
 		    r == MAHAL)
 
-#define cmd_help_ok(r) (r == EDIT_SCRIPT || \
+#define cmd_help_ok(r) (r == EDIT_HANSL || \
 	                r == EDIT_PKG_CODE || \
                         r == EDIT_PKG_SAMPLE || \
 			r == VIEW_PKG_SAMPLE || \
@@ -942,7 +942,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!cmd_help_ok(r) && f == CMD_HELP_ITEM) {
 	return NULL;
-    } else if (r != EDIT_SCRIPT && f == MAIL_ITEM) {
+    } else if (r != EDIT_HANSL && f == MAIL_ITEM) {
 	return NULL;
     } else if (!help_ok(r) && f == HELP_ITEM) {
 	return NULL;
@@ -970,8 +970,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SERIES && f == EDITOR_ITEM) {
 	return NULL;
-    } else if (r != EDIT_SCRIPT && r != EDIT_PKG_CODE && 
-	       r != EDIT_PKG_SAMPLE && f == EDIT_SCRIPT_ITEM) {
+    } else if (r != EDIT_HANSL && r != EDIT_PKG_CODE && 
+	       r != EDIT_PKG_SAMPLE && f == EDIT_HANSL_ITEM) {
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;
@@ -1330,7 +1330,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	} else if (item->flag == DIGITS_ITEM &&
 		   (vwin->role == VIEW_MODEL || vwin->role == SUMMARY)) {
 	    func = G_CALLBACK(display_digits_callback);
-	} else if (vwin->role == EDIT_SCRIPT) {
+	} else if (vwin->role == EDIT_HANSL) {
 	    /* the script editor popup may have some special stuff
 	       added: don't clutter it up */
 	    if (edit_script_popup_item(item)) {
@@ -1358,7 +1358,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	}
     }
 
-    if (vwin->role != EDIT_SCRIPT) {
+    if (vwin->role != EDIT_HANSL) {
 	if (window_is_undockable(vwin)) {
 	    add_undock_popup_item(pmenu, vwin);
 	} else if (window_is_dockable(vwin)) {
@@ -1417,7 +1417,7 @@ static void tbar_model (void)
 
 static void tbar_new_script (void)
 {
-    do_new_script(EDIT_SCRIPT, NULL);
+    do_new_script(EDIT_HANSL, NULL);
 }
 
 static void tbar_show_funcs (GtkWidget *w, gpointer p)

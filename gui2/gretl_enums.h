@@ -53,7 +53,7 @@ enum extra_cmds {
     FNCALL_OUT,
     CONSOLE,
     EDIT_HEADER,
-    EDIT_SCRIPT,
+    EDIT_HANSL,
     EDIT_NOTES,
     EDIT_PKG_CODE,
     EDIT_PKG_SAMPLE,
@@ -137,6 +137,8 @@ enum extra_cmds {
 };
 
 #define help_role(r) (r >= CMD_HELP && r <= FUNC_HELP_EN)
+
+#define editing_other_script(r) (r >= EDIT_GP && r <= EDIT_JULIA)
 
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */

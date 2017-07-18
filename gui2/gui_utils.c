@@ -1354,7 +1354,7 @@ gboolean verify_open_session (void)
 {
     if (!gretl_is_pkzip_file(tryfile)) {
 	/* not a zipped session file */
-	return do_open_script(EDIT_SCRIPT);
+	return do_open_script(EDIT_HANSL);
     }
 
     if (data_status) {
@@ -1452,7 +1452,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	update_gfn_help_text(vwin);
     } else if (*vwin->fname == '\0' || strstr(vwin->fname, "script_tmp")) {
 	/* no real filename is available yet */
-	if (vwin->role == EDIT_SCRIPT) {
+	if (vwin->role == EDIT_HANSL) {
 	    file_selector(SAVE_SCRIPT, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_GP) {
 	    file_selector(SAVE_GP_CMDS, FSEL_DATA_VWIN, vwin);
@@ -1774,7 +1774,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup("gretl: function reference"); break;
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;
-    case EDIT_SCRIPT:
+    case EDIT_HANSL:
     case VIEW_SCRIPT:
     case VIEW_FILE:
     case VIEW_CODEBOOK:
@@ -2113,7 +2113,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
-    if (role == EDIT_SCRIPT && use_tabbed_editor()) {
+    if (role == EDIT_HANSL && use_tabbed_editor()) {
 	vwin = viewer_tab_new(role, filename, NULL);
     } else if (given_title != NULL) {
 	vwin = gretl_viewer_new(role, given_title, NULL);

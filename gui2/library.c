@@ -8298,7 +8298,7 @@ gboolean do_open_script (int action)
 
     if (fp == NULL) {
 	file_read_errbox(tryfile);
-	if (action == EDIT_SCRIPT) {
+	if (action == EDIT_HANSL) {
 	    delete_from_filelist(FILE_LIST_SESSION, tryfile);
 	    delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
 	}
@@ -8307,14 +8307,14 @@ gboolean do_open_script (int action)
 
     fclose(fp);
 
-    if (action == EDIT_SCRIPT) {
+    if (action == EDIT_HANSL) {
 	strcpy(scriptfile, tryfile);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	gretl_set_current_dir(scriptfile);
 	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
 	    view_script(scriptfile, 0, VIEW_SCRIPT);
 	} else {
-	    view_script(scriptfile, 1, EDIT_SCRIPT);
+	    view_script(scriptfile, 1, EDIT_HANSL);
 	}
     } else {
 	view_script(tryfile, 1, action);
@@ -8325,7 +8325,7 @@ gboolean do_open_script (int action)
 
 void do_new_script (int code, const char *buf) 
 {
-    int action = (code == FUNC)? EDIT_SCRIPT : code;
+    int action = (code == FUNC)? EDIT_HANSL : code;
     windata_t *vwin;
     char temp[MAXLEN];
     FILE *fp;
@@ -8347,7 +8347,7 @@ void do_new_script (int code, const char *buf)
 
     fclose(fp);
 
-    if (action == EDIT_SCRIPT) {
+    if (action == EDIT_HANSL) {
 	strcpy(scriptfile, temp);
     }
     
@@ -8361,7 +8361,7 @@ void do_new_script (int code, const char *buf)
 void new_script_callback (GtkAction *action) 
 {
     const gchar *s = gtk_action_get_name(action);
-    int etype = EDIT_SCRIPT;
+    int etype = EDIT_HANSL;
 
     if (!strcmp(s, "GnuplotScript")) {
 	etype = EDIT_GP;

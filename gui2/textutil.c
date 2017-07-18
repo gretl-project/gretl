@@ -688,7 +688,7 @@ void window_print (GtkAction *action, windata_t *vwin)
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     }
 
-    if (vwin->role == EDIT_SCRIPT ||
+    if (vwin->role == EDIT_HANSL ||
 	vwin->role == VIEW_SCRIPT) {
 	const char *p = strrchr(vwin->fname, SLASH);
 	
