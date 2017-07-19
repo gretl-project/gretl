@@ -5418,6 +5418,26 @@ char *double_underscores (char *targ, const char *src)
     return targ;
 }
 
+static int got_printable_output (PRN *prn)
+{
+    int ret = 0;
+
+    if (prn == NULL) {
+	warnbox(_("No output was produced"));
+    } else {
+	const char *buf = gretl_print_get_buffer(prn);
+
+	if (string_is_blank(buf)) {
+	    warnbox(_("No output was produced"));
+	    gretl_print_destroy(prn);
+	} else {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 #ifdef G_OS_WIN32
 
 /* MS Windows variants of functions to exec some third-party
@@ -5503,12 +5523,10 @@ void run_foreign_script (gchar *buf, int lang)
 	    }
 	}
 
-	if (prn != NULL) {
+	if (got_printable_output(prn)) {
 	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
 	} else if (err) {
 	    gui_errmsg(err);
-	} else {
-	    warnbox("Got no output");
 	}
 	    
 	g_free(cmd);
@@ -5683,20 +5701,16 @@ static void run_prog_sync (char **argv, int lang)
 	    pputs(prn, buf);
 	    g_free(buf);
 	    pputc(prn, '\n');
-	} else {
-	    warnbox("Got no output");
 	}
     } else {
 	/* read good old stdout */
-	if (sout != NULL) {
+	if (!string_is_blank(sout)) {
 	    bufopen(&prn);
 	    pputs(prn, sout);
-	} else {
-	    warnbox("Got no output");
 	}
     }
 
-    if (prn != NULL) {
+    if (got_printable_output(prn)) {
 	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
 

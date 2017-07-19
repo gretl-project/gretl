@@ -1016,7 +1016,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 
 static void dock_viewer (GtkWidget *w, windata_t *vwin)
 {
-    tabwin_t *tabwin;
+    tabwin_t *tabwin = NULL;
     GtkWidget *oldmain;
     GtkWidget *box;
     gulong handler_id;
