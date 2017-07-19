@@ -1062,14 +1062,6 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 	}
     }
 
-#if 0 /* not yet */    
-    if (item->flag == COPY_ITEM &&
-	!vwin_subselection_present(vwin) &&
-	!vwin_is_editing(vwin)) {
-	menu = make_copy_menu(vwin, W_COPY);
-    }
-#endif    
-
     if (menu != NULL) {
 	/* don't leak: record pointer to menu so it can
 	   be destroyed when the window is closed */
