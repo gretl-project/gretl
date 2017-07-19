@@ -4761,6 +4761,12 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 	}
     }
 
+    if (!err) {
+	/* estimation start and end, converted to 1-based */
+	gretl_bundle_set_int(b, "t1", pmod->t1 + 1);
+	gretl_bundle_set_int(b, "t2", pmod->t2 + 1);
+    }
+
     if (pmod->ci == PANEL && (pmod->opt & OPT_F) &&
 	!gretl_bundle_has_key(b, "within_rsq")) {
 	/* fixed effects: add within R-squared */

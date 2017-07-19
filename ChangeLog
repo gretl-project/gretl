@@ -1,5 +1,7 @@
 version 2017d, in progress
 - GUI: enable a tabbed editor for foreign scripts
+- $model bundle: add members t1 and t2 (start and end of
+  estimation range)
 
 2017-07-18 version 2017c
 - MIDAS support: several small fixes and refinements
