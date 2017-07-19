@@ -8236,24 +8236,10 @@ static void ensure_newline_termination (gchar **ps)
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     gboolean selection = FALSE;
-    const char *fname = vwin->fname;
+    char cwd[MAXLEN];
     gchar *buf = NULL;
 
-    if (editing_alt_script(vwin->role) &&
-	fname != NULL && *fname != '\0' &&
-	strstr(fname, "script_tmp") == NULL) {
-	/* There's a "real" (alt) filename in place: maybe we
-	   should chdir to its location?
-	*/
-	char *p, scriptdir[MAXLEN];
-
-	strcpy(scriptdir, fname);
-	p = strrchr(scriptdir, SLASH);
-	if (p != NULL) {
-	    *p = '\0';
-	    gretl_chdir(scriptdir);
-	}
-    }
+    *cwd = '\0';
 
     if (vwin->role == EDIT_GP || 
 	vwin->role == EDIT_R || 
@@ -8276,7 +8262,29 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	    g_free(buf);
 	}
 	return;
-    }  
+    }
+
+    if (editing_alt_script(vwin->role) &&
+	vwin->fname[0] != '\0' &&
+	strstr(vwin->fname, "script_tmp") == NULL) {
+	/* If there's a "real" (alt) filename in place we should
+	   probably chdir to its location so we're able to pick
+	   up any data files it may reference. We'll also arrange
+	   to revert the working directory once we're done.
+	*/
+	char *s, *p, scriptdir[MAXLEN];
+
+	strcpy(scriptdir, vwin->fname);
+	p = strrchr(scriptdir, SLASH);
+	if (p != NULL) {
+	    s = getcwd(cwd, MAXLEN);
+	    if (s == NULL) {
+		*cwd = '\0';
+	    }
+	    *p = '\0';
+	    gretl_chdir(scriptdir);
+	}
+    }
 
     if (vwin->role != EDIT_PKG_SAMPLE) {
 	ensure_newline_termination(&buf);
@@ -8305,6 +8313,10 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     }
 
     g_free(buf);
+
+    if (*cwd != '\0') {
+	gretl_chdir(cwd);
+    }
 }
 
 gboolean do_open_script (int action)

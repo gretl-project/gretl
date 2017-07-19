@@ -545,7 +545,8 @@ tabwin_handle_drag  (GtkWidget *widget,
     strcpy(tryfile, tmp);
 #endif
 
-    if (has_suffix(tryfile, ".inp")) { /* FIXME generalize? */
+    if (has_suffix(tryfile, ".inp")) {
+	/* FIXME generalize? */
 	do_open_script(EDIT_HANSL);
     }
 }
@@ -1021,7 +1022,14 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
     gulong handler_id;
     gchar *info = NULL;
 
-    tabwin = (vwin->role == VIEW_MODEL)? tabmod : tabhansl;
+    if (vwin->role == VIEW_MODEL) {
+	tabwin = tabmod;
+    } else if (vwin->role == EDIT_HANSL) {
+	tabwin = tabhansl;
+    } else if (editing_alt_script(vwin->role)) {
+	tabwin = tabalt;
+    }
+
     if (tabwin == NULL) {
 	return;
     }
@@ -1048,7 +1056,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 					 vwin);
 
     /* grab info for title */
-    if (vwin->role == EDIT_HANSL) {
+    if (vwin->role == EDIT_HANSL || editing_alt_script(vwin->role)) {
 	info = g_strdup(vwin->fname);
     } else {
 	const gchar *tmp = gtk_window_get_title(GTK_WINDOW(oldmain));
@@ -1128,6 +1136,8 @@ gboolean window_is_dockable (windata_t *vwin)
     if (vwin->topmain == NULL) {
 	if (vwin->role == EDIT_HANSL && tabhansl != NULL) {
 	    return TRUE;
+	} else if (editing_alt_script(vwin->role) && tabalt != NULL) {
+	    return TRUE;
 	} else if (vwin->role == VIEW_MODEL && tabmod != NULL) {
 	    return TRUE;
 	}
@@ -1163,10 +1173,17 @@ void add_dock_popup_item (GtkWidget *menu, windata_t *vwin)
 windata_t *tabwin_get_editor_for_file (const char *filename,
 				       GtkWidget *w)
 {
+    tabwin_t *tabwin = NULL;
     windata_t *ret = NULL;
 
     if (tabhansl != NULL && w == tabhansl->main) {
-	GtkNotebook *notebook = GTK_NOTEBOOK(tabhansl->tabs);
+	tabwin = tabhansl;
+    } else if (tabalt != NULL && w == tabalt->main) {
+	tabwin = tabalt;
+    }
+
+    if (tabwin != NULL) {
+	GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
 	int i, n = gtk_notebook_get_n_pages(notebook);
 	GtkWidget *tab;
 	windata_t *vwin;
@@ -1238,7 +1255,9 @@ void tabwin_close_models_viewer (GtkWidget *w)
 
 static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 {
-    if (tabwin != NULL && (tabwin == tabmod || tabwin == tabhansl)) {
+    if (tabwin != NULL && (tabwin == tabmod ||
+			   tabwin == tabhansl ||
+			   tabwin == tabalt)) {
 	/* @tabwin will be an invalid pointer if it
 	   got a delete-event before execution gets
 	   here
