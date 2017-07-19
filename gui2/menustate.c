@@ -1095,8 +1095,8 @@ void set_workdir_label (void)
 	trim_slash(tmp);
 	wdir = my_filename_to_utf8(tmp);
 	len = g_utf8_strlen(wdir, -1);
-	if (len > 48) {
-	    gretl_utf8_truncate(wdir, 45);
+	if (len > 56) {
+	    gretl_utf8_truncate(wdir, 53);
 	    strncat(wdir, "...", 3);
 	}
 	buf = g_markup_printf_escaped(fmt, wdir);
