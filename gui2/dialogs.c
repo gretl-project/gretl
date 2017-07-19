@@ -762,8 +762,8 @@ copy_item_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     return button;
 }  
 
-#define can_do_tabbed(v) ((v->role == PRINT && v->data != NULL) || \
-		           v->role == VIEW_SERIES)
+#define can_do_tsv(v) ((v->role == PRINT && v->data != NULL) || \
+		       v->role == VIEW_SERIES)
 
 #define can_do_csv(v) ((v->role == PRINT && v->data != NULL) || \
 		        v->role == VIEW_SERIES || \
@@ -811,7 +811,7 @@ void copy_format_dialog (windata_t *vwin, int action)
 #else
     rtf_label = "RTF";
 #endif
-    if (finfo->multi || can_do_tabbed(finfo->vwin)) {
+    if (finfo->multi || can_do_tsv(finfo->vwin)) {
 	rtf_format = GRETL_FORMAT_RTF;
     } else {
 	rtf_format = GRETL_FORMAT_RTF_TXT;
@@ -831,7 +831,7 @@ void copy_format_dialog (windata_t *vwin, int action)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 #endif
 
-    if (can_do_tabbed(vwin)) {
+    if (can_do_tsv(vwin)) {
 	/* tab-separated option */
 	button = copy_item_button(group, vbox, finfo, GRETL_FORMAT_TAB,
 				  _("Tab separated"), pref);
