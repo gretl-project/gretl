@@ -270,9 +270,8 @@ installed.
 \end{center}
 \caption{Browser for installed packages. It's quite easy to tell this
   apart from the ``on server'' window. Apart from their title-bars,
-  this one has a lot more toolbar buttons; and it doesn't display the
-  Author field of packages, though you can see that if you click on
-  the Info button (second from left).}
+  this one has a lot more toolbar buttons (you can do more with a
+  package once it is installed).}
 \label{fig:local-packages}
 \end{figure}
 
@@ -2050,8 +2049,8 @@ File, so that on the next revision it doesn't matter where you start.
 \section*{Appendix A: The CLI on Windows}
 \addcontentsline{toc}{section}{Appendix A: The CLI on Windows}
 
-If you would like to use the command-line approach on a Windows
-computer you must make a preliminary choice: you can either
+If you would like to use the command-line approach under MS Windows
+you must make a preliminary choice: you can either
 \begin{itemize}
 \item Stick to the native Windows way of doing things, or
 \item install software which mimics a unix environment on Windows.
@@ -2077,7 +2076,7 @@ command-line \textsf{zip} and \textsf{unzip} from \textsf{GnuWin32}:
 \url{http://gnuwin32.sf.net/packages/zip.htm}. (In both cases you
 should select the option ``Complete package, except sources''.)
 
-For anyone who's interested, but not very familiar with
+For anyone who's interested but not very familiar with
 \textsf{cmd.exe}, a basic guide follows.  First, to get easy access to
 the program go to the Windows desktop, right-click, and select New,
 Shortcut. You'll be asked for the location of the target for the
@@ -2594,6 +2593,42 @@ the \textsf{Extra properties} button.
 
   \vbusage{} \verb|gui-precheck = lp_mfx_precheck|
 
+\item \texttt{list-maker} (optional): Applies only when a model-window
+  \texttt{menu-attachment} is specified. This element identifies a
+  function to be called to construct a list of series bearing some
+  specific relationship to the gretl model which the package
+  ``targets,'' from which the user is then expected to select a
+  member. This is a generalization of the \texttt{\$xlist} mechanism
+  described in section~\ref{sec:bandplot} above, and is best explained
+  by example. In the \textsf{exogtest} package the designated
+  \texttt{list-maker} function reads as follows:
+\begin{code}
+function list exogtest_listmaker (void)
+  bundle m = $model
+  list xlist = m.xlist
+  list zlist = m.instlist
+  list L = xlist - zlist
+  if nelem(L) == 0
+    funcerr "No endogenous regressors were found"
+  endif
+  return L
+end function
+\end{code}
+  %$
+  This function constructs a list of endogenous regressors from a
+  model estimated via gretl's \texttt{tsls} command (details of which
+  are presumed to be available as members of the \texttt{\$model}
+  bundle). This then provides an automatic listing of candidate
+  arguments for the \texttt{xvar} parameter to the package's
+  \texttt{GUI\_exogtest} function, the signature of which is
+\begin{code}
+function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
+\end{code}
+  %$
+  The dummy default value of \texttt{\$mylist} is understood by gretl
+  to mean the user's selection from the list returned by the
+  \texttt{list-maker} function.
+
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
   package whose job is to produce a special graph based on model data.
@@ -2888,5 +2923,3 @@ are intended to supplement the required sample script.
 \bibliography{gretl}
 
 \end{document}
-
-
