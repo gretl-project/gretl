@@ -1613,10 +1613,10 @@ static int function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
-    if ((cinfo->flags & DATA_ACCESS) && sample_size(dataset) != dataset->n) {
+    if ((cinfo->flags & DATA_ACCESS) && sample_size(dataset) < dataset->n) {
 	/* "allow data access" option button */
 	hbox = gtk_hbox_new(FALSE, 5);
-	button = gtk_check_button_new_with_label(_("allow access to full data range"));
+	button = gtk_check_button_new_with_label(_("allow access to out-of-sample data"));
 	g_signal_connect(G_OBJECT(button), "toggled",
 			 G_CALLBACK(set_allow_full_data), NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 

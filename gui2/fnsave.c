@@ -85,6 +85,7 @@ struct function_info_ {
     GtkWidget *alttree;    /* currently undisplayed menu treeview */
     GtkWidget *treewin;    /* scrolled window to hold menu trees */
     GtkWidget *mreq_combo; /* model requirement selector */
+    GtkWidget *data_button; /* data access request button */
     GtkWidget *specdlg;    /* pkg spec save dialog */
     GtkWidget *validate;   /* "Validate" gfn button */
     GtkWidget *tagsel[2];  /* tag selector combos */
@@ -2591,7 +2592,7 @@ static GtkWidget *add_menu_navigator (GtkWidget *holder,
 }
 
 static GtkWidget *
-model_requirement_selector (GtkWidget *holder, 
+model_requirement_selector (GtkWidget *holder,
 			    function_info *finfo)
 {
     GtkWidget *hbox, *label;
@@ -2603,7 +2604,7 @@ model_requirement_selector (GtkWidget *holder,
     hbox = gtk_hbox_new(FALSE, 5);
     label = gtk_label_new("Model requirement");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    
+
     combo = gtk_combo_box_text_new();
     g_object_set_data(G_OBJECT(combo), "label", label);
     combo_box_append_text(combo, _("Any model"));
@@ -2617,7 +2618,7 @@ model_requirement_selector (GtkWidget *holder,
 	    }
 	}
     }
-    
+
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
@@ -2626,6 +2627,22 @@ model_requirement_selector (GtkWidget *holder,
     gtk_widget_set_sensitive(combo, finfo->menuwin == MODEL_WINDOW);
 
     return combo;
+}
+
+static GtkWidget *
+access_request_button (GtkWidget *holder,
+		       function_info *finfo)
+{
+    GtkWidget *hbox, *button;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    button = gtk_check_button_new_with_label("request access to out-of-sample data");
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), finfo->data_access);
+    // g_signal_connect(button, "toggled", access_button_callback, finfo);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+
+    return button;
 }
 
 static void switch_menu_view (GtkComboBox *combo,
@@ -2926,6 +2943,17 @@ static int process_menu_attachment (function_info *finfo,
 	}
     }
 
+    if (finfo->data_button != NULL) {
+	gboolean req = button_is_active(finfo->data_button);
+
+	if (req != finfo->data_access) {
+	    if (make_changes) {
+		finfo->data_access = req;
+	    }
+	    changed = 1;
+	}
+    }
+
  finish:
 
     if (make_changes) {
@@ -3036,7 +3064,7 @@ static int process_special_functions (function_info *finfo,
 }
 
 #define must_be_private(r) (r == UFUN_GUI_PRECHECK)
-#define must_be_public(r) (r != UFUN_GUI_PRECHECK)
+#define must_be_public(r) (r != UFUN_GUI_PRECHECK && r != UFUN_LIST_MAKER)
 
 /* After adding or deleting functions, check that any
    selected "specials" are still valid: the selected
@@ -3345,6 +3373,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     finfo->currtree = finfo->alttree = NULL;
     finfo->treewin = NULL;
     finfo->mreq_combo = NULL;
+    finfo->data_button = NULL;
 
     dlg = gretl_dialog_new(_("gretl: extra properties"), finfo->dlg,
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
@@ -3459,6 +3488,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     finfo->modeltree = add_menu_navigator(vbox, finfo, 1);
 
     finfo->mreq_combo = model_requirement_selector(vbox, finfo);
+    finfo->data_button = access_request_button(vbox, finfo);
 
     gtk_widget_set_sensitive(finfo->currtree, finfo->menuwin != NO_WINDOW);
 
@@ -3670,8 +3700,6 @@ static void finfo_dialog (function_info *finfo)
     add_tag_selectors(tbl, i, finfo);
     i += 2;
     add_data_requirement_menu(tbl, i, finfo);
-
-    /* data access request check button here? */
 
     /* table for min version and help doc controls */
     hbox = gtk_hbox_new(FALSE, 0);
@@ -4591,6 +4619,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	BUNDLE_FCAST,
 	BUNDLE_EXTRA,
 	GUI_PRECHECK,
+	LIST_MAKER,
 	NULL
     };
     const char *reqstr = NULL;
