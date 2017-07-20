@@ -288,6 +288,8 @@ static int check_args (call_info *cinfo)
 
 static void fncall_dialog_destruction (GtkWidget *w, call_info *cinfo)
 {
+    /* turn off out-of-sample data access */
+    allow_full_data_access(0);
     cinfo_free(cinfo);
     open_fncall_dlg = NULL;
 }
