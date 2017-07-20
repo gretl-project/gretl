@@ -1668,11 +1668,12 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	search_cols[1] = 2;  /* description */
     } else if (vwin->role == FUNC_FILES) {
 	search_cols[0] = 0;  /* package name */
-	search_cols[1] = 2;  /* description (skip version #) */
+	search_cols[1] = 4;  /* description */
+	search_cols[2] = 3;  /* author */
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	search_cols[0] = 0;  /* package name */
-	search_cols[1] = 3;  /* description */
-	search_cols[2] = 2;  /* author */
+	search_cols[1] = 4;  /* description */
+	search_cols[2] = 3;  /* author */
     } else {
 	/* databases, datafiles */
 	search_cols[0] = 1; /* description */
