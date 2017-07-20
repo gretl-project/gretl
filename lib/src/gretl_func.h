@@ -164,6 +164,8 @@ int object_is_const (const char *name);
 
 int object_is_function_arg (const char *name);
 
+void allow_full_data_access (int s);
+
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 
 int function_return_type_from_string (const char *s);

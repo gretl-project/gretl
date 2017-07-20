@@ -48,7 +48,8 @@
 
 enum {
     SHOW_GUI_MAIN = 1 << 0,
-    MODEL_CALL    = 1 << 1
+    MODEL_CALL    = 1 << 1,
+    DATA_ACCESS   = 1 << 2
 };
 
 typedef struct call_info_ call_info;
@@ -91,6 +92,7 @@ struct call_info_ {
 
 static GtkWidget *open_fncall_dlg;
 static gboolean close_on_OK = TRUE;
+static gboolean allow_full_data = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
 static void maybe_record_include (const char *pkgname, int model_id);
@@ -1362,6 +1364,12 @@ static void set_close_on_OK (GtkWidget *b, gpointer p)
     close_on_OK = button_is_active(b);
 }
 
+static void set_allow_full_data (GtkWidget *b, gpointer p)
+{
+    allow_full_data = button_is_active(b);
+    allow_full_data_access(allow_full_data);
+}
+
 static int cinfo_show_return (call_info *c)
 {
     if (c->rettype == GRETL_TYPE_NONE ||
@@ -1605,7 +1613,19 @@ static int function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
-    /* option button */
+    if ((cinfo->flags & DATA_ACCESS) && sample_size(dataset) != dataset->n) {
+	/* "allow data access" option button */
+	hbox = gtk_hbox_new(FALSE, 5);
+	button = gtk_check_button_new_with_label(_("allow access to full data range"));
+	g_signal_connect(G_OBJECT(button), "toggled",
+			 G_CALLBACK(set_allow_full_data), NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+				     allow_full_data);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    }
+
+    /* "close on exec" option button */
     hbox = gtk_hbox_new(FALSE, 5);
     button = gtk_check_button_new_with_label(_("close this dialog on \"OK\""));
     g_signal_connect(G_OBJECT(button), "toggled",
@@ -2246,6 +2266,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   int *err)
 {
     call_info *cinfo;
+    int data_access = 0;
     fnpkg *pkg;
 
     pkg = get_function_package_by_name(pkgname);
@@ -2274,6 +2295,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   "data-requirement", &cinfo->dreq,
 					   "model-requirement", &cinfo->modelreq,
 					   "min-version", &cinfo->minver,
+					   "wants-data-access", &data_access,
 					   NULL);
 
     if (*err) {
@@ -2282,6 +2304,10 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 	/* no available interfaces */
 	errbox(_("Function package is broken"));
 	*err = E_DATA;
+    }
+
+    if (!*err && data_access) {
+	cinfo->flags |= DATA_ACCESS;
     }
 
     if (*err) {

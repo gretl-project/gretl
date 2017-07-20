@@ -4762,9 +4762,12 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
     }
 
     if (!err) {
-	/* estimation start and end, converted to 1-based */
+	/* estimation start and end, 1-based */
 	gretl_bundle_set_int(b, "t1", pmod->t1 + 1);
 	gretl_bundle_set_int(b, "t2", pmod->t2 + 1);
+	/* contemporaneous sample range, 1-based */
+	gretl_bundle_set_int(b, "sample_t1", pmod->smpl.t1 + 1);
+	gretl_bundle_set_int(b, "sample_t2", pmod->smpl.t2 + 1);
     }
 
     if (pmod->ci == PANEL && (pmod->opt & OPT_F) &&

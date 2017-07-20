@@ -151,8 +151,9 @@ struct fnpkg_ {
     char *label;      /* for use in GUI menus */
     char *mpath;      /* menu path in GUI */
     int minver;       /* minimum required gretl version */
-    int uses_subdir;  /* lives in subdirectory (0/1) */
-    int prechecked;   /* already checked for data requirement */
+    char uses_subdir; /* lives in subdirectory (0/1) */
+    char prechecked;  /* already checked for data requirement */
+    char data_access; /* wants access to full data range */
     DataReq dreq;     /* data requirement */
     int modelreq;     /* required model type, if applicable */
     ufunc **pub;      /* pointers to public interfaces */
@@ -514,6 +515,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->minver = 0;
     pkg->uses_subdir = 0;
     pkg->prechecked = 0;
+    pkg->data_access = 0;
     
     pkg->pub = pkg->priv = NULL;
     pkg->n_pub = pkg->n_priv = 0;
@@ -2578,6 +2580,10 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 
     if (pkg->uses_subdir) {
 	fprintf(fp, " lives-in-subdir=\"true\"");
+    }
+
+    if (pkg->data_access) {
+	fprintf(fp, " wants-data-access=\"true\"");
     }    
 
     fputs(">\n", fp);
@@ -2662,6 +2668,10 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->uses_subdir) {
 	fprintf(fp, " lives-in-subdir=\"true\"");
+    }
+
+    if (pkg->data_access) {
+	fprintf(fp, " wants-data-access=\"true\"");
     }    
 
     fputs(">\n", fp);
@@ -3310,6 +3320,8 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		got++;
 	    } else if (!strncmp(line, "lives-in-subdir", 15)) {
 		pkg->uses_subdir = pkg_boolean_from_string(p);
+	    } else if (!strncmp(line, "wants-data-access", 17)) {
+		pkg->data_access = pkg_boolean_from_string(p);
 	    } else if (!strncmp(line, "no-print", 8)) {
 		err = pkg_set_funcs_attribute(pkg, p, UFUN_NOPRINT);
 	    } else if (!strncmp(line, "menu-only", 9)) {
@@ -3921,6 +3933,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		pkg->minver = ival;
 	    } else if (!strcmp(key, "lives-in-subdir")) {
 		pkg->uses_subdir = (ival != 0);
+	    } else if (!strcmp(key, "wants-data-access")) {
+		pkg->data_access = (ival != 0);
 	    }
 	} 
     }
@@ -4124,6 +4138,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "lives-in-subdir")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->uses_subdir;
+	} else if (!strcmp(key, "wants-data-access")) {
+	    pi = (int *) ptr;
+	    *pi = pkg->data_access;
 	} else if (!strcmp(key, "publist")) {
 	    plist = (int **) ptr;
 	    *plist = function_package_get_list(pkg, PUBLIST, npub);
@@ -4739,6 +4756,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     }
 
     pkg->uses_subdir = gretl_xml_get_prop_as_bool(node, "lives-in-subdir");
+    pkg->data_access = gretl_xml_get_prop_as_bool(node, "wants-data-access");
 
     cur = node->xmlChildrenNode;
     
@@ -8376,6 +8394,13 @@ int object_is_function_arg (const char *name)
     return 0;
 }
 
+static int allow_full_data;
+
+void allow_full_data_access (int s)
+{
+    allow_full_data = (s != 0);
+}
+
 /**
  * sample_range_get_extrema:
  * @dset: dataset info.
@@ -8390,14 +8415,19 @@ int object_is_function_arg (const char *name)
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 {
-    fncall *call = current_function_call();
-
-    if (call != NULL) {
-	*t1 = call->obs.t1;
-	*t2 = call->obs.t2;
-    } else {
+    if (allow_full_data) {
 	*t1 = 0;
 	*t2 = dset->n - 1;
+    } else {	
+	fncall *call = current_function_call();
+
+	if (call != NULL) {
+	    *t1 = call->obs.t1;
+	    *t2 = call->obs.t2;
+	} else {
+	    *t1 = 0;
+	    *t2 = dset->n - 1;
+	}
     }
 }
 

@@ -117,6 +117,7 @@ struct function_info_ {
     int n_priv;            /* number of private functions */
     int n_files;           /* number of include data files */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
+    gboolean data_access;  /* the package wants access to full data range */
     gboolean pdfdoc;       /* the package has PDF documentation */
     gchar *menupath;       /* path for menu attachment, if any */
     gchar *menulabel;      /* label for menu attachment, if any */
@@ -231,6 +232,7 @@ function_info *finfo_new (void)
     finfo->dreq = 0;
     finfo->minver = 10900;
     finfo->uses_subdir = 0;
+    finfo->data_access = 0;
     finfo->pdfdoc = 0;
 
     return finfo;
@@ -3669,6 +3671,8 @@ static void finfo_dialog (function_info *finfo)
     i += 2;
     add_data_requirement_menu(tbl, i, finfo);
 
+    /* data access request check button here? */
+
     /* table for min version and help doc controls */
     hbox = gtk_hbox_new(FALSE, 0);
     tbl = gtk_table_new(3, 2, FALSE);
@@ -4376,6 +4380,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "gui-help", finfo->gui_help,
 					      "gui-attrs", finfo->gui_attrs,
 					      "lives-in-subdir", finfo->uses_subdir,
+					      "wants-data-access", finfo->data_access,
 					      "model-requirement", finfo->mreq,
 					      NULL);
 	if (err) {
@@ -4935,6 +4940,7 @@ void edit_function_package (const char *fname)
 					  "label", &finfo->menulabel,
 					  "gui-help", &finfo->gui_help,
 					  "lives-in-subdir", &finfo->uses_subdir,
+					  "wants-data-access", &finfo->data_access,
 					  "model-requirement", &finfo->mreq,
 					  "gui-attrs", finfo->gui_attrs,
 					  NULL);
