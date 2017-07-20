@@ -2629,6 +2629,11 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   to mean the user's selection from the list returned by the
   \texttt{list-maker} function.
 
+  Note that the \texttt{list-maker} function must take no arguments
+  (but can assume access to \texttt{\$model}) and must return a list
+  (or fail with an error message if no suitable list members are
+  available). It should be a function private to the package.
+
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
   package whose job is to produce a special graph based on model data.
