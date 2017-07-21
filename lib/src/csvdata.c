@@ -37,6 +37,9 @@
 #define QUOTE      '\''
 #define CSVSTRLEN  72
 
+/* experimental, 2017-07-21 */
+#undef CSV_PRESERVE_QUOTATION
+
 enum {
     CSV_HAVEDATA = 1 << 0,
     CSV_GOTDELIM = 1 << 1,
@@ -1720,6 +1723,39 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 
 #define nonspace_delim(d) (d != ',' && d != ';')
 
+#ifdef CSV_PRESERVE_QUOTATION
+
+static int count_csv_fields (const char *s, char delim)
+{
+    int inquote = 0;
+    int cbak, nf = 0;
+
+    if (*s == delim && *s == ' ') {
+	s++;
+    }
+
+    while (*s) {
+	if (*s == '"') {
+	    inquote = !inquote;
+	} else if (!inquote && *s == delim) {
+	    nf++;
+	}
+	cbak = *s;
+	s++;
+	/* Problem: (when) should a trailing delimiter be read as an
+	   implicit NA?  For now we'll so treat it if the delimiter
+	   is not white space.
+	*/
+	if (*s == '\0' && cbak == delim && nonspace_delim(delim)) {
+	    nf--;
+	}
+    }
+
+    return nf + 1;
+}
+
+#else
+
 static int count_csv_fields (const char *s, char delim)
 {
     int cbak, nf = 0;
@@ -1760,6 +1796,8 @@ static void purge_quoted_commas (char *s)
     }
 }
 
+#endif /* CSV_PRESERVE_QUOTATION or not */
+
 static void purge_unquoted_spaces (char *s)
 {
     int inquote = 0;
@@ -1788,9 +1826,11 @@ static void compress_csv_line (csvdata *c, int nospace)
 	*p = '\0';
     }
 
+#ifndef CSV_PRESERVE_QUOTATION
     if (c->delim == ',') {
 	purge_quoted_commas(c->line);
     }
+#endif
 
     if (c->delim != ' ') {
 	if (nospace) {
@@ -1800,7 +1840,9 @@ static void compress_csv_line (csvdata *c, int nospace)
 	compress_spaces(c->line);
     }
 
+#ifndef CSV_PRESERVE_QUOTATION
     gretl_delchar('"', c->line);
+#endif
 
     if (csv_has_trailing_comma(c)) {
 	/* chop trailing comma */
@@ -3090,6 +3132,9 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     c->real_n = c->dset->n;
 
     while (csv_fgets(c, fp) && !err) {
+#ifdef CSV_PRESERVE_QUOTATION
+	int inquote = 0;
+#endif
 
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
@@ -3113,6 +3158,21 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	j = 1;
 	for (k=0; k<c->ncols && !err; k++) {
 	    i = 0;
+#ifdef CSV_PRESERVE_QUOTATION
+	    while (*p) {
+		if (*p == '"') {
+		    inquote = !inquote;
+		} else if (!inquote && *p == c->delim) {
+		    break;
+		}
+		if (i < CSVSTRLEN - 1) {
+		    c->str[i++] = *p;
+		} else {
+		    truncated++;
+		}
+		p++;
+	    }
+#else
 	    while (*p && *p != c->delim) {
 		if (i < CSVSTRLEN - 1) {
 		    c->str[i++] = *p;
@@ -3121,6 +3181,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		}
 		p++;
 	    }
+#endif
 	    c->str[i] = '\0';
 	    err = maybe_fix_csv_string(c->str);
 	    if (!err) {
@@ -4484,15 +4545,15 @@ static void joiner_print (joiner *jr)
     for (i=0; i<jr->n_rows; i++) {
 	row = &jr->rows[i];
 	if (row->n_keys > 1) {
-	    fprintf(stderr, " row %d: keyvals=(%" G_GINT64_FORMAT ",%" G_GINT64_FORMAT "), "
-		    "data=%.12g\n", i, row->keyval, row->keyval2, row->val);
+	    fprintf(stderr, " row %d: keyvals=(%" G_GINT64_FORMAT ",%" G_GINT64_FORMAT ")\n",
+		    i, row->keyval, row->keyval2);
 	} else {
 	    if (jr->str_keys[0] && row->keyval >= 0) {
-		fprintf(stderr, " row %d: keyval=%" G_GINT64_FORMAT "(%s), data=%.12g\n",
-			i, row->keyval, labels[row->keyval - 1], row->val);
+		fprintf(stderr, " row %d: keyval=%" G_GINT64_FORMAT "(%s)\n",
+			i, row->keyval, labels[row->keyval - 1]);
 	    } else {
-		fprintf(stderr, " row %d: keyval=%" G_GINT64_FORMAT ", data=%.12g\n",
-			i, row->keyval, row->val);
+		fprintf(stderr, " row %d: keyval=%" G_GINT64_FORMAT "\n",
+			i, row->keyval);
 	    }
 	}
     }
