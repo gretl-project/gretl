@@ -2605,9 +2605,7 @@ the \textsf{Extra properties} button.
 \begin{code}
 function list exogtest_listmaker (void)
   bundle m = $model
-  list xlist = m.xlist
-  list zlist = m.instlist
-  list L = xlist - zlist
+  list L = m.xlist - m.instlist
   if nelem(L) == 0
     funcerr "No endogenous regressors were found"
   endif
@@ -2633,6 +2631,8 @@ function bundle GUI_exogtest (int xvar[$mylist] "regressor to test")
   (but can assume access to \texttt{\$model}) and must return a list
   (or fail with an error message if no suitable list members are
   available). It should be a function private to the package.
+
+  \ttusage{list-maker = exogtest\_listmaker}
 
 \item \texttt{no-print} (optional): A list of public interfaces that
   are not designed to print anything.  Consider, for example, a
