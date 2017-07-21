@@ -1359,7 +1359,7 @@ static int get_menu_add_ok (windata_t *vwin)
 static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
 {
     GtkWidget *button;
-    gint flags;
+    gint flags = 0;
 
     button = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
     if (button != NULL) {
