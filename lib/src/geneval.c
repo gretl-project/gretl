@@ -4851,6 +4851,27 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *get_series_info (NODE *n, parser *p)
+{
+    NODE *ret = aux_bundle_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int v = 0;
+
+	if (useries_node(n)) {
+	    v = n->vnum;
+	} else {
+	    v = node_get_int(n, p);
+	}
+
+	if (!p->err) {
+	    ret->v.b = series_info_bundle(p->dset, v, &p->err);
+	}
+    }
+
+    return ret;
+}
+
 /* middle argument is series or list; value returned is list in
    either case */
 
@@ -13561,9 +13582,17 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_DUMIFY:
-	/* series argument wanted */
+	/* series or list argument wanted */
 	if (ok_list_node(l)) {
 	    ret = dummify_func(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_GETINFO:
+	/* named series (or ID) argument wanted */
+	if (useries_node(l) || l->t == NUM) {
+	    ret = get_series_info(l, p);
 	} else {
 	    p->err = E_TYPES;
 	}

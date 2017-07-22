@@ -576,4 +576,7 @@ int series_is_midas_anchor (const DATASET *dset, int i);
 
 void series_set_midas_anchor (const DATASET *dset, int i);
 
+void *series_info_bundle (const DATASET *dset, int i,
+			  int *err);
+
 #endif /* DATASET_H */

@@ -475,6 +475,7 @@ struct str_table funcs[] = {
     { F_DAYSPAN,   "dayspan" },
     { F_SMPLSPAN,  "smplspan" },
     { F_SLEEP,     "sleep" },
+    { F_GETINFO,   "getinfo" },
     { 0,           NULL }
 };
 
