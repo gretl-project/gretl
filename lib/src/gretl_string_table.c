@@ -32,6 +32,8 @@ struct _series_table {
     int n_strs;       /* number of strings in table */
     char **strs;      /* saved strings */
     GHashTable *ht;   /* hash table for quick lookup */
+    int quoted;       /* strings were quoted on input */
+    int all_ints;     /* all strings represent integers */
 };
 
 struct _gretl_string_table {
@@ -48,6 +50,8 @@ static series_table *series_table_alloc (void)
 	st->strs = NULL;
 	st->n_strs = 0;
 	st->ht = g_hash_table_new(g_str_hash, g_str_equal);
+	st->quoted = 0;
+	st->all_ints = 0;
     }
 
     return st;
@@ -243,6 +247,18 @@ char **series_table_get_strings (series_table *st, int *n_strs)
     }
 }
 
+static char *get_unquoted (const char *s)
+{
+    char *tmp = NULL;
+    int n = strlen(s);
+
+    if (s[n-1] == '"') {
+	tmp = gretl_strndup(s+1, n-2);
+    }
+
+    return tmp;
+}
+
 /**
  * series_table_add_string:
  * @st: a gretl series table.
@@ -254,9 +270,20 @@ char **series_table_get_strings (series_table *st, int *n_strs)
 
 int series_table_add_string (series_table *st, const char *s)
 {
+    char *tmp = NULL;
     int n, err;
 
-    err = strings_array_add(&st->strs, &st->n_strs, s);
+    if (*s == '"') {
+	tmp = get_unquoted(s);
+    }
+
+    if (tmp != NULL) {
+	st->quoted = 1;
+	err = strings_array_add(&st->strs, &st->n_strs, tmp);
+	free(tmp);
+    } else {
+	err = strings_array_add(&st->strs, &st->n_strs, s);
+    }
 
     if (err) {
 	n = -1;
@@ -372,9 +399,12 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
 			  int col, int addcol, PRN *prn)
 {
     series_table *st = NULL;
+    char *tmp = NULL;
     int i, idx = 0;
 
-    if (gst == NULL) return idx;
+    if (gst == NULL) {
+	return idx;
+    }
 
     if (gst->cols_list != NULL) {
 	for (i=1; i<=gst->cols_list[0]; i++) {
@@ -385,9 +415,13 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
 	}
     }
 
+    if (*s == '"') {
+	tmp = get_unquoted(s);
+    }
+
     if (st != NULL) {
 	/* there's a table for this column already */
-	idx = series_table_get_index(st, s);
+	idx = series_table_get_index(st, tmp != NULL ? tmp: s);
     } else if (addcol) {
 	/* no table for this column yet: start one now */
 	st = gretl_string_table_add_column(gst, col);
@@ -400,6 +434,8 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
     if (idx == 0 && st != NULL) {
 	idx = series_table_add_string(st, s);
     }
+
+    free(tmp);
 
     return idx;
 }
@@ -474,6 +510,32 @@ void gretl_string_table_destroy (gretl_string_table *gst)
     free(gst);
 }
 
+/* Given a string table in which all the strings are just
+   representations of integers, write the integer values
+   into the series and destroy the string table, while
+   marking the series as "coded."
+*/
+
+static void series_commute_string_table (DATASET *dset, int i,
+					 series_table *st)
+{
+    if (dset != NULL && i > 0 && i < dset->v) {
+	const char *s;
+	double val;
+	int t;
+
+	for (t=0; t<dset->n; t++) {
+	    val = dset->Z[i][t];
+	    if (!na(val)) {
+		s = series_table_get_string(st, val);
+		dset->Z[i][t] = (double) atoi(s);
+	    }
+	}
+	series_table_destroy(st);
+	series_set_flag(dset, i, VAR_DISCRETE | VAR_CODED);
+    }
+}
+
 /**
  * gretl_string_table_print:
  * @gst: gretl string table.
@@ -493,32 +555,43 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     series_table *st;
     const char *fshort;
     char stname[MAXLEN];
-    FILE *fp;
+    FILE *fp = NULL;
     int i, j, ncols = 0;
+    int n_strvars = 0;
     int err = 0;
 
     if (gst == NULL) {
 	return E_DATA;
     }
 
-    strcpy(stname, "string_table.txt");
-    gretl_path_prepend(stname, gretl_workdir());
-
-    fp = gretl_fopen(stname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    fshort = strrchr(fname, SLASH);
-    if (fshort != NULL) {
-	fprintf(fp, "%s\n", fshort + 1);
-    } else {
-	fprintf(fp, "%s\n", fname);
-    }
-
     ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
+    n_strvars = ncols;
 
-    if (ncols > 0) {
+    /* first examine the string table for numeric codings */
+    for (i=0; i<ncols; i++) {
+	st = gst->cols[i];
+	if (st->all_ints) {
+	    n_strvars--;
+	}
+    }
+
+    if (n_strvars > 0) {
+	/* FIXME print something about coded integer series */
+	strcpy(stname, "string_table.txt");
+	gretl_path_prepend(stname, gretl_workdir());
+
+	fp = gretl_fopen(stname, "w");
+	if (fp == NULL) {
+	    return E_FOPEN;
+	}
+
+	fshort = strrchr(fname, SLASH);
+	if (fshort != NULL) {
+	    fprintf(fp, "%s\n", fshort + 1);
+	} else {
+	    fprintf(fp, "%s\n", fname);
+	}
+
 	fputc('\n', fp);
 	fputs(_("One or more non-numeric variables were found.\n"
 		"These variables have been given numeric codes as follows.\n\n"), fp);
@@ -532,28 +605,34 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	int vi = gst->cols_list[i+1];
 
 	st = gst->cols[i];
-	if (i > 0) {
-	    fputc('\n', fp);
-	}
-	fprintf(fp, _("String code table for variable %d (%s):\n"), 
-		vi, dset->varname[vi]);
-	for (j=0; j<st->n_strs; j++) {
-	    fprintf(fp, "%3d = '%s'\n", j+1, st->strs[j]);
+	if (fp != NULL && !st->all_ints) {
+	    if (i > 0) {
+		fputc('\n', fp);
+	    }
+	    fprintf(fp, _("String code table for variable %d (%s):\n"),
+		    vi, dset->varname[vi]);
+	    for (j=0; j<st->n_strs; j++) {
+		fprintf(fp, "%3d = '%s'\n", j+1, st->strs[j]);
+	    }
 	}
 	if (dset->varinfo != NULL) {
-	    series_attach_string_table(dset, vi, st);
+	    if (st->all_ints) {
+		series_commute_string_table(dset, vi, st);
+	    } else {
+		series_attach_string_table(dset, vi, st);
+	    }
 	    gst->cols[i] = NULL;
 	}
     }
 
-    if (gst->extra != NULL) {
-	fputs(gst->extra, fp);
+    if (fp != NULL) {
+	if (gst->extra != NULL) {
+	    fputs(gst->extra, fp);
+	}
+	pprintf(prn, _("String code table written to\n %s\n"), stname);
+	fclose(fp);
+	set_string_table_written();
     }
-
-    pprintf(prn, _("String code table written to\n %s\n"), stname);
-
-    fclose(fp);
-    set_string_table_written();
 
     return err;
 }
@@ -583,17 +662,34 @@ int gretl_string_table_validate (gretl_string_table *gst)
     for (i=0; i<ncols; i++) {
 	series_table *st = gst->cols[i];
 	const char *s;
+	int nint = 0;
 	int j, myerr = E_DATA;
+
+	if (st->quoted) {
+	    myerr = 0;
+	}
 
 	for (j=0; j<st->n_strs; j++) {
 	    s = st->strs[j];
-	    if (*s == '-' || *s == '+') s++;
-	    if (strspn(s, test) < strlen(s)) {
-		/* not quasi-numeric */
-		myerr = 0;
-		break;
-
+	    if (st->quoted) {
+		if (integer_string(s)) {
+		    nint++;
+		}
+	    } else {
+		/* field is not quoted */
+		if (*s == '-' || *s == '+') {
+		    s++;
+		}
+		if (strspn(s, test) < strlen(s)) {
+		    /* not quasi-numeric */
+		    myerr = 0;
+		    break;
+		}
 	    }
+	}
+
+	if (nint == st->n_strs) {
+	    st->all_ints = 1;
 	}
 
 	if (myerr) {

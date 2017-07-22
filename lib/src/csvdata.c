@@ -2341,36 +2341,11 @@ static int converted_ok (const char *s, char *test, double x)
     }
 }
 
-static int is_quoted_int (const char *s)
-{
-    int ret = 0;
-
-    if (*s == '"') {
-	int n = strlen(s);
-
-	s++;
-	if (n < 14 && s[n-2] == '"') {
-	    char test[16] = {0};
-
-	    strncat(test, s, n - 2);
-	    if (integer_string(test)) {
-		ret = 1;
-	    }
-	}
-    }
-
-    return ret;
-}
-
 static double csv_atof (csvdata *c, int i, const char *s)
 {
     char tmp[CSVSTRLEN], clean[CSVSTRLEN];
     double x = NON_NUMERIC;
     char *test;
-
-    if (0 && csv_keep_quotes(c) && is_quoted_int(s)) {
-	fprintf(stderr, "'%s': got quoted int\n", s);
-    }
 
     if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
 	all_digits_and_seps(s)) {
