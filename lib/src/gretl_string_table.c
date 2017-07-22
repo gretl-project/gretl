@@ -28,12 +28,16 @@
 
 #include <glib.h>
 
+enum {
+    ST_QUOTED  = 1 << 0,
+    ST_ALLINTS = 1 << 1
+};
+
 struct _series_table {
     int n_strs;       /* number of strings in table */
     char **strs;      /* saved strings */
     GHashTable *ht;   /* hash table for quick lookup */
-    int quoted;       /* strings were quoted on input */
-    int all_ints;     /* all strings represent integers */
+    int flags;        /* status flags (above) */
 };
 
 struct _gretl_string_table {
@@ -41,6 +45,9 @@ struct _gretl_string_table {
     series_table **cols;  /* per-column tables (see above) */
     char *extra;          /* extra information, if any */
 };
+
+#define st_quoted(t) (t->flags & ST_QUOTED)
+#define all_ints(t)  (t->flags & ST_ALLINTS)
 
 static series_table *series_table_alloc (void)
 {
@@ -50,8 +57,7 @@ static series_table *series_table_alloc (void)
 	st->strs = NULL;
 	st->n_strs = 0;
 	st->ht = g_hash_table_new(g_str_hash, g_str_equal);
-	st->quoted = 0;
-	st->all_ints = 0;
+	st->flags = 0;
     }
 
     return st;
@@ -278,7 +284,7 @@ int series_table_add_string (series_table *st, const char *s)
     }
 
     if (tmp != NULL) {
-	st->quoted = 1;
+	st->flags |= ST_QUOTED;
 	err = strings_array_add(&st->strs, &st->n_strs, tmp);
 	free(tmp);
     } else {
@@ -570,7 +576,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     /* first examine the string table for numeric codings */
     for (i=0; i<ncols; i++) {
 	st = gst->cols[i];
-	if (st->all_ints) {
+	if (all_ints(st)) {
 	    n_strvars--;
 	}
     }
@@ -605,7 +611,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	int vi = gst->cols_list[i+1];
 
 	st = gst->cols[i];
-	if (fp != NULL && !st->all_ints) {
+	if (fp != NULL && !all_ints(st)) {
 	    if (i > 0) {
 		fputc('\n', fp);
 	    }
@@ -616,7 +622,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	    }
 	}
 	if (dset->varinfo != NULL) {
-	    if (st->all_ints) {
+	    if (all_ints(st)) {
 		series_commute_string_table(dset, vi, st);
 	    } else {
 		series_attach_string_table(dset, vi, st);
@@ -665,13 +671,13 @@ int gretl_string_table_validate (gretl_string_table *gst)
 	int nint = 0;
 	int j, myerr = E_DATA;
 
-	if (st->quoted) {
+	if (st_quoted(st)) {
 	    myerr = 0;
 	}
 
 	for (j=0; j<st->n_strs; j++) {
 	    s = st->strs[j];
-	    if (st->quoted) {
+	    if (st_quoted(st)) {
 		if (integer_string(s)) {
 		    nint++;
 		}
@@ -689,7 +695,7 @@ int gretl_string_table_validate (gretl_string_table *gst)
 	}
 
 	if (nint == st->n_strs) {
-	    st->all_ints = 1;
+	    st->flags |= ST_ALLINTS;
 	}
 
 	if (myerr) {
