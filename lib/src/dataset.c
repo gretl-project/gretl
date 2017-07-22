@@ -3722,6 +3722,21 @@ int series_is_listarg (const DATASET *dset, int i)
 }
 
 /**
+ * series_is_coded:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ *
+ * Returns: non-zero iff series @i has been marked as
+ * "coded", meaning that its numerical values represent
+ * an arbitrary encoding of qualitative characteristics.
+ */
+
+int series_is_coded (const DATASET *dset, int i)
+{
+    return dset->varinfo[i]->flags & VAR_CODED;
+}
+
+/**
  * series_set_flag:
  * @dset: pointer to dataset.
  * @i: index number of series.

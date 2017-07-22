@@ -34,11 +34,7 @@
 
 #define CDEBUG 0
 
-#define QUOTE      '\''
-#define CSVSTRLEN  72
-
-/* experimental, 2017-07-21 */
-#undef CSV_PRESERVE_QUOTATION
+#define CSVSTRLEN 72
 
 enum {
     CSV_HAVEDATA = 1 << 0,
@@ -55,7 +51,8 @@ enum {
     CSV_BOM      = 1 << 11,
     CSV_VERBOSE  = 1 << 12,
     CSV_THOUSEP  = 1 << 13,
-    CSV_NOHEADER = 1 << 14
+    CSV_NOHEADER = 1 << 14,
+    CSV_QUOTES   = 1 << 15
 };
 
 enum {
@@ -128,6 +125,7 @@ struct csvdata_ {
 #define csv_is_verbose(c)         (c->flags & CSV_VERBOSE)
 #define csv_scrub_thousep(c)      (c->flags & CSV_THOUSEP)
 #define csv_no_header(c)          (c->flags & CSV_NOHEADER)
+#define csv_keep_quotes(c)        (c->flags & CSV_QUOTES)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -144,6 +142,7 @@ struct csvdata_ {
 #define csv_set_verbose(c)          (c->flags |= CSV_VERBOSE)
 #define csv_set_scrub_thousep(c)    (c->flags |= CSV_THOUSEP)
 #define csv_set_no_header(c)        (c->flags |= CSV_NOHEADER)
+#define csv_set_keep_quotes(c)      (c->flags |= CSV_QUOTES)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -1723,21 +1722,20 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 
 #define nonspace_delim(d) (d != ',' && d != ';')
 
-#ifdef CSV_PRESERVE_QUOTATION
-
-static int count_csv_fields (const char *s, char delim)
+static int count_csv_fields (csvdata *c)
 {
+    const char *s = c->line;
     int inquote = 0;
     int cbak, nf = 0;
 
-    if (*s == delim && *s == ' ') {
+    if (*s == c->delim && *s == ' ') {
 	s++;
     }
 
     while (*s) {
-	if (*s == '"') {
+	if (csv_keep_quotes(c) && *s == '"') {
 	    inquote = !inquote;
-	} else if (!inquote && *s == delim) {
+	} else if (!inquote && *s == c->delim) {
 	    nf++;
 	}
 	cbak = *s;
@@ -1746,35 +1744,7 @@ static int count_csv_fields (const char *s, char delim)
 	   implicit NA?  For now we'll so treat it if the delimiter
 	   is not white space.
 	*/
-	if (*s == '\0' && cbak == delim && nonspace_delim(delim)) {
-	    nf--;
-	}
-    }
-
-    return nf + 1;
-}
-
-#else
-
-static int count_csv_fields (const char *s, char delim)
-{
-    int cbak, nf = 0;
-
-    if (*s == delim && *s == ' ') {
-	s++;
-    }
-
-    while (*s) {
-	if (*s == delim) {
-	    nf++;
-	}
-	cbak = *s;
-	s++;
-	/* Problem: (when) should a trailing delimiter be read as an
-	   implicit NA?  For now we'll so treat it if the delimiter
-	   is not white space.
-	*/
-	if (*s == '\0' && cbak == delim && nonspace_delim(delim)) {
+	if (*s == '\0' && cbak == c->delim && nonspace_delim(c->delim)) {
 	    nf--;
 	}
     }
@@ -1795,8 +1765,6 @@ static void purge_quoted_commas (char *s)
 	s++;
     }
 }
-
-#endif /* CSV_PRESERVE_QUOTATION or not */
 
 static void purge_unquoted_spaces (char *s)
 {
@@ -1826,11 +1794,9 @@ static void compress_csv_line (csvdata *c, int nospace)
 	*p = '\0';
     }
 
-#ifndef CSV_PRESERVE_QUOTATION
-    if (c->delim == ',') {
+    if (!csv_keep_quotes(c) && c->delim == ',') {
 	purge_quoted_commas(c->line);
     }
-#endif
 
     if (c->delim != ' ') {
 	if (nospace) {
@@ -1840,9 +1806,9 @@ static void compress_csv_line (csvdata *c, int nospace)
 	compress_spaces(c->line);
     }
 
-#ifndef CSV_PRESERVE_QUOTATION
-    gretl_delchar('"', c->line);
-#endif
+    if (!csv_keep_quotes(c)) {
+        gretl_delchar('"', c->line);
+    }
 
     if (csv_has_trailing_comma(c)) {
 	/* chop trailing comma */
@@ -2070,6 +2036,10 @@ int non_numeric_check (DATASET *dset, int **plist,
 	}
     }
 
+#if CDEBUG > 1
+    fprintf(stderr, " found %d candidate series\n", nn);
+#endif
+
     if (nn == 0) {
 	return 0; /* nothing to be done */
     }
@@ -2094,6 +2064,7 @@ int non_numeric_check (DATASET *dset, int **plist,
 #endif
 
     for (i=1; i<=list[0]; i++) {
+	/* check each member of @list */
 	double nnfrac;
 	int nnon = 0;
 	int nok = 0;
@@ -2370,11 +2341,36 @@ static int converted_ok (const char *s, char *test, double x)
     }
 }
 
+static int is_quoted_int (const char *s)
+{
+    int ret = 0;
+
+    if (*s == '"') {
+	int n = strlen(s);
+
+	s++;
+	if (n < 14 && s[n-2] == '"') {
+	    char test[16] = {0};
+
+	    strncat(test, s, n - 2);
+	    if (integer_string(test)) {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static double csv_atof (csvdata *c, int i, const char *s)
 {
     char tmp[CSVSTRLEN], clean[CSVSTRLEN];
     double x = NON_NUMERIC;
     char *test;
+
+    if (0 && csv_keep_quotes(c) && is_quoted_int(s)) {
+	fprintf(stderr, "'%s': got quoted int\n", s);
+    }
 
     if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
 	all_digits_and_seps(s)) {
@@ -2600,7 +2596,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	    gotdata = 1;
 	} 
 
-	chkcols = count_csv_fields(c->line, c->delim);
+	chkcols = count_csv_fields(c);
 	if (c->ncols == 0) {
 	    c->ncols = chkcols;
 	    pprintf(prn, A_("   number of columns = %d\n"), c->ncols);	    
@@ -3132,9 +3128,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     c->real_n = c->dset->n;
 
     while (csv_fgets(c, fp) && !err) {
-#ifdef CSV_PRESERVE_QUOTATION
 	int inquote = 0;
-#endif
 
 	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
@@ -3158,9 +3152,8 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	j = 1;
 	for (k=0; k<c->ncols && !err; k++) {
 	    i = 0;
-#ifdef CSV_PRESERVE_QUOTATION
 	    while (*p) {
-		if (*p == '"') {
+		if (csv_keep_quotes(c) && *p == '"') {
 		    inquote = !inquote;
 		} else if (!inquote && *p == c->delim) {
 		    break;
@@ -3172,16 +3165,6 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		}
 		p++;
 	    }
-#else
-	    while (*p && *p != c->delim) {
-		if (i < CSVSTRLEN - 1) {
-		    c->str[i++] = *p;
-		} else {
-		    truncated++;
-		}
-		p++;
-	    }
-#endif
 	    c->str[i] = '\0';
 	    err = maybe_fix_csv_string(c->str);
 	    if (!err) {
@@ -3456,6 +3439,10 @@ static int real_import_csv (const char *fname,
         }
         if (opt & OPT_V) {
             csv_set_verbose(c);
+        }
+	/* FIXME placement? */
+        if (opt & OPT_U) {
+            csv_set_keep_quotes(c);
         }
     }
 

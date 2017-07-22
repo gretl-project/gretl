@@ -436,6 +436,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_V, "verbose", 0 },
     { OPEN,     OPT_K, "frompkg", 2 },
     { OPEN,     OPT_H, "no-header", 0 },
+    { OPEN,     OPT_U, "respect-quotes", 0 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },

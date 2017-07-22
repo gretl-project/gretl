@@ -39,7 +39,8 @@ typedef enum {
     VAR_GENERATED  = 1 << 2,
     VAR_LISTARG    = 1 << 3,
     VAR_TIMECOL    = 1 << 4,
-    VAR_HFANCHOR   = 1 << 5
+    VAR_HFANCHOR   = 1 << 5,
+    VAR_CODED      = 1 << 5
 } VarFlags;
 
 typedef enum {
@@ -463,6 +464,8 @@ int series_is_hidden (const DATASET *dset, int i);
 int series_is_generated (const DATASET *dset, int i);
 
 int series_is_listarg (const DATASET *dset, int i);
+
+int series_is_coded (const DATASET *dset, int i);
 
 VarFlags series_get_flags (const DATASET *dset, int i);
 
