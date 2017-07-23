@@ -743,7 +743,7 @@ static int set_var_info (const int *list,
 		err = E_TYPES;
 	    }
 	} else if (opt & OPT_N) {
-	    /* -- numeric */
+	    /* -- numeric (i.e. not-coded) */
 	    series_unset_flag(dset, vi, VAR_CODED);
 	}
     }
