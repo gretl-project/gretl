@@ -528,6 +528,7 @@ struct gretl_option gretl_opts[] = {
     { SETINFO,  OPT_I, "description", 2 },
     { SETINFO,  OPT_G, "graph-name", 2 },
     { SETINFO,  OPT_M, "midas", 0 },
+    { SETINFO,  OPT_F, "coded", 0 },
     { SETOBS,   OPT_C, "stacked-cross-section", 0 },
     { SETOBS,   OPT_P, "panel-vars", 0 },
     { SETOBS,   OPT_R, "restructure", 0 },

@@ -732,6 +732,9 @@ static int set_var_info (const int *list,
 	} else if (opt & OPT_C) {
 	    series_set_discrete(dset, list[i], 0);
 	}
+	if (opt & OPT_F) {
+	    series_set_flag(dset, list[i], VAR_CODED);
+	}
     }
 
     /* below: we'll accept multi-series lists, but the
