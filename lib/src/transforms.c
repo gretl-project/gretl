@@ -138,9 +138,13 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	    }		
 	}
     } else if (ci == DUMMIFY) {
-	char ext[6];
+	char ext[16];
 
-	sprintf(ext, "_%d", aux);
+	if (aux < 0) {
+	    sprintf(ext, "_m%d", abs(aux));
+	} else {
+	    sprintf(ext, "_%d", aux);
+	}
 	strcpy(vname, "D");
 	strncat(vname, orig, len - strlen(ext) - 1);
 	strcat(vname, ext);
@@ -690,6 +694,24 @@ static int get_lag_ID (int srcv, int lag, const DATASET *dset)
     return -1;
 }
 
+static int is_integer_valued (const DATASET *dset, int v)
+{
+    const double *x = dset->Z[v];
+    int i, ret = 1;
+
+    for (i=0; i<dset->n; i++) {
+	if (!na(x[i]) && x[i] != floor(x[i])) {
+	    ret = 0;
+	    break;
+	} else if (x[i] > INT_MAX || x[i] < INT_MIN) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 /* get_transform: create specified transformation of variable v if
    this variable does not already exist.
 
@@ -782,6 +804,8 @@ static int get_transform (int ci, int v, int aux, double x,
 	    make_varname_unique(vname, 0, dset);
 	} else if (ci == SQUARE && v != aux) {
 	    make_xp_varname(vname, v, aux, dset, len);
+	} else if (ci == DUMMIFY && is_integer_valued(dset, v)) {
+	    make_transform_varname(vname, srcname, ci, (int) x, len);
 	} else {
 	    make_transform_varname(vname, srcname, ci, aux, len);
 	}
