@@ -276,32 +276,6 @@ int gretl_isunits (int t1, int t2, const double *x)
 }
 
 /**
- * gretl_isint:
- * @x: data series to examine.
- * @t1: starting observation.
- * @t2: ending observation. 
- * 
- * Check whether series @x contains only integer values over
- * the given sample range (aside from any missing values).
- *
- * Returns: 1 if so, otherwise 0.
- */
-
-int gretl_isint (int t1, int t2, const double *x)
-{
-    int t, ret = 1;
-
-    for (t=t1; t<=t2; t++) {
-	if (!na(x[t]) && x[t] != floor(x[t])) {
-	    ret = 0;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
-/**
  * gretl_iscount:
  * @x: data series to examine.
  * @t1: starting observation.

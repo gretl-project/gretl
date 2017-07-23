@@ -36,6 +36,7 @@ enum {
     VSET_DISPLAY,
     VSET_COMPACT,
     VSET_DISCRETE,
+    VSET_CODED,
     VSET_IDNUM,
     VSET_MAX
 };
@@ -53,6 +54,7 @@ struct gui_varinfo_ {
     GtkWidget *display_entry;
     GtkWidget *compaction_menu;
     GtkWidget *discrete_check;
+    GtkWidget *coded_check;
     GtkWidget *id_spin;
     GtkWidget *apply;
     GtkWidget *up;
@@ -91,6 +93,7 @@ static void gui_varinfo_init (gui_varinfo *vset, int v)
     vset->display_entry = NULL;
     vset->compaction_menu = NULL;
     vset->discrete_check = NULL;
+    vset->coded_check = NULL;
     vset->id_spin = NULL;
     vset->up = vset->down = NULL;
     vset->apply = NULL;
@@ -300,7 +303,19 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    lib_command_sprintf("setinfo %s --continuous", dataset->varname[v]);
 	}
 	record_command_verbatim();
-    }  
+    }
+
+    if (!err && vset->changed[VSET_CODED]) {
+	ival = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->coded_check));
+	if (ival) {
+	    series_set_flag(dataset, v, VAR_CODED);
+	    lib_command_sprintf("setinfo %s --coded", dataset->varname[v]);
+	} else {
+	    series_unset_flag(dataset, v, VAR_CODED);
+	    lib_command_sprintf("setinfo %s --numeric", dataset->varname[v]);
+	}
+	record_command_verbatim();
+    }
 
     if (!err) {
 	if (vset->changed[VSET_IDNUM]) {
@@ -504,7 +519,18 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 	}
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->discrete_check), d1);
 	gtk_widget_set_sensitive(vset->discrete_check, d1 || d2);
-    } 
+    }
+
+    if (vset->coded_check != NULL) {
+	int d2 = 0, d1 = series_is_coded(dataset, v);
+
+	if (!d1) {
+	    d2 = series_is_integer_valued(dataset, v) &&
+		!gretl_isdummy(0, dataset->n - 1, dataset->Z[v]);
+	}
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->coded_check), d1);
+	gtk_widget_set_sensitive(vset->coded_check, d1 || d2);
+    }
 
     varinfo_set_unchanged(vset);
     sensitize_up_down_buttons(vset);
@@ -573,6 +599,14 @@ static void varinfo_discrete_changed (GtkToggleButton *button, gui_varinfo *vset
     int orig = series_is_discrete(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_DISCRETE, d != orig);
+}
+
+static void varinfo_coded_changed (GtkToggleButton *button, gui_varinfo *vset)
+{
+    int d = gtk_toggle_button_get_active(button);
+    int orig = series_is_coded(dataset, vset->varnum);
+
+    varinfo_set_field_changed(vset, VSET_CODED, d != orig);
 }
 
 static void varinfo_compact_changed (GtkComboBox *box, gui_varinfo *vset)
@@ -899,7 +933,27 @@ void varinfo_dialog (int varnum)
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	vset->discrete_check = tmp;
-	gtk_widget_show(hbox); 
+	gtk_widget_show(hbox);
+    }
+
+    if (1) {
+	/* mark variable as "coded" or not */
+	int c1 = series_is_coded(dataset, varnum);
+	int c2 = series_is_integer_valued(dataset, varnum) &&
+	    !gretl_isdummy(0, dataset->n - 1, dataset->Z[varnum]);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_check_button_new_with_label(_("Numeric values represent an "
+						"encoding"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), c1 && c2);
+	gtk_widget_set_sensitive(tmp, c2);
+	g_signal_connect(tmp, "toggled",
+			 G_CALLBACK(varinfo_coded_changed), vset);
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	vset->discrete_check = tmp;
+	gtk_widget_show(hbox);
     }
 
     /* control button box */

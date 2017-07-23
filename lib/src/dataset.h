@@ -467,6 +467,8 @@ int series_is_listarg (const DATASET *dset, int i);
 
 int series_is_coded (const DATASET *dset, int i);
 
+int series_is_integer_valued (const DATASET *dset, int i);
+
 VarFlags series_get_flags (const DATASET *dset, int i);
 
 void series_set_flag (DATASET *dset, int i, VarFlags flag);

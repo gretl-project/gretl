@@ -3737,6 +3737,33 @@ int series_is_coded (const DATASET *dset, int i)
 }
 
 /**
+ * series_is_integer_valued:
+ * @dset: pointer to dataset.
+ * @i: index number of series.
+ *
+ * Returns: non-zero iff all values in series @i are
+ * representable as integers (ignoring missing values).
+ */
+
+int series_is_integer_valued (const DATASET *dset, int i)
+{
+    const double *x = dset->Z[i];
+    int t, ret = 1;
+
+    for (t=0; t<dset->n; t++) {
+	if (!na(x[t]) && x[t] != floor(x[t])) {
+	    ret = 0;
+	    break;
+	} else if (x[t] > INT_MAX || x[t] < INT_MIN) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * series_set_flag:
  * @dset: pointer to dataset.
  * @i: index number of series.

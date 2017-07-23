@@ -538,7 +538,10 @@ static void series_commute_string_table (DATASET *dset, int i,
 	    }
 	}
 	series_table_destroy(st);
-	series_set_flag(dset, i, VAR_DISCRETE | VAR_CODED);
+	series_set_flag(dset, i, VAR_DISCRETE);
+	if (!gretl_isdummy(0, dset->n - 1, dset->Z[i])) {
+	    series_set_flag(dset, i, VAR_CODED);
+	}
     }
 }
 

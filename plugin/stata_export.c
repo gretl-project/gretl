@@ -211,6 +211,20 @@ static int include_var (const int *list, int i)
     }
 }
 
+static int x_isint (int t1, int t2, const double *x)
+{
+    int t, ret = 1;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && x[t] != floor(x[t])) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 static guint8 *make_types_array (const DATASET *dset,
 				 const int *list,
 				 int *nvars)
@@ -239,7 +253,7 @@ static guint8 *make_types_array (const DATASET *dset,
 		    t[j] = STATA_BYTE;
 		} else if (gretl_isdummy(dset->t1, dset->t2, x)) {
 		    t[j] = STATA_BYTE;
-		} else if (gretl_isint(dset->t1, dset->t2, x)) {
+		} else if (x_isint(dset->t1, dset->t2, x)) {
 		    if (xmin > -10000 && xmax < 10000) {
 			t[j] = STATA_INT;
 		    } else if (xmin > -200000000 && xmax < 200000000) {

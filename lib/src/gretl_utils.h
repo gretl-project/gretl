@@ -62,8 +62,6 @@ int gretl_isconst (int t1, int t2, const double *x);
 
 int gretl_isunits (int t1, int t2, const double *x);
 
-int gretl_isint (int t1, int t2, const double *x);
-
 int gretl_iscount (int t1, int t2, const double *x);
 
 int gretl_isdiscrete (int t1, int t2, const double *x);

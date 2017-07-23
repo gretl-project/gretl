@@ -710,7 +710,7 @@ static int set_var_info (const int *list,
 			 gretlopt opt,
 			 DATASET *dset)
 {
-    int v = list[1];
+    int vi, v = list[1];
     int i, err = 0;
 
     if (dset == NULL || dset->varinfo == NULL) {
@@ -727,14 +727,29 @@ static int set_var_info (const int *list,
     }
 
     for (i=1; i<=list[0]; i++) {
+	vi = list[i];
 	if (opt & OPT_D) {
-	    series_set_discrete(dset, list[i], 1);
+	    series_set_discrete(dset, vi, 1);
 	} else if (opt & OPT_C) {
-	    series_set_discrete(dset, list[i], 0);
+	    series_set_discrete(dset, vi, 0);
 	}
 	if (opt & OPT_F) {
-	    series_set_flag(dset, list[i], VAR_CODED);
+	    /* --coded */
+	    if (series_is_integer_valued(dset, vi) &&
+		!gretl_isdummy(0, dset->n - 1, dset->Z[vi])) {
+		series_set_flag(dset, vi, VAR_CODED);
+	    } else {
+		gretl_errmsg_set("This series cannot be set as 'coded'\n");
+		err = E_TYPES;
+	    }
+	} else if (opt & OPT_N) {
+	    /* -- numeric */
+	    series_unset_flag(dset, vi, VAR_CODED);
 	}
+    }
+
+    if (err) {
+	return err;
     }
 
     /* below: we'll accept multi-series lists, but the
