@@ -60,6 +60,8 @@ int list_dumgenr (int **plist, DATASET *dset, gretlopt opt);
 
 int dumgenr_with_oddval (int **plist, DATASET *dset, double oddval);
 
+int auto_dummify_list (int **plist, DATASET *dset);
+
 int list_makediscrete (const int *list, DATASET *dset, gretlopt opt);
 
 int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset);

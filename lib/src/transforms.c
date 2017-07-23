@@ -2131,6 +2131,62 @@ int dumgenr_with_oddval (int **plist, DATASET *dset, double oddval)
 }
 
 /**
+ * auto_dummify_list:
+ * @plist: pointer to list of variables to process.
+ * @dset: dataset struct.
+ *
+ * Produces a list in which any coded series in the original
+ * list are replaced by a set of dummy variables. If the
+ * original list contains no such series it is not altered.
+ * In generating dummy series, the omitted category is the
+ * minimum value of the coding variable.
+ *
+ * Returns: 0 on success, error code on error.
+*/
+
+int auto_dummify_list (int **plist, DATASET *dset)
+{
+    int *orig = *plist;
+    int *list = NULL;
+    int *dlist = NULL;
+    int i, vi;
+    int err = 0;
+
+    /* empty starting point for full list */
+    list = gretl_null_list();
+
+    for (i=1; i<=orig[0] && !err; i++) {
+	vi = orig[i];
+	if (series_is_coded(dset, vi)) {
+	    /* coded series: split into dummies */
+	    dlist = gretl_list_new(1);
+	    dlist[1] = vi;
+	    err = real_list_dumgenr(&dlist, dset, NADBL, OPT_F);
+	    if (!err) {
+		gretl_list_append_list(&list, dlist, &err);
+	    }
+	    free(dlist);
+	} else if (!in_gretl_list(list, vi)) {
+	    /* non-coded, not already present */
+	    list = gretl_list_append_term(&list, vi);
+	    if (list == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (err) {
+	free(list);
+    } else if (list != *plist) {
+	/* replace original list */
+	free(*plist);
+	*plist = list;
+    }
+
+    return err;
+}
+
+/**
  * list_makediscrete:
  * @list: list of variables to process.
  * @dset: data information struct.

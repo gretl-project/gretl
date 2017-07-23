@@ -4838,6 +4838,10 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 	    /* got just one argument */
 	    p->err = list_dumgenr(&list, p->dset, OPT_F);
 	    ret->v.ivec = list;
+	} else if (oddval == -999) {
+	    /* temporary hack! */
+	    p->err = auto_dummify_list(&list, p->dset);
+	    ret->v.ivec = list;
 	} else if (list[0] > 1) {
 	    gretl_errmsg_set("dummify(x, y): first argument should be a single variable");
 	    free(list);
