@@ -12386,6 +12386,14 @@
 	  <effect>mark series as continuous</effect>
 	</option>
 	<option>
+	  <flag>--coded</flag>
+	  <effect>mark as an encoding</effect>
+	</option>
+	<option>
+	  <flag>--numeric</flag>
+	  <effect>mark as not an encoding</effect>
+	</option>
+	<option>
 	  <flag>--midas</flag>
 	  <effect>mark as component of high-frequency data</effect>
 	</option>	
@@ -12423,6 +12431,14 @@
 	numerical character is set accordingly.  The default is to treat
 	all series as continuous; setting a series as discrete
 	affects the way the variable is handled in frequency plots.
+      </para>
+      <para>
+	If one or other of the <opt>coded</opt> or <opt>numeric</opt>
+	option flags is given, the status of the given series is set
+	accordingly.  The default is to treat all numerical values as
+	meaningful as such, at least in an ordinal sense; setting a
+	series as <lit>coded</lit> means that the numerical values are
+	an arbitrary encoding of qualitative characteristics.
       </para>
       <para>
 	The <opt>midas</opt> option sets a flag indicating that a
