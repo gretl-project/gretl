@@ -88,6 +88,7 @@ struct csvdata_ {
     char delim;
     char decpoint;
     char thousep;
+    char qchar;
     int markerpd;
     int maxlinelen;
     int real_n;
@@ -301,6 +302,7 @@ static csvdata *csvdata_new (DATASET *dset)
     c->flags = 0;
     c->delim = '\t';
     c->thousep = 0;
+    c->qchar = 0;
     c->markerpd = -1;
     c->maxlinelen = 0;
     c->real_n = 0;
@@ -1638,13 +1640,16 @@ static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
    a comment line is one that starts with '#').  
 
    In addition, we check whether the file has a trailing comma on every
-   line.
+   line, and for the numbers of double- and single-quote characters
+   to try to determine which, if either, is used to indicate quoted
+   fields in the input.
 */
 
 static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlinelen = 0;
+    int ndquo = 0, nsquo = 0;
     int crlf = 0, lines = 0;
 
     csv_set_trailing_comma(cdata); /* just provisionally */
@@ -1701,15 +1706,33 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    }
 	    if (c == cdata->delim) {
 		csv_set_got_delim(cdata);
+	    } else if (c == '"') {
+		ndquo++;
+	    } else if (c == '\'') {
+		nsquo++;
 	    }
 	}
 	cc++;
     }
 
     if (maxlinelen == 0) {
-	pprintf(prn, A_("Data file is empty\n"));
+	pputs(prn, A_("Data file is empty\n"));
     } else if (csv_has_trailing_comma(cdata)) {
-	pprintf(prn, A_("Data file has trailing commas\n"));
+	pputs(prn, A_("Data file has trailing commas\n"));
+    }
+
+    if (ndquo > 0 || nsquo > 0) {
+	pprintf(prn, A_("Found %d double-quotes, %d single-quotes\n"),
+		ndquo, nsquo);
+	if (ndquo >= nsquo) {
+	    pputs(prn, A_("Assuming double-quote is the relevant "
+			  "quotation character\n"));
+	    cdata->qchar = '"';
+	} else {
+	    pputs(prn, A_("Assuming single-quote is the relevant "
+			  "quotation character\n"));
+	    cdata->qchar = '\'';
+	}
     }
 
     if (maxlinelen > 0) {
@@ -1733,7 +1756,7 @@ static int count_csv_fields (csvdata *c)
     }
 
     while (*s) {
-	if (csv_keep_quotes(c) && *s == '"') {
+	if (csv_keep_quotes(c) && *s == c->qchar) {
 	    inquote = !inquote;
 	} else if (!inquote && *s == c->delim) {
 	    nf++;
@@ -3128,7 +3151,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 	for (k=0; k<c->ncols && !err; k++) {
 	    i = 0;
 	    while (*p) {
-		if (csv_keep_quotes(c) && *p == '"') {
+		if (csv_keep_quotes(c) && *p == c->qchar) {
 		    inquote = !inquote;
 		} else if (!inquote && *p == c->delim) {
 		    break;

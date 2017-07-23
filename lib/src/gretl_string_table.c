@@ -258,7 +258,7 @@ static char *get_unquoted (const char *s)
     char *tmp = NULL;
     int n = strlen(s);
 
-    if (s[n-1] == '"') {
+    if (s[n-1] == s[0]) {
 	tmp = gretl_strndup(s+1, n-2);
     }
 
@@ -279,7 +279,7 @@ int series_table_add_string (series_table *st, const char *s)
     char *tmp = NULL;
     int n, err;
 
-    if (*s == '"') {
+    if (*s == '"' || *s == '\'') {
 	tmp = get_unquoted(s);
     }
 
