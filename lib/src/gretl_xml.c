@@ -2345,6 +2345,10 @@ static int real_write_gdt (const char *fname, const int *list,
 	    alt_puts("\n discrete=\"true\"", fp, fz);
 	}
 
+	if (series_is_coded(dset, v)) {
+	    alt_puts("\n coded=\"true\"", fp, fz);
+	}
+
 	if (series_is_midas_anchor(dset, v)) {
 	    alt_puts("\n hf-anchor=\"true\"", fp, fz);
 	}
@@ -2673,6 +2677,13 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		}
 		free(tmp);
 	    }
+	    tmp = xmlGetProp(cur, (XUC) "coded");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, i, VAR_CODED);
+		}
+		free(tmp);
+	    }
 	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
@@ -2909,6 +2920,14 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
 		    series_set_flag(dset, k, VAR_DISCRETE);
+		}
+		free(tmp);
+	    }
+
+	    tmp = xmlGetProp(cur, (XUC) "coded");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    series_set_flag(dset, k, VAR_CODED);
 		}
 		free(tmp);
 	    }
