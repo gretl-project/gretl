@@ -1850,6 +1850,10 @@ int import_obs_label (const char *s)
 	return 1;
     }
 
+    if (!strcmp(s, "\"\"") || !strcmp(s, "''")) {
+	return 1;
+    }
+
     if (*s == '"' || *s == '\'') s++;
 
     if (*s == '\0') {
@@ -3101,12 +3105,28 @@ static int maybe_fix_csv_string (gchar *s)
 static void transcribe_obs_label (csvdata *c, int t)
 {
     char *s = c->str;
+    char c0 = *s;
+    int n = strlen(s);
 
-    if (*s == '"' || *s == '\'') {
+    /* skip a leading quote, and unquote fully
+       if a matching trailing quote is found
+    */
+
+    if (c0 == '"' || c0 == '\'') {
+	if (s[n-1] == c0) {
+	    s[n-1] = '\0';
+	    n--;
+	}
 	s++;
+	n--;
     }
+
+    if (n > OBSLEN - 1) {
+	n = OBSLEN - 1;
+    }
+
     c->dset->S[t][0] = '\0';
-    gretl_utf8_strncat(c->dset->S[t], s, OBSLEN - 1);
+    gretl_utf8_strncat(c->dset->S[t], s, n);
 }
 
 static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
