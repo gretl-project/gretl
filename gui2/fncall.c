@@ -181,18 +181,34 @@ static int *mylist; /* custom list constructed by gfn */
 
 static int lmaker_run (ufunc *func, call_info *cinfo)
 {
-    PRN *prn;
+    fncall *fcall = NULL;
+    int *biglist = NULL;
     int *list = NULL;
+    PRN *prn;
     int err = 0;
 
     free(mylist);
     mylist = NULL;
 
+    fcall = fncall_new(func);
+    if (fn_n_params(func) == 1) {
+	/* pass full dataset list as argument */
+	biglist = full_var_list(dataset, NULL);
+	if (biglist != NULL) {
+	    push_function_arg(fcall, NULL, GRETL_TYPE_LIST,
+			      biglist);
+	}
+    }
+
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-    set_genr_model_from_vwin(cinfo->vwin);
-    err = gretl_function_exec(fncall_new(func), GRETL_TYPE_LIST,
+    if (cinfo->flags & MODEL_CALL) {
+	set_genr_model_from_vwin(cinfo->vwin);
+    }
+    err = gretl_function_exec(fcall, GRETL_TYPE_LIST,
 			      dataset, &list, NULL, prn);
-    unset_genr_model();
+    if (cinfo->flags & MODEL_CALL) {
+	unset_genr_model();
+    }
     gretl_print_destroy(prn);
 
     if (err) {
@@ -209,6 +225,7 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     }
 
     free(list);
+    free(biglist);
 
     return err;
 }
@@ -938,27 +955,21 @@ static void update_mylist_arg (GtkComboBox *combo,
 static GtkWidget *mylist_int_selector (call_info *cinfo, int i)
 {
     GtkWidget *combo = NULL;
+    const char *lmaker;
+    ufunc *func;
     int err = 0;
 
-    if (cinfo->vwin == NULL || cinfo->vwin->data == NULL ||
-	!(cinfo->flags & MODEL_CALL)) {
-	return NULL;
+    function_package_get_properties(cinfo->pkg,
+				    "list-maker", &lmaker,
+				    NULL);
+    if (lmaker == NULL) {
+	err = 1;
     } else {
-	const char *lmaker;
-	ufunc *func;
-
-	function_package_get_properties(cinfo->pkg,
-					"list-maker", &lmaker,
-					NULL);
-	if (lmaker == NULL) {
+	func = get_function_from_package(lmaker, cinfo->pkg);
+	if (func == NULL) {
 	    err = 1;
 	} else {
-	    func = get_function_from_package(lmaker, cinfo->pkg);
-	    if (func == NULL) {
-		err = 1;
-	    } else {
-		err = lmaker_run(func, cinfo);
-	    }
+	    err = lmaker_run(func, cinfo);
 	}
     }
 

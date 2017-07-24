@@ -2910,6 +2910,18 @@ static int pkg_remove_role (fnpkg *pkg, int role)
     return E_DATA;
 }
 
+static int valid_list_maker (ufunc *u)
+{
+    if (u->n_params == 0) {
+	return 1; /* OK */
+    } else if (u->n_params == 1 &&
+	       u->params[0].type == GRETL_TYPE_LIST) {
+	return 1; /* OK */
+    } else {
+	return 0;
+    }
+}
+
 int function_set_package_role (const char *name, fnpkg *pkg,
 			       const char *attr, PRN *prn)
 {
@@ -2974,8 +2986,9 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		if (u->rettype != GRETL_TYPE_LIST) {
 		    pprintf(prn, "%s: must return a list\n", attr);
 		    err = E_TYPES;
-		} else if (u->n_params > 0) {
-		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		} else if (!valid_list_maker(u)) {
+		    pprintf(prn, "%s: must have 0 parameters or a single "
+			    "list parameter\n", attr);
 		    err = E_TYPES;
 		}
 		if (!err) {
