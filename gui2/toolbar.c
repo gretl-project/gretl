@@ -771,7 +771,7 @@ static void set_plot_icon (GretlToolItem *item, int role)
 	item->icon = GRETL_STOCK_SCATTER;
     } else if (role == VIEW_SERIES && dataset_is_cross_section(dataset)) {
 	item->icon = GRETL_STOCK_BOX;
-    }
+    } /* else stay with the default, a time series plot icon */
 }
 
 static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
