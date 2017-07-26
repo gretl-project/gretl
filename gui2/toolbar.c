@@ -769,7 +769,7 @@ static void set_plot_icon (GretlToolItem *item, int role)
 {
     if (role == LOESS || role == NADARWAT || role == VIEW_BUNDLE) {
 	item->icon = GRETL_STOCK_SCATTER;
-    } else {
+    } else if (role == VIEW_SERIES && dataset_is_cross_section(dataset)) {
 	item->icon = GRETL_STOCK_BOX;
     }
 }
