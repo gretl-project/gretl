@@ -867,6 +867,8 @@ static void csv_data_out (const DATASET *dset, const int *list,
 		    strncat(tmp, series_get_string_for_obs(dset, vi, t), 
 			    TMPLEN - 3);
 		    strcat(tmp, "\"");
+		} else if (series_is_coded(dset, vi)) {
+		    sprintf(tmp, "\"%d\"", (int) xt);
 		} else {
 		    sprintf(tmp, "%.*g", digits, xt);
 		}
@@ -921,6 +923,8 @@ static void R_data_out (const DATASET *dset, const int *list,
 		fputs("NA", fp);
 	    } else if (is_string_valued(dset, vi)) {
 		fprintf(fp, "\"%s\"", series_get_string_for_obs(dset, vi, t));
+	    } else if (series_is_coded(dset, vi)) {
+		fprintf(fp, "\"%d\"", (int) xt);
 	    } else {
 		fprintf(fp, "%.*g", digits, xt);
 	    }
@@ -1065,7 +1069,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	csv_data_out(dset, list, print_obs, csv_digits,
 		     decpoint, delim, fp);
     } else if (fmt == GRETL_FMT_R) { 
-	/* GNU R dataframe */
+	/* friendly to GNU R */
 	if (dataset_is_time_series(dset)) {
 	    char datestr[OBSLEN];
 
