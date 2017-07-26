@@ -8998,7 +8998,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	       w, work, &lwork, &info);
 	if (info != 0) {
 	    fprintf(stderr, "dsyev: info = %d\n", info);
-	    *err = 1;
+	    *err = E_DATA;
 	}
     }
 
