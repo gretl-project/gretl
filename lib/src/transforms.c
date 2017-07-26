@@ -1952,8 +1952,6 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 
 #define DUMDEBUG 0
 
-#define skip_j (x, xs) (!na(xs) && (xs == x))
-
 static int real_list_dumgenr (int **plist, DATASET *dset,
 			      double oddval, gretlopt opt)
 {
@@ -2018,7 +2016,6 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	fprintf(stderr, "variable %d has %d distinct values\n", vi, nuniq);
 	if (opt & OPT_F) fprintf(stderr, "skipping lowest value\n");
 	if (opt & OPT_L) fprintf(stderr, "skipping highest value\n");
-	fprintf(stderr, "jskip = %d\n", jskip);
 #endif
 
 	for (j=jmin; j<jmax && !err; j++) {
@@ -2026,13 +2023,14 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 		tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset, 
 				     startlen, origv, NULL);
 #if DUMDEBUG   
-		fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
+		fprintf(stderr, "%s: for value %g tnum = %d\n",
+			dset->varname[vi], x[j], tnum);
 #endif
 		if (tnum > 0) {
 		    tmplist = gretl_list_append_term(&tmplist, tnum);
 		    if (tmplist == NULL) {
 			err = E_ALLOC;
-		    } 
+		    }
 		} else {
 		    err = E_DATA;
 		}
@@ -2040,8 +2038,12 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	}
     }
 
-    if (!err && tmplist[0] == 0) {
+    if (!err && !(opt & OPT_A) && tmplist[0] == 0) {
+	/* don't fail here if doing auto-dummify (OPT_A) */
 	gretl_errmsg_set(_("dummify: no suitable variables were found"));
+#if DUMDEBUG
+	printlist(list, "list for which dummify failed");
+#endif	
 	err = E_DATA;
     }
 
@@ -2049,7 +2051,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 
  bailout:
 
-    if (!err) {
+    if (!err && tmplist[0] > 0) {
 	free(*plist);
 	*plist = tmplist;
 #if DUMDEBUG   
@@ -2143,7 +2145,7 @@ int auto_dummify_list (int **plist, DATASET *dset)
 	    /* coded series: split into dummies */
 	    dlist = gretl_list_new(1);
 	    dlist[1] = vi;
-	    err = real_list_dumgenr(&dlist, dset, NADBL, OPT_F);
+	    err = real_list_dumgenr(&dlist, dset, NADBL, OPT_F | OPT_A);
 	    if (!err) {
 		gretl_list_append_list(&list, dlist, &err);
 	    }
