@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-07-13 11:45-0400\n"
-"PO-Revision-Date: 2017-07-04 16:41+0100\n"
+"PO-Revision-Date: 2017-07-13 20:23+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -509,18 +509,19 @@ msgstr "Proba de Wald"
 #: lib/src/graphing.c:4542 lib/src/gretl_model.c:4214
 #: lib/src/gretl_model.c:4228 lib/src/gretl_model.c:4231
 #: lib/src/gretl_model.c:4256 lib/src/gretl_panel.c:4387
-#: lib/src/gretl_panel.c:4645 lib/src/modelprint.c:202 lib/src/modelprint.c:381
-#: lib/src/modelprint.c:385 lib/src/modelprint.c:475 lib/src/modelprint.c:478
-#: lib/src/modelprint.c:499 lib/src/modelprint.c:502 lib/src/modelprint.c:2562
-#: lib/src/modelprint.c:2567 lib/src/modelprint.c:2589
-#: lib/src/modelprint.c:2594 lib/src/modelprint.c:3084
-#: lib/src/modelprint.c:5359 lib/src/modelprint.c:5382 lib/src/printout.c:329
-#: lib/src/pvalues.c:2629 lib/src/pvalues.c:3294 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3387 lib/src/system.c:3409
-#: lib/src/system.c:3481 lib/src/system.c:3499 lib/src/system.c:4610
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:253 lib/src/vartest.c:1213
-#: lib/src/vartest.c:1500 plugin/johansen.c:1813 plugin/jrestrict.c:2811
+#: lib/src/gretl_panel.c:4645 lib/src/modelprint.c:202
+#: lib/src/modelprint.c:381 lib/src/modelprint.c:385 lib/src/modelprint.c:475
+#: lib/src/modelprint.c:478 lib/src/modelprint.c:499 lib/src/modelprint.c:502
+#: lib/src/modelprint.c:2562 lib/src/modelprint.c:2567
+#: lib/src/modelprint.c:2589 lib/src/modelprint.c:2594
+#: lib/src/modelprint.c:3084 lib/src/modelprint.c:5359
+#: lib/src/modelprint.c:5382 lib/src/printout.c:329 lib/src/pvalues.c:2629
+#: lib/src/pvalues.c:3294 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3387 lib/src/system.c:3409 lib/src/system.c:3481
+#: lib/src/system.c:3499 lib/src/system.c:4610 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:253 lib/src/vartest.c:1213 lib/src/vartest.c:1500
+#: plugin/johansen.c:1813 plugin/jrestrict.c:2811
 msgid "Chi-square"
 msgstr "Khi-cadrado"
 
@@ -1123,17 +1124,19 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Fallo ao interpretar os datos como numéricos\n"
 
-#: lib/src/csvdata.c:3622 plugin/eviews_import.c:554 plugin/excel_import.c:1831
-#: plugin/jmulti_import.c:379 plugin/sas_import.c:686 plugin/spss_import.c:1975
+#: lib/src/csvdata.c:3622 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1831 plugin/jmulti_import.c:379
+#: plugin/sas_import.c:686 plugin/spss_import.c:1975
 #: plugin/stata_import.c:2182 plugin/xlsx_import.c:1501
 msgid "warning: some variable names were duplicated\n"
 msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
 
-#: lib/src/csvdata.c:3663 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1665 plugin/jmulti_import.c:350
-#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
-#: plugin/spss_import.c:1880 plugin/spss_import.c:1901
-#: plugin/stata_import.c:2150 plugin/stata_import.c:2161
+#: lib/src/csvdata.c:3663 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1665
+#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
+#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1880
+#: plugin/spss_import.c:1901 plugin/stata_import.c:2150
+#: plugin/stata_import.c:2161
 msgid "Out of memory\n"
 msgstr "Fóra de memoria\n"
 
@@ -1511,8 +1514,8 @@ msgid "Invalid null sample"
 msgstr "Mostra nula incorrecta"
 
 #: lib/src/dbread.c:2044 lib/src/gretl_errors.c:583
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1364 lib/src/options.c:1314
-#: lib/src/options.c:1325
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1364
+#: lib/src/options.c:1314 lib/src/options.c:1325
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "Campo '%s' incorrecto na instrución"
@@ -2817,7 +2820,7 @@ msgstr "axuste Loess, d = %d, q = %g"
 
 #: lib/src/graphing.c:3387
 msgid "time series by group"
-msgstr "series temporais por grupos"
+msgstr "Series temporais por grupos"
 
 #: lib/src/graphing.c:3761 lib/src/plotspec.c:699 lib/src/plotspec.c:1575
 #: gui2/gpt_dialog.c:995 gui2/gpt_dialog.c:1419 gui2/gpt_dialog.c:2894
@@ -3365,8 +3368,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: Tipo de resultado incorrecto para a función"
 
 #: lib/src/gretl_func.c:2487 lib/src/gretl_func.c:2547
-#: lib/src/gretl_func.c:2628 lib/src/gretl_utils.c:1948 lib/src/interact.c:1224
-#: gui2/dialogs.c:5577 gui2/fnsave.c:5047 plugin/tramo-x12a.c:793
+#: lib/src/gretl_func.c:2628 lib/src/gretl_utils.c:1948
+#: lib/src/interact.c:1224 gui2/dialogs.c:5577 gui2/fnsave.c:5047
+#: plugin/tramo-x12a.c:793
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Non se puido abrir *%s*"
@@ -3678,7 +3682,7 @@ msgstr "Proba de omisión de variables"
 
 #: lib/src/gretl_model.c:3933
 msgid "specification is adequate"
-msgstr "A especificación é axeitada"
+msgstr "[A especificación é axeitada]"
 
 #: lib/src/gretl_model.c:3935
 msgid "Non-linearity test (squares)"
@@ -3723,7 +3727,7 @@ msgstr "Proba de Breusch-Pagan"
 
 #: lib/src/gretl_model.c:3957
 msgid "Variance of the unit-specific error = 0"
-msgstr "Varianza da perturbación específica de unidade = 0"
+msgstr "[Varianza da perturbación específica de unidade = 0]"
 
 #: lib/src/gretl_model.c:3959
 msgid "Wald joint test on time dummies"
@@ -3763,7 +3767,7 @@ msgstr "Proba CD de Pesaran para dependencia de sección cruzada"
 
 #: lib/src/gretl_model.c:3984
 msgid "No cross-sectional dependence"
-msgstr "dependencia non de sección cruzada"
+msgstr "[Sen dependencia de seccións cruzadas]"
 
 #: lib/src/gretl_model.c:3991 lib/src/gretl_panel.c:4386
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -3797,7 +3801,8 @@ msgstr "Graos de liberdade denominador"
 #: lib/src/gretl_model.c:4340 lib/src/modelprint.c:5428
 #: lib/src/modelprint.c:5439 lib/src/modelprint.c:5441 lib/src/varprint.c:946
 #: lib/src/varprint.c:950 lib/src/varprint.c:954 gui2/calculator.c:2034
-#: gui2/calculator.c:2037 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
+#: gui2/calculator.c:2037 plugin/anova.c:85 plugin/anova.c:96
+#: plugin/anova.c:98
 msgid "df"
 msgstr "Graos de liberdade"
 
@@ -5890,8 +5895,8 @@ msgstr "Imaxinaria"
 msgid "Modulus"
 msgstr "Módulo"
 
-#: lib/src/modelprint.c:5143 lib/src/modelprint.c:5151 lib/src/subsample.c:3046
-#: lib/src/subsample.c:3068 lib/src/subsample.c:3123
+#: lib/src/modelprint.c:5143 lib/src/modelprint.c:5151
+#: lib/src/subsample.c:3046 lib/src/subsample.c:3068 lib/src/subsample.c:3123
 msgid "Frequency"
 msgstr "Frecuencia"
 
@@ -5982,7 +5987,8 @@ msgid "Total"
 msgstr "Total"
 
 #: lib/src/monte_carlo.c:298 lib/src/monte_carlo.c:788
-#: lib/src/monte_carlo.c:1822 lib/src/monte_carlo.c:1985 lib/src/uservar.c:1809
+#: lib/src/monte_carlo.c:1822 lib/src/monte_carlo.c:1985
+#: lib/src/uservar.c:1809
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': Non é un escalar"
@@ -8773,8 +8779,9 @@ msgstr "Aviso: A serie ten observacións ausentes"
 msgid "Couldn't access binary datafile"
 msgstr "Non puido accederse ao ficheiro de datos binario"
 
-#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163 gui2/session.c:169
-#: gui2/session.c:176 gui2/session.c:182 gui2/session.c:3417
+#: gui2/database.c:862 gui2/session.c:156 gui2/session.c:163
+#: gui2/session.c:169 gui2/session.c:176 gui2/session.c:182
+#: gui2/session.c:3417
 msgid "Display"
 msgstr "Amosar"
 
@@ -8953,8 +8960,8 @@ msgstr "Engadir ao menú"
 
 #: gui2/datafiles.c:1447 gui2/datafiles.c:1643 gui2/gpt_control.c:3951
 #: gui2/gpt_control.c:3953 gui2/gpt_control.c:4057 gui2/session.c:165
-#: gui2/session.c:172 gui2/session.c:3473 gui2/toolbar.c:820 gui2/toolbar.c:821
-#: gui2/toolbar.c:822
+#: gui2/session.c:172 gui2/session.c:3473 gui2/toolbar.c:820
+#: gui2/toolbar.c:821 gui2/toolbar.c:822
 msgid "Help"
 msgstr "Axuda"
 
@@ -9453,54 +9460,44 @@ msgid "plain text"
 msgstr "Texto plano"
 
 #: gui2/dialogs.c:923
-#, fuzzy
 msgid "Copy as plain text"
-msgstr "Texto plano"
+msgstr "Copiar como texto plano"
 
 #: gui2/dialogs.c:924
-#, fuzzy
 msgid "Copy as tab-separated"
-msgstr "Separado por comas"
+msgstr "Copiar como separado por tabuladores"
 
 #: gui2/dialogs.c:925
-#, fuzzy
 msgid "Copy as comma-separated"
-msgstr "Separado por comas"
+msgstr "Copiar como separado por comas"
 
 #: gui2/dialogs.c:926
-#, fuzzy
 msgid "Copy as LaTeX"
-msgstr "Copiar como:"
+msgstr "Copiar como LaTeX"
 
 #: gui2/dialogs.c:927
-#, fuzzy
 msgid "Copy as RTF"
-msgstr "Copiar como:"
+msgstr "Copiar como RTF"
 
 #: gui2/dialogs.c:930
-#, fuzzy
 msgid "Save as plain text"
-msgstr "Texto plano"
+msgstr "Gardar como texto plano"
 
 #: gui2/dialogs.c:931
-#, fuzzy
 msgid "Save as tab-separated"
-msgstr "Separado por tabuladores"
+msgstr "Gardar como separado por tabuladores"
 
 #: gui2/dialogs.c:932
-#, fuzzy
 msgid "Save as comma-separated"
-msgstr "Separado por comas"
+msgstr "Gardar como separado por comas"
 
 #: gui2/dialogs.c:933
-#, fuzzy
 msgid "Save as LaTeX"
-msgstr "Gardar como TeX..."
+msgstr "Gardar como LaTeX"
 
 #: gui2/dialogs.c:934
-#, fuzzy
 msgid "Save as RTF"
-msgstr "Gardar como"
+msgstr "Gardar como RTF"
 
 #: gui2/dialogs.c:1111 gui2/library.c:2156
 msgid "gretl: bootstrap analysis"
@@ -10214,24 +10211,23 @@ msgid "right-click for some shortcuts"
 msgstr "Pulsar no botón dereito para algúns atallos"
 
 #: gui2/fileselect.c:339
-#, fuzzy, c-format
+#, c-format
 msgid "Open %s in new window"
-msgstr "Ir a unha nova xanela"
+msgstr "Abrir %s nunha nova xanela"
 
 #: gui2/fileselect.c:340
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "Substituído"
+msgstr "Substituír %s"
 
 #: gui2/fileselect.c:345
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to %s"
-msgstr "Gardar os cambios?"
+msgstr "Gardar os cambios en %s"
 
 #: gui2/fileselect.c:348
-#, fuzzy
 msgid "Open script"
-msgstr "Guión novo"
+msgstr "Abrir guión"
 
 #: gui2/fileselect.c:883
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
@@ -11167,8 +11163,8 @@ msgid "Display PDF"
 msgstr "Amosar PDF"
 
 #: gui2/gpt_control.c:278 gui2/gpt_control.c:3978 gui2/gpt_control.c:4055
-#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206 gui2/session.c:3342
-#: gui2/session.c:3381 gui2/session.c:3394
+#: gui2/session.c:190 gui2/session.c:196 gui2/session.c:206
+#: gui2/session.c:3342 gui2/session.c:3381 gui2/session.c:3394
 msgid "Edit"
 msgstr "Editar"
 
@@ -11732,9 +11728,8 @@ msgid " No datafile loaded "
 msgstr " Non se cargou ningún ficheiro de datos  "
 
 #: gui2/gretl.c:1456
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "Cartafol de traballo:"
+msgstr "Cartafol de traballo: clic para configurar"
 
 #: gui2/gretl.c:1561 gui2/gretl.c:1573
 msgid "_User file..."
@@ -14693,9 +14688,8 @@ msgid "Display components"
 msgstr "Amosar compoñentes"
 
 #: gui2/menustate.c:571
-#, fuzzy
 msgid "Plot components"
-msgstr "Todas as compoñentes"
+msgstr "Compoñentes de gráfica"
 
 #: gui2/menustate.c:572
 msgid "Edit components"
@@ -15783,13 +15777,13 @@ msgstr "Editar as ordes de gráfica"
 msgid "Export as CSV..."
 msgstr "Exportar como CSV..."
 
-#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208 gui2/session.c:3347
-#: gui2/session.c:3385 gui2/session.c:3396
+#: gui2/session.c:192 gui2/session.c:197 gui2/session.c:208
+#: gui2/session.c:3347 gui2/session.c:3385 gui2/session.c:3396
 msgid "Copy as CSV..."
 msgstr "Copiar como CSV..."
 
-#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215 gui2/session.c:3334
-#: gui2/session.c:3368 gui2/textutil.c:485
+#: gui2/session.c:201 gui2/session.c:205 gui2/session.c:215
+#: gui2/session.c:3334 gui2/session.c:3368 gui2/textutil.c:485
 msgid "View"
 msgstr "Ver"
 
@@ -16027,9 +16021,8 @@ msgid "Prompt to save session"
 msgstr "Preguntar se desexas gardar sesión"
 
 #: gui2/settings.c:223
-#, fuzzy
 msgid "Display working directory"
-msgstr "Gretl: Cartafol de traballo"
+msgstr "Presentar o cartafol de traballo"
 
 #: gui2/settings.c:225
 msgid "Set working directory from shell"
@@ -16325,15 +16318,12 @@ msgid "always start in the working directory"
 msgstr "Comezar sempre no cartafol de traballo"
 
 #: gui2/settings.c:2916
-#, fuzzy
 msgid "Show working directory in main window"
-msgstr ""
-"Establecer o cartafol de traballo desde o intérprete de instrucións (shell)"
+msgstr "Amosar o cartafol de traballo na xanela principal"
 
 #: gui2/settings.c:2926
-#, fuzzy
 msgid "Open working directory"
-msgstr "Cartafol actual de traballo"
+msgstr "Abrir o cartafol de traballo"
 
 #: gui2/settings.c:2995
 msgid "gretl: working directory"
@@ -17074,7 +17064,7 @@ msgstr "regresores"
 
 #: plugin/addons-i18n.c:46
 msgid "Structural VARs"
-msgstr "_VARs estructural"
+msgstr "_VARs estrutural"
 
 #: plugin/addons-i18n.c:47
 msgid "AB-model"
@@ -17305,7 +17295,8 @@ msgid "No worksheets found"
 msgstr "Non se atoparon follas de traballo"
 
 #: plugin/excel_import.c:1698 plugin/gnumeric_import.c:674
-#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1256 plugin/xlsx_import.c:1316
+#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1256
+#: plugin/xlsx_import.c:1316
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento incorrecto para a importación dunha folla de cálculo"
 
