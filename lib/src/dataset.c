@@ -4722,7 +4722,7 @@ void *series_info_bundle (const DATASET *dset, int i,
 {
     gretl_bundle *b = NULL;
 
-    if (dset != NULL && i > 0 && i < dset->v) {
+    if (dset != NULL && i >= 0 && i < dset->v) {
 	b = gretl_bundle_new();
 	if (b == NULL) {
 	    *err = E_ALLOC;
@@ -4735,34 +4735,26 @@ void *series_info_bundle (const DATASET *dset, int i,
 	VARINFO *vinfo = dset->varinfo[i];
 
 	gretl_bundle_set_string(b, "name", dset->varname[i]);
-	if (*vinfo->label) {
-	    gretl_bundle_set_string(b, "description", vinfo->label);
-	}
-	if (*vinfo->display_name) {
-	    gretl_bundle_set_string(b, "graph_name", vinfo->display_name);
-	}
+	gretl_bundle_set_string(b, "description", vinfo->label);
+	gretl_bundle_set_string(b, "graph_name", vinfo->display_name);
 	gretl_bundle_set_int(b, "discrete", vinfo->flags & VAR_DISCRETE ?
 			     1 : 0);
 	gretl_bundle_set_int(b, "coded", vinfo->flags & VAR_CODED ?
 			     1 : 0);
-	if (*vinfo->parent) {
-	    gretl_bundle_set_string(b, "parent", vinfo->parent);
-	}
+	gretl_bundle_set_string(b, "parent", vinfo->parent);
 	if (vinfo->transform > 0) {
 	    gretl_bundle_set_string(b, "transform",
 				    gretl_command_word(vinfo->transform));
-	}
-	if (vinfo->lag != 0) {
-	    gretl_bundle_set_int(b, "lag", vinfo->lag);
-	}
+	} else {
+	    gretl_bundle_set_string(b, "transform", "none");
+	}	    
+	gretl_bundle_set_int(b, "lag", vinfo->lag);
+	gretl_bundle_set_int(b, "has_string_table", vinfo->st != NULL);
 	if (vinfo->midas_period > 0) {
 	    gretl_bundle_set_int(b, "midas_period", vinfo->midas_period);
 	}
 	if (vinfo->midas_freq > 0) {
 	    gretl_bundle_set_int(b, "midas_freq", vinfo->midas_freq);
-	}
-	if (vinfo->st != NULL) {
-	    gretl_bundle_set_int(b, "has_string_table", 1);
 	}
     }
 
