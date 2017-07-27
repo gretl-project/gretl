@@ -7529,22 +7529,10 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return err;
 }
 
-/**
- * gretl_matrix_psd_root:
- * @a: matrix to operate on.
- * 
- * Computes the LL' factorization of the symmetric,
- * positive semidefinite matrix @a.  On successful exit 
- * the lower triangle of @a is replaced by the factor L
- * and the upper triangle is set to zero.  
- *
- * Returns: 0 on success; 1 on failure.
- */
-
-int gretl_matrix_psd_root (gretl_matrix *a)
+static int simple_psd_root (gretl_matrix *a)
 {
     gretl_matrix *L;
-    double sum, x1, x2;
+    double sum, x1, x2, d;
     int i, j, k, n;
     int err = 0;
 
@@ -7572,17 +7560,23 @@ int gretl_matrix_psd_root (gretl_matrix *a)
 		sum += x1 * x2;
 	    }
 	    x1 = gretl_matrix_get(a, i, j);
-	    if (x1 - sum == 0.0) {
+	    d = x1 - sum;
+	    if (i == j && d < 0) {
+		gretl_errmsg_set("Matrix is not positive semidefinite");
+		err = E_DATA;
+		break;
+	    }
+	    if (d == 0.0) {
 		gretl_matrix_set(L, i, i, 0.0);
 	    } else if (i == j) {
-		gretl_matrix_set(L, i, i, sqrt(x1 - sum));
+		gretl_matrix_set(L, i, i, sqrt(d));
 	    } else {
-		x2 = gretl_matrix_get(L, j, j);  
-		gretl_matrix_set(L, i, j, 1.0 / x2 * (x1 - sum));
+		x2 = gretl_matrix_get(L, j, j);
+		gretl_matrix_set(L, i, j, 1.0 / x2 * d);
 	    }
 	}
-	if (gretl_matrix_get(L, i, i) < 0) {
-	    fprintf(stderr, "Matrix is not positive semidefinite\n");
+	if (!err && gretl_matrix_get(L, i, i) < 0) {
+	    gretl_errmsg_set("Matrix is not positive semidefinite");
 	    err = E_DATA;
 	}
     }
@@ -7596,6 +7590,117 @@ int gretl_matrix_psd_root (gretl_matrix *a)
     gretl_matrix_free(L);
 
     return err;
+}
+
+static int permute_by_and_check (gretl_matrix *L, integer *piv)
+{
+    gretl_matrix *P = NULL;
+    gretl_matrix *PL = NULL;
+    gretl_matrix *A = NULL;
+    int pivoted = 0;
+    int i, n = L->rows;
+
+    for (i=0; i<n; i++) {
+	if ((i == 0 && piv[i] != 1) ||
+	    (i > 0 && piv[i] != piv[i-1])) {
+	    pivoted = 1;
+	}
+    }
+
+    A = gretl_matrix_alloc(n, n);
+
+    if (pivoted) {
+	P = gretl_zero_matrix_new(n, n);
+	PL = gretl_matrix_alloc(n, n);
+	for (i=0; i<n; i++) {
+	    gretl_matrix_set(P, piv[i] - 1, i, 1.0);
+	}
+	gretl_matrix_multiply(P, L, PL);
+	gretl_matrix_multiply_mod(PL, GRETL_MOD_NONE,
+				  PL, GRETL_MOD_TRANSPOSE,
+				  A, GRETL_MOD_NONE);
+    } else {
+	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
+				  L, GRETL_MOD_TRANSPOSE,
+				  A, GRETL_MOD_NONE);
+    }
+
+    /* FIXME check @A against the original input! */
+    gretl_matrix_print(A, "A");
+    gretl_matrix_free(A);
+
+    if (pivoted) {
+	gretl_matrix_free(P);
+	free(L->val);
+	L->val = PL->val;
+	PL->val = NULL;
+	gretl_matrix_free(PL);
+    }
+
+    return 0;
+}
+
+static int lapack_psd_root (gretl_matrix *a)
+{
+    double *work = NULL;
+    integer *piv = NULL;
+    integer n, info = 0;
+    integer rank = 0;
+    double tol = -1.0;
+    char uplo = 'L';
+    int err = 0;
+
+    if (a == NULL || a->rows == 0) {
+	return E_DATA;
+    }
+
+    n = a->rows;
+
+    if (a->cols != n) {
+	return E_NONCONF;
+    }
+
+    piv = malloc(n * sizeof *piv);
+    work = lapack_malloc(2 * n * sizeof *work);
+
+    if (piv == NULL || work == NULL) {
+	err = E_ALLOC;
+    } else {
+	dpstrf_(&uplo, &n, a->val, &n, piv, &rank, &tol, work, &info);
+	fprintf(stderr, "dpstrf: rank = %d, info = %d\n", rank, info);
+	if (info < 0) {
+	    err = E_DATA;
+	} else {
+	    gretl_matrix_zero_triangle(a, 'U');
+	    permute_by_and_check(a, piv);
+	}
+    }
+
+    free(piv);
+
+    return err;
+}
+
+/**
+ * gretl_matrix_psd_root:
+ * @a: matrix to operate on.
+ * 
+ * Computes the LL' factorization of the symmetric,
+ * positive semidefinite matrix @a.  On successful exit 
+ * the lower triangle of @a is replaced by the factor L
+ * and the upper triangle is set to zero.  
+ *
+ * Returns: 0 on success; 1 on failure.
+ */
+
+int gretl_matrix_psd_root (gretl_matrix *a)
+{
+    if (0) {
+	/* not yet */
+	return lapack_psd_root(a);
+    } else {
+	return simple_psd_root(a);
+    }
 }
 
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,

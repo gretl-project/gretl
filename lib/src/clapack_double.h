@@ -1404,6 +1404,9 @@ int dtzrqf_(integer *m, integer *n, doublereal *a, integer *
  
 int dtzrzf_(integer *m, integer *n, doublereal *a, integer *
 	    lda, doublereal *tau, doublereal *work, integer *lwork, integer *info);
+
+int dpstrf_(char *uplo, integer *n, doublereal *a, integer *lda, integer *piv,
+	    integer *rank, double *tol, double *work, integer *info);
  
 integer icmax1_(integer *n, complex *cx, integer *incx);
  
