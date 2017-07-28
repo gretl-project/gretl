@@ -7637,16 +7637,12 @@ static int simple_psd_root (gretl_matrix *a)
    in place according to the information in @piv
 */
 
-static int permute_rows (gretl_matrix *L, integer *piv)
+static void permute_rows (gretl_matrix *L, integer *piv)
 {
     double tmp, val;
     int n = L->rows;
-    int i, j, k, *src;
-
-    src = malloc(n * sizeof *src);
-    if (src == NULL) {
-	return E_ALLOC;
-    }
+    integer *src = piv + n;
+    int i, j, k;
 
     /* Re-order the lapack @piv array to give, in @src,
        the source rows in target order, 0-based. That
@@ -7680,10 +7676,6 @@ static int permute_rows (gretl_matrix *L, integer *piv)
 	    }
 	}
     }
-
-    free(src);
-
-    return 0;
 }
 
 static int process_psd_root (gretl_matrix *L,
@@ -7692,7 +7684,6 @@ static int process_psd_root (gretl_matrix *L,
 			     integer *piv)
 {
     gretl_matrix *A = NULL;
-    int pivoted = 0;
     int i, j, n = L->rows;
     int err = 0;
 
@@ -7708,7 +7699,8 @@ static int process_psd_root (gretl_matrix *L,
     for (i=0; i<n; i++) {
 	if ((i == 0 && piv[i] != 1) ||
 	    (i > 0 && piv[i] != piv[i-1])) {
-	    pivoted = 1;
+	    /* pivoting was done */
+	    permute_rows(L, piv);
 	    break;
 	}
     }
@@ -7717,17 +7709,13 @@ static int process_psd_root (gretl_matrix *L,
 	A = gretl_matrix_alloc(n, n);
     }
 
-    if (pivoted) {
-	err = permute_rows(L, piv);
-    }
-
     if (A != NULL) {
 	/* form A = LL' and compare with A0 to see if L
 	   is really a viable factor
 	*/
 	int di = -1, dj = -1;
 	double d, maxd = 0;
-	double tol = 1.0e-13;
+	double tol = 1.0e-10;
 
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  L, GRETL_MOD_TRANSPOSE,
@@ -7746,11 +7734,6 @@ static int process_psd_root (gretl_matrix *L,
 	if (maxd > tol) {
 	    fprintf(stderr, "check_psd_root: maxd = %g at L(%d,%d)\n",
 		    maxd, di, dj);
-#if 0
-	    gretl_matrix_print(A0, "A0");
-	    gretl_matrix_print(L, "L");
-	    gretl_matrix_print(A, "A");
-#endif
 	    err = E_DATA;
 	}
     }
@@ -7780,14 +7763,16 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 	return E_NONCONF;
     }
 
-    piv = malloc(n * sizeof *piv);
+    piv = malloc(2 * n * sizeof *piv);
     work = lapack_malloc(2 * n * sizeof *work);
 
     if (piv == NULL || work == NULL) {
 	err = E_ALLOC;
     } else {
 	dpstrf_(&uplo, &n, a->val, &n, piv, &rank, &tol, work, &info);
+#if 0
 	fprintf(stderr, "dpstrf: rank = %d, info = %d\n", rank, info);
+#endif
 	if (info < 0) {
 	    err = E_DATA;
 	} else {
