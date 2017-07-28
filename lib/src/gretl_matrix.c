@@ -7559,8 +7559,7 @@ static int simple_psd_root (gretl_matrix *a)
 		x2 = gretl_matrix_get(L, j, k);
 		sum += x1 * x2;
 	    }
-	    x1 = gretl_matrix_get(a, i, j);
-	    d = x1 - sum;
+	    d = gretl_matrix_get(a, i, j) - sum;
 	    if (i == j && d < 0) {
 		gretl_errmsg_set("Matrix is not positive semidefinite");
 		err = E_DATA;
@@ -7575,10 +7574,6 @@ static int simple_psd_root (gretl_matrix *a)
 		gretl_matrix_set(L, i, j, 1.0 / x2 * d);
 	    }
 	}
-	if (!err && gretl_matrix_get(L, i, i) < 0) {
-	    gretl_errmsg_set("Matrix is not positive semidefinite");
-	    err = E_DATA;
-	}
     }
 
     if (!err) {
@@ -7592,25 +7587,83 @@ static int simple_psd_root (gretl_matrix *a)
     return err;
 }
 
-static int check_psd_root (gretl_matrix *L,
-			   const gretl_matrix *A0,
-			   integer *piv,
-			   double *tmp)
+/* permute the rows of lower-trangular matrix @L
+   in place according to the information in @piv
+*/
+
+static int permute_rows (gretl_matrix *L, integer *piv)
 {
-    gretl_matrix *P = NULL;
-    gretl_matrix *PL = NULL;
+    double tmp, val;
+    int n = L->rows;
+    int i, j, k, *src;
+
+    src = malloc(n * sizeof *src);
+    if (src == NULL) {
+	return E_ALLOC;
+    }
+
+    /* Re-order the lapack @piv array to give, in @src,
+       the source rows in target order, 0-based. That
+       is, src[i] will hold the index of the row that
+       should be swapped into row i, i = 0,1,...n.
+    */
+    for (i=0; i<n; i++) {
+	for (j=0; i<n; j++) {
+	    if (piv[j] - 1 == i) {
+		src[i] = j;
+		break;
+	    }
+	}
+    }
+
+    for (i=0; i<n; i++) {
+	k = src[i];
+	if (k != i) {
+	    for (j=0; j<n; j++) {
+		tmp = gretl_matrix_get(L, i, j);
+		val = gretl_matrix_get(L, k, j);
+		gretl_matrix_set(L, i, j, val);
+		gretl_matrix_set(L, k, j, tmp);
+	    }
+	    for (j=i+1; j<n; j++) {
+		/* we moved a source row, so update */
+		if (src[j] == i) {
+		    src[j] = k;
+		    break;
+		}
+	    }
+	}
+    }
+
+    free(src);
+
+    return 0;
+}
+
+static int process_psd_root (gretl_matrix *L,
+			     const gretl_matrix *A0,
+			     integer rank,
+			     integer *piv)
+{
     gretl_matrix *A = NULL;
-    double d, maxd = 0;
-    double tol = 2.0e-15;
     int pivoted = 0;
     int i, j, n = L->rows;
-    int di = -1, dj = -1;
     int err = 0;
+
+    if (rank < n) {
+	/* zero the lower right block, beyond the rank */
+	for (j=rank; j<n; j++) {
+	    for (i=j; i<n; i++) {
+		gretl_matrix_set(L, i, j, 0);
+	    }
+	}
+    }
 
     for (i=0; i<n; i++) {
 	if ((i == 0 && piv[i] != 1) ||
 	    (i > 0 && piv[i] != piv[i-1])) {
 	    pivoted = 1;
+	    break;
 	}
     }
 
@@ -7619,28 +7672,23 @@ static int check_psd_root (gretl_matrix *L,
     }
 
     if (pivoted) {
-	P = gretl_zero_matrix_new(n, n);
-	PL = gretl_matrix_alloc(n, n);
-	for (i=0; i<n; i++) {
-	    gretl_matrix_set(P, piv[i] - 1, i, 1.0);
-	}
-	gretl_matrix_multiply(P, L, PL);
-	if (A0 != NULL) {
-	    gretl_matrix_multiply_mod(PL, GRETL_MOD_NONE,
-				      PL, GRETL_MOD_TRANSPOSE,
-				      A, GRETL_MOD_NONE);
-	}
-    } else if (A0 != NULL) {
+	err = permute_rows(L, piv);
+    }
+
+    if (A != NULL) {
+	/* form A = LL' and compare with A0 to see if L
+	   is really a viable factor
+	*/
+	int di = -1, dj = -1;
+	double d, maxd = 0;
+	double tol = 2.0e-15;
+
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  L, GRETL_MOD_TRANSPOSE,
 				  A, GRETL_MOD_NONE);
-    }
-
-    if (A0 != NULL) {
-	/* check @A against the original input, @A0 */
 	for (i=0; i<n; i++) {
 	    for (j=0; j<=i; j++) {
-		d = gretl_matrix_get(A, j, i) - gretl_matrix_get(A0, i, j);
+		d = fabs(gretl_matrix_get(A, j, i) - gretl_matrix_get(A0, i, j));
 		if (d > maxd) {
 		    di = i;
 		    dj = j;
@@ -7648,26 +7696,20 @@ static int check_psd_root (gretl_matrix *L,
 		}
 	    }
 	}
+
+	if (maxd > tol) {
+	    fprintf(stderr, "check_psd_root: maxd = %g at L(%d,%d)\n",
+		    maxd, di, dj);
+#if 0
+	    gretl_matrix_print(A0, "A0");
+	    gretl_matrix_print(L, "L");
+	    gretl_matrix_print(A, "A");
+#endif
+	    err = E_DATA;
+	}
     }
 
-    if (maxd > tol) {
-	fprintf(stderr, "check_psd_root: maxd = %g at L(%d,%d)\n",
-		maxd, di, dj);
-	gretl_matrix_print(A0, "A0");
-	gretl_matrix_print(L, "L");
-	gretl_matrix_print(A, "A");
-	err = E_DATA;
-    }
-    
     gretl_matrix_free(A);
-
-    if (pivoted) {
-	gretl_matrix_free(P);
-	free(L->val);
-	L->val = PL->val;
-	PL->val = NULL;
-	gretl_matrix_free(PL);
-    }
 
     return err;
 }
@@ -7704,7 +7746,7 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 	    err = E_DATA;
 	} else {
 	    gretl_matrix_zero_triangle(a, 'U');
-	    err = check_psd_root(a, a0, piv, work);
+	    err = process_psd_root(a, a0, rank, piv);
 	}
     }
 
@@ -7733,7 +7775,7 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 int gretl_matrix_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 {
     if (0) {
-	/* not yet */
+	/* not just yet */
 	return lapack_psd_root(a, a0);
     } else {
 	return simple_psd_root(a);
