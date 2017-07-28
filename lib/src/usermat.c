@@ -1004,7 +1004,7 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
 	} else if (f == F_CHOL) {
 	    *err = gretl_matrix_cholesky_decomp(R);
 	} else if (f == F_PSDROOT) {
-	    *err = gretl_matrix_psd_root(R);
+	    *err = gretl_matrix_psd_root(R, m);
 	} else if (f == F_INVPD) {
 	    *err = gretl_invpd(R);
 	} else if (f == F_GINV) {

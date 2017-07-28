@@ -7592,13 +7592,20 @@ static int simple_psd_root (gretl_matrix *a)
     return err;
 }
 
-static int permute_by_and_check (gretl_matrix *L, integer *piv)
+static int check_psd_root (gretl_matrix *L,
+			   const gretl_matrix *A0,
+			   integer *piv,
+			   double *tmp)
 {
     gretl_matrix *P = NULL;
     gretl_matrix *PL = NULL;
     gretl_matrix *A = NULL;
+    double d, maxd = 0;
+    double tol = 2.0e-15;
     int pivoted = 0;
-    int i, n = L->rows;
+    int i, j, n = L->rows;
+    int di = -1, dj = -1;
+    int err = 0;
 
     for (i=0; i<n; i++) {
 	if ((i == 0 && piv[i] != 1) ||
@@ -7607,7 +7614,9 @@ static int permute_by_and_check (gretl_matrix *L, integer *piv)
 	}
     }
 
-    A = gretl_matrix_alloc(n, n);
+    if (A0 != NULL) {
+	A = gretl_matrix_alloc(n, n);
+    }
 
     if (pivoted) {
 	P = gretl_zero_matrix_new(n, n);
@@ -7616,17 +7625,40 @@ static int permute_by_and_check (gretl_matrix *L, integer *piv)
 	    gretl_matrix_set(P, piv[i] - 1, i, 1.0);
 	}
 	gretl_matrix_multiply(P, L, PL);
-	gretl_matrix_multiply_mod(PL, GRETL_MOD_NONE,
-				  PL, GRETL_MOD_TRANSPOSE,
-				  A, GRETL_MOD_NONE);
-    } else {
+	if (A0 != NULL) {
+	    gretl_matrix_multiply_mod(PL, GRETL_MOD_NONE,
+				      PL, GRETL_MOD_TRANSPOSE,
+				      A, GRETL_MOD_NONE);
+	}
+    } else if (A0 != NULL) {
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  L, GRETL_MOD_TRANSPOSE,
 				  A, GRETL_MOD_NONE);
     }
 
-    /* FIXME check @A against the original input! */
-    gretl_matrix_print(A, "A");
+    if (A0 != NULL) {
+	/* check @A against the original input, @A0 */
+	for (i=0; i<n; i++) {
+	    for (j=0; j<=i; j++) {
+		d = gretl_matrix_get(A, j, i) - gretl_matrix_get(A0, i, j);
+		if (d > maxd) {
+		    di = i;
+		    dj = j;
+		    maxd = d;
+		}
+	    }
+	}
+    }
+
+    if (maxd > tol) {
+	fprintf(stderr, "check_psd_root: maxd = %g at L(%d,%d)\n",
+		maxd, di, dj);
+	gretl_matrix_print(A0, "A0");
+	gretl_matrix_print(L, "L");
+	gretl_matrix_print(A, "A");
+	err = E_DATA;
+    }
+    
     gretl_matrix_free(A);
 
     if (pivoted) {
@@ -7637,10 +7669,10 @@ static int permute_by_and_check (gretl_matrix *L, integer *piv)
 	gretl_matrix_free(PL);
     }
 
-    return 0;
+    return err;
 }
 
-static int lapack_psd_root (gretl_matrix *a)
+static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 {
     double *work = NULL;
     integer *piv = NULL;
@@ -7672,8 +7704,12 @@ static int lapack_psd_root (gretl_matrix *a)
 	    err = E_DATA;
 	} else {
 	    gretl_matrix_zero_triangle(a, 'U');
-	    permute_by_and_check(a, piv);
+	    err = check_psd_root(a, a0, piv, work);
 	}
+    }
+
+    if (err == E_DATA) {
+	gretl_errmsg_set("Matrix is not positive semi-definite");
     }
 
     free(piv);
@@ -7684,6 +7720,7 @@ static int lapack_psd_root (gretl_matrix *a)
 /**
  * gretl_matrix_psd_root:
  * @a: matrix to operate on.
+ * @a0: the original matrix, for comparison, or NULL.
  * 
  * Computes the LL' factorization of the symmetric,
  * positive semidefinite matrix @a.  On successful exit 
@@ -7693,11 +7730,11 @@ static int lapack_psd_root (gretl_matrix *a)
  * Returns: 0 on success; 1 on failure.
  */
 
-int gretl_matrix_psd_root (gretl_matrix *a)
+int gretl_matrix_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 {
     if (0) {
 	/* not yet */
-	return lapack_psd_root(a);
+	return lapack_psd_root(a, a0);
     } else {
 	return simple_psd_root(a);
     }
