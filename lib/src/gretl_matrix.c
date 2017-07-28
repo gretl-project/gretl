@@ -7529,10 +7529,17 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return err;
 }
 
+#define USE_GVL 0
+
 static int simple_psd_root (gretl_matrix *a)
 {
-    gretl_matrix *L;
-    double sum, x1, x2, d;
+#if USE_GVL
+    double x3;
+#else
+    gretl_matrix *L = NULL;
+    double sum, chk;
+#endif
+    double d, x1, x2;
     int i, j, k, n;
     int err = 0;
 
@@ -7546,11 +7553,42 @@ static int simple_psd_root (gretl_matrix *a)
 	return E_NONCONF;
     }
 
+#if USE_GVL
+
+    /* Golub and Van Loan, algorithm 4.2.11 */
+    for (k=0; k<n; k++) {
+	d = gretl_matrix_get(a, k, k);
+	if (d > 0) {
+	    d = sqrt(d);
+	    gretl_matrix_set(a, k, k, d);
+	    for (i=k+1; i<n; i++) {
+		x1 = gretl_matrix_get(a, i, k);
+		gretl_matrix_set(a, i, k, x1 / d);
+	    }
+	    for (j=k+1; j<n; j++) {
+		x1 = gretl_matrix_get(a, j, k);
+		for (i=j; i<n; i++) {
+		    x2 = gretl_matrix_get(a, i, j);
+		    x3 = gretl_matrix_get(a, i, k);
+		    gretl_matrix_set(a, i, j, x2 - x3 * x1);
+		}
+	    }
+	} else {
+	    for (i=k; i<n; i++) {
+		gretl_matrix_set(a, i, k, 0.0);
+	    }
+	}
+    }
+    gretl_matrix_zero_triangle(a, 'U');
+
+#else /* the old algorithm */
+
     L = gretl_zero_matrix_new(n, n);
     if (L == NULL) {
 	return E_ALLOC;
     }
 
+    /* what was the source of this algorithm?? */
     for (i=0; i<n && !err; i++)  {
 	for (j=0; j<=i; j++) {
 	    sum = 0.0;
@@ -7560,18 +7598,25 @@ static int simple_psd_root (gretl_matrix *a)
 		sum += x1 * x2;
 	    }
 	    d = gretl_matrix_get(a, i, j) - sum;
-	    if (i == j && d < 0) {
-		gretl_errmsg_set("Matrix is not positive semidefinite");
-		err = E_DATA;
-		break;
-	    }
 	    if (d == 0.0) {
 		gretl_matrix_set(L, i, i, 0.0);
 	    } else if (i == j) {
-		gretl_matrix_set(L, i, i, sqrt(d));
+		chk = d < 0 ? 0.0 : sqrt(d);
+		gretl_matrix_set(L, i, i, chk);
 	    } else {
 		x2 = gretl_matrix_get(L, j, j);
-		gretl_matrix_set(L, i, j, 1.0 / x2 * d);
+		chk = 1.0 / x2 * d;
+		gretl_matrix_set(L, i, j, chk);
+		if (xna(chk)) {
+		    err = E_NAN;
+		    break;
+		}
+	    }
+	}
+	if (!err) {
+	    chk = gretl_matrix_get(L, i, i);
+	    if (xna(chk)) {
+		gretl_matrix_set(L, i, i, 0);
 	    }
 	}
     }
@@ -7583,6 +7628,7 @@ static int simple_psd_root (gretl_matrix *a)
     }
 
     gretl_matrix_free(L);
+#endif
 
     return err;
 }
@@ -7681,7 +7727,7 @@ static int process_psd_root (gretl_matrix *L,
 	*/
 	int di = -1, dj = -1;
 	double d, maxd = 0;
-	double tol = 2.0e-15;
+	double tol = 1.0e-13;
 
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  L, GRETL_MOD_TRANSPOSE,
