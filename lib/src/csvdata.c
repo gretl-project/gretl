@@ -143,7 +143,7 @@ struct csvdata_ {
 #define csv_set_verbose(c)          (c->flags |= CSV_VERBOSE)
 #define csv_set_scrub_thousep(c)    (c->flags |= CSV_THOUSEP)
 #define csv_set_no_header(c)        (c->flags |= CSV_NOHEADER)
-#define csv_set_keep_quotes(c)      (c->flags |= CSV_QUOTES)
+#define csv_unset_keep_quotes(c)    (c->flags &= ~CSV_QUOTES)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -299,7 +299,7 @@ static csvdata *csvdata_new (DATASET *dset)
 	return NULL;
     }
 
-    c->flags = 0;
+    c->flags = CSV_QUOTES;
     c->delim = '\t';
     c->thousep = 0;
     c->qchar = 0;
@@ -3458,10 +3458,10 @@ static int real_import_csv (const char *fname,
         if (opt & OPT_V) {
             csv_set_verbose(c);
         }
-	/* FIXME placement? */
-        if (opt & OPT_U) {
-            csv_set_keep_quotes(c);
-        }
+    }
+
+    if (opt & OPT_I) {
+	csv_unset_keep_quotes(c);
     }
 
     if (mprn != NULL) {
