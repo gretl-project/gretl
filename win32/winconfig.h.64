@@ -29,6 +29,9 @@
 /* TRAMO/SEATS support? */
 #define HAVE_TRAMO 1
 
+/* libsvm support? */
+#define HAVE_LIBSVM 1
+
 /* Define if you want GNU readline support */
 #define HAVE_READLINE 1
 

@@ -127,7 +127,8 @@ PLUGINSRC = \
 	interval.c \
 	anova.c \
 	biprobit.c \
-	reprobit.c
+	reprobit.c \
+	svm.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -173,7 +174,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/reprobit.dll \
 	plugins/panurc.dll \
 	plugins/json_get.dll \
-	plugins/xml_get.dll
+	plugins/xml_get.dll \
+	plugins/svm.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -575,6 +577,10 @@ plugins/json_get.dll: json_get.o dllinit.o
 plugins/xml_get.dll: xml_get.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2.dll $(GRETLLIB)
+
+plugins/svm.dll: svm.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lsvm $(GRETLLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
