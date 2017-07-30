@@ -849,14 +849,24 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
     int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_INT) {
-	myerr = E_TYPES;
-    }
 
-    if (ptr != NULL && !myerr) {
-	int *pi = (int *) ptr;
+    if (ptr != NULL) {
+	if (type == GRETL_TYPE_INT) {
+	    int *pi = (int *) ptr;
 
-	i = *pi;
+	    i = *pi;
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    double x, *px = (double *) ptr;
+
+	    x = *px;
+	    if (x >= INT_MIN && x <= INT_MAX && x == floor(x)) {
+		i = (int) x;
+	    } else {
+		myerr = E_TYPES;
+	    }
+	} else {
+	    myerr = E_TYPES;
+	}
     }
 
     if (err != NULL) {
