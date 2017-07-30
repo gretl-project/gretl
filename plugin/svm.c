@@ -412,6 +412,18 @@ static int parse_params_bundle (gretl_bundle *b,
     return err;
 }
 
+static PRN *svm_prn;
+
+static void gretl_libsvm_print (const char *s)
+{
+    if (svm_prn != NULL) {
+	pputs(svm_prn, s);
+	gretl_gui_flush();
+    } else {
+	fputs(s, stdout);
+    }
+}
+
 int gretl_svm_predict (const int *list,
 		       gretl_bundle *bparams,
 		       gretl_bundle **bmodel,
@@ -444,6 +456,9 @@ int gretl_svm_predict (const int *list,
     if (err) {
 	return err;
     }
+
+    svm_prn = prn;
+    svm_set_print_string_function(gretl_libsvm_print);
 
     dset->t2 = t2_train;
     T = sample_size(dset);
@@ -500,7 +515,9 @@ int gretl_svm_predict (const int *list,
 	if (model == NULL) {
 	    err = E_DATA;
 	}
+	gretl_gui_flush();
 	pprintf(prn, "Training done, err = %d\n", err);
+	gretl_gui_flush();
     }
 
     if (!err) {
@@ -538,6 +555,7 @@ int gretl_svm_predict (const int *list,
     gretl_sv_data_destroy(prob2, x_space2);
     svm_free_and_destroy_model(&model);
     svm_destroy_param(&parm);
+    svm_prn = NULL;
 
     return err;
 }

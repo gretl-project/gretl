@@ -7929,7 +7929,7 @@ static void output_handler_block_deletion (void)
 			 NULL);
 }
 
-static void handle_flush_callback (int finalize)
+static void handle_flush_callback (gretlopt opt)
 {
     if (oh.vwin != NULL) {
 	/* we have a "flushable" window in place */
@@ -7938,14 +7938,17 @@ static void handle_flush_callback (int finalize)
 	textview_delete_processing_message(oh.vwin->text);
 	textview_append_text_colorized(oh.vwin->text, buf, 0);
 	free(buf);
-	if (finalize) {
+	if (opt & OPT_F) {
+	    /* finalize */
 	    if (oh.flushing) {
 		scroll_to_foot(oh.vwin);
 	    }
 	    gretl_print_destroy(oh.prn);
 	} else {
 	    /* prepare for another chunk of output */
-	    textview_add_processing_message(oh.vwin->text);
+	    if (!(opt & OPT_Q)) {
+		textview_add_processing_message(oh.vwin->text);
+	    }
 	    gretl_print_set_save_position(oh.prn);
 	    oh.flushing = 1;
 	}
@@ -8004,7 +8007,7 @@ static int start_script_output_handler (PRN *prn, int role,
 void finalize_script_output_window (int role, gpointer data)
 {
     if (oh.vwin != NULL) {
-	handle_flush_callback(1);
+	handle_flush_callback(OPT_F);
 	if (oh.stopped) {
 	    gtk_widget_destroy(oh.vwin->main);
 	    oh.vwin = NULL;
@@ -8024,7 +8027,7 @@ void finalize_script_output_window (int role, gpointer data)
 
 void finalize_reusable_output_window (windata_t *vwin)
 {
-    handle_flush_callback(1);
+    handle_flush_callback(OPT_F);
     vwin_reinstate_toolbar(vwin);
     clear_output_handler();
 }
@@ -9349,11 +9352,17 @@ int execute_script (char *runfile, const char *buf,
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {
-    int ci = (s == NULL)? FLUSH : s->cmd->ci;
-    int err = 0;
+    int ci, err = 0;
+
+    if (s != NULL) {
+	ci = s->cmd->ci;
+    } else {
+	handle_flush_callback(OPT_Q);
+	return;
+    }
 
     if (ci == FLUSH) {
-	handle_flush_callback(0);
+	handle_flush_callback(OPT_NONE);
     } else if (ci == JOIN) {
 	if (dataset->modflag) {
 	    mark_dataset_as_modified();
