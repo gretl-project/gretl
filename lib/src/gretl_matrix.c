@@ -7529,110 +7529,6 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return err;
 }
 
-#define USE_GVL 0
-
-static int simple_psd_root (gretl_matrix *a)
-{
-#if USE_GVL
-    double x3;
-#else
-    gretl_matrix *L = NULL;
-    double sum, chk;
-#endif
-    double d, x1, x2;
-    int i, j, k, n;
-    int err = 0;
-
-    if (a == NULL || a->rows == 0) {
-	return E_DATA;
-    }
-
-    n = a->rows;
-
-    if (a->cols != n) {
-	return E_NONCONF;
-    }
-
-#if USE_GVL
-
-    /* Golub and Van Loan, algorithm 4.2.11 */
-    for (k=0; k<n; k++) {
-	d = gretl_matrix_get(a, k, k);
-	if (d > 0) {
-	    d = sqrt(d);
-	    gretl_matrix_set(a, k, k, d);
-	    for (i=k+1; i<n; i++) {
-		x1 = gretl_matrix_get(a, i, k);
-		gretl_matrix_set(a, i, k, x1 / d);
-	    }
-	    for (j=k+1; j<n; j++) {
-		x1 = gretl_matrix_get(a, j, k);
-		for (i=j; i<n; i++) {
-		    x2 = gretl_matrix_get(a, i, j);
-		    x3 = gretl_matrix_get(a, i, k);
-		    gretl_matrix_set(a, i, j, x2 - x3 * x1);
-		}
-	    }
-	} else {
-	    for (i=k; i<n; i++) {
-		gretl_matrix_set(a, i, k, 0.0);
-	    }
-	}
-    }
-    gretl_matrix_zero_triangle(a, 'U');
-
-#else /* the old algorithm */
-
-    L = gretl_zero_matrix_new(n, n);
-    if (L == NULL) {
-	return E_ALLOC;
-    }
-
-    /* what was the source of this algorithm?? */
-    for (i=0; i<n && !err; i++)  {
-	for (j=0; j<=i; j++) {
-	    sum = 0.0;
-	    for (k=0; k<j; k++) {
-		x1 = gretl_matrix_get(L, i, k);
-		x2 = gretl_matrix_get(L, j, k);
-		sum += x1 * x2;
-	    }
-	    d = gretl_matrix_get(a, i, j) - sum;
-	    if (d == 0.0) {
-		gretl_matrix_set(L, i, i, 0.0);
-	    } else if (i == j) {
-		chk = d < 0 ? 0.0 : sqrt(d);
-		gretl_matrix_set(L, i, i, chk);
-	    } else {
-		x2 = gretl_matrix_get(L, j, j);
-		chk = 1.0 / x2 * d;
-		gretl_matrix_set(L, i, j, chk);
-		if (xna(chk)) {
-		    err = E_NAN;
-		    break;
-		}
-	    }
-	}
-	if (!err) {
-	    chk = gretl_matrix_get(L, i, i);
-	    if (xna(chk)) {
-		gretl_matrix_set(L, i, i, 0);
-	    }
-	}
-    }
-
-    if (!err) {
-	mval_free(a->val);
-	a->val = L->val;
-	L->val = NULL;
-    }
-
-    gretl_matrix_free(L);
-#endif
-
-    return err;
-}
-
 /* permute the rows of lower-trangular matrix @L
    in place according to the information in @piv
 */
@@ -7684,25 +7580,30 @@ static int process_psd_root (gretl_matrix *L,
 			     integer *piv)
 {
     gretl_matrix *A = NULL;
+    double toler = 1.0e-8;
     int i, j, n = L->rows;
     int err = 0;
 
-    if (rank < n) {
-	/* zero the lower right block, beyond the rank */
-	for (j=rank; j<n; j++) {
-	    for (i=j; i<n; i++) {
-		gretl_matrix_set(L, i, j, 0);
+    if (piv != NULL) {
+	/* processing output from dpstrf */
+	if (rank < n) {
+	    /* zero the lower right block, beyond the rank */
+	    for (j=rank; j<n; j++) {
+		for (i=j; i<n; i++) {
+		    gretl_matrix_set(L, i, j, 0);
+		}
 	    }
 	}
-    }
-
-    for (i=0; i<n; i++) {
-	if ((i == 0 && piv[i] != 1) ||
-	    (i > 0 && piv[i] != piv[i-1])) {
-	    /* pivoting was done */
-	    permute_rows(L, piv);
-	    break;
+	for (i=0; i<n; i++) {
+	    if ((i == 0 && piv[i] != 1) ||
+		(i > 0 && piv[i] != piv[i-1])) {
+		/* pivoting was done */
+		permute_rows(L, piv);
+		break;
+	    }
 	}
+	/* we can enforce relatively high accuracy */
+	toler = 1.0e-10;
     }
 
     if (A0 != NULL) {
@@ -7713,27 +7614,24 @@ static int process_psd_root (gretl_matrix *L,
 	/* form A = LL' and compare with A0 to see if L
 	   is really a viable factor
 	*/
-	int di = -1, dj = -1;
-	double d, maxd = 0;
-	double tol = 1.0e-10;
+	double dj, dmax = 0;
 
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  L, GRETL_MOD_TRANSPOSE,
 				  A, GRETL_MOD_NONE);
-	for (i=0; i<n; i++) {
-	    for (j=0; j<=i; j++) {
-		d = fabs(gretl_matrix_get(A, j, i) - gretl_matrix_get(A0, i, j));
-		if (d > maxd) {
-		    di = i;
-		    dj = j;
-		    maxd = d;
-		}
+	for (j=0; j<n; j++) {
+	    dj = 0.0;
+	    for (i=0; i<n; i++) {
+		dj += fabs(gretl_matrix_get(A, i, j) - gretl_matrix_get(A0, i, j));
+	    }
+	    if (dj > dmax) {
+		dmax = dj;
 	    }
 	}
 
-	if (maxd > tol) {
-	    fprintf(stderr, "check_psd_root: maxd = %g at L(%d,%d)\n",
-		    maxd, di, dj);
+	if (dmax > toler) {
+	    gretl_errmsg_sprintf("psdroot: norm-test of %g exceeds tolerance (%g)",
+				 toler);
 	    err = E_DATA;
 	}
     }
@@ -7743,25 +7641,70 @@ static int process_psd_root (gretl_matrix *L,
     return err;
 }
 
+/* PSD cholesky-type factor via the simple algorithm from
+   Golub and Van Loan. Does not preserve great accuracy
+   when @a is of seriously reduced rank.
+*/
+
+static int simple_psd_root (gretl_matrix *a, const gretl_matrix *a0)
+{
+    double d, x1, x2, x3;
+    int i, j, k, n = a->rows;
+    int err = 0;
+
+    /* Golub and Van Loan, algorithm 4.2.11 */
+
+    for (k=0; k<n && !err; k++) {
+	d = gretl_matrix_get(a, k, k);
+	if (d > 0) {
+	    d = sqrt(d);
+	    gretl_matrix_set(a, k, k, d);
+	    for (i=k+1; i<n; i++) {
+		x1 = gretl_matrix_get(a, i, k);
+		gretl_matrix_set(a, i, k, x1 / d);
+	    }
+	    for (j=k+1; j<n; j++) {
+		x1 = gretl_matrix_get(a, j, k);
+		for (i=j; i<n; i++) {
+		    x2 = gretl_matrix_get(a, i, j);
+		    x3 = gretl_matrix_get(a, i, k);
+		    gretl_matrix_set(a, i, j, x2 - x3 * x1);
+		}
+	    }
+	} else {
+	    if (a0 == NULL && d < -1.0e-8) {
+		/* Since we can't perform the check against a0, we'll
+		   reject a matrix that has a "significantly" negative
+		   diagonal element.
+		*/
+		gretl_errmsg_sprintf("psdroot: diag[%d] = %g", k+1, d);
+		err = E_DATA;
+	    }
+	    for (i=k; i<n; i++) {
+		gretl_matrix_set(a, i, k, 0.0);
+	    }
+	}
+    }
+
+    gretl_matrix_zero_triangle(a, 'U');
+
+    if (a0 != NULL) {
+	err = process_psd_root(a, a0, 0, NULL);
+    }
+
+    return err;
+}
+
 static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 {
     double *work = NULL;
     integer *piv = NULL;
-    integer n, info = 0;
+    integer n = a->rows;
+    integer info = 0;
     integer rank = 0;
     double tol = -1.0;
     char uplo = 'L';
     int err = 0;
-
-    if (a == NULL || a->rows == 0) {
-	return E_DATA;
-    }
-
-    n = a->rows;
-
-    if (a->cols != n) {
-	return E_NONCONF;
-    }
 
     piv = malloc(2 * n * sizeof *piv);
     work = lapack_malloc(2 * n * sizeof *work);
@@ -7793,23 +7736,36 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 /**
  * gretl_matrix_psd_root:
  * @a: matrix to operate on.
- * @a0: the original matrix, for comparison, or NULL.
+ * @a0: copy of @a, for comparison, or NULL.
  * 
  * Computes the LL' factorization of the symmetric,
  * positive semidefinite matrix @a.  On successful exit 
  * the lower triangle of @a is replaced by the factor L
  * and the upper triangle is set to zero.  
  *
- * Returns: 0 on success; 1 on failure.
+ * Returns: 0 on success; non-zero on failure.
  */
 
 int gretl_matrix_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 {
+    if (gretl_is_null_matrix(a) ||
+	a->rows != a->cols) {
+	return E_DATA;
+    }
+
+    if (a0 != NULL) {
+	if (gretl_is_null_matrix(a0) ||
+	    a0->rows != a0->cols ||
+	    a0->rows != a->rows) {
+	    return E_DATA;
+	}
+    }
+
     if (0) {
-	/* not just yet */
+	/* just for testing, at this point */
 	return lapack_psd_root(a, a0);
     } else {
-	return simple_psd_root(a);
+	return simple_psd_root(a, a0);
     }
 }
 
