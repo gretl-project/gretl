@@ -1839,6 +1839,8 @@ static int check_clear_data (void)
     return 0;
 }
 
+static EXEC_CALLBACK gui_callback;
+
 static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
@@ -1863,6 +1865,13 @@ static void callback_exec (ExecState *s, char *fname, int err)
 
     s->flags &= ~CALLBACK_EXEC;
     *s->cmd->savename = '\0';
+}
+
+void gretl_gui_flush (void)
+{
+    if (gui_callback != NULL) {
+	gui_callback(NULL, NULL, 0);
+    }
 }
 
 static int do_end_restrict (ExecState *s, DATASET *dset)
@@ -3602,8 +3611,6 @@ void function_state_init (CMD *cmd, ExecState *state, int *indent0)
 
     *indent0 = gretl_if_state_record();
 }
-
-static EXEC_CALLBACK gui_callback;
 
 void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,
 				    gretlopt opt)

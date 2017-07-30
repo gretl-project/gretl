@@ -344,7 +344,8 @@ static int real_svm_predict (double *yhat,
 	ymean = gretl_mean(0, prob->l - 1, prob->y);
     }
 
-    pprintf(prn, "Calling libsvm prediction function... ");
+    pprintf(prn, "Calling prediction function (this may take a while)\n");
+    gretl_gui_flush();
     gretl_print_flush_stream(prn);
     for (i=0; i<prob->l; i++) {
 	x = prob->x[i];
@@ -359,7 +360,6 @@ static int real_svm_predict (double *yhat,
 	    n_correct += (yhi == prob->y[i]);
 	}
     }
-    pputs(prn, "OK\n");
 
     label = training ? "Training data" : "Test data";
 
@@ -403,8 +403,7 @@ static int parse_params_bundle (gretl_bundle *b,
 	    err = E_INVARG;
 	}
 	if (!err) {
-	    /* convert to zero-based */
-	    *t2_train = ival - 1;
+	    *t2_train = ival - 1; /* zero-based */
 	}
     }
 
@@ -428,6 +427,7 @@ int gretl_svm_predict (const int *list,
     sv_cell *x_space2 = NULL;
     sv_model *model = NULL;
     int svm_type = EPSILON_SVR;
+    int save_t2 = dset->t2;
     int scaling = 1;
     int t2_train = 0;
     int T, k = 0;
@@ -442,7 +442,6 @@ int gretl_svm_predict (const int *list,
     }
 
     if (err) {
-	fprintf(stderr, "HERE, returning %d\n", err);
 	return err;
     }
 
@@ -457,6 +456,7 @@ int gretl_svm_predict (const int *list,
     } else {
 	pputs(prn, "OK\n");
     }
+    gretl_gui_flush();
 
     if (0 && !err) {
 	/* just for testing */
@@ -474,6 +474,7 @@ int gretl_svm_predict (const int *list,
 	    pputs(prn, "OK\n");
 	}
     }
+    gretl_gui_flush();
 
     if (!err) {
 	/* fill out the "problem" data */
@@ -493,7 +494,8 @@ int gretl_svm_predict (const int *list,
 	if (parm.gamma == 0) {
 	    parm.gamma = 1.0 / k;
 	}
-	pprintf(prn, "Calling libsvm training function...\n");
+	pprintf(prn, "Calling training function (this may take a while)\n");
+	gretl_gui_flush();
 	model = svm_train(prob1, &parm);
 	if (model == NULL) {
 	    err = E_DATA;
@@ -505,13 +507,13 @@ int gretl_svm_predict (const int *list,
 	int T_os;
 
 	real_svm_predict(yhat, prob1, model, 1, dset, prn);
-	T_os = dset->n -1 - t2_train;
-	if (T_os > t2_train) {
+	dset->t2 = save_t2;
+	T_os = dset->t2 - t2_train;
+	if (T_os >= t2_train) {
 	    /* If we have enough out-of-sample data, go
 	       ahead and predict out of sample.
 	    */
 	    dset->t1 = t2_train + 1;
-	    dset->t2 = dset->n - 1;
 	    T = sample_size(dset);
 	    pprintf(prn, "Found %d testing observations\n", T);
 	    err = check_test_data(dset, ranges, k);
@@ -528,6 +530,8 @@ int gretl_svm_predict (const int *list,
 	    }
 	}
     }
+
+    dset->t2 = save_t2;
 
     gretl_matrix_free(ranges);
     gretl_sv_data_destroy(prob1, x_space1);

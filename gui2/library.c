@@ -9349,7 +9349,7 @@ int execute_script (char *runfile, const char *buf,
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {
-    int ci = s->cmd->ci;
+    int ci = (s == NULL)? FLUSH : s->cmd->ci;
     int err = 0;
 
     if (ci == FLUSH) {
