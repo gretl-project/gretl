@@ -36,6 +36,7 @@ FLITE_CFLAGS = @FLITE_CFLAGS@
 FLITE_LIBS = @FLITE_LIBS@
 JSON_GLIB_CFLAGS = @JSON_GLIB_CFLAGS@
 JSON_GLIB_LIBS = @JSON_GLIB_LIBS@
+SVM_LIBS = @SVM_LIBS@
 
 OMP_OPT = @OPENMP_CFLAGS@
 
@@ -177,6 +178,7 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 
 MAILER_PLUGIN = mailer.la
 JSON_PLUGIN = json_get.la
+SVM_PLUGIN = svm.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
@@ -198,7 +200,11 @@ endif
 
 ifneq ($(JSON_GLIB_LIBS),)
   PLUGINS += $(JSON_PLUGIN)
-endif 
+endif
+
+ifneq ($(SVM_LIBS),)
+  PLUGINS += $(SVM_PLUGIN)
+endif
 
 # for now we'll build the gretlzip plugin regardless, since
 # libgsf-1.14.29 does not support setting of the zlib
@@ -346,6 +352,9 @@ xml_get.la: xml_get.lo
 
 json_get.la: json_get.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
+
+svm.la: svm.lo
+	$(LINK) -o $@ $< $(GRETLLIB) $(SVM_LIBS)
 
 # plugins that require GTK+
 

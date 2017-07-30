@@ -50,6 +50,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* TRAMO/SEATS support? */
 #undef HAVE_TRAMO
 
+/* libsvm support? */
+#undef HAVE_LIBSVM
+
 /* Define if you want GNU readline support */
 #undef HAVE_READLINE
 

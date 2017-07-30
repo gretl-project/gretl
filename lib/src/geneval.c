@@ -8413,6 +8413,32 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_series_node(p);
+
+#ifndef HAVE_LIBSVM
+    gretl_errmsg_set(_("Libsvm is not supported"));
+    p->err = E_DATA;
+#else
+    if (ret != NULL) {
+	int (*pfunc) (const int *, gretl_bundle *,
+		      gretl_bundle **, double *,
+		      DATASET *, PRN *);
+
+	pfunc = get_plugin_function("gretl_svm_predict");
+	if (pfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    p->err = pfunc(l->v.ivec, m->v.b, NULL, ret->v.xvec,
+			   p->dset, p->prn);
+	}
+    }
+#endif    
+
+    return ret;
+}
+
 static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
 {
     gretl_bundle *b = NULL;
@@ -13758,6 +13784,16 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_CURL:
 	ret = curl_bundle_node(l, p);
+	break;
+    case F_SVM:
+	if (l->t == LIST && m->t == BUNDLE) {
+	    /* FIXME: handling of the @r node */
+	    ret = svm_predict_node(l, m, r, p);
+	} else if (l->t == LIST) {
+	    node_type_error(t->t, 1, BUNDLE, m, p);
+	} else {
+	    node_type_error(t->t, 0, LIST, l, p);
+	}
 	break;
     case F_TYPESTR:
 	/* numerical type code to string */

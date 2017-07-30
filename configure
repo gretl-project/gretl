@@ -720,6 +720,7 @@ READLINE_LIBS
 READLINE_CFLAGS
 new_readline
 have_readline
+SVM_LIBS
 MPI_LIBS
 MPI_CFLAGS
 HAVE_MPICC
@@ -2849,6 +2850,7 @@ have_odbc="no"
 try_mpi="yes"
 try_libR="yes"
 have_libR="no"
+have_libsvm="no"
 try_bc="yes"
 check_gnuplot="yes"
 use_curl="yes"
@@ -16250,6 +16252,67 @@ fi
 
 fi
 
+for ac_header in svm.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "svm.h" "ac_cv_header_svm_h" "$ac_includes_default"
+if test "x$ac_cv_header_svm_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SVM_H 1
+_ACEOF
+ try_libsvm="yes"
+else
+  try_libsvm="no"
+
+fi
+
+done
+
+if test "$try_libsvm" = "yes" ; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for svm_train in -lsvm" >&5
+$as_echo_n "checking for svm_train in -lsvm... " >&6; }
+if ${ac_cv_lib_svm_svm_train+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsvm  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char svm_train ();
+int
+main ()
+{
+return svm_train ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_svm_svm_train=yes
+else
+  ac_cv_lib_svm_svm_train=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_svm_svm_train" >&5
+$as_echo "$ac_cv_lib_svm_svm_train" >&6; }
+if test "x$ac_cv_lib_svm_svm_train" = xyes; then :
+  SVM_LIBS="-lsvm" ; \
+  have_libsvm="yes" ; $as_echo "#define HAVE_LIBSVM 1" >>confdefs.h
+
+fi
+
+
+fi
+
 if test "$try_readline" = "yes" ; then
 
 # Check whether --with-readline-prefix was given.
@@ -22309,6 +22372,7 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
+  libsvm support:                         ${have_libsvm}
   ODBC support:                           ${have_odbc}
   JSON parsing support:                   ${have_json_glib}
   Experimental audio support:             ${have_audio}

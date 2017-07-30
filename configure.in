@@ -66,6 +66,7 @@ have_odbc="no"
 try_mpi="yes"
 try_libR="yes"
 have_libR="no"
+have_libsvm="no"
 try_bc="yes"
 check_gnuplot="yes"
 use_curl="yes"
@@ -414,6 +415,17 @@ AC_CHECK_TYPE(struct in_addr,
   #include <sys/socket.h>
   #include <netdb.h>
 )
+fi
+
+dnl try to build svm plugin?
+AC_CHECK_HEADERS(svm.h,
+	try_libsvm="yes",
+	try_libsvm="no"
+)
+if test "$try_libsvm" = "yes" ; then
+AC_CHECK_LIB(svm, svm_train, SVM_LIBS="-lsvm" ; \
+  have_libsvm="yes" ; AC_DEFINE(HAVE_LIBSVM),,)
+AC_SUBST(SVM_LIBS)
 fi
 
 dnl
@@ -1109,6 +1121,7 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
+  libsvm support:                         ${have_libsvm}
   ODBC support:                           ${have_odbc}
   JSON parsing support:                   ${have_json_glib}
   Experimental audio support:             ${have_audio}

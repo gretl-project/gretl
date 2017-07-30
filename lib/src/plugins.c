@@ -92,7 +92,8 @@ enum {
     P_PANURC,
     P_JSON_GET,
     P_XML_GET,
-    P_STATA_EXPORT
+    P_STATA_EXPORT,
+    P_SVM
 } plugin_codes;
 
 struct plugin_info {
@@ -151,7 +152,8 @@ struct plugin_info plugins[] = {
     { P_PANURC,          "panurc",          NULL },
     { P_JSON_GET,        "json_get",        NULL },
     { P_XML_GET,         "xml_get",         NULL },
-    { P_STATA_EXPORT,    "stata_export",    NULL }
+    { P_STATA_EXPORT,    "stata_export",    NULL },
+    { P_SVM,             "svm",             NULL },
 };  
 
 struct plugin_function_info plugin_functions[] = { 
@@ -289,6 +291,9 @@ struct plugin_function_info plugin_functions[] = {
 
     /* exporting data in dta format */
     { "stata_export", P_STATA_EXPORT},
+
+    /* libsvm interface */
+    { "gretl_svm_predict", P_SVM},
 
     /* sentinel */
     { NULL, 0 }
