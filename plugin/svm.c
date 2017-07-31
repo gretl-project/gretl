@@ -1047,7 +1047,7 @@ int gretl_svm_predict (const int *list,
 	}
 	if (parm.gamma == 0) {
 	    parm.gamma = 1.0 / k;
-	}	
+	}
 	pputs(prn, "OK\n");
     }
 
