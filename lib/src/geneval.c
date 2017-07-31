@@ -8441,14 +8441,21 @@ static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
 	if (!p->err) {
 	    int (*pfunc) (const int *, gretl_bundle *,
 			  gretl_bundle *, double *,
-			  DATASET *, PRN *);
+			  int *, DATASET *, PRN *);
+	    int got_yhat = 0;
 
 	    pfunc = get_plugin_function("gretl_svm_predict");
 	    if (pfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
 		p->err = pfunc(l->v.ivec, m->v.b, rbundle, ret->v.xvec,
-			       p->dset, p->prn);
+			       &got_yhat, p->dset, p->prn);
+		if (!p->err && !got_yhat) {
+		    /* change the return type to a (non-)error code */
+		    free(ret->v.xvec);
+		    ret->t = NUM;
+		    ret->v.xval = 0;
+		}
 	    }
 	}
     }
