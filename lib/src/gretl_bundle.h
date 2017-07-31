@@ -72,6 +72,10 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
 				 const char *key,
 				 int *n, int *err);
 
+int *gretl_bundle_get_list (gretl_bundle *bundle,
+			    const char *key,
+			    int *err);
+
 double gretl_bundle_get_scalar (gretl_bundle *bundle,
 				const char *key,
 				int *err);

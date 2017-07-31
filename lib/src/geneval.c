@@ -8422,16 +8422,34 @@ static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
     p->err = E_DATA;
 #else
     if (ret != NULL) {
-	int (*pfunc) (const int *, gretl_bundle *,
-		      gretl_bundle **, double *,
-		      DATASET *, PRN *);
+	gretl_bundle *rbundle = NULL;
 
-	pfunc = get_plugin_function("gretl_svm_predict");
-	if (pfunc == NULL) {
-	    p->err = E_FOPEN;
-	} else {
-	    p->err = pfunc(l->v.ivec, m->v.b, NULL, ret->v.xvec,
-			   p->dset, p->prn);
+	if (!null_or_empty(r)) {
+	    /* we should have a bundle pointer on the right */
+	    if (r->t == U_ADDR) {
+		r = r->v.b1.b;
+		if (r->t == BUNDLE) {
+		    rbundle = r->v.b;
+		} else {
+		    p->err = E_INVARG;
+		}
+	    } else {
+		p->err = E_INVARG;
+	    }
+	}
+
+	if (!p->err) {
+	    int (*pfunc) (const int *, gretl_bundle *,
+			  gretl_bundle *, double *,
+			  DATASET *, PRN *);
+
+	    pfunc = get_plugin_function("gretl_svm_predict");
+	    if (pfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		p->err = pfunc(l->v.ivec, m->v.b, rbundle, ret->v.xvec,
+			       p->dset, p->prn);
+	    }
 	}
     }
 #endif    
@@ -13787,7 +13805,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SVM:
 	if (l->t == LIST && m->t == BUNDLE) {
-	    /* FIXME: handling of the @r node */
 	    ret = svm_predict_node(l, m, r, p);
 	} else if (l->t == LIST) {
 	    node_type_error(t->t, 1, BUNDLE, m, p);

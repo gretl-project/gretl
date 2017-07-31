@@ -20,6 +20,7 @@
 /* interface to libsvm for support vector machines */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "version.h"
 
 #include <svm.h>
@@ -28,20 +29,66 @@ typedef struct svm_problem sv_data;
 typedef struct svm_node sv_cell;
 typedef struct svm_model sv_model;
 
-/*
-   key enumerations from svm.h
+static const char *svm_type_names[] = {
+    "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"
+};
 
-   svm_type:
-   C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR
+static const char *kernel_type_names[] = {
+    "linear", "polynomial", "rbf", "sigmoid", "precomputed"
+};
 
-   kernel_type:
-   LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED
-*/
+struct svm_meta {
+    int scaling;
+    int t2_train;
+    int xvalid;
+    int task;
+    gchar *scaled_outfile;
+    gchar *model_outfile;
+    gchar *scaled_infile;
+    gchar *model_infile;
+};
 
-static void set_svm_param_defaults (struct svm_parameter *parm,
-				    int mtype)
+struct svm_parm_info {
+    const char *key;
+    GretlType type;
+};
+
+#define N_PARMS 15
+
+static int gui_mode;
+
+static void svm_flush (PRN *prn)
 {
-    parm->svm_type = mtype;
+    if (gui_mode) {
+	gretl_gui_flush();
+    } else {
+	gretl_print_flush_stream(prn);
+    }
+}
+
+static void svm_meta_init (struct svm_meta *m)
+{
+    m->scaling = 1;
+    m->t2_train = 0;
+    m->xvalid = 0;
+    m->task = 0;
+    m->scaled_outfile = NULL;
+    m->model_outfile = NULL;
+    m->scaled_infile = NULL;
+    m->model_infile = NULL;
+}
+
+static void svm_meta_free (struct svm_meta *m)
+{
+    g_free(m->scaled_outfile);
+    g_free(m->model_outfile);
+    g_free(m->scaled_infile);
+    g_free(m->model_infile);
+}
+
+static void set_svm_param_defaults (struct svm_parameter *parm)
+{
+    parm->svm_type = -1; /* mark as unknown for now */
     parm->kernel_type = RBF;
     parm->degree = 3; /* for polynomial */
     parm->gamma = 0;  /* poly/rbf/sigmoid: default 1.0 / num_features */
@@ -58,6 +105,419 @@ static void set_svm_param_defaults (struct svm_parameter *parm,
     parm->p = 0.1;             /* for EPSILON_SVR */
     parm->shrinking = 1;       /* use the shrinking heuristics */
     parm->probability = 0;     /* do probability estimates */
+}
+
+static int set_svm_parm (struct svm_parameter *parm,
+			 gretl_bundle *b, PRN *prn)
+{
+    struct svm_parm_info pinfo[N_PARMS] = {
+	{ "svm_type",     GRETL_TYPE_INT },
+	{ "kernel_type",  GRETL_TYPE_INT },
+	{ "degree",       GRETL_TYPE_INT },
+	{ "gamma",        GRETL_TYPE_DOUBLE },
+	{ "coef0",        GRETL_TYPE_DOUBLE },
+	{ "cachesize",    GRETL_TYPE_DOUBLE },
+	{ "toler",        GRETL_TYPE_DOUBLE },
+	{ "cost",         GRETL_TYPE_DOUBLE },
+	{ "nr_weight",    GRETL_TYPE_INT },
+	{ "weight_label", GRETL_TYPE_SERIES },
+	{ "weight",       GRETL_TYPE_SERIES },
+	{ "nu",           GRETL_TYPE_DOUBLE },
+	{ "epsilon",      GRETL_TYPE_DOUBLE },
+	{ "shrinking",    GRETL_TYPE_BOOL },
+	{ "probability",  GRETL_TYPE_BOOL }
+    };
+    void *elem[N_PARMS] = {
+	&parm->svm_type,
+	&parm->kernel_type,
+	&parm->degree,
+	&parm->gamma,
+	&parm->coef0,
+	&parm->cache_size,
+	&parm->eps,
+	&parm->C,
+	&parm->nr_weight,
+	&parm->weight_label,
+	&parm->weight,
+	&parm->nu,
+	&parm->p,
+	&parm->shrinking,
+	&parm->probability
+    };
+    int i, ival;
+    double xval;
+    int err = 0;
+
+    set_svm_param_defaults(parm);
+
+    for (i=0; i<N_PARMS && !err; i++) {
+	if (gretl_bundle_has_key(b, pinfo[i].key)) {
+	    if (i >= 8 && i <= 10) {
+		pputs(prn, "Sorry, weighting not handled yet\n");
+		err = E_INVARG;
+	    } else if (pinfo[i].type == GRETL_TYPE_DOUBLE) {
+		xval = gretl_bundle_get_scalar(b, pinfo[i].key, &err);
+		if (!err) {
+		    *(double *) elem[i] = xval;
+		}
+	    } else if (pinfo[i].type == GRETL_TYPE_INT ||
+		       pinfo[i].type == GRETL_TYPE_BOOL) {
+		ival = gretl_bundle_get_int(b, pinfo[i].key, &err);
+		if (!err) {
+		    if (pinfo[i].type == GRETL_TYPE_BOOL) {
+			*(int *) elem[i] = (ival != 0);
+		    } else {
+			*(int *) elem[i] = ival;
+		    }
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
+static void gretl_destroy_svm_model (sv_model *model)
+{
+    if (model != NULL) {
+	if (model->l > 0 && model->SV != NULL &&
+	    model->SV[0] != NULL) {
+	    free(model->SV[0]);
+	}
+	if (model->sv_coef != NULL) {
+	    doubles_array_free(model->sv_coef, model->nr_class-1);
+	}
+	free(model->SV);
+	free(model->rho);
+	free(model->label);
+	free(model->probA);
+	free(model->probB);
+	free(model->sv_indices);
+	free(model->nSV);
+	free(model);
+    }
+}
+
+static int bundle_as_matrix (gretl_bundle *b, const char *key,
+			     double *xvals, int n)
+{
+    gretl_matrix *m = gretl_matrix_alloc(n, 1);
+
+    if (m == NULL) {
+	return E_ALLOC;
+    } else {
+	memcpy(m->val, xvals, n * sizeof *xvals);
+	gretl_bundle_donate_data(b, key, m, GRETL_TYPE_MATRIX, 0);
+	return 0;
+    }
+}
+
+static int bundle_as_list (gretl_bundle *b, const char *key,
+			   int *ivals, int n)
+{
+    int *list = gretl_list_new(n);
+
+    if (list == NULL) {
+	return E_ALLOC;
+    } else {
+	memcpy(list + 1, ivals, n * sizeof *ivals);
+	gretl_bundle_donate_data(b, key, list, GRETL_TYPE_LIST, 0);
+	return 0;
+    }
+}
+
+static int svm_model_save_to_bundle (const sv_model *model,
+				     gretl_bundle *b)
+{
+    const struct svm_parameter *parm = &model->param;
+    gretl_matrix *m = NULL;
+    int i, j, nc, l, ntr;
+    int err = 0;
+
+    gretl_bundle_void_content(b);
+
+    gretl_bundle_set_int(b, "svm_type", parm->svm_type);
+    gretl_bundle_set_int(b, "kernel_type", parm->kernel_type);
+
+    if (parm->kernel_type == POLY) {
+	gretl_bundle_set_int(b, "degree", parm->degree);
+    }
+
+    if (parm->kernel_type == POLY ||
+	parm->kernel_type == RBF ||
+	parm->kernel_type == SIGMOID) {
+	gretl_bundle_set_scalar(b, "gamma", parm->gamma);
+    }
+
+    if (parm->kernel_type == POLY || parm->kernel_type == SIGMOID) {
+	gretl_bundle_set_scalar(b, "coef0", parm->coef0);
+    }
+
+    nc = model->nr_class;
+    l = model->l;
+
+    gretl_bundle_set_int(b, "nr_class", nc);
+    gretl_bundle_set_int(b, "l", l);
+
+    /* number of triangular elements */
+    ntr = nc * (nc - 1) / 2;
+
+    bundle_as_matrix(b, "rho", model->rho, ntr);
+
+    if (model->label != NULL) {
+	bundle_as_list(b, "label", model->label, nc);
+    }
+
+    if (model->probA != NULL) {
+	bundle_as_matrix(b, "probA", model->probA, ntr);
+    }
+
+    if (model->probB != NULL) {
+	bundle_as_matrix(b, "probB", model->probB, ntr);
+    }
+
+    if (model->nSV != NULL) {
+	bundle_as_list(b, "nr_sv", model->nSV, nc);
+    }
+
+    /* store the SVs */
+
+    m = gretl_matrix_alloc(l, nc - 1);
+    if (m != NULL) {
+	for (j=0; j<nc-1; j++) {
+	    /* j = class index */
+	    for (i=0; i<l; i++) {
+		/* i = row index */
+		gretl_matrix_set(m, i, j, model->sv_coef[j][i]);
+	    }
+	}
+	gretl_bundle_donate_data(b, "sv_coef", m,
+				 GRETL_TYPE_MATRIX, 0);
+    }
+
+    if (parm->kernel_type == PRECOMPUTED) {
+	int *plist = gretl_list_new(l);
+
+	if (plist != NULL) {
+	    const sv_cell *p;
+
+	    for (i=0; i<l; i++) {
+		p = model->SV[i];
+		plist[i+1] = (int) p->value;
+	    }
+	}
+    } else {
+	/* not a precomputed kernel: more complicated */
+	gretl_array *aidx, *avec;
+	gretl_matrix *vec;
+	int *idx;
+	int n_elements = 0;
+
+	aidx = gretl_array_new(GRETL_TYPE_LISTS, l, &err);
+	if (!err) {
+	    avec = gretl_array_new(GRETL_TYPE_MATRICES, l, &err);
+	}
+
+	for (i=0; i<l && !err; i++) {
+	    const sv_cell *p = model->SV[i];
+	    int i, k, ni = 0;
+
+	    /* count the nodes on this row */
+	    while (p->index != -1) {
+		ni++;
+		p++;
+	    }
+	    idx = gretl_list_new(ni);
+	    vec = gretl_matrix_alloc(1, ni);
+	    if (idx == NULL || vec == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
+	    p = model->SV[i]; /* reset */
+	    for (k=0; k<ni; k++) {
+		idx[k+1] = p[k].index;
+		vec->val[k] = p[k].value;
+	    }
+	    gretl_array_set_list(aidx, i, idx, 0);
+	    gretl_array_set_matrix(avec, i, vec, 0);
+	    n_elements += ni + 1;
+	}
+
+	if (err) {
+	    gretl_array_destroy(aidx);
+	    gretl_array_destroy(avec);
+	} else {
+	    gretl_bundle_set_int(b, "n_elements", n_elements);
+	    gretl_bundle_donate_data(b, "SV_indices", aidx,
+				     GRETL_TYPE_ARRAY, 0);
+	    gretl_bundle_donate_data(b, "SV_vecs", avec,
+				     GRETL_TYPE_ARRAY, 0);
+	}
+    }
+
+    if (err) {
+	gretl_bundle_void_content(b);
+    }
+
+    return err;
+}
+
+static double *array_from_bundled_matrix (gretl_bundle *b,
+					  const char *key,
+					  int required,
+					  int *err)
+{
+    double *ret = NULL;
+
+    if (gretl_bundle_has_key(b, key)) {
+	gretl_matrix *m = gretl_bundle_get_matrix(b, key, err);
+
+	if (m != NULL) {
+	    int n = m->rows * m->cols;
+
+	    ret = malloc(n * sizeof *ret);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		memcpy(ret, m->val, n * sizeof *ret);
+	    }
+	}
+    } else if (required) {
+	fprintf(stderr, "required matrix %s was not found\n", key);
+	*err = E_DATA;
+    }
+
+    return ret;
+}
+
+static int *array_from_bundled_list (gretl_bundle *b,
+				     const char *key,
+				     int required,
+				     int *err)
+{
+    int *ret = NULL;
+
+    if (gretl_bundle_has_key(b, key)) {
+	int *list = gretl_bundle_get_list(b, key, err);
+
+	if (list != NULL) {
+	    int n = list[0];
+
+	    ret = malloc(n * sizeof *ret);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		memcpy(ret, list + 1, n * sizeof *ret);
+	    }
+	}
+    } else if (required) {
+	fprintf(stderr, "required list %s was not found\n", key);
+	*err = E_DATA;
+    }
+
+    return ret;
+}
+
+static sv_model *svm_model_from_bundle (gretl_bundle *b,
+					int *err)
+{
+    struct svm_parameter *parm;
+    sv_model *model;
+    gretl_matrix *m;
+    int n_elements;
+    int i, j, nc, l;
+
+    model = malloc(sizeof *model);
+    if (model == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    memset(model, 0, sizeof *model);
+    parm = &model->param;
+    *err = set_svm_parm(parm, b, NULL);
+
+    nc = model->nr_class = gretl_bundle_get_int(b, "nr_class", err);
+    l = model->l = gretl_bundle_get_int(b, "l", err);
+    n_elements = gretl_bundle_get_int(b, "n_elements", err);
+
+    model->rho = array_from_bundled_matrix(b, "rho", 1, err);
+    model->label = array_from_bundled_list(b, "label", 0, err);
+    model->probA = array_from_bundled_matrix(b, "probA", 0, err);
+    model->probB = array_from_bundled_matrix(b, "probB", 0, err);
+    model->nSV = array_from_bundled_list(b, "nr_sv", 0, err);
+
+    /* load the SVs */
+
+    m = gretl_bundle_get_matrix(b, "sv_coef", err);
+    if (m == NULL) {
+	*err = E_DATA;
+    } else {
+	model->sv_coef = doubles_array_new(nc-1, l);
+	if (model->sv_coef == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    double *val = m->val;
+
+	    for (j=0; j<nc-1; j++) {
+		memcpy(model->sv_coef[j], val, l * sizeof *val);
+		val += l;
+	    }
+	}
+    }
+
+    if (parm->kernel_type == PRECOMPUTED) {
+	; /* not handled yet! */
+    } else {
+	sv_cell *p, *x_space = NULL;
+	gretl_array *aidx = NULL;
+	gretl_array *avec = NULL;
+	gretl_matrix *vec;
+	int *idx;
+
+	model->SV = malloc(l * sizeof *model->SV);
+	if (model->SV == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    x_space = malloc(n_elements * sizeof *x_space);
+	    if (x_space == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+
+	if (!*err) {
+	    aidx = gretl_bundle_get_array(b, "SV_indices", NULL);
+	    avec = gretl_bundle_get_array(b, "SV_vecs", NULL);
+	    if (gretl_array_get_type(aidx) != GRETL_TYPE_LISTS ||
+		gretl_array_get_type(avec) != GRETL_TYPE_MATRICES) {
+		*err = E_DATA;
+	    }
+	}
+
+	p = x_space;
+	for (i=0; i<l && !*err; i++) {
+	    int ni;
+
+	    model->SV[i] = p;
+	    idx = gretl_array_get_element(aidx, i, NULL, err);
+	    vec = gretl_array_get_element(avec, i, NULL, err);
+	    ni = idx[0];
+	    for (j=0; j<ni; j++) {
+		p[j].index = idx[j+1];
+		p[j].value = vec->val[j];
+	    }
+	    /* add -1 sentinel */
+	    p[j].index = -1;
+	    p += ni + 1;
+	}
+    }
+
+    if (*err) {
+	gretl_destroy_svm_model(model);
+	model = NULL;
+    }
+
+    return model;
 }
 
 /* for testing against svm-scale */
@@ -345,8 +805,7 @@ static int real_svm_predict (double *yhat,
     }
 
     pprintf(prn, "Calling prediction function (this may take a while)\n");
-    gretl_gui_flush();
-    gretl_print_flush_stream(prn);
+    svm_flush(prn);
     for (i=0; i<prob->l; i++) {
 	x = prob->x[i];
 	yhi = svm_predict(model, x);
@@ -377,13 +836,81 @@ static int real_svm_predict (double *yhat,
     return 0;
 }
 
-static int parse_params_bundle (gretl_bundle *b,
-				int *scaling,
-				int *t2_train,
-				const int *list,
-				const DATASET *dset)
+static int do_cross_validation (sv_data *prob,
+				struct svm_parameter *parm,
+				int xvalid,
+				PRN *prn)
+{
+    double *targ;
+    int i, n = prob->l;
+
+    targ = malloc(n * sizeof *targ);
+    if (targ == NULL) {
+	return E_ALLOC;
+    }
+
+    svm_cross_validation(prob, parm, xvalid, targ);
+
+    if (parm->svm_type == EPSILON_SVR || parm->svm_type == NU_SVR) {
+	double total_error = 0;
+	double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
+	double yi, vi;
+
+	for (i=0; i<prob->l; i++) {
+	    yi = prob->y[i];
+	    vi = targ[i];
+	    total_error += (vi-yi)*(vi-yi);
+	    sumv += vi;
+	    sumy += yi;
+	    sumvv += vi*vi;
+	    sumyy += yi*yi;
+	    sumvy += vi*yi;
+	}
+	pprintf(prn, "Cross Validation Mean squared error = %g\n",
+		total_error / n);
+	pprintf(prn, "Cross Validation Squared correlation coefficient = %g\n",
+	       ((n*sumvy-sumv*sumy)*(n*sumvy-sumv*sumy)) /
+	       ((n*sumvv-sumv*sumv)*(n*sumyy-sumy*sumy)));
+    } else {
+	int n_correct = 0;
+
+	for (i=0; i<n; i++) {
+	    if (targ[i] == prob->y[i]) {
+		n_correct++;
+	    }
+	}
+	pprintf(prn, "Cross Validation Accuracy = %g%%\n",
+		100.0 * n_correct / (double) n);
+    }
+
+    free(targ);
+
+    return 0;
+}
+
+static int read_params_bundle (gretl_bundle *b,
+			       struct svm_meta *meta,
+			       struct svm_parameter *parm,
+			       const int *list,
+			       const DATASET *dset,
+			       PRN *prn)
 {
     int ival, err = 0;
+
+    /* start by reading some info that's not included in
+       the libsvm @parm struct
+    */
+
+    if (gretl_bundle_has_key(b, "task")) {
+	ival = gretl_bundle_get_int(b, "task", &err);
+	if (!err && (ival < 0 || ival > 2)) {
+	    fprintf(stderr, "invalid 'task' arg %d\n", ival);
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    meta->task = ival;
+	}
+    }
 
     if (gretl_bundle_has_key(b, "scaling")) {
 	ival = gretl_bundle_get_int(b, "scaling", &err);
@@ -392,7 +919,7 @@ static int parse_params_bundle (gretl_bundle *b,
 	    err = E_INVARG;
 	}
 	if (!err) {
-	    *scaling = ival;
+	    meta->scaling = ival;
 	}
     }
 
@@ -403,11 +930,26 @@ static int parse_params_bundle (gretl_bundle *b,
 	    err = E_INVARG;
 	}
 	if (!err) {
-	    *t2_train = ival - 1; /* zero-based */
+	    meta->t2_train = ival - 1; /* zero-based */
 	}
     }
 
-    /* FIXME: add a lot more here, sooner or later! */
+    if (!err && gretl_bundle_has_key(b, "cross_validation")) {
+	ival = gretl_bundle_get_int(b, "cross_validation", &err);
+	if (!err && ival < 2) {
+	    fprintf(stderr, "invalid 'cross_validation' arg %d\n", ival);
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    meta->xvalid = ival;
+	}
+    }
+
+    /* if we're still OK, fill out the libsvm @parm struct */
+
+    if (!err) {
+	err = set_svm_parm(parm, b, prn);
+    }
 
     return err;
 }
@@ -426,52 +968,56 @@ static void gretl_libsvm_print (const char *s)
 
 int gretl_svm_predict (const int *list,
 		       gretl_bundle *bparams,
-		       gretl_bundle **bmodel,
+		       gretl_bundle *bmodel,
 		       double *yhat,
 		       DATASET *dset,
 		       PRN *prn)
 {
     struct svm_parameter parm;
+    struct svm_meta meta;
     gretl_matrix *ranges;
     sv_data *prob1 = NULL;
     sv_data *prob2 = NULL;
     sv_cell *x_space1 = NULL;
     sv_cell *x_space2 = NULL;
     sv_model *model = NULL;
-    int svm_type = EPSILON_SVR;
+    int auto_svm_type = EPSILON_SVR;
     int save_t2 = dset->t2;
-    int scaling = 1;
-    int t2_train = 0;
     int T, k = 0;
     int err = 0;
+
+    gui_mode = gretl_in_gui_mode();
 
     if (list == NULL || list[0] < 2) {
 	fprintf(stderr, "svm: invalid list argument\n");
 	err = E_INVARG;
     } else {
-	err = parse_params_bundle(bparams, &scaling, &t2_train,
-				  list, dset);
+	svm_meta_init(&meta);
+	err = read_params_bundle(bparams, &meta, &parm, list,
+				 dset, prn);
     }
 
     if (err) {
 	return err;
     }
 
-    svm_prn = prn;
-    svm_set_print_string_function(gretl_libsvm_print);
+    if (gui_mode) {
+	svm_prn = prn;
+	svm_set_print_string_function(gretl_libsvm_print);
+    }
 
-    dset->t2 = t2_train;
+    dset->t2 = meta.t2_train;
     T = sample_size(dset);
 
     pprintf(prn, "Getting data ranges (sample = %d to %d)... ",
 	    dset->t1 + 1, dset->t2 + 1);
-    ranges = get_data_ranges(list, scaling, dset, &err);
+    ranges = get_data_ranges(list, meta.scaling, dset, &err);
     if (err) {
 	pprintf(prn, "done, err = %d\n", err);
     } else {
 	pputs(prn, "OK\n");
     }
-    gretl_gui_flush();
+    svm_flush(prn);
 
     if (0 && !err) {
 	/* just for testing */
@@ -489,13 +1035,19 @@ int gretl_svm_predict (const int *list,
 	    pputs(prn, "OK\n");
 	}
     }
-    gretl_gui_flush();
+    svm_flush(prn);
 
     if (!err) {
 	/* fill out the "problem" data */
 	pputs(prn, "Scaling and transcribing data... ");
-	sv_data_fill(prob1, x_space1, k, ranges, scaling,
-		     &svm_type, list, dset);
+	sv_data_fill(prob1, x_space1, k, ranges, meta.scaling,
+		     &auto_svm_type, list, dset);
+	if (parm.svm_type < 0) {
+	    parm.svm_type = auto_svm_type;
+	}
+	if (parm.gamma == 0) {
+	    parm.gamma = 1.0 / k;
+	}	
 	pputs(prn, "OK\n");
     }
 
@@ -505,19 +1057,38 @@ int gretl_svm_predict (const int *list,
     }
 
     if (!err) {
-	set_svm_param_defaults(&parm, svm_type);
-	if (parm.gamma == 0) {
-	    parm.gamma = 1.0 / k;
+	/* we're now in a position to run a check on @parm */
+	const char *msg = svm_check_parameter(prob1, &parm);
+
+	pputs(prn, "Checking parameter values... ");
+	if (msg != NULL) {
+	    pputs(prn, "problem\n");
+	    gretl_errmsg_sprintf("svm: %s", msg);
+	    err = E_INVARG;
+	} else {
+	    pputs(prn, "OK\n");
+	    pprintf(prn, "svm_type = %s\n", svm_type_names[parm.svm_type]);
+	    pprintf(prn, "kernel_type = %s\n", kernel_type_names[parm.kernel_type]);
 	}
-	pprintf(prn, "Calling training function (this may take a while)\n");
-	gretl_gui_flush();
-	model = svm_train(prob1, &parm);
+    }
+
+    if (!err) {
+	if (meta.xvalid > 0) {
+	    pprintf(prn, "Calling cross-validation function (this may take a while)\n");
+	    svm_flush(prn);
+	    err = do_cross_validation(prob1, &parm, meta.xvalid, prn);
+	    /* And then what? Apparently we don't get a model out of this. */
+	    goto getout;
+	} else {
+	    pprintf(prn, "Calling training function (this may take a while)\n");
+	    svm_flush(prn);
+	    model = svm_train(prob1, &parm);
+	}
 	if (model == NULL) {
 	    err = E_DATA;
 	}
-	gretl_gui_flush();
 	pprintf(prn, "Training done, err = %d\n", err);
-	gretl_gui_flush();
+	svm_flush(prn);
     }
 
     if (!err) {
@@ -525,12 +1096,12 @@ int gretl_svm_predict (const int *list,
 
 	real_svm_predict(yhat, prob1, model, 1, dset, prn);
 	dset->t2 = save_t2;
-	T_os = dset->t2 - t2_train;
-	if (T_os >= t2_train) {
+	T_os = dset->t2 - meta.t2_train;
+	if (T_os >= meta.t2_train) {
 	    /* If we have enough out-of-sample data, go
 	       ahead and predict out of sample.
 	    */
-	    dset->t1 = t2_train + 1;
+	    dset->t1 = meta.t2_train + 1;
 	    T = sample_size(dset);
 	    pprintf(prn, "Found %d testing observations\n", T);
 	    err = check_test_data(dset, ranges, k);
@@ -541,12 +1112,14 @@ int gretl_svm_predict (const int *list,
 		}
 	    }
 	    if (!err) {
-		sv_data_fill(prob2, x_space2, k, ranges, scaling,
+		sv_data_fill(prob2, x_space2, k, ranges, meta.scaling,
 			     NULL, list, dset);
 		real_svm_predict(yhat, prob2, model, 0, dset, prn);
 	    }
 	}
     }
+
+ getout:
 
     dset->t2 = save_t2;
 
@@ -555,6 +1128,7 @@ int gretl_svm_predict (const int *list,
     gretl_sv_data_destroy(prob2, x_space2);
     svm_free_and_destroy_model(&model);
     svm_destroy_param(&parm);
+    svm_meta_free(&meta);
     svm_prn = NULL;
 
     return err;

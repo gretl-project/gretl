@@ -786,6 +786,41 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_get_list:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the list associated with @key in the
+ * specified @bundle, if any; otherwise NULL.
+ */
+
+int *gretl_bundle_get_list (gretl_bundle *bundle,
+			    const char *key,
+			    int *err)
+{
+    int *list = NULL;
+    GretlType type;
+    void *ptr;
+    int myerr = 0;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    if (ptr != NULL && type != GRETL_TYPE_LIST) {
+	myerr = E_TYPES;
+    }
+
+    if (ptr != NULL && !myerr) {
+	list = (int *) ptr;
+    }
+
+    if (err != NULL) {
+	*err = myerr;
+    }
+
+    return list;
+}
+
+/**
  * gretl_bundle_get_scalar:
  * @bundle: bundle to access.
  * @key: name of key to access.
