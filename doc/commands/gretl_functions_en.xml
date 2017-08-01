@@ -1932,6 +1932,45 @@
       </description>
     </function>
 
+    <function name="cdummify" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function returns a list in which each series in
+	  <argname>L</argname> that has the <quote>coded</quote>
+	  attribute is replaced by a set of dummy variables
+	  representing each of its coded values, with the least
+	  value omitted. If <argname>L</argname> contains no
+	  coded series the return value will be identical to
+	  <argname>L</argname>.
+	</para>
+	<para>
+	  The generated dummy variables, if any, are named on the
+	  pattern
+	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>vi</repl>
+	  where <repl>vi</repl> is the <repl>i</repl><sup>th</sup>
+	  represented value of the coded variable. In case any
+	  values are negative, <quote>m</quote> is inserted before
+	  the (absolute) value of <repl>vi</repl>.
+	</para>
+	<para>
+	  For example, suppose <argname>L</argname> contains a coded
+	  series named <lit>C1</lit> with values &minus;9, &minus;7,
+	  0, 1 and 2.  Then the generated dummies will be
+	  <lit>DC1_m7</lit> (coding for C1 = &minus;7),
+	  <lit>DC1_0</lit> (coding for C1 = 0), and so on.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="dummify"/>
+	    <fncref targ="getinfo"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="ceil" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -3500,6 +3539,24 @@
 	</para>
       </description>
     </function>
+
+    <function name="getinfo" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  The series argument <argname>y</argname> may be given either
+	  by name or ID number.  This function is basically
+	  complementary to the <cmdref targ="setinfo"/> command, but
+	  it also provides additional information in the returned
+	  bundle.
+	</para>
+	<para>
+	  FIXME this needs to be expanded.
+	</para>
+      </description>
+    </function>    
 
     <function name="getline" section="strings" output="scalar">
       <fnargs>
