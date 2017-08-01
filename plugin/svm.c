@@ -28,6 +28,8 @@
 typedef struct svm_problem sv_data;
 typedef struct svm_node sv_cell;
 typedef struct svm_model sv_model;
+typedef struct svm_parameter sv_parm;
+typedef struct svm_wrapper_ svm_wrapper;
 
 static const char *svm_type_names[] = {
     "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"
@@ -37,14 +39,17 @@ static const char *kernel_type_names[] = {
     "linear", "polynomial", "rbf", "sigmoid", "precomputed"
 };
 
-struct svm_meta {
+struct svm_wrapper_ {
+    int auto_type;
     int scaling;
     int t2_train;
     int xvalid;
     int savemod;
     int loadmod;
     int predict;
+    int quiet;
     int libsvm_ranges;
+    gretl_matrix *ranges;
     char *ranges_outfile;
     char *ranges_infile;
     char *model_outfile;
@@ -70,41 +75,45 @@ static void svm_flush (PRN *prn)
     }
 }
 
-static void svm_meta_init (struct svm_meta *m)
+static void svm_wrapper_init (svm_wrapper *w)
 {
-    m->scaling = 1;
-    m->t2_train = 0;
-    m->xvalid = 0;
-    m->savemod = 0;
-    m->loadmod = 0;
-    m->predict = 1;
-    m->libsvm_ranges = 0;
-    m->ranges_outfile = NULL;
-    m->ranges_infile = NULL;
-    m->model_outfile = NULL;
-    m->model_infile = NULL;
-    m->data_outfile = NULL;
+    w->auto_type = EPSILON_SVR;
+    w->scaling = 1;
+    w->t2_train = 0;
+    w->xvalid = 0;
+    w->savemod = 0;
+    w->loadmod = 0;
+    w->predict = 2;
+    w->quiet = 0;
+    w->libsvm_ranges = 0;
+    w->ranges = NULL;
+    w->ranges_outfile = NULL;
+    w->ranges_infile = NULL;
+    w->model_outfile = NULL;
+    w->model_infile = NULL;
+    w->data_outfile = NULL;
 }
 
-static void svm_meta_free (struct svm_meta *m)
+static void svm_wrapper_free (svm_wrapper *w)
 {
-    free(m->ranges_outfile);
-    free(m->ranges_infile);
-    free(m->model_outfile);
-    free(m->model_infile);
-    free(m->data_outfile);
+    gretl_matrix_free(w->ranges);
+    free(w->ranges_outfile);
+    free(w->ranges_infile);
+    free(w->model_outfile);
+    free(w->model_infile);
+    free(w->data_outfile);
 }
 
-static int doing_file_io (struct svm_meta *m)
+static int doing_file_io (svm_wrapper *w)
 {
-    return m->ranges_outfile != NULL ||
-	m->ranges_infile != NULL ||
-	m->model_outfile != NULL ||
-	m->model_infile != NULL ||
-	m->data_outfile != NULL;
+    return w->ranges_outfile != NULL ||
+	w->ranges_infile != NULL ||
+	w->model_outfile != NULL ||
+	w->model_infile != NULL ||
+	w->data_outfile != NULL;
 }
 
-static void set_svm_param_defaults (struct svm_parameter *parm)
+static void set_svm_param_defaults (sv_parm *parm)
 {
     parm->svm_type = -1; /* mark as unknown for now */
     parm->kernel_type = RBF;
@@ -125,8 +134,8 @@ static void set_svm_param_defaults (struct svm_parameter *parm)
     parm->probability = 0;     /* do probability estimates */
 }
 
-static int set_svm_parm (struct svm_parameter *parm,
-			 gretl_bundle *b, PRN *prn)
+static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
+			 PRN *prn)
 {
     struct svm_parm_info pinfo[N_PARMS] = {
 	{ "svm_type",     GRETL_TYPE_INT },
@@ -553,39 +562,38 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 
 /* can use for testing against svm-scale */
 
-static int write_ranges (const gretl_matrix *ranges,
-			 struct svm_meta *m)
+static int write_ranges (svm_wrapper *w)
 {
     FILE *fp;
     double lo, hi;
     int i, idx, vi;
 
-    fp = gretl_fopen(m->ranges_outfile, "wb");
+    fp = gretl_fopen(w->ranges_outfile, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
     gretl_push_c_numeric_locale();
 
-    if (m->libsvm_ranges) {
+    if (w->libsvm_ranges) {
 	fprintf(fp, "x\n%d %d\n",
-		(int) gretl_matrix_get(ranges, 0, 0),
-		(int) gretl_matrix_get(ranges, 0, 1));
+		(int) gretl_matrix_get(w->ranges, 0, 0),
+		(int) gretl_matrix_get(w->ranges, 0, 1));
     } else {
 	fprintf(fp, "x\n%d %d %d\n",
-		(int) gretl_matrix_get(ranges, 0, 0),
-		(int) gretl_matrix_get(ranges, 0, 1),
-		(int) gretl_matrix_get(ranges, 0, 2));
+		(int) gretl_matrix_get(w->ranges, 0, 0),
+		(int) gretl_matrix_get(w->ranges, 0, 1),
+		(int) gretl_matrix_get(w->ranges, 0, 2));
     }
 
-    for (i=1; i<ranges->rows; i++) {
-	idx = gretl_matrix_get(ranges, i, 0);
-	lo  = gretl_matrix_get(ranges, i, 1);
-	hi  = gretl_matrix_get(ranges, i, 2);
-	if (m->libsvm_ranges) {
+    for (i=1; i<w->ranges->rows; i++) {
+	idx = gretl_matrix_get(w->ranges, i, 0);
+	lo  = gretl_matrix_get(w->ranges, i, 1);
+	hi  = gretl_matrix_get(w->ranges, i, 2);
+	if (w->libsvm_ranges) {
 	    fprintf(fp, "%d %.16g %.16g\n", idx, lo, hi);
 	} else {
-	    vi = gretl_matrix_get(ranges, i, 3);
+	    vi = gretl_matrix_get(w->ranges, i, 3);
 	    fprintf(fp, "%d %.16g %.16g %d\n", idx, lo, hi, vi);
 	}
     }
@@ -597,25 +605,24 @@ static int write_ranges (const gretl_matrix *ranges,
     return 0;
 }
 
-static gretl_matrix *read_ranges (struct svm_meta *m, int *err)
+static int read_ranges (svm_wrapper *w)
 {
     FILE *fp;
-    gretl_matrix *ranges;
     char line[512];
     double lo, hi, j;
     int read_lims = 0;
     int ncols = 4;
     int i, vi, idx, n = 0;
+    int err = 0;
 
-    fp = gretl_fopen(m->ranges_infile, "rb");
+    fp = gretl_fopen(w->ranges_infile, "rb");
     if (fp == NULL) {
-	*err = E_FOPEN;
-	return NULL;
+	return E_FOPEN;
     }
 
     gretl_push_c_numeric_locale();
 
-    while (fgets(line, sizeof line, fp) && !*err) {
+    while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == 'x') {
 	    read_lims = 1;
 	    continue;
@@ -627,7 +634,7 @@ static gretl_matrix *read_ranges (struct svm_meta *m, int *err)
 		n = sscanf(line, "%lf %lf %lf\n", &lo, &hi, &j);
 	    }
 	    if (n != ncols - 1) {
-		*err = E_DATA;
+		err = E_DATA;
 	    }
 	    read_lims = 0;
 	} else if (!string_is_blank(line)) {
@@ -635,21 +642,21 @@ static gretl_matrix *read_ranges (struct svm_meta *m, int *err)
 	}
     }
 
-    ranges = gretl_matrix_alloc(n+1, ncols);
-    if (ranges == NULL) {
-	*err = E_ALLOC;
+    w->ranges = gretl_matrix_alloc(n+1, ncols);
+    if (w->ranges == NULL) {
+	err = E_ALLOC;
     } else {
-	gretl_matrix_set(ranges, 0, 0, lo);
-	gretl_matrix_set(ranges, 0, 1, hi);
-	gretl_matrix_set(ranges, 0, 2, j);
+	gretl_matrix_set(w->ranges, 0, 0, lo);
+	gretl_matrix_set(w->ranges, 0, 1, hi);
+	gretl_matrix_set(w->ranges, 0, 2, j);
 	if (ncols == 4) {
-	    gretl_matrix_set(ranges, 0, 3, 0);
+	    gretl_matrix_set(w->ranges, 0, 3, 0);
 	}
 	rewind(fp);
 	i = 1;
     }
 
-    while (fgets(line, sizeof line, fp) && !*err) {
+    while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == 'x') {
 	    fgets(line, sizeof line, fp);
 	    continue;
@@ -660,13 +667,13 @@ static gretl_matrix *read_ranges (struct svm_meta *m, int *err)
 	    n = sscanf(line, "%d %lf %lf %d\n", &idx, &lo, &hi, &vi);
 	}
 	if (n != ncols) {
-	    *err = E_DATA;
+	    err = E_DATA;
 	} else {
-	    gretl_matrix_set(ranges, i, 0, idx);
-	    gretl_matrix_set(ranges, i, 1, lo);
-	    gretl_matrix_set(ranges, i, 2, hi);
+	    gretl_matrix_set(w->ranges, i, 0, idx);
+	    gretl_matrix_set(w->ranges, i, 1, lo);
+	    gretl_matrix_set(w->ranges, i, 2, hi);
 	    if (ncols == 4) {
-		gretl_matrix_set(ranges, i, 3, vi);
+		gretl_matrix_set(w->ranges, i, 3, vi);
 	    }
 	    i++;
 	}
@@ -676,7 +683,7 @@ static gretl_matrix *read_ranges (struct svm_meta *m, int *err)
 
     fclose(fp);
 
-    return ranges;
+    return err;
 }
 
 /* can use for testing against svm-scale */
@@ -760,31 +767,29 @@ static sv_data *gretl_sv_data_alloc (int T, int k,
 /* initial discovery of ranges of the RHS data using the
    training data */
 
-static gretl_matrix *get_data_ranges (const int *list,
-				      int scaling,
-				      const DATASET *dset,
-				      int *err)
+static int get_data_ranges (const int *list,
+			    const DATASET *dset,
+			    svm_wrapper *w)
 {
-    gretl_matrix *ranges;
     const double *x;
     double xmin, xmax;
     int k = list[0] - 1;
     int i, j, vi;
+    int err = 0;
 
-    ranges = gretl_matrix_alloc(k+1, 4);
-    if (ranges == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+    w->ranges = gretl_matrix_alloc(k+1, 4);
+    if (w->ranges == NULL) {
+	return E_ALLOC;
     }
 
     /* scaling limits */
-    xmin = scaling == 2 ? 0 : -1;
-    gretl_matrix_set(ranges, 0, 0, xmin); /* lower */
-    gretl_matrix_set(ranges, 0, 1, 1);    /* upper */
+    xmin = w->scaling == 2 ? 0 : -1;
+    gretl_matrix_set(w->ranges, 0, 0, xmin); /* lower */
+    gretl_matrix_set(w->ranges, 0, 1, 1);    /* upper */
 
     /* padding */
-    gretl_matrix_set(ranges, 0, 2, 0);
-    gretl_matrix_set(ranges, 0, 3, 0);
+    gretl_matrix_set(w->ranges, 0, 2, 0);
+    gretl_matrix_set(w->ranges, 0, 3, 0);
 
     /* note: we make no provision for scaling y at present */
 
@@ -795,10 +800,10 @@ static gretl_matrix *get_data_ranges (const int *list,
 	gretl_minmax(dset->t1, dset->t2, x, &xmin, &xmax);
 	if (xmin != xmax) {
 	    j++;
-	    gretl_matrix_set(ranges, j, 0, j); /* or... ? */
-	    gretl_matrix_set(ranges, j, 1, xmin);
-	    gretl_matrix_set(ranges, j, 2, xmax);
-	    gretl_matrix_set(ranges, j, 3, vi);
+	    gretl_matrix_set(w->ranges, j, 0, j); /* or... ? */
+	    gretl_matrix_set(w->ranges, j, 1, xmin);
+	    gretl_matrix_set(w->ranges, j, 2, xmax);
+	    gretl_matrix_set(w->ranges, j, 3, vi);
 	} else {
 	    fprintf(stderr, "training data: dropping var %d (%s)\n",
 		    vi, dset->varname[vi]);
@@ -811,9 +816,9 @@ static gretl_matrix *get_data_ranges (const int *list,
     /* record number of rows actually occupied, which
        could be less than the number allocated
     */
-    gretl_matrix_set(ranges, 0, 2, j + 1);
+    gretl_matrix_set(w->ranges, 0, 2, j + 1);
 
-    return ranges;
+    return err;
 }
 
 /* The following requires a gretl-special "ranges" matrix
@@ -874,11 +879,10 @@ static double scale_x (double val, double lo, double hi,
 
 static int sv_data_fill (sv_data *prob,
 			 sv_cell *x_space, int k,
-			 const gretl_matrix *ranges,
-			 int scaling,
-			 int *svm_type,
+			 svm_wrapper *w,
 			 const int *list,
-			 const DATASET *dset)
+			 const DATASET *dset,
+			 int pass)
 {
     double scalemin, scalemax;
     double xit, xmin, xmax;
@@ -887,37 +891,37 @@ static int sv_data_fill (sv_data *prob,
 
     /* deal with the LHS variable */
     vi = list[1];
-    if (svm_type != NULL &&
+    if (pass == 1 &&
 	(gretl_isdummy(dset->t1, dset->t2, dset->Z[vi]) ||
 	 series_is_coded(dset, vi))) {
 	/* classification, not regression */
-	*svm_type = C_SVC;
+	w->auto_type = C_SVC;
     }
     for (i=0, t=dset->t1; t<=dset->t2; t++, i++) {
 	prob->y[i] = dset->Z[vi][t];
     }
 
     /* retrieve the global x-scaling limits */
-    scalemin = gretl_matrix_get(ranges, 0, 0);
-    scalemax = gretl_matrix_get(ranges, 0, 1);
+    scalemin = gretl_matrix_get(w->ranges, 0, 0);
+    scalemax = gretl_matrix_get(w->ranges, 0, 1);
 
     /* write the scaled x-data into the problem struct */
     for (s=0, t=dset->t1; t<=dset->t2; t++, s++) {
 	prob->x[s] = &x_space[pos];
 	j = 0;
 	for (i=1; i<=k; i++) {
-	    if (ranges->cols == 4) {
-		vi = (int) gretl_matrix_get(ranges, i, 3);
+	    if (w->ranges->cols == 4) {
+		vi = (int) gretl_matrix_get(w->ranges, i, 3);
 		if (vi <= 0) {
 		    /* may happen when we get to the test data */
 		    continue;
 		}
 	    }
-	    idx = (int) gretl_matrix_get(ranges, i, 0);
-	    xmin = gretl_matrix_get(ranges, i, 1);
-	    xmax = gretl_matrix_get(ranges, i, 2);
+	    idx = (int) gretl_matrix_get(w->ranges, i, 0);
+	    xmin = gretl_matrix_get(w->ranges, i, 1);
+	    xmax = gretl_matrix_get(w->ranges, i, 2);
 	    xit = dset->Z[vi][t];
-	    if (scaling != 0) {
+	    if (w->scaling != 0) {
 		xit = scale_x(xit, xmin, xmax, scalemin, scalemax);
 	    }
 	    if (xit == 0) {
@@ -994,7 +998,7 @@ static int real_svm_predict (double *yhat,
 }
 
 static int do_cross_validation (sv_data *prob,
-				struct svm_parameter *parm,
+				sv_parm *parm,
 				int xvalid,
 				PRN *prn)
 {
@@ -1063,8 +1067,8 @@ static int get_optional_int (gretl_bundle *b, const char *key,
 
 static int read_params_bundle (gretl_bundle *bparm,
 			       gretl_bundle *bmod,
-			       struct svm_meta *meta,
-			       struct svm_parameter *parm,
+			       svm_wrapper *wrap,
+			       sv_parm *parm,
 			       const int *list,
 			       const DATASET *dset,
 			       PRN *prn)
@@ -1081,7 +1085,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    fprintf(stderr, "invalid 'loadmod' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
-	    meta->loadmod = ival;
+	    wrap->loadmod = ival;
 	}
     }
 
@@ -1090,12 +1094,17 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    fprintf(stderr, "invalid 'scaling' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
-	    meta->scaling = ival;
+	    wrap->scaling = ival;
 	}
     }
 
-    if (get_optional_int(bparm, "no_predict", &ival, &err)) {
-	meta->predict = (ival == 0);
+    if (get_optional_int(bparm, "predict", &ival, &err)) {
+	if (ival < 0 || ival > 2) {
+	    fprintf(stderr, "invalid 'predict' arg %d\n", ival);
+	    err = E_INVARG;
+	} else {
+	    wrap->predict = ival;
+	}
     }
 
     if (get_optional_int(bparm, "t2_train", &ival, &err)) {
@@ -1103,7 +1112,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    fprintf(stderr, "invalid 't2_train' arg %d\n", ival);
 	    err = E_INVARG;
 	} else if (ival > 0) {
-	    meta->t2_train = ival - 1; /* zero-based */
+	    wrap->t2_train = ival - 1; /* zero-based */
 	}
     }
 
@@ -1112,40 +1121,44 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    fprintf(stderr, "invalid 'cross_validation' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
-	    meta->xvalid = ival;
+	    wrap->xvalid = ival;
 	}
+    }
+
+    if (get_optional_int(bparm, "quiet", &ival, &err)) {
+	wrap->quiet = (ival != 0);
     }
 
     if (!err) {
 	strval = gretl_bundle_get_string(bparm, "ranges_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->ranges_outfile = gretl_strdup(strval);
+	    wrap->ranges_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "data_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->data_outfile = gretl_strdup(strval);
+	    wrap->data_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "ranges_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->ranges_infile = gretl_strdup(strval);
+	    wrap->ranges_infile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "model_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->model_outfile = gretl_strdup(strval);
+	    wrap->model_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "model_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->model_infile = gretl_strdup(strval);
+	    wrap->model_infile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "range_format", NULL);
 	if (strval != NULL && !strcmp(strval, "libsvm")) {
-	    meta->libsvm_ranges = 1;
+	    wrap->libsvm_ranges = 1;
 	}
     }
 
-    if (!err && !meta->loadmod && bmod != NULL) {
+    if (!err && !wrap->loadmod && bmod != NULL) {
 	/* implicitly, the model should be saved to @bmod */
-	meta->savemod = 1;
+	wrap->savemod = 1;
     }
 
     /* if we're still OK, fill out the libsvm @parm struct */
@@ -1213,13 +1226,70 @@ static void gretl_libsvm_print (const char *s)
     }
 }
 
+static void gretl_libsvm_noprint (const char *s)
+{
+    return;
+}
+
 static void report_result (int err, PRN *prn)
 {
-    if (err) {
-	pprintf(prn, "err = %d\n", err);
-    } else {
-	pputs(prn, "OK\n");
+    if (prn != NULL) {
+	if (err) {
+	    pprintf(prn, "err = %d\n", err);
+	} else {
+	    pputs(prn, "OK\n");
+	}
     }
+}
+
+static int get_svm_ranges (const int *list,
+			   DATASET *dset,
+			   svm_wrapper *wrap,
+			   PRN *prn)
+{
+    int err = 0;
+
+    if (wrap->ranges_infile != NULL) {
+	pprintf(prn, "Getting data ranges from %s... ",
+		wrap->ranges_infile);
+	err = read_ranges(wrap);
+	report_result(err, prn);
+	svm_flush(prn);
+    } else {
+	pprintf(prn, "Getting data ranges (sample = %d to %d)... ",
+		dset->t1 + 1, dset->t2 + 1);
+	err = get_data_ranges(list, dset, wrap);
+	report_result(err, prn);
+	if (!err && wrap->ranges_outfile != NULL) {
+	    err = write_ranges(wrap);
+	    report_result(err, prn);
+	}
+	svm_flush(prn);
+    }
+
+    return err;
+}
+
+static int check_svm_params (sv_data *data,
+			     sv_parm *parm,
+			     PRN *prn)
+{
+    const char *msg = svm_check_parameter(data, parm);
+    int err = 0;
+
+    pputs(prn, "Checking parameter values... ");
+    if (msg != NULL) {
+	pputs(prn, "problem\n");
+	gretl_errmsg_sprintf("svm: %s", msg);
+	err = E_INVARG;
+    } else if (prn != NULL) {
+	pputs(prn, "OK\n");
+	pprintf(prn, "svm_type %s, kernel_type %s\n",
+		svm_type_names[parm->svm_type],
+		kernel_type_names[parm->kernel_type]);
+    }
+
+    return err;
 }
 
 int gretl_svm_predict (const int *list,
@@ -1228,18 +1298,18 @@ int gretl_svm_predict (const int *list,
 		       double *yhat,
 		       int *yhat_written,
 		       DATASET *dset,
-		       PRN *prn)
+		       PRN *inprn)
 {
-    struct svm_parameter parm;
-    struct svm_meta meta;
-    gretl_matrix *ranges;
+    sv_parm parm;
+    svm_wrapper wrap;
     sv_data *prob1 = NULL;
     sv_data *prob2 = NULL;
     sv_cell *x_space1 = NULL;
     sv_cell *x_space2 = NULL;
     sv_model *model = NULL;
-    int auto_svm_type = EPSILON_SVR;
+    int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    PRN *prn = inprn;
     int T, k = 0;
     int err = 0;
 
@@ -1249,8 +1319,8 @@ int gretl_svm_predict (const int *list,
 	fprintf(stderr, "svm: invalid list argument\n");
 	err = E_INVARG;
     } else {
-	svm_meta_init(&meta);
-	err = read_params_bundle(bparams, bmodel, &meta, &parm,
+	svm_wrapper_init(&wrap);
+	err = read_params_bundle(bparams, bmodel, &wrap, &parm,
 				 list, dset, prn);
     }
 
@@ -1258,42 +1328,28 @@ int gretl_svm_predict (const int *list,
 	return err;
     }
 
-    if (gui_mode) {
+    if (wrap.quiet) {
+	svm_set_print_string_function(gretl_libsvm_noprint);
+	prn = NULL;
+    } else if (gui_mode) {
 	svm_prn = prn;
 	svm_set_print_string_function(gretl_libsvm_print);
     }
 
-    if (meta.t2_train > 0) {
-	dset->t2 = meta.t2_train;
+    if (wrap.t2_train > 0) {
+	dset->t2 = wrap.t2_train;
     }
     T = sample_size(dset);
 
-    if (doing_file_io(&meta)) {
+    if (doing_file_io(&wrap)) {
 	/* try to ensure we're in workdir */
 	gretl_chdir(gretl_workdir());
     }
 
-    if (meta.ranges_infile != NULL) {
-	pprintf(prn, "Getting data ranges from %s... ",
-		meta.ranges_infile);
-	ranges = read_ranges(&meta, &err);
-	report_result(err, prn);
-	svm_flush(prn);
-    } else {
-	pprintf(prn, "Getting data ranges (sample = %d to %d)... ",
-		dset->t1 + 1, dset->t2 + 1);
-	ranges = get_data_ranges(list, meta.scaling, dset, &err);
-	report_result(err, prn);
-	svm_flush(prn);
-    }
-
-    if (!err && meta.ranges_outfile != NULL) {
-	err = write_ranges(ranges, &meta);
-	report_result(err, prn);
-    }
+    err = get_svm_ranges(list, dset, &wrap, prn);
 
     if (!err) {
-	k = (int) gretl_matrix_get(ranges, 0, 2) - 1;
+	k = (int) gretl_matrix_get(wrap.ranges, 0, 2) - 1;
 	pputs(prn, "Allocating problem space... ");
 	prob1 = gretl_sv_data_alloc(T, k, &x_space1, &err);
 	report_result(err, prn);
@@ -1303,10 +1359,9 @@ int gretl_svm_predict (const int *list,
     if (!err) {
 	/* fill out the "problem" data */
 	pputs(prn, "Scaling and transcribing data... ");
-	sv_data_fill(prob1, x_space1, k, ranges, meta.scaling,
-		     &auto_svm_type, list, dset);
+	sv_data_fill(prob1, x_space1, k, &wrap, list, dset, 1);
 	if (parm.svm_type < 0) {
-	    parm.svm_type = auto_svm_type;
+	    parm.svm_type = wrap.auto_type;
 	}
 	if (parm.gamma == 0) {
 	    parm.gamma = 1.0 / k;
@@ -1314,42 +1369,32 @@ int gretl_svm_predict (const int *list,
 	pputs(prn, "OK\n");
     }
 
-    if (!err && meta.data_outfile != NULL) {
-	err = write_problem(prob1, k, meta.data_outfile);
+    if (!err && wrap.data_outfile != NULL) {
+	err = write_problem(prob1, k, wrap.data_outfile);
 	report_result(err, prn);
     }
 
     if (!err) {
 	/* we're now in a position to run a check on @parm */
-	const char *msg = svm_check_parameter(prob1, &parm);
-
-	pputs(prn, "Checking parameter values... ");
-	if (msg != NULL) {
-	    pputs(prn, "problem\n");
-	    gretl_errmsg_sprintf("svm: %s", msg);
-	    err = E_INVARG;
-	} else {
-	    pputs(prn, "OK\n");
-	    pprintf(prn, "svm_type %s, kernel_type %s\n",
-		    svm_type_names[parm.svm_type],
-		    kernel_type_names[parm.kernel_type]);
-	}
+	err = check_svm_params(prob1, &parm, prn);
     }
 
-    if (!err && meta.loadmod) {
-	/* restore a previously saved model via bundle */
+    if (!err && wrap.loadmod) {
+	/* restore previously saved model via bundle */
 	pputs(prn, "Loading svm model from bundle... ");
 	model = svm_model_from_bundle(bmodel, &err);
 	report_result(err, prn);
-    } else if (!err && meta.model_infile != NULL) {
-	pprintf(prn, "Loading svm model from %s... ", meta.model_infile);
-	model = svm_load_model_wrapper(meta.model_infile, &err);
+    } else if (!err && wrap.model_infile != NULL) {
+	/* restore previously saved model from file */
+	pprintf(prn, "Loading svm model from %s... ", wrap.model_infile);
+	model = svm_load_model_wrapper(wrap.model_infile, &err);
 	report_result(err, prn);
     } else if (!err) {
-	if (meta.xvalid > 0) {
+	/* cross-validate (?) or build a model by training */
+	if (wrap.xvalid > 0) {
 	    pprintf(prn, "Calling cross-validation function (this may take a while)\n");
 	    svm_flush(prn);
-	    err = do_cross_validation(prob1, &parm, meta.xvalid, prn);
+	    err = do_cross_validation(prob1, &parm, wrap.xvalid, prn);
 	    /* And then what? Apparently we don't get a model out of this. */
 	    goto getout;
 	} else {
@@ -1365,42 +1410,43 @@ int gretl_svm_predict (const int *list,
     }
 
     if (model != NULL) {
-	if (meta.savemod) {
+	/* We have a model: should it be saved (to bundle or file)? */
+	if (wrap.savemod) {
 	    pputs(prn, "Saving svm model to bundle... ");
 	    err = svm_model_save_to_bundle(model, bmodel);
 	    report_result(err, prn);
 	}
-	if (meta.model_outfile != NULL) {
-	    pprintf(prn, "Saving svm model as %s... ", meta.model_outfile);
-	    err = svm_save_model_wrapper(meta.model_outfile, model);
+	if (wrap.model_outfile != NULL) {
+	    pprintf(prn, "Saving svm model as %s... ", wrap.model_outfile);
+	    err = svm_save_model_wrapper(wrap.model_outfile, model);
 	    report_result(err, prn);
 	}
     }
 
-    if (!err && meta.predict) {
-	int training = (meta.t2_train > 0);
+    if (!err && wrap.predict) {
+	/* Now do some prediction */
+	int training = (wrap.t2_train > 0);
 	int T_os = -1;
 
 	real_svm_predict(yhat, prob1, model, training, dset, prn);
 	*yhat_written = 1;
 	dset->t2 = save_t2;
-	if (training) {
-	    T_os = dset->t2 - meta.t2_train;
+	if (training && wrap.predict == 2) {
+	    T_os = dset->t2 - wrap.t2_train;
 	}
-	if (T_os >= meta.t2_train) {
+	if (T_os >= wrap.t2_train) {
 	    /* If we have enough out-of-sample data, go
 	       ahead and predict out of sample.
 	    */
-	    dset->t1 = meta.t2_train + 1;
+	    dset->t1 = wrap.t2_train + 1;
 	    T = sample_size(dset);
 	    pprintf(prn, "Found %d testing observations\n", T);
-	    err = check_test_data(dset, ranges, k);
+	    err = check_test_data(dset, wrap.ranges, k);
 	    if (!err) {
 		prob2 = gretl_sv_data_alloc(T, k, &x_space2, &err);
 	    }
 	    if (!err) {
-		sv_data_fill(prob2, x_space2, k, ranges, meta.scaling,
-			     NULL, list, dset);
+		sv_data_fill(prob2, x_space2, k, &wrap, list, dset, 2);
 		real_svm_predict(yhat, prob2, model, 0, dset, prn);
 	    }
 	}
@@ -1408,19 +1454,18 @@ int gretl_svm_predict (const int *list,
 
  getout:
 
+    dset->t1 = save_t1;
     dset->t2 = save_t2;
 
-    gretl_matrix_free(ranges);
     gretl_sv_data_destroy(prob1, x_space1);
     gretl_sv_data_destroy(prob2, x_space2);
-    if (meta.loadmod) {
+    if (wrap.loadmod) {
 	gretl_destroy_svm_model(model);
     } else {
 	svm_free_and_destroy_model(&model);
     }
     svm_destroy_param(&parm);
-
-    svm_meta_free(&meta);
+    svm_wrapper_free(&wrap);
     svm_prn = NULL;
 
     return err;
