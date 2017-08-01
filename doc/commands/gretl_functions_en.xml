@@ -3546,14 +3546,54 @@
       </fnargs>    
       <description>
 	<para>
-	  The series argument <argname>y</argname> may be given either
-	  by name or ID number.  This function is basically
-	  complementary to the <cmdref targ="setinfo"/> command, but
-	  it also provides additional information in the returned
-	  bundle.
+	  Returns information on the specified series, which may be
+	  given by name or ID number. The returned bundle contains all
+	  the attributes which can be set via the <cmdref
+	  targ="setinfo"/> command. It also contains additional
+	  information relevant for series that have been created as
+	  transformations of primary data (lags, logs, etc.): this
+	  includes the gretl command word for the transformation under
+	  the key <quote>transform</quote> and the name of the
+	  associated primary series under <quote>parent</quote>. For
+	  lagged series, the specific lag number can be found under
+	  the key <quote>lag</quote>.
 	</para>
 	<para>
-	  FIXME this needs to be expanded.
+	  Here is an example of usage:
+	</para>
+	<code>
+	  open data9-7
+	  lags QNC
+	  bundle b = getinfo(QNC_2)
+	  print b
+	</code>
+	<para>
+	  On executing the above we see:
+	</para>
+	<code>
+	  has_string_table = 0
+	  lag = 2
+	  parent = QNC
+	  name = QNC_2
+	  graph_name = 
+	  coded = 0
+	  discrete = 0
+	  transform = lags
+	  description = = QNC(t - 2)
+	</code>
+	<para>
+	  To test whether series 5 in a dataset is a lagged term one can
+	  do this sort of thing:
+	</para>
+	<code>
+	  if getinfo(5).lag != 0
+	     printf "series 5 is a lag of %s\n", getinfo(5).parent
+	  endif
+	</code>
+	<para>
+	  Note that the dot notation to access bundle members can be
+	  used even when the bundle is <quote>anonymous</quote> (not
+	  saved under its own name).
 	</para>
       </description>
     </function>    
