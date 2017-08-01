@@ -566,6 +566,8 @@ static int write_ranges (const gretl_matrix *ranges, const char *fname)
     return 0;
 }
 
+/* FIXME this won't work on a "standard" libsvm ranges file */
+
 static gretl_matrix *read_ranges (const char *fname, int *err)
 {
     FILE *fp;
@@ -1097,6 +1099,44 @@ static int read_params_bundle (gretl_bundle *bparm,
     return err;
 }
 
+static sv_model *svm_load_model_wrapper (const char *fname,
+					 int *err)
+{
+    sv_model *model = NULL;
+    char *conv = NULL;
+
+    *err = maybe_recode_path(fname, &conv, -1);
+
+    if (!*err) {
+	model = svm_load_model(conv != NULL ? conv : fname);
+	if (model == NULL) {
+	    *err = E_EXTERNAL;
+	}
+	free(conv);
+    }
+
+    return model;
+}
+
+static int svm_save_model_wrapper (const char *fname,
+				   const sv_model *model)
+{
+    char *conv = NULL;
+    int err;
+
+    err = maybe_recode_path(fname, &conv, -1);
+
+    if (!err) {
+	err = svm_save_model(conv != NULL ? conv : fname, model);
+	if (err) {
+	    err = E_EXTERNAL;
+	}
+	free(conv);
+    }
+
+    return err;
+}
+
 static PRN *svm_prn;
 
 /* callback function for setting on libsvm printing */
@@ -1241,8 +1281,7 @@ int gretl_svm_predict (const int *list,
     } else if (!err && meta.model_infile != NULL) {
 	/* FIXME filename encoding? */
 	pprintf(prn, "Loading svm model from %s... ", meta.model_infile);
-	model = svm_load_model(meta.model_infile);
-	err = model == NULL ? E_EXTERNAL : 0;
+	model = svm_load_model_wrapper(meta.model_infile, &err);
 	report_result(err, prn);
     } else if (!err) {
 	if (meta.xvalid > 0) {
@@ -1272,10 +1311,7 @@ int gretl_svm_predict (const int *list,
 	if (meta.model_outfile != NULL) {
 	    /* FIXME filename encoding? */
 	    pprintf(prn, "Saving svm model as %s... ", meta.model_outfile);
-	    err = svm_save_model(meta.model_outfile, model);
-	    if (err < 0) {
-		err = E_FOPEN;
-	    }
+	    err = svm_save_model_wrapper(meta.model_outfile, model);
 	    report_result(err, prn);
 	}
     }
