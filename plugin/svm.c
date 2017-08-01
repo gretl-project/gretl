@@ -17,7 +17,7 @@
  *
  */
 
-/* interface to libsvm for support vector machines */
+/* interface to libsvm for machine learning */
 
 #include "libgretl.h"
 #include "libset.h"
@@ -43,12 +43,13 @@ struct svm_meta {
     int xvalid;
     int savemod;
     int loadmod;
+    int predict;
     int libsvm_ranges;
     char *ranges_outfile;
-    char *scaled_outfile;
-    char *model_outfile;
     char *ranges_infile;
+    char *model_outfile;
     char *model_infile;
+    char *data_outfile;
 };
 
 struct svm_parm_info {
@@ -76,30 +77,31 @@ static void svm_meta_init (struct svm_meta *m)
     m->xvalid = 0;
     m->savemod = 0;
     m->loadmod = 0;
+    m->predict = 1;
     m->libsvm_ranges = 0;
     m->ranges_outfile = NULL;
-    m->scaled_outfile = NULL;
-    m->model_outfile = NULL;
     m->ranges_infile = NULL;
+    m->model_outfile = NULL;
     m->model_infile = NULL;
+    m->data_outfile = NULL;
 }
 
 static void svm_meta_free (struct svm_meta *m)
 {
     free(m->ranges_outfile);
-    free(m->scaled_outfile);
-    free(m->model_outfile);
     free(m->ranges_infile);
+    free(m->model_outfile);
     free(m->model_infile);
+    free(m->data_outfile);
 }
 
 static int doing_file_io (struct svm_meta *m)
 {
     return m->ranges_outfile != NULL ||
-	m->scaled_outfile != NULL ||
-	m->model_outfile != NULL ||
 	m->ranges_infile != NULL ||
-	m->model_infile != NULL;
+	m->model_outfile != NULL ||
+	m->model_infile != NULL ||
+	m->data_outfile != NULL;
 }
 
 static void set_svm_param_defaults (struct svm_parameter *parm)
@@ -169,7 +171,7 @@ static int set_svm_parm (struct svm_parameter *parm,
     for (i=0; i<N_PARMS && !err; i++) {
 	if (gretl_bundle_has_key(b, pinfo[i].key)) {
 	    if (i >= 8 && i <= 10) {
-		pputs(prn, "Sorry, weighting not handled yet\n");
+		pputs(prn, "Sorry, svm weighting not handled yet\n");
 		err = E_INVARG;
 	    } else if (pinfo[i].type == GRETL_TYPE_DOUBLE) {
 		xval = gretl_bundle_get_scalar(b, pinfo[i].key, &err);
@@ -382,6 +384,8 @@ static double *array_from_bundled_matrix (gretl_bundle *b,
 {
     double *ret = NULL;
 
+    if (*err) return NULL;
+
     if (gretl_bundle_has_key(b, key)) {
 	gretl_matrix *m = gretl_bundle_get_matrix(b, key, err);
 
@@ -396,7 +400,7 @@ static double *array_from_bundled_matrix (gretl_bundle *b,
 	    }
 	}
     } else if (required) {
-	fprintf(stderr, "required matrix %s was not found\n", key);
+	gretl_errmsg_sprintf("svm model: required matrix %s was not found", key);
 	*err = E_DATA;
     }
 
@@ -409,6 +413,8 @@ static int *array_from_bundled_list (gretl_bundle *b,
 				     int *err)
 {
     int *ret = NULL;
+
+    if (*err) return NULL;
 
     if (gretl_bundle_has_key(b, key)) {
 	int *list = gretl_bundle_get_list(b, key, err);
@@ -424,7 +430,7 @@ static int *array_from_bundled_list (gretl_bundle *b,
 	    }
 	}
     } else if (required) {
-	fprintf(stderr, "required list %s was not found\n", key);
+	gretl_errmsg_sprintf("svm model: required list %s was not found", key);
 	*err = E_DATA;
     }
 
@@ -437,8 +443,9 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
     struct svm_parameter *parm;
     sv_model *model;
     gretl_matrix *m;
-    int n_elements;
-    int i, j, nc, l;
+    int n_elements = 0;
+    int nc = 0, l = 0;
+    int i, j;
 
     model = malloc(sizeof *model);
     if (model == NULL) {
@@ -450,11 +457,18 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
     parm = &model->param;
     *err = set_svm_parm(parm, b, NULL);
 
-    nc = model->nr_class = gretl_bundle_get_int(b, "nr_class", err);
-    l = model->l = gretl_bundle_get_int(b, "l", err);
-    n_elements = gretl_bundle_get_int(b, "n_elements", err);
+    if (!*err) {
+	nc = model->nr_class = gretl_bundle_get_int(b, "nr_class", err);
+	l = model->l = gretl_bundle_get_int(b, "l", err);
+	n_elements = gretl_bundle_get_int(b, "n_elements", err);
+	if (nc <= 0 || l <= 0 || n_elements <= 0) {
+	    *err = E_DATA;
+	}
+    }
 
     model->rho = array_from_bundled_matrix(b, "rho", 1, err);
+
+    /* not always present */
     model->label = array_from_bundled_list(b, "label", 0, err);
     model->probA = array_from_bundled_matrix(b, "probA", 0, err);
     model->probB = array_from_bundled_matrix(b, "probB", 0, err);
@@ -462,26 +476,29 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 
     /* load the SVs */
 
-    m = gretl_bundle_get_matrix(b, "sv_coef", err);
-    if (m == NULL) {
-	*err = E_DATA;
-    } else {
-	model->sv_coef = doubles_array_new(nc-1, l);
-	if (model->sv_coef == NULL) {
-	    *err = E_ALLOC;
+    if (!*err) {
+	m = gretl_bundle_get_matrix(b, "sv_coef", err);
+	if (m == NULL) {
+	    *err = E_DATA;
 	} else {
-	    double *val = m->val;
+	    model->sv_coef = doubles_array_new(nc-1, l);
+	    if (model->sv_coef == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		double *val = m->val;
 
-	    for (j=0; j<nc-1; j++) {
-		memcpy(model->sv_coef[j], val, l * sizeof *val);
-		val += l;
+		for (j=0; j<nc-1; j++) {
+		    memcpy(model->sv_coef[j], val, l * sizeof *val);
+		    val += l;
+		}
 	    }
 	}
     }
 
-    if (parm->kernel_type == PRECOMPUTED) {
-	; /* not handled yet! */
-    } else {
+    if (!*err && parm->kernel_type == PRECOMPUTED) {
+	gretl_errmsg_set("svm precomputed kernel: not handled yet");
+	*err = E_DATA;
+    } else if (!*err) {
 	sv_cell *p, *x_space = NULL;
 	gretl_array *aidx = NULL;
 	gretl_array *avec = NULL;
@@ -799,6 +816,10 @@ static gretl_matrix *get_data_ranges (const int *list,
     return ranges;
 }
 
+/* The following requires a gretl-special "ranges" matrix
+   with 4 columns, including the dataset IDs of the series.
+*/
+
 static int check_test_data (const DATASET *dset,
 			    gretl_matrix *ranges,
 			    int k)
@@ -847,12 +868,6 @@ static double scale_x (double val, double lo, double hi,
 	val = scalemin + (scalemax - scalemin) *
 	    (val - lo) / (hi - lo);
     }
-
-#if 0
-    if (value != 0) {
-	new_num_nonzeros++;
-    }
-#endif
 
     return val;
 }
@@ -1030,6 +1045,22 @@ static int do_cross_validation (sv_data *prob,
     return 0;
 }
 
+/* It's OK if there's no @key value in bundle @b, but if it
+   is present it should hold an integer value. Return 1
+   if key found and integer retrieved OK, else 0.
+*/
+
+static int get_optional_int (gretl_bundle *b, const char *key,
+			     int *ival, int *err)
+{
+    if (!*err && gretl_bundle_has_key(b, key)) {
+	*ival = gretl_bundle_get_int(b, key, err);
+	return (*err == 0);
+    } else {
+	return 0;
+    }
+}
+
 static int read_params_bundle (gretl_bundle *bparm,
 			       gretl_bundle *bmod,
 			       struct svm_meta *meta,
@@ -1045,46 +1076,42 @@ static int read_params_bundle (gretl_bundle *bparm,
        the libsvm @parm struct
     */
 
-    if (gretl_bundle_has_key(bparm, "loadmod")) {
-	ival = gretl_bundle_get_int(bparm, "loadmod", &err);
+    if (get_optional_int(bparm, "loadmod", &ival, &err)) {
 	if (ival != 0 && bmod == NULL) {
 	    fprintf(stderr, "invalid 'loadmod' arg %d\n", ival);
 	    err = E_INVARG;
-	}
-	if (!err) {
+	} else {
 	    meta->loadmod = ival;
 	}
     }
 
-    if (!err && gretl_bundle_has_key(bparm, "scaling")) {
-	ival = gretl_bundle_get_int(bparm, "scaling", &err);
-	if (!err && (ival < 0 || ival > 2)) {
+    if (get_optional_int(bparm, "scaling", &ival, &err)) {
+	if (ival < 0 || ival > 2) {
 	    fprintf(stderr, "invalid 'scaling' arg %d\n", ival);
 	    err = E_INVARG;
-	}
-	if (!err) {
+	} else {
 	    meta->scaling = ival;
 	}
     }
 
-    if (!err && gretl_bundle_has_key(bparm, "t2_train")) {
-	ival = gretl_bundle_get_int(bparm, "t2_train", &err);
-	if (!err && (ival < list[0] || ival > dset->n)) {
+    if (get_optional_int(bparm, "no_predict", &ival, &err)) {
+	meta->predict = (ival == 0);
+    }
+
+    if (get_optional_int(bparm, "t2_train", &ival, &err)) {
+	if (ival != 0 && (ival < list[0] || ival > dset->n)) {
 	    fprintf(stderr, "invalid 't2_train' arg %d\n", ival);
 	    err = E_INVARG;
-	}
-	if (!err) {
+	} else if (ival > 0) {
 	    meta->t2_train = ival - 1; /* zero-based */
 	}
     }
 
-    if (!err && gretl_bundle_has_key(bparm, "cross_validation")) {
-	ival = gretl_bundle_get_int(bparm, "cross_validation", &err);
-	if (!err && ival < 2) {
+    if (get_optional_int(bparm, "cross_validation", &ival, &err)) {
+	if (ival < 2) {
 	    fprintf(stderr, "invalid 'cross_validation' arg %d\n", ival);
 	    err = E_INVARG;
-	}
-	if (!err) {
+	} else {
 	    meta->xvalid = ival;
 	}
     }
@@ -1094,9 +1121,9 @@ static int read_params_bundle (gretl_bundle *bparm,
 	if (strval != NULL && *strval != '\0') {
 	    meta->ranges_outfile = gretl_strdup(strval);
 	}
-	strval = gretl_bundle_get_string(bparm, "scaled_outfile", NULL);
+	strval = gretl_bundle_get_string(bparm, "data_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->scaled_outfile = gretl_strdup(strval);
+	    meta->data_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "ranges_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
@@ -1287,8 +1314,8 @@ int gretl_svm_predict (const int *list,
 	pputs(prn, "OK\n");
     }
 
-    if (!err && meta.scaled_outfile != NULL) {
-	err = write_problem(prob1, k, meta.scaled_outfile);
+    if (!err && meta.data_outfile != NULL) {
+	err = write_problem(prob1, k, meta.data_outfile);
 	report_result(err, prn);
     }
 
@@ -1303,8 +1330,9 @@ int gretl_svm_predict (const int *list,
 	    err = E_INVARG;
 	} else {
 	    pputs(prn, "OK\n");
-	    pprintf(prn, "svm_type = %s\n", svm_type_names[parm.svm_type]);
-	    pprintf(prn, "kernel_type = %s\n", kernel_type_names[parm.kernel_type]);
+	    pprintf(prn, "svm_type %s, kernel_type %s\n",
+		    svm_type_names[parm.svm_type],
+		    kernel_type_names[parm.kernel_type]);
 	}
     }
 
@@ -1314,7 +1342,6 @@ int gretl_svm_predict (const int *list,
 	model = svm_model_from_bundle(bmodel, &err);
 	report_result(err, prn);
     } else if (!err && meta.model_infile != NULL) {
-	/* FIXME filename encoding? */
 	pprintf(prn, "Loading svm model from %s... ", meta.model_infile);
 	model = svm_load_model_wrapper(meta.model_infile, &err);
 	report_result(err, prn);
@@ -1344,14 +1371,13 @@ int gretl_svm_predict (const int *list,
 	    report_result(err, prn);
 	}
 	if (meta.model_outfile != NULL) {
-	    /* FIXME filename encoding? */
 	    pprintf(prn, "Saving svm model as %s... ", meta.model_outfile);
 	    err = svm_save_model_wrapper(meta.model_outfile, model);
 	    report_result(err, prn);
 	}
     }
 
-    if (!err) {
+    if (!err && meta.predict) {
 	int training = (meta.t2_train > 0);
 	int T_os = -1;
 
