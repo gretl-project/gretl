@@ -43,11 +43,11 @@ struct svm_meta {
     int xvalid;
     int savemod;
     int loadmod;
-    gchar *ranges_outfile;
-    gchar *scaled_outfile;
-    gchar *model_outfile;
-    gchar *ranges_infile;
-    gchar *model_infile;
+    char *ranges_outfile;
+    char *scaled_outfile;
+    char *model_outfile;
+    char *ranges_infile;
+    char *model_infile;
 };
 
 struct svm_parm_info {
@@ -84,11 +84,11 @@ static void svm_meta_init (struct svm_meta *m)
 
 static void svm_meta_free (struct svm_meta *m)
 {
-    g_free(m->ranges_outfile);
-    g_free(m->scaled_outfile);
-    g_free(m->model_outfile);
-    g_free(m->ranges_infile);
-    g_free(m->model_infile);
+    free(m->ranges_outfile);
+    free(m->scaled_outfile);
+    free(m->model_outfile);
+    free(m->ranges_infile);
+    free(m->model_infile);
 }
 
 static int doing_file_io (struct svm_meta *m)
@@ -1063,23 +1063,23 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (!err) {
 	strval = gretl_bundle_get_string(bparm, "ranges_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->ranges_outfile = g_strdup(strval);
+	    meta->ranges_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "scaled_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->scaled_outfile = g_strdup(strval);
+	    meta->scaled_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "ranges_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->ranges_infile = g_strdup(strval);
+	    meta->ranges_infile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "model_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->model_outfile = g_strdup(strval);
+	    meta->model_outfile = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "model_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
-	    meta->model_infile = g_strdup(strval);
+	    meta->model_infile = gretl_strdup(strval);
 	}
     }
 
