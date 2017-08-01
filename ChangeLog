@@ -1,6 +1,13 @@
 version 2017d, in progress
 - $model bundle: add members t1 and t2 (start and end of
   estimation range)
+- New function getinfo(): returns a bundle with information
+  on a specified series
+- New function cdummify(): applies to a list, with the effect
+  of "dummifying" any and all series in the list that have
+  the "coded' attribute set
+- psdroot() function: use improved algorithm (from Golub and
+  Van Loan)
 - GUI: enable a tabbed editor for foreign scripts
 - GUI: fix breakage in function-package search facility
 
