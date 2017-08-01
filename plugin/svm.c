@@ -891,10 +891,12 @@ static int sv_data_fill (sv_data *prob,
 	prob->x[s] = &x_space[pos];
 	j = 0;
 	for (i=1; i<=k; i++) {
-	    vi = (int) gretl_matrix_get(ranges, i, 3);
-	    if (vi <= 0) {
-		/* may happen when we get to the test data */
-		continue;
+	    if (ranges->cols == 4) {
+		vi = (int) gretl_matrix_get(ranges, i, 3);
+		if (vi <= 0) {
+		    /* may happen when we get to the test data */
+		    continue;
+		}
 	    }
 	    idx = (int) gretl_matrix_get(ranges, i, 0);
 	    xmin = gretl_matrix_get(ranges, i, 1);
