@@ -122,7 +122,7 @@ static void set_svm_param_defaults (sv_parm *parm)
     parm->coef0 = 0;    /* for use in kernel function */
 
     /* training-only variables */
-    parm->cache_size = 1000;   /* cache size in MB */
+    parm->cache_size = 1024;   /* cache size in MB */
     parm->eps = 0.001;         /* stopping criterion */
     parm->C = 1;               /* cost: for C_SVC, EPSILON_SVR and NU_SVR */
     parm->nr_weight = 0;       /* for C_SVC */
@@ -1107,9 +1107,9 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
     }
 
-    if (get_optional_int(bparm, "t2_train", &ival, &err)) {
+    if (get_optional_int(bparm, "n_train", &ival, &err)) {
 	if (ival != 0 && (ival < list[0] || ival > dset->n)) {
-	    fprintf(stderr, "invalid 't2_train' arg %d\n", ival);
+	    fprintf(stderr, "invalid 'n_train' arg %d\n", ival);
 	    err = E_INVARG;
 	} else if (ival > 0) {
 	    wrap->t2_train = ival - 1; /* zero-based */
