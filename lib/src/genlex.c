@@ -476,6 +476,7 @@ struct str_table funcs[] = {
     { F_SMPLSPAN,  "smplspan" },
     { F_SLEEP,     "sleep" },
     { F_GETINFO,   "getinfo" },
+    { F_CDUMIFY,   "cdummify" },
     { F_SVM,       "svm" },
     { 0,           NULL }
 };

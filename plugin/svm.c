@@ -1099,6 +1099,10 @@ static int read_params_bundle (gretl_bundle *bparm,
     return err;
 }
 
+/* wrap a couple of libsvm I/0 functions so they don't
+   fall foul of filename encoding issues on Windows
+*/
+
 static sv_model *svm_load_model_wrapper (const char *fname,
 					 int *err)
 {

@@ -289,6 +289,7 @@ enum {
     F_ECDF,
     F_SLEEP,
     F_GETINFO,
+    F_CDUMIFY,
     HF_CINV,
     HF_CTRAN,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */

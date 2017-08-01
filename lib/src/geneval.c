@@ -4802,7 +4802,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-/* argument is series; value returned is list */
+/* argument is series or list; value returned is list */
 
 static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 {
@@ -4812,7 +4812,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 	int *list = NULL;
 	double oddval = NADBL;
 
-	if (r->t != EMPTY) {
+	if (!null_or_empty(r)) {
 	    if (r->t != NUM) {
 		p->err = E_TYPES;
 		return ret;
@@ -4838,16 +4838,43 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 	    /* got just one argument */
 	    p->err = list_dumgenr(&list, p->dset, OPT_F);
 	    ret->v.ivec = list;
-	} else if (oddval == -999) {
-	    /* temporary hack! */
-	    p->err = auto_dummify_list(&list, p->dset);
-	    ret->v.ivec = list;
 	} else if (list[0] > 1) {
 	    gretl_errmsg_set("dummify(x, y): first argument should be a single variable");
 	    free(list);
 	    p->err = E_DATA;
 	} else {
 	    p->err = dumgenr_with_oddval(&list, p->dset, oddval);
+	    ret->v.ivec = list;
+	}
+    }
+
+    return ret;
+}
+
+/* argument is list; value returned is list */
+
+static NODE *cdummify_func (NODE *n, parser *p)
+{
+    NODE *ret = aux_list_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = NULL;
+
+	if (n->t == LIST) {
+	    list = gretl_list_copy(n->v.ivec);
+	} else if (useries_node(n)) {
+	    list = gretl_list_new(1);
+	    list[1] = n->vnum;
+	} else {
+	    p->err = E_TYPES;
+	}
+
+	if (p->err) {
+	    ; /* don't do anything more */
+	} else if (list == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    p->err = auto_dummify_list(&list, p->dset);
 	    ret->v.ivec = list;
 	}
     }
@@ -13637,9 +13664,14 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_DUMIFY:
+    case F_CDUMIFY:
 	/* series or list argument wanted */
 	if (ok_list_node(l)) {
-	    ret = dummify_func(l, r, p);
+	    if (t->t == F_CDUMIFY) {
+		ret = cdummify_func(l, p);
+	    } else {
+		ret = dummify_func(l, r, p);
+	    }
 	} else {
 	    p->err = E_TYPES;
 	}
