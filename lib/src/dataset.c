@@ -3751,12 +3751,14 @@ int series_is_integer_valued (const DATASET *dset, int i)
     int t, ret = 1;
 
     for (t=0; t<dset->n; t++) {
-	if (!na(x[t]) && x[t] != floor(x[t])) {
-	    ret = 0;
-	    break;
-	} else if (x[t] > INT_MAX || x[t] < INT_MIN) {
-	    ret = 0;
-	    break;
+	if (!na(x[t])) {
+	    if (x[t] != floor(x[t])) {
+		ret = 0;
+		break;
+	    } else if (x[t] > INT_MAX || x[t] < INT_MIN) {
+		ret = 0;
+		break;
+	    }
 	}
     }
 
