@@ -1332,8 +1332,8 @@ drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
 	if (fabs(d) < R_DIAG_MIN) {
 	    vi = pmod->list[pos];
 	    gretl_list_append_term(&droplist, vi);
-	    fprintf(stderr, "dropping redundant variable %d (%s)\n",
-		    vi, dset->varname[vi]);
+	    fprintf(stderr, "dropping redundant variable %d (%s): d = %g\n",
+		    vi, dset->varname[vi], d);
 	    gretl_list_delete_at_pos(pmod->list, pos--);
 	    nd++;
 	}

@@ -1893,7 +1893,6 @@ int list_resample (int *list, DATASET *dset)
 
 int list_dropcoll (int *list, double eps, DATASET *dset)
 {
-    double eps_default = 1.0e-8;
     gretl_matrix *R = NULL;
     gretl_matrix *X = NULL;
     int T, k, err = 0;
@@ -1908,7 +1907,7 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
     if (eps < 0) {
 	return E_DATA;
     } else if (na(eps)) {
-	eps = eps_default;
+	eps = R_DIAG_MIN;
     }
 
     X = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
