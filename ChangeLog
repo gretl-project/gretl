@@ -1,11 +1,13 @@
 version 2017d, in progress
+- New accessor, $tmax: gives the maximum legal setting for
+  the end of the sample range via "smpl"
 - $model bundle: add members t1 and t2 (start and end of
   estimation range)
 - New function getinfo(): returns a bundle with information
   on a specified series
 - New function cdummify(): applies to a list, with the effect
   of "dummifying" any and all series in the list that have
-  the "coded' attribute set
+  the "coded" attribute set
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
 - GUI: enable a tabbed editor for foreign scripts

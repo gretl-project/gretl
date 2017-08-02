@@ -80,6 +80,7 @@ struct str_table dvars[] = {
     { R_TEST_LNL,  "$rlnl" },
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
+    { R_TMAX,      "$tmax" },
     { R_STOPWATCH, "$stopwatch" },
     { R_PUNIT,     "$unit" },
     { R_OBSMAJ,    "$obsmajor" },

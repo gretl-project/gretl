@@ -12465,6 +12465,15 @@ double dvar_get_scalar (int i, const DATASET *dset)
 	return (no_data(dset))? NADBL : dset->t1 + 1;
     case R_T2:
 	return (no_data(dset))? NADBL : dset->t2 + 1;
+    case R_TMAX:
+	if (no_data(dset)) {
+	    return NADBL;
+	} else {
+	    int tmax;
+
+	    sample_range_get_extrema(dset, NULL, &tmax);
+	    return tmax + 1;
+	}
     case R_DATATYPE:
 	return (no_data(dset))? NADBL : dataset_get_structure(dset);
     case R_TEST_PVAL:

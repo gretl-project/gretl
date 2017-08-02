@@ -513,7 +513,7 @@
       <description>
 	<para>
 	  Returns the number of observations in the currently selected
-	  sample.
+	  sample. Related: <fncref label="\$tmax" targ="dtmax"/>.
 	</para>
       </description>
     </function>
@@ -923,6 +923,24 @@
 	  <seelist>
             <fncref label="\$pvalue" targ="dpvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$tmax" section="access" output="int">
+      <description>
+	<para>
+	  Returns the maximum legal setting for the end of the sample
+	  range via the <cmdref targ="smpl"/> command. In most cases
+	  this will equal the number of observations in the dataset
+	  but within a hansl function the <lit>$tmax</lit> value may
+	  be smaller, since in general data access within functions is
+	  limited to the sample range set by the caller.
+	</para>
+	<para>
+	  Note that <lit>$tmax</lit> does not in general equal <fncref
+	  label="\$nobs" targ="dnobs"/>, which gives the number of
+	  observations in the current sample range.
 	</para>
       </description>
     </function>

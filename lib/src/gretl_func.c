@@ -8417,10 +8417,12 @@ void allow_full_data_access (int s)
 /**
  * sample_range_get_extrema:
  * @dset: dataset info.
- * @t1: location to receive earliest possible starting observation.
- * @t2: location to receive latest possible ending observation.
+ * @t1: location to receive earliest possible starting
+ * observation, or NULL.
+ * @t2: location to receive latest possible ending observation,
+ * or NULL.
  *
- * Fills out @t1 and @t2, making allowance for the possibility
+ * Fills out @t1 and/or @t2, making allowance for the possibility
  * that we're currently executing a function, on entry to 
  * which the sample range was restricted: within the function,
  * we are not allowed to overstep the bounds set on entry. 
@@ -8428,19 +8430,22 @@ void allow_full_data_access (int s)
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 {
-    if (allow_full_data) {
-	*t1 = 0;
-	*t2 = dset->n - 1;
-    } else {	
+    int tvals[2] = {0, dset->n - 1};
+
+    if (!allow_full_data) {
 	fncall *call = current_function_call();
 
 	if (call != NULL) {
-	    *t1 = call->obs.t1;
-	    *t2 = call->obs.t2;
-	} else {
-	    *t1 = 0;
-	    *t2 = dset->n - 1;
+	    tvals[0] = call->obs.t1;
+	    tvals[1] = call->obs.t2;
 	}
+    }
+
+    if (t1 != NULL) {
+	*t1 = tvals[0];
+    }
+    if (t2 != NULL) {
+	*t2 = tvals[1];
     }
 }
 
