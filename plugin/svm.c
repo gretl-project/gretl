@@ -177,7 +177,6 @@ static int set_or_print_svm_parm (sv_parm *parm, gretl_bundle *b,
 
     if (b == NULL) {
 	/* we're just printing */
-	pputs(prn, "libsvm parameter values:\n");
 	for (i=0; i<N_PARMS && !err; i++) {
 	    if (pinfo[i].type == GRETL_TYPE_DOUBLE) {
 		xval = *(double *) elem[i];
@@ -1315,8 +1314,25 @@ static int check_svm_params (sv_data *data,
 		kernel_type_names[parm->kernel_type]);
     }
 
-    if (0 && prn != NULL) {
-	/* do this only if we got a verbose flag? */
+    return err;
+}
+
+static int call_cross_validation (sv_data *data,
+				  sv_parm *parm,
+				  svm_wrapper *w,
+				  PRN *prn)
+{
+    int err;
+
+    pputs(prn, "libsvm parameters before cross-validation:\n");
+    print_svm_parm(parm, prn);
+    pprintf(prn, "now calling cross-validation function (this may take a while)\n");
+    svm_flush(prn);
+
+    err = do_cross_validation(data, parm, w->xvalid, prn);
+
+    if (!err) {
+	pputs(prn, "parameters after cross-validation\n");
 	print_svm_parm(parm, prn);
     }
 
@@ -1421,14 +1437,10 @@ int gretl_svm_predict (const int *list,
 	model = svm_load_model_wrapper(wrap.model_infile, &err);
 	report_result(err, prn);
     } else if (!err) {
-	/* cross-validate (?) or build a model by training */
 	if (wrap.xvalid > 0) {
-	    pprintf(prn, "Calling cross-validation function (this may take a while)\n");
-	    svm_flush(prn);
-	    err = do_cross_validation(prob1, &parm, wrap.xvalid, prn);
-	    /* And then what? Apparently we don't get a model out of this. */
-	    goto getout;
-	} else {
+	    err = call_cross_validation(prob1, &parm, &wrap, prn);
+	}
+	if (!err) {
 	    pprintf(prn, "Calling training function (this may take a while)\n");
 	    svm_flush(prn);
 	    model = svm_train(prob1, &parm);
