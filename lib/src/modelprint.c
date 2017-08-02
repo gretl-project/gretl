@@ -1677,6 +1677,12 @@ static void print_model_droplist (const MODEL *pmod,
 	/* any droplist references will probably be wrong,
 	   and may be out of bounds */
 	return;
+    } else if (dlist[0] > 10) {
+	/* let's not spew a ton of series names here */
+	pputs(prn, A_(tag));
+	pprintf(prn, A_(" %d series"), dlist[0]);
+	pputc(prn, '\n');
+	return;
     }
 
     print_extra_list(tag, dlist, dset, prn);
