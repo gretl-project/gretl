@@ -134,8 +134,8 @@ static void set_svm_param_defaults (sv_parm *parm)
     parm->probability = 0;     /* do probability estimates */
 }
 
-static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
-			 PRN *prn)
+static int set_or_print_svm_parm (sv_parm *parm, gretl_bundle *b,
+				  PRN *prn)
 {
     struct svm_parm_info pinfo[N_PARMS] = {
 	{ "svm_type",     GRETL_TYPE_INT },
@@ -175,6 +175,21 @@ static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
     double xval;
     int err = 0;
 
+    if (b == NULL) {
+	/* we're just printing */
+	pputs(prn, "libsvm parameter values:\n");
+	for (i=0; i<N_PARMS && !err; i++) {
+	    if (pinfo[i].type == GRETL_TYPE_DOUBLE) {
+		xval = *(double *) elem[i];
+		pprintf(prn, " %s = %g\n", pinfo[i].key, xval);
+	    } else {
+		ival = *(int *) elem[i];
+		pprintf(prn, " %s = %d\n", pinfo[i].key, ival);
+	    }
+	}
+	return 0;
+    }
+
     set_svm_param_defaults(parm);
 
     for (i=0; i<N_PARMS && !err; i++) {
@@ -202,6 +217,17 @@ static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
     }
 
     return err;
+}
+
+static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
+			 PRN *prn)
+{
+    return set_or_print_svm_parm(parm, b, prn);
+}
+
+static void print_svm_parm (sv_parm *parm, PRN *prn)
+{
+    set_or_print_svm_parm(parm, NULL, prn);
 }
 
 static void gretl_destroy_svm_model (sv_model *model)
@@ -1116,9 +1142,9 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
     }
 
-    if (get_optional_int(bparm, "cross_validation", &ival, &err)) {
+    if (get_optional_int(bparm, "xvalidate", &ival, &err)) {
 	if (ival < 2) {
-	    fprintf(stderr, "invalid 'cross_validation' arg %d\n", ival);
+	    fprintf(stderr, "invalid 'xvalidate' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
 	    wrap->xvalid = ival;
@@ -1287,6 +1313,11 @@ static int check_svm_params (sv_data *data,
 	pprintf(prn, "svm_type %s, kernel_type %s\n",
 		svm_type_names[parm->svm_type],
 		kernel_type_names[parm->kernel_type]);
+    }
+
+    if (0 && prn != NULL) {
+	/* do this only if we got a verbose flag? */
+	print_svm_parm(parm, prn);
     }
 
     return err;
