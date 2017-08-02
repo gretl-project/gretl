@@ -735,11 +735,16 @@ static int set_var_info (const int *list,
 	}
 	if (opt & OPT_F) {
 	    /* --coded */
-	    if (series_is_integer_valued(dset, vi) &&
-		!gretl_isdummy(0, dset->n - 1, dset->Z[vi])) {
+	    int ivals = series_is_integer_valued(dset, vi);
+	    int isdum = gretl_isdummy(0, dset->n - 1, dset->Z[vi]);
+
+	    if (ivals && !isdum) {
 		series_set_flag(dset, vi, VAR_CODED);
 	    } else {
-		gretl_errmsg_set("This series cannot be set as 'coded'\n");
+		gretl_errmsg_sprintf("%s cannot be set as 'coded' (%s)",
+				     dset->varname[vi], ivals ?
+				     _("is a 0/1 variable") :
+				     _("not integer-valued"));
 		err = E_TYPES;
 	    }
 	} else if (opt & OPT_N) {
