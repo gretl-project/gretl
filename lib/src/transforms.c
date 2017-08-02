@@ -1883,7 +1883,7 @@ int list_resample (int *list, DATASET *dset)
 /**
  * list_dropcoll:
  * @list: on entry, list of variables to process; on exit,
- * the origonal list minus collinear terms.
+ * the original list minus collinear terms.
  * @dset: dataset struct.
  *
  * Drop collinear variables from @list.
@@ -1896,7 +1896,7 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
     double eps_default = 1.0e-8;
     gretl_matrix *R = NULL;
     gretl_matrix *X = NULL;
-    int m, n, err = 0;
+    int T, k, err = 0;
 
     if (list == NULL) {
 	return E_DATA;
@@ -1917,14 +1917,14 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 	return err;
     }
 
-    m = X->rows;
-    n = X->cols;
+    T = X->rows;
+    k = X->cols;
     
-    if (n > m) {
-	gretl_errmsg_sprintf(_("A minimum of %d observations is required"), n);
+    if (T < k) {
+	gretl_errmsg_sprintf(_("A minimum of %d observations is required"), k);
 	err = E_TOOFEW;
     } else {
-	R = gretl_matrix_alloc(n, n);
+	R = gretl_matrix_alloc(k, k);
 	if (R == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -1936,7 +1936,7 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 	double rii;
 	int i, j = 1;
 
-	for (i=0; i<n; i++, j++) {
+	for (i=0; i<k && !err; i++, j++) {
 	    rii = gretl_matrix_get(R, i, i);
 	    if (fabs(rii) < eps) {
 		err = gretl_list_delete_at_pos(list, j--);
