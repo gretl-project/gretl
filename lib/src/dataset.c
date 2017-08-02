@@ -3748,10 +3748,11 @@ int series_is_coded (const DATASET *dset, int i)
 int series_is_integer_valued (const DATASET *dset, int i)
 {
     const double *x = dset->Z[i];
-    int t, ret = 1;
+    int t, n_ok = 0, ret = 1;
 
     for (t=0; t<dset->n; t++) {
 	if (!na(x[t])) {
+	    n_ok++;
 	    if (x[t] != floor(x[t])) {
 		ret = 0;
 		break;
@@ -3760,6 +3761,13 @@ int series_is_integer_valued (const DATASET *dset, int i)
 		break;
 	    }
 	}
+    }
+
+    if (n_ok == 0) {
+	/* don't let an entirely missing series count as
+	   "integer-valued"
+	*/
+	ret = 0;
     }
 
     return ret;
