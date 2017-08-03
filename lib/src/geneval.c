@@ -11484,6 +11484,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    for (i=0; i<k && !p->err; i++) {
 		ptr = NULL;
 		e = eval(n->v.bn.n[i], p);
+		if (p->err) {
+		    break;
+		}
 		if (i == 0 || i % 2 == 0) {
 		    /* we need a key string */
 		    if (e->t == STR) {
