@@ -31,6 +31,7 @@ typedef struct svm_model sv_model;
 typedef struct svm_parameter sv_parm;
 typedef struct svm_wrapper_ svm_wrapper;
 typedef struct svm_grid_ svm_grid;
+typedef struct grid_row_ grid_row;
 
 static const char *svm_type_names[] = {
     "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"
@@ -70,17 +71,22 @@ struct svm_parm_info {
     GretlType type;
 };
 
+enum {
+    G_C,
+    G_g,
+    G_p
+};
+
+struct grid_row_ {
+    double start;
+    double stop;
+    double step;
+};
+
 struct svm_grid_ {
-    double C_start;
-    double C_stop;
-    double C_step;
-    double g_start;
-    double g_stop;
-    double g_step;
-    int C_null;
-    int g_null;
-    int nC;
-    int ng;
+    grid_row row[3];
+    int null[3];
+    int n[3];
 };
 
 #define N_PARMS 15
@@ -463,6 +469,7 @@ static void save_parms_to_bundle (const sv_parm *parm,
     gretl_bundle_void_content(b);
     gretl_bundle_set_scalar(b, "C", parm->C);
     gretl_bundle_set_scalar(b, "gamma", parm->gamma);
+    gretl_bundle_set_scalar(b, "epsilon", parm->p);
 }
 
 static double *array_from_bundled_matrix (gretl_bundle *b,
@@ -1139,100 +1146,103 @@ static int do_cross_validation (sv_data *prob,
     "null"         -- do not grid with g
 */
 
-static int grid_set_dimensions (svm_grid *gd)
+static int grid_set_dimensions (svm_grid *g)
 {
     double x;
+    int i;
 
-    if ((gd->C_stop < gd->C_start && gd->C_step >= 0) ||
-	(gd->g_stop < gd->g_start && gd->g_step >= 0) ||
-	(gd->C_stop > gd->C_start && gd->C_step <= 0) ||
-	(gd->g_stop > gd->g_start && gd->g_step <= 0)) {
-	return E_INVARG;
-    }
-
-    gd->C_null = gd->nC = 0;
-    
-    if (gd->C_start == 0 && gd->C_stop == 0 && gd->C_step == 0) {
-	/* flag clamping of C */
-	gd->C_null = gd->nC = 1;
-    } else if (gd->C_stop >= gd->C_start) {
-	for (x=gd->C_start; x<=gd->C_stop; x+=gd->C_step) {
-	    gd->nC += 1;
+    for (i=0; i<=G_p; i++) {
+	if ((g->row[i].stop < g->row[i].start && g->row[i].step >= 0) ||
+	    (g->row[i].stop > g->row[i].start && g->row[i].step <= 0)) {
+	    return E_INVARG;
 	}
-    } else {
-	for (x=gd->C_start; x>=gd->C_stop; x+=gd->C_step) {
-	    gd->nC += 1;
-	}
-    }
-
-    gd->g_null = gd->ng = 0;
-    
-    if (gd->g_start == 0 && gd->g_stop == 0 && gd->g_step == 0) {
-	/* flag clamping of gamma */
-	gd->g_null = gd->ng = 1;
-    } else if (gd->g_stop >= gd->g_start) {
-	for (x=gd->g_start; x<=gd->g_stop; x+=gd->g_step) {
-	    gd->ng += 1;
-	}
-    } else {
-	for (x=gd->g_start; x>=gd->g_stop; x+=gd->g_step) {
-	    gd->ng += 1;
+	g->null[i] = g->n[i] = 0;
+	if (g->row[i].start == 0 && g->row[i].stop == 0 && g->row[i].step == 0) {
+	    /* flag clamping of this row */
+	    g->null[i] = g->n[i] = 1;
+	} else if (g->row[i].stop >= g->row[i].start) {
+	    for (x=g->row[i].start; x<=g->row[i].stop; x+=g->row[i].step) {
+		g->n[i] += 1;
+	    }
+	} else {
+	    for (x=g->row[i].start; x>=g->row[i].stop; x+=g->row[i].step) {
+		g->n[i] += 1;
+	    }
 	}
     }
 
     return 0;
 }
 
-static void svm_grid_default (svm_grid *grid)
+static void svm_grid_default (svm_grid *g)
 {
-    grid->C_start = -5;
-    grid->C_stop = 9; /* was 15 */
-    grid->C_step = 2;
+    g->row[G_C].start = -5;
+    g->row[G_C].stop = 9; /* was 15 */
+    g->row[G_C].step = 2;
 
-    grid->g_start = 3;
-    grid->g_stop = -15;
-    grid->g_step = -2;
+    g->row[G_g].start = 3;
+    g->row[G_g].stop = -15;
+    g->row[G_g].step = -2;
 
-    grid_set_dimensions(grid);
+    g->row[G_p].start = 0;
+    g->row[G_p].stop = 0;
+    g->row[G_p].step = 0;
+
+    grid_set_dimensions(g);
 }
 
-static double grid_get_C (svm_grid *grid, int i)
+static double grid_get_C (svm_grid *g, int i)
 {
-    double C_pow = grid->C_start + i * grid->C_step;
+    double C_pow = g->row[G_C].start + i * g->row[G_C].step;
 
     return pow(2.0, C_pow);
 }
 
-static double grid_get_g (svm_grid *grid, int j)
+static double grid_get_g (svm_grid *g, int j)
 {
-    double g_pow = grid->g_start + j * grid->g_step;
+    double g_pow = g->row[G_g].start + j * g->row[G_g].step;
 
     return pow(2.0, g_pow);
+}
+
+static double grid_get_p (svm_grid *g, int k)
+{
+    double p_pow = g->row[G_p].start + k * g->row[G_p].step;
+
+    return pow(2.0, p_pow);
 }
 
 static int svm_wrapper_add_grid (svm_wrapper *w,
 				 const gretl_matrix *m)
 {
-    int err = 0;
+    svm_grid *g;
+    int i, err = 0;
 
-    w->grid = malloc(sizeof *w->grid);
+    g = calloc(1, sizeof *g);
 
-    if (w->grid == NULL) {
+    if (g == NULL) {
 	err = E_ALLOC;
     } else if (m != NULL) {
-	if (m->rows != 2 || m->cols != 3) {
+	if (m->rows < 2 || m->cols != 3) {
 	    err = E_INVARG;
 	} else {
-	    w->grid->C_start = gretl_matrix_get(m, 0, 0);
-	    w->grid->C_stop  = gretl_matrix_get(m, 0, 1);
-	    w->grid->C_step  = gretl_matrix_get(m, 0, 2);
-	    w->grid->g_start = gretl_matrix_get(m, 1, 0);
-	    w->grid->g_stop  = gretl_matrix_get(m, 1, 1);
-	    w->grid->g_step  = gretl_matrix_get(m, 1, 2);
-	    err = grid_set_dimensions(w->grid);
+	    for (i=0; i<m->rows; i++) {
+		g->row[i].start = gretl_matrix_get(m, i, 0);
+		g->row[i].stop  = gretl_matrix_get(m, i, 1);
+		g->row[i].step  = gretl_matrix_get(m, i, 2);
+	    }
+	    err = grid_set_dimensions(g);
 	}
     } else {
-	svm_grid_default(w->grid);
+	svm_grid_default(g);
+    }
+
+    if (err) {
+	if (g != NULL) {
+	    free(g);
+	}
+    } else {
+	w->grid = g;
     }
 
     return err;
@@ -1260,10 +1270,13 @@ static int call_cross_validation (sv_data *data,
     }
 
     if (w->grid != NULL) {
+	svm_grid *grid = w->grid;
 	double cmax = -DBL_MAX;
-	int i, j, imax = 0, jmax = 0;
-	int nC = w->grid->nC;
-	int ng = w->grid->ng;
+	int imax = 0, jmax = 0, kmax = 0;
+	int nC = grid->n[G_C];
+	int ng = grid->n[G_g];
+	int np = grid->n[G_p];
+	int i, j, k;
 
 	if (!(w->flags & W_QUIET)) {
 	    /* cut out excessive verbosity */
@@ -1271,18 +1284,24 @@ static int call_cross_validation (sv_data *data,
 	}
 
 	for (i=0; i<nC; i++) {
-	    if (!w->grid->C_null) {
-		parm->C = grid_get_C(w->grid, i);
+	    if (!grid->null[G_C]) {
+		parm->C = grid_get_C(grid, i);
 	    }
 	    for (j=0; j<ng; j++) {
-		if (!w->grid->g_null) {
-		    parm->gamma = grid_get_g(w->grid, j);
+		if (!grid->null[G_g]) {
+		    parm->gamma = grid_get_g(grid, j);
 		}
-		do_cross_validation(data, parm, w->nfold, targ, &crit, prn);
-		if (crit > cmax) {
-		    cmax = crit;
-		    imax = i;
-		    jmax = j;
+		for (k=0; k<np; k++) {
+		    if (!grid->null[G_p]) {
+			parm->p = grid_get_p(grid, k);
+		    }
+		    do_cross_validation(data, parm, w->nfold, targ, &crit, prn);
+		    if (crit > cmax) {
+			cmax = crit;
+			imax = i;
+			jmax = j;
+			kmax = k;
+		    }
 		}
 	    }
 	}
@@ -1292,15 +1311,18 @@ static int call_cross_validation (sv_data *data,
 	    svm_set_print_string_function(gretl_libsvm_print);
 	}
 
-	if (!w->grid->C_null) {
-	    parm->C = grid_get_C(w->grid, imax);
+	if (!grid->null[G_C]) {
+	    parm->C = grid_get_C(grid, imax);
 	}
-	if (!w->grid->g_null) {
-	    parm->gamma = grid_get_g(w->grid, jmax);
+	if (!grid->null[G_g]) {
+	    parm->gamma = grid_get_g(grid, jmax);
+	}
+	if (!grid->null[G_p]) {
+	    parm->p = grid_get_p(grid, kmax);
 	}
 
-	pprintf(prn, "*** Criterion maximized at %g with C = %g, gamma = %g ***\n",
-		cmax, parm->C, parm->gamma);
+	pprintf(prn, "*** Criterion maximized at %g: C=%g, gamma=%g, p=%g ***\n",
+		cmax, parm->C, parm->gamma, parm->p);
     } else {
 	err = do_cross_validation(data, parm, w->nfold, targ, &crit, prn);
     }
