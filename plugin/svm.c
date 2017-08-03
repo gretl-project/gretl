@@ -30,6 +30,7 @@ typedef struct svm_node sv_cell;
 typedef struct svm_model sv_model;
 typedef struct svm_parameter sv_parm;
 typedef struct svm_wrapper_ svm_wrapper;
+typedef struct svm_grid_ svm_grid;
 
 static const char *svm_type_names[] = {
     "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"
@@ -39,27 +40,47 @@ static const char *kernel_type_names[] = {
     "linear", "polynomial", "rbf", "sigmoid", "precomputed"
 };
 
+enum {
+    W_SAVEMOD = 1 << 0,
+    W_LOADMOD = 1 << 1,
+    W_QUIET   = 1 << 2,
+    W_SEARCH  = 1 << 3,
+    W_STDFMT  = 1 << 4,
+    W_SVPARM  = 1 << 5
+};
+
 struct svm_wrapper_ {
     int auto_type;
+    int flags;
     int scaling;
     int t2_train;
-    int xvalid;
-    int savemod;
-    int loadmod;
+    int nfold;
     int predict;
-    int quiet;
-    int libsvm_ranges;
     gretl_matrix *ranges;
     char *ranges_outfile;
     char *ranges_infile;
     char *model_outfile;
     char *model_infile;
     char *data_outfile;
+    svm_grid *grid;
 };
 
 struct svm_parm_info {
     const char *key;
     GretlType type;
+};
+
+struct svm_grid_ {
+    double C_start;
+    double C_stop;
+    double C_step;
+    double g_start;
+    double g_stop;
+    double g_step;
+    int C_null;
+    int g_null;
+    int nC;
+    int ng;
 };
 
 #define N_PARMS 15
@@ -78,20 +99,18 @@ static void svm_flush (PRN *prn)
 static void svm_wrapper_init (svm_wrapper *w)
 {
     w->auto_type = EPSILON_SVR;
+    w->flags = 0;
     w->scaling = 1;
     w->t2_train = 0;
-    w->xvalid = 0;
-    w->savemod = 0;
-    w->loadmod = 0;
+    w->nfold = 0;
     w->predict = 2;
-    w->quiet = 0;
-    w->libsvm_ranges = 0;
     w->ranges = NULL;
     w->ranges_outfile = NULL;
     w->ranges_infile = NULL;
     w->model_outfile = NULL;
     w->model_infile = NULL;
     w->data_outfile = NULL;
+    w->grid = NULL;
 }
 
 static void svm_wrapper_free (svm_wrapper *w)
@@ -102,6 +121,7 @@ static void svm_wrapper_free (svm_wrapper *w)
     free(w->model_outfile);
     free(w->model_infile);
     free(w->data_outfile);
+    free(w->grid);
 }
 
 static int doing_file_io (svm_wrapper *w)
@@ -224,10 +244,36 @@ static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
     return set_or_print_svm_parm(parm, b, prn);
 }
 
+#if 0 /* not used at present */
+
 static void print_svm_parm (sv_parm *parm, PRN *prn)
 {
     set_or_print_svm_parm(parm, NULL, prn);
 }
+
+#endif
+
+/* printing apparatus */
+
+static PRN *svm_prn;
+
+static void gretl_libsvm_print (const char *s)
+{
+    if (svm_prn != NULL) {
+	pputs(svm_prn, s);
+	svm_flush(svm_prn);
+    } else {
+	fputs(s, stdout);
+	fflush(stdout);
+    }
+}
+
+static void gretl_libsvm_noprint (const char *s)
+{
+    return;
+}
+
+/* end printing apparatus */
 
 static void gretl_destroy_svm_model (sv_model *model)
 {
@@ -281,7 +327,7 @@ static int bundle_as_list (gretl_bundle *b, const char *key,
 static int svm_model_save_to_bundle (const sv_model *model,
 				     gretl_bundle *b)
 {
-    const struct svm_parameter *parm = &model->param;
+    const sv_parm *parm = &model->param;
     gretl_matrix *m = NULL;
     int i, j, nc, l, ntr;
     int err = 0;
@@ -409,6 +455,14 @@ static int svm_model_save_to_bundle (const sv_model *model,
     }
 
     return err;
+}
+
+static void save_parms_to_bundle (const sv_parm *parm,
+				  gretl_bundle *b)
+{
+    gretl_bundle_void_content(b);
+    gretl_bundle_set_scalar(b, "C", parm->C);
+    gretl_bundle_set_scalar(b, "gamma", parm->gamma);
 }
 
 static double *array_from_bundled_matrix (gretl_bundle *b,
@@ -589,18 +643,23 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 
 static int write_ranges (svm_wrapper *w)
 {
-    FILE *fp;
+    int libsvm_format = 0;
     double lo, hi;
     int i, idx, vi;
+    FILE *fp;
 
     fp = gretl_fopen(w->ranges_outfile, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
+    if (w->flags & W_STDFMT) {
+	libsvm_format = 1;
+    }
+
     gretl_push_c_numeric_locale();
 
-    if (w->libsvm_ranges) {
+    if (libsvm_format) {
 	fprintf(fp, "x\n%d %d\n",
 		(int) gretl_matrix_get(w->ranges, 0, 0),
 		(int) gretl_matrix_get(w->ranges, 0, 1));
@@ -615,7 +674,7 @@ static int write_ranges (svm_wrapper *w)
 	idx = gretl_matrix_get(w->ranges, i, 0);
 	lo  = gretl_matrix_get(w->ranges, i, 1);
 	hi  = gretl_matrix_get(w->ranges, i, 2);
-	if (w->libsvm_ranges) {
+	if (libsvm_format) {
 	    fprintf(fp, "%d %.16g %.16g\n", idx, lo, hi);
 	} else {
 	    vi = gretl_matrix_get(w->ranges, i, 3);
@@ -1024,40 +1083,33 @@ static int real_svm_predict (double *yhat,
 
 static int do_cross_validation (sv_data *prob,
 				sv_parm *parm,
-				int xvalid,
+				int nfolds,
+				double *targ,
+				double *crit,
 				PRN *prn)
 {
-    double *targ;
     int i, n = prob->l;
 
-    targ = malloc(n * sizeof *targ);
-    if (targ == NULL) {
-	return E_ALLOC;
-    }
-
-    svm_cross_validation(prob, parm, xvalid, targ);
+    svm_cross_validation(prob, parm, nfolds, targ);
 
     if (parm->svm_type == EPSILON_SVR || parm->svm_type == NU_SVR) {
-	double total_error = 0;
-	double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
-	double yi, vi;
+	double dev, r, r2, MSE = 0;
 
 	for (i=0; i<prob->l; i++) {
-	    yi = prob->y[i];
-	    vi = targ[i];
-	    total_error += (vi-yi)*(vi-yi);
-	    sumv += vi;
-	    sumy += yi;
-	    sumvv += vi*vi;
-	    sumyy += yi*yi;
-	    sumvy += vi*yi;
+	    dev = prob->y[i] - targ[i];
+	    MSE += dev * dev;
 	}
-	pprintf(prn, "Cross Validation Mean squared error = %g\n",
-		total_error / n);
-	pprintf(prn, "Cross Validation Squared correlation coefficient = %g\n",
-	       ((n*sumvy-sumv*sumy)*(n*sumvy-sumv*sumy)) /
-	       ((n*sumvv-sumv*sumv)*(n*sumyy-sumy*sumy)));
+	MSE /= n;
+	r = gretl_corr(0, prob->l - 1, prob->y, targ, NULL);
+	r2 = r * r;
+	if (prn != NULL) {
+	    pprintf(prn, "C = %g, gamma = %g: MSE = %g, r^2 = %g\n",
+		    parm->C, parm->gamma, MSE, r2);
+	    svm_flush(prn);
+	}
+	*crit = r2;
     } else {
+	double pc_correct = 0;
 	int n_correct = 0;
 
 	for (i=0; i<n; i++) {
@@ -1065,13 +1117,197 @@ static int do_cross_validation (sv_data *prob,
 		n_correct++;
 	    }
 	}
-	pprintf(prn, "Cross Validation Accuracy = %g%%\n",
-		100.0 * n_correct / (double) n);
+	pc_correct = 100.0 * n_correct / (double) n;
+	if (prn != NULL) {
+	    pprintf(prn, "C = %g, gamma = %g: percent correct = %g\n",
+		    parm->C, parm->gamma, pc_correct);
+	    svm_flush(prn);
+	}
+	*crit = pc_correct;
+    }
+
+    return 0;
+}
+
+/* From grid.py:
+
+  -log2c {begin,end,step | "null"} : set the range of c (default -5,15,2)
+    begin,end,step -- c_range = 2^{begin,...,begin+k*step,...,end}
+    "null"         -- do not grid with c
+  -log2g {begin,end,step | "null"} : set the range of g (default 3,-15,-2)
+    begin,end,step -- g_range = 2^{begin,...,begin+k*step,...,end}
+    "null"         -- do not grid with g
+*/
+
+static int grid_set_dimensions (svm_grid *gd)
+{
+    double x;
+
+    if ((gd->C_stop < gd->C_start && gd->C_step >= 0) ||
+	(gd->g_stop < gd->g_start && gd->g_step >= 0) ||
+	(gd->C_stop > gd->C_start && gd->C_step <= 0) ||
+	(gd->g_stop > gd->g_start && gd->g_step <= 0)) {
+	return E_INVARG;
+    }
+
+    gd->C_null = gd->nC = 0;
+    
+    if (gd->C_start == 0 && gd->C_stop == 0 && gd->C_step == 0) {
+	/* flag clamping of C */
+	gd->C_null = gd->nC = 1;
+    } else if (gd->C_stop >= gd->C_start) {
+	for (x=gd->C_start; x<=gd->C_stop; x+=gd->C_step) {
+	    gd->nC += 1;
+	}
+    } else {
+	for (x=gd->C_start; x>=gd->C_stop; x+=gd->C_step) {
+	    gd->nC += 1;
+	}
+    }
+
+    gd->g_null = gd->ng = 0;
+    
+    if (gd->g_start == 0 && gd->g_stop == 0 && gd->g_step == 0) {
+	/* flag clamping of gamma */
+	gd->g_null = gd->ng = 1;
+    } else if (gd->g_stop >= gd->g_start) {
+	for (x=gd->g_start; x<=gd->g_stop; x+=gd->g_step) {
+	    gd->ng += 1;
+	}
+    } else {
+	for (x=gd->g_start; x>=gd->g_stop; x+=gd->g_step) {
+	    gd->ng += 1;
+	}
+    }
+
+    return 0;
+}
+
+static void svm_grid_default (svm_grid *grid)
+{
+    grid->C_start = -5;
+    grid->C_stop = 9; /* was 15 */
+    grid->C_step = 2;
+
+    grid->g_start = 3;
+    grid->g_stop = -15;
+    grid->g_step = -2;
+
+    grid_set_dimensions(grid);
+}
+
+static double grid_get_C (svm_grid *grid, int i)
+{
+    double C_pow = grid->C_start + i * grid->C_step;
+
+    return pow(2.0, C_pow);
+}
+
+static double grid_get_g (svm_grid *grid, int j)
+{
+    double g_pow = grid->g_start + j * grid->g_step;
+
+    return pow(2.0, g_pow);
+}
+
+static int svm_wrapper_add_grid (svm_wrapper *w,
+				 const gretl_matrix *m)
+{
+    int err = 0;
+
+    w->grid = malloc(sizeof *w->grid);
+
+    if (w->grid == NULL) {
+	err = E_ALLOC;
+    } else if (m != NULL) {
+	if (m->rows != 2 || m->cols != 3) {
+	    err = E_INVARG;
+	} else {
+	    w->grid->C_start = gretl_matrix_get(m, 0, 0);
+	    w->grid->C_stop  = gretl_matrix_get(m, 0, 1);
+	    w->grid->C_step  = gretl_matrix_get(m, 0, 2);
+	    w->grid->g_start = gretl_matrix_get(m, 1, 0);
+	    w->grid->g_stop  = gretl_matrix_get(m, 1, 1);
+	    w->grid->g_step  = gretl_matrix_get(m, 1, 2);
+	    err = grid_set_dimensions(w->grid);
+	}
+    } else {
+	svm_grid_default(w->grid);
+    }
+
+    return err;
+}
+
+static int call_cross_validation (sv_data *data,
+				  sv_parm *parm,
+				  svm_wrapper *w,
+				  PRN *prn)
+{
+    double *targ;
+    double crit;
+    int err = 0;
+
+    targ = malloc(data->l * sizeof *targ);
+    if (targ == NULL) {
+	return E_ALLOC;
+    }
+
+    pputs(prn, "Calling cross-validation (this may take a while)\n");
+    svm_flush(prn);
+
+    if ((w->flags & W_SEARCH) && w->grid == NULL) {
+	svm_wrapper_add_grid(w, NULL);
+    }
+
+    if (w->grid != NULL) {
+	double cmax = -DBL_MAX;
+	int i, j, imax = 0, jmax = 0;
+	int nC = w->grid->nC;
+	int ng = w->grid->ng;
+
+	if (!(w->flags & W_QUIET)) {
+	    /* cut out excessive verbosity */
+	    svm_set_print_string_function(gretl_libsvm_noprint);
+	}
+
+	for (i=0; i<nC; i++) {
+	    if (!w->grid->C_null) {
+		parm->C = grid_get_C(w->grid, i);
+	    }
+	    for (j=0; j<ng; j++) {
+		if (!w->grid->g_null) {
+		    parm->gamma = grid_get_g(w->grid, j);
+		}
+		do_cross_validation(data, parm, w->nfold, targ, &crit, prn);
+		if (crit > cmax) {
+		    cmax = crit;
+		    imax = i;
+		    jmax = j;
+		}
+	    }
+	}
+
+	if (!(w->flags & W_QUIET)) {
+	    /* restore libsvm printing */
+	    svm_set_print_string_function(gretl_libsvm_print);
+	}
+
+	if (!w->grid->C_null) {
+	    parm->C = grid_get_C(w->grid, imax);
+	}
+	if (!w->grid->g_null) {
+	    parm->gamma = grid_get_g(w->grid, jmax);
+	}
+
+	pprintf(prn, "*** Criterion maximized at %g with C = %g, gamma = %g ***\n",
+		cmax, parm->C, parm->gamma);
+    } else {
+	err = do_cross_validation(data, parm, w->nfold, targ, &crit, prn);
     }
 
     free(targ);
 
-    return 0;
+    return err;
 }
 
 /* It's OK if there's no @key value in bundle @b, but if it
@@ -1098,7 +1334,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 			       const DATASET *dset,
 			       PRN *prn)
 {
-    const char *strval;
+    int no_savemod = 0;
     int ival, err = 0;
 
     /* start by reading some info that's not included in
@@ -1109,8 +1345,9 @@ static int read_params_bundle (gretl_bundle *bparm,
 	if (ival != 0 && bmod == NULL) {
 	    fprintf(stderr, "invalid 'loadmod' arg %d\n", ival);
 	    err = E_INVARG;
-	} else {
-	    wrap->loadmod = ival;
+	} else if (ival != 0) {
+	    wrap->flags |= W_LOADMOD;
+	    no_savemod = 1;
 	}
     }
 
@@ -1146,15 +1383,43 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    fprintf(stderr, "invalid 'xvalidate' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
-	    wrap->xvalid = ival;
+	    wrap->nfold = ival;
 	}
     }
 
-    if (get_optional_int(bparm, "quiet", &ival, &err)) {
-	wrap->quiet = (ival != 0);
+    if (get_optional_int(bparm, "quiet", &ival, &err) && ival != 0) {
+	wrap->flags |= W_QUIET;
+    }
+
+    if (get_optional_int(bparm, "gridsearch", &ival, &err) && ival != 0) {
+	wrap->flags |= W_SEARCH;
+    }
+
+    if (get_optional_int(bparm, "search_only", &ival, &err) && ival != 0) {
+	if (bmod == NULL) {
+	    fputs("invalid use of 'search_only'\n", stderr);
+	} else {
+	    wrap->flags |= (W_SVPARM | W_SEARCH);
+	    no_savemod = 1;
+	}
     }
 
     if (!err) {
+	/* experimental */
+	const gretl_matrix *m;
+
+	m = gretl_bundle_get_matrix(bparm, "gridmat", NULL);
+	if (m != NULL) {
+	    err = svm_wrapper_add_grid(wrap, m);
+	    if (!err) {
+		wrap->flags |= W_SEARCH;
+	    }
+	}
+    }
+
+    if (!err) {
+	const char *strval;
+
 	strval = gretl_bundle_get_string(bparm, "ranges_outfile", NULL);
 	if (strval != NULL && *strval != '\0') {
 	    wrap->ranges_outfile = gretl_strdup(strval);
@@ -1177,18 +1442,17 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
 	strval = gretl_bundle_get_string(bparm, "range_format", NULL);
 	if (strval != NULL && !strcmp(strval, "libsvm")) {
-	    wrap->libsvm_ranges = 1;
+	    wrap->flags |= W_STDFMT;
 	}
     }
 
-    if (!err && !wrap->loadmod && bmod != NULL) {
-	/* implicitly, the model should be saved to @bmod */
-	wrap->savemod = 1;
+    if (!err && bmod != NULL && !no_savemod) {
+	/* implicitly, a model should be saved to @bmod */
+	wrap->flags |= W_SAVEMOD;
     }
 
-    /* if we're still OK, fill out the libsvm @parm struct */
-
     if (!err) {
+	/* if we're still OK, fill out the libsvm @parm struct */
 	err = set_svm_parm(parm, bparm, prn);
     }
 
@@ -1235,25 +1499,6 @@ static int svm_save_model_wrapper (const char *fname,
     }
 
     return err;
-}
-
-static PRN *svm_prn;
-
-/* callback function for setting on libsvm printing */
-
-static void gretl_libsvm_print (const char *s)
-{
-    if (svm_prn != NULL) {
-	pputs(svm_prn, s);
-	gretl_gui_flush();
-    } else {
-	fputs(s, stdout);
-    }
-}
-
-static void gretl_libsvm_noprint (const char *s)
-{
-    return;
 }
 
 static void report_result (int err, PRN *prn)
@@ -1309,31 +1554,10 @@ static int check_svm_params (sv_data *data,
 	err = E_INVARG;
     } else if (prn != NULL) {
 	pputs(prn, "OK\n");
-	pprintf(prn, "svm_type %s, kernel_type %s\n",
+	pprintf(prn, "svm_type %s, kernel_type %s, C = %g, gamma = %g\n",
 		svm_type_names[parm->svm_type],
-		kernel_type_names[parm->kernel_type]);
-    }
-
-    return err;
-}
-
-static int call_cross_validation (sv_data *data,
-				  sv_parm *parm,
-				  svm_wrapper *w,
-				  PRN *prn)
-{
-    int err;
-
-    pputs(prn, "libsvm parameters before cross-validation:\n");
-    print_svm_parm(parm, prn);
-    pprintf(prn, "now calling cross-validation function (this may take a while)\n");
-    svm_flush(prn);
-
-    err = do_cross_validation(data, parm, w->xvalid, prn);
-
-    if (!err) {
-	pputs(prn, "parameters after cross-validation\n");
-	print_svm_parm(parm, prn);
+		kernel_type_names[parm->kernel_type],
+		parm->C, parm->gamma);
     }
 
     return err;
@@ -1375,10 +1599,10 @@ int gretl_svm_predict (const int *list,
 	return err;
     }
 
-    if (wrap.quiet) {
+    if (wrap.flags & W_QUIET) {
 	svm_set_print_string_function(gretl_libsvm_noprint);
 	prn = NULL;
-    } else if (gui_mode) {
+    } else {
 	svm_prn = prn;
 	svm_set_print_string_function(gretl_libsvm_print);
     }
@@ -1426,7 +1650,7 @@ int gretl_svm_predict (const int *list,
 	err = check_svm_params(prob1, &parm, prn);
     }
 
-    if (!err && wrap.loadmod) {
+    if (!err && (wrap.flags & W_LOADMOD)) {
 	/* restore previously saved model via bundle */
 	pputs(prn, "Loading svm model from bundle... ");
 	model = svm_model_from_bundle(bmodel, &err);
@@ -1437,8 +1661,18 @@ int gretl_svm_predict (const int *list,
 	model = svm_load_model_wrapper(wrap.model_infile, &err);
 	report_result(err, prn);
     } else if (!err) {
-	if (wrap.xvalid > 0) {
+	if (wrap.nfold > 0) {
 	    err = call_cross_validation(prob1, &parm, &wrap, prn);
+	    if (wrap.flags & W_SEARCH) {
+		/* continue to train using tuned params? */
+		if (wrap.flags & W_SVPARM) {
+		    /* no, just save the tuned parms */
+		    save_parms_to_bundle(&parm, bmodel);
+		    goto getout;
+		}
+	    } else {
+		goto getout;
+	    }
 	}
 	if (!err) {
 	    pprintf(prn, "Calling training function (this may take a while)\n");
@@ -1454,7 +1688,7 @@ int gretl_svm_predict (const int *list,
 
     if (model != NULL) {
 	/* We have a model: should it be saved (to bundle or file)? */
-	if (wrap.savemod) {
+	if (wrap.flags & W_SAVEMOD) {
 	    pputs(prn, "Saving svm model to bundle... ");
 	    err = svm_model_save_to_bundle(model, bmodel);
 	    report_result(err, prn);
@@ -1466,7 +1700,7 @@ int gretl_svm_predict (const int *list,
 	}
     }
 
-    if (!err && wrap.predict) {
+    if (!err && wrap.predict > 0) {
 	/* Now do some prediction */
 	int training = (wrap.t2_train > 0);
 	int T_os = -1;
@@ -1502,7 +1736,7 @@ int gretl_svm_predict (const int *list,
 
     gretl_sv_data_destroy(prob1, x_space1);
     gretl_sv_data_destroy(prob2, x_space2);
-    if (wrap.loadmod) {
+    if (wrap.flags & W_LOADMOD) {
 	gretl_destroy_svm_model(model);
     } else {
 	svm_free_and_destroy_model(&model);
