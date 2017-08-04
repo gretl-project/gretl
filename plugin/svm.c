@@ -1209,7 +1209,7 @@ static int grid_set_dimensions (sv_grid *g)
 static void sv_grid_default (sv_grid *g)
 {
     g->row[G_C].start = -5;
-    g->row[G_C].stop = 11; /* python has 15 */
+    g->row[G_C].stop = 9; /* python has 15 (too big?) */
     g->row[G_C].step = 2;
 
     g->row[G_g].start = 3;
@@ -1364,6 +1364,11 @@ static int call_cross_validation (sv_data *data,
 	    parm->p = grid_get_p(grid, kmax);
 	}
 
+	if (w->xdata != NULL) {
+	    /* temporary! */
+	    gretl_matrix_write_to_file(w->xdata, "w_xdata.mat", 0);
+	}
+
 	pprintf(prn, "*** Criterion optimized at %g: C=%g, gamma=%g",
 		fabs(cmax), parm->C, parm->gamma);
 	if (grid->null[G_p]) {
@@ -1461,15 +1466,18 @@ static int read_params_bundle (gretl_bundle *bparm,
 	wrap->flags |= W_QUIET;
     }
 
+    if (get_optional_int(bparm, "plot", &ival, &err) && ival != 0) {
+	wrap->flags |= W_SVPLOT;
+    }
+
     if (get_optional_int(bparm, "gridsearch", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
     }
 
     if (get_optional_int(bparm, "search_only", &ival, &err) && ival != 0) {
-	if (bmod == NULL) {
-	    fputs("invalid use of 'search_only'\n", stderr);
-	} else {
-	    wrap->flags |= (W_SVPARM | W_SEARCH);
+	wrap->flags |= W_SEARCH;
+	if (bmod != NULL) {
+	    wrap->flags |= W_SVPARM;
 	    no_savemod = 1;
 	}
     }
@@ -1783,11 +1791,11 @@ int gretl_svm_predict (const int *list,
 	real_svm_predict(yhat, prob1, model, training, dset, prn);
 	*yhat_written = 1;
 	dset->t2 = save_t2;
-	if (training && wrap.predict == 2) {
+	if (training && wrap.predict > 1) {
 	    T_os = dset->t2 - wrap.t2_train;
 	}
-	if (T_os >= wrap.t2_train) {
-	    /* If we have enough out-of-sample data, go
+	if (T_os >= 10) {
+	    /* If we have some out-of-sample data, go
 	       ahead and predict out of sample.
 	    */
 	    dset->t1 = wrap.t2_train + 1;
