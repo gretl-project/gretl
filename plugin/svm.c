@@ -47,8 +47,7 @@ enum {
     W_QUIET   = 1 << 2,
     W_SEARCH  = 1 << 3,
     W_STDFMT  = 1 << 4,
-    W_SVPARM  = 1 << 5,
-    W_SVPLOT  = 1 << 6
+    W_SVPARM  = 1 << 5
 };
 
 struct sv_wrapper_ {
@@ -65,6 +64,7 @@ struct sv_wrapper_ {
     char *model_infile;
     char *data_outfile;
     sv_grid *grid;
+    char *plot;
     gretl_matrix *xdata;
 };
 
@@ -119,6 +119,7 @@ static void sv_wrapper_init (sv_wrapper *w)
     w->model_infile = NULL;
     w->data_outfile = NULL;
     w->grid = NULL;
+    w->plot = NULL;
     w->xdata = NULL;
 }
 
@@ -131,6 +132,7 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->model_infile);
     free(w->data_outfile);
     free(w->grid);
+    free(w->plot);
     gretl_matrix_free(w->xdata);
 }
 
@@ -1280,6 +1282,41 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
     return err;
 }
 
+static int write_plot_file (sv_wrapper *w)
+{
+    gretl_matrix *m = w->xdata;
+    int i, err = 0;
+    FILE *fp;
+
+    set_optval_string(GNUPLOT, OPT_U, w->plot);
+
+    fp = open_plot_input_file(PLOT_USER, 0, &err);
+    if (err) {
+	return err;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    fputs("set xlabel 'log2(C)'\n", fp);
+    fputs("set ylabel 'log2(gamma)'\n", fp);
+    fprintf(fp, "set zlabel '%s'\n", "MSE"); /* FIXME */
+    fputs("set dgrid3d\n", fp);
+    fputs("set contour\n", fp);
+    fputs("set cntrparam levels auto 5\n", fp);
+    fputs("splot '-' using 1:2:3 title '' w l\n", fp);
+    for (i=0; i<m->rows; i++) {
+	fprintf(fp, "%g %g %g\n",
+		gretl_matrix_get(m, i, 0),
+		gretl_matrix_get(m, i, 1),
+		gretl_matrix_get(m, i, 2));
+    }
+    fputc('\n', fp);
+
+    gretl_pop_c_numeric_locale();
+
+    return finalize_plot_input_file(fp);
+}
+
 static int call_cross_validation (sv_data *data,
 				  sv_parm *parm,
 				  sv_wrapper *w,
@@ -1311,7 +1348,7 @@ static int call_cross_validation (sv_data *data,
 	int iter = 0;
 	int i, j, k;
 
-	if ((w->flags & W_SVPLOT) && nC > 1 && ng > 1) {
+	if (w->plot != NULL && nC > 1 && ng > 1) {
 	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
 	}
 
@@ -1340,9 +1377,9 @@ static int call_cross_validation (sv_data *data,
 			kmax = k;
 		    }
 		    if (w->xdata != NULL) {
-			gretl_matrix_set(w->xdata, iter, 0, parm->C);
-			gretl_matrix_set(w->xdata, iter, 1, parm->gamma);
-			gretl_matrix_set(w->xdata, iter, 2, crit);
+			gretl_matrix_set(w->xdata, iter, 0, log2(parm->C));
+			gretl_matrix_set(w->xdata, iter, 1, log2(parm->gamma));
+			gretl_matrix_set(w->xdata, iter, 2, fabs(crit));
 		    }
 		}
 		iter++;
@@ -1365,8 +1402,9 @@ static int call_cross_validation (sv_data *data,
 	}
 
 	if (w->xdata != NULL) {
-	    /* temporary! */
-	    gretl_matrix_write_to_file(w->xdata, "w_xdata.mat", 0);
+	    write_plot_file(w);
+	    gretl_matrix_free(w->xdata);
+	    w->xdata = NULL;
 	}
 
 	pprintf(prn, "*** Criterion optimized at %g: C=%g, gamma=%g",
@@ -1466,10 +1504,6 @@ static int read_params_bundle (gretl_bundle *bparm,
 	wrap->flags |= W_QUIET;
     }
 
-    if (get_optional_int(bparm, "plot", &ival, &err) && ival != 0) {
-	wrap->flags |= W_SVPLOT;
-    }
-
     if (get_optional_int(bparm, "gridsearch", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
     }
@@ -1516,6 +1550,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	strval = gretl_bundle_get_string(bparm, "model_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
 	    wrap->model_infile = gretl_strdup(strval);
+	}
+	strval = gretl_bundle_get_string(bparm, "plot", NULL);
+	if (strval != NULL && *strval != '\0') {
+	    wrap->plot = gretl_strdup(strval);
 	}
 	strval = gretl_bundle_get_string(bparm, "range_format", NULL);
 	if (strval != NULL && !strcmp(strval, "libsvm")) {
