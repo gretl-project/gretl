@@ -1282,9 +1282,11 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
     return err;
 }
 
-static int write_plot_file (sv_wrapper *w)
+static int write_plot_file (sv_wrapper *w,
+			    sv_parm *parm)
 {
     gretl_matrix *m = w->xdata;
+    const char *zlabel = "MSE";
     int i, err = 0;
     FILE *fp;
 
@@ -1295,15 +1297,20 @@ static int write_plot_file (sv_wrapper *w)
 	return err;
     }
 
+    if (parm->svm_type != EPSILON_SVR && parm->svm_type != NU_SVR) {
+	/* must be classification */
+	zlabel = "correct";
+    }
+
     gretl_push_c_numeric_locale();
 
     fputs("set xlabel 'log2(C)'\n", fp);
     fputs("set ylabel 'log2(gamma)'\n", fp);
-    fprintf(fp, "set zlabel '%s'\n", "MSE"); /* FIXME */
+    fprintf(fp, "set zlabel '%s'\n", zlabel);
     fputs("set dgrid3d\n", fp);
     fputs("set contour\n", fp);
-    fputs("set cntrparam levels auto 5\n", fp);
-    fputs("splot '-' using 1:2:3 title '' w l\n", fp);
+    fputs("set cntrparam levels auto 8\n", fp);
+    fputs("splot '-' using 1:2:3 notitle w l\n", fp);
     for (i=0; i<m->rows; i++) {
 	fprintf(fp, "%g %g %g\n",
 		gretl_matrix_get(m, i, 0),
@@ -1402,7 +1409,7 @@ static int call_cross_validation (sv_data *data,
 	}
 
 	if (w->xdata != NULL) {
-	    write_plot_file(w);
+	    write_plot_file(w, parm);
 	    gretl_matrix_free(w->xdata);
 	    w->xdata = NULL;
 	}
