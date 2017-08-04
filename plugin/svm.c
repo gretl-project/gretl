@@ -171,7 +171,7 @@ static int set_or_print_svm_parm (sv_parm *parm, gretl_bundle *b,
 	{ "coef0",        GRETL_TYPE_DOUBLE },
 	{ "cachesize",    GRETL_TYPE_DOUBLE },
 	{ "toler",        GRETL_TYPE_DOUBLE },
-	{ "cost",         GRETL_TYPE_DOUBLE },
+	{ "C",            GRETL_TYPE_DOUBLE },
 	{ "nr_weight",    GRETL_TYPE_INT },
 	{ "weight_label", GRETL_TYPE_SERIES },
 	{ "weight",       GRETL_TYPE_SERIES },
@@ -1177,7 +1177,7 @@ static int grid_set_dimensions (svm_grid *g)
 static void svm_grid_default (svm_grid *g)
 {
     g->row[G_C].start = -5;
-    g->row[G_C].stop = 9; /* was 15 */
+    g->row[G_C].stop = 15;
     g->row[G_C].step = 2;
 
     g->row[G_g].start = 3;
