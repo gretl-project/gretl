@@ -907,9 +907,6 @@ static int get_data_ranges (const int *list,
 	}
     }
 
-    /* FIXME check for pathologies! (NAs, no non-constant
-       series or whatever) */
-
     /* record number of rows actually occupied, which
        could be less than the number allocated
     */
@@ -1018,7 +1015,9 @@ static int sv_data_fill (sv_data *prob,
 	    xmin = gretl_matrix_get(w->ranges, i, 1);
 	    xmax = gretl_matrix_get(w->ranges, i, 2);
 	    xit = dset->Z[vi][t];
-	    if (w->scaling != 0) {
+	    if (na(xit)) {
+		xit = 0;
+	    } else if (w->scaling != 0) {
 		xit = scale_x(xit, xmin, xmax, scalemin, scalemax);
 	    }
 	    if (xit == 0) {
@@ -1346,12 +1345,16 @@ static int call_cross_validation (sv_data *data,
     }
 
     if (w->grid != NULL) {
+	double *pptr[3] = {
+	    &parm->C,
+	    &parm->gamma,
+	    &parm->p
+	};
 	sv_grid *grid = w->grid;
 	double cmax = -DBL_MAX;
-	int imax = 0, jmax = 0, kmax = 0;
+	int maxidx[3] = {0};
 	int nC = grid->n[G_C];
 	int ng = grid->n[G_g];
-	int np = grid->n[G_p];
 	int iter = 0;
 	int i, j, k;
 
@@ -1372,16 +1375,16 @@ static int call_cross_validation (sv_data *data,
 		if (!grid->null[G_g]) {
 		    parm->gamma = grid_get_g(grid, j);
 		}
-		for (k=0; k<np; k++) {
+		for (k=0; k<grid->n[G_p]; k++) {
 		    if (!grid->null[G_p]) {
 			parm->p = grid_get_p(grid, k);
 		    }
 		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
 		    if (crit > cmax) {
 			cmax = crit;
-			imax = i;
-			jmax = j;
-			kmax = k;
+			maxidx[0] = i;
+			maxidx[1] = j;
+			maxidx[2] = k;
 		    }
 		    if (w->xdata != NULL) {
 			gretl_matrix_set(w->xdata, iter, 0, log2(parm->C));
@@ -1398,14 +1401,10 @@ static int call_cross_validation (sv_data *data,
 	    svm_set_print_string_function(gretl_libsvm_print);
 	}
 
-	if (!grid->null[G_C]) {
-	    parm->C = grid_get_C(grid, imax);
-	}
-	if (!grid->null[G_g]) {
-	    parm->gamma = grid_get_g(grid, jmax);
-	}
-	if (!grid->null[G_p]) {
-	    parm->p = grid_get_p(grid, kmax);
+	for (i=G_C; i<=G_p; i++) {
+	    if (!grid->null[i]) {
+		*pptr[i] = grid_get_C(grid, maxidx[i]);
+	    }
 	}
 
 	if (w->xdata != NULL) {
