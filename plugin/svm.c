@@ -100,7 +100,7 @@ static int gui_mode;
 static void svm_flush (PRN *prn)
 {
     if (gui_mode) {
-	gretl_gui_flush();
+	manufacture_gui_callback(FLUSH);
     } else {
 	gretl_print_flush_stream(prn);
     }
@@ -1292,17 +1292,14 @@ static void sv_wrapper_remove_grid (sv_wrapper *w)
     }
 }
 
-/* FIXME the plotting mechanism is not working in the
-   GUI program, only gretlcli. Need some sort of
-   callback mechanism.
-*/
-
 static int write_plot_file (sv_wrapper *w,
-			    sv_parm *parm)
+			    sv_parm *parm,
+			    double cmax)
 {
     gretl_matrix *m = w->xdata;
     const char *zlabel = "MSE";
-    int i, err = 0;
+    double x[3], best[3] = {0};
+    int i, j, err = 0;
     FILE *fp;
 
     set_optval_string(GNUPLOT, OPT_U, w->plot);
@@ -1325,18 +1322,32 @@ static int write_plot_file (sv_wrapper *w,
     fputs("set dgrid3d\n", fp);
     fputs("set contour\n", fp);
     fputs("set cntrparam levels auto 8\n", fp);
-    fputs("splot '-' using 1:2:3 notitle w l\n", fp);
+    fputs("splot '-' using 1:2:3 title '' w l ,\\\n", fp);
+    fputs(" '-' using 1:2:3 title 'best' w p lt 1 pt 8\n", fp);
     for (i=0; i<m->rows; i++) {
-	fprintf(fp, "%g %g %g\n",
-		gretl_matrix_get(m, i, 0),
-		gretl_matrix_get(m, i, 1),
-		gretl_matrix_get(m, i, 2));
+	for (j=0; j<3; j++) {
+	    x[j] = gretl_matrix_get(m, i, j);
+	}
+	if (x[2] == cmax) {
+	    for (j=0; j<3; j++) {
+		best[j] = x[j];
+	    }
+	}
+	fprintf(fp, "%g %g %g\n", x[0], x[1], x[2]);
     }
-    fputc('\n', fp);
+    fputs("e\n", fp);
+    fprintf(fp, "%g %g %g\n", best[0], best[1], best[2]);
+    fputs("e\n", fp);
 
     gretl_pop_c_numeric_locale();
 
-    return finalize_plot_input_file(fp);
+    err = finalize_plot_input_file(fp);
+
+    if (!err && gui_mode) {
+	manufacture_gui_callback(GNUPLOT);
+    }
+
+    return err;
 }
 
 static int call_cross_validation (sv_data *data,
@@ -1425,7 +1436,7 @@ static int call_cross_validation (sv_data *data,
 	}
 
 	if (w->xdata != NULL) {
-	    write_plot_file(w, parm);
+	    write_plot_file(w, parm, fabs(cmax));
 	    gretl_matrix_free(w->xdata);
 	    w->xdata = NULL;
 	}

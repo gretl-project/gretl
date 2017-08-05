@@ -105,7 +105,7 @@ int call_pca_plugin (VMatrix *cmat, DATASET *dset,
 
 int gretl_shell_grab (const char *arg, char **sout);
 
-void gretl_gui_flush (void);
+void manufacture_gui_callback (int ci);
 
 int is_plotting_command (CMD *cmd);
 

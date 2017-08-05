@@ -1872,10 +1872,22 @@ static void callback_exec (ExecState *s, char *fname, int err)
     *s->cmd->savename = '\0';
 }
 
-void gretl_gui_flush (void)
+/* for use in contexts where we don't have an
+   ExecState (or CMD) to hand
+*/
+
+void manufacture_gui_callback (int ci)
 {
     if (gui_callback != NULL) {
-	gui_callback(NULL, NULL, 0);
+	ExecState s = {0};
+	CMD cmd = {0};
+
+	cmd.ci = ci;
+	if (ci == FLUSH) {
+	    cmd.opt = OPT_Q;
+	}
+	s.cmd = &cmd;
+	gui_callback(&s, NULL, 0);
     }
 }
 

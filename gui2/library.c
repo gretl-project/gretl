@@ -9352,17 +9352,11 @@ int execute_script (char *runfile, const char *buf,
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {
-    int ci, err = 0;
-
-    if (s != NULL) {
-	ci = s->cmd->ci;
-    } else {
-	handle_flush_callback(OPT_Q);
-	return;
-    }
+    int ci = s->cmd->ci;
+    int err = 0;
 
     if (ci == FLUSH) {
-	handle_flush_callback(OPT_NONE);
+	handle_flush_callback(s->cmd->opt);
     } else if (ci == JOIN) {
 	if (dataset->modflag) {
 	    mark_dataset_as_modified();
