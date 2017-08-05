@@ -17,7 +17,7 @@
  *
  */
 
-/* interface to libsvm for machine learning */
+/* gretl interface to libsvm for machine learning */
 
 #include "libgretl.h"
 #include "libset.h"
@@ -93,6 +93,8 @@ struct sv_grid_ {
 
 #define N_PARMS 15
 
+#define doing_regression(p) (p->svm_type == EPSILON_SVR || p->svm_type == NU_SVR)
+
 static int gui_mode;
 
 static void svm_flush (PRN *prn)
@@ -150,7 +152,7 @@ static void set_sv_parm_defaults (sv_parm *parm)
     parm->svm_type = -1; /* mark as unknown for now */
     parm->kernel_type = RBF;
     parm->degree = 3;   /* for polynomial */
-    parm->gamma = 0;    /* poly/rbf/sigmoid: default 1.0 / num_features */
+    parm->gamma = 0;    /* poly/RBF/sigmoid: default 1.0 / num_features */
     parm->coef0 = 0;    /* for use in kernel function */
 
     /* training-only variables */
@@ -475,7 +477,9 @@ static void save_parms_to_bundle (const sv_parm *parm,
     /* note: don't destroy the bundle's prior content */
     gretl_bundle_set_scalar(b, "C", parm->C);
     gretl_bundle_set_scalar(b, "gamma", parm->gamma);
+#if 0 /* not yet */
     gretl_bundle_set_scalar(b, "epsilon", parm->p);
+#endif
 }
 
 static double *array_from_bundled_matrix (gretl_bundle *b,
@@ -1128,8 +1132,7 @@ static int xvalidate_once (sv_data *prob,
 
     svm_cross_validation(prob, parm, w->nfold, targ);
 
-    if (parm->svm_type == EPSILON_SVR || parm->svm_type == NU_SVR) {
-	/* regression */
+    if (doing_regression(parm)) {
 	double dev, MSE = 0;
 #if 0
 	double r, r2;
@@ -1281,6 +1284,19 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
     return err;
 }
 
+static void sv_wrapper_remove_grid (sv_wrapper *w)
+{
+    if (w != NULL && w->grid != NULL) {
+	free(w->grid);
+	w->grid = NULL;
+    }
+}
+
+/* FIXME the plotting mechanism is not working in the
+   GUI program, only gretlcli. Need some sort of
+   callback mechanism.
+*/
+
 static int write_plot_file (sv_wrapper *w,
 			    sv_parm *parm)
 {
@@ -1296,7 +1312,7 @@ static int write_plot_file (sv_wrapper *w,
 	return err;
     }
 
-    if (parm->svm_type != EPSILON_SVR && parm->svm_type != NU_SVR) {
+    if (!doing_regression(parm)) {
 	/* must be classification */
 	zlabel = "correct";
     }
@@ -1340,21 +1356,22 @@ static int call_cross_validation (sv_data *data,
     pputs(prn, "Calling cross-validation (this may take a while)\n");
     svm_flush(prn);
 
-    if ((w->flags & W_SEARCH) && w->grid == NULL) {
-	sv_wrapper_add_grid(w, NULL);
+    if (w->flags & W_SEARCH) {
+	if (parm->kernel_type != RBF) {
+	    pputs(prn, "Non-RBF kernel, don't know how to tune parameters\n");
+	    sv_wrapper_remove_grid(w);
+	} else if (w->grid == NULL) {
+	    sv_wrapper_add_grid(w, NULL);
+	}
     }
 
     if (w->grid != NULL) {
-	double *pptr[3] = {
-	    &parm->C,
-	    &parm->gamma,
-	    &parm->p
-	};
+	double *ptr[] = {&parm->C, &parm->gamma, &parm->p};
 	sv_grid *grid = w->grid;
 	double cmax = -DBL_MAX;
-	int maxidx[3] = {0};
 	int nC = grid->n[G_C];
 	int ng = grid->n[G_g];
+	int bestidx[3] = {0};
 	int iter = 0;
 	int i, j, k;
 
@@ -1382,9 +1399,9 @@ static int call_cross_validation (sv_data *data,
 		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
 		    if (crit > cmax) {
 			cmax = crit;
-			maxidx[0] = i;
-			maxidx[1] = j;
-			maxidx[2] = k;
+			bestidx[0] = i;
+			bestidx[1] = j;
+			bestidx[2] = k;
 		    }
 		    if (w->xdata != NULL) {
 			gretl_matrix_set(w->xdata, iter, 0, log2(parm->C));
@@ -1403,7 +1420,7 @@ static int call_cross_validation (sv_data *data,
 
 	for (i=G_C; i<=G_p; i++) {
 	    if (!grid->null[i]) {
-		*pptr[i] = grid_get_C(grid, maxidx[i]);
+		*ptr[i] = grid_get_C(grid, bestidx[i]);
 	    }
 	}
 
