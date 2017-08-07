@@ -13008,10 +13008,12 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 	goto bailout;
     }
 
-    /* convert ssx to std deviations */
-    for (i=0; i<m; i++) {
-	x = ssx->val[i];
-	ssx->val[i] = sqrt(x / (T - 1));
+    if (corr) {
+	/* convert ssx to std deviations */
+	for (i=0; i<m; i++) {
+	    x = ssx->val[i];
+	    ssx->val[i] = sqrt(x / (T - 1));
+	}
     }
 
     /* compute the PCs */
@@ -13021,7 +13023,11 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 	    for (k=0; k<m; k++) {
 		load = gretl_matrix_get(C, k, j);
 		val = gretl_matrix_get(X, i, k);
-		x += load * (val - xbar->val[k]) / ssx->val[k];
+		if (corr) {
+		    x += load * (val - xbar->val[k]) / ssx->val[k];
+		} else {
+		    x += load * (val - xbar->val[k]);
+		}
 	    }
 	    gretl_matrix_set(P, i, j, x);
 	}
