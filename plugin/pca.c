@@ -271,7 +271,6 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 static int standardize (double *sy, const double *y,
 			VMatrix *v, int i)
 {
-    double sd;
     int t;
 
     if (v->xbar == NULL || v->ssx == NULL) {
@@ -279,10 +278,17 @@ static int standardize (double *sy, const double *y,
 	return E_DATA;
     }
 
-    sd = sqrt(v->ssx[i] / (v->n - 1));
+    if (v->ci == CORR) {
+	double sd = sqrt(v->ssx[i] / (v->n - 1));
 
-    for (t=0; t<v->n; t++) {
-	sy[t] = (y[t] - v->xbar[i]) / sd;
+	for (t=0; t<v->n; t++) {
+	    sy[t] = (y[t] - v->xbar[i]) / sd;
+	}
+    } else {
+	/* using the covariance matrix: just center */
+	for (t=0; t<v->n; t++) {
+	    sy[t] = y[t] - v->xbar[i];
+	}
     }
 
     return 0;
@@ -301,7 +307,7 @@ static int pca_save_components (VMatrix *cmat,
 				gretlopt opt)
 {
     int save_all = (opt & OPT_A);
-    double **sX = NULL;
+    double *xi, **sX = NULL;
     int m = 0, v = dset->v;
     int k = cmat->dim;
     int i, j, t, vi;
@@ -327,9 +333,7 @@ static int pca_save_components (VMatrix *cmat,
 
     if (!err) {
 	/* construct standardized versions of all variables */
-	double *xi;
-
-	sX = doubles_array_new(k, cmat->n); 
+	sX = doubles_array_new(k, cmat->n);
 	if (sX == NULL) {
 	    err = E_ALLOC;
 	} else {
