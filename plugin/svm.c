@@ -472,6 +472,7 @@ static int svm_model_save_to_bundle (const sv_model *model,
 }
 
 static void save_parms_to_bundle (const sv_parm *parm,
+				  sv_wrapper *w,
 				  gretl_bundle *b)
 {
     /* note: don't destroy the bundle's prior content */
@@ -480,6 +481,19 @@ static void save_parms_to_bundle (const sv_parm *parm,
 #if 0 /* not yet */
     gretl_bundle_set_scalar(b, "epsilon", parm->p);
 #endif
+
+    if (w != NULL && w->xdata != NULL) {
+	char **S;
+	int ns;
+
+	S = gretl_string_split("C gamma score", &ns, NULL);
+	if (S != NULL) {
+	    gretl_matrix_set_colnames(w->xdata, S);
+	}
+	gretl_bundle_donate_data(b, "search_results", w->xdata,
+				 GRETL_TYPE_MATRIX, 0);
+	w->xdata = NULL;
+    }
 }
 
 static double *array_from_bundled_matrix (gretl_bundle *b,
@@ -1179,7 +1193,7 @@ static int xvalidate_once (sv_data *prob,
     "null"         -- do not grid with c
   -log2g {begin,end,step | "null"} : set the range of g (default 3,-15,-2)
     begin,end,step -- g_range = 2^{begin,...,begin+k*step,...,end}
-    "null"         -- do not grid with g
+    "null"         -- do not with g
 */
 
 static int grid_set_dimensions (sv_grid *g)
@@ -1227,6 +1241,27 @@ static void sv_grid_default (sv_grid *g)
     grid_set_dimensions(g);
 }
 
+static void print_grid (sv_grid *g, PRN *prn)
+{
+    const char *labels[] = {
+	"C",
+	"gamma",
+	"eps"
+    };
+    int i, imax;
+
+    imax = g->null[G_p] ? 2 : 3;
+
+    pputs(prn, "parameter search grid (log-2 start, stop, step):\n\n");
+
+    for (i=0; i<imax; i++) {
+	pprintf(prn, "%-8s %g, %g, %g\n", labels[i],
+		g->row[i].start, g->row[i].stop,
+		g->row[i].step);
+    }
+    pputc(prn, '\n');
+}
+
 static double grid_get_C (sv_grid *g, int i)
 {
     double C_pow = g->row[G_C].start + i * g->row[G_C].step;
@@ -1249,7 +1284,7 @@ static double grid_get_p (sv_grid *g, int k)
 }
 
 static int sv_wrapper_add_grid (sv_wrapper *w,
-				 const gretl_matrix *m)
+				const gretl_matrix *m)
 {
     sv_grid *g;
     int i, err = 0;
@@ -1386,7 +1421,11 @@ static int call_cross_validation (sv_data *data,
 	int iter = 0;
 	int i, j, k;
 
-	if (w->plot != NULL && nC > 1 && ng > 1) {
+	if (prn != NULL) {
+	    print_grid(grid, prn);
+	}
+
+	if ((w->plot != NULL || (w->flags & W_SVPARM)) && nC > 1 && ng > 1) {
 	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
 	}
 
@@ -1435,10 +1474,8 @@ static int call_cross_validation (sv_data *data,
 	    }
 	}
 
-	if (w->xdata != NULL) {
+	if (w->plot != NULL && w->xdata != NULL) {
 	    write_plot_file(w, parm, fabs(cmax));
-	    gretl_matrix_free(w->xdata);
-	    w->xdata = NULL;
 	}
 
 	pprintf(prn, "*** Criterion optimized at %g: C=%g, gamma=%g",
@@ -1822,7 +1859,7 @@ int gretl_svm_predict (const int *list,
 		/* continue to train using tuned params? */
 		if (wrap.flags & W_SVPARM) {
 		    /* no, just save the tuned parms */
-		    save_parms_to_bundle(&parm, bmodel);
+		    save_parms_to_bundle(&parm, &wrap, bmodel);
 		    goto getout;
 		}
 	    } else {
