@@ -1368,7 +1368,7 @@ static int write_plot_file (sv_wrapper *w,
 		best[j] = x[j];
 	    }
 	}
-	fprintf(fp, "%g %g %g\n", x[0], x[1], x[2]);
+	fprintf(fp, "%g %g %g\n", log2(x[0]), log2(x[1]), x[2]);
     }
     fputs("e\n", fp);
     fprintf(fp, "%g %g %g\n", best[0], best[1], best[2]);
@@ -1453,8 +1453,8 @@ static int call_cross_validation (sv_data *data,
 			kbest = k;
 		    }
 		    if (w->xdata != NULL) {
-			gretl_matrix_set(w->xdata, iter, 0, log2(parm->C));
-			gretl_matrix_set(w->xdata, iter, 1, log2(parm->gamma));
+			gretl_matrix_set(w->xdata, iter, 0, parm->C);
+			gretl_matrix_set(w->xdata, iter, 1, parm->gamma);
 			gretl_matrix_set(w->xdata, iter, 2, fabs(crit));
 		    }
 		}
