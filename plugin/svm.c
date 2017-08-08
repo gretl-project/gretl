@@ -1412,12 +1412,11 @@ static int call_cross_validation (sv_data *data,
     }
 
     if (w->grid != NULL) {
-	double *ptr[] = {&parm->C, &parm->gamma, &parm->p};
 	sv_grid *grid = w->grid;
 	double cmax = -DBL_MAX;
 	int nC = grid->n[G_C];
 	int ng = grid->n[G_g];
-	int bestidx[3] = {0};
+	int ibest = 0, jbest = 0, kbest = 0;
 	int iter = 0;
 	int i, j, k;
 
@@ -1449,9 +1448,9 @@ static int call_cross_validation (sv_data *data,
 		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
 		    if (crit > cmax) {
 			cmax = crit;
-			bestidx[0] = i;
-			bestidx[1] = j;
-			bestidx[2] = k;
+			ibest = i;
+			jbest = j;
+			kbest = k;
 		    }
 		    if (w->xdata != NULL) {
 			gretl_matrix_set(w->xdata, iter, 0, log2(parm->C));
@@ -1468,10 +1467,14 @@ static int call_cross_validation (sv_data *data,
 	    svm_set_print_string_function(gretl_libsvm_print);
 	}
 
-	for (i=G_C; i<=G_p; i++) {
-	    if (!grid->null[i]) {
-		*ptr[i] = grid_get_C(grid, bestidx[i]);
-	    }
+	if (!grid->null[G_C]) {
+	    parm->C = grid_get_C(grid, ibest);
+	}
+	if (!grid->null[G_g]) {
+	    parm->gamma = grid_get_g(grid, jbest);
+	}
+	if (!grid->null[G_p]) {
+	    parm->p = grid_get_p(grid, kbest);
 	}
 
 	if (w->plot != NULL && w->xdata != NULL) {
