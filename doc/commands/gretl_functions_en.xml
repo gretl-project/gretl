@@ -7249,22 +7249,24 @@
 	  <math>i</math> to <math>k</math> of
 	  <math>Z</math><sub>ti</sub> times
 	  <math>v</math><sub>ji</sub>, where
-	  <math>Z</math><sub>ti</sub> is the standardized value of
-	  variable <math>i</math> at observation <math>t</math> and
+	  <math>Z</math><sub>ti</sub> is the standardized value (or
+	  just the centered value, if the covariance matrix is used)
+	  of variable <math>i</math> at observation <math>t</math> and
 	  <math>v</math><sub>ji</sub> is the <math>j</math>th
 	  eigenvector of the correlation (or covariance) matrix of the
 	  <math>X</math><sub>i</sub>s, with the eigenvectors ordered
 	  by decreasing value of the corresponding eigenvalues.
 	</para>
 	<para context="tex">
-	  The elements of $P$ are computed as 
-	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] 
-	  where $Z_{ti}$ is the standardized value
-	  of variable $i$ at observation $t$, $Z_{ti} = (X_{ti} -
-	  \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}_i$ is the $j$th
-	  eigenvector of the correlation (or covariance) matrix of the
-	  $X_i$s, with the eigenvectors ordered by decreasing value 
-	  of the corresponding eigenvalues.
+	  The elements of $P$ are computed as \[ P_{tj} =
+	  \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \] where $Z_{ti}$ is the
+	  standardized value (or just the centered value, if the
+	  covariance matrix is used) of variable $i$ at observation
+	  $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, and
+	  $v^{(j)}_i$ is the $j$th eigenvector of the correlation (or
+	  covariance) matrix of the $X_i$s, with the eigenvectors
+	  ordered by decreasing value of the corresponding
+	  eigenvalues.
 	</para> 
 	<para>
 	  <seelist>

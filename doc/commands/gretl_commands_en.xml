@@ -9813,8 +9813,8 @@
 	<opt>covariance</opt> option is given) for the variables
 	in <repl>varlist</repl>, along with the proportion of the
 	joint variance accounted for by each component. Also prints
-	the corresponding eigenvectors (or <quote>component
-	loadings</quote>).
+	the corresponding eigenvectors or <quote>component
+	loadings</quote>.
       </para>
       <para>
 	If you give the <opt>save-all</opt> option then all
