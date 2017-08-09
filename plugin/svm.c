@@ -1255,9 +1255,14 @@ static void print_grid (sv_grid *g, PRN *prn)
     pputs(prn, "parameter search grid (log-2 start, stop, step):\n\n");
 
     for (i=0; i<imax; i++) {
-	pprintf(prn, "%-8s %g, %g, %g\n", labels[i],
+	pprintf(prn, "%-8s %g, %g, %g", labels[i],
 		g->row[i].start, g->row[i].stop,
 		g->row[i].step);
+	if (g->n[i] > 1) {
+	    pprintf(prn, " (%d values)\n", g->n[i]);
+	} else {
+	    pputc(prn, '\n');
+	}
     }
     pputc(prn, '\n');
 }
@@ -1424,7 +1429,7 @@ static int call_cross_validation (sv_data *data,
 	    print_grid(grid, prn);
 	}
 
-	if ((w->plot != NULL || (w->flags & W_SVPARM)) && nC > 1 && ng > 1) {
+	if ((w->plot != NULL || (w->flags & W_SVPARM)) && (nC > 1 || ng > 1)) {
 	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
 	}
 
