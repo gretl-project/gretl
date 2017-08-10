@@ -1629,7 +1629,7 @@ static int check_folds_series (const int *list,
 	for (i=0; i<n && !err; i++) {
 	    if (i > 0) {
 		if (x[i] != x[i-1] + 1) {
-		    fputs("foldvar must contain consecutive integers\n", stderr);
+		    fputs("foldvar must hold consecutive integers\n", stderr);
 		    err = E_DATA;
 		}
 	    } else if (x[i] != 1.0) {
@@ -1639,11 +1639,13 @@ static int check_folds_series (const int *list,
 	}
 
 	if (!err) {
-	    w->nfold = x[n-1];
-	    pprintf(prn, "%s: found %d folds\n", dset->varname[v]);
-	    if (w->nfold < 2) {
-		w->nfold = 0;
+	    int nf = x[n-1];
+
+	    pprintf(prn, "%s: found %d folds\n", dset->varname[v], nf);
+	    if (nf < 2 || (w->nfold > 0 && nf != w->nfold)) {
 		err = E_DATA;
+	    } else {
+		w->nfold = nf;
 	    }
 	}
     }
@@ -1722,11 +1724,7 @@ static int read_params_bundle (gretl_bundle *bparm,
     }
 
     if (get_optional_int(bparm, "folds", &ival, &err)) {
-	if (ival == 1) {
-	    pprintf(prn, "folds: will read from series %s\n",
-		    dset->varname[list[list[0]]]);
-	    wrap->flags |= W_FOLDVAR;
-	} else if (ival < 2) {
+	if (ival < 2) {
 	    fprintf(stderr, "invalid 'folds' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
@@ -1740,6 +1738,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "gridsearch", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
+    }
+
+    if (get_optional_int(bparm, "foldvar", &ival, &err) && ival != 0) {
+	wrap->flags |= W_FOLDVAR;
     }
 
     if (get_optional_int(bparm, "search_only", &ival, &err) && ival != 0) {
@@ -1800,7 +1802,8 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    /* implicitly, a model should be saved to @bmod */
 	    wrap->flags |= W_SAVEMOD;
 	}
-	if ((wrap->flags & W_SEARCH) && wrap->nfold == 0) {
+	if ((wrap->flags & W_SEARCH) && !(wrap->flags & W_FOLDVAR) &&
+	    wrap->nfold == 0) {
 	    /* default to 5 folds */
 	    wrap->nfold = 5;
 	}
