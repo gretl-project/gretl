@@ -10,12 +10,11 @@ version 2017d, in progress
   the "coded" attribute set
 - "pca" command and princomp() function: center but do not
   standardize when computing principal components using the
-  cova riance matrix 
+  covariance matrix 
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
 - GUI: enable a tabbed editor for foreign scripts
 - GUI: fix breakage in function-package search facility
-
 
 2017-07-18 version 2017c
 - MIDAS support: several small fixes and refinements
