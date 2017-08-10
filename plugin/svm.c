@@ -47,7 +47,8 @@ enum {
     W_QUIET   = 1 << 2,
     W_SEARCH  = 1 << 3,
     W_STDFMT  = 1 << 4,
-    W_SVPARM  = 1 << 5
+    W_SVPARM  = 1 << 5,
+    W_FOLDVAR = 1 << 6
 };
 
 struct sv_wrapper_ {
@@ -66,6 +67,7 @@ struct sv_wrapper_ {
     sv_grid *grid;
     char *plot;
     gretl_matrix *xdata;
+    int *flist;
 };
 
 struct sv_parm_info {
@@ -123,6 +125,7 @@ static void sv_wrapper_init (sv_wrapper *w)
     w->grid = NULL;
     w->plot = NULL;
     w->xdata = NULL;
+    w->flist = NULL;
 }
 
 static void sv_wrapper_free (sv_wrapper *w)
@@ -136,6 +139,7 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->grid);
     free(w->plot);
     gretl_matrix_free(w->xdata);
+    free(w->flist);
 }
 
 static int doing_file_io (sv_wrapper *w)
@@ -888,9 +892,14 @@ static int get_data_ranges (const int *list,
 {
     const double *x;
     double xmin, xmax;
-    int k = list[0] - 1;
-    int i, j, vi;
+    int lmax = list[0];
+    int i, j, k, vi;
     int err = 0;
+
+    if (w->flags & W_FOLDVAR) {
+	lmax = list[0] - 1;
+    }
+    k = lmax - 1;
 
     w->ranges = gretl_matrix_alloc(k+1, 4);
     if (w->ranges == NULL) {
@@ -909,7 +918,7 @@ static int get_data_ranges (const int *list,
     /* note: we make no provision for scaling y at present */
 
     j = 0;
-    for (i=2; i<=list[0]; i++) {
+    for (i=2; i<=lmax; i++) {
 	vi = list[i];
 	x = dset->Z[vi];
 	gretl_minmax(dset->t1, dset->t2, x, &xmin, &xmax);
@@ -999,7 +1008,7 @@ static int sv_data_fill (sv_data *prob,
     double scalemin, scalemax;
     double xit, xmin, xmax;
     int i, j, s, t, vi, idx;
-    int pos = 0;
+    int vf = 0, pos = 0;
 
     /* deal with the LHS variable */
     vi = list[1];
@@ -1013,12 +1022,24 @@ static int sv_data_fill (sv_data *prob,
 	prob->y[i] = dset->Z[vi][t];
     }
 
+    if (pass == 1 && (w->flags & W_FOLDVAR)) {
+	w->flist = gretl_list_new(prob->l);
+	if (w->flist != NULL) {
+	    /* record the ID of the folds series */
+	    vf = list[list[0]];
+	}
+    }
+
     /* retrieve the global x-scaling limits */
     scalemin = gretl_matrix_get(w->ranges, 0, 0);
     scalemax = gretl_matrix_get(w->ranges, 0, 1);
 
     /* write the scaled x-data into the problem struct */
     for (s=0, t=dset->t1; t<=dset->t2; t++, s++) {
+	if (vf > 0) {
+	    /* record the specified fold for this obs */
+	    w->flist[s+1] = dset->Z[vf][t];
+	}
 	prob->x[s] = &x_space[pos];
 	j = 0;
 	for (i=1; i<=k; i++) {
@@ -1134,17 +1155,92 @@ static void print_xvalid_iter (sv_parm *parm,
     svm_flush(prn);
 }
 
+static int *get_fold_sizes (const sv_data *data, sv_wrapper *w)
+{
+    int *ret = malloc(w->nfold * sizeof *ret);
+    int i, t;
+
+    for (i=1; i<=w->nfold; i++) {
+	ret[i] = 0;
+	for (t=0; t<data->l; t++) {
+	    if (w->flist[t+1] == i) {
+		ret[i] += 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static void custom_xvalidate (const sv_data *prob,
+			      const sv_parm *parm,
+			      const sv_wrapper *w,
+			      const int *fn,
+			      double *target)
+{
+    int i, vi, ni;
+
+    for (i=0; i<w->nfold; i++) {
+	struct svm_problem subprob;
+	struct svm_model *submodel;
+	int j, k;
+
+	vi = i + 1;
+	ni = fn[i];
+	subprob.l = prob->l - ni;
+	subprob.x = malloc(subprob.l * sizeof *subprob.x);
+	subprob.y = malloc(subprob.l * sizeof *subprob.y);
+
+	k = 0;
+	for (j=0; j<prob->l; j++) {
+	    if (w->flist[j+1] != vi) {
+		subprob.x[k] = prob->x[perm[j]];
+		subprob.y[k] = prob->y[perm[j]];
+		k++;
+	    }
+	}
+
+	submodel = svm_train(&subprob, parm);
+
+	if (parm->probability &&
+	    (parm->svm_type == C_SVC || parm->svm_type == NU_SVC)) {
+	    double *prob_estimates = malloc(svm_get_nr_class(submodel) * sizeof(double));
+
+	    for (j=0; j<prob->l; j++) {
+		if (w->flist[j+1] == vi) {
+		    target[j] = svm_predict_probability(submodel, prob->x[j], prob_estimates);
+		}
+	    }
+	    free(prob_estimates);
+	} else {
+	    for (j=0; j<prob->l; j++) {
+		if (w->flist[j+1] == vi) {
+		    target[j] = svm_predict(submodel, prob->x[j]);
+		}
+	    }
+	}
+	svm_free_and_destroy_model(&submodel);
+	free(subprob.x);
+	free(subprob.y);
+    }
+}
+
 static int xvalidate_once (sv_data *prob,
 			   sv_parm *parm,
 			   sv_wrapper *w,
 			   double *targ,
 			   double *crit,
+			   int *fsize,
 			   int iter,
 			   PRN *prn)
 {
     int i, n = prob->l;
 
-    svm_cross_validation(prob, parm, w->nfold, targ);
+    if (fsize != NULL) {
+	custom_xvalidate(prob, parm, w, fsize, targ);
+    } else {
+	svm_cross_validation(prob, parm, w->nfold, targ);
+    }
 
     if (doing_regression(parm)) {
 	double dev, MSE = 0;
@@ -1252,10 +1348,10 @@ static void print_grid (sv_grid *g, PRN *prn)
 
     imax = g->null[G_p] ? 2 : 3;
 
-    pputs(prn, "parameter search grid (log-2 start, stop, step):\n\n");
+    pputs(prn, "parameter search grid (log-2 start, stop, step):\n");
 
     for (i=0; i<imax; i++) {
-	pprintf(prn, "%-8s %g, %g, %g", labels[i],
+	pprintf(prn, " %-8s %g, %g, %g", labels[i],
 		g->row[i].start, g->row[i].stop,
 		g->row[i].step);
 	if (g->n[i] > 1) {
@@ -1395,6 +1491,7 @@ static int call_cross_validation (sv_data *data,
 				  sv_wrapper *w,
 				  PRN *prn)
 {
+    int *fsize = NULL;
     double *yhat;
     double crit;
     int err = 0;
@@ -1414,6 +1511,10 @@ static int call_cross_validation (sv_data *data,
 	} else if (w->grid == NULL) {
 	    sv_wrapper_add_grid(w, NULL);
 	}
+    }
+
+    if (w->flags & W_FOLDVAR) {
+	fsize = get_fold_sizes(data, w);
     }
 
     if (w->grid != NULL) {
@@ -1450,7 +1551,7 @@ static int call_cross_validation (sv_data *data,
 		    if (!grid->null[G_p]) {
 			parm->p = grid_get_p(grid, k);
 		    }
-		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
+		    xvalidate_once(data, parm, w, yhat, &crit, fsize, iter, prn);
 		    if (crit > cmax) {
 			cmax = crit;
 			ibest = i;
@@ -1494,10 +1595,58 @@ static int call_cross_validation (sv_data *data,
 	    pprintf(prn, ", epsilon=%g ***\n", parm->p);
 	}
     } else {
-	err = xvalidate_once(data, parm, w, yhat, &crit, -1, prn);
+	err = xvalidate_once(data, parm, w, yhat, &crit, fsize, -1, prn);
     }
 
     free(yhat);
+    free(fsize);
+
+    return err;
+}
+
+static int check_folds_series (const int *list,
+			       const DATASET *dset,
+			       sv_wrapper *w,
+			       PRN *prn)
+{
+    gretl_matrix *fvec;
+    const double *x;
+    int v = list[list[0]];
+    int i, t2, n;
+    int err = 0;
+
+    x = dset->Z[v] + dset->t1;
+    t2 = w->t2_train > 0 ? w->t2_train : dset->t2;
+    n = t2 - dset->t1 + 1;
+
+    fvec = gretl_matrix_values(x, n, OPT_S, &err);
+    if (!err) {
+	n = gretl_vector_get_length(fvec);
+	x = fvec->val;
+
+	for (i=0; i<n && !err; i++) {
+	    if (i > 0) {
+		if (x[i] != x[i-1] + 1) {
+		    fputs("foldvar must contain consecutive integers\n", stderr);
+		    err = E_DATA;
+		}
+	    } else if (x[i] != 1.0) {
+		fputs("foldvar values must start at 1\n", stderr);
+		err = E_DATA;
+	    }
+	}
+
+	if (!err) {
+	    w->nfold = x[n-1];
+	    pprintf(prn, "%s: found %d folds\n", dset->varname[v]);
+	    if (w->nfold < 2) {
+		w->nfold = 0;
+		err = E_DATA;
+	    }
+	}
+    }
+
+    gretl_matrix_free(fvec);
 
     return err;
 }
@@ -1571,7 +1720,11 @@ static int read_params_bundle (gretl_bundle *bparm,
     }
 
     if (get_optional_int(bparm, "folds", &ival, &err)) {
-	if (ival < 2) {
+	if (ival == 1) {
+	    pprintf(prn, "folds: will read from series %s\n",
+		    dset->varname[list[list[0]]]);
+	    wrap->flags |= W_FOLDVAR;
+	} else if (ival < 2) {
 	    fprintf(stderr, "invalid 'folds' arg %d\n", ival);
 	    err = E_INVARG;
 	} else {
@@ -1649,6 +1802,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    /* default to 5 folds */
 	    wrap->nfold = 5;
 	}
+    }
+
+    if (!err && (wrap->flags & W_FOLDVAR)) {
+	err = check_folds_series(list, dset, wrap, prn);
     }
 
     if (!err) {
