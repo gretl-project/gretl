@@ -1160,10 +1160,10 @@ static int *get_fold_sizes (const sv_data *data, sv_wrapper *w)
     int *ret = malloc(w->nfold * sizeof *ret);
     int i, t;
 
-    for (i=1; i<=w->nfold; i++) {
+    for (i=0; i<w->nfold; i++) {
 	ret[i] = 0;
 	for (t=0; t<data->l; t++) {
-	    if (w->flist[t+1] == i) {
+	    if (w->flist[t+1] == i + 1) {
 		ret[i] += 1;
 	    }
 	}
@@ -1191,11 +1191,13 @@ static void custom_xvalidate (const sv_data *prob,
 	subprob.x = malloc(subprob.l * sizeof *subprob.x);
 	subprob.y = malloc(subprob.l * sizeof *subprob.y);
 
+	fprintf(stderr, "fold %d, size %d\n", i+1, ni);
+
 	k = 0;
 	for (j=0; j<prob->l; j++) {
 	    if (w->flist[j+1] != vi) {
-		subprob.x[k] = prob->x[perm[j]];
-		subprob.y[k] = prob->y[perm[j]];
+		subprob.x[k] = prob->x[j];
+		subprob.y[k] = prob->y[j];
 		k++;
 	    }
 	}
