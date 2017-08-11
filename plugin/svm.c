@@ -151,6 +151,16 @@ static int doing_file_io (sv_wrapper *w)
 	w->data_outfile != NULL;
 }
 
+static int loading_model (sv_wrapper *w)
+{
+    return (w->flags & W_LOADMOD) || w->model_infile != NULL;
+}
+
+static int saving_model (sv_wrapper *w)
+{
+    return (w->flags & W_SAVEMOD) || w->model_outfile != NULL;
+}
+
 static void set_sv_parm_defaults (sv_parm *parm)
 {
     parm->svm_type = -1; /* mark as unknown for now */
@@ -1176,7 +1186,7 @@ static void custom_xvalidate (const sv_data *prob,
 			      const sv_parm *parm,
 			      const sv_wrapper *w,
 			      const int *fn,
-			      double *target)
+			      double *targ)
 {
     int i, vi, ni;
 
@@ -1206,18 +1216,18 @@ static void custom_xvalidate (const sv_data *prob,
 
 	if (parm->probability &&
 	    (parm->svm_type == C_SVC || parm->svm_type == NU_SVC)) {
-	    double *prob_estimates = malloc(svm_get_nr_class(submodel) * sizeof(double));
+	    double *tmp = malloc(svm_get_nr_class(submodel) * sizeof(double));
 
 	    for (j=0; j<prob->l; j++) {
 		if (w->flist[j+1] == vi) {
-		    target[j] = svm_predict_probability(submodel, prob->x[j], prob_estimates);
+		    targ[j] = svm_predict_probability(submodel, prob->x[j], tmp);
 		}
 	    }
-	    free(prob_estimates);
+	    free(tmp);
 	} else {
 	    for (j=0; j<prob->l; j++) {
 		if (w->flist[j+1] == vi) {
-		    target[j] = svm_predict(submodel, prob->x[j]);
+		    targ[j] = svm_predict(submodel, prob->x[j]);
 		}
 	    }
 	}
@@ -1902,6 +1912,41 @@ static int get_svm_ranges (const int *list,
     return err;
 }
 
+static sv_model *do_load_model (sv_wrapper *w,
+				gretl_bundle *b,
+				PRN *prn,
+				int *err)
+{
+    sv_model *model = NULL;
+
+    if (w->flags & W_LOADMOD) {
+	pputs(prn, "Loading svm model from bundle... ");
+	model = svm_model_from_bundle(b, err);
+    } else {
+	pprintf(prn, "Loading svm model from %s... ", w->model_infile);
+	model = svm_load_model_wrapper(w->model_infile, err);
+    }
+
+    return model;
+}
+
+static int do_save_model (sv_model *model, sv_wrapper *w,
+			  gretl_bundle *b, PRN *prn)
+{
+    int err = 0;
+
+    if (w->flags & W_SAVEMOD) {
+	pputs(prn, "Saving svm model to bundle... ");
+	err = svm_model_save_to_bundle(model, b);
+    }
+    if (w->model_outfile != NULL) {
+	pprintf(prn, "Saving svm model as %s... ", w->model_outfile);
+	err = svm_save_model_wrapper(w->model_outfile, model);
+    }
+
+    return err;
+}
+
 static int check_svm_params (sv_data *data,
 			     sv_parm *parm,
 			     PRN *prn)
@@ -1942,6 +1987,7 @@ int gretl_svm_predict (const int *list,
     sv_model *model = NULL;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int do_training = 1;
     PRN *prn = inprn;
     int T, k = 0;
     int err = 0;
@@ -2012,35 +2058,31 @@ int gretl_svm_predict (const int *list,
 	err = check_svm_params(prob1, &parm, prn);
     }
 
-    if (!err && (wrap.flags & W_LOADMOD)) {
-	/* restore previously saved model via bundle */
-	pputs(prn, "Loading svm model from bundle... ");
-	model = svm_model_from_bundle(bmodel, &err);
+    if (!err && loading_model(&wrap)) {
+	do_training = 0;
+	model = do_load_model(&wrap, bmodel, prn, &err);
 	report_result(err, prn);
-    } else if (!err && wrap.model_infile != NULL) {
-	/* restore previously saved model from file */
-	pprintf(prn, "Loading svm model from %s... ", wrap.model_infile);
-	model = svm_load_model_wrapper(wrap.model_infile, &err);
-	report_result(err, prn);
-    } else if (!err) {
-	if (wrap.nfold > 0) {
-	    err = call_cross_validation(prob1, &parm, &wrap, prn);
-	    if (wrap.flags & W_SEARCH) {
-		/* continue to train using tuned params? */
-		if (wrap.flags & W_SVPARM) {
-		    /* no, just save the tuned parms */
-		    save_parms_to_bundle(&parm, &wrap, bmodel);
-		    goto getout;
-		}
-	    } else {
-		goto getout;
+    }
+
+    if (!err && wrap.nfold > 0 && model == NULL) {
+	err = call_cross_validation(prob1, &parm, &wrap, prn);
+	if (wrap.flags & W_SEARCH) {
+	    /* continue to train using tuned params? */
+	    if (wrap.flags & W_SVPARM) {
+		/* no, just save the tuned parms */
+		save_parms_to_bundle(&parm, &wrap, bmodel);
+		wrap.predict = do_training = 0;
 	    }
+	} else {
+	    /* not searching, we're done */
+	    wrap.predict = do_training = 0;
 	}
-	if (!err) {
-	    pprintf(prn, "Calling training function (this may take a while)\n");
-	    svm_flush(prn);
-	    model = svm_train(prob1, &parm);
-	}
+    }
+
+    if (!err && do_training) {
+	pprintf(prn, "Calling training function (this may take a while)\n");
+	svm_flush(prn);
+	model = svm_train(prob1, &parm);
 	if (model == NULL) {
 	    err = E_DATA;
 	}
@@ -2048,18 +2090,9 @@ int gretl_svm_predict (const int *list,
 	svm_flush(prn);
     }
 
-    if (model != NULL) {
-	/* We have a model: should it be saved (to bundle or file)? */
-	if (wrap.flags & W_SAVEMOD) {
-	    pputs(prn, "Saving svm model to bundle... ");
-	    err = svm_model_save_to_bundle(model, bmodel);
-	    report_result(err, prn);
-	}
-	if (wrap.model_outfile != NULL) {
-	    pprintf(prn, "Saving svm model as %s... ", wrap.model_outfile);
-	    err = svm_save_model_wrapper(wrap.model_outfile, model);
-	    report_result(err, prn);
-	}
+    if (model != NULL && saving_model(&wrap)) {
+	err = do_save_model(model, &wrap, bmodel, prn);
+	report_result(err, prn);
     }
 
     if (!err && wrap.predict > 0) {
@@ -2090,8 +2123,6 @@ int gretl_svm_predict (const int *list,
 	    }
 	}
     }
-
- getout:
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
