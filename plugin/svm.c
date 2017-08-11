@@ -23,6 +23,10 @@
 #include "libset.h"
 #include "version.h"
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #include <svm.h>
 
 typedef struct svm_problem sv_data;
@@ -182,8 +186,8 @@ static void set_sv_parm_defaults (sv_parm *parm)
     parm->probability = 0;     /* do probability estimates */
 }
 
-static int set_or_print_sv_parm (sv_parm *parm, gretl_bundle *b,
-				 PRN *prn)
+static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
+				 int store, PRN *prn)
 {
     struct sv_parm_info pinfo[N_PARMS] = {
 	{ "svm_type",     GRETL_TYPE_INT },
@@ -223,15 +227,15 @@ static int set_or_print_sv_parm (sv_parm *parm, gretl_bundle *b,
     double xval;
     int err = 0;
 
-    if (b == NULL) {
-	/* we're just printing */
+    if (store) {
+	/* we're supposed to store @parm in @b */
 	for (i=0; i<N_PARMS && !err; i++) {
 	    if (pinfo[i].type == GRETL_TYPE_DOUBLE) {
 		xval = *(double *) elem[i];
-		pprintf(prn, " %s = %g\n", pinfo[i].key, xval);
+		gretl_bundle_set_scalar(b, pinfo[i].key, xval);
 	    } else {
 		ival = *(int *) elem[i];
-		pprintf(prn, " %s = %d\n", pinfo[i].key, ival);
+		gretl_bundle_set_int(b, pinfo[i].key, ival);
 	    }
 	}
 	return 0;
@@ -269,14 +273,26 @@ static int set_or_print_sv_parm (sv_parm *parm, gretl_bundle *b,
 static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
 			 PRN *prn)
 {
-    return set_or_print_sv_parm(parm, b, prn);
+    return set_or_store_sv_parm(parm, b, 0, prn);
 }
 
-#if 0 /* not used at present */
+#if 0 /* not used yet */
 
-static void print_sv_parm (sv_parm *parm, PRN *prn)
+static gretl_bundle *store_sv_parm (sv_parm *parm, PRN *prn, int *err)
 {
-    set_or_print_sv_parm(parm, NULL, prn);
+    gretl_bundle *b = gretl_bundle_new();
+
+    if (b == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = set_or_store_sv_parm(parm, NULL, 1, prn);
+	if (*err) {
+	    gretl_bundle_destroy(b);
+	    b = NULL;
+	}
+    }
+
+    return b;
 }
 
 #endif
@@ -787,8 +803,12 @@ static int read_ranges (sv_wrapper *w)
 
     while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == 'x') {
-	    fgets(line, sizeof line, fp);
-	    continue;
+	    if (fgets(line, sizeof line, fp) == NULL) {
+		err = E_DATA;
+		break;
+	    } else {
+		continue;
+	    }
 	}
 	if (ncols == 3) {
 	    n = sscanf(line, "%d %lf %lf\n", &idx, &lo, &hi);
@@ -1498,6 +1518,24 @@ static int write_plot_file (sv_wrapper *w,
     return err;
 }
 
+#ifdef HAVE_MPI
+
+static int cross_validate_via_mpi (void)
+{
+#if 0 /* not yet */
+    sv_data *data;
+    sv_parm *parm;
+    sv_wrapper *w;
+#endif
+
+    fprintf(stderr, "cross_validate_via_mpi: rank %d ready!\n",
+	    gretl_mpi_rank());
+
+    return 0;
+}
+
+#endif
+
 static int call_cross_validation (sv_data *data,
 				  sv_parm *parm,
 				  sv_wrapper *w,
@@ -1970,13 +2008,13 @@ static int check_svm_params (sv_data *data,
     return err;
 }
 
-int gretl_svm_predict (const int *list,
-		       gretl_bundle *bparams,
-		       gretl_bundle *bmodel,
-		       double *yhat,
-		       int *yhat_written,
-		       DATASET *dset,
-		       PRN *inprn)
+static int svm_predict_main (const int *list,
+			     gretl_bundle *bparams,
+			     gretl_bundle *bmodel,
+			     double *yhat,
+			     int *yhat_written,
+			     DATASET *dset,
+			     PRN *inprn)
 {
     sv_parm parm;
     sv_wrapper wrap;
@@ -2137,6 +2175,40 @@ int gretl_svm_predict (const int *list,
     svm_destroy_param(&parm);
     sv_wrapper_free(&wrap);
     svm_prn = NULL;
+
+    return err;
+}
+
+int gretl_svm_predict (const int *list,
+		       gretl_bundle *bparams,
+		       gretl_bundle *bmodel,
+		       double *yhat,
+		       int *yhat_written,
+		       DATASET *dset,
+		       PRN *inprn)
+{
+    int doing_mpi = 0;
+    int err = 0;
+
+#ifdef HAVE_MPI
+    doing_mpi = gretl_mpi_n_processes() > 1;
+#endif
+
+    if (!doing_mpi) {
+	return svm_predict_main(list, bparams, bmodel,
+				yhat, yhat_written,
+				dset, inprn);
+    }
+
+#ifdef HAVE_MPI
+    if (gretl_mpi_rank() == 0) {
+	err = svm_predict_main(list, bparams, bmodel,
+			       yhat, yhat_written,
+			       dset, inprn);
+    } else {
+	cross_validate_via_mpi();
+    }
+#endif
 
     return err;
 }
