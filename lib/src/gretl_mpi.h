@@ -45,6 +45,8 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root);
 
 int gretl_scalar_mpi_bcast (double *px, int root);
 
+int gretl_int_mpi_bcast (int *pi, int root);
+
 int gretl_mpi_send (void *p, GretlType type, int dest);
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);
@@ -75,7 +77,8 @@ double gretl_scalar_mpi_receive (int source,
 int gretl_mpi_receive (int source, GretlType *type, 
 		       gretl_matrix **pm,
 		       gretl_bundle **pb,
-		       double *px);
+		       double *px,
+		       int *pi);
 
 void gretl_mpi_stopwatch_init (void);
 

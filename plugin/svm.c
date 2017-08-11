@@ -276,7 +276,7 @@ static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
     return set_or_store_sv_parm(parm, b, 0, prn);
 }
 
-#if 0 /* not used yet */
+#ifdef HAVE_MPI
 
 static gretl_bundle *store_sv_parm (sv_parm *parm, PRN *prn, int *err)
 {
@@ -293,6 +293,22 @@ static gretl_bundle *store_sv_parm (sv_parm *parm, PRN *prn, int *err)
     }
 
     return b;
+}
+
+static int mpi_broadcast_parm (sv_parm *parm)
+{
+    gretl_bundle *b;
+    int err = 0;
+
+    b = store_sv_parm(parm, NULL, &err);
+
+    if (!err) {
+	gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
+    }
+
+    gretl_bundle_destroy(b);
+
+    return err;
 }
 
 #endif
@@ -868,6 +884,45 @@ static int write_problem (sv_data *p, int k, const char *fname)
 
     return 0;
 }
+
+#if HAVE_MPI
+
+static char *problem_to_buffer (sv_data *p, int k, int *err)
+{
+    char *buf = NULL;
+    PRN *prn;
+    int i, t, idx;
+    double val;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
+    if (prn == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    for (t=0; t<p->l; t++) {
+	pprintf(prn, "%.12g ", p->y[t]);
+	for (i=0; i<k; i++) {
+	    idx = p->x[t][i].index;
+	    val = p->x[t][i].value;
+	    if (val != 0) {
+		pprintf(prn, "%d:%.12g ", idx, val);
+	    }
+	}
+	pputc(prn, '\n');
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    buf = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+    return buf;
+}
+
+#endif /* HAVE_MPI */
 
 static void gretl_sv_data_destroy (sv_data *p, sv_cell *x_space)
 {
@@ -1520,21 +1575,156 @@ static int write_plot_file (sv_wrapper *w,
 
 #ifdef HAVE_MPI
 
-static int cross_validate_via_mpi (void)
+static int colon_count (const char *s)
 {
-#if 0 /* not yet */
-    sv_data *data;
-    sv_parm *parm;
-    sv_wrapper *w;
-#endif
+    int n = 0;
 
-    fprintf(stderr, "cross_validate_via_mpi: rank %d ready!\n",
-	    gretl_mpi_rank());
+    while (*s) {
+	if (*s == ':') {
+	    n++;
+	}
+	s++;
+    }
 
-    return 0;
+    return n;
 }
 
-#endif
+/* read buffer passed from MPI root and reconstruct svm data array */
+
+static sv_data *svm_data_from_buffer (const char *s, sv_cell **cells,
+				      int *err)
+{
+    sv_data *data = NULL;
+    sv_cell *xspace = NULL;
+    char *line = NULL;
+    const char *p = s;
+    int len = 0, nlines = 0;
+    int maxlen = 0;
+    int i, j, k, idx, pos;
+    double xval;
+
+    /* get number of lines in buffer and maximum line length */
+    while (*p) {
+	if (*p == '\n') {
+	    nlines++;
+	    if (len > maxlen) {
+		maxlen = len;
+	    }
+	    len = 0;
+	} else {
+	    len++;
+	}
+	p++;
+    }
+
+    line = calloc(maxlen + 2, 1);
+    if (line == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    bufgets_init(s);
+
+    i = pos = 0;
+    while (bufgets(line, maxlen + 1, s) && !*err) {
+	if (i == 0) {
+	    /* determine number of indep vars and allocate */
+	    k = colon_count(line);
+	    data = gretl_sv_data_alloc(nlines, k+1, &xspace, err);
+	    if (*err) {
+		break;
+	    }
+	}
+	data->x[i] = &xspace[pos];
+	p = line;
+	if (sscanf(p, "%lf", &xval) == 1) {
+	    data->y[i] = xval;
+	    p += strcspn(p, " ") + 1;
+	    for (j=0; j<k && !*err; j++) {
+		if (sscanf(p, "%d:%lf", &idx, &xval) == 2) {
+		    data->x[i][j].index = idx;
+		    data->x[i][j].value = xval;
+		    p += strcspn(p, " ") + 1;
+		    pos++;
+		} else {
+		    *err = E_DATA;
+		}
+	    }
+	    /* end-of-line sentinel */
+	    data->x[i][j].index = -1;
+	    data->x[i][j].value = 0;
+	    pos++;
+	} else {
+	    *err = E_DATA;
+	}
+     	i++;
+    }
+
+    bufgets_finalize(s);
+
+    *cells = xspace;
+
+    return data;
+}
+
+static int cross_validate_via_mpi (void)
+{
+    gretl_bundle *getparm = NULL;
+    sv_parm parm = {0};
+    sv_data *data = NULL;
+    sv_cell *xspace = NULL;
+    int rank = gretl_mpi_rank();
+    int err = 0;
+
+    fprintf(stderr, "cross_validate_via_mpi: rank %d ready!\n", rank);
+
+    err = gretl_mpi_bcast(&getparm, GRETL_TYPE_BUNDLE, 0);
+    fprintf(stderr, " rank %d, getparm = %p\n", rank, (void *) getparm);
+
+    if (!err) {
+	set_svm_parm(&parm, getparm, NULL);
+    }
+
+    if (!err) {
+	char *databuf = NULL;
+
+	gretl_mpi_bcast(&databuf, GRETL_TYPE_STRING, 0);
+	if (databuf == NULL) {
+	    err = E_DATA;
+	} else {
+	    data = svm_data_from_buffer(databuf, &xspace, &err);
+	    fprintf(stderr, " rank %d, datalen %d, err %d\n", rank,
+		    (int) strlen(databuf), err);
+	    free(databuf);
+	}
+    }
+
+    gretl_bundle_destroy(getparm);
+    gretl_sv_data_destroy(data, xspace);
+
+    return err;
+}
+
+static int broadcast_svm_info (sv_data *data,
+			       sv_parm *parm,
+			       int k)
+{
+    char *buf;
+    int err = 0;
+
+    buf = problem_to_buffer(data, k, &err);
+    if (err) {
+	return err;
+    }
+
+    mpi_broadcast_parm(parm);
+    gretl_mpi_bcast(&buf, GRETL_TYPE_STRING, 0);
+    free(buf);
+
+    return err;
+}
+
+#endif /* HAVE_MPI */
 
 static int call_cross_validation (sv_data *data,
 				  sv_parm *parm,
@@ -2102,6 +2292,15 @@ static int svm_predict_main (const int *list,
 	report_result(err, prn);
     }
 
+#ifdef HAVE_MPI
+    if (!err && wrap.nfold > 0 && gretl_mpi_n_processes() > 1) {
+	/* if we reach here, we're rank 0 */
+	pputs(prn, "Broadcasting svm info... ");
+	err = broadcast_svm_info(prob1, &parm, k);
+	report_result(err, prn);
+    }
+#endif
+
     if (!err && wrap.nfold > 0 && model == NULL) {
 	err = call_cross_validation(prob1, &parm, &wrap, prn);
 	if (wrap.flags & W_SEARCH) {
@@ -2118,7 +2317,7 @@ static int svm_predict_main (const int *list,
     }
 
     if (!err && do_training) {
-	pprintf(prn, "Calling training function (this may take a while)\n");
+	pputs(prn, "Calling training function (this may take a while)\n");
 	svm_flush(prn);
 	model = svm_train(prob1, &parm);
 	if (model == NULL) {

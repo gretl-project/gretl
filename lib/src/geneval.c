@@ -2159,8 +2159,9 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	gretl_matrix *m = NULL;
 	gretl_bundle *b = NULL;
 	double x = NADBL;
+	int ival = 0;
 
-	p->err = gretl_mpi_receive(id, &type, &m, &b, &x);
+	p->err = gretl_mpi_receive(id, &type, &m, &b, &x, &ival);
 
 	if (!p->err) {
 	    if (type == GRETL_TYPE_MATRIX) {
@@ -2173,10 +2174,15 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		if (!p->err) {
 		    ret->v.b = b;
 		}
-	    } else {
+	    } else if (type == GRETL_TYPE_DOUBLE) {
 		ret = aux_scalar_node(p);
 		if (!p->err) {
 		    ret->v.xval = x;
+		}
+	    } else {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = ival;
 		}
 	    }
 	}
