@@ -252,9 +252,6 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 
     for (i=0; i<N_PARMS && !err; i++) {
 	if (gretl_bundle_has_key(b, pinfo[i].key)) {
-	    if (i == 0) {
-		fprintf(stderr, "bundle, got key svm_type\n");
-	    }
 	    if (i >= 8 && i <= 10) {
 		pputs(prn, "Sorry, svm weighting not handled yet\n");
 		err = E_INVARG;
@@ -266,8 +263,6 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 	    } else if (pinfo[i].type == GRETL_TYPE_INT ||
 		       pinfo[i].type == GRETL_TYPE_BOOL) {
 		ival = gretl_bundle_get_int(b, pinfo[i].key, &err);
-		if (i == 0)
-		    fprintf(stderr, "bundle, got svm_type %d\n", ival);
 		if (!err) {
 		    if (pinfo[i].type == GRETL_TYPE_BOOL) {
 			*(int *) elem[i] = (ival != 0);
@@ -300,7 +295,7 @@ static gretl_bundle *store_sv_parm (sv_parm *parm, PRN *prn, int *err)
     if (b == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = set_or_store_sv_parm(parm, NULL, 1, prn);
+	*err = set_or_store_sv_parm(parm, b, 1, prn);
 	if (*err) {
 	    gretl_bundle_destroy(b);
 	    b = NULL;
@@ -316,7 +311,6 @@ static int mpi_broadcast_parm (sv_parm *parm)
     int err = 0;
 
     b = store_sv_parm(parm, NULL, &err);
-
     if (!err) {
 	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
     }
@@ -1774,6 +1768,12 @@ static int cross_validate_worker_task (void)
     err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
     fprintf(stderr, " rank %d, getparm = %p\n", rank, (void *) b);
 
+    if (rank == 1) {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	gretl_bundle_print(b, prn);
+	gretl_print_destroy(prn);
+    }
+
     if (!err) {
 	set_svm_parm(&parm, b, NULL);
 	gretl_bundle_destroy(b);
@@ -1957,7 +1957,7 @@ static int carve_up_xvalidation (sv_data *data,
 	parm->p     = gretl_matrix_get(m, i, 2);
 	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
 	if (!err) {
-	    gretl_matrix_set(m, i, 3, crit);
+	    gretl_matrix_set(m, i, 3, fabs(crit));
 	}
     }
 
