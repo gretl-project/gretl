@@ -72,6 +72,7 @@ struct sv_wrapper_ {
     char *plot;
     gretl_matrix *xdata;
     int *flist;
+    int *fsize;
 };
 
 struct sv_parm_info {
@@ -130,6 +131,7 @@ static void sv_wrapper_init (sv_wrapper *w)
     w->plot = NULL;
     w->xdata = NULL;
     w->flist = NULL;
+    w->fsize = NULL;
 }
 
 static void sv_wrapper_free (sv_wrapper *w)
@@ -144,6 +146,7 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->plot);
     gretl_matrix_free(w->xdata);
     free(w->flist);
+    free(w->fsize);
 }
 
 static int doing_file_io (sv_wrapper *w)
@@ -236,6 +239,10 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 	    } else {
 		ival = *(int *) elem[i];
 		gretl_bundle_set_int(b, pinfo[i].key, ival);
+		if (i == 0) {
+		    fprintf(stderr, "put %s = %d into bundle\n",
+			    pinfo[i].key, ival);
+		}
 	    }
 	}
 	return 0;
@@ -245,6 +252,9 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 
     for (i=0; i<N_PARMS && !err; i++) {
 	if (gretl_bundle_has_key(b, pinfo[i].key)) {
+	    if (i == 0) {
+		fprintf(stderr, "bundle, got key svm_type\n");
+	    }
 	    if (i >= 8 && i <= 10) {
 		pputs(prn, "Sorry, svm weighting not handled yet\n");
 		err = E_INVARG;
@@ -256,6 +266,8 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 	    } else if (pinfo[i].type == GRETL_TYPE_INT ||
 		       pinfo[i].type == GRETL_TYPE_BOOL) {
 		ival = gretl_bundle_get_int(b, pinfo[i].key, &err);
+		if (i == 0)
+		    fprintf(stderr, "bundle, got svm_type %d\n", ival);
 		if (!err) {
 		    if (pinfo[i].type == GRETL_TYPE_BOOL) {
 			*(int *) elem[i] = (ival != 0);
@@ -264,6 +276,9 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 		    }
 		}
 	    }
+	} else if (i == 0) {
+	    fprintf(stderr, "bundle, NO key %s found\n",
+		    pinfo[i].key);
 	}
     }
 
@@ -303,7 +318,32 @@ static int mpi_broadcast_parm (sv_parm *parm)
     b = store_sv_parm(parm, NULL, &err);
 
     if (!err) {
-	gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
+	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
+    }
+
+    gretl_bundle_destroy(b);
+
+    return err;
+}
+
+static int mpi_broadcast_wrapper (sv_wrapper *w)
+{
+    gretl_bundle *b;
+    int err = 0;
+
+    b = gretl_bundle_new();
+
+    if (b == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_bundle_set_int(b, "nfold", w->nfold);
+	if (w->flist != NULL) {
+	    gretl_bundle_set_list(b, "flist", w->flist);
+	}
+	if (w->fsize != NULL) {
+	    gretl_bundle_set_list(b, "fsize", w->fsize);
+	}
+	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
     }
 
     gretl_bundle_destroy(b);
@@ -887,6 +927,9 @@ static int write_problem (sv_data *p, int k, const char *fname)
 
 #if HAVE_MPI
 
+/* Write an svm dataset or "problem" to a buffer, for broadcast
+   in MPI context. */
+
 static char *problem_to_buffer (sv_data *p, int k, int *err)
 {
     char *buf = NULL;
@@ -1242,13 +1285,13 @@ static void print_xvalid_iter (sv_parm *parm,
 
 static int *get_fold_sizes (const sv_data *data, sv_wrapper *w)
 {
-    int *ret = malloc(w->nfold * sizeof *ret);
+    int *ret = gretl_list_new(w->nfold);
     int i, t;
 
-    for (i=0; i<w->nfold; i++) {
+    for (i=1; i<=w->nfold; i++) {
 	ret[i] = 0;
 	for (t=0; t<data->l; t++) {
-	    if (w->flist[t+1] == i + 1) {
+	    if (w->flist[t+1] == i) {
 		ret[i] += 1;
 	    }
 	}
@@ -1257,10 +1300,14 @@ static int *get_fold_sizes (const sv_data *data, sv_wrapper *w)
     return ret;
 }
 
+/* carry out cross validation in the case where the user has provided
+   a series to specify the "folds," as opposed to the default random
+   subsetting
+*/
+
 static void custom_xvalidate (const sv_data *prob,
 			      const sv_parm *parm,
 			      const sv_wrapper *w,
-			      const int *fn,
 			      double *targ)
 {
     int i, vi, ni;
@@ -1271,7 +1318,7 @@ static void custom_xvalidate (const sv_data *prob,
 	int j, k;
 
 	vi = i + 1;
-	ni = fn[i];
+	ni = w->fsize[i+1];
 	subprob.l = prob->l - ni;
 	subprob.x = malloc(subprob.l * sizeof *subprob.x);
 	subprob.y = malloc(subprob.l * sizeof *subprob.y);
@@ -1312,38 +1359,32 @@ static void custom_xvalidate (const sv_data *prob,
     }
 }
 
+/* implement a single cross validation pass */
+
 static int xvalidate_once (sv_data *prob,
 			   sv_parm *parm,
 			   sv_wrapper *w,
 			   double *targ,
 			   double *crit,
-			   int *fsize,
 			   int iter,
 			   PRN *prn)
 {
     int i, n = prob->l;
 
-    if (fsize != NULL) {
-	custom_xvalidate(prob, parm, w, fsize, targ);
+    if (w->fsize != NULL) {
+	custom_xvalidate(prob, parm, w, targ);
     } else {
 	svm_cross_validation(prob, parm, w->nfold, targ);
     }
 
     if (doing_regression(parm)) {
 	double dev, MSE = 0;
-#if 0
-	double r, r2;
-#endif
 
 	for (i=0; i<prob->l; i++) {
 	    dev = prob->y[i] - targ[i];
 	    MSE += dev * dev;
 	}
 	MSE /= n;
-#if 0
-	r = gretl_corr(0, prob->l - 1, prob->y, targ, NULL);
-	r2 = r * r;
-#endif
 	if (prn != NULL) {
 	    print_xvalid_iter(parm, w, MSE, "MSE", iter, prn);
 	}
@@ -1369,7 +1410,7 @@ static int xvalidate_once (sv_data *prob,
     return 0;
 }
 
-/* From libsvm's grid.py:
+/* For comparison, from libsvm's grid.py:
 
   -log2c {begin,end,step | "null"} : set the range of c (default -5,15,2)
     begin,end,step -- c_range = 2^{begin,...,begin+k*step,...,end}
@@ -1573,6 +1614,30 @@ static int write_plot_file (sv_wrapper *w,
     return err;
 }
 
+static int do_search_prep (sv_data *data,
+			   sv_parm *parm,
+			   sv_wrapper *w,
+			   PRN *prn)
+{
+    int err = 0;
+
+    if (w->flags & W_SEARCH) {
+	if (parm->kernel_type != RBF) {
+	    pputs(prn, "Non-RBF kernel, don't know how to tune parameters\n");
+	    sv_wrapper_remove_grid(w);
+	    err = E_INVARG;
+	} else if (w->grid == NULL) {
+	    sv_wrapper_add_grid(w, NULL);
+	}
+    }
+
+    if (w->flags & W_FOLDVAR) {
+	w->fsize = get_fold_sizes(data, w);
+    }
+
+    return err;
+}
+
 #ifdef HAVE_MPI
 
 static int colon_count (const char *s)
@@ -1589,7 +1654,7 @@ static int colon_count (const char *s)
     return n;
 }
 
-/* read buffer passed from MPI root and reconstruct svm data array */
+/* read buffer passed by MPI root and reconstruct svm data array */
 
 static sv_data *svm_data_from_buffer (const char *s, sv_cell **cells,
 				      int *err)
@@ -1667,25 +1732,55 @@ static sv_data *svm_data_from_buffer (const char *s, sv_cell **cells,
     return data;
 }
 
-static int cross_validate_via_mpi (void)
+static int get_wrapper_info (sv_wrapper *w, gretl_bundle *b)
 {
-    gretl_bundle *getparm = NULL;
-    sv_parm parm = {0};
-    sv_data *data = NULL;
-    sv_cell *xspace = NULL;
-    int rank = gretl_mpi_rank();
+    const int *list;
     int err = 0;
 
-    fprintf(stderr, "cross_validate_via_mpi: rank %d ready!\n", rank);
+    w->nfold = gretl_bundle_get_int(b, "nfold", &err);
 
-    err = gretl_mpi_bcast(&getparm, GRETL_TYPE_BUNDLE, 0);
-    fprintf(stderr, " rank %d, getparm = %p\n", rank, (void *) getparm);
+    if (!err && gretl_bundle_has_key(b, "flist")) {
+	list = gretl_bundle_get_list(b, "flist", &err);
+	if (list != NULL) {
+	    w->flist = gretl_list_copy(list);
+	    list = gretl_bundle_get_list(b, "fsize", &err);
+	    if (list != NULL) {
+		w->fsize = gretl_list_copy(list);
+	    }
+	}
+	if (!err && (w->flist == NULL || w->fsize == NULL)) {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
+static int cross_validate_worker_task (void)
+{
+    gretl_bundle *b = NULL;
+    sv_parm parm = {0};
+    sv_wrapper wrap = {0};
+    sv_data *data = NULL;
+    sv_cell *xspace = NULL;
+    gretl_matrix *task = NULL;
+    double crit, *targ = NULL;
+    int rank = gretl_mpi_rank();
+    int i, err = 0;
+
+    fprintf(stderr, "cross_validate_worker: rank %d ready!\n", rank);
+
+    /* get bundle containing the svm parameters from root */
+    err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
+    fprintf(stderr, " rank %d, getparm = %p\n", rank, (void *) b);
 
     if (!err) {
-	set_svm_parm(&parm, getparm, NULL);
+	set_svm_parm(&parm, b, NULL);
+	gretl_bundle_destroy(b);
     }
 
     if (!err) {
+	/* get the svm data or "problem" */
 	char *databuf = NULL;
 
 	gretl_mpi_bcast(&databuf, GRETL_TYPE_STRING, 0);
@@ -1699,27 +1794,246 @@ static int cross_validate_via_mpi (void)
 	}
     }
 
-    gretl_bundle_destroy(getparm);
+    if (!err) {
+	/* get the wrapper bundle */
+	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
+	if (!err) {
+	    err = get_wrapper_info(&wrap, b);
+	    gretl_bundle_destroy(b);
+	}
+    }
+
+    if (!err) {
+	/* allocate array for prediction */
+	targ = malloc(data->l * sizeof *targ);
+	if (targ == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* get our sub-task matrix */
+	task = gretl_matrix_mpi_receive(0, &err);
+    }
+
+    /* do the actual cross validation */
+    for (i=0; i<task->rows && !err; i++) {
+	parm.C     = gretl_matrix_get(task, i, 0);
+	parm.gamma = gretl_matrix_get(task, i, 1);
+	parm.p     = gretl_matrix_get(task, i, 2);
+	err = xvalidate_once(data, &parm, &wrap, targ, &crit, i, NULL);
+	if (!err) {
+	    gretl_matrix_set(task, i, 3, fabs(crit));
+	}
+    }
+
+    /* send results back to root */
+    if (!err) {
+	err = gretl_matrix_mpi_send(task, 0);
+    }
+
+    /* clean up */
     gretl_sv_data_destroy(data, xspace);
+    gretl_matrix_free(task);
+    free(targ);
+    free(wrap.flist);
+    free(wrap.fsize);
 
     return err;
 }
 
+static int carve_up_xvalidation (sv_data *data,
+				 sv_parm *parm,
+				 sv_wrapper *w)
+{
+    sv_grid *grid = w->grid;
+    gretl_matrix **M = NULL;
+    gretl_matrix *m = NULL;
+    int *row = NULL;
+    int nC = grid->n[G_C];
+    int ng = grid->n[G_g];
+    int np = grid->n[G_p];
+    double crit, *targ = NULL;
+    double C, g, p;
+    int nproc, ncom;
+    int i, j, k, ii;
+    int r1, r2;
+    int err = 0;
+
+    nproc = gretl_mpi_n_processes();
+
+    /* total number of parameter combinations */
+    ncom = nC * ng * np;
+
+    r1 = ncom / nproc;      /* rows per matrix */
+    r2 = r1 + ncom % nproc; /* rows in final matrix */
+
+    fprintf(stderr, "carve_up: ncom=%d, r1=%d, r2=%d\n", ncom, r1, r2);
+
+    /* matrices to store per-worker parameter sets */
+    M = malloc(nproc * sizeof *M);
+    if (M == NULL) {
+	err = E_ALLOC;
+    }
+    for (i=0; i<nproc-1 && !err; i++) {
+	M[i] = gretl_matrix_alloc(r1, 4);
+	if (M[i] == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    if (!err) {
+	m = M[nproc-1] = gretl_matrix_alloc(r2, 4);
+    }
+
+    if (!err) {
+	targ = malloc(data->l * sizeof *targ);
+	if (targ == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	row = malloc(nproc * sizeof *row);
+	if (row == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<nproc; i++) {
+		row[i] = 0;
+	    }
+	}
+    }
+
+    C = parm->C;
+    g = parm->gamma;
+    p = parm->p;
+
+    /* We'll dole out the full parameter matrix row by row: this
+       is an attempt to even up the tasks, given that doing the
+       cross validation is much more expensive for large values
+       of C.
+    */
+
+    ii = 0;
+    for (i=0; i<nC; i++) {
+	if (!grid->null[G_C]) {
+	    C = grid_get_C(grid, i);
+	}
+	for (j=0; j<ng; j++) {
+	    if (!grid->null[G_g]) {
+		g = grid_get_g(grid, j);
+	    }
+	    for (k=0; k<np; k++) {
+		if (!grid->null[G_p]) {
+		    p = grid_get_p(grid, k);
+		}
+		if (row[ii] == M[ii]->rows) {
+		    ii++;
+		}
+		gretl_matrix_set(M[ii], row[ii], 0, C);
+		gretl_matrix_set(M[ii], row[ii], 1, g);
+		gretl_matrix_set(M[ii], row[ii], 2, p);
+		gretl_matrix_set(M[ii], row[ii], 3, 0);
+		row[ii] += 1;
+		/* FIXME r2 > r1 */
+		if (ii == nproc - 1) {
+		    ii = 0;
+		} else {
+		    ii++;
+		}
+	    }
+	}
+    }
+
+    /* send matrices to workers, keeping the last for root */
+    for (i=0; i<nproc-1; i++) {
+	gretl_matrix_mpi_send(M[i], i+1);
+	gretl_matrix_free(M[i]);
+    }
+
+    /* do our portion of the cross validation */
+    for (i=0; i<m->rows && !err; i++) {
+	parm->C     = gretl_matrix_get(m, i, 0);
+	parm->gamma = gretl_matrix_get(m, i, 1);
+	parm->p     = gretl_matrix_get(m, i, 2);
+	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
+	if (!err) {
+	    gretl_matrix_set(m, i, 3, crit);
+	}
+    }
+
+    /* get results back from workers */
+    if (!err) {
+	gretl_matrix *Res;
+	gretl_matrix *mi;
+	int row = 0;
+
+	Res = gretl_matrix_alloc(ncom, 4);
+
+     	for (i=1; i<nproc; i++) {
+	    mi = gretl_matrix_mpi_receive(i, &err);
+	    if (mi != NULL) {
+		gretl_matrix_inscribe_matrix(Res, mi, row, 0, GRETL_MOD_NONE);
+		row += mi->rows;
+		gretl_matrix_free(mi);
+	    }
+	}
+	gretl_matrix_inscribe_matrix(Res, m, row, 0, GRETL_MOD_NONE);
+	gretl_matrix_print(Res, "Res");
+	gretl_matrix_free(Res);
+    }
+
+    free(M);
+    free(row);
+    free(targ);
+
+    return err;
+}
+
+/* called only by the MPI root node: broadcast svm parameters,
+   data, wrapper and task matrices
+*/
+
 static int broadcast_svm_info (sv_data *data,
 			       sv_parm *parm,
-			       int k)
+			       sv_wrapper *w,
+			       int k,
+			       PRN *prn)
 {
     char *buf;
     int err = 0;
 
+    err = do_search_prep(data, parm, w, prn);
+    if (err) {
+	return err;
+    }
+
+    /* assemble dataset buffer */
     buf = problem_to_buffer(data, k, &err);
     if (err) {
 	return err;
     }
 
-    mpi_broadcast_parm(parm);
-    gretl_mpi_bcast(&buf, GRETL_TYPE_STRING, 0);
+    /* broadcast the parameters first */
+    err = mpi_broadcast_parm(parm);
+
+    /* then the data */
+    if (!err) {
+	err = gretl_mpi_bcast(&buf, GRETL_TYPE_STRING, 0);
+    }
     free(buf);
+
+    fprintf(stderr, "broadcast_svm_info, done data send\n");
+
+    /* then the "wrapper" info */
+    err = mpi_broadcast_wrapper(w);
+
+    fprintf(stderr, "broadcast_svm_info, done wrapper send\n");
+
+    /* and the task matrices */
+    if (!err) {
+	fprintf(stderr, "broadcast_svm_info, calling carve-up\n");
+	err = carve_up_xvalidation(data, parm, w);
+    }
 
     return err;
 }
@@ -1731,7 +2045,6 @@ static int call_cross_validation (sv_data *data,
 				  sv_wrapper *w,
 				  PRN *prn)
 {
-    int *fsize = NULL;
     double *yhat;
     double crit;
     int err = 0;
@@ -1744,24 +2057,14 @@ static int call_cross_validation (sv_data *data,
     pputs(prn, "Calling cross-validation (this may take a while)\n");
     svm_flush(prn);
 
-    if (w->flags & W_SEARCH) {
-	if (parm->kernel_type != RBF) {
-	    pputs(prn, "Non-RBF kernel, don't know how to tune parameters\n");
-	    sv_wrapper_remove_grid(w);
-	} else if (w->grid == NULL) {
-	    sv_wrapper_add_grid(w, NULL);
-	}
-    }
-
-    if (w->flags & W_FOLDVAR) {
-	fsize = get_fold_sizes(data, w);
-    }
+    do_search_prep(data, parm, w, prn);
 
     if (w->grid != NULL) {
 	sv_grid *grid = w->grid;
 	double cmax = -DBL_MAX;
 	int nC = grid->n[G_C];
 	int ng = grid->n[G_g];
+	int np = grid->n[G_p];
 	int ibest = 0, jbest = 0, kbest = 0;
 	int iter = 0;
 	int i, j, k;
@@ -1787,11 +2090,11 @@ static int call_cross_validation (sv_data *data,
 		if (!grid->null[G_g]) {
 		    parm->gamma = grid_get_g(grid, j);
 		}
-		for (k=0; k<grid->n[G_p]; k++) {
+		for (k=0; k<np; k++) {
 		    if (!grid->null[G_p]) {
 			parm->p = grid_get_p(grid, k);
 		    }
-		    xvalidate_once(data, parm, w, yhat, &crit, fsize, iter, prn);
+		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
 		    if (crit > cmax) {
 			cmax = crit;
 			ibest = i;
@@ -1835,11 +2138,10 @@ static int call_cross_validation (sv_data *data,
 	    pprintf(prn, ", epsilon=%g ***\n", parm->p);
 	}
     } else {
-	err = xvalidate_once(data, parm, w, yhat, &crit, fsize, -1, prn);
+	err = xvalidate_once(data, parm, w, yhat, &crit, -1, prn);
     }
 
     free(yhat);
-    free(fsize);
 
     return err;
 }
@@ -2204,7 +2506,8 @@ static int svm_predict_main (const int *list,
 			     double *yhat,
 			     int *yhat_written,
 			     DATASET *dset,
-			     PRN *inprn)
+			     PRN *inprn,
+			     int nproc)
 {
     sv_parm parm;
     sv_wrapper wrap;
@@ -2293,10 +2596,10 @@ static int svm_predict_main (const int *list,
     }
 
 #ifdef HAVE_MPI
-    if (!err && wrap.nfold > 0 && gretl_mpi_n_processes() > 1) {
+    if (!err && wrap.nfold > 0 && nproc > 1) {
 	/* if we reach here, we're rank 0 */
 	pputs(prn, "Broadcasting svm info... ");
-	err = broadcast_svm_info(prob1, &parm, k);
+	err = broadcast_svm_info(prob1, &parm, &wrap, k, prn);
 	report_result(err, prn);
     }
 #endif
@@ -2386,26 +2689,28 @@ int gretl_svm_predict (const int *list,
 		       DATASET *dset,
 		       PRN *inprn)
 {
+    int nproc = 1;
     int doing_mpi = 0;
     int err = 0;
 
 #ifdef HAVE_MPI
-    doing_mpi = gretl_mpi_n_processes() > 1;
+    nproc = gretl_mpi_n_processes();
+    doing_mpi = nproc > 1;
 #endif
 
     if (!doing_mpi) {
 	return svm_predict_main(list, bparams, bmodel,
 				yhat, yhat_written,
-				dset, inprn);
+				dset, inprn, nproc);
     }
 
 #ifdef HAVE_MPI
     if (gretl_mpi_rank() == 0) {
 	err = svm_predict_main(list, bparams, bmodel,
 			       yhat, yhat_written,
-			       dset, inprn);
+			       dset, inprn, nproc);
     } else {
-	cross_validate_via_mpi();
+	err = cross_validate_worker_task();
     }
 #endif
 
