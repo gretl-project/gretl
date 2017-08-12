@@ -239,10 +239,6 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 	    } else {
 		ival = *(int *) elem[i];
 		gretl_bundle_set_int(b, pinfo[i].key, ival);
-		if (i == 0) {
-		    fprintf(stderr, "put %s = %d into bundle\n",
-			    pinfo[i].key, ival);
-		}
 	    }
 	}
 	return 0;
@@ -271,9 +267,6 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 		    }
 		}
 	    }
-	} else if (i == 0) {
-	    fprintf(stderr, "bundle, NO key %s found\n",
-		    pinfo[i].key);
 	}
     }
 
@@ -1632,6 +1625,21 @@ static int do_search_prep (sv_data *data,
     return err;
 }
 
+static void maybe_hush (sv_wrapper *w)
+{
+    if (!(w->flags & W_QUIET)) {
+	/* cut out excessive verbosity */
+	svm_set_print_string_function(gretl_libsvm_noprint);
+    }
+}
+
+static void maybe_resume_printing (sv_wrapper *w)
+{
+    if (!(w->flags & W_QUIET)) {
+	svm_set_print_string_function(gretl_libsvm_print);
+    }
+}
+
 #ifdef HAVE_MPI
 
 static int colon_count (const char *s)
@@ -1762,17 +1770,8 @@ static int cross_validate_worker_task (void)
     int rank = gretl_mpi_rank();
     int i, err = 0;
 
-    fprintf(stderr, "cross_validate_worker: rank %d ready!\n", rank);
-
     /* get bundle containing the svm parameters from root */
     err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
-    fprintf(stderr, " rank %d, getparm = %p\n", rank, (void *) b);
-
-    if (rank == 1) {
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-	gretl_bundle_print(b, prn);
-	gretl_print_destroy(prn);
-    }
 
     if (!err) {
 	set_svm_parm(&parm, b, NULL);
@@ -1816,6 +1815,8 @@ static int cross_validate_worker_task (void)
 	task = gretl_matrix_mpi_receive(0, &err);
     }
 
+    maybe_hush(&wrap);
+
     /* do the actual cross validation */
     for (i=0; i<task->rows && !err; i++) {
 	parm.C     = gretl_matrix_get(task, i, 0);
@@ -1826,6 +1827,8 @@ static int cross_validate_worker_task (void)
 	    gretl_matrix_set(task, i, 3, fabs(crit));
 	}
     }
+
+    maybe_resume_printing(&wrap);
 
     /* send results back to root */
     if (!err) {
@@ -1857,7 +1860,8 @@ static int carve_up_xvalidation (sv_data *data,
     double C, g, p;
     int nproc, ncom;
     int i, j, k, ii;
-    int r1, r2;
+    int r1, r2, seq;
+    int lastmat = 0;
     int err = 0;
 
     nproc = gretl_mpi_n_processes();
@@ -1876,13 +1880,13 @@ static int carve_up_xvalidation (sv_data *data,
 	err = E_ALLOC;
     }
     for (i=0; i<nproc-1 && !err; i++) {
-	M[i] = gretl_matrix_alloc(r1, 4);
+	M[i] = gretl_matrix_alloc(r1, 5);
 	if (M[i] == NULL) {
 	    err = E_ALLOC;
 	}
     }
     if (!err) {
-	m = M[nproc-1] = gretl_matrix_alloc(r2, 4);
+	m = M[nproc-1] = gretl_matrix_alloc(r2, 5);
     }
 
     if (!err) {
@@ -1913,7 +1917,7 @@ static int carve_up_xvalidation (sv_data *data,
        of C.
     */
 
-    ii = 0;
+    ii = seq = 0;
     for (i=0; i<nC; i++) {
 	if (!grid->null[G_C]) {
 	    C = grid_get_C(grid, i);
@@ -1927,18 +1931,22 @@ static int carve_up_xvalidation (sv_data *data,
 		    p = grid_get_p(grid, k);
 		}
 		if (row[ii] == M[ii]->rows) {
+		    lastmat = 1;
 		    ii++;
 		}
 		gretl_matrix_set(M[ii], row[ii], 0, C);
 		gretl_matrix_set(M[ii], row[ii], 1, g);
 		gretl_matrix_set(M[ii], row[ii], 2, p);
 		gretl_matrix_set(M[ii], row[ii], 3, 0);
+		gretl_matrix_set(M[ii], row[ii], 4, seq);
+		seq++;
 		row[ii] += 1;
-		/* FIXME r2 > r1 */
-		if (ii == nproc - 1) {
-		    ii = 0;
-		} else {
-		    ii++;
+		if (!lastmat) {
+		    if (ii == nproc - 1) {
+			ii = 0;
+		    } else {
+			ii++;
+		    }
 		}
 	    }
 	}
@@ -1949,6 +1957,8 @@ static int carve_up_xvalidation (sv_data *data,
 	gretl_matrix_mpi_send(M[i], i+1);
 	gretl_matrix_free(M[i]);
     }
+
+    maybe_hush(w);
 
     /* do our portion of the cross validation */
     for (i=0; i<m->rows && !err; i++) {
@@ -1961,23 +1971,28 @@ static int carve_up_xvalidation (sv_data *data,
 	}
     }
 
+    maybe_resume_printing(w);
+
     /* get results back from workers */
     if (!err) {
-	gretl_matrix *Res;
+	gretl_matrix *Tmp, *Res;
 	gretl_matrix *mi;
 	int row = 0;
 
-	Res = gretl_matrix_alloc(ncom, 4);
+	Tmp = gretl_matrix_alloc(ncom, 5);
 
      	for (i=1; i<nproc; i++) {
 	    mi = gretl_matrix_mpi_receive(i, &err);
 	    if (mi != NULL) {
-		gretl_matrix_inscribe_matrix(Res, mi, row, 0, GRETL_MOD_NONE);
+		gretl_matrix_inscribe_matrix(Tmp, mi, row, 0, GRETL_MOD_NONE);
 		row += mi->rows;
 		gretl_matrix_free(mi);
 	    }
 	}
-	gretl_matrix_inscribe_matrix(Res, m, row, 0, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(Tmp, m, row, 0, GRETL_MOD_NONE);
+	Res = gretl_matrix_sort_by_column(Tmp, 4, &err);
+	gretl_matrix_free(Tmp);
+	gretl_matrix_reuse(Res, ncom, 4);
 	gretl_matrix_print(Res, "Res");
 	gretl_matrix_free(Res);
     }
@@ -2022,16 +2037,11 @@ static int broadcast_svm_info (sv_data *data,
     }
     free(buf);
 
-    fprintf(stderr, "broadcast_svm_info, done data send\n");
-
     /* then the "wrapper" info */
     err = mpi_broadcast_wrapper(w);
 
-    fprintf(stderr, "broadcast_svm_info, done wrapper send\n");
-
     /* and the task matrices */
     if (!err) {
-	fprintf(stderr, "broadcast_svm_info, calling carve-up\n");
 	err = carve_up_xvalidation(data, parm, w);
     }
 
@@ -2077,10 +2087,8 @@ static int call_cross_validation (sv_data *data,
 	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
 	}
 
-	if (!(w->flags & W_QUIET)) {
-	    /* cut out excessive verbosity */
-	    svm_set_print_string_function(gretl_libsvm_noprint);
-	}
+	/* cut out excessive verbosity? */
+	maybe_hush(w);
 
 	for (i=0; i<nC; i++) {
 	    if (!grid->null[G_C]) {
@@ -2111,10 +2119,8 @@ static int call_cross_validation (sv_data *data,
 	    }
 	}
 
-	if (!(w->flags & W_QUIET)) {
-	    /* restore libsvm printing */
-	    svm_set_print_string_function(gretl_libsvm_print);
-	}
+	/* restore libsvm printing */
+	maybe_resume_printing(w);
 
 	if (!grid->null[G_C]) {
 	    parm->C = grid_get_C(grid, ibest);
