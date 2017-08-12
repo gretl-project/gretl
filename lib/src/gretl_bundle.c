@@ -2008,7 +2008,7 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
 	size_t sz = (size_t) pos;
 	
 	*bytes = (int) pos;
-	buf = malloc(sz);
+	buf = calloc(sz + 1, 1);
 	if (buf == NULL) {
 	    *err = E_ALLOC;
 	} else if (fread(buf, 1, sz, fp) != sz) {
