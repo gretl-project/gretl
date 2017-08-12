@@ -98,6 +98,7 @@ static int (*mpi_bcast) (void *, int, MPI_Datatype, int, MPI_Comm);
 static int (*mpi_send) (void *, int, MPI_Datatype, int, int, MPI_Comm);
 static int (*mpi_recv) (void *, int, MPI_Datatype, int, int, MPI_Comm,
 			MPI_Status *);
+static int (*mpi_barrier) (MPI_Comm);
 static int (*mpi_probe) (int, int, MPI_Comm, MPI_Status *);
 static double (*mpi_wtime) (void);
 static int (*mpi_initialized) (int *);
@@ -157,6 +158,7 @@ int gretl_MPI_init (void)
     mpi_send         = mpiget(MPIhandle, "MPI_Send", &err);
     mpi_recv         = mpiget(MPIhandle, "MPI_Recv", &err);
     mpi_probe        = mpiget(MPIhandle, "MPI_Probe", &err);
+    mpi_barrier      = mpiget(MPIhandle, "MPI_Barrier", &err);
     mpi_wtime        = mpiget(MPIhandle, "MPI_Wtime", &err);
     mpi_initialized  = mpiget(MPIhandle, "MPI_Initialized", &err);
 
@@ -621,7 +623,7 @@ static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int root)
     gretl_bundle *b = NULL;
     char *buf = NULL;
     int bytes = 0;
-    int id, np, err;
+    int id, np, err = 0;
 
     mpi_comm_rank(mpi_comm_world, &id);
     mpi_comm_size(mpi_comm_world, &np);
@@ -663,6 +665,8 @@ static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int root)
 	    return err;
 	}
     }
+
+    mpi_barrier(mpi_comm_world);
 
     free(buf);
 
