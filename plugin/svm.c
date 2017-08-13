@@ -1310,7 +1310,7 @@ static void custom_xvalidate (const sv_data *prob,
 	subprob.x = malloc(subprob.l * sizeof *subprob.x);
 	subprob.y = malloc(subprob.l * sizeof *subprob.y);
 
-	fprintf(stderr, "fold %d, size %d\n", i+1, ni);
+	/* fprintf(stderr, "fold %d, size %d\n", i+1, ni); */
 
 	k = 0;
 	for (j=0; j<prob->l; j++) {
