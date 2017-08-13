@@ -1931,8 +1931,8 @@ static int carve_up_xvalidation (sv_data *data,
 		    p = grid_get_p(grid, k);
 		}
 		if (row[ii] == M[ii]->rows) {
+		    ii = nproc - 1
 		    lastmat = 1;
-		    ii++;
 		}
 		gretl_matrix_set(M[ii], row[ii], 0, C);
 		gretl_matrix_set(M[ii], row[ii], 1, g);
