@@ -1160,19 +1160,25 @@ static void print_xvalid_iter (sv_parm *parm,
 			       int iter,
 			       PRN *prn)
 {
+    int first = 1;
+
     if (iter >= 0) {
 	pprintf(prn, "[%d] ", iter + 1);
     }
-    if (w->grid->null[G_C]) {
-	pprintf(prn, "gamma = %g: %s = %#g\n", parm->gamma,
-		label, val);
-    } else if (w->grid->null[G_g]) {
-	pprintf(prn, "C = %g, %s = %#g\n", parm->C, label, val);
-    } else {
-	pprintf(prn, "C = %g, gamma = %g: %s = %#g\n",
-		parm->C, parm->gamma, label, val);
+    if (!w->grid->null[G_C]) {
+	pprintf(prn, "C = %g", parm->C);
+	first = 0;
     }
-
+    if (!w->grid->null[G_g]) {
+	if (!first) pputs(prn, ", ");
+	pprintf(prn, "gamma = %g", parm->gamma);
+	first = 0;
+    }
+    if (!w->grid->null[G_p]) {
+	if (!first) pputs(prn, ", ");
+	pprintf(prn, "epsilon = %g", parm->p);
+    }
+    pprintf(prn, ": %s = %#g\n", label, val);
     svm_flush(prn);
 }
 
@@ -1906,7 +1912,6 @@ static int call_cross_validation (sv_data *data,
 	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
 	}
 
-	/* cut out excessive verbosity? */
 	maybe_hush(w);
 
 	for (i=0; i<nC; i++) {
@@ -1951,6 +1956,7 @@ static int call_cross_validation (sv_data *data,
 	}
 	param_search_finalize(parm, w, cmax, prn);
     } else {
+	/* no search: just a single cross validation pass */
 	err = xvalidate_once(data, parm, w, yhat, &crit, -1, prn);
     }
 
@@ -2445,7 +2451,7 @@ int gretl_svm_predict (const int *list,
     int save_t2 = dset->t2;
     int T, err = 0;
 
-    /* general checking and intialization */
+    /* general checking and initialization */
     if (list == NULL || list[0] < 2) {
 	gretl_errmsg_set("svm: invalid list argument");
 	err = E_INVARG;
@@ -2501,7 +2507,7 @@ int gretl_svm_predict (const int *list,
 	    parm.gamma = 1.0 / wrap.k;
 	}
 	pputs(prn, "OK\n");
-	/* we're now in a position to run a check on @parm */
+	/* we're now ready to run a check on @parm */
 	err = check_svm_params(prob, &parm, prn);
     }
 
