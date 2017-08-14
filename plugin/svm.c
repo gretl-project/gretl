@@ -59,9 +59,13 @@ struct sv_wrapper_ {
     int auto_type;
     int flags;
     int scaling;
+    int orig_t2;
     int t2_train;
+    int k;
     int nfold;
     int predict;
+    int nproc;
+    int rank;
     gretl_matrix *ranges;
     char *ranges_outfile;
     char *ranges_infile;
@@ -113,14 +117,18 @@ static void svm_flush (PRN *prn)
     }
 }
 
-static void sv_wrapper_init (sv_wrapper *w)
+static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
 {
     w->auto_type = EPSILON_SVR;
     w->flags = 0;
     w->scaling = 1;
+    w->orig_t2 = dset->t2;
     w->t2_train = 0;
+    w->k = 0;
     w->nfold = 0;
     w->predict = 2;
+    w->nproc = 0;
+    w->rank = 0;
     w->ranges = NULL;
     w->ranges_outfile = NULL;
     w->ranges_infile = NULL;
@@ -278,67 +286,6 @@ static int set_svm_parm (sv_parm *parm, gretl_bundle *b,
 {
     return set_or_store_sv_parm(parm, b, 0, prn);
 }
-
-#ifdef HAVE_MPI
-
-static gretl_bundle *store_sv_parm (sv_parm *parm, PRN *prn, int *err)
-{
-    gretl_bundle *b = gretl_bundle_new();
-
-    if (b == NULL) {
-	*err = E_ALLOC;
-    } else {
-	*err = set_or_store_sv_parm(parm, b, 1, prn);
-	if (*err) {
-	    gretl_bundle_destroy(b);
-	    b = NULL;
-	}
-    }
-
-    return b;
-}
-
-static int mpi_broadcast_parm (sv_parm *parm)
-{
-    gretl_bundle *b;
-    int err = 0;
-
-    b = store_sv_parm(parm, NULL, &err);
-    if (!err) {
-	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
-    }
-
-    gretl_bundle_destroy(b);
-
-    return err;
-}
-
-static int mpi_broadcast_wrapper (sv_wrapper *w)
-{
-    gretl_bundle *b;
-    int err = 0;
-
-    b = gretl_bundle_new();
-
-    if (b == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_bundle_set_int(b, "nfold", w->nfold);
-	if (w->flist != NULL) {
-	    gretl_bundle_set_list(b, "flist", w->flist);
-	}
-	if (w->fsize != NULL) {
-	    gretl_bundle_set_list(b, "fsize", w->fsize);
-	}
-	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
-    }
-
-    gretl_bundle_destroy(b);
-
-    return err;
-}
-
-#endif
 
 /* printing apparatus */
 
@@ -880,13 +827,13 @@ static int read_ranges (sv_wrapper *w)
 
 /* can use for testing against svm-scale */
 
-static int write_problem (sv_data *p, int k, const char *fname)
+static int write_problem (sv_data *p, sv_wrapper *w)
 {
     FILE *fp;
     int i, t, idx;
     double val;
 
-    fp = gretl_fopen(fname, "wb");
+    fp = gretl_fopen(w->data_outfile, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
@@ -895,7 +842,7 @@ static int write_problem (sv_data *p, int k, const char *fname)
 
     for (t=0; t<p->l; t++) {
 	fprintf(fp, "%g ", p->y[t]);
-	for (i=0; i<k; i++) {
+	for (i=0; i<w->k; i++) {
 	    idx = p->x[t][i].index;
 	    val = p->x[t][i].value;
 	    if (val != 0) {
@@ -911,48 +858,6 @@ static int write_problem (sv_data *p, int k, const char *fname)
 
     return 0;
 }
-
-#if HAVE_MPI
-
-/* Write an svm dataset or "problem" to a buffer, for broadcast
-   in MPI context. */
-
-static char *problem_to_buffer (sv_data *p, int k, int *err)
-{
-    char *buf = NULL;
-    PRN *prn;
-    int i, t, idx;
-    double val;
-
-    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
-    if (prn == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    gretl_push_c_numeric_locale();
-
-    for (t=0; t<p->l; t++) {
-	pprintf(prn, "%.12g ", p->y[t]);
-	for (i=0; i<k; i++) {
-	    idx = p->x[t][i].index;
-	    val = p->x[t][i].value;
-	    if (val != 0) {
-		pprintf(prn, "%d:%.12g ", idx, val);
-	    }
-	}
-	pputc(prn, '\n');
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    buf = gretl_print_steal_buffer(prn);
-    gretl_print_destroy(prn);
-
-    return buf;
-}
-
-#endif /* HAVE_MPI */
 
 static void gretl_sv_data_destroy (sv_data *p, sv_cell *x_space)
 {
@@ -1114,7 +1019,7 @@ static double scale_x (double val, double lo, double hi,
 }
 
 static int sv_data_fill (sv_data *prob,
-			 sv_cell *x_space, int k,
+			 sv_cell *x_space,
 			 sv_wrapper *w,
 			 const int *list,
 			 const DATASET *dset,
@@ -1124,6 +1029,7 @@ static int sv_data_fill (sv_data *prob,
     double xit, xmin, xmax;
     int i, j, s, t, vi, idx;
     int vf = 0, pos = 0;
+    int k = w->k;
 
     /* deal with the LHS variable */
     vi = list[1];
@@ -1608,17 +1514,15 @@ static int do_search_prep (sv_data *data,
 {
     int err = 0;
 
-    if (w->flags & W_SEARCH) {
-	if (parm->kernel_type != RBF) {
-	    pputs(prn, "Non-RBF kernel, don't know how to tune parameters\n");
-	    sv_wrapper_remove_grid(w);
-	    err = E_INVARG;
-	} else if (w->grid == NULL) {
-	    sv_wrapper_add_grid(w, NULL);
-	}
+    if (parm->kernel_type != RBF) {
+	pputs(prn, "Non-RBF kernel, don't know how to tune parameters\n");
+	sv_wrapper_remove_grid(w);
+	err = E_INVARG;
+    } else if (w->grid == NULL) {
+	sv_wrapper_add_grid(w, NULL);
     }
 
-    if (w->flags & W_FOLDVAR) {
+    if (!err && (w->flags & W_FOLDVAR)) {
 	w->fsize = get_fold_sizes(data, w);
     }
 
@@ -1640,214 +1544,144 @@ static void maybe_resume_printing (sv_wrapper *w)
     }
 }
 
+static void param_search_finalize (sv_parm *parm,
+				   sv_wrapper *w,
+				   double cmax,
+				   PRN *prn)
+{
+    sv_grid *grid = w->grid;
+
+    if (w->plot != NULL && w->xdata != NULL) {
+	write_plot_file(w, parm, fabs(cmax));
+    }
+
+    pprintf(prn, "*** Criterion optimized at %g: C=%g, gamma=%g",
+	    fabs(cmax), parm->C, parm->gamma);
+    if (grid->null[G_p]) {
+	pputs(prn, " ***\n");
+    } else {
+	pprintf(prn, ", epsilon=%g ***\n", parm->p);
+    }
+}
+
 #ifdef HAVE_MPI
 
-static int colon_count (const char *s)
+static int cross_validate_worker_task (sv_data *data,
+				       sv_parm *parm,
+				       sv_wrapper *w,
+				       double *targ)
 {
-    int n = 0;
-
-    while (*s) {
-	if (*s == ':') {
-	    n++;
-	}
-	s++;
-    }
-
-    return n;
-}
-
-/* read buffer passed by MPI root and reconstruct svm data array */
-
-static sv_data *svm_data_from_buffer (const char *s, sv_cell **cells,
-				      int *err)
-{
-    sv_data *data = NULL;
-    sv_cell *xspace = NULL;
-    char *line = NULL;
-    const char *p = s;
-    int len = 0, nlines = 0;
-    int maxlen = 0;
-    int i, j, k, idx, pos;
-    double xval;
-
-    /* get number of lines in buffer and maximum line length */
-    while (*p) {
-	if (*p == '\n') {
-	    nlines++;
-	    if (len > maxlen) {
-		maxlen = len;
-	    }
-	    len = 0;
-	} else {
-	    len++;
-	}
-	p++;
-    }
-
-    line = calloc(maxlen + 2, 1);
-    if (line == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    bufgets_init(s);
-
-    i = pos = 0;
-    while (bufgets(line, maxlen + 1, s) && !*err) {
-	if (i == 0) {
-	    /* determine number of indep vars and allocate */
-	    k = colon_count(line);
-	    data = gretl_sv_data_alloc(nlines, k+1, &xspace, err);
-	    if (*err) {
-		break;
-	    }
-	}
-	data->x[i] = &xspace[pos];
-	p = line;
-	if (sscanf(p, "%lf", &xval) == 1) {
-	    data->y[i] = xval;
-	    p += strcspn(p, " ") + 1;
-	    for (j=0; j<k && !*err; j++) {
-		if (sscanf(p, "%d:%lf", &idx, &xval) == 2) {
-		    data->x[i][j].index = idx;
-		    data->x[i][j].value = xval;
-		    p += strcspn(p, " ") + 1;
-		    pos++;
-		} else {
-		    *err = E_DATA;
-		}
-	    }
-	    /* end-of-line sentinel */
-	    data->x[i][j].index = -1;
-	    data->x[i][j].value = 0;
-	    pos++;
-	} else {
-	    *err = E_DATA;
-	}
-     	i++;
-    }
-
-    bufgets_finalize(s);
-
-    *cells = xspace;
-
-    return data;
-}
-
-static int get_wrapper_info (sv_wrapper *w, gretl_bundle *b)
-{
-    const int *list;
-    int err = 0;
-
-    w->nfold = gretl_bundle_get_int(b, "nfold", &err);
-
-    if (!err && gretl_bundle_has_key(b, "flist")) {
-	list = gretl_bundle_get_list(b, "flist", &err);
-	if (list != NULL) {
-	    w->flist = gretl_list_copy(list);
-	    list = gretl_bundle_get_list(b, "fsize", &err);
-	    if (list != NULL) {
-		w->fsize = gretl_list_copy(list);
-	    }
-	}
-	if (!err && (w->flist == NULL || w->fsize == NULL)) {
-	    err = E_ALLOC;
-	}
-    }
-
-    return err;
-}
-
-static int cross_validate_worker_task (void)
-{
-    gretl_bundle *b = NULL;
-    sv_parm parm = {0};
-    sv_wrapper wrap = {0};
-    sv_data *data = NULL;
-    sv_cell *xspace = NULL;
     gretl_matrix *task = NULL;
-    double crit, *targ = NULL;
-    int rank = gretl_mpi_rank();
+    double crit;
     int i, err = 0;
 
-    /* get bundle containing the svm parameters from root */
-    err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
-
-    if (!err) {
-	set_svm_parm(&parm, b, NULL);
-	gretl_bundle_destroy(b);
-    }
-
-    if (!err) {
-	/* get the svm data or "problem" */
-	char *databuf = NULL;
-
-	gretl_mpi_bcast(&databuf, GRETL_TYPE_STRING, 0);
-	if (databuf == NULL) {
-	    err = E_DATA;
-	} else {
-	    data = svm_data_from_buffer(databuf, &xspace, &err);
-	    fprintf(stderr, " rank %d, datalen %d, err %d\n", rank,
-		    (int) strlen(databuf), err);
-	    free(databuf);
-	}
-    }
-
-    if (!err) {
-	/* get the wrapper bundle */
-	err = gretl_mpi_bcast(&b, GRETL_TYPE_BUNDLE, 0);
-	if (!err) {
-	    err = get_wrapper_info(&wrap, b);
-	    gretl_bundle_destroy(b);
-	}
-    }
-
-    if (!err) {
-	/* allocate array for prediction */
-	targ = malloc(data->l * sizeof *targ);
-	if (targ == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	/* get our sub-task matrix */
-	task = gretl_matrix_mpi_receive(0, &err);
-    }
-
-    maybe_hush(&wrap);
+    /* get our sub-task matrix */
+    task = gretl_matrix_mpi_receive(0, &err);
 
     /* do the actual cross validation */
     for (i=0; i<task->rows && !err; i++) {
-	parm.C     = gretl_matrix_get(task, i, 0);
-	parm.gamma = gretl_matrix_get(task, i, 1);
-	parm.p     = gretl_matrix_get(task, i, 2);
-	err = xvalidate_once(data, &parm, &wrap, targ, &crit, i, NULL);
+	parm->C     = gretl_matrix_get(task, i, 0);
+	parm->gamma = gretl_matrix_get(task, i, 1);
+	parm->p     = gretl_matrix_get(task, i, 2);
+	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
 	if (!err) {
-	    gretl_matrix_set(task, i, 3, fabs(crit));
+	    gretl_matrix_set(task, i, 3, crit);
 	}
     }
-
-    maybe_resume_printing(&wrap);
 
     /* send results back to root */
     if (!err) {
 	err = gretl_matrix_mpi_send(task, 0);
     }
 
-    /* clean up */
-    gretl_sv_data_destroy(data, xspace);
+    /* local clean up */
     gretl_matrix_free(task);
-    free(targ);
-    free(wrap.flist);
-    free(wrap.fsize);
 
     return err;
 }
 
+static gretl_matrix **allocate_submatrices (int n,
+					    int cols,
+					    int r1,
+					    int r2)
+{
+    gretl_matrix **M = malloc(n * sizeof *M);
+    int i, err = 0;
+
+    if (M == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<n-1 && !err; i++) {
+	    M[i] = gretl_matrix_alloc(r1, cols);
+	    if (M[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (!err) {
+	M[n-1] = gretl_matrix_alloc(r2, cols);
+	if (M[n-1] == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err && M != NULL) {
+	free(M);
+	M = NULL;
+    }
+
+    return M;
+}
+
+static int assemble_xdata (sv_parm *parm,
+			   sv_wrapper *w,
+			   const gretl_matrix *m,
+			   double *pcmax)
+{
+    double crit, cmax = -DBL_MAX;
+    int i, imax = 0;
+
+    w->xdata = gretl_matrix_alloc(m->rows, 3);
+    if (w->xdata == NULL) {
+	return E_ALLOC;
+    }
+
+    /* If we decide to support p-search this will
+       have to be modified! */
+
+    for (i=0; i<m->rows; i++) {
+	crit = gretl_matrix_get(m, i, 3);
+	if (crit > cmax) {
+	    cmax = crit;
+	    imax = i;
+	}
+	gretl_matrix_set(w->xdata, i, 0, gretl_matrix_get(m, i, 0));
+	gretl_matrix_set(w->xdata, i, 1, gretl_matrix_get(m, i, 1));
+	gretl_matrix_set(w->xdata, i, 2, fabs(crit));
+    }
+
+    if (!w->grid->null[G_C]) {
+	parm->C = gretl_matrix_get(w->xdata, imax, 0);
+    }
+    if (!w->grid->null[G_g]) {
+	parm->gamma = gretl_matrix_get(w->xdata, imax, 1);
+    }
+
+    *pcmax = cmax;
+
+    return 0;
+}
+
+/* The following is called only by the root process,
+   when doing cross validation via MPI */
+
 static int carve_up_xvalidation (sv_data *data,
 				 sv_parm *parm,
-				 sv_wrapper *w)
+				 sv_wrapper *w,
+				 double *targ,
+				 double *pcmax,
+				 PRN *prn)
 {
     sv_grid *grid = w->grid;
     gretl_matrix **M = NULL;
@@ -1856,47 +1690,27 @@ static int carve_up_xvalidation (sv_data *data,
     int nC = grid->n[G_C];
     int ng = grid->n[G_g];
     int np = grid->n[G_p];
-    double crit, *targ = NULL;
-    double C, g, p;
-    int nproc, ncom;
+    double C, g, p, crit;
+    int ncom, nproc = w->nproc;
     int i, j, k, ii;
     int r1, r2, seq;
     int lastmat = 0;
     int err = 0;
 
-    nproc = gretl_mpi_n_processes();
-
-    /* total number of parameter combinations */
-    ncom = nC * ng * np;
-
+    ncom = nC * ng * np;    /* number of param combinations */
     r1 = ncom / nproc;      /* rows per matrix */
-    r2 = r1 + ncom % nproc; /* rows in final matrix */
+    r2 = r1 + ncom % nproc; /* rows in last matrix */
 
-    fprintf(stderr, "carve_up: ncom=%d, r1=%d, r2=%d\n", ncom, r1, r2);
+    pprintf(prn, "MPI: dividing %d parameter combinations\n", ncom);
 
     /* matrices to store per-worker parameter sets */
-    M = malloc(nproc * sizeof *M);
+    M = allocate_submatrices(nproc, 5, r1, r2);
+
     if (M == NULL) {
 	err = E_ALLOC;
-    }
-    for (i=0; i<nproc-1 && !err; i++) {
-	M[i] = gretl_matrix_alloc(r1, 5);
-	if (M[i] == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-    if (!err) {
-	m = M[nproc-1] = gretl_matrix_alloc(r2, 5);
-    }
-
-    if (!err) {
-	targ = malloc(data->l * sizeof *targ);
-	if (targ == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
+    } else {
+	/* array to keep track of which row we're on for
+	   each of the submatrices */
 	row = malloc(nproc * sizeof *row);
 	if (row == NULL) {
 	    err = E_ALLOC;
@@ -1907,6 +1721,11 @@ static int carve_up_xvalidation (sv_data *data,
 	}
     }
 
+    if (err) {
+	goto bailout;
+    }
+
+    m = M[nproc-1]; /* convenience pointer */
     C = parm->C;
     g = parm->gamma;
     p = parm->p;
@@ -1914,7 +1733,8 @@ static int carve_up_xvalidation (sv_data *data,
     /* We'll dole out the full parameter matrix row by row: this
        is an attempt to even up the tasks, given that doing the
        cross validation is much more expensive for large values
-       of C.
+       of C. We add an extra column holding "seq" so that we can
+       easily put the reassembled matrix into "standard order".
     */
 
     ii = seq = 0;
@@ -1956,32 +1776,35 @@ static int carve_up_xvalidation (sv_data *data,
     for (i=0; i<nproc-1; i++) {
 	gretl_matrix_mpi_send(M[i], i+1);
 	gretl_matrix_free(M[i]);
+	M[i] = NULL;
     }
 
     maybe_hush(w);
 
-    /* do our portion of the cross validation */
+    /* do root's share of the cross validation */
     for (i=0; i<m->rows && !err; i++) {
 	parm->C     = gretl_matrix_get(m, i, 0);
 	parm->gamma = gretl_matrix_get(m, i, 1);
 	parm->p     = gretl_matrix_get(m, i, 2);
 	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
 	if (!err) {
-	    gretl_matrix_set(m, i, 3, fabs(crit));
+	    gretl_matrix_set(m, i, 3, crit);
 	}
     }
 
     maybe_resume_printing(w);
 
-    /* get results back from workers */
+    /* get results back from workers and process */
     if (!err) {
-	gretl_matrix *Tmp, *Res;
+	gretl_matrix *Tmp, *Res = NULL;
 	gretl_matrix *mi;
 	int row = 0;
 
 	Tmp = gretl_matrix_alloc(ncom, 5);
-
-     	for (i=1; i<nproc; i++) {
+	if (Tmp == NULL) {
+	    err = E_ALLOC;
+	}
+     	for (i=1; i<nproc && !err; i++) {
 	    mi = gretl_matrix_mpi_receive(i, &err);
 	    if (mi != NULL) {
 		gretl_matrix_inscribe_matrix(Tmp, mi, row, 0, GRETL_MOD_NONE);
@@ -1989,61 +1812,59 @@ static int carve_up_xvalidation (sv_data *data,
 		gretl_matrix_free(mi);
 	    }
 	}
-	gretl_matrix_inscribe_matrix(Tmp, m, row, 0, GRETL_MOD_NONE);
-	Res = gretl_matrix_sort_by_column(Tmp, 4, &err);
+	if (!err) {
+	    gretl_matrix_inscribe_matrix(Tmp, m, row, 0, GRETL_MOD_NONE);
+	    Res = gretl_matrix_sort_by_column(Tmp, 4, &err);
+	}
 	gretl_matrix_free(Tmp);
-	gretl_matrix_reuse(Res, ncom, 4);
-	gretl_matrix_print(Res, "Res");
-	gretl_matrix_free(Res);
+	if (Res != NULL) {
+	    err = assemble_xdata(parm, w, Res, pcmax);
+	    gretl_matrix_free(Res);
+	}
     }
+
+ bailout:
 
     free(M);
     free(row);
-    free(targ);
 
     return err;
 }
 
-/* called only by the MPI root node: broadcast svm parameters,
-   data, wrapper and task matrices
-*/
-
-static int broadcast_svm_info (sv_data *data,
-			       sv_parm *parm,
-			       sv_wrapper *w,
-			       int k,
-			       PRN *prn)
+static int call_mpi_cross_validation (sv_data *data,
+				      sv_parm *parm,
+				      sv_wrapper *w,
+				      PRN *prn)
 {
-    char *buf;
+    double cmax = -DBL_MAX;
+    double *targ;
     int err = 0;
 
-    err = do_search_prep(data, parm, w, prn);
-    if (err) {
-	return err;
+    /* For now we're not supporting search for parm->p
+       via MPI. FIXME: determine if this is ever
+       worthwhile.
+    */
+    if (w->grid->n[G_p] > 1) {
+	gretl_errmsg_set("p-search not supported!");
+	return E_INVARG;
     }
 
-    /* assemble dataset buffer */
-    buf = problem_to_buffer(data, k, &err);
-    if (err) {
-	return err;
+    targ = malloc(data->l * sizeof *targ);
+    if (targ == NULL) {
+	return E_ALLOC;
     }
 
-    /* broadcast the parameters first */
-    err = mpi_broadcast_parm(parm);
-
-    /* then the data */
-    if (!err) {
-	err = gretl_mpi_bcast(&buf, GRETL_TYPE_STRING, 0);
+    if (w->rank == 0) {
+	err = carve_up_xvalidation(data, parm, w, targ, &cmax, prn);
+    } else {
+	err = cross_validate_worker_task(data, parm, w, targ);
     }
-    free(buf);
 
-    /* then the "wrapper" info */
-    err = mpi_broadcast_wrapper(w);
-
-    /* and the task matrices */
-    if (!err) {
-	err = carve_up_xvalidation(data, parm, w);
+    if (w->rank == 0) {
+	param_search_finalize(parm, w, cmax, prn);
     }
+
+    free(targ);
 
     return err;
 }
@@ -2066,8 +1887,6 @@ static int call_cross_validation (sv_data *data,
 
     pputs(prn, "Calling cross-validation (this may take a while)\n");
     svm_flush(prn);
-
-    do_search_prep(data, parm, w, prn);
 
     if (w->grid != NULL) {
 	sv_grid *grid = w->grid;
@@ -2119,7 +1938,6 @@ static int call_cross_validation (sv_data *data,
 	    }
 	}
 
-	/* restore libsvm printing */
 	maybe_resume_printing(w);
 
 	if (!grid->null[G_C]) {
@@ -2131,18 +1949,7 @@ static int call_cross_validation (sv_data *data,
 	if (!grid->null[G_p]) {
 	    parm->p = grid_get_p(grid, kbest);
 	}
-
-	if (w->plot != NULL && w->xdata != NULL) {
-	    write_plot_file(w, parm, fabs(cmax));
-	}
-
-	pprintf(prn, "*** Criterion optimized at %g: C=%g, gamma=%g",
-		fabs(cmax), parm->C, parm->gamma);
-	if (grid->null[G_p]) {
-	    pputs(prn, " ***\n");
-	} else {
-	    pprintf(prn, ", epsilon=%g ***\n", parm->p);
-	}
+	param_search_finalize(parm, w, cmax, prn);
     } else {
 	err = xvalidate_once(data, parm, w, yhat, &crit, -1, prn);
     }
@@ -2507,42 +2314,158 @@ static int check_svm_params (sv_data *data,
 }
 
 static int svm_predict_main (const int *list,
-			     gretl_bundle *bparams,
 			     gretl_bundle *bmodel,
 			     double *yhat,
 			     int *yhat_written,
 			     DATASET *dset,
-			     PRN *inprn,
-			     int nproc)
+			     PRN *prn,
+			     sv_parm *parm,
+			     sv_wrapper *wrap,
+			     sv_data *prob1)
 {
-    sv_parm parm;
-    sv_wrapper wrap;
-    sv_data *prob1 = NULL;
     sv_data *prob2 = NULL;
-    sv_cell *x_space1 = NULL;
     sv_cell *x_space2 = NULL;
     sv_model *model = NULL;
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
     int do_training = 1;
-    PRN *prn = inprn;
-    int T, k = 0;
     int err = 0;
 
     gui_mode = gretl_in_gui_mode();
 
+    if (doing_file_io(wrap)) {
+	/* try to ensure we're in workdir */
+	gretl_chdir(gretl_workdir());
+    }
+
+    if (!err && wrap->data_outfile != NULL && wrap->rank == 0) {
+	err = write_problem(prob1, wrap);
+	report_result(err, prn);
+    }
+
+    if (!err && loading_model(wrap)) {
+	do_training = 0;
+	model = do_load_model(wrap, bmodel, prn, &err);
+	report_result(err, prn);
+    }
+
+    if (!err && wrap->nfold > 0 && model == NULL) {
+#ifdef HAVE_MPI
+	if (wrap->nproc > 1) {
+	    err = call_mpi_cross_validation(prob1, parm, wrap, prn);
+	} else {
+	    err = call_cross_validation(prob1, parm, wrap, prn);
+	}
+#else
+	err = call_cross_validation(prob1, parm, wrap, prn);
+#endif
+	if (wrap->flags & W_SEARCH) {
+	    /* continue to train using tuned params? */
+	    if (wrap->flags & W_SVPARM) {
+		/* no, just save the tuned parms */
+		save_parms_to_bundle(parm, wrap, bmodel);
+		wrap->predict = do_training = 0;
+	    }
+	} else {
+	    /* not searching, we're done */
+	    wrap->predict = do_training = 0;
+	}
+    }
+
+    if (!err && do_training) {
+	pputs(prn, "Calling training function (this may take a while)\n");
+	svm_flush(prn);
+	model = svm_train(prob1, parm);
+	if (model == NULL) {
+	    err = E_DATA;
+	}
+	pprintf(prn, "Training done, err = %d\n", err);
+	svm_flush(prn);
+    }
+
+    if (model != NULL && saving_model(wrap)) {
+	err = do_save_model(model, wrap, bmodel, prn);
+	report_result(err, prn);
+    }
+
+    if (!err && wrap->predict > 0) {
+	/* Now do some prediction */
+	int training = (wrap->t2_train > 0);
+	int T_os = -1;
+
+	real_svm_predict(yhat, prob1, model, training, dset, prn);
+	*yhat_written = 1;
+	dset->t2 = wrap->orig_t2;
+	if (training && wrap->predict > 1) {
+	    T_os = dset->t2 - wrap->t2_train;
+	}
+	if (T_os >= 10) {
+	    /* If we have some out-of-sample data, go
+	       ahead and predict out of sample.
+	    */
+	    int T;
+
+	    dset->t1 = wrap->t2_train + 1;
+	    T = sample_size(dset);
+	    pprintf(prn, "Found %d testing observations\n", T);
+	    err = check_test_data(dset, wrap->ranges, wrap->k);
+	    if (!err) {
+		prob2 = gretl_sv_data_alloc(T, wrap->k, &x_space2, &err);
+	    }
+	    if (!err) {
+		sv_data_fill(prob2, x_space2, wrap, list, dset, 2);
+		real_svm_predict(yhat, prob2, model, 0, dset, prn);
+	    }
+	}
+    }
+
+    gretl_sv_data_destroy(prob2, x_space2);
+    if (wrap->flags & W_LOADMOD) {
+	gretl_destroy_svm_model(model);
+    } else {
+	svm_free_and_destroy_model(&model);
+    }
+    svm_prn = NULL;
+
+    return err;
+}
+
+int gretl_svm_predict (const int *list,
+		       gretl_bundle *bparams,
+		       gretl_bundle *bmodel,
+		       double *yhat,
+		       int *yhat_written,
+		       DATASET *dset,
+		       PRN *inprn)
+{
+    sv_parm parm;
+    sv_wrapper wrap;
+    sv_data *prob = NULL;
+    sv_cell *x_space = NULL;
+    PRN *prn = inprn;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int T, err = 0;
+
+    /* general checking and intialization */
     if (list == NULL || list[0] < 2) {
-	fprintf(stderr, "svm: invalid list argument\n");
+	gretl_errmsg_set("svm: invalid list argument");
 	err = E_INVARG;
     } else {
-	sv_wrapper_init(&wrap);
+	sv_wrapper_init(&wrap, dset);
 	err = read_params_bundle(bparams, bmodel, &wrap, &parm,
 				 list, dset, prn);
     }
-
     if (err) {
 	return err;
     }
+
+#ifdef HAVE_MPI
+    wrap.nproc = gretl_mpi_n_processes();
+    wrap.rank = gretl_mpi_rank();
+    if (wrap.rank > 0) {
+	/* let root do all the talking */
+	wrap.flags |= W_QUIET;
+    }
+#endif
 
     if (wrap.flags & W_QUIET) {
 	svm_set_print_string_function(gretl_libsvm_noprint);
@@ -2557,17 +2480,12 @@ static int svm_predict_main (const int *list,
     }
     T = sample_size(dset);
 
-    if (doing_file_io(&wrap)) {
-	/* try to ensure we're in workdir */
-	gretl_chdir(gretl_workdir());
-    }
-
     err = get_svm_ranges(list, dset, &wrap, prn);
 
     if (!err) {
-	k = (int) gretl_matrix_get(wrap.ranges, 0, 2) - 1;
+	wrap.k = (int) gretl_matrix_get(wrap.ranges, 0, 2) - 1;
 	pputs(prn, "Allocating problem space... ");
-	prob1 = gretl_sv_data_alloc(T, k, &x_space1, &err);
+	prob = gretl_sv_data_alloc(T, wrap.k, &x_space, &err);
 	report_result(err, prn);
     }
     svm_flush(prn);
@@ -2575,150 +2493,54 @@ static int svm_predict_main (const int *list,
     if (!err) {
 	/* fill out the "problem" data */
 	pputs(prn, "Scaling and transcribing data... ");
-	sv_data_fill(prob1, x_space1, k, &wrap, list, dset, 1);
+	sv_data_fill(prob, x_space, &wrap, list, dset, 1);
 	if (parm.svm_type < 0) {
 	    parm.svm_type = wrap.auto_type;
 	}
 	if (parm.gamma == 0) {
-	    parm.gamma = 1.0 / k;
+	    parm.gamma = 1.0 / wrap.k;
 	}
 	pputs(prn, "OK\n");
-    }
-
-    if (!err && wrap.data_outfile != NULL) {
-	err = write_problem(prob1, k, wrap.data_outfile);
-	report_result(err, prn);
-    }
-
-    if (!err) {
 	/* we're now in a position to run a check on @parm */
-	err = check_svm_params(prob1, &parm, prn);
+	err = check_svm_params(prob, &parm, prn);
     }
 
-    if (!err && loading_model(&wrap)) {
-	do_training = 0;
-	model = do_load_model(&wrap, bmodel, prn, &err);
-	report_result(err, prn);
+    if (!err && (wrap.flags & W_SEARCH)) {
+	err = do_search_prep(prob, &parm, &wrap, prn);
+    }
+
+    if (err) {
+	goto getout;
+    }
+
+    if (wrap.nproc < 2 || !(wrap.flags & W_SEARCH)) {
+	/* not doing parameter search via MPI */
+	err = svm_predict_main(list, bmodel,
+			       yhat, yhat_written,
+			       dset, prn, &parm,
+			       &wrap, prob);
+	goto getout;
     }
 
 #ifdef HAVE_MPI
-    if (!err && wrap.nfold > 0 && nproc > 1) {
-	/* if we reach here, we're rank 0 */
-	pputs(prn, "Broadcasting svm info... ");
-	err = broadcast_svm_info(prob1, &parm, &wrap, k, prn);
-	report_result(err, prn);
+    if (wrap.rank == 0) {
+	err = svm_predict_main(list, bmodel,
+			       yhat, yhat_written,
+			       dset, prn, &parm,
+			       &wrap, prob);
+    } else {
+	err = call_mpi_cross_validation(prob, &parm, &wrap, NULL);
     }
 #endif
 
-    if (!err && wrap.nfold > 0 && model == NULL) {
-	err = call_cross_validation(prob1, &parm, &wrap, prn);
-	if (wrap.flags & W_SEARCH) {
-	    /* continue to train using tuned params? */
-	    if (wrap.flags & W_SVPARM) {
-		/* no, just save the tuned parms */
-		save_parms_to_bundle(&parm, &wrap, bmodel);
-		wrap.predict = do_training = 0;
-	    }
-	} else {
-	    /* not searching, we're done */
-	    wrap.predict = do_training = 0;
-	}
-    }
+ getout:
 
-    if (!err && do_training) {
-	pputs(prn, "Calling training function (this may take a while)\n");
-	svm_flush(prn);
-	model = svm_train(prob1, &parm);
-	if (model == NULL) {
-	    err = E_DATA;
-	}
-	pprintf(prn, "Training done, err = %d\n", err);
-	svm_flush(prn);
-    }
-
-    if (model != NULL && saving_model(&wrap)) {
-	err = do_save_model(model, &wrap, bmodel, prn);
-	report_result(err, prn);
-    }
-
-    if (!err && wrap.predict > 0) {
-	/* Now do some prediction */
-	int training = (wrap.t2_train > 0);
-	int T_os = -1;
-
-	real_svm_predict(yhat, prob1, model, training, dset, prn);
-	*yhat_written = 1;
-	dset->t2 = save_t2;
-	if (training && wrap.predict > 1) {
-	    T_os = dset->t2 - wrap.t2_train;
-	}
-	if (T_os >= 10) {
-	    /* If we have some out-of-sample data, go
-	       ahead and predict out of sample.
-	    */
-	    dset->t1 = wrap.t2_train + 1;
-	    T = sample_size(dset);
-	    pprintf(prn, "Found %d testing observations\n", T);
-	    err = check_test_data(dset, wrap.ranges, k);
-	    if (!err) {
-		prob2 = gretl_sv_data_alloc(T, k, &x_space2, &err);
-	    }
-	    if (!err) {
-		sv_data_fill(prob2, x_space2, k, &wrap, list, dset, 2);
-		real_svm_predict(yhat, prob2, model, 0, dset, prn);
-	    }
-	}
-    }
+    gretl_sv_data_destroy(prob, x_space);
+    svm_destroy_param(&parm);
+    sv_wrapper_free(&wrap);
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
-
-    gretl_sv_data_destroy(prob1, x_space1);
-    gretl_sv_data_destroy(prob2, x_space2);
-    if (wrap.flags & W_LOADMOD) {
-	gretl_destroy_svm_model(model);
-    } else {
-	svm_free_and_destroy_model(&model);
-    }
-    svm_destroy_param(&parm);
-    sv_wrapper_free(&wrap);
-    svm_prn = NULL;
-
-    return err;
-}
-
-int gretl_svm_predict (const int *list,
-		       gretl_bundle *bparams,
-		       gretl_bundle *bmodel,
-		       double *yhat,
-		       int *yhat_written,
-		       DATASET *dset,
-		       PRN *inprn)
-{
-    int nproc = 1;
-    int doing_mpi = 0;
-    int err = 0;
-
-#ifdef HAVE_MPI
-    nproc = gretl_mpi_n_processes();
-    doing_mpi = nproc > 1;
-#endif
-
-    if (!doing_mpi) {
-	return svm_predict_main(list, bparams, bmodel,
-				yhat, yhat_written,
-				dset, inprn, nproc);
-    }
-
-#ifdef HAVE_MPI
-    if (gretl_mpi_rank() == 0) {
-	err = svm_predict_main(list, bparams, bmodel,
-			       yhat, yhat_written,
-			       dset, inprn, nproc);
-    } else {
-	err = cross_validate_worker_task();
-    }
-#endif
 
     return err;
 }
