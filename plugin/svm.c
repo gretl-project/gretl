@@ -38,11 +38,11 @@ typedef struct sv_grid_ sv_grid;
 typedef struct grid_row_ grid_row;
 
 static const char *svm_type_names[] = {
-    "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"
+    "C-SVC", "NU-SVC", "one-class", "EPSILON-SVR", "NU-SVR"
 };
 
 static const char *kernel_type_names[] = {
-    "linear", "polynomial", "rbf", "sigmoid", "precomputed"
+    "linear", "polynomial", "RBF", "sigmoid", "precomputed"
 };
 
 enum {
@@ -1164,21 +1164,23 @@ static void print_xvalid_iter (sv_parm *parm,
 
     if (iter >= 0) {
 	pprintf(prn, "[%d] ", iter + 1);
+    } else {
+	pputs(prn, "\nCross validation:\n ");
     }
-    if (!w->grid->null[G_C]) {
+    if (w->grid == NULL || !w->grid->null[G_C]) {
 	pprintf(prn, "C = %g", parm->C);
 	first = 0;
     }
-    if (!w->grid->null[G_g]) {
+    if (w->grid == NULL || !w->grid->null[G_g]) {
 	if (!first) pputs(prn, ", ");
 	pprintf(prn, "gamma = %g", parm->gamma);
 	first = 0;
     }
-    if (!w->grid->null[G_p]) {
+    if (w->grid == NULL || !w->grid->null[G_p]) {
 	if (!first) pputs(prn, ", ");
 	pprintf(prn, "epsilon = %g", parm->p);
     }
-    pprintf(prn, ": %s = %#g\n", label, val);
+    pprintf(prn, ": %s = %#.8g\n", label, val);
     svm_flush(prn);
 }
 
@@ -1956,7 +1958,9 @@ static int call_cross_validation (sv_data *data,
 	}
 	param_search_finalize(parm, w, cmax, prn);
     } else {
-	/* no search: just a single cross validation pass */
+	/* no search: just a single cross validation pass
+	   FIXME save the criterion to optional bundle arg?
+	*/
 	err = xvalidate_once(data, parm, w, yhat, &crit, -1, prn);
     }
 
