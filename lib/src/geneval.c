@@ -1185,28 +1185,8 @@ static int gen_replace_scalar (parser *p, double x)
 static void eval_warning (parser *p, int op, int errnum)
 {
     if (!check_gretl_warning()) {
-	const char *s = NULL;
-	const char *w = "";
-
-	if (op == B_POW) {
-	    w = "pow";
-	} else if (op == F_LOG) {
-	    w = "log";
-	} else if (op == F_SQRT) {
-	    w = "sqrt";
-	} else if (op == F_EXP) {
-	    w = "exp";
-	} else if (op == F_GAMMA) {
-	    w = "gammafun";
-	} else if (op == F_LNGAMMA) {
-	    w = "lgamma";
-	} else if (op == F_DIGAMMA) {
-	    w = "digamma";
-	}
-
-	if (errnum) {
-	    s = strerror(errnum);
-	}
+	const char *w = (op == B_POW)? "pow" : getsymb(op);
+	const char *s = (errnum)? strerror(errnum) : NULL;
 
 	if (s != NULL) {
 	    gretl_warnmsg_sprintf("%s: %s", w, s);
@@ -4652,23 +4632,27 @@ static double real_apply_func (double x, int f, parser *p)
 	}
 	return y;
     case F_LOG:
-    case F_LOG10:
-    case F_LOG2:
 	y = log(x);
 	if (errno) {
-	    eval_warning(p, F_LOG, errno);
-	} else {
-	    if (f == F_LOG10) {
-		y /= log(10.0);
-	    } else if (f == F_LOG2) {
-		y /= log(2.0);
-	    }
+	    eval_warning(p, f, errno);
+	}
+	return y;
+    case F_LOG10:
+	y = log10(x);
+	if (errno) {
+	    eval_warning(p, f, errno);
+	}
+	return y;
+    case F_LOG2:
+	y = log2(x);
+	if (errno) {
+	    eval_warning(p, f, errno);
 	}
 	return y;
     case F_EXP:
 	y = exp(x);
 	if (errno) {
-	    eval_warning(p, F_EXP, errno);
+	    eval_warning(p, f, errno);
 	}
 	return y;
     case F_INVMILLS:
