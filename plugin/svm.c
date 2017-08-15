@@ -38,7 +38,7 @@ typedef struct sv_grid_ sv_grid;
 typedef struct grid_row_ grid_row;
 
 static const char *svm_type_names[] = {
-    "C-SVC", "NU-SVC", "one-class", "EPSILON-SVR", "NU-SVR"
+    "C-SVC", "Nu-SVC", "One-class", "Epsilon-SVR", "Nu-SVR"
 };
 
 static const char *kernel_type_names[] = {
@@ -499,9 +499,11 @@ static void save_parms_to_bundle (const sv_parm *parm,
     /* note: don't destroy the bundle's prior content */
     gretl_bundle_set_scalar(b, "C", parm->C);
     gretl_bundle_set_scalar(b, "gamma", parm->gamma);
-#if 0 /* not yet */
-    gretl_bundle_set_scalar(b, "epsilon", parm->p);
-#endif
+    if (parm->svm_type == EPSILON_SVR) {
+	gretl_bundle_set_scalar(b, "epsilon", parm->p);
+    } else if (parm->svm_type == NU_SVR) {
+	gretl_bundle_set_scalar(b, "nu", parm->nu);
+    }
 
     if (w != NULL && w->xdata != NULL) {
 	char **S;
@@ -1169,6 +1171,8 @@ static void print_xvalid_iter (sv_parm *parm,
     pprintf(prn, "C = %g, gamma = %g", parm->C, parm->gamma);
     if (parm->svm_type == EPSILON_SVR) {
 	pprintf(prn, ", epsilon = %g", parm->p);
+    } else if (parm->svm_type == NU_SVR) {
+	pprintf(prn, ", nu = %g", parm->nu);
     }
     pprintf(prn, ": %s = %#.8g\n", label, val);
     svm_flush(prn);
@@ -1213,8 +1217,6 @@ static void custom_xvalidate (const sv_data *prob,
 	subprob.l = prob->l - ni;
 	subprob.x = malloc(subprob.l * sizeof *subprob.x);
 	subprob.y = malloc(subprob.l * sizeof *subprob.y);
-
-	/* fprintf(stderr, "fold %d, size %d\n", i+1, ni); */
 
 	k = 0;
 	for (j=0; j<prob->l; j++) {
@@ -1574,8 +1576,10 @@ static void param_search_finalize (sv_parm *parm,
 	    fabs(cmax), parm->C, parm->gamma);
     if (grid->null[G_p]) {
 	pputs(prn, " ***\n");
-    } else {
+    } else if (parm->svm_type == EPSILON_SVR) {
 	pprintf(prn, ", epsilon=%g ***\n", parm->p);
+    } else if (parm->svm_type == NU_SVR) {
+	pprintf(prn, ", nu=%g ***\n", parm->nu);
     }
 }
 
@@ -1716,7 +1720,14 @@ static int carve_up_xvalidation (sv_data *data,
     r1 = ncom / nproc;      /* rows per matrix */
     r2 = r1 + ncom % nproc; /* rows in last matrix */
 
-    pprintf(prn, "MPI: dividing %d parameter combinations\n", ncom);
+    if (prn != NULL) {
+	pprintf(prn, "MPI: dividing %d parameter combinations, ", ncom);
+	if (r2 > r1) {
+	    pprintf(prn, "%d for root, otherwise %d\n", r2, r1);
+	} else {
+	    pprintf(prn, "%d per process\n", r1);
+	}
+    }
 
     /* matrices to store per-worker parameter sets */
     M = allocate_submatrices(nproc, 5, r1, r2);
@@ -1801,7 +1812,7 @@ static int carve_up_xvalidation (sv_data *data,
 	parm->C     = gretl_matrix_get(m, i, 0);
 	parm->gamma = gretl_matrix_get(m, i, 1);
 	parm->p     = gretl_matrix_get(m, i, 2);
-	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
+	err = xvalidate_once(data, parm, w, targ, &crit, i, prn);
 	if (!err) {
 	    gretl_matrix_set(m, i, 3, crit);
 	}
@@ -1872,7 +1883,7 @@ static int call_mpi_cross_validation (sv_data *data,
     if (w->rank == 0) {
 	if (prn != NULL) {
 	    print_grid(w->grid, prn);
-	}	
+	}
 	err = carve_up_xvalidation(data, parm, w, targ, &cmax, prn);
     } else {
 	err = cross_validate_worker_task(data, parm, w, targ);
@@ -2472,6 +2483,12 @@ int gretl_svm_predict (const int *list,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int T, err = 0;
+
+#ifdef HAVE_MPI
+    if (gretl_mpi_rank() > 0) {
+	prn = NULL;
+    }
+#endif
 
     /* general checking and initialization */
     if (list == NULL || list[0] < 2) {
