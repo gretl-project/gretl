@@ -1160,25 +1160,14 @@ static void print_xvalid_iter (sv_parm *parm,
 			       int iter,
 			       PRN *prn)
 {
-    int first = 1;
-
     if (iter >= 0) {
 	pprintf(prn, "[%d] ", iter + 1);
     } else {
 	pputs(prn, "\nCross validation:\n ");
     }
-    if (w->grid == NULL || !w->grid->null[G_C]) {
-	pprintf(prn, "C = %g", parm->C);
-	first = 0;
-    }
-    if (w->grid == NULL || !w->grid->null[G_g]) {
-	if (!first) pputs(prn, ", ");
-	pprintf(prn, "gamma = %g", parm->gamma);
-	first = 0;
-    }
-    if (w->grid == NULL || !w->grid->null[G_p]) {
-	if (!first) pputs(prn, ", ");
-	pprintf(prn, "epsilon = %g", parm->p);
+    pprintf(prn, "C = %g, gamma = %g", parm->C, parm->gamma);
+    if (parm->svm_type == EPSILON_SVR) {
+	pprintf(prn, ", epsilon = %g", parm->p);
     }
     pprintf(prn, ": %s = %#.8g\n", label, val);
     svm_flush(prn);
