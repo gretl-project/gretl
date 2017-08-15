@@ -97,6 +97,7 @@ struct grid_row_ {
 };
 
 struct sv_grid_ {
+    int linear;
     grid_row row[3];
     int null[3];
     int n[3];
@@ -1366,16 +1367,19 @@ static void print_grid (sv_grid *g, PRN *prn)
 
     imax = g->null[G_p] ? 2 : 3;
 
-    pputs(prn, "parameter search grid (log-2 start, stop, step):\n");
+    pprintf(prn, "parameter search grid (%s start, stop, step):\n",
+	    g->linear ? "linear" : "log2");
 
     for (i=0; i<imax; i++) {
-	pprintf(prn, " %-8s %g, %g, %g", labels[i],
-		g->row[i].start, g->row[i].stop,
-		g->row[i].step);
-	if (g->n[i] > 1) {
-	    pprintf(prn, " (%d values)\n", g->n[i]);
-	} else {
-	    pputc(prn, '\n');
+	if (!g->null[i]) {
+	    pprintf(prn, " %-8s %g, %g, %g", labels[i],
+		    g->row[i].start, g->row[i].stop,
+		    g->row[i].step);
+	    if (g->n[i] > 1) {
+		pprintf(prn, " (%d values)\n", g->n[i]);
+	    } else {
+		pputc(prn, '\n');
+	    }
 	}
     }
     pputc(prn, '\n');
@@ -1383,27 +1387,28 @@ static void print_grid (sv_grid *g, PRN *prn)
 
 static double grid_get_C (sv_grid *g, int i)
 {
-    double C_pow = g->row[G_C].start + i * g->row[G_C].step;
+    double Ci = g->row[G_C].start + i * g->row[G_C].step;
 
-    return pow(2.0, C_pow);
+    return g->linear ? Ci : pow(2.0, Ci);
 }
 
 static double grid_get_g (sv_grid *g, int j)
 {
-    double g_pow = g->row[G_g].start + j * g->row[G_g].step;
+    double gj = g->row[G_g].start + j * g->row[G_g].step;
 
-    return pow(2.0, g_pow);
+    return g->linear ? gj : pow(2.0, gj);
 }
 
 static double grid_get_p (sv_grid *g, int k)
 {
-    double p_pow = g->row[G_p].start + k * g->row[G_p].step;
+    double pk = g->row[G_p].start + k * g->row[G_p].step;
 
-    return pow(2.0, p_pow);
+    return g->linear ? pk : pow(2.0, pk);
 }
 
 static int sv_wrapper_add_grid (sv_wrapper *w,
-				const gretl_matrix *m)
+				const gretl_matrix *m,
+				int linear)
 {
     sv_grid *g;
     int i, err = 0;
@@ -1422,6 +1427,9 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
 		g->row[i].step  = gretl_matrix_get(m, i, 2);
 	    }
 	    err = grid_set_dimensions(g);
+	    if (!err) {
+		g->linear = linear;
+	    }
 	}
     } else {
 	sv_grid_default(g);
@@ -1453,6 +1461,7 @@ static int write_plot_file (sv_wrapper *w,
     gretl_matrix *m = w->xdata;
     const char *zlabel = "MSE";
     double x[3], best[3] = {0};
+    int linear = w->grid->linear;
     int i, j, err = 0;
     FILE *fp;
 
@@ -1470,8 +1479,13 @@ static int write_plot_file (sv_wrapper *w,
 
     gretl_push_c_numeric_locale();
 
-    fputs("set xlabel 'log2(C)'\n", fp);
-    fputs("set ylabel 'log2(gamma)'\n", fp);
+    if (linear) {
+	fputs("set xlabel 'C'\n", fp);
+	fputs("set ylabel 'gamma'\n", fp);
+    } else {
+	fputs("set xlabel 'log2(C)'\n", fp);
+	fputs("set ylabel 'log2(gamma)'\n", fp);
+    }
     fprintf(fp, "set zlabel '%s'\n", zlabel);
     fputs("set dgrid3d\n", fp);
     fputs("set contour\n", fp);
@@ -1487,7 +1501,11 @@ static int write_plot_file (sv_wrapper *w,
 		best[j] = x[j];
 	    }
 	}
-	fprintf(fp, "%g %g %g\n", log2(x[0]), log2(x[1]), x[2]);
+	if (linear) {
+	    fprintf(fp, "%g %g %g\n", x[0], x[1], x[2]);
+	} else {
+	    fprintf(fp, "%g %g %g\n", log2(x[0]), log2(x[1]), x[2]);
+	}
     }
     fputs("e\n", fp);
     fprintf(fp, "%g %g %g\n", best[0], best[1], best[2]);
@@ -1516,7 +1534,7 @@ static int do_search_prep (sv_data *data,
 	sv_wrapper_remove_grid(w);
 	err = E_INVARG;
     } else if (w->grid == NULL) {
-	sv_wrapper_add_grid(w, NULL);
+	sv_wrapper_add_grid(w, NULL, 0);
     }
 
     if (!err && (w->flags & W_FOLDVAR)) {
@@ -1852,6 +1870,9 @@ static int call_mpi_cross_validation (sv_data *data,
     }
 
     if (w->rank == 0) {
+	if (prn != NULL) {
+	    print_grid(w->grid, prn);
+	}	
 	err = carve_up_xvalidation(data, parm, w, targ, &cmax, prn);
     } else {
 	err = cross_validate_worker_task(data, parm, w, targ);
@@ -2107,11 +2128,19 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (!err) {
 	const gretl_matrix *m;
 
-	m = gretl_bundle_get_matrix(bparm, "gridmat", NULL);
+	m = gretl_bundle_get_matrix(bparm, "grid", NULL);
 	if (m != NULL) {
-	    err = sv_wrapper_add_grid(wrap, m);
+	    err = sv_wrapper_add_grid(wrap, m, 0);
 	    if (!err) {
 		wrap->flags |= W_SEARCH;
+	    }
+	} else {
+	    m = gretl_bundle_get_matrix(bparm, "linear_grid", NULL);
+	    if (m != NULL) {
+		err = sv_wrapper_add_grid(wrap, m, 1);
+		if (!err) {
+		    wrap->flags |= W_SEARCH;
+		}
 	    }
 	}
     }

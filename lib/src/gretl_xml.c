@@ -29,6 +29,10 @@
 #include "swap_bytes.h"
 #include "gretl_zip.h"
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #ifdef WIN32
 # include "gretl_win32.h"
 #endif
@@ -4233,9 +4237,19 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
+	int id = -1;
 	int err;
 
-	zdir = g_strdup_printf("%stmp-unzip", gretl_dotdir());
+#ifdef HAVE_MPI
+	if (gretl_mpi_initialized()) {
+	    id = gretl_mpi_rank();
+	}
+#endif
+	if (id >= 0) {
+	    zdir = g_strdup_printf("%stmp%d-unzip", gretl_dotdir(), id);
+	} else {
+	    zdir = g_strdup_printf("%stmp-unzip", gretl_dotdir());
+	}
 	err = gretl_mkdir(zdir);
 
 	if (!err) {
