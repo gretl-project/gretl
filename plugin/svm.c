@@ -2139,7 +2139,7 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (!err) {
 	const gretl_matrix *m;
 
-	m = gretl_bundle_get_matrix(bparm, "grid", NULL);
+	m = gretl_bundle_get_matrix(bparm, "gridmat", NULL);
 	if (m != NULL) {
 	    err = sv_wrapper_add_grid(wrap, m, 0);
 	    if (!err) {
