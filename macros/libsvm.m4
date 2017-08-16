@@ -4,7 +4,7 @@
 # Based on macros by Owen Taylor.
 
 dnl AM_PATH_LIBSVM([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for LIBSVM, and define LIBSVM_CFLAGS and LIBSVM_LIBS.
+dnl Test for LIBSVM, and define SVM_CFLAGS and SVM_LIBS.
 dnl
 AC_DEFUN([AM_PATH_LIBSVM],
 [dnl 
@@ -19,13 +19,13 @@ AC_ARG_WITH(libsvm-prefix,[  --with-libsvm-prefix=PFX   Prefix where LIBSVM is i
 
   AC_MSG_CHECKING(for LIBSVM - version >= $min_libsvm_version)
 
-  LIBSVM_CFLAGS="-I$libsvm_config_prefix/include"
-  LIBSVM_LIBS="-L$libsvm_config_prefix/lib -lsvm"
+  SVM_CFLAGS="-I$libsvm_config_prefix/include"
+  SVM_LIBS="-L$libsvm_config_prefix/lib -lsvm"
 
   ac_save_CFLAGS="$CFLAGS"
   ac_save_LIBS="$LIBS"
-  CFLAGS="$CFLAGS $LIBSVM_CFLAGS"
-  LIBS="$LIBSVM_LIBS $LIBS"
+  CFLAGS="$CFLAGS $SVM_CFLAGS"
+  LIBS="$SVM_LIBS $LIBS"
 
 dnl
 dnl Now check if the installed LIBSVM is sufficiently new.
@@ -75,8 +75,8 @@ main ()
        :
      else
        echo "*** Could not run LIBSVM test program, checking why..."
-       CFLAGS="$CFLAGS $LIBSVM_CFLAGS"
-       LIBS="$LIBS $LIBSVM_LIBS"
+       CFLAGS="$CFLAGS $SVM_CFLAGS"
+       LIBS="$LIBS $SVM_LIBS"
        AC_TRY_LINK([
 #include <svm.h>
 #include <stdio.h>
@@ -97,17 +97,17 @@ main ()
          CFLAGS="$ac_save_CFLAGS"
          LIBS="$ac_save_LIBS"
      fi
-     LIBSVM_CFLAGS=""
-     LIBSVM_LIBS=""
+     SVM_CFLAGS=""
+     SVM_LIBS=""
      ifelse([$3], , :, [$3])
   fi
-  if test "$LIBSVM_CFLAGS" = "-I/include" ; then 
-     LIBSVM_CFLAGS=""
+  if test "$SVM_CFLAGS" = "-I/include" ; then 
+     SVM_CFLAGS=""
   fi
-  if test "$LIBSVM_LIBS" = "-L/lib -lsvm" ; then 
-     LIBSVM_LIBS="-lsvm"
+  if test "$SVM_LIBS" = "-L/lib -lsvm" ; then 
+     SVM_LIBS="-lsvm"
   fi
-  AC_SUBST(LIBSVM_CFLAGS)
-  AC_SUBST(LIBSVM_LIBS)
+  AC_SUBST(SVM_CFLAGS)
+  AC_SUBST(SVM_LIBS)
   rm -f conf.libsvmtest
 ])
