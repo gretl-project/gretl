@@ -66,6 +66,7 @@ have_odbc="no"
 try_mpi="yes"
 try_libR="yes"
 have_libR="no"
+try_libsvm="yes"
 have_libsvm="no"
 try_bc="yes"
 check_gnuplot="yes"
@@ -417,17 +418,6 @@ AC_CHECK_TYPE(struct in_addr,
 )
 fi
 
-dnl try to build svm plugin?
-AC_CHECK_HEADERS(svm.h,
-	try_libsvm="yes",
-	try_libsvm="no"
-)
-if test "$try_libsvm" = "yes" ; then
-AC_CHECK_LIB(svm, svm_train, SVM_LIBS="-lsvm" ; \
-  have_libsvm="yes" ; AC_DEFINE(HAVE_LIBSVM),,)
-AC_SUBST(SVM_LIBS)
-fi
-
 dnl
 dnl Check for libreadline for use with gretlcli
 dnl
@@ -436,6 +426,19 @@ if test "$try_readline" = "yes" ; then
    if test "$have_readline" = "no" ; then
      READLINE_LIBS=""
      READLINE_CFLAGS=""
+   fi
+fi
+
+dnl
+dnl Check for libsvm (build svm plugin?)
+dnl
+if test "$try_libsvm" = "yes" ; then
+   AM_PATH_LIBSVM(321, have_libsvm="yes")
+   if test "$have_libsvm" = "yes" ; then
+     AC_DEFINE(HAVE_LIBSVM)
+   else
+     SVM_LIBS=""
+     SVM_CFLAGS=""
    fi
 fi
 
