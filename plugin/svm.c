@@ -911,7 +911,7 @@ static sv_data *gretl_sv_data_alloc (int T, int k,
     return p;
 }
 
-/* initial discovery of ranges of using the training data */
+/* initial discovery of data ranges using the training data */
 
 static int get_data_ranges (const int *list,
 			    const DATASET *dset,
@@ -920,15 +920,15 @@ static int get_data_ranges (const int *list,
     const double *x;
     double xmin, xmax;
     int lmax = list[0];
-    int i, j, k, vi;
+    int i, j, vi;
     int err = 0;
 
     if (w->flags & W_FOLDVAR) {
-	lmax = list[0] - 1;
+	/* the last series is not a regressor */
+	lmax--;
     }
-    k = lmax - 1;
 
-    w->ranges = gretl_matrix_alloc(k+1, 4);
+    w->ranges = gretl_matrix_alloc(lmax, 4);
     if (w->ranges == NULL) {
 	return E_ALLOC;
     }
@@ -1029,19 +1029,14 @@ static double scale_x (double val, double lo, double hi,
     return val;
 }
 
-static double unscale_x (double val, double lo, double hi,
-			 double scalemin, double scalemax)
+static double scale_y (double y, sv_wrapper *w)
 {
-    if (val == scalemin) {
-	val = lo;
-    } else if (val == scalemax) {
-	val = hi;
-    } else {
-	val = lo + (val - scalemin) * (hi - lo) /
-	    (scalemax - scalemin);
-    }
+    return -1 + 2 * (y - w->ymin) / (w->ymax - w->ymin);
+}
 
-    return val;
+static double unscale_y (double y, sv_wrapper *w)
+{
+    return w->ymin + (w->ymax - w->ymin) * (y + 1) / 2.0;
 }
 
 static int sv_data_fill (sv_data *prob,
@@ -1067,8 +1062,7 @@ static int sv_data_fill (sv_data *prob,
     }
     for (i=0, t=dset->t1; t<=dset->t2; t++, i++) {
 	if (w->flags & W_YSCALE) {
-	    prob->y[i] = scale_x(dset->Z[vi][t], w->ymin, w->ymax,
-				 -1.0, 1.0);
+	    prob->y[i] = scale_y(dset->Z[vi][t], w);
 	} else {
 	    prob->y[i] = dset->Z[vi][t];
 	}
@@ -1152,8 +1146,7 @@ static int real_svm_predict (double *yhat,
 	regression = 1;
 	if (w->flags & W_YSCALE) {
 	    for (i=0; i<prob->l; i++) {
-		ymean += unscale_x(prob->y[i], w->ymin, w->ymax,
-				   -1.0, 1.0);
+		ymean += unscale_y(prob->y[i], w);
 	    }
 	    ymean /= prob->l;
 	} else {
@@ -1167,9 +1160,12 @@ static int real_svm_predict (double *yhat,
 	x = prob->x[i];
 	yhi = svm_predict(model, x);
 	yi = prob->y[i];
+	if (!regression) {
+	    n_correct += (yhi == yi);
+	}
 	if (w->flags & W_YSCALE) {
-	    yhi = unscale_x(yhi, w->ymin, w->ymax, -1.0, 1.0);
-	    yi = unscale_x(yi, w->ymin, w->ymax, -1.0, 1.0);
+	    yhi = unscale_y(yhi, w);
+	    yi = unscale_y(yi, w);
 	}
 	yhat[dset->t1 + i] = yhi;
 	if (regression) {
@@ -1177,19 +1173,14 @@ static int real_svm_predict (double *yhat,
 	    TSS += dev * dev;
 	    dev = yi - yhi;
 	    SSR += dev * dev;
-	} else {
-	    n_correct += (yhi == yi);
 	}
     }
 
     label = training ? "Training data" : "Test data";
 
     if (regression) {
-	double r;
-
-	r = gretl_corr(0, prob->l - 1, prob->y, yhat + dset->t1, NULL);
-	pprintf(prn, "%s: MSE = %g, R^2 = %g, squared corr = %g\n", label,
-		SSR / prob->l, 1.0 - SSR / TSS, r * r);
+	pprintf(prn, "%s: MSE = %g, R^2 = %g\n", label,
+		SSR / prob->l, 1.0 - SSR / TSS);
     } else {
 	pprintf(prn, "%s: correct predictions = %d (%.1f percent)\n", label,
 		n_correct, 100 * n_correct / (double) prob->l);
@@ -1313,10 +1304,16 @@ static int xvalidate_once (sv_data *prob,
     }
 
     if (doing_regression(parm)) {
-	double dev, MSE = 0;
+	double yi, yhi, dev, MSE = 0;
 
 	for (i=0; i<prob->l; i++) {
-	    dev = prob->y[i] - targ[i];
+	    yi = prob->y[i];
+	    yhi = targ[i];
+	    if (w->flags & W_YSCALE) {
+		yi = unscale_y(yi, w);
+		yhi = unscale_y(yhi, w);
+	    }
+	    dev = yi - yhi;
 	    MSE += dev * dev;
 	}
 	MSE /= n;
@@ -1962,6 +1959,7 @@ static int call_cross_validation (sv_data *data,
     if (w->grid != NULL) {
 	sv_grid *grid = w->grid;
 	double cmax = -DBL_MAX;
+	double *p3 = NULL;
 	int nC = grid->n[G_C];
 	int ng = grid->n[G_g];
 	int np = grid->n[G_p];
@@ -1977,6 +1975,14 @@ static int call_cross_validation (sv_data *data,
 	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
 	}
 
+	if (!grid->null[G_p]) {
+	    if (parm->svm_type == EPSILON_SVR) {
+		p3 = &parm->p;
+	    } else if (parm->svm_type == NU_SVR) {
+		p3 = &parm->nu;
+	    }
+	}
+
 	maybe_hush(w);
 
 	for (i=0; i<nC; i++) {
@@ -1988,8 +1994,8 @@ static int call_cross_validation (sv_data *data,
 		    parm->gamma = grid_get_g(grid, j);
 		}
 		for (k=0; k<np; k++) {
-		    if (!grid->null[G_p]) {
-			parm->p = grid_get_p(grid, k);
+		    if (p3 != NULL) {
+			*p3 = grid_get_p(grid, k);
 		    }
 		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
 		    if (crit > cmax) {
