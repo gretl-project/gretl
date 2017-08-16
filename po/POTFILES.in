@@ -195,6 +195,7 @@ plugin/spss_import.c
 plugin/stata_export.c
 plugin/stata_import.c
 plugin/stats_tables.c
+plugin/svm.c
 plugin/sysest.c
 plugin/tramo_options.c
 plugin/tramo-x12a.c
