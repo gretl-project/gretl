@@ -1152,6 +1152,15 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
 	    if (!err && gretl_in_gui_mode() && s->callback != NULL && 
 		(havename || window)) {
+		if (s->pmod != NULL && (opt & OPT_Q) && !window) {
+		    /* With OPT_Q (--quiet) and without the --window
+		       flag, this model will not have a unique ID;
+		       but that will be needed if it's going to be
+		       a fully fledged gui model, as requested by
+		       its having been given a "savename".
+		    */
+		    set_model_id(s->pmod, OPT_NONE);
+		}
 		s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	    }
 	}
