@@ -2530,7 +2530,7 @@ static void sensitize_panel_options (GtkSpinButton *spin,
 	} else if (j == 1 || j == 2) {
 	    gtk_widget_set_sensitive(w, N <= 80);
 	} else if (j == 3) {
-	    gtk_widget_set_sensitive(w, N <= 9);
+	    gtk_widget_set_sensitive(w, N <= 16);
 	} else if (j == 4) {
 	    gtk_widget_set_sensitive(w, N <= 6);
 	} else if (j == 5) {

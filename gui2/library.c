@@ -7316,6 +7316,7 @@ void do_boxplot_var (int varnum, gretlopt opt)
     }
 
     if (opt & OPT_P) {
+	/* the --panel option */
 	plotopt = OPT_P;
     } else if (!(opt & OPT_S) && dataset_is_panel(dataset)) {
 	/* note: OPT_S enforces a single plot */

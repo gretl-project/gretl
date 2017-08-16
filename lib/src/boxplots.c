@@ -51,6 +51,7 @@ typedef struct {
     const int *list;
     char *title;
     int n_bools;
+    int pan_min;
     BOXPLOT *plots;
     double gmin, gmax;
     double limit;
@@ -217,9 +218,13 @@ static void box_stats_leader (PLOTGROUP *grp, int i, int offset,
     BOXPLOT *plt = &grp->plots[i];
 
     if (factorized(grp)) {
-	char numstr[32];
+	char numstr[32] = "";
 
-	sprintf(numstr, "%g", gretl_vector_get(grp->dvals, i));
+	if (grp->dvals != NULL) {
+	    sprintf(numstr, "%g", gretl_vector_get(grp->dvals, i));
+	} else if (grp->pan_min > 0) {
+	    sprintf(numstr, "%d", grp->pan_min + i);
+	}
 	pprintf(prn, "%-*s", offset, numstr);
     } else if (plt->bool != NULL) {
 	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
@@ -433,6 +438,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
 				 const char *literal,
 				 const DATASET *dset,
 				 double limit,
+				 int pan_min,
 				 gretlopt opt)
 {
     PLOTGROUP *grp;
@@ -457,6 +463,9 @@ static PLOTGROUP *plotgroup_new (const int *list,
     } else {
 	grp->limit = limit;
     }
+
+    /* for identifying panel groups */
+    grp->pan_min = pan_min;
 
     *grp->xlabel = '\0';
     *grp->ylabel = '\0';
@@ -588,7 +597,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	if (np > 1 && np <= 30) {
 	    set_use_xtics(grp);
 	}
-    } 
+    }
+
+    if (grp->pan_min > 0) {
+	fprintf(fp, "# panel_min %d\n", grp->pan_min);
+    }
 
     if (grp->title != NULL) {
 	fprintf(fp, "set title \"%s\"\n", grp->title);
@@ -811,8 +824,9 @@ static int factorized_boxplot_check (const int *list,
    gnuplot_do_boxplot to write the command file */
 
 static int real_boxplots (const int *list,
-			  const char *literal,
 			  const DATASET *dset,
+			  const char *literal,
+			  int pan_min,
 			  gretlopt opt)
 {
     PLOTGROUP *grp;
@@ -853,7 +867,7 @@ static int real_boxplots (const int *list,
 	}
     } 
 
-    grp = plotgroup_new(list, literal, dset, lim, opt);
+    grp = plotgroup_new(list, literal, dset, lim, pan_min, opt);
     if (grp == NULL) {
 	return E_ALLOC;
     }
@@ -997,7 +1011,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
 	}
     }
 
-    err = real_boxplots(list, NULL, gdset, opt);
+    err = real_boxplots(list, gdset, NULL, u0+1, opt);
 
     destroy_dataset(gdset);
     free(list);
@@ -1032,7 +1046,7 @@ int boxplots (const int *list, const char *literal,
 	    err = panel_group_boxplots(list[1], dset, opt);
 	}
     } else {
-	err = real_boxplots(list, literal, dset, opt);
+	err = real_boxplots(list, dset, literal, 0, opt);
     }
 
     return err;
@@ -1231,6 +1245,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     char title[128];
     char fmt[16], tfmt[16], line[512];
     int parsing = 1;
+    int pan_min = 0;
     FILE *fp;
     int n = 0;
     int err = 0;
@@ -1255,7 +1270,9 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	if (!parsing) {
 	    continue;
 	}
-	if (!strncmp(line, "1 ", 2)) {
+	if (!strncmp(line, "# panel_min", 11)) {
+	    pan_min = atoi(line + 12);
+	} else if (!strncmp(line, "1 ", 2)) {
 	    /* reached first data block */
 	    break;
 	} else if (!strncmp(line, "set ylabel ", 11)) {
@@ -1298,7 +1315,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     } else {
 	int list[2] = {n, 0};
 
-	grp = plotgroup_new(list, NULL, NULL, NADBL, OPT_NONE);
+	grp = plotgroup_new(list, NULL, NULL, NADBL, pan_min, OPT_NONE);
 	if (grp == NULL) {
 	    err = E_ALLOC;
 	}
