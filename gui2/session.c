@@ -600,7 +600,8 @@ int real_add_text_to_session (PRN *prn, int pos, const char *tname)
     char *buf = gretl_print_get_chunk_at(prn, pos);
     int replace = 0;
 
-    if (buf == NULL) {
+    if (buf == NULL || string_is_blank(buf)) {
+	warnbox_printf(_("%s: no text to save"), tname);
 	return ADD_OBJECT_FAIL;
     }
 
@@ -618,6 +619,8 @@ int real_add_text_to_session (PRN *prn, int pos, const char *tname)
 
     if (iconlist != NULL && !replace) {
 	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
+    } else if (autoicon_on()) {
+	auto_view_session();
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
@@ -3659,7 +3662,8 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     }
 
     if (name == NULL) {
-	fprintf(stderr, "session_add_icon: got NULL name\n");
+	fprintf(stderr, "session_add_icon: NULL name for object of sort %d\n",
+		sort);
 	return NULL;
     }
 
