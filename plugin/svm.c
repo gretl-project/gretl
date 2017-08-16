@@ -52,7 +52,8 @@ enum {
     W_SEARCH  = 1 << 3,
     W_STDFMT  = 1 << 4,
     W_SVPARM  = 1 << 5,
-    W_FOLDVAR = 1 << 6
+    W_FOLDVAR = 1 << 6,
+    W_YSCALE  = 1 << 7
 };
 
 struct sv_wrapper_ {
@@ -66,6 +67,8 @@ struct sv_wrapper_ {
     int predict;
     int nproc;
     int rank;
+    double ymin;
+    double ymax;
     gretl_matrix *ranges;
     char *ranges_outfile;
     char *ranges_infile;
@@ -130,6 +133,8 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->predict = 2;
     w->nproc = 0;
     w->rank = 0;
+    w->ymin = 0;
+    w->ymax = 0;
     w->ranges = NULL;
     w->ranges_outfile = NULL;
     w->ranges_infile = NULL;
@@ -906,8 +911,7 @@ static sv_data *gretl_sv_data_alloc (int T, int k,
     return p;
 }
 
-/* initial discovery of ranges of the RHS data using the
-   training data */
+/* initial discovery of ranges of using the training data */
 
 static int get_data_ranges (const int *list,
 			    const DATASET *dset,
@@ -938,8 +942,6 @@ static int get_data_ranges (const int *list,
     gretl_matrix_set(w->ranges, 0, 2, 0);
     gretl_matrix_set(w->ranges, 0, 3, 0);
 
-    /* note: we make no provision for scaling y at present */
-
     j = 0;
     for (i=2; i<=lmax; i++) {
 	vi = list[i];
@@ -947,7 +949,7 @@ static int get_data_ranges (const int *list,
 	gretl_minmax(dset->t1, dset->t2, x, &xmin, &xmax);
 	if (xmin != xmax) {
 	    j++;
-	    gretl_matrix_set(w->ranges, j, 0, j); /* or... ? */
+	    gretl_matrix_set(w->ranges, j, 0, j);
 	    gretl_matrix_set(w->ranges, j, 1, xmin);
 	    gretl_matrix_set(w->ranges, j, 2, xmax);
 	    gretl_matrix_set(w->ranges, j, 3, vi);
@@ -955,6 +957,12 @@ static int get_data_ranges (const int *list,
 	    fprintf(stderr, "training data: dropping var %d (%s)\n",
 		    vi, dset->varname[vi]);
 	}
+    }
+
+    if (w->flags & W_YSCALE) {
+	/* we'll arrange to scale y onto [-1, +1] */
+	gretl_minmax(dset->t1, dset->t2, dset->Z[list[1]],
+		     &w->ymin, &w->ymax);
     }
 
     /* record number of rows actually occupied, which
@@ -1021,6 +1029,21 @@ static double scale_x (double val, double lo, double hi,
     return val;
 }
 
+static double unscale_x (double val, double lo, double hi,
+			 double scalemin, double scalemax)
+{
+    if (val == scalemin) {
+	val = lo;
+    } else if (val == scalemax) {
+	val = hi;
+    } else {
+	val = lo + (val - scalemin) * (hi - lo) /
+	    (scalemax - scalemin);
+    }
+
+    return val;
+}
+
 static int sv_data_fill (sv_data *prob,
 			 sv_cell *x_space,
 			 sv_wrapper *w,
@@ -1030,12 +1053,12 @@ static int sv_data_fill (sv_data *prob,
 {
     double scalemin, scalemax;
     double xit, xmin, xmax;
-    int i, j, s, t, vi, idx;
+    int i, j, s, t, idx;
     int vf = 0, pos = 0;
+    int vi = list[1];
     int k = w->k;
 
     /* deal with the LHS variable */
-    vi = list[1];
     if (pass == 1 &&
 	(gretl_isdummy(dset->t1, dset->t2, dset->Z[vi]) ||
 	 series_is_coded(dset, vi))) {
@@ -1043,7 +1066,12 @@ static int sv_data_fill (sv_data *prob,
 	w->auto_type = C_SVC;
     }
     for (i=0, t=dset->t1; t<=dset->t2; t++, i++) {
-	prob->y[i] = dset->Z[vi][t];
+	if (w->flags & W_YSCALE) {
+	    prob->y[i] = scale_x(dset->Z[vi][t], w->ymin, w->ymax,
+				 -1.0, 1.0);
+	} else {
+	    prob->y[i] = dset->Z[vi][t];
+	}
     }
 
     if (pass == 1 && (w->flags & W_FOLDVAR)) {
@@ -1103,6 +1131,7 @@ static int sv_data_fill (sv_data *prob,
 
 static int real_svm_predict (double *yhat,
 			     sv_data *prob,
+			     sv_wrapper *w,
 			     sv_model *model,
 			     int training,
 			     const DATASET *dset,
@@ -1111,17 +1140,25 @@ static int real_svm_predict (double *yhat,
     const char *label;
     int n_correct = 0;
     int regression = 0;
-    double ymean = 0;
+    double ymean = 0.0;
     double TSS = 0.0;
     double SSR = 0.0;
-    double dev, yhi;
+    double dev, yhi, yi;
     sv_cell *x;
     int i;
 
     if (model->param.svm_type == EPSILON_SVR ||
 	model->param.svm_type == NU_SVR) {
 	regression = 1;
-	ymean = gretl_mean(0, prob->l - 1, prob->y);
+	if (w->flags & W_YSCALE) {
+	    for (i=0; i<prob->l; i++) {
+		ymean += unscale_x(prob->y[i], w->ymin, w->ymax,
+				   -1.0, 1.0);
+	    }
+	    ymean /= prob->l;
+	} else {
+	    ymean = gretl_mean(0, prob->l - 1, prob->y);
+	}
     }
 
     pprintf(prn, "Calling prediction function (this may take a while)\n");
@@ -1129,14 +1166,19 @@ static int real_svm_predict (double *yhat,
     for (i=0; i<prob->l; i++) {
 	x = prob->x[i];
 	yhi = svm_predict(model, x);
+	yi = prob->y[i];
+	if (w->flags & W_YSCALE) {
+	    yhi = unscale_x(yhi, w->ymin, w->ymax, -1.0, 1.0);
+	    yi = unscale_x(yi, w->ymin, w->ymax, -1.0, 1.0);
+	}
 	yhat[dset->t1 + i] = yhi;
 	if (regression) {
-	    dev = prob->y[i] - ymean;
+	    dev = yi - ymean;
 	    TSS += dev * dev;
-	    dev = prob->y[i] - yhi;
+	    dev = yi - yhi;
 	    SSR += dev * dev;
 	} else {
-	    n_correct += (yhi == prob->y[i]);
+	    n_correct += (yhi == yi);
 	}
     }
 
@@ -2128,6 +2170,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	wrap->flags |= W_FOLDVAR;
     }
 
+    if (get_optional_int(bparm, "yscale", &ival, &err) && ival != 0) {
+	wrap->flags |= W_YSCALE;
+    }
+
     if (get_optional_int(bparm, "search_only", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
 	if (bmod != NULL) {
@@ -2343,10 +2389,16 @@ static int check_svm_params (sv_data *data,
 	err = E_INVARG;
     } else if (prn != NULL) {
 	pputs(prn, "OK\n");
-	pprintf(prn, "svm_type %s, kernel_type %s, C = %g, gamma = %g\n",
+	pprintf(prn, "svm_type %s, kernel_type %s, C = %g, gamma = %g",
 		svm_type_names[parm->svm_type],
 		kernel_type_names[parm->kernel_type],
 		parm->C, parm->gamma);
+	if (parm->svm_type == EPSILON_SVR) {
+	    pprintf(prn, ", epsilon = %g\n", parm->p);
+	} else if (parm->svm_type == NU_SVR) {
+	    pprintf(prn, ", nu = %g\n", parm->nu);
+	}
+	pputc(prn, '\n');
     }
 
     return err;
@@ -2430,7 +2482,7 @@ static int svm_predict_main (const int *list,
 	int training = (wrap->t2_train > 0);
 	int T_os = -1;
 
-	real_svm_predict(yhat, prob1, model, training, dset, prn);
+	real_svm_predict(yhat, prob1, wrap, model, training, dset, prn);
 	*yhat_written = 1;
 	dset->t2 = wrap->orig_t2;
 	if (training && wrap->predict > 1) {
@@ -2451,7 +2503,7 @@ static int svm_predict_main (const int *list,
 	    }
 	    if (!err) {
 		sv_data_fill(prob2, x_space2, wrap, list, dset, 2);
-		real_svm_predict(yhat, prob2, model, 0, dset, prn);
+		real_svm_predict(yhat, prob2, wrap, model, 0, dset, prn);
 	    }
 	}
     }
