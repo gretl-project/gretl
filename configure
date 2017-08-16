@@ -716,8 +716,8 @@ GMP_LIBS
 GMP_CFLAGS
 have_zlib
 XDG_MIME
-LIBSVM_LIBS
-LIBSVM_CFLAGS
+SVM_LIBS
+SVM_CFLAGS
 READLINE_LIBS
 READLINE_CFLAGS
 new_readline
@@ -16550,13 +16550,13 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBSVM - version >= $min_libsvm_version" >&5
 $as_echo_n "checking for LIBSVM - version >= $min_libsvm_version... " >&6; }
 
-  LIBSVM_CFLAGS="-I$libsvm_config_prefix/include"
-  LIBSVM_LIBS="-L$libsvm_config_prefix/lib -lsvm"
+  SVM_CFLAGS="-I$libsvm_config_prefix/include"
+  SVM_LIBS="-L$libsvm_config_prefix/lib -lsvm"
 
   ac_save_CFLAGS="$CFLAGS"
   ac_save_LIBS="$LIBS"
-  CFLAGS="$CFLAGS $LIBSVM_CFLAGS"
-  LIBS="$LIBSVM_LIBS $LIBS"
+  CFLAGS="$CFLAGS $SVM_CFLAGS"
+  LIBS="$SVM_LIBS $LIBS"
 
   rm -f conf.libsvmtest
   if test "$cross_compiling" = yes; then :
@@ -16620,8 +16620,8 @@ $as_echo "no" >&6; }
        :
      else
        echo "*** Could not run LIBSVM test program, checking why..."
-       CFLAGS="$CFLAGS $LIBSVM_CFLAGS"
-       LIBS="$LIBS $LIBSVM_LIBS"
+       CFLAGS="$CFLAGS $SVM_CFLAGS"
+       LIBS="$LIBS $SVM_LIBS"
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -16657,15 +16657,15 @@ rm -f core conftest.err conftest.$ac_objext \
          CFLAGS="$ac_save_CFLAGS"
          LIBS="$ac_save_LIBS"
      fi
-     LIBSVM_CFLAGS=""
-     LIBSVM_LIBS=""
+     SVM_CFLAGS=""
+     SVM_LIBS=""
      :
   fi
-  if test "$LIBSVM_CFLAGS" = "-I/include" ; then
-     LIBSVM_CFLAGS=""
+  if test "$SVM_CFLAGS" = "-I/include" ; then
+     SVM_CFLAGS=""
   fi
-  if test "$LIBSVM_LIBS" = "-L/lib -lsvm" ; then
-     LIBSVM_LIBS="-lsvm"
+  if test "$SVM_LIBS" = "-L/lib -lsvm" ; then
+     SVM_LIBS="-lsvm"
   fi
 
 
