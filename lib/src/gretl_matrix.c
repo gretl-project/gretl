@@ -7643,7 +7643,7 @@ static int process_psd_root (gretl_matrix *L,
 
 /* PSD cholesky-type factor via the simple algorithm from
    Golub and Van Loan. Does not preserve great accuracy
-   when @a is of seriously reduced rank.
+   when @a is substantially rank-deficient.
 */
 
 static int simple_psd_root (gretl_matrix *a, const gretl_matrix *a0)
