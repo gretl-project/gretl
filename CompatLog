@@ -1,3 +1,9 @@
+version 2017d, in progress
+
+The --rolling option to the "fcast" command has been renamed
+more accurately as --recursive. The old option-word remains
+acceptable as an alias until further notice.
+
 2017-07-18 version 2017c
 
 No incompatible changes.

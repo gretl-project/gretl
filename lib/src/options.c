@@ -226,7 +226,8 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_N, "no-stats", 0 },
     { FCAST,    OPT_T, "stats-only", 0 },
     { FCAST,    OPT_S, "static", 0 },
-    { FCAST,    OPT_R, "rolling", 0 },
+    { FCAST,    OPT_R, "recursive", 0 },
+    { FCAST,    OPT_R, "rolling", 0 }, /* legacy alias */
     { FCAST,    OPT_O, "out-of-sample", 0 },
     { FCAST,    OPT_I, "integrate", 0 },
     { FCAST,    OPT_U, "plot", 2 },

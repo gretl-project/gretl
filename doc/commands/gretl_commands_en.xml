@@ -3793,7 +3793,7 @@
     <usage>
       <altforms>
 	<altform><lit>fcast [</lit><repl>startobs endobs</repl><lit>] [</lit><repl>vname</repl><lit>]</lit></altform>
-	<altform><lit>fcast [</lit><repl>startobs endobs</repl><lit>]</lit> <repl>steps-ahead</repl> <lit>[</lit><repl>vname</repl><lit>] --rolling</lit></altform>
+	<altform><lit>fcast [</lit><repl>startobs endobs</repl><lit>]</lit> <repl>steps-ahead</repl> <lit>[</lit><repl>vname</repl><lit>] --recursive</lit></altform>
       </altforms>
       <options>
         <option>
@@ -3821,7 +3821,7 @@
 	  <effect>don't print anything</effect>
         </option>
         <option>
-	  <flag>--rolling</flag>
+	  <flag>--recursive</flag>
 	  <effect>see below</effect>
         </option>
         <option>
@@ -3833,7 +3833,7 @@
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
-	<example>fcast 2004:1 2008:3 4 rfcast --rolling</example>
+	<example>fcast 2004:1 2008:3 4 rfcast --recursive</example>
       </examples>
     </usage>
 
@@ -3855,7 +3855,7 @@
 	requested but no relevant observations are available, an error is
 	flagged. Depending on the nature of the model, standard errors may
 	also be generated; see below.  Also see below for the special effect
-	of the <opt>rolling</opt> option.
+	of the <opt>recursive</opt> option.
       </para>
 
       <para context="cli">
@@ -3896,17 +3896,18 @@
       </para>
 
       <para context="cli">
-	The <opt>rolling</opt> option is presently available only for
-	single-equation models estimated via OLS.  When this option is given
-	the forecasts are recursive. That is, each forecast is generated from
-	an estimate of the given model using data from a fixed starting point
-	(namely, the start of the sample range for the original estimation) up
-	to the forecast date minus <math>k</math>, where <math>k</math> is the
-	number of steps ahead, which must be given in the
-	<repl>steps-ahead</repl> argument. The forecasts are always dynamic if
-	this is applicable.  Note that the <repl>steps-ahead</repl> argument
-	should be given only in conjunction with the <opt>rolling</opt>
-	option.
+	The <opt>recursive</opt> option is presently available only
+	for single-equation models estimated via OLS.  When this
+	option is given the forecasts are recursive. That is, each
+	forecast is generated from an estimate of the given model
+	using data from a fixed starting point (namely, the start of
+	the sample range for the original estimation) up to the
+	forecast date minus <math>k</math>, where <math>k</math> is
+	the number of steps ahead, which must be given in the
+	<repl>steps-ahead</repl> argument. The forecasts are always
+	dynamic if this is applicable.  Note that the
+	<repl>steps-ahead</repl> argument should be given only in
+	conjunction with the <opt>recursive</opt> option.
       </para>
 
       <para context="cli">
