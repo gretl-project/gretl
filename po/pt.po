@@ -10,15 +10,15 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-08-16 11:30-0400\n"
-"PO-Revision-Date: 2017-07-14 22:42+0100\n"
+"PO-Revision-Date: 2017-08-17 18:58+0000\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Language-Team: PT\n"
+"Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Virtaal 0.7.1\n"
+"X-Generator: Lokalize 2.0\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
 "X-Language: pt_PT\n"
 
@@ -959,15 +959,15 @@ msgstr "O ficheiro de dados tem vírgulas em excesso\n"
 #: lib/src/csvdata.c:1725
 #, c-format
 msgid "Found %d double-quotes, %d single-quotes\n"
-msgstr ""
+msgstr "Encontrado %d aspas, %d plicas\n"
 
 #: lib/src/csvdata.c:1728
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Assumindo que aspas são os caracteres relevantes para citação\n"
 
 #: lib/src/csvdata.c:1732
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Assumindo que plicas são os caracteres relevantes para citação\n"
 
 #: lib/src/csvdata.c:1936
 #, c-format
@@ -2342,9 +2342,8 @@ msgstr ""
 "utilizador"
 
 #: lib/src/geneval.c:8438
-#, fuzzy
 msgid "Libsvm is not supported"
-msgstr "a frequência %d não é suportada"
+msgstr "A biblioteca libsvm não é suportada"
 
 #: lib/src/geneval.c:8607
 #, c-format
@@ -4465,14 +4464,12 @@ msgid "not found"
 msgstr "não encontrado"
 
 #: lib/src/interact.c:746
-#, fuzzy
 msgid "is a 0/1 variable"
-msgstr "Variável do eixo dos XX"
+msgstr "é uma variável 0/1"
 
 #: lib/src/interact.c:747
-#, fuzzy
 msgid "not integer-valued"
-msgstr "Não instalado"
+msgstr "Não tem valor inteiro"
 
 #: lib/src/interact.c:801 lib/src/printout.c:1801
 msgid "No series are defined\n"
@@ -4651,9 +4648,9 @@ msgid "Time series"
 msgstr "Série temporal"
 
 #: lib/src/libset.c:1766
-#, fuzzy, c-format
+#, c-format
 msgid "Pseudo-random number generator seeded with %u\n"
-msgstr "Gerador de números pseudo-aleatórios com semente %d\n"
+msgstr "Gerador de números pseudo-aleatórios com semente %u\n"
 
 #: lib/src/libset.c:1792
 #, c-format
@@ -5384,9 +5381,9 @@ msgid "Omitted due to exact collinearity:"
 msgstr "Omitido devido a colinearidade exacta:"
 
 #: lib/src/modelprint.c:1683
-#, fuzzy, c-format
+#, c-format
 msgid " %d series"
-msgstr "acrescentar série"
+msgstr "%d séries"
 
 #: lib/src/modelprint.c:1698
 msgid "Redundant instruments:"
@@ -7895,7 +7892,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 14 de julho de 2017."
+"Tradução de 17 de agosto de 2017."
 
 #: gui2/about.c:193
 msgid "News"
@@ -10673,7 +10670,7 @@ msgstr "selecção (ou nova variável)"
 
 #: gui2/fncall.c:1632
 msgid "allow access to out-of-sample data"
-msgstr ""
+msgstr "permitir acesso a dados fora-da-amostra"
 
 #: gui2/fncall.c:1643
 msgid "close this dialog on \"OK\""
@@ -13609,7 +13606,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:5425 gui2/gui_utils.c:5430
 msgid "No output was produced"
-msgstr ""
+msgstr "Não produziu resultados"
 
 #: gui2/gui_utils.c:5608
 msgid "No command was supplied to start R"
@@ -16014,9 +16011,8 @@ msgid "Display working directory"
 msgstr "Mostrar a directoria de trabalho"
 
 #: gui2/settings.c:226
-#, fuzzy
 msgid "Working directory tooltip"
-msgstr "Directoria de trabalho:"
+msgstr "Dica da directoria de trabalho"
 
 #: gui2/settings.c:228
 msgid "Set working directory from shell"
@@ -16522,9 +16518,8 @@ msgid "untitled"
 msgstr "sem nome"
 
 #: gui2/tabwin.c:580
-#, fuzzy
 msgid "gretl: foreign script editor"
-msgstr "gretl: editor de sequências de comandos"
+msgstr "gretl: editor de scripts estrangeiros"
 
 #: gui2/tabwin.c:584
 msgid "gretl: models"
@@ -16921,7 +16916,7 @@ msgstr "Tratar esta variável como discreta"
 
 #: gui2/varinfo.c:946
 msgid "Numeric values represent an encoding"
-msgstr ""
+msgstr "Valores numéricos representam uma codificação"
 
 #: gui2/varinfo.c:1001
 msgid "gretl: save series"
