@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-08-16 11:30-0400\n"
-"PO-Revision-Date: 2017-07-13 14:25-0300\n"
+"PO-Revision-Date: 2017-08-17 11:02-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -959,15 +959,15 @@ msgstr "O arquivo de dados tem vírgulas em excesso\n"
 #: lib/src/csvdata.c:1725
 #, c-format
 msgid "Found %d double-quotes, %d single-quotes\n"
-msgstr ""
+msgstr "Foram encontradas %d aspas duplas e %d aspas simples\n"
 
 #: lib/src/csvdata.c:1728
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Assumindo que as aspas duplas são os caracteres de aspas relevantes\n"
 
 #: lib/src/csvdata.c:1732
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Assumindo que as aspas simples são os caracteres de aspas relevantes\n"
 
 #: lib/src/csvdata.c:1936
 #, c-format
@@ -2345,9 +2345,8 @@ msgstr ""
 "usuário"
 
 #: lib/src/geneval.c:8438
-#, fuzzy
 msgid "Libsvm is not supported"
-msgstr "a frequência %d não é suportada"
+msgstr "Libsvm não é suportado"
 
 #: lib/src/geneval.c:8607
 #, c-format
@@ -3582,7 +3581,7 @@ msgstr "_Arquivo"
 #: lib/src/gretl_intl.c:876
 #, c-format
 msgid "%s: locale is not supported on this system"
-msgstr "%s: indioma não suportado por este sistema"
+msgstr "%s: idioma não suportado por este sistema"
 
 #: lib/src/gretl_list.c:322
 #, c-format
@@ -4463,14 +4462,12 @@ msgid "not found"
 msgstr "não encontrado"
 
 #: lib/src/interact.c:746
-#, fuzzy
 msgid "is a 0/1 variable"
-msgstr "Variável do eixo X"
+msgstr "é uma variável 0/1"
 
 #: lib/src/interact.c:747
-#, fuzzy
 msgid "not integer-valued"
-msgstr "Não instalado"
+msgstr "não é valor inteiro"
 
 #: lib/src/interact.c:801 lib/src/printout.c:1801
 msgid "No series are defined\n"
@@ -4511,7 +4508,7 @@ msgstr "A partir de agora acrescentando resultados em '%s'\n"
 #: lib/src/interact.c:1031
 #, c-format
 msgid "Now writing output to '%s'\n"
-msgstr "A partir de agora escrevendo saída para '%s'\n"
+msgstr "A partir de agora escrevendo resultados em '%s'\n"
 
 #: lib/src/interact.c:1107
 msgid "No data information is available.\n"
@@ -4645,9 +4642,9 @@ msgid "Time series"
 msgstr "Série temporal"
 
 #: lib/src/libset.c:1766
-#, fuzzy, c-format
+#, c-format
 msgid "Pseudo-random number generator seeded with %u\n"
-msgstr "Gerador de números pseudo-aleatórios com semente %d\n"
+msgstr "Gerador de números pseudo-aleatórios com semente %u\n"
 
 #: lib/src/libset.c:1792
 #, c-format
@@ -5376,9 +5373,9 @@ msgid "Omitted due to exact collinearity:"
 msgstr "Omitido devido a colinearidade exata:"
 
 #: lib/src/modelprint.c:1683
-#, fuzzy, c-format
+#, c-format
 msgid " %d series"
-msgstr "adicionar séries"
+msgstr "%d séries"
 
 #: lib/src/modelprint.c:1698
 msgid "Redundant instruments:"
@@ -7793,7 +7790,7 @@ msgstr "OK, mantendo o conjunto de dados atual\n"
 #, c-format
 msgid "type a filename to store output (enter to quit): "
 msgstr ""
-"escreva um nome de arquivo onde guardar resultados (\"enter\" para sair): "
+"escreva um nome de arquivo para guardar resultados (\"enter\" para sair): "
 
 #: cli/gretlcli.c:1038
 #, c-format
@@ -10667,7 +10664,7 @@ msgstr "seleção (ou nova variável)"
 
 #: gui2/fncall.c:1632
 msgid "allow access to out-of-sample data"
-msgstr ""
+msgstr "permitir acesso aos dados fora da amostra"
 
 #: gui2/fncall.c:1643
 msgid "close this dialog on \"OK\""
@@ -13604,7 +13601,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:5425 gui2/gui_utils.c:5430
 msgid "No output was produced"
-msgstr ""
+msgstr "Não foi produzida saída"
 
 #: gui2/gui_utils.c:5608
 msgid "No command was supplied to start R"
@@ -16006,9 +16003,8 @@ msgid "Display working directory"
 msgstr "Mostrar diretório de trabalho"
 
 #: gui2/settings.c:226
-#, fuzzy
 msgid "Working directory tooltip"
-msgstr "Diretório de trabalho:"
+msgstr "Dica do diretório de trabalho"
 
 #: gui2/settings.c:228
 msgid "Set working directory from shell"
@@ -16514,9 +16510,8 @@ msgid "untitled"
 msgstr "sem título"
 
 #: gui2/tabwin.c:580
-#, fuzzy
 msgid "gretl: foreign script editor"
-msgstr "gretl: editor de script"
+msgstr "gretl: editor de script em outras linguagens"
 
 #: gui2/tabwin.c:584
 msgid "gretl: models"
@@ -16913,7 +16908,7 @@ msgstr "Tratar esta variável como discreta"
 
 #: gui2/varinfo.c:946
 msgid "Numeric values represent an encoding"
-msgstr ""
+msgstr "Valores numéricos representam uma codificação"
 
 #: gui2/varinfo.c:1001
 msgid "gretl: save series"
@@ -17419,7 +17414,7 @@ msgstr "Não foram encontrados dados numéricos"
 #: plugin/import_common.c:562 plugin/import_common.c:567
 #, c-format
 msgid "Sending debugging output to %s"
-msgstr "Enviando saída de depuração para %s"
+msgstr "Enviando resultado de depuração para %s"
 
 #: plugin/import_common.c:695
 msgid "Sheet to import:"
