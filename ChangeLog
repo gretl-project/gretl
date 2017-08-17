@@ -13,6 +13,8 @@ version 2017d, in progress
   covariance matrix 
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
+- Fix big: rename() function not working on Windows when
+  the target filename already exists
 - GUI: enable a tabbed editor for foreign scripts
 - GUI: fix breakage in function-package search facility
 - GUI: fix crash on requesting "Numerical summary" for panel
