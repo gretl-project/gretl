@@ -2568,7 +2568,7 @@ static int parse_forecast_string (const char *s,
     int t1 = 0, t2 = 0;
     int nf, err = 0;
     
-    /* "static" and "rolling" can't be combined */
+    /* "static" and "recursive" can't be combined */
     err = incompatible_options(opt, OPT_S | OPT_R);
     if (err) {
 	return err;
@@ -2577,7 +2577,7 @@ static int parse_forecast_string (const char *s,
     *vname = '\0';
 
     /* How many fields should we be looking for in the user input?
-       If OPT_R ("rolling") is given, the max is 4: 
+       If OPT_R ("recursive") is given, the max is 4: 
 
        t1, t2, k (steps-ahead), vname
 
@@ -3123,8 +3123,8 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (opt & OPT_R) {
-	fr = rolling_OLS_k_step_fcast(pmod, dset, t1, t2, 
-				      k, 0, &err);
+	fr = recursive_OLS_k_step_fcast(pmod, dset, t1, t2, 
+					k, 0, &err);
     } else {
 	fr = get_forecast(pmod, t1, t2, 0, dset, opt, &err);
     }
@@ -3335,7 +3335,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
  * out of sample (in cases where this distinction is meaningful).
- * %OPT_R: do rolling/recursive forecast.
+ * %OPT_R: do recursive forecast.
  * %OPT_Q: suppress printing of the forecast;
  * %OPT_P: ensure that the values are printed.
  * %OPT_U: produce gnuplot plot.
@@ -3361,7 +3361,7 @@ int do_forecast (const char *str, DATASET *dset,
     }
 
     if ((opt & (OPT_R | OPT_I | OPT_U)) && type != GRETL_OBJ_EQN) {
-	/* "rolling", "integrate", plot option: single equations only */
+	/* "recursive", "integrate", plot option: single equations only */
 	err = E_BADOPT;
     } else if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, dset, opt, prn);
@@ -3640,7 +3640,7 @@ static int k_step_init (MODEL *pmod, const DATASET *dset,
     return 0;
 }
 
-static int rolling_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
+static int recursive_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
 {
     /* the earliest possible forecast start */
     int t1min = pmod->t1 + pmod->ncoeff + k - 1;
@@ -3661,9 +3661,9 @@ static int rolling_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
 /* recursive k-step ahead forecasts, for models estimated via OLS */
 
 FITRESID * 
-rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
-			  int t1, int t2, int k, 
-			  int pre_n, int *err)
+recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
+			    int t1, int t2, int k, 
+			    int pre_n, int *err)
 {
     FITRESID *fr;
     int orig_t1 = dset->t1;
@@ -3687,7 +3687,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
     }    
 
     /* check feasibility of forecast range */
-    *err = rolling_fcast_adjust_obs(pmod, &t1, t2, k);
+    *err = recursive_fcast_adjust_obs(pmod, &t1, t2, k);
     if (*err) {
 	return NULL;
     }
@@ -3716,8 +3716,8 @@ rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
     /* number of forecasts */
     nf = t2 - t1 + 1;
 
-    fprintf(stderr, "rolling fcast: dset->t1=%d, dset->t2=%d, t1=%d, t2=%d, k=%d, nf=%d\n",
-	    dset->t1, dset->t2, t1, t2, k, nf);
+    fprintf(stderr, "recursive fcast: dset->t1=%d, dset->t2=%d, t1=%d, "
+	    "t2=%d, k=%d, nf=%d\n", dset->t1, dset->t2, t1, t2, k, nf);
 
     for (t=0; t<dset->n; t++) {
 	fr->actual[t] = dset->Z[pmod->list[1]][t];

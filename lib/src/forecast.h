@@ -77,9 +77,9 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 gretl_matrix *get_forecast_matrix (int idx, int *err);
 
 FITRESID *
-rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
-			  int t1, int t2, int k, int pre_n, 
-			  int *err);
+recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
+			    int t1, int t2, int k, int pre_n, 
+			    int *err);
 
 void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2);
 

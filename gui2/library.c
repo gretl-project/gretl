@@ -1966,7 +1966,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int flags = 0;
     int premax, pre_n = 0;
     int t1min = 0;
-    int rolling = 0, k = 1, *kptr;
+    int recursive = 0, k = 1, *kptr;
     int dt2 = dataset->n - 1;
     int st2 = dataset->n - 1;
     gretlopt opt = OPT_NONE;
@@ -2041,7 +2041,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     } else if (resp == 2) {
 	opt = OPT_S;
     } else if (resp == 3) {
-	rolling = 1;
+	recursive = 1;
     }
     
     if (gopt & OPT_I) {
@@ -2056,9 +2056,10 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	opt |= OPT_M;
     }
 
-    if (rolling) {
-	fr = rolling_OLS_k_step_fcast(pmod, dataset,
-				      t1, t2, k, pre_n, &err);
+    if (recursive) {
+	fr = recursive_OLS_k_step_fcast(pmod, dataset,
+					t1, t2, k, pre_n,
+					&err);
     } else {
 	ntodate(startobs, t1, dataset);
 	ntodate(endobs, t2, dataset);
@@ -2084,7 +2085,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	int ols_special = 0;
 	int width = 78;
 
-	if (rolling) {
+	if (recursive) {
 	    err = text_print_fit_resid(fr, dataset, prn);
 	} else {
 	    if (dataset_is_cross_section(dataset)) {
@@ -2109,7 +2110,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	if (!err && (gopt & OPT_P)) {
 	    register_graph();
 	}
-	if (!rolling && fr->sderr == NULL) {
+	if (!recursive && fr->sderr == NULL) {
 	    width = 60;
 	}
 	view_buffer_with_parent(vwin, prn, width, 400, 

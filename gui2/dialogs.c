@@ -3153,7 +3153,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	N_("automatic forecast (dynamic out of sample)"),
 	N_("dynamic forecast"),
 	N_("static forecast"),
-	N_("rolling k-step ahead forecasts: k = "),
+	N_("recursive k-step ahead forecasts: k = "),
     };
     int nopts = 3;
     int deflt = 0;
@@ -3192,7 +3192,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     if (flags & FC_INTEGRATE_OK) {
 	ibutton = forecast_integrate_option(pmod, vbox, optp);
     } else if (pmod != NULL && pmod->ci == OLS) {
-	/* allow the "rolling" option */
+	/* allow the "recursive" option */
 	nopts++;
     }
 
@@ -3219,7 +3219,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	}
 
 	if (i == 3 && k != NULL) {
-	    /* steps ahead for rolling forecast */
+	    /* steps ahead for recursive forecast */
 	    GtkWidget *spin = gtk_spin_button_new_with_range(1, 50, 1);
 
 	    g_signal_connect(G_OBJECT(spin), "value-changed",
