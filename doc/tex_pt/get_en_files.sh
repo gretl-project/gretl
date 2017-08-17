@@ -83,9 +83,25 @@ vecm.tex
 "
 
 for i in $untranslated; do
-    if [ `diff ../tex/$i $i 2>/dev/null; echo $?` -eq 2 ];
+    a=`diff -q ../tex/$i ./$i 2>/dev/null`
+    code=`echo $?`
+    if [ $code -eq 2 ];
     then
        ln -sf ../tex/$i $i
     fi
 done
+
+###########
+# Figures #
+###########
+for i in ../figures/*; do
+    a=`basename $i`
+    b=`diff -q $i ./figures/$a 2>/dev/null`
+    code=`echo $?`
+    if [ $code -eq 2 ];
+    then
+       ln -sf ../figures/$a ./figures/$a
+    fi
+done
+
 
