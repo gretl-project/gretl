@@ -100,10 +100,10 @@ struct grid_row_ {
 };
 
 struct sv_grid_ {
-    int linear;
     grid_row row[3];
     int null[3];
     int n[3];
+    int linear[3];
 };
 
 #define N_PARMS 15
@@ -1352,17 +1352,21 @@ static int xvalidate_once (sv_data *prob,
     "null"         -- do not with g
 */
 
-static int grid_set_dimensions (sv_grid *g)
+static int grid_set_dimensions (sv_grid *g, const gretl_matrix *m)
 {
+    int i, linvals = 0;
     double x;
-    int i;
+
+    if (m != NULL && m->cols == 4) {
+	linvals = 1;
+    }
 
     for (i=0; i<=G_p; i++) {
 	if ((g->row[i].stop < g->row[i].start && g->row[i].step >= 0) ||
 	    (g->row[i].stop > g->row[i].start && g->row[i].step <= 0)) {
 	    return E_INVARG;
 	}
-	g->null[i] = g->n[i] = 0;
+	g->null[i] = g->n[i] = g->linear[i] = 0;
 	if (g->row[i].start == 0 && g->row[i].stop == 0 && g->row[i].step == 0) {
 	    /* flag clamping of this row */
 	    g->null[i] = g->n[i] = 1;
@@ -1374,6 +1378,9 @@ static int grid_set_dimensions (sv_grid *g)
 	    for (x=g->row[i].start; x>=g->row[i].stop; x+=g->row[i].step) {
 		g->n[i] += 1;
 	    }
+	}
+	if (linvals && i < m->rows && gretl_matrix_get(m, i, 3) != 0) {
+	    g->linear[i] = 1;
 	}
     }
 
@@ -1394,7 +1401,7 @@ static void sv_grid_default (sv_grid *g)
     g->row[G_p].stop = 0;
     g->row[G_p].step = 0;
 
-    grid_set_dimensions(g);
+    grid_set_dimensions(g, NULL);
 }
 
 static void print_grid (sv_grid *g, PRN *prn)
@@ -1408,8 +1415,7 @@ static void print_grid (sv_grid *g, PRN *prn)
 
     imax = g->null[G_p] ? 2 : 3;
 
-    pprintf(prn, "parameter search grid (%s start, stop, step):\n",
-	    g->linear ? "linear" : "log2");
+    pputs(prn, "parameter search grid (start, stop, step):\n");
 
     for (i=0; i<imax; i++) {
 	if (!g->null[i]) {
@@ -1417,7 +1423,8 @@ static void print_grid (sv_grid *g, PRN *prn)
 		    g->row[i].start, g->row[i].stop,
 		    g->row[i].step);
 	    if (g->n[i] > 1) {
-		pprintf(prn, " (%d values)\n", g->n[i]);
+		pprintf(prn, " (%d values, %s)\n", g->n[i],
+			g->linear[i] ? "linear" : "log2");
 	    } else {
 		pputc(prn, '\n');
 	    }
@@ -1430,26 +1437,25 @@ static double grid_get_C (sv_grid *g, int i)
 {
     double Ci = g->row[G_C].start + i * g->row[G_C].step;
 
-    return g->linear ? Ci : pow(2.0, Ci);
+    return g->linear[G_C] ? Ci : pow(2.0, Ci);
 }
 
 static double grid_get_g (sv_grid *g, int j)
 {
     double gj = g->row[G_g].start + j * g->row[G_g].step;
 
-    return g->linear ? gj : pow(2.0, gj);
+    return g->linear[G_g] ? gj : pow(2.0, gj);
 }
 
 static double grid_get_p (sv_grid *g, int k)
 {
     double pk = g->row[G_p].start + k * g->row[G_p].step;
 
-    return g->linear ? pk : pow(2.0, pk);
+    return g->linear[G_p] ? pk : pow(2.0, pk);
 }
 
 static int sv_wrapper_add_grid (sv_wrapper *w,
-				const gretl_matrix *m,
-				int linear)
+				const gretl_matrix *m)
 {
     sv_grid *g;
     int i, err = 0;
@@ -1459,7 +1465,7 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
     if (g == NULL) {
 	err = E_ALLOC;
     } else if (m != NULL) {
-	if (m->rows < 2 || m->cols != 3) {
+	if (m->rows < 1 || m->cols != 3) {
 	    err = E_INVARG;
 	} else {
 	    for (i=0; i<m->rows; i++) {
@@ -1467,10 +1473,7 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
 		g->row[i].stop  = gretl_matrix_get(m, i, 1);
 		g->row[i].step  = gretl_matrix_get(m, i, 2);
 	    }
-	    err = grid_set_dimensions(g);
-	    if (!err) {
-		g->linear = linear;
-	    }
+	    err = grid_set_dimensions(g, m);
 	}
     } else {
 	sv_grid_default(g);
@@ -1502,7 +1505,6 @@ static int write_plot_file (sv_wrapper *w,
     gretl_matrix *m = w->xdata;
     const char *zlabel = "MSE";
     double x[3], best[3] = {0};
-    int linear = w->grid->linear;
     int i, j, err = 0;
     FILE *fp;
 
@@ -1520,11 +1522,14 @@ static int write_plot_file (sv_wrapper *w,
 
     gretl_push_c_numeric_locale();
 
-    if (linear) {
+    if (w->grid->linear[G_C]) {
 	fputs("set xlabel 'C'\n", fp);
-	fputs("set ylabel 'gamma'\n", fp);
     } else {
 	fputs("set xlabel 'log2(C)'\n", fp);
+    }
+    if (w->grid->linear[G_g]) {
+	fputs("set ylabel 'gamma'\n", fp);
+    } else {
 	fputs("set ylabel 'log2(gamma)'\n", fp);
     }
     fprintf(fp, "set zlabel '%s'\n", zlabel);
@@ -1542,7 +1547,7 @@ static int write_plot_file (sv_wrapper *w,
 		best[j] = x[j];
 	    }
 	}
-	if (linear) {
+	if (w->grid->linear[i]) {
 	    fprintf(fp, "%g %g %g\n", x[0], x[1], x[2]);
 	} else {
 	    fprintf(fp, "%g %g %g\n", log2(x[0]), log2(x[1]), x[2]);
@@ -1575,7 +1580,7 @@ static int do_search_prep (sv_data *data,
 	sv_wrapper_remove_grid(w);
 	err = E_INVARG;
     } else if (w->grid == NULL) {
-	sv_wrapper_add_grid(w, NULL, 0);
+	sv_wrapper_add_grid(w, NULL);
     }
 
     if (!err && (w->flags & W_FOLDVAR)) {
@@ -2193,17 +2198,9 @@ static int read_params_bundle (gretl_bundle *bparm,
 
 	m = gretl_bundle_get_matrix(bparm, "gridmat", NULL);
 	if (m != NULL) {
-	    err = sv_wrapper_add_grid(wrap, m, 0);
+	    err = sv_wrapper_add_grid(wrap, m);
 	    if (!err) {
 		wrap->flags |= W_SEARCH;
-	    }
-	} else {
-	    m = gretl_bundle_get_matrix(bparm, "linear_grid", NULL);
-	    if (m != NULL) {
-		err = sv_wrapper_add_grid(wrap, m, 1);
-		if (!err) {
-		    wrap->flags |= W_SEARCH;
-		}
 	    }
 	}
     }
