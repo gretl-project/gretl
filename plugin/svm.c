@@ -1424,7 +1424,7 @@ static void print_grid (sv_grid *g, PRN *prn)
 		    g->row[i].step);
 	    if (g->n[i] > 1) {
 		pprintf(prn, " (%d values, %s)\n", g->n[i],
-			g->linear[i] ? "linear" : "log2");
+			g->linear[i] ? "linear" : "log2-based");
 	    } else {
 		pputc(prn, '\n');
 	    }
@@ -1465,7 +1465,7 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
     if (g == NULL) {
 	err = E_ALLOC;
     } else if (m != NULL) {
-	if (m->rows < 1 || m->cols != 3) {
+	if (m->rows < 1 || m->cols < 3) {
 	    err = E_INVARG;
 	} else {
 	    for (i=0; i<m->rows; i++) {
