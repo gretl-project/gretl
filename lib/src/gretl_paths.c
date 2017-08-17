@@ -743,8 +743,8 @@ int gretl_rename (const char *oldpath, const char *newpath)
 
 #if 0
     fprintf(stderr, "maybe_recode: old='%s' err=%d oldconv=%p\n",
-	    oldpath, err, (void *) oldconv);    
-#endif    
+	    oldpath, err, (void *) oldconv);
+#endif
 
     if (!err) {
 	err = maybe_recode_path(newpath, &newconv, -1);
@@ -761,7 +761,7 @@ int gretl_rename (const char *oldpath, const char *newpath)
 	/* rename() on Windows sets EEXIST if the target
 	   is already present */
 	remove(newpath);
-#endif	
+#endif
 	err = rename(oldpath, newpath);
     }
 
