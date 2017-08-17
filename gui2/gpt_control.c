@@ -3627,12 +3627,14 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
     } else {
 	gchar *plotcmd;
 
-	gretl_rename(tmpname, plot->spec->fname);
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-				  gretl_gnuplot_path(), 
-				  plot->spec->fname);
-	err = gretl_spawn(plotcmd);
-	g_free(plotcmd);
+	err = gretl_rename(tmpname, plot->spec->fname);
+	if (!err) {
+	    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+				      gretl_gnuplot_path(),
+				      plot->spec->fname);
+	    err = gretl_spawn(plotcmd);
+	    g_free(plotcmd);
+	}
     }
 
     if (err) {

@@ -383,7 +383,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(fname);
+	gretl_errmsg_set_from_errno(fname, errno);
 #if FDEBUG
 	fprintf(stderr, "  message: '%s'\n", gretl_errmsg_get());
 #endif
@@ -425,7 +425,7 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
 	}
 
 	if (errno != 0) {
-	    gretl_errmsg_set_from_errno(NULL);
+	    gretl_errmsg_set_from_errno(NULL, errno);
 	} else if (fd != -1) {
 	    if (fconv != NULL) {
 		strcpy(pattern, fconv);
@@ -544,7 +544,7 @@ FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(fname);
+	gretl_errmsg_set_from_errno(fname, errno);
     }
 
     return fp;
@@ -626,7 +626,7 @@ int gretl_open (const char *pathname, int flags, int mode)
     }
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(pathname);
+	gretl_errmsg_set_from_errno(pathname, errno);
     }
 
     return fd;
@@ -735,32 +735,35 @@ int gretl_file_exists (const char *fname)
 int gretl_rename (const char *oldpath, const char *newpath)
 {
     gchar *oldconv = NULL, *newconv = NULL;
-    int err;
+    int err = 0;
 
     gretl_error_clear();
 
     err = maybe_recode_path(oldpath, &oldconv, -1);
+
+#if 0
+    fprintf(stderr, "maybe_recode: old='%s' err=%d oldconv=%p\n",
+	    oldpath, err, (void *) oldconv);    
+#endif    
 
     if (!err) {
 	err = maybe_recode_path(newpath, &newconv, -1);
     }
 
     if (!err) {
-	if (oldconv == NULL && newconv == NULL) {
-	    err = rename(oldpath, newpath);
-	} else if (oldconv != NULL && newconv != NULL) {
-	    err = rename(oldconv, newconv);
-	} else if (oldconv != NULL) {
-	    err = rename(oldconv, newpath);
-	} else if (newconv != NULL) {
-	    err = rename(oldpath, newconv);
+	if (oldconv != NULL) {
+	    oldpath = oldconv;
 	}
+	if (newconv != NULL) {
+	    newpath = newconv;
+	}
+#ifdef WIN32
+	/* rename() on Windows sets EEXIST if the target
+	   is already present */
+	remove(newpath);
+#endif	
+	err = rename(oldpath, newpath);
     }
-
-#if 0
-    fprintf(stderr, "oldpath='%s'\nnewpath='%s'\n"
-	    "err=%d\n", oldpath, newpath, err);
-#endif
 
     if (oldconv != NULL || newconv != NULL) {
 	g_free(oldconv);
@@ -768,7 +771,7 @@ int gretl_rename (const char *oldpath, const char *newpath)
     }
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno("gretl_rename");
+	gretl_errmsg_set_from_errno("gretl_rename", errno);
     }
 
     return err;
@@ -853,7 +856,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
     }
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno("gzopen");
+	gretl_errmsg_set_from_errno("gzopen", errno);
     }
 
     return fz;
@@ -923,7 +926,7 @@ int gretl_chdir (const char *path)
     }
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno("chdir");
+	gretl_errmsg_set_from_errno("chdir", errno);
     }
 
 #ifdef WIN32
@@ -1060,7 +1063,7 @@ static int real_deltree (const char *path)
     }
 
     if (err) {
-	gretl_errmsg_set_from_errno(path);
+	gretl_errmsg_set_from_errno(path, errno);
 	err = E_FOPEN;
     }
     
@@ -1196,7 +1199,7 @@ int gretl_write_access (char *fname)
 
 #ifndef WIN32
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(fname);
+	gretl_errmsg_set_from_errno(fname, errno);
     }
 #endif
 
@@ -2682,7 +2685,7 @@ int set_gretl_work_dir (const char *path)
     test = gretl_opendir(path);
 
     if (test == NULL) {
-	gretl_errmsg_set_from_errno(path);
+	gretl_errmsg_set_from_errno(path, errno);
 	fprintf(stderr, "set_gretl_work_dir: '%s': failed\n", path);
 	err = E_FOPEN;
     } else {

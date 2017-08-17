@@ -1186,7 +1186,7 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 {
     char fontname[128];
 
-    if (default_font == NULL) {
+    if (default_font == NULL || *default_font == '\0') {
 	if (type == 1) {
 	    default_font = pdf_ps_saver_current_font(p);
 	} else {
@@ -1198,10 +1198,12 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
     win32_font_selector(fontname, APP_FONT_SELECTION);
 
     if (*fontname != '\0') {
-	gchar *title = g_strdup_printf(_("font: %s"), fontname);
+	if (type < 2 && button != NULL) {
+	    gchar *title = g_strdup_printf(_("font: %s"), fontname);
 
-	gtk_button_set_label(button, title);
-	g_free(title);
+	    gtk_button_set_label(button, title);
+	    g_free(title);
+	}
 	if (type == 0) {
 	    plot_editor_set_fontname(p, fontname);
 	} else if (type == 1) {

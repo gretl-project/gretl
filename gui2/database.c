@@ -2121,7 +2121,7 @@ static int unpack_book_data (const char *fname)
 
     if (chdir(path) != 0) {
 	if (errno != 0) {
-	    gretl_errmsg_set_from_errno("chdir");
+	    gretl_errmsg_set_from_errno("chdir", errno);
 	}
 	err = E_FOPEN;
     }

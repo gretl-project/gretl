@@ -457,12 +457,12 @@ void gretl_warnmsg_sprintf (const char *fmt, ...)
  * append the new error info to the message.
  */
 
-void gretl_errmsg_set_from_errno (const char *s)
+void gretl_errmsg_set_from_errno (const char *s, int errnum)
 {
     char *msg = NULL;
 
-    if (errno) {
-	msg = strerror(errno);
+    if (errnum) {
+	msg = strerror(errnum);
 	errno = 0;
     }
 

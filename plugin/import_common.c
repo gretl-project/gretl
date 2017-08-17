@@ -17,6 +17,8 @@
  * 
  */
 
+#include <errno.h>
+
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
 # include "gtk_compat.h"
 #endif
@@ -227,7 +229,7 @@ static int gretl_make_tempdir (char *dname)
     s = mkdtemp(dname);
 
     if (s == NULL) {
-	gretl_errmsg_set_from_errno("gretl_make_tempdir");
+	gretl_errmsg_set_from_errno("gretl_make_tempdir", errno);
 	err = E_FOPEN;
     } 
 
@@ -288,7 +290,7 @@ static int open_import_zipfile (const char *fname, char *dname,
 
     /* cd to user dir and make temporary dir */
     if (gretl_chdir(udir)) {
-	gretl_errmsg_set_from_errno(udir);
+	gretl_errmsg_set_from_errno(udir, errno);
 	err = E_FOPEN;
     } else {
 	err = gretl_make_tempdir(dname);
