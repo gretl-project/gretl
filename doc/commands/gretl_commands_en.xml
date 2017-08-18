@@ -6367,6 +6367,13 @@
 	entered into the model specification, but the up and down arrows
 	can be used to promote or demote a selected variable.
       </para>
+      <para>
+	Regarding the scale of the impulse responses: the
+	<quote>shock</quote> is sized at one standard deviation of the
+	estimated innovations in the source variable, and the
+	responses are given in whatever is the <quote>natural</quote>
+	unit of the target variable.
+      </para>
     </description>
 
   </command>
