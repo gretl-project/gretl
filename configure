@@ -874,6 +874,7 @@ with_tramo_seats
 with_libR
 with_mpi
 with_odbc
+with_libsvm
 with_bash_completion
 with_audio
 enable_static
@@ -1601,6 +1602,7 @@ Optional Packages:
   --with-libR            include libR support [default=auto]
   --with-mpi             include MPI support [default=auto]
   --with-odbc            include ODBC support
+  --with-libsvm            include libsvm support [default=auto]
   --with-bash-completion install bash-completion script [default=auto]
   --with-audio           include audio graph support (experimental)
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
@@ -6747,6 +6749,18 @@ then
 fi
 else
   try_odbc=no
+fi
+
+
+
+# Check whether --with-libsvm was given.
+if test "${with_libsvm+set}" = set; then :
+  withval=$with_libsvm; if test "$withval" = "no"
+then
+  try_libsvm=no
+fi
+else
+  try_libsvm=yes
 fi
 
 
