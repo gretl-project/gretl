@@ -163,15 +163,6 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->fsize);
 }
 
-static int doing_file_io (sv_wrapper *w)
-{
-    return w->ranges_outfile != NULL ||
-	w->ranges_infile != NULL ||
-	w->model_outfile != NULL ||
-	w->model_infile != NULL ||
-	w->data_outfile != NULL;
-}
-
 static int loading_model (sv_wrapper *w)
 {
     return (w->flags & W_LOADMOD) || w->model_infile != NULL;
@@ -702,12 +693,14 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 
 static int write_ranges (sv_wrapper *w)
 {
+    const char *fname;
     int libsvm_format = 0;
     double lo, hi;
     int i, idx, vi;
     FILE *fp;
 
-    fp = gretl_fopen(w->ranges_outfile, "wb");
+    fname = gretl_maybe_switch_dir(w->ranges_outfile);
+    fp = gretl_fopen(fname, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
@@ -750,6 +743,7 @@ static int write_ranges (sv_wrapper *w)
 
 static int read_ranges (sv_wrapper *w)
 {
+    const char *fname;
     FILE *fp;
     char line[512];
     double lo, hi, j;
@@ -758,7 +752,8 @@ static int read_ranges (sv_wrapper *w)
     int i, vi, idx, n = 0;
     int err = 0;
 
-    fp = gretl_fopen(w->ranges_infile, "rb");
+    fname = gretl_maybe_switch_dir(w->ranges_infile);
+    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
@@ -837,11 +832,13 @@ static int read_ranges (sv_wrapper *w)
 
 static int write_problem (sv_data *p, sv_wrapper *w)
 {
+    const char *fname;
     FILE *fp;
     int i, t, idx;
     double val;
 
-    fp = gretl_fopen(w->data_outfile, "wb");
+    fname = gretl_maybe_switch_dir(w->data_outfile);
+    fp = gretl_fopen(fname, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
@@ -2262,8 +2259,9 @@ static int read_params_bundle (gretl_bundle *bparm,
     return err;
 }
 
-/* wrap a couple of libsvm I/0 functions so they don't
-   fall foul of filename encoding issues on Windows
+/* wrap a couple of libsvm I/0 functions so they respect
+   @workdir, and don't fall foul of filename encoding issues
+   on MS Windows
 */
 
 static sv_model *svm_load_model_wrapper (const char *fname,
@@ -2272,6 +2270,7 @@ static sv_model *svm_load_model_wrapper (const char *fname,
     sv_model *model = NULL;
     char *conv = NULL;
 
+    fname = gretl_maybe_switch_dir(fname);
     *err = maybe_recode_path(fname, &conv, -1);
 
     if (!*err) {
@@ -2291,6 +2290,7 @@ static int svm_save_model_wrapper (const char *fname,
     char *conv = NULL;
     int err;
 
+    fname = gretl_maybe_switch_dir(fname);
     err = maybe_recode_path(fname, &conv, -1);
 
     if (!err) {
@@ -2424,11 +2424,6 @@ static int svm_predict_main (const int *list,
     int err = 0;
 
     gui_mode = gretl_in_gui_mode();
-
-    if (doing_file_io(wrap)) {
-	/* try to ensure we're in workdir */
-	gretl_chdir(gretl_workdir());
-    }
 
     if (!err && wrap->data_outfile != NULL && wrap->rank == 0) {
 	err = write_problem(prob1, wrap);
