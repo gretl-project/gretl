@@ -32,7 +32,7 @@ dnl Now check if the installed LIBSVM is sufficiently new.
 dnl
   rm -f conf.libsvmtest
   AC_TRY_RUN([
-#include <svm.h>
+#include <libsvm/svm.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -78,7 +78,7 @@ main ()
        CFLAGS="$CFLAGS $SVM_CFLAGS"
        LIBS="$LIBS $SVM_LIBS"
        AC_TRY_LINK([
-#include <svm.h>
+#include <libsvm/svm.h>
 #include <stdio.h>
 ],     [ return (1); ],
        [ echo "*** The test program compiled, but did not run. This usually means"

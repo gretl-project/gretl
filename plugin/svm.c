@@ -27,7 +27,7 @@
 # include "gretl_mpi.h"
 #endif
 
-#include <svm.h>
+#include <libsvm/svm.h>
 
 typedef struct svm_problem sv_data;
 typedef struct svm_node sv_cell;

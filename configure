@@ -16565,7 +16565,7 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <svm.h>
+#include <libsvm/svm.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16625,7 +16625,7 @@ $as_echo "no" >&6; }
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <svm.h>
+#include <libsvm/svm.h>
 #include <stdio.h>
 
 int
