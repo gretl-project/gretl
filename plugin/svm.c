@@ -163,14 +163,25 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->fsize);
 }
 
-static int loading_model (sv_wrapper *w)
+static int loading_model (const sv_wrapper *w)
 {
     return (w->flags & W_LOADMOD) || w->model_infile != NULL;
 }
 
-static int saving_model (sv_wrapper *w)
+static int saving_model (const sv_wrapper *w)
 {
     return (w->flags & W_SAVEMOD) || w->model_outfile != NULL;
+}
+
+static int uses_epsilon (const sv_parm *parm)
+{
+    return parm->svm_type == EPSILON_SVR;
+}
+
+static int uses_nu (const sv_parm *parm)
+{
+    return parm->svm_type == NU_SVC ||
+	parm->svm_type == NU_SVR || parm->svm_type == ONE_CLASS;
 }
 
 static void set_sv_parm_defaults (sv_parm *parm)
@@ -488,28 +499,28 @@ static int svm_model_save_to_bundle (const sv_model *model,
     return err;
 }
 
-static void save_parms_to_bundle (const sv_parm *parm,
-				  sv_wrapper *w,
-				  gretl_bundle *b)
+static void save_results_to_bundle (const sv_parm *parm,
+				    sv_wrapper *w,
+				    gretl_bundle *b)
 {
-    /* note: don't destroy the bundle's prior content */
-    gretl_bundle_set_scalar(b, "C", parm->C);
-    gretl_bundle_set_scalar(b, "gamma", parm->gamma);
-    if (parm->svm_type == EPSILON_SVR) {
-	gretl_bundle_set_scalar(b, "epsilon", parm->p);
-    } else if (parm->svm_type == NU_SVR) {
-	gretl_bundle_set_scalar(b, "nu", parm->nu);
-    }
+    if (w->xdata != NULL) {
+	int ns = w->xdata->cols;
+	char **S = strings_array_new(ns);
 
-    if (w != NULL && w->xdata != NULL) {
-	char **S;
-	int ns;
-
-	S = gretl_string_split("C gamma score", &ns, NULL);
 	if (S != NULL) {
+	    S[0] = gretl_strdup("C");
+	    S[1] = gretl_strdup("gamma");
+	    if (ns == 4) {
+		const char *s = uses_epsilon(parm) ? "epsilon" : "nu";
+
+		S[2] = gretl_strdup(s);
+		S[3] = gretl_strdup("score");
+	    } else {
+		S[2] = gretl_strdup("score");
+	    }
 	    gretl_matrix_set_colnames(w->xdata, S);
 	}
-	gretl_bundle_donate_data(b, "search_results", w->xdata,
+	gretl_bundle_donate_data(b, "xvalid_results", w->xdata,
 				 GRETL_TYPE_MATRIX, 0);
 	w->xdata = NULL;
     }
@@ -1502,6 +1513,7 @@ static int write_plot_file (sv_wrapper *w,
     gretl_matrix *m = w->xdata;
     const char *zlabel = "MSE";
     double x[3], best[3] = {0};
+    int critcol = m->cols - 1;
     int i, j, err = 0;
     FILE *fp;
 
@@ -1536,19 +1548,18 @@ static int write_plot_file (sv_wrapper *w,
     fputs("splot '-' using 1:2:3 title '' w l ,\\\n", fp);
     fputs(" '-' using 1:2:3 title 'best' w p lt 1 pt 8\n", fp);
     for (i=0; i<m->rows; i++) {
-	for (j=0; j<3; j++) {
-	    x[j] = gretl_matrix_get(m, i, j);
-	}
+	x[0] = gretl_matrix_get(m, i, 0);
+	x[1] = gretl_matrix_get(m, i, 1);
+	x[2] = gretl_matrix_get(m, i, critcol);
 	if (x[2] == cmax) {
 	    for (j=0; j<3; j++) {
 		best[j] = x[j];
 	    }
 	}
-	if (w->grid->linear[i]) {
-	    fprintf(fp, "%g %g %g\n", x[0], x[1], x[2]);
-	} else {
-	    fprintf(fp, "%g %g %g\n", log2(x[0]), log2(x[1]), x[2]);
-	}
+	fprintf(fp, "%g %g %g\n",
+		w->grid->linear[0] ? x[0] : log2(x[0]),
+		w->grid->linear[1] ? x[1] : log2(x[1]),
+		x[2]);
     }
     fputs("e\n", fp);
     fprintf(fp, "%g %g %g\n", best[0], best[1], best[2]);
@@ -1602,6 +1613,23 @@ static void maybe_resume_printing (sv_wrapper *w)
     }
 }
 
+static int can_write_plot (sv_wrapper *w)
+{
+    /* for now we handle only the case of a 2D grid
+       with C and gamma, but this should be generalized
+       at some point
+    */
+    if (w->xdata == NULL) {
+	return 0;
+    } else if (w->grid->null[G_C] || w->grid->null[G_g]) {
+	return 0;
+    } else if (!w->grid->null[G_p]) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 static void param_search_finalize (sv_parm *parm,
 				   sv_wrapper *w,
 				   double cmax,
@@ -1609,7 +1637,7 @@ static void param_search_finalize (sv_parm *parm,
 {
     sv_grid *grid = w->grid;
 
-    if (w->plot != NULL && w->xdata != NULL) {
+    if (w->plot != NULL && can_write_plot(w)) {
 	write_plot_file(w, parm, fabs(cmax));
     }
 
@@ -1642,7 +1670,11 @@ static int cross_validate_worker_task (sv_data *data,
     for (i=0; i<task->rows && !err; i++) {
 	parm->C     = gretl_matrix_get(task, i, 0);
 	parm->gamma = gretl_matrix_get(task, i, 1);
-	parm->p     = gretl_matrix_get(task, i, 2);
+	if (parm->svm_type == EPSILON_SVR) {
+	    parm->p = gretl_matrix_get(task, i, 2);
+	} else if (parm->svm_type == NU_SVR) {
+	    parm->nu = gretl_matrix_get(task, i, 2);
+	}
 	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
 	if (!err) {
 	    gretl_matrix_set(task, i, 3, crit);
@@ -1694,39 +1726,35 @@ static gretl_matrix **allocate_submatrices (int n,
     return M;
 }
 
-static int assemble_xdata (sv_parm *parm,
-			   sv_wrapper *w,
-			   const gretl_matrix *m,
-			   double *pcmax)
+static int process_results (sv_parm *parm,
+			    sv_wrapper *w,
+			    gretl_matrix *m,
+			    double *pcmax)
 {
     double crit, cmax = -DBL_MAX;
     int i, imax = 0;
 
-    w->xdata = gretl_matrix_alloc(m->rows, 3);
-    if (w->xdata == NULL) {
-	return E_ALLOC;
-    }
-
-    /* If we decide to support p-search this will
-       have to be modified! */
-
     for (i=0; i<m->rows; i++) {
-	crit = gretl_matrix_get(m, i, 3);
+	crit = gretl_matrix_get(m, i, m->cols - 1);
 	if (crit > cmax) {
 	    cmax = crit;
 	    imax = i;
 	}
-	gretl_matrix_set(w->xdata, i, 0, gretl_matrix_get(m, i, 0));
-	gretl_matrix_set(w->xdata, i, 1, gretl_matrix_get(m, i, 1));
-	gretl_matrix_set(w->xdata, i, 2, fabs(crit));
+	gretl_matrix_set(m, i, m->cols - 1, fabs(crit));
     }
 
-    if (!w->grid->null[G_C]) {
-	parm->C = gretl_matrix_get(w->xdata, imax, 0);
+    parm->C = gretl_matrix_get(m, imax, 0);
+    parm->gamma = gretl_matrix_get(m, imax, 1);
+    if (!w->grid->null[G_p]) {
+	if (parm->svm_type == EPSILON_SVR) {
+	    parm->p = gretl_matrix_get(m, imax, 2);
+	} else {
+	    parm->nu = gretl_matrix_get(m, imax, 2);
+	}
     }
-    if (!w->grid->null[G_g]) {
-	parm->gamma = gretl_matrix_get(w->xdata, imax, 1);
-    }
+
+    /* wrapper takes ownership of @m */
+    w->xdata = m;
 
     *pcmax = cmax;
 
@@ -1751,11 +1779,29 @@ static int carve_up_xvalidation (sv_data *data,
     int ng = grid->n[G_g];
     int np = grid->n[G_p];
     double C, g, p, crit;
+    double *p3 = NULL;
     int ncom, nproc = w->nproc;
     int i, j, k, ii;
     int r1, r2, seq;
     int lastmat = 0;
+    int ncols = 4;
     int err = 0;
+
+    if (uses_epsilon(parm)) {
+	p = parm->p;
+	ncols++;
+	if (!grid->null[G_p]) {
+	    p3 = &parm->p;
+	}
+    } else if (uses_nu(parm)) {
+	p = parm->nu;
+	ncols++;
+	if (!grid->null[G_p]) {
+	    p3 = &parm->nu;
+	}
+    } else {
+	p = 0;
+    }
 
     ncom = nC * ng * np;    /* number of param combinations */
     r1 = ncom / nproc;      /* rows per matrix */
@@ -1771,7 +1817,7 @@ static int carve_up_xvalidation (sv_data *data,
     }
 
     /* matrices to store per-worker parameter sets */
-    M = allocate_submatrices(nproc, 5, r1, r2);
+    M = allocate_submatrices(nproc, ncols, r1, r2);
 
     if (M == NULL) {
 	err = E_ALLOC;
@@ -1795,7 +1841,6 @@ static int carve_up_xvalidation (sv_data *data,
     m = M[nproc-1]; /* convenience pointer */
     C = parm->C;
     g = parm->gamma;
-    p = parm->p;
 
     /* We'll dole out the full parameter matrix row by row: this
        is an attempt to even up the tasks, given that doing the
@@ -1823,9 +1868,11 @@ static int carve_up_xvalidation (sv_data *data,
 		}
 		gretl_matrix_set(M[ii], row[ii], 0, C);
 		gretl_matrix_set(M[ii], row[ii], 1, g);
-		gretl_matrix_set(M[ii], row[ii], 2, p);
-		gretl_matrix_set(M[ii], row[ii], 3, 0);
-		gretl_matrix_set(M[ii], row[ii], 4, seq);
+		if (ncols == 5) {
+		    gretl_matrix_set(M[ii], row[ii], 2, p);
+		}
+		gretl_matrix_set(M[ii], row[ii], ncols - 2, 0);
+		gretl_matrix_set(M[ii], row[ii], ncols - 1, seq);
 		seq++;
 		row[ii] += 1;
 		if (!lastmat) {
@@ -1850,12 +1897,14 @@ static int carve_up_xvalidation (sv_data *data,
 
     /* do root's share of the cross validation */
     for (i=0; i<m->rows && !err; i++) {
-	parm->C     = gretl_matrix_get(m, i, 0);
+	parm->C = gretl_matrix_get(m, i, 0);
 	parm->gamma = gretl_matrix_get(m, i, 1);
-	parm->p     = gretl_matrix_get(m, i, 2);
+	if (!grid->null[G_p]) {
+	    *p3 = gretl_matrix_get(m, i, 2);
+	}
 	err = xvalidate_once(data, parm, w, targ, &crit, i, prn);
 	if (!err) {
-	    gretl_matrix_set(m, i, 3, crit);
+	    gretl_matrix_set(m, i, ncols - 2, crit);
 	}
     }
 
@@ -1881,12 +1930,13 @@ static int carve_up_xvalidation (sv_data *data,
 	}
 	if (!err) {
 	    gretl_matrix_inscribe_matrix(Tmp, m, row, 0, GRETL_MOD_NONE);
-	    Res = gretl_matrix_sort_by_column(Tmp, 4, &err);
+	    Res = gretl_matrix_sort_by_column(Tmp, ncols - 1, &err);
 	}
 	gretl_matrix_free(Tmp);
 	if (Res != NULL) {
-	    err = assemble_xdata(parm, w, Res, pcmax);
-	    gretl_matrix_free(Res);
+	    /* hide the sequence column */
+	    gretl_matrix_reuse(Res, -1, ncols - 1);
+	    err = process_results(parm, w, Res, pcmax);
 	}
     }
 
@@ -1906,15 +1956,6 @@ static int call_mpi_cross_validation (sv_data *data,
     double cmax = -DBL_MAX;
     double *targ;
     int err = 0;
-
-    /* For now we're not supporting search for parm->p
-       via MPI. FIXME: determine if this is ever
-       worthwhile.
-    */
-    if (w->grid->n[G_p] > 1) {
-	gretl_errmsg_set("p-search not supported!");
-	return E_INVARG;
-    }
 
     targ = malloc(data->l * sizeof *targ);
     if (targ == NULL) {
@@ -1967,22 +2008,23 @@ static int call_cross_validation (sv_data *data,
 	int np = grid->n[G_p];
 	int ibest = 0, jbest = 0, kbest = 0;
 	int iter = 0;
+	int ncols = 3;
 	int i, j, k;
 
 	if (prn != NULL) {
 	    print_grid(grid, prn);
 	}
 
-	if ((w->plot != NULL || (w->flags & W_SVPARM)) && (nC > 1 || ng > 1)) {
-	    w->xdata = gretl_matrix_alloc(nC * ng, 3);
+	if (uses_epsilon(parm)) {
+	    ncols++;
+	    p3 = &parm->p;
+	} else if (uses_nu(parm)) {
+	    ncols++;
+	    p3 = &parm->nu;
 	}
 
-	if (!grid->null[G_p]) {
-	    if (parm->svm_type == EPSILON_SVR) {
-		p3 = &parm->p;
-	    } else if (parm->svm_type == NU_SVR) {
-		p3 = &parm->nu;
-	    }
+	if ((w->plot != NULL || (w->flags & W_SVPARM)) && (nC > 1 || ng > 1)) {
+	    w->xdata = gretl_matrix_alloc(nC * ng * np, ncols);
 	}
 
 	maybe_hush(w);
@@ -1996,7 +2038,7 @@ static int call_cross_validation (sv_data *data,
 		    parm->gamma = grid_get_g(grid, j);
 		}
 		for (k=0; k<np; k++) {
-		    if (p3 != NULL) {
+		    if (!grid->null[G_p]) {
 			*p3 = grid_get_p(grid, k);
 		    }
 		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
@@ -2009,10 +2051,13 @@ static int call_cross_validation (sv_data *data,
 		    if (w->xdata != NULL) {
 			gretl_matrix_set(w->xdata, iter, 0, parm->C);
 			gretl_matrix_set(w->xdata, iter, 1, parm->gamma);
-			gretl_matrix_set(w->xdata, iter, 2, fabs(crit));
+			if (p3 != NULL) {
+			    gretl_matrix_set(w->xdata, iter, 2, *p3);
+			}
+			gretl_matrix_set(w->xdata, iter, ncols - 1, fabs(crit));
 		    }
+		    iter++;
 		}
-		iter++;
 	    }
 	}
 
@@ -2025,7 +2070,7 @@ static int call_cross_validation (sv_data *data,
 	    parm->gamma = grid_get_g(grid, jbest);
 	}
 	if (!grid->null[G_p]) {
-	    parm->p = grid_get_p(grid, kbest);
+	    *p3 = grid_get_p(grid, kbest);
 	}
 	param_search_finalize(parm, w, cmax, prn);
     } else {
@@ -2193,7 +2238,7 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (!err) {
 	const gretl_matrix *m;
 
-	m = gretl_bundle_get_matrix(bparm, "gridmat", NULL);
+	m = gretl_bundle_get_matrix(bparm, "grid", NULL);
 	if (m != NULL) {
 	    err = sv_wrapper_add_grid(wrap, m);
 	    if (!err) {
@@ -2392,9 +2437,10 @@ static int check_svm_params (sv_data *data,
 	err = E_INVARG;
     } else if (prn != NULL) {
 	pputs(prn, "OK\n");
-	pprintf(prn, "svm_type %s, kernel_type %s, C = %g, gamma = %g",
+	pprintf(prn, "svm_type %s, kernel_type %s\n",
 		svm_type_names[parm->svm_type],
-		kernel_type_names[parm->kernel_type],
+		kernel_type_names[parm->kernel_type]);
+	pprintf(prn, "initial params: C = %g, gamma = %g",
 		parm->C, parm->gamma);
 	if (parm->svm_type == EPSILON_SVR) {
 	    pprintf(prn, ", epsilon = %g\n", parm->p);
@@ -2450,7 +2496,7 @@ static int svm_predict_main (const int *list,
 	    /* continue to train using tuned params? */
 	    if (wrap->flags & W_SVPARM) {
 		/* no, just save the tuned parms */
-		save_parms_to_bundle(parm, wrap, bmodel);
+		save_results_to_bundle(parm, wrap, bmodel);
 		wrap->predict = do_training = 0;
 	    }
 	} else {
