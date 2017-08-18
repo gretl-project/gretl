@@ -2170,7 +2170,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 	wrap->flags |= W_QUIET;
     }
 
-    if (get_optional_int(bparm, "gridsearch", &ival, &err) && ival != 0) {
+    if (get_optional_int(bparm, "search", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
     }
 
