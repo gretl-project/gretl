@@ -45,7 +45,9 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root);
 
 int gretl_scalar_mpi_bcast (double *px, int root);
 
-int gretl_int_mpi_bcast (int *pi, int root);
+int gretl_int_mpi_bcast (int *pu, int root);
+
+int gretl_unsigned_mpi_bcast (unsigned int *ui, int root);
 
 int gretl_mpi_send (void *p, GretlType type, int dest);
 

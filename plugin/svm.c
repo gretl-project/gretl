@@ -80,6 +80,7 @@ struct sv_wrapper_ {
     gretl_matrix *xdata;
     int *flist;
     int *fsize;
+    unsigned seed;
 };
 
 struct sv_parm_info {
@@ -146,6 +147,7 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->xdata = NULL;
     w->flist = NULL;
     w->fsize = NULL;
+    w->seed = time(NULL);
 }
 
 static void sv_wrapper_free (sv_wrapper *w)
@@ -1308,6 +1310,7 @@ static int xvalidate_once (sv_data *prob,
     if (w->fsize != NULL) {
 	custom_xvalidate(prob, parm, w, targ);
     } else {
+	srand(w->seed);
 	svm_cross_validation(prob, parm, w->nfold, targ);
     }
 
@@ -1962,6 +1965,9 @@ static int call_mpi_cross_validation (sv_data *data,
 	return E_ALLOC;
     }
 
+    /* arrange to get rand() in sync across the processes */
+    gretl_unsigned_mpi_bcast(&w->seed, 0);
+
     if (w->rank == 0) {
 	if (prn != NULL) {
 	    print_grid(w->grid, prn);
@@ -2209,6 +2215,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	} else {
 	    wrap->nfold = ival;
 	}
+    }
+
+    if (get_optional_int(bparm, "seed", &ival, &err)) {
+	wrap->seed = ival;
     }
 
     if (get_optional_int(bparm, "quiet", &ival, &err) && ival != 0) {
