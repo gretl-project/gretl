@@ -1664,23 +1664,24 @@ static int cross_validate_worker_task (sv_data *data,
 {
     gretl_matrix *task = NULL;
     double crit;
-    int i, err = 0;
+    int i, j, err = 0;
 
     /* get our sub-task matrix */
     task = gretl_matrix_mpi_receive(0, &err);
 
     /* do the actual cross validation */
     for (i=0; i<task->rows && !err; i++) {
-	parm->C     = gretl_matrix_get(task, i, 0);
-	parm->gamma = gretl_matrix_get(task, i, 1);
+	j = 0;
+	parm->C     = gretl_matrix_get(task, i, j++);
+	parm->gamma = gretl_matrix_get(task, i, j++);
 	if (parm->svm_type == EPSILON_SVR) {
-	    parm->p = gretl_matrix_get(task, i, 2);
+	    parm->p = gretl_matrix_get(task, i, j++);
 	} else if (parm->svm_type == NU_SVR) {
-	    parm->nu = gretl_matrix_get(task, i, 2);
+	    parm->nu = gretl_matrix_get(task, i, j++);
 	}
 	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
 	if (!err) {
-	    gretl_matrix_set(task, i, 3, crit);
+	    gretl_matrix_set(task, i, j, crit);
 	}
     }
 
@@ -1900,14 +1901,15 @@ static int carve_up_xvalidation (sv_data *data,
 
     /* do root's share of the cross validation */
     for (i=0; i<m->rows && !err; i++) {
-	parm->C = gretl_matrix_get(m, i, 0);
-	parm->gamma = gretl_matrix_get(m, i, 1);
+	j = 0;
+	parm->C = gretl_matrix_get(m, i, j++);
+	parm->gamma = gretl_matrix_get(m, i, j++);
 	if (!grid->null[G_p]) {
-	    *p3 = gretl_matrix_get(m, i, 2);
+	    *p3 = gretl_matrix_get(m, i, j++);
 	}
 	err = xvalidate_once(data, parm, w, targ, &crit, i, prn);
 	if (!err) {
-	    gretl_matrix_set(m, i, ncols - 2, crit);
+	    gretl_matrix_set(m, i, j, crit);
 	}
     }
 
