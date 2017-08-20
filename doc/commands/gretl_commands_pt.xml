@@ -1316,7 +1316,7 @@
       <para context="cli">
 	Em modo interativo o resultado é mostrado imediatamente. Em
 	modo lote ('batch') o comportamento normal é o de criar um
-	ficheiro de comandos gnuplot na diretoria de trabalho do
+	ficheiro de script gnuplot na diretoria de trabalho do
 	utilizador, cujo nome segue a forma <filename>gpttmpN.plt</filename>,
    	iniciando com N = <lit>01</lit>. Esses gráficos poderão ser 
 	posteriormente gerados com o programa <program>gnuplot</program> 
@@ -3702,7 +3702,7 @@
 	extensão é usada para determinar o tipo de ficheiro a ser
 	escrito (<lit>.eps</lit> para EPS, <lit>.pdf</lit> para PDF, ou
 	<lit>.png</lit> para PNG; qualquer outra extensão resulta num
-	ficheiro de comandos gnuplot).  Por exemplo,
+	ficheiro de script gnuplot).  Por exemplo,
       </para>
       <code>
 	fcast --plot=fc.pdf
@@ -4843,7 +4843,7 @@
       <para>
 	Em modo interativo o gráfico é apresentado imediatamente. Em modo de 
 	sequência de comandos o comportamento por omissão é o de criar um 
-	ficheiro de comandos gnuplot na directoria de trabalho do utilizador,
+	ficheiro de script gnuplot na directoria de trabalho do utilizador,
 	com um nome seguindo o padrão <filename>gpttmpN.plt</filename>, 
 	iniciando com N = <lit>01</lit>. Os gráficos podem ser depois gerados
 	usando o programa <program>gnuplot</program> (em MS Windows,
@@ -4858,7 +4858,7 @@
 	para o formato SVG ('Scalable Vector Graphics'). Se usado o nome de ficheiro
 	<quote><lit>display</lit></quote> o gráfico é apresentado no écran tal como
 	em modo interativo. Se o nome de ficheiro tiver outra qualquer extensão que
-	não as mencionadas, será escrito um ficheiro de comandos gnuplot.
+	não as mencionadas, será escrito um ficheiro de script gnuplot.
       </para>
       <ilist>
 	<li>

@@ -8,7 +8,7 @@ executado numa janela de linha de comandos (algumas vezes incorrectamente
 chamada de ``janela MS DOS'').
 \app{gretlcli} tem o seu próprio ficheiro de ajuda, que pode ser acedido
 escrevendo o comando ``help'' no interface CLI. Pode ser executado em modo de
-sequência de comandos, enviando os resultados directamente para um ficheiro
+script, enviando os resultados directamente para um ficheiro
 (ver também o \GCR).
     
 Se \app{gretlcli} tiver sido ligado no momento da compilação à biblioteca de
@@ -40,16 +40,16 @@ sistema \app{readline} vai tentar completar o comando por você.  Se houver uma
 que uma, pressionando Tab uma segunda vez faz aparecer uma lista.
 
 Provavelmente o modo mais produtivo para análises intensivas com o
-\app{gretlcli} é em modo de sequência de comandos (não-interactivo), no qual o
-programa lê e processa um ficheiro de sequência de comandos, e envia a saída
+\app{gretlcli} é em modo de script (não-interactivo), no qual o
+programa lê e processa um ficheiro de script, e envia a saída
 para um ficheiro.  Por exemplo
 \begin{code}
-gretlcli -b ficheirodecomandos > ficheiroderesultados
+gretlcli -b ficheirodescript > ficheiroderesultados
 \end{code}
 
-O \textsl{ficheirodecomandos} é tratado como um argumento de programa; apenas o ficheiro de resultados requer redirecionamento (\verb|>|).  Não esquecer a opção \texttt{-b}
+O \textsl{ficheirodescript} é tratado como um argumento de programa; apenas o ficheiro de resultados requer redirecionamento (\verb|>|).  Não esquecer a opção \texttt{-b}
 (\textit{batch}=lote), de outro modo o programa ficará a aguardar comandos do
-utilizador após a execução da sequência de comandos (e se a saída estiver redirecionada, o programa aparentará estar "pendurado").
+utilizador após a execução do script (e se a saída estiver redirecionada, o programa aparentará estar "pendurado").
 
     
 %%% Local Variables: 
