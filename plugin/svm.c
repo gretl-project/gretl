@@ -38,7 +38,7 @@ typedef struct sv_grid_ sv_grid;
 typedef struct grid_row_ grid_row;
 
 static const char *svm_type_names[] = {
-    "C-SVC", "Nu-SVC", "One-class", "Epsilon-SVR", "Nu-SVR"
+    "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR"
 };
 
 static const char *kernel_type_names[] = {
@@ -2309,6 +2309,15 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (!err) {
 	/* if we're still OK, fill out the libsvm @parm struct */
 	err = set_svm_parm(parm, bparm, prn);
+    }
+
+    if (!err) {
+	/* param search: at present we only support the RBF kernel */
+	if ((wrap->flags & W_SEARCH) && parm->kernel_type != RBF) {
+	    gretl_errmsg_set("parameter search is only supported for "
+			     "the RBF kernel at present");
+	    err = E_INVARG;
+	}
     }
 
     return err;
