@@ -1401,7 +1401,7 @@ static int grid_set_dimensions (sv_grid *g, const gretl_matrix *m)
 static void sv_grid_default (sv_grid *g)
 {
     g->row[G_C].start = -5;
-    g->row[G_C].stop = 9; /* python has 15 (too big?) */
+    g->row[G_C].stop = 9; /* grid.py has 15 (too big?) */
     g->row[G_C].step = 2;
 
     g->row[G_g].start = 3;
@@ -1415,16 +1415,19 @@ static void sv_grid_default (sv_grid *g)
     grid_set_dimensions(g, NULL);
 }
 
-static void print_grid (sv_grid *g, PRN *prn)
+static void print_grid (sv_grid *g, sv_parm *parm, PRN *prn)
 {
     const char *labels[] = {
 	"C",
 	"gamma",
-	"eps"
+	""
     };
-    int i, imax;
+    int i, imax = 2;
 
-    imax = g->null[G_p] ? 2 : 3;
+    if (!g->null[G_p]) {
+	imax = 3;
+	labels[2] = uses_nu(parm) ? "nu" : "eps";
+    }
 
     pputs(prn, "parameter search grid (start, stop, step):\n");
 
@@ -1699,7 +1702,7 @@ static int cross_validate_worker_task (sv_data *data,
 static gretl_matrix **allocate_submatrices (int n,
 					    int cols,
 					    int r1,
-					    int r2)
+					    int nr1)
 {
     gretl_matrix **M = malloc(n * sizeof *M);
     int i, err = 0;
@@ -1707,18 +1710,15 @@ static gretl_matrix **allocate_submatrices (int n,
     if (M == NULL) {
 	err = E_ALLOC;
     } else {
-	for (i=0; i<n-1 && !err; i++) {
-	    M[i] = gretl_matrix_alloc(r1, cols);
+	for (i=0; i<n && !err; i++) {
+	    if (i < nr1) {
+		M[i] = gretl_matrix_alloc(r1, cols);
+	    } else {
+		M[i] = gretl_matrix_alloc(r1 + 1, cols);
+	    }
 	    if (M[i] == NULL) {
 		err = E_ALLOC;
 	    }
-	}
-    }
-
-    if (!err) {
-	M[n-1] = gretl_matrix_alloc(r2, cols);
-	if (M[n-1] == NULL) {
-	    err = E_ALLOC;
 	}
     }
 
@@ -1786,9 +1786,8 @@ static int carve_up_xvalidation (sv_data *data,
     double *p3 = NULL;
     int ncom, nproc = w->nproc;
     int i, j, k, ii;
-    int r1, r2, seq;
-    int lastmat = 0;
-    int ncols = 4;
+    int r1, nr1, seq;
+    int rem, ncols = 4;
     int err = 0;
 
     if (uses_epsilon(parm)) {
@@ -1807,21 +1806,18 @@ static int carve_up_xvalidation (sv_data *data,
 	p = 0;
     }
 
-    ncom = nC * ng * np;    /* number of param combinations */
-    r1 = ncom / nproc;      /* rows per matrix */
-    r2 = r1 + ncom % nproc; /* rows in last matrix */
+    ncom = nC * ng * np;  /* number of param combinations */
+    r1 = ncom / nproc;    /* initial rows per matrix */
+    rem = ncom % nproc;   /* remainder, if any */
+    nr1 = nproc - rem;    /* number of matrices with r1 rows */
 
     if (prn != NULL) {
-	pprintf(prn, "MPI: dividing %d parameter combinations, ", ncom);
-	if (r2 > r1) {
-	    pprintf(prn, "%d for root, otherwise %d\n", r2, r1);
-	} else {
-	    pprintf(prn, "%d per process\n", r1);
-	}
+	pprintf(prn, "MPI: dividing %d parameter combinations "
+		"between %d processes\n", ncom, nproc);
     }
 
     /* matrices to store per-worker parameter sets */
-    M = allocate_submatrices(nproc, ncols, r1, r2);
+    M = allocate_submatrices(nproc, ncols, r1, nr1);
 
     if (M == NULL) {
 	err = E_ALLOC;
@@ -1842,7 +1838,7 @@ static int carve_up_xvalidation (sv_data *data,
 	goto bailout;
     }
 
-    m = M[nproc-1]; /* convenience pointer */
+    m = M[nproc-1]; /* convenience pointer to root's submatrix */
     C = parm->C;
     g = parm->gamma;
 
@@ -1867,8 +1863,8 @@ static int carve_up_xvalidation (sv_data *data,
 		    p = grid_get_p(grid, k);
 		}
 		if (row[ii] == M[ii]->rows) {
-		    ii = nproc - 1;
-		    lastmat = 1;
+		    /* skip to the larger matrices */
+		    ii = nr1;
 		}
 		gretl_matrix_set(M[ii], row[ii], 0, C);
 		gretl_matrix_set(M[ii], row[ii], 1, g);
@@ -1879,12 +1875,10 @@ static int carve_up_xvalidation (sv_data *data,
 		gretl_matrix_set(M[ii], row[ii], ncols - 1, seq);
 		seq++;
 		row[ii] += 1;
-		if (!lastmat) {
-		    if (ii == nproc - 1) {
-			ii = 0;
-		    } else {
-			ii++;
-		    }
+		if (ii == nproc - 1) {
+		    ii = 0;
+		} else {
+		    ii++;
 		}
 	    }
 	}
@@ -1896,20 +1890,20 @@ static int carve_up_xvalidation (sv_data *data,
 	gretl_matrix_free(M[i]);
 	M[i] = NULL;
     }
+    gretl_matrix_print(M[nproc-1], "rootmat");
 
     maybe_hush(w);
 
     /* do root's share of the cross validation */
     for (i=0; i<m->rows && !err; i++) {
-	j = 0;
-	parm->C = gretl_matrix_get(m, i, j++);
-	parm->gamma = gretl_matrix_get(m, i, j++);
+	parm->C = gretl_matrix_get(m, i, 0);
+	parm->gamma = gretl_matrix_get(m, i, 1);
 	if (!grid->null[G_p]) {
-	    *p3 = gretl_matrix_get(m, i, j++);
+	    *p3 = gretl_matrix_get(m, i, 2);
 	}
 	err = xvalidate_once(data, parm, w, targ, &crit, i, prn);
 	if (!err) {
-	    gretl_matrix_set(m, i, j, crit);
+	    gretl_matrix_set(m, i, ncols-2, crit);
 	}
     }
 
@@ -1972,7 +1966,7 @@ static int call_mpi_cross_validation (sv_data *data,
 
     if (w->rank == 0) {
 	if (prn != NULL) {
-	    print_grid(w->grid, prn);
+	    print_grid(w->grid, parm, prn);
 	}
 	err = carve_up_xvalidation(data, parm, w, targ, &cmax, prn);
     } else {
@@ -2020,7 +2014,7 @@ static int call_cross_validation (sv_data *data,
 	int i, j, k;
 
 	if (prn != NULL) {
-	    print_grid(grid, prn);
+	    print_grid(grid, parm, prn);
 	}
 
 	if (uses_epsilon(parm)) {
