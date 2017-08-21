@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-08-16 11:30-0400\n"
-"PO-Revision-Date: 2017-08-17 18:58+0000\n"
+"PO-Revision-Date: 2017-08-20 17:33+0000\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -4579,7 +4579,7 @@ msgstr "Não se conseguiu formatar o modelo\n"
 #: lib/src/interact.c:3296 cli/gretlcli.c:1290 cli/gretlcli-mpi.c:894
 #: gui2/library.c:10126
 msgid "Infinite loop detected in script\n"
-msgstr "Ciclo infinito detectado na sequência de comandos\n"
+msgstr "Ciclo infinito detectado no script\n"
 
 #: lib/src/interact.c:3335 cli/gretlcli.c:846 cli/gretlcli-mpi.c:527
 #, c-format
@@ -7728,10 +7728,10 @@ msgstr ""
 "\n"
 "Pode-se fornecer um nome de um ficheiro de dados na linha de comandos.\n"
 "Opções:\n"
-" -b ou --batch     Processar um ficheiro de comandos e sair.\n"
-" -r ou --run       Executar um ficheiro de comandos e passar controlo para a "
+" -b ou --batch     Processar um ficheiro de script e sair.\n"
+" -r ou --run       Executar um ficheiro de script e passar controlo para a "
 "linha de comandos.\n"
-" -m ou --makepkg   Executar um ficheiro de comandos e criar um pacote a "
+" -m ou --makepkg   Executar um ficheiro de script e criar um pacote a "
 "partir dele.\n"
 " -h ou --help      Mostrar esta informação e sair.\n"
 " -v ou --version   Mostrar informação sobre a versão e sair.\n"
@@ -7751,9 +7751,9 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Opção especial em modo sequência de comandos:\n"
+"Opção especial em modo script:\n"
 " --scriptopt=<value> define um valor escalar, com o nome \"scriptopt\",\n"
-" ficando acessível na sequência de comandos\n"
+" ficando acessível no script\n"
 "\n"
 
 #: cli/gretlcli.c:214
@@ -7763,7 +7763,7 @@ msgid ""
 "gretlcli: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlcli: erro ao executar sequência de comandos: terminando\n"
+"gretlcli: erro ao executar script: terminando\n"
 
 #: cli/gretlcli.c:515
 #, c-format
@@ -7848,7 +7848,7 @@ msgid ""
 "script file as argument.\n"
 msgstr ""
 "Este programa deve correr dentro de mpiexec, e precisa do nome de um\n"
-"ficheiro de comandos como argumento.\n"
+"ficheiro de script como argumento.\n"
 
 #: cli/gretlcli-mpi.c:138
 #, c-format
@@ -7874,7 +7874,7 @@ msgid ""
 "gretlmpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlmpi: erro ao executar sequência de comandos: terminando\n"
+"gretlmpi: erro ao executar script: terminando\n"
 
 #: gui2/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -7892,7 +7892,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 17 de agosto de 2017."
+"Tradução de 20 de agosto de 2017."
 
 #: gui2/about.c:193
 msgid "News"
@@ -8716,7 +8716,7 @@ msgid ""
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
 "# Registo dos comandos da sessão.  Note que provavelmente\n"
-"# terá que ser editado se pretender executar como sequência de comandos.\n"
+"# terá que ser editado se pretender executar como script.\n"
 
 #: gui2/console.c:500
 msgid "gretl console: type 'help' for a list of commands"
@@ -8961,7 +8961,7 @@ msgstr "Abrir"
 
 #: gui2/datafiles.c:1427 gui2/datafiles.c:1635
 msgid "Sample script"
-msgstr "Ficheiro de comandos de exemplo"
+msgstr "Ficheiro de script de exemplo"
 
 #: gui2/datafiles.c:1430 gui2/datafiles.c:1636
 msgid "View code"
@@ -9117,7 +9117,7 @@ msgstr "Data"
 
 #: gui2/datafiles.c:2765
 msgid "Script"
-msgstr "Comando"
+msgstr "Script"
 
 #: gui2/datafiles.c:2766
 msgid "Topic"
@@ -10038,11 +10038,11 @@ msgstr "Agrupar por"
 
 #: gui2/dialogs.c:5997
 msgid "New script output:"
-msgstr "Nova saída da sequência de comandos:"
+msgstr "Nova saída do script:"
 
 #: gui2/dialogs.c:5999
 msgid "New script output should:"
-msgstr "A saída da nova sequência de comandos deve:"
+msgstr "A saída do novo script deve:"
 
 #: gui2/dialogs.c:6059
 msgid "Replace previous output"
@@ -10208,7 +10208,7 @@ msgstr "Gravar alterações em %s"
 
 #: gui2/fileselect.c:348
 msgid "Open script"
-msgstr "Abrir sequência de comandos"
+msgstr "Abrir script"
 
 #: gui2/fileselect.c:883
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
@@ -10268,7 +10268,7 @@ msgstr "Todos os ficheiros (*.*)"
 
 #: gui2/fileselect.c:952 gui2/fileselect.c:972
 msgid "gretl script files (*.inp)"
-msgstr "Ficheiros de sequência de comandos gretl (*.inp)"
+msgstr "Ficheiros de script gretl (*.inp)"
 
 #: gui2/fileselect.c:953
 msgid "GNU R files (*.R)"
@@ -10710,7 +10710,7 @@ msgstr "Este pacote necessita um conjunto de dados em uso."
 
 #: gui2/fncall.c:2455
 msgid "Would you like to open its sample script?"
-msgstr "Você quer abrir o ficheiro sequência de comandos de exemplo?"
+msgstr "Você quer abrir o ficheiro de script exemplo?"
 
 #: gui2/fncall.c:3089
 #, c-format
@@ -10763,7 +10763,7 @@ msgstr "Gravar ficheiro _zip..."
 
 #: gui2/fnsave.c:361
 msgid "Save as _script..."
-msgstr "Gravar como ficheiro de comando_s..."
+msgstr "Gravar como ficheiro de _script..."
 
 #: gui2/fnsave.c:362
 msgid "_Write spec file..."
@@ -10816,7 +10816,7 @@ msgstr "Por favor remova do texto de ajuda a linha \"pdfdoc:\""
 
 #: gui2/fnsave.c:793
 msgid "Please add a sample script for this package"
-msgstr "Por favor acrescente um exemplo de sequência de comandos a este pacote"
+msgstr "Por favor acrescente um script de exemplo a este pacote"
 
 #: gui2/fnsave.c:799
 msgid "Please supply a valid email address"
@@ -10855,12 +10855,12 @@ msgid ""
 "Saving packaged functions as script:\n"
 "include the sample script?"
 msgstr ""
-"Gravando o pacote de funções como ficheiro de comandos:\n"
-"Incluir o ficheiro de comandos de exemplo?"
+"Gravando o pacote de funções como ficheiro de script:\n"
+"Incluir o ficheiro de script exemplo?"
 
 #: gui2/fnsave.c:1450
 msgid "Save sample script as"
-msgstr "Gravar o ficheiro de comandos de exemplo como"
+msgstr "Gravar o ficheiro de script exemplo como"
 
 #: gui2/fnsave.c:1451
 msgid "Save help text as"
@@ -11033,7 +11033,7 @@ msgstr "Gravar..."
 
 #: gui2/fnsave.c:3757
 msgid "Edit sample script"
-msgstr "Editar o ficheiro de comandos de exemplo"
+msgstr "Editar o ficheiro de script exemplo"
 
 #: gui2/fnsave.c:3763
 msgid "Add/remove functions"
@@ -11645,7 +11645,7 @@ msgstr ""
 
 #: gui2/gretl.c:126
 msgid "open a script file on startup"
-msgstr "abrir um ficheiro de comandos no arranque"
+msgstr "abrir um ficheiro de script no arranque"
 
 #: gui2/gretl.c:128
 msgid "open a database on startup"
@@ -11682,7 +11682,7 @@ msgstr "mostrar informação sobre a versão"
 #: gui2/gretl.c:296
 #, c-format
 msgid "Couldn't find script '%s'\n"
-msgstr "Não se encontrou a sequência de comandos '%s'\n"
+msgstr "Não se encontrou o script '%s'\n"
 
 #: gui2/gretl.c:299
 #, c-format
@@ -11759,7 +11759,7 @@ msgstr "_Directoria de trabalho..."
 
 #: gui2/gretl.c:1574
 msgid "_Script files"
-msgstr "Ficheiros de Comando_s"
+msgstr "Ficheiros de _Script"
 
 #: gui2/gretl.c:1576
 msgid "_Practice file..."
@@ -11767,23 +11767,23 @@ msgstr "Ficheiro de _Exercícios..."
 
 #: gui2/gretl.c:1577
 msgid "_New script"
-msgstr "_Novo Ficheiro de Comandos"
+msgstr "_Novo Ficheiro de Script"
 
 #: gui2/gretl.c:1578
 msgid "gretl script"
-msgstr "comandos gretl"
+msgstr "Script gretl"
 
 #: gui2/gretl.c:1579
 msgid "gnuplot script"
-msgstr "comandos gnuplot"
+msgstr "Script gnuplot"
 
 #: gui2/gretl.c:1580
 msgid "R script"
-msgstr "comandos R"
+msgstr "Script R"
 
 #: gui2/gretl.c:1581
 msgid "Octave script"
-msgstr "Ficheiro de comandos Octave"
+msgstr "Ficheiro de script Octave"
 
 #: gui2/gretl.c:1582
 msgid "Python script"
@@ -12623,7 +12623,7 @@ msgstr "Por favor veja o ficheiro de dados do gretl %s em anexo."
 #: gui2/gretlwin32.c:415 plugin/mailer.c:674
 #, c-format
 msgid "Please find the gretl script %s attached."
-msgstr "Por favor veja o ficheiro de comandos do gretl %s em anexo."
+msgstr "Por favor veja o ficheiro de script do gretl %s em anexo."
 
 #: gui2/gtkfontselhack.c:120
 msgid "abcdefghijk ABCDEFGHIJK"
@@ -13174,7 +13174,7 @@ msgstr "gretl: editar comandos do gráfico"
 
 #: gui2/gui_utils.c:1698
 msgid "gretl: edit R script"
-msgstr "gretl: editar ficheiro de comandos R"
+msgstr "gretl: editar ficheiro de script R"
 
 #: gui2/gui_utils.c:1700
 msgid "gretl: edit Ox program"
@@ -13182,7 +13182,7 @@ msgstr "gretl: editar programa Ox"
 
 #: gui2/gui_utils.c:1702
 msgid "gretl: edit Octave script"
-msgstr "gretl: editar ficheiro de comandos Octave"
+msgstr "gretl: editar ficheiro de script Octave"
 
 #: gui2/gui_utils.c:1704
 msgid "gretl: edit Python script"
@@ -13207,12 +13207,12 @@ msgstr "gretl: sem nome"
 #: gui2/gui_utils.c:1752
 #, c-format
 msgid "gretl: script output %d"
-msgstr "gretl: saída da sequência de comandos %d"
+msgstr "gretl: saída do script %d"
 
 #: gui2/gui_utils.c:1754 gui2/gui_utils.c:5459 gui2/gui_utils.c:5526
 #: gui2/gui_utils.c:5713
 msgid "gretl: script output"
-msgstr "gretl: saída da sequência de comandos"
+msgstr "gretl: saída do script"
 
 #: gui2/gui_utils.c:1764
 msgid "gretl: command reference"
@@ -14570,7 +14570,7 @@ msgid ""
 "Error executing script: halting\n"
 msgstr ""
 "\n"
-"Erro ao executar sequência de comandos: parando\n"
+"Erro ao executar script: parando\n"
 
 #: gui2/library.c:9340
 msgid "Unmatched \"if\" in script (fixed)"
@@ -14578,7 +14578,7 @@ msgstr "\"if\" desemparelhado no script (corrigido)"
 
 #: gui2/library.c:9345
 msgid "Unterminated comment in script"
-msgstr "Comentário não fechado em sequência de comandos"
+msgstr "Comentário não fechado no script"
 
 #: gui2/library.c:10027
 msgid "No series were deleted"
@@ -14586,7 +14586,7 @@ msgstr "Não foram apagadas nenhumas séries"
 
 #: gui2/library.c:10099
 msgid "Script done\n"
-msgstr "Sequência de comandos concluída\n"
+msgstr "Concluído o script\n"
 
 #: gui2/menustate.c:51
 #, c-format
@@ -16148,7 +16148,7 @@ msgstr "Mostrar a numeração de linhas"
 
 #: gui2/settings.c:316
 msgid "Script editor uses tabs"
-msgstr "O editor de sequência de comandos usa separadores"
+msgstr "O editor de script usa separadores"
 
 #: gui2/settings.c:319
 msgid "Enable auto-completion"
@@ -16507,11 +16507,11 @@ msgstr "Não se conseguiu abrir '%s'"
 #: gui2/tabwin.c:98
 #, c-format
 msgid "Editing %d scripts: really quit?"
-msgstr "A editar %d sequências de comandos: realmente sair?"
+msgstr "A editar %d scripts: realmente sair?"
 
 #: gui2/tabwin.c:102 gui2/tabwin.c:575
 msgid "gretl: script editor"
-msgstr "gretl: editor de sequências de comandos"
+msgstr "gretl: editor de script"
 
 #: gui2/tabwin.c:434 gui2/tabwin.c:436
 msgid "untitled"
@@ -16599,7 +16599,7 @@ msgstr "Desindentar região"
 
 #: gui2/textbuf.c:3495
 msgid "Auto-indent script"
-msgstr "Auto-indentar sequência de comandos"
+msgstr "Auto-indentar script"
 
 #: gui2/textbuf.c:3506 gui2/toolbar.c:804
 msgid "Preferences..."
@@ -16684,7 +16684,7 @@ msgstr "Gravar como..."
 
 #: gui2/toolbar.c:789
 msgid "Open in script editor"
-msgstr "Abrir no editor de sequências de comandos"
+msgstr "Abrir no editor de script"
 
 #: gui2/toolbar.c:790
 msgid "Save bundle content..."
@@ -16736,7 +16736,7 @@ msgstr "Ordenar por..."
 
 #: gui2/toolbar.c:806
 msgid "Scripts index"
-msgstr "Índice  de sequência de comandos"
+msgstr "Índice  de script"
 
 #: gui2/toolbar.c:807
 msgid "Confidence level..."
@@ -16804,7 +16804,7 @@ msgstr "iniciar a calculadora"
 
 #: gui2/toolbar.c:1424
 msgid "new script"
-msgstr "nova sequência de comandos"
+msgstr "novo script"
 
 #: gui2/toolbar.c:1425
 msgid "open gretl console"
