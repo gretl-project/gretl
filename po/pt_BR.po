@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-08-16 11:30-0400\n"
-"PO-Revision-Date: 2017-08-17 11:02-0300\n"
+"PO-Revision-Date: 2017-08-21 11:12-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -10668,7 +10668,7 @@ msgstr "permitir acesso aos dados fora da amostra"
 
 #: gui2/fncall.c:1643
 msgid "close this dialog on \"OK\""
-msgstr "fechar essa caixa ao clicar em \"OK\""
+msgstr "fechar essa janela ao clicar em \"OK\""
 
 #: gui2/fncall.c:2146 gui2/fncall.c:2157
 msgid "Select function"
