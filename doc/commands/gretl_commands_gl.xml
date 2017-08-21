@@ -3793,7 +3793,7 @@
     <usage>
       <altforms>
 	<altform><lit>fcast [</lit><repl>obsinicio obsfin</repl><lit>] [</lit><repl>nomev</repl><lit>]</lit></altform>
-	<altform><lit>fcast [</lit><repl>obsinicio obsfin</repl><lit>]</lit> <repl>pasosadiante</repl> <lit>[</lit><repl>nomev</repl><lit>] --rolling</lit></altform>
+	<altform><lit>fcast [</lit><repl>obsinicio obsfin</repl><lit>]</lit> <repl>pasosadiante</repl> <lit>[</lit><repl>nomev</repl><lit>] --recursive</lit></altform>
       </altforms>
       <options>
         <option>
@@ -3821,7 +3821,7 @@
 	  <effect>Non presenta nada</effect>
         </option>
         <option>
-	  <flag>--rolling</flag>
+	  <flag>--recursive</flag>
 	  <effect>Mira abaixo</effect>
         </option>
         <option>
@@ -3833,7 +3833,7 @@
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
-	<example>fcast 2004:1 2008:3 4 rfcast --rolling</example>
+	<example>fcast 2004:1 2008:3 4 rfcast --recursive</example>
       </examples>
     </usage>
 
@@ -3855,7 +3855,7 @@
 	unha predición 'out-of-sample' pero non hai dispoñibles observacións
 	relevantes, amósase un fallo. Dependendo da natureza do modelo, tamén
 	poden xerarse as desviacións padrón (mira abaixo). Tamén mira abaixo
-	para indagar sobre o efecto especial da opción <opt>rolling</opt>.
+	para indagar sobre o efecto especial da opción <opt>recursive</opt>.
       </para>
 
       <para context="cli">
@@ -3896,17 +3896,18 @@
       </para>
 
       <para context="cli">
-	A opción <opt>rolling</opt> está actualmente dispoñible só para
-	modelos dunha soa ecuación, estimados mediante MCO. Cando indicas
-	esta opción as predicións son recursivas; é dicir, cada predición
-	xérase a partir dunha estimación do modelo indicado, utilizando os
-	datos a partir dun punto de inicio fixado (en concreto, o inicio do
-	rango da mostra para a estimación orixinal) ata a data de predición
-	menos <math>k</math>, o número de pasos adiantados que debes de
-	indicar no argumento <repl>pasosadiante</repl>. As predicións sempre
-	son dinámicas se iso é pertinente. Cae na conta de que debes de
-	indicar o argumento <repl>pasosadiante</repl> unicamente xunto coa
-	opción <opt>rolling</opt>.
+	A opción <opt>recursive</opt> está actualmente dispoñible só
+	para modelos dunha soa ecuación, estimados mediante MCO.
+	Cando indicas esta opción as predicións son recursivas; é
+	dicir, cada predición xérase a partir dunha estimación do
+	modelo indicado, utilizando os datos a partir dun punto de
+	inicio fixado (en concreto, o inicio do rango da mostra
+	para a estimación orixinal) ata a data de predición menos
+	<math>k</math>, o número de pasos adiantados que debes de
+	indicar no argumento <repl>pasosadiante</repl>. As predicións
+	sempre son dinámicas se iso é pertinente. Cae na conta de
+	que debes de indicar o argumento <repl>pasosadiante</repl>
+	unicamente xunto coa opción <opt>recursive</opt>.
       </para>
 
       <para context="cli">
@@ -6365,6 +6366,13 @@
 	cruzadas. O proceder por defecto ven indicado pola orde na que se
 	introducen as variables na especificación do modelo, pero podes usar as
 	frechas de arriba e abaixo para adiantar ou retrasar a variable escollida.
+      </para>
+      <para>
+	A respecto da escala das respostas ao impulso, a dimensión do
+	<quote>impacto</quote> establécese nunha desviación padrón das
+	innovacións estimadas na variable de orixe, e as respostas se
+	proporcionan en calquera que sexa a unidade <quote>natural</quote>
+	da variable obxectivo.
       </para>
     </description>
 
@@ -9813,8 +9821,8 @@
 	indicas a opción <opt>covariance</opt>) para as variables
 	que forman <repl>listavariables</repl>, xunto coa proporción da
 	varianza conxunta representada por cada compoñente. Tamén
-	presenta os correspondentes autovectores (ou
-	<quote>pesos das compoñentes</quote>).
+	presenta os correspondentes autovectores ou
+	<quote>pesos das compoñentes</quote>.
       </para>
       <para>
 	Se indicas a opción <opt>save-all</opt>, entón gárdanse

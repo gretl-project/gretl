@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -512,8 +512,8 @@
     <function name="$nobs" section="access" targ="dnobs" output="int">
       <description>
 	<para>
-	  Devolve un número enteiro coa cantidade total de observacións que
-	  están seleccionadas na mostra actual.
+	  Devolve un número enteiro coa cantidade total de observacións que están
+	  seleccionadas na mostra actual. Relacionado: <fncref label="\$tmax" targ="dtmax"/>.
 	</para>
       </description>
     </function>
@@ -923,6 +923,24 @@
 	  <seelist>
             <fncref label="\$pvalue" targ="dpvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="$tmax" section="access" output="int">
+      <description>
+	<para>
+	  Devolve un enteiro co máximo valor válido establecido para indicar o
+	  final do rango da mostra mediante a instrución <cmdref targ="smpl"/>.
+	  Na maioría dos casos, isto vai ser igual ao número de observacións do
+	  conxunto de datos, pero nunha función de Hansl, o valor <lit>$tmax</lit>
+	  podería ser menor, posto que o acceso habitual aos datos dentro das
+	  funcións, limítase ao rango mostral establecido polo solicitante.
+	</para>
+	<para>
+	  Ten en conta que, en xeral, <lit>$tmax</lit> non é igual a
+	  <fncref label="\$nobs" targ="dnobs"/>, que proporciona o
+	  número de observacións do rango da mostra vixente.
 	</para>
       </description>
     </function>
@@ -1927,6 +1945,45 @@
 	  existir a parte imaxinaria, un vector con <math>n</math> filas.
 	  <seelist>
             <fncref targ="cmult"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="cdummify" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función devolve unha lista na que cada serie do argumento
+	  <argname>L</argname> que teña o atributo <quote>codificado</quote>
+	  substitúese por un conxunto de variables ficticias que representan
+	  cada un dos seus valores codificados, pero omitindo o valor
+	  máis pequeno. Se o argumento <argname>L</argname> non contén
+	  ningunha serie codificada, o valor que se devolve vai ser idéntico
+	  a <argname>L</argname>.
+	</para>
+	<para>
+	  No caso de que se xeren, as variables ficticias noméanse co
+	  padrón <lit>D</lit><repl>varname</repl><lit>_</lit><repl>vi</repl>,
+	  no que <repl>vi</repl> indica o <repl>i</repl><sup>ésimo</sup>
+	  valor representado da variable que se codifica. No caso de que
+	  algúns dos valores sexan negativos, vaise inserir <quote>m</quote>
+	  antes do valor (absoluto) de
+	  <repl>vi</repl>.
+	</para>
+	<para>
+	  Por exemplo, supón que <argname>L</argname> contén unha serie
+	  codificada chamada <lit>C1</lit> cos valores &minus;9, &minus;7,
+	  0, 1 and 2. Entón, as variables ficticias xeradas van ser
+	  <lit>DC1_m7</lit> (que codifica cando C1 = &minus;7),
+	  <lit>DC1_0</lit> (que codifica cando C1 = 0), etcétera.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="dummify"/>
+	    <fncref targ="getinfo"/>
 	  </seelist>
 	</para>
       </description>
@@ -3497,6 +3554,64 @@
 	  <argname>s</argname>, a función devolve o valor desa variable como
 	  cadea de texto; noutro caso devolve unha cadea de texto baleira.
 	  Consulta tamén <fncref targ="ngetenv"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="getinfo" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve información sobre a serie especificada, a que podes indicar
+	  mediante o seu nome ou o seu número ID. O paquete que se devolve
+	  contén tódolos atributos que se poden establecer por medio da
+	  instrución <cmdref targ="setinfo"/>. E tamén contén información
+	  adicional relevante para series que se xeraron como transformacións
+	  de datos primarios (mediante retardos, logaritmos, etc.); isto inclúe
+	  a palabra da instrución de Gretl para a transformación coa 
+	  clave <quote>transform</quote> e o nome da serie asociada primaria
+	  coa clave <quote>parent</quote>. Para as series retardadas, podes
+	  atopar o número específico de retardos baixo a clave
+	  <quote>lag</quote>.
+	</para>
+	<para>
+	  Aquí tes un exemplo do seu uso:
+	</para>
+	<code>
+	  open data9-7
+	  lags QNC
+	  bundle b = getinfo(QNC_2)
+	  print b
+	</code>
+	<para>
+	  Ao executar o anterior, podemos ver:
+	</para>
+	<code>
+	  has_string_table = 0
+	  lag = 2
+	  parent = QNC
+	  name = QNC_2
+	  graph_name = 
+	  coded = 0
+	  discrete = 0
+	  transform = lags
+	  description = = QNC(t - 2)
+	</code>
+	<para>
+	  Para probar se a serie 5 dun conxunto de datos é un termo retardado,
+	  podes facer este tipo de cousas:
+	</para>
+	<code>
+	  if getinfo(5).lag != 0
+	     printf "A serie 5 é un retardo de %s\n", getinfo(5).parent
+	  endif
+	</code>
+	<para>
+	  Ten en conta que podes utilizar a notación co punto para acceder aos
+	  elementos dun paquete, mesmo cando o paquete é <quote>anónimo</quote>
+	  (non gardado co seu propio nome).
 	</para>
       </description>
     </function>
@@ -7134,7 +7249,8 @@
 	  como a suma desde <math>i</math> ata <math>k</math> de
 	  <math>Z</math><sub>ti</sub> veces <math>v</math><sub>ji</sub>,
 	  onde <math>Z</math><sub>ti</sub> representa o valor
-	  estandarizado da variable <math>i</math> na observación
+	  estandarizado (ou simplemente o valor centrado, se utilizas a matriz
+	  de covarianzas) da variable <math>i</math> na observación
 	  <math>t</math>, e <math>v</math><sub>ji</sub> representa o
 	  <math>j</math>-ésimo autovector da matriz de correlacións (ou a
 	  matriz de covarianzas) entre as <math>X</math><sub>i</sub>s, cos
@@ -7144,7 +7260,8 @@
 	<para context="tex">
 	  Os elementos da matriz $P$ que se devolve, calcúlanse como
 	  \[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]
-	  onde $Z_{ti}$ representa o valor estandarizado da variable $i$
+	  onde $Z_{ti}$ representa o valor estandarizado (ou simplemente
+	  o valor centrado, se utilizas a matriz de covarianzas) da variable $i$
 	  na observación $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$,
 	  e $v^{(j)_i}$ representa o $j$-ésimo autovector da matriz de
 	  correlacións (ou de covarianzas) dos $X_i$s, cos autovectores
