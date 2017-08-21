@@ -36,6 +36,7 @@
 #include "dbread.h"
 #include "uservar.h"
 #include "csvdata.h"
+#include "gretl_mpi.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -657,7 +658,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	} else {
+	} else if (gretl_mpi_rank() < 1) {
 	    /* print minimal success message */
 	    pprintf(prn, _("Read datafile %s\n"), newfile);
 	}
