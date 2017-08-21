@@ -1890,7 +1890,6 @@ static int carve_up_xvalidation (sv_data *data,
 	gretl_matrix_free(M[i]);
 	M[i] = NULL;
     }
-    gretl_matrix_print(M[nproc-1], "rootmat");
 
     maybe_hush(w);
 
