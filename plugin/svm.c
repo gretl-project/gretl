@@ -113,6 +113,10 @@ struct sv_grid_ {
 
 static int gui_mode;
 
+#ifdef HAVE_MPI
+static PRN *worker_prn;
+#endif
+
 static void svm_flush (PRN *prn)
 {
     if (gui_mode) {
@@ -1667,7 +1671,8 @@ static int cross_validate_worker_task (sv_data *data,
 {
     gretl_matrix *task = NULL;
     double crit;
-    int i, j, err = 0;
+    int i, j, seq;
+    int err = 0;
 
     /* get our sub-task matrix */
     task = gretl_matrix_mpi_receive(0, &err);
@@ -1682,7 +1687,8 @@ static int cross_validate_worker_task (sv_data *data,
 	} else if (parm->svm_type == NU_SVR) {
 	    parm->nu = gretl_matrix_get(task, i, j++);
 	}
-	err = xvalidate_once(data, parm, w, targ, &crit, i, NULL);
+	seq = gretl_matrix_get(task, i, task->cols - 1);
+	err = xvalidate_once(data, parm, w, targ, &crit, seq, worker_prn);
 	if (!err) {
 	    gretl_matrix_set(task, i, j, crit);
 	}
@@ -1900,7 +1906,8 @@ static int carve_up_xvalidation (sv_data *data,
 	if (!grid->null[G_p]) {
 	    *p3 = gretl_matrix_get(m, i, 2);
 	}
-	err = xvalidate_once(data, parm, w, targ, &crit, i, prn);
+	seq = gretl_matrix_get(m, i, ncols-1);
+	err = xvalidate_once(data, parm, w, targ, &crit, seq, prn);
 	if (!err) {
 	    gretl_matrix_set(m, i, ncols-2, crit);
 	}
@@ -2616,9 +2623,13 @@ int gretl_svm_predict (const int *list,
 #ifdef HAVE_MPI
     wrap.nproc = gretl_mpi_n_processes();
     wrap.rank = gretl_mpi_rank();
+    worker_prn = NULL;
     if (wrap.rank > 0) {
-	/* let root do all the talking */
-	wrap.flags |= W_QUIET;
+	/* let root do (almost) all the talking */
+	if (!(wrap.flags & W_QUIET)) {
+	    worker_prn = inprn;
+	    wrap.flags |= W_QUIET;
+	}
     }
 #endif
 
