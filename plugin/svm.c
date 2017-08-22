@@ -207,7 +207,7 @@ static void set_sv_parm_defaults (sv_parm *parm)
     parm->weight = NULL;       /* for C_SVC */
     parm->nu = 0.5;            /* for NU_SVC, ONE_CLASS, and NU_SVR */
     parm->p = 0.1;             /* for EPSILON_SVR */
-    parm->shrinking = 1;       /* use the shrinking heuristics */
+    parm->shrinking = 1;       /* use shrinking heuristics */
     parm->probability = 0;     /* do probability estimates */
 }
 
@@ -263,6 +263,7 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 		gretl_bundle_set_int(b, pinfo[i].key, ival);
 	    }
 	}
+	/* done */
 	return 0;
     }
 
@@ -1009,8 +1010,7 @@ static int check_test_data (const DATASET *dset,
 	    fprintf(stderr, "test data: dropping var %d (%s)\n",
 		    vi, dset->varname[vi]);
 	    /* arrange to exclude this variable by setting the
-	       record of its series ID to zero
-	    */
+	       record of its series ID to zero */
 	    gretl_matrix_set(ranges, i, 3, 0);
 	}
     }
