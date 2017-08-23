@@ -1993,16 +1993,11 @@ static int call_mpi_cross_validation (sv_data *data,
 static int call_cross_validation (sv_data *data,
 				  sv_parm *parm,
 				  sv_wrapper *w,
+				  double *targ,
 				  PRN *prn)
 {
-    double *yhat;
     double crit;
     int err = 0;
-
-    yhat = malloc(data->l * sizeof *yhat);
-    if (yhat == NULL) {
-	return E_ALLOC;
-    }
 
     pputs(prn, "Calling cross-validation (this may take a while)\n");
     svm_flush(prn);
@@ -2049,7 +2044,7 @@ static int call_cross_validation (sv_data *data,
 		    if (!grid->null[G_p]) {
 			*p3 = grid_get_p(grid, k);
 		    }
-		    xvalidate_once(data, parm, w, yhat, &crit, iter, prn);
+		    xvalidate_once(data, parm, w, targ, &crit, iter, prn);
 		    if (crit > cmax) {
 			cmax = crit;
 			ibest = i;
@@ -2085,10 +2080,8 @@ static int call_cross_validation (sv_data *data,
 	/* no search: just a single cross validation pass
 	   FIXME save the criterion to optional bundle arg?
 	*/
-	err = xvalidate_once(data, parm, w, yhat, &crit, -1, prn);
+	err = xvalidate_once(data, parm, w, targ, &crit, -1, prn);
     }
-
-    free(yhat);
 
     return err;
 }
@@ -2508,10 +2501,17 @@ static int svm_predict_main (const int *list,
 	if (wrap->nproc > 1) {
 	    err = call_mpi_cross_validation(prob1, parm, wrap, prn);
 	} else {
-	    err = call_cross_validation(prob1, parm, wrap, prn);
+	    err = call_cross_validation(prob1, parm, wrap, yhat + dset->t1,
+					prn);
+	    if (!err) {
+		*yhat_written = 1;
+	    }
 	}
 #else
-	err = call_cross_validation(prob1, parm, wrap, prn);
+	err = call_cross_validation(prob1, parm, wrap, yhat + dset->t1, prn);
+	if (!err) {
+	    *yhat_written = 1;
+	}
 #endif
 	if (wrap->flags & W_SEARCH) {
 	    /* continue to train using tuned params? */

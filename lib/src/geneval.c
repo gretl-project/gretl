@@ -8468,10 +8468,10 @@ static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
 		p->err = pfunc(l->v.ivec, m->v.b, rbundle, ret->v.xvec,
 			       &got_yhat, p->dset, p->prn);
 		if (!p->err && !got_yhat) {
-		    /* change the return type to a (non-)error code */
+		    /* change the return type to scalar NA */
 		    free(ret->v.xvec);
 		    ret->t = NUM;
-		    ret->v.xval = 0;
+		    ret->v.xval = NADBL;
 		}
 	    }
 	}
