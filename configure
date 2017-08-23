@@ -17004,7 +17004,7 @@ fi
 $as_echo_n "checking for MPFR - version >= $min_mpfr_version... " >&6; }
 
   MPFR_CFLAGS="-I$mpfr_config_prefix/include"
-  MPFR_LIBS="-L$mpfr_config_prefix/lib -lmpfr"
+  MPFR_LIBS="-L$mpfr_config_prefix/lib -lmpfr -lgmp"
 
   ac_save_CFLAGS="$CFLAGS"
   ac_save_LIBS="$LIBS"

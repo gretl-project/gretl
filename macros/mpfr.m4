@@ -20,7 +20,7 @@ AC_ARG_WITH(mpfr-prefix,[  --with-mpfr-prefix=PFX   Prefix where MPFR is install
   AC_MSG_CHECKING(for MPFR - version >= $min_mpfr_version)
 
   MPFR_CFLAGS="-I$mpfr_config_prefix/include"
-  MPFR_LIBS="-L$mpfr_config_prefix/lib -lmpfr"
+  MPFR_LIBS="-L$mpfr_config_prefix/lib -lmpfr -lgmp"
 
   ac_save_CFLAGS="$CFLAGS"
   ac_save_LIBS="$LIBS"
