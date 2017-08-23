@@ -46,6 +46,7 @@ dnl
   AC_TRY_RUN([
 #include <stdlib.h>
 #include "gretl_f2c.h"
+#include "clapack_double.h"
 
 int main (void)
 {
