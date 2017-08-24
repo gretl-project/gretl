@@ -32,7 +32,7 @@
 
 #include <unistd.h>
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 # include "gretl_win32.h"
 #else
 # include <sys/stat.h>
@@ -46,7 +46,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#ifndef WIN32
+#ifndef G_OS_WIN32
 # ifdef USE_GTK3
 #  define PLUGIN_SFX "gretl-gtk3/"
 # else
@@ -550,7 +550,7 @@ FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
     return fp;
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 static int win32_open_fchdir (int fd)
 {
@@ -601,7 +601,7 @@ int gretl_open (const char *pathname, int flags, int mode)
     int fd = -1;
     int err = 0;
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     if (!strcmp(pathname, ".")) {
 	return win32_open_fchdir(0);
     }
@@ -637,7 +637,7 @@ int gretl_open (const char *pathname, int flags, int mode)
 
 int gretl_fchdir (int fd)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     return win32_open_fchdir(fd);
 #else
     return fchdir(fd);
@@ -757,7 +757,7 @@ int gretl_rename (const char *oldpath, const char *newpath)
 	if (newconv != NULL) {
 	    newpath = newconv;
 	}
-#ifdef WIN32
+#ifdef G_OS_WIN32
 	/* rename() on Windows sets EEXIST if the target
 	   is already present */
 	remove(newpath);
@@ -805,7 +805,7 @@ int gretl_remove (const char *path)
 	}
     }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     /* allow for the possibility that we're trying to remove a
        directory on win32 -> use g_remove */
     if (ret == -1) {
@@ -897,7 +897,7 @@ static gzFile gretl_try_gzopen (const char *fname, const char *mode)
 
 int gretl_chdir (const char *path)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     char *ptmp = NULL;
     int len = strlen(path);
 #endif
@@ -906,7 +906,7 @@ int gretl_chdir (const char *path)
 
     gretl_error_clear();
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     if (len > 1 && path[len - 1] == '\\' && path[len - 2] != ':') {
 	/* trim trailing slash for non-root dir */
 	ptmp = gretl_strndup(path, len - 1);
@@ -929,7 +929,7 @@ int gretl_chdir (const char *path)
 	gretl_errmsg_set_from_errno("chdir", errno);
     }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     free(ptmp);
 #endif
     
@@ -957,7 +957,7 @@ int gretl_isdir (const char *path)
     return (err)? 0 : S_ISDIR(buf.st_mode);
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 int gretl_mkdir (const char *path)
 {
@@ -1070,7 +1070,7 @@ static int real_deltree (const char *path)
     return err;
 }
 
-#endif /* WIN32 or not */
+#endif /* G_OS_WIN32 or not */
 
 /**
  * gretl_deltree:
@@ -1083,7 +1083,7 @@ static int real_deltree (const char *path)
 
 int gretl_deltree (const char *path)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     return win32_delete_dir(path);
 #else
     char tmp[FILENAME_MAX];
@@ -1104,7 +1104,7 @@ int gretl_deltree (const char *path)
 
 DIR *gretl_opendir (const char *name)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     int n = strlen(name);
     int fixit = 0;
 
@@ -1146,7 +1146,7 @@ DIR *gretl_opendir (const char *name)
 
 int gretl_setenv (const char *name, const char *value)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     gchar *estr;
     int ok;
 
@@ -1183,21 +1183,21 @@ int gretl_write_access (char *fname)
     }
 
     if (fconv != NULL) {
-#ifdef WIN32
+#ifdef G_OS_WIN32
 	err = !win32_write_access(fconv);
 #else
 	err = access(fconv, W_OK);
 #endif
 	g_free(fconv);
     } else {
-#ifdef WIN32
+#ifdef G_OS_WIN32
 	err = !win32_write_access(fname);
 #else
 	err = access(fname, W_OK);
 #endif
     }
 
-#ifndef WIN32
+#ifndef G_OS_WIN32
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname, errno);
     }
@@ -1274,10 +1274,10 @@ enum {
     SUBDIRS = 1 << 2
 };
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 static int try_open_file (char *targ, const char *finddir, 
-			  WIN32_FIND_DATA *fdata, int flags)
+			  G_OS_WIN32_FIND_DATA *fdata, int flags)
 {
     char tmp[MAXLEN];
     int n = strlen(finddir);
@@ -1332,7 +1332,7 @@ static void make_findname (char *targ, const char *src)
     }
 }
 
-static int got_subdir (WIN32_FIND_DATA *fdata)
+static int got_subdir (G_OS_WIN32_FIND_DATA *fdata)
 {
     int ret = 0;
 
@@ -1349,7 +1349,7 @@ static int got_subdir (WIN32_FIND_DATA *fdata)
 static int find_in_subdir (const char *topdir, char *fname, int flags)
 {
     HANDLE handle;
-    WIN32_FIND_DATA fdata;
+    G_OS_WIN32_FIND_DATA fdata;
     char finddir[MAXLEN];
     int found = 0;
 
@@ -1518,7 +1518,7 @@ char *search_dir (char *fname, const char *topdir, int flags)
     return NULL;
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 # define fslash(c) (c == '/' || c == '\\')
 #else
 # define fslash(c) (c == '/')
@@ -1541,7 +1541,7 @@ static int dotpath (const char *fname)
 
 static char *fname_strstr (char *fname, char *dname)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     char lfname[MAXLEN], ldname[MAXLEN];
 
     *lfname = *ldname = '\0';
@@ -2143,7 +2143,7 @@ char *gretl_addpath (char *fname, int script)
 	}
     }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     /* try looking on the desktop? */
     if (1) {
 	char *dtdir = desktop_path();
@@ -2359,7 +2359,7 @@ enum paths_status_flags {
 
 static void set_gretl_libpath (const char *path)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     strcpy(paths.libpath, path);
 #else
 # ifdef LIBDIR
@@ -2381,7 +2381,7 @@ static void set_gretl_libpath (const char *path)
 	sprintf(paths.libpath, "%s/lib/%s", path, PLUGIN_SFX);
     }
 # endif /* !LIBDIR */
-#endif /* !WIN32 */
+#endif /* !G_OS_WIN32 */
 }
 
 static void set_gretl_binbase (const char *path)
@@ -2479,7 +2479,7 @@ static void set_builtin_path_strings (int update)
 	*s = '\0';
 	strncat(s, paths.tramo, MAXLEN - 1);
 	n = strlen(s);
-#ifdef WIN32
+#ifdef G_OS_WIN32
 	if (n >= 9 && !strcmp(s + n - 9, "tramo.exe")) {
 	    strcpy(s + n - 9, "seats.exe");
 	    gretl_insert_builtin_string("seats", s);
@@ -2564,7 +2564,7 @@ const char *gretl_workdir (void)
     return paths.workdir;
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 static const char *win32_default_workdir (void)
 {
@@ -2588,7 +2588,7 @@ static const char *win32_default_workdir (void)
     return retval;
 }
 
-#else /* !WIN32 */
+#else /* !G_OS_WIN32 */
 
 static const char *regular_default_workdir (void)
 {
@@ -2611,7 +2611,7 @@ static const char *regular_default_workdir (void)
     return retval;
 }
 
-#endif /* WIN32 or not */
+#endif /* G_OS_WIN32 or not */
 
 /**
  * maybe_get_default_workdir:
@@ -2629,7 +2629,7 @@ static const char *regular_default_workdir (void)
 
 const char *maybe_get_default_workdir (void)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     return win32_default_workdir();
 #else
     return regular_default_workdir();
@@ -2753,7 +2753,7 @@ int gretl_x12_is_x13 (void)
     return strstr(paths.x12a, "x13") != NULL;
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 /* try to avoid using a stale value saved to .gretl2rc */
 
@@ -2774,7 +2774,7 @@ static void R_path_try_registry (int which, char *targ)
 
 const char *gretl_rbin_path (void)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     static int checked;
 
     if (!checked) {
@@ -2792,7 +2792,7 @@ const char *gretl_rbin_path (void)
 
 const char *gretl_rlib_path (void)
 {
-#ifdef WIN32
+#ifdef G_OS_WIN32
     static int checked;
 
     if (!checked) {
@@ -2893,7 +2893,7 @@ void show_paths (void)
     printf("gnuplot: %s\n", paths.gnuplot);
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 static char *rightmost (char *s1, char *s2)
 {
@@ -2962,7 +2962,7 @@ void win32_set_gretldir (const char *progname)
     }
 }
 
-#else /* !WIN32 */
+#else /* !G_OS_WIN32 */
 
 /* We have paths.gretldir in place: now test it by seeing if we can
    open the the GPL file "COPYING", which definitely should be in that
@@ -3054,7 +3054,7 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
     } 
 
     if (*paths.gretldir == '\0') {
-#ifdef WIN32
+#ifdef G_OS_WIN32
 	/* fall back on installation-time default */
 	char *progfiles = program_files_path();
 
@@ -3067,7 +3067,7 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 #endif
     }
 
-#ifndef WIN32
+#ifndef G_OS_WIN32
     check_gretldir(dirname);
 #endif
 
@@ -3113,7 +3113,7 @@ static int initialize_dotdir (void)
 
     *paths.dotdir = '\0';
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     dirname = appdata_path();
     if (dirname != NULL) {
 	sprintf(paths.dotdir, "%s\\gretl\\", dirname);
@@ -3213,7 +3213,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     maybe_transcribe_path(paths.dbhost, cpaths->dbhost, 
 			  PATH_BLANK_OK);
 
-#ifndef WIN32
+#ifndef G_OS_WIN32
     /* gnuplot path: this is set immutably at start-up on Windows */
     ndelta += maybe_transcribe_path(paths.gnuplot, cpaths->gnuplot, 0);
 #endif
@@ -3254,7 +3254,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     return 0;
 }
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
 
 /* MS Windows variants of defaults for any paths that
    we need that were not found in the Windows registry
@@ -3330,7 +3330,7 @@ static void show_paths_on_stderr (void)
 
 # endif
 
-#else /* !WIN32 */
+#else /* !G_OS_WIN32 */
 
 /* unix-type variants of defaults for any paths that we need 
    that were not found in the gretl config file.
@@ -3427,7 +3427,7 @@ static void load_default_path (char *targ)
     }
 }
 
-#endif /* WIN32 or not */
+#endif /* G_OS_WIN32 or not */
 
 int add_slash (char *s)
 {
@@ -3467,7 +3467,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.dbhost, cpaths->dbhost, 0);
 
     /* gnuplot */
-#ifdef WIN32
+#ifdef G_OS_WIN32
     sprintf(paths.gnuplot, "%swgnuplot.exe", paths.gretldir);
 #else
     path_init(paths.gnuplot, cpaths->gnuplot, 0);
@@ -3545,7 +3545,7 @@ int gretl_set_paths (ConfigPaths *cpaths)
 
 #if CFG_DEBUG
     fprintf(stderr, "gretl_set_paths: returning %d\n", retval);
-# ifdef WIN32
+# ifdef G_OS_WIN32
     show_paths_on_stderr();
 # endif
 #endif
@@ -3674,7 +3674,7 @@ int gretl_normalize_path (char *path)
     *tmp = '\0';
     s = pcpy;
 
-#ifdef WIN32
+#ifdef G_OS_WIN32
     /* may be ok for a filename to start with a double backslash */
     if (!strncmp(path, "\\\\", 2)) {
 	strcpy(tmp, SLASHSTR);
@@ -3846,7 +3846,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	gretl_strstrip(val); 
 	if (!strcmp(key, "gretldir")) {
 	    strncat(cpaths->gretldir, val, MAXLEN - 1);
-#ifndef WIN32
+#ifndef G_OS_WIN32
 	} else if (!strcmp(key, "gnuplot")) {
 	    strncat(cpaths->gnuplot, val, MAXLEN - 1);
 #endif
@@ -3920,7 +3920,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 #endif    
 }
 
-#ifndef WIN32
+#ifndef G_OS_WIN32
 
 void get_gretl_rc_path (char *rcfile)
 {
@@ -3982,7 +3982,7 @@ int cli_read_rc (void)
     return err;
 }
 
-#endif /* !WIN32 */
+#endif /* !G_OS_WIN32 */
 
 #ifdef OS_OSX
 
@@ -4089,7 +4089,7 @@ const char *gretl_function_package_path (void)
 #if defined(OS_OSX)
 	/* we prefer writing to ~/Library/Application Support */
 	sys_first = 0;
-#elif defined(WIN32)
+#elif defined(G_OS_WIN32)
 	if (win32_uses_virtual_store()) {
 	    /* don't write to virtualized location */
 	    sys_first = 0;
