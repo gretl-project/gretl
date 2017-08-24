@@ -23,9 +23,9 @@ else
   PKG_CONFIG_PATH = c:/msys/1.0/lib/pkgconfig:$(MGWDIR)/lib/pkgconfig
 endif
 
-# GTK version switch: set HAVE_GTK_SPINNER to yes if you
-# are building (and running) with GTK version 2.20.0 or higher
-# HAVE_GTK_SPINNER = no
+# GTK version switch: set HAVE_GTK_SPINNER to "yes" if you
+# are building (and running) with GTK version 2.20.0 or higher,
+# otherwise set to "no".
 HAVE_GTK_SPINNER = yes
 
 # set this for an MPI-enabled build
