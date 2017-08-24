@@ -43,7 +43,6 @@
 
 #include <fcntl.h> /* for 'open' */
 
-#include <glib.h>
 #include <glib/gstdio.h>
 
 #ifndef G_OS_WIN32
