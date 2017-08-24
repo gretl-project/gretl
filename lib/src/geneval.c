@@ -19,6 +19,7 @@
 
 /* syntax tree evaluator for "genr" */
 
+#include "libgretl.h"
 #include "genparse.h"
 #include "monte_carlo.h"
 #include "gretl_string_table.h"
