@@ -41,8 +41,12 @@
 #include <glib.h>
 
 #ifdef G_OS_WIN32
-/* hack: validate our non-standard Windows indentifier */
-# define WIN32
+/* set our non-standard Windows identifier, if
+   it's not already defined by the compiler
+*/
+# ifndef WIN32
+#  define WIN32
+# endif
 #endif
 
 #ifdef FULL_XML_HEADERS
