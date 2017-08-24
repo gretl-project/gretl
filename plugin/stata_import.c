@@ -38,7 +38,7 @@
 # define HOST_ENDIAN G_LITTLE_ENDIAN
 #endif
 
-#if defined(WIN64)
+#if defined(_WIN64)
 # define ftell64(a)     _ftelli64(a)
 # define fseek64(a,b,c) _fseeki64(a,b,c)
 #elif !defined(WIN32)
@@ -46,7 +46,7 @@
 # define fseek64(a,b,c) fseeko(a,b,c)
 #endif
 
-#if defined(WIN32) && !defined(WIN64)
+#if defined(WIN32) && !defined(_WIN64)
 /* 32-bit Windows: _ftelli64 missing in msvcrt.dll */
 
 # define SAFETY_FIRST 1
