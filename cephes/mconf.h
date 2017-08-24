@@ -64,11 +64,7 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 #ifndef CEPHES_MCONF_H
 #define CEPHES_MCONF_H
 
-#ifdef _WIN32
-# include "winconfig.h"
-#else
-# include "config.h"
-#endif
+#include "config.h"
 
 #include <math.h>
 
