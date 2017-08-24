@@ -22,11 +22,7 @@
 #ifndef GRETL_H
 #define GRETL_H
 
-#ifdef _WIN32
-# include "winconfig.h"
-#else
-# include "config.h"
-#endif
+#include "config.h"
 
 #define FULL_XML_HEADERS
 #include "libgretl.h"

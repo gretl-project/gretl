@@ -21,10 +21,6 @@
 # include "config.h"
 #endif
 
-#ifdef WIN32
-# include "winconfig.h"
-#endif
-
 #include "libgretl.h"
 #include "gretl_zip.h"
 #include <unistd.h>  /* for getcwd() */

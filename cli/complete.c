@@ -17,11 +17,7 @@
  * 
  */
 
-#ifdef WIN32
-# include "winconfig.h"
-#else
-# include "config.h"
-#endif
+#include "config.h"
 
 #include <stdio.h> 
 #include <stdlib.h>
