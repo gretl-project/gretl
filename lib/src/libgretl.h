@@ -24,10 +24,6 @@
 # include "config.h"
 #endif
 
-#ifdef WIN32
-# include "winconfig.h"
-#endif
-
 #ifdef HAVE_VASPRINTF
 # define _GNU_SOURCE
 # include <stdio.h>
@@ -43,6 +39,11 @@
 
 #include <zlib.h>
 #include <glib.h>
+
+#ifdef G_OS_WIN32
+/* hack: validate our non-standard Windows indentifier */
+# define WIN32
+#endif
 
 #ifdef FULL_XML_HEADERS
 # include <libxml/xmlmemory.h>
