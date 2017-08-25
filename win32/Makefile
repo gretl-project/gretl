@@ -4,10 +4,10 @@
 # controlled by the BUILDTYPE variable in config.mk, included
 # below.
 
+# the following file may need adjusting for your system
 include config.mk
 
 # directories
-topsrc = ..
 libsrcdir  = $(topsrc)/lib/src
 plugindir = $(topsrc)/plugin
 zipdir = $(topsrc)/plugin/zipunzip
@@ -15,7 +15,7 @@ guidir = $(topsrc)/gui2
 imports = ./import-libs
 host_builddir = $(topsrc)/build
 
-# tools (can add -fopenmp to CC if wanted)
+# tools (can add/subtract -fopenmp to CC if wanted)
 CC = $(MGW_PREFIX)gcc -msse2 -fopenmp -Wall -O2 -mms-bitfields -DHAVE_CONFIG_H
 AS = $(MGW_PREFIX)as
 DLLWRAP = $(MGW_PREFIX)dllwrap
@@ -36,7 +36,7 @@ FFTW_LIBS = -lfftw3
 CURL_LIBS = -lcurl.dll
 
 # flags/defines
-CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) -I$(XML2_INC) $(RLIB_CFLAGS) 
+CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) $(XML2_INC) $(SVM_INC) $(RLIB_CFLAGS)
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0 gtksourceview-2.0 json-glib-1.0)
 
 ifeq ($(BUILDTYPE),cross)
@@ -52,12 +52,6 @@ endif
 ifeq ($(have_mpi),yes)
   MPICLI = gretlmpi.exe
   MPI_LIB = -lmsmpi
-endif
-
-ifeq ($(use_openblas),yes)
-  LAPACK_LIBS = -lopenblas.dll
-else
-  LAPACK_LIBS = -llapack.dll -lblas.dll
 endif
 
 # source paths
@@ -268,7 +262,7 @@ endif
 
 LIBOBJ = $(LIBSRC:.c=.o)
 
-CLISRC = gretlcli.c complete.c 
+CLISRC = gretlcli.c complete.c
 
 CLIOBJ = $(CLISRC:.c=.o)
 
@@ -348,7 +342,7 @@ MOFILES = mo/de.po mo/el.mo mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo \
 
 %.o: %.c
 	$(CC) -c $(GTK_CFLAGS) $(CFLAGS) $<
-	$(CC) -MM $(GTK_CFLAGS) $(CFLAGS) $< > $*.d 
+	$(CC) -MM $(GTK_CFLAGS) $(CFLAGS) $< > $*.d
 
 # targets begin
 
@@ -364,7 +358,7 @@ gretlmpi.exe: gretlcli-mpi.o
 gretl.exe: $(GUIOBJ) gretlres.o
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lz -lmingwex -s
 
-gretlres.o: gretl.rc 
+gretlres.o: gretl.rc
 	$(RC) $(RCFLAGS) $< $@
 
 cross_lang: $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
@@ -400,31 +394,31 @@ dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) $(DCMTOBJ) dllinit.o
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libprob.def --implib $(imports)/libprob.a \
-	-o $@ $^ 
+	-o $@ $^
 
-plugins/stats_tables.dll: stats_tables.o dllinit.o 
+plugins/stats_tables.dll: stats_tables.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -lz $(GRETLLIB)
 
-plugins/range-mean.dll: range-mean.o dllinit.o 
+plugins/range-mean.dll: range-mean.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
-plugins/fractals.dll: fractals.o dllinit.o 
+plugins/fractals.dll: fractals.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
-plugins/poisson.dll: poisson.o dllinit.o 
+plugins/poisson.dll: poisson.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lprob
 
-plugins/duration.dll: duration.o dllinit.o 
+plugins/duration.dll: duration.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/kernel.dll: kernel.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/vif.dll: vif.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -485,7 +479,7 @@ plugins/jmulti_import.dll: jmulti_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
-plugins/mp_ols.dll: mp_ols.o dllinit.o 
+plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lmpfr.dll -lgmp.dll
 
@@ -548,11 +542,11 @@ plugins/quantreg.dll: quantreg.o rqfnb.o rqbr.o dllinit.o
 
 plugins/interval.dll: interval.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/anova.dll: anova.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB) 
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB)
 
 plugins/interpolate.dll: interpolate.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -601,8 +595,8 @@ dist.stamp:
 .PHONY:
 
 dirs:
-	mkdir -p dlls 
-	mkdir -p plugins 
+	mkdir -p dlls
+	mkdir -p plugins
 	mkdir -p import-libs
 
 cross_builddate: $(topsrc)/builddate.c
@@ -617,9 +611,9 @@ buildstamp: $(BUILDDATE)
 clean:
 	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(MPICLI) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
-	rm -f $(imports)/*.a 
+	rm -f $(imports)/*.a
 	rm -f gretl.stamp gretl.lang builddate build.h
-	rm -f windist/MANIFEST windist/gretl.iss 
+	rm -f windist/MANIFEST windist/gretl.iss
 	rm -rf windist/gretl windist/Output
 	make -C mo clean
 	make -C db clean
@@ -629,4 +623,3 @@ cleandist:
 	rm -rf windist/gretl windist/gnuplot windist/Output
 
 dist: all dist.stamp
-

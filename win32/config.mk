@@ -1,5 +1,8 @@
 # Configuration variables governing the build of gretl for win32
 
+topsrc = ..
+podir = $(topsrc)/po
+
 # change to 'native' if building on MS Windows
 BUILDTYPE = cross
 
@@ -31,11 +34,15 @@ HAVE_GTK_SPINNER = yes
 # set this for an MPI-enabled build
 have_mpi = yes
 
-# set this if building using openblas
-use_openblas = yes
+# lapack/blas: adjust to match your system
+LAPACK_LIBS = -lopenblas.dll
 
 # libxml2 includes: adjust to match your system
-XML2_INC = $(MGWDIR)/include/libxml2
+XML2_INC = -I$(MGWDIR)/include/libxml2
+
+# libsvm includes: adjust/add if required
+# SVM_INC = -I/usr/local/include
 
 # libR includes: likewise
 RLIB_CFLAGS = -I/opt/R/lib64/R/include
+

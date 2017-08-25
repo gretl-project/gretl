@@ -1,9 +1,9 @@
 include ../config.mk
 
-LANGS = $(shell cat ../../po/LINGUAS | grep -v \\\#)
+LANGS = $(shell cat $(podir)/LINGUAS | grep -v \\\#)
 MO = $(LANGS:=.mo)
 
-vpath %.po ../../po
+vpath %.po $(podir)
 
 %.mo: %.po
 	$(WIN32_MSGFMT) -o $@ $<
