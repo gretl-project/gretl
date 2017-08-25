@@ -1,7 +1,7 @@
 # Configuration variables governing the build of gretl for win32
 
 topsrc = ..
-podir = $(topsrc)/po
+podir = ../$(topsrc)/po
 
 # change to 'native' if building on MS Windows
 BUILDTYPE = cross
