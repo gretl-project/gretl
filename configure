@@ -2861,6 +2861,7 @@ try_bc="yes"
 check_gnuplot="yes"
 use_curl="yes"
 darwin_build="no"
+win32_build="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
@@ -7335,6 +7336,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+case $host_os in
+  mingw*)
+    win32_build=yes
+  ;;
+esac
+
 # Check whether --enable-static was given.
 if test "${enable_static+set}" = set; then :
   enableval=$enable_static; p=${PACKAGE-default}
@@ -7363,10 +7370,6 @@ fi
 
 
 
-
-
-
-enable_dlopen=yes
 
 
 
@@ -10719,6 +10722,8 @@ done
 # Set options
 
 
+
+        enable_dlopen=no
 
 
   enable_win32_dll=no
@@ -14991,6 +14996,13 @@ else
 $as_echo "no, using $LN_S" >&6; }
 fi
 
+
+if test "win32_build" = "no" ; then
+  enable_dlopen=yes
+
+
+
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sin in -lm" >&5
 $as_echo_n "checking for sin in -lm... " >&6; }

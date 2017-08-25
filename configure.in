@@ -72,6 +72,7 @@ try_bc="yes"
 check_gnuplot="yes"
 use_curl="yes"
 darwin_build="no"
+win32_build="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
@@ -345,10 +346,20 @@ AC_PROG_CC
 AC_CANONICAL_HOST
 AC_PROG_INSTALL
 
+dnl check for Windows build
+case $host_os in
+  mingw*)
+    win32_build=yes
+  ;;
+esac
+
 AC_DISABLE_STATIC
-AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
+
+if test "win32_build" = "no" ; then
+  AC_LIBTOOL_DLOPEN
+fi
 
 AC_CHECK_LIB(m, sin)
 AC_CHECK_LIB(c, fopen)

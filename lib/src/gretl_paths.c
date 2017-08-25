@@ -45,7 +45,7 @@
 
 #include <glib/gstdio.h>
 
-#if !defined(WIN32) || (defined(WIN32) && !defined(PKGBUILD))
+#if !defined(WIN32) || !defined(PKGBUILD)
 # ifdef USE_GTK3
 #  define PLUGIN_SFX "gretl-gtk3/"
 # else
