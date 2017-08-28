@@ -9,15 +9,20 @@ void current_ymd (int *y, int *m, int *d)
 {
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
-    char *endptr;
-    char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
-    unsigned long long epoch;
+    char *source_date_epoch = NULl;
+
+#ifndef _WIN32
+    source_date_epoch = getenv("SOURCE_DATE_EPOCH");
+#endif
 
     if (source_date_epoch != NULL) {
+	unsigned long long epoch;
+	char *endptr;
+
         errno = 0;
         epoch = strtoull(source_date_epoch, &endptr, 10);
         if ((errno == ERANGE && (epoch == ULLONG_MAX || epoch == 0))
-                || (errno != 0 && epoch == 0)) {
+	    || (errno != 0 && epoch == 0)) {
             fprintf(stderr, "Environment variable $SOURCE_DATE_EPOCH: "
 		    "strtoull: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
@@ -47,7 +52,7 @@ void current_ymd (int *y, int *m, int *d)
     *d = lt->tm_mday;
 }
 
-/* See if build.h exists and is up to date, and if not, 
+/* See if build.h exists and is up to date, and if not,
    create/update it. */
 
 int main (void)
@@ -82,7 +87,7 @@ int main (void)
 	    exit(EXIT_FAILURE);
 	} else {
 	    printf("Updating build.h\n");
-	    fprintf(fp, "#define BUILD_DATE \"%d-%02d-%02d\"\n", 
+	    fprintf(fp, "#define BUILD_DATE \"%d-%02d-%02d\"\n",
 		    y, m, d);
 	    fclose(fp);
 	}
