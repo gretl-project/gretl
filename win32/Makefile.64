@@ -378,7 +378,7 @@ mknews.exe: mknews.c
 	$(CC) -o $@ $<
 
 native_lang: mklang.exe
-	PATH=/bin:./dlls:/mingw/winbuild/misc-dll ./mklang.exe > gretl.lang
+	PATH="$(PATH):./dlls" ./mklang.exe > gretl.lang
 
 native_news: mknews.exe
 	./mknews.exe $(topsrc)/ChangeLog > NEWS
