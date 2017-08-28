@@ -17,13 +17,13 @@ ifeq ($(BUILDTYPE),cross)
   PKG_CONFIG_PATH = $(MGWDIR)/lib/pkgconfig
 else
   # directory containing mingw
-  MGWDIR = c:/mingw
+  MGWDIR = /mingw64
   # no prefix for gcc, etc.
   MGW_PREFIX =
   # msgfmt command for producing win32 messages file
   WIN32_MSGFMT = msgfmt.exe
   # location of pkgconfig files
-  PKG_CONFIG_PATH = c:/msys/1.0/lib/pkgconfig:$(MGWDIR)/lib/pkgconfig
+  PKG_CONFIG_PATH = $(MGWDIR)/lib/pkgconfig:/usr/lib/pkgconfig
 endif
 
 # GTK version switch: set HAVE_GTK_SPINNER to "yes" if you
