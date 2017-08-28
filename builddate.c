@@ -9,11 +9,9 @@ void current_ymd (int *y, int *m, int *d)
 {
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
-    char *source_date_epoch = NULL;
 
 #ifndef _WIN32
-    source_date_epoch = getenv("SOURCE_DATE_EPOCH");
-#endif
+    char *source_date_epoch = getenv("SOURCE_DATE_EPOCH");
 
     if (source_date_epoch != NULL) {
 	unsigned long long epoch;
@@ -46,6 +44,7 @@ void current_ymd (int *y, int *m, int *d)
         t = epoch;
         lt = gmtime(&t);
     }
+#endif /* ! _WIN32 */
 
     *y = lt->tm_year + 1900;
     *m = lt->tm_mon + 1;

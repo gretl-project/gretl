@@ -38,6 +38,7 @@ CURL_LIBS = -lcurl.dll
 # flags/defines
 CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) $(XML2_INC) $(SVM_INC) $(RLIB_CFLAGS)
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0 gtksourceview-2.0 json-glib-1.0)
+GLIB_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags glib-2.0)
 
 ifeq ($(BUILDTYPE),cross)
   GRETL_LANG = cross_lang
@@ -368,7 +369,7 @@ cross_news: $(topsrc)/ChangeLog
 	HERE=$$PWD ; cd $(host_builddir)/gui2 && make mknews && cd $$HERE && $(topsrc)/build/gui2/mknews $< > NEWS
 
 mklang.o: mklang.c $(libsrcdir)/options.c $(libsrcdir)/genlex.c $(libsrcdir)/gretl_commands.c
-	$(CC) -c -I. -I$(libsrcdir) -I$(XML2_INC) $<
+	$(CC) -c -I. -I$(libsrcdir) -I$(XML2_INC) $(GLIB_CFLAGS) $<
 
 mklang.exe: mklang.o
 	$(CC) -o $@ $< $(GRETLLIB) -lxml2.dll -lz
