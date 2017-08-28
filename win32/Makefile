@@ -388,7 +388,7 @@ $(MOFILES):
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) $(DCMTOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp.dll \
+	-o $@ $^ -lm -L$(imports) -lxml2.dll -lz -lintl -lprob -lgmp \
 	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS) $(CURL_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
@@ -481,7 +481,7 @@ plugins/jmulti_import.dll: jmulti_import.o dllinit.o
 
 plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lmpfr.dll -lgmp.dll
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lmpfr -lgmp
 
 plugins/sysest.dll: sysest.o fiml.o liml.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
