@@ -9,7 +9,7 @@ void current_ymd (int *y, int *m, int *d)
 {
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
-    char *source_date_epoch = NULl;
+    char *source_date_epoch = NULL;
 
 #ifndef _WIN32
     source_date_epoch = getenv("SOURCE_DATE_EPOCH");
