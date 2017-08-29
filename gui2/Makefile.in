@@ -203,6 +203,7 @@ endif
 
 ifeq ($(win32_build),yes)
   SRCS += gretlwin32.c
+  WINLIBS = -lwsock32 -lole32 -lshlwapi -ladvapi32 -lcomdlg32
 else
   SRCS += clipboard.c
 endif
@@ -223,7 +224,7 @@ all: $(PROG) gretl.lang NEWS
 $(PROG): .deps $(OBJS) $(HACK_OBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
-	$(HACK_OBJ) $(LIBS) $(CARBONLIB)
+	$(HACK_OBJ) $(LIBS) $(CARBONLIB) $(WINLIBS)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
