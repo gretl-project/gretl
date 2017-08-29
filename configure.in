@@ -419,8 +419,8 @@ fi
 
 dnl try to build mailer plugin?
 if test $win32_build = "yes" ; then
-  build_mailer="yes"
   AC_DEFINE(ENABLE_MAILER)
+  build_mailer="no"
 else
   AC_CHECK_HEADERS(netdb.h sys/socket.h,
 	  build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),

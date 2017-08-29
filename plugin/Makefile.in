@@ -171,7 +171,6 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	xlsx_import.la \
 	gnumeric_import.la \
 	leverage.la \
-	mailer.la \
 	ods_import.la \
 	pca.la \
 	progress_bar.la \
