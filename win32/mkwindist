@@ -276,7 +276,7 @@ add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 
 # libsvm copyright
-add file ${WINFILES}/copyright_libsvm gretl/copyright_libsvm
+add_file ${WINFILES}/copyright_libsvm gretl/copyright_libsvm
 
 # PDF docs
 for f in gretl-guide gretl-ref hansl-primer pkgbook gretl-keys ; do
