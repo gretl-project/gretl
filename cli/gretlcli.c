@@ -267,7 +267,7 @@ static int file_get_line (ExecState *s)
 
 static void nls_init (void)
 {
-# ifdef WIN32
+# if defined(WIN32) && defined(PKGBUILD)
     char LOCALEDIR[MAXLEN];
 
     build_path(LOCALEDIR, gretl_home(), "locale", NULL);
