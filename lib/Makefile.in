@@ -34,6 +34,8 @@ ifeq ($(use_curl),yes)
   CURL_LIBS = @CURL_LIBS@
 endif
 
+win32_build = @win32_build@
+
 have_mpi = @have_mpi@
 MPI_CFLAGS = @MPI_CFLAGS@
 
@@ -55,6 +57,10 @@ ifeq ($(DARWIN_RPATH),)
   LIBDEF = -DLIBDIR=\"$(libdir)\"  
 else
   RPATH = $(DARWIN_RPATH)
+endif
+
+ifneq ($(win32_build),yes)
+  LIBDL = -ldl
 endif
 
 ifeq ($(INSTALL_PROGRAM),)
@@ -84,7 +90,7 @@ INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(pkgconfigd
 
 LIBGRETL = libgretl-1.0.la 
 
-LIBS = $(LAPACK_LIBS) -lm -ldl -lz $(XML_LIBS) \
+LIBS = $(LAPACK_LIBS) -lm $(LIBDL) -lz $(XML_LIBS) \
 	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS) $(RT_LIB)
 
 #### End of system configuration section. ####
@@ -262,6 +268,10 @@ endif
 ifeq ($(have_mpi),yes)
   PUBLIC_HDRS += gretl_mpi.h
   SRCS += gretl_mpi.c
+endif
+
+ifeq ($(win32_build),yes)
+  SRCS += gretl_win32.c
 endif
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \

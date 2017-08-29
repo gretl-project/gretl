@@ -855,6 +855,7 @@ dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
+AC_SUBST(win32_build)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)

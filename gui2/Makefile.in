@@ -19,6 +19,7 @@ have_sourceview = @have_sourceview@
 have_zlib = @have_zlib@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
+win32_build = @win32_build@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
 
@@ -135,8 +136,11 @@ override LIBS += $(GDK_PIXBUF_LIBS)
 
 SHELL = /bin/sh
 LIBTOOL = ../libtool
+
 ifeq ($(mac_native),yes)
   PROG = gretl
+else ifeq ($(win32_build),yes)
+  PROG = gretl$(EXEEXT)
 else
   PROG = gretl_x11$(EXEEXT)
   INSTALL_SCRIPT = install-script
@@ -196,6 +200,10 @@ SRCS = about.c \
 # use back-ported gtkspinner code?
 ifeq ($(fake_gtkspinner),yes)
   SRCS += spinner.c
+endif
+
+ifeq ($(win32_build),yes)
+  SRCS += gretlwin32.c
 endif
 
 OBJS = $(SRCS:.c=.o)

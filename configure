@@ -668,6 +668,7 @@ have_audio
 have_gnu_regex
 fake_gtkspinner
 have_sourceview
+win32_build
 mac_native
 gtk_version
 build_gui
@@ -19570,6 +19571,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 
