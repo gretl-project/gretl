@@ -77,7 +77,7 @@ GtkTargetEntry image_targets[] = {
     { "image/png",         0, TARGET_PNG }
 };
 
-#endif
+#endif /* OS_OSX */
 
 #define image_type(t) (t == TARGET_SVG || t == TARGET_EMF || \
 		       t == TARGET_EPS || t == TARGET_PDF || \
@@ -204,7 +204,7 @@ static void pasteboard_set (int fmt)
     }
 }
 
-#endif
+#endif /* OS_OSX */
 
 static void gretl_clipboard_set (int fmt, int imgtype)
 {

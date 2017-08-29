@@ -152,7 +152,6 @@ vpath %.h $(topsrc)/gui2
 SRCS = about.c \
 	calculator.c \
 	callbacks.c \
-	clipboard.c \
 	cmdstack.c \
 	console.c \
 	database.c \
@@ -204,6 +203,8 @@ endif
 
 ifeq ($(win32_build),yes)
   SRCS += gretlwin32.c
+else
+  SRCS += clipboard.c
 endif
 
 OBJS = $(SRCS:.c=.o)

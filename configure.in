@@ -418,23 +418,26 @@ else
 fi
 
 dnl try to build mailer plugin?
-AC_CHECK_HEADERS(netdb.h sys/socket.h,
-	build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
-	build_mailer="no"
-)
-
-if test "$build_mailer" = "yes" ; then
-AC_CHECK_TYPE(struct sockaddr_in, 
-  AC_DEFINE(HAVE_SOCKADDR_IN, 1, [Do we have sockaddr_in?]),,
-  #include <sys/socket.h>
-  #include <netdb.h>
-)
-
-AC_CHECK_TYPE(struct in_addr, 
-  AC_DEFINE(HAVE_IN_ADDR, 1, [Do we have in_addr?]),,
-  #include <sys/socket.h>
-  #include <netdb.h>
-)
+if test $win32_build = "yes" ; then
+  build_mailer="yes"
+  AC_DEFINE(ENABLE_MAILER)
+else
+  AC_CHECK_HEADERS(netdb.h sys/socket.h,
+	  build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
+	  build_mailer="no"
+  )
+  if test "$build_mailer" = "yes" ; then
+    AC_CHECK_TYPE(struct sockaddr_in,
+      AC_DEFINE(HAVE_SOCKADDR_IN, 1, [Do we have sockaddr_in?]),,
+      #include <sys/socket.h>
+      #include <netdb.h>
+    )
+    AC_CHECK_TYPE(struct in_addr,
+      AC_DEFINE(HAVE_IN_ADDR, 1, [Do we have in_addr?]),,
+      #include <sys/socket.h>
+      #include <netdb.h>
+    )
+  fi
 fi
 
 dnl
