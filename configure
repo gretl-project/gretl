@@ -16241,7 +16241,12 @@ else
   have_mpi="no"
 fi
 
-for ac_header in netdb.h sys/socket.h
+if test $win32_build = "yes" ; then
+  build_mailer="yes"
+  $as_echo "#define ENABLE_MAILER 1" >>confdefs.h
+
+else
+  for ac_header in netdb.h sys/socket.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -16258,10 +16263,9 @@ fi
 
 done
 
-
-if test "$build_mailer" = "yes" ; then
-ac_fn_c_check_type "$LINENO" "struct sockaddr_in" "ac_cv_type_struct_sockaddr_in" "#include <sys/socket.h>
-  #include <netdb.h>
+  if test "$build_mailer" = "yes" ; then
+    ac_fn_c_check_type "$LINENO" "struct sockaddr_in" "ac_cv_type_struct_sockaddr_in" "#include <sys/socket.h>
+      #include <netdb.h>
 
 "
 if test "x$ac_cv_type_struct_sockaddr_in" = xyes; then :
@@ -16270,9 +16274,8 @@ $as_echo "#define HAVE_SOCKADDR_IN 1" >>confdefs.h
 
 fi
 
-
-ac_fn_c_check_type "$LINENO" "struct in_addr" "ac_cv_type_struct_in_addr" "#include <sys/socket.h>
-  #include <netdb.h>
+    ac_fn_c_check_type "$LINENO" "struct in_addr" "ac_cv_type_struct_in_addr" "#include <sys/socket.h>
+      #include <netdb.h>
 
 "
 if test "x$ac_cv_type_struct_in_addr" = xyes; then :
@@ -16281,6 +16284,7 @@ $as_echo "#define HAVE_IN_ADDR 1" >>confdefs.h
 
 fi
 
+  fi
 fi
 
 if test "$try_readline" = "yes" ; then
