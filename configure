@@ -16123,7 +16123,7 @@ fi
     if test $win32_build = "yes" ; then
       MPI_LIBS="-lmsmpi"
       have_mpi="yes"
-    elif if test "x${HAVE_MPICC}" = "xyes" ; then
+    else
 
 ARCH=`uname -m`
 if test "${ARCH}" = "i386" -o "${ARCH}" = "i686" -o "${ARCH}" = "ppc" -o "${ARCH}" = "sparcv9" ; then
@@ -16238,9 +16238,9 @@ $as_echo "$MPI_incdir" >&6; }
   fi
 fi
 
-    else
-      have_mpi="no"
     fi
+  else
+    have_mpi="no"
   fi
 else
   have_mpi="no"

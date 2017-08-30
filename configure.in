@@ -412,11 +412,11 @@ if test "$try_mpi" = "yes" ; then
     if test $win32_build = "yes" ; then
       MPI_LIBS="-lmsmpi"
       have_mpi="yes"
-    elif if test "x${HAVE_MPICC}" = "xyes" ; then
+    else 
       AC_C_MPI
-    else
-      have_mpi="no"
     fi
+  else
+    have_mpi="no"
   fi
 else
   have_mpi="no"
