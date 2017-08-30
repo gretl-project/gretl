@@ -272,6 +272,7 @@ endif
 
 ifeq ($(win32_build),yes)
   SRCS += gretl_win32.c
+  override LDFLAGS += -no-undefined
 endif
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
