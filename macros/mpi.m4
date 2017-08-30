@@ -66,7 +66,7 @@ then
   have_mpi=no
 else
   AC_MSG_RESULT([$MPI_libdir])
-  if test "MPI_libdir" = "/usr/lib" ; then
+  if test "$MPI_libdir" = "/usr/lib" ; then
     MPI_LIBS="-lmpi"
   else
     MPI_LIBS="-L$MPI_libdir -lmpi"
