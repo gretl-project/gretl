@@ -1672,10 +1672,8 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
     int j;
 
     if (item->type == GRETL_TYPE_STRING) {
-	char *s = item->data;
-
-	if (s == NULL || *s == '\0') {
-	    fprintf(stderr, "bundle -> XML: skipping empty string %s\n", key);
+	if (item->data == NULL) {
+	    fprintf(stderr, "bundle -> XML: skipping NULL string %s\n", key);
 	    return;
 	} 
     }
