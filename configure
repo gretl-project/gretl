@@ -16198,7 +16198,7 @@ $as_echo "Couldn't find MPI library" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_libdir" >&5
 $as_echo "$MPI_libdir" >&6; }
-  if test "MPI_libdir" = "/usr/lib" ; then
+  if test "$MPI_libdir" = "/usr/lib" ; then
     MPI_LIBS="-lmpi"
   else
     MPI_LIBS="-L$MPI_libdir -lmpi"
@@ -19856,6 +19856,11 @@ fi
 fi
 
 if test "$try_libR" = "yes" ; then
+  if test $win32_build = "yes" ; then
+     have_libR="yes"
+     $as_echo "#define USE_RLIB 1" >>confdefs.h
+
+  else
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libR" >&5
@@ -19946,6 +19951,7 @@ _ACEOF
 
       have_libR="yes"
 fi
+  fi
 fi
 
 if test "$try_gsf" = "yes" ; then

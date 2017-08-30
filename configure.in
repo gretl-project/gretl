@@ -910,11 +910,15 @@ fi
 
 dnl Check for libR (optional)
 if test "$try_libR" = "yes" ; then
+  if test $win32_build = "yes" ; then
+     have_libR="yes"
+     AC_DEFINE(USE_RLIB)
+  else
     PKG_CHECK_MODULES(RLIB, libR,
       AC_DEFINE(USE_RLIB)
       if echo "$RLIB_LIBS" | grep ^-L > /dev/null ; then
         RLIBDIR=`echo $RLIB_LIBS | cut -b 3- | awk '{ print $1 }'`
-      else 
+      else
         RLIBDIR="/usr/lib"
       fi 
       if test "$darwin_build" = "yes" ; then
@@ -927,6 +931,7 @@ if test "$try_libR" = "yes" ; then
       have_libR="yes",
       have_libR="no"
     )
+  fi
 fi
 
 dnl
