@@ -271,7 +271,7 @@ static void nls_init (void)
     char LOCALEDIR[MAXLEN];
 
     build_path(LOCALEDIR, gretl_home(), "locale", NULL);
-# endif /* WIN32 */
+# endif /* WIN32 package */
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE); 
