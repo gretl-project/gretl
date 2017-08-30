@@ -18,6 +18,7 @@ have_odbc = @have_odbc@
 quiet_build = @quiet_build@
 gtk_version = @gtk_version@
 use_gsf = @use_gsf@
+win32_build = @win32_build@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -196,6 +197,10 @@ ifeq ($(use_gsf),no)
   PLUGINS += gretlzip.la
   GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
   GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
+endif
+
+ifeq ($(win32_build),yes)
+  override LDFLAGS += -no-undefined
 endif
 
 ifneq ($(JSON_GLIB_LIBS),)
