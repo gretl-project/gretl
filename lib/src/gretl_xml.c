@@ -888,7 +888,13 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
 	    ret = 1;
 	}
 	free(tmp);	
-    } 
+    } else {
+	/* empty string */
+	*pstr = gretl_strdup("");
+	if (*pstr != NULL) {
+	    ret = 1;
+	}
+    }
 
     return ret;
 }
