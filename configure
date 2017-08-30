@@ -16123,6 +16123,8 @@ fi
     if test $win32_build = "yes" ; then
       MPI_LIBS="-lmsmpi"
       have_mpi="yes"
+      $as_echo "#define HAVE_MPI 1" >>confdefs.h
+
     else
 
 ARCH=`uname -m`

@@ -412,6 +412,7 @@ if test "$try_mpi" = "yes" ; then
     if test $win32_build = "yes" ; then
       MPI_LIBS="-lmsmpi"
       have_mpi="yes"
+      AC_DEFINE(HAVE_MPI)
     else 
       AC_C_MPI
     fi
