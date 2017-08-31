@@ -544,7 +544,7 @@ int main (int argc, char *argv[])
     PRN *cmdprn = NULL;
     int err = 0;
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32) && defined(PKGBUILD)
     win32_set_gretldir(callname);
 #endif
 

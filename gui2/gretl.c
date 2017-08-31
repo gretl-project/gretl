@@ -602,7 +602,9 @@ int main (int argc, char **argv)
     GError *opterr = NULL;
 
 #if defined(G_OS_WIN32)
+# ifdef PKGBUILD
     win32_set_gretldir(callname);
+# endif
 #elif !defined(OS_OSX)
     protect_against_ubuntu();
 #endif

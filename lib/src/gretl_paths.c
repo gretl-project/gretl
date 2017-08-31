@@ -2907,7 +2907,10 @@ static char *rightmost (char *s1, char *s2)
     }
 }
 
-/* note: @progname is argv[0] at startup */
+/* note: @progname is argv[0] at startup; we use
+   this apparatus only for a "package build" for
+   Windows
+*/
 
 void win32_set_gretldir (const char *progname)
 {

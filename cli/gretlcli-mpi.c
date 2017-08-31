@@ -339,7 +339,7 @@ int main (int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &np);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32) && defined(PKGBUILD)
     win32_set_gretldir(callname);
 #endif
 
