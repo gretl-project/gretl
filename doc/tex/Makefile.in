@@ -212,7 +212,7 @@ gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f gretl-lite.sty && ln -s ../gretl-lite.sty ./gretl-lite.sty
-	rm -f figures && ln -s $(docsrc)/figures ./figures
+	if [ ! $$d figures ] ; then rm -f figures && ln -s $(docsrc)/figures ./figures ; fi
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 	for f in $(BIBSRC) ; do \
