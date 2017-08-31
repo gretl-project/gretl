@@ -414,10 +414,7 @@ static void *get_plugin_handle_by_index (int i)
 	/* not opened yet */
 	char pluginpath[MAXLEN];
 
-	strcpy(pluginpath, gretl_lib_path());
-#ifdef WIN32
-	append_dir(pluginpath, "plugins");
-#endif
+	strcpy(pluginpath, gretl_plugin_path());
 	strcat(pluginpath, plugins[i].pname);
 	strcat(pluginpath, PLUGIN_EXT);
 
@@ -510,10 +507,7 @@ static void *get_plugin_handle_by_name (const char *name)
 {
     char pluginpath[MAXLEN];
 
-    strcpy(pluginpath, gretl_lib_path());
-#ifdef WIN32
-    append_dir(pluginpath, "plugins");
-#endif
+    strcpy(pluginpath, gretl_plugin_path());
     strcat(pluginpath, name);
     strcat(pluginpath, PLUGIN_EXT);
 

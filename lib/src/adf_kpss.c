@@ -942,10 +942,7 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
         return pval;
     }
 
-    strcpy(datapath, gretl_lib_path());
-#ifdef WIN32
-    append_dir(datapath, "plugins");
-#endif
+    strcpy(datapath, gretl_plugin_path());
 
     if ((opt & OPT_G) && itv == UR_CONST) {
 	itv = UR_NO_CONST;

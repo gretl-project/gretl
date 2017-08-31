@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -45,12 +45,12 @@
 
 #include <glib/gstdio.h>
 
-#if !defined(WIN32) || !defined(PKGBUILD)
-# ifdef USE_GTK3
-#  define PLUGIN_SFX "gretl-gtk3/"
-# else
-#  define PLUGIN_SFX "gretl-gtk2/"
-# endif
+#if defined(WIN32) && defined(PKGBUILD)
+# define PLUGIN_SFX "plugins"
+#elif defined(USE_GTK3)
+# define PLUGIN_SFX "gretl-gtk3"
+#else
+# define PLUGIN_SFX "gretl-gtk2"
 #endif
 
 struct INTERNAL_PATHS {
@@ -59,7 +59,7 @@ struct INTERNAL_PATHS {
     char workdir[MAXLEN];
     char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
-    char libpath[MAXLEN];
+    char plugpath[MAXLEN];
     char binbase[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
@@ -108,8 +108,8 @@ static const char *helpfiles[] = {
     /* TRANSLATORS: you may change the two-letter language code
        if gretl_commands_en.xml has been translated for your language,
        as in gretl_gui_help.pt -- otherwise leave it untranslated
-    */	
-    N_("gretl_gui_help.en"),    
+    */
+    N_("gretl_gui_help.en"),
     /* TRANSLATORS: you may change the two-letter language code
        if gretl_functions_en.xml has been translated for your language,
        as in gretl_cli_fnref.pt -- otherwise leave it untranslated
@@ -118,7 +118,7 @@ static const char *helpfiles[] = {
     /* TRANSLATORS: you may change the two-letter language code
        if gretl_functions_en.xml has been translated for your language,
        as in gretl_gui_fnref.pt -- otherwise leave it untranslated
-    */	
+    */
     N_("gretl_gui_fnref.en")
 };
 
@@ -200,7 +200,7 @@ int using_translated_helpfile (int id)
     return ret;
 }
 
-/* If @fname does not already have suffix @sfx, add it. 
+/* If @fname does not already have suffix @sfx, add it.
    With the qualification that if the @fname bears either of
    the standard gretl data-file suffixes, ".gdt" or ".gdtb",
    we won't stick the other one onto the end.
@@ -250,7 +250,7 @@ static int stdio_use_utf8;
  * set_stdio_use_utf8:
  *
  * Sets gretl's internal state so as to ensure that filenames
- * are given in UTF-8 when passed to functions such as the C 
+ * are given in UTF-8 when passed to functions such as the C
  * library's fopen().
  */
 
@@ -311,7 +311,7 @@ int maybe_recode_path (const char *path, char **pconv, int want_utf8)
 	    /* need to convert from locale to UTF-8 */
 	    GError *gerr = NULL;
 	    gsize sz;
-	    
+
 	    *pconv = g_locale_to_utf8(path, -1, NULL, &sz, &gerr);
 	    if (*pconv == NULL) {
 		if (gerr != NULL) {
@@ -333,8 +333,8 @@ int maybe_recode_path (const char *path, char **pconv, int want_utf8)
 		g_error_free(gerr);
 	    }
 	    err = 1;
-	}	
-    }	    
+	}
+    }
 
     return err;
 }
@@ -501,8 +501,8 @@ int gretl_test_fopen (const char *fname, const char *mode)
  * A wrapper for  the C library's fopen(), making allowance for
  * the possibility that @fname has to be converted from
  * UTF-8 to the locale encoding or vice versa. If conversion
- * is carried out, the newly allocated recoded filename is 
- * returned via the last argument (otherwise that argument is 
+ * is carried out, the newly allocated recoded filename is
+ * returned via the last argument (otherwise that argument is
  * not touched).
  *
  * Returns: file pointer, or %NULL on failure.
@@ -604,7 +604,7 @@ int gretl_open (const char *pathname, int flags, int mode)
     if (!strcmp(pathname, ".")) {
 	return win32_open_fchdir(0);
     }
-#endif    
+#endif
 
     gretl_error_clear();
 
@@ -612,7 +612,7 @@ int gretl_open (const char *pathname, int flags, int mode)
 
     if (!err) {
 	mode_t m = 0;
-	
+
 	if (flags & O_CREAT) {
 	    m = (mode_t) mode;
 	}
@@ -640,7 +640,7 @@ int gretl_fchdir (int fd)
     return win32_open_fchdir(fd);
 #else
     return fchdir(fd);
-#endif 
+#endif
 }
 
 /**
@@ -651,7 +651,7 @@ int gretl_fchdir (int fd)
  * call).
  *
  * A wrapper for the C library's stat(), making allowance for
- * the possibility that @fname has to be converted from UTF-8 
+ * the possibility that @fname has to be converted from UTF-8
  * to the locale encoding or vice versa.
  *
  * Returns: 0 on success, non-zero on failure.
@@ -665,7 +665,7 @@ int gretl_stat (const char *fname, struct stat *buf)
     gretl_error_clear();
 
     err = maybe_recode_path(fname, &pconv, -1);
-    
+
     if (err) {
 	/* emulate stat() */
 	err = -1;
@@ -687,7 +687,7 @@ int gretl_stat (const char *fname, struct stat *buf)
  * @fname: name of file to be examined.
  *
  * Uses the C library's stat() function, making allowance for
- * the possibility that @fname has to be converted from UTF-8 
+ * the possibility that @fname has to be converted from UTF-8
  * to the locale encoding or vice versa.
  *
  * Returns: 1 if @fname is the name of an existing file,
@@ -703,7 +703,7 @@ int gretl_file_exists (const char *fname)
     gretl_error_clear();
 
     err = maybe_recode_path(fname, &pconv, -1);
-    
+
     if (err) {
 	/* emulate 'stat' */
 	err = -1;
@@ -725,7 +725,7 @@ int gretl_file_exists (const char *fname)
  * @newpath: new name to give the file.
  *
  * A wrapper for the C library's rename(), making allowance for
- * the possibility that @oldpath and/or @newpath have to be 
+ * the possibility that @oldpath and/or @newpath have to be
  * converted from UTF-8 to the locale encoding or vice versa.
  *
  * Returns: 0 on success, non-zero on failure.
@@ -816,7 +816,7 @@ int gretl_remove (const char *path)
 	    } else {
 		ret = g_remove(path);
 	    }
-	}	    
+	}
     }
 #endif
 
@@ -830,7 +830,7 @@ int gretl_remove (const char *path)
  *
  * A wrapper for zlib's gzopen(), making allowance for
  * the possibility that @fname has to be converted from
- * UTF-8 to the locale encoding or vice versa. 
+ * UTF-8 to the locale encoding or vice versa.
  *
  * Returns: pointer to gzip stream, or %NULL on failure.
  */
@@ -931,7 +931,7 @@ int gretl_chdir (const char *path)
 #ifdef WIN32
     free(ptmp);
 #endif
-    
+
     return err;
 }
 
@@ -940,7 +940,7 @@ int gretl_chdir (const char *path)
  * @path: path to check.
  *
  * A test for whether or not @path is the name of a directory,
- * allowing for the possibility that @path has to be converted 
+ * allowing for the possibility that @path has to be converted
  * from UTF-8 to the locale encoding or vice versa.
  *
  * Returns: 1 if @path is the name of a directory, else 0.
@@ -988,7 +988,7 @@ int gretl_mkdir (const char *path)
 	    done = CreateDirectory(path, NULL);
 	}
     }
-    
+
     return !done;
 }
 
@@ -1040,7 +1040,7 @@ static int real_deltree (const char *path)
 	err = 1;
     } else {
 	const char *fname;
-	
+
 	err = chdir(path);
 	while ((fname = gretl_readd(dir)) != NULL && !err) {
 	    /* recursively delete dir's contents */
@@ -1065,7 +1065,7 @@ static int real_deltree (const char *path)
 	gretl_errmsg_set_from_errno(path, errno);
 	err = E_FOPEN;
     }
-    
+
     return err;
 }
 
@@ -1126,7 +1126,7 @@ DIR *gretl_opendir (const char *name)
 	} else {
 	    /* chop backslash */
 	    tmp[strlen(tmp)-1] = '\0';
-	} 
+	}
 	return opendir(tmp);
     }
 #endif
@@ -1224,12 +1224,12 @@ int gretl_is_xml_file (const char *fname)
 	if (gzread(fz, test, 5)) {
 	    test[5] = '\0';
 	    if (!strcmp(test, "<?xml")) ret = 1;
-	} 
+	}
 	gzclose(fz);
-    } 
+    }
 
     return ret;
-} 
+}
 
 /**
  * gretl_path_prepend:
@@ -1275,13 +1275,13 @@ enum {
 
 #ifdef WIN32
 
-static int try_open_file (char *targ, const char *finddir, 
+static int try_open_file (char *targ, const char *finddir,
 			  WIN32_FIND_DATA *fdata, int flags)
 {
     char tmp[MAXLEN];
     int n = strlen(finddir);
     int err, found = 0;
-    
+
     strcpy(tmp, finddir);
     tmp[n-1] = '\0';
     strcat(tmp, fdata->cFileName);
@@ -1304,7 +1304,7 @@ static int try_open_file (char *targ, const char *finddir,
     if (!err) {
 	strcpy(targ, tmp);
 	found = 1;
-    }	
+    }
 
     return found;
 }
@@ -1316,7 +1316,7 @@ static void make_findname (char *targ, const char *src)
     if (string_is_utf8((const unsigned char *) targ)) {
 	gchar *tmp;
 	gsize sz;
-	
+
 	tmp = g_locale_from_utf8(src, -1, NULL, &sz, NULL);
 	if (tmp != NULL) {
 	    strcpy(targ, tmp);
@@ -1355,16 +1355,16 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
     /* make find target */
     make_findname(finddir, topdir);
 
-    handle = FindFirstFile(finddir, &fdata); 
+    handle = FindFirstFile(finddir, &fdata);
     if (handle != INVALID_HANDLE_VALUE) {
 	if (got_subdir(&fdata)) {
 	    found = try_open_file(fname, finddir, &fdata, flags);
-	} 
+	}
 	while (!found && FindNextFile(handle, &fdata)) {
 	    if (got_subdir(&fdata)) {
 		found = try_open_file(fname, finddir, &fdata, flags);
 	    }
-	} 
+	}
 	FindClose(handle);
     }
 
@@ -1373,12 +1373,12 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
 #else /* end of win32 file-finding, on to posix */
 
-static int try_open_file (char *targ, const char *finddir, 
+static int try_open_file (char *targ, const char *finddir,
 			  struct dirent *dirent, int flags)
 {
     char tmp[MAXLEN];
     int err, found = 0;
-    
+
     strcpy(tmp, finddir);
     strcat(tmp, dirent->d_name);
     strcat(tmp, "/");
@@ -1400,7 +1400,7 @@ static int try_open_file (char *targ, const char *finddir,
     if (!err) {
 	strcpy(targ, tmp);
 	found = 1;
-    }	
+    }
 
     return found;
 }
@@ -1413,7 +1413,7 @@ static void make_findname (char *targ, const char *src)
 
     if (targ[n-1] != '/') {
 	strcat(targ, "/");
-    } 
+    }
 }
 
 static int got_subdir (const char *topdir, struct dirent *dirent)
@@ -1479,7 +1479,7 @@ char *search_dir (char *fname, const char *topdir, int flags)
 	err = gretl_test_fopen(fname, "r");
 #if SEARCH_DEBUG
 	fprintf(stderr, " trying '%s'\n", fname);
-#endif	
+#endif
 	if (!err) {
 	    return fname;
 	}
@@ -1487,7 +1487,7 @@ char *search_dir (char *fname, const char *topdir, int flags)
 	    if (maybe_add_suffix(fname, ".gdt")) {
 #if SEARCH_DEBUG
 		fprintf(stderr, " trying '%s'\n", fname);
-#endif		
+#endif
 		err = gretl_test_fopen(fname, "r");
 		if (!err) {
 		    return fname;
@@ -1497,7 +1497,7 @@ char *search_dir (char *fname, const char *topdir, int flags)
 		if (!err) {
 		    return fname;
 		}
-	    }		
+	    }
 	} else if (flags & ADD_GFN) {
 	    if (maybe_add_suffix(fname, ".gfn")) {
 		err = gretl_test_fopen(fname, "r");
@@ -1505,7 +1505,7 @@ char *search_dir (char *fname, const char *topdir, int flags)
 		    return fname;
 		}
 	    }
-	}	    
+	}
 	strcpy(fname, orig);
 	if (flags & SUBDIRS) {
 	    if (find_in_subdir(topdir, fname, flags)) {
@@ -1592,9 +1592,9 @@ static void make_path_absolute (char *fname, const char *orig)
  * gretl databases, FUNCS_SEARCH for function packages, or
  * SCRIPT_SEARCH for hansl scripts.
  * @n_dirs: location to receive the number of directories.
- * 
- * Returns: an array of plausible search paths, depending on the 
- * @type of search. The array should be freed when you are done 
+ *
+ * Returns: an array of plausible search paths, depending on the
+ * @type of search. The array should be freed when you are done
  * with it, using strings_array_free().
  */
 
@@ -1789,7 +1789,7 @@ char *gretl_function_package_get_path (const char *name,
 	const char *dname;
 	char *p, test[NAME_MAX+1];
 	DIR *dir;
-	
+
 	if ((dir = gretl_opendir(fndir)) == NULL) {
 	    continue;
 	}
@@ -1800,7 +1800,7 @@ char *gretl_function_package_get_path (const char *name,
 	    while ((dirent = readdir(dir)) != NULL && !found) {
 		dname = dirent->d_name;
 		if (!strcmp(dname, name)) {
-		    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
+		    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH,
 			    dname, SLASH, dname);
 		    err = gretl_test_fopen(path, "r");
 		    if (!err) {
@@ -1850,7 +1850,7 @@ char *gretl_function_package_get_path (const char *name,
 */
 
 static int find_file_in_dir (const char *fname,
-			     const char *dirname, 
+			     const char *dirname,
 			     char *fullname,
 			     int maxdepth,
 			     int depth)
@@ -1891,7 +1891,7 @@ static int find_file_in_dir (const char *fname,
 	    if (!strcmp(entry->d_name, ".") ||
 		!strcmp(entry->d_name, "..")) {
 		continue;
-	    }	    
+	    }
 	    sprintf(tmp, "%s%c%s", dirname, SLASH, entry->d_name);
 	    if (gretl_stat(tmp, &sbuf) < 0) {
 		continue;
@@ -1912,10 +1912,10 @@ static int find_file_in_dir (const char *fname,
  * @fname: the basename of the file whose full path is wanted.
  * @fullname: location to which the full path should be written
  * (should be at least FILENAME_MAX bytes).
- * 
+ *
  * Looks for @fname in association with the name of a function
  * package, which must have been set previously using the
- * --frompkg option with the "open" command. 
+ * --frompkg option with the "open" command.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -1961,7 +1961,7 @@ int get_package_data_path (const char *fname, char *fullname)
 	    } else {
 		needle = fname;
 	    }
-	    
+
 	    if (!find_file_in_dir(needle, gfnpath, fullname, 1, 0)) {
 		gretl_errmsg_sprintf(_("Couldn't find file %s for package %s"),
 				     needle, pkgname);
@@ -1983,7 +1983,7 @@ int get_package_data_path (const char *fname, char *fullname)
  * for possible additions.
  * @script: if non-zero, assume the file we're looking for
  * is a hansl script.
- * 
+ *
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened. Usually called by get_full_filename().
  * If @fname does not already have a dot-extension we may also try adding
@@ -2051,7 +2051,7 @@ char *gretl_addpath (char *fname, int script)
 	    if (script) {
 		sprintf(trydir, "%sscripts", gpath);
 		test = search_dir(fname, trydir, SUBDIRS);
-		if (test != NULL) { 
+		if (test != NULL) {
 		    return fname;
 		} else {
 		    strcpy(fname, orig);
@@ -2065,17 +2065,17 @@ char *gretl_addpath (char *fname, int script)
 		/* database? */
 		sprintf(trydir, "%sdb", gpath);
 		test = search_dir(fname, trydir, 0);
-		if (test != NULL) { 
+		if (test != NULL) {
 		    return fname;
-		}		
+		}
 	    } else {
 		/* data file */
 		sprintf(trydir, "%sdata", gpath);
 		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
-		if (test != NULL) { 
+		if (test != NULL) {
 		    return fname;
 		}
-	    } 
+	    }
 	}
 
 	strcpy(fname, orig);
@@ -2092,13 +2092,13 @@ char *gretl_addpath (char *fname, int script)
 	    if (script) {
 		sprintf(trydir, "%sscripts", gpath);
 		test = search_dir(fname, trydir, SUBDIRS);
-		if (test != NULL) { 
+		if (test != NULL) {
 		    return fname;
 		} else {
 		    strcpy(fname, orig);
 		    sprintf(trydir, "%sfunctions", gpath);
 		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
-		    if (test != NULL) { 
+		    if (test != NULL) {
 			return fname;
 		    }
 		}
@@ -2106,18 +2106,18 @@ char *gretl_addpath (char *fname, int script)
 		/* database? */
 		sprintf(trydir, "%sdb", gpath);
 		test = search_dir(fname, trydir, 0);
-		if (test != NULL) { 
+		if (test != NULL) {
 		    return fname;
-		}		
+		}
 	    } else {
 		/* data file? */
 		sprintf(trydir, "%sdata", gpath);
 		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
-		if (test != NULL) { 
+		if (test != NULL) {
 		    return fname;
 		}
-	    } 
-	}	
+	    }
+	}
 
 	strcpy(fname, orig);
 	gpath = gretl_workdir();
@@ -2125,7 +2125,7 @@ char *gretl_addpath (char *fname, int script)
 	if (*gpath != '\0') {
 	    /* try looking in user's dir (and subdirs) */
 	    test = search_dir(fname, gpath, SUBDIRS);
-	    if (test != NULL) { 
+	    if (test != NULL) {
 		return fname;
 	    }
 	}
@@ -2136,7 +2136,7 @@ char *gretl_addpath (char *fname, int script)
 	if (gpath != NULL && *gpath != '\0') {
 	    /* try looking in default workdir? */
 	    test = search_dir(fname, gpath, SUBDIRS);
-	    if (test != NULL) { 
+	    if (test != NULL) {
 		return fname;
 	    }
 	}
@@ -2155,7 +2155,7 @@ char *gretl_addpath (char *fname, int script)
 	if (test != NULL) {
 	    return fname;
 	}
-    }	    
+    }
 #endif
 
     strcpy(fname, orig);
@@ -2239,7 +2239,7 @@ static int get_gfn_special (char *fname)
  * @fullname: filename to be filled out: must be at least #MAXLEN bytes.
  * @opt: if OPT_S, treat as a script; if OPT_I we're responding
  * to the "include" command; if OPT_W, pass @fname through as is.
- * 
+ *
  * Includes elementary path-searching: try adding various paths to the
  * given @fname, if appropriate, and see if it can be opened. For
  * internal gretl use.
@@ -2283,7 +2283,7 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 	    build_path(fullname, ipath, fname, NULL);
 	    goto test_open;
 	}
-    }	
+    }
 
     if (has_suffix(fullname, ".gfn") && get_gfn_special(fullname)) {
 	/* checked for existence */
@@ -2338,13 +2338,13 @@ int has_system_prefix (const char *fname, SearchType stype)
     if (strlen(fname) < n) {
 	return 0;
     }
-    
+
     if (!strncmp(fname, gretldir, n)) {
 	if (stype == DATA_SEARCH &&
 	    !strncmp(fname + n, "data", 4)) {
 	    ret = 1;
 	} else if (stype == SCRIPT_SEARCH &&
-		   !strncmp(fname + n, "scripts", 7)) { 
+		   !strncmp(fname + n, "scripts", 7)) {
 	    ret = 1;
 	}
     }
@@ -2356,31 +2356,42 @@ enum paths_status_flags {
     STRING_TABLE_WRITTEN = 1 << 0
 };
 
-static void set_gretl_libpath (const char *path)
+static void set_gretl_plugpath (const char *path)
 {
-#ifdef WIN32
-    strcpy(paths.libpath, path);
+    *paths.plugpath = '\0';
+
+#if defined(WIN32) && defined(PKGBUILD)
+    strcpy(paths.plugpath, path);
+    strcat(paths.plugpath, PLUGIN_SFX);
 #else
 # ifdef LIBDIR
     /* respect the libdir set at compile time, e.g. /usr/lib or
-       /usr/lib64 
+       /usr/lib64
     */
-    build_path(paths.libpath, LIBDIR, PLUGIN_SFX, NULL);
+    build_path(paths.plugpath, LIBDIR, PLUGIN_SFX, NULL);
 # else
+#  ifdef WIN32
+    char *p = strstr(path, "\\share");
+#  else
     char *p = strstr(path, "/share");
-    
-    if (p) {
+#  endif
+
+    if (p != NULL) {
+	/* back up a level */
 	size_t len = p - path;
 
-	*paths.libpath = '\0';
-	strncat(paths.libpath, path, len);
-	strcat(paths.libpath, "/lib/");
-	strcat(paths.libpath, PLUGIN_SFX);
+	strncat(paths.plugpath, path, len);
     } else {
-	sprintf(paths.libpath, "%s/lib/%s", path, PLUGIN_SFX);
+	strcpy(paths.plugpath, path);
     }
+    slash_terminate(paths.plugpath);
+    strcat(paths.plugpath, "lib");
+    slash_terminate(paths.plugpath);
+    strcat(paths.plugpath, PLUGIN_SFX);
 # endif /* !LIBDIR */
 #endif /* !WIN32 */
+
+    slash_terminate(paths.plugpath);
 }
 
 static void set_gretl_binbase (const char *path)
@@ -2498,7 +2509,7 @@ const char *gretl_home (void)
     return paths.gretldir;
 }
 
-const char *gretl_lib_path (void)
+const char *gretl_plugin_path (void)
 {
     static int set;
 
@@ -2506,32 +2517,30 @@ const char *gretl_lib_path (void)
 	char *epath = getenv("GRETL_PLUGIN_PATH");
 
 	if (epath != NULL) {
-	    *paths.libpath = '\0';
-	    strncat(paths.libpath, epath, MAXLEN - 1);
+	    *paths.plugpath = '\0';
+	    strncat(paths.plugpath, epath, MAXLEN - 2);
+	    slash_terminate(paths.plugpath);
 	}
 
 #if defined(LIBDIR) || defined(GRETL_PREFIX)
 	/* if blank, try drawing on compiled-in values */
-	if (*paths.libpath == '\0') {
+	if (*paths.plugpath == '\0') {
 # ifdef LIBDIR
-	    strcat(paths.libpath, LIBDIR);
+	    strcat(paths.plugpath, LIBDIR);
 # else
-	    strcat(paths.libpath, GRETL_PREFIX);
-	    slash_terminate(paths.libpath);
-	    strcat(paths.libpath, "lib");
+	    strcat(paths.plugpath, GRETL_PREFIX);
+	    slash_terminate(paths.plugpath);
+	    strcat(paths.plugpath, "lib");
 # endif
-	    slash_terminate(paths.libpath);
-# ifdef PLUGIN_SFX
-	    strcat(paths.libpath, PLUGIN_SFX);
-	    slash_terminate(paths.libpath);
-# endif
+	    slash_terminate(paths.plugpath);
+	    strcat(paths.plugpath, PLUGIN_SFX);
+	    slash_terminate(paths.plugpath);
 	}
 #endif /* LIBDIR or GRETL_PREFIX defined */
-
 	set = 1;
     }
 
-    return paths.libpath;
+    return paths.plugpath;
 }
 
 const char *gretl_dotdir (void)
@@ -2605,7 +2614,7 @@ static const char *regular_default_workdir (void)
 	    if (dir != NULL) {
 		closedir(dir);
 		retval = default_workdir;
-	    } 
+	    }
 	}
     }
 
@@ -2649,7 +2658,7 @@ static int validate_writedir (const char *dirname)
     err = gretl_mkdir(dirname);
     if (err) {
 	gretl_errmsg_sprintf( _("Couldn't create directory '%s'"), dirname);
-    } 
+    }
 
     if (!err) {
 	/* ensure the directory is writable */
@@ -2660,7 +2669,7 @@ static int validate_writedir (const char *dirname)
 	fp = gretl_fopen(testname, "w");
 	if (fp == NULL) {
 	    gretl_errmsg_sprintf(_("Couldn't write to '%s': "
-				   "gretl will not work properly!"), 
+				   "gretl will not work properly!"),
 				 dirname);
 	    err = E_FOPEN;
 	} else {
@@ -2768,7 +2777,7 @@ static void R_path_try_registry (int which, char *targ)
     if (!err) {
 	*targ = '\0';
 	strncat(targ, tmp, MAXLEN - 1);
-    }	
+    }
 }
 
 #endif
@@ -2799,7 +2808,7 @@ const char *gretl_rlib_path (void)
     if (!checked) {
 	R_path_try_registry(RLIB, paths.rlibpath);
 	checked = 1;
-    }	
+    }
 #endif
 
 #if 0
@@ -2970,7 +2979,7 @@ void win32_set_gretldir (const char *progname)
 
 /* We have paths.gretldir in place: now test it by seeing if we can
    open the the GPL file "COPYING", which definitely should be in that
-   directory.  If that doesn't work, try some remedial measures.  
+   directory.  If that doesn't work, try some remedial measures.
    Note, @config_path is the path garnered from the config file,
    which we may or may not have used to write paths.gretldir (and
    which may indeed be an empty string).
@@ -3024,7 +3033,7 @@ static void check_gretldir (char *config_path)
 		*paths.gretldir = '\0';
 		strncat(paths.gretldir, testname, s - testname);
 		strcat(paths.gretldir, "share/gretl/");
-		fprintf(stderr, "gretldir is maybe '%s'?\n", 
+		fprintf(stderr, "gretldir is maybe '%s'?\n",
 			paths.gretldir);
 	    }
 	}
@@ -3049,13 +3058,13 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 	/* environment setting, if any, takes precedence */
 	strcpy(paths.gretldir, ghome);
 	slash_terminate(paths.gretldir);
-    } else if (dirname != NULL && *dirname != '\0' && 
+    } else if (dirname != NULL && *dirname != '\0' &&
 	       *paths.gretldir == '\0') {
 	/* use value from config/registry, unless we already got
 	   a value somehow */
 	strcpy(paths.gretldir, dirname);
 	slash_terminate(paths.gretldir);
-    } 
+    }
 
     if (*paths.gretldir == '\0') {
 #ifdef WIN32
@@ -3077,7 +3086,7 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 
     if (!err) {
 	set_helpfile_option(opt);
-	set_gretl_libpath(paths.gretldir);
+	set_gretl_plugpath(paths.gretldir);
 	set_gretl_binbase(paths.gretldir);
     }
 
@@ -3089,7 +3098,7 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
  * @path: path to the gretl plugins.
  *
  * For use by third-party code: the purpose of this function
- * is to ensure that libgretl can find its plugins. 
+ * is to ensure that libgretl can find its plugins.
  *
  * @prefix, if given, should be the path under which the plugins
  * are installed. On a unix-type system this might be, for example,
@@ -3100,9 +3109,9 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 void set_gretl_plugin_path (const char *path)
 {
     if (path != NULL) {
-	*paths.libpath = '\0';
-	strncat(paths.libpath, path, MAXLEN - 2);
-	slash_terminate(paths.libpath);
+	*paths.plugpath = '\0';
+	strncat(paths.plugpath, path, MAXLEN - 2);
+	slash_terminate(paths.plugpath);
     }
 }
 
@@ -3129,7 +3138,7 @@ static int initialize_dotdir (void)
     dirname = getenv("HOME");
     if (dirname != NULL) {
 	sprintf(paths.dotdir, "%s/.gretl/", dirname);
-    } 
+    }
 #endif
 
     err = validate_writedir(paths.dotdir);
@@ -3206,15 +3215,15 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 {
     int ndelta = 0;
 
-    if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir, 
+    if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir,
 			      PATH_NEEDS_SLASH)) {
 	set_helpfile_option(opt);
-	set_gretl_libpath(paths.gretldir);
+	set_gretl_plugpath(paths.gretldir);
 	ndelta++;
     }
-    
+
     /* native databases */
-    maybe_transcribe_path(paths.dbhost, cpaths->dbhost, 
+    maybe_transcribe_path(paths.dbhost, cpaths->dbhost,
 			  PATH_BLANK_OK);
 
 #ifndef WIN32
@@ -3234,7 +3243,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 
 #ifdef HAVE_MPI
     ndelta += maybe_transcribe_path(paths.mpiexec, cpaths->mpiexec, 0);
-    ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts, 
+    ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts,
 				    PATH_BLANK_OK);
 #endif
 
@@ -3287,7 +3296,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.dbhost) {
 	strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.x12a) {
-	sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);	
+	sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
     } else if (targ == paths.tramo) {
 	sprintf(targ, "%s\\tramo\\tramo.exe", pfx86);
     } else if (targ == paths.rbinpath) {
@@ -3303,7 +3312,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.pypath) {
 	strcpy(targ, "python.exe");
     } else if (targ == paths.jlpath) {
-	strcpy(targ, "julia.exe"); 
+	strcpy(targ, "julia.exe");
     } else if (targ == paths.mpiexec) {
 	strcpy(targ, "mpiexec.exe");
     } else if (targ == paths.mpi_hosts) {
@@ -3336,7 +3345,7 @@ static void show_paths_on_stderr (void)
 
 #else /* !WIN32 */
 
-/* unix-type variants of defaults for any paths that we need 
+/* unix-type variants of defaults for any paths that we need
    that were not found in the gretl config file.
 */
 
@@ -3370,7 +3379,7 @@ static void load_default_path (char *targ)
 	"octave",
 	"stata"
     };
-#endif  
+#endif
 
     if (targ == paths.workdir) {
 	load_default_workdir(targ);
@@ -3494,8 +3503,8 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.pngfont, cpaths->pngfont, 0);
 }
 
-/* This is called after reading the gretl config file at startup 
-   (and only then).  Subsequent updates to paths via the GUI (if any) 
+/* This is called after reading the gretl config file at startup
+   (and only then).  Subsequent updates to paths via the GUI (if any)
    are handled by the function gretl_update_paths().
 
    The no_dotdir member of cpaths is used only when gretlcli is
@@ -3510,7 +3519,7 @@ int gretl_set_paths (ConfigPaths *cpaths)
     int err0 = 0, err1 = 0;
     int retval = 0;
 
-    *current_dir = '\0';	
+    *current_dir = '\0';
     *paths.workdir = '\0';
     *paths.plotfile = '\0';
 
@@ -3524,15 +3533,15 @@ int gretl_set_paths (ConfigPaths *cpaths)
 
     if (cpaths->no_dotdir) {
 	strcpy(paths.dotdir, paths.workdir);
-    }    
+    }
 
-    if (strcmp(paths.dotdir, paths.workdir)) { 
+    if (strcmp(paths.dotdir, paths.workdir)) {
 	err1 = validate_writedir(paths.workdir);
 	if (err1) {
 	    /* try falling back on the default working dir */
 	    const char *defpath = maybe_get_default_workdir();
 
-	    if (defpath != NULL && *defpath != '\0' && 
+	    if (defpath != NULL && *defpath != '\0' &&
 		strcmp(defpath, paths.workdir)) {
 		err1 = validate_writedir(defpath);
 		if (err1 == 0) {
@@ -3566,7 +3575,7 @@ const char *gretl_maybe_switch_dir (const char *fname)
 {
     if (fname[0] == '~' && fname[1] == '/') {
 	char *home = getenv("HOME");
-	
+
 	if (home != NULL && chdir(home) == 0) {
 	    fname += 2;
 	}
@@ -3587,7 +3596,7 @@ const char *gretl_maybe_switch_dir (const char *fname)
  * directory.  Otherwise, if @fname is not already an
  * absolute path, prepend the user's gretl working directory.
  * Otherwise do nothing.
- * 
+ *
  * Returns: the possibly modified filename.
  */
 
@@ -3599,7 +3608,7 @@ char *gretl_maybe_prepend_dir (char *fname)
 
     if (fname[0] == '~' && fname[1] == '/') {
 	char *home = getenv("HOME");
-	
+
 	if (home != NULL) {
 	    build_path(tmp, home, fname + 2, NULL);
 	}
@@ -3620,7 +3629,7 @@ char *gretl_maybe_prepend_dir (char *fname)
  *
  * Attempts to open @fname in read-only mode.  If the file
  * is not found when the name is used "as is", we use
- * gretl_maybe_prepend_dir() to prepend the user's gretl 
+ * gretl_maybe_prepend_dir() to prepend the user's gretl
  * working directory and try again.
  *
  * Returns: file pointer, or NULL on failure.
@@ -3638,7 +3647,7 @@ FILE *gretl_read_user_file (const char *fname)
 	if (*fullname != '\0') {
 	    fp = gretl_fopen(fullname, "r");
 	}
-    }    
+    }
 
     return fp;
 }
@@ -3737,7 +3746,7 @@ int gretl_normalize_path (char *path)
 
     free(P);
     free(pcpy);
-    
+
     return err;
 }
 
@@ -3745,7 +3754,7 @@ int gretl_normalize_path (char *path)
  * slash_terminate:
  * @path: path string.
  *
- * Check whether @path is already slash-terminated, and if  
+ * Check whether @path is already slash-terminated, and if
  * not, append a #SLASH; @path should be a large enough
  * array to accept an extra byte.
  *
@@ -3804,7 +3813,7 @@ static int rc_bool (const char *s)
 	return 1;
     } else {
 	return 0;
-    }	
+    }
 }
 
 static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
@@ -3845,9 +3854,9 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    continue;
 	}
 	*val = '\0';
-	/* get the string that follows " = " */ 
+	/* get the string that follows " = " */
 	strncat(val, line + strlen(key) + 3, MAXLEN - 1);
-	gretl_strstrip(val); 
+	gretl_strstrip(val);
 	if (!strcmp(key, "gretldir")) {
 	    strncat(cpaths->gretldir, val, MAXLEN - 1);
 #ifndef WIN32
@@ -3864,9 +3873,9 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	} else if (!strcmp(key, "usecwd")) {
 #if GRETLCLI_USE_CWD
 	    ; /* handled later */
-#else	    
+#else
 	    handle_use_cwd(rc_bool(val), cpaths);
-#endif	    
+#endif
 	} else if (!strcmp(key, "lcnumeric")) {
 	    libset_set_bool(FORCE_DECP, !rc_bool(val));
 	} else if (!strcmp(key, "dbhost")) {
@@ -3920,8 +3929,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 
 #if GRETLCLI_USE_CWD
     /* "workdir" is always the current directory */
-    handle_use_cwd(1, cpaths);  
-#endif    
+    handle_use_cwd(1, cpaths);
+#endif
 }
 
 #ifndef WIN32
@@ -3950,7 +3959,7 @@ void get_gretl_rc_path (char *rcfile)
    of the CLI program, gretlcli
 */
 
-int cli_read_rc (void) 
+int cli_read_rc (void)
 {
     ConfigPaths cpaths = {0};
     char rcfile[FILENAME_MAX];
@@ -4006,7 +4015,7 @@ const char *gretl_app_support_dir (void)
 	    char *p;
 	    int err;
 
-	    sprintf(suppdir, "%s/Library/Application Support/gretl/functions", 
+	    sprintf(suppdir, "%s/Library/Application Support/gretl/functions",
 		    home);
 	    p = strrchr(suppdir, '/') + 1;
 	    err = gretl_mkdir(suppdir);
@@ -4079,7 +4088,7 @@ static int get_system_install_path (char *path, const char *subdir)
 }
 
 /* get a path that's suitable for writing a function
-   package on installation 
+   package on installation
 */
 
 const char *gretl_function_package_path (void)
@@ -4089,7 +4098,7 @@ const char *gretl_function_package_path (void)
     if (*path == '\0') {
 	int sys_first = 1;
 	int err = 0;
-	
+
 #if defined(OS_OSX)
 	/* we prefer writing to ~/Library/Application Support */
 	sys_first = 0;
@@ -4097,7 +4106,7 @@ const char *gretl_function_package_path (void)
 	if (win32_uses_virtual_store()) {
 	    /* don't write to virtualized location */
 	    sys_first = 0;
-	}    
+	}
 #endif
 
 	if (sys_first) {
@@ -4118,4 +4127,3 @@ const char *gretl_function_package_path (void)
 
     return path;
 }
-

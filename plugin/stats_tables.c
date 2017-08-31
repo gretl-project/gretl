@@ -160,9 +160,9 @@ int dw_lookup (int n, int k, gretl_matrix **pm)
 	
     /* Open data file */
 #ifdef WIN32
-    sprintf(datfile, "%splugins\\data\\dwdata.gz", gretl_lib_path());
+    sprintf(datfile, "%sdata\\dwdata.gz", gretl_plugin_path());
 #else
-    sprintf(datfile, "%sdata/dwdata.gz", gretl_lib_path());
+    sprintf(datfile, "%sdata/dwdata.gz", gretl_plugin_path());
 #endif
     fz = gretl_gzopen(datfile, "rb");
     if (fz == NULL) {
