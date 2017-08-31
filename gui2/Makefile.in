@@ -212,13 +212,12 @@ ifeq ($(win32_build),yes)
 	--define __GNUWIN32__
 else
   SRCS += clipboard.c
+  HACK_SRC = gtkfontselhack.c fontfilter.c
+  HACK_HDR = gtkfontselhack.h fontfilter.h
+  HACK_OBJ = gtkfontselhack.o fontfilter.o
 endif
 
 OBJS = $(SRCS:.c=.o)
-
-HACK_SRC = gtkfontselhack.c fontfilter.c
-HACK_HDR = gtkfontselhack.h fontfilter.h
-HACK_OBJ = gtkfontselhack.o fontfilter.o
 
 all: $(PROG) gretl.lang NEWS
 

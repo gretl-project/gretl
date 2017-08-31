@@ -133,7 +133,7 @@ for f in \
 	librtmp-1.dll \
 	libpcre-1.dll \
 	libunistring-2.dll \
-	libfortran-4.dll \
+	libgfortran-4.dll \
 	libhogweed-4.dll \
 	libgnutls-30.dll \
 	libnettle-6.dll \
