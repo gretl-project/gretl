@@ -203,16 +203,19 @@ static int file_get_line (ExecState *s)
     return 0;
 }
 
+#ifdef ENABLE_NLS
+
 static void nls_init (void)
 {
-#ifdef ENABLE_NLS
 # if defined(WIN32) && defined(PKGBUILD)
-    char LOCALEDIR[MAXLEN];
+    char localedir[MAXLEN];
 
-    build_path(LOCALEDIR, gretl_home(), "locale", NULL);
+    build_path(localedir, gretl_home(), "locale", NULL);
+# else
+    const char *localedir = LOCALEDIR;
 # endif /* WIN32 package */
     setlocale(LC_ALL, "");
-    bindtextdomain(PACKAGE, LOCALEDIR);
+    bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE); 
     iso_gettext("@CLI_INIT");
 
@@ -221,9 +224,10 @@ static void nls_init (void)
     reset_local_decpoint();
 # ifdef WIN32
     cli_set_win32_charset(PACKAGE);
-# endif    
-#endif /* ENABLE_NLS */
+# endif
 }
+
+#endif /* ENABLE_NLS */
 
 static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
 {

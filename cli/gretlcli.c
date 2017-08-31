@@ -268,12 +268,14 @@ static int file_get_line (ExecState *s)
 static void nls_init (void)
 {
 # if defined(WIN32) && defined(PKGBUILD)
-    char LOCALEDIR[MAXLEN];
+    char localedir[MAXLEN];
 
-    build_path(LOCALEDIR, gretl_home(), "locale", NULL);
+    build_path(localedir, gretl_home(), "locale", NULL);
+# else
+    const char *localedir = LOCALEDIR;
 # endif /* WIN32 package */
     setlocale(LC_ALL, "");
-    bindtextdomain(PACKAGE, LOCALEDIR);
+    bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE); 
     iso_gettext("@CLI_INIT");
 

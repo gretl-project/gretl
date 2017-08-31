@@ -17186,6 +17186,9 @@ case $host_os in
     $as_echo "#define OS_OSX 1" >>confdefs.h
 
   ;;
+  *mingw*)
+    have_lapack="yes"
+  ;;
   *cygwin*)
 
 # Check whether --with-lapack-prefix was given.

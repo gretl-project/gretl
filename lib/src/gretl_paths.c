@@ -2521,8 +2521,10 @@ const char *gretl_lib_path (void)
 	    strcat(paths.libpath, "lib");
 # endif
 	    slash_terminate(paths.libpath);
+# ifdef PLUGIN_SFX
 	    strcat(paths.libpath, PLUGIN_SFX);
 	    slash_terminate(paths.libpath);
+# endif
 	}
 #endif /* LIBDIR or GRETL_PREFIX defined */
 

@@ -56,7 +56,6 @@ ifneq ($(strip $(bcdir)),)
   INSTALL_BC = install-bc
 endif
 
-
 ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"

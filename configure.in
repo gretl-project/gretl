@@ -529,13 +529,16 @@ case $host_os in
     have_lapack="yes"
     darwin_build="yes"
     AC_DEFINE(OS_OSX)
-  ;; 
+  ;;
+  *mingw*)
+    have_lapack="yes"
+  ;;
   *cygwin*) 
     AM_PATH_LAPACK(, have_lapack="yes") 
     if test "$have_lapack" = "yes" ; then
       LAPACK_LIBS="${LAPACK_LIBS} -XCClinker,-lgfortran"
     fi
-  ;;  
+  ;;
   *)
     AM_PATH_LAPACK(, have_lapack="yes") 
     if test "$have_lapack" = "yes" ; then

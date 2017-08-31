@@ -206,7 +206,8 @@ ifeq ($(win32_build),yes)
   WINLIBS = -lwsock32 -lole32 -lshlwapi -ladvapi32 -lcomdlg32
   WINOBJ = gretlres.o
   WINGUI = -mwindows
-  RC = windres
+  WINDRES = windres
+  GRETLRC = $(topsrc)/win32/gretl.rc
   RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
 else
@@ -233,8 +234,8 @@ $(PROG): .deps $(OBJS) $(HACK_OBJ) $(WINOBJ)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
-gretlres.o: gretl.rc
-	$(RC) $(RCFLAGS) $< $@
+gretlres.o: $(GRETLRC)
+	$(WINDRES) $(RCFLAGS) $< $@
 
 mklang.o: mklang.c $(LANGDEPS)
 	$(AMP)$(CC) $(CFLAGS) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
