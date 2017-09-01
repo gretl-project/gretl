@@ -19,6 +19,7 @@ quiet_build = @quiet_build@
 gtk_version = @gtk_version@
 use_gsf = @use_gsf@
 win32_build = @win32_build@
+win32pkg = @win32pkg@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -42,7 +43,9 @@ SVM_LIBS = @SVM_LIBS@
 
 OMP_OPT = @OPENMP_CFLAGS@
 
-ifeq ($(gtk_version),3.0)
+ifeq ($(win32pkg),yes)
+  plugindir = $(libdir)/plugins
+else ifeq ($(gtk_version),3.0)
   plugindir = $(libdir)/gretl-gtk3
 else
   plugindir = $(libdir)/gretl-gtk2

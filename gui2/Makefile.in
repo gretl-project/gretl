@@ -20,6 +20,7 @@ have_zlib = @have_zlib@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 win32_build = @win32_build@
+win32pkg = @win32pkg@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
 
@@ -115,14 +116,19 @@ endif
 DEFS = $(NLSDEF) $(SVDEF)
 
 # Directories
-bindir	= $(prefix)/bin
-gretldir = $(prefix)/share/gretl
-uidir = $(prefix)/share/gretl/ui
+ifeq ($(win32pkg),yes)
+  gretldir = $(datarootdir)/gretl
+  uidir = $(datarootdir)/gretl/ui
+  appdatadir = $(datarootdir)/appdata
+else
+  gretldir = $(datarootdir)
+  uidir = $(datarootdir)/ui
+  appdatadir = $(datarootdir)
+endif
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
 clisrc = $(topsrc)/cli
 docdir = $(topsrc)/doc
-appdatadir = $(datarootdir)/appdata
 
 LANGDEPS = $(libsrc)/options.c \
            $(libsrc)/genlex.c \

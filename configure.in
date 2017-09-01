@@ -73,6 +73,7 @@ check_gnuplot="yes"
 use_curl="yes"
 darwin_build="no"
 win32_build="no"
+win32pkg="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
@@ -350,6 +351,9 @@ dnl check for Windows build
 case $host_os in
   mingw*)
     win32_build=yes
+    if test $pkg_build = yes ; then
+      win32pkg=yes
+    fi
   ;;
 esac
 
@@ -357,7 +361,7 @@ AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
 
-if test "win32_build" = "no" ; then
+if test "$win32_build" = "no" ; then
   AC_LIBTOOL_DLOPEN
 fi
 
@@ -868,6 +872,7 @@ AC_SUBST(build_gui)
 AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
 AC_SUBST(win32_build)
+AC_SUBST(win32pkg)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)
