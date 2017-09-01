@@ -841,7 +841,7 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
     if (ptr != NULL && type != GRETL_TYPE_DOUBLE &&
-	type != GRETL_TYPE_INT) {
+	type != GRETL_TYPE_INT && type != GRETL_TYPE_MATRIX) {
 	myerr = E_TYPES;
     }
 
@@ -850,10 +850,19 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 	    double *px = (double *) ptr;
 
 	    x = *px;
-	} else {
+	} else if (type == GRETL_TYPE_INT) {
 	    int *pi = (int *) ptr;
 
 	    x = (double) *pi;
+	} else {
+	    /* must be a matrix */
+	    gretl_matrix *m = ptr;
+
+	    if (gretl_matrix_is_scalar(m)) {
+		x = m->val[0];
+	    } else {
+		myerr = E_TYPES;
+	    }
 	}
     }
 
