@@ -10,8 +10,10 @@ INSTALL = @INSTALL@
 
 ifeq ($(win32pkg),yes)
   gretldir = $(prefix)
+  styledir = $(gretldir)/gtksourceview
 else
   gretldir = $(datarootdir)/gretl
+  styledir = $(gretldir)/styles
 endif
 
 tooldir = $(topsrc)/tools
@@ -115,9 +117,9 @@ install_help: $(query_make_help)
 	if test -f $$f ; then $(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; fi ; done
 
 install_styles:
-	$(INSTALL_DATA) $(sharesrc)/styles/build.xml $(DESTDIR)$(gretldir)/styles
-	$(INSTALL_DATA) $(sharesrc)/styles/darkslate.xml $(DESTDIR)$(gretldir)/styles
-	$(INSTALL_DATA) $(sharesrc)/styles/espresso.xml $(DESTDIR)$(gretldir)/styles
+	$(INSTALL_DATA) $(sharesrc)/styles/build.xml $(DESTDIR)$(styledir)
+	$(INSTALL_DATA) $(sharesrc)/styles/darkslate.xml $(DESTDIR)$(styledir)
+	$(INSTALL_DATA) $(sharesrc)/styles/espresso.xml $(DESTDIR)$(styledir)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir) 
@@ -131,7 +133,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/styles
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(styledir)
 
 helpclean:
 	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done

@@ -3476,6 +3476,8 @@ mingw* | pw32*)
     lt_cv_deplibs_check_method='file_magic file format (pei*-i386(.*architecture: i386)?|pe-arm-wince|pe-x86-64)'
     lt_cv_file_magic_cmd='$OBJDUMP -f'
   fi
+  # gretl hack: allow linking in static libs on Windows under mingw
+  lt_cv_deplibs_check_method=pass_all
   ;;
 
 cegcc*)
