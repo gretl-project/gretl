@@ -710,7 +710,7 @@ foreign_script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 
 /* Packages for Windows and OS X: gtksourceview needs to
    be told where to find its language-specs and style
-   files: these live under gretl/share inside the package.
+   files: these live under gtksourceview inside the package.
 
    On Windows we need to ensure that the "set_search_path"
    functions are fed a UTF-8 path, since gtksourceview uses
