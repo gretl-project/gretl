@@ -1,9 +1,13 @@
 topsrc = @top_srcdir@
+datarootdir = @datarootdir@
+prefix = @prefix@
 
 CC = @CC@
 HOSTCC = @HOSTCC@
 INSTALL_DATA = cp -fp
+
 swap_ends = @swap_ends@
+win32pkg = @win32pkg@
 
 ifeq ($(HOSTCC),)
   HOSTCC = $(CC)
@@ -13,8 +17,12 @@ ifeq ($(swap_ends),yes)
   mkbin_opt = --swap-ends
 endif
 
-prefix = @prefix@
-gretldir = $(prefix)/share/gretl
+ifeq ($(win32pkg),yes)
+  gretldir = $(prefix)
+else
+  gretldir = $(datarootdir)/gretl
+endif
+
 VPATH = $(topsrc)/share/bcih
 
 fedstl.bin: mkbin fedstl.dat
@@ -28,7 +36,7 @@ install: fedstl.bin
 	$(INSTALL_DATA) $(topsrc)/share/bcih/fedstl.idx $(DESTDIR)$(gretldir)/db/fedstl.idx
 
 clean:
-	rm -f mkbin fedstl.bin
+	rm -f mkbin* fedstl.bin
 
 distclean: clean
 	rm -f Makefile

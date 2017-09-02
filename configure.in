@@ -82,6 +82,7 @@ have_mac_integration="no"
 gui_disabled="no"
 gp_3d="yes"
 MAKE="make"
+mingw_prefix=
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
 
@@ -354,6 +355,7 @@ case $host_os in
     if test $pkg_build = yes ; then
       win32pkg=yes
     fi
+    mingw_prefix="$host_cpu-$host_vendor-$host_os-"
   ;;
 esac
 
@@ -453,7 +455,13 @@ fi
 dnl
 dnl Check for libreadline for use with gretlcli
 dnl
-if test "$try_readline" = "yes" ; then
+if test "x$CROSS_READLINE_LIBS" != x ; then
+   READLINE_LIBS="$CROSS_READLINE_LIBS"
+   have_readline=yes
+   AC_DEFINE(NEW_READLINE)
+   AC_SUBST(READLINE_CFLAGS)
+   AC_SUBST(READLINE_LIBS)
+elif test "$try_readline" = "yes" ; then
    AM_PATH_READLINE(have_readline="yes", have_readline="no")
    if test "$have_readline" = "no" ; then
      READLINE_LIBS=""
@@ -873,6 +881,7 @@ AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
+AC_SUBST(mingw_prefix)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)

@@ -6,6 +6,7 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
+EXEEXT = @EXEEXT@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -102,7 +103,7 @@ $(CLI): .deps $(OBJS)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
 
-gretlmpi: .deps $(MPIOBJ)
+$(MPICLI): .deps $(MPIOBJ)
 	$(MPILD_ECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
 	$(GRETLLIB) $(MPILINK)

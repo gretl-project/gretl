@@ -35,6 +35,7 @@ ifeq ($(use_curl),yes)
 endif
 
 win32_build = @win32_build@
+win32pkg = @win32pkg@
 
 have_mpi = @have_mpi@
 MPI_CFLAGS = @MPI_CFLAGS@
@@ -46,9 +47,9 @@ else
 endif
 OMP_OPT = @OPENMP_CFLAGS@
 
-CURRENT=@LIBGRETL_CURRENT@
-REVISION=@LIBGRETL_REVISION@
-AGE=@LIBGRETL_AGE@
+CURRENT = @LIBGRETL_CURRENT@
+REVISION = @LIBGRETL_REVISION@
+AGE = @LIBGRETL_AGE@
 
 quiet_build = @quiet_build@
 
@@ -88,7 +89,13 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(pkgconfigdir)
 
-LIBGRETL = libgretl-1.0.la 
+LIBGRETL = libgretl-1.0.la
+
+ifeq ($(win32pkg),yes)
+  VERSION_INFO = -version-info 1
+else
+  VERSION_INFO = -version-info $(CURRENT):$(REVISION):$(AGE)
+endif
 
 LIBS = $(LAPACK_LIBS) -lm $(LIBDL) -lz $(XML_LIBS) \
 	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS) $(RT_LIB)
@@ -306,7 +313,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(RPATH) $(LIBS) -version-info $(CURRENT):$(REVISION):$(AGE)
+	-rpath $(RPATH) $(LIBS) $(VERSION_INFO)
 
 .deps:
 	$(AMP)mkdir $@

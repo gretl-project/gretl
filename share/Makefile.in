@@ -3,11 +3,17 @@ datarootdir = @datarootdir@
 
 prefix = @prefix@
 build_docs = @build_docs@
+win32pkg = @win32pkg@
 
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 
-gretldir = $(prefix)/share/gretl
+ifeq ($(win32pkg),yes)
+  gretldir = $(prefix)
+else
+  gretldir = $(datarootdir)/gretl
+endif
+
 tooldir = $(topsrc)/tools
 sharesrc = $(topsrc)/share
 pdfdir = ../doc/tex

@@ -13,6 +13,7 @@ AVX_CFLAGS = @AVX_CFLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
+EXEEXT = @EXEEXT@
 LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
@@ -23,6 +24,7 @@ win32_build = @win32_build@
 win32pkg = @win32pkg@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
+mingw_prefix = @mingw_prefix@
 
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
@@ -65,8 +67,10 @@ ifeq ($(have_sourceview),2.0)
   JULIA_LANG = julia_sv2.lang
 endif
 
-ifeq ($(pkg_build),yes)
-  # special for building Windows and OS X packages
+ifeq ($(win32pkg),yes)
+  langdir = $(prefix)/gtksourceview
+  JULIA_LANG = julia_sv2.lang
+else ifeq ($(pkg_build),yes)
   langdir = $(prefix)/share/gretl/gtksourceview
   JULIA_LANG = julia_sv2.lang
 else ifneq ($(prefix),$(GTKSOURCEVIEW_PREFIX))
@@ -117,14 +121,15 @@ DEFS = $(NLSDEF) $(SVDEF)
 
 # Directories
 ifeq ($(win32pkg),yes)
-  gretldir = $(datarootdir)/gretl
-  uidir = $(datarootdir)/gretl/ui
-  appdatadir = $(datarootdir)/appdata
+  gretldir = $(prefix)
+  uidir = $(gretldir)/ui
+  appdatadir = $(gretldir)/appdata
 else
   gretldir = $(datarootdir)
   uidir = $(datarootdir)/ui
   appdatadir = $(datarootdir)
 endif
+
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
 clisrc = $(topsrc)/cli
@@ -212,7 +217,7 @@ ifeq ($(win32_build),yes)
   WINLIBS = -lwsock32 -lole32 -lshlwapi -ladvapi32 -lcomdlg32
   WINOBJ = gretlres.o
   WINGUI = -mwindows
-  WINDRES = windres
+  WINDRES = $(mingw_prefix)windres
   GRETLRC = $(topsrc)/win32/gretl.rc
   RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
