@@ -1,7 +1,3 @@
-include SVAR_constraints.inp
-
-# ----------------------------------------------------------------------------
-
 function matrices SampleMatrices(matrix Ra, matrix da, matrix Rb, matrix db)
   /* 
      Returns an array with A and B evaluated at a random point 
