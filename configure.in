@@ -82,7 +82,6 @@ have_mac_integration="no"
 gui_disabled="no"
 gp_3d="yes"
 MAKE="make"
-mingw_prefix=
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
 
@@ -355,7 +354,10 @@ case $host_os in
     if test $pkg_build = yes ; then
       win32pkg=yes
     fi
-    mingw_prefix="$host_cpu-$host_vendor-$host_os-"
+    if test "x$WINDRES" = x ; then
+      WINDRES=windres
+    fi
+    AC_SUBST(WINDRES)
   ;;
 esac
 
@@ -881,7 +883,6 @@ AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
-AC_SUBST(mingw_prefix)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)

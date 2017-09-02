@@ -24,7 +24,6 @@ win32_build = @win32_build@
 win32pkg = @win32pkg@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
-mingw_prefix = @mingw_prefix@
 
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
@@ -217,7 +216,7 @@ ifeq ($(win32_build),yes)
   WINLIBS = -lwsock32 -lole32 -lshlwapi -ladvapi32 -lcomdlg32
   WINOBJ = gretlres.o
   WINGUI = -mwindows
-  WINDRES = $(mingw_prefix)windres
+  WINDRES = @WINDRES@
   GRETLRC = $(topsrc)/win32/gretl.rc
   RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__

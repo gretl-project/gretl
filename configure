@@ -668,7 +668,6 @@ have_audio
 have_gnu_regex
 fake_gtkspinner
 have_sourceview
-mingw_prefix
 win32pkg
 win32_build
 mac_native
@@ -757,6 +756,7 @@ DUMPBIN
 LD
 FGREP
 LIBTOOL
+WINDRES
 HAVE_AUDIO
 HAVE_TRAMO
 HAVE_X12A
@@ -2874,7 +2874,6 @@ have_mac_integration="no"
 gui_disabled="no"
 gp_3d="yes"
 MAKE="make"
-mingw_prefix=
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
 
@@ -7347,7 +7346,10 @@ case $host_os in
     if test $pkg_build = yes ; then
       win32pkg=yes
     fi
-    mingw_prefix="$host_cpu-$host_vendor-$host_os-"
+    if test "x$WINDRES" = x ; then
+      WINDRES=windres
+    fi
+
   ;;
 esac
 
@@ -19600,7 +19602,6 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
-
 
 
 
