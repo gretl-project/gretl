@@ -626,6 +626,7 @@ void set_app_font (const char *fontname, int remember)
 
 #ifdef G_OS_WIN32
     if (fontname == NULL && *appfontname == '\0') {
+	/* as we're called at startup from gretl.c */
 	get_default_windows_app_font(appfontname);
     }
 #endif
@@ -2447,7 +2448,7 @@ static int fontsel_code (GtkAction *action)
 
 #if defined(G_OS_WIN32)
 
-void font_selector (GtkAction *action)
+void windows_font_selector (GtkAction *action)
 {
     int which = fontsel_code(action);
     char fontname[128];
@@ -2546,7 +2547,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
     gtk_widget_destroy(GTK_WIDGET(fc));
 }
 
-void font_selector (GtkAction *action)
+void chooser_font_selector (GtkAction *action)
 {
     static GtkWidget *fc = NULL;
     GtkFontFilterFunc filter;
@@ -2636,7 +2637,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-void font_selector (GtkAction *action)
+void default_font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
     int filter, which = fontsel_code(action);
@@ -2681,6 +2682,17 @@ void font_selector (GtkAction *action)
 }
 
 #endif /* end font selection dialog switch */
+
+void font_selector (GtkAction *action)
+{
+#if defined(G_OS_WIN32)
+    windows_font_selector(action);
+#elif HAVE_GTK_FONT_CHOOSER
+    chooser_font_selector(action);
+#else
+    default_font_selector(action);
+#endif
+}
 
 static void impose_font_scale (int scale, int remember)
 {
