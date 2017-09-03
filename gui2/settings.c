@@ -593,6 +593,23 @@ const char *get_fixed_fontname (void)
     return fixedfontname;
 }
 
+#ifdef G_OS_WIN32
+
+static void font_try_harder (const char *fontname)
+{
+    gchar *rc;
+
+    rc = g_strdup_printf("style \"myfont\" {\n"
+			 "  font_name = \"%s\"\n}\n"
+			 "widget_class \"*\" style \"myfont\"\n"
+			 "gtk-font-name = \"%s\"\n",
+			 fontname, fontname);
+    gtk_rc_parse_string(rc);
+    g_free(rc);
+}
+
+#endif
+
 void set_app_font (const char *fontname, int remember)
 {
     GtkSettings *settings;
@@ -655,6 +672,9 @@ void set_app_font (const char *fontname, int remember)
 	    fprintf(stderr, "set_app_font: setting '%s'\n", fontname);
 	    g_object_set(G_OBJECT(settings), "gtk-font-name", fontname, NULL);
 	    g_object_unref(font);
+#ifdef G_OS_WIN32
+	    font_try_harder(fontname);
+#endif
 	}
 
 	gtk_widget_destroy(w);
@@ -3108,6 +3128,10 @@ void set_up_windows_look (void)
 	fprintf(stderr, "gtkrc = '%s'\n", gtkrc);
 	gtk_rc_parse(gtkrc);
 	g_free(gtkrc);
+    } else {
+	GtkSettings *settings = gtk_settings_get_default();
+
+	g_object_set(G_OBJECT(settings), "gtk-theme-name", "Raleigh", NULL);
     }
 }
 
