@@ -638,11 +638,15 @@ void set_app_font (const char *fontname, int remember)
 	PangoContext *pc;
 	PangoFont *font;
 
-	w = gtk_label_new("");
+	w = gtk_label_new("text");
 	pfd = pango_font_description_from_string(fontname);
 	pc = gtk_widget_get_pango_context(w);
 	font = pango_context_load_font(pc, pfd);
 
+#ifdef G_OS_WIN32
+	fprintf(stderr, "set_app_font, '%s': PangoFont=%p\n", fontname,
+		(void *) font);
+#endif
 	if (font != NULL) {
 	    /* OK, found it */
 	    if (remember) {
