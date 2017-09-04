@@ -70,10 +70,6 @@ void set_script_output_policy (int p, windata_t *vwin);
 
 int get_script_output_policy (void);
 
-int get_thread_warn (void);
-
-void set_thread_warn (int s);
-
 int write_rc (void);
 
 void dump_rc (void);

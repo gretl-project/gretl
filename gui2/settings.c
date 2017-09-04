@@ -154,9 +154,6 @@ static gboolean modtab_asterisks = TRUE;
 static int modtab_digits = 4;
 static gboolean modtab_decimals;
 
-/* warn about problematic BLAS threading? */
-static gboolean thread_warn = TRUE;
-
 typedef enum {
     USERSET  = 1 << 0,  /* user-level variable */
     BOOLSET  = 1 << 1,  /* boolean value (user) */
@@ -359,8 +356,6 @@ RCVAR rc_vars[] = {
       INVISET | INTSET, 0, TAB_NONE, NULL },
     { "modtab_decimals", "Model table decimal places", NULL, &modtab_decimals, 
       INVISET | INTSET, 0, TAB_NONE, NULL },
-    { "thread_warning", "Warn re. threading incompatibility", NULL, &thread_warn,
-      INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "author_mail", "Package author email", NULL, &author_mail,
       INVISET | SKIPSET, sizeof author_mail, TAB_NONE, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
@@ -463,16 +458,6 @@ int show_workdir_tooltip (void)
 int get_keep_folder (void)
 {
     return keep_folder;
-}
-
-int get_thread_warn (void)
-{
-    return thread_warn;
-}
-
-void set_thread_warn (int s)
-{
-    thread_warn = (s != 0);
 }
 
 void set_script_output_policy (int p, windata_t *vwin)
