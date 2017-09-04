@@ -258,6 +258,8 @@ void get_default_windows_app_font (char *target)
 	/* fallback */
 	strcpy(target, "tahoma 8");
     }
+
+    fprintf(stderr, "get_default_windows_app_font: '%s'\n", target);
 }
 
 void gretl_win32_debug_init (int debug)

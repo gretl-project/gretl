@@ -599,6 +599,8 @@ static void font_try_harder (const char *fontname)
 {
     gchar *rc;
 
+    fprintf(stderr, "font_try_harder() called\n");
+
     rc = g_strdup_printf("style \"myfont\" {\n"
 			 "  font_name = \"%s\"\n}\n"
 			 "widget_class \"*\" style \"myfont\"\n"
@@ -625,6 +627,8 @@ void set_app_font (const char *fontname, int remember)
     g_object_set(G_OBJECT(settings), "gtk-menu-images", TRUE, NULL);
 
 #ifdef G_OS_WIN32
+    fprintf(stderr, "set_app_font: incoming fontname='%s', remember=%d\n",
+	    fontname == NULL ? "" : fontname, remember);
     if (fontname == NULL && *appfontname == '\0') {
 	/* as we're called at startup from gretl.c */
 	get_default_windows_app_font(appfontname);
@@ -666,7 +670,7 @@ void set_app_font (const char *fontname, int remember)
 	    if (remember) {
 		strcpy(appfontname, fontname);
 	    }
-	    fprintf(stderr, "set_app_font: setting '%s'\n", fontname);
+	    fprintf(stderr, "set_app_font: now setting '%s'\n", fontname);
 	    g_object_set(G_OBJECT(settings), "gtk-font-name", fontname, NULL);
 	    g_object_unref(font);
 #ifdef G_OS_WIN32
