@@ -1926,8 +1926,8 @@ static void add_conditional_items (windata_t *vwin)
     GtkUIManager *ui = vwin->ui;
     int add_appfont = 1;
 
-#ifdef G_OS_WIN32
-    if (0 && using_wimp()) {
+#if 0 /* ifdef G_OS_WIN32 */
+    if (using_wimp()) {
 	/* disable choice of "Menu font" when using MS-Windows theme */
 	add_appfont = 0;
     }

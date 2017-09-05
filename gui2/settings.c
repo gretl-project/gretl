@@ -625,8 +625,10 @@ void set_app_font (const char *fontname, int remember)
     GtkSettings *settings;
     gchar *deffont = NULL;
 
+#if 0
     fprintf(stderr, "set_app_font: fontname='%s', remember=%d, "
 	    "appfontname='%s'\n", fontname, remember, appfontname);
+#endif
 
     if (fontname != NULL && *fontname == '\0') {
 	return;
@@ -639,7 +641,7 @@ void set_app_font (const char *fontname, int remember)
 
     if (!default_recorded) {
 	record_system_appfont(settings, &deffont);
-	fprintf(stderr, "record default: system '%s', gtk '%s'\n",
+	fprintf(stderr, "record app font default: system '%s', gtk '%s'\n",
 		system_appfont, deffont);
 	default_recorded = 1;
     }
@@ -672,7 +674,6 @@ void set_app_font (const char *fontname, int remember)
 #else
 	g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
 #endif
-	fprintf(stderr, "set_app_font (1): setting '%s'\n", appfontname);
     } else {
 	/* loading a user-specified font: check that it works */
 	GtkWidget *w;
@@ -690,7 +691,6 @@ void set_app_font (const char *fontname, int remember)
 	    if (remember) {
 		strcpy(appfontname, fontname);
 	    }
-	    fprintf(stderr, "set_app_font (2): setting '%s'\n", fontname);
 #ifdef G_OS_WIN32
 	    win32_set_font(fontname, settings);
 #else
