@@ -641,6 +641,7 @@ void set_app_font (const char *fontname, int remember)
 	record_system_appfont(settings, &deffont);
 	fprintf(stderr, "record default: system '%s', gtk '%s'\n",
 		system_appfont, deffont);
+	default_recorded = 1;
     }
 
 #ifdef G_OS_WIN32
@@ -665,7 +666,7 @@ void set_app_font (const char *fontname, int remember)
     }
 
     if (fontname == NULL) {
-	/* just loading the default font (pre-checked) */
+	/* just loading @appfontname (pre-checked) */
 #ifdef G_OS_WIN32
 	win32_set_font(appfontname, settings);
 #else
@@ -2470,23 +2471,28 @@ static int fontsel_code (GtkAction *action)
     }
 }
 
-/* font selection: Windows version first */
-
-#if defined(G_OS_WIN32)
-
-void windows_font_selector (GtkAction *action)
+static int choose_fontsel_action (void)
 {
     const char *opts[] = {
 	N_("Select a specific font"),
 	N_("Reset to default")
     };
+
+    return radio_dialog(NULL, NULL, opts, 2, 0, 0,
+			mdata->main);
+}
+
+/* font selection: Windows version first */
+
+#if defined(G_OS_WIN32)
+
+static void windows_font_selector (GtkAction *action)
+{
     int resp, which = fontsel_code(action);
     char fontname[128];
 
     *fontname = '\0';
-
-    resp = radio_dialog(NULL, NULL, opts, 2, 0, 0,
-			mdata->main);
+    resp = choose_fontsel_action();
 
     if (resp == 0) {
 	if (which == FIXED_FONT_SELECTION) {
@@ -2562,11 +2568,10 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 
 	if (mono) {
 	    set_fixed_font(fontname, 1);
-	    write_rc();
 	} else {
 	    set_app_font(fontname, 1);
-	    write_rc();
 	}
+	write_rc();
     }
 
     g_free(fontname);
@@ -2574,7 +2579,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
     gtk_widget_destroy(GTK_WIDGET(fc));
 }
 
-void chooser_font_selector (GtkAction *action)
+static void chooser_font_selector (GtkAction *action)
 {
     static GtkWidget *fc = NULL;
     GtkFontFilterFunc filter;
@@ -2582,11 +2587,25 @@ void chooser_font_selector (GtkAction *action)
     int which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
-    int err = 0;
+    int resp, err = 0;
 
     if (fc != NULL) {
 	gtk_window_present(GTK_WINDOW(fc));
         return;
+    }
+
+    resp = choose_fontsel_action();
+    if (resp == 1) {
+	/* reset to default */
+	if (which == FIXED_FONT_SELECTION) {
+	    set_fixed_font(default_fixedfont, 1);
+	} else {
+	    set_app_font(system_appfont, 1);
+	}
+	write_rc();
+	return;
+    } else if (resp != 0) {
+	return;
     }
 
     if (which == FIXED_FONT_SELECTION) {
@@ -2664,17 +2683,32 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-void default_font_selector (GtkAction *action)
+static void standard_font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
     int filter, which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
+    int resp;
 
     if (fontsel != NULL) {
 	gtk_window_present(GTK_WINDOW(fontsel));
         return;
     }
+
+    resp = choose_fontsel_action();
+    if (resp == 1) {
+	/* reset to default */
+	if (which == FIXED_FONT_SELECTION) {
+	    set_fixed_font(default_fixedfont, 1);
+	} else {
+	    set_app_font(system_appfont, 1);
+	}
+	write_rc();
+	return;
+    } else if (resp != 0) {
+	return;
+    }    
 
     if (which == FIXED_FONT_SELECTION) {
 	title = _("Font for gretl output windows");
@@ -2717,7 +2751,7 @@ void font_selector (GtkAction *action)
 #elif HAVE_GTK_FONT_CHOOSER
     chooser_font_selector(action);
 #else
-    default_font_selector(action);
+    standard_font_selector(action);
 #endif
 }
 
