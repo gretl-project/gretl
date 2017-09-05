@@ -251,7 +251,9 @@ void get_default_windows_app_font (char *target)
 	double y_scale = 72.0 / GetDeviceCaps(screen, LOGPIXELSY);
 	int point_size = (int) (ncm.lfMenuFont.lfHeight * y_scale);
 
-	if (point_size < 0) point_size = -point_size;
+	if (point_size < 0) {
+	    point_size = -point_size;
+	}
 	sprintf(target, "%s %d", ncm.lfMenuFont.lfFaceName, point_size);
 	ReleaseDC(0, screen);
     } else {
