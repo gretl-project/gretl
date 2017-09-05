@@ -2795,28 +2795,54 @@ static void impose_font_scale (int scale, int remember)
     set_app_font(fontname, remember);
 }
 
+#define FSCALE_DEFAULT 99
+
+static void set_fscale_default (GtkWidget *w, int *resp)
+{
+    GtkWidget *dlg = g_object_get_data(G_OBJECT(w), "dlg");
+
+    *resp = FSCALE_DEFAULT;
+    gtk_widget_destroy(dlg);
+}
+
 void font_scale_selector (GtkAction *action)
 {
     const char *opt = "Remember this setting";
+    GtkWidget *dlg, *hbox, *button;
     int fscale = tmpfontscale;
-    int resp, remember = 0;
+    int remember = 0;
+    int resp = GRETL_CANCEL;
 
     if (fscale == 0) {
 	fscale = fontname_get_size(fixedfontname);
     }
 
-    resp = checks_dialog(_("gretl: font scale"),
-			 _("Scale for both monospaced and menu fonts"),
-			 &opt,
-			 1, &remember,
-			 0, 0,
-			 0, NULL,
-			 &fscale, NULL,
-			 8, 24,
-			 0, mdata->main);
+    dlg = build_checks_dialog(_("gretl: font scale"), NULL,
+			      &opt,
+			      1, &remember,
+			      0, 0,
+			      0, NULL,
+			      &fscale, _("Scale for monospaced and menu fonts"),
+			      8, 24,
+			      0, mdata->main,
+			      &resp);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    button = gtk_button_new_with_label(_("Reset to default"));
+    g_object_set_data(G_OBJECT(button), "dlg", dlg);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_fscale_default), &resp);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_reorder_child(GTK_BOX(hbox), button, 0);
+
+    gtk_widget_show_all(dlg);
 
     if (resp == GRETL_CANCEL) {
 	return;
+    } else if (resp == FSCALE_DEFAULT) {
+	set_fixed_font(default_fixedfont, 1);
+	set_app_font(system_appfont, 1);
+	write_rc();
     } else if (fscale > 0) {
 	impose_font_scale(fscale, remember);
 	tmpfontscale = fscale;
