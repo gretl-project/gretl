@@ -667,7 +667,7 @@ void set_app_font (const char *fontname, int remember)
     if (fontname == NULL) {
 	/* just loading the default font (pre-checked) */
 #ifdef G_OS_WIN32
-	win32_set_font(fontname, settings);
+	win32_set_font(appfontname, settings);
 #else
 	g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
 #endif
