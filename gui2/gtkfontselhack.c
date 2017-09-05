@@ -96,8 +96,6 @@ struct _GtkFontselHackDialog
     GtkWidget *main_vbox;
     GtkWidget *action_area;
     GtkWidget *ok_button;
-    /* The 'Apply' button is not shown by default but you can show/hide it. */
-    GtkWidget *apply_button;
     GtkWidget *cancel_button;
     /* If the user changes the width of the dialog, we turn auto-shrink off. */
     gint dialog_width;
@@ -1271,8 +1269,6 @@ gtk_fontsel_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
 	return G_OBJECT(GTK_FNTHACK_DIALOG(buildable)->ok_button);
     else if (strcmp(childname, "cancel_button") == 0)
 	return G_OBJECT(GTK_FNTHACK_DIALOG(buildable)->cancel_button);
-    else if (strcmp(childname, "apply_button") == 0)
-	return G_OBJECT(GTK_FNTHACK_DIALOG(buildable)->apply_button);
     else if (strcmp(childname, "font_selection") == 0)
 	return G_OBJECT(GTK_FNTHACK_DIALOG(buildable)->fontsel);
 
@@ -1318,12 +1314,6 @@ gtk_fontsel_hack_dialog_init (GtkFontselHackDialog *fontseldiag)
     fontseldiag->cancel_button = gtk_dialog_add_button(dialog,
 						       GTK_STOCK_CANCEL,
 						       GTK_RESPONSE_CANCEL);
-
-    fontseldiag->apply_button = gtk_dialog_add_button(dialog,
-						      GTK_STOCK_APPLY,
-						      GTK_RESPONSE_APPLY);
-    gtk_widget_hide(fontseldiag->apply_button);
-
     fontseldiag->ok_button = gtk_dialog_add_button(dialog,
 						   GTK_STOCK_OK,
 						   GTK_RESPONSE_OK);

@@ -2471,6 +2471,10 @@ static int fontsel_code (GtkAction *action)
     }
 }
 
+#if defined(G_OS_WIN32)
+
+/* font selection: Windows version first */
+
 static int choose_fontsel_action (void)
 {
     const char *opts[] = {
@@ -2481,10 +2485,6 @@ static int choose_fontsel_action (void)
     return radio_dialog(NULL, NULL, opts, 2, 0, 0,
 			mdata->main);
 }
-
-/* font selection: Windows version first */
-
-#if defined(G_OS_WIN32)
 
 static void windows_font_selector (GtkAction *action)
 {
@@ -2579,33 +2579,36 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
     gtk_widget_destroy(GTK_WIDGET(fc));
 }
 
+static void font_selection_reset (GtkWidget *w, GtkFontChooser *fc)
+{
+    int mono = widget_get_int(fc, "mono");
+
+    gtk_widget_hide(GTK_WIDGET(fc));
+
+    if (mono) {
+	set_fixed_font(default_fixedfont, 1);
+    } else {
+	set_app_font(system_appfont, 1);
+    }
+    write_rc();
+
+    gretl_font_filter_cleanup();
+    gtk_widget_destroy(GTK_WIDGET(fc));
+}
+
 static void chooser_font_selector (GtkAction *action)
 {
     static GtkWidget *fc = NULL;
     GtkFontFilterFunc filter;
-    GtkWidget *button;
+    GtkWidget *hbox, *button;
     int which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
-    int resp, err = 0;
+    int err = 0;
 
     if (fc != NULL) {
 	gtk_window_present(GTK_WINDOW(fc));
         return;
-    }
-
-    resp = choose_fontsel_action();
-    if (resp == 1) {
-	/* reset to default */
-	if (which == FIXED_FONT_SELECTION) {
-	    set_fixed_font(default_fixedfont, 1);
-	} else {
-	    set_app_font(system_appfont, 1);
-	}
-	write_rc();
-	return;
-    } else if (resp != 0) {
-	return;
     }
 
     if (which == FIXED_FONT_SELECTION) {
@@ -2655,7 +2658,14 @@ static void chooser_font_selector (GtkAction *action)
 			 fc);
     }
 
-    gtk_widget_show(fc);
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(fc));
+    button = gtk_button_new_with_label(_("Reset to default"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(font_selection_reset), fc);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_reorder_child(GTK_BOX(hbox), button, 0);
+
+    gtk_widget_show_all(fc);
 }
 
 #else /* GTK, not using GtkFontChooser */
@@ -2672,43 +2682,44 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 
 	if (filter == FONT_HACK_LATIN_MONO) {
 	    set_fixed_font(fontname, 1);
-	    write_rc();
 	} else if (filter == FONT_HACK_LATIN) {
 	    set_app_font(fontname, 1);
-	    write_rc();
 	}
+	write_rc();
     }
 
     g_free(fontname);
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-static void standard_font_selector (GtkAction *action)
+static void font_selection_reset (GtkWidget *w, GtkFontselHackDialog *fs)
+{
+    int filter = gtk_fontsel_hack_dialog_get_filter(fs);
+
+    gtk_widget_hide(GTK_WIDGET(fs));
+
+    if (filter == FONT_HACK_LATIN_MONO) {
+	set_fixed_font(default_fixedfont, 1);
+    } else if (filter == FONT_HACK_LATIN) {
+	set_app_font(system_appfont, 1);
+    }
+    write_rc();
+
+    gtk_widget_destroy(GTK_WIDGET(fs));
+}
+
+static void gtk2_font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
+    GtkWidget *hbox, *button;
     int filter, which = fontsel_code(action);
     char *title = NULL;
     const char *fontname = NULL;
-    int resp;
 
     if (fontsel != NULL) {
 	gtk_window_present(GTK_WINDOW(fontsel));
         return;
     }
-
-    resp = choose_fontsel_action();
-    if (resp == 1) {
-	/* reset to default */
-	if (which == FIXED_FONT_SELECTION) {
-	    set_fixed_font(default_fixedfont, 1);
-	} else {
-	    set_app_font(system_appfont, 1);
-	}
-	write_rc();
-	return;
-    } else if (resp != 0) {
-	return;
-    }    
 
     if (which == FIXED_FONT_SELECTION) {
 	title = _("Font for gretl output windows");
@@ -2728,6 +2739,16 @@ static void standard_font_selector (GtkAction *action)
 					  fontname);
 
     gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(fontsel));
+    button = gtk_button_new_with_label(_("Reset to default"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(font_selection_reset),
+		     fontsel);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_reorder_child(GTK_BOX(hbox), button, 0);
+    gtk_widget_show(button);
+    gtk_widget_show(hbox);
 
     g_signal_connect(G_OBJECT(fontsel), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
@@ -2751,7 +2772,7 @@ void font_selector (GtkAction *action)
 #elif HAVE_GTK_FONT_CHOOSER
     chooser_font_selector(action);
 #else
-    standard_font_selector(action);
+    gtk2_font_selector(action);
 #endif
 }
 
