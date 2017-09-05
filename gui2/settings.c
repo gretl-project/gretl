@@ -666,7 +666,11 @@ void set_app_font (const char *fontname, int remember)
 
     if (fontname == NULL) {
 	/* just loading the default font (pre-checked) */
+#ifdef G_OS_WIN32
+	win32_set_font(fontname, settings);
+#else
 	g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
+#endif
 	fprintf(stderr, "set_app_font (1): setting '%s'\n", appfontname);
     } else {
 	/* loading a user-specified font: check that it works */
@@ -3153,7 +3157,7 @@ void set_up_windows_look (void)
 	int needslash = (gretldir[n-1] != SLASH);
 	gchar *gtkrc;
 
-	gtkrc = g_strdup_printf("%s%s\\share\\themes\\%s\\gtk-2.0\\gtkrc",
+	gtkrc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc",
 				gretldir, (needslash)? "\\" : "",
 				themepref);
 	fprintf(stderr, "gtkrc = '%s'\n", gtkrc);
