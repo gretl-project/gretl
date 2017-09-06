@@ -671,6 +671,9 @@ static int revise_plot_file (GPT_SPEC *spec,
 					      spec->flags);
 	}
 	fprintf(fpout, "%s\n", termstr);
+	if (mono) {
+	    fputs("set mono\n", fpout);
+	}
 	write_plot_output_line(outname, fpout);
     }	
 

@@ -283,10 +283,10 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
     }
 
     if (s->spec->termtype == GP_TERM_PDF) {
-	ttype = (s->mono)? "pdfcairo noenhanced mono dashed" : "pdfcairo noenhanced";
+	ttype = (s->mono)? "pdfcairo noenhanced dashed" : "pdfcairo noenhanced";
 	sprintf(fontstr, "font \"%s,%d\"", s->font, s->fontsize);
     } else {
-	ttype = (s->mono)? "epscairo noenhanced mono dashed" : "epscairo noenhanced";
+	ttype = (s->mono)? "epscairo noenhanced dashed" : "epscairo noenhanced";
 	sprintf(fontstr, "font \"%s,%d\"", s->font, s->fontsize);
     }
 

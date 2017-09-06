@@ -1097,15 +1097,8 @@ static char *gretl_pdf_term_line (char *term_line,
     *font_string = '\0';
     write_other_font_string(font_string, ptsize);
 
-    if (flags & GPT_MONO) {
-	sprintf(term_line,
-		"set term pdfcairo noenhanced mono font \"%s\"",
-		font_string);
-    } else {
-	sprintf(term_line,
-		"set term pdfcairo noenhanced font \"%s\"",
-		font_string);
-    }
+    sprintf(term_line, "set term pdfcairo noenhanced font \"%s\"",
+	    font_string);
 
     maybe_set_eps_pdf_dims(term_line, ptype, flags);
     append_gp_encoding(term_line);
@@ -1125,15 +1118,8 @@ static char *gretl_eps_term_line (char *term_line,
     *font_string = '\0';
     write_other_font_string(font_string, ptsize);
 
-    if (flags & GPT_MONO) {
-	sprintf(term_line,
-		"set term epscairo noenhanced mono font \"%s\"",
-		font_string);
-    } else {
-	sprintf(term_line,
-		"set term epscairo noenhanced font \"%s\"",
-		font_string);
-    }
+    sprintf(term_line, "set term epscairo noenhanced font \"%s\"",
+	    font_string);
 
     maybe_set_eps_pdf_dims(term_line, ptype, flags);
     append_gp_encoding(term_line);
@@ -1145,20 +1131,10 @@ static char *gretl_tex_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
-    /* FIXME? */
-
     if (gnuplot_has_tikz()) {
-	if (flags & GPT_MONO) {
-	    strcpy(term_line, "set term tikz mono");
-	} else {
-	    strcpy(term_line, "set term tikz");
-	}
+	strcpy(term_line, "set term tikz");
     } else {
-	if (flags & GPT_MONO) {
-	    strcpy(term_line, "set term cairolatex mono");
-	} else {
-	    strcpy(term_line, "set term cairolatex");
-	}
+	strcpy(term_line, "set term cairolatex");
     }
 
     append_gp_encoding(term_line);
@@ -1223,13 +1199,8 @@ static char *real_png_term_line (char *term_line,
 			  ptype, specfont, scale);
     write_png_size_string(size_string, ptype, flags, scale);
 
-    if (flags & GPT_MONO) {
-	sprintf(term_line, "set term pngcairo mono%s%s noenhanced",
-		font_string, size_string);
-    } else {
-	sprintf(term_line, "set term pngcairo%s%s noenhanced",
-		font_string, size_string);
-    }
+    sprintf(term_line, "set term pngcairo%s%s noenhanced",
+	    font_string, size_string);
 
     append_gp_encoding(term_line);
 
@@ -1360,7 +1331,7 @@ static char *gretl_emf_term_line (char *term_line,
     write_emf_font_string(font_string);
 
     if (flags & GPT_MONO) {
-	strcat(term_line, "set term emf mono dash noenhanced ");
+	strcat(term_line, "set term emf dash noenhanced ");
     } else {
 	strcat(term_line, "set term emf color noenhanced ");
     }
@@ -1449,7 +1420,9 @@ static void print_term_string (int ttype, PlotType ptype,
 
     if (*term_line != '\0') {
 	fprintf(fp, "%s\n", term_line);
-	if (!(flags & GPT_MONO)) {
+	if (flags & GPT_MONO) {
+	    fputs("set mono\n", fp);
+	} else {
 	    write_plot_line_styles(ptype, fp);
 	}
     }
