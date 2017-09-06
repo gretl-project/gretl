@@ -38,6 +38,7 @@ GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 GTKSOURCEVIEW_CFLAGS = @GTKSOURCEVIEW_CFLAGS@
 GTKSOURCEVIEW_LIBS = @GTKSOURCEVIEW_LIBS@
+GTKSOURCEVIEW_PREFIX = @GTKSOURCEVIEW_PREFIX@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
@@ -47,32 +48,17 @@ GTKMAC_LIBS = @GTKMAC_LIBS@
 MKLANG = @MKLANG@
 MKNEWS = @MKNEWS@
 
-ifeq ($(prefix),/usr)
-  GTKSOURCEVIEW_PREFIX = @prefix@
-else ifeq ($(prefix),/usr/local)
-  GTKSOURCEVIEW_PREFIX = @prefix@
-else ifneq (,$(findstring build,$(prefix)))
-  GTKSOURCEVIEW_PREFIX = @prefix@
-else
-  GTKSOURCEVIEW_PREFIX = @GTKSOURCEVIEW_PREFIX@
-endif
-
-ifeq ($(have_sourceview),3.0)
-  langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-3.0/language-specs
-endif
-
 ifeq ($(have_sourceview),2.0)
-  langdir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-2.0/language-specs
   JULIA_LANG = julia_sv2.lang
 endif
 
 ifeq ($(win32pkg),yes)
-  langdir = $(prefix)/gtksourceview
-  JULIA_LANG = julia_sv2.lang
-else ifeq ($(pkg_build),yes)
-  langdir = $(prefix)/share/gretl/gtksourceview
-  JULIA_LANG = julia_sv2.lang
-else ifneq ($(prefix),$(GTKSOURCEVIEW_PREFIX))
+  svdir = $(prefix)/gtksourceview
+else
+  svdir = $(prefix)/share/gretl/gtksourceview
+endif
+
+ifeq ($(pkg_build),no)
   SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
 endif
 
@@ -268,7 +254,7 @@ NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 
 .PHONY:
 
-install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-news
+install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles install-news
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -288,11 +274,16 @@ install-exec: $(PROG) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-lang: gretl.lang installdirs
-	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(langdir)/gretl.lang
+	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(svdir)/gretl.lang
 	for f in gnuplot.lang stata.lang gfnspec.lang ; do \
-	$(INSTALL_DATA) $(topsrc)/gui2/$$f $(DESTDIR)$(langdir)/$$f ; done
+	$(INSTALL_DATA) $(topsrc)/gui2/$$f $(DESTDIR)$(svdir)/$$f ; done
 	if [ x$(JULIA_LANG) != x ] ; then \
-	$(INSTALL_DATA) $(topsrc)/gui2/$(JULIA_LANG) $(DESTDIR)$(langdir)/julia.lang ; fi
+	$(INSTALL_DATA) $(topsrc)/gui2/$(JULIA_LANG) $(DESTDIR)$(svdir)/julia.lang ; fi
+
+install-styles: installdirs
+	$(INSTALL_DATA) $(topsrc)/share/styles/build.xml $(DESTDIR)$(svdir)
+	$(INSTALL_DATA) $(topsrc)/share/styles/darkslate.xml $(DESTDIR)$(svdir)
+	$(INSTALL_DATA) $(topsrc)/share/styles/espresso.xml $(DESTDIR)$(svdir)
 
 install-news: NEWS installdirs
 	$(INSTALL_DATA) NEWS $(DESTDIR)$(gretldir)
@@ -301,7 +292,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(appdatadir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(svdir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:

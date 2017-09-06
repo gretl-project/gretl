@@ -10,10 +10,8 @@ INSTALL = @INSTALL@
 
 ifeq ($(win32pkg),yes)
   gretldir = $(prefix)
-  styledir = $(gretldir)/gtksourceview
 else
   gretldir = $(datarootdir)/gretl
-  styledir = $(gretldir)/styles
 endif
 
 tooldir = $(topsrc)/tools
@@ -62,7 +60,7 @@ help:
 
 .PHONY :
 
-install: installdirs install_datafiles install_scripts install_functions install_help install_styles
+install: installdirs install_datafiles install_scripts install_functions install_help
 	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)/COPYING
 	$(MAKE) -C bcih install
 
@@ -116,11 +114,6 @@ install_help: $(query_make_help)
 	for f in $(pdfdir)/gretl-ref-a4.pdf $(pdfdir)/gretl-guide-a4.pdf ; do \
 	if test -f $$f ; then $(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; fi ; done
 
-install_styles:
-	$(INSTALL_DATA) $(sharesrc)/styles/build.xml $(DESTDIR)$(styledir)
-	$(INSTALL_DATA) $(sharesrc)/styles/darkslate.xml $(DESTDIR)$(styledir)
-	$(INSTALL_DATA) $(sharesrc)/styles/espresso.xml $(DESTDIR)$(styledir)
-
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir) 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data 
@@ -133,7 +126,6 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(styledir)
 
 helpclean:
 	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done

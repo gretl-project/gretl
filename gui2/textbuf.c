@@ -754,11 +754,11 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
     }
 }
 
-#elif defined(OS_OSX) && defined(SVPREFIX)
+#else /* not PKGBUILD */
 
-/* On OS X but not @PKGBUILD: use @SVPREFIX for gtksourceview.
-   Here we allow for the possibility that some people might
-   build gretl on OS X using gtk3.
+/* Gtksourceview needs to be told to search both its own "native"
+   paths and @prefix/share/gretl/gtksourceview for both language
+   file and style files
 */
 
 static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
@@ -771,40 +771,23 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
     if (!done && lm != NULL) {
 	GtkSourceStyleSchemeManager *mgr;
-	gchar *dirs[2] = {NULL, NULL};
+	gchar *dirs[3] = {NULL, NULL, NULL};
 
+	/* languages: need to set path, can't append */
 	dirs[0] = g_strdup_printf("%s/share/gtksourceview-%d.0/language-specs",
 				  SVPREFIX, SVVER);
+	dirs[1] = g_strdup_printf("%sgtksourceview", gretl_home());
 	gtk_source_language_manager_set_search_path(lm, dirs);
 	g_free(dirs[0]);
 
+	/* styles: can just append to path */
 	mgr = gtk_source_style_scheme_manager_get_default();
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-%d.0/styles",
-				  SVPREFIX, SVVER);
-	gtk_source_style_scheme_manager_append_search_path(mgr, dirs[0]);
+	gtk_source_style_scheme_manager_append_search_path(mgr, dirs[1]);
 	gtk_source_style_scheme_manager_force_rescan(mgr);
+
 	g_free(dirs[0]);
+	g_free(dirs[1]);
 	
-	done = 1;
-    }
-}
-
-#else
-
-/* a "regular" build */
-
-static void ensure_gretl_style_path (void)
-{
-    static int done;
-
-    if (!done) {
-	GtkSourceStyleSchemeManager *mgr;
-	gchar *dir;
-
-	dir = g_strdup_printf("%sstyles", gretl_home());
-	mgr = gtk_source_style_scheme_manager_get_default();
-	gtk_source_style_scheme_manager_append_search_path(mgr, dir);
-	g_free(dir);
 	done = 1;
     }
 }
@@ -858,13 +841,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     if (textview_use_highlighting(vwin->role)) {
 	lm = gtk_source_language_manager_get_default();
-#ifdef PKGBUILD
 	ensure_sourceview_path(lm);
-#elif defined(OS_OSX) && defined(SVPREFIX)
-	ensure_sourceview_path(lm);
-#else
-	ensure_gretl_style_path();
-#endif	
     }
 
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
@@ -958,13 +935,7 @@ GtkWidget *create_sample_source (const char *style)
 	return NULL;
     }
     
-#ifdef PKGBUILD
     ensure_sourceview_path(lm);
-#elif defined(OS_OSX) && defined(SVPREFIX)
-    ensure_sourceview_path(lm);
-#else
-    ensure_gretl_style_path();
-#endif
 
     lang = gtk_source_language_manager_get_language(lm, "gretl");
     if (lang == NULL) {
@@ -992,13 +963,7 @@ GtkWidget *create_sample_source (const char *style)
 
 void update_script_editor_options (windata_t *vwin)
 {
-#ifdef PKGBUILD    
     ensure_sourceview_path(NULL);
-#elif defined(OS_OSX) && defined(SVPREFIX)
-    ensure_sourceview_path(NULL);
-#else
-    ensure_gretl_style_path();
-#endif
     
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
 					  script_line_numbers);
@@ -3372,13 +3337,7 @@ const char **get_sourceview_style_ids (int *n)
     GtkSourceStyleSchemeManager *mgr;
     const gchar * const *ids = NULL;
 
-#ifdef PKGBUILD
     ensure_sourceview_path(NULL);
-#elif defined(OS_OSX) && defined(SVPREFIX)
-    ensure_sourceview_path(NULL);
-#else
-    ensure_gretl_style_path();
-#endif
 
     *n = 0;
 
