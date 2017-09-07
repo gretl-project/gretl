@@ -710,7 +710,7 @@ foreign_script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 
 # ifdef G_OS_WIN32
 
-static gchar *maybe_recode_path (gchar *path)
+static gchar *ensure_utf8_path (gchar *path)
 {
     if (!g_utf8_validate(path, -1, NULL)) {
 	gchar *tmp;
@@ -752,7 +752,7 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
 # ifdef G_OS_WIN32
-	dirs[0] = maybe_recode_path(dirs[0]);
+	dirs[0] = ensure_utf8_path(dirs[0]);
 # endif
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
