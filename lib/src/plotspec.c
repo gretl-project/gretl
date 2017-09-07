@@ -1283,6 +1283,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	gretl_pop_c_numeric_locale();
     }
 
+    if (mono) {
+	fputs("set mono\n", fp);
+    }
+
 #if !FREEZE_COL0RS
     if (!mono) {
 	write_styles_from_plotspec(spec, fp);

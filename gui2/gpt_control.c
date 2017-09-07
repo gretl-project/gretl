@@ -1846,6 +1846,10 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "polar")) {
 	spec->flags |= GPT_POLAR;
 	return 0;
+    } else if (!strcmp(key, "mono") ||
+	       !strcmp(key, "monochrome")) {
+	spec->flags |= GPT_MONO;
+	return 0;
     } else if (!strcmp(key, "xzeroaxis")) {
 	spec->flags |= GPT_XZEROAXIS;
 	return 0;
