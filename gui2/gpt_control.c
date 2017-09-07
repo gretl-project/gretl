@@ -5339,13 +5339,23 @@ void launch_gnuplot_interactive (void)
     create_child_process(gpline);
     g_free(gpline);
 #elif defined(MAC_NATIVE)
+    const char *gppath = gretl_gnuplot_path();
+    gchar *gpline;
+
 # ifdef PKGBUILD
-    gchar *gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\"",
-				    gretl_gnuplot_path());
+    /* call driver script to set environment correctly -- and
+       in addition prepend a full path spec if necessary
+    */
+    if (g_path_is_absolute(gppath)) {
+	gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\"",
+				 gppath);
+    } else {
+	gpline = g_strdup_printf("open -a Terminal.app \"%s%s.sh\"",
+				 gretl_bindir(), gppath);
+    }
 # else
-    gchar *gpline = g_strdup_printf("open -a Terminal.app \"%s\"",
-				    gretl_gnuplot_path());
-# endif    
+    gpline = g_strdup_printf("open -a Terminal.app \"%s\"", gppath);
+# endif
     system(gpline);
     g_free(gpline);    
 #else /* neither WIN32 nor MAC_NATIVE */

@@ -161,6 +161,8 @@ int using_translated_helpfile (int id);
 
 const char *gretl_home (void);
 
+const char *gretl_bindir (void);
+
 const char *gretl_plugin_path (void);
 
 const char *gretl_dotdir (void);

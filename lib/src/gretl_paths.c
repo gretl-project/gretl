@@ -2509,6 +2509,33 @@ const char *gretl_home (void)
     return paths.gretldir;
 }
 
+const char *gretl_bindir (void)
+{
+    static char bindir[MAXLEN];
+
+    if (*bindir == '\0') {
+	char *p;
+
+	strcpy(bindir, paths.gretldir);
+	p = strstr(bindir, "share/gretl");
+	if (p != NULL) {
+	    *p = '\0';
+	    strncat(p, "bin/", 4);
+	}
+#ifdef WIN32
+	if (p == NULL) {
+	    p = strstr(bindir, "share\\gretl");
+	    if (p != NULL) {
+		*p = '\0';
+		strncat(p, "bin\\", 4);
+	    }
+	}
+#endif
+    }
+
+    return bindir;
+}
+
 const char *gretl_plugin_path (void)
 {
     static int set;
@@ -3386,7 +3413,11 @@ static void load_default_path (char *targ)
     } else if (targ == paths.dbhost) {
 	strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.gnuplot) {
+#if defined(OS_OSX) && defined(PKGBUILD)
+	sprintf(targ, "%sgnuplot", gretl_bindir());
+#else
 	strcpy(targ, "gnuplot");
+#endif
     } else if (targ == paths.x12a) {
 #ifdef HAVE_X12A
 	strcpy(targ, "x12a");
