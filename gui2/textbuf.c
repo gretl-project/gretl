@@ -708,6 +708,26 @@ foreign_script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 
 #ifdef PKGBUILD
 
+# ifdef G_OS_WIN32
+
+static gchar *maybe_recode_path (gchar *path)
+{
+    if (!g_utf8_validate(path, -1, NULL)) {
+	gchar *tmp;
+	gsize bytes;
+
+	tmp = g_locale_to_utf8(path, -1, NULL, &bytes, NULL);
+	if (tmp != NULL) {
+	    g_free(path);
+	    path = tmp;
+	}
+    }
+
+    return path;
+}
+
+# endif
+
 /* Packages for Windows and OS X: gtksourceview needs to
    be told where to find its language-specs and style
    files: these live under gtksourceview inside the package.
@@ -731,17 +751,8 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 	gchar *dirs[2] = {NULL, NULL};
 
 	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
-
 # ifdef G_OS_WIN32
-	if (!g_utf8_validate(dirs[0], -1, NULL)) {
-	    gsize bytes;
-	    gchar *tmp = g_locale_to_utf8(dirs[0], -1, NULL, &bytes, NULL);
-
-	    if (tmp != NULL) {
-		g_free(dirs[0]);
-		dirs[0] = tmp;
-	    } 
-	}
+	dirs[0] = maybe_recode_path(dirs[0]);
 # endif
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
@@ -756,7 +767,7 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 #else /* not PKGBUILD */
 
-/* Gtksourceview needs to be told to search both its own "native"
+/* gtksourceview needs to be told to search both its own "native"
    paths and @prefix/share/gretl/gtksourceview for both language
    file and style files
 */
@@ -773,14 +784,13 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 	GtkSourceStyleSchemeManager *mgr;
 	gchar *dirs[3] = {NULL, NULL, NULL};
 
-	/* languages: need to set path, can't append */
+	/* languages: need to set path, can't just append */
 	dirs[0] = g_strdup_printf("%s/share/gtksourceview-%d.0/language-specs",
 				  SVPREFIX, SVVER);
 	dirs[1] = g_strdup_printf("%sgtksourceview", gretl_home());
 	gtk_source_language_manager_set_search_path(lm, dirs);
-	g_free(dirs[0]);
 
-	/* styles: can just append to path */
+	/* styles: can just append to default path */
 	mgr = gtk_source_style_scheme_manager_get_default();
 	gtk_source_style_scheme_manager_append_search_path(mgr, dirs[1]);
 	gtk_source_style_scheme_manager_force_rescan(mgr);
