@@ -589,13 +589,15 @@ static void record_system_appfont (GtkSettings *settings,
     g_object_get(G_OBJECT(settings), "gtk-font-name", pfont, NULL);
 #if defined(G_OS_WIN32)
     get_default_windows_app_font(system_appfont);
-#elif defined(MAC_NATIVE)
-    strcpy(system_appfont, "Lucida Grande 13");
 #else
     if (*pfont != NULL) {
 	strcpy(system_appfont, *pfont);
     } else {
+# if defined(MAC_NATIVE)
+	strcpy(system_appfont, "Lucida Grande 13");
+# else
 	strcpy(system_appfont, "sans 10");
+# endif
     }
 #endif
 }
