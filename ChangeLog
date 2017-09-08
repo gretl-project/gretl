@@ -13,12 +13,16 @@ version 2017d, in progress
   covariance matrix 
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
-- Fix big: rename() function not working on Windows when
+- Fix bug: rename() function not working on Windows when
   the target filename already exists
+- Fix bug: on repeated estimation of a given arima model in
+  a function one might get slightly different results
 - GUI: enable a tabbed editor for foreign scripts
 - GUI: fix breakage in function-package search facility
 - GUI: fix crash on requesting "Numerical summary" for panel
   groups boxplot
+- GUI: improve font-selection dialogs, including a "Reset to
+  default" option
 
 2017-07-18 version 2017c
 - MIDAS support: several small fixes and refinements
