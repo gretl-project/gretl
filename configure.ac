@@ -364,6 +364,7 @@ esac
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
+AC_PROG_GREP
 
 if test "$win32_build" = "no" ; then
   AC_LIBTOOL_DLOPEN
@@ -563,6 +564,9 @@ case $host_os in
     fi
   ;;
 esac
+if echo $LAPACK_LIBS | $GREP --quiet openblas ; then
+  AC_DEFINE(OPENBLAS_BUILD)
+fi
 
 dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
