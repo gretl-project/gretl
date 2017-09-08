@@ -280,6 +280,15 @@ static int nls_genr_setup (nlspec *s)
 	return err;
     }
 
+#if NLS_DEBUG > 1
+    PRN *eprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+    if (eprn != NULL) {
+	printdata(NULL, NULL, s->dset, OPT_O, eprn);
+	gretl_print_destroy(eprn);
+    }
+#endif
+
     /* We now loop across the "generators", setting them up
        and checking them. We hook up any auxiliary genrs
        first, then the criterion function, then the anaytical
@@ -414,8 +423,8 @@ static int nls_genr_setup (nlspec *s)
 	fprintf(stderr, " formula '%s'\n", formula);
 	fprintf(stderr, " v = %d, m = %p\n", v, (void *) m);
 	if (v > 0) {
-	    fprintf(stderr, " first value: Z[%d][%d] = %g\n", 
-		    v, s->t1, s->dset->Z[v][s->t1]);
+	    fprintf(stderr, " second value: Z[%d][%d] = %g\n",
+		    v, s->t1+1, s->dset->Z[v][s->t1+1]);
 	}
 #endif
     }
@@ -448,6 +457,9 @@ static int nls_auto_genr (nlspec *s, int i)
 #endif
 
     if (s->genrs == NULL) {
+#if NLS_DEBUG
+	fprintf(stderr, " calling nls_genr_setup\n");
+#endif
 	s->generr = nls_genr_setup(s);
 	if (s->generr) {
 	    fprintf(stderr, " nls_genr_setup failed\n");
@@ -2032,6 +2044,7 @@ int finalize_nls_model (MODEL *pmod, nlspec *spec,
 }
 
 #if NLS_DEBUG > 1
+
 static void 
 print_GNR_dataset (const int *list, DATASET *gdset)
 {
@@ -2045,6 +2058,7 @@ print_GNR_dataset (const int *list, DATASET *gdset)
     gdset->t1 = t1;
     gretl_print_destroy(prn);
 }
+
 #endif
 
 /* Gauss-Newton regression to calculate standard errors for the NLS

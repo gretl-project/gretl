@@ -750,10 +750,11 @@ static int arma_init_build_dataset (arma_info *ainfo,
     }
 
 #if AINIT_DEBUG
-    fprintf(stderr, "arma init dataset:\n");
-    for (i=0; i<aset->v; i++) {
-	fprintf(stderr, "var %d '%s', obs[0] = %g\n", i, aset->varname[i], 
-		aset->Z[i][0]);
+    PRN *eprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+    if (eprn != NULL) {
+	printdata(NULL, NULL, aset, OPT_O, eprn);
+	gretl_print_destroy(eprn);
     }
 #endif
 
@@ -1027,7 +1028,6 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 		    i, parms[i], pnames[i]);
 	}
 #endif
-
 	err = nlspec_set_regression_function(spec, fnstr, dset);
     }
 

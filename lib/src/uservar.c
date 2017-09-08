@@ -63,7 +63,7 @@ static USER_VAR_FUNC user_var_callback;
 
 #define UV_CHUNK 32
 
-#define var_is_private(u) ((u->flags & UV_PRIVATE) || *u->name == '$')
+#define var_is_private(u) ((u->flags & UV_PRIVATE) || *u->name == '$' || *u->name == '_')
 #define var_is_shell(u)   (u->flags & UV_SHELL)
 
 static double *na_ptr (void)

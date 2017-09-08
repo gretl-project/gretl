@@ -226,8 +226,13 @@ static void print_tree (NODE *t, parser *p, int level)
     }
 
     if (t->vname != NULL) {
-	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d), vname='%s'\n",
+	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d), vname='%s'",
 		level, (void *) t, t->t, getsymb(t->t), t->flags, t->vname);
+	if (t->t == NUM) {
+	    fprintf(stderr, ", val %g\n", t->v.xval);
+	} else {
+	    fputs("\n", stderr);
+	}
     } else if (t->t == STR) {
 	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d, val '%s')\n",
 		level, (void *) t, t->t, getsymb(t->t), t->flags, t->v.str);
@@ -16685,6 +16690,7 @@ static int save_generated_var (parser *p, PRN *prn)
 #if EDEBUG
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n",
 		v, p->lh.name);
+	fprintf(stderr, " value[1] = %g\n", p->dset->Z[v][1]);
 #endif
 	if (!p->err) {
 	    /* (probably) changed or added a series */
