@@ -3428,6 +3428,8 @@ static void pivot_check (integer *ipiv, int n)
     for (i=0; i<n; i++) {
 	if (ipiv[i] > n) {
 	    /* clamp the bad value to avoid a crash */
+	    fprintf(stderr, "pivot_check: clamped bad ipiv[%d] = %d\n",
+		    i, ipiv[i]);
 	    ipiv[i] = n;
 	}
     }
