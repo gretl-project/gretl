@@ -2596,16 +2596,24 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	    ret = real_list_dup(list, 2, start - 2);
 	}
     } else if (ci == VAR || ci == VECM || ci == COINT2) {
+	int seppos = 0;
+
 	multi = 1;
 	for (i=1; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
-		start = i+1;
+		seppos = i;
 		break;
 	    }
 	}
-	ret = real_list_dup(list, start, list[0]);
-	if (ret == -1) {
-	    ret = real_list_dup(list, 1, start - 2);
+	if (seppos) {
+	    /* check each sublist */
+	    ret = real_list_dup(list, 1, seppos - 1);
+	    if (ret == -1) {
+		ret = real_list_dup(list, seppos + 1, list[0]);
+	    }
+	} else {
+	    /* just one list to examine */
+	    ret = real_list_dup(list, 1, list[0]);
 	}
     } else if (ci == ARBOND || ci == DPANEL) {
 	int stop = 0;

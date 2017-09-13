@@ -1693,10 +1693,12 @@ static int read_plot_format (const char *s, GPT_SPEC *spec,
 
 static int catch_value (char *targ, const char *src, int maxlen)
 {
-    int i, n;
+    int i, n, q = 0;
+    int ret = 0;
 
     src += strspn(src, " \t\r\n");
     if (*src == '\'' || *src == '"') {
+	q = *src;
 	src++;
     }
 
@@ -1712,13 +1714,16 @@ static int catch_value (char *targ, const char *src, int maxlen)
 	    } else {
 		break;
 	    }
-	}  
+	}
 	if (targ[i] == '\'' || targ[i] == '"') {
+	    if (i == 0 && targ[i] == q) {
+		ret = 1; /* accept empty string as "value" */
+	    }
 	    targ[i] = '\0';
 	}
     }
 
-    return (*targ != '\0');
+    return ret || (*targ != '\0');
 }
 
 static void fix_old_roots_plot (GPT_SPEC *spec)
@@ -2572,6 +2577,69 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
     }
 }
 
+/* Here we're seeing if we should "promote" literal plot
+   lines to supplement or override "set" variables that
+   are recognized by gretl and form part of @spec. If we
+   don't do this the GUI plot editor may be broken.
+*/
+
+static void maybe_promote_literal_lines (GPT_SPEC *spec,
+					 linestyle *styles)
+{
+    const char *line;
+    int *rmlines = NULL;
+    int i, err = 0;
+
+    for (i=0; i<spec->n_literal; i++) {
+	line = spec->literal[i];
+	if (!strncmp(line, "set ", 4)) {
+	    err = parse_gp_set_line(spec, line, styles);
+	    if (!err) {
+		gretl_list_append_term(&rmlines, i);
+	    }
+	} else if (!strncmp(line, "unset ", 6)) {
+	    err = parse_gp_unset_line(spec, line);
+	    if (!err) {
+		gretl_list_append_term(&rmlines, i);
+	    }
+	}
+    }
+
+    if (rmlines != NULL) {
+	/* at least one "literal" line has been promoted */
+	if (rmlines[0] == spec->n_literal) {
+	    strings_array_free(spec->literal, spec->n_literal);
+	    spec->literal = NULL;
+	    spec->n_literal = 0;
+	} else {
+	    char **S = spec->literal;
+	    int ns, orig_ns = spec->n_literal;
+
+	    ns = orig_ns - rmlines[0];
+	    spec->literal = strings_array_new(ns);
+
+	    if (spec->literal == NULL) {
+		/* unlikely, but... */
+		spec->literal = S;
+	    } else {
+		/* reduced version of the "literal" array */
+		int j = 0;
+
+		for (i=0; i<orig_ns; i++) {
+		    if (in_gretl_list(rmlines, i)) {
+			free(S[i]);
+		    } else {
+			spec->literal[j++] = S[i];
+		    }
+		    S[i] = NULL;
+		}
+		strings_array_free(S, orig_ns);
+		spec->n_literal = ns;
+	    }
+	}
+    }
+}
+
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
                            c != PLOT_PROB_DIST && \
                            c != PLOT_CURVE && \
@@ -2912,7 +2980,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	/* backward compatibility */
 	fprintf(stderr, "old roots plot: fixing\n");
 	fix_old_roots_plot(spec);
-    }   
+    }
+
+    if (!err && spec->literal != NULL) {
+	maybe_promote_literal_lines(spec, styles);
+    }
 
  bailout:
 

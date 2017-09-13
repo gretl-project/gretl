@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-08-16 11:30-0400\n"
-"PO-Revision-Date: 2017-07-15 16:28+0200\n"
+"PO-Revision-Date: 2017-09-13 15:28+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -960,15 +960,15 @@ msgstr "Il file di dati contiene virgole finali\n"
 #: lib/src/csvdata.c:1725
 #, c-format
 msgid "Found %d double-quotes, %d single-quotes\n"
-msgstr ""
+msgstr "Trovate %d virgolette doppie e %d semplici\n"
 
 #: lib/src/csvdata.c:1728
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Posto che il marcatore per i caratteri sia la virgoletta doppia\n"
 
 #: lib/src/csvdata.c:1732
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Posto che il marcatore per i caratteri sia la virgoletta singola\n"
 
 #: lib/src/csvdata.c:1936
 #, c-format
@@ -2341,9 +2341,8 @@ msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr "\"catch\" non può essere usato su funzioni definite dall'utente"
 
 #: lib/src/geneval.c:8438
-#, fuzzy
 msgid "Libsvm is not supported"
-msgstr "la frequenza %d non è supportata"
+msgstr "Libsvm non è supportata"
 
 #: lib/src/geneval.c:8607
 #, c-format
@@ -4457,14 +4456,12 @@ msgid "not found"
 msgstr "non trovato"
 
 #: lib/src/interact.c:746
-#, fuzzy
 msgid "is a 0/1 variable"
-msgstr "Variabile asse X"
+msgstr "è una variabile 0/1"
 
 #: lib/src/interact.c:747
-#, fuzzy
 msgid "not integer-valued"
-msgstr "Non installato"
+msgstr "non è a valori interi"
 
 #: lib/src/interact.c:801 lib/src/printout.c:1801
 msgid "No series are defined\n"
@@ -4639,9 +4636,9 @@ msgid "Time series"
 msgstr "Serie storiche"
 
 #: lib/src/libset.c:1766
-#, fuzzy, c-format
+#, c-format
 msgid "Pseudo-random number generator seeded with %u\n"
-msgstr "Scelto %d come seme per il generatore di numeri pseudocasuali\n"
+msgstr "Generatore di numeri pseudocasuali inizializzato col seme %u\n"
 
 #: lib/src/libset.c:1792
 #, c-format
@@ -5373,9 +5370,9 @@ msgid "Omitted due to exact collinearity:"
 msgstr "Omesse per perfetta collinearità:"
 
 #: lib/src/modelprint.c:1683
-#, fuzzy, c-format
+#, c-format
 msgid " %d series"
-msgstr "aggiungi serie"
+msgstr "%d serie"
 
 #: lib/src/modelprint.c:1698
 msgid "Redundant instruments:"
@@ -10667,7 +10664,7 @@ msgstr "Selezione (o nuova variabile)"
 
 #: gui2/fncall.c:1632
 msgid "allow access to out-of-sample data"
-msgstr ""
+msgstr "permetti l'accesso ai dati fuori dal sottocampione selezionato"
 
 #: gui2/fncall.c:1643
 msgid "close this dialog on \"OK\""
@@ -13610,7 +13607,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:5425 gui2/gui_utils.c:5430
 msgid "No output was produced"
-msgstr ""
+msgstr "Non è stato prodotto alcun output"
 
 #: gui2/gui_utils.c:5608
 msgid "No command was supplied to start R"
@@ -16027,9 +16024,8 @@ msgid "Display working directory"
 msgstr "Mostra la directory di lavoro"
 
 #: gui2/settings.c:226
-#, fuzzy
 msgid "Working directory tooltip"
-msgstr "Directory di lavoro:"
+msgstr "Tooltip sulla directory di lavoro"
 
 #: gui2/settings.c:228
 msgid "Set working directory from shell"
@@ -16533,9 +16529,8 @@ msgid "untitled"
 msgstr "senza titolo"
 
 #: gui2/tabwin.c:580
-#, fuzzy
 msgid "gretl: foreign script editor"
-msgstr "gretl: editor di script"
+msgstr "gretl: editor di script esterni"
 
 #: gui2/tabwin.c:584
 msgid "gretl: models"
@@ -16933,7 +16928,7 @@ msgstr "Tratta questa variabile come discreta"
 
 #: gui2/varinfo.c:946
 msgid "Numeric values represent an encoding"
-msgstr ""
+msgstr "I valori numerici rappresentano una codifica"
 
 #: gui2/varinfo.c:1001
 msgid "gretl: save series"
