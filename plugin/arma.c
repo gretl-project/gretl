@@ -939,7 +939,6 @@ static double kalman_arma_ll (const double *b, void *data)
 	fprintf(stderr, "kalman_arma_ll: kalman_forecast gave %d, "
 		"loglik = %#.12g\n", err, ll);
 #endif
-
     }
 
     return ll;

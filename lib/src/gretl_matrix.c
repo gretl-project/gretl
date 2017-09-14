@@ -3097,7 +3097,7 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
  * @m: matrix.
  * @msg: message to print with matrix, or NULL.
  *
- * Prints the given matrix to stderr.  
+ * Prints the given matrix to stderr.
  */
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg) 
@@ -3117,7 +3117,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 
     envstr = getenv("GRETL_MATRIX_DEBUG");
     if (envstr != NULL && atoi(envstr) > 0) {
-	fmt = "%#24.15g ";
+	fmt = "%#22.15g ";
     } else {
 	envstr = getenv("GRETL_MATRIX_PRINT6");
 	if (envstr != NULL && atoi(envstr) > 0) {
@@ -3897,6 +3897,8 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
     return err;
 }
 
+#define BLASDEBUG 1
+
 /**
  * gretl_LU_solve:
  * @a: square matrix.
@@ -3917,12 +3919,25 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     integer info;
     integer n, ldb, nrhs = 1;
     integer *ipiv;
+    int debug = 0;
     int err = 0;
+
+#if BLASDEBUG
+    const char *envstr = getenv("GRETL_MATRIX_DEBUG");
+
+    debug = (envstr != NULL && atoi(envstr) > 0);
+#endif
 
     if (gretl_is_null_matrix(a) || 
 	gretl_is_null_matrix(b) ||
 	a->rows != a->cols) {
 	return E_DATA;
+    }
+
+    if (debug) {
+	fputs("gretl_LU_solve\n", stderr);
+	gretl_matrix_print(a, "a, on input");
+	gretl_matrix_print(b, "b, on input");
     }
 
     n = a->cols;
@@ -3958,7 +3973,13 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 		    (int) info);
 	    err = E_DATA;
 	}
-    }    
+    }
+
+    if (debug) {
+	gretl_matrix_print(a, "a, on return");
+	gretl_matrix_print(b, "b, on return");
+	fprintf(stderr, "err, on return = %d\n", err);
+    }
 
     free(ipiv);
 
