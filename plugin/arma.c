@@ -919,6 +919,17 @@ static double kalman_arma_ll (const double *b, void *data)
     double ll = NADBL;
     int err = 0;
 
+#if 1 /* temporary debugging */
+    const char *envstr = getenv("GRETL_MATRIX_DEBUG");
+    if (envstr != NULL && atoi(envstr) > 0) {
+	int i;
+	fputs("kalman_arma_ll: @b from BFGS\n", stderr);
+	for (i=0; i<ainfo->nc; i++) {
+	    fprintf(stderr, " %d: %.16g\n", i, b[i]);
+	}
+    }
+#endif
+
 #if ARMA_DEBUG
     if (ainfo->q > 0 || ainfo->Q > 0) {
 	debug_print_theta(theta, Theta, ainfo);
