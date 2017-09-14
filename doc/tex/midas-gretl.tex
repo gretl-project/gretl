@@ -460,14 +460,28 @@ follows.
 \begin{itemize}
 \item \texttt{mweights} takes three arguments: the number of lags
   required ($p$), the $k$-vector of hyperparameters ($\theta$), and an
-  integer code indicating the method (1 = exponential Almon, 2 = beta
-  with zero last lag, 3 = beta with non-zero last lag, 4 = Almon
-  polynomial). It returns a $p$-vector containing the coefficients.
+  integer code or string indicating the method (see
+  Table~\ref{tab:midas-parm}). It returns a $p$-vector containing the
+  coefficients.
 \item \texttt{mgradient} takes three arguments, just like
   \texttt{mweights}. However, this function returns a $p \times k$
   matrix holding the (analytical) gradient of the $p$ coefficients or
   weights with respect to the $k$ elements of $\theta$.
 \end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lcl}
+    \textit{Parameterization} & 
+      \textit{code} & \textit{string} \\[4pt]
+    Normalized exponential Almon & 1 & \verb|"nealmon"| \\
+    Normalized beta, zero last lag & 2 & \verb|"beta0"| \\
+    Normalized beta, non-zero last lag & 3 & \verb|"betan"| \\
+    Almon polynomial & 4 & \verb|"almonp"| \\
+  \end{tabular}
+  \caption{MIDAS parameterizations}
+  \label{tab:midas-parm}
+\end{table}
 
 An additional function is provided for convenience: it is named
 \texttt{mlincomb} and it combines \texttt{mweights} with the
@@ -477,11 +491,11 @@ series result, namely a linear combination of the elements of the
 list. If we have a suitable list \texttt{L} available, we can
 do, for example,
 \begin{code}
-series foo = mlincomb(L, theta, 2)
+series foo = mlincomb(L, theta, "beta0")
 \end{code}
 This is equivalent to
 \begin{code}
-series foo = lincomb(L, mweights(nelem(L), theta, 2))
+series foo = lincomb(L, mweights(nelem(L), theta, "beta0"))
 \end{code}
 but saves a little typing and some CPU cycles.
 
@@ -510,47 +524,43 @@ one or other of the following patterns:
 \begin{tabular}{ll}
 1 & \texttt{mds(\textsl{mlist}, \textsl{minlag}, 
    \textsl{maxlag}, \textsl{type}, \textsl{theta})} \\
-2 & \texttt{mds(\textsl{mlist}, \textsl{minlag}, \textsl{maxlag}, 0)} \\[4pt]
-3 & \texttt{mdsl(\textsl{llist}, \textsl{type}, \textsl{theta})} \\
-4 & \texttt{mdsl(\textsl{llist}, 0)}
+2 & \texttt{mdsl(\textsl{llist}, \textsl{type}, \textsl{theta})}
 \end{tabular}
 
-In cases 1 and 2, \texttt{\textsl{mlist}} must be a \textbf{MIDAS
-  list}, as defined above, which contains a full set of per-period
-series (but no lags). Lags will be generated automatically, governed
-by the \texttt{\textsl{minlag}} and \texttt{\textsl{maxlag}} (integer)
-arguments. The integer \texttt{\textsl{type}} argument represents the
-type of parameterization; in addition to the values 1 to 4 defined in
-section~\ref{sec:hparams} above, a value of 0 indicates unrestricted
-MIDAS. When \texttt{\textsl{type}} is non-zero the final
-\texttt{\textsl{theta}} argument is mandatory (see below for details);
-when \texttt{\textsl{type}} is 0, \texttt{\textsl{theta}} is not
-required.
+In case 1 \texttt{\textsl{mlist}} must be a \textbf{MIDAS list}, as
+defined above, which contains a full set of per-period series (but no
+lags). Lags will be generated automatically, governed by the
+\texttt{\textsl{minlag}} and \texttt{\textsl{maxlag}} (integer)
+arguments. The integer (or string) \texttt{\textsl{type}} argument
+represents the type of parameterization; in addition to the values 1
+to 4 defined in Table~\ref{tab:midas-parm} a value of 0 (or the
+string \verb|"umidas"|) indicates unrestricted MIDAS.
 
-In cases 3 and 4, \texttt{\textsl{llist}} is assumed to be a list that
+In case 2 \texttt{\textsl{llist}} is assumed to be a list that
 already contains the required set of high-frequency lags---as may be
 obtained via the \texttt{hflags} function described in
 section~\ref{sec:hflags}---hence \texttt{\textsl{minlag}} and
 \texttt{\textsl{maxlag}} are not wanted.
 
-When the \texttt{\textsl{theta}} argument is required, it must take
-one of the following forms:
+The final \texttt{\textsl{theta}} argument is optional in most cases
+(implying an automatic initialization of the hyperparameters). If this
+argument is given it must take one of the following forms:
 \begin{enumerate}
 \item The name of a matrix (vector) holding initial values for the
   hyperparameters, or a simple expression which defines a matrix
   using scalars, such as \texttt{\{1, 5\}}.
 \item The keyword \texttt{null}, indicating that an automatic
-  initialization should be used.
+  initialization should be used (as happens when this argument is
+  omitted).
 \item An integer value (in numerical form), indicating how many
   hyperparameters should be used (which again calls for
   automatic initialization).
 \end{enumerate}
-The second of these forms can be used when the number of
-hyperparameters is fixed by the given \texttt{\textsl{type}}; that is
-for either of the two beta cases (\texttt{\textsl{type}} = 2 or 3). It
-can also be used in the normalized exponential Almon case, where it
-implies (the common case of) two parameters.  Otherwise, if you don't
-provide an initialization vector you must use the third form.
+The third of these forms is required if you want automatic
+initialization in the Almon polynomial case, since we need to know how
+many terms you wish to include. (In the normalized exponential Almon
+case we default to the usual two hyperparameters if
+\texttt{\textsl{theta}} is omitted or given as \texttt{null}.)
 
 The \texttt{midasreg} syntax allows the user to specify multiple
 high-frequency predictors, if wanted: these can have different lag
@@ -580,7 +590,7 @@ Almon parameterization with two coefficients, both initialized to
 zero:
 %
 \begin{code}
-midasreg dy const dy(-1) ; mds(dX, 1, 10, 1, {0,0})
+midasreg dy const dy(-1) ; mds(dX, 1, 10, "nealmon", {0,0})
 \end{code}
 %
 In the examples above, the required lags will be added to the dataset
@@ -592,9 +602,9 @@ Almon, beta with zero last lag, and beta with non-zero last lag) on
 the same data:
 \begin{code}
 list dXL = hflags(1, 10, dX)
-midasreg dy 0 dy(-1) ; mdsl(dXL, 1, {0,0})
-midasreg dy 0 dy(-1) ; mdsl(dXL, 2, {1,5})
-midasreg dy 0 dy(-1) ; mdsl(dXL, 3, {1,1,0})
+midasreg dy 0 dy(-1) ; mdsl(dXL, "nealmon", {0,0})
+midasreg dy 0 dy(-1) ; mdsl(dXL, "beta0", {1,5})
+midasreg dy 0 dy(-1) ; mdsl(dXL, "betan", {1,1,0})
 \end{code}
 
 Any additional MIDAS terms should be separated by spaces, as in
@@ -657,27 +667,27 @@ matrix FC = {}
 # estimation sample
 smpl 1985:1 2009:1
 
-print "=== unrestricted MIDAS (U-MIDAS) ==="
+print "=== unrestricted MIDAS (umidas) ==="
 midasreg dy 0 dy(-1) ; mdsl(dXL, 0)
 fcast --out-of-sample --static --quiet
 FC ~= $fcast
 
-print "=== normalized beta with zero last lag (Beta) ==="
+print "=== normalized beta with zero last lag (beta0) ==="
 midasreg dy 0 dy(-1) ; mdsl(dXL, 2, {1,5})
 fcast --out-of-sample --static --quiet
 FC ~= $fcast
 
-print "=== normalized beta, non-zero last lag (BetaNZ) ==="
+print "=== normalized beta, non-zero last lag (betan) ==="
 midasreg dy 0 dy(-1) ; mdsl(dXL, 3, {1,1,0})
 fcast --out-of-sample --static --quiet
 FC ~= $fcast
 
-print "=== normalized exponential Almon (neAlmon) ==="
+print "=== normalized exponential Almon (nealmon) ==="
 midasreg dy 0 dy(-1) ; mdsl(dXL, 1, {0,0})
 fcast --out-of-sample --static --quiet
 FC ~= $fcast
 
-print "=== Almon polynomial (Almonp) ==="
+print "=== Almon polynomial (almonp) ==="
 midasreg dy 0 dy(-1) ; mdsl(dXL, 4, 4)
 fcast --out-of-sample --static --quiet
 FC ~= $fcast
@@ -685,11 +695,11 @@ FC ~= $fcast
 smpl 2009:2 2011:2
 matrix my = {dy}
 print "Forecast RMSEs:"
-printf "  U-MIDAS %.4f\n", fcstats(my, FC[,1])[2]
-printf "  Beta    %.4f\n", fcstats(my, FC[,2])[2]
-printf "  BetaNZ  %.4f\n", fcstats(my, FC[,3])[2]
-printf "  neAlmon %.4f\n", fcstats(my, FC[,4])[2]
-printf "  Almonp  %.4f\n", fcstats(my, FC[,5])[2]
+printf "  umidas  %.4f\n", fcstats(my, FC[,1])[2]
+printf "  beta0   %.4f\n", fcstats(my, FC[,2])[2]
+printf "  betan   %.4f\n", fcstats(my, FC[,3])[2]
+printf "  nealmon %.4f\n", fcstats(my, FC[,4])[2]
+printf "  almonp  %.4f\n", fcstats(my, FC[,5])[2]
 \end{scode}
 \end{script}
 
@@ -697,7 +707,7 @@ printf "  Almonp  %.4f\n", fcstats(my, FC[,5])[2]
   \caption{Replication of Ghysels' results, partial output}
   \label{ghysels-out}
 \begin{scode}
-=== normalized beta, non-zero last lag (BetaNZ) ===
+=== normalized beta, non-zero last lag (betan) ===
 Model 3: MIDAS (NLS), using observations 1985:1-2009:1 (T = 97)
 Using L-BFGS-B with conditional OLS
 Dependent variable: dy
@@ -719,7 +729,7 @@ R-squared            0.356376   Adjusted R-squared   0.321012
 Log-likelihood      -78.71248   Akaike criterion     169.4250
 Schwarz criterion    184.8732   Hannan-Quinn         175.6715
 
-=== Almon polynomial (Almonp) ===
+=== Almon polynomial (almonp) ===
 Model 5: MIDAS (NLS), using observations 1985:1-2009:1 (T = 97)
 Using Levenberg-Marquardt algorithm
 Dependent variable: dy
@@ -742,11 +752,11 @@ Log-likelihood      -78.51596   Akaike criterion     169.0319
 Schwarz criterion    184.4802   Hannan-Quinn         175.2784
 
 Forecast RMSEs:
-  U-MIDAS 0.5424
-  Beta    0.5650
-  BetaNZ  0.5210
-  neAlmon 0.5642
-  Almonp  0.5329
+  umidas  0.5424
+  beta0   0.5650
+  betan   0.5210
+  nealmon 0.5642
+  almonp  0.5329
 \end{scode}
 \end{script}
 
