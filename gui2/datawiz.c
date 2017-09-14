@@ -679,13 +679,13 @@ static void compute_default_ts_info (DATASET *dwinfo)
 	    dwinfo->t1 = 25;
 	}
     } else if (dwinfo->pd == 4) {
-	strcpy(dwinfo->stobs, "1700:1");
-	dwinfo->n = 1400;
-	dwinfo->t1 = 1040; /* 1960:1 */
+	strcpy(dwinfo->stobs, "1300:1");
+	dwinfo->n = 1600 + 1400;
+	dwinfo->t1 = 1600 + 1040; /* 1960:1 */
     } else if (dwinfo->pd == 12) {
-	strcpy(dwinfo->stobs, "1700:01");
-	dwinfo->n = 4200;
-	dwinfo->t1 = 3120; /* 1960:01 */
+	strcpy(dwinfo->stobs, "1300:01");
+	dwinfo->n = 4800 + 4200;
+	dwinfo->t1 = 4800 + 3120; /* 1960:01 */
     } else if (dwinfo->pd == 24) {
 	strcpy(dwinfo->stobs, "1:01");
 	dwinfo->n = 1500;
