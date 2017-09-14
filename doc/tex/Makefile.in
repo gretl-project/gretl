@@ -136,6 +136,8 @@ $(MPIDOC): gretl-mpi.tex links date.tex $(STYSRC)
 
 $(MIDASDOC): midas-gretl.tex links date.tex $(STYSRC)
 	pdflatex $<
+	bibtex midas-gretl
+	pdflatex $<
 	pdflatex $<
 
 $(KBD): gretl-keys.tex links $(STYSRC)
@@ -170,6 +172,8 @@ $(ALTPKGBOOK): pkgbook-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
 
 $(ALTMPIDOC): gretl-mpi-a4.tex links date.tex $(STYSRC)
+	pdflatex $<
+	bibtex midas-gretl-a4
 	pdflatex $<
 	pdflatex $<
 
