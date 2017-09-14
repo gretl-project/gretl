@@ -21,6 +21,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "gretl_foreign.h"
+#include "matrix_extra.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -1556,6 +1557,44 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
     return 0;
 }
 
+static gretl_matrix *make_coded_vec (const int *vlist,
+				     const DATASET *dset)
+{
+    gretl_matrix *coded = NULL;
+    int *list = NULL;
+    int i, nc = 0;
+
+    if (vlist == NULL) {
+	list = full_var_list(dset, NULL);
+	vlist = list;
+    }
+
+    if (vlist != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    if (series_is_coded(dset, vlist[i])) {
+		nc++;
+	    }
+	}
+    }
+
+    if (nc > 0) {
+	coded = gretl_matrix_alloc(1, nc);
+	if (coded != NULL) {
+	    int j = 0;
+
+	    for (i=1; i<=list[0]; i++) {
+		if (series_is_coded(dset, vlist[i])) {
+		    coded->val[j++] = i;
+		}
+	    }
+	}
+    }
+
+    free(list);
+
+    return coded;
+}
+
 /* write out current dataset in R format, and, if this succeeds,
    write appropriate R commands to @fp to source the data
 */
@@ -1564,6 +1603,7 @@ static int write_data_for_R (const DATASET *dset,
 			     gretlopt opt,
 			     FILE *fp)
 {
+    gretl_matrix *coded = NULL;
     int *list = NULL;
     gchar *Rdata;
     int ts, err;
@@ -1580,13 +1620,31 @@ static int write_data_for_R (const DATASET *dset,
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
+	if (!ts) {
+	    coded = make_coded_vec(list, dset);
+	}
 	err = write_data(Rdata, list, dset, OPT_R, NULL);
     }
 
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_R: failed with err = %d\n", err);
 	g_free(Rdata);
+	gretl_matrix_free(coded);
 	return err;
+    }
+
+    if (coded != NULL) {
+	gchar *tmp = g_strdup_printf("%sRcoded.mat", gretl_dotdir());
+	int mwerr;
+
+	/* ensure we don't load a stale file */
+	gretl_remove(tmp);
+	g_free(tmp);
+	mwerr = gretl_matrix_write_to_file(coded, "Rcoded.mat", 1);
+	if (mwerr) {
+	   gretl_matrix_free(coded);
+	   coded = NULL;
+	}
     }
 
     fputs("# load data from gretl\n", fp);
@@ -1607,9 +1665,14 @@ static int write_data_for_R (const DATASET *dset,
     } else {	
 	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fputs("attach(gretldata)\n", fp);
+	if (coded != NULL) {
+	    fputs("Coded <- gretl.loadmat(\"Rcoded.mat\")\n", fp);
+	    fputs("for (i in Coded) {gretldata[,i] <- as.factor(gretldata[,i])}\n", fp);
+	}
     }
 
     g_free(Rdata);
+    gretl_matrix_free(coded);
 
     if (opt & OPT_I) {
 	/* let the (interactive) user see that this worked */
