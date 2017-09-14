@@ -512,6 +512,31 @@ static void midas_term_init (midas_term *mt)
     mt->nlags = 0;
 }
 
+static int type_from_string (const char *s, int *err)
+{
+    int ret = -1;
+
+    if (integer_string(s)) {
+	ret = atoi(s);
+    } else if (!strcmp(s, "\"umidas\"")) {
+	ret = 0;
+    } else if (!strcmp(s, "\"nealmon\"")) {
+	ret = 1;
+    } else if (!strcmp(s, "\"beta0\"")) {
+	ret = 2;
+    } else if (!strcmp(s, "\"betan\"")) {
+	ret = 3;
+    } else if (!strcmp(s, "\"almonp\"")) {
+	ret = 4;
+    }
+
+    if (ret < 0) {
+	*err = E_INVARG;
+    }
+
+    return ret;
+}
+
 /* Parse a particular entry in the incoming array of MIDAS
    specifications. Each entry should look like one of
    the following:
@@ -539,34 +564,38 @@ static int parse_midas_term (const char *s,
 {
     char lname[VNAMELEN];
     char mname[VNAMELEN];
+    char typestr[10];
     char fmt[48];
     int ns, p1, p2, type;
     int umidas = 0;
     int err = 0;
 
     midas_term_init(mt);
+    *typestr = '\0';
 
     if (!strncmp(s, "mds(", 4)) {
 	/* calling for auto-generated lags */
 	s += 4;
-	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%d, %%%d[^) ])",
-		VNAMELEN-1, VNAMELEN-1);
-	ns = sscanf(s, fmt, lname, &p1, &p2, &type, mname);
-	if (ns == 4 && type == MIDAS_U) {
+	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%%d[^,) ] , %%%d[^) ])",
+		VNAMELEN-1, 9, VNAMELEN-1);
+	ns = sscanf(s, fmt, lname, &p1, &p2, typestr, mname);
+	type = type_from_string(typestr, &err);
+	if (!err && ns == 4 && type == MIDAS_U) {
 	    umidas = 1;
-	} else if (ns != 5) {
+	} else if (!err && ns != 5) {
 	    err = E_PARSE;
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
 	/* list already holds lags */
 	mt->flags |= M_PRELAG;
 	s += 5;
-	sprintf(fmt, "%%%d[^, ] , %%d, %%%d[^) ])",
-		VNAMELEN-1, VNAMELEN-1);
-	ns = sscanf(s, fmt, lname, &type, mname);
-	if (ns == 2 && type == MIDAS_U) {
+	sprintf(fmt, "%%%d[^, ] , %%%d[^,) ] , %%%d[^) ])",
+		VNAMELEN-1, 9, VNAMELEN-1);
+	ns = sscanf(s, fmt, lname, typestr, mname);
+	type = type_from_string(typestr, &err);
+	if (!err && ns == 2 && type == MIDAS_U) {
 	    umidas = 1;
-	} else if (ns != 3) {
+	} else if (!err && ns != 3) {
 	    err = E_PARSE;
 	}
 	p1 = p2 = 0; /* got no min/max info */

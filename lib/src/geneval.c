@@ -5711,6 +5711,29 @@ static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static int node_get_midas_method (NODE *n, parser *p)
+{
+    int ret = -1;
+
+    if (n->t == STR) {
+	if (!strcmp(n->v.str, "nealmon")) {
+	    ret = 1;
+	} else if (!strcmp(n->v.str, "beta0")) {
+	    ret = 2;
+	} else if (!strcmp(n->v.str, "betan")) {
+	    ret = 3;
+	} else if (!strcmp(n->v.str, "almonp")) {
+	    ret = 4;
+	} else {
+	    p->err = E_INVARG;
+	}
+    } else {
+	ret = node_get_int(n, p);
+    }
+
+    return ret;
+}
+
 static NODE *lincomb_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_series_node(p);
@@ -5725,7 +5748,7 @@ static NODE *lincomb_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	}
 
 	if (!p->err && f == F_MLINCOMB) {
-	    k = node_get_int(r, p);
+	    k = node_get_midas_method(r, p);
 	}
 
 	if (!p->err) {
@@ -10070,11 +10093,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (m->t != MAT) {
 	    node_type_error(f, 2, MAT, m, p);
-	} else if (!scalar_node(r)) {
+	} else if (!scalar_node(r) && r->t != STR) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    int length = node_get_int(l, p);
-	    int method = node_get_int(r, p);
+	    int method = node_get_midas_method(r, p);
 
 	    if (!p->err) {
 		A = midas_weights(length, m->v.m, method, &p->err);
@@ -10085,11 +10108,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (m->t != MAT) {
 	    node_type_error(f, 2, MAT, m, p);
-	} else if (!scalar_node(r)) {
+	} else if (!scalar_node(r) && r->t != STR) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    int length = node_get_int(l, p);
-	    int method = node_get_int(r, p);
+	    int method = node_get_midas_method(r, p);
 
 	    if (!p->err) {
 		A = midas_gradient(length, m->v.m, method, &p->err);
@@ -14546,7 +14569,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MLINCOMB:
 	/* list + matrix + int -> series */
-	if (ok_list_node(l) && m->t == MAT && scalar_node(r)) {
+	if (ok_list_node(l) && m->t == MAT &&
+	    (scalar_node(r) || r->t == STR)) {
 	    ret = lincomb_func(l, m, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
