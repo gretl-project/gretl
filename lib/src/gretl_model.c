@@ -4739,7 +4739,13 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    err = gretl_bundle_set_matrix(b, bkey, item->ptr);
 	} else if (item->type == GRETL_TYPE_LIST) {
-	    err = gretl_bundle_set_list(b, bkey, item->ptr);
+	    if (pmod->ci == MIDASREG && !strcmp(bkey, "seplist")) {
+		; /* internal use only, skip it */
+	    } else {
+		err = gretl_bundle_set_list(b, bkey, item->ptr);
+	    }
+	} else if (item->type == GRETL_TYPE_ARRAY) {
+	    gretl_bundle_set_data(b, bkey, item->ptr, item->type, 0);
 	}
     }
 

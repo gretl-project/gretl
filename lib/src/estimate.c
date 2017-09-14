@@ -1917,7 +1917,6 @@ int makevcv (MODEL *pmod, double sigma)
 
     if (pmod->xpx == NULL) {
 	/* raw material not available */
-	fprintf(stderr, "makevcv: pmod->xpx = NULL\n");
 	return E_BADSTAT;
     }
 
