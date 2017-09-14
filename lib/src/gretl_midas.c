@@ -409,7 +409,7 @@ static gretl_matrix *make_auto_theta (char *mstr, int i,
 
     if (k == 0) {
 	/* we have to infer k */
-	if (!strcmp(mstr, "null")) {
+	if (*mstr == '\0' || !strcmp(mstr, "null")) {
 	    /* OK if we know how many parameters are needed? */
 	    if (ptype == MIDAS_BETA0) {
 		k = 2;
@@ -512,7 +512,7 @@ static void midas_term_init (midas_term *mt)
     mt->nlags = 0;
 }
 
-static int type_from_string (const char *s, int *err)
+static int type_from_string (const char *s, int *umidas, int *err)
 {
     int ret = -1;
 
@@ -532,6 +532,8 @@ static int type_from_string (const char *s, int *err)
 
     if (ret < 0) {
 	*err = E_INVARG;
+    } else if (ret == 0) {
+	*umidas = 1;
     }
 
     return ret;
@@ -571,7 +573,7 @@ static int parse_midas_term (const char *s,
     int err = 0;
 
     midas_term_init(mt);
-    *typestr = '\0';
+    *typestr = *lname = *mname = '\0';
 
     if (!strncmp(s, "mds(", 4)) {
 	/* calling for auto-generated lags */
@@ -579,10 +581,8 @@ static int parse_midas_term (const char *s,
 	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%%d[^,) ] , %%%d[^) ])",
 		VNAMELEN-1, 9, VNAMELEN-1);
 	ns = sscanf(s, fmt, lname, &p1, &p2, typestr, mname);
-	type = type_from_string(typestr, &err);
-	if (!err && ns == 4 && type == MIDAS_U) {
-	    umidas = 1;
-	} else if (!err && ns != 5) {
+	type = type_from_string(typestr, &umidas, &err);
+	if (!err && ns < 4) {
 	    err = E_PARSE;
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
@@ -592,10 +592,8 @@ static int parse_midas_term (const char *s,
 	sprintf(fmt, "%%%d[^, ] , %%%d[^,) ] , %%%d[^) ])",
 		VNAMELEN-1, 9, VNAMELEN-1);
 	ns = sscanf(s, fmt, lname, typestr, mname);
-	type = type_from_string(typestr, &err);
-	if (!err && ns == 2 && type == MIDAS_U) {
-	    umidas = 1;
-	} else if (!err && ns != 3) {
+	type = type_from_string(typestr, &umidas, &err);
+	if (!err && ns < 2) {
 	    err = E_PARSE;
 	}
 	p1 = p2 = 0; /* got no min/max info */
@@ -611,7 +609,7 @@ static int parse_midas_term (const char *s,
 	    gretl_matrix *theta = NULL;
 	    char c = mname[0];
 
-	    if (!isdigit(c) && c != '{' && strcmp(mname, "null")) {
+	    if (c != '\0' && !isdigit(c) && c != '{' && strcmp(mname, "null")) {
 		theta = get_matrix_by_name(mname);
 	    }
 
