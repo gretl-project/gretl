@@ -12,12 +12,14 @@ REF = gretl-ref.pdf
 HANSL = hansl-primer.pdf
 PKGBOOK = pkgbook.pdf
 MPIDOC = gretl-mpi.pdf
+MIDASDOC = midas-gretl.pdf
 KBD = gretl-keys.pdf
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
 ALTHANSL = hansl-primer-a4.pdf
 ALTPKGBOOK = pkgbook-a4.pdf
 ALTMPIDOC = gretl-mpi-a4.pdf
+ALTMIDASDOC = midas-gretl-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
 
 TEXSRC = cli.tex \
@@ -88,7 +90,8 @@ TEXSRC = cli.tex \
 	hp-estimate.tex \
 	hp-further.tex \
 	hp-reference.tex \
-	pkgbook.tex
+	pkgbook.tex \
+	midas-gretl.tex
 
 BIBSRC = gretl.bib gretl.bst
 
@@ -131,6 +134,10 @@ $(MPIDOC): gretl-mpi.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
+$(MIDASDOC): midas-gretl.tex links date.tex $(STYSRC)
+	pdflatex $<
+	pdflatex $<
+
 $(KBD): gretl-keys.tex links $(STYSRC)
 	pdflatex $<
 
@@ -166,6 +173,10 @@ $(ALTMPIDOC): gretl-mpi-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
+$(ALTMIDASDOC): midas-gretl-a4.tex links date.tex $(STYSRC)
+	pdflatex $<
+	pdflatex $<
+
 $(ALTKBD): gretl-keys-a4.tex links $(STYSRC)
 	pdflatex $<
 
@@ -179,6 +190,9 @@ hansl-primer.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 gretl-mpi.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+
+midas-gretl.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 gretl-keys.tex:
@@ -201,6 +215,9 @@ pkgbook-a4.tex: $(docsrc)/tex/pkgbook.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 gretl-mpi-a4.tex: $(docsrc)/tex/gretl-mpi.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
+
+midas-gretl-a4.tex: $(docsrc)/tex/midas-gretl.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
