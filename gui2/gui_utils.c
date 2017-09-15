@@ -5805,6 +5805,20 @@ void start_R (const char *buf, int send_data, int interactive)
 
     if (send_data) {
 	Ropt |= OPT_D;
+	if (annual_data(dataset) || quarterly_or_monthly(dataset)) {
+	    const char *opts[] = {
+		N_("multiple time series object"),
+		N_("data frame")
+	    };
+	    int resp;
+
+	    resp = radio_dialog(NULL, _("Send data as"), opts, 2, 0, 0, NULL);
+	    if (resp < 0) {
+		return;
+	    } else if (resp == 1) {
+		Ropt |= OPT_F;
+	    }
+	}
     }
 
     /* On Windows in non-interactive mode, don't write

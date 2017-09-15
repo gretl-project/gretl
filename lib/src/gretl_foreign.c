@@ -1610,14 +1610,14 @@ static int write_data_for_R (const DATASET *dset,
     gchar *Rdata;
     int ts, err;
 
-    fprintf(stderr, "write_data_for_R\n");
-
     err = no_data_check(dset);
     if (err) {
 	return err;
     }
 
-    ts = dataset_is_time_series(dset);
+    /* FIXME: can R's "ts" handle daily data, weekly data, etc.? */
+    ts = annual_data(dset) || quarterly_or_monthly(dset);
+
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
     list = get_send_data_list(dset, FOREIGN, &err);
 
@@ -1661,7 +1661,7 @@ static int write_data_for_R (const DATASET *dset,
 	}
 
 	if (opt & OPT_F) {
-	    /* treat as data frame */
+	    /* treat as data frame (but set columns as "ts") */
 	    fputs("if (length(class(gretldata)) > 1) {m <- ncol(x)} else {m <- 1}\n", fp);
 	    fputs("for (i in 1:m) {\n", fp);
 	    fprintf(fp, "  gretldata[,i] <- ts(gretldata[,i], start=c(%d, %d), "
