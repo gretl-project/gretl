@@ -1620,9 +1620,7 @@ static int write_data_for_R (const DATASET *dset,
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
-	if (!ts) {
-	    coded = make_coded_vec(list, dset);
-	}
+	coded = make_coded_vec(list, dset);
 	err = write_data(Rdata, list, dset, OPT_R, NULL);
     }
 
@@ -1665,10 +1663,11 @@ static int write_data_for_R (const DATASET *dset,
     } else {	
 	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fputs("attach(gretldata)\n", fp);
-	if (coded != NULL) {
-	    fputs("Coded <- gretl.loadmat(\"Rcoded.mat\")\n", fp);
-	    fputs("for (i in Coded) {gretldata[,i] <- as.factor(gretldata[,i])}\n", fp);
-	}
+    }
+
+    if (coded != NULL) {
+	fputs("Coded <- gretl.loadmat(\"Rcoded.mat\")\n", fp);
+	fputs("for (i in Coded) {gretldata[,i] <- as.factor(gretldata[,i])}\n", fp);
     }
 
     g_free(Rdata);
