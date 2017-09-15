@@ -1620,13 +1620,9 @@ static int write_data_for_R (const DATASET *dset,
     ts = dataset_is_time_series(dset);
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
     list = get_send_data_list(dset, FOREIGN, &err);
-    fprintf(stderr, " err = %d\n", err);
 
     if (!err) {
-	fprintf(stderr, " HERE 1\n");
 	coded = make_coded_vec(list, dset);
-	fprintf(stderr, " HERE 2\n");
-	printlist(list, "R export list");
 	err = write_data(Rdata, list, dset, OPT_R, NULL);
     }
 
