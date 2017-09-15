@@ -233,6 +233,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_U, "plot", 2 },
     { FOREIGN,  OPT_D, "send-data", 1 },
     { FOREIGN,  OPT_V, "verbose", 0 },
+    { FOREIGN,  OPT_F, "frame", 0 },
     { FRACTINT, OPT_G, "gph", 0 },
     { FRACTINT, OPT_A, "all", 0 },
     { FREQ,     OPT_G, "show-plot", 0 }, /* legacy */

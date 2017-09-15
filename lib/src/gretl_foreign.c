@@ -1557,21 +1557,21 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
     return 0;
 }
 
-static gretl_matrix *make_coded_vec (const int *vlist,
+static gretl_matrix *make_coded_vec (int *list,
 				     const DATASET *dset)
 {
     gretl_matrix *coded = NULL;
-    int *list = NULL;
+    int free_list = 0;
     int i, nc = 0;
 
-    if (vlist == NULL) {
+    if (list == NULL) {
 	list = full_var_list(dset, NULL);
-	vlist = list;
+	free_list = 1;
     }
 
-    if (vlist != NULL) {
+    if (list != NULL) {
 	for (i=1; i<=list[0]; i++) {
-	    if (series_is_coded(dset, vlist[i])) {
+	    if (series_is_coded(dset, list[i])) {
 		nc++;
 	    }
 	}
@@ -1583,14 +1583,16 @@ static gretl_matrix *make_coded_vec (const int *vlist,
 	    int j = 0;
 
 	    for (i=1; i<=list[0]; i++) {
-		if (series_is_coded(dset, vlist[i])) {
+		if (series_is_coded(dset, list[i])) {
 		    coded->val[j++] = i;
 		}
 	    }
 	}
     }
 
-    free(list);
+    if (free_list) {
+	free(list);
+    }
 
     return coded;
 }
@@ -1608,19 +1610,23 @@ static int write_data_for_R (const DATASET *dset,
     gchar *Rdata;
     int ts, err;
 
+    fprintf(stderr, "write_data_for_R\n");
+
     err = no_data_check(dset);
     if (err) {
 	return err;
     }
 
     ts = dataset_is_time_series(dset);
-
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
-
     list = get_send_data_list(dset, FOREIGN, &err);
+    fprintf(stderr, " err = %d\n", err);
 
     if (!err) {
+	fprintf(stderr, " HERE 1\n");
 	coded = make_coded_vec(list, dset);
+	fprintf(stderr, " HERE 2\n");
+	printlist(list, "R export list");
 	err = write_data(Rdata, list, dset, OPT_R, NULL);
     }
 
@@ -1646,6 +1652,7 @@ static int write_data_for_R (const DATASET *dset,
     }
 
     fputs("# load data from gretl\n", fp);
+    fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 
     if (ts) {
 	char *p, datestr[OBSLEN];
@@ -1657,11 +1664,20 @@ static int write_data_for_R (const DATASET *dset,
 	    subper = atoi(p + 1);
 	}
 
-	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
-	fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
-		atoi(datestr), subper, dset->pd);
+	if (opt & OPT_F) {
+	    /* treat as data frame */
+	    fputs("if (length(class(gretldata)) > 1) {m <- ncol(x)} else {m <- 1}\n", fp);
+	    fputs("for (i in 1:m) {\n", fp);
+	    fprintf(fp, "  gretldata[,i] <- ts(gretldata[,i], start=c(%d, %d), "
+		  "frequency=%d)\n", atoi(datestr), subper, dset->pd);
+	    fputs("}\n", fp);
+	    fputs("attach(gretldata)\n", fp);
+	} else {
+	    /* convert to "mts" (multiple time series object) */
+	    fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
+		    atoi(datestr), subper, dset->pd);
+	}
     } else {	
-	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fputs("attach(gretldata)\n", fp);
     }
 
