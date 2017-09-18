@@ -12231,8 +12231,8 @@ static int vec_branch (const double *c, parser *p)
 /* Given a series condition in a ternary "?" expression, return the
    evaluated counterpart.  We evaluate both forks and select based on
    the value of the condition at each observation.  We accept only
-   scalar (NUM) and series (SERIES) types on input, and always produce
-   a SERIES type on output.
+   scalar (NUM or 1x1 matrix) and series (SERIES) types on input, and
+   always produce a SERIES type on output.
 */
 
 static NODE *query_eval_series (const double *c, NODE *n, parser *p)
@@ -12254,8 +12254,8 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
 	}
 	if (l->t == SERIES) {
 	    xvec = l->v.xvec;
-	} else if (l->t == NUM) {
-	    x = l->v.xval;
+	} else if (scalar_node(l)) {
+	    x = node_get_scalar(l, p);
 	} else {
 	    p->err = E_TYPES;
 	    return NULL;
@@ -12269,8 +12269,8 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
 	}
 	if (r->t == SERIES) {
 	    yvec = r->v.xvec;
-	} else if (r->t == NUM) {
-	    y = r->v.xval;
+	} else if (scalar_node(r)) {
+	    y = node_get_scalar(r, p);
 	} else {
 	    p->err = E_TYPES;
 	    return NULL;
