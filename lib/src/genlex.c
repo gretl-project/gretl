@@ -521,11 +521,6 @@ int const_lookup (const char *s)
 	}
     }
 
-    /* backward comatibility: to be removed eventually */
-    if (!strcmp(s, "macheps")) {
-	return CONST_EPS;
-    }
-
     return 0;
 }
 
@@ -1267,10 +1262,6 @@ static void look_up_word (const char *s, parser *p)
 		/* note: all "native" types take precedence over this */
 		p->sym = RFUN;
 		p->idstr = gretl_strdup(s + 2);
-	    } else if (!strcmp(s, "pi")) {
-		/* backward compat (get rid of this) */
-		p->idnum = CONST_PI;
-		p->sym = CON;
 	    } else if (parsing_query) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
