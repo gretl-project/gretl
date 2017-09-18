@@ -512,6 +512,20 @@ static void midas_term_init (midas_term *mt)
     mt->nlags = 0;
 }
 
+static int get_p1_p2 (const char *s1, const char *s2,
+		      int *p1, int *p2)
+{
+    int err = 0;
+
+    *p1 = gretl_int_from_string(s1, &err);
+
+    if (!err) {
+	*p2 = gretl_int_from_string(s2, &err);
+    }
+
+    return err;
+}
+
 static int type_from_string (const char *s, int *umidas, int *err)
 {
     int ret = -1;
@@ -566,10 +580,12 @@ static int parse_midas_term (const char *s,
 {
     char lname[VNAMELEN];
     char mname[VNAMELEN];
+    char p1str[VNAMELEN];
+    char p2str[VNAMELEN];
     char typestr[10];
     char fmt[48];
-    int ns, p1, p2, type;
-    int umidas = 0;
+    int ns, p1 = 0, p2 = 0;
+    int type, umidas = 0;
     int err = 0;
 
     midas_term_init(mt);
@@ -578,10 +594,13 @@ static int parse_midas_term (const char *s,
     if (!strncmp(s, "mds(", 4)) {
 	/* calling for auto-generated lags */
 	s += 4;
-	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%%d[^,) ] , %%%d[^) ])",
-		VNAMELEN-1, 9, VNAMELEN-1);
-	ns = sscanf(s, fmt, lname, &p1, &p2, typestr, mname);
-	type = type_from_string(typestr, &umidas, &err);
+	sprintf(fmt, "%%%d[^, ] , %%%d[^, ] , %%%d[^, ] , %%%d[^,) ] , %%%d[^) ])",
+		VNAMELEN-1, VNAMELEN-1, VNAMELEN-1, 9, VNAMELEN-1);
+	ns = sscanf(s, fmt, lname, p1str, p2str, typestr, mname);
+	err = get_p1_p2(p1str, p2str, &p1, &p2);
+	if (!err) {
+	    type = type_from_string(typestr, &umidas, &err);
+	}
 	if (!err && ns < 4) {
 	    err = E_PARSE;
 	}
@@ -596,7 +615,6 @@ static int parse_midas_term (const char *s,
 	if (!err && ns < 2) {
 	    err = E_PARSE;
 	}
-	p1 = p2 = 0; /* got no min/max info */
     } else {
 	err = E_INVARG;
     }

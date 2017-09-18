@@ -10,7 +10,9 @@ version 2017d, in progress
   the "coded" attribute set
 - "pca" command and princomp() function: center but do not
   standardize when computing principal components using the
-  covariance matrix 
+  covariance matrix
+- "midasreg" command, mds() term: allow specification of min
+  and max lags via scalar variables
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
 - Fix bug: rename() function not working on Windows when
