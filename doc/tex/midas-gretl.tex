@@ -531,10 +531,12 @@ In case 1 \texttt{\textsl{mlist}} must be a \textbf{MIDAS list}, as
 defined above, which contains a full set of per-period series (but no
 lags). Lags will be generated automatically, governed by the
 \texttt{\textsl{minlag}} and \texttt{\textsl{maxlag}} (integer)
-arguments. The integer (or string) \texttt{\textsl{type}} argument
-represents the type of parameterization; in addition to the values 1
-to 4 defined in Table~\ref{tab:midas-parm} a value of 0 (or the
-string \verb|"umidas"|) indicates unrestricted MIDAS.
+arguments, which may be given as numerical values or the names of
+predefined scalar variables. The integer (or string)
+\texttt{\textsl{type}} argument represents the type of
+parameterization; in addition to the values 1 to 4 defined in
+Table~\ref{tab:midas-parm} a value of 0 (or the string
+\verb|"umidas"|) indicates unrestricted MIDAS.
 
 In case 2 \texttt{\textsl{llist}} is assumed to be a list that
 already contains the required set of high-frequency lags---as may be
@@ -1315,7 +1317,7 @@ hfplot DJ ; indpro --with-lines --output=daily.pdf \
 \section*{Appendix C: parameterization functions}
 \label{app:c}
 
-Here we give some more detail of the MIDAS parameterizations supprted
+Here we give some more detail of the MIDAS parameterizations supported
 by gretl.
 
 \vspace{1ex}
@@ -1349,14 +1351,17 @@ In the standard, two-parameter \textbf{normalized beta} case we have
 \label{eq:fbeta}
   f(i, \theta) = (i^-/p^-)^{\theta_1-1} \cdot (1-i^-/p^-)^{\theta_2-1}
 \end{equation}
-where $p^- = p-1$, and $i^- = i-1$ except at the end-points, $i=1$
-and $i=p$, where we add and subtract, respectively, machine epsilon to
+where $p^- = p-1$, and $i^- = i-1$ except at the end-points, $i=1$ and
+$i=p$, where we add and subtract, respectively, machine epsilon to
 avoid numerical problems.  This formulation constrains the coefficient
-on the last lag to be zero (unless $\theta_1 = \theta_2 = 1$ in which
-case we get equal weights). A third parameter can be used to allow a
-non-zero final weight.  Let $w_i$ denote the normalized weight
+on the last lag to be zero---provided that the weights are declining
+at higher lags, a condition that is ensured if $\theta_2$ is greater
+than $\theta_1$ by a sufficient margin. The special case of
+$\theta_1 = \theta_2 = 1$ yields equal weights at all lags. A third
+parameter can be used to allow a non-zero final weight, even in the
+case of declining weights.  Let $w_i$ denote the normalized weight
 obtained by using (\ref{eq:fbeta}) in (\ref{eq:general}). Then the
-modified variant, with additional parameter $\theta_3$, can be written
+modified variant with additional parameter $\theta_3$ can be written
 as
 \[
 w^{(3)}_i = \frac{w_i + \theta_3}{1 + p\theta_3}

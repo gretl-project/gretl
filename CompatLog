@@ -1,6 +1,6 @@
 version 2017d, in progress
 
-The deprecated aliases "pi" and "macheps," for $pi and $macheps
+The deprecated aliases "pi" and "macheps", for $pi and $macheps
 respectively, have now been removed.
 
 The --rolling option to the "fcast" command has been renamed
