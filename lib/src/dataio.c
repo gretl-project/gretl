@@ -1516,7 +1516,7 @@ static int compare_ranges (const DATASET *targ,
 	!(targ->markers && src->markers)) {
 	if (newvars == 0) {
 	    if (src->markers) {
-		/* hand off? */
+		/* pass the problem on to just_append_rows */
 		return 0;
 	    } else {
 		/* assume the new data should be appended length-wise */
@@ -1713,7 +1713,8 @@ static int panel_append_special (int addvars,
     return err;
 }
 
-static int markers_compatible (const DATASET *d1, const DATASET *d2)
+static int markers_compatible (const DATASET *d1, const DATASET *d2,
+			       int *offset)
 {
     int ret = 0;
 
@@ -1721,25 +1722,27 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2)
 	ret = 1;
     } else if (d1->markers == 0) {
 	/* markers "on the right only": are they consecutive
-	   integers starting at 1 or d1->n + 1?
-	   FIXME allow intersection
+	   integers starting between 1 and d1->n + 1?
 	*/
 	if (integer_string(d2->S[0])) {
-	    int k = atoi(d2->S[0]);
+	    int k0 = atoi(d2->S[0]);
 
-	    if (k == 1 || k == d1->n + 1) {
+	    if (k0 >= 1 && k0 <= d1->n + 1) {
 		int i, k1;
 
 		ret = 1;
 		for (i=1; i<d2->n && ret; i++) {
 		    if (!integer_string(d2->S[i])) {
 			ret = 0;
-		    } else if ((k1 = atoi(d2->S[i])) != k + 1) {
+		    } else if ((k1 = atoi(d2->S[i])) != k0 + 1) {
 			ret = 0;
 		    } else {
-			k = k1;
+			k0 = k1;
 		    }
 		}
+	    }
+	    if (ret) {
+		*offset = atoi(d2->S[0]) - 1;
 	    }
 	}
     } else {
@@ -1757,8 +1760,6 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2)
 	}
     }
 
-    fprintf(stderr, "markers_compatible: ret = %d\n", ret);
-
     return ret;
 }
 
@@ -1768,16 +1769,21 @@ just_append_rows (const DATASET *targ, const DATASET *src,
 {
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
-	targ->sd0 == 1 && src->sd0 == 1 &&
-	markers_compatible(targ, src)) {
-	/* note: we do this only if we're not adding any new
-	   series: we'll append to existing series lengthwise
-	*/
-	*offset = targ->n;
-	return src->n;
-    } else {
-	return 0;
+	targ->sd0 == 1 && src->sd0 == 1) {
+	int ok, test_offset = -1;
+
+	ok = markers_compatible(targ, src, &test_offset);
+	if (ok) {
+	    /* note: we do this only if we're not adding any new
+	       series: we'll append to existing series lengthwise
+	       (or perhaps write data into existing existing rows)
+	    */
+	    *offset = test_offset;
+	    return src->n - (targ->n - *offset);
+	}
     }
+
+    return 0;
 }
 
 static int simple_range_match (const DATASET *targ, const DATASET *src,
