@@ -1515,9 +1515,14 @@ static int compare_ranges (const DATASET *targ,
 	dataset_is_cross_section(src) &&
 	!(targ->markers && src->markers)) {
 	if (newvars == 0) {
-	    /* assume the new data should be appended length-wise */
-	    *offset = ed0 + 1;
-	    return src->n;
+	    if (src->markers) {
+		/* hand off? */
+		return 0;
+	    } else {
+		/* assume the new data should be appended length-wise */
+		*offset = ed0 + 1;
+		return src->n;
+	    }
 	} else {
 	    /* we've already determined that the series length in
 	       @src doesn't match either the full series length or
@@ -1717,6 +1722,7 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2)
     } else if (d1->markers == 0) {
 	/* markers "on the right only": are they consecutive
 	   integers starting at 1 or d1->n + 1?
+	   FIXME allow intersection
 	*/
 	if (integer_string(d2->S[0])) {
 	    int k = atoi(d2->S[0]);
@@ -1750,6 +1756,8 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2)
 	    }
 	}
     }
+
+    fprintf(stderr, "markers_compatible: ret = %d\n", ret);
 
     return ret;
 }
@@ -1945,7 +1953,9 @@ static int merge_data (DATASET *dset, DATASET *addset,
     }
 
     if (!err && !addpanel && dset->markers != addset->markers) {
-	if (addset->n != dset->n && !yrspecial && !dayspecial) {
+	if (addobs == 0 && addvars == 0) {
+	    ; /* might be OK? */
+	} else if (addset->n != dset->n && !yrspecial && !dayspecial) {
 	    merge_error(_("Inconsistency in observation markers\n"), prn);
 	    err = E_DATA;
 	} else if (addset->markers && !dset->markers &&
