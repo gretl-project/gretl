@@ -2025,7 +2025,6 @@ static int model_add_mterms_array (MODEL *pmod,
 	    } else {
 		mt = &mterms[i];
 		gretl_bundle_set_string(b, "lname",  mt->lnam0);
-		gretl_bundle_set_string(b, "mname",  mt->mname);
 		gretl_bundle_set_int(b, "prelag", prelag(mt) ? 1 : 0);
 		gretl_bundle_set_int(b, "minlag", mt->minlag);
 		gretl_bundle_set_int(b, "maxlag", mt->maxlag);
@@ -2078,7 +2077,6 @@ static midas_term *mterms_from_array (gretl_array *A,
 		*err = E_DATA;
 	    } else {
 		strcpy(mt->lname, gretl_bundle_get_string(b, "lname", err));
-		strcpy(mt->mname, gretl_bundle_get_string(b, "mname", err));
 		if (gretl_bundle_get_int(b, "prelag", err)) {
 		    mt->flags |= M_PRELAG;
 		}
@@ -2086,6 +2084,7 @@ static midas_term *mterms_from_array (gretl_array *A,
 		mt->maxlag = gretl_bundle_get_int(b, "maxlag", err);
 		mt->type   = gretl_bundle_get_int(b, "type", err);
 		mt->nparm  = gretl_bundle_get_int(b, "nparm", err);
+		sprintf(mt->mname, "theta___%d", i+1);
 	    }
 	}
 
