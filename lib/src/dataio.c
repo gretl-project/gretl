@@ -1758,8 +1758,6 @@ static int
 just_append_rows (const DATASET *targ, const DATASET *src,
 		  int *offset)
 {
-    fprintf(stderr, "just_append_rows? m0 = %d, m1 = %d, sds = %g, %g\n",
-	    targ->markers, src->markers, targ->sd0, src->sd0);
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
 	targ->sd0 == 1 && src->sd0 == 1 &&
