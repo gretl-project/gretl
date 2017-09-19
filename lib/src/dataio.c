@@ -1708,14 +1708,62 @@ static int panel_append_special (int addvars,
     return err;
 }
 
+static int markers_compatible (const DATASET *d1, const DATASET *d2)
+{
+    int ret = 0;
+
+    if (d1->markers == 0 && d2->markers == 0) {
+	ret = 1;
+    } else if (d1->markers == 0) {
+	/* markers "on the right only": are they consecutive
+	   integers starting at 1 or d1->n + 1?
+	*/
+	if (integer_string(d2->S[0])) {
+	    int k = atoi(d2->S[0]);
+
+	    if (k == 1 || k == d1->n + 1) {
+		int i, k1;
+
+		ret = 1;
+		for (i=1; i<d2->n && ret; i++) {
+		    if (!integer_string(d2->S[i])) {
+			ret = 0;
+		    } else if ((k1 = atoi(d2->S[i])) != k + 1) {
+			ret = 0;
+		    } else {
+			k = k1;
+		    }
+		}
+	    }
+	}
+    } else {
+	/* markers on both sides: are they totally distinct? */
+	int i, j;
+
+	ret = 1;
+	for (i=0; i<d2->n && ret; i++) {
+	    for (j=0; j<d1->n && ret; j++) {
+		if (!strcmp(d2->S[i], d1->S[j])) {
+		    /* no, not totally distinct */
+		    ret = 0;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static int 
 just_append_rows (const DATASET *targ, const DATASET *src,
 		  int *offset)
 {
+    fprintf(stderr, "just_append_rows? m0 = %d, m1 = %d, sds = %g, %g\n",
+	    targ->markers, src->markers, targ->sd0, src->sd0);
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
-	targ->markers == 0 && src->markers == 0 &&
-	targ->sd0 == 1 && src->sd0 == 1) {
+	targ->sd0 == 1 && src->sd0 == 1 &&
+	markers_compatible(targ, src)) {
 	/* note: we do this only if we're not adding any new
 	   series: we'll append to existing series lengthwise
 	*/

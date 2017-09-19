@@ -2116,7 +2116,7 @@ int non_numeric_check (DATASET *dset, int **plist,
 	pprintf(prn, "variable %d (%s): non-numeric values = %d "
 		"(%.2f percent)\n", v, dset->varname[v], 
 		nnon, 100 * nnfrac);
-	if (nnon < 2 || nnfrac < 0.01) {
+	if ((nnon < 2 && dset->n > 2) || nnfrac < 0.01) {
 	    /* if we got just a few non-numeric values, we'll assume
 	       that the data file is broken
 	    */
