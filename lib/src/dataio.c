@@ -1714,7 +1714,7 @@ static int panel_append_special (int addvars,
 }
 
 static int markers_compatible (const DATASET *d1, const DATASET *d2,
-			       int *offset)
+			       int *offset, gretlopt opt)
 {
     int ret = 0;
 
@@ -1742,7 +1742,12 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 		}
 	    }
 	    if (ret) {
-		*offset = atoi(d2->S[0]) - 1;
+		if (opt & OPT_U) {
+		    /* update overlap */
+		    *offset = atoi(d2->S[0]) - 1;
+		} else {
+		    *offset = d1->n;
+		}
 	    }
 	}
     } else {
@@ -1765,14 +1770,14 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 
 static int 
 just_append_rows (const DATASET *targ, const DATASET *src,
-		  int *offset)
+		  int *offset, gretlopt opt)
 {
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
 	targ->sd0 == 1 && src->sd0 == 1) {
 	int ok, test_offset = -1;
 
-	ok = markers_compatible(targ, src, &test_offset);
+	ok = markers_compatible(targ, src, &test_offset, opt);
 	if (ok) {
 	    /* note: we do this only if we're not adding any new
 	       series: we'll append to existing series lengthwise
@@ -1946,7 +1951,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 #endif	    
 	}
 	if (!err && addobs <= 0 && addvars == 0) {
-	    addobs = just_append_rows(dset, addset, &offset);
+	    addobs = just_append_rows(dset, addset, &offset, opt);
 #if MERGE_DEBUG	    
 	    fprintf(stderr, " added obs, from just_append_rows: %d\n", addobs);
 #endif	    
