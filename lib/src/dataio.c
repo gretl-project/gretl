@@ -1723,6 +1723,7 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
     int ret = 0;
 
     if (d1->markers == 0 && d2->markers == 0) {
+	*offset = d1->n;
 	ret = 1;
     } else if (d1->markers == 0) {
 	/* markers "on the right only": are they consecutive

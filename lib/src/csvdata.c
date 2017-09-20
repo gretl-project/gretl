@@ -2923,6 +2923,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 
     if (!err && joining(c) && c->cols_list == NULL) {
 	/* no relevant columns were found */
+	gretl_errmsg_set("No relevant columns were found");
 	err = E_UNKVAR;
     }
 

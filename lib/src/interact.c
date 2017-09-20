@@ -1398,6 +1398,7 @@ static int get_inner_key_id (const char *s, int n,
 	} else {
 	    id = current_series_index(dset, vname);
 	    if (id < 0) {
+		gretl_errmsg_sprintf("'%s': no such series", vname);
 		*err = E_UNKVAR;
 	    }
 	}
@@ -1417,6 +1418,7 @@ static int *get_inner_keys (const char *s, DATASET *dset,
 	/* just one key, fine */
 	ikey1 = current_series_index(dset, s);
 	if (ikey1 < 0) {
+	    gretl_errmsg_sprintf("'%s': no such series", s);
 	    *err = E_UNKVAR;
 	} else {
 	    nkeys = 1;
@@ -1613,6 +1615,7 @@ static int lib_join_data (ExecState *s,
 	if (opt & jopt) {
 	    param = get_optval_string(JOIN, jopt);
 	    if (param == NULL) {
+		gretl_errmsg_set("Missing option parameter");
 		err = E_DATA;
 	    } else if (jopt == OPT_I) {		
 		/* --ikey: the inner key(s) string */
