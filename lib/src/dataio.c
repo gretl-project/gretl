@@ -1405,7 +1405,9 @@ static int extend_markers (DATASET *dset, int old_n, int new_n)
 static void merge_error (const char *msg, PRN *prn)
 {
     pputs(prn, msg);
-    gretl_errmsg_set(msg);
+    if (!printing_to_standard_stream(prn)) {
+	gretl_errmsg_set(msg);
+    }
 }
 
 static void merge_name_error (const char *objname, PRN *prn)
@@ -1414,7 +1416,9 @@ static void merge_name_error (const char *objname, PRN *prn)
 
     msg = g_strdup_printf("Can't replace %s with a series", objname);
     pprintf(prn, "%s\n", msg);
-    gretl_errmsg_set(msg);
+    if (!printing_to_standard_stream(prn)) {
+	gretl_errmsg_set(msg);
+    }
     g_free(msg);
 }
 
@@ -1714,7 +1718,7 @@ static int panel_append_special (int addvars,
 }
 
 static int markers_compatible (const DATASET *d1, const DATASET *d2,
-			       int *offset, gretlopt opt)
+			       int *offset)
 {
     int ret = 0;
 
@@ -1742,12 +1746,7 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 		}
 	    }
 	    if (ret) {
-		if (opt & OPT_U) {
-		    /* update overlap */
-		    *offset = atoi(d2->S[0]) - 1;
-		} else {
-		    *offset = d1->n;
-		}
+		*offset = atoi(d2->S[0]) - 1;
 	    }
 	}
     } else {
@@ -1770,14 +1769,14 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 
 static int 
 just_append_rows (const DATASET *targ, const DATASET *src,
-		  int *offset, gretlopt opt)
+		  int *offset)
 {
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
 	targ->sd0 == 1 && src->sd0 == 1) {
 	int ok, test_offset = -1;
 
-	ok = markers_compatible(targ, src, &test_offset, opt);
+	ok = markers_compatible(targ, src, &test_offset);
 	if (ok) {
 	    /* note: we do this only if we're not adding any new
 	       series: we'll append to existing series lengthwise
@@ -1951,7 +1950,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 #endif	    
 	}
 	if (!err && addobs <= 0 && addvars == 0) {
-	    addobs = just_append_rows(dset, addset, &offset, opt);
+	    addobs = just_append_rows(dset, addset, &offset);
 #if MERGE_DEBUG	    
 	    fprintf(stderr, " added obs, from just_append_rows: %d\n", addobs);
 #endif	    
@@ -1965,7 +1964,12 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
     if (!err && !addpanel && dset->markers != addset->markers) {
 	if (addobs == 0 && addvars == 0) {
-	    ; /* might be OK? */
+	    if (update_overlap) {
+		; /* might be OK? */
+	    } else {
+		gretl_errmsg_set("Found no data conformable for appending");
+		err = E_DATA;
+	    }
 	} else if (addset->n != dset->n && !yrspecial && !dayspecial) {
 	    merge_error(_("Inconsistency in observation markers\n"), prn);
 	    err = E_DATA;
