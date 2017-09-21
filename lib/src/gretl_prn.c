@@ -25,6 +25,10 @@
 #include <errno.h>
 #include <glib.h>
 
+#ifdef G_OS_WIN32
+# define _ISOC99_SOURCE 1
+#endif
+
 /**
  * SECTION:gretl_prn
  * @short_description: gretl printing struct
