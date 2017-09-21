@@ -1047,7 +1047,7 @@ int pprintf (PRN *prn, const char *format, ...)
 
 int pputs (PRN *prn, const char *s)
 {
-    int slen, bytesleft;
+    int slen, rem;
 
     if (prn == NULL || prn->fixed) {
 	return 0;
@@ -1064,18 +1064,18 @@ int pputs (PRN *prn, const char *s)
 	return 0;
     }
 
-    bytesleft = prn->bufsize - prn->blen;
+    rem = prn->bufsize - prn->blen;
 
-    while (prn->bufsize - prn->blen < MINREM || bytesleft <= slen) {
+    while (rem < MINREM || rem <= slen) {
 	if (realloc_prn_buffer(prn, 0)) {
 	    return -1;
 	}
-	bytesleft = prn->bufsize - prn->blen;
+	rem = prn->bufsize - prn->blen;
     }
 
 #if PRN_DEBUG > 1
-    fprintf(stderr, "pputs: bufsize=%d, blen=%d, bytesleft=%d, copying %d bytes\n",
-	    (int) prn->bufsize, (int) prn->blen, bytesleft, slen);
+    fprintf(stderr, "pputs: bufsize=%d, blen=%d, rem=%d, copying %d bytes\n",
+	    (int) prn->bufsize, (int) prn->blen, rem, slen);
 #endif
 
     strcpy(prn->buf + prn->blen, s);
