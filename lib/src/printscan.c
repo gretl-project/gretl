@@ -657,15 +657,19 @@ static int print_arg (const char **pfmt, const char **pargs,
 		      wstar, pstar, prn);
     } else if (fc == 's') {
 	/* printing a string */
-	maybe_adjust_string_format(str, &wstar, &pstar,
-				   &wid, &prec, &fmt);
-	if (wstar && pstar) {
-	    pprintf(prn, fmt, wid, prec, str);
-	} else if (wstar || pstar) {
-	    wid = (wstar)? wid : prec;
-	    pprintf(prn, fmt, wid, str);
+	if (!strcmp(fmt, "s")) {
+	    pputs(prn, str);
 	} else {
-	    pprintf(prn, fmt, str);
+	    maybe_adjust_string_format(str, &wstar, &pstar,
+				       &wid, &prec, &fmt);
+	    if (wstar && pstar) {
+		pprintf(prn, fmt, wid, prec, str);
+	    } else if (wstar || pstar) {
+		wid = (wstar)? wid : prec;
+		pprintf(prn, fmt, wid, str);
+	    } else {
+		pprintf(prn, fmt, str);
+	    }
 	}
     } else if (strchr(intconv, fc)) {
 	/* printing a scalar as int */
