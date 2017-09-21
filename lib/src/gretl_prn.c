@@ -999,7 +999,8 @@ int pprintf (PRN *prn, const char *format, ...)
 	return 0;
     }
 
-    if (prn->bufsize - prn->blen < MINREM) {
+    rem = prn->bufsize - prn->blen;
+    if (rem < MINREM) {
 	if (realloc_prn_buffer(prn, 0)) {
 	    return -1;
 	}

@@ -657,7 +657,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 		      wstar, pstar, prn);
     } else if (fc == 's') {
 	/* printing a string */
-	if (!strcmp(fmt, "s")) {
+	if (!strcmp(fmt+1, "s")) {
 	    pputs(prn, str);
 	} else {
 	    maybe_adjust_string_format(str, &wstar, &pstar,
