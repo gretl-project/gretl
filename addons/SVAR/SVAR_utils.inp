@@ -38,7 +38,7 @@ function scalar base_est(bundle *SVARobj)
     SVARobj.Sigma = Sigma
     SVARobj.E = E
     SVARobj.step = 1
-    SVARobj.LL0 = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
+    SVARobj.LL0 = T*(n*ln(2*$pi) - 0.5*ln(det(Sigma)) - 0.5)
   endif
 
   return err
@@ -218,7 +218,7 @@ function scalar vecm_est(bundle *SVARobj)
     SVARobj.E = E
     SVARobj.jalpha = jalpha
     SVARobj.step = 1
-    SVARobj.LL0 = T*(n*ln(2*pi) - 0.5*ln(det(Sigma)) - 0.5)
+    SVARobj.LL0 = T*(n*ln(2*$pi) - 0.5*ln(det(Sigma)) - 0.5)
 
     return err
 
@@ -297,7 +297,7 @@ function scalar VARloglik(scalar T, matrix Sigma, matrix *C[null])
   # for just-identified models
 
   n = rows(Sigma)
-  ll = n * 1.83787706640934548355 # ln(2*pi)
+  ll = n * 1.83787706640934548355 # ln(2*$pi)
 
   if isnull(C) # just-identified model
     ll += ln(det(Sigma)) + n
