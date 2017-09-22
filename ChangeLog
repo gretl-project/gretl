@@ -17,6 +17,8 @@ version 2017d, in progress
   Van Loan)
 - Fix bug: rename() function not working on Windows when
   the target filename already exists
+- Fix Windows-specific bug: long strings could get "lost" in
+  printf and sprintf
 - Fix bug: on repeated estimation of a given arima model in
   a function one might get slightly different results
 - GUI: enable a tabbed editor for foreign scripts
