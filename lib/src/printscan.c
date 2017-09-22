@@ -28,7 +28,6 @@
 
 #include <errno.h>
 
-#define SPRINTF_TARGLEN 64
 #define PSDEBUG 0
 
 /* For the point of "x *= (1 + 0x1p-52)" below, see
