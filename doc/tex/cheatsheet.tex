@@ -163,30 +163,6 @@ main dataset must be recognized as a panel.  This can be arranged via
 the \cmd{setobs} command or the ``Dataset structure'' item under
 the \textsf{Data} menu.
 
-\subsection{Easter}
-
-\emph{Problem:} I have a 7-day daily dataset. How do I create an
-``Easter'' dummy?
-
-\emph{Solution:} We have the \cmd{easterday()} function, which returns
-month and day of Easter given the year. The following is an example
-script which uses this function and a few string magic tricks:
-
-\begin{code}
-series Easter = 0
-loop y=2011..2016
-    a = easterday(y)
-    m = floor(a)
-    d = round(100*(a-m))
-    ed_str = sprintf("%04d-%02d-%02d", y, m, d)
-    Easter["@ed_str"] = 1
-endloop
-\end{code}
-
-\emph{Comment:} The \cmd{round()} function is necessary for the
-``day'' component because otherwise floating-point problems may
-ensue. Try the year 2015, for example.
-
 \section{Creating/modifying variables}
 
 \subsection{Generating a dummy variable for a specific observation}
@@ -242,6 +218,30 @@ modify the code snippet above into
 \begin{code}
 series x = lincomb(D, seq(0, nelem(D)-1))
 \end{code}
+
+\subsection{Easter}
+
+\emph{Problem:} I have a 7-day daily dataset. How do I create an
+``Easter'' dummy?
+
+\emph{Solution:} We have the \cmd{easterday()} function, which returns
+month and day of Easter given the year. The following is an example
+script which uses this function and a few string magic tricks:
+
+\begin{code}
+series Easter = 0
+loop y=2011..2016
+    a = easterday(y)
+    m = floor(a)
+    d = round(100*(a-m))
+    ed_str = sprintf("%04d-%02d-%02d", y, m, d)
+    Easter["@ed_str"] = 1
+endloop
+\end{code}
+
+\emph{Comment:} The \cmd{round()} function is necessary for the
+``day'' component because otherwise floating-point problems may
+ensue. Try the year 2015, for example.
 
 \subsection{Recoding a variable}
 
@@ -449,6 +449,49 @@ series x = time
 \emph{Comment:} The special construct \cmd{genr time} and its variants
 are aware of whether a dataset is a panel.
 
+\subsection{Sanitizing a list of regressors}
+
+\emph{Problem:} I noticed that built-in commands like \cmd{ols}
+automatically drop collinear variables and put the constant first. How
+can I achieve the same result for an estimator I'm writing?
+
+\emph{Solution:}
+No worry. The function below does just that
+\begin{code}
+function list sanitize(list X)
+    list R = X - const
+    if nelem(R) < nelem(X)
+        R = const R
+    endif
+    return dropcoll(R)
+end function
+\end{code}
+so for example the code below
+\begin{code}
+nulldata 20
+x = normal()
+y = normal()
+z = x + y # collinear
+list A = x y const z
+list B = sanitize(A)
+
+list print A
+list print B
+\end{code}
+returns
+\begin{code}
+? list print A
+x y const z 
+? list print B
+const x y 
+\end{code}
+
+Besides: it has been brought to our attention that some mischievous
+programs out there put the constant \emph{last}, instead of first,
+like God intended. We are not amused by this utter disrespect of
+econometric tradition, but if you want to pursue the way of evil, it
+is rather simple to adapt the script above to that effect.
+
 
 \subsection{Generating the ``hat'' values after an OLS regression}
 
@@ -632,16 +675,6 @@ more elegant:
     ols y$i const x$i
   endloop
 \end{code}
-
-\subsection{Dropping collinear variables}
-
-\emph{Problem:} I'm writing my own estimator and I'd like to have a
-function that automatically drops collinear variables from a list.
-
-\emph{Solution:}
-In previous versions of \app{gretl} this required some
-scripting. Nowadays, we have the \cmd{dropcoll} function, which does
-just that. See the \GCR.
 
 \subsection{Convolution / polynomial multiplication}
 
