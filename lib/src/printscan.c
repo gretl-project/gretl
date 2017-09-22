@@ -315,9 +315,6 @@ get_printf_format_chunk (const char *s, char *conv,
 	/* variable version */
 	*wstar = 1;
 	p++;
-    } else if (n > 3) {
-	*err = E_PARSE;
-	return NULL;
     } else {
 	p += n;
     }
@@ -329,9 +326,6 @@ get_printf_format_chunk (const char *s, char *conv,
 	if (n == 0 && *p == '*') {
 	    *pstar = 1;
 	    p++;
-	} else if (n > 3) {
-	    *err = E_PARSE;
-	    return NULL;
 	} else {
 	    p += n;
 	}

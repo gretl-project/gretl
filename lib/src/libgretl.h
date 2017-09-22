@@ -26,6 +26,7 @@
 
 #ifdef HAVE_VASPRINTF
 # define _GNU_SOURCE
+# define _ISOC99_SOURCE
 # include <stdio.h>
 # undef _GNU_SOURCE
 #else
