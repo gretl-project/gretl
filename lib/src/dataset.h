@@ -40,7 +40,7 @@ typedef enum {
     VAR_LISTARG    = 1 << 3,
     VAR_TIMECOL    = 1 << 4,
     VAR_HFANCHOR   = 1 << 5,
-    VAR_CODED      = 1 << 5
+    VAR_CODED      = 1 << 6
 } VarFlags;
 
 typedef enum {
