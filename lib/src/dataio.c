@@ -1424,37 +1424,56 @@ static void merge_name_error (const char *objname, PRN *prn)
     g_free(msg);
 }
 
-static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
+static int count_new_vars (const DATASET *d1, const DATASET *d2,
 			   PRN *prn)
 {
     const char *vname;
-    int addvars = addinfo->v - 1;
+    int addvars = d2->v - 1;
     int i, j;
 
-    /* We start by assuming that all the series in @addinfo are new,
+    /* We start by assuming that all the series in @d2 are new,
        then subtract those we find to be already present. We also
        check for collision between the names of series to be added and
        the names of existing objects other than series.
     */
 
-    for (i=1; i<addinfo->v && addvars >= 0; i++) {
-	vname = addinfo->varname[i];
+    for (i=1; i<d2->v && addvars >= 0; i++) {
+	vname = d2->varname[i];
 	if (gretl_is_user_var(vname)) {
 	    merge_name_error(vname, prn);
 	    addvars = -1;
 	} else if (gretl_function_depth() > 0) {
-	    if (current_series_index(dset, vname) > 0) {
+	    if (current_series_index(d1, vname) > 0) {
 		addvars--;
 	    }
 	} else {
-	    for (j=1; j<dset->v; j++) {
-		if (!strcmp(vname, dset->varname[j])) {
+	    for (j=1; j<d1->v; j++) {
+		if (!strcmp(vname, d1->varname[j])) {
 		    addvars--;
 		    break;
 		}
 	    }
 	}
     }
+
+#if MERGE_DEBUG
+    if (gretl_function_depth() == 0) {
+	int found;
+
+	for (i=1; i<d2->v; i++) {
+	    found = 0;
+	    for (j=1; j<d1->v && !found; j++) {
+		if (!strcmp(d2->varname[i], d1->varname[j])) {
+		    found = 1;
+		}
+	    }
+	    if (!found) {
+		fprintf(stderr, "'%s' in import but not current dataset\n",
+			d2->varname[i]);
+	    }
+	}
+    }
+#endif
 
     return addvars;
 }
@@ -1719,7 +1738,7 @@ static int panel_append_special (int addvars,
     return err;
 }
 
-static int markers_compatible (const DATASET *d1, const DATASET *d2,
+static int markers_compatible (const DATASET *d1, DATASET *d2,
 			       int *offset)
 {
     int ret = 0;
@@ -1750,6 +1769,10 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 	    }
 	    if (ret) {
 		*offset = atoi(d2->S[0]) - 1;
+		/* the @d2 markers have done their job -- yielding
+		   an @offset value -- and they can now be trashed
+		*/
+		dataset_destroy_obs_markers(d2);
 	    }
 	}
     } else {
@@ -1775,9 +1798,10 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 }
 
 static int 
-just_append_rows (const DATASET *targ, const DATASET *src,
-		  int *offset)
+just_append_rows (const DATASET *targ, DATASET *src, int *offset)
 {
+    int ret = 0;
+
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
 	targ->sd0 == 1 && src->sd0 == 1) {
@@ -1790,11 +1814,14 @@ just_append_rows (const DATASET *targ, const DATASET *src,
 	       (or perhaps write data into existing existing rows)
 	    */
 	    *offset = test_offset;
-	    return src->n - (targ->n - *offset);
+	    ret = src->n - (targ->n - *offset);
+	    if (ret < 0) {
+		ret = 0;
+	    }
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 static int simple_range_match (const DATASET *targ, const DATASET *src,
