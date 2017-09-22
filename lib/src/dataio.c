@@ -35,6 +35,8 @@
 
 #include <glib.h>
 
+#define MERGE_DEBUG 0
+
 /**
  * SECTION:dataio
  * @short_description: data handling (internal)
@@ -1765,6 +1767,10 @@ static int markers_compatible (const DATASET *d1, const DATASET *d2,
 	}
     }
 
+#if MERGE_DEBUG
+    fprintf(stderr, " markers_compatible: ret=%d, offset=%d\n", ret, *offset);
+#endif
+
     return ret;
 }
 
@@ -1852,8 +1858,6 @@ static int merge_lengthen_series (DATASET *dset,
 
     return err;
 }
-
-#define MERGE_DEBUG 0
 
 #define simple_structure(p) (p->structure == TIME_SERIES ||		\
 			     p->structure == SPECIAL_TIME_SERIES ||	\
