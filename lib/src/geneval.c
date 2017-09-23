@@ -4368,6 +4368,74 @@ static NODE *array_element_node (gretl_array *a, int i,
     return ret;
 }
 
+static int check_range_spec (int range[], int n)
+{
+    int err = 0;
+
+    if (range[0] < 1 || range[0] > n) {
+	/* out of bounds */
+	err = E_DATA;
+    } else if (range[1] == -999) {
+	range[1] = n;
+    }
+
+    if (!err && (range[1] < 1 || range[1] > n || range[1] < range[0])) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static NODE *array_range_node (gretl_array *a, int range[],
+			       parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	p->err = check_range_spec(range, gretl_array_get_length(a));
+	if (!p->err) {
+	    ret = aux_array_node(p);
+	    if (ret != NULL) {
+		ret->v.a = gretl_array_copy_range(a, range[0] - 1,
+						  range[1] - 1,
+						  &p->err);
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *list_range_node (int *list, int range[], parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	p->err = check_range_spec(range, list[0]);
+	if (!p->err) {
+	    int n = range[1] - range[0] + 1;
+
+	    ret = aux_list_node(p);
+	    if (ret != NULL) {
+		ret->v.ivec = gretl_list_new(n);
+		if (ret->v.ivec != NULL) {
+		    int i, j = 1;
+
+		    for (i=range[0]; i<=range[1]; i++) {
+			ret->v.ivec[j++] = list[i];
+		    }
+		}
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
 static NODE *real_list_series_node (int *list, int i, parser *p)
 {
     NODE *ret = NULL;
@@ -4462,17 +4530,22 @@ static int mspec_get_series_index (matrix_subspec *s,
     return t;
 }
 
-static int mspec_get_simple_index (matrix_subspec *s,
-				   parser *p)
+static int test_for_single_range (matrix_subspec *s,
+				  parser *p)
 {
+    int ret = 0;
+
     if (s->type[0] == SEL_RANGE &&
-	s->type[1] == SEL_NULL &&
-	s->sel[0].range[0] == s->sel[0].range[1]) {
-	return s->sel[0].range[0];
+	s->type[1] == SEL_NULL) {
+	if (s->sel[0].range[0] == s->sel[0].range[1]) {
+	    ret = s->sel[0].range[0];
+	}
     } else {
 	p->err = E_TYPES;
-	return -1;
+	ret = -1;
     }
+
+    return ret;
 }
 
 static NODE *subobject_node (NODE *l, NODE *r, parser *p)
@@ -4483,13 +4556,23 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	if (l->t == MAT && r->t == MSPEC) {
 	    return submatrix_node(l, r, p);
 	} else if ((l->t == ARRAY || l->t == LIST) && r->t == MSPEC) {
-	    int i = mspec_get_simple_index(r->v.mspec, p);
+	    int i = test_for_single_range(r->v.mspec, p);
 
-	    if (!p->err) {
+	    if (!p->err && i > 0) {
 		if (l->t == ARRAY) {
 		    ret = array_element_node(l->v.a, i, p);
 		} else {
 		    ret = list_member_node(l->v.ivec, i, p);
+		}
+	    } else if (!p->err) {
+		int range[2];
+
+		range[0] = r->v.mspec->sel[0].range[0];
+		range[1] = r->v.mspec->sel[0].range[1];
+		if (l->t == ARRAY) {
+		    ret = array_range_node(l->v.a, range, p);
+		} else {
+		    ret = list_range_node(l->v.ivec, range, p);
 		}
 	    }
 	} else if (l->t == SERIES && r->t == MSPEC) {

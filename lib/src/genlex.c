@@ -1376,13 +1376,13 @@ static void word_check_next_char (parser *p)
 	    p->sym = OBS;
 	} else if (p->sym == LIST) {
 	    /* element of list */
-	    p->sym = ELEMENT;
+	    p->sym = OSL; /* was ELEMENT */
 	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
 	    /* element of accessor list */
 	    p->sym = ELEMENT;
 	} else if (p->sym == ARRAY) {
 	    /* element of array */
-	    p->sym = ELEMENT;
+	    p->sym = OSL; /* was ELEMENT */
 	} else if (p->sym == BUNDLE) {
 	    /* member from bundle */
 	    p->sym = BMEMB;

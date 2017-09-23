@@ -1385,7 +1385,7 @@ NODE *powterm (parser *p, NODE *l)
 	if (sym == LAG) {
 	    set_lag_parse_off(p);
 	}	
-    } else if (sym == MSL || sym == DMSL) {
+    } else if (sym == MSL || sym == DMSL || sym == OSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, p->upsym);

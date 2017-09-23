@@ -98,6 +98,10 @@ gretl_array *gretl_array_copy (const gretl_array *A,
 int gretl_array_copy_as (const char *name, const char *copyname,
 			 GretlType copytype);
 
+gretl_array *gretl_array_copy_range (gretl_array *A,
+				     int r1, int r2,
+				     int *err);
+
 gretl_array *get_array_by_name (const char *name);
 
 gretl_array *gretl_array_pull_from_stack (const char *name,
