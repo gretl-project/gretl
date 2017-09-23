@@ -6820,8 +6820,12 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
 
 	if (null_or_empty(r)) {
 	    bufgets_finalize(buf);
+	} else if (l->vname == NULL) {
+	    gretl_errmsg_set("getline: the source must be a named string variable");
+	    p->err = E_INVARG;
 	} else if (r->vname == NULL) {
-	    gretl_errmsg_set("getline: the target must be a string variable");
+	    gretl_errmsg_set("getline: the target must be a named string variable");
+	    p->err = E_INVARG;
 	} else {
 	    p->err = query_bufgets_init(buf);
 	    if (!p->err) {
