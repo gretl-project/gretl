@@ -517,10 +517,7 @@ join ss13pnc.csv SCHL WAGP WKHP --ikey=SERIALNO,SPORDER
 
 # using a strings array: may be worthwhile if the array
 # will be used for more than one purpose
-strings S = array(3)
-S[1] = "SCHL"
-S[2] = "WAGP"
-S[3] = "WKHP"
+strings S = defarray("SCHL", "WAGP", "WKHP")
 join ss13pnc.csv S --ikey=SERIALNO,SPORDER
 \end{code}
 
