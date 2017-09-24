@@ -2,8 +2,8 @@
 <gretl-functions>
 <gretl-function-package name="criteria" ID="1266796477" minver="2.1.10">
 <author email="cottrell@wfu.edu">Allin Cottrell</author>
-<version>1.2</version>
-<date>2016-10-29</date>
+<version>1.3</version>
+<date>2017-09-24</date>
 <description>Calculate model selection criteria</description>
 <tags>C10</tags>
 <help>
@@ -34,7 +34,7 @@ endif
 matrix crit = zeros(1, 3)
 scalar logn = log(n)
 scalar llm = n * log(ess)
-llm += n * (log(2*pi) + 1 - logn)
+llm += n * (log(2*$pi) + 1 - logn)
 crit[1] = llm + 2*k
 crit[2] = llm + k*logn
 crit[3] = llm + 2*k*log(logn)
