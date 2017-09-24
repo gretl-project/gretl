@@ -110,7 +110,6 @@ enum {
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
   /* 80 */    LISTVAR,    /* variable in list, dot syntax */
-	      ELEMENT,    /* element of list or array, [...] syntax) */
 	      DBUNDLE,    /* $ bundle accessor */
 	      BMEMB,      /* member of bundle */
 	      DBMEMB,     /* member of $ bundle */
@@ -119,8 +118,8 @@ enum {
               EMPTY,      /* "null" or empty arg slot */
 	      UNDEF,      /* undefined (allowed in "query" context only) */
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
-  /* 90 */    UFUN,	  /* user-defined function */
-	      RFUN,       /* GNU R function */
+	      UFUN,	  /* user-defined function */
+  /* 90 */    RFUN,       /* GNU R function */
 	      IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
@@ -129,7 +128,7 @@ enum {
 	      QUERY,      /* ternary "?" expression */
 	      PTR,        /* miscellaneous pointer */
 	      EOT,	  /* end of transmission */
- /* 100 */    UNK 
+	      UNK 
 };
 
 /* functions: don't collide with the enumeration above */
@@ -536,7 +535,7 @@ enum {
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSLRAW || s == SUBSL || s == LAG || \
                    s == OBS || s == BMEMB || s == DBMEMB || \
-		   s == ELEMENT || s == OSL)
+		   s == OSL)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR)

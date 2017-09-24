@@ -4373,7 +4373,7 @@ static int check_range_spec (int range[], int n)
     int err = 0;
 
     if (range[0] < 1 || range[0] > n) {
-	/* out of bounds */
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[0]);
 	err = E_DATA;
     } else if (range[1] == -999) {
 	range[1] = n;
@@ -4436,6 +4436,32 @@ static NODE *list_range_node (int *list, int range[], parser *p)
     return ret;
 }
 
+static NODE *string_range_node (const char *s, int r1, int r2, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	int range[2] = {r1, r2};
+
+	p->err = check_range_spec(range, strlen(s));
+	if (!p->err) {
+	    int n = r2 - r1 + 1;
+
+	    ret = aux_string_node(p);
+	    if (ret != NULL) {
+		ret->v.str = gretl_strndup(s + r1 - 1, n);
+		if (ret->v.str == NULL) {
+		    p->err = E_ALLOC;
+		}
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
 static NODE *real_list_series_node (int *list, int i, parser *p)
 {
     NODE *ret = NULL;
@@ -4480,29 +4506,6 @@ static NODE *list_member_node (int *list, int i, parser *p)
     return ret;
 }
 
-/* coming from a context where @list and @i have to be
-   resolved from nodes @l and @r respectively
-*/
-
-static NODE *get_named_list_element (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = NULL;
-
-    if (starting(p)) {
-	int *list = node_get_list(l, p);
-	int i = node_get_int(r, p);
-
-	if (!p->err) {
-	    ret = real_list_series_node(list, i, p);
-	}
-	free(list);
-    } else {
-	ret = aux_any_node(p);
-    }
-
-    return ret;
-}
-
 static int mspec_get_series_index (matrix_subspec *s,
 				   parser *p)
 {
@@ -4530,15 +4533,22 @@ static int mspec_get_series_index (matrix_subspec *s,
     return t;
 }
 
-static int test_for_single_range (matrix_subspec *s,
+/* Here we're checking @spec for suitability in specifying
+   a "slice" of an array, list or string: unlike the matrix
+   case, @spec must be one-dimensional, and moreover (at
+   present) it must come down to a single element or a
+   straightfoward range (so not a vector).
+*/
+
+static int test_for_single_range (matrix_subspec *spec,
 				  parser *p)
 {
     int ret = 0;
 
-    if (s->type[0] == SEL_RANGE &&
-	s->type[1] == SEL_NULL) {
-	if (s->sel[0].range[0] == s->sel[0].range[1]) {
-	    ret = s->sel[0].range[0];
+    if (spec->type[0] == SEL_RANGE &&
+	spec->type[1] == SEL_NULL) {
+	if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
+	    ret = spec->sel[0].range[0];
 	}
     } else {
 	p->err = E_TYPES;
@@ -4555,14 +4565,17 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
     if (starting(p)) {
 	if (l->t == MAT && r->t == MSPEC) {
 	    return submatrix_node(l, r, p);
-	} else if ((l->t == ARRAY || l->t == LIST) && r->t == MSPEC) {
+	} else if ((l->t == ARRAY || l->t == LIST || l->t == STR) &&
+		   r->t == MSPEC) {
 	    int i = test_for_single_range(r->v.mspec, p);
 
 	    if (!p->err && i > 0) {
 		if (l->t == ARRAY) {
 		    ret = array_element_node(l->v.a, i, p);
-		} else {
+		} else if (l->t == LIST) {
 		    ret = list_member_node(l->v.ivec, i, p);
+		} else {
+		    ret = string_range_node(l->v.str, i, i, p);
 		}
 	    } else if (!p->err) {
 		int range[2];
@@ -4571,8 +4584,10 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 		range[1] = r->v.mspec->sel[0].range[1];
 		if (l->t == ARRAY) {
 		    ret = array_range_node(l->v.a, range, p);
-		} else {
+		} else if (l->t == LIST) {
 		    ret = list_range_node(l->v.ivec, range, p);
+		} else {
+		    ret = string_range_node(l->v.str, range[0], range[1], p);
 		}
 	    }
 	} else if (l->t == SERIES && r->t == MSPEC) {
@@ -5526,23 +5541,6 @@ static NODE *list_list_op (NODE *l, NODE *r, int f, parser *p)
 	ret->v.ivec = list;
 	free(llist);
 	free(rlist);
-    }
-
-    return ret;
-}
-
-static NODE *get_array_element (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = NULL;
-
-    if (starting(p)) {
-	int i = node_get_int(r, p);
-
-	if (!p->err) {
-	    ret = array_element_node(l->v.a, i, p);
-	}
-    } else {
-	ret = aux_any_node(p);
     }
 
     return ret;
@@ -9306,6 +9304,56 @@ static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (!p->err) {
 	list[idx] = v;
+    }
+
+    return p->err;
+}
+
+/* setting element of string: only straight assignment accepted */
+
+static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
+{
+    NODE *lh1 = lhs->v.b2.l;
+    NODE *lh2 = lhs->v.b2.r;
+    char *s1 = NULL;
+    char *s2 = NULL;
+    int idx = 0, err = 0;
+
+    if (p->op != B_ASN) {
+	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"),
+			     get_opstr(p->op));
+	return E_TYPES;
+    } else if (rhs->t != STR) {
+	return E_TYPES;
+    }
+
+    if (lh2->t == MSPEC) {
+	idx = array_index_from_mspec(lh2->v.mspec, &err);
+	if (err) {
+	    return err;
+	}
+    } else {
+	idx = lh2->v.xval;
+    }
+
+    s1 = lh1->v.str;
+    if (s1 == NULL) {
+	return E_DATA;
+    } else if (idx < 1 || idx > strlen(s1)) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
+	return E_DATA;
+    }
+
+#if LHDEBUG
+    fprintf(stderr, "set_string_value: s1 = %p, idx = %d\n",
+	    (void *) str, idx);
+#endif
+
+    s2 = rhs->v.str;
+    if (strlen(s2) != 1) {
+	return E_INVARG; /* FIXME */
+    } else {
+	s1[idx - 1] = s2[0];
     }
 
     return p->err;
@@ -13915,18 +13963,6 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix sub-slice, x:y, or lag range, 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
-    case ELEMENT:
-	/* list or array, plus scalar */
-	if (!scalar_node(r)) {
-	    node_type_error(t->t, 2, NUM, r, p);
-	} else if (t->flags & LHT_NODE) {
-	    ret = lhs_terminal_node(t, l, r, p);
-	} else if (l->t == ARRAY) {
-	    ret = get_array_element(l, r, p);
-	} else {
-	    ret = get_named_list_element(l, r, p);
-	}
-	break;
     case BMEMB:
     case F_INBUNDLE:
 	/* name of bundle plus string */
@@ -15494,10 +15530,9 @@ static int compound_const_check (NODE *lhs, parser *p)
     NODE *n = lhs;
     int i = 0, err = 0;
 
-    while (n->t == MSL || n->t == OBS || n->t == BMEMB ||
-	   n->t == ELEMENT || n->t == OSL) {
+    while (n->t == MSL || n->t == OBS || n->t == BMEMB || n->t == OSL) {
 	n = n->v.b2.l;
-	if (i == 0 && lhs->t == ELEMENT && n->t == ARRAY) {
+	if (i == 0 && lhs->t == OSL && n->t == ARRAY) {
 	    if (gretl_array_get_type(n->v.a) == GRETL_TYPE_LISTS) {
 		p->flags |= P_LISTDEF;
 	    }
@@ -16598,28 +16633,23 @@ static int save_generated_var (parser *p, PRN *prn)
 #endif
 	if (compound_t == BMEMB) {
 	    p->err = set_bundle_value(p->lhres, r, p);
-	} else if (compound_t == ELEMENT) {
+	} else if (compound_t == MSL) {
+	    p->err = set_matrix_value(p->lhres, r, p);
+	} else if (compound_t == OBS) {
+	    p->err = set_series_obs_value(p->lhres, r, p);
+	} else if (compound_t == OSL) {
 	    NODE *lh1 = p->lhres->v.b2.l;
 
 	    if (lh1->t == ARRAY) {
 		p->err = set_array_value(p->lhres, r, p);
 	    } else if (lh1->t == LIST) {
 		p->err = set_list_value(p->lhres, r, p);
-	    }
-	} else if (compound_t == MSL) {
-	    p->err = set_matrix_value(p->lhres, r, p);
-	} else if (compound_t == OSL) {
-	    NODE *lh1 = p->lhres->v.b2.l;
-
-	    if (lh1->t == MAT) {
+	    } else if (lh1->t == STR) {
+		p->err = set_string_value(p->lhres, r, p);
+	    } else if (lh1->t == MAT) {
+		/* is this ever reached?? */
 		p->err = set_matrix_value(p->lhres, r, p);
-	    } else if (lh1->t == ARRAY) {
-		p->err = set_array_value(p->lhres, r, p);
-	    } else if (lh1->t == LIST) {
-		p->err = set_list_value(p->lhres, r, p);
 	    }
-	} else if (compound_t == OBS) {
-	    p->err = set_series_obs_value(p->lhres, r, p);
 	} else {
 	    gretl_errmsg_set(_("Invalid left-hand side expression"));
 	    p->err = E_TYPES;

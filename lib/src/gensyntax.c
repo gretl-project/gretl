@@ -334,9 +334,6 @@ static NODE *base (parser *p, NODE *up)
 	}
 	if (up->t == OBS) {
 	    t = obs_node(p);
-	} else if (up->t == ELEMENT) {
-	    lex(p);
-	    t = expr(p);
 	}
 	if (p->sym == G_RBR) {
 	    lex(p);
@@ -1401,13 +1398,6 @@ NODE *powterm (parser *p, NODE *l)
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
 	    t->v.b2.r = get_final_string_arg(p, t, sym, 1);
-	}
-    } else if (sym == ELEMENT) {
-	t = newb2(sym, NULL, NULL);
-	if (t != NULL) {
-	    t->v.b2.l = newref(p, p->upsym);
-	    lex(p);
-	    t->v.b2.r = base(p, t); /* ?? */
 	}
     } else if (sym == BMEMB) {
 	t = newb2(sym, NULL, NULL);

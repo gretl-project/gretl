@@ -1374,15 +1374,12 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
 	    /* observation from "dollar" series */
 	    p->sym = OBS;
-	} else if (p->sym == LIST) {
-	    /* element of list */
-	    p->sym = OSL; /* was ELEMENT */
+	} else if (p->sym == ARRAY || p->sym == LIST || p->sym == STR) {
+	    /* element or range of array, list or string */
+	    p->sym = OSL;
 	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
-	    /* element of accessor list */
-	    p->sym = ELEMENT;
-	} else if (p->sym == ARRAY) {
-	    /* element of array */
-	    p->sym = OSL; /* was ELEMENT */
+	    /* element/range of accessor list */
+	    p->sym = OSL;
 	} else if (p->sym == BUNDLE) {
 	    /* member from bundle */
 	    p->sym = BMEMB;
@@ -1958,8 +1955,6 @@ const char *getsymb_full (int t, const parser *p)
 	return "LISTVAR";
     } else if (t == BMEMB) {
 	return "BMEMB";
-    } else if (t == ELEMENT) {
-	return "ELEMENT";
     } else if (t == SERIES) {
 	return "SERIES";
     } else if (t == MAT) {
