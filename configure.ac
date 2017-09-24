@@ -68,7 +68,7 @@ try_libR="yes"
 have_libR="no"
 try_libsvm="yes"
 have_libsvm="no"
-try_bc="yes"
+try_bc="no"
 check_gnuplot="yes"
 use_curl="yes"
 darwin_build="no"
@@ -324,7 +324,7 @@ fi,
 try_libsvm=yes)
 
 AC_ARG_WITH(bash-completion,
-[  --with-bash-completion install bash-completion script [[default=auto]]],
+[  --with-bash-completion install bash-completion script [[default=no]]],
 if test "$withval" = "no"
 then
   try_bc=no

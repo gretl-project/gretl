@@ -1606,7 +1606,7 @@ Optional Packages:
   --with-mpi             include MPI support [default=auto]
   --with-odbc            include ODBC support
   --with-libsvm            include libsvm support [default=auto]
-  --with-bash-completion install bash-completion script [default=auto]
+  --with-bash-completion install bash-completion script [default=no]
   --with-audio           include audio graph support (experimental)
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
@@ -2860,7 +2860,7 @@ try_libR="yes"
 have_libR="no"
 try_libsvm="yes"
 have_libsvm="no"
-try_bc="yes"
+try_bc="no"
 check_gnuplot="yes"
 use_curl="yes"
 darwin_build="no"
