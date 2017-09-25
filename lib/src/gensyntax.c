@@ -1276,10 +1276,8 @@ NODE *powterm (parser *p, NODE *l)
 	    }
 	} else if (sym == G_LBR) {
 	    /* "OSL": we're being somewhat agnostic here regarding
-	       the type of object of which we're taking a slice.
-	       That will be sorted out at eval() time, and if the
-	       object is not a matrix the "slice" will be mapped
-	       down to a single index value, if possible.
+	       the type of object of which we're taking a slice;
+	       That will be sorted out at eval() time.
 	    */
 	    t = newb2(OSL, l, NULL);
 	    if (t != NULL) {
