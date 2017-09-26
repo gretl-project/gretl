@@ -151,8 +151,8 @@ shown that the matrix
   K_i = I - \frac{\theta_i}{T_i} J,
 \]
 where $\theta_i = 1 -
-\sqrt{\frac{\sigma^2_{\varepsilon}}{\sigma^2_{\varepsilon} + T_i
-    \sigma^2_{v}}}$, has the property
+\sqrt{\sigma^2_{\varepsilon}/\left(\sigma^2_{\varepsilon} + T_i
+    \sigma^2_{v}\right)}$, has the property
 \[
   K_i \Sigma K_i' = \sigma^2_{\varepsilon} I
 \]
@@ -200,13 +200,13 @@ the estimate of $\sigma^2_\varepsilon$ from $s^2_e$.
 Alternatively, if the \option{nerlove} option is given, gretl
 uses the method suggested by \cite{nerlove71}. In this case
 $\sigma^2_v$ is estimated as the sample variance of the fixed effects,
-$\alpha_i$,
+$\hat{\alpha}_i$,
 \[
 \hat{\sigma}^2_v = \frac{1}{n-1} \sum_{i=1}^n 
-  \left(\alpha_i - \bar{\alpha}\right)^2 
+  \left(\hat{\alpha}_i - \bar{\hat{\alpha}}\right)^2 
 \]
-where $n$ is the number of individuals and $\bar{\alpha}$ is the mean
-of the fixed effects.
+where $n$ is the number of individuals and $\bar{\hat{\alpha}}$ is the mean
+of the estimated fixed effects.
 
 \subsection{Choice of estimator}
 \label{panel-choice}
