@@ -849,6 +849,26 @@ int fn_param_optional (const ufunc *fun, int i)
 }
 
 /**
+ * fn_param_set_const:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: 0 on successful setting of the "const" flag
+ * on parameter @i of function @fun, otherwise non-zero
+ * error code.
+ */
+
+int fn_param_set_const (ufunc *fun, int i)
+{
+    if (fun == NULL || i < 0 || i >= fun->n_params) {
+	return E_INVARG;
+    } else {
+	fun->params[i].flags |= ARG_CONST;
+	return 0;
+    }
+}
+
+/**
  * fn_param_uses_xlist:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.

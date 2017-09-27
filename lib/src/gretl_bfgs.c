@@ -25,6 +25,7 @@
 #include "matrix_extra.h"
 #include "usermat.h"
 #include "uservar.h"
+#include "gretl_func.h"
 
 #include "../../minpack/minpack.h"
 #include <float.h>
@@ -1791,6 +1792,26 @@ int optimizer_get_matrix_name (const char *fncall, char *name)
     return err;
 }
 
+static int check_maximizer_callback (const char *fncall)
+{
+    int n = strcspn(fncall, "(");
+    int err = 0;
+
+    if (n > 0 && n < FN_NAMELEN) {
+	char fname[FN_NAMELEN];
+	ufunc *u;
+	
+	*fname = '\0';
+	strncat(fname, fncall, n);
+	u = get_user_function_by_name(fname);
+	err = fn_param_set_const(u, 0);
+    } else {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
 static int user_gen_setup (umax *u,
 			   const char *fncall,
 			   const char *gradcall,
@@ -1798,10 +1819,14 @@ static int user_gen_setup (umax *u,
 			   DATASET *dset)
 {
     gchar *formula;
-    int err = 0;
+    int err;
+
+    err = check_maximizer_callback(fncall);
+    if (err) {
+	return err;
+    }
 
     formula = g_strdup_printf("$umax=%s", fncall);
-
     u->gf = genr_compile(formula, dset, u->gentype, OPT_P,
 			 u->prn, &err);
 
