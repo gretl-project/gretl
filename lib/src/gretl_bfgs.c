@@ -1792,6 +1792,11 @@ int optimizer_get_matrix_name (const char *fncall, char *name)
     return err;
 }
 
+/* Ensure that we can find the specified callback function,
+   and that it cannot modify its first argument (the parameter
+   vector).
+*/
+
 static int check_maximizer_callback (const char *fncall)
 {
     int n = strcspn(fncall, "(");

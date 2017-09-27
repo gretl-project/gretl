@@ -863,7 +863,9 @@ int fn_param_set_const (ufunc *fun, int i)
     if (fun == NULL || i < 0 || i >= fun->n_params) {
 	return E_INVARG;
     } else {
-	fun->params[i].flags |= ARG_CONST;
+	if (gretl_ref_type(fun->params[i].type)) {
+	    fun->params[i].flags |= ARG_CONST;
+	}
 	return 0;
     }
 }
