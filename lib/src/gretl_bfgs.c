@@ -1793,11 +1793,12 @@ int optimizer_get_matrix_name (const char *fncall, char *name)
 }
 
 /* Ensure that we can find the specified callback function,
-   and that it cannot modify its first argument (the parameter
-   vector).
+   and that it cannot modify its param-vector argument
+   (given by @argnum).
 */
 
-static int check_maximizer_callback (const char *fncall)
+static int check_optimizer_callback (const char *fncall,
+				     int argnum)
 {
     int n = strcspn(fncall, "(");
     int err = 0;
@@ -1809,7 +1810,7 @@ static int check_maximizer_callback (const char *fncall)
 	*fname = '\0';
 	strncat(fname, fncall, n);
 	u = get_user_function_by_name(fname);
-	err = fn_param_set_const(u, 0);
+	err = fn_param_set_const(u, argnum);
     } else {
 	err = E_INVARG;
     }
@@ -1826,7 +1827,13 @@ static int user_gen_setup (umax *u,
     gchar *formula;
     int err;
 
-    err = check_maximizer_callback(fncall);
+    err = check_optimizer_callback(fncall, 0);
+    if (!err && gradcall != NULL) {
+	err = check_optimizer_callback(gradcall, 1);
+    }
+    if (!err && hesscall != NULL) {
+	err = check_optimizer_callback(hesscall, 1);
+    }
     if (err) {
 	return err;
     }

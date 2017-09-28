@@ -3798,22 +3798,23 @@
 	<para>
 	  One-dimensional maximization via the Golden Section Search
 	  method. The matrix <argname>b</argname> should be a
-	  3-vector. On input the first element is ignored; the second
-	  and third elements set the lower and upper bounds on the
-	  search. The <argname>fncall</argname> argument should be a
-	  call to a function that returns the value of the maximand;
-	  element 1 of <argname>b</argname> will hold the current
-	  value of the adjustable parameter and should be given as the
-	  first argument; any other required arguments may then
-	  follow. The function in question should be unimodal (should
-	  have no local maxima other than the global maximum) over the
-	  stipulated range, or GSS is not sure to find the maximum.
+	  3-vector. On input the first element is ignored while the
+	  second and third elements set the lower and upper bounds on
+	  the search. The <argname>fncall</argname> argument should
+	  specify a call to a function that returns the value of the
+	  maximand; element 1 of <argname>b</argname>, which will hold
+	  the current value of the adjustable parameter when the
+	  function is called, should be given as its first argument;
+	  any other required arguments may then follow. The function
+	  in question should be unimodal (should have no local maxima
+	  other than the global maximum) over the stipulated range, or
+	  GSS is not sure to find the maximum.
 	</para>
 	<para>
-	  On successful completion this function returns the optimum
-	  value of the maximand, while <argname>b</argname> holds the
-	  optimal parameter value along with the limits of its
-	  bracket.
+	  On successful completion <lit>GSSmax</lit> returns the
+	  optimum value of the maximand, while <argname>b</argname>
+	  holds the optimal parameter value along with the limits of
+	  its bracket.
 	</para>
 	<para>
 	  The optional third argument may be used to set the tolerance
