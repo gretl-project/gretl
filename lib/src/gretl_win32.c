@@ -284,9 +284,10 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
     } else {
 	WaitForSingleObject(pinfo.hProcess, INFINITE);
 	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
+	    /* the call "succeeded" */
 	    if (exitcode != 0) {
-		fprintf(stderr, "%s: exit code %d\n", cmdline, exitcode);
-		gretl_errmsg_sprintf("%s: exit code %d", cmdline,
+		fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
+		gretl_errmsg_sprintf("%s: exit code %u", cmdline,
 				     exitcode);
 		err = 1;
 	    }
