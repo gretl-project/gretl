@@ -2990,10 +2990,15 @@ static int unbalanced_SA_s2v (panelmod_t *pan,
     gretl_matrix_multiply(ZPZ, D2, trmat);
     tr = gretl_matrix_trace(trmat);
 
+#if 0
+    gretl_matrix_print(trmat, "trmat");
+    fprintf(stderr, "S-A: effn=%d, k=%d, NT=%d, tr=%g\n", pan->effn,
+	    k, pan->NT, tr);
+#endif
+
     pan->s2v = (pan->ubPub - (pan->effn - k) * pan->s2e) / (pan->NT - tr);
 
 #if PDEBUG
-    /* agrees with Stata */
     fprintf(stderr, "S-A: ubPub=%#.8g, tr=%#.8g, s2v=%#.8g, sv=%#.8g\n",
 	    pan->ubPub, tr, pan->s2v, sqrt(pan->s2v));
 #endif
