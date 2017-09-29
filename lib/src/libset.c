@@ -2023,7 +2023,7 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*var = &gretl_debug;
     } else if (!strcmp(s, FDJAC_QUAL)) {
 	*min = 0;
-	*max = 3;
+	*max = 4;
 	*var = &state->fdjac_qual;
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	*min = 0;

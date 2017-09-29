@@ -129,7 +129,7 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	}
     } else {
 	int k, dim, d;
-	int a[4], b[4];
+	int a[6], b[6];
 	double y[m];
 
 	if (quality == 1) {
@@ -143,6 +143,12 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    d = 12;
 	    a[0] = -2; a[1] = -1; a[2] = 1; a[3] =  2;
 	    b[0] =  1; b[1] = -8; b[2] = 8; b[3] = -1;
+	} else if (quality == 3) {
+	    dim = 6;
+	    d = 60;
+	    eps *= 10;
+	    a[0] = -(a[5] = 3); a[1] = -(a[4] = 2); a[2] = -(a[3] = 1);
+	    b[0] = -(b[5] = 1); b[1] = -(b[4] = -9); b[2] = -(b[3] = 45);
 	} else {
 	    *iflag = -1;
 	    return 0;
@@ -151,7 +157,7 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	for (j = 0; j < n; j++) {
 	    temp = x[j];
 #if BIGGER_H	    
-	    if (quality == 2) {
+	    if (quality > 1) {
 		if (fabs(temp) > XREF) {
 		    h = XREF * sqrt(fabs(temp/XREF)) * eps / DEN;
 		} else {
