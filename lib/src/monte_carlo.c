@@ -2303,14 +2303,12 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     if (loop->cmds[n].line == NULL) {
 	err = E_ALLOC;
     } else {
-	/* FIXME is this (still) wanted? (it messes up python in loops) */
-	/* compress_spaces(loop->cmds[n].line); */
 	if (s->cmd->ci == PRINT) {
 	    if (!loop_is_progressive(loop) || strchr(s->line, '"')) {
 		/* printing a literal string, not a variable's value */
 		loop->cmds[n].flags |= LOOP_CMD_LIT;
 	    }
-	} else if (s->cmd->ci == RENAME) {
+	} else if (s->cmd->ci == RENAME || s->cmd->ci == OPEN) {
 	    loop_set_renaming(loop);
 	}
 	loop->cmds[n].ci = s->cmd->ci;
