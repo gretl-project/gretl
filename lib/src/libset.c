@@ -121,6 +121,7 @@ struct set_vars_ {
     char csv_read_na[8];        /* representation of NA in CSV input */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
     int fdjac_qual;             /* quality of "fdjac" function */
+    double fdjac_eps;           /* finite increment for "fdjac" function */
     int wildboot_dist;          /* distribution for wild bootstrap */
 };
 
@@ -167,7 +168,8 @@ struct set_vars_ {
 			  !strcmp(s, BHHH_TOLER) || \
 			  !strcmp(s, NLS_TOLER) || \
 			  !strcmp(s, QS_BANDWIDTH) || \
-			  !strcmp(s, NADARWAT_TRIM))
+			  !strcmp(s, NADARWAT_TRIM) || \
+			  !strcmp(s, FDJAC_EPS))
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
 		       !strcmp(s, BFGS_VERBSKIP) || \
@@ -441,6 +443,7 @@ static void state_vars_copy (set_vars *sv)
     sv->garch_robust_vcv = state->garch_robust_vcv;
     sv->nadarwat_trim = state->nadarwat_trim;
     sv->fdjac_qual = state->fdjac_qual;
+    sv->fdjac_eps = state->fdjac_eps;
     sv->wildboot_dist = state->wildboot_dist;
 
     sv->initvals = gretl_matrix_copy(state->initvals);
@@ -614,6 +617,7 @@ static void state_vars_init (set_vars *sv)
     sv->garch_robust_vcv = ML_UNSET;
     sv->nadarwat_trim = 4.0;
     sv->fdjac_qual = 0;
+    sv->fdjac_eps = 0.0;
     sv->wildboot_dist = 0;
 
     strcpy(sv->csv_write_na, "NA");
@@ -1498,6 +1502,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(DPDSTYLE, prn, opt);
     libset_print_double(NADARWAT_TRIM, prn, opt);
     libset_print_int(FDJAC_QUAL, prn, opt);
+    libset_print_double(FDJAC_EPS, prn, opt);
 
     libset_header(N_("Random number generation"), prn, opt);
 
@@ -1842,6 +1847,12 @@ double libset_get_double (const char *key)
 	} else {
 	    return state->conv_huge;
 	}
+    } else if (!strcmp(key, FDJAC_EPS)) {
+	if (na(state->fdjac_eps)) {
+	    return 0.0;
+	} else {
+	    return state->fdjac_eps;
+	}
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"variable '%s'\n", key);	
@@ -1872,8 +1883,12 @@ int libset_set_double (const char *key, double val)
 	return 1;
     }
 
-    /* all the libset double vals must be positive */
-    if (val <= 0.0) {
+    /* all the libset double vals must be positive, except for
+       FDJAC_EPS, where 0.0 means "auto"
+    */
+    if (val < 0.0) {
+	return E_DATA;
+    } else if (val == 0.0 && strcmp(key, FDJAC_EPS)) {
 	return E_DATA;
     }
 
@@ -1891,6 +1906,8 @@ int libset_set_double (const char *key, double val)
 	state->nadarwat_trim = val;
     } else if (!strcmp(key, CONV_HUGE)) {
 	state->conv_huge = val;
+    } else if (!strcmp(key, FDJAC_EPS)) {
+	state->fdjac_eps = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized "
 		"variable '%s'\n", key);	

@@ -2211,9 +2211,14 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	*err = E_DATA;
     } else {
 	int quality = libset_get_int(FDJAC_QUAL);
+#if 0
+	double eps = 0.0;
+#else
+	double eps = libset_get_double("fdjac_eps");
+#endif
 
 	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val,
-		m, &iflag, 0.0, wa, u);
+		m, &iflag, eps, wa, u);
     }
 
  bailout:

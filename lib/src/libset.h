@@ -87,6 +87,7 @@ typedef enum {
 #define CONV_HUGE        "huge"
 #define USE_OPENMP       "openmp"
 #define FDJAC_QUAL       "fdjac_quality"
+#define FDJAC_EPS        "fdjac_eps"
 #define ROBUST_Z         "robust_z"
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
