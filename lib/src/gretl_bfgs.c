@@ -228,7 +228,7 @@ typedef struct uhess_data_ uhess_data;
 struct uhess_data_ {
     gretl_matrix *theta;  /* parameter vector (user matrix) */
     int ncoeff;           /* number of coefficients */
-    GENERATOR *genr;      /* for generating scalar result */
+    GENERATOR *genr;      /* for generating scalar criterion */
 };
 
 static double uhess_callback (const double *b, void *data)
@@ -2297,7 +2297,7 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
     uh.theta = b;
     uh.ncoeff = gretl_vector_get_length(b);
     if (uh.ncoeff == 0) {
-	fprintf(stderr, "numhess: gretl_vector_get_length gave %d for theta\n",
+	fprintf(stderr, "numhess: gretl_vector_get_length gave %d for b\n",
 		uh.ncoeff);
 	*err = E_DATA;
 	return NULL;
