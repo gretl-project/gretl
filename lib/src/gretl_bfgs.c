@@ -223,6 +223,36 @@ gretl_matrix *hessian_inverse_from_score (double *b, int n,
     return H;
 }
 
+typedef struct uhess_data_ uhess_data;
+
+struct uhess_data_ {
+    gretl_matrix *theta;  /* parameter vector (user matrix) */
+    int ncoeff;           /* number of coefficients */
+    GENERATOR *genr;      /* for generating scalar result */
+};
+
+static double uhess_callback (const double *b, void *data)
+{
+    uhess_data *uh = data;
+    double ret = NADBL;
+    int i, err;
+
+    for (i=0; i<uh->ncoeff; i++) {
+	uh->theta->val[i] = b[i];
+    }
+
+    err = execute_genr(uh->genr, NULL, NULL);
+    if (!err) {
+	ret = get_scalar_value_by_name("$umax", &err);
+#if 0
+	gretl_matrix_print(uh->theta, "uh->theta");
+	fprintf(stderr, " criterion %.15g\n", ret);
+#endif
+    }
+
+    return ret;
+}
+
 /* apparatus for constructing numerical approximation to
    the Hessian */
 
@@ -255,6 +285,7 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
     c[j] += sgn * h[j];
 }
 
+/* number of Richardson steps */
 #define RSTEPS 4
 
 /* The algorithm below implements the method of Richardson
@@ -262,30 +293,33 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
    "numDeriv" by Paul Gilbert, which was in turn derived from code
    by Xinqiao Liu.  Turned into C and modified for gretl by
    Allin Cottrell, June 2006.  On successful completion, writes
-   the negative inverse of the Hessian into @H.
+   the Hessian (or the negative Hessian, if @neg is non-zero)
+   into @H, which must be correctly sized to receive the result.
 */
 
-static int numerical_hessian (const double *b, gretl_matrix *H,
-			      BFGS_CRIT_FUNC func, void *data)
+int numerical_hessian (const double *b, gretl_matrix *H,
+		       BFGS_CRIT_FUNC func, void *data,
+		       int neg)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
     double *wspace;
     double *c, *h0, *h, *Hd, *D;
-    /* numerical parameters */
-    int r = RSTEPS;      /* number of Richardson steps */
-    double eps = 1.0e-4;
-    double d = 0.0001;
-    double v = 2.0;      /* reduction factor for h */
+    int r = RSTEPS;
+    double ztol = sqrt(DBL_EPSILON / 7e-7);
+    double eps = 1e-4;
+    double d = 0.1;
+    double v = 2.0; /* reduction factor for h */
     double f0, f1, f2;
     double p4m, hij;
     int n = gretl_matrix_rows(H);
     int vn = (n * (n + 1)) / 2;
     int dn = vn + n;
+    int wlen = 4 * n + dn;
     int i, j, k, m, u;
     int err = 0;
 
-    wspace = malloc((4 * n + dn) * sizeof *wspace);
+    wspace = malloc(wlen * sizeof *wspace);
     if (wspace == NULL) {
 	return E_ALLOC;
     }
@@ -296,15 +330,20 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
 
+    for (i=0; i<wlen; i++) {
+	wspace[i] = 0.0;
+    }
+
     /* note: numDeriv has
 
-       h0 <- abs(d*x) + eps * (abs(x) < zero.tol)
+       h0 <- abs(d*x) + args$eps * (abs(x) < args$zero.tol)
 
-       where the defaults are eps = 1e-4, d = 0.0001,
+       where the defaults are eps = 1e-4, d = 0.1,
        and zero.tol = sqrt(double.eps/7e-7)
     */
     for (i=0; i<n; i++) {
-	h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]);
+	h0[i] = fabs(d*b[i]) + eps * (fabs(b[i]) < ztol);
+	/* h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]); */
     }
 
     f0 = func(b, data);
@@ -331,9 +370,9 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 		goto bailout;
 	    }
 	    /* F'(i) */
-	    Dx[k] = (f1 - f2) / (2.0 * h[i]);
+	    Dx[k] = (f1 - f2) / (2 * h[i]);
 	    /* F''(i) */
-	    Hx[k] = (f1 - 2.0*f0 + f2) / (h[i] * h[i]);
+	    Hx[k] = (f1 - 2*f0 + f2) / (h[i] * h[i]);
 	    hess_h_reduce(h, v, n);
 	}
 	p4m = 4.0;
@@ -375,8 +414,8 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 			goto bailout;
 		    }
 		    /* cross-partial */
-		    Dx[k] = (f1 - 2.0*f0 + f2 - Hd[i]*h[i]*h[i]
-			     - Hd[j]*h[j]*h[j]) / (2.0*h[i]*h[j]);
+		    Dx[k] = (f1 - 2*f0 + f2 - Hd[i]*h[i]*h[i]
+			     - Hd[j]*h[j]*h[j]) / (2*h[i]*h[j]);
 		    hess_h_reduce(h, v, n);
 		}
 		p4m = 4.0;
@@ -392,11 +431,15 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 	}
     }
 
-    /* transcribe the negative of the Hessian */
+    /* transcribe the (negative of?) the Hessian */
     u = n;
     for (i=0; i<n; i++) {
 	for (j=0; j<=i; j++) {
-	    hij = -D[u++];
+	    if (neg) {
+		hij = -D[u++];
+	    } else {
+		hij = D[u++];
+	    }
 	    gretl_matrix_set(H, i, j, hij);
 	    gretl_matrix_set(H, j, i, hij);
 	}
@@ -437,7 +480,7 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = numerical_hessian(b, H, func, data);
+	*err = numerical_hessian(b, H, func, data, 1);
     }
 
     if (!*err) {
@@ -461,7 +504,7 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
     if (gradfunc != NULL) {
 	return hessian_from_score(b, H, gradfunc, cfunc, data);
     } else {
-	return numerical_hessian(b, H, cfunc, data);
+	return numerical_hessian(b, H, cfunc, data, 1);
     }
 }
 
@@ -2234,6 +2277,79 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     umax_destroy(u);
 
     return J;
+}
+
+gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
+			    int *err)
+{
+    uhess_data uh = {NULL, 0, NULL};
+    gretl_matrix *H = NULL;
+    gchar *formula = NULL;
+    double *bval = NULL;
+    int i;
+
+    if (get_user_var_by_data(b) == NULL) {
+	fprintf(stderr, "numhess: b must be a named matrix\n");
+	*err = E_DATA;
+	return NULL;
+    }
+
+    uh.theta = b;
+    uh.ncoeff = gretl_vector_get_length(b);
+    if (uh.ncoeff == 0) {
+	fprintf(stderr, "numhess: gretl_vector_get_length gave %d for theta\n",
+		uh.ncoeff);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    bval = malloc(uh.ncoeff * sizeof *bval);
+    if (bval == NULL) {
+	*err = E_ALLOC;
+    } else {
+	/* copy the original values so we can restore them */
+	for (i=0; i<uh.ncoeff; i++) {
+	    bval[i] = b->val[i];
+	}
+    }
+
+    if (!*err) {
+	formula = g_strdup_printf("$umax=%s", fncall);
+	uh.genr = genr_compile(formula, NULL, GRETL_TYPE_DOUBLE, OPT_P,
+			   NULL, err);
+    }
+
+    if (*err) {
+	fprintf(stderr, "numhess: error %d from genr_compile\n", *err);
+    } else {
+	H = gretl_zero_matrix_new(uh.ncoeff, uh.ncoeff);
+	if (H == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0);
+    }
+
+    g_free(formula);
+    user_var_delete_by_name("$umax", NULL);
+    destroy_genr(uh.genr);
+
+    if (bval != NULL) {
+	/* restore @b */
+	for (i=0; i<uh.ncoeff; i++) {
+	    b->val[i] = bval[i];
+	}
+	free(bval);
+    }
+
+    if (*err && H != NULL) {
+	gretl_matrix_free(H);
+	H = NULL;
+    }
+
+    return H;
 }
 
 /* Below: Newton-Raphson code, starting with a few

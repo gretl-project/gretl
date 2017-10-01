@@ -381,6 +381,7 @@ enum {
     F_NORMTEST,
     F_COR,
     F_STRSCRAPE,
+    F_NUMHESS,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
@@ -519,7 +520,7 @@ enum {
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 			s == F_FDJAC || s == F_SIMANN || \
 			s == F_BFGSCMAX || s == F_NMMAX || \
-			s == F_GSSMAX)
+			s == F_GSSMAX || s == F_NUMHESS)
 
 #define max_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 		     s == F_SIMANN || s == F_BFGSCMAX || \

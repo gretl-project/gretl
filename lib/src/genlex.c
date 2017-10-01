@@ -313,6 +313,7 @@ struct str_table funcs[] = {
     { F_BFGSMAX,  "BFGSmax" },
     { F_BFGSCMAX, "BFGScmax" },
     { F_NRMAX,    "NRmax" },
+    { F_NUMHESS,  "numhess" },
     { F_OBSNUM,   "obsnum" },
     { F_ISDISCR,  "isdiscrete" },
     { F_ISDUMMY,  "isdummy"},
