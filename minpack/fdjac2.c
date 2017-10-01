@@ -105,9 +105,14 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    double *fjac, int ldfjac, int *iflag, 
 	    double epsfcn, double *wa, void *p)
 {
-    double eps = sqrt(max(epsfcn, DBL_EPSILON));
+    double eps = sqrt(DBL_EPSILON);
     double h, temp;
-    int i, j;
+    int i, j, user_eps = 0;
+
+    if (epsfcn >= DBL_EPSILON) {
+	user_eps = 1;
+	eps = sqrt(epsfcn);
+    }
 
     if (quality == 0) {
 	/* plain old minpack fdjac2 */
@@ -133,7 +138,9 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	double y[m];
 
 	if (quality == 1) {
-	    eps *= 2;
+	    if (!user_eps) {
+		eps *= 2;
+	    }
 	    dim = 2;
 	    d = 2;
 	    a[0] = b[0] = -1;
@@ -146,7 +153,9 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	} else if (quality == 3) {
 	    dim = 6;
 	    d = 60;
-	    eps *= 10;
+	    if (!user_eps) {
+		eps *= 10;
+	    }
 	    a[0] = -(a[5] = 3); a[1] = -(a[4] = 2); a[2] = -(a[3] = 1);
 	    b[0] = -(b[5] = 1); b[1] = -(b[4] = -9); b[2] = -(b[3] = 45);
 	} else {
