@@ -297,9 +297,9 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
    into @H, which must be correctly sized to receive the result.
 */
 
-int numerical_hessian (const double *b, gretl_matrix *H,
-		       BFGS_CRIT_FUNC func, void *data,
-		       int neg)
+static int numerical_hessian (const double *b, gretl_matrix *H,
+			      BFGS_CRIT_FUNC func, void *data,
+			      double d, int neg)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
@@ -308,7 +308,6 @@ int numerical_hessian (const double *b, gretl_matrix *H,
     int r = RSTEPS;
     double ztol = sqrt(DBL_EPSILON / 7e-7);
     double eps = 1e-4;
-    double d = 0.1;
     double v = 2.0; /* reduction factor for h */
     double f0, f1, f2;
     double p4m, hij;
@@ -480,7 +479,7 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = numerical_hessian(b, H, func, data, 1);
+	*err = numerical_hessian(b, H, func, data, 0.1, 1);
     }
 
     if (!*err) {
@@ -504,7 +503,7 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
     if (gradfunc != NULL) {
 	return hessian_from_score(b, H, gradfunc, cfunc, data);
     } else {
-	return numerical_hessian(b, H, cfunc, data, 1);
+	return numerical_hessian(b, H, cfunc, data, 0.1, 1);
     }
 }
 
@@ -2329,7 +2328,7 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
     }
 
     if (!*err) {
-	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0);
+	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0.1, 0);
     }
 
     g_free(formula);

@@ -105,10 +105,6 @@ double deriv_free_optimize (MaxMethod method,
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     DATASET *dset, int *err);
 
-int numerical_hessian (const double *b, gretl_matrix *H,
-		       BFGS_CRIT_FUNC func, void *data,
-		       int neg);
-
 gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
 			    int *err);
 
