@@ -139,16 +139,16 @@ int hessian_from_score (double *b, gretl_matrix *H,
     double *g, *splus, *sminus, *splus2, *sminus2;
     double x, den, eps = 1.0e-05;
     int n = gretl_matrix_rows(H);
-    int i, j, err = 0;
     int extra_precision = 0;
+    int i, j, err = 0;
 
     char *s = getenv("H_EXTRA");
 
     if (s != NULL && *s != '\0') {
 	extra_precision = 1;
     }
-    
-    fprintf(stderr, "extra = %d\n", extra_precision);
+
+    fprintf(stderr, "hessian_from_score: extra = %d\n", extra_precision);
 
     if (extra_precision) {
 	splus = malloc(5 * n * sizeof *splus);
@@ -161,16 +161,17 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	splus = malloc(3 * n * sizeof *splus);
 	sminus = splus + n;
 	g = sminus + n;
+	splus2 = sminus2 = NULL;
 	den = 2*eps;
     }
-    
+
     if (splus == NULL) {
 	return E_ALLOC;
     }
 
     for (i=0; i<n; i++) {
 	double b0 = b[i];
-	
+
 	b[i] = b0 + eps;
 	err = gradfunc(b, g, n, cfunc, data);
 	if (err) break;
@@ -199,8 +200,8 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	    for (j=0; j<n; j++) {
 		splus2[j] = g[j];
 	    }
-	}	    
-	
+	}
+
 	b[i] = b0;
 	for (j=0; j<n; j++) {
 	    if (extra_precision) {
