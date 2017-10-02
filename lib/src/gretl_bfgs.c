@@ -136,22 +136,41 @@ int hessian_from_score (double *b, gretl_matrix *H,
 			BFGS_CRIT_FUNC cfunc,
 			void *data)
 {
-    double *g, *splus, *sminus;
-    double x, eps = 1.0e-05;
+    double *g, *splus, *sminus, *splus2, *sminus2;
+    double x, den, eps = 1.0e-05;
     int n = gretl_matrix_rows(H);
     int i, j, err = 0;
+    int extra_precision = 0;
 
-    splus = malloc(3 * n * sizeof *splus);
-    sminus = splus + n;
-    g = sminus + n;
+    char *s = getenv("H_EXTRA");
 
+    if (s != NULL && *s != '\0') {
+	extra_precision = 1;
+    }
+    
+    fprintf(stderr, "extra = %d\n", extra_precision);
+
+    if (extra_precision) {
+	splus = malloc(5 * n * sizeof *splus);
+	splus2 = splus + n;
+	sminus = splus2 + n;
+	sminus2 = sminus + n;
+	g = sminus2 + n;
+	den = 12*eps;
+    } else {
+	splus = malloc(3 * n * sizeof *splus);
+	sminus = splus + n;
+	g = sminus + n;
+	den = 2*eps;
+    }
+    
     if (splus == NULL) {
 	return E_ALLOC;
     }
 
     for (i=0; i<n; i++) {
 	double b0 = b[i];
-
+	
 	b[i] = b0 + eps;
 	err = gradfunc(b, g, n, cfunc, data);
 	if (err) break;
@@ -166,10 +185,30 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	    sminus[j] = g[j];
 	}
 
+	if (extra_precision) {
+	    b[i] = b0 - 2*eps;
+	    err = gradfunc(b, g, n, cfunc, data);
+	    if (err) break;
+	    for (j=0; j<n; j++) {
+		sminus2[j] = g[j];
+	    }
+
+	    b[i] = b0 + 2*eps;
+	    err = gradfunc(b, g, n, cfunc, data);
+	    if (err) break;
+	    for (j=0; j<n; j++) {
+		splus2[j] = g[j];
+	    }
+	}	    
+	
 	b[i] = b0;
 	for (j=0; j<n; j++) {
-	    x = -(splus[j] - sminus[j]) / (2*eps);
-	    gretl_matrix_set(H, i, j, x);
+	    if (extra_precision) {
+		x = -(splus2[j] - sminus2[j]) + 8*(splus[j] - sminus[j]);
+	    } else {		
+		x = splus[j] - sminus[j];
+	    }
+	    gretl_matrix_set(H, i, j, -x / den);
 	}
     }
 
