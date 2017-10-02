@@ -479,7 +479,7 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = numerical_hessian(b, H, func, data, 0.1, 1);
+	*err = numerical_hessian(b, H, func, data, 0.01, 1);
     }
 
     if (!*err) {
@@ -503,7 +503,7 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
     if (gradfunc != NULL) {
 	return hessian_from_score(b, H, gradfunc, cfunc, data);
     } else {
-	return numerical_hessian(b, H, cfunc, data, 0.1, 1);
+	return numerical_hessian(b, H, cfunc, data, 0.01, 1);
     }
 }
 
@@ -2328,7 +2328,7 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
     }
 
     if (!*err) {
-	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0.1, 0);
+	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0.01, 0);
     }
 
     g_free(formula);
