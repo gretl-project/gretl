@@ -110,9 +110,9 @@ ifeq ($(win32pkg),yes)
   uidir = $(gretldir)/ui
   appdatadir = $(gretldir)/appdata
 else
-  gretldir = $(datarootdir)
-  uidir = $(datarootdir)/ui
-  appdatadir = $(datarootdir)
+  gretldir = $(datarootdir)/gretl
+  uidir = $(gretldir)/ui
+  appdatadir = $(datarootdir)/appdata
 endif
 
 tooldir = $(topsrc)/tools
