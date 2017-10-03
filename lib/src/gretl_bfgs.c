@@ -1889,7 +1889,9 @@ static int check_optimizer_callback (const char *fncall,
 	*fname = '\0';
 	strncat(fname, fncall, n);
 	u = get_user_function_by_name(fname);
-	err = fn_param_set_const(u, argnum);
+	if (u != NULL) {
+	    err = fn_param_set_const(u, argnum);
+	}
     } else {
 	err = E_INVARG;
     }
