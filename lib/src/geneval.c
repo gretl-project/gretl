@@ -9357,8 +9357,8 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
 #if LHDEBUG
-    fprintf(stderr, "set_string_value: s1 = %p, idx = %d\n",
-	    (void *) str, idx);
+    fprintf(stderr, "set_string_value: s1 = %s, idx = %d\n",
+	    s1, idx);
 #endif
 
     s2 = rhs->v.str;
