@@ -4214,8 +4214,13 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	spec->sel[0].range[0] = l->v.ivec[0];
 	spec->sel[0].range[1] = l->v.ivec[1];
     } else if (l->t == MAT) {
-	spec->type[0] = SEL_MATRIX;
-	spec->sel[0].m = l->v.m;
+	if (gretl_matrix_is_scalar(l->v.m)) {
+	    spec->type[0] = SEL_RANGE;
+	    mspec_set_row_index(spec, l->v.m->val[0]);
+	} else {
+	    spec->type[0] = SEL_MATRIX;
+	    spec->sel[0].m = l->v.m;
+	}
     } else if (l->t == EMPTY) {
 	spec->type[0] = SEL_ALL;
     } else {
@@ -4233,8 +4238,13 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	spec->sel[1].range[0] = r->v.ivec[0];
 	spec->sel[1].range[1] = r->v.ivec[1];
     } else if (r->t == MAT) {
-	spec->type[1] = SEL_MATRIX;
-	spec->sel[1].m = r->v.m;
+	if (gretl_matrix_is_scalar(r->v.m)) {
+	    spec->type[1] = SEL_RANGE;
+	    mspec_set_col_index(spec, r->v.m->val[0]);
+	} else {
+	    spec->type[1] = SEL_MATRIX;
+	    spec->sel[1].m = r->v.m;
+	}
     } else if (r->t == EMPTY) {
 	spec->type[1] = SEL_ALL;
     } else {
@@ -4562,10 +4572,6 @@ static int test_for_single_range (matrix_subspec *spec,
 	if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
 	    ret = spec->sel[0].range[0];
 	}
-    } else if (spec->type[0] == SEL_MATRIX &&
-	       spec->type[1] == SEL_NULL &&
-	       gretl_matrix_is_scalar(spec->sel[0].m)) {
-	ret = spec->sel[0].m->val[0];
     } else {
 	p->err = E_TYPES;
 	ret = -1;
