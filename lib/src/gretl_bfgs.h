@@ -72,6 +72,10 @@ gretl_matrix *hessian_inverse_from_score (double *b, int n,
 					  BFGS_CRIT_FUNC cfunc,
 					  void *data, int *err);
 
+int numerical_hessian (double *b, gretl_matrix *H,
+		       BFGS_CRIT_FUNC func, void *data,
+		       int neg, double d);
+
 gretl_matrix *numerical_hessian_inverse (const double *b, int n, 
 					 BFGS_CRIT_FUNC func, 
 					 void *data, int *err);

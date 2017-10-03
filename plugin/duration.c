@@ -427,6 +427,16 @@ static gretl_matrix *duration_hessian_inverse (double *theta,
 	*err = duration_hessian(theta, H, data);
     }
 
+#if 0
+    /* debugging check on numerical_hessian() */
+    gretl_matrix *nH = gretl_zero_matrix_new(dinfo->npar, dinfo->npar);
+
+    numerical_hessian(theta, nH, duration_loglik, data, 1, 0.0);
+    gretl_matrix_subtract_from(nH, H);
+    gretl_matrix_print(nH, "H: numerical - analytical");
+    gretl_matrix_free(nH);
+#endif
+
     if (!*err) {
 	*err = gretl_invert_symmetric_matrix(H);
     }

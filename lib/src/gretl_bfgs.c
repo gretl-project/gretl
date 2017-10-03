@@ -137,7 +137,7 @@ int hessian_from_score (double *b, gretl_matrix *H,
 			void *data)
 {
     double *g, *splus, *sminus, *splus2, *sminus2;
-    double x, den, eps = 1.0e-05;
+    double x, den, b0, eps = 1.0e-05;
     int n = gretl_matrix_rows(H);
     int extra_precision = 0;
     int i, j, err = 0;
@@ -169,39 +169,38 @@ int hessian_from_score (double *b, gretl_matrix *H,
     }
 
     for (i=0; i<n; i++) {
-	double b0 = b[i];
-
+	b0 = b[i];
 	b[i] = b0 + eps;
 	err = gradfunc(b, g, n, cfunc, data);
-	if (err) break;
+	if (err) goto restore;
 	for (j=0; j<n; j++) {
 	    splus[j] = g[j];
 	}
-
 	b[i] = b0 - eps;
 	err = gradfunc(b, g, n, cfunc, data);
-	if (err) break;
+	if (err) goto restore;
 	for (j=0; j<n; j++) {
 	    sminus[j] = g[j];
 	}
-
 	if (extra_precision) {
 	    b[i] = b0 - 2*eps;
 	    err = gradfunc(b, g, n, cfunc, data);
-	    if (err) break;
+	    if (err) goto restore;
 	    for (j=0; j<n; j++) {
 		sminus2[j] = g[j];
 	    }
-
 	    b[i] = b0 + 2*eps;
 	    err = gradfunc(b, g, n, cfunc, data);
-	    if (err) break;
+	    if (err) goto restore;
 	    for (j=0; j<n; j++) {
 		splus2[j] = g[j];
 	    }
 	}
-
+    restore:
 	b[i] = b0;
+	if (err) {
+	    break;
+	}
 	for (j=0; j<n; j++) {
 	    if (extra_precision) {
 		x = -(splus2[j] - sminus2[j]) + 8*(splus[j] - sminus[j]);
@@ -303,8 +302,8 @@ static void hess_h_reduce (double *h, double v, int n)
 /* number of Richardson steps */
 #define RSTEPS 4
 
-/* default @d for numerical_hessian */
-#define numhess_d 0.0001
+/* default @d for numerical_hessian (2017-10-03: was 0.0001) */
+#define numhess_d 0.01
 
 /* The algorithm below implements the method of Richardson
    Extrapolation.  It is derived from code in the gnu R package
@@ -315,9 +314,9 @@ static void hess_h_reduce (double *h, double v, int n)
    into @H, which must be correctly sized to receive the result.
 */
 
-static int numerical_hessian (double *b, gretl_matrix *H,
-			      BFGS_CRIT_FUNC func, void *data,
-			      int neg, double d)
+int numerical_hessian (double *b, gretl_matrix *H,
+		       BFGS_CRIT_FUNC func, void *data,
+		       int neg, double d)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
@@ -377,6 +376,7 @@ static int numerical_hessian (double *b, gretl_matrix *H,
 	    if (na(f1)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
 			"criterion = NA for theta[%d] = %g\n", i, b[i]);
+		b[i] = bi0;
 		err = E_NAN;
 		goto bailout;
 	    }
@@ -385,6 +385,7 @@ static int numerical_hessian (double *b, gretl_matrix *H,
 	    if (na(f2)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
 			"criterion = NA for theta[%d] = %g\n", i, b[i]);
+		b[i] = bi0;
 		err = E_NAN;
 		goto bailout;
 	    }
@@ -425,6 +426,8 @@ static int numerical_hessian (double *b, gretl_matrix *H,
 		    if (na(f1)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
 				"objective function gave NA\n", i, j);
+			b[i] = bi0;
+			b[j] = bj0;
 			err = E_NAN;
 			goto bailout;
 		    }
@@ -434,6 +437,8 @@ static int numerical_hessian (double *b, gretl_matrix *H,
 		    if (na(f2)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
 				"objective function gave NA\n", i, j);
+			b[i] = bi0;
+			b[j] = bj0;
 			err = E_NAN;
 			goto bailout;
 		    }
@@ -469,6 +474,14 @@ static int numerical_hessian (double *b, gretl_matrix *H,
     }
 
  bailout:
+
+    if (neg) {
+	/* internal use, not user_numhess(): we should ensure
+	   that the original criterion value is restored after
+	   calculating with a perturbed version of @b
+	*/
+	func(b, data);
+    }
 
     if (err && err != E_ALLOC) {
 	gretl_errmsg_set(_("Failed to compute numerical Hessian"));
