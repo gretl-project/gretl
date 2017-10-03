@@ -2642,7 +2642,7 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
     }
 
     if (!err) {
-	J = fdjac(coeff, fncall, NULL, &err);
+	J = user_fdjac(coeff, fncall, 0.0, NULL, &err);
     }
 
 #if RDEBUG

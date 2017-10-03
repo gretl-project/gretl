@@ -102,11 +102,11 @@ double deriv_free_optimize (MaxMethod method,
 			    PRN *prn,
 			    int *err);
 
-gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
-		     DATASET *dset, int *err);
+gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
+			  double eps, DATASET *dset, int *err);
 
 gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
-			    int *err);
+			    double d, int *err);
 
 int gretl_simann (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,

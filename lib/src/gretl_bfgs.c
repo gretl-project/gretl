@@ -262,31 +262,22 @@ gretl_matrix *hessian_inverse_from_score (double *b, int n,
     return H;
 }
 
-typedef struct uhess_data_ uhess_data;
-
-struct uhess_data_ {
-    gretl_matrix *theta;  /* parameter vector (user matrix) */
-    int ncoeff;           /* number of coefficients */
-    GENERATOR *genr;      /* for generating scalar criterion */
-};
+/* Callback from numerical_hessian() for use in user_hess().
+   The first argument is redundant here, since the user
+   matrix referenced in the function-call in @genr will
+   already contain the values in @b. But we need to
+   respect the typedef for BFGS_CRIT_FUNC.
+*/
 
 static double uhess_callback (const double *b, void *data)
 {
-    uhess_data *uh = data;
+    GENERATOR *genr = data;
     double ret = NADBL;
-    int i, err;
+    int err;
 
-    for (i=0; i<uh->ncoeff; i++) {
-	uh->theta->val[i] = b[i];
-    }
-
-    err = execute_genr(uh->genr, NULL, NULL);
+    err = execute_genr(genr, NULL, NULL);
     if (!err) {
 	ret = get_scalar_value_by_name("$umax", &err);
-#if 0
-	gretl_matrix_print(uh->theta, "uh->theta");
-	fprintf(stderr, " criterion %.15g\n", ret);
-#endif
     }
 
     return ret;
@@ -309,23 +300,11 @@ static void hess_h_reduce (double *h, double v, int n)
     }
 }
 
-static void hess_b_adjust_i (double *c, const double *b, double *h, int n,
-			     int i, double sgn)
-{
-    memcpy(c, b, n * sizeof *b);
-    c[i] += sgn * h[i];
-}
-
-static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
-			      int i, int j, double sgn)
-{
-    memcpy(c, b, n * sizeof *b);
-    c[i] += sgn * h[i];
-    c[j] += sgn * h[j];
-}
-
 /* number of Richardson steps */
 #define RSTEPS 4
+
+/* default @d for numerical_hessian */
+#define numhess_d 0.0001
 
 /* The algorithm below implements the method of Richardson
    Extrapolation.  It is derived from code in the gnu R package
@@ -336,33 +315,36 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
    into @H, which must be correctly sized to receive the result.
 */
 
-static int numerical_hessian (const double *b, gretl_matrix *H,
+static int numerical_hessian (double *b, gretl_matrix *H,
 			      BFGS_CRIT_FUNC func, void *data,
-			      int neg)
+			      int neg, double d)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
     double *wspace;
-    double *c, *h0, *h, *Hd, *D;
+    double *h0, *h, *Hd, *D;
     int r = RSTEPS;
     double eps = 1e-4;
-    double d = 0.0001; /* 2017-10-03: could be bigger? */
     double v = 2.0;    /* reduction factor for h */
     double f0, f1, f2;
     double p4m, hij;
+    double bi0, bj0;
     int n = gretl_matrix_rows(H);
     int vn = (n * (n + 1)) / 2;
     int dn = vn + n;
     int i, j, k, m, u;
     int err = 0;
 
-    wspace = malloc((4 * n + dn) * sizeof *wspace);
+    if (d == 0.0) {
+	d = numhess_d;
+    }
+
+    wspace = malloc((3 * n + dn) * sizeof *wspace);
     if (wspace == NULL) {
 	return E_ALLOC;
     }
 
-    c = wspace;
-    h0 = c + n;
+    h0 = wspace;
     h = h0 + n;
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
@@ -387,21 +369,22 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
     /* first derivatives and Hessian diagonal */
 
     for (i=0; i<n; i++) {
+	bi0 = b[i];
 	hess_h_init(h, h0, n);
 	for (k=0; k<r; k++) {
-	    hess_b_adjust_i(c, b, h, n, i, 1);
-	    f1 = func(c, data);
+	    b[i] = bi0 + h[i];
+	    f1 = func(b, data);
 	    if (na(f1)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
-			"criterion = NA for theta[%d] = %g\n", i, c[i]);
+			"criterion = NA for theta[%d] = %g\n", i, b[i]);
 		err = E_NAN;
 		goto bailout;
 	    }
-	    hess_b_adjust_i(c, b, h, n, i, -1);
-	    f2 = func(c, data);
+	    b[i] = bi0 - h[i];
+	    f2 = func(b, data);
 	    if (na(f2)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
-			"criterion = NA for theta[%d] = %g\n", i, c[i]);
+			"criterion = NA for theta[%d] = %g\n", i, b[i]);
 		err = E_NAN;
 		goto bailout;
 	    }
@@ -411,6 +394,7 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 	    Hx[k] = (f1 - 2*f0 + f2) / (h[i] * h[i]);
 	    hess_h_reduce(h, v, n);
 	}
+	b[i] = bi0;
 	p4m = 4.0;
 	for (m=0; m<r-1; m++) {
 	    for (k=0; k<r-m-1; k++) {
@@ -427,22 +411,26 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 
     u = n;
     for (i=0; i<n; i++) {
+	bi0 = b[i];
 	for (j=0; j<=i; j++) {
 	    if (i == j) {
 		D[u] = Hd[i];
 	    } else {
 		hess_h_init(h, h0, n);
+		bj0 = b[j];
 		for (k=0; k<r; k++) {
-		    hess_b_adjust_ij(c, b, h, n, i, j, 1);
-		    f1 = func(c, data);
+		    b[i] = bi0 + h[i];
+		    b[j] = bj0 + h[j];
+		    f1 = func(b, data);
 		    if (na(f1)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
 				"objective function gave NA\n", i, j);
 			err = E_NAN;
 			goto bailout;
 		    }
-		    hess_b_adjust_ij(c, b, h, n, i, j, -1);
-		    f2 = func(c, data);
+		    b[i] = bi0 - h[i];
+		    b[j] = bj0 - h[j];
+		    f2 = func(b, data);
 		    if (na(f2)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
 				"objective function gave NA\n", i, j);
@@ -462,9 +450,11 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 		    p4m *= 4.0;
 		}
 		D[u] = Dx[0];
+		b[j] = bj0;
 	    }
 	    u++;
 	}
+	b[i] = bi0;
     }
 
     /* transcribe the (negative of?) the Hessian */
@@ -513,7 +503,7 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = numerical_hessian(b, H, func, data, 1);
+	*err = numerical_hessian((double *) b, H, func, data, 1, 0.0);
     }
 
     if (!*err) {
@@ -537,7 +527,7 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
     if (gradfunc != NULL) {
 	return hessian_from_score(b, H, gradfunc, cfunc, data);
     } else {
-	return numerical_hessian(b, H, cfunc, data, 1);
+	return numerical_hessian(b, H, cfunc, data, 1, 0.0);
     }
 }
 
@@ -2221,8 +2211,8 @@ static int fdjac_allocate (int m, int n,
     return 0;
 }
 
-gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
-		     DATASET *dset, int *err)
+gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
+			  double eps, DATASET *dset, int *err)
 {
     umax *u;
     gretl_matrix *J = NULL;
@@ -2287,9 +2277,10 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	*err = E_DATA;
     } else {
 	int quality = libset_get_int(FDJAC_QUAL);
-	/* the following could be supplied as an argument? */
-	double eps = libset_get_double("fdjac_eps");
 
+	if (eps == 0.0) {
+	    eps = libset_get_double("fdjac_eps");
+	}
 	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val,
 		m, &iflag, eps, wa, u);
     }
@@ -2310,13 +2301,12 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 }
 
 gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
-			    int *err)
+			    double d, int *err)
 {
-    uhess_data uh = {NULL, 0, NULL};
     gretl_matrix *H = NULL;
+    GENERATOR *genr = NULL;
     gchar *formula = NULL;
-    double *bval = NULL;
-    int i;
+    int n;
 
     if (get_user_var_by_data(b) == NULL) {
 	fprintf(stderr, "numhess: b must be a named matrix\n");
@@ -2324,55 +2314,36 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
 	return NULL;
     }
 
-    uh.theta = b;
-    uh.ncoeff = gretl_vector_get_length(b);
-    if (uh.ncoeff == 0) {
-	fprintf(stderr, "numhess: gretl_vector_get_length gave %d for b\n",
-		uh.ncoeff);
+    n = gretl_vector_get_length(b);
+    if (n == 0) {
+	fprintf(stderr, "numhess: gretl_vector_get_length gave %d for b\n", n);
 	*err = E_DATA;
 	return NULL;
     }
 
-    bval = malloc(uh.ncoeff * sizeof *bval);
-    if (bval == NULL) {
-	*err = E_ALLOC;
-    } else {
-	/* copy the original values so we can restore them */
-	for (i=0; i<uh.ncoeff; i++) {
-	    bval[i] = b->val[i];
-	}
-    }
-
     if (!*err) {
 	formula = g_strdup_printf("$umax=%s", fncall);
-	uh.genr = genr_compile(formula, NULL, GRETL_TYPE_DOUBLE, OPT_P,
-			   NULL, err);
+	genr = genr_compile(formula, NULL, GRETL_TYPE_DOUBLE, OPT_P,
+			    NULL, err);
     }
 
     if (*err) {
 	fprintf(stderr, "numhess: error %d from genr_compile\n", *err);
     } else {
-	H = gretl_zero_matrix_new(uh.ncoeff, uh.ncoeff);
+	H = gretl_zero_matrix_new(n, n);
 	if (H == NULL) {
 	    *err = E_ALLOC;
 	}
     }
 
     if (!*err) {
-	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0);
+	*err = numerical_hessian(b->val, H, uhess_callback,
+				 genr, 0, d);
     }
 
     g_free(formula);
     user_var_delete_by_name("$umax", NULL);
-    destroy_genr(uh.genr);
-
-    if (bval != NULL) {
-	/* restore @b */
-	for (i=0; i<uh.ncoeff; i++) {
-	    b->val[i] = bval[i];
-	}
-	free(bval);
-    }
+    destroy_genr(genr);
 
     if (*err && H != NULL) {
 	gretl_matrix_free(H);

@@ -3071,13 +3071,14 @@ static int is_function_call (const char *s)
     }
 }
 
-static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *r,
+static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *m, NODE *r,
 					  int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	const char *s = r->v.str;
+	const char *s = m->v.str;
+	double eps = 0.0;
 
 	if (!is_function_call(s)) {
 	    p->err = E_TYPES;
@@ -3089,10 +3090,16 @@ static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *r,
 	    return NULL;
 	}
 
-	if (f == F_FDJAC) {
-	    ret->v.m = fdjac(l->v.m, s, p->dset, &p->err);
-	} else {
-	    ret->v.m = user_numhess(l->v.m, s, &p->err);
+	if (!null_or_empty(r)) {
+	    eps = node_get_scalar(r, p);
+	}
+
+	if (!p->err) {
+	    if (f == F_FDJAC) {
+		ret->v.m = user_fdjac(l->v.m, s, eps, p->dset, &p->err);
+	    } else {
+		ret->v.m = user_numhess(l->v.m, s, eps, &p->err);
+	    }
 	}
     } else {
 	ret = aux_matrix_node(p);
@@ -14374,17 +14381,21 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    p->err = E_TYPES;
 	}
-	break;	
+	break;
     case F_FDJAC:
     case F_NUMHESS:
+	/* matrix, fncall, optional scalar */
+	if (l->t == MAT && m->t == STR) {
+	    ret = numeric_jacobian_or_hessian(l, m, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
     case F_MWRITE:
     case HF_CPRINTF:
 	/* matrix, with string as second arg */
-	if ((t->t == F_FDJAC || t->t == F_NUMHESS) &&
-	    l->t == MAT && r->t == STR) {
-	    ret = numeric_jacobian_or_hessian(l, r, t->t, p);
-	} else if (t->t == F_MWRITE && l->t == MAT &&
-		   m->t == STR && empty_or_num(r)) {
+	if (t->t == F_MWRITE && l->t == MAT &&
+	    m->t == STR && empty_or_num(r)) {
 	    ret = matrix_file_write(l, m, r, p);
 	} else if (t->t == HF_CPRINTF && empty_or_string(r)) {
 	    ret = cmatrix_printf(l, r, p);

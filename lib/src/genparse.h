@@ -310,7 +310,6 @@ enum {
     F_EIGSYM,	 
     F_EIGGEN,
     HF_CEIGH,
-    F_FDJAC,
     F_LRVAR,
     F_QUANTILE,
     F_CMULT,	  /* complex multiplication */
@@ -381,7 +380,6 @@ enum {
     F_NORMTEST,
     F_COR,
     F_STRSCRAPE,
-    F_NUMHESS,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
@@ -436,6 +434,8 @@ enum {
     F_DAYSPAN,
     F_SMPLSPAN,
     F_SVM,
+    F_FDJAC,
+    F_NUMHESS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
