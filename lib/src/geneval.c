@@ -4562,6 +4562,10 @@ static int test_for_single_range (matrix_subspec *spec,
 	if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
 	    ret = spec->sel[0].range[0];
 	}
+    } else if (spec->type[0] == SEL_MATRIX &&
+	       spec->type[1] == SEL_NULL &&
+	       gretl_matrix_is_scalar(spec->sel[0].m)) {
+	ret = spec->sel[0].m->val[0];
     } else {
 	p->err = E_TYPES;
 	ret = -1;
