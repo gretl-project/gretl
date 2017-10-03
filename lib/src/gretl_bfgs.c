@@ -146,9 +146,8 @@ int hessian_from_score (double *b, gretl_matrix *H,
 
     if (s != NULL && *s != '\0') {
 	extra_precision = 1;
+	fprintf(stderr, "hessian_from_score: using extra precision\n");
     }
-
-    fprintf(stderr, "hessian_from_score: extra = %d\n", extra_precision);
 
     if (extra_precision) {
 	splus = malloc(5 * n * sizeof *splus);
@@ -339,26 +338,25 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
 
 static int numerical_hessian (const double *b, gretl_matrix *H,
 			      BFGS_CRIT_FUNC func, void *data,
-			      double d, int neg)
+			      int neg)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
     double *wspace;
     double *c, *h0, *h, *Hd, *D;
     int r = RSTEPS;
-    double ztol = sqrt(DBL_EPSILON / 7e-7);
     double eps = 1e-4;
-    double v = 2.0; /* reduction factor for h */
+    double d = 0.0001; /* 2017-10-03: could be bigger? */
+    double v = 2.0;    /* reduction factor for h */
     double f0, f1, f2;
     double p4m, hij;
     int n = gretl_matrix_rows(H);
     int vn = (n * (n + 1)) / 2;
     int dn = vn + n;
-    int wlen = 4 * n + dn;
     int i, j, k, m, u;
     int err = 0;
 
-    wspace = malloc(wlen * sizeof *wspace);
+    wspace = malloc((4 * n + dn) * sizeof *wspace);
     if (wspace == NULL) {
 	return E_ALLOC;
     }
@@ -369,20 +367,19 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
 
-    for (i=0; i<wlen; i++) {
-	wspace[i] = 0.0;
-    }
-
     /* note: numDeriv has
 
        h0 <- abs(d*x) + args$eps * (abs(x) < args$zero.tol)
 
        where the defaults are eps = 1e-4, d = 0.1,
        and zero.tol = sqrt(double.eps/7e-7)
+
+       translation:
+       double ztol = sqrt(DBL_EPSILON / 7e-7);
+       h0[i] = fabs(d*b[i]) + eps * (fabs(b[i]) < ztol);
     */
     for (i=0; i<n; i++) {
-	h0[i] = fabs(d*b[i]) + eps * (fabs(b[i]) < ztol);
-	/* h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]); */
+	h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]);
     }
 
     f0 = func(b, data);
@@ -474,13 +471,10 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
     u = n;
     for (i=0; i<n; i++) {
 	for (j=0; j<=i; j++) {
-	    if (neg) {
-		hij = -D[u++];
-	    } else {
-		hij = D[u++];
-	    }
+	    hij = neg ? -D[u] : D[u];
 	    gretl_matrix_set(H, i, j, hij);
 	    gretl_matrix_set(H, j, i, hij);
+	    u++;
 	}
     }
 
@@ -519,7 +513,7 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = numerical_hessian(b, H, func, data, 0.01, 1);
+	*err = numerical_hessian(b, H, func, data, 1);
     }
 
     if (!*err) {
@@ -543,7 +537,7 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
     if (gradfunc != NULL) {
 	return hessian_from_score(b, H, gradfunc, cfunc, data);
     } else {
-	return numerical_hessian(b, H, cfunc, data, 0.01, 1);
+	return numerical_hessian(b, H, cfunc, data, 1);
     }
 }
 
@@ -2293,11 +2287,8 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 	*err = E_DATA;
     } else {
 	int quality = libset_get_int(FDJAC_QUAL);
-#if 0
-	double eps = 0.0;
-#else
+	/* the following could be supplied as an argument? */
 	double eps = libset_get_double("fdjac_eps");
-#endif
 
 	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val,
 		m, &iflag, eps, wa, u);
@@ -2368,7 +2359,7 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
     }
 
     if (!*err) {
-	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0.01, 0);
+	*err = numerical_hessian(bval, H, uhess_callback, &uh, 0);
     }
 
     g_free(formula);
