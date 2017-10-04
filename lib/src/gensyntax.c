@@ -251,7 +251,11 @@ static void expected_symbol_error (int c, parser *p)
 
 static void unmatched_symbol_error (int c, parser *p)
 {
-    fprintf(stderr, "*** gensyntax: unmatched_symbol_error (%c)\n", c);
+    if (c == '(' || c == ')') {
+	fprintf(stderr, "*** gensyntax: unmatched_symbol_error '%c'\n", c);
+    } else {
+	fprintf(stderr, "*** gensyntax: unmatched_symbol_error (%c)\n", c);
+    }
     parser_print_input(p);
     pprintf(p->prn, _("Unmatched '%c'\n"), c);
     p->err = E_PARSE;
@@ -736,6 +740,11 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 	int paren = 0;
 	int i = 0;
 
+	if (p->ch == '(') {
+	    /* an "anonymous function"? */
+	    gotparen = paren = 1;
+	}
+
 	while (*s) {
 	    if (*s == '"') {
 		anyquote = 1;
@@ -1139,7 +1148,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     int i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args: f = %d, k = %d...\n", f, k);
+    fprintf(stderr, "get_args: f=%s, k=%d, point='%s'\n", getsymb(f),
+	    k, p->point);
 #endif    
 
     if (p->sym != G_LPR) {

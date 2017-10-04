@@ -1892,7 +1892,7 @@ static int check_optimizer_callback (const char *fncall,
 	if (u != NULL) {
 	    err = fn_param_set_const(u, argnum);
 	}
-    } else {
+    } else if (n >= FN_NAMELEN) {
 	err = E_INVARG;
     }
 
