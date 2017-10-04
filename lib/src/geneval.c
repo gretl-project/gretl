@@ -3098,7 +3098,7 @@ static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *m, NODE *r,
 	    if (f == F_FDJAC) {
 		ret->v.m = user_fdjac(l->v.m, s, eps, p->dset, &p->err);
 	    } else {
-		ret->v.m = user_numhess(l->v.m, s, eps, &p->err);
+		ret->v.m = user_numhess(l->v.m, s, eps, p->dset, &p->err);
 	    }
 	}
     } else {

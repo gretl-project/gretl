@@ -110,7 +110,7 @@ gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
 			  double eps, DATASET *dset, int *err);
 
 gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
-			    double d, int *err);
+			    double d, DATASET *dset, int *err);
 
 int gretl_simann (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,

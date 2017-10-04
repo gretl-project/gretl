@@ -261,6 +261,11 @@ gretl_matrix *hessian_inverse_from_score (double *b, int n,
     return H;
 }
 
+struct uhess_data {
+    GENERATOR *genr;
+    DATASET *dset;
+};
+
 /* Callback from numerical_hessian() for use in user_hess().
    The first argument is redundant here, since the user
    matrix referenced in the function-call in @genr will
@@ -270,11 +275,11 @@ gretl_matrix *hessian_inverse_from_score (double *b, int n,
 
 static double uhess_callback (const double *b, void *data)
 {
-    GENERATOR *genr = data;
+    struct uhess_data *uh = data;
     double ret = NADBL;
     int err;
 
-    err = execute_genr(genr, NULL, NULL);
+    err = execute_genr(uh->genr, uh->dset, NULL);
     if (!err) {
 	ret = get_scalar_value_by_name("$umax", &err);
     }
@@ -2316,10 +2321,10 @@ gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
 }
 
 gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
-			    double d, int *err)
+			    double d, DATASET *dset, int *err)
 {
     gretl_matrix *H = NULL;
-    GENERATOR *genr = NULL;
+    struct uhess_data uh = {0};
     gchar *formula = NULL;
     int n;
 
@@ -2338,8 +2343,8 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
 
     if (!*err) {
 	formula = g_strdup_printf("$umax=%s", fncall);
-	genr = genr_compile(formula, NULL, GRETL_TYPE_DOUBLE, OPT_P,
-			    NULL, err);
+	uh.genr = genr_compile(formula, dset, GRETL_TYPE_DOUBLE, OPT_P,
+			       NULL, err);
     }
 
     if (*err) {
@@ -2352,13 +2357,14 @@ gretl_matrix *user_numhess (gretl_matrix *b, const char *fncall,
     }
 
     if (!*err) {
+	uh.dset = dset;
 	*err = numerical_hessian(b->val, H, uhess_callback,
-				 genr, 0, d);
+				 &uh, 0, d);
     }
 
     g_free(formula);
     user_var_delete_by_name("$umax", NULL);
-    destroy_genr(genr);
+    destroy_genr(uh.genr);
 
     if (*err && H != NULL) {
 	gretl_matrix_free(H);
