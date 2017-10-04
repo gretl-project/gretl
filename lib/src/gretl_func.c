@@ -1116,16 +1116,20 @@ int gretl_function_recursing (void)
 
 static fnpkg *find_caller_package (const char *name)
 {
+    fnpkg *pkg = NULL;
     int i;
 
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(name, ufuns[i]->name)) {
-	    ufuns[i]->pkg->prechecked = 1;
-	    return ufuns[i]->pkg;
+	    if (ufuns[i]->pkg != NULL) {
+		ufuns[i]->pkg->prechecked = 1;
+		pkg = ufuns[i]->pkg;
+	    }
+	    break;
 	}
     }
 
-    return NULL;
+    return pkg;
 }
 
 #endif
