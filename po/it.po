@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-10-05 11:22-0400\n"
-"PO-Revision-Date: 2017-09-13 15:28+0200\n"
+"PO-Revision-Date: 2017-10-05 22:05+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2641,10 +2641,8 @@ msgid "Empty observation []\n"
 msgstr "Osservazione vuota []\n"
 
 #: lib/src/genlex.c:1269
-#, fuzzy
 msgid "obsolete use of \"pi\": please use \"$pi\" instead"
-msgstr ""
-"uso obsoleto di \"=\" come operatore booleano: è necessario usare \"==\""
+msgstr "uso obsoleto di \"pi\": è necessario usare \"$pi\""
 
 #: lib/src/genlex.c:1735
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
@@ -9735,9 +9733,8 @@ msgid "static forecast"
 msgstr "previsione statica"
 
 #: gui2/dialogs.c:3156
-#, fuzzy
 msgid "recursive k-step ahead forecasts: k = "
-msgstr "Previsioni ricorsive per %d periodi successivi"
+msgstr "Previsioni ricorsive a k periodi: k ="
 
 #: gui2/dialogs.c:3169
 msgid "gretl: forecast"
@@ -9805,9 +9802,8 @@ msgid "Use start-of-period values"
 msgstr "Usa i valori di inizio periodo"
 
 #: gui2/dialogs.c:3761
-#, fuzzy
 msgid "Spread to multiple series (MIDAS)"
-msgstr "Espansione su più serie"
+msgstr "Espansione su più serie (MIDAS)"
 
 #: gui2/dialogs.c:3781
 msgid "Default method:"
@@ -13625,19 +13621,16 @@ msgid "No command was supplied to start R"
 msgstr "Non è stato indicato alcun comando per avviare R"
 
 #: gui2/gui_utils.c:5810
-#, fuzzy
 msgid "multiple time series object"
-msgstr "Pila di serie storiche"
+msgstr "Oggetto a serie storiche multiple"
 
 #: gui2/gui_utils.c:5811
-#, fuzzy
 msgid "data frame"
-msgstr "scala dei dati"
+msgstr "data frame"
 
 #: gui2/gui_utils.c:5815
-#, fuzzy
 msgid "Send data as"
-msgstr "Sa_lva dati come..."
+msgstr "Invia dati come..."
 
 #: gui2/helpfiles.c:76
 msgid "Larger"
@@ -15818,9 +15811,9 @@ msgid "Properties"
 msgstr "Proprietà"
 
 #: gui2/session.c:604
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no text to save"
-msgstr "è uno scalare"
+msgstr "%s: non c'è testo da salvare"
 
 #: gui2/session.c:879 gui2/session.c:943 gui2/session.c:962
 msgid "Failed to copy graph file"
@@ -16311,7 +16304,6 @@ msgid "gretl: font scale"
 msgstr "gretl: scala dei font"
 
 #: gui2/settings.c:2827
-#, fuzzy
 msgid "Scale for monospaced and menu fonts"
 msgstr "Scala per i font di menu e a larghezza fissa"
 
