@@ -86,7 +86,7 @@ struct midas_info_ {
     int hfslopes;         /* # of high-frequency slope coeffs */
     int nalmonp;          /* number of straight Almon poly terms */
     int method;           /* estimation method */
-    int ldepvar;          /* lagged dependent variable? (1/0) */
+    int ldepvar;          /* position of lagged dependent variable? */
     int nobs;             /* number of observations used */
     size_t colsize;       /* matrix column size in bytes */
     DATASET *dset;        /* dataset */
@@ -848,7 +848,8 @@ static int make_midas_xlist (midas_info *mi)
 		xi = mi->list[i+1];
 		mi->xlist[i] = xi;
 		if (standard_lag_of(xi, mi->yno, mi->dset) > 0) {
-		    mi->ldepvar = 1;
+		    mi->ldepvar = i+1;
+		    break;
 		}
 	    }
 	}
@@ -939,11 +940,13 @@ static int make_midas_laglists (midas_info *mi,
 	mt = &mi->mterms[i];
 	mlist = make_midas_laglist(mt, dset, &err);
 	if (!err) {
-	    if (!prelag(mt) && mi->method != MDS_BFGS) {
-		/* In the "prelag" case the laglist is already
-		   in userspace, and if method is BFGS the list
-		   doesn't need to be pushed into userspace.
-		*/
+	    /* In the "prelag" case the laglist is already
+	       in userspace. If method is BFGS the list
+	       doesn't have to be pushed into userspace,
+	       but we'll record it nonetheless for model
+	       printout purposes.
+	    */
+	    if (!prelag(mt)) {
 		sprintf(mt->lname, "ML___%d", i+1);
 		/* note: remember_list copies its first arg */
 		err = remember_list(mlist, mt->lname, NULL);
@@ -2204,7 +2207,7 @@ static int finalize_midas_model (MODEL *pmod,
     }
 
     if (mi->ldepvar) {
-	gretl_model_set_int(pmod, "ldepvar", 1);
+	gretl_model_set_int(pmod, "ldepvar", mi->ldepvar);
 	gretl_model_set_int(pmod, "dynamic", 1);
     }
 
@@ -2438,7 +2441,7 @@ static void make_pname (char *targ, midas_term *mt, int i,
     } else if (mt->type == MIDAS_ALMONP) {
 	sprintf(targ, "Almon%d", i);
     } else {
-	/* U-MIDAS */
+	/* U-MIDAS: FIXME! */
 	int *list = get_list_by_name(mt->lname);
 
 	if (list != NULL) {
