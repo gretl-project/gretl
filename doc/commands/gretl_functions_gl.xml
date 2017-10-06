@@ -3798,19 +3798,20 @@
 	<para>
 	  Maximización unidimensional mediante o método Golden Section Search
 	  (GSS). A matriz <argname>b</argname>do argumento debe de ser un
-	  vector de 3 elementos. Ao definila, o primeiro elemento ignórase; o
-	  segundo e terceiro elementos establecen os límites inferior e superior
-	  da procura. O argumento <argname>fncall</argname> deberá de ser unha
-	  chamada á función que devolve o valor do concepto a maximizar; o termo
-	  1 de <argname>b</argname> conterá o valor vixente do parámetro que se
-	  axusta e debe de indicarse como primeiro argumento; calquera outro
-	  argumento requirido pode ir entón a continuación. A función en cuestión
-	  debe de ser unimodal (non debe de ter outro máximo local que non sexa
-	  o máximo global) no rango estipulado, pois do contrario non se asegura
-	  que GSS atope o máximo.
+	  vector de 3 elementos. Ao definila, o primeiro elemento ignórase mentres
+	  que o segundo e terceiro elementos establecen os límites inferior e
+	  superior da procura. O argumento <argname>fncall</argname> deberá de
+	  especificar unha chamada á función que devolve o valor do concepto a
+	  maximizar; o termo 1 de <argname>b</argname> (que deberá conter o valor
+	  vixente do parámetro que se axusta cando se invoca a función) debe de
+	  indicarse como primeiro argumento; calquera outro argumento requirido
+	  pode ir entón a continuación. A función en cuestión deberá de ser
+	  unimodal (non debe de ter outro máximo local que non sexa o máximo
+	  global) no rango estipulado, pois do contrario non se asegura que GSS
+	  atope o máximo.
 	</para>
 	<para>
-	  Ao completarse con éxito, esta función devolverá o valor
+	  Ao completarse con éxito, <lit>GSSmax</lit> devolverá o valor
 	  óptimo do concepto que se quere maximizar, mentres que
 	  <argname>b</argname> conterá o valor óptimo do parámetro
 	  xunto cos límites da súa fiestra de valores.
