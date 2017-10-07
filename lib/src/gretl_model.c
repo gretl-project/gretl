@@ -624,7 +624,7 @@ int gretl_model_get_cluster_var (const MODEL *pmod)
  * @pmod: pointer to model.
  * @key: key string.
  * @copied: location to receive flag indicating whether the
- * return value is an allocated copy of the original data:
+ * return value is an allocated copy of the original data.
  * @type: location to receive data type.
  * @sz: location to receive the size of the data.
  *
@@ -632,7 +632,7 @@ int gretl_model_get_cluster_var (const MODEL *pmod)
  * If a non-zero value is written to @copied this indicates that the
  * return value is a copy of the original (and therefore it is the
  * caller's responsibility to free the data when it is no longer
- * required.
+ * required).
  */
 
 void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
