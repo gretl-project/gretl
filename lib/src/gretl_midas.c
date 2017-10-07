@@ -1078,7 +1078,7 @@ static int push_midas_coeff_array (const MODEL *pmod,
     int i, err;
 
     if (gretl_model_get_int(pmod, "umidas")) {
-	/* original estimation was U-MIDAS OLS */
+	/* original estimation was plain U-MIDAS OLS */
 	int nx = xlist == NULL? 0 : xlist[0];
 	int nt = pmod->ncoeff - nx;
 
@@ -1090,11 +1090,11 @@ static int push_midas_coeff_array (const MODEL *pmod,
 	    hfb->val[i] = pmod->coeff[nx + i];
 	}
     } else {
-	gretl_matrix *mc =
-	    gretl_model_get_data(pmod, "midas_coeffs");
+	gretl_matrix *mc = gretl_model_get_data(pmod, "midas_coeffs");
 	int j, k, nt = 0;
 
 	if (mc == NULL) {
+	    fprintf(stderr, "push_midas_coeff_array: mc = NULL\n");
 	    return E_DATA;
 	}
 	for (i=0; i<nmidas; i++) {
