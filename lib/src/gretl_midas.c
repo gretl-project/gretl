@@ -1922,6 +1922,16 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
     return err;
 }
 
+/* Below: we add a column vector containing the "gross"
+   MIDAS coefficients (i.e. high-frequency slope, where
+   applicable, times the weights implied by the hyper-
+   parameter values). This is required for forecasting.
+   In addition, if there's just a single MIDAS term, we
+   add to the model a two-column matrix holding the
+   gross coefficients and the associated lags -- this is
+   to support a plot of the coefficients in the GUI.
+*/
+
 static int add_gross_midas_coeffs (MODEL *pmod,
 				   midas_info *mi)
 {
