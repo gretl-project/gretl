@@ -730,6 +730,16 @@ int user_var_set_flag (user_var *uvar, UVFlags flag)
     }
 }
 
+int user_var_unset_flag (user_var *uvar, UVFlags flag)
+{
+    if (uvar != NULL) {
+	uvar->flags &= ~flag;
+	return 0;
+    } else {
+	return E_INVARG;
+    }
+}
+
 void user_var_privatize_by_name (const char *name)
 {
     user_var *u = get_user_var_by_name(name);
@@ -957,6 +967,9 @@ int user_var_replace_value (user_var *uvar, void *value,
     
     if (uvar == NULL) {
 	err = E_UNKVAR;
+    } else if (value != uvar->ptr && (uvar->flags & UV_NOREPL)) {
+	gretl_errmsg_sprintf("The variable %s is read-only", uvar->name);
+	err = E_DATA;
     } else if (type != uvar->type) {
 	err = E_TYPES; /* assume the worst */
 	if (uvar->type == GRETL_TYPE_ARRAY && uvar->ptr != NULL) {

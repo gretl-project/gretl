@@ -583,7 +583,7 @@ static int parse_midas_term (const char *s,
     char p1str[VNAMELEN];
     char p2str[VNAMELEN];
     char typestr[10];
-    char fmt[48];
+    char fmt[64];
     int ns, p1 = 0, p2 = 0;
     int type, umidas = 0;
     int err = 0;

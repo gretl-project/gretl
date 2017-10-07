@@ -1723,6 +1723,15 @@ static umax *umax_new (GretlType t)
     return u;
 }
 
+static void umax_unset_no_replace_flag (umax *u)
+{
+    user_var *uv = get_user_var_by_data(u->b);
+
+    if (uv != NULL) {
+	user_var_unset_flag(uv, UV_NOREPL);
+    }
+}
+
 static void umax_destroy (umax *u)
 {
     if (u->dset != NULL) {
@@ -1730,6 +1739,7 @@ static void umax_destroy (umax *u)
 	dataset_drop_listed_variables(NULL, u->dset, NULL, NULL);
     }
 
+    umax_unset_no_replace_flag(u);
     user_var_delete_by_name("$umax", NULL);
 
     destroy_genr(u->gf);
@@ -1877,25 +1887,26 @@ int optimizer_get_matrix_name (const char *fncall, char *name)
 }
 
 /* Ensure that we can find the specified callback function,
-   and that it cannot modify its param-vector argument
-   (given by @argnum).
+   and that it cannot replace/move its param-vector argument,
+   given by u->b.
 */
 
-static int check_optimizer_callback (const char *fncall,
-				     int argnum)
+static int check_optimizer_callback (umax *u, const char *fncall)
 {
     int n = strcspn(fncall, "(");
     int err = 0;
 
     if (n > 0 && n < FN_NAMELEN) {
 	char fname[FN_NAMELEN];
-	ufunc *u;
-	
+	user_var *uvar;
+	ufunc *ufun;
+
 	*fname = '\0';
 	strncat(fname, fncall, n);
-	u = get_user_function_by_name(fname);
-	if (u != NULL) {
-	    err = fn_param_set_const(u, argnum);
+	ufun = get_user_function_by_name(fname);
+	uvar = get_user_var_by_data(u->b);
+	if (ufun != NULL && uvar != NULL) {
+	    user_var_set_flag(uvar, UV_NOREPL);
 	}
     } else if (n >= FN_NAMELEN) {
 	err = E_INVARG;
@@ -1913,12 +1924,12 @@ static int user_gen_setup (umax *u,
     gchar *formula;
     int err;
 
-    err = check_optimizer_callback(fncall, 0);
+    err = check_optimizer_callback(u, fncall);
     if (!err && gradcall != NULL) {
-	err = check_optimizer_callback(gradcall, 1);
+	err = check_optimizer_callback(u, gradcall);
     }
     if (!err && hesscall != NULL) {
-	err = check_optimizer_callback(hesscall, 1);
+	err = check_optimizer_callback(u, hesscall);
     }
     if (err) {
 	return err;
@@ -1950,6 +1961,7 @@ static int user_gen_setup (umax *u,
 	u->dset = dset;
 	u->fm_out = genr_get_output_matrix(u->gf);
     } else {
+	umax_unset_no_replace_flag(u);
 	destroy_genr(u->gf);
 	destroy_genr(u->gg);
 	u->gf = u->gg = NULL;
