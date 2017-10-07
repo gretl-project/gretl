@@ -2604,6 +2604,11 @@ static int parse_forecast_string (const char *s,
 	nf = sscanf(s, "%31s %31s %31s %31s", f[0], f[1], f[2], f[3]);
     }
 
+    if (nf > nmax) {
+	/* try for parenthesized t1, t2 terms? */
+	nf = sscanf(s, "(%31[^)]) (%31[^)]) %31s %31s", f[0], f[1], f[2], f[3]);
+    }
+
     if (nf < nmin || nf > nmax) {
 	gretl_errmsg_sprintf("fcast: expected %d to %d fields in input, got %d",
 			     nmin, nmax, nf);
