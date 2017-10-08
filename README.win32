@@ -1,8 +1,10 @@
-If you want to build gretl for win32, you have two main options:
+As of version 2017d, it is possible to build gretl for Windows
+on MS Windows. We have checked this using MSYS2 and Mingw-w64;
+building via cygwin should also be feasible but we have not
+tried that.
 
-* Go into the win32 subdirectory and have a look at the READMEs 
-  there. You'll find support for building with mingw.
+Look in the win32 subdirectory for sample invocations of gretl's
+configure script suitable for use on Windows.
 
-* You may be able to do the standard UNIX "configure ; make" in 
-  this top-level directory, if you're on cygwin (but almost
-  certainly not otherwise).
+Allin Cottrell
+2017-10-08
