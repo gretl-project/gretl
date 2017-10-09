@@ -835,7 +835,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 
 static int make_midas_xlist (midas_info *mi)
 {
-    int ldvpos, ldv_count = 0;
+    int ldvpos = 0, ldv_count = 0;
     int i, xi, err = 0;
 
     mi->nx = mi->list[0] - 1;
