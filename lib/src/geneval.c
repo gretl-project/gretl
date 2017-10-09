@@ -4777,7 +4777,11 @@ static double real_apply_func (double x, int f, parser *p)
     case F_EXP:
 	y = exp(x);
 	if (errno) {
-	    eval_warning(p, f, errno);
+	    if (x < 0 && y == 0) {
+		; /* we'll let this pass */
+	    } else {
+		eval_warning(p, f, errno);
+	    }
 	}
 	return y;
     case F_INVMILLS:
