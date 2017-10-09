@@ -1168,17 +1168,23 @@ static int list_purge_const (int *list, DATASET *dset)
     n = list[0] - 1; /* number of RHS terms */
 
     for (j=0; j<n && !ok; j++) {
+	int vi, pos;
+
 	tmpmod = lsq(list, dset, OLS, OPT_A);
 	if (tmpmod.errcode) {
 	    err = tmpmod.errcode;
-	    fprintf(stderr, "list_purge_const: tmpmod err = %d\n", err);
 	    break;
 	}
 	ok = (tmpmod.ess > 1.0e-6);
 	if (!ok) {
 	    for (i=tmpmod.ncoeff-1; i>=0; i--) {
 		if (fabs(tmpmod.coeff[i]) > 1.0e-06) {
-		    gretl_list_delete_at_pos(list, i+2);
+		    /* tmpmod.list and list may not be identical */
+		    vi = tmpmod.list[i+2];
+		    pos = in_gretl_list(list, vi);
+		    if (pos >= 2) {
+			gretl_list_delete_at_pos(list, pos);
+		    }
 		    break;
 		}
 	    }
