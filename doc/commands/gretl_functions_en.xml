@@ -9121,15 +9121,44 @@
 	  that with index <argname>end</argname>, inclusive.
 	</para>
     <para>
-        Examples:
+        For example, the code below
     </para>
     <code>
         string s1 = "Hello, Gretl!"
         string s2 = substr(s1, 8, 12)
-        print s2
-        
         string s3 = substr("Hello, Gretl!", 8, 12)
+        print s2
         print s3
+    </code>
+    <para>
+        gives:
+    </para>
+    <code>
+      ? print s2
+      Gretl
+      ? print s3
+      Gretl
+    </code>
+    <para>
+        It should be noted that in some cases you may be willing to
+        trade clarity for conciseness, and use slicing and increment
+	operators, as in
+    </para>
+    <code>
+        string s1 = "Hello, Gretl!"
+        string s2 = s1[8:12]
+        string s3 = s1 + 7
+        print s2
+        print s3
+    </code>
+    <para>
+    which would give you
+    </para>
+    <code>
+      ? print s2
+      Gretl
+      ? print s3
+      Gretl!
     </code>
       </description>
     </function>
