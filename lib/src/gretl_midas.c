@@ -1266,10 +1266,24 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
     midas_term *mt;
 
     if (clamp) {
+	int ok = 0;
+
 	/* check for valid use of OPT_C, --clamp-beta */
 	if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
-	    ; /* OK */
-	} else {
+	    ok = 1; /* clearly OK */
+	} else if (0) {
+	    /* not just yet! */
+	    for (i=0; i<mi->nmidas; i++) {
+		if (mi->mterms[i].type == MIDAS_BETA0) {
+		    /* should be supported? */
+		    ok = 1;
+		    break;
+		}
+	    }
+	}
+	if (!ok) {
+	    gretl_errmsg_set("clamp-beta can be used only with a single "
+			     "beta0 MIDAS term");
 	    return E_BADOPT;
 	}
     }
