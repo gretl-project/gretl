@@ -835,6 +835,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 
 static int make_midas_xlist (midas_info *mi)
 {
+    int ldvpos, ldv_count = 0;
     int i, xi, err = 0;
 
     mi->nx = mi->list[0] - 1;
@@ -844,15 +845,19 @@ static int make_midas_xlist (midas_info *mi)
 	if (mi->xlist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=1; i<=mi->nx; i++) {
-		xi = mi->list[i+1];
-		mi->xlist[i] = xi;
+	    for (i=2; i<=mi->list[0]; i++) {
+		xi = mi->list[i];
+		mi->xlist[i-1] = xi;
 		if (standard_lag_of(xi, mi->yno, mi->dset) > 0) {
-		    mi->ldepvar = i+1;
-		    break;
+		    ldvpos = i;
+		    ldv_count++;
 		}
 	    }
 	}
+    }
+
+    if (ldv_count == 1) {
+	mi->ldepvar = ldvpos;
     }
 
     return err;
@@ -2481,7 +2486,7 @@ static void make_pname (char *targ, midas_term *mt, int i,
 static int add_param_names (midas_info *mi,
 			    const DATASET *dset)
 {
-    char tmp[64], str[MAXLEN];
+    char tmp[64], str[2*MAXLEN];
     int i, j, k = 0;
 
     mi->seplist = gretl_list_new(mi->nmidas);
