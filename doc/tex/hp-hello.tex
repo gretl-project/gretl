@@ -265,7 +265,9 @@ offers all the standard capabilities one would expect, such as
 specialized ones. Again, see the \GCR\ for a complete list.
 
 In order to access part of a string, you may use the \cmd{substr}
-function, as in
+function,\footnote{Actually, there is a cooler method, which uses the
+  same syntax as matrix slicing (see chapter \ref{chap:matrices}):
+  \cmd{substr(s, 3, 5)} is functionally equivalent to \cmd{s[3:5]}.} as in
 \begin{code}
   string s = "endogenous"
   string pet = substr(s, 3, 5)

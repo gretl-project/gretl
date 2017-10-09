@@ -9046,20 +9046,48 @@
     <para>
       Restituisce la sottostringa di <argname>s</argname> dal
       carattere <argname>start</argname> al carattere
-      <argname>end</argname> compresi. L'indicizzazione è a base
-      1.
+      <argname>end</argname> compresi. L'indicizzazione è a base 1.
     </para>
-	<para>
-          Esempi:
-	</para>
-	<code>
-          string s1 = "Ciao, Gretl!"
-          string s2 = substr(s1, 7, 11)
-          print s2
-        
-          string s3 = substr("Ciao, Gretl!", 7, 11)
-          print s3
-	</code>
+    <para>
+        Ad esempio, il codice seguente
+    </para>
+    <code>
+        string s1 = "Ciao, Gretl!"
+        string s2 = substr(s1, 7, 11)
+        string s3 = substr("Ciao, Gretl!", 7, 11)
+        print s2
+        print s3
+    </code>
+    <para>
+        ritorna:
+    </para>
+    <code>
+      ? print s2
+      Gretl
+      ? print s3
+      Gretl
+    </code>
+    <para>
+      In certi casi, si possono preferire costrutti meno espliciti ma
+      più compatti, che fanno uso degli operatori di indicizzazione e
+      di incremento, come nel caso seguente:
+    </para>
+    <code>
+        string s1 = "Ciao, Gretl!"
+        string s2 = s1[7:11]
+        string s3 = s1 + 6
+        print s2
+        print s3
+    </code>
+    <para>
+    in cui l'output sarebbe
+    </para>
+    <code>
+      ? print s2
+      Gretl
+      ? print s3
+      Gretl!
+    </code>
       </description>
     </function>
 
