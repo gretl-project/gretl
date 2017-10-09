@@ -1146,14 +1146,14 @@ static int *make_op_list (const int *list, DATASET *dset,
     return biglist;
 }
 
-static void list_purge_const (int *list, DATASET *dset)
+static int list_purge_const (int *list, DATASET *dset)
 {
     MODEL tmpmod;
     int depvar = list[1];
-    int i, ok = 0;
+    int i, j, n, ok = 0;
+    int err = 0;
 
-    /* first remove the constant itself, if present */
-
+    /* first remove "const" (var 0) itself, if present */
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    gretl_list_delete_at_pos(list, i);
@@ -1162,15 +1162,21 @@ static void list_purge_const (int *list, DATASET *dset)
     }
 
     /* drop other stuff possibly collinear with the constant 
-       (eg sets of dummies) */
+       (e.g. sets of dummies) */
     
-    list[1] = 0; /* substitute the constant as dependent */
+    list[1] = 0;     /* substitute the constant as dependent */
+    n = list[0] - 1; /* number of RHS terms */
 
-    while (!ok) {
+    for (j=0; j<n && !ok; j++) {
 	tmpmod = lsq(list, dset, OLS, OPT_A);
+	if (tmpmod.errcode) {
+	    err = tmpmod.errcode;
+	    fprintf(stderr, "list_purge_const: tmpmod err = %d\n", err);
+	    break;
+	}
 	ok = (tmpmod.ess > 1.0e-6);
 	if (!ok) {
-	    for (i=tmpmod.ncoeff-1; i>0; i--) {
+	    for (i=tmpmod.ncoeff-1; i>=0; i--) {
 		if (fabs(tmpmod.coeff[i]) > 1.0e-06) {
 		    gretl_list_delete_at_pos(list, i+2);
 		    break;
@@ -1182,6 +1188,8 @@ static void list_purge_const (int *list, DATASET *dset)
 
     /* reinstate the real dependent variable */
     list[1] = depvar;
+
+    return err;
 }
 
 static int ordered_depvar_check (int v, const DATASET *dset)
@@ -1211,27 +1219,29 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     int ndum = 0;
 
     gretl_model_init(&model, dset);
-
     model.errcode = ordered_depvar_check(list[1], dset);
 
     if (!model.errcode) {
 	/* remove the constant from the incoming list, if present */
-	list_purge_const(list, dset);
+	model.errcode = list_purge_const(list, dset);
+    }
 
+    if (!model.errcode) {
 	/* construct augmented regression list, including dummies 
 	   for the level of the dependent variable
 	*/
 	biglist = make_op_list(list, dset, &dumlist, &model.errcode);
     }
 
-    if (model.errcode) {
-	return model;
+    if (!model.errcode) {
+	/* run initial OLS, with dummies added */
+	model = lsq(biglist, dset, OLS, OPT_A);
+	if (model.errcode) {
+	    fprintf(stderr, "ordered_estimate: initial OLS failed\n");
+	}
     }
 
-    /* run initial OLS, with dummies added */
-    model = lsq(biglist, dset, OLS, OPT_A);
     if (model.errcode) {
-	fprintf(stderr, "ordered_estimate: initial OLS failed\n");
 	free(dumlist);
 	free(biglist);
 	return model;

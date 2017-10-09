@@ -329,25 +329,28 @@ MODEL quantreg_driver (const char *param, const int *list,
 MODEL logit_probit (int *list, DATASET *dset, int ci, 
 		    gretlopt opt, PRN *prn)
 {
+    MODEL ret;
     int yv = list[1];
 
     if (ci == LOGIT && (opt & OPT_M)) {
-	return multinomial_logit(list, dset, opt, prn);
+	ret = multinomial_logit(list, dset, opt, prn);
     } else if (ci == PROBIT && (opt & OPT_E)) {
-	return reprobit_model(list, dset, opt, prn);
+	ret = reprobit_model(list, dset, opt, prn);
     } else if (gretl_isdummy(dset->t1, dset->t2, dset->Z[yv])) {
 	if (ci == LOGIT) {
-	    return binary_logit(list, dset, opt, prn);
+	    ret = binary_logit(list, dset, opt, prn);
 	} else {
-	    return binary_probit(list, dset, opt, prn);
+	    ret = binary_probit(list, dset, opt, prn);
 	}
     } else {
 	if (ci == LOGIT) {
-	    return ordered_logit(list, dset, opt, prn);
+	    ret = ordered_logit(list, dset, opt, prn);
 	} else {
-	    return ordered_probit(list, dset, opt, prn);
+	    ret = ordered_probit(list, dset, opt, prn);
 	}
-    } 
+    }
+
+    return ret;
 }
 
 /* parse out optional "ymax=..." parameter before calling the real
