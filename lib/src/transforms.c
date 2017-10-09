@@ -842,6 +842,9 @@ int laggenr (int v, int lag, DATASET *dset)
     if (lag > dset->n || -lag > dset->n) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), lag);
 	lno = -1;
+    } else if (v == 0) {
+	gretl_errmsg_set(_("The constant cannot be lagged"));
+	lno = -1;
     } else if (lag == 0) {
 	lno = v;
     } else {
@@ -1159,6 +1162,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 	    }
 	} else if (f == LAGS) {
 	    if (v == 0) {
+		gretl_errmsg_set(_("The constant cannot be lagged"));
 		ok = 0;
 	    }
 	} else if (f == DUMMIFY) {

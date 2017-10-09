@@ -7386,6 +7386,11 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
     int k = -(node_get_int(r, p));
     int t1, t2;
 
+    if (!p->err && l->vnum == 0) {
+	gretl_errmsg_set(_("The constant cannot be lagged"));
+	p->err = E_TYPES;
+    }
+
     if (!p->err) {
 	ret = aux_series_node(p);
     }
