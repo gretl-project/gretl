@@ -877,8 +877,8 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
     err = midas_forecast_setup(pmod, dset, fc->method, &mdsfunc);
 
 #if MIDAS_DEBUG
-    fprintf(stderr, "mdas_fcast: method %d\n", fc->method);
-#endif    
+    fprintf(stderr, "midas_fcast: method %d, err = %d\n", fc->method, err);
+#endif
 
     if (!err && fc->method == FC_AUTO) {
 	y = copyvec(dset->Z[yno], dset->n);
@@ -901,8 +901,8 @@ static int midas_fcast (Forecast *fc, const MODEL *pmod,
 	    err = generate(formula, dset, GRETL_TYPE_SERIES,
 			   OPT_P, NULL);
 #if MIDAS_DEBUG
-	    fprintf(stderr, " static range %d to %d, fcv=%d\n",
-		    dset->t1, dset->t2, fcv);
+	    fprintf(stderr, " static range %d to %d, fcv=%d, err=%d\n",
+		    dset->t1, dset->t2, fcv, err);
 #endif
 	    if (!err) {
 		for (t=dset->t1; t<=dset->t2; t++) {
@@ -2602,6 +2602,11 @@ static int parse_forecast_string (const char *s,
 	nf = 0;
     } else {
 	nf = sscanf(s, "%31s %31s %31s %31s", f[0], f[1], f[2], f[3]);
+    }
+
+    if (nf > nmax) {
+	/* try for parenthesized t1, t2 terms? */
+	nf = sscanf(s, "(%31[^)]) (%31[^)]) %31s %31s", f[0], f[1], f[2], f[3]);
     }
 
     if (nf < nmin || nf > nmax) {

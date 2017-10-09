@@ -29,7 +29,8 @@ typedef enum {
     UV_PRIVATE = 1 << 0,
     UV_SHELL   = 1 << 1,
     UV_MAIN    = 1 << 2,
-    UV_NODECL  = 1 << 3
+    UV_NODECL  = 1 << 3,
+    UV_NOREPL  = 1 << 4
 } UVFlags;
 
 typedef int (*USER_VAR_FUNC) (const char *, GretlType, int);
@@ -89,6 +90,8 @@ int user_var_get_level (user_var *uvar);
 int user_var_get_flags (user_var *uvar);
 
 int user_var_set_flag (user_var *uvar, UVFlags flag);
+
+int user_var_unset_flag (user_var *uvar, UVFlags flag);
 
 void user_var_privatize_by_name (const char *name);
 

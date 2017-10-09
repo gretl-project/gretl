@@ -86,7 +86,7 @@ struct midas_info_ {
     int hfslopes;         /* # of high-frequency slope coeffs */
     int nalmonp;          /* number of straight Almon poly terms */
     int method;           /* estimation method */
-    int ldepvar;          /* lagged dependent variable? (1/0) */
+    int ldepvar;          /* position of lagged dependent variable? */
     int nobs;             /* number of observations used */
     size_t colsize;       /* matrix column size in bytes */
     DATASET *dset;        /* dataset */
@@ -583,7 +583,7 @@ static int parse_midas_term (const char *s,
     char p1str[VNAMELEN];
     char p2str[VNAMELEN];
     char typestr[10];
-    char fmt[48];
+    char fmt[64];
     int ns, p1 = 0, p2 = 0;
     int type, umidas = 0;
     int err = 0;
@@ -848,7 +848,8 @@ static int make_midas_xlist (midas_info *mi)
 		xi = mi->list[i+1];
 		mi->xlist[i] = xi;
 		if (standard_lag_of(xi, mi->yno, mi->dset) > 0) {
-		    mi->ldepvar = 1;
+		    mi->ldepvar = i+1;
+		    break;
 		}
 	    }
 	}
@@ -939,11 +940,13 @@ static int make_midas_laglists (midas_info *mi,
 	mt = &mi->mterms[i];
 	mlist = make_midas_laglist(mt, dset, &err);
 	if (!err) {
-	    if (!prelag(mt) && mi->method != MDS_BFGS) {
-		/* In the "prelag" case the laglist is already
-		   in userspace, and if method is BFGS the list
-		   doesn't need to be pushed into userspace.
-		*/
+	    /* In the "prelag" case the laglist is already
+	       in userspace. If method is BFGS the list
+	       doesn't have to be pushed into userspace,
+	       but we'll record it nonetheless for model
+	       printout purposes.
+	    */
+	    if (!prelag(mt)) {
 		sprintf(mt->lname, "ML___%d", i+1);
 		/* note: remember_list copies its first arg */
 		err = remember_list(mlist, mt->lname, NULL);
@@ -1066,46 +1069,19 @@ static int umidas_ols (MODEL *pmod,
    lag terms.
 */
 
-static int push_midas_coeff_array (const MODEL *pmod,
-				   const int *xlist,
-				   midas_term *mterms,
-				   int nmidas)
+static int push_midas_coeff_array (const MODEL *pmod)
 {
-    gretl_matrix *hfb;
-    int i, err;
+    gretl_matrix *mhfb, *hfb;
+    int err = 0;
 
-    if (gretl_model_get_int(pmod, "umidas")) {
-	/* original estimation was U-MIDAS OLS */
-	int nx = xlist == NULL? 0 : xlist[0];
-	int nt = pmod->ncoeff - nx;
-
-	hfb = gretl_column_vector_alloc(nt);
-	if (hfb == NULL) {
-	    return E_ALLOC;
-	}
-	for (i=0; i<nt; i++) {
-	    hfb->val[i] = pmod->coeff[nx + i];
-	}
+    mhfb = gretl_model_get_data(pmod, "hfb");
+    if (mhfb == NULL) {
+	fprintf(stderr, "Couldn't retrieve gross midas coeffs\n");
+	err = E_DATA;
     } else {
-	gretl_matrix *mc =
-	    gretl_model_get_data(pmod, "midas_coeffs");
-	int j, k, nt = 0;
-
-	if (mc == NULL) {
-	    return E_DATA;
-	}
-	for (i=0; i<nmidas; i++) {
-	    nt += mterms[i].nlags;
-	}
-	hfb = gretl_column_vector_alloc(nt);
+	hfb = gretl_matrix_copy(mhfb);
 	if (hfb == NULL) {
-	    return E_ALLOC;
-	}
-	k = 0;
-	for (i=0; i<nmidas; i++) {
-	    for (j=0; j<mterms[i].nlags; j++) {
-		hfb->val[k++] = gretl_matrix_get(mc, j, i);
-	    }
+	    err = E_ALLOC;
 	}
     }
 
@@ -1113,7 +1089,9 @@ static int push_midas_coeff_array (const MODEL *pmod,
     gretl_matrix_print(hfb, "hfb in fcast");
 #endif
 
-    err = private_matrix_add(hfb, "hfb___");
+    if (!err) {
+	err = private_matrix_add(hfb, "hfb___");
+    }
 
     return err;
 }
@@ -1165,6 +1143,13 @@ int midas_forecast_setup (const MODEL *pmod,
 	    err = E_ALLOC;
 	} else {
 	    /* note: remember_list() copies its argument */
+#if FC_DEBUG
+	    int j;
+	    printlist(hflist, "hflist");
+	    for (j=1; j<=hflist[0]; j++) {
+		fprintf(stderr, "%d %s\n", hflist[j], dset->varname[hflist[j]]);
+	    }
+#endif
 	    err = remember_list(hflist, "HFL___", NULL);
 	    user_var_privatize_by_name("HFL___");
 	    free(hflist);
@@ -1172,9 +1157,8 @@ int midas_forecast_setup (const MODEL *pmod,
     }
 
     if (!err) {
-	/* build and push vector of all MIDAS coeffs */
-	err = push_midas_coeff_array(pmod, xlist,
-				     mterms, nmidas);
+	/* retrieve and push vector of all MIDAS coeffs */
+	err = push_midas_coeff_array(pmod);
     }
 
     if (!err) {
@@ -1938,62 +1922,108 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
     return err;
 }
 
-static int add_midas_plot_matrix (MODEL *pmod,
-				  midas_term *mt,
-				  const double *b)
+/* Below: we add a column vector containing the "gross"
+   MIDAS coefficients (i.e. high-frequency slope, where
+   applicable, times the weights implied by the hyper-
+   parameter values). This is required for forecasting.
+   In addition, if there's just a single MIDAS term, we
+   add to the model a two-column matrix holding the
+   gross coefficients and the associated lags -- this is
+   to support a plot of the coefficients in the GUI.
+*/
+
+static int add_gross_midas_coeffs (MODEL *pmod,
+				   midas_info *mi)
 {
-    gretl_matrix *C = NULL;
-    gretl_matrix *theta = NULL;
-    gretl_matrix *w = NULL;
+    const double *b = pmod->coeff + mi->nx;
+    gretl_matrix *hfb, *C = NULL;
+    int j, k = 0, nt = 0;
+    int row = 0;
     int err = 0;
 
-    C = gretl_matrix_alloc(mt->nlags, 2);
-    err = (C == NULL);
-
-    if (!err && mt->type != MIDAS_U) {
-	theta = gretl_matrix_alloc(mt->nparm, 1);
-	err = (theta == NULL);
+    for (j=0; j<mi->nmidas; j++) {
+	nt += mi->mterms[j].nlags;
     }
 
-    if (!err) {
-	double ci, hfb = 0;
-	int p = mt->minlag;
-	int i, k = 0;
+    /* vector to hold all gross midas coeffs */
+    hfb = gretl_column_vector_alloc(nt);
+    if (hfb == NULL) {
+	err = E_ALLOC;
+    }
 
-	if (mt->type == MIDAS_U) {
-	    for (i=0; i<mt->nparm; i++) {
-		gretl_matrix_set(C, i, 0, b[k++]);
-		gretl_matrix_set(C, i, 1, p++);
+    if (!err && mi->nmidas == 1) {
+	/* matrix for plotting purposes */
+	C = gretl_matrix_alloc(mi->mterms[0].nlags, 2);
+    }
+
+    for (j=0; j<mi->nmidas && !err; j++) {
+	midas_term *mt = &mi->mterms[j];
+	gretl_matrix *theta = NULL;
+
+	if (mt->type != MIDAS_U) {
+	    theta = gretl_matrix_alloc(mt->nparm, 1);
+	    if (theta == NULL) {
+		err = E_ALLOC;
 	    }
-	} else {
-	    hfb = takes_coeff(mt->type) ? b[k++] : 1.0;
-	    for (i=0; i<mt->nparm; i++) {
-		theta->val[i] = b[k++];
-	    }
-	    w = midas_weights(mt->nlags, theta, mt->type, &err);
-	    if (!err) {
-		for (i=0; i<mt->nlags; i++) {
-		    ci = hfb * w->val[i];
-		    gretl_matrix_set(C, i, 0, ci);
-		    gretl_matrix_set(C, i, 1, p++);
+	}
+
+	if (!err) {
+	    gretl_matrix *w = NULL;
+	    double ci, hfslope = 0;
+	    int p = mt->minlag;
+	    int i;
+
+	    if (mt->type == MIDAS_U) {
+		for (i=0; i<mt->nparm; i++) {
+		    gretl_vector_set(hfb, row++, b[k]);
+		    if (C != NULL) {
+			gretl_matrix_set(C, i, 0, b[k]);
+			gretl_matrix_set(C, i, 1, p++);
+		    }
+		    k++;
 		}
+	    } else {
+		/* compute slope times weights */
+		hfslope = takes_coeff(mt->type) ? b[k++] : 1.0;
+		for (i=0; i<mt->nparm; i++) {
+		    theta->val[i] = b[k++];
+		}
+		w = midas_weights(mt->nlags, theta, mt->type, &err);
+		if (!err) {
+		    for (i=0; i<mt->nlags; i++) {
+			ci = hfslope * w->val[i];
+			gretl_vector_set(hfb, row++, ci);
+			if (C != NULL) {
+			    gretl_matrix_set(C, i, 0, ci);
+			    gretl_matrix_set(C, i, 1, p++);
+			}
+		    }
+		}
+		gretl_matrix_free(w);
 	    }
-	    gretl_matrix_free(w);
+	}
+
+	if (theta != NULL) {
+	    gretl_matrix_free(theta);
+	    theta = NULL;
+	}
+
+	if (!err && C != NULL) {
+	    /* finalize plotting matrix and attach to model */
+	    char *cnames[2] = {"coeff", "lag"};
+	    char **S = strings_array_dup(cnames, 2);
+
+	    if (S != NULL) {
+		gretl_matrix_set_colnames(C, S);
+	    }
+	    gretl_model_set_matrix_as_data(pmod, "midas_coeffs", C);
+	} else {
+	    gretl_matrix_free(C);
 	}
     }
 
-    gretl_matrix_free(theta);
-
     if (!err) {
-	char *cnames[2] = {"coeff", "lag"};
-	char **S = strings_array_dup(cnames, 2);
-
-	if (S != NULL) {
-	    gretl_matrix_set_colnames(C, S);
-	}
-	err = gretl_model_set_matrix_as_data(pmod, "midas_coeffs", C);
-    } else {
-	gretl_matrix_free(C);
+	gretl_model_set_matrix_as_data(pmod, "hfb", hfb);
     }
 
     return err;
@@ -2024,13 +2054,16 @@ static int model_add_mterms_array (MODEL *pmod,
 		err = E_ALLOC;
 	    } else {
 		mt = &mterms[i];
-		gretl_bundle_set_string(b, "lname",  mt->lnam0);
-		gretl_bundle_set_int(b, "prelag", prelag(mt) ? 1 : 0);
-		gretl_bundle_set_int(b, "minlag", mt->minlag);
-		gretl_bundle_set_int(b, "maxlag", mt->maxlag);
-		gretl_bundle_set_int(b, "type",  mt->type);
-		gretl_bundle_set_int(b, "nparm", mt->nparm);
-		err = gretl_array_set_bundle(A, i, b, 0);
+		err += gretl_bundle_set_string(b, "lname",  mt->lnam0);
+		err += gretl_bundle_set_int(b, "prelag", prelag(mt) ? 1 : 0);
+		err += gretl_bundle_set_int(b, "minlag", mt->minlag);
+		err += gretl_bundle_set_int(b, "maxlag", mt->maxlag);
+		err += gretl_bundle_set_int(b, "type",  mt->type);
+		err += gretl_bundle_set_int(b, "nparm", mt->nparm);
+		err += gretl_array_set_bundle(A, i, b, 0);
+		if (err) {
+		    err = E_DATA;
+		}
 	    }
 	}
 
@@ -2204,7 +2237,7 @@ static int finalize_midas_model (MODEL *pmod,
     }
 
     if (mi->ldepvar) {
-	gretl_model_set_int(pmod, "ldepvar", 1);
+	gretl_model_set_int(pmod, "ldepvar", mi->ldepvar);
 	gretl_model_set_int(pmod, "dynamic", 1);
     }
 
@@ -2222,16 +2255,12 @@ static int finalize_midas_model (MODEL *pmod,
 	gretl_model_set_int(pmod, "midas_type", type0);
     }
 
-    if (mi->nmidas == 1) {
-	/* Record the "gross" MIDAS coefficients, to enable
-	   drawing of a plot? We'll do this only if we have
-	   a single MIDAS term, which is probably the most
-	   most common case. Otherwise it becomes too hard
-	   to get the plot right.
+    if (!err) {
+	/* Compute and record the "gross" MIDAS coefficients:
+	   we may need these for forecasting, and possibly to
+	   enable a plot in the GUI.
 	*/
-	const double *b = pmod->coeff + mi->nx;
-
-	add_midas_plot_matrix(pmod, &mi->mterms[0], b);
+	err = add_gross_midas_coeffs(pmod, mi);
     }
 
     if (!err) {

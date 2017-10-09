@@ -315,25 +315,34 @@
 
       <para context="cli">
 	In primo luogo, mentre nel caso di serie storiche regolari è
-	possibile indicare un elenco di variabili da testare, con dati panel
-	ciascun comando può esaminare una sola variabile alla volta.
-	Secondo, le opzioni che governano l'inclusione di trend
-	deterministici diventano mutualmente esclusive: è necessario
-	scegliere fra il caso senza costante, quello con solo la costante,
-	e quello che la costante e il trend; il default è il secondo.
-	L'opzione <opt>seasonals</opt>, inoltre, non è disponibile.
-	Terzo, l'opzione  <opt>verbose</opt> ha un significato diverso:
-	produce un breve resoconto del test per ciascuna singola
-	serie storica (il default prevede di mostrare solo il risultato complessivo).
+	possibile indicare un elenco di variabili da testare, con dati
+	panel ciascun comando può esaminare una sola variabile alla
+	volta.  Secondo, le opzioni che governano l'inclusione di
+	trend deterministici diventano mutualmente esclusive: è
+	necessario scegliere fra il caso senza costante, quello con
+	solo la costante, e quello che la costante e il trend; il
+	default è il secondo.  L'opzione <opt>seasonals</opt>,
+	inoltre, non è disponibile.  Terzo, l'opzione
+	<opt>verbose</opt> ha un significato diverso: produce un breve
+	resoconto del test per ciascuna singola serie storica (il
+	default prevede di mostrare solo il risultato complessivo).
       </para>
       <para context="cli">
 	Il test complessivo (ipotesi nulla: la variabile in questione
 	ha una radice unitaria per tutte le unità panel) viene
 	calcolata in uno o in entrambi i modi disponibili: usando il
-	metodo di <cite key="IPS03">Im, Pesaran and Shin (Journal of
+	metodo di <cite key="IPS03">Im, Pesaran e Shin (Journal of
 	Econometrics, 2003)</cite> oppure quello di <cite
 	key="choi01">Choi (Journal of International Money and Finance,
-	2001)</cite>.
+	2001)</cite>. Il test di Choi richiede che siano disponibili i
+	<emphasis>P</emphasis>-value dei test singoli; se così non
+	fosse, per via delle opzioni selezionate, esso viene
+	omesso. La statistica riportata per il test di Im, Pesaran e
+	Shin varia come segue: se l'ordine di ritardi per il test è
+	positivo, viene riportata la statistica <math>W</math>;
+	altrimenti, viene riportata la statistica <math>Z</math> se la
+	lunghezza delle serie è diversa fra individui, quella
+	<math>t</math> barrato se è uguale per tutte le unità.
       </para>
 
     </description>
