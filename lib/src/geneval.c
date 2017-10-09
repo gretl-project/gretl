@@ -5037,8 +5037,8 @@ static NODE *list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	if (!p->err) {
-	    /* lag order or vector */
-	    if (scalar_node(l)) {
+	    /* scalar lag order or vector */
+	    if (l->t == NUM) {
 		k = node_get_int(l, p);
 	    } else {
 		v = l->v.m;
@@ -5075,8 +5075,8 @@ static NODE *matrix_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	if (!p->err) {
-	    /* max lag order or vector */
-	    if (scalar_node(l)) {
+	    /* scalar max lag order or vector */
+	    if (l->t == NUM) {
 		int i, k = node_get_int(l, p);
 
 		if (!p->err && k <= 0) {

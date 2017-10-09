@@ -2,32 +2,9 @@ topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
 
-HTML_DIR = $(prefix)/share/gtk-doc/html/libgretl
-
-srcdir = .
-LIBTOOL = ../../libtool
-
-# The name of the module.
-DOC_MODULE = gretl
-
-# Uncomment for versioned docs and specify the version of the module, e.g. '2'.
-#DOC_MODULE_VERSION=2
-
-# The top-level SGML file. Change it if you want.
-DOC_MAIN_SGML_FILE = $(DOC_MODULE)-docs.sgml
-
-# The directory containing the above
-DOC_SGML_DIR = $(topsrc)/doc/reference
-
-# Directories containing the source code, relative to $(srcdir).
-# gtk-doc will search all .c and .h files beneath these paths
-# for inline comments documenting functions and macros.
-# e.g. DOC_SOURCE_DIR=../../../gtk ../../../gdk
-DOC_SOURCE_DIR = $(topsrc)/lib/src
-
-# Extra options to supply to gtkdoc-scan.
-# e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED"
-SCAN_OPTIONS =
+DOC_MODULE = libgretl
+SRC_DIR = $(topsrc)/lib/src
+DOC_SRC_DIR = $(topsrc)/doc/reference
 
 # Header files to ignore when scanning.
 IGNORE_SRCS = \
@@ -70,123 +47,30 @@ IGNORE_SRCS = \
 	usermat.h \
 	version.h
 
-# Extra options to supply to gtkdoc-mkdb.
-MKDB_OPTIONS = --output-format=xml --ignore-files="$(IGNORE_SRCS)" \
-               --sgml-mode --expand-content-files=""
+# extra options to supply to gtkdoc-scan
+SCAN_OPTIONS = --ignore-headers="$(IGNORE_SRCS)"
 
-# Extra options to supply to gtkdoc-fixref.
-FIXXREF_OPTIONS =
+# extra options to supply to gtkdoc-mkdb
+MKDB_OPTIONS = --output-format xml --xml-mode --ignore-files="$(IGNORE_SRCS)"
 
 # Used for dependencies. The docs will be rebuilt if any of these change.
 HFILE_GLOB=$(DOC_SOURCE_DIR)/*.h
 CFILE_GLOB=$(DOC_SOURCE_DIR)/*.c
 
-# Extra header to include when scanning, which are not under DOC_SOURCE_DIR
-# e.g. EXTRA_HFILES=$(top_srcdir}/contrib/extra.h
-EXTRA_HFILES=
-
-# Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
-content_files =
-
-# Other files to distribute.
-extra_files =
-
-# CFLAGS and LDFLAGS for compiling scan program. Only needed if your app/lib
-# contains GtkObjects/GObjects and you want to document signals and properties.
-GTKDOC_CFLAGS =
-GTKDOC_LIBS =
-
 GTKDOC_CC = $(LIBTOOL) --mode=compile $(CC)
 GTKDOC_LD = $(LIBTOOL) --mode=link $(CC)
 
-# If you need to override some of the declarations, place them in this file
-# and uncomment this line.
-#DOC_OVERRIDES = $(DOC_MODULE)-overrides.txt
-
-###########################################################################
-# Everything below here is generic
-###########################################################################
-
-DOC_STAMPS=scan-build.stamp tmpl-build.stamp sgml-build.stamp html-build.stamp \
-	pdf-build.stamp \
-	$(srcdir)/tmpl.stamp $(srcdir)/sgml.stamp $(srcdir)/html.stamp \
-	$(srcdir)/pdf.stamp
-
-all-local: html-build.stamp
-
-#### scan ####
-
-scan-build.stamp: $(HFILE_GLOB) links.stamp
-	@echo '*** Scanning header files ***'
-	cd $(srcdir) && \
-	  gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) \
-	--ignore-headers="$(IGNORE_SRCS)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
-	touch scan-build.stamp
-
-$(DOC_MODULE)-decl.txt: scan-build.stamp
-	@true
-
-#### templates ####
-
-tmpl-build.stamp: $(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(DOC_MODULE)-sections.txt $(DOC_OVERRIDES)
-	@echo '*** Rebuilding template files ***'
-	cd $(srcdir) && gtkdoc-mktmpl --module=$(DOC_MODULE)
-	touch tmpl-build.stamp
-
-tmpl.stamp: tmpl-build.stamp
-	@true
-
-#### sgml ####
-
-sgml-build.stamp: tmpl.stamp $(CFILE_GLOB) # $(srcdir)/tmpl/*.sgml
-	@echo '*** Building SGML ***'
-	cd $(srcdir) && \
-	gtkdoc-mkdb --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) \
-	--main-sgml-file=$(DOC_MAIN_SGML_FILE) $(MKDB_OPTIONS)
-	touch sgml-build.stamp
-
-sgml.stamp: sgml-build.stamp
-	@true
-
-#### html ####
-
-html-build.stamp: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
-	@echo '*** Building HTML ***'
-	test -d $(srcdir)/html || mkdir $(srcdir)/html
-	cd $(srcdir)/html && gtkdoc-mkhtml $(DOC_MODULE) ../$(DOC_MAIN_SGML_FILE)
-	@echo '-- Fixing Crossreferences' 
-	cd $(srcdir) && gtkdoc-fixxref --module-dir=html $(FIXXREF_OPTIONS)
-	touch html-build.stamp
-
-##############
+all: links.stamp
+	gtkdoc-scan --module $(DOC_MODULE) $(SCAN_OPTIONS) --source-dir $(SRC_DIR)
+	gtkdoc-mkdb --module $(DOC_MODULE) $(MKDB_OPTIONS) --source-dir $(SRC_DIR)
+	mkdir -p html
+	cd html && gtkdoc-mkhtml $(DOC_MODULE) ../$(DOC_MODULE)-docs.xml
+	gtkdoc-fixxref --module $(DOC_MODULE) --module-dir html
 
 links.stamp: Makefile
-	for f in $(DOC_SGML_DIR)/*.sgml; do \
+	for f in $(DOC_SRC_DIR)/*.xml ; do \
 	if [ ! -f `basename $$f` ] ; then ln -sf $$f . ; fi ; done
 	touch $@
 
-man: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
-	test -d $(srcdir)/man || mkdir $(srcdir)/man
-	gtkdoc-mkman 
-
 clean:
-	rm -f *~ *.bak $(SCANOBJ_FILES) *-unused.txt $(DOC_STAMPS)
-	rm -f $(DOC_MODULE)-sections.txt
-
-distclean: clean
-	cd $(srcdir) && rm -rf sgml html $(DOC_MODULE)-decl-list.txt \
-	$(DOC_MODULE)-decl.txt Makefile
-
-install:
-	mkdir -p $(DESTDIR)$(HTML_DIR)
-	rm -f $(DESTDIR)$(HTML_DIR)/*.html
-	(installfiles=`echo $(srcdir)/html/*.html`; \
-	if test "$$installfiles" = '$(srcdir)/html/*.html'; \
-	then echo '-- Nothing to install' ; \
-	else \
-	  for i in $$installfiles; do \
-	    echo '-- Installing '$$i ; \
-	    install -m 644 $$i $(DESTDIR)$(HTML_DIR); \
-	  done \
-	fi)
-
+	rm -f html/*.html xml/*.xml

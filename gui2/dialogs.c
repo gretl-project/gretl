@@ -3758,7 +3758,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	N_("Compact by summing"),
 	N_("Use end-of-period values"),
 	N_("Use start-of-period values"),
-	N_("Spread to multiple series")
+	N_("Spread to multiple series (MIDAS)")
     };
     int ccodes[] = {
 	COMPACT_AVG,

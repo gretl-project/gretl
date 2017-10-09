@@ -97,6 +97,7 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	    plt->mean = (x[0] + x[1]) / 2.0;
 	    plt->median = plt->lq = plt->uq = NADBL;
 	} else {
+	    /* n = 3 */
 	    plt->wmin = plt->min = x[0];
 	    plt->wmax = plt->max = x[2];
 	    plt->median = x[1];
@@ -110,8 +111,8 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	    for (i=0; i<n; i++) {
 		gretl_vector_set(plt->outliers, i, x[i]);
 	    }
-	}	
-	
+	}
+
 	return;
     }
 
@@ -131,7 +132,7 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	plt->lq = plt->uq = NADBL;
     }
 
-    plt->mean = gretl_mean(0, n - 1, x);
+    plt->mean = gretl_mean(0, n-1, x);
 
     if (limit > 0) {
 	double d = limit * (plt->uq - plt->lq);
@@ -139,18 +140,22 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	double xhi = plt->uq + d;
 	int i, j, nout = 0;
 
+	plt->wmin = xlo;
+	plt->wmax = xhi;
+
 	for (i=0; i<n; i++) {
 	    if (x[i] < xlo) {
 		nout++;
+		/* adjust the bottom of the lower whisker? */
+		if (i < n-1 && x[i+1] > plt->wmin) {
+		    plt->wmin = x[i+1];
+		}
 	    } else if (x[i] > xhi) {
 		nout++;
-		if (i > 0 && x[i-1] <= xhi) {
-		    /* the top of the upper whisker */
+		/* adjust the top of the upper whisker? */
+		if (i > 0 && x[i-1] < plt->wmax) {
 		    plt->wmax = x[i-1];
 		}
-	    } else if (i > 0 && x[i-1] < xlo) {
-		/* the bottom of the lower whisker */
-		plt->wmin = x[i-1];
 	    }
 	}
 

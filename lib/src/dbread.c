@@ -3431,6 +3431,8 @@ static void fill_cset_t (const DATASET *dset,
     *startday += ndays;
 }
 
+#define SPREAD_DEBUG 0
+
 /* compact daily data to monthly or quarterly using the
    "spread" method */
 
@@ -3477,7 +3479,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     /* the number of series, after compaction */
     v = 1 + (dset->v - 1) * compfac;
 
-#if 1
+#if SPREAD_DEBUG
     fprintf(stderr, "oldpd %d, newpd %d, nvars=%d, T=%d, start=%d:%d, end=%d:%d\n",
 	    dset->pd, newpd, v, T, startyr, startper, endyr, endper);
 #endif
@@ -3550,7 +3552,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 	k += compfac;
     }
 
-#if 0
+#if SPREAD_DEBUG > 1
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     printdata(NULL, NULL, cset, OPT_O, prn);
     gretl_print_destroy(prn);
@@ -3586,6 +3588,9 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     int v, i, j, k, t, T;
     int q0 = 0, qT = 0;
 
+    /* calculate @T, the number of observations that the compacted
+       dataset should comprise
+    */
     if (newpd == 1) {
 	T = endmaj - startmaj + 1;
     } else if (newpd == 4) {
@@ -3603,10 +3608,10 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 	return NULL;
     }
 
-    /* the number of series, after compaction */
+    /* calculate @v, the number of series after compaction */
     v = 1 + (dset->v - 1) * compfac;
 
-#if 0
+#if SPREAD_DEBUG
     fprintf(stderr, "oldpd %d, newpd %d, v=%d, T=%d, start=%d:%d, end=%d:%d\n",
 	    oldpd, newpd, v, T, startmaj, startmin, endmaj, endmin);
 #endif
@@ -3634,9 +3639,9 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     cset->structure = TIME_SERIES;
     cset->sd0 = get_date_x(cset->pd, cset->stobs);
 
-#if 0 
-    fprintf(stderr, "stobs '%s', endobs '%s', sd0 %g\n",
-	    cset->stobs, cset->endobs, cset->sd0);
+#if SPREAD_DEBUG
+    fprintf(stderr, "stobs '%s', endobs '%s', sd0=%g, q0=%d\n",
+	    cset->stobs, cset->endobs, cset->sd0, q0);
 #endif
 
     k = 1; /* the first new series */
@@ -3644,9 +3649,16 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     for (i=1; i<dset->v; i++) {
 	/* loop across original data series */
 	double *xtmp;
-	int offset = startmin - 1;
+	int offset;
 	int p, s = 0;
-	
+
+	/* how many initial observations should be set to NA? */
+	if (newpd == 1) {
+	    offset = startmin - 1;
+	} else {
+	    offset = startmin - (1 + (q0 - 1) * compfac);
+	}
+
 	for (t=0; t<T; t++) {
 	    /* loop across new time periods */
 	    for (j=0; j<compfac; j++) {
@@ -3702,7 +3714,7 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
 	k += compfac;
     }
 
-#if 0
+#if SPREAD_DEBUG > 1
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     printdata(NULL, NULL, cset, OPT_O, prn);
     gretl_print_destroy(prn);

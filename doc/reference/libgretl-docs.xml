@@ -1,14 +1,19 @@
 <?xml version="1.0"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" 
-               "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
-<!ENTITY % local.common.attrib "xmlns:xi CDATA #FIXED 'http://www.w3.org/2003/XInclude'">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+
+[
+  <!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+  <!--<!ENTITY % gtkdocentities SYSTEM "xml/gtkdocentities.ent"> -->
+  %gtkdocentities;
 ]>
 
-<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
-
+<book id="index">
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for libgretl-1.0 version 19.0.0 (gretl 2016d)</releaseinfo>
+    <releaseinfo>
+      API reference for libgretl-1.0 version 21.0.0 (gretl 2017c)
+    </releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">
@@ -46,10 +51,10 @@
       library. See <link linkend="gretl-gretl-utils">Utilities</link>.
     </para>
     
-    <xi:include href="building.sgml" />
-    <xi:include href="resources.sgml" />   
+    <xi:include href="building.xml" />
+    <xi:include href="resources.xml" />   
 
-  </chapter>
+  </chapter>  
 
   <chapter id="ch-common">
     <title>Core structures and error-handling</title>
@@ -144,4 +149,8 @@
     <xi:include href="xml/gretl_paths.xml" />        
   </chapter>
 
+  <index id="api-index-full">
+    <title>API Index</title>
+    <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
+  </index>
 </book>
