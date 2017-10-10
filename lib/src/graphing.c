@@ -6240,8 +6240,7 @@ int rmplot (const int *list, DATASET *dset,
     return range_mean_graph(list[1], dset, opt, prn);
 }
 
-int 
-hurstplot (const int *list, DATASET *dset, gretlopt opt, PRN *prn)
+int hurstplot (const int *list, DATASET *dset, gretlopt opt, PRN *prn)
 {
     int (*hurst_exponent) (int, const DATASET *, gretlopt, PRN *);
 

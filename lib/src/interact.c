@@ -2760,12 +2760,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case RMPLOT:
+	err = rmplot(cmd->list, dset, cmd->opt, prn);
+	break;
+	
     case HURST:
-	if (cmd->ci == RMPLOT) {
-	    err = rmplot(cmd->list, dset, cmd->opt, prn);
-	} else {
-	    err = hurstplot(cmd->list, dset, cmd->opt, prn);
-	}
+	err = hurstplot(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case QQPLOT:
