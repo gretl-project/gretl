@@ -97,6 +97,8 @@ double win32_stopwatch (void);
 
 int cli_set_win32_charset (const char *package);
 
+int windows_is_xp (void);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

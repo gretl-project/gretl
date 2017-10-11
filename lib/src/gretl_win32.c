@@ -1578,3 +1578,19 @@ int cli_set_win32_charset (const char *package)
 
     return 0;
 }
+
+int windows_is_xp (void)
+{
+    OSVERSIONINFO osv = {0};
+    int ret = 0;
+
+    osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+    if (GetVersionEx(&osv)) {
+	if (dwMajorVersion == 5 && dwMinorVersion == 1) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
