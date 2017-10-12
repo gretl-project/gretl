@@ -1675,8 +1675,9 @@ static int cond_ols_GNR (MODEL *pmod,
     int *glist = NULL;
     gretl_matrix *w, *G;
     int nc, zcol, vi;
-    int i, j, k, t, s, v;
-    int cpos = 0;
+    int i, j, k, kk, t, s, v;
+    int clamp = (opt & OPT_C);
+    int cpi, *cpos = NULL;
     int err = 0;
 
 #if MIDAS_DEBUG
@@ -1731,8 +1732,29 @@ static int cond_ols_GNR (MODEL *pmod,
 	glist[0] += 1;
     }
 
+    if (clamp) {
+	/* number of clamped beta0 terms? */
+	int nb0 = 0;
+
+	for (i=0; i<mi->nmidas; i++) {
+	    if (mi->mterms[i].type == MIDAS_BETA0) {
+		nb0++;
+	    }
+	}
+	if (nb0 > 0) {
+	    cpos = gretl_list_new(nb0);
+	    if (cpos == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
     /* the read position for OLS coefficients */
     k = mi->nx;
+
+    /* the write position and coeff position for clamped beta0 terms */
+    cpi = 1;
+    kk = mi->nx;
 
     /* MIDAS terms */
     for (i=0; i<mi->nmidas && !err; i++) {
@@ -1752,6 +1774,7 @@ static int cond_ols_GNR (MODEL *pmod,
 		zcol++;
 	    }
 	    k += mt->nlags;
+	    kk += mt->nlags;
 	    continue;
 	}
 
@@ -1774,6 +1797,7 @@ static int cond_ols_GNR (MODEL *pmod,
 	glist[glist[0]] = zcol;
 	sprintf(gdset->varname[zcol], "mdx%d", i+1);
 	zcol++;
+	kk++;
 
 	/* gradient wrt hyper-parameters */
 	pos = zcol;
@@ -1802,26 +1826,29 @@ static int cond_ols_GNR (MODEL *pmod,
 	    for (ii=0; ii<mt->nparm; ii++) {
 		glist[0] += 1;
 		glist[glist[0]] = pos + ii;
-		if (ii == 0 && (opt & OPT_C)) {
-		    cpos = glist[0];
+		if (ii == 0 && mt->type == MIDAS_BETA0 && clamp) {
+		    cpos[cpi++] = kk;
 		    sprintf(gdset->varname[pos+ii], "grad%dc", ii+1);
 		} else {
 		    sprintf(gdset->varname[pos+ii], "grad%d", ii+1);
 		}
 	    }
 	    zcol += mt->nparm;
+	    kk += mt->nparm;
 	}
     }
 
-#if 0
+#if MIDAS_DEBUG
     printlist(glist, "glist, mi");
+    printlist(cpos, "cpos");
+# if MIDAS_DEBUG > 1
     printdata(glist, NULL, gdset, OPT_O, prn);
+# endif
 #endif
 
     *pmod = GNR(glist, gdset, opt, prn);
 
 #if MIDAS_DEBUG
-    pprintf(prn, "MIDAS GNR, cpos = %d\n", cpos);
     printmodel(pmod, gdset, opt, prn);
 #endif
 
@@ -1835,12 +1862,17 @@ static int cond_ols_GNR (MODEL *pmod,
 	err = transcribe_to_nlspec(&spec, mi, opt);
 	if (!err) {
 	    err = finalize_nls_model(pmod, &spec, 0, glist);
-	    if (!err && cpos > 0) {
-		/* invalidate std error of clamped coeff */
-		pmod->sderr[cpos-2] = NADBL;
+	    if (!err && cpos != NULL) {
+		/* invalidate std errors of clamped coeffs */
+		for (cpi=1; cpi<=cpos[0]; cpi++) {
+		    i = cpos[cpi];
+		    if (i < pmod->ncoeff) {
+			/* this conditionality should NOT be needed! */
+			pmod->sderr[i] = NADBL;
+		    }
+		}
 	    }
 	}
-
 	if (err && !pmod->errcode) {
 	    pmod->errcode = err;
 	}
@@ -1851,6 +1883,7 @@ static int cond_ols_GNR (MODEL *pmod,
 
     destroy_dataset(gdset);
     free(glist);
+    free(cpos);
 
     return err;
 }
