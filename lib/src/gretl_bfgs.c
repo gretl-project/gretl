@@ -353,6 +353,8 @@ int numerical_hessian (double *b, gretl_matrix *H,
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
 
+ try_again:
+
     /* note: numDeriv has
 
        h0 <- abs(d*x) + args$eps * (abs(x) < args$zero.tol)
@@ -380,19 +382,19 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	    f1 = func(b, data);
 	    if (na(f1)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
-			"criterion = NA for theta[%d] = %g\n", i, b[i]);
+			"criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
 		b[i] = bi0;
 		err = E_NAN;
-		goto bailout;
+		goto end_first;
 	    }
 	    b[i] = bi0 - h[i];
 	    f2 = func(b, data);
 	    if (na(f2)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
-			"criterion = NA for theta[%d] = %g\n", i, b[i]);
+			"criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
 		b[i] = bi0;
 		err = E_NAN;
-		goto bailout;
+		goto end_first;
 	    }
 	    /* F'(i) */
 	    Dx[k] = (f1 - f2) / (2 * h[i]);
@@ -411,6 +413,16 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	}
 	D[i] = Dx[0];
 	Hd[i] = Hx[0];
+    }
+
+ end_first:
+    if (err == E_NAN && d > 0.0001) {
+	err = 0;
+	gretl_error_clear();
+	d /= 10;
+	goto try_again;
+    } else if (err) {
+	goto bailout;
     }
 
     /* second derivatives: lower half of Hessian only */
