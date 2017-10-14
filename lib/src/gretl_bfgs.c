@@ -307,15 +307,8 @@ static void hess_h_reduce (double *h, double v, int n)
 /* number of Richardson steps */
 #define RSTEPS 4
 
-/* default @d for numerical_hessian.  
-
-   This was 0.0001 originally; on 2017-10-03 it was changed to 0.01 to
-   improve precision; then, it was found to cause problems with arma
-   models, so it was set to a smaller value again, just to be on the
-   safe side. Note that, however, ARMA estimation uses a (smaller)
-   custom value anyway.
- */
-#define numhess_d 0.001
+/* default @d for numerical_hessian (2017-10-03: was 0.0001) */
+#define numhess_d 0.01
 
 /* The algorithm below implements the method of Richardson
    Extrapolation.  It is derived from code in the gnu R package
@@ -385,10 +378,6 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	bi0 = b[i];
 	hess_h_init(h, h0, n);
 	for (k=0; k<r; k++) {
-#if 0
-	    fprintf(stderr, "b[%d] = %g, h[%d] = %g\n", i, b[i], i, h[i]);
-#endif
-	    
 	    b[i] = bi0 + h[i];
 	    f1 = func(b, data);
 	    if (na(f1)) {
@@ -537,15 +526,14 @@ int numerical_hessian (double *b, gretl_matrix *H,
 
 gretl_matrix *numerical_hessian_inverse (const double *b, int n,
 					 BFGS_CRIT_FUNC func,
-					 void *data, double d,
-					 int *err)
+					 void *data, int *err)
 {
     gretl_matrix *H = gretl_zero_matrix_new(n, n);
 
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = numerical_hessian((double *) b, H, func, data, 1, d);
+	*err = numerical_hessian((double *) b, H, func, data, 1, 0.0);
     }
 
     if (!*err) {
