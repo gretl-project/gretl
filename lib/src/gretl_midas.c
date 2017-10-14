@@ -2264,7 +2264,7 @@ static int finalize_midas_model (MODEL *pmod,
 	pmod->list = gretl_list_copy(mi->list);
 	if (mi->method == MDS_BFGS) {
 	    /* distinguish this from Levenberg-Marquardt */
-	    if (opt & OPT_C) {
+	    if (mi->nmidas == 1 && (opt & OPT_C)) {
 		gretl_model_set_int(pmod, "GSS", 1);
 	    } else {
 		gretl_model_set_int(pmod, "BFGS", 1);
