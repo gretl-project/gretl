@@ -1061,7 +1061,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 
 	kalman_do_ma_check = 0;
 	Hinv = numerical_hessian_inverse(b, ainfo->nc, kalman_arma_ll, 
-					 K, &err);
+					 K, 0.00025, &err);
 	kalman_do_ma_check = 1;
 	if (!err) {
 	    if (kopt & KALMAN_AVG_LL) {
