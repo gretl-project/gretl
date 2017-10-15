@@ -1587,7 +1587,7 @@ int windows_is_xp (void)
     osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 
     if (GetVersionEx(&osv)) {
-	if (dwMajorVersion == 5 && dwMinorVersion == 1) {
+	if (osv.dwMajorVersion == 5 && osv.dwMinorVersion == 1) {
 	    ret = 1;
 	}
     }
