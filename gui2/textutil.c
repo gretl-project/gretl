@@ -100,6 +100,10 @@ static void replace_find_callback (GtkWidget *widget,
     if (found) {
 	gtk_text_buffer_select_range(s->buf, &f_start, &f_end);
 	gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
+	if (gtk_text_iter_forward_line(&f_end)) {
+	    /* go one line further on, if possible */
+	    gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
+	}
 	gtk_text_view_scroll_mark_onscreen(s->view, s->mark);
     } else {
 	notify_string_not_found(s->f_entry);
