@@ -1271,7 +1271,7 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
 	/* check for valid use of OPT_C, --clamp-beta */
 	if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
 	    ok = 1; /* clearly OK */
-	} else if (0) {
+	} else if (1) {
 	    /* not just yet! */
 	    for (i=0; i<mi->nmidas; i++) {
 		if (mi->mterms[i].type == MIDAS_BETA0) {
@@ -1952,10 +1952,17 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
     int fncount = 0, grcount = 0;
     int err;
 
-    if (theta[0] == 1.0 && (opt & OPT_C)) {
+    if (theta[0] == 1.0 && mi->nmidas == 1 && (opt & OPT_C)) {
+#if MIDAS_DEBUG
+	fprintf(stderr, "midas_bfgs_run: calling midas_gss\n");
+#endif
 	err = midas_gss(theta, n, mi, &fncount);
     } else {
 	double reltol = libset_get_double(BFGS_TOLER);
+
+#if MIDAS_DEBUG
+	fprintf(stderr, "midas_bfgs_run: calling LBFGS_max\n");
+#endif
 
 	err = LBFGS_max(theta, n, 1000, reltol,
 			&fncount, &grcount, NULL,
@@ -2735,6 +2742,10 @@ MODEL midas_model (const int *list,
 	mod.errcode = E_ALLOC;
 	return mod;
     }
+
+#if MIDAS_DEBUG
+    fprintf(stderr, "\nmidas_model, starting...\n");
+#endif
 
     if (param == NULL || *param == '\0') {
 	err = E_DATA;
