@@ -5587,7 +5587,7 @@
       <fnargs>
 	<fnarg type="int">p</fnarg>
 	<fnarg type="vector">theta</fnarg>
-	<fnarg type="int">type</fnarg>
+	<fnarg type="int-or-string">type</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5762,7 +5762,7 @@
       <fnargs>
 	<fnarg type="list">hfvars</fnarg>
 	<fnarg type="vector">theta</fnarg>
-	<fnarg type="int">type</fnarg>
+	<fnarg type="int-or-string">type</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6185,7 +6185,7 @@
       <fnargs>
 	<fnarg type="int">p</fnarg>
 	<fnarg type="vector">theta</fnarg>
-	<fnarg type="int">type</fnarg>
+	<fnarg type="int-or-string">type</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6206,8 +6206,21 @@
 	  must be positive.
 	</para>
 	<para>
+	  The <repl>type</repl> may be given as an integer code, as
+	  shown above, or by one of the following strings
+	  (respectively): <lit>nealmon</lit>, <lit>beta0</lit>,
+	  <lit>betan</lit>, <lit>almonp</lit>. If a string is used, it
+	  should be placed in double quotes. For example, the
+	  following two statements are equivalent:
+	</para>
+	<code>
+	  W = mweights(8, theta, 2)
+	  W = mweights(8, theta, "beta0")
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="mgradient"/>
+	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>	
       </description>

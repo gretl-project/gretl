@@ -23,6 +23,7 @@
  <gentext key="series-list-or-mat" text="série, lista ou matriz"/>
  <gentext key="scalar-or-series" text="escalar ou série"/>
  <gentext key="int-or-list"   text="número inteiro ou lista"/>
+ <gentext key="int-or-string" text="número inteiro ou texto"/>
  <gentext key="series-or-list" text="série ou lista"/>
  <gentext key="scalar-or-vec" text="escalar ou vetor"/>
  <gentext key="scalar-or-matrix" text="escalar ou matriz"/>
