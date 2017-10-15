@@ -1566,7 +1566,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	gtk_text_buffer_place_cursor(buf, &start);
 	gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &end);
 	vis = gtk_text_buffer_create_mark(buf, "vis", &end, FALSE);
-	gtk_text_view_scroll_to_mark(view, vis, 0.0, FALSE, 0, 0);
+	gtk_text_view_scroll_mark_onscreen(view, vis);
     } else if (from_cursor && !wrapped && !search_all) {
 	/* try wrapping */
 	from_cursor = FALSE;
