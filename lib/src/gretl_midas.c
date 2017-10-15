@@ -51,7 +51,8 @@ enum mflags {
 enum midas_methods {
     MDS_NLS,
     MDS_OLS,
-    MDS_BFGS
+    MDS_BFGS,
+    MDS_GSS
 };
 
 /* information on an individual MIDAS term */
@@ -742,6 +743,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
     int n_spec = 0;
     int n_umidas = 0;
     int n_boxed = 0;
+    int n_beta0 = 0;
     int n_almonp = 0;
     int err = 0;
 
@@ -800,19 +802,33 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		    if (takes_coeff(mt->type)) {
 			mi->hfslopes += 1;
 		    }
+		    if (mt->type == MIDAS_BETA0) {
+			n_beta0++;
+		    }
 		}
 		s = p + 1;
 	    }
 	}
     }
 
-    if (err) {
-	free(mi->mterms);
-	mi->mterms = NULL;
-    } else {
+    if (!err) {
+	/* check validity of options */
+	if ((opt & OPT_C) && n_beta0 == 0) {
+	    /* --clamp-beta applies only to beta0 terms */
+	    err = E_BADOPT;
+	} else if ((opt & OPT_C) && n_almonp > 0) {
+	    gretl_errmsg_set("Can't combine --clamp-beta with almonp terms");
+	    err = E_BADOPT;
+	} else {
+	    /* can't combine --clamp-beta and --levenberg */
+	    err = incompatible_options(opt, OPT_C | OPT_L);
+	}
+    }
+
+    if (!err) {
 	mi->nmidas = n_spec;
 	mi->nalmonp = n_almonp;
-	if (n_boxed > 0) {
+	if (n_boxed > 0 && n_almonp == 0) {
 	    /* prefer LBFGS, but respect OPT_L if it's given */
 	    if (!(opt & OPT_L)) {
 		/* ! --levenberg */
@@ -822,6 +838,14 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	    /* note: switch to MDS_OLS if appropriate */
 	    err = umidas_check(mi, n_umidas);
 	}
+    }
+
+    if (err) {
+	/* scrub all this stuff to avoid a crash on cleanup */
+	free(mi->mterms);
+	mi->mterms = NULL;
+	mi->nmidas = 0;
+	mi->nalmonp = 0;
     }
 
     return err;
@@ -1271,8 +1295,9 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
 	/* check for valid use of OPT_C, --clamp-beta */
 	if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
 	    ok = 1; /* clearly OK */
-	} else if (1) {
-	    /* not just yet! */
+	    mi->method = MDS_GSS;
+	} else {
+	    /* Maybe OK? Watch out for breakage! */
 	    for (i=0; i<mi->nmidas; i++) {
 		if (mi->mterms[i].type == MIDAS_BETA0) {
 		    /* should be supported? */
@@ -1942,7 +1967,7 @@ static int midas_gss (double *theta, int n, midas_info *mi,
 }
 
 /* driver function for estimating MIDAS model using
-   L-BFGS-B (or Golden Section search) */
+   L-BFGS-B or Golden Section search */
 
 static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
 			   gretlopt opt, PRN *prn)
@@ -2270,12 +2295,9 @@ static int finalize_midas_model (MODEL *pmod,
 	free(pmod->list);
 	pmod->list = gretl_list_copy(mi->list);
 	if (mi->method == MDS_BFGS) {
-	    /* distinguish this from Levenberg-Marquardt */
-	    if (mi->nmidas == 1 && (opt & OPT_C)) {
-		gretl_model_set_int(pmod, "GSS", 1);
-	    } else {
-		gretl_model_set_int(pmod, "BFGS", 1);
-	    }
+	    gretl_model_set_int(pmod, "BFGS", 1);
+	} else if (mi->method == MDS_GSS) {
+	    gretl_model_set_int(pmod, "GSS", 1);
 	}
     }
 
@@ -2508,11 +2530,14 @@ static int put_midas_nls_line (char *line,
 
 static void append_pname (char *s, const char *pname)
 {
-    char c = s[strlen(s) - 1];
+    if (*s != '\0') {
+	char c = s[strlen(s) - 1];
 
-    if (c != ' ' && c != '"') {
-	strncat(s, " ", 1);
+	if (c != ' ' && c != '"') {
+	    strncat(s, " ", 1);
+	}
     }
+
     strcat(s, pname);
 }
 
@@ -2542,9 +2567,10 @@ static int add_param_names (midas_info *mi,
 {
     char tmp[64], str[2*MAXLEN];
     int i, j, k = 0;
+    int err = 0;
 
     mi->seplist = gretl_list_new(mi->nmidas);
-    *str = '\0';
+    *tmp = *str = '\0';
 
     if (mi->xlist != NULL) {
 	for (i=1; i<=mi->xlist[0]; i++) {
@@ -2576,7 +2602,7 @@ static int add_param_names (midas_info *mi,
 
     mi->pnames = g_strdup(str);
 
-    return 0;
+    return err;
 }
 
 /* Allocate and initialize midas_info struct, and set
@@ -2756,7 +2782,8 @@ MODEL midas_model (const int *list,
     if (!err) {
 	/* build list of regular regressors */
 	err = make_midas_xlist(mi);
-	if (mi->xlist != NULL && mi->method != MDS_BFGS) {
+	if (mi->xlist != NULL &&
+	    (mi->method == MDS_NLS || mi->method == MDS_OLS)) {
 	    err = remember_list(mi->xlist, "XL___", NULL);
 	    user_var_privatize_by_name("XL___");
 	}
@@ -2777,7 +2804,7 @@ MODEL midas_model (const int *list,
 	err = midas_set_sample(mi, dset);
     }
 
-    if (!err && mi->method != MDS_BFGS && mi->nx > 0) {
+    if (!err && mi->method == MDS_NLS && mi->nx > 0) {
 	/* add some required matrices */
 	err = add_midas_matrices(mi, dset);
     }
@@ -2794,7 +2821,7 @@ MODEL midas_model (const int *list,
 	    mod = nl_model(dset, (opt | OPT_G | OPT_M), prn);
 	}
     } else if (!err) {
-	/* estimation using L-BFGS-B */
+	/* estimation using L-BFGS-B or GSS */
 	err = midas_bfgs_setup(mi, dset, opt);
 	if (!err) {
 	    err = midas_bfgs_run(&mod, mi, opt, prn);
