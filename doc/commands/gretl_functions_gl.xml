@@ -5587,7 +5587,7 @@
       <fnargs>
 	<fnarg type="int">p</fnarg>
 	<fnarg type="vector">theta</fnarg>
-	<fnarg type="int">type</fnarg>
+	<fnarg type="int-or-string">type</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5762,7 +5762,7 @@
       <fnargs>
 	<fnarg type="list">hfvars</fnarg>
 	<fnarg type="vector">theta</fnarg>
-	<fnarg type="int">type</fnarg>
+	<fnarg type="int-or-string">type</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6185,7 +6185,7 @@
       <fnargs>
 	<fnarg type="int">p</fnarg>
 	<fnarg type="vector">theta</fnarg>
-	<fnarg type="int">type</fnarg>
+	<fnarg type="int-or-string">type</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6202,12 +6202,25 @@
 	  (<math>k</math> = 2); 3 = para Beta normalizada co retardo final
 	  non nulo (<math>k</math> = 3); e 4 = para Almon polinómico
 	  (<math>k</math> debe de ser cando menos igual a 1). Ten en conta
-	  que no caso Beta normalizada, os dous primeiros elementos de
+	  que no caso de Beta normalizada, os dous primeiros elementos de
 	  <repl>theta</repl> deben de ser positivos.
 	</para>
 	<para>
+	  Podes indicar o <repl>type</repl> como un código enteiro tal e
+	  como se amosa máis abaixo, ou mediante unha das seguintes cadeas
+	  de texto (respectivamente): <lit>nealmon</lit>, <lit>beta0</lit>,
+	  <lit>betan</lit> ou <lit>almonp</lit>. Se utilizas unha cadea de
+	  texto, esta deberá de estar situada entre comiñas. Por exemplo,
+	  as dúas seguintes expresións son equivalentes:
+	</para>
+	<code>
+	  W = mweights(8, theta, 2)
+	  W = mweights(8, theta, "beta0")
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="mgradient"/>
+	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>
       </description>
@@ -9121,15 +9134,44 @@
 	  rematando no indicado por <argname>fin</argname>, ambos incluídos.
 	</para>
     <para>
-        Exemplos:
+        Por exemplo, o código de abaixo
     </para>
     <code>
-        string s1 = "Hola,  Gretl!"
-        string s2 = substr(s1, 8, 12)
+        string s1 = "Hola, Gretl!"
+        string s2 = substr(s1, 7, 11)
+        string s3 = substr("Hola, Gretl!", 7, 11)
         print s2
-
-        string s3 = substr("Hola,  Gretl!", 8, 12)
         print s3
+    </code>
+    <para>
+        proporciona:
+    </para>
+    <code>
+      ? print s2
+      Gretl
+      ? print s3
+      Gretl
+    </code>
+    <para>
+        Debes de darte de conta de que, nalgúns casos, poderías estar
+        desexando intercambiar claridade por concisión, e utilizar operadores
+        de redución e incremento, como en
+    </para>
+    <code>
+        string s1 = "Hola, Gretl!"
+        string s2 = s1[7:11]
+        string s3 = s1 + 6
+        print s2
+        print s3
+    </code>
+    <para>
+        o que te proporcionaría
+    </para>
+    <code>
+      ? print s2
+      Gretl
+      ? print s3
+      Gretl!
     </code>
       </description>
     </function>
