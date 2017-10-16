@@ -100,6 +100,7 @@ struct midas_info_ {
     gretl_matrix *xi;     /* single column of X */
     gretl_matrix *X;      /* X(\beta) */
     double SSR;           /* sum of squared residuals */
+    double orig_toler;    /* prior NLS_TOLER value */
 };
 
 typedef struct midas_info_ midas_info;
@@ -1661,9 +1662,9 @@ static int make_full_coeff_vector (midas_info *mi, int n)
     return 0;
 }
 
-static int
-transcribe_to_nlspec (nlspec *s, midas_info *mi,
-		      gretlopt opt)
+static int transcribe_to_nlspec (nlspec *s,
+				 midas_info *mi,
+				 gretlopt opt)
 {
     int err = 0;
 
@@ -2623,6 +2624,7 @@ static midas_info *midas_info_new (const int *list,
 	mi->list = list;
 	mi->dset = dset;
 	mi->method = MDS_NLS;
+	mi->orig_toler = 0;
     }
 
     return mi;
@@ -2737,8 +2739,15 @@ static int midas_nls_setup (midas_info *mi, DATASET *dset,
 	pputs(prn, "=== end nls specification ===\n\n");
     }
 
-    if (!err && any_smallstep_terms(mi)) {
-	nl_set_smallstep();
+    if (!err) {
+	if (any_smallstep_terms(mi)) {
+	    nl_set_smallstep();
+	}
+	if (mi->nmidas > 1) {
+	    /* allow for a sloppier than usual fit? */
+	    mi->orig_toler = libset_get_double(NLS_TOLER);
+	    libset_set_double(NLS_TOLER, 1.0e-7);
+	}
     }
 
     return err;
@@ -2861,6 +2870,10 @@ MODEL midas_model (const int *list,
     destroy_private_uvars();
 
     if (mi != NULL) {
+	if (mi->orig_toler != 0) {
+	    /* put back what we found on input */
+	    libset_set_double(NLS_TOLER, mi->orig_toler);
+	}
 	midas_info_destroy(mi);
     }
 
