@@ -733,8 +733,8 @@ gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
 	return NULL;
     }
 
-    a = (cmplx*) A->val;
-    c = (cmplx*) C->val;
+    a = (cmplx *) A->val;
+    c = (cmplx *) C->val;
     ra = A->rows / 2;
     rc = C->rows / 2;
 
