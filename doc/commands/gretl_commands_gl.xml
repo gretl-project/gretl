@@ -345,7 +345,15 @@
 	dunha ou as dúas formas seguintes: utilizando o método de
 	<cite key="IPS03">Im, Pesaran e Shin (Journal of Econometrics, 2003)</cite>
 	ou a de
-	<cite key="choi01">Choi (Journal of International Money and Finance, 2001)</cite>.
+	<cite key="choi01">Choi (Journal of International Money and Finance, 2001)</cite>
+	A proba de Choi require que estean dispoñibles as probabilidades asociadas
+	(valores <emphasis>P</emphasis>) para as probas individuais; se este non
+	é o caso (dependendo das opcións escollidas), omítese. O estatístico
+	concreto proporcionado para a proba de Im, Pesaran e Shin varía do xeito
+	seguinte: se o nivel de retardo para a proba non é cero, amósase o seu
+	estatístico <math>W</math>; por outra banda, se as longuras das series
+	de tempo difiren dun individuo a outro, amósase o seu estatístico
+	<math>Z</math>; noutro caso, amósase o seu estatístico <math>t</math>-barra.
       </para>
 
     </description>
@@ -549,7 +557,7 @@
 	Coa <quote>lista de retardos AR</quote> especificas a estrutura
 	do proceso xerador do termo de perturbación. Por exemplo, a
 	indicación <quote>1 3 4</quote> correspóndese co proceso:
-	<equation status="display" 
+	<equation status="display"
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
 	  ascii="u(t) = rho1*u(t-1) + rho3*u(t-3) + rho4*u(t-4)"
@@ -560,7 +568,7 @@
 	Con <repl quote="true">retardos</repl> tes que indicar unha lista de
 	retardos do termo de perturbación, rematada por un punto e coma.
 	No exemplo de arriba, o termo de perturbación especifícase como
-	<equation status="display" 
+	<equation status="display"
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
 	  ascii="u(t) = rho(1)*u(t-1) + rho(3)*u(t-3) + rho(4)*u(t-4)"
@@ -726,7 +734,7 @@
 	automaticamente; se queres utilizar estas diferenzas (o que xeralmente
 	será o caso para variables cuantitativas habituais, aínda que quizais
 	non para variables ficticias temporais) debes de xerar primeiro as
-	diferenzas e logo indicar que estas son regresores. 
+	diferenzas e logo indicar que estas son regresores.
       </para>
       <para>
 	O último campo (opcional) da instrución é para especificar os
@@ -1081,7 +1089,7 @@
 	A cantidade <quote>Frecuencia</quote> presentada en
 	conexión coas raíces AR e MA é o valor &lgr; que soluciona
 	<math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;)
-	onde <math>z</math> é a raíz en cuestión e <math>r</math> 
+	onde <math>z</math> é a raíz en cuestión e <math>r</math>
 	é o seu módulo.
       </para>
 
@@ -1342,7 +1350,7 @@
 	obxectivo e a do xénero como o factor, para ver así as gráficas de
 	caixas de salarios de homes e mulleres unha a carón da outra.
       </para>
-      
+
       <para context="cli">
 	A opción <opt>factorized</opt> te permite examinar a distribución
 	da variable elixida condicionada ao valor de algún factor discreto.
@@ -1448,7 +1456,7 @@
 
   </command>
 
-  <command name="catch" section="Programming" 
+  <command name="catch" section="Programming"
     label="Capturar fallos" context="cli">
     <usage>
       <syntax><lit>catch </lit><repl>command</repl></syntax>
@@ -1569,7 +1577,7 @@
     </description>
   </command>
 
-  <command name="cluster" section="Estimation" 
+  <command name="cluster" section="Estimation"
 	   label="Estimación con varianza robusta" context="gui">
     <description>
       <para>
@@ -1633,7 +1641,7 @@
 
   </command>
 
-  <command name="coint" section="Tests" 
+  <command name="coint" section="Tests"
     label="Proba de cointegración de Engle-Granger">
 
     <usage>
@@ -1919,13 +1927,13 @@
 	\begin{tabular}{cllll}
 	&amp; \multicolumn{2}{c}{Proba traza} &amp;
 	   \multicolumn{2}{c}{Proba $\lambda$-máx} \\
-	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
-	       \multicolumn{1}{c}{$H_1$} &amp; 
-	       \multicolumn{1}{c}{$H_0$} &amp; 
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} &amp;
+	       \multicolumn{1}{c}{$H_0$} &amp;
 	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
  	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
 	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
 	\end{tabular}
 	\end{center}
       </para>
@@ -2032,7 +2040,7 @@
 
   </command>
 
-  <command name="corr" section="Statistics" 
+  <command name="corr" section="Statistics"
     label="Coeficientes de correlación">
 
     <usage>
@@ -2355,7 +2363,7 @@
 
   </command>
 
-  <command name="daily-purge" section="Dataset" 
+  <command name="daily-purge" section="Dataset"
 	   label="Depurar datos diarios" context="gui">
     <description>
       <para>
@@ -2382,7 +2390,7 @@
     </description>
   </command>
 
-  <command name="data" section="Dataset" 
+  <command name="data" section="Dataset"
     label="Importar dun banco de datos" context="cli">
 
     <usage>
@@ -2482,7 +2490,7 @@
 
   </command>
 
-  <command name="data-files" section="Programming" 
+  <command name="data-files" section="Programming"
 	   label="Ficheiros de datos" context="gui">
     <description>
       <para>
@@ -2531,7 +2539,7 @@
     </description>
   </command>
 
-  <command name="dataset" section="Dataset" 
+  <command name="dataset" section="Dataset"
     label="Manipular o conxunto de datos" context="cli">
 
     <usage>
@@ -2720,7 +2728,7 @@
     </description>
   </command>
 
-  <command name="delete" section="Dataset" 
+  <command name="delete" section="Dataset"
     label="Eliminar variables" context="cli">
 
     <usage>
@@ -2900,7 +2908,7 @@
 
   </command>
 
-  <command name="diff" section="Transformations" 
+  <command name="diff" section="Transformations"
     label="Primeiras diferenzas" context="cli">
 
     <usage>
@@ -2928,7 +2936,7 @@
 
   </command>
 
-  <command name="difftest" section="Tests" 
+  <command name="difftest" section="Tests"
     label="Probas non paramétricas de diferenzas" context="cli">
 
     <usage>
@@ -3014,7 +3022,7 @@
 
   </command>
 
-  <command name="discrete" section="Transformations" 
+  <command name="discrete" section="Transformations"
     label="Marcar variables como discretas" context="cli">
 
     <usage>
@@ -3216,7 +3224,7 @@
 
   </command>
 
-  <command name="dummify" section="Transformations" 
+  <command name="dummify" section="Transformations"
     label="Xerar conxuntos de variables ficticias" context="cli">
 
     <usage>
@@ -3276,7 +3284,7 @@
 
   </command>
 
-  <command name="duration" section="Estimation" label="Modelos de duración" 
+  <command name="duration" section="Estimation" label="Modelos de duración"
     context="cli">
     <usage>
       <arguments>
@@ -3417,7 +3425,7 @@
 
   </command>
 
-  <command name="end" section="Programming" 
+  <command name="end" section="Programming"
     label="Finalizar un bloque de instrucións" context="cli">
     <description>
       <para>
@@ -3432,7 +3440,7 @@
     </description>
   </command>
 
-  <command name="endloop" section="Programming" 
+  <command name="endloop" section="Programming"
     label="Finalizar un bucle de instrucións" context="cli">
     <description>
       <para>
@@ -3441,7 +3449,7 @@
     </description>
   </command>
 
-  <command name="eqnprint" section="Printing" 
+  <command name="eqnprint" section="Printing"
     label="Presentar un modelo como ecuación" context="cli">
 
     <usage>
@@ -3486,7 +3494,7 @@
 
   </command>
 
-  <command name="equation" section="Estimation" 
+  <command name="equation" section="Estimation"
     label="Definir unha ecuación dentro dun sistema" context="cli">
 
     <usage>
@@ -3514,7 +3522,7 @@
 
   </command>
 
-  <command name="estimate" section="Estimation" 
+  <command name="estimate" section="Estimation"
     label="Estimar sistemas de ecuacións" context="cli">
 
     <usage>
@@ -3787,7 +3795,7 @@
 
   </command>
 
-  <command name="fcast" section="Prediction" 
+  <command name="fcast" section="Prediction"
     label="Xerar predicións">
 
     <usage>
@@ -4017,7 +4025,7 @@
 
   </command>
 
-  <command name="foreign" section="Programming" 
+  <command name="foreign" section="Programming"
     label="Guión alleo" context="cli">
 
     <usage>
@@ -4069,7 +4077,7 @@
   </command>
 
   <command name="fractint" section="Statistics" label="Integración fraccional">
-  
+
     <usage>
       <arguments>
         <argument>serie</argument>
@@ -4105,7 +4113,7 @@
       </para>
       <para>
 	Para obter máis detalles sobre esta clase de proba, consulta
-	<cite key="phillips04">Phillips e Shimotsu (2004)</cite>. 
+	<cite key="phillips04">Phillips e Shimotsu (2004)</cite>.
       </para>
       <para>
 	Cando non indicas o argumento <repl>nivel</repl> (opcional), o nivel
@@ -4276,7 +4284,7 @@
 
   </command>
 
-  <command name="function" section="Programming" 
+  <command name="function" section="Programming"
     label="Definir unha función" context="cli">
 
     <usage>
@@ -4373,7 +4381,7 @@
 	incluíndo as variables esóxenas indicadas (cando se escollen
 	variables independentes). A ecuación da varianza condicionada
 	amósase abaixo.
-	<equation status="display" tex="\[h_t = \alpha_0 + 
+	<equation status="display" tex="\[h_t = \alpha_0 +
 	\sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p
 	\beta_i h_{t-j}\]" ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i) +
 	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
@@ -4547,7 +4555,7 @@
 	Se admiten os <emphasis>operadores aritméticos</emphasis>,
 	en orde de prioridade: <lit>^</lit> (elevar á potencia);
 	<lit>*</lit>, <lit>/</lit> e <lit>%</lit> (módulo ou resto);
-	<lit>+</lit> e <lit>-</lit>. 
+	<lit>+</lit> e <lit>-</lit>.
       </para>
 
       <para>
@@ -4574,13 +4582,13 @@
 	varias que son especiais de Econometría. Ademais, ofrece acceso
 	a moitas variables internas que se definen durante a execución
 	das regresións, a realización de probas de hipóteses, etcétera.
-	<refnote xref="false"> 
+	<refnote xref="false">
 	  Para obter unha listaxe de funcións e accesorios, escribe
-	  <quote>help functions</quote>. 
-	</refnote> 
+	  <quote>help functions</quote>.
+	</refnote>
 	<refnote xref="true">
 	  Para ver unha listaxe de funcións e accesorios, consulta o
-	  <gfr targ="chap:funcref"/>. 
+	  <gfr targ="chap:funcref"/>.
 	</refnote>
       </para>
 
@@ -4669,7 +4677,7 @@
       </para>
 
       <table id="tab-genr" title="Exemplos de uso da instrución genr"
-	lhead="Fórmula" rhead="Comentario" lwidth="100pt" rwidth="300pt" 
+	lhead="Fórmula" rhead="Comentario" lwidth="100pt" rwidth="300pt"
 	style="rpara">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
@@ -4683,7 +4691,7 @@
 	  <cell><lit>z = x&gt;y</lit></cell>
 	  <cell><lit>z(t)</lit> = 1 se <lit>x(t) &gt; y(t)</lit>,
 	    noutro caso 0</cell>
-	</row> 
+	</row>
 	<row>
 	  <cell><lit>y = x(-2)</lit></cell>
 	  <cell><lit>x</lit> retardada 2 períodos</cell>
@@ -4726,7 +4734,7 @@
 	</row>
 	<row>
 	  <cell><lit>y = cum(x)</lit></cell>
-	  <cell>Acumulación: 
+	  <cell>Acumulación:
 		<equation status="inline"
 		  tex="$y_t = \sum_{\tau=1}^t x_{\tau}$"
 		  ascii="y(t) = suma desde s=1 ata s=t de x(s)"
@@ -4945,7 +4953,7 @@
 
   </command>
 
-  <command name="gnuplot" section="Graphs" 
+  <command name="gnuplot" section="Graphs"
     label="Xerar unha gráfica Gnuplot" context="cli">
 
     <usage>
@@ -5450,7 +5458,7 @@
     </description>
   </command>
 
-  <command name="gui-funcs" section="Programming" 
+  <command name="gui-funcs" section="Programming"
 	   label="Funcións especiais" context="gui">
     <description>
       <para>
@@ -5676,7 +5684,7 @@
 
     </description>
   </command>
- 
+
   <command name="hausman" section="Tests" label="Diagnósticos de panel">
     <usage>
       <options>
@@ -5863,7 +5871,7 @@
 
   </command>
 
-  <command name="help" section="Utilities" 
+  <command name="help" section="Utilities"
     label="Axuda sobre as instrucións" context="cli">
 
     <usage>
@@ -5904,7 +5912,7 @@
 
   </command>
 
-  <command name="hfplot" section="Graphs" 
+  <command name="hfplot" section="Graphs"
     label="Xerar unha gráfica MIDAS" context="cli">
 
     <usage>
@@ -6124,7 +6132,7 @@
 
   </command>
 
-  <command name="include" section="Programming" 
+  <command name="include" section="Programming"
     label="Incluír definicións de funcións" context="cli">
 
     <usage>
@@ -6166,7 +6174,7 @@
 
   </command>
 
-  <command name="info" section="Dataset" 
+  <command name="info" section="Dataset"
     label="Información sobre o conxunto de datos" context="cli">
 
     <description>
@@ -6378,7 +6386,7 @@
 
   </command>
 
-  <command name="join" section="Dataset" label="Manexar fontes de datos" 
+  <command name="join" section="Dataset" label="Manexar fontes de datos"
 	   context="cli">
 
     <usage>
@@ -6469,7 +6477,7 @@
 
   </command>
 
-  <command name="join" section="Dataset" label="Engadir datos con controis" 
+  <command name="join" section="Dataset" label="Engadir datos con controis"
 	   context="gui">
     <description>
     <para>
@@ -6659,7 +6667,7 @@
 
   </command>
 
-  <command name="labels" section="Dataset" 
+  <command name="labels" section="Dataset"
     label="Etiquetas de variables" context="cli">
 
     <usage>
@@ -6839,7 +6847,7 @@
 
   </command>
 
-  <command name="ldiff" section="Transformations" 
+  <command name="ldiff" section="Transformations"
     label="Diferenzas logarítmicas" context="cli">
 
     <usage>
@@ -6907,7 +6915,7 @@
 	Tamén se calculan os valores DFFITS: estes son iguais aos
 	<quote>erros tipificados</quote> (erros de predición divididos
 	polas súas desviacións padrón) multiplicados por
-	  <equation status="inline" 
+	  <equation status="inline"
 	  tex="$\sqrt{h/(1 - h)}$"
 	  ascii="sqrt[h/(1 - h)]"
 	  graphic="dffit"/>.
@@ -6946,7 +6954,7 @@
 	Logo da execución, o accesorio <fncref targ="$test"/> devolve o criterio
 	de validación cruzada, que se define como
         \[
-        \sum_{i=1}^n (y_i - \hat{y}_{-i})^2 
+        \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
         \]
 	onde $\hat{y}_{-i}$ é o erro de predición para a observación
 	$i$-ésima, logo de que esta sexa excluída da mostra. Por iso, o
@@ -7108,7 +7116,7 @@
       <para>
 	Regresión loxística: Leva a cabo unha regresión MCO utilizando
 	a transformación loxística da variable dependente,
-	<equation status="display" 
+	<equation status="display"
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
@@ -7138,7 +7146,7 @@
       <para>
 	Os valores axustados e os erros da regresión transfórmanse
 	automaticamente utilizando
-	<equation status="display" 
+	<equation status="display"
 	  tex="\[y=\frac{y^*}{1+e^{-z}}\]"
 	  ascii="y = y* / (1 + exp(-z))"
 	  graphic="logistic2"/>
@@ -7268,7 +7276,7 @@
 
   </command>
 
-  <command name="logs" section="Transformations" 
+  <command name="logs" section="Transformations"
     label="Xerar logaritmos" context="cli">
 
     <usage>
@@ -7293,7 +7301,7 @@
 
   </command>
 
-  <command name="loop" section="Programming" 
+  <command name="loop" section="Programming"
     label="Comezar un bucle de instrucións" context="cli">
 
     <usage>
@@ -7675,7 +7683,7 @@
       </ilist>
     </description>
   </command>
-  
+
   <command name="midasreg" section="Estimation" label="Regresión MIDAS">
     <usage>
       <arguments>
@@ -7868,7 +7876,7 @@
     </description>
   </command>
 
-  <command name="menu-attach" section="Programming" 
+  <command name="menu-attach" section="Programming"
 	   label="Anexo ao menú" context="gui">
     <description>
       <para>
@@ -8126,7 +8134,7 @@
       </altforms>
     </usage>
 
-    <description context="gui"> 
+    <description context="gui">
       <para>
 	Na investigación econométrica é habitual estimar varios modelos
 	cunha mesma variable dependente, diferenciándose eses modelos
@@ -8512,7 +8520,7 @@
 
   </command>
 
-  <command name="nadarwat" section="Estimation" label="Nadaraya-Watson" 
+  <command name="nadarwat" section="Estimation" label="Nadaraya-Watson"
 	   context="gui">
     <description>
       <para>
@@ -9194,7 +9202,7 @@
     </description>
   </command>
 
-  <command name="open" section="Dataset" 
+  <command name="open" section="Dataset"
     label="Abrir un ficheiro de datos" context="cli">
 
     <usage>
@@ -9330,7 +9338,7 @@
 
   </command>
 
-  <command name="orthdev" section="Transformations" 
+  <command name="orthdev" section="Transformations"
     label="Desviacións ortogonais" context="cli">
 
     <usage>
@@ -9358,7 +9366,7 @@
 
   </command>
 
-  <command name="outfile" section="Printing" 
+  <command name="outfile" section="Printing"
     label="Dirixir a presentación a un ficheiro" context="cli">
 
     <usage>
@@ -9988,7 +9996,7 @@
         </option>
       </options>
     </usage>
-    
+
     <description>
       <para>
 	O bloque <lit>plot</lit> proporciona unha alternativa á instrución
@@ -10141,7 +10149,7 @@
 
   </command>
 
-  <command name="poisson" section="Estimation" 
+  <command name="poisson" section="Estimation"
     label="Estimación de Poisson">
 
     <usage>
@@ -10184,7 +10192,7 @@
       <para>
 	Se unha variable aleatoria discreta <math>Y</math> segue unha
 	distribución de Poisson, entón
-        <equation status="display" 
+        <equation status="display"
           tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
           ascii="Pr(Y = y) = exp(-v) * v^y / y!"
           graphic="poisson1"/>
@@ -10194,7 +10202,7 @@
 	representado como unha función dunha ou máis variables
 	independentes. A versión máis habitual (e a única que admite
 	Gretl) cumpre
-        <equation status="display" 
+        <equation status="display"
           tex="\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]"
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
           graphic="poisson2"/>
@@ -10233,7 +10241,7 @@
 
   </command>
 
-  <command name="print" section="Printing" 
+  <command name="print" section="Printing"
     label="Presentar datos ou cadeas de texto" context="cli">
 
     <usage>
@@ -10327,7 +10335,7 @@
 
   </command>
 
-  <command name="printf" section="Printing" 
+  <command name="printf" section="Printing"
     label="Presentación con formato" context="cli">
 
     <usage>
@@ -10368,7 +10376,7 @@
 	ols 1 0 2 3
 	scalar b = $coeff[2]
 	scalar se_b = $stderr[2]
-	printf "b = %.8g, Desviación padrón %.8g, t = %.4f\n", 
+	printf "b = %.8g, Desviación padrón %.8g, t = %.4f\n",
           b, se_b, b/se_b
       </code>
       <para>
@@ -10559,7 +10567,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilities" 
+  <command name="pvalue" section="Utilities"
     label="Calcular probabilidades asociadas" context="cli">
 
     <usage>
@@ -10638,7 +10646,7 @@
 	</option>
       </options>
     </usage>
-    
+
     <description>
       <para>
 	Para un modelo estimado con datos de series temporais mediante
@@ -10760,7 +10768,7 @@
 
   </command>
 
-  <command name="quantreg" section="Estimation" 
+  <command name="quantreg" section="Estimation"
     label="Regresión de cuantís">
 
     <usage>
@@ -10887,7 +10895,7 @@
 
   </command>
 
-  <command name="quit" section="Utilities" 
+  <command name="quit" section="Utilities"
     label="Saír do programa" context="cli">
 
     <description>
@@ -10903,7 +10911,7 @@
 
   </command>
 
-  <command name="rename" section="Dataset" 
+  <command name="rename" section="Dataset"
     label="Cambiar o nome dunha variable" context="cli">
 
     <usage>
@@ -10995,7 +11003,7 @@
     </description>
 
   </command>
-  
+
 
   <command name="reset" section="Tests" label="RESET de Ramsey">
 
@@ -11173,7 +11181,7 @@
 	cómodas para utilizar como <math>R</math> e <math>q</math>, como en
       </para>
       <code>
-	restrict 
+	restrict
 	  R = Rmat
 	  q = qvec
 	end restrict
@@ -11416,7 +11424,7 @@
 
   </command>
 
-  <command name="run" section="Programming" 
+  <command name="run" section="Programming"
     label="Executar un guión" context="cli">
 
     <usage>
@@ -11549,7 +11557,7 @@
     </description>
   </command>
 
-  <command name="save-labels" section="Utilities" 
+  <command name="save-labels" section="Utilities"
     label="Gardar ou eliminar etiquetas das series" context="gui">
     <description>
       <para>
@@ -11568,7 +11576,7 @@
     </description>
   </command>
 
-  <command name="add-labels" section="Utilities" 
+  <command name="add-labels" section="Utilities"
     label="Engadir etiquetas das series" context="gui">
     <description>
       <para>
@@ -11582,7 +11590,7 @@
     </description>
   </command>
 
-  <command name="save-script" section="Utilities" 
+  <command name="save-script" section="Utilities"
     label="Gardar instrucións?" context="gui">
     <description>
       <para>
@@ -11600,7 +11608,7 @@
     </description>
   </command>
 
-  <command name="save-session" section="Utilities" 
+  <command name="save-session" section="Utilities"
     label="Gardar esta sesión de Gretl?" context="gui">
     <description>
       <para>
@@ -11773,7 +11781,7 @@
 
   </command>
 
-  <command name="sdiff" section="Transformations" 
+  <command name="sdiff" section="Transformations"
     label="Calcular diferenzas estacionais" context="cli">
 
     <usage>
@@ -11797,7 +11805,7 @@
 
   </command>
 
-  <command name="set" section="Programming" 
+  <command name="set" section="Programming"
     label="Establecer os parámetros do programa" context="cli">
 
     <usage>
@@ -12265,12 +12273,12 @@
 	  representan dúas variantes de cálculo automático baseadas no
 	  tamaño da mostra <math>T</math>: para nw1,
 	  <equation status="inline"
-	    tex="$p = 0.75 \times T^{1/3}$" 
+	    tex="$p = 0.75 \times T^{1/3}$"
 	    ascii="p = 0.75 * T^(1/3)"
-	    graphic="nw1"/>, e para nw2, 
+	    graphic="nw1"/>, e para nw2,
 	  <equation status="inline"
-	    tex="$p = 4 \times (T/100)^{2/9}$" 
-	    ascii="p = 4 * (T/100)^(2/9)" 
+	    tex="$p = 4 \times (T/100)^{2/9}$"
+	    ascii="p = 4 * (T/100)^(2/9)"
 	    graphic="nw2"/>. <lit>nw3</lit>
 	  solicita unha elección do largo de banda que se basea nos datos. Consulta
 	  tamén máis abaixo <lit>qs_bandwidth</lit> e <lit>hac_prewhiten</lit>.
@@ -12318,7 +12326,7 @@
 	  (A diferenza dos 'kernels' de Bartlett e de Parzen, o largo de banda
 	  QS non require ser un enteiro.)
 	  </para>
-	</li> 
+	</li>
       </ilist>
 
       <subhead>Series temporais</subhead>
@@ -12523,14 +12531,14 @@
 	código para <quote>ausente</quote>, pero só para a variable
 	<lit>x2</lit>.
       </para>
-      
+
       <para context="gui">
 	Establece un valor numérico que vai interpretarse como 'ausente' ou
 	'non aplicable', ben para unha serie de datos en concreto (baixo o
 	menú Variable) ou globalmente para todo o conxunto de datos (baixo
 	o menú Datos).
 	    </para>
-      
+
       <para context="gui">
 	Gretl ten a súa propia codificación interna para os valores ausentes,
 	pero ás veces cos datos que se importan púidose empregar un código
@@ -12707,7 +12715,7 @@
     <gui-access>
       <menu-path>/Datos/Estrutura do conxunto de datos</menu-path>
     </gui-access>
-      
+
   </command>
 
   <command name="setopt" section="Programming" context="cli"
@@ -12772,7 +12780,7 @@
     </description>
   </command>
 
-  <command name="shell" section="Utilities" 
+  <command name="shell" section="Utilities"
     label="Executar instrucións do intérprete" context="cli">
 
     <usage>
@@ -12810,7 +12818,7 @@
 
   </command>
 
-  <command name="smpl" section="Dataset" 
+  <command name="smpl" section="Dataset"
     label="Establecer o rango da mostra" context="cli">
 
     <!-- don't break the lines below or the text version will get messed
@@ -12948,7 +12956,7 @@
       </para>
       <code>
 	smpl obs!=4 --restrict
-      </code> 
+      </code>
       <para>
 	vai prescindir unicamente da cuarta observación. Se os casos
 	dos datos se identifican mediante etiquetas,
@@ -13041,7 +13049,7 @@
 
   </command>
 
-  <command name="sprintf" section="Printing" 
+  <command name="sprintf" section="Printing"
     label="Presentar nunha cadea de texto" context="cli">
 
     <usage>
@@ -13064,7 +13072,7 @@
 
   </command>
 
-  <command name="square" section="Transformations" 
+  <command name="square" section="Transformations"
     label="Xerar cadrados de variables" context="cli">
 
     <usage>
@@ -13280,7 +13288,7 @@
 
   </command>
 
-  <command name="summary" section="Statistics" 
+  <command name="summary" section="Statistics"
     label="Estatísticas descritivas" context="cli">
 
     <usage>
@@ -13482,7 +13490,7 @@
 	<equation status="display"
 	  tex="\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]"
 	  ascii="Gamma y(t) = A y(t-1) + B x(t) + e(t)"
-	  graphic="structural"/> 
+	  graphic="structural"/>
 	Se hai <math>n</math> variables endóxenas e <math>k</math> variables
 	esóxenas, &Gamma; é unha matriz de dimensión <by r="n" c="n"/> e
 	<math>B</math> é <by r="n" c="k"/>. Cando o sistema non contén
@@ -13500,7 +13508,7 @@
 
   </command>
 
-  <command name="tabprint" section="Printing" 
+  <command name="tabprint" section="Printing"
     label="Presentar o modelo en formato de táboa" context="cli">
 
     <usage>
@@ -13586,7 +13594,7 @@
 
   </command>
 
-  <command name="textplot" section="Graphs" 
+  <command name="textplot" section="Graphs"
     label="Gráfica ASCII" context="cli">
 
     <usage>
@@ -14104,7 +14112,7 @@
 
   </command>
 
-  <command name="varlist" section="Dataset" 
+  <command name="varlist" section="Dataset"
     label="Listar as variables" context="cli">
 
     <usage>
@@ -14376,7 +14384,7 @@
 	menos 2 variables independentes. Calcula e amosa os Factores
 	de Inflación da Varianza (FIV) para os regresores. O FIV do
 	regresor <math>j</math> defínese como
-	<equation status="display" 
+	<equation status="display"
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2)"
 	  graphic="vif"/>
@@ -14626,7 +14634,7 @@
 
   </command>
 
-  <command name="xtab" section="Statistics" 
+  <command name="xtab" section="Statistics"
     label="Tabulación cruzada de variables">
 
     <usage>
@@ -14743,4 +14751,3 @@
   </command>
 
 </commandref>
-
