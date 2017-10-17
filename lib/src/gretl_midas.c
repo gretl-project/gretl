@@ -1425,6 +1425,7 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
     }
 
     if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
+	/* FIXME multiple beta terms? */
 	midas_beta_init(mi);
     } else {
 	/* initialize overall mi->theta by composition

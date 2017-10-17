@@ -3117,6 +3117,7 @@ static int random_effects (panelmod_t *pan,
 	if (pan->opt & OPT_R) {
 	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
 	} else {
+	    /* note: @sigma will be modified later */
 	    makevcv(&remod, remod.sigma);
 	}
 
