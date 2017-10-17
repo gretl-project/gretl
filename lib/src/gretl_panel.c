@@ -1620,7 +1620,7 @@ static int bXb (panelmod_t *pan)
     return err;
 }
 
-static void panel_df_correction (MODEL *pmod, int k)
+static void fixed_effects_df_correction (MODEL *pmod, int k)
 {
     double dfcorr = sqrt((double) pmod->dfd / (pmod->dfd - k));
     int i;
@@ -2464,7 +2464,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
     } else {
 	/* we estimated a bunch of group means, and have to
 	   subtract degrees of freedom */
-	panel_df_correction(&femod, pan->effn - 1);
+	fixed_effects_df_correction(&femod, pan->effn - 1);
 #if PDEBUG > 1
 	verbose_femod_print(&femod, wset, prn);
 #endif
