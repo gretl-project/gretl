@@ -3746,7 +3746,8 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 
 #define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT || \
 		       f == HF_CINV || f == HF_CFFT || \
-		       f == HF_CTRAN || f == HF_CHPROD)
+		       f == HF_CTRAN || f == HF_CHPROD || \
+		       f == HF_CEXP)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -3927,6 +3928,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case HF_CTRAN:
 	    ret->v.m = gretl_ctran(m, &p->err);
+	    break;
+	case HF_CEXP:
+	    ret->v.m = gretl_cexp(m, &p->err);
 	    break;
 	default:
 	    break;
@@ -14345,6 +14349,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CINV:
     case HF_CFFT:
     case HF_CTRAN:
+    case HF_CEXP:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);

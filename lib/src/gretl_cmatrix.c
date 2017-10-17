@@ -25,6 +25,11 @@
 #include <fftw3.h>
 #include <complex.h>
 
+typedef union _cz {
+    cmplx c;
+    double complex z;
+} cz;
+
 /* helper function for fftw-based real FFT functions */
 
 static int fft_allocate (double **px, gretl_matrix **pm,
@@ -747,4 +752,31 @@ gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
     }
 
     return C;
+}
+
+/* return cexp() of a complex argument given as a 2-vector */
+
+gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err)
+{
+    gretl_vector *B = NULL;
+
+    if (gretl_vector_get_length(A) != 2) {
+	*err = E_INVARG;
+    } else {
+	cz res;
+
+	res.c.r = A->val[0];
+	res.c.i = A->val[1];
+	res.z = cexp(res.z);
+
+	B = gretl_column_vector_alloc(2);
+	if (B == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    B->val[0] = res.c.r;
+	    B->val[1] = res.c.i;
+	}
+    }
+
+    return B;
 }

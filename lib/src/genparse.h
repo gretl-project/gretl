@@ -291,6 +291,7 @@ enum {
     F_CDUMIFY,
     HF_CINV,
     HF_CTRAN,
+    HF_CEXP,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COV,
     F_SDC,
