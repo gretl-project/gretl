@@ -88,6 +88,7 @@ struct panelmod_t_ {
     MODEL *pooled;        /* reference model (pooled OLS) */
     MODEL *realmod;       /* fixed or random effects model */
     unit_ts *tsinfo;      /* per unit time-series info */
+    double *re_uhat;      /* "fixed" random-effects residuals */
 };
 
 struct {
@@ -191,6 +192,7 @@ static void panelmod_init (panelmod_t *pan)
     pan->pooled = NULL;
     pan->realmod = NULL;
     pan->tsinfo = NULL;
+    pan->re_uhat = NULL;
 }
 
 static void panelmod_free_tsinfo (panelmod_t *pan)
@@ -234,6 +236,7 @@ static void panelmod_free (panelmod_t *pan)
     
     free(pan->small2big);
     free(pan->big2small);
+    free(pan->re_uhat);
 
     free(pan->realmod);
 
@@ -267,6 +270,10 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
     int k = pmod->ncoeff;
     double x;
     int i, j, m;
+
+#if 0
+    fprintf(stderr, "panel_model_xpxinv...\n");
+#endif
 
     if (gretl_model_get_int(pmod, "vcv_xpx")) {
 	/* already done */
@@ -302,6 +309,8 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
     }
 
 #if 0
+    fprintf(stderr, "pmod->sigma = %g\n", pmod->sigma);
+    printlist(pmod->list, "pmod->list");
     gretl_matrix_print(X, "panel (X'X)^{-1}");
 #endif
 
@@ -324,7 +333,7 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
 */
 
 static int 
-beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
+beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	       gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
 {
     gretl_matrix *Xi = NULL;
@@ -361,7 +370,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 		si = small_index(pan, si);
 		for (p=0; p<k; p++) {
 		    v = pmod->list[p + 2];
-		    gretl_matrix_set(Xi, s, p, Z[v][si]);
+		    gretl_matrix_set(Xi, s, p, dset->Z[v][si]);
 		}
 		s++;
 	    }
@@ -411,8 +420,8 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 		    sj = small_index(pan, sj);
 		    for (p=0; p<k; p++) {
 			v = pmod->list[p + 2];
-			gretl_matrix_set(Xi, s, p, Z[v][si]);
-			gretl_matrix_set(Xj, s, p, Z[v][sj]);
+			gretl_matrix_set(Xi, s, p, dset->Z[v][si]);
+			gretl_matrix_set(Xj, s, p, dset->Z[v][sj]);
 		    }
 		    s++;
 		}
@@ -464,7 +473,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 */
 
 static int 
-arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
+arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	      gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
 {
     gretl_vector *e = NULL;
@@ -526,7 +535,11 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	    s = small_index(pan, s);
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j+2];
-		gretl_matrix_set(Xi, p, j, Z[v][s]);
+		if (s < 0) {
+		    gretl_matrix_set(Xi, p, j, 0);
+		} else {
+		    gretl_matrix_set(Xi, p, j, dset->Z[v][s]);
+		}
 	    }
 	    p++;
 	}
@@ -566,7 +579,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 */
 
 static int 
-panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
 {
     gretl_matrix *W = NULL;
     gretl_matrix *V = NULL;
@@ -590,9 +603,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 
     /* call the appropriate function */
     if (libset_get_bool(PCSE)) {
-	err = beck_katz_vcv(pmod, pan, Z, XX, W, V);
+	err = beck_katz_vcv(pmod, pan, dset, XX, W, V);
     } else {
-	err = arellano_vcv(pmod, pan, Z, XX, W, V);
+	err = arellano_vcv(pmod, pan, dset, XX, W, V);
     }
 
     if (!err) {
@@ -2312,7 +2325,7 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
    purged of missing observations.
 */
 
-static void 
+static int
 fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 {
     const double *y = NULL;
@@ -2329,6 +2342,16 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     if (pan->opt & OPT_U) {
 	/* random effects model */
 	pmod->ess = 0.0;
+	if (pan->opt & OPT_R) {
+	    /* robust: we need an extra residuals array */
+	    pan->re_uhat = malloc(n * sizeof *pan->re_uhat);
+	    if (pan->re_uhat == NULL) {
+		return E_ALLOC;
+	    }
+	    for (t=0; t<n; t++) {
+		pan->re_uhat[t] = NADBL;
+	    }
+	}
     } 
 
     s = 0;
@@ -2352,6 +2375,11 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 		re_n++;
 		uhat[t] = y[t] - yht;
 		pmod->ess += uhat[t] * uhat[t];
+		if (pan->re_uhat != NULL) {
+		    /* store both the "fixed" and the GLS residuals */
+		    pan->re_uhat[t] = uhat[t];
+		    uhat[t] = pmod->uhat[s];
+		}
 	    } else {
 		/* fixed effects */
 		uhat[t] = pmod->uhat[s];
@@ -2387,6 +2415,43 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     /* we've stolen these */
     pan->pooled->uhat = NULL;
     pan->pooled->yhat = NULL;
+
+    return 0;
+}
+
+static int
+hausman_move_uhat (MODEL *pmod, panelmod_t *pan)
+{
+    int n = pan->pooled->full_n;
+    double *uhat;
+    int i, s, t, ti;
+
+    uhat = malloc(n * sizeof *uhat);
+    if (uhat == NULL) {
+	return E_ALLOC;
+    }
+    
+    for (t=0; t<n; t++) {
+	uhat[t] = NADBL;
+    }
+
+    s = 0;
+    for (i=0; i<pan->nunits; i++) {
+	int Ti = pan->unit_obs[i];
+
+	if (Ti > 0) {
+	    for (ti=0; ti<Ti; ti++) {
+		t = big_index(pan, s);
+		uhat[t] = pmod->uhat[s];
+		s++;
+	    }
+	}
+    }
+
+    free(pmod->uhat);
+    pmod->uhat = uhat;
+
+    return 0;
 }
 
 #if PDEBUG > 1
@@ -2478,7 +2543,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 	    }
 	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
 	    if (pan->opt & OPT_R) {
-		panel_robust_vcv(&femod, pan, (const double **) wset->Z);
+		panel_robust_vcv(&femod, pan, wset);
 	    } else {
 		femod_regular_vcv(&femod);
 	    }
@@ -2648,6 +2713,17 @@ static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
     gretl_model_set_int(pmod, "Tmax", pan->Tmax);
 }
 
+static void replace_re_residuals (MODEL *pmod, panelmod_t *pan)
+{
+    int t;
+
+    /* replace the GLS residuals with the "fixed" ones */
+
+    for (t=0; t<pmod->full_n; t++) {
+	pmod->uhat[t] = pan->re_uhat[t];
+    }
+}
+
 /* We use this to "finalize" models estimated via fixed effects
    and random effects */
 
@@ -2685,7 +2761,9 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	    gretl_model_set_double(pmod, "theta_bar", pan->theta_bar);
 	} 
 	gretl_model_add_panel_varnames(pmod, dset, NULL);
-	fix_panel_hatvars(pmod, pan, Z);
+	if (pan->re_uhat != NULL) {
+	    replace_re_residuals(pmod, pan);
+	}
 	fix_gls_stats(pmod, pan);
 	panel_model_add_ahat(pmod, dset, pan);
 	if (pan->opt & OPT_N) {
@@ -2895,7 +2973,10 @@ static double hausman_regression_result (panelmod_t *pan,
 	    if (pan->dfH > 0) {
 		if (pan->opt & OPT_R) {
 		    /* do robust Wald test */
-		    panel_robust_vcv(&hmod, pan, (const double **) rset->Z);
+		    if (hmod.full_n < pan->pooled->full_n) {
+			hausman_move_uhat(&hmod, pan);
+		    }
+		    panel_robust_vcv(&hmod, pan, rset);
 		    if (hmod.vcv != NULL) {
 			if (pan->dfH < hlist[0]) {
 			    ret = robust_hausman_fixup(hlist, &hmod);
@@ -3024,7 +3105,7 @@ static int random_effects (panelmod_t *pan,
     int *relist = NULL;
     int *hlist = NULL;
     double hres = NADBL;
-    int i, k, err = 0;
+    int i, err = 0;
 
     gretl_model_init(&remod, dset);
 
@@ -3101,22 +3182,25 @@ static int random_effects (panelmod_t *pan,
     } else {
 #if PDEBUG > 1
 	for (i=0; i<20 && i<remod.nobs; i++) {
-	    fprintf(stderr, "remod uhat[%d] = %g\n", i+1, remod.uhat[i]);
+	    fprintf(stderr, "remod uhat[%d] = %g\n", i, remod.uhat[i]);
 	}
 #endif
+	if (pan->bdiff != NULL) {
+	    /* matrix-diff Hausman variant */
+	    int vi, k = 0;
 
-	k = 0;
-	for (i=0; i<remod.ncoeff; i++) {
-	    int vi = pan->pooled->list[i+2];
-
-	    if (pan->bdiff != NULL && var_is_varying(pan, vi)) {
-		pan->bdiff->val[k++] -= remod.coeff[i];
+	    for (i=0; i<remod.ncoeff; i++) {
+		vi = pan->pooled->list[i+2];
+		if (var_is_varying(pan, vi)) {
+		    pan->bdiff->val[k++] -= remod.coeff[i];
+		}
 	    }
 	}
 
+	fix_panel_hatvars(&remod, pan, (const double **) dset->Z);
+
 	if (pan->opt & OPT_R) {
-	    fprintf(stderr, "doing panel_robust_vcv\n");
-	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
+	    panel_robust_vcv(&remod, pan, rset);
 	} else {
 	    /* double sigma = sqrt(remod.ess / remod.nobs); z ?? */
 	    double sigma = remod.sigma;
@@ -3694,7 +3778,7 @@ static int get_ntdum (const int *orig, const int *new)
 }
 
 static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
-			       const double **Z)
+			       const DATASET *dset)
 {
     gretl_model_set_int(pmod, "pooled", 1);
     add_panel_obs_info(pmod, pan);
@@ -3704,7 +3788,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     }
 
     if (pan->opt & OPT_R) {
-	panel_robust_vcv(pmod, pan, Z);
+	panel_robust_vcv(pmod, pan, dset);
 	pmod->opt |= OPT_R;
 	pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_NONE);
 	pmod->dfd = pan->effn - 1;
@@ -3713,7 +3797,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     panel_dwstat(pmod, pan);
 
     if (!na(pmod->dw) && (pan->opt & OPT_I)) {
-	panel_DW_pvalue(pmod, pan, Z);
+	panel_DW_pvalue(pmod, pan, (const double **) dset->Z);
     }
 }
 
@@ -3809,7 +3893,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 
     free(olslist);
 
-#if PDEBUG
+#if PDEBUG > 1
     pprintf(prn, "*** initial baseline OLS\n");
     printmodel(&mod, dset, OPT_NONE, prn);
 #endif
@@ -3832,7 +3916,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     }   
 
     if (opt & OPT_P) {
-	save_pooled_model(&mod, &pan, (const double **) dset->Z);
+	save_pooled_model(&mod, &pan, dset);
 	goto bailout;
     }
 
@@ -3962,7 +4046,7 @@ int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset)
 
     err = panelmod_setup(&pan, pmod, dset, 0, OPT_NONE);
     if (!err) {
-	err = panel_robust_vcv(pmod, &pan, (const double **) dset->Z);
+	err = panel_robust_vcv(pmod, &pan, dset);
     }
 
     panelmod_free(&pan); 
