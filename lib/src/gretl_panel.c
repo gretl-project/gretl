@@ -3115,10 +3115,13 @@ static int random_effects (panelmod_t *pan,
 	}
 
 	if (pan->opt & OPT_R) {
+	    fprintf(stderr, "doing panel_robust_vcv\n");
 	    panel_robust_vcv(&remod, pan, (const double **) rset->Z);
 	} else {
-	    /* note: @sigma will be modified later */
-	    makevcv(&remod, remod.sigma);
+	    /* double sigma = sqrt(remod.ess / remod.nobs); z ?? */
+	    double sigma = remod.sigma;
+
+	    makevcv(&remod, sigma);
 	}
 
 	if (pan->opt & OPT_V) {
