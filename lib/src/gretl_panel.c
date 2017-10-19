@@ -1677,7 +1677,7 @@ static void print_re_results (panelmod_t *pan,
     pprintf(prn, " between = %g\n", pan->s2v);
     pprintf(prn, " within = %g\n", pan->s2e);
 
-    if (pan->balanced) {
+    if (pan->balanced || pan->s2v == 0) {
 	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
     } else {
 	pputs(prn, "Panel is unbalanced: theta varies across units\n");
@@ -2309,16 +2309,36 @@ static int nerlove_s2v (MODEL *pmod, const DATASET *dset,
     return err;
 }
 
-/* Fix uhat and yhat in two cases: 
+/* robust RE: we need an extra residuals array */
 
-   (a) when we estimated fixed effects using a de-meaned dataset we
+static int re_hatvars_prep (panelmod_t *pan)
+{
+    int t, n = pan->pooled->full_n;
+
+    pan->re_uhat = malloc(n * sizeof *pan->re_uhat);
+
+    if (pan->re_uhat == NULL) {
+	return E_ALLOC;
+    } else {
+	for (t=0; t<n; t++) {
+	    pan->re_uhat[t] = NADBL;
+	}
+	return 0;
+    }
+}
+
+/* Fix uhat and yhat in two cases.
+
+   (a) When we estimated fixed effects using a de-meaned dataset we
    need to ensure that the uhat and yhat values get written to the
    right observation slots in relation to the full dataset, and also
    that the yhat values get corrected, putting the means back in.
 
-   (b) when estimating the random effects model we need to compute
+   (b) When estimating the random effects model we need to compute
    residuals based on the untransformed data (and again, place them
-   correctly in relation to the full dataset).
+   correctly in relation to the full dataset). However, if we're
+   going to produce robust standard errors we also need to preserve
+   the GLS residuals.
 
    The placement issue arises because the special datasets used in
    these cases are not necessarily of full length, since they are
@@ -2329,35 +2349,38 @@ static int
 fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 {
     const double *y = NULL;
-    double *uhat = pan->pooled->uhat;
     double *yhat = pan->pooled->yhat;
+    double *uhat = NULL;
     int n = pan->pooled->full_n;
     int re_n = 0;
-    double yht;
-    int ti;
+    double yht, SSR = 0.0;
     int i, j, s, t;
+    int err = 0;
 
     y = Z[pan->pooled->list[1]];
 
+    uhat = malloc(n * sizeof *uhat);
+    if (uhat == NULL) {
+	return E_ALLOC;
+    }
+
     if (pan->opt & OPT_U) {
-	/* random effects model */
-	pmod->ess = 0.0;
+	/* random effects */
 	if (pan->opt & OPT_R) {
-	    /* robust: we need an extra residuals array */
-	    pan->re_uhat = malloc(n * sizeof *pan->re_uhat);
-	    if (pan->re_uhat == NULL) {
-		return E_ALLOC;
-	    }
-	    for (t=0; t<n; t++) {
-		pan->re_uhat[t] = NADBL;
-	    }
+	    err = re_hatvars_prep(pan);
 	}
-    } 
+	if (err) {
+	    return err;
+	}
+    }
+
+    for (t=0; t<n; t++) {
+	uhat[t] = NADBL;
+    }
 
     s = 0;
-
     for (i=0; i<pan->nunits; i++) {
-	int Ti = pan->unit_obs[i];
+	int ti, Ti = pan->unit_obs[i];
 
 	if (Ti == 0) {
 	    continue;
@@ -2374,7 +2397,7 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 		yhat[t] = yht;
 		re_n++;
 		uhat[t] = y[t] - yht;
-		pmod->ess += uhat[t] * uhat[t];
+		SSR += uhat[t] * uhat[t];
 		if (pan->re_uhat != NULL) {
 		    /* store both the "fixed" and the GLS residuals */
 		    pan->re_uhat[t] = uhat[t];
@@ -2397,7 +2420,11 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     if (pan->opt & OPT_U) {
 	double r;
 
-	pmod->sigma = sqrt(pmod->ess / (re_n - (pmod->ncoeff - 1)));
+	/* Defer rewriting of pmod->ess and pmod->sigma to avoid
+	   screwing up the covariance matrix estimator and Hausman
+	   test.
+	*/
+	gretl_model_set_double(pmod, "fixed_SSR", SSR);
 	r = gretl_corr(pmod->t1, pmod->t2, y, yhat, NULL);
 	if (!na(r)) {
 	    gretl_model_set_double(pmod, "corr-rsq", r * r);
@@ -2406,17 +2433,16 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 
     pmod->full_n = n;
 
+    /* replace the uhat and yhat arrays on @pmod */
     free(pmod->uhat);
     pmod->uhat = uhat;
-    
     free(pmod->yhat);
     pmod->yhat = yhat;
 
-    /* we've stolen these */
-    pan->pooled->uhat = NULL;
+    /* NULLify stolen pointer */
     pan->pooled->yhat = NULL;
 
-    return 0;
+    return err;
 }
 
 static int
@@ -2673,11 +2699,6 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
     pmod->rho = NADBL;
     pmod->dw = NADBL;
 
-    nc = pmod->ncoeff;
-    pmod->ncoeff = pmod->dfn + 1;
-    ls_criteria(pmod);
-    pmod->ncoeff = nc;
-
     /* add joint chi-square test on regressors */
 
     if (pan->ntdum > 0) {
@@ -2692,6 +2713,15 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
 	    chisq = panel_overall_test(pmod, pan, 0, OPT_X);
 	}
     }
+
+    /* deferred rewriting of ess and sigma, etc. */
+    pmod->ess = gretl_model_get_double(pmod, "fixed_SSR");
+    pmod->sigma = sqrt(pmod->ess / (pmod->nobs - (pmod->ncoeff - 1)));
+    gretl_model_destroy_data_item(pmod, "fixed_SSR");
+    nc = pmod->ncoeff;
+    pmod->ncoeff = pmod->dfn + 1;
+    ls_criteria(pmod);
+    pmod->ncoeff = nc;
 
     if (!xna(chisq) && chisq >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_RE_WALD);
@@ -2717,7 +2747,7 @@ static void replace_re_residuals (MODEL *pmod, panelmod_t *pan)
 {
     int t;
 
-    /* replace the GLS residuals with the "fixed" ones */
+    /* replace the GLS residuals with the "fixed up" ones */
 
     for (t=0; t<pmod->full_n; t++) {
 	pmod->uhat[t] = pan->re_uhat[t];
@@ -2879,9 +2909,7 @@ static int within_variance (panelmod_t *pan,
 static void print_hausman_result (panelmod_t *pan, PRN *prn)
 {
     if (na(pan->H)) {
-	pputs(prn, _("Hausman test matrix is not positive definite (this "
-		     "result may be treated as\n\"fail to reject\" the random effects "
-		     "specification).\n"));
+	pputs(prn, _("Hausman test matrix is not positive definite!\n"));
     } else {
 	pprintf(prn, _("Hausman test statistic:\n"
 		       " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
@@ -2915,9 +2943,9 @@ static void save_hausman_result (panelmod_t *pan)
     }	    
 }
 
-/* handle the case where collinear terms were dropped
+/* Handle the case where collinear terms were dropped
    when doing the Hausman test via the regression
-   method in robust mode
+   method in robust mode.
 */
 
 static double robust_hausman_fixup (const int *hlist,
@@ -2968,15 +2996,19 @@ static double hausman_regression_result (panelmod_t *pan,
 	printmodel(&hmod, rset, OPT_NONE, prn);
 #endif
 	if (hmod.errcode == 0) {
-	    /* number of extra regressors actually used */
-	    pan->dfH = hlist[0] - (biglist[0] - hmod.list[0]);
+	    /* Find the number of additional regressors actually used,
+	       relative to @relist, allowing for the possibility
+	       that one or more elements of @biglist were dropped
+	       in estimation of @hmod due to excessive collinearity.
+	    */
+	    pan->dfH = hmod.list[0] - relist[0];
 	    if (pan->dfH > 0) {
 		if (pan->opt & OPT_R) {
 		    /* do robust Wald test */
 		    if (hmod.full_n < pan->pooled->full_n) {
 			hausman_move_uhat(&hmod, pan);
 		    }
-		    panel_robust_vcv(&hmod, pan, rset);
+		    panel_robust_vcv(&hmod, pan, rset); /* FIXME? */
 		    if (hmod.vcv != NULL) {
 			if (pan->dfH < hlist[0]) {
 			    ret = robust_hausman_fixup(hlist, &hmod);
@@ -3197,13 +3229,13 @@ static int random_effects (panelmod_t *pan,
 	    }
 	}
 
+	/* note: moved to here 2017-10-18 */
 	fix_panel_hatvars(&remod, pan, (const double **) dset->Z);
 
 	if (pan->opt & OPT_R) {
 	    panel_robust_vcv(&remod, pan, rset);
 	} else {
-	    /* double sigma = sqrt(remod.ess / remod.nobs); z ?? */
-	    double sigma = remod.sigma;
+	    double sigma = remod.sigma; /* or... ? */
 
 	    makevcv(&remod, sigma);
 	}
