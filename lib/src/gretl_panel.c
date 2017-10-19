@@ -3218,7 +3218,7 @@ static int random_effects (panelmod_t *pan,
 	}
 #endif
 	if (pan->bdiff != NULL) {
-	    /* matrix-diff Hausman variant */
+	    /* matrix-diff Hausman variant, if wanted */
 	    int vi, k = 0;
 
 	    for (i=0; i<remod.ncoeff; i++) {
@@ -3229,7 +3229,9 @@ static int random_effects (panelmod_t *pan,
 	    }
 	}
 
-	/* note: moved to here 2017-10-18 */
+	/* note: this call moved to here 2017-10-18 so we
+	   get computation of robust standard errors right
+	*/
 	fix_panel_hatvars(&remod, pan, (const double **) dset->Z);
 
 	if (pan->opt & OPT_R) {
