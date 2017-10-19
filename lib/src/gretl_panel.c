@@ -3236,7 +3236,10 @@ static int random_effects (panelmod_t *pan,
 	    panel_robust_vcv(&remod, pan, rset);
 	} else {
 	    double sigma = remod.sigma; /* or... ? */
-
+#if PDEBUG
+	    fprintf(stderr, "GLS sigma = %g\n", sigma);
+	    fprintf(stderr, "GLS SSR   = %.7g\n", remod.ess);
+#endif
 	    makevcv(&remod, sigma);
 	}
 
