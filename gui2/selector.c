@@ -6372,12 +6372,20 @@ static void build_omit_test_radios (selector *sr)
     }
 }
 
-static void toggle_nerlove (GtkComboBox *box, selector *sr)
+static void select_re_method (GtkComboBox *box, selector *sr)
 {
-    if (gtk_combo_box_get_active(box)) {
+    int a = gtk_combo_box_get_active(box);
+
+    if (a == 2) {
 	sr->opts |= OPT_N;
+	sr->opts &= ~OPT_X;
     } else {
 	sr->opts &= ~OPT_N;
+	if (a == 1) {
+	    sr->opts |= OPT_X;
+	} else {
+	    sr->opts &= ~OPT_X;
+	}
     }
 }
 
@@ -6406,12 +6414,13 @@ static void build_panel_radios (selector *sr)
     /* random effects transformation selector */
     w = gtk_combo_box_text_new();
     combo_box_append_text(w, _("Swamy-Arora"));
+    combo_box_append_text(w, _("Swamy-Arora / Baltagi-Chang"));
     combo_box_append_text(w, _("Nerlove"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     gtk_widget_set_sensitive(w, !fe);
     g_signal_connect(G_OBJECT(w), "changed",
-		     G_CALLBACK(toggle_nerlove), sr);
+		     G_CALLBACK(select_re_method), sr);
     sensitize_conditional_on(w, b2);
 }
 
