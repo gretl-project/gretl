@@ -15,12 +15,18 @@ version 2017d, in progress
   and max lags via scalar variables
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
+- CSV importation: smarter handling of quote symbols
+- Fix bug: incorrect standard errors when the --robust option
+  is given for random-effects panel estimator in presence
+  of missing values
 - Fix bug: rename() function not working on Windows when
   the target filename already exists
 - Fix Windows-specific bug: long strings could get "lost" in
   printf and sprintf
 - Fix bug: on repeated estimation of a given arima model in
   a function one might get slightly different results
+- Fix for Windows XP: produce a build of gnuplot that does
+  not depend on API introduced in later Windows versions
 - GUI: enable a tabbed editor for foreign scripts
 - GUI: fix breakage in function-package search facility
 - GUI: fix crash on requesting "Numerical summary" for panel
