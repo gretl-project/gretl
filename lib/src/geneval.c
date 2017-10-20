@@ -6624,17 +6624,22 @@ static void strstr_escape (char *s)
 
 static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret;
+    NODE *ret = NULL;
 
     if (starting(p)) {
-	const char *sl = l->v.str;
-	const char *sr = r->v.str;
+	const char *sr, *sl = l->v.str;
 
-	ret = aux_string_node(p);
+	if (r->t != STR) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_string_node(p);
+	}
 
 	if (ret == NULL) {
 	    return NULL;
 	}
+
+	sr = r->v.str;
 
 	if (f == F_STRSTR) {
 	    char *sret, *tmp = gretl_strdup(sr);
@@ -8806,10 +8811,6 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
     } else if (ltype == GRETL_TYPE_STRING) {
 	l->t = STR;
 	l->v.str = lp;
-	if (p->op == B_ADD) {
-	    /* reinterpret '+' when appending to a string */
-	    op->t = B_HCAT;
-	}
     } else if (ltype == GRETL_TYPE_BUNDLE) {
 	l->t = BUNDLE;
 	l->v.b = lp;
@@ -13732,6 +13733,11 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case B_HCAT:
+	if (l->t == STR) {
+	    ret = two_string_func(l, r, t->t, p);
+	    break;
+	}
+	/* Falls through. */
     case B_VCAT:
     case F_QFORM:
     case F_HDPROD:
@@ -13746,9 +13752,6 @@ static NODE *eval (NODE *t, parser *p)
 	if ((l->t == MAT || l->t == NUM) &&
 	    (r->t == MAT || r->t == NUM)) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
-	} else if (t->t == B_HCAT && l->t == STR && r->t == STR) {
-	    /* exception: string concatenation */
-	    ret = two_string_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
 			    MAT, (l->t == MAT)? r : l, p);
