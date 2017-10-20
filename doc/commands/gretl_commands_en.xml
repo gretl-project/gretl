@@ -9668,7 +9668,13 @@
 	If the "Random effects" button is checked, random effects
 	(GLS) estimates are computed. By default the method of Swamy
 	and Arora is used for the GLS transformation, but the Nerlove
-	method is available as an option.
+	method is available as an option (via the drop-down
+	selector). A further option is <quote>Swamy-Arora /
+	Baltagi-Chang</quote>: in the case of an unbalanced panel
+	this invokes a modification of the Swamy-Arora method
+	devised by <cite key="baltagi-chang94">Baltagi and Chang
+	(1994)</cite>, otherwise it's just equivalent to regular
+	Swamy-Arora.
       </para>
       <para context="cli">
 	The <opt>unbalanced</opt> option is available only for random
