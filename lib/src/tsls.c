@@ -352,6 +352,15 @@ ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
     return newlist;
 }
 
+/* prepend constant to list of instruments */
+
+static int zlist_prepend_const (int **pzlist)
+{
+    int clist[2] = {1, 0};
+
+    return gretl_list_insert_list(pzlist, clist, 1);
+}
+
 /**
  * tsls_make_endolist:
  * @reglist: regression specification.
@@ -400,9 +409,7 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
 
     if (addconst != NULL && *addconst) {
 	/* add constant to list of instruments */
-	int clist[2] = {1, 0};
-
-	*err = gretl_list_insert_list(instlist, clist, 1);
+	*err = zlist_prepend_const(instlist);
     }
 
     return endolist;
@@ -1498,7 +1505,7 @@ static int tsls_adjust_sample (const int *list, DATASET *dset,
 int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 {
     int *rlist, *zlist;
-    int i, err, oid;
+    int i, err;
 
     err = gretl_list_split_on_separator(list, reglist, instlist);
     if (err) {
@@ -1522,8 +1529,18 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     }
     
     if (!err) {
-	oid = zlist[0] - rlist[0] + 1;
-	if (oid < 0) {
+	int oid = zlist[0] - rlist[0] + 1;
+
+	if (oid < 0 && (in_gretl_list(rlist, 0) > 1) &&
+	    !in_gretl_list(zlist, 0)) {
+	    /* do not treat the constant as if it were endogenous */
+	    err = zlist_prepend_const(instlist);
+	    if (!err) {
+		zlist = *instlist;
+		oid++;
+	    }
+	}
+	if (!err && oid < 0) {
 	    gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
 				   "At least %d more instruments are needed."), -oid);
 	    fprintf(stderr, "zlist[0] = %d, rlist[0] = %d\n", zlist[0], rlist[0]);
