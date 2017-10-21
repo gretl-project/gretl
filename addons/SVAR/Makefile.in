@@ -1,6 +1,7 @@
 topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
+win32pkg = @win32pkg@
 tooldir = $(topsrc)/tools
 
 MAKE = @MAKE@
@@ -10,7 +11,12 @@ ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
 endif
 
-GFNDIR = $(prefix)/share/gretl/functions
+ifeq ($(win32pkg),yes)
+  GFNDIR = $(prefix)/functions
+else
+  GFNDIR = $(datarootdir)/gretl/functions
+endif
+
 GRETLCLI = ../../cli/gretlcli
 
 PKG = SVAR
