@@ -143,7 +143,7 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 
     if (!err) {
 	b = gretl_coeff_vector_from_model(pmod, mask, &err);
-    }  
+    }
 
     if (!err) {
 	double rc = gretl_symmetric_matrix_rcond(C, &err);
@@ -154,7 +154,7 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	fprintf(stderr, "rcond of Wald VCV matrix = %g\n", rc);
 #endif
 	if (!err) {
-	    if (rc < 1.0e-15) {
+	    if (rc < 1.0e-16) {
 		err = gretl_matrix_moore_penrose(C);
 	    } else {
 		err = gretl_invert_symmetric_matrix(C);
