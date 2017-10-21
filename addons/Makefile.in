@@ -1,6 +1,7 @@
 topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
+win32pkg = @win32pkg@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -12,7 +13,12 @@ INSTALL_DATA = ${INSTALL} -m 644
 vpath %.c $(topsrc)/addons
 
 tooldir = $(topsrc)/tools
-funcsdir = $(prefix)/share/gretl/functions
+
+ifeq ($(win32pkg),yes)
+  funcsdir = $(prefix)/functions
+else
+  funcsdir = $(datarootdir)/gretl/functions
+endif
 
 SUBDIRS = gig ivpanel SVAR HIP
 ALLSUBDIRS = gig ivpanel SVAR HIP

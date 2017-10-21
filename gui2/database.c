@@ -3140,10 +3140,12 @@ static int maybe_replace_db_path (const char *name,
     if (!err && buf.st_mtime > bufprev.st_mtime) {
 	/* @db is newer than @dbprev, so replace path */
 	fprintf(stderr, " using newer version in %s\n", path);
+	fprintf(stderr, " masking version in %s\n", pathprev);
 	gtk_list_store_set(GTK_LIST_STORE(mod), iprev, 2, path, -1);
 	ret = 1;
     } else {
 	fprintf(stderr, " keeping version in %s\n", pathprev);
+	fprintf(stderr, " ignoring version in %s\n", path);
     }
 
     g_free(path);
