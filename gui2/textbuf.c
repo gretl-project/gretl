@@ -563,12 +563,15 @@ void sourceview_print (windata_t *vwin)
 
     if (settings != NULL) {
 	gtk_print_operation_set_print_settings(print, settings);
-    } else {
-	gtk_source_print_compositor_set_right_margin(comp, 54, GTK_UNIT_POINTS);
-	gtk_source_print_compositor_set_left_margin(comp, 54, GTK_UNIT_POINTS);
-	gtk_source_print_compositor_set_top_margin(comp, 54, GTK_UNIT_POINTS);
-	gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
     }
+
+    /* should put up a dialog for these things? */
+    gtk_source_print_compositor_set_right_margin(comp, 60, GTK_UNIT_POINTS);
+    gtk_source_print_compositor_set_left_margin(comp, 60, GTK_UNIT_POINTS);
+    gtk_source_print_compositor_set_top_margin(comp, 54, GTK_UNIT_POINTS);
+    gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
+    gtk_source_print_compositor_set_wrap_mode(comp, GTK_WRAP_WORD);
+    gtk_source_print_compositor_set_body_font_name(comp, "Monospace 9");
 
     g_signal_connect(G_OBJECT(print), "begin_print", G_CALLBACK(begin_print), comp);
     g_signal_connect(G_OBJECT(print), "draw_page", G_CALLBACK(draw_page), comp);
