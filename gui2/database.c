@@ -50,6 +50,8 @@
 # include "gretlwin32.h"
 #endif
 
+#define DB_SEARCH_DEBUG 0
+
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
 static int add_local_db_series_list (windata_t *vwin);
@@ -2474,6 +2476,9 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *path,
 	    name = g_strndup(fname, len - 4);
 	    descrip = real_get_db_description(NULL, fname, path);
 	    if (name != NULL && descrip != NULL) {
+#if DB_SEARCH_DEBUG
+		fprintf(stderr, "  found '%s'\n", name);
+#endif
 		gtk_list_store_append(store, iter);
 		gtk_list_store_set(store, iter, 0, name, 1, descrip, 
 				   2, path, -1);
@@ -3110,14 +3115,118 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     return err;
 }
 
+static int maybe_replace_db_path (const char *name,
+				  GtkTreeIter *iter,
+				  GtkTreeIter *iprev,
+				  GtkTreeModel *mod)
+{
+    gchar *db, *dbprev;
+    gchar *path, *pathprev;
+    struct stat buf, bufprev;
+    int err = 0, ret = 0;
+
+    fprintf(stderr, "databases: found a duplicate of %s\n", name);
+
+    gtk_tree_model_get(mod, iter, 2, &path, -1);
+    gtk_tree_model_get(mod, iprev, 2, &pathprev, -1);
+    /* formulate full names of the two .bin files */
+    db = g_strdup_printf("%s%c%s.bin", path, SLASH, name);
+    dbprev = g_strdup_printf("%s%c%s.bin", pathprev, SLASH, name);
+
+    err = gretl_stat(db, &buf);
+    if (!err) {
+	err = gretl_stat(dbprev, &bufprev);
+    }
+    if (!err && buf.st_mtime > bufprev.st_mtime) {
+	/* @db is newer than @dbprev, so replace path */
+	fprintf(stderr, " using newer version in %s\n", path);
+	gtk_list_store_set(GTK_LIST_STORE(mod), iprev, 2, path, -1);
+	ret = 1;
+    } else {
+	fprintf(stderr, " keeping version in %s\n", pathprev);
+    }
+
+    g_free(path);
+    g_free(pathprev);
+    g_free(db);
+    g_free(dbprev);
+
+    return ret;
+}
+
+/* Purge any duplicates from the list of database files to
+   display -- in case of duplicates we keep the newer file
+   as assessed by stat's st_mtime.
+*/
+
+static void maybe_prune_db_list (GtkTreeView *tview,
+				 int *pndb)
+{
+    char **S;
+    GtkTreeModel *mod;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    GtkTreeIter *icpy;
+    int ndb, i = 0;
+
+    mod = gtk_tree_view_get_model(tview);
+    store = GTK_LIST_STORE(mod);
+    if (!gtk_tree_model_get_iter_first(mod, &iter)) {
+	return;
+    }
+
+    ndb = *pndb;
+    S = strings_array_new(ndb);
+    icpy = malloc(ndb * sizeof *icpy);
+    if (S == NULL || icpy == NULL) {
+	return;
+    }
+
+    while (1) {
+	int j, drop = 0;
+
+	gtk_tree_model_get(mod, &iter, 0, &S[i], -1);
+	icpy[i] = iter;
+	for (j=0; j<i; j++) {
+	    if (S[j] != NULL && !strcmp(S[i], S[j])) {
+		/* found a duplicate */
+		drop = 1;
+		*pndb -= 1;
+		maybe_replace_db_path(S[j], &iter, &icpy[j], mod);
+		gtk_list_store_remove(store, &iter);
+		g_free(S[i]);
+		S[i] = NULL;
+		break;
+	    }
+	}
+	if (!gtk_tree_model_iter_next(mod, &iter)) {
+	    break;
+	}
+	if (!drop) {
+	    i++;
+	}
+    }
+
+    for (i=0; i<ndb; i++) {
+	g_free(S[i]);
+    }
+    free(S);
+    free(icpy);
+}
+
 gint populate_dbfilelist (windata_t *vwin, int *pndb)
 {
     GtkListStore *store;
     GtkTreeIter iter;
     char **dirnames;
     DIR *dir;
-    int i, n_dirs, ndb = 0;
+    int i, n_dirs;
+    int nf, ndb = 0;
     int err = 0;
+
+#if DB_SEARCH_DEBUG
+    fprintf(stderr, "populate_dbfilelist...\n");
+#endif
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
@@ -3128,10 +3237,14 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
     for (i=0; i<n_dirs; i++) {
 	dir = gretl_opendir(dirnames[i]);
 	if (dir != NULL) {
-	    ndb += read_db_files_in_dir(dir, vwin->role, dirnames[i], store, &iter);
+	    nf = read_db_files_in_dir(dir, vwin->role, dirnames[i], store, &iter);
+#if DB_SEARCH_DEBUG
+	    fprintf(stderr, " found %d db files in '%s'\n", nf, dirnames[i]);
+#endif
+	    ndb += nf;
 	    closedir(dir);
 	}
-    }  
+    }
 
     strings_array_free(dirnames, n_dirs);
 
@@ -3139,6 +3252,7 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
 	errbox(_("No database files found"));
 	err = 1;
     } else {
+	maybe_prune_db_list(GTK_TREE_VIEW(vwin->listbox), &ndb);
 	presort_treelist(vwin);
     }
 
