@@ -8,6 +8,7 @@ version 2017d, in progress
 - New function cdummify(): applies to a list, with the effect
   of "dummifying" any and all series in the list that have
   the "coded" attribute set
+- new function numhess() to compute numerical Hessian
 - "pca" command and princomp() function: center but do not
   standardize when computing principal components using the
   covariance matrix
@@ -34,6 +35,8 @@ version 2017d, in progress
 - GUI: fix for GUI editing of MIDAS plots
 - GUI: improve font-selection dialogs, including a "Reset to
   default" option
+- GUI: don't show duplicates in the database browser window;
+  in case of duplicates just show the newest version
 
 2017-07-18 version 2017c
 - MIDAS support: several small fixes and refinements
