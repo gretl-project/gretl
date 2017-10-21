@@ -3176,6 +3176,7 @@
       <fnargs>
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar">h</fnarg>
       </fnargs> 
       <description>
 	<para>
@@ -3188,7 +3189,16 @@
 	  any additional arguments that may be needed, and it should
 	  return an <by r="m" c="1"/> matrix. On successful completion
 	  <lit>fdjac</lit> returns an <by r="m" c="n"/> matrix holding
-	  the Jacobian. Example:
+	  the Jacobian.
+	</para>
+	<para>
+	  The optional third argument can be used to set the step size
+	  <math>h</math> used in the approximation mechanism (see
+	  below); if this argument is omitted the step size is
+	  determined automatically.
+	</para>
+	<para>
+	  Here is an example of usage:
 	</para>
 	<code>
 	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
@@ -3230,6 +3240,7 @@
 	<para>
 	  <seelist>
             <fncref targ="BFGSmax"/>
+	    <fncref targ="numhess"/>
             <cmdref targ="set"/>
 	  </seelist>
 	</para>
@@ -6822,6 +6833,47 @@
         <fncref targ="rank"/>
         <fncref targ="svd"/>
       </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="numhess" section="numerical" output="matrix">
+      <fnargs>
+	<fnarg type="cvec">b</fnarg>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
+      </fnargs> 
+      <description>
+	<para>
+	  Calculates a numerical approximation to the Hessian
+	  associated with the <math>n</math>-vector
+	  <argname>b</argname> and the objective function specified by
+	  the argument <argname>fcall</argname>.  The function call
+	  should take <argname>b</argname> as its first argument
+	  (either straight or in pointer form), followed by any
+	  additional arguments that may be needed, and it should
+	  return a scalar result. On successful completion
+	  <lit>numhess</lit> returns an <by r="n" c="n"/> matrix
+	  holding the Hessian.
+	</para>
+	<para>
+	  The method used is Richardson extrapolation, with four
+	  steps. The optional third argument can be used to set the
+	  fraction <math>d</math> of the parameter value used in
+	  setting the initial step size; if this argument is omitted
+	  the default is <math>d</math> = 0.01.
+	</para>
+	<para>
+	  Here is an example of usage:
+	</para>
+	<code>
+	  matrix H = numhess(theta, myfunc(&amp;theta, X))
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="BFGSmax"/>
+	    <fncref targ="fdjac"/>
+	  </seelist>
 	</para>
       </description>
     </function>
