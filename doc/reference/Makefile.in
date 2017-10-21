@@ -18,6 +18,7 @@ IGNORE_SRCS = \
         estim_private.h \
 	flow_control.c \
 	flow_control.h \
+	gretl_cmatrix.h \
 	gretl_bundle.c \
 	gretl_bundle.h \
 	gretl_intl.c \
@@ -45,6 +46,7 @@ IGNORE_SRCS = \
 	tsls.h \
 	usermat.c \
 	usermat.h \
+	uservar_priv.h \
 	version.h
 
 # extra options to supply to gtkdoc-scan
