@@ -3196,6 +3196,7 @@ static void maybe_prune_db_list (GtkTreeView *tview,
 		*pndb -= 1;
 		maybe_replace_db_path(S[j], &iter, &icpy[j], mod);
 		gtk_list_store_remove(store, &iter);
+		iter = icpy[i-1]; /* back up one row */
 		g_free(S[i]);
 		S[i] = NULL;
 		break;
