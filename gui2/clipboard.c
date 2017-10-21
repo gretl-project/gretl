@@ -22,7 +22,7 @@
 #include "clipboard.h"
 #include "gpt_control.h"
 
-#define CLIPDEBUG 0
+#define CLIPDEBUG 1
 
 static gchar *clipboard_buf;
 static gsize clipboard_bytes;
@@ -115,7 +115,7 @@ int buf_to_clipboard (const char *buf)
     return err;
 }
 
-#if 1 || CLIPDEBUG
+#if CLIPDEBUG
 
 static const char *fmt_label (int f)
 {
@@ -151,7 +151,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 				 guint info,
 				 gpointer p)
 {
-#if 1 || CLIPDEBUG
+#if CLIPDEBUG
     fprintf(stderr, "gretl_clipboard_get: info = %d (%s)\n", 
 	    (int) info, fmt_label(info));
 #endif
@@ -295,7 +295,8 @@ int image_file_to_clipboard (const char *fname)
 
 #if CLIPDEBUG
     fprintf(stderr, "image_file_to_clipboard: "
-	    "buf at %p, size %d\n", (void *) buf, (int) sz);
+	    "buf at %p, size %d, fname %s\n", (void *) buf,
+	    (int) sz, fname);
 #endif    
 
     if (buf != NULL && *buf != '\0') {
