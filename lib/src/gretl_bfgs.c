@@ -385,7 +385,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
 			"criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
 		b[i] = bi0;
 		err = E_NAN;
-		goto end_first;
+		goto end_first_try;
 	    }
 	    b[i] = bi0 - h[i];
 	    f2 = func(b, data);
@@ -394,7 +394,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
 			"criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
 		b[i] = bi0;
 		err = E_NAN;
-		goto end_first;
+		goto end_first_try;
 	    }
 	    /* F'(i) */
 	    Dx[k] = (f1 - f2) / (2 * h[i]);
@@ -413,16 +413,6 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	}
 	D[i] = Dx[0];
 	Hd[i] = Hx[0];
-    }
-
- end_first:
-    if (err == E_NAN && d > 0.0001) {
-	err = 0;
-	gretl_error_clear();
-	d /= 10;
-	goto try_again;
-    } else if (err) {
-	goto bailout;
     }
 
     /* second derivatives: lower half of Hessian only */
@@ -446,7 +436,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
 			b[i] = bi0;
 			b[j] = bj0;
 			err = E_NAN;
-			goto bailout;
+			goto end_first_try;
 		    }
 		    b[i] = bi0 - h[i];
 		    b[j] = bj0 - h[j];
@@ -457,7 +447,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
 			b[i] = bi0;
 			b[j] = bj0;
 			err = E_NAN;
-			goto bailout;
+			goto end_first_try;
 		    }
 		    /* cross-partial */
 		    Dx[k] = (f1 - 2*f0 + f2 - Hd[i]*h[i]*h[i]
@@ -479,18 +469,26 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	b[i] = bi0;
     }
 
-    /* transcribe the (negative of?) the Hessian */
-    u = n;
-    for (i=0; i<n; i++) {
-	for (j=0; j<=i; j++) {
-	    hij = neg ? -D[u] : D[u];
-	    gretl_matrix_set(H, i, j, hij);
-	    gretl_matrix_set(H, j, i, hij);
-	    u++;
-	}
+ end_first_try:
+    if (err == E_NAN && d > 0.0001) {
+	err = 0;
+	gretl_error_clear();
+	d /= 10;
+	goto try_again;
     }
 
- bailout:
+    if (!err) {
+	/* transcribe the (negative of?) the Hessian */
+	u = n;
+	for (i=0; i<n; i++) {
+	    for (j=0; j<=i; j++) {
+		hij = neg ? -D[u] : D[u];
+		gretl_matrix_set(H, i, j, hij);
+		gretl_matrix_set(H, j, i, hij);
+		u++;
+	    }
+	}
+    }
 
     if (neg) {
 	/* internal use, not user_numhess(): we should ensure
