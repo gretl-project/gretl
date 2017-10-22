@@ -35,8 +35,8 @@
  <gentext key="bundle"        text="bundle"/>
  <gentext key="scalar"        text="scalare"/>
  <gentext key="pscalar"       text="scalare tra 0 e 1"/>
- <gentext key="int"           text="integer"/>
- <gentext key="bool"          text="boolean"/>
+ <gentext key="int"           text="intero"/>
+ <gentext key="bool"          text="booleano"/>
  <gentext key="series"        text="serie"/>
  <gentext key="vector"        text="vettore"/>
  <gentext key="matrix"        text="matrice"/>
@@ -50,22 +50,22 @@
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>
  <gentext key="string"        text="stringa"/>
- <gentext key="listetc"       text="list, matrix, bundle or array"/>
- <gentext key="strings"       text="array of strings"/>
- <gentext key="matrices"      text="array of matrices"/>
- <gentext key="bundles"       text="array of bundles"/>
- <gentext key="string-or-strings"  text="string or array of strings"/>
- <gentext key="strings-or-list"  text="array of strings or list"/>
+ <gentext key="listetc"       text="lista, matrice, bundle o array"/>
+ <gentext key="strings"       text="array di stringhe"/>
+ <gentext key="matrices"      text="array di matrici"/>
+ <gentext key="bundles"       text="array di bundle"/>
+ <gentext key="string-or-strings"  text="stringa o array di stringhe"/>
+ <gentext key="strings-or-list"  text="array di stringhe o lista"/>
  <gentext key="char"          text="carattere"/>
  <gentext key="coeffname"     text="nome del coefficiente"/>
  <gentext key="sslist"        text="scalare, serie o lista"/>
  <gentext key="smlist"        text="serie, matrice o lista"/>
- <gentext key="fncall"        text="function call"/>
+ <gentext key="fncall"        text="chiamata a funzione"/>
  <gentext key="optional"      text="opzionale"/>
  <gentext key="conditional"   text="condizionale"/>
  <gentext key="seebelow"      text="vedi sotto"/>
  <gentext key="varargs"       text="vedi sotto"/>
  <gentext key="chapter"       text="il capitolo"/>
- <gentext key="applies-to"    text="Applies to"/> 
+ <gentext key="applies-to"    text="Si applica a"/> 
  
 </localization>

@@ -146,7 +146,7 @@
 	  di covarianza dei disturbi sia diagonale. La statistica
 	  utilizzata è quella di Breusch&ndash;Pagan tranne nel caso
 	  del SUR iterato, nel qual caso è un test LR. si veda la
-	  <guideref targ="chap:system"/> per dettagli; see also
+	  <guideref targ="chap:system"/> per dettagli; vedi anche
 	  <fncref targ="$diagpval"/>.
 	</para>
       </description>
@@ -157,7 +157,7 @@
     <para>
       Fornisce il p-value per la statistica Durbin&ndash;Watson
       relativa all'ultimo modello stimato, se disponibile. Tale
-      valore è calcolato ramite la procedura di Imhof.
+      valore è calcolato tramite la procedura di Imhof.
     </para>
 	<para>
 	  A causa della limitata precisione dell'aritmetica digitale,
@@ -479,7 +479,7 @@
 	  Deve seguire la stima di un modello ad equazione singole, e
 	  restituisce un bundle contenente svariati elementi relativi
 	  al modello. I consueti accessori sono tutti inclusi, e
-	  sono referenziati da chiavi identiche al nomce
+	  sono referenziati da chiavi identiche al nome
 	  dell'accessore, meno il segno del dollaro. Ad esempio, i
 	  residui appaiono sotto la chiave <lit>uhat</lit> e la somma
 	  dei quadrati dei residui sotto <lit>ess</lit>.
@@ -489,7 +489,7 @@
 	  informazioni aggiuntive; le chiavi relative dovrebbero
 	  essere (si spera) relativamente auto-esplicative. Il modo
 	  più semplice per verificare il contenuto del bundle è
-	  stamporlo, come in questo esempio:
+	  stamparlo, come in questo esempio:
 	</para>
 	<code>
 	  ols y 0 x
@@ -1015,7 +1015,7 @@
       forma <lit>x.y.z</lit> (ad esempio, 1.7.6).  Il valore prodotto
       da questo accessore è pari a <lit>10000*x + 100*y + z</lit>,
       cosicché 1.7.6 diventa 10706. Come si vede, l'ordinamento
-      risuolta preservato dal vecchio al nuovo sistema.
+      risulta preservato dal vecchio al nuovo sistema.
     </para>
       </description>
     </function>
@@ -1502,8 +1502,8 @@
       <description>
 	<para>
 	  Massimizzazione numerica vincolata via L-BFGS-B (limited
-	  memory BFGS, see <cite key="byrd-etal95">Byrd, Lu, Nocedal
-	  and Zhu, 1995</cite>).  In ingresso, il vettore
+	  memory BFGS, vedi <cite key="byrd-etal95">Byrd, Lu, Nocedal
+	  e Zhu, 1995</cite>).  In ingresso, il vettore
 	  <argname>b</argname> contiene i valori iniziali di un
 	  insieme di parametri, <argname>bounds</argname> contiene i
 	  vincoli a tali parametri (vedi sotto), e
@@ -1523,8 +1523,8 @@
 	  di parametri <argname>b</argname>. Per ogni riga, il primo
 	  elemento è l'indice (a base 1) del parametro da vincolare;
 	  il secondo ed il terzo sono rispettivamente i limiti
-	  inferiore e superior. Per indicare l'assenza di vincolo in
-	  una direzione, si usiano i valori <lit>-$huge</lit> e
+	  inferiore e superiore. Per indicare l'assenza di vincolo in
+	  una direzione, si usano i valori <lit>-$huge</lit> e
 	  <lit>$huge</lit>. Ad esempio, il vincolo secondo cui il
 	  secondo elemento del vettore dev'essere non-negativo si
 	  esprime come:
@@ -1533,12 +1533,12 @@
 	  matrix bounds = {2, 0, $huge}
 	</code>
 	<para>
-	  Il terzo argomento (opzionale) permette di formire il
+	  Il terzo argomento (opzionale) permette di fornire il
 	  gradiente analitico (se assente, il gradiente sarà calcolato
 	  numericamente).  La chiamata alla funzione gradiente
 	  <argname>g</argname> deve avere come primo argomento una
 	  puntatore ad una matrice
-	  pre-definita dlle dimensioni corrette per contenere il gradiente.
+	  pre-definita delle dimensioni corrette per contenere il gradiente.
 	  Inoltre, deve prendere come argomento il vettore dei
 	  parametri (come puntatore o meno). Altri argomenti sono opzionali.
 	</para>
@@ -2038,7 +2038,7 @@
 	<para>
 	  Ritorna il numero di condizionamento della matrice
 	  <argname>X</argname>, di dimensioni <by r="n" c="k"/>, come
-	  definito in <cite key="belsley-etal80">Belsley, Kuh and
+	  definito in <cite key="belsley-etal80">Belsley, Kuh e
 	  Welsch (1980)</cite>. Se le colonne di <argname>X</argname>
 	  sono ortogonali fra loro, il risultato è 1. All'opposto, un
 	  valore molto grande del numero di condizionamento è un
@@ -2239,7 +2239,7 @@
       <description>
     <para>
       Calcola la covarianza fra <argname>y1</argname> e
-      <argname>y2</argname>. Gli argomenti dovrebbbero essere due variabili o due
+      <argname>y2</argname>. Gli argomenti dovrebbero essere due variabili o due
       vettori con lo stesso numero di elementi.
       <seelist> 
         <fncref targ="corr"/> 
@@ -2418,13 +2418,13 @@
 	  <quote><lit>errmsg</lit></quote>.  Si noti, tuttavia, che
 	  <quote>a buon fine</quote> in questo senso non implica che
 	  tutti i dati desiderati siano stati scaricati, ma solo che
-	  il server ha dato una qualche risposta. È reposnsabilità
+	  il server ha dato una qualche risposta. È responsabilità
 	  dell'utente controllare il contenuto del buffer di output
 	  (che per esempio potrebbe contenere semplicemente il testo
 	  <quote>Page not found</quote>).
 	</para>
 	<para>
-	  A seguire, un esempio, in cui scharicheremo dei dati dal
+	  A seguire, un esempio, in cui scaricheremo dei dati dal
 	  sito dell'US Bureau of Labor Statistics; a tal fine, bisogna
 	  formulare una query JSON. Si noti l'uso di <cmdref
 	  targ="sprintf"/> per inserire il carattere <lit>"</lit> nei
@@ -2523,7 +2523,7 @@
 	  bundle b2 = defbundle("yn", normal(), "x", 5)
 	</code>
 	<para>
-	  Il primo esempio crea un bundle contentente una stringa e
+	  Il primo esempio crea un bundle contenente una stringa e
 	  una matrice; il secondo, un bundle con una serie e uno
 	  scalare. Si noti che, con questa funzione, non è possibile
 	  specificare un tipo per gli argomenti, ma bisogna accettare
@@ -2556,11 +2556,11 @@
 	  appropriati. Ogni argomento deve essere una serie
 	  (identificata dal nome o dal suo numero ID) o una lista
 	  (data dal nome di una lista preesistente o da un'espressione
-	  che resitutisce una lista).
+	  che restituisce una lista).
 	</para>
 	<para>
 	  Si noti: questa funzione non fa altro che concatenare la
-	  erie e/o liste fornite come argomenti. È responsabilità
+	  serie e/o liste fornite come argomenti. È responsabilità
 	  dell'utente assicurarsi che non ci siano duplicazioni.
 	</para>
       </description>
@@ -2731,7 +2731,7 @@
       <description>
 	<para>
 	  Restituisce una lista con gli stessi elementi di
-	  <argname>X</argname>, fuorché le serie collineari. Qunidi,
+	  <argname>X</argname>, fuorché le serie collineari. Quindi,
 	  se tutte le serie in <argname>X</argname>
 	  sono linearmente indipendenti, la lista risultato è
 	  semplicemente una copia di <argname>X</argname>.
@@ -2841,7 +2841,7 @@
     <para>
       Dato l'anno in <argname>x</argname>, ritorna la data di
       Pasqua nel calendario gregoriano sotto forma dello scalare
-      <math>mese + giorno/100</math>. Si not che, per questa
+      <math>mese + giorno/100</math>. Si noti che, per questa
       convenzione, il 10 aprile è 4.1; quindi, 4.2 sarà il 20
       aprile, non il 2 (che sarebbe 4.02).
     </para>
@@ -3113,12 +3113,13 @@
 
     <function name="fdjac" section="numerical" output="matrix">
       <fnargs>
-    <fnarg type="cvec">b</fnarg>
-    <fnarg type="fncall">fcall</fnarg>
+	<fnarg type="cvec">b</fnarg>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar">h</fnarg>
       </fnargs> 
       <description>
     <para>
-          Calcola un'approssimazione numerica allo jacobiano associato
+          Calcola un'approssimazione numerica allo Jacobiano associato
           al vettore <argname>b</argname> (con <math>n</math>elementi)
           e la trasformazione definita dall'argomento
           <argname>fcall</argname>. Questa funzione deve avere
@@ -3126,8 +3127,17 @@
           puntatore o no), seguito da eventuali altri parametri, se
           necessario; deve restituire una matrice <by r="m"
           c="1"/>. Se il comando va a buon fine, verrà restituita una
-          matrice <by r="m" c="n"/> contenente lo jacobiano. Ad
+          matrice <by r="m" c="n"/> contenente lo Jacobiano. Ad
           esempio:
+    </para>
+    <para>
+	Il terzo argomento (opzionale) consente di aggiustare la
+	lunghezza di passo <math>h</math> usata nel meccanismo di
+	approssimazione (vedi sotto); se omesso, <math>h</math> viene
+	determinata automaticamente.
+    </para>
+    <para>
+      Per esempio:
     </para>
     <code>
       matrix J = fdjac(theta, myfunc(&amp;theta, X))
@@ -3171,6 +3181,7 @@
     <para>
       <seelist>
         <fncref targ="BFGSmax"/>
+        <fncref targ="numhess"/>
         <cmdref targ="set"/>
       </seelist>
     </para>
@@ -3371,7 +3382,7 @@
       Destinato all'uso in relazione al comando <cmdref
       targ="join"/>.  Restituisce il risultato della conversione
       di <argname>rawname</argname> in un identificatore gretl
-      valido, che deve inizione con un carattere alfabetico,
+      valido, che deve iniziare con un carattere alfabetico,
       contenere esclusivamente caratteri (ASCII), numeri e trattino
       basso, e non deve eccedere i 31 caratteri. Le regole
       utilizzate per la conversione sono:
@@ -3421,7 +3432,7 @@
         \[
         \Delta^d y_t = y_t - \sum_{i=1}^{\infty} \psi_i y_{t-i}
         \]
-      where
+      dove
         \[\psi_i = \frac{\Gamma(i-d)}{\Gamma(-d) \Gamma(i+1)}\]
     </para>
     <para>
@@ -3642,7 +3653,7 @@
       <argname>y</argname>, che devono contenere valori
       non-negativi. Un risultato pari a 0 indica uguaglianza
       perfetta. Il valore massimo per l'indice, con una serie
-      contentente <math>n</math> membri è (<math>n</math> &minus;
+      contenente <math>n</math> membri è (<math>n</math> &minus;
       1)/<math>n</math>, che si ha quando un solo elemento ha valore
       positivo; il valore 1.0 è, pertanto, il limite a cui tende una
       serie molto grande con massima disuguaglianza.
@@ -3761,7 +3772,7 @@
       scartati: questo valore può essere modificato specificando
       l'argomento opzionale <argname>offset</argname> (che deve
       essere un numero intero non-negativo). Si veda
-      <cite key="halton64">Halton and Smith (1964)</cite>.
+      <cite key="halton64">Halton e Smith (1964)</cite>.
     </para>
       </description>
     </function>
@@ -3858,7 +3869,7 @@
 	  Data una <cmdref targ="MIDAS_list"/>, <repl>mlist</repl>,
 	  produce una lista contenente i ritardi ad alta frequenza da
 	  <repl>minlag</repl> fino a <repl>maxlag</repl>. Valori
-	  positivi indicano ritardi, valori negativi anticipi. Ad esmepio, se
+	  positivi indicano ritardi, valori negativi anticipi. Ad esempio, se
 	  <repl>minlag</repl> è pari a &minus;3 e <repl>maxlag</repl> è 5
 	  la lista risultato conterrà 9 serie: 3 anticipi, il valore
 	  contemporaneo e 5 ritardi.
@@ -3892,7 +3903,7 @@
 	<para>
 	  I nomi delle serie così create verranno costruiti dal
 	  <repl>prefisso</repl> (che dev'essere una stringa ASCII
-	  di 24 caratteri al massimo, obbediente ai rquisiti di un
+	  di 24 caratteri al massimo, obbediente ai requisiti di un
 	  identificativo valido), più una o più cifre per il
 	  sottoperiodo. Se uno o più dei nomi così risultanti fosse
 	  già esistente, verrà segnalato un errore.
@@ -4065,7 +4076,7 @@
       della somma dei valori assoluti degli elementi nelle righe.
     </para>
     <para context="tex">
-      Restiuisce la norma-$\infty$ di una matrice $r\times c$ 
+      Restituisce la norma-$\infty$ di una matrice $r\times c$ 
       <argname>X</argname>: 
         \[\| X \|_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|\]
     </para>
@@ -4317,7 +4328,7 @@
     <para>
       Restituisce l'inversa di una matrice simmetrica, definita
       positiva <argname>A</argname>.  Questa funzione è leggermente più veloce
-      di <fncref targ="inv"/> per grandi matrici poichè non viene
+      di <fncref targ="inv"/> per grandi matrici poiché non viene
       effettuato nessun controllo per la simmetria; per questa
       ragione deve essere utilizzata con attenzione.
     </para>
@@ -4544,7 +4555,7 @@
       c="p"/>), restituisce un'estrazione dalla distribuzione inversa di 
       Wishart con <argname>v</argname> gradi di 
       libertà. La matrice che ne risulta è anch'essa <by r="p" c="p"/>.  
-      Utilizza l'algoritmo di <cite key="odell-feiveson66">Odell and Feiveson
+      Utilizza l'algoritmo di <cite key="odell-feiveson66">Odell e Feiveson
       (1966)</cite>.
     </para>
       </description>
@@ -4567,7 +4578,7 @@
 	  Questa funzione restituisce una stringa con i dati trovati
 	  nel buffer al path specificato. Sono supportati i tipi di
 	  dato <quote>double</quote> (decimale), <quote>int</quote>
-	  (intero) and <quote>string</quote> (stringa). Nel caso di
+	  (intero) e <quote>string</quote> (stringa). Nel caso di
 	  argomenti numerici, viene restituita la loro
 	  rappresentazione stringa (con le convenzioni
 	  <quote>C</quote> per i double).  Se l'oggetto a cui
@@ -4580,7 +4591,7 @@
 	  esempio
 	  <url>http://goessner.net/articles/JsonPath/</url>. Tuttavia,
 	  si noti che il modulo di gretl per <lit>jsonget</lit> è
-	  formito dalla libreria esterna <lit>json-glib</lit>, la
+	  fornito dalla libreria esterna <lit>json-glib</lit>, la
 	  quale non necessariamente supporta tutti gli elementi di
 	  JsonPath. Inoltre, la funzionalità precisa di
 	  <lit>json-glib</lit> può dipendere dalla versione installata
@@ -4698,7 +4709,7 @@
       </fnargs>
       <description>
 	<para>
-	  Effettua il <quote>disturbance smooting</quote> per un
+	  Effettua il <quote>disturbance smoothing</quote> per un
 	  bundle tipo Kalman inizializzato in precedenza con la funzione
 	  <fncref targ="ksetup"/>; restituisce 0 se il comando va a
 	  buon fine e 1 se ci sono stati problemi numerici.
@@ -4712,10 +4723,10 @@
 	  L'argomento opzionale <argname>MSE</argname> determina il
 	  contenuto di <lit>Mod.smdisterr</lit>. Se esso è 0 od
 	  omesso, questa matrice conterrà gli errori standard non
-	  condizionali dei disturbi, che sono dimsolito usati per
+	  condizionali dei disturbi, che sono di solito usati per
 	  produrre i cosiddetti <emphasis>residui
 	  ausiliari</emphasis>. Altrimenti, <lit>Mod.smdisterr</lit>
-	  conterrà la stima degli scarti quadratici medi dei reidui
+	  conterrà la stima degli scarti quadratici medi dei residui
 	  ausiliari dal loro vero valore.
 	</para>
 	<para>
@@ -4738,21 +4749,21 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a forward, filtering pass on a Kalman bundle
-	  previously set up by means of the <fncref targ="ksetup"/>
-	  and returns 0 on successful completion or 1 if numerical
-	  problems are encountered.
+	  Effettua un passaggio di filtraggio in avanti su un bundle
+	  di tipo Kalman, creato in precedenza per mezzo della
+	  funzione <fncref targ="ksetup"/>; ritorna 0 se l'esecuzione
+	  va a buon fine o 1 quando si incontrino problemi numerici.
 	</para>
 	<para>
-	  On succession completion, the one-step-ahead prediction
-	  errors will be available as <lit>Mod.prederr</lit> and the
-	  sequence of their covariance matrices as
-	  <lit>Mod.pevar</lit>, respectively. Moreover, the key
-	  <lit>Mod.llt</lit> gives access to a T-vector, containing
-	  the log-likelihood by observation.
+	  Se l'esecuzione va a buon fine, l'elemento
+	  <lit>Mod.prederr</lit> conterrà gli errori di previsione a
+	  un passo, assieme alla sequenza delle rispettive matrici di
+	  covarianza in <lit>Mod.pevar</lit>. Inoltre, l'elemento
+	  <lit>Mod.llt</lit> conterrà un vettore di dimensione T,
+	  contenente la log-verosimiglianza per osservazione.
 	</para>
 	<para>
-	  For more details see <guideref targ="chap:kalman"/>.
+	  Per ulteriori dettagli, vedi <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -6717,6 +6728,47 @@
       </description>
     </function>
 
+    <function name="numhess" section="numerical" output="matrix">
+      <fnargs>
+	<fnarg type="cvec">b</fnarg>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
+      </fnargs> 
+      <description>
+	<para>
+	  Calcola un'approssimazione numerica alla matrice hessiana
+	  della funzione specificata dall'argomento
+	  <argname>fcall</argname> nel punto dato dal vettore a
+	  <math>n</math> dimensioni <argname>b</argname>.  La funzione
+	  deve avere <argname>b</argname> come suo primo argomento (in
+	  forma di puntatore o meno), seguito da quanti parametri si
+	  voglia; deve ritornare uno scalare. Se la funzione va a buon
+	  fine <lit>numhess</lit> restituisce una matrice <by r="n"
+	  c="n"/> contenente l'hessiana, che è per costruzione
+	  esattamente simmetrica.
+	</para>
+	<para>
+	  Il metodo usato è l'estrapolazione di Richardson a quattro
+	  passi. Il terzo argomento (opzionale) si usa per assegnare
+	  un valore alla frazione <math>d</math> del parametro, che
+	  viene usata per la lunghezza di passo iniziale; se omesso,
+	  il valore di default è <math>d</math> = 0.01.
+	</para>
+	<para>
+	  Un esempio:
+	</para>
+	<code>
+	  matrix H = numhess(theta, myfunc(&amp;theta, X))
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="BFGSmax"/>
+	    <fncref targ="fdjac"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="obs" section="data-utils" output="series">
       <description>
 	<para>

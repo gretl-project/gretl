@@ -6854,7 +6854,7 @@
 	  additional arguments that may be needed, and it should
 	  return a scalar result. On successful completion
 	  <lit>numhess</lit> returns an <by r="n" c="n"/> matrix
-	  holding the Hessian.
+	  holding the Hessian, which is exactly symmetric by construction.
 	</para>
 	<para>
 	  The method used is Richardson extrapolation, with four
