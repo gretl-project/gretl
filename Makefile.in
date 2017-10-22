@@ -51,10 +51,9 @@ INSTALL_DATA = ${INSTALL} -m 644
 export
 
 tooldir = $(topsrc)/tools
-texdir = $(DOCDIR)/tex
 
-SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR) $(ADDONSDIR)
-ALLSUBDIRS = lib cli gui2 plugin po share tests xdg addons
+SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(DOCDIR) $(XDGDIR) $(ADDONSDIR)
+ALLSUBDIRS = lib cli gui2 plugin po share tests doc xdg addons
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
 install-man tags dist distclean check buildstamp
@@ -69,11 +68,7 @@ pdfdocs:
 	echo "pdfdocs: this target is not enabled" ; else \
 	$(MAKE) -C $(DOCDIR) ; fi
 
-texclean:
-	rm -rf $(texdir)/*.aux $(texdir)/*.log $(texdir)/*.out $(texdir)/*.toc
-	rm -rf $(texdir)/*.bbl $(texdir)/*.blg
-
-clean: texclean
+clean:
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean; done
 	$(MAKE) -C utils/emacs clean
 	rm -f build.h builddate

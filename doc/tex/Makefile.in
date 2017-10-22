@@ -2,7 +2,14 @@ topsrc = @top_srcdir@
 docsrc = $(topsrc)/doc
 tooldir = $(topsrc)/tools
 prefix = @prefix@
-gretldir = $(prefix)/share/gretl
+datarootdir = @datarootdir@
+win32pkg = @win32pkg@
+
+ifeq ($(win32pkg),yes)
+  docdir = $(prefix)/doc
+else
+  docdir = $(datarootdir)/gretl/doc
+endif
 
 MAKE = @MAKE@
 INSTALL_DATA = cp -fp
@@ -99,8 +106,8 @@ STYSRC = $(docsrc)/gretl.sty.in
 
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
-all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) \
-	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK)
+all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(KBD) \
+	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTKBD)
 
 $(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
@@ -173,11 +180,11 @@ $(ALTPKGBOOK): pkgbook-a4.tex links date.tex $(STYSRC)
 
 $(ALTMPIDOC): gretl-mpi-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
-	bibtex midas-gretl-a4
-	pdflatex $<
 	pdflatex $<
 
 $(ALTMIDASDOC): midas-gretl-a4.tex links date.tex $(STYSRC)
+	pdflatex $<
+	bibtex midas-gretl-a4
 	pdflatex $<
 	pdflatex $<
 
@@ -280,10 +287,10 @@ bibpass: onepass refpass
 
 install: all installdirs
 	for f in *.pdf ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
 
 installdirs:
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/doc
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(docdir)
 
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
