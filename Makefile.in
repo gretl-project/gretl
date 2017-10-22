@@ -52,7 +52,7 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(DOCDIR) $(XDGDIR) $(ADDONSDIR)
+SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR) $(ADDONSDIR)
 ALLSUBDIRS = lib cli gui2 plugin po share tests doc xdg addons
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
@@ -83,6 +83,9 @@ install: $(SUBDIRS) installdirs install-man
 install-strip: $(SUBDIRS) installdirs install-man	
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip || exit 1; done
 	$(MAKE) -C share install-strip
+
+install-doc: pdfdocs
+	$(MAKE) -C $(DOCDIR) install
 
 install-man:
 	$(tooldir)/install_man $(tooldir) $(DESTDIR)$(prefix) $(topsrc)/gretl.1
