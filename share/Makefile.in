@@ -16,7 +16,6 @@ endif
 
 tooldir = $(topsrc)/tools
 sharesrc = $(topsrc)/share
-pdfdir = ../doc/tex
 
 INSTALL_DATA = cp -fp
 
@@ -109,10 +108,6 @@ install_help: $(query_make_help)
 	$(INSTALL_DATA) $(sharesrc)/$$f $(DESTDIR)$(gretldir) ; fi ; done
 	for f in $(sharesrc)/texfigs/*.png ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/helpfigs ; done
-	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
-	if test -f $$f ; then $(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; fi ; done
-	for f in $(pdfdir)/gretl-ref-a4.pdf $(pdfdir)/gretl-guide-a4.pdf ; do \
-	if test -f $$f ; then $(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; fi ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir) 
