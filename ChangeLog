@@ -16,7 +16,9 @@ version 2017d, in progress
   and max lags via scalar variables
 - psdroot() function: use improved algorithm (from Golub and
   Van Loan)
-- CSV importation: smarter handling of quote symbols
+- fdjac() function: add (optional) trailing argument to set
+  step size
+- CSV importation: improved handling of quote symbols
 - Fix bug: incorrect standard errors when the --robust option
   is given for random-effects panel estimator in presence
   of missing values
