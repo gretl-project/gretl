@@ -90,7 +90,7 @@
       <description>
     <para>
       Deve seguire la stima di un VAR o un VECM; produce la matrice
-          compagna.
+      compagna.
     </para>
       </description>
     </function>
@@ -478,11 +478,11 @@
 	<para>
 	  Deve seguire la stima di un modello ad equazione singole, e
 	  restituisce un bundle contenente svariati elementi relativi
-	  al modello. I consueti accessori sono tutti inclusi, e
-	  sono referenziati da chiavi identiche al nome
-	  dell'accessore, meno il segno del dollaro. Ad esempio, i
-	  residui appaiono sotto la chiave <lit>uhat</lit> e la somma
-	  dei quadrati dei residui sotto <lit>ess</lit>.
+	  al modello. I consueti accessori sono tutti inclusi, e sono
+	  referenziati da chiavi identiche al nome dell'accessore,
+	  meno il segno del dollaro. Ad esempio, i residui appaiono
+	  sotto la chiave <lit>uhat</lit> e la somma dei quadrati dei
+	  residui sotto <lit>ess</lit>.
 	</para>
 	<para>
 	  A seconda dello stimatore, potrebbero essere disponibili
@@ -510,7 +510,8 @@
     <function name="$nobs" section="access" targ="dnobs" output="int">
       <description>
     <para>
-      Produce il numero delle osservazioni nel campione selezionato.
+      Produce il numero delle osservazioni nel campione
+      selezionato. Si veda anche <fncref label="\$tmax" targ="dtmax"/>.
     </para>
       </description>
     </function>
@@ -920,6 +921,25 @@
         <fncref label="\$pvalue" targ="dpvalue"/>
       </seelist>
     </para>
+      </description>
+    </function>
+
+    <function name="$tmax" section="access" output="int">
+      <description>
+	<para>
+	  Ritorna il massimo ammissibile come fine del campione nel
+	  comando <cmdref targ="smpl"/>. Nella maggioranza dei casi, 
+	  questo sarà il numero di osservazioni nel dataset, ma in una
+	  funzione hansl <lit>$tmax</lit> potrebbe essere inferiore,
+	  poiché in generale l'accesso ai dati dentro una funzione è
+	  limitato al sottocampione effettivo al momento della chiamata.
+	</para>
+	<para>
+	  Si noti che, in generale, <lit>$tmax</lit> non è uguale a
+	  <fncref label="\$nobs" targ="dnobs"/>, che resituisce il
+	  numero di osservazioni nel sottocampione attualmente in
+	  vigore.
+	</para>
       </description>
     </function>
 
@@ -1492,6 +1512,15 @@
       </description>
     </function>
 
+    <function name="BFGSmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Come <fncref targ="BFGSmax"/>, ma risolve un problema di
+	  minimo anziché di massimo.
+	</para>
+      </description>
+    </function>
+    
     <function name="BFGScmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>
@@ -1554,6 +1583,15 @@
 	</para>
       </description>
     </function>    
+
+    <function name="BFGScmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Come <fncref targ="BFGScmax"/>, ma risolve un problema di
+	  minimo anziché di massimo.
+	</para>
+      </description>
+    </function>
 
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
@@ -1924,6 +1962,44 @@
       </description>
     </function>
 
+    <function name="cdummify" section="transforms" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione ritorna una lista in cui ogni serie in
+	  <argname>L</argname> che possiede l'attributo
+	  <quote>codificata</quote> è sostituita da un insieme di
+	  dummy ognuna delle quali rappresenta uno dei valori
+	  codificati, omettendo quello più piccolo. Se
+	  <argname>L</argname> non contiene serie codificate, la lista
+	  risultato sarà identica a <argname>L</argname>.
+	</para>
+	<para>
+	  Le dummy eventualmente generate avranno un nome dato da
+	  <lit>D</lit><repl>nomevar</repl><lit>_</lit><repl>vi</repl>
+	  dove <repl>vi</repl> è l'<repl>i</repl>-esimo valore
+	  rappresentato dalla variabile codificata. Se ve ne forrsero
+	  di negativi, verrà inserita una <quote>m</quote> prima del
+	  valore assoluto di <repl>vi</repl>.
+	</para>
+	<para>
+	  Ad esempio, facciamo che <argname>L</argname> contenga una
+	  serie codificata di nome <lit>C1</lit> con valori &minus;9,
+	  &minus;7, 0, 1 e 2.  Le dummy generate saranno
+	  <lit>DC1_m7</lit> (codifica per C1 = &minus;7),
+	  <lit>DC1_0</lit> (codifica per C1 = 0), e così via.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="dummify"/>
+	    <fncref targ="getinfo"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="ceil" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -2447,8 +2523,9 @@
 	  endif
 	</code>
 	<para>
-	  Vedi anche la funzione <fncref targ="jsonget"/> per poi
-	  elaborare i dati JSON in entrata.
+	  Vedi anche le funzione <fncref targ="jsonget"/> e <fncref
+	  targ="xmlget"/> per elaborare i dati JSON o XML
+	  rispettivamente.
 	</para>
       </description>
     </function>
@@ -3521,6 +3598,64 @@
       </description>
     </function>
 
+    <function name="getinfo" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Restituisce varie informazioni sulla serie in argomento, che
+	  può essere specificate per nome o col suo numero ID. Il
+	  bundle risultato contiene tutti gli attributi controllabili
+	  per mezzo del comando <cmdref targ="setinfo"/>, nonché altre
+	  informazioni su serie create come trasformate di altre
+	  (ritardi, logaritmi, ecc.): queste ultime includono il
+	  comando usato allo scopo sotto la chiave
+	  <quote>transform</quote> e il nome della serie primaria ad
+	  esso associata sotto <quote>parent</quote>. Per serie
+	  ritardate, la chiave <quote>lag</quote> contiene il ritardo
+	  specifico.
+	</para>
+	<para>
+	  Segue un esempio d'uso:
+	</para>
+	<code>
+	  open data9-7
+	  lags QNC
+	  bundle b = getinfo(QNC_2)
+	  print b
+	</code>
+	<para>
+	  In esecuzione si ha:
+	</para>
+	<code>
+	  has_string_table = 0
+	  lag = 2
+	  parent = QNC
+	  name = QNC_2
+	  graph_name = 
+	  coded = 0
+	  discrete = 0
+	  transform = lags
+	  description = = QNC(t - 2)
+	</code>
+	<para>
+	  Per verificate se la serie 5 in un dataset è una ritardata,
+	  si può usare un meccanismo tipo il seguente:
+	</para>
+	<code>
+	  if getinfo(5).lag != 0
+	     printf "la serie 5 è un ritardo di %s\n", getinfo(5).parent
+	  endif
+	</code>
+	<para>
+	  Si noti che la notazione col punto funziona anche quando il
+	  bundle è <quote>anonimo</quote> (non è salvato sotto un
+	  qualche nome).
+	</para>
+      </description>
+    </function>
+    
     <function name="getline" section="strings" output="scalar">
       <fnargs>
     <fnarg type="string">source</fnarg>
@@ -3752,6 +3887,15 @@
 	  eval GSSmax(&amp;m, trigfunc(m[1]))
 	  printf "\n%10.7f", m
 	</code>
+      </description>
+    </function>
+    
+    <function name="GSSmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Come <fncref targ="GSSmax"/>, ma risolve un problema di
+	  minimo anziché di massimo.
+	</para>
       </description>
     </function>
     
@@ -6461,6 +6605,15 @@
       </description>
     </function>    
 
+    <function name="NMmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Come <fncref targ="NMmax"/>, ma risolve un problema di
+	  minimo anziché di massimo.
+	</para>
+      </description>
+    </function>
+    
     <function name="nobs" section="stats" output="int">
       <fnargs>
     <fnarg type="series">y</fnarg>
@@ -6640,6 +6793,15 @@
       </description>
     </function>
 
+    <function name="NRmin" section="numerical" output="scalar">
+      <description>
+	<para>
+	  Come <fncref targ="NRmax"/>, ma risolve un problema di
+	  minimo anziché di massimo.
+	</para>
+      </description>
+    </function>
+    
     <function name="nullspace" section="linalg" output="matrix">
       <fnargs>
     <fnarg type="matrix">A</fnarg>
@@ -9949,6 +10111,47 @@
       </description>
     </function>
 
+    <function name="xmlget" section="data-utils" output="string">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="string-or-strings">percorso</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  L'argomento <argname>buf</argname> dev'essere un buffer XML,
+	  così come risulta dal comando <fncref targ="curl"/> su un
+	  sito appropriato, o letto da un file con <fncref
+	  targ="readfile"/>; l'argomento <argname>percorso</argname> deve
+	  contenere una o più specificazioni XPath (come array se
+	  multiple).
+	</para>
+	<para>
+	  Questa funzione restituisce una stringa coi dati trovati nel
+	  buffer XML al percorso specificato. Se l'espressione
+	  corrisponde a più di un nodo, i conenuti sono stampati uno
+	  per riga nella stringa risultato. Se il secondo argomento è
+	  un array di percorsi, la stringa risultato conterrà un
+	  buffer separato da virgole, dove la colonna <math>i</math>
+	  contiene in risultati del percorso <math>i</math>. Se le
+	  stringhe così ottenute contangono virgole, esse sono
+	  racchiuse da virgolette doppie.
+	</para>
+	<para>
+	  Per una buona introduzione a XPath e alla sua sintassi, si
+	  veda
+	  <url>https://www.w3schools.com/xml/xml_xpath.asp</url>. L'implementazione
+	  di <lit>xmlget</lit> è quella conenuta nel corrispondente
+	  modulo di libxml2, che supporta XPath 1.0 ma non XPath 2.0.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="jsonget"/>
+	    <fncref targ="readfile"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="zeromiss" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
