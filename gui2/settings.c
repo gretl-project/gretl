@@ -643,8 +643,10 @@ void set_app_font (const char *fontname, int remember)
 
     if (!default_recorded) {
 	record_system_appfont(settings, &deffont);
+#if 0
 	fprintf(stderr, "record app font default: system '%s', gtk '%s'\n",
 		system_appfont, deffont);
+#endif
 	default_recorded = 1;
     }
 
