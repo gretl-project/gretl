@@ -3176,19 +3176,29 @@
       <fnargs>
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar">h</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Permite calcular unha aproximación numérica ao Jacobiano asociado ao
-	  <math>n</math>-vector <argname>b</argname>, así como a función de
-	  transformación especificada polo argumento <argname>fcall</argname>.
-	  Ao apelar a esta función debes de utilizar <argname>b</argname> como
-	  o seu primeiro argumento (ben directamente ou en forma de punteiro),
-	  seguido de calquera argumento adicional que poda necesitarse; e
-	  como resultado deberase producir unha matriz <by r="m" c="1"/>.
-	  Cando se executa con éxito, <lit>fdjac</lit> vai devolver unha
-	  matriz <by r="m" c="n"/> que contén o Jacobiano.
-	  Exemplo:
+	  Permite calcular unha aproximación numérica ao Jacobiano
+	  asociado ao <math>n</math>-vector <argname>b</argname>,
+	  así como a función de transformación especificada polo
+	  argumento <argname>fcall</argname>. Ao apelar a esta función
+	  debes de utilizar <argname>b</argname> como o seu primeiro
+	  argumento (ben directamente ou en forma de punteiro), seguido
+	  de calquera argumento adicional que poda necesitarse; e como
+	  resultado deberase producir unha matriz <by r="m" c="1"/>.
+	  Cando se executa con éxito, <lit>fdjac</lit> vai devolver
+	  unha matriz <by r="m" c="n"/> que contén o Jacobiano.
+	</para>
+	<para>
+	  Podes utilizar o terceiro argumento (opcional) para determinar o
+	  tamaño da medida <math>h</math> que se usa no mecanismo de
+	  aproximación (mira máis abaixo). Cando omites este argumento, o
+	  tamaño da medida determínase automaticamente.
+	</para>
+	<para>
+	  Aquí tes un exemplo do seu uso:
 	</para>
 	<code>
 	  matrix J = fdjac(theta, myfunc(&amp;theta, X))
@@ -3230,6 +3240,7 @@
 	<para>
 	  <seelist>
             <fncref targ="BFGSmax"/>
+	          <fncref targ="numhess"/>
             <cmdref targ="set"/>
 	  </seelist>
 	</para>
@@ -6822,6 +6833,47 @@
         <fncref targ="rank"/>
         <fncref targ="svd"/>
       </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="numhess" section="numerical" output="matrix">
+      <fnargs>
+	<fnarg type="cvec">b</fnarg>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
+      </fnargs> 
+      <description>
+	<para>
+	  Calcula unha aproximación numérica á matriz hessiana asociada
+	  ao vector <math>n</math>-dimensional <argname>b</argname>,
+	  e á función obxectivo que se especifique mediante o argumento
+	  <argname>fcall</argname>. A chamada á función debe de ter o
+	  <argname>b</argname> como primeiro argumento (ben directamente
+	  ou ben en forma de punteiro), seguido de calquera argumento
+	  adicional que poida ser necesario, e debe de devolver como
+	  resultado un escalar. Ao completarse con éxito <lit>numhess</lit>
+	  devolve unha matriz <by r="n" c="n"/> que contén a hessiana,
+	  e que é exactamente simétrica por construción.
+	</para>
+	<para>
+	  O método utiliza a extrapolación de Richardson, con catro pasos.
+	  Podes usar o terceiro argumento (opcional) para establecer a
+	  fracción <math>d</math> do valor do parámetro que se utiliza
+	  para establecer o tamaño da medida inicial. Cando omites este
+	  argumento, por defecto vai ser <math>d</math> = 0.01.
+	</para>
+	<para>
+	  Aquí tes un exemplo do seu uso:
+	</para>
+	<code>
+	  matrix H = numhess(theta, myfunc(&amp;theta, X))
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="BFGSmax"/>
+	          <fncref targ="fdjac"/>
+	  </seelist>
 	</para>
       </description>
     </function>
