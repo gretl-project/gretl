@@ -1438,6 +1438,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
     char *lbl1 = dset->S[0];
     char *lbl2 = dset->S[n - 1];
     int len1 = strlen(lbl1);
+    int len2 = strlen(lbl2);
     int pd = -1;
 
     if (skipstr != NULL && *skipstr != '\0') {
@@ -1460,8 +1461,12 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
     }	
 
     /* labels are of different lengths? */
-    if (len1 != strlen(lbl2)) {
-	return -1;
+    if (len1 != len2) {
+	if (abs(len1 - len2) > 1) {
+	    return -1;
+	} else if (len2 > len1) {
+	    len1 = len2;
+	}
     }
 
     pputs(prn, A_("trying to parse row labels as dates...\n"));
