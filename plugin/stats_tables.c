@@ -700,22 +700,38 @@ int get_IPS_critvals (int N, int T, int trend, double *c)
    50,000 Monte Carlo replications.
 */
 
-static const double IPS_moments[] = {
-    /* E(),   V() */
-    -1.520, 1.745, /*  T=6 */
-    -1.514, 1.414, /*    7 */
-    -1.501, 1.228, /*    8 */
-    -1.501, 1.132, /*    9 */
-    -1.504, 1.069, /*   10 */
-    -1.514, 0.923, /*   15 */
-    -1.522, 0.851, /*   20 */
-    -1.520, 0.809, /*   25 */
-    -1.526, 0.789, /*   30 */
-    -1.523, 0.770, /*   40 */
-    -1.527, 0.760, /*   50 */
-    -1.532, 0.735, /*  100 */
-    -1.531, 0.715, /*  500 */
-    -1.529, 0.707  /* 1000 */
+static const double IPS_E[14] = {
+    -1.520, /*  T=6 */
+    -1.514, /*    7 */
+    -1.501, /*    8 */
+    -1.501, /*    9 */
+    -1.504, /*   10 */
+    -1.514, /*   15 */
+    -1.522, /*   20 */
+    -1.520, /*   25 */
+    -1.526, /*   30 */
+    -1.523, /*   40 */
+    -1.527, /*   50 */
+    -1.532, /*  100 */
+    -1.531, /*  500 */
+    -1.529  /* 1000 */
+};
+
+static const double IPS_V[14] = {
+    1.745, /*  T=6 */
+    1.414, /*    7 */
+    1.228, /*    8 */
+    1.132, /*    9 */
+    1.069, /*   10 */
+    0.923, /*   15 */
+    0.851, /*   20 */
+    0.809, /*   25 */
+    0.789, /*   30 */
+    0.770, /*   40 */
+    0.760, /*   50 */
+    0.735, /*  100 */
+    0.715, /*  500 */
+    0.707  /* 1000 */
 };
 
 static const int IPS_mom_T[] = {6, 7, 8, 9, 10, 15, 20, 25, 
@@ -729,27 +745,24 @@ int IPS_tbar_moments (int T, double *Etbar, double *Vtbar)
 	*Etbar = *Vtbar = NADBL;
 	err = E_DATA;
     } else if (T >= 1000) {
-	*Etbar = IPS_moments[2*13];
-	*Vtbar = IPS_moments[2*13+1];
+	*Etbar = IPS_E[13];
+	*Vtbar = IPS_V[13];
     } else {
-	double w1, w2, E1, E2, V1, V2;
-	int i, j;
+	double w1, w2;
+	int i;
 
 	for (i=12; i>=0; i--) {
-	    j = 2 * i;
 	    if (T == IPS_mom_T[i]) {
-		*Etbar = IPS_moments[j+1];
-		*Vtbar = IPS_moments[j+2];
+		/* transcribe */
+		*Etbar = IPS_E[i];
+		*Vtbar = IPS_V[i];
 		break;
 	    } else if (T > IPS_mom_T[i]) {
+		/* interpolate */
 		w1 = 1.0 / (T - IPS_mom_T[i]);
 		w2 = 1.0 / (IPS_mom_T[i+1] - T);
-		E1 = IPS_moments[j];
-		V1 = IPS_moments[j+1];
-		E2 = IPS_moments[j+2];
-		V2 = IPS_moments[j+3];
-		*Etbar = (w1 * E1 + w2 * E2) / (w1 + w2);
-		*Vtbar = (w1 * V1 + w2 * V2) / (w1 + w2);
+		*Etbar = (w1 * IPS_E[i] + w2 * IPS_E[i+1]) / (w1 + w2);
+		*Vtbar = (w1 * IPS_V[i] + w2 * IPS_V[i+1]) / (w1 + w2);
 		break;
 	    }
 	}
