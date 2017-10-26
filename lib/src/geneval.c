@@ -10544,6 +10544,81 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+static int subst_comp (gconstpointer a, gconstpointer b)
+{
+    return a - b > 0 ? 1 : a == b ? 0 : -1;
+}
+
+#define GPZERO -999999
+
+static double subst_val_via_tree (double x, const double *x0, int n0,
+				  const double *x1, int n1)
+{
+    static GTree *tree;
+    void *val;
+    int i, ival;
+
+    if (x0 == NULL) {
+	/* cleanup */
+	g_tree_destroy(tree);
+	tree = NULL;
+	return 0;
+    }
+
+    if (tree == NULL) {
+	/* allocate and populate tree */
+	tree = g_tree_new(subst_comp);
+	for (i=0; i<n0; i++) {
+	    ival = n1 == 1 ? *x1 : x1[i];
+	    ival = ival == 0 ? GPZERO : ival;
+	    g_tree_insert(tree, GINT_TO_POINTER((int) x0[i]),
+			  GINT_TO_POINTER(ival));
+	}
+    }
+
+    /* do the actual lookup */
+    val = g_tree_lookup(tree, GINT_TO_POINTER((int) x));
+    if (val != NULL) {
+	if (GPOINTER_TO_INT(val) == GPZERO) {
+	    x = 0;
+	} else {
+	    x = (double) GPOINTER_TO_INT(val);
+	}
+    }
+
+    return x;
+}
+
+#define disint(d) (d == floor(d) && fabs(d) < INT_MAX)
+
+static int subst_use_tree (const double *x0, int n0,
+			   const double *x1, int n1)
+{
+    int i, x1vec = n1 > 1;
+
+    if (n0 < 50) {
+	/* FIXME do some testing? */
+	return 0;
+    }
+
+    /* check for non-integer values, and collision with
+       @GPZERO on the @x1 side */
+
+    if (!x1vec && (!disint(*x1) || *x1 == GPZERO)) {
+	return 0;
+    }
+
+    for (i=0; i<n0; i++) {
+	if (!disint(x0[i])) {
+	    return 0;
+	} else if (x1vec && (!disint(x1[i]) || x1[i] == GPZERO)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* Given an original value @x, see if it matches any of the @n0 values
    in @x0.  If so, return the substitute value from @x1, otherwise
    return the original.
@@ -10685,15 +10760,21 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	double *px0 = (vx0 != NULL)? vx0->val : &x0;
 	double *px1 = (vx1 != NULL)? vx1->val : &x1;
 	double xt;
-	int t;
+	int t, use_tree;
 
 	if (k0 < 0) k0 = 1;
 	if (k1 < 0) k1 = 1;
 
+	use_tree = subst_use_tree(px0, k0, px1, k1);
+
 	if (src->t == SERIES) {
 	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		xt = src->v.xvec[t];
-		ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1);
+		if (use_tree) {
+		    ret->v.xvec[t] = subst_val_via_tree(xt, px0, k0, px1, k1);
+		} else {
+		    ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1);
+		}
 	    }
 	} else if (src->t == MAT) {
 	    gretl_matrix *m = src->v.m;
@@ -10705,9 +10786,16 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	    } else {
 		for (t=0; t<n; t++) {
 		    xt = m->val[t];
-		    ret->v.m->val[t] = subst_val(xt, px0, k0, px1, k1);
+		    if (use_tree) {
+			ret->v.m->val[t] = subst_val_via_tree(xt, px0, k0, px1, k1);
+		    } else {
+			ret->v.m->val[t] = subst_val(xt, px0, k0, px1, k1);
+		    }
 		}
 	    }
+	}
+	if (use_tree) {
+	    subst_val_via_tree(0, NULL, 0, NULL, 0);
 	}
     }
 
