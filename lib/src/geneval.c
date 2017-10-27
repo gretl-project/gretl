@@ -36,6 +36,7 @@
 #include "uservar_priv.h"
 #include "genr_optim.h"
 #include "gretl_cmatrix.h"
+#include "gretl_btree.h"
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -10544,40 +10545,35 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-static int subst_comp (gconstpointer a, gconstpointer b)
-{
-    return a - b > 0 ? 1 : a == b ? 0 : -1;
-}
-
 #define GPZERO -999999
 
 static double subst_val_via_tree (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
-    static GTree *tree;
+    static BTree *tree;
     void *val;
     int i, ival;
 
     if (x0 == NULL) {
 	/* cleanup */
-	g_tree_destroy(tree);
+	gretl_btree_destroy(tree);
 	tree = NULL;
 	return 0;
     }
 
     if (tree == NULL) {
 	/* allocate and populate tree */
-	tree = g_tree_new(subst_comp);
+	tree = gretl_btree_new();
 	for (i=0; i<n0; i++) {
 	    ival = n1 == 1 ? *x1 : x1[i];
 	    ival = ival == 0 ? GPZERO : ival;
-	    g_tree_insert(tree, GINT_TO_POINTER((int) x0[i]),
-			  GINT_TO_POINTER(ival));
+	    gretl_btree_insert(tree, GINT_TO_POINTER((int) x0[i]),
+			       GINT_TO_POINTER(ival));
 	}
     }
 
     /* do the actual lookup */
-    val = g_tree_lookup(tree, GINT_TO_POINTER((int) x));
+    val = gretl_btree_lookup(tree, GINT_TO_POINTER((int) x));
     if (val != NULL) {
 	if (GPOINTER_TO_INT(val) == GPZERO) {
 	    x = 0;
@@ -10595,6 +10591,8 @@ static int subst_use_tree (const double *x0, int n0,
 			   const double *x1, int n1)
 {
     int i, x1vec = n1 > 1;
+
+    return 1;
 
     if (n0 < 50) {
 	/* FIXME do some testing? */
