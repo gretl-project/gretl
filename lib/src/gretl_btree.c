@@ -308,8 +308,7 @@ gdouble gretl_btree_lookup (BTree *tree,
 static BTreeNode *b_tree_node_rotate_left (BTreeNode *node)
 {
     BTreeNode *right;
-    gint a_bal;
-    gint b_bal;
+    gint a_bal, b_bal;
 
     right = node->right;
 
