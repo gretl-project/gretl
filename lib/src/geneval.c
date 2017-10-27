@@ -10576,11 +10576,15 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 
 static int subst_use_btree (int n, int nfind)
 {
+#if 0
+    /* just for testing */
+    return (getenv("REPLACE_USE_BTREE") != NULL);
+#endif
     /* The idea here is that it's worth using a binary tree
        mapping "find" to "replace" values only if the
-       problem is big enough. FIXME: carry out some testing
-       to try to nail down what "big enough" really means;
-       the following is just a shot in the dark.
+       problem is big enough. Minimal testing seems to
+       indicate that the following condition for "big
+       enough" may be very roughly right.
     */
     return nfind > 20 && n > 100;
 }

@@ -27,6 +27,7 @@
 */
 
 #include <glib.h>
+#include <math.h>
 #include "gretl_btree.h"
 
 #define MAX_BTREE_HEIGHT 40
@@ -69,6 +70,16 @@ static BTreeNode *btree_node_new (gdouble key,
 
 static gint key_compare (gdouble a, gdouble b)
 {
+    /* Handle NaNs in matrices? Let NaN be "bigger" than
+       anything else, and in this context let it compare
+       equal to itself.
+    */
+    if (isnan(a)) {
+	return isnan(b) ? 0 : 1;
+    } else if (isnan(b)) {
+	return -1;
+    }
+
     return a - b > 0 ? 1 : a == b ? 0 : -1;
 }
 
@@ -157,7 +168,7 @@ static BTreeNode *btree_node_balance (BTreeNode *node)
 	if (node->left->balance > 0) {
 	    node->left = btree_node_rotate_left(node->left);
 	}
-	node = btree_node_rotate_right (node);
+	node = btree_node_rotate_right(node);
     } else if (node->balance > 1) {
 	if (node->right->balance < 0) {
 	    node->right = btree_node_rotate_right(node->right);
