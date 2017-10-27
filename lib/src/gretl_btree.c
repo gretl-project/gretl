@@ -27,7 +27,6 @@
 */
 
 #include <glib.h>
-#include <glib/gslice.h>
 #include "gretl_btree.h"
 
 #define MAX_BTREE_HEIGHT 40
