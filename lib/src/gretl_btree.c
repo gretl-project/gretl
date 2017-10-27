@@ -18,9 +18,12 @@
  */
 
 /* The code here is a simplified version of GLib's GTree, modified
-   such that ...
-
-   
+   such that we can use doubles for key and value rather than
+   pointers; this gives us a means of setting up fast lookup for
+   the hansl replace() function as applied to series or matrices.
+   See glib/gtree.c at https://github.com/GNOME/glib for the
+   original code, which is under the GNU Lesser General Public
+   License, version 2.1 or higher.
 */
 
 #include <glib.h>
@@ -33,14 +36,12 @@ typedef struct _BTreeNode  BTreeNode;
 
 struct _BTree {
     BTreeNode *root;
-    GCompareFunc key_compare;
     guint nnodes;
-    gint ref_count;
 };
 
 struct _BTreeNode {
-    gpointer key;       /* key for this node */
-    gpointer value;     /* value stored at this node */
+    gdouble key;        /* key for this node */
+    gdouble value;      /* value stored at this node */
     BTreeNode *left;    /* left subtree */
     BTreeNode *right;   /* right subtree */
     gint8 balance;      /* height (right) - height (left) */
@@ -48,14 +49,11 @@ struct _BTreeNode {
     guint8 right_child;
 };
 
-static BTreeNode *b_tree_node_balance (BTreeNode *node);
-static BTreeNode *b_tree_find_node (BTree *tree,
-				    gconstpointer key);
 static BTreeNode *b_tree_node_rotate_left (BTreeNode *node);
 static BTreeNode *b_tree_node_rotate_right (BTreeNode *node);
 
-static BTreeNode *b_tree_node_new (gpointer key,
-				   gpointer value)
+static BTreeNode *b_tree_node_new (gdouble key,
+				   gdouble value)
 {
     BTreeNode *node = g_slice_new(BTreeNode);
 
@@ -70,7 +68,7 @@ static BTreeNode *b_tree_node_new (gpointer key,
     return node;
 }
 
-static gint tree_key_comp (gconstpointer a, gconstpointer b)
+static gint key_compare (gdouble a, gdouble b)
 {
     return a - b > 0 ? 1 : a == b ? 0 : -1;
 }
@@ -79,10 +77,8 @@ BTree *gretl_btree_new (void)
 {
     BTree *tree = g_slice_new(BTree);
   
-    tree->root               = NULL;
-    tree->key_compare        = (GCompareFunc) tree_key_comp;
-    tree->nnodes             = 0;
-    tree->ref_count          = 1;
+    tree->root = NULL;
+    tree->nnodes = 0;
   
     return tree;
 }
@@ -156,9 +152,26 @@ void gretl_btree_destroy (BTree *tree)
     g_slice_free(BTree, tree);
 }
 
+static BTreeNode *b_tree_node_balance (BTreeNode *node)
+{
+    if (node->balance < -1) {
+	if (node->left->balance > 0) {
+	    node->left = b_tree_node_rotate_left(node->left);
+	}
+	node = b_tree_node_rotate_right (node);
+    } else if (node->balance > 1) {
+	if (node->right->balance < 0) {
+	    node->right = b_tree_node_rotate_right(node->right);
+	}
+	node = b_tree_node_rotate_left(node);
+    }
+
+    return node;
+}
+
 void gretl_btree_insert (BTree *tree,
-			 gpointer key,
-			 gpointer value)
+			 gdouble key,
+			 gdouble value)
 {
     BTreeNode *node;
     BTreeNode *path[MAX_BTREE_HEIGHT];
@@ -177,7 +190,7 @@ void gretl_btree_insert (BTree *tree,
     node = tree->root;
 
     while (1) {
-	int cmp = tree->key_compare(key, node->key);
+	int cmp = key_compare(key, node->key);
       
 	if (cmp == 0) {
 	    node->value = value;
@@ -227,7 +240,7 @@ void gretl_btree_insert (BTree *tree,
 	BTreeNode *bparent = path[--idx];
 	gboolean left_node = (bparent && node == bparent->left);
       
-	g_assert (!bparent || bparent->left == node || bparent->right == node);
+	g_assert(!bparent || bparent->left == node || bparent->right == node);
 
 	if (node->balance < -1 || node->balance > 1) {
 	    node = b_tree_node_balance (node);
@@ -254,37 +267,8 @@ void gretl_btree_insert (BTree *tree,
     }
 }
 
-gpointer gretl_btree_lookup (BTree *tree,
-			     gconstpointer key)
-{
-    BTreeNode *node;
-
-    g_return_val_if_fail(tree != NULL, NULL);
-
-    node = b_tree_find_node(tree, key);
-  
-    return node ? node->value : NULL;
-}
-
-static BTreeNode *b_tree_node_balance (BTreeNode *node)
-{
-    if (node->balance < -1) {
-	if (node->left->balance > 0) {
-	    node->left = b_tree_node_rotate_left(node->left);
-	}
-	node = b_tree_node_rotate_right (node);
-    } else if (node->balance > 1) {
-	if (node->right->balance < 0) {
-	    node->right = b_tree_node_rotate_right(node->right);
-	}
-	node = b_tree_node_rotate_left(node);
-    }
-
-    return node;
-}
-
 static BTreeNode *b_tree_find_node (BTree *tree,
-				    gconstpointer key)
+				    gdouble key)
 {
     BTreeNode *node = tree->root;
     gint cmp;
@@ -294,7 +278,7 @@ static BTreeNode *b_tree_find_node (BTree *tree,
     }
 
     while (1) {
-	cmp = tree->key_compare(key, node->key);
+	cmp = key_compare(key, node->key);
 	if (cmp == 0) {
 	    return node;
 	} else if (cmp < 0) {
@@ -309,6 +293,18 @@ static BTreeNode *b_tree_find_node (BTree *tree,
 	    node = node->right;
 	}
     }
+}
+
+gdouble gretl_btree_lookup (BTree *tree,
+			    gdouble key)
+{
+    BTreeNode *node;
+
+    g_return_val_if_fail(tree != NULL, key);
+
+    node = b_tree_find_node(tree, key);
+  
+    return node ? node->value : key;
 }
 
 static BTreeNode *b_tree_node_rotate_left (BTreeNode *node)

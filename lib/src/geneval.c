@@ -10545,14 +10545,12 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-#define GPZERO -999999
-
 static double subst_val_via_tree (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
     static BTree *tree;
-    void *val;
-    int i, ival;
+    double xval;
+    int i;
 
     if (x0 == NULL) {
 	/* cleanup */
@@ -10565,56 +10563,26 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 	/* allocate and populate tree */
 	tree = gretl_btree_new();
 	for (i=0; i<n0; i++) {
-	    ival = n1 == 1 ? *x1 : x1[i];
-	    ival = ival == 0 ? GPZERO : ival;
-	    gretl_btree_insert(tree, GINT_TO_POINTER((int) x0[i]),
-			       GINT_TO_POINTER(ival));
+	    xval = n1 == 1 ? *x1 : x1[i];
+	    gretl_btree_insert(tree, x0[i], xval);
 	}
     }
 
     /* do the actual lookup */
-    val = gretl_btree_lookup(tree, GINT_TO_POINTER((int) x));
-    if (val != NULL) {
-	if (GPOINTER_TO_INT(val) == GPZERO) {
-	    x = 0;
-	} else {
-	    x = (double) GPOINTER_TO_INT(val);
-	}
-    }
+    x = gretl_btree_lookup(tree, x);
 
     return x;
 }
 
-#define disint(d) (d == floor(d) && fabs(d) < INT_MAX)
-
-static int subst_use_tree (const double *x0, int n0,
-			   const double *x1, int n1)
+static int subst_use_btree (int n, int nfind)
 {
-    int i, x1vec = n1 > 1;
-
-    return 1;
-
-    if (n0 < 50) {
-	/* FIXME do some testing? */
-	return 0;
-    }
-
-    /* check for non-integer values, and collision with
-       @GPZERO on the @x1 side */
-
-    if (!x1vec && (!disint(*x1) || *x1 == GPZERO)) {
-	return 0;
-    }
-
-    for (i=0; i<n0; i++) {
-	if (!disint(x0[i])) {
-	    return 0;
-	} else if (x1vec && (!disint(x1[i]) || x1[i] == GPZERO)) {
-	    return 0;
-	}
-    }
-
-    return 1;
+    /* The idea here is that it's worth using a binary tree
+       mapping "find" to "replace" values only if the
+       problem is big enough. FIXME: carry out some testing
+       to try to nail down what "big enough" really means;
+       the following is just a shot in the dark.
+    */
+    return nfind > 20 && n > 100;
 }
 
 /* Given an original value @x, see if it matches any of the @n0 values
@@ -10757,13 +10725,21 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
     if (!p->err) {
 	double *px0 = (vx0 != NULL)? vx0->val : &x0;
 	double *px1 = (vx1 != NULL)? vx1->val : &x1;
+	gretl_matrix *m = NULL;
 	double xt;
-	int t, use_tree;
+	int t, use_tree, n = 0;
 
 	if (k0 < 0) k0 = 1;
 	if (k1 < 0) k1 = 1;
 
-	use_tree = subst_use_tree(px0, k0, px1, k1);
+	if (src->t == SERIES) {
+	    n = sample_size(p->dset);
+	} else if (src->t == MAT) {
+	    m = src->v.m;
+	    n = m->rows * m->cols;
+	}
+
+	use_tree = subst_use_btree(n, k1);
 
 	if (src->t == SERIES) {
 	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
@@ -10775,9 +10751,6 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 		}
 	    }
 	} else if (src->t == MAT) {
-	    gretl_matrix *m = src->v.m;
-	    int n = gretl_matrix_rows(m) * gretl_matrix_cols(m);
-
 	    ret->v.m = gretl_matrix_copy(m);
 	    if (ret->v.m == NULL) {
 		p->err = E_ALLOC;

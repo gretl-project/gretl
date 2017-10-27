@@ -25,11 +25,11 @@ typedef struct _BTree BTree;
 BTree *gretl_btree_new (void);
 
 void gretl_btree_insert (BTree *tree,
-			 gpointer key,
-			 gpointer value);
+			 double key,
+			 double value);
 
-gpointer gretl_btree_lookup (BTree *tree,
-			     gconstpointer key);
+double gretl_btree_lookup (BTree *tree,
+			   double key);
 
 void gretl_btree_destroy (BTree *tree);
 
