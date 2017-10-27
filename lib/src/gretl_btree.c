@@ -48,11 +48,11 @@ struct _BTreeNode {
     guint8 right_child;
 };
 
-static BTreeNode *b_tree_node_rotate_left (BTreeNode *node);
-static BTreeNode *b_tree_node_rotate_right (BTreeNode *node);
+static BTreeNode *btree_node_rotate_left (BTreeNode *node);
+static BTreeNode *btree_node_rotate_right (BTreeNode *node);
 
-static BTreeNode *b_tree_node_new (gdouble key,
-				   gdouble value)
+static BTreeNode *btree_node_new (gdouble key,
+				  gdouble value)
 {
     BTreeNode *node = g_slice_new(BTreeNode);
 
@@ -82,7 +82,7 @@ BTree *gretl_btree_new (void)
     return tree;
 }
 
-static inline BTreeNode *b_tree_first_node (BTree *tree)
+static inline BTreeNode *btree_first_node (BTree *tree)
 {
     BTreeNode *tmp;
 
@@ -99,7 +99,7 @@ static inline BTreeNode *b_tree_first_node (BTree *tree)
     return tmp;
 }
 
-static inline BTreeNode *b_tree_node_previous (BTreeNode *node)
+static inline BTreeNode *btree_node_previous (BTreeNode *node)
 {
     BTreeNode *tmp = node->left;
 
@@ -112,7 +112,7 @@ static inline BTreeNode *b_tree_node_previous (BTreeNode *node)
     return tmp;
 }
 
-static inline BTreeNode *b_tree_node_next (BTreeNode *node)
+static inline BTreeNode *btree_node_next (BTreeNode *node)
 {
     BTreeNode *tmp = node->right;
 
@@ -125,16 +125,16 @@ static inline BTreeNode *b_tree_node_next (BTreeNode *node)
     return tmp;
 }
 
-static void b_tree_remove_all (BTree *tree)
+static void btree_remove_all (BTree *tree)
 {
     BTreeNode *node, *next;
 
     g_return_if_fail(tree != NULL);
 
-    node = b_tree_first_node(tree);
+    node = btree_first_node(tree);
 
     while (node) {
-	next = b_tree_node_next(node);
+	next = btree_node_next(node);
 	g_slice_free(BTreeNode, node);
 	node = next;
     }
@@ -147,22 +147,22 @@ void gretl_btree_destroy (BTree *tree)
 {
     g_return_if_fail(tree != NULL);
 
-    b_tree_remove_all(tree);
+    btree_remove_all(tree);
     g_slice_free(BTree, tree);
 }
 
-static BTreeNode *b_tree_node_balance (BTreeNode *node)
+static BTreeNode *btree_node_balance (BTreeNode *node)
 {
     if (node->balance < -1) {
 	if (node->left->balance > 0) {
-	    node->left = b_tree_node_rotate_left(node->left);
+	    node->left = btree_node_rotate_left(node->left);
 	}
-	node = b_tree_node_rotate_right (node);
+	node = btree_node_rotate_right (node);
     } else if (node->balance > 1) {
 	if (node->right->balance < 0) {
-	    node->right = b_tree_node_rotate_right(node->right);
+	    node->right = btree_node_rotate_right(node->right);
 	}
-	node = b_tree_node_rotate_left(node);
+	node = btree_node_rotate_left(node);
     }
 
     return node;
@@ -179,7 +179,7 @@ void gretl_btree_insert (BTree *tree,
     g_return_if_fail(tree != NULL);
 
     if (!tree->root) {
-	tree->root = b_tree_node_new(key, value);
+	tree->root = btree_node_new(key, value);
 	tree->nnodes++;
 	return;
     }
@@ -199,7 +199,7 @@ void gretl_btree_insert (BTree *tree,
 		path[idx++] = node;
 		node = node->left;
 	    } else {
-		BTreeNode *child = b_tree_node_new(key, value);
+		BTreeNode *child = btree_node_new(key, value);
 
 		child->left = node->left;
 		child->right = node;
@@ -215,7 +215,7 @@ void gretl_btree_insert (BTree *tree,
 		path[idx++] = node;
 		node = node->right;
 	    } else {
-		BTreeNode *child = b_tree_node_new(key, value);
+		BTreeNode *child = btree_node_new(key, value);
 
 		child->right = node->right;
 		child->left = node;
@@ -240,7 +240,7 @@ void gretl_btree_insert (BTree *tree,
 	g_assert(!bparent || bparent->left == node || bparent->right == node);
 
 	if (node->balance < -1 || node->balance > 1) {
-	    node = b_tree_node_balance (node);
+	    node = btree_node_balance (node);
 	    if (bparent == NULL) {
 		tree->root = node;
 	    } else if (left_node) {
@@ -264,8 +264,8 @@ void gretl_btree_insert (BTree *tree,
     }
 }
 
-static BTreeNode *b_tree_find_node (BTree *tree,
-				    gdouble key)
+static BTreeNode *btree_find_node (BTree *tree,
+				   gdouble key)
 {
     BTreeNode *node = tree->root;
     gint cmp;
@@ -299,12 +299,12 @@ gdouble gretl_btree_lookup (BTree *tree,
 
     g_return_val_if_fail(tree != NULL, key);
 
-    node = b_tree_find_node(tree, key);
+    node = btree_find_node(tree, key);
 
     return node ? node->value : key;
 }
 
-static BTreeNode *b_tree_node_rotate_left (BTreeNode *node)
+static BTreeNode *btree_node_rotate_left (BTreeNode *node)
 {
     BTreeNode *right;
     gint a_bal, b_bal;
@@ -341,7 +341,7 @@ static BTreeNode *b_tree_node_rotate_left (BTreeNode *node)
     return right;
 }
 
-static BTreeNode *b_tree_node_rotate_right (BTreeNode *node)
+static BTreeNode *btree_node_rotate_right (BTreeNode *node)
 {
     BTreeNode *left;
     gint a_bal, b_bal;
