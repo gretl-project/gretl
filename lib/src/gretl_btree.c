@@ -76,10 +76,10 @@ static gint key_compare (gdouble a, gdouble b)
 BTree *gretl_btree_new (void)
 {
     BTree *tree = g_slice_new(BTree);
-  
+
     tree->root = NULL;
     tree->nnodes = 0;
-  
+
     return tree;
 }
 
@@ -191,7 +191,7 @@ void gretl_btree_insert (BTree *tree,
 
     while (1) {
 	int cmp = key_compare(key, node->key);
-      
+
 	if (cmp == 0) {
 	    node->value = value;
 	    return;
@@ -209,7 +209,6 @@ void gretl_btree_insert (BTree *tree,
 		node->balance -= 1;
 
 		tree->nnodes++;
-
 		break;
 	    }
 	} else {
@@ -226,7 +225,6 @@ void gretl_btree_insert (BTree *tree,
 		node->balance += 1;
 
 		tree->nnodes++;
-
 		break;
 	    }
 	}
@@ -239,7 +237,7 @@ void gretl_btree_insert (BTree *tree,
     while (1) {
 	BTreeNode *bparent = path[--idx];
 	gboolean left_node = (bparent && node == bparent->left);
-      
+
 	g_assert(!bparent || bparent->left == node || bparent->right == node);
 
 	if (node->balance < -1 || node->balance > 1) {
@@ -256,7 +254,7 @@ void gretl_btree_insert (BTree *tree,
 	if (node->balance == 0 || bparent == NULL) {
 	    break;
 	}
-      
+
 	if (left_node) {
 	    bparent->balance -= 1;
 	} else {
@@ -303,7 +301,7 @@ gdouble gretl_btree_lookup (BTree *tree,
     g_return_val_if_fail(tree != NULL, key);
 
     node = b_tree_find_node(tree, key);
-  
+
     return node ? node->value : key;
 }
 
@@ -381,7 +379,3 @@ static BTreeNode *b_tree_node_rotate_right (BTreeNode *node)
 
     return left;
 }
-
-
-
-
