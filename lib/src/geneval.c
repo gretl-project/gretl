@@ -10545,6 +10545,12 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+enum {
+    SUBST_NAIVE,
+    SUBST_SORT,
+    SUBST_BTREE
+};
+
 static double subst_val_via_tree (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
@@ -10574,11 +10580,86 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
     return x;
 }
 
-static int subst_use_btree (int n, int nfind)
+static gretl_matrix *sorted_subst_vals (const double *x0, int n0,
+					const double *x1, int n1,
+					int *err)
 {
-#if 0
+    gretl_matrix *ret = NULL;
+    gretl_matrix *tmp;
+    int c = n1 == 1 ? 1 : 2;
+
+    tmp = gretl_matrix_alloc(n0, c);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    memcpy(tmp->val, x0, n0 * sizeof *x0);
+
+    if (c == 1) {
+	/* there's a single "replace" value */
+	ret = gretl_vector_sort(tmp, 0, err);
+    } else {
+	/* n1 must equal n0 */
+	memcpy(tmp->val + n0, x1, n0 * sizeof *x1);
+	ret = gretl_matrix_sort_by_column(tmp, 0, err);
+    }
+
+    gretl_matrix_free(tmp);
+
+    return ret;
+}
+
+static double subst_val_via_sort (double x, const double *x0, int n0,
+				  const double *x1, int n1)
+{
+    static gretl_matrix *srtx;
+    double x0i;
+    int i, err = 0;
+
+    if (x0 == NULL) {
+	/* cleanup */
+	gretl_matrix_free(srtx);
+	srtx = NULL;
+	return 0;
+    }
+
+    if (srtx == NULL) {
+	srtx = sorted_subst_vals(x0, n0, x1, n1, &err);
+    }
+
+    if (!err) {
+	/* do the actual lookup */
+	if (x < srtx->val[0] || x > srtx->val[n0-1]) {
+	    return x;
+	}
+	for (i=0; i<n0; i++) {
+	    x0i = gretl_matrix_get(srtx, i, 0);
+	    if (x0i == x) {
+		/* x was found */
+		x = n1 == 1 ? *x1 : gretl_matrix_get(srtx, i, 1);
+		break;
+	    } else if (x0i > x) {
+		/* x is not going to be found */
+		break;
+	    }
+	}
+    }
+
+    return x;
+}
+
+static int select_subst_method (int n, int nfind)
+{
+#if 1
     /* just for testing */
-    return (getenv("REPLACE_USE_BTREE") != NULL);
+    if (getenv("REPLACE_USE_BTREE") != NULL) {
+	return SUBST_BTREE;
+    } else if (getenv("REPLACE_USE_SORT") != NULL) {
+	return SUBST_SORT;
+    } else if (getenv("REPLACE_NAIVE") != NULL) {
+	return SUBST_NAIVE;
+    }
 #endif
     /* The idea here is that it's worth using a binary tree
        mapping "find" to "replace" values only if the
@@ -10586,7 +10667,11 @@ static int subst_use_btree (int n, int nfind)
        indicate that the following condition for "big
        enough" may be very roughly right.
     */
-    return nfind > 20 && n > 100;
+    if (nfind > 20 && n > 100) {
+	return SUBST_BTREE;
+    } else {
+	return SUBST_NAIVE;
+    }
 }
 
 /* Given an original value @x, see if it matches any of the @n0 values
@@ -10595,16 +10680,23 @@ static int subst_use_btree (int n, int nfind)
 */
 
 static double subst_val (double x, const double *x0, int n0,
-			 const double *x1, int n1)
+			 const double *x1, int n1,
+			 int method)
 {
-    int i;
+    if (method == SUBST_BTREE) {
+	x = subst_val_via_tree(x, x0, n0, x1, n1);
+    } else if (method == SUBST_SORT) {
+	x = subst_val_via_sort(x, x0, n0, x1, n1);
+    } else {
+	int i;
 
-    for (i=0; i<n0; i++) {
-	if (x == x0[i]) {
-	    return (n1 == 1)? *x1 : x1[i];
-	} else if (isnan(x) && isnan(x0[i])) {
-	    /* we'll count this as a match */
-	    return (n1 == 1)? *x1 : x1[i];
+	for (i=0; i<n0; i++) {
+	    if (x == x0[i]) {
+		return (n1 == 1)? *x1 : x1[i];
+	    } else if (isnan(x) && isnan(x0[i])) {
+		/* we'll count this as a match */
+		return (n1 == 1)? *x1 : x1[i];
+	    }
 	}
     }
 
@@ -10731,7 +10823,7 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	double *px1 = (vx1 != NULL)? vx1->val : &x1;
 	gretl_matrix *m = NULL;
 	double xt;
-	int t, use_tree, n = 0;
+	int t, method, n = 0;
 
 	if (k0 < 0) k0 = 1;
 	if (k1 < 0) k1 = 1;
@@ -10743,16 +10835,12 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	    n = m->rows * m->cols;
 	}
 
-	use_tree = subst_use_btree(n, k1);
+	method = select_subst_method(n, k1);
 
 	if (src->t == SERIES) {
 	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		xt = src->v.xvec[t];
-		if (use_tree) {
-		    ret->v.xvec[t] = subst_val_via_tree(xt, px0, k0, px1, k1);
-		} else {
-		    ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1);
-		}
+		ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1, method);
 	    }
 	} else if (src->t == MAT) {
 	    ret->v.m = gretl_matrix_copy(m);
@@ -10761,16 +10849,13 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	    } else {
 		for (t=0; t<n; t++) {
 		    xt = m->val[t];
-		    if (use_tree) {
-			ret->v.m->val[t] = subst_val_via_tree(xt, px0, k0, px1, k1);
-		    } else {
-			ret->v.m->val[t] = subst_val(xt, px0, k0, px1, k1);
-		    }
+		    ret->v.m->val[t] = subst_val(xt, px0, k0, px1, k1,
+						 method);
 		}
 	    }
 	}
-	if (use_tree) {
-	    subst_val_via_tree(0, NULL, 0, NULL, 0);
+	if (method != SUBST_NAIVE) {
+	    subst_val(0, NULL, 0, NULL, 0, method);
 	}
     }
 
