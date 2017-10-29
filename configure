@@ -6772,12 +6772,12 @@ fi
 
 # Check whether --with-bash-completion was given.
 if test "${with_bash_completion+set}" = set; then :
-  withval=$with_bash_completion; if test "$withval" = "no"
+  withval=$with_bash_completion; if test "$withval" = "yes"
 then
-  try_bc=no
+  try_bc=yes
 fi
 else
-  try_bc=yes
+  try_bc=no
 fi
 
 

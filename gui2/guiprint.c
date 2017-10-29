@@ -444,7 +444,8 @@ draw_text_page (GtkPrintOperation *op, GtkPrintContext *context,
     pango_cairo_show_layout(pinfo->cr, pinfo->layout);
 }
 
-static void job_set_n_pages (GtkPrintOperation *op, struct print_info *pinfo)
+static void job_set_n_pages (GtkPrintOperation *op,
+			     struct print_info *pinfo)
 {
     const char *s = pinfo->buf;
     int lines = 0;

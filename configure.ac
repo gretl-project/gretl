@@ -325,11 +325,11 @@ try_libsvm=yes)
 
 AC_ARG_WITH(bash-completion,
 [  --with-bash-completion install bash-completion script [[default=no]]],
-if test "$withval" = "no"
+if test "$withval" = "yes"
 then
-  try_bc=no
+  try_bc=yes
 fi,
-try_bc=yes)
+try_bc=no)
 
 AC_ARG_WITH(audio,
 [  --with-audio           include audio graph support (experimental)],
