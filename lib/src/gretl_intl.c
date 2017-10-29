@@ -541,7 +541,7 @@ struct localeinfo {
     const char *code;
 };
 
-/* the following are the strings that are accepted by setlocale()
+/* the following are strings accepted by setlocale()
    on win32 */
 
 static struct localeinfo locales[] = {
@@ -911,20 +911,18 @@ int force_language (int langid)
 	gretl_setenv("LANGUAGE", "english");
 	gretl_setenv("LANG", "C");
 # ifdef WIN32
+	/* ensure we get an appropriate code page set */
 	setlocale(LC_ALL, "english.1252");
 # else
 	setlocale(LC_ALL, "C");
 #endif
     } else {
+	/* setting a specific language other than English */
 	lcode = get_setlocale_string(langid);
-# ifdef WIN32
-	fprintf(stderr, "get_setlocale_string(%d) gave %s\n",
-		langid, lcode == NULL ? "NULL" : lcode);
-# endif
 	if (lcode != NULL) {  
 # ifdef WIN32
 	    locale = gretl_strdup(setlocale(LC_ALL, lcode));
-            fprintf(stderr, "lcode='%s', newloc='%s'\n", lcode, locale);
+            fprintf(stderr, "lcode='%s' -> locale='%s'\n", lcode, locale);
 	    if (locale != NULL) {
 		set_cp_from_locale(locale);
 	    } else {
