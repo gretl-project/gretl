@@ -10555,7 +10555,7 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
     static BTree *tree;
-    double xval;
+    double x1val;
     int i;
 
     if (x0 == NULL) {
@@ -10569,8 +10569,8 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 	/* allocate and populate tree */
 	tree = gretl_btree_new();
 	for (i=0; i<n0; i++) {
-	    xval = n1 == 1 ? *x1 : x1[i];
-	    gretl_btree_insert(tree, x0[i], xval);
+	    x1val = n1 == 1 ? *x1 : x1[i];
+	    gretl_btree_insert(tree, x0[i], x1val);
 	}
     }
 
