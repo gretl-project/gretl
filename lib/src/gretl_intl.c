@@ -957,6 +957,10 @@ int force_language (int langid)
 	setlocale(LC_ALL, "C");
     } else {
 	lcode = get_setlocale_string(langid);
+# ifdef WIN32
+	fprintf(stderr, "get_setlocale_string(%d) gave %s\n",
+		langid, lcode == NULL ? "NULL" : lcode);
+# endif
 	if (lcode != NULL) {  
 # ifdef WIN32
 	    locale = gretl_strdup(setlocale(LC_ALL, lcode));

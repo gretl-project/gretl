@@ -2162,6 +2162,10 @@ static int common_read_rc_setup (void)
 # endif
 
     langid = lang_id_from_name(langpref);
+#ifdef G_OS_WIN32
+    fprintf(stderr, "langpref='%s', langid=%d, lcnumeric=%d\n",
+	    langpref, langid, lcnumeric);
+#endif
     force_language(langid);
     if (langid == LANG_C) {
 	force_english_help();
