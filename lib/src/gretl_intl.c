@@ -88,20 +88,6 @@ void gretl_pop_c_numeric_locale (void)
     }
 }
 
-#else
-
-void gretl_push_c_numeric_locale (void)
-{
-    return;
-}
-
-void gretl_pop_c_numeric_locale (void)
-{
-    return;
-}
-
-#endif /* ENABLE_NLS or not */
-
 /**
  * doing_nls:
  *
@@ -121,8 +107,6 @@ int doing_nls (void)
 
     return nls;
 }
-
-#ifdef ENABLE_NLS
 
 static int decpoint;
 
@@ -173,19 +157,7 @@ int get_local_decpoint (void)
     return decpoint;
 }
 
-#else
-
-int reset_local_decpoint (void)
-{
-    return '.';
-}
-
-int get_local_decpoint (void)
-{
-    return '.';
-}
-
-#endif /* ENABLE_NLS or not */
+#endif /* end of one NLS-only block */
 
 /* fudges for strings that should not be in utf-8 under some
    conditions: under GTK translations always come out in utf-8 in the
@@ -208,7 +180,6 @@ void set_native_utf8 (int s)
 	set_stdio_use_utf8();
     }
 }
-
 
 /* Use g_get_charset() to determine the current local character set,
    and record this information.  If we get an "ISO-XXXX-Y" locale,
@@ -561,7 +532,7 @@ void set_alt_gettext_mode (PRN *prn)
     return;
 }
 
-#endif /* ENABLE_NLS */
+#endif /* ENABLE_NLS or not */
 
 #ifdef WIN32
 
@@ -695,7 +666,7 @@ static const char *lang_code_from_windows_name (char *s)
     int i, n;
 
     if (strstr(s, "razil")) {
-	return "pr_BR";
+	return "pt_BR";
     } else if (!strncmp(s + 1, "hinese", 6)) {
 	return "zh_TW";
     }
@@ -765,12 +736,17 @@ static char *other_set_numeric (const char *lang)
 
 #endif /* WIN32 or not */
 
+#ifdef ENABLE_NLS
+
+/* more functions conditional on NLS enabled */
+
 void set_lcnumeric (int langid, int lcnumeric)
 {
-#ifndef ENABLE_NLS
-    return;
-#else
-    if (lcnumeric && langid != LANG_C) {
+    if (!lcnumeric || langid == LANG_C) {
+	setlocale(LC_NUMERIC, "C");
+	gretl_setenv("LC_NUMERIC", "C");
+    } else {
+	/* lcnumeric is selected and we're not in LANG_C */
 	const char *lang;
 	char *set = NULL;
 
@@ -793,17 +769,10 @@ void set_lcnumeric (int langid, int lcnumeric)
 	    setlocale(LC_NUMERIC, "");
 	    gretl_setenv("LC_NUMERIC", "");
 	}
-    } else {
-	/* either lcnumeric is not chosen, or we're in LANG_C */
-	setlocale(LC_NUMERIC, "C");
-	gretl_setenv("LC_NUMERIC", "C");
     }
 
     reset_local_decpoint();
-#endif
 }
-
-#ifdef ENABLE_NLS
 
 static int 
 set_locale_with_workaround (int langid, const char *lcode,
@@ -846,17 +815,12 @@ set_locale_with_workaround (int langid, const char *lcode,
 # define get_setlocale_string(i) (lang_code_from_id(i))
 # endif
 
-#endif /* ENABLE_NLS */
-
 /* @langstr should be the English name of the selected language
    as displayed in the GUI (e.g. "German", "French") 
 */
 
 int test_locale (const char *langstr)
 {
-#ifndef ENABLE_NLS
-    return 1;
-#else
     const char *lcode;
     char *orig, ocpy[64];
     int langid, err = 0;
@@ -880,10 +844,7 @@ int test_locale (const char *langstr)
     } 
 
     return err;
-#endif
 }
-
-#ifdef ENABLE_NLS
 
 static void record_locale (char *locale)
 {
@@ -934,13 +895,8 @@ static void record_locale (char *locale)
     }
 }
 
-#endif
-
 int force_language (int langid)
 {
-#ifndef ENABLE_NLS
-    return 1;
-#else
     const char *lcode = NULL;
     char *locale = NULL;
     int err = 0;
@@ -954,7 +910,11 @@ int force_language (int langid)
     if (langid == LANG_C) {
 	gretl_setenv("LANGUAGE", "english");
 	gretl_setenv("LANG", "C");
+# ifdef WIN32
+	setlocale(LC_ALL, "english.1252");
+# else
 	setlocale(LC_ALL, "C");
+#endif
     } else {
 	lcode = get_setlocale_string(langid);
 # ifdef WIN32
@@ -1002,8 +962,53 @@ int force_language (int langid)
     free(locale);
 
     return err;
-#endif /* ENABLE_NLS */
 }
+
+#else /* !ENABLE_NLS */
+
+/* stubs for NLS-disabled case */
+
+void set_lcnumeric (int langid, int lcnumeric)
+{
+    return;
+}
+
+int test_locale (const char *langstr)
+{
+    return 1;
+}
+
+int force_language (int langid)
+{
+    return 1;
+}
+
+void gretl_push_c_numeric_locale (void)
+{
+    return;
+}
+
+void gretl_pop_c_numeric_locale (void)
+{
+    return;
+}
+
+int doing_nls (void)
+{
+    return 0;
+}
+
+int reset_local_decpoint (void)
+{
+    return '.';
+}
+
+int get_local_decpoint (void)
+{
+    return '.';
+}
+
+#endif /* non-NLS stubs */
 
 static void 
 iso_to_ascii_translate (char *targ, const char *src, int latin)
