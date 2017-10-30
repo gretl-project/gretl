@@ -10556,11 +10556,13 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 {
     static BTree *tree;
     static double kmin, kmax;
+    int x0nan;
 
     if (x0 == NULL) {
 	/* cleanup */
 	gretl_btree_destroy(tree);
 	tree = NULL;
+	x0nan = 0;
 	return 0;
     }
 
@@ -10573,11 +10575,14 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 	for (i=0; i<n0; i++) {
 	    x1val = n1 == 1 ? *x1 : x1[i];
 	    gretl_btree_insert(tree, x0[i], x1val);
+	    if (isnan(x0[i])) {
+		x0nan = 1;
+	    }
 	}
 	gretl_btree_minmax(tree, &kmin, &kmax);
     }
 
-    if (x >= kmin && x <= kmax) {
+    if ((x >= kmin && x <= kmax) || (isnan(x) && x0nan)) {
 	/* do the actual lookup */
 	x = gretl_btree_lookup(tree, x);
     }
