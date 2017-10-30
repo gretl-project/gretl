@@ -10555,8 +10555,7 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
     static BTree *tree;
-    double x1val;
-    int i;
+    static double kmin, kmax;
 
     if (x0 == NULL) {
 	/* cleanup */
@@ -10567,15 +10566,21 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 
     if (tree == NULL) {
 	/* allocate and populate tree */
+	double x1val;
+	int i;
+	
 	tree = gretl_btree_new();
 	for (i=0; i<n0; i++) {
 	    x1val = n1 == 1 ? *x1 : x1[i];
 	    gretl_btree_insert(tree, x0[i], x1val);
 	}
+	gretl_btree_minmax(tree, &kmin, &kmax);
     }
 
-    /* do the actual lookup */
-    x = gretl_btree_lookup(tree, x);
+    if (x >= kmin && x <= kmax) {
+	/* do the actual lookup */
+	x = gretl_btree_lookup(tree, x);
+    }
 
     return x;
 }

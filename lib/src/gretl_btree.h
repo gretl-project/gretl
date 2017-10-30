@@ -31,6 +31,10 @@ void gretl_btree_insert (BTree *tree,
 double gretl_btree_lookup (BTree *tree,
 			   double key);
 
+void gretl_btree_minmax (BTree *tree,
+			 gdouble *keymin,
+			 gdouble *keymax);
+
 void gretl_btree_destroy (BTree *tree);
 
 #endif /* GRETL_BTREE_H */

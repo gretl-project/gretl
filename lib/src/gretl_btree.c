@@ -240,10 +240,7 @@ void gretl_btree_insert (BTree *tree,
 	}
     }
 
-    /* Restore balance. This is the goodness of a non-recursive
-     * implementation, when we are done with balancing we 'break'
-     * the loop and we are done.
-     */
+    /* restore balance */
     while (1) {
 	BTreeNode *bparent = path[--idx];
 	gboolean left_node = (bparent && node == bparent->left);
@@ -313,6 +310,27 @@ gdouble gretl_btree_lookup (BTree *tree,
     node = btree_find_node(tree, key);
 
     return node ? node->value : key;
+}
+
+void gretl_btree_minmax (BTree *tree,
+			 gdouble *keymin,
+			 gdouble *keymax)
+{
+    BTreeNode *L, *R;
+
+    g_return_if_fail(tree != NULL);
+
+    L = R = tree->root;
+
+    while (L) {
+	*keymin = L->key;
+	L = L->left;
+    }
+
+    while (R) {
+	*keymax = R->key;
+	R = R->right;
+    }
 }
 
 static BTreeNode *btree_node_rotate_left (BTreeNode *node)
