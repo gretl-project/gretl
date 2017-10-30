@@ -10546,9 +10546,8 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 }
 
 enum {
-    SUBST_NAIVE,
-    SUBST_SORT,
-    SUBST_BTREE
+    SUBST_SORT =  1 << 0,
+    SUBST_BTREE = 1 << 1
 };
 
 static double subst_val_via_tree (double x, const double *x0, int n0,
@@ -10590,79 +10589,55 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
     return x;
 }
 
-static gretl_matrix *sorted_subst_vals (const double *x0, int n0,
-					const double *x1, int n1,
-					int *err)
+static gretl_matrix *sorted_target_vals (const double *x, int n,
+					 int *err)
 {
     gretl_matrix *ret = NULL;
     gretl_matrix *tmp;
-    int c = n1 == 1 ? 1 : 2;
+    int i;
 
-    tmp = gretl_matrix_alloc(n0, c);
+    tmp = gretl_matrix_alloc(n, 2);
     if (tmp == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    memcpy(tmp->val, x0, n0 * sizeof *x0);
-
-    if (c == 1) {
-	/* there's a single "replace" value */
-	ret = gretl_vector_sort(tmp, 0, err);
-    } else {
-	/* n1 must equal n0 */
-	memcpy(tmp->val + n0, x1, n0 * sizeof *x1);
-	ret = gretl_matrix_sort_by_column(tmp, 0, err);
+    /* copy in the data */
+    memcpy(tmp->val, x, n * sizeof *x);
+    /* add an index to record the original order */
+    for (i=0; i<n; i++) {
+	gretl_matrix_set(tmp, i, 1, i);
     }
 
+    /* sort by the data column */
+    ret = gretl_matrix_sort_by_column(tmp, 0, err);
     gretl_matrix_free(tmp);
 
     return ret;
 }
 
-static double subst_val_via_sort (double x, const double *x0, int n0,
-				  const double *x1, int n1)
-{
-    static gretl_matrix *srtx;
-    int i, err = 0;
-
-    if (x0 == NULL) {
-	/* cleanup */
-	gretl_matrix_free(srtx);
-	srtx = NULL;
-	return 0;
-    }
-
-    if (srtx == NULL) {
-	srtx = sorted_subst_vals(x0, n0, x1, n1, &err);
-    }
-
-    if (!err) {
-	/* do the actual lookup */
-	if (x < srtx->val[0] || x > srtx->val[n0-1]) {
-	    return x;
-	}
-	for (i=0; i<n0; i++) {
-	    if (x == gretl_matrix_get(srtx, i, 0)) {
-		x = n1 == 1 ? *x1 : gretl_matrix_get(srtx, i, 1);
-		break;
-	    }
-	}
-    }
-
-    return x;
-}
-
 static int select_subst_method (int n, int nfind)
 {
+    int method = 0;
+
 #if 1
     /* just for testing */
+    int gotenv = 0;
+
     if (getenv("REPLACE_USE_BTREE") != NULL) {
-	return SUBST_BTREE;
-    } else if (getenv("REPLACE_USE_SORT") != NULL) {
-	return SUBST_SORT;
-    } else if (getenv("REPLACE_NAIVE") != NULL) {
-	return SUBST_NAIVE;
+	method |= SUBST_BTREE;
+	gotenv = 1;
+    }
+    if (getenv("REPLACE_USE_SORT") != NULL) {
+	method |= SUBST_SORT;
+	gotenv = 1;
+    }
+    if (getenv("REPLACE_NAIVE") != NULL) {
+	method = 0;
+	gotenv = 1;
+    }
+    if (gotenv) {
+	return method;
     }
 #endif
     /* The idea here is that it's worth using a binary tree
@@ -10672,10 +10647,10 @@ static int select_subst_method (int n, int nfind)
        enough" may be very roughly right.
     */
     if (nfind > 20 && n > 100) {
-	return SUBST_BTREE;
-    } else {
-	return SUBST_NAIVE;
+	method |= SUBST_BTREE;
     }
+
+    return method;
 }
 
 /* Given an original value @x, see if it matches any of the @n0 values
@@ -10687,10 +10662,8 @@ static double subst_val (double x, const double *x0, int n0,
 			 const double *x1, int n1,
 			 int method)
 {
-    if (method == SUBST_BTREE) {
+    if (method & SUBST_BTREE) {
 	x = subst_val_via_tree(x, x0, n0, x1, n1);
-    } else if (method == SUBST_SORT) {
-	x = subst_val_via_sort(x, x0, n0, x1, n1);
     } else {
 	int i;
 
@@ -10826,39 +10799,64 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	double *px0 = (vx0 != NULL)? vx0->val : &x0;
 	double *px1 = (vx1 != NULL)? vx1->val : &x1;
 	gretl_matrix *m = NULL;
-	double xt;
-	int t, method, n = 0;
+	const double *x = NULL;
+	double *targ = NULL;
+	int method = 0;
+	int i, j, n = 0;
 
 	if (k0 < 0) k0 = 1;
 	if (k1 < 0) k1 = 1;
 
 	if (src->t == SERIES) {
 	    n = sample_size(p->dset);
+	    x = src->v.xvec + p->dset->t1;    /* source array */
+	    targ = ret->v.xvec + p->dset->t1; /* target array */
 	} else if (src->t == MAT) {
 	    m = src->v.m;
-	    n = m->rows * m->cols;
-	}
-
-	method = select_subst_method(n, k1);
-
-	if (src->t == SERIES) {
-	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		xt = src->v.xvec[t];
-		ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1, method);
-	    }
-	} else if (src->t == MAT) {
 	    ret->v.m = gretl_matrix_copy(m);
 	    if (ret->v.m == NULL) {
 		p->err = E_ALLOC;
 	    } else {
-		for (t=0; t<n; t++) {
-		    xt = m->val[t];
-		    ret->v.m->val[t] = subst_val(xt, px0, k0, px1, k1,
-						 method);
-		}
+		n = m->rows * m->cols;
+		x = m->val;           /* source array */
+		targ = ret->v.m->val; /* target array */
 	    }
 	}
-	if (method != SUBST_NAIVE) {
+
+	if (!p->err) {
+	    method = select_subst_method(n, k1);
+	}
+
+	if (!p->err && (method & SUBST_SORT)) {
+	    gretl_matrix *srtx;
+	    double *order;
+	    double rep;
+
+	    srtx = sorted_target_vals(x, n, &p->err);
+	    if (!p->err) {
+		x = srtx->val;
+		order = srtx->val + n;
+		for (i=0; i<n; i++) {
+		    rep = subst_val(x[i], px0, k0, px1, k1, method);
+		    j = order[i];
+		    targ[j] = rep;
+		    while (i < n-1 && x[i+1] == x[i]) {
+			/* we can skip look-up */
+			j = order[++i];
+			targ[j] = rep;
+		    }
+		}
+	    }
+	    gretl_matrix_free(srtx);
+	} else if (!p->err) {
+	    /* the unsorted case */
+	    for (i=0; i<n; i++) {
+		targ[i] = subst_val(x[i], px0, k0, px1, k1, method);
+	    }
+	}
+
+	if (method & SUBST_BTREE) {
+	    /* cleanup call */
 	    subst_val(0, NULL, 0, NULL, 0, method);
 	}
     }
