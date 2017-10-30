@@ -10614,7 +10614,6 @@ static double subst_val_via_sort (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
     static gretl_matrix *srtx;
-    double x0i;
     int i, err = 0;
 
     if (x0 == NULL) {
@@ -10634,13 +10633,8 @@ static double subst_val_via_sort (double x, const double *x0, int n0,
 	    return x;
 	}
 	for (i=0; i<n0; i++) {
-	    x0i = gretl_matrix_get(srtx, i, 0);
-	    if (x0i == x) {
-		/* x was found */
+	    if (x == gretl_matrix_get(srtx, i, 0)) {
 		x = n1 == 1 ? *x1 : gretl_matrix_get(srtx, i, 1);
-		break;
-	    } else if (x0i > x) {
-		/* x is not going to be found */
 		break;
 	    }
 	}
