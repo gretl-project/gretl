@@ -10597,17 +10597,17 @@ static int select_subst_method (int n, int nfind)
 	return SUBST_SIMPLE;
     }
 #endif
-    /* The idea here is that it's worth using a binary tree
-       mapping "find" to "replace" values only if the
-       problem is big enough. Minimal testing seems to
+    /* The idea here is that it's worth using a binary
+       tree mapping "find" to "replace" values only if
+       the problem is big enough. Testing seems to
        indicate that the following condition for "big
-       enough" may be very roughly right.
+       enough" may be roughly appropriate.
     */
-    if (nfind > 20 && n > 100) {
+    if (nfind > 11 && n >= 80) {
 	return SUBST_BTREE;
+    } else {
+	return SUBST_SIMPLE;
     }
-
-    return SUBST_SIMPLE;
 }
 
 /* Given an original value @x, see if it matches any of the @n0 values

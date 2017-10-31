@@ -8,7 +8,7 @@ version 2017d, in progress
 - New function cdummify(): applies to a list, with the effect
   of "dummifying" any and all series in the list that have
   the "coded" attribute set
-- new function numhess() to compute numerical Hessian
+- New function numhess() to compute numerical Hessian
 - "pca" command and princomp() function: center but do not
   standardize when computing principal components using the
   covariance matrix
@@ -18,6 +18,8 @@ version 2017d, in progress
   Van Loan)
 - fdjac() function: add (optional) trailing argument to set
   step size
+- randgen() function (and related): add support for the
+  Exponential distribution
 - CSV importation: improved handling of quote symbols
 - Fix bug: incorrect standard errors when the --robust option
   is given for random-effects panel estimator in presence
