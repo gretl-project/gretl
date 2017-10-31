@@ -10546,22 +10546,19 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 }
 
 enum {
-    SUBST_SORT =  1 << 0,
-    SUBST_BTREE = 1 << 1
+    SUBST_SIMPLE,
+    SUBST_BTREE
 };
 
 static double subst_val_via_tree (double x, const double *x0, int n0,
 				  const double *x1, int n1)
 {
     static BTree *tree;
-    static double kmin, kmax;
-    int x0nan;
 
     if (x0 == NULL) {
 	/* cleanup */
 	gretl_btree_destroy(tree);
 	tree = NULL;
-	x0nan = 0;
 	return 0;
     }
 
@@ -10574,70 +10571,23 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 	for (i=0; i<n0; i++) {
 	    x1val = n1 == 1 ? *x1 : x1[i];
 	    gretl_btree_insert(tree, x0[i], x1val);
-	    if (isnan(x0[i])) {
-		x0nan = 1;
-	    }
 	}
-	gretl_btree_minmax(tree, &kmin, &kmax);
     }
 
-    if ((x >= kmin && x <= kmax) || (isnan(x) && x0nan)) {
-	/* do the actual lookup */
-	x = gretl_btree_lookup(tree, x);
-    }
+    /* do the actual lookup */
+    x = gretl_btree_lookup(tree, x);
 
     return x;
 }
 
-static gretl_matrix *sorted_target_vals (const double *x, int n,
-					 int *err)
-{
-    gretl_matrix *ret = NULL;
-    gretl_matrix *tmp;
-    int i;
-
-    tmp = gretl_matrix_alloc(n, 2);
-    if (tmp == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    /* copy in the data */
-    memcpy(tmp->val, x, n * sizeof *x);
-    /* add an index to record the original order */
-    for (i=0; i<n; i++) {
-	gretl_matrix_set(tmp, i, 1, i);
-    }
-
-    /* sort by the data column */
-    ret = gretl_matrix_sort_by_column(tmp, 0, err);
-    gretl_matrix_free(tmp);
-
-    return ret;
-}
-
 static int select_subst_method (int n, int nfind)
 {
-    int method = 0;
-
 #if 1
-    /* just for testing */
-    int gotenv = 0;
-
+    /* for testing */
     if (getenv("REPLACE_USE_BTREE") != NULL) {
-	method |= SUBST_BTREE;
-	gotenv = 1;
-    }
-    if (getenv("REPLACE_USE_SORT") != NULL) {
-	method |= SUBST_SORT;
-	gotenv = 1;
-    }
-    if (getenv("REPLACE_NAIVE") != NULL) {
-	method = 0;
-	gotenv = 1;
-    }
-    if (gotenv) {
-	return method;
+	return SUBST_BTREE;
+    } else if (getenv("REPLACE_NAIVE") != NULL) {
+	return SUBST_SIMPLE;
     }
 #endif
     /* The idea here is that it's worth using a binary tree
@@ -10647,10 +10597,10 @@ static int select_subst_method (int n, int nfind)
        enough" may be very roughly right.
     */
     if (nfind > 20 && n > 100) {
-	method |= SUBST_BTREE;
+	return SUBST_BTREE;
     }
 
-    return method;
+    return SUBST_SIMPLE;
 }
 
 /* Given an original value @x, see if it matches any of the @n0 values
@@ -10801,8 +10751,7 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	gretl_matrix *m = NULL;
 	const double *x = NULL;
 	double *targ = NULL;
-	int method = 0;
-	int i, j, n = 0;
+	int n = 0;
 
 	if (k0 < 0) k0 = 1;
 	if (k1 < 0) k1 = 1;
@@ -10824,40 +10773,15 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	}
 
 	if (!p->err) {
-	    method = select_subst_method(n, k1);
-	}
+	    int i, method = select_subst_method(n, k1);
 
-	if (!p->err && (method & SUBST_SORT)) {
-	    gretl_matrix *srtx;
-	    double *order;
-	    double rep;
-
-	    srtx = sorted_target_vals(x, n, &p->err);
-	    if (!p->err) {
-		x = srtx->val;
-		order = srtx->val + n;
-		for (i=0; i<n; i++) {
-		    rep = subst_val(x[i], px0, k0, px1, k1, method);
-		    j = order[i];
-		    targ[j] = rep;
-		    while (i < n-1 && x[i+1] == x[i]) {
-			/* we can skip look-up */
-			j = order[++i];
-			targ[j] = rep;
-		    }
-		}
-	    }
-	    gretl_matrix_free(srtx);
-	} else if (!p->err) {
-	    /* the unsorted case */
 	    for (i=0; i<n; i++) {
 		targ[i] = subst_val(x[i], px0, k0, px1, k1, method);
 	    }
-	}
-
-	if (method & SUBST_BTREE) {
-	    /* cleanup call */
-	    subst_val(0, NULL, 0, NULL, 0, method);
+	    if (method & SUBST_BTREE) {
+		/* cleanup call */
+		subst_val(0, NULL, 0, NULL, 0, method);
+	    }
 	}
     }
 
