@@ -10600,21 +10600,22 @@
 	specified distribution (<lit>z</lit> for Gaussian, <lit>t</lit>
 	for Student's <math>t</math>, <lit>X</lit> for chi-square,
 	<lit>F</lit> for <math>F</math>, <lit>G</lit> for gamma,
-	<lit>B</lit> for binomial, <lit>P</lit> for Poisson, or
-	<lit>W</lit> for Weibull).
+	<lit>B</lit> for binomial, <lit>P</lit> for Poisson,
+	<lit>exp</lit> for Exponential, <lit>W</lit> for Weibull).
       </para>
       <para>
-	Depending on the distribution, the following information must be
-	given, before the <repl>xval</repl>: for the <math>t</math>
+	Depending on the distribution, the following information must
+	be given, before the <repl>xval</repl>: for the <math>t</math>
 	and chi-square distributions, the degrees of freedom; for
 	<math>F</math>, the numerator and denominator degrees of
 	freedom; for gamma, the shape and scale parameters; for the
-	binomial distribution, the <quote>success</quote> probability and
-	the number of trials; for the Poisson distribution, the
-	parameter &lgr; (which is both the mean and the variance); and
-	for the Weibull distribution, shape and scale parameters. As
-	shown in the examples above, the numerical parameters may be given
-	in numeric form or as the names of variables.
+	binomial distribution, the <quote>success</quote> probability
+	and the number of trials; for the Poisson distribution, the
+	parameter &lgr; (which is both the mean and the variance); for
+	the Exponential, a scale parameter; and for the Weibull, shape
+	and scale parameters. As shown in the examples above, the
+	numerical parameters may be given in numeric form or as the
+	names of variables.
       </para>
       <para>
 	The parameters for the gamma distribution are sometimes given as

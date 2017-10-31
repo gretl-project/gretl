@@ -977,9 +977,42 @@ static int weibull_pdf_array (double k, double l,
     return err;
 }
 
+static int exponential_pdf_array (double mu, double *x, int n)
+{
+    int i, err = 0;
+
+    if (na(mu) || mu <= 0) {
+	err = E_INVARG;
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    } else {
+	double b = 1.0 / mu;
+
+	for (i=0; i<n; i++) {
+	    if (x[i] < 0) {
+		x[i] = 0;
+	    } else if (!na(x[i])) {
+		x[i] = b * exp(-b * x[i]);
+	    } else {
+		x[i] = NADBL;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static double weibull_pdf (double k, double l, double x)
 {
     weibull_pdf_array(k, l, &x, 1);
+
+    return x;
+}
+
+static double exponential_pdf (double mu, double x)
+{
+    exponential_pdf_array(mu, &x, 1);
 
     return x;
 }
@@ -1461,7 +1494,7 @@ double weibull_cdf (double shape, double scale, double x)
 {
     double ret = NADBL;
 
-    if (shape > 0 && scale > 0) {
+    if (shape > 0 && scale > 0 && !na(x)) {
 	if (x == 0.0) {
 	    ret = 0.0;
 	} else if (x > 0.0) {
@@ -1472,11 +1505,35 @@ double weibull_cdf (double shape, double scale, double x)
     return ret;
 }
 
+/**
+ * exponential_cdf:
+ * @mu: scale parameter > 0.
+ * @x: test value.
+ *
+ * Returns: the probability of X <= @x, for X an r.v. that follows
+ * the exponential distribution with scale parameter @mu.
+ */
+
+double exponential_cdf (double mu, double x)
+{
+    double ret = NADBL;
+
+    if (mu > 0 && !na(x)) {
+	if (x < 0.0) {
+	    ret = 0.0;
+	} else {
+	    ret = 1.0 - exp(-x / mu);
+	}
+    }
+
+    return ret;
+}
+
 static double weibull_cdf_comp (double shape, double scale, double x)
 {
     double ret = NADBL;
 
-    if (shape > 0 && scale > 0) {
+    if (shape > 0 && scale > 0 && !na(x)) {
 	if (x == 0.0) {
 	    ret = 1.0;
 	} else if (x > 0.0) {
@@ -2562,6 +2619,7 @@ int dist_code_from_string (const char *s)
 	{ D_SNEDECOR, "f" },
 	{ D_BINOMIAL, "b" },
 	{ D_POISSON,  "p" },
+	{ D_EXPON,    "exp" },
 	{ D_WEIBULL,  "w" },
 	{ D_GAMMA,    "g" },
 	{ D_GED,      "e" },
@@ -2636,6 +2694,9 @@ void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
 	break;
     case D_POISSON:
 	pprintf(prn, "Poisson (mean = %g)", parm[0]);
+	break;
+    case D_EXPON:
+	pprintf(prn, "Exponential (scale = %g)", parm[0]);
 	break;
     case D_WEIBULL:
 	pprintf(prn, "Weibull (shape = %g, scale = %g)", parm[0], parm[1]);
@@ -2785,7 +2846,9 @@ double gretl_get_critval (int dist, const double *parm, double a)
 	x = poisson_critval(parm[0], a);
     } else if (dist == D_WEIBULL) {
 	x = weibull_critval(parm[0], parm[1], a);
-    } 
+    } else if (dist == D_EXPON) {
+	x = weibull_critval(1.0, parm[0], a);
+    }
 
     return x;
 }
@@ -2825,6 +2888,8 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 	y = binomial_cdf(parm[0], (int) parm[1], (int) x);
     } else if (dist == D_POISSON) {
 	y = poisson_cdf(parm[0], (int) x);
+    } else if (dist == D_EXPON) {
+	y = exponential_cdf(parm[0], x);
     } else if (dist == D_WEIBULL) {
 	y = weibull_cdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
@@ -2875,6 +2940,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 	y = binomial_pmf(parm[0], parm[1], x);
     } else if (dist == D_POISSON) {
 	y = poisson_pmf(parm[0], x);
+    } else if (dist == D_EXPON) {
+	y = exponential_pdf(parm[0], x);
     } else if (dist == D_WEIBULL) {
 	y = weibull_pdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
@@ -2928,6 +2995,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 	err = binomial_pmf_array(parm[0], parm[1], x, n);
     } else if (dist == D_POISSON) {
 	err = poisson_pmf_array(parm[0], x, n);
+    } else if (dist == D_EXPON) {
+	err = exponential_pdf_array(parm[0], x, n);
     } else if (dist == D_WEIBULL) {
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_GED) {
@@ -2976,6 +3045,8 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
 	y = binomial_cdf_comp(parm[0], (int) parm[1], x);
     } else if (dist == D_POISSON) {
 	y = poisson_cdf_comp(parm[0], x);
+    } else if (dist == D_EXPON) {
+	y = weibull_cdf_comp(1.0, parm[0], x);
     } else if (dist == D_WEIBULL) {
 	y = weibull_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_GED) {
@@ -3108,6 +3179,17 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	    }
 	} else {
 	    err = gretl_rand_poisson(x, t1, t2, &m, 0);
+	}
+    } else if (dist == D_EXPON) {
+	double scale = parm[0];
+
+	if (vecp1 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		scale = vecp1[t];
+		err = gretl_rand_exponential(x, t, t, scale);
+	    }
+	} else {
+	    err = gretl_rand_exponential(x, t1, t2, scale);
 	}
     } else if (dist == D_WEIBULL) {
 	double shape = parm[0], scale = parm[1];
@@ -3340,6 +3422,14 @@ void print_pvalue (int dist, const double *parm, double x,
 	} else {
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
 	}
+	break;
+
+    case D_EXPON:
+	pprintf(prn, _("Exponential (scale = %g): "), parm[0]);
+	err = print_pv_string(x, pv, prn);
+	if (err) return;
+	pc = exponential_cdf(parm[0], x);
+	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;	
 
     case D_WEIBULL:

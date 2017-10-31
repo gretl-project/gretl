@@ -1112,6 +1112,42 @@ int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 }
 
 /**
+ * gretl_rand_exponential:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @mu: scale parameter > 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the exponential distribution with scale @mu.
+ *
+ * Returns: 0 on success, non-zero if @mu is out of
+ * bounds.
+ */
+
+int gretl_rand_exponential (double *a, int t1, int t2, double mu)
+{
+    int err = 0;
+
+    if (mu <= 0) {
+	err = E_DATA;
+    } else {
+	double u;
+	int t;
+
+	for (t=t1; t<=t2; t++) {
+	    u = gretl_rand_01();
+	    while (u == 0.0) {
+		u = gretl_rand_01();
+	    }
+	    a[t] = -mu * log(u);
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_rand_GED:
  * @a: target array.
  * @t1: start of the fill range.

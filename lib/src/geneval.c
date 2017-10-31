@@ -1352,6 +1352,13 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	}
     } else if (d == D_POISSON) {
 	*np = 1;
+    } else if (d == D_EXPON) {
+	/* inverse cdf not supported */
+	if (f == F_INVCDF) {
+	    err = E_INVARG;
+	} else {
+	    *np = 1; /* scale */
+	}
     } else if (d == D_WEIBULL) {
 	/* inverse cdf not supported */
 	if (f == F_INVCDF) {

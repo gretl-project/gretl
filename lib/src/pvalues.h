@@ -30,6 +30,7 @@ typedef enum {
     D_SNEDECOR,
     D_BINOMIAL,
     D_POISSON,
+    D_EXPON,
     D_WEIBULL,
     D_GAMMA,
     D_GED,

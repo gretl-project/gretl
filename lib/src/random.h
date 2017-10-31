@@ -63,6 +63,8 @@ int gretl_rand_binomial (double *a, int t1, int t2, int n, double p);
 int gretl_rand_poisson (double *a, int t1, int t2, const double *m,
 			 int vec);
 
+int gretl_rand_exponential (double *a, int t1, int t2, double mu);
+
 int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 			double scale);
 
