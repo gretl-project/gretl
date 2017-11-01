@@ -8,7 +8,8 @@ version 2017d, in progress
 - New function cdummify(): applies to a list, with the effect
   of "dummifying" any and all series in the list that have
   the "coded" attribute set
-- New function numhess() to compute numerical Hessian
+- New function numhess() to compute numerical Hessian; also
+  improve accuracy of the underlying numerical_hessian code
 - "pca" command and princomp() function: center but do not
   standardize when computing principal components using the
   covariance matrix
@@ -32,6 +33,10 @@ version 2017d, in progress
   a function one might get slightly different results
 - Fix for Windows XP: produce a build of gnuplot that does
   not depend on API introduced in later Windows versions
+- Fix for Mac: try to ensure the default is not too big when
+  printing a script
+- Fix for text search on Windows: try to ensure the found
+  text is actually scrolled into view
 - GUI: enable a tabbed editor for foreign scripts
 - GUI: fix breakage in function-package search facility
 - GUI: fix crash on requesting "Numerical summary" for panel
@@ -41,6 +46,10 @@ version 2017d, in progress
   default" option
 - GUI: don't show duplicates in the database browser window;
   in case of duplicates just show the newest version
+- Build process: enable use of "configure ; make" when
+  building gretl on Windows using MSYS2
+- Experimental: add support for machine learning via SVM:
+  http://ricardo.ecn.wfu.edu/pub/gretl/svm/gretl-svm.pdf
 
 2017-07-18 version 2017c
 - MIDAS support: several small fixes and refinements
