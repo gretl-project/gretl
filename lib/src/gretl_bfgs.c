@@ -328,6 +328,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
     double *wspace;
     double *h0, *h, *Hd, *D;
     int r = RSTEPS;
+    double dsmall = 0.0001;
     double eps = 1e-4;
     double v = 2.0;    /* reduction factor for h */
     double f0, f1, f2;
@@ -381,8 +382,10 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	    b[i] = bi0 + h[i];
 	    f1 = func(b, data);
 	    if (na(f1)) {
-		fprintf(stderr, "numerical_hessian: 1st derivative: "
-			"criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
+		if (d <= dsmall) {
+		    fprintf(stderr, "numerical_hessian: 1st derivative: "
+			    "criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
+		}
 		b[i] = bi0;
 		err = E_NAN;
 		goto end_first_try;
@@ -390,8 +393,10 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	    b[i] = bi0 - h[i];
 	    f2 = func(b, data);
 	    if (na(f2)) {
-		fprintf(stderr, "numerical_hessian: 1st derivative: "
-			"criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
+		if (d <= dsmall) {
+		    fprintf(stderr, "numerical_hessian: 1st derivative: "
+			    "criterion=NA for theta[%d] = %g (d=%g)\n", i, b[i], d);
+		}
 		b[i] = bi0;
 		err = E_NAN;
 		goto end_first_try;
@@ -431,8 +436,10 @@ int numerical_hessian (double *b, gretl_matrix *H,
 		    b[j] = bj0 + h[j];
 		    f1 = func(b, data);
 		    if (na(f1)) {
-			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
-				"objective function gave NA\n", i, j);
+			if (d <= dsmall) {
+			    fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
+				    "objective function gave NA\n", i, j);
+			}
 			b[i] = bi0;
 			b[j] = bj0;
 			err = E_NAN;
@@ -442,8 +449,10 @@ int numerical_hessian (double *b, gretl_matrix *H,
 		    b[j] = bj0 - h[j];
 		    f2 = func(b, data);
 		    if (na(f2)) {
-			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
-				"objective function gave NA\n", i, j);
+			if (d <= dsmall) {
+			    fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
+				    "objective function gave NA\n", i, j);
+			}
 			b[i] = bi0;
 			b[j] = bj0;
 			err = E_NAN;
@@ -470,7 +479,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
     }
 
  end_first_try:
-    if (err == E_NAN && d > 0.0001) {
+    if (err == E_NAN && d > dsmall) {
 	err = 0;
 	gretl_error_clear();
 	d /= 10;
