@@ -1816,7 +1816,7 @@
     <ilist context="notex">
       <li>
         <para>
-          Normale standard (c = z, n, or N): nessun argomento supplementare
+          Normale standard (c = z, n, o N): nessun argomento supplementare
         </para>
       </li>
       <li>
@@ -1831,33 +1831,38 @@
       </li>
       <li>
         <para>
-          Chi quadro (c, x, or X): gradi di libertà
+          Chi quadro (c, x, o X): gradi di libertà
         </para>
       </li>
       <li>
         <para>
-          F di Snedecor (f or F): gradi di libertà (num.); gradi
+          F di Snedecor (f o F): gradi di libertà (num.); gradi
           di libertà (den.)
         </para>
       </li>
       <li>
         <para>
-          Gamma (g or G): forma; scala
+          Gamma (g o G): forma; scala
         </para>
       </li>   
       <li>
         <para>
-          Binomiale (b or B): probabilità; numero di prove
+          Binomiale (b o B): probabilità; numero di prove
         </para>
       </li>   
       <li>
         <para>
-          Poisson (p or P): Media
+          Poisson (p o P): Media
         </para>
       </li>   
       <li>
         <para>
-          Weibull (w or W): forma; scala
+          Esponenziale negativa (exp): scala
+        </para>
+      </li> 
+      <li>
+        <para>
+          Weibull (w o W): forma; scala
         </para>
       </li> 
       <li>
@@ -1886,15 +1891,15 @@
     <tabular colspec="lllll">
       \textit{Distribuzione} &amp; \textsl{c} &amp;
       \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt] 
-      Normale standardizzata &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; 
+      Normale standardizzata &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp; 
       -- &amp; -- \\ 
       Normale bivariata &amp; \texttt{D} &amp; 
       $\rho$ &amp; -- \\ 
       $t$ di Student (centrale) &amp; \texttt{t} &amp;  
       gradi di libertà &amp; -- \\ 
-      Chi quadro &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
+      Chi quadro &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp; 
       gradi di libertà &amp; -- \\ 
-      $F$ di Snedecor &amp; \texttt{f} or \texttt{F} &amp;
+      $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp;
       gdl (num.) &amp; gdl (den.) \\ 
       Gamma &amp; \texttt{g} o \texttt{G} &amp;
       forma &amp; scala \\ 
@@ -1902,7 +1907,7 @@
       probabilit\`a &amp; prove \\ 
       Poisson &amp; \texttt{p} o \texttt{P} &amp; 
       media &amp; -- \\
-      Weibull &amp; \texttt{w} or \texttt{W} &amp; 
+      Weibull &amp; \texttt{w} o \texttt{W} &amp; 
       forma &amp; scala &amp; --\\
       Generalized Error &amp; \texttt{E} &amp; 
       forma &amp; -- &amp; --\\
@@ -2349,7 +2354,7 @@
     <ilist context="notex">
       <li>
         <para>
-          Normale standard (c = z, n, or N): nessun argomento addizionale
+          Normale standard (c = z, n, o N): nessun argomento addizionale
         </para>
       </li>
       <li>
@@ -2359,30 +2364,30 @@
       </li>
       <li>
         <para>
-          Chi quadro (c, x, or X): gradi di libertà
+          Chi quadro (c, x, o X): gradi di libertà
         </para>
       </li>
       <li>
         <para>
-          F di Snedecor (f or F): gradi di libertà (num.); gradi
+          F di Snedecor (f o F): gradi di libertà (num.); gradi
           di libertà (den.)
         </para>
       </li>
       <li>
         <para>
-          Binomiale (b or B): probabilità; numero di prove
+          Binomiale (b o B): probabilità; numero di prove
         </para>
       </li>   
       <li>
         <para>
-          Poisson (p or P): Media
+          Poisson (p o P): Media
         </para>
       </li>   
     </ilist>
     <tabular colspec="llll">
       \textit{Distribuzione} &amp; \textsl{c} &amp;
       \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
-      Normale standard &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
+      Normale standard &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp;
       -- &amp; -- \\ 
       $t$ di Student (centrale) &amp; \texttt{t} &amp; 
       gradi di libert\`a &amp; -- \\ 
@@ -4344,7 +4349,7 @@
     <ilist context="notex">
       <li>
         <para>
-          Normale standardizzata (c = z, n, or N): nessun argomento addizionale
+          Normale standardizzata (c = z, n, o N): nessun argomento addizionale
         </para>
       </li>
       <li>
@@ -4403,7 +4408,7 @@
     <tabular colspec="lllll">
       \textit{Distribuzione} &amp; codice, $c$ &amp;
       \textit{Arg.} 2 &amp; \textit{Arg.} 3 &amp; \textit{Arg.} 4 \\[4pt] 
-      Normale Standard &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
+      Normale Standard &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp;
       -- &amp; -- &amp; -- \\ 
       Gamma &amp; \texttt{g} o \texttt{G} &amp;
       forma &amp; scala &amp; -- \\ 
@@ -4413,7 +4418,7 @@
       gradi di libertà &amp; -- &amp; -- \\
       $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp; 
       gradi di libertà (num.) &amp; gradi di libertà (den.) \\ 
-      Binomiale &amp; \texttt{b} or \texttt{B} &amp; 
+      Binomiale &amp; \texttt{b} o \texttt{B} &amp; 
       $p$ &amp; $n$ &amp; -- \\
       Poisson &amp; \texttt{p} o \texttt{P} &amp;
           $\lambda$ &amp; -- &amp; -- \\ 
@@ -4989,34 +4994,35 @@
       </fnargs>
       <description>
 	<para>
-	  Sets up a Kalman bundle, that is an object which contains
-	  all the information needed to define a linear state space
-	  model of the form
+	  Imposta un bundle di tipo Kalman, ossia un oggetto
+	  contentente le informazioni necessarie a definire un modello
+	  lineare in spazio degli stati della seguente forma:
 	  <equation status="display" 
 		    tex="\[y_t=H'\alpha_t\]"
 		    ascii="y(t) = H'a(t)"
 		    graphic="kalman1"/> 
-	  and state transition equation
+	  con equazione di transizione
 	  <equation status="display" 
 		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
 		    ascii="a(t+1) = F a(t) + u(t)"
 		    graphic="kalman2"/> 
-	  where <math>V(u) = Q</math>.
+	  dove <math>V(u) = Q</math>.
 	</para>
 	<para>
-	  Objects created via this function can be later used via the
-	  dedicated functions <fncref targ="kfilter"/> for filtering,
-	  <fncref targ="ksmooth"/> and <fncref targ="kdsmooth"/> for
-	  smoothing and <fncref targ="ksimul"/> for performing
-	  simulations.
+	  Gli oggetti così creati possono poi essere usati con le
+	  funzioni dedicate <fncref targ="kfilter"/> per il
+	  filtraggio, <fncref targ="ksmooth"/> e <fncref
+	  targ="kdsmooth"/> per il lisciaggio (<i>smoothing</i>) e
+	  <fncref targ="ksimul"/> per effettuare simulazioni.
 	</para>
 	<para>
-	  The class of models that gretl can handle is in fact much
-	  wider than the one implied by the representation above: it
-	  is possible to have time-varying models, models with diffuse
-	  priors and exogenous variable in the measurement equation
-	  and models with cross-correlated innovations. For further
-	  details, see <guideref targ="chap:kalman"/>.
+	  La classe dei modelli gestibili è, in realtà, molto più
+	  ampia di quanto implicato dalla rappresentazione qui sopra:
+	  si possono creare modelli con matrici di sistema variabili
+	  nel tempo, modelli con prior diffuse, variabili esogene
+	  nell'equazione di misura e moelli con innovazioni correlate
+	  fra loro. Per ulteriori dettagli, si veda <guideref
+	  targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -5035,8 +5041,8 @@
       </fnargs>
       <description>
 	<para>
-	  Uses a Kalman bundle previously set up by means of the
-	  <fncref targ="ksetup"/> to simulate data.
+	  Usa un bundle di tipo Kalman, creato in precedenza con
+	  <fncref targ="ksetup"/> per simulare dei dati.
 	</para>
 	<para>
 	  For details see <guideref targ="chap:kalman"/>.
@@ -8010,6 +8016,11 @@
       <li>
         <para>
           Poisson (p o P): media
+        </para>
+      </li> 
+      <li>
+        <para>
+          Esponenziale negativa (exp): scala
         </para>
       </li> 
       <li>
