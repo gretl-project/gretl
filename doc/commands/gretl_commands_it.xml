@@ -5081,7 +5081,7 @@
 	<li>
 	  <para>
 	    <lit>inverse</lit>, <lit>quadratic</lit>,
-	    <lit>cubic</lit>, <lit>semilog</lit> or <lit>linlog</lit>:
+	    <lit>cubic</lit>, <lit>semilog</lit> o <lit>linlog</lit>:
 	    mostrano una linea interpolante basata su una regressione
 	    del tipo corrispondente. Per <lit>semilog</lit>, si
 	    intende una regressione del logaritmo <math>y</math> on
@@ -5506,7 +5506,7 @@
         parentesi e in generale prende la forma "variabile operatore valore",
         dove "variabile" è il nome di una variabile nel dataset attuale,
         "valore" è un valore numerico e "operatore" è un operatore di confronto,
-        da scegliere tra =, !=, &lt;, &gt;, &lt;= or &gt;= (rispettivamente uguale
+        da scegliere tra =, !=, &lt;, &gt;, &lt;= o &gt;= (rispettivamente uguale
         diverso, minore, maggiore, minore o uguale, maggiore o uguale). Gli
         spazi prima e dopo l'operatore sono opzionali.
       </para>
@@ -7578,7 +7578,7 @@
 	  <para>
 	    La parola chiave <lit>null</lit>: accettabile solo se la
 	    parameterizzazione scelta ha un numero fisso di termini (i
-	    casi beta, 2 or 3).
+	    casi beta, 2 o 3).
 	  </para>
 	</li>
 	<li>
@@ -9601,13 +9601,12 @@
 	</li>
       </ilist>
       <para>
-	Note that when you specify an option using the
-	<lit>option</lit> or <lit>options</lit> keywords, it is not
-	necessary to supply the customary double-dash before the
-	option specifier. For details on the effects of the various
-	options please see <cmdref targ="gnuplot"/> (but see
-	below for some specifics on using the <opt>band</opt>
-	option in the <lit>plot</lit> context).
+	Si noti che, quando si specifica un'opzione attraverso i comandi
+	<lit>option</lit> o <lit>options</lit>, il solito
+	<lit>--</lit> va omesso. Per ulteriori dettagli sugli effetti
+	delle varie opzioni si veda <cmdref targ="gnuplot"/> (ma vedi
+	anche sotto su alcune specificità dell'opzione <opt>band</opt>
+	nel contesto <lit>plot</lit>).
       </para>
       <para>
 	L'uso del blocco <lit>plot</lit> è illustrato al meglio
@@ -10080,25 +10079,28 @@
     <description>
       <para>
 	Calcola l'area alla destra del <repl>valore-x</repl> nella
-        distribuzione indicata (<lit>z</lit> per la Gaussiana,
+	distribuzione indicata (<lit>z</lit> per la Gaussiana,
 	<lit>t</lit> per la <math>t</math> di Student, <lit>X</lit>
 	per la chi-quadro, <lit>F</lit> per la <math>F</math>,
 	<lit>G</lit> per la gamma, <lit>B</lit> per la binomiale,
-        <lit>P</lit> per la Poisson e <lit>W</lit> for Weibull).
+	<lit>P</lit> per la Poisson, <lit>exp</lit> per l'esponenziale
+	negativa e <lit>W</lit> per la Weibull).
       </para>
       <para>
-	A seconda della distribuzione, occorre fornire le seguenti informazioni,
-        prima del <repl>valore-x</repl>: per le distribuzioni <math>t</math>
-        e chi-quadro occorre indicare i gradi di libertà; per la
-        <math>F</math> sono richiesti i gradi di libertà al numeratore e
-        al denominatore; per la gamma sono richiesti il parametro di forma e
-        quello di scala; per la binomiale sono richieste la probabilità di
-        <quote>successo</quote> e il numero di prove; per la distribuzione di
-        Poisson va indicato il parametro &lgr; (che rappresenta sia la media che
-        la varianza); per la distribuzione Weibull, i parametri di forma e scala.
-        Come si vede dagli esempi precedenti, gli argomenti
-        numerici possono essere indicati sotto forma di numero o come nomi di
-        variabili.
+	A seconda della distribuzione, occorre fornire le seguenti
+	informazioni, prima del <repl>valore-x</repl>: per le
+	distribuzioni <math>t</math> e chi-quadro occorre indicare i
+	gradi di libertà; per la <math>F</math> sono richiesti i gradi
+	di libertà al numeratore e al denominatore; per la gamma sono
+	richiesti il parametro di forma e quello di scala; per la
+	binomiale sono richieste la probabilità di
+	<quote>successo</quote> e il numero di prove; per la
+	distribuzione di Poisson va indicato il parametro &lgr; (che
+	rappresenta sia la media che la varianza); per l'esponenziale,
+	il parametro di scala; per la distribuzione Weibull, i
+	parametri di forma e scala.  Come si vede dagli esempi
+	precedenti, gli argomenti numerici possono essere indicati
+	sotto forma di numero o come nomi di variabili.
       </para>
       <para>
         Si noti che talvolta la distribuzione gamma viene
