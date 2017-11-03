@@ -1848,6 +1848,11 @@
 	  </li>
 	  <li>
             <para>
+              Exponencial (exp): escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Weibull (w ou W): forma, escala
             </para>
 	  </li>
@@ -1892,6 +1897,8 @@
 	  probabilidade &amp; ensaios &amp; --\\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp;
 	  media &amp; -- &amp; --\\
+	  Exponencial &amp; \texttt{exp} &amp;
+	  escala &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp;
 	  forma &amp; escala &amp; --\\
 	  Erro Xeneralizado &amp; \texttt{E} &amp;
@@ -7069,11 +7076,12 @@
 	  <argname>d</argname>. Consulta <fncref targ="cdf"/> para obter máis
 	  detalles acerca dos argumentos (escalares) esixidos. Esta función
 	  <lit>pdf</lit> acepta as distribucións: Normal, <math>t</math> de
-	  Student, Khi-cadrado, <math>F</math>, Gamma, Weibull, Erro
-	  Xeneralizado, Binomial e Poisson. Cae na conta de que para a Binomial
-	  e a Poisson, o que se calcula de feito é a masa de probabilidade no
-	  punto especificado. Para <math>t</math> de Student, Khi-cadrado e
-	  <math>F</math> tamén están dispoñibles as súas variantes non centrais.
+	  Student, Khi-cadrado, <math>F</math>, Gamma, Exponencial, Weibull,
+	  Erro Xeneralizado, Binomial e Poisson. Cae na conta de que para a
+	  Binomial e a Poisson, o que se calcula de feito é a masa de
+	  probabilidade no punto especificado. Para <math>t</math> de Student,
+	  Khi-cadrado e <math>F</math> tamén están dispoñibles as súas
+	  variantes non centrais.
 	</para>
 	<para>
 	  Para a distribución Normal, consulta tamén <fncref targ="dnorm"/>.
@@ -7538,7 +7546,7 @@
 	  trate. Para máis detalles, consulta <fncref targ="cdf"/>. As
 	  distribucións soportadas pola función <lit>pvalue</lit> son:
 	  Normal estándar, <math>t</math>, Khi-cadrado, <math>F</math>, Gamma,
-	  Binomial, Poisson, Weibull e Erro Xeneralizado.
+	  Binomial, Poisson, Exponencial, Weibull e Erro Xeneralizado.
 	</para>
 	<para>
 	  <seelist>
@@ -7943,6 +7951,11 @@
 	  </li>
 	  <li>
             <para>
+              Exponencial (exp): escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Weibull (w ou W): forma, escala
             </para>
 	  </li>
@@ -7973,6 +7986,7 @@
 	  Gamma &amp; \texttt{g} ou \texttt{G} &amp; forma &amp; escala  &amp; --\\
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp; media &amp; --  &amp; --\\
+	  Exponencial &amp; \texttt{exp} &amp; escala &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp; forma &amp; escala &amp; --\\
 	  Erro Xeneralizado &amp; \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma2 &amp; --\\

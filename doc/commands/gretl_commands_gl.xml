@@ -9665,16 +9665,22 @@
 	<cite key="welch51">Welch (1951)</cite>.
       </para>
       <para context="gui">
-	Se marcas o cadriño de 'Efectos aleatorios', calcúlanse as estimacións
-	(MCX) de efectos aleatorios. Por defecto, utilízase o método de Swamy
-	e Arora para a transformación MCX, pero está dispoñible o método de
-	Nerlove como opción.
+	Se marcas o cadriño de 'Efectos aleatorios', vanse calcular as
+	estimacións (MCX) de efectos aleatorios. Por defecto, utilízase o
+	método de Swamy e Arora para a transformación MCX, pero está
+	dispoñible o método de Nerlove como opción (mediante o botón para
+	despregar). O método de <quote>Swamy-Arora/Baltagi-Chang</quote>
+	tamén é unha opción adicional, pois no caso dun panel non equilibrado
+	fai unha chamada a unha modificación do método de Swamy-Arora ideada
+	por <cite key="baltagi-chang94">Baltagi and Chang (1994)</cite>.
+	Noutro caso, simplemente é equivalente ao método normal de
+	Swamy-Arora.
       </para>
       <para context="cli">
 	A opción <opt>unbalanced</opt> está dispoñible só para modelos
 	con efectos aleatorios e podes usala para elixir o método ANOVA
 	que empregar cun panel desequilibrado. Por defecto, Gretl emprega
-	o método de Swamy&ndash;Arora igual se fai que para os paneis
+	o método de Swamy&ndash;Arora igual que se fai para os paneis
 	equilibrados, agás que utiliza a media armónica das longuras das
 	series de tempo individuais en vez da <math>T</math> habitual.
 	Baixo esta opción podes especificar ben <lit>bc</lit> para usar o
@@ -10594,8 +10600,8 @@
 	distribución especificada (<lit>z</lit> para a Normal, <lit>t</lit>
 	para a <math>t</math> de Student, <lit>X</lit> para a Khi-cadrado,
 	<lit>F</lit> para a <math>F</math>, <lit>G</lit> para a Gamma,
-	<lit>B</lit> para a Binomial, <lit>P</lit> para a Poisson ou
-	<lit>W</lit> para a Weibull).
+	<lit>B</lit> para a Binomial, <lit>P</lit> para a Poisson,
+	<lit>exp</lit> para Exponencial, ou <lit>W</lit> para a Weibull).
       </para>
       <para>
 	Dependendo do tipo de distribución, debes de indicar a seguinte
@@ -10605,10 +10611,11 @@
 	para a Gamma, os parámetros de forma e de escala; para a distribución
 	Binomial, a probabilidade de <quote>éxito</quote> e o número de
 	intentos; para a distribución de Poisson, o parámetro &lgr; (que é
-	tanto a media como a varianza); e para a distribución de Weibull,
-	os parámetros de forma e de escala. Como se amosou no exemplo de
-	arriba, podes indicar os parámetros numéricos en formato numérico
-	ou como nomes de variables.
+	tanto a media como a varianza); para a Exponencial, un parámetro de
+	escala; e para a distribución de Weibull, os parámetros de forma e
+	de escala. Como se amosou nos exemplos de arriba, podes indicar
+	os parámetros numéricos en formato numérico ou como nomes de
+	variables.
       </para>
       <para>
 	Os parámetros para a distribución Gamma indícanse ás veces como
