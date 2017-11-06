@@ -4962,7 +4962,7 @@ static gint blist_sort_by_key (gconstpointer a,
     const struct bitem *bia = a;
     const struct bitem *bib = b;
 
-    return strcmp(bia->key, bib->key);
+    return g_ascii_strcasecmp(bia->key, bib->key);
 }
 
 GtkWidget *make_bundle_content_menu (windata_t *vwin)
