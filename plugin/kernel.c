@@ -203,7 +203,9 @@ static double quartiles (const double *x, int n,
 
 static int kernel_kn (int nobs)
 {
-    if (nobs >= 200) {
+    if (nobs >= 1000) {
+	return 1000;
+    } else if (nobs >= 200) {
 	return 200;
     } else if (nobs >= 100) {
 	return 100;
