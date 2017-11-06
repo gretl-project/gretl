@@ -4792,10 +4792,15 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     exec_bundle_plot_function(bundle, gtk_action_get_name(action));
 }
 
-static void add_bundled_item_to_menu (gpointer key, 
-				      gpointer value, 
-				      gpointer data)
+struct bitem {
+    gchar *key;
+    gpointer value;
+};
+
+static void add_blist_item_to_menu (gpointer listitem,
+				    gpointer data)
 {
+    struct bitem *bi = listitem;
     GtkWidget *menu = data;
     GtkAction *action;
     GtkWidget *item;
@@ -4806,6 +4811,9 @@ static void add_bundled_item_to_menu (gpointer key,
     GretlType type;
     void *val;
     int size = 0;
+
+    gchar *key = bi->key;
+    gpointer value = bi->value;
 
     val = bundled_item_get_data((bundled_item *) value, &type, &size);
 
@@ -4846,6 +4854,20 @@ static void add_bundled_item_to_menu (gpointer key,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     g_free(label);
+}
+
+static void add_bundled_item_to_list (gpointer key,
+				      gpointer value,
+				      gpointer data)
+{
+    GList **plist = (GList **) data;
+    struct bitem *bi;
+
+    bi = malloc(sizeof *bi);
+    bi->key = key;
+    bi->value = value;
+
+    *plist = g_list_prepend(*plist, bi);
 }
 
 static void add_kalman_items_to_menu (GtkWidget *menu,
@@ -4934,8 +4956,14 @@ static int any_saveable_content (gretl_bundle *b)
     return n;
 }
 
-/* FIXME the following needs to be revised to handle kalman
-   bundles */
+static gint blist_sort_by_key (gconstpointer a,
+			       gconstpointer b)
+{
+    const struct bitem *bia = a;
+    const struct bitem *bib = b;
+
+    return strcmp(bia->key, bib->key);
+}
 
 GtkWidget *make_bundle_content_menu (windata_t *vwin)
 {
@@ -4954,12 +4982,16 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
 
     if (any_saveable_content(bundle)) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
+	GList *blist = NULL;
 
 	if (menu == NULL) {
 	    menu = gtk_menu_new();
 	    g_object_set_data(G_OBJECT(menu), "vwin", vwin);
 	}
-	g_hash_table_foreach(ht, add_bundled_item_to_menu, menu);
+	g_hash_table_foreach(ht, add_bundled_item_to_list, &blist);
+	blist = g_list_sort(blist, blist_sort_by_key);
+	g_list_foreach(blist, add_blist_item_to_menu, menu);
+	g_list_free_full(blist, free);
     }
 
     return menu;
