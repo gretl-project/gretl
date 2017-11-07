@@ -33,8 +33,8 @@
   a function one might get slightly different results
 - Fix for Windows XP: produce a build of gnuplot that does
   not depend on API introduced in later Windows versions
-- Fix for Mac: try to ensure the default is not too big when
-  printing a script
+- Fix for Mac: try to ensure the default font is not too big
+  when printing a script
 - Fix for text search on Windows: try to ensure the found
   text is actually scrolled into view
 - GUI: enable a tabbed editor for foreign scripts
