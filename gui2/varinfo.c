@@ -952,7 +952,7 @@ void varinfo_dialog (int varnum)
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	vset->discrete_check = tmp;
+	vset->coded_check = tmp;
 	gtk_widget_show(hbox);
     }
 
