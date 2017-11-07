@@ -1,4 +1,4 @@
-version 2017d, in progress
+2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for
   the end of the sample range via "smpl"
 - $model bundle: add members t1 and t2 (start and end of

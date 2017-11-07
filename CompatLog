@@ -1,4 +1,4 @@
-version 2017d, in progress
+2017-11-07 version 2017d
 
 The deprecated aliases "pi" and "macheps", for $pi and $macheps
 respectively, have now been removed.
