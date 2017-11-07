@@ -4817,8 +4817,8 @@ static void add_blist_item_to_menu (gpointer listitem,
 
     val = bundled_item_get_data((bundled_item *) value, &type, &size);
 
-    if (val == NULL || type == GRETL_TYPE_STRING || 
-	type == GRETL_TYPE_MATRIX_REF) {
+    if (val == NULL || type == GRETL_TYPE_STRING) {
+	free(bi);
 	return;
     }
 
@@ -4854,6 +4854,7 @@ static void add_blist_item_to_menu (gpointer listitem,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     g_free(label);
+    free(bi);
 }
 
 static void add_bundled_item_to_list (gpointer key,
@@ -4925,8 +4926,8 @@ static void check_for_saveable (gpointer key,
 	return;
     }
 
-    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
-	/* not very useful in GUI? */
+    if (type == GRETL_TYPE_STRING) {
+	/* not useful in GUI? */
 	return;
     }
 
@@ -4991,7 +4992,7 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
 	g_hash_table_foreach(ht, add_bundled_item_to_list, &blist);
 	blist = g_list_sort(blist, blist_sort_by_key);
 	g_list_foreach(blist, add_blist_item_to_menu, menu);
-	g_list_free_full(blist, free);
+	g_list_free(blist);
     }
 
     return menu;
