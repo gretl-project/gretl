@@ -791,9 +791,9 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 	gchar *dirs[3] = {NULL, NULL, NULL};
 
 	/* languages: need to set path, can't just append */
-	dirs[0] = g_strdup_printf("%s/share/gtksourceview-%d.0/language-specs",
+	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
+	dirs[1] = g_strdup_printf("%s/share/gtksourceview-%d.0/language-specs",
 				  SVPREFIX, SVVER);
-	dirs[1] = g_strdup_printf("%sgtksourceview", gretl_home());
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
 	/* styles: can just append to default path */
