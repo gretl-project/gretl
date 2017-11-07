@@ -49,7 +49,7 @@ the gretlmpi binary won't work (unless and until the user installs
 such an implementation), but the rest of gretl's functionality is
 unaffected. You can find details on this at
 
-http://ricardo.ecn.wfu.edu/~cottrell/gretl/gretl-mpi.pdf
+https://sourceforge.net/projects/gretl/files/manual/gretl-mpi.pdf
 
 but we would recommend that packagers enable MPI support in gretl
 by including an MPI implementation on the build host. That way,
