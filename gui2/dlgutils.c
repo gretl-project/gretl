@@ -1133,9 +1133,11 @@ static void dlg_display_sys (dialog_t *d)
     gretl_dialog_set_resizeable(d->dialog, TRUE);
 }
 
-void raise_and_focus_dialog (GtkEditable *entry, 
+void raise_and_focus_dialog (GtkEditable *entry,
 			     GtkWidget *parent)
 {
+    g_return_if_fail(entry != NULL && parent != NULL);
+
     gtk_window_present(GTK_WINDOW(parent));
 
     if (!gtk_widget_has_focus(GTK_WIDGET(entry))) {
