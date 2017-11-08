@@ -1367,7 +1367,7 @@ static int helper_spawn (const char *path, const char *vname,
    check if we got more than 4 lines of output.
 */
 
-static int got_x12a_warning (const char *fname)
+static int got_x12a_warning (const char *fname, int *err)
 {
     FILE *fp = gretl_fopen(fname, "r");
     int ret = 0;
@@ -1377,12 +1377,13 @@ static int got_x12a_warning (const char *fname)
 	int n = 0;
 
 	while (fgets(line, sizeof line, fp)) {
+	    if (strstr(line, "ERROR:") != NULL) {
+		*err = ret = 1;
+	    }
 	    if (++n > 4 && !string_is_blank(line)) {
 		ret = 1;
-		break;
 	    }
 	}
-
 	fclose(fp);
     }
 
@@ -1624,76 +1625,76 @@ int write_tx_data (char *fname, int varnum,
     if (err == E_EXTERNAL) {
 	/* fatal: couldn't run program */
 	*fname = '\0';
-    } else if (err) {
-	if (request.prog == X12A) {
-	    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
-	} else {
-	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
+	goto bailout;
+    }
+
+    if (request.prog == X12A) {
+	/* see if we got a warning -- and if so, whether it
+	   should count as an error */
+	sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
+	*warning = got_x12a_warning(fname, &err);
+	if (!err) {
+	    /* switch @fname to the .out file */
+	    sprintf(fname, "%s%c%s.out", workdir, SLASH, vname);
 	}
     } else {
-	if (request.prog == X12A) {
-	    /* first check the .err file for warnings */
-	    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
-	    if (got_x12a_warning(fname)) {
-		*warning = 1;
+	sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
+	if (request.prog == TRAMO_ONLY) {
+	    /* no graph offered */
+	    request.opts[TRIGRAPH].save = 0;
+	    *opt |= OPT_T;
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* save vars locally if needed; graph if wanted */
+    if (savelist[0] > 0) {
+	const char *path = request.prog == X12A ? fname : workdir;
+
+	copy_variable(tmpset, 0, dset, varnum);
+
+	for (i=1; i<=savelist[0]; i++) {
+	    err = add_series_from_file(path, savelist[i], tmpset,
+				       i, &request);
+	    if (err) {
+		fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
+		if (request.prog == X12A) {
+		    /* switch @fname to point to X12A error file */
+		    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
+		}
+		break;
 	    }
-	    /* then set the output filename */
-	    sprintf(fname, "%s%c%s.out", workdir, SLASH, vname); 
-	} else {
-	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
-	    if (request.prog == TRAMO_ONLY) {
-		/* no graph offered */
-		request.opts[TRIGRAPH].save = 0;
-		*opt |= OPT_T;
-	    }
-	} 
+	}
 
-	/* save vars locally if needed; graph if wanted */
-	if (savelist[0] > 0) {
-	    const char *path = request.prog == X12A ? fname : workdir;
-
-	    copy_variable(tmpset, 0, dset, varnum);
-
-	    for (i=1; i<=savelist[0]; i++) {
-		err = add_series_from_file(path, savelist[i], tmpset,
-					   i, &request);
+	if (!err) {
+	    if (request.opts[TRIGRAPH].save) {
+		err = graph_series(tmpset, &request);
 		if (err) {
-		    fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
-		    if (request.prog == X12A) {
-			/* switch to X12A error file */
-			sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
-		    }
-		    break;
-		} 
-	    }
-
-	    if (!err) {
-		if (request.opts[TRIGRAPH].save) {
-		    err = graph_series(tmpset, &request);
-		    if (err) {
-			fprintf(stderr, "graph_series() failed\n");
-		    } else {
-			*opt |= OPT_G;
-		    }
+		    fprintf(stderr, "graph_series() failed\n");
 		} else {
-		    *opt &= ~OPT_G;
+		    *opt |= OPT_G;
 		}
-	    }
-
-	    if (request.prog == X12A) {
-		if (request.opts[TEXTOUT].save) {
-		    *opt &= ~OPT_Q;
-		} else {
-		    *opt |= OPT_Q;
-		}
+	    } else {
+		*opt &= ~OPT_G;
 	    }
 	}
 
-	/* now save the local vars to main dataset, if wanted */
-	if (!err && request.savevars > 0) {
-	    err = save_vars_to_dataset(dset, tmpset, savelist, 
-				       &request);
+	if (request.prog == X12A) {
+	    if (request.opts[TEXTOUT].save) {
+		*opt &= ~OPT_Q;
+	    } else {
+		*opt |= OPT_Q;
+	    }
 	}
+    }
+
+    /* now save the local vars to main dataset, if wanted */
+    if (!err && request.savevars > 0) {
+	err = save_vars_to_dataset(dset, tmpset, savelist,
+				   &request);
     }
 
  bailout:

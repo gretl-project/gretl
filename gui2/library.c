@@ -5418,21 +5418,24 @@ void do_freq_dist (void)
 
 /* If we got a non-null warning message from X-12-ARIMA,
    pull it out of the .err file and display it in a
-   warning dialog box.
+   warning (or error) dialog box.
 */
 
-static void display_x12a_warning (const char *fname)
+static void display_x12a_warning (const char *fname,
+				  int err)
 {
     char *errfile = gretl_strdup(fname);
 
     if (errfile != NULL) {
-	const char *wbuf = NULL;
+	const char *buf = NULL;
 	char *s, line[128];
 	PRN *prn = NULL;
 	FILE *fp;
 	int n = 0;
 
-	switch_ext(errfile, fname, "err");
+	if (!err) {
+	    switch_ext(errfile, fname, "err");
+	}
 	fp = gretl_fopen(errfile, "r");
 	if (fp != NULL) {
 	    if (bufopen(&prn)) {
@@ -5449,9 +5452,13 @@ static void display_x12a_warning (const char *fname)
 		}
 	    }
 	    fclose(fp);
-	    wbuf = gretl_print_get_buffer(prn);
-	    if (!string_is_blank(wbuf)) {
-		warnbox(wbuf);
+	    buf = gretl_print_get_buffer(prn);
+	    if (!string_is_blank(buf)) {
+		if (err) {
+		    errbox(buf);
+		} else {
+		    warnbox(buf);
+		}
 	    }
 	    gretl_print_destroy(prn);
 	}
@@ -5565,11 +5572,16 @@ static void real_do_tramo_x12a (int v, int tramo)
     dataset->t2 = save_t2;
 
     if (err) {
-	gui_errmsg(err);
+	if (has_suffix(outfile, ".err")) {
+	    display_x12a_warning(outfile, 1);
+	    return;
+	} else {
+	    gui_errmsg(err);
+	}
 	graph_ok = 0;
     } else if (warning) {
 	/* got a warning from x12a */
-	display_x12a_warning(outfile);
+	display_x12a_warning(outfile, 0);
     } else if (opt & OPT_S) {
 	/* created x12a spec file for editing */
 	view_file(outfile, 1, 0, 78, 370, EDIT_X12A);
