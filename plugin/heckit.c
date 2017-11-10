@@ -1040,6 +1040,8 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
     hm->rho = HC->rho;
 
     if (!err) {
+	int *zlist;
+	
 	free(hm->list);
 	hm->list = gretl_list_copy(HC->list);
 	free(hm->coeff);
@@ -1049,6 +1051,10 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 	hm->t2 = HC->t2;
 	gretl_model_set_coeff_separator(hm, N_("Selection equation"), kb + 1);
 	gretl_model_set_int(hm, "base-coeffs", kb);
+	zlist = gretl_list_copy(HC->Zlist);
+	if (zlist != NULL) {
+	    gretl_model_set_list_as_data(hm, "zlist", zlist);
+	}
     }
     
     return err;
