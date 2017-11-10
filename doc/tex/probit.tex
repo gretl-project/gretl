@@ -663,14 +663,14 @@ models in several special cases:
 \begin{itemize}
 \item When all observations are point observations the model trivially
   reduces to the ordinary linear regression model.
-\item The interval model could be thought of an ordered probit model
-  (see \ref{sec:ordered}) in which the cut points (the $\alpha_j$
-  coefficients in eq. \ref{eq:QR-ordered}) are observed and don't need
-  to be estimated.
+\item The interval model could be thought of as an ordered probit
+  model (see \ref{sec:ordered}) in which the cut points (the
+  $\alpha_j$ coefficients in eq. \ref{eq:QR-ordered}) are observed and
+  don't need to be estimated.
 \item The Tobit model (see \ref{sec:tobit}) is a special case of the
   interval model in which $m_i$ and $M_i$ do not depend on $i$, that
   is, the censoring limits are the same for all observations. As a
-  matter of fact, gretl's \texttt{tobit} commands is handled
+  matter of fact, gretl's \texttt{tobit} command is handled
   internally as a special case of the interval model.
 \end{itemize}
 
@@ -1009,10 +1009,10 @@ this approach we hypothesize that the durations follow some definite
 probability law and we seek to estimate the parameters of that law,
 factoring in the influence of covariates.
 
-We may express the density (PDF) of the durations as $f(t, X,
-\theta)$, where $t$ is the length of time in the state in question,
-$X$ is a matrix of covariates, and $\theta$ is a vector of parameters.
-The likelihood for a sample of $n$ observations indexed by $i$ is then
+We may express the density of the durations as $f(t, X, \theta)$,
+where $t$ is the length of time in the state in question, $X$ is a
+matrix of covariates, and $\theta$ is a vector of parameters.  The
+likelihood for a sample of $n$ observations indexed by $i$ is then
 \[
 L = \prod_{i=1}^n f(t_i, x_i, \theta)
 \]
