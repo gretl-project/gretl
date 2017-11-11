@@ -142,17 +142,19 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	double xhi = plt->uq + d;
 	int i, nout = 0;
 
-	/* initialize whisker limits */
+	/* initialize whiskers to zero length */
 	plt->wmin = plt->lq;
 	plt->wmax = plt->uq;
 
 	/* work on lower region... */
 	for (i=0; x[i] < plt->lq; i++) {
 	    if (x[i] < xlo) {
-		/* low outlier */
+		/* outlier */
 		nout++;
 	    } else {
-		/* extend lower whisker */
+		/* let the lower whisker extend to the
+		   least non-outlying value below Q1
+		*/
 		plt->wmin = x[i];
 		break;
 	    }
@@ -161,10 +163,12 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	/* and upper region */
 	for (i=n-1; x[i] > plt->uq; i--) {
 	    if (x[i] > xhi) {
-		/* high outlier */
+		/* outlier */
 		nout++;
 	    } else {
-		/* extend upper whisker */
+		/* let the upper whisker extend to the
+		   greatest non-outlying value above Q3
+		*/
 		plt->wmax = x[i];
 		break;
 	    }
