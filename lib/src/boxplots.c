@@ -140,7 +140,7 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	/* set limits beyond which points are outliers */
 	double xlo = plt->lq - d;
 	double xhi = plt->uq + d;
-	int i, nout = 0;
+	int i, nlo = 0, nhi = 0;
 
 	/* initialize whiskers to zero length */
 	plt->wmin = plt->lq;
@@ -150,7 +150,7 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	for (i=0; x[i] < plt->lq; i++) {
 	    if (x[i] < xlo) {
 		/* outlier */
-		nout++;
+		nlo++;
 	    } else {
 		/* let the lower whisker extend to the
 		   least non-outlying value below Q1
@@ -164,7 +164,7 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	for (i=n-1; x[i] > plt->uq; i--) {
 	    if (x[i] > xhi) {
 		/* outlier */
-		nout++;
+		nhi++;
 	    } else {
 		/* let the upper whisker extend to the
 		   greatest non-outlying value above Q3
@@ -174,16 +174,17 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	    }
 	}
 	
-	if (nout > 0) {
+	if (nlo + nhi > 0) {
 	    /* build vector of outliers */
 	    int j = 0;
 
-	    plt->outliers = gretl_vector_alloc(nout);
+	    plt->outliers = gretl_vector_alloc(nlo + nhi);
 	    if (plt->outliers != NULL) {
-		for (i=0; i<n; i++) {
-		    if (x[i] < xlo || x[i] > xhi) {
-			gretl_vector_set(plt->outliers, j++, x[i]);
-		    }
+		for (i=0; i<nlo; i++) {
+		    gretl_vector_set(plt->outliers, j++, x[i]);
+		}
+		for (i=n-nhi; i<n; i++) {
+		    gretl_vector_set(plt->outliers, j++, x[i]);
 		}
 	    }
 	}
