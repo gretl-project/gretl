@@ -78,6 +78,8 @@ typedef struct {
 #define unset_show_mean(g)    (g->flags &= ~BOX_SHOW_MEAN)
 #define unset_do_intervals(g) (g->flags &= ~BOX_INTERVALS)
 
+#define WHISKERFIX 1
+
 static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 			   double limit)
 {
@@ -143,6 +145,32 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	plt->wmin = xlo;
 	plt->wmax = xhi;
 
+#if WHISKERFIX
+	/* find outliers and possibly adjust whiskers */
+	/* start from the top */
+	i = n-1;
+	if (x[i] < xhi) {
+	    /* no outliers -- but adjust whisker */
+	    plt->wmax = x[i];
+	} else {
+	    while (x[i] > xhi) {
+		nout++;
+		i--;
+	    }
+	}
+
+	/* now do the bottom */
+	i = 0;
+	if (x[i] > xlo) {
+	    /* no outliers -- but adjust whisker */
+	    plt->wmin = x[i];
+	} else {
+	    while (x[i] < xlo) {
+		nout++;
+		i++;
+	    }
+	}
+#else
 	for (i=0; i<n; i++) {
 	    if (x[i] < xlo) {
 		nout++;
@@ -159,6 +187,8 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	    }
 	}
 
+#endif
+	
 	if (nout > 0) {
 	    plt->outliers = gretl_vector_alloc(nout);
 	}
@@ -901,7 +931,7 @@ static int real_boxplots (const int *list,
 
     np = grp->nplots;
     k = 0;
-
+    
     for (i=0; i<np && !err; i++) {
 	BOXPLOT *plot;
 	const char *vname;
@@ -931,7 +961,7 @@ static int real_boxplots (const int *list,
 	plot = &grp->plots[k]; /* note: k rather than i */
 	qsort(grp->x, n, sizeof *grp->x, gretl_compare_doubles);
 	quartiles_etc(grp->x, n, plot, grp->limit);
-	
+		
 	plot->n = n;
 
 	if (k == 0 || plot->min < grp->gmin) {
