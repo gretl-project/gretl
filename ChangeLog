@@ -5,6 +5,9 @@ version 2017e, in progress
   user more effectively
 - "heckit" command: add selection equation regressor list to
   $model bundle under the key "zlist"
+- Build fix: correct undefined symbol in cephes/iv.c
+- Boxplots: fix for incorrect extent of "whiskers" in some
+  cases
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for

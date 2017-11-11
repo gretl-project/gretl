@@ -78,14 +78,13 @@ typedef struct {
 #define unset_show_mean(g)    (g->flags &= ~BOX_SHOW_MEAN)
 #define unset_do_intervals(g) (g->flags &= ~BOX_INTERVALS)
 
-#define WHISKERFIX 1
-
 static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 			   double limit)
 {
     double p[3] = {0.25, 0.5, 0.75};
 
     if (n <= 3) {
+	/* special treatment for tiny samples */
 	int i;
 
 	if (n == 1) {
@@ -122,7 +121,6 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
     plt->wmax = plt->max = x[n-1];
 
     gretl_array_quantiles(x, n, p, 3);
-
     plt->lq = p[0];
     plt->median = p[1];
     plt->uq = p[2];
@@ -136,68 +134,48 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 
     plt->mean = gretl_mean(0, n-1, x);
 
-    if (limit > 0) {
+    if (limit > 0 && !na(plt->lq)) {
+	/* set suitable multiple of IQR */
 	double d = limit * (plt->uq - plt->lq);
+	/* set limits beyond which points are outliers */
 	double xlo = plt->lq - d;
 	double xhi = plt->uq + d;
-	int i, j, nout = 0;
+	int i, nout = 0;
 
-	plt->wmin = xlo;
-	plt->wmax = xhi;
+	/* initialize whisker limits */
+	plt->wmin = plt->lq;
+	plt->wmax = plt->uq;
 
-#if WHISKERFIX
-	/* find outliers and possibly adjust whiskers */
-	/* start from the top */
-	i = n-1;
-	if (x[i] < xhi) {
-	    /* no outliers -- but adjust whisker */
-	    plt->wmax = x[i];
-	} else {
-	    while (x[i] > xhi) {
-		nout++;
-		i--;
-	    }
-	}
-
-	/* now do the bottom */
-	i = 0;
-	if (x[i] > xlo) {
-	    /* no outliers -- but adjust whisker */
-	    plt->wmin = x[i];
-	} else {
-	    while (x[i] < xlo) {
-		nout++;
-		i++;
-	    }
-	}
-#else
 	for (i=0; i<n; i++) {
-	    if (x[i] < xlo) {
-		nout++;
-		/* adjust the bottom of the lower whisker? */
-		if (i < n-1 && x[i+1] > plt->wmin) {
-		    plt->wmin = x[i+1];
+	    if (x[i] < plt->lq) {
+		if (x[i] < xlo) {
+		    /* low outlier */
+		    nout++;
+		} else if (x[i] < plt->wmin) {
+		    /* extend lower whisker */
+		    plt->wmin = x[i];
 		}
-	    } else if (x[i] > xhi) {
-		nout++;
-		/* adjust the top of the upper whisker? */
-		if (i > 0 && x[i-1] < plt->wmax) {
-		    plt->wmax = x[i-1];
+	    } else if (x[i] > plt->uq) {
+		if (x[i] > xhi) {
+		    /* high outlier */
+		    nout++;
+		} else if (x[i] > plt->wmax) {
+		    /* extend upper whisker */
+		    plt->wmax = x[i];
 		}
 	    }
 	}
-
-#endif
 	
 	if (nout > 0) {
-	    plt->outliers = gretl_vector_alloc(nout);
-	}
+	    /* build vector of outliers */
+	    int j = 0;
 
-	if (plt->outliers != NULL) {
-	    j = 0;
-	    for (i=0; i<n; i++) {
-		if (x[i] < xlo || x[i] > xhi) {
-		    gretl_vector_set(plt->outliers, j++, x[i]);
+	    plt->outliers = gretl_vector_alloc(nout);
+	    if (plt->outliers != NULL) {
+		for (i=0; i<n; i++) {
+		    if (x[i] < xlo || x[i] > xhi) {
+			gretl_vector_set(plt->outliers, j++, x[i]);
+		    }
 		}
 	    }
 	}
