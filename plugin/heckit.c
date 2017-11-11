@@ -997,10 +997,31 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     }
 }
 
-/*
-  This function works the same way for the 2-step and the ML
-  estimators: all the relevant items are taken from the container HC
-  anyway.
+/* Reconstitute the full list for the selection equation and
+   stick it onto @hm.
+*/
+
+static int heckit_model_add_zlist (MODEL *hm, h_container *HC)
+{
+    int i, nz = HC->Zlist[0] + 1;
+    int *zlist;
+
+    zlist = gretl_list_new(nz);
+    if (zlist == NULL) {
+	return E_ALLOC;
+    }
+
+    zlist[1] = HC->selvar;
+    for (i=2; i<=zlist[0]; i++) {
+	zlist[i] = HC->Zlist[i-1];
+    }
+
+    return gretl_model_set_list_as_data(hm, "zlist", zlist);
+}
+
+/* This function works the same way for the 2-step and the ML
+   estimators: all the relevant items are taken from @HC
+   anyway.
 */
 
 static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
@@ -1049,6 +1070,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 	hm->t2 = HC->t2;
 	gretl_model_set_coeff_separator(hm, N_("Selection equation"), kb + 1);
 	gretl_model_set_int(hm, "base-coeffs", kb);
+	heckit_model_add_zlist(hm, HC);
     }
     
     return err;

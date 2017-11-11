@@ -1,6 +1,10 @@
 version 2017e, in progress
 - Fix bug: setting of a series as "discrete" via the GUI got
   broken
+- Error messages from X13-ARIMA: try to relay these to the
+  user more effectively
+- "heckit" command: add selection equation regressor list to
+  $model bundle under the key "zlist"
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for
