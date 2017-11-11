@@ -67,7 +67,7 @@ double cephes_bessel_Iv (double v, double x)
     sign = 1;
     if (x < 0.0) {
 	if (t != v) {
-	    mtherr("iv", DOMAIN);
+	    mtherr("iv", CEPHES_DOMAIN);
 	    return 0.0;
 	}
 	if (v != 2.0 * floor(v/2.0))
