@@ -9733,12 +9733,10 @@ static int script_open_append (ExecState *s, DATASET *dset,
     if (opt & OPT_W) {
 	/* --www: database on server */
 	ftype = GRETL_NATIVE_DB_WWW;
-	strncat(myfile, cmd->param, MAXLEN - 1);
 	got_type = 1;
     } else if (opt & OPT_O) {
 	/* --odbc */
 	ftype = GRETL_ODBC;
-	strncat(myfile, cmd->param, MAXLEN - 1);
 	got_type = 1;
     } else if (opt & OPT_K) {
 	/* --frompkg=whatever */
@@ -9802,7 +9800,9 @@ static int script_open_append (ExecState *s, DATASET *dset,
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(myfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(myfile, vprn);
+	err = set_odbc_dsn(cmd->param, vprn);
+    } else if (ftype == GRETL_NATIVE_DB_WWW) {
+	err = set_db_name(cmd->param, ftype, vprn);
     } else if (dbdata) {
 	err = set_db_name(myfile, ftype, vprn);
     } else {
@@ -9820,7 +9820,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	} else if (!(opt & (OPT_W | OPT_O))) {
+	} else if (*myfile != '\0') {
 	    /* print minimal success message */
 	    pprintf(prn, _("Read datafile %s\n"), myfile);
 	}
@@ -9835,9 +9835,9 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }
 
     if (http) {
-	/* arrange to display "Unsaved data" */
+	/* arrange to display "Unsaved data" in place of filename */
 	data_status |= MODIFIED_DATA;
-    } else if (!dbdata && cmd->ci != APPEND) {
+    } else if (!dbdata && cmd->ci != APPEND && *myfile != '\0') {
 	strncpy(datafile, myfile, MAXLEN - 1);
     }
 

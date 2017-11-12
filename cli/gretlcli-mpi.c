@@ -591,12 +591,10 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     if (opt & OPT_W) {
 	/* --www: database on server */
 	ftype = GRETL_NATIVE_DB_WWW;
-	strncat(newfile, cmd->param, MAXLEN - 1);
 	got_type = 1;
     } else if (opt & OPT_O) {
 	/* --odbc */
 	ftype = GRETL_ODBC;
-	strncat(newfile, cmd->param, MAXLEN - 1);
 	got_type = 1;
     } else if (opt & OPT_K) {
 	/* --frompkg=whatever */
@@ -649,6 +647,8 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	err = import_other(newfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(cmd->param, vprn);
+    } else if (ftype == GRETL_NATIVE_DB_WWW) {
+	err = set_db_name(cmd->param, ftype, vprn);
     } else if (dbdata) {
 	err = set_db_name(newfile, ftype, vprn);
     } else {
@@ -666,7 +666,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	} else if (!(opt & (OPT_W | OPT_O)) && gretl_mpi_rank() < 1) {
+	} else if (*newfile != '\0' && gretl_mpi_rank() < 1) {
 	    /* print minimal success message */
 	    pprintf(prn, _("Read datafile %s\n"), newfile);
 	}
@@ -678,8 +678,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	return err;
     }
 
-    if (!dbdata && !http && cmd->ci != APPEND) {
-	/* FIXME? */
+    if (!dbdata && !http && cmd->ci != APPEND && *newfile != '\0') {
 	strncpy(datafile, newfile, MAXLEN - 1);
     }
 
