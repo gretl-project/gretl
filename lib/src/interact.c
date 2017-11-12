@@ -1807,7 +1807,7 @@ static int lib_open_append (ExecState *s,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	} else {
+	} else if (ftype != GRETL_NATIVE_DB_WWW && ftype != GRETL_ODBC) {
 	    /* print minimal success message */
 	    pprintf(prn, _("Read datafile %s\n"), newfile);
 	}

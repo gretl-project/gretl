@@ -88,7 +88,7 @@
 # include "spinner.h"
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 1
 
 /* file scope state variables */
 static CMD libcmd;
@@ -9723,14 +9723,24 @@ static int script_open_append (ExecState *s, DATASET *dset,
     CMD *cmd = s->cmd;
     char myfile[MAXLEN] = {0};
     int http = 0, dbdata = 0;
-    int ftype;
+    int ftype, got_type = 0;
     int err = 0;
 
     if (dataset_locked()) {
 	return 0;
     }
 
-    if (opt & OPT_K) {
+    if (opt & OPT_W) {
+	/* --www: database on server */
+	ftype = GRETL_NATIVE_DB_WWW;
+	strncat(myfile, cmd->param, MAXLEN - 1);
+	got_type = 1;
+    } else if (opt & OPT_O) {
+	/* --odbc */
+	ftype = GRETL_ODBC;
+	strncat(myfile, cmd->param, MAXLEN - 1);
+	got_type = 1;
+    } else if (opt & OPT_K) {
 	/* --frompkg=whatever */
 	err = get_package_data_path(cmd->param, myfile);
 	if (err) {
@@ -9743,11 +9753,9 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    gui_errmsg(err);
 	    return err;
 	}  
-
-	if (!http && !(opt & OPT_O)) {
-	    /* not using http or ODBC */
-	    err = get_full_filename(cmd->param, myfile, (opt & OPT_W)? 
-				    OPT_W : OPT_NONE);
+	if (!http) {
+	    /* not using http: local file */
+	    err = get_full_filename(cmd->param, myfile, OPT_NONE);
 	    if (err) {
 		gui_errmsg(err);
 		return err;
@@ -9755,11 +9763,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	}
     }
 
-    if (opt & OPT_W) {
-	ftype = GRETL_NATIVE_DB_WWW;
-    } else if (opt & OPT_O) {
-	ftype = GRETL_ODBC;
-    } else {
+    if (!got_type) {
 	ftype = detect_filetype(myfile, OPT_P);
     }
 
@@ -9798,7 +9802,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(myfile, ftype, dset, opt, vprn);
     } else if (ftype == GRETL_ODBC) {
-	err = set_odbc_dsn(cmd->param, vprn);
+	err = set_odbc_dsn(myfile, vprn);
     } else if (dbdata) {
 	err = set_db_name(myfile, ftype, vprn);
     } else {
@@ -9816,7 +9820,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    if (buf != NULL && *buf != '\0') {
 		pputs(prn, buf);
 	    }
-	} else {
+	} else if (!(opt & (OPT_W | OPT_O))) {
 	    /* print minimal success message */
 	    pprintf(prn, _("Read datafile %s\n"), myfile);
 	}
@@ -9831,6 +9835,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }
 
     if (!dbdata && !http && cmd->ci != APPEND) {
+	/* FIXME? */
 	strncpy(datafile, myfile, MAXLEN - 1);
     }
 

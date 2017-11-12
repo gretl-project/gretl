@@ -2262,8 +2262,8 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     strncat(fullname, fname, MAXLEN - 1);
 
     if (opt & OPT_W) {
-	/* use original name */
-	goto test_open;
+	/* remote database: just use original name */
+	return 0;
     }
 
     if (fullname[0] == '~' && fullname[1] == '/') {
