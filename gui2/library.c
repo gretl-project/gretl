@@ -88,7 +88,7 @@
 # include "spinner.h"
 #endif
 
-#define CMD_DEBUG 1
+#define CMD_DEBUG 0
 
 /* file scope state variables */
 static CMD libcmd;
