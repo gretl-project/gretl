@@ -9834,8 +9834,10 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	gui_warnmsg(0);
     }
 
-    if (!dbdata && !http && cmd->ci != APPEND) {
-	/* FIXME? */
+    if (http) {
+	/* arrange to display "Unsaved data" */
+	data_status |= MODIFIED_DATA;
+    } else if (!dbdata && cmd->ci != APPEND) {
 	strncpy(datafile, myfile, MAXLEN - 1);
     }
 
