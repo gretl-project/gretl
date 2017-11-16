@@ -2943,9 +2943,37 @@ static char *rightmost (char *s1, char *s2)
     }
 }
 
+static char getsep (const char *s)
+{
+    int bak = 0, fwd = 0;
+
+    while (*s) {
+	if (*s == '\\') {
+	    bak++;
+	} else if (*s == '/') {
+	    fwd++;
+	}
+	s++;
+    }
+
+    return fwd > bak ? '/' : '\\';
+}
+
+static char *rslashpos (const char *s)
+{
+    char *p1 = strrchr(s, '\\');
+    char *p2 = strrchr(s, '/');
+
+    return rightmost(p1, p2);
+}
+
+static int slash_terminated (const char *s, int n)
+{
+    return s[n-1] == '\\' || s[n-1] == '/';
+}
+
 /* note: @progname is argv[0] at startup; we use
-   this apparatus only for a "package build" for
-   Windows
+   this apparatus only for MS Windows
 */
 
 void win32_set_gretldir (const char *progname)
@@ -2962,11 +2990,15 @@ void win32_set_gretldir (const char *progname)
 	if (test != NULL) {
 	    int n = strlen(paths.gretldir);
 	    int m = strlen(progname);
+	    char sep = getsep(paths.gretldir);
 
 	    if (n + m + 1 < MAXLEN) {
-		if (paths.gretldir[n-1] != '\\' &&
-		    paths.gretldir[n-1] != '/') {
-		    strncat(paths.gretldir, "\\", 1);
+		if (!slash_terminated(paths.gretldir, n)) {
+		    if (sep == '/') {
+			strncat(paths.gretldir, "/", 1);
+		    } else {
+			strncat(paths.gretldir, "\\", 1);
+		    }
 		}
 		strncat(paths.gretldir, progname, m);
 		if (!gretl_file_exists(paths.gretldir)) {
@@ -2978,9 +3010,7 @@ void win32_set_gretldir (const char *progname)
     }
 
     if (*paths.gretldir != '\0') {
-	char *p1 = strrchr(paths.gretldir, '\\');
-	char *p2 = strrchr(paths.gretldir, '/');
-	char *s = rightmost(p1, p2);
+	char *s = rslashpos(paths.gretldir);
 
 	if (s != NULL) {
 	    /* chop off the program-name bit */
@@ -2989,6 +3019,7 @@ void win32_set_gretldir (const char *progname)
 	}
     }
 
+# ifdef PKGBUILD
     if (!done) {
 	/* try the registry */
 	char tmp[MAXLEN];
@@ -3000,6 +3031,30 @@ void win32_set_gretldir (const char *progname)
 	    slash_terminate(paths.gretldir);
 	}
     }
+# else
+    /* a non-pkgbuild Windows build */
+    if (*paths.gretldir != '\0') {
+	/* if we got "path-to\bin\" (with slashes of either sort)
+	   we need to convert to "path-to\share\gretl\"
+	*/
+	int n = strlen(paths.gretldir);
+	char *tail = paths.gretldir + n - 5;
+
+	if (*tail == '\\' || *tail == '/' && !strncmp(tail+1, "bin", 3)) {
+	    char sep = getsep(paths.gretldir);
+
+	    tail[1] = '\0';
+	    strncat(tail + 1, "share", 5);
+	    if (sep == '/') {
+		strncat(paths.gretldir, "/", 1);
+	    } else {
+		strncat(paths.gretldir, "\\", 1);
+	    }
+	}
+    } else {
+	fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
+    }
+# endif
 }
 
 #else /* !WIN32 */

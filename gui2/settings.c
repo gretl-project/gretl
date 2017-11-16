@@ -2350,15 +2350,34 @@ int read_win32_config (int debug)
 	strcpy(default_fixedfont, "MS Gothic 10");
     }
 
-    appdata = appdata_path();
-    if (appdata != NULL) {
-	sprintf(rcfile, "%s\\gretl\\.gretl2rc", appdata);
-	free(appdata);
+    rcfile[0] = '\0';
+
+#ifndef PKGBUILD
+    /* try "HOME" first */
+    if (rcfile[0] == '\0') {
+	char *home = getenv("HOME");
+
+	if (home != NULL) {
+	    strcpy(rcfile, home);
+	    slash_terminate(rcfile);
+	    strncat(rcfile, ".gretl2rc", 9);
+	}
+    }
+#endif
+
+    if (rcfile[0] == '\0') {
+	appdata = appdata_path();
+	if (appdata != NULL) {
+	    sprintf(rcfile, "%s\\gretl\\.gretl2rc", appdata);
+	    free(appdata);
+	}
     }
 
+#ifndef PKGBUILD
     /* see if we have a gretlnet.txt in place, and if so,
        read config from it */
     get_network_settings();
+#endif
 
     /* read from user config file */
     win32_read_gretlrc();

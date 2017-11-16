@@ -601,10 +601,8 @@ int main (int argc, char **argv)
     char filearg[MAXLEN];
     GError *opterr = NULL;
 
-#if defined(G_OS_WIN32)
-# ifdef PKGBUILD
+#ifdef G_OS_WIN32
     win32_set_gretldir(callname);
-# endif
 #elif !defined(OS_OSX)
     protect_against_ubuntu();
 #endif
