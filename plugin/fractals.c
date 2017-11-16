@@ -22,7 +22,6 @@
 #include "libset.h"
 
 #define MINSAMP 8
-#define LOG2 0.6931471805599453
 
 #define HDEBUG 0
 
@@ -61,20 +60,6 @@ do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
     return finalize_plot_input_file(fp);
 }
 
-#define log_2(x) (log(x) / LOG2)
-
-static double get_xbar (const double *x, int n)
-{
-    double xsum = 0.0;
-    int i;
-
-    for (i=0; i<n; i++) {
-	xsum += x[i];
-    }
-
-    return xsum / n;
-}
-
 static double cum_range (const double *x, int n, double xbar)
 {
     double w, wmin, wmax;
@@ -104,13 +89,7 @@ static double stdev (const double *x, int n, double xbar)
 	ssx += dev * dev;
     }
 
-    if (ssx > 0.0) {
-	dev = sqrt(ssx / n);
-    } else {
-	dev = 0.0;
-    }
-
-    return dev;
+    return ssx > 0.0 ? sqrt(ssx / n) : 0.0;
 }
 
 static int hurst_calc (const double *x, int n, int depth,
@@ -145,7 +124,7 @@ static int hurst_calc (const double *x, int n, int depth,
 	for (j=0; j<nsub; j++) {
 	    double xbar, r, s;
 
-	    xbar = get_xbar(x + j*m, m);
+	    gretl_mean(0, m-1, x + j*m);
 	    r = cum_range(x + j*m, m, xbar);
 	    s = stdev(x + j*m, m, xbar);
 #if HDEBUG
@@ -157,8 +136,8 @@ static int hurst_calc (const double *x, int n, int depth,
 
 	RS /= nsub;
 	
-	dset->Z[1][i] = log_2(RS);
-	dset->Z[2][i] = log_2(m);
+	dset->Z[1][i] = log2(RS);
+	dset->Z[2][i] = log2(m);
 
 	pprintf(prn, "%*d %#*.5g %#*.5g %#*.5g\n", cw[0], m, cw[1], RS, 
 		cw[2], dset->Z[2][i], cw[3], dset->Z[1][i]);
@@ -216,7 +195,7 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 {
     DATASET *hset;
     MODEL hmod;
-    int hlist[4] = { 3, 1, 0, 2 };
+    int hlist[4] = {3, 1, 0, 2};
     int k, T;
     int t1, t2;
     int missing;
@@ -230,7 +209,7 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
     if (missing) {
 	pputs(prn, _("There were missing data values"));
 	pputc(prn, '\n');
-	return 1;
+	return E_MISSDATA;
     }
 
     T = t2 - t1 + 1;
@@ -238,13 +217,15 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
     if (T < 96) {
 	pputs(prn, _("Sample is too small for Hurst exponent"));
 	pputc(prn, '\n');
-	return 1;
+	return E_TOOFEW;
     }
 
     k = get_depth(T);
 
     hset = create_auxiliary_dataset(3, k, 0);
-    if (hset == NULL) return E_ALLOC;
+    if (hset == NULL) {
+	return E_ALLOC;
+    }
 
     pprintf(prn, _("Rescaled range figures for %s"), 
 	    dset->varname[vnum]);
@@ -269,7 +250,7 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 	    N_("coeff"),
 	    N_("std. error")
 	};
-	int cw[] = { 12, 12, 12 };
+	int cw[] = {12, 12, 12};
 
 	get_column_widths(heads, cw, 3);
 
