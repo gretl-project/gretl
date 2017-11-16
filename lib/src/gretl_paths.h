@@ -52,7 +52,7 @@ typedef struct ConfigPaths_ ConfigPaths;
 struct ConfigPaths_ {
     char gretldir[MAXLEN];
     char workdir[MAXLEN];
-#ifndef WIN32
+#if !defined(WIN32) || !defined(PKGBUILD)
     char gnuplot[MAXLEN];
 #endif
     char x12a[MAXLEN];
