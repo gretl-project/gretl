@@ -237,7 +237,7 @@ RCVAR rc_vars[] = {
 #endif
     { "graph_scale", N_("Default graph scale"), NULL, &graph_scale,
       LISTSET | FLOATSET, 0, TAB_MAIN, NULL },
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) || !defined(PKGBUILD)
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot,
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
 #endif
