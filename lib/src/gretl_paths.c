@@ -2993,13 +2993,7 @@ void win32_set_gretldir (const char *progname)
 	    char sep = getsep(paths.gretldir);
 
 	    if (n + m + 1 < MAXLEN) {
-		if (!slash_terminated(paths.gretldir, n)) {
-		    if (sep == '/') {
-			strncat(paths.gretldir, "/", 1);
-		    } else {
-			strncat(paths.gretldir, "\\", 1);
-		    }
-		}
+		slash_terminate(paths.gretldir);
 		strncat(paths.gretldir, progname, m);
 		if (!gretl_file_exists(paths.gretldir)) {
 		    /* can't be right! */
@@ -3041,15 +3035,9 @@ void win32_set_gretldir (const char *progname)
 	char *tail = paths.gretldir + n - 5;
 
 	if (*tail == '\\' || *tail == '/' && !strncmp(tail+1, "bin", 3)) {
-	    char sep = getsep(paths.gretldir);
-
 	    tail[1] = '\0';
 	    strncat(tail + 1, "share", 5);
-	    if (sep == '/') {
-		strncat(paths.gretldir, "/", 1);
-	    } else {
-		strncat(paths.gretldir, "\\", 1);
-	    }
+	    slash_terminate(paths.gretldir);
 	}
     } else {
 	fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
@@ -3849,12 +3837,25 @@ int gretl_normalize_path (char *path)
 
 int slash_terminate (char *path)
 {
+#ifdef WIN32
     if (path != NULL && *path != '\0') {
-	if (path[strlen(path) - 1] != SLASH) {
-	    strcat(path, SLASHSTR);
+	int n = strlen(path);
+
+	if (path[n-1] != '\\' && path[n-1] != '/') {
+	    char sep = getsep(path);
+
+	    strcat(path, sep == '/' ? "/" : "\\");
 	    return 1;
 	}
     }
+#else
+    if (path != NULL && *path != '\0') {
+	if (path[strlen(path) - 1] != '/') {
+	    strcat(path, "//");
+	    return 1;
+	}
+    }
+#endif
 
     return 0;
 }
