@@ -3624,6 +3624,9 @@ int gnuplot (const int *plotlist, const char *literal,
     fputs("set xzeroaxis\n", fp); 
     gnuplot_missval_string(fp);
 
+    /* key: default to left top */
+    strcpy(keystr, "set key left top\n");
+
     if (list[0] == 1) {
 	/* only one variable (time series) */
 	print_axis_label('y', series_get_graph_name(dset, list[1]), fp);
