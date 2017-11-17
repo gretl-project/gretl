@@ -1572,7 +1572,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fputs("notitle ", fp);
 	} else {
 	    fprintf(fp, "title \"%s", line->title);
-	    if (any_y2) {
+	    if (any_y2 && strchr(line->title, '(') == NULL) {
 		if (line->yaxis == 1) {
 		    fprintf(fp, " (%s)\" ", _("left"));
 		} else {
