@@ -124,7 +124,7 @@ static int hurst_calc (const double *x, int n, int depth,
 	for (j=0; j<nsub; j++) {
 	    double xbar, r, s;
 
-	    gretl_mean(0, m-1, x + j*m);
+	    xbar = gretl_mean(0, m-1, x + j*m);
 	    r = cum_range(x + j*m, m, xbar);
 	    s = stdev(x + j*m, m, xbar);
 #if HDEBUG
