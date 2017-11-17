@@ -3038,6 +3038,8 @@ void win32_set_gretldir (const char *progname)
 	    tail[1] = '\0';
 	    strncat(tail + 1, "share", 5);
 	    slash_terminate(paths.gretldir);
+	    strncat(paths.gretldir, "gretl", 5);
+	    slash_terminate(paths.gretldir);
 	}
     } else {
 	fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
