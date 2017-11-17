@@ -2400,7 +2400,6 @@ int read_win32_config (int debug)
 	/* note: by now we have already determined gretldir as
 	   best we can; don't overwrite its setting
 	*/
-
 	if ((rcvar->flags & MACHSET) && strcmp(rcvar->key, "gretldir")) {
 	    regerr = read_reg_val(HKEY_LOCAL_MACHINE,
 				  get_reg_base(rcvar->key),

@@ -3557,7 +3557,8 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.dbhost, cpaths->dbhost, 0);
 
     /* gnuplot */
-#ifdef WIN32
+#if defined(WIN32) && defined(PKGBUILD)
+    /* "hard-wired" case for Windows package */
     sprintf(paths.gnuplot, "%swgnuplot.exe", paths.gretldir);
 #else
     path_init(paths.gnuplot, cpaths->gnuplot, 0);
