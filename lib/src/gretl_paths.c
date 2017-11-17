@@ -3269,7 +3269,7 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
    internal path elements that can be set in this way are:
 
    gretldir
-   gnuplot (but not on MS Windows)
+   gnuplot (but not for MS Windows package)
    tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, statapath,
      pypath, jlpath, dbhost
 
@@ -3361,8 +3361,18 @@ static void load_default_workdir (char *targ)
 
 static void load_default_path (char *targ)
 {
-    char *progfiles = program_files_path();
-    char *pfx86 = program_files_x86_path();
+    char *progfiles = NULL;
+    char *pfx86 = NULL;
+
+#ifndef PKGBUILD
+    if (targ == paths.gnuplot) {
+	sprintf(targ, "%swgnuplot.exe", gretl_bindir());
+	return;
+    }
+#endif
+
+    progfiles = program_files_path();
+    pfx86 = program_files_x86_path();
 
     if (targ == paths.workdir) {
 	load_default_workdir(targ);
@@ -3401,6 +3411,7 @@ static void load_default_path (char *targ)
     }
 
     free(progfiles);
+    free(pfx86);
 }
 
 # if CFG_DEBUG
