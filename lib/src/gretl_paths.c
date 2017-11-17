@@ -3296,8 +3296,9 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     maybe_transcribe_path(paths.dbhost, cpaths->dbhost,
 			  PATH_BLANK_OK);
 
-#ifndef WIN32
-    /* gnuplot path: this is set immutably at start-up on Windows */
+#if !defined(WIN32) || !defined(PKGBUILD)
+    /* gnuplot path: this is set immutably at start-up in the
+       gretl for Windows package */
     ndelta += maybe_transcribe_path(paths.gnuplot, cpaths->gnuplot, 0);
 #endif
 
