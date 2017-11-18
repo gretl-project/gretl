@@ -2678,6 +2678,8 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
     n = G_N_ELEMENTS(model_test_items);
 
     for (i=0; i<n; i++) {
+	int skip = 0;
+	
 	opt = OPT_NONE;
 	s = model_test_items[i].name;
 	if (strchr(s, ':')) {
@@ -2688,12 +2690,21 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 	    continue;
 	} else if (!strcmp(s, "Hsk")) {
 	    ci = MODTEST;
-	    opt = (dataset_is_panel(dataset))? OPT_P : OPT_W;
+	    if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
+		/* random effects: not supported (FIXME?) */
+		skip = 1;
+	    } else {
+		opt = (dataset_is_panel(dataset))? OPT_P : OPT_W;
+	    }
 	} else {
 	    ci = gretl_command_number(s);
 	}
 	sprintf(path, "/menubar/Tests/%s", s);
-	flip(ui, path, model_test_ok(ci, opt, pmod, dataset));
+	if (skip) {
+	    flip(ui, path, FALSE);
+	} else {
+	    flip(ui, path, model_test_ok(ci, opt, pmod, dataset));
+	}
     }
 
     if (pmod->ci == GARCH) {
@@ -3417,6 +3428,11 @@ static void set_up_model_view_menu (windata_t *vwin)
 				panel_hsk_items, 
 				G_N_ELEMENTS(panel_hsk_items));
 	} else if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
+	    /* fixed effects */
+	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
+				panel_hsk_items + 1, 1);
+	} else if (0 && pmod->ci == PANEL && (pmod->opt & OPT_U)) {
+	    /* random effects: is this OK?? */
 	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 				panel_hsk_items + 1, 1);
 	}	    
