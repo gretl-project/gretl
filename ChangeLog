@@ -10,6 +10,8 @@ version 2017e, in progress
 - Build fix: correct undefined symbol in cephes/iv.c
 - Boxplots: fix for incorrect extent of "whiskers" in some
   cases
+- GUI fix: the iterate option for groupwise weighted least
+  squares (Model/Panel menu) had become disconnected
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for
