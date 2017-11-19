@@ -2679,7 +2679,7 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 
     for (i=0; i<n; i++) {
 	int skip = 0;
-	
+
 	opt = OPT_NONE;
 	s = model_test_items[i].name;
 	if (strchr(s, ':')) {
