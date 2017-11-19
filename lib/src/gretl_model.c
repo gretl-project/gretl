@@ -5862,7 +5862,9 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     int ok = command_ok_for_model(ci, opt, pmod);
 
     /* for now we'll treat MIDASREG as a case of NLS */
-    if (ci == MIDASREG) ci = NLS;
+    if (ci == MIDASREG) {
+	ci = NLS;
+    }
 
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs */
@@ -5918,6 +5920,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && ci == MODTEST && (opt & OPT_C)) {
 	/* common factor test */
 	if (pmod->opt & OPT_P) {
+	    /* ?? check what this means! */
 	    ok = 0;
 	}
     }

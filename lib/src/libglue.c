@@ -97,6 +97,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }
 
     /* non-linearity (logs) */
@@ -107,6 +108,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }
 
     /* heteroskedasticity (White or Breusch-Pagan) */
@@ -120,6 +122,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }
 
     /* autocorrelation */
@@ -138,6 +141,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }
 
     /* ARCH */
@@ -156,11 +160,12 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }    
 
     /* normality of residual */
     if (!err && (opt & OPT_N)) {
-	err = last_model_test_uhat(dset, testopt, prn);
+	return last_model_test_uhat(dset, testopt, prn);
     }
 
     /* groupwise heteroskedasticity */
@@ -170,6 +175,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }
 
     /* common factor restriction */
@@ -179,6 +185,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }
 
     /* cross-sectional dependence */
@@ -188,6 +195,7 @@ int model_test_driver (int order, DATASET *dset,
 	} else {
 	    err = E_NOTIMP;
 	}
+	return err;
     }    
 
     return err;
