@@ -2936,32 +2936,33 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
        GUI editor */
 
     for (i=0; i<spec->n_lines; i++) {
-	int idx = spec->lines[i].type; /* this will be 1-based */
+	GPT_LINE *line = &spec->lines[i];
+	int idx = line->type; /* this will be 1-based */
 
 	if (idx == LT_AUTO) {
 	    idx = i + 1;
 	}
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
-	    spec->lines[i].flags |= GP_LINE_USER;
+	    line->flags |= GP_LINE_USER;
 	}
-	if (idx > 0 && idx < MAX_STYLES && spec->lines[i].rgb[0] == '\0') {
+	if (idx > 0 && idx < MAX_STYLES && line->rgb[0] == '\0') {
 	    /* if we haven't already got a line-specific color,
 	       apply the default style */
-	    strcpy(spec->lines[i].rgb, styles[idx-1].rgb);
+	    strcpy(line->rgb, styles[idx-1].rgb);
 	}
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
 	    /* the last "line" doesn't use the regular
 	       data mechanism */
-	    spec->lines[i].flags = GP_LINE_AUXDATA;
+	    line->flags = GP_LINE_AUXDATA;
 	    continue;
 	}
- 	if (spec->lines[i].ncols == 0) {
+ 	if (line->ncols == 0) {
 	    continue;
 	}
 	if (spec->datacols == 0) {
-	    spec->datacols = spec->lines[i].ncols;
+	    spec->datacols = line->ncols;
 	} else {
-	    spec->datacols += spec->lines[i].ncols - 1;
+	    spec->datacols += line->ncols - 1;
 	}
     }
 
