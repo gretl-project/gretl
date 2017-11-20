@@ -16223,7 +16223,7 @@ fi
 if test "${with_mpi_lib+set}" = set; then :
   withval=$with_mpi_lib; MPI_lib_check="$with_mpi_lib $with_mpi_lib/lib${MODE} $with_mpi_lib/lib $with_mpi_lib/lib${MODE}/openmpi $with_mpi_lib/lib/openmpi"
 else
-  MPI_lib_check="/usr/lib /usr/lib/openmpi /usr/lib64/openmpi/lib /usr/lib/openmpi/lib"
+  MPI_lib_check="/usr/lib /usr/lib/openmpi /usr/lib64/openmpi/lib /usr/lib/openmpi/lib /etc/alternatives"
 fi
 
 
