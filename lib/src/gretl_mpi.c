@@ -78,7 +78,8 @@ enum {
     TAG_SCALAR_VAL,
     TAG_BUNDLE_BYTES,
     TAG_BUNDLE_XML,
-    TAG_INTEGER_VAL
+    TAG_INTEGER_VAL,
+    TAG_ARRAY_LEN
 };
 
 #define MPI_DEBUG 0
@@ -525,6 +526,105 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 
     if (!err && (opt & OPT_A)) {
 	err = gretl_matrix_mpi_bcast(pm, root);
+    }
+
+    return err;
+}
+
+int gretl_array_mpi_reduce (gretl_array *sa,
+			    gretl_array **pa,
+			    Gretl_MPI_Op op,
+			    int root)
+{
+    gretl_array *a = NULL;
+    gretl_matrix *mij;
+    int *nmvec = NULL;
+    int id, np, nm;
+    int i, j;
+    int err = 0;
+
+    if (op != GRETL_MPI_ACAT) {
+	return E_DATA;
+    } else if (gretl_array_get_type(sa) != GRETL_TYPE_MATRICES) {
+	return E_TYPES;
+    }
+
+    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_rank_error(root);
+    }
+
+    nm = gretl_array_get_length(sa);
+
+    if (id != root) {
+	/* send size of our array to root */
+	err = mpi_send(&nm, 1, mpi_int, root, TAG_ARRAY_LEN,
+		       mpi_comm_world);
+    } else {
+	/* root: gather and record array sizes from other processes;
+	   allocate composite array
+	*/
+	int ntotal = 0;
+
+	nmvec = malloc(np * sizeof *nmvec);
+	if (nmvec == NULL) {
+	    err = E_ALLOC;
+	}
+
+	for (i=0; i<np && !err; i++) {
+	    if (i == root) {
+		nmvec[i] = nm;
+	    } else {
+		err = mpi_recv(&nmvec[i], 1, mpi_int, i, TAG_ARRAY_LEN,
+			       mpi_comm_world, MPI_STATUS_IGNORE);
+	    }
+	    ntotal += nmvec[i];
+	}
+
+	if (!err) {
+	    a = gretl_array_new(GRETL_TYPE_MATRICES, ntotal, &err);
+	}
+    }
+
+    if (!err) {
+	if (id != root) {
+	    /* send our member matrices to root */
+	    for (j=0; j<nm; j++) {
+		mij = gretl_array_get_element(sa, j, NULL, &err);
+		err = gretl_matrix_mpi_send(mij, root);
+	    }
+	} else {
+	    /* root: gather matrices from other processes
+	       and pack into big array
+	    */
+	    int k = 0;
+
+	    for (i=0; i<np && !err; i++) {
+		for (j=0; j<nmvec[i] && !err; j++) {
+		    if (i == root) {
+			mij = gretl_array_get_element(sa, j, NULL, &err);
+			err = gretl_array_set_matrix(a, k++, mij, 1);
+		    } else {
+			mij = gretl_matrix_mpi_receive(i, &err);
+			if (!err) {
+			    err = gretl_array_set_matrix(a, k++, mij, 0);
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    if (id == root) {
+	free(nmvec);
+	/* handle return value */
+	if (!err) {
+	    *pa = a;
+	} else {
+	    gretl_array_destroy(a);
+	}
     }
 
     return err;

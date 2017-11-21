@@ -1148,6 +1148,20 @@ static int node_replace_bundle (NODE *n, gretl_bundle *b)
     return err;
 }
 
+static int node_replace_array (NODE *n, gretl_array *a)
+{
+    int err;
+
+    if (n->uv != NULL) {
+	err = user_var_replace_value(n->uv, a, GRETL_TYPE_ARRAY);
+    } else {
+	fprintf(stderr, "*** replace array: node uv is NULL!\n");
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 #endif
 
 static int node_replace_scalar (NODE *n, double x)
@@ -2040,6 +2054,8 @@ static Gretl_MPI_Op reduce_op_from_string (const char *s)
 	return GRETL_MPI_HCAT;
     } else if (!strcmp(s, "vcat")) {
 	return GRETL_MPI_VCAT;
+    } else if (!strcmp(s, "acat")) {
+	return GRETL_MPI_ACAT;
     } else {
 	return 0;
     }
@@ -2111,6 +2127,9 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    } else if (ubundle_node(l) && f == F_BCAST) {
 		/* bundle: only broadcast OK */
 		type = GRETL_TYPE_BUNDLE;
+	    } else if (uarray_node(l) && f == F_REDUCE) {
+		/* array: only reduce OK */
+		type = GRETL_TYPE_ARRAY;
 	    } else if (uscalar_node(l) && f != F_SCATTER) {
 		/* scalar: all ops OK apart from scatter */
 		type = GRETL_TYPE_DOUBLE;
@@ -2220,15 +2239,20 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    Gretl_MPI_Op op = reduce_op_from_string(r->v.str);
 	    gretlopt opt = (f == F_REDUCE)? OPT_NONE : OPT_A;
 	    gretl_matrix *m = NULL;
+	    gretl_array *a = NULL;
 	    double x = NADBL;
 
-	    if (type == GRETL_TYPE_MATRIX) {
+	    if (type == GRETL_TYPE_ARRAY) {
+		p->err = gretl_array_mpi_reduce(l->v.a, &a, op, root);
+	    } else if (type == GRETL_TYPE_MATRIX) {
 		p->err = gretl_matrix_mpi_reduce(l->v.m, &m, op, root, opt);
 	    } else {
 		p->err = gretl_scalar_mpi_reduce(l->v.xval, &x, op, root, opt);
 	    }
 	    if (!p->err && (id == root || f == F_ALLREDUCE)) {
-		if (type == GRETL_TYPE_MATRIX) {
+		if (type == GRETL_TYPE_ARRAY) {
+		    p->err = node_replace_array(l, a);
+		} else if (type == GRETL_TYPE_MATRIX) {
 		    p->err = node_replace_matrix(l, m);
 		} else {
 		    p->err = node_replace_scalar(l, x);
