@@ -3866,7 +3866,7 @@ int slash_terminate (char *path)
 #else
     if (path != NULL && *path != '\0') {
 	if (path[strlen(path) - 1] != '/') {
-	    strcat(path, "//");
+	    strcat(path, "/");
 	    return 1;
 	}
     }
