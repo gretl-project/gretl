@@ -75,6 +75,10 @@ int gretl_array_append_bundle (gretl_array *A,
 gretl_bundle *gretl_array_get_bundle (gretl_array *A,
 				      int i);
 
+gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
+					  int vcat,
+					  int *err);
+
 int gretl_array_set_list (gretl_array *A, int i, 
 			  int *L, int copy);
 

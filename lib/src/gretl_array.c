@@ -339,6 +339,107 @@ gretl_bundle *gretl_array_get_bundle (gretl_array *A, int i)
     return b;
 }
 
+gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
+					  int vcat,
+					  int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *m;
+    int common_r = 1;
+    int common_c = 1;
+    int sum_r = 0;
+    int sum_c = 0;
+    int r0 = 0, c0 = 0;
+    int i;
+    
+    if (A->type != GRETL_TYPE_MATRICES) {
+	*err = E_TYPES;
+	return NULL;
+    }
+
+    for (i=0; i<A->n; i++) {
+	m = A->data[i];
+	if (!gretl_is_null_matrix(m)) {
+	    if (c0 == 0) {
+		r0 = m->rows;
+		c0 = m->cols;
+	    } else {
+		if (m->rows != r0) {
+		    common_r = 0;
+		}
+		if (m->cols != c0) {
+		    common_c = 0;
+		}
+		if (!common_r && !common_c) {
+		    *err = E_NONCONF;
+		    break;
+		}		
+	    }
+	    sum_r += m->rows;
+	    sum_c += m->cols;
+	}
+    }
+
+    if (!*err) {
+	if ((vcat && !common_c) || (!vcat && !common_r)) {
+	    *err = E_NONCONF;
+	}
+    }
+
+    if (!*err && sum_r == 0) {
+	ret = gretl_null_matrix_new();
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err || ret != NULL) {
+	return ret;
+    }
+
+    if (vcat) {
+	ret = gretl_matrix_alloc(sum_r, c0);
+    } else {
+	ret = gretl_matrix_alloc(r0, sum_c);
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else if (vcat) {
+	/* vertical concatenation */
+	int ii, j, k, rpos = 0;
+	double x;
+
+	for (k=0; k<A->n; k++) {
+	    m = A->data[k];
+	    if (!gretl_is_null_matrix(m)) {
+		for (j=0; j<c0; j++) {
+		    for (i=0, ii=rpos; i<m->rows; i++, ii++) {
+			x = gretl_matrix_get(m, i, j);
+			gretl_matrix_set(ret, ii, j, x);
+		    }
+		}
+		rpos += m->rows;
+	    }
+	}
+    } else {
+	/* horizontal concatenation */
+	double *val = ret->val;
+	int n;
+
+	for (i=0; i<A->n; i++) {
+	    m = A->data[i];
+	    if (!gretl_is_null_matrix(m)) {
+		n = m->rows * m->cols;
+		memcpy(val, m->val, n * sizeof *val);
+		val += n;
+	    }
+	}
+    }
+    
+    return ret;
+}
+
 int gretl_array_set_type (gretl_array *A, GretlType type)
 {
     if (A == NULL || A->n > 0) {
