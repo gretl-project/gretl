@@ -5064,7 +5064,7 @@ int load_function_package_by_filename (const char *fname,
 
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
-    } else if (pkg != NULL && prn != NULL) {
+    } else if (pkg != NULL && prn != NULL && gretl_mpi_rank() < 1) {
 	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version, 
 		pkg->date, pkg->author);
     }
