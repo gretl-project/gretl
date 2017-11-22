@@ -9563,7 +9563,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	/* legacy: this has long been accepted */
 	m2 = tmp_matrix_from_series(rhs, p);
 	prechecked = 1;
-	free_m2 = 1; /* flag temporary status */
+	free_m2 = 1; /* flag temporary status of @m2 */
     } else {
 	p->err = E_TYPES;
     }
@@ -9656,8 +9656,10 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	*/
 	p->err = matrix_replace_submatrix(m1, m2, spec);
 #if MATRIX_NA_CHECK
-	if (!p->err && !prechecked && gretl_matrix_xna_check(m1)) {
-	    set_gretl_warning(W_GENNAN);
+	if (!p->err && !prechecked) {
+	    if (gretl_matrix_xna_check(m2)) {
+		set_gretl_warning(W_GENNAN);
+	    }
 	}
 #endif
     }
@@ -16748,7 +16750,7 @@ static int save_generated_var (parser *p, PRN *prn)
     int t, v = 0;
 
 #if EDEBUG
-    fprintf(stderr, "save (%s): '%s'\n  callcount=%d\n"
+    fprintf(stderr, "save (%s): lhname='%s'\n  callcount=%d\n"
 	    "lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
 	    p->lhtree != NULL ? "compound" : "unitary",
 	    p->lh.name, p->callcount, getsymb(p->lh.t),
@@ -17013,9 +17015,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	/* note: for use by genr_get_output_matrix() */
 	p->lh.mret = m;
 #if MATRIX_NA_CHECK
-	if (!p->err && !prechecked && m != NULL &&
-	    gretl_matrix_xna_check(m)) {
-	    set_gretl_warning(W_GENNAN);
+	if (!p->err && !prechecked && m != NULL) {
+	    if (gretl_matrix_xna_check(m)) {
+		set_gretl_warning(W_GENNAN);
+	    }
 	    prechecked = 1;
 	}
 #endif

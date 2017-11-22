@@ -358,7 +358,9 @@ static int get_slices (matrix_subspec *spec,
     }
 
 #if MDEBUG
-    fprintf(stderr, "matrix: get_slices, err=%d\n", err);
+    if (err) {
+	fprintf(stderr, "matrix: get_slices, err=%d\n", err);
+    }
 #endif 
 
     return err;
@@ -454,6 +456,10 @@ int matrix_replace_submatrix (gretl_matrix *M,
     int sscalar = 0;
     int err = 0;
 
+#if MDEBUG
+    fprintf(stderr, "\nmatrix_replace_submatrix\n");
+#endif
+
     if (spec == NULL) {
 	fprintf(stderr, "matrix_replace_submatrix: spec is NULL!\n");
 	return E_DATA;
@@ -472,6 +478,9 @@ int matrix_replace_submatrix (gretl_matrix *M,
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
 	/* parse mspec into lists of affected rows and columns */
+#if MDEBUG
+	fprintf(stderr, "calling get_slices\n");
+#endif
 	err = get_slices(spec, M);
 	if (err) {
 	    return err;
@@ -499,18 +508,42 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	err = E_NONCONF;
     }
 
-    if (!err) {
+    if (!err && spec->rslice == NULL && spec->cslice != NULL) {
+	/* the target is just specified by column(s) */
+	int j, mcol, nr = M->rows;
+
+	if (sscalar) {
+	    /* write scalar into all rows of each selected col */
+	    double x = S->val[0];
+	    int i;
+
+	    for (j=1; j<=spec->cslice[0]; j++) {
+		mcol = spec->cslice[j] - 1;
+		for (i=0; i<nr; i++) {
+		    gretl_matrix_set(M, i, mcol, x);
+		}
+	    }
+	} else {
+	    /* zap from cols of S into selected cols of M */
+	    double *src = S->val;
+	    size_t colsize = nr * sizeof *src;
+
+	    for (j=1; j<=spec->cslice[0]; j++) {
+		mcol = spec->cslice[j] - 1;
+		memcpy(M->val + mcol * nr, src, colsize);
+		src += nr;
+	    }
+	}
+    } else if (!err) {
+	double x = sscalar ? S->val[0] : 0.0;
 	int i, j, l, k = 0;
 	int mi, mj;
-	double x;
 
-	x = (sscalar)? S->val[0] : 0.0;
-
-	for (i=0; i<sr; i++) {
-	    mi = (spec->rslice == NULL)? k++ : spec->rslice[i+1] - 1;
+	for (j=0; j<sc; j++) {
+	    mj = (spec->cslice == NULL)? k++ : spec->cslice[j+1] - 1;
 	    l = 0;
-	    for (j=0; j<sc; j++) {
-		mj = (spec->cslice == NULL)? l++ : spec->cslice[j+1] - 1;
+	    for (i=0; i<sr; i++) {
+		mi = (spec->rslice == NULL)? l++ : spec->rslice[i+1] - 1;
 		if (!sscalar) {
 		    x = gretl_matrix_get(S, i, j);
 		}
