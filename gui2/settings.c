@@ -3233,10 +3233,10 @@ void set_up_mac_look (void)
 	    gtk_rc_parse(gtkrc);
 	    g_free(gtkrc);
 	} else {
-#if defined(SVPREFIX)
+#if defined(GTK_PREFIX)
 	    /* go with the build-time prefix */
 	    gtkrc = g_strdup_printf("%s/share/themes/%s/gtk-2.0/gtkrc",
-				    SVPREFIX, themepref);
+				    GTK_PREFIX, themepref);
 #else
 	    /* hard-wired? */
 	    const char *path = "/Library/Frameworks/gretl-dev.framework/Resources";
