@@ -265,6 +265,9 @@ void get_default_windows_app_font (char *target)
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
+	/* FIXME this doesn't work if gretl is launched
+	   from an MSYS2 terminal window
+	*/
         redirect_io_to_console();
     }
 
