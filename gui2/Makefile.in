@@ -59,6 +59,14 @@ else
   svdir = $(prefix)/share/gretl/gtksourceview
 endif
 
+ifeq ($(win32_build),yes)
+ifeq ($(win32pkg),yes)
+  wimpdir = $(prefix)/share/themes/MS-Windows/gtk-2.0
+else
+  wimpdir = $(GTK_PREFIX)/share/themes/MS-Windows/gtk-2.0
+endif
+endif
+
 ifeq ($(pkg_build),no)
   SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
 endif
@@ -142,6 +150,7 @@ ifeq ($(mac_native),yes)
   PROG = gretl
 else ifeq ($(win32_build),yes)
   PROG = gretl$(EXEEXT)
+  INSTALL_GTKRC = install-gtkrc
 else
   PROG = gretl_x11$(EXEEXT)
   INSTALL_SCRIPT = install-script
@@ -259,7 +268,8 @@ NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 
 .PHONY:
 
-install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles install-news
+install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles \
+	install-news $(INSTALL_GTKRC)
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -292,6 +302,10 @@ install-styles: installdirs
 
 install-news: NEWS installdirs
 	$(INSTALL_DATA) NEWS $(DESTDIR)$(gretldir)
+
+install-gtkrc:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(wimpdir)
+	$(INSTALL_DATA) $(topsrc)/win32/gtkrc.win32 $(DESTDIR)$(wimpdir)/gtkrc
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)

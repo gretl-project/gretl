@@ -1,0 +1,44 @@
+
+[Icons]
+Name: "{group}\gretl"; Filename: "{app}\gretl.exe"
+Name: "{group}\Gretl Web Site"; Filename: "{app}\gretl_website.url"
+Name: "{group}\uninstall gretl"; Filename: "{app}\unins000.exe"
+Name: "{userdesktop}\gretl"; Filename: "{app}\gretl.exe"; WorkingDir: "{app}"
+
+[Registry]
+; Start "gretl" registry keys.
+Root: HKCR; Subkey: "Software\gretl"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\gretl"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\gretl"; ValueType: string; ValueName: "gretldir"; ValueData: "{app}"
+Root: HKCR; Subkey: ".gdt"; ValueType: string; ValueName: ""; ValueData: "GretlDataFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".gdt"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-gretldata"
+Root: HKCR; Subkey: "GretlDataFile"; ValueType: string; ValueName: ""; ValueData: "Gretl data file"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "GretlDataFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\gretl.exe,1"
+Root: HKCR; Subkey: "GretlDataFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\gretl.exe"" ""%1"""
+Root: HKCR; Subkey: ".inp"; ValueType: string; ValueName: ""; ValueData: "GretlScriptFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".inp"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-gretlscript"
+Root: HKCR; Subkey: "GretlScriptFile"; ValueType: string; ValueName: ""; ValueData: "Gretl script file"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "GretlScriptFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\gretl.exe,2"
+Root: HKCR; Subkey: "GretlScriptFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\gretl.exe"" -r ""%1"""
+Root: HKCR; Subkey: ".gretl"; ValueType: string; ValueName: ""; ValueData: "GretlSessionFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".gretl"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-gretlsession"
+Root: HKCR; Subkey: "GretlSessionFile"; ValueType: string; ValueName: ""; ValueData: "Gretl session file"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "GretlSessionFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\gretl.exe,3"
+Root: HKCR; Subkey: "GretlSessionFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\gretl.exe"" ""%1"""
+Root: HKCR; Subkey: ".gdtb"; ValueType: string; ValueName: ""; ValueData: "GretlBindataFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".gdtb"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-gretlbindata"
+Root: HKCR; Subkey: "GretlBindataFile"; ValueType: string; ValueName: ""; ValueData: "Gretl binary data file"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "GretlBindataFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\gretl.exe,4"
+Root: HKCR; Subkey: "GretlBindataFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\gretl.exe"" ""%1"""
+
+[Code]
+const
+ModPathName = 'modifypath';
+ModPathType = 'user';
+
+function ModPathDir(): TArrayOfString;
+begin
+   setArrayLength(Result, 1);
+   Result[0] := ExpandConstant('{app}');
+end;
+

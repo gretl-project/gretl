@@ -1,0 +1,31 @@
+#!/bin/sh
+
+ARCH=$1
+topsrc=@abs_top_srcdir@
+VERSION=@VERSION@
+
+if [ "a${ARCH}" = "ai686" ] ; then
+  ISSTOP="${topsrc}/win32/windist/isstop.32"
+elif [ "a${ARCH}" = "ax86_64" ] ; then
+  ISSTOP="${topsrc}/win32/windist/isstop.64"
+else
+  echo "Please specify i686 or x86_64"
+  exit 1
+fi
+
+ISSTAIL="${topsrc}/win32/windist/isstail"
+
+# make .iss file for Inno
+cat ${ISSTOP} | sed s/VERSION/${VERSION}/ > gretl.iss
+echo "[Files]" >> gretl.iss
+for f in `find gretl -name "*"` ; do
+  if [ ! -d $f ] ; then
+    winf=`echo $f | sed s+/+'\\\'+g`
+    windir=`dirname $f | sed s+^gretl+{app}+ | sed s+/+'\\\'+g`
+    echo "Source: \"$winf\"; Destdir: \"$windir\"" >> gretl.iss
+  fi
+done
+cat ${ISSTAIL} >> gretl.iss
+echo "#include \"${topsrc}/win32/windist/modpath.iss\"" >> gretl.iss
+
+

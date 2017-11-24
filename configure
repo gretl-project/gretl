@@ -20209,7 +20209,7 @@ fi
 
 CFLAGS="$orig_CFLAGS"
 
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/gretl.sh osx/fixlinks.sh osx/Info.plist redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/gretl.sh osx/fixlinks.sh osx/Info.plist win32/windist/mkiss.sh redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
 
 
 if test "${build_docs}" = "yes" ; then
@@ -21236,6 +21236,7 @@ do
     "osx/gretl.sh") CONFIG_FILES="$CONFIG_FILES osx/gretl.sh" ;;
     "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "osx/Info.plist") CONFIG_FILES="$CONFIG_FILES osx/Info.plist" ;;
+    "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;

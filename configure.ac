@@ -1058,6 +1058,7 @@ osx/Makefile
 osx/gretl.sh
 osx/fixlinks.sh
 osx/Info.plist
+win32/windist/mkiss.sh
 redhat/gretl.spec
 utils/emacs/Makefile
 doc/gretl.sty
