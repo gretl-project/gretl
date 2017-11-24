@@ -829,13 +829,15 @@ if test "$mac_native" = "yes" ; then
 fi
 
 dnl
-dnl For native gtkspinner: check for GTK 2.20 or higher
+dnl For native gtkspinner: check for GTK 2.20 or higher,
+dnl and while we're at it grab the gtk prefix
 dnl
 if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSPINNER, gtk+-2.0 >= 2.20.0,
       fake_gtkspinner="no",
       fake_gtkspinner="yes",      
     )
+    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 fi
 
 dnl
@@ -906,6 +908,7 @@ AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LIBS)
 AC_SUBST(GTKSOURCEVIEW_PREFIX)
 AC_SUBST(BASH_COMPLETION_DIR)
+AC_SUBST(GTK_PREFIX)
 
 dnl Check for gdk-pixbuf support
 if test ${build_gui} = "yes" ; then

@@ -653,6 +653,7 @@ XML_LIBS
 XML_CFLAGS
 GDK_PIXBUF_LIBS
 GDK_PIXBUF_CFLAGS
+GTK_PREFIX
 BASH_COMPLETION_DIR
 GTKSOURCEVIEW_PREFIX
 GTK_LIBS
@@ -19425,6 +19426,7 @@ else
 $as_echo "yes" >&6; }
 	fake_gtkspinner="no"
 fi
+    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 fi
 
 if test "$gtk_version" = "2.0" ; then
@@ -19671,6 +19673,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 
