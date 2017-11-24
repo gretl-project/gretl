@@ -1,0 +1,60 @@
+Windows Registry Editor Version 5.00
+
+; PATH needs to be substituted
+
+[HKEY_LOCAL_MACHINE\Software\gretl]
+"gretldir"="PATH"
+
+[HKEY_CLASSES_ROOT\Software\gretl]
+
+[HKEY_CLASSES_ROOT\Software\gretl\.gdt]
+""="GretlDataFile"
+"Content Type"="application/x-gretldata"
+
+[HKEY_CLASSES_ROOT\Software\gretl\.inp]
+""="GretlDataFile"
+"Content Type"="application/x-gretlscript"
+
+[HKEY_CLASSES_ROOT\Software\gretl\.gretl]
+""="GretlSessionFile"
+"Content Type"="application/x-gretlsession"
+
+[HKEY_CLASSES_ROOT\Software\gretl\.gdtb]
+""="GretlBindataFile"
+"Content Type"="application/x-gretlbindata"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile]
+""="Gretl data file"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\DefaultIcon]
+""="PATH\gretl.exe,1"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\shell\open\command]
+""="""PATH\gretl.exe"" ""%1"""
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile]
+""="Gretl script file"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\DefaultIcon]
+""="PATH\gretl.exe,2"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\shell\open\command]
+""="""PATH\gretl.exe"" -r ""%1"""
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile]
+""="Gretl session file"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\DefaultIcon]
+""="PATH\gretl.exe,3"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\shell\open\command]
+""="""PATH\gretl.exe"" ""%1"""
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile]
+""="Gretl data file"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\DefaultIcon]
+""="PATH\gretl.exe,4"
+
+[HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\shell\open\command]
+""="""PATH\gretl.exe"" ""%1"""
