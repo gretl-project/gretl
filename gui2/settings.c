@@ -3260,9 +3260,10 @@ void set_up_windows_look (void)
     if (!strcmp(themepref, "MS-Windows") ||
 	!strcmp(themepref, "Clearlooks")) {
 	const char *prefix;
+	char sl[2] = {0};
+	gchar *gtkrc;
 	size_t n;
 	int needslash;
-	gchar *gtkrc;
 
 # ifdef PKGBUILD
 	prefix = gretl_home();
@@ -3271,9 +3272,10 @@ void set_up_windows_look (void)
 # endif
 	n = strlen(prefix);
 	needslash = (prefix[n-1] != '\\' && prefix[n-1] != '/');
-	gtkrc = g_strdup_printf("%s%sshare\\themes\\%s\\gtk-2.0\\gtkrc",
-				prefix, (needslash)? "\\" : "",
-				themepref);
+	sl[0] = strchr(prefix, '/') ? '/' : '\\';
+	gtkrc = g_strdup_printf("%s%sshare%sthemes%s%s%sgtk-2.0%sgtkrc",
+				prefix, (needslash)? sl : "", sl, sl,
+				themepref, sl, sl);
 	fprintf(stderr, "gtkrc = '%s'\n", gtkrc);
 	gtk_rc_parse(gtkrc);
 	g_free(gtkrc);
