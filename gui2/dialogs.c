@@ -26,6 +26,7 @@
 #include "textutil.h"
 #include "menustate.h"
 #include "dlgutils.h"
+#include "treeutils.h"
 #include "ssheet.h"
 #include "database.h"
 #include "selector.h"
@@ -6082,78 +6083,123 @@ int output_policy_dialog (windata_t *source,
     return policy;
 }
 
+static gchar *auto_pcd_name (const char *vname)
+{
+    char pcname[VNAMELEN];
+
+    pcname[0] = '\0';
+    strcat(pcname, "pcd_");
+    strncat(pcname, vname, VNAMELEN - 5);
+    /* FIXME checking and uniqueness */
+
+    return g_strdup(pcname);
+}
+
 struct pc_change_info {
     GtkWidget *dialog;
     GtkWidget *entry;
-    int varnum;
+    GtkWidget *logcheck;
+    const int *varlist;
     int *ctrl;
 };
 
 static void pc_change_callback (GtkWidget *w,
 				struct pc_change_info *pci)
 {
-    gchar *newname;
-    int err;
+    gchar *newname = NULL;
+    int autoname = 0;
+    int err = 0;
 
-    newname = entry_box_get_trimmed_text(pci->entry);
-    
-    if (newname == NULL || *newname == '\0') {
-	gtk_widget_grab_focus(pci->entry);
-	g_free(newname);
-	return;
+    if (pci->entry != NULL) {
+	newname = entry_box_get_trimmed_text(pci->entry);
+	if (newname == NULL || *newname == '\0') {
+	    gtk_widget_grab_focus(pci->entry);
+	    g_free(newname);
+	    return;
+	} else {
+	    err = gui_validate_varname(newname,
+				       GRETL_TYPE_SERIES,
+				       pci->dialog);
+	    if (err) {
+		gtk_widget_grab_focus(pci->entry);
+		g_free(newname);
+		return;
+	    }
+	}
+    } else {
+	autoname = 1;
     }
 
-    err = gui_validate_varname(newname,
-			       GRETL_TYPE_SERIES,
-			       pci->dialog);
-
-    if (err) {
-	gtk_widget_grab_focus(pci->entry);
-    } else {
-	const char *vname = dataset->varname[pci->varnum];
+    if (!err) {
 	gchar *genline;
-	int ctrl = 0;
+	int use_logs = 0;
+	int i, ctrl = 0;
 
 	if (pci->ctrl != NULL) {
 	    ctrl = *pci->ctrl;
 	}
 
-	if (ctrl == 0) {
-	    /* period to period rate */
-	    genline = g_strdup_printf("series %s=(%s/%s(-1)-1)*100",
-				      newname, vname, vname);
-	} else if (ctrl == 1) {
-	    /* annualized */
-	    genline = g_strdup_printf("series %s=((%s/%s(-1))^%d-1)*100",
-				      newname, vname, vname,
-				      dataset->pd);
-	} else {
-	    /* year on year */
-	    genline = g_strdup_printf("series %s=(%s/%s(-%d)-1)*100",
-				      newname, vname, vname,
-				      dataset->pd);
+	if (pci->logcheck != NULL &&
+	    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pci->logcheck))) {
+	    use_logs = 1;
 	}
 
-	err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
+	for (i=1; i<=pci->varlist[0] && !err; i++) {
+	    const char *vname = dataset->varname[pci->varlist[i]];
 
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    add_command_to_stack(genline, 0);
-	    refresh_data();
+	    if (autoname) {
+		newname = auto_pcd_name(vname);
+	    }
+	    if (ctrl == 0) {
+		/* period to period rate */
+		if (use_logs) {
+		    genline = g_strdup_printf("series %s=100*log(%s/%s(-1))",
+					      newname, vname, vname);
+		} else {
+		    genline = g_strdup_printf("series %s=100*(%s/%s(-1)-1)",
+					      newname, vname, vname);
+		}
+	    } else if (ctrl == 1) {
+		/* annualized */
+		if (use_logs) {
+		    int mult = dataset->pd * 100;
+		    genline = g_strdup_printf("series %s=%d*log(%s/%s(-1))",
+					      newname, mult, vname, vname);
+		} else {
+		    genline = g_strdup_printf("series %s=100*((%s/%s(-1))^%d-1)",
+					      newname, vname, vname, dataset->pd);
+		}
+	    } else {
+		/* year on year */
+		if (use_logs) {
+		    genline = g_strdup_printf("series %s=100*log(%s/%s(-%d))",
+					      newname, vname, vname, dataset->pd);
+		} else {
+		    genline = g_strdup_printf("series %s=100*(%s/%s(-%d)-1)",
+					      newname, vname, vname, dataset->pd);
+		}
+	    }
+
+	    err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
+
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		add_command_to_stack(genline, 0);
+		refresh_data();
+	    }
+
+	    g_free(genline);
+	    g_free(newname);
 	}
-
-	g_free(genline);
     }
-
-    g_free(newname);
 
     if (!err) {
 	gtk_widget_destroy(pci->dialog);
     }
 }
 
-void percent_change_dialog (int v)
+static void percent_change_dialog (const int *list)
 {
     struct pc_change_info pci;
     GtkWidget *dialog;
@@ -6170,32 +6216,41 @@ void percent_change_dialog (int v)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     pci.dialog = dialog;
-    pci.varnum = v;
+    pci.varlist = list;
     pci.ctrl = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    msg = g_strdup_printf(_("percent change in %s"), dataset->varname[v]);
+    if (list[0] == 1) {
+	msg = g_strdup_printf(_("percent change in %s"),
+			      dataset->varname[list[1]]);
+    } else {
+	msg = g_strdup_printf(_("percent changes"));
+    }
     tmp = gtk_label_new(msg);
     g_free(msg);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    msg = g_strdup_printf(_("Enter name for new variable\n"
-			    "(max. %d characters)"), 
-			  VNAMELEN - 1);
-    tmp = gtk_label_new(msg);
-    g_free(msg);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    if (pci.varlist[0] == 1) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+	msg = g_strdup_printf(_("Enter name for new variable\n"
+				"(max. %d characters)"),
+			      VNAMELEN - 1);
+	tmp = gtk_label_new(msg);
+	g_free(msg);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    pci.entry = tmp = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
-    gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
-    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+	pci.entry = tmp = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(tmp), 32);
+	gtk_entry_set_width_chars(GTK_ENTRY(tmp), 32);
+	gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    } else {
+	pci.entry = NULL;
+    }
 
     if (quarterly_or_monthly(dataset)) {
 	const char *q_opts[] = {
@@ -6213,7 +6268,7 @@ void percent_change_dialog (int v)
 	int i;
 
 	opts = dataset->pd == 4 ? q_opts : m_opts;
-	
+
 	for (i=0; i<3; i++) {
 	    button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
@@ -6228,6 +6283,12 @@ void percent_change_dialog (int v)
 	pci.ctrl = &radioval;
     }
 
+    /* add option of calculating via logs */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    pci.logcheck = gtk_check_button_new_with_label(_("Calculate using logs"));
+    gtk_box_pack_start(GTK_BOX(hbox), pci.logcheck, TRUE, TRUE, 5);
+
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     cancel_delete_button(hbox, dialog);
@@ -6238,6 +6299,23 @@ void percent_change_dialog (int v)
 
     gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
+}
+
+void single_percent_change_dialog (int v)
+{
+    int list[2] = {1, v};
+
+    percent_change_dialog(list);
+}
+
+void multi_percent_change_dialog (void)
+{
+    int *list = main_window_selection_as_list();
+
+    if (list != NULL) {
+	percent_change_dialog(list);
+	free(list);
+    }
 }
 
 struct midas_sync {

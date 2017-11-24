@@ -203,7 +203,9 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
 int output_policy_dialog (windata_t *source, windata_t *target,
 			  int toolbar);
 
-void percent_change_dialog (int v);
+void single_percent_change_dialog (int v);
+
+void multi_percent_change_dialog (void);
 
 int midas_term_dialog (const char *name, int m,
 		       int *minlag, int *maxlag,

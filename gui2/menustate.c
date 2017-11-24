@@ -350,14 +350,6 @@ void compact_data_state (gboolean s)
     }
 }
 
-void single_var_menu_state (int nsel)
-{
-    gboolean s = dataset_is_time_series(dataset) ||
-	dataset_is_panel(dataset);
-	
-    flip(mdata->ui, "/menubar/Add/pcdiff", s && nsel == 1);
-}
-
 void main_menus_enable (gboolean s)
 {
     if (mdata->ui != NULL) {
@@ -556,6 +548,7 @@ struct popup_entries main_pop_entries[] = {
     { MNU_DUMIF, N_("Dummify..."), T_SINGLE },
     { MNU_LOGS,  N_("Add logs"), T_MULTI },
     { MNU_DIFF,  N_("Add differences"), T_MULTI },
+    { MNU_PCDIF, N_("Add percent changes..."), T_MULTI },
     { MNU_SEPAR, NULL, T_BOTH },
     { MNU_GENR,  N_("Define new variable..."), T_BOTH },
     { MNU_LIST,  N_("Define list"), T_MULTI }
@@ -621,7 +614,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, v, 0);
 	break;
     case MNU_PCDIF:
-	percent_change_dialog(v);
+	single_percent_change_dialog(v);
 	break;
     case MNU_DUMIF:
 	add_discrete_dummies(v);
@@ -739,6 +732,8 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	delete_selected_vars();
     } else if (i == MNU_LOGS || i == MNU_DIFF)  {
 	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0, 0);
+    } else if (i == MNU_PCDIF) {
+	multi_percent_change_dialog();
     } else if (i == MNU_LIST) { 
 	make_list_from_main();
     } else if (i == MNU_GENR) { 
