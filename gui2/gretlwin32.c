@@ -262,13 +262,22 @@ void get_default_windows_app_font (char *target)
     }
 }
 
+static int running_under_msys (void)
+{
+    char *s = getenv("OSTYPE");
+
+    return s != NULL && !strcmp(s, "msys");
+}
+
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
-	/* FIXME this doesn't work if gretl is launched
+	/* This doesn't work if gretl is launched
 	   from an MSYS2 terminal window
 	*/
-        redirect_io_to_console();
+	if (!running_under_msys) {
+	    redirect_io_to_console();
+	}
     }
 
     set_g_logging(debug);
