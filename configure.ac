@@ -1072,6 +1072,11 @@ if test "${win32_build}" = "yes" ; then
     GHOME="${prefix}\share\gretl"
     GEXEPATH="${prefix}\bin"
   fi
+  AC_CHECK_PROG(CYGPATH_CHECK,cygpath,yes)
+  if test x"$CYGPATH_CHECK" = x"yes" ; then
+    GHOME=`cygpath -w $GHOME`
+    GEXEPATH=`cygpath -w $GEXEPATH`
+  fi
   AC_SUBST(GHOME)
   AC_SUBST(GEXEPATH)
   AC_CONFIG_FILES([
