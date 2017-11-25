@@ -632,6 +632,8 @@ ac_includes_default="\
 gt_needs=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+GEXEPATH
+GHOME
 USE_AVX
 USE_SSE2
 RLIB
@@ -20209,8 +20211,22 @@ fi
 
 CFLAGS="$orig_CFLAGS"
 
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/gretl.sh osx/fixlinks.sh osx/Info.plist win32/windist/mkiss.sh redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/gretl.sh osx/fixlinks.sh osx/Info.plist redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
 
+
+if test "${win32_build}" = "yes" ; then
+  if test "${pkg_build}" = "yes" ; then
+    GHOME="${prefix}"
+    GEXEPATH="${prefix}"
+  else
+    GHOME="${prefix}\share\gretl"
+    GEXEPATH="${prefix}\bin"
+  fi
+
+
+  ac_config_files="$ac_config_files win32/gretlmime.reg win32/windist/mkiss.sh"
+
+fi
 
 if test "${build_docs}" = "yes" ; then
   ac_config_files="$ac_config_files doc/Makefile doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile doc/tex_gl/Makefile doc/reference/Makefile"
@@ -21236,11 +21252,12 @@ do
     "osx/gretl.sh") CONFIG_FILES="$CONFIG_FILES osx/gretl.sh" ;;
     "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "osx/Info.plist") CONFIG_FILES="$CONFIG_FILES osx/Info.plist" ;;
-    "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "redhat/gretl.spec") CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
+    "win32/gretlmime.reg") CONFIG_FILES="$CONFIG_FILES win32/gretlmime.reg" ;;
+    "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/commands/Makefile") CONFIG_FILES="$CONFIG_FILES doc/commands/Makefile" ;;
     "doc/tex/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex/Makefile" ;;

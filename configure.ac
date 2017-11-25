@@ -1058,12 +1058,27 @@ osx/Makefile
 osx/gretl.sh
 osx/fixlinks.sh
 osx/Info.plist
-win32/windist/mkiss.sh
 redhat/gretl.spec
 utils/emacs/Makefile
 doc/gretl.sty
 doc/gretl-lite.sty
 ])
+
+if test "${win32_build}" = "yes" ; then
+  if test "${pkg_build}" = "yes" ; then
+    GHOME="${prefix}"
+    GEXEPATH="${prefix}"
+  else
+    GHOME="${prefix}\share\gretl"
+    GEXEPATH="${prefix}\bin"
+  fi
+  AC_SUBST(GHOME)
+  AC_SUBST(GEXEPATH)
+  AC_CONFIG_FILES([
+    win32/gretlmime.reg
+    win32/windist/mkiss.sh
+  ])
+fi
 
 if test "${build_docs}" = "yes" ; then
   AC_CONFIG_FILES([
