@@ -64,6 +64,7 @@ ifeq ($(win32pkg),yes)
   wimpdir = $(prefix)/share/themes/MS-Windows/gtk-2.0
 else
   wimpdir = $(GTK_PREFIX)/share/themes/MS-Windows/gtk-2.0
+  INSTALL_CMDFILE = install-cmdfile
 endif
 endif
 
@@ -269,7 +270,7 @@ NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 .PHONY:
 
 install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles \
-	install-news $(INSTALL_GTKRC)
+	install-news $(INSTALL_GTKRC) $(INSTALL_CMDFILE)
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -306,6 +307,9 @@ install-news: NEWS installdirs
 install-gtkrc:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(wimpdir)
 	$(INSTALL_DATA) $(topsrc)/win32/gtkrc.win32 $(DESTDIR)$(wimpdir)/gtkrc
+
+install-cmdfile:
+	$(INSTALL_DATA) ../win32/gretlrun.cmd $(DESTDIR)$(bindir)/gretlrun.cmd
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
