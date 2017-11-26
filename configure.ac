@@ -1066,30 +1066,30 @@ doc/gretl-lite.sty
 
 if test "${win32_build}" = "yes" ; then
   if test "${pkg_build}" = "yes" ; then
-    GHOME="${prefix}"
-    GEXEPATH="${prefix}"
+    AC_CONFIG_FILES([
+      win32/windist/mkiss.sh
+    ])
   else
     GHOME="${prefix}/share/gretl"
     GEXEPATH="${prefix}/bin"
+    MINGWBIN="$MINGW_PREFIX/bin"
+    MSYSBIN="/bin"
+    AC_CHECK_PROG(CYGPATH_CHECK,cygpath,yes)
+    if test x"$CYGPATH_CHECK" = x"yes" ; then
+      GHOME=`cygpath -m $GHOME`
+      GEXEPATH=`cygpath -m $GEXEPATH`
+      MINGWBIN=`cygpath -m $MINGWBIN`
+      MSYSBIN=`cygpath -m $MSYSBIN`
+    fi
+    AC_SUBST(GHOME)
+    AC_SUBST(GEXEPATH)
+    AC_SUBST(MINGWBIN)
+    AC_SUBST(MSYSBIN)
+    AC_CONFIG_FILES([
+      win32/gretlrun.cmd
+      win32/gretlmime.reg
+    ])
   fi
-  MINGWBIN="$MINGW_PREFIX/bin"
-  MSYSBIN="/bin"
-  AC_CHECK_PROG(CYGPATH_CHECK,cygpath,yes)
-  if test x"$CYGPATH_CHECK" = x"yes" ; then
-    GHOME=`cygpath -m $GHOME`
-    GEXEPATH=`cygpath -m $GEXEPATH`
-    MINGWBIN=`cygpath -m $MINGWBIN`
-    MSYSBIN=`cygpath -m $MSYSBIN`
-  fi
-  AC_SUBST(GHOME)
-  AC_SUBST(GEXEPATH)
-  AC_SUBST(MINGWBIN)
-  AC_SUBST(MSYSBIN)
-  AC_CONFIG_FILES([
-    win32/gretlrun.cmd
-    win32/gretlmime.reg
-    win32/windist/mkiss.sh
-  ])
 fi
 
 if test "${build_docs}" = "yes" ; then

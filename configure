@@ -20219,15 +20219,14 @@ ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/
 
 if test "${win32_build}" = "yes" ; then
   if test "${pkg_build}" = "yes" ; then
-    GHOME="${prefix}"
-    GEXEPATH="${prefix}"
+    ac_config_files="$ac_config_files win32/windist/mkiss.sh"
+
   else
     GHOME="${prefix}/share/gretl"
     GEXEPATH="${prefix}/bin"
-  fi
-  MINGWBIN="$MINGW_PREFIX/bin"
-  MSYSBIN="/bin"
-  # Extract the first word of "cygpath", so it can be a program name with args.
+    MINGWBIN="$MINGW_PREFIX/bin"
+    MSYSBIN="/bin"
+    # Extract the first word of "cygpath", so it can be a program name with args.
 set dummy cygpath; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -20264,18 +20263,19 @@ $as_echo "no" >&6; }
 fi
 
 
-  if test x"$CYGPATH_CHECK" = x"yes" ; then
-    GHOME=`cygpath -m $GHOME`
-    GEXEPATH=`cygpath -m $GEXEPATH`
-    MINGWBIN=`cygpath -m $MINGWBIN`
-    MSYSBIN=`cygpath -m $MSYSBIN`
+    if test x"$CYGPATH_CHECK" = x"yes" ; then
+      GHOME=`cygpath -m $GHOME`
+      GEXEPATH=`cygpath -m $GEXEPATH`
+      MINGWBIN=`cygpath -m $MINGWBIN`
+      MSYSBIN=`cygpath -m $MSYSBIN`
+    fi
+
+
+
+
+    ac_config_files="$ac_config_files win32/gretlrun.cmd win32/gretlmime.reg"
+
   fi
-
-
-
-
-  ac_config_files="$ac_config_files win32/gretlrun.cmd win32/gretlmime.reg win32/windist/mkiss.sh"
-
 fi
 
 if test "${build_docs}" = "yes" ; then
@@ -21306,9 +21306,9 @@ do
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
+    "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "win32/gretlrun.cmd") CONFIG_FILES="$CONFIG_FILES win32/gretlrun.cmd" ;;
     "win32/gretlmime.reg") CONFIG_FILES="$CONFIG_FILES win32/gretlmime.reg" ;;
-    "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/commands/Makefile") CONFIG_FILES="$CONFIG_FILES doc/commands/Makefile" ;;
     "doc/tex/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex/Makefile" ;;
