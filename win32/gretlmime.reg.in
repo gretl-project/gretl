@@ -7,18 +7,6 @@ Windows Registry Editor Version 5.00
 @="GretlDataFile"
 "Content Type"="application/x-gretldata"
 
-[HKEY_CLASSES_ROOT\Software\gretl\.inp]
-@="GretlScriptFile"
-"Content Type"="application/x-gretlscript"
-
-[HKEY_CLASSES_ROOT\Software\gretl\.gretl]
-@="GretlSessionFile"
-"Content Type"="application/x-gretlsession"
-
-[HKEY_CLASSES_ROOT\Software\gretl\.gdtb]
-@="GretlBindataFile"
-"Content Type"="application/x-gretlbindata"
-
 [HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile]
 @="Gretl data file"
 
@@ -27,6 +15,10 @@ Windows Registry Editor Version 5.00
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\shell\open\command]
 @="\"@GEXEPATH@\\gretl.exe\" \"%1\""
+
+[HKEY_CLASSES_ROOT\Software\gretl\.inp]
+@="GretlScriptFile"
+"Content Type"="application/x-gretlscript"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile]
 @="Gretl script file"
@@ -37,6 +29,10 @@ Windows Registry Editor Version 5.00
 [HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\shell\open\command]
 @="\"@GEXEPATH@\\gretl.exe\" \"%1\""
 
+[HKEY_CLASSES_ROOT\Software\gretl\.gretl]
+@="GretlSessionFile"
+"Content Type"="application/x-gretlsession"
+
 [HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile]
 @="Gretl session file"
 
@@ -45,6 +41,10 @@ Windows Registry Editor Version 5.00
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\shell\open\command]
 @="\"@GEXEPATH@\\gretl.exe\" \"%1\""
+
+[HKEY_CLASSES_ROOT\Software\gretl\.gdtb]
+@="GretlBindataFile"
+"Content Type"="application/x-gretlbindata"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile]
 @="Gretl binary data file"
