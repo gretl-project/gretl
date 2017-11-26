@@ -3,8 +3,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\Software\gretl]
 "gretldir"="@GHOME@"
 
-[HKEY_CLASSES_ROOT\Software\gretl]
-
 [HKEY_CLASSES_ROOT\Software\gretl\.gdt]
 @="GretlDataFile"
 "Content Type"="application/x-gretldata"
@@ -25,34 +23,34 @@ Windows Registry Editor Version 5.00
 @="Gretl data file"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\DefaultIcon]
-@="@GEXEPATH@/gretl.exe,1"
+@="@GEXEPATH@\\gretl.exe,1"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\shell\open\command]
-@="\"@GEXEPATH@/gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile]
 @="Gretl script file"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\DefaultIcon]
-@="@GEXEPATH@/gretl.exe,2"
+@="@GEXEPATH@\\gretl.exe,2"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\shell\open\command]
-@="\"@GEXEPATH@/gretl.exe\" -r \"%1\""
+@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile]
 @="Gretl session file"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\DefaultIcon]
-@="@GEXEPATH@/gretl.exe,3"
+@="@GEXEPATH@\\gretl.exe,3"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\shell\open\command]
-@="\"@GEXEPATH@/gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile]
 @="Gretl binary data file"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\DefaultIcon]
-@="@GEXEPATH@/gretl.exe,4"
+@="@GEXEPATH@\\gretl.exe,4"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\shell\open\command]
-@="\"@GEXEPATH@/gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
