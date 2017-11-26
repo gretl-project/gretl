@@ -1054,15 +1054,20 @@ share/Makefile
 share/bcih/Makefile
 tests/Makefile
 extra/Makefile
-osx/Makefile
-osx/gretl.sh
-osx/fixlinks.sh
-osx/Info.plist
 redhat/gretl.spec
 utils/emacs/Makefile
 doc/gretl.sty
 doc/gretl-lite.sty
 ])
+
+if test "${darwin_build}" = "yes" ; then
+  AC_CONFIG_FILES([
+    osx/Makefile
+    osx/gretl.sh
+    osx/fixlinks.sh
+    osx/Info.plist
+  ])
+fi
 
 if test "${win32_build}" = "yes" ; then
   if test "${pkg_build}" = "yes" ; then
