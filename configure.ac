@@ -1081,8 +1081,8 @@ if test "${win32_build}" = "yes" ; then
     MSYSBIN="/bin"
     AC_CHECK_PROG(CYGPATH_CHECK,cygpath,yes)
     if test x"$CYGPATH_CHECK" = x"yes" ; then
-      GHOME=`cygpath -m $GHOME`
-      GEXEPATH=`cygpath -m $GEXEPATH`
+      GHOME=`cygpath -w $GHOME | sed s'+\\+\\\\+'`
+      GEXEPATH=`cygpath -w $GEXEPATH | sed s'+\\+\\\\+'`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
     fi
