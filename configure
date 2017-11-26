@@ -20261,8 +20261,8 @@ fi
 
 
   if test x"$CYGPATH_CHECK" = x"yes" ; then
-    GHOME=`cygpath -w $GHOME`
-    GEXEPATH=`cygpath -w $GEXEPATH`
+    GHOME=`cygpath -m $GHOME`
+    GEXEPATH=`cygpath -m $GEXEPATH`
   fi
 
 
