@@ -25,7 +25,7 @@ fi
 AC_ARG_WITH(mpi-lib,
     [  --with-mpi-lib=PFX path to MPI library],
     [MPI_lib_check="$with_mpi_lib $with_mpi_lib/lib${MODE} $with_mpi_lib/lib $with_mpi_lib/lib${MODE}/openmpi $with_mpi_lib/lib/openmpi"],
-    [MPI_lib_check="/usr/lib /usr/lib/openmpi /usr/lib64/openmpi/lib /usr/lib/openmpi/lib /etc/alternatives"])
+    [MPI_lib_check="/usr/lib /usr/lib/openmpi /usr/lib64/openmpi/lib /usr/lib/openmpi/lib /etc/alternatives /usr/lib/${ARCH}-linux-gnu/openmpi/lib"])
 
 AC_ARG_WITH(mpi-include,
     [  --with-mpi-include=PFX path to MPI header],
