@@ -64,6 +64,7 @@ have_json_glib="no"
 try_odbc="no"
 have_odbc="no"
 try_mpi="yes"
+have_mpi="no"
 try_libR="yes"
 have_libR="no"
 try_libsvm="yes"
@@ -323,14 +324,6 @@ then
 fi,
 try_libsvm=yes)
 
-AC_ARG_WITH(bash-completion,
-[  --with-bash-completion install bash-completion script [[default=no]]],
-if test "$withval" = "yes"
-then
-  try_bc=yes
-fi,
-try_bc=no)
-
 AC_ARG_WITH(audio,
 [  --with-audio           include audio graph support (experimental)],
 if test "$withval" = "yes"
@@ -425,11 +418,7 @@ if test "$try_mpi" = "yes" ; then
     else 
       AC_C_MPI
     fi
-  else
-    have_mpi="no"
   fi
-else
-  have_mpi="no"
 fi
 
 dnl try to build mailer plugin?
@@ -604,15 +593,6 @@ if test "$try_odbc" = "yes" ; then
       )
     ;;
   esac
-fi
-
-dnl
-dnl Check for bash-completion?
-dnl
-if test "$try_bc" = "yes" ; then
-  PKG_CHECK_MODULES([BASH_COMPLETION], [bash-completion >= 2.0],
-  [BASH_COMPLETION_DIR="`pkg-config --variable=completionsdir bash-completion`"],
-  [BASH_COMPLETION_DIR="$datadir/bash-completion/completions"])
 fi
 
 dnl
@@ -907,7 +887,6 @@ AC_SUBST(GTK_LIBS)
 AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LIBS)
 AC_SUBST(GTKSOURCEVIEW_PREFIX)
-AC_SUBST(BASH_COMPLETION_DIR)
 AC_SUBST(GTK_PREFIX)
 
 dnl Check for gdk-pixbuf support

@@ -35,8 +35,6 @@ endif
 
 OMP_OPT = @OPENMP_CFLAGS@
 
-bcdir = @BASH_COMPLETION_DIR@
-
 quiet_build = @quiet_build@
 
 ifeq ($(CC),)
@@ -51,10 +49,6 @@ endif
 ifeq ($(have_mpi),yes)
   MPICLI = gretlmpi$(EXEEXT)
   INSTALL_MPI = install-mpi
-endif
-
-ifneq ($(strip $(bcdir)),)
-  INSTALL_BC = install-bc
 endif
 
 ifeq ($(quiet_build),yes)
@@ -128,17 +122,11 @@ install-cli: $(CLI) installdirs
 install-mpi: $(MPICLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(MPICLI) $(DESTDIR)$(bindir)/$(MPICLI)
 
-install-bc: makebcdir
-	-$(INSTALL) -m 644 $(topsrc)/cli/gretlcli.bc $(DESTDIR)$(bcdir)/gretlcli
-
 install-strip: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
 installdirs: $(tooldir)/mkinstalldirs
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
-
-makebcdir: $(tooldir)/mkinstalldirs
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(bcdir)
 
 clean:
 	rm -f *.o $(CLI) $(MPICLI)
