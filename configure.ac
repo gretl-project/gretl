@@ -1056,6 +1056,7 @@ if test "${win32_build}" = "yes" ; then
   else
     GHOME="${prefix}/share/gretl"
     GEXEPATH="${prefix}/bin"
+    GEXE="${prefix}/bin/gretl.exe"
     MINGWBIN="$MINGW_PREFIX/bin"
     MSYSBIN="/bin"
     AC_PROG_SED
@@ -1063,10 +1064,12 @@ if test "${win32_build}" = "yes" ; then
     if test x"$CYGPATH_CHECK" = x"yes" ; then
       GHOME=`cygpath -w $GHOME | $SED 's+\\\\+\\\\\\\\+g'`
       GEXEPATH=`cygpath -w $GEXEPATH | $SED 's+\\\\+\\\\\\\\+g'`
+      GEXE=`cygpath -m $GEXE`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
     fi
     AC_SUBST(GHOME)
+    AC_SUBST(GEXE)
     AC_SUBST(GEXEPATH)
     AC_SUBST(MINGWBIN)
     AC_SUBST(MSYSBIN)

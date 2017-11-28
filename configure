@@ -635,6 +635,7 @@ LIBOBJS
 MSYSBIN
 MINGWBIN
 GEXEPATH
+GEXE
 GHOME
 CYGPATH_CHECK
 USE_AVX
@@ -20073,6 +20074,7 @@ if test "${win32_build}" = "yes" ; then
   else
     GHOME="${prefix}/share/gretl"
     GEXEPATH="${prefix}/bin"
+    GEXE="${prefix}/bin/gretl.exe"
     MINGWBIN="$MINGW_PREFIX/bin"
     MSYSBIN="/bin"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for a sed that does not truncate output" >&5
@@ -20184,9 +20186,11 @@ fi
     if test x"$CYGPATH_CHECK" = x"yes" ; then
       GHOME=`cygpath -w $GHOME | $SED 's+\\\\+\\\\\\\\+g'`
       GEXEPATH=`cygpath -w $GEXEPATH | $SED 's+\\\\+\\\\\\\\+g'`
+      GEXE=`cygpath -m $GEXE`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
     fi
+
 
 
 

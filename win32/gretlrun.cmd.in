@@ -1,1 +1,1 @@
-set path=@MINGWBIN@;@MSYSBIN@;%path% && start ^"^" @GEXEPATH@/gretl.exe
+set path=@MINGWBIN@;@MSYSBIN@;%path% && start ^"^" @GEXE
