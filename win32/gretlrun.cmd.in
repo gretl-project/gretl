@@ -1,1 +1,1 @@
-set path=@MINGWBIN@;@MSYSBIN@;%path% && start ^"^" @GEXE
+set path=@MINGWBIN@;@MSYSBIN@;%path% && start "" "@GEXE@"
