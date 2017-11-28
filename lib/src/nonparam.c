@@ -997,6 +997,7 @@ signed_rank_test (const double *x, const double *y,
     struct ranker *r;
     double d, T, wp, wm;
     double z = NADBL, pval = NADBL;
+    int quiet = (opt & OPT_Q);
     int Z = 0, N = 0;
     int i, k, t, n = 0;
 
@@ -1056,14 +1057,15 @@ signed_rank_test (const double *x, const double *y,
 	}
     }
 
-    diff_test_header(v1, v2, dset, prn);
-    pprintf(prn, "\n%s\n", _("Wilcoxon Signed-Rank Test"));
-    pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
-	    _("the median difference is zero"));
-
-    if (opt & OPT_V) {
-	pprintf(prn, "%16s %8s %16s\n\n", "difference", "rank",
-		"signed rank");
+    if (!quiet) {
+	diff_test_header(v1, v2, dset, prn);
+	pprintf(prn, "\n%s\n", _("Wilcoxon Signed-Rank Test"));
+	pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
+		_("the median difference is zero"));
+	if (opt & OPT_V) {
+	    pprintf(prn, "%16s %8s %16s\n\n", "difference", "rank",
+		    "signed rank");
+	}
     }
 
     wp = wm = 0.0;
@@ -1086,18 +1088,22 @@ signed_rank_test (const double *x, const double *y,
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "  n = %d\n", n);
-    pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
-    pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"),
-	    Z, _("non-zero ties"), k);
+    if (!quiet) {
+	pprintf(prn, "  n = %d\n", n);
+	pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
+	pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"),
+		Z, _("non-zero ties"), k);
+    }
 
     if (n > 8) {
 	double s2, x, num;
 
 	x = (N*(N+1) - Z*(Z+1)) / 4.0;
-	pprintf(prn, "  %s = %g\n", _("Expected value"), x);
 	s2 = (N*(N+1)*(2*N+1) - Z*(Z+1)*(2*Z+1) - T/2) / 24.0;
-	pprintf(prn, "  %s = %g\n", _("Variance"), s2);
+	if (!quiet) {
+	    pprintf(prn, "  %s = %g\n", _("Expected value"), x);
+	    pprintf(prn, "  %s = %g\n", _("Variance"), s2);
+	}
 	num = wp - x;
 	if (num > 0.25) {
 	    num -= .5;
@@ -1105,8 +1111,12 @@ signed_rank_test (const double *x, const double *y,
 	    num += .5;
 	}
 	z = num / sqrt(s2);
-	pprintf(prn, "  z = %g\n", z);
-	pval = print_z_prob(z, prn);
+	if (quiet) {
+	    pval = print_z_prob(z, NULL);
+	} else {
+	    pprintf(prn, "  z = %g\n", z);
+	    pval = print_z_prob(z, prn);
+	}
     } else if (n > 5) {
 	pprintf(prn, "  5%% critical values: %d (two-tailed), %d (one-tailed)\n",
 		rank5[n-6][0], rank5[n-6][1]);
@@ -1115,7 +1125,9 @@ signed_rank_test (const double *x, const double *y,
 		_("Sample too small for statistical significance"));
     }
 
-    pputc(prn, '\n');
+    if (!quiet) {
+	pputc(prn, '\n');
+    }
 
     result[0] = z;
     result[1] = pval;
@@ -1133,6 +1145,7 @@ static int rank_sum_test (const double *x, const double *y,
     double wa, z = NADBL, pval = NADBL;
     char xc = 'a', yc = 'b';
     int na = 0, nb = 0;
+    int quiet = (opt & OPT_Q);
     int i, t, n = 0;
 
     for (t=dset->t1; t<=dset->t2; t++) {
@@ -1193,32 +1206,32 @@ static int rank_sum_test (const double *x, const double *y,
 	}
     }
 
-    diff_test_header(v1, v2, dset, prn);
-    pprintf(prn, "\n%s\n", _("Wilcoxon Rank-Sum Test"));
-    pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
-	    _("the two medians are equal"));
-
-    wa = 0.0;
-
-    if (opt & OPT_V) {
-	pprintf(prn, "%10s %7s %8s\n\n", "value", "rank", "group");
+    if (!quiet) {
+	diff_test_header(v1, v2, dset, prn);
+	pprintf(prn, "\n%s\n", _("Wilcoxon Rank-Sum Test"));
+	pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
+		_("the two medians are equal"));
     }
 
+    wa = 0.0;
     for (i=0; i<n; i++) {
-	if (opt & OPT_V) {
-	    pprintf(prn, "%10g %7g %8c\n", r[i].val, r[i].rank, r[i].c);
-	}
 	if (r[i].c == 'a') {
 	    wa += r[i].rank;
 	}
     }
 
     if (opt & OPT_V) {
-	pputc(prn, '\n');
+	pprintf(prn, "%10s %7s %8s\n\n", "value", "rank", "group");
+	for (i=0; i<n; i++) {
+	    pprintf(prn, "%10g %7g %8c\n", r[i].val, r[i].rank, r[i].c);
+	}
+ 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "  n1 = %d, n2 = %d\n", na, nb);
-    pprintf(prn, "  w (%s) = %g\n", _("sum of ranks, sample 1"), wa);
+    if (!quiet) {
+	pprintf(prn, "  n1 = %d, n2 = %d\n", na, nb);
+	pprintf(prn, "  w (%s) = %g\n", _("sum of ranks, sample 1"), wa);
+    }
 
     if (na >= 10 && nb >= 10) {
 	double m, s;
@@ -1226,8 +1239,12 @@ static int rank_sum_test (const double *x, const double *y,
 	m = na * (na + nb + 1) / 2.0;
 	s = sqrt(na * nb * (na + nb + 1) / 12.0);
 	z = (wa - m) / s;
-	pprintf(prn, "  z = (%g - %g) / %g = %g\n", wa, m, s, z);
-	pval = print_z_prob(z, prn);
+	if (quiet) {
+	    pval = print_z_prob(z, NULL);
+	} else {
+	    pprintf(prn, "  z = (%g - %g) / %g = %g\n", wa, m, s, z);
+	    pval = print_z_prob(z, prn);
+	}
     } else if (na >= 4 && nb >= 4 && nb <= 12) {
 	void (*cv) (int, int, PRN *);
 
@@ -1240,7 +1257,9 @@ static int rank_sum_test (const double *x, const double *y,
 		_("Sample too small for statistical significance"));
     }
 
-    pputc(prn, '\n');
+    if (!quiet) {
+	pputc(prn, '\n');
+    }
 
     result[0] = z;
     result[1] = pval;
@@ -1269,25 +1288,27 @@ static int sign_test (const double *x, const double *y,
 	return E_MISSDATA;
     }
 
-    diff_test_header(v1, v2, dset, prn);
-    pprintf(prn, "\n%s\n\n", _("Sign Test"));
-    pprintf(prn, _("Number of differences: n = %d\n"), n);
-    pputs(prn, "  ");
-    pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
-	    dset->varname[v1], dset->varname[v2],
-	    w, 100.0 * w / n);
-
-    pputs(prn, "  ");
-    pprintf(prn, _("Under the null hypothesis of no difference, W "
-		   "follows B(%d, %.1f)\n"), n, 0.5);
-    pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w,
-	    binomial_cdf(0.5, n, w));
     if (w == 0) {
 	pv = 1.0;
     } else {
 	pv = binomial_cdf_comp(0.5, n, w - 1);
+    }    
+
+    if (!(opt & OPT_Q)) {
+	diff_test_header(v1, v2, dset, prn);
+	pprintf(prn, "\n%s\n\n", _("Sign Test"));
+	pprintf(prn, _("Number of differences: n = %d\n"), n);
+	pputs(prn, "  ");
+	pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"),
+		dset->varname[v1], dset->varname[v2],
+		w, 100.0 * w / n);
+	pputs(prn, "  ");
+	pprintf(prn, _("Under the null hypothesis of no difference, W "
+		       "follows B(%d, %.1f)\n"), n, 0.5);
+	pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w,
+		binomial_cdf(0.5, n, w));
+	pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, pv);
     }
-    pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, pv);
 
     result[0] = w;
     result[1] = pv;

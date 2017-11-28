@@ -2961,6 +2961,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print extra output</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+	</option>	
       </options>
     </usage>
 
@@ -3017,6 +3021,12 @@
 	For the Wilcoxon tests, if the <opt>verbose</opt> option is
 	given then the ranking is printed.  (This option has no effect if
 	the Sign test is selected.)
+      </para>
+      <para>
+	On successful completion the accessors <fncref targ="$test"/>
+	and <fncref targ="$pvalue"/> are available. If one just wants
+	to obtain these values the <opt>quiet</opt> flag can be
+	appended to the command.
       </para>
     </description>
 

@@ -43,6 +43,7 @@
 			 c == CORRGM ||		\
 			 c == CUSUM ||		\
 			 c == DATA ||		\
+			 c == DIFFTEST ||	\
 			 c == ESTIMATE ||	\
 			 c == FCAST ||		\
 			 c == FOREIGN ||	\
