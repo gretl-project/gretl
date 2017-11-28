@@ -20182,8 +20182,8 @@ fi
 
 
     if test x"$CYGPATH_CHECK" = x"yes" ; then
-      GHOME=`cygpath -w $GHOME | $SED s'+\\+\\\\+'`
-      GEXEPATH=`cygpath -w $GEXEPATH | $SED s'+\\+\\\\+'`
+      GHOME=`cygpath -w $GHOME | $SED 's+\\+\\\\+'`
+      GEXEPATH=`cygpath -w $GEXEPATH | $SED 's+\\+\\\\+'`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
     fi
