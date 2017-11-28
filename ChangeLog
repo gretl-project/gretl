@@ -7,6 +7,7 @@ version 2017e, in progress
   user more effectively
 - "heckit" command: add selection equation regressor list to
   $model bundle under the key "zlist"
+- "difftest" command: add --quiet option
 - Build fix: correct undefined symbol in cephes/iv.c
 - Boxplots: fix for incorrect extent of "whiskers" in some
   cases
