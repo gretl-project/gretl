@@ -1010,7 +1010,7 @@ signed_rank_test (const double *x, const double *y,
 	}
     }
 
-    if (n == 0) {
+    if (N == 0) {
 	return E_MISSDATA;
     }
 
@@ -1093,6 +1093,9 @@ signed_rank_test (const double *x, const double *y,
 	pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
 	pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"),
 		Z, _("non-zero ties"), k);
+	if (N > 0 && n == 0) {
+	    pprintf(prn, "  %s\n", _("Fail to reject H0"));
+	}
     }
 
     if (n > 8) {

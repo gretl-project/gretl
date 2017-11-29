@@ -42,7 +42,7 @@
 #include "import_common.c"
 
 #define XDEBUG 0
-#define DATE_DEBUG 0
+#define DATE_DEBUG 1
 
 struct xlsx_info_ {
     BookFlag flags;
@@ -1380,7 +1380,7 @@ static void xlsx_dates_check (DATASET *dset)
     for (t=0; t<dset->n && maybe_dates; t++) {
 	if (!integer_string(dset->S[t])) {
 #if DATE_DEBUG
-	    fprintf(stderr, "S[%d] = '%s', giving up\n", t, dset->S[t]);
+	    fprintf(stderr, " S[%d] = '%s', giving up\n", t, dset->S[t]);
 #endif
 	    maybe_dates = 0;
 	} else if (t == 0) {
@@ -1413,7 +1413,7 @@ static void xlsx_dates_check (DATASET *dset)
     }
 
 #if DATE_DEBUG
-    fprintf(stderr, "after obs loop, maybe_dates=%d\n"
+    fprintf(stderr, " after obs loop, maybe_dates=%d\n"
 	    " (date_min=%d, date_max=%d, delta_min=%d, delta_max=%d)\n",
 	    maybe_dates, date_min, date_max, delta_min, delta_max);
 #endif
@@ -1424,7 +1424,7 @@ static void xlsx_dates_check (DATASET *dset)
 
 	delta_min = -delta_max;
 	delta_max = -tmp;
-	fprintf(stderr, "xlsx_dates_check: diffmin=%d, diffmax=%d\n", 
+	fprintf(stderr, " xlsx_dates_check: diffmin=%d, diffmax=%d\n", 
 		delta_min, delta_max);
     }
 
@@ -1453,7 +1453,7 @@ static void xlsx_dates_check (DATASET *dset)
 	} else {
 	    /* unsupported frequency or nonsensical */
 #if DATE_DEBUG
-	    fprintf(stderr, "delta_max = %d, delta_min = %d, unsupported\n", 
+	    fprintf(stderr, " delta_max = %d, delta_min = %d, unsupported\n", 
 		    delta_max, delta_min);
 #endif
 	    maybe_dates = 0;
