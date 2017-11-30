@@ -1134,7 +1134,6 @@ static int sv_data_fill (sv_data *prob,
 	    } else if (w->scaling != 0) {
 		xit = scale_x(xit, xmin, xmax, scalemin, scalemax);
 	    }
-	    fprintf(stderr, "x(%d,%d) = %g\n", i, t, xit);
 	    if (xit == 0) {
 		/* fprintf(stderr, "skipping a 0 data value (var %d)\n", vi); */
 		continue;
