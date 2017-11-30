@@ -29,6 +29,8 @@
 
 #include <libsvm/svm.h>
 
+#define DATA_DEBUG 0
+
 typedef struct svm_problem sv_data;
 typedef struct svm_node sv_cell;
 typedef struct svm_model sv_model;
@@ -60,6 +62,7 @@ struct sv_wrapper_ {
     int auto_type;
     int flags;
     int scaling;
+    int orig_t1;
     int orig_t2;
     int t2_train;
     int k;
@@ -131,6 +134,7 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->auto_type = EPSILON_SVR;
     w->flags = 0;
     w->scaling = 1;
+    w->orig_t1 = dset->t1;
     w->orig_t2 = dset->t2;
     w->t2_train = 0;
     w->k = 0;
@@ -1067,6 +1071,10 @@ static int sv_data_fill (sv_data *prob,
     int vi = list[1];
     int k = w->k;
 
+#if DATA_DEBUG
+    fprintf(stderr, "sv_data_fill, pass %d\n", pass);
+#endif
+
     /* deal with the LHS variable */
     if (pass == 1 &&
 	(gretl_isdummy(dset->t1, dset->t2, dset->Z[vi]) ||
@@ -1094,6 +1102,10 @@ static int sv_data_fill (sv_data *prob,
     scalemin = gretl_matrix_get(w->ranges, 0, 0);
     scalemax = gretl_matrix_get(w->ranges, 0, 1);
 
+#if DATA_DEBUG
+    fprintf(stderr, "scalemin = %g, scalemax = %g\n", scalemin, scalemax);
+#endif
+
     /* write the scaled x-data into the problem struct */
     for (s=0, t=dset->t1; t<=dset->t2; t++, s++) {
 	if (vf > 0) {
@@ -1115,6 +1127,8 @@ static int sv_data_fill (sv_data *prob,
 	    xmax = gretl_matrix_get(w->ranges, i, 2);
 	    xit = dset->Z[vi][t];
 	    if (na(xit)) {
+		/* catch missing values */
+		fprintf(stderr, "skipping NA for var %d, obs %d\n", vi, t+1);
 		xit = 0;
 	    } else if (w->scaling != 0) {
 		xit = scale_x(xit, xmin, xmax, scalemin, scalemax);
@@ -2195,11 +2209,28 @@ static int read_params_bundle (gretl_bundle *bparm,
     }
 
     if (get_optional_int(bparm, "n_train", &ival, &err)) {
-	if (ival != 0 && (ival < list[0] || ival > dset->n)) {
-	    fprintf(stderr, "invalid 'n_train' arg %d\n", ival);
-	    err = E_INVARG;
-	} else if (ival > 0) {
-	    wrap->t2_train = ival - 1; /* zero-based */
+	/* number of training observations: this sets a range
+	   starting at the incoming dset->t1, which was recorded
+	   as wrap->orig_t1
+	*/
+	if (ival != 0) {
+	    int nmax = wrap->orig_t2 - wrap->orig_t1 + 1;
+
+	    if (ival < list[0]) {
+		gretl_errmsg_sprintf("svm: n_train must be at least %d", list[0]);
+		err = E_INVARG;
+	    } else if (ival > nmax) {
+		gretl_errmsg_sprintf("svm: n_train cannot exceed arg %d", nmax);
+		err = E_INVARG;
+	    } else {
+		char obs1[OBSLEN], obs2[OBSLEN];
+
+		wrap->t2_train = wrap->orig_t1 + ival - 1;
+		get_obs_string(obs1, wrap->orig_t1, dset);
+		get_obs_string(obs2, wrap->t2_train, dset);
+		pprintf(prn, "n_train = %d; use obs %s to %s for training\n",
+			ival, obs1, obs2);
+	    }
 	}
     }
 
