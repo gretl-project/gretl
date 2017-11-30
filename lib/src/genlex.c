@@ -1209,6 +1209,7 @@ void set_doing_genseries (int s)
 static void look_up_word (const char *s, parser *p)
 {
     int have_dset = (p->dset != NULL && p->dset->v > 0);
+    int prevsym = p->sym;
     int fsym, err = 0;
 
     fsym = p->sym = function_lookup_with_alias(s, p);
@@ -1271,7 +1272,7 @@ static void look_up_word (const char *s, parser *p)
 					"please use \"$pi\" instead"));
 		p->idnum = CONST_PI;
 		p->sym = CON;
-	    } else if (parsing_query) {
+	    } else if (parsing_query || prevsym == B_AND) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
 	    } else {

@@ -1133,6 +1133,7 @@ static int sv_data_fill (sv_data *prob,
 	    } else if (w->scaling != 0) {
 		xit = scale_x(xit, xmin, xmax, scalemin, scalemax);
 	    }
+	    fprintf(stderr, "x(%d,%d) = %g\n", i, t, xit);
 	    if (xit == 0) {
 		/* fprintf(stderr, "skipping a 0 data value (var %d)\n", vi); */
 		continue;
@@ -2615,6 +2616,31 @@ static int svm_predict_main (const int *list,
     return err;
 }
 
+static int sv_trim_missing (const int *list, DATASET *dset)
+{
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int T, nmiss = 0;
+    int err = 0;
+
+    list_adjust_sample(list, &t1, &t2, dset, &nmiss);
+    T = t2 - t1 + 1 - nmiss;
+
+    if (T < sample_size(dset)) {
+	fprintf(stderr, "sv_trim_missing: t1=%d, t2=%d, excluding %d observations\n",
+		t1+1, t2+1, sample_size(dset) - T);
+    }
+    
+    if (T > list[0]) {
+	dset->t1 = t1;
+	dset->t2 = t2;
+    } else {
+	err = E_MISSDATA;
+    }
+
+    return err;
+}
+
 int gretl_svm_predict (const int *list,
 		       gretl_bundle *bparams,
 		       gretl_bundle *bmodel,
@@ -2643,11 +2669,16 @@ int gretl_svm_predict (const int *list,
 	gretl_errmsg_set("svm: invalid list argument");
 	err = E_INVARG;
     } else {
-	sv_wrapper_init(&wrap, dset);
-	err = read_params_bundle(bparams, bmodel, &wrap, &parm,
-				 list, dset, prn);
+	err = sv_trim_missing(list, dset);
+	if (!err) {
+	    sv_wrapper_init(&wrap, dset);
+	    err = read_params_bundle(bparams, bmodel, &wrap, &parm,
+				     list, dset, prn);
+	}
     }
     if (err) {
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
 	return err;
     }
 
