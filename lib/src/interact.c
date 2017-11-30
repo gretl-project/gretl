@@ -2479,6 +2479,12 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     return err;
 }
 
+static int smpl_special (gretlopt opt)
+{
+    opt &= ~OPT_Q;
+    return opt != OPT_NONE;
+}
+
 static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)
 {
     if (gretl_function_depth() > 0) {
@@ -2925,7 +2931,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = restore_full_sample(dset, s);
 	} else if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
 	    err = perma_sample(dset, cmd->opt, prn, NULL);
-	} else if (cmd->opt) {
+	} else if (smpl_special(cmd->opt)) {
 	    err = restrict_sample(cmd->param, cmd->list, dset, 
 				  s, cmd->opt, prn, NULL);
 	} else if (cmd->param == NULL && cmd->parm2 == NULL) {
@@ -2935,7 +2941,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else {
 	    err = set_sample(cmd->param, cmd->parm2, dset);
 	}
-	if (!err) {
+	if (!err && !(cmd->opt & OPT_Q)) {
 	    print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
 	}	
 	break;

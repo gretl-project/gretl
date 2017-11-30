@@ -12897,6 +12897,10 @@
 	  <flag>--balanced</flag>
 	  <effect>panel data: try to retain balanced panel</effect>
         </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't report sample range</effect>
+	</option>
       </options>
       <examples>
         <example>smpl 3 10</example>

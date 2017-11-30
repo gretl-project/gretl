@@ -66,6 +66,7 @@
 			 c == RESET ||		\
 			 c == RESTRICT ||	\
 			 c == RMPLOT ||		\
+			 c == SMPL ||		\
 			 c == SYSTEM ||		\
 			 c == VAR ||		\
 			 c == VECM ||		\
