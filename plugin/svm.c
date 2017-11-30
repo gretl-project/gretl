@@ -1065,7 +1065,7 @@ static int sv_data_fill (sv_data *prob,
 			 int pass)
 {
     double scalemin, scalemax;
-    double xit, xmin, xmax;
+    double yt, xit, xmin, xmax;
     int i, j, s, t, idx;
     int vf = 0, pos = 0;
     int vi = list[1];
@@ -1083,10 +1083,11 @@ static int sv_data_fill (sv_data *prob,
 	w->auto_type = C_SVC;
     }
     for (i=0, t=dset->t1; t<=dset->t2; t++, i++) {
-	if (w->flags & W_YSCALE) {
-	    prob->y[i] = scale_y(dset->Z[vi][t], w);
+	yt = dset->Z[vi][t];
+        if (w->flags & W_YSCALE) {
+	    prob->y[i] = scale_y(yt, w);
 	} else {
-	    prob->y[i] = dset->Z[vi][t];
+	    prob->y[i] = yt;
 	}
     }
 
@@ -2627,15 +2628,30 @@ static int sv_trim_missing (const int *list, DATASET *dset)
     T = t2 - t1 + 1 - nmiss;
 
     if (T < sample_size(dset)) {
-	fprintf(stderr, "sv_trim_missing: t1=%d, t2=%d, excluding %d observations\n",
-		t1+1, t2+1, sample_size(dset) - T);
+	/* we can't handle NAs for the dependent variable within the
+	   (possibly reduced) sample range
+	*/
+	int t, yno = list[1];
+
+	for (t=t1; t<=t2 && !err; t++) {
+	    if (xna(dset->Z[yno][t])) {
+		gretl_errmsg_sprintf("Dependent variable is NA at obs %d", t+1);
+		err = E_MISSDATA;
+	    }
+	}
+	if (!err) {
+	    fprintf(stderr, "sv_trim_missing: t1=%d, t2=%d, excluding %d observations\n",
+		    t1+1, t2+1, sample_size(dset) - T);
+	}
     }
     
-    if (T > list[0]) {
-	dset->t1 = t1;
-	dset->t2 = t2;
-    } else {
-	err = E_MISSDATA;
+    if (!err) {
+	if (T > list[0]) {
+	    dset->t1 = t1;
+	    dset->t2 = t2;
+	} else {
+	    err = E_MISSDATA;
+	}
     }
 
     return err;
