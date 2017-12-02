@@ -638,6 +638,7 @@ GEXEPATH
 GEXE
 GHOME
 CYGPATH_CHECK
+MINGW_PREFIX
 USE_AVX
 USE_SSE2
 RLIB
@@ -20069,6 +20070,8 @@ fi
 
 if test "${win32_build}" = "yes" ; then
   if test "${pkg_build}" = "yes" ; then
+    MINGW_PREFIX="$MINGW_PREFIX"
+
 
     ac_config_files="$ac_config_files win32/windist/mkiss.sh win32/windist/post-install.sh win32/windist/install-runtime.sh"
 

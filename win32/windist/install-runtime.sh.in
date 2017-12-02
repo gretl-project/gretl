@@ -3,7 +3,7 @@
 # these first paths will need configuring
 TARGET=@prefix@
 SRCDIR=@top_srcdir@
-SYSBASE=/mingw64
+SYSBASE=@mingw_prefix@
 EXTRA=${HOME}/gretl-extra
 
 # nothing below here should need configuring
