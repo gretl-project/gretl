@@ -497,7 +497,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	}
 	
 	cmd = g_strdup_printf("%s%s%s \"%sgretlmpi\"%s%s \"%s\"",
-			      mpiexec, hostbit, npbit, gretl_home(), rngbit,
+			      mpiexec, hostbit, npbit, gretl_bindir(), rngbit,
 			      qopt, gretl_mpi_filename());
 
 	if (opt & OPT_V) {
