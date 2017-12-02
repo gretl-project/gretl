@@ -13,7 +13,7 @@ SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
 SYSSV=${SYSBASE}/share/gtksourceview-2.0
 
-# make extra (GTK-related) directories not created by "make install"
+# make required GTK-related directories not created by "make install"
 mkdir -p ${TARGET}/share/themes/Emacs/gtk-2.0-key
 mkdir -p ${TARGET}/share/themes/Default/gtk-2.0-key
 mkdir -p ${TARGET}/share/themes/MS-Windows/gtk-2.0
@@ -102,9 +102,6 @@ cp $SYSTHEME/Default/gtk-2.0-key/gtkrc ${TARGET}/share/themes/Default/gtk-2.0-ke
 cp $SYSTHEME/Raleigh/gtk-2.0/gtkrc ${TARGET}/share/themes/Raleigh/gtk-2.0/gtkrc
 cp $SYSTHEME/Clearlooks/gtk-2.0/gtkrc ${TARGET}/share/themes/Clearlooks/gtk-2.0/gtkrc
 
-# GTK aux. files, gretl-specific
-cp $EXTRA/locale.alias ${TARGET}/share/locale/locale.alias
-
 cp $SYSBASE/lib/gtk-2.0/modules/libgail.dll ${TARGET}/lib/gtk-2.0/modules/libgail.dll
 cp $SYSBASE/lib/gtk-2.0/2.10.0/engines/libpixmap.dll ${TARGET}/lib/gtk-2.0/2.10.0/engines/libpixmap.dll
 cp $SYSBASE/lib/gtk-2.0/2.10.0/engines/libwimp.dll ${TARGET}/lib/gtk-2.0/2.10.0/engines/libwimp.dll
@@ -127,7 +124,8 @@ cp ${SYSSV}/styles/oblivion.xml ${TARGET}/gtksourceview/oblivion.xml
 cp ${SYSSV}/styles/tango.xml ${TARGET}/gtksourceview/tango.xml
 cp ${SYSSV}/styles/styles.rng ${TARGET}/gtksourceview/styles.rng
 
-# certs for cURL, libsvm copyright
+# locale file, certs for cURL, libsvm copyright
+cp ${EXTRA}/locale.alias ${TARGET}/share/locale/locale.alias
 cp ${EXTRA}/curl-ca-bundle.crt ${TARGET}/curl-ca-bundle.crt
 cp ${EXTRA}/copyright_libsvm ${TARGET}/copyright_libsvm
 
