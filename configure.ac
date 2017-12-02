@@ -1054,6 +1054,7 @@ if test "${win32_build}" = "yes" ; then
     AC_CONFIG_FILES([
       win32/windist/mkiss.sh
       win32/windist/post-install.sh
+      win32/windist/install-runtime.sh
     ])
   else
     GHOME="${prefix}/share/gretl"

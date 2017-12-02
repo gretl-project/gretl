@@ -1,0 +1,142 @@
+#!/bin/sh
+
+# these first paths will need configuring
+TARGET=@prefix@
+SRCDIR=@top_srcdir@
+SYSBASE=/mingw64
+EXTRA=${HOME}/gretl-extra
+
+# nothing below here should need configuring
+
+SYSBIN=${SYSBASE}/bin
+SYSTRANS=${SYSBASE}/share/locale
+SYSTHEME=${SYSBASE}/share/themes
+SYSSV=${SYSBASE}/share/gtksourceview-2.0
+
+# make extra (GTK-related) directories not created by "make install"
+mkdir -p ${TARGET}/share/themes/Emacs/gtk-2.0-key
+mkdir -p ${TARGET}/share/themes/Default/gtk-2.0-key
+mkdir -p ${TARGET}/share/themes/MS-Windows/gtk-2.0
+mkdir -p ${TARGET}/share/themes/Raleigh/gtk-2.0
+mkdir -p ${TARGET}/share/themes/Clearlooks/gtk-2.0
+mkdir -p ${TARGET}/lib/gtk-2.0/modules
+mkdir -p ${TARGET}/lib/gtk-2.0/2.10.0/engines
+mkdir -p ${TARGET}/etc/gtk-2.0
+# directories to hold GTK translations
+LANGS=`cat ${SRCDIR}/po/LINGUAS | grep -v ^#`
+for lang in $LANGS ; do
+  mkdir -p ${TARGET}/share/locale/$lang/LC_MESSAGES
+done
+
+# copy in third-party dlls from MSYS2
+for f in \
+	libatk-1.0-0.dll \
+	libcairo-2.dll \
+	libcairo-gobject-2.dll \
+	libcurl-4.dll \
+	ssleay32.dll \
+	libeay32.dll \
+	libffi-6.dll \
+	libfftw3-3.dll \
+	libgailutil-18.dll \
+	libgdk_pixbuf-2.0-0.dll \
+	libgdk-win32-2.0-0.dll \
+	libgio-2.0-0.dll \
+	libglib-2.0-0.dll \
+	libgmodule-2.0-0.dll \
+	libgmp-10.dll \
+	libgobject-2.0-0.dll \
+	libgthread-2.0-0.dll \
+	libgtksourceview-2.0-0.dll \
+	libgtk-win32-2.0-0.dll \
+	libiconv-2.dll \
+	libintl-8.dll \
+	libpango-1.0-0.dll \
+	libpangocairo-1.0-0.dll \
+	libpangowin32-1.0-0.dll \
+	libpixman-1-0.dll \
+	libxml2-2.dll \
+	zlib1.dll \
+	libpng16-16.dll \
+	libreadline7.dll \
+	libjson-glib-1.0-0.dll \
+	libopenblas.dll \
+	libwinpthread-1.dll \
+	libtermcap-0.dll \
+	libgomp-1.dll \
+	libnghttp2-14.dll \
+	libidn2-0.dll \
+	libgcc_s_seh-1.dll \
+	libssh2-1.dll \
+	liblzma-5.dll \
+	librtmp-1.dll \
+	libpcre-1.dll \
+	libunistring-2.dll \
+	libgfortran-4.dll \
+	libhogweed-4.dll \
+	libgnutls-30.dll \
+	libnettle-6.dll \
+	libquadmath-0.dll \
+	libidn-11.dll \
+	libp11-kit-0.dll \
+	libtasn1-6.dll \
+	libfontconfig-1.dll \
+	libfreetype-6.dll \
+	libpangoft2-1.0-0.dll \
+	libexpat-1.dll \
+	libharfbuzz-0.dll \
+	libbz2-1.dll \
+	libgraphite2.dll \
+	libstdc++-6.dll \
+	libsvm.dll
+do
+    cp ${SYSBIN}/$f ${TARGET}/$f
+done
+
+# gdk-pixbuf loaders
+cp -r ${SYSBASE}/lib/gdk-pixbuf-2.0 ${TARGET}/lib
+
+# GTK theme files
+cp $SYSTHEME/Emacs/gtk-2.0-key/gtkrc ${TARGET}/share/themes/Emacs/gtk-2.0-key/gtkrc
+cp $SYSTHEME/Default/gtk-2.0-key/gtkrc ${TARGET}/share/themes/Default/gtk-2.0-key/gtkrc
+cp $SYSTHEME/Raleigh/gtk-2.0/gtkrc ${TARGET}/share/themes/Raleigh/gtk-2.0/gtkrc
+cp $SYSTHEME/Clearlooks/gtk-2.0/gtkrc ${TARGET}/share/themes/Clearlooks/gtk-2.0/gtkrc
+
+# GTK aux. files, gretl-specific
+cp $EXTRA/locale.alias ${TARGET}/share/locale/locale.alias
+
+cp $SYSBASE/lib/gtk-2.0/modules/libgail.dll ${TARGET}/lib/gtk-2.0/modules/libgail.dll
+cp $SYSBASE/lib/gtk-2.0/2.10.0/engines/libpixmap.dll ${TARGET}/lib/gtk-2.0/2.10.0/engines/libpixmap.dll
+cp $SYSBASE/lib/gtk-2.0/2.10.0/engines/libwimp.dll ${TARGET}/lib/gtk-2.0/2.10.0/engines/libwimp.dll
+cp $SYSBASE/lib/gtk-2.0/2.10.0/engines/libclearlooks.dll ${TARGET}/lib/gtk-2.0/2.10.0/engines/libclearlooks.dll
+cp $SYSBASE/etc/gtk-2.0/im-multipress.conf ${TARGET}/etc/gtk-2.0/im-multipress.conf
+
+# data files for gtksourceview, other than the gretl-special ones
+cp ${SYSSV}/language-specs/R.lang ${TARGET}/gtksourceview/R.lang
+cp ${SYSSV}/language-specs/cpp.lang ${TARGET}/gtksourceview/cpp.lang
+cp ${SYSSV}/language-specs/octave.lang ${TARGET}/gtksourceview/octave.lang
+cp ${SYSSV}/language-specs/python.lang ${TARGET}/gtksourceview/python.lang
+cp ${SYSSV}/language-specs/def.lang ${TARGET}/gtksourceview/def.lang
+cp ${SYSSV}/language-specs/c.lang ${TARGET}/gtksourceview/c.lang
+cp ${SYSSV}/language-specs/gtk-doc.lang ${TARGET}/gtksourceview/gtk-doc.lang
+cp ${SYSSV}/language-specs/language2.rng ${TARGET}/gtksourceview/language2.rng
+cp ${SYSSV}/styles/classic.xml ${TARGET}/gtksourceview/classic.xml
+cp ${SYSSV}/styles/cobalt.xml ${TARGET}/gtksourceview/cobalt.xml
+cp ${SYSSV}/styles/kate.xml ${TARGET}/gtksourceview/kate.xml
+cp ${SYSSV}/styles/oblivion.xml ${TARGET}/gtksourceview/oblivion.xml
+cp ${SYSSV}/styles/tango.xml ${TARGET}/gtksourceview/tango.xml
+cp ${SYSSV}/styles/styles.rng ${TARGET}/gtksourceview/styles.rng
+
+# certs for cURL, libsvm copyright
+cp ${EXTRA}/curl-ca-bundle.crt ${TARGET}/curl-ca-bundle.crt
+cp ${EXTRA}/copyright_libsvm ${TARGET}/copyright_libsvm
+
+# GTK translations
+for lang in $LANGS ; do
+  cp $SYSTRANS/$lang/LC_MESSAGES/glib20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/glib20.mo
+  cp $SYSTRANS/$lang/LC_MESSAGES/gtk20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/gtk20.mo
+done
+
+# misc files
+cp ${SRCDIR}/win32/gretl_website.url ${TARGET}/gretl_website.url
+

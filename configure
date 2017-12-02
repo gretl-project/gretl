@@ -20070,7 +20070,7 @@ fi
 if test "${win32_build}" = "yes" ; then
   if test "${pkg_build}" = "yes" ; then
 
-    ac_config_files="$ac_config_files win32/windist/mkiss.sh win32/windist/post-install.sh"
+    ac_config_files="$ac_config_files win32/windist/mkiss.sh win32/windist/post-install.sh win32/windist/install-runtime.sh"
 
   else
     GHOME="${prefix}/share/gretl"
@@ -21231,6 +21231,7 @@ do
     "osx/Info.plist") CONFIG_FILES="$CONFIG_FILES osx/Info.plist" ;;
     "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "win32/windist/post-install.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/post-install.sh" ;;
+    "win32/windist/install-runtime.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/install-runtime.sh" ;;
     "win32/gretlrun.cmd") CONFIG_FILES="$CONFIG_FILES win32/gretlrun.cmd" ;;
     "win32/gretlmime.reg") CONFIG_FILES="$CONFIG_FILES win32/gretlmime.reg" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
