@@ -1,12 +1,6 @@
 #!/bin/sh
 
 prefix=@prefix@
-GDLL="libgretl-1.0-1.dll"
-
-# ensure that the libgretl DLL is in the right place
-if [ -f ${prefix}/../bin/${GDLL} ] ; then
-  mv ${prefix}/../bin/${GDLL} ${prefix}
-fi
 
 # delete stuff that's not needed in a run-only Windows package
 rm -rf ${prefix}/include
