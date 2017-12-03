@@ -93,6 +93,7 @@ LIBGRETL = libgretl-1.0.la
 
 ifeq ($(win32pkg),yes)
   VERSION_INFO = -version-info 1
+  BINPATH = -bindir "$(prefix)"
 else
   VERSION_INFO = -version-info $(CURRENT):$(REVISION):$(AGE)
 endif
@@ -315,7 +316,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ) Makefile
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(RPATH) $(LIBS) $(VERSION_INFO)
+	-rpath $(RPATH) $(LIBS) $(VERSION_INFO) $(BINPATH)
 
 .deps:
 	$(AMP)mkdir $@
