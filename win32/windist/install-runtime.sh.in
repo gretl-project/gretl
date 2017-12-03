@@ -1,13 +1,14 @@
 #!/bin/sh
 
-# these first paths will need configuring
+# these first paths may need configuring
 TARGET=@prefix@
 SRCDIR=@top_srcdir@
-SYSBASE=@mingw_prefix@
+# note: http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/gretl-extra.tar.gz
 EXTRA=${HOME}/gretl-extra
 
 # nothing below here should need configuring
 
+SYSBASE=${MINGW_PREFIX}
 SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
@@ -22,13 +23,14 @@ mkdir -p ${TARGET}/share/themes/Clearlooks/gtk-2.0
 mkdir -p ${TARGET}/lib/gtk-2.0/modules
 mkdir -p ${TARGET}/lib/gtk-2.0/2.10.0/engines
 mkdir -p ${TARGET}/etc/gtk-2.0
-# directories to hold GTK translations
+# directories to hold GTK message catalogs
 LANGS=`cat ${SRCDIR}/po/LINGUAS | grep -v ^#`
 for lang in $LANGS ; do
   mkdir -p ${TARGET}/share/locale/$lang/LC_MESSAGES
 done
 
-# copy in third-party dlls from MSYS2
+# copy in third-party dlls from mingw64 or mingw32: this listing
+# is correct as of 2017-12-03
 for f in \
 	libatk-1.0-0.dll \
 	libcairo-2.dll \
@@ -125,11 +127,13 @@ cp ${SYSSV}/styles/tango.xml ${TARGET}/gtksourceview/tango.xml
 cp ${SYSSV}/styles/styles.rng ${TARGET}/gtksourceview/styles.rng
 
 # locale file, certs for cURL, libsvm copyright
-cp ${EXTRA}/locale.alias ${TARGET}/share/locale/locale.alias
-cp ${EXTRA}/curl-ca-bundle.crt ${TARGET}/curl-ca-bundle.crt
-cp ${EXTRA}/copyright_libsvm ${TARGET}/copyright_libsvm
+if [ -d ${EXTRA} ] ; then
+  cp ${EXTRA}/locale.alias ${TARGET}/share/locale/locale.alias
+  cp ${EXTRA}/curl-ca-bundle.crt ${TARGET}/curl-ca-bundle.crt
+  cp ${EXTRA}/copyright_libsvm ${TARGET}/copyright_libsvm
+fi
 
-# GTK translations
+# GLib and GTK message catalogs
 for lang in $LANGS ; do
   cp $SYSTRANS/$lang/LC_MESSAGES/glib20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/glib20.mo
   cp $SYSTRANS/$lang/LC_MESSAGES/gtk20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/gtk20.mo
