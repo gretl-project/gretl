@@ -26,6 +26,11 @@ for f in `find gretl -name "*"` ; do
   fi
 done
 cat ${ISSTAIL} >> gretl.iss
-echo "#include \"${topsrc}/win32/windist/modpath.iss\"" >> gretl.iss
+
+MODPATH="${topsrc}/win32/windist/modpath.iss"
+if [ "x$MINGW_PREFIX" != "x" ] ; then
+  $MODPATH=`cygpath -w $MODPATH`
+fi
+echo "#include \"${MODPATH}\"" >> gretl.iss
 
 
