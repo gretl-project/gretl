@@ -398,6 +398,13 @@ static int curl_get (urlinfo *u)
     CURLcode res;
     int err = 0;
 
+#ifdef SSLWIN
+    /* set up the certs path once */
+    if (cpath[0] == '\0') {
+        sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
+    }
+#endif
+
     err = gretl_curl_toggle(1);
     if (err) {
 	return err;
@@ -428,12 +435,9 @@ static int curl_get (urlinfo *u)
 	}
 
 #ifdef SSLWIN
-	if (!strncmp(u->url, "https", 5)) {
-	    if (cpath[0] = '\0') {
-		sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
-	    }
-	    curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
-	}
+	/* be on the safe side: 'http' can turn into 'https'
+	   at the server */
+	curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
 #endif
 
 	if (u->progfunc != NULL) {
@@ -458,18 +462,13 @@ static int curl_get (urlinfo *u)
 	}
 
 	if (res != CURLE_OK) {
-#ifdef SSLWIN
-	    gretl_errmsg_sprintf("cURL error %d (%s)\ncerts path: '%s'", res,
-				 curl_easy_strerror(res), cpath);
-#else
 	    gretl_errmsg_sprintf("cURL error %d (%s)", res,
 				 curl_easy_strerror(res));
-#endif
 	    err = u->err ? u->err : 1;
 	}
 
 	curl_easy_cleanup(curl);
-    } 
+    }
 
     return err;
 }
