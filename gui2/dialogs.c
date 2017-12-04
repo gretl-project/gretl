@@ -6083,14 +6083,14 @@ int output_policy_dialog (windata_t *source,
     return policy;
 }
 
-static gchar *auto_pcd_name (const char *vname)
+static gchar *auto_pc_name (const char *vname)
 {
     char pcname[VNAMELEN];
 
     pcname[0] = '\0';
-    strcat(pcname, "pcd_");
+    strcat(pcname, "pc_");
     strncat(pcname, vname, VNAMELEN - 5);
-    /* FIXME checking and uniqueness */
+    /* FIXME checking and uniqueness? */
 
     return g_strdup(pcname);
 }
@@ -6148,7 +6148,7 @@ static void pc_change_callback (GtkWidget *w,
 	    const char *vname = dataset->varname[pci->varlist[i]];
 
 	    if (autoname) {
-		newname = auto_pcd_name(vname);
+		newname = auto_pc_name(vname);
 	    }
 	    if (ctrl == 0) {
 		/* period to period rate */
