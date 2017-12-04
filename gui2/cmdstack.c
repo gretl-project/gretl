@@ -64,7 +64,21 @@ gchar *get_logfile_content (int *err)
     gchar *s = NULL;
 
     if (n_cmds > 0) {
-	*err = gretl_file_get_contents(logname, &s, NULL);
+	if (gretl_print_has_tempfile(logprn)) {
+	    char *buf = NULL;
+
+	    buf = gretl_print_read_tempfile(logprn, err);
+	    if (!*err) {
+		s = g_strdup_printf(buf);
+	    }
+	    free(buf);
+	} else {
+	    *err = gretl_file_get_contents(logname, &s, NULL);
+	}
+#if CMD_DEBUG
+	fprintf(stderr, "get_logfile_content: logname='%s', tempfile=%d, err=%d\n",
+		logname, gretl_print_has_tempfile(logprn), *err);
+#endif
     }
 
     return s;
