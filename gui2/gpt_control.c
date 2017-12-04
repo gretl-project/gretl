@@ -2593,7 +2593,9 @@ static void maybe_promote_literal_lines (GPT_SPEC *spec,
     for (i=0; i<spec->n_literal; i++) {
 	line = spec->literal[i];
 	if (!strncmp(line, "set ", 4)) {
+	    gretl_push_c_numeric_locale();
 	    err = parse_gp_set_line(spec, line, styles);
+	    gretl_pop_c_numeric_locale();
 	    if (!err) {
 		gretl_list_append_term(&rmlines, i);
 	    }
@@ -2860,7 +2862,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
 
 	if (!strncmp(gpline, "set ", 4)) {
+	    gretl_push_c_numeric_locale();
 	    err = parse_gp_set_line(spec, gpline, styles);
+	    gretl_pop_c_numeric_locale();
 	} else if (!strncmp(gpline, "unset ", 6)) {
 	    err = parse_gp_unset_line(spec, gpline);
 	} else {

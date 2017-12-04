@@ -916,7 +916,7 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (spec->boxwidth > 0 && spec->boxwidth < 1) {
-	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
+	fprintf(fp, "set boxwidth %g relative\n", (double) spec->boxwidth);
     } else if (spec->boxwidth < 0 && spec->boxwidth > -1) {
 	fprintf(fp, "set boxwidth %g absolute\n", (double) -spec->boxwidth);
     }
