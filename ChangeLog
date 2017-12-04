@@ -11,8 +11,12 @@ version 2017e, in progress
 - Build fix: correct undefined symbol in cephes/iv.c
 - Boxplots: fix for incorrect extent of "whiskers" in some
   cases
+- Boxplots: fix for "collapse" of boxplot when edited in
+  the GUI, if the locale decimal separator is ','
 - GUI fix: the iterate option for groupwise weighted least
   squares (Model/Panel menu) had become disconnected
+- Windows fix: error on trying to save a record of executed
+  commands on program exit
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for
