@@ -40,7 +40,7 @@ enum {
 #define DBHLEN 64
 
 #if defined(WIN32) && defined(PKGBUILD)
-# define SSLWIN 1
+# define SSLWIN
 #endif
 
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
@@ -391,6 +391,9 @@ static void set_curl_proxy (urlinfo *u, CURL *curl)
 
 static int curl_get (urlinfo *u)
 {
+#ifdef SSLWIN
+    static char cpath[MAXLEN];
+#endif
     CURL *curl;
     CURLcode res;
     int err = 0;
@@ -424,14 +427,14 @@ static int curl_get (urlinfo *u)
 	    set_curl_proxy(u, curl);
 	}
 
-#if SSLWIN
+#ifdef SSLWIN
 	if (!strncmp(u->url, "https", 5)) {
-	    char cpath[MAXLEN];
-
-	    sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
+	    if (cpath[0] = '\0') {
+		sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
+	    }
 	    curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
 	}
-#endif	
+#endif
 
 	if (u->progfunc != NULL) {
 	    curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
@@ -443,7 +446,7 @@ static int curl_get (urlinfo *u)
 
 	res = curl_easy_perform(curl);
 
-#if SSLWIN
+#ifdef SSLWIN
 	if (res == CURLE_SSL_CACERT) {
 	    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
 	    res = curl_easy_perform(curl);
@@ -455,8 +458,13 @@ static int curl_get (urlinfo *u)
 	}
 
 	if (res != CURLE_OK) {
-	    gretl_errmsg_sprintf("cURL error %d (%s)", res, 
+#ifdef SSLWIN
+	    gretl_errmsg_sprintf("cURL error %d (%s)\ncerts path: '%s'", res,
+				 curl_easy_strerror(res), cpath);
+#else
+	    gretl_errmsg_sprintf("cURL error %d (%s)", res,
 				 curl_easy_strerror(res));
+#endif
 	    err = u->err ? u->err : 1;
 	}
 
