@@ -69,7 +69,8 @@ gchar *get_logfile_content (int *err)
 
 	    buf = gretl_print_read_tempfile(logprn, err);
 	    if (!*err) {
-		s = g_strdup_printf(buf);
+		/* the return value will be subject to g_free() */
+		s = g_strdup(buf);
 	    }
 	    free(buf);
 	} else {
