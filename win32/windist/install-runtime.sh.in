@@ -29,6 +29,22 @@ for lang in $LANGS ; do
   mkdir -p ${TARGET}/share/locale/$lang/LC_MESSAGES
 done
 
+# note: if we replace mingw64's libcurl-4.dll with our
+# relatively minimal version, we can then drop:
+#
+# libnghttp2-14.dll
+# libidn2-0.dll
+# libssh2-1.dll
+# liblzma-5.dll
+# librtmp-1.dll
+# libhogweed-4.dll
+# libgnutls-30.dll
+# libnettle-6.dll
+# libquadmath-0.dll
+# libidn-11.dll
+# libp11-kit-0.dll
+# libtasn1-6.dll
+
 # copy in third-party dlls from mingw64 or mingw32: this listing
 # is correct as of 2017-12-03
 for f in \
