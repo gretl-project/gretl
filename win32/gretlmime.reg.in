@@ -16,7 +16,7 @@ Windows Registry Editor Version 5.00
 @="@GEXEPATH@\\gretl.exe,1"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\shell\open\command]
-@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
 
 ; gretl script files (.inp)
 
@@ -31,7 +31,7 @@ Windows Registry Editor Version 5.00
 @="@GEXEPATH@\\gretl.exe,2"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\shell\open\command]
-@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
 
 ; gretl session files (.gretl)
 
@@ -46,7 +46,7 @@ Windows Registry Editor Version 5.00
 @="@GEXEPATH@\\gretl.exe,3"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\shell\open\command]
-@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
 
 ; gretl binary data files (.gdtb)
 
@@ -61,4 +61,4 @@ Windows Registry Editor Version 5.00
 @="@GEXEPATH@\\gretl.exe,4"
 
 [HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\shell\open\command]
-@="\"@GEXEPATH@\\gretl.exe\" \"%1\""
+@="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
