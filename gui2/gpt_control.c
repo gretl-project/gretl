@@ -2897,7 +2897,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     /* then get the "plot" lines */
     if (strncmp(gpline, "plot ", 5) ||
 	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {
-	fprintf(stderr, "HERE!\n");
 	err = unhandled_gp_line_error(gpline);
 	goto bailout;
     }
