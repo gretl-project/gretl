@@ -6088,9 +6088,14 @@ static gchar *auto_pc_name (const char *vname, int idxvals)
     char pcname[VNAMELEN];
 
     pcname[0] = '\0';
-    strcat(pcname, idxvals ? "ix_" : "pc_");
-    strncat(pcname, vname, VNAMELEN - 5);
-    /* FIXME checking and uniqueness? */
+
+    if (idxvals) {
+	strcat(pcname, "i_");
+	strncat(pcname, vname, VNAMELEN - 4);
+    } else {
+	strcat(pcname, "pc_");
+	strncat(pcname, vname, VNAMELEN - 5);
+    }
 
     return g_strdup(pcname);
 }
@@ -6421,7 +6426,7 @@ static void index_values_dialog (const int *list)
 	ixi.entry = NULL;
     }
 
-    /* selection of base period via spin button */
+    /* selection of base period for index via spin button */
     hbox = gtk_hbox_new(FALSE, 5);
     adj = (GtkAdjustment *) gtk_adjustment_new(dataset->t1, 0,
 					       dataset->n - 1,
