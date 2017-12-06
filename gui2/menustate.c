@@ -300,6 +300,8 @@ void ts_or_panel_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Add/diff", s);
     flip(mdata->ui, "/menubar/Add/ldiff", s);
     flip(mdata->ui, "/menubar/Add/pcdiff", s);
+    flip(mdata->ui, "/menubar/Add/idxvals",
+	 s && !dataset_is_panel(dataset));
 
     s = dataset_is_seasonal(dataset);
     if (!s && dataset_is_seasonal_panel(dataset)) {
@@ -484,6 +486,7 @@ enum MenuIdx_ {
     MNU_LOGS,
     MNU_DIFF,
     MNU_PCDIF,
+    MNU_IDXV,
     MNU_DUMIF,
     MNU_GENR,
     MNU_LIST
@@ -545,10 +548,12 @@ struct popup_entries main_pop_entries[] = {
     { MNU_LOGS,  N_("Add log"), T_SINGLE },
     { MNU_DIFF,  N_("Add difference"), T_SINGLE },
     { MNU_PCDIF, N_("Add percent change..."), T_SINGLE },
+    { MNU_IDXV,  N_("Add index values..."), T_SINGLE },
     { MNU_DUMIF, N_("Dummify..."), T_SINGLE },
     { MNU_LOGS,  N_("Add logs"), T_MULTI },
     { MNU_DIFF,  N_("Add differences"), T_MULTI },
     { MNU_PCDIF, N_("Add percent changes..."), T_MULTI },
+    { MNU_IDXV, N_("Add index values..."), T_MULTI },
     { MNU_SEPAR, NULL, T_BOTH },
     { MNU_GENR,  N_("Define new variable..."), T_BOTH },
     { MNU_LIST,  N_("Define list"), T_MULTI }
@@ -614,7 +619,10 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, v, 0);
 	break;
     case MNU_PCDIF:
-	single_percent_change_dialog(v);
+	single_percent_change_dialog(v, 0);
+	break;
+    case MNU_IDXV:
+	single_percent_change_dialog(v, 1);
 	break;
     case MNU_DUMIF:
 	add_discrete_dummies(v);
@@ -664,9 +672,9 @@ GtkWidget *build_var_popup (int selvar)
 	    /* don't offer panel plot */
 	    continue;
 	}	
-	if ((i == MNU_CGRAM || i == MNU_PGRAM) &&
+	if ((i == MNU_CGRAM || i == MNU_PGRAM || i == MNU_IDXV) &&
 	    !dataset_is_time_series(dataset)) {
-	    /* correlogram, periodogram */ 
+	    /* correlogram, periodogram, index values */ 
 	    continue;
 	}
 	if ((i == MNU_TPLOT || i == MNU_DIFF || i == MNU_PCDIF) &&
@@ -733,7 +741,9 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MNU_LOGS || i == MNU_DIFF)  {
 	add_logs_etc(i == MNU_LOGS ? LOGS : DIFF, 0, 0);
     } else if (i == MNU_PCDIF) {
-	multi_percent_change_dialog();
+	multi_percent_change_dialog(0);
+    } else if (i == MNU_IDXV) {
+	multi_percent_change_dialog(1);
     } else if (i == MNU_LIST) { 
 	make_list_from_main();
     } else if (i == MNU_GENR) { 

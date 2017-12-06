@@ -227,10 +227,13 @@ static void new_matrix_callback (GtkAction *action, gpointer p)
 
 static void pc_change_callback (GtkAction *action, gpointer p)
 {
+    const char *s = gtk_action_get_name(action);
+    int idxvals = !strcmp(s, "idxvals");
+    
     if (mdata_selection_count() == 1) {
-	single_percent_change_dialog(mdata->active_var);
+	single_percent_change_dialog(mdata->active_var, idxvals);
     } else {
-	multi_percent_change_dialog();
+	multi_percent_change_dialog(idxvals);
     }
 }
 
@@ -1697,6 +1700,8 @@ GtkActionEntry main_entries[] = {
     { "sdiff", NULL, N_("_Seasonal differences of selected variables"), NULL, NULL, 
       G_CALLBACK(logs_etc_callback) },
     { "pcdiff", NULL, N_("_Percentage change of selected variables"), NULL, NULL, 
+      G_CALLBACK(pc_change_callback) },
+    { "idxvals", NULL, N_("_100-based indices of selected variables"), NULL, NULL, 
       G_CALLBACK(pc_change_callback) },
     { "AddIndex", NULL, N_("_Index variable"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddTime", NULL, N_("_Time trend"), NULL, NULL, G_CALLBACK(add_index) },
