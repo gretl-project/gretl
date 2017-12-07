@@ -9,16 +9,26 @@ function void boot_printout(int type, int n, int rep,
     rep + failed, failed
 
   #   printf "Spar_mat: %d x %d", rows(Spar_mat), cols(Spar_mat)
+  if (type != 3) && ( cols(Spar_mat) == 2 * n2 )	# long-run matrix at the end!  
+    matrix bK = mshape( bm[1:n2], n, n)
+    printStrMat(bK, bV[1:n2, 1:n2], "C")
+    matrix bL = mshape( bm[n2+1:], n, n)
+    printStrMat(bL, bV[1+n2: , 1+n2: ], "LongRun")
+  endif
+
   if (type == 1) || (type == 2) || (type == 4) 
+    # C model without printing the long-run matrix (does type 4 make sense?)
     matrix bK = mshape(bm,n,n)
     printStrMat(bK, bV, "C")
   elif type == 3	# AB model
-    matrix bmA = mshape(bm[1:n2],n,n)
-    printStrMat(bmA, bV[1:n2,1:n2], "A")
-    matrix bmB = mshape(bm[n2+1:],n,n)
+    matrix bmA = mshape( bm[1:n2], n, n)
+    printStrMat(bmA, bV[1:n2, 1:n2], "A")
+    matrix bmB = mshape( bm[n2+1:], n, n)
     printStrMat(bmB, bV[1+n2:,1+n2:], "B")
   endif
 end function
+
+# ---------------------------
 
 function scalar max_eval(matrix A)
   n = rows(A)
@@ -35,7 +45,7 @@ function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
 
   /* This function implements a bias correction for
      the estimate of the VAR parameters as per Kilian,
-     REStud (1998).
+     REStat (1998).
   */
 
   n = rows(Ahat)
@@ -65,8 +75,8 @@ function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
       Ab = Ab ./ H
       matrix BC = Ahat - Ab
 
-      H = smash_unstable_roots(&Ab, BC)
-      printf "H = %g\n", H
+    H = add_and_smash(&Ab, BC)
+    printf "H = %g\n", H
   else
       matrix Ab = Ahat
   endif
@@ -79,210 +89,236 @@ end function
 
 function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 
-    loop foreach i n k T p --quiet 
-	scalar $i = obj.$i
-    endloop
-    
-    type = obj.type
-    scalar h = obj.horizon
-    n2 = n*n
+  loop foreach i n k T p type --quiet 
+    scalar $i = obj.$i 	# copy for convenience,   # type = obj.type 
+  endloop
+  scalar h = obj.horizon
+  scalar n2 = n*n  
+  # meth = obj.optmeth
+  matrix m = obj.mu	       # deterministics 
 
-    matrix A = obj.VARpar    # VAR parameters (first n rows of companion m.)
-    matrix m = obj.mu	      # deterministics 
-    matrix param = obj.theta # SVAR params
-
-    /* --- constraints-related matrices ---------------------*/
-    matrix Rd1 = obj.Rd1
-    matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
+  /* --- constraints-related matrices ---------------------*/
+  matrix Rd1 = obj.Rd1
+  matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
    
-    nc2 = rows(Rd2)
+  if type == 4
+    coint_r = cols(obj.jbeta)
+    matrix J = zeros(n - coint_r, coint_r) | I(coint_r)
+  endif
 
-    if type == 4
-	coint_r = cols(obj.jbeta)
-	matrix J = zeros(n-coint_r, coint_r) | I(coint_r)
+  matrix X = obj.X        # exogenous variables
+  matrix start = obj.Y    
+  start = start[1:p,] # Y0
+  matrix E = cdemean(obj.E) # was: E .- meanc(E)   # centre residuals
+
+  matrix C = obj.C	# (used below at least in maybe_flip_columns(C, &K))
+  
+  if type == 3 # AB 
+    matrix bmA bmB # needed as memory for transfer 
+  endif  
+
+  /*
+     the matrix "bands" will contain the bootstrap results:
+     each bootstrap replication on one row; each row contains
+     the vectorisation of the complete IRF matrix
+  */
+  matrix bands = zeros(rep, (h+1) * n2)
+  matrix U
+
+  matrix bmu = (k > 0) ? X*m : {}
+
+  bundle bobj = obj       # store a copy of the model for bootstrap
+  obj.nboot = rep         # record bootstrap details
+  obj.boot_alpha = alpha  # into original model
+
+  if obj.ncumul > 0
+    matrix to_cum = obj.cumul
+    matrix tmp = zeros(n, n)
+    tmp[to_cum,] = 1
+    sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
+  endif
+	
+  i = 1
+  failed = 0
+  set loop_maxiter 16384
+  
+  # The result matrix (IRFs further below)
+  if (type == 3) || (rows(obj.Rd1l) || obj.calc_lr)
+    # save either A,B (for type 3) or C and the long-run matrix
+    matrix Spar_mat = zeros(rep, 2 * n2)
+    
+  else # type 1,2,4 and just save the C matrices.
+    matrix Spar_mat =  zeros(rep, n2) 
+  endif    
+
+  BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots # was: bc
+  if BIASCORR
+    matrix Psi = {}
+    matrix ABC = bias_correction(1000, obj.VARpar, bmu, E, X, start, &Psi) # was: A
+  endif
+
+  printf "\nBootstrapping model (%d iterations)\n\n", rep
+  flush
+
+  loop while i <= rep --quiet
+    bobj.step = 0	# clear previous bootstrap indicator
+    /*
+       generate bootstrap disturbances: first p rows
+       (corresponding to Y0) are 0; next rows are sampled
+       with replacement from VAR residuals
+    */      
+    U = zeros(p,n) | resample(E)  
+    if rows(bmu) > 0
+      U = bmu + U
     endif
 
-    matrix X = obj.X        # exogenous variables
-    matrix start = obj.Y    
-    start = start[1:p,] # Y0
-    matrix E = obj.E
-    E = E .- meanc(E)   # centre residuals
+    # generate bootstrap data
+    matrix ABCorA = BIASCORR ? ABC : obj.VARpar	# was: A
+    matrix bY = varsimul(ABCorA, U[p+1:,], start)
 
-    if (type == 1) || (type == 2) || (type == 4) 
-	matrix C = obj.S1
-    elif type == 3 # if AB-model, compute C as inv(A)*B
-	matrix C = obj.S1 \ obj.S2
-	matrix bmA bmB
-    endif
+    matrix bobj.Y = bY       # and store it into the bootstrap object
 
     /*
-        the matrix "bands" will contain the bootstrap results:
-	each bootstrap replication on one row; each row contains
-	the vectorisation of the complete IRF matrix
+       estimate VAR parameters, via VECM if type==4 (KPSW) 
+       or via VAR otherwise
     */
-    matrix bands = zeros(rep, (h+1)*n2)
-    matrix U
-
-    matrix bmu = k>0 ? X*m : {}
-
-    bundle bobj = obj       # store a copy of the model for bootstrap
-    obj.nboot = rep         # record bootstrap details
-    obj.boot_alpha = alpha  # into original model
-
-    if obj.ncumul > 0
-	matrix to_cum = obj.cumul
-	matrix tmp = zeros(n,n)
-	tmp[to_cum,] = 1
-	sel = selifr(transp(seq(1,n*n)), vec(tmp))
+    if type == 4 
+      vecm_est(&bobj)
+    else
+      base_est(&bobj)
     endif
 	
-    scalar i = 1
-    scalar failed = 0
-    set loop_maxiter 16384
-    matrix Spar_mat = (type<3 || type==4) ? zeros(rep, n2) : zeros(rep, 2*n2) 
+    matrix bA = bobj.VARpar  # recover estimates (first n rows of companion mat)
+    matrix bSigma = bobj.Sigma
+    matrix theta = obj.theta # init original SVAR params (C/A&B apparently, in suitable form...)
+    # (was: param)
+    errcode = 0
 
-    scalar bc = obj.biascorr
-    BIASCORR = (type != 4) && bc # not available w/unit roots
-    if BIASCORR
-	matrix Psi = {}
-	matrix ABC = bias_correction(1000, A, bmu, E, X, start, &Psi)
+    ## Full bias correction 
+    /* (Moved up from below because the new C estimates should be based
+    on the bc-ed VARpar version.) 
+    But note that the bc-ed VARpar only actually enter the new C matrix if
+    there are long-run constraints, namely via C1 through fullRd.
+    Otherwise the new C only depends on Sigma, but we do not update Sigma
+    in the full biascorr case. (In theory we could, by re-calculating the 
+    residuals using the bc-ed VARpar. We shouldn't, should we?) 
+    */
+         
+    if obj.biascorr == 2 && type != 4 # was: bc; 
+      # (The check for SVEC / type!=4 was missing before -- Sven)       
+      scalar H = add_and_smash(&bA, Psi)
+      # printf("\tH=%g\n",H)
+      if ok(H)
+        bobj.VARpar = bA
+      else
+        errcode = 101
+      endif
+    endif  
+
+    /* now re-estimate C, according to model type */
+
+    if type == 1 # Cholesky
+      matrix K = cholesky(bSigma)
+      
+    elif type == 2 || type == 4 # consolidate the SVEC case here
+      
+      # FIXME: (Sven) The following SVEC check can simply be removed after 
+      # we verify that the call to get_full_Rd() works alright in this case!
+      if type == 4 && rows(bobj.Rd1l) 
+        funcerr "Bootstrap in SVEC with further long-run restrictions not supported (yet)."
+	    endif
+
+      matrix fullRd = get_full_Rd(&bobj)
+      matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
+      
+      /* For type==4, this was before:
+      # FIXME: this is very much WIP
+      matrix aperp = nullspace(bobj.jalpha')
+
+      # set up permanent-transitory constraints
+      r = cols(bobj.jbeta)
+      matrix J = zeros(n-r, r) | I(r)
+      matrix ptRd = (J ** aperp)' ~ zeros(r*(n-r),1)
+      # matrix J = I(n-r) | zeros(r, n-r)
+      # moo = (J ** beta)' ~ zeros(r*(n-r),1)
+      # ptRd |= moo
+
+      matrix fullRd = Rd1 | ptRd
+      */
+
+    elif type == 3 # "AB" 
+      matrices transferAB = array(2)	# new: get A,B instead of re-calc'ing it below
+      matrix K = estAB(&theta, bSigma, Rd2, Rd1, null, \
+        &errcode, obj.optmeth, 0, &transferAB)
+      
+    # elif type == 4 # SVEC, was: "KPSW"  
+      # matrix fullRd = get_full_Rd(&bobj)      
+      # matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
+    endif
+   
+    ## Process and store the simulated C results 
+    if !errcode && rows(K) == n
+      bobj.step = 2
+      bobj.theta = theta
+      
+      # we don't treat the AB-model specially here (there's no reason to)
+      maybe_flip_columns(C, &K)
+
+      if (type == 1) || (type == 2) || (type == 4) 
+        bobj.C = K	# was: bobj.S1 = K	/ is used in doIRF()
+        Spar_mat[i, 1:n2] = vec(K)'		# was just [i,]
+        
+        /* New Oct 2017: Also bootstrap the long-run matrix if wanted   */        
+        if (type < 3) && ( rows(bobj.Rd1l) || bobj.calc_lr )	
+          # (a plain or C model with long-run constraints, or user switch)          
+          # long-run matrix (C1 comes from get_full_Rd() above):
+          matrix bobj.lrmat = bobj.C1 * bobj.C	# was: C1mat(bobj.VARpar) * bobj.S1
+          
+          # attach it to the other bootstrap result
+          Spar_mat[i, n2+1 : 2*n2] = vec(bobj.lrmat)'
+        endif
+        
+      elif type == 3
+        # (Sven): the following stuff could be gotten from estAB above
+        bobj.S1 = transferAB[1] # was: bmA
+        bobj.S2 = transferAB[2] # bmB
+        
+        Spar_mat[i,] = vec(bobj.S1)' ~ vec(bobj.S2)' # was: vec(bmA)' ~ vec(bmB)'
+      endif
+
+      ### This was the place where the full bias correction block lived before ###
+      
     endif
 
-    meth = obj.optmeth
-
-    printf "\nBootstrapping model (%d iterations)\n\n", rep
-    flush
-
-    loop while i<=rep -q
-	# clear previous bootstrap
-	bobj.step = 0
-
-	/*
-	    generate bootstrap disturbances: first p rows
-	    (corresponding to Y0) are 0; next rows are sampled
-	    with replacement from VAR residuals
-        */      
-	U = zeros(p,n) | resample(E)  
-	if rows(bmu) > 0
-	    U = bmu + U
-	endif
-
-	# generate bootstrap data
-	matrix ABCorA = BIASCORR ? ABC : A
-	matrix bY = varsimul(ABCorA, U[p+1:,], start)
-
-	bobj.Y = bY                # and store it into the bootstrap object
-
-	/*
-	    estimate VAR parameters, via VECM if type==4 (KPSW) 
-	    or via VAR otherwise
-	*/
-	if type == 4 
-	    vecm_est(&bobj)
-	else
-	    base_est(&bobj)
-	endif
-	
-	matrix bA = bobj.VARpar    # recover estimates
-	matrix bSigma = bobj.Sigma
-	matrix theta = param
-	errcode = 0
-
-	/* now re-estimate C, according to model type */
-
-	if type == 1 # Cholesky
-	    matrix K = cholesky(bSigma)
-	elif type == 2 
-	    matrix fullRd = Rd1
-	    if nc2 > 0
-		matrix C1 = C1mat(bA, 0)
-		fullRd = fullRd | lrConstr(C1, Rd2)
-	    endif
-	    matrix K = estC(&theta, bSigma, fullRd, null, &errcode, meth, 0)
-	elif type == 3 # "AB" 
-	    matrix K = estAB(&theta, bSigma, Rd2, Rd1, null, &errcode, meth, 0)
-	elif type == 4 # "KPSW"
-	    # FIXME: this is very much WIP
-	    
-	    matrix aperp = nullspace(bobj.jalpha')
-
-	    /* set up permanent-transitory constraints */
-
-	    r = cols(bobj.jbeta)
-	    matrix J = zeros(n-r, r) | I(r)
-	    matrix ptRd = (J ** aperp)' ~ zeros(r*(n-r),1)
-	    # matrix J = I(n-r) | zeros(r, n-r)
-	    # moo = (J ** beta)' ~ zeros(r*(n-r),1)
-	    # ptRd |= moo
-
-	    matrix fullRd = Rd1 | ptRd
-	    matrix K = estC(&theta, bSigma, fullRd, null, &errcode, meth, 0)
-	endif
-
-	if !errcode && rows(K) == n
-	    bobj.step = 2
-	    bobj.theta = theta
-	    # we don't treat the AB-model specially here
-	    # (there's no reason to)
-	    maybe_flip_columns(C, &K)
-
-	    if (type == 1) || (type == 2) || (type == 4) 
-		bobj.S1 = K
-		Spar_mat[i,] = vec(K)'
-	    elif type == 3
-		matrix aSs = imp2exp(Rd2)
-		matrix bSs = imp2exp(Rd1)
-		ABmat_exp(theta, aSs, bSs, &bmA, &bmB)
-		bobj.S1 = bmA
-		bobj.S2 = bmB
-		Spar_mat[i,] = vec(bmA)' ~ vec(bmB)'
-	    endif
-
-	    if bc==2
-		scalar H = smash_unstable_roots(&bA, Psi)
-		# printf("\tH=%g\n",H)
-		if ok(H)
-		    bobj.VARpar = bA
-		else
-		    errcode = 101
-		endif
-	    endif
-	endif
-
-	if !errcode && rows(K) == n
-	    doIRF(&bobj)
-	    matrix ir = bobj.IRFs	
-	    bands[i,] = vec(ir)'
-	    i++
-	else
-	    failed++
-	    outfile stderr --write
-	    printf "Iter %4d failed (error code = %d)\n", i, errcode
-	    outfile --close
-	endif
-    endloop
-
-    if !quiet
-	boot_printout(type, n, rep, failed, &Spar_mat)
+    if !errcode && rows(K) == n
+      doIRF(&bobj)	
+      bands[i,] = vec(bobj.IRFs)' # was vec(ir) from ir = bobj.IRFs
+      i++
+    else
+      failed++
+      outfile stderr --write
+      printf "Iter %4d failed (error code = %d)\n", i, errcode
+      outfile --close
     endif
+  endloop
 
-    # quantiles of bootstrapped IRFs used in graphs    
-    matrix locb = quantile(bands, 1-alpha)
-    matrix hicb = quantile(bands, alpha)
-    matrix mdn  = quantile(bands, 0.5)
-    
-    locb = mshape(locb, h+1, n2)    
-    hicb = mshape(hicb, h+1, n2)    
-    mdn  = mshape(mdn, h+1, n2)    
+  if !quiet
+    boot_printout(type, n, rep, failed, &Spar_mat)
+  endif
 
-    bundle bootdata = null
-    bootdata.rep   = rep             # no of replications
-    bootdata.alpha = alpha           # alpha 
-    bootdata.biascorr  = bc	        # type of bias correction
-    bootdata.lo_cb = locb 	        # lower bounds
-    bootdata.hi_cb = hicb	        # upper bounds
-    bootdata.mdns  = mdn	        # medians
+  # quantiles of bootstrapped IRFs used in graphs    
+  matrix locb = quantile(bands, 1 - alpha)
+  matrix hicb = quantile(bands, alpha)
+  matrix mdn  = quantile(bands, 0.5)
 
-    obj.bootdata = bootdata
-    return failed
+  bundle bootdata = null
+  bootdata.rep   = rep             # no of replications
+  bootdata.alpha = alpha           # alpha 
+  bootdata.biascorr  = obj.biascorr   # type of bias correction
+  matrix bootdata.lo_cb = mshape(locb, h+1, n2) # was: locb   # lower bounds
+  matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # was: hicb   # upper bounds
+  matrix bootdata.mdns  = mshape(mdn, h+1, n2)	# was: mdn    # medians
+
+  bundle obj.bootdata = bootdata
+  return failed
 end function

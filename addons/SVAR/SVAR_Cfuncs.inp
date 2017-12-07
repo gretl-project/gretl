@@ -2,7 +2,7 @@ function void scoreC(matrix *ret, matrix *theta, matrix *dat)
   matrix Sigma Ss 
   unscramble_dat(&dat, &Sigma, &Ss)
   scalar n = rows(Sigma)
-  scalar npar = cols(Ss)-1
+  scalar npar = cols(Ss) - 1
 
   matrix C = mat_exp(theta, Ss, 0)
   matrix S = Ss[,1:npar]
@@ -37,7 +37,7 @@ function matrix C1mat(matrix A, bool VECM[0],
       I guess. Different from jbeta (n+1,r) in other contexts (?). 
   */
   scalar n = rows(A)
-  scalar p = cols(A)/n
+  scalar p = cols(A) / n
   matrix tmp = mshape(vec(A), n*n, p)  
 
   if VECM == 0
@@ -71,7 +71,7 @@ function void PseudoHessC(matrix *H, matrix *theta, matrix *dat)
   matrix Sigma Ss 
   unscramble_dat(&dat, &Sigma, &Ss)
   scalar n = rows(Sigma)
-  scalar npar = cols(Ss)-1
+  scalar npar = cols(Ss) - 1
   matrix S = Ss[,1:npar]
 
   # printf "PseudoHessC\n%10.4f\n%4.1f\n", theta, Ss
@@ -180,7 +180,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
       printf "Estimated C matrix:\n%12.5f", C
     endif
 
-    if !isnull(vcv)
+    if exists(vcv)
       vcv = coeffVCV(Ss[,1:npar], &C)
     endif
 

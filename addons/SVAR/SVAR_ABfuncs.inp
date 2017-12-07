@@ -4,6 +4,8 @@ function scalar is_standard_AB(matrix aRd, matrix bRd)
 end function
 
 function void scoreAB(matrix *ret, matrix *theta, matrix *dat, int p1)
+    # FIXME: This func might benefit from getting the pre-computed C matrix
+  
   matrix Sigma Ss A B 
   unscramble_dat(&dat, &Sigma, &Ss)
 
@@ -135,23 +137,6 @@ function matrix nonstdAB_init(matrix E, matrix aRd, matrix bRd)
   return ret
 end function
 
-/*
-not needed anymore, just called once (?):
-
-function matrix init_AB(matrix E, matrix aRd, matrix bRd)
-    # E: VAR residuals
-  matrix ret = is_standard_AB(aRd, bRd) ? \
-      stdAB_init(E, aRd, bRd) : nonstdAB_init(E, aRd, bRd)
-  #if is_standard_AB(aRd, bRd)
-  #  matrix ret = stdAB_init(E, aRd, bRd)
-  #else
-  #  matrix ret = nonstdAB_init(E, aRd, bRd)
-  #endif
-
-  return ret
-end function
-*/
-
 function void ABmat_exp(matrix theta, matrix aSs, matrix bSs,
 			    matrix *A, matrix *B)
   scalar p1 = cols(aSs) - 1
@@ -189,16 +174,18 @@ function void PseudoHessAB(matrix *H, matrix *theta, matrix *dat, int p1)
   H = InfoMat(B, S, &A) 
 end function
 
+# -----------------------------------------
+
 function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
                       matrix *vcv[null], scalar *errcode, int method, \
-                      int verbose[1])
+		      int verbose[1], matrices *transfABkakb[null])
+  # new optional arg transfABkakb added by Sven for transfer/ 
+  # to avoid calc duplication
   
   matrix aSs  = imp2exp(aRd)
   matrix bSs  = imp2exp(bRd)
   scalar npar = rows(theta)
   scalar n    = rows(Sigma)
-
-  matrix sSig = Sigma
 
   scalar p1 = cols(aSs) - 1  
   scalar p2 = p1 + cols(bSs) - 1  
@@ -239,7 +226,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
   scalar warn = (crit > 1.0e-1)
 
   if err || warn
-    C = {}
+    matrix C = {}
     errcode = err + 10*warn
     outfile stderr --write
     printf "err = %d; warn = %d; Gradient: %10.6f", err, warn, g
@@ -259,7 +246,29 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
     printf "Estimated C matrix:\n%12.5f", C
     printf "Check:\n%12.5f", cholesky(Sigma)
   endif
+  
+  # new transplanted block from SVAR_estimate():
+  n2 = n*n
+  ka = cols(aSs) - 1
+  kb = cols(bSs) - 1
+  matrix S = zeros(2*n2, ka+kb)  
 
+  if ka > 0
+      S[1:n2,1:ka] = aSs[,1:ka]
+  endif
+  if kb > 0
+      S[n2+1:2*n2,ka+1:ka+kb] = bSs[,1:kb]
+  endif
+      
+  if exists(vcv)
+    vcv = coeffVCV(S, &B, &A)  # was coeffVCV(S, &mB, &mA)
+  endif
+
+  # transfer back the A, B, ka, kb results (ugly hack <Sven>)  
+  if exists(transfABkakb)
+    transfABkakb = defarray(A, B, {ka}, {kb})
+  endif
+  
   return C 
 end function
 

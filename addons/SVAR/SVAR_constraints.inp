@@ -25,7 +25,7 @@ function scalar CheckNormalizeRd(matrix *R, matrix *d)
       else # redundant
 	  matrix RR
 	  matrix QQ = qrdecomp(Rd', &RR)
-	  e = abs(diag(RR)) .> $macheps
+	  matrix e = abs(diag(RR)) .> $macheps
 	  QQ = selifc(QQ, e')
 	  matrix RR = selifr(selifc(RR, e'), e)
 	  matrix Rd = QQ * RR
@@ -88,14 +88,17 @@ function matrix cholRd(int n)
     return ret
 end function
 
+# ---------------------------------
 function matrix diag_Rd(int n, scalar x)
     return selifr(I(n*n), vec(I(n))) ~ (x*ones(n,1))
 end function
+# ---------------------------------
 
 function matrix free_diag_Rd(int n)
     n2 = n*n
     return selifr(I(n2)~zeros(n2,1), !vec(I(n)))
 end function
+# ----------------------------------
 
 function matrix imp2exp(matrix Rd)
   /*
@@ -104,10 +107,10 @@ function matrix imp2exp(matrix Rd)
   */
 
   p = cols(Rd)
-  matrix R = Rd[,1:(p-1)]
+  matrix R = Rd[, 1:(p-1)]
   matrix d = Rd[,p]
   matrix s = R'invpd(R*R')*d
-  S = nullspace(R | s')
+  matrix S = nullspace(R | s')
   return S ~ s
 end function
 
@@ -126,66 +129,63 @@ end function
 
 function matrix lrConstr(matrix C1, matrix lrRd)
     if rows(lrRd) == 0
-	# nothing to do
-	ret = {}
+	return {} # nothing to do
     else
 	n = rows(C1)
 	k = cols(lrRd) - 1
 	matrix d = lrRd[,k+1]
-	ret = ( lrRd[,1:k] * (I(n) ** C1) ) ~ d
-    endif
+	return ( lrRd[,1:k] * (I(n) ** C1) ) ~ d
+  endif
     
   return ret
 end function
 
-function matrix get_full_Rd(bundle *obj, int verbosity)
-    type = obj.type
-    n = obj.n
-    matrix fullRd = {}
+# ----------------------------------
 
-    if type == 1
-	# duh
-	fullRd = obj.Rd1
-    elif (type==2) || (type == 4)
-	# generic C-model: may also have long-run restrictions
-	# includes SVEC
-	
-	fullRd = obj.Rd1 # grab sr-restrictions first
-	nc2 = rows(obj.Rd1l)
-	if (type == 4) || (nc2 > 0) # long-run restrictions
-
-	    matrix A = obj.VARpar              # grab the autoregressive parameters
-
-	    # before ML estimation, we need to take into account the
-	    # permanent/temporary shock classification in SVEC
-	    if type == 4
-		matrix alpha = obj.jalpha
-		matrix beta  = obj.jbeta
-		if obj.jcase % 2 == 0
-		    # trim beta
-		    beta = beta[1:n,]
-		endif
-		matrix C1 = C1mat(A, 1, &alpha, &beta)
-		r = cols(beta)
-		matrix J = zeros(n-r, r) | I(r)
-		matrix ptRd = (J ** nullspace(alpha'))' ~ zeros(r*(n-r),1)
-		fullRd = fullRd | ptRd  # put the constraints together
-	    else 
-		matrix C1 = C1mat(A, 0)        # compute the lr matrix
-	    endif
+function matrix get_full_Rd(bundle *obj, int verbosity[0])
+  
+    scalar type = obj.type
+    scalar n = obj.n
+    matrix fullRd = obj.Rd1 # grab sr-restrictions first
+    # (for type 1 or type 2 with short-run only: nothing else to do)
+    lr_constr = rows(obj.Rd1l) ? 1 : 0	# further long-run constraints?
+  
+    if type == 3
+	funcerr "This func not usable for AB models (yet)"
+	# because long-run restrictions aren't implemented for them    
 	    
-	    printf "Long-run matrix C(1) = \n%12.4f\n", C1
+    elif (type == 4) || lr_constr || obj.calc_lr
+	# generic C-model (includes SVEC) with some kind of long-run restr
 
-	    matrix lrRd = obj.Rd1l                    # grab lr-restrictions, if any
-	    fullRd = fullRd | lrConstr(C1, lrRd)  # put the constraints together
-
-	    if verbosity>1 
-		matrix lrSigma = qform(C1, obj.Sigma) # compute the lr covariance matrix
-		printf "Long-run matrix: \n%8.3f\n", C1 
-		printf "Long-run Sigma: \n%8.3f\n", lrSigma
-	    endif
+	# before ML estimation, we need to take into account the
+	# permanent/temporary shock classification in SVEC
+	if type == 4
+	    matrix alpha = obj.jalpha # don't mix up with the scalar sig level obj.alpha!!
+	    # trim beta from restr. exo terms if needed:
+	    matrix beta = (obj.jcase % 2 == 0) ? obj.jbeta[1:n,] : obj.jbeta
+	    r = cols(beta)        
+	    matrix C1 = C1mat(obj.VARpar, 1, &alpha, &beta)
+            
+	    matrix J = zeros(n-r, r) | I(r)
+	    matrix ptRd = (J ** nullspace(alpha'))' ~ zeros(r*(n-r), 1)
+	    fullRd = fullRd | ptRd  # put the constraints together
+	    
+	else # can only be type 2 (or 1 if obj.calc_lr)
+	    matrix C1 = C1mat(obj.VARpar, 0) # compute the lr matrix
 	endif
+	
+	if lr_constr # avoid function call if unnecessary
+	    fullRd = fullRd | lrConstr(C1, obj.Rd1l) # put the constraints together
+	endif 
+	if verbosity > 1 
+	    matrix lrSigma = qform(C1, obj.Sigma) # compute the lr cov matrix
+	    printf "Long-run matrix (C1): \n%8.3f\n", C1 
+	    printf "Long-run Sigma: \n%8.3f\n", lrSigma
+	endif
+	
+	# store the C1 matrix for possible future use
+	matrix obj.C1 = C1
     endif
-
+    
     return fullRd
 end function

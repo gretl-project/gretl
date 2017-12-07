@@ -144,52 +144,42 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   matrix mreg = set_default_dimensions(&ret, lY, lX, varorder)
 
   /* the actual data */
-  ret.Y = mreg[,1:n]
-  if k > 0
-    ret.X = mreg[,n+1:n+k]
-  else
-    ret.X = {}
-  endif
-
+  matrix ret.Y = mreg[,1:n]
+  matrix ret.X = (k>0) ? mreg[, n+1 : n+k] : {}
+  
   # variable names
-  ret.Ynames = strsplit(strsub(varname(lY),","," ")) # note: string array
-  ret.Xnames = strsplit(strsub(varname(lX),","," ")) # needed?
+  strings ret.Ynames = strsplit(strsub(varname(lY),","," ")) # note: string array
+  strings ret.Xnames = strsplit(strsub(varname(lX),","," ")) # needed?
 
   /*
-  The constraint matrices.
-  "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
-  "Rd1l" contains long-run constraints on B (and therefore C in non-AB models);
-  "Rd0" contains short-run constraints on A in AB;
+     The constraint matrices.
+     "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
+     "Rd1l" contains long-run constraints on C (not supported in AB models);
+     "Rd0" contains short-run constraints on A in AB;
 
   note that "Rd1l" and "Rd0" were both "aux" in previous versions.
 
   Initially, they are empty. Except for the "plain" model, it's up to 
   the user to fill them up later, via SVAR_restrict() or by hand
   */
-
-  if type == 1
-    ret.Rd1 = cholRd(n)
-  else
-    ret.Rd1 = {}
-  endif
-
-  ret.Rd1l = {}
+  
+  matrix ret.Rd1 = (type==1) ? cholRd(n) : {} 
+  matrix ret.Rd1l = {}
 
   if type == 3
-    ret.Rd0 = {}
+    matrix ret.Rd0 = {}
   endif
 
   if type == 4
     /* SVEC model: cointegration stuff */
-    ret.jalpha = {}
-    ret.jbeta = {}
+    matrix ret.jalpha = {}
+    matrix ret.jbeta = {}
     ret.jcase = 0
   endif
 
   /* 
      Optimisation
   */
-  # Sven remark: user choice has to override after calling this func
   ret.optmeth = 4 # default = scoring
   ret.simann  = 0 # not for now
 
@@ -198,7 +188,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   */
 
   ret.ncumul = 0
-  ret.cumul = {}
+  matrix ret.cumul = {}
   ret.normalize = 0
     
   /* 
@@ -206,15 +196,21 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   */
   ret.nboot = 0
   ret.boot_alpha = -1
-  ret.bootdata = {}
+  matrix ret.bootdata = {}
   ret.biascorr = 0
 
   /* Names for shocks */
   # per default, we borrow variable names, following tradition
-  ret.snames = ret.Ynames
-
+  strings ret.snames = ret.Ynames
+  
+  /* Don't calculate the long-run matrix by default.
+    (This does not apply to the case of long-run restrictions.) */
+  ret.calc_lr	= 0
+  
   return ret
 end function
+
+#####################################
 
 function scalar SVAR_restrict(bundle *b, string code, int r, 
     int c[0], scalar d[0])
@@ -236,8 +232,13 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
       return 1
       
   elif (strstr("A B Adiag Bdiag", code) != "") && (type!=3)
-      print "AB type restriction but not an AB model."    
-      return 1
+    print "AB type restriction but not an AB model."    
+    return 1
+      
+    # check for unsupported case
+  elif code=="lrC" && type==3 
+    print "Long-run restrictions only supported in C model."
+    return 3	# (Which code to return here? <Sven>) 
   endif
 
   # if no input error, proceed with this:
@@ -319,116 +320,117 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha,
 			   bool verbose[0])
 
-    /*
-    This function doesn't do very much, except setting
-    up the model for subsequent VECM estimation; "dcase" tells you
-    which of the "five cases" we want (no constant, restricted
-    constant, etc), jbeta is simply checked for dimensions and then
-    copied into the object.
+  /*
+     This function doesn't do very much, except setting
+     up the model for subsequent VECM estimation; "dcase" tells you
+     which of the "five cases" we want (no constant, restricted
+     constant, etc), jbeta is simply checked for dimensions and then
+     copied into the object.
 
-    As for jalpha, if it's an empty matrix,
-    that means "just estimate it unrestrictedly", and we set up a
-    flag accordingly. Otherwise, it's taken to be pre-set to some
-    fixed value; the intermediate case (contraints on alpha) is not
-    handled, and I doubt it will ever be.
+     As for jalpha, if it's an empty matrix,
+     that means "just estimate it unrestrictedly", and we set up a
+     flag accordingly. Otherwise, it's taken to be pre-set to some
+     fixed value; the intermediate case (contraints on alpha) is not
+     handled, and I doubt it will ever be.
 
-    While we're at it, we also label the structural shocks as
-    "Perm_1", "Perm_2", "Trans_1", "Trans_2", etc.
-    */
+     While we're at it, we also label the structural shocks as
+     "Perm_1", "Perm_2", "Trans_1", "Trans_2", etc.
+  */
 
-    scalar n = SVARobj.n
+  scalar n = SVARobj.n
     
-    # syntax check
-    err = (dcase<1) || (dcase>5)
+  # syntax check
+  err = (dcase<1) || (dcase>5)
 
-    # dimensions check
-    if dcase%2 # nice, huh?
-	err = err || (rows(jbeta) != n)
-    else
-	err = err || (rows(jbeta) != n+1)
+  # dimensions check
+  if dcase%2 # nice, huh?
+    err = err || (rows(jbeta) != n)
+  else
+    err = err || (rows(jbeta) != n+1)
+  endif
+
+  r = cols(jbeta)
+  err = err || (n < r) # should this be <=? hmm.
+
+  # rank check
+  err = err || (rank(jbeta) < r)
+
+  # now check if alpha is ok
+  d = rows(jalpha)
+
+  # d==0 is ok, we'll estimate alpha later
+  free_a = (d==0)
+  if !free_a
+    err = err || (d != n) || (cols(jalpha) != r)
+  endif
+    
+  # if anything goes wrong, return
+  if err
+    return err
+  endif
+
+  # fill up the object with the info
+    
+  SVARobj.crank = r
+  SVARobj.jcase = dcase
+  SVARobj.jbeta = jbeta
+  SVARobj.jalpha = jalpha
+  SVARobj.free_a = free_a
+    
+  if verbose
+    if dcase == 1
+      printf "No constant, "
+    elif dcase == 2
+      printf "Restricted constant, "
+    elif dcase == 3
+      printf "Unrestricted constant, "
+    elif dcase == 4
+      printf "Restricted trend, "
+    elif dcase == 5
+      printf "Unrestricted trend, "
     endif
-
-    r = cols(jbeta)
-    err = err || (n < r) # should this be <=? hmm.
-
-    # rank check
-    err = err || (rank(jbeta) < r)
-
-    # now check if alpha is ok
-    d = rows(jalpha)
-
-    # d==0 is ok, we'll estimate alpha later
-    free_a = (d==0)
-    if !free_a
-	err = err || (d != n) || (cols(jalpha) != r)
-    endif
-    
-    # if anything goes wrong, return
-    if err
-	return err
-    endif
-
-    # fill up the object with the info
-    
-    SVARobj.crank = r
-    SVARobj.jcase = dcase
-    SVARobj.jbeta = jbeta
-    SVARobj.jalpha = jalpha
-    SVARobj.free_a = free_a
-    
-    if verbose
-	if dcase == 1
-	    printf "No constant, "
-	elif dcase == 2
-	    printf "Restricted constant, "
-	elif dcase == 3
-	    printf "Unrestricted constant, "
-	elif dcase == 4
-	    printf "Restricted trend, "
-	elif dcase == 5
-	    printf "Unrestricted trend, "
-	endif
 	
 	printf "beta =\n%9.5f\n", jbeta
 
-	if free_a
-	    printf "alpha is unrestricted\n"
-	else
-	    printf "alpha =\n%9.5f\n", jalpha
-	    printf "PI =\n%9.5f\n", jalpha * jbeta'
-	endif
-    endif
-
-    # relabel transitory structural shocks
-
-    strings sn = SVARobj.snames
-    
-    if n-r == 1
-	sn[1] = sprintf("Permanent")
-	if r == 1
-	    sn[2] = "Transitory"
-	else
-	    loop i=2..n --quiet
-		sn[i] = sprintf("Transitory_%d", i-1)
-	    endloop
-	endif
+    if free_a
+      printf "alpha is unrestricted\n"
     else
-	loop i=1..n --quiet
-	    sn[i] = sprintf("Permanent_%d", i)
-	endloop
-	if r == 1
-	    sn[n] = "Transitory"
-	else
-	    loop i=1..r --quiet
-		sn[n-r+i] = sprintf("Transitory_%d", i)
-	    endloop
-	endif
+      printf "alpha =\n%9.5f\n", jalpha
+      printf "PI =\n%9.5f\n", jalpha * jbeta'
     endif
+  endif
 
-    SVARobj.snames = sn
+  # relabel transitory structural shocks
+  strings sn = SVARobj.snames
     
-    return err
+  if n-r == 1
+    sn[1] = sprintf("Permanent")
+    if r == 1
+      sn[2] = "Transitory"
+    else
+      loop i=2..n --quiet
+        sn[i] = sprintf("Transitory_%d", i-1)
+      endloop
+    endif
+  else
+    loop i=1..n --quiet
+      sn[i] = sprintf("Permanent_%d", i)
+    endloop
+    if r == 1
+      sn[n] = "Transitory"
+    else
+      loop i=1..r --quiet
+        sn[n-r+i] = sprintf("Transitory_%d", i)
+      endloop
+    endif
+  endif
+
+  SVARobj.snames = sn
+    
+  return err
 end function
+
+####
 
 function scalar SVAR_cumulate(bundle *b, int nv)
     err = (nv>b.n || nv<1) # was nv<0, but 0 makes no sense (?)

@@ -12,9 +12,13 @@ function void doIRF(bundle *SVARobj)
   scalar n = SVARobj.n
 
   if (type == 1) || (type == 2) || (type == 4)
-    matrix C = SVARobj.S1
+    matrix C = SVARobj.C	# was: SVARobj.S1
   elif type == 3
-    matrix C = SVARobj.S1 \ SVARobj.S2
+    if inbundle(SVARobj, "C")	# maybe not yet computed
+      matrix C = SVARobj.C
+    else
+      matrix C = SVARobj.S1 \ SVARobj.S2 
+    endif      
   endif
 
   matrix ret = zeros(H,n*n)
@@ -42,6 +46,8 @@ function void doIRF(bundle *SVARobj)
   SVARobj.IRFs = ret
 end function
 
+##############
+
 function matrix FEVD(bundle *SVARobj)
   n = SVARobj.n
   h = SVARobj.horizon + 1
@@ -58,6 +64,10 @@ function matrix FEVD(bundle *SVARobj)
   return ret
 end function
 
+
+### The function GetShock() isn't called anywhere, but it's public and
+### meant to be used by the user.
+
 function series GetShock(bundle *SVARobj, scalar i)
   series ret = NA
   scalar n = SVARobj.n
@@ -65,9 +75,13 @@ function series GetShock(bundle *SVARobj, scalar i)
   if (i <= n) && (i > 0) 
     scalar type = SVARobj.type
     if (type == 1) || (type == 2) || (type == 4)
-      matrix C = SVARobj.S1
+      matrix C = SVARobj.C  # was: SVARobj.S1
     elif type == 3
-      matrix C = SVARobj.S1 \ SVARobj.S2
+      if inbundle(SVARobj, "C")	# maybe not yet computed
+        matrix C = SVARobj.C
+      else
+        matrix C = SVARobj.S1 \ SVARobj.S2 
+      endif      
     endif
 
     matrix iC = inv(C')
@@ -81,14 +95,16 @@ function series GetShock(bundle *SVARobj, scalar i)
     tmp |= SVARobj.E * iC[,i]
     series ret = tmp
 
-    snames = SVARobj.snames
-    vlab = snames[i]
+    snames = SVARobj.snames # strings array?
+    string vlab = snames[i]
           
     setinfo ret --description="@vlab"    
   endif
   
   return ret
 end function
+
+#######################
 
 function list SVAR_hd(bundle *Mod, scalar nv)
     
@@ -97,11 +113,12 @@ function list SVAR_hd(bundle *Mod, scalar nv)
         scalar $i = Mod.$i
     endloop
     
-    if nv<0 && nv>n
-        printf "Hm. There are %d variables in the model. You asked for no. %d\n", n, yno
-        return ret
+    if nv<0 && nv>n 
+	printf "Hm. There are %d variables in the model. You asked for no. %d\n", n, nv
+	# (And yno doesn't exist?)
+	return ret
     endif
-
+    
     # compute the exogenous part
     if (type < 4)
 	# this is easy
@@ -110,58 +127,56 @@ function list SVAR_hd(bundle *Mod, scalar nv)
 	# here we have to take into account the "5 cases"
 	scalar dcase = Mod.jcase
 	scalar T    = Mod.T
-
-	if dcase == 1
-	    matrix mreg = {}
-	else
-	    matrix mreg = ones(T,1)
-        endif
-	    
+	matrix mreg = (dcase == 1) ? {} : ones(T,1)
 	if dcase > 3
 	    matrix mreg ~= seq(1,T)'
 	endif
-
+	
 	# printf "%8.3f\n", mreg
 	# printf "%8.3f\n", Mod.X
 	# printf "%8.3f\n", Mod.mu
 	
 	matrix m = (mreg ~ Mod.X) * Mod.mu'
     endif
-
+  
     matrix E = Mod.E 
     matrix VARpar = Mod.VARpar
     if (type == 1) || (type == 2) || (type == 4)
-	matrix C = Mod.S1
+	matrix C = Mod.C
     elif type == 3
-	matrix C = Mod.S1 \ Mod.S2
+	if inbundle(Mod, "C")
+	    matrix C = Mod.C
+	else
+	    matrix C = Mod.S1 \ Mod.S2
+	endif
     endif
-
+  
     matrix iC = inv(C)
     strings Ynames = Mod.Ynames
     strings snames = Mod.snames
     string yn = Ynames[nv]
-
+    
     smpl t1 t2
     if cols(m)>0
 	Xdet = varsimul(VARpar, m[p+1:,], Mod.Y[1:p,])
     else
 	Xdet = varsimul(VARpar, zeros(Mod.T-p,n), Mod.Y[1:p,])
     endif
-
+  
     # printf "nobs = %d, rows(Xdet) = %d\n", $nobs, rows(Xdet)
-
+  
     ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
-
+  
     # the structural shocks
     matrix U = E * iC'
     rotVARpar = iC * Mod.VARpar * (I(p) ** C)    
-
+  
     loop i=1..n --quiet
-        a = (seq(1,n) .= i)
-        W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
-        #printf "U[$i]:\n%8.3f\n", W[1:10,]
-        ret += genseries(sprintf("hd_%s_%s", yn, snames[i]), W[,nv])
+	a = (seq(1,n) .= i)
+	W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
+	#printf "U[$i]:\n%8.3f\n", W[1:10,]
+	ret += genseries(sprintf("hd_%s_%s", yn, snames[i]), W[,nv])
     endloop
-
+    
     return ret
 end function

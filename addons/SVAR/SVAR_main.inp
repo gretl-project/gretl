@@ -20,29 +20,24 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     base_est(&obj)
   endif
 
-  # grab the instantanous covariance matrix and 
-  # print it if required 
+  # grab the instantaneous covariance matrix 
   matrix Sigma = obj.Sigma
-  LL0 = VARloglik(T, Sigma)
-
-  if verbosity > 0
-    printf "\nUnconstrained Sigma:\n%12.5f\n", Sigma
-  endif
+  scalar obj.LL0 = VARloglik(obj.T, Sigma)
 
   if type == 1
-      # plain model: no fancy stuff, just Cholesky decomposition
-      matrix C = cholesky(Sigma)
-      matrix param = vech(C')
-      obj.S1 = C  # store C into the bundle
+    # plain model: just Cholesky decomposition
+    matrix C = cholesky(Sigma)
+    matrix param = vech(C')
       
-      # compute the covariance matrix for C
-      matrix Ss = imp2exp(obj.Rd1)
-      matrix vcv = coeffVCV(Ss[,1:cols(Ss)-1], &C)
+    # compute the covariance matrix for C
+    matrix Ss = imp2exp(obj.Rd1)
+    vcv = coeffVCV(Ss[, 1: cols(Ss)-1], &C)
       
   elif (type==2) || (type == 4)
-      
-      matrix fullRd = get_full_Rd(&obj, verbosity)
-      matrix param = init_C(0, Sigma, fullRd) # try to set some "sensible" inital values
+    # C models in a broad sense (including SVEC)  
+    matrix fullRd = get_full_Rd(&obj, verbosity)
+    # try to set some "sensible" initial values
+    matrix param = init_C(0, Sigma, fullRd) 
             
       if obj.simann > 0
 	  printf "before simann:\n%12.6f\n", param
@@ -53,15 +48,8 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 	  printf "after simann:\n%12.6f\n", param
       endif
       
-      # do estimation; note that vcv is estimated inside "estC"	
-      # (is C also a matrix? probably...)
-      C = estC(&param, Sigma, fullRd, &vcv, &errcode, meth, verbosity)
-      
-      if errcode == 0
-	  obj.S1 = C # store C into the bundle
-      else
-	  funcerr "Estimation failed"
-      endif
+    # do estimation; note that vcv is estimated inside "estC"	
+    matrix C = estC(&param, Sigma, fullRd, &vcv, &errcode, meth, verbosity)
       
   elif type == 3
       # AB-model
@@ -70,107 +58,85 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
       matrix bRd = obj.Rd1 # restrictions on B
       matrix aRd = obj.Rd0 # restrictions on A
       
-      # try to set some "sensible" inital values
+      # try to set some "sensible" initial values
       # (substitute out call to (former) init_AB)
       matrix param = is_standard_AB(aRd, bRd) ? \
       stdAB_init(E, aRd, bRd) : nonstdAB_init(E, aRd, bRd)
       
-      # matrix param = init_AB(E, aRd, bRd) # try to set some "sensible" inital values
-      # scalar errcode = 0
+    # do estimation; note that vcv is estimated inside "estAB" 
+    # (no it actually wasn't, now it is <Sven>)
+    matrices transfer
+    matrix C = estAB(&param, Sigma, aRd, bRd, &vcv, &errcode, meth, \
+      verbosity, &transfer) 
       
-      # do estimation; note that vcv is estimated inside "estAB"
-      C = estAB(&param, Sigma, aRd, bRd, &vcv, &errcode, meth, verbosity) 
-      
-      if errcode == 0
-	  matrix mA mB
-	  matrix aSs = imp2exp(aRd)
-	  matrix bSs = imp2exp(bRd)
-	  ABmat_exp(param, aSs, bSs, &mA, &mB)     # reconstruct A and B
-	  
-	  obj.S1 = mA
-	  obj.S2 = mB
-      else
-	  funcerr "Estimation failed"
-      endif
-  endif
+  endif	# which type
   
-  if (verbosity > 0)
-      printf "Optimization method = %s\n", optimstring(meth)
-      
+  /*
+  Post-estimation; transfers, long-run matrix, over-id test 
+  */
+  if errcode
+    funcerr "Estimation failed"
+    
+  else	# estimation ran fine
+    
+    # Copy stuff into the bundle
     if type == 3
-	  n2 = n*n
-	  ka = cols(aSs) - 1
-	  kb = cols(bSs) - 1
-	  matrix S = zeros(2*n2, ka+kb)  
-
-	  if ka > 0
-	      S[1:n2,1:ka] = aSs[,1:ka]
-	  endif
-	  if kb > 0
-	      S[n2+1:2*n2,ka+1:ka+kb] = bSs[,1:kb]
-      endif
+      matrix obj.S1 = transfer[1]	# A
+      matrix obj.S2 = transfer[2]	# B
+      scalar obj.ka = transfer[3]
+      scalar obj.kb = transfer[4]
+        
+    #
+    # else		# type is 1,2, or 4
+    #  matrix obj.C = C # store C into the bundle
       
-      matrix vcv = coeffVCV(S, &mB, &mA)
-	  
-	  if ka > 0
-	      printStrMat(mA, vcv[1:n2,1:n2], "A")
-	  endif
-	  
-	  if kb > 0
-	      printStrMat(mB, vcv[n2+1:2*n2,n2+1:2*n2], "B")
-	  endif
-    else
-	  printStrMat(C, vcv, "C")
     endif
+    /* 
+      We now also store C in the bundle because its computation
+      was repeated several times elsewhere */
+    matrix obj.C = C    
+    /* (This was obj.S1 for C models instead of obj.C, don't know why...)
+    matrix obj.S1 = C */ 
+    
+    matrix obj.theta = param
+    matrix obj.vcv = vcv
 
-      LL1 = VARloglik(T, Sigma, &C)
-      printf "  Log-likelihood = %g\n\n", LL1
-	  
-      overid = (n*(n+1)/2 - rows(param))
-      if overid > 0
-	  LR = 2*(LL0-LL1)
-	  printf "\n  Overidentification LR test = %g (%d df, pval = %g)\n", LR,
-	  overid, pvalue(X, overid, LR)
-      endif
+    # Long-run matrix 
+    if (type < 3) && ( rows(obj.Rd1l) || obj.calc_lr )	
+      # a plain or C model with long-run constraints, or user switch;
+      # here we now (Oct 2017) calc and save the long-run matrix
+      matrix obj.lrmat = C1mat(obj.VARpar) * obj.C	# was: obj.S1
+    endif
+      
+    # Indicate that estimation is done (still needed?)
+    obj.step = 2
+    # Store IRFs into the bundle 
+    doIRF(&obj)
+
+    # store the log-likelihood into the bundle
+    scalar obj.LL1 = VARloglik(obj.T, obj.Sigma, &C)
+    
+    # calculate the over-id test in any case (not just for verbosity)
+    # (C should hopefully be correctly depending on type)
+    overid = (n * (n+1) / 2 - rows(obj.theta))
+    if overid > 0
+      LR = 2 * (obj.LL0 - obj.LL1)
+      matrix obj.LRoid = {LR; overid; pvalue(X, overid, LR)}
+      # this is: (stat| dof| pv)
+    endif
+    
+    if (verbosity > 0)     
+      SVAR_est_printout(&obj) 
+    endif
   endif
 
-  if errcode == 0
-      obj.step = 2
-      obj.theta = param
-      obj.vcv = vcv
-      doIRF(&obj)
-  endif
-  
   return errcode
-end function
+end function # SVAR_estimate
 
-/* ---------------------------------------------------------------------- */
-function list autodrop(list X, scalar criterion[1.0e-12])
-    list drop = null
-    matrix R
-    qrdecomp({X}, &R)
-    scalar ndrop = 0
-    loop i=1..nelem(X) --quiet
-        if criterion > abs(R[i,i])
-            drop += X[i]
-            ndrop++
-        endif
-    endloop
-    if ndrop > 0
-        printf "%d collinear variables dropped (%s)\n", \
-          ndrop, varname(drop)
-        return X - drop
-    else
-        return X
-    endif
-end function
+/* ------------------------------------------------------------------ */
 
 function list determ(list X, bool cnst, bool trnd, bool seas)
-    if cnst
-	list ret = const
-    else
-	list ret = null
-    endif
+  list ret = cnst ? const : null 
     
     if trnd
 	list ret += time
@@ -188,6 +154,8 @@ function list determ(list X, bool cnst, bool trnd, bool seas)
     list ret = ret || X
     return ret
 end function
+
+/* ------------------------------------------------------------------ */
 
 function bundle GUI_SVAR(int type[1:3:1] "Model type" \
 			 {"plain (Cholesky)", "C-model", "AB-model"}, 
@@ -215,39 +183,39 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
     
     n = nelem(Y)    
    
-    # stick together deterministics and other exog.
-    list lX = autodrop(determ(X, hasconst, hastrend, hasseas))
+  # stick together deterministics and other exog.
+  list lX = dropcoll(determ(X, hasconst, hastrend, hasseas))
     
-    # initialize the model bundle    
-    bundle m = SVAR_setup(modelstring(type), Y, lX, l)
-    if h > 0
-	m.horizon = h
-    endif
+  # initialize the model bundle    
+  bundle m = SVAR_setup(modelstring(type), Y, lX, l)
+  if h > 0
+    m.horizon = h
+  endif
     
-    # copy options (new by Sven)
-    m.biascorr = biascorr
-    m.optmeth = optmeth
+  # copy options (new by Sven)
+  m.biascorr = biascorr
+  m.optmeth = optmeth
 
-    ## implement the cumulation spec (sven 1.0.2)
-    if !isnull(cumix)
-        # ensure column vector
-        cumix = vec(cumix)
-        # input checks (numbers out of bounds)
-        if max(cumix) > nelem(Y) || min(cumix) < 1
-            print "Invalid cumulation specification!"
-            print "(No responses will be cumulated.)"
-        else	# sensible cumulation spec	
-            loop i=1..rows(cumix) -q
-                SVAR_cumulate(&m, cumix[i])
-            endloop
-        endif
-    endif 
+  ## implement the cumulation spec (sven 1.0.2)
+  if !isnull(cumix)
+    # ensure column vector
+    cumix = vec(cumix)
+    # input checks (numbers out of bounds)
+    if max(cumix) > nelem(Y) || min(cumix) < 1
+      print "Invalid cumulation specification!"
+      print "(No responses will be cumulated.)"
+    else	# sensible cumulation spec	
+      loop i=1..rows(cumix) -q
+        SVAR_cumulate(&m, cumix[i])
+      endloop
+    endif
+  endif 
     
-    ## process restrictions
-    if type == 1
-        if !isnull(R1) || !isnull(R2)
-            print "Estimating plain model. Discarding provided restrictions."
-        endif
+  ## process restrictions
+  if type == 1
+    if !isnull(R1) || !isnull(R2)
+      print "Estimating plain model. Discarding provided restrictions."
+    endif
         
         if checkident
             print "(Identification trivially given in plain model.)"
@@ -281,38 +249,38 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
             endloop
 	endif
         
-        # still need to consider the A or longrun-C matrix (new by Sven 1.0.1 and after)
-	# transform the R2-matrix to SVAR-style restrictions
-	if !isnull(R2)
-	    r2 = rows(R2)
-	    c2 = cols(R2)
-	    if (r2 != n || c2 != n)
-		funcerr "wrong R2 dimension"
-	    endif
+    # still need to consider the A or longrun-C matrix
+    # transform the R2-matrix to SVAR-style restrictions
+    if !isnull(R2)
+      r2 = rows(R2)
+      c2 = cols(R2)
+      if (r2 != n || c2 != n)
+        funcerr "wrong R2 dimension"
+      endif
             
-            string sAorlrC = type == 3 ? "A" : "lrC"
-	    loop i=1..n -q
-		loop j=1..n -q
-		    scalar rij = R2[i,j]
-		    if ok(rij) # valid number = restricted element
-                        SVAR_restrict(&m, sAorlrC, i, j, rij)                
-		    endif
-		endloop
-	    endloop
-	endif
+      string sAorlrC = type == 3 ? "A" : "lrC"
+      loop i=1..n -q
+        loop j=1..n -q
+          scalar rij = R2[i,j]
+          if ok(rij) # valid number = restricted element
+            SVAR_restrict(&m, sAorlrC, i, j, rij)                
+          endif
+        endloop
+      endloop
     endif
+  endif
     
     # do an explicit ID check (sven 1.0.2)
     scalar id_ok = 1
 	
-    if checkident
-        if (type == 2  && !isnull(R2) ) # longrun C
-            print "FIXME: not yet implemented for models with long-run restrictions"
-        else
-            print "Check identification:" 
-            id_ok = SVAR_ident(&m, 1)	# request verbosity==1 to get messages
-	endif
+  if checkident
+    if (type == 2  && !isnull(R2) ) # longrun C
+      print "FIXME: not yet implemented for models with long-run restrictions"
+    else
+      print "Check identification:" 
+      id_ok = SVAR_ident(&m, 1)	# request verbosity==1 to get messages
     endif
+  endif
 
     # and of course estimate
     if !id_ok
@@ -320,10 +288,10 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
     else
 	SVAR_estimate(&m)
 	
-	if b > 0
-	    SVAR_boot(&m, b, alpha, 0)
-	endif
+    if b > 0
+      SVAR_boot(&m, b, alpha, 0)
     endif
+  endif
 	
     return m
 end function
@@ -334,76 +302,76 @@ function void SVAR_bundle_print(bundle *b)
     # Some specification echoing (sven 1.0.2)
     # (not sure whether this should go into SVAR_est_printout() instead...)
 
-    loop foreach i type n k p --quiet
-	scalar $i = b.$i
-    endloop
+  loop foreach i type n k p --quiet
+    scalar $i = b.$i
+  endloop
     
-    printf "Model type: %s\n", modelstring(type)
+  printf "Model type: %s\n", modelstring(type)
     
-    strings Ynames = b.Ynames
-    print "Endogenous variables:"
-    loop i=1..n --quiet
-	printf "%s", Ynames[i]
-	if (i==n)
-	    printf "\n"
-	else
-	    printf ", "
-	endif
-    endloop
-    printf "\n"
-    
-    if k>0
-        print "Exogenous variables:"
-	strings Xnames = b.Xnames
-	loop i=1..k --quiet
-	    printf "%s", Xnames[i]
-	    if (i==k)
-		printf "\n"
-	    else
-		printf ", "
-	    endif
-	endloop
+  strings Ynames = b.Ynames
+  print "Endogenous variables:"
+  loop i=1..n --quiet
+    printf "%s", Ynames[i]
+    if (i==n)
+      printf "\n"
     else
-        print "(No exogenous variables.)"
+      printf ", "
     endif
-    printf "\n"
+  endloop
+  printf "\n"
     
-    printf "Restriction patterns:\n\n"
+  if k>0
+    print "Exogenous variables:"
+    strings Xnames = b.Xnames
+    loop i=1..k --quiet
+      printf "%s", Xnames[i]
+      if (i==k)
+        printf "\n"
+      else
+        printf ", "
+      endif
+    endloop
+  else
+    print "(No exogenous variables.)"
+  endif
+  printf "\n"
     
-    if type == 1
-        print "Lower-triangular C matrix (Choleski decomposition)\n" 
-    elif type == 2 # C-model
-        if rows(b.Rd1)>0
-            printf "Short-run restrictions:\n"
-            printf "%3.0f\n", b.Rd1
-        else
-            print "(No short-run restrictions)"
-        endif
-        if rows(b.Rd1l)>0
-            print "Long-run restrictions:"
-            printf "%3.0f\n", b.Rd1l
-        else
-            print "(No long-run restrictions.)"
-        endif
-    elif type == 3 # AB-model
-        if rows(b.Rd0)
-            print "Restrictions on A:"
-            printf "%3.0f\n", b.Rd0
-        else
-            print "(No restrictions on A.)"
-        endif
-        if rows(b.Rd1)
-            print "Restrictions on B:"
-            printf "%3.0f\n", b.Rd1
-        else
-            print "(No restrictions on B.)"
-        endif
+  printf "Restriction patterns:\n\n"
+    
+  if type == 1
+    print "Lower-triangular C matrix (Choleski decomposition)\n" 
+  elif type == 2 # C-model
+    if rows(b.Rd1)>0
+      printf "Short-run restrictions:\n"
+      printf "%3.0f\n", b.Rd1
+    else
+      print "(No short-run restrictions)"
     endif
-    
-    # only print this if actual estimation took place
-    if inbundle(b, "Sigma")
-        printf "Sigma = \n%10.6f", b.Sigma
-        SVAR_est_printout(&b)
+    if rows(b.Rd1l)>0
+      print "Long-run restrictions:"
+      printf "%3.0f\n", b.Rd1l
+    else
+      print "(No long-run restrictions.)"
     endif
+  elif type == 3 # AB-model
+    if rows(b.Rd0)
+      print "Restrictions on A:"
+      printf "%3.0f\n", b.Rd0
+    else
+      print "(No restrictions on A.)"
+    endif
+    if rows(b.Rd1)
+      print "Restrictions on B:"
+      printf "%3.0f\n", b.Rd1
+    else
+      print "(No restrictions on B.)"
+    endif
+  endif
+    
+  # only print this if actual estimation took place
+  if inbundle(b, "Sigma")
+    printf "Sigma = \n%10.6f", b.Sigma
+    SVAR_est_printout(&b)
+  endif
     
 end function
