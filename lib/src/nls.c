@@ -61,7 +61,7 @@ struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
     gretl_bundle *bundle; /* parent bundle, if applicable */
     int type;             /* type of parameter (scalar or vector) */
-    int dtype;            /* type of derivative for parameter */
+    int dvtype;           /* type of derivative for parameter */
     char *deriv;          /* string representation of derivative of regression
 			     function with respect to param (or NULL) */
     int dnum;             /* ID number of series holding the derivative, or 0 */
@@ -73,8 +73,8 @@ struct parm_ {
 };
 
 #define scalar_param(s,i) (s->params[i].type == GRETL_TYPE_DOUBLE)
-#define matrix_deriv(s,i) (s->params[i].dtype == GRETL_TYPE_MATRIX)
-#define scalar_deriv(s,i) (s->params[i].dtype == GRETL_TYPE_DOUBLE)
+#define matrix_deriv(s,i) (s->params[i].dvtype == GRETL_TYPE_MATRIX)
+#define scalar_deriv(s,i) (s->params[i].dvtype == GRETL_TYPE_DOUBLE)
 
 #define numeric_mode(s) (!(s->flags & NL_ANALYTICAL))
 #define analytic_mode(s) (s->flags & NL_ANALYTICAL)
@@ -404,11 +404,11 @@ static int nls_genr_setup (nlspec *s)
 	} else if (j >= 0) {
 	    /* derivatives */
 	    if (v > 0) {
-		s->params[j].dtype = GRETL_TYPE_SERIES;
+		s->params[j].dvtype = GRETL_TYPE_SERIES;
 	    } else if (m != NULL) {
-		s->params[j].dtype = GRETL_TYPE_MATRIX;
+		s->params[j].dvtype = GRETL_TYPE_MATRIX;
 	    } else {
-		s->params[j].dtype = GRETL_TYPE_DOUBLE;
+		s->params[j].dvtype = GRETL_TYPE_DOUBLE;
 	    }
 
 	    s->params[j].dnum = v;
@@ -645,7 +645,7 @@ static int nlspec_push_param (nlspec *s,
     strncat(p->name, name, VNAMELEN - 1);
     p->type = type;
     p->bundle = bundle;
-    p->dtype = GRETL_TYPE_NONE;
+    p->dvtype = GRETL_TYPE_NONE;
     p->deriv = deriv;
     p->dnum = 0;
     p->nc = 1;

@@ -3478,7 +3478,7 @@ static double get_gdt_version (xmlNodePtr node)
     return v;
 }
 
-static int xml_get_data_structure (xmlNodePtr node, int *dtype)
+static int xml_get_data_structure (xmlNodePtr node, int *dattype)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "type");
     int err = 0;
@@ -3488,13 +3488,13 @@ static int xml_get_data_structure (xmlNodePtr node, int *dtype)
 	err = 1;
     } else {
 	if (!strcmp((char *) tmp, "cross-section")) {
-	    *dtype = CROSS_SECTION;
+	    *dattype = CROSS_SECTION;
 	} else if (!strcmp((char *) tmp, "time-series")) {
-	    *dtype = TIME_SERIES;
+	    *dattype = TIME_SERIES;
 	} else if (!strcmp((char *) tmp, "stacked-time-series")) {
-	    *dtype = STACKED_TIME_SERIES;
+	    *dattype = STACKED_TIME_SERIES;
 	} else if (!strcmp((char *) tmp, "stacked-cross-section")) {
-	    *dtype = STACKED_CROSS_SECTION;
+	    *dattype = STACKED_CROSS_SECTION;
 	} else {
 	    gretl_errmsg_set(_("Unrecognized type attribute for data file"));
 	    err = 1;
@@ -3505,7 +3505,7 @@ static int xml_get_data_structure (xmlNodePtr node, int *dtype)
     return err;
 }
 
-static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
+static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dattype)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "frequency");
     int err = 0;
@@ -3514,7 +3514,7 @@ static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
 
     if (tmp != NULL) {
 	if (!strncmp((char *) tmp, "special", 7)) {
-	    *dtype = SPECIAL_TIME_SERIES;
+	    *dattype = SPECIAL_TIME_SERIES;
 	    if (sscanf((char *) tmp + 7, ":%d", pd) == 1) {
 		fprintf(stderr, "custom time series, frequency %d\n", *pd);
 	    } else {
