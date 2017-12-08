@@ -8,6 +8,10 @@ version 2017e, in progress
 - "heckit" command: add selection equation regressor list to
   $model bundle under the key "zlist"
 - "difftest" command: add --quiet option
+- GUI convenience: add facility to generate 100-based indices
+  of selected series
+- GUI plot editor: support selection of dash patterns for
+  plots using lines
 - Build fix: correct undefined symbol in cephes/iv.c
 - Boxplots: fix for incorrect extent of "whiskers" in some
   cases
