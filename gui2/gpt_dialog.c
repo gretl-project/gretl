@@ -1045,7 +1045,8 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	if (ed->colorsel[i] != NULL) {
 	    apply_line_color(ed->colorsel[i], spec, i);
 	}
-	if (ed->dtcombo[i] != NULL) {
+	if (ed->dtcombo[i] != NULL &&
+	    gtk_widget_is_sensitive(ed->dtcombo[i])) {
 	    line->dtype =
 		gtk_combo_box_get_active(GTK_COMBO_BOX(ed->dtcombo[i])) + 1;
 	}
@@ -2489,19 +2490,26 @@ static int line_get_point_type (GPT_LINE *line, int i)
 }
 
 #define has_point(s) (s == GP_STYLE_POINTS || s == GP_STYLE_LINESPOINTS)
+#define has_line(s)  (s == GP_STYLE_LINES || s == GP_STYLE_LINESPOINTS)
 
-static void flip_pointsel (GtkWidget *box, GtkWidget *targ)
+static void adjust_line_controls (GtkWidget *src, GtkWidget *targ)
 {
     GtkWidget *label = g_object_get_data(G_OBJECT(targ), "label");
     GtkWidget *psize = g_object_get_data(G_OBJECT(targ), "psize");
     GtkWidget *pslbl = g_object_get_data(G_OBJECT(targ), "pslbl");
-    gchar *s = combo_box_get_active_text(box);
-    int hp = has_point(gp_style_index_from_display_name(s));
+    GtkWidget *dshsl = g_object_get_data(G_OBJECT(src), "dashsel");
+    gchar *s = combo_box_get_active_text(src);
+    int idx = gp_style_index_from_display_name(s);
+    int hp = has_point(idx);
 
     gtk_widget_set_sensitive(targ, hp);
     gtk_widget_set_sensitive(label, hp);
     gtk_widget_set_sensitive(psize, hp);
     gtk_widget_set_sensitive(pslbl, hp);
+
+    if (dshsl != NULL) {
+	gtk_widget_set_sensitive(dshsl, has_line(idx));
+    }
 }
 
 static GtkWidget *scroller_page (GtkWidget *vbox)
@@ -2726,7 +2734,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 1, 2,
 				  nrows-1, nrows);
 	gtk_widget_show(label);
-
 	ed->stylecombo[i] = gtk_combo_box_text_new();
 	hbox = gpt_hboxit(ed->stylecombo[i]);
 
@@ -2751,7 +2758,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ptsel = point_types_combo();
 	    g_object_set_data(G_OBJECT(ed->stylecombo[i]), "pointsel", ptsel);
 	    g_signal_connect(G_OBJECT(ed->stylecombo[i]), "changed",
-			     G_CALLBACK(flip_pointsel), ptsel);
+			     G_CALLBACK(adjust_line_controls), ptsel);
 	} 
 
 	if (IRF_plot(spec->code) && (line->style == GP_STYLE_FILLEDCURVE ||
@@ -2803,11 +2810,15 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (i < 6 && !frequency_plot_code(spec->code)) {
 	    /* dash type adjustment */
 	    int active = line->dtype > 1 ? line->dtype - 1 : 0;
+	    int hl = has_line(line->style);
 
 	    ed->dtcombo[i] = dash_types_combo();
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->dtcombo[i]), active);
 	    gtk_widget_show(ed->dtcombo[i]);
 	    gtk_box_pack_start(GTK_BOX(hbox), ed->dtcombo[i], FALSE, FALSE, 5);
+	    gtk_widget_set_sensitive(ed->dtcombo[i], hl);
+	    g_object_set_data(G_OBJECT(ed->stylecombo[i]), "dashsel",
+			      ed->dtcombo[i]);
 	}
 
 	if (hbox != NULL) {
