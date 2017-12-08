@@ -93,6 +93,7 @@ struct plot_editor_ {
     GtkWidget **linewidth;
     GtkWidget **pointsize;
     GtkWidget **colorsel;
+    GtkWidget **dtcombo;
 
     GtkWidget *fitformula;
     GtkWidget *fitlegend;
@@ -344,8 +345,7 @@ static GtkWidget *color_patch_button (int i)
     return button;
 }
 
-static int style_from_line_number (GPT_SPEC *spec, int i,
-				   int *dotted)
+static int style_from_line_number (GPT_SPEC *spec, int i)
 {
     int j, lt = spec->lines[i].type;
 
@@ -354,9 +354,6 @@ static int style_from_line_number (GPT_SPEC *spec, int i,
     } else if (lt == LT_AUTO) {
 	j = i;
     } else if (lt == 0) {
-	if (dotted != NULL) {
-	    *dotted = 1;
-	}
 	j = i;
     } else {
 	j = LT_AUTO;
@@ -374,7 +371,7 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 {
     GtkWidget *image = NULL;
     GtkWidget *button = NULL;
-    int j = i, dotted = 0;
+    int j = i;
 
     if (spec->lines[i].type == 0) {
 	return NULL;
@@ -389,7 +386,7 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
     } else if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
 	image = get_image_for_color(get_graph_color(SHADECOLOR));
     } else {
-	j = style_from_line_number(spec, i, &dotted);
+	j = style_from_line_number(spec, i);
 	if (j < 0) {
 	    return NULL;
 	}
@@ -404,10 +401,6 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(graph_color_selector), 
 			 GINT_TO_POINTER(j));
-    }
-
-    if (dotted && button != NULL) {
-	gtk_widget_set_sensitive(button, FALSE);
     }
 
     return button;
@@ -431,33 +424,37 @@ static void apply_line_color (GtkWidget *cb, GPT_SPEC *spec,
 
 /* end graph color selection apparatus */
 
-static GdkPixbuf *get_pixbuf_for_line (int dots)
+static GdkPixbuf *get_pixbuf_for_line (int dt)
 {
+    const char *dstrs[] = {
+	"............................................................",
+	" .....        .....        .....        .....        .....  ",
+	".    .    .    .    .    .    .    .    .    .    .    .    ",
+	".    ..    ........    ..    ........    ..    ........    .",
+	".......    .    .    .........    .    .    .........    .  "
+    };
     static char **xpm = NULL;
     int i;
 
     if (xpm == NULL) {
-	xpm = strings_array_new_with_length(14, 31);
+	xpm = strings_array_new_with_length(14, 61);
 	if (xpm == NULL) {
 	    return NULL;
 	}
 
 	/* common set-up */
-	strcpy(xpm[0], "30 11 2 1");
+	strcpy(xpm[0], "60 11 2 1");
 	strcpy(xpm[1], "  c None");
 	strcpy(xpm[2], ". c #000000");
 
 	for (i=3; i<14; i++) {
-	    strcpy(xpm[i], "                              ");
+	    memset(xpm[i], ' ', 60);
+	    xpm[i][60] = '\0';
 	}
     }
 
     /* write in the specific pattern we want */
-    if (dots) {
-	strcpy(xpm[8], ".  .  .  .  .  .  .  .  .  .  ");
-    } else {
-	strcpy(xpm[8], "............................  ");
-    }    
+    strcpy(xpm[8], dstrs[dt]);
 
     return gdk_pixbuf_new_from_xpm_data((const char **) xpm);
 }
@@ -632,26 +629,6 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     }
     
     return FALSE;
-}
-
-static void dot_callback (GtkComboBox *box, GPT_SPEC *spec)
-{
-    int i = widget_get_int(GTK_WIDGET(box), "linenum");
-    int solid = (gtk_combo_box_get_active(box) == 0);
-    GtkWidget *w;
-
-    /* flip between colored solid line (the first option)
-       and a dotted black line (second option) 
-    */
-    spec->lines[i].type = solid ? LT_AUTO : 0;
-
-    /* the color selector is effective only for solid lines */
-    w = g_object_get_data(G_OBJECT(box), "colorsel");
-    if (w != NULL) {
-	gtk_widget_set_sensitive(w, solid);
-	w = g_object_get_data(G_OBJECT(box), "color-label");
-	gtk_widget_set_sensitive(w, solid);
-    }
 }
 
 static float spinner_get_float (GtkWidget *b)
@@ -1067,6 +1044,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
 	if (ed->colorsel[i] != NULL) {
 	    apply_line_color(ed->colorsel[i], spec, i);
+	}
+	if (ed->dtcombo[i] != NULL) {
+	    line->dtype =
+		gtk_combo_box_get_active(GTK_COMBO_BOX(ed->dtcombo[i])) + 1;
 	}
 	if (ed->pointsize[i] != NULL) {
 	    line->pscale = spinner_get_float(ed->pointsize[i]);
@@ -2439,7 +2420,7 @@ static GtkWidget *print_field_label (GtkWidget *tbl, int row,
 
 static GtkWidget *dash_types_combo (void)
 {
-    GtkWidget *dotsel;
+    GtkWidget *dtsel;
     GtkCellRenderer *cell;
     GtkListStore *store;
     GtkTreeIter iter;
@@ -2448,20 +2429,20 @@ static GtkWidget *dash_types_combo (void)
 
     store = gtk_list_store_new(1, GDK_TYPE_PIXBUF);
 
-    for (i=0; i<2; i++) {
+    for (i=0; i<5; i++) {
 	gtk_list_store_append(store, &iter);
 	pbuf = get_pixbuf_for_line(i);
 	gtk_list_store_set(store, &iter, 0, pbuf, -1);
 	g_object_unref(pbuf);
     }
 
-    dotsel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
+    dtsel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
     cell = gtk_cell_renderer_pixbuf_new();
-    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(dotsel), cell, FALSE);
-    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(dotsel), cell,
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(dtsel), cell, FALSE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(dtsel), cell,
 				   "pixbuf", 0, NULL);
     
-    return dotsel;
+    return dtsel;
 }
 
 static GtkWidget *point_types_combo (void)
@@ -2817,22 +2798,16 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 			     tbl, ncols, nrows);
 	}
 
-	if (line->flags & GP_LINE_USER) {
-	    /* offer dotted option */
-	    GtkWidget *dotcombo = dash_types_combo();
-	    int dotted = (line->type == 0);
+	ed->dtcombo[i] = NULL;
 
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(dotcombo), 
-				     dotted ? 1 : 0);
-	    gtk_widget_show(dotcombo);
-	    widget_set_int(dotcombo, "linenum", i);
-	    if (ed->colorsel[i] != NULL) {
-		g_object_set_data(G_OBJECT(dotcombo), "colorsel", ed->colorsel[i]);
-		g_object_set_data(G_OBJECT(dotcombo), "color-label", color_label);
-		g_signal_connect(G_OBJECT(dotcombo), "changed", 
-				 G_CALLBACK(dot_callback), spec);
-	    }
-	    gtk_box_pack_start(GTK_BOX(hbox), dotcombo, FALSE, FALSE, 5);
+	if (i < 6 && !frequency_plot_code(spec->code)) {
+	    /* dash type adjustment */
+	    int active = line->dtype > 1 ? line->dtype - 1 : 0;
+
+	    ed->dtcombo[i] = dash_types_combo();
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->dtcombo[i]), active);
+	    gtk_widget_show(ed->dtcombo[i]);
+	    gtk_box_pack_start(GTK_BOX(hbox), ed->dtcombo[i], FALSE, FALSE, 5);
 	}
 
 	if (hbox != NULL) {
@@ -3453,6 +3428,7 @@ static void plot_editor_destroy (plot_editor *ed)
     free(ed->linescale);
     free(ed->linewidth);
     free(ed->colorsel);
+    free(ed->dtcombo);
     free(ed->pointsize);
 
     free(ed->labeltext);
@@ -3511,6 +3487,7 @@ static int add_line_widget (plot_editor *ed)
     ed->linescale   = widget_array_expand(&ed->linescale, n, &err);
     ed->linewidth   = widget_array_expand(&ed->linewidth, n, &err);
     ed->colorsel    = widget_array_expand(&ed->colorsel, n, &err);
+    ed->dtcombo     = widget_array_expand(&ed->dtcombo, n, &err);
     ed->pointsize   = widget_array_expand(&ed->pointsize, n, &err);
     
     if (!err) {
@@ -3532,6 +3509,7 @@ static int allocate_line_widgets (plot_editor *ed, int n)
 	ed->linescale   = widget_array_new(n, &err);
 	ed->linewidth   = widget_array_new(n, &err);
 	ed->colorsel    = widget_array_new(n, &err);
+	ed->dtcombo     = widget_array_new(n, &err);
 	ed->pointsize   = widget_array_new(n, &err);
 	if (!err) {
 	    ed->gui_nlines = n;

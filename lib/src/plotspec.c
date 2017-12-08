@@ -1025,8 +1025,13 @@ static void maybe_print_point_info (const GPT_LINE *line, FILE *fp)
 	if (line->pscale != 1.0) {
 	    fprintf(fp, " ps %g", (double) line->pscale);
 	}
-    } else if (line->dtype != 0) {
-	fprintf(fp, " dt %d", line->dtype);
+    }
+
+    if (line->style == GP_STYLE_LINES ||
+	line->style == GP_STYLE_LINESPOINTS) {
+	if (line->dtype > 1) {
+	    fprintf(fp, " dt %d", line->dtype);
+	}
     }
 }
 
