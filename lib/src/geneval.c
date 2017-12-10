@@ -9091,6 +9091,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    }
 	    break;
 	case SERIES:
+	    if (targ == GRETL_TYPE_LIST) {
+		fprintf(stderr, "HERE, FIXME\n");
+	    }
 	    ptr = rhs->v.xvec;
 	    type = GRETL_TYPE_SERIES;
 	    size = p->dset->n;
