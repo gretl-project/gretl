@@ -9042,7 +9042,14 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	targ = gretl_type_of(p->targ);
     }
 
-    if (!err) {
+    if (!err && targ == GRETL_TYPE_LIST) {
+	ptr = node_get_list(rhs, p);
+	err = p->err;
+	if (!err) {
+	    type = GRETL_TYPE_LIST;
+	    donate = 1;
+	}
+    } else if (!err) {
 	switch (rhs->t) {
 	case NUM:
 	    if (targ == GRETL_TYPE_SERIES) {
@@ -9078,12 +9085,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 		    type = GRETL_TYPE_SERIES;
 		    size = p->dset->n;
 		}
-	    } else if (targ == GRETL_TYPE_LIST) {
-		ptr = gretl_list_from_vector(rhs->v.m, p->dset, &p->err);
-		if (!p->err) {
-		    type = GRETL_TYPE_LIST;
-		    donate = 1;
-		}
 	    } else {
 		ptr = rhs->v.m;
 		type = GRETL_TYPE_MATRIX;
@@ -9091,9 +9092,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    }
 	    break;
 	case SERIES:
-	    if (targ == GRETL_TYPE_LIST) {
-		fprintf(stderr, "HERE, FIXME\n");
-	    }
 	    ptr = rhs->v.xvec;
 	    type = GRETL_TYPE_SERIES;
 	    size = p->dset->n;
