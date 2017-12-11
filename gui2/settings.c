@@ -2833,7 +2833,7 @@ static void set_fscale_default (GtkWidget *w, int *resp)
 
 void font_scale_selector (GtkAction *action)
 {
-    const char *opt = "Remember this setting";
+    const char *opt = N_("Remember this setting");
     GtkWidget *dlg, *hbox, *button;
     int fscale = tmpfontscale;
     int remember = 0;
