@@ -1268,11 +1268,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     int anydata = 0;
     int miss = 0;
 
-#if 0
-    /* experiment!! */
-    spec->heredata = 1;
-#endif
-
     if (spec->pd > 0) {
 	fprintf(fp, "# timeseries %d", spec->pd);
 	if (spec->flags & GPT_LETTERBOX) {
@@ -1503,14 +1498,14 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     }
 
     if (spec->heredata && anydata) {
-	fputs("# start inline data", fp);
+	fputs("# start inline data\n", fp);
 	if (spec->bars != NULL && spec->nbars > 0) {
 	    print_plotbars(spec, fp);
 	}
 	if (spec->data != NULL || spec->auxdata != NULL) {
 	    plotspec_print_heredata(spec, skipline, &miss, fp);
 	}
-	fputs("# end inline data", fp);
+	fputs("# end inline data\n", fp);
 	strcpy(src, "$data");
     }
 
