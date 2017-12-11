@@ -3613,6 +3613,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->linescale = NULL;
     ed->linewidth = NULL;
     ed->colorsel = NULL;
+    ed->dtcombo = NULL;
     ed->pointsize = NULL;
 
     ed->labeltext = NULL;

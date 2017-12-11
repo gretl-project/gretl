@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* gpt_control.c for gretl -- gnuplot controller */
@@ -115,7 +115,7 @@ struct png_plot_t {
     GtkWidget *shell;
     GtkWidget *canvas;
     GtkWidget *popup;
-    GtkWidget *statusarea;    
+    GtkWidget *statusarea;
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
     GtkWidget *pos_entry;
@@ -143,7 +143,7 @@ struct png_plot_t {
     double zoom_xmin, zoom_xmax;
     double zoom_ymin, zoom_ymax;
     int screen_x0, screen_y0; /* to define selection */
-    unsigned long status; 
+    unsigned long status;
     unsigned char format;
 };
 
@@ -209,12 +209,12 @@ static void terminate_plot_positioning (png_plot *plot)
     }
 }
 
-GtkWidget *plot_get_shell (png_plot *plot) 
+GtkWidget *plot_get_shell (png_plot *plot)
 {
     return plot->shell;
 }
 
-GPT_SPEC *plot_get_spec (png_plot *plot) 
+GPT_SPEC *plot_get_spec (png_plot *plot)
 {
     return plot->spec;
 }
@@ -298,13 +298,13 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 	     item->func == G_CALLBACK(graph_shrink_callback)) &&
 	    plot_not_editable(plot)) {
 	    continue;
-	}	
+	}
 	button = gretl_toolbar_insert(tbar, item, item->func, plot, -1);
 	if (item->func == G_CALLBACK(graph_enlarge_callback)) {
 	    plot->up_icon = button;
 	} else if (item->func == G_CALLBACK(graph_shrink_callback)) {
 	    plot->down_icon = button;
-	}	
+	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 5);
@@ -313,7 +313,7 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 /* end apparatus for graph toolbar */
 
 /* Provide the data coordinates for a gretl/gnuplot
-   graph, if they are all positive, otherwise return 
+   graph, if they are all positive, otherwise return
    non-zero.
 */
 
@@ -325,7 +325,7 @@ int plot_get_coordinates (png_plot *plot,
 {
     int err = 0;
 
-    if (plot != NULL && plot->xmin > 0 && 
+    if (plot != NULL && plot->xmin > 0 &&
 	plot->xmax > plot->xmin &&
 	plot->ymax > plot->ymin) {
 	*xmin = plot->xmin;
@@ -361,7 +361,7 @@ void plot_position_click (GtkWidget *w, png_plot *plot)
 	entry = g_object_get_data(G_OBJECT(w), "pos_entry");
 	plot->pos_entry = entry;
 	plot->status |= PLOT_POSITIONING;
-	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
+	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid,
 			   _(" Click to set position"));
     }
 }
@@ -420,7 +420,7 @@ static void check_win32_png_spec (char *s)
 
 #endif
 
-static int 
+static int
 add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
@@ -438,7 +438,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	fclose(ftmp);
 	return 1;
     }
-    
+
     if (action == ADD_PNG) {
 	/* see if there's already a png term setting, possibly commented
 	   out, that can be reused */
@@ -508,7 +508,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     } else {
 	/* not ADD_PNG: we're removing the png term line */
 	int printit, png_line_saved = 0;
-	
+
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    printit = 1;
 	    if (is_png_term_line(fline)) {
@@ -516,7 +516,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		    /* comment it out, for future reference */
 		    fprintf(ftmp, "# %s", fline);
 		    png_line_saved = 1;
-		} 
+		}
 		printit = 0;
 	    } else if (commented_term_line(fline)) {
 		if (png_line_saved) {
@@ -596,7 +596,7 @@ static int gnuplot_png_init (png_plot *plot, FILE **fpp)
 int gp_term_code (gpointer p, int action)
 {
     GPT_SPEC *spec;
-    
+
     if (action == SAVE_GNUPLOT) {
 	spec = (GPT_SPEC *) p;
     } else {
@@ -641,7 +641,7 @@ void filter_gnuplot_file (int mono, FILE *fpin, FILE *fpout)
    context
 */
 
-static int revise_plot_file (GPT_SPEC *spec, 
+static int revise_plot_file (GPT_SPEC *spec,
 			     const char *inpname,
 			     const char *outname,
 			     const char *termstr)
@@ -675,7 +675,7 @@ static int revise_plot_file (GPT_SPEC *spec,
 	    fputs("set mono\n", fpout);
 	}
 	write_plot_output_line(outname, fpout);
-    }	
+    }
 
     filter_gnuplot_file(mono, fpin, fpout);
 
@@ -697,15 +697,15 @@ void save_graph_to_file (gpointer data, const char *fname)
     if (!err) {
 	gchar *plotcmd;
 
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-				  gretl_gnuplot_path(), 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+				  gretl_gnuplot_path(),
 				  pltname);
 	err = gretl_spawn(plotcmd);
 	gretl_remove(pltname);
 	g_free(plotcmd);
 	if (err) {
 	    gui_errmsg(err);
-	} 
+	}
     }
 }
 
@@ -728,8 +728,8 @@ static void graph_display_pdf (GPT_SPEC *spec)
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-			      gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+			      gretl_gnuplot_path(),
 			      plttmp);
     err = gretl_spawn(plotcmd);
     gretl_remove(plttmp);
@@ -738,7 +738,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
     if (err) {
 	gui_errmsg(err);
 	return;
-    } 
+    }
 
 #if defined(G_OS_WIN32)
     win32_open_file(pdfname);
@@ -769,7 +769,7 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
 			      plttmp);
     err = gretl_spawn(plotcmd);
     gretl_remove(plttmp);
@@ -778,7 +778,7 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
     if (err) {
 	gui_errmsg(err);
 	return;
-    } 
+    }
 
 #if defined(G_OS_WIN32)
     win32_open_file(grfname);
@@ -804,7 +804,7 @@ int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
     if (!err) {
 	gchar *plotcmd;
 
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
 			      plttmp);
 	err = gretl_spawn(plotcmd);
 	gretl_remove(plttmp);
@@ -924,8 +924,8 @@ static int real_send_to_gp (const char *fname, int persist)
     gchar *cmd;
     int err;
 
-    cmd = g_strdup_printf("\"%s\" \"%s\"", 
-			  gretl_gnuplot_path(), 
+    cmd = g_strdup_printf("\"%s\" \"%s\"",
+			  gretl_gnuplot_path(),
 			  fname);
     retval = WinExec(cmd, SW_SHOWNORMAL);
     err = (retval < 32);
@@ -960,7 +960,7 @@ static void gnuplot_done (GPid pid, gint status, gpointer p)
 	    close(err_fd);
 	}
     }
-	
+
     g_spawn_close_pid(pid);
 }
 
@@ -979,10 +979,10 @@ static int real_send_to_gp (const char *fname, int persist)
     argv[2] = persist ? g_strdup("-persist") : NULL;
     argv[3] = NULL;
 
-    run = g_spawn_async_with_pipes(NULL, argv, NULL, 
-				   G_SPAWN_SEARCH_PATH | 
+    run = g_spawn_async_with_pipes(NULL, argv, NULL,
+				   G_SPAWN_SEARCH_PATH |
 				   G_SPAWN_DO_NOT_REAP_CHILD,
-				   NULL, NULL, &pid, 
+				   NULL, NULL, &pid,
 				   NULL, NULL,
 				   &fd, &error);
 
@@ -1047,13 +1047,13 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-			      gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+			      gretl_gnuplot_path(),
 			      plttmp);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
     gretl_remove(plttmp);
-    
+
     if (err) {
         errbox(_("Gnuplot error creating graph"));
     } else if (dest == WIN32_TO_CLIPBOARD) {
@@ -1105,7 +1105,7 @@ int write_plot_for_copy (int target)
     saveflags = spec->flags;
     saveterm = spec->termtype;
     savescale = spec->scale;
-    
+
     if (target == TARGET_SVG) {
 	spec->termtype = GP_TERM_SVG;
     } else if (target == TARGET_EMF) {
@@ -1125,7 +1125,7 @@ int write_plot_for_copy (int target)
     if (cb_image_mono) {
 	spec->flags |= GPT_MONO;
     }
-    
+
     build_path(inpname, gretl_dotdir(), "gptinp.tmp", NULL);
     build_path(outname, gretl_dotdir(), "gptout.tmp", NULL);
     err = revise_plot_file(spec, inpname, outname, NULL);
@@ -1135,14 +1135,14 @@ int write_plot_for_copy (int target)
     spec->scale = savescale;
 
     if (!err) {
-	gchar *plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-					 gretl_gnuplot_path(), 
+	gchar *plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+					 gretl_gnuplot_path(),
 					 inpname);
 	err = gretl_spawn(plotcmd);
 	g_free(plotcmd);
 	gretl_remove(inpname);
     }
-    
+
     if (err) {
         errbox(_("Gnuplot error creating graph"));
     } else {
@@ -1174,11 +1174,11 @@ static int chop_comma (char *str)
 	    break;
 	}
     }
-		
+
     return 0;
 }
 
-static int get_gpt_marker (const char *line, char *label, 
+static int get_gpt_marker (const char *line, char *label,
 			   const char *format)
 {
     const char *p = strchr(line, '#');
@@ -1199,7 +1199,7 @@ static int get_gpt_marker (const char *line, char *label,
 }
 
 /* special graphs for which editing via GUI is not supported
-   note: FIXME relax the restriction on PLOT_BAND asap */
+   note: FIXME relax the restriction on PLOT_BAND ? */
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
                       p == PLOT_LEVERAGE || \
@@ -1226,7 +1226,8 @@ static int get_gpt_marker (const char *line, char *label,
 			p == PLOT_STACKED_BAR || \
 			p == PLOT_3D)
 
-static int get_gpt_data (GPT_SPEC *spec, int do_markers,
+static int get_gpt_data (GPT_SPEC *spec,
+			 int do_markers,
 			 const char *buf)
 {
     char s[MAXLEN];
@@ -1297,7 +1298,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 	    x[0] = spec->data;
 	    x[1] = x[0] + spec->nobs;
 	    started_data_lines = 1;
-	} 
+	}
 
 	x[2] = x[1] + spec->nobs;
 	x[3] = x[2] + spec->nobs;
@@ -1315,7 +1316,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 
 	    nf = 0;
 	    if (ncols == 5) {
-		nf = sscanf(s, "%31s %31s %31s %31s %31s", test[0], test[1], test[2], 
+		nf = sscanf(s, "%31s %31s %31s %31s %31s", test[0], test[1], test[2],
 			    test[3], test[4]);
 	    } else if (ncols == 4) {
 		nf = sscanf(s, "%31s %31s %31s %31s", test[0], test[1], test[2], test[3]);
@@ -1358,7 +1359,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 
 	if (okobs < spec->okobs) {
 	    spec->okobs = okobs;
-	} 
+	}
 
 	/* trailer line for data block */
 	bufgets(s, sizeof s, buf);
@@ -1468,6 +1469,30 @@ static int get_gpt_heredata (GPT_SPEC *spec,
     return err;
 }
 
+static int line_starts_heredata (const char *line,
+				 char **eod)
+{
+    int ret = 0;
+
+    if (*line == '$') {
+	const char *p = strstr(line, "<<");
+
+	if (p != NULL) {
+	    int len;
+
+	    p += 2;
+	    p += strspn(p, " ");
+	    len = gretl_namechar_spn(p);
+	    if (len > 0) {
+		*eod = gretl_strndup(p, len);
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* read a gnuplot source line specifying a text label */
 
 static int parse_label_line (GPT_SPEC *spec, const char *line)
@@ -1480,7 +1505,7 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
 
     /* Examples:
        set label "this is a label" at 1998.26,937.557 left front
-       set label 'foobar' at 1500,350 left 
+       set label 'foobar' at 1500,350 left
     */
 
     /* find first double or single quote */
@@ -1510,7 +1535,7 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
 	gretl_pop_c_numeric_locale();
 	if (nc != 2) {
 	    err = E_DATA;
-	} 
+	}
     }
 
     if (!err) {
@@ -1521,7 +1546,7 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
 	    just = GP_JUST_CENTER;
 	}
     }
-    
+
     if (!err) {
 	err = plotspec_add_label(spec);
 	if (!err) {
@@ -1552,7 +1577,7 @@ static int parse_arrow_line (GPT_SPEC *spec, const char *line)
     */
 
     gretl_push_c_numeric_locale();
-    n = sscanf(line, "set arrow from %lf,%lf to %lf,%lf %s", 
+    n = sscanf(line, "set arrow from %lf,%lf to %lf,%lf %s",
 	       &x0, &y0, &x1, &y1, head);
     gretl_pop_c_numeric_locale();
 
@@ -1570,7 +1595,7 @@ static int parse_arrow_line (GPT_SPEC *spec, const char *line)
 	}
 	if (strstr(line, "lt 0")) {
 	    flags |= GP_ARROW_DOTS;
-	}	
+	}
 	n = spec->n_arrows - 1;
 	spec->arrows[n].x0 = x0;
 	spec->arrows[n].y0 = y0;
@@ -1582,7 +1607,7 @@ static int parse_arrow_line (GPT_SPEC *spec, const char *line)
     return err;
 }
 
-static int 
+static int
 read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 {
     double r0, r1;
@@ -1644,7 +1669,7 @@ static int read_plot_logscale (const char *s, GPT_SPEC *spec)
 	    err = 1;
 	}
     }
-    
+
     if (!err) {
 	spec->logbase[i] = base;
     }
@@ -1782,7 +1807,7 @@ static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
     return err;
 }
 
-static void read_xtics_setting (GPT_SPEC *spec, 
+static void read_xtics_setting (GPT_SPEC *spec,
 				const char *key,
 				const char *val)
 {
@@ -1796,14 +1821,16 @@ static void read_xtics_setting (GPT_SPEC *spec,
     }
 }
 
-static int parse_gp_set_line (GPT_SPEC *spec, const char *s, 
-			      linestyle *styles)
+static int parse_gp_set_line (GPT_SPEC *spec,
+			      const char *s,
+			      linestyle *styles,
+			      int *unhandled)
 {
     char key[16] = {0};
     char val[MAXLEN] = {0};
 
     if (!strncmp(s, "set style line", 14)) {
-	/* e.g. set style line 1 lc rgb "#ff0000" */
+	/* legacy: e.g. set style line 1 lc rgb "#ff0000" */
 	int n, idx = 0;
 	char rgb[8] = {0};
 
@@ -1824,6 +1851,15 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	return 0;
     }
 
+    if (unhandled != NULL) {
+	/* we're peeking at "literal" lines */
+	if (strstr(s, "histogram rowstacked")) {
+	    spec->code = PLOT_STACKED_BAR;
+	    *unhandled = 1;
+	    return 0;
+	}
+    }
+
     if (sscanf(s + 4, "%11s", key) != 1) {
 	return unhandled_gp_line_error(s);
     }
@@ -1832,7 +1868,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     fprintf(stderr, "parse_gp_set_line: key = '%s'\n", key);
 #endif
 
-    if (!strcmp(key, "term") || 
+    if (!strcmp(key, "term") ||
 	!strcmp(key, "output") ||
 	!strcmp(key, "encoding") ||
 	!strcmp(key, "datafile")) {
@@ -1917,7 +1953,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "timefmt")) {
 	if (read_plot_format(val, spec, 1)) {
 	    return unhandled_gp_line_error(s);
-	}	
+	}
     } else if (!strcmp(key, "title")) {
 	strcpy(spec->titles[0], val);
     } else if (!strcmp(key, "xlabel")) {
@@ -1934,7 +1970,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	strcpy(spec->titles[4], val);
     } else if (!strcmp(key, "key")) {
 	spec->keyspec = gp_keypos_from_name(val);
-    } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) { 
+    } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) {
 	read_xtics_setting(spec, key, val);
     } else if (!strcmp(key, "mxtics")) {
 	*spec->mxtics = '\0';
@@ -1957,6 +1993,8 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	if (!strncmp(val, "time", 4)) {
 	    spec->flags |= GPT_TIMEFMT;
 	}
+    } else if (unhandled != NULL) {
+	*unhandled = 1;
     }
 
     return 0;
@@ -1993,6 +2031,7 @@ static void get_plot_nobs (GPT_SPEC *spec,
     int startmin = 1;
     long auxpos = 0;
     char line[MAXLEN], test[12];
+    char *eod = NULL;
     char *p = NULL;
 
     spec->code = PLOT_REGULAR;
@@ -2019,15 +2058,19 @@ static void get_plot_nobs (GPT_SPEC *spec,
 	    auxpos = buftell(buf);
 	}
 
-	if (started < 0 && !strncmp(line, "$data <", 7)) {
-	    /* new style */
+	if (started < 0 && line_starts_heredata(line, &eod)) {
+	    /* new method of handling plot data */
+	    fprintf(stderr, "*** got heredata!\n");
 	    spec->heredata = 1;
 	    *datapos = buftell(buf);
 	    continue;
 	}
 
-	if (spec->heredata) {
-	    if (!strncmp(line, "EOD", 3)) {
+	if (eod != NULL) {
+	    if (!strncmp(line, eod, strlen(eod))) {
+		fprintf(stderr, "*** reached end of heredata (%s)\n", eod);
+		free(eod);
+		eod = NULL;
 		break;
 	    } else if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", test) == 1) {
@@ -2149,7 +2192,7 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 	n = sscanf(s, "%lf + %lf*x + %lf", &b->val[0],
 		   &b->val[1], &b->val[2]);
     } else if (k == 4) {
-	n = sscanf(s, "%lf + %lf*x + %lf*x**2 + %lf", &b->val[0], 
+	n = sscanf(s, "%lf + %lf*x + %lf*x**2 + %lf", &b->val[0],
 		   &b->val[1], &b->val[2], &b->val[3]);
     }
 
@@ -2200,7 +2243,7 @@ static void grab_line_rgb (char *targ, const char *src)
 
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
-  
+
      using XX axes XX title XX w XX lt XX lw XX
 */
 
@@ -2259,8 +2302,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	    line->ncols = 2;
 	}
     } else {
-	/* absence of "using" should mean that the line plots 
-	   a formula, not a set of data columns 
+	/* absence of "using" should mean that the line plots
+	   a formula, not a set of data columns
 	*/
 	line->scale = NADBL;
 	/* get the formula: it runs up to "title" or "notitle" */
@@ -2286,7 +2329,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 
     if (strstr(s, "axes x1y2")) {
 	line->yaxis = 2;
-    } 
+    }
 
     if ((p = strstr(s, " title "))) {
 	grab_line_title(line->title, p + 7);
@@ -2295,7 +2338,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     if ((p = strstr(s, " w "))) {
 	sscanf(p + 3, "%15[^, ]", tmp);
 	line->style = gp_style_index_from_name(tmp);
-    } 
+    }
 
     if ((p = strstr(s, " lt "))) {
 	sscanf(p + 4, "%d", &line->type);
@@ -2317,14 +2360,14 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 
     if (!auto_linewidth && (p = strstr(s, " lw "))) {
 	sscanf(p + 4, "%f", &line->width);
-    } 
+    }
 
     if ((p = strstr(s, " whiskerbars "))) {
 	double ww;
 
 	sscanf(p + 13, "%lf", &ww);
 	line->whiskwidth = (float) ww;
-    } 
+    }
 
     if (line->ncols == 0 && line->formula[0] == '\0') {
 	/* got neither data column spec nor formula */
@@ -2381,9 +2424,9 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "allocating: nobs=%d, datacols=%d, dsize=%d\n", 
+    fprintf(stderr, "allocating: nobs=%d, datacols=%d, dsize=%d\n",
 	    spec->nobs, spec->datacols, (int) dsize);
-#endif  
+#endif
 
     /* allocate for the plot data... */
     spec->data = mymalloc(dsize);
@@ -2492,7 +2535,7 @@ static void check_for_plot_size (GPT_SPEC *spec, gchar *buf)
 	    } else if (strstr(line, "large")) {
 		spec->flags |= GPT_XL;
 		break;
-	    }		
+	    }
 	}
 	i++;
     }
@@ -2539,7 +2582,7 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
 		err = 1;
 		break;
 	    }
-	}	    
+	}
 	gretl_matrix_set(z, i, j, x);
     }
 
@@ -2588,15 +2631,17 @@ static void maybe_promote_literal_lines (GPT_SPEC *spec,
 {
     const char *line;
     int *rmlines = NULL;
+    int unhandled;
     int i, err = 0;
 
     for (i=0; i<spec->n_literal; i++) {
 	line = spec->literal[i];
 	if (!strncmp(line, "set ", 4)) {
+	    unhandled = 0;
 	    gretl_push_c_numeric_locale();
-	    err = parse_gp_set_line(spec, line, styles);
+	    err = parse_gp_set_line(spec, line, styles, &unhandled);
 	    gretl_pop_c_numeric_locale();
-	    if (!err) {
+	    if (!err && !unhandled) {
 		gretl_list_append_term(&rmlines, i);
 	    }
 	} else if (!strncmp(line, "unset ", 6)) {
@@ -2665,12 +2710,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     char gpline[MAXLEN];
     gchar *buf = NULL;
     char *got = NULL;
+#if 0 /* not yet */
+    char *eod = NULL;
+#endif
     int ignore = 0;
     int i, done;
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "read_plotspec_from_file: spec=%p\n", 
+    fprintf(stderr, "read_plotspec_from_file: spec=%p\n",
 	    (void *) spec);
 #endif
 
@@ -2690,7 +2738,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     bufgets_init(buf);
 
-    /* get the number of data-points, plot type, and check for 
+    /* get the number of data-points, plot type, and check for
        observation markers and time-series bars */
     get_plot_nobs(spec, buf, &do_markers, &barpos, &datapos);
 
@@ -2768,7 +2816,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    continue;
 	} else if (!strncmp(gpline, "# scale = ", 10)) {
 	    double x = dot_atof(gpline + 10);
-	    
+
 	    if (x >= 0.5 && x <= 2.0) {
 		spec->scale = x;
 	    }
@@ -2794,7 +2842,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 		    if (plot_ols_var_ok(vname, v)) {
 			reglist[3] = v;
 		    }
-		} else { 
+		} else {
 		    /* 'Y' */
 		    if (reglist[3] > 0 && plot_ols_var_ok(vname, v)) {
 			reglist[0] = 3;
@@ -2804,7 +2852,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    }
 	    continue;
 	}
-	
+
 	if (sscanf(gpline, "# literal lines = %d", &spec->n_literal)) {
 	    spec->literal = strings_array_new(spec->n_literal);
 	    if (spec->literal == NULL) {
@@ -2863,14 +2911,14 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
 	if (!strncmp(gpline, "set ", 4)) {
 	    gretl_push_c_numeric_locale();
-	    err = parse_gp_set_line(spec, gpline, styles);
+	    err = parse_gp_set_line(spec, gpline, styles, NULL);
 	    gretl_pop_c_numeric_locale();
 	} else if (!strncmp(gpline, "unset ", 6)) {
 	    err = parse_gp_unset_line(spec, gpline);
 	} else {
 	    /* done reading "set" lines */
 	    break;
-	}	    
+	}
 
 	if (err) {
 	    goto bailout;
@@ -2894,6 +2942,19 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
+#if 0 /* not ready yet! */
+    if (line_starts_heredata(gpline, &eod)) {
+	/* experimental: skip to end of heredata */
+	while (bufgets(gpline, MAXLEN - 1, buf) != NULL) {
+	    if (!strncmp(gpline, eod, strlen(eod))) {
+		bufgets(gpline, MAXLEN - 1, buf);
+		break;
+	    }
+	}
+	free(eod);
+    }
+#endif
+
     /* then get the "plot" lines */
     if (strncmp(gpline, "plot ", 5) ||
 	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {
@@ -2916,14 +2977,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    /* line did not end with comma -> no continuation of
 	       the plot command */
 	    done = 1;
-	} 
-
+	}
 #if GPDEBUG
 	fprintf(stderr, "calling parse_gp_line_line\n");
 #endif
-
 	err = parse_gp_line_line(gpline, spec, auto_linewidth);
-
 	if (err || done || (got = bufgets(gpline, MAXLEN - 1, buf)) == NULL) {
 	    break;
 	}
@@ -3005,7 +3063,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
 #define has_log_axis(s) (s->logbase[0] != 0 || s->logbase[1] != 0)
 
-static int get_data_xy (png_plot *plot, int x, int y, 
+static int get_data_xy (png_plot *plot, int x, int y,
 			double *data_x, double *data_y)
 {
     double xmin, xmax;
@@ -3034,18 +3092,18 @@ static int get_data_xy (png_plot *plot, int x, int y,
     }
 #endif
 
-    if (xmin == 0.0 && xmax == 0.0) { 
+    if (xmin == 0.0 && xmax == 0.0) {
 	fprintf(stderr, "get_data_xy: unknown x range\n");
     } else {
-	dx = xmin + ((double) x - plot->pixel_xmin) / 
+	dx = xmin + ((double) x - plot->pixel_xmin) /
 	    (plot->pixel_xmax - plot->pixel_xmin) * (xmax - xmin);
     }
 
     if (!na(dx)) {
-	if (ymin == 0.0 && ymax == 0.0) { 
+	if (ymin == 0.0 && ymax == 0.0) {
 	    fprintf(stderr, "get_data_xy: unknown y range\n");
 	} else {
-	    dy = ymax - ((double) y - plot->pixel_ymin) / 
+	    dy = ymax - ((double) y - plot->pixel_ymin) /
 		(plot->pixel_ymax - plot->pixel_ymin) * (ymax - ymin);
 	}
     }
@@ -3117,7 +3175,7 @@ static void redraw_plot_rectangle (png_plot *plot, GdkRectangle *r)
 	};
 
 	gdk_window_invalidate_rect(plot->window, &rt, FALSE);
-    }  
+    }
 }
 
 static void make_cairo_rectangle (png_plot *plot,
@@ -3137,9 +3195,9 @@ static void copy_state_to_pixbuf (png_plot *plot)
 {
     if (plot->savebuf != NULL) {
 	g_object_unref(plot->savebuf);
-    } 
+    }
 
-    plot->savebuf = 
+    plot->savebuf =
 	gdk_pixbuf_get_from_drawable(NULL,
 				     plot->pixmap,
 				     NULL,
@@ -3239,7 +3297,7 @@ static int copy_pixbuf_to_surface (png_plot *plot,
 
     plot->cs = cairo_image_surface_create(format, width, height);
 
-    if (plot->cs == NULL || 
+    if (plot->cs == NULL ||
 	cairo_surface_status(plot->cs) != CAIRO_STATUS_SUCCESS) {
 	fprintf(stderr, "copy_pixbuf_to_surface: failed\n");
 	return 1;
@@ -3293,7 +3351,7 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 
     if (plot_is_roots(plot)) {
 	gchar alt_label[12];
-	
+
 	if (make_alt_label(alt_label, label)) {
 	    return;
 	}
@@ -3329,7 +3387,7 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 #define TOLDIST 0.01
 
 static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
-			    double x, double y) 
+			    double x, double y)
 {
     const double *data_x = NULL;
     const double *data_y = NULL;
@@ -3351,7 +3409,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 
     /* no markers to show */
     if (plot->spec->markers == NULL) {
-	plot->status |= PLOT_NO_MARKERS;	
+	plot->status |= PLOT_NO_MARKERS;
 	return TRUE;
     }
 
@@ -3389,7 +3447,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	}
 	if (!got_y) {
 	    data_y = NULL;
-	    plot->status |= PLOT_NO_MARKERS;	
+	    plot->status |= PLOT_NO_MARKERS;
 	    return TRUE;
 	}
     }
@@ -3430,7 +3488,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     }
 
 #if GPDEBUG > 2
-    fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n", 
+    fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n",
 	    t, t, data_x[t], t, data_y[t]);
 #endif
 
@@ -3443,7 +3501,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	    /* flag the point as labeled already */
 	    plot->spec->labeled[t] = 1;
 	}
-    } 
+    }
 
     return TRUE;
 }
@@ -3506,7 +3564,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
     *label = '\0';
     do_label = plot_show_cursor_label(plot);
 
-    if (x > plot->pixel_xmin && x < plot->pixel_xmax && 
+    if (x > plot->pixel_xmin && x < plot->pixel_xmax &&
 	y > plot->pixel_ymin && y < plot->pixel_ymax) {
 	double data_x, data_y;
 
@@ -3573,7 +3631,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
     if (do_label) {
 	gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
     }
-  
+
     return TRUE;
 }
 
@@ -3601,7 +3659,7 @@ static void set_plot_format_flags (png_plot *plot)
     }
     if (plot->spec->flags & GPT_POLAR) {
 	plot->format |= PLOT_POLAR;
-    }    
+    }
 }
 
 /* called from png plot popup menu, also toolbar item */
@@ -3647,8 +3705,8 @@ static int substitute_graph_font (char *line, const gchar *fstr)
 	if (p != NULL) {
 	    strcat(tmp, p);
 	    strcpy(line, tmp);
-	} 
-    } 
+	}
+    }
 
     return (p == NULL)? E_DATA : 0;
 }
@@ -3689,7 +3747,7 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
     if (ftmp == NULL) {
 	fclose(fp);
 	gui_errmsg(E_FOPEN);
-	return;	
+	return;
     }
 
     while (fgets(line, sizeof line, fp) && !err) {
@@ -3726,7 +3784,7 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 	free(plot->spec->fontstr);
 	plot->spec->fontstr = gretl_strdup(fstr);
 	render_pngfile(plot, PNG_REDISPLAY);
-    } 
+    }
 
     g_free(fstr);
 }
@@ -3778,7 +3836,7 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 
     if (!strcmp(menu_string, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
-	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
+	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
 				  plot->spec, plot->shell);
     } else if (!strcmp(menu_string, _("Copy to clipboard"))) {
 #ifdef G_OS_WIN32
@@ -3791,8 +3849,8 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 #ifdef G_OS_WIN32
     else if (!strcmp(menu_string, _("Print"))) {
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
-    }    
-#endif    
+    }
+#endif
 
     plot->spec->flags &= ~GPT_MONO;
 
@@ -3808,7 +3866,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 
     if (bufopen(&prn)) {
 	return;
-    } 
+    }
 
     pputs(prn, _("roots (real, imaginary, modulus, frequency)"));
     pputs(prn, "\n\n");
@@ -3820,7 +3878,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 		freq = spec->data[i] / (2.0 * M_PI);
 		mod = spec->data[spec->nobs + i];
 		gretl_pop_c_numeric_locale();
-		pprintf(prn, "%2d: (%7.4f  %7.4f  %7.4f  %7.4f)\n", i+1, 
+		pprintf(prn, "%2d: (%7.4f  %7.4f  %7.4f  %7.4f)\n", i+1,
 			x, y, mod, freq);
 		gretl_push_c_numeric_locale();
 	    } else {
@@ -3834,7 +3892,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 	    if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
 		freq = spec->data[i] / (2.0 * M_PI);
 		mod = spec->data[spec->nobs + i];
-		pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1, 
+		pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1,
 			x, y, mod, freq);
 	    } else {
 		err = E_DATA;
@@ -3850,7 +3908,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 	gchar *title = g_strdup_printf("gretl: %s", _("roots"));
 
 	view_buffer(prn, 72, 340, title, PRINT, NULL);
-	g_free(title);	
+	g_free(title);
     }
 }
 
@@ -3861,16 +3919,16 @@ static void boxplot_show_summary (GPT_SPEC *spec)
 
     if (bufopen(&prn)) {
 	return;
-    } 
+    }
 
     err = boxplot_numerical_summary(spec->fname, prn);
-    
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
 	view_buffer(prn, 78, 240, _("gretl: boxplot data"), PRINT, NULL);
-    }	
+    }
 }
 
 static void add_to_session_callback (GPT_SPEC *spec)
@@ -3953,7 +4011,7 @@ static void plot_do_rescale (png_plot *plot, int mod)
     fclose(fp);
     unset_png_output(plot->spec);
 
-    repaint_png(plot, PNG_REDISPLAY); 
+    repaint_png(plot, PNG_REDISPLAY);
 }
 
 static void show_all_labels (png_plot *plot)
@@ -3977,7 +4035,7 @@ static void show_all_labels (png_plot *plot)
     plotspec_print(plot->spec, fp);
     fclose(fp);
 
-    repaint_png(plot, PNG_REDISPLAY); 
+    repaint_png(plot, PNG_REDISPLAY);
     plot->format |= PLOT_MARKERS_UP;
 }
 
@@ -3996,7 +4054,7 @@ static void clear_labels (png_plot *plot)
 	fclose(fp);
     }
 
-    repaint_png(plot, PNG_REDISPLAY); 
+    repaint_png(plot, PNG_REDISPLAY);
     plot->format &= ~PLOT_MARKERS_UP;
 }
 
@@ -4007,7 +4065,7 @@ static void prepare_for_zoom (png_plot *plot)
     gdk_window_set_cursor(plot->window, cursor);
     gdk_cursor_unref(cursor);
     plot->status |= PLOT_ZOOMING;
-    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid,
 		       _(" Drag to define zoom rectangle"));
 }
 
@@ -4023,7 +4081,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	dist_graph_add(plot);
     } else if (!strcmp(item_string, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
-        file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
+        file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
 				  plot->spec, plot->shell);
     } else if (!strcmp(item_string, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
@@ -4031,28 +4089,28 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Save as postscript (EPS)..."))) {
 	plot->spec->termtype = GP_TERM_EPS;
 	pdf_ps_dialog(plot->spec, plot->shell);
-    } else if (!strcmp(item_string, _("Save to session as icon"))) { 
+    } else if (!strcmp(item_string, _("Save to session as icon"))) {
 	add_to_session_callback(plot->spec);
-    } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) { 
+    } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) {
 	show_gui_help(RMPLOT);
-    } else if (plot_is_hurst(plot) && !strcmp(item_string, _("Help"))) { 
+    } else if (plot_is_hurst(plot) && !strcmp(item_string, _("Help"))) {
 	show_gui_help(HURST);
     } else if (!strcmp(item_string, _("Freeze data labels"))) {
 	plot->spec->flags |= GPT_PRINT_MARKERS;
 	redisplay_edited_plot(plot);
-    } else if (!strcmp(item_string, _("Clear data labels"))) { 
+    } else if (!strcmp(item_string, _("Clear data labels"))) {
 	clear_labels(plot);
-    } else if (!strcmp(item_string, _("All data labels"))) { 
+    } else if (!strcmp(item_string, _("All data labels"))) {
 	show_all_labels(plot);
-    } else if (!strcmp(item_string, _("Zoom..."))) { 
+    } else if (!strcmp(item_string, _("Zoom..."))) {
 	prepare_for_zoom(plot);
-    } else if (!strcmp(item_string, _("Restore full view"))) { 
+    } else if (!strcmp(item_string, _("Restore full view"))) {
 	repaint_png(plot, PNG_UNZOOM);
     } else if (!strcmp(item_string, _("Replace full view"))) {
 	zoom_replaces_plot(plot);
-    } else if (!strcmp(item_string, _("Display PDF"))) { 
+    } else if (!strcmp(item_string, _("Display PDF"))) {
 	graph_display_pdf(plot->spec);
-    } else if (!strcmp(item_string, _("OLS estimates"))) { 
+    } else if (!strcmp(item_string, _("OLS estimates"))) {
 	if (plot->spec != NULL) {
 	    do_graph_model(plot->spec->reglist, plot->spec->fit);
 	}
@@ -4060,13 +4118,13 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	show_numbers_from_markers(plot->spec);
     } else if (!strcmp(item_string, _("Numerical summary"))) {
 	boxplot_show_summary(plot->spec);
-    } else if (!strcmp(item_string, _("Edit"))) { 
+    } else if (!strcmp(item_string, _("Edit"))) {
 	start_editing_png_plot(plot);
-    } else if (!strcmp(item_string, _("Font"))) { 
+    } else if (!strcmp(item_string, _("Font"))) {
 	plot_add_font_selector(plot, plot->spec->fontstr);
-    } else if (!strcmp(item_string, _("Close"))) { 
+    } else if (!strcmp(item_string, _("Close"))) {
         killplot = 1;
-    } 
+    }
 
     if (killplot) {
 	gtk_widget_destroy(plot->shell);
@@ -4093,7 +4151,7 @@ static void attach_color_popup (GtkWidget *w, png_plot *plot)
 	g_object_set_data(G_OBJECT(item), "plot", plot);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(cpopup), item);
-    } 
+    }
 
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(w), cpopup);
 }
@@ -4112,7 +4170,7 @@ static void attach_color_popup (GtkWidget *w, png_plot *plot)
 
 static void build_plot_menu (png_plot *plot)
 {
-    GtkWidget *item;    
+    GtkWidget *item;
     const char *regular_items[] = {
 	N_("Add another curve..."),
 #ifdef G_OS_WIN32
@@ -4163,7 +4221,7 @@ static void build_plot_menu (png_plot *plot)
     i = 0;
     while (plot_items[i]) {
 	int colorpop = 0;
-	
+
 	if (plot->spec->code != PLOT_PROB_DIST &&
 	    !strcmp(plot_items[i], "Add another curve...")) {
 	    i++;
@@ -4201,31 +4259,31 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (labels_frozen(plot) && 
+	if (labels_frozen(plot) &&
 	    !strcmp(plot_items[i], "Freeze data labels")) {
 	    /* labels are frozen so this item inapplicable */
 	    i++;
 	    continue;
 	}
-	if ((cant_edit(plot->spec->code) || 
-	     cant_do_labels(plot) || 
-	     showing_all_labels(plot)) && 
+	if ((cant_edit(plot->spec->code) ||
+	     cant_do_labels(plot) ||
+	     showing_all_labels(plot)) &&
 	    !strcmp(plot_items[i], "All data labels")) {
 	    i++;
 	    continue;
 	}
-	if ((!plot_has_regression_list(plot) || 
-	     !graph_model_ok(plot->spec->fit)) && 
+	if ((!plot_has_regression_list(plot) ||
+	     !graph_model_ok(plot->spec->fit)) &&
 	    !strcmp(plot_items[i], "OLS estimates")) {
 	    i++;
 	    continue;
 	}
-	if (!plot_is_roots(plot) && 
+	if (!plot_is_roots(plot) &&
 	    !strcmp(plot_items[i], "Numerical values")) {
 	    i++;
 	    continue;
 	}
-	if (plot->spec->code != PLOT_BOXPLOTS && 
+	if (plot->spec->code != PLOT_BOXPLOTS &&
 	    !strcmp(plot_items[i], "Numerical summary")) {
 	    i++;
 	    continue;
@@ -4253,7 +4311,7 @@ static void build_plot_menu (png_plot *plot)
 	    g_signal_connect(G_OBJECT(item), "activate",
 			     G_CALLBACK(plot_popup_activated),
 			     plot);
-	}	    
+	}
 
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
@@ -4262,7 +4320,7 @@ static void build_plot_menu (png_plot *plot)
     }
 
     g_signal_connect(G_OBJECT(plot->popup), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed), 
+		     G_CALLBACK(gtk_widget_destroyed),
 		     &plot->popup);
 }
 
@@ -4288,8 +4346,8 @@ int redisplay_edited_plot (png_plot *plot)
     fclose(fp);
 
     /* get gnuplot to create a new PNG graph */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-			      gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+			      gretl_gnuplot_path(),
 			      plot->spec->fname);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
@@ -4354,18 +4412,18 @@ static int repaint_png (png_plot *plot, int view)
 	fclose(fpout);
 	fclose(fpin);
 
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-				  gretl_gnuplot_path(), 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+				  gretl_gnuplot_path(),
 				  zoomname);
-    } else { 
+    } else {
 	/* PNG_UNZOOM, PNG_START or PNG_REDISPLAY */
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
 				  gretl_gnuplot_path(),
 				  plot->spec->fname);
     }
 
     err = gretl_spawn(plotcmd);
-    g_free(plotcmd);  
+    g_free(plotcmd);
 
     if (view == PNG_ZOOM) {
 	gretl_remove(zoomname);
@@ -4440,13 +4498,13 @@ static int zoom_replaces_plot (png_plot *plot)
     return err;
 }
 
-static gint plot_button_release (GtkWidget *widget, GdkEventButton *event, 
+static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 				 png_plot *plot)
 {
     if (plot_is_zooming(plot)) {
 	double z;
 
-	if (!get_data_xy(plot, event->x, event->y, 
+	if (!get_data_xy(plot, event->x, event->y,
 			 &plot->zoom_xmax, &plot->zoom_ymax)) {
 	    return TRUE;
 	}
@@ -4477,11 +4535,11 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
-static gint plot_button_press (GtkWidget *widget, GdkEventButton *event, 
+static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 			       png_plot *plot)
 {
     if (plot_is_zooming(plot)) {
-	if (get_data_xy(plot, event->x, event->y, 
+	if (get_data_xy(plot, event->x, event->y,
 			&plot->zoom_xmin, &plot->zoom_ymin)) {
 	    plot->screen_x0 = event->x;
 	    plot->screen_y0 = event->y;
@@ -4492,7 +4550,7 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     if (plot_doing_position(plot)) {
 	if (plot->pos_entry != NULL) {
 	    double dx, dy;
-	    
+
 	    if (get_data_xy(plot, event->x, event->y, &dx, &dy)) {
 		gchar *posstr;
 
@@ -4500,7 +4558,7 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 		gtk_entry_set_text(GTK_ENTRY(plot->pos_entry), posstr);
 		g_free(posstr);
 	    }
-	} 
+	}
 	terminate_plot_positioning(plot);
 	return TRUE;
     }
@@ -4519,12 +4577,12 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
-static gboolean 
+static gboolean
 plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 {
     guint k = key->keyval;
 
-    if (plot_is_editable(plot) && 
+    if (plot_is_editable(plot) &&
 	(k == GDK_plus || k == GDK_greater ||
 	 k == GDK_minus || k == GDK_less ||
 	 k == GDK_equal || k == GDK_0)) {
@@ -4553,7 +4611,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	add_to_session_callback(plot->spec);
 	break;
     case GDK_z:
-    case GDK_Z:	
+    case GDK_Z:
 	prepare_for_zoom(plot);
 	break;
 #ifdef G_OS_WIN32
@@ -4576,7 +4634,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 
 #if GTK_MAJOR_VERSION >= 3
 
-static 
+static
 void plot_draw (GtkWidget *canvas, cairo_t *cr, gpointer data)
 {
     png_plot *plot = data;
@@ -4587,8 +4645,8 @@ void plot_draw (GtkWidget *canvas, cairo_t *cr, gpointer data)
 
 #else /* transitional use of cairo */
 
-static 
-void plot_expose (GtkWidget *canvas, GdkEventExpose *event, 
+static
+void plot_expose (GtkWidget *canvas, GdkEventExpose *event,
 		  gpointer data)
 {
     png_plot *plot = data;
@@ -4624,7 +4682,7 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 	    errbox(gerr->message);
 	    g_error_free(gerr);
 	}
-    }    
+    }
 
     return pbuf;
 }
@@ -4636,14 +4694,14 @@ static int resize_png_plot (png_plot *plot, int width, int height)
     plot->pixel_width = width;
     plot->pixel_height = height;
 
-    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
+    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas),
 				plot->pixel_width, plot->pixel_height);
 
 #if GTK_MAJOR_VERSION == 2
     g_object_unref(plot->pixmap);
-    plot->pixmap = gdk_pixmap_new(plot->window, 
-				  plot->pixel_width, 
-				  plot->pixel_height, 
+    plot->pixmap = gdk_pixmap_new(plot->window,
+				  plot->pixel_width,
+				  plot->pixel_height,
 				  -1);
 #endif
 
@@ -4653,7 +4711,7 @@ static int resize_png_plot (png_plot *plot, int width, int height)
 
     /* try revising the gnuplot bounds info? */
 
-    if (plot_has_png_coords(plot) && 
+    if (plot_has_png_coords(plot) &&
 	get_png_bounds_info(&b) == GRETL_PNG_OK) {
 	plot->status |= PLOT_PNG_COORDS;
 	plot->pixel_xmin = b.xleft;
@@ -4712,7 +4770,7 @@ static int render_pngfile (png_plot *plot, int view)
 	if (!(plot->spec->flags & GPT_PRINT_MARKERS)) {
 	    /* any markers will have disappeared on reprinting */
 	    plot->format &= ~PLOT_MARKERS_UP;
-	} 
+	}
     }
 
 #if GTK_MAJOR_VERSION >= 3
@@ -4730,10 +4788,10 @@ static int render_pngfile (png_plot *plot, int view)
 
     g_object_unref(pbuf);
     gretl_remove(pngname);
-   
-    if (view != PNG_START) { 
+
+    if (view != PNG_START) {
 	/* we're changing the view, so refresh the whole canvas */
-	redraw_plot_rectangle(plot, NULL);	
+	redraw_plot_rectangle(plot, NULL);
 	if (view == PNG_ZOOM) {
 	    plot->status |= PLOT_ZOOMED;
 	} else if (view == PNG_UNZOOM) {
@@ -4761,11 +4819,11 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	    (void *) plot, (void *) plot->spec);
 #endif
 
-#ifndef G_OS_WIN32    
+#ifndef G_OS_WIN32
     if (copyspec == plot->spec) {
 	copyspec = NULL;
     }
-#endif    
+#endif
 
     plotspec_destroy(plot->spec);
 
@@ -4800,12 +4858,12 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "get_plot_ranges: plot=%p, plot->spec=%p\n", 
+    fprintf(stderr, "get_plot_ranges: plot=%p, plot->spec=%p\n",
 	    (void *) plot, (void *) plot->spec);
-#endif    
+#endif
 
     plot->xmin = plot->xmax = 0.0;
-    plot->ymin = plot->ymax = 0.0;   
+    plot->ymin = plot->ymax = 0.0;
     plot->xint = plot->yint = 0;
 
     if (no_readback(plot->spec->code)) {
@@ -4822,8 +4880,8 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
     gretl_push_c_numeric_locale();
 
     while (fgets(line, MAXLEN-1, fp) && strncmp(line, "plot ", 5)) {
-	if (sscanf(line, "set xrange [%lf:%lf]", 
-		   &plot->xmin, &plot->xmax) == 2) { 
+	if (sscanf(line, "set xrange [%lf:%lf]",
+		   &plot->xmin, &plot->xmax) == 2) {
 	    got_x = 1;
 	} else if (!strncmp(line, "# timeseries 1", 13)) {
 	    annual = 1;
@@ -4834,7 +4892,7 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 
     fclose(fp);
 
-    /* now try getting accurate coordinate info from 
+    /* now try getting accurate coordinate info from
        auxiliary file (or maybe PNG file)
     */
     if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
@@ -4850,7 +4908,7 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 	plot->ymax = b.ymax;
 # if POINTS_DEBUG
 	fprintf(stderr, "get_png_bounds_info():\n"
-		" xmin=%d xmax=%d ymin=%d ymax=%d\n", 
+		" xmin=%d xmax=%d ymin=%d ymax=%d\n",
 		plot->pixel_xmin, plot->pixel_xmax,
 		plot->pixel_ymin, plot->pixel_ymax);
 	fprintf(stderr, "using px_height %d, px_width %d\n",
@@ -4858,13 +4916,13 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 # endif
     }
 
-    /* If got_x = 0 at this point, we didn't get an x-range out of 
+    /* If got_x = 0 at this point, we didn't get an x-range out of
        gnuplot, so we might as well give up.
     */
     if (!got_x) {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
 	return 1;
-    }    
+    }
 
     if (plot_has_png_coords(plot)) {
 	plot->status |= PLOT_HAS_XRANGE;
@@ -4875,20 +4933,20 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
 	if (annual) {
 	    /* years on x-axis: show as integer */
 	    plot->xint = 1;
-	} else if ((plot->xmax - plot->xmin) / 
+	} else if ((plot->xmax - plot->xmin) /
 	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
 	    /* show x-axis variable as integer */
 	    plot->xint = 1;
 	}
-	if ((plot->ymax - plot->ymin) / 
+	if ((plot->ymax - plot->ymin) /
 	    (plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
 	    /* show y-axis variable as integer */
 	    plot->yint = 1;
 	}
     } else {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
-#if POINTS_DEBUG 
-	fputs("get_plot_ranges: setting PLOT_DONT_ZOOM, PLOT_DONT_MOUSE\n", 
+#if POINTS_DEBUG
+	fputs("get_plot_ranges: setting PLOT_DONT_ZOOM, PLOT_DONT_MOUSE\n",
 	      stderr);
 #endif
     }
@@ -4907,7 +4965,7 @@ static png_plot *png_plot_new (void)
     plot->shell = NULL;
     plot->canvas = NULL;
     plot->popup = NULL;
-    plot->statusarea = NULL;    
+    plot->statusarea = NULL;
     plot->statusbar = NULL;
     plot->cursor_label = NULL;
     plot->cr = NULL;
@@ -4942,7 +5000,7 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
-/* note: @fname is the name of the file containing the 
+/* note: @fname is the name of the file containing the
    plot commands.
 */
 
@@ -4960,7 +5018,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	return 0;
     }
 
-    gretl_error_clear(); 
+    gretl_error_clear();
 
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
@@ -5005,7 +5063,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	return E_FOPEN;
     }
 
-#if GPDEBUG 
+#if GPDEBUG
     fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",
 	    plot->err);
 #endif
@@ -5053,7 +5111,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	    if (range_err) {
 		plot->spec->nbars = 0;
 	    } else {
-		plotspec_set_bars_limits(plot->spec, 
+		plotspec_set_bars_limits(plot->spec,
 					 plot->xmin, plot->xmax,
 					 plot->ymin, plot->ymax);
 	    }
@@ -5092,7 +5150,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
-    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
+    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas),
 				plot->pixel_width, plot->pixel_height);
     gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
@@ -5101,9 +5159,9 @@ static int gnuplot_show_png (const char *fname, const char *name,
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
     gtk_widget_set_can_focus(plot->canvas, TRUE);
-    g_signal_connect(G_OBJECT(plot->canvas), "button-press-event", 
+    g_signal_connect(G_OBJECT(plot->canvas), "button-press-event",
 		     G_CALLBACK(plot_button_press), plot);
-    g_signal_connect(G_OBJECT(plot->canvas), "button-release-event", 
+    g_signal_connect(G_OBJECT(plot->canvas), "button-release-event",
 		     G_CALLBACK(plot_button_release), plot);
     gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
@@ -5133,7 +5191,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
 		       plot->cid, _(" Right-click on graph for menu"));
 #endif
-    
+
     if (plot_has_xrange(plot)) {
 	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",
 			 G_CALLBACK(plot_motion_callback), plot);
@@ -5147,10 +5205,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
 #endif
 
     /* finish setup of plot->shell */
-    g_object_set_data(G_OBJECT(plot->shell), "plot-filename", 
+    g_object_set_data(G_OBJECT(plot->shell), "plot-filename",
 		      plot->spec->fname);
     window_list_add(plot->shell, GNUPLOT);
-    g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
+    g_signal_connect(G_OBJECT(plot->shell), "key-press-event",
 		     G_CALLBACK(plot_key_handler), plot);
     gtk_widget_show_all(plot->shell);
 
@@ -5163,9 +5221,9 @@ static int gnuplot_show_png (const char *fname, const char *name,
     g_signal_connect(G_OBJECT(plot->canvas), "draw",
 		     G_CALLBACK(plot_draw), plot);
 #else
-    plot->pixmap = gdk_pixmap_new(plot->window, 
-				  plot->pixel_width, 
-				  plot->pixel_height, 
+    plot->pixmap = gdk_pixmap_new(plot->window,
+				  plot->pixel_width,
+				  plot->pixel_height,
 				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
 		     G_CALLBACK(plot_expose), plot);
@@ -5200,7 +5258,7 @@ void register_graph (void)
    current session, and @title is its display name */
 
 void display_session_graph (const char *fname, const char *title,
-			    void *session_ptr) 
+			    void *session_ptr)
 {
     char fullname[MAXLEN];
     gchar *plotcmd;
@@ -5216,8 +5274,8 @@ void display_session_graph (const char *fname, const char *title,
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
-			      gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"",
+			      gretl_gnuplot_path(),
 			      fullname);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
@@ -5245,10 +5303,10 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 	       &bounds->xleft, &bounds->xright,
 	       &bounds->ybot, &bounds->ytop) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
-    } 
+    }
 
-    if (ret == GRETL_PNG_OK && bounds->xleft == 0 && 
-	bounds->xright == 0 && bounds->ybot == 0 && 
+    if (ret == GRETL_PNG_OK && bounds->xleft == 0 &&
+	bounds->xright == 0 && bounds->ybot == 0 &&
 	bounds->ytop == 0) {
 	ret = GRETL_PNG_NO_COORDS;
     }
@@ -5280,13 +5338,13 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 	       &bounds->xmin, &bounds->xmax,
 	       &bounds->ymin, &bounds->ymax) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
-    } 
+    }
 
-    if (ret == GRETL_PNG_OK && bounds->xmin == 0.0 && 
-	bounds->xmax == 0.0 && bounds->ymin == 0.0 && 
+    if (ret == GRETL_PNG_OK && bounds->xmin == 0.0 &&
+	bounds->xmax == 0.0 && bounds->ymin == 0.0 &&
 	bounds->ymax == 0.0) {
 	ret = GRETL_PNG_NO_COORDS;
-    } 
+    }
 
 #if POINTS_DEBUG
     fprintf(stderr, "Got: xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
@@ -5305,7 +5363,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     int plot_ret = -1, data_ret = -1;
     int ret = GRETL_PNG_OK;
 
-    build_path(bbname, gretl_dotdir(), "gretltmp.png", ".bounds"); 
+    build_path(bbname, gretl_dotdir(), "gretltmp.png", ".bounds");
     fp = gretl_fopen(bbname, "r");
 
     if (fp == NULL) {
@@ -5377,7 +5435,7 @@ static int get_terminal (char *s)
     } else {
 	*s = '\0';
     }
-#endif    
+#endif
 
     errbox(_("Couldn't find a usable terminal program"));
 
@@ -5392,7 +5450,7 @@ static void mac_do_gp_script (const char *plotfile)
 {
     gchar *buf = NULL;
     gsize sz = 0;
-    
+
     if (g_file_get_contents(plotfile, &buf, &sz, NULL)) {
 	run_gnuplot_script(buf);
 	g_free(buf);
@@ -5401,7 +5459,7 @@ static void mac_do_gp_script (const char *plotfile)
 
 #endif
 
-/* Callback for "Gnuplot" item in Tools menu: open a 
+/* Callback for "Gnuplot" item in Tools menu: open a
    gnuplot session and let the user do whatever. In
    this case we need a controlling terminal window if
    we're not on MS Windows.
@@ -5433,7 +5491,7 @@ void launch_gnuplot_interactive (void)
     gpline = g_strdup_printf("open -a Terminal.app \"%s\"", gppath);
 # endif
     system(gpline);
-    g_free(gpline);    
+    g_free(gpline);
 #else /* neither WIN32 nor MAC_NATIVE */
     char term[32];
     int err;
@@ -5454,7 +5512,7 @@ void launch_gnuplot_interactive (void)
 	    g_free(altgp);
 	    altgp = NULL;
 	}
-# endif	
+# endif
 
 	if (strstr(term, "gnome")) {
 	    /* gnome-terminal */
@@ -5463,7 +5521,7 @@ void launch_gnuplot_interactive (void)
 	    argv[2] = "-x";
 	    argv[3] = (char *) gp;
 	    argv[4] = NULL;
-	} else {	    
+	} else {
 	    /* xterm, rxvt, kterm */
 	    argv[0] = term;
 	    argv[1] = "-title";
@@ -5471,7 +5529,7 @@ void launch_gnuplot_interactive (void)
 	    argv[3] = "-e";
 	    argv[4] = (char *) gp;
 	    argv[5] = NULL;
-	} 
+	}
 
 	g_spawn_async(NULL, /* working dir */
 		      argv,
@@ -5489,7 +5547,7 @@ void launch_gnuplot_interactive (void)
 
 # ifdef OS_OSX
 	g_free(altgp);
-# endif	
+# endif
     }
 #endif /* !(G_OS_WIN32 or MAC_NATIVE) */
 }
@@ -5497,7 +5555,7 @@ void launch_gnuplot_interactive (void)
 void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
-    gchar *gpline = g_strdup_printf("\"%s\" \"%s\"", 
+    gchar *gpline = g_strdup_printf("\"%s\" \"%s\"",
 				    gretl_gnuplot_path(),
 				    plotfile);
 
