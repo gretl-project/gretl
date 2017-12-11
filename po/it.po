@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-12-10 21:52-0500\n"
-"PO-Revision-Date: 2017-10-05 22:05+0200\n"
+"PO-Revision-Date: 2017-12-11 13:17+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -958,14 +958,14 @@ msgid "Data file has trailing commas\n"
 msgstr "Il file di dati contiene virgole finali\n"
 
 #: lib/src/csvdata.c:1745
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d double-quotes, max %d per line\n"
-msgstr "Trovate %d virgolette doppie e %d semplici\n"
+msgstr "Trovate %d virgolette doppie, massimo %d per riga\n"
 
 #: lib/src/csvdata.c:1749
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d single-quotes, max %d per line\n"
-msgstr "Trovate %d virgolette doppie e %d semplici\n"
+msgstr "Trovate %d virgolette, massimo %d per riga\n"
 
 #: lib/src/csvdata.c:1769
 msgid "Assuming double-quote is the relevant quotation character\n"
@@ -2334,9 +2334,8 @@ msgid "Variable number %d is out of bounds"
 msgstr "Il numero di variabile %d è fuori dai limiti"
 
 #: lib/src/geneval.c:7431 lib/src/transforms.c:846 lib/src/transforms.c:1165
-#, fuzzy
 msgid "The constant cannot be lagged"
-msgstr "Con costante e trend"
+msgstr "Non si può ritardare la costante"
 
 #: lib/src/geneval.c:7845
 msgid "Matrix specification is not coherent"
@@ -3927,9 +3926,8 @@ msgid "Inadequate data for panel estimation"
 msgstr "Dati inadeguati per stima panel"
 
 #: lib/src/gretl_panel.c:2912
-#, fuzzy
 msgid "Hausman test matrix is not positive definite!\n"
-msgstr "La matrice del test di Hausman non è definita positiva"
+msgstr "La matrice del test di Hausman non è definita positiva!\n"
 
 #: lib/src/gretl_panel.c:2914
 #, c-format
@@ -6403,9 +6401,8 @@ msgid "non-zero ties"
 msgstr "non-zero pareggi"
 
 #: lib/src/nonparam.c:1097
-#, fuzzy
 msgid "Fail to reject H0"
-msgstr "Impossibile copiare l'oggetto"
+msgstr "L'ipotesi H0 non può essere rifiutata"
 
 #: lib/src/nonparam.c:1107
 msgid "Expected value"
@@ -6977,9 +6974,9 @@ msgid "Poisson (mean = %g): "
 msgstr "Poisson (media = %g): "
 
 #: lib/src/pvalues.c:3428
-#, fuzzy, c-format
+#, c-format
 msgid "Exponential (scale = %g): "
-msgstr "GED (forma = %g): "
+msgstr "Esponenziale (scala = %g): "
 
 #: lib/src/pvalues.c:3436
 #, c-format
@@ -10089,9 +10086,8 @@ msgid "percent change in %s"
 msgstr "Differenza percentuale di %s"
 
 #: gui2/dialogs.c:6301
-#, fuzzy
 msgid "percent changes"
-msgstr "Differenza percentuale di %s"
+msgstr "differenza percentuale"
 
 #: gui2/dialogs.c:6310 gui2/dialogs.c:6411 gui2/ssheet.c:998
 #, c-format
@@ -10115,23 +10111,21 @@ msgid "Monthly, annualized"
 msgstr "Mensile, annualizzato"
 
 #: gui2/dialogs.c:6362
-#, fuzzy
 msgid "Calculate using logs"
-msgstr "Calcolatrice"
+msgstr "Usa i logaritmi"
 
 #: gui2/dialogs.c:6399
 #, c-format
 msgid "100-based index of %s"
-msgstr ""
+msgstr "Indice in base 100 di %s"
 
 #: gui2/dialogs.c:6402
 msgid "100-based indices"
-msgstr ""
+msgstr "Indici in base 100"
 
 #: gui2/dialogs.c:6435
-#, fuzzy
 msgid "Base period:"
-msgstr "periodo"
+msgstr "Periodo base:"
 
 # Si riferisce alla specificazione MIDAS
 #: gui2/dialogs.c:6537
@@ -12175,14 +12169,12 @@ msgid "_Seasonal differences of selected variables"
 msgstr "Differenze _stagionali delle variabili selezionate"
 
 #: gui2/gretl.c:1702
-#, fuzzy
 msgid "_Percentage change of selected variables"
 msgstr "Variazioni _Percentuali delle variabili selezionate"
 
 #: gui2/gretl.c:1704
-#, fuzzy
 msgid "_100-based indices of selected variables"
-msgstr "_Differenze delle variabili selezionate"
+msgstr "Indici in base 100 delle variabili selezionate"
 
 #: gui2/gretl.c:1706
 msgid "_Index variable"
@@ -14718,9 +14710,8 @@ msgid "Add percent change..."
 msgstr "Aggiungi differenza percentuale..."
 
 #: gui2/menustate.c:551 gui2/menustate.c:556
-#, fuzzy
 msgid "Add index values..."
-msgstr "Modifica valori..."
+msgstr "Aggiungi indici..."
 
 #: gui2/menustate.c:552
 msgid "Dummify..."
@@ -14735,7 +14726,6 @@ msgid "Add differences"
 msgstr "Aggiungi differenze"
 
 #: gui2/menustate.c:555
-#, fuzzy
 msgid "Add percent changes..."
 msgstr "Aggiungi differenza percentuale..."
 
@@ -15537,9 +15527,8 @@ msgid "Swamy-Arora"
 msgstr "Swamy-Arora"
 
 #: gui2/selector.c:6417
-#, fuzzy
 msgid "Swamy-Arora / Baltagi-Chang"
-msgstr "Con metodo di Swamy-Arora secondo Baltagi-Chang"
+msgstr "Swamy-Arora / Baltagi-Chang"
 
 #: gui2/selector.c:6418
 msgid "Nerlove"
