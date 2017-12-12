@@ -2749,6 +2749,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    set_combo_box_strings_from_stylist(ed->stylecombo[i], altsty);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]),
 				     gp_style_index(line->style, altsty));
+	    /* we'll not offer to mess with these! */
+	    gtk_widget_set_sensitive(ed->stylecombo[i], FALSE);
 	    g_list_free(altsty);
 	} else {
 	    int lt = gp_style_index(line->style, stylist);
