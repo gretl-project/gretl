@@ -47,12 +47,15 @@
 	adición das variables indicadas no argumento, ao derradeiro modelo estimado.
       </para>
       <para context="cli">
-	Por defecto, estímase unha versión <quote>ampliada</quote> do modelo orixinal,
-	que resulta ao engadirlle a este as variables do argumento <repl>listavariables</repl>,
-	como regresores. Neste caso, a proba é de tipo Wald sobre o modelo ampliado,
-	pasando a ser este o <quote>modelo vixente</quote> en troques do orixinal. Debes de ter
-	isto en conta, por exemplo, para usar <lit>$uhat</lit> porque este permite recuperar os erros
-	do que sexa o modelo vixente en cada momento, ou para facer probas posteriores.
+	Por defecto, estímase unha versión <quote>ampliada</quote> do
+	modelo orixinal, que resulta ao engadirlle a este as variables
+	do argumento <repl>listavariables</repl>, como
+	regresores. Neste caso, a proba é de tipo Wald sobre o modelo
+	ampliado, pasando a ser este o <quote>modelo vixente</quote>
+	en troques do orixinal. Debes de ter isto en conta, por
+	exemplo, para usar <lit>$uhat</lit> porque este permite
+	recuperar os erros do que sexa o modelo vixente en cada
+	momento, ou para facer probas posteriores.
       </para>
       <para context="cli">
 	Alternativamente, se indicas a opción <opt>lm</opt> (que só está dispoñible
@@ -2961,6 +2964,10 @@
 	  <flag>--verbose</flag>
 	  <effect>Presenta resultados adicionais</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Elimina o resultado presentado</effect>
+	</option>
       </options>
     </usage>
 
@@ -3017,6 +3024,12 @@
 	Para as probas de Wilcoxon, cando indicas a opción <opt>verbose</opt>,
 	entón preséntase a ordenación. (Esta opción non ten efecto cando se
 	selecciona a proba dos signos.)
+      </para>
+      <para>
+	Ao completarse con éxito, van estar dispoñibles os accesorios
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Se unicamente
+	queres obter estes valores, podes engadir a opción <opt>quiet</opt>
+	á instrución.
       </para>
     </description>
 
@@ -8325,16 +8338,16 @@
 	  <effect>Non linearidade: logaritmos</effect>
         </option>
         <option>
+	  <flag>--squares</flag>
+	  <effect>Non linearidade: cadrados</effect>
+        </option>
+        <option>
 	  <flag>--autocorr</flag>
 	  <effect>Autocorrelación</effect>
         </option>
         <option>
 	  <flag>--arch</flag>
 	  <effect>ARCH</effect>
-        </option>
-        <option>
-	  <flag>--squares</flag>
-	  <effect>Non linearidade: cadrados</effect>
         </option>
         <option>
 	  <flag>--white</flag>
@@ -8452,6 +8465,11 @@
 	<cite key="godfrey94" p="true">(Godfrey, 1994)</cite> mentres que a opción
 	<flag>--white</flag> produce o estatístico da proba HET1 de heterocedasticidade
 	<cite key="pesaran99" p="true">(Pesaran e Taylor, 1999)</cite>.
+      </para>
+      <para>
+	Para probas adicionais de diagnóstico sobre os modelos,
+	consulta <cmdref targ="chow"/>, <cmdref targ="cusum"/>,
+	<cmdref targ="reset"/> e <cmdref targ="qlrtest"/>.
       </para>
     </description>
 
@@ -11037,18 +11055,20 @@
 
     <description>
       <para>
-	Debe de seguir a estimación dun modelo mediante MCO. Leva a cabo
-	a proba RESET de Ramsey sobre a especificación (non linear) dun
-	modelo, engadíndolle á regresión o cadrado e/ou o cubo dos valores
-	axustados, e calculando o estatístico <math>F</math> para probar a
-	hipótese nula de que os parámetros dos termos engadidos son cero.
+	Debe de seguir a estimación dun modelo mediante MCO. Leva a
+	cabo a proba RESET de Ramsey sobre a especificación (non linear)
+	dun modelo, engadíndolle á regresión os cadrados e/ou os cubos
+	dos valores axustados, e calculando o estatístico <math>F</math>
+	para probar a hipótese nula de que os parámetros dos termos
+	engadidos son cero.
       </para>
       <para context="cli">
-	Engádense tanto os cadrados como os cubos, agás que indiques unha
-	das opcións <opt>squares-only</opt> ou <opt>cubes-only</opt>.
+	Vanse engadir tanto os cadrados como os cubos, agás que
+	indiques unha das opcións <opt>squares-only</opt> ou
+	<opt>cubes-only</opt>.
       </para>
       <para context="cli">
-	A opción <opt>silent</opt> pode ter sentido se tes intención de facer
+	Podes utilizar a opción <opt>silent</opt> se tes intención de facer
 	uso dos accesorios <fncref targ="$test"/> e/ou <fncref targ="$pvalue"/>
 	para gardar os resultados da proba.
       </para>
@@ -12880,6 +12900,10 @@
 	  <flag>--balanced</flag>
 	  <effect>Datos de panel: trata de manter o panel equilibrado</effect>
         </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Non amosar o rango mostral</effect>
+	</option>
       </options>
       <examples>
         <example>smpl 3 10</example>
