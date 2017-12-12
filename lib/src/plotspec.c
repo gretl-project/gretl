@@ -1081,12 +1081,8 @@ static void plotspec_print_data (GPT_SPEC *spec,
     for (i=0; i<spec->n_lines; i++) {
 	int ncols = gp_line_data_columns(spec, i);
 
-	if (ncols == 0) {
+	if (ncols == 0 || i == skipline) {
 	    /* no (regular) data to print */
-	    continue;
-	}
-
-	if (i == skipline) {
 	    continue;
 	}
 
@@ -1111,7 +1107,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
 	    } else {
 		fprintf(fp, "%.10g ", x[0][t]);
 	    }
-
 	    /* conversion, if needed, between (y, ydelta) and
 	       (ylow, yhigh)
 	    */
@@ -1132,7 +1127,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
 		    }
 		}
 	    }
-
 	    /* print y-axis value(s) */
 	    for (j=1; j<ncols; j++) {
 		if (na(x[j][t])) {
@@ -1142,11 +1136,10 @@ static void plotspec_print_data (GPT_SPEC *spec,
 		    fprintf(fp, "%.10g ", x[j][t]);
 		}
 	    }
-
+	    /* append markers if applicable */
 	    if (spec->markers != NULL && i == 0) {
 		fprintf(fp, " # %s", spec->markers[t]);
 	    }
-
 	    fputc('\n', fp);
 	}
 
@@ -1178,6 +1171,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 				     FILE *fp)
 {
     gretl_matrix *m = NULL;
+    double mti;
     int i, t;
 
     if (spec->auxdata != NULL) {
@@ -1235,8 +1229,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 
     for (t=0; t<spec->nobs; t++) {
 	for (i=0; i<m->cols; i++) {
-	    double mti = gretl_matrix_get(m, t, i);
-
+	    mti = gretl_matrix_get(m, t, i);
 	    if (na(mti)) {
 		fputs("? ", fp);
 		*miss = 1;

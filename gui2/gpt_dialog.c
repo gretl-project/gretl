@@ -2865,7 +2865,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_entry_set_max_length(GTK_ENTRY(ed->linescale[i]), 6);
 	    double_to_gp_entry(line->scale, ed->linescale[i]);
 	    gtk_entry_set_width_chars(GTK_ENTRY(ed->linescale[i]), 6);
-	    if (line_is_formula(line)) {
+	    if (line_is_formula(line) || line->ustr != NULL) {
 		gtk_widget_set_sensitive(ed->linescale[i], FALSE);
 	    } else {
 		g_signal_connect(G_OBJECT(ed->linescale[i]), "activate", 
