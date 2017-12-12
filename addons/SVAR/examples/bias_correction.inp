@@ -1,5 +1,4 @@
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
 
 function list GenerateExampleData(scalar phi, scalar T)

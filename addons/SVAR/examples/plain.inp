@@ -1,9 +1,8 @@
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
 open sw_ch14.gdt
 
-genr infl = 400*ldiff(PUNEW)
+series infl = 400*ldiff(PUNEW)
 rename LHUR unemp
 scalar order = 3
 

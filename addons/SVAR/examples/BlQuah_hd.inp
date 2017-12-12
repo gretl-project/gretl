@@ -1,5 +1,4 @@
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
 open BlQuah.gdt
 
@@ -13,7 +12,7 @@ BQModel = SVAR_setup("C", X, exog, 8)
 SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
 
 # name the shocks to something meaningful
-BQModel.snames = strsplit("Supply Demand")
+BQModel.snames = defarray("Supply", "Demand") # old: strsplit("Supply Demand")
 
 # perform estimation
 SVAR_estimate(&BQModel)

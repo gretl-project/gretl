@@ -1,5 +1,4 @@
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
 open IS-LM.gdt
 
@@ -19,11 +18,12 @@ ISLM.snames = strsplit("uIS uLM uMS")
 
 SVAR_estimate(&ISLM)
 
-Amat = ISLM.S1
-Bmat = ISLM.S2
+# old:
+# Amat = ISLM.S1
+# Bmat = ISLM.S2
 
 printf "Estimated contemporaneous impact matrix (x100) =\n%10.6f", \
-  100*inv(Amat)*Bmat
+  100 * ISLM.C  # old: 100*inv(Amat)*Bmat
 
 set stopwatch
 rej = SVAR_boot(&ISLM, 2000, 0.95)

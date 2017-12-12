@@ -1,5 +1,4 @@
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
 open BlQuah.gdt
 
@@ -18,7 +17,7 @@ SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
 SVAR_restrict(&BQModel, "C", 1, 1, 0)
 
 # name the shocks to something meaningful
-BQModel.snames = strsplit("Supply Demand")
+BQModel.snames = defarray("Supply", "Demand")  # old: strsplit("Supply Demand")
 
 # cumulate the IRFs for variable 1
 SVAR_cumulate(&BQModel, 1)
