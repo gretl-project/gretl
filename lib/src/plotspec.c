@@ -1074,7 +1074,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
 				 FILE *fp)
 {
     double *x[5];
-    double et, yt;
     int started_data_lines = 0;
     int i, j, t;
 
@@ -1106,26 +1105,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
 		fprintf(fp, "%.0f ", x[0][t]);
 	    } else {
 		fprintf(fp, "%.10g ", x[0][t]);
-	    }
-	    /* conversion, if needed, between (y, ydelta) and
-	       (ylow, yhigh)
-	    */
-	    if (spec->lines[i].ncols == 3) {
-		if (spec->flags & GPT_FILL_SWITCH) {
-		    yt = x[1][t];
-		    et = x[2][t];
-		    if (!na(yt) && !na(et)) {
-			x[1][t] = yt - et;
-			x[2][t] = yt + et;
-		    }
-		} else if (spec->flags & GPT_ERR_SWITCH) {
-		    if (!na(x[1][t]) && !na(x[2][t])) {
-			et = (x[2][t] - x[1][t]) / 2.0;
-			yt = x[1][t] + et;
-			x[1][t] = yt;
-			x[2][t] = et;
-		    }
-		}
 	    }
 	    /* print y-axis value(s) */
 	    for (j=1; j<ncols; j++) {
@@ -1196,34 +1175,6 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
     }
 
     m = spec->data;
-
-#if 0
-    /* FIXME (y, ydelta) to (ylow, yhigh) conversion? */
-    if (spec->flags & (GPT_FILL_SWITCH | GPT_ERR_SWITCH)) {
-	double v1, v2, et;
-	int k;
-
-	for (i=0; i<spec->n_lines; i++) {
-	    /* FIXME k-value? */
-	    if (spec->lines[i].ncols == 3) {
-		for (t=0; t<spec->nobs; t++) {
-		    v1 = gretl_matrix_get(m, t, k);
-		    v2 = gretl_matrix_get(m, t, k+1);
-		    if (na(v1) || na(v2)) {
-			*miss = 1;
-		    } else if (spec->flags & GPT_FILL_SWITCH) {
-			gretl_matrix_set(m, t, k, v1 - v2);
-			gretl_matrix_set(m, t, k+1, v1 + v2);
-		    } else if (spec->flags & GPT_ERR_SWITCH) {
-			et = (v2 - v1) / 2.0;
-			gretl_matrix_set(m, t, k, v1 + et);
-			gretl_matrix_set(m, t, k+1, et);
-		    }
-		}
-	    }
-	}
-    }
-#endif
 
     fputs("$data << EOD\n", fp);
 

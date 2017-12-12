@@ -44,17 +44,15 @@ typedef enum {
     GPT_PARAMETRIC     = 1 << 16, /* gnuplot should be in parametric mode */
     GPT_XZEROAXIS      = 1 << 17, /* show x = 0 line */
     GPT_YZEROAXIS      = 1 << 18, /* show y = 0 line */
-    GPT_FILL_SWITCH    = 1 << 19, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 20, /* switching from fill to errorbars */
-    GPT_MONO           = 1 << 21, /* monochrome output */
-    GPT_GRID_Y         = 1 << 22, /* display horizontal grid lines */
-    GPT_GRID_X         = 1 << 23, /* display vertical grid lines */
-    GPT_POLAR          = 1 << 24, /* plot is in polar mode */
-    GPT_XL             = 1 << 25, /* large */
-    GPT_XXL            = 1 << 26, /* extra-large */
-    GPT_TIMEFMT        = 1 << 27, /* using gnuplot "timefmt" */
-    GPT_ICON           = 1 << 28, /* saving plot "as icon" */
-    GPT_STEPS          = 1 << 29  /* force steps for plot */
+    GPT_MONO           = 1 << 19, /* monochrome output */
+    GPT_GRID_Y         = 1 << 20, /* display horizontal grid lines */
+    GPT_GRID_X         = 1 << 21, /* display vertical grid lines */
+    GPT_POLAR          = 1 << 22, /* plot is in polar mode */
+    GPT_XL             = 1 << 23, /* large */
+    GPT_XXL            = 1 << 24, /* extra-large */
+    GPT_TIMEFMT        = 1 << 25, /* using gnuplot "timefmt" */
+    GPT_ICON           = 1 << 26, /* saving plot "as icon" */
+    GPT_STEPS          = 1 << 27  /* force steps for plot */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
