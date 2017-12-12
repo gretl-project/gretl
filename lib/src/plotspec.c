@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -22,10 +22,10 @@
 
 struct plotbars_ {
     int n;         /* number of available start-stop "bar" pairs */
-    double t1;     /* current min. value on time axis */   
-    double t2;     /* current max. value on time axis */  
-    double ymin;   /* current min. value on y axis */  
-    double ymax;   /* current max. value on y axis */  
+    double t1;     /* current min. value on time axis */
+    double t2;     /* current max. value on time axis */
+    double ymin;   /* current min. value on y axis */
+    double ymax;   /* current max. value on y axis */
     double **dx;   /* start-stop time pairs */
 };
 
@@ -46,6 +46,7 @@ GPT_SPEC *plotspec_new (void)
 	return NULL;
     }
 
+    spec->datacols = 0;
     spec->heredata = 0;
 
     spec->lines = NULL;
@@ -110,7 +111,6 @@ GPT_SPEC *plotspec_new (void)
     spec->reglist = NULL;
     spec->nobs = 0;
     spec->okobs = 0;
-    spec->datacols = 0;
     spec->pd = 0;
     spec->nbars = 0;
     spec->boxwidth = 0;
@@ -131,6 +131,17 @@ static void plotbars_free (plotbars *bars)
     }
 }
 
+static void free_plotspec_lines (GPT_SPEC *spec)
+{
+    int i;
+
+    for (i=0; i<spec->n_lines; i++) {
+	free(spec->lines[i].ustr);
+    }
+
+    free(spec->lines);
+}
+
 void plotspec_destroy (GPT_SPEC *spec)
 {
     if (spec == NULL) {
@@ -138,24 +149,24 @@ void plotspec_destroy (GPT_SPEC *spec)
     }
 
     if (spec->lines != NULL) {
-	free(spec->lines);
+	free_plotspec_lines(spec);
     }
 
     if (spec->labels != NULL) {
 	free(spec->labels);
-    }    
+    }
 
     if (spec->arrows != NULL) {
 	free(spec->arrows);
-    } 
-  
+    }
+
     if (spec->data != NULL) {
 	gretl_matrix_free(spec->data);
     }
 
     if (spec->auxdata != NULL) {
 	gretl_matrix_free(spec->auxdata);
-    }    
+    }
 
     if (spec->reglist != NULL) {
 	free(spec->reglist);
@@ -179,16 +190,16 @@ void plotspec_destroy (GPT_SPEC *spec)
 
     if (spec->fontstr != NULL) {
 	free(spec->fontstr);
-    } 
-   
+    }
+
     if (spec->xticstr != NULL) {
 	free(spec->xticstr);
     }
 
     if (spec->x2ticstr != NULL) {
 	free(spec->x2ticstr);
-    }    
-  
+    }
+
     gretl_matrix_free(spec->b_ols);
     gretl_matrix_free(spec->b_quad);
     gretl_matrix_free(spec->b_cub);
@@ -199,7 +210,7 @@ void plotspec_destroy (GPT_SPEC *spec)
     free(spec);
 }
 
-static void plotspec_get_xt1_xt2 (const GPT_SPEC *spec, 
+static void plotspec_get_xt1_xt2 (const GPT_SPEC *spec,
 				  double *xt1,
 				  double *xt2)
 {
@@ -274,7 +285,7 @@ int gp_style_index_from_name (const char *s)
     }
 
     /* fallback */
-    return GP_STYLE_LINES;
+    return GP_STYLE_AUTO;
 }
 
 int gp_style_index_from_display_name (const char *s)
@@ -395,6 +406,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].pscale = 1.0;
     lines[n].title[0] = '\0';
     lines[n].formula[0] = '\0';
+    lines[n].ustr = NULL;
     lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
     lines[n].type = LT_AUTO;
@@ -425,6 +437,12 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->ncols = src->ncols;
     targ->whiskwidth = src->whiskwidth;
     targ->flags = src->flags;
+
+    /* below: is this right, in context? */
+    if (src->ustr != NULL) {
+	free(targ->ustr);
+	targ->ustr = gretl_strdup(src->ustr);
+    }
 }
 
 int plotspec_delete_line (GPT_SPEC *spec, int i)
@@ -482,7 +500,7 @@ int plotspec_max_line_width (GPT_SPEC *spec)
 	if (spec->lines[i].width > lw) {
 	    lw = spec->lines[i].width;
 	}
-    } 
+    }
 
     return lw;
 }
@@ -704,12 +722,12 @@ static void print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
 {
     char *label = escape_quotes(lbl->text);
 
-    fprintf(fp, "set label \"%s\" ", (label != NULL)? 
+    fprintf(fp, "set label \"%s\" ", (label != NULL)?
 	    label : lbl->text);
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "at %g,%g %s front\n", 
+    fprintf(fp, "at %g,%g %s front\n",
 	    lbl->pos[0], lbl->pos[1],
 	    gp_justification_string(lbl->just));
 
@@ -723,7 +741,7 @@ static void print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
 static void print_plot_arrow (const GPT_ARROW *arrow, FILE *fp)
 {
     gretl_push_c_numeric_locale();
-    fprintf(fp, "set arrow from %g,%g to %g,%g %s", 
+    fprintf(fp, "set arrow from %g,%g to %g,%g %s",
 	    arrow->x0, arrow->y0, arrow->x1, arrow->y1,
 	    (arrow->flags & GP_ARROW_HEAD)? "head" : "nohead");
     if (arrow->flags & GP_ARROW_DOTS) {
@@ -748,14 +766,14 @@ static int print_polar_labels (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 	if (sscanf(spec->markers[t], "%lf,%lf", &x, &y) == 2) {
-	    fprintf(fp, "set label \"%.3f,%.3f\" at %.3f,%.3f\n", 
+	    fprintf(fp, "set label \"%.3f,%.3f\" at %.3f,%.3f\n",
 		    x, y, x, y + .04);
 	}
     }
 
     gretl_pop_c_numeric_locale();
 
-    return 0;	
+    return 0;
 }
 
 static int usable_obs (const double *x, const double *y0,
@@ -786,8 +804,8 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	return print_polar_labels(spec, fp);
     }
 
-    if (spec->n_lines > 2 || 
-	spec->lines[0].ncols != 2 || 
+    if (spec->n_lines > 2 ||
+	spec->lines[0].ncols != 2 ||
 	spec->markers == NULL) {
 	return 1;
     }
@@ -821,7 +839,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 		    } else if (x[t] > xmax) {
 			xmax = x[t];
 		    }
-		}		
+		}
 	    }
 	}
 	if (yrange == 0.0) {
@@ -830,7 +848,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	if (xrange == 0.0) {
 	    xrange = xmax - xmin;
 	}
-    }   
+    }
 
     yoff = 0.03 * yrange;
 
@@ -903,7 +921,7 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
-	fprintf(fp, "set %srange [%.10g:%.10g]\n", rstrs[i], 
+	fprintf(fp, "set %srange [%.10g:%.10g]\n", rstrs[i],
 		spec->range[i][0], spec->range[i][1]);
 
 	if (i == 4 && spec->code == PLOT_PROB_DIST && spec->samples == 0) {
@@ -924,7 +942,7 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 
 static int blank_user_line (const GPT_SPEC *spec, int i)
 {
-    return ((spec->lines[i].flags & GP_LINE_USER) && 
+    return ((spec->lines[i].flags & GP_LINE_USER) &&
 	    spec->lines[i].formula[0] == '\0');
 }
 
@@ -1113,7 +1131,7 @@ static void plotspec_print_data (GPT_SPEC *spec,
 			x[2][t] = et;
 		    }
 		}
-	    } 
+	    }
 
 	    /* print y-axis value(s) */
 	    for (j=1; j<ncols; j++) {
@@ -1153,24 +1171,25 @@ static void plotspec_print_data (GPT_SPEC *spec,
     }
 }
 
+#define SIMPLE_TEST 1
+
 static void plotspec_print_heredata (GPT_SPEC *spec,
-				     int skipline,
 				     int *miss,
 				     FILE *fp)
 {
     gretl_matrix *m = NULL;
-    double xt, yt;
-    int i, j, k, t;
+    int i, t;
 
     if (spec->auxdata != NULL) {
-	int rows = gretl_matrix_rows(spec->auxdata);
-	int cols = gretl_matrix_cols(spec->auxdata);
+	int r = spec->auxdata->rows;
+	int c = spec->auxdata->cols;
+	int j;
 
-	fprintf(fp, "# auxdata %d %d\n", rows, cols);
+	fprintf(fp, "# auxdata %d %d\n", r, c);
 	fputs("$aux << EOA\n", fp);
 
-	for (i=0; i<rows; i++) {
-	    for (j=0; j<cols; j++) {
+	for (i=0; i<r; i++) {
+	    for (j=0; j<c; j++) {
 		fprintf(fp, "%.10g ", gretl_matrix_get(spec->auxdata, i, j));
 	    }
 	    fputc('\n', fp);
@@ -1184,64 +1203,51 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 
     m = spec->data;
 
+#if 0
+    /* FIXME (y, ydelta) to (ylow, yhigh) conversion? */
+    if (spec->flags & (GPT_FILL_SWITCH | GPT_ERR_SWITCH)) {
+	double v1, v2, et;
+	int k;
+
+	for (i=0; i<spec->n_lines; i++) {
+	    /* FIXME k-value? */
+	    if (spec->lines[i].ncols == 3) {
+		for (t=0; t<spec->nobs; t++) {
+		    v1 = gretl_matrix_get(m, t, k);
+		    v2 = gretl_matrix_get(m, t, k+1);
+		    if (na(v1) || na(v2)) {
+			*miss = 1;
+		    } else if (spec->flags & GPT_FILL_SWITCH) {
+			gretl_matrix_set(m, t, k, v1 - v2);
+			gretl_matrix_set(m, t, k+1, v1 + v2);
+		    } else if (spec->flags & GPT_ERR_SWITCH) {
+			et = (v2 - v1) / 2.0;
+			gretl_matrix_set(m, t, k, v1 + et);
+			gretl_matrix_set(m, t, k+1, et);
+		    }
+		}
+	    }
+	}
+    }
+#endif
+
     fputs("$data << EOD\n", fp);
 
     for (t=0; t<spec->nobs; t++) {
-	/* print x-axis value */
-	xt = gretl_matrix_get(m, t, 0);
-	if (na(xt)) {
-	    fputs("? ", fp);
-	    *miss = 1;
-	} else if (spec->flags & GPT_TIMEFMT) {
-	    fprintf(fp, "%.0f ", xt);
-	} else {
-	    fprintf(fp, "%.10g ", xt);
+	for (i=0; i<m->cols; i++) {
+	    double mti = gretl_matrix_get(m, t, i);
+
+	    if (na(mti)) {
+		fputs("? ", fp);
+		*miss = 1;
+	    } else if (i == 0 && (spec->flags & GPT_TIMEFMT)) {
+		fprintf(fp, "%.0f ", mti);
+	    } else {
+		fprintf(fp, "%.10g ", mti);
+	    }
 	}
-	k = 1; /* starting col for y-data */
-	for (i=0; i<spec->n_lines; i++) {
-	    int ncols = gp_line_data_columns(spec, i);
-
-	    if (ncols == 0) {
-		/* no (regular) data to print */
-		continue;
-	    }
-	    if (i == skipline) {
-		/* FIXME? */
-		continue;
-	    }
-	    /* conversion, if needed, between (y, ydelta) and
-	       (ylow, yhigh)
-	    */
-	    if (spec->lines[i].ncols == 3) {
-		double v1 = gretl_matrix_get(m, t, k);
-		double v2 = gretl_matrix_get(m, t, k+1);
-
-		if (na(v1) || na(v2)) {
-		    *miss = 1;
-		} else if (spec->flags & GPT_FILL_SWITCH) {
-		    gretl_matrix_set(m, t, k, v1 - v2);
-		    gretl_matrix_set(m, t, k+1, v1 + v2);
-		} else if (spec->flags & GPT_ERR_SWITCH) {
-		    double et = (v2 - v1) / 2.0;
-
-		    gretl_matrix_set(m, t, k, v1 + et);
-		    gretl_matrix_set(m, t, k+1, et);
-		}
-	    }
-	    /* print y-axis value(s) */
-	    for (j=1; j<ncols; j++) {
-		yt = gretl_matrix_get(m, t, k+j-1);
-		if (na(yt)) {
-		    fputs("? ", fp);
-		    *miss = 1;
-		} else {
-		    fprintf(fp, "%.10g ", yt);
-		}
-	    }
-	    if (spec->markers != NULL) {
-		fprintf(fp, " # %s", spec->markers[t]);
-	    }
-	    k += ncols - 1;
+	if (spec->markers != NULL) {
+	    fprintf(fp, " # %s", spec->markers[t]);
 	}
 	fputc('\n', fp);
     }
@@ -1257,7 +1263,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     int png = get_png_output(spec);
     int mono = (spec->flags & GPT_MONO);
     double xt1 = 0, xt2 = 0;
-    char src[8] = "-";
+    char src[16] = "'-'";
     int skipline = -1;
     int ycol, any_y2 = 0;
     int anydata = 0;
@@ -1316,7 +1322,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     for (i=0; i<spec->n_arrows; i++) {
 	print_plot_arrow(&spec->arrows[i], fp);
-    }    
+    }
 
     if (spec->flags & GPT_XZEROAXIS) {
 	fputs("set xzeroaxis\n", fp);
@@ -1324,7 +1330,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     if (spec->flags & GPT_YZEROAXIS) {
 	fputs("set yzeroaxis\n", fp);
-    } 
+    }
 
     if (spec->flags & (GPT_GRID_Y | GPT_GRID_X)) {
 	if (!(spec->flags & GPT_GRID_X)) {
@@ -1335,7 +1341,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    /* default, both */
 	    fputs("set grid\n", fp);
 	}
-    }     
+    }
 
     if (spec->flags & GPT_PARAMETRIC) {
 	fputs("set parametric\n", fp);
@@ -1393,7 +1399,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     /* using x2tics? */
     if (spec->x2ticstr != NULL) {
 	fprintf(fp, "set x2tics %s\n", spec->x2ticstr);
-    }	
+    }
 
     /* customized ytics? */
     if (!strcmp(spec->ytics, "none")) {
@@ -1402,7 +1408,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	if (!string_is_blank(spec->ytics)) {
 	    fprintf(fp, "set ytics %s\n", spec->ytics);
 	}
-    }    
+    }
 
     if (spec->flags & GPT_Y2AXIS) {
 	/* using two y axes */
@@ -1498,7 +1504,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    print_plotbars(spec, fp);
 	}
 	if (spec->data != NULL || spec->auxdata != NULL) {
-	    plotspec_print_heredata(spec, skipline, &miss, fp);
+	    plotspec_print_heredata(spec, &miss, fp);
 	}
 	fputs("# end inline data\n", fp);
 	strcpy(src, "$data");
@@ -1525,20 +1531,22 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (spec->code == PLOT_STACKED_BAR) {
+	if (spec->code == PLOT_STACKED_BAR && line->ustr == NULL) {
 	    /* stacked-bar histogram: special case */
-	    fprintf(fp, "'%s' using %d title \"%s\"", src, ycol, line->title);
+	    fprintf(fp, "%s using %d title \"%s\"", src, ycol, line->title);
 	    goto end_print_line;
 	}
 
 	if (*line->formula != '\0') {
 	    fprintf(fp, "%s ", line->formula);
+	} else if (line->ustr != NULL) {
+	    fprintf(fp, "%s using %s ", src, line->ustr);
 	} else if (line->scale == 1.0 || na(line->scale)) {
 	    /* line->scale may be NA for nonparametric fit,
 	       represented by an array of data rather than
 	       a formula
 	    */
-	    fprintf(fp, "'%s' using 1", src);
+	    fprintf(fp, "%s using 1", src);
 	    if (line->ncols == 5) {
 		/* Note: boxplot candlesticks, hard-wired! */
 		fprintf(fp, ":%d:%d:%d:%d", ycol+1, ycol, ycol+3, ycol+2);
@@ -1556,7 +1564,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	    fputc(' ', fp);
 	} else {
-	    fprintf(fp, "'%s' using 1:($%d*%g) ", src, ycol, line->scale);
+	    fprintf(fp, "%s using 1:($%d*%g) ", src, ycol, line->scale);
 	}
 
 	if ((spec->flags & GPT_Y2AXIS) && line->yaxis != 1) {
@@ -1581,7 +1589,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 #if FREEZE_COLORS
 	if (*line->rgb != '\0') {
 	    fprintf(fp, "lc rgb \"%s\" ", line->rgb);
-	} 
+	}
 #else
 	if (line->style == GP_STYLE_FILLEDCURVE && line->type == LT_AUTO) {
 	    if (*line->rgb != '\0') {
@@ -1592,7 +1600,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
 #endif
 
-	fprintf(fp, "w %s", gp_line_style_name(line->style));
+	if (line->style != GP_STYLE_AUTO) {
+	    fprintf(fp, "w %s", gp_line_style_name(line->style));
+	}
+
 #if !FREEZE_COLORS
 	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
@@ -1621,10 +1632,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
 	if (more_lines(spec, i, skipline)) {
 	    fputs(", \\", fp);
-	} 
+	}
 
 	fputc('\n', fp);
-    } 
+    }
 
     /* supply the data to gnuplot inline, old style */
 
@@ -1687,7 +1698,7 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
 				 double x0, double pd)
 {
     char x[32];
-    
+
     gretl_push_c_numeric_locale();
 
     /* If x0 is not NA that indicates that we've calculated a fit
@@ -1710,8 +1721,8 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
 	sprintf(formula, "%.10g + %.10g*%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_QUADRATIC) {
 	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2", b[0], b[1], x, b[2], x);
-    } else if (f == PLOT_FIT_CUBIC) {	
-	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2 + %.10g*%s**3", 
+    } else if (f == PLOT_FIT_CUBIC) {
+	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2 + %.10g*%s**3",
 		b[0], b[1], x, b[2], x, b[3], x);
     } else if (f == PLOT_FIT_INVERSE) {
 	sprintf(formula, "%.10g + %.10g/%s", b[0], b[1], x);
@@ -1729,7 +1740,7 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
 }
 
 void set_plotfit_line (char *title, char *formula,
-		       FitType f, const double *b, 
+		       FitType f, const double *b,
 		       double x0, double pd)
 {
     char xc = (na(x0)) ? 'X' : 't';
@@ -1744,7 +1755,7 @@ void set_plotfit_line (char *title, char *formula,
 		(b[1] > 0)? '+' : '-', fabs(b[1]), xc,
 		(b[2] > 0)? '+' : '-', fabs(b[2]), xc);
     } else if (f == PLOT_FIT_CUBIC) {
-	sprintf(title, "Y = %#.3g %c %#.3g%c %c %#.3g%c^2 %c %#.3g%c^3", 
+	sprintf(title, "Y = %#.3g %c %#.3g%c %c %#.3g%c^2 %c %#.3g%c^3",
 		b[0], (b[1] > 0)? '+' : '-', fabs(b[1]), xc,
 		(b[2] > 0)? '+' : '-', fabs(b[2]), xc,
 		(b[3] > 0)? '+' : '-', fabs(b[3]), xc);
@@ -1772,7 +1783,7 @@ void set_plotfit_line (char *title, char *formula,
     set_plotfit_formula(formula, f, b, x0, pd);
 }
 
-static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f, 
+static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
 				      double x0)
 {
     char *formula = spec->lines[1].formula;
@@ -1830,7 +1841,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	    */
 	    x0 = px[0];
 	}
-    } 
+    }
 
     if ((f == PLOT_FIT_OLS && spec->b_ols != NULL) ||
 	(f == PLOT_FIT_QUADRATIC && spec->b_quad != NULL) ||
@@ -1918,7 +1929,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 		}
 		if (f == PLOT_FIT_CUBIC) {
 		    gretl_matrix_set(X, i, 3, xt * xt * xt);
-		}		
+		}
 	    }
 	    i++;
 	}
@@ -1963,7 +1974,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	} else if (f == PLOT_FIT_LINLOG) {
 	    spec->b_linlog = b;
 	    b = NULL;
-	}	    
+	}
     }
 
     if (!err) {
@@ -1975,7 +1986,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     }
 
  bailout:
-    
+
     gretl_matrix_free(y);
     gretl_matrix_free(X);
     gretl_matrix_free(b);
@@ -1983,7 +1994,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 
 #if 0
     fprintf(stderr, "plotspec_add_fit: returning %d\n", err);
-#endif    
+#endif
 
     return err;
 }
@@ -2027,7 +2038,7 @@ static plotbars *plotbars_new (int n)
    annual, quarterly or monthly time series.
 */
 
-static plotbars *parse_bars_file (const char *fname, 
+static plotbars *parse_bars_file (const char *fname,
 				  int *err)
 {
     FILE *fp;
@@ -2200,7 +2211,7 @@ static void print_bars_header (GPT_SPEC *spec, FILE *fp)
 	}
     } else {
 	for (i=0; i<spec->nbars; i++) {
-	    fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve, \\\n", 
+	    fprintf(fp, "'-' using 1:2:3 notitle lc rgb \"%s\" w filledcurve, \\\n",
 		    cstr);
 	}
     }
@@ -2231,7 +2242,7 @@ static int n_bars_shown (double xmin, double xmax, plotbars *bars)
 	} else if (dx[i][0] >= xmin || dx[i][1] <= xmax) {
 	    n++;
 	}
-    } 
+    }
 
     bars->t1 = xmin;
     bars->t2 = xmax;
@@ -2252,7 +2263,7 @@ static int n_bars_shown (double xmin, double xmax, plotbars *bars)
    in the current range, @xmin to @xmax.
 */
 
-int plotspec_add_bars_info (GPT_SPEC *spec, 
+int plotspec_add_bars_info (GPT_SPEC *spec,
 			    double xmin, double xmax,
 			    double ymin, double ymax,
 			    const char *fname)
@@ -2296,13 +2307,13 @@ int plotspec_add_bars_info (GPT_SPEC *spec,
 */
 
 int plotspec_allocate_bars (GPT_SPEC *spec)
-{ 
+{
     int err = 0;
 
     spec->bars = plotbars_new(spec->nbars);
     if (spec->bars == NULL) {
 	err = E_ALLOC;
-    }  
+    }
 
     return err;
 }
@@ -2314,17 +2325,17 @@ int plotspec_allocate_bars (GPT_SPEC *spec)
 
 int plotspec_set_bar_info (GPT_SPEC *spec, int i,
 			   double t1, double t2)
-{ 
+{
     if (i < spec->bars->n) {
 	spec->bars->dx[i][0] = t1;
-	spec->bars->dx[i][1] = t2; 
+	spec->bars->dx[i][1] = t2;
 	return 0;
     } else {
 	return E_DATA;
     }
 }
 
-void plotspec_set_bars_limits (GPT_SPEC *spec, 
+void plotspec_set_bars_limits (GPT_SPEC *spec,
 			       double t1, double t2,
 			       double ymin, double ymax)
 {

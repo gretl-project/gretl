@@ -36,7 +36,8 @@ typedef enum {
     GP_STYLE_BOXES,
     GP_STYLE_ERRORBARS,
     GP_STYLE_FILLEDCURVE,
-    GP_STYLE_CANDLESTICKS
+    GP_STYLE_CANDLESTICKS,
+    GP_STYLE_AUTO
 } GpLineStyle;
 
 typedef enum {
@@ -86,6 +87,7 @@ typedef struct {
     int style;                     /* lines, points, etc. */
     char title[MAXTITLE];          /* key or legend title */
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
+    char *ustr;                    /* custom 'using' string */
     double scale;                  /* scale factor for data */
     float pscale;                  /* scale factor for points */
     char rgb[8];                   /* rgb color specification */

@@ -2252,19 +2252,21 @@ static void grab_line_rgb (char *targ, const char *src)
 */
 
 static int handle_using_spec_full (const char *s,
-				   GPT_LINE *line)
+				   GPT_SPEC *spec,
+				   int i)
 {
+    GPT_LINE *line = &spec->lines[i];
     const char *f, *p = s;
     int *cols = NULL;
     int inparen = 0;
     int ticspecs = 0;
     int ncolrefs = 0;
-    int i, n = 0;
+    int k, n = 0;
     int err = 0;
 
     if (isdigit(*s)) {
-	i = atoi(s);
-	gretl_list_append_term(&cols, i);
+	k = atoi(s);
+	gretl_list_append_term(&cols, k);
     }
 
     while (*p) {
@@ -2278,10 +2280,10 @@ static int handle_using_spec_full (const char *s,
 		if (*f == 'x' || *f == 'y') {
 		    ticspecs++;
 		} else {
-		    i = (*f == '$')? atoi(f + 1) : atoi(f);
+		    k = (*f == '$')? atoi(f + 1) : atoi(f);
 		    ncolrefs++;
-		    if (i > 0 && !in_gretl_list(cols, i)) {
-			gretl_list_append_term(&cols, i);
+		    if (k > 0 && !in_gretl_list(cols, k)) {
+			gretl_list_append_term(&cols, k);
 		    }
 		}
 	    } else if (isspace(*p) || *p == ',') {
@@ -2290,21 +2292,23 @@ static int handle_using_spec_full (const char *s,
 	} else if (*p == '$' && isdigit(*(p+1))) {
 	    /* inparen: a tic specification may make reference
 	       to a data column */
-	    i = atoi(p + 1);
+	    k = atoi(p + 1);
 	    ncolrefs++;
-	    if (i > 0 && !in_gretl_list(cols, i)) {
-		gretl_list_append_term(&cols, i);
+	    if (k > 0 && !in_gretl_list(cols, k)) {
+		gretl_list_append_term(&cols, k);
 	    }
 	}
 	p++;
 	n++;
     }
 
-    if (n > 0 && ticspecs > 0) {
+    line->style = GP_STYLE_AUTO;
+
+    if (n > 0) {
 	char *ustr = gretl_strndup(s, n);
 
-	fprintf(stderr, "special 'using' string = '%s'\n", ustr);
-	free(ustr); /* FIXME attach to line */
+	fprintf(stderr, "'using' string = '%s'\n", ustr);
+	line->ustr = ustr;
     }
 
     if (cols != NULL) {
@@ -2313,8 +2317,15 @@ static int handle_using_spec_full (const char *s,
 	    /* boxplot special */
 	    line->flags |= GP_LINE_BOXDATA;
 	}
+	if (i > 0 && in_gretl_list(cols, 1)) {
+	    /* col 1 should already be counted */
+	    spec->datacols += line->ncols - 1;
+	} else {
+	    spec->datacols += line->ncols;
+	}
 	printlist(cols, "cols list");
-	free(cols); /* FIXME attach to line */
+	fprintf(stderr, "spec->datacols now = %d\n", spec->datacols);
+	free(cols);
     }
 
     return err;
@@ -2364,7 +2375,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	/* data column spec */
 	p += 7;
 #if HANDLE_HEREDATA
-	err = handle_using_spec_full(p, line);
+	err = handle_using_spec_full(p, spec, i);
 #else
 	if (strstr(p, "1:3:2:5:4")) {
 	    line->ncols = 5;
@@ -2847,6 +2858,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	return err;
     }
 
+    spec->datacols = 0;
     bufgets_init(buf);
 
     /* get the number of data-points, plot type, and check for
@@ -3068,14 +3080,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    line->flags = GP_LINE_AUXDATA;
 	    continue;
 	}
- 	if (line->ncols == 0) {
-	    continue;
+#if !HANDLE_HEREDATA
+ 	if (line->ncols > 0) {
+	    if (spec->datacols == 0) {
+		spec->datacols = line->ncols;
+	    } else {
+		spec->datacols += line->ncols - 1;
+	    }
 	}
-	if (spec->datacols == 0) {
-	    spec->datacols = line->ncols;
-	} else {
-	    spec->datacols += line->ncols - 1;
-	}
+#endif
     }
 
     if (!err) {
