@@ -160,7 +160,7 @@ struct GPT_SPEC_ {
     GPT_LINE *lines;           /* details on individual lines */
     char **literal;            /* additional commands */
     int n_literal;             /* number of the above */
-    double *data;              /* data to plot */
+    gretl_matrix *data;        /* data to plot */
     char **markers;            /* data-point markers (not always present) */
     int n_markers;             /* number of such markers */
     GPT_LABEL *labels;         /* textual labels written onto graph */

@@ -35,9 +35,6 @@
 #include "toolbar.h"
 #include "clipboard.h"
 
-#define GPDEBUG 0
-#define POINTS_DEBUG 0
-
 #ifdef G_OS_WIN32
 # include <io.h>
 # include "gretlwin32.h"
@@ -46,6 +43,12 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 #include <errno.h>
+
+#define GPDEBUG 0
+#define POINTS_DEBUG 0
+
+/* the following needs a good deal more work */
+#define HANDLE_HEREDATA 0
 
 enum {
     PLOT_SAVED          = 1 << 0,
@@ -1295,7 +1298,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 
 	if (!started_data_lines) {
 	    offset = 0;
-	    x[0] = spec->data;
+	    x[0] = spec->data->val;
 	    x[1] = x[0] + spec->nobs;
 	    started_data_lines = 1;
 	}
@@ -1369,9 +1372,7 @@ static int get_gpt_data (GPT_SPEC *spec,
     }
 
 #if GPDEBUG
-    for (i=0; i<spec->nobs*spec->datacols; i++) {
-	fprintf(stderr, "spec->data[%d] = %g\n", i, spec->data[i]);
-    }
+    gretl_matrix_print(spec->data, "spec->data");
 #endif
 
     gretl_pop_c_numeric_locale();
@@ -1385,8 +1386,7 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 			     long datapos,
 			     const char *buf)
 {
-    gretl_matrix tmp = {0};
-    gretl_matrix *m = &tmp;
+    gretl_matrix *m = spec->data;
     char line[MAXLEN], test[32];
     char obsfmt[12] = {0};
     char *s, *got = NULL;
@@ -1395,9 +1395,6 @@ static int get_gpt_heredata (GPT_SPEC *spec,
     int err = 0;
 
     spec->okobs = spec->nobs;
-    m->rows = spec->nobs;
-    m->cols = spec->datacols;
-    m->val = spec->data;
 
     gretl_push_c_numeric_locale();
 
@@ -2241,6 +2238,90 @@ static void grab_line_rgb (char *targ, const char *src)
     }
 }
 
+#if HANDLE_HEREDATA
+
+/* Examples:
+
+   using 1:n:m:p
+   using 1:xtic(...)
+   using 1:2:xtic(""):ytic("")
+
+   we need to extract the data column numbers, and
+   if we get special inline xtic() or ytic() specs,
+   record the 'using' string as a whole
+*/
+
+static int handle_using_spec_full (const char *s,
+				   GPT_LINE *line)
+{
+    const char *f, *p = s;
+    int *cols = NULL;
+    int inparen = 0;
+    int ticspecs = 0;
+    int ncolrefs = 0;
+    int i, n = 0;
+    int err = 0;
+
+    if (isdigit(*s)) {
+	i = atoi(s);
+	gretl_list_append_term(&cols, i);
+    }
+
+    while (*p) {
+	if (*p == '(') {
+	    inparen++;
+	} else if (*p == ')') {
+	    inparen--;
+	} else if (!inparen) {
+	    if (*p == ':') {
+		f = p + 1;
+		if (*f == 'x' || *f == 'y') {
+		    ticspecs++;
+		} else {
+		    i = (*f == '$')? atoi(f + 1) : atoi(f);
+		    ncolrefs++;
+		    if (i > 0 && !in_gretl_list(cols, i)) {
+			gretl_list_append_term(&cols, i);
+		    }
+		}
+	    } else if (isspace(*p) || *p == ',') {
+		break;
+	    }
+	} else if (*p == '$' && isdigit(*(p+1))) {
+	    /* inparen: a tic specification may make reference
+	       to a data column */
+	    i = atoi(p + 1);
+	    ncolrefs++;
+	    if (i > 0 && !in_gretl_list(cols, i)) {
+		gretl_list_append_term(&cols, i);
+	    }
+	}
+	p++;
+	n++;
+    }
+
+    if (n > 0 && ticspecs > 0) {
+	char *ustr = gretl_strndup(s, n);
+
+	fprintf(stderr, "special 'using' string = '%s'\n", ustr);
+	free(ustr); /* FIXME attach to line */
+    }
+
+    if (cols != NULL) {
+	line->ncols = cols[0];
+	if (cols[0] == 2 && ncolrefs == 5) {
+	    /* boxplot special */
+	    line->flags |= GP_LINE_BOXDATA;
+	}
+	printlist(cols, "cols list");
+	free(cols); /* FIXME attach to line */
+    }
+
+    return err;
+}
+
+#endif
+
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
 
@@ -2255,6 +2336,10 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     const char *p;
     int i, err;
 
+#if GPDEBUG
+    fprintf(stderr, "parse_gp_line_line, starting\n");
+#endif
+
     err = plotspec_add_line(spec);
     if (err) {
 	return err;
@@ -2266,18 +2351,21 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     if (!strncmp(s, "plot ", 5)) {
 	s += 5;
     }
-
     s += strspn(s, " ");
 
     /* The checks below will have to be modified if we're to
        handle gnuplot 5 "heredoc" data correctly, since the
        y-columns for a given "line" will not necessarily start
-       at 2.
+       at 2. See above for a start on this, but it's by no
+       means ready yet.
     */
 
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
+#if HANDLE_HEREDATA
+	err = handle_using_spec_full(p, line);
+#else
 	if (strstr(p, "1:3:2:5:4")) {
 	    line->ncols = 5;
 	} else if (strstr(p, "1:2:2:2:2")) {
@@ -2287,13 +2375,14 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	    line->ncols = 4;
 	} else if (strstr(p, "1:2:3")) {
 	    line->ncols = 3;
-	} else if ((p = strstr(s, "($2*"))) {
+	} else if ((p = strstr(p, "($2*"))) {
 	    sscanf(p + 4, "%15[^)]", tmp);
 	    line->scale = dot_atof(tmp);
 	    line->ncols = 2;
 	} else {
 	    line->ncols = 2;
 	}
+#endif
     } else if (*s == '\'' || *s == '"') {
 	/* name of data file, without 'using' */
 	if (*(s+1) != '-') {
@@ -2420,16 +2509,15 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
 				      long barpos,
 				      long datapos)
 {
-    size_t dsize = spec->nobs * spec->datacols * sizeof *spec->data;
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "allocating: nobs=%d, datacols=%d, dsize=%d\n",
-	    spec->nobs, spec->datacols, (int) dsize);
+    fprintf(stderr, "allocating: nobs=%d, datacols=%d\n",
+	    spec->nobs, spec->datacols);
 #endif
 
     /* allocate for the plot data... */
-    spec->data = mymalloc(dsize);
+    spec->data = gretl_matrix_alloc(spec->nobs, spec->datacols);
     if (spec->data == NULL) {
 	err = E_ALLOC;
     }
@@ -2453,7 +2541,7 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
 	    err = get_gpt_data(spec, do_markers, buf);
 	}
     } else {
-	free(spec->data);
+	gretl_matrix_free(spec->data);
 	spec->data = NULL;
     }
 
@@ -2687,6 +2775,29 @@ static void maybe_promote_literal_lines (GPT_SPEC *spec,
     }
 }
 
+static void plot_get_ols_info (const char *line,
+			       int *reglist)
+{
+    char fmt[16], vname[VNAMELEN];
+    int v;
+
+    sprintf(fmt, "'%%%d[^\\']' (%%d)", VNAMELEN - 1);
+
+    if (sscanf(line + 6, fmt, vname, &v) == 2) {
+	if (line[2] == 'X') {
+	    if (plot_ols_var_ok(vname, v)) {
+		reglist[3] = v;
+	    }
+	} else {
+	    /* 'Y' */
+	    if (reglist[3] > 0 && plot_ols_var_ok(vname, v)) {
+		reglist[0] = 3;
+		reglist[1] = v;
+	    }
+	}
+    }
+}
+
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && \
                            c != PLOT_PROB_DIST && \
                            c != PLOT_CURVE && \
@@ -2710,7 +2821,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     char gpline[MAXLEN];
     gchar *buf = NULL;
     char *got = NULL;
-#if 0 /* not yet */
+#if HANDLE_HEREDATA
     char *eod = NULL;
 #endif
     int ignore = 0;
@@ -2778,28 +2889,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* get the preamble and "set" lines */
 
-    while ((got = bufgets(gpline, sizeof gpline, buf))) {
-	char vname[VNAMELEN];
-	int v;
-
+    while ((got = bufgets(gpline, sizeof gpline, buf)) && !err) {
 #if GPDEBUG
 	tailstrip(gpline);
 	fprintf(stderr, "gpline: '%s'\n", gpline);
 #endif
-
 	if (ignore) {
 	    if (!strncmp(gpline, "# end inline", 12)) {
 		ignore = 0;
 	    }
-	    continue;
-	}
-
-	if (!strncmp(gpline, "# start inline", 14)) {
+	} else if (!strncmp(gpline, "# start inline", 14)) {
 	    ignore = 1;
-	    continue;
-	}
-
-	if (!strncmp(gpline, "# timeseries", 12)) {
+	} else if (!strncmp(gpline, "# timeseries", 12)) {
 	    if (sscanf(gpline, "# timeseries %d", &spec->pd)) {
 		*plot_pd = spec->pd;
 	    }
@@ -2807,67 +2908,42 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    if (strstr(gpline, "letterbox")) {
 		spec->flags |= GPT_LETTERBOX;
 	    }
-	    continue;
 	} else if (!strncmp(gpline, "# multiple timeseries", 21)) {
 	    if (sscanf(gpline, "# multiple timeseries %d", &spec->pd)) {
 		*plot_pd = spec->pd;
 	    }
 	    spec->flags |= GPT_TS;
-	    continue;
 	} else if (!strncmp(gpline, "# scale = ", 10)) {
 	    double x = dot_atof(gpline + 10);
 
 	    if (x >= 0.5 && x <= 2.0) {
 		spec->scale = x;
 	    }
-	    continue;
 	} else if (!strncmp(gpline, "# auto linewidth", 16)) {
 	    auto_linewidth = 1;
-	    continue;
 	} else if (!strncmp(gpline, "# fontspec: ", 12)) {
 	    free(spec->fontstr);
 	    spec->fontstr = gretl_strdup(gpline + 12);
 	    tailstrip(spec->fontstr);
 	} else if (!strncmp(gpline, "# boxplots", 10)) {
-	    continue;
-	}
-
-	if (!strncmp(gpline, "# X = ", 6) || !strncmp(gpline, "# Y = ", 6)) {
-	    char fmt[16];
-
-	    sprintf(fmt, "'%%%d[^\\']' (%%d)", VNAMELEN - 1);
-
-	    if (sscanf(gpline + 6, fmt, vname, &v) == 2) {
-		if (gpline[2] == 'X') {
-		    if (plot_ols_var_ok(vname, v)) {
-			reglist[3] = v;
-		    }
-		} else {
-		    /* 'Y' */
-		    if (reglist[3] > 0 && plot_ols_var_ok(vname, v)) {
-			reglist[0] = 3;
-			reglist[1] = v;
-		    }
-		}
-	    }
-	    continue;
-	}
-
-	if (sscanf(gpline, "# literal lines = %d", &spec->n_literal)) {
+	    ; /* OK */
+	} else if (!strncmp(gpline, "# X = ", 6) ||
+		   !strncmp(gpline, "# Y = ", 6)) {
+	    plot_get_ols_info(gpline, reglist);
+	} else if (sscanf(gpline, "# literal lines = %d", &spec->n_literal)) {
 	    spec->literal = strings_array_new(spec->n_literal);
 	    if (spec->literal == NULL) {
 		err = E_ALLOC;
-		goto bailout;
-	    }
-	    for (i=0; i<spec->n_literal; i++) {
-		if (!bufgets(gpline, MAXLEN - 1, buf)) {
-		    errbox(_("Plot file is corrupted"));
-		} else {
-		    top_n_tail(gpline, 0, NULL);
-		    spec->literal[i] = g_strdup(gpline);
+	    } else {
+		for (i=0; i<spec->n_literal; i++) {
+		    if (!bufgets(gpline, MAXLEN - 1, buf)) {
+			errbox(_("Plot file is corrupted"));
+		    } else {
+			top_n_tail(gpline, 0, NULL);
+			spec->literal[i] = g_strdup(gpline);
+		    }
 		}
 	    }
-	    continue;
 	} else if (!strncmp(gpline, "# start literal lines", 21) &&
 		   spec->literal == NULL) {
 	    for (i=0; ; i++) {
@@ -2881,52 +2957,32 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 				      gpline);
 		}
 	    }
-	}
-
-	if (strstr(gpline, "automatic fit")) {
+	} else if (strstr(gpline, "automatic fit")) {
 	    spec->flags |= GPT_AUTO_FIT;
 	    spec->fit = recognize_fit_string(gpline);
-	    continue;
-	}
-
-	if (strstr(gpline, "user-defined")) {
+	} else 	if (strstr(gpline, "user-defined")) {
 	    uservec = get_user_lines_list(gpline);
-	    continue;
-	}
-
-	if (strstr(gpline, "printing data labels")) {
+	} else if (strstr(gpline, "printing data labels")) {
 	    spec->flags |= GPT_PRINT_MARKERS;
-	    continue;
-	}
-
-	if (!strncmp(gpline, "# ", 2)) {
-	    /* ignore unknown comment lines */
-	    continue;
-	}
-
-	if (strncmp(gpline, "set ", 4) && strncmp(gpline, "unset ", 6)) {
-	    /* done reading "set" lines */
-	    break;
-	}
-
-	if (!strncmp(gpline, "set ", 4)) {
+	} else if (!strncmp(gpline, "# ", 2)) {
+	    ; /* ignore unknown comment lines */
+	} else if (!strncmp(gpline, "set ", 4)) {
 	    gretl_push_c_numeric_locale();
 	    err = parse_gp_set_line(spec, gpline, styles, NULL);
 	    gretl_pop_c_numeric_locale();
 	} else if (!strncmp(gpline, "unset ", 6)) {
 	    err = parse_gp_unset_line(spec, gpline);
 	} else {
-	    /* done reading "set" lines */
+	    /* done reading "set" lines? */
 	    break;
-	}
-
-	if (err) {
-	    goto bailout;
 	}
     }
 
-    if (got == NULL) {
-	err = 1;
+    if (!err && got == NULL) {
+	err = E_DATA;
+    }
+
+    if (err) {
 	goto bailout;
     }
 
@@ -2942,9 +2998,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
-#if 0 /* not ready yet! */
+#if HANDLE_HEREDATA /* not ready yet! */
     if (line_starts_heredata(gpline, &eod)) {
-	/* experimental: skip to end of heredata */
 	while (bufgets(gpline, MAXLEN - 1, buf) != NULL) {
 	    if (!strncmp(gpline, eod, strlen(eod))) {
 		bufgets(gpline, MAXLEN - 1, buf);
@@ -2978,25 +3033,21 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	       the plot command */
 	    done = 1;
 	}
-#if GPDEBUG
-	fprintf(stderr, "calling parse_gp_line_line\n");
-#endif
 	err = parse_gp_line_line(gpline, spec, auto_linewidth);
 	if (err || done || (got = bufgets(gpline, MAXLEN - 1, buf)) == NULL) {
 	    break;
 	}
     }
 
-    if (err || got == NULL) {
-	err = 1;
-	goto bailout;
+    if (!err && got == NULL) {
+	err = E_DATA;
     }
 
     /* determine total number of required data columns, etc.,
        and transcribe styles info into lines for use in the
        GUI editor */
 
-    for (i=0; i<spec->n_lines; i++) {
+    for (i=0; i<spec->n_lines && !err; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	int idx = line->type; /* this will be 1-based */
 
@@ -3027,8 +3078,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
-    err = plot_get_data_and_markers(spec, buf, do_markers,
-				    barpos, datapos);
+    if (!err) {
+	err = plot_get_data_and_markers(spec, buf, do_markers,
+					barpos, datapos);
+    }
 
     if (!err && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
@@ -3038,7 +3091,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	maybe_set_add_fit_ok(spec);
     }
 
-    if (spec->code == PLOT_ROOTS && spec->n_literal == 8) {
+    if (!err && spec->code == PLOT_ROOTS && spec->n_literal == 8) {
 	/* backward compatibility */
 	fprintf(stderr, "old roots plot: fixing\n");
 	fix_old_roots_plot(spec);
@@ -3429,7 +3482,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	yrange = plot->ymax - plot->ymin;
     }
 
-    data_x = plot->spec->data;
+    data_x = plot->spec->data->val;
     data_y = data_x + plot->spec->nobs;
 
     if (plot_has_y2axis(plot)) {
@@ -3860,45 +3913,46 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 static void show_numbers_from_markers (GPT_SPEC *spec)
 {
     PRN *prn;
-    double x, y;
+    double x, y, pi2;
     double mod, freq;
+    int dcomma = 0;
     int i, err = 0;
 
     if (bufopen(&prn)) {
 	return;
     }
 
+    pi2 = 2.0 * M_PI;
+    dcomma = get_local_decpoint() != '.';
+
     pputs(prn, _("roots (real, imaginary, modulus, frequency)"));
     pputs(prn, "\n\n");
 
-    if (get_local_decpoint() != '.') {
+    if (dcomma) {
 	gretl_push_c_numeric_locale();
-	for (i=0; i<spec->n_markers; i++) {
-	    if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
-		freq = spec->data[i] / (2.0 * M_PI);
-		mod = spec->data[spec->nobs + i];
+    }
+
+    for (i=0; i<spec->n_markers; i++) {
+	if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
+	    freq = gretl_matrix_get(spec->data, i, 0) / pi2;
+	    mod = gretl_matrix_get(spec->data, i, 1);
+	    if (dcomma) {
 		gretl_pop_c_numeric_locale();
 		pprintf(prn, "%2d: (%7.4f  %7.4f  %7.4f  %7.4f)\n", i+1,
 			x, y, mod, freq);
 		gretl_push_c_numeric_locale();
 	    } else {
-		err = E_DATA;
-		break;
-	    }
-	}
-	gretl_pop_c_numeric_locale();
-    } else {
-	for (i=0; i<spec->n_markers; i++) {
-	    if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
-		freq = spec->data[i] / (2.0 * M_PI);
-		mod = spec->data[spec->nobs + i];
 		pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1,
 			x, y, mod, freq);
-	    } else {
-		err = E_DATA;
-		break;
 	    }
+	} else {
+	    err = E_DATA;
+	    break;
 	}
+    }
+
+    if (dcomma) {
+	gretl_pop_c_numeric_locale();
     }
 
     if (err) {

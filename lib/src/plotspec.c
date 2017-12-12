@@ -150,7 +150,7 @@ void plotspec_destroy (GPT_SPEC *spec)
     } 
   
     if (spec->data != NULL) {
-	free(spec->data);
+	gretl_matrix_free(spec->data);
     }
 
     if (spec->auxdata != NULL) {
@@ -204,10 +204,8 @@ static void plotspec_get_xt1_xt2 (const GPT_SPEC *spec,
 				  double *xt2)
 {
     if (spec->data != NULL) {
-	double *x = spec->data;
-    
-	*xt1 = x[0];
-	*xt2 = x[spec->nobs - 1];
+	*xt1 = spec->data->val[0];
+	*xt2 = spec->data->val[spec->nobs - 1];
     }
 }
 
@@ -794,7 +792,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	return 1;
     }
 
-    x = spec->data;
+    x = spec->data->val;
     y0 = x + spec->nobs;
 
     if (spec->code == PLOT_FACTORIZED) {
@@ -1075,7 +1073,7 @@ static void plotspec_print_data (GPT_SPEC *spec,
 	}
 
 	if (!started_data_lines) {
-	    x[0] = spec->data;
+	    x[0] = spec->data->val;
 	    /* see below for subsequent adjustment of x[1] */
 	    x[1] = x[0] + spec->nobs;
 	    started_data_lines = 1;
@@ -1160,8 +1158,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 				     int *miss,
 				     FILE *fp)
 {
-    gretl_matrix tmp = {0};
-    gretl_matrix *m = &tmp;
+    gretl_matrix *m = NULL;
     double xt, yt;
     int i, j, k, t;
 
@@ -1185,9 +1182,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 	return;
     }
 
-    m->rows = spec->nobs;
-    m->cols = spec->datacols;
-    m->val = spec->data;
+    m = spec->data;
 
     fputs("$data << EOD\n", fp);
 
@@ -1654,21 +1649,26 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
 			  gretl_matrix *y, gretl_matrix *yh)
 {
-    int t, T = gretl_vector_get_length(y);
-    double *data;
+    int i, t, T = gretl_vector_get_length(y);
+    const double *src;
+    gretl_matrix *m;
 
-    data = realloc(spec->data, 3 * T * sizeof *data);
-    if (data == NULL) {
-	return E_ALLOC;
+    m = gretl_matrix_alloc(T, 3);
+    if (m == NULL) {
+	return E_DATA;
     }
 
-    for (t=0; t<T; t++) {
-	data[t] = x->val[t];
-	data[t+T] = y->val[t];
-	data[t+2*T] = yh->val[t];
+    gretl_matrix_free(spec->data);
+    spec->data = m;
+
+    for (i=0; i<3; i++) {
+	src = i == 0 ? x->val : i == 1 ? y->val : yh->val;
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(m, t, i, src[t]);
+	}
     }
 
-    spec->data = data;
+    spec->data = m;
     spec->datacols = 3;
     spec->nobs = spec->okobs = T;
 
@@ -1811,7 +1811,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *yh = NULL;
-    const double *px = spec->data;
+    const double *px = spec->data->val;
     const double *py;
     int T = spec->okobs;
     double x0 = NADBL;
@@ -1871,7 +1871,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 	}
     }
 
-    px = spec->data;
+    px = spec->data->val;
     py = px + spec->nobs;
 
     i = 0;

@@ -1673,7 +1673,7 @@ static GtkWidget *gp_page_vbox (GtkWidget *notebook, char *str)
 
 static int semilog_is_ok (GPT_SPEC *spec)
 {
-    const double *x = spec->data;
+    const double *x = spec->data->val;
 
     if (x == NULL) {
 	return 0;
@@ -1686,7 +1686,7 @@ static int semilog_is_ok (GPT_SPEC *spec)
 
 static int log_x_ok (GPT_SPEC *spec)
 {
-    const double *x = spec->data;
+    const double *x = spec->data->val;
 
     if (x == NULL) {
 	return 0;
@@ -2817,8 +2817,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_widget_show(ed->dtcombo[i]);
 	    gtk_box_pack_start(GTK_BOX(hbox), ed->dtcombo[i], FALSE, FALSE, 5);
 	    gtk_widget_set_sensitive(ed->dtcombo[i], hl);
-	    g_object_set_data(G_OBJECT(ed->stylecombo[i]), "dashsel",
-			      ed->dtcombo[i]);
+	    if (ed->stylecombo[i] != NULL) {
+		g_object_set_data(G_OBJECT(ed->stylecombo[i]), "dashsel",
+				  ed->dtcombo[i]);
+	    }
 	}
 
 	if (hbox != NULL) {
