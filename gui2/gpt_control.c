@@ -47,7 +47,7 @@
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
 
-/* the following needs a good deal more work */
+/* the following needs more work/testing */
 #define HANDLE_HEREDATA 0
 
 enum {
@@ -2251,81 +2251,101 @@ static void grab_line_rgb (char *targ, const char *src)
    record the 'using' string as a whole
 */
 
-static int handle_using_spec_full (const char *s,
+static int handle_using_spec_full (const char **ps,
 				   GPT_SPEC *spec,
 				   int i)
 {
     GPT_LINE *line = &spec->lines[i];
-    const char *f, *p = s;
+    const char *f, *p, *s = *ps;
     int *cols = NULL;
     int inparen = 0;
+    int anyparen = 0;
     int ticspecs = 0;
-    int ncolrefs = 0;
+    int n_uniq = 0;
     int k, n = 0;
     int err = 0;
 
     if (isdigit(*s)) {
 	k = atoi(s);
 	gretl_list_append_term(&cols, k);
+	n_uniq++;
     }
 
-    while (*p) {
-	if (*p == '(') {
+    p = s;
+
+    while (*s) {
+	if (*s == '(') {
+	    anyparen = 1;
 	    inparen++;
-	} else if (*p == ')') {
+	} else if (*s == ')') {
 	    inparen--;
 	} else if (!inparen) {
-	    if (*p == ':') {
-		f = p + 1;
+	    if (*s == ':') {
+		f = s + 1;
 		if (*f == 'x' || *f == 'y') {
 		    ticspecs++;
 		} else {
 		    k = (*f == '$')? atoi(f + 1) : atoi(f);
-		    ncolrefs++;
-		    if (k > 0 && !in_gretl_list(cols, k)) {
+		    if (k > 0) {
+			if (!in_gretl_list(cols, k)) {
+			    n_uniq++;
+			}
 			gretl_list_append_term(&cols, k);
 		    }
 		}
-	    } else if (isspace(*p) || *p == ',') {
+	    } else if (isspace(*s) || *s == ',') {
 		break;
 	    }
-	} else if (*p == '$' && isdigit(*(p+1))) {
+	} else if (*s == '$' && isdigit(*(s+1))) {
 	    /* inparen: a tic specification may make reference
 	       to a data column */
-	    k = atoi(p + 1);
-	    ncolrefs++;
-	    if (k > 0 && !in_gretl_list(cols, k)) {
+	    k = atoi(s + 1);
+	    if (k > 0) {
+		if (!in_gretl_list(cols, k)) {
+		    n_uniq++;
+		}
 		gretl_list_append_term(&cols, k);
 	    }
 	}
-	p++;
+	s++;
 	n++;
     }
 
+    /* pass back pointer to remainder of line, if any */
+    *ps = s;
+
     line->style = GP_STYLE_AUTO;
 
-    if (n > 0) {
-	char *ustr = gretl_strndup(s, n);
+    if (n > 0 && (anyparen || ticspecs > 0)) {
+	/* record the 'using' string as is */
+	char *ustr = gretl_strndup(p, n);
 
-	fprintf(stderr, "'using' string = '%s'\n", ustr);
+	fprintf(stderr, "saving ustr = '%s'\n", ustr);
 	line->ustr = ustr;
     }
 
     if (cols != NULL) {
-	line->ncols = cols[0];
-	if (cols[0] == 2 && ncolrefs == 5) {
+	line->ncols = n_uniq;
+	if (cols[0] == 5 && n_uniq == 2) {
 	    /* boxplot special */
 	    line->flags |= GP_LINE_BOXDATA;
 	}
+	/* cumulate total data columns */
 	if (i > 0 && in_gretl_list(cols, 1)) {
 	    /* col 1 should already be counted */
 	    spec->datacols += line->ncols - 1;
 	} else {
 	    spec->datacols += line->ncols;
 	}
+	fprintf(stderr, "number of unique columns %d\n", n_uniq);
 	printlist(cols, "cols list");
 	fprintf(stderr, "spec->datacols now = %d\n", spec->datacols);
-	free(cols);
+	if (line->ustr == NULL) {
+	    fprintf(stderr, "saving line->mcols\n");
+	    line->mcols = cols;
+	} else {
+	    free(cols);
+	}
     }
 
     return err;
@@ -2375,7 +2395,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	/* data column spec */
 	p += 7;
 #if HANDLE_HEREDATA
-	err = handle_using_spec_full(p, spec, i);
+	err = handle_using_spec_full(&p, spec, i);
+	s = p; /* remainder of line */
 #else
 	if (strstr(p, "1:3:2:5:4")) {
 	    line->ncols = 5;
@@ -2386,10 +2407,6 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	    line->ncols = 4;
 	} else if (strstr(p, "1:2:3")) {
 	    line->ncols = 3;
-	} else if ((p = strstr(p, "($2*"))) {
-	    sscanf(p + 4, "%15[^)]", tmp);
-	    line->scale = dot_atof(tmp);
-	    line->ncols = 2;
 	} else {
 	    line->ncols = 2;
 	}
@@ -2405,7 +2422,6 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	/* absence of "using" should mean that the line plots
 	   a formula, not a set of data columns
 	*/
-	line->scale = NADBL;
 	/* get the formula: it runs up to "title" or "notitle" */
 	p = strstr(s, " title");
 	if (p == NULL) {

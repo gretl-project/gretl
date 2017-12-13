@@ -89,7 +89,6 @@ struct plot_editor_ {
     GtkWidget **lineformula;
     GtkWidget **stylecombo;
     GtkWidget **yaxiscombo;
-    GtkWidget **linescale;
     GtkWidget **linewidth;
     GtkWidget **pointsize;
     GtkWidget **colorsel;
@@ -1021,9 +1020,6 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	if (should_apply_changes(ed->lineformula[i])) {
 	    entry_to_gp_string(ed->lineformula[i], line->formula,
 			       sizeof spec->lines[0].formula);
-	}
-	if (should_apply_changes(ed->linescale[i])) {
-	    entry_to_gp_double(ed->linescale[i], &line->scale);
 	}
 	if (should_apply_changes(ed->linewidth[i])) {
 	    line->width = spinner_get_float(ed->linewidth[i]);
@@ -2220,7 +2216,6 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 
     line->style = GP_STYLE_LINES;
     line->type = spec->n_lines; /* assign next line style */
-    line->scale = NADBL;        /* mark as a non-data line */
     line->flags = GP_LINE_USER;
 
     /* re-fill the "lines" notebook page */
@@ -2836,35 +2831,20 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	}
 
 	if (axis_chooser) {
-	    /* scale factor for data? */
+	    /* use left or right y axis? */
 	    GtkWidget *hbox;
 
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
-	    print_field_label(tbl, nrows, _("data scale"));
-	    ed->linescale[i] = gtk_entry_new();
-	    gtk_entry_set_max_length(GTK_ENTRY(ed->linescale[i]), 6);
-	    double_to_gp_entry(line->scale, ed->linescale[i]);
-	    gtk_entry_set_width_chars(GTK_ENTRY(ed->linescale[i]), 6);
-	    if (line_is_formula(line) || line->ustr != NULL) {
-		gtk_widget_set_sensitive(ed->linescale[i], FALSE);
-	    } else {
-		g_signal_connect(G_OBJECT(ed->linescale[i]), "activate",
-				 G_CALLBACK(apply_gpt_changes),
-				 ed);
-	    }
-	    hbox = gpt_hboxit(ed->linescale[i]);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
-				      nrows-1, nrows);
-	    gtk_widget_show_all(hbox);
-
-	    /* use left or right y axis? */
-	    label = gtk_label_new( _("y axis"));
+	    print_field_label(tbl, nrows, _("y axis"));
 	    ed->yaxiscombo[i] = gtk_combo_box_text_new();
 	    combo_box_append_text(ed->yaxiscombo[i], _("left"));
 	    combo_box_append_text(ed->yaxiscombo[i], _("right"));
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->yaxiscombo[i]),
 				     (line->yaxis == 1)? 0 : 1);
-	    gpt_linetab_add2(label, ed->yaxiscombo[i], tbl, ncols, nrows);
+	    hbox = gpt_hboxit(ed->yaxiscombo[i]);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
+				      nrows-1, nrows);
+	    gtk_widget_show_all(hbox);
 	}
 
     add_line_sep:
@@ -3420,7 +3400,6 @@ static void plot_editor_destroy (plot_editor *ed)
     free(ed->lineformula);
     free(ed->stylecombo);
     free(ed->yaxiscombo);
-    free(ed->linescale);
     free(ed->linewidth);
     free(ed->colorsel);
     free(ed->dtcombo);
@@ -3479,7 +3458,6 @@ static int add_line_widget (plot_editor *ed)
     ed->lineformula = widget_array_expand(&ed->lineformula, n, &err);
     ed->stylecombo  = widget_array_expand(&ed->stylecombo, n, &err);
     ed->yaxiscombo  = widget_array_expand(&ed->yaxiscombo, n, &err);
-    ed->linescale   = widget_array_expand(&ed->linescale, n, &err);
     ed->linewidth   = widget_array_expand(&ed->linewidth, n, &err);
     ed->colorsel    = widget_array_expand(&ed->colorsel, n, &err);
     ed->dtcombo     = widget_array_expand(&ed->dtcombo, n, &err);
@@ -3501,7 +3479,6 @@ static int allocate_line_widgets (plot_editor *ed, int n)
 	ed->lineformula = widget_array_new(n, &err);
 	ed->stylecombo  = widget_array_new(n, &err);
 	ed->yaxiscombo  = widget_array_new(n, &err);
-	ed->linescale   = widget_array_new(n, &err);
 	ed->linewidth   = widget_array_new(n, &err);
 	ed->colorsel    = widget_array_new(n, &err);
 	ed->dtcombo     = widget_array_new(n, &err);
@@ -3594,7 +3571,6 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     ed->lineformula = NULL;
     ed->stylecombo = NULL;
     ed->yaxiscombo = NULL;
-    ed->linescale = NULL;
     ed->linewidth = NULL;
     ed->colorsel = NULL;
     ed->dtcombo = NULL;

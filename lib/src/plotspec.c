@@ -137,6 +137,7 @@ static void free_plotspec_lines (GPT_SPEC *spec)
 
     for (i=0; i<spec->n_lines; i++) {
 	free(spec->lines[i].ustr);
+	free(spec->lines[i].mcols);
     }
 
     free(spec->lines);
@@ -402,11 +403,11 @@ int plotspec_add_line (GPT_SPEC *spec)
 
     lines[n].varnum = 0;
     lines[n].style = 0;
-    lines[n].scale = 1.0;
     lines[n].pscale = 1.0;
     lines[n].title[0] = '\0';
     lines[n].formula[0] = '\0';
     lines[n].ustr = NULL;
+    lines[n].mcols = NULL;
     lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
     lines[n].type = LT_AUTO;
@@ -424,7 +425,6 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
 {
     targ->varnum = src->varnum;
     targ->style = src->style;
-    targ->scale = src->scale;
     targ->pscale = src->pscale;
     strcpy(targ->title, src->title);
     strcpy(targ->formula, src->formula);
@@ -438,10 +438,13 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->whiskwidth = src->whiskwidth;
     targ->flags = src->flags;
 
-    /* below: is this right, in context? */
     if (src->ustr != NULL) {
 	free(targ->ustr);
 	targ->ustr = gretl_strdup(src->ustr);
+    }
+    if (src->mcols != NULL) {
+	free(targ->mcols);
+	targ->mcols = gretl_list_copy(src->mcols);
     }
 }
 
@@ -1153,8 +1156,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
     }
 }
 
-#define SIMPLE_TEST 1
-
 static void plotspec_print_heredata (GPT_SPEC *spec,
 				     int *miss,
 				     FILE *fp)
@@ -1485,7 +1486,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (spec->code == PLOT_STACKED_BAR && line->ustr == NULL) {
+	if (spec->code == PLOT_STACKED_BAR &&
+	    line->ustr == NULL && line->mcols == NULL) {
 	    /* stacked-bar histogram: special case */
 	    fprintf(fp, "%s using %d title \"%s\"", src, ycol, line->title);
 	    goto end_print_line;
@@ -1495,11 +1497,15 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "%s ", line->formula);
 	} else if (line->ustr != NULL) {
 	    fprintf(fp, "%s using %s ", src, line->ustr);
-	} else if (line->scale == 1.0 || na(line->scale)) {
-	    /* line->scale may be NA for nonparametric fit,
-	       represented by an array of data rather than
-	       a formula
-	    */
+	} else if (line->mcols != NULL) {
+	    int j;
+
+	    fprintf(fp, "%s using ", src);
+	    for (j=1; j<=line->mcols[0]; j++) {
+		fprintf(fp, "%d", line->mcols[j]);
+		fputc(j < line->mcols[0] ? ':' : ' ', fp);
+	    }
+	} else {
 	    fprintf(fp, "%s using 1", src);
 	    if (line->ncols == 5) {
 		/* Note: boxplot candlesticks, hard-wired! */
@@ -1517,8 +1523,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		}
 	    }
 	    fputc(' ', fp);
-	} else {
-	    fprintf(fp, "%s using 1:($%d*%g) ", src, ycol, line->scale);
 	}
 
 	if ((spec->flags & GPT_Y2AXIS) && line->yaxis != 1) {
@@ -1638,7 +1642,6 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     spec->nobs = spec->okobs = T;
 
     sprintf(spec->lines[1].title, _("loess fit, d = %d, q = %g"), d, q);
-    spec->lines[1].scale = 1.0;
     spec->lines[1].pscale = 1.0;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 2;
@@ -1764,7 +1767,6 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
     set_plotfit_line(title, formula, f, b, x0, pd);
 
     spec->fit = f;
-    spec->lines[1].scale = NADBL;
     spec->lines[1].pscale = 1.0;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 0;

@@ -88,7 +88,7 @@ typedef struct {
     char title[MAXTITLE];          /* key or legend title */
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
     char *ustr;                    /* custom 'using' string */
-    double scale;                  /* scale factor for data */
+    int *mcols;                    /* data-matrix columns used */
     float pscale;                  /* scale factor for points */
     char rgb[8];                   /* rgb color specification */
     char yaxis;                    /* 1 for left, 2 for right */
