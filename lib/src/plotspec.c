@@ -1509,7 +1509,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		    /* boxplot median, hard-wired */
 		    fprintf(fp, ":%d:%d:%d:%d", ycol, ycol, ycol, ycol);
 		} else {
-		    fprintf(fp, ":($%d)", ycol);
+		    fprintf(fp, ":%d", ycol);
 		}
 	    } else {
 		for (k=2; k<=line->ncols; k++) {

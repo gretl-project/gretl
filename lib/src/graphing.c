@@ -2785,13 +2785,10 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 	    if (in_gretl_list(na_skiplist, datlist[ynum]) &&
 		na(dset->Z[datlist[ynum]][t])) {
 		continue;
-	    }
-
-	    if (gi->x == NULL && 
+	    } else if (gi->x == NULL && 
 		all_graph_data_missing(gi->list, t, (const double **) dset->Z)) {
 		continue;
 	    }
-
 	    if (!(gi->flags & GPT_TS) && i == 1) {
 		if (dset->markers) {
 		    label = dset->S[t];
@@ -2800,11 +2797,9 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		    label = obs;
 		}
 	    }
-
 	    if ((gi->flags & GPT_TS) && dset->structure == STACKED_TIME_SERIES) {
 		maybe_print_panel_jot(t, dset, fp);
 	    }
-
 	    printvars(fp, t, datlist, dset, gi, label, xoff);
 	}
 
@@ -3731,7 +3726,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	for (i=1; i<lmax; i++) {
 	    set_lwstr(dset, list[i], lwstr);
 	    set_withstr(&gi, i, withstr);
-	    fprintf(fp, "'-' using 1:($2) axes %s title \"%s (%s)\" %s%s%s",
+	    fprintf(fp, " '-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    series_get_graph_name(dset, list[i]), 
 		    (i == oddman)? _("right") : _("left"),
@@ -3754,10 +3749,10 @@ int gnuplot (const int *plotlist, const char *literal,
 	    double di = gretl_vector_get(gi.dvals, i);
 	    
 	    if (st != NULL) {
-		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%s)\" w points", 
+		fprintf(fp, " '-' using 1:2 title \"%s (%s=%s)\" w points", 
 			s1, s2, series_table_get_string(st, di));
 	    } else {
-		fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points", 
+		fprintf(fp, " '-' using 1:2 title \"%s (%s=%g)\" w points", 
 			s1, s2, di);
 	    }
 	    if (i < nd - 1) {
@@ -3768,7 +3763,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.yformula != NULL) {
 	/* we have a formula to plot, not just data */
-	fprintf(fp, " '-' using 1:($2) title \"%s\" w points, \\\n", _("actual"));	
+	fprintf(fp, " '-' using 1:2 title \"%s\" w points, \\\n", _("actual"));	
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	/* this is a fitted vs actual plot */
@@ -3778,8 +3773,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	list[1] = list[2];
 	list[2] = tmp;
 	set_withstr(&gi, 1, withstr);
-	fprintf(fp, " '-' using 1:($2) title \"%s\" %s, \\\n", _("actual"), withstr);
-	fprintf(fp, " '-' using 1:($2) title \"%s\" %s\n", _("fitted"), withstr);	
+	fprintf(fp, " '-' using 1:2 title \"%s\" %s, \\\n", _("actual"), withstr);
+	fprintf(fp, " '-' using 1:2 title \"%s\" %s\n", _("fitted"), withstr);	
     } else {
 	/* all other cases */
 	int lmax = list[0] - 1;
@@ -3792,7 +3787,7 @@ int gnuplot (const int *plotlist, const char *literal,
 		strcpy(s1, series_get_graph_name(dset, list[i]));
 	    }
 	    set_withstr(&gi, i, withstr);
-	    fprintf(fp, " '-' using 1:($2) title \"%s\" %s%s", s1, withstr, lwstr);
+	    fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
 	    if (i < lmax || (gi.flags & GPT_AUTO_FIT)) {
 	        fputs(", \\\n", fp); 
 	    } else {
@@ -3870,7 +3865,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     print_x_range_from_list(&gi, dset, gi.list, fp);
 
     fputs("plot \\\n", fp);
-    fputs(" '-' using 1:($2) notitle w points, \\\n", fp);
+    fputs(" '-' using 1:2 notitle w points, \\\n", fp);
     fprintf(fp, " x title \"%s\" w lines\n", _("actual = predicted"));
 
     print_gp_data(&gi, dset, fp);
@@ -5814,7 +5809,7 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	}
 	/* then the confidence band */
 	if (style == BAND_BARS) {
-	    fprintf(fp, "'-' using 1:($2):(%g*$3) w errorbars %s%s\n",
+	    fprintf(fp, "'-' using 1:2:(%g*$3) w errorbars %s%s\n",
 		    pm.factor, lspec, dspec);
 	} else {
 	    char *wstr = style == BAND_STEP ? "steps" : "lines";
@@ -6821,7 +6816,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
 	    fprintf(fp, "set title '%s (%s)'\n", vname, uname);
 	}
 
-	fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
+	fputs("plot \\\n'-' using 1:2 notitle w lines\n", fp);
 
 	for (t=0; t<T; t++) {
 	    if (x != NULL) {
