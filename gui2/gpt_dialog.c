@@ -222,15 +222,15 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
 
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
-
     rgb.r = (unsigned char) (scale_round(gcolor.red));
     rgb.g = (unsigned char) (scale_round(gcolor.green));
     rgb.b = (unsigned char) (scale_round(gcolor.blue));
 
-    i = widget_get_int(w, "colnum");
+    i = widget_get_int(w, "colornum");
     data = g_object_get_data(G_OBJECT(color_button), "plotspec");
 
     if (data != NULL) {
+	/* ad hoc color selection for line in particular plot */
 	gretlRGB *prgb = malloc(sizeof *prgb);
 
 	if (prgb != NULL) {
@@ -241,6 +241,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 				   prgb, free);
 	}
     } else {
+	/* user-setting of plot palette */
 	set_graph_palette(i, rgb);
 	update_persistent_graph_colors();
     }
@@ -306,8 +307,7 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     gdk_color_parse(colstr, &gcolor);
 
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
-
-    widget_set_int(cdlg, "colnum", i);
+    widget_set_int(cdlg, "colornum", i);
     g_object_set_data(G_OBJECT(cdlg), "color_button", w);
 
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
@@ -316,7 +316,6 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     g_object_get(G_OBJECT(cdlg), "ok-button", &button, NULL);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(color_select_callback), cdlg);
-
     g_object_get(G_OBJECT(cdlg), "cancel-button", &button, NULL);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(color_cancel), cdlg);
@@ -932,6 +931,11 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
     }
 }
 
+static gboolean should_apply_changes (GtkWidget *w)
+{
+    return w != NULL && gtk_widget_is_sensitive(w);
+}
+
 /* Respond to "OK" or "Apply", or to hitting the Enter key in
    some parts of the plot editor dialog */
 
@@ -950,7 +954,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (ed->keycombo != NULL) {
+    if (should_apply_changes(ed->keycombo)) {
         s = combo_box_get_active_text(ed->keycombo);
 	spec->keyspec = gp_keypos_from_display_name(s);
 	g_free(s);
@@ -1006,34 +1010,32 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	GtkWidget *combo = ed->stylecombo[i];
 
 	line = &spec->lines[i];
-	if (combo != NULL && gtk_widget_is_sensitive(combo)) {
+	if (should_apply_changes(combo)) {
 	    combo_to_gp_style(combo, &line->style);
 	    maybe_set_point_type(line, combo, i);
 	}
-	if (ed->linetitle[i] != NULL) {
+	if (should_apply_changes(ed->linetitle[i])) {
 	    entry_to_gp_string(ed->linetitle[i], line->title,
 			       sizeof spec->lines[0].title);
 	}
-	if (ed->lineformula[i] != NULL &&
-	    gtk_widget_is_sensitive(ed->lineformula[i])) {
+	if (should_apply_changes(ed->lineformula[i])) {
 	    entry_to_gp_string(ed->lineformula[i], line->formula,
 			       sizeof spec->lines[0].formula);
 	}
-	if (ed->linescale[i] != NULL) {
+	if (should_apply_changes(ed->linescale[i])) {
 	    entry_to_gp_double(ed->linescale[i], &line->scale);
 	}
-	if (ed->linewidth[i] != NULL) {
+	if (should_apply_changes(ed->linewidth[i])) {
 	    line->width = spinner_get_float(ed->linewidth[i]);
 	}
-	if (ed->colorsel[i] != NULL) {
+	if (should_apply_changes(ed->colorsel[i])) {
 	    apply_line_color(ed->colorsel[i], spec, i);
 	}
-	if (ed->dtcombo[i] != NULL &&
-	    gtk_widget_is_sensitive(ed->dtcombo[i])) {
+	if (should_apply_changes(ed->dtcombo[i])) {
 	    line->dtype =
 		gtk_combo_box_get_active(GTK_COMBO_BOX(ed->dtcombo[i])) + 1;
 	}
-	if (ed->pointsize[i] != NULL) {
+	if (should_apply_changes(ed->pointsize[i])) {
 	    line->pscale = spinner_get_float(ed->pointsize[i]);
 	}
     }
@@ -1089,7 +1091,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (!err && ed->fitcombo != NULL && gtk_widget_is_sensitive(ed->fitcombo)) {
+    if (!err && should_apply_changes(ed->fitcombo)) {
 	err = set_fit_type_from_combo(ed->fitcombo, spec);
 	if ((spec->fit == PLOT_FIT_NONE || spec->fit == PLOT_FIT_LOESS) &&
 	    ed->fitformula != NULL && spec->n_lines > 1) {
@@ -1098,7 +1100,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (!err && ed->bars_check != NULL) {
+    if (!err && should_apply_changes(ed->bars_check)) {
 	if (button_is_active(ed->bars_check)) {
 	    try_adding_plotbars(spec, ed);
 	} else {
@@ -2748,6 +2750,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				  nrows-1, nrows);
 	gtk_widget_show_all(hbox);
 
+	if (0 && line->style == GP_STYLE_FILLEDCURVE) {
+	    goto add_line_sep;
+	}
+
     line_width_adj:
 
 	/* line-width adjustment */
@@ -2771,12 +2777,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	ed->colorsel[i] = NULL;
 	color_label = NULL;
 
-	/* line color adjustment */
+	/* line color adjustment? */
 	if (i < 6 && !frequency_plot_code(spec->code)) {
 	    ed->colorsel[i] = line_color_button(spec, i);
-	}
-
-	if (ed->colorsel[i] != NULL) {
 	    color_label = gtk_label_new(_("color"));
 	    gpt_linetab_add2(color_label, ed->colorsel[i],
 			     tbl, ncols, nrows);
@@ -2863,6 +2866,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				     (line->yaxis == 1)? 0 : 1);
 	    gpt_linetab_add2(label, ed->yaxiscombo[i], tbl, ncols, nrows);
 	}
+
+    add_line_sep:
 
 	/* separator */
 	gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);

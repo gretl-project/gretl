@@ -984,15 +984,17 @@ static int more_lines (const GPT_SPEC *spec, int i, int skipline)
     }
 }
 
-static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
+static void print_linestyle (const GPT_SPEC *spec,
+			     int targ, int src,
+			     FILE *fp)
 {
     GPT_LINE *line;
     int done = 0;
 
-    fprintf(fp, "set linetype %d ", i+1);
+    fprintf(fp, "set linetype %d ", targ + 1);
 
-    if (i < spec->n_lines) {
-	line = &spec->lines[i];
+    if (src < spec->n_lines) {
+	line = &spec->lines[src];
 	if (*line->rgb != '\0' && line->style != GP_STYLE_FILLEDCURVE) {
 	    fprintf(fp, "lc rgb \"%s\"\n", line->rgb);
 	    done = 1;
@@ -1000,7 +1002,7 @@ static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
     }
 
     if (!done) {
-	const gretlRGB *color = get_graph_color(i);
+	const gretlRGB *color = get_graph_color(targ);
 	char cstr[8];
 
 	print_rgb_hash(cstr, color);
@@ -1022,11 +1024,19 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     } else if (spec->code == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
 	for (i=1; i<BOXCOLOR; i++) {
-	    print_linestyle(spec, i, fp);
+	    print_linestyle(spec, i, i, fp);
 	}
     } else {
+	/* note: handle the case where "line 0" is filledcurve,
+	   the color of which is handled separately
+	*/
+	int offset = 0;
+
+	if (spec->lines[0].style == GP_STYLE_FILLEDCURVE) {
+	    offset = 1;
+	}
 	for (i=0; i<BOXCOLOR; i++) {
-	    print_linestyle(spec, i, fp);
+	    print_linestyle(spec, i, i + offset, fp);
 	}
     }
 }
