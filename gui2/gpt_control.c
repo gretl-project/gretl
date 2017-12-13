@@ -2446,38 +2446,30 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     if (strstr(s, "axes x1y2")) {
 	line->yaxis = 2;
     }
-
     if ((p = strstr(s, " title "))) {
 	grab_line_title(line->title, p + 7);
     }
-
     if ((p = strstr(s, " w "))) {
 	sscanf(p + 3, "%15[^, ]", tmp);
 	line->style = gp_style_index_from_name(tmp);
     }
-
     if ((p = strstr(s, " lt "))) {
 	sscanf(p + 4, "%d", &line->type);
     } else if ((p = strstr(s, " lc rgb "))) {
 	grab_line_rgb(line->rgb, p + 8);
     }
-
     if ((p = strstr(s, " ps "))) {
 	sscanf(p + 4, "%f", &line->pscale);
     }
-
     if ((p = strstr(s, " pt "))) {
 	sscanf(p + 4, "%d", &line->ptype);
     }
-
     if ((p = strstr(s, " dt "))) {
 	sscanf(p + 4, "%d", &line->dtype);
     }
-
     if (!auto_linewidth && (p = strstr(s, " lw "))) {
 	sscanf(p + 4, "%f", &line->width);
     }
-
     if ((p = strstr(s, " whiskerbars "))) {
 	double ww;
 
