@@ -694,11 +694,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     }
 
     fputs("plot \\\n", fp);
-    /* the quartiles and extrema */
+    /* quartiles and whiskers */
     fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lt %d lw %d "
 	    "notitle%s, \\\n", qtype, lwidth, (whiskerbars(grp))? 
 	    " whiskerbars 0.5" : "");
-    /* the median */
+    /* median */
     fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
     if (show_mean(grp) || do_intervals(grp) || n_outliers > 0) {
@@ -712,7 +712,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	/* plot the mean as point */
 	fputs("'-' using 1:2 w points pt 1 notitle", fp);
     } else if (do_intervals(grp)) {
-	/* upper and lower bounds of median interval */
+	/* upper and lower bounds of median c.i. */
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle, \\\n", fp);
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle", fp);
     }
