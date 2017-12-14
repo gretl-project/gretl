@@ -699,7 +699,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 	    "notitle%s, \\\n", qtype, lwidth, (whiskerbars(grp))? 
 	    " whiskerbars 0.5" : "");
     /* median */
-    fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
+    fprintf(fp, "'-' using 1:2:2:2:2 w candlesticks lt %d notitle", qtype);
 
     if (show_mean(grp) || do_intervals(grp) || n_outliers > 0) {
 	/* continue plot lines array */

@@ -482,7 +482,7 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     }
 }
 
-static void combo_to_gp_style (GtkWidget *w, int *sty)
+static void combo_to_gp_style (GtkWidget *w, GpLineStyle *sty)
 {
     gchar *s;
 
@@ -1120,14 +1120,17 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 static void set_keyspec_sensitivity (plot_editor *ed)
 {
     gboolean state = FALSE;
-    const char *p;
-    int i;
 
-    for (i=0; i<ed->gui_nlines; i++) {
-	p = gtk_entry_get_text(GTK_ENTRY(ed->linetitle[i]));
-	if (p != NULL && *p != 0) {
-	    state = TRUE;
-	    break;
+    if (ed->spec->code != PLOT_BOXPLOTS) {
+	const char *p;
+	int i;
+
+	for (i=0; i<ed->gui_nlines; i++) {
+	    p = gtk_entry_get_text(GTK_ENTRY(ed->linetitle[i]));
+	    if (p != NULL && *p != 0) {
+		state = TRUE;
+		break;
+	    }
 	}
     }
 
@@ -2343,23 +2346,44 @@ static void item_remove_button (GtkWidget *tbl, int row,
     gtk_widget_show(button);
 }
 
-static void print_line_label (GtkWidget *tbl, int row, GPT_SPEC *spec,
-			      int i)
+static int boxplot_has_ci (GPT_SPEC *spec)
+{
+    int i, nc = 0;
+
+    for (i=0; i<spec->n_lines; i++) {
+	if (spec->lines[i].style == GP_STYLE_CANDLESTICKS) {
+	    nc++;
+	}
+    }
+
+    return nc > 2;
+}
+
+static void print_line_label (GtkWidget *tbl, int row,
+			      GPT_SPEC *spec, int i)
 {
     char label_text[32];
     GtkWidget *label;
 
+    *label_text = '\0';
+
     if (spec->code == PLOT_BOXPLOTS) {
 	if (i == 0) {
-	    sprintf(label_text, "%s: ", _("quartiles"));
+	    sprintf(label_text, "%s: ", _("box"));
 	} else if (i == 1) {
 	    sprintf(label_text, "%s: ", _("median"));
-	} else if (i == 2 && spec->n_lines == 3) {
-	    sprintf(label_text, "%s: ", _("mean"));
-	} else if (i == 2) {
-	    sprintf(label_text, "%s: ", _("lower bound"));
-	} else if (i == 3) {
-	    sprintf(label_text, "%s: ", _("upper bound"));
+	} else if (boxplot_has_ci(spec)) {
+	    if (i == 2 || i == 3) {
+		sprintf(label_text, "%s: ", _("c.i. bound"));
+	    } else {
+		sprintf(label_text, "%s: ", _("outliers"));
+	    }
+	} else {
+	    if (i == 2) {
+		sprintf(label_text, "%s: ", _("mean"));
+	    } else {
+		sprintf(label_text, "%s: ", _("outliers"));
+	    }
 	}
     } else {
 	sprintf(label_text, _("line %d: "), i+1);
@@ -2582,8 +2606,6 @@ static void set_combo_box_strings_from_stylist (GtkWidget *box,
     }
 }
 
-#define IRF_plot(c) (c == PLOT_IRFBOOT || c == PLOT_MULTI_IRF)
-
 static GList *add_style_spec (GList *list, int t)
 {
     return g_list_append(list, get_style_spec(t));
@@ -2653,9 +2675,21 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     for (i=0; i<ed->gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	GtkWidget *ptsel = NULL;
+	int line_width_ok = 1;
+	int dash_type_ok = 1;
+	int color_sel_ok = 1;
 	int label_done = 0;
 
 	hbox = NULL;
+
+	if (i >= 6 || frequency_plot_code(spec->code)) {
+	    dash_type_ok = 0; /* ? */
+	    color_sel_ok = 0;
+	}
+
+	if (line->type <= 0 && line->type != LT_AUTO) {
+	    color_sel_ok = 0;
+	}
 
 	if (line_is_formula(line)) {
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
@@ -2679,7 +2713,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_widget_show(ed->lineformula[i]);
 	}
 
-	/* identifier and key or legend text */
+	/* identifier */
 	gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	if (!label_done) {
 	    print_line_label(tbl, nrows, spec, i);
@@ -2687,28 +2721,35 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (line->flags & GP_LINE_USER) {
 	    item_remove_button(tbl, nrows, ed, i, GUI_LINE);
 	}
-	print_field_label(tbl, nrows, _("legend"));
-	ed->linetitle[i] = gtk_entry_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->linetitle[i],
-				  2, ncols, nrows-1, nrows);
-	strip_lr(line->title);
-	gp_string_to_entry(ed->linetitle[i], line->title);
-	g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed",
-			 G_CALLBACK(linetitle_callback), ed);
-	g_signal_connect(G_OBJECT(ed->linetitle[i]), "activate",
-			 G_CALLBACK(apply_gpt_changes), ed);
-	gtk_widget_show(ed->linetitle[i]);
-	if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
-	    ed->fitlegend = ed->linetitle[i];
+
+	if (spec->code == PLOT_BOXPLOTS) {
+	    ed->linetitle[i] = NULL;
+	} else {
+	    /* key or legend text */
+	    print_field_label(tbl, nrows, _("legend"));
+	    ed->linetitle[i] = gtk_entry_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->linetitle[i],
+				      2, ncols, nrows-1, nrows);
+	    strip_lr(line->title);
+	    gp_string_to_entry(ed->linetitle[i], line->title);
+	    g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed",
+			     G_CALLBACK(linetitle_callback), ed);
+	    g_signal_connect(G_OBJECT(ed->linetitle[i]), "activate",
+			     G_CALLBACK(apply_gpt_changes), ed);
+	    gtk_widget_show(ed->linetitle[i]);
+	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
+		ed->fitlegend = ed->linetitle[i];
+	    }
 	}
 
-	if (line_is_formula(line) ||
-	    line->style == GP_STYLE_CANDLESTICKS) {
+	if (line_is_formula(line)) {
 	    goto line_width_adj;
 	}
 
 	/* line type (lines, points, etc.) */
-	gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
+	if (spec->code != PLOT_BOXPLOTS) {
+	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
+	}
 	label = gtk_label_new(_("type"));
 	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 1, 2,
@@ -2718,19 +2759,29 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	hbox = gpt_hboxit(ed->stylecombo[i]);
 
 	if (line->style == GP_STYLE_ERRORBARS ||
-	    line->style == GP_STYLE_FILLEDCURVE) {
-	    /* special case */
+	    line->style == GP_STYLE_FILLEDCURVE ||
+	    line->style == GP_STYLE_CANDLESTICKS ||
+	    (spec->code == PLOT_BOXPLOTS &&
+	     line->style == GP_STYLE_POINTS)) {
+	    /* special cases: style not mutable */
 	    GList *altsty = NULL;
 
-	    altsty = add_style_spec(altsty, GP_STYLE_ERRORBARS);
-	    altsty = add_style_spec(altsty, GP_STYLE_FILLEDCURVE);
+	    altsty = add_style_spec(altsty, line->style);
 	    set_combo_box_strings_from_stylist(ed->stylecombo[i], altsty);
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]),
-				     gp_style_index(line->style, altsty));
-	    /* note: no messing with these! */
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), 0);
+	    /* no messing with these! */
 	    gtk_widget_set_sensitive(ed->stylecombo[i], FALSE);
 	    g_list_free(altsty);
+	    dash_type_ok = 0;
+	    if (line->style == GP_STYLE_POINTS ||
+		line->style == GP_STYLE_FILLEDCURVE) {
+		line_width_ok = 0;
+	    } else if (line->style == GP_STYLE_CANDLESTICKS && i > 0) {
+		/* boxplot median: same color as box */
+		color_sel_ok = 0;
+	    }
 	} else {
+	    /* offer choice of styles of representation */
 	    int lt = gp_style_index(line->style, stylist);
 
 	    set_combo_box_strings_from_stylist(ed->stylecombo[i], stylist);
@@ -2745,45 +2796,43 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				  nrows-1, nrows);
 	gtk_widget_show_all(hbox);
 
-	if (0 && line->style == GP_STYLE_FILLEDCURVE) {
-	    goto add_line_sep;
-	}
-
     line_width_adj:
 
-	/* line-width adjustment */
-	gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
-	print_field_label(tbl, nrows, _("line width"));
-	hbox = gtk_hbox_new(FALSE, 5);
-	ed->linewidth[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
-				  line->width);
-	gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
-	gtk_widget_show(ed->linewidth[i]);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
-				  nrows-1, nrows);
-	if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
-	    gtk_widget_set_sensitive(ed->linewidth[i], FALSE);
+	if (line_width_ok) {
+	    /* line-width adjustment */
+	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
+	    print_field_label(tbl, nrows, _("line width"));
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    ed->linewidth[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
+				      line->width);
+	    gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
+	    gtk_widget_show(ed->linewidth[i]);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
+				      nrows-1, nrows);
+	    if (line->style == GP_STYLE_FILLEDCURVE) {
+		gtk_widget_set_sensitive(ed->linewidth[i], FALSE);
+	    } else {
+		g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate",
+				 G_CALLBACK(apply_gpt_changes), ed);
+	    }
 	} else {
-	    g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate",
-			     G_CALLBACK(apply_gpt_changes), ed);
+	    ed->linewidth[i] = NULL;
 	}
 
-	ed->colorsel[i] = NULL;
-	color_label = NULL;
-
-	/* line color adjustment? */
-	if (i < 6 && !frequency_plot_code(spec->code)) {
+	if (color_sel_ok) {
+	    /* color selection */
 	    ed->colorsel[i] = line_color_button(spec, i);
 	    color_label = gtk_label_new(_("color"));
 	    gpt_linetab_add2(color_label, ed->colorsel[i],
 			     tbl, ncols, nrows);
+	} else {
+	    ed->colorsel[i] = NULL;
+	    color_label = NULL;
 	}
 
-	ed->dtcombo[i] = NULL;
-
-	if (i < 6 && !frequency_plot_code(spec->code)) {
-	    /* dash type adjustment */
+	if (dash_type_ok) {
+	    /* dash type selection */
 	    int active = line->dtype > 1 ? line->dtype - 1 : 0;
 	    int hl = has_line(line->style);
 
@@ -2796,6 +2845,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 		g_object_set_data(G_OBJECT(ed->stylecombo[i]), "dashsel",
 				  ed->dtcombo[i]);
 	    }
+	} else {
+	    ed->dtcombo[i] = NULL;
 	}
 
 	if (hbox != NULL) {
@@ -2846,8 +2897,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				      nrows-1, nrows);
 	    gtk_widget_show_all(hbox);
 	}
-
-    add_line_sep:
 
 	/* separator */
 	gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);

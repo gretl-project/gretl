@@ -47,8 +47,8 @@
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
 
-/* the following needs more work/testing */
-#define HANDLE_HEREDATA 0
+/* the following needs more testing */
+#define HANDLE_HEREDATA 1
 
 enum {
     PLOT_SAVED          = 1 << 0,
@@ -2123,6 +2123,7 @@ static void get_plot_nobs (GPT_SPEC *spec,
 	    while (bufgets(line, MAXLEN - 1, buf)) {
 		if (!strncmp(line, "# auxdata", 9)) {
 		    auxpos = buftell(buf);
+		    break;
 		}
 	    }
 	}
@@ -2238,7 +2239,10 @@ static void grab_line_rgb (char *targ, const char *src)
     }
 }
 
-#if HANDLE_HEREDATA
+#define NEW_USING_PARSER 1
+
+#if NEW_USING_PARSER
+#define UDEBUG 0
 
 /* Examples:
 
@@ -2320,7 +2324,9 @@ static int handle_using_spec_full (const char **ps,
 	/* record the 'using' string as is */
 	char *ustr = gretl_strndup(p, n);
 
+#if UDEBUG
 	fprintf(stderr, "saving ustr = '%s'\n", ustr);
+#endif
 	line->ustr = ustr;
     }
 
@@ -2337,11 +2343,12 @@ static int handle_using_spec_full (const char **ps,
 	} else {
 	    spec->datacols += line->ncols;
 	}
+#if UDEBUG
 	fprintf(stderr, "number of unique columns %d\n", n_uniq);
 	printlist(cols, "cols list");
 	fprintf(stderr, "spec->datacols now = %d\n", spec->datacols);
+#endif
 	if (line->ustr == NULL) {
-	    fprintf(stderr, "saving line->mcols\n");
 	    line->mcols = cols;
 	} else {
 	    free(cols);
@@ -2394,7 +2401,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
-#if HANDLE_HEREDATA
+#if NEW_USING_PARSER
 	err = handle_using_spec_full(&p, spec, i);
 	s = p; /* remainder of line */
 #else

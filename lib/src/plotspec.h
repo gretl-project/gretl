@@ -84,7 +84,7 @@ typedef enum {
 
 typedef struct {
     int varnum;                    /* ID number of variable to plot */
-    int style;                     /* lines, points, etc. */
+    GpLineStyle style;             /* lines, points, etc. */
     char title[MAXTITLE];          /* key or legend title */
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
     char *ustr;                    /* custom 'using' string */
@@ -92,7 +92,7 @@ typedef struct {
     float pscale;                  /* scale factor for points */
     char rgb[8];                   /* rgb color specification */
     char yaxis;                    /* 1 for left, 2 for right */
-    int type;                      /* 1, 2, ... (style) */
+    int type;                      /* 1, 2, ... (style reference) */
     int ptype;                     /* point type */
     int dtype;                     /* dash type */
     float width;                   /* line width, default 1.0 */

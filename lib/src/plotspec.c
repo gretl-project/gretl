@@ -283,6 +283,8 @@ int gp_style_index_from_name (const char *s)
 	return GP_STYLE_IMPULSES;
     } else if (!strcmp(s, "b")) {
 	return GP_STYLE_BOXES;
+    } else if (!strncmp(s, "can", 3)) {
+	return GP_STYLE_CANDLESTICKS;
     }
 
     /* fallback */
@@ -1027,6 +1029,13 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     } else if (spec->code == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
 	for (i=1; i<BOXCOLOR; i++) {
+	    print_linestyle(spec, i, i, fp);
+	}
+    } else if (spec->code == PLOT_BOXPLOTS) {
+	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
+	/* "line 0" actually uses linetype 2 */
+	print_linestyle(spec, 1, 0, fp);
+	for (i=2; i<BOXCOLOR; i++) {
 	    print_linestyle(spec, i, i, fp);
 	}
     } else {
