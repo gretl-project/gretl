@@ -2294,7 +2294,7 @@ static void remove_label (GtkWidget *w, plot_editor *ed)
 	nomem();
     } else {
 	int pgnum = widget_get_int(ed->notebook, "labels_page");
-	int labnum = widget_get_int(w, "labelnum")
+	int labnum = widget_get_int(w, "labelnum");
 
 	plotspec_delete_label(ed->spec, labnum);
 	ed->gui_nlabels -= 1;
@@ -2312,7 +2312,7 @@ static void remove_arrow (GtkWidget *w, plot_editor *ed)
 	nomem();
     } else {
 	int pgnum = widget_get_int(ed->notebook, "arrows_page");
-	int anum = widget_get_int(w, "arrownum")
+	int anum = widget_get_int(w, "arrownum");
 
 	plotspec_delete_arrow(ed->spec, anum);
 	ed->gui_narrows -= 1;
