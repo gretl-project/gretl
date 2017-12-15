@@ -1713,6 +1713,8 @@ static int show_bars_check (GPT_SPEC *spec)
 
 #define plot_has_tics(s) (strcmp(s->xtics, "none") || strcmp(s->ytics, "none"))
 
+#define bar_plot(c) (c == PLOT_BAR || c == PLOT_STACKED_BAR)
+
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 {
     GtkWidget *label, *vbox, *tbl;
@@ -1859,7 +1861,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	}
     }
 
-    if (plot_has_tics(spec)) {
+    if (plot_has_tics(spec) && !bar_plot(spec->code)) {
 	/* add show grid options */
 	const char *grid_opts[] = {
 	    N_("horizontal"),
@@ -3729,12 +3731,15 @@ GtkWidget *plot_add_editor (png_plot *plot)
 	gpt_tab_XY(editor, spec, 2);
     }
 
-    if (spec->lines != NULL && spec->code != PLOT_STACKED_BAR) {
+    if (spec->lines != NULL && !bar_plot(spec->code)) {
+	/* FIXME exclusion of bar plots? */
 	gpt_tab_lines(editor, spec, 0);
     }
 
-    gpt_tab_labels(editor, spec, 0);
-    gpt_tab_arrows(editor, spec, 0);
+    if (plot_is_mouseable(plot)) {
+	gpt_tab_labels(editor, spec, 0);
+	gpt_tab_arrows(editor, spec, 0);
+    }
 
     if (!frequency_plot_code(spec->code)) {
 	gpt_tab_palette(notebook);

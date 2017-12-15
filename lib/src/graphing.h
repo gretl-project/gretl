@@ -112,6 +112,7 @@ typedef enum {
     PLOT_QQ,
     PLOT_USER,
     PLOT_XCORRELOGRAM,
+    PLOT_BAR,
     PLOT_STACKED_BAR,
     PLOT_3D,
     PLOT_BAND,

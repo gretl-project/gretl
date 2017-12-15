@@ -1227,6 +1227,7 @@ static int get_gpt_marker (const char *line, char *label,
                         p == PLOT_TRI_GRAPH || \
                         p == PLOT_BI_GRAPH || \
 			p == PLOT_STACKED_BAR || \
+			p == PLOT_BAR || \
 			p == PLOT_3D)
 
 static int get_gpt_data (GPT_SPEC *spec,
@@ -1850,7 +1851,11 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 
     if (unhandled != NULL) {
 	/* we're peeking at "literal" lines */
-	if (strstr(s, "histogram rowstacked")) {
+	if (strstr(s, "set style data histogram")) {
+	    spec->code = PLOT_BAR;
+	    *unhandled = 1;
+	    return 0;
+	} else if (strstr(s, "histogram rowstacked")) {
 	    spec->code = PLOT_STACKED_BAR;
 	    *unhandled = 1;
 	    return 0;

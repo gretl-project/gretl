@@ -1503,13 +1503,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (spec->code == PLOT_STACKED_BAR &&
-	    line->ustr == NULL && line->mcols == NULL) {
-	    /* stacked-bar histogram: special case */
-	    fprintf(fp, "%s using %d title \"%s\"", src, ycol, line->title);
-	    goto end_print_line;
-	}
-
 	if (*line->formula != '\0') {
 	    fprintf(fp, "%s ", line->formula);
 	} else if (line->ustr != NULL) {
