@@ -13352,9 +13352,10 @@ static int series_calc_nodes (NODE *l, NODE *r)
 
 static int cast_series_to_list (parser *p, NODE *n, short f)
 {
-    if (p->targ == LIST && useries_node(n) &&
-	p->tree->t != F_GENSERIES) {
+    if (p->tree->t == F_GENSERIES) {
 	/* FIXME: other cases when we shouldn't do this "cast"? */
+	return 0;
+    } else if (p->targ == LIST && useries_node(n)) {
 	return (f == F_LOG || f == F_DIFF ||
 		f == F_LDIFF || f == F_SDIFF ||
 		f == F_ODEV);

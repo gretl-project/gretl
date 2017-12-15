@@ -2496,23 +2496,18 @@ static int line_get_point_type (GPT_LINE *line, int i)
 #define has_point(s) (s == GP_STYLE_POINTS || s == GP_STYLE_LINESPOINTS)
 #define has_line(s)  (s == GP_STYLE_LINES || s == GP_STYLE_LINESPOINTS)
 
-static void adjust_line_controls (GtkWidget *src, GtkWidget *targ)
+static void adjust_line_controls (GtkWidget *src, gpointer p)
 {
-    GtkWidget *label = g_object_get_data(G_OBJECT(targ), "label");
-    GtkWidget *psize = g_object_get_data(G_OBJECT(targ), "psize");
-    GtkWidget *pslbl = g_object_get_data(G_OBJECT(targ), "pslbl");
-    GtkWidget *dshsl = g_object_get_data(G_OBJECT(src), "dashsel");
+    GtkWidget *ptc = g_object_get_data(G_OBJECT(src), "point-controls");
+    GtkWidget *lnc = g_object_get_data(G_OBJECT(src), "line-controls");
     gchar *s = combo_box_get_active_text(src);
     int idx = gp_style_index_from_display_name(s);
-    int hp = has_point(idx);
 
-    gtk_widget_set_sensitive(targ, hp);
-    gtk_widget_set_sensitive(label, hp);
-    gtk_widget_set_sensitive(psize, hp);
-    gtk_widget_set_sensitive(pslbl, hp);
-
-    if (dshsl != NULL) {
-	gtk_widget_set_sensitive(dshsl, has_line(idx));
+    if (ptc != NULL) {
+	gtk_widget_set_sensitive(ptc, has_point(idx));
+    }
+    if (lnc != NULL) {
+	gtk_widget_set_sensitive(lnc, has_line(idx));
     }
 }
 
@@ -2581,11 +2576,13 @@ static void gpt_linetab_add2 (GtkWidget *label,
 {
     GtkWidget *hb;
 
-    gtk_widget_show(label);
-    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach(GTK_TABLE(tbl), label,
-		     col-2, col-1, row-1, row,
-		     0, 0, 10, 0);
+    if (label != NULL) {
+	gtk_widget_show(label);
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+	gtk_table_attach(GTK_TABLE(tbl), label,
+			 col-2, col-1, row-1, row,
+			 0, 0, 10, 0);
+    }
     hb = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hb), control, 0, 0, 0);
     gtk_widget_show_all(hb);
@@ -2616,7 +2613,6 @@ static GList *add_style_spec (GList *list, int t)
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
-    GtkWidget *color_label = NULL;
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox, *sep;
     GtkWidget *page;
@@ -2788,8 +2784,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), lt);
 	    ptsel = point_types_combo();
 	    g_object_set_data(G_OBJECT(ed->stylecombo[i]), "pointsel", ptsel);
-	    g_signal_connect(G_OBJECT(ed->stylecombo[i]), "changed",
-			     G_CALLBACK(adjust_line_controls), ptsel);
 	}
 
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
@@ -2799,23 +2793,42 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     line_width_adj:
 
 	if (line_width_ok) {
-	    /* line-width adjustment */
+	    /* (dash type and) line-width adjustment */
+	    int hl = has_line(line->style);
+
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
-	    print_field_label(tbl, nrows, _("line width"));
+	    print_field_label(tbl, nrows, dash_type_ok ? _("line") :
+			      _("line width"));
 	    hbox = gtk_hbox_new(FALSE, 5);
+
+	    if (dash_type_ok) {
+		int active = line->dtype > 1 ? line->dtype - 1 : 0;
+
+		ed->dtcombo[i] = dash_types_combo();
+		gtk_combo_box_set_active(GTK_COMBO_BOX(ed->dtcombo[i]), active);
+		gtk_box_pack_start(GTK_BOX(hbox), ed->dtcombo[i], FALSE, FALSE, 0);
+		label = gtk_label_new( _("width"));
+		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+	    } else {
+		ed->dtcombo[i] = NULL;
+	    }
+
 	    ed->linewidth[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
 				      line->width);
 	    gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
-	    gtk_widget_show(ed->linewidth[i]);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
 				      nrows-1, nrows);
-	    if (line->style == GP_STYLE_FILLEDCURVE) {
-		gtk_widget_set_sensitive(ed->linewidth[i], FALSE);
-	    } else {
-		g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate",
-				 G_CALLBACK(apply_gpt_changes), ed);
+	    g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate",
+			     G_CALLBACK(apply_gpt_changes), ed);
+	    gtk_widget_show_all(hbox);
+	    if (should_apply_changes(ed->stylecombo[i])) {
+		g_object_set_data(G_OBJECT(ed->stylecombo[i]), "line-controls",
+				  hbox);
+		g_signal_connect(G_OBJECT(ed->stylecombo[i]), "changed",
+				 G_CALLBACK(adjust_line_controls), NULL);
 	    }
+	    gtk_widget_set_sensitive(hbox, hl);
 	} else {
 	    ed->linewidth[i] = NULL;
 	}
@@ -2823,35 +2836,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (color_sel_ok) {
 	    /* color selection */
 	    ed->colorsel[i] = line_color_button(spec, i);
-	    color_label = gtk_label_new(_("color"));
-	    gpt_linetab_add2(color_label, ed->colorsel[i],
+	    gpt_linetab_add2(NULL, ed->colorsel[i],
 			     tbl, ncols, nrows);
 	} else {
 	    ed->colorsel[i] = NULL;
-	    color_label = NULL;
-	}
-
-	if (dash_type_ok) {
-	    /* dash type selection */
-	    int active = line->dtype > 1 ? line->dtype - 1 : 0;
-	    int hl = has_line(line->style);
-
-	    ed->dtcombo[i] = dash_types_combo();
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->dtcombo[i]), active);
-	    gtk_widget_show(ed->dtcombo[i]);
-	    gtk_box_pack_start(GTK_BOX(hbox), ed->dtcombo[i], FALSE, FALSE, 5);
-	    gtk_widget_set_sensitive(ed->dtcombo[i], hl);
-	    if (ed->stylecombo[i] != NULL) {
-		g_object_set_data(G_OBJECT(ed->stylecombo[i]), "dashsel",
-				  ed->dtcombo[i]);
-	    }
-	} else {
-	    ed->dtcombo[i] = NULL;
-	}
-
-	if (hbox != NULL) {
-	    gtk_widget_show(hbox);
-	    hbox = NULL;
 	}
 
 	if (ptsel != NULL) {
@@ -2861,24 +2849,28 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	    label = print_field_label(tbl, nrows, _("point"));
-	    gtk_widget_set_sensitive(label, hp);
-	    g_object_set_data(G_OBJECT(ptsel), "label", label);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ptsel), pt);
-	    hbox = gpt_hboxit(ptsel);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
-				      nrows-1, nrows);
-	    gtk_widget_show_all(hbox);
+
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    gtk_box_pack_start(GTK_BOX(hbox), ptsel, 0, 0, 0);
 
 	    label = gtk_label_new( _("size"));
-	    g_object_set_data(G_OBJECT(ptsel), "pslbl", label);
-	    gtk_widget_set_sensitive(label, hp);
+	    gtk_box_pack_start(GTK_BOX(hbox), label, 0, 0, 0);
 	    ed->pointsize[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->pointsize[i]),
 				      line->pscale);
-	    gpt_linetab_add2(label, ed->pointsize[i], tbl, ncols, nrows);
-	    gtk_widget_set_sensitive(ptsel, hp);
-	    gtk_widget_set_sensitive(ed->pointsize[i], hp);
 	    g_object_set_data(G_OBJECT(ptsel), "psize", ed->pointsize[i]);
+	    gtk_box_pack_start(GTK_BOX(hbox), ed->pointsize[i], 0, 0, 0);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
+				      nrows-1, nrows);
+	    gtk_widget_show_all(hbox);
+	    if (should_apply_changes(ed->stylecombo[i])) {
+		g_object_set_data(G_OBJECT(ed->stylecombo[i]), "point-controls",
+				  hbox);
+		g_signal_connect(G_OBJECT(ed->stylecombo[i]), "changed",
+				 G_CALLBACK(adjust_line_controls), NULL);
+	    }
+	    gtk_widget_set_sensitive(hbox, hp);
 	}
 
 	if (axis_chooser) {
