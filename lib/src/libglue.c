@@ -623,10 +623,10 @@ int do_modprint (const char *mname, const char *names,
     return err;
 }
 
-int *matrix_bandplot_biglist (int ci,
-			      const gretl_matrix *m,
-			      const int *list,
-			      int *err)
+static int *matrix_bandplot_biglist (int ci,
+				     const gretl_matrix *m,
+				     const int *list,
+				     int *err)
 {
     const char *s = get_optval_string(ci, OPT_N);
     gchar **S = NULL;
