@@ -2742,7 +2742,11 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    goto line_width_adj;
 	}
 
-	/* line type (lines, points, etc.) */
+	/* data representation style (lines, points, etc.):
+	   in some cases this is user-selectable while in others
+	   it is an immutable consequence of the type of plot
+	   that has been produced
+	*/
 	if (spec->code != PLOT_BOXPLOTS) {
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	}
@@ -2759,7 +2763,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    line->style == GP_STYLE_CANDLESTICKS ||
 	    (spec->code == PLOT_BOXPLOTS &&
 	     line->style == GP_STYLE_POINTS)) {
-	    /* special cases: style not mutable */
+	    /* cases where style is immutable */
 	    GList *altsty = NULL;
 
 	    altsty = add_style_spec(altsty, line->style);
@@ -2777,7 +2781,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 		color_sel_ok = 0;
 	    }
 	} else {
-	    /* offer choice of styles of representation */
+	    /* otherwise offer choice of styles of representation */
 	    int lt = gp_style_index(line->style, stylist);
 
 	    set_combo_box_strings_from_stylist(ed->stylecombo[i], stylist);
@@ -2793,7 +2797,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     line_width_adj:
 
 	if (line_width_ok) {
-	    /* (dash type and) line-width adjustment */
+	    /* characteristics of the lines (or linespoints)
+	       representation of the data, if applicable; plus
+	       linewidth for boxplot "candlesticks"
+	    */
 	    int hl = has_line(line->style);
 
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
@@ -2802,6 +2809,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    hbox = gtk_hbox_new(FALSE, 5);
 
 	    if (dash_type_ok) {
+		/* not relevant for "candlesticks" */
 		int active = line->dtype > 1 ? line->dtype - 1 : 0;
 
 		ed->dtcombo[i] = dash_types_combo();
@@ -2828,7 +2836,11 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 		g_signal_connect(G_OBJECT(ed->stylecombo[i]), "changed",
 				 G_CALLBACK(adjust_line_controls), NULL);
 	    }
-	    gtk_widget_set_sensitive(hbox, hl);
+	    if (line->style == GP_STYLE_CANDLESTICKS) {
+		gtk_widget_set_sensitive(hbox, TRUE);
+	    } else {
+		gtk_widget_set_sensitive(hbox, hl);
+	    }
 	} else {
 	    ed->linewidth[i] = NULL;
 	}
@@ -2843,7 +2855,11 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	}
 
 	if (ptsel != NULL) {
-	    /* point type and size adjustment */
+	    /* point type and size adjustment: we show this only
+	       if representation of the data as points is acceptable
+	       in context; and we make it sensitive iff the point
+	       (or linespoints) style is actually selected
+	    */
 	    int pt = line_get_point_type(line, i);
 	    int hp = has_point(line->style);
 
