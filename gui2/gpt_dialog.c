@@ -85,23 +85,27 @@ struct plot_editor_ {
     gchar *user_barsfile;
     gint active_bars;
 
-    GtkWidget **linetitle;
+    /* plot-line controls */
     GtkWidget **lineformula;
+    GtkWidget **linetitle;
     GtkWidget **stylecombo;
-    GtkWidget **yaxiscombo;
-    GtkWidget **linewidth;
-    GtkWidget **pointsize;
-    GtkWidget **colorsel;
     GtkWidget **dtcombo;
+    GtkWidget **linewidth;
+    GtkWidget **colorsel;
+    GtkWidget **pointsize;
+    GtkWidget **yaxiscombo;
 
+    /* fitted-line controls */
     GtkWidget *fitformula;
     GtkWidget *fitlegend;
 
+    /* label and arrow controls */
     GtkWidget **labeltext;
     GtkWidget **labeljust;
     GtkWidget **labelpos;
     GtkWidget **arrowpos;
 
+    /* global controls */
     GtkWidget *keycombo;
     GtkWidget *fitcombo;
     GtkWidget *border_check;
@@ -2592,6 +2596,18 @@ static GList *add_style_spec (GList *list, int t)
 
 #define line_is_formula(l) (l->formula[0] != '\0' || (l->flags & GP_LINE_USER))
 
+static void line_controls_init (plot_editor *ed, int i)
+{
+    ed->lineformula[i] = NULL;
+    ed->linetitle[i] = NULL;
+    ed->stylecombo[i] = NULL;
+    ed->dtcombo[i] = NULL;
+    ed->linewidth[i] = NULL;
+    ed->colorsel[i] = NULL;
+    ed->pointsize[i] = NULL;
+    ed->yaxiscombo[i] = NULL;
+}
+
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
@@ -2659,6 +2675,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	int label_done = 0;
 
 	hbox = NULL;
+	line_controls_init(ed, i);
 
 	if (i >= 6 || frequency_plot_code(spec->code)) {
 	    dash_type_ok = 0; /* ? */
@@ -2700,9 +2717,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    item_remove_button(tbl, nrows, ed, i, GUI_LINE);
 	}
 
-	if (spec->code == PLOT_BOXPLOTS) {
-	    ed->linetitle[i] = NULL;
-	} else {
+	if (spec->code != PLOT_BOXPLOTS) {
 	    /* key or legend text */
 	    print_field_label(tbl, nrows, _("legend"));
 	    ed->linetitle[i] = gtk_entry_new();
@@ -2799,8 +2814,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 		gtk_box_pack_start(GTK_BOX(hbox), ed->dtcombo[i], FALSE, FALSE, 0);
 		label = gtk_label_new( _("width"));
 		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	    } else {
-		ed->dtcombo[i] = NULL;
 	    }
 
 	    ed->linewidth[i] = gtk_spin_button_new_with_range(0.5, 6.0, 0.5);
@@ -2823,8 +2836,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    } else {
 		gtk_widget_set_sensitive(hbox, hl);
 	    }
-	} else {
-	    ed->linewidth[i] = NULL;
 	}
 
 	if (color_sel_ok) {
@@ -2834,8 +2845,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 3, ncols,
 				      nrows-1, nrows);
 	    gtk_widget_show_all(hbox);
-	} else {
-	    ed->colorsel[i] = NULL;
 	}
 
 	if (ptsel != NULL) {
@@ -2875,8 +2884,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	if (axis_chooser) {
 	    /* use left or right y axis? */
-	    GtkWidget *hbox;
-
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	    print_field_label(tbl, nrows, _("y axis"));
 	    ed->yaxiscombo[i] = gtk_combo_box_text_new();
@@ -2888,8 +2895,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
 				      nrows-1, nrows);
 	    gtk_widget_show_all(hbox);
-	} else {
-	    ed->yaxiscombo[i] = NULL;
 	}
 
 	/* separator */
