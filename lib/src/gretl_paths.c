@@ -124,7 +124,7 @@ static const char *helpfiles[] = {
 
 const char *helpfile_path (int id, int cli, int en)
 {
-    static char hpath[MAXLEN];
+    static char hpath[MAXLEN+18];
     int i = -1;
 
     *hpath = '\0';
@@ -2404,7 +2404,7 @@ static void set_gretl_binbase (const char *path)
 
 static int set_extra_dot_paths (void)
 {
-    char dirname[MAXLEN];
+    char dirname[MAXLEN+128];
     size_t n;
     int err = 0;
 
