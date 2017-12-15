@@ -408,8 +408,6 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].pscale = 1.0;
     lines[n].title[0] = '\0';
     lines[n].formula[0] = '\0';
-    lines[n].ustr = NULL;
-    lines[n].mcols = NULL;
     lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
     lines[n].type = LT_AUTO;
@@ -419,6 +417,9 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].ncols = 0;
     lines[n].whiskwidth = 0;
     lines[n].flags = 0;
+
+    lines[n].ustr = NULL;
+    lines[n].mcols = NULL;
 
     return 0;
 }
@@ -459,6 +460,10 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
 	return E_DATA;
     }
 
+    free(lines[i].ustr);
+    free(lines[i].mcols);
+
+    /* move the remaining line contents down */
     for (j=i; j<n-1; j++) {
 	copy_line_content(&lines[j], &lines[j+1]);
     }
@@ -485,11 +490,14 @@ GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err)
 	return NULL;
     }
 
-    lines = malloc(spec->n_lines * sizeof *lines);
+    lines = calloc(spec->n_lines, sizeof *lines);
+
     if (lines == NULL) {
 	*err = E_ALLOC;
     } else {
 	for (i=0; i<spec->n_lines; i++) {
+	    lines[i].ustr = NULL;
+	    lines[i].mcols = NULL;
 	    copy_line_content(&lines[i], &spec->lines[i]);
 	}
     }

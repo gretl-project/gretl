@@ -2276,8 +2276,9 @@ static void remove_line (GtkWidget *w, plot_editor *ed)
 	nomem();
     } else {
 	int pgnum = widget_get_int(ed->notebook, "lines_page");
+	int lnum = widget_get_int(w, "linenum");
 
-	plotspec_delete_line(ed->spec, widget_get_int(w, "linenum"));
+	plotspec_delete_line(ed->spec, lnum);
 	ed->gui_nlines -= 1;
 
 	/* refresh the associated notebook page */
@@ -2293,8 +2294,9 @@ static void remove_label (GtkWidget *w, plot_editor *ed)
 	nomem();
     } else {
 	int pgnum = widget_get_int(ed->notebook, "labels_page");
+	int labnum = widget_get_int(w, "labelnum")
 
-	plotspec_delete_label(ed->spec, widget_get_int(w, "labelnum"));
+	plotspec_delete_label(ed->spec, labnum);
 	ed->gui_nlabels -= 1;
 
 	/* refresh the associated notebook page */
@@ -2310,8 +2312,9 @@ static void remove_arrow (GtkWidget *w, plot_editor *ed)
 	nomem();
     } else {
 	int pgnum = widget_get_int(ed->notebook, "arrows_page");
+	int anum = widget_get_int(w, "arrownum")
 
-	plotspec_delete_arrow(ed->spec, widget_get_int(w, "arrownum"));
+	plotspec_delete_arrow(ed->spec, anum);
 	ed->gui_narrows -= 1;
 
 	/* refresh the associated notebook page */
@@ -2342,7 +2345,7 @@ static void item_remove_button (GtkWidget *tbl, int row,
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(cb[j]), ed);
     gtk_table_attach_defaults(GTK_TABLE(tbl),
-			      button, 0, 1, row - 1, row);
+			      button, 0, 1, row-1, row);
     gtk_widget_show(button);
 }
 
@@ -2569,27 +2572,6 @@ static GtkWidget *gpt_hboxit (GtkWidget *w)
     return hbox;
 }
 
-static void gpt_linetab_add2 (GtkWidget *label,
-			      GtkWidget *control,
-			      GtkWidget *tbl,
-			      int col, int row)
-{
-    GtkWidget *hb;
-
-    if (label != NULL) {
-	gtk_widget_show(label);
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach(GTK_TABLE(tbl), label,
-			 col-2, col-1, row-1, row,
-			 0, 0, 10, 0);
-    }
-    hb = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hb), control, 0, 0, 0);
-    gtk_widget_show_all(hb);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hb,
-			      col-1, col, row-1, row);
-}
-
 static void set_combo_box_strings_from_stylist (GtkWidget *box,
 						GList *list)
 {
@@ -2618,7 +2600,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     GtkWidget *page;
     GList *stylist = NULL;
     int axis_chooser;
-    int i, nrows, ncols = 5;
+    int i, nrows, ncols = 4;
     int pgnum = -1;
 
     axis_chooser = show_axis_chooser(spec);
@@ -2825,7 +2807,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
 				      line->width);
 	    gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3,
 				      nrows-1, nrows);
 	    g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate",
 			     G_CALLBACK(apply_gpt_changes), ed);
@@ -2848,8 +2830,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (color_sel_ok) {
 	    /* color selection */
 	    ed->colorsel[i] = line_color_button(spec, i);
-	    gpt_linetab_add2(NULL, ed->colorsel[i],
-			     tbl, ncols, nrows);
+	    hbox = gpt_hboxit(ed->colorsel[i]);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 3, ncols,
+				      nrows-1, nrows);
+	    gtk_widget_show_all(hbox);
 	} else {
 	    ed->colorsel[i] = NULL;
 	}
@@ -2877,7 +2861,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				      line->pscale);
 	    g_object_set_data(G_OBJECT(ptsel), "psize", ed->pointsize[i]);
 	    gtk_box_pack_start(GTK_BOX(hbox), ed->pointsize[i], 0, 0, 0);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3,
 				      nrows-1, nrows);
 	    gtk_widget_show_all(hbox);
 	    if (should_apply_changes(ed->stylecombo[i])) {
@@ -2901,9 +2885,11 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->yaxiscombo[i]),
 				     (line->yaxis == 1)? 0 : 1);
 	    hbox = gpt_hboxit(ed->yaxiscombo[i]);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols-2,
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
 				      nrows-1, nrows);
 	    gtk_widget_show_all(hbox);
+	} else {
+	    ed->yaxiscombo[i] = NULL;
 	}
 
 	/* separator */
