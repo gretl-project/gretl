@@ -3,8 +3,7 @@ on MS Windows. We have checked this using MSYS2 and Mingw-w64;
 building via cygwin should also be feasible but we have not
 tried that.
 
-Look in the win32 subdirectory for sample invocations of gretl's
-configure script suitable for use on Windows.
+Look in the win32 subdirectory details.
 
 Allin Cottrell
-2017-10-08
+2017-12-15
