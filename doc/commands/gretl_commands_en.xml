@@ -6752,6 +6752,20 @@
 	estimates, printed when the <opt>vcv</opt> flag is given, is
 	based on the same bootstrap.
       </para>
+      <para>
+	Note that this method can be slow when the sample is large or
+	there are many regressors; in that case it may be preferable
+	to use the <cmdref targ="quantreg"/> command. Given a
+	dependent variable <lit>y</lit> and a list of regressors
+	<lit>X</lit>, the following commands are basically equivalent,
+	except that the quantreg method uses the faster
+	Frisch&ndash;Newton algorithm and provides analytical rather
+	then bootstrapped standard errors.
+      </para>
+      <code>
+	lad y const X
+	quantreg 0.5 y const X
+      </code>
     </description>
 
     <gui-access>
