@@ -142,6 +142,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_QQ,             "QQ plot" },
     { PLOT_USER,           "user-defined plot" },
     { PLOT_XCORRELOGRAM,   "cross-correlogram" },
+    { PLOT_BAR,            "bars" },
     { PLOT_STACKED_BAR,    "stacked-bars" },
     { PLOT_3D,             "3-D plot" },
     { PLOT_BAND,           "band plot" },
