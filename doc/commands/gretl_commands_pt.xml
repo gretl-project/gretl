@@ -182,18 +182,17 @@
       </para>
 
       <para context="cli">
-	The options shown above and the discussion which follows pertain
-	to the use of the <lit>adf</lit> command with regular time series
-	data. For use of this command with panel data please see below.
+	As opções mostradas acima e a discussão que se segue sobre o uso do comando
+    <lit>adf</lit> com dados de séries temporais tipicas. Para usar este comando com
+    dados de painel, ver mais abaixo.
       </para>
 
       <para context="cli">
-	Computes a set of Dickey&ndash;Fuller tests on each of the the
-	listed variables, the null hypothesis being that the variable in
-	question has a unit root.  (But if the <opt>difference</opt>
-	flag is given, the first difference of the variable is taken prior
-	to testing, and the discussion below must be taken as referring to
-	the transformed variable.)
+	Calcula um conjunto de testes de Dickey&ndash;Fuller sobre cada uma das variáveis
+    do argumento, sendo a hipótese nula de que a variável em questão tem uma raiz
+    unitária.  (Mas quando a é dada a opção <opt>difference</opt>, é calculada sobre as
+    primeiras diferenças, e assim, a discussão abaixo deve ser entendida como sendo sobre
+    a variável transformada.)
       </para>
 
       <para context="cli">
@@ -204,16 +203,16 @@
       </para>
 
       <para context="cli">
-	The <opt>--gls</opt> option can be used in conjunction with
-	one or other of the flags <opt>--c</opt> and <opt>--ct</opt>
-	(the model with constant, or model with constant and trend).
-	The effect of this option is that the de-meaning or
-	de-trending of the variable to be tested is done using the GLS
-	procedure suggested by <cite key="ERS96">Elliott,
-	Rothenberg and Stock (1996)</cite>, which gives a test of
-	greater power than the standard Dickey&ndash;Fuller approach.
-	This option is not compatible with <opt>--nc</opt>,
-	<opt>--ctt</opt> or <opt>--seasonals</opt>.
+	A opção <opt>--gls</opt> pode ser utilizada em conjunto com uma ou mais
+    opções <opt>--c</opt> e <opt>--ct</opt>
+	(o modelo com constante, ou modelo com constante e tendência).
+	O efeito desta opção é de que a "desmédianização" ou "destendênciação" da variável
+    a ser testada seja feita usando o procedimento de Mínimos Quadrados Generalizados
+    (GLS) sugerido por <cite key="ERS96">Elliott,
+	Rothenberg e Stock (1996)</cite>, o que resulta num teste mais potente do que a 
+    aproximação de  Dickey&ndash;Fuller.
+	Esta opção não é compatível com a opção <opt>--nc</opt>,
+	<opt>--ctt</opt> ou <opt>--seasonals</opt>.
       </para>      
 
       <para>
@@ -225,21 +224,20 @@
         ser escrito como <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
 	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	  graphic="adf1"/> Under the null hypothesis of a unit root the
-	coefficient on lagged <math>y</math> equals zero; under the
-	alternative that <math>y</math> is stationary this coefficient is
-	negative.
+	  graphic="adf1"/> Sobre a hipótese nula de que o coeficiente da variável
+    desfasada <math>y</math> é igual a zero; contra a alternativa de que
+    <math>y</math> é estacionária este coeficiente é negativo.
       </para>
 
       <para context="cli">
 	Se a <repl>ordem</repl> de desfasamento (daqui em diante, 
         <math>k</math>) é maior que 0, então <math>k</math> desfasamentos
         da variável dependente são incluidos no lado direito das regressões
-        de teste.  If the order is given as &minus;1,
-	<math>k</math> is set following the recommendation of <cite
-	key="schwert89">Schwert (1989)</cite>, namely the integer part
-	of 12(<math>T</math>/100)<sup>0.25</sup>, where <math>T</math>
-	is the sample size.   Se a opção <lit>--test-down</lit> foi dada, 
+        de teste.  Se a ordem for dada como &minus;1,
+	<math>k</math> considera-se a recomendação de <cite
+	key="schwert89">Schwert (1989)</cite>, nomeadamente a parte inteira de
+    12(<math>T</math>/100)<sup>0.25</sup>, onde <math>T</math>
+	é a dimensão da amostra.   Se a opção <lit>--test-down</lit> foi dada, 
         <math>k</math> é considerada como sendo o desfasamento 
         <emphasis>máximo</emphasis> e a ordem de desfasamento efectivamente
         usada é obtida testando para baixo.  O critério para testar para baixo
@@ -248,31 +246,39 @@
         <lit>AIC</lit>.
       </para>
 
+      <para context="gui">
+	Se o nível de desfasamentos (<math>k</math>) é maior que 0, então incluem-se
+	<math>k</math> desfasamentos da variável dependente no lado direito de cada
+	uma das regressões necessárias para calcular as estatísticas dos testes,
+	sujeito ao seguinte requisito. Com a caixa de seleção
+	<quote>Testar para baixo a partir do nível máximo de desfasamentos</quote> ativa,
+	o nível de desfasamentos indicado é considerado como o máximo, e o nível de desfasamentos
+	concreto que se utilizará, obtém-se testando para baixo (de acordo com o
+	critério que foi selecionado na lista).
+      </para>
 
       <para context="cli">
-	When testing down via AIC or BIC is called for, the final lag
-	order for the ADF equation is that which optimizes the chosen
-	information criterion (Akaike or Schwarz Bayesian).  The
-	exact procedure depends on whether or not the <opt>--gls</opt>
-	option is given: when GLS detrending is specified, AIC and BIC
-	are the <quote>modified</quote> versions described in <cite
-	key="ng-perron01">Ng and Perron (2001)</cite>, otherwise they
-	are the standard versions. In the GLS case a refinement is
-	available: if the additional option <opt>perron-qu</opt> is
-	given, the modified information criteria are computed
-	according to the revised method recommended by <cite
-	key="perron-qu07">Perron and Qu (2007)</cite>.
+	Quando se testa para baixo usando AIC ou BIC, o nível final de desfasamento
+    para a equação ADF é tal que optimiza o critério de informação escolhido 
+    (de Akaike ou Bayesiano de Schwarz).  O procedimento exato depende se se
+    indicou ou não a opção <opt>--gls</opt>: quando a "destendenciação" GLS
+    é especificada, os AIC e BIC são versões <quote>modificadas</quote> descritas
+    em <cite key="ng-perron01">Ng e Perron (2001)</cite>, senão, elas são as 
+    versões padrão. No caso GLS existe uma afinação: se a opção adicional
+    <opt>perron-qu</opt> tiver sido dada, o critério de informação modificado
+    é calculado de acordo com o método revisto recomendado por <cite
+	key="perron-qu07">Perron e Qu (2007)</cite>.
       </para>
 
       <para context="gui">
-	When testing down via AIC or BIC is called for, the final lag
-	order for the ADF equation is that which optimizes the chosen
-	information criterion (Akaike or Schwarz Bayesian).
+	Quando se testa para baixo usando AIC ou BIC, o nível final de desfasamento
+    para a equação ADF é tal que optimiza o critério de informação escolhido 
+    (de Akaike ou Bayesiano de Schwarz).
       </para>      
 	
       <para>
-	When testing down via the <math>t</math>-statistic method
-	is called for, the procedure is as follows:
+	Quando se testa para baixo usando o método da estatística <math>t</math>, 
+    o procedimento é o seguinte:
       </para>
 
       <nlist>
@@ -296,14 +302,13 @@
 
       <para>Os <emphasis>p</emphasis> valores para os testes de
 	Dickey&ndash;Fuller baseiam-se em MacKinnon (1996).  O código relevante
-	é incluído com a generosa permissão do autor.  In the case of the test with linear
-	trend using GLS these <emphasis>P</emphasis>-values are not
-	applicable; critical values from Table 1 in <cite
-	key="ERS96">Elliott, Rothenberg and Stock (1996)</cite> are
-	shown instead.
+	é incluído com a generosa permissão do autor.  No caso de teste usando a
+    tendência linear (GLS) estes <emphasis>P</emphasis> valores não são
+	aplicáveis; neste caso usam-se os valores críticos da Tabela 1 em <cite
+	key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.
       </para>
 
-      <subhead context="cli">Panel data</subhead>
+      <subhead context="cli">Dados de Painel</subhead>
 
       <para context="cli">
 	When the <lit>adf</lit> command is used with panel data, to
