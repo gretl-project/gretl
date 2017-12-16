@@ -1592,8 +1592,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, " whiskerbars %g", (double) line->whiskwidth);
 	}
 
-    end_print_line:
-
 	if (spec->heredata) {
 	    ycol += line->ncols - 1;
 	}

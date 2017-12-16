@@ -54,15 +54,14 @@ enum {
     PLOT_SAVED          = 1 << 0,
     PLOT_ZOOMED         = 1 << 1,
     PLOT_ZOOMING        = 1 << 2,
-    PLOT_NO_MARKERS     = 1 << 3,
-    PLOT_PNG_COORDS     = 1 << 4,
-    PLOT_HAS_XRANGE     = 1 << 5,
-    PLOT_HAS_YRANGE     = 1 << 6,
-    PLOT_DONT_ZOOM      = 1 << 7,
-    PLOT_DONT_EDIT      = 1 << 8,
-    PLOT_DONT_MOUSE     = 1 << 9,
-    PLOT_POSITIONING    = 1 << 10,
-    PLOT_CURSOR_LABEL   = 1 << 11
+    PLOT_PNG_COORDS     = 1 << 3,
+    PLOT_HAS_XRANGE     = 1 << 4,
+    PLOT_HAS_YRANGE     = 1 << 5,
+    PLOT_DONT_ZOOM      = 1 << 6,
+    PLOT_DONT_EDIT      = 1 << 7,
+    PLOT_DONT_MOUSE     = 1 << 8,
+    PLOT_POSITIONING    = 1 << 9,
+    PLOT_CURSOR_LABEL   = 1 << 10
 } plot_status_flags;
 
 enum {
@@ -101,7 +100,7 @@ enum {
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
 
 #define labels_frozen(p)        (p->spec->flags & GPT_PRINT_MARKERS)
-#define cant_do_labels(p)       (p->err || (p->status & PLOT_NO_MARKERS))
+#define cant_do_labels(p)       (p->err || p->spec->markers == NULL)
 
 #define plot_show_cursor_label(p) (p->status & PLOT_CURSOR_LABEL)
 
@@ -1181,6 +1180,8 @@ static int chop_comma (char *str)
     return 0;
 }
 
+/* returns non-zero on obtaining a marker */
+
 static int get_gpt_marker (const char *line, char *label,
 			   const char *format)
 {
@@ -1190,15 +1191,16 @@ static int get_gpt_marker (const char *line, char *label,
     fprintf(stderr, "get_gpt_marker, p='%s'\n", p);
 #endif
 
+    *label = '\0';
+
     if (p != NULL) {
 	sscanf(p + 2, format, label);
 #if GPDEBUG > 1
 	fprintf(stderr, "read marker: '%s'\n", label);
 #endif
-	return 0;
     }
 
-    return 1;
+    return *label != '\0';
 }
 
 /* special graphs for which editing via GUI is not supported
@@ -1231,7 +1233,7 @@ static int get_gpt_marker (const char *line, char *label,
 			p == PLOT_3D)
 
 static int get_gpt_data (GPT_SPEC *spec,
-			 int do_markers,
+			 int *do_markers,
 			 const char *buf)
 {
     char s[MAXLEN];
@@ -1275,7 +1277,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 	}
     }
 
-    if (do_markers) {
+    if (*do_markers) {
 	sprintf(obsfmt, "%%%d[^\r\n]", OBSLEN - 1);
     }
 
@@ -1353,8 +1355,8 @@ static int get_gpt_data (GPT_SPEC *spec,
 		okobs--;
 	    }
 
-	    if (i <= imin && do_markers) {
-		get_gpt_marker(s, spec->markers[t], obsfmt);
+	    if (i <= imin && *do_markers) {
+		*do_markers = get_gpt_marker(s, spec->markers[t], obsfmt);
 		if (spec->code == PLOT_FACTORIZED && imin == 0) {
 		    imin = 1;
 		}
@@ -1382,7 +1384,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 }
 
 static int get_gpt_heredata (GPT_SPEC *spec,
-			     int do_markers,
+			     int *do_markers,
 			     long barpos,
 			     long datapos,
 			     const char *buf)
@@ -1424,7 +1426,7 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 	}
     }
 
-    if (do_markers) {
+    if (*do_markers) {
 	sprintf(obsfmt, "%%%d[^\r\n]", OBSLEN - 1);
     }
 
@@ -1450,8 +1452,8 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 	    }
 	    gretl_matrix_set(m, i, j, xij);
 	    s += strlen(test);
-	    if (do_markers) {
-		get_gpt_marker(s, spec->markers[i], obsfmt);
+	    if (*do_markers) {
+		*do_markers = get_gpt_marker(s, spec->markers[i], obsfmt);
 	    }
 	}
     }
@@ -2017,6 +2019,13 @@ static int plotspec_allocate_markers (GPT_SPEC *spec)
     }
 }
 
+static void plotspec_destroy_markers (GPT_SPEC *spec)
+{
+    strings_array_free(spec->markers, spec->n_markers);
+    spec->markers = NULL;
+    spec->n_markers = 0;
+}
+
 /* Determine the number of data points in a plot. While we're at it,
    determine the type of plot, check whether there are any
    data-point markers along with the data, and see if there are
@@ -2536,7 +2545,7 @@ static void maybe_set_add_fit_ok (GPT_SPEC *spec)
 
 static int plot_get_data_and_markers (GPT_SPEC *spec,
 				      const char *buf,
-				      int do_markers,
+				      int *do_markers,
 				      long barpos,
 				      long datapos)
 {
@@ -2554,7 +2563,7 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     }
 
     /* and markers if any */
-    if (!err && do_markers) {
+    if (!err && *do_markers) {
 	err = plotspec_allocate_markers(spec);
     }
 
@@ -2574,6 +2583,11 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     } else {
 	gretl_matrix_free(spec->data);
 	spec->data = NULL;
+    }
+
+    if (spec->markers != NULL && *do_markers == 0) {
+	/* something must have gone wrong: clean up */
+	plotspec_destroy_markers(spec);
     }
 
 #if GPDEBUG
@@ -3112,7 +3126,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     }
 
     if (!err) {
-	err = plot_get_data_and_markers(spec, buf, do_markers,
+	err = plot_get_data_and_markers(spec, buf, &do_markers,
 					barpos, datapos);
     }
 
@@ -3489,13 +3503,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	    pixel_x, x, pixel_y, y);
 #endif
 
-    if (plot->err) {
-	return TRUE;
-    }
-
-    /* no markers to show */
-    if (plot->spec->markers == NULL) {
-	plot->status |= PLOT_NO_MARKERS;
+    if (plot->err || plot->spec->markers == NULL) {
 	return TRUE;
     }
 
@@ -3533,7 +3541,6 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	}
 	if (!got_y) {
 	    data_y = NULL;
-	    plot->status |= PLOT_NO_MARKERS;
 	    return TRUE;
 	}
     }
@@ -3667,8 +3674,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	}
 
 	if (!cant_do_labels(plot) && !labels_frozen(plot) &&
-	    !plot_is_zooming(plot) &&
-	    !na(data_y)) {
+	    !plot_is_zooming(plot) && !na(data_y)) {
 	    identify_point(plot, x, y, data_x, data_y);
 	}
 
