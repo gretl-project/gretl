@@ -1359,14 +1359,11 @@ PlotType plot_type_from_string (const char *str)
 {
     int i, len, ret = PLOT_REGULAR;
 
-    for (i=1; i<PLOT_TYPE_MAX; i++) {
-	/* try to make this failsafe! */
-	if (ptinfo[i].pstr != NULL) {
-	    len = strlen(ptinfo[i].pstr);
-	    if (!strncmp(str + 2, ptinfo[i].pstr, len)) {
-		ret = ptinfo[i].ptype;
-		break;
-	    }
+    for (i=1; ptinfo[i].pstr != NULL; i++) {
+	len = strlen(ptinfo[i].pstr);
+	if (!strncmp(str + 2, ptinfo[i].pstr, len)) {
+	    ret = ptinfo[i].ptype;
+	    break;
 	}
     }
 
