@@ -1125,6 +1125,8 @@ static void set_keyspec_sensitivity (plot_editor *ed)
 {
     gboolean state = FALSE;
 
+    /* key doesn't make sense for boxplots? */
+
     if (ed->spec->code != PLOT_BOXPLOTS) {
 	const char *p;
 	int i;
