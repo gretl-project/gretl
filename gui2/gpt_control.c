@@ -1821,6 +1821,80 @@ static void read_xtics_setting (GPT_SPEC *spec,
     }
 }
 
+static int get_hex_color_from_name (char *str)
+{
+    char colorsfile[MAXLEN+32];
+    FILE *fp;
+    int got = 0;
+
+    sprintf(colorsfile, "%sdata%cgnuplot%cgpcolors.txt",
+	    gretl_home(), SLASH, SLASH);
+    fp = fopen(colorsfile, "r");
+
+    if (fp != NULL) {
+	char line[32], colname[16], hexbit[8];
+
+	while (fgets(line, sizeof line, fp) && !got) {
+	    if (sscanf(line, "%15s %6s", colname, hexbit) == 2) {
+		if (!strcmp(colname, str)) {
+		    *str = '\0';
+		    sprintf(str, "#%s", hexbit);
+		    got = 1;
+		}
+	    } else {
+		break;
+	    }
+	}
+	fclose(fp);
+    }
+
+    return got ? 0 : E_DATA;
+}
+
+static int verify_rgb (char *rgb)
+{
+    char *s = rgb;
+    char delim;
+    int err = 0;
+
+    delim = s[0];
+
+    if (delim == '"' || delim == '\'') {
+	const char *p;
+
+	s++;
+	p = strchr(s, delim);
+	if (p != NULL) {
+	    char test[16] = {0};
+	    int len = p - s;
+
+	    if (len > 0 && len < 16) {
+		strncat(test, s, len);
+		if (*test == '#' && strlen(test) == 7) {
+		    /* should be OK as is? */
+		    strcpy(rgb, test);
+		} else if (!strncmp(test, "0x", 2) && strlen(test) == 8) {
+		    /* revise hex string */
+		    sprintf(rgb, "#%s", test + 2);
+		} else if (isalpha(*test)) {
+		    err = get_hex_color_from_name(test);
+		    if (!err) {
+			strcpy(rgb, test);
+		    }
+		} else {
+		    err = E_DATA;
+		}
+	    } else {
+		err = E_DATA;
+	    }
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
 static int parse_gp_set_line (GPT_SPEC *spec,
 			      const char *s,
 			      linestyle *styles,
@@ -1841,14 +1915,19 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	return 0;
     } else if (!strncmp(s, "set linetype", 12)) {
 	/* e.g. set linetype 1 lc rgb "#ff0000" */
+	char rgb[20] = {0};
 	int n, idx = 0;
-	char rgb[8] = {0};
+	int err = 0;
 
-	n = sscanf(s + 12, " %d lc rgb \"%7s\"", &idx, rgb);
+	n = sscanf(s + 12, " %d lc rgb %19s", &idx, rgb);
 	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
-	    strcpy(styles[idx-1].rgb, rgb);
+	    err = verify_rgb(rgb);
+	    if (!err) {
+		strcpy(styles[idx-1].rgb, rgb);
+	    }
 	}
-	return 0;
+
+	return err;
     }
 
     if (unhandled != NULL) {
@@ -2071,7 +2150,9 @@ static void get_plot_nobs (GPT_SPEC *spec,
 
 	if (started < 0 && line_starts_heredata(line, &eod)) {
 	    /* new method of handling plot data */
+#if GPDEBUG
 	    fprintf(stderr, "*** got heredata!\n");
+#ndif
 	    spec->heredata = 1;
 	    *datapos = buftell(buf);
 	    continue;
@@ -2079,7 +2160,9 @@ static void get_plot_nobs (GPT_SPEC *spec,
 
 	if (eod != NULL) {
 	    if (!strncmp(line, eod, strlen(eod))) {
+#if GPDEBUG
 		fprintf(stderr, "*** reached end of heredata (%s)\n", eod);
+#endif
 		free(eod);
 		eod = NULL;
 		break;
@@ -3091,7 +3174,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* determine total number of required data columns, etc.,
        and transcribe styles info into lines for use in the
-       GUI editor */
+       GUI editor
+    */
 
     for (i=0; i<spec->n_lines && !err; i++) {
 	GPT_LINE *line = &spec->lines[i];
@@ -3106,7 +3190,13 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	if (idx > 0 && idx < MAX_STYLES && line->rgb[0] == '\0') {
 	    /* if we haven't already got a line-specific color,
 	       apply the default style */
-	    strcpy(line->rgb, styles[idx-1].rgb);
+	    strcpy(line->rgb, styles[idx-1].rgb); /* zero-based */
+#if GPDEBUG
+	    fprintf(stderr, "i=%d, no explicit rgb, applying styles[%d].rgb='%s'\n",
+		    i, idx-1, styles[idx-1].rgb);
+#endif
+	} else {
+	    fprintf(stderr, "i=%d, explicit rgb='%s'\n", i, line->rgb);
 	}
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
 	    /* the last "line" doesn't use the regular
