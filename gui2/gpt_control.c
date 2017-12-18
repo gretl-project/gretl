@@ -2152,7 +2152,7 @@ static void get_plot_nobs (GPT_SPEC *spec,
 	    /* new method of handling plot data */
 #if GPDEBUG
 	    fprintf(stderr, "*** got heredata!\n");
-#ndif
+#endif
 	    spec->heredata = 1;
 	    *datapos = buftell(buf);
 	    continue;
