@@ -1993,7 +1993,8 @@ static int loop_store_start (LOOPSET *loop, const char *names,
 }
 
 static int loop_store_update (LOOPSET *loop, int j,
-			      const char *names, const char *fname,
+			      const char *names,
+			      const char *fname,
 			      gretlopt opt)
 {
     LOOP_STORE *lstore = &loop->store;
@@ -3562,7 +3563,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		parse = 0;
 	    } else if (cmd_preparsed(loop, j)) {
 		cmd->ci = ci;
-		parse = 0;
+		if (loop->cmds[j].flags & LOOP_CMD_NOSUB) {
+		    parse = 0;
+		}
 	    }
 
 	do_parsing:
