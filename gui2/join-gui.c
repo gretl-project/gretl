@@ -238,11 +238,11 @@ static void cancel_joiner (GtkWidget *w, join_info *jinfo)
    of zero length or just a placeholder.
 */
 
-static const char *join_entry_text (GtkWidget *w)
+static const char *join_entry_text (GtkWidget *w, const char *nulltext)
 {
     const char *s = gtk_entry_get_text(GTK_ENTRY(w));
-
-    if (*s == '\0' || !strncmp(s, "same as", 7)) {
+    int l = strlen(nulltext);
+    if (*s == '\0' || !strncmp(s, nulltext, l)) {
 	return NULL;
     } else {
 	return s;
@@ -801,16 +801,16 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     PRN *prn;
     int err = 0;
 
-    import = join_entry_text(jinfo->import);
-    target = join_entry_text(jinfo->target);
+    import = join_entry_text(jinfo->import, "same as");
+    target = join_entry_text(jinfo->target, "same as");
 
-    ikey1 = join_entry_text(jinfo->ikey[0]);
-    ikey2 = join_entry_text(jinfo->ikey[1]);
+    ikey1 = join_entry_text(jinfo->ikey[0], "same as");
+    ikey2 = join_entry_text(jinfo->ikey[1], "same as");
 
-    okey1 = join_entry_text(jinfo->okey[0]);
-    okey2 = join_entry_text(jinfo->okey[1]);
+    okey1 = join_entry_text(jinfo->okey[0], "same as");
+    okey2 = join_entry_text(jinfo->okey[1], "same as");
 
-    filter = join_entry_text(jinfo->filter);
+    filter = join_entry_text(jinfo->filter, "none");
 
     /* aggregation: check validity */
     aggr = get_aggr_string(jinfo->aggr, &err);
