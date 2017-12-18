@@ -533,6 +533,9 @@ static PLOTGROUP *plotgroup_new (const int *list,
 	grp->flags = 0;
 	grp->n_bools = 0;
 	grp->gmax = grp->gmin = 0.0;
+	if (opt & OPT_B) {
+	    grp->flags |= BOX_WHISKBARS;
+	}
     }
 
     if (err) {
