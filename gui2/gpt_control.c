@@ -1203,8 +1203,7 @@ static int get_gpt_marker (const char *line, char *label,
     return *label != '\0';
 }
 
-/* special graphs for which editing via GUI is not supported
-   note: FIXME relax the restriction on PLOT_BAND ? */
+/* special graphs for which editing via GUI is not supported */
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
                       p == PLOT_LEVERAGE || \
@@ -1820,6 +1819,9 @@ static void read_xtics_setting (GPT_SPEC *spec,
     }
 }
 
+/* If we got a color name rather than a hex string in an "rgb"
+   spec, try looking it up in gpcolors.txt */
+
 static int get_hex_color_from_name (char *str)
 {
     char colorsfile[MAXLEN+32];
@@ -1849,6 +1851,11 @@ static int get_hex_color_from_name (char *str)
 
     return got ? 0 : E_DATA;
 }
+
+/* Try to accept variant RGB specifications besides the
+   one that's standard in gretl plot files, namely
+   "#RRGGBB" in hex.
+*/
 
 static int verify_rgb (char *rgb)
 {
@@ -1901,24 +1908,23 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 {
     char key[16] = {0};
     char val[MAXLEN] = {0};
+    int lt_pos = 0;
 
-    if (!strncmp(s, "set style line", 14)) {
-	/* legacy: e.g. set style line 1 lc rgb "#ff0000" */
-	int n, idx = 0;
-	char rgb[8] = {0};
-
-	n = sscanf(s + 14, " %d lc rgb \"%7s\"", &idx, rgb);
-	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
-	    strcpy(styles[idx-1].rgb, rgb);
-	}
-	return 0;
-    } else if (!strncmp(s, "set linetype", 12)) {
+    if (!strncmp(s, "set linetype", 12)) {
 	/* e.g. set linetype 1 lc rgb "#ff0000" */
+	lt_pos = 12;
+    } else if (!strncmp(s, "set style line", 14)) {
+	/* legacy: e.g. set style line 1 lc rgb "#ff0000" */
+	lt_pos = 14;
+    }
+
+    if (lt_pos > 0) {
+	/* look for color specification */
 	char rgb[20] = {0};
 	int n, idx = 0;
 	int err = 0;
 
-	n = sscanf(s + 12, " %d lc rgb %19s", &idx, rgb);
+	n = sscanf(s + lt_pos, " %d lc rgb %19s", &idx, rgb);
 	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
 	    err = verify_rgb(rgb);
 	    if (!err) {
