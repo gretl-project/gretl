@@ -488,7 +488,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	write_plot_output_line(NULL, ftmp);
 
 	if (add_line_styles) {
-	    write_plot_line_styles(PLOT_REGULAR, ftmp);
+	    write_plot_line_styles(spec->code, ftmp);
 	}
 
 	/* now for the body of the plot file */
@@ -2336,25 +2336,24 @@ static void grab_line_rgb (char *targ, const char *src)
     }
 }
 
-#define NEW_USING_PARSER 1
-
-#if NEW_USING_PARSER
 #define UDEBUG 0
 
 /* Examples:
 
+   using 1:2
    using 1:n:m:p
    using 1:xtic(...)
    using 1:2:xtic(""):ytic("")
+   using 1:($2+x)
 
-   we need to extract the data column numbers, and
-   if we get special inline xtic() or ytic() specs,
-   record the 'using' string as a whole
+   we need to extract the data column numbers, and if we
+   find special stuff inlinerecord the 'using' string as
+   a whole
 */
 
-static int handle_using_spec_full (const char **ps,
-				   GPT_SPEC *spec,
-				   int i)
+static int process_using_spec (const char **ps,
+			       GPT_SPEC *spec,
+			       int i)
 {
     GPT_LINE *line = &spec->lines[i];
     const char *f, *p, *s = *ps;
@@ -2420,7 +2419,6 @@ static int handle_using_spec_full (const char **ps,
     if (n > 0 && (anyparen || ticspecs > 0)) {
 	/* record the 'using' string as is */
 	char *ustr = gretl_strndup(p, n);
-
 #if UDEBUG
 	fprintf(stderr, "saving ustr = '%s'\n", ustr);
 #endif
@@ -2455,8 +2453,6 @@ static int handle_using_spec_full (const char **ps,
     return err;
 }
 
-#endif
-
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
 
@@ -2488,33 +2484,11 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     }
     s += strspn(s, " ");
 
-    /* The checks below will have to be modified if we're to
-       handle gnuplot 5 "heredoc" data correctly, since the
-       y-columns for a given "line" will not necessarily start
-       at 2. See above for a start on this, but it's by no
-       means ready yet.
-    */
-
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
-#if NEW_USING_PARSER
-	err = handle_using_spec_full(&p, spec, i);
+	err = process_using_spec(&p, spec, i);
 	s = p; /* remainder of line */
-#else
-	if (strstr(p, "1:3:2:5:4")) {
-	    line->ncols = 5;
-	} else if (strstr(p, "1:2:2:2:2")) {
-	    line->ncols = 2;
-	    line->flags |= GP_LINE_BOXDATA;
-	} else if (strstr(p, "1:2:3:4")) {
-	    line->ncols = 4;
-	} else if (strstr(p, "1:2:3")) {
-	    line->ncols = 3;
-	} else {
-	    line->ncols = 2;
-	}
-#endif
     } else if (*s == '\'' || *s == '"') {
 	/* name of data file, without 'using' */
 	if (*(s+1) != '-') {
@@ -3127,7 +3101,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
-#if HANDLE_HEREDATA /* not ready yet! */
+#if HANDLE_HEREDATA
     if (line_starts_heredata(gpline, &eod)) {
 	while (bufgets(gpline, MAXLEN - 1, buf) != NULL) {
 	    if (!strncmp(gpline, eod, strlen(eod))) {
@@ -3172,16 +3146,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	err = E_DATA;
     }
 
-    /* determine total number of required data columns, etc.,
-       and transcribe styles info into lines for use in the
-       GUI editor
-    */
+    /* transcribe styles info into lines for use in the
+       GUI plot-editor */
 
     for (i=0; i<spec->n_lines && !err; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	int idx = line->type; /* this will be 1-based */
 
 	if (idx == LT_AUTO) {
+	    /* automatic sequential line-types */
 	    idx = i + 1;
 	}
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
@@ -3195,8 +3168,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    fprintf(stderr, "i=%d, no explicit rgb, applying styles[%d].rgb='%s'\n",
 		    i, idx-1, styles[idx-1].rgb);
 #endif
-	} else {
-	    fprintf(stderr, "i=%d, explicit rgb='%s'\n", i, line->rgb);
 	}
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
 	    /* the last "line" doesn't use the regular
@@ -3204,15 +3175,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    line->flags = GP_LINE_AUXDATA;
 	    continue;
 	}
-#if !HANDLE_HEREDATA
- 	if (line->ncols > 0) {
-	    if (spec->datacols == 0) {
-		spec->datacols = line->ncols;
-	    } else {
-		spec->datacols += line->ncols - 1;
-	    }
-	}
-#endif
     }
 
     if (!err) {

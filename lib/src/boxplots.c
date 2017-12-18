@@ -592,7 +592,6 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     double ymin, ymax;
     int anybool, n_outliers;
     int lwidth = 2;
-    int fmt, qtype = 2;
     int i, err = 0;
 
     fp = open_plot_input_file(PLOT_BOXPLOTS, 0, &err);
@@ -600,12 +599,6 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     if (err) {
 	return err;
     }
-
-    fmt = specified_gp_output_format();
-    if (fmt == GP_TERM_EPS) {
-	/* line type for main outline, monochrome */
-	qtype = 1;
-    }    
 
     anybool = test_for_bool(grp);
     n_outliers = test_for_outliers(grp);
@@ -695,11 +688,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 
     fputs("plot \\\n", fp);
     /* quartiles and whiskers */
-    fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lt %d lw %d "
-	    "notitle%s, \\\n", qtype, lwidth, (whiskerbars(grp))? 
+    fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lw %d "
+	    "notitle%s, \\\n", lwidth, (whiskerbars(grp))? 
 	    " whiskerbars 0.5" : "");
     /* median */
-    fprintf(fp, "'-' using 1:2:2:2:2 w candlesticks lt %d notitle", qtype);
+    fputs("'-' using 1:2:2:2:2 w candlesticks lt 1 notitle", fp);
 
     if (show_mean(grp) || do_intervals(grp) || n_outliers > 0) {
 	/* continue plot lines array */
@@ -710,7 +703,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 
     if (show_mean(grp)) {
 	/* plot the mean as point */
-	fputs("'-' using 1:2 w points pt 1 notitle", fp);
+	fputs("'-' using 1:2 w points lt 2 pt 1 notitle", fp);
     } else if (do_intervals(grp)) {
 	/* upper and lower bounds of median c.i. */
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle, \\\n", fp);

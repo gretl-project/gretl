@@ -967,6 +967,11 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
+    } else if (ptype == PLOT_BOXPLOTS) {
+	for (i=0; i<2; i++) {
+	    print_rgb_hash(cstr, &user_color[i+1]);
+	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
+	}
     } else if (frequency_plot_code(ptype)) {
 	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
@@ -5236,7 +5241,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     }
 
     if (use_fill) {
-	/* plot the confidence bands first so the other lines
+	/* plot the confidence band first so the other lines
 	   come out on top */
 	if (do_errs) {
 	    print_filledcurve_line(cistr, NULL, fp);

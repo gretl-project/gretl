@@ -1015,6 +1015,7 @@ static void print_linestyle (const GPT_SPEC *spec,
     }
 
     if (!done) {
+	/* hmm, should we be doing this? */
 	const gretlRGB *color = get_graph_color(targ);
 	char cstr[8];
 
@@ -1040,12 +1041,9 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 	    print_linestyle(spec, i, i, fp);
 	}
     } else if (spec->code == PLOT_BOXPLOTS) {
-	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	/* "line 0" actually uses linetype 2 */
-	print_linestyle(spec, 1, 0, fp);
-	for (i=2; i<BOXCOLOR; i++) {
-	    print_linestyle(spec, i, i, fp);
-	}
+	/* the first two elements use the same color */
+	print_linestyle(spec, 0, 0, fp);
+	print_linestyle(spec, 1, 2, fp);
     } else {
 	/* note: handle the case where "line 0" is filledcurve,
 	   the color of which is handled separately
@@ -1227,8 +1225,6 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
     fputs("EOD\n", fp);
 }
 
-#define FREEZE_COL0RS 0 /* not yet */
-
 int plotspec_print (GPT_SPEC *spec, FILE *fp)
 {
     int i, k;
@@ -1258,13 +1254,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
     if (mono) {
 	fputs("set mono\n", fp);
-    }
-
-#if !FREEZE_COL0RS
-    if (!mono) {
+    } else {
 	write_styles_from_plotspec(spec, fp);
     }
-#endif
 
     if (!string_is_blank(spec->titles[0])) {
 	fprintf(fp, "set title \"%s\"\n", spec->titles[0]);
@@ -1554,11 +1546,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-#if FREEZE_COLORS
-	if (*line->rgb != '\0') {
-	    fprintf(fp, "lc rgb \"%s\" ", line->rgb);
-	}
-#else
 	if (line->style == GP_STYLE_FILLEDCURVE && line->type == LT_AUTO) {
 	    if (*line->rgb != '\0') {
 		fprintf(fp, "lc rgb \"%s\" ", line->rgb);
@@ -1566,19 +1553,16 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		print_filledcurve_color(fp);
 	    }
 	}
-#endif
 
 	if (line->style != GP_STYLE_AUTO) {
 	    fprintf(fp, "w %s", gp_line_style_name(line->style));
 	}
 
-#if !FREEZE_COLORS
 	if (line->type != LT_AUTO) {
 	    fprintf(fp, " lt %d", line->type);
 	} else if (spec->nbars > 0 && line->style != GP_STYLE_FILLEDCURVE) {
 	    fprintf(fp, " lt %d", i + 1);
 	}
-#endif
 
 	maybe_print_point_info(line, fp);
 
