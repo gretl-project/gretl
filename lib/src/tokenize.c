@@ -3505,6 +3505,27 @@ static int post_process_rename_param (CMD *cmd,
     return err;
 }
 
+static int post_process_sprintf_command (CMD *cmd,
+					 char *line)
+{
+    int err = 0;
+
+    *line = '\0';
+
+    if (cmd->vstart != NULL) {
+	sprintf(line, "%s=sprintf(\"%s\",%s)", cmd->param,
+		cmd->parm2, cmd->vstart);
+    } else {
+	sprintf(line, "%s=sprintf(\"%s\")", cmd->param, cmd->parm2);
+    }
+
+    cmd->ci = GENR;
+    cmd->gtype = GRETL_TYPE_STRING;
+    cmd->vstart = line;
+
+    return err;
+}
+
 /* check the commands that have the CI_INFL flag:
    the precise line-up of required arguments may
    depend on the option(s) specified
@@ -3591,7 +3612,8 @@ static void handle_option_inflections (CMD *cmd)
     }
 }
 
-static int assemble_command (CMD *cmd, DATASET *dset)
+static int assemble_command (CMD *cmd, DATASET *dset,
+			     char *line)
 {
     /* defer handling option(s) till param is known? */
     int options_later = cmd->ci == SETOPT;
@@ -3713,6 +3735,8 @@ static int assemble_command (CMD *cmd, DATASET *dset)
 	    cmd->err = post_process_spreadsheet_options(cmd);
 	} else if (cmd->ci == RENAME) {
 	    cmd->err = post_process_rename_param(cmd, dset);
+	} else if (cmd->ci == SPRINTF && line != NULL) {
+	    cmd->err = post_process_sprintf_command(cmd, line);
 	}
     }
 
@@ -3781,7 +3805,7 @@ static int get_flow_control_ci (const char *s)
     return ci;
 }
 
-static int real_parse_command (const char *line, CMD *cmd, 
+static int real_parse_command (char *line, CMD *cmd,
 			       DATASET *dset, int compmode,
 			       void *ptr)
 {
@@ -3803,7 +3827,7 @@ static int real_parse_command (const char *line, CMD *cmd,
 	       want to extract the options).
 	    */
 	    if (!err && cmd->ci == LOOP && compmode == LOOP) {
-		err = assemble_command(cmd, dset);
+		err = assemble_command(cmd, dset, line);
 		compmode = 0;
 	    }
 	    goto parse_exit;
@@ -3832,7 +3856,7 @@ static int real_parse_command (const char *line, CMD *cmd,
 
 	/* Otherwise proceed to "assemble" the parsed command */
 	if (!err) {
-	    err = assemble_command(cmd, dset);
+	    err = assemble_command(cmd, dset, line);
 	}
     }
 
@@ -3877,7 +3901,7 @@ int parse_gui_command (const char *line, CMD *cmd, DATASET *dset)
     if (*line != '\0') {
 	err = tokenize_line(cmd, line, dset, 0);
 	if (!err) {
-	    err = assemble_command(cmd, dset);
+	    err = assemble_command(cmd, dset, NULL);
 	}
     }
 

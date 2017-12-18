@@ -1361,33 +1361,6 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
     return err;
 }
 
-/* Supporting the old, deprecated command-form of sprintf:
-   we'll just repackage this as a function call.
-*/
-
-static int do_sprintf_command (const char *targ,
-			       const char *format,
-			       const char *args,
-			       DATASET *dset,
-			       PRN *prn)
-{
-    gchar *tmp;
-    int err;
-
-    if (args != NULL) {
-	tmp = g_strdup_printf("%s=sprintf(\"%s\",%s)",
-			      targ, format, args);
-    } else {
-	tmp = g_strdup_printf("%s=sprintf(\"%s\")",
-			      targ, format);
-    }
-    
-    err = generate(tmp, dset, GRETL_TYPE_STRING, 0, prn);
-    g_free(tmp);
-    
-    return err;
-}
-
 /* apparatus to support the command-forms of printf, sprintf 
    and sscanf */
 
@@ -1398,8 +1371,6 @@ int do_printscan_command (int ci, const char *parm1, const char *parm2,
 
     if (ci == PRINTF) {
 	err = do_printf(parm1, vargs, dset, prn, NULL);
-    } else if (ci == SPRINTF) {
-	err = do_sprintf_command(parm1, parm2, vargs, dset, prn);
     } else {
 	err = sscanf_driver(vargs, dset, prn);
     }
