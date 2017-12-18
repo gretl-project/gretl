@@ -120,7 +120,7 @@ be given in plain form (without the ``at'' sign):
 
 \begin{itemize}
 \item When such a variable appears among the arguments to the
-  commands \texttt{printf} or \texttt{sprintf}.
+  \texttt{printf} command or \texttt{sprintf} function.
 \item When such a variable is given as the argument to a function.
 \item On the right-hand side of a \texttt{string} assignment.
 \end{itemize}
@@ -150,7 +150,7 @@ want to create 10 random normal series named \texttt{norm1} to
 \begin{code}
 string sname = null
 loop i=1..10
-  sprintf sname "norm%d", i
+  sname = sprintf("norm%d", i)
   series @sname = normal()
 endloop
 \end{code}

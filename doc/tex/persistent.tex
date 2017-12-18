@@ -453,20 +453,18 @@ string s = "\"
 \end{code}
 %
 is a valid assignment, producing a string that contains a single
-backslash character.  If you wish to use backslash-escapes to denote
-newlines, tabs, embedded double-quotes and so on, use \texttt{sprintf}
-instead.
+backslash character.
 
-The \texttt{sprintf} command can also be used to define a string
-variable. This command works in exactly the same way as the
-\texttt{printf} command except that the ``format'' string must be
-preceded by an identifier: either the name of an existing string
-variable or a new name to which the string should be assigned.
-For example,
+If you wish to use backslash-escapes to denote newlines, tabs,
+embedded double-quotes and so on, use the \texttt{sprintf} function
+instead (see the \texttt{printf} command for an account of the
+escape-characters). This function can also be used to produce
+a string variable whose definition involves the values of other
+variables, as in
 %
 \begin{code}
 scalar x = 8
-sprintf foo "var%d", x
+foo = sprintf("var%d", x) # produces "var8"
 \end{code}
 
 \subsection{String variables and string substitution}
@@ -483,7 +481,7 @@ given in plain form (without the ``at'' sign):
 
 \begin{itemize}
 \item When such a variable appears among the arguments to the
-  commands \texttt{printf} or \texttt{sprintf}.
+  \texttt{printf} command or \texttt{sprintf} function.
 \item When such a variable is given as the argument to a function.
 \item On the right-hand side of a \texttt{string} assignment.
 \end{itemize}
@@ -513,7 +511,7 @@ want to create 10 random normal series named \texttt{norm1} to
 \begin{code}
 string sname = null
 loop i=1..10
-  sprintf sname "norm%d", i
+  sname = sprintf("norm%d", i)
   series @sname = normal()
 endloop
 \end{code}
@@ -647,7 +645,7 @@ The \textsl{filename} field may be given as a string variable.  For
 example
 %
 \begin{code}
-? sprintf fname "%s/QNC.rts", $x12adir
+? fname = sprintf("%s/QNC.rts", $x12adir)
 Generated string fname
 ? string foo = readfile(fname)
 Generated string foo

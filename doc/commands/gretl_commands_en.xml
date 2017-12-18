@@ -13091,27 +13091,13 @@
 
   </command>
 
-  <command name="sprintf" section="Printing"
-    label="Printing to a string" context="cli">
-
-    <usage>
-      <arguments>
-	<argument>stringvar</argument>
-        <argument>format</argument>
-	<argpunct>, </argpunct>
-        <argument>args</argument>
-      </arguments>
-    </usage>
-
+  <command name="sprintf" section="Printing" context="cli">
     <description>
       <para>
-	This command works exactly like the <cmdref targ="printf"/>
-	command, printing the given arguments under the control of the
-	format string, except that the result is written into the named
-	string, <repl>stringvar</repl>.
+	Obsolete command: please use the <fncref targ="sprintf"/>
+	function instead.
       </para>
     </description>
-
   </command>
 
   <command name="square" section="Transformations"

@@ -973,8 +973,8 @@ rewriting the sequence of joins as a loop, as in
 
 \begin{footnotesize}
 \begin{verbatim}
-sprintf countries "France Germany Italy \"United Kingdom\""
-sprintf vnames "FRA GER ITA UK"
+string countries = sprintf("France Germany Italy \"United Kingdom\"")
+string vnames = "FRA GER ITA UK"
 setopt join persist --tkey="Period,Q%q-%Y" --data=Value
 
 loop foreach i @countries
@@ -1090,8 +1090,7 @@ for parsing the \texttt{Period} values).
 
 Now for the country names:
 \begin{code}
-string cstrs
-sprintf cstrs "France Germany Italy \"United Kingdom\""
+string cstrs = sprintf("France Germany Italy \"United Kingdom\"")
 setobs country cstrs --panel-groups
 \end{code}
 Here we write into the string \texttt{cstrs} the names of the
@@ -1134,7 +1133,7 @@ on importing (see section~\ref{sec:join-syntax}) so we'll need a
 slightly different set of country strings.
 %
 \begin{code}
-sprintf cstrs "France Germany Italy United_Kingdom"
+string cstrs = "France Germany Italy United_Kingdom"
 setobs country cstrs --panel-groups
 loop foreach i @cstrs --quiet
   smpl country=="$i" --restrict --replace

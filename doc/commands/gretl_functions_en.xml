@@ -2495,7 +2495,7 @@
 	<para>
 	  Here is an example of use: downloading some data from the
 	  US Bureau of Labor Statistics site, which requires sending
-	  a JSON query. Note the use of <cmdref targ="sprintf"/> to
+	  a JSON query. Note the use of <fncref targ="sprintf"/> to
 	  embed double-quotes in the <lit>POST</lit> data.
 	</para>
 	<code>
@@ -8825,14 +8825,14 @@
 	  sqrt(5) is (roughly) 2.2361.
 	</code>
 	<para>
-	  where <lit>%d</lit> indicates that we want an integer at
-	  that place in the output; since it is the leftmost
-	  <quote>percent</quote> expression, it is matched to the
-	  first argument, that is 5. The second special sequence is
-	  <lit>%6.4f</lit>, which stands for a decimal value with 4
-	  digits after the decimal separator and at least 6 digits
-	  wide. The number of such sequences must match the number
-	  of arguments following the format string.
+	  The expression <lit>%d</lit> in the format string indicates
+	  that we want an integer at that place in the output; since
+	  it is the leftmost <quote>percent</quote> expression, it is
+	  matched to the first argument, that is 5. The second special
+	  sequence is <lit>%6.4f</lit>, which stands for a decimal
+	  value at least 6 digits wide with 4 digits after the decimal
+	  separator.  The number of such sequences must match the
+	  number of arguments following the format string.
 	</para>
 	<para>
 	  See the help page for the <cmdref targ="printf"/> command
@@ -8967,7 +8967,7 @@
 	  scalar y
 	  sscanf("123456", "%3d%3d", x, y)
 
-	  sprintf S, "1 2 3 4\n5 6 7 8"
+	  S = sprintf("1 2 3 4\n5 6 7 8")
 	  S
 	  matrix m
 	  sscanf(S, "%m", m)

@@ -419,8 +419,7 @@ However, we are now able to pull the results back into gretl by
 executing the following commands, either from the console or by
 creating a small script:
 \begin{code}
-string fname 
-sprintf fname "%s/compon.csv", $dotdir
+string fname = sprintf("%s/compon.csv", $dotdir)
 append @fname
 vars = mread("vars.mat", 1)
 \end{code}
