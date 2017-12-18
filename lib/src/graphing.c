@@ -5509,8 +5509,7 @@ static int parse_band_pm_option (const int *list,
     return err;
 }
 
-static int parse_gnuplot_color (const char *s,
-				char *targ)
+int parse_gnuplot_color (const char *s, char *targ)
 {
     int hexcheck = 0;
     int err = 0;

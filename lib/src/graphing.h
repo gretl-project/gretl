@@ -314,6 +314,8 @@ void print_palette_string (char *s);
 
 const gretlRGB *get_graph_color (int i);
 
+int parse_gnuplot_color (const char *s, char *targ);
+
 int gnuplot_test_command (const char *cmd);
 
 void gnuplot_png_set_default_scale (double s);

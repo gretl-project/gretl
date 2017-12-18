@@ -1819,39 +1819,6 @@ static void read_xtics_setting (GPT_SPEC *spec,
     }
 }
 
-/* If we got a color name rather than a hex string in an "rgb"
-   spec, try looking it up in gpcolors.txt */
-
-static int get_hex_color_from_name (char *str)
-{
-    char colorsfile[MAXLEN+32];
-    FILE *fp;
-    int got = 0;
-
-    sprintf(colorsfile, "%sdata%cgnuplot%cgpcolors.txt",
-	    gretl_home(), SLASH, SLASH);
-    fp = fopen(colorsfile, "r");
-
-    if (fp != NULL) {
-	char line[32], colname[16], hexbit[8];
-
-	while (fgets(line, sizeof line, fp) && !got) {
-	    if (sscanf(line, "%15s %6s", colname, hexbit) == 2) {
-		if (!strcmp(colname, str)) {
-		    *str = '\0';
-		    sprintf(str, "#%s", hexbit);
-		    got = 1;
-		}
-	    } else {
-		break;
-	    }
-	}
-	fclose(fp);
-    }
-
-    return got ? 0 : E_DATA;
-}
-
 /* Try to accept variant RGB specifications besides the
    one that's standard in gretl plot files, namely
    "#RRGGBB" in hex.
@@ -1860,10 +1827,8 @@ static int get_hex_color_from_name (char *str)
 static int verify_rgb (char *rgb)
 {
     char *s = rgb;
-    char delim;
+    char delim = s[0];
     int err = 0;
-
-    delim = s[0];
 
     if (delim == '"' || delim == '\'') {
 	const char *p;
@@ -1876,20 +1841,7 @@ static int verify_rgb (char *rgb)
 
 	    if (len > 0 && len < 16) {
 		strncat(test, s, len);
-		if (*test == '#' && strlen(test) == 7) {
-		    /* should be OK as is? */
-		    strcpy(rgb, test);
-		} else if (!strncmp(test, "0x", 2) && strlen(test) == 8) {
-		    /* revise hex string */
-		    sprintf(rgb, "#%s", test + 2);
-		} else if (isalpha(*test)) {
-		    err = get_hex_color_from_name(test);
-		    if (!err) {
-			strcpy(rgb, test);
-		    }
-		} else {
-		    err = E_DATA;
-		}
+		err = parse_gnuplot_color(test, rgb);
 	    } else {
 		err = E_DATA;
 	    }
