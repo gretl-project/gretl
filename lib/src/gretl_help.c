@@ -22,6 +22,14 @@
 #include "gretl_func.h"
 #include "gretl_help.h"
 
+/* for PDF opening */
+#ifdef G_OS_WIN32
+# include <windows.h>
+#endif
+#ifdef OS_OSX
+# include <Carbon/Carbon.h>
+#endif
+
 static int maybe_need_recode (void)
 {
     const gchar *cset = NULL;
@@ -241,6 +249,8 @@ static int find_pkg_in_dir (const char *targ,
 
     *fullname = '\0';
 
+    /* first look for pdf or gfn in own subdir */
+
     if (is_functions_dir(path)) {
 	while ((dirent = readdir(dir)) != NULL && !found) {
 	    basename = dirent->d_name;
@@ -272,7 +282,7 @@ static int find_pkg_in_dir (const char *targ,
 	rewinddir(dir);
     }
 
-    /* then look for "plain gfn" files? */
+    /* then look for "plain gfn" files */
 
     while (!found && (dirent = readdir(dir)) != NULL) {
 	basename = dirent->d_name;
@@ -289,6 +299,14 @@ static int find_pkg_in_dir (const char *targ,
     return found;
 }
 
+#ifdef G_OS_WIN32
+# ifdef _WIN64
+# define ptrcast gint64
+# else
+# define ptrcast long
+# endif
+#endif
+
 static int show_pkg_pdf (const char *fname)
 {
     int err = 0;
@@ -300,7 +318,7 @@ static int show_pkg_pdf (const char *fname)
 #elif defined(OS_OSX)
     FSRef ref;
 
-    err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
+    err = FSPathMakeRef((const UInt8 *) fname, &ref, NULL);
     if (!err) {
 	err = LSOpenFSRef(&ref, NULL);
     }
