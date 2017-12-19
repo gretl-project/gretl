@@ -4726,7 +4726,7 @@ static void print_package_help (const fnpkg *pkg,
 				const char *fname,
 				PRN *prn)
 {
-    char *rem, *p, line[2048];
+    char *rem, line[2048];
     int i, lmax = 76;
 
     pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
@@ -4747,9 +4747,8 @@ static void print_package_help (const fnpkg *pkg,
 		for (i=lmax-1; i>0; i--) {
 		    if (rem[i] == ' ') {
 			rem[i] = '\0';
-			p = rem + i + 1;
 			pprintf(prn, "%s\n", rem);
-			rem = p;
+			rem = rem + i + 1;
 			break;
 		    }
 		}
