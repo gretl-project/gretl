@@ -4727,8 +4727,7 @@ static void print_package_help (const fnpkg *pkg,
 				PRN *prn)
 {
     char *rem, *p, line[2048];
-    int lmax = 76;
-    int i, n;
+    int i, lmax = 76;
 
     pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
 	    pkg->date, pkg->author);
@@ -4744,7 +4743,7 @@ static void print_package_help (const fnpkg *pkg,
 	    pputs(prn, line);
 	} else {
 	    rem = line;
-	    while ((n = strlen(rem)) > lmax) {
+	    while (strlen(rem) > lmax) {
 		for (i=lmax-1; i>0; i--) {
 		    if (rem[i] == ' ') {
 			rem[i] = '\0';
