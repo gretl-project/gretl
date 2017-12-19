@@ -3543,13 +3543,19 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 
     if (tmp != NULL) {
 	char obstr[OBSLEN];
+	int y, m, d;
 
 	obstr[0] = '\0';
 	strncat(obstr, (char *) tmp, OBSLEN - 1);
 	gretl_charsub(obstr, ':', '.');
+
+	if (sscanf(obstr, "%d/%d/%d", &y, &m, &d) == 3) {
+	    /* handle legacy gdt dates */
+	    gretl_charsub(obstr, '/', '-');
+	}
 	
 	if (likely_calendar(obstr) && caldata) {
-	    guint32 ed = get_epoch_day((char *) tmp);
+	    guint32 ed = get_epoch_day(obstr);
 
 	    if (ed <= 0) {
 		err = 1;
@@ -3570,7 +3576,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 	    gretl_errmsg_set(_("Failed to parse startobs"));
 	} else {
 	    stobs[0] = '\0';
-	    strncat(stobs, (char *) tmp, OBSLEN - 1);
+	    strncat(stobs, obstr, OBSLEN - 1);
 	    colonize_obs(stobs);
 	}
 
@@ -3586,25 +3592,38 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
     int err = 0;
 
     if (tmp != NULL) {
-	if (caldata) {
-	    guint32 ed = get_epoch_day((char *) tmp);
+	char obstr[OBSLEN];
 
+	obstr[0] = '\0';
+	strncat(obstr, (char *) tmp, OBSLEN - 1);
+	gretl_charsub(obstr, ':', '.');
+
+	if (caldata) {
+	    int y, m, d;
+	    guint32 ed;
+
+	    if (sscanf(obstr, "%d/%d/%d", &y, &m, &d) == 3) {
+		/* handle legacy gdt file */
+		gretl_charsub(obstr, '/', '-');
+	    }
+
+	    ed = get_epoch_day(obstr);
 	    if (ed <= 0) {
 		err = 1;
 	    }
 	} else {
 	    double x;
 
-	    if (sscanf((char *) tmp, "%lf", &x) != 1) {
+	    if (sscanf(obstr, "%lf", &x) != 1) {
 		err = 1;
 	    }
-	} 
+	}
 
 	if (err) {
 	    gretl_errmsg_set(_("Failed to parse endobs"));
 	} else {
 	    endobs[0] = '\0';
-	    strncat(endobs, (char *) tmp, OBSLEN - 1);
+	    strncat(endobs, obstr, OBSLEN - 1);
 	    colonize_obs(endobs);
 	}
 
@@ -3833,7 +3852,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     err = xml_get_startobs(cur, &tmpset->sd0, tmpset->stobs, caldata);
     if (err) {
 	goto bailout;
-    }     
+    }
 
     *tmpset->endobs = '\0';
     caldata = calendar_data(tmpset);
