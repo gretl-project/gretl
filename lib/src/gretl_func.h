@@ -255,6 +255,8 @@ int print_function_package_info (const char *fname, PRN *prn);
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn);
 
+int print_function_package_help (const char *fname, PRN *prn);
+
 ufunc *get_function_from_package (const char *funname, fnpkg *pkg);
 
 int get_function_file_header (const char *fname, char **pdesc,

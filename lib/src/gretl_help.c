@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -36,7 +36,7 @@ static int recode_print_line (const char *s, PRN *prn)
     gsize bytes;
     GError *err = NULL;
 
-    trs = g_locale_from_utf8(s, -1, NULL, &bytes, &err);  
+    trs = g_locale_from_utf8(s, -1, NULL, &bytes, &err);
 
     if (err != NULL) {
 	pprintf(prn, "%s\n", err->message);
@@ -63,7 +63,7 @@ static int func_help_topics (const char *helpfile, PRN *prn)
     if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
 	printf(_("Unable to access the file %s.\n"), helpfile);
 	return E_FOPEN;
-    } 
+    }
 
     j = 1;
     k = 0;
@@ -87,13 +87,13 @@ static int func_help_topics (const char *helpfile, PRN *prn)
 	    }
 	    j++;
 	}
-    } 
+    }
 
     pputs(prn, _("\n\nFor help on a specific function, type: help funname"));
     pputs(prn, _(" (e.g. help qrdecomp)\n"));
 
     fclose(fp);
-    
+
     return 0;
 }
 
@@ -106,7 +106,7 @@ static void output_help_line (const char *line, PRN *prn, int recode)
     }
 }
 
-/* check in the CLI helpfile for a line of the form "  @s: ...", 
+/* check in the CLI helpfile for a line of the form "  @s: ...",
    where @s has been recognized as a libset variable */
 
 static int got_setvar_line (const char *s, int n, char *line)
@@ -122,9 +122,9 @@ static int got_setvar_line (const char *s, int n, char *line)
 
 #define HELPLEN 128
 
-/* special case: the user has done "help set @setvar" */	
+/* special case: the user has done "help set @setvar" */
 
-static int do_set_help (const char *setvar, FILE *fp, 
+static int do_set_help (const char *setvar, FILE *fp,
 			int recode, PRN *prn)
 {
     char s[9], line[HELPLEN];
@@ -222,6 +222,132 @@ static void do_help_on_help (PRN *prn)
     pputs(prn, _("You can also do 'help functions' for a list of functions\n"));
 }
 
+static int is_functions_dir (const char *path)
+{
+    int n = strlen(path) - 9;
+
+    return n > 0 && !strcmp(path + n, "functions");
+}
+
+static int find_pkg_in_dir (const char *targ,
+			    DIR *dir, const char *path,
+			    char **gfn, char **pdf)
+{
+    struct dirent *dirent;
+    const char *basename;
+    char fullname[MAXLEN];
+    char test[128];
+    int found = 0;
+
+    *fullname = '\0';
+
+    if (is_functions_dir(path)) {
+	while ((dirent = readdir(dir)) != NULL && !found) {
+	    basename = dirent->d_name;
+	    if (!strcmp(basename, ".") ||
+		!strcmp(basename, "..")) {
+		continue;
+	    }
+	    if (!strcmp(basename, targ)) {
+		build_path(fullname, path, basename, NULL);
+		if (gretl_isdir(fullname)) {
+		    /* construct functions/foo/foo.pdf */
+		    strcat(fullname, SLASHSTR);
+		    strcat(fullname, basename);
+		    strcat(fullname, ".pdf");
+		    if (gretl_file_exists(fullname)) {
+			*pdf = gretl_strdup(fullname);
+			found = 1;
+		    } else {
+			switch_ext(fullname, fullname, "gfn");
+			if (gretl_file_exists(fullname)) {
+			    *gfn = gretl_strdup(fullname);
+			    found = 1;
+			}
+		    }
+		}
+		gretl_error_clear();
+	    }
+	}
+	rewinddir(dir);
+    }
+
+    /* then look for "plain gfn" files? */
+
+    while (!found && (dirent = readdir(dir)) != NULL) {
+	basename = dirent->d_name;
+	if (has_suffix(basename, ".gfn")) {
+	    sprintf(test, "%s.gfn", targ);
+	    if (!strcmp(basename, test)) {
+		build_path(fullname, path, basename, NULL);
+		*gfn = gretl_strdup(fullname);
+		found = 1;
+	    }
+	}
+    }
+
+    return found;
+}
+
+static int show_pkg_pdf (const char *fname)
+{
+    int err = 0;
+
+#if defined(G_OS_WIN32)
+    if ((ptrcast) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
+	err = E_FOPEN;
+    }
+#elif defined(OS_OSX)
+    FSRef ref;
+
+    err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
+    if (!err) {
+	err = LSOpenFSRef(&ref, NULL);
+    }
+#else
+    char *syscmd = g_strdup_printf("xdg-open \"%s\"", fname);
+
+    err = system(syscmd);
+    g_free(syscmd);
+#endif
+
+    return err;
+}
+
+static int find_function_package_help (const char *targ,
+				       PRN *prn, int *err)
+{
+    char *gfn = NULL;
+    char *pdf = NULL;
+    char **dnames = NULL;
+    int i, n_dirs = 0;
+    int found = 0;
+
+    /* get names of directories to search */
+    dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
+
+    for (i=0; i<n_dirs && !found; i++) {
+	DIR *dir = gretl_opendir(dnames[i]);
+
+	if (dir != NULL) {
+	    found = find_pkg_in_dir(targ, dir, dnames[i], &gfn, &pdf);
+	    closedir(dir);
+	}
+    }
+
+    if (pdf != NULL) {
+	*err = show_pkg_pdf(pdf);
+	free(pdf);
+    } else if (gfn != NULL) {
+	*err = print_function_package_help(gfn, prn);
+	free(gfn);
+    }
+
+    strings_array_free(dnames, n_dirs);
+
+    return found;
+}
+
 /**
  * cli_help:
  * @hlpword: the word (usually a command) on which help is wanted.
@@ -230,8 +356,8 @@ static void do_help_on_help (PRN *prn)
  * rather than commands.
  * @prn: pointer to gretl printing struct.
  *
- * Searches in the gretl helpfile for help on @hlpword and, 
- * if help is found, prints it to @prn.  If @hlpword is %NULL, 
+ * Searches in the gretl helpfile for help on @hlpword and,
+ * if help is found, prints it to @prn.  If @hlpword is %NULL,
  * lists the valid commands.
  *
  * Returns: 0 on success, 1 if the helpfile was not found or the
@@ -246,6 +372,7 @@ int cli_help (const char *hlpword, const char *param,
     FILE *fp;
     int noword, funhelp = (opt & OPT_F);
     int ok = 0;
+    int err = 0;
 
     noword = (hlpword == NULL || *hlpword == '\0');
 
@@ -266,7 +393,7 @@ int cli_help (const char *hlpword, const char *param,
 
     if (!funhelp) {
 	int ci = gretl_command_number(hlpword);
-	
+
 	if (ci == SET && param != NULL) {
 	    ok = is_libset_var(param);
 	    if (!ok) {
@@ -276,7 +403,7 @@ int cli_help (const char *hlpword, const char *param,
 	} else {
 	    ok = ci > 0;
 	}
-    } 
+    }
 
     if (ok) {
 	strcpy(helpfile, helpfile_path(GRETL_CMDREF, 1, 0));
@@ -284,29 +411,31 @@ int cli_help (const char *hlpword, const char *param,
 	strcpy(helpfile, helpfile_path(GRETL_FUNCREF, 1, 0));
     } else if (gretl_is_public_user_function(hlpword)) {
 	return user_function_help(hlpword, OPT_NONE, prn);
+    } else if (find_function_package_help(hlpword, prn, &err)) {
+	return err; /* handled */
     } else {
 	pprintf(prn, _("\"%s\" is not a gretl command.\n"), hlpword);
 	return 1;
     }
 
-    if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
+    fp = gretl_fopen(helpfile, "r");
+
+    if (fp == NULL) {
 	printf(_("Unable to access the file %s.\n"), helpfile);
-	return 1;
-    } 
-
-    if (!gretl_in_gui_mode() && recode < 0) {
-	recode = maybe_need_recode();
-    }
-
-    /* actually output the relevant help text */
-
-    if (param != NULL) {
-	ok = do_set_help(param, fp, recode, prn);
+	err = E_FOPEN;
     } else {
-	ok = output_help_text(hlpword, fp, recode, prn);
+	if (!gretl_in_gui_mode() && recode < 0) {
+	    recode = maybe_need_recode();
+	}
+	/* actually output the relevant help text */
+	if (param != NULL) {
+	    ok = do_set_help(param, fp, recode, prn);
+	} else {
+	    ok = output_help_text(hlpword, fp, recode, prn);
+	}
+
+	fclose(fp);
     }
 
-    fclose(fp);
-
-    return 0;
+    return err;
 }

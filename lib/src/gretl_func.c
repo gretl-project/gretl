@@ -1399,7 +1399,8 @@ enum {
     FUNCS_INFO,
     FUNCS_LOAD,
     FUNCS_CODE,
-    FUNCS_SAMPLE
+    FUNCS_SAMPLE,
+    FUNCS_HELP
 };
 
 static const char *arg_type_xml_string (int t)
@@ -4719,6 +4720,16 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     }
 }
 
+static void print_package_help (const fnpkg *pkg, const char *fname, PRN *prn)
+{
+    pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
+	    pkg->date, pkg->author);
+    pputs(prn, gretl_strstrip(pkg->descrip));
+    pputs(prn, "\n\n");
+    pputs(prn, pkg->help);
+    pputs(prn, "\n\n");
+}
+
 static void print_package_code (const fnpkg *pkg,
 				int tabwidth,
 				PRN *prn)
@@ -5183,7 +5194,9 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
     }
 
     if (!err) {
-	if (task == FUNCS_INFO) {
+	if (task == FUNCS_HELP) {
+	    print_package_help(pkg, fname, prn);
+	} else if (task == FUNCS_INFO) {
 	    print_package_info(pkg, fname, prn);
 	} else if (task == FUNCS_SAMPLE) {
 	    pputs(prn, pkg->sample);
@@ -5224,6 +5237,13 @@ int print_function_package_sample (const char *fname, int tabwidth,
 				   PRN *prn)
 {
     return real_print_gfn_data(fname, prn, tabwidth, FUNCS_SAMPLE);
+}
+
+/* callback used via command line */
+
+int print_function_package_help (const char *fname, PRN *prn)
+{
+    return real_print_gfn_data(fname, prn, 0, FUNCS_HELP);
 }
 
 /* Read the header from a function package file -- this is used when
