@@ -4720,13 +4720,52 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     }
 }
 
-static void print_package_help (const fnpkg *pkg, const char *fname, PRN *prn)
+/* simple plain-text help output */
+
+static void print_package_help (const fnpkg *pkg,
+				const char *fname,
+				PRN *prn)
 {
+    char *rem, *p, line[2048];
+    int lmax = 76;
+    int i, n;
+
     pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
 	    pkg->date, pkg->author);
     pputs(prn, gretl_strstrip(pkg->descrip));
     pputs(prn, "\n\n");
-    pputs(prn, pkg->help);
+
+    /* try reflowing the help text if lines are too long
+       for presentation in console */
+
+    bufgets_init(pkg->help);
+    while (bufgets(line, sizeof line, pkg->help)) {
+	if (strlen(line) <= lmax) {
+	    pputs(prn, line);
+	} else {
+	    rem = line;
+	    while ((n = strlen(rem)) > lmax) {
+		for (i=lmax-1; i>0; i--) {
+		    if (rem[i] == ' ') {
+			rem[i] = '\0';
+			p = rem + i + 1;
+			pprintf(prn, "%s\n", rem);
+			rem = p;
+			break;
+		    }
+		}
+		if (rem - line == 0) {
+		    /* let's not get into an infinite loop */
+		    break;
+		}
+	    }
+	    if (*rem != '\0') {
+		pputs(prn, rem);
+	    }
+	}
+    }
+    bufgets_finalize(pkg->help);
+
     pputs(prn, "\n\n");
 }
 
