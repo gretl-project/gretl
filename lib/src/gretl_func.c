@@ -6435,12 +6435,19 @@ int gretl_function_append_line (const char *line)
 
 #if NULL_LIST_SPECIAL
 
-static int localize_null_list (fncall *call, fn_param *fp,
-			       DATASET *dset)
+/* Missing or "null" arg -> gives an empty list,
+   rather than no list.
+
+   This is traditional behavior though it's (now)
+   inconsistent with what happens with other types
+   of argument.
+*/
+
+static int add_empty_list (fncall *call, fn_param *fp,
+			   DATASET *dset)
 {
     int err = 0;
 
-    /* empty arg -> gives an empty list? */
     if (dset == NULL || dset->n == 0) {
 	err = E_NODATA;
     } else {
@@ -6452,7 +6459,7 @@ static int localize_null_list (fncall *call, fn_param *fp,
     return err;
 }
 
-#endif
+#endif /* NULL_LIST_SPECIAL */
 
 static int localize_list (fncall *call, fn_arg *arg,
 			  fn_param *fp, DATASET *dset)
@@ -6756,10 +6763,20 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		gretl_type_get_name(arg->type));
 #endif
 
-	if (gretl_scalar_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_NONE) {
+	if (arg->type == GRETL_TYPE_NONE) {
+	    if (gretl_scalar_type(fp->type)) {
 		err = add_scalar_arg_default(fp);
-	    } else if (arg->type == GRETL_TYPE_MATRIX) {
+	    }
+#if NULL_LIST_SPECIAL
+	    else if (fp->type == GRETL_TYPE_LIST) {
+		add_empty_list(call, fp, dset);
+	    }
+#endif
+	    continue;
+	}
+
+	if (gretl_scalar_type(fp->type)) {
+	    if (arg->type == GRETL_TYPE_MATRIX) {
 		err = do_matrix_scalar_cast(arg, fp);
 	    } else {
 		err = real_add_scalar_arg(fp, arg->val.x);
@@ -6768,7 +6785,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    if (arg->type == GRETL_TYPE_USERIES) {
 		/* an existing named series */
 		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
-	    } else if (arg->type != GRETL_TYPE_NONE) {
+	    } else {
 		/* an on-the-fly constructed series */
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }	    
@@ -6779,40 +6796,23 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		   fp->type == GRETL_TYPE_BUNDLE ||
 		   fp->type == GRETL_TYPE_STRING ||
 		   gretl_array_type(fp->type)) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		if (fp->flags & ARG_CONST) {
-		    err = localize_const_object(arg, fp);
-		} else {
-		    err = copy_as_arg(fp->name, fp->type, arg_get_data(arg));
-		}
+	    if (fp->flags & ARG_CONST) {
+		err = localize_const_object(arg, fp);
+	    } else {
+		err = copy_as_arg(fp->name, fp->type, arg_get_data(arg));
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    /* special: handles relevant cases for lists */
-#if NULL_LIST_SPECIAL
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_list(call, arg, fp, dset);
-	    } else {
-		err = localize_null_list(call, fp, dset);
-	    }
-#else
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_list(call, arg, fp, dset);
-	    }
-#endif
+	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_series_ref(call, arg, fp, dset);
-	    }
+	    err = localize_series_ref(call, arg, fp, dset);
 	} else if (gretl_ref_type(fp->type)) {
-	    if (arg->type != GRETL_TYPE_NONE) {
-		if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->upname[0] == '\0') {
-		    err = localize_bundle_as_shell(arg, fp);
-		} else {
-		    err = user_var_localize(arg->upname, fp->name, fp->type);
-		}
-		if (!err) {
-		    maybe_set_arg_const(arg, fp);
-		}
+	    if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->upname[0] == '\0') {
+		err = localize_bundle_as_shell(arg, fp);
+	    } else {
+		err = user_var_localize(arg->upname, fp->name, fp->type);
+	    }
+	    if (!err) {
+		maybe_set_arg_const(arg, fp);
 	    }
 	}
 
@@ -6824,7 +6824,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	}	
     }
 
-    /* now for any parameters without matching arguments */
+    /* now for any trailing parameters without matching arguments */
 
     for (i=call->argc; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
@@ -6832,7 +6832,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    err = add_scalar_arg_default(fp);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 #if NULL_LIST_SPECIAL
-	    err = localize_null_list(call, fp, dset);
+	    err = add_empty_list(call, fp, dset);
 #else
 	    fprintf(stderr, "skipping list pseudo-arg\n");
 #endif
