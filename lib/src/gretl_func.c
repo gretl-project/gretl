@@ -6431,22 +6431,36 @@ int gretl_function_append_line (const char *line)
    purposes of the function.
 */
 
+#define NULL_LIST_SPECIAL 1
+
+#if NULL_LIST_SPECIAL
+
+static int localize_null_list (fncall *call, fn_param *fp,
+			       DATASET *dset)
+{
+    int err = 0;
+
+    /* empty arg -> gives an empty list? */
+    if (dset == NULL || dset->n == 0) {
+	err = E_NODATA;
+    } else {
+	int tmp[] = {0};
+
+	copy_list_as_arg(fp->name, tmp, &err);
+    }
+
+    return err;
+}
+
+#endif
+
 static int localize_list (fncall *call, fn_arg *arg,
 			  fn_param *fp, DATASET *dset)
 {
     int *list = NULL;
     int err = 0;
 
-    if (arg == NULL || arg->type == GRETL_TYPE_NONE) {
-	/* empty arg -> gives an empty list? */
-	if (dset == NULL || dset->n == 0) {
-	    err = E_NODATA;
-	} else {
-	    int tmp[] = {0};
-
-	    list = copy_list_as_arg(fp->name, tmp, &err);
-	}
-    } else if (arg->type == GRETL_TYPE_LIST) {
+    if (arg->type == GRETL_TYPE_LIST) {
 	/* actual list arg -> copy to function level */
 	list = arg->val.list;
 	err = copy_as_arg(fp->name, GRETL_TYPE_LIST, list);
@@ -6773,8 +6787,18 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		}
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    /* special: handles all relevant cases for lists */
-	    err = localize_list(call, arg, fp, dset);
+	    /* special: handles relevant cases for lists */
+#if NULL_LIST_SPECIAL
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = localize_list(call, arg, fp, dset);
+	    } else {
+		err = localize_null_list(call, fp, dset);
+	    }
+#else
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = localize_list(call, arg, fp, dset);
+	    }
+#endif
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
 		err = localize_series_ref(call, arg, fp, dset);
@@ -6807,7 +6831,11 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	if (gretl_scalar_type(fp->type)) {
 	    err = add_scalar_arg_default(fp);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    err = localize_list(call, NULL, fp, dset);
+#if NULL_LIST_SPECIAL
+	    err = localize_null_list(call, fp, dset);
+#else
+	    fprintf(stderr, "skipping list pseudo-arg\n");
+#endif
 	}
     }
 
