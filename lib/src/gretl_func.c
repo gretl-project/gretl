@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS
@@ -272,7 +272,7 @@ static int pkg_key_get_role (const char *key)
 	    }
 	}
     }
-    
+
     return UFUN_ROLE_NONE;
 }
 
@@ -285,7 +285,7 @@ const char *package_role_get_key (int flag)
 	    return pkg_lookups[i].key;
 	}
     }
-    
+
     return NULL;
 }
 
@@ -308,7 +308,7 @@ int gretl_compiling_python (const char *line)
     if (compiling_python) {
 	char s1[4], s2[8];
 
-	if (sscanf(line, "%3s %7s", s1, s2) == 2 && 
+	if (sscanf(line, "%3s %7s", s1, s2) == 2 &&
 	    !strcmp(s1, "end") && !strcmp(s2, "foreign")) {
 	    compiling_python = 0;
 	}
@@ -347,7 +347,7 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
 			    GretlType type, void *p)
 {
     int err = 0;
-    
+
     arg->type = type;
     arg->flags = 0;
     arg->name = NULL;
@@ -356,18 +356,18 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     if (name != NULL) {
 	strcpy(arg->upname, name);
     }
-    
+
     if (type == GRETL_TYPE_NONE) {
 	arg->val.x = 0;
-    } else if (type == GRETL_TYPE_DOUBLE || 
+    } else if (type == GRETL_TYPE_DOUBLE ||
 	       type == GRETL_TYPE_SCALAR_REF) {
 	arg->val.x = *(double *) p;
-    } else if (type == GRETL_TYPE_INT || 
+    } else if (type == GRETL_TYPE_INT ||
 	       type == GRETL_TYPE_OBS) {
 	arg->val.x = *(int *) p;
     } else if (type == GRETL_TYPE_SERIES) {
 	arg->val.px = (double *) p;
-    } else if (type == GRETL_TYPE_MATRIX || 
+    } else if (type == GRETL_TYPE_MATRIX ||
 	       type == GRETL_TYPE_MATRIX_REF) {
 	arg->val.m = (gretl_matrix *) p;
     } else if (type == GRETL_TYPE_STRING ||
@@ -378,7 +378,7 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     } else if (type == GRETL_TYPE_SERIES_REF ||
 	       type == GRETL_TYPE_USERIES) {
 	arg->val.idnum = *(int *) p;
-    } else if (type == GRETL_TYPE_BUNDLE || 
+    } else if (type == GRETL_TYPE_BUNDLE ||
 	       type == GRETL_TYPE_BUNDLE_REF) {
 	arg->val.b = (gretl_bundle *) p;
     } else if (type == GRETL_TYPE_ARRAY ||
@@ -396,7 +396,7 @@ static int fncall_add_args_array (fncall *fc)
 {
     int i, np = fc->fun->n_params;
     int err = 0;
-    
+
     fc->args = malloc(np * sizeof *fc->args);
 
     if (fc->args == NULL) {
@@ -493,7 +493,7 @@ static fnpkg *function_package_alloc (const char *fname)
 
 #if PKG_DEBUG
     fprintf(stderr, "function_package_alloc: fname='%s'\n", fname);
-#endif    
+#endif
 
     pkg->name[0] = '\0';
     pkg->author = NULL;
@@ -516,7 +516,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->uses_subdir = 0;
     pkg->prechecked = 0;
     pkg->data_access = 0;
-    
+
     pkg->pub = pkg->priv = NULL;
     pkg->n_pub = pkg->n_priv = 0;
     pkg->datafiles = NULL;
@@ -528,7 +528,7 @@ static fnpkg *function_package_alloc (const char *fname)
 
 /* For function call @call, set the 'listarg' status of any named
    series provided to the called function via list arguments.  This is
-   required for correct handling of namespaces.  
+   required for correct handling of namespaces.
 */
 
 static void set_listargs_from_call (fncall *call, DATASET *dset)
@@ -580,7 +580,7 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 
     if (fn_executing > 0) {
 	GList *tmp = g_list_last(callstack);
-	
+
 	popcall = tmp->data;
     } else {
 	g_list_free(callstack);
@@ -668,7 +668,7 @@ int fn_n_params (const ufunc *fun)
  * fn_param_type:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the type of parameter @i of function
  * @fun.
  */
@@ -683,7 +683,7 @@ int fn_param_type (const ufunc *fun, int i)
  * fn_param_name:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the name of parameter @i of function
  * @fun.
  */
@@ -698,7 +698,7 @@ const char *fn_param_name (const ufunc *fun, int i)
  * fn_param_descrip:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the description of parameter @i of function
  * @fun (if any), otherwise %NULL.
  */
@@ -714,12 +714,12 @@ const char *fn_param_descrip (const ufunc *fun, int i)
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
  * @n: location to receive number of labels.
- * 
- * Returns: the value-labels associated with parameter @i 
+ *
+ * Returns: the value-labels associated with parameter @i
  * of function @fun (if any), otherwise %NULL.
  */
 
-const char **fn_param_value_labels (const ufunc *fun, int i, 
+const char **fn_param_value_labels (const ufunc *fun, int i,
 				    int *n)
 {
     if (i >= 0 && i < fun->n_params) {
@@ -735,8 +735,8 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
  * fn_param_has_default:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
- * Returns: 1 if the (scalar) parameter @i of function @fun 
+ *
+ * Returns: 1 if the (scalar) parameter @i of function @fun
  * (if any) has a default value set, otherwise 0.
  */
 
@@ -749,13 +749,13 @@ int fn_param_has_default (const ufunc *fun, int i)
 
 	return !default_unset(fp);
     }
-}   
+}
 
 /**
  * fn_param_default:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the default value of (scalar) parameter @i of
  * function @fun (if any), otherwise #NADBL.
  */
@@ -769,13 +769,13 @@ double fn_param_default (const ufunc *fun, int i)
 
 	return default_unset(fp)? NADBL : fp->deflt;
     }
-}    
+}
 
 /**
  * fn_param_minval:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the minimum value of (scalar) parameter @i of
  * function @fun (if any), otherwise #NADBL.
  */
@@ -790,7 +790,7 @@ double fn_param_minval (const ufunc *fun, int i)
  * fn_param_maxval:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the maximum value of (scalar) parameter @i of
  * function @fun (if any), otherwise #NADBL.
  */
@@ -805,7 +805,7 @@ double fn_param_maxval (const ufunc *fun, int i)
  * fn_param_step:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: the step value for (scalar) parameter @i of
  * function @fun (if any), otherwise #NADBL.
  */
@@ -818,22 +818,19 @@ double fn_param_step (const ufunc *fun, int i)
 
 static int arg_may_be_optional (GretlType t)
 {
-    return gretl_ref_type(t) ||
+    return gretl_ref_type(t) || gretl_is_array_type(t) ||
 	t == GRETL_TYPE_SERIES ||
 	t == GRETL_TYPE_MATRIX ||
 	t == GRETL_TYPE_BUNDLE ||
 	t == GRETL_TYPE_LIST ||
-	t == GRETL_TYPE_STRING ||
-	t == GRETL_TYPE_MATRICES ||
-	t == GRETL_TYPE_BUNDLES ||
-	t == GRETL_TYPE_STRINGS;
+	t == GRETL_TYPE_STRING;
 }
 
 /**
  * fn_param_optional:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: 1 if parameter @i of function @fun is optional,
  * otherwise 0.
  */
@@ -852,7 +849,7 @@ int fn_param_optional (const ufunc *fun, int i)
  * fn_param_set_const:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
- * 
+ *
  * Returns: 0 on successful setting of the "const" flag
  * on parameter @i of function @fun, otherwise non-zero
  * error code.
@@ -913,7 +910,7 @@ int fn_param_uses_mylist (const ufunc *fun, int i)
 /**
  * user_func_get_return_type:
  * @fun: pointer to user-function.
- * 
+ *
  * Returns: the return type of function @fun.
  */
 
@@ -929,7 +926,7 @@ int user_func_get_return_type (const ufunc *fun)
 /**
  * user_func_is_noprint:
  * @fun: pointer to user-function.
- * 
+ *
  * Returns: 1 if the function is not designed to print anything.
  */
 
@@ -945,7 +942,7 @@ int user_func_is_noprint (const ufunc *fun)
 /**
  * user_func_is_menu_only:
  * @fun: pointer to user-function.
- * 
+ *
  * Returns: 1 if the function is not designed to be called
  * other than via a GUI menu.
  */
@@ -963,7 +960,7 @@ int user_func_is_menu_only (const ufunc *fun)
  * user_function_name_by_index:
  * @i: the position of a user-function in the array of
  * loaded functions.
- * 
+ *
  * Returns: the name of the function, or %NULL if
  * @i is out of bounds.
  */
@@ -983,11 +980,11 @@ const char *user_function_name_by_index (int i)
  * @pkg: reference function package, or NULL.
  *
  * Looks up the 0-based index of the named function
- * in the current array of user-functions. If @pkg is 
+ * in the current array of user-functions. If @pkg is
  * non-NULL the search for @name is confined to functions
  * that belong to @pkg; otherwise the index of the first
  * match is returned.
- * 
+ *
  * Returns: 0-based index or -1 on failure.
  */
 
@@ -997,14 +994,14 @@ int user_function_index_by_name (const char *name,
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if ((pkg == NULL || ufuns[i]->pkg == pkg) && 
+	if ((pkg == NULL || ufuns[i]->pkg == pkg) &&
 	    !strcmp(name, ufuns[i]->name)) {
 	    return i;
 	}
     }
 
     return -1;
-}	
+}
 
 static int fname_idx;
 
@@ -1176,7 +1173,7 @@ ufunc *get_user_function_by_name (const char *name)
     */
     for (i=0; i<n_ufuns; i++) {
 	if ((pkg == NULL && !function_is_private(ufuns[i])) || ufuns[i]->pkg == pkg) {
-	    if (!strcmp(name, ufuns[i]->name)) { 
+	    if (!strcmp(name, ufuns[i]->name)) {
 		fun = ufuns[i];
 		break;
 	    }
@@ -1194,7 +1191,7 @@ ufunc *get_user_function_by_name (const char *name)
 		break;
 	    }
 	}
-    }	
+    }
 
 #if FN_DEBUG > 1
     if (fun != NULL) {
@@ -1222,7 +1219,7 @@ ufunc *get_function_from_package (const char *funname, fnpkg *pkg)
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && 
+	if (ufuns[i]->pkg == pkg &&
 	    !strcmp(funname, ufuns[i]->name)) {
 	    return ufuns[i];
 	}
@@ -1298,7 +1295,7 @@ static void free_lines_array (fn_line *lines, int n)
 	    gretl_loop_destroy(lines[i].loop);
 	}
     }
-    
+
     free(lines);
 }
 
@@ -1320,7 +1317,7 @@ static void clear_ufunc_data (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
-    
+
     fun->lines = NULL;
     fun->params = NULL;
 
@@ -1388,7 +1385,7 @@ static int no_scalar_default (fn_param *fp)
 	ret = 1;
     } else if (fp->type != GRETL_TYPE_DOUBLE && na(fp->deflt)) {
 	ret = 1;
-    } 
+    }
 
     return ret;
 }
@@ -1456,20 +1453,20 @@ static GretlType return_type_from_string (const char *s,
     return t;
 }
 
-static GretlType param_field_to_type (const char *s, 
+static GretlType param_field_to_type (const char *s,
 				      const char *funname,
 				      int *err)
 {
     GretlType t = gretl_type_from_string(s);
 
     if (!ok_function_arg_type(t)) {
-	gretl_errmsg_sprintf("function %s: invalid parameter type '%s'", 
+	gretl_errmsg_sprintf("function %s: invalid parameter type '%s'",
 			     funname, s);
 	*err = E_INVARG;
     }
 
     return t;
-}    
+}
 
 /* read the parameter info for a function from XML file */
 
@@ -1483,7 +1480,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
 	fprintf(stderr, "Couldn't read param count\n");
 	return E_DATA;
-    }  
+    }
 
     if (n == 0) {
 	return 0;
@@ -1492,7 +1489,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     fun->params = allocate_params(n);
     if (fun->params == NULL) {
 	return E_ALLOC;
-    } 
+    }
 
     fun->n_params = n;
 
@@ -1521,7 +1518,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 			param->deflt = x;
 		    } else {
 			param->deflt = UNSET_VALUE;
-		    } 
+		    }
 		    if (param->type != GRETL_TYPE_BOOL) {
 			gretl_xml_get_prop_as_double(cur, "min", &param->min);
 			gretl_xml_get_prop_as_double(cur, "max", &param->max);
@@ -1538,12 +1535,12 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		err = E_DATA;
 		break;
 	    }
-	    gretl_xml_child_get_string(cur, doc, "description", 
+	    gretl_xml_child_get_string(cur, doc, "description",
 				       &param->descrip);
 	    gretl_xml_child_get_strings_array(cur, doc, "labels",
 					      &param->labels,
 					      &param->nlabels);
-	}	    
+	}
 	cur = cur->next;
     }
 
@@ -1572,7 +1569,7 @@ static int push_function_line (ufunc *fun, const char *s)
 	    err = E_ALLOC;
 	} else {
 	    int i = n - 1;
-	    
+
 	    fun->lines = lines;
 	    lines[i].idx = fun->line_idx;
 	    lines[i].s = gretl_strdup(s);
@@ -1591,7 +1588,7 @@ static int push_function_line (ufunc *fun, const char *s)
     return err;
 }
 
-/* read the actual code lines from the XML representation of a 
+/* read the actual code lines from the XML representation of a
    function */
 
 static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
@@ -1726,7 +1723,7 @@ static void ufunc_unload (ufunc *fun)
     }
 }
 
-/* remove a package from the current listing and free it; 
+/* remove a package from the current listing and free it;
    if @full is non-zero, also unload any member functions
 */
 
@@ -1744,8 +1741,8 @@ static void real_function_package_unload (fnpkg *pkg, int full)
 	    if (ufuns[i]->pkg == pkg) {
 		ufunc_unload(ufuns[i]);
 	    }
-	}  
-    }  
+	}
+    }
 
     /* remove this package from the array of loaded packages */
     for (i=0; i<n_pkgs; i++) {
@@ -1797,12 +1794,12 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
 	    pkg->pub = uf;
 	    pkg->pub[n] = fun;
 	    pkg->n_pub += 1;
-	}	
-    } 
+	}
+    }
 
 #if PKG_DEBUG
     fprintf(stderr, "attach_ufunc_to_package: package = %s, "
-	    "private = %d, err = %d\n", pkg->name, 
+	    "private = %d, err = %d\n", pkg->name,
 	    function_is_private(fun), err);
 #endif
 
@@ -1885,7 +1882,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
-	    " private = %d, plugin = %d\n", fun->name, fun->rettype, 
+	    " private = %d, plugin = %d\n", fun->name, fun->rettype,
 	    function_is_private(fun), function_is_plugin(fun));
 #endif
 
@@ -1893,7 +1890,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	fprintf(stderr, "unpackaged function: can't be private or plugin\n");
 	ufunc_free(fun);
 	return E_DATA;
-    }	
+    }
 
     cur = node->xmlChildrenNode;
 
@@ -1932,7 +1929,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
     if (err) {
 	ufunc_free(fun);
-    } 
+    }
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: returning %d\n", err);
@@ -1944,7 +1941,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 static int wordmatch (const char *s, const char *test)
 {
     int n = strlen(test);
-    
+
     return (!strncmp(s, test, n) && (s[n] == '\0' || isspace(s[n])));
 }
 
@@ -1994,7 +1991,7 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	       wordmatch(s, "elif")) {
 	ni = ti;
 	ti--;
-    } 
+    }
 
     *this_indent = ti;
     *next_indent = ni;
@@ -2031,12 +2028,12 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	rtype = GRETL_TYPE_VOID;
     }
 
-    fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\"", 
+    fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\"",
 	    fun->name, gretl_type_get_name(rtype));
 
     if (function_is_private(fun)) {
 	fputs(" private=\"1\"", fp);
-    }    
+    }
     if (function_is_plugin(fun)) {
 	fputs(" plugin-wrapper=\"1\"", fp);
     }
@@ -2045,7 +2042,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     }
     if (function_is_menu_only(fun)) {
 	fputs(" menu-only=\"1\"", fp);
-    }    
+    }
 
     if (fun->pkg_role) {
 	fprintf(fp, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
@@ -2088,13 +2085,13 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	    if (parm_has_children(param)) {
 		fputs(">\n", fp); /* terminate opening tag */
 		if (param->descrip != NULL) {
-		    gretl_xml_put_tagged_string("description", 
+		    gretl_xml_put_tagged_string("description",
 						param->descrip,
 						fp);
-		} 
+		}
 		if (param->nlabels > 0) {
-		    gretl_xml_put_strings_array_quoted("labels", 
-						       (const char **) param->labels, 
+		    gretl_xml_put_strings_array_quoted("labels",
+						       (const char **) param->labels,
 						       param->nlabels, fp);
 		}
 		fputs("  </param>\n", fp);
@@ -2122,7 +2119,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     fputs("</code>\n", fp);
 
     fputs("</gretl-function>\n", fp);
-    
+
     return 0;
 }
 
@@ -2211,7 +2208,7 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     if (tabwidth == 0) {
 	tabwidth = 2;
     }
-   
+
     print_function_start(u, prn);
 
     for (i=0; i<u->n_lines; i++) {
@@ -2255,7 +2252,7 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 	    if (!u->lines[i].ignore) {
 		S[j++] = u->lines[i].s;
 	    }
-	}	
+	}
     }
 
     return S;
@@ -2308,7 +2305,7 @@ static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
 		return ufuns[i];
 	    }
 	}
-    }   
+    }
 
     return NULL;
 }
@@ -2362,7 +2359,7 @@ static void package_disconnect_funcs (fnpkg *pkg)
    allocation fails.
 */
 
-static int set_uf_array_from_names (fnpkg *pkg, char **names, 
+static int set_uf_array_from_names (fnpkg *pkg, char **names,
 				    int n, int priv)
 {
     ufunc **uf = NULL;
@@ -2421,14 +2418,14 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
  * Returns: 0 on success, non-zero on error.
  */
 
-int function_package_connect_funcs (fnpkg *pkg, 
+int function_package_connect_funcs (fnpkg *pkg,
 				    char **pubnames, int n_pub,
-				    char **privnames, int n_priv) 
+				    char **privnames, int n_priv)
 {
     int err;
 
     /* clear the decks first */
-    package_disconnect_funcs(pkg);  
+    package_disconnect_funcs(pkg);
 
     err = set_uf_array_from_names(pkg, pubnames, n_pub, 0);
 
@@ -2457,9 +2454,9 @@ int function_package_connect_funcs (fnpkg *pkg,
  * Returns: pointer to package on success, %NULL on error.
  */
 
-fnpkg *function_package_new (const char *fname, 
+fnpkg *function_package_new (const char *fname,
 			     char **pubnames, int n_pub,
-			     char **privnames, int n_priv, 
+			     char **privnames, int n_priv,
 			     int *err)
 {
     fnpkg *pkg = NULL;
@@ -2472,7 +2469,7 @@ fnpkg *function_package_new (const char *fname,
 	if (pkg == NULL) {
 	    *err = E_ALLOC;
 	}
-    } 
+    }
 
     if (*err) {
 	return NULL;
@@ -2541,7 +2538,7 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
 	fprintf(fp, "const char *%s_translations[] = {\n", pkg->name);
 	if (pkg->label != NULL) {
 	    fprintf(fp, "    N_(\"%s\"),\n", pkg->label);
-	}	
+	}
 	if (S != NULL) {
 	    strings_array_sort(&S, &n, OPT_U);
 	    for (i=0; i<n; i++) {
@@ -2595,7 +2592,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->modelreq > 0) {
-	fprintf(fp, " model-requirement=\"%s\"", 
+	fprintf(fp, " model-requirement=\"%s\"",
 		gretl_command_word(pkg->modelreq));
     }
 
@@ -2611,7 +2608,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 
     if (pkg->data_access) {
 	fprintf(fp, " wants-data-access=\"true\"");
-    }    
+    }
 
     fputs(">\n", fp);
 
@@ -2622,7 +2619,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 
     if (pkg->tags != NULL) {
 	gretl_xml_put_tagged_string("tags", pkg->tags, fp);
-    }    
+    }
 
     if (pkg->label != NULL) {
 	gretl_xml_put_tagged_string("label", pkg->label, fp);
@@ -2646,7 +2643,7 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
    this as a package file in its own right, using the filename given
    in the package (the 'standalone' case), otherwise we're writing it
    as a component of the functions listing in a gretl session file,
-   which already has an associated open stream.  
+   which already has an associated open stream.
 */
 
 static int real_write_function_package (fnpkg *pkg, FILE *fp)
@@ -2683,7 +2680,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     }
 
     if (pkg->modelreq > 0) {
-	fprintf(fp, " model-requirement=\"%s\"", 
+	fprintf(fp, " model-requirement=\"%s\"",
 		gretl_command_word(pkg->modelreq));
     }
 
@@ -2699,7 +2696,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->data_access) {
 	fprintf(fp, " wants-data-access=\"true\"");
-    }    
+    }
 
     fputs(">\n", fp);
 
@@ -2716,7 +2713,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->tags != NULL) {
 	gretl_xml_put_tagged_string("tags", pkg->tags, fp);
-    }    
+    }
 
     if (pkg->label != NULL) {
 	gretl_xml_put_tagged_string("label", pkg->label, fp);
@@ -2734,7 +2731,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	}
 	gretl_xml_put_string(trim_text(pkg->help), fp);
 	fputs("\n</help>\n", fp);
-    } 
+    }
 
     if (pkg->gui_help != NULL) {
 	if (pkg->gui_help_fname != NULL) {
@@ -2742,7 +2739,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 		    pkg->gui_help_fname);
 	} else {
 	    fputs("<gui-help>\n", fp);
-	}	
+	}
 	gretl_xml_put_string(trim_text(pkg->gui_help), fp);
 	fputs("\n</gui-help>\n", fp);
     }
@@ -2751,13 +2748,13 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	gretl_xml_put_strings_array("data-files",
 				    (const char **) pkg->datafiles,
 				    pkg->n_files, fp);
-    }    
+    }
 
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
 	    write_function_xml(pkg->pub[i], fp);
 	}
-    }    
+    }
 
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv; i++) {
@@ -2773,7 +2770,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	    fputs("<sample-script>\n", fp);
 	}
 	gretl_xml_put_string(trim_text(pkg->sample), fp);
-	fputs("\n</sample-script>\n", fp);	
+	fputs("\n</sample-script>\n", fp);
     }
 
     fputs("</gretl-function-package>\n", fp);
@@ -2888,7 +2885,7 @@ static int pkg_set_datafiles (fnpkg *pkg, const char *s)
 	err = E_DATA;
     } else {
 	int n = 0;
-	
+
 	pkg->datafiles = gretl_string_split(s, &n, NULL);
 	if (pkg->datafiles == NULL) {
 	    pkg->n_files = 0;
@@ -2981,7 +2978,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
     }
 
     /* check that the function in question satisfies the
-       requirements for its role, and if so, hook it up 
+       requirements for its role, and if so, hook it up
     */
 
     if (role == UFUN_GUI_PRECHECK) {
@@ -2998,7 +2995,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		}
 		if (!err) {
 		    u->pkg_role = role;
-		}		
+		}
 		return err; /* found */
 	    }
 	}
@@ -3036,7 +3033,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	    if (role == UFUN_GUI_MAIN) {
 #if 1
 		; /* OK, type does not matter */
-#else	
+#else
 		if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
 		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
 		    err = E_TYPES;
@@ -3079,7 +3076,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 }
 
 /* called from the GUI package editor to check whether
-   a given function of name @name can be shown as a 
+   a given function of name @name can be shown as a
    candidate for a specified GUI-special @role
 */
 
@@ -3092,9 +3089,9 @@ int function_ok_for_package_role (const char *name,
     if (name == NULL || role == UFUN_ROLE_NONE) {
 	return 0;
     }
-    
+
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) { 
+	if (!strcmp(name, ufuns[i]->name)) {
 	    u = ufuns[i];
 	    break;
 	}
@@ -3185,7 +3182,7 @@ static void function_package_set_auxfile (fnpkg *pkg,
 					  const char *fname)
 {
     gchar *test = NULL;
-    
+
     /* Maybe set the source filename for an element
        of a function package read from file, but only
        if it's not the standard, default filename for
@@ -3213,7 +3210,7 @@ static int is_pdf_ref (const char *s)
     if (!strncmp(s, "pdfdoc:", 7)) {
 	s += 7;
     }
-    
+
     return strlen(s) < 64 && strchr(s, ' ') == NULL &&
 	has_suffix(s, ".pdf");
 }
@@ -3287,7 +3284,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		int pdfdoc = 0;
-		
+
 		if (is_pdf_ref(p)) {
 		    if (!quiet) {
 			pprintf(prn, "Recording help reference %s\n", p);
@@ -3448,7 +3445,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 			*err = E_DATA;
 		    }
 		}
-	    } 
+	    }
 	}
 
 	if (!*err) {
@@ -3481,7 +3478,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	    if (npriv < 0) {
 		npriv = 0;
 	    }
-	}	
+	}
 
 	if (!*err && npriv > 0) {
 	    npriv = 0;
@@ -3581,7 +3578,7 @@ static int cli_validate_package_file (const char *fname,
 
 	xmlFreeValidCtxt(cvp);
 	xmlFreeDtd(dtd);
-    } 
+    }
 
     xmlFreeDoc(doc);
 
@@ -3611,7 +3608,7 @@ static int get_gfn_info_for_zip (const char *fname,
 	    while (sub != NULL && found < 2) {
 		if (!xmlStrcmp(sub->name, (XUC) "help")) {
 		    char *s = NULL;
-		    
+
 		    gretl_xml_node_get_trimmed_string(sub, doc, &s);
 		    *pdfdoc = is_pdf_ref(s);
 		    free(s);
@@ -3661,7 +3658,7 @@ static int cli_build_zip_package (const char *fname,
 				   &n_datafiles);
 	freeit = 1;
     }
-	
+
     if (!err) {
 	err = package_make_zipfile(gfnname,
 				   pdfdoc,
@@ -3728,7 +3725,7 @@ static int should_rebuild_gfn (const char *gfnname)
  * Returns: 0 on success, non-zero on error.
  */
 
-int create_and_write_function_package (const char *fname, 
+int create_and_write_function_package (const char *fname,
 				       gretlopt opt,
 				       PRN *prn)
 {
@@ -3765,7 +3762,7 @@ int create_and_write_function_package (const char *fname,
 		}
 		if (opt & OPT_I) {
 		    package_write_index(pkg, prn);
-		}		
+		}
 	    }
 	}
     }
@@ -3845,7 +3842,7 @@ static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
 		uf->flags |= UFUN_MENU_ONLY;
 	    } else {
 		uf->flags &= ~UFUN_MENU_ONLY;
-	    }	    
+	    }
 	}
     }
 }
@@ -3881,7 +3878,7 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
 				  int *optional)
 {
     *optional = 0;
-    
+
     if (!strcmp(key, "fname")) {
 	return &pkg->fname;
     } else if (!strcmp(key, "author")) {
@@ -3952,7 +3949,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    } else {
 		err = maybe_replace_string_var(sptr, sval);
 	    }
-	    
+
 	    if (!err && !strcmp(key, "help")) {
 		if (!strncmp(sval, "pdfdoc", 6) || is_pdf_ref(sval)) {
 		    pkg->uses_subdir = 1;
@@ -3976,7 +3973,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    } else if (!strcmp(key, "wants-data-access")) {
 		pkg->data_access = (ival != 0);
 	    }
-	} 
+	}
     }
 
     va_end(ap);
@@ -4027,7 +4024,7 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
 		}
 	    }
 	}
-    } 
+    }
 
     if (list != NULL) {
 	if (j == 0) {
@@ -4049,7 +4046,7 @@ static char *pkg_get_special_func (fnpkg *pkg, UfunRole role)
 	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
 	    return g_strdup(ufuns[i]->name);
 	}
-    }	    
+    }
 
     return NULL;
 }
@@ -4062,7 +4059,7 @@ static int pkg_get_special_func_id (fnpkg *pkg, UfunRole role)
 	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
 	    return i;
 	}
-    }	    
+    }
 
     return -1;
 }
@@ -4208,7 +4205,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, BUNDLE_EXTRA)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_EXTRA);
-	} else if (!strcmp(key, GUI_MAIN)) {	
+	} else if (!strcmp(key, GUI_MAIN)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_GUI_MAIN);
 	} else if (!strcmp(key, GUI_PRECHECK)) {
@@ -4219,7 +4216,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *ps = pkg_get_special_func(pkg, UFUN_LIST_MAKER);
 	} else if (!strcmp(key, "gui-attrs")) {
 	    unsigned char *s = (unsigned char *) ptr;
-	    
+
 	    pkg_get_gui_attrs(pkg, s);
 	}
     }
@@ -4271,7 +4268,7 @@ char **function_package_get_data_files (fnpkg *pkg, int *n)
 int function_package_set_data_files (fnpkg *pkg, char **S, int n)
 {
     int err = 0;
-    
+
     if (pkg->datafiles != NULL) {
 	strings_array_free(pkg->datafiles, pkg->n_files);
 	pkg->datafiles = NULL;
@@ -4325,7 +4322,7 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 	return E_FOPEN;
     }
 
-    gretl_xml_header(fp);  
+    gretl_xml_header(fp);
     fputs("<gretl-functions>\n", fp);
 
 #ifdef HAVE_MPI
@@ -4340,7 +4337,7 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 	}
     }
 #endif
-    
+
     /* write any loaded function packages */
 
     for (i=0; i<n_pkgs; i++) {
@@ -4570,7 +4567,7 @@ static int load_public_function (ufunc *fun)
 				     ufuns[i]->pkg->name);
 		err = E_DATA;
 		break;
-	    } 
+	    }
 	}
     }
 
@@ -4678,7 +4675,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	    strncat(p, ".pdf", 4);
 	    pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", localpdf);
 	    g_free(localpdf);
-	}	
+	}
     } else {
 	pputc(prn, '\n');
     }
@@ -4693,7 +4690,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	    }
 	} else {
 	    int i;
-	    
+
 	    pputs(prn, "<@itl=\"Public interfaces\">:\n\n");
 	    pputs(prn, "<mono>\n");
 	    for (i=0; i<pkg->n_pub; i++) {
@@ -4701,7 +4698,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	    }
 	    pputs(prn, "</mono>\n\n");
 	}
-    }    
+    }
 
     if (!pdfdoc) {
 	pputs(prn, "<@itl=\"Help text\">:\n\n");
@@ -4792,8 +4789,8 @@ static void print_package_code (const fnpkg *pkg,
 
 /* allocate a fnpkg structure and read from XML file into it */
 
-static fnpkg * 
-real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, 
+static fnpkg *
+real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 		   int *err)
 {
     xmlNodePtr cur;
@@ -4835,7 +4832,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     if (gretl_xml_get_prop_as_string(node, "model-requirement", &tmp)) {
 	pkg->modelreq = gretl_command_number(tmp);
 	free(tmp);
-    }    
+    }
 
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
 	pkg->minver = gretl_version_number(tmp);
@@ -4846,7 +4843,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     pkg->data_access = gretl_xml_get_prop_as_bool(node, "wants-data-access");
 
     cur = node->xmlChildrenNode;
-    
+
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "author")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->author);
@@ -4997,7 +4994,7 @@ static fnpkg *read_package_file (const char *fname, int *err)
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
 	    pkg = real_read_package(doc, cur, fname, err);
 	    break;
-	} 
+	}
 	cur = cur->next;
     }
 
@@ -5016,7 +5013,7 @@ static fnpkg *read_package_file (const char *fname, int *err)
     return pkg;
 }
 
-/** 
+/**
  * function_package_is_loaded:
  * @fname: full path to gfn file.
  * @version: location to receive version info, or NULL.
@@ -5031,7 +5028,7 @@ int function_package_is_loaded (const char *fname,
     return (get_loaded_pkg_by_filename(fname, version) != NULL);
 }
 
-/** 
+/**
  * gfn_is_loaded:
  * @gfnname: basename of gfn file, including suffix.
  *
@@ -5042,7 +5039,7 @@ int function_package_is_loaded (const char *fname,
 int gfn_is_loaded (const char *gfnname)
 {
     int ret = 0;
-    
+
     if (strchr(gfnname, SLASH) == NULL && has_suffix(gfnname, ".gfn")) {
 	/* plain basename of gfn file */
 	gchar *test = g_strdup(gfnname);
@@ -5058,7 +5055,7 @@ int gfn_is_loaded (const char *gfnname)
     return ret;
 }
 
-/** 
+/**
  * load_function_package_by_filename:
  * @fname: full path to gfn file.
  * @opt: may include OPT_F to force loading even when
@@ -5107,20 +5104,20 @@ int load_function_package_by_filename (const char *fname,
 		real_function_package_unload(oldpkg, 1);
 	    }
 	    err = real_load_package(pkg);
-	} 
+	}
     }
 
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
     } else if (pkg != NULL && prn != NULL && gretl_mpi_rank() < 1) {
-	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version, 
+	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
 		pkg->date, pkg->author);
     }
 
     return err;
 }
 
-/** 
+/**
  * get_function_package_by_filename:
  * @fname: gfn filename.
  * @err: location to receive error code.
@@ -5163,7 +5160,7 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
     return pkg;
 }
 
-/** 
+/**
  * get_function_package_by_name:
  * @pkgname: name of function package.
  *
@@ -5184,11 +5181,11 @@ fnpkg *get_function_package_by_name (const char *pkgname)
     return NULL;
 }
 
-/** 
+/**
  * get_function_package_path_by_name:
  * @pkgname: name of function package.
  *
- * Returns: the full path to the named function package if it 
+ * Returns: the full path to the named function package if it
  * is already in memory, otherwise NULL.
  */
 
@@ -5220,7 +5217,7 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
     pkg = get_loaded_pkg_by_filename(fname, NULL);
 
 #if PKG_DEBUG
-    fprintf(stderr, "real_print_gfn_data: fname='%s', pkg=%p\n", 
+    fprintf(stderr, "real_print_gfn_data: fname='%s', pkg=%p\n",
 	    fname, (void *) pkg);
 #endif
 
@@ -5246,7 +5243,7 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
     }
 
 #if PKG_DEBUG
-    fprintf(stderr, "real_get_function_file_info: err = %d (free_pkg = %d)\n", 
+    fprintf(stderr, "real_get_function_file_info: err = %d (free_pkg = %d)\n",
 	    err, free_pkg);
 #endif
 
@@ -5289,7 +5286,7 @@ int print_function_package_help (const char *fname, PRN *prn)
    number into *pver.
 */
 
-int get_function_file_header (const char *fname, char **pdesc, 
+int get_function_file_header (const char *fname, char **pdesc,
 			      char **pver, char **pdate,
 			      char **pauthor, int *pdfdoc)
 {
@@ -5326,7 +5323,7 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
 		} else if (pdfdoc != NULL && !xmlStrcmp(sub->name, (XUC) "help")) {
 		    char *tmp = NULL;
-		    
+
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
 		    if (tmp != NULL) {
 			if (!strncmp(tmp, "pdfdoc", 6) || is_pdf_ref(tmp)) {
@@ -5392,7 +5389,7 @@ int package_has_menu_attachment (const char *fname,
     }
 
     node = node->xmlChildrenNode;
-    
+
     while (!stop && node != NULL) {
 	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
 	    if (pkgname != NULL) {
@@ -5460,7 +5457,7 @@ int package_needs_zipping (const char *fname,
     }
 
     node = node->xmlChildrenNode;
-    
+
     while (!stop && node != NULL) {
 	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
 	    sub = node->xmlChildrenNode;
@@ -5509,11 +5506,11 @@ double function_package_get_version (const char *fname)
     int err;
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
- 
+
     if (!err) {
 	xmlNodePtr sub;
 	int found = 0;
-	
+
 	node = node->xmlChildrenNode;
 	while (node != NULL && !found) {
 	    if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
@@ -5616,7 +5613,7 @@ static int check_func_name (const char *name, ufunc **pfun, PRN *prn)
 	    }
 	}
     }
-    
+
     return err;
 }
 
@@ -5638,7 +5635,7 @@ static int maybe_delete_function (const char *fname, PRN *prn)
 	if (gretl_messages_on()) {
 	    pprintf(prn, _("Deleted function '%s'\n"), fname);
 	}
-    } 
+    }
 
     return err;
 }
@@ -5670,7 +5667,7 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int check_parm_min_max (fn_param *p, const char *name, 
+static int check_parm_min_max (fn_param *p, const char *name,
 			       int *nvals)
 {
     int err = 0;
@@ -5703,7 +5700,7 @@ static int check_parm_min_max (fn_param *p, const char *name,
 	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
 	    err = E_DATA;
 	}
-    } 
+    }
 
     return err;
 }
@@ -5724,7 +5721,7 @@ static int colon_count (const char *p)
 
 #define VALDEBUG 0
 
-static int read_min_max_deflt (char **ps, fn_param *param, 
+static int read_min_max_deflt (char **ps, fn_param *param,
 			       const char *name, int *nvals)
 {
     char *p = *ps;
@@ -5734,7 +5731,10 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 
     errno = 0;
 
-    if (param->type == GRETL_TYPE_BOOL) {
+    if (!strcmp(p, "[null]")) {
+	gretl_errmsg_set("'null' is not a valid default for scalars");
+	err = E_TYPES;
+    } else if (param->type == GRETL_TYPE_BOOL) {
 	if (sscanf(p, "[%lf]", &param->deflt) != 1) {
 	    err = E_PARSE;
 	}
@@ -5746,7 +5746,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	int i, len, nf = colon_count(p) + 1;
 	char *test, valstr[32];
 	char *q = p + 1;
-	double x[4] = {NADBL, NADBL, UNSET_VALUE, NADBL}; 
+	double x[4] = {NADBL, NADBL, UNSET_VALUE, NADBL};
 
 	for (i=0; i<nf && !err; i++) {
 	    len = strcspn(q, ":]");
@@ -5766,7 +5766,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 			err = E_PARSE;
 		    }
 		}
-	    } 
+	    }
 	    q += len + 1;
 	}
 
@@ -5783,7 +5783,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	    }
 
 #if VALDEBUG
-	    fprintf(stderr, "min %g, max %g, deflt %g, step %g\n", 
+	    fprintf(stderr, "min %g, max %g, deflt %g, step %g\n",
 		    param->min, param->max, param->deflt, param->step);
 #endif
 
@@ -5807,7 +5807,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 
 static int read_param_option (char **ps, fn_param *param)
 {
-    int err = E_PARSE;
+    int err = 0;
 
 #if FNPARSE_DEBUG
     fprintf(stderr, "read_param_option: got '%s'\n", *ps);
@@ -5815,8 +5815,10 @@ static int read_param_option (char **ps, fn_param *param)
 
     if (!strncmp(*ps, "[null]", 6)) {
 	param->flags |= ARG_OPTIONAL;
-	err = 0;
 	*ps += 6;
+    } else {
+	gretl_errmsg_sprintf(_("got invalid field '%s'"), *ps);
+	err = E_PARSE;
     }
 
     return err;
@@ -5855,7 +5857,7 @@ static int read_param_descrip (char **ps, fn_param *param)
 
 /* get the value labels for a function parameter */
 
-static int read_param_labels (char **ps, fn_param *param, 
+static int read_param_labels (char **ps, fn_param *param,
 			      const char *name, int nvals)
 {
     char *p = *ps + 1; /* skip opening '{' */
@@ -5923,7 +5925,6 @@ static int parse_function_param (char *s, fn_param *param, int i)
     while (isspace(*s)) s++;
 
     /* pick up the "const" flag if present */
-
     if (!strncmp(s, "const ", 6)) {
 	param->flags |= ARG_CONST;
 	s += 6;
@@ -5931,7 +5932,6 @@ static int parse_function_param (char *s, fn_param *param, int i)
     }
 
     /* get parameter type, required */
-
     len = gretl_namechar_spn(s);
     if (len > 21) {
 	err = E_PARSE;
@@ -5954,18 +5954,17 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    } else if (!ok_function_arg_type(type)) {
 		gretl_errmsg_sprintf(_("%s: invalid parameter type"), tstr);
 		err = E_INVARG;
-	    }		
-	} 
+	    }
+	}
     }
 
     if (err) {
 	return err;
     }
 
-    /* now get the required parameter name */
-    
-    while (isspace(*s)) s++;
+    /* get the required parameter name */
 
+    while (isspace(*s)) s++;
     len = gretl_namechar_spn(s);
 
     if (len == 0) {
@@ -5979,7 +5978,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    free(name);
 	    err = E_DATA;
 	}
-    }	
+    }
 
     if (err) {
 	return err;
@@ -5991,20 +5990,23 @@ static int parse_function_param (char *s, fn_param *param, int i)
     s += strspn(s, " ");
 
     /* now scan for various optional extras: first we may have
-       a [min:max:default] specification, or a [null] spec
-       to allow no argument for "pointer"-type arguments
+       a [min:max:default] specification (scalars only), or a
+       [null] spec to allow no argument for "pointer"-type
+       parameters (broadly interpreted)
     */
 
-    if (*s == '[') { 
+    if (*s == '[') {
 	if (gretl_scalar_type(type)) {
 	    err = read_min_max_deflt(&s, param, name, &nvals);
 	} else if (arg_may_be_optional(type)) {
 	    err = read_param_option(&s, param);
 	} else {
+	    gretl_errmsg_sprintf("'%s': error scanning default value",
+				 name);
 	    err = E_PARSE;
 	}
 	s += strspn(s, " ");
-    } 
+    }
 
     /* then we may have a double-quoted descriptive string
        for the parameter */
@@ -6012,7 +6014,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (!err && *s == '"') {
 	err = read_param_descrip(&s, param);
 	s += strspn(s, " ");
-    } 
+    }
 
     /* and finally we may have a set of value-labels enclosed
        in braces, but this is valid only if we have been able
@@ -6027,7 +6029,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    err = read_param_labels(&s, param, name, nvals);
 	}
 	s += strspn(s, " ");
-    }    
+    }
 
     if (!err && *s != '\0') {
 	/* got trailing unparseable stuff */
@@ -6042,16 +6044,16 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
 #if FNPARSE_DEBUG
     if (!err) {
-	fprintf(stderr, " param[%d] = '%s', ptype = %d\n", 
-		i, name, type);
-	fprintf(stderr, "  min=%g, max=%g, deflt=%g\n", 
+	fprintf(stderr, " param[%d] = '%s', ptype = %d (%s)\n",
+		i, name, type, gretl_type_get_name(type));
+	fprintf(stderr, "  min=%g, max=%g, deflt=%g\n",
 		param->min, param->max, param->deflt);
 	if (param->descrip != NULL) {
 	    fprintf(stderr, "  comment = '%s'\n", param->descrip);
 	}
 	if (param->nlabels > 0) {
 	    fprintf(stderr, "  value labels: %d\n", param->nlabels);
-	}	
+	}
     }
 #endif
 
@@ -6085,7 +6087,7 @@ static int parse_function_parameters (const char *str,
     s = gretl_strdup(str);
     if (s == NULL) {
 	return E_ALLOC;
-    }    
+    }
 
     if (!strcmp(s, ")")) {
 	/* we got a void function "foo()" */
@@ -6159,7 +6161,7 @@ static int parse_function_parameters (const char *str,
 	*pparams = params;
 	*pnp = np;
     }
-    
+
     return err;
 }
 
@@ -6262,7 +6264,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     }
 
     if (!err) {
-	err = parse_function_parameters(p, &params, &n_params, 
+	err = parse_function_parameters(p, &params, &n_params,
 					name, prn);
     }
 
@@ -6293,7 +6295,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     } else {
 	current_fdef = NULL;
     }
-    
+
     return err;
 }
 
@@ -6338,7 +6340,7 @@ int gretl_function_append_line (const char *line)
     }
 
 #if FNPARSE_DEBUG
-    fprintf(stderr, "gretl_function_append_line: '%s' (idx = %d)\n", 
+    fprintf(stderr, "gretl_function_append_line: '%s' (idx = %d)\n",
 	    line, fun->line_idx);
 #endif
 
@@ -6352,7 +6354,7 @@ int gretl_function_append_line (const char *line)
     blank = string_is_blank(line);
 
     /* below: append line to function, carrying out some
-       basic structural checks as we go 
+       basic structural checks as we go
     */
 
     if (!blank) {
@@ -6385,12 +6387,12 @@ int gretl_function_append_line (const char *line)
 
     if (abort || err) {
 	set_compiling_off();
-    }    
+    }
 
     if (compiling) {
 	/* actually add the line */
 	int i = fun->n_lines;
-	
+
 	err = push_function_line(fun, line);
 	if (!err) {
 	    if (ignore) {
@@ -6405,9 +6407,9 @@ int gretl_function_append_line (const char *line)
 	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
 	    err = E_PARSE;
 	}
-#if GLOBAL_TRACE	
+#if GLOBAL_TRACE
 	fprintf(stderr, "finished compiling function %s\n", fun->name);
-#endif	
+#endif
 	/* reset static vars */
 	gretl_cmd_destroy(cmd);
 	cmd = NULL;
@@ -6416,7 +6418,7 @@ int gretl_function_append_line (const char *line)
 
     if (abort || err) {
 	ufunc_unload(fun);
-    }	
+    }
 
     return err;
 }
@@ -6500,7 +6502,7 @@ static int localize_list (fncall *call, fn_arg *arg,
     }
 
 #if UDEBUG
-    fprintf(stderr, "localize_list (%s): returning %d\n", 
+    fprintf(stderr, "localize_list (%s): returning %d\n",
 	    fp->name, err);
 #endif
 
@@ -6523,7 +6525,7 @@ static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
 /* handle the case where the GUI passed an anonymous
    bundle as a "bundle *" argument */
 
-static int localize_bundle_as_shell (fn_arg *arg, 
+static int localize_bundle_as_shell (fn_arg *arg,
 				     fn_param *fp)
 {
     int err = 0;
@@ -6585,7 +6587,7 @@ static int localize_const_object (fn_arg *arg, fn_param *fp)
     return err;
 }
 
-static int localize_series_ref (fncall *call, fn_arg *arg, 
+static int localize_series_ref (fncall *call, fn_arg *arg,
 				fn_param *fp, DATASET *dset)
 {
     int v = arg->val.idnum;
@@ -6605,7 +6607,7 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
 static int argval_get_int (fn_param *param, double x, int *err)
 {
     int ret = gretl_int_from_double(x, err);
-    
+
     if (*err) {
 	gretl_errmsg_sprintf(_("%s: expected an integer but found %g"),
 			     param->name, x);
@@ -6660,7 +6662,7 @@ static int add_scalar_arg_default (fn_param *param)
     }
 }
 
-/* Handle the case of a scalar parameter for which a 1 x 1 matrix 
+/* Handle the case of a scalar parameter for which a 1 x 1 matrix
    was given as argument.
 */
 
@@ -6715,8 +6717,8 @@ static int duplicated_pointer_arg_check (fn_arg *args, int argc)
     fn_arg *ai, *aj;
     int i, j, err = 0;
 
-    /* note: a caller cannot be allowed to supply a given 
-       variable in pointer form for more than one argument 
+    /* note: a caller cannot be allowed to supply a given
+       variable in pointer form for more than one argument
        slot in a function call (although ordinary arguments
        may be repeated)
     */
@@ -6726,7 +6728,7 @@ static int duplicated_pointer_arg_check (fn_arg *args, int argc)
 	if (gretl_ref_type(ai->type)) {
 	    for (j=i+1; j<argc && !err; j++) {
 		aj = &args[j];
-		if (gretl_ref_type(aj->type) && 
+		if (gretl_ref_type(aj->type) &&
 		    !strcmp(ai->upname, aj->upname)) {
 		    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 		    err = E_DATA;
@@ -6788,7 +6790,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    } else {
 		/* an on-the-fly constructed series */
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
-	    }	    
+	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX &&
 		   arg->type == GRETL_TYPE_DOUBLE) {
 	    err = do_scalar_matrix_cast(arg, fp);
@@ -6821,7 +6823,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		/* FIXME ? */
 		arg->upname[0] = '\0';
 	    }
-	}	
+	}
     }
 
     /* now for any trailing parameters without matching arguments */
@@ -6905,12 +6907,12 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
 	return E_DATA;
     }
 
-    if (dreq == FN_NEEDS_QM && 
-	(!dataset_is_time_series(dset) || 
+    if (dreq == FN_NEEDS_QM &&
+	(!dataset_is_time_series(dset) ||
 	 (dset->pd != 4 && dset->pd != 12))) {
 	gretl_errmsg_set("This function needs quarterly or monthly data");
 	return E_DATA;
-    } 
+    }
 
     return 0;
 }
@@ -6951,7 +6953,7 @@ static int maybe_check_function_needs (const DATASET *dset,
     if (fun->pkg == NULL || fun->pkg->prechecked) {
 	return 0;
     } else {
-	return check_function_needs(dset, fun->pkg->dreq, 
+	return check_function_needs(dset, fun->pkg->dreq,
 				    fun->pkg->minver);
     }
 }
@@ -7021,7 +7023,7 @@ static int handle_matrix_return (const char *name, void *ptr,
 	    if (ret == NULL) {
 		err = E_ALLOC;
 	    }
-	} 
+	}
     } else {
 	ret = steal_matrix_by_name(name);
     }
@@ -7046,7 +7048,7 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
 
 	if (b != NULL) {
 	    ret = gretl_bundle_copy(b, &err);
-	} 
+	}
     } else {
 	ret = gretl_bundle_pull_from_stack(name, &err);
     }
@@ -7072,7 +7074,7 @@ static int handle_array_return (fncall *call, void *ptr, int copy)
 
 	if (a != NULL) {
 	    ret = gretl_array_copy(a, &err);
-	} 
+	}
     } else {
 	ret = gretl_array_pull_from_stack(name, &err);
     }
@@ -7117,13 +7119,13 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
     printlist(list, lname);
     fprintf(stderr, " dset = %p, dset->v = %d\n", (void *) dset, dset->v);
     fprintf(stderr, " list is direct return value? %s\n", arg == NULL ? "yes" : "no");
-#endif	    
+#endif
 
     if (list == NULL) {
 	return E_DATA;
     }
 
-    /* 
+    /*
        If the list we're looking at was given as a function argument
        we simply shunt all its members to the prior stack level.  But
        if the list is the direct return value from the function, we
@@ -7162,7 +7164,7 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
 			!strcmp(dset->varname[j], vname)) {
 			overwrite = 1;
 			break;
-		    }			
+		    }
 		}
 		if (overwrite) {
 		    replace_caller_series(j, vi, dset);
@@ -7173,7 +7175,7 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
 		}
 	    }
 #if UDEBUG
-	    fprintf(stderr, " list-member var %d, '%s': ", vi, vname); 
+	    fprintf(stderr, " list-member var %d, '%s': ", vi, vname);
 	    if (overwrite) {
 		fprintf(stderr, "found match in caller, overwrote var %d\n", j);
 	    } else {
@@ -7248,8 +7250,8 @@ static int is_pointer_arg (fncall *call, int rtype)
 			  t == GRETL_TYPE_LISTS || \
 			  t == GRETL_TYPE_LISTS_REF)
 
-static int 
-function_assign_returns (fncall *call, int rtype, 
+static int
+function_assign_returns (fncall *call, int rtype,
 			 DATASET *dset, void *ret,
 			 char **label, PRN *prn,
 			 int *perr)
@@ -7258,7 +7260,7 @@ function_assign_returns (fncall *call, int rtype,
     int i, err = 0;
 
 #if UDEBUG
-    fprintf(stderr, "function_assign_returns: rtype = %d, call->retname = %s\n", 
+    fprintf(stderr, "function_assign_returns: rtype = %d, call->retname = %s\n",
 	    rtype, call->retname);
 #endif
 
@@ -7274,7 +7276,7 @@ function_assign_returns (fncall *call, int rtype,
 
     if (*perr == 0) {
 	/* first we work on the value directly returned by the
-	   function (but only if there's no error) 
+	   function (but only if there's no error)
 	*/
 	int copy = is_pointer_arg(call, rtype);
 
@@ -7296,7 +7298,7 @@ function_assign_returns (fncall *call, int rtype,
 	    err = handle_array_return(call, ret, copy);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    err = handle_string_return(call->retname, ret);
-	} 
+	}
 
 	if (err == E_UNKVAR) {
 	    pprintf(prn, "Function %s did not provide the specified return value\n",
@@ -7306,14 +7308,14 @@ function_assign_returns (fncall *call, int rtype,
 	*perr = err;
     }
 
-    /* "Indirect return" values and other pointerized args: 
+    /* "Indirect return" values and other pointerized args:
        these should be handled even if the function bombed.
     */
 
     for (i=0; i<call->argc; i++) {
 	fn_arg *arg = &call->args[i];
 	fn_param *fp = &u->params[i];
-	
+
 	if (needs_dataset(fp->type) && dset == NULL) {
 	    err = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
@@ -7327,7 +7329,7 @@ function_assign_returns (fncall *call, int rtype,
 		strcpy(dset->varname[v], arg->upname);
 	    } else if (gretl_ref_type(arg->type)) {
 		user_var_unlocalize(fp->name, arg->upname, fp->type);
-	    } 
+	    }
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
 		    fp->type == GRETL_TYPE_STRING ||
@@ -7343,7 +7345,7 @@ function_assign_returns (fncall *call, int rtype,
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, arg, NULL, dset);
-	} 
+	}
     }
 
 #if UDEBUG
@@ -7384,7 +7386,7 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 	opt = OPT_S;
     } else if (oi->structure == SPECIAL_TIME_SERIES) {
 	opt = OPT_N;
-    } 
+    }
 
     return simple_set_obs(dset, oi->pd, oi->stobs, opt);
 }
@@ -7403,12 +7405,12 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
 #if FN_DEBUG
     fprintf(stderr, "stop_fncall: terminating call to "
-	    "function '%s' at depth %d, dset->v = %d\n", 
+	    "function '%s' at depth %d, dset->v = %d\n",
 	    call->fun->name, d, (dset != NULL)? dset->v : 0);
 #endif
 
     /* below: delete series local to the function, taking care not to
-       delete any that have been "promoted" to caller level via their 
+       delete any that have been "promoted" to caller level via their
        inclusion in a returned list; also catch any "listarg" series
        that are no longer attached to a list
     */
@@ -7433,13 +7435,13 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 			if (anyerr && !err) {
 			    err = anyerr;
 			}
-		    } 
+		    }
 		}
-	    }    
+	    }
 	}
 	if (call->listvars != NULL) {
 	    int vi;
-	    
+
 	    for (i=1; i<=call->listvars[0]; i++) {
 		vi = call->listvars[i];
 		series_unset_flag(dset, vi, VAR_LISTARG);
@@ -7469,7 +7471,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     if (anyerr && !err) {
 	err = anyerr;
-    }    
+    }
 
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
@@ -7509,7 +7511,7 @@ static void reset_saved_loops (ufunc *u)
     }
 }
 
-#endif 
+#endif
 
 static void set_pkgdir (fnpkg *pkg)
 {
@@ -7517,7 +7519,7 @@ static void set_pkgdir (fnpkg *pkg)
 
     if (p != NULL) {
 	char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
-	
+
 	gretl_insert_builtin_string("pkgdir", pkgdir);
 	free(pkgdir);
     }
@@ -7535,15 +7537,15 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	    break;
 	}
 	tmp = tmp->next;
-    }    
-    
+    }
+
     fn_executing++;
     push_program_state();
 
     callstack = g_list_append(callstack, call);
 
 #if EXEC_DEBUG
-    fprintf(stderr, "start_fncall: added call to %s, depth now %d\n", 
+    fprintf(stderr, "start_fncall: added call to %s, depth now %d\n",
 	    call->fun->name, g_list_length(callstack));
 #endif
 
@@ -7564,7 +7566,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 
     if (fn_executing == 1 && call->fun->pkg != NULL) {
 	set_pkgdir(call->fun->pkg);
-    } 
+    }
 
     return 0;
 }
@@ -7595,13 +7597,15 @@ static double arg_get_double_val (fn_arg *arg)
 
 static int check_function_args (fncall *call, PRN *prn)
 {
-    ufunc *u = call->fun;    
+    ufunc *u = call->fun;
     fn_arg *arg;
     fn_param *fp;
     double x;
     int i, err = 0;
 
     for (i=0; i<call->argc && !err; i++) {
+	int scalar_check = 1;
+
 	arg = &call->args[i];
 	fp = &u->params[i];
 
@@ -7611,7 +7615,7 @@ static int check_function_args (fncall *call, PRN *prn)
 	    ; /* OK: types match */
 	} else if (fp->type == GRETL_TYPE_SERIES && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK: types match */
-	} else if (gretl_scalar_type(fp->type) && 
+	} else if (gretl_scalar_type(fp->type) &&
 		   arg->type == GRETL_TYPE_MATRIX &&
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK: either types match or we can convert */
@@ -7621,19 +7625,22 @@ static int check_function_args (fncall *call, PRN *prn)
 	    ; /* OK, we'll handle it (create singleton list) */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_NONE) {
 	    ; /* OK (special: "null" was passed as argument) */
+	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_NONE &&
+		   !no_scalar_default(fp)) {
+	    scalar_check = 0; /* OK: arg missing but we have a default value */
 	} else if (fp->type != arg->type) {
-	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
-		    u->name, i + 1, gretl_type_get_name(arg->type), 
+	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"),
+		    u->name, i + 1, gretl_type_get_name(arg->type),
 		    gretl_type_get_name(fp->type));
 	    err = E_TYPES;
 	}
 
-	if (!err && fp->type == GRETL_TYPE_DOUBLE) {
+	if (!err && scalar_check && fp->type == GRETL_TYPE_DOUBLE) {
 	    /* check for out-of-bounds scalar value */
 	    x = arg_get_double_val(arg);
 	    if ((!na(fp->min) && x < fp->min) ||
 		(!na(fp->max) && x > fp->max)) {
-		pprintf(prn, _("%s, argument %d: value %g is out of bounds\n"), 
+		pprintf(prn, _("%s, argument %d: value %g is out of bounds\n"),
 			u->name, i + 1, x);
 		err = E_INVARG;
 	    }
@@ -7653,7 +7660,7 @@ static int check_function_args (fncall *call, PRN *prn)
     if (err) {
 	fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
     }
-#endif    
+#endif
 
     return err;
 }
@@ -7676,7 +7683,7 @@ int user_function_set_debug (const char *name, int debug)
 
     if (name == NULL || *name == '\0') {
 	return E_ARGS;
-    } 
+    }
 
     fun = get_user_function_by_name(name);
 
@@ -7695,10 +7702,10 @@ int user_function_set_debug (const char *name, int debug)
 #define set_debug_next(c) (c->ci = FUNDEBUG, c->opt = OPT_N)
 
 /* loop for stepping through function commands; returns
-   1 if we're debugging, otherwise 0 
+   1 if we're debugging, otherwise 0
 */
 
-static int debug_command_loop (ExecState *state, 
+static int debug_command_loop (ExecState *state,
 			       DATASET *dset,
 			       DEBUG_READLINE get_line,
 			       DEBUG_OUTPUT put_func,
@@ -7710,7 +7717,7 @@ static int debug_command_loop (ExecState *state,
 
     while (!brk) {
 #if DDEBUG
-	fprintf(stderr, "--- debug_command_loop calling get_line\n"); 
+	fprintf(stderr, "--- debug_command_loop calling get_line\n");
 #endif
 	*errp = (*get_line)(state);
 	if (*errp) {
@@ -7719,7 +7726,7 @@ static int debug_command_loop (ExecState *state,
 	    return 0;
 	}
 
-	err = parse_command_line(state->line, state->cmd, 
+	err = parse_command_line(state->line, state->cmd,
 				 dset, NULL);
 	if (err) {
 	    if (!strcmp(state->line, "c")) {
@@ -7739,11 +7746,11 @@ static int debug_command_loop (ExecState *state,
 	    /* execute interpolated command */
 	    err = gretl_cmd_exec(state, dset);
 	    if (put_func != NULL) {
-#if DDEBUG		
-		fprintf(stderr, "--- debug_command_loop calling put_func\n"); 
+#if DDEBUG
+		fprintf(stderr, "--- debug_command_loop calling put_func\n");
 #endif
 		(*put_func)(state);
-	    }		
+	    }
 	}
     }
 
@@ -7771,7 +7778,7 @@ static const char *get_funcerr_message (ExecState *state)
     return p;
 }
 
-static void set_func_error_message (int err, ufunc *u, 
+static void set_func_error_message (int err, ufunc *u,
 				    ExecState *state,
 				    const char *line,
 				    int lineno)
@@ -7803,18 +7810,18 @@ static void set_func_error_message (int err, ufunc *u,
 	       available (the error occurred inside a loop)
 	    */
 	    if (*line != '\0' && err != E_FNEST) {
-		gretl_errmsg_sprintf("*** error within loop in function %s\n> %s", 
+		gretl_errmsg_sprintf("*** error within loop in function %s\n> %s",
 				     u->name, line);
 	    } else {
-		gretl_errmsg_sprintf("*** error within loop in function %s\n", 
+		gretl_errmsg_sprintf("*** error within loop in function %s\n",
 				     u->name, lineno);
 	    }
 	} else {
 	    if (*line != '\0' && err != E_FNEST) {
-		gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s", 
+		gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s",
 				     u->name, lineno, line);
 	    } else {
-		gretl_errmsg_sprintf("*** error in function %s, line %d\n", 
+		gretl_errmsg_sprintf("*** error in function %s, line %d\n",
 				     u->name, lineno);
 	    }
 	}
@@ -7853,11 +7860,11 @@ static int handle_return_statement (fncall *call,
 	if (*s == '\0') {
 	    ; /* plain "return" from void function: OK */
 	} else if (lineno < 0) {
-	    gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid", 
+	    gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid",
 				 fun->name, s);
 	    err = E_TYPES;
 	} else {
-	    gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid", 
+	    gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid",
 				 fun->name, lineno, s);
 	    err = E_TYPES;
 	}
@@ -7870,7 +7877,7 @@ static int handle_return_statement (fncall *call,
 	} else {
 	    gretl_errmsg_sprintf("%s, line %d: return value is missing",
 				 fun->name, lineno);
-	}	    
+	}
 	err = E_TYPES;
     } else {
 	int len = gretl_namechar_spn(s);
@@ -7880,7 +7887,7 @@ static int handle_return_statement (fncall *call,
 	    call->retname = gretl_strndup(s, len);
 	} else {
 	    char formula[MAXLINE];
-	    
+
 	    sprintf(formula, "$retval=%s", s);
 	    err = generate(formula, dset, fun->rettype, OPT_P, NULL);
 	    if (err) {
@@ -7935,7 +7942,7 @@ static int handle_plugin_call (fncall *call,
     if (cfunc == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
-    }    
+    }
 
     /* bundle to serve as wrapper for arguments */
     argb = gretl_bundle_new();
@@ -7974,7 +7981,7 @@ static int handle_plugin_call (fncall *call,
 	    err = gretl_bundle_set_data(argb, key, &x, GRETL_TYPE_DOUBLE, 0);
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = arg->val.m;
-	    
+
 	    err = gretl_bundle_set_data(argb, key, m, fp->type, 0);
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    int size = sample_size(dset);
@@ -7985,19 +7992,19 @@ static int handle_plugin_call (fncall *call,
 	    } else {
 		px = arg->val.px;
 	    }
-	    err = gretl_bundle_set_data(argb, key, px + dset->t1, 
+	    err = gretl_bundle_set_data(argb, key, px + dset->t1,
 					GRETL_TYPE_SERIES, size);
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    gretl_bundle *b = arg->val.b;
 
-	    err = gretl_bundle_set_data(argb, key, b, 
+	    err = gretl_bundle_set_data(argb, key, b,
 					GRETL_TYPE_BUNDLE, 0);
 	} else {
 	    /* FIXME strings and maybe other types */
 	    err = E_TYPES;
 	}
 #if CDEBUG
-	fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n", 
+	fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n",
 		i, key, fp->type, err);
 #endif
     }
@@ -8018,7 +8025,7 @@ static int handle_plugin_call (fncall *call,
 
 	if (!err) {
 #if CDEBUG
-	    fprintf(stderr, "%s: stole return value of type %d\n", 
+	    fprintf(stderr, "%s: stole return value of type %d\n",
 		    u->name, type);
 #endif
 	    if (type != u->rettype) {
@@ -8029,7 +8036,7 @@ static int handle_plugin_call (fncall *call,
 	if (!err) {
 	    if (type == GRETL_TYPE_DOUBLE) {
 		double *px = ptr;
-		
+
 		*(double *) retval = *px;
 		free(ptr);
 	    } else if (type == GRETL_TYPE_MATRIX) {
@@ -8216,7 +8223,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	/* get out before allocating further storage */
 	fncall_destroy(call);
 	return err;
-    }  
+    }
 
     model = allocate_working_model();
     if (model == NULL) {
@@ -8229,7 +8236,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     if (!err) {
 	*line = '\0';
-	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
+	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd,
 			      model, prn);
 	if (dset != NULL) {
 	    if (dset->submask != NULL) {
@@ -8279,7 +8286,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
 #if LOOPSAVE
 	if (u->lines[i].loop != NULL && !call->recursing) {
-# if LSDEBUG	    
+# if LSDEBUG
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
 # endif
@@ -8325,7 +8332,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		pprintf(prn, "-- debugging %s, line %d --\n", u->name, lineno);
 	    }
 	    debugging = debug_command_loop(&state, dset,
-					   get_line, put_func, 
+					   get_line, put_func,
 					   &err);
 	}
 
@@ -8359,7 +8366,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: %s: finished main exec, "
-	    "err = %d, dset->v = %d\n", u->name, err, 
+	    "err = %d, dset->v = %d\n", u->name, err,
 	    (dset != NULL)? dset->v : 0);
 #endif
 
@@ -8375,7 +8382,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
 		restore_full_sample(dset, NULL);
 		restrict_sample_from_mask(state.submask, dset, opt);
-	    } 
+	    }
 	} else if (dset->n > orig_n) {
 	    /* some observations were added inside the function; note
 	       that this is not allowed if the dataset is subsampled
@@ -8400,14 +8407,14 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(call, rtype, dset, ret, 
+    function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
 #if LOOPSAVE
     if (!err && !call->recursing) {
 	reset_saved_loops(call->fun);
     }
-#endif    
+#endif
 
     gretl_exec_state_clear(&state);
 
@@ -8427,7 +8434,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    u->name, err);
 #endif
 
-    return err;    
+    return err;
 }
 
 /* look up name of supplied argument based on name of variable
@@ -8447,7 +8454,7 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
 		*err = 0;
-		ret = gretl_strdup(call->args[i].upname); 
+		ret = gretl_strdup(call->args[i].upname);
 		if (ret == NULL) {
 		    *err = E_ALLOC;
 		}
@@ -8534,9 +8541,9 @@ void allow_full_data_access (int s)
  * or NULL.
  *
  * Fills out @t1 and/or @t2, making allowance for the possibility
- * that we're currently executing a function, on entry to 
+ * that we're currently executing a function, on entry to
  * which the sample range was restricted: within the function,
- * we are not allowed to overstep the bounds set on entry. 
+ * we are not allowed to overstep the bounds set on entry.
  */
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
@@ -8562,7 +8569,7 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 
 /**
  * gretl_functions_cleanup:
- * 
+ *
  * For internal use: frees all resources associated with
  * user-defined functions and function packages.
  */
@@ -8631,7 +8638,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	    pputs(prn, "<mono>\n");
 	} else {
 	    pputs(prn, "Help text:\n");
-	}   	
+	}
 	pputs(prn, pkg->gui_help);
 	if (markup) {
 	    pputs(prn, "\n</mono>");
@@ -8644,12 +8651,12 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	pputs(prn, "<@itl=\"Parameters\">: ");
     } else {
 	pputs(prn, "Parameters: ");
-    }    
+    }
 
     if (fun->n_params > 0) {
 	pputc(prn, '\n');
 	for (i=0; i<fun->n_params; i++) {
-	    pprintf(prn, " %s (%s", 
+	    pprintf(prn, " %s (%s",
 		    fun->params[i].name, gretl_type_get_name(fun->params[i].type));
 	    if (fun->params[i].descrip != NULL) {
 		pprintf(prn, ": %s)\n", fun->params[i].descrip);
@@ -8666,7 +8673,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	pputs(prn, "<@itl=\"Return value\">: ");
     } else {
 	pputs(prn, "Return value: ");
-    }      
+    }
 
     if (fun->rettype != GRETL_TYPE_NONE && fun->rettype != GRETL_TYPE_VOID) {
 	pprintf(prn, "%s\n\n", gretl_type_get_name(fun->rettype));
@@ -8680,7 +8687,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	    pputs(prn, "<mono>\n");
 	} else {
 	    pputs(prn, "Help text:\n");
-	}   	
+	}
 	if (is_pdf_ref(pkg->help)) {
 	    const char *s = strrchr(pkg->help, ':');
 
@@ -8693,7 +8700,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	    } else {
 		pputs(prn, pkg->help);
 	    }
-	} else {	
+	} else {
 	    pputs(prn, pkg->help);
 	}
 	if (markup) {
@@ -8715,7 +8722,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	} else {
 	    pprintf(prn, "\n\n");
 	}
-    }	
+    }
 }
 
 /**
@@ -8724,9 +8731,9 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
  * @opt: may include OPT_M for adding markup, OPT_G
  * for preferring GUI-specific help, if available.
  * @prn: printing struct.
- * 
+ *
  * Looks for a function named @fnname and prints
- * as much help information as possible.  
+ * as much help information as possible.
  *
  * Returns: 0 on success, non-zero if the function is not
  * found.
@@ -8752,7 +8759,7 @@ int user_function_help (const char *fnname, gretlopt opt, PRN *prn)
  * @pkg: function-package pointer.
  * @pdfname: location to receive basename of PDF file,
  * if applicable (or NULL if this is not wanted).
- * 
+ *
  * Checks whether @pkg is documented in the form of a PDF file.
  *
  * Returns: 1 if so (in which case the name of that file is
@@ -8779,7 +8786,7 @@ int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 /**
  * function_package_has_gui_help:
  * @pkg: function-package pointer.
- * 
+ *
  * Checks whether @pkg has GUI-specific help text.
  *
  * Returns: 1 if so, 0 otherwise.
@@ -8805,7 +8812,7 @@ void *function_package_get_editor (fnpkg *pkg)
 /**
  * delete_function_package:
  * @gfnname: full path to gfn file.
- * 
+ *
  * Deletes @gfnname, taking care of deleting its enclosing
  * specific subdirectory and all of its contents if applicable.
  *
@@ -8855,7 +8862,7 @@ int delete_function_package (const char *gfnname)
  * @package: name of package (with or without .gfn extension).
  * @opt: option flag(s).
  * @prn: gretl printer.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
@@ -8889,7 +8896,7 @@ int uninstall_function_package (const char *package, gretlopt opt,
 	function_package_unload_full_by_filename(fname);
 	if (opt & OPT_P) {
 	    err = delete_function_package(fname);
-	}	
+	}
     }
 
     if (!err && gretl_messages_on()) {
