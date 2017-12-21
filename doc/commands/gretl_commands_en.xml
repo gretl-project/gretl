@@ -6760,7 +6760,7 @@
 	<lit>X</lit>, the following commands are basically equivalent,
 	except that the quantreg method uses the faster
 	Frisch&ndash;Newton algorithm and provides analytical rather
-	then bootstrapped standard errors.
+	than bootstrapped standard errors.
       </para>
       <code>
 	lad y const X

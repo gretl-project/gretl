@@ -47,15 +47,12 @@
 	adición das variables indicadas no argumento, ao derradeiro modelo estimado.
       </para>
       <para context="cli">
-	Por defecto, estímase unha versión <quote>ampliada</quote> do
-	modelo orixinal, que resulta ao engadirlle a este as variables
-	do argumento <repl>listavariables</repl>, como
-	regresores. Neste caso, a proba é de tipo Wald sobre o modelo
-	ampliado, pasando a ser este o <quote>modelo vixente</quote>
-	en troques do orixinal. Debes de ter isto en conta, por
-	exemplo, para usar <lit>$uhat</lit> porque este permite
-	recuperar os erros do que sexa o modelo vixente en cada
-	momento, ou para facer probas posteriores.
+	Por defecto, estímase unha versión <quote>ampliada</quote> do modelo orixinal,
+	que resulta ao engadirlle a este as variables do argumento <repl>listavariables</repl>,
+	como regresores. Neste caso, a proba é de tipo Wald sobre o modelo ampliado,
+	pasando a ser este o <quote>modelo vixente</quote> en troques do orixinal. Debes de ter
+	isto en conta, por exemplo, para usar <lit>$uhat</lit> porque este permite recuperar os erros
+	do que sexa o modelo vixente en cada momento, ou para facer probas posteriores.
       </para>
       <para context="cli">
 	Alternativamente, se indicas a opción <opt>lm</opt> (que só está dispoñible
@@ -231,7 +228,7 @@
 	<equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
 	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	graphic="adf1"/>.
+	graphic="adf1"/>
 	Baixo a hipótese nula de existencia dunha raíz unitaria, o coeficiente da
 	variable <math>y</math> retardada é igual a cero; e baixo a hipótese
 	alternativa de que <math>y</math> é estacionaria, este coeficiente é negativo.
@@ -6755,6 +6752,20 @@
 	estimadores dos parámetros, que se presenta cando indicas
 	<opt>vcv</opt>, baséase no mesmo 'bootstrap'.
       </para>
+      <para>
+	Ten en conta que este método pode resultar lento cando a mostra
+	é moi longa ou cando hai moitos regresores. Por iso, neses casos,
+	pode ser mellor utilizar a instrución <cmdref targ="quantreg"/>.
+	Dadas unha variable dependente <lit>y</lit> e unha lista <lit>X</lit>
+	de regresores, as seguintes instrucións son basicamente equivalentes,
+	coa excepción de que o método "quantreg" utiliza o algoritmo máis
+	rápido de Frisch&ndash;Newton e que proporciona as desviacións
+	padrón analíticas en lugar das de "bootstrapping".
+      </para>
+      <code>
+	lad y const X
+	quantreg 0.5 y const X
+      </code>
     </description>
 
     <gui-access>
@@ -13080,27 +13091,13 @@
 
   </command>
 
-  <command name="sprintf" section="Printing"
-    label="Presentar nunha cadea de texto" context="cli">
-
-    <usage>
-      <arguments>
-	      <argument>varcadea</argument>
-        <argument>formato</argument>
-	      <argpunct>, </argpunct>
-        <argument>args</argument>
-      </arguments>
-    </usage>
-
+  <command name="sprintf" section="Printing" context="cli">
     <description>
       <para>
-	Esta instrución funciona exactamente como a instrución <cmdref targ="printf"/>
-	e presenta os argumentos que se indican, baixo o control da cadea de
-	formato, coa excepción de que o resultado escríbese na cadea de texto
-	indicada en <repl>varcadea</repl>.
+	Instrución obsoleta: utiliza no seu lugar a función co mesmo nome,
+	<cmdref targ="sprintf"/>.
       </para>
     </description>
-
   </command>
 
   <command name="square" section="Transformations"

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -2495,7 +2495,7 @@
 	<para>
 	  Aquí temos un exemplo de como utilizar esta función: para baixar
 	  algúns datos da web do US Bureau of Labor Statistics, que require
-	  o envío dunha consulta JSON. Observa o uso de <cmdref targ="sprintf"/>
+	  o envío dunha consulta JSON. Observa o uso de <fcnref targ="sprintf"/>
 	  para inserir comiñas nos datos <lit>POST</lit>.
 	</para>
 	<code>
@@ -8825,13 +8825,13 @@
 	  sqrt(5) é (aproximadamente) 2.2361.
 	</code>
 	<para>
-	  onde <lit>%d</lit> indica que se quere un número enteiro nese
-	  preciso lugar da saída que se vai presentar, dado que esa é a
-	  expresión co símbolo <quote>por cento</quote> que está máis á
-	  esquerda, polo que se emparella co primeiro argumento, é dicir 5.
+	  A expresión <lit>%d</lit> na cadea de formato, indica que se quere un
+	  número enteiro nese preciso lugar da saída que se vai presentar, e dado
+	  que esa é a expresión co símbolo <quote>por cento</quote> que está
+	  máis á esquerda, emparéllase co primeiro argumento, é dicir 5.
 	  A segunda secuencia especial é <lit>%6.4f</lit>, e representa un
-	  valor con 4 díxitos despois do separador decimal e con 6 díxitos de
-	  largo como mínimo. O número desas secuencias debe de coincidir coa
+	  valor con 6 díxitos de largo como mínimo, e con 4 díxitos despois do
+	  separador decimal. O número desas secuencias debe de coincidir coa
 	  cantidade de argumentos que acompañan á cadea de texto para o formato.
 	</para>
 	<para>
@@ -8967,7 +8967,7 @@
 	  scalar y
 	  sscanf("123456", "%3d%3d", x, y)
 
-	  sprintf S, "1 2 3 4\n5 6 7 8"
+	  S = sprintf("1 2 3 4\n5 6 7 8")
 	  S
 	  matrix m
 	  sscanf(S, "%m", m)
