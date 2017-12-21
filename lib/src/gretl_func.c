@@ -6478,6 +6478,7 @@ static int localize_list (fncall *call, fn_arg *arg,
 	int tmp[] = {1, arg->val.idnum};
 
 	list = copy_list_as_arg(fp->name, tmp, &err);
+	arg->upname[0] = '\0';
     } else {
 	/* "can't happen" */
 	err = E_DATA;
@@ -6815,13 +6816,6 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	    if (!err) {
 		maybe_set_arg_const(arg, fp);
-	    }
-	}
-
-	if (!err && arg->type == GRETL_TYPE_USERIES) {
-	    if (fp->type == GRETL_TYPE_LIST) {
-		/* FIXME ? */
-		arg->upname[0] = '\0';
 	    }
 	}
     }
