@@ -6433,10 +6433,6 @@ int gretl_function_append_line (const char *line)
    purposes of the function.
 */
 
-#define NULL_LIST_SPECIAL 1
-
-#if NULL_LIST_SPECIAL
-
 /* Missing or "null" arg -> gives an empty list,
    rather than no list.
 
@@ -6460,8 +6456,6 @@ static int add_empty_list (fncall *call, fn_param *fp,
 
     return err;
 }
-
-#endif /* NULL_LIST_SPECIAL */
 
 static int localize_list (fncall *call, fn_arg *arg,
 			  fn_param *fp, DATASET *dset)
@@ -6769,12 +6763,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
 		err = add_scalar_arg_default(fp);
-	    }
-#if NULL_LIST_SPECIAL
-	    else if (fp->type == GRETL_TYPE_LIST) {
+	    } else if (fp->type == GRETL_TYPE_LIST) {
 		add_empty_list(call, fp, dset);
 	    }
-#endif
 	    continue;
 	}
 
@@ -6827,11 +6818,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	if (gretl_scalar_type(fp->type)) {
 	    err = add_scalar_arg_default(fp);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-#if NULL_LIST_SPECIAL
 	    err = add_empty_list(call, fp, dset);
-#else
-	    fprintf(stderr, "skipping list pseudo-arg\n");
-#endif
 	}
     }
 
