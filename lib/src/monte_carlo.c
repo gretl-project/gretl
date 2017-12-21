@@ -473,7 +473,8 @@ int ok_in_loop (int c)
 {
     /* here are the commands we _don't_ currently allow */
 
-    if (c == FUNC ||
+    if (c == DELEET ||
+	c == FUNC ||
 	c == INCLUDE ||
 	c == NULLDATA ||
 	c == RUN ||
@@ -3149,45 +3150,6 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 #endif	 
 }
 
-static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
-{
-    int err = 0;
-
-    if (cmd->list != NULL && cmd->list[0] > 0) {
-	/* too dangerous! */
-	pputs(prn, _("You cannot delete series in this context\n"));
-	err = 1;
-    } else if (gretl_is_scalar(cmd->param)) {
-	/* could delete loop index */
-	pputs(prn, _("You cannot delete scalars in this context\n"));
-	err = 1;
-    } else if (loop->parent != NULL || loop->n_children > 0) {
-	/* not a "singleton" loop */
-	pprintf(prn, _("delete %s: not allowed\n"), cmd->param);
-	err = 1;
-    } else {
-	/* check for compiled genrs on board: don't let these
-	   get screwed up by deletion of variables of any kind
-	*/
-	int i, ok = 1;
-
-	for (i=0; i<loop->n_cmds; i++) {
-	    if (loop->cmds[i].genr != NULL) {
-		ok = 0;
-		break;
-	    }
-	}
-	if (ok) {
-	    err = gretl_delete_var_by_name(cmd->param, prn);
-	} else {
-	    pprintf(prn, _("delete %s: not allowed\n"), cmd->param);
-	    err = 1;
-	}
-    }
-
-    return err;
-}
-
 static char *inner_errline;
 
 static int loop_report_error (LOOPSET *loop, int err, 
@@ -3681,8 +3643,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 				       cmd->opt, prn);
 		    }			
 		}
-	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
-		err = loop_delete_object(loop, cmd, prn);
 	    } else {
 		/* send command to the regular processor */
 		int catch = cmd->flags & CMD_CATCH;
