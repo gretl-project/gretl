@@ -7352,16 +7352,16 @@ function_assign_returns (fncall *call, int rtype,
 /* make a record of the sample information at the time a function is
    called */
 
-static void record_obs_info (obsinfo *o, DATASET *dset)
+static void record_obs_info (obsinfo *oi, DATASET *dset)
 {
-    o->changed = 0;
+    oi->changed = 0;
 
     if (dset != NULL) {
-	o->structure = dset->structure;
-	o->pd = dset->pd;
-	o->t1 = dset->t1;
-	o->t2 = dset->t2;
-	strcpy(o->stobs, dset->stobs);
+	oi->structure = dset->structure;
+	oi->pd = dset->pd;
+	oi->t1 = dset->t1;
+	oi->t2 = dset->t2;
+	strcpy(oi->stobs, dset->stobs);
     }
 }
 
