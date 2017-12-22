@@ -44,6 +44,9 @@
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
+# ifndef G_OS_WIN32
+#  define SHM_OK
+# endif
 #endif
 
 #ifdef USE_RLIB
@@ -3393,17 +3396,26 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	const char *s = m->v.str;
-	int export = 0;
-
-	if (!null_or_empty(r)) {
-	    export = (r->v.xval != 0);
-	}
+	const char *fname = m->v.str;
 
 	ret = aux_scalar_node(p);
-
 	if (ret != NULL) {
-	    ret->v.xval = gretl_matrix_write_to_file(l->v.m, s, export);
+	    int done = 0;
+
+#ifdef SHM_OK
+	    if (has_suffix(fname, ".shm")) {
+		ret->v.xval = shm_write_matrix(l->v.m, fname);
+		done = 1;
+	    }
+#endif
+	    if (!done) {
+		int export = 0;
+
+		if (!null_or_empty(r)) {
+		    export = (r->v.xval != 0);
+		}
+		ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
+	    }
 	}
     } else {
 	ret = aux_scalar_node(p);
@@ -4003,7 +4015,9 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
     }
 
     if (ret != NULL && starting(p)) {
+	const char *fname = n->v.str;
 	int import = 0;
+	int done = 0;
 
 	if (!null_or_empty(r)) {
 	    import = (r->v.xval != 0);
@@ -4013,25 +4027,24 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_MREAD:
-	    ret->v.m = gretl_matrix_read_from_file(n->v.str, import,
-						   &p->err);
+#ifdef SHM_OK
+	    if (has_suffix(fname, ".shm")) {
+		ret->v.m = shm_read_matrix(fname, &p->err);
+		done = 1;
+	    }
+#endif
+	    if (!done) {
+		ret->v.m = gretl_matrix_read_from_file(fname, import,
+						       &p->err);
+	    }
 	    break;
 	case F_BREAD:
-	    ret->v.b = gretl_bundle_read_from_file(n->v.str, import,
+	    ret->v.b = gretl_bundle_read_from_file(fname, import,
 						   &p->err);
 	    break;
 	default:
 	    break;
 	}
-
-#if 0
-	/* Allin, 2016-08-03: I really don't like this
-	   behaviour! */
-	if (f == F_MREAD && p->err == E_FOPEN) {
-	    ret->v.m = gretl_null_matrix_new();
-	    p->err = 0;
-	}
-#endif
 
 	if (f == F_MREAD && ret->v.m == NULL) {
 	    matrix_error(p);

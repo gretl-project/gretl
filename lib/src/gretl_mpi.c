@@ -1349,3 +1349,139 @@ int gretl_mpi_initialized (void)
 
     return ret;
 }
+
+#ifndef G_OS_WIN32
+
+/* Experimental: implementation of the functions mwrite() and
+   mread() via POSIX shared memory. Should work on Linux and
+   OS X (not available on MS Windows). This implementation is
+   invoked when the matrix filename has suffix ".shm". The
+   filename should not have any path component but ideally
+   should start with a slash, as in "/mymatrix.shm".
+
+   This is intended for fast transport between gretl or gretlcli
+   and gretlmpi when an "mpi block" is used. In that context a
+   single MPI process (presumably that with rank 0) must take
+   exclusive charge of the shared-memory transaction. Unlike
+   mwrite/mread using regular files, the matrix that is written
+   into the RAM disk by mwrite is cleared on the first access
+   by mread and any subsequent attempts to read it will fail.
+*/
+
+#include <unistd.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
+
+#define MATRIX_ID "gretl_matrix"
+#define IDLEN 12 /* strlen(MATRIX_ID) */
+
+int shm_write_matrix (const gretl_matrix *m,
+		      const char *fname)
+{
+    int vsize = m->rows * m->cols * sizeof *m->val;
+    int msize = IDLEN + 2 * sizeof(int) + vsize;
+    void *ptr, *pos;
+    int fd, err = 0;
+
+    fd = shm_open(fname, O_RDWR | O_CREAT, 0666);
+    if (fd == -1) {
+	printf("mwrite: shm_open failed: %s\n", strerror(errno));
+	return E_FOPEN;
+    }
+
+    if (ftruncate(fd, msize) == -1) {
+	printf("mwrite: ftruncate failed: %s\n", strerror(errno));
+	close(fd);
+	shm_unlink(fname);
+	return E_ALLOC;
+    }
+
+    ptr = mmap(NULL, msize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (ptr == MAP_FAILED) {
+	printf("server: mmap failed: %s\n", strerror(errno));
+	close(fd);
+	shm_unlink(fname);
+	return E_ALLOC;
+    }
+
+    pos = ptr;
+    memcpy(pos, MATRIX_ID, IDLEN);
+    pos += IDLEN;
+    memcpy(pos, &m->rows, sizeof m->rows);
+    pos += sizeof m->rows;
+    memcpy(pos, &m->cols, sizeof m->cols);
+    pos += sizeof m->cols;
+    memcpy(pos, m->val, vsize);
+
+    munmap(ptr, msize);
+    close(fd);
+
+    return err;
+}
+
+gretl_matrix *shm_read_matrix (const char *fname, int *err)
+{
+    gretl_matrix *m = NULL;
+    char buf[IDLEN] = {0};
+    int isize, msize;
+    void *ptr, *pos;
+    int r, c, fd;
+
+    fd = shm_open(fname, O_RDONLY, 0666);
+    if (fd == -1) {
+	printf("mread: shm_open failed: %s\n", strerror(errno));
+	*err = E_FOPEN;
+	return NULL;
+    }
+
+    msize = isize = IDLEN + 2 * sizeof(int);
+    ptr = mmap(NULL, isize, PROT_READ, MAP_SHARED, fd, 0);
+
+    if (ptr == MAP_FAILED) {
+	printf("mread: mmap failed: %s\n", strerror(errno));
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    pos = ptr;
+    memcpy(buf, pos, IDLEN);
+
+    if (memcmp(buf, MATRIX_ID, IDLEN) == 0) {
+	pos += IDLEN;
+	memcpy(&r, pos, sizeof r);
+	pos += sizeof r;
+	memcpy(&c, pos, sizeof c);
+	m = gretl_matrix_alloc(r, c);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (m != NULL) {
+	int vsize = r * c * sizeof *m->val;
+
+	/* FIXME: use mremap() on Linux? */
+	munmap(ptr, isize);
+	msize = isize + vsize;
+	ptr = mmap(NULL, msize, PROT_READ, MAP_SHARED, fd, 0);
+	if (ptr == MAP_FAILED) {
+	    *err = E_ALLOC;
+	    gretl_matrix_free(m);
+	    m = NULL;
+	} else {
+	    memcpy(m->val, ptr + isize, vsize);
+	}
+    }
+
+    munmap(ptr, msize);
+
+ bailout:
+
+    close(fd);
+    shm_unlink(fname);
+
+    return m;
+}
+
+#endif /* non-Windows code! */
