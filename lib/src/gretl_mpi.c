@@ -1386,12 +1386,12 @@ int shm_write_matrix (const gretl_matrix *m,
 
     fd = shm_open(fname, O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
-	printf("mwrite: shm_open failed: %s\n", strerror(errno));
+	fprintf(stderr, "mwrite: shm_open failed: %s\n", strerror(errno));
 	return E_FOPEN;
     }
 
     if (ftruncate(fd, msize) == -1) {
-	printf("mwrite: ftruncate failed: %s\n", strerror(errno));
+	fprintf(stderr, "mwrite: ftruncate failed: %s\n", strerror(errno));
 	close(fd);
 	shm_unlink(fname);
 	return E_ALLOC;
@@ -1399,7 +1399,7 @@ int shm_write_matrix (const gretl_matrix *m,
 
     ptr = mmap(NULL, msize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
-	printf("server: mmap failed: %s\n", strerror(errno));
+	fprintf(stderr, "mwrite: mmap failed: %s\n", strerror(errno));
 	close(fd);
 	shm_unlink(fname);
 	return E_ALLOC;
@@ -1430,7 +1430,7 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 
     fd = shm_open(fname, O_RDONLY, 0666);
     if (fd == -1) {
-	printf("mread: shm_open failed: %s\n", strerror(errno));
+	fprintf(stderr, "mread: shm_open failed: %s\n", strerror(errno));
 	*err = E_FOPEN;
 	return NULL;
     }
@@ -1439,7 +1439,7 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     ptr = mmap(NULL, isize, PROT_READ, MAP_SHARED, fd, 0);
 
     if (ptr == MAP_FAILED) {
-	printf("mread: mmap failed: %s\n", strerror(errno));
+	fprintf(stderr, "mread: mmap failed: %s\n", strerror(errno));
 	*err = E_ALLOC;
 	goto bailout;
     }
