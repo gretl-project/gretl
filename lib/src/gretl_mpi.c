@@ -1415,8 +1415,8 @@ int shm_write_matrix (const gretl_matrix *m,
     mapfile = CreateFileMapping(INVALID_HANDLE_VALUE, /* use paging file */
 				NULL,                 /* default security */
 				PAGE_READWRITE,       /* read/write access */
-				0,                    /* maximum size (high-order DWORD) */
-				msize,                /* maximum size (low-order DWORD) */
+				0,                    /* maximum size (hi-order DWORD) */
+				msize,                /* maximum size (lo-order DWORD) */
 				memname);             /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mwrite: CreateFileMapping failed\n");
@@ -1459,7 +1459,7 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 {
     gretl_matrix *m = NULL;
     char buf[IDLEN] = {0};
-    int isize, msize;
+    int isize;
     HANDLE mapfile;
     void *ptr = NULL;
     gchar *memname;
@@ -1468,11 +1468,11 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     memname = canonical_memname(fname);
 
     /* initial object size */
-    msize = isize = IDLEN + 2 * sizeof(int);
+    isize = IDLEN + 2 * sizeof(int);
 
     mapfile = OpenFileMapping(FILE_MAP_ALL_ACCESS, /* read/write access */
 			      FALSE,               /* do not inherit the name */
-			      fname);              /* name of mapping object */
+			      memname);            /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mread: OpenFileMapping failed\n");
 	*err = E_FOPEN;
@@ -1504,9 +1504,9 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 
     if (m != NULL) {
 	int vsize = r * c * sizeof *m->val;
+	int msize = isize + vsize;
 
 	UnmapViewOfFile(ptr);
-	msize = isize + vsize;
 	ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, msize);
 	if (ptr == NULL) {
 	    *err = E_ALLOC;
@@ -1587,7 +1587,7 @@ int shm_write_matrix (const gretl_matrix *m,
 	close(fd);
     }
     if (err) {
-	shm_unlink(fname);
+	shm_unlink(memname);
     }
 
     return err;
@@ -1659,7 +1659,7 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     if (fd != -1) {
 	close(fd);
     }
-    shm_unlink(fname);
+    shm_unlink(memname);
 
     return m;
 }
