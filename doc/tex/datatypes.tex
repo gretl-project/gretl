@@ -7,17 +7,17 @@ Gretl offers the following data types:
 %
 \begin{center}
 \begin{tabular}{lp{.8\textwidth}}
-\texttt{scalar} & holds a single numerical value\\
-\texttt{series} & holds $n$ numerical values, where $n$
- is the number of observations in the current dataset \\
-\texttt{matrix} & holds a rectangular array of numerical
- values, of any dimensions\\
-\texttt{list} & holds the ID numbers of a set of series \\
-\texttt{string} & holds an array of characters\\
-\texttt{bundle} & holds a variable number of objects of 
- various types \\
-\texttt{array} & holds a variable number of objects of 
- a given type
+  \texttt{scalar} & holds a single numerical value\\
+  \texttt{series} & holds $n$ numerical values, where $n$
+                    is the number of observations in the current dataset \\
+  \texttt{matrix} & holds a rectangular array of numerical
+                    values, of any (two) dimensions\\
+  \texttt{list} & holds the ID numbers of a set of series \\
+  \texttt{string} & holds an array of characters\\
+  \texttt{bundle} & holds zero or more objects of 
+                    various types \\
+  \texttt{array} & holds zero or more objects of 
+                   a given type
 \end{tabular}
 \end{center}
 
@@ -27,8 +27,9 @@ floating point numbers.
 In this chapter we give a run-down of the basic characteristics of
 each of these types and also explain their ``life cycle'' (creation,
 modification and destruction). The list and matrix types, whose uses
-are relatively complex, are discussed at greater length in the
-following two chapters. 
+are relatively complex, are discussed at greater length in
+chapters~\ref{chap:lists-strings} and \ref{chap:matrices}
+respectively.
 
 \section{Series}
 \label{sec:Series}
@@ -79,8 +80,8 @@ in chapter~\ref{chap:discrete}.
 
 It is generally expected that series in gretl will be ``properly
 numeric'' (on a ratio or at least an ordinal scale), or the sort of
-numerical indicator variables that are traditional in
-econometrics. However, there is some support for ``string-valued''
+numerical indicator variables (0/1 ``dummies'') that are traditional
+in econometrics. However, there is some support for ``string-valued''
 series---see chapter~\ref{chap:strval-series} for details.
 
 \section{Scalars}
@@ -126,7 +127,7 @@ window: each currently defined matrix is represented by an icon.
 \label{sec:Lists}
 
 As with matrices, lists merit an explication of their own (see
-chapter~\ref{chap:persistent}).  Briefly, named lists can (and
+chapter~\ref{chap:lists-strings}).  Briefly, named lists can (and
 should!)  be used to make command scripts less verbose and
 repetitious, and more easily modifiable. Since lists are in fact lists
 of series ID numbers they can be used only when a dataset is in place.
@@ -139,7 +140,7 @@ In the gretl GUI, named lists can be inspected and edited under the
 \label{sec:Strings}
 
 String variables may be used for labeling, or for constructing
-commands. They are discussed in chapter~\ref{chap:persistent}. They
+commands. They are discussed in chapter~\ref{chap:lists-strings}. They
 must be referenced by name; they can be defined in the absence of a
 dataset.
 
@@ -674,4 +675,7 @@ invert the command and use the \texttt{list} keyword:
 
 \begin{code}
 list L delete
-\end{code} 
+\end{code}
+
+Note that the \texttt{delete} command cannot be used within a
+\texttt{loop} construct (see chapter~\ref{chap:looping}).

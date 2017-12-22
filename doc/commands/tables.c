@@ -104,12 +104,16 @@ void sort_and_print_tabular (char **S, int n, int cols)
 {
     int i, t = 0;
 
-    qsort(S, n, sizeof *S, sort_strings);    
+    qsort(S, n, sizeof *S, sort_strings);
+
+    if (n < cols) {
+	cols = n;
+    }
 
     print_tabtop(cols);
 
     for (i=0; i<n; i++) {
-	printf("%s", S[i]);
+	printf("\\texttt{%s}", S[i]);
 	print_tabsep(cols, &t);
     }
 

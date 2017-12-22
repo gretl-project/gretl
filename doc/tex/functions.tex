@@ -97,17 +97,15 @@ function parameter may include some additional fields, as follows:
 \item For \texttt{scalar} or \texttt{int} parameters: minimum, maximum
   and/or default values; or for \texttt{bool} parameters, just a
   default value.
-\item For optional arguments in pointer form, and additionally for
-  string or list arguments in standard form (see
-  section~\ref{func-details}), the special default value
-  \texttt{null}.
+\item For optional arguments other than \texttt{scalar}, \texttt{int}
+  and \texttt{bool}, the special default value \texttt{null}.
 \item For all parameters, a descriptive string.
 \item For \texttt{int} parameters with minimum and maximum values
   specified, a set of strings to associate with the allowed numerical
   values (value labels).
 \end{itemize}
 
-The first two of these options may be useful in many contexts; the
+The first three of these options may be useful in many contexts; the
 last two may be helpful if a function is to be packaged for use in
 the gretl GUI (but probably not otherwise). We now expand on
 each of the options.
@@ -670,7 +668,7 @@ print malist --byobs
 %
 The last line of the script will print two variables named
 \verb|nocars_2| and \verb|nocars_4|.  For details on the handling of
-named strings, see chapter~\ref{chap:persistent}.
+named strings, see chapter~\ref{chap:lists-strings}.
 
 If a string argument is considered optional, it may be given a
 \texttt{null} default value, as in
