@@ -1352,7 +1352,7 @@ int gretl_mpi_initialized (void)
 
 /* Experimental: implementation of the functions mwrite() and
    mread() via POSIX shared memory. Should work on Linux and
-   OS X (not available on MS Windows). This implementation is
+   OS X (not tested yet on MS Windows). This implementation is
    invoked when the matrix filename has suffix ".shm". The
    filename should not have any path component but ideally
    should start with a slash, as in "/mymatrix.shm".
@@ -1369,6 +1369,35 @@ int gretl_mpi_initialized (void)
 #define MATRIX_ID "gretl_matrix"
 #define IDLEN 12 /* strlen(MATRIX_ID) */
 
+static gchar *canonical_memname (const char *s)
+{
+    gchar *name;
+
+    /* Ensure we have a suitable name for a memory-mapped
+       file: on Linux and OS X something like "/foo.shm"
+       (no initial path component other than "/") and on
+       MS Windows something like "Global\foo.shm"
+    */
+
+#ifdef G_OS_WIN32
+    if (*s != '/' || *s == '\\') {
+	s++;
+    }
+    name = g_strdup_printf("Global\\%s", s);
+    gretl_charsub(name + 7, '\\', '_');
+    gretl_charsub(name + 7, '/', '_');
+#else
+    if (*s != '/') {
+	name = g_strdup_printf("/%s", s);
+    } else {
+	name = g_strdup(s);
+    }
+    gretl_charsub(name + 1, '/', '_');
+#endif
+
+    return name;
+}
+
 #ifdef G_OS_WIN32
 
 int shm_write_matrix (const gretl_matrix *m,
@@ -1377,40 +1406,53 @@ int shm_write_matrix (const gretl_matrix *m,
     int vsize = m->rows * m->cols * sizeof *m->val;
     int msize = IDLEN + 2 * sizeof(int) + vsize;
     HANDLE mapfile;
-    void *ptr, *pos;
+    void *ptr = NULL;
+    gchar *memname;
+    int err = 0;
+
+    memname = canonical_memname(fname);
 
     mapfile = CreateFileMapping(INVALID_HANDLE_VALUE, /* use paging file */
 				NULL,                 /* default security */
 				PAGE_READWRITE,       /* read/write access */
 				0,                    /* maximum size (high-order DWORD) */
 				msize,                /* maximum size (low-order DWORD) */
-				fname);               /* name of mapping object */
+				memname);             /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mwrite: CreateFileMapping failed\n");
-	return E_FOPEN;
+	err = E_FOPEN;
     }
 
-    ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, msize);
+    if (!err) {
+	ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, msize);
+	if (ptr == NULL) {
+	    fprintf(stderr, "mwrite: MapViewOfFile failed\n");
+	    err = E_ALLOC;
+	}
+    }
 
-    if (ptr == NULL) {
-	fprintf(stderr, "mwrite: MapViewOfFile failed\n");
+    if (!err) {
+	void *pos = ptr;
+
+	memcpy(pos, MATRIX_ID, IDLEN);
+	pos += IDLEN;
+	memcpy(pos, &m->rows, sizeof m->rows);
+	pos += sizeof m->rows;
+	memcpy(pos, &m->cols, sizeof m->cols);
+	pos += sizeof m->cols;
+	memcpy(pos, m->val, vsize);
+    }
+
+    g_free(memname);
+
+    if (ptr != NULL) {
+	UnmapViewOfFile(ptr);
+    }
+    if (mapfile != NULL) {
 	CloseHandle(mapfile);
-	return E_ALLOC;
     }
 
-    pos = ptr;
-    memcpy(pos, MATRIX_ID, IDLEN);
-    pos += IDLEN;
-    memcpy(pos, &m->rows, sizeof m->rows);
-    pos += sizeof m->rows;
-    memcpy(pos, &m->cols, sizeof m->cols);
-    pos += sizeof m->cols;
-    memcpy(pos, m->val, vsize);
-
-    UnmapViewOfFile(ptr);
-    CloseHandle(mapfile);
-
-    return 0;
+    return err;
 }
 
 gretl_matrix *shm_read_matrix (const char *fname, int *err)
@@ -1419,8 +1461,11 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     char buf[IDLEN] = {0};
     int isize, msize;
     HANDLE mapfile;
-    void *ptr, *pos;
+    void *ptr = NULL;
+    gchar *memname;
     int r, c, fd;
+
+    memname = canonical_memname(fname);
 
     /* initial object size */
     msize = isize = IDLEN + 2 * sizeof(int);
@@ -1431,28 +1476,29 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     if (mapfile == NULL) {
 	fprintf(stderr, "mread: OpenFileMapping failed\n");
 	*err = E_FOPEN;
-	return NULL;
     }
 
-    ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, isize);
-    if (ptr == NULL) {
-	fprintf(stderr, "MapViewOfFile failed\n");
-	CloseHandle(mapfile);
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    pos = ptr;
-    memcpy(buf, pos, IDLEN);
-
-    if (memcmp(buf, MATRIX_ID, IDLEN) == 0) {
-	pos += IDLEN;
-	memcpy(&r, pos, sizeof r);
-	pos += sizeof r;
-	memcpy(&c, pos, sizeof c);
-	m = gretl_matrix_alloc(r, c);
-	if (m == NULL) {
+    if (!*err) {
+	ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, isize);
+	if (ptr == NULL) {
+	    fprintf(stderr, "MapViewOfFile failed\n");
 	    *err = E_ALLOC;
+	}
+    }
+
+    if (ptr != NULL) {
+	void *pos = ptr;
+
+	memcpy(buf, pos, IDLEN);
+	if (memcmp(buf, MATRIX_ID, IDLEN) == 0) {
+	    pos += IDLEN;
+	    memcpy(&r, pos, sizeof r);
+	    pos += sizeof r;
+	    memcpy(&c, pos, sizeof c);
+	    m = gretl_matrix_alloc(r, c);
+	    if (m == NULL) {
+		*err = E_ALLOC;
+	    }
 	}
     }
 
@@ -1471,13 +1517,19 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	}
     }
 
-    UnmapViewOfFile(ptr);
-    CloseHandle(mapfile);
+    g_free(memname);
+
+    if (ptr != NULL) {
+	UnmapViewOfFile(ptr);
+    }
+    if (mapfile != NULL) {
+	CloseHandle(mapfile);
+    }
 
     return m;
 }
 
-#else /* not MS Windows */
+#else /* not MS Windows: Linux, OS X, etc. */
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -1489,41 +1541,54 @@ int shm_write_matrix (const gretl_matrix *m,
 {
     int vsize = m->rows * m->cols * sizeof *m->val;
     int msize = IDLEN + 2 * sizeof(int) + vsize;
-    void *ptr, *pos;
+    void *ptr = NULL;
+    gchar *memname;
     int fd, err = 0;
 
-    fd = shm_open(fname, O_RDWR | O_CREAT, 0666);
+    memname = canonical_memname(fname);
+
+    fd = shm_open(memname, O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
 	fprintf(stderr, "mwrite: shm_open failed: %s\n", strerror(errno));
-	return E_FOPEN;
+	err = E_FOPEN;
     }
 
     if (ftruncate(fd, msize) == -1) {
 	fprintf(stderr, "mwrite: ftruncate failed: %s\n", strerror(errno));
-	close(fd);
-	shm_unlink(fname);
-	return E_ALLOC;
+	err = E_ALLOC;
     }
 
-    ptr = mmap(NULL, msize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED) {
-	fprintf(stderr, "mwrite: mmap failed: %s\n", strerror(errno));
-	close(fd);
-	shm_unlink(fname);
-	return E_ALLOC;
+    if (!err) {
+	ptr = mmap(NULL, msize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (ptr == MAP_FAILED) {
+	    fprintf(stderr, "mwrite: mmap failed: %s\n", strerror(errno));
+	    err = E_ALLOC;
+	}
     }
 
-    pos = ptr;
-    memcpy(pos, MATRIX_ID, IDLEN);
-    pos += IDLEN;
-    memcpy(pos, &m->rows, sizeof m->rows);
-    pos += sizeof m->rows;
-    memcpy(pos, &m->cols, sizeof m->cols);
-    pos += sizeof m->cols;
-    memcpy(pos, m->val, vsize);
+    if (ptr != NULL) {
+	void *pos = ptr;
 
-    munmap(ptr, msize);
-    close(fd);
+	memcpy(pos, MATRIX_ID, IDLEN);
+	pos += IDLEN;
+	memcpy(pos, &m->rows, sizeof m->rows);
+	pos += sizeof m->rows;
+	memcpy(pos, &m->cols, sizeof m->cols);
+	pos += sizeof m->cols;
+	memcpy(pos, m->val, vsize);
+    }
+
+    g_free(memname);
+
+    if (ptr != NULL) {
+	munmap(ptr, msize);
+    }
+    if (fd != -1) {
+	close(fd);
+    }
+    if (err) {
+	shm_unlink(fname);
+    }
 
     return err;
 }
@@ -1532,37 +1597,41 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 {
     gretl_matrix *m = NULL;
     char buf[IDLEN] = {0};
-    int isize, msize;
-    void *ptr, *pos;
+    int isize, msize = 0;
+    void *ptr = NULL;
+    gchar *memname;
     int r, c, fd;
 
-    fd = shm_open(fname, O_RDONLY, 0666);
+    memname = canonical_memname(fname);
+
+    fd = shm_open(memname, O_RDONLY, 0666);
     if (fd == -1) {
 	fprintf(stderr, "mread: shm_open failed: %s\n", strerror(errno));
 	*err = E_FOPEN;
-	return NULL;
     }
 
-    msize = isize = IDLEN + 2 * sizeof(int);
-    ptr = mmap(NULL, isize, PROT_READ, MAP_SHARED, fd, 0);
-
-    if (ptr == MAP_FAILED) {
-	fprintf(stderr, "mread: mmap failed: %s\n", strerror(errno));
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    pos = ptr;
-    memcpy(buf, pos, IDLEN);
-
-    if (memcmp(buf, MATRIX_ID, IDLEN) == 0) {
-	pos += IDLEN;
-	memcpy(&r, pos, sizeof r);
-	pos += sizeof r;
-	memcpy(&c, pos, sizeof c);
-	m = gretl_matrix_alloc(r, c);
-	if (m == NULL) {
+    if (!*err) {
+	msize = isize = IDLEN + 2 * sizeof(int);
+	ptr = mmap(NULL, isize, PROT_READ, MAP_SHARED, fd, 0);
+	if (ptr == MAP_FAILED) {
+	    fprintf(stderr, "mread: mmap failed: %s\n", strerror(errno));
 	    *err = E_ALLOC;
+	}
+    }
+
+    if (ptr != NULL) {
+	void *pos = ptr;
+
+	memcpy(buf, pos, IDLEN);
+	if (memcmp(buf, MATRIX_ID, IDLEN) == 0) {
+	    pos += IDLEN;
+	    memcpy(&r, pos, sizeof r);
+	    pos += sizeof r;
+	    memcpy(&c, pos, sizeof c);
+	    m = gretl_matrix_alloc(r, c);
+	    if (m == NULL) {
+		*err = E_ALLOC;
+	    }
 	}
     }
 
@@ -1582,11 +1651,14 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	}
     }
 
-    munmap(ptr, msize);
+    g_free(memname);
 
- bailout:
-
-    close(fd);
+    if (ptr != NULL) {
+	munmap(ptr, msize);
+    }
+    if (fd != -1) {
+	close(fd);
+    }
     shm_unlink(fname);
 
     return m;
