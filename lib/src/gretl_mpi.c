@@ -1443,14 +1443,14 @@ int shm_write_matrix (const gretl_matrix *m,
 	memcpy(pos, m->val, vsize);
     }
 
-    g_free(memname);
-
     if (ptr != NULL) {
 	UnmapViewOfFile(ptr);
     }
     if (mapfile != NULL) {
 	CloseHandle(mapfile);
     }
+
+    g_free(memname);
 
     return err;
 }
@@ -1517,14 +1517,14 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	}
     }
 
-    g_free(memname);
-
     if (ptr != NULL) {
 	UnmapViewOfFile(ptr);
     }
     if (mapfile != NULL) {
 	CloseHandle(mapfile);
     }
+
+    g_free(memname);
 
     return m;
 }
@@ -1578,8 +1578,6 @@ int shm_write_matrix (const gretl_matrix *m,
 	memcpy(pos, m->val, vsize);
     }
 
-    g_free(memname);
-
     if (ptr != NULL) {
 	munmap(ptr, msize);
     }
@@ -1589,6 +1587,8 @@ int shm_write_matrix (const gretl_matrix *m,
     if (err) {
 	shm_unlink(memname);
     }
+
+    g_free(memname);
 
     return err;
 }
@@ -1651,8 +1651,6 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	}
     }
 
-    g_free(memname);
-
     if (ptr != NULL) {
 	munmap(ptr, msize);
     }
@@ -1660,6 +1658,8 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	close(fd);
     }
     shm_unlink(memname);
+
+    g_free(memname);
 
     return m;
 }
