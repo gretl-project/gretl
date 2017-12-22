@@ -1390,7 +1390,7 @@ int shm_write_matrix (const gretl_matrix *m,
 	return E_FOPEN;
     }
 
-    ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, BUF_SIZE);
+    ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, msize);
 
     if (ptr == NULL) {
 	fprintf(stderr, "mwrite: MapViewOfFile failed\n");
@@ -1406,8 +1406,6 @@ int shm_write_matrix (const gretl_matrix *m,
     memcpy(pos, &m->cols, sizeof m->cols);
     pos += sizeof m->cols;
     memcpy(pos, m->val, vsize);
-
-    /* CopyMemory(buf, msg, strlen(msg) + 1); */
 
     UnmapViewOfFile(ptr);
     CloseHandle(mapfile);
