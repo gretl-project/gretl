@@ -29,9 +29,7 @@
 
 #define REGDEBUG 0
 
-#if REGDEBUG
-
-static void win_print_last_error (void)
+void win_print_last_error (void)
 {
     DWORD dw = GetLastError();
     LPVOID buf;
@@ -51,8 +49,6 @@ static void win_print_last_error (void)
 	LocalFree(buf);
     }
 }
-
-#endif
 
 /* returns 0 on success */
 

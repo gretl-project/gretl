@@ -1380,7 +1380,7 @@ static gchar *canonical_memname (const char *s)
     */
 
 #ifdef G_OS_WIN32
-    if (*s != '/' || *s == '\\') {
+    if (*s == '/' || *s == '\\') {
 	s++;
     }
     name = g_strdup_printf("Global\\%s", s);
@@ -1399,6 +1399,8 @@ static gchar *canonical_memname (const char *s)
 }
 
 #ifdef G_OS_WIN32
+
+#include "gretl_win32.h"
 
 int shm_write_matrix (const gretl_matrix *m,
 		      const char *fname)
@@ -1420,6 +1422,7 @@ int shm_write_matrix (const gretl_matrix *m,
 				memname);             /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mwrite: CreateFileMapping failed for '%s'\n", memname);
+	win_print_last_err();
 	err = E_FOPEN;
     }
 
@@ -1474,7 +1477,8 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 			      FALSE,               /* do not inherit the name */
 			      memname);            /* name of mapping object */
     if (mapfile == NULL) {
-	fprintf(stderr, "mread: OpenFileMapping failed\n");
+	fprintf(stderr, "mread: OpenFileMapping failed for '%s'\n", memname);
+	win_print_last_error();
 	*err = E_FOPEN;
     }
 
