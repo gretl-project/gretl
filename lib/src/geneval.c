@@ -44,9 +44,6 @@
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
-# ifndef G_OS_WIN32
-#  define SHM_OK
-# endif
 #endif
 
 #ifdef USE_RLIB
@@ -3402,7 +3399,7 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 	if (ret != NULL) {
 	    int done = 0;
 
-#ifdef SHM_OK
+#ifdef HAVE_MPI
 	    if (has_suffix(fname, ".shm")) {
 		ret->v.xval = shm_write_matrix(l->v.m, fname);
 		done = 1;
@@ -4027,7 +4024,7 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_MREAD:
-#ifdef SHM_OK
+#ifdef HAVE_MPI
 	    if (has_suffix(fname, ".shm")) {
 		ret->v.m = shm_read_matrix(fname, &p->err);
 		done = 1;

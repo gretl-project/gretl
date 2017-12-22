@@ -1350,8 +1350,6 @@ int gretl_mpi_initialized (void)
     return ret;
 }
 
-#ifndef G_OS_WIN32
-
 /* Experimental: implementation of the functions mwrite() and
    mread() via POSIX shared memory. Should work on Linux and
    OS X (not available on MS Windows). This implementation is
@@ -1368,13 +1366,123 @@ int gretl_mpi_initialized (void)
    by mread and any subsequent attempts to read it will fail.
 */
 
+#define MATRIX_ID "gretl_matrix"
+#define IDLEN 12 /* strlen(MATRIX_ID) */
+
+#ifdef G_OS_WIN32
+
+int shm_write_matrix (const gretl_matrix *m,
+		      const char *fname)
+{
+    int vsize = m->rows * m->cols * sizeof *m->val;
+    int msize = IDLEN + 2 * sizeof(int) + vsize;
+    HANDLE mapfile;
+    void *ptr, *pos;
+
+    mapfile = CreateFileMapping(INVALID_HANDLE_VALUE, /* use paging file */
+				NULL,                 /* default security */
+				PAGE_READWRITE,       /* read/write access */
+				0,                    /* maximum size (high-order DWORD) */
+				msize,                /* maximum size (low-order DWORD) */
+				fname);               /* name of mapping object */
+    if (mapfile == NULL) {
+	fprintf(stderr, "mwrite: CreateFileMapping failed\n");
+	return E_FOPEN;
+    }
+
+    ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, BUF_SIZE);
+
+    if (ptr == NULL) {
+	fprintf(stderr, "mwrite: MapViewOfFile failed\n");
+	CloseHandle(mapfile);
+	return E_ALLOC;
+    }
+
+    pos = ptr;
+    memcpy(pos, MATRIX_ID, IDLEN);
+    pos += IDLEN;
+    memcpy(pos, &m->rows, sizeof m->rows);
+    pos += sizeof m->rows;
+    memcpy(pos, &m->cols, sizeof m->cols);
+    pos += sizeof m->cols;
+    memcpy(pos, m->val, vsize);
+
+    /* CopyMemory(buf, msg, strlen(msg) + 1); */
+
+    UnmapViewOfFile(ptr);
+    CloseHandle(mapfile);
+
+    return 0;
+}
+
+gretl_matrix *shm_read_matrix (const char *fname, int *err)
+{
+    gretl_matrix *m = NULL;
+    char buf[IDLEN] = {0};
+    int isize, msize;
+    HANDLE mapfile;
+    void *ptr, *pos;
+    int r, c, fd;
+
+    /* initial object size */
+    msize = isize = IDLEN + 2 * sizeof(int);
+
+    mapfile = OpenFileMapping(FILE_MAP_ALL_ACCESS, /* read/write access */
+			      FALSE,               /* do not inherit the name */
+			      fname);              /* name of mapping object */
+    if (mapfile == NULL) {
+	fprintf(stderr, "mread: OpenFileMapping failed\n");
+	return E_FOPEN;
+    }
+
+    ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, isize);
+    if (ptr == NULL) {
+	fprintf(stderr, "MapViewOfFile failed\n");
+	CloseHandle(mapfile);
+	return E_ALLOC;
+    }
+
+    pos = ptr;
+    memcpy(buf, pos, IDLEN);
+
+    if (memcmp(buf, MATRIX_ID, IDLEN) == 0) {
+	pos += IDLEN;
+	memcpy(&r, pos, sizeof r);
+	pos += sizeof r;
+	memcpy(&c, pos, sizeof c);
+	m = gretl_matrix_alloc(r, c);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (m != NULL) {
+	int vsize = r * c * sizeof *m->val;
+
+	UnmapViewOfFile(ptr);
+	msize = isize + vsize;
+	ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, msize);
+	if (ptr == NULL) {
+	    *err = E_ALLOC;
+	    gretl_matrix_free(m);
+	    m = NULL;
+	} else {
+	    memcpy(m->val, ptr + isize, vsize);
+	}
+    }
+
+    UnmapViewOfFile(ptr);
+    CloseHandle(mapfile);
+
+    return m;
+}
+
+#else /* not MS Windows */
+
 #include <unistd.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
-
-#define MATRIX_ID "gretl_matrix"
-#define IDLEN 12 /* strlen(MATRIX_ID) */
 
 int shm_write_matrix (const gretl_matrix *m,
 		      const char *fname)
@@ -1484,4 +1592,4 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     return m;
 }
 
-#endif /* non-Windows code! */
+#endif /* shared memory variants */

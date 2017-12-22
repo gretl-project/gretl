@@ -92,14 +92,10 @@ void gretl_mpi_stopwatch_init (void);
 
 double gretl_mpi_stopwatch (void);
 
-#ifndef G_OS_WIN32
-
 int shm_write_matrix (const gretl_matrix *m,
 		      const char *fname);
 
 gretl_matrix *shm_read_matrix (const char *fname,
 			       int *err);
-
-#endif
 
 #endif /* GRETL_MPI_H */
