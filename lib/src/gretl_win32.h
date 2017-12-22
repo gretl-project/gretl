@@ -48,7 +48,7 @@ void win32_cli_read_rc (char *callname);
 
 void win_show_last_error (void);
 
-void win_printf_last_error (void);
+void win_print_last_error (void);
 
 int win_run_sync (char *cmdline, const char *currdir);
 

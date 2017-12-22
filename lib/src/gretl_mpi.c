@@ -1422,7 +1422,7 @@ int shm_write_matrix (const gretl_matrix *m,
 				memname);             /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mwrite: CreateFileMapping failed for '%s'\n", memname);
-	win_print_last_err();
+	win_print_last_error();
 	err = E_FOPEN;
     }
 
