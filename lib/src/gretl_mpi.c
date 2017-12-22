@@ -1430,14 +1430,16 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 			      fname);              /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mread: OpenFileMapping failed\n");
-	return E_FOPEN;
+	*err = E_FOPEN;
+	return NULL;
     }
 
     ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, isize);
     if (ptr == NULL) {
 	fprintf(stderr, "MapViewOfFile failed\n");
 	CloseHandle(mapfile);
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return NULL;
     }
 
     pos = ptr;
