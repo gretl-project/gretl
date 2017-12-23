@@ -1369,35 +1369,6 @@ int gretl_mpi_initialized (void)
 #define MATRIX_ID "gretl_matrix"
 #define IDLEN 12 /* strlen(MATRIX_ID) */
 
-static gchar *canonical_memname (const char *s)
-{
-    gchar *name;
-
-    /* Ensure we have a suitable name for a memory-mapped
-       file: on Linux and OS X something like "/foo.shm"
-       (no initial path component other than "/") and on
-       MS Windows something like "Local\foo.shm"
-    */
-
-#ifdef G_OS_WIN32
-    if (*s == '/' || *s == '\\') {
-	s++;
-    }
-    name = g_strdup_printf("Local\\%s", s);
-    gretl_charsub(name + 6, '\\', '_');
-    gretl_charsub(name + 6, '/', '_');
-#else
-    if (*s != '/') {
-	name = g_strdup_printf("/%s", s);
-    } else {
-	name = g_strdup(s);
-    }
-    gretl_charsub(name + 1, '/', '_');
-#endif
-
-    return name;
-}
-
 #ifdef G_OS_WIN32
 
 #include "gretl_win32.h"
@@ -1409,21 +1380,36 @@ int shm_write_matrix (const gretl_matrix *m,
     int msize = IDLEN + 2 * sizeof(int) + vsize;
     HANDLE diskfile, mapfile;
     void *ptr = NULL;
-    gchar *memname;
+    gchar *diskname;
     int err = 0;
 
-    memname = canonical_memname(fname);
+    diskname = g_strdup_printf("%s%s", gretl_dotdir, fname);
 
-    mapfile = CreateFileMapping(INVALID_HANDLE_VALUE, /* or ... */
-				NULL,                 /* default security */
-				PAGE_READWRITE,       /* read/write access */
-				0,                    /* max size (high DWORD) */
-				msize,                /* max size (low DWORD) */
-				memname);             /* name of mapping object */
-    if (mapfile == NULL) {
-	fprintf(stderr, "mwrite: CreateFileMapping failed for '%s'\n", memname);
+    diskfile = CreateFile(diskname,
+			  GENERIC_READ | GENERIC_WRITE,
+			  FILE_SHARE_DELETE | FILE_SHARE_READ,
+			  CREATE_ALWAYS,
+			  FILE_ATTRIBUTE_NORMAL,
+			  NULL);
+
+    if (diskfile == INVALID_HANDLE_VALUE) {
+	fprintf(stderr, "mwrite: CreateFile failed for '%s'\n", diskname);
 	win_print_last_error();
 	err = E_FOPEN;
+    }
+
+    if (!err) {
+	mapfile = CreateFileMapping(diskfile,        /* existing file handle */
+				    NULL,            /* default security */
+				    PAGE_READWRITE,  /* read/write access */
+				    0,               /* max size (high DWORD) */
+				    msize,           /* max size (low DWORD) */
+				    NULL);           /* no name required */
+	if (mapfile == NULL) {
+	    fprintf(stderr, "mwrite: CreateFileMapping failed for '%s'\n", diskname);
+	    win_print_last_error();
+	    err = E_FOPEN;
+	}
     }
 
     if (!err) {
@@ -1449,18 +1435,14 @@ int shm_write_matrix (const gretl_matrix *m,
     if (ptr != NULL) {
 	UnmapViewOfFile(ptr);
     }
-    if (0 && mapfile != NULL) {
-	/* Closing the handle destroys the mapping:
-	   nobody can read! And even if we don't do
-	   CloseHandle here, when gretlmpi exits any
-	   file mapping is automatically destroyed,
-	   so we can't send data back from gretlmpi
-	   to gretl(cli) by this means.
-	*/
+    if (mapfile != NULL) {
 	CloseHandle(mapfile);
     }
+    if (diskfile != NULL) {
+	CloseHandle(diskfile);
+    }
 
-    g_free(memname);
+    g_free(diskname);
 
     return err;
 }
@@ -1472,27 +1454,45 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     int isize;
     HANDLE mapfile;
     void *ptr = NULL;
-    gchar *memname;
+    gchar *diskname;
     int r, c, fd;
-
-    memname = canonical_memname(fname);
 
     /* initial object size */
     isize = IDLEN + 2 * sizeof(int);
 
-    mapfile = OpenFileMapping(FILE_MAP_ALL_ACCESS, /* read/write access */
-			      FALSE,               /* do not inherit the name */
-			      memname);            /* name of mapping object */
-    if (mapfile == NULL) {
-	fprintf(stderr, "mread: OpenFileMapping failed for '%s'\n", memname);
+    diskname = g_strdup_printf("%s%s", gretl_dotdir, fname);
+
+    diskfile = CreateFile(diskname,
+			  GENERIC_READ | GENERIC_WRITE,
+			  0,             /* no sharing here */
+			  OPEN_EXISTING, /* must already exist */
+			  FILE_ATTRIBUTE_NORMAL,
+			  NULL);
+
+    if (diskfile == INVALID_HANDLE_VALUE) {
+	fprintf(stderr, "mread: CreateFile failed for '%s'\n", diskfile);
 	win_print_last_error();
-	*err = E_FOPEN;
+	err = E_FOPEN;
+    }
+
+    if (!err) {
+	mapfile = CreateFileMapping(diskfile,
+				    NULL,            /* default security */
+				    PAGE_READWRITE,  /* read/write access */
+				    0,               /* accept existing size */
+				    0,               /* ditto */
+				    NULL);           /* no name required */
+	if (mapfile == NULL) {
+	    fprintf(stderr, "mread: CreateFileMapping failed for '%s'\n", diskname);
+	    win_print_last_error();
+	    *err = E_FOPEN;
+	}
     }
 
     if (!*err) {
 	ptr = MapViewOfFile(mapfile, FILE_MAP_ALL_ACCESS, 0, 0, isize);
 	if (ptr == NULL) {
-	    fprintf(stderr, "MapViewOfFile failed\n");
+	    fprintf(stderr, "mread: MapViewOfFile failed\n");
 	    *err = E_ALLOC;
 	}
     }
@@ -1534,8 +1534,13 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     if (mapfile != NULL) {
 	CloseHandle(mapfile);
     }
+    if (diskfile != NULL) {
+	/* clean up fully */
+	DeleteFile(diskname);
+	CloseHandle(diskfile);
+    }
 
-    g_free(memname);
+    g_free(diskname);
 
     return m;
 }
@@ -1546,6 +1551,24 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
+
+static gchar *canonical_memname (const char *s)
+{
+    gchar *name;
+
+    /* Ensure we have a suitable name for a memory-mapped
+       file: should be something like "/foo.shm", with no
+       path component other than "/").
+    */
+    if (*s != '/') {
+	name = g_strdup_printf("/%s", s);
+    } else {
+	name = g_strdup(s);
+    }
+    gretl_charsub(name + 1, '/', '_');
+
+    return name;
+}
 
 int shm_write_matrix (const gretl_matrix *m,
 		      const char *fname)
