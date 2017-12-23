@@ -1376,16 +1376,16 @@ static gchar *canonical_memname (const char *s)
     /* Ensure we have a suitable name for a memory-mapped
        file: on Linux and OS X something like "/foo.shm"
        (no initial path component other than "/") and on
-       MS Windows something like "Global\foo.shm"
+       MS Windows something like "Local\foo.shm"
     */
 
 #ifdef G_OS_WIN32
     if (*s == '/' || *s == '\\') {
 	s++;
     }
-    name = g_strdup_printf("Global\\%s", s);
-    gretl_charsub(name + 7, '\\', '_');
-    gretl_charsub(name + 7, '/', '_');
+    name = g_strdup_printf("Local\\%s", s);
+    gretl_charsub(name + 6, '\\', '_');
+    gretl_charsub(name + 6, '/', '_');
 #else
     if (*s != '/') {
 	name = g_strdup_printf("/%s", s);
