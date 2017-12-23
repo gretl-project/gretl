@@ -1351,19 +1351,17 @@ int gretl_mpi_initialized (void)
 }
 
 /* Experimental: implementation of the functions mwrite() and
-   mread() via POSIX shared memory. Should work on Linux and
-   OS X, not so well on MS Windows. This implementation is
-   invoked when the matrix filename has suffix ".shm". The
-   filename should not have any path component but ideally
-   should start with a slash, as in "/mymatrix.shm".
+   mread() via shared memory. This implementation is invoked
+   when the matrix filename has suffix ".shm". The filename
+   should not have any path component as in "mymatrix.shm".
 
    This is intended for fast transport between gretl or gretlcli
    and gretlmpi when an "mpi block" is used. In that context a
    single MPI process (presumably that with rank 0) must take
    exclusive charge of the shared-memory transaction. Unlike
    mwrite/mread using regular files, the matrix that is written
-   into the RAM disk by mwrite is cleared on the first access
-   by mread and any subsequent attempts to read it will fail.
+   into mapped memory by mwrite is cleared on the first access
+   by mread so any subsequent attempts to read it will fail.
 */
 
 #define MATRIX_ID "gretl_matrix"
@@ -1383,11 +1381,12 @@ int shm_write_matrix (const gretl_matrix *m,
     gchar *diskname;
     int err = 0;
 
-    diskname = g_strdup_printf("%s%s", gretl_dotdir, fname);
+    diskname = g_strdup_printf("%s%s", gretl_dotdir(), fname);
 
     diskfile = CreateFile(diskname,
 			  GENERIC_READ | GENERIC_WRITE,
 			  FILE_SHARE_DELETE | FILE_SHARE_READ,
+			  NULL,
 			  CREATE_ALWAYS,
 			  FILE_ATTRIBUTE_NORMAL,
 			  NULL);
@@ -1452,7 +1451,7 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     gretl_matrix *m = NULL;
     char buf[IDLEN] = {0};
     int isize;
-    HANDLE mapfile;
+    HANDLE diskfile, mapfile;
     void *ptr = NULL;
     gchar *diskname;
     int r, c, fd;
@@ -1460,11 +1459,12 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     /* initial object size */
     isize = IDLEN + 2 * sizeof(int);
 
-    diskname = g_strdup_printf("%s%s", gretl_dotdir, fname);
+    diskname = g_strdup_printf("%s%s", gretl_dotdir(), fname);
 
     diskfile = CreateFile(diskname,
 			  GENERIC_READ | GENERIC_WRITE,
 			  0,             /* no sharing here */
+			  NULL,          /* security */
 			  OPEN_EXISTING, /* must already exist */
 			  FILE_ATTRIBUTE_NORMAL,
 			  NULL);
@@ -1472,10 +1472,10 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     if (diskfile == INVALID_HANDLE_VALUE) {
 	fprintf(stderr, "mread: CreateFile failed for '%s'\n", diskfile);
 	win_print_last_error();
-	err = E_FOPEN;
+	*err = E_FOPEN;
     }
 
-    if (!err) {
+    if (!*err) {
 	mapfile = CreateFileMapping(diskfile,
 				    NULL,            /* default security */
 				    PAGE_READWRITE,  /* read/write access */
@@ -1535,11 +1535,10 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	CloseHandle(mapfile);
     }
     if (diskfile != NULL) {
-	/* clean up fully */
-	DeleteFile(diskname);
 	CloseHandle(diskfile);
     }
 
+    gretl_remove(diskname);
     g_free(diskname);
 
     return m;
