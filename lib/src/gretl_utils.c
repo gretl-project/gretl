@@ -2239,6 +2239,30 @@ int gretl_mpi_initialized (void)
 
 #endif
 
+static void dotdir_cleanup (void)
+{
+    int err = gretl_chdir(gretl_dotdir());
+
+    if (!err) {
+	DIR *dir = gretl_opendir(".");
+	struct dirent *dirent;
+	const char *fname;
+
+	if (dir != NULL) {
+	    while ((dirent = readdir(dir)) != NULL) {
+		fname = dirent->d_name;
+		if (strcmp(fname, "..") &&
+		    strcmp(fname, ".") &&
+		    strcmp(fname, ".gretl2rc") &&
+		    !gretl_isdir(fname)) {
+		    remove(fname);
+		}
+	    }
+	    closedir(dir);
+	}
+    }
+}
+
 void libgretl_session_cleanup (int mode)
 {
     gretl_saved_objects_cleanup();
@@ -2290,6 +2314,7 @@ void libgretl_cleanup (void)
     gretl_www_cleanup();
 #endif
     builtin_strings_cleanup();
+    dotdir_cleanup();
 
 #ifdef USE_RLIB
     gretl_R_cleanup();
