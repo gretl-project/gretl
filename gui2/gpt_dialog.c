@@ -2791,6 +2791,12 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    g_object_set_data(G_OBJECT(ed->stylecombo[i]), "pointsel", ptsel);
 	}
 
+	if (color_sel_ok) {
+	    ed->colorsel[i] = line_color_button(spec, i);
+	    gtk_box_pack_start(GTK_BOX(hbox), ed->colorsel[i], FALSE, FALSE, 20);
+	    color_sel_ok = 0;
+	}
+
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
 				  nrows-1, nrows);
 	gtk_widget_show_all(hbox);
@@ -2843,7 +2849,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	}
 
 	if (color_sel_ok) {
-	    /* color selection */
+	    /* color selection ok and not already added */
 	    ed->colorsel[i] = line_color_button(spec, i);
 	    hbox = gpt_hboxit(ed->colorsel[i]);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 3, ncols,
