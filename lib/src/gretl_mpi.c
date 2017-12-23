@@ -1352,7 +1352,7 @@ int gretl_mpi_initialized (void)
 
 /* Experimental: implementation of the functions mwrite() and
    mread() via POSIX shared memory. Should work on Linux and
-   OS X (not tested yet on MS Windows). This implementation is
+   OS X, not so well on MS Windows. This implementation is
    invoked when the matrix filename has suffix ".shm". The
    filename should not have any path component but ideally
    should start with a slash, as in "/mymatrix.shm".
@@ -1407,18 +1407,18 @@ int shm_write_matrix (const gretl_matrix *m,
 {
     int vsize = m->rows * m->cols * sizeof *m->val;
     int msize = IDLEN + 2 * sizeof(int) + vsize;
-    HANDLE mapfile;
+    HANDLE diskfile, mapfile;
     void *ptr = NULL;
     gchar *memname;
     int err = 0;
 
     memname = canonical_memname(fname);
 
-    mapfile = CreateFileMapping(INVALID_HANDLE_VALUE, /* use paging file */
+    mapfile = CreateFileMapping(INVALID_HANDLE_VALUE, /* or ... */
 				NULL,                 /* default security */
 				PAGE_READWRITE,       /* read/write access */
-				0,                    /* maximum size (hi-order DWORD) */
-				msize,                /* maximum size (lo-order DWORD) */
+				0,                    /* max size (high DWORD) */
+				msize,                /* max size (low DWORD) */
 				memname);             /* name of mapping object */
     if (mapfile == NULL) {
 	fprintf(stderr, "mwrite: CreateFileMapping failed for '%s'\n", memname);
@@ -1449,7 +1449,14 @@ int shm_write_matrix (const gretl_matrix *m,
     if (ptr != NULL) {
 	UnmapViewOfFile(ptr);
     }
-    if (mapfile != NULL) {
+    if (0 && mapfile != NULL) {
+	/* Closing the handle destroys the mapping:
+	   nobody can read! And even if we don't do
+	   CloseHandle here, when gretlmpi exits any
+	   file mapping is automatically destroyed,
+	   so we can't send data back from gretlmpi
+	   to gretl(cli) by this means.
+	*/
 	CloseHandle(mapfile);
     }
 
