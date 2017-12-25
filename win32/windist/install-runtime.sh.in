@@ -3,12 +3,14 @@
 # these first paths may need configuring
 TARGET=@prefix@
 SRCDIR=@top_srcdir@
-# note: content downloaded from
-# http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/gretl-extra.tar.gz
-EXTRA=${HOME}/gretl-extra
+
+# and set this to "no" if you don't want to install pre-built
+# gnuplot from the server
+INSTALL_GNUPLOT="yes"
 
 # nothing below here should need configuring
 
+SERVERDIR="http://ricardo.ecn.wfu.edu/pub/gretl/winbuild"
 SYSBASE=${MINGW_PREFIX}
 SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
@@ -55,6 +57,16 @@ done
 # gdk-pixbuf loaders
 cp -r ${SYSBASE}/lib/gdk-pixbuf-2.0 ${TARGET}/lib
 
+# gnuplot -- unless you're building it yourself
+if [ "x${INSTALL_GNUPLOT}" = "xyes" ; then
+  if [ "$MSYSTEM_CARCH" = "x86_64" ] ; then
+    GPTGZ=${SERVERDIR}/gp522w64.tar.gz
+  else
+    GPTGZ=${SERVERDIR}/gp522w32.tar.gz
+  fi
+  cd ${TARGET} && wget ${GPTGZ} && tar xvf ${GPTGZ} && rm ${GPTGZ}
+fi
+
 # GTK theme files
 cp $SYSTHEME/Emacs/gtk-2.0-key/gtkrc ${TARGET}/share/themes/Emacs/gtk-2.0-key/gtkrc
 cp $SYSTHEME/Default/gtk-2.0-key/gtkrc ${TARGET}/share/themes/Default/gtk-2.0-key/gtkrc
@@ -84,11 +96,9 @@ cp ${SYSSV}/styles/tango.xml ${TARGET}/gtksourceview/tango.xml
 cp ${SYSSV}/styles/styles.rng ${TARGET}/gtksourceview/styles.rng
 
 # locale file, certs for cURL, libsvm copyright
-if [ -d ${EXTRA} ] ; then
-  cp ${EXTRA}/locale.alias ${TARGET}/share/locale/locale.alias
-  cp ${EXTRA}/curl-ca-bundle.crt ${TARGET}/curl-ca-bundle.crt
-  cp ${EXTRA}/copyright_libsvm ${TARGET}/copyright_libsvm
-fi
+cd ${TARGET} && wget ${SERVERDIR}/gretl-extra.tar.gz && \
+ tar xvf gretl-extra.tar.gz && rm gretl-extra.tar.gz && \
+ mv locale.alias share/locale/locale.alias
 
 # GLib and GTK message catalogs
 for lang in $LANGS ; do
