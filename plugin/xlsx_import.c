@@ -1398,6 +1398,9 @@ static void xlsx_dates_check (DATASET *dset)
 		date_max = d;
 	    }
 	    d = atoi(dset->S[t]) - atoi(dset->S[t-1]);
+	    if (d == 0) {
+		fprintf(stderr, "dates? delta = 0 at obs %d\n", t+1);
+	    }
 	    if (t == 1) {
 		delta_min = delta_max = d;
 	    } else if (d < delta_min) {
