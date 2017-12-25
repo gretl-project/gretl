@@ -3,7 +3,8 @@
 # these first paths may need configuring
 TARGET=@prefix@
 SRCDIR=@top_srcdir@
-# note: http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/gretl-extra.tar.gz
+# note: content downloaded from
+# http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/gretl-extra.tar.gz
 EXTRA=${HOME}/gretl-extra
 
 # nothing below here should need configuring
@@ -14,7 +15,7 @@ SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
 SYSSV=${SYSBASE}/share/gtksourceview-2.0
 
-# make required GTK-related directories not created by "make install"
+# create required GTK-related directories not created by "make install"
 mkdir -p ${TARGET}/share/themes/Emacs/gtk-2.0-key
 mkdir -p ${TARGET}/share/themes/Default/gtk-2.0-key
 mkdir -p ${TARGET}/share/themes/MS-Windows/gtk-2.0
@@ -29,59 +30,26 @@ for lang in $LANGS ; do
   mkdir -p ${TARGET}/share/locale/$lang/LC_MESSAGES
 done
 
-# copy in third-party dlls from mingw64 or mingw32: this listing
-# is correct as of 2017-12-05
+# copy in third-party dlls not detected by ldd: this listing
+# is correct as of 2017-12-25
 for f in \
-	libatk-1.0-0.dll \
-	libcairo-2.dll \
 	libcairo-gobject-2.dll \
-	libcurl-4.dll \
-	ssleay32.dll \
-	libeay32.dll \
-	libffi-6.dll \
-	libfftw3-3.dll \
 	libgailutil-18.dll \
-	libgdk_pixbuf-2.0-0.dll \
-	libgdk-win32-2.0-0.dll \
-	libgio-2.0-0.dll \
-	libglib-2.0-0.dll \
-	libgmodule-2.0-0.dll \
-	libgmp-10.dll \
-	libgobject-2.0-0.dll \
 	libgthread-2.0-0.dll \
-	libgtksourceview-2.0-0.dll \
-	libgtk-win32-2.0-0.dll \
-	libiconv-2.dll \
-	libintl-8.dll \
-	libpango-1.0-0.dll \
-	libpangocairo-1.0-0.dll \
-	libpangowin32-1.0-0.dll \
-	libpixman-1-0.dll \
-	libxml2-2.dll \
-	zlib1.dll \
-	libpng16-16.dll \
-	libreadline7.dll \
 	libjson-glib-1.0-0.dll \
-	libopenblas.dll \
-	libwinpthread-1.dll \
-	libtermcap-0.dll \
-	libgomp-1.dll \
-	libgcc_s_seh-1.dll \
-	libpcre-1.dll \
-	libunistring-2.dll \
-	libgfortran-4.dll \
-	libquadmath-0.dll \
-	libfontconfig-1.dll \
-	libfreetype-6.dll \
-	libpangoft2-1.0-0.dll \
-	libexpat-1.dll \
-	libharfbuzz-0.dll \
-	libbz2-1.dll \
-	libgraphite2.dll \
-	libstdc++-6.dll \
 	libsvm.dll
 do
     cp ${SYSBIN}/$f ${TARGET}/$f
+done
+
+# make list of ldd-detected DLL dependencies...
+ldd ${TARGET}/gretl.exe | grep -vi /c/windows > dlls.tmp
+ldd ${TARGET}/gretlcli.exe | grep -vi /c/windows >> dlls.tmp
+cat dlls.tmp | awk '{print $1}' | sort | uniq | \
+  grep -v libgretl | grep -v '?' > dlls.txt && rm dlls.tmp
+# and copy them in
+for f in `cat dlls.txt` ; do
+  cp ${SYSBIN}/$f ${TARGET}/$f
 done
 
 # gdk-pixbuf loaders
