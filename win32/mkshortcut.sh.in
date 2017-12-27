@@ -1,0 +1,17 @@
+#!/bin/sh
+
+GEXEPATH="@GEXEPATH@"
+
+echo "Set oWS = WScript.CreateObject(\"WScript.Shell\")" > scut.vbs
+echo "sLinkFile = \"$USERPROFILE\Desktop\gretl-msys.lnk\"" >> scut.vbs
+echo "Set oLink = oWS.CreateShortcut(sLinkFile)" >> scut.vbs
+echo "oLink.TargetPath = \"$GEXEPATH\gretlrun.cmd\"" >> scut.vbs
+echo "oLink.WorkingDirectory = \"C:\msys64\opt\gretl\"" >> scut.vbs
+echo "oLink.Description = \"gretl (MSYS2)\"" >> scut.vbs
+echo "oLink.IconLocation = \"$GEXEPATH\gretl.exe,0\"" >> scut.vbs
+echo "oLink.WindowStyle = \"7\"" >> scut.vbs
+echo "oLink.Save" >> scut.vbs
+
+cscript scut.vbs
+rm scut.vbs
+
