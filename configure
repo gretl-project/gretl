@@ -20204,7 +20204,7 @@ fi
 
 
 
-    ac_config_files="$ac_config_files win32/gretlrun.cmd win32/gretlmime.reg"
+    ac_config_files="$ac_config_files win32/gretlrun.cmd win32/gretlmime.reg win32/mkshortcut.sh"
 
   fi
 fi
@@ -21242,6 +21242,7 @@ do
     "win32/windist/install-runtime.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/install-runtime.sh" ;;
     "win32/gretlrun.cmd") CONFIG_FILES="$CONFIG_FILES win32/gretlrun.cmd" ;;
     "win32/gretlmime.reg") CONFIG_FILES="$CONFIG_FILES win32/gretlmime.reg" ;;
+    "win32/mkshortcut.sh") CONFIG_FILES="$CONFIG_FILES win32/mkshortcut.sh" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/commands/Makefile") CONFIG_FILES="$CONFIG_FILES doc/commands/Makefile" ;;
     "doc/tex/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex/Makefile" ;;

@@ -1086,6 +1086,7 @@ if test "${win32_build}" = "yes" ; then
     AC_CONFIG_FILES([
       win32/gretlrun.cmd
       win32/gretlmime.reg
+      win32/mkshortcut.sh
     ])
   fi
 fi
