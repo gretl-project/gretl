@@ -85,6 +85,7 @@ gp_3d="yes"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
+RT_LIB=
 
 AC_CHECK_HEADERS(libintl.h,
 	try_nls="yes",
@@ -508,6 +509,7 @@ AC_MSG_RESULT($ac_cv_func_mmap_ok)
 if test $ac_cv_func_mmap_ok = yes
 then
  AC_DEFINE(HAVE_MMAP)
+ RT_LIB="-lrt"
 fi
 
 dnl
@@ -712,7 +714,7 @@ if test "$fake_mono_time" = "yes" ; then
    AC_CHECK_LIB(c, clock_gettime, have_clock_gettime="yes",,)
    if test "$have_clock_gettime" = "no" ; then
       AC_CHECK_LIB(rt, clock_gettime, have_clock_gettime="yes"; \
-       RT_LIB="-lrt" ; AC_SUBST(RT_LIB),,)
+       RT_LIB="-lrt",,)
    fi
    if test "$have_clock_gettime" = "yes" ; then
       AC_DEFINE(HAVE_CLOCK_GETTIME)
@@ -888,6 +890,7 @@ AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LIBS)
 AC_SUBST(GTKSOURCEVIEW_PREFIX)
 AC_SUBST(GTK_PREFIX)
+AC_SUBST(RT_LIB)
 
 dnl Check for gdk-pixbuf support
 if test ${build_gui} = "yes" ; then

@@ -638,7 +638,7 @@ GEXEPATH
 GEXE
 GHOME
 CYGPATH_CHECK
-MINGW_PREFIX
+mingw_prefix
 USE_AVX
 USE_SSE2
 RLIB
@@ -660,6 +660,7 @@ XML_LIBS
 XML_CFLAGS
 GDK_PIXBUF_LIBS
 GDK_PIXBUF_CFLAGS
+RT_LIB
 GTK_PREFIX
 GTKSOURCEVIEW_PREFIX
 GTK_LIBS
@@ -694,7 +695,6 @@ GTK2_LIBS
 GTK2_CFLAGS
 JSON_GLIB_LIBS
 JSON_GLIB_CFLAGS
-RT_LIB
 GLIB28_LIBS
 GLIB28_CFLAGS
 GLIB_LIBS
@@ -2873,6 +2873,7 @@ gp_3d="yes"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
+RT_LIB=
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -16808,6 +16809,7 @@ if test $ac_cv_func_mmap_ok = yes
 then
  $as_echo "#define HAVE_MMAP 1" >>confdefs.h
 
+ RT_LIB="-lrt"
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gzopen in -lz" >&5
@@ -18753,7 +18755,7 @@ fi
 $as_echo "$ac_cv_lib_rt_clock_gettime" >&6; }
 if test "x$ac_cv_lib_rt_clock_gettime" = xyes; then :
   have_clock_gettime="yes"; \
-       RT_LIB="-lrt" ;
+       RT_LIB="-lrt"
 fi
 
    fi
@@ -19551,6 +19553,7 @@ fi
 
 
 
+
 if test ${build_gui} = "yes" ; then
 
 pkg_failed=no
@@ -20070,7 +20073,7 @@ fi
 
 if test "${win32_build}" = "yes" ; then
   if test "${pkg_build}" = "yes" ; then
-    MINGW_PREFIX="$MINGW_PREFIX"
+    mingw_prefix="$MINGW_PREFIX"
 
 
     ac_config_files="$ac_config_files win32/windist/mkiss.sh win32/windist/post-install.sh win32/windist/install-runtime.sh"
