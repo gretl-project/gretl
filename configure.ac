@@ -489,32 +489,6 @@ if test "$try_xdg_utils" = "yes" ; then
 fi
 
 dnl
-dnl Is MMAP available?
-dnl
-AC_MSG_CHECKING([for mmap])
-AC_CACHE_VAL(ac_cv_func_mmap_ok,
- [AC_TRY_LINK(
- changequote(<<, >>)dnl
- <<
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
- >>,
- changequote([, ])dnl
- [mmap((void *)0, 0, PROT_READ, 0, 0, 0);],
- ac_cv_func_mmap_ok=yes,
- ac_cv_func_mmap_ok=no)] )
-AC_MSG_RESULT($ac_cv_func_mmap_ok)
-if test $ac_cv_func_mmap_ok = yes
-then
-  AC_DEFINE(HAVE_MMAP)
-  if test $darwin_build = no ; then
-    RT_LIB="-lrt"
-  fi
-fi
-
-dnl
 dnl Check for zlib
 dnl
 AC_CHECK_LIB(z, gzopen,have_zlib="yes" ; \
@@ -568,6 +542,32 @@ if test "$darwin_build" = "yes" ; then
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
     AC_SUBST(DARWIN_RPATH)
+  fi
+fi
+
+dnl
+dnl Is MMAP available?
+dnl
+AC_MSG_CHECKING([for mmap])
+AC_CACHE_VAL(ac_cv_func_mmap_ok,
+ [AC_TRY_LINK(
+ changequote(<<, >>)dnl
+ <<
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+ >>,
+ changequote([, ])dnl
+ [mmap((void *)0, 0, PROT_READ, 0, 0, 0);],
+ ac_cv_func_mmap_ok=yes,
+ ac_cv_func_mmap_ok=no)] )
+AC_MSG_RESULT($ac_cv_func_mmap_ok)
+if test $ac_cv_func_mmap_ok = yes
+then
+  AC_DEFINE(HAVE_MMAP)
+  if test $darwin_build = no ; then
+    RT_LIB="-lrt"
   fi
 fi
 
