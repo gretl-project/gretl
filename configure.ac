@@ -508,8 +508,10 @@ AC_CACHE_VAL(ac_cv_func_mmap_ok,
 AC_MSG_RESULT($ac_cv_func_mmap_ok)
 if test $ac_cv_func_mmap_ok = yes
 then
- AC_DEFINE(HAVE_MMAP)
- RT_LIB="-lrt"
+  AC_DEFINE(HAVE_MMAP)
+  if test $darwin_build = no ; then
+    RT_LIB="-lrt"
+  fi
 fi
 
 dnl
