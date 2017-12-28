@@ -2293,8 +2293,6 @@ static void grab_line_rgb (char *targ, const char *src)
     }
 }
 
-#define UDEBUG 0
-
 /* Examples:
 
    using 1:2
@@ -2376,7 +2374,7 @@ static int process_using_spec (const char **ps,
     if (n > 0 && (anyparen || ticspecs > 0)) {
 	/* record the 'using' string as is */
 	char *ustr = gretl_strndup(p, n);
-#if UDEBUG
+#if GPDEBUG
 	fprintf(stderr, "saving ustr = '%s'\n", ustr);
 #endif
 	line->ustr = ustr;
@@ -2395,7 +2393,7 @@ static int process_using_spec (const char **ps,
 	} else {
 	    spec->datacols += line->ncols;
 	}
-#if UDEBUG
+#if GPDEBUG
 	fprintf(stderr, "number of unique columns %d\n", n_uniq);
 	printlist(cols, "cols list");
 	fprintf(stderr, "spec->datacols now = %d\n", spec->datacols);
@@ -2447,10 +2445,13 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	err = process_using_spec(&p, spec, i);
 	s = p; /* remainder of line */
     } else if (*s == '\'' || *s == '"') {
-	/* name of data file, without 'using' */
+	/* name of data file, without 'using': implicitly
+	   using cols 1 and 2
+	*/
 	if (*(s+1) != '-') {
 	    fprintf(stderr, "plotting datafile, not supported\n");
 	} else {
+	    spec->datacols += 2;
 	    line->ncols = 2;
 	}
     } else {
@@ -2566,9 +2567,14 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "allocating: nobs=%d, datacols=%d\n",
+    fprintf(stderr, "plot_get_data, allocating: nobs=%d, datacols=%d\n",
 	    spec->nobs, spec->datacols);
 #endif
+
+    if (spec->nobs == 0 || spec->datacols == 0) {
+	/* somehow we got here by mistake! */
+	return E_DATA;
+    }
 
     /* allocate for the plot data... */
     spec->data = gretl_matrix_alloc(spec->nobs, spec->datacols);
