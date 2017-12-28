@@ -5,60 +5,60 @@ Windows Registry Editor Version 5.00
 
 ; gretl data files (.gdt)
 
-[HKEY_CLASSES_ROOT\Software\gretl\.gdt]
+[HKEY_CLASSES_ROOT\.gdt]
 @="GretlDataFile"
 "Content Type"="application/x-gretldata"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile]
+[HKEY_CLASSES_ROOT\GretlDataFile]
 @="Gretl data file"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\DefaultIcon]
+[HKEY_CLASSES_ROOT\GretlDataFile\DefaultIcon]
 @="@GEXEPATH@\\gretl.exe,1"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlDataFile\shell\open\command]
+[HKEY_CLASSES_ROOT\GretlDataFile\shell\open\command]
 @="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
 
 ; gretl script files (.inp)
 
-[HKEY_CLASSES_ROOT\Software\gretl\.inp]
+[HKEY_CLASSES_ROOT\.inp]
 @="GretlScriptFile"
 "Content Type"="application/x-gretlscript"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile]
+[HKEY_CLASSES_ROOT\GretlScriptFile]
 @="Gretl script file"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\DefaultIcon]
+[HKEY_CLASSES_ROOT\GretlScriptFile\DefaultIcon]
 @="@GEXEPATH@\\gretl.exe,2"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlScriptFile\shell\open\command]
+[HKEY_CLASSES_ROOT\GretlScriptFile\shell\open\command]
 @="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
 
 ; gretl session files (.gretl)
 
-[HKEY_CLASSES_ROOT\Software\gretl\.gretl]
+[HKEY_CLASSES_ROOT\.gretl]
 @="GretlSessionFile"
 "Content Type"="application/x-gretlsession"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile]
+[HKEY_CLASSES_ROOT\GretlSessionFile]
 @="Gretl session file"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\DefaultIcon]
+[HKEY_CLASSES_ROOT\GretlSessionFile\DefaultIcon]
 @="@GEXEPATH@\\gretl.exe,3"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlSessionFile\shell\open\command]
+[HKEY_CLASSES_ROOT\GretlSessionFile\shell\open\command]
 @="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
 
 ; gretl binary data files (.gdtb)
 
-[HKEY_CLASSES_ROOT\Software\gretl\.gdtb]
+[HKEY_CLASSES_ROOT\.gdtb]
 @="GretlBindataFile"
 "Content Type"="application/x-gretlbindata"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile]
+[HKEY_CLASSES_ROOT\GretlBindataFile]
 @="Gretl binary data file"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\DefaultIcon]
+[HKEY_CLASSES_ROOT\GretlBindataFile\DefaultIcon]
 @="@GEXEPATH@\\gretl.exe,4"
 
-[HKEY_CLASSES_ROOT\Software\gretl\GretlBindataFile\shell\open\command]
+[HKEY_CLASSES_ROOT\GretlBindataFile\shell\open\command]
 @="\"@GEXEPATH@\\gretlrun.cmd\" \"%1\""
