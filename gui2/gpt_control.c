@@ -2387,8 +2387,8 @@ static int process_using_spec (const char **ps,
 	    line->flags |= GP_LINE_BOXDATA;
 	}
 	/* cumulate total data columns */
-	if (i > 0 && in_gretl_list(cols, 1)) {
-	    /* col 1 should already be counted */
+	if (spec->datacols > 0 && in_gretl_list(cols, 1)) {
+	    /* col 1 should already be counted? */
 	    spec->datacols += line->ncols - 1;
 	} else {
 	    spec->datacols += line->ncols;
@@ -2451,8 +2451,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	if (*(s+1) != '-') {
 	    fprintf(stderr, "plotting datafile, not supported\n");
 	} else {
-	    spec->datacols += 2;
 	    line->ncols = 2;
+	    spec->datacols += 2;
 	}
     } else {
 	/* absence of "using" should mean that the line plots
@@ -5112,8 +5112,9 @@ static png_plot *png_plot_new (void)
    plot commands.
 */
 
-static int gnuplot_show_png (const char *fname, const char *name,
-			     GPT_SPEC *spec, void *session_ptr)
+static int gnuplot_show_png (const char *fname,
+			     const char *name,
+			     void *session_ptr)
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -5129,8 +5130,8 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gretl_error_clear();
 
 #if GPDEBUG
-    fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
-	    fname, (void *) spec, (session_ptr != NULL));
+    fprintf(stderr, "gnuplot_show_png:\n fname='%s', saved=%d\n",
+	    fname, (session_ptr != NULL));
 #endif
 
     plot = png_plot_new();
@@ -5138,16 +5139,13 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	return E_ALLOC;
     }
 
-    if (spec != NULL) {
-	plot->spec = spec;
-    } else {
-	plot->spec = plotspec_new();
-	if (plot->spec == NULL) {
-	    free(plot);
-	    return E_ALLOC;
-	}
-	strcpy(plot->spec->fname, fname);
+    plot->spec = plotspec_new();
+    if (plot->spec == NULL) {
+	free(plot);
+	return E_ALLOC;
     }
+
+    strcpy(plot->spec->fname, fname);
 
     if (session_ptr != NULL) {
 	plot->status |= PLOT_SAVED;
@@ -5164,9 +5162,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     plot->err = read_plotspec_from_file(plot->spec, &plot->pd);
 
     if (plot->err == E_FOPEN) {
-	if (plot->spec != spec) {
-	    plotspec_destroy(plot->spec);
-	}
+	plotspec_destroy(plot->spec);
 	free(plot);
 	return E_FOPEN;
     }
@@ -5359,13 +5355,16 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
 void register_graph (void)
 {
-    gnuplot_show_png(gretl_plotfile(), NULL, NULL, NULL);
+    gnuplot_show_png(gretl_plotfile(), NULL, NULL);
 }
 
 /* @fname is the name of a plot command file from the
-   current session, and @title is its display name */
+   current session and @title is its display name;
+   @session_ptr is a pointer to the session object.
+*/
 
-void display_session_graph (const char *fname, const char *title,
+void display_session_graph (const char *fname,
+			    const char *title,
 			    void *session_ptr)
 {
     char fullname[MAXLEN];
@@ -5392,7 +5391,7 @@ void display_session_graph (const char *fname, const char *title,
 	/* display the bad plot file */
 	view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
     } else {
-	err = gnuplot_show_png(fullname, title, NULL, session_ptr);
+	err = gnuplot_show_png(fullname, title, session_ptr);
     }
 
     if (err) {
