@@ -2224,7 +2224,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
-    fputs(" '-' using 1:2 title '' w points, \\\n", fp);
+    fputs(" '-' using 1:2 notitle w points, \\\n", fp);
     sprintf(title, _("loess fit, d = %d, q = %g"), d, q);
     fprintf(fp, " '-' using 1:2 title \"%s\" w lines\n", title);
 
@@ -2407,7 +2407,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
-    fputs(" '-' using 1:2 title '' w lines, \\\n", fp);
+    fputs(" '-' using 1:2 notitle w lines, \\\n", fp);
     
     gretl_push_c_numeric_locale();
 
@@ -4368,7 +4368,7 @@ static gchar *maybe_get_surface (const int *list,
 	double vadj = (vmax - vmin) * 0.02;
 
 	ret = g_strdup_printf("[u=%g:%g] [v=%g:%g] "
-			      "%g+(%g)*u+(%g)*v title ''", 
+			      "%g+(%g)*u+(%g)*v notitle", 
 			      umin - uadj, umax + uadj, 
 			      vmin - vadj, vmax + vadj,
 			      smod.coeff[0], smod.coeff[1],
@@ -4473,10 +4473,10 @@ int gnuplot_3d (int *list, const char *literal,
     surface = maybe_get_surface(list, dset, *opt);
 
     if (surface != NULL) {
-	fprintf(fp, "splot %s, \\\n'-' title '' w p\n", surface);
+	fprintf(fp, "splot %s, \\\n'-' notitle w p\n", surface);
 	g_free(surface);
     } else {
-	fputs("splot '-' title '' w p\n", fp);
+	fputs("splot '-' notitle w p\n", fp);
     }
 
     datlist[0] = 3;
@@ -7598,11 +7598,11 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
     fprintf(fp, "x(t) = %g*cos(t)%+g*sin(t)%+g\n", xcoeff[0], xcoeff[1], b[0]);
     fprintf(fp, "y(t) = %g*cos(t)%+g*sin(t)%+g\n", ycoeff[0], ycoeff[1], b[1]);
 
-    fputs("plot x(t), y(t) title '', \\\n", fp);
-    fprintf(fp, "%g, y(t) title '' w lines lt 2, \\\n", b[0] - maxerr[0]);
-    fprintf(fp, "%g, y(t) title '' w lines lt 2, \\\n", b[0] + maxerr[0]);
-    fprintf(fp, "x(t), %g title '' w lines lt 2, \\\n", b[1] - maxerr[1]);
-    fprintf(fp, "x(t), %g title '' w lines lt 2\n", b[1] + maxerr[1]);
+    fputs("plot x(t), y(t) notitle, \\\n", fp);
+    fprintf(fp, "%g, y(t) notitle w lines lt 2, \\\n", b[0] - maxerr[0]);
+    fprintf(fp, "%g, y(t) notitle w lines lt 2, \\\n", b[0] + maxerr[0]);
+    fprintf(fp, "x(t), %g notitle w lines lt 2, \\\n", b[1] - maxerr[1]);
+    fprintf(fp, "x(t), %g notitle w lines lt 2\n", b[1] + maxerr[1]);
 
     gretl_pop_c_numeric_locale();
 
