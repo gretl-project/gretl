@@ -3358,10 +3358,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    const char *word = gretl_command_word(cmd->ci);
 
 	    if (*word != '\0') {
-		pprintf(prn, _("Sorry, the %s command is not yet implemented "
-			       "in libgretl\n"), word);
+		pprintf(prn, _("The \"%s\" command cannot be used in this context"),
+			word);
+		pputc(prn, '\n');
 	    } else {
-		pprintf(prn, "What?\n");
+		pprintf(prn, "What??\n");
 	    }
 	}
 	err = 1;
