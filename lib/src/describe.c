@@ -2435,6 +2435,43 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     return tab;
 }
 
+#if 0 /* not yet: but respond to Artur's request? */
+
+static int xtab_pearson_only (const Xtab *tab, gretlopt opt)
+{
+    double x, y;
+    double ymin = 1.0e-7;
+    double pearson = 0.0;
+    int i, j, err = 0;
+
+    for (i=0; i<tab->rows && !err; i++) {
+	if (tab->rtotal[i] > 0) {
+	    for (j=0; j<tab->cols && !err; j++) {
+		y = ((double) tab->rtotal[i] * tab->ctotal[j]) / tab->n;
+		if (y < ymin) {
+		    err = E_DATA;
+		} else {
+		    x = (double) tab->f[i][j] - y;
+		    pearson += x * x / y;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	int df = (tab->rows - 1) * (tab->cols - 1);
+	double pval = chisq_cdf_comp(df, pearson);
+
+	if (!na(pval)) {
+	    ; /* record stuff! */
+	}
+    }
+
+    return err;
+}
+
+#endif
+
 int crosstab_from_matrix (gretlopt opt, PRN *prn)
 {
     const char *mname;
@@ -2499,7 +2536,7 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	for (i=0; i<m->rows; i++) {
 	    tab->ctotal[j] += tab->f[i][j];
 	}
-    }  
+    } 
 
     print_xtab(tab, NULL, opt, prn);
     free_xtab(tab);	
