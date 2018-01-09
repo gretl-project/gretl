@@ -2435,12 +2435,11 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     return tab;
 }
 
-#if 0 /* not yet: but respond to Artur's request? */
+#if 0 /* respond to Artur's request? */
 
 static int xtab_pearson_only (const Xtab *tab, gretlopt opt)
 {
-    double x, y;
-    double ymin = 1.0e-7;
+    double x, y, ymin = 1.0e-7;
     double pearson = 0.0;
     int i, j, err = 0;
 
@@ -2463,8 +2462,14 @@ static int xtab_pearson_only (const Xtab *tab, gretlopt opt)
 	double pval = chisq_cdf_comp(df, pearson);
 
 	if (!na(pval)) {
-	    ; /* record stuff! */
+	    record_test_result(pearson, pval);
+	} else {
+	    err = E_DATA;
 	}
+    }
+
+    if (err) {
+	record_test_result(NADBL, NADBL);
     }
 
     return err;
