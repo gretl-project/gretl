@@ -6179,7 +6179,11 @@ static int get_two_words (const char *s, char *w1, char *w2,
 
 	s += 9;
 	s += strspn(s, " ");
-	n = strcspn(s, " (");
+
+	/* @w1 should be a return type, except in the case
+	   of "function foo delete"
+	*/
+	n = strcspn(s, " ");
 
 	if (n == 0 || n >= FN_NAMELEN) {
 	    *err = E_PARSE;
@@ -6191,9 +6195,13 @@ static int get_two_words (const char *s, char *w1, char *w2,
 	    n = strcspn(s, " (");
 	}
 
+	/* @w2 should generally be the function name */
 	if (n > 0 && n < FN_NAMELEN) {
 	    strncat(w2, s, n);
 	    nf++;
+	} else if (n >= FN_NAMELEN) {
+	    gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
+	    *err = E_PARSE;
 	}
     }
 
