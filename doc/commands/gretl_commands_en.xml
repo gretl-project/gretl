@@ -391,7 +391,7 @@
 	Unless the <opt>quiet</opt> option is given, this command
 	prints a table showing the sums of squares and mean squares
 	along with an <math>F</math>-test.  The <math>F</math>-test
-	and its P-value can be retrieved using the accessors <fncref
+	and its p-value can be retrieved using the accessors <fncref
 	targ="$test"/> and <fncref targ="$pvalue"/> respectively.
       </para>
       <para>
@@ -1247,7 +1247,7 @@
 	    coefficient estimates, divided by the bootstrap standard
 	    error. The confidence interval is then based on the
 	    quantiles of this bootstrap <math>t</math>-ratio, as
-	    explained in ETM.  The P-value option is based on the
+	    explained in ETM.  The p-value option is based on the
 	    distribution of the bootstrap <math>t</math>-ratio: it is
 	    the proportion of the replications where the absolute
 	    value of this statistic exceeds the absolute value of the
@@ -2964,7 +2964,7 @@
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>suppress printed output</effect>
-	</option>	
+	</option>
       </options>
     </usage>
 
@@ -14620,7 +14620,7 @@
 	  <effect>see below</effect>
         </option>
       </options>
-       <examples>
+      <examples>
         <example>xcorrgm x y 12</example>
       </examples>
     </usage>
@@ -14688,21 +14688,32 @@
 	  <optparm>matname</optparm>
 	  <effect>use frequencies from named matrix</effect>
         </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>see the bivariate case below</effect>
+	</option>
       </options>
+      <examples>
+	<example>xtab 1 2</example>
+	<example>xtab 1 ; 2 3 4</example>
+	<example>xtab --matrix=A</example>
+      </examples>
     </usage>
 
     <description context="cli">
       <para>
         Displays a contingency table or cross-tabulation for each
-	combination of the variables included in <repl>ylist</repl>; if a
-	second list <repl>xlist</repl> is given, each variable in
-	<repl>ylist</repl> is cross-tabulated by row against each variable
-	in <repl>xlist</repl> (by column).  Variables in these lists can
-	be referenced by name or by number.  Note that all the variables
-	must have been marked as discrete.  Alternatively, if the
-	<opt>matrix</opt> option is given, treat the named matrix as
-	a precomputed set of frequencies and display this as a
-	cross-tabulation.
+        combination of the variables included in <repl>ylist</repl>;
+        if a second list <repl>xlist</repl> is given, each variable in
+        <repl>ylist</repl> is cross-tabulated by row against each
+        variable in <repl>xlist</repl> (by column).  Variables in
+        these lists can be referenced by name or by number.  Note that
+        all the variables must have been marked as discrete.
+        Alternatively, if the <opt>matrix</opt> option is given, the
+        named matrix is treated as a precomputed set of frequencies,
+        to be displayed as a cross-tabulation (see also the <fncref
+        targ="mxtab"/> function). In this case the
+        <argname>list</argname> argument(s) should be omitted.
       </para>
       <para>
 	By default the cell entries are given as frequency counts. The
@@ -14734,6 +14745,17 @@
 	the probabilities of all possible tables having the given row and
 	column totals and having a probability less than or equal to that
 	of the observed table.
+      </para>
+      
+      <subhead>The bivariate case</subhead>
+      
+      <para>
+	In the simple case of a bivariate cross-tabulation the
+	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>
+	may be used to retrieve the Pearson chi-square test and its
+	p-value, provided the minimum expected value condition is
+	met. In that context the <opt>quiet</opt> option may be
+	used to suppress printing of the table.
       </para>
     </description>
 
