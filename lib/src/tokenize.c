@@ -207,7 +207,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { VIF,      "vif",      CI_NOOPT },
     { WLS,      "wls",      CI_LIST },
     { XCORRGM,  "xcorrgm",  CI_LIST | CI_LLEN2 | CI_ORD2 },
-    { XTAB,     "xtab",     CI_LIST },
+    { XTAB,     "xtab",     CI_LIST | CI_INFL },
     { FUNDEBUG, "debug",    CI_PARM1 },
     { FUNCRET,  "return",   CI_EXPR },
     { CATCH,    "catch",    0 },
@@ -3600,6 +3600,11 @@ static void handle_option_inflections (CMD *cmd)
 	if (cmd->opt == OPT_O) {
 	    /* --output: no arg needed */
 	    cmd->ciflags &= ~CI_PARM1;
+	}
+    } else if (cmd->ci == XTAB) {
+	if (cmd->opt & OPT_X) {
+	    /* --matrix: no list wanted */
+	    cmd->ciflags &= ~CI_LIST;
 	}
     } else if (cmd->ci == SETINFO) {
 	if (cmd->opt & (OPT_M | OPT_C | OPT_D)) {
