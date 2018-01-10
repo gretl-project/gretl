@@ -589,7 +589,11 @@ if test "$try_odbc" = "yes" ; then
     *arwin*) 
       ODBC_LIBS="-liodbc"
       have_odbc="yes"
-    ;; 
+    ;;
+    mingw*)
+      ODBC_LIBS="-lodbc32"
+      have_odbc="yes"
+    ;;
     *)
       AM_PATH_ODBC(, 
         have_odbc="yes",
