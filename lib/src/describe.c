@@ -2597,6 +2597,8 @@ int crosstab (const int *list, const DATASET *dset,
 	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k]) > 1) {
 	    rowvar[j++] = k;
 	} else {
+	    pprintf(prn, _("dropping %s: not a discrete variable\n"),
+		    dset->varname[k]);
 	    rowvar[0] -= 1;
 	}
     }
