@@ -2435,9 +2435,12 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     return tab;
 }
 
-#if 0 /* respond to Artur's request? */
+/* for use in the context of "xtab" with --quiet option:
+   compute and record the Pearson chi-square value and its
+   p-value
+*/
 
-static int xtab_pearson_only (const Xtab *tab, gretlopt opt)
+static int xtab_test_only (const Xtab *tab)
 {
     double x, y, ymin = 1.0e-7;
     double pearson = 0.0;
@@ -2474,8 +2477,6 @@ static int xtab_pearson_only (const Xtab *tab, gretlopt opt)
 
     return err;
 }
-
-#endif
 
 int crosstab_from_matrix (gretlopt opt, PRN *prn)
 {
@@ -2541,9 +2542,15 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	for (i=0; i<m->rows; i++) {
 	    tab->ctotal[j] += tab->f[i][j];
 	}
-    } 
+    }
 
-    print_xtab(tab, NULL, opt, prn);
+    if (opt & OPT_Q) {
+	xtab_test_only(tab);
+    } else {
+	opt |= OPT_S;
+	print_xtab(tab, NULL, opt, prn);
+    }
+
     free_xtab(tab);	
 
     return err;    
@@ -2557,6 +2564,7 @@ int crosstab (const int *list, const DATASET *dset,
     int *colvar = NULL;
     int i, j, k;
     int pos = gretl_list_separator_position(list);
+    int simple = 0;
     int err = 0;
     int blanket = 0;
     int nrv, ncv;
@@ -2565,6 +2573,9 @@ int crosstab (const int *list, const DATASET *dset,
 	nrv = list[0];
 	ncv = nrv - 1;
 	blanket = 1;
+	if (ncv == 1) {
+	    simple = 1;
+	}
     } else {
 	nrv = pos - 1;
 	ncv = list[0] - pos;
@@ -2622,7 +2633,18 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<i && !err; j++) {
 		tab = get_xtab(rowvar[j], rowvar[i], dset, &err); 
 		if (!err) {
-		    print_xtab(tab, dset, opt, prn); 
+		    if (opt & OPT_Q) {
+			/* --quiet: no printing */
+			if (simple) {
+			    xtab_test_only(tab);
+			}
+		    } else {
+			if (simple) {
+			    /* add save/record flag */
+			    opt |= OPT_S;
+			}
+			print_xtab(tab, dset, opt, prn);
+		    }
 		    free_xtab(tab);
 		}
 	    }

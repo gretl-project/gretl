@@ -70,7 +70,8 @@
 			 c == SYSTEM ||		\
 			 c == VAR ||		\
 			 c == VECM ||		\
-			 c == XCORRGM)
+			 c == XCORRGM ||	\
+			 c == XTAB)
 
 struct gretl_option {
     int ci;              /* command index (gives context) */

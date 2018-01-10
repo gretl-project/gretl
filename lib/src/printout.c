@@ -543,6 +543,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
     int n5 = 0;
     double ymin = 1.0e-7;
     double pearson = 0.0;
+    double pval = NADBL;
     char lbl[64];
     int i, j;
 
@@ -674,9 +675,11 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
     } else {
 	double n5p = (double) n5 / (tab->rows * tab->cols);
 	int df = (tab->rows - 1) * (tab->cols - 1);
-	double pval = chisq_cdf_comp(df, pearson);
 
-	if (!na(pval)) {
+	pval = chisq_cdf_comp(df, pearson);
+	if (na(pval)) {
+	    pearson = NADBL;
+	} else {
 	    pputc(prn, '\n');
 	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
 		    pearson, df, pval);
@@ -687,6 +690,11 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 			     "values of 5 or greater.\n"));
 	    }
 	}
+    }
+
+    if (opt & OPT_S) {
+	/* saving Pearson test result */
+	record_test_result(pearson, pval);
     }
 
     if (tab->rows == 2 && tab->cols == 2) {
