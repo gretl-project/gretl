@@ -4174,9 +4174,9 @@
 	  data-item with name <argname>key</argname>. The value
 	  returned is an integer code for the type of the item: 0 for
 	  no match, 1 for scalar, 2 for series, 3 for matrix, 4 for
-	  string, 5 for bundle and 6 for array. The function <fncref
-	  targ="typestr"/> may be used to get the string corresponding
-	  to this code.
+	  string, 5 for bundle, 6 for array and 7 for list. The
+	  function <fncref targ="typestr"/> may be used to get the
+	  string corresponding to this code.
 	</para>   
       </description>
     </function>   
