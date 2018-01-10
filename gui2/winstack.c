@@ -63,19 +63,25 @@ static GtkWidget *window_from_action (GtkAction *action)
     GtkWidget *w = NULL;
 
     if (action != NULL) {
-	const gchar *name = gtk_action_get_name(action);
+	const gchar *aname = gtk_action_get_name(action);
 
-	if (name != NULL) {
+	if (aname != NULL) {
 #ifdef _WIN64
 	    /* note: win64 uses the LLP64 data model, so
 	       it's necessary to use a long long to hold a
 	       pointer; on other 64-bit systems plain long
 	       is 64 bits (LP64).
 	    */
-	    unsigned long long ull = strtoull(name, NULL, 16);
+# if WDEBUG
+	    fprintf(stderr, "window_from_action: name='%s'\n", aname);
+# endif	    
+	    unsigned long long ull = strtoull(aname, NULL, 16);
 	    w = (GtkWidget *) ull;
+# if WDEBUG
+	    fprintf(stderr, " ull = %llu\n", ull);
+# endif	    
 #else
-	    unsigned long ul = strtoul(name, NULL, 16);
+	    unsigned long ul = strtoul(aname, NULL, 16);
 	    w = (GtkWidget *) ul;
 #endif
 	}
@@ -617,8 +623,9 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 }
 
-void vwin_winlist_popup (GtkWidget *src, GdkEvent *event, 
-			 windata_t *vwin)
+static void vwin_winlist_popup (GtkWidget *src,
+				GdkEvent *event, 
+				windata_t *vwin)
 {
     /* Note: this function may look redundant, given the
        window_list_popup() function, but it's not. This is
