@@ -73,18 +73,23 @@ static GtkWidget *window_from_action (GtkAction *action)
 	       is 64 bits (LP64).
 	    */
 # if WDEBUG
-	    fprintf(stderr, "window_from_action: name='%s'\n", aname);
+	    fprintf(stderr, "window_from_action: aname='%s'\n", aname);
 # endif	    
 	    unsigned long long ull = strtoull(aname, NULL, 16);
 	    w = (GtkWidget *) ull;
 # if WDEBUG
-	    fprintf(stderr, " ull = %llu\n", ull);
+	    fprintf(stderr, " ull = %llx\n", ull);
 # endif	    
 #else
 	    unsigned long ul = strtoul(aname, NULL, 16);
 	    w = (GtkWidget *) ul;
 #endif
 	}
+    }
+
+    if (w != NULL && !GTK_IS_WIDGET(w)) {
+	/* shouldn't happen, but... */
+	w = NULL;
     }
 
     return w;
