@@ -60,32 +60,9 @@ static gint select_other_window (gpointer self, int seq);
 
 static GtkWidget *window_from_action (GtkAction *action)
 {
-    GtkWidget *w = NULL;
+    GtkWidget *w;
 
-    if (action != NULL) {
-	const gchar *aname = gtk_action_get_name(action);
-
-	if (aname != NULL) {
-#ifdef _WIN64
-	    /* note: win64 uses the LLP64 data model, so
-	       it's necessary to use a long long to hold a
-	       pointer; on other 64-bit systems plain long
-	       is 64 bits (LP64).
-	    */
-# if WDEBUG
-	    fprintf(stderr, "window_from_action: aname='%s'\n", aname);
-# endif	    
-	    unsigned long long ull = strtoull(aname, NULL, 16);
-	    w = (GtkWidget *) ull;
-# if WDEBUG
-	    fprintf(stderr, " ull = %llx\n", ull);
-# endif	    
-#else
-	    unsigned long ul = strtoul(aname, NULL, 16);
-	    w = (GtkWidget *) ul;
-#endif
-	}
-    }
+    w = g_object_get_data(G_OBJECT(action), "target");
 
     if (w != NULL && !GTK_IS_WIDGET(w)) {
 	/* shouldn't happen, but... */
@@ -297,9 +274,10 @@ void window_list_add (GtkWidget *w, int role)
 	/* name, stock_id, label, accelerator, tooltip, callback */
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
     };
+    GtkAction *action;
     const char *label;
     char *modlabel = NULL;
-    char aname[32];
+    gchar *aname = NULL;
 
     if (window_group == NULL) {
 	/* create the window list action group */
@@ -308,7 +286,7 @@ void window_list_add (GtkWidget *w, int role)
 
     /* set up an action entry for window @w */
 
-    sprintf(aname, "%p", (void *) w);
+    aname = g_strdup_printf("%p", (void *) w);
     entry.name = aname;
     entry.stock_id = window_list_icon(role);
 
@@ -326,6 +304,7 @@ void window_list_add (GtkWidget *w, int role)
     }
 
     if (label == NULL) {
+	g_free(aname);
 	return;
     }
 
@@ -333,6 +312,10 @@ void window_list_add (GtkWidget *w, int role)
 
     /* add new action entry to group */
     gtk_action_group_add_actions(window_group, &entry, 1, NULL);
+
+    /* grab the added action and stick @w onto it as data */
+    action = gtk_action_group_get_action(window_group, aname);
+    g_object_set_data(G_OBJECT(action), "target", w);
 
     if (role != MAINWIN) {
 	/* attach time to window */
@@ -348,6 +331,7 @@ void window_list_add (GtkWidget *w, int role)
 
     n_listed_windows++;
 
+    g_free(aname);
     free(modlabel);
 }
 
