@@ -5839,24 +5839,87 @@ static int first_open_index (joinspec *join)
 
 #define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
 
+static int determine_gdt_matches (const char *fname, joinspec *join,
+				  int **plist, int *addvars)
+{
+    char **vnames = NULL;
+    int nv = 0;
+    int err = 0;
+
+    err = gretl_read_gdt_varnames(fname, &vnames, &nv);
+
+    if (!err) {
+	GPatternSpec *pspec;
+	int *vlist = NULL;
+	char **S = NULL;
+	int i, j, ns = 0;
+	int err = 0;
+
+	/* form array of unique wanted identifiers */
+	for (i=0; i<join->ncols && !err; i++) {
+	    if (join->colnames[i] != NULL) {
+		err = strings_array_add_uniq(&S, &ns, join->colnames[i]);
+	    }
+	}
+
+	if (!err) {
+	    for (i=0; i<ns && !err; i++) {
+		int match = 0;
+
+		if (is_wildstr(S[i])) {
+		    pspec = g_pattern_spec_new(S[i]);
+		    for (j=1; j<nv; j++) {
+			if (g_pattern_match_string(pspec, vnames[j])) {
+			    match++;
+			    if (!in_gretl_list(vlist, j)) {
+				gretl_list_append_term(&vlist, j);
+			    }
+			}
+		    }
+		    g_pattern_spec_free(pspec);
+		} else {
+		    for (j=1; j<nv; j++) {
+			if (!strcmp(S[i], vnames[j])) {
+			    match = 1;
+			    if (!in_gretl_list(vlist, j)) {
+				gretl_list_append_term(&vlist, j);
+			    }
+			    break;
+			}
+		    }
+		    if (!match) {
+			err = E_DATA;
+			gretl_errmsg_sprintf("'%s': not found", S[i]);
+		    }
+		}
+	    }
+	}
+
+	if (!err) {
+	    *addvars = vlist[0] - ns;
+	    *plist = vlist;
+	} else {
+	    free(vlist);
+	}
+
+	strings_array_free(S, ns);
+	strings_array_free(vnames, nv);
+    }
+
+    return err;
+}
+
 static int join_import_gdt (const char *fname, 
 			    joinspec *join,
 			    gretlopt opt)
 {
-    char **vnames = NULL;
     const char *cname;
-    int i, vi, nv = 0;
+    int *vlist = NULL;
     int orig_ncols = join->ncols;
-    int addvars = 0;
+    int i, vi, addvars = 0;
     int err = 0;
 
-    /* form array of unique wanted series names */
-    for (i=0; i<join->ncols && !err; i++) {
-	cname = join->colnames[i];
-	if (cname != NULL) {
-	    err = strings_array_add_uniq(&vnames, &nv, cname);
-	}
-    }
+    err = determine_gdt_matches(fname, join, &vlist, &addvars);
 
     if (!err) {
 	join->dset = datainfo_new();
@@ -5866,18 +5929,14 @@ static int join_import_gdt (const char *fname,
     }
 
     if (!err) {
-	err = gretl_read_gdt_subset(fname, join->dset,
-				    (const char **) vnames,
-				    nv, opt);
+	err = gretl_read_gdt_subset(fname, join->dset, vlist, opt);
     }
 
-    if (!err) {
-	/* do we have any extra vars due to wildcard expansion? */
-	addvars = join->dset->v - nv - 1;
-	if (addvars > 0) {
-	    join->wildcards = 1;
-	    err = expand_jspec(join, addvars);
-	}
+    if (!err && addvars > 0) {
+	/* we have some extra vars due to wildcard expansion */
+	fprintf(stderr, "HERE addvars = %d\n", addvars);
+	join->wildcards = 1;
+	err = expand_jspec(join, addvars);
     }
 
     if (!err) {
@@ -5920,7 +5979,7 @@ static int join_import_gdt (const char *fname,
 	}
     }
 
-    strings_array_free(vnames, nv);
+    free(vlist);
 
     return err;
 }

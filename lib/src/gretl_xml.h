@@ -155,8 +155,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 
 int gretl_read_gdt_subset (const char *fname, DATASET *dset, 
-			   const char **vnames, int nv,
-			   gretlopt opt);
+			   int *vlist, gretlopt opt);
 
 int gretl_read_gdt_varnames (const char *fname,
 			     char ***vnames,
