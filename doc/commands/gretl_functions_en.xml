@@ -6082,16 +6082,14 @@
     <function name="mreverse" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">bycol</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a matrix containing the rows of <argname>X</argname> in
-	  reverse order.  If you wish to obtain a matrix in which the columns
-	  of <argname>X</argname> appear in reverse order you can do:
+	  Returns a matrix containing the rows of <argname>X</argname>
+	  in reverse order, or the columns in reverse order if the
+	  optional second argument has a non-zero value.
 	</para>
-	<code>
-	  matrix Y = mreverse(X')'
-	</code>
       </description>
     </function>  
 
