@@ -6154,7 +6154,7 @@ static void maybe_transfer_string_table (DATASET *l_dset,
  * @ikeyvars: list of 1 or 2 "inner" key variables, or NULL.
  * @okey: string specifying "outer" key(s) or NULL.
  * @filtstr: string specifying filter, or NULL.
- * @data: name of outer "payload" column, or NULL.
+ * @dataname: name of outer "payload" column, or NULL.
  * @aggr: aggregation method specifier.
  * @seqval: 1-based sequence number for aggregation, or 0.
  * @auxname: name of auxiliary column for max or min aggregation,
