@@ -77,6 +77,8 @@ struct joinspec_ {
     int *timecols;
     csvdata *c;
     DATASET *dset;
+    int wildcards;
+    char **wildnames;
 };
 
 struct csvprobe_ {
@@ -3981,6 +3983,8 @@ struct jr_filter_ {
 
 typedef struct jr_filter_ jr_filter;
 
+static int expand_jspec (joinspec *jspec, int addvars);
+
 static void jr_filter_destroy (jr_filter *f)
 {
     if (f != NULL) {
@@ -5816,18 +5820,41 @@ static int set_up_outer_keys (joinspec *jspec, const DATASET *l_dset,
     return err;
 }
 
+static int first_open_index (joinspec *join)
+{
+    if (join->colnums[JOIN_VAL] == 0) {
+	return JOIN_VAL;
+    } else {
+	int i;
+
+	for (i=JOIN_MAXCOL; i<join->ncols; i++) {
+	    if (join->colnums[i] == 0) {
+		return i;
+	    }
+	}
+    }
+
+    return -1;
+}
+
+#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
+
 static int join_import_gdt (const char *fname, 
 			    joinspec *join,
 			    gretlopt opt)
 {
     char **vnames = NULL;
+    const char *cname;
     int i, vi, nv = 0;
+    int orig_ncols = join->ncols;
+    int addvars = 0;
     int err = 0;
-    
+
     /* form array of unique wanted series names */
     for (i=0; i<join->ncols && !err; i++) {
-	if (join->colnames[i] != NULL) {
-	    err = strings_array_add_uniq(&vnames, &nv, join->colnames[i]);
+	cname = join->colnames[i];
+	if (cname != NULL) {
+	    err = strings_array_add_uniq(&vnames, &nv, cname);
 	}
     }
 
@@ -5845,14 +5872,49 @@ static int join_import_gdt (const char *fname,
     }
 
     if (!err) {
+	/* do we have any extra vars due to wildcard expansion? */
+	addvars = join->dset->v - nv - 1;
+	if (addvars > 0) {
+	    join->wildcards = 1;
+	    err = expand_jspec(join, addvars);
+	}
+    }
+
+    if (!err) {
 	/* match up the imported series with their roles */
-	for (i=0; i<join->ncols && !err; i++) {
-	    if (join->colnames[i] != NULL) {
-		vi = current_series_index(join->dset, join->colnames[i]);
+	for (i=0; i<orig_ncols && !err; i++) {
+	    cname = join->colnames[i];
+	    if (cname != NULL && !is_wildstr(cname)) {
+		vi = current_series_index(join->dset, cname);
 		if (vi < 0) {
 		    err = E_DATA;
 		} else {
 		    join->colnums[i] = vi;
+		}
+	    }
+	}
+    }
+
+    if (!err && addvars > 0) {
+	/* register any extra imported series */
+	int j, pos, idx;
+
+	for (i=1; i<join->dset->v; i++) {
+	    pos = 0;
+	    for (j=0; j<join->ncols; j++) {
+		if (join->colnums[j] == i) {
+		    /* already registered */
+		    pos = i;
+		    break;
+		}
+	    }
+	    if (pos == 0) {
+		idx = first_open_index(join);
+		if (idx < 0) {
+		    err = E_DATA;
+		} else {
+		    join->colnums[idx] = i;
+		    join->colnames[idx] = join->dset->varname[i];
 		}
 	    }
 	}
@@ -5925,6 +5987,66 @@ static int *get_series_indices (const char **vnames,
     return ret;
 }
 
+static int jspec_n_vars (joinspec *jspec)
+{
+    return 1 + jspec->ncols - JOIN_MAXCOL;
+}
+
+static int *revise_series_indices (joinspec *jspec,
+				   DATASET *dset,
+				   int *n_add,
+				   int *err)
+{
+    int nvars = jspec_n_vars(jspec);
+    int *ret = gretl_list_new(nvars);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	jspec->wildnames = strings_array_new(nvars);
+	if (jspec->wildnames == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	const char *cname;
+	int i, v;
+
+	/* zero the count of added vars */
+	*n_add = 0;
+
+	for (i=0; i<nvars && !*err; i++) {
+	    cname = (i == 0)? jspec->colnames[JOIN_VAL] :
+		jspec->colnames[JOIN_MAXCOL+i-1];
+	    v = current_series_index(dset, cname);
+	    if (v == 0) {
+		*err = E_DATA;
+	    } else {
+		ret[i+1] = v;
+		if (v < 0) {
+		    /* not a current series */
+		    if (gretl_type_from_name(cname, NULL)) {
+			*err = E_TYPES;
+		    } else {
+			*n_add += 1;
+		    }
+		}
+		if (!*err) {
+		    jspec->wildnames[i] = gretl_strdup(cname);
+		}
+	    }
+	}
+    }
+
+    if (*err) {
+	free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 static int set_up_jspec (joinspec *jspec, const char **vnames,
 			 int nvars)
 {
@@ -5938,6 +6060,8 @@ static int set_up_jspec (joinspec *jspec, const char **vnames,
     }
 
     jspec->ncols = ncols;
+    jspec->wildcards = 0;
+    jspec->wildnames = NULL;
 
     for (i=0; i<JOIN_MAXCOL; i++) {
 	jspec->colnames[i] = NULL;
@@ -5950,6 +6074,32 @@ static int set_up_jspec (joinspec *jspec, const char **vnames,
 	jspec->colnums[j] = 0;
 	j++;
     }
+
+    return 0;
+}
+
+static int expand_jspec (joinspec *jspec, int addvars)
+{
+    int i, ncols = jspec->ncols + addvars;
+    char **colnames;
+    int *colnums;
+
+    colnames = realloc(jspec->colnames, ncols * sizeof *colnames);
+    colnums = realloc(jspec->colnums, ncols * sizeof *colnums);
+
+    if (colnames == NULL || colnums == NULL) {
+	return E_ALLOC;
+    }
+
+    jspec->colnames = (const char **) colnames;
+    jspec->colnums = colnums;
+
+    for (i=jspec->ncols; i<ncols; i++) {
+	jspec->colnames[i] = NULL;
+	jspec->colnums[i] = 0;
+    }
+
+    jspec->ncols = ncols;
 
     return 0;
 }
@@ -5967,6 +6117,10 @@ static void clear_jspec (joinspec *jspec)
 	csvdata_free(jspec->c);
     } else if (jspec->dset != NULL) {
 	destroy_dataset(jspec->dset);
+    }
+
+    if (jspec->wildnames != NULL) {
+	strings_array_free(jspec->wildnames, jspec_n_vars(jspec));
     }
 }
 
@@ -6078,7 +6232,7 @@ int gretl_join_data (const char *fname,
     timeconv_map_init();
 
 #if CDEBUG
-    fputs("*** join_from_csv:\n", stderr);
+    fputs("*** gretl_join_data:\n", stderr);
     fprintf(stderr, " filename = '%s'\n", fname);
     if (nvars > 1) {
 	int i;
@@ -6295,9 +6449,19 @@ int gretl_join_data (const char *fname,
 
     /* Step 9: transcribe or aggregate the data */
 
+    if (!err && jspec.wildcards) {
+	free(targvars);
+	targvars = revise_series_indices(&jspec, dset, &add_v, &err);
+    }
+
     if (!err && add_v > 0) {
-	/* we need to add new series on the left */
-	err = add_target_series(vnames, dset, targvars, add_v);
+	/* we need to add one or more new series on the left */
+	if (jspec.wildnames != NULL) {
+	    err = add_target_series((const char **) jspec.wildnames,
+				    dset, targvars, add_v);
+	} else {
+	    err = add_target_series(vnames, dset, targvars, add_v);
+	}
     }   
 
     if (!err) {

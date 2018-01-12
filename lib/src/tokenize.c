@@ -324,6 +324,9 @@ struct cmd_token_ {
 			   t == TOK_CBSTR ||  \
 			   t == TOK_BRSTR)
 
+#define wildsym(t) (t->type == TOK_AST || \
+		    (t->type == TOK_SYMB && t->s[0] == '?'))
+
 static void cmd_token_init (cmd_token *t)
 {
     t->s = NULL;
@@ -1588,7 +1591,7 @@ static int get_parm2 (CMD *c, int options_later)
 
     if (pos < 0) {
 	if (c->ci == SMPL && c->opt == 0) {
-	    /* backward-compat slop factor: allow missing ';'
+	    /* backward-compatible slop factor: allow missing ';'
 	       in second place?
 	    */
 	    ;
@@ -3001,6 +3004,9 @@ static int handle_command_extra (CMD *c)
 	    if (!token_done(tok) && tok->type == TOK_NAME) {
 		tok->flag |= TOK_DONE;
 		c->parm2 = gretl_str_expand(&c->parm2, tok->s, " ");
+	    } else if (!token_done(tok) && wildsym(tok)) {
+		tok->flag |= TOK_DONE;
+		c->parm2 = gretl_str_expand(&c->parm2, tok->s, "");
 	    }
 	}
     }	

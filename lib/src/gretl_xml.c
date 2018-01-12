@@ -2735,18 +2735,27 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 static int series_wanted (const char *name, const char **vnames,
 			  int nv, char *check)
 {
-    int i;
+    GPatternSpec *pspec;
+    const char *test;
+    int i, ret = 0;
 
-    for (i=0; i<nv; i++) {
-	if (!strcmp(name, vnames[i])) {
+    for (i=0; i<nv && !ret; i++) {
+	test = vnames[i];
+	if (strchr(test, '*') || strchr(test, '?')) {
+	    pspec = g_pattern_spec_new(test);
+	    if (g_pattern_match_string(pspec, name)) {
+		ret = 1;
+	    }
+	    g_pattern_spec_free(pspec);
+	} else if (!strcmp(name, test)) {
 	    if (check != NULL) {
 		check[i] = 1;
 	    }
-	    return 1;
+	    ret = 1;
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 static int missing_series_error (const char **vnames, int nv,
@@ -2778,6 +2787,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     int *vlist = NULL;
     char *check = NULL;
     int nv_found = 0;
+    int nnames = nv;
     int i, k, err = 0;
 
     if (tmp != NULL) {
@@ -2797,6 +2807,9 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 
 #if GDT_DEBUG
     fprintf(stderr, "process_varlist_subset: fullv = %d\n", *fullv);
+    for (i=0; i<nv; i++) {
+	fprintf(stderr, " vnames[%d] = '%s'\n", i, vnames[i]);
+    }
 #endif
 
     cur = node->xmlChildrenNode;
@@ -2833,10 +2846,13 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 #endif
 
     if (nv_found < nv) {
+	/* note: @check is used here to give an informative
+	   error message */
 	return missing_series_error(vnames, nv, check);
     }
 
     free(check);
+    nv = nv_found; /* FIXME? */
 
     /* allocate the dataset content */
 
@@ -2873,7 +2889,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
-		if (series_wanted((const char *) tmp, vnames, nv, NULL)) {
+		if (series_wanted((const char *) tmp, vnames, nnames, NULL)) {
 		    wanted = 1;
 		    transcribe_string(dset->varname[k], (char *) tmp, VNAMELEN);
 		    vlist[k] = i;
@@ -2894,19 +2910,16 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		series_set_label(dset, k, (char *) tmp);
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "displayname");
 	    if (tmp != NULL) {
 		series_set_display_name(dset, k, (char *) tmp);
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "parent");
 	    if (tmp != NULL) {
 		series_set_parent(dset, k, (char *) tmp); 
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "transform");
 	    if (tmp != NULL) {
 		int ci = gretl_command_number((char *) tmp);
@@ -2919,13 +2932,11 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		series_set_lag(dset, k, atoi((char *) tmp));
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");
 	    if (tmp != NULL) {
 		series_set_compact_method(dset, k, compact_string_to_int((char *) tmp));
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "discrete");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
@@ -2933,7 +2944,6 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		}
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "coded");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
@@ -2941,7 +2951,6 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		}
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "midas_period");
 	    if (tmp != NULL) {
 		int mpd = atoi((char *) tmp);
@@ -2951,7 +2960,6 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		}
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "midas_freq");
 	    if (tmp != NULL) {
 		int mpf = atoi((char *) tmp);
@@ -2961,7 +2969,6 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 		}
 		free(tmp);
 	    }
-
 	    tmp = xmlGetProp(cur, (XUC) "hf-anchor");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
@@ -4141,7 +4148,7 @@ static int real_read_gdt_subset (const char *fname,
     }
 
 #if GDT_DEBUG
-    fprintf(stderr, "gretl_read_gdt_subset: returning %d\n", err);
+    fprintf(stderr, "real_read_gdt_subset: returning %d\n", err);
 #endif
 
     return err;
@@ -4346,6 +4353,10 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 	/* plain XML file */
 	err = real_read_gdt_subset(fname, dset, vnames, nv, opt);
     }
+
+#if GDT_DEBUG
+    fprintf(stderr, "gretl_read_gdt_subset: returning %d\n", err);
+#endif
 
     return err;
 }

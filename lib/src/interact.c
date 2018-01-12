@@ -1463,6 +1463,8 @@ static int check_join_import_names (char **S, int ns,
     for (i=0; i<ns && !err; i++) {
 	if (S[i] == NULL || S[i][0] == '\0') {
 	    err = E_DATA;
+	} else if (strchr(S[i], '*') || strchr(S[i], '?')) {
+	    ; /* wildcards: may be OK? */
 	} else if (current_series_index(dset, S[i]) < 0) {
 	    err = check_varname(S[i]);
 	    if (!err && gretl_type_from_name(S[i], NULL)) {
