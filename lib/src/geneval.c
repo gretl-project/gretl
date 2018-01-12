@@ -4001,6 +4001,23 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *list_reverse_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_list_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int i, nt = n->v.ivec[0];
+	int *rev = gretl_list_new(nt);
+
+	for (i=1; i<=nt; i++) {
+	    rev[i] = n->v.ivec[nt-i+1];
+	}
+	ret->v.ivec = rev;
+    }
+
+    return ret;
+}
+
 static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret;
@@ -14477,6 +14494,8 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
+	} else if (t->t == F_MREVERSE && l->t == LIST) {
+	    ret = list_reverse_node(l, p);
 	} else {
 	    node_type_error(t->t, 1, MAT, l, p);
 	}
