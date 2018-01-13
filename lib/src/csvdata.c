@@ -71,6 +71,7 @@ typedef struct csvprobe_ csvprobe;
 typedef struct csvdata_ csvdata;
 
 struct joinspec_ {
+    GretlFileType ftype;
     int ncols;
     const char **colnames;
     int *colnums;
@@ -156,6 +157,8 @@ struct csvdata_ {
 
 #define joining(c) (c->jspec != NULL)
 #define probing(c) (c->probe != NULL)
+
+#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
 
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr, 
@@ -5820,15 +5823,15 @@ static int set_up_outer_keys (joinspec *jspec, const DATASET *l_dset,
     return err;
 }
 
-static int first_open_index (joinspec *join)
+static int first_available_index (joinspec *jspec)
 {
-    if (join->colnums[JOIN_VAL] == 0) {
+    if (jspec->colnums[JOIN_VAL] == 0) {
 	return JOIN_VAL;
     } else {
 	int i;
 
-	for (i=JOIN_MAXCOL; i<join->ncols; i++) {
-	    if (join->colnums[i] == 0) {
+	for (i=JOIN_MAXCOL; i<jspec->ncols; i++) {
+	    if (jspec->colnums[i] == 0) {
 		return i;
 	    }
 	}
@@ -5837,10 +5840,11 @@ static int first_open_index (joinspec *join)
     return -1;
 }
 
-#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
-
-static int determine_gdt_matches (const char *fname, joinspec *join,
-				  int **plist, int *addvars)
+static int determine_gdt_matches (const char *fname,
+				  joinspec *jspec,
+				  int **plist,
+				  int *addvars,
+				  PRN *prn)
 {
     char **vnames = NULL;
     int nv = 0;
@@ -5856,15 +5860,19 @@ static int determine_gdt_matches (const char *fname, joinspec *join,
 	int err = 0;
 
 	/* form array of unique wanted identifiers */
-	for (i=0; i<join->ncols && !err; i++) {
-	    if (join->colnames[i] != NULL) {
-		err = strings_array_add_uniq(&S, &ns, join->colnames[i]);
+	for (i=0; i<jspec->ncols && !err; i++) {
+	    if (jspec->colnames[i] != NULL) {
+		err = strings_array_add_uniq(&S, &ns, jspec->colnames[i]);
 	    }
 	}
 
 	if (!err) {
 	    for (i=0; i<ns && !err; i++) {
 		int match = 0;
+
+		if (prn != NULL) {
+		    pprintf(prn, "checking for '%s'\n", S[i]);
+		}
 
 		if (is_wildstr(S[i])) {
 		    pspec = g_pattern_spec_new(S[i]);
@@ -5892,6 +5900,9 @@ static int determine_gdt_matches (const char *fname, joinspec *join,
 			gretl_errmsg_sprintf("'%s': not found", S[i]);
 		    }
 		}
+		if (prn != NULL) {
+		    pprintf(prn, " found %d match(es)\n", match);
+		}		
 	    }
 	}
 
@@ -5910,44 +5921,44 @@ static int determine_gdt_matches (const char *fname, joinspec *join,
 }
 
 static int join_import_gdt (const char *fname, 
-			    joinspec *join,
-			    gretlopt opt)
+			    joinspec *jspec,
+			    gretlopt opt,
+			    PRN *prn)
 {
     const char *cname;
     int *vlist = NULL;
-    int orig_ncols = join->ncols;
+    int orig_ncols = jspec->ncols;
     int i, vi, addvars = 0;
     int err = 0;
 
-    err = determine_gdt_matches(fname, join, &vlist, &addvars);
+    err = determine_gdt_matches(fname, jspec, &vlist, &addvars, prn);
 
     if (!err) {
-	join->dset = datainfo_new();
-	if (join->dset == NULL) {
+	jspec->dset = datainfo_new();
+	if (jspec->dset == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	err = gretl_read_gdt_subset(fname, join->dset, vlist, opt);
+	err = gretl_read_gdt_subset(fname, jspec->dset, vlist, opt);
     }
 
     if (!err && addvars > 0) {
 	/* we have some extra vars due to wildcard expansion */
-	join->wildcards = 1;
-	err = expand_jspec(join, addvars);
+	err = expand_jspec(jspec, addvars);
     }
 
     if (!err) {
 	/* match up the imported series with their roles */
 	for (i=0; i<orig_ncols && !err; i++) {
-	    cname = join->colnames[i];
+	    cname = jspec->colnames[i];
 	    if (cname != NULL && !is_wildstr(cname)) {
-		vi = current_series_index(join->dset, cname);
+		vi = current_series_index(jspec->dset, cname);
 		if (vi < 0) {
 		    err = E_DATA;
 		} else {
-		    join->colnums[i] = vi;
+		    jspec->colnums[i] = vi;
 		}
 	    }
 	}
@@ -5957,28 +5968,109 @@ static int join_import_gdt (const char *fname,
 	/* register any extra imported series */
 	int j, pos, idx;
 
-	for (i=1; i<join->dset->v; i++) {
+	for (i=1; i<jspec->dset->v; i++) {
 	    pos = 0;
-	    for (j=0; j<join->ncols; j++) {
-		if (join->colnums[j] == i) {
+	    for (j=0; j<jspec->ncols; j++) {
+		if (jspec->colnums[j] == i) {
 		    /* already registered */
 		    pos = i;
 		    break;
 		}
 	    }
 	    if (pos == 0) {
-		idx = first_open_index(join);
+		idx = first_available_index(jspec);
 		if (idx < 0) {
 		    err = E_DATA;
 		} else {
-		    join->colnums[idx] = i;
-		    join->colnames[idx] = join->dset->varname[i];
+		    jspec->colnums[idx] = i;
+		    jspec->colnames[idx] = jspec->dset->varname[i];
 		}
 	    }
 	}
     }
 
     free(vlist);
+
+    return err;
+}
+
+static int determine_csv_matches (const char *fname,
+				  joinspec *jspec,
+				  PRN *prn)
+{
+    gretlopt opt = OPT_NONE; /* FIXME? */
+    char **vnames = NULL;
+    int nv = 0;
+    int err = 0;
+
+    err = probe_csv(fname, &vnames, &nv, &opt);
+
+    if (!err) {
+	GPatternSpec *pspec;
+	int nmatch = 0;
+	int match1 = -1;
+	int i, err = 0;
+
+	pspec = g_pattern_spec_new(jspec->colnames[JOIN_VAL]);
+	
+	for (i=0; i<nv; i++) {
+	    if (g_pattern_match_string(pspec, vnames[i])) {
+		if (nmatch == 0) {
+		    jspec->colnames[JOIN_VAL] = vnames[i];
+		    match1 = i;
+		}
+		nmatch++;
+	    }
+	}
+
+	if (nmatch == 1) {
+	    /* prevent freeing of replacement string */
+	    vnames[match1] = NULL;
+	} else if (nmatch > 1) {
+	    /* we have some extra vars due to wildcard expansion */
+	    err = expand_jspec(jspec, nmatch - 1);
+	    if (!err) {
+		int j = JOIN_MAXCOL;
+
+		nmatch = 0;
+		for (i=0; i<nv; i++) {
+		    if (g_pattern_match_string(pspec, vnames[i])) {
+			if (nmatch > 0) {
+			    /* the first match is already handled */
+			    jspec->colnames[j++] = vnames[i];
+			}
+			vnames[i] = NULL;
+			nmatch++;
+		    }
+		}
+	    }
+	}		
+	
+	g_pattern_spec_free(pspec);    
+	strings_array_free(vnames, nv);
+    }
+
+    return err;
+}
+
+static int join_import_csv (const char *fname, 
+			    joinspec *jspec,
+			    gretlopt opt,
+			    PRN *prn)
+{
+    int err = 0;
+
+    if (jspec->wildcards) {
+	err = determine_csv_matches(fname, jspec, prn);
+	if (err) {
+	    pputs(prn, "join_import_csv: failed in matching varnames\n");
+	}
+    }
+
+    if (!err) {
+	err = real_import_csv(fname, NULL, NULL, NULL,
+			      jspec, NULL, opt, prn);
+    }
 
     return err;
 }
@@ -6015,6 +6107,7 @@ static int *get_series_indices (const char **vnames,
 				int nvars,
 				DATASET *dset,
 				int *n_add,
+				int *any_wild,
 				int *err)
 {
     int *ret = gretl_list_new(nvars);
@@ -6025,6 +6118,10 @@ static int *get_series_indices (const char **vnames,
 	int i, v;
 	
 	for (i=0; i<nvars && !*err; i++) {
+	    if (is_wildstr(vnames[i])) {
+		*any_wild = 1;
+		continue;
+	    }
 	    v = current_series_index(dset, vnames[i]);
 	    if (v == 0) {
 		*err = E_DATA;
@@ -6037,7 +6134,13 @@ static int *get_series_indices (const char **vnames,
 	}
     }
 
-    if (ret != NULL && *err != 0) {
+    if (!*err && nvars > 1 && *any_wild) {
+	/* wildcard spec must be singleton varname spec */
+	gretl_errmsg_set("Invalid join specification");
+	*err = E_DATA;
+    }
+
+    if (*err) {
 	free(ret);
 	ret = NULL;
     }
@@ -6049,6 +6152,11 @@ static int jspec_n_vars (joinspec *jspec)
 {
     return 1 + jspec->ncols - JOIN_MAXCOL;
 }
+
+/* we come here if we have determined that the
+   import series specification includes a wildcard
+   ('*' or '?')
+*/
 
 static int *revise_series_indices (joinspec *jspec,
 				   DATASET *dset,
@@ -6105,8 +6213,11 @@ static int *revise_series_indices (joinspec *jspec,
     return ret;
 }
 
-static int set_up_jspec (joinspec *jspec, const char **vnames,
-			 int nvars)
+static int set_up_jspec (joinspec *jspec,
+			 const char **vnames,
+			 int nvars,
+			 gretlopt opt,
+			 int any_wild)
 {
     int i, j, ncols = JOIN_MAXCOL + nvars - 1;
 
@@ -6117,8 +6228,9 @@ static int set_up_jspec (joinspec *jspec, const char **vnames,
 	return E_ALLOC;
     }
 
+    jspec->ftype = (opt & OPT_G) ? GRETL_XML_DATA : GRETL_CSV;
     jspec->ncols = ncols;
-    jspec->wildcards = 0;
+    jspec->wildcards = any_wild;
     jspec->wildnames = NULL;
 
     for (i=0; i<JOIN_MAXCOL; i++) {
@@ -6220,7 +6332,8 @@ static void maybe_transfer_string_table (DATASET *l_dset,
  * @tconvstr: string specifying date columns for conversion, or NULL.
  * @tconvfmt: string giving format(s) for "timeconv" columns, or NULL.
  * @opt: may contain OPT_V for verbose operation, OPT_H to assume
- * no header row.
+ * no header row, OPT_G for native gretl import file as opposed to
+ * CSV.
  * @prn: gretl printing struct (or NULL).
  * 
  * Opens a delimited text data file or gdt file and carries out a 
@@ -6259,6 +6372,7 @@ int gretl_join_data (const char *fname,
     int orig_v = dset->v;
     int add_v = 0;
     int modified = 0;
+    int any_wild = 0;
     int verbose = (opt & OPT_V);
     int str_keys[2] = {0};
     int n_keys = 0;
@@ -6272,12 +6386,26 @@ int gretl_join_data (const char *fname,
 
     varname = vnames[0];
 
-    targvars = get_series_indices(vnames, nvars, dset, &add_v, &err);
-    if (err) {
-	return err;
+    targvars = get_series_indices(vnames, nvars, dset, &add_v,
+				  &any_wild, &err);
+    
+    if (!err && dataname != NULL) {
+	/* If we have a spec for the original name of a series
+	   to import (@dataname), we cannot accept more than one
+	   target name (in @vnames), nor can we accept any
+	   wildcard specification.
+	*/
+	if (nvars > 1 || any_wild) {
+	    gretl_errmsg_set("Invalid join specification");
+	    err = E_DATA;
+	}
     }
 
-    err = set_up_jspec(&jspec, vnames, nvars);
+    if (err) {
+	return err;
+    }    
+
+    err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild);
     if (err) {
 	return err;
     }
@@ -6412,10 +6540,10 @@ int gretl_join_data (const char *fname,
     if (!err) {
 	if (opt & OPT_G) {
 	    /* FIXME OPT_M? */
-	    err = join_import_gdt(fname, &jspec, OPT_NONE);
+	    err = join_import_gdt(fname, &jspec, OPT_NONE,
+				  verbose ? prn : NULL);
 	} else {
-	    err = real_import_csv(fname, NULL, NULL, NULL,
-				  &jspec, NULL, opt,
+	    err = join_import_csv(fname, &jspec, opt,
 				  verbose ? prn : NULL);
 	}
 	if (!err) {
@@ -6505,12 +6633,16 @@ int gretl_join_data (const char *fname,
 
  transcribe:
 
-    /* Step 9: transcribe or aggregate the data */
+    /* step 9: revise information on the series to be imported
+       if we came across any wildcard specifications
+    */
 
     if (!err && jspec.wildcards) {
 	free(targvars);
 	targvars = revise_series_indices(&jspec, dset, &add_v, &err);
     }
+
+    /* Step 10: transcribe or aggregate the data */
 
     if (!err && add_v > 0) {
 	/* we need to add one or more new series on the left */
