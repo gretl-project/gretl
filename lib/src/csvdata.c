@@ -5934,7 +5934,6 @@ static int join_import_gdt (const char *fname,
 
     if (!err && addvars > 0) {
 	/* we have some extra vars due to wildcard expansion */
-	fprintf(stderr, "HERE addvars = %d\n", addvars);
 	join->wildcards = 1;
 	err = expand_jspec(join, addvars);
     }
