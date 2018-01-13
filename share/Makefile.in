@@ -66,15 +66,15 @@ install: installdirs install_datafiles install_scripts install_functions install
 install-strip: install
 
 install_datafiles:
-	for f in $(sharesrc)/data/*.gdt ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data ; done
-	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(DESTDIR)$(gretldir)/data 
-	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data 
+	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data
 	$(INSTALL_DATA) $(sharesrc)/data/plotbars/nber.txt $(DESTDIR)$(gretldir)/data/plotbars
 	$(INSTALL_DATA) $(sharesrc)/data/gnuplot/gpcolors.txt $(DESTDIR)$(gretldir)/data/gnuplot
+	for f in $(sharesrc)/data/ramanathan/*.gdt ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/ramanathan ; done
+	$(INSTALL_DATA) $(sharesrc)/data/ramanathan/descriptions $(DESTDIR)$(gretldir)/data/ramanathan
 	for f in $(sharesrc)/data/greene/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/greene ; done
-	$(INSTALL_DATA) $(sharesrc)/data/greene/wg_descriptions $(DESTDIR)$(gretldir)/data/greene
+	$(INSTALL_DATA) $(sharesrc)/data/greene/descriptions $(DESTDIR)$(gretldir)/data/greene
 	for f in $(sharesrc)/data/misc/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/misc ; done
 	$(INSTALL_DATA) $(sharesrc)/data/misc/descriptions $(DESTDIR)$(gretldir)/data/misc
@@ -111,7 +111,8 @@ install_help: $(query_make_help)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir) 
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/ramanathan
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/greene
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/misc
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/nist

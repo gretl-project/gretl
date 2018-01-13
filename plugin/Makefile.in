@@ -63,7 +63,7 @@ endif
 
 VPATH = $(topsrc)/plugin:$(topsrc)/tests:$(topsrc)/plugin/mpack:$(topsrc)/plugin/rq
 
-override CFLAGS += -I.. -I$(topsrc)/gui2 -DHAVE_CONFIG_H
+override CFLAGS += -I.. -I$(topsrc)/gui -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
