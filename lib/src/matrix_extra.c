@@ -656,7 +656,7 @@ gretl_matrix *gretl_matrix_data_subset (const int *list,
  * @err: location to receive error code.
  *
  * Creates a gretl matrix holding the subset of variables from
- * @Z specified by @list, over the sample range @t1 to @t2,
+ * @dset specified by @list, over the sample range @t1 to @t2,
  * inclusive.  Variables are in columns.  @mask should be an
  * array of char of length (@t2 - @t1 + 1) with 1s in the positions 
  * of observations to exclude from the subset and zeros elsewhere. 
@@ -700,7 +700,7 @@ static int mmask_row_count (const gretl_matrix *mask,
  * @err: location to receive error code.
  *
  * Creates a gretl matrix holding the subset of variables from
- * @Z specified by @list, using the observations (data rows)
+ * @dset specified by @list, using the observations (data rows)
  * selected by non-zero elements in @mmask. This is designed
  * to support the gretl "libset" variable %matrix_mask.
  *
