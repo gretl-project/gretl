@@ -130,6 +130,8 @@ char **strings_array_realloc_with_length (char ***pS,
 
 int strings_array_add (char ***pS, int *n, const char *p);
 
+int strings_array_donate (char ***pS, int *n, char *p);
+
 int strings_array_add_uniq (char ***pS, int *n, const char *p);
 
 char **strings_array_new_with_length (int nstrs, int len);

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -71,15 +71,16 @@ typedef struct csvprobe_ csvprobe;
 typedef struct csvdata_ csvdata;
 
 struct joinspec_ {
-    GretlFileType ftype;
     int ncols;
     const char **colnames;
     int *colnums;
     int *timecols;
     csvdata *c;
     DATASET *dset;
-    int wildcards;
+    int wildcard;
     char **wildnames;
+    char **auxnames;
+    int n_aux;
 };
 
 struct csvprobe_ {
@@ -161,7 +162,7 @@ struct csvdata_ {
 #define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
 
 static int
-time_series_label_check (DATASET *dset, int reversed, char *skipstr, 
+time_series_label_check (DATASET *dset, int reversed, char *skipstr,
 			 int convert_pd, PRN *prn);
 
 static int format_uses_quarterly (char *fmt);
@@ -200,14 +201,14 @@ static void timeconv_map_set (int ncols, char **colnames, char *tname,
 
     if (fmt != NULL) {
 	if (fmt[TCONV_FMT] != NULL) {
-	    tconv_map.m_means_q[TCONV_FMT] = 
+	    tconv_map.m_means_q[TCONV_FMT] =
 		format_uses_quarterly(fmt[TCONV_FMT]);
 	}
 	if (fmt[TKEY_FMT] != NULL) {
-	    tconv_map.m_means_q[TKEY_FMT] = 
+	    tconv_map.m_means_q[TKEY_FMT] =
 		format_uses_quarterly(fmt[TKEY_FMT]);
 	}
-    }	
+    }
 }
 
 static void timeconv_map_init (void)
@@ -226,7 +227,7 @@ static void timeconv_map_destroy (void)
     timeconv_map_init();
 }
 
-static int timecol_get_format (const DATASET *dset, int v, 
+static int timecol_get_format (const DATASET *dset, int v,
 			       char **pfmt, int *q)
 {
     if (no_formats(tconv_map)) {
@@ -284,12 +285,12 @@ static void csvdata_free (csvdata *c)
 
     if (c->line != NULL) {
 	free(c->line);
-    }  
+    }
 
     if (c->cols_list != NULL) {
 	free(c->cols_list);
 	free(c->width_list);
-    }  
+    }
 
     destroy_dataset(c->dset);
 
@@ -377,9 +378,9 @@ static int *cols_list_from_matrix (const char *s, int *err)
 }
 
 /* The interpretation of the "cols" specification depends on
-   @opt: if this includes OPT_L then it should provide a 1-based 
-   list of columns to be read; but if @opt includes OPT_F it 
-   should provide a fixed-format spec, consisting of pairs 
+   @opt: if this includes OPT_L then it should provide a 1-based
+   list of columns to be read; but if @opt includes OPT_F it
+   should provide a fixed-format spec, consisting of pairs
    (start column, width).
 */
 
@@ -416,7 +417,7 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
 		    err = E_ALLOC;
 		} else {
 		    int j = 1;
-	
+
 		    for (i=1; i<=n; i+=2, j++) {
 			clist[j] = list[i];
 			wlist[j] = list[i+1];
@@ -437,7 +438,7 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
 	} else if (wlist != NULL && wlist[i] <= 0) {
 	    err = E_DATA;
 	} else if (wlist != NULL && wlist[i] >= CSVSTRLEN) {
-	    fprintf(stderr, "Warning: field %d too wide (%d), truncating\n", 
+	    fprintf(stderr, "Warning: field %d too wide (%d), truncating\n",
 		    i, wlist[i]);
 	    wlist[i] = CSVSTRLEN - 1;
 	}
@@ -546,7 +547,7 @@ static int pad_weekly_data (DATASET *dset, int add)
     int ttarg, offset = 0, skip = 0;
     int i, s, t, tc, err;
 
-    err = dataset_add_observations(dset, add, OPT_A); 
+    err = dataset_add_observations(dset, add, OPT_A);
 
     if (!err) {
 	for (t=0; t<oldn; t++) {
@@ -597,7 +598,7 @@ static int csv_weekly_data (DATASET *dset)
     if (misscount > 0) {
 	double missfrac = (double) misscount / dset->n;
 
-	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n", 
+	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n",
 		dset->n, misscount, 100.0 * missfrac);
 	if (missfrac > 0.05) {
 	    ret = 0;
@@ -614,16 +615,16 @@ static int csv_weekly_data (DATASET *dset)
 		fprintf(stderr, "OK, consistent\n");
 		err = pad_weekly_data(dset, misscount);
 		if (err) ret = 0;
-	    } 
-	} 
+	    }
+	}
     }
-    
+
     return ret;
 }
 
 #define DAY_DEBUG 1
 
-static int check_daily_dates (DATASET *dset, int *pd, 
+static int check_daily_dates (DATASET *dset, int *pd,
 			      int *reversed, PRN *prn)
 {
     int T = dset->n;
@@ -637,14 +638,14 @@ static int check_daily_dates (DATASET *dset, int *pd,
     int nmiss = 0, err = 0;
 
     *pd = 0;
-    
+
     ed1 = get_epoch_day(lbl1);
     ed2 = get_epoch_day(lbl2);
     if (ed1 <= 0 || ed2 <= 0) {
 	err = 1;
     }
 
-#if DAY_DEBUG    
+#if DAY_DEBUG
     fprintf(stderr, "check_daily_dates: '%s' -> %d, '%s' -> %d\n",
 	    lbl1, (int) ed1, lbl2, (int) ed2);
 #endif
@@ -652,13 +653,13 @@ static int check_daily_dates (DATASET *dset, int *pd,
     dset->pd = guess_daily_pd(dset);
     dset->structure = TIME_SERIES;
 
-#if DAY_DEBUG    
+#if DAY_DEBUG
     fprintf(stderr, "guessed at daily pd = %d\n", dset->pd);
 #endif
 
     if (!err) {
 	if (ed2 < ed1) {
-#if DAY_DEBUG    
+#if DAY_DEBUG
 	    fprintf(stderr, "check_daily_dates: data are reversed?\n");
 #endif
 	    dset->sd0 = ed2;
@@ -683,7 +684,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
 	    err = 1;
 	} else {
 	    nmiss = fulln - T;
-	    pprintf(prn, A_("Observations: %d; days in sample: %d\n"), 
+	    pprintf(prn, A_("Observations: %d; days in sample: %d\n"),
 		    T, fulln);
 	    if (nmiss > 300 * T) {
 		pprintf(prn, A_("Probably annual data\n"));
@@ -713,21 +714,21 @@ static int check_daily_dates (DATASET *dset, int *pd,
 	if (dset->pd == 5 && (wd == 6 || wd == 0)) {
 	    /* Got Sat or Sun, can't be 5-day daily? */
 	    alt_pd = (wd == 6)? 6 : 7;
-	    pprintf(prn, "Found a Saturday (%s): re-trying with pd = %d\n", 
+	    pprintf(prn, "Found a Saturday (%s): re-trying with pd = %d\n",
 		    dset->S[s], alt_pd);
 	    break;
 	} else if (dset->pd == 6 && wd == 0) {
 	    /* Got Sun, can't be 6-day daily? */
 	    alt_pd = 7;
-	    pprintf(prn, "Found a Sunday (%s): re-trying with pd = %d\n", 
+	    pprintf(prn, "Found a Sunday (%s): re-trying with pd = %d\n",
 		    dset->S[s], alt_pd);
 	    break;
 	}
-	    
+
 	n = calendar_obs_number(dset->S[s], dset);
 	if (n < t) {
 	    pprintf(prn, "Daily dates error at t = %d:\n"
-		    "  calendar_obs_number() for '%s' = %d but t = %d\n", 
+		    "  calendar_obs_number() for '%s' = %d but t = %d\n",
 		    t, dset->S[s], n, t);
 	    err = 1;
 	} else if (n > fulln - 1) {
@@ -759,7 +760,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
     }
 
 #if DAY_DEBUG
-    fprintf(stderr, "check_daily_dates: daily pd = %d, reversed = %d, err = %d\n", 
+    fprintf(stderr, "check_daily_dates: daily pd = %d, reversed = %d, err = %d\n",
 	    dset->pd, *reversed, err);
 #endif
 
@@ -768,7 +769,7 @@ static int check_daily_dates (DATASET *dset, int *pd,
 
 /* convert from daily date label to a lower frequency --
    annual, monthly or quarterly -- if @pd indicates this
-   is required 
+   is required
 */
 
 static void convert_daily_label (char *targ, const char *src,
@@ -784,7 +785,7 @@ static void convert_daily_label (char *targ, const char *src,
 	sprintf(targ, "%d:%02d", y, m);
     } else if (pd == 4) {
 	sprintf(targ, "%d:%d", y, m / 3 + (m % 3 != 0));
-    } 
+    }
 }
 
 /* There's a special case (ugh!) where observation strings are
@@ -794,12 +795,12 @@ static void convert_daily_label (char *targ, const char *src,
    1947.06
    1947.09
    1947.12
-   1948.03 
+   1948.03
 
    we'll make a brave attempt to handle this.
-*/ 
+*/
 
-#define fakequarter(m) (m==3 || m==6 || m==9 || m==12) 
+#define fakequarter(m) (m==3 || m==6 || m==9 || m==12)
 
 static int consistent_qm_labels (DATASET *dset, int reversed,
 				 int convert_pd, char *skipstr,
@@ -844,16 +845,16 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
 
 	if (sscanf(label, fmt, &yr, &per) != 2) {
 	    ret = 0;
-	} else if (Ep == 1 && pd == pd0 && per == pd + 1 
+	} else if (Ep == 1 && pd == pd0 && per == pd + 1
 		   && skipstr != NULL) {
 	    *skip = *bad = '\0';
-	    strncat(skip, label + 4, 7); 
-	    strncat(bad, label, OBSLEN-1); 
+	    strncat(skip, label + 4, 7);
+	    strncat(bad, label, OBSLEN-1);
 	    pd = pd0 + 1;
 	    goto restart;
 	} else if (per == Ep + 2 && pmin == 1 && fakequarter(per)) {
 	    *bad = '\0';
-	    strncat(bad, label, OBSLEN-1); 
+	    strncat(bad, label, OBSLEN-1);
 	    pmin = 3;
 	    goto restart;
 	} else if (pd == 12 && Ep == 5 && per == 1 && yr == Ey + 1) {
@@ -874,11 +875,11 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
 
     if (ret) {
 	if (pmin == 3) {
-	    pprintf(prn, "   \"%s\": quarterly data pretending to be monthly?\n", 
+	    pprintf(prn, "   \"%s\": quarterly data pretending to be monthly?\n",
 		    bad);
 	    *ppd = 4;
 	} else if (pd == pd0 + 1) {
-	    pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n", 
+	    pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n",
 		    bad);
 	    strcpy(skipstr, skip);
 	}
@@ -887,7 +888,7 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
     return ret;
 }
 
-static int consistent_year_labels (const DATASET *dset, 
+static int consistent_year_labels (const DATASET *dset,
 				   int convert_pd,
 				   int reversed)
 {
@@ -941,7 +942,7 @@ enum date_orders {
     DDMMYYYY
 };
 
-static int get_date_order (int f0, int fn, DATASET *dset) 
+static int get_date_order (int f0, int fn, DATASET *dset)
 {
     if (f0 > 31 || fn > 31) {
 	/* first field must be year */
@@ -1072,12 +1073,12 @@ static int csv_daily_date_check (DATASET *dset, int *reversed,
 	}
 
 	if (mon1 > 0 && mon1 < 13 &&
-	    mon2 > 0 && mon2 < 13 && 
+	    mon2 > 0 && mon2 < 13 &&
 	    day1 > 0 && day1 < 32 &&
 	    day2 > 0 && day2 < 32) {
 	    /* looks promising for calendar dates, but check
 	       further if we don't have the canonical order
-	       or separator 
+	       or separator
 	    */
 	    if (dorder != YYYYMMDD || s1 != '-') {
 		if (transform_daily_dates(dset, dorder, s1)) {
@@ -1105,18 +1106,18 @@ static int csv_daily_date_check (DATASET *dset, int *reversed,
 		    if (pd == 1 || pd == 4 || pd == 12) {
 			convert_pd = pd;
 		    }
-		    ret = time_series_label_check(dset, 
+		    ret = time_series_label_check(dset,
 						  *reversed,
-						  skipstr, 
-						  convert_pd, 
+						  skipstr,
+						  convert_pd,
 						  prn);
 		    if (ret < 0 && dorder == MMDDYYYY) {
 			retransform_daily_dates(dset);
 			dorder = DDMMYYYY;
 			goto tryagain;
-		    }			
+		    }
 		}
-	    } 
+	    }
 	    return ret;
 	}
     } else {
@@ -1221,8 +1222,8 @@ static int time_series_label_check (DATASET *dset, int reversed,
 	int savepd = pd;
 	int extra_zero = 0;
 
-	if (consistent_qm_labels(dset, reversed, convert_pd, 
-				 skipstr, &pd, format, 
+	if (consistent_qm_labels(dset, reversed, convert_pd,
+				 skipstr, &pd, format,
 				 &extra_zero, prn)) {
 	    dset->pd = pd;
 	    if (savepd == 12 && pd == 4) {
@@ -1268,7 +1269,7 @@ static int dates_maybe_reversed (const char *s1, const char *s2,
     if (ret) {
 	pputs(prn, A_("   dates are reversed?\n"));
     }
-    
+
     return ret;
 }
 
@@ -1306,11 +1307,11 @@ static int fix_IFS_data_labels (DATASET *dset)
 		if (y < 1800 || y > 2500 || p <= 0 || p > pmax) {
 		    doit = 0;
 		    break;
-		} 
+		}
 		if (i > 0 && p != pbak + 1 && p != 1) {
 		    doit = 0;
 		    break;
-		}		    
+		}
 		pbak = p;
 	    }
 
@@ -1328,7 +1329,7 @@ static int fix_IFS_data_labels (DATASET *dset)
 			dset->S[i] = gretl_strdup(tmp);
 		    } else {
 			strcpy(s, tmp);
-		    }		    
+		    }
 		}
 		ret = 1;
 	    }
@@ -1392,7 +1393,7 @@ static int fix_mon_year_labels (DATASET *dset)
 	    yr1 = atoi(s + 4);
 	    *m1 = '\0';
 	    strncat(m1, s, 3);
-	    if (yr1 < 1000 || yr1 >= 3000 || 
+	    if (yr1 < 1000 || yr1 >= 3000 ||
 		(p = month_number(m1)) < 1) {
 		pd = 0;
 		break;
@@ -1435,7 +1436,7 @@ static int fix_mon_year_labels (DATASET *dset)
    observation numbers, else return the inferred data frequency.
 */
 
-int test_markers_for_dates (DATASET *dset, int *reversed, 
+int test_markers_for_dates (DATASET *dset, int *reversed,
 			    char *skipstr, PRN *prn)
 {
     char endobs[OBSLEN];
@@ -1450,7 +1451,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	return time_series_label_check(dset, *reversed, skipstr, 0, prn);
     }
 
-    pprintf(prn, A_("   first row label \"%s\", last label \"%s\"\n"), 
+    pprintf(prn, A_("   first row label \"%s\", last label \"%s\"\n"),
 	    lbl1, lbl2);
 
     /* are the labels (probably) just 1, 2, 3 etc.? */
@@ -1463,7 +1464,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	lbl1 = dset->S[0];
 	lbl2 = dset->S[n - 1];
 	len1 = strlen(lbl1);
-    }	
+    }
 
     /* labels are of different lengths? */
     if (len1 != len2) {
@@ -1483,7 +1484,7 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
 	    isdigit((unsigned char) lbl1[1]) &&
-	    isdigit((unsigned char) lbl1[2]) && 
+	    isdigit((unsigned char) lbl1[2]) &&
 	    isdigit((unsigned char) lbl1[3])) {
 	    *reversed = dates_maybe_reversed(lbl1, lbl2, prn);
 	    pd = time_series_label_check(dset, *reversed, skipstr, 0, prn);
@@ -1558,7 +1559,7 @@ static int csv_recode_input (FILE **fpp,
 			     int ucode,
 			     PRN *prn)
 {
-    const gchar *from_set = 
+    const gchar *from_set =
 	(ucode == UTF_32)? "UTF-32" : "UTF-16";
     gchar *altname = NULL;
     int err = 0;
@@ -1572,7 +1573,7 @@ static int csv_recode_input (FILE **fpp,
     /* we'll recode to a temp file in dotdir */
     altname = g_strdup_printf("%srecode_tmp.u8", gretl_dotdir());
 
-    err = gretl_recode_file(fname, altname, 
+    err = gretl_recode_file(fname, altname,
 			    from_set, "UTF-8",
 			    prn);
 
@@ -1644,10 +1645,10 @@ static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
 }
 
 /* The function below checks for the maximum line length in the given
-   file.  It also checks for extraneous binary data (the file is 
+   file.  It also checks for extraneous binary data (the file is
    supposed to be plain text), and checks whether the 'delim'
    character is present in the file, on a non-comment line (where
-   a comment line is one that starts with '#').  
+   a comment line is one that starts with '#').
 
    In addition, we check whether the file has a trailing comma on every
    line, and for the numbers of double- and single-quote characters
@@ -1704,7 +1705,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ) && !utf8_ok(fp, cc)) {
 	    pprintf(prn, A_("Binary data (%d) encountered (line %d:%d): "
-			    "this is not a valid text file\n"), 
+			    "this is not a valid text file\n"),
 		    c, lines + 1, cc + 1);
 	    return -1;
 	}
@@ -1915,8 +1916,8 @@ int import_obs_label (const char *s)
     gretl_lower(tmp);
 
     return (!strcmp(tmp, "obs") ||
-	    !strcmp(tmp, "date") || 
-	    !strcmp(tmp, "year") || 
+	    !strcmp(tmp, "date") ||
+	    !strcmp(tmp, "year") ||
 	    !strcmp(tmp, "period") ||
 	    !strcmp(tmp, "observation") ||
 	    !strcmp(tmp, "observation_date"));
@@ -1996,7 +1997,7 @@ void import_na_init (void)
 }
 
 /* Returns 1 if the string @s should be counted representing
-   an NA or missing value, 0 otherwise. If there is a user-set 
+   an NA or missing value, 0 otherwise. If there is a user-set
    "csv_read_na" value this is used for comparison, otherwise
    a set of default values is consulted.
 */
@@ -2038,7 +2039,7 @@ int import_na_string (const char *s)
     return 0;
 }
 
-static int csv_missval (const char *str, int i, int t, 
+static int csv_missval (const char *str, int i, int t,
 			int *miss_shown, PRN *prn)
 {
     int miss = 0;
@@ -2047,7 +2048,7 @@ static int csv_missval (const char *str, int i, int t,
 	if (miss_shown != NULL) {
 	    if (t < 80 || *miss_shown < i) {
 		pprintf(prn, A_("   the cell for variable %d, obs %d "
-				"is empty: treating as missing value\n"), 
+				"is empty: treating as missing value\n"),
 			i, t);
 		*miss_shown += 1;
 	    }
@@ -2069,7 +2070,7 @@ static int csv_missval (const char *str, int i, int t,
     return miss;
 }
 
-/* In the case where we think we've found thousands 
+/* In the case where we think we've found thousands
    separators in numerical input, provisionally mark
    all "non-numeric" values as NAs; we do this prior
    to a second pass through the data.
@@ -2078,7 +2079,7 @@ static int csv_missval (const char *str, int i, int t,
 static void revise_non_numeric_values (csvdata *c)
 {
     int i, t;
-    
+
     for (i=1; i<c->dset->v; i++) {
 	for (t=0; t<c->dset->n; t++) {
 	    if (c->dset->Z[i][t] == NON_NUMERIC) {
@@ -2160,14 +2161,14 @@ int non_numeric_check (DATASET *dset, int **plist,
 
 	nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
 	pprintf(prn, "variable %d (%s): non-numeric values = %d "
-		"(%.2f percent)\n", v, dset->varname[v], 
+		"(%.2f percent)\n", v, dset->varname[v],
 		nnon, 100 * nnfrac);
 	if ((nnon < 2 && dset->n > 2) || nnfrac < 0.01) {
 	    /* if we got just a few non-numeric values, we'll assume
 	       that the data file is broken
 	    */
 	    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
-			    "non-numeric value\n"), 
+			    "non-numeric value\n"),
 		    v, dset->varname[v], tn);
 	    err = E_DATA;
 	}
@@ -2218,7 +2219,7 @@ static double special_time_val (const char *s, const char *fmt,
     char *test;
 
     test = strptime(s, fmt, &t);
-    
+
     if (test == NULL || *test != '\0') {
 	/* conversion didn't work right */
 	return NADBL;
@@ -2258,9 +2259,9 @@ static int char_count (char c, const char *s)
 }
 
 /* Follow-up check for the case where we think we might
-   have found a thousands separator: each occurrence of 
+   have found a thousands separator: each occurrence of
    the putative separator must be followed by exactly 3
-   digits: we set c->thousep to an invalid value if this 
+   digits: we set c->thousep to an invalid value if this
    is not the case.
 */
 
@@ -2285,7 +2286,7 @@ static void validate_thousep (csvdata *c, const char *s)
 #if CDEBUG
 		fprintf(stderr, "validate_thousep: no: '%c' is followed by %d digits\n",
 			c->thousep, nd);
-#endif		
+#endif
 		c->thousep = -1;
 		break;
 	    }
@@ -2296,11 +2297,11 @@ static void validate_thousep (csvdata *c, const char *s)
 }
 
 /* Initial heuristic for detecting a thousands separator,
-   where the string @s has been determined to contain 
-   nothing but digits, dot and comma (allowing for a leading 
+   where the string @s has been determined to contain
+   nothing but digits, dot and comma (allowing for a leading
    minus).
 
-   1) If the string contains both comma and dot, whichever 
+   1) If the string contains both comma and dot, whichever
    character appears to the left cannot be the decimal
    separator and may be a thousands separator.
 
@@ -2423,7 +2424,7 @@ static double csv_atof (csvdata *c, int i, const char *s)
     if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
 	all_digits_and_seps(s)) {
 	/* second pass through the data: pre-process fields
-	   that we reckon include thousands separators 
+	   that we reckon include thousands separators
 	*/
 	strcpy(clean, s);
 	gretl_delchar(c->thousep, clean);
@@ -2493,7 +2494,7 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
 	c->dset->Z[i][t] = NADBL;
     } else {
 	c->dset->Z[i][t] = csv_atof(c, i, gretl_strstrip(c->str));
-    } 
+    }
 
     return err;
 }
@@ -2531,7 +2532,7 @@ static char *csv_fgets (csvdata *cdata, FILE *fp)
     }
 
     s[i] = '\0';
-    
+
     return s;
 }
 
@@ -2620,7 +2621,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 		continue;
 	    }
 	}
-	
+
 	c->nrows += 1;
 
 	if (fixed_format(c)) {
@@ -2642,12 +2643,12 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 	    /* scrutinize the first "real" line */
 	    check_first_field(c->line, c, prn);
 	    gotdata = 1;
-	} 
+	}
 
 	chkcols = count_csv_fields(c);
 	if (c->ncols == 0) {
 	    c->ncols = chkcols;
-	    pprintf(prn, A_("   number of columns = %d\n"), c->ncols);	    
+	    pprintf(prn, A_("   number of columns = %d\n"), c->ncols);
 	} else if (chkcols != c->ncols) {
 	    pprintf(prn, A_("   ...but row %d has %d fields: aborting\n"),
 		    c->nrows, chkcols);
@@ -2659,7 +2660,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 		gretl_errmsg_set(_("Invalid column specification"));
 		err = E_DATA;
 	    }
-	}		
+	}
     }
 
     if (!err && fixed_format(c)) {
@@ -2847,7 +2848,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 
     if (!csv_skip_col_1(c)) {
 	k++;
-    }    
+    }
 
     if (csv_no_header(c)) {
 	sprintf(okname, "col%d", k);
@@ -2869,7 +2870,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	}
 	if (!strcmp(okname, colname)) {
 #if CDEBUG
-	    fprintf(stderr, " target %d matched at CSV col %d, j=%d\n", i, k, j); 
+	    fprintf(stderr, " target %d matched at CSV col %d, j=%d\n", i, k, j);
 #endif
 	    c->jspec->colnums[i] = j;
 	    if (!matched) {
@@ -2928,7 +2929,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     } else {
 	pprintf(mprn, A_("   line: %s\n"), p);
     }
-    
+
     numcount = 0;
     j = 1; /* for the constant */
 
@@ -2962,7 +2963,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	if (j == c->dset->v) {
 #if CDEBUG
 	    fprintf(stderr, "breaking on j = %d (k = %d)\n", j, k);
-#endif	    
+#endif
 	    break;
 	}
     }
@@ -2977,7 +2978,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	return err;
     }
 
-    if (csv_no_header(c) || numcount == c->dset->v - 1 || 
+    if (csv_no_header(c) || numcount == c->dset->v - 1 ||
 	obs_labels_no_varnames(obscol, c->dset, numcount)) {
 	if (!csv_no_header(c)) {
 	    pputs(prn, A_("it seems there are no variable names\n"));
@@ -3067,7 +3068,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 			"but line length = %d\n", t+1, i, k, n, m);
 		err = E_DATA;
 		break;
-	    }		
+	    }
 	    p = c->line + k - 1;
 	    *c->str = '\0';
 	    strncat(c->str, p, n);
@@ -3104,7 +3105,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 #define XML1_OK(u) ((u>=0x0020 && u<=0xD7FF) || \
 		    (u>=0xE000 && u<=0xFFFD))
 
-/* Check that an observation label contains only 
+/* Check that an observation label contains only
    valid UTF-8, and moreover that every character
    is valid in XML 1.0. If not, try recoding from
    ISO 8859.
@@ -3254,7 +3255,7 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		if (c->delim != ' ') {
 		    p += strspn(p, " ");
 		}
-	    }		
+	    }
 	}
 
 	s++;
@@ -3280,7 +3281,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
     int reversed = csv_data_reversed(c);
     int err;
-    
+
     if (mprn != NULL) {
 	if (csv_all_cols(c)) {
 	    pputs(mprn, A_("scanning for data...\n"));
@@ -3422,16 +3423,16 @@ static int csv_set_dataset_dimensions (csvdata *c)
  * interpret the first column as observation labels); for use of
  * OPT_T see the help text for the "append" command.
  * @prn: gretl printing struct (or NULL).
- * 
+ *
  * Open a Comma-Separated Values data file and read the data into
  * the current work space.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-static int real_import_csv (const char *fname, 
-			    DATASET *dset, 
-			    const char *cols, 
+static int real_import_csv (const char *fname,
+			    DATASET *dset,
+			    const char *cols,
 			    const char *rows,
 			    joinspec *join,
 			    csvprobe *probe,
@@ -3490,7 +3491,7 @@ static int real_import_csv (const char *fname,
 	err = csvdata_add_row_mask(c, rows);
 	if (err) {
 	    goto csv_bailout;
-	} 
+	}
     }
 
     if (opt & OPT_H) {
@@ -3521,7 +3522,7 @@ static int real_import_csv (const char *fname,
     }
 
     /* get line length, also check for binary data, etc. */
-    c->maxlinelen = csv_max_line_length(fp, c, prn);    
+    c->maxlinelen = csv_max_line_length(fp, c, prn);
     if (c->maxlinelen <= 0) {
 	err = E_DATA;
 	goto csv_bailout;
@@ -3532,7 +3533,7 @@ static int real_import_csv (const char *fname,
 	    fixed_format(c) ? "yes" : "no", c->delim,
 	    csv_got_delim(c) ? "yes" : "no",
 	    csv_got_tab(c)? "yes" : "no");
-#endif    
+#endif
 
     if (!fixed_format(c) && !csv_got_delim(c)) {
 	/* set default delimiter */
@@ -3550,7 +3551,7 @@ static int real_import_csv (const char *fname,
     if (c->line == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
-    }  
+    }
 
  alt_delim:
 
@@ -3583,7 +3584,7 @@ static int real_import_csv (const char *fname,
     if (err) {
 	err = E_DATA;
 	goto csv_bailout;
-    }	
+    }
 
     pprintf(mprn, A_("   number of variables: %d\n"), c->dset->v - 1);
     pprintf(mprn, A_("   number of non-blank lines: %d\n"), c->nrows);
@@ -3624,7 +3625,7 @@ static int real_import_csv (const char *fname,
     }
 
     if (c->decpoint == '.' && get_local_decpoint() == ',') {
-	/* we're in a locale that uses decimal comma: 
+	/* we're in a locale that uses decimal comma:
 	   switch to the C locale */
 	gretl_push_c_numeric_locale();
 	popit = 1;
@@ -3689,7 +3690,7 @@ static int real_import_csv (const char *fname,
 	pputs(mprn, A_("taking date information from row labels\n\n"));
 	if (csv_skip_bad(c)) {
 	    pprintf(prn, "WARNING: Check your data! gretl has stripped out "
-		    "what appear to be\nextraneous lines in a %s dataset: " 
+		    "what appear to be\nextraneous lines in a %s dataset: "
 		    "this may not be right.\n\n",
 		    (c->dset->pd == 4)? "quarterly" : "monthly");
 	}
@@ -3698,7 +3699,7 @@ static int real_import_csv (const char *fname,
 	dataset_obs_info_default(c->dset);
     }
 
-    if (c->dset->pd != 1 || strcmp(c->dset->stobs, "1")) { 
+    if (c->dset->pd != 1 || strcmp(c->dset->stobs, "1")) {
         c->dset->structure = TIME_SERIES;
     }
 
@@ -3715,10 +3716,10 @@ static int real_import_csv (const char *fname,
     }
 
     /* If there were observation labels and they were not interpretable
-       as dates, and they weren't simply "1, 2, 3, ...", then they 
-       should probably be preserved; otherwise discard them. 
+       as dates, and they weren't simply "1, 2, 3, ...", then they
+       should probably be preserved; otherwise discard them.
     */
-    if (c->dset->S != NULL && c->markerpd >= 0 && 
+    if (c->dset->S != NULL && c->markerpd >= 0 &&
 	c->dset->markers != DAILY_DATE_STRINGS) {
 	dataset_destroy_obs_markers(c->dset);
     }
@@ -3735,7 +3736,7 @@ static int real_import_csv (const char *fname,
 	for (ii=0; ii<c->dset->v; ii++) {
 	    fprintf(stderr, " c->dset->varname[%d] = '%s'\n", ii, c->dset->varname[ii]);
 	}
-#endif	
+#endif
 	if (fix_varname_duplicates(c->dset)) {
 	    pputs(prn, A_("warning: some variable names were duplicated\n"));
 	}
@@ -3768,6 +3769,7 @@ static int real_import_csv (const char *fname,
     } else if (!err && c->probe != NULL) {
 	c->probe->dset = c->dset;
 	c->dset = NULL;
+	csvdata_free(c);
     } else {
 	csvdata_free(c);
     }
@@ -3779,7 +3781,7 @@ static int real_import_csv (const char *fname,
 
     if (err == E_ALLOC) {
 	pputs(prn, A_("Out of memory\n"));
-    }    
+    }
 
     return err;
 }
@@ -3789,17 +3791,17 @@ static int real_import_csv (const char *fname,
  * @fname: name of CSV file.
  * @dset: dataset struct.
  * @opt: use OPT_N to force interpretation of data colums containing
- * strings as coded (non-numeric) values and not errors; for use of 
+ * strings as coded (non-numeric) values and not errors; for use of
  * OPT_T see the help for "append".
  * @prn: gretl printing struct (or NULL).
- * 
+ *
  * Open a Comma-Separated Values data file and read the data into
  * the current work space.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_csv (const char *fname, DATASET *dset, 
+int import_csv (const char *fname, DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     const char *cols = NULL;
@@ -3826,7 +3828,7 @@ int import_csv (const char *fname, DATASET *dset,
 	if (cols == NULL || *cols == '\0') {
 	    return E_PARSE;
 	}
-    }	
+    }
 
     if (opt & OPT_M) {
 	/* we should have a "--rowmask=XXX" specification */
@@ -3834,9 +3836,9 @@ int import_csv (const char *fname, DATASET *dset,
 	if (rows == NULL || *rows == '\0') {
 	    return E_PARSE;
 	}
-    }	
+    }
 
-    return real_import_csv(fname, dset, cols, rows, 
+    return real_import_csv(fname, dset, cols, rows,
 			   NULL, NULL, opt, prn);
 }
 
@@ -3861,7 +3863,7 @@ static int probe_varnames_check (DATASET *dset, gretlopt opt,
 	    *rerun = 1;
 	}
     }
-	   
+
     return err;
 }
 
@@ -3871,12 +3873,13 @@ static int probe_varnames_check (DATASET *dset, gretlopt opt,
  * @varnames: location to receive variable names.
  * @nvars: location to receive number of variables (columns).
  * @opt: on input, may contain any extra options to pass to
- * real_import_csv(); on return, OPT_H may be added if it
- * seems to be required (no header).
- * 
+ * real_import_csv(); on return, OPT_H (indicating that the
+ * CSV file has no header) may be added if it seems to be
+ * required (no header).
+ *
  * Open a Comma-Separated Values data file and read enough to
  * determine the variable names.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -3885,31 +3888,34 @@ int probe_csv (const char *fname, char ***varnames,
 {
     csvprobe probe = {0};
     int err;
-    
-    err = real_import_csv(fname, NULL, NULL, NULL, 
+
+    err = real_import_csv(fname, NULL, NULL, NULL,
 			  NULL, &probe, *opt, NULL);
 
     if (!err) {
 	int rerun = 0;
-	
+
 	err = probe_varnames_check(probe.dset, *opt, &rerun);
 
-	if (err) {
+	if (err || rerun) {
 	    destroy_dataset(probe.dset);
 	    probe.dset = NULL;
-	} else if (rerun) {
-	    /* try again with --no-header */
-	    destroy_dataset(probe.dset);
-	    probe.dset = NULL;
+	}
+
+	if (!err && rerun) {
+	    /* try again with --no-header flag */
 	    *opt |= OPT_H;
 	    err = real_import_csv(fname, NULL, NULL, NULL,
 				  NULL, &probe, *opt, NULL);
 	}
+
 	if (!err) {
+	    /* steal the varname array */
 	    *varnames = probe.dset->varname;
 	    *nvars = probe.dset->v;
 	    probe.dset->varname = NULL;
 	}
+
 	destroy_dataset(probe.dset);
     }
 
@@ -4146,7 +4152,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     }
 
     /* note: with strptime, a NULL return means that an error
-       occurred while a non-NULL and non-empty return string 
+       occurred while a non-NULL and non-empty return string
        means a trailing portion of the input was not
        processed.
     */
@@ -4170,7 +4176,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	if (err) {
 	    gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
 	    fprintf(stderr, "time-format match error in read_outer_auto_keys:\n"
-		    " remainder = '%s' (source = %s)\n", test ? test : "null", 
+		    " remainder = '%s' (source = %s)\n", test ? test : "null",
 		    s_src < 3 ? "specified time column" : "first-column strings");
 	}
     }
@@ -4225,7 +4231,7 @@ static int read_iso_basic (joiner *jr, int j, int i)
    it is then indeterminate.
 */
 
-static int evaluate_filter (jr_filter *filter, DATASET *r_dset, 
+static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
 			    int *nrows)
 {
     char *line;
@@ -4324,7 +4330,7 @@ static DATASET *outer_dataset (joinspec *jspec)
 
 #define using_auto_keys(j) (j->auto_keys->timefmt != NULL)
 
-static joiner *build_joiner (joinspec *jspec, 
+static joiner *build_joiner (joinspec *jspec,
 			     DATASET *l_dset,
 			     jr_filter *filter,
 			     AggrType aggr,
@@ -4343,7 +4349,7 @@ static joiner *build_joiner (joinspec *jspec,
 #if CDEBUG
     fprintf(stderr, "joiner columns:\n"
 	    "KEY=%d, VAL=%d, F1=%d, F2=%d, F3=%d, KEY2=%d, AUX=%d\n",
-	    keycol, valcol, jspec->colnums[JOIN_F1], 
+	    keycol, valcol, jspec->colnums[JOIN_F1],
 	    jspec->colnums[JOIN_F2], jspec->colnums[JOIN_F3],
 	    key2col, auxcol);
 #endif
@@ -4380,7 +4386,7 @@ static joiner *build_joiner (joinspec *jspec,
 	jr->auto_keys = auto_keys;
 
 	if (using_auto_keys(jr)) {
-	    /* check for the case where the outer time-key 
+	    /* check for the case where the outer time-key
 	       column is in the "tconvert" set: if so we
 	       know it will be in YYYYMMDD format and we'll
 	       give it special treatment
@@ -4456,7 +4462,7 @@ static int compare_jr_rows (const void *a, const void *b)
 	/* ensure stable sort */
 	ret = a - b > 0 ? 1 : -1;
     }
-    
+
     return ret;
 }
 
@@ -4482,7 +4488,7 @@ static int joiner_sort (joiner *jr)
        left (signalled by a strmap value of -1) we can exploit this
        information by shuffling such rows to the end of the joiner
        rectangle and ignoring them when aggregating.
-    */ 
+    */
 
     if (jr->str_keys[0] || jr->str_keys[1]) {
 	series_table *stl, *str;
@@ -4620,7 +4626,7 @@ static void joiner_print (joiner *jr)
     if (jr->keys != NULL) {
 	fprintf(stderr, " for primary key: n_unique = %d\n", jr->n_unique);
 	for (i=0; i<jr->n_unique; i++) {
-	    fprintf(stderr,"  key value %" G_GINT64_FORMAT ": count = %d\n", 
+	    fprintf(stderr,"  key value %" G_GINT64_FORMAT ": count = %d\n",
 		    jr->keys[i], jr->key_freq[i]);
 	}
     }
@@ -4650,7 +4656,7 @@ static int seqval_out_of_bounds (joiner *jr, int seqmax)
 
 /* Do a binary search for the left-hand key value @targ in the sorted
    array of unique right-hand key values, @vals; return the position
-   among @vals at which @targ matches, or -1 for no match.  
+   among @vals at which @targ matches, or -1 for no match.
 */
 
 static int binsearch (gint64 targ, const gint64 *vals, int n, int offset)
@@ -4713,14 +4719,14 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
 */
 
 static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
-			  int v, double *xmatch, double *auxmatch, 
+			  int v, double *xmatch, double *auxmatch,
 			  int *nomatch, int *err)
 {
     double x, xa;
     int imin, imax, pos;
     int i, n, ntotal;
 
-    /* find the position of the inner (primary) key in the 
+    /* find the position of the inner (primary) key in the
        array of unique outer key values */
     pos = binsearch(key1, jr->keys, jr->n_unique, 0);
 
@@ -4730,7 +4736,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
     } else {
 	fprintf(stderr, " key1 = %ld: matched at position %d\n", key1, pos);
     }
-#endif    
+#endif
 
     if (pos < 0) {
 	/* (primary) inner key value not found */
@@ -4739,7 +4745,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
     }
 
     /* how many matches at @pos? (must be at least 1 unless
-       something very bad has happened) 
+       something very bad has happened)
     */
     n = jr->key_freq[pos];
 
@@ -4788,7 +4794,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 		    /* we can't know the min/max of the aux var */
 		    *err = E_MISSDATA;
 		    return NADBL;
-		}		    
+		}
 		if (!na(xa)) {
 		    auxmatch[n] = xa;
 		    xmatch[n++] = x;
@@ -4796,7 +4802,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 	    } else if (!na(x)) {
 		xmatch[n++] = x;
 	    }
-	}		
+	}
     }
 
     if (jr->n_keys > 1) {
@@ -4818,7 +4824,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 	i = sval < 0 ? n + sval : sval - 1;
 	if (i >= 0 && i < n) {
 	    x = xmatch[i];
-	}	    
+	}
     } else if (jr->aggr == AGGR_MAX || jr->aggr == AGGR_MIN) {
 	if (jr->auxcol) {
 	    /* using the max/min of an auxiliary var */
@@ -4859,7 +4865,7 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
    pre-existing and already has a string table attached. The RHS
    coding must be made consistent with that on the left. We reach this
    function only if we've verified that there are string tables on
-   both sides, and that @rz is not NA.  
+   both sides, and that @rz is not NA.
 */
 
 static double maybe_adjust_string_code (series_table *rst,
@@ -5009,7 +5015,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 
 	/* run through the rows in the current sample range of the
 	   left-hand dataset, pick up the value of the inner key(s), and
-	   call aggr_value() to determine the value that should be 
+	   call aggr_value() to determine the value that should be
 	   imported from the right
 	*/
 
@@ -5032,10 +5038,10 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 
 #if AGGDEBUG
 	    if (na(z)) {
-		fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n", 
+		fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n",
 			(int) key, (int) key2, err);
 	    } else {
-		fprintf(stderr, " aggr_value: got %.12g (keys=%d,%d, err=%d)\n", 
+		fprintf(stderr, " aggr_value: got %.12g (keys=%d,%d, err=%d)\n",
 			z, (int) key, (int) key2, err);
 	    }
 #endif
@@ -5310,7 +5316,7 @@ static int add_target_series (const char **vnames,
 /* Parse either one or two elements (time-key column name, time format
    string) out of @s. If both elements are present they must be
    comma-separated; if only the second element is present it must be
-   preceded by a comma.  
+   preceded by a comma.
 */
 
 static int process_time_key (const char *s, char *tkeyname,
@@ -5349,7 +5355,7 @@ static int process_time_key (const char *s, char *tkeyname,
    should use the corresponding inner key name.
 */
 
-static int process_outer_key (const char *s, int n_keys, 
+static int process_outer_key (const char *s, int n_keys,
 			      char *name1, char *name2,
 			      gretlopt opt)
 {
@@ -5422,9 +5428,9 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
     char *s = auto_keys->timefmt;
     int i, err = 0;
 
-#if CDEBUG 
+#if CDEBUG
     fprintf(stderr, "check_for_quarterly_format: '%s'\n", s);
-#endif    
+#endif
 
     for (i=0; s[i]; i++) {
 	if (s[i] == '%' &&
@@ -5517,7 +5523,7 @@ static int auto_keys_check (const DATASET *l_dset,
     }
 
  bailout:
-    
+
     /* we should flag an error here only if the user
        explicitly requested use of this apparatus,
        by giving --tkey=<whatever> (OPT_K)
@@ -5529,7 +5535,7 @@ static int auto_keys_check (const DATASET *l_dset,
     return err;
 }
 
-static int make_time_formats_array (char const **fmts, char ***pS) 
+static int make_time_formats_array (char const **fmts, char ***pS)
 {
     char **S = strings_array_new(2);
     int i, err = 0;
@@ -5573,7 +5579,7 @@ static int make_time_formats_array (char const **fmts, char ***pS)
    common format, or an addendum if no common format is given).
 */
 
-static int process_tconvert_info (joinspec *jspec, 
+static int process_tconvert_info (joinspec *jspec,
 				  const char *tconvcols,
 				  const char *tconvfmt,
 				  const char *keyfmt)
@@ -5659,7 +5665,7 @@ static void obskey_init (obskey *keys)
 
 static int join_data_type_check (joinspec *jspec,
 				 const DATASET *l_dset,
-				 int *targvars, 
+				 int *targvars,
 				 AggrType aggr)
 {
     DATASET *r_dset = outer_dataset(jspec);
@@ -5700,7 +5706,7 @@ static int aggregation_type_check (joinspec *jspec, AggrType aggr)
 	; /* no problem */
     } else {
 	/* the aggregation method requires numerical data: flag
-	   an error if we got strings instead 
+	   an error if we got strings instead
 	*/
 	const DATASET *dset = outer_dataset(jspec);
 	int aggcol = 0;
@@ -5749,7 +5755,7 @@ static int check_for_missing_columns (joinspec *jspec)
 	if (name != NULL) {
 	    fprintf(stderr, "colname '%s' -> colnum %d\n", name, jspec->colnums[i]);
 	}
-#endif	
+#endif
     }
 
     return 0;
@@ -5766,14 +5772,14 @@ static int key_types_error (int lstr, int rstr)
 	gretl_errmsg_sprintf(_("%s: string key on left but numeric on right"), "join");
     } else {
 	gretl_errmsg_sprintf(_("%s: string key on right but numeric on left"), "join");
-    }	
+    }
 
     return E_TYPES;
 }
 
 static int set_up_outer_keys (joinspec *jspec, const DATASET *l_dset,
-			      gretlopt opt, const int *ikeyvars, 
-			      int *okeyvars, obskey *auto_keys, 
+			      gretlopt opt, const int *ikeyvars,
+			      int *okeyvars, obskey *auto_keys,
 			      int *str_keys)
 {
     const DATASET *r_dset = outer_dataset(jspec);
@@ -5817,7 +5823,7 @@ static int set_up_outer_keys (joinspec *jspec, const DATASET *l_dset,
 	    } else if (lstr) {
 		str_keys[1] = 1;
 	    }
-	}		
+	}
     }
 
     return err;
@@ -5857,7 +5863,6 @@ static int determine_gdt_matches (const char *fname,
 	int *vlist = NULL;
 	char **S = NULL;
 	int i, j, ns = 0;
-	int err = 0;
 
 	/* form array of unique wanted identifiers */
 	for (i=0; i<jspec->ncols && !err; i++) {
@@ -5866,44 +5871,47 @@ static int determine_gdt_matches (const char *fname,
 	    }
 	}
 
-	if (!err) {
-	    for (i=0; i<ns && !err; i++) {
-		int match = 0;
+	for (i=0; i<ns && !err; i++) {
+	    int match = 0;
 
-		if (prn != NULL) {
-		    pprintf(prn, "checking for '%s'\n", S[i]);
-		}
-
-		if (is_wildstr(S[i])) {
-		    pspec = g_pattern_spec_new(S[i]);
-		    for (j=1; j<nv; j++) {
-			if (g_pattern_match_string(pspec, vnames[j])) {
-			    match++;
-			    if (!in_gretl_list(vlist, j)) {
-				gretl_list_append_term(&vlist, j);
-			    }
-			}
-		    }
-		    g_pattern_spec_free(pspec);
-		} else {
-		    for (j=1; j<nv; j++) {
-			if (!strcmp(S[i], vnames[j])) {
-			    match = 1;
-			    if (!in_gretl_list(vlist, j)) {
-				gretl_list_append_term(&vlist, j);
-			    }
-			    break;
-			}
-		    }
-		    if (!match) {
-			err = E_DATA;
-			gretl_errmsg_sprintf("'%s': not found", S[i]);
-		    }
-		}
-		if (prn != NULL) {
-		    pprintf(prn, " found %d match(es)\n", match);
-		}		
+	    if (prn != NULL) {
+		pprintf(prn, "checking for '%s'\n", S[i]);
 	    }
+
+	    if (is_wildstr(S[i])) {
+		pspec = g_pattern_spec_new(S[i]);
+		for (j=1; j<nv; j++) {
+		    if (g_pattern_match_string(pspec, vnames[j])) {
+			match++;
+			if (!in_gretl_list(vlist, j)) {
+			    gretl_list_append_term(&vlist, j);
+			}
+		    }
+		}
+		g_pattern_spec_free(pspec);
+	    } else {
+		for (j=1; j<nv; j++) {
+		    if (!strcmp(S[i], vnames[j])) {
+			match = 1;
+			if (!in_gretl_list(vlist, j)) {
+			    gretl_list_append_term(&vlist, j);
+			}
+			break;
+		    }
+		}
+		if (!match) {
+		    err = E_DATA;
+		    gretl_errmsg_sprintf("'%s': not found", S[i]);
+		}
+	    }
+	    if (prn != NULL) {
+		pprintf(prn, " found %d match(es)\n", match);
+	    }
+	}
+
+	if (!err && (vlist == NULL || vlist[0] == 0)) {
+	    gretl_errmsg_set("No matching data were found");
+	    err = E_DATA;
 	}
 
 	if (!err) {
@@ -5920,7 +5928,7 @@ static int determine_gdt_matches (const char *fname,
     return err;
 }
 
-static int join_import_gdt (const char *fname, 
+static int join_import_gdt (const char *fname,
 			    joinspec *jspec,
 			    gretlopt opt,
 			    PRN *prn)
@@ -5994,6 +6002,20 @@ static int join_import_gdt (const char *fname,
     return err;
 }
 
+/* add/replace an entry in @jspec's colnames array,
+   and record the fact that @src is now owned by
+   @jspec so we can free it when we're finished
+   and hence avoid leaking memory
+*/
+
+static int jspec_push_auxname (joinspec *jspec,
+			       int pos,
+			       char *src)
+{
+    jspec->colnames[pos] = src;
+    return strings_array_donate(&jspec->auxnames, &jspec->n_aux, src);
+}
+
 static int determine_csv_matches (const char *fname,
 				  joinspec *jspec,
 				  PRN *prn)
@@ -6012,11 +6034,11 @@ static int determine_csv_matches (const char *fname,
 	int i, err = 0;
 
 	pspec = g_pattern_spec_new(jspec->colnames[JOIN_VAL]);
-	
+
 	for (i=0; i<nv; i++) {
 	    if (g_pattern_match_string(pspec, vnames[i])) {
 		if (nmatch == 0) {
-		    jspec->colnames[JOIN_VAL] = vnames[i];
+		    jspec_push_auxname(jspec, JOIN_VAL, vnames[i]);
 		    match1 = i;
 		}
 		nmatch++;
@@ -6037,30 +6059,30 @@ static int determine_csv_matches (const char *fname,
 		    if (g_pattern_match_string(pspec, vnames[i])) {
 			if (nmatch > 0) {
 			    /* the first match is already handled */
-			    jspec->colnames[j++] = vnames[i];
+			    jspec_push_auxname(jspec, j++, vnames[i]);
 			}
 			vnames[i] = NULL;
 			nmatch++;
 		    }
 		}
 	    }
-	}		
-	
-	g_pattern_spec_free(pspec);    
+	}
+
+	g_pattern_spec_free(pspec);
 	strings_array_free(vnames, nv);
     }
 
     return err;
 }
 
-static int join_import_csv (const char *fname, 
+static int join_import_csv (const char *fname,
 			    joinspec *jspec,
 			    gretlopt opt,
 			    PRN *prn)
 {
     int err = 0;
 
-    if (jspec->wildcards) {
+    if (jspec->wildcard) {
 	err = determine_csv_matches(fname, jspec, prn);
 	if (err) {
 	    pputs(prn, "join_import_csv: failed in matching varnames\n");
@@ -6116,7 +6138,7 @@ static int *get_series_indices (const char **vnames,
 	*err = E_ALLOC;
     } else {
 	int i, v;
-	
+
 	for (i=0; i<nvars && !*err; i++) {
 	    if (is_wildstr(vnames[i])) {
 		*any_wild = 1;
@@ -6147,6 +6169,8 @@ static int *get_series_indices (const char **vnames,
 
     return ret;
 }
+
+/* figure the number of series to import */
 
 static int jspec_n_vars (joinspec *jspec)
 {
@@ -6228,10 +6252,11 @@ static int set_up_jspec (joinspec *jspec,
 	return E_ALLOC;
     }
 
-    jspec->ftype = (opt & OPT_G) ? GRETL_XML_DATA : GRETL_CSV;
     jspec->ncols = ncols;
-    jspec->wildcards = any_wild;
+    jspec->wildcard = any_wild;
     jspec->wildnames = NULL;
+    jspec->auxnames = NULL;
+    jspec->n_aux = 0;
 
     for (i=0; i<JOIN_MAXCOL; i++) {
 	jspec->colnames[i] = NULL;
@@ -6278,7 +6303,7 @@ static void clear_jspec (joinspec *jspec)
 {
     free(jspec->colnames);
     free(jspec->colnums);
-    
+
     if (jspec->timecols != NULL) {
 	free(jspec->timecols);
     }
@@ -6291,6 +6316,10 @@ static void clear_jspec (joinspec *jspec)
 
     if (jspec->wildnames != NULL) {
 	strings_array_free(jspec->wildnames, jspec_n_vars(jspec));
+    }
+
+    if (jspec->auxnames != NULL) {
+	strings_array_free(jspec->auxnames, jspec->n_aux);
     }
 }
 
@@ -6335,17 +6364,17 @@ static void maybe_transfer_string_table (DATASET *l_dset,
  * no header row, OPT_G for native gretl import file as opposed to
  * CSV.
  * @prn: gretl printing struct (or NULL).
- * 
- * Opens a delimited text data file or gdt file and carries out a 
+ *
+ * Opens a delimited text data file or gdt file and carries out a
  * "join" operation to pull data into the current working dataset.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
 int gretl_join_data (const char *fname,
 		     const char **vnames,
 		     int nvars,
-		     DATASET *dset, 
+		     DATASET *dset,
 		     const int *ikeyvars,
 		     const char *okey,
 		     const char *filtstr,
@@ -6388,7 +6417,7 @@ int gretl_join_data (const char *fname,
 
     targvars = get_series_indices(vnames, nvars, dset, &add_v,
 				  &any_wild, &err);
-    
+
     if (!err && dataname != NULL) {
 	/* If we have a spec for the original name of a series
 	   to import (@dataname), we cannot accept more than one
@@ -6403,7 +6432,7 @@ int gretl_join_data (const char *fname,
 
     if (err) {
 	return err;
-    }    
+    }
 
     err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild);
     if (err) {
@@ -6422,7 +6451,7 @@ int gretl_join_data (const char *fname,
     fprintf(stderr, " filename = '%s'\n", fname);
     if (nvars > 1) {
 	int i;
-	
+
 	fputs(" target series names:\n", stderr);
 	for (i=0; i<nvars; i++) {
 	    fprintf(stderr, "  '%s'\n", vnames[i]);
@@ -6439,20 +6468,20 @@ int gretl_join_data (const char *fname,
     if (okey != NULL) {
 	fprintf(stderr, " outer key = '%s'\n", okey);
     } else if (n_keys > 0) {
-	fprintf(stderr, " outer key = '%s' (from inner key)\n", 
+	fprintf(stderr, " outer key = '%s' (from inner key)\n",
 		dset->varname[ikeyvars[1]]);
 	if (n_keys == 2) {
-	    fprintf(stderr, " second outer key = '%s' (from inner)\n", 
+	    fprintf(stderr, " second outer key = '%s' (from inner)\n",
 		    dset->varname[ikeyvars[2]]);
 	}
     }
     if (filtstr != NULL) {
 	fprintf(stderr, " filter = '%s'\n", filtstr);
-    }    
+    }
     if (dataname != NULL) {
 	fprintf(stderr, " source data series = '%s'\n", dataname);
     } else if (aggr != AGGR_COUNT) {
-	fprintf(stderr, " source data series: assuming '%s' (from inner varname)\n", 
+	fprintf(stderr, " source data series: assuming '%s' (from inner varname)\n",
 		varname);
     }
     fprintf(stderr, " aggregation method = %d\n", aggr);
@@ -6464,7 +6493,7 @@ int gretl_join_data (const char *fname,
     }
     if (tconvfmt != NULL) {
 	fprintf(stderr, " tconvfmt = '%s'\n", tconvfmt);
-    }    
+    }
 #endif
 
     /* Step 1: process the arguments we got with regard to filtering
@@ -6503,7 +6532,7 @@ int gretl_join_data (const char *fname,
 	    jspec.colnames[JOIN_KEY2] = okeyname2;
 	} else if (n_keys > 1) {
 	    jspec.colnames[JOIN_KEY2] = dset->varname[ikeyvars[2]];
-	}	
+	}
 
 	/* the data or "payload" column */
 	if (aggr != AGGR_COUNT) {
@@ -6567,7 +6596,7 @@ int gretl_join_data (const char *fname,
 
     if (!err && verbose) {
 	int i;
-	
+
 	pprintf(prn, _("Outer dataset: read %d columns and %d rows\n"),
 		outer_dset->v - 1, outer_dset->n);
 	for (i=1; i<outer_dset->v; i++) {
@@ -6587,7 +6616,7 @@ int gretl_join_data (const char *fname,
 			      &auto_keys, &n_keys);
     }
 
-    if (!err && n_keys == 0 && filter == NULL && aggr == 0 && 
+    if (!err && n_keys == 0 && filter == NULL && aggr == 0 &&
 	auto_keys.timefmt == NULL) {
 	/* the simple case: no need to build joiner struct */
 	err = join_simple_range_check(dset, outer_dset, targvars);
@@ -6608,7 +6637,7 @@ int gretl_join_data (const char *fname,
 
     if (!err && filter != NULL && verbose) {
 	pprintf(prn, "Filter: %d rows were selected\n", jr->n_rows);
-    }    
+    }
 
     /* Step 7: transcribe more info and sort the "joiner" struct */
 
@@ -6619,7 +6648,7 @@ int gretl_join_data (const char *fname,
 	jr->r_keyno = okeyvars;
 	if (jr->n_keys > 0) {
 	    err = joiner_sort(jr);
-	}	
+	}
 #if CDEBUG > 1
 	if (!err) joiner_print(jr);
 #endif
@@ -6637,7 +6666,7 @@ int gretl_join_data (const char *fname,
        if we came across any wildcard specifications
     */
 
-    if (!err && jspec.wildcards) {
+    if (!err && jspec.wildcard) {
 	free(targvars);
 	targvars = revise_series_indices(&jspec, dset, &add_v, &err);
     }
@@ -6652,7 +6681,7 @@ int gretl_join_data (const char *fname,
 	} else {
 	    err = add_target_series(vnames, dset, targvars, add_v);
 	}
-    }   
+    }
 
     if (!err) {
 	if (jr == NULL) {
@@ -6670,7 +6699,7 @@ int gretl_join_data (const char *fname,
 #if CDEBUG
     fprintf(stderr, "join: add_v = %d, modified = %d\n",
 	    add_v, modified);
-#endif    
+#endif
 
     if (!err && add_v > 0 && jspec.colnums[JOIN_VAL] > 0) {
 	/* we added one or more new series */

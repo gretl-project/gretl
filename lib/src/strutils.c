@@ -1593,6 +1593,46 @@ int strings_array_add (char ***pS, int *n, const char *p)
 }
 
 /**
+ * strings_array_donate:
+ * @pS: pointer to strings array.
+ * @n: location of present number of strings in array.
+ * @p: string to append to array.
+ *
+ * Allocates storage for an extra member of @S and adds
+ * string @p in the last position. Unlike strings_array_add(),
+ * the array takes ownnership of @p rather than copying it.
+ * On success, the content of @n is incremented by 1.
+ * 
+ * Returns: 0 on success, %E_ALLOC on failure.
+ */
+
+int strings_array_donate (char ***pS, int *n, char *p)
+{
+    char **Tmp;
+    int m = *n;
+
+    Tmp = realloc(*pS, (m + 1) * sizeof *Tmp);
+    if (Tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    *pS = Tmp;
+
+    if (p != NULL) {
+	Tmp[m] = p;
+	if (Tmp[m] == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	Tmp[m] = NULL;
+    }
+    
+    *n += 1;
+
+    return 0;
+}
+
+/**
  * strings_array_add_uniq:
  * @pS: pointer to strings array.
  * @n: location of present number of strings in array.
