@@ -3599,7 +3599,7 @@ static int gui_package_info_init (void)
 /* For function packages offering a menu attachment point: given the
    internal package name (e.g. "gig") and a menu path where we'd like
    it to appear (e.g. "/menubar/Model/TSModels" -- see the ui
-   definition file gui2/gretlmain.xml), construct the appropriate menu
+   definition file gui/gretlmain.xml), construct the appropriate menu
    item and connect it to gfn_menu_callback(), for which see above.
 
    This is called for both main-window and model-window menu

@@ -1029,8 +1029,8 @@ AC_CONFIG_FILES([
 Makefile 
 gretl_sh
 gretl.pc 
-gui2/Makefile
-gui2/debug
+gui/Makefile
+gui/debug
 xdg/gretl.desktop
 xdg/Makefile
 cli/Makefile 

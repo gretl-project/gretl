@@ -20069,7 +20069,7 @@ fi
 
 CFLAGS="$orig_CFLAGS"
 
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/debug xdg/gretl.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
 
 
 if test "${darwin_build}" = "yes" ; then
@@ -21220,8 +21220,8 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "gretl_sh") CONFIG_FILES="$CONFIG_FILES gretl_sh" ;;
     "gretl.pc") CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
-    "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
-    "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
+    "gui/Makefile") CONFIG_FILES="$CONFIG_FILES gui/Makefile" ;;
+    "gui/debug") CONFIG_FILES="$CONFIG_FILES gui/debug" ;;
     "xdg/gretl.desktop") CONFIG_FILES="$CONFIG_FILES xdg/gretl.desktop" ;;
     "xdg/Makefile") CONFIG_FILES="$CONFIG_FILES xdg/Makefile" ;;
     "cli/Makefile") CONFIG_FILES="$CONFIG_FILES cli/Makefile" ;;
