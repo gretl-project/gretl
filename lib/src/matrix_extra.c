@@ -626,11 +626,11 @@ real_gretl_matrix_data_subset (const int *list,
  * @err: location to receive error code.
  *
  * Creates a gretl matrix holding the subset of variables from
- * @Z specified by @list, over the sample range @t1 to @t2,
+ * @dset specified by @list, over the sample range @t1 to @t2,
  * inclusive.  Variables are in columns. The @missop flag
  * can be %M_MISSING_OK to indicate that it's OK to include
  * missing values in the matrix (these become NaNs),
- * %M_MISSING_ERROR (it's an error of any missing values are
+ * %M_MISSING_ERROR (it's an error if any missing values are
  * found), or %M_MISSING_SKIP (observations with any missing
  * values are omitted from the matrix).
  *
