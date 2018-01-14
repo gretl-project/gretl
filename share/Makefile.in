@@ -82,10 +82,12 @@ install_datafiles:
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/nist ; done
 
 install_scripts:
-	for f in $(sharesrc)/scripts/*.inp ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts ; done
-	$(INSTALL_DATA) $(sharesrc)/scripts/ps_descriptions $(DESTDIR)$(gretldir)/scripts
-	$(INSTALL_DATA) $(sharesrc)/scripts/wg_ps_descriptions $(DESTDIR)$(gretldir)/scripts
+	for f in $(sharesrc)/scripts/ramanathan/*.inp ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts/ramanathan ; done
+	$(INSTALL_DATA) $(sharesrc)/scripts/ramanathan/ps_descriptions $(DESTDIR)$(gretldir)/scripts/ramanathan
+	for f in $(sharesrc)/scripts/greene/*.inp ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts/greene ; done
+	$(INSTALL_DATA) $(sharesrc)/scripts/greene/ps_descriptions $(DESTDIR)$(gretldir)/scripts/greene
 	for f in $(sharesrc)/scripts/misc/*.inp ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts/misc ; done
 	$(INSTALL_DATA) $(sharesrc)/scripts/misc/ps_descriptions $(DESTDIR)$(gretldir)/scripts/misc
@@ -119,6 +121,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/plotbars
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/gnuplot
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/ramanathan
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/greene
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
