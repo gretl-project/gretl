@@ -5055,6 +5055,15 @@ int gfn_is_loaded (const char *gfnname)
     return ret;
 }
 
+static int not_mpi_duplicate (void)
+{
+#ifdef HAVE_MPI
+    return gretl_mpi_rank() < 1;
+#else
+    return 0;
+#endif
+}
+
 /**
  * load_function_package_by_filename:
  * @fname: full path to gfn file.
@@ -5109,7 +5118,7 @@ int load_function_package_by_filename (const char *fname,
 
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
-    } else if (pkg != NULL && prn != NULL && gretl_mpi_rank() < 1) {
+    } else if (pkg != NULL && prn != NULL && not_mpi_duplicate()) {
 	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
 		pkg->date, pkg->author);
     }
