@@ -57,13 +57,12 @@ enum {
 
 enum {
     JOIN_KEY,
-    JOIN_TARG,
     JOIN_F1,
     JOIN_F2,
     JOIN_F3,
     JOIN_KEY2,
     JOIN_AUX,
-    JOIN_MAXCOL
+    JOIN_TARG
 };
 
 typedef struct joinspec_ joinspec;
@@ -4947,12 +4946,8 @@ static int get_inner_key_values (joiner *jr, int i,
 
 static int outer_series_index (joinspec *jspec, int i)
 {
-    if (i == 1) {
-	/* the first var */
-	return jspec->colnums[JOIN_TARG];
-    } else if (i > 1) {
-	/* subsequent vars, if any */
-	return jspec->colnums[JOIN_MAXCOL + i - 2];
+    if (i >= 1) {
+	return jspec->colnums[JOIN_TARG + i - 1];
     } else {
 	return -1;
     }
@@ -5831,15 +5826,11 @@ static int set_up_outer_keys (joinspec *jspec, const DATASET *l_dset,
 
 static int first_available_index (joinspec *jspec)
 {
-    if (jspec->colnums[JOIN_TARG] == 0) {
-	return JOIN_TARG;
-    } else {
-	int i;
+    int i;
 
-	for (i=JOIN_MAXCOL; i<jspec->ncols; i++) {
-	    if (jspec->colnums[i] == 0) {
-		return i;
-	    }
+    for (i=JOIN_TARG; i<jspec->ncols; i++) {
+	if (jspec->colnums[i] == 0) {
+	    return i;
 	}
     }
 
@@ -6030,40 +6021,29 @@ static int determine_csv_matches (const char *fname,
     if (!err) {
 	GPatternSpec *pspec;
 	int nmatch = 0;
-	int match1 = -1;
 	int i, err = 0;
 
 	pspec = g_pattern_spec_new(jspec->colnames[JOIN_TARG]);
 
+	/* first determine the number of matches to @pspec */
 	for (i=0; i<nv; i++) {
 	    if (g_pattern_match_string(pspec, vnames[i])) {
-		if (nmatch == 0) {
-		    jspec_push_tmpname(jspec, JOIN_TARG, vnames[i]);
-		    match1 = i;
-		}
 		nmatch++;
 	    }
 	}
 
-	if (nmatch == 1) {
-	    /* prevent freeing of replacement string */
-	    vnames[match1] = NULL;
-	} else if (nmatch > 1) {
+	if (nmatch > 1) {
 	    /* we have some extra vars due to wildcard expansion */
 	    err = expand_jspec(jspec, nmatch - 1);
-	    if (!err) {
-		int j = JOIN_MAXCOL;
+	}
 
-		nmatch = 0;
-		for (i=0; i<nv; i++) {
-		    if (g_pattern_match_string(pspec, vnames[i])) {
-			if (nmatch > 0) {
-			    /* the first match is already handled */
-			    jspec_push_tmpname(jspec, j++, vnames[i]);
-			}
-			vnames[i] = NULL;
-			nmatch++;
-		    }
+	if (!err && nmatch > 0) {
+	    int j = JOIN_TARG;
+
+	    for (i=0; i<nv; i++) {
+		if (g_pattern_match_string(pspec, vnames[i])) {
+		    jspec_push_tmpname(jspec, j++, vnames[i]);
+		    vnames[i] = NULL;
 		}
 	    }
 	}
@@ -6174,7 +6154,7 @@ static int *get_series_indices (const char **vnames,
 
 static int jspec_n_vars (joinspec *jspec)
 {
-    return 1 + jspec->ncols - JOIN_MAXCOL;
+    return jspec->ncols - JOIN_TARG;
 }
 
 /* we come here if we have determined that the
@@ -6207,8 +6187,7 @@ static int *revise_series_indices (joinspec *jspec,
 	*n_add = 0;
 
 	for (i=0; i<nvars && !*err; i++) {
-	    cname = (i == 0)? jspec->colnames[JOIN_TARG] :
-		jspec->colnames[JOIN_MAXCOL+i-1];
+	    cname = jspec->colnames[JOIN_TARG + i];
 	    v = current_series_index(dset, cname);
 	    if (v == 0) {
 		*err = E_DATA;
@@ -6243,7 +6222,7 @@ static int set_up_jspec (joinspec *jspec,
 			 gretlopt opt,
 			 int any_wild)
 {
-    int i, j, ncols = JOIN_MAXCOL + nvars - 1;
+    int i, j, ncols = JOIN_TARG + nvars;
 
     jspec->colnames = malloc(ncols * sizeof *jspec->colnames);
     jspec->colnums = malloc(ncols * sizeof *jspec->colnums);
@@ -6258,16 +6237,14 @@ static int set_up_jspec (joinspec *jspec,
     jspec->tmpnames = NULL;
     jspec->n_tmp = 0;
 
-    for (i=0; i<JOIN_MAXCOL; i++) {
-	jspec->colnames[i] = NULL;
+    j = 1;
+    for (i=0; i<ncols; i++) {
+	if (i > JOIN_TARG) {
+	    jspec->colnames[i] = vnames[j++];
+	} else {
+	    jspec->colnames[i] = NULL;
+	}
 	jspec->colnums[i] = 0;
-    }
-
-    j = JOIN_MAXCOL;
-    for (i=1; i<nvars; i++) {
-	jspec->colnames[j] = vnames[i];
-	jspec->colnums[j] = 0;
-	j++;
     }
 
     return 0;
