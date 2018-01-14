@@ -57,7 +57,7 @@ enum {
 
 enum {
     JOIN_KEY,
-    JOIN_VAL,
+    JOIN_TARG,
     JOIN_F1,
     JOIN_F2,
     JOIN_F3,
@@ -79,8 +79,8 @@ struct joinspec_ {
     DATASET *dset;
     int wildcard;
     char **wildnames;
-    char **auxnames;
-    int n_aux;
+    char **tmpnames;
+    int n_tmp;
 };
 
 struct csvprobe_ {
@@ -4341,7 +4341,7 @@ static joiner *build_joiner (joinspec *jspec,
     joiner *jr = NULL;
     DATASET *r_dset = outer_dataset(jspec);
     int keycol  = jspec->colnums[JOIN_KEY];
-    int valcol  = jspec->colnums[JOIN_VAL];
+    int valcol  = jspec->colnums[JOIN_TARG];
     int key2col = jspec->colnums[JOIN_KEY2];
     int auxcol  = jspec->colnums[JOIN_AUX];
     int i, nrows = r_dset->n;
@@ -4949,7 +4949,7 @@ static int outer_series_index (joinspec *jspec, int i)
 {
     if (i == 1) {
 	/* the first var */
-	return jspec->colnums[JOIN_VAL];
+	return jspec->colnums[JOIN_TARG];
     } else if (i > 1) {
 	/* subsequent vars, if any */
 	return jspec->colnums[JOIN_MAXCOL + i - 2];
@@ -5713,8 +5713,8 @@ static int aggregation_type_check (joinspec *jspec, AggrType aggr)
 
 	if (jspec->colnums[JOIN_AUX] > 0) {
 	    aggcol = jspec->colnums[JOIN_AUX];
-	} else if (jspec->colnums[JOIN_VAL] > 0) {
-	    aggcol = jspec->colnums[JOIN_VAL];
+	} else if (jspec->colnums[JOIN_TARG] > 0) {
+	    aggcol = jspec->colnums[JOIN_TARG];
 	}
 
 	if (aggcol > 0 && is_string_valued(dset, aggcol)) {
@@ -5831,8 +5831,8 @@ static int set_up_outer_keys (joinspec *jspec, const DATASET *l_dset,
 
 static int first_available_index (joinspec *jspec)
 {
-    if (jspec->colnums[JOIN_VAL] == 0) {
-	return JOIN_VAL;
+    if (jspec->colnums[JOIN_TARG] == 0) {
+	return JOIN_TARG;
     } else {
 	int i;
 
@@ -6008,12 +6008,12 @@ static int join_import_gdt (const char *fname,
    and hence avoid leaking memory
 */
 
-static int jspec_push_auxname (joinspec *jspec,
+static int jspec_push_tmpname (joinspec *jspec,
 			       int pos,
 			       char *src)
 {
     jspec->colnames[pos] = src;
-    return strings_array_donate(&jspec->auxnames, &jspec->n_aux, src);
+    return strings_array_donate(&jspec->tmpnames, &jspec->n_tmp, src);
 }
 
 static int determine_csv_matches (const char *fname,
@@ -6033,12 +6033,12 @@ static int determine_csv_matches (const char *fname,
 	int match1 = -1;
 	int i, err = 0;
 
-	pspec = g_pattern_spec_new(jspec->colnames[JOIN_VAL]);
+	pspec = g_pattern_spec_new(jspec->colnames[JOIN_TARG]);
 
 	for (i=0; i<nv; i++) {
 	    if (g_pattern_match_string(pspec, vnames[i])) {
 		if (nmatch == 0) {
-		    jspec_push_auxname(jspec, JOIN_VAL, vnames[i]);
+		    jspec_push_tmpname(jspec, JOIN_TARG, vnames[i]);
 		    match1 = i;
 		}
 		nmatch++;
@@ -6059,7 +6059,7 @@ static int determine_csv_matches (const char *fname,
 		    if (g_pattern_match_string(pspec, vnames[i])) {
 			if (nmatch > 0) {
 			    /* the first match is already handled */
-			    jspec_push_auxname(jspec, j++, vnames[i]);
+			    jspec_push_tmpname(jspec, j++, vnames[i]);
 			}
 			vnames[i] = NULL;
 			nmatch++;
@@ -6207,7 +6207,7 @@ static int *revise_series_indices (joinspec *jspec,
 	*n_add = 0;
 
 	for (i=0; i<nvars && !*err; i++) {
-	    cname = (i == 0)? jspec->colnames[JOIN_VAL] :
+	    cname = (i == 0)? jspec->colnames[JOIN_TARG] :
 		jspec->colnames[JOIN_MAXCOL+i-1];
 	    v = current_series_index(dset, cname);
 	    if (v == 0) {
@@ -6255,8 +6255,8 @@ static int set_up_jspec (joinspec *jspec,
     jspec->ncols = ncols;
     jspec->wildcard = any_wild;
     jspec->wildnames = NULL;
-    jspec->auxnames = NULL;
-    jspec->n_aux = 0;
+    jspec->tmpnames = NULL;
+    jspec->n_tmp = 0;
 
     for (i=0; i<JOIN_MAXCOL; i++) {
 	jspec->colnames[i] = NULL;
@@ -6318,8 +6318,8 @@ static void clear_jspec (joinspec *jspec)
 	strings_array_free(jspec->wildnames, jspec_n_vars(jspec));
     }
 
-    if (jspec->auxnames != NULL) {
-	strings_array_free(jspec->auxnames, jspec->n_aux);
+    if (jspec->tmpnames != NULL) {
+	strings_array_free(jspec->tmpnames, jspec->n_tmp);
     }
 }
 
@@ -6353,7 +6353,7 @@ static void maybe_transfer_string_table (DATASET *l_dset,
  * @ikeyvars: list of 1 or 2 "inner" key variables, or NULL.
  * @okey: string specifying "outer" key(s) or NULL.
  * @filtstr: string specifying filter, or NULL.
- * @dataname: name of outer "payload" column, or NULL.
+ * @srcname: name of variable to import at source, or NULL.
  * @aggr: aggregation method specifier.
  * @seqval: 1-based sequence number for aggregation, or 0.
  * @auxname: name of auxiliary column for max or min aggregation,
@@ -6378,7 +6378,7 @@ int gretl_join_data (const char *fname,
 		     const int *ikeyvars,
 		     const char *okey,
 		     const char *filtstr,
-		     const char *dataname,
+		     const char *srcname,
 		     AggrType aggr,
 		     int seqval,
 		     const char *auxname,
@@ -6418,9 +6418,9 @@ int gretl_join_data (const char *fname,
     targvars = get_series_indices(vnames, nvars, dset, &add_v,
 				  &any_wild, &err);
 
-    if (!err && dataname != NULL) {
+    if (!err && srcname != NULL) {
 	/* If we have a spec for the original name of a series
-	   to import (@dataname), we cannot accept more than one
+	   to import (@srcname), we cannot accept more than one
 	   target name (in @vnames), nor can we accept any
 	   wildcard specification.
 	*/
@@ -6478,8 +6478,8 @@ int gretl_join_data (const char *fname,
     if (filtstr != NULL) {
 	fprintf(stderr, " filter = '%s'\n", filtstr);
     }
-    if (dataname != NULL) {
-	fprintf(stderr, " source data series = '%s'\n", dataname);
+    if (srcname != NULL) {
+	fprintf(stderr, " source data series = '%s'\n", srcname);
     } else if (aggr != AGGR_COUNT) {
 	fprintf(stderr, " source data series: assuming '%s' (from inner varname)\n",
 		varname);
@@ -6536,10 +6536,10 @@ int gretl_join_data (const char *fname,
 
 	/* the data or "payload" column */
 	if (aggr != AGGR_COUNT) {
-	    if (dataname != NULL) {
-		jspec.colnames[JOIN_VAL] = dataname;
+	    if (srcname != NULL) {
+		jspec.colnames[JOIN_TARG] = srcname;
 	    } else {
-		jspec.colnames[JOIN_VAL] = varname;
+		jspec.colnames[JOIN_TARG] = varname;
 	    }
 	}
 
@@ -6701,7 +6701,7 @@ int gretl_join_data (const char *fname,
 	    add_v, modified);
 #endif
 
-    if (!err && add_v > 0 && jspec.colnums[JOIN_VAL] > 0) {
+    if (!err && add_v > 0 && jspec.colnums[JOIN_TARG] > 0) {
 	/* we added one or more new series */
 	maybe_transfer_string_table(dset, outer_dset, &jspec,
 				    targvars, orig_v);
