@@ -15,6 +15,10 @@ This directory contains:
 * A C program to revise gfn files or hansl scripts -- at present,
   to replace "=" with "==" when a test for equality is required;
   in ./scriptfix.
+  
+* A C program to create a gzipped file containing bin and idx
+  components of a gretl database (or to extract these components),
+  in ./dbzip.
 
 Allin Cottrell
 cottrell@wfu.edu

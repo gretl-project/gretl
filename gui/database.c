@@ -68,6 +68,12 @@ enum db_data_actions {
     DB_IMPORT
 };
 
+enum db_codebook_type {
+    CB_NONE,
+    CB_TEXT,
+    CB_PDF
+};
+
 static int utf8_correct (char *orig)
 {
     int err = 0;
@@ -840,12 +846,18 @@ void display_db_series (windata_t *vwin)
 
 static void db_view_codebook (GtkWidget *w, windata_t *vwin)
 {
-    char cbname[MAXLEN];
-
-    strcpy(cbname, vwin->fname);
-    strcat(cbname, ".cb");
+    gchar *cbname;
     
-    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
+    if (vwin->flags & VWIN_CB_PDF) {
+	cbname = g_strdup_printf("%s.pdf", vwin->fname);
+	gretl_show_pdf(cbname, NULL);
+	g_free(cbname);
+    } else {
+	cbname = g_strdup_printf("%s.cb", vwin->fname);
+	view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
+    }
+
+    g_free(cbname);
 }
 
 static void db_show_index (GtkWidget *w, windata_t *vwin)
@@ -853,7 +865,7 @@ static void db_show_index (GtkWidget *w, windata_t *vwin)
     show_native_dbs();
 }
 
-static void build_db_popup (windata_t *vwin, int cb, int del)
+static void build_db_content_popup (windata_t *vwin, int cb, int del)
 {
     if (vwin->popup != NULL) {
 	return;
@@ -932,18 +944,25 @@ static void make_db_toolbar (windata_t *vwin, int cb, int del,
 
 static int db_has_codebook (const char *fname)
 {
-    char testname[MAXLEN];
-    FILE *fp;
-    int ret = 0;
+    gchar *testname;
+    int err, ret = CB_NONE;
 
-    strcpy(testname, fname);
-    strcat(testname, ".cb");
-
-    fp = gretl_fopen(testname, "r");
-    if (fp != NULL) {
-	ret = 1;
-	fclose(fp);
+    /* try first for *.cb (plain text) file */
+    testname = g_strdup_printf("%s.cb", fname);
+    err = gretl_test_fopen(testname, "rb");
+    if (err == 0) {
+	ret = CB_TEXT;
+    } else {
+	/* try for PDF documentation? */
+	g_free(testname);
+	testname = g_strdup_printf("%s.pdf", fname);
+	err = gretl_test_fopen(testname, "rb");
+	if (err == 0) {
+	    ret = CB_PDF;
+	}
     }
+
+    g_free(testname);
 
     return ret;
 }
@@ -1062,8 +1081,12 @@ make_db_index_window (int action, char *fname, char *buf,
     cb = db_has_codebook(fname);
     del = db_is_writable(action, fname);
 
+    if (cb == CB_PDF) {
+	vwin->flags |= VWIN_CB_PDF;
+    }
+
     make_db_toolbar(vwin, cb, del, index_button);
-    build_db_popup(vwin, cb, del);
+    build_db_content_popup(vwin, cb, del);
 
     listbox = database_window(vwin);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), listbox, TRUE, TRUE, 0);

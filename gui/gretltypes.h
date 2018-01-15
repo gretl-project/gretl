@@ -57,7 +57,8 @@ typedef enum {
     VWIN_STICKY          = 1 << 2,
     VWIN_CONTENT_CHANGED = 1 << 3,
     VWIN_SESSION_GRAPH   = 1 << 4,
-    VWIN_TABBED          = 1 << 5
+    VWIN_TABBED          = 1 << 5,
+    VWIN_CB_PDF          = 1 << 6
 } windata_flags;
 
 typedef struct windata_t_ windata_t;

@@ -4,7 +4,8 @@
    Allin Cottrell (cottrell@wfu.edu) November, 2000 (revised, October 2002)
 
    Further revised February 2003 to allow for inclusion of a database
-   codebook.
+   codebook. Than again in January 2018 to allow for the codebook to
+   be a PDF file.
 */
 
 #include <stdio.h>
@@ -72,30 +73,46 @@ static char *switch_ext (char *fname, char *ext)
 }
 
 static int parse_db_header (const char *buf, size_t *idxlen, 
-			    size_t *datalen, size_t *cblen)
+			    size_t *datalen, size_t *cblen,
+			    int *pdfdoc)
 {
     char *p;
+    int err = 0;
 
     *cblen = 0;
 
     /* length of index file (required) */
-    if (sscanf(buf, "%lu", idxlen) != 1) return 1;
-
-    /* length of data (required under "new" system) */
-    p = strchr(buf, '\n');
-    if (p == NULL) return 1;
-    p++; 
-    if (sscanf(p, "%lu", datalen) != 1) return 1;
-
-    /* length of codebook (optional) */
-    p = strchr(p, '\n');
-    if (p == NULL) return 0;
-    p++;
-    if (sscanf(p, "%lu", cblen) != 1) {
-	*cblen = 0;
+    if (sscanf(buf, "%lu", idxlen) != 1) {
+	err = 1;
     }
 
-    return 0;
+    if (!err) {
+	/* length of data (required) */
+	p = strchr(buf, '\n');
+	if (p == NULL) {
+	    err = 1;
+	} else {
+	    p++; 
+	    if (sscanf(p, "%lu", datalen) != 1) {
+		err = 1;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* codebook info (optional) */
+	p = strchr(p, '\n');
+	if (p != NULL) {
+	    p++;
+	    if (sscanf(p, "%lu", cblen) != 1) {
+		*cblen = 0;
+	    } else if (strstr(p, ".pdf")) {
+		*pdfdoc = 1;
+	    }
+	}
+    }
+
+    return err;
 }
 
 /* Note: below -- the "info" string for the archive must be
@@ -104,9 +121,8 @@ static int parse_db_header (const char *buf, size_t *idxlen,
 
 static int ggz_create (char *infobuf, char *fname, char *gzname)
 {
-    int i;
     int gotcb = 0;
-    int len, chk;
+    int i, len, chk;
     struct stat fbuf;
     FILE *fidx, *fbin, *fcb;
     char tmp[40];
@@ -135,8 +151,17 @@ static int ggz_create (char *infobuf, char *fname, char *gzname)
 
     fcb = fopen(cbname, "rb");
     if (fcb != NULL) {
+	/* plain text codebook */
 	printf("Found codebook file %s\n", cbname);
 	gotcb = 1;
+    } else {
+	/* try for PDF? */
+	sprintf(cbname, "%s.pdf", fname);
+	fcb = fopen(cbname, "rb");
+	if (fcb != NULL) {
+	    printf("Found codebook file %s\n", cbname);
+	    gotcb = 1;
+	}
     }
 
     fgz = gzopen(gzname, "wb");
@@ -144,6 +169,9 @@ static int ggz_create (char *infobuf, char *fname, char *gzname)
 	sprintf(infobuf, "Couldn't open %s for writing\n", gzname);
 	fclose(fidx);
 	fclose(fbin);
+	if (fcb != NULL) {
+	    fclose(fcb);
+	}
 	return 1;
     }
 
@@ -162,13 +190,14 @@ static int ggz_create (char *infobuf, char *fname, char *gzname)
 	if (gotcb) {
 	    print_time_short(infobuf, &(fbuf.st_mtime));
 	} else {
-	    print_time_long(infobuf, &(fbuf.st_mtime)); ;
+	    print_time_long(infobuf, &(fbuf.st_mtime));
 	}
 	sprintf(tmp, "%15s", strip_path(readname));
 	strcat(infobuf, tmp);
 	strcat(infobuf, "\n");
     }
 
+    printf("infobuf: strlen = %d\n", (int) strlen(infobuf));
     gzwrite(fgz, infobuf, INFOLEN); 
 
     /* write compressed content of idx and bin files */
@@ -205,21 +234,19 @@ static int ggz_create (char *infobuf, char *fname, char *gzname)
 
 static int ggz_extract (char *infobuf, char *fname, char *outname)
 {
-    int fidx, fbin, fcb;
+    int fidx, fbin, fcb = -1;
     size_t idxlen, datalen, cblen, bytesleft;
-    int bgot;
+    int bgot, pdfdoc = 0;
     char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
     char gzbuf[BUFSIZE];
     gzFile fgz;
     unsigned i;
+    int err = 0;
 
     strcat(fname, ".gz");
-    strcpy(idxname, outname);
-    strcat(idxname, ".idx");
-    strcpy(binname, outname);
-    strcat(binname, ".bin");
-    strcpy(cbname, outname);
-    strcat(cbname, ".cb");
+    sprintf(idxname, "%s.idx", outname);
+    sprintf(binname, "%s.bin", outname);
+    cbname[0] = '\0';
 
     fgz = gzopen(fname, "rb");
     if (fgz == NULL) {
@@ -243,28 +270,30 @@ static int ggz_extract (char *infobuf, char *fname, char *outname)
 	return 1;
     }
 
-    fcb = creat(cbname, 00644);
-    if (fcb == -1) {
-	gzclose(fgz);
-	close(fidx);
-	close(fbin);
-	sprintf(infobuf, "Couldn't open '%s' for writing\n"
-		"Error: %s\n", cbname, strerror(errno));
-	return 1;
-    } 
-
     clear(gzbuf, BUFSIZE);
     gzread(fgz, gzbuf, INFOLEN);
     strcpy(infobuf, gzbuf);
 
-    if (parse_db_header(infobuf, &idxlen, &datalen, &cblen)) {
+    if (parse_db_header(infobuf, &idxlen, &datalen, &cblen, &pdfdoc)) {
 	fputs("Error reading info buffer: failed to get byte counts\n",
 	      stderr);
-	gzclose(fgz);
-	close(fidx);
-	close(fbin);
-	close(fcb);
-	return 1;
+	err = 1;
+	goto bailout;
+    } else if (cblen > 0) {
+	if (pdfdoc) {
+	    fputs("Detected PDF codebook\n", stderr);
+	    sprintf(cbname, "%s.pdf", outname);
+	} else {
+	    fputs("Detected plain text codebook\n", stderr);
+	    sprintf(cbname, "%s.cb", outname);
+	}
+	fcb = creat(cbname, 00644);
+	if (fcb == -1) {
+	    sprintf(infobuf, "Couldn't open '%s' for writing\n"
+		    "Error: %s\n", cbname, strerror(errno));
+	    err = 1;
+	    goto bailout;
+	}	
     }
 
     for (i=0; i<1+idxlen/BUFSIZE; i++) {
@@ -290,16 +319,16 @@ static int ggz_extract (char *infobuf, char *fname, char *outname)
 	}
     }
 
+ bailout:
+
     gzclose(fgz);
     close(fidx);
     close(fbin);
-    close(fcb);
-
-    if (cblen == 0) {
-	remove(cbname);
+    if (fcb != -1) {
+	close(fcb);
     }
     
-    return 0;
+    return err;
 }
 
 static void usage (char *progname)
