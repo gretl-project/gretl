@@ -2255,6 +2255,7 @@ static void dotdir_cleanup (void)
 		    strcmp(fname, ".") &&
 		    strcmp(fname, ".gretl2rc") &&
 		    strcmp(fname, "gretl.pid") &&
+		    !strstr(fname, "mpi") &&
 		    !gretl_isdir(fname)) {
 		    remove(fname);
 		}
