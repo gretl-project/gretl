@@ -11985,6 +11985,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    gretl_bundle *b = kalman_bundle_new(M, copy, k, &p->err);
 
 	    if (!p->err) {
+		reset_p_aux(p, save_aux);
 		ret = aux_bundle_node(p);
 		if (ret != NULL) {
 		    ret->v.b = b;
