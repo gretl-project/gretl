@@ -4702,7 +4702,7 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
     }
 }
 
-#define AGGDEBUG 0
+#define AGGDEBUG 3
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
 
@@ -4854,6 +4854,11 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 	if (jr->aggr == AGGR_AVG) {
 	    x /= n;
 	}
+    } else if (jr->aggr == AGGR_MIDAS) {
+	fprintf(stderr, "  AGGR_MIDAS, not implemented yet!\n");
+	fprintf(stderr, "l_dset->pd=%d, r_dset->pd=%d\n",
+		jr->l_dset->pd, jr->r_dset->pd);
+	*err = E_DATA;
     }
 
     return x;
@@ -4965,12 +4970,33 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
     double *xmatch = NULL;
     double *auxmatch = NULL;
     gint64 key, key2 = 0;
-    int i, t, nmax;
+    int i, t, nmax, m = 0;
     int err = 0;
 
 #if AGGDEBUG
     fputs("\naggregate data:\n", stderr);
 #endif
+
+    if (jr->aggr == AGGR_MIDAS) {
+	/* check if MIDAS "aggregation" is going to work */
+	int lpd = jr->l_dset->pd;
+	int rpd = jr->r_dset->pd;
+
+	/* FIXME monthly on left, daily on right */
+
+	if (lpd == 1) {
+	    m = (rpd == 4)? 4 : (rpd == 12)? 12 : 0;
+	} else if (lpd == 4) {
+	    m = (rpd == 12)? 3 : 0;
+	}
+
+	if (m == 0) {
+	    fprintf(stderr, "MIDAS aggregation cannot work!\n");
+	    return E_DATA;
+	} else {
+	    fprintf(stderr, "MIDAS aggregation: m = %d\n", m);
+	}
+    }
 
     /* find the greatest (primary) key frequency */
     nmax = 0;
@@ -6220,7 +6246,8 @@ static int set_up_jspec (joinspec *jspec,
 			 const char **vnames,
 			 int nvars,
 			 gretlopt opt,
-			 int any_wild)
+			 int any_wild,
+			 AggrType aggr)
 {
     int i, j, ncols = JOIN_TARG + nvars;
 
@@ -6237,14 +6264,25 @@ static int set_up_jspec (joinspec *jspec,
     jspec->tmpnames = NULL;
     jspec->n_tmp = 0;
 
-    j = 1;
-    for (i=0; i<ncols; i++) {
-	if (i > JOIN_TARG) {
-	    jspec->colnames[i] = vnames[j++];
-	} else {
-	    jspec->colnames[i] = NULL;
+    if (aggr == AGGR_MIDAS) {
+	for (i=0; i<ncols; i++) {
+	    if (i == JOIN_TARG + 1) {
+		jspec->colnames[i] = vnames[0];
+	    } else {
+		jspec->colnames[i] = NULL;
+	    }
+	    jspec->colnums[i] = 0;
 	}
-	jspec->colnums[i] = 0;
+    } else {
+	j = 1;
+	for (i=0; i<ncols; i++) {
+	    if (i > JOIN_TARG) {
+		jspec->colnames[i] = vnames[j++];
+	    } else {
+		jspec->colnames[i] = NULL;
+	    }
+	    jspec->colnums[i] = 0;
+	}
     }
 
     return 0;
@@ -6318,6 +6356,16 @@ static void maybe_transfer_string_table (DATASET *l_dset,
 		steal_string_table(l_dset, lv, r_dset, rv);
 	    }
 	}
+    }
+}
+
+static int maybe_midas_ok (int nvars, int wild, DATASET *dset,
+			   AggrType aggr)
+{
+    if (nvars == 1 && wild && aggr == AGGR_NONE) {
+	return annual_data(dset) || quarterly_or_monthly(dset);
+    } else {
+	return 0;
     }
 }
 
@@ -6401,7 +6449,10 @@ int gretl_join_data (const char *fname,
 	   target name (in @vnames), nor can we accept any
 	   wildcard specification.
 	*/
-	if (nvars > 1 || any_wild) {
+	if (maybe_midas_ok(nvars, any_wild, dset, aggr)) {
+	    fprintf(stderr, "maybe trying a MIDAS join?\n");
+	    aggr = AGGR_MIDAS;
+	} else if (nvars > 1 || any_wild) {
 	    gretl_errmsg_set("Invalid join specification");
 	    err = E_DATA;
 	}
@@ -6411,7 +6462,7 @@ int gretl_join_data (const char *fname,
 	return err;
     }
 
-    err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild);
+    err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild, aggr);
     if (err) {
 	return err;
     }

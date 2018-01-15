@@ -27,7 +27,8 @@ typedef enum {
     AGGR_SUM,
     AGGR_MIN,
     AGGR_MAX,
-    AGGR_SEQ
+    AGGR_SEQ,
+    AGGR_MIDAS
 } AggrType;
 
 #define NON_NUMERIC 1.0e99
