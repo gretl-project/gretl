@@ -1814,7 +1814,8 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 #define INFOLEN 100
 
 static int parse_db_header (const char *buf, unsigned *idxlen, 
-			    unsigned *datalen, unsigned *cblen)
+			    unsigned *datalen, unsigned *cblen,
+			    int *pdfdoc)
 {
     char *p;
     int err = 0;
@@ -1844,6 +1845,9 @@ static int parse_db_header (const char *buf, unsigned *idxlen,
 
 	    if (sscanf(p + 1, "%u", &cbl) == 1) {
 		*cblen = cbl;
+		if (strstr(p, ".pdf")) {
+		    *pdfdoc = 1;
+		}
 	    }
 	}
     }
@@ -1856,7 +1860,7 @@ static int ggz_extract (char *ggzname)
     gzFile fgz = NULL;
     FILE *fidx = NULL, *fbin = NULL, *fcbk = NULL;
     unsigned idxlen, datalen, cblen = 0;
-    int bgot, bytesleft;
+    int bgot, bytesleft, pdfdoc = 0;
     char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
     char gzbuf[GRETL_BUFSIZE];
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -1867,7 +1871,7 @@ static int ggz_extract (char *ggzname)
 
     switch_ext(idxname, ggzname, "idx");
     switch_ext(binname, ggzname, "bin");
-    switch_ext(cbname, ggzname, "cb");
+    cbname[0] = '\0';
 
     fgz = gzopen(ggzname, "rb");
     if (fgz == NULL) {
@@ -1889,21 +1893,22 @@ static int ggz_extract (char *ggzname)
 	goto bailout;
     }
 
-    fcbk = gretl_fopen(cbname, "wb");
-    if (fcbk == NULL) {
-	file_write_errbox(cbname);
-	err = E_FOPEN;
-	goto bailout;
-    } 
-
     memset(gzbuf, 0, GRETL_BUFSIZE);
     gzread(fgz, gzbuf, INFOLEN);
 
-    if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen)) {
+    if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen, &pdfdoc)) {
 	fputs("Error reading info buffer: failed to get byte counts\n",
 	      stderr);
 	err = 1;
 	goto bailout;
+    }
+
+    if (cblen > 0) {
+	switch_ext(cbname, ggzname, pdfdoc ? "pdf" : "cb");
+	fcbk = gretl_fopen(cbname, "wb");
+	if (fcbk == NULL) {
+	    cblen = pdfdoc = 0;
+	}
     }
 
     bytesleft = idxlen;
@@ -1972,10 +1977,6 @@ static int ggz_extract (char *ggzname)
     if (fidx != NULL) fclose(fidx);
     if (fbin != NULL) fclose(fbin);
     if (fcbk != NULL) fclose(fcbk);
-
-    if (cblen == 0) {
-	gretl_remove(cbname);
-    }
 
     gretl_remove(ggzname);
 
