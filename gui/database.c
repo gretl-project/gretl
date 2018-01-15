@@ -1899,6 +1899,7 @@ static int ggz_extract (char *ggzname)
     if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen, &pdfdoc)) {
 	fputs("Error reading info buffer: failed to get byte counts\n",
 	      stderr);
+	fprintf(stderr, "bad infobuf:\n%s\n", gzbuf);
 	err = 1;
 	goto bailout;
     }
@@ -1977,6 +1978,15 @@ static int ggz_extract (char *ggzname)
     if (fidx != NULL) fclose(fidx);
     if (fbin != NULL) fclose(fbin);
     if (fcbk != NULL) fclose(fcbk);
+
+    if (err) {
+	/* clean up botched files */
+	gretl_remove(idxname);
+	gretl_remove(binname);
+	if (cbname[0] != '\0') {
+	    gretl_remove(cbname);
+	}
+    }
 
     gretl_remove(ggzname);
 
