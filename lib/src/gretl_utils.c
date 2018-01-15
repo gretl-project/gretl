@@ -2255,7 +2255,6 @@ static void dotdir_cleanup (void)
 		    strcmp(fname, ".") &&
 		    strcmp(fname, ".gretl2rc") &&
 		    strcmp(fname, "gretl.pid") &&
-		    !strstr(fname, "mpi") &&
 		    !gretl_isdir(fname)) {
 		    remove(fname);
 		}
@@ -2316,7 +2315,14 @@ void libgretl_cleanup (void)
     gretl_www_cleanup();
 #endif
     builtin_strings_cleanup();
+
+#ifdef HAVE_MPI
+    if (!gretl_mpi_initialized()) {
+	dotdir_cleanup();
+    }
+#else
     dotdir_cleanup();
+#endif
 
 #ifdef USE_RLIB
     gretl_R_cleanup();
