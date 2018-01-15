@@ -2351,8 +2351,10 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 #endif
 
     if (!ok_in_loop(s->cmd->ci)) {
-	gretl_errmsg_set(_("Sorry, this command is not available in loop mode"));
-	fprintf(stderr, "ci = %d (%s)\n", s->cmd->ci, s->line);
+	char msg[80];
+	sprintf(msg, _("Sorry, the '%s' command is not available in loop mode"),
+		gretl_command_word(s->cmd->ci));
+	gretl_errmsg_set(msg);
 	destroy_loop_stack(loop);
 	return E_NOTIMP;
     }
