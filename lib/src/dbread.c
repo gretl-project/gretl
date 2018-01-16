@@ -3034,6 +3034,8 @@ static int check_db_import_full (SERIESINFO *sinfo, DATASET *dset)
 	fprintf(stderr, "(dset->n = %d)\n", dset->n);
     }
 #endif
+
+    return err;
 }
 
 static void
