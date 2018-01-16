@@ -260,18 +260,24 @@ static int obs_overlap_check (SERIESINFO *sinfo)
 }
 
 static int pd_convert_check (SERIESINFO *sinfo)
-{ 
+{
+    int target = dataset->pd;
     int err = 0;
 
-    if (sinfo->pd < dataset->pd) {
-	if (sinfo->pd != 1 && sinfo->pd != 4 && 
-	    dataset->pd != 4 && dataset->pd != 12) {
-	    err = 1;
-	} 
-    } else if (sinfo->pd > dataset->pd) {
-	if (dataset->pd != 1 && dataset->pd != 4 && sinfo->pd != 12) {
-	    err = 1;
-	}
+    if (sinfo->pd == 1 && target == 4) {
+	; /* annual to quarterly expansion */
+    } else if (sinfo->pd == 1 && target == 12) {
+	; /* annual to monthly expansion */
+    } else if (sinfo->pd == 4 && target == 12) {
+	; /* quarterly to monthly expansion */
+    } else if (sinfo->pd == 12 && target == 1) {
+	; /* monthly to annual compaction */
+    } else if (sinfo->pd == 4 && target == 1) {
+	; /* quarterly to annual compaction */
+    } else if (sinfo->pd == 12 && target == 4) {
+	; /* monthly to quarterly compaction */
+    } else {
+	err = E_DATA;
     }
 
     if (err) {
@@ -594,10 +600,8 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 
 	for (i=1; i<=dw->nv && !err; i++) {
 	    sinfo = &dw->sinfo[i-1];
-
 	    strcpy(dataset->varname[i], sinfo->varname);
 	    series_set_label(dataset, i, sinfo->descrip);
-	    
 	    lib_command_sprintf("data %s", sinfo->varname);
 	    record_command_verbatim();
 	}
@@ -1147,7 +1151,7 @@ static int check_serinfo (char *str, char *sername, int *nobs)
 	!isdigit((unsigned char) *stobs) || 
 	!isdigit((unsigned char) *endobs) ||
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
-	 pdc != 'D' && pdc != 'B')) {
+	 pdc != 'D' && pdc != 'B' && pdc != 'S')) {
 	errbox_printf(_("Database parse error at variable '%s'"), sername);
 	fprintf(stderr, "%s: stobs='%s', endobs='%s', pdc='%c', nobs = %d\n",
 		sername, stobs, endobs, pdc, *nobs);
