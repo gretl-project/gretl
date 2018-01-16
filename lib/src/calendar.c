@@ -998,10 +998,13 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
 /**
  * n_hidden_missing_obs:
  * @dset: dataset information.
+ * @t1: first observation.
+ * @t2: last observation.
  *
  * For daily data with user-supplied data strings,
- * determine the number of "hidden" missing observations,
- * i.e. the difference between the actual number of
+ * determine the number of "hidden" missing observations
+ * in the range @t1 to @t2 inclusive. This is
+ * the difference between the actual number of
  * observations and the number that should be there,
  * according to the calendar. Allowance is made for
  * 5- or 6-day data, via the data frequency given
@@ -1010,21 +1013,21 @@ int daily_index_to_date (char *targ, int y, int m, int idx,
  * Returns: number of hidden observations.
  */
 
-int n_hidden_missing_obs (const DATASET *dset)
+int n_hidden_missing_obs (const DATASET *dset, int t1, int t2)
 {
-    int t1, t2;
+    int n_present = t2 - t1 + 1;
     int cal_n;
 
     if (!dated_daily_data(dset) || dset->S == NULL) {
 	return 0;
     }
 
-    t1 = calendar_obs_number(dset->S[0], dset);
-    t2 = calendar_obs_number(dset->S[dset->n - 1], dset);
+    t1 = calendar_obs_number(dset->S[t1], dset);
+    t2 = calendar_obs_number(dset->S[t2], dset);
 
     cal_n = t2 - t1 + 1;
 
-    return cal_n - dset->n;
+    return cal_n - n_present;
 }
 
 /**

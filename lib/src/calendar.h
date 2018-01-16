@@ -78,7 +78,7 @@ double get_dec_date (const char *datestr);
 
 double day_of_week (int y, int m, int d, int julian, int *err);
 
-int n_hidden_missing_obs (const DATASET *dset);
+int n_hidden_missing_obs (const DATASET *dset, int t1, int t2);
 
 int guess_daily_pd (const DATASET *dset);
 
