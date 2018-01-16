@@ -4702,7 +4702,7 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
     }
 }
 
-#define AGGDEBUG 3
+#define AGGDEBUG 0
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
 
