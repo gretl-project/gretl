@@ -380,18 +380,26 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 				  const char *stobs,
 				  const char *endobs)
 {
-    if (strchr(stobs, '/')) { 
+    char dc = 0;
+
+    if (strchr(stobs, '-')) {
+	dc = '-';
+    } else if (strchr(stobs, '/')) {
+	dc = '/';
+    }
+
+    if (dc != 0) {
 	/* calendar data */
 	const char *q = stobs;
-	const char *p = strchr(stobs, '/');
+	const char *p = strchr(stobs, dc);
 
 	if (p - q == 4) {
-	    strcpy(sinfo->stobs, q + 2);
+	    strcpy(sinfo->stobs, q);
 	}
 	q = endobs;
-	p = strchr(endobs, '/');
+	p = strchr(endobs, dc);
 	if (p && p - q == 4) {
-	    strcpy(sinfo->endobs, q + 2);
+	    strcpy(sinfo->endobs, q);
 	}
     } else {
 	*sinfo->stobs = '\0';
@@ -564,7 +572,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo,
     FILE *fp = NULL;
     char sername[VNAMELEN];
     char s1[256], s2[72];
-    char stobs[16], endobs[16];
+    char stobs[OBSLEN], endobs[OBSLEN];
     char pdc;
     int offset = 0;
     int gotit = 0, err = 0;
@@ -4546,7 +4554,7 @@ static int insert_missing_hidden_obs (DATASET *dset, int nmiss)
 
 int maybe_expand_daily_data (DATASET *dset)
 {
-    int nmiss = n_hidden_missing_obs(dset);
+    int nmiss = n_hidden_missing_obs(dset, 0, dset->n - 1);
     int err = 0;
 
     fprintf(stderr, "n_hidden_missing_obs: nmiss = %d\n", nmiss);
