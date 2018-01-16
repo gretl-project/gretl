@@ -1355,6 +1355,8 @@ static int join_aggregation_method (const char *s, int *seqval,
 	ret = AGGR_MAX;
     } else if (!strcmp(s, "none")) {
 	ret = AGGR_NONE;
+    } else if (!strcmp(s, "spread")) {
+	ret = AGGR_MIDAS;
     } else if (!strncmp(s, "min(", 4) ||
 	       !strncmp(s, "max(", 4)) {
 	const char *p = strchr(s + 4, ')');
