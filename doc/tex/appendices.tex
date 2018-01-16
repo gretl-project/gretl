@@ -94,11 +94,11 @@ second, surely fast enough for most purposes.
 \section{Native database format}
 \label{dbdetails}
 
-A gretl database consists of two parts: an ASCII index file
-(with filename suffix \verb+.idx+) containing information on the
-series, and a binary file (suffix \verb+.bin+) containing the actual
-data.  Two examples of the format for an entry in the \verb+idx+ file
-are shown below:
+A gretl database consists of two parts: an ASCII index file (with
+filename suffix \texttt{.idx}) containing information on the series,
+and a binary file (suffix \texttt{.bin}) containing the actual data.
+Two examples of the format for an entry in the \texttt{idx} file are
+shown below:
 
 \begin{code}
 G0M910  Composite index of 11 leading indicators (1987=100) 
@@ -109,15 +109,17 @@ Q 1960.1 - 1999.4 n = 160
 
 The first field is the series name.  The second is a description of
 the series (maximum 128 characters).  On the second line the first
-field is a frequency code: \verb+M+ for monthly, \verb+Q+ for
-quarterly, \verb+A+ for annual, \verb+B+ for business-daily (daily
-with five days per week) and \verb+D+ for daily (seven days per week).
+field is a frequency code: \texttt{M} for monthly, \texttt{Q} for
+quarterly, \texttt{A} for annual, \texttt{B} for business-daily (daily
+with five days per week), \texttt{D} for 7-day daily, \texttt{S} for
+6-day daily, \texttt{U} for undated.
+
 No other frequencies are accepted at present.  Then comes the starting
 date (N.B. with two digits following the point for monthly data, one
 for quarterly data, none for annual), a space, a hyphen, another
 space, the ending date, the string ``\verb+n = +'' and the integer
 number of observations. In the case of daily data the starting and
-ending dates should be given in the form \verb+YYYY/MM/DD+. This
+ending dates should be given in the form \verb+YYYY-MM-DD+. This
 format must be respected exactly.
 
 Optionally, the first line of the index file may contain a short
