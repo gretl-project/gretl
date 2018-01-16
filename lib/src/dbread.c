@@ -2991,12 +2991,14 @@ int db_range_check (SERIESINFO *sinfo, DATASET *dset)
     return err;
 }
 
-int check_db_import (SERIESINFO *sinfo, DATASET *dset)
+int check_db_import_conversion (SERIESINFO *sinfo, DATASET *dset)
 {
     int target = dset->pd;
     int err = 0;
 
-    if (sinfo->pd == 1 && target == 4) {
+    if (sinfo->pd == target) {
+	; /* no conversion needed */
+    } else if (sinfo->pd == 1 && target == 4) {
 	; /* annual to quarterly expansion */
     } else if (sinfo->pd == 1 && target == 12) {
 	; /* annual to monthly expansion */
@@ -3009,23 +3011,29 @@ int check_db_import (SERIESINFO *sinfo, DATASET *dset)
     } else if (sinfo->pd == 12 && target == 4) {
 	; /* monthly to quarterly compaction */
     } else {
-	gretl_errmsg_sprintf(_("%s: can't handle conversion"),
-			     sinfo->varname);
 	err = E_DATA;
     }
 
-    if (!err) {
+    return err;
+}
+
+static int check_db_import_full (SERIESINFO *sinfo, DATASET *dset)
+{
+    int err = check_db_import_conversion(sinfo, dset);
+
+    if (err) {
+	gretl_errmsg_sprintf(_("%s: can't handle conversion"),
+			     sinfo->varname);
+    } else {
 	err = db_range_check(sinfo, dset);
     }
 
 #if DB_DEBUG
     if (err) {
-	fprintf(stderr, "check_db_import: err = %d\n", err);
+	fprintf(stderr, "check_db_import_full: err = %d\n", err);
 	fprintf(stderr, "(dset->n = %d)\n", dset->n);
     }
 #endif
-
-    return err;
 }
 
 static void
@@ -3172,7 +3180,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    dset->structure = TIME_SERIES;
 	}
     } else {
-	err = check_db_import(sinfo, dset);
+	err = check_db_import_full(sinfo, dset);
 	if (err) {
 	    return err;
 	}

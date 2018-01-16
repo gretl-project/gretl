@@ -127,7 +127,7 @@ void get_db_padding (SERIESINFO *sinfo, DATASET *dset,
 
 int db_range_check (SERIESINFO *sinfo, DATASET *dset);
 
-int check_db_import (SERIESINFO *sinfo, DATASET *dset);
+int check_db_import_conversion (SERIESINFO *sinfo, DATASET *dset);
 
 int lib_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 		     DATASET *dset, CompactMethod cmethod, 

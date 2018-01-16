@@ -259,26 +259,11 @@ static int obs_overlap_check (SERIESINFO *sinfo)
     return err;
 }
 
-static int pd_convert_check (SERIESINFO *sinfo)
+static int pd_conversion_check (SERIESINFO *sinfo)
 {
-    int target = dataset->pd;
-    int err = 0;
+    int err;
 
-    if (sinfo->pd == 1 && target == 4) {
-	; /* annual to quarterly expansion */
-    } else if (sinfo->pd == 1 && target == 12) {
-	; /* annual to monthly expansion */
-    } else if (sinfo->pd == 4 && target == 12) {
-	; /* quarterly to monthly expansion */
-    } else if (sinfo->pd == 12 && target == 1) {
-	; /* monthly to annual compaction */
-    } else if (sinfo->pd == 4 && target == 1) {
-	; /* quarterly to annual compaction */
-    } else if (sinfo->pd == 12 && target == 4) {
-	; /* monthly to quarterly compaction */
-    } else {
-	err = E_DATA;
-    }
+    err = check_db_import_conversion(sinfo, dataset);
 
     if (err) {
 	warnbox(_("Sorry, can't handle this frequency conversion"));
@@ -424,8 +409,9 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
     int resp, warned = 0, chosen = 0;
     int i, t, err = 0;
 
-    if (pd_convert_check(&dw->sinfo[0])) {
-	return 1;
+    err = pd_conversion_check(&dw->sinfo[0]);
+    if (err) {
+	return err;
     }
 
     record_db_open_command(dw);
