@@ -3506,6 +3506,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     const char *period;
     DATASET *cset = NULL;
     char label[MAXLABEL];
+    int oldpd = dset->pd;
     int compfac;
     int v, i, j, k, t, T;
     int startyr, startper;
@@ -3604,6 +3605,11 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 	    sprintf(label, "%s in day %d of %s", dset->varname[i],
 		    compfac - j, period);
 	    series_record_label(cset, k+j, label);
+	    series_set_midas_period(cset, k+j, compfac - j);
+	    series_set_midas_freq(cset, k+j, oldpd);
+	    if (j == 0) {
+		series_set_midas_anchor(cset, k+j);
+	    }
 	}
 
 	/* advance column write position for next source series */
