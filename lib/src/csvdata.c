@@ -72,6 +72,7 @@ typedef struct csvdata_ csvdata;
 struct joinspec_ {
     int ncols;
     const char **colnames;
+    const char *wstr;
     int *colnums;
     int *timecols;
     csvdata *c;
@@ -3974,6 +3975,7 @@ struct joiner_ {
     AggrType aggr;      /* aggregation method for 1:n joining */
     int seqval;         /* sequence number for aggregation */
     int auxcol;         /* auxiliary data column for aggregation */
+    int midas_m;        /* midas frequency ratio */
     obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;    /* the left-hand or inner dataset */
     DATASET *r_dset;    /* the right-hand or outer temporary dataset */
@@ -4383,6 +4385,7 @@ static joiner *build_joiner (joinspec *jspec,
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
 	jr->auto_keys = auto_keys;
+	jr->midas_m = 0;
 
 	if (using_auto_keys(jr)) {
 	    /* check for the case where the outer time-key
@@ -4717,9 +4720,14 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
    the caller.
 */
 
-static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
-			  int v, double *xmatch, double *auxmatch,
-			  int *nomatch, int *err)
+static double aggr_value (joiner *jr,
+			  gint64 key1,
+			  gint64 key2,
+			  int v, int revseq,
+			  double *xmatch,
+			  double *auxmatch,
+			  int *nomatch,
+			  int *err)
 {
     double x, xa;
     int imin, imax, pos;
@@ -4855,10 +4863,24 @@ static double aggr_value (joiner *jr, gint64 key1, gint64 key2,
 	    x /= n;
 	}
     } else if (jr->aggr == AGGR_MIDAS) {
-	fprintf(stderr, "  AGGR_MIDAS, not implemented yet!\n");
-	fprintf(stderr, "l_dset->pd=%d, r_dset->pd=%d\n",
-		jr->l_dset->pd, jr->r_dset->pd);
-	*err = E_DATA;
+	int gotit = 0;
+
+	for (i=imin; i<imax && !gotit; i++) {
+	    /* loop across primary key matches */
+	    jr_row *r = &jr->rows[i];
+
+	    if (jr->n_keys == 1 || key2 == r->keyval2) {
+		/* got secondary key match */
+		int sub, t = r->dset_row;
+
+		/* FIXME daily */
+		date_maj_min(t, jr->r_dset, NULL, &sub);
+		if ((sub - 1) % jr->midas_m + 1 == revseq) {
+		    x = jr->r_dset->Z[v][t];
+		    gotit = 1;
+		}
+	    }
+	}
     }
 
     return x;
@@ -4962,7 +4984,7 @@ static int outer_series_index (joinspec *jspec, int i)
 
 static int aggregate_data (joiner *jr, const int *ikeyvars,
 			   const int *targvars, joinspec *jspec,
-			   int newvar, int *modified)
+			   int orig_v, int *modified)
 {
     series_table *rst = NULL;
     series_table *lst = NULL;
@@ -4970,33 +4992,13 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
     double *xmatch = NULL;
     double *auxmatch = NULL;
     gint64 key, key2 = 0;
-    int i, t, nmax, m = 0;
+    int revseq = 0;
+    int i, t, nmax;
     int err = 0;
 
 #if AGGDEBUG
     fputs("\naggregate data:\n", stderr);
 #endif
-
-    if (jr->aggr == AGGR_MIDAS) {
-	/* check if MIDAS "aggregation" is going to work */
-	int lpd = jr->l_dset->pd;
-	int rpd = jr->r_dset->pd;
-
-	/* FIXME monthly on left, daily on right */
-
-	if (lpd == 1) {
-	    m = (rpd == 4)? 4 : (rpd == 12)? 12 : 0;
-	} else if (lpd == 4) {
-	    m = (rpd == 12)? 3 : 0;
-	}
-
-	if (m == 0) {
-	    fprintf(stderr, "MIDAS aggregation cannot work!\n");
-	    return E_DATA;
-	} else {
-	    fprintf(stderr, "MIDAS aggregation: m = %d\n", m);
-	}
-    }
 
     /* find the greatest (primary) key frequency */
     nmax = 0;
@@ -5019,11 +5021,22 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 	}
     }
 
+    if (jr->aggr == AGGR_MIDAS) {
+	/* reverse sequence number for MIDAS join */
+	revseq = targvars[0];
+	jr->midas_m = revseq;
+    }
+
     for (i=1; i<=targvars[0]; i++) {
 	/* loop across the series to be added/modified */
-	int rv = outer_series_index(jspec, i);
-	int lv = targvars[i];
+	int rv, lv = targvars[i];
 	int strcheck = 0;
+
+	if (jr->aggr == AGGR_MIDAS) {
+	    rv = jspec->colnums[JOIN_TARG];
+	} else {
+	    rv = outer_series_index(jspec, i);
+	}
 
 	if (rv > 0) {
 	    /* check for the case where both the target variable on the
@@ -5054,9 +5067,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 		continue;
 	    }
 
-	    z = aggr_value(jr, key, key2, rv, xmatch, auxmatch,
+	    z = aggr_value(jr, key, key2, rv, revseq, xmatch, auxmatch,
 			   &nomatch, &err);
-
 #if AGGDEBUG
 	    if (na(z)) {
 		fprintf(stderr, " aggr_value: got NA (keys=%d,%d, err=%d)\n",
@@ -5066,13 +5078,12 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 			z, (int) key, (int) key2, err);
 	    }
 #endif
-
 	    if (!err && strcheck && !na(z)) {
 		z = maybe_adjust_string_code(rst, lst, z, &err);
 	    }
-
 	    if (!err) {
-		if (newvar) {
+		if (lv >= orig_v) {
+		    /* lv is a newly added series */
 		    dset->Z[lv][t] = z;
 		} else if (z != dset->Z[lv][t]) {
 		    if (nomatch && !na(dset->Z[lv][t])) {
@@ -5084,6 +5095,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 		}
 	    }
 	}
+
+	revseq--;
     }
 
     free(xmatch);
@@ -6196,6 +6209,8 @@ static int *revise_series_indices (joinspec *jspec,
     int nvars = jspec_n_vars(jspec);
     int *ret = gretl_list_new(nvars);
 
+    ret = gretl_list_new(nvars);
+
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -6263,14 +6278,12 @@ static int set_up_jspec (joinspec *jspec,
     jspec->wildnames = NULL;
     jspec->tmpnames = NULL;
     jspec->n_tmp = 0;
+    jspec->wstr = NULL;
 
     if (aggr == AGGR_MIDAS) {
+	jspec->wstr = vnames[0];
 	for (i=0; i<ncols; i++) {
-	    if (i == JOIN_TARG + 1) {
-		jspec->colnames[i] = vnames[0];
-	    } else {
-		jspec->colnames[i] = NULL;
-	    }
+	    jspec->colnames[i] = NULL;
 	    jspec->colnums[i] = 0;
 	}
     } else {
@@ -6336,6 +6349,72 @@ static void clear_jspec (joinspec *jspec)
     if (jspec->tmpnames != NULL) {
 	strings_array_free(jspec->tmpnames, jspec->n_tmp);
     }
+}
+
+static int *midas_revise_jspec (joinspec *jspec,
+				DATASET *dset,
+				int *n_add,
+				int *err)
+{
+    int lpd = dset->pd;
+    int rpd = jspec->dset->pd;
+    int m = 0, nvars = 0;
+    int *ret = NULL;
+
+    /* FIXME monthly on left, daily on right */
+
+    if (lpd == 1) {
+	m = (rpd == 4)? 4 : (rpd == 12)? 12 : 0;
+    } else if (lpd == 4) {
+	m = (rpd == 12)? 3 : 0;
+    }
+
+    if (m == 0) {
+	fprintf(stderr, "MIDAS aggregation cannot work!\n");
+	*err = E_PDWRONG;
+	return NULL;
+    } else {
+	fprintf(stderr, "MIDAS aggregation: m = %d\n", m);
+	nvars = m;
+    }
+
+    ret = gretl_list_new(nvars);
+    jspec->wildnames = strings_array_new(nvars);
+
+    if (ret == NULL || jspec->wildnames == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	char cname[VNAMELEN];
+	char tmp[VNAMELEN];
+	int i, v;
+
+	/* zero the count of added vars */
+	*n_add = 0;
+	/* create base for naming vars */
+	strcpy(tmp, jspec->wstr);
+	tmp[strlen(tmp)-1] = '\0';
+
+	for (i=0; i<nvars && !*err; i++) {
+	    sprintf(cname, "%s%d", tmp, nvars - i);
+	    v = current_series_index(dset, cname);
+	    ret[i+1] = v;
+	    if (v < 0) {
+		/* not a current series */
+		if (gretl_type_from_name(cname, NULL)) {
+		    *err = E_TYPES;
+		} else {
+		    *n_add += 1;
+		}
+	    }
+	    if (!*err) {
+		jspec->wildnames[i] = gretl_strdup(cname);
+	    }
+	}
+    }
+
+    return ret;
 }
 
 static void maybe_transfer_string_table (DATASET *l_dset,
@@ -6447,7 +6526,9 @@ int gretl_join_data (const char *fname,
 	/* If we have a spec for the original name of a series
 	   to import (@srcname), we cannot accept more than one
 	   target name (in @vnames), nor can we accept any
-	   wildcard specification.
+	   wildcard specification -- unless we're doing a
+	   "MIDAS join", in which case a single wildcard spec
+	   is OK for the target series.
 	*/
 	if (maybe_midas_ok(nvars, any_wild, dset, aggr)) {
 	    fprintf(stderr, "maybe trying a MIDAS join?\n");
@@ -6696,7 +6777,11 @@ int gretl_join_data (const char *fname,
 
     if (!err && jspec.wildcard) {
 	free(targvars);
-	targvars = revise_series_indices(&jspec, dset, &add_v, &err);
+	if (aggr == AGGR_MIDAS) {
+	    targvars = midas_revise_jspec(&jspec, dset, &add_v, &err);
+	} else {
+	    targvars = revise_series_indices(&jspec, dset, &add_v, &err);
+	}
     }
 
     /* Step 10: transcribe or aggregate the data */
@@ -6720,7 +6805,7 @@ int gretl_join_data (const char *fname,
 				       &jspec, &modified);
 	} else {
 	    err = aggregate_data(jr, ikeyvars, targvars, &jspec,
-				 add_v, &modified);
+				 orig_v, &modified);
 	}
     }
 
