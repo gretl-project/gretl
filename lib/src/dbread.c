@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* dbread.c for gretl */
@@ -43,7 +43,7 @@
  * SECTION:dbread
  * @short_description: reading from databases
  * @title: DB read
- * @include: gretl/libgretl.h, gretl/dbread.h 
+ * @include: gretl/libgretl.h, gretl/dbread.h
  *
  * Functions that read data from native gretl databases as
  * well as RATS 4.0 and PcGive databases. As you will see,
@@ -66,9 +66,9 @@ typedef struct {
     short panel;                   /* 1 for panel set, 2 for intraday
 				      date set , 0 o.w. */
 #define LINEAR    0                /* Single time direction */
-#define RATSPANEL 1                /* panel:period */    
+#define RATSPANEL 1                /* panel:period */
 #define INTRADAY  2                /* date:intraday period */
-    gint32 panelrecord;            /* Size of panel or 
+    gint32 panelrecord;            /* Size of panel or
 				      number of periods per day */
     short dclass;                  /* See definitions below */
 #define UNDATEDCLASS   0           /* No time series properties */
@@ -119,7 +119,7 @@ float retrieve_float (netfloat nf)
     short exp = ntohs(nf.exp);
     long frac = ntohl(nf.frac);
     double receive = frac / 10e6;
-    
+
     return ldexp(receive, exp);
 }
 #endif
@@ -138,7 +138,7 @@ static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 	if (strstr(dbbin, ".bn7") == NULL) {
 	    strcat(dbbin, ".bn7");
 	}
-    }	
+    }
 
     fp = gretl_fopen(dbbin, "rb");
 
@@ -155,14 +155,14 @@ static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 
 /**
  * get_native_db_data:
- * @dbbase: 
+ * @dbbase:
  * @sinfo:
  * @Z: data array.
  *
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
+int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z)
 {
     char numstr[32];
@@ -195,7 +195,7 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     return err;
 }
 
-static int db_row_wanted (const gretl_matrix *mask, 
+static int db_row_wanted (const gretl_matrix *mask,
 			  int masklen, int t)
 {
     if (t >= masklen) {
@@ -205,7 +205,7 @@ static int db_row_wanted (const gretl_matrix *mask,
     }
 }
 
-static int get_native_db_data_masked (const char *dbbase, 
+static int get_native_db_data_masked (const char *dbbase,
 				      SERIESINFO *sinfo,
 				      double **dbZ,
 				      const gretl_matrix *mask)
@@ -253,7 +253,7 @@ static int get_native_db_data_masked (const char *dbbase,
  * Returns:  0 on success, non-zero code on failure.
  */
 
-int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, 
+int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z)
 {
     char *getbuf = NULL;
@@ -276,7 +276,7 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
     if (err) {
 	free(getbuf);
 	return E_FOPEN;
-    } 
+    }
 
     t2 = (sinfo->t2 > 0)? sinfo->t2 : sinfo->nobs - 1;
 
@@ -314,7 +314,7 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
+int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z)
 {
     FILE *fp;
@@ -376,7 +376,7 @@ static int get_native_series_pd (SERIESINFO *sinfo, char pdc)
     return 0;
 }
 
-static int get_native_series_obs (SERIESINFO *sinfo, 
+static int get_native_series_obs (SERIESINFO *sinfo,
 				  const char *stobs,
 				  const char *endobs)
 {
@@ -411,8 +411,8 @@ static int get_native_series_obs (SERIESINFO *sinfo,
     return 0;
 }
 
-static int 
-open_native_db_files (const char *dname, FILE **f1, char *name1, 
+static int
+open_native_db_files (const char *dname, FILE **f1, char *name1,
 		      FILE **f2, char *name2)
 {
     char dbbase[FILENAME_MAX];
@@ -446,7 +446,7 @@ open_native_db_files (const char *dname, FILE **f1, char *name1,
 	    if (fidx == NULL) {
 		gretl_errmsg_set(_("Couldn't open database index file"));
 		err = E_FOPEN;
-	    } 
+	    }
 	}
     }
 
@@ -466,7 +466,7 @@ open_native_db_files (const char *dname, FILE **f1, char *name1,
 	    if (fbin == NULL) {
 		gretl_errmsg_set(_("Couldn't open database binary file"));
 		err = E_FOPEN;
-	    } 
+	    }
 	}
     }
 
@@ -500,7 +500,7 @@ static char *native_db_index_name (void)
     return fname;
 }
 
-static int db_match_glob (FILE *fp, 
+static int db_match_glob (FILE *fp,
 			  char *line, int linelen,
 			  GPatternSpec *pspec,
 			  char **S, int *err)
@@ -565,7 +565,7 @@ static char **native_db_match_series (const char *glob, int *nmatch,
     return S;
 }
 
-static int 
+static int
 get_native_series_info (const char *series, SERIESINFO *sinfo,
 			const char *idxname)
 {
@@ -605,7 +605,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo,
 
 	if (gotit) {
 	    get_native_series_comment(sinfo, s1);
-	    if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d", 
+	    if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d",
 		       &pdc, stobs, endobs, &sinfo->nobs) != 4) {
 		gretl_errmsg_set(_("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
@@ -664,7 +664,7 @@ static int remote_db_index_to_file (const char *fname)
 
 #endif /* USE_CURL */
 
-static int in7_get_obs (int y0, int p0, int y1, int p1, 
+static int in7_get_obs (int y0, int p0, int y1, int p1,
 			SERIESINFO *sinfo)
 {
     int pd = sinfo->pd;
@@ -681,8 +681,8 @@ static int in7_get_obs (int y0, int p0, int y1, int p1,
     return err;
 }
 
-static int 
-pcgive_set_stobs_endobs (int y0, int p0, int y1, int p1, 
+static int
+pcgive_set_stobs_endobs (int y0, int p0, int y1, int p1,
 			 SERIESINFO *sinfo)
 {
     int err = 0;
@@ -702,11 +702,11 @@ pcgive_set_stobs_endobs (int y0, int p0, int y1, int p1,
     } else {
 	err = E_DATA; /* FIXME? */
     }
-    
+
     return err;
 }
 
-static int 
+static int
 get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 {
     FILE *fp;
@@ -742,7 +742,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 	if (*line == '>') {
 	    *sinfo->varname = 0;
 	    *sinfo->descrip = 0;
-	    nf = sscanf(line + 1, fmt, sinfo->varname, &y0, &p0, 
+	    nf = sscanf(line + 1, fmt, sinfo->varname, &y0, &p0,
 			&y1, &p1, &sinfo->pd, &sinfo->offset);
 	    fprintf(stderr, "in7: varname='%s'\n", sinfo->varname);
 	    if (!strcmp(sinfo->varname, series)) {
@@ -787,10 +787,10 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 
 /* Figure the ending observation date of a series */
 
-static int get_endobs (char *datestr, int startyr, int startfrac, 
+static int get_endobs (char *datestr, int startyr, int startfrac,
 		       int pd, int n)
 {
-    int endyr, endfrac;  
+    int endyr, endfrac;
 
     endyr = startyr + n / pd;
     endfrac = startfrac - 1 + n % pd;
@@ -803,8 +803,8 @@ static int get_endobs (char *datestr, int startyr, int startfrac,
     if (endfrac == 0) {
 	endyr--;
 	endfrac = pd;
-    }   
- 
+    }
+
     if (pd == 1) {
 	sprintf(datestr, "%d", endyr);
     } else if (pd == 4) {
@@ -842,7 +842,7 @@ static int dinfo_sanity_check (const DATEINFO *dinfo)
 	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: failed dinfo_sanity_check:\n"
 		" info=%d, year=%d, month=%d, day=%d\n",
-		(int) dinfo->info, (int) dinfo->year, (int) dinfo->month, 
+		(int) dinfo->info, (int) dinfo->year, (int) dinfo->month,
 		(int) dinfo->day);
     }
 
@@ -861,7 +861,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 	return 1;
     }
 
-    sprintf(sinfo->stobs, "%d", dinfo->year); 
+    sprintf(sinfo->stobs, "%d", dinfo->year);
 
     if (dinfo->info == 4) {
 	sprintf(pdstr, ".%d", dinfo->month);
@@ -883,10 +883,10 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
 		(int) dinfo->info);
 	fputc('\n', stderr);
-	gretl_errmsg_sprintf(("frequency (%d) does not make seem to make sense"), 
+	gretl_errmsg_sprintf(("frequency (%d) does not make seem to make sense"),
 			     (int) dinfo->info);
 	err = 1;
-    }   
+    }
 
     if (*pdstr) {
 	strcat(sinfo->stobs, pdstr);
@@ -903,7 +903,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     strncat(sinfo->descrip, comment, MAXLABEL - 1);
 
 #if DB_DEBUG
-    fprintf(stderr, "dinfo_to_sinfo: '%s': set sinfo->offset = %d\n", varname, 
+    fprintf(stderr, "dinfo_to_sinfo: '%s': set sinfo->offset = %d\n", varname,
 	    (int) offset);
 #endif
 
@@ -944,13 +944,13 @@ static int in7_to_sinfo (const char *varname, const char *comment,
 	}
 	sinfo->pd = pd;
 	sinfo->offset = offset;
-    } 
+    }
 
     return err;
 }
 
 static RECNUM read_rats_directory (FILE *fp, const char *series_name,
-				   SERIESINFO *sinfo) 
+				   SERIESINFO *sinfo)
 {
     RATSDirect rdir;
     DATEINFO dinfo;
@@ -1013,8 +1013,8 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     fseek(fp, sizeof(short) * 4L, SEEK_CUR);  /* skip 4 shorts */
 
 #if DB_DEBUG
-    fprintf(stderr, "info=%d, digits=%d, year=%d, mon=%d, day=%d\n", 
-	    (int) dinfo.info, (int) dinfo.digits, (int) dinfo.year, 
+    fprintf(stderr, "info=%d, digits=%d, year=%d, mon=%d, day=%d\n",
+	    (int) dinfo.info, (int) dinfo.digits, (int) dinfo.year,
 	    (int) dinfo.month, (int) dinfo.day);
     fprintf(stderr, "datapoints = %d\n", (int) rdir.datapoints);
 #endif
@@ -1181,7 +1181,7 @@ static int read_in7_series_info (FILE *fp, dbwrapper *dw)
     i = 0;
     while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == '>') {
-	    nf = sscanf(line + 1, fmt, sname, &y0, &p0, &y1, 
+	    nf = sscanf(line + 1, fmt, sname, &y0, &p0, &y1,
 			&p1, &pd, &offset);
 	    if (nf == 7 && y0 > 0 && p0 > 0 && y1 > 0 && p1 > 0 &&
 		pd >= 1 && offset > 0) {
@@ -1234,7 +1234,7 @@ static int count_in7_series (FILE *fp, int *err)
 	    return 0;
 	}
 	if (*line == '>') {
-	    nf = sscanf(line + 1, fmt, sname, &y0, &p0, &y1, 
+	    nf = sscanf(line + 1, fmt, sname, &y0, &p0, &y1,
 			&p1, &pd, &offset);
 	    if (nf < 7 || y0 < 0 || p0 < 0 || y1 < 0 || p1 < 0 ||
 		pd < 1 || offset < 0) {
@@ -1255,12 +1255,12 @@ static int count_in7_series (FILE *fp, int *err)
  * @fp: pre-opened stream (caller to close it)
  *
  * Read the series info from a PcGive database, .in7 file
- * 
+ *
  * Returns: pointer to a #dbwrapper containing the series info,
  * or NULL in case of failure.
  */
 
-dbwrapper *read_pcgive_db (const char *fname, FILE *fp) 
+dbwrapper *read_pcgive_db (const char *fname, FILE *fp)
 {
     dbwrapper *dw;
     int ns, err = 0;
@@ -1278,7 +1278,7 @@ dbwrapper *read_pcgive_db (const char *fname, FILE *fp)
 #if DB_DEBUG
     fprintf(stderr, "in7: found %d series\n", ns);
 #endif
-    
+
     /* allocate table for series rows */
     dw = dbwrapper_new(ns, fname, GRETL_PCGIVE_DB);
     if (dw == NULL) {
@@ -1287,7 +1287,7 @@ dbwrapper *read_pcgive_db (const char *fname, FILE *fp)
     }
 
     rewind(fp);
-    
+
     /* Go find the series info */
     err = read_in7_series_info(fp, dw);
 
@@ -1304,22 +1304,22 @@ dbwrapper *read_pcgive_db (const char *fname, FILE *fp)
  * @fname: database filename.
  * @fp: pre-opened stream (caller to close it)
  *
- * Read the series info from a RATS 4.0 database: read the base 
- * block at offset 0 in the data file, and recurse through the 
+ * Read the series info from a RATS 4.0 database: read the base
+ * block at offset 0 in the data file, and recurse through the
  * directory entries.
- * 
+ *
  * Returns: pointer to a #dbwrapper containing the series info,
  * or NULL in case of failure.
  */
 
-dbwrapper *read_rats_db (const char *fname, FILE *fp) 
+dbwrapper *read_rats_db (const char *fname, FILE *fp)
 {
     dbwrapper *dw;
     long forward = 0;
     int i, err = 0;
 
     gretl_error_clear();
-    
+
     /* get into position */
     fseek(fp, 30L, SEEK_SET); /* skip unneeded fields */
     if (fread(&forward, sizeof forward, 1, fp) == 1) {
@@ -1327,7 +1327,7 @@ dbwrapper *read_rats_db (const char *fname, FILE *fp)
     }
 
     /* basic check */
-    if (forward <= 0) { 
+    if (forward <= 0) {
 	gretl_errmsg_set(_("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: got forward = %ld\n", forward);
 	return NULL;
@@ -1339,7 +1339,7 @@ dbwrapper *read_rats_db (const char *fname, FILE *fp)
 	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
     }
-    
+
     /* Go find the series */
     i = 0;
     while (forward && !err) {
@@ -1347,7 +1347,7 @@ dbwrapper *read_rats_db (const char *fname, FILE *fp)
 #if DB_DEBUG
 	fprintf(stderr, "read_rats_db: forward = %d, nv = %d\n",
 		(int) forward, dw->nv);
-#endif    
+#endif
 	if (dw->nv > 0 && dw->nv % DB_INIT_ROWS == 0) {
 	    err = dbwrapper_expand(dw);
 	    if (err) {
@@ -1365,13 +1365,13 @@ dbwrapper *read_rats_db (const char *fname, FILE *fp)
 	}
 #if DB_DEBUG
 	fprintf(stderr, "bottom of loop, err = %d\n", err);
-#endif    
+#endif
     }
 
 #if DB_DEBUG
     fprintf(stderr, "read_rats_db: err = %d, dw = %p\n",
 	    err, (void *) dw);
-#endif    
+#endif
 
     if (err) {
 	dbwrapper_destroy(dw);
@@ -1383,7 +1383,7 @@ dbwrapper *read_rats_db (const char *fname, FILE *fp)
 
 /* retrieve the actual data values from the data blocks */
 
-static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp, 
+static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 			    double **Z)
 {
     RATSData rdata;
@@ -1392,7 +1392,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
     int i, t, T;
     int miss = 0;
     int err = 0;
- 
+
     fprintf(stderr, "get_rats_series: starting from offset %d\n", offset);
 
     if (sinfo->t2 > 0) {
@@ -1400,7 +1400,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
     } else {
 	T = sinfo->nobs;
     }
-    
+
     rdata.forward_point = offset;
     t = sinfo->t1;
 
@@ -1438,13 +1438,13 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
  * @Z: data matrix
  *
  * Read the actual data values for a series from a RATS database.
- * 
+ *
  * Returns: 0 on successful completion, E_FOPEN if
  * the data could not be read, and DB_MISSING_DATA if the
  * data were found but there were some missing values.
  */
 
-int get_rats_db_data (const char *fname, SERIESINFO *sinfo, 
+int get_rats_db_data (const char *fname, SERIESINFO *sinfo,
 		      double **Z)
 {
     FILE *fp;
@@ -1479,7 +1479,7 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 #endif
 
     /* get into position */
-    fseek(fp, 30L, SEEK_SET); 
+    fseek(fp, 30L, SEEK_SET);
     if (fread(&forward, sizeof forward, 1, fp) == 1) {
 	fseek(fp, 4L, SEEK_CUR);
     }
@@ -1503,7 +1503,7 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 	if (sinfo->offset != 0) {
 	    break;
 	}
-    }    
+    }
 
     fclose(fp);
 
@@ -1521,7 +1521,7 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 
 /* For importation of database series */
 
-static double *get_compacted_xt (const double *src, int n, 
+static double *get_compacted_xt (const double *src, int n,
 				 CompactMethod method, int compfac,
 				 int skip)
 {
@@ -1534,7 +1534,7 @@ static double *get_compacted_xt (const double *src, int n,
     for (t=0; t<n; t++) {
 	p = (t + 1) * compfac;
 	x[t] = 0.0;
-	if (method == COMPACT_AVG || method == COMPACT_SUM) { 
+	if (method == COMPACT_AVG || method == COMPACT_SUM) {
 	    int i, st;
 
 	    for (i=1; i<=compfac; i++) {
@@ -1559,7 +1559,7 @@ static double *get_compacted_xt (const double *src, int n,
     return x;
 }
 
-/* Compact a single series from a database, for importation 
+/* Compact a single series from a database, for importation
    into a working dataset of lower frequency.  At present
    this is permitted only for the cases:
 
@@ -1656,7 +1656,7 @@ static double *interpolate_db_series (const double *src,
 
 #define EXPAND_DEBUG 0
 
-/* Expand a single series from a database, for importation 
+/* Expand a single series from a database, for importation
    into a working dataset of higher frequency.  At present
    this is permitted only for the cases:
 
@@ -1691,7 +1691,7 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
 	x = malloc(newn * sizeof *x);
 	if (x == NULL) {
 	    err = E_ALLOC;
-	} else {  
+	} else {
 	    int s = 0;
 
 	    for (t=0; t<oldn; t++) {
@@ -1794,7 +1794,7 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 	}
 #endif
     }
-	    
+
     if (fp == NULL) {
 	*saved_db_name = '\0';
 	pprintf(prn, _("Couldn't open %s\n"), fname);
@@ -1822,7 +1822,7 @@ static char *get_dsn_field (const char *tag, const char *src)
     const char *p;
     char needle[12];
     char *ret = NULL;
-    
+
     sprintf(needle, "%s=", tag);
     p = strstr(src, needle);
 
@@ -1919,13 +1919,13 @@ int set_odbc_dsn (const char *line, PRN *prn)
     if (err) {
 	if (!got_plugin) {
 	    pprintf(prn, "Couldn't open the gretl ODBC plugin\n");
-	} else {	    
-	    pprintf(prn, "Failed to connect to ODBC data source '%s'\n", 
+	} else {
+	    pprintf(prn, "Failed to connect to ODBC data source '%s'\n",
 		    gretl_odinfo.dsn);
-	} 
+	}
 	gretl_odbc_cleanup();
     } else if (gretl_messages_on()) {
-	pprintf(prn, "Connected to ODBC data source '%s'\n", 
+	pprintf(prn, "Connected to ODBC data source '%s'\n",
 		gretl_odinfo.dsn);
     }
 
@@ -1960,8 +1960,8 @@ int db_set_sample (const char *start, const char *stop, DATASET *dset)
 
 #if DB_DEBUG
     fprintf(stderr, "db_set_sample: t1=%d, t2=%d, stobs='%s', endobs='%s' "
-	    "sd0 = %g, n = %d\n", 
-	    dset->t1, dset->t2, 
+	    "sd0 = %g, n = %d\n",
+	    dset->t1, dset->t2,
 	    dset->stobs, dset->endobs,
 	    dset->sd0, dset->n);
 #endif
@@ -2095,7 +2095,7 @@ static int parse_odbc_format_chunk (char **ps, int i)
     int n, err = 0;
 
     /* advance to '%' */
-    while (*p && *p != '%') p++; 
+    while (*p && *p != '%') p++;
     if (*p == '\0') {
 	return E_PARSE;
     }
@@ -2113,7 +2113,7 @@ static int parse_odbc_format_chunk (char **ps, int i)
 	p++;
     } else if (n > 0) {
 	return E_PARSE;
-    } 
+    }
 
     /* optional dot plus precision? */
     if (*p == '.') {
@@ -2142,15 +2142,15 @@ static int parse_odbc_format_chunk (char **ps, int i)
 
     /* append any trailing fixed chars */
     p++;
-    while (*p && *p != '%') p++; 
+    while (*p && *p != '%') p++;
     n = p - *ps;
 
     chunk = gretl_strndup(*ps, n);
     if (chunk == NULL) {
 	err = E_ALLOC;
     } else {
-	err = strings_array_add(&gretl_odinfo.fmts, 
-				&gretl_odinfo.obscols, 
+	err = strings_array_add(&gretl_odinfo.fmts,
+				&gretl_odinfo.obscols,
 				chunk);
 	free(chunk);
     }
@@ -2158,7 +2158,7 @@ static int parse_odbc_format_chunk (char **ps, int i)
     *ps = p;
 
 #if 1
-    fprintf(stderr, "set coltype[%d] = %d, fmt='%s'\n", i, 
+    fprintf(stderr, "set coltype[%d] = %d, fmt='%s'\n", i,
 	    gretl_odinfo.coltypes[i], gretl_odinfo.fmts[i]);
 #endif
 
@@ -2204,7 +2204,7 @@ static char *odbc_get_query (const char *s, int *err)
     } else if (*query == '\0') {
 	gretl_errmsg_set(_("Expected an SQL query string"));
 	*err = E_PARSE;
-    } 
+    }
 
     return query;
 }
@@ -2249,7 +2249,7 @@ static char **odbc_get_varnames (const char **line, int *err)
 	    s += strspn(s, " ");
 	}
 
-	if (!loop_ok || *s == '\0' || !strncmp(s, "obs-", 4) || 
+	if (!loop_ok || *s == '\0' || !strncmp(s, "obs-", 4) ||
 	    !strncmp(s, "query=", 6)) {
 	    /* got to the end of the varnames section */
 	    break;
@@ -2259,16 +2259,16 @@ static char **odbc_get_varnames (const char **line, int *err)
     if (*err) {
 	strings_array_free(vnames, nv);
 	vnames = NULL;
-    } else {	
+    } else {
 	gretl_odinfo.nvars = nv;
-    } 
+    }
 
     *line = s;
 
     return vnames;
 }
 
-static int odbc_transcribe_data (char **vnames, DATASET *dset, 
+static int odbc_transcribe_data (char **vnames, DATASET *dset,
 				 int vmin, int newvars)
 {
     char label[MAXLABEL];
@@ -2336,7 +2336,7 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
     return 0;
 }
 
-static int odbc_count_new_vars (char **vnames, int nv, 
+static int odbc_count_new_vars (char **vnames, int nv,
 				const DATASET *dset)
 {
     int newv = nv;
@@ -2356,7 +2356,7 @@ static int odbc_count_new_vars (char **vnames, int nv,
 
 /* data series [obs-format=format-string] [query=]query-string */
 
-static int odbc_get_series (const char *line, DATASET *dset, 
+static int odbc_get_series (const char *line, DATASET *dset,
 			    PRN *prn)
 {
     int (*get_data) (ODBC_info *);
@@ -2367,7 +2367,7 @@ static int odbc_get_series (const char *line, DATASET *dset,
     if (gretl_odinfo.dsn == NULL) {
 	gretl_errmsg_set(_("No database has been opened"));
 	return 1;
-    } 
+    }
 
     if (dset->n == 0) {
 	gretl_errmsg_set(_("No series length has been defined"));
@@ -2419,7 +2419,7 @@ static int odbc_get_series (const char *line, DATASET *dset,
 	int newvars, vmin = 1;
 
 	if (gretl_messages_on()) {
-	    pprintf(prn, "Retrieved %d observations on %d series via ODBC\n", 
+	    pprintf(prn, "Retrieved %d observations on %d series via ODBC\n",
 		    n, nv);
 	}
 
@@ -2455,7 +2455,7 @@ static int db_get_row_mask (const gretl_matrix **pmat)
     rows = get_optval_string(DATA, OPT_M);
     if (rows == NULL || *rows == '\0') {
 	return E_PARSE;
-    }   
+    }
 
     *pmat = get_matrix_by_name(rows);
     if (*pmat == NULL) {
@@ -2508,10 +2508,10 @@ static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
     return err;
 }
 
-static int get_one_db_series (const char *series, 
+static int get_one_db_series (const char *series,
 			      DATASET *dset,
 			      CompactMethod cmethod,
-			      int interpolate, 
+			      int interpolate,
 			      const gretl_matrix *mask,
 			      const char *idxname,
 			      PRN *prn)
@@ -2531,7 +2531,7 @@ static int get_one_db_series (const char *series,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n", 
+    fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n",
 	    dset->v, v, series);
     fprintf(stderr, "this_var_method = %d\n", this_method);
 #endif
@@ -2543,7 +2543,7 @@ static int get_one_db_series (const char *series,
 	err = get_pcgive_series_info(series, &sinfo);
     } else {
 	err = get_native_series_info(series, &sinfo, idxname);
-    } 
+    }
 
     if (err) {
 	fprintf(stderr, "db_get_series: failed to get series info\n");
@@ -2564,7 +2564,7 @@ static int get_one_db_series (const char *series,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", 
+    fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n",
 	    sinfo.offset, nobs);
 #endif
 
@@ -2577,11 +2577,11 @@ static int get_one_db_series (const char *series,
 	err = get_remote_db_data(saved_db_name, &sinfo, dbZ);
 #endif
     } else if (mask != NULL) {
-	err = get_native_db_data_masked(saved_db_name, &sinfo, dbZ, 
+	err = get_native_db_data_masked(saved_db_name, &sinfo, dbZ,
 					mask);
     } else {
 	err = get_native_db_data(saved_db_name, &sinfo, dbZ);
-    } 
+    }
 
 #if DB_DEBUG
     fprintf(stderr, "db_get_series: get_db_data gave %d\n", err);
@@ -2597,7 +2597,7 @@ static int get_one_db_series (const char *series,
     }
 
     if (!err) {
-	err = lib_add_db_data(dbZ, &sinfo, dset, this_method, 
+	err = lib_add_db_data(dbZ, &sinfo, dset, this_method,
 			      interpolate, v, prn);
     }
 
@@ -2615,7 +2615,7 @@ static int is_glob (const char *s)
    command-line client or in script or console mode
 */
 
-int db_get_series (const char *line, DATASET *dset, 
+int db_get_series (const char *line, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     const gretl_matrix *rowmask = NULL;
@@ -2643,10 +2643,10 @@ int db_get_series (const char *line, DATASET *dset,
 	if (err) {
 	    return err;
 	}
-    }    
+    }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: line='%s', dset=%p\n", 
+    fprintf(stderr, "db_get_series: line='%s', dset=%p\n",
 	    line, (void *) dset);
     fprintf(stderr, "db_name = '%s'\n", saved_db_name);
 #endif
@@ -2701,11 +2701,11 @@ int db_get_series (const char *line, DATASET *dset,
 		char **tmp;
 		int j, nmatch;
 
-		tmp = native_db_match_series(vnames[i], &nmatch, 
+		tmp = native_db_match_series(vnames[i], &nmatch,
 					     idxname, &err);
 		for (j=0; j<nmatch && !err; j++) {
-		    err = get_one_db_series(tmp[j], dset, cmethod, 
-					    interpolate, rowmask, 
+		    err = get_one_db_series(tmp[j], dset, cmethod,
+					    interpolate, rowmask,
 					    idxname, prn);
 		}
 		strings_array_free(tmp, nmatch);
@@ -2736,7 +2736,7 @@ int db_get_series (const char *line, DATASET *dset,
 	}
 	free(idxname);
     }
-    
+
     return err;
 }
 
@@ -2809,12 +2809,12 @@ static int db_delete_series (const char *line, const int *list,
     f2 = tempfile_open(tmp2, &err);
     if (err) {
 	goto bailout;
-    }    
+    }
 
     if (line != NULL) {
 	/* extract the variable names given on the line */
 	ns = 0;
-	while ((line = get_word_and_advance(line, series, VNAMELEN-1)) 
+	while ((line = get_word_and_advance(line, series, VNAMELEN-1))
 	       && !err) {
 	    err = strings_array_add(&snames, &ns, series);
 	}
@@ -2886,7 +2886,7 @@ static int db_delete_series (const char *line, const int *list,
 			rem -= got;
 		    }
 		}
-	    }	    
+	    }
 	}
 	i++;
     }
@@ -2929,29 +2929,59 @@ int db_delete_series_by_number (const int *list, const char *fname)
     return db_delete_series(NULL, list, fname, NULL);
 }
 
-void get_db_padding (SERIESINFO *sinfo, DATASET *dset, 
+void get_db_padding (SERIESINFO *sinfo, DATASET *dset,
 		     int *pad1, int *pad2)
 {
     *pad1 = dateton(sinfo->stobs, dset);
-#if DB_DEBUG    
+#if DB_DEBUG
     fprintf(stderr, "pad1 = dateton(%s) = %d\n", sinfo->stobs, *pad1);
-#endif    
+#endif
 
     *pad2 = dset->n - sinfo->nobs - *pad1;
 #if DB_DEBUG
-    fprintf(stderr, "pad2 = dset->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n", 
+    fprintf(stderr, "pad2 = dset->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n",
 	    dset->n, sinfo->nobs, *pad1, *pad2);
-#endif    
-} 
+#endif
+}
+
+static void obs_to_ymd (const char *obs, int pd, int *y, int *m, int *d)
+{
+    *y = atoi(obs);
+    *d = 1;
+
+    if (pd == 12) {
+	*m = atoi(obs + 5);
+    } else if (pd == 4) {
+	int q = atoi(obs + 5);
+
+	*m = q * 3 - 2;
+    } else {
+	*m = 1;
+    }
+}
 
 int db_range_check (SERIESINFO *sinfo, DATASET *dset)
 {
-    double sdn_orig = get_date_x(dset->pd, dset->endobs);
-    double sd0 = get_date_x(sinfo->pd, sinfo->stobs);
-    double sdn = get_date_x(sinfo->pd, sinfo->endobs);
+    double sd0_orig, sdn_orig, sd0, sdn;
     int err = 0;
 
-    if (sd0 > sdn_orig || sdn < dset->sd0) {
+    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
+    sdn = get_date_x(sinfo->pd, sinfo->endobs);
+
+    if (sinfo->pd >= 5 && sinfo->pd <= 7 && !dated_daily_data(dset)) {
+	/* convert 'orig' info to daily dates */
+	int y, m, d;
+
+	obs_to_ymd(dset->stobs, dset->pd, &y, &m, &d);
+	sd0_orig = epoch_day_from_ymd(y, m, d);
+	obs_to_ymd(dset->endobs, dset->pd, &y, &m, &d);
+	sdn_orig = epoch_day_from_ymd(y, m, d);
+    } else {
+	sd0_orig = dset->sd0;
+	sdn_orig = get_date_x(dset->pd, dset->endobs);
+    }
+
+    if (sd0 > sdn_orig || sdn < sd0_orig) {
 	gretl_errmsg_sprintf(_("%s: observation range does not overlap\n"
 			       "with the working data set"),
 			     sinfo->varname);
@@ -2963,15 +2993,25 @@ int db_range_check (SERIESINFO *sinfo, DATASET *dset)
 
 int check_db_import (SERIESINFO *sinfo, DATASET *dset)
 {
+    int target = dset->pd;
     int err = 0;
 
-    if (sinfo->pd < dset->pd) {
-	if (sinfo->pd != 1 && sinfo->pd != 4 && 
-	    dset->pd != 4 && dset->pd != 12) {
-	    gretl_errmsg_sprintf(_("%s: can't handle conversion"),
-				 sinfo->varname);
-	    err = 1;
-	} 
+    if (sinfo->pd == 1 && target == 4) {
+	; /* annual to quarterly expansion */
+    } else if (sinfo->pd == 1 && target == 12) {
+	; /* annual to monthly expansion */
+    } else if (sinfo->pd == 4 && target == 12) {
+	; /* quarterly to monthly expansion */
+    } else if (sinfo->pd == 12 && target == 1) {
+	; /* monthly to annual compaction */
+    } else if (sinfo->pd == 4 && target == 1) {
+	; /* quarterly to annual compaction */
+    } else if (sinfo->pd == 12 && target == 4) {
+	; /* monthly to quarterly compaction */
+    } else {
+	gretl_errmsg_sprintf(_("%s: can't handle conversion"),
+			     sinfo->varname);
+	err = E_DATA;
     }
 
     if (!err) {
@@ -2984,11 +3024,11 @@ int check_db_import (SERIESINFO *sinfo, DATASET *dset)
 	fprintf(stderr, "(dset->n = %d)\n", dset->n);
     }
 #endif
-    
+
     return err;
 }
 
-static void 
+static void
 init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
 {
     dset->pd = sinfo->pd;
@@ -3017,13 +3057,13 @@ static int compact_spread_pd_check (int high, int low)
 	/* daily to monthly or quarterly */
 	return 0;
     }
-    
+
     if (!(high == 12 && low == 1) &&
 	!(high == 12 && low == 4) &&
 	!(high == 4 && low == 1)) {
 	gretl_errmsg_set("Unsupported conversion");
 	return E_DATA;
-    }   
+    }
 
     return 0;
 }
@@ -3042,7 +3082,7 @@ static DATASET *make_import_tmpset (const DATASET *dset,
     *err = compact_spread_pd_check(sinfo->pd, dset->pd);
     if (*err) {
 	return NULL;
-    }    
+    }
 
     tmpset = datainfo_new();
     if (tmpset == NULL) {
@@ -3058,7 +3098,7 @@ static DATASET *make_import_tmpset (const DATASET *dset,
 	*err = E_ALLOC;
 	free(tmpset);
 	return NULL;
-    }    
+    }
 
     *err = dataset_allocate_varnames(tmpset);
     if (*err) {
@@ -3093,8 +3133,8 @@ static DATASET *make_import_tmpset (const DATASET *dset,
     return tmpset;
 }
 
-int lib_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-		     DATASET *dset, CompactMethod cmethod, 
+int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
+		     DATASET *dset, CompactMethod cmethod,
 		     int interpolate, int dbv, PRN *prn)
 {
     double *xvec = NULL;
@@ -3124,10 +3164,11 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
     if (dset->n == 0) {
 	/* if the length of the dataset is not defined yet,
-	   initialize using sinfo */
+	   initialize it using sinfo
+	*/
 	init_datainfo_from_sinfo(dset, sinfo);
 	dset->v = 0; /* trigger for creating data array below */
-	if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
+	if (dset->pd != 1 || strcmp(dset->stobs, "1")) {
 	    dset->structure = TIME_SERIES;
 	}
     } else {
@@ -3150,7 +3191,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
 #if DB_DEBUG
     fprintf(stderr, "dset->Z=%p\n", (void *) dset->Z);
-    fprintf(stderr, "dset->n = %d, dset->v = %d, dbv = %d\n", 
+    fprintf(stderr, "dset->n = %d, dset->v = %d, dbv = %d\n",
 	    dset->n, dset->v, dbv);
 #endif
 
@@ -3159,8 +3200,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	xvec = expand_db_series(dbZ[1], sinfo, dset->pd, interpolate);
     } else if (sinfo->pd > dset->pd) {
 	/* the series needs to be compacted */
-	if (dset->pd != 1 && dset->pd != 4 &&
-	    sinfo->pd != 12) {
+	if (dset->pd != 1 && dset->pd != 4 && sinfo->pd != 12) {
 	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
 	    if (new) {
 		dataset_drop_last_variables(dset, 1);
@@ -3169,7 +3209,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	}
 	if (cmethod == COMPACT_NONE) {
 	    cmethod = COMPACT_AVG;
-	    pprintf(prn, _("%s: using default compaction method: averaging"), 
+	    pprintf(prn, _("%s: using default compaction method: averaging"),
 		    sinfo->varname);
 	    pputc(prn, '\n');
 	}
@@ -3182,7 +3222,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	} else {
 	    free_xvec = 1;
 	}
-    } else {  
+    } else {
 	/* series does not need compacting */
 	xvec = dbZ[1];
     }
@@ -3334,7 +3374,7 @@ static int daily_yp (const DATASET *dset, int t,
     int mon, day;
 
     ntodate(obs, t, dset);
-    
+
     if (sscanf(obs, YMD_READ_FMT, y, &mon, &day) != 3) {
 	return E_DATA;
     }
@@ -3421,7 +3461,7 @@ static void fill_cset_t (const DATASET *dset,
 	if (effn < compfac) {
 	    /* we have some padding to do */
 	    double zbar = zsum / effn;
-	
+
 	    for (j=0; j<compfac; j++) {
 		if (na(cvec[j])) {
 		    cvec[j] = zbar;
@@ -3491,7 +3531,7 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     fprintf(stderr, "oldpd %d, newpd %d, nvars=%d, T=%d, start=%d:%d, end=%d:%d\n",
 	    dset->pd, newpd, v, T, startyr, startper, endyr, endper);
 #endif
-    
+
     cset = create_new_dataset(v, T, 0);
     if (cset == NULL) {
 	*err = E_ALLOC;
@@ -3550,12 +3590,12 @@ static DATASET *compact_daily_spread (const DATASET *dset,
 	    strcpy(cset->varname[k+j], dset->varname[i]);
 	    gretl_trunc(cset->varname[k+j], VNAMELEN - 5);
 	    sprintf(sfx, "_d%02d", compfac - j);
-	    strcat(cset->varname[k+j], sfx);	
+	    strcat(cset->varname[k+j], sfx);
 	    sprintf(label, "%s in day %d of %s", dset->varname[i],
 		    compfac - j, period);
 	    series_record_label(cset, k+j, label);
 	}
-	
+
 	/* advance column write position for next source series */
 	k += compfac;
     }
@@ -3623,7 +3663,7 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     fprintf(stderr, "oldpd %d, newpd %d, v=%d, T=%d, start=%d:%d, end=%d:%d\n",
 	    oldpd, newpd, v, T, startmaj, startmin, endmaj, endmin);
 #endif
-    
+
     cset = create_new_dataset(v, T, 0);
     if (cset == NULL) {
 	*err = E_ALLOC;
@@ -3752,8 +3792,8 @@ static double *extend_series (const double *z, int n)
 #define DMDEBUG 0
 
 static double *
-daily_series_to_monthly (DATASET *dset, int i, 
-			 int nm, int yr, int mon, int offset, 
+daily_series_to_monthly (DATASET *dset, int i,
+			 int nm, int yr, int mon, int offset,
 			 int any_eop, CompactMethod method)
 {
     double *x;
@@ -3804,7 +3844,7 @@ daily_series_to_monthly (DATASET *dset, int i,
     }
 
 #if DMDEBUG
-    fprintf(stderr, "starting: offset=%d, any_eop=%d, sop_t=%d, eop_t=%d\n", 
+    fprintf(stderr, "starting: offset=%d, any_eop=%d, sop_t=%d, eop_t=%d\n",
 	    offset, any_eop, sop_t, eop_t);
 #endif
 
@@ -3817,7 +3857,7 @@ daily_series_to_monthly (DATASET *dset, int i,
 	}
 
 #if DMDEBUG
-	fprintf(stderr, "t=%d: mon=%d, mdays=%d, sop_t=%d, eop_t=%d\n", 
+	fprintf(stderr, "t=%d: mon=%d, mdays=%d, sop_t=%d, eop_t=%d\n",
 		t, mon, mdays, sop_t, eop_t);
 #endif
 
@@ -3868,7 +3908,7 @@ daily_series_to_monthly (DATASET *dset, int i,
 
 	    if (n_ok == 0) {
 		x[t] = NADBL;
-	    } 
+	    }
 
 	    if (method == COMPACT_AVG && !na(x[t])) {
 		if (den > 0) {
@@ -3896,10 +3936,10 @@ daily_series_to_monthly (DATASET *dset, int i,
     return x;
 }
 
-static void 
-get_startskip_etc (int compfac, int startmin, int endmin, 
-		   int oldn, CompactMethod method, 
-		   int *startskip, int *newn) 
+static void
+get_startskip_etc (int compfac, int startmin, int endmin,
+		   int oldn, CompactMethod method,
+		   int *startskip, int *newn)
 {
     int ss = 0, n = 0;
 
@@ -3923,7 +3963,7 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 	}
     } else {
 	int es = endmin % compfac;
-	
+
 	ss = (compfac - (startmin % compfac) + 1) % compfac;
 	n = (oldn - ss - es) / compfac;
     }
@@ -3934,8 +3974,8 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 
 /* specific to compaction of daily time series */
 
-static void 
-get_daily_compact_params (CompactMethod default_method, 
+static void
+get_daily_compact_params (CompactMethod default_method,
 			  int *any_eop, int *any_sop,
 			  int *all_same,
 			  const DATASET *dset)
@@ -3975,9 +4015,9 @@ get_daily_compact_params (CompactMethod default_method,
 
 /* specific to non-daily time series (monthly or quarterly) */
 
-static void 
+static void
 get_global_compact_params (int compfac, int startmin, int endmin,
-			   CompactMethod default_method, 
+			   CompactMethod default_method,
 			   int *min_startskip, int *max_n,
 			   int *any_eop, int *all_same,
 			   DATASET *dset)
@@ -3988,7 +4028,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 
     for (i=0; i<dset->v; i++) {
 	if (i == 0) {
-	    get_startskip_etc(compfac, startmin, endmin, dset->n, 
+	    get_startskip_etc(compfac, startmin, endmin, dset->n,
 			      default_method, &startskip, &n);
 	    if (default_method == COMPACT_EOP) {
 		*any_eop = 1;
@@ -3996,7 +4036,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 	} else {
 	    method = series_get_compact_method(dset, i);
 	    if (method != default_method && method != COMPACT_NONE) {
-		get_startskip_etc(compfac, startmin, endmin, dset->n, 
+		get_startskip_etc(compfac, startmin, endmin, dset->n,
 				  method, &startskip, &n);
 		*all_same = 0;
 		if (method == COMPACT_EOP) {
@@ -4004,7 +4044,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 		} else {
 		    n_not_eop++;
 		}
-	    } 
+	    }
 	}
 	if (startskip < *min_startskip) {
 	    *min_startskip = startskip;
@@ -4031,11 +4071,11 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
 }
 
 /* for daily data, figure the number of observations to
-   be skipped at the start of each series 
+   be skipped at the start of each series
 */
 
 static int get_daily_offset (const DATASET *dset,
-			     int y, int m, int d, 
+			     int y, int m, int d,
 			     int skip, int any_eop)
 {
     int ret = 0;
@@ -4058,11 +4098,11 @@ static int get_daily_offset (const DATASET *dset,
     return ret;
 }
 
-/* for daily data, figure the number of valid monthly 
+/* for daily data, figure the number of valid monthly
    observations that can be constructed by compaction
 */
 
-static int get_n_ok_months (const DATASET *dset, 
+static int get_n_ok_months (const DATASET *dset,
 			    CompactMethod default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
@@ -4099,7 +4139,7 @@ static int get_n_ok_months (const DATASET *dset,
 #if DMDEBUG
     fprintf(stderr, "get_n_ok_months: any_sop=%d, any_eop=%d, "
 	    "all_same=%d\n", any_sop, any_eop, all_same);
-    fprintf(stderr, "y1=%d m1=%d d1=%d; y2=%d m2=%d d2=%d\n", 
+    fprintf(stderr, "y1=%d m1=%d d1=%d; y2=%d m2=%d d2=%d\n",
 	    y1, m1, d1, y2, m2, d2);
 #endif
 
@@ -4126,7 +4166,7 @@ static int get_n_ok_months (const DATASET *dset,
 
 #if DMDEBUG
     fprintf(stderr, "after adjustment: range %d:%02d to %d:%02d, "
-	    "pad=%d, skip=%d\n", *startyr, *startmon, *endyr, *endmon, 
+	    "pad=%d, skip=%d\n", *startyr, *startmon, *endyr, *endmon,
 	    pad, skip);
 #endif
 
@@ -4143,10 +4183,10 @@ static int get_n_ok_months (const DATASET *dset,
 
 #define WEEKLY_DEBUG 0
 
-static int 
-weeks_to_months_exec (double **mZ, const DATASET *dset, 
+static int
+weeks_to_months_exec (double **mZ, const DATASET *dset,
 		      CompactMethod method)
-{ 
+{
     char obsstr[OBSLEN];
     int *mn = NULL;
     int yr, mon, day;
@@ -4163,7 +4203,7 @@ weeks_to_months_exec (double **mZ, const DATASET *dset,
 	/* initialize all series, first obs */
 	mZ[i][0] = NADBL;
 	mn[i] = 0;
-    }    
+    }
 
     for (s=0; s<dset->n; s++) {
 	/* loop across the weekly obs in this month */
@@ -4195,7 +4235,7 @@ weeks_to_months_exec (double **mZ, const DATASET *dset,
 		    mn[i] = 0;
 		}
 	    }
-	} 
+	}
 
 	/* cumulate non-missing weekly observations? */
 	for (i=1; i<dset->v; i++) {
@@ -4218,7 +4258,7 @@ weeks_to_months_exec (double **mZ, const DATASET *dset,
 		} else if (method == COMPACT_AVG && mn[i] > 0) {
 		    mZ[i][t] /= (double) mn[i];
 		}
-	    }		    
+	    }
 	}
 	monbak = mon;
     }
@@ -4228,10 +4268,10 @@ weeks_to_months_exec (double **mZ, const DATASET *dset,
     return err;
 }
 
-static int 
+static int
 weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 		       int *startmon, int *endmon)
-{ 
+{
     char obsstr[OBSLEN];
     int yr, mon, day;
     int wcount = 0, mcount = 0;
@@ -4250,11 +4290,11 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 	    *startyr = yr;
 	    *startmon = mon;
 	    mcount++;
-	    wcount = 1;	
+	    wcount = 1;
 	} else if (mon != monbak) {
 	    /* got a new month: report on previous one */
 #if WEEKLY_DEBUG
-	    fprintf(stderr, "month %d ('%d'), weekly obs = %d\n", 
+	    fprintf(stderr, "month %d ('%d'), weekly obs = %d\n",
 		    mcount, monbak, wcount);
 #endif
 	    mcount++;
@@ -4271,7 +4311,7 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
     } else {
 	/* flush the last observation */
 #if WEEKLY_DEBUG
-	fprintf(stderr, "month %d ('%d'), weekly obs = %d\n", 
+	fprintf(stderr, "month %d ('%d'), weekly obs = %d\n",
 		mcount, monbak, wcount);
 #endif
 	*endyr = yr;
@@ -4319,7 +4359,7 @@ static int weekly_dataset_to_monthly (DATASET *dset,
 	dset->t1 = 0;
 	dset->t2 = dset->n - 1;
     }
-    
+
     return err;
 }
 
@@ -4375,9 +4415,9 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
     if (n_ok == 0) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	return 1;
-    }	
+    }
 
-    fprintf(stderr, "n=%d, n_ok=%d, y1=%d, m1=%d, d1=%d\n", 
+    fprintf(stderr, "n=%d, n_ok=%d, y1=%d, m1=%d, d1=%d\n",
 	    n, n_ok, y1, m1, d1);
 
     x = malloc(n * sizeof *x);
@@ -4402,7 +4442,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 	    err = E_ALLOC;
 	} else {
 	    dset->Z[i] = tmp;
-	    for (t=0; t<n; t++) { 
+	    for (t=0; t<n; t++) {
 		dset->Z[i][t] = x[t];
 	    }
 	}
@@ -4413,7 +4453,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
     if (!err) {
 	dset->n = n;
 	dset->pd = 52;
-	
+
 	sprintf(dset->stobs, YMD_WRITE_Y4_FMT, y1, m1, d1);
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
 	dset->t1 = 0;
@@ -4421,7 +4461,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 	ntodate(dset->endobs, dset->t2, dset);
 
 	dataset_destroy_obs_markers(dset);
-    }    
+    }
 
     return err;
 }
@@ -4452,7 +4492,7 @@ static int daily_dataset_to_monthly (DATASET *dset,
 	}
 
 	x = daily_series_to_monthly(dset, i, nm,
-				    startyr, startmon, 
+				    startyr, startmon,
 				    offset, any_eop, method);
 	if (x == NULL) {
 	    err = E_ALLOC;
@@ -4483,7 +4523,7 @@ static int get_daily_skip (const DATASET *dset, int t)
 	calendar_obs_number(dset->S[t-1], dset);
 
     if (dd == 0) {
-	fprintf(stderr, "get_daily_skip: S[%d] = '%s', S[%d] = '%s'\n", 
+	fprintf(stderr, "get_daily_skip: S[%d] = '%s', S[%d] = '%s'\n",
 		t, dset->S[t], t-1, dset->S[t-1]);
     }
 
@@ -4546,7 +4586,7 @@ static int insert_missing_hidden_obs (DATASET *dset, int nmiss)
     fprintf(stderr, "insert_missing_hidden_obs, done, err = %d\n", err);
     for (t=0; t<dset->n; t++) {
 	fprintf(stderr, "Z[1][%d] = %14g\n", t, Z[1][t]);
-    }    
+    }
 #endif
 
     return err;
@@ -4589,7 +4629,7 @@ static int do_compact_spread (DATASET *dset, int newpd)
     } else {
 	int startmaj, startmin;
 	int endmaj, endmin;
-	
+
 
 	/* get starting obs major and minor components */
 	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
@@ -4599,18 +4639,18 @@ static int do_compact_spread (DATASET *dset, int newpd)
 	/* get ending obs major and minor components */
 	if (!get_obs_maj_min(dset->endobs, &endmaj, &endmin)) {
 	    return E_DATA;
-	} 
+	}
 
 	cset = compact_data_spread(dset, newpd, startmaj, startmin,
 				   endmaj, endmin, &nv, &err);
     }
-    
+
     if (!err) {
 	free_Z(dset);
 	clear_datainfo(dset, CLEAR_FULL);
 	*dset = *cset;
 	free(cset);
-    }    
+    }
 
     return err;
 }
@@ -4625,14 +4665,14 @@ static int do_compact_spread (DATASET *dset, int newpd)
  * data).
  * @repday: "representative day" for conversion from daily
  * to weekly data (with method %COMPACT_WDAY only).
- * 
+ *
  * Compact the data set from higher to lower frequency.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 int compact_data_set (DATASET *dset, int newpd,
-		      CompactMethod default_method, 
+		      CompactMethod default_method,
 		      int monstart, int repday)
 {
     int newn, oldn = dset->n, oldpd = dset->pd;
@@ -4648,7 +4688,7 @@ int compact_data_set (DATASET *dset, int newpd,
 
     if (default_method == COMPACT_SPREAD) {
 	return do_compact_spread(dset, newpd);
-    }    
+    }
 
     if (oldpd == 52) {
 	return weekly_dataset_to_monthly(dset, default_method);
@@ -4668,7 +4708,7 @@ int compact_data_set (DATASET *dset, int newpd,
 	}
     }
 
-    if (newpd == 52 && oldpd >= 5 && oldpd <= 7 && 
+    if (newpd == 52 && oldpd >= 5 && oldpd <= 7 &&
 	default_method == COMPACT_WDAY) {
 	/* daily to weekly, using "representative day" */
 	return daily_dataset_to_weekly(dset, repday);
@@ -4705,7 +4745,7 @@ int compact_data_set (DATASET *dset, int newpd,
 	/* get ending obs major and minor components */
 	if (!get_obs_maj_min(dset->endobs, &endmaj, &endmin)) {
 	    return 1;
-	} 
+	}
     }
 
     min_startskip = oldpd;
@@ -4713,16 +4753,16 @@ int compact_data_set (DATASET *dset, int newpd,
     any_eop = 0;
     all_same = 1;
     get_global_compact_params(compfac, startmin, endmin, default_method,
-			      &min_startskip, &newn, &any_eop, &all_same, 
+			      &min_startskip, &newn, &any_eop, &all_same,
 			      dset);
 
     if (newn == 0 && default_method != COMPACT_SPREAD) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	return 1;
-    }    
+    }
 
     if (newpd == 1) {
-	if (min_startskip > 0 && !any_eop) { 
+	if (min_startskip > 0 && !any_eop) {
 	    startmaj++;
 	}
 	sprintf(stobs, "%d", startmaj);
@@ -4751,7 +4791,7 @@ int compact_data_set (DATASET *dset, int newpd,
     dset->t1 = 0;
     dset->t2 = dset->n - 1;
     ntodate(dset->endobs, dset->t2, dset);
-    
+
     if (oldpd >= 5 && oldpd <= 7 && dset->markers) {
 	/* remove any daily date strings; revise endobs */
 	dataset_destroy_obs_markers(dset);
@@ -4784,7 +4824,7 @@ int compact_data_set (DATASET *dset, int newpd,
 	    }
 	}
 
-	x = compact_series(dset, i, oldn, startskip, min_startskip, 
+	x = compact_series(dset, i, oldn, startskip, min_startskip,
 			   compfac, this_method);
 	if (x == NULL) {
 	    err = E_ALLOC;
@@ -4797,7 +4837,7 @@ int compact_data_set (DATASET *dset, int newpd,
     return err;
 }
 
-static gretl_matrix *interpol_expand_dataset (const DATASET *dset, 
+static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 					      int newpd, int *err)
 {
     gretl_matrix *Y0, *Y1 = NULL;
@@ -4829,7 +4869,7 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
  * @dset: dataset struct.
  * @newpd: target data frequency.
  * @interpol: use interpolation (0/1).
- * 
+ *
  * Expand the data set from lower to higher frequency: an "expert"
  * option.  This is supported at present only for expansion from
  * annual to quarterly or monthly, or from quarterly to monthly.
@@ -4923,7 +4963,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
 
     if (dset->t2 < oldn - 1) {
 	dset->t2 = dset->t1 + (t2 - t1 + 1) * mult - 1;
-    }    
+    }
 
     strcpy(dset->stobs, stobs);
     dset->pd = newpd;
@@ -4935,7 +4975,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     }
 
  bailout:
-    
+
     free(x);
     gretl_matrix_free(X);
 
