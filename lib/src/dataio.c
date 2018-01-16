@@ -792,6 +792,8 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	    *delim = ' ';
 	} else if (has_suffix(fname, ".dta")) {
 	    fmt = GRETL_FMT_DTA;
+	} else if (has_suffix(fname, ".bin")) {
+	    fmt = GRETL_FMT_DB;
 	}
     }
 
