@@ -60,7 +60,7 @@ struct INTERNAL_PATHS {
     char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
     char plugpath[MAXLEN];
-    char binbase[MAXLEN];
+    char binbase[MAXLEN+4];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
     char tramo[MAXLEN];
