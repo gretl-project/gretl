@@ -827,6 +827,38 @@ int get_days_in_month (int m, int y, int wkdays, int julian)
 }
 
 /**
+ * month_day_index:
+ * @y: 4-digit year
+ * @m: month number, 1-based
+ * @d: day in month.
+ * @wkdays: number of days in week (7, 6 or 5)
+ *
+ * Returns: the 1-based index of calendar day @d in month
+ * @m of year @y, allowing for the possibility of a 5- or
+ * 6-day week.
+ */
+
+int month_day_index (int y, int m, int d, int wkdays)
+{
+    int ret = 0;
+
+    if (wkdays == 7) {
+	ret = d;
+    } else {
+	int i, idx = day_of_week_from_ymd(y, m, 1, 0);
+
+	for (i=1; i<=d; i++) {
+	    if (day_in_calendar(wkdays, idx)) {
+		ret++;
+	    }
+	    idx = (idx == 6)? 0 : idx + 1;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * days_in_month_before:
  * @y: 4-digit year
  * @m: month number, 1-based

@@ -24,6 +24,7 @@
 #include "uservar.h"
 #include "genparse.h"
 #include "gretl_xml.h"
+#include "gretl_midas.h"
 #include "csvdata.h"
 
 #ifdef WIN32
@@ -4873,11 +4874,26 @@ static double aggr_value (joiner *jr,
 		/* got secondary key match */
 		int sub, t = r->dset_row;
 
-		/* FIXME daily */
-		date_maj_min(t, jr->r_dset, NULL, &sub);
-		if ((sub - 1) % jr->midas_m + 1 == revseq) {
-		    x = jr->r_dset->Z[v][t];
-		    gotit = 1;
+		if (dated_daily_data(jr->r_dset)) {
+		    char obs[OBSLEN];
+		    int y, m, d;
+
+		    ntodate(obs, t, jr->r_dset);
+		    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) == 3) {
+			sub = month_day_index(y, m, d, jr->r_dset->pd);
+			if (sub == revseq) {
+			    x = jr->r_dset->Z[v][t];
+			    fprintf(stderr, "revseq=sub=%d at %04d-%02d-%02d: %g\n",
+				    sub, y, m, d, x);
+			    gotit = 1;
+			}
+		    }
+		} else {
+		    date_maj_min(t, jr->r_dset, NULL, &sub);
+		    if ((sub - 1) % jr->midas_m + 1 == revseq) {
+			x = jr->r_dset->Z[v][t];
+			gotit = 1;
+		    }
 		}
 	    }
 	}
@@ -6177,7 +6193,7 @@ static int *get_series_indices (const char **vnames,
 
     if (!*err && nvars > 1 && *any_wild) {
 	/* wildcard spec must be singleton varname spec */
-	gretl_errmsg_set("Invalid join specification");
+	gretl_errmsg_set(_("Invalid join specification"));
 	*err = E_DATA;
     }
 
@@ -6356,25 +6372,17 @@ static int *midas_revise_jspec (joinspec *jspec,
 				int *n_add,
 				int *err)
 {
-    int lpd = dset->pd;
     int rpd = jspec->dset->pd;
-    int m = 0, nvars = 0;
+    int m, nvars = 0;
     int *ret = NULL;
 
-    /* FIXME monthly on left, daily on right */
-
-    if (lpd == 1) {
-	m = (rpd == 4)? 4 : (rpd == 12)? 12 : 0;
-    } else if (lpd == 4) {
-	m = (rpd == 12)? 3 : 0;
-    }
+    m = midas_m_from_pd(dset, rpd);
 
     if (m == 0) {
 	fprintf(stderr, "MIDAS aggregation cannot work!\n");
 	*err = E_PDWRONG;
 	return NULL;
     } else {
-	fprintf(stderr, "MIDAS aggregation: m = %d\n", m);
 	nvars = m;
     }
 
@@ -6388,16 +6396,21 @@ static int *midas_revise_jspec (joinspec *jspec,
     if (!*err) {
 	char cname[VNAMELEN];
 	char tmp[VNAMELEN];
-	int i, v;
+	int i, v, extlen;
+	char mc;
 
 	/* zero the count of added vars */
 	*n_add = 0;
+
 	/* create base for naming vars */
-	strcpy(tmp, jspec->wstr);
-	tmp[strlen(tmp)-1] = '\0';
+	mc = rpd == 12 ? 'm' : rpd == 4 ? 'q' : 'd';
+	extlen = m < 10 ? 3 : 4;
+	*tmp = '\0';
+	strncat(tmp, jspec->wstr, VNAMELEN - 1);
+	gretl_trunc(tmp, VNAMELEN - extlen - 1);
 
 	for (i=0; i<nvars && !*err; i++) {
-	    sprintf(cname, "%s%d", tmp, nvars - i);
+	    sprintf(cname, "%s_%c%d", tmp, mc, nvars - i);
 	    v = current_series_index(dset, cname);
 	    ret[i+1] = v;
 	    if (v < 0) {
@@ -6438,13 +6451,18 @@ static void maybe_transfer_string_table (DATASET *l_dset,
     }
 }
 
-static int maybe_midas_ok (int nvars, int wild, DATASET *dset,
-			   AggrType aggr)
+static int initial_midas_check (int nvars, DATASET *dset,
+				int *any_wild)
 {
-    if (nvars == 1 && wild && aggr == AGGR_NONE) {
-	return annual_data(dset) || quarterly_or_monthly(dset);
+    if (nvars == 1 && (annual_data(dset) || quarterly_or_monthly(dset))) {
+	/* varname should be taken as implicit wildcard */
+	*any_wild = 1;
+	return 0; /* might be OK */
     } else {
-	return 0;
+	fprintf(stderr, "midas_check error: nvars=%d, pd=%d\n",
+		nvars, dset->pd);
+	gretl_errmsg_set(_("Invalid join specification"));
+	return E_DATA;
     }
 }
 
@@ -6530,13 +6548,14 @@ int gretl_join_data (const char *fname,
 	   "MIDAS join", in which case a single wildcard spec
 	   is OK for the target series.
 	*/
-	if (maybe_midas_ok(nvars, any_wild, dset, aggr)) {
-	    fprintf(stderr, "maybe trying a MIDAS join?\n");
-	    aggr = AGGR_MIDAS;
-	} else if (nvars > 1 || any_wild) {
-	    gretl_errmsg_set("Invalid join specification");
+	if ((nvars > 1 || any_wild) && aggr != AGGR_MIDAS) {
+	    gretl_errmsg_set(_("Invalid join specification"));
 	    err = E_DATA;
 	}
+    }
+
+    if (!err && aggr == AGGR_MIDAS) {
+	err = initial_midas_check(nvars, dset, &any_wild);
     }
 
     if (err) {

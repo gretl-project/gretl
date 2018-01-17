@@ -59,6 +59,8 @@ int day_ends_month (int d, int m, int y, int wkdays);
 
 int get_days_in_month (int m, int y, int wkdays, int julian);
 
+int month_day_index (int y, int m, int d, int wkdays);
+
 int days_in_month_before (int y, int m, int d, int wkdays);
 
 int days_in_month_after (int y, int m, int d, int wkdays);

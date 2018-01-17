@@ -4646,7 +4646,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	bigset->pd = pd;
 	bigset->structure = TIME_SERIES;
 	bigset->sd0 = (double) ed0;
-	ntodate(bigset->stobs, 0, bigset);
+	strcpy(bigset->stobs, dset->stobs);
 	ntodate(bigset->endobs, bigset->n - 1, bigset);
 
 	dset->varname = NULL;

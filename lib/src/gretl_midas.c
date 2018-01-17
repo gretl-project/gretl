@@ -221,14 +221,14 @@ const char *midas_pdstr (const DATASET *dset, int cfac)
     }
 }
 
-static int midas_m_from_freq (const DATASET *dset, int freq)
+int midas_m_from_pd (const DATASET *dset, int pd)
 {
-    if (dset->pd == 1 && (freq == 4 || freq == 12)) {
-	return freq;
-    } else if (dset->pd == 4 && freq == 12) {
+    if (dset->pd == 1 && (pd == 4 || pd == 12)) {
+	return pd;
+    } else if (dset->pd == 4 && pd == 12) {
 	return 3;
     } else if (dset->pd == 4 || dset->pd == 12) {
-	return midas_days_per_period(freq, dset->pd);
+	return midas_days_per_period(pd, dset->pd);
     }
 
     return 0;
@@ -474,7 +474,7 @@ static int lag_info_from_prelag_list (midas_term *mt,
     int i, p, maxp = 0;
 
     if (mf > 0) {
-	maxp = midas_m_from_freq(dset, mf);
+	maxp = midas_m_from_pd(dset, mf);
     }
 
     if (maxp == 0 && p1 > 0) {
