@@ -3977,7 +3977,7 @@ static int real_read_gdt_subset (const char *fname,
     binary = gdt_binary_order(cur);
 
 #if GDT_DEBUG
-    fprintf(stderr, "starting to walk XML tree...\n");
+    fprintf(stderr, "%s: starting to walk XML tree...\n", fname);
 #endif
 
     /* Now walk the tree */

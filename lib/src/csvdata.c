@@ -4883,8 +4883,6 @@ static double aggr_value (joiner *jr,
 			sub = month_day_index(y, m, d, jr->r_dset->pd);
 			if (sub == revseq) {
 			    x = jr->r_dset->Z[v][t];
-			    fprintf(stderr, "revseq=sub=%d at %04d-%02d-%02d: %g\n",
-				    sub, y, m, d, x);
 			    gotit = 1;
 			}
 		    }
@@ -6696,8 +6694,12 @@ int gretl_join_data (const char *fname,
 
     if (!err) {
 	if (opt & OPT_G) {
-	    /* FIXME OPT_M? */
-	    err = join_import_gdt(fname, &jspec, OPT_NONE,
+	    gretlopt gdt_opt = OPT_NONE;
+
+	    if (dataset_is_time_series(dset)) {
+		gdt_opt = OPT_M;
+	    }
+	    err = join_import_gdt(fname, &jspec, gdt_opt,
 				  verbose ? prn : NULL);
 	} else {
 	    err = join_import_csv(fname, &jspec, opt,
