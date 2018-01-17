@@ -815,8 +815,17 @@ void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
     }
 
     if (min != NULL) {
-	char *s = strchr(obs, ':');
+	char *s, sep = ':';
 
+	if (strchr(obs, sep) == NULL) {
+	    if (dset->pd == 4 && strchr(obs, 'Q')) {
+		sep = 'Q';
+	    } else if (dset->pd == 12 && strchr(obs, 'M')) {
+		sep = 'M';
+	    }
+	}
+
+	s = strchr(obs, sep);
 	if (s != NULL && strlen(s) > 1) {
 	    *min = atoi(s + 1);
 	} else {
