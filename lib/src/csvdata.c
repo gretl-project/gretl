@@ -4706,6 +4706,19 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
     }
 }
 
+static int midas_day_index (int t, DATASET *dset)
+{
+    char obs[OBSLEN];
+    int y, m, d, idx = -1;
+
+    ntodate(obs, t, dset);
+    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) == 3) {
+	idx = month_day_index(y, m, d, dset->pd);
+    }
+
+    return idx;
+}
+
 #define AGGDEBUG 0
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
@@ -4875,23 +4888,14 @@ static double aggr_value (joiner *jr,
 		int sub, t = r->dset_row;
 
 		if (dated_daily_data(jr->r_dset)) {
-		    char obs[OBSLEN];
-		    int y, m, d;
-
-		    ntodate(obs, t, jr->r_dset);
-		    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) == 3) {
-			sub = month_day_index(y, m, d, jr->r_dset->pd);
-			if (sub == revseq) {
-			    x = jr->r_dset->Z[v][t];
-			    gotit = 1;
-			}
-		    }
+		    sub = midas_day_index(t, jr->r_dset);
+		    gotit = sub == revseq;
 		} else {
 		    date_maj_min(t, jr->r_dset, NULL, &sub);
-		    if ((sub - 1) % jr->midas_m + 1 == revseq) {
-			x = jr->r_dset->Z[v][t];
-			gotit = 1;
-		    }
+		    gotit = (sub - 1) % jr->midas_m + 1 == revseq;
+		}
+		if (gotit) {
+		    x = jr->r_dset->Z[v][t];
 		}
 	    }
 	}
@@ -4994,8 +4998,6 @@ static int outer_series_index (joinspec *jspec, int i)
     }
 }
 
-/* below: FIXME "newvar" when importing more than one series */
-
 static int aggregate_data (joiner *jr, const int *ikeyvars,
 			   const int *targvars, joinspec *jspec,
 			   int orig_v, int *modified)
@@ -5097,7 +5099,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 	    }
 	    if (!err) {
 		if (lv >= orig_v) {
-		    /* lv is a newly added series */
+		    /* @lv is a newly added series */
 		    dset->Z[lv][t] = z;
 		} else if (z != dset->Z[lv][t]) {
 		    if (nomatch && !na(dset->Z[lv][t])) {
@@ -5108,6 +5110,16 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 		    }
 		}
 	    }
+	}
+
+	if (!err && jr->aggr == AGGR_MIDAS) {
+	    /* set MIDAS-specific info on series @lv */
+	    series_set_midas_period(dset, lv, revseq);
+	    series_set_midas_freq(dset, lv, jr->r_dset->pd);
+	    if (i == 1) {
+		series_set_midas_anchor(dset, lv);
+	    }
+	    /* FIXME post-process daily data for NAs? */
 	}
 
 	revseq--;
