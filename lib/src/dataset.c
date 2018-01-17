@@ -4664,6 +4664,43 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 
 /* MIDAS-related functions */
 
+/* postprocess: fill missing slots in daily data array
+   with the period (month or quarter) average
+   (FIXME support interpolation?)
+*/
+
+int postprocess_daily_data (DATASET *dset, const int *list)
+{
+    double *x, xbar, xsum;
+    int t, i, n_ok, n_miss;
+    int err = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	xsum = 0.0;
+	n_ok = n_miss = 0;
+	for (i=1; i<=list[0]; i++) {
+	    x = dset->Z[list[i]];
+	    if (na(x[t])) {
+		n_miss++;
+	    } else {
+		xsum += x[t];
+		n_ok++;
+	    }
+	}
+	if (n_miss > 0 && n_ok > 0) {
+	    xbar = xsum / n_ok;
+	    for (i=1; i<=list[0]; i++) {
+		x = dset->Z[list[i]];
+		if (na(x[t])) {
+		    x[t] = xbar;
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
 int series_get_midas_period (const DATASET *dset, int i)
 {
     if (i > 0 && i < dset->v) {

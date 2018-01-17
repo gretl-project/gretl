@@ -4795,9 +4795,40 @@ static double aggr_value (joiner *jr,
     fprintf(stderr, "  aggregation row range: %d to %d\n", imin+1, imax);
 #endif
 
+    if (jr->aggr == AGGR_MIDAS) {
+	/* special case: MIDAS "spreading" */
+	int gotit = 0;
+
+	x = NADBL;
+
+	for (i=imin; i<imax && !gotit; i++) {
+	    /* loop across primary key matches */
+	    jr_row *r = &jr->rows[i];
+
+	    if (jr->n_keys == 1 || key2 == r->keyval2) {
+		/* got secondary key match */
+		int sub, t = r->dset_row;
+
+		if (dated_daily_data(jr->r_dset)) {
+		    sub = midas_day_index(t, jr->r_dset);
+		    gotit = sub == revseq;
+		} else {
+		    date_maj_min(t, jr->r_dset, NULL, &sub);
+		    gotit = (sub - 1) % jr->midas_m + 1 == revseq;
+		}
+		if (gotit) {
+		    x = jr->r_dset->Z[v][t];
+		}
+	    }
+	}
+
+	/* and we're done */
+	return x;
+    }
+
     /* We now fill out the array @xmatch with non-missing values
        from the matching outer rows. If we have a secondary key
-       we have to screen for matches on that as we go.
+       we screen for matches on that as we go.
     */
 
     n = 0;      /* will now hold count of non-NA matches */
@@ -4875,29 +4906,6 @@ static double aggr_value (joiner *jr,
 	}
 	if (jr->aggr == AGGR_AVG) {
 	    x /= n;
-	}
-    } else if (jr->aggr == AGGR_MIDAS) {
-	int gotit = 0;
-
-	for (i=imin; i<imax && !gotit; i++) {
-	    /* loop across primary key matches */
-	    jr_row *r = &jr->rows[i];
-
-	    if (jr->n_keys == 1 || key2 == r->keyval2) {
-		/* got secondary key match */
-		int sub, t = r->dset_row;
-
-		if (dated_daily_data(jr->r_dset)) {
-		    sub = midas_day_index(t, jr->r_dset);
-		    gotit = sub == revseq;
-		} else {
-		    date_maj_min(t, jr->r_dset, NULL, &sub);
-		    gotit = (sub - 1) % jr->midas_m + 1 == revseq;
-		}
-		if (gotit) {
-		    x = jr->r_dset->Z[v][t];
-		}
-	    }
 	}
     }
 
@@ -5114,12 +5122,16 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 
 	if (!err && jr->aggr == AGGR_MIDAS) {
 	    /* set MIDAS-specific info on series @lv */
+	    char label[MAXLABEL];
+
 	    series_set_midas_period(dset, lv, revseq);
+	    sprintf(label, "%s in sub-period %d",
+		    jr->r_dset->varname[rv], revseq);
+	    series_record_label(dset, lv, label);
 	    series_set_midas_freq(dset, lv, jr->r_dset->pd);
 	    if (i == 1) {
 		series_set_midas_anchor(dset, lv);
 	    }
-	    /* FIXME post-process daily data for NAs? */
 	}
 
 	revseq--;
@@ -6709,6 +6721,7 @@ int gretl_join_data (const char *fname,
 	    gretlopt gdt_opt = OPT_NONE;
 
 	    if (dataset_is_time_series(dset)) {
+		/* import obs markers: may be needed */
 		gdt_opt = OPT_M;
 	    }
 	    err = join_import_gdt(fname, &jspec, gdt_opt,
@@ -6839,6 +6852,11 @@ int gretl_join_data (const char *fname,
 	} else {
 	    err = aggregate_data(jr, ikeyvars, targvars, &jspec,
 				 orig_v, &modified);
+	    /* complete the job for MIDAS daily import */
+	    if (!err && aggr == AGGR_MIDAS &&
+		dated_daily_data(outer_dset)) {
+		postprocess_daily_data(dset, targvars);
+	    }
 	}
     }
 

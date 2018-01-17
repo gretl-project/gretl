@@ -564,6 +564,8 @@ int is_panel_group_names_series (const DATASET *dset, int v);
 
 int is_dataset_series (const DATASET *dset, const double *x);
 
+int postprocess_daily_data (DATASET *dset, const int *list);
+
 int series_get_midas_period (const DATASET *dset, int i);
 
 void series_set_midas_period (const DATASET *dset, int i,
