@@ -129,13 +129,13 @@ static double cond_ols_callback (double *theta, double *g,
 
 int midas_days_per_period (int days_per_week, int pd)
 {
-    int ret;
+    int ret = 0;
 
     if (days_per_week == 5) {
 	ret = 22;
     } else if (days_per_week == 6) {
 	ret = 26;
-    } else {
+    } else if (days_per_week == 7) {
 	ret = 30;
     }
 
