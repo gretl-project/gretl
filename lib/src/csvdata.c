@@ -73,13 +73,15 @@ typedef struct csvdata_ csvdata;
 struct joinspec_ {
     int ncols;
     const char **colnames;
-    const char *wstr;
+    const char *mdsbase;
     int *colnums;
     int *timecols;
     csvdata *c;
     DATASET *dset;
     int wildcard;
+    int midas;
     char **wildnames;
+    char **mdsnames;
     char **tmpnames;
     int n_tmp;
 };
@@ -3278,6 +3280,16 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     return err;
 }
 
+static int csv_skip_dates (csvdata *c)
+{
+    if (c->jspec != NULL) {
+	/* with --aggr=spread (MIDAS) we'll need dates info */
+	return c->jspec->midas == 0;
+    } else {
+	return 0;
+    }
+}
+
 static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
     int reversed = csv_data_reversed(c);
@@ -3295,7 +3307,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 
     err = real_read_labels_and_data(c, fp, prn);
 
-    if (!err && csv_skip_col_1(c) && !rows_subset(c) && !joining(c)) {
+    if (!err && csv_skip_col_1(c) && !rows_subset(c) && !csv_skip_dates(c)) {
 	c->markerpd = test_markers_for_dates(c->dset, &reversed,
 					     c->skipstr, prn);
 	if (reversed) {
@@ -4791,7 +4803,7 @@ static double aggr_value (joiner *jr,
     imin = jr->key_row[pos];
     imax = imin + n;
 
-#if AGGDEBUG > 1
+#if AGGDEBUG
     fprintf(stderr, "  aggregation row range: %d to %d\n", imin+1, imax);
 #endif
 
@@ -5020,10 +5032,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
     int i, t, nmax;
     int err = 0;
 
-#if AGGDEBUG
-    fputs("\naggregate data:\n", stderr);
-#endif
-
     /* find the greatest (primary) key frequency */
     nmax = 0;
     for (i=0; i<jr->n_unique; i++) {
@@ -5032,7 +5040,15 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 	}
     }
 
-    if (nmax > 0) {
+#if AGGDEBUG
+    fprintf(stderr, "\naggregate data: nmax=%d\n", nmax);
+#endif
+
+    if (jr->aggr == AGGR_MIDAS) {
+	/* reverse sequence number for MIDAS join */
+	revseq = targvars[0];
+	jr->midas_m = revseq;
+    } else if (nmax > 0) {
 	/* allocate workspace for aggregation */
 	int nx = (jr->auxcol > 0)? 2 * nmax : nmax;
 
@@ -5043,12 +5059,6 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 	if (jr->auxcol) {
 	    auxmatch = xmatch + nmax;
 	}
-    }
-
-    if (jr->aggr == AGGR_MIDAS) {
-	/* reverse sequence number for MIDAS join */
-	revseq = targvars[0];
-	jr->midas_m = revseq;
     }
 
     for (i=1; i<=targvars[0]; i++) {
@@ -5542,11 +5552,14 @@ static int auto_keys_check (const DATASET *l_dset,
 	goto bailout;
     }
 
-    if ((opt & OPT_G) && dataset_is_time_series(r_dset)) {
+    /* was: if ((opt & OPT_G) && dataset_is_time_series(r_dset)) */
+
+    if (dataset_is_time_series(r_dset)) {
 	auto_keys->native = 1;
     } else if (r_dset->S == NULL && auto_keys->keycol < 0) {
 	/* On the right, we need either obs strings or a specified
-	   time column */
+	   time column
+	*/
 	err = E_DATA;
 	goto bailout;
     }
@@ -6149,6 +6162,15 @@ static int join_import_csv (const char *fname,
     if (!err) {
 	err = real_import_csv(fname, NULL, NULL, NULL,
 			      jspec, NULL, opt, prn);
+	if (0 && !err) {
+	    DATASET *dset = jspec->c->dset;
+	    int pd, reversed = 0;
+
+	    fprintf(stderr, "join_import_csv: n=%d, v=%d, pd=%d, markers=%d\n",
+		    dset->n, dset->v, dset->pd, dset->markers);
+	    pd = test_markers_for_dates(dset, &reversed, NULL, prn);
+	    fprintf(stderr, "pd from markers: %d\n", pd);
+	}
     }
 
     return err;
@@ -6316,10 +6338,13 @@ static int set_up_jspec (joinspec *jspec,
     jspec->wildnames = NULL;
     jspec->tmpnames = NULL;
     jspec->n_tmp = 0;
-    jspec->wstr = NULL;
+    jspec->mdsbase = NULL;
+    jspec->mdsnames = NULL;
+    jspec->midas = 0;
 
     if (aggr == AGGR_MIDAS) {
-	jspec->wstr = vnames[0];
+	jspec->mdsbase = vnames[0];
+	jspec->midas = 1;
 	for (i=0; i<ncols; i++) {
 	    jspec->colnames[i] = NULL;
 	    jspec->colnums[i] = 0;
@@ -6365,7 +6390,7 @@ static int expand_jspec (joinspec *jspec, int addvars)
     return 0;
 }
 
-static void clear_jspec (joinspec *jspec)
+static void clear_jspec (joinspec *jspec, int midas_m)
 {
     free(jspec->colnames);
     free(jspec->colnums);
@@ -6382,6 +6407,8 @@ static void clear_jspec (joinspec *jspec)
 
     if (jspec->wildnames != NULL) {
 	strings_array_free(jspec->wildnames, jspec_n_vars(jspec));
+    } else if (jspec->mdsnames != NULL) {
+	strings_array_free(jspec->mdsnames, midas_m);
     }
 
     if (jspec->tmpnames != NULL) {
@@ -6394,14 +6421,16 @@ static int *midas_revise_jspec (joinspec *jspec,
 				int *n_add,
 				int *err)
 {
-    int rpd = jspec->dset->pd;
+    DATASET *rdset = outer_dataset(jspec);
+    int rpd = rdset->pd;
     int m, nvars = 0;
     int *ret = NULL;
 
     m = midas_m_from_pd(dset, rpd);
 
     if (m == 0) {
-	fprintf(stderr, "MIDAS aggregation cannot work!\n");
+	gretl_errmsg_sprintf("frequency %d in import data: \"spread\" will "
+			     "not work", rpd);
 	*err = E_PDWRONG;
 	return NULL;
     } else {
@@ -6409,9 +6438,9 @@ static int *midas_revise_jspec (joinspec *jspec,
     }
 
     ret = gretl_list_new(nvars);
-    jspec->wildnames = strings_array_new(nvars);
+    jspec->mdsnames = strings_array_new(nvars);
 
-    if (ret == NULL || jspec->wildnames == NULL) {
+    if (ret == NULL || jspec->mdsnames == NULL) {
 	*err = E_ALLOC;
     }
 
@@ -6428,7 +6457,7 @@ static int *midas_revise_jspec (joinspec *jspec,
 	mc = rpd == 12 ? 'm' : rpd == 4 ? 'q' : 'd';
 	extlen = m < 10 ? 3 : 4;
 	*tmp = '\0';
-	strncat(tmp, jspec->wstr, VNAMELEN - 1);
+	strncat(tmp, jspec->mdsbase, VNAMELEN - 1);
 	gretl_trunc(tmp, VNAMELEN - extlen - 1);
 
 	for (i=0; i<nvars && !*err; i++) {
@@ -6444,7 +6473,7 @@ static int *midas_revise_jspec (joinspec *jspec,
 		}
 	    }
 	    if (!*err) {
-		jspec->wildnames[i] = gretl_strdup(cname);
+		jspec->mdsnames[i] = gretl_strdup(cname);
 	    }
 	}
     }
@@ -6473,19 +6502,22 @@ static void maybe_transfer_string_table (DATASET *l_dset,
     }
 }
 
-static int initial_midas_check (int nvars, DATASET *dset,
-				int *any_wild)
+static int initial_midas_check (int nvars, int any_wild, DATASET *dset)
 {
+    int err;
+
     if (nvars == 1 && (annual_data(dset) || quarterly_or_monthly(dset))) {
-	/* varname should be taken as implicit wildcard */
-	*any_wild = 1;
-	return 0; /* might be OK */
+	/* might be OK, if no wildcard */
+	err = any_wild ? E_DATA : 0;
     } else {
-	fprintf(stderr, "midas_check error: nvars=%d, pd=%d\n",
-		nvars, dset->pd);
-	gretl_errmsg_set(_("Invalid join specification"));
-	return E_DATA;
+	err = E_DATA;
     }
+
+    if (err) {
+	gretl_errmsg_set(_("Invalid join specification"));
+    }
+
+    return err;
 }
 
 /**
@@ -6577,7 +6609,7 @@ int gretl_join_data (const char *fname,
     }
 
     if (!err && aggr == AGGR_MIDAS) {
-	err = initial_midas_check(nvars, dset, &any_wild);
+	err = initial_midas_check(nvars, any_wild, dset);
     }
 
     if (err) {
@@ -6818,10 +6850,11 @@ int gretl_join_data (const char *fname,
  transcribe:
 
     /* step 9: revise information on the series to be imported
-       if we came across any wildcard specifications
+       if we came across a wildcard specification or a case
+       of MIDAS importation
     */
 
-    if (!err && jspec.wildcard) {
+    if (!err && (jspec.wildcard || aggr == AGGR_MIDAS)) {
 	free(targvars);
 	if (aggr == AGGR_MIDAS) {
 	    targvars = midas_revise_jspec(&jspec, dset, &add_v, &err);
@@ -6836,6 +6869,9 @@ int gretl_join_data (const char *fname,
 	/* we need to add one or more new series on the left */
 	if (jspec.wildnames != NULL) {
 	    err = add_target_series((const char **) jspec.wildnames,
+				    dset, targvars, add_v);
+	} else if (jspec.mdsnames != NULL) {
+	    err = add_target_series((const char **) jspec.mdsnames,
 				    dset, targvars, add_v);
 	} else {
 	    err = add_target_series(vnames, dset, targvars, add_v);
@@ -6867,8 +6903,10 @@ int gretl_join_data (const char *fname,
 
     if (!err && add_v > 0 && jspec.colnums[JOIN_TARG] > 0) {
 	/* we added one or more new series */
-	maybe_transfer_string_table(dset, outer_dset, &jspec,
-				    targvars, orig_v);
+	if (aggr != AGGR_MIDAS) {
+	    maybe_transfer_string_table(dset, outer_dset, &jspec,
+					targvars, orig_v);
+	}
     }
 
     if (err) {
@@ -6897,7 +6935,7 @@ int gretl_join_data (const char *fname,
 	free(auto_keys.timefmt);
     }
 
-    clear_jspec(&jspec);
+    clear_jspec(&jspec, jr->midas_m);
     joiner_destroy(jr);
     jr_filter_destroy(filter);
     free(targvars);
