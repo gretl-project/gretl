@@ -6546,7 +6546,7 @@ static int initial_midas_check (int nvars, int any_wild, int pd,
 {
     int err;
 
-    if (pd != 0 && pd != 12 && pd != 5 && pd != 6 && pd != 7) {
+    if (pd != 0 && pd != 12 && pd != 4 && pd != 5 && pd != 6 && pd != 7) {
 	/* unacceptable outer data frequency */
 	err = E_PDWRONG;
     } else if (nvars == 1 && (annual_data(dset) || quarterly_or_monthly(dset))) {
