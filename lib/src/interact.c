@@ -1576,6 +1576,7 @@ static int lib_join_data (ExecState *s,
 	OPT_K, /* tkey: outer time-key name,format */
 	OPT_X, /* tconvert: date columns for conversion */
 	OPT_T, /* tconv-fmt: format for "tconvert" */
+	OPT_P, /* pd: outer data frequency */
 	0 
     };
     char *okey = NULL, *filter = NULL;
@@ -1587,6 +1588,7 @@ static int lib_join_data (ExecState *s,
     char *tconvfmt = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
+    int midas_pd = 0;
     int tseries = 0;
     int nvars = 1;
     int i, err = 0;
@@ -1646,6 +1648,8 @@ static int lib_join_data (ExecState *s,
 	    } else if (jopt == OPT_T) {
 		/* --tconv-fmt: format for tconvert columns */
 		tconvfmt = gretl_strdup(param);
+	    } else if (jopt == OPT_P) {
+		midas_pd = atoi(param);
 	    }
 	}
     }
@@ -1674,7 +1678,8 @@ static int lib_join_data (ExecState *s,
 			      ikeyvars, okey, filter,
 			      dataname, aggr, seqval, 
 			      auxname, tconvstr,
-			      tconvfmt, opt, prn);
+			      tconvfmt, midas_pd,
+			      opt, prn);
     }
 
     strings_array_free(vnames, nvars);

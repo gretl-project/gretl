@@ -63,6 +63,7 @@ int gretl_join_data (const char *fname,
 		     const char *auxname,
 		     const char *tconvstr,
 		     const char *tconvfmt,
+		     int midas_pd,
 		     gretlopt opt,
 		     PRN *prn);
 

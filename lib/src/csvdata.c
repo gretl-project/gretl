@@ -79,7 +79,8 @@ struct joinspec_ {
     csvdata *c;
     DATASET *dset;
     int wildcard;
-    int midas;
+    int auto_midas;
+    int midas_pd;
     char **wildnames;
     char **mdsnames;
     char **tmpnames;
@@ -3280,11 +3281,24 @@ static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
     return err;
 }
 
+/* When reading a CSV file, should we attempt to parse observation
+   strings as dates (and impose time-series structure on the data
+   if this is successful)? In general, yes, but maybe not if we're
+   reading the data in the context of a "join" operation, since
+   in this case automatic detection may collide with time-key
+   information supplied by the user. Current status: we'll skip
+   the auto-dating stuff when joining unless (a) it's a MIDAS
+   join (mixed frequencies) and the user has _not_ supplied any
+   time key specification.
+*/
+
 static int csv_skip_dates (csvdata *c)
 {
     if (c->jspec != NULL) {
-	/* with --aggr=spread (MIDAS) we'll need dates info */
-	return c->jspec->midas == 0;
+	/* with --aggr=spread (MIDAS) we'll need dates info,
+	   unless the user have a time key spec
+	*/
+	return c->jspec->auto_midas == 0;
     } else {
 	return 0;
     }
@@ -3958,6 +3972,7 @@ struct jr_row_ {
     int n_keys;     /* number of keys (needed for qsort callback) */
     gint64 keyval;  /* primary key value */
     gint64 keyval2; /* secondary key value, if applicable */
+    int month;        /* high-frequency "key", if any */
     int dset_row;   /* associated row in the RHS or outer dataset */
     double aux;     /* auxiliary value */
 };
@@ -4034,7 +4049,7 @@ static joiner *joiner_new (int nrows)
     joiner *jr = malloc(sizeof *jr);
 
     if (jr != NULL) {
-	jr->rows = malloc(nrows * sizeof *jr->rows);
+	jr->rows = calloc(nrows, sizeof *jr->rows);
 	if (jr->rows == NULL) {
 	    free(jr);
 	    jr = NULL;
@@ -4075,9 +4090,10 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	    jr->rows[j].n_keys = 1;
 	    jr->rows[j].keyval = eday;
 	    jr->rows[j].keyval2 = 0;
+	    jr->rows[j].month = 0;
 	}
     } else {
-	int maj, min;
+	int maj, min, mic = 0;
 
 	maj = tp->tm_year + 1900;
 	min = tp->tm_mon + 1;
@@ -4088,13 +4104,17 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		err = E_DATA;
 	    }
 	} else if (jr->l_dset->pd == 4) {
-	    /* map from month on right to quarter on left */
+	    /* map from month on right to quarter on left, but
+	       preserve the month info in case we need it
+	    */
+	    mic = min;
 	    min = (int) ceil(min / 3.0);
 	}
 	if (!err) {
 	    jr->rows[j].n_keys = 2;
 	    jr->rows[j].keyval = maj;
 	    jr->rows[j].keyval2 = min;
+	    jr->rows[j].month = mic;
 	}
     }
 
@@ -4226,6 +4246,7 @@ static int read_iso_basic (joiner *jr, int j, int i)
 	    jr->rows[j].n_keys = 1;
 	    jr->rows[j].keyval = ed;
 	    jr->rows[j].keyval2 = 0;
+	    jr->rows[j].month = 0;
 	} else {
 	    struct tm t = {0};
 
@@ -4783,7 +4804,7 @@ static double aggr_value (joiner *jr,
     n = jr->key_freq[pos];
 
 #if AGGDEBUG
-    fprintf(stderr, "  number of matches = %d\n", n);
+    fprintf(stderr, "  number of primary matches = %d\n", n);
 #endif
 
     if (jr->n_keys == 1) {
@@ -4825,7 +4846,14 @@ static double aggr_value (joiner *jr,
 		    sub = midas_day_index(t, jr->r_dset);
 		    gotit = sub == revseq;
 		} else {
-		    date_maj_min(t, jr->r_dset, NULL, &sub);
+		    if (r->month > 0) {
+			/* if present, this was given by the outer
+			   time-key specification
+			*/
+			sub = r->month;
+		    } else {
+			date_maj_min(t, jr->r_dset, NULL, &sub);
+		    }
 		    gotit = (sub - 1) % jr->midas_m + 1 == revseq;
 		}
 		if (gotit) {
@@ -5654,10 +5682,10 @@ static int make_time_formats_array (char const **fmts, char ***pS)
    not considered an error if there's no match for a given "tconvert"
    name; in that case the column will be ignored.
 
-   If @fmt1 is non-NULL, this should hold a common format for date
-   conversion.
+   If @tconvfmt is non-NULL, this should hold a common format for
+   date conversion.
 
-   If @tkeyfmt is not an empty string, it holds a specific format
+   If @keyfmt is not an empty string, it holds a specific format
    for the --tkey column. In that case we should check for tkey
    among the tconvert columns; if it's present we need to add its
    format to the timeconv_map apparatus (as an override to the
@@ -6322,7 +6350,8 @@ static int set_up_jspec (joinspec *jspec,
 			 int nvars,
 			 gretlopt opt,
 			 int any_wild,
-			 AggrType aggr)
+			 AggrType aggr,
+			 int midas_pd)
 {
     int i, j, ncols = JOIN_TARG + nvars;
 
@@ -6340,11 +6369,13 @@ static int set_up_jspec (joinspec *jspec,
     jspec->n_tmp = 0;
     jspec->mdsbase = NULL;
     jspec->mdsnames = NULL;
-    jspec->midas = 0;
+    jspec->auto_midas = 0;
+    jspec->midas_pd = 0;
 
     if (aggr == AGGR_MIDAS) {
 	jspec->mdsbase = vnames[0];
-	jspec->midas = 1;
+	jspec->auto_midas = 1; /* provisional! */
+	jspec->midas_pd = midas_pd;
 	for (i=0; i<ncols; i++) {
 	    jspec->colnames[i] = NULL;
 	    jspec->colnums[i] = 0;
@@ -6422,11 +6453,17 @@ static int *midas_revise_jspec (joinspec *jspec,
 				int *err)
 {
     DATASET *rdset = outer_dataset(jspec);
-    int rpd = rdset->pd;
-    int m, nvars = 0;
+    int m, rpd = 0, nvars = 0;
     int *ret = NULL;
 
-    m = midas_m_from_pd(dset, rpd);
+    if (jspec->midas_pd == 0) {
+	/* outer pd not specified on input: so take
+	   it from the discovered dataset
+	*/
+	rpd = jspec->midas_pd = rdset->pd;
+    }
+
+    m = midas_m_from_pd(dset, jspec->midas_pd);
 
     if (m == 0) {
 	gretl_errmsg_sprintf("frequency %d in import data: \"spread\" will "
@@ -6502,11 +6539,15 @@ static void maybe_transfer_string_table (DATASET *l_dset,
     }
 }
 
-static int initial_midas_check (int nvars, int any_wild, DATASET *dset)
+static int initial_midas_check (int nvars, int any_wild, int pd,
+				DATASET *dset)
 {
     int err;
 
-    if (nvars == 1 && (annual_data(dset) || quarterly_or_monthly(dset))) {
+    if (pd != 0 && pd != 12 && pd != 5 && pd != 6 && pd != 7) {
+	/* unacceptable outer data frequency */
+	err = E_PDWRONG;
+    } else if (nvars == 1 && (annual_data(dset) || quarterly_or_monthly(dset))) {
 	/* might be OK, if no wildcard */
 	err = any_wild ? E_DATA : 0;
     } else {
@@ -6560,6 +6601,7 @@ int gretl_join_data (const char *fname,
 		     const char *auxname,
 		     const char *tconvstr,
 		     const char *tconvfmt,
+		     int midas_pd,
 		     gretlopt opt,
 		     PRN *prn)
 {
@@ -6609,14 +6651,15 @@ int gretl_join_data (const char *fname,
     }
 
     if (!err && aggr == AGGR_MIDAS) {
-	err = initial_midas_check(nvars, any_wild, dset);
+	err = initial_midas_check(nvars, any_wild, midas_pd, dset);
     }
 
     if (err) {
 	return err;
     }
 
-    err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild, aggr);
+    err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild,
+		       aggr, midas_pd);
     if (err) {
 	return err;
     }
@@ -6689,6 +6732,8 @@ int gretl_join_data (const char *fname,
 
     if (!err && okey != NULL) {
 	if (opt & OPT_K) {
+	    /* cancel automatic MIDAS flag if present */
+	    jspec.auto_midas = 0;
 	    err = process_time_key(okey, okeyname1, tkeyfmt);
 	} else {
 	    err = process_outer_key(okey, n_keys, okeyname1, okeyname2, opt);
