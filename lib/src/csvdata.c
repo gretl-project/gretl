@@ -6421,7 +6421,7 @@ static int expand_jspec (joinspec *jspec, int addvars)
     return 0;
 }
 
-static void clear_jspec (joinspec *jspec, int midas_m)
+static void clear_jspec (joinspec *jspec, joiner *jr)
 {
     free(jspec->colnames);
     free(jspec->colnums);
@@ -6438,8 +6438,8 @@ static void clear_jspec (joinspec *jspec, int midas_m)
 
     if (jspec->wildnames != NULL) {
 	strings_array_free(jspec->wildnames, jspec_n_vars(jspec));
-    } else if (jspec->mdsnames != NULL) {
-	strings_array_free(jspec->mdsnames, midas_m);
+    } else if (jr != NULL && jspec->mdsnames != NULL) {
+	strings_array_free(jspec->mdsnames, jr->midas_m);
     }
 
     if (jspec->tmpnames != NULL) {
@@ -6980,7 +6980,7 @@ int gretl_join_data (const char *fname,
 	free(auto_keys.timefmt);
     }
 
-    clear_jspec(&jspec, jr->midas_m);
+    clear_jspec(&jspec, jr);
     joiner_destroy(jr);
     jr_filter_destroy(filter);
     free(targvars);
