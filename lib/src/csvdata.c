@@ -6438,7 +6438,9 @@ static void clear_jspec (joinspec *jspec, joiner *jr)
 
     if (jspec->wildnames != NULL) {
 	strings_array_free(jspec->wildnames, jspec_n_vars(jspec));
-    } else if (jr != NULL && jspec->mdsnames != NULL) {
+    }
+
+    if (jr != NULL && jspec->mdsnames != NULL) {
 	strings_array_free(jspec->mdsnames, jr->midas_m);
     }
 
