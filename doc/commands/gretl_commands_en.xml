@@ -7858,7 +7858,7 @@
 	squares (NLS). When the normalized exponential Almon or
 	normalized beta parameterization is specified, the default
 	NLS method is a combination of constrained BFGS and OLS, but
-	the <opt>levenverg</opt> option can be given to force use
+	the <opt>levenberg</opt> option can be given to force use
 	of the Levenberg&ndash;Marquardt algorithm.
       </para>
       <para context="gui">

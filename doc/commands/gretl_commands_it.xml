@@ -7596,7 +7596,7 @@
 	normalizzata, il metodo NLS di default è una combinazione di
 	BFGS vincolato e OLS, ma per forzare l'uso dell'algoritmo di
 	Levenberg&ndash;Marquardt si può usare l'opzione
-	<opt>levenverg</opt>.
+	<opt>levenberg</opt>.
       </para>
       <para context="gui">
 	Il metodo di stima usato da questo comando dipende dalla
