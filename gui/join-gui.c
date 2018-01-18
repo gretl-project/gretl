@@ -383,7 +383,9 @@ static GtkWidget *aggregation_combo (void)
 	"min",
 	"max",
 	"seq:",
+	"spread"
     };
+    
     GtkWidget *ac, *entry;
     int i, n = G_N_ELEMENTS(as);
 
