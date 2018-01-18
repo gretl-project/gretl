@@ -4666,7 +4666,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 
 /* postprocess: fill missing slots in daily data array
    with the period (month or quarter) average
-   (FIXME support interpolation?)
+   (FIXME support interpolation as an option?)
 */
 
 int postprocess_daily_data (DATASET *dset, const int *list)

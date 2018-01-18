@@ -33,7 +33,9 @@
 
 #include <errno.h>
 
-#define CDEBUG 0
+#define CDEBUG 0    /* CSV reading in general */
+#define AGGDEBUG 0  /* aggregation in "join" */
+#define TDEBUG 0    /* handling of time keys in "join" */
 
 #define CSVSTRLEN 72
 
@@ -3972,7 +3974,7 @@ struct jr_row_ {
     int n_keys;     /* number of keys (needed for qsort callback) */
     gint64 keyval;  /* primary key value */
     gint64 keyval2; /* secondary key value, if applicable */
-    int month;        /* high-frequency "key", if any */
+    int micro;      /* high-frequency "key", if any */
     int dset_row;   /* associated row in the RHS or outer dataset */
     double aux;     /* auxiliary value */
 };
@@ -4004,6 +4006,7 @@ struct joiner_ {
     int seqval;         /* sequence number for aggregation */
     int auxcol;         /* auxiliary data column for aggregation */
     int midas_m;        /* midas frequency ratio */
+    int midas_pd;       /* frequency of outer dataset */
     obskey *auto_keys;  /* struct to hold info on obs-based key(s) */
     DATASET *l_dset;    /* the left-hand or inner dataset */
     DATASET *r_dset;    /* the right-hand or outer temporary dataset */
@@ -4090,16 +4093,16 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	    jr->rows[j].n_keys = 1;
 	    jr->rows[j].keyval = eday;
 	    jr->rows[j].keyval2 = 0;
-	    jr->rows[j].month = 0;
+	    jr->rows[j].micro = 0;
 	}
     } else {
-	int maj, min, mic = 0;
+	int major = tp->tm_year + 1900;
+	int minor = tp->tm_mon + 1;
+	int micro = 0;
 
-	maj = tp->tm_year + 1900;
-	min = tp->tm_mon + 1;
 	if (jr->auto_keys->m_means_q) {
 	    /* using the gretl-specific "%q" conversion */
-	    if (min > 4) {
+	    if (minor > 4) {
 		gretl_errmsg_sprintf("'%s' is not a valid date", s);
 		err = E_DATA;
 	    }
@@ -4107,14 +4110,17 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	    /* map from month on right to quarter on left, but
 	       preserve the month info in case we need it
 	    */
-	    mic = min;
-	    min = (int) ceil(min / 3.0);
+	    micro = minor;
+	    minor = (int) ceil(minor / 3.0);
+	}
+	if (!err && micro == 0) {
+	    micro = tp->tm_mday;
 	}
 	if (!err) {
 	    jr->rows[j].n_keys = 2;
-	    jr->rows[j].keyval = maj;
-	    jr->rows[j].keyval2 = min;
-	    jr->rows[j].month = mic;
+	    jr->rows[j].keyval = major;
+	    jr->rows[j].keyval2 = minor;
+	    jr->rows[j].micro = micro;
 	}
     }
 
@@ -4246,7 +4252,7 @@ static int read_iso_basic (joiner *jr, int j, int i)
 	    jr->rows[j].n_keys = 1;
 	    jr->rows[j].keyval = ed;
 	    jr->rows[j].keyval2 = 0;
-	    jr->rows[j].month = 0;
+	    jr->rows[j].micro = 0;
 	} else {
 	    struct tm t = {0};
 
@@ -4739,6 +4745,8 @@ static int aggr_val_determined (joiner *jr, int n, double *x, int *err)
     }
 }
 
+/* get month-day index from @dset time-series info */
+
 static int midas_day_index (int t, DATASET *dset)
 {
     char obs[OBSLEN];
@@ -4752,7 +4760,7 @@ static int midas_day_index (int t, DATASET *dset)
     return idx;
 }
 
-#define AGGDEBUG 0
+#define midas_daily(j) (j->midas_m > 20)
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
 
@@ -4830,6 +4838,7 @@ static double aggr_value (joiner *jr,
 
     if (jr->aggr == AGGR_MIDAS) {
 	/* special case: MIDAS "spreading" */
+	int daily = dated_daily_data(jr->r_dset);
 	int gotit = 0;
 
 	x = NADBL;
@@ -4841,16 +4850,25 @@ static double aggr_value (joiner *jr,
 	    if (jr->n_keys == 1 || key2 == r->keyval2) {
 		/* got secondary key match */
 		int sub, t = r->dset_row;
-
-		if (dated_daily_data(jr->r_dset)) {
+#if AGGDEBUG
+		fprintf(stderr, "  i=%d: 2-key match: %d,%d (revseq=%d)\n",
+			i, (int) key1, (int) key2, revseq);
+#endif
+		if (daily) {
+		    /* outer dataset has known daily structure */
 		    sub = midas_day_index(t, jr->r_dset);
 		    gotit = sub == revseq;
+		} else if (midas_daily(jr) && r->micro > 0) {
+		    /* "other" daily data: r->micro holds day */
+		    sub = month_day_index((int) key1, (int) key2,
+					  r->micro, jr->midas_pd);
+		    gotit = sub == revseq;
 		} else {
-		    if (r->month > 0) {
-			/* if present, this was given by the outer
+		    if (r->micro > 0) {
+			/* if present, this is derived from the outer
 			   time-key specification
 			*/
-			sub = r->month;
+			sub = r->micro;
 		    } else {
 			date_maj_min(t, jr->r_dset, NULL, &sub);
 		    }
@@ -5069,13 +5087,16 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
     }
 
 #if AGGDEBUG
-    fprintf(stderr, "\naggregate data: nmax=%d\n", nmax);
+    fprintf(stderr, "\naggregate data: max primary matches = %d\n", nmax);
 #endif
 
     if (jr->aggr == AGGR_MIDAS) {
 	/* reverse sequence number for MIDAS join */
 	revseq = targvars[0];
 	jr->midas_m = revseq;
+#if AGGDEBUG
+	fprintf(stderr, "midas m = %d\n", jr->midas_m);
+#endif
     } else if (nmax > 0) {
 	/* allocate workspace for aggregation */
 	int nx = (jr->auxcol > 0)? 2 * nmax : nmax;
@@ -5096,8 +5117,10 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 
 	if (jr->aggr == AGGR_MIDAS) {
 	    rv = jspec->colnums[JOIN_TARG];
+	    jr->midas_pd = jspec->midas_pd;
 	} else {
 	    rv = outer_series_index(jspec, i);
+	    jr->midas_pd = 0;
 	}
 
 	if (rv > 0) {
@@ -5451,6 +5474,11 @@ static int process_time_key (const char *s, char *tkeyname,
 	    strncat(tkeyfmt, p + 1, 31);
 	}
     }
+
+#if TDEBUG
+    fprintf(stderr, "time key: name='%s', format='%s'\n",
+	    tkeyname, tkeyfmt);
+#endif
 
     if (*tkeyname == '\0' && *tkeyfmt == '\0') {
 	err = E_DATA;
@@ -6796,6 +6824,8 @@ int gretl_join_data (const char *fname,
     */
 
     if (!err) {
+	PRN *vprn = verbose ? prn : NULL;
+
 	if (opt & OPT_G) {
 	    gretlopt gdt_opt = OPT_NONE;
 
@@ -6803,11 +6833,9 @@ int gretl_join_data (const char *fname,
 		/* import obs markers: may be needed */
 		gdt_opt = OPT_M;
 	    }
-	    err = join_import_gdt(fname, &jspec, gdt_opt,
-				  verbose ? prn : NULL);
+	    err = join_import_gdt(fname, &jspec, gdt_opt, vprn);
 	} else {
-	    err = join_import_csv(fname, &jspec, opt,
-				  verbose ? prn : NULL);
+	    err = join_import_csv(fname, &jspec, opt, vprn);
 	}
 	if (!err) {
 	    outer_dset = outer_dataset(&jspec);
@@ -6936,8 +6964,7 @@ int gretl_join_data (const char *fname,
 	    err = aggregate_data(jr, ikeyvars, targvars, &jspec,
 				 orig_v, &modified);
 	    /* complete the job for MIDAS daily import */
-	    if (!err && aggr == AGGR_MIDAS &&
-		dated_daily_data(outer_dset)) {
+	    if (!err && aggr == AGGR_MIDAS && midas_daily(jr)) {
 		postprocess_daily_data(dset, targvars);
 	    }
 	}
