@@ -1157,6 +1157,7 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
     } else {
 	char sep = lbl[4];
 	char sub[3], *s = NULL;
+	int dashQ = 0;
 	int p;
 
 	if (strchr(subchars, sep)) {
@@ -1173,17 +1174,35 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
 		    pprintf(prn, "quarter %d: not possible\n", p);
 		}
 	    } else if (len == 7) {
+		if (*s == 'Q') {
+		    /* YYYY-Qn? This is supported by SDMX */
+		    dashQ = 1;
+		    s++;
+		}
 		p = atoi(s);
-		if (p > 0 && p < 13) {
-		    pprintf(prn, A_("month %s?\n"), s);
-		    pd = 12;
+		if (dashQ) {
+		    if (p > 0 && p < 5) {
+			pprintf(prn, A_("quarter %d?\n"), p);
+			pd = 4;
+		    } else {
+			pprintf(prn, "quarter %d: not possible\n", p);
+		    }
 		} else {
-		    pprintf(prn, "month %d: not possible\n", p);
+		    if (p > 0 && p < 13) {
+			pprintf(prn, A_("month %s?\n"), s);
+			pd = 12;
+		    } else {
+			pprintf(prn, "month %d: not possible\n", p);
+		    }
 		}
 	    }
 	    strcpy(subp, s);
 	    if (format != NULL && (pd == 4 || pd == 12)) {
-		sprintf(format, "%%d%c%%d", sep);
+		if (dashQ) {
+		    sprintf(format, "%%d%cQ%%d", sep);
+		} else {
+		    sprintf(format, "%%d%c%%d", sep);
+		}
 	    }
 	}
     }
