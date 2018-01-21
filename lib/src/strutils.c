@@ -874,6 +874,8 @@ char **gretl_string_split_quoted (const char *s, int *n,
     char *substr;
     char **S;
 
+    /* FIXME this function is dodgy! */
+
     *err = 0;
     ignore = sep != NULL ? sep : " \t\n";
 

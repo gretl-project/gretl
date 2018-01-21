@@ -6845,7 +6845,8 @@ static NODE *strsplit_node (NODE *l, NODE *r, parser *p)
 	    char **S;
 	    int ns = 0;
 
-	    S = gretl_string_split_quoted(s, &ns, NULL, &p->err);
+	    // S = gretl_string_split_quoted(s, &ns, NULL, &p->err);
+	    S = gretl_string_split(s, &ns, " \t\n");
 	    if (!p->err) {
 		ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
 	    }
