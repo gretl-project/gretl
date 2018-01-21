@@ -869,12 +869,9 @@ char **gretl_string_split_quoted (const char *s, int *n,
     const char *ignore;
     const char *q, *p = s;
     int i, len, m = 0;
-    int quoted = 0;
-    int grabit;
+    int grabit, quoted;
     char *substr;
     char **S;
-
-    /* FIXME this function is dodgy! */
 
     *err = 0;
     ignore = sep != NULL ? sep : " \t\n";
@@ -884,33 +881,26 @@ char **gretl_string_split_quoted (const char *s, int *n,
     while (*p) {
 	p += strspn(p, ignore);
 	if (*p == '"') {
-	    if (quoted) {
-		/* reached the end of quoted substring */
-		m++;
-	    } else {
-		/* starting a quoted substring */
-		q = strchr(p + 1, '"');
-		if (q == NULL) {
-		    *err = E_PARSE;
-		    return NULL;
-		}
-		p = q - 1;
+	    /* quoted substring */
+	    m++;
+	    q = strchr(p + 1, '"');
+	    if (q == NULL) {
+		*err = E_PARSE;
+		return NULL;
 	    }
-	    quoted = !quoted;
-	} else if (!quoted) {
+	    p = q;
+	} else {
 	    len = strcspn(p, ignore);
 	    if (len > 0) {
-		/* an unquoted substring */
+		/* unquoted substring */
 		m++;
 		p += len - 1;
 	    }
 	}
+	if (*p == '\0') {
+	    break;
+	}
 	p++;
-    }
-
-    if (quoted != 0) {
-	/* unbalanced quotes */
-	*err = E_PARSE;
     }
 
     if (*err || m == 0) {
