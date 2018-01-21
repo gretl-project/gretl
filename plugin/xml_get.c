@@ -26,7 +26,7 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
-#define SDMX_NS 0 /* not just yet */
+#define SDMX_NS 1 /* experimental */
 
 #if SDMX_NS
 # include <libxml/xpathInternals.h>
