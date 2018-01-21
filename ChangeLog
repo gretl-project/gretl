@@ -1,4 +1,6 @@
 version 2017e, in progress
+- New function linesplit(): returns array of substrings by
+  splitting on newlines
 - Fix bug: setting of a series as "discrete" via the GUI got
   broken
 - Fix bug: the --www option for opening a database file got
