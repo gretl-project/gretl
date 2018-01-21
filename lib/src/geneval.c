@@ -6688,13 +6688,19 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
     if (starting(p)) {
 	const char *sr, *sl = l->v.str;
 
-	if (r->t != STR) {
+	if (f == F_XMLGET && r->t == ARRAY) {
+	    if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
+		p->err = E_TYPES;
+	    }
+	} else if (r->t != STR) {
 	    p->err = E_TYPES;
-	} else {
+	}
+
+	if (!p->err) {
 	    ret = aux_string_node(p);
 	}
 
-	if (ret == NULL) {
+	if (p->err) {
 	    return NULL;
 	}
 

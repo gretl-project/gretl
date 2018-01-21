@@ -129,7 +129,7 @@ static int xml_get_multi (xmlDocPtr doc,
 
 /*
   @data: XML buffer.
-  @path: either a single string containing an XPath specification,
+  @ppath: either a single string containing an XPath specification,
    or an array of such strings
   @ptype: either GRETL_TYPE_STRING or GRETL_TYPE_STRINGS, depending
   on the type of the second argument.
