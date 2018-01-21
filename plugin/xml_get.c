@@ -26,6 +26,12 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
+#define SDMX_NS 0 /* not just yet */
+
+#if SDMX_NS
+# include <libxml/xpathInternals.h>
+#endif
+
 static void report_xml_error (xmlError *xerr)
 {
     if (xerr->code) {
@@ -127,6 +133,28 @@ static int xml_get_multi (xmlDocPtr doc,
     return err;
 }
 
+#if SDMX_NS
+
+/* register the SDMX "message" and "data" namespaces */
+
+static int add_sdmx_namespaces (xmlXPathContextPtr ctx)
+{
+    int err;
+
+    err = xmlXPathRegisterNs(ctx, (const xmlChar *) "message", (const xmlChar *)
+			     "http://www.sdmx.org/resources/sdmxml/schemas/"
+			     "v2_1/message");
+    if (!err) {
+	err = xmlXPathRegisterNs(ctx, (const xmlChar *) "data", (const xmlChar *)
+				 "http://www.sdmx.org/resources/sdmxml/schemas/"
+				 "v2_1/data/structurespecific");
+    }
+
+    return err;
+}
+
+#endif
+
 /*
   @data: XML buffer.
   @ppath: either a single string containing an XPath specification,
@@ -175,6 +203,12 @@ char *xml_get (const char *data, void *ppath,
 	xmlFreeDoc(doc);
 	return NULL;
     }
+
+#if SDMX_NS /* experimental: may or may not really be needed */
+    if (strstr(data, "message:DataSet")) {
+	add_sdmx_namespaces(context);
+    }
+#endif
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
