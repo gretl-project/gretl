@@ -179,7 +179,7 @@ gretl_array *gretl_array_from_strings (char **S, int n,
 
     A = gretl_array_new(GRETL_TYPE_STRINGS, 0, err);
 
-    if (A != NULL) {
+    if (A != NULL && n > 0) {
 	if (copy) {
 	    A->data = (void **) strings_array_dup(S, n);
 	    if (A->data == NULL) {

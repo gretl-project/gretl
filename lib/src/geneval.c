@@ -6802,7 +6802,7 @@ static const char *advance_to_split (const char *s)
     return (n == m)? NULL : s + n;
 }
 
-static NODE *strsplit_node (NODE *l, NODE *r, parser *p)
+static NODE *strsplit_node (int f, NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -6810,7 +6810,7 @@ static NODE *strsplit_node (NODE *l, NODE *r, parser *p)
 	const char *s = l->v.str;
 	int k = 0;
 
-	if (r->t != EMPTY) {
+	if (r != NULL && r->t != EMPTY) {
 	    k = node_get_int(r, p);
 	    if (k < 1) {
 		p->err = E_DATA;
@@ -6842,14 +6842,14 @@ static NODE *strsplit_node (NODE *l, NODE *r, parser *p)
 	    }
 	} else if (!p->err) {
 	    /* returning an array of strings */
-	    char **S;
+	    char **S = NULL;
 	    int ns = 0;
 
-#if 0 /* changed 2018-01-20 */
-	    S = gretl_string_split_quoted(s, &ns, NULL, &p->err);
-#else
-	    S = gretl_string_split(s, &ns, " \t\n");
-#endif
+	    if (f == F_LINESPLIT) {
+		S = gretl_string_split_lines(s, &ns);
+	    } else {
+		S = gretl_string_split(s, &ns, " \t\r\n");
+	    }
 	    if (!p->err) {
 		ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
 	    }
@@ -14966,11 +14966,18 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_STRSPLIT:
 	if (l->t == STR && empty_or_num(r)) {
-	    ret = strsplit_node(l, r, p);
+	    ret = strsplit_node(t->t, l, r, p);
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
 			    (l->t == STR)? NUM : STR,
 			    (l->t == STR)? r : l, p);
+	}
+	break;
+    case F_LINESPLIT:
+	if (l->t == STR) {
+	    ret = strsplit_node(t->t, l, NULL, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
     case F_GETLINE:

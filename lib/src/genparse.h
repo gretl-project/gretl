@@ -289,6 +289,7 @@ enum {
     F_SLEEP,
     F_GETINFO,
     F_CDUMIFY,
+    F_LINESPLIT,
     HF_CINV,
     HF_CTRAN,
     HF_CEXP,

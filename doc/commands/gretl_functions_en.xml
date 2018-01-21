@@ -5189,7 +5189,24 @@
 	</para>
       </description>
     </function>
-    
+
+    <function name="linesplit" section="strings" output="strings">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an array of strings, one per line in the argument
+	  <argname>s</argname>. The newline character is trimmed from
+	  the returned strings; blank lines in <argname>s</argname>
+	  are preserved.
+	</para>
+	<para>
+	  See also <fncref targ="strsplit"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -9097,6 +9114,9 @@
         string favorite = strsplit(basket, 3)
         eval favorite
     </code>
+    <para>
+      See also <fncref targ="linesplit"/>.
+    </para>
       </description>
     </function>
 

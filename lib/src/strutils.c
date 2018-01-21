@@ -847,6 +847,72 @@ char **gretl_string_split (const char *s, int *n,
 }
 
 /**
+ * gretl_string_split_lines:
+ * @s: the source string.
+ * @n: location to receive the number of substrings.
+ *
+ * Parses @s into a set of zero or more substrings, one per
+ * complete line of @s, and creates an array of those substrings.
+ * On sucessful exit @n holds the number of substrings.
+ *
+ * Returns: the allocated array or NULL in case of failure.
+ */
+
+char **gretl_string_split_lines (const char *s, int *n)
+{
+    const char *p = s;
+    int i, len, m = 0;
+    int err = 0;
+    char **S = NULL;
+
+    *n = 0;
+
+    while (*p) {
+	if (*p == '\n') {
+	    m++;
+	}
+	p++;
+    }
+
+    if (m == 0) {
+	return NULL;
+    }
+
+    S = strings_array_new(m);
+    if (S == NULL) {
+	return NULL;
+    }
+
+    p = s;
+    i = 0;
+
+    while (*p && i < m) {
+	len = strcspn(p, "\r\n");
+	S[i] = gretl_strndup(p, len);
+	if (S[i] == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+	i++;
+	p += len;
+	if (*p == '\r') p++;
+	if (*p == '\n') p++;
+	if (*p == '\0') {
+	    break;
+	}
+    }
+
+    if (err) {
+	strings_array_free(S, m);
+	S = NULL;
+    } else {
+	*n = m;
+    }
+
+    return S;
+}
+
+/**
  * gretl_string_split_quoted:
  * @s: the source string.
  * @n: location to receive the number of substrings.
