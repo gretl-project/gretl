@@ -864,6 +864,77 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
     }
 }
 
+/* Types of data files supported by "Open" */
+
+typedef enum {
+    DATA_GDT,
+    DATA_CSV,
+    DATA_TXT,
+    DATA_GNM,
+    DATA_ODS,
+    DATA_XLS,
+    DATA_XLX,
+    DATA_DTA,
+    DATA_WF1,
+    DATA_SAV,
+    DATA_XPT,
+    DATA_OCT,
+    DATA_JMU,
+    DATA_ALL
+} OpenDataType;
+
+struct open_data_mapper {
+    OpenDataType type;
+    const char *desc;
+    const char *pat;
+};
+
+static struct open_data_mapper data_mappers[] = {
+    { DATA_GDT, N_("Gretl datafiles (*.gdt, *.gdtb)"), "*.gdt" },
+    { DATA_CSV, N_("CSV files (*.csv)"), "*.csv", },
+    { DATA_TXT, N_("ASCII files (*.txt)"), "*.txt" },
+    { DATA_GNM, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" },
+    { DATA_ODS, N_("Open Document files (*.ods)"), "*.ods" },
+    { DATA_XLS, N_("Excel files (*.xls)"), "*.xls" },
+    { DATA_XLX, N_("Excel files (*.xlsx)"), "*.xlsx" },
+    { DATA_DTA, N_("Stata files (*.dta)"), "*.dta" },
+    { DATA_WF1, N_("Eviews files (*.wf1)"), "*.wf1" },
+    { DATA_SAV, N_("SPSS files (*.sav)"), "*.sav" },
+    { DATA_XPT, N_("SAS xport files (*.xpt)"), "*.xpt" },
+    { DATA_OCT, N_("Octave files (*.m)"), "*.m" },
+    { DATA_JMU, N_("JMulTi files (*.dat)"), "*.dat" },
+    { DATA_ALL, N_("all files (*.*)"), "*" }
+};
+
+static int n_data_mappers = G_N_ELEMENTS(data_mappers);
+
+static OpenDataType open_data_type;
+
+static GtkFileFilter *filesel_add_data_filter (GtkWidget *filesel,
+					       OpenDataType type)
+{
+    GtkFileFilter *filt = gtk_file_filter_new();
+    int i;
+
+    for (i=0; i<n_data_mappers; i++) {
+	if (type == data_mappers[i].type) {
+	    gtk_file_filter_set_name(filt, _(data_mappers[i].desc));
+	    gtk_file_filter_add_pattern(filt, data_mappers[i].pat);
+	    if (type == DATA_GDT) {
+		gtk_file_filter_add_pattern(filt, "*.gdtb");
+	    } else {
+		maybe_upcase_filter_pattern(filt, data_mappers[i].pat);
+	    }
+	    g_object_set_data(G_OBJECT(filt), "OpenDataType",
+			      GINT_TO_POINTER(type));
+	    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
+	    break;
+	}
+    }
+
+    return filt;
+}
+
 static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
 					  const char *desc,
 					  const char *pat)
@@ -876,18 +947,6 @@ static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 
     return filt;
-}
-
-static void filesel_add_native_data_filter (GtkWidget *filesel)
-{
-    const char *desc = N_("Gretl datafiles (*.gdt, *.gdtb)");
-    GtkFileFilter *filt = gtk_file_filter_new();
-
-    gtk_file_filter_set_name(filt, _(desc));
-    gtk_file_filter_add_pattern(filt, "*.gdt");
-    gtk_file_filter_add_pattern(filt, "*.gdtb");
-
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
 static int script_filter_index (int role)
@@ -931,20 +990,15 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
 	multi = 0;	
     } else if (action == OPEN_DATA || action == APPEND_DATA) {
-	filesel_add_native_data_filter(filesel);
-	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv");
-	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
-	filesel_add_filter(filesel, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric");
-	filesel_add_filter(filesel, N_("Open Document files (*.ods)"), "*.ods");
-	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls");
-	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx");
-	filesel_add_filter(filesel, N_("Stata files (*.dta)"), "*.dta");
-	filesel_add_filter(filesel, N_("Eviews files (*.wf1)"), "*.wf1");
-	filesel_add_filter(filesel, N_("SPSS files (*.sav)"), "*.sav");
-	filesel_add_filter(filesel, N_("SAS xport files (*.xpt)"), "*.xpt");
-	filesel_add_filter(filesel, N_("Octave files (*.m)"), "*.m");
-	filesel_add_filter(filesel, N_("JMulTi files (*.dat)"), "*.dat");
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
+	GtkFileFilter *flt;
+	int i;
+
+	for (i=0; i<n_data_mappers; i++) {
+	    flt = filesel_add_data_filter(filesel, data_mappers[i].type);
+	    if (data_mappers[i].type == open_data_type) {
+		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt);
+	    }
+	}
     } else if (action == OPEN_SCRIPT) {
 	GtkFileFilter *flt[8] = {0};
 	int fidx;
@@ -1032,7 +1086,7 @@ static void add_compression_level_option (GtkWidget *filesel)
 				      hbox);
 }
 
-static void check_native_save_filter (GtkWidget *filesel)
+static void check_native_data_save_filter (GtkWidget *filesel)
 {
     GtkFileFilter *filter;
     const gchar *filter_name;
@@ -1044,6 +1098,15 @@ static void check_native_save_filter (GtkWidget *filesel)
     if (strstr(filter_name, "gdtb") != NULL) {
 	gdtb_save = 1;
     }
+}
+
+static void peek_data_open_filter (GtkWidget *filesel)
+{
+    GtkFileFilter *filter;
+
+    filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(filesel));
+    open_data_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(filter),
+						       "OpenDataType"));
 }
 
 static void set_up_filesel_filters (GtkWidget *filesel,
@@ -1195,7 +1258,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gchar *fname;
 
 	if (action == SAVE_DATA || action == SAVE_DATA_AS) {
-	    check_native_save_filter(filesel);
+	    check_native_data_save_filter(filesel);
+	} else if (action == OPEN_DATA) {
+	    /* we'll want to record this choice */
+	    peek_data_open_filter(filesel);
 	}
 
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
