@@ -1897,6 +1897,62 @@ static int merge_lengthen_series (DATASET *dset,
     return err;
 }
 
+#if 0 /* not yet (maybe usable with DND */
+
+int basic_data_merge_check (const DATASET *dset,
+			    DATASET *addset)
+{
+    int dayspecial = 0;
+    int yrspecial = 0;
+    int addsimple = 0;
+    int addvars = 0;
+    int addobs = 0;
+    int offset = 0;
+    int err = 0;
+
+    /* first see how many new vars we have */
+    addvars = count_new_vars(dset, addset, NULL);
+    if (addvars < 0) {
+	return 1;
+    }
+
+    if (dated_daily_data(dset) && dated_daily_data(addset)) {
+	dayspecial = 1;
+    }
+
+    if (simple_range_match(dset, addset, &offset)) {
+	addsimple = 1;
+    } else if (dset->pd != addset->pd) {
+	err = 1;
+    }
+
+    if (!err) {
+	if (!addsimple) {
+	    addobs = compare_ranges(dset, addset, addvars, &offset,
+				    &yrspecial, &err);
+	}
+	if (!err && addobs <= 0 && addvars == 0) {
+	    addobs = just_append_rows(dset, addset, &offset);
+	}
+    }
+
+    if (!err && (addobs < 0 || addvars < 0)) {
+	err = E_DATA;
+    }
+
+    if (!err && dset->markers != addset->markers) {
+	if (addobs == 0 && addvars == 0) {
+	    err = E_DATA;
+	} else if (addset->n != dset->n && !yrspecial && !dayspecial) {
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
+#endif
+
 #define simple_structure(p) (p->structure == TIME_SERIES ||		\
 			     p->structure == SPECIAL_TIME_SERIES ||	\
 			     (p->structure == CROSS_SECTION &&		\
