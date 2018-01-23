@@ -866,8 +866,10 @@ static void filter_dialog (filter_info *finfo)
     gtk_widget_show_all(dlg);
 }
 
-static void print_gp_data (filter_info *finfo, const double *obs,
-			   const double *x, FILE *fp)
+static void print_gp_filter_data (filter_info *finfo,
+				  const double *obs,
+				  const double *x,
+				  FILE *fp)
 {
     int t;
 
@@ -954,9 +956,9 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	ztitle = g_strdup_printf(_("%s (smoothed)"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
-	print_gp_data(finfo, obs, dataset->Z[v], fp);
+	print_gp_filter_data(finfo, obs, dataset->Z[v], fp);
 	fputs("e , \\\n", fp);
-	print_gp_data(finfo, obs, fx, fp);
+	print_gp_filter_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
 
 	fputs("set size 1.0,0.38\n", fp);
@@ -964,13 +966,13 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("set xzeroaxis\n", fp);
 	title = g_strdup_printf(_("Cyclical component of %s"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
-	print_gp_data(finfo, obs, u, fp);
+	print_gp_filter_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
 	fputs("unset multiplot\n", fp);
     } else if (finfo->ftype == FILTER_FD) {
 	ztitle = g_strdup_printf("fracdiff(%s, %g)", finfo->vname, finfo->lambda);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", ztitle);
-	print_gp_data(finfo, obs, fx, fp);
+	print_gp_filter_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
      } else if (finfo->graph_opt & FILTER_GRAPH_TREND) {
 	if (zkeypos == 'L') {
@@ -980,9 +982,9 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	ztitle = g_strdup_printf(_("%s (smoothed)"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
-	print_gp_data(finfo, obs, dataset->Z[v], fp);
+	print_gp_filter_data(finfo, obs, dataset->Z[v], fp);
 	fputs("e , \\\n", fp);
-	print_gp_data(finfo, obs, fx, fp);
+	print_gp_filter_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
 	if (finfo->ftype == FILTER_BK) {
@@ -995,7 +997,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fprintf(fp, "set title '%s'\n", title); 
 	fputs("set xzeroaxis\n", fp);
 	fprintf(fp, "plot '-' using 1:2 title '' w lines\n");
-	print_gp_data(finfo, obs, u, fp);
+	print_gp_filter_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
     }	
 
