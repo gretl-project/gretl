@@ -31,11 +31,6 @@
 #include "uservar_priv.h"
 #include "gretl_cmatrix.h"
 
-/* varname hashing: should be OK, but here's
-   where you can turn it off 
-*/
-#define USE_HASH 1
-
 #define UVDEBUG 0
 #define HDEBUG 0
 
@@ -479,8 +474,6 @@ static int uvar_index (user_var *u)
 
 #endif
 
-#if USE_HASH
-
 /* Try to guess whether the currently-called function is big enough
    (number of lines of code) to make it worthwhile to construct a hash
    table for uservars at its level of execution, namely @uvh1, given
@@ -611,37 +604,6 @@ user_var *get_user_var_of_type_by_name (const char *name,
 
     return u;
 }
-
-#else
-
-user_var *get_user_var_of_type_by_name (const char *name,
-					GretlType type)
-{
-    int i, imin = 0, d = gretl_function_depth();
-    user_var *u = NULL;
-
-    if (name == NULL || *name == '\0') {
-	return NULL;
-    }
-
-    if (type == GRETL_TYPE_DOUBLE) {
-	/* support "auxiliary scalars" mechanism */
-	imin = scalar_imin;
-    }    
-
-    for (i=imin; i<n_vars; i++) {
-	if (uvars[i]->level == d && 
-	    (type == GRETL_TYPE_ANY || uvars[i]->type == type) &&
-	    !strcmp(uvars[i]->name, name)) {
-	    u = uvars[i];
-	    break;
-	}
-    }
-
-    return u;
-}
-
-#endif /* USE_HASH or not */
 
 user_var *get_user_var_by_name (const char *name)
 {
