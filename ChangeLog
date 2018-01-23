@@ -14,6 +14,8 @@ version 2017e, in progress
   of selected series
 - GUI plot editor: support selection of dash patterns for
   plots using lines
+- GUI file chooser for "Open data": remember the last chosen
+  file type and set the filter accordingly
 - Build fix: correct undefined symbol in cephes/iv.c
 - Boxplots: fix for incorrect extent of "whiskers" in some
   cases
