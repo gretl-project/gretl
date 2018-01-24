@@ -864,73 +864,47 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
     }
 }
 
-/* Types of data files supported by "Open" */
-
-typedef enum {
-    DATA_GDT,
-    DATA_CSV,
-    DATA_TXT,
-    DATA_GNM,
-    DATA_ODS,
-    DATA_XLS,
-    DATA_XLX,
-    DATA_DTA,
-    DATA_WF1,
-    DATA_SAV,
-    DATA_XPT,
-    DATA_OCT,
-    DATA_JMU,
-    DATA_ALL
-} OpenDataType;
-
-struct open_data_mapper {
-    OpenDataType type;
+struct filter_info {
     const char *desc;
     const char *pat;
 };
 
-static struct open_data_mapper data_mappers[] = {
-    { DATA_GDT, N_("Gretl datafiles (*.gdt, *.gdtb)"), "*.gdt" },
-    { DATA_CSV, N_("CSV files (*.csv)"), "*.csv", },
-    { DATA_TXT, N_("ASCII files (*.txt)"), "*.txt" },
-    { DATA_GNM, N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" },
-    { DATA_ODS, N_("Open Document files (*.ods)"), "*.ods" },
-    { DATA_XLS, N_("Excel files (*.xls)"), "*.xls" },
-    { DATA_XLX, N_("Excel files (*.xlsx)"), "*.xlsx" },
-    { DATA_DTA, N_("Stata files (*.dta)"), "*.dta" },
-    { DATA_WF1, N_("Eviews files (*.wf1)"), "*.wf1" },
-    { DATA_SAV, N_("SPSS files (*.sav)"), "*.sav" },
-    { DATA_XPT, N_("SAS xport files (*.xpt)"), "*.xpt" },
-    { DATA_OCT, N_("Octave files (*.m)"), "*.m" },
-    { DATA_JMU, N_("JMulTi files (*.dat)"), "*.dat" },
-    { DATA_ALL, N_("all files (*.*)"), "*" }
+static struct filter_info data_filters[] = {
+    { N_("Gretl datafiles (*.gdt, *.gdtb)"), "*.gdt" },
+    { N_("CSV files (*.csv)"), "*.csv", },
+    { N_("ASCII files (*.txt)"), "*.txt" },
+    { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" },
+    { N_("Open Document files (*.ods)"), "*.ods" },
+    { N_("Excel files (*.xls)"), "*.xls" },
+    { N_("Excel files (*.xlsx)"), "*.xlsx" },
+    { N_("Stata files (*.dta)"), "*.dta" },
+    { N_("Eviews files (*.wf1)"), "*.wf1" },
+    { N_("SPSS files (*.sav)"), "*.sav" },
+    { N_("SAS xport files (*.xpt)"), "*.xpt" },
+    { N_("Octave files (*.m)"), "*.m" },
+    { N_("JMulTi files (*.dat)"), "*.dat" },
+    { N_("all files (*.*)"), "*" }
 };
 
-static int n_data_mappers = G_N_ELEMENTS(data_mappers);
+static int n_data_filters = G_N_ELEMENTS(data_filters);
 
-static OpenDataType open_data_type;
+static int open_filter_index;
 
 static GtkFileFilter *filesel_add_data_filter (GtkWidget *filesel,
-					       OpenDataType type)
+					       int i)
 {
     GtkFileFilter *filt = gtk_file_filter_new();
-    int i;
 
-    for (i=0; i<n_data_mappers; i++) {
-	if (type == data_mappers[i].type) {
-	    gtk_file_filter_set_name(filt, _(data_mappers[i].desc));
-	    gtk_file_filter_add_pattern(filt, data_mappers[i].pat);
-	    if (type == DATA_GDT) {
-		gtk_file_filter_add_pattern(filt, "*.gdtb");
-	    } else {
-		maybe_upcase_filter_pattern(filt, data_mappers[i].pat);
-	    }
-	    g_object_set_data(G_OBJECT(filt), "OpenDataType",
-			      GINT_TO_POINTER(type));
-	    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
-	    break;
-	}
+    gtk_file_filter_set_name(filt, _(data_filters[i].desc));
+    gtk_file_filter_add_pattern(filt, data_filters[i].pat);
+    if (i == 0) {
+	gtk_file_filter_add_pattern(filt, "*.gdtb");
+    } else {
+	maybe_upcase_filter_pattern(filt, data_filters[i].pat);
     }
+    g_object_set_data(G_OBJECT(filt), "filter-index",
+		      GINT_TO_POINTER(i));
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 
     return filt;
 }
@@ -993,9 +967,9 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	GtkFileFilter *flt;
 	int i;
 
-	for (i=0; i<n_data_mappers; i++) {
-	    flt = filesel_add_data_filter(filesel, data_mappers[i].type);
-	    if (data_mappers[i].type == open_data_type) {
+	for (i=0; i<n_data_filters; i++) {
+	    flt = filesel_add_data_filter(filesel, i);
+	    if (i == open_filter_index) {
 		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt);
 	    }
 	}
@@ -1105,8 +1079,8 @@ static void peek_data_open_filter (GtkWidget *filesel)
     GtkFileFilter *filter;
 
     filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(filesel));
-    open_data_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(filter),
-						       "OpenDataType"));
+    open_filter_index = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(filter),
+							  "filter-index"));
 }
 
 static void set_up_filesel_filters (GtkWidget *filesel,
