@@ -2659,9 +2659,7 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 		continue;
 	    }
 	    yt = (d[t] == gi->dvals->val[i])? y[t] : NADBL;
-	    if (na(yt)) {
-		fprintf(fp, "%.10g ?\n", xt);
-	    } else {
+	    if (!na(yt)) {
 		fprintf(fp, "%.10g %.10g", xt, yt);
 		if (!(gi->flags & GPT_TS)) {
 		    if (dset->markers) {
