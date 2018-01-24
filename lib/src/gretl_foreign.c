@@ -2203,7 +2203,23 @@ static void set_path_for_Rlib (const char *Rhome)
     }
 }
 
-#endif /* WIN32 */
+#else /* !WIN32 */
+
+static void try_set_R_home (void)
+{
+    const char *libpath = gretl_rlib_path();
+    char *s, *tmp;
+
+    tmp = gretl_strdup(libpath);
+    s = strstr(tmp, "/lib/libR");
+    if (s != NULL) {
+	*s = '\0';
+	gretl_setenv("R_HOME", tmp);
+    }
+    free(tmp);
+}
+
+#endif /* WIN32 or not */
 
 /* Initialize the R library for use with gretl.  Note that we only
    need do this once per gretl session.  We need to check that the
@@ -2223,9 +2239,7 @@ static int gretl_Rlib_init (void)
 #ifndef WIN32
     Rhome = getenv("R_HOME");
     if (Rhome == NULL) {
-	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
-	err = E_EXTERNAL;
-	goto bailout;
+	try_set_R_home();
     }
 #endif
 
@@ -2532,6 +2546,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
     res = R_catch(current_call, VR_GlobalEnv, &err);
     if (err) {
+	fprintf(stderr, "gretl_R_function_exec: R_catch failed on %s\n", name);
 	return E_EXTERNAL;
     }
 

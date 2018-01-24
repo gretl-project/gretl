@@ -8306,6 +8306,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
     /* first find the function */
     p->err = gretl_R_get_call(funname, argc);
     if (p->err) {
+	fprintf(stderr, "eval_Rfunc: can't find function %s\n", funname);
 	return NULL;
     }
 
