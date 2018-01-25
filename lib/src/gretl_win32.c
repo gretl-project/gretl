@@ -889,15 +889,12 @@ int R_path_from_registry (char *s, int which)
     }
 
     if (!err && which != RBASE) {
-	FILE *fp;
+	int openerr = 0;
 
 	strcat(s, "\\bin\\");
 	append_R_filename(s, which);
-
-	fp = fopen(s, "r");
-	if (fp != NULL) {
-	    fclose(fp);
-	} else {
+	openerr = gretl_test_fopen(s, "rb");
+	if (openerr) {
 #ifdef _WIN64
 	    const char *arch[] = {
 		"x64\\",
@@ -914,23 +911,26 @@ int R_path_from_registry (char *s, int which)
 	    *p = '\0';
 	    strcat(s, arch[0]);
 	    append_R_filename(s, which);
-	    fp = fopen(s, "r");
-	    if (fp != NULL) {
-		fclose(fp);
-	    } else {
+	    openerr = gretl_test_fopen(s, "rb");
+	    if (openerr) {
 		/* try for alternate arch */
 		*p = '\0';
 		strcat(s, arch[1]);
 		append_R_filename(s, which);
-		fp = fopen(s, "r");
-		if (fp != NULL) {
-		    fclose(fp);
-		} else {
+		openerr = gretl_test_fopen(s, "rb");
+		if (openerr) {
 		    err = E_FOPEN;
 		}
 	    }
 	}
     }
+
+    if (err) {
+	/* scrub invalid path */
+	*s = '\0';
+    }
+
+    fprintf(stderr, "R_path_from_registry(%d): '%s'\n", s);
 
     return err;
 }

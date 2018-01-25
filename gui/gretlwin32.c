@@ -128,6 +128,7 @@ static int Rgui_path_from_registry (void)
 {
     char tmp[MAX_PATH];
     int err;
+
     err = R_path_from_registry(tmp, RGUI);
 
     if (!err) {
@@ -266,7 +267,9 @@ void gretl_win32_debug_init (int debug)
 {
     if (debug) {
 	/* This doesn't work if gretl is launched
-	   from an MSYS2 terminal window
+	   from an MSYS2 terminal window, and in that
+	   context we should have OSTYPE=msys in the
+	   environment.
 	*/
 	char *s = getenv("OSTYPE");
 
