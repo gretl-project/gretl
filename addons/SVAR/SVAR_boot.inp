@@ -8,23 +8,35 @@ function void boot_printout(int type, int n, int rep,
   printf "Bootstrap results (%d replications, %d failed)\n", \
     rep + failed, failed
 
-  #   printf "Spar_mat: %d x %d", rows(Spar_mat), cols(Spar_mat)
-  if (type != 3) && ( cols(Spar_mat) == 2 * n2 )	# long-run matrix at the end!  
+  if (type != 3) && ( cols(Spar_mat) == 2 * n2 )	
+    # Long-run matrix at the end exists!
+    # And so this is a model with long-run restrictions (Bl-Quah-style or SVEC),
+    # or the user forced it via calc_lr.
+      
     matrix bK = mshape( bm[1:n2], n, n)
     printStrMat(bK, bV[1:n2, 1:n2], "C")
     matrix bL = mshape( bm[n2+1:], n, n)
     printStrMat(bL, bV[1+n2: , 1+n2: ], "LongRun")
-  endif
+    
+  # endif
 
-  if (type == 1) || (type == 2) || (type == 4) 
-    # C model without printing the long-run matrix (does type 4 make sense?)
+  elif type != 3 #  was: (type == 1) || (type == 2) || (type == 4) 
+    
+    # C model without printing the long-run matrix 
+    # (SVEC / type 4 should not happen here, because it has long-run
+    #  constraints by construction)
+    
     matrix bK = mshape(bm,n,n)
     printStrMat(bK, bV, "C")
+    
   elif type == 3	# AB model
     matrix bmA = mshape( bm[1:n2], n, n)
     printStrMat(bmA, bV[1:n2, 1:n2], "A")
     matrix bmB = mshape( bm[n2+1:], n, n)
     printStrMat(bmB, bV[1+n2:,1+n2:], "B")
+    
+  else
+    funcerr "shouldn't happen"
   endif
 end function
 
@@ -143,7 +155,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
   set loop_maxiter 16384
   
   # The result matrix (IRFs further below)
-  if (type == 3) || (rows(obj.Rd1l) || obj.calc_lr)
+  if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
     # save either A,B (for type 3) or C and the long-run matrix
     matrix Spar_mat = zeros(rep, 2 * n2)
     
@@ -224,9 +236,10 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
       
       # FIXME: (Sven) The following SVEC check can simply be removed after 
       # we verify that the call to get_full_Rd() works alright in this case!
-      if type == 4 && rows(bobj.Rd1l) 
-        funcerr "Bootstrap in SVEC with further long-run restrictions not supported (yet)."
-	    endif
+      # Jan 2018: try to remove it...:
+      # if type == 4 && rows(bobj.Rd1l) 
+      #   funcerr "Bootstrap in SVEC with further long-run restrictions not supported (yet)."
+	    # endif
 
       matrix fullRd = get_full_Rd(&bobj)
       matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
@@ -268,12 +281,15 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
         bobj.C = K	# was: bobj.S1 = K	/ is used in doIRF()
         Spar_mat[i, 1:n2] = vec(K)'		# was just [i,]
         
-        /* New Oct 2017: Also bootstrap the long-run matrix if wanted   */        
-        if (type < 3) && ( rows(bobj.Rd1l) || bobj.calc_lr )	
+        /* New Oct 2017: Also bootstrap the long-run matrix if wanted   
+           Jan 2018: add type 4 */        
+        if ( type < 3 && ( rows(bobj.Rd1l) || bobj.calc_lr ) ) || type == 4	
           # (a plain or C model with long-run constraints, or user switch)          
-          # long-run matrix (C1 comes from get_full_Rd() above):
-          matrix bobj.lrmat = bobj.C1 * bobj.C	# was: C1mat(bobj.VARpar) * bobj.S1
+          # long-run matrix (C1 comes from get_full_Rd() above (except type 1)):
           
+          matrix C1 = (type == 2 || type == 4) ? bobj.C1 : C1mat(bobj.VARpar)  
+          matrix bobj.lrmat = C1 * bobj.C
+                    
           # attach it to the other bootstrap result
           Spar_mat[i, n2+1 : 2*n2] = vec(bobj.lrmat)'
         endif

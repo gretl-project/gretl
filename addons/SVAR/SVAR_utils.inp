@@ -49,7 +49,7 @@ function matrix vecm_det(int T, int dcase)
     matrix mreg ~= seq(1,T)'
   endif
 
-    return mreg
+  return mreg
 end function
     
     
@@ -122,60 +122,60 @@ function scalar vecm_est(bundle *SVARobj)
     matrix mreg ~= SVARobj.X 
   endif
     
-    # extra lags
-    if p > 1
-	mreg ~= mlag(dY, seq(1,p-1))
-    endif
+  # extra lags
+  if p > 1
+    mreg ~= mlag(dY, seq(1,p-1))
+  endif
 
-    # trim the first rows
-    if rows(mreg)>0
-	mreg = mreg[p+1:T,]
-	# printf "%d rows\n", rows(dep)
-	# printf "%8.3f\n", (dep[1:10,] ~ mreg[1:10,])
-	matrix olspar = mols(dep, mreg, &E)
-    else
-	matrix olspar = {}
-	E = dep
-    endif
+  # trim the first rows
+  if rows(mreg)>0
+    mreg = mreg[p+1:T,]
+    # printf "%d rows\n", rows(dep)
+    # printf "%8.3f\n", (dep[1:10,] ~ mreg[1:10,])
+    matrix olspar = mols(dep, mreg, &E)
+  else
+    matrix olspar = {}
+    E = dep
+  endif
 
-    df = T - (n*p + k - (n-r)) 
-    matrix Sigma = (E'E)./T
+  df = T - (n*p + k - (n-r)) 
+  matrix Sigma = (E'E)./T
 
-    # print olspar Sigma
+  # print olspar Sigma
     
-    # --- construct the various matrices required later
+  # --- construct the various matrices required later
 
-    rp = rows(olspar)
+  rp = rows(olspar)
 
-    # alpha first (should be before the gammas, if estimated)
-    if ols_al
-	ng = n*(p-1)
-	jalpha = olspar[rp-ng-r+1:rp-ng,]'
-    endif
+  # alpha first (should be before the gammas, if estimated)
+  if ols_al
+    ng = n*(p-1)
+    jalpha = olspar[rp-ng-r+1:rp-ng,]'
+  endif
     
-    # exogenous
+  # exogenous
 
-    if dcase == 1
-	matrix mu = {}
-	scalar nd = 0
-    elif dcase == 2
-	matrix mu = jalpha * jbeta[n+1,]
-	scalar nd = 0
-    elif dcase == 3
-	matrix mu = olspar[1,]
-	scalar nd = 1
-    elif dcase == 4
-	matrix mu =  olspar[1,] | (jalpha * jbeta[n+1,])'
-	scalar nd = 1
-    elif dcase == 5
-	matrix mu = olspar[1:2,]
-	scalar nd = 2
-    endif
+  if dcase == 1
+    matrix mu = {}
+    scalar nd = 0
+  elif dcase == 2
+    matrix mu = jalpha * jbeta[n+1,]
+    scalar nd = 0
+  elif dcase == 3
+    matrix mu = olspar[1,]
+    scalar nd = 1
+  elif dcase == 4
+    matrix mu =  olspar[1,] | (jalpha * jbeta[n+1,])'
+    scalar nd = 1
+  elif dcase == 5
+    matrix mu = olspar[1:2,]
+    scalar nd = 2
+  endif
 
-    if k > 0
-	matrix sel = nd + seq(0, k-1) 
-	mu = mu ~ olspar[sel,]
-    endif
+  if k > 0
+    matrix sel = nd + seq(0, k-1) 
+    mu = mu ~ olspar[sel,]
+  endif
 
   /*
      companion form in levels
@@ -205,7 +205,7 @@ function scalar vecm_est(bundle *SVARobj)
   SVARobj.step = 1
   SVARobj.LL0 = T*(n*log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
 
-    return err
+  return err
 
 end function
 
@@ -264,18 +264,18 @@ function matrix mat_exp(matrix theta, matrix Ss, bool force_pos[0])
 end function
 
 function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
-    n2 = rows(dat) 
-    n = int(sqrt(n2))
-    k = cols(dat)
+  n2 = rows(dat) 
+  n = int(sqrt(n2))
+  k = cols(dat)
 
-    Sigma = mshape(dat[,1],n,n)
-    Ss = dat[,2:k]
+  Sigma = mshape(dat[,1],n,n)
+  Ss = dat[,2:k]
 end function
 
 function scalar VARloglik(scalar T, matrix Sigma, matrix *C[null])
   # computes the (concentrated) loglikelihood for a VAR
   # the matrix C (such that in theory CC' = Sigma) may be null,
-  # for just-identified models
+    # for just-identified models
 
   n = rows(Sigma)
   ll = n * 1.83787706640934548355 # ln(2*$pi)
@@ -316,10 +316,10 @@ function scalar loglik(matrix *theta, matrix *dat, scalar modeltype)
 end function 
 
 function matrix InfoMat(matrix CorB, matrix S, matrix *A[null])
-    /*
-    merged from InfoMatC and InfoMatAB
-    First case C model (A is null), latter AB model.
-    */
+/*
+   merged from InfoMatC and InfoMatAB
+   First case C model (A is null), latter AB model.
+  */
   matrix tmp = isnull(A) ? I(rows(CorB)) : (A\CorB) | -I(rows(A))    
   tmp = S' (tmp ** inv(CorB'))    
   return tmp * N2_ify(tmp')
@@ -327,30 +327,30 @@ end function
 
 
 function matrix coeffVCV(matrix S, matrix *rhs, matrix *lhs[null])
-    # C or AB model
-    matrix IM = isnull(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
-    # (should be correct with new InfoMat)
+  # C or AB model
+  matrix IM = isnull(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
+  # (should be correct with new InfoMat)
   
   
-    # quick-dirty check for singularity
-    if rcond(IM)>1.0e-10
-        matrix iIM = invpd(IM)/$nobs
-    else
-        matrix evec
-        l = eigensym(IM, &evec)
-        printf "\n\nInformation matrix is not pd!!\n\n%12.5f\n", IM
-        printf "Eigenvalues:\n%12.5f\n", l 
-        matrix e = (l .< 1.0e-07)
-        printf "Troublesome eigenvectors:\n%12.5f\n", selifc(evec, e')
-        printf "S:\n%4.0f\n", S
-        matrix iIM = zeros(rows(IM), cols(IM))
-    endif
+  # quick-dirty check for singularity
+  if rcond(IM)>1.0e-10
+    matrix iIM = invpd(IM)/$nobs
+  else
+    matrix evec
+    l = eigensym(IM, &evec)
+    printf "\n\nInformation matrix is not pd!!\n\n%12.5f\n", IM
+    printf "Eigenvalues:\n%12.5f\n", l 
+    matrix e = (l .< 1.0e-07)
+    printf "Troublesome eigenvectors:\n%12.5f\n", selifc(evec, e')
+    printf "S:\n%4.0f\n", S
+    matrix iIM = zeros(rows(IM), cols(IM))
+  endif
 
-    return qform(S,iIM)
+  return qform(S,iIM)
 end function
 
 function void maybe_flip_columns(matrix C, matrix *X)
-  /*
+/*
    the objective here is to make X as similar as possible to C
    by flipping the sign of the columns. Used for bootstrapping, 
    to have IRFs with comparable signs.
@@ -377,6 +377,7 @@ function void printStrMat(matrix X, matrix V, string name)
   if rows(numzero) > 1
     se[numzero] = 0.0
   endif
+    
   cfse ~= se
   string parnames = ""
 
@@ -394,7 +395,7 @@ function void printStrMat(matrix X, matrix V, string name)
 end function
 
 function void SVAR_est_printout(bundle *mod)
-  scalar type = mod.type
+  # scalar type = mod.type
      
   printf "Optimization method = " 
   strings os = defarray("BFGS (numerical)", "BFGS (analytical)", \
@@ -404,21 +405,27 @@ function void SVAR_est_printout(bundle *mod)
      
   printf "Unconstrained Sigma:\n%12.5f\n", mod.Sigma
   
-  if type < 3  # plain or C-model
+  if mod.type < 3 || mod.type == 4 # plain or C-model, or (Jan 2018) SVEC 
+    # Standard C matrix
     printStrMat(mod.C, mod.vcv, "C")	# was mod.S1
-    
-    if rows(mod.Rd1l) || mod.calc_lr	# either long-run restr., or user wish
+
+    # Long-run matrix     
+    if rows(mod.Rd1l) || mod.calc_lr || mod.type == 4	
+      # either long-run restr., or user wish, or SVEC
       # (this could be much embellished, probably)
       printf "Estimated long-run matrix"
       if rows(mod.Rd1l)
-        printf " (restricted)\n"
+        printf " (restricted)"
       endif
+      printf "\n"
       
       matrix longrun = mod.lrmat
+      # round to zero for printout (also do it in general?)
+      longrun = (abs(longrun) .< 1e-15) ? 0.0 : longrun  
       print longrun
     endif
 
-  elif type == 3	# AB, new <Sven> 
+  elif mod.type == 3	# AB, new <Sven> 
     n2 = (mod.n)^2
     if mod.ka > 0
       printStrMat(mod.S1, mod.vcv[1:n2, 1:n2], "A")
@@ -431,7 +438,7 @@ function void SVAR_est_printout(bundle *mod)
 
   printf "  Log-likelihood = %g\n", mod.LL1
   if inbundle(mod, "LRoid")	# over-id test was done
-      printf "  Overidentification LR test = %g (%d df, pval = %g)\n\n", \
+    printf "  Overidentification LR test = %g (%d df, pval = %g)\n\n", \
       mod.LRoid[1], mod.LRoid[2], mod.LRoid[3]
   endif
   
@@ -439,10 +446,10 @@ end function
 
 # --------------------------
 /* This function was called smash_unstable_roots(), 
-renamed because its name was misleading (to Sven at least).
-The new name contains 'add' because the Psi input is added
-to the A input. 
-(Call changes needed only in SVAR_boot.inp.) 
+   renamed because its name was misleading (to Sven at least).
+   The new name contains 'add' because the Psi input is added
+   to the A input. 
+   (Call changes needed only in SVAR_boot.inp.) 
 */
 function scalar add_and_smash(matrix *A, const matrix Psi)
 

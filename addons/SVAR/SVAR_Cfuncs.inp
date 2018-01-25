@@ -26,15 +26,20 @@ function matrix Cmat(matrix theta, matrix Rd, bool force_pos[0])
 end function
 */
 
-function matrix C1mat(matrix A, bool VECM[0], 
-		      matrix *jalpha[null], matrix *jbeta[null])
+function matrix C1mat( const matrix A, bool VECM[0], 
+const matrix jalpha[null], const matrix jbeta[null])
+# (Jan 2018: used to be pointer args, coming from a time where it was necessary
+# for optional args; now changed to non-pointers)
+
   /*
       computes C(1) out of the autoregressive matrices; jalpha and jbeta
       are alpha and beta, which are used only if VECM is nonzero,
       that is under cointegration
       
-      (Remark Sven: here jbeta is (n,r) without coeffs for restr. terms
-      I guess. Different from jbeta (n+1,r) in other contexts (?). 
+      (Remark Sven: here jbeta was assumed to be (n,r) 
+      without coeffs for restr. terms
+      Different from jbeta (n+1,r) in other contexts (?).
+      We now (Jan 2018) make sure only rows 1:n are used. 
   */
   scalar n = rows(A)
   scalar p = cols(A) / n
@@ -44,8 +49,12 @@ function matrix C1mat(matrix A, bool VECM[0],
       tmp = mshape(sumr(tmp), n, n)    
       matrix ret = inv(I(n) - tmp)
   else # cointegrated
+    if !exists(jalpha) || !exists(jbeta)
+      funcerr "Need cointegration params for C1 in VECM!"
+    endif 
+    
       matrix aperp = nullspace(jalpha')
-      matrix bperp = nullspace(jbeta')
+      matrix bperp = nullspace(jbeta[1:n, ]')
       tmp = mshape(tmp*seq(1,p)', n, n)
       matrix ret = bperp * inv(aperp'tmp*bperp) * aperp'
   endif
