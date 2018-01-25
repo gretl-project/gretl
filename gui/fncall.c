@@ -2739,8 +2739,8 @@ int download_addon (const char *pkgname, char **local_path)
 	gchar *fullname = g_strdup_printf("%s%s.zip", path, pkgname);
 
 #if 1
-	fprintf(stderr, "uri   = '%s'\n", uri);
-	fprintf(stderr, "fname = '%s'\n", fullname);
+	fprintf(stderr, "download_addon: uri   = '%s'\n", uri);
+	fprintf(stderr, "download_addon: fname = '%s'\n", fullname);
 #endif
 
 	err = retrieve_public_file(uri, fullname);
