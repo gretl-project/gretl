@@ -2175,57 +2175,77 @@ void gretl_R_reset_error (void)
 
 #ifdef WIN32
 
+/* check whether the relevant R directory is already
+   in $PATH, and if not then try to arrange this.
+*/
+
 static void set_path_for_Rlib (const char *Rhome)
 {
+    char *orig_path = getenv("PATH");
+    gchar *R_path = NULL;
+
+    if (Rhome != NULL) {
 #ifdef _WIN64
-    const char *arch = "x64";
+	const char *arch = "x64";
 #else
-    const char *arch = "i386";
+	const char *arch = "i386";
 #endif
-    char *path = getenv("PATH");
-    gchar *Rpath;
+	/* build path entry from R_HOME spec */
+	R_path = g_strdup_printf("%s\\bin\\%s", Rhome, arch);
+    } else {
+	/* get path entry from DLL location? */
+	char *s;
 
-    Rpath = g_strdup_printf("%s\\bin\\%s", Rhome, arch);
-    fprintf(stderr, "set_path_for_Rlib: Rpath = '%s'\n", Rpath);
+	R_path = g_strdup(gretl_rlib_path());
+	s = strstr(R_path, "\\R.dll");
+	if (s != NULL) {
+	    *s = '\0';
+	}
+    }
 
-    if (path != NULL && strstr(path, Rpath) != NULL) {
+    fprintf(stderr, "set_path_for_Rlib: R_path = '%s'\n", R_path);
+
+    if (orig_path != NULL && strstr(orig_path, R_path) != NULL) {
 	; /* nothing to be done */
     } else {
-	g_free(Rpath);
-	Rpath = g_strdup_printf("%s;%s\\bin\\%s", path, Rhome, arch);
-	gretl_setenv("PATH", Rpath);
-	g_free(Rpath);
-	Rpath = NULL;
+	gchar *new_path;
+
+	new_path = g_strdup_printf("%s;%s\\bin\\%s", orig_path, R_path);
+	gretl_setenv("PATH", new_path);
+	g_free(new_path);
     }
 
-    if (Rpath != NULL) {
-	g_free(Rpath);
-    }
+    g_free(R_path);
 }
 
-#else /* !WIN32 */
+#endif /* WIN32 */
 
-/* non-Windows: attempt to remedy the absence of the
-   R_HOME environment variable. We try to infer the
-   required directory from take the path to libR.so and
-   push it into the environment.
+/* Attempt to remedy the absence of the R_HOME environment
+   variable. We try to infer the required directory from
+   the path to the R shared library and push it into the
+   environment.
 */
 
 static void try_set_R_home (void)
 {
+#if defined(_WIN64)
+    const char *skip = "\\bin\\x64";
+#elif defined(WIN32)
+    const char *skip = "\\bin\\i386";
+#else
+    const char *skip = "/lib/libR";
+#endif
     const char *libpath = gretl_rlib_path();
     char *s, *tmp;
 
     tmp = gretl_strdup(libpath);
-    s = strstr(tmp, "/lib/libR");
+    s = strstr(tmp, skip);
     if (s != NULL) {
 	*s = '\0';
 	gretl_setenv("R_HOME", tmp);
     }
     free(tmp);
 }
-
-#endif /* WIN32 or not */
 
 /* Initialize the R library for use with gretl.  Note that we only
    need do this once per gretl session.  We need to check that the
@@ -2259,12 +2279,9 @@ static int gretl_Rlib_init (void)
     Rhome = R_get_HOME();
     fprintf(stderr, "R_get_HOME() gave '%s'\n", Rhome);
     if (Rhome == NULL) {
-	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
-	err = E_EXTERNAL;
-	goto bailout;
-    } else {
-	set_path_for_Rlib(Rhome);
+	try_set_R_home();
     }
+    set_path_for_Rlib(Rhome);
 #endif
 
     /* ensure common filenames are in place */
