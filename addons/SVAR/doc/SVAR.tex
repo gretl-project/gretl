@@ -86,8 +86,8 @@
 \newcommand{\rk}[1]{\mathrm{rank}\left(#1\right)}
 
 \title{The SVAR addon for \app{gretl}}
-\author{Jack Lucchetti}
-\date{Version 1.2}
+\author{Jack Lucchetti and Sven Schreiber}
+\date{Version 1.31}
 \begin{document}
 
 \maketitle
@@ -105,7 +105,7 @@
 \section{Introduction}
 \label{sec:intro}
 
-The \texttt{SVAR} package is a collection of \app{gretl} scripts to
+The \texttt{SVAR} package is a collection of \app{gretl} functions to
 estimate Structural VARs, or SVARs for short. 
 
 In the remainder of this guide, the emphasis will be put on the
@@ -118,7 +118,6 @@ and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
 in the Appendix.
 
-% (Jack, I upgraded the GUI subsec to a section on purpose.)
 In order to establish notation and define a few concepts, allow me to
 inflict on you a 2-page crash course on SVARs.  In this
 context,\footnote{The adjective ``structural'' is possibly one of the
@@ -258,8 +257,7 @@ universally adopted, although in some cases it may be quite CPU-heavy.
   \label{InternalChol-in}
   \begin{code}
 # turn extra output off
-set echo off
-set messages off
+set verbose off
 
 # open the data and do some preliminary transformations
 open sw_ch14.gdt
@@ -393,7 +391,7 @@ in a \app{gretl} bundle.\footnote{Bundles are a \app{gretl} data type:
   string). Technically speaking, a bundle is an associative array:
   these data structures are called ``hashes'' in Perl or
   ``dictionaries'' in Python. Fore more info, you'll want to take a
-  look at the Gretl User's Guide, section 11.7.} In this example,
+  look at the Gretl User's Guide, section 10.7.} In this example,
 the bundle is called \texttt{Mod}, but it can of course take any valid
 \texttt{gretl} identifier.
 
@@ -647,8 +645,8 @@ before calling \cmd{IRFplot}. Setting ot back to its default value of
 \begin{scode}
   bfail = SVAR_boot(&Mod, 1024, 0.90)
 
-  loop for i=1..2 -q
-      loop for j=1..2 -q
+  loop i=1..2 --quiet
+      loop j=1..2 --quiet
           sprintf fnam "simpleC_%d%d.pdf", i, j
           IRFsave(fnam, &Mod, i, j)
       end loop
@@ -692,14 +690,14 @@ Bootstrap results (1024 replications)
 Failed = 0, Time (bootstrap) = 20.24
 \end{code}
 This can be achieved by supplying a zero fourth argument to the
-\cmd{SVAR\_boot} function, as in
+\texttt{SVAR\_boot} function, as in
 \begin{code}
   bfail = SVAR_boot(&Mod, 1024, 0.90, 0)
 \end{code}
 
 Once the bootstrap is done, its results are stored into the bundle for
 later use: upon successful completion, the model bundle will
-contain a bundle\footnote{Yes, bundles can contain bundles.} called
+contain another bundle called
 \texttt{bootdata}. This contains some information on the bootstrap
 details, such as the confidence interval $\alpha$ and others; in
 addition, it will contain three matrices in which each column is one
@@ -760,13 +758,18 @@ by \cite{Runkle87}.
 
 
 As an alternative, one may use bias-correction, which comes in two
-flavors, both inspired to the procedure known as
-``bootstrap-after-bootstrap'' \citep{Kilian98}.\footnote{None of the
-  fancier alternatives listed, for example, in \cite{Brug06} are
-  available. They are planned, though.}
+flavors, both inspired by the procedure known as
+``bootstrap-after-bootstrap'' \citep{Kilian98}.
+% Comment by Sven:
+% I don't think we have to belittle our bias correction by saying
+% that "fancy" alternatives are not implemented. Following our discussion,
+% those are not sooo fancy, after all. So I commented out the footnote.
+%\footnote{None of the
+%  fancier alternatives listed, for example, in \cite{Brug06} are
+%  available. They are planned, though.}
 
 The one which corresponds more closely to \citeauthor{Kilian98}'s
-proceudre is what what we call the ``Full'' variant; The ``Partial''
+procedure is what what we call the ``Full'' variant; The ``Partial''
 variant applies the bias correction only for adjusting the VAR
 coefficients used for generating the bootstrap replications, but
 \emph{not} for computing the VMA representation. The interested user
@@ -913,8 +916,7 @@ the filename you choose for the output.\footnote{See also the
 \begin{table}[htbp]
 \begin{scode}
 # turn extra output off
-set echo off
-set messages off
+set verbose off
 
 # open the data and do some preliminary transformations
 open sw_ch14.gdt
@@ -1024,10 +1026,9 @@ been using as an example in this section.
 
 \begin{table}[htbp]
 \begin{scode}
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
-open BlQuah.gdt
+open BlQuah.gdt --frompkg=SVAR
 
 list X = DY U
 list exog = const time
@@ -1044,7 +1045,7 @@ SVAR_restrict(&BQModel, "lrC", 1, 2, 0)
 SVAR_cumulate(&BQModel, 1)
 
 # set up names for the shocks
-BQModel.snames = strsplit("Supply Demand")
+BQModel.snames = defarray("Supply", "Demand")
 
 # do estimation
 SVAR_estimate(&BQModel)
@@ -1052,8 +1053,8 @@ SVAR_estimate(&BQModel)
 # retrieve the demand shocks
 dShock = GetShock(&BQModel, 2)
 
-# bootstrap
-bfail = SVAR_boot(&BQModel, 1024, 0.9)
+# bootstrap (set 'quiet' off with trailing zero arg)
+bfail = SVAR_boot(&BQModel, 1024, 0.9, 0)
 
 # page 662
 IRFsave("bq_Yd.pdf", &BQModel,  1, 1)
@@ -1202,14 +1203,29 @@ suitable set of conditions (see \cite{AG}, section 6.1).
   C[ 1; 2]   -0.907210     0.0507146    -17.89     1.45e-71 ***
   C[ 2; 2]    0.199459     0.0111501     17.89     1.45e-71 ***
 
-Bootstrap results (1000 replications)
+Estimated long-run matrix (restricted)
+longrun (2 x 2)
 
-             coefficient   std. error      z      p-value 
+     0.50080       0.0000 
+    0.088690       3.9133 
+
+  Log-likelihood = -202.193
+  
+Bootstrap results (1024 replications, 0 failed)
+
+             coefficient    std. error     z       p-value 
   --------------------------------------------------------
-  C[ 1; 1]     0.232452    0.285316      0.8147   0.4152  
-  C[ 2; 1]     0.191064    0.0786388     2.430    0.0151   **
-  C[ 1; 2]    -0.829021    0.113861     -7.281    3.31e-13 ***
-  C[ 2; 2]     0.222009    0.0648956     3.421    0.0006   ***
+  C[ 1; 1]    0.0444250     0.268505      0.1655   0.8686   
+  C[ 2; 1]    0.195149      0.0626996     3.112    0.0019    ***
+  C[ 1; 2]   -0.802685      0.0812301    -9.882    5.00e-023 ***
+  C[ 2; 2]    0.173711      0.0631364     2.751    0.0059    ***
+
+                   coefficient    std. error     z        p-value
+  ----------------------------------------------------------------
+  LongRun[ 1; 1]    0.446961      0.101229      4.415     1.01e-05 ***
+  LongRun[ 2; 1]    0.170568      1.34237       0.1271    0.8989  
+  LongRun[ 1; 2]    0.000000      0.000000     -0.02221   0.9823  
+  LongRun[ 2; 2]    2.92878       1.03183       2.838     0.0045   ***
 \end{scode}
   \caption{Output for the Blanchard-Quah model}
   \label{tab:BlQuahOutput}
@@ -1232,10 +1248,17 @@ $y_t$, so those for $\Delta y_t$ will have to be cumulated. This is
 done via the function \texttt{SVAR\_cumulate()}, in what should be a
 rather self-explanatory way (the number 1 refers in this case to the
 position of $\Delta Y_t$ in the list \texttt{X}). Finally, a cosmetic
-touch: we store into the model the string array \texttt{"Supply"} and
-\texttt{"Demand"}, which will be used to label the shocks in the
-graphs. Note that in this case there is no ad-hoc function, but we
-rely on the standard \app{gretl} syntax for bundles.
+touch: we overwrite the model's default shock labels with a string array 
+containing \texttt{"Supply"} and \texttt{"Demand"}. The shock labels
+are always stored in the array \texttt{snames}. 
+
+When a model with long-run restrictions is estimated, the resulting 
+long-run matrix is stored in the model bundle as member \texttt{lrmat},
+and is also printed out by default.
+
+The bootstrap is invoked by \texttt{SVAR\_boot}, which however by default
+does not produce any additional printout. To display the results 
+straight away set the optional fourth (trailing) argument to 0.
 
 \begin{figure}[htbp]
  \centering
@@ -1291,7 +1314,9 @@ economic implications aside, from a statistical viewpoint this could
 have suggested an alternative identification strategy or, more
 interestingly, to combine the two hypotheses into one. 
 
-The script presented in Table \ref{tab:BlQuah} is very easy to modify
+\texttt{SVAR} allows the combination of short- and long-run 
+restrictions in C models (but not in AB models, which are very rarely used 
+in this context). The script presented in Table \ref{tab:BlQuah} is very easy to modify
 to this effect: in this case, we simply need to insert the line 
 \begin{code}
   SVAR_restrict(&BQModel, "C", 1, 1, 0)
@@ -1323,10 +1348,9 @@ so desired.
 
 \begin{table}[htbp]
   \begin{scode}
-set echo off
-set messages off
+set verbose off
 include SVAR.gfn
-open IS-LM.gdt
+open IS-LM.gdt --frompkg=SVAR
 
 list X = q i m
 list Z = const time
@@ -1571,8 +1595,7 @@ identified by running a simple variation of the example contained in
 Table \ref{tab:simpleC-base}: 
 
 \begin{code}
-set echo off
-set messages off
+set verbose off
 
 include SVAR.gfn
 open sw_ch14.gdt
@@ -1908,7 +1931,7 @@ More in detail, the script goes like this:
   and that the cointegration matrix is the one hypothesised by
   economic theory.
 \item[Line 32] Set up the SVAR object. Note the usage of the
-  \texttt{KPSW} code.
+  \texttt{SVEC} code.
 \item[Lines 33--36] Set up the cointegration infrastructure
   (deterministic terms, $\beta$, etcetera).
 \item[lines 35--36] Set the horizon for IRF computation to a higher
@@ -1931,7 +1954,7 @@ replicated one is quite remarkable.
 
 \begin{code}
 # ok, now go for the real thing
-? x = SVAR_setup("KPSW", X, const, p)
+? x = SVAR_setup("SVEC", X, const, p)
 ? matrix b = I(2) | -ones(1,2)
 Generated matrix b
 ? SVAR_coint(&x, 3, b, {}, 1)
@@ -1944,19 +1967,12 @@ alpha is unrestricted
 ? x.horizon = 40
 ? SVAR_restrict(&x, "C", 1, 2, 0)
 ? SVAR_estimate(&x)
-
+Optimization method = Scoring algorithm
 Unconstrained Sigma:
      0.29538     0.39670     0.22203
      0.39670     1.64419     0.55188
      0.22203     0.55188     0.32538
 
-C1 (3 x 3)
-
-     0.97501      0.31359      0.55519 
-     0.97501      0.31359      0.55519 
-     0.97501      0.31359      0.55519 
-
-Optimization method = Scoring algorithm
 
              coefficient   std. error      z       p-value 
   ---------------------------------------------------------
@@ -1970,6 +1986,13 @@ Optimization method = Scoring algorithm
   C[ 2; 3]    -0.551965    0.0501828    -11.00     3.86e-28 ***
   C[ 3; 3]    -0.117619    0.0210737     -5.581    2.39e-08 ***
 
+Estimated long-run matrix
+longrun (3 x 3)
+
+      1.1036       0.0000       0.0000 
+      1.1036       0.0000       0.0000 
+      1.1036       0.0000       0.0000 
+	  
   Log-likelihood = -295.974
 \end{code}
 
@@ -1983,10 +2006,6 @@ Optimization method = Scoring algorithm
 
 \section{The GUI interface}
 \label{sec:GUI}
-
-\emph{by Sven Schreiber}
-
-\vfil 
 
 This section introduces the GUI interface with which most of the
 available calculations can be accomplished as well and which can be
@@ -2245,7 +2264,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \item a bundle holding the model
   \item the number of bootstrap replications
   \item the quantile used for the confidence bands
-  \item (optional) omit the table with bootstap means and standard
+  \item (optional) omit the table with bootstrap means and standard
     errors (default: yes) 
   \end{enumerate}
 \end{funcdoc}
@@ -2253,7 +2272,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \begin{funcdoc}{SVAR\_coint(bundle *obj, scalar case,
 			   matrix jbeta, matrix jalpha,
 			   bool verbose[0])}
-  Sets up a KPSW model for subsequent estimation. Its arguments are:
+  Sets up a SVEC model for subsequent estimation. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
   \item a code for the constant/trend combination (1 to 5, as per
@@ -2271,10 +2290,10 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   with long-run restrictions.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_estimate(bundle *obj, int quiet)}
+\begin{funcdoc}{SVAR\_estimate(bundle *obj, int verbosity[1])}
   Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
-  estimation proceeds silently.
+  output is printed.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_hd(bundle *b, scalar nv)}
@@ -2382,13 +2401,14 @@ a warning will be printed.
     \multicolumn{2}{c}{\textbf{Basic setup}} \\
     \hline
     \texttt{step} & done so far \\
-    \texttt{type} & string, model type \\
+    \texttt{type} & integer, model type (1: PLAIN, 2: C, 3: AB, 4: SVEC)\\
     \texttt{n}	  & number of endogenous variables \\
     \texttt{p}	  & VAR order \\
     \texttt{k}	  & number of exogenous variables \\
     \texttt{T}	  & number of observations \\
     \texttt{t1, t2}	  & initial and final observations \\
     \texttt{X}	  & exogenous variables data matrix \\
+    \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
     \hline
     \multicolumn{2}{c}{\textbf{VAR}} \\
     \hline
@@ -2402,8 +2422,8 @@ a warning will be printed.
     \multicolumn{2}{c}{\textbf{SVAR setup}} \\
     \hline
     \texttt{Rd1}	 & short-run constraints on B (and therefore C in non-AB models) \\
-    \texttt{Rd1l}	 & long-run constraints on B (and therefore C in non-AB models) \\
-    \texttt{Rd0}	 & contains short-run constraints on A in AB models \\
+    \texttt{Rd1l}	 & long-run constraints on C \\
+    \texttt{Rd0}	 & short-run constraints on A in AB models \\
     \texttt{horizon}	 & horizon for structural VMA \\
     \texttt{cumul}	 & vector of cumuland variables \\
     \texttt{ncumul}	 & number of cumuland variables \\
@@ -2415,8 +2435,10 @@ a warning will be printed.
     \hline
     \multicolumn{2}{c}{\textbf{SVAR post-estimation}} \\
     \hline
-    \texttt{S1}	   & estimated A (or C) \\
+    \texttt{S1}	   & estimated A \\
     \texttt{S2}	   & estimated B \\
+    \texttt{C}	   & estimated C \\
+    \texttt{lrmat} & estimated long-run matrix \\ 
     \texttt{theta} & coefficient vector \\
     \texttt{IRFs}  & IRF matrix (see section \ref{sec:baseest})\\
     \hline
@@ -2428,6 +2450,40 @@ a warning will be printed.
     \texttt{biascorr}	 & scalar, 0 for no bias correction, 1 for
     partial, 2 for full
   \end{tabular}
+  
+\section{Changelog (after v1.2)}
+\label{sec:changelog}
+
+\subsection{Version 1.31, January 2018}
+\begin{itemize}
+\item Update this documentation to reflect some previous changes.
+
+\item Fix failing printout for bootstrap.
+
+\item Enable long-run matrix calculation and reporting also for SVEC models.
+\end{itemize}
+
+\subsection{Version 1.3, December 2017}
+
+\begin{itemize}
+
+\item The full bias correction now also corrects the estimated A/B/C matrices
+explicitly, not only the implied IRFs.
+
+\item Make it clear that long-run restrictions are not supported in AB models.
+
+\item Calculate the long-run matrix and put it into the model bundle as \texttt{lrmat}.
+Also add a boolean switch \texttt{calc\_lr} to the model bundle to force its 
+calculation when it would normally not be done 
+(in models with short-run constraints only).
+
+\item The case of a SVEC model with Blanchard-Quah restrictions on top might 
+not have been handled correctly, and should be OK now (but the bootstrap is 
+currently not allowed in this case).
+
+\item Require gretl version >2016c or >2017a due to internal changes.
+
+\end{itemize}
 \end{document}
 
 %%% Local Variables: 
