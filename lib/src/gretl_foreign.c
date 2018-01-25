@@ -2207,6 +2207,8 @@ static void set_path_for_Rlib (const char *Rhome)
 
     if (orig_path != NULL && strstr(orig_path, R_path) != NULL) {
 	; /* nothing to be done */
+    } else if (orig_path == NULL) {
+	gretl_setenv("PATH", R_path);
     } else {
 	gchar *new_path;
 
@@ -2235,10 +2237,9 @@ static void try_set_R_home (void)
 #else
     const char *skip = "/lib/libR";
 #endif
-    const char *libpath = gretl_rlib_path();
     char *s, *tmp;
 
-    tmp = gretl_strdup(libpath);
+    tmp = gretl_strdup(gretl_rlib_path());
     s = strstr(tmp, skip);
     if (s != NULL) {
 	*s = '\0';
@@ -2255,7 +2256,7 @@ static void try_set_R_home (void)
 
 static int gretl_Rlib_init (void)
 {
-    char *Rhome;
+    char *Rhome = NULL;
     int err = 0;
 
 #if FDEBUG
@@ -2277,8 +2278,8 @@ static int gretl_Rlib_init (void)
 
 #ifdef WIN32
     Rhome = R_get_HOME();
-    fprintf(stderr, "R_get_HOME() gave '%s'\n", Rhome);
     if (Rhome == NULL) {
+	fprintf(stderr, "get_R_HOME() gave NULL\n");
 	try_set_R_home();
     }
     set_path_for_Rlib(Rhome);
