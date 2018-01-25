@@ -2143,7 +2143,7 @@ static int load_R_symbols (void)
 
  bailout:
 
-#if FDEBUG
+#if FDEBUG || defined(WIN32)
     fprintf(stderr, "load_R_symbols: returning %d\n", err);
 #endif
 
@@ -2186,7 +2186,7 @@ static void set_path_for_Rlib (const char *Rhome)
     gchar *Rpath;
 
     Rpath = g_strdup_printf("%s\\bin\\%s", Rhome, arch);
-    fprintf(stderr, "Rpath = '%s'\n", Rpath);
+    fprintf(stderr, "set_path_for_Rlib: Rpath = '%s'\n", Rpath);
 
     if (path != NULL && strstr(path, Rpath) != NULL) {
 	; /* nothing to be done */
@@ -2204,6 +2204,12 @@ static void set_path_for_Rlib (const char *Rhome)
 }
 
 #else /* !WIN32 */
+
+/* non-Windows: attempt to remedy the absence of the
+   R_HOME environment variable. We try to infer the
+   required directory from take the path to libR.so and
+   push it into the environment.
+*/
 
 static void try_set_R_home (void)
 {
@@ -2251,6 +2257,7 @@ static int gretl_Rlib_init (void)
 
 #ifdef WIN32
     Rhome = R_get_HOME();
+    fprintf(stderr, "R_get_HOME() gave '%s'\n", Rhome);
     if (Rhome == NULL) {
 	fprintf(stderr, "To use Rlib, the variable R_HOME must be set\n");
 	err = E_EXTERNAL;
