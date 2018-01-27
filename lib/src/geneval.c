@@ -248,7 +248,7 @@ static void print_tree (NODE *t, parser *p, int level)
     if (t->aux != NULL) {
 	fprintf(stderr, "  aux node at %p (type %03d, %s, flags %d)\n",
 		(void *) t->aux, t->aux->t, getsymb(t->aux->t), t->aux->flags);
-    }	
+    }
 }
 
 #endif /* EDEBUG */
@@ -1084,7 +1084,7 @@ static int gen_replace_lhs (parser *p, GretlType type, void *data)
 static int gen_add_uvar (parser *p, GretlType type, void *data)
 {
     int err;
-    
+
     err = user_var_add(p->lh.name, type, data);
 
     /* FIXME attach lh.uv pointer? */
@@ -6358,7 +6358,7 @@ static NODE *generic_typeof_node (NODE *n, parser *p)
     default:
 	break;
     }
-	
+
     ret->v.xval = type_translate_to_int(t);
 
     return ret;
@@ -6800,31 +6800,93 @@ static NODE *one_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-static const char *advance_to_split (const char *s)
+static const char *advance_to_split (const char *s,
+				     const char *sep)
 {
-    int n = strcspn(s, " \t\r\n");
+    int n = strcspn(s, sep);
     int m = strlen(s);
 
     return (n == m)? NULL : s + n;
 }
 
-static NODE *strsplit_node (int f, NODE *l, NODE *r, parser *p)
+static char *escape_strsplit_sep (const char *s)
+{
+    char *ret = calloc(strlen(s) + 1, 1);
+    int i = 0;
+
+    while (*s) {
+	if (*s == '\\') {
+	    if (*(s+1) == '\\') {
+		ret[i++] = '\\';
+		s++;
+	    } else if (*(s+1) == 'n') {
+		ret[i++] = '\n';
+		s++;
+	    } else if (*(s+1) == 'r') {
+		ret[i++] = '\r';
+		s++;
+	    } else if (*(s+1) == 't') {
+		ret[i++] = '\t';
+		s++;
+	    } else {
+		ret[i++] = *s;
+	    }
+	} else {
+	    ret[i++] = *s;
+	}
+	s++;
+    }
+
+    return ret;
+}
+
+static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
 	const char *s = l->v.str;
+	const char *sep0 = NULL;
+	char *sep = NULL;
 	int k = 0;
 
-	if (r != NULL && r->t != EMPTY) {
-	    k = node_get_int(r, p);
-	    if (k < 1) {
-		p->err = E_DATA;
-	    } else {
-		ret = aux_string_node(p);
-	    }
+	if ((r == NULL || r->t == EMPTY) && m != NULL && m->t == STR) {
+	    /* got primary arg plus separator, only */
+	    sep0 = m->v.str;
+	} else if (null_or_empty(m) && r != NULL && r->t == STR) {
+	    /* got primary arg, blank, separator */
+	    sep0 = r->v.str;
 	} else {
-	    ret = aux_array_node(p);
+	    if (m != NULL && m->t != EMPTY) {
+		/* second arg must be index */
+		k = node_get_int(m, p);
+		if (k < 1) {
+		    p->err = E_DATA;
+		}
+	    }
+	    if (r != NULL && r->t != EMPTY) {
+		/* third arg must be separator */
+		if (r->t != STR) {
+		    p->err = E_TYPES;
+		} else {
+		    sep0 = r->v.str;
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ret = k > 0 ? aux_string_node(p) : aux_array_node(p);
+	}
+
+	if (!p->err) {
+	    if (sep0 == NULL) {
+		/* default: split on white space */
+		sep = gretl_strdup(" \t\r\n");
+	    } else if (strchr(sep0, '\\')) {
+		sep = escape_strsplit_sep(sep0);
+	    } else {
+		sep = gretl_strdup(sep0);
+	    }
 	}
 
 	if (!p->err && k > 0) {
@@ -6833,16 +6895,16 @@ static NODE *strsplit_node (int f, NODE *l, NODE *r, parser *p)
 	    int i;
 
 	    for (i=1; i<k; i++) {
-		q = advance_to_split(s);
+		q = advance_to_split(s, sep);
 		if (q != NULL) {
-		    q += strspn(q, " \t\r\n");
+		    q += strspn(q, sep);
 		    s = q;
 		} else {
 		    s = "";
 		    break;
 		}
 	    }
-	    ret->v.str = gretl_strndup(s, strcspn(s, " \t\r\n"));
+	    ret->v.str = gretl_strndup(s, strcspn(s, sep));
 	    if (!p->err && ret->v.str == NULL) {
 		p->err = E_ALLOC;
 	    }
@@ -6851,15 +6913,18 @@ static NODE *strsplit_node (int f, NODE *l, NODE *r, parser *p)
 	    char **S = NULL;
 	    int ns = 0;
 
-	    if (f == F_LINESPLIT) {
+	    if (!strcmp(sep, "\n") || !strcmp(sep, "\r\n")) {
+		/* just splitting on newlines */
 		S = gretl_string_split_lines(s, &ns);
 	    } else {
-		S = gretl_string_split(s, &ns, " \t\r\n");
+		S = gretl_string_split(s, &ns, sep);
 	    }
 	    if (!p->err) {
 		ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
 	    }
 	}
+
+	free(sep);
     } else {
 	ret = aux_any_node(p);
     }
@@ -6910,7 +6975,7 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 
     if (!p->err) {
 	int julian = (f == F_JULDATE);
-	
+
 	if (scalar_node(l)) {
 	    /* epoch day node is scalar */
 	    int as_string = scalar_node(r)? node_get_int(r, p) : 0;
@@ -8699,7 +8764,7 @@ static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 	}
     }
-#endif    
+#endif
 
     return ret;
 }
@@ -8971,7 +9036,7 @@ static int dot_assign_to_matrix (gretl_matrix *m, parser *p,
 				 int *prechecked)
 {
     int err = 0;
-    
+
     if (p->ret->t == NUM) {
 	double x = p->ret->v.xval;
 
@@ -9061,7 +9126,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    }
 	}
 	goto push_data;
-    }    
+    }
 
     /* Note: @targ is the gretl type specified by the caller for
        the bundle member (if any, this need not be supplied), and
@@ -9264,7 +9329,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	GretlType ltype = 0;
 	void *lp;
 
-	lp = gretl_array_get_element(array, idx, &ltype, &err);	
+	lp = gretl_array_get_element(array, idx, &ltype, &err);
 	if (p->op == B_DOTASN) {
 	    if (!err) {
 		if (ltype == GRETL_TYPE_MATRIX) {
@@ -9530,7 +9595,7 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     } else {
 	Z[v][t] = xy_calc(Z[v][t], x, op, NUM, p);
     }
-    
+
     if (p->err == 0) {
 	/* made a change to an element of a series */
 	p->flags |= P_OBSVAL;
@@ -9634,7 +9699,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	    gretl_matrix_set(m1, i-1, j-1, x);
 	}
 	return p->err; /* note, we're done */
-    }    
+    }
 
     if (rhs_scalar && p->op == B_ASN) {
 	/* straight assignment of a scalar value to a
@@ -10004,7 +10069,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 		if (!p->err) {
 		    int julian = 0;
-		    
+
 		    if (yr < 0) {
 			yr = -yr;
 			julian = 1;
@@ -10053,7 +10118,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	} else {
 	    p->err = E_TYPES;
-	}	
+	}
     } else if (f == F_KDENSITY) {
 	if (l->t != SERIES && l->t != MAT) {
 	    node_type_error(f, 1, SERIES, l, p);
@@ -10444,7 +10509,7 @@ static int x_to_period (double x, char c, int *julian, int *err)
 	    *julian = 0;
 	}
     }
-    
+
     if (na(x)) {
 	return -1;
     } else if (x < 0 || fabs(x) > INT_MAX) {
@@ -10638,7 +10703,7 @@ static double subst_val_via_tree (double x, const double *x0, int n0,
 	/* allocate and populate tree */
 	double x1val;
 	int i;
-	
+
 	tree = gretl_btree_new();
 	for (i=0; i<n0; i++) {
 	    x1val = n1 == 1 ? *x1 : x1[i];
@@ -14972,19 +15037,12 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSPLIT:
-	if (l->t == STR && empty_or_num(r)) {
-	    ret = strsplit_node(t->t, l, r, p);
+	if (l->t == STR && empty_or_num(m) && empty_or_string(r)) {
+	    ret = strsplit_node(t->t, l, m, r, p);
+	} else if (l->t == STR && m->t == STR && null_or_empty(r)) {
+	    ret = strsplit_node(t->t, l, m, r, p);
 	} else {
-	    node_type_error(t->t, (l->t == STR)? 2 : 1,
-			    (l->t == STR)? NUM : STR,
-			    (l->t == STR)? r : l, p);
-	}
-	break;
-    case F_LINESPLIT:
-	if (l->t == STR) {
-	    ret = strsplit_node(t->t, l, NULL, p);
-	} else {
-	    node_type_error(t->t, 0, STR, l, p);
+	    p->err = E_TYPES;
 	}
 	break;
     case F_GETLINE:
@@ -15630,7 +15688,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 		lhlen -= 2;
 	    }
 	}
-	    
+
 	if (lhlen > 0) {
 	    if (lhlen == gretl_namechar_spn(lhs)) {
 		/* a straight identifier? */
@@ -15668,7 +15726,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 #if LHDEBUG
     fprintf(stderr, "extract: name='%s', expr='%s', op='%s', err=%d,\n s='%s'\n",
 	    p->lh.name, p->lh.expr ? p->lh.expr : "nil", opstr, err, *ps);
-#endif    
+#endif
 
     return err;
 }
@@ -15827,7 +15885,7 @@ static int check_operator_validity (parser *p, const char *opstr)
 static void check_for_inline_typespec (const char **ps, parser *p)
 {
     const char *s = *ps;
-    
+
     if (!strncmp(s, "scalar ", 7)) {
 	p->targ = NUM;
 	s += 7;
@@ -15855,7 +15913,7 @@ static void check_for_inline_typespec (const char **ps, parser *p)
     *ps = s;
 }
 
-/* Check @p->lh.name for the name of an existing series or 
+/* Check @p->lh.name for the name of an existing series or
    user_var of some kind. If found, record the relevant
    info in p->lh.t, and also either p->lh.vnum (series) or
    p->lh.uv (other types).
@@ -15873,7 +15931,7 @@ static int check_existing_lhs_type (parser *p, int *newvar)
 	*newvar = 0;
 	return 0;
     }
-    
+
     uvar = get_user_var_by_name(p->lh.name);
 
     if (uvar != NULL) {
@@ -15998,7 +16056,7 @@ static void gen_preprocess (parser *p, int flags)
 
     if (p->err) {
 	return;
-    }    
+    }
 
     if (newvar) {
 	/* new variable: check name for legality */
@@ -16808,19 +16866,19 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->lh.name, p->callcount, getsymb(p->lh.t),
 	    getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
 	    (r == NULL)? "none" : getsymb(r->t));
-#endif    
+#endif
 
     if (p->lhtree != NULL) {
 	/* handle compound target first */
 	int compound_t;
-	
+
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
-#if LHDEBUG	
+#if LHDEBUG
 	fprintf(stderr, "*** eval lhtree -> lhres ***\n");
 #endif
 	p->lhres = eval(p->lhtree, p);
-#if LHDEBUG	
+#if LHDEBUG
 	if (p->lhres != NULL) {
 	    print_tree(p->lhres, p, 0);
 	    fprintf(stderr, "*** lhtree post-eval ***\n");
@@ -16863,7 +16921,7 @@ static int save_generated_var (parser *p, PRN *prn)
 
     if (p->op == INC || p->op == DEC) {
 	return do_incr_decr(p);
-    }    
+    }
 
     if (p->callcount < 2) {
 	/* first exec: test for type mismatch errors */
@@ -17051,14 +17109,14 @@ static int save_generated_var (parser *p, PRN *prn)
 	    m = retrieve_matrix_result(p, &prechecked);
 	    if (!p->err) {
 		p->err = gen_add_uvar(p, GRETL_TYPE_MATRIX, m);
-	    }	    
+	    }
 	} else if (p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
 	    m = assign_to_matrix(p, &prechecked);
 	} else {
 	    /* inflected assignment to entire existing matrix */
 	    gretl_matrix *m1 = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
-	    
+
 	    m = assign_to_matrix_mod(m1, p, &prechecked);
 	    if (!p->err) {
 		p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);

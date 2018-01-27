@@ -289,7 +289,6 @@ enum {
     F_SLEEP,
     F_GETINFO,
     F_CDUMIFY,
-    F_LINESPLIT,
     HF_CINV,
     HF_CTRAN,
     HF_CEXP,
@@ -341,7 +340,6 @@ enum {
     F_NPV,
     F_DSUM,
     F_POLYFIT,
-    F_STRSPLIT,
     F_INLIST,
     F_ISCONST,
     F_INBUNDLE,
@@ -438,6 +436,7 @@ enum {
     F_SVM,
     F_FDJAC,
     F_NUMHESS,
+    F_STRSPLIT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

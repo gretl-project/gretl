@@ -5190,23 +5190,6 @@
       </description>
     </function>
 
-    <function name="linesplit" section="strings" output="strings">
-      <fnargs>
-	<fnarg type="string">s</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns an array of strings, one per line in the argument
-	  <argname>s</argname>. The newline character is trimmed from
-	  the returned strings; blank lines in <argname>s</argname>
-	  are preserved.
-	</para>
-	<para>
-	  See also <fncref targ="strsplit"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -9081,42 +9064,61 @@
       <fnargs>
 	<fnarg type="string">s</fnarg>
 	<fnarg optional="true" type="int">i</fnarg>
+	<fnarg optional="true" type="string">sep</fnarg>
       </fnargs>  
       <description>
 	<para>
-	  With no second argument, returns the array of strings
-	  that results from the splitting of <argname>s</argname>
-	  on white space.
+	  In basic usage, with a single argument, returns the array of
+	  strings that results from the splitting of
+	  <argname>s</argname> on white space (that is on any
+	  combination of the space, tab and/or newline characters).
 	</para>
 	<para>
-	  If the second argument is provided, returns space-separated
-	  element <argname>i</argname> from the string
-	  <argname>s</argname>. The index <argname>i</argname> is
-	  1-based, and it is an error if <argname>i</argname> is less
-	  than 1. In case <argname>s</argname> contains no spaces and
-	  <argname>i</argname> equals 1, a copy of the entire input
-	  string is returned; otherwise, in case <argname>i</argname>
-	  exceeds the number of space-separated elements an empty
+	  If an integer value greater than zero is given as the second
+	  argument, the return value is a single string, namely the
+	  (1-based) element <argname>i</argname> of the array that
+	  would otherwise be produced. If <argname>i</argname> is less
+	  than 1 that provokes an error, but if <argname>i</argname>
+	  is greater than the implied number of elements an empty
 	  string is returned.
 	</para>
-    <para>
-        Examples:
-    </para>
-    <code>
-        string basket = "banana apple jackfruit orange"
-        
-        strings fruits = strsplit(basket)
-        eval fruits[1]
-        eval fruits[2]
-        eval fruits[3]
-        eval fruits[4]
-        
-        string favorite = strsplit(basket, 3)
-        eval favorite
-    </code>
-    <para>
-      See also <fncref targ="linesplit"/>.
-    </para>
+	<para>
+	  The optional third argument can be used to adjust the
+	  separator used for splitting <argname>s</argname>. For
+	  example
+	</para>
+	<code>
+	  string basket = "banana,apple,jackfruit,orange"
+	  strings S = strsplit(basket,,",")
+	</code>
+	<para>
+	  will split the input into an array of four strings using
+	  comma as separator. The <quote>extra</quote> comma in the
+	  input above indicates that the <argname>i</argname> argument
+	  is omitted, but it's not strictly necessary unless you wish
+	  to extract a single element; if the second argument is a
+	  string and only two arguments are given it is understood
+	  that <argname>sep</argname> rather than <argname>i</argname>
+	  is intended. So
+	</para>
+	<code>
+	  strings S = strsplit(basket, ",")
+	</code>
+	<para>
+	  is equally acceptable.
+	</para>
+	<para>
+	  The backslash-escape sequences <quote><lit>\n</lit></quote>
+	  and <quote><lit>\t</lit></quote> are taken to represent
+	  newline and tab in the optional <argname>sep</argname>
+	  argument. If you wish to include a literal backslash as a
+	  separator character you should double it, as in
+	  <quote><lit>\\</lit></quote>. Example:
+	</para>
+	<code>
+	  string s = "c:\fiddle\sticks"
+	  strings S = strsplit(s, "\\")
+	</code>
       </description>
     </function>
 
