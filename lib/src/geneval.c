@@ -13566,7 +13566,7 @@ static void node_reattach_data (NODE *n, parser *p)
 	GretlType type = 0;
 	void *data = NULL;
 
-	if (n->uv == NULL) {
+	if (n->uv == NULL || (gretl_looping() && n->t == LIST)) {
 	    n->uv = get_user_var_by_name(n->vname);
 	}
 
