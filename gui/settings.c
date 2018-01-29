@@ -112,7 +112,7 @@ static int robust_z;
 static int autoicon = 1;
 static int session_prompt = 1;
 static int keep_folder = 1;
-static int tabbed_editor;
+static int tabbed_editor = 1;
 static int tabbed_models;
 static int display_wdir = 1;
 static int wdir_tooltip = 1;
