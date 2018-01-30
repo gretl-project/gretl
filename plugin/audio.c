@@ -937,15 +937,9 @@ static int midi_fork (const char *fname, const char *midiplayer)
 {
     int err = 0;
 
-#ifdef _WIN64
-    if ((gint64) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) < 32) {
-	err = 1;
-    }
-#else
     if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) < 32) {
 	err = 1;
     }
-#endif
 
     return err;
 }

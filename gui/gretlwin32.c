@@ -41,17 +41,11 @@
 
 #define MAX_CONSOLE_LINES 500
 
-#ifdef _WIN64
-# define ptrcast gint64
-#else
-# define ptrcast long
-#endif
-
 void redirect_io_to_console (void)
 {
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     int conhandle;
-    long stdhandle;
+    HANDLE stdhandle;
     FILE *fp;
 
     AllocConsole();
@@ -64,15 +58,15 @@ void redirect_io_to_console (void)
 			       coninfo.dwSize);
 
     /* redirect unbuffered STDOUT to the console */
-    stdhandle = (ptrcast) GetStdHandle(STD_OUTPUT_HANDLE);
-    conhandle = _open_osfhandle(stdhandle, _O_TEXT);
+    stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
     setvbuf(stdout, NULL, _IONBF, 0);
 
     /* redirect unbuffered STDERR to the console */
-    stdhandle = (ptrcast) GetStdHandle(STD_ERROR_HANDLE);
-    conhandle = _open_osfhandle(stdhandle, _O_TEXT);
+    stdhandle = GetStdHandle(STD_ERROR_HANDLE);
+    conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -652,9 +646,24 @@ static int get_pdf_service_name (char *service, const char *exe)
 
 static int win32_open_arg (const char *arg, char *ext)
 {
+    static int initted;
     int err = 0;
 
-    if ((ptrcast) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
+    if (!initted) {
+	CoInitialize(NULL);
+	initted = 1;
+    }
+
+    /* From the MSDN doc: "If the function succeeds, it returns a
+       value greater than 32. If the function fails, it returns an
+       error value that indicates the cause of the failure. The return
+       value is cast as an HINSTANCE for backward compatibility with
+       16-bit Windows applications. It is not a true HINSTANCE,
+       however. It can be cast only to an int and compared to either
+       32 or the following error codes below..."
+    */
+
+    if ((int) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
 	/* if the above fails, try via the registry */
 	char *exe = get_exe_for_type(ext);
 

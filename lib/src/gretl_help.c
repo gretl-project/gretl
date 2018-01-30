@@ -299,20 +299,12 @@ static int find_pkg_in_dir (const char *targ,
     return found;
 }
 
-#ifdef G_OS_WIN32
-# ifdef _WIN64
-# define ptrcast gint64
-# else
-# define ptrcast long
-# endif
-#endif
-
 static int show_pkg_pdf (const char *fname)
 {
     int err = 0;
 
 #if defined(G_OS_WIN32)
-    if ((ptrcast) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
+    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
 	err = E_FOPEN;
     }
 #elif defined(OS_OSX)
