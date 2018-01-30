@@ -1,7 +1,7 @@
 set verbose off
 include SVAR.gfn
-open BlQuah.gdt
-set seed 1234
+open BlQuah.gdt --frompkg=SVAR
+set seed 1234 # make bootstrap results reproducible
 
 list X = DY U
 list exog = const time
@@ -29,7 +29,9 @@ dShock = GetShock(&BQModel, 2)
 BQModel.biascorr = 2
 # do bootstrap
 set stopwatch
-bfail = SVAR_boot(&BQModel, 1024, 0.9)
+
+# bootstrap (set 'quiet' off with trailing zero arg)
+bfail = SVAR_boot(&BQModel, 1024, 0.9, 0)
 printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
 
 

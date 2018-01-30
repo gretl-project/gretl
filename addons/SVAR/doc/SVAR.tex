@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 1.31}
+\date{Version 1.32}
 \begin{document}
 
 \maketitle
@@ -1029,6 +1029,7 @@ been using as an example in this section.
 set verbose off
 include SVAR.gfn
 open BlQuah.gdt --frompkg=SVAR
+set seed 1234 # make results reproducible
 
 list X = DY U
 list exog = const time
@@ -1213,19 +1214,20 @@ longrun (2 x 2)
   
 Bootstrap results (1024 replications, 0 failed)
 
-             coefficient    std. error     z       p-value 
+             coefficient   std. error      z      p-value 
   --------------------------------------------------------
-  C[ 1; 1]    0.0444250     0.268505      0.1655   0.8686   
-  C[ 2; 1]    0.195149      0.0626996     3.112    0.0019    ***
-  C[ 1; 2]   -0.802685      0.0812301    -9.882    5.00e-023 ***
-  C[ 2; 2]    0.173711      0.0631364     2.751    0.0059    ***
+  C[ 1; 1]    0.0563995    0.340707      0.1655   0.8685  
+  C[ 2; 1]    0.184285     0.0814261     2.263    0.0236   **
+  C[ 1; 2]   -0.769799     0.109725     -7.016    2.29e-12 ***
+  C[ 2; 2]    0.171516     0.0830117     2.066    0.0388   **
 
-                   coefficient    std. error     z        p-value
-  ----------------------------------------------------------------
-  LongRun[ 1; 1]    0.446961      0.101229      4.415     1.01e-05 ***
-  LongRun[ 2; 1]    0.170568      1.34237       0.1271    0.8989  
-  LongRun[ 1; 2]    0.000000      0.000000     -0.02221   0.9823  
-  LongRun[ 2; 2]    2.92878       1.03183       2.838     0.0045   ***
+
+                   coefficient   std. error       z       p-value
+  ---------------------------------------------------------------
+  LongRun[ 1; 1]    0.544885      0.168701     3.230       0.0012 ***
+  LongRun[ 2; 1]    0.0285569     2.89306      0.009871    0.9921
+  LongRun[ 1; 2]    0.00000       0.00000     NA          NA     
+  LongRun[ 2; 2]    4.09942       2.08718      1.964       0.0495 **
 \end{scode}
   \caption{Output for the Blanchard-Quah model}
   \label{tab:BlQuahOutput}
@@ -2454,11 +2456,12 @@ a warning will be printed.
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection{Version 1.31, January 2018}
+\subsection{Version 1.31 and 1.32, January 2018}
 \begin{itemize}
 \item Update this documentation to reflect some previous changes.
 
-\item Fix failing printout for bootstrap.
+\item Fix failing printout for bootstrap. 
+(v1.32: Sanitize further the printout of the long-run matrix.)
 
 \item Enable long-run matrix calculation and reporting also for SVEC models.
 \end{itemize}
