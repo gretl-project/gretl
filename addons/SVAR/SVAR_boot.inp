@@ -3,7 +3,15 @@ function void boot_printout(int type, int n, int rep,
 
   matrix bm = meanc(Spar_mat)
   matrix bV = mcov(Spar_mat)
+  scalar nc = cols(Spar_mat)
   scalar n2 = n*n
+
+  # force numerical zeros to real zeros
+  e = diag(bV) < 1.0e-12
+  if maxc(e)
+      e = selifc(seq(1, nc), e)
+      bV[e,e] = 0
+  endif
 
   printf "Bootstrap results (%d replications, %d failed)\n", \
     rep + failed, failed
