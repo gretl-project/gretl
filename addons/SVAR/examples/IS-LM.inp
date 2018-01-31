@@ -1,6 +1,6 @@
 set verbose off
 include SVAR.gfn
-open IS-LM.gdt
+open IS-LM.gdt --frompkg=SVAR
 
 set seed 1234
 

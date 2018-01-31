@@ -112,7 +112,7 @@ In the remainder of this guide, the emphasis will be put on the
 scripting interface, which is the recommended way of using the
 package. However, most, if not all, of its features are also
 accessible via the ``Structural VAR'' menu entry (go to \emph{Model
-  $>$ Time Series}) and the corresponding menu-driven interface. The
+  $>$ Time Series $>$ Multivariate}) and the corresponding menu-driven interface. The
 impatient reader, who already has some understanding of what a SVAR is
 and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
@@ -272,7 +272,8 @@ C = cholesky(Sigma)
 print Sigma C
   \end{code}
 %$
-  \caption{Cholesky example via the internal \texttt{gretl} command}
+  \caption{Cholesky example via \texttt{gretl}'s internal 
+  \texttt{var} command}
 \end{table}
 
 As a trivial example, we will estimate a plain Cholesky model. The
@@ -316,7 +317,8 @@ C (2 x 2)
      0.23525       0.0000 
     -0.12041       1.3268 
   \end{code}
-  \caption{Cholesky example via the internal \texttt{gretl} command --- Output}
+  \caption{Cholesky example via \texttt{gretl}'s internal 
+  \texttt{var} command --- Output}
 \end{table}
 
 \begin{figure}[htbp]
@@ -357,8 +359,7 @@ attained by stipulating that $C$ is lower-triangular, that is
 \begin{table}[htbp]
 \begin{scode}
 # turn extra output off
-set echo off
-set messages off
+set verbose off
 
 # open the data and do some preliminary transformations
 open sw_ch14.gdt
@@ -523,7 +524,7 @@ be used for initialising the VAR. However,
 \begin{code}
   smpl 1980:1 ;
   list X = x y z
-  Model = SVAR_setup("C", X, const, 6)
+  Mod = SVAR_setup("C", X, const, 6)
 \end{code}
 will estimate the same model on a different dataset: that is, the first
 available datapoint for estimation will be 1981Q3 because data from
@@ -616,7 +617,7 @@ want. Just store an array of strings with the appropriate number of
 elements into the model bundle, under the \texttt{snames} key. For
 example,
 \begin{code}
-  Model.sname = strsplit("foo bar baz")
+  Mod.snames = strsplit("foo bar baz")
 \end{code}
 If you omit this step, the structural shocks will be labelled with
 names corresponding to the observable variables in your VAR. This
@@ -633,7 +634,7 @@ people want to display IRFs graphically by normalizing $\IRF{i,i,0} =
 1$. This can be achieved by setting the bundle member \cmd{normalize}
 to 1, as in
 \begin{code}
-  Model.normalize = 1
+  Mod.normalize = 1
 \end{code}
 before calling \cmd{IRFplot}. Setting ot back to its default value of
 0 will restore standard behavior.
@@ -1327,6 +1328,8 @@ somewhere between the \texttt{SVAR\_setup} and the
 \texttt{SVAR\_estimate} function. 
 The rest is unchanged, and below is the output.
 
+\pagebreak[4]
+
 \begin{code}
              coefficient   std. error     z       p-value 
   --------------------------------------------------------
@@ -1365,7 +1368,7 @@ SVAR_restrict(&ISLM, "A", 1, 3, 0)
 SVAR_restrict(&ISLM, "A", 3, 1, 0)
 SVAR_restrict(&ISLM, "A", 3, 2, 0)
 SVAR_restrict(&ISLM, "Bdiag", NA)
-ISLM.snames = "uIS uLM uMS"
+ISLM.snames = defarray("uIS", "uLM", "uMS")
 SVAR_estimate(&ISLM)
 
 Amat = ISLM.S1
@@ -1414,7 +1417,7 @@ the constant and a linear time trend as exogenous variables. The
 horizon of impulse response analysis is set to 48 quarters.
 
 The constraints on the matrices $A$ and $B$ can be set up quite simply
-by using a the function \texttt{SVAR\_restrict} via a special syntax
+by using the function \texttt{SVAR\_restrict} via a special syntax
 construct: the line
 \begin{code}
   SVAR_restrict(&ISLM, "Adiag", 1)
@@ -2011,8 +2014,8 @@ longrun (3 x 3)
 
 This section introduces the GUI interface with which most of the
 available calculations can be accomplished as well and which can be
-accessed via the \emph{Model $>$ Time Series $>$ Structural VAR} menu
-entry of the the graphical \app{gretl} client.  While we recommend
+accessed via the \emph{Model $>$ Time Series $>$ Multivariate $>$ Structural VAR}
+menu entry of the the graphical \app{gretl} client.  While we recommend
 using the script interface to access the full capabilities of the SVAR
 package, the GUI interface may be less intimidating for less
 experienced users. At the time of writing, the GUI component covers
@@ -2029,7 +2032,7 @@ future version of the SVAR package.
 \end{figure}
 
 
-Many important contents of the window displayed in figure
+Many important contents of the window displayed in Figure
 \ref{fig:GUI-plain} should be rather self-explanatory; the model type
 chooser, the list of endogenous VAR variables, another (optional) list
 of exogenous variables, the lag order, and further down the number of
@@ -2484,7 +2487,7 @@ calculation when it would normally not be done
 not have been handled correctly, and should be OK now (but the bootstrap is 
 currently not allowed in this case).
 
-\item Require gretl version >2016c or >2017a due to internal changes.
+\item Require \texttt{gretl} version $>$2016c or $>$2017a due to internal changes.
 
 \end{itemize}
 \end{document}
