@@ -3512,6 +3512,8 @@ static gboolean icon_left (GtkWidget *icon, GdkEventCrossing *event,
     return FALSE;
 }
 
+static MODEL *drag_model_src;
+
 static void 
 session_data_received (GtkWidget *widget,
 		       GdkDragContext *context,
@@ -3529,11 +3531,22 @@ session_data_received (GtkWidget *widget,
     }
 
     if (info == GRETL_MODEL_PTR && seldata != NULL) {
+#if 1
+	MODEL *pmod = drag_model_src;
+
+	if (pmod != NULL) {
+	    add_to_model_table(pmod, MODEL_ADD_BY_DRAG, 0, NULL);
+	    drag_model_src = NULL;
+	}
+#else	
 	MODEL **ppmod = (MODEL **) seldata;
 
 	if (ppmod != NULL) {
-	    add_to_model_table(*ppmod, MODEL_ADD_BY_DRAG, 0, NULL);
+	    MODEL *pmod = *ppmod;
+	    fprintf(stderr, "GRETL_MODEL_PTR: pmod = %p\n", pmod);
+	    add_to_model_table(pmod, MODEL_ADD_BY_DRAG, 0, NULL);
 	}
+#endif	
     } else if (info == GRETL_GRAPH_FILE && seldata != NULL) {
 	gchar *fname = (gchar *) seldata;
 
@@ -3554,14 +3567,14 @@ static void session_drag_setup (gui_obj *obj)
 	targ = &gretl_drag_targets[GRETL_GRAPH_FILE];
     }
 
-    gtk_drag_dest_set (w,
-                       GTK_DEST_DEFAULT_ALL,
-                       targ, 1,
-                       GDK_ACTION_COPY);
+    gtk_drag_dest_set(w,
+		      GTK_DEST_DEFAULT_ALL,
+		      targ, 1,
+		      GDK_ACTION_COPY);
 
-    g_signal_connect (G_OBJECT(w), "drag-data-received",
-                      G_CALLBACK(session_data_received),
-                      NULL);
+    g_signal_connect(G_OBJECT(w), "drag-data-received",
+		     G_CALLBACK(session_data_received),
+		     NULL);
 }
 
 static void drag_graph (GtkWidget *w, GdkDragContext *context,
@@ -3586,6 +3599,7 @@ static void drag_model (GtkWidget *w, GdkDragContext *context,
 			GtkSelectionData *sel, guint info, guint t,
 			SESSION_MODEL *mod)
 {
+    drag_model_src = mod->ptr;
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_STRING, 8, 
                            (const guchar *) &mod->ptr, 
 			   sizeof mod->ptr);

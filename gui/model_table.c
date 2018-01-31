@@ -190,7 +190,9 @@ static int model_table_depvar (void)
     int i;
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] != NULL) {
+	if (table_models[i] != NULL &&
+	    table_models[i]->list != NULL &&
+	    table_models[i]->list[0] > 0) {
 	    return table_models[i]->list[1];
 	}
     }
