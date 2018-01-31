@@ -1,6 +1,6 @@
 set verbose off
 include SVAR.gfn
-open BlQuah.gdt
+open BlQuah.gdt --frompkg=SVAR
 
 list X = DY U
 list exog = const time
