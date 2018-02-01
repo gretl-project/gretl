@@ -657,8 +657,13 @@ static void db_delete_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-/* set by drag selection callback */
+/* this pointer to the source "vwin" for drag-and-drop is
+   set by drag selection callback, do_db_drag()
+*/
 static windata_t *vwin_drag_src;
+
+/* import series from a database window into main
+   gretl workspace */
 
 void drag_import_db_series (void)
 {
@@ -1176,14 +1181,10 @@ static void db_drag_connect (windata_t *vwin, int i)
     gtk_drag_source_set(vwin->listbox, GDK_BUTTON1_MASK,
 			&gretl_drag_targets[i],
 			1, GDK_ACTION_COPY);
-
     g_signal_connect(G_OBJECT(vwin->listbox), "drag-data-get",
 		     G_CALLBACK(do_db_drag),
 		     vwin);
 }
-
-#define db_drag_series_connect(v) db_drag_connect(v, GRETL_DBSERIES_PTR)
-#define db_drag_db_connect(v) db_drag_connect(v, GRETL_REMOTE_DB_PTR)
 
 #define DB_LINELEN 512
 
@@ -1261,7 +1262,7 @@ static int add_local_db_series_list (windata_t *vwin)
     }
 
     fclose(fp);
-    db_drag_series_connect(vwin);
+    db_drag_connect(vwin, GRETL_DBSERIES_PTR);
 
     return 0;
 }
@@ -1322,7 +1323,7 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
     }
 
     bufgets_finalize(buf);
-    db_drag_series_connect(vwin);
+    db_drag_connect(vwin, GRETL_DBSERIES_PTR);
 
     return 0;
 }
@@ -1439,7 +1440,7 @@ static int add_rats_db_series_list (windata_t *vwin)
 
     insert_and_free_dbwrapper(dw, vwin->listbox);
     vwin->active_var = 0;
-    db_drag_series_connect(vwin);
+    db_drag_connect(vwin, GRETL_DBSERIES_PTR);
 
     return 0;
 }
@@ -1471,7 +1472,7 @@ static int add_pcgive_db_series_list (windata_t *vwin)
 
     insert_and_free_dbwrapper(dw, vwin->listbox);
     vwin->active_var = 0;
-    db_drag_series_connect(vwin);
+    db_drag_connect(vwin, GRETL_DBSERIES_PTR);
 
     return 0;
 }
@@ -2317,10 +2318,15 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     free(targ);
 }
 
+/* called from within datafiles.c, when dragging a
+   remote database or function package from its
+   "on server" window to the associated local
+   window */
+
 void drag_file_from_server (guint info)
 {
     windata_t *vwin = NULL;
-    
+
     if (info == GRETL_REMOTE_DB_PTR ||
 	info == GRETL_REMOTE_FNPKG_PTR) {
 	vwin = vwin_drag_src;
@@ -2851,7 +2857,7 @@ gint populate_remote_db_list (windata_t *vwin)
     free_src_info();
 
     if (!err) {
-	db_drag_db_connect(vwin);
+	db_drag_connect(vwin, GRETL_REMOTE_DB_PTR);
     }
 
     return err;

@@ -27,6 +27,7 @@ version 2017e, in progress
   squares (Model/Panel menu) had become disconnected
 - Windows fix: error on trying to save a record of executed
   commands on program exit
+- OS X fix: intra-program drag-and-drop provoked crash
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for
