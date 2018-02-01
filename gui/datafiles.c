@@ -1860,66 +1860,26 @@ static gchar *files_title (int code)
     return ret;
 }
 
-/* handle drag of pointer from remote database window */
+/* handle drag of pointer from remote database window
+   to local one, or remote function package window to
+   local one
+*/
 
 static void  
-db_window_handle_drag  (GtkWidget *widget,
-			GdkDragContext *context,
-			gint x,
-			gint y,
-			GtkSelectionData *data,
-			guint info,
-			guint time,
-			gpointer p)
+remote_window_handle_drag (GtkWidget *widget,
+			   GdkDragContext *context,
+			   gint x,
+			   gint y,
+			   GtkSelectionData *data,
+			   guint info,
+			   guint time,
+			   gpointer p)
 {
-#ifdef MAC_NATIVE
-    if (info == GRETL_REMOTE_DB_PTR && data != NULL) {
-	const guchar *seldata = gtk_selection_data_get_data(data);
-
-	install_file_from_server(NULL, *(void **) seldata);
+    if (data != NULL &&
+	(info == GRETL_REMOTE_DB_PTR ||
+	 info == GRETL_REMOTE_FNPKG_PTR)) {
+	drag_file_from_server(info);
     }
-#else
-    if (info == GRETL_REMOTE_DB_PTR && data != NULL) {
-	GdkAtom type = gtk_selection_data_get_data_type(data);
-	
-	if (type == GDK_SELECTION_TYPE_INTEGER) {
-	    const guchar *seldata = gtk_selection_data_get_data(data);
-
-	    install_file_from_server(NULL, *(void **) seldata);
-	}
-    }
-#endif
-}
-
-/* handle drag of pointer from remote function package window */
-
-static void  
-pkg_window_handle_drag  (GtkWidget *widget,
-			 GdkDragContext *context,
-			 gint x,
-			 gint y,
-			 GtkSelectionData *data,
-			 guint info,
-			 guint time,
-			 gpointer p)
-{
-#ifdef MAC_NATIVE
-    if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL) {
-	const guchar *seldata = gtk_selection_data_get_data(data);
-
-	install_file_from_server(NULL, *(void **) seldata);
-    }
-#else
-    if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL) {
-	GdkAtom type = gtk_selection_data_get_data_type(data);
-
-	if (type == GDK_SELECTION_TYPE_INTEGER) {
-	    const guchar *seldata = gtk_selection_data_get_data(data);
-
-	    install_file_from_server(NULL, *(void **) seldata);
-	}
-    }
-#endif
 }
 
 static void set_up_viewer_drag_target (windata_t *vwin)
@@ -1929,10 +1889,10 @@ static void set_up_viewer_drag_target (windata_t *vwin)
 
     if (vwin->role == NATIVE_DB) {
 	i = GRETL_REMOTE_DB_PTR;
-	callback = G_CALLBACK(db_window_handle_drag);
+	callback = G_CALLBACK(remote_window_handle_drag);
     } else if (vwin->role == FUNC_FILES) {
 	i = GRETL_REMOTE_FNPKG_PTR;
-	callback = G_CALLBACK(pkg_window_handle_drag);
+	callback = G_CALLBACK(remote_window_handle_drag);
     } else {
 	return;
     }

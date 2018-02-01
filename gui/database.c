@@ -657,9 +657,17 @@ static void db_delete_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-void import_db_series (windata_t *vwin)
+/* set by drag selection callback */
+static windata_t *vwin_drag_src;
+
+void drag_import_db_series (void)
 {
-    gui_get_db_series(vwin, DB_IMPORT);
+    windata_t *vwin = vwin_drag_src;
+
+    if (vwin != NULL) {
+	gui_get_db_series(vwin, DB_IMPORT);
+	vwin_drag_src = NULL;
+    }
 }
 
 static int diffdate (double d1, double d0, int pd)
@@ -1158,6 +1166,7 @@ static void do_db_drag (GtkWidget *w, GdkDragContext *context,
 			GtkSelectionData *sel, guint info, guint t,
 			windata_t *vwin)
 {
+    vwin_drag_src = vwin;
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
 			   (const guchar *) &vwin, sizeof vwin);
 }
@@ -2306,6 +2315,21 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
     g_free(objname);
     free(targ);
+}
+
+void drag_file_from_server (guint info)
+{
+    windata_t *vwin = NULL;
+    
+    if (info == GRETL_REMOTE_DB_PTR ||
+	info == GRETL_REMOTE_FNPKG_PTR) {
+	vwin = vwin_drag_src;
+	vwin_drag_src = NULL;
+    }
+
+    if (vwin != NULL) {
+	install_file_from_server(NULL, vwin);
+    }
 }
 
 /* Called when the "install" command is used to install a function

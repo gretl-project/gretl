@@ -3531,22 +3531,12 @@ session_data_received (GtkWidget *widget,
     }
 
     if (info == GRETL_MODEL_PTR && seldata != NULL) {
-#if 1
 	MODEL *pmod = drag_model_src;
 
 	if (pmod != NULL) {
 	    add_to_model_table(pmod, MODEL_ADD_BY_DRAG, 0, NULL);
 	    drag_model_src = NULL;
 	}
-#else	
-	MODEL **ppmod = (MODEL **) seldata;
-
-	if (ppmod != NULL) {
-	    MODEL *pmod = *ppmod;
-	    fprintf(stderr, "GRETL_MODEL_PTR: pmod = %p\n", pmod);
-	    add_to_model_table(pmod, MODEL_ADD_BY_DRAG, 0, NULL);
-	}
-#endif	
     } else if (info == GRETL_GRAPH_FILE && seldata != NULL) {
 	gchar *fname = (gchar *) seldata;
 

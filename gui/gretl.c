@@ -2344,7 +2344,6 @@ mdata_handle_drag  (GtkWidget *widget,
 		    guint time,
 		    gpointer p)
 {
-    GdkAtom type = gtk_selection_data_get_data_type(data);
     const guchar *seldata = NULL;
     gchar *dfname;
     char tmp[MAXLEN];
@@ -2355,19 +2354,10 @@ mdata_handle_drag  (GtkWidget *widget,
     }
 
     /* handle drag of pointer from database window */
-#ifdef MAC_NATIVE
     if (info == GRETL_DBSERIES_PTR && data != NULL) {
-	/* GdkAtom stuff is X-specific? */
-	import_db_series(*(void **) seldata);
+	drag_import_db_series();
 	return;
     }
-#else
-    if (info == GRETL_DBSERIES_PTR && data != NULL && 
-	type == GDK_SELECTION_TYPE_INTEGER) {
-	import_db_series(*(void **) seldata);
-	return;
-    }
-#endif
 
     if (info != GRETL_FILENAME) {
 	return;

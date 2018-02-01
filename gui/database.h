@@ -11,6 +11,8 @@ gboolean open_named_remote_db_index (char *dbname);
 
 void install_file_from_server (GtkWidget *w, windata_t *vwin);
 
+void drag_file_from_server (guint info);
+
 void pkg_info_from_server (GtkWidget *w, windata_t *vwin);
 
 void maybe_update_pkgview (const char *filename,
@@ -32,7 +34,7 @@ gint populate_remote_data_pkg_list (windata_t *vwin);
 
 void display_db_series (windata_t *vwin);
 
-void import_db_series (windata_t *vwin);
+void drag_import_db_series (void);
 
 void do_compact_data_set (void);
 
