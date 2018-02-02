@@ -7,7 +7,8 @@
 void write_chapter_info (const char *path, const char *src,
 			 int *chapnum)
 {
-    char targ[64];
+    const char *targ = "\\label{chap:";
+    char label[32];
     char tmp[512];
     FILE *fp;
     char *s;
@@ -20,12 +21,10 @@ void write_chapter_info (const char *path, const char *src,
 	return;
     }
 
-    /* the string we're looking for */
-    sprintf(targ, "label{chap:%s}", src);
-
     while (fgets(tmp, sizeof tmp, fp)) {
 	if ((s = strstr(tmp, targ)) != NULL) {
-	    printf(" <ref key=\"chap:%s\" chapter=\"%d\"/>\n", src, *chapnum);
+	    sscanf(s + 12, "%31[^}]", label);
+	    printf(" <ref key=\"chap:%s\" chapter=\"%d\"/>\n", label, *chapnum);
 	    *chapnum += 1;
 	    break;
 	}

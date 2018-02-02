@@ -1485,8 +1485,8 @@
 	  otherwise).  Other arguments are optional.
 	</para>
 	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  For more details and examples see <guideref
+	  targ="chap:numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGScmax"/>
             <fncref targ="NRmax"/>
@@ -1557,8 +1557,8 @@
 	  otherwise).  Other arguments are optional.
 	</para>
 	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  For more details and examples see <guideref
+	  targ="chap:numerical"/>.
 	  <seelist>
 	    <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>
@@ -3241,8 +3241,8 @@
 	  0, 1 or 2 for the <lit>fdjac_quality</lit> variable.
 	</para>
 	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  For more details and examples <guideref
+	  targ="chap:numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -6556,8 +6556,8 @@
 	  alias <lit>NMmin</lit>.
 	</para>
 	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  For more details and examples <guideref
+	  targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="simann"/>
 	  </seelist>
@@ -6737,8 +6737,8 @@
 	  approximation is used.
 	</para>
 	<para>
-	  For more details and examples see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  For more details and examples see <guideref
+	  targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="fdjac"/>
@@ -8606,8 +8606,8 @@
 	  parameter vector.
 	</para>
 	<para>
-	  For more details and an example see the chapter on numerical
-	  methods in <guideref targ="chap:numerical"/>.
+	  For more details and an example see <guideref
+	  targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>
