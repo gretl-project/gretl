@@ -7783,66 +7783,70 @@
 	<lit>mds</lit>: this variant generally requires 5 arguments,
 	as follows: the name of a <cmdref targ="MIDAS_list"/>, two
 	integers giving the minimum and maximum high-frequency lags,
-	an integer between 0 and 4 specifying the type of
-	parameterization to use, and the name of a vector holding
-	initial values of the parameters. The example below calls for
-	lags 3 to 11 of the high-frequency series represented by the
-	list <lit>X</lit>, using parameterization type 1 (exponential
-	Almon, see below) with initializer <lit>theta</lit>.
+	an integer between 0 and 4 (or string, see below) specifying
+	the type of parameterization to use, and the name of a vector
+	holding initial values of the parameters. The example below
+	calls for lags 3 to 11 of the high-frequency series
+	represented by the list <lit>X</lit>, using parameterization
+	type 1 (exponential Almon, see below) with initializer
+	<lit>theta</lit>.
       </para>
       <code context="cli">
 	mds(X, 3, 11, 1, theta)
       </code>
       <para context="cli">
 	<lit>mdsl</lit>: generally requires 3 arguments: the name of a
-	list of MIDAS lags, an integer to specify the type of
-	parameterization and the name of an initialization vector. In
-	this case the minimum and maximum lags are implicit in the
-	initial list argument. In the example below <lit>Xlags</lit>
-	should be a list which already holds all the required lags;
-	such a list can be constructed using the <fncref
-	targ="hflags"/> function.
+	list of MIDAS lags, an integer (or string, see below) to
+	specify the type of parameterization and the name of an
+	initialization vector. In this case the minimum and maximum
+	lags are implicit in the initial list argument. In the example
+	below <lit>Xlags</lit> should be a list which already holds
+	all the required lags; such a list can be constructed using
+	the <fncref targ="hflags"/> function.
       </para>
       <code context="cli">
 	mdsl(XLags, 1, theta)
       </code>
       <para context="cli">
-	The supported types of parameterization are as follows:
+	The supported types of parameterization are shown below; in
+	the context of <lit>mds</lit> and <lit>mdsl</lit>
+	specifications these may be given in the form of numeric codes
+	or the double-quoted strings shown after the numbers.
       </para>
       <para context="cli">
-	0 = <quote>unrestricted MIDAS</quote> or U-MIDAS (each lag has
-	its own coefficient)
+	0 or <lit>"umidas"</lit>: unrestricted MIDAS or U-MIDAS (each
+	lag has its own coefficient)
       </para>
       <para context="cli">
-	1 = normalized exponential Almon; requires at least one
-	parameter, commonly uses two
+	1 or <lit>"nealmon"</lit>: normalized exponential Almon;
+	requires at least one parameter, commonly uses two
       </para>
       <para context="cli">
-	2 = normalized beta with a zero last lag; requires exactly two
-	parameters
+	2 or <lit>"beta0"</lit>: normalized beta with a zero last lag;
+	requires exactly two parameters
       </para>
       <para context="cli">
-	3 = normalized beta with non-zero last lag; requires exactly
-	three parameters
+	3 or <lit>"betan"</lit>: normalized beta with non-zero last
+	lag; requires exactly three parameters
       </para>
       <para context="cli">
-	4 = (non-normalized) Almon polynomial; requires at least
-	one parameter
+	4 or <lit>"almonp"</lit>: (non-normalized) Almon polynomial;
+	requires at least one parameter
       </para>
       <para context="cli">
 	When the parameterization is U-MIDAS, the final initializer
-	argument is not required with <lit>mds</lit> or
-	<lit>mdsl</lit>. In other cases you can request an automatic
-	initialization by substituting one or other of these two
-	forms for the name of an initial parameter vector:
+	argument is not required. In other cases you can request an
+	automatic initialization by substituting one or other of these
+	two forms for the name of an initial parameter vector:
       </para>
       <ilist context="cli">
 	<li>
 	  <para>
 	    The keyword <lit>null</lit>: this is accepted if the
 	    parameterization has a fixed number of terms (the beta
-	    cases, 2 or 3). It's also accepted for the exponential
-	    Almon case, implying the default of 2 parameters.
+	    cases, with 2 or 3 parameters). It's also accepted for the
+	    exponential Almon case, implying the default of 2
+	    parameters.
 	  </para>
 	</li>
 	<li>
