@@ -3388,6 +3388,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (!err && plot_ok) {
 	maybe_schedule_graph_callback(s);
+	plot_ok = 0;
     }
 
     if (callback_scheduled(s)) {
