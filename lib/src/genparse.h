@@ -344,6 +344,7 @@ enum {
     F_ISCONST,
     F_INBUNDLE,
     F_COLNAME,
+    F_ROWNAME,
     F_PNOBS,
     F_PMIN,
     F_PMAX,

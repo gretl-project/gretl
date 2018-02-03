@@ -975,6 +975,29 @@ char *user_matrix_get_column_name (const gretl_matrix *M, int col,
     return ret;
 }
 
+char *user_matrix_get_row_name (const gretl_matrix *M, int row,
+				int *err)
+{
+    char *ret = NULL;
+
+    if (M == NULL || row < 1 || row > M->rows) {
+	*err = E_DATA;
+    } else {
+	const char **S = gretl_matrix_get_rownames(M);
+
+	if (S == NULL) {
+	    ret = gretl_strdup("");
+	} else {
+	    ret = gretl_strdup(S[row-1]);
+	}
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
 double 
 user_matrix_get_determinant (gretl_matrix *m, int tmpmat, 
 			     int f, int *err)

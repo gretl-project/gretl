@@ -416,6 +416,7 @@ struct str_table funcs[] = {
     { F_STRSUB,   "strsub" },
     { F_REGSUB,   "regsub" },
     { F_COLNAME,  "colname" },
+    { F_ROWNAME,  "rowname" },
     { F_RANDINT,  "randint" },
     { F_NADARWAT, "nadarwat" },   /* Nadaraya-Watson */
     { F_SIMANN,   "simann" },     /* simulated annealing */

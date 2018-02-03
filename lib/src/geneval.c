@@ -3751,14 +3751,19 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *matrix_get_colname (NODE *l, NODE *r, parser *p)
+static NODE *matrix_get_col_or_row_name (int f, NODE *l, NODE *r,
+					 parser *p)
 {
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
 	int c = node_get_int(r, p);
 
-	ret->v.str = user_matrix_get_column_name(l->v.m, c, &p->err);
+	if (f == F_COLNAME) {
+	    ret->v.str = user_matrix_get_column_name(l->v.m, c, &p->err);
+	} else {
+	    ret->v.str = user_matrix_get_row_name(l->v.m, c, &p->err);
+	}
     }
 
     return ret;
@@ -14694,9 +14699,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_COLNAME:
+    case F_ROWNAME:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
-	    ret = matrix_get_colname(l, r, p);
+	    ret = matrix_get_col_or_row_name(t->t, l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}

@@ -14024,4 +14024,3 @@ const char **gretl_matrix_get_rownames (const gretl_matrix *m)
 	return NULL;
     }
 }
-

@@ -2133,7 +2133,6 @@
       </description>
     </function>    
 
-
     <function name="colname" section="strings" output="string">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
@@ -8328,6 +8327,31 @@
             <fncref targ="int"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="rowname" section="strings" output="string">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="int">row</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retrieves the name for row <argname>row</argname> of matrix
+	  <argname>M</argname>. If <argname>M</argname> has no row
+	  names attached the value returned is an empty string; if
+	  <argname>row</argname> is out of bounds for the given matrix
+	  an error is flagged. See also <fncref targ="rownames"/>.
+	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
+	  rownames(A, "First Second")
+	  string name = rowname(A, 2)
+	  print name
+	</code>
       </description>
     </function>
 

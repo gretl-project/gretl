@@ -90,6 +90,9 @@ int umatrix_set_names_from_list (gretl_matrix *M,
 char *user_matrix_get_column_name (const gretl_matrix *M, int col,
 				   int *err);
 
+char *user_matrix_get_row_name (const gretl_matrix *M, int row,
+				int *err);
+
 double user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
 				    int f, int *err);
 
