@@ -3,6 +3,7 @@ version 2017e, in progress
   frequency data for use in MIDAS analysis
 - strsplit() function: add optional third argument to choose
   the separator on which to split strings
+- New function rowname(), strictly analogous to colname()
 - Fix bug: setting of a series as "discrete" via the GUI got
   broken
 - Fix bug: the --www option for opening a database file got
