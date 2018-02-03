@@ -415,8 +415,8 @@ struct str_table funcs[] = {
     { F_INBUNDLE, "inbundle" },
     { F_STRSUB,   "strsub" },
     { F_REGSUB,   "regsub" },
-    { F_COLNAME,  "colname" },
-    { F_ROWNAME,  "rowname" },
+    { F_CNAMEGET, "cnameget" },
+    { F_RNAMEGET, "rnameget" },
     { F_RANDINT,  "randint" },
     { F_NADARWAT, "nadarwat" },   /* Nadaraya-Watson */
     { F_SIMANN,   "simann" },     /* simulated annealing */
@@ -496,6 +496,8 @@ struct str_table func_alias[] = {
     { F_LOG,      "ln" },
     { F_SQUARE,   "xpx" },
     { F_BACKTICK, "$" },
+    { F_CNAMEGET, "colname" },
+    { F_RNAMEGET, "rowname" },
     { 0,          NULL }
 };
 

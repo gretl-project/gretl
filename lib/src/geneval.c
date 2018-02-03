@@ -3754,15 +3754,31 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 static NODE *matrix_get_col_or_row_name (int f, NODE *l, NODE *r,
 					 parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    int get_all = null_or_empty(r);
+    NODE *ret = get_all ? aux_array_node(p) : aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	int c = node_get_int(r, p);
-
-	if (f == F_COLNAME) {
-	    ret->v.str = user_matrix_get_column_name(l->v.m, c, &p->err);
+	if (get_all) {
+	    const char **S;
+	    int n = 0;
+	    
+	    if (f == F_CNAMEGET) {
+		S = gretl_matrix_get_colnames(l->v.m);
+		if (S != NULL) n = l->v.m->cols;
+	    } else {
+		S = gretl_matrix_get_rownames(l->v.m);
+		if (S != NULL) n = l->v.m->rows;
+	    }
+	    ret->v.a = gretl_array_from_strings((char **) S, n,
+						1, &p->err);
 	} else {
-	    ret->v.str = user_matrix_get_row_name(l->v.m, c, &p->err);
+	    int i = node_get_int(r, p);
+
+	    if (f == F_CNAMEGET) {
+		ret->v.str = user_matrix_get_column_name(l->v.m, i, &p->err);
+	    } else {
+		ret->v.str = user_matrix_get_row_name(l->v.m, i, &p->err);
+	    }
 	}
     }
 
@@ -14698,10 +14714,10 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_COLNAME:
-    case F_ROWNAME:
+    case F_CNAMEGET:
+    case F_RNAMEGET:
 	/* matrix, scalar as second arg */
-	if (l->t == MAT && scalar_node(r)) {
+	if (l->t == MAT && (null_or_empty(r) || scalar_node(r))) {
 	    ret = matrix_get_col_or_row_name(t->t, l, r, p);
 	} else {
 	    p->err = E_TYPES;

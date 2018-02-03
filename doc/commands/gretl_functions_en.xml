@@ -2133,19 +2133,25 @@
       </description>
     </function>    
 
-    <function name="colname" section="strings" output="string">
+    <function name="cnameget" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="int">col</fnarg>
+	<fnarg type="int" optional="true">col</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Retrieves the name for column <argname>col</argname> of
-	  matrix <argname>M</argname>. If <argname>M</argname> has
-	  no column names attached the value returned is an empty
-	  string; if <argname>col</argname> is out of bounds for
-	  the given matrix an error is flagged. See also
-	  <fncref targ="colnames"/>.
+	  If the <argname>col</argname> argument is given, retrieves
+	  the name for column <argname>col</argname> of matrix
+	  <argname>M</argname>. If <argname>M</argname> has no column
+	  names attached the value returned is an empty string; if
+	  <argname>col</argname> is out of bounds for the given matrix
+	  an error is flagged.
+	</para>
+	<para>
+	  If no second argument is given, retrieves an array of
+	  strings holding the column names from <argname>M</argname>,
+	  or an empty array if <argname>M</argname> does not have
+	  column names attached.
 	</para>
 	<para>
 	  Example:
@@ -2153,9 +2159,14 @@
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
 	  colnames(A, "Col_A Col_B Col_C")
-	  string name = colname(A, 3)
+	  string name = cnameget(A, 3)
 	  print name
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="colnames"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -8330,18 +8341,25 @@
       </description>
     </function>
 
-    <function name="rowname" section="strings" output="string">
+    <function name="rnameget" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="int">row</fnarg>
+	<fnarg type="int" optional="true">row</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Retrieves the name for row <argname>row</argname> of matrix
+	  If the <argname>row</argname> argument is given, retrieves
+	  the name for row <argname>col</argname> of matrix
 	  <argname>M</argname>. If <argname>M</argname> has no row
 	  names attached the value returned is an empty string; if
 	  <argname>row</argname> is out of bounds for the given matrix
-	  an error is flagged. See also <fncref targ="rownames"/>.
+	  an error is flagged.
+	</para>
+	<para>
+	  If no second argument is given, retrieves an array of
+	  strings holding the row names from <argname>M</argname>,
+	  or an empty array if <argname>M</argname> does not have
+	  row names attached.
 	</para>
 	<para>
 	  Example:
@@ -8349,9 +8367,14 @@
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
 	  rownames(A, "First Second")
-	  string name = rowname(A, 2)
-	  print name
+	  string name = rnameget(A, 2)
+	  print name	
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="rownames"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
