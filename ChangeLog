@@ -14,7 +14,7 @@ version 2017e, in progress
 - "heckit" command: add selection equation regressor list to
   $model bundle under the key "zlist"
 - "xtab" command: add --quiet option and enable accessors
-  $test and $pvalue for the Pearson chi-square in the simple
+  $test and $pvalue for the Pearson chi-square test in the
   bivariate case
 - "difftest" command: add --quiet option
 - "smpl" command: add --quiet option
