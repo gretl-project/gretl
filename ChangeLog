@@ -4,7 +4,8 @@ version 2017e, in progress
 - strsplit() function: add optional third argument to choose
   the separator on which to split strings
 - mreverse() function: make this work for a list argument
-- New function rowname(), strictly analogous to colname()
+- colname() function: rename as cnameget()
+- New function rnameget(), strictly analogous to cnameget()
 - Fix bug: setting of a series as "discrete" via the GUI got
   broken
 - Fix bug: the --www option for opening a database file got

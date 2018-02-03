@@ -1,5 +1,8 @@
 version 2017e, in progress
 
+The function colname() has been renamed as cnameget(), but the
+old name is still accepted as an alias.
+
 The command-form of "sprintf" is now deprecated in favor of the
 function of the same name; the command-form continues to work
 but should not be used in newly written hansl code.
