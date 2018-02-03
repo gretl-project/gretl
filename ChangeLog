@@ -3,6 +3,7 @@ version 2017e, in progress
   frequency data for use in MIDAS analysis
 - strsplit() function: add optional third argument to choose
   the separator on which to split strings
+- mreverse() function: make this work for a list argument
 - New function rowname(), strictly analogous to colname()
 - Fix bug: setting of a series as "discrete" via the GUI got
   broken
@@ -12,7 +13,14 @@ version 2017e, in progress
   user more effectively
 - "heckit" command: add selection equation regressor list to
   $model bundle under the key "zlist"
+- "xtab" command: add --quiet option and enable accessors
+  $test and $pvalue for the Pearson chi-square in the simple
+  bivariate case
 - "difftest" command: add --quiet option
+- "smpl" command: add --quiet option
+- CSV data reader: support date format YYYY-Qq for quarterly
+  data
+- GUI: tabbed script editor option: make this the default
 - GUI convenience: add facility to generate 100-based indices
   of selected series
 - GUI plot editor: support selection of dash patterns for
