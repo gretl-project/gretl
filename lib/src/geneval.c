@@ -3724,7 +3724,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = l->v.m;
-	int byrow = (f == F_ROWNAMES);
+	int byrow = (f == F_RNAMESET);
 
 	if (r->t == STR) {
 	    ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
@@ -14705,8 +14705,8 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_COLNAMES:
-    case F_ROWNAMES:
+    case F_CNAMESET:
+    case F_RNAMESET:
 	/* matrix, list, string or strings array as second arg */
 	if (l->t == MAT && (ok_list_node(r) || r->t == STR || r->t == ARRAY)) {
 	    ret = matrix_add_names(l, r, t->t, p);

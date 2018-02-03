@@ -2158,19 +2158,19 @@
 	</para>
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
-	  colnames(A, "Col_A Col_B Col_C")
+	  cnameset(A, "Col_A Col_B Col_C")
 	  string name = cnameget(A, 3)
 	  print name
 	</code>
 	<para>
 	  <seelist>
-            <fncref targ="colnames"/>
+            <fncref targ="cnameset"/>
 	  </seelist>
 	</para>
       </description>
     </function>
 
-    <function name="colnames" section="matbuild" output="scalar">
+    <function name="cnameset" section="matbuild" output="scalar">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -2189,7 +2189,7 @@
 	</para>
 	<para>
 	  The return value is 0 on successful completion, non-zero on
-	  error. See also <fncref targ="rownames"/>.
+	  error. See also <fncref targ="rnameset"/>.
 	</para>
 	<para>
 	  Example:
@@ -2199,7 +2199,7 @@
 	  strings S = array(2)
 	  S[1] = "Col1"
 	  S[2] = "Col2"
-	  colnames(M, S)
+	  cnameset(M, S)
 	  print M
 	</code>
       </description>
@@ -8366,19 +8366,19 @@
 	</para>
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
-	  rownames(A, "First Second")
+	  rnameset(A, "First Second")
 	  string name = rnameget(A, 2)
 	  print name	
 	</code>
 	<para>
 	  <seelist>
-            <fncref targ="rownames"/>
+            <fncref targ="rnameset"/>
 	  </seelist>
 	</para>
       </description>
     </function>
 
-    <function name="rownames" section="matbuild" output="int">
+    <function name="rnameset" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -8397,7 +8397,7 @@
 	</para>
 	<para>
 	  The return value is 0 on successful completion, non-zero on
-	  error. See also <fncref targ="colnames"/>.	  
+	  error. See also <fncref targ="cnameset"/>.	  
 	</para>
 	<para>
 	  Example:
@@ -8408,7 +8408,7 @@
 	  S[1] = "Row1"
 	  S[2] = "Row2"
 	  S[3] = "Row3"
-	  rownames(M, S)
+	  rnameset(M, S)
 	  print M      
 	</code>
       </description>
