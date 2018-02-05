@@ -3,14 +3,14 @@
 # first translator: Markus Hahn <markus.hahn@rub.de>, 2004.
 # current (Feb 2008) translator: Sven Schreiber <svetosch ... gmx ... net>
 #  <>, 2008.
-#
-#
+# 
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2017-05-25 08:56+0100\n"
+"PO-Revision-Date: 2018-02-05 14:21+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.6.5\n"
+"X-Generator: Poedit 2.0.4\n"
 
 #: lib/src/adf_kpss.c:493
 msgid "lagged differences"
@@ -959,22 +959,22 @@ msgid "Data file has trailing commas\n"
 msgstr "Datendatei enthält Endkommata\n"
 
 #: lib/src/csvdata.c:1776
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d double-quotes, max %d per line\n"
-msgstr "Fand %d Variablen und %d Beobachtungen\n"
+msgstr "Fand %d doppelte Anführungszeichen, max %d pro Zeile\n"
 
 #: lib/src/csvdata.c:1780
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d single-quotes, max %d per line\n"
-msgstr "Fand %d Variablen und %d Beobachtungen\n"
+msgstr "Fand %d einfache Anführungszeichen, max %d pro Zeile\n"
 
 #: lib/src/csvdata.c:1800
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Unterstelle doppeltes Anführungszeichen als relevant\n"
 
 #: lib/src/csvdata.c:1804
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Unterstelle einfaches Anführungszeichen als relevant\n"
 
 #: lib/src/csvdata.c:2008
 #, c-format
@@ -2336,9 +2336,8 @@ msgid "Variable number %d is out of bounds"
 msgstr "Variablennummer %d außerhalb der Grenzen"
 
 #: lib/src/geneval.c:7554 lib/src/transforms.c:846 lib/src/transforms.c:1165
-#, fuzzy
 msgid "The constant cannot be lagged"
-msgstr "mit Konstante und Trend"
+msgstr "Konstante kann nicht verzögert werden"
 
 #: lib/src/geneval.c:7968
 msgid "Matrix specification is not coherent"
@@ -2356,9 +2355,8 @@ msgstr ""
 "werden"
 
 #: lib/src/geneval.c:8747
-#, fuzzy
 msgid "Libsvm is not supported"
-msgstr "Frequenz %d nicht unterstützt"
+msgstr "Libsvm nicht unterstützt"
 
 #: lib/src/geneval.c:8916
 #, c-format
@@ -2571,9 +2569,9 @@ msgid "fitted variance from model %d"
 msgstr "angepasste Varianz aus Modell %d"
 
 #: lib/src/genfuncs.c:3468
-#, fuzzy, c-format
+#, c-format
 msgid "individual effects from model %d"
-msgstr "Residuen von Modell %d"
+msgstr "Individualeffekte von Modell %d"
 
 #: lib/src/genfuncs.c:3470
 #, c-format
@@ -2656,9 +2654,8 @@ msgid "Empty observation []\n"
 msgstr "Leere Beobachtung []\n"
 
 #: lib/src/genlex.c:1289
-#, fuzzy
 msgid "obsolete use of \"pi\": please use \"$pi\" instead"
-msgstr "obsoleter Gebrauch von \"=\" als boolscher Test: bitte \"==\" benutzen"
+msgstr "obsoleter Gebrauch von \"pi\": bitte \"$pi\" benutzen"
 
 #: lib/src/genlex.c:1755
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
@@ -3637,9 +3634,9 @@ msgid "daily"
 msgstr "täglich"
 
 #: lib/src/gretl_midas.c:2254
-#, fuzzy, c-format
+#, c-format
 msgid "MIDAS list %s, high-frequency lags %d to %d"
-msgstr "= Hochfrequenz-log-Differenz von %s"
+msgstr "MIDAS-Liste %s, Hochfrequenz-Verzögerungen %d bis %d"
 
 #: lib/src/gretl_model.c:3899
 msgid "Test for addition of variables"
@@ -3929,9 +3926,8 @@ msgid "Inadequate data for panel estimation"
 msgstr "Ungeeignete Daten für Panelschätzung"
 
 #: lib/src/gretl_panel.c:2912
-#, fuzzy
 msgid "Hausman test matrix is not positive definite!\n"
-msgstr "Hausmantest-Matrix ist nicht positiv-definit"
+msgstr "Hausmantest-Matrix ist nicht positiv-definit!\n"
 
 #: lib/src/gretl_panel.c:2914
 #, c-format
@@ -4465,14 +4461,12 @@ msgid "not found"
 msgstr "nicht gefunden"
 
 #: lib/src/interact.c:746
-#, fuzzy
 msgid "is a 0/1 variable"
-msgstr "X-Achsen-Variable"
+msgstr "ist 0/1-Variable"
 
 #: lib/src/interact.c:747
-#, fuzzy
 msgid "not integer-valued"
-msgstr "Nicht installiert"
+msgstr "Nicht ganzzahlig"
 
 #: lib/src/interact.c:801 lib/src/printout.c:1809
 msgid "No series are defined\n"
@@ -4642,9 +4636,9 @@ msgid "Time series"
 msgstr "Zeitreihe"
 
 #: lib/src/libset.c:1771
-#, fuzzy, c-format
+#, c-format
 msgid "Pseudo-random number generator seeded with %u\n"
-msgstr "Pseudozufallszahlen-Generator initialisiert mit %d\n"
+msgstr "Pseudozufallszahlen-Generator initialisiert mit %u\n"
 
 #: lib/src/libset.c:1797
 #, c-format
@@ -5372,9 +5366,9 @@ msgid "Omitted due to exact collinearity:"
 msgstr "Weggelassen wg. exakter Kollinearität:"
 
 #: lib/src/modelprint.c:1683
-#, fuzzy, c-format
+#, c-format
 msgid " %d series"
-msgstr "Reihen hinzufügen"
+msgstr "%d Reihen"
 
 #: lib/src/modelprint.c:1698
 msgid "Redundant instruments:"
@@ -5458,9 +5452,8 @@ msgid "T"
 msgstr "T"
 
 #: lib/src/modelprint.c:1900
-#, fuzzy
 msgid "Using line search with conditional OLS"
-msgstr "L-BFGS-B mit bedingten KQ benutzt"
+msgstr "Liniensuche mit bedingten KQ benutzt"
 
 #: lib/src/modelprint.c:1902
 msgid "Using L-BFGS-B with conditional OLS"
@@ -5476,11 +5469,11 @@ msgstr "Levenberg-Marquardt-Algorithmus benutzt"
 
 #: lib/src/modelprint.c:1918
 msgid "Using Swamy-Arora as per Stata"
-msgstr ""
+msgstr "Verwende Swamy-Arora wie bei Stata"
 
 #: lib/src/modelprint.c:1920
 msgid "Using Swamy-Arora as per Baltagi-Chang"
-msgstr ""
+msgstr "Verwende Swamy-Arora wie bei Baltagi-Chang"
 
 #: lib/src/modelprint.c:1973 lib/src/modelprint.c:1976
 #: lib/src/modelprint.c:1979 lib/src/system.c:4604 lib/src/system.c:4630
@@ -5513,9 +5506,8 @@ msgid "%s, using %d observations"
 msgstr "%s, mit %d Beobachtungen"
 
 #: lib/src/modelprint.c:2072
-#, fuzzy
 msgid "Using weighted Nerlove transformation"
-msgstr "Verwende Nerloves Transformation"
+msgstr "Verwende gewichtete Nerlove-Transformation"
 
 #: lib/src/modelprint.c:2074
 msgid "Using Nerlove's transformation"
@@ -6385,9 +6377,8 @@ msgid "non-zero ties"
 msgstr "auftretende Bindungen"
 
 #: lib/src/nonparam.c:1097
-#, fuzzy
 msgid "Fail to reject H0"
-msgstr "Kopieren des Objekts schlug fehl"
+msgstr "H0 wurde nicht abgelehnt"
 
 #: lib/src/nonparam.c:1107
 msgid "Expected value"
@@ -6957,9 +6948,9 @@ msgid "Poisson (mean = %g): "
 msgstr "Poisson (mean = %g): "
 
 #: lib/src/pvalues.c:3428
-#, fuzzy, c-format
+#, c-format
 msgid "Exponential (scale = %g): "
-msgstr "GED (Form = %g)"
+msgstr "Exponenziell (Skala = %g):"
 
 #: lib/src/pvalues.c:3436
 #, c-format
@@ -7347,9 +7338,9 @@ msgid "Invalid option '--%s'"
 msgstr "ungültige Option '--%s'"
 
 #: lib/src/tokenize.c:1766
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid lag order %g"
-msgstr "Ungültige Lagordnung %d"
+msgstr "Ungültige Lagordnung %g"
 
 #: lib/src/tokenize.c:3180
 #, c-format
@@ -9074,13 +9065,12 @@ msgid "gretl: packages on menus"
 msgstr "gretl: Pakete in den Menüs"
 
 #: gui/datafiles.c:2543
-#, fuzzy
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Please try /File/Functions packages/On server"
 msgstr ""
 "Keine gretl-Funktionspakete auf diesem Computer gefunden.\n"
-"Bitte probieren Sie /Werkzeuge/Funktionspakete/Auf Server"
+"Bitte probieren Sie /Datei/Funktionspakete/Auf Server"
 
 #: gui/datafiles.c:2716 gui/datafiles.c:2720
 msgid "File"
@@ -9719,9 +9709,8 @@ msgid "static forecast"
 msgstr "statische Prognose"
 
 #: gui/dialogs.c:3157
-#, fuzzy
 msgid "recursive k-step ahead forecasts: k = "
-msgstr "Rekursive %d-Schritt-Prognosen"
+msgstr "rekursive k-Schritt-Prognosen: k ="
 
 #: gui/dialogs.c:3170
 msgid "gretl: forecast"
@@ -9788,9 +9777,8 @@ msgid "Use start-of-period values"
 msgstr "Frequenzverringerung durch Anfangswerte"
 
 #: gui/dialogs.c:3762
-#, fuzzy
 msgid "Spread to multiple series (MIDAS)"
-msgstr "Auf mehrere Reihen aufteilen"
+msgstr "Auf mehrere Reihen aufteilen (MIDAS)"
 
 #: gui/dialogs.c:3782
 msgid "Default method:"
@@ -10058,9 +10046,8 @@ msgid "percent change in %s"
 msgstr "Prozentänderung in %s"
 
 #: gui/dialogs.c:6301
-#, fuzzy
 msgid "percent changes"
-msgstr "Prozentänderung in %s"
+msgstr "Prozentänderungen"
 
 #: gui/dialogs.c:6310 gui/dialogs.c:6411 gui/ssheet.c:998
 #, c-format
@@ -10084,23 +10071,21 @@ msgid "Monthly, annualized"
 msgstr "Monatlich, annualisiert"
 
 #: gui/dialogs.c:6362
-#, fuzzy
 msgid "Calculate using logs"
-msgstr "Rechner"
+msgstr "Berechne mit Logs"
 
 #: gui/dialogs.c:6399
 #, c-format
 msgid "100-based index of %s"
-msgstr ""
+msgstr "100-basierter Index von %s"
 
 #: gui/dialogs.c:6402
 msgid "100-based indices"
-msgstr ""
+msgstr "100-basierte Indizes"
 
 #: gui/dialogs.c:6435
-#, fuzzy
 msgid "Base period:"
-msgstr "Periode"
+msgstr "Basisperiode:"
 
 #: gui/dialogs.c:6537
 msgid "Unrestricted (U-MIDAS)"
@@ -10123,9 +10108,8 @@ msgid "Almon polynomial"
 msgstr "Almon-Polynom"
 
 #: gui/dialogs.c:6542
-#, fuzzy
 msgid "Normalized beta, one parameter"
-msgstr "Normalisiertes Beta (letzter Lag nicht Null)"
+msgstr "Normalisiertes Beta, ein Parameter"
 
 #: gui/dialogs.c:6565
 #, c-format
@@ -10201,24 +10185,23 @@ msgid "right-click for some shortcuts"
 msgstr "Rechtsklick für einige Kürzel"
 
 #: gui/fileselect.c:339
-#, fuzzy, c-format
+#, c-format
 msgid "Open %s in new window"
-msgstr "Gehe zu neuem Fenster"
+msgstr "Öffne %s in neuem Fenster"
 
 #: gui/fileselect.c:340
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "Ersetzt"
+msgstr "Ersetze %s"
 
 #: gui/fileselect.c:345
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to %s"
-msgstr "Änderungen speichern?"
+msgstr "Änderungen an %s speichern"
 
 #: gui/fileselect.c:348
-#, fuzzy
 msgid "Open script"
-msgstr "Öffne Skriptdatei"
+msgstr "Öffne Skript"
 
 #: gui/fileselect.c:873
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
@@ -10680,7 +10663,7 @@ msgstr "Auswahl (oder neue Variable)"
 
 #: gui/fncall.c:1632
 msgid "allow access to out-of-sample data"
-msgstr ""
+msgstr "erlaube Zugriff außerhalb der Stichprobe"
 
 #: gui/fncall.c:1643
 msgid "close this dialog on \"OK\""
@@ -11725,9 +11708,8 @@ msgid " No datafile loaded "
 msgstr "Keine Datendatei geladen"
 
 #: gui/gretl.c:1466
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "Arbeitsverzeichnis:"
+msgstr "Arbeitsverzeichnis: klicke zum Konfigurieren"
 
 #: gui/gretl.c:1572 gui/gretl.c:1586
 msgid "_User file..."
@@ -11890,14 +11872,12 @@ msgid "_General..."
 msgstr "_Haupt..."
 
 #: gui/gretl.c:1626
-#, fuzzy
 msgid "Font _scale..."
-msgstr "X-Y-_Streudiagramm..."
+msgstr "Schrift_skalierung..."
 
 #: gui/gretl.c:1628
-#, fuzzy
 msgid "Monospaced _font..."
-msgstr "Menüschriftart..."
+msgstr "Feste-_Breite-Schrift..."
 
 #: gui/gretl.c:1630 gui/gretl.c:1946
 msgid "_Menu font..."
@@ -12148,14 +12128,12 @@ msgid "_Seasonal differences of selected variables"
 msgstr "_Saison-Differenzen gewählter Variablen"
 
 #: gui/gretl.c:1702
-#, fuzzy
 msgid "_Percentage change of selected variables"
 msgstr "_Prozentuale Änderung gewählter Variablen"
 
 #: gui/gretl.c:1704
-#, fuzzy
 msgid "_100-based indices of selected variables"
-msgstr "_Erste Differenzen gewählter Variablen"
+msgstr "_100-basierte Indizes gewählter Variablen"
 
 #: gui/gretl.c:1706
 msgid "_Index variable"
@@ -12574,9 +12552,8 @@ msgid "_Function reference"
 msgstr "_Funktionsdokumentation"
 
 #: gui/gretl.c:1835
-#, fuzzy
 msgid "_Packages"
-msgstr "Paket"
+msgstr "_Pakete"
 
 #: gui/gretl.c:1836
 msgid "_User's guide"
@@ -13335,9 +13312,8 @@ msgid "Per-unit _constants"
 msgstr "gruppenspezifische _Konstanten"
 
 #: gui/gui_utils.c:2904
-#, fuzzy
 msgid "Individual effects"
-msgstr "Fixed effects"
+msgstr "Individualeffekte"
 
 #: gui/gui_utils.c:3078
 msgid "_Against time"
@@ -13633,26 +13609,23 @@ msgstr ""
 
 #: gui/gui_utils.c:5474 gui/gui_utils.c:5479
 msgid "No output was produced"
-msgstr ""
+msgstr "Kein Output erzeugt"
 
 #: gui/gui_utils.c:5657
 msgid "No command was supplied to start R"
 msgstr "Kein Befehl zum Start von R angegeben"
 
 #: gui/gui_utils.c:5859
-#, fuzzy
 msgid "multiple time series object"
-msgstr "gestapelte Zeitreihe"
+msgstr "multiples Zeitreihenobjekt"
 
 #: gui/gui_utils.c:5860
-#, fuzzy
 msgid "data frame"
-msgstr "Datenskalierung"
+msgstr "Daten-Frame"
 
 #: gui/gui_utils.c:5864
-#, fuzzy
 msgid "Send data as"
-msgstr "Daten speichern _als..."
+msgstr "Sende Daten als"
 
 #: gui/helpfiles.c:76
 msgid "Larger"
@@ -13807,9 +13780,9 @@ msgid "Error adding variables"
 msgstr "Fehler beim Hinzufügen der Variablen"
 
 #: gui/library.c:610
-#, fuzzy, c-format
+#, c-format
 msgid "forecast std errors of %s"
-msgstr "Prognose-Standardfehler"
+msgstr "Prognose-Standardfehler von %s"
 
 #: gui/library.c:613
 #, c-format
@@ -14475,9 +14448,9 @@ msgid "Plot the series"
 msgstr "Reihe(n) plotten"
 
 #: gui/library.c:7732
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values in current sample"
-msgstr "%s: keine gültigen Werte"
+msgstr "%s: keine gültigen Werte in aktueller Stichprobe"
 
 #: gui/library.c:7735
 #, c-format
@@ -14684,9 +14657,8 @@ msgid "Add percent change..."
 msgstr "Prozentänderung hinzufügen..."
 
 #: gui/menustate.c:551 gui/menustate.c:556
-#, fuzzy
 msgid "Add index values..."
-msgstr "Bearbeite Werte..."
+msgstr "Füge Indexwerte hinzu..."
 
 #: gui/menustate.c:552
 msgid "Dummify..."
@@ -14701,9 +14673,8 @@ msgid "Add differences"
 msgstr "Differenzen hinzufügen"
 
 #: gui/menustate.c:555
-#, fuzzy
 msgid "Add percent changes..."
-msgstr "Prozentänderung hinzufügen..."
+msgstr "Prozentänderungen hinzufügen..."
 
 #: gui/menustate.c:558 gui/menustate.c:573
 msgid "Define new variable..."
@@ -14722,9 +14693,8 @@ msgid "Display components"
 msgstr "Komponenten anzeigen"
 
 #: gui/menustate.c:569
-#, fuzzy
 msgid "Plot components"
-msgstr "Alle Komponenten"
+msgstr "Plotte Komponenten"
 
 #: gui/menustate.c:570
 msgid "Edit components"
@@ -15310,9 +15280,8 @@ msgid "Seasonal"
 msgstr "Saisonal"
 
 #: gui/selector.c:5447
-#, fuzzy
 msgid "Orders"
-msgstr "Ordnung:"
+msgstr "Ordnungen"
 
 #: gui/selector.c:5487
 msgid "I"
@@ -15496,7 +15465,7 @@ msgstr "Swamy-Arora"
 
 #: gui/selector.c:6417
 msgid "Swamy-Arora / Baltagi-Chang"
-msgstr ""
+msgstr "Swamy-Arora / Baltagi-Chang"
 
 #: gui/selector.c:6418
 msgid "Nerlove"
@@ -15576,7 +15545,7 @@ msgstr "gretl-Datenbank (.bin)"
 
 #: gui/selector.c:6641
 msgid "space separated (R-friendly)"
-msgstr ""
+msgstr "leerzeichengetrennt (R-freundlich)"
 
 #: gui/selector.c:6642
 msgid "Octave"
@@ -15830,9 +15799,9 @@ msgid "Properties"
 msgstr "Eigenschaften"
 
 #: gui/session.c:604
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no text to save"
-msgstr "ist ein Skalar"
+msgstr "%s: kein Text zum Speichern"
 
 #: gui/session.c:879 gui/session.c:943 gui/session.c:962
 msgid "Failed to copy graph file"
@@ -16063,9 +16032,8 @@ msgid "Prompt to save session"
 msgstr "Auffordern zum Sitzung speichern"
 
 #: gui/settings.c:226
-#, fuzzy
 msgid "Display working directory"
-msgstr "gretl: Arbeitsverzeichnis"
+msgstr "Zeige Arbeitsverzeichnis"
 
 #: gui/settings.c:230
 msgid "Set working directory from shell"
@@ -16172,9 +16140,8 @@ msgid "Use HTTP proxy"
 msgstr "Verwende HTTP-Proxy"
 
 #: gui/settings.c:300
-#, fuzzy
 msgid "Monospaced font"
-msgstr "Platz für Kommentare"
+msgstr "Feste-Breite-Schrift"
 
 #: gui/settings.c:302
 msgid "Menu font"
@@ -16321,13 +16288,12 @@ msgid "Remember this setting"
 msgstr ""
 
 #: gui/settings.c:2846
-#, fuzzy
 msgid "gretl: font scale"
-msgstr "gretl: Wähle Bereich"
+msgstr "gretl: Schriftskalierung"
 
 #: gui/settings.c:2851
 msgid "Scale for monospaced and menu fonts"
-msgstr ""
+msgstr "Skalierung für Feste-Breite- und Menüschriften"
 
 #: gui/settings.c:3017
 msgid "Working directory:"
@@ -16358,14 +16324,12 @@ msgid "always start in the working directory"
 msgstr "starte immer im Arbeitsverzeichnis"
 
 #: gui/settings.c:3090
-#, fuzzy
 msgid "Show working directory in main window"
-msgstr "Arbeitsverzeichnis auf Shell-Einstellung setzen"
+msgstr "Zeige Arbeitsverzeichnis in Hauptfenster "
 
 #: gui/settings.c:3100
-#, fuzzy
 msgid "Open working directory"
-msgstr "Arbeitsverzeichnis"
+msgstr "Öffne Arbeitsverzeichnis"
 
 #: gui/settings.c:3169
 msgid "gretl: working directory"
@@ -16572,9 +16536,8 @@ msgid "untitled"
 msgstr "unbenannt"
 
 #: gui/tabwin.c:580
-#, fuzzy
 msgid "gretl: foreign script editor"
-msgstr "gretl: Skripteditor"
+msgstr "gretl: foreign-Skripteditor"
 
 #: gui/tabwin.c:584
 msgid "gretl: models"
@@ -16842,14 +16805,12 @@ msgid "Digits..."
 msgstr "Ziffern..."
 
 #: gui/toolbar.c:1030
-#, fuzzy
 msgid "_Save forecast..."
-msgstr "_Speichern unter..."
+msgstr "_Speichere Prognose..."
 
 #: gui/toolbar.c:1031
-#, fuzzy
 msgid "Save standard errors..."
-msgstr "Standardfehler"
+msgstr "Speichere Standardfehler..."
 
 #: gui/toolbar.c:1216
 msgid "New tab"
@@ -16975,12 +16936,11 @@ msgstr "Diese Variable als diskret behandeln"
 
 #: gui/varinfo.c:946
 msgid "Numeric values represent an encoding"
-msgstr ""
+msgstr "Numerische Werte repräsentieren Kodierung"
 
 #: gui/varinfo.c:1001
-#, fuzzy
 msgid "gretl: save series"
-msgstr "gretl: Matrix speichern"
+msgstr "gretl: Reihe speichern"
 
 #: gui/winstack.c:298
 msgid "Main window"
@@ -18239,9 +18199,8 @@ msgstr "Dekoration"
 #~ msgid "data scale"
 #~ msgstr "Datenskalierung"
 
-#, fuzzy
 #~ msgid "Working directory tooltip"
-#~ msgstr "Arbeitsverzeichnis:"
+#~ msgstr "Tooltip Arbeitsverzeichnis"
 
 #~ msgid ""
 #~ "Hausman test matrix is not positive definite (this result may be treated "
