@@ -225,7 +225,7 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "display_workdir", N_("Display working directory"), NULL, &display_wdir,
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
-    { "workdir_tooltip", N_("Working directory tooltip"), NULL, &wdir_tooltip,
+    { "workdir_tooltip", "Working directory tooltip", NULL, &wdir_tooltip,
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
