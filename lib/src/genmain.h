@@ -211,6 +211,8 @@ int function_from_string (const char *s);
 
 int function_lookup (const char *s);
 
+int is_function_alias (const char *s);
+
 int const_lookup (const char *s);
 
 double get_const_by_name (const char *name, int *err);

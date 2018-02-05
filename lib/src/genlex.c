@@ -614,6 +614,19 @@ int function_lookup (const char *s)
     return real_function_lookup(s, 0, NULL);
 }
 
+int is_function_alias (const char *s)
+{
+    int i;
+
+    for (i=0; func_alias[i].id != 0; i++) {
+	if (!strcmp(s, func_alias[i].str)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int function_lookup_with_alias (const char *s,
 				       parser *p)
 {

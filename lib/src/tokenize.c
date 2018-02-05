@@ -2298,7 +2298,8 @@ static int test_for_genr (CMD *c, int i, DATASET *dset)
 	} else if (nexttok->type == TOK_BRSTR && token_joined(nexttok)) {
 	    /* assignment to array or series element(s) */
 	    c->ci = GENR;
-	} else if (function_lookup(s) || get_user_function_by_name(s)) {
+	} else if (function_lookup(s) || get_user_function_by_name(s) ||
+		   is_function_alias(s)) {
 	    /* function call, no assignment */
 	    c->ci = GENR;
 	    c->opt |= OPT_O;
