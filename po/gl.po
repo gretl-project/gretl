@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2017-12-11 13:09+0100\n"
+"PO-Revision-Date: 2018-02-05 19:58+0100\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.7\n"
+"X-Generator: Poedit 2.0.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -910,9 +910,9 @@ msgid "quarter %s?\n"
 msgstr "trimestre %s?\n"
 
 #: lib/src/csvdata.c:1185
-#, fuzzy, c-format
+#, c-format
 msgid "quarter %d?\n"
-msgstr "trimestre %s?\n"
+msgstr "Trimestre %d?\n"
 
 #: lib/src/csvdata.c:1192
 #, c-format
@@ -1190,9 +1190,8 @@ msgid "Series length does not match the dataset"
 msgstr "O tamaño da serie non coincide co do conxunto de datos"
 
 #: lib/src/csvdata.c:6315 lib/src/csvdata.c:6607 lib/src/csvdata.c:6697
-#, fuzzy
 msgid "Invalid join specification"
-msgstr "Especificación incorrecta de columna"
+msgstr "Especificación incorrecta de unión"
 
 #: lib/src/csvdata.c:6881
 #, c-format
@@ -1635,9 +1634,9 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "A matriz *%s* non representa unha táboa de continxencia"
 
 #: lib/src/describe.c:2600
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "*%s* non é unha variable de cadea"
+msgstr "Eliminando %s: non é unha variable discreta\n"
 
 #: lib/src/describe.c:2898 lib/src/describe.c:3083 lib/src/describe.c:3631
 #: lib/src/geneval.c:7514 lib/src/transforms.c:843 lib/src/transforms.c:1390
@@ -3490,9 +3489,8 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: O nome do parámetro '%s' está duplicado"
 
 #: lib/src/gretl_func.c:6212
-#, fuzzy
 msgid "Identifier exceeds the maximum of 31 characters"
-msgstr "O nome da variable excede o máximo de 31 caracteres"
+msgstr "O nome do identificador excede o máximo de 31 caracteres"
 
 #: lib/src/gretl_func.c:6624
 #, c-format
@@ -6066,9 +6064,9 @@ msgid "progressive loop: model must be of constant size"
 msgstr "Bucle progresivo: O modelo debe de ter un tamaño constante"
 
 #: lib/src/monte_carlo.c:2353
-#, fuzzy, c-format
+#, c-format
 msgid "The '%s' command is not available in loop mode"
-msgstr "Esta instrución non está dispoñible en modo bucle"
+msgstr "A instrución '%s' non está dispoñible en modo bucle"
 
 #: lib/src/monte_carlo.c:2488
 #, c-format
@@ -11486,19 +11484,16 @@ msgid "No formula was given"
 msgstr "Non se indicou fórmula"
 
 #: gui/gpt_dialog.c:2383
-#, fuzzy
 msgid "box"
-msgstr "caixas"
+msgstr "Caixa"
 
 #: gui/gpt_dialog.c:2388
-#, fuzzy
 msgid "c.i. bound"
-msgstr "Cota dereita"
+msgstr "Límite do I.C."
 
 #: gui/gpt_dialog.c:2390 gui/gpt_dialog.c:2396
-#, fuzzy
 msgid "outliers"
-msgstr "Outliers"
+msgstr "Valores atípicos"
 
 #: gui/gpt_dialog.c:2416
 #, c-format
@@ -11518,9 +11513,8 @@ msgid "type"
 msgstr "Tipo"
 
 #: gui/gpt_dialog.c:2814
-#, fuzzy
 msgid "line"
-msgstr "liñas"
+msgstr "Liña"
 
 #: gui/gpt_dialog.c:2815
 msgid "line width"
@@ -16342,7 +16336,7 @@ msgstr "Tipo de letra para menús e táboas"
 
 #: gui/settings.c:2836
 msgid "Remember this setting"
-msgstr ""
+msgstr "Lembrar esta configuración"
 
 #: gui/settings.c:2846
 msgid "gretl: font scale"
