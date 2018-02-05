@@ -4173,9 +4173,9 @@
 	  Comproba se o feixe (<quote>bundle</quote>) <argname>b</argname>
 	  contén un elemento co nome <argname>key</argname>. Devolve un enteiro
 	  co código do tipo de elemento: 0 no caso de non achalo e, no caso de
-	  atopalo, 1 para un escalar, 2 para unha serie, 3 para unha matriz, 4
-	  para unha cadea de texto, 5 para un feixe e 6 para un arranxo. En
-	  base ao valor do seu código, a función <fncref targ="typestr"/> pódese
+	  atopalo, 1 para un escalar, 2 para unha serie, 3 para unha matriz, 4 para
+	  unha cadea de texto, 5 para un feixe, 6 para un arranxo e 7 para unha lista.
+	  En base ao valor do seu código, a función <fncref targ="typestr"/> pódese
 	  usar para obter a cadea de texto que expresa o tipo de elemento que é.
 	</para>
       </description>
@@ -6082,16 +6082,14 @@
     <function name="mreverse" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">bycol</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve unha matriz que contén as filas de <argname>X</argname>
-	  en orde inversa. Para obter unha matriz na que as columnas de
-	  <argname>X</argname> aparezan en orde inversa pódese utilizar:
+	  en orde inversa; ou as columnas en orde inversa se o segundo
+	  argumento ten un valor non nulo.
 	</para>
-	<code>
-	  matrix Y = mreverse(X')'
-	</code>
       </description>
     </function>
 
@@ -9066,39 +9064,61 @@
       <fnargs>
 	<fnarg type="string">s</fnarg>
 	<fnarg optional="true" type="int">i</fnarg>
+	<fnarg optional="true" type="string">sep</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Sen un segundo argumento, devolve un arranxo de cadeas de texto, e
-	  que resulta ao separar o contido de <argname>s</argname> conforme
-	  aos espazos en branco que ten.
+	  No seu funcionamento básico, cun único argumento, devolve o arranxo de
+	  cadeas de texto que resulta ao separar o contido de <argname>s</argname>
+	  conforme aos espazos baleiros que ten (é dicir, conforme a calquera
+	  combinación dos caracteres de espazo, tabulación e/ou liña nova).
 	</para>
 	<para>
-	  Cando se proporciona un segundo argumento, devolve o elemento
-	  <argname>i</argname> da cadea de texto <argname>s</argname> do
-	  argumento, numerado considerando os espazos de separación para elo.
-	  O índice <argname>i</argname> está en base 1 e, indica un fallo cando
-	  <argname>i</argname> sexa menor ca 1. No caso de que o argumento
-	  <argname>s</argname> non conteña espazos e <argname> i</argname> sexa
-	  igual a 1, a función devolve unha copia completa da cadea de texto do
-	  argumento; pola contra, se <argname>i</argname> excede o número de
-	  elementos separados por espazos, devólvese unha cadea de texto baleira.
+	  Cando indicas un valor enteiro maior ca cero como segundo argumento,
+	  o valor que se devolve é unha única cadea de texto, en concreto o
+	  elemento <argname>i</argname> (en base 1) do arranxo que se xeraría
+	  doutro xeito sen ese segundo argumento. Cando <argname>i</argname>
+	  sexa menor ca 1, se produce un fallo; mais cando <argname>i</argname>
+	  excede o número de elementos implicados, devólvese unha cadea de
+	  texto baleira.
 	</para>
-    <para>
-        Exemplos:
-    </para>
-    <code>
-        string Cesta = "Plátano Mazá Yaca Laranxa"
-
-        strings Froitas = strsplit(Cesta)
-        eval Froitas[1]
-        eval Froitas[2]
-        eval Froitas[3]
-        eval Froitas[4]
-
-        string Preferida = strsplit(Cesta, 3)
-        eval Preferida
-    </code>
+	<para>
+	  Podes utilizar o terceiro argumento (opcional) para axustar
+	  o separador que se usa para separar <argname>s</argname>.
+	  Por exemplo...
+	</para>
+	<code>
+	  string Cesta = "Plátano,Mazá,Yaca,Laranxa"
+	  strings S = strsplit(Cesta,,",")
+	</code>
+	<para>
+	  vai separar o primeiro argumento da función nun arranxo de catro
+	  cadeas de texto, usando a coma como elemento separador. A coma
+	  <quote>extra</quote> indicada arriba, expresa que se quere omitir
+	  o segundo argumento <argname>i</argname> da función, aínda que
+	  isto non sexa estritamente necesario (agás que desexes extraer un
+	  único elemento), pois cando só indicas dous argumentos e o segundo
+	  é unha cadea de texto, enténdese que pretendes expresar o argumento
+	  <argname>sep</argname> en lugar de <argname>i</argname>. Así...
+	</para>
+	<code>
+	  strings S = strsplit(Cesta, ",")
+	</code>
+	<para>
+	  resulta igualmente aceptable.
+	</para>
+	<para>
+	  As dúas secuencias de barra diagonal esquerda para escapar, indicadas
+	  mediante <quote><lit>\n</lit></quote> e <quote><lit>\t</lit></quote>,
+	  considérase que representan unha liña nova e unha tabulación cando se
+	  indican no argumento opcional <argname>sep</argname>. Se queres incluír
+	  unha barra diagonal esquerda literal como carácter separador, debes de
+	  duplicala como en <quote><lit>\\</lit></quote>. Exemplo:
+	</para>
+	<code>
+	  string s = "c:\fiddle\sticks"
+	  strings S = strsplit(s, "\\")
+	</code>
       </description>
     </function>
 

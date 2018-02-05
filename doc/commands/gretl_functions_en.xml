@@ -8349,7 +8349,7 @@
       <description>
 	<para>
 	  If the <argname>row</argname> argument is given, retrieves
-	  the name for row <argname>col</argname> of matrix
+	  the name for row <argname>row</argname> of matrix
 	  <argname>M</argname>. If <argname>M</argname> has no row
 	  names attached the value returned is an empty string; if
 	  <argname>row</argname> is out of bounds for the given matrix

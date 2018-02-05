@@ -7780,26 +7780,27 @@
 	do rato nun termo MIDAS da dereita.
       </para>
       <para context="cli">
-	<lit>mds</lit>: Esta variante xeralmente require 5 argumentos, do xeito
-	seguinte: o nome dunha <cmdref targ="MIDAS_list"/>, dous enteiros que
-	indican os retardos mínimo e máximo de alta frecuencia, un enteiro entre
-	0 e 4 que especifica o tipo de disposición dos parámetros que se vai
-	usar, e o nome dun vector que contén os valores iniciais dos parámetros.
-	O exemplo de abaixo solicita os retardos do 3 ao 11 das series de alta
-	frecuencia representadas na lista <lit>X</lit>, utilizando para elo unha
-	disposición dos parámetros de tipo 1 (Almon exponencial, mira abaixo)
-	co vector de inicio <lit>theta</lit>.
+	<lit>mds</lit>: Esta variante xeralmente require 5 argumentos, do
+	xeito seguinte: o nome dunha <cmdref targ="MIDAS_list"/>, dous
+	enteiros que indican os retardos mínimo e máximo de alta frecuencia,
+	un enteiro entre 0 e 4 (ou unha cadea de texto, mira baixo) que
+	especifica o tipo de disposición dos parámetros que se vai usar, e o
+	nome dun vector que contén os valores iniciais dos parámetros. O
+	exemplo de abaixo solicita os retardos do 3 ao 11 das series de alta
+	frecuencia representadas na lista <lit>X</lit>, utilizando para elo
+	unha disposición dos parámetros de tipo 1 (Almon exponencial, mira
+	abaixo) co vector de inicio <lit>theta</lit>.
       </para>
       <code context="cli">
 	mds(X, 3, 11, 1, theta)
       </code>
       <para context="cli">
-	<lit>mdsl</lit>: Xeralmente require 3 argumentos: o nome dunha lista
-	de retardos MIDAS, un número enteiro para especificar o tipo de
-	disposición dos parámetros e o nome dun vector de inicio. Neste
-	caso, os retardos máximo e mínimo están implícitos no argumento
-	inicial da lista. No exemplo de abaixo <lit>Xlags</lit> debe de
-	ser unha lista que xa conteña todos os retardos que se necesiten;
+	<lit>mdsl</lit>: Xeralmente require 3 argumentos: o nome dunha lista de
+	retardos MIDAS, un número enteiro (ou unha cadea de texto, mira baixo)
+	para especificar o tipo de disposición dos parámetros e o nome dun vector
+	de inicio. Neste caso, os retardos máximo e mínimo están implícitos no
+	argumento inicial da lista. No exemplo de abaixo <lit>Xlags</lit> debe
+	de ser unha lista que xa conteña todos os retardos que se necesiten;
 	podes construír unha lista dese tipo utilizando a función
 	<fncref targ="hflags"/>.
       </para>
@@ -7807,42 +7808,45 @@
 	mdsl(XLags, 1, theta)
       </code>
       <para context="cli">
-	Os tipos de disposición de parámetros que se admiten son os seguintes:
+	Os tipos de disposición de parámetros que se admiten amósanse
+	abaixo. No contexto das especificacións <lit>mds</lit> e <lit>mdsl</lit>
+	podes indicalos en forma dos códigos numéricos ou das cadeas de texto
+	entre comiñas que se amosan despois dos números:
       </para>
       <para context="cli">
-	0 = <quote>MIDAS non restrinxido</quote> ou U-MIDAS, no que cada
-	retardo ten o seu propio coeficiente.
+	0 ou <lit>"umidas"</lit>: MIDAS sen restricións ou U-MIDAS, no que
+	cada retardo ten o seu propio coeficiente.
       </para>
       <para context="cli">
-	1 = Almon exponencial normalizada, que require polo menos un parámetro
-	e habitualmente utiliza dous.
+	1 ou <lit>"nealmon"</lit>: Almon exponencial normalizada, que
+	require polo menos un parámetro e habitualmente utiliza dous.
       </para>
       <para context="cli">
-	2 = Beta normalizada cun derradeiro retardo nulo, que require
-	exactamente dous parámetros.
+	2 ou <lit>"beta0"</lit>: Beta normalizada cun derradeiro retardo
+	nulo, que require exactamente dous parámetros.
       </para>
       <para context="cli">
-	3 = Beta normalizada cun derradeiro retardo non nulo, que require
-	exactamente tres parámetros.
+	3 ou <lit>"betan"</lit>: Beta normalizada cun derradeiro retardo
+	non nulo, que require exactamente tres parámetros.
       </para>
       <para context="cli">
-	4 = Polinomio de Almon (non normalizada), que require polo menos
-	un parámetro.
+	4 ou <lit>"almonp"</lit>: Polinomio de Almon (non normalizada),
+	que require polo menos un parámetro.
       </para>
       <para context="cli">
-	Cando a disposición de parámetros é U-MIDAS, non é necesario
-	o vector de inicio do último argumento con <lit>mds</lit> nin
-	<lit>mdsl</lit>. Noutros casos, podes solicitar unha iniciación
-	automática substituíndo o nome do vector de parámetros inicial
-	por algunha destas dúas formas:
+	Cando a disposición de parámetros é U-MIDAS, non é necesario o
+	vector de inicio do último argumento. Noutros casos, podes solicitar
+	unha iniciación automática substituíndo o nome do vector de
+	parámetros inicial por algunha destas dúas formas:
       </para>
       <ilist context="cli">
 	<li>
 	  <para>
 	    A palabra chave <lit>null</lit>: isto só é admisible cando a
-	    disposición dos parámetros ten un número fixo de termos (os casos
-	    Beta, o 2 ou 3). Tamén se acepta no caso do Almon exponencial,
-	    o que implica que ese é o valor por defecto dos dous parámetros.
+	    disposición dos parámetros ten un número fixo de termos (os
+	    casos Beta, con 2 ou 3 parámetros). Tamén se acepta no caso
+	    do Almon exponencial, o que implica que ese é o valor por
+	    defecto dos dous parámetros.
 	  </para>
 	</li>
 	<li>
@@ -7858,7 +7862,7 @@
 	(MCNL ou NLS). Cando especificas as disposicións de parámetros
 	Almon exponencial normalizada ou Beta normalizada, o método MCNL
 	por defecto é unha combinación de BFGS restrinxido e MCO, pero
-	podes indicar a opción <opt>levenverg</opt> para forzar que se
+	podes indicar a opción <opt>levenberg</opt> para forzar que se
 	utilice o algoritmo de Levenberg&ndash;Marquardt.
       </para>
       <para context="gui">
@@ -14620,7 +14624,7 @@
 	  <effect>Mira abaixo</effect>
         </option>
       </options>
-       <examples>
+      <examples>
         <example>xcorrgm x y 12</example>
       </examples>
     </usage>
@@ -14688,7 +14692,16 @@
 	  <optparm>nomematr</optparm>
 	  <effect>Usa as frecuencias da matriz indicada</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Consulta o caso bivariante de abaixo</effect>
+        </option>
       </options>
+      <examples>
+	<example>xtab 1 2</example>
+	<example>xtab 1 ; 2 3 4</example>
+	<example>xtab --matrix=A</example>
+      </examples>
     </usage>
 
     <description context="cli">
@@ -14701,8 +14714,10 @@
 	destas listas mediante os seus nomes ou os seus números. Ten en conta
 	que todas as variables teñen que estar marcadas como discretas. Como
 	alternativa, cando indicas a opción <opt>matrix</opt>, se trata a matriz
-	indicada como un conxunto calculado previamente de frecuencias e se
-	presenta isto como unha tabulación cruzada.
+	indicada como un conxunto calculado previamente de frecuencias a
+	presentar como unha tabulación cruzada (consulta tamén a función
+	<fncref targ="mxtab"/>). Neste caso deberás de omitir o argumento
+	<argname>list</argname>.
       </para>
       <para>
 	Por defecto, a anotación de cada cela indica o reconto da frecuencia de
@@ -14734,6 +14749,17 @@
 	isto é a suma das probabilidades de todas as táboas posibles que teñan
 	os totais de filas e columnas indicados, e que teñan unha probabilidade
 	menor ou igual á da táboa observada.
+      </para>
+      
+      <subhead>O caso bivariante</subhead>
+      
+      <para>
+	No sinxelo caso dunha tabulación cruzada bivariante, podes utilizar
+	os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/> para
+	recuperar o estatístico da proba khi-cadrado de Pearson e a súa
+	probabilidade asociada (con tal de que se cumpra a condición do
+	mínimo valor agardado). Nese contexto, podes utilizar a opción
+	<opt>quiet</opt> para eliminar a presentación da táboa.
       </para>
     </description>
 
