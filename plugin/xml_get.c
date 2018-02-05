@@ -26,7 +26,7 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
-#define SDMX_NS 1 /* experimental */
+#define SDMX_NS 1
 
 #if SDMX_NS
 # include <libxml/xpathInternals.h>
@@ -135,20 +135,24 @@ static int xml_get_multi (xmlDocPtr doc,
 
 #if SDMX_NS
 
-/* register the SDMX "message" and "data" namespaces */
+/* register the SDMX "message", "data", "com" and "str" namespaces */
+
+#define SDMX_SCHEMAS "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/"
 
 static int add_sdmx_namespaces (xmlXPathContextPtr ctx)
 {
-    int err;
+    int err = 0;
 
-    err = xmlXPathRegisterNs(ctx, (const xmlChar *) "message", (const xmlChar *)
-			     "http://www.sdmx.org/resources/sdmxml/schemas/"
-			     "v2_1/message");
-    if (!err) {
-	err = xmlXPathRegisterNs(ctx, (const xmlChar *) "data", (const xmlChar *)
-				 "http://www.sdmx.org/resources/sdmxml/schemas/"
-				 "v2_1/data/structurespecific");
-    }
+    err += xmlXPathRegisterNs(ctx, (const xmlChar *) "message",
+			      (const xmlChar *) SDMX_SCHEMAS "message");
+    err += xmlXPathRegisterNs(ctx, (const xmlChar *) "com",
+			      (const xmlChar *)SDMX_SCHEMAS "common");
+    err += xmlXPathRegisterNs(ctx, (const xmlChar *) "data",
+			      (const xmlChar *)SDMX_SCHEMAS "data/structurespecific");
+    err += xmlXPathRegisterNs(ctx, (const xmlChar *) "str",
+			      (const xmlChar *) SDMX_SCHEMAS "structure");
+
+    fprintf(stderr, "add_sdmx_namespaces: err = %d\n", err);
 
     return err;
 }
@@ -205,7 +209,7 @@ char *xml_get (const char *data, void *ppath,
     }
 
 #if SDMX_NS /* experimental: may or may not really be needed */
-    if (strstr(data, "message:DataSet")) {
+    if (strstr(data, "message:DataSet") || strstr(data, "str:Codelist")) {
 	add_sdmx_namespaces(context);
     }
 #endif
