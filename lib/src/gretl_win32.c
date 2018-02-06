@@ -98,7 +98,7 @@ static char netfile[FILENAME_MAX];
 
 const char *get_gretlnet_filename (void)
 {
-    return (*netfile != '\0')? netfile : NULL;
+    return (netfile[0] == '\0')? NULL : netfile;
 }
 
 int set_gretlnet_filename (const char *prog)
@@ -106,7 +106,8 @@ int set_gretlnet_filename (const char *prog)
     char *p;
     int i, n;
 
-    strcpy(netfile, prog);
+    netfile[0] = '\0';
+    strncat(netfile, prog, FILENAME_MAX-1);
     n = strlen(netfile) - 1;
     p = netfile;
 
@@ -135,15 +136,35 @@ static FILE *cli_gretlnet_open (const char *prog)
 
 static FILE *cli_rcfile_open (void)
 {
-    char *appdata = appdata_path();
+    char rcfile[FILENAME_MAX];
     FILE *fp = NULL;
 
-    if (appdata != NULL) {
-	char fname[FILENAME_MAX];
+    rcfile[0] = '\0';
 
-	sprintf(fname, "%s\\gretl\\.gretl2rc", appdata);
-	free(appdata);
-	fp = fopen(fname, "r");
+#ifndef PKGBUILD
+    /* try "HOME" first */
+    if (rcfile[0] == '\0') {
+	char *home = getenv("HOME");
+
+	if (home != NULL) {
+	    strcpy(rcfile, home);
+	    slash_terminate(rcfile);
+	    strncat(rcfile, ".gretl2rc", 9);
+	}
+    }
+#endif
+
+    if (rcfile[0] == '\0') {
+	char *appdata = appdata_path();
+
+	if (appdata != NULL) {
+	    sprintf(rcfile, "%s\\gretl\\.gretl2rc", appdata);
+	    free(appdata);
+	}
+    }
+
+    if (rcfile[0] != '\0') {
+	fp = fopen(rcfile, "r");
     }
 
     return fp;

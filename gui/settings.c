@@ -2209,7 +2209,7 @@ static void find_and_set_rc_var (const char *key, const char *val)
 
 #ifdef G_OS_WIN32
 
-static int get_network_settings (void)
+static int maybe_get_network_settings (void)
 {
     const char *netfile;
     FILE *fp;
@@ -2373,11 +2373,9 @@ int read_win32_config (int debug)
 	}
     }
 
-#ifndef PKGBUILD
     /* see if we have a gretlnet.txt in place, and if so,
        read config from it */
-    get_network_settings();
-#endif
+    maybe_get_network_settings();
 
     /* read from user config file */
     win32_read_gretlrc();

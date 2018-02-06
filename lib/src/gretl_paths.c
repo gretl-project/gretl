@@ -4058,7 +4058,8 @@ void get_gretl_rc_path (char *rcfile)
 }
 
 /* non-Windows read of the gretl configuration file on behalf
-   of the CLI program, gretlcli
+   of the CLI program, gretlcli; the Windows variant of this,
+   win32_cli_read_rc(), is in gretl_win32.c
 */
 
 int cli_read_rc (void)
