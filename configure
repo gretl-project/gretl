@@ -16300,6 +16300,8 @@ fi
 if test "x$CROSS_READLINE_LIBS" != x ; then
    READLINE_LIBS="$CROSS_READLINE_LIBS"
    have_readline=yes
+   $as_echo "#define HAVE_READLINE 1" >>confdefs.h
+
    $as_echo "#define NEW_READLINE 1" >>confdefs.h
 
 
