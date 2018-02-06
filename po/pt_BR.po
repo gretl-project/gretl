@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2017-12-11 10:35-0200\n"
+"PO-Revision-Date: 2018-02-06 11:31-0200\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 2.0.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -915,9 +915,9 @@ msgid "quarter %s?\n"
 msgstr "trimestre %s?\n"
 
 #: lib/src/csvdata.c:1185
-#, fuzzy, c-format
+#, c-format
 msgid "quarter %d?\n"
-msgstr "trimestre %s?\n"
+msgstr "trimestre %d?\n"
 
 #: lib/src/csvdata.c:1192
 #, c-format
@@ -1193,9 +1193,8 @@ msgid "Series length does not match the dataset"
 msgstr "O tamanho da série não corresponde ao conjunto de dados"
 
 #: lib/src/csvdata.c:6315 lib/src/csvdata.c:6607 lib/src/csvdata.c:6697
-#, fuzzy
 msgid "Invalid join specification"
-msgstr "Especificação de coluna inválida"
+msgstr "Especificação 'join' inválida"
 
 #: lib/src/csvdata.c:6881
 #, c-format
@@ -1639,9 +1638,9 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "A matriz %s não representa uma tabela de contingência"
 
 #: lib/src/describe.c:2600
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "'%s: não é uma variável de texto"
+msgstr "descartando %s: não é uma variável discreta\n"
 
 #: lib/src/describe.c:2898 lib/src/describe.c:3083 lib/src/describe.c:3631
 #: lib/src/geneval.c:7514 lib/src/transforms.c:843 lib/src/transforms.c:1390
@@ -3494,9 +3493,8 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: nome de parâmetro duplicado '%s'"
 
 #: lib/src/gretl_func.c:6212
-#, fuzzy
 msgid "Identifier exceeds the maximum of 31 characters"
-msgstr "O nome da variável excede o limite máximo de 31 caracteres"
+msgstr "Identificador excede o limite máximo de 31 caracteres"
 
 #: lib/src/gretl_func.c:6624
 #, c-format
@@ -6073,9 +6071,9 @@ msgid "progressive loop: model must be of constant size"
 msgstr "Loop progressivo: modelo deve ser de tamanho constante"
 
 #: lib/src/monte_carlo.c:2353
-#, fuzzy, c-format
+#, c-format
 msgid "The '%s' command is not available in loop mode"
-msgstr "Lamentamos, mas este comando não está disponível em modo de loop"
+msgstr "O comando '%s' não está disponível em modo de loop"
 
 #: lib/src/monte_carlo.c:2488
 #, c-format
@@ -11480,19 +11478,16 @@ msgid "No formula was given"
 msgstr "Não foi fornecida nenhuma fórmula"
 
 #: gui/gpt_dialog.c:2383
-#, fuzzy
 msgid "box"
-msgstr "caixas"
+msgstr "caixa"
 
 #: gui/gpt_dialog.c:2388
-#, fuzzy
 msgid "c.i. bound"
-msgstr "limite direito"
+msgstr "limite i.c."
 
 #: gui/gpt_dialog.c:2390 gui/gpt_dialog.c:2396
-#, fuzzy
 msgid "outliers"
-msgstr "Valores extremos"
+msgstr "valores extremos"
 
 #: gui/gpt_dialog.c:2416
 #, c-format
@@ -11512,9 +11507,8 @@ msgid "type"
 msgstr "tipo"
 
 #: gui/gpt_dialog.c:2814
-#, fuzzy
 msgid "line"
-msgstr "linhas"
+msgstr "linha"
 
 #: gui/gpt_dialog.c:2815
 msgid "line width"
@@ -16328,7 +16322,7 @@ msgstr "Fonte para menus e rótulos"
 
 #: gui/settings.c:2836
 msgid "Remember this setting"
-msgstr ""
+msgstr "Lembrar deste ajuste"
 
 #: gui/settings.c:2846
 msgid "gretl: font scale"
