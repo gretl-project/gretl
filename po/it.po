@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2018-02-06 09:20+0100\n"
+"PO-Revision-Date: 2018-02-06 09:23+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -422,7 +422,7 @@ msgstr "mediana"
 #: lib/src/boxplots.c:332
 #, no-c-format
 msgid "(90% interval)"
-msgstr "(intervallo al 90%)"
+msgstr "(int. conf. 90%)"
 
 #: lib/src/boxplots.c:340 lib/src/gmm.c:1536 lib/src/monte_carlo.c:2538
 #: lib/src/monte_carlo.c:2539 gui/calculator.c:2026 gui/calculator.c:2051
