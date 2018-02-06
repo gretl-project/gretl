@@ -7385,11 +7385,16 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	double rval = node_get_scalar(r, p);
+	double rval = -1;
 	const double *xvec;
 	int t1 = p->dset->t1;
 	int t2 = p->dset->t2;
 	int pd = 1;
+
+	if (r != NULL) {
+	    /* the second arg is optional for lrvar() */
+	    rval = node_get_scalar(r, p);
+	}
 
 	if (l->t == MAT) {
 	    int n = gretl_vector_get_length(l->v.m);
@@ -14449,6 +14454,8 @@ static NODE *eval (NODE *t, parser *p)
 		} else {
 		    ret = series_scalar_scalar_func(l, r, t->t, p);
 		}
+	    } else if (t->t == F_LRVAR && null_or_empty(r)) {
+		ret = series_scalar_scalar_func(l, NULL, t->t, p);
 	    } else {
 		node_type_error(t->t, 2, NUM, r, p);
 	    }

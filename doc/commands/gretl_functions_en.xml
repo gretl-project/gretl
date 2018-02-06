@@ -5367,16 +5367,15 @@
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="int">k</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the long-run variance of <argname>y</argname>,
 	  calculated using a Bartlett kernel with window size
-	  <argname>k</argname>. The default window size, namely the
-	  integer part of the cube root of the sample size, can be
-	  selected by giving a negative value for
-	  <argname>k</argname>.
+	  <argname>k</argname>. If the second argument is omitted, or
+	  given a value less than zero, the window size defaults to
+	  the integer part of the cube root of the sample size.
 	</para>
 	<para context="tex">
 	  In formulae: 
