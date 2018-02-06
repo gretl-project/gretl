@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2018-02-06 09:16+0100\n"
+"PO-Revision-Date: 2018-02-06 09:20+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1637,7 +1637,7 @@ msgstr "La matrice %s non rappresenta una tabella di contingenza"
 #: lib/src/describe.c:2600
 #, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "%s non è una variabile stringa: esclusa"
+msgstr "%s non è una variabile stringa: esclusa\n"
 
 #: lib/src/describe.c:2898 lib/src/describe.c:3083 lib/src/describe.c:3631
 #: lib/src/geneval.c:7514 lib/src/transforms.c:843 lib/src/transforms.c:1390
