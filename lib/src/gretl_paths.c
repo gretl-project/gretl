@@ -1124,7 +1124,7 @@ DIR *gretl_opendir (const char *name)
 	    /* append backslash */
 	    strcat(tmp, "\\");
 	} else {
-	    /* chop backslash */
+	    /* chop trailing backslash */
 	    tmp[strlen(tmp)-1] = '\0';
 	}
 	return opendir(tmp);

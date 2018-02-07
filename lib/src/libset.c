@@ -1276,18 +1276,27 @@ static int set_workdir (const char *s)
     if (gretl_function_depth() > 0) {
 	gretl_errmsg_set("set workdir: cannot be done inside a function");
 	return 1;
-    }
-
-    if (*s == '\0') {
-	err = E_DATA;
+    } else if (*s == '\0') {
+	return E_DATA;
     } else {
 	char workdir[MAXLEN];
 
 	*workdir = '\0';
 	strncat(workdir, s, MAXLEN - 1);
-	if (workdir_callback != NULL) {
+#ifdef WIN32
+	if (!err) {
+	    char *wconv = NULL;
+
+	    err = maybe_recode_path(workdir, &wconv, 0);
+	    if (wconv != NULL) {
+		strcpy(workdir, wconv);
+		free(wconv);
+	    }
+	}
+#endif
+	if (!err && workdir_callback != NULL) {
 	    err = (*workdir_callback)(workdir);
-	} else {
+	} else if (!err) {
 	    err = set_gretl_work_dir(workdir);
 	}
     } 
