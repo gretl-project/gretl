@@ -776,7 +776,7 @@ static char *win32_correct_path (char *s)
     return s;
 }
 
-#endif
+#endif /* G_OS_WIN32 */
 
 static void set_default_progs_path (GtkFileChooser *fsel)
 {

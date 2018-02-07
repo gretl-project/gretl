@@ -4015,7 +4015,7 @@ static void do_pkg_upload (function_info *finfo)
     if (finfo->pdfdoc || finfo->datafiles != NULL) {
 	err = gui_pkg_make_zipfile(finfo, &zipname, NULL);
 	if (err) {
-	    /* the error message will have been handled abive */
+	    /* the error message will have been handled above */
 	    return;
 	}
     }
