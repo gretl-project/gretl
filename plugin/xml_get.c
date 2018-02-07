@@ -152,8 +152,6 @@ static int add_sdmx_namespaces (xmlXPathContextPtr ctx)
     err += xmlXPathRegisterNs(ctx, (const xmlChar *) "str",
 			      (const xmlChar *) SDMX_SCHEMAS "structure");
 
-    fprintf(stderr, "add_sdmx_namespaces: err = %d\n", err);
-
     return err;
 }
 
@@ -270,10 +268,6 @@ char *xml_get (const char *data, void *ppath,
     }
 
     gretl_print_destroy(prn);
-
-    if (*err) {
-	fprintf(stderr, "xml_get: err = %d\n", *err);
-    }
 
     if (n_objects != NULL) {
 	*n_objects = n;
