@@ -893,6 +893,7 @@ char **gretl_string_split_lines (const char *s, int *n)
 	    err = E_ALLOC;
 	    break;
 	}
+	gretl_strstrip(S[i]);
 	i++;
 	p += len;
 	if (*p == '\r') p++;
