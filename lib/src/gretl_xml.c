@@ -66,6 +66,15 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 	if (fconv != NULL) {
 	    ptr = xmlParseFile(fconv);
 	    g_free(fconv);
+	} else {
+	    /* fallback */
+	    gchar *buf = NULL;
+	    gsize len = 0;
+
+	    if (g_file_get_contents(fname, &buf, &len, NULL)) {
+		ptr = xmlParseMemory(buf, len);
+		g_free(buf);
+	    }
 	}
 	errno = save_errno;
     }
