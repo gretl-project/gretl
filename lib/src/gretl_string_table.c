@@ -1024,12 +1024,28 @@ char *retrieve_file_content (const char *fname, const char *codeset,
     } else {
 	char fullname[FILENAME_MAX];
 	GError *gerr = NULL;
+	int done = 0;
 
 	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);
 	gretl_addpath(fullname, 0);
+#ifdef WIN32
+	/* g_file_get_contents() requires a UTF-8 filename */
+	if (!g_utf8_validate(fullname, -1, NULL)) {
+	    gchar *conv;
+	    gsize wrote = 0;
 
-	g_file_get_contents(fullname, &content, &len, &gerr);
+	    conv = g_locale_to_utf8(fullname, -1, NULL, &wrote, &gerr);
+	    if (conv != NULL) {
+		g_file_get_contents(conv, &content, &len, &gerr);
+		g_free(conv);
+	    }
+	    done = 1;
+	}
+#endif
+	if (!done) {
+	    g_file_get_contents(fullname, &content, &len, &gerr);
+	}
 
 	if (gerr != NULL) {
 	    gretl_errmsg_set(gerr->message);
