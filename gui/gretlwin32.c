@@ -180,7 +180,8 @@ int filename_to_win32 (char *targ, const char *src)
 	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
 
 	if (gerr != NULL) {
-	    fprintf(stderr, "Couldn't handle '%s': %s\n", src, gerr->message);
+	    fprintf(stderr, "filename_to_win32 failed on '%s': %s\n",
+		    src, gerr->message);
 	    g_error_free(gerr);
 	    err = 1;
 	} else {

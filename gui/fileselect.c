@@ -570,14 +570,11 @@ file_selector_process_result (const char *in_fname, int action,
 
     if (action < END_OPEN) {
 	/* opening a file: check that the file is accessible */
-	FILE *fp = gretl_fopen(fname, "r");
-
-	if (fp == NULL) {
+	err = gretl_test_fopen(fname, "r");
+	if (err) {
 	    file_read_errbox(fname);
 	    maybe_set_fsel_status(action, src, data, E_FOPEN);
 	    return;
-	} else {
-	    fclose(fp);
 	}
     }
 
@@ -742,7 +739,7 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 #ifdef G_OS_WIN32
 
 /* On getting an output filename @s from the GTK file chooser, 
-   convert to the locale encoding */
+   try converting it to the locale encoding */
 
 static gchar *inplace_windows_filename (gchar *s)
 {

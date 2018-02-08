@@ -359,6 +359,16 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
     gretl_error_clear();
 
+#ifdef WIN32
+    if (string_is_utf8((unsigned char *) fname)) {
+	fp = g_fopen(fname, mode);
+	if (fp == NULL && errno != 0) {
+	    gretl_errmsg_set_from_errno(fname, errno);
+	}
+	return fp;
+    }
+#endif
+
 #if FDEBUG
     fprintf(stderr, "gretl_fopen: got '%s'\n", fname);
 #endif
@@ -457,9 +467,25 @@ int gretl_test_fopen (const char *fname, const char *mode)
 {
     gchar *fconv = NULL;
     FILE *fp = NULL;
-    int err;
+    int err = 0;
 
     gretl_error_clear();
+
+#ifdef WIN32
+    if (string_is_utf8((unsigned char *) fname)) {
+	fp = g_fopen(fname, mode);
+	if (fp != NULL) {
+	    fclose(fp);
+	    if (*mode == 'w') {
+		g_remove(fname);
+	    }
+	} else {
+	    err = errno;
+	}
+	return err;
+    }
+#endif
+
     err = maybe_recode_path(fname, &fconv, -1);
 
     if (err) {
