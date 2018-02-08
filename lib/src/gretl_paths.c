@@ -690,6 +690,15 @@ int gretl_stat (const char *fname, struct stat *buf)
 
     gretl_error_clear();
 
+#ifdef WIN32
+    if (string_is_utf8((unsigned char *) fname)) {
+	struct stat tmp = {0};
+
+	err = g_stat(fname, buf == NULL ? &tmp : buf);
+	return err;
+    }
+#endif
+
     err = maybe_recode_path(fname, &pconv, -1);
 
     if (err) {
