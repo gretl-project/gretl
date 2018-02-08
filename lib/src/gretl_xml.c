@@ -35,6 +35,7 @@
 
 #ifdef WIN32
 # include "gretl_win32.h"
+# include <glib/gstdio.h>
 #endif
 
 #include <sys/types.h>
@@ -49,7 +50,35 @@
 
 #ifdef WIN32
 
-#define ZBUFLEN 131072
+#define BUFLEN 131072
+
+static xmlDocPtr transcribe_and_parse (const char *fname)
+{
+    xmlDocPtr ptr = NULL;
+    gchar *xmltmp = g_strdup_printf("%stmp.xml", gretl_dotdir());
+    FILE *fz, *ftmp;
+
+    fz = g_fopen(fname, "rb");
+    if (fz != NULL) {
+	ftmp = gretl_fopen(xmltmp, "wb");
+	if (ftmp != NULL) {
+	    char buf[BUFLEN];
+	    int len;
+
+	    while ((len = fread(buf, 1, BUFLEN, fz)) > 0) {
+		fwrite(buf, 1, len, ftmp);
+	    }
+	    fclose(ftmp);
+	    ptr = xmlParseFile(xmltmp);
+	}
+	fclose(fz);
+    }
+
+    gretl_remove(xmltmp);
+    g_free(xmltmp);
+
+    return ptr;
+}
 
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
@@ -72,26 +101,7 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 	    /* fallback for gzipped case: try transcribing the data
 	       to a file that can be accessed by libxml2
 	    */
-	    gchar *xmltmp = g_strdup_printf("%stmp.xml", gretl_dotdir());
-	    char buf[ZBUFLEN];
-	    FILE *ftmp;
-	    gzFile fz;
-	    size_t len;
-
-	    fz = gzopen_w(fname, "rb");
-	    if (fz != Z_NULL) {
-		ftmp = gretl_fopen(xmltmp, "wb");
-		if (ftmp != NULL) {
-		    while ((len = gzread(fz, buf, ZBUFLEN)) > 0) {
-			fwrite(buf, 1, len, ftmp);
-		    }
-		    fclose(ftmp);
-		    ptr = xmlParseFile(xmltmp);
-		}
-		gzclose(fz);
-	    }
-	    gretl_remove(xmltmp);
-	    g_free(xmltmp);
+	    ptr = transcribe_and_parse(fname);
 	} else {
 	    /* fallback, non-gzipped case: use GLib to grab the
 	       content to pass to libxml2

@@ -353,38 +353,22 @@ int maybe_recode_path (const char *path, char **pconv, int want_utf8)
 
 FILE *gretl_fopen (const char *fname, const char *mode)
 {
-    gchar *fconv = NULL;
     FILE *fp = NULL;
-    int err;
 
     gretl_error_clear();
-
-#ifdef WIN32
-    if (string_is_utf8((unsigned char *) fname)) {
-	fp = g_fopen(fname, mode);
-	if (fp == NULL && errno != 0) {
-	    gretl_errmsg_set_from_errno(fname, errno);
-	}
-	return fp;
-    }
-#endif
 
 #if FDEBUG
     fprintf(stderr, "gretl_fopen: got '%s'\n", fname);
 #endif
 
-    err = maybe_recode_path(fname, &fconv, -1);
-
-    if (!err) {
-	if (fconv != NULL) {
-	    fp = fopen(fconv, mode);
-#if FDEBUG
-            fprintf(stderr, "  using fconv, fp = %p\n", (void *) fp);
+#ifdef WIN32
+    if (string_is_utf8((unsigned char *) fname)) {
+	fp = g_fopen(fname, mode);
+    }
 #endif
-	    g_free(fconv);
-	} else {
-	    fp = fopen(fname, mode);
-	}
+
+    if (fp == NULL) {
+	fp = fopen(fname, mode);
     }
 
 #if FDEBUG
@@ -393,9 +377,6 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname, errno);
-#if FDEBUG
-	fprintf(stderr, "  message: '%s'\n", gretl_errmsg_get());
-#endif
     }
 
     return fp;
@@ -465,7 +446,6 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
 
 int gretl_test_fopen (const char *fname, const char *mode)
 {
-    gchar *fconv = NULL;
     FILE *fp = NULL;
     int err = 0;
 
@@ -474,43 +454,25 @@ int gretl_test_fopen (const char *fname, const char *mode)
 #ifdef WIN32
     if (string_is_utf8((unsigned char *) fname)) {
 	fp = g_fopen(fname, mode);
-	if (fp != NULL) {
+	if (fp == NULL) {
+	    err = errno;
+	} else {
 	    fclose(fp);
 	    if (*mode == 'w') {
 		g_remove(fname);
 	    }
-	} else {
-	    err = errno;
 	}
 	return err;
     }
 #endif
 
-    err = maybe_recode_path(fname, &fconv, -1);
-
-    if (err) {
-	gretl_error_clear();
-	err = -1;
-    } else if (fconv != NULL) {
-	fp = fopen(fconv, mode);
-	if (fp != NULL) {
-	    fclose(fp);
-	    if (*mode == 'w') {
-		gretl_remove(fconv);
-	    }
-	} else {
-	    err = errno;
-	}
-	g_free(fconv);
+    fp = fopen(fname, mode);
+    if (fp == NULL) {
+	err = errno;
     } else {
-	fp = fopen(fname, mode);
-	if (fp != NULL) {
-	    fclose(fp);
-	    if (*mode == 'w') {
-		gretl_remove(fname);
-	    }
-	} else {
-	    err = errno;
+	fclose(fp);
+	if (*mode == 'w') {
+	    remove(fname);
 	}
     }
 
@@ -685,36 +647,17 @@ int gretl_fchdir (int fd)
 
 int gretl_stat (const char *fname, struct stat *buf)
 {
-    gchar *pconv = NULL;
-    int err;
+    struct stat tmp = {0};
 
     gretl_error_clear();
 
 #ifdef WIN32
     if (string_is_utf8((unsigned char *) fname)) {
-	struct stat tmp = {0};
-
-	err = g_stat(fname, buf == NULL ? &tmp : buf);
-	return err;
+	return g_stat(fname, buf == NULL ? &tmp : buf);
     }
 #endif
 
-    err = maybe_recode_path(fname, &pconv, -1);
-
-    if (err) {
-	/* emulate stat() */
-	err = -1;
-    } else if (buf == NULL) {
-	struct stat tmp = {0};
-
-	err = stat(pconv ? pconv : fname, &tmp);
-    } else {
-	err = stat(pconv ? pconv : fname, buf);
-    }
-
-    g_free(pconv);
-
-    return err;
+    return stat(fname, buf == NULL ? &tmp : buf);
 }
 
 /**
@@ -731,24 +674,20 @@ int gretl_stat (const char *fname, struct stat *buf)
 
 int gretl_file_exists (const char *fname)
 {
-    struct stat buf;
-    gchar *pconv = NULL;
-    int err;
+    struct stat buf = {0};
+    int err, done = 0;
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, &pconv, -1);
+#ifdef WIN32
+    if (string_is_utf8((unsigned char *) fname)) {
+	err = g_stat(fname, &buf);
+	done = 1;
+    }
+#endif
 
-    if (err) {
-	/* emulate 'stat' */
-	err = -1;
-    } else {
-	if (pconv != NULL) {
-            err = stat(pconv, &buf);
- 	    g_free(pconv);
-	} else {
-            err = stat(fname, &buf);
- 	}
+    if (!done) {
+	err = stat(fname, &buf);
     }
 
     return err == 0;
