@@ -49,6 +49,8 @@
 
 #ifdef WIN32
 
+#define ZBUFLEN 131072
+
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
     xmlDocPtr ptr = NULL;
@@ -66,8 +68,34 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 	if (fconv != NULL) {
 	    ptr = xmlParseFile(fconv);
 	    g_free(fconv);
+	} else if (is_gzipped(fname)) {
+	    /* fallback for gzipped case: try transcribing the data
+	       to a file that can be accessed by libxml2
+	    */
+	    gchar *xmltmp = g_strdup_printf("%stmp.xml", gretl_dotdir());
+	    char buf[ZBUFLEN];
+	    FILE *ftmp;
+	    gzFile fz;
+	    size_t len;
+
+	    fz = gzopen_w(fname, "rb");
+	    if (fz != Z_NULL) {
+		ftmp = gretl_fopen(xmltmp, "wb");
+		if (ftmp != NULL) {
+		    while ((len = gzread(fz, buf, ZBUFLEN)) > 0) {
+			fwrite(buf, 1, len, ftmp);
+		    }
+		    fclose(ftmp);
+		    ptr = xmlParseFile(xmltmp);
+		}
+		gzclose(fz);
+	    }
+	    gretl_remove(xmltmp);
+	    g_free(xmltmp);
 	} else {
-	    /* fallback */
+	    /* fallback, non-gzipped case: use GLib to grab the
+	       content to pass to libxml2
+	    */
 	    gchar *buf = NULL;
 	    gsize len = 0;
 
