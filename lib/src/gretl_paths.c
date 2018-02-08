@@ -398,30 +398,26 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
 FILE *gretl_mktemp (char *pattern, const char *mode)
 {
-    gchar *fconv = NULL;
     FILE *fp = NULL;
-    int err;
+    int fd, done = 0;
 
     gretl_error_clear();
-    err = maybe_recode_path(pattern, &fconv, -1);
 
-    if (!err) {
-	int fd;
+#ifdef WIN32
+    if (string_is_utf8((unsigned char *) pattern)) {
+	fd = g_mkstemp(pattern);
+	done = 1;
+    }
+#endif
 
-	if (fconv != NULL) {
-	    fd = mkstemp(fconv);
-	} else {
-	    fd = mkstemp(pattern);
-	}
+    if (!done) {
+	fd = mkstemp(pattern);
+    }
 
-	if (errno != 0) {
-	    gretl_errmsg_set_from_errno(NULL, errno);
-	} else if (fd != -1) {
-	    if (fconv != NULL) {
-		strcpy(pattern, fconv);
-	    }
-	    fp = fdopen(fd, mode);
-	}
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno(NULL, errno);
+    } else if (fd != -1) {
+	fp = fdopen(fd, mode);
     }
 
 #if 0
@@ -584,32 +580,27 @@ static int win32_open_fchdir (int fd)
 
 int gretl_open (const char *pathname, int flags, int mode)
 {
-    gchar *pconv = NULL;
+    mode_t m = 0;
     int fd = -1;
-    int err = 0;
+    int done = 0;
+
+    gretl_error_clear();
+
+    if (flags & O_CREAT) {
+	m = (mode_t) mode;
+    }
 
 #ifdef WIN32
     if (!strcmp(pathname, ".")) {
 	return win32_open_fchdir(0);
+    } else if (string_is_utf8((unsigned char *) pathname)) {
+	fd = g_open(pathname, flags, m);
+	done = 1;
     }
 #endif
 
-    gretl_error_clear();
-
-    err = maybe_recode_path(pathname, &pconv, -1);
-
-    if (!err) {
-	mode_t m = 0;
-
-	if (flags & O_CREAT) {
-	    m = (mode_t) mode;
-	}
-	if (pconv != NULL) {
-	    fd = open(pconv, flags, m);
-	    g_free(pconv);
-	} else {
-	    fd = open(pathname, flags, m);
-	}
+    if (!done) {
+	fd = open(pathname, flags, m);
     }
 
     if (errno != 0) {
@@ -763,25 +754,30 @@ int gretl_rename (const char *oldpath, const char *newpath)
 
 int gretl_remove (const char *path)
 {
-    gchar *pconv = NULL;
+    int tried = 0;
     int ret = -1;
-    int err;
 
-    err = maybe_recode_path(path, &pconv, -1);
+#ifdef WIN32
+    int utf8 = 0;
 
-    if (!err) {
-	if (pconv != NULL) {
-	    ret = remove(pconv);
-	    g_free(pconv);
-	} else {
-	    ret = remove(path);
-	}
+    if (string_is_utf8((unsigned char *) path)) {
+	ret = g_remove(path);
+	tried = utf8 = 1;
+    }
+#endif
+
+    if (!tried) {
+	ret = remove(path);
     }
 
 #ifdef WIN32
-    /* allow for the possibility that we're trying to remove a
-       directory on win32 -> use g_remove */
-    if (ret == -1) {
+    if (ret == -1 && !utf8) {
+	/* allow for the possibility that we're trying to remove a
+	   directory on win32 -> recode to UTF-8 and use g_remove
+	*/
+	gchar *pconv = NULL;
+	int err;
+
 	err = maybe_recode_path(path, &pconv, 1);
 	if (!err) {
 	    if (pconv != NULL) {
@@ -927,7 +923,7 @@ int gretl_isdir (const char *path)
 
     err = gretl_stat(path, &buf);
 
-    return (err)? 0 : S_ISDIR(buf.st_mode);
+    return err ? 0 : S_ISDIR(buf.st_mode);
 }
 
 #ifdef WIN32
