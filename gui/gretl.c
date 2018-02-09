@@ -2390,7 +2390,10 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
 
 #ifdef G_OS_WIN32
-    filename_to_win32(tryfile, tmp);
+    if (filename_to_win32(tryfile, tmp) != 0) {
+	/* conversion failed: try the original */
+	strcpy(tryfile, tmp);
+    }
 #else
     strcpy(tryfile, tmp);
 #endif
