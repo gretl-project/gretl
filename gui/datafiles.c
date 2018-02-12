@@ -1146,7 +1146,10 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == VIEW_PKG_DOC) {
 	gretl_show_pdf(path, NULL);
     } else if (task == CALL_FN_PKG) {
-	/* note: this is the double-click default */
+	/* note: this is the double-click default for the local
+	   function package browser; can also be invoked via
+	   context menu and toolbar button
+	*/
 	open_function_package(pkgname, path, vwin);
     }
 
@@ -1235,6 +1238,10 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 	g_free(pkgname);
     }
 }
+
+/* this function is public because it's called from
+   doubleclick_action() in callbacks.c
+*/
 
 void browser_call_func (GtkWidget *w, gpointer data)
 {
@@ -1634,7 +1641,7 @@ static GretlToolItem files_items[] = {
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
     { N_("Sample script"),  GTK_STOCK_JUSTIFY_LEFT, G_CALLBACK(show_function_sample), BTN_CODE },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
-    { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func), BTN_EXEC },    
+    { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func),  BTN_EXEC },
     { N_("List series"),    GTK_STOCK_INDEX,      NULL,                           BTN_INDX },
     { N_("Install"),        GTK_STOCK_SAVE,       NULL,                           BTN_INST },
     { N_("Resources..."),   GTK_STOCK_OPEN,       G_CALLBACK(show_package_resources), BTN_RES },

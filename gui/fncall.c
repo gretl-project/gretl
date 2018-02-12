@@ -97,6 +97,9 @@ static gboolean allow_full_data = TRUE;
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
 static void maybe_record_include (const char *pkgname, int model_id);
 static void set_genr_model_from_vwin (windata_t *vwin);
+static void maybe_open_sample_script (call_info *cinfo,
+				      windata_t *vwin,
+				      const char *path);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -1708,15 +1711,29 @@ void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
     }	
 }
 
-static int function_data_check (call_info *cinfo)
+static int function_data_check (call_info *cinfo,
+				windata_t *vwin,
+				const char *path)
 {
     int err = 0;
 
     if (dataset != NULL && dataset->v > 0) {
-	; /* OK */
+	; /* OK, we have data */
     } else if (cinfo->dreq != FN_NODATA_OK) {
+	/* The package requires a dataset but no dataset
+	   is loaded: this error should have been caught
+	   earlier?
+	*/
 	err = 1;
     } else {
+	/* check the particular function being called:
+	   this is potentially relevant if we're coming
+	   from the gfn browser, trying to execute the
+	   default function of a package. It's possible
+	   that the package as such does not require a
+	   dataset but its default function does --
+	   though that is arguably somewhat anomalous.
+	*/
 	int i;
 
 	for (i=0; i<cinfo->n_params; i++) {
@@ -1732,7 +1749,8 @@ static int function_data_check (call_info *cinfo)
     }
 
     if (err) {
-	warnbox(_("Please open a data file first"));
+	/* 2018-02-12: was warnbox(_("Please open a data file first")); */
+	maybe_open_sample_script(cinfo, vwin, path);
     }
 
     return err;
@@ -2340,7 +2358,9 @@ static call_info *start_cinfo_for_package (const char *pkgname,
    installed function packages -- see open_function_package() below.
 */
 
-static int call_function_package (call_info *cinfo, windata_t *vwin,
+static int call_function_package (call_info *cinfo,
+				  windata_t *vwin,
+				  const char *path,
 				  int from_browser)
 {
     int err = 0;
@@ -2378,7 +2398,7 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
     
     if (!err) {
 	cinfo->n_params = fn_n_params(cinfo->func);
-	err = function_data_check(cinfo);
+	err = function_data_check(cinfo, vwin, path);
     }
 
     if (!err) {
@@ -2411,7 +2431,7 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
 
 static void maybe_open_sample_script (call_info *cinfo,
 				      windata_t *vwin,
-				      const char *fname)
+				      const char *path)
 {
     const char *ts_msg = N_("This package needs time series data.");
     const char *qm_msg = N_("This package needs quarterly or monthly data.");
@@ -2436,7 +2456,7 @@ static void maybe_open_sample_script (call_info *cinfo,
     resp = yes_no_dialog(title, msg, vwin_toplevel(vwin));
 
     if (resp == GRETL_YES) {
-	display_function_package_data(cinfo->pkgname, fname,
+	display_function_package_data(cinfo->pkgname, path,
 				      VIEW_PKG_SAMPLE);
     }
 
@@ -2479,9 +2499,9 @@ int open_function_package (const char *pkgname,
     }
 
     if (can_call) {
-	/* actually call the package: preserve @cinfo! */
+	/* actually call the package: must preserve @cinfo! */
 	free_cinfo = 0;
-	call_function_package(cinfo, vwin, 1);
+	call_function_package(cinfo, vwin, fname, 1);
     } else {
 	/* notify and give choice of running sample */
 	maybe_open_sample_script(cinfo, vwin, fname);
@@ -3129,7 +3149,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
 	cinfo = start_cinfo_for_package(pkgname, gpi->filepath, vwin, &err);
 	if (cinfo != NULL) {
-	    call_function_package(cinfo, vwin, 0);
+	    call_function_package(cinfo, vwin, gpi->filepath, 0);
 	}
     } else {
 	errbox_printf("Sorry, could not find %s", pkgname);
