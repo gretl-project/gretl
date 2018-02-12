@@ -1710,26 +1710,29 @@ void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
 
 static int function_data_check (call_info *cinfo)
 {
-    int i, err = 0;
+    int err = 0;
 
-    if (cinfo->dreq != FN_NODATA_OK) {
-	if (dataset == NULL || dataset->v == 0) {
-	    warnbox(_("Please open a data file first"));
-	    return 1;
-	}
-    }
+    if (dataset != NULL && dataset->v > 0) {
+	; /* OK */
+    } else if (cinfo->dreq != FN_NODATA_OK) {
+	err = 1;
+    } else {
+	int i;
 
-    for (i=0; i<cinfo->n_params; i++) {
-	int type = fn_param_type(cinfo->func, i);
+	for (i=0; i<cinfo->n_params; i++) {
+	    int type = fn_param_type(cinfo->func, i);
 
-	if (type == GRETL_TYPE_SERIES || type == GRETL_TYPE_LIST ||
-	    type == GRETL_TYPE_SERIES_REF) {
-	    if (dataset == NULL || dataset->v == 0) {
-		warnbox(_("Please open a data file first"));
+	    if (type == GRETL_TYPE_SERIES ||
+		type == GRETL_TYPE_LIST ||
+		type == GRETL_TYPE_SERIES_REF) {
 		err = 1;
 		break;
 	    }
 	}
+    }
+
+    if (err) {
+	warnbox(_("Please open a data file first"));
     }
 
     return err;
@@ -2406,6 +2409,40 @@ static int call_function_package (call_info *cinfo, windata_t *vwin,
     return err;
 }
 
+static void maybe_open_sample_script (call_info *cinfo,
+				      windata_t *vwin,
+				      const char *fname)
+{
+    const char *ts_msg = N_("This package needs time series data.");
+    const char *qm_msg = N_("This package needs quarterly or monthly data.");
+    const char *pn_msg = N_("This package needs panel data.");
+    const char *ds_msg = N_("This package needs a dataset in place.");
+    const char *query = N_("Would you like to open its sample script?");
+    gchar *msg, *title = cinfo_pkg_title(cinfo);
+    const char *req;
+    int resp;
+
+    if (cinfo->dreq == FN_NEEDS_TS) {
+	req = ts_msg;
+    } else if (cinfo->dreq == FN_NEEDS_QM) {
+	req = qm_msg;
+    } else if (cinfo->dreq == FN_NEEDS_PANEL) {
+	req = pn_msg;
+    } else {
+	req = ds_msg;
+    }
+
+    msg = g_strdup_printf("%s\n%s", _(req), _(query));
+    resp = yes_no_dialog(title, msg, vwin_toplevel(vwin));
+
+    if (resp == GRETL_YES) {
+	display_function_package_data(cinfo->pkgname, fname,
+				      VIEW_PKG_SAMPLE);
+    }
+
+    g_free(msg);
+}
+
 /* Called from the function-package browser: unless the
    package can't be loaded we should return 0 to signal
    that loading happened.
@@ -2447,32 +2484,7 @@ int open_function_package (const char *pkgname,
 	call_function_package(cinfo, vwin, 1);
     } else {
 	/* notify and give choice of running sample */
-	const char *ts_msg = N_("This package needs time series data.");
-	const char *qm_msg = N_("This package needs quarterly or monthly data.");
-	const char *pn_msg = N_("This package needs panel data.");
-	const char *ds_msg = N_("This package needs a dataset in place.");
-	const char *query = N_("Would you like to open its sample script?");
-	gchar *msg, *title = cinfo_pkg_title(cinfo);
-	const char *req;
-	int resp;
-
-	if (cinfo->dreq == FN_NEEDS_TS) {
-	    req = ts_msg;
-	} else if (cinfo->dreq == FN_NEEDS_QM) {
-	    req = qm_msg;
-	} else if (cinfo->dreq == FN_NEEDS_PANEL) {
-	    req = pn_msg;
-	} else {
-	    req = ds_msg;
-	}
-
-	msg = g_strdup_printf("%s\n%s", _(req), _(query));
-	resp = yes_no_dialog(title, msg, vwin_toplevel(vwin));
-	if (resp == GRETL_YES) {
-	    display_function_package_data(cinfo->pkgname, fname,
-					  VIEW_PKG_SAMPLE);
-	}
-	g_free(msg);
+	maybe_open_sample_script(cinfo, vwin, fname);
     }
 
     if (free_cinfo) {
