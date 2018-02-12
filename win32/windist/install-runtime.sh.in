@@ -64,7 +64,7 @@ if [ "x${INSTALL_GNUPLOT}" = "xyes" ; then
   else
     GPTGZ=${SERVERDIR}/gp522w32.tar.gz
   fi
-  cd ${TARGET} && wget ${GPTGZ} && tar xvf ${GPTGZ} && rm ${GPTGZ}
+  cd ${TARGET} && wget -N ${GPTGZ} && tar xvf ${GPTGZ} && rm ${GPTGZ}
 fi
 
 # GTK theme files
@@ -96,7 +96,7 @@ cp ${SYSSV}/styles/tango.xml ${TARGET}/gtksourceview/tango.xml
 cp ${SYSSV}/styles/styles.rng ${TARGET}/gtksourceview/styles.rng
 
 # locale file, certs for cURL, libsvm copyright
-cd ${TARGET} && wget ${SERVERDIR}/gretl-extra.tar.gz && \
+cd ${TARGET} && wget -N ${SERVERDIR}/gretl-extra.tar.gz && \
  tar xvf gretl-extra.tar.gz && rm gretl-extra.tar.gz && \
  mv locale.alias share/locale/locale.alias
 

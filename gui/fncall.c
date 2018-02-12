@@ -1965,7 +1965,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     /* note: gretl_exec_state_init zeros the first byte of its
        'line' member
     */
-
     gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
 			  model, prn);
     state.line = fnline;
