@@ -389,6 +389,23 @@ static void set_curl_proxy (urlinfo *u, CURL *curl)
     }
 }
 
+#ifdef SSLWIN
+
+static void set_ca_cert_path (char *cpath)
+{
+# ifndef PKGBUILD
+    char *pfx = getenv("MINGW_PREFIX");
+
+    if (pfx != NULL) {
+	sprintf(cpath, "%s/share/curl/curl-ca-bundle.crt", pfx);
+	return;
+    }
+# endif
+    sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
+}
+
+#endif
+
 static int curl_get (urlinfo *u)
 {
 #ifdef SSLWIN
@@ -401,7 +418,7 @@ static int curl_get (urlinfo *u)
 #ifdef SSLWIN
     /* set up the certs path once */
     if (cpath[0] == '\0') {
-        sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
+	set_ca_cert_path(cpath);
     }
 #endif
 
