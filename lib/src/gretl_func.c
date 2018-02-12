@@ -4233,6 +4233,8 @@ const char *function_package_get_string (fnpkg *pkg,
 {
     if (pkg == NULL || id == NULL) {
 	return NULL;
+    } else if (!strcmp(id, "fname")) {
+	return pkg->fname;
     } else if (!strcmp(id, "help-fname")) {
 	return pkg->help_fname;
     } else if (!strcmp(id, "gui-help-fname")) {
@@ -4431,6 +4433,10 @@ static fnpkg *get_loaded_pkg_by_filename (const char *fname,
 					  const char **version)
 {
     int i;
+
+    if (fname == NULL) {
+	return NULL;
+    }
 
     for (i=0; i<n_pkgs; i++) {
 	if (!strcmp(fname, pkgs[i]->fname)) {
