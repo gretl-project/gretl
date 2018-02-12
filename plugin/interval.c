@@ -929,7 +929,11 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 
     if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
 	use_bfgs = 1;
-    }    
+    }
+
+#if INTDEBUG
+    fprintf(stderr, "do_interval: use_bfgs = %d\n", use_bfgs);
+#endif
 
     if (use_bfgs) {
 	err = BFGS_max(IC->theta, IC->k, maxit, toler, 
@@ -944,6 +948,10 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 				 interval_score, interval_hessian, 
 				 IC, maxopt, prn);
     }
+
+#if INTDEBUG
+    fprintf(stderr, "after maximization, err = %d\n", err);
+#endif
 
     if (!err) {
 	IC->ll = interval_loglik(IC->theta, IC);
@@ -1082,6 +1090,21 @@ static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
     return err;
 }
 
+static int tobit_depvar_check (const int *list)
+{
+    int i, yvar = list[1];
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == yvar) {
+	    gretl_errmsg_set("tobit: the dependent variable cannot be "
+			     "included as a regressor");
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
 MODEL tobit_via_intreg (int *list, double llim, double rlim,
 			DATASET *dset, gretlopt opt, 
 			PRN *prn) 
@@ -1089,6 +1112,14 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
     MODEL model;
     int *ilist = NULL;
     int origv = dset->v;
+    int err;
+
+    err = tobit_depvar_check(list);
+    if (err) {
+	gretl_model_init(&model, NULL);
+	model.errcode = err;
+	return model;
+    }
 
     /* run initial OLS */
     model = lsq(list, dset, OLS, OPT_A);
