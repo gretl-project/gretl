@@ -39,7 +39,7 @@ enum {
 
 #define DBHLEN 64
 
-#if defined(WIN32) && defined(PKGBUILD)
+#if defined(WIN32)
 # define SSLWIN
 #endif
 
