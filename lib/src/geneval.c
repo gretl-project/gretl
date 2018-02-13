@@ -1567,6 +1567,28 @@ static int node_get_bool (NODE *n, parser *p, int deflt)
     return ret;
 }
 
+static gretl_matrix *mat_or_num_get_matrix (NODE *n, parser *p,
+					    int i)
+{
+    gretl_matrix *m = NULL;
+
+    if (p->err) {
+	/* don't compound prior error */
+	return NULL;
+    } else if (n->t == MAT) {
+	m = n->v.m;
+    } else if (n->t == NUM) {
+	m = gretl_matrix_from_scalar(n->v.xval);
+    } else {
+	if (i > 0) {
+	    gretl_errmsg_sprintf(_("arg %d is missing or of invalid type"), i);
+	}
+	p->err = E_INVARG;
+    }
+
+    return m;
+}
+
 static NODE *DW_node (NODE *r, parser *p)
 {
     NODE *s, *e, *ret = NULL;
@@ -3481,17 +3503,6 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
     return ret;
 }
 
-static gretl_matrix *make_scalar_matrix (double x)
-{
-    gretl_matrix *m = gretl_matrix_alloc(1, 1);
-
-    if (m != NULL) {
-	m->val[0] = x;
-    }
-
-    return m;
-}
-
 /* both operands are known to be matrices or scalars */
 
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
@@ -3523,14 +3534,14 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     }
 
     if (l->t == NUM) {
-	ml = make_scalar_matrix(l->v.xval);
+	ml = gretl_matrix_from_scalar(l->v.xval);
     } else {
 	ml = l->v.m;
     }
 
     if (op != B_POW) {
 	if (r->t == NUM) {
-	    mr = make_scalar_matrix(r->v.xval);
+	    mr = gretl_matrix_from_scalar(r->v.xval);
 	} else {
 	    mr = r->v.m;
 	}
@@ -4095,11 +4106,13 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	const gretl_matrix *m = n->v.m;
+	gretl_matrix *m = mat_or_num_get_matrix(n, p, 0);
 	const char *rname;
 
-	if (gretl_is_null_matrix(m)) {
+	if (!p->err && gretl_is_null_matrix(m)) {
 	    p->err = E_DATA;
+	}
+	if (p->err) {
 	    goto finalize;
 	}
 
@@ -4144,6 +4157,9 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
     finalize:
 
+	if (n->t == NUM) {
+	    gretl_matrix_free(m);
+	}
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
 	}
@@ -7396,7 +7412,11 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    rval = node_get_scalar(r, p);
 	}
 
-	if (l->t == MAT) {
+	if (l->t == NUM) {
+	    t1 = 0;
+	    t2 = 0;
+	    xvec = &l->v.xval;
+	} else if (l->t == MAT) {
 	    int n = gretl_vector_get_length(l->v.m);
 
 	    if (n == 0) {
@@ -7619,7 +7639,10 @@ static NODE *vector_values (NODE *l, int f, parser *p)
 	const double *x = NULL;
 	int n = 0;
 
-	if (l->t == SERIES) {
+	if (l->t == NUM) {
+	    n = 1;
+	    x = &l->v.xval;
+	} else if (l->t == SERIES) {
 	    n = sample_size(p->dset);
 	    x = l->v.xvec + p->dset->t1;
 	} else if (!gretl_is_null_matrix(l->v.m)) {
@@ -7647,7 +7670,10 @@ static NODE *do_irr (NODE *l, parser *p)
 	const double *x = NULL;
 	int pd = 1, n = 0;
 
-	if (l->t == SERIES) {
+	if (l->t == NUM) {
+	    n = 1;
+	    x = &l->v.xval;
+	} else if (l->t == SERIES) {
 	    n = sample_size(p->dset);
 	    x = l->v.xvec + p->dset->t1;
 	    pd = p->dset->pd;
@@ -9970,7 +9996,8 @@ static gretl_matrix *mshape_scalar (double x, int r, int c, int *err)
 
 /* evaluate a built-in function that has three arguments */
 
-static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
+static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
+			      int f, parser *p)
 {
     NODE *save_aux = p->aux;
     NODE *ret = NULL;
@@ -10012,33 +10039,36 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    }
 	}
     } else if (f == F_SVD) {
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
+	gretl_matrix *lm = mat_or_num_get_matrix(l, p, 1);
+
+	if (p->err) {
+	    ; /* skip the rest */
 	} else if (m->t != U_ADDR && m->t != EMPTY) {
 	    node_type_error(f, 2, U_ADDR, m, p);
 	} else if (r->t != U_ADDR && r->t != EMPTY) {
 	    node_type_error(f, 3, U_ADDR, r, p);
 	} else {
-	    const char *uname, *vname;
+	    const char *uname = ptr_node_get_matrix_name(m, p);
+	    const char *vname = ptr_node_get_matrix_name(r, p);
 
-	    uname = ptr_node_get_matrix_name(m, p);
-	    vname = ptr_node_get_matrix_name(r, p);
-	    A = user_matrix_SVD(l->v.m, uname, vname, &p->err);
+	    A = user_matrix_SVD(lm, uname, vname, &p->err);
+	    if (l->t == NUM) gretl_matrix_free(lm);
 	}
     } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != MAT) {
-	    node_type_error(f, 2, MAT, m, p);
-	} else if (r->t != MAT) {
-	    node_type_error(f, 3, MAT, r, p);
-	} else {
+	gretl_matrix *m1 = mat_or_num_get_matrix(l, p, 1);
+	gretl_matrix *m2 = mat_or_num_get_matrix(m, p, 2);
+	gretl_matrix *m3 = mat_or_num_get_matrix(r, p, 3);
+
+	if (!p->err) {
 	    if (f == F_TOEPSOLV) {
-		A = gretl_toeplitz_solve(l->v.m, m->v.m, r->v.m, &p->err);
+		A = gretl_toeplitz_solve(m1, m2, m3, &p->err);
 	    } else {
-		A = gretl_matrix_varsimul(l->v.m, m->v.m, r->v.m, &p->err);
+		A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
 	    }
 	}
+	if (l->t == NUM) gretl_matrix_free(m1);
+	if (m->t == NUM) gretl_matrix_free(m2);
+	if (r->t == NUM) gretl_matrix_free(m3);
     } else if (f == F_CORRGM) {
 	if (l->t != SERIES && l->t != MAT && !ok_list_node(l)) {
 	    node_type_error(f, 1, SERIES, l, p);
@@ -10258,34 +10288,27 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 					  p->dset, &p->err);
 	}
     } else if (f == F_MLAG) {
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != MAT && m->t != NUM) {
-	    /* scalar or vector */
-	    node_type_error(f, 2, MAT, m, p);
+	gretl_matrix *m1 = mat_or_num_get_matrix(l, p, 1);
+	gretl_matrix *m2 = mat_or_num_get_matrix(m, p, 2);
+
+	if (p->err) {
+	    ; /* skip the rest */
 	} else if (r->t != NUM && r->t != EMPTY) {
 	    /* optional scalar */
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    double missval = (r->t == NUM)? r->v.xval : 0.0;
-	    gretl_matrix *mm;
 
-	    if (m->t == NUM) {
-		/* promote arg2 if scalar */
-		mm = make_scalar_matrix(m->v.xval);
-	    } else {
-		mm = m->v.m;
-	    }
-	    A = gretl_matrix_lag(l->v.m, mm, OPT_L, missval);
-	    if (m->t == NUM && mm != NULL) {
-		gretl_matrix_free(mm);
-	    }
+	    A = gretl_matrix_lag(m1, m2, OPT_L, missval);
 	}
+	if (l->t == NUM) gretl_matrix_free(m1);
+	if (m->t == NUM) gretl_matrix_free(m2);
     } else if (f == F_EIGSOLVE) {
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != MAT) {
-	    node_type_error(f, 2, MAT, m, p);
+	gretl_matrix *m1 = mat_or_num_get_matrix(l, p, 1);
+	gretl_matrix *m2 = mat_or_num_get_matrix(m, p, 2);
+
+	if (p->err) {
+	    ; /* skip the rest */
 	} else if (r->t != EMPTY && r->t != U_ADDR) {
 	    /* optional matrix-pointer */
 	    node_type_error(f, 3, U_ADDR, r, p);
@@ -10293,8 +10316,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    const char *rname;
 
 	    rname = (r->t == U_ADDR)? ptr_node_get_matrix_name(r, p) : "null";
-	    A = user_gensymm_eigenvals(l->v.m, m->v.m, rname, &p->err);
+	    A = user_gensymm_eigenvals(m1, m2, rname, &p->err);
 	}
+	if (l->t == NUM) gretl_matrix_free(m1);
+	if (m->t == NUM) gretl_matrix_free(m2);
     } else if (f == F_NADARWAT) {
 	post_process = 0;
 	if (l->t != SERIES) {
@@ -11322,11 +11347,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
     } else if (t->t == F_MOLS || t->t == F_MPOLS) {
 	gretlopt opt = (t->t == F_MPOLS)? OPT_M : OPT_NONE;
-	gretl_matrix *Y = NULL;
-	gretl_matrix *X = NULL;
+	gretl_matrix *M[2] = {NULL};
 	const char *SU = NULL;
 	const char *SV = NULL;
-	int freeY = 0, freeX = 0;
+	char freemat[2] = {0};
 
 	if (k < 2 || k > 4) {
 	    n_args_error(k, 1, t->t, p);
@@ -11337,23 +11361,17 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (p->err) {
 		break;
 	    }
-	    if (i == 0) {
+	    if (i < 2) {
 		if (e->t == SERIES) {
-		    Y = tmp_matrix_from_series(e, p);
-		    freeY = 1;
+		    M[i] = tmp_matrix_from_series(e, p);
+		    freemat[i] = 1;
+		} else if (e->t == NUM) {
+		    M[i] = gretl_matrix_from_scalar(e->v.xval);
+		    freemat[i] = 1;
 		} else if (e->t != MAT) {
 		    node_type_error(t->t, i+1, MAT, e, p);
 		} else {
-		    Y = e->v.m;
-		}
-	    } else if (i == 1) {
-		if (e->t == SERIES) {
-		    X = tmp_matrix_from_series(e, p);
-		    freeX = 1;
-		} else if (e->t != MAT) {
-		    node_type_error(t->t, i+1, MAT, e, p);
-		} else {
-		    X = e->v.m;
+		    M[i] = e->v.m;
 		}
 	    } else {
 		if (e->t == EMPTY) {
@@ -11377,18 +11395,16 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = user_matrix_ols(Y, X, SU, SV, opt, &p->err);
+	    ret->v.m = user_matrix_ols(M[0], M[1], SU, SV, opt, &p->err);
 	}
-
-	if (freeY) gretl_matrix_free(Y);
-	if (freeX) gretl_matrix_free(X);
+	if (freemat[0]) gretl_matrix_free(M[0]);
+	if (freemat[1]) gretl_matrix_free(M[1]);
     } else if (t->t == F_MRLS) {
-	gretl_matrix *Y = NULL;
-	gretl_matrix *X = NULL;
-	gretl_matrix *R = NULL;
-	gretl_matrix *Q = NULL;
+	gretl_matrix *M[4] = {NULL};
+	gretl_matrix *em = NULL;
 	const char *SU = NULL;
 	const char *SV = NULL;
+	char freemat[4] = {0};
 
 	if (k < 4 || k > 6) {
 	    n_args_error(k, 1, t->t, p);
@@ -11400,16 +11416,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		break;
 	    }
 	    if (i < 4) {
-		if (e->t != MAT) {
-		    node_type_error(t->t, i+1, MAT, e, p);
-		} else if (i == 0) {
-		    Y = e->v.m;
-		} else if (i == 1) {
-		    X = e->v.m;
-		} else if (i == 2) {
-		    R = e->v.m;
-		} else if (i == 3) {
-		    Q = e->v.m;
+		em = mat_or_num_get_matrix(e, p, i+1);
+		if (!p->err) {
+		    M[i] = em;
+		    if (e->t == NUM) {
+			freemat[i] = 1;
+		    }
 		}
 	    } else {
 		if (e->t == EMPTY) {
@@ -11428,12 +11440,16 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
-
 	if (!p->err) {
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = user_matrix_rls(Y, X, R, Q, SU, SV, &p->err);
+	    ret->v.m = user_matrix_rls(M[0], M[1], M[2], M[3], SU, SV, &p->err);
+	}
+	for (i=0; i<4; i++) {
+	    if (freemat[i]) {
+		gretl_matrix_free(M[i]);
+	    }
 	}
     } else if (t->t == F_NRMAX) {
 	gretl_matrix *b = NULL;
@@ -11553,11 +11569,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == F_GHK) {
-	gretl_matrix *C = NULL;
-	gretl_matrix *A = NULL;
-	gretl_matrix *B = NULL;
-	gretl_matrix *U = NULL;
+	gretl_matrix *M[4] = {NULL};
+	gretl_matrix *em = NULL;
 	const char *dP_name = NULL;
+	char freemat[4] = {0};
 
 	if (k < 4 || k > 5) {
 	    n_args_error(k, 5, t->t, p);
@@ -11567,16 +11582,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    e = eval(n->v.bn.n[i], p);
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else if (i < 4 && e->t != MAT) {
-		node_type_error(t->t, i+1, MAT, e, p);
-	    } else if (i == 0) {
-		C = e->v.m;
-	    } else if (i == 1) {
-		A = e->v.m;
-	    } else if (i == 2) {
-		B = e->v.m;
-	    } else if (i == 3) {
-		U = e->v.m;
+	    } else if (i < 4) {
+		em = mat_or_num_get_matrix(e, p, i+1);
+		if (!p->err) {
+		    M[i] = em;
+		    if (e->t == NUM) {
+			freemat[i] = 1;
+		    }
+		}
 	    } else {
 		/* the optional last argument */
 		if (e->t == EMPTY) {
@@ -11597,9 +11610,15 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		gretl_matrix_free(ret->v.m);
 	    }
 	    if (dP_name == NULL) {
-		ret->v.m = gretl_GHK(C, A, B, U, &p->err);
+		ret->v.m = gretl_GHK(M[0], M[1], M[2], M[3], &p->err);
 	    } else {
-		ret->v.m = user_matrix_GHK(C, A, B, U, dP_name, &p->err);
+		ret->v.m = user_matrix_GHK(M[0], M[1], M[2], M[3],
+					   dP_name, &p->err);
+	    }
+	}
+	for (i=0; i<4; i++) {
+	    if (freemat[i]) {
+		gretl_matrix_free(M[i]);
 	    }
 	}
     } else if (t->t == F_QUADTAB) {
@@ -14385,7 +14404,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_PERGM:
     case F_IRR:
 	/* series or vector argument needed */
-	if (l->t == SERIES || l->t == MAT) {
+	if (l->t == SERIES || l->t == MAT || l->t == NUM) {
 	    if (t->t == F_PERGM) {
 		ret = pergm_node(l, r, p);
 	    } else if (t->t == F_VALUES || t->t == F_UNIQ) {
@@ -14430,7 +14449,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_ECDF:
     case F_NORMTEST:
-	/* series or vector (plus optional string arg for,
+	/* series or vector (plus optional string arg for
 	   normtest); returns matrix */
 	if (l->t != SERIES && l->t != MAT) {
 	    p->err = E_TYPES;
@@ -14441,7 +14460,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LRVAR:
-    case F_NPV:
     case F_ISCONST:
     case F_ISDUMMY:
 	/* takes series and scalar arg, returns scalar */
@@ -14461,6 +14479,15 @@ static NODE *eval (NODE *t, parser *p)
 	    }
 	} else {
 	    node_type_error(t->t, 1, SERIES, l, p);
+	}
+	break;
+    case F_NPV:
+	if (l->t != SERIES && l->t != MAT && l->t != NUM) {
+	    node_type_error(t->t, 1, SERIES, l, p);
+	} else if (!scalar_node(r)) {
+	    node_type_error(t->t, 2, NUM, r, p);
+	} else {
+	    ret = series_scalar_scalar_func(l, r, t->t, p);
 	}
 	break;
     case F_QUANTILE:
@@ -14637,7 +14664,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_EIGGEN:
     case HF_CEIGH:
 	/* matrix -> matrix functions, with indirect return */
-	if (l->t != MAT) {
+	if (l->t != MAT && l->t != NUM) {
 	    node_type_error(t->t, 1, MAT, l, p);
 	} else if (r->t != U_ADDR && r->t != EMPTY) {
 	    node_type_error(t->t, 2, U_ADDR, r, p);
