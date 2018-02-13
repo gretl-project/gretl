@@ -12519,6 +12519,12 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
     }
 
     V = gretl_matrix_alloc(k, k);
+
+    if (corr || k == 1) {
+	V->val[0] = 1;
+	goto bailout;
+    }
+    
     xbar = gretl_vector_alloc(k);
 
     if (V == NULL || xbar == NULL) {
