@@ -436,10 +436,11 @@ static int console_get_line (void *p)
 
     /* wait for a command to be entered via the console */
     while (!command_entered) {
-	if (gtk_events_pending()) {
+	/* 2018-02-14: was "if" rather than "while" below */
+	while (gtk_events_pending()) {
 	    gtk_main_iteration();
 	}
-	g_usleep(1000);
+	/* g_usleep(1000); */
     }
 
     command_entered = 0;
