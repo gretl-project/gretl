@@ -15580,7 +15580,7 @@ static int get_op (char *s)
 
 static char *get_opstr (int op)
 {
-    static char opstr[3] = {0};
+    static char opstr[4] = {0};
 
     if (op == B_ASN) {
 	return "=";
@@ -15789,25 +15789,9 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 
 static void maybe_do_type_errmsg (const char *name, int t)
 {
-    const char *tstr = NULL;
+    const char *tstr = typestr(t);
 
-    if (t == NUM) {
-	tstr = "scalar";
-    } else if (t == SERIES) {
-	tstr = "series";
-    } else if (t == MAT) {
-	tstr = "matrix";
-    } else if (t == STR) {
-	tstr = "string";
-    } else if (t == BUNDLE) {
-	tstr = "bundle";
-    } else if (t == LIST) {
-	tstr = "list";
-    } else if (t == ARRAY) {
-	tstr = "array";
-    }
-
-    if (tstr != NULL) {
+    if (tstr != NULL && strcmp(tstr, "?")) {
 	if (name != NULL && *name != '\0') {
 	    gretl_errmsg_sprintf(_("The variable %s is of type %s, "
 				   "not acceptable in context"),
@@ -15817,6 +15801,13 @@ static void maybe_do_type_errmsg (const char *name, int t)
 				   "acceptable in context"), tstr);
 	}
     }
+}
+
+static void assignment_type_errmsg (int targ, int rhs, int op)
+{
+    gretl_errmsg_sprintf(_("Incompatible types in assignment: "
+			   "%s %s %s"), typestr(targ), get_opstr(op),
+			 typestr(rhs));
 }
 
 static int overwrite_type_check (parser *p)
@@ -16764,7 +16755,7 @@ static int gen_check_return_type (parser *p)
     }
 
     if (err == E_TYPES) {
-	maybe_do_type_errmsg(p->lh.name, p->lh.t);
+	assignment_type_errmsg(p->targ, r->t, p->op);
     }
 
 #if EDEBUG
