@@ -104,10 +104,6 @@ enum {
 
 #define postfix_node(n) (n->t == NUM_P || n->t == NUM_M)
 
-#define ok_list_node(n) (n->t == LIST || n->t == NUM || \
-			 n->t == MAT || n->t == EMPTY || \
-			 (n->t == SERIES && n->vnum >= 0))
-
 #define uscalar_node(n) ((n->t == NUM && n->vname != NULL) || postfix_node(n))
 
 #define umatrix_node(n) (n->t == MAT && n->vname != NULL)
@@ -145,6 +141,45 @@ static NODE *object_var_node (NODE *t, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
+
+/* ok_list_node: This is a first-pass assessment of whether
+   a given node _may_ be interpretable as holding a LIST.
+   The follow-up is node_get_list(), and that will determine
+   whether the interpretation really works.
+*/
+
+static int ok_list_node (NODE *n, parser *p)
+{
+    if (n->t == LIST) {
+	return 1;
+    } else if (n->t == SERIES && n->vnum >= 0) {
+	/* can interpret as singleton list */
+	return 1;
+    } else if (p->targ == LIST) {
+	/* when defining a list we can be a bit more accommodating */
+	return scalar_node(n) || n->t == EMPTY;
+    }
+    
+    return 0;
+}
+
+/* more "lenient" version of the above, to accommodate
+   list expressions such as (L - 0), indicating the list
+   that results from dropping the constant from L
+*/
+
+static int ok_list_node_plus (NODE *n)
+{
+    if (n->t == LIST) {
+	return 1;
+    } else if (n->t == SERIES && n->vnum >= 0) {
+	return 1;
+    } else if (n->t == NUM) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
 static const char *typestr (int t)
 {
@@ -5573,7 +5608,7 @@ int *list_from_strings_array (gretl_array *a, parser *p)
     return list;
 }
 
-/* get an *int list from node @n: note that the list is always
+/* get an *int LIST from node @n: note that the list is always
    newly allocated, and so should be freed by the caller if
    it's just for temporary use
 */
@@ -6422,13 +6457,10 @@ static NODE *n_elements_node (NODE *n, parser *p)
 	    gretl_bundle *b = n->v.b;
 
 	    ret->v.xval = gretl_bundle_get_n_members(b);
-	} else if (ok_list_node(n)) {
-	    int *list = node_get_list(n, p);
-
-	    if (list != NULL) {
-		ret->v.xval = list[0];
-		free(list);
-	    }
+	} else if (n->t == LIST) {
+	    int *list = n->v.ivec;
+	    
+	    ret->v.xval = list[0];
 	} else if (n->t == STR) {
 	    /* backward compatibility: _name_ of list */
 	    int *list = get_list_by_name(n->v.str);
@@ -9857,13 +9889,9 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 	return NULL;
     }
 
-    /* if we're supposed to have a list, check that we
-       actually have one */
-    if (l->t != SERIES && l->t != MAT) {
-	list = node_get_list(l, p);
-	if (p->err) {
-	    return NULL;
-	}
+    /* hook up list if arg1 is list */
+    if (l->t == LIST) {
+	list = l->v.ivec;
     }
 
     /* if third node is matrix, must be col vector */
@@ -9903,8 +9931,6 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 
 	A = multi_xcf(px, xtype, py, r->t, p->dset, k, &p->err);
     }
-
-    free(list);
 
     return A;
 }
@@ -10070,7 +10096,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (m->t == NUM) gretl_matrix_free(m2);
 	if (r->t == NUM) gretl_matrix_free(m3);
     } else if (f == F_CORRGM) {
-	if (l->t != SERIES && l->t != MAT && !ok_list_node(l)) {
+	if (l->t != SERIES && l->t != MAT && l->t != LIST) {
 	    node_type_error(f, 1, SERIES, l, p);
 	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
@@ -11981,7 +12007,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (!p->err) {
 		if (k == 1 && e->t == ARRAY) {
 		    li = list_from_strings_array(e->v.a, p);
-		} else if (ok_list_node(e)) {
+		} else if (ok_list_node(e, p)) {
 		    li = node_get_list(e, p);
 		} else {
 		    p->err = E_TYPES;
@@ -13920,26 +13946,26 @@ static NODE *eval (NODE *t, parser *p)
 		    (l->t == STR && r->t == SERIES))) {
 	    ret = series_string_calc(l, r, t->t, p);
 	} else if ((t->t == B_AND || t->t == B_OR || t->t == B_SUB) &&
-		   ok_list_node(l) && ok_list_node(r)) {
+		   ok_list_node_plus(l) && ok_list_node_plus(r)) {
 	    ret = list_list_op(l, r, t->t, p);
-	} else if (t->t == B_POW && ok_list_node(l) && ok_list_node(r)) {
+	} else if (t->t == B_POW && ok_list_node(l, p) && ok_list_node(r, p)) {
 	    ret = list_list_op(l, r, t->t, p);
 	} else if ((t->t == B_EQ || t->t == B_NEQ) &&
 		   ((l->t == NUM && r->t == STR) ||
 		    (l->t == STR && r->t == NUM))) {
 	    ret = num_string_comp(l, r, t->t, p);
 	} else if (bool_comp(t->t)) {
-	    if (ok_list_node(l) && (r->t == NUM || r->t == SERIES)) {
+	    if (ok_list_node(l, p) && (r->t == NUM || r->t == SERIES)) {
 		ret = list_bool_comp(l, r, t->t, 0, p);
-	    } else if (ok_list_node(r) && (l->t == NUM || l->t == SERIES)) {
+	    } else if (ok_list_node(r, p) && (l->t == NUM || l->t == SERIES)) {
 		ret = list_bool_comp(r, l, t->t, 1, p);
-	    } else if (ok_list_node(l) && ok_list_node(r)) {
+	    } else if (ok_list_node(l, p) && ok_list_node(r, p)) {
 		ret = list_list_comp(r, l, t->t, p);
 	    } else {
 		p->err = E_TYPES;
 	    }
 	} else if ((t->t == B_ADD || t->t == B_SUB) &&
-		   l->t == SERIES && ok_list_node(r)) {
+		   l->t == SERIES && ok_list_node(r, p)) {
 	    ret = series_list_calc(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14027,7 +14053,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case B_JOIN:
 	/* list join with separator */
-	if (ok_list_node(l) && ok_list_node(r)) {
+	if (ok_list_node(l, p) && ok_list_node(r, p)) {
 	    ret = list_join_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14045,7 +14071,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-	if ((scalar_node(l) || l->t == MAT) && m->t != MAT && ok_list_node(m)) {
+	if ((scalar_node(l) || l->t == MAT) && m->t != MAT && ok_list_node(m, p)) {
 	    ret = list_make_lags(l, m, r, p);
 	} else if ((scalar_node(l) || l->t == MAT) && m->t == MAT) {
 	    ret = matrix_make_lags(l, m, r, p);
@@ -14054,7 +14080,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_HFLAG:
-	if (scalar_node(l) && scalar_node(m) && ok_list_node(r)) {
+	if (scalar_node(l) && scalar_node(m) && ok_list_node(r, p)) {
 	    ret = hf_list_make_lags(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14069,7 +14095,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_HFDIFF:
     case F_HFLDIFF:
-	if (ok_list_node(l) && empty_or_num(r)) {
+	if (ok_list_node(l, p) && empty_or_num(r)) {
 	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14120,7 +14146,7 @@ static NODE *eval (NODE *t, parser *p)
 	    }
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
-	} else if (ok_list_node(l) && t->t == F_LOG) {
+	} else if (ok_list_node(l, p) && t->t == F_LOG) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14129,7 +14155,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DUMIFY:
     case F_CDUMIFY:
 	/* series or list argument wanted */
-	if (ok_list_node(l)) {
+	if (ok_list_node(l, p)) {
 	    if (t->t == F_CDUMIFY) {
 		ret = cdummify_func(l, p);
 	    } else {
@@ -14181,7 +14207,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
-	} else if (ok_list_node(l)) {
+	} else if (ok_list_node(l, p)) {
 	    ret = list_ok_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
@@ -14317,7 +14343,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
 	    ret = series_series_func(l, r, t->t, p);
-	} else if (ok_list_node(l)) {
+	} else if (ok_list_node(l, p)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
@@ -14388,9 +14414,9 @@ static NODE *eval (NODE *t, parser *p)
 	    }
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
-	} else if (t->t == F_DIFF && ok_list_node(l)) {
+	} else if (t->t == F_DIFF && ok_list_node(l, p)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
-	} else if (t->t == F_RESAMPLE && ok_list_node(l) &&
+	} else if (t->t == F_RESAMPLE && ok_list_node(l, p) &&
 		   null_or_empty(r)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
@@ -14440,7 +14466,7 @@ static NODE *eval (NODE *t, parser *p)
 		    t->t == F_VCE || t->t == F_MIN ||
 		    t->t == F_MAX || t->t == F_SUM ||
 		    t->t == F_MEDIAN)
-		   && ok_list_node(l)) {
+		   && ok_list_node(l, p)) {
 	    /* list -> series also acceptable for these cases */
 	    ret = list_to_series_func(l, t->t, p);
 	} else {
@@ -14741,8 +14767,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_CNAMESET:
     case F_RNAMESET:
-	/* matrix, list, string or strings array as second arg */
-	if (l->t == MAT && (ok_list_node(r) || r->t == STR || r->t == ARRAY)) {
+	/* matrix, with (list, string or strings array) as second arg */
+	if (l->t == MAT && (ok_list_node(r, p) || r->t == STR || r->t == ARRAY)) {
 	    ret = matrix_add_names(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14935,7 +14961,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = n_elements_node(l, p);
 	break;
     case F_INLIST:
-	if (ok_list_node(l)) {
+	if (ok_list_node(l, p)) {
 	    ret = in_list_node(l, r, p);
 	} else {
 	    node_type_error(t->t, 1, LIST, l, p);
@@ -14977,14 +15003,14 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case B_LCAT:
 	/* list concatenation */
-	if (ok_list_node(l) && ok_list_node(r)) {
+	if (ok_list_node(l, p) && ok_list_node(r, p)) {
 	    ret = eval_lcat(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
 	break;
     case F_SQUARE:
-	if (ok_list_node(l) && empty_or_num(r)) {
+	if (ok_list_node(l, p) && empty_or_num(r)) {
 	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -14994,7 +15020,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_WVAR:
     case F_WSD:
 	/* two lists -> series */
-	if (ok_list_node(l) && ok_list_node(r)) {
+	if (ok_list_node(l, p) && ok_list_node(r, p)) {
 	    ret = list_list_series_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15002,7 +15028,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_LINCOMB:
 	/* list + matrix -> series */
-	if (ok_list_node(l) && r->t == MAT) {
+	if (ok_list_node(l, p) && r->t == MAT) {
 	    ret = lincomb_func(l, r, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15010,7 +15036,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MLINCOMB:
 	/* list + matrix + int -> series */
-	if (ok_list_node(l) && m->t == MAT &&
+	if (ok_list_node(l, p) && m->t == MAT &&
 	    (scalar_node(r) || r->t == STR)) {
 	    ret = lincomb_func(l, m, r, t->t, p);
 	} else {
@@ -16715,7 +16741,7 @@ static int gen_check_return_type (parser *p)
     } else if (p->targ == MAT) {
 	; /* no-op: handled later */
     } else if (p->targ == LIST) {
-	if (r->t != EMPTY && !ok_list_node(r)) {
+	if (r->t != EMPTY && r->t != MAT && !ok_list_node(r, p)) {
 	    err = E_TYPES;
 	}
     } else if (p->targ == STR) {
