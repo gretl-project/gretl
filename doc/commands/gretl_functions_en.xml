@@ -2257,7 +2257,7 @@
 	  number of elements in <argname>x</argname> (1 if
 	  <argname>x</argname> is a series, the number of columns if
 	  <argname>x</argname> is a matrix, or the number of
-	  list-members is <argname>x</argname> is a list).  The return
+	  list-members if <argname>x</argname> is a list).  The return
 	  value is a matrix with <argname>p</argname> rows and
 	  2<math>k</math> columns, the first <math>k</math> columns
 	  holding the respective autocorrelations and the remainder
