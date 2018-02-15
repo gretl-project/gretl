@@ -159,7 +159,7 @@ static int ok_list_node (NODE *n, parser *p)
 	/* when defining a list we can be a bit more accommodating */
 	return scalar_node(n) || n->t == EMPTY;
     }
-    
+
     return 0;
 }
 
@@ -3807,7 +3807,7 @@ static NODE *matrix_get_col_or_row_name (int f, NODE *l, NODE *r,
 	if (get_all) {
 	    const char **S;
 	    int n = 0;
-	    
+
 	    if (f == F_CNAMEGET) {
 		S = gretl_matrix_get_colnames(l->v.m);
 		if (S != NULL) n = l->v.m->cols;
@@ -6034,12 +6034,11 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *list = node_get_list(n, p);
+	int *list = n->v.ivec;
 	int i, v, t;
 	double x;
 
-	if (list == NULL || list[0] == 0) {
-	    free(list);
+	if (list[0] == 0) {
 	    return ret;
 	}
 
@@ -6054,8 +6053,6 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 	    }
 	    ret->v.xvec[t] = x;
 	}
-
-	free(list);
     }
 
     return ret;
@@ -6459,7 +6456,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
 	    ret->v.xval = gretl_bundle_get_n_members(b);
 	} else if (n->t == LIST) {
 	    int *list = n->v.ivec;
-	    
+
 	    ret->v.xval = list[0];
 	} else if (n->t == STR) {
 	    /* backward compatibility: _name_ of list */
@@ -14155,14 +14152,14 @@ static NODE *eval (NODE *t, parser *p)
     case F_DUMIFY:
     case F_CDUMIFY:
 	/* series or list argument wanted */
-	if (ok_list_node(l, p)) {
-	    if (t->t == F_CDUMIFY) {
-		ret = cdummify_func(l, p);
-	    } else {
+	if (l->t == SERIES || l->t == LIST) {
+	    if (t->t == F_DUMIFY) {
 		ret = dummify_func(l, r, p);
+	    } else {
+		ret = cdummify_func(l, p);
 	    }
 	} else {
-	    p->err = E_TYPES;
+	    p->err = E_INVARG;
 	}
 	break;
     case F_GETINFO:
@@ -14207,7 +14204,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
-	} else if (ok_list_node(l, p)) {
+	} else if (l->t == LIST) {
 	    ret = list_ok_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
