@@ -1008,58 +1008,45 @@ static void *gen_get_lhs_var (parser *p, GretlType type)
     return data;
 }
 
+struct typeconv {
+    GretlType t;
+    int gen_t;
+};
+
+struct typeconv conversions[] = {
+    { GRETL_TYPE_DOUBLE, NUM },
+    { GRETL_TYPE_SERIES, SERIES },
+    { GRETL_TYPE_MATRIX, MAT },
+    { GRETL_TYPE_LIST,   LIST },
+    { GRETL_TYPE_STRING, STR },
+    { GRETL_TYPE_BUNDLE, BUNDLE },
+    { GRETL_TYPE_ARRAY,  ARRAY }
+};
+
 static int gen_type_from_gretl_type (GretlType t)
 {
-    switch (t) {
-    case GRETL_TYPE_DOUBLE:
-	return NUM;
-	break;
-    case GRETL_TYPE_MATRIX:
-	return MAT;
-	break;
-    case GRETL_TYPE_LIST:
-	return LIST;
-	break;
-    case GRETL_TYPE_STRING:
-	return STR;
-	break;
-    case GRETL_TYPE_BUNDLE:
-	return BUNDLE;
-	break;
-    case GRETL_TYPE_ARRAY:
-	return ARRAY;
-	break;
-    default:
-	return UNDEF;
-	break;
+    int i, n = G_N_ELEMENTS(conversions);
+
+    for (i=0; i<n; i++) {
+	if (t == conversions[i].t) {
+	    return conversions[i].gen_t;
+	}
     }
+
+    return UNDEF;
 }
 
-static GretlType gretl_type_from_gen_type (int t)
+static GretlType gretl_type_from_gen_type (int gen_t)
 {
-    switch (t) {
-    case NUM:
-	return GRETL_TYPE_DOUBLE;
-	break;
-    case MAT:
-	return GRETL_TYPE_MATRIX;
-	break;
-    case LIST:
-	return GRETL_TYPE_LIST;
-	break;
-    case STR:
-	return GRETL_TYPE_STRING;
-	break;
-    case BUNDLE:
-	return GRETL_TYPE_BUNDLE;
-	break;
-    case ARRAY:
-	return GRETL_TYPE_ARRAY;
-	break;
-    default:
-	return GRETL_TYPE_NONE;
-	break;
+    int i, n = G_N_ELEMENTS(conversions);
+
+    for (i=0; i<n; i++) {
+	if (gen_t == conversions[i].gen_t) {
+	    return conversions[i].t;
+	}
     }
+
+    return GRETL_TYPE_NONE;
 }
 
 static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
@@ -1197,7 +1184,7 @@ static int node_replace_array (NODE *n, gretl_array *a)
     return err;
 }
 
-#endif
+#endif /* HAVE_MPI */
 
 static int node_replace_scalar (NODE *n, double x)
 {
@@ -2129,7 +2116,7 @@ static Gretl_MPI_Op scatter_op_from_string (const char *s)
     }
 }
 
-#endif
+#endif /* HAVE_MPI */
 
 static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 				int f, parser *p)
@@ -8941,27 +8928,6 @@ static double *scalar_to_series (NODE *n, parser *p)
     return ret;
 }
 
-static GretlType gretl_type_of (int t)
-{
-    if (t == NUM) {
-	return GRETL_TYPE_DOUBLE;
-    } else if (t == SERIES) {
-	return GRETL_TYPE_SERIES;
-    } else if (t == MAT) {
-	return GRETL_TYPE_MATRIX;
-    } else if (t == STR) {
-	return GRETL_TYPE_STRING;
-    } else if (t == BUNDLE) {
-	return GRETL_TYPE_BUNDLE;
-    } else if (t == LIST) {
-	return GRETL_TYPE_LIST;
-    } else if (t == ARRAY) {
-	return GRETL_TYPE_ARRAY;
-    } else {
-	return 0;
-    }
-}
-
 /* note: we come here only if we setting a bundle-member or
    an element of an array
 */
@@ -9179,7 +9145,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
 	lp = gretl_bundle_get_data(bundle, key, &ltype, &size, &err);
 	if (!err) {
-	    targ = gretl_type_of(p->targ);
+	    targ = gretl_type_from_gen_type(p->targ);
 	    err = lhs_type_check(targ, ltype, BUNDLE);
 	}
 	if (p->op == B_DOTASN) {
@@ -9223,7 +9189,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     if (p->targ == ARRAY) {
 	targ = p->lh.gtype;
     } else {
-	targ = gretl_type_of(p->targ);
+	targ = gretl_type_from_gen_type(p->targ);
     }
 
     if (!err && targ == GRETL_TYPE_LIST) {
@@ -9395,7 +9361,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     atype = gretl_array_get_content_type(array);
-    targ = gretl_type_of(p->targ);
+    targ = gretl_type_from_gen_type(p->targ);
     err = lhs_type_check(targ, atype, ARRAY);
 
 #if LHDEBUG
@@ -10396,15 +10362,15 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == F_IWISHART) {
-	if (l->t != MAT) {
+	if (l->t != MAT && l->t != NUM) {
 	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != NUM) {
+	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
 	} else if (r->t != EMPTY && r->t != NUM) {
 	    /* optional number of replications */
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    const gretl_matrix *S = l->v.m;
+	    gretl_matrix *S = mat_or_num_get_matrix(l, p, 0);
 	    int v = node_get_int(m, p);
 	    int N = (r->t == EMPTY)? 0 : node_get_int(r, p);
 
@@ -10415,6 +10381,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		    A = inverse_wishart_sequence(S, v, N, &p->err);
 		}
 	    }
+	    if (l->t == NUM) gretl_matrix_free(S);
 	}
     } else if (f == F_AGGRBY) {
 	if (l->t != SERIES && l->t != LIST && !null_or_empty(l)) {
