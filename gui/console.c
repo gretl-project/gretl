@@ -468,12 +468,17 @@ int console_is_busy (void)
     return 0;
 }
 
-/* callback for the "destroy" signal on the console window */
+/* callback for the delete-event signal on the console window */
 
-static gboolean console_quit (GtkWidget *w, ExecState *state)
+static gboolean console_delete (GtkWidget *w,
+				GdkEvent  *event,
+				ExecState *state)
 {
+#if CDEBUG
+    fprintf(stderr, "*** console_delete called\n");
+#endif
     if (state->cmd->ci != QUIT) {
-	/* we're still in the command loop: defer the destroy */
+	/* we're still in the command loop */
 	ExecState *curr;
 
 	curr = g_object_get_data(G_OBJECT(console_text), "ExecState");
@@ -485,13 +490,16 @@ static gboolean console_quit (GtkWidget *w, ExecState *state)
 	command_entered = 1;
 	return TRUE;
     } else {
-	/* OK, really destroy the console window */
 	return FALSE;
     }
 }
 
 static void console_cleanup (windata_t *vwin, ExecState *state)
 {
+#if CDEBUG
+    fprintf(stderr, "*** console_cleanup called, console_main=%p\n",
+	    console_main);
+#endif
     if (console_main != NULL) {
 	/* the user actually typed quit/exit */
 	gtk_widget_destroy(vwin->main);
@@ -504,6 +512,12 @@ static void console_cleanup (windata_t *vwin, ExecState *state)
     set_debug_read_func(NULL);
     set_debug_output_func(NULL);
     reset_console_globals();
+}
+
+static void console_destroyed (GtkWidget *w, gpointer data)
+{
+    console_main = NULL;
+    console_text = NULL;
 }
 
 /* callback from menu/button: launches the console and remains
@@ -544,16 +558,12 @@ void gretl_console (void)
 		     G_CALLBACK(console_mouse_handler), NULL);
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(console_key_handler), NULL);
+    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
+		     G_CALLBACK(console_delete), state);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
-		     G_CALLBACK(console_quit), state);
-    g_signal_connect(G_OBJECT(vwin->main), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed),
-		     &console_main);
-    g_signal_connect(G_OBJECT(vwin->main), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed),
-		     &console_text);
+		     G_CALLBACK(console_destroyed), state);
 
-    g_object_set_data(G_OBJECT(vwin->text), "ExecState", state);
+    g_object_set_data(G_OBJECT(vwin->text), "ExecState", NULL);
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(buf, &iter);
