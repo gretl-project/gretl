@@ -26,6 +26,8 @@ typedef struct LOOPSET_ LOOPSET;
 
 int gretl_compiling_loop (void);
 
+void gretl_abort_compiling_loop (void);
+
 int gretl_execute_loop (void);
 
 int ok_in_loop (int ci);

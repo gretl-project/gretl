@@ -217,6 +217,7 @@ static void loop_print_free (LOOP_PRINT *lprn);
 static void loop_store_free (LOOP_STORE *lstore);
 static int extend_loop_dataset (LOOP_STORE *lstore);
 static void controller_free (controller *clr);
+static void destroy_loop_stack (LOOPSET *loop);
 
 static int 
 make_dollar_substitutions (char *str, int maxlen,
@@ -238,6 +239,13 @@ static int loop_renaming;
 int gretl_compiling_loop (void)
 {
     return compile_level;
+}
+
+void gretl_abort_compiling_loop (void)
+{
+    if (currloop != NULL) {
+	destroy_loop_stack(currloop);
+    }
 }
 
 int gretl_execute_loop (void)
