@@ -3708,6 +3708,13 @@ void gretl_exec_state_clear (ExecState *s)
     free_subsample_mask(s->submask);
 }
 
+void gretl_exec_state_destroy (ExecState *s)
+{
+    free_subsample_mask(s->submask);
+    gretl_abort_compiling_loop();
+    free(s);
+}
+
 void gretl_exec_state_uncomment (ExecState *s)
 {
     s->in_comment = 0;

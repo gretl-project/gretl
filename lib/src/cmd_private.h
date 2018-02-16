@@ -81,6 +81,8 @@ EXEC_CALLBACK get_gui_callback (void);
 
 void gretl_exec_state_clear (ExecState *s);
 
+void gretl_exec_state_destroy (ExecState *s);
+
 void gretl_exec_state_uncomment (ExecState *s);
 
 void gretl_exec_state_transcribe_flags (ExecState *s, CMD *cmd);
