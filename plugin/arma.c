@@ -28,6 +28,7 @@
 
 #define ARMA_DEBUG 0
 #define ARMA_MDEBUG 0
+#define CHK_FOR_ENV 0
 
 #include "arma_common.c"
 
@@ -919,7 +920,7 @@ static double kalman_arma_ll (const double *b, void *data)
     double ll = NADBL;
     int err = 0;
 
-#if 1 /* temporary debugging */
+#if CHK_FOR_ENV /* temporary debugging */
     const char *envstr = getenv("GRETL_MATRIX_DEBUG");
     if (envstr != NULL && atoi(envstr) > 0) {
 	int i;
@@ -1329,6 +1330,7 @@ static int kalman_arma (double *coeff, const DATASET *dset,
     } else {
 	double toler;
 	int maxit;
+	int avg_ll;
 
 	kalman_attach_printer(K, ainfo->prn);
 	kalman_attach_data(K, kh);
@@ -1339,18 +1341,25 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 	    kalman_set_nonshift(K, r);
 	}
 
-	if (arma_avg_ll(ainfo) || getenv("KALMAN_AVG_LL") != NULL) {
+	avg_ll = arma_avg_ll(ainfo);
+	use_newton = libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON;
+
+#if CHK_FOR_ENV
+	if (getenv("KALMAN_AVG_LL") != NULL) {
+	    avg_ll = 1;
+	}
+	if (getenv("ARMA_USE_NEWTON") != NULL) {
+	    use_newton = 1;
+	}
+#endif
+
+	if (avg_ll) {
 	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
 	} else {
 	    kalman_set_options(K, KALMAN_ARMA_LL);
 	}
 
 	BFGS_defaults(&maxit, &toler, ARMA);
-
-	if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON ||
-	    getenv("ARMA_USE_NEWTON") != NULL) {
-	    use_newton = 1;
-	}
 
 	if (use_newton) {
 	    double crittol = 1.0e-7;
