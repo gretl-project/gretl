@@ -644,6 +644,30 @@ static int kalman_matrices_init (arma_info *ainfo,
     return 0;
 }
 
+#if 0
+
+/* return 2 if identity matrix, 1 if scaled identity
+   matrix, 0 if neither
+*/
+
+static int is_identity_mat (const gretl_matrix *m)
+{
+    double x, x0 = m->val[0];
+    int i, j;
+
+    for (j=0; j<m->cols; j++) {
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j);
+	    if (i == j && x != x0) return 0;
+	    if (i != j && x != 0.0) return 0;
+	}
+    }
+
+    return x0 == 1.0 ? 2 : 1;
+}
+
+#endif
+
 static int write_kalman_matrices (khelper *kh,
 				  const double *b, 
 				  int idx)
@@ -766,6 +790,9 @@ static int write_kalman_matrices (khelper *kh,
 		gretl_matrix_unvectorize(P, kh->vQ);
 	    }
 	}
+#if 0	
+	fprintf(stderr, "Pidentity=%d\n", is_identity_mat(P));
+#endif	
     }
 
     if (arima_levels(ainfo)) {
