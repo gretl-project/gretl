@@ -644,13 +644,16 @@ static int kalman_matrices_init (arma_info *ainfo,
     return 0;
 }
 
-#if 0
+#define HAMILTON_P 1 /* use Hamilton mechanism for P matrix? */
+#define ID_CHK 0     /* in which case, check for P = I? */
+
+#if ID_CHK
 
 /* return 2 if identity matrix, 1 if scaled identity
    matrix, 0 if neither
 */
 
-static int is_identity_mat (const gretl_matrix *m)
+static int identity_check (const gretl_matrix *m)
 {
     double x, x0 = m->val[0];
     int i, j;
@@ -771,11 +774,11 @@ static int write_kalman_matrices (khelper *kh,
 	    }
 	}
 
+#if HAMILTON_P
 	/* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378. */
 
 	gretl_matrix_kronecker_product(F, F, kh->Svar);
 	gretl_matrix_I_minus(kh->Svar);
-
 	if (arma_using_vech(ainfo)) {
 	    condense_state_vcv(kh->Svar2, kh->Svar, gretl_matrix_rows(F));
 	    gretl_matrix_vectorize_h(kh->vQ, Q);
@@ -790,9 +793,12 @@ static int write_kalman_matrices (khelper *kh,
 		gretl_matrix_unvectorize(P, kh->vQ);
 	    }
 	}
-#if 0	
-	fprintf(stderr, "Pidentity=%d\n", is_identity_mat(P));
-#endif	
+# if ID_CHK
+	fprintf(stderr, "Pidentity=%d\n", identity_check(P));
+# endif
+#else /* !HAMILTON_P */
+	gretl_matrix_inscribe_I(P, 0, 0, P->rows);
+#endif
     }
 
     if (arima_levels(ainfo)) {
