@@ -631,7 +631,6 @@ static int kalman_matrices_init (arma_info *ainfo,
 #if ARMA_DEBUG
 	gretl_matrix_print(kh->S, "S0 (arima via levels)");
 #endif
-	gretl_matrix_zero(kh->P);
 
 	/* initialize the plain-arma "shadow" matrices */
 	gretl_matrix_zero(kh->F_);
@@ -640,6 +639,7 @@ static int kalman_matrices_init (arma_info *ainfo,
 	gretl_matrix_set(kh->Q_, 0, 0, 1.0);
 	gretl_matrix_zero(kh->P_);
     } else if (ainfo->np == 0 && ainfo->P == 0) {
+	/* initialize P to identity matrix */
 	gretl_matrix_inscribe_I(kh->P, 0, 0, kh->P->rows);
     }
 
@@ -693,7 +693,7 @@ static int write_kalman_matrices (khelper *kh,
     if (idx == KALMAN_ALL) {
 	rewrite_A = rewrite_F = rewrite_H = 1;
     } else {
-	/* called in context of calculating score */
+	/* called in context of calculating score, for OPG matrix */
 	int pmax = ainfo->ifc + ainfo->np + ainfo->P;
 	int tmax = pmax + ainfo->nq + ainfo->Q;
 
