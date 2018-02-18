@@ -870,14 +870,23 @@ make_missing_mask (const int *list, const DATASET *dset, char *mask)
 
 static int copy_dummy_to_mask (char *mask, const double *x, int n)
 {
-    int t, err = 0;
+    int t, nsel = 0, err = 0;
+
+#if SUBDEBUG
+    fprintf(stderr, "copy_dummy_to_mask, n = %d\n", n);
+#endif
 
     for (t=0; t<n && !err; t++) {
 	if (x[t] == 1.0) {
 	    mask[t] = 1;
+	    nsel++;
 	} else if (!na(x[t]) && x[t] != 0.0) { /* NA? */
 	    err = 1;
 	}
+    }
+
+    if (!err && nsel == 0) {
+	err = E_ZERO;
     }
 
     return err;
@@ -895,9 +904,16 @@ static int mask_from_temp_dummy (const char *s, DATASET *dset,
 
     x = generate_series(formula, dset, prn, &err);
 
+#if SUBDEBUG
+    fprintf(stderr, "mask_from_temp_dummy: formula='%s', err=%d\n",
+	    formula, err);
+#endif
+
     if (!err) {
 	err = copy_dummy_to_mask(mask, x, dset->n);
-	if (err) {
+	if (err == E_ZERO) {
+	    gretl_errmsg_set(_("No observations would be left!"));
+	} else if (err) {
 	    gretl_errmsg_sprintf(_("'%s' is not a dummy variable"), "mask");
 	}
     }
@@ -1802,9 +1818,9 @@ static char *expand_mask (char *tmpmask, const char *oldmask,
 
 /* Below: we do this "precompute" thing if the dataset is already
    subsampled and the user wants to compound the restriction with a
-   new one of the form "obs=x" or "obs!=x".  The "obs" references may
-   get out of whack if we restore the full dataset first, as we
-   usually do.  For example, say the spec is "obs!=50" to exclude
+   boolean restriction. One reason for this is that "obs" references
+   in the new restriction may get out of whack if we restore the full
+   dataset first.  For example, say the spec is "obs!=50" to exclude
    observation 50: presumably the user means to exclude the 50th
    observation in the current, subsampled dataset, which may not be
    the same as the 50th observation in the full dataset.
@@ -2111,56 +2127,15 @@ static int check_permanent_option (gretlopt opt,
 
 /* "Precomputing" a mask means computing a mask based on a
    current subsampled dataset (before restoring the full dataset,
-   which is a part of the subsampling process).
-*/
-
-#if 1 /* modified 2015-12-06 */
-
-/* Do this if we're cumulating a boolean restriction on top of
-   an existing restriction.
+   which is a part of the subsampling process). We do this if
+   we're cumulating a boolean restriction on top of an existing
+   restriction.
 */
 
 static int do_precompute (int mode, char *oldmask, const char *param)
 {
     return oldmask != NULL && mode == SUBSAMPLE_BOOLEAN;
 }
-
-#else
-
-/* Do this only if we're cumulating (rather than replacing) sample
-   restrictions _and_ the present resampling parameter makes reference
-   to the built-in "obs" series. Given the last point, the user might
-   reasonably expect the "obs" values to refer to the currently
-   subsampled dataset rather than the full dataset.
-*/
-
-static int do_precompute (int mode, char *oldmask, const char *param)
-{
-    int ret = 0;
-    
-    if (fullset == NULL) {
-	; /* not subsampled: no */
-    } else if (oldmask == NULL) {
-	; /* not cumulating restrictions: no */
-    } else if (mode != SUBSAMPLE_BOOLEAN) {
-	; /* can't be keying off "obs" series: no */
-    } else {
-	/* look for "obs" as a "word" in itself */
-	const char *s = param;
-
-	while (!ret && strstr(s, "obs") != NULL) {
-	    if (gretl_namechar_spn(s) == 3 &&
-		(s == param || !isalpha(*(s-1)))) {
-		ret = 1;
-	    }
-	    s += 3;
-	}
-    }
-
-    return ret;
-}
-
-#endif /* new versus old */
 
 /* restrict_sample: 
  * @param: restriction string (or %NULL).
