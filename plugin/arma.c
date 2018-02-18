@@ -1,17 +1,17 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -73,7 +73,7 @@ static struct bchecker *bchecker_allocate (arma_info *ainfo)
     if (b->temp == NULL || b->tmp2 == NULL || b->roots == NULL) {
 	bchecker_free(b);
 	b = NULL;
-    } 
+    }
 
     return b;
 }
@@ -104,14 +104,14 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 		tzero = 0;
 	    }
 	}
-    }  
+    }
 
     for (i=0; i<ainfo->Q && Tzero; i++) {
 	if (Theta[i] != 0.0) {
 	    Tzero = 0;
-	}    
-    }  
-    
+	}
+    }
+
     if (tzero && Tzero) {
 	/* nothing to be done */
 	return 0;
@@ -149,7 +149,7 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 		if (MA_included(ainfo, i)) {
 		    m = si + (i + 1);
 		    b->temp[m] += Theta[j] * theta[k++];
-		} 
+		}
 	    }
 	}
     }
@@ -157,7 +157,7 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 #if ARMA_DEBUG
     if (b->temp[qtot] == 0.0) {
 	fprintf(stderr, "b->temp[%d] = 0; polrt won't work\n", qtot);
-	fprintf(stderr, "q = %d, Q = %d, b->qmax = %d\n", 
+	fprintf(stderr, "q = %d, Q = %d, b->qmax = %d\n",
 		ainfo->q, ainfo->Q, b->qmax);
 	for (i=0; i<=qtot; i++) {
 	    fprintf(stderr, "b->temp[%d] = %g\n", i, b->temp[i]);
@@ -191,7 +191,7 @@ void bounds_checker_cleanup (void)
 }
 
 /*
-  Given an ARMA process $A(L)B(L) y_t = C(L)D(L) \epsilon_t$, finds the 
+  Given an ARMA process $A(L)B(L) y_t = C(L)D(L) \epsilon_t$, finds the
   roots of the four polynomials -- or just two polynomials if seasonal
   AR and MA effects, B(L) and D(L) are not present -- and attaches
   this information to the ARMA model.
@@ -260,7 +260,7 @@ int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 	/* B(L), seasonal */
 	for (i=0; i<ainfo->P; i++) {
 	    temp[i+1] = -Phi[i];
-	}    
+	}
 	cerr = polrt(temp, tmp2, ainfo->P, rptr);
 	rptr += ainfo->P;
     }
@@ -274,7 +274,7 @@ int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 	    } else {
 		temp[i+1] = 0;
 	    }
-	}  
+	}
 	cerr = polrt(temp, tmp2, ainfo->q, rptr);
 	rptr += ainfo->q;
     }
@@ -283,10 +283,10 @@ int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 	/* D(L), seasonal */
 	for (i=0; i<ainfo->Q; i++) {
 	    temp[i+1] = Theta[i];
-	}  
+	}
 	cerr = polrt(temp, tmp2, ainfo->Q, rptr);
     }
-    
+
     free(temp);
     free(tmp2);
 
@@ -322,7 +322,7 @@ struct kalman_helper_ {
     gretl_matrix *Q_; /* ditto */
     gretl_matrix *P_; /* ditto */
 
-    arma_info *kainfo; 
+    arma_info *kainfo;
 };
 
 static void kalman_helper_free (khelper *kh)
@@ -375,7 +375,7 @@ static khelper *kalman_helper_new (arma_info *ainfo,
 	kh->vQ = gretl_column_vector_alloc(m);
 	if (kh->Svar2 == NULL || kh->vQ == NULL) {
 	    err = E_ALLOC;
-	}	    
+	}
     } else {
 	kh->vQ = gretl_column_vector_alloc(r2);
 	if (kh->vQ == NULL) {
@@ -466,7 +466,7 @@ static int allocate_ac_mc (arma_info *ainfo)
     return err;
 }
 
-static void write_big_phi (const double *phi, 
+static void write_big_phi (const double *phi,
 			   const double *Phi,
 			   arma_info *ainfo,
 			   gretl_matrix *F)
@@ -501,7 +501,7 @@ static void write_big_phi (const double *phi,
     }
 }
 
-static void write_big_theta (const double *theta, 
+static void write_big_theta (const double *theta,
 			     const double *Theta,
 			     arma_info *ainfo,
 			     gretl_matrix *H,
@@ -558,13 +558,13 @@ static void condense_row (gretl_matrix *targ,
 	    x = gretl_matrix_get(src, srcrow, k);
 	    if (g != k) {
 		x += gretl_matrix_get(src, srcrow, g);
-	    } 
+	    }
 	    gretl_matrix_set(targ, targrow, targcol++, x);
 	}
     }
 }
 
-static void condense_state_vcv (gretl_matrix *targ, 
+static void condense_state_vcv (gretl_matrix *targ,
 				const gretl_matrix *src,
 				int n)
 {
@@ -591,7 +591,6 @@ static int kalman_matrices_init (arma_info *ainfo,
     gretl_matrix_zero(kh->A);
     gretl_matrix_zero(kh->S);
     gretl_matrix_zero(kh->P);
- 
     gretl_matrix_zero(kh->F);
     gretl_matrix_inscribe_I(kh->F, 1, 0, r0 - 1);
 
@@ -632,47 +631,51 @@ static int kalman_matrices_init (arma_info *ainfo,
 #if ARMA_DEBUG
 	gretl_matrix_print(kh->S, "S0 (arima via levels)");
 #endif
+	gretl_matrix_zero(kh->P);
 
-	/* and initialize the plain-arma "shadow" matrices */
+	/* initialize the plain-arma "shadow" matrices */
 	gretl_matrix_zero(kh->F_);
 	gretl_matrix_inscribe_I(kh->F_, 1, 0, r0 - 1);
 	gretl_matrix_zero(kh->Q_);
 	gretl_matrix_set(kh->Q_, 0, 0, 1.0);
 	gretl_matrix_zero(kh->P_);
+    } else if (ainfo->np == 0 && ainfo->P == 0) {
+	gretl_matrix_inscribe_I(kh->P, 0, 0, kh->P->rows);
     }
 
     return 0;
 }
 
-#define HAMILTON_P 1 /* use Hamilton mechanism for P matrix? */
-#define ID_CHK 0     /* in which case, check for P = I? */
+#define PRINT_P_INFO 0
 
-#if ID_CHK
+#if PRINT_P_INFO
 
-/* return 2 if identity matrix, 1 if scaled identity
-   matrix, 0 if neither
-*/
-
-static int identity_check (const gretl_matrix *m)
+static void print_P_info (const gretl_matrix *m,
+			  arma_info *ainfo)
 {
     double x, x0 = m->val[0];
-    int i, j;
+    int i, j, id = (x0 == 1.0)? 2 : 1;
 
-    for (j=0; j<m->cols; j++) {
+    for (j=0; j<m->cols && id > 0; j++) {
 	for (i=0; i<m->rows; i++) {
 	    x = gretl_matrix_get(m, i, j);
-	    if (i == j && x != x0) return 0;
-	    if (i != j && x != 0.0) return 0;
+	    if (i == j && x != x0) {
+		id = 0;
+	    } else if (i != j && x != 0.0) {
+		id = 0;
+	    }
 	}
     }
 
-    return x0 == 1.0 ? 2 : 1;
+    fprintf(stderr, "%d,%d,%d,%d,%d,%d,%d\n",
+	    id, ainfo->np, ainfo->d, ainfo->nq,
+	    ainfo->P, ainfo->D, ainfo->Q);
 }
 
 #endif
 
 static int write_kalman_matrices (khelper *kh,
-				  const double *b, 
+				  const double *b,
 				  int idx)
 {
     arma_info *ainfo = kh->kainfo;
@@ -705,13 +708,26 @@ static int write_kalman_matrices (khelper *kh,
 	}
     }
 
+    /* revise for pure MA model */
+    if (ainfo->np == 0 && ainfo->P == 0 && !arima_levels(ainfo)) {
+	rewrite_F = 0;
+    }
+    /* and for case of no constant or other regressors */
+    if (ainfo->ifc == 0 && ainfo->nexo == 0) {
+	rewrite_A = 0;
+    }
+
 #if ARMA_MDEBUG
+    fprintf(stderr, "write_kalman_matrices: rewrites: A=%d, F=%d, H=%d\n",
+	    rewrite_A, rewrite_F, rewrite_H);
+# if ARMA_MDEBUG > 1
     fprintf(stderr, "\n*** write_kalman_matrices: before\n");
     gretl_matrix_print(kh->A, "A");
     gretl_matrix_print(kh->F, "F");
     gretl_matrix_print(kh->H, "H");
     gretl_matrix_print(kh->P, "P");
-#endif 
+# endif
+#endif
 
     /* See Hamilton, Time Series Analysis, ch 13, p. 375 */
 
@@ -770,11 +786,10 @@ static int write_kalman_matrices (khelper *kh,
 		    } else {
 			gretl_matrix_set(kh->F, ainfo->r0, i+1, 0.0);
 		    }
-		}		
+		}
 	    }
 	}
 
-#if HAMILTON_P
 	/* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378. */
 
 	gretl_matrix_kronecker_product(F, F, kh->Svar);
@@ -793,16 +808,13 @@ static int write_kalman_matrices (khelper *kh,
 		gretl_matrix_unvectorize(P, kh->vQ);
 	    }
 	}
-# if ID_CHK
-	fprintf(stderr, "Pidentity=%d\n", identity_check(P));
+# if PRINT_P_INFO
+	print_P_info(P, ainfo);
 # endif
-#else /* !HAMILTON_P */
-	gretl_matrix_inscribe_I(P, 0, 0, P->rows);
-#endif
     }
 
     if (arima_levels(ainfo)) {
-	/* complete the job on F, Q, P and S */
+	/* complete the job on F, Q, P */
 	gretl_matrix_inscribe_matrix(kh->F, kh->F_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->Q, kh->Q_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->P, kh->P_, 0, 0, GRETL_MOD_NONE);
@@ -814,7 +826,7 @@ static int write_kalman_matrices (khelper *kh,
     gretl_matrix_print(kh->F, "F");
     gretl_matrix_print(kh->H, "H");
     gretl_matrix_print(kh->P, "P");
-#endif    
+#endif
 
     return err;
 }
@@ -832,7 +844,7 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
     return err;
 }
 
-static const double *kalman_arma_llt_callback (const double *b, int i, 
+static const double *kalman_arma_llt_callback (const double *b, int i,
 					       void *data)
 {
     kalman *K = (kalman *) data;
@@ -854,7 +866,7 @@ static const double *kalman_arma_llt_callback (const double *b, int i,
    Gradient
 */
 
-static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b, 
+static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 			 double s2, int k, int T,
 			 PRN *prn)
 {
@@ -862,7 +874,7 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     gretl_matrix *V = NULL;
     int err = 0;
 
-    G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback, 
+    G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
 			       K, &err);
 
     if (!err) {
@@ -892,7 +904,7 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 
     gretl_matrix_free(G);
     gretl_matrix_free(V);
-    
+
     return err;
 }
 
@@ -935,7 +947,7 @@ static void debug_print_theta (const double *theta,
 
     for (i=0; i<ainfo->Q; i++) {
 	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
-    }   
+    }
 }
 
 #endif
@@ -1034,8 +1046,8 @@ static void arma_add_ehat (MODEL *pmod, arma_info *ainfo,
 }
 
 static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
-			       const DATASET *dset, 
-			       kalman *K, double *b, 
+			       const DATASET *dset,
+			       kalman *K, double *b,
 			       gretlopt opt, PRN *prn)
 {
     khelper *kh = kalman_get_data(K);
@@ -1051,7 +1063,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     pmod->ncoeff = ainfo->nc;
     pmod->full_n = dset->n;
 
-    /* in the Kalman case the basic model struct is empty, so we 
+    /* in the Kalman case the basic model struct is empty, so we
        have to allocate for coefficients, residuals and so on
     */
 
@@ -1089,12 +1101,12 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    (opt & OPT_R)? "QML" : (do_opg)? "OPG" : "Hessian");
 #endif
 
-    if (!do_opg) { 
+    if (!do_opg) {
 	/* base covariance matrix on Hessian (perhaps QML) */
 	gretl_matrix *Hinv;
 
 	kalman_do_ma_check = 0;
-	Hinv = numerical_hessian_inverse(b, ainfo->nc, kalman_arma_ll, 
+	Hinv = numerical_hessian_inverse(b, ainfo->nc, kalman_arma_ll,
 					 K, &err);
 	kalman_do_ma_check = 1;
 	if (!err) {
@@ -1119,7 +1131,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    gretl_model_set_int(pmod, "hess-error", 1);
 	}
 	gretl_matrix_free(Hinv);
-    } 
+    }
 
     if (do_opg) {
 	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
@@ -1127,7 +1139,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    pmod->opt |= OPT_G;
 	}
-    }	
+    }
 
     if (!err) {
 	write_arma_model_stats(pmod, ainfo, dset);
@@ -1214,7 +1226,7 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 	gretl_matrix_print(yvec, "arma y vector");
 #endif
     }
-    
+
     return yvec;
 }
 
@@ -1236,7 +1248,7 @@ static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
     }
 
     X = gretl_matrix_data_subset(ainfo->xlist, dset,
-				 ainfo->t1, ainfo->t2, 
+				 ainfo->t1, ainfo->t2,
 				 missop, err);
 
 #if ARMA_DEBUG
@@ -1247,7 +1259,7 @@ static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
 }
 
 static int kalman_undo_y_scaling (arma_info *ainfo,
-				  gretl_matrix *y, double *b, 
+				  gretl_matrix *y, double *b,
 				  kalman *K)
 {
     double *beta = b + 1 + ainfo->np + ainfo->P +
@@ -1296,7 +1308,7 @@ static int kalman_arma (double *coeff, const DATASET *dset,
     int use_newton = 0;
     double *b;
     int i, err = 0;
-    
+
     b = malloc(ainfo->nc * sizeof *b);
     if (b == NULL) {
 	return E_ALLOC;
@@ -1348,14 +1360,14 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 
 #if ARMA_DEBUG
     fprintf(stderr, "ready to estimate: ainfo specs:\n"
-	    "p=%d, P=%d, q=%d, Q=%d, ifc=%d, nexo=%d, t1=%d, t2=%d\n", 
-	    ainfo->p, ainfo->P, ainfo->q, ainfo->Q, ainfo->ifc, 
+	    "p=%d, P=%d, q=%d, Q=%d, ifc=%d, nexo=%d, t1=%d, t2=%d\n",
+	    ainfo->p, ainfo->P, ainfo->q, ainfo->Q, ainfo->ifc,
 	    ainfo->nexo, ainfo->t1, ainfo->t2);
-    fprintf(stderr, "Kalman dims: r = %d, k = %d, T = %d, ncoeff=%d\n", 
+    fprintf(stderr, "Kalman dims: r = %d, k = %d, T = %d, ncoeff=%d\n",
 	    r, k, ainfo->T, ainfo->nc);
 #endif
 
-    K = kalman_new(kh->S, kh->P, kh->F, kh->A, kh->H, kh->Q, 
+    K = kalman_new(kh->S, kh->P, kh->F, kh->A, kh->H, kh->Q,
 		   NULL, y, X, NULL, kh->E, &err);
 
     if (err) {
@@ -1398,10 +1410,10 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 	    double crittol = 1.0e-7;
 	    double gradtol = 1.0e-7;
 
-	    err = newton_raphson_max(b, ainfo->nc, maxit, 
-				     crittol, gradtol, &fncount, 
-				     C_LOGLIK, kalman_arma_ll, 
-				     NULL, NULL, K, opt, 
+	    err = newton_raphson_max(b, ainfo->nc, maxit,
+				     crittol, gradtol, &fncount,
+				     C_LOGLIK, kalman_arma_ll,
+				     NULL, NULL, K, opt,
 				     ainfo->prn);
 	} else {
 	    int save_lbfgs = libset_get_bool(USE_LBFGS);
@@ -1412,8 +1424,8 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 		libset_set_bool(USE_LBFGS, 1);
 		ainfo->pflags |= ARMA_LBFGS;
 	    }
-	    
-	    err = BFGS_max(b, ainfo->nc, maxit, toler, 
+
+	    err = BFGS_max(b, ainfo->nc, maxit, toler,
 			   &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
 			   NULL, K, NULL, opt, ainfo->prn);
 
@@ -1424,7 +1436,7 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 
 	if (err) {
 	    fprintf(stderr, "kalman_arma: optimizer returned %d\n", err);
-	} 
+	}
     }
 
 #if ARMA_DEBUG
@@ -1442,9 +1454,9 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 	    gretl_model_set_int(pmod, "fncount", fncount);
 	    gretl_model_set_int(pmod, "grcount", grcount);
 	}
-	err = kalman_arma_finish(pmod, ainfo, dset, K, b, 
+	err = kalman_arma_finish(pmod, ainfo, dset, K, b,
 				 opt, ainfo->prn);
-    } 
+    }
 
  bailout:
 
@@ -1481,13 +1493,13 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 	/* initialization is handled within BFGS/Newton-Raphson */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
-	}	
+	}
     } else {
 	const gretl_matrix *m = get_init_vals();
 
-	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"), 
+	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
 		_("user-specified values"));
-	      
+
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = gretl_vector_get(m, i);
 	}
@@ -1547,7 +1559,7 @@ static int prefer_hr_init (arma_info *ainfo)
 
 /* estimate an ARIMA (0,d,0) x (0,D,0) model via OLS */
 
-static int arima_by_ls (const DATASET *dset, arma_info *ainfo, 
+static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
 			MODEL *pmod)
 {
     gretl_matrix *X;
@@ -1601,14 +1613,14 @@ static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
 	pmod->full_n = dset->n;
 	err = gretl_model_allocate_storage(pmod);
     }
-    
+
     if (!err) {
 	for (i=0; i<k; i++) {
 	    pmod->coeff[i] = b->val[i];
 	}
 	for (t=0; t<ainfo->T; t++) {
 	    pmod->uhat[t + ainfo->t1] = u->val[t];
-	}	
+	}
 	err = gretl_model_write_vcv(pmod, V);
     }
 
@@ -1617,7 +1629,7 @@ static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
 	pmod->sdy = gretl_stddev(ainfo->t1, ainfo->t2, ainfo->y);
 	pmod->nobs = ainfo->T;
     }
-    
+
     gretl_matrix_free(b);
     gretl_matrix_free(u);
     gretl_matrix_free(V);
@@ -1632,7 +1644,7 @@ static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
 /* calculate info criteria for compatibility with ML? */
 #define ML_COMPAT 1 /* 2017-03-23 */
 
-static int arma_via_OLS (arma_info *ainfo, const double *coeff, 
+static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 			 const DATASET *dset, MODEL *pmod)
 {
     int err = 0;
@@ -1687,7 +1699,7 @@ static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
 }
 
 /* Set flag to allow NAs within the sample range for an
-   ARMA model using native exact ML. 
+   ARMA model using native exact ML.
 */
 
 static void maybe_allow_missvals (arma_info *ainfo)
@@ -1728,7 +1740,7 @@ static int check_arma_options (gretlopt opt)
 }
 
 MODEL arma_model (const int *list, const int *pqspec,
-		  const DATASET *dset, gretlopt opt, 
+		  const DATASET *dset, gretlopt opt,
 		  PRN *prn)
 {
     double *coeff = NULL;
@@ -1801,7 +1813,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 		/* this replaces ainfo->y */
 		err = arima_difference(ainfo, dset, 0);
 	    }
-	} 
+	}
     }
 
     if (err) {
