@@ -2659,7 +2659,9 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 		continue;
 	    }
 	    yt = (d[t] == gi->dvals->val[i])? y[t] : NADBL;
-	    if (!na(yt)) {
+	    if (na(yt)) {
+		fprintf(fp, "%.10g ?\n", xt);
+	    } else {
 		fprintf(fp, "%.10g %.10g", xt, yt);
 		if (!(gi->flags & GPT_TS)) {
 		    if (dset->markers) {
@@ -4946,14 +4948,14 @@ static void print_y_data (const double *x,
     fputs("e\n", fp);
 }
 
-static void print_user_y_data (const double *x, 
+static void print_user_y_data (const double *x,
 			       const double *y,
-			       int t1, int t2, 
+			       int t1, int t2,
 			       FILE *fp)
 {
     int t;
 
-    for (t=0; t<=t2; t++) {
+    for (t=t1; t<=t2; t++) {
 	if (xna(y[t])) {
 	    fprintf(fp, "%.10g ?\n", x[t]);
 	} else {
