@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -42,7 +42,7 @@
 
 static char **foreign_lines;
 static int foreign_started;
-static int foreign_n_lines; 
+static int foreign_n_lines;
 static int foreign_lang;
 
 /* foreign_opt may include OPT_D to send data, OPT_Q to operate
@@ -322,7 +322,7 @@ static char *get_rscript_path (void)
     if (err) {
 	free(rscript);
 	rscript = NULL;
-    }	
+    }
 
     return rscript;
 }
@@ -495,7 +495,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	} else {
 	    qopt = g_strdup("");
 	}
-	
+
 	cmd = g_strdup_printf("%s%s%s \"%sgretlmpi\"%s%s \"%s\"",
 			      mpiexec, hostbit, npbit, gretl_bindir(), rngbit,
 			      qopt, gretl_mpi_filename());
@@ -548,7 +548,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 		 &status, &gerr);
 
     if (gerr != NULL) {
-	pprintf(prn, "%s\n", gerr->message); 
+	pprintf(prn, "%s\n", gerr->message);
 	g_error_free(gerr);
 	err = 1;
     } else if (status != 0) {
@@ -557,12 +557,12 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 	    pputs(prn, "stdout:\n");
 	    pputs(prn, sout);
 	    pputc(prn, '\n');
-	} 
+	}
 	if (errout != NULL && *errout != '\0') {
 	    pputs(prn, "\nstderr:\n");
 	    pputs(prn, errout);
 	    pputc(prn, '\n');
-	}	
+	}
 	err = 1;
     } else if (sout != NULL) {
 	if (!(opt & OPT_Q)) {
@@ -596,7 +596,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
     char *argv[] = {
-	"R", 
+	"R",
 	"--no-save",
 	"--no-init-file",
 	"--no-restore-data",
@@ -781,7 +781,7 @@ static int write_ox_io_file (void)
 #else
 	    fputs("gretl_dotdir ()\n{\n", fp);
 	    fprintf(fp, "  return \"%s\";\n", dotdir);
-#endif	
+#endif
 	    fputs("}\n\n", fp);
 
 	    fputs("gretl_export_nodot (const X, const str)\n{\n", fp);
@@ -832,7 +832,7 @@ static int real_write_octave_io_file (void)
 #else
 	fputs("function dotdir = gretl_dotdir()\n", fp);
 	fprintf(fp, "  dotdir = \"%s\";\n", dotdir);
-#endif	
+#endif
 	fputs("endfunction\n\n", fp);
 
 	fputs("function gretl_export(X, str, autodot=1)\n", fp);
@@ -849,7 +849,7 @@ static int real_write_octave_io_file (void)
 	fputc('\n', fp);
 	fputs("  fprintf(fd, fs, X');\n", fp);
 	fputs("  fclose(fd);\n", fp);
-	fputs("endfunction\n\n", fp);  
+	fputs("endfunction\n\n", fp);
 
 	fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
 	fputs("  if (autodot)\n", fp);
@@ -910,20 +910,52 @@ static int write_python_io_file (void)
 #endif
 	    /* export matrix for reading by gretl */
 	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
-	    fputs("  from numpy import asmatrix, savetxt\n", fp);
+	    fputs("  binwrite = 0\n", fp);
+	    fputs("  if fname[-4:] == '.bin':\n", fp);
+	    fputs("    binwrite = 1\n", fp);
+	    fputs("    from numpy import asmatrix, asarray\n", fp);
+	    fputs("    from struct import pack\n", fp);
+	    fputs("  else:\n", fp);
+	    fputs("    from numpy import asmatrix, savetxt\n", fp);
 	    fputs("  M = asmatrix(X)\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
 	    fputs("  if autodot:\n", fp);
             fputs("    fname = gretl_dotdir + fname\n", fp);
-	    fputs("  ghead = repr(r) + ' ' + repr(c)\n", fp);
-	    fputs("  savetxt(fname, M, header=ghead, comments='')\n", fp);
+	    fputs("  if binwrite:\n", fp);
+	    fputs("    f = open(fname, 'wb')\n", fp);
+	    fputs("    f.write('gretl_binary_matrix')\n", fp);
+	    fputs("    f.write(pack('i', r))\n", fp);
+	    fputs("    f.write(pack('i', c))\n", fp);
+	    fputs("    A = asarray(X, dtype=float)\n", fp);
+	    fputs("    f.write(A.tobytes('F'))\n", fp);
+	    fputs("    f.close()\n", fp);
+	    fputs("  else:\n", fp);
+ 	    fputs("    ghead = repr(r) + ' ' + repr(c)\n", fp);
+	    fputs("    savetxt(fname, M, header=ghead, comments='')\n", fp);
 
 	    /* import matrix from gretl */
 	    fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
-	    fputs("  from numpy import loadtxt\n", fp);
 	    fputs("  if autodot:\n", fp);
 	    fputs("    fname = gretl_dotdir + fname\n", fp);
-	    fputs("  M = loadtxt(fname, skiprows=1)\n", fp);
+	    fputs("  if fname[-4:] == '.bin':\n", fp);
+	    fputs("    from numpy import ndarray, asmatrix\n", fp);
+	    fputs("    from struct import unpack\n", fp);
+	    fputs("    f = open(fname, 'rb')\n", fp);
+	    fputs("    buf = f.read(19)\n", fp);
+	    fputs("    chk = buf.decode(encoding='UTF-8')\n", fp);
+	    fputs("    if chk != 'gretl_binary_matrix':\n", fp);
+	    fputs("      raise ValueError('Not a gretl binary matrix')\n", fp);
+	    fputs("    r = unpack('i', f.read(4))[0]\n", fp);
+	    fputs("    c = unpack('i', f.read(4))[0]\n", fp);
+	    fputs("    M = ndarray(shape=(r,c), dtype=float, order='F')\n", fp);
+	    fputs("    for j in range(0, c):\n", fp);
+	    fputs("      for i in range(0, r):\n", fp);
+	    fputs("        M[i,j] = unpack('d', f.read(8))[0]\n", fp);
+	    fputs("    f.close()\n", fp);
+	    fputs("    M = asmatrix(M)\n", fp);
+	    fputs("  else:\n", fp);
+	    fputs("    from numpy import loadtxt\n", fp);
+	    fputs("    M = loadtxt(fname, skiprows=1)\n", fp);
 	    fputs("  return M\n\n", fp);
 
 	    fclose(fp);
@@ -957,7 +989,7 @@ static int write_julia_io_file (void)
 	    g_free(dotcpy);
 #else
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
-#endif	
+#endif
 
 	    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
 	    fputs("  r,c = size(M)\n", fp);
@@ -1048,7 +1080,7 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
     } else {
 	/* convert to forward slashes */
 	gchar *dotcpy = win32_dotpath();
-	
+
 	if (lang == LANG_OX) {
 	    if (strchr(dotcpy, ' ')) {
 		fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
@@ -1250,7 +1282,7 @@ int write_gretl_julia_file (const char *buf, gretlopt opt, const char **pfname)
 	}
     }
 
-    return 0;    
+    return 0;
 }
 
 static int no_data_check (const DATASET *dset)
@@ -1416,7 +1448,7 @@ static int write_data_for_stata (const DATASET *dset,
     }
 
     list = get_send_data_list(dset, FOREIGN, &err);
-    
+
     if (!err) {
 	*save_na = '\0';
 	strncat(save_na, get_csv_na_write_string(), 7);
@@ -1425,7 +1457,7 @@ static int write_data_for_stata (const DATASET *dset,
 	err = write_data(sdata, list, dset, OPT_C, NULL);
 	set_csv_na_write_string(save_na);
     }
- 
+
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
     } else {
@@ -1438,7 +1470,7 @@ static int write_data_for_stata (const DATASET *dset,
     return err;
 }
 
-int write_gretl_stata_file (const char *buf, gretlopt opt, 
+int write_gretl_stata_file (const char *buf, gretlopt opt,
 			    const DATASET *dset,
 			    const char **pfname)
 {
@@ -1500,7 +1532,7 @@ static int write_data_for_octave (const DATASET *dset,
 	mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
 	err = write_data(mdata, list, dset, OPT_M, NULL);
     }
- 
+
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_octave: failed with err = %d\n", err);
     } else {
@@ -1513,7 +1545,7 @@ static int write_data_for_octave (const DATASET *dset,
     return err;
 }
 
-int write_gretl_octave_file (const char *buf, gretlopt opt, 
+int write_gretl_octave_file (const char *buf, gretlopt opt,
 			     const DATASET *dset,
 			     const char **pfname)
 {
@@ -1649,7 +1681,7 @@ static int write_data_for_R (const DATASET *dset,
     if (ts) {
 	char *p, datestr[OBSLEN];
 	int subper = 1;
-	    
+
 	ntodate(datestr, dset->t1, dset);
 	p = strchr(datestr, ':');
 	if (p != NULL) {
@@ -1666,10 +1698,10 @@ static int write_data_for_R (const DATASET *dset,
 	    fputs("attach(gretldata)\n", fp);
 	} else {
 	    /* convert to "mts" (multiple time series object) */
-	    fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
+	    fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n",
 		    atoi(datestr), subper, dset->pd);
 	}
-    } else {	
+    } else {
 	fputs("attach(gretldata)\n", fp);
     }
 
@@ -1696,7 +1728,7 @@ static int write_data_for_R (const DATASET *dset,
 
 /* define an R function for passing data back to gretl */
 
-static void write_R_io_funcs (FILE *fp) 
+static void write_R_io_funcs (FILE *fp)
 {
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dot_dir);
 
@@ -1743,7 +1775,7 @@ static void write_R_io_funcs (FILE *fp)
 
 static void put_R_startup_content (FILE *fp)
 {
-    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
+    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n",
 	  fp);
     fputs("if (vnum > 2.41) library(utils)\n", fp);
     fputs("library(stats)\n", fp);
@@ -1766,7 +1798,7 @@ static int write_gretl_R_profile (gretlopt opt)
 
     /* On Windows we'll not use the environment-variable
        mechanism unless we're in interactive (async) mode
-    */ 
+    */
 
 #ifdef G_OS_WIN32
     if (opt & OPT_I) {
@@ -1780,7 +1812,7 @@ static int write_gretl_R_profile (gretlopt opt)
     if (err) {
 	return err;
     }
-#endif    
+#endif
 
     fp = gretl_fopen(gretl_Rprofile, "w");
 
@@ -1788,7 +1820,7 @@ static int write_gretl_R_profile (gretlopt opt)
 	err = E_FOPEN;
     } else {
 	put_R_startup_content(fp);
-	fprintf(fp, "source(\"%s\", %s = TRUE)\n", 
+	fprintf(fp, "source(\"%s\", %s = TRUE)\n",
 		gretl_Rsrc, (opt & OPT_V)? "echo" : "print.eval");
 	fclose(fp);
     }
@@ -1906,7 +1938,7 @@ static int write_R_source_file (const char *buf,
 int write_gretl_R_files (const char *buf,
 			 const DATASET *dset,
 			 gretlopt opt)
-{ 
+{
     int err = 0;
 
 #if FDEBUG
@@ -1919,14 +1951,14 @@ int write_gretl_R_files (const char *buf,
     err = write_gretl_R_profile(opt);
     if (err) {
 	fprintf(stderr, "error writing gretl.Rprofile\n");
-    } 
+    }
 
     if (!err) {
 	/* write commands and/or data to file, to be sourced in R */
 	err = write_R_source_file(buf, dset, opt);
 	if (err) {
 	    fprintf(stderr, "error writing gretl's Rsrc\n");
-	} 	
+	}
     }
 
 #if FDEBUG
@@ -2065,7 +2097,7 @@ static char *(*R_get_HOME) (void);
 static void *dlget (void *handle, const char *name, int *err)
 {
     void *p = gretl_dlsym(handle, name);
-    
+
     if (p == NULL) {
 	fprintf(stderr, "dlget: couldn't find '%s'\n", name);
 	*err += 1;
@@ -2091,7 +2123,7 @@ static int load_R_symbols (void)
     if (Rhandle == NULL) {
 	err = E_EXTERNAL;
 	goto bailout;
-    } 
+    }
 
     R_CDR           = dlget(Rhandle, "CDR", &err);
     R_REAL          = dlget(Rhandle, "REAL", &err);
@@ -2116,7 +2148,7 @@ static int load_R_symbols (void)
     R_unprotect     = dlget(Rhandle, "Rf_unprotect", &err);
     R_catch         = dlget(Rhandle, "R_tryEval", &err);
     R_SETCAR        = dlget(Rhandle, "SETCAR", &err);
-    R_SET_TYPEOF    = dlget(Rhandle, "SET_TYPEOF", &err); 
+    R_SET_TYPEOF    = dlget(Rhandle, "SET_TYPEOF", &err);
     R_TYPEOF        = dlget(Rhandle, "TYPEOF", &err);
     R_SET_TAG       = dlget(Rhandle, "SET_TAG", &err);
     R_LOGICAL       = dlget(Rhandle, "LOGICAL", &err);
@@ -2275,10 +2307,10 @@ static int gretl_Rlib_init (void)
     gretl_remove(gretl_Rprofile);
 
     if (!err) {
-	char *argv[] = { 
-	    "gretl", 
-	    "--no-save", 
-	    "--silent", 
+	char *argv[] = {
+	    "gretl",
+	    "--no-save",
+	    "--silent",
 	};
 	int ok, argc = 3;
 
@@ -2310,7 +2342,7 @@ static int gretl_Rlib_init (void)
 /* run R's source() function on an R command file written by
    gretl, shared library version */
 
-static int lib_run_Rlib_sync (gretlopt opt, PRN *prn) 
+static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 {
     int err = 0;
 
@@ -2331,10 +2363,10 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 
 	/* expression source(f, print.eval=p) */
 	R_protect(expr = R_allocVector(LANGSXP, 3));
-	R_SETCAR(expr, R_install("source")); 
+	R_SETCAR(expr, R_install("source"));
 	R_SETCAR(R_CDR(expr), R_mkString(gretl_Rsrc));
 	R_SETCAR(R_CDR(R_CDR(expr)), p);
-	R_SET_TAG(R_CDR(R_CDR(expr)), 
+	R_SET_TAG(R_CDR(R_CDR(expr)),
 		  R_install((opt & OPT_V)? "echo" : "print.eval"));
 
 	R_catch(expr, NULL, &err);
@@ -2347,7 +2379,7 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 
 	outname = (err)? gretl_Rmsg : gretl_Rout;
 	fp = gretl_fopen(outname, "r");
-	
+
 	if (fp != NULL) {
 	    char line[512];
 
@@ -2393,7 +2425,7 @@ static SEXP find_R_function (const char *name)
 }
 
 /* Check if we should be using the R shared library for executing the
-   code in a "foreign" block.  This is disabled if the user has 
+   code in a "foreign" block.  This is disabled if the user has
    done "set R_lib off", and can be prohibited by the environment
    variable GRETL_NO_RLIB.  It may also be blocked if we already tried
    and failed to initialize the library for gretl's use.  (The
@@ -2422,7 +2454,7 @@ static int gretl_use_Rlib (void)
 
 #if FDEBUG
     fprintf(stderr, "gretl_use_Rlib: using %s\n", (ret)? "library" : "executable");
-#endif    
+#endif
 
     return ret;
 }
@@ -2432,15 +2464,15 @@ static int gretl_use_Rlib (void)
    is conditional on the user's doing "set R_functions on".
 */
 
-int get_R_function_by_name (const char *name) 
+int get_R_function_by_name (const char *name)
 {
     int ret = 0;
-    
+
     if (libset_get_bool(R_FUNCTIONS) && gretl_use_Rlib()) {
 	SEXP fun = find_R_function(name);
 
 	ret = (fun == VR_UnboundValue)? 0 : 1;
-    } 
+    }
 
     return ret;
 }
@@ -2449,7 +2481,7 @@ int get_R_function_by_name (const char *name)
    gretl types to R constructs for passing to R functions
 */
 
-int gretl_R_function_add_scalar (double x) 
+int gretl_R_function_add_scalar (double x)
 {
     current_arg = R_CDR(current_arg);
     R_SETCAR(current_arg, R_ScalarReal(x));
@@ -2457,7 +2489,7 @@ int gretl_R_function_add_scalar (double x)
     return 0;
 }
 
-int gretl_R_function_add_vector (const double *x, int t1, int t2) 
+int gretl_R_function_add_vector (const double *x, int t1, int t2)
 {
     SEXP res = R_allocVector(REALSXP, t2 - t1 + 1);
     int i;
@@ -2471,13 +2503,13 @@ int gretl_R_function_add_vector (const double *x, int t1, int t2)
     for (i=t1; i<=t2; i++) {
     	R_REAL(res)[i-t1] = x[i];
     }
-    
+
     R_SETCAR(current_arg, res);
 
     return 0;
 }
 
-int gretl_R_function_add_matrix (const gretl_matrix *m) 
+int gretl_R_function_add_matrix (const gretl_matrix *m)
 {
     int nr = gretl_matrix_rows(m);
     int nc = gretl_matrix_cols(m);
@@ -2495,7 +2527,7 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
 	    R_REAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
     	}
     }
-    
+
     R_SETCAR(current_arg, res);
 
     return 0;
@@ -2503,24 +2535,24 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
 
 /* called from geneval.c only, and should be pre-checked */
 
-int gretl_R_get_call (const char *name, int argc) 
+int gretl_R_get_call (const char *name, int argc)
 {
     SEXP call, e;
 
     call = R_findFun(R_install(name), VR_GlobalEnv);
 
     if (call == VR_NilValue) {
-	fprintf(stderr, "gretl_R_get_call: no definition for function %s\n", 
+	fprintf(stderr, "gretl_R_get_call: no definition for function %s\n",
 		name);
 	R_unprotect(1); /* is this OK? */
 	return E_EXTERNAL;
-    } 
+    }
 
     R_protect(e = R_allocList(argc + 1));
     R_SET_TYPEOF(e, LANGSXP);
     R_SETCAR(e, R_install(name));
     current_call = current_arg = e;
- 
+
     return 0;
 }
 
@@ -2543,7 +2575,7 @@ static int R_type_to_gretl_type (SEXP s)
    into a gretl type
 */
 
-int gretl_R_function_exec (const char *name, int *rtype, void **ret) 
+int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 {
     SEXP res;
     int err = 0;
@@ -2611,7 +2643,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 }
 
 static int run_R_lib (const char *buf,
-		      const DATASET *dset, 
+		      const DATASET *dset,
 		      gretlopt opt,
 		      PRN *prn)
 {
@@ -2619,7 +2651,7 @@ static int run_R_lib (const char *buf,
 
 #if FDEBUG
     fprintf(stderr, "run_R_lib\n");
-#endif    
+#endif
 
     /* we don't want gretl.Rprofile in the way */
     gretl_remove(gretl_Rprofile);
@@ -2645,11 +2677,11 @@ static int run_R_lib (const char *buf,
  *
  * Starts a new "foreign" block if no such block is
  * currently defined.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
-int foreign_start (int ci, const char *param, gretlopt opt, 
+int foreign_start (int ci, const char *param, gretlopt opt,
 		   PRN *prn)
 {
     int err = 0;
@@ -2677,7 +2709,7 @@ int foreign_start (int ci, const char *param, gretlopt opt,
     } else if (ci == MPI) {
 	err = set_foreign_lang("mpi", prn);
     }
-	    
+
     if (!err) {
 	foreign_started = 1;
 	foreign_opt = opt;
@@ -2693,7 +2725,7 @@ int foreign_start (int ci, const char *param, gretlopt opt,
  *
  * Appends @line to an internally stored block of "foreign"
  * or MPI commands, if such a block is currently defined.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -2720,7 +2752,7 @@ int foreign_append (const char *line, int context)
 }
 
 static int run_R_binary (const char *buf,
-			 const DATASET *dset, 
+			 const DATASET *dset,
 			 gretlopt opt,
 			 PRN *prn)
 {
@@ -2746,11 +2778,11 @@ static int run_R_binary (const char *buf,
  *
  * Executes a block of commands previously established via
  * calls to foreign_append_line().
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
-int foreign_execute (const DATASET *dset, 
+int foreign_execute (const DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     int i, err = 0;
@@ -2799,7 +2831,7 @@ int foreign_execute (const DATASET *dset,
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
-	err = write_gretl_octave_file(NULL, foreign_opt, 
+	err = write_gretl_octave_file(NULL, foreign_opt,
 				      dset, NULL);
 	if (err) {
 	    delete_gretl_octave_file();
@@ -2807,7 +2839,7 @@ int foreign_execute (const DATASET *dset,
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_STATA) {
-	err = write_gretl_stata_file(NULL, foreign_opt, 
+	err = write_gretl_stata_file(NULL, foreign_opt,
 				     dset, NULL);
 	if (err) {
 	    delete_gretl_stata_file();
@@ -2815,7 +2847,7 @@ int foreign_execute (const DATASET *dset,
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_PYTHON) {
-	err = write_gretl_python_file(NULL, foreign_opt, 
+	err = write_gretl_python_file(NULL, foreign_opt,
 				      NULL);
 	if (err) {
 	    delete_gretl_python_file();
@@ -2823,18 +2855,18 @@ int foreign_execute (const DATASET *dset,
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_JULIA) {
-	err = write_gretl_julia_file(NULL, foreign_opt, 
+	err = write_gretl_julia_file(NULL, foreign_opt,
 				     NULL);
 	if (err) {
 	    delete_gretl_julia_file();
 	} else {
 	    err = lib_run_other_sync(foreign_opt, prn);
-	}	
+	}
     } else {
 	/* "can't happen" */
 	err = E_DATA;
     }
-    
+
     foreign_destroy();
 
     return err;
@@ -2848,14 +2880,14 @@ int foreign_execute (const DATASET *dset,
  * @prn: struct for printing output.
  *
  * This is used only for MS Windows, working around
- * breakage in previously coded non-interactive calls to R 
+ * breakage in previously coded non-interactive calls to R
  * executable(s).
  *
  * Returns: 0 on success, non-zero on error.
  */
 
 int execute_R_buffer (const char *buf,
-		      const DATASET *dset, 
+		      const DATASET *dset,
 		      gretlopt opt,
 		      PRN *prn)
 {
