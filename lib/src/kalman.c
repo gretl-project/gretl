@@ -1156,14 +1156,16 @@ static int kalman_revise_variance (kalman *K)
     return err;
 }
 
-static int matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
+static int matrix_diff (const gretl_matrix *a,
+			const gretl_matrix *b,
+			double tol)
 {
     int i, n = a->rows * a->cols;
 
     /* note: we ignore the 0,0 element here */
 
     for (i=1; i<n; i++) {
-	if (b->val[i] != a->val[i]) {
+	if (fabs(b->val[i] - a->val[i]) > tol) {
 	    return 1;
 	}
     }
@@ -1899,7 +1901,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	if (!err) {
 	    /* update MSE matrix, if needed */
 	    if (arma_ll(K) && !smoothing && update_P && K->t > 20) {
-		if (!matrix_diff(K->P1, K->P0)) {
+		if (!matrix_diff(K->P1, K->P0, 1.0e-20)) {
 		    K->P0->val[0] += 1.0;
 		    update_P = 0;
 		}
