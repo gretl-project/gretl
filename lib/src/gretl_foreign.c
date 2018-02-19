@@ -884,8 +884,6 @@ static int write_octave_io_file (void)
     return err;
 }
 
-#define NUMPY_USE_SAVETXT 1
-
 static int write_python_io_file (void)
 {
     static int written;
@@ -909,29 +907,18 @@ static int write_python_io_file (void)
 	    g_free(dotcpy);
 #else
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
-#endif	
-	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
-#if NUMPY_USE_SAVETXT
-	    fputs("  from numpy import asmatrix, savetxt\n", fp);
-#else
-	    fputs("  from numpy import asmatrix\n", fp);
 #endif
+	    /* export matrix for reading by gretl */
+	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
+	    fputs("  from numpy import asmatrix, savetxt\n", fp);
 	    fputs("  M = asmatrix(X)\n", fp);
 	    fputs("  r, c = M.shape\n", fp);
 	    fputs("  if autodot:\n", fp);
             fputs("    fname = gretl_dotdir + fname\n", fp);
-#if NUMPY_USE_SAVETXT
-	    fputs("  ghead = repr(r) + '\t' + repr(c)\n", fp);
+	    fputs("  ghead = repr(r) + ' ' + repr(c)\n", fp);
 	    fputs("  savetxt(fname, M, header=ghead, comments='')\n", fp);
-#else	    
-	    fputs("  f = open(fname, 'w')\n", fp);
-	    fputs("  f.write(repr(r) + '\\t' + repr(c) + '\\n')\n", fp);
-	    fputs("  for i in range(0, r):\n", fp);
-	    fputs("    for j in range(0, c):\n", fp);
-	    fputs("      f.write('%.18e ' % M[i,j])\n", fp);
-            fputs("    f.write('\\n')\n", fp);
-	    fputs("  f.close()\n\n", fp);
-#endif	    
+
+	    /* import matrix from gretl */
 	    fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
 	    fputs("  from numpy import loadtxt\n", fp);
 	    fputs("  if autodot:\n", fp);
