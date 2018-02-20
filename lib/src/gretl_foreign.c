@@ -924,7 +924,7 @@ static int write_python_io_file (void)
 	    fputs("  if binwrite:\n", fp);
 	    fputs("    from sys import byteorder\n", fp);
 	    fputs("    f = open(fname, 'wb')\n", fp);
-	    fputs("    f.write('gretl_binary_matrix')\n", fp);
+	    fputs("    f.write(b'gretl_binary_matrix')\n", fp);
 	    fputs("    f.write(pack('<i', r))\n", fp);
 	    fputs("    f.write(pack('<i', c))\n", fp);
 	    fputs("    if byteorder == 'big':\n", fp);
