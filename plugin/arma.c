@@ -667,9 +667,10 @@ static void print_P_info (const gretl_matrix *m,
 	}
     }
 
-    fprintf(stderr, "%d,%d,%d,%d,%d,%d,%d\n",
+    fprintf(stderr, "%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
 	    id, ainfo->np, ainfo->d, ainfo->nq,
-	    ainfo->P, ainfo->D, ainfo->Q);
+	    ainfo->P, ainfo->D, ainfo->Q,
+	    ainfo->ifc, ainfo->nexo);
 }
 
 #endif
