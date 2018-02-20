@@ -4296,13 +4296,18 @@ int function_package_set_data_files (fnpkg *pkg, char **S, int n)
     return err;
 }
 
-/* quick check to see if there's a gross problem with a package */
+/* quick check to see if there's a gross problem with a package,
+   in the context of considering packing it into a gretl
+   session file
+*/
 
 static int validate_function_package (fnpkg *pkg)
 {
     if (pkg->pub == NULL || pkg->author == NULL ||
 	pkg->version == NULL || pkg->date == NULL ||
 	pkg->descrip == NULL) {
+	return 0;
+    } else if (pkg->name[0] == '\0') {
 	return 0;
     }
 
