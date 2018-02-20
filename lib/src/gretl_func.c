@@ -2665,7 +2665,9 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 
     fputs("<gretl-function-package", fp);
 
-    name_package_from_filename(pkg); /* ? */
+    if (pkg->name[0] == '\0') {
+	name_package_from_filename(pkg);
+    }
 
     fprintf(fp, " name=\"%s\"", pkg->name);
 
