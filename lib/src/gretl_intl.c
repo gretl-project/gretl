@@ -342,7 +342,7 @@ int iso_latin_version (void)
 int chinese_locale (void)
 {
 #ifdef WIN32
-    return (gretl_cpage == 950);
+    return (gretl_cpage == 936 || gretl_cpage == 950);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
@@ -368,7 +368,7 @@ int japanese_locale (void)
 int east_asian_locale (void)
 {
 #ifdef WIN32
-    return (gretl_cpage == 950 || gretl_cpage == 932);
+    return (gretl_cpage == 950 || gretl_cpage == 932 || gretl_cpage == 936);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
@@ -669,8 +669,12 @@ static const char *lang_code_from_windows_name (char *s)
 
     if (strstr(s, "razil")) {
 	return "pt_BR";
-    } else if (!strncmp(s + 1, "hinese", 6)) {
+    } else if (!strncmp(s + 1, "hinese-t", 8)) {
+	/* chinese-traditional */
 	return "zh_TW";
+    } else if (!strncmp(s + 1, "hinese-s", 8)) {
+	/* chinese-simplified */
+	return "zh_CN";
     }
 
     for (i=1; i<LANG_MAX; i++) {
