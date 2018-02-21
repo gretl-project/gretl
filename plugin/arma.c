@@ -1122,7 +1122,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 		}
 	    }
-	} else if (err == E_NOTPD && !(opt & OPT_H)) {
+	} else if (!(opt & OPT_H)) {
 	    /* try falling back to OPG, if use of the Hessian has not
 	       been explicitly specified
 	    */
