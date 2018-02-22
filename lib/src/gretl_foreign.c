@@ -948,8 +948,7 @@ static int write_python_io_file (void)
 	    fputs("    from struct import unpack\n", fp);
 	    fputs("    f = open(fname, 'rb')\n", fp);
 	    fputs("    buf = f.read(19)\n", fp);
-	    fputs("    chk = buf.decode(encoding='UTF-8')\n", fp);
-	    fputs("    if chk != 'gretl_binary_matrix':\n", fp);
+	    fputs("    if buf != b'gretl_binary_matrix':\n", fp);
 	    fputs("      raise ValueError('Not a gretl binary matrix')\n", fp);
 	    fputs("    r = unpack('<i', f.read(4))[0]\n", fp);
 	    fputs("    c = unpack('<i', f.read(4))[0]\n", fp);
@@ -1006,7 +1005,7 @@ static int write_julia_io_file (void)
 	    fputs("  n = endof(fname)\n", fp);
 	    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
 	    fputs("    # binary mode\n", fp);
-	    fputs("    write(f, \"gretl_binary_matrix\")\n", fp);
+	    fputs("    write(f, b\"gretl_binary_matrix\")\n", fp);
 	    fputs("    if ENDIAN_BOM == 0x01020304\n", fp);
 	    fputs("      # host is big-endian\n", fp);
 	    fputs("      write(f, htol(Int32(r)))\n", fp);
@@ -1044,7 +1043,7 @@ static int write_julia_io_file (void)
 	    fputs("    f = open(fname, \"r\")\n", fp);
 	    fputs("    hdr = read(f, UInt8, 19)\n", fp);
 	    fputs("    if hdr != b\"gretl_binary_matrix\"\n", fp);
-	    fputs("      error(\"not a gretl binary matrix\")\n", fp);
+	    fputs("      error(\"Not a gretl binary matrix\")\n", fp);
 	    fputs("    end\n", fp);
 	    fputs("    if ENDIAN_BOM == 0x01020304\n", fp);
 	    fputs("      # host is big-endian\n", fp);
