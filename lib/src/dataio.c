@@ -119,6 +119,9 @@ int check_varname (const char *varname)
 	firstbad = 1;
 	testchar = *varname;
         err = E_DATA;
+    } else if (get_user_function_by_name(varname)) {
+	gretl_warnmsg_sprintf(_("'%s': masks a function of the same name"),
+			      varname);
     } else {
 	const char *p = varname;
 

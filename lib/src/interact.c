@@ -2686,7 +2686,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case FUNC:
-	err = gretl_start_compiling_function(cmd->param, prn);
+	err = gretl_start_compiling_function(cmd->param, dset, prn);
 	break;
 
     case GENR:

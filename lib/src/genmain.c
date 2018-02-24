@@ -255,7 +255,7 @@ int function_from_string (const char *s)
     return 0;
 }
 
-static const char *reswords[] = {
+static const char *extra_reswords[] = {
     /* constants */
     "const",
     "NA",
@@ -288,18 +288,21 @@ static const char *reswords[] = {
 
 int gretl_reserved_word (const char *str)
 {
-    static int n = sizeof reswords / sizeof reswords[0];
+    static int n = sizeof extra_reswords / sizeof extra_reswords[0];
     int i, ret = gretl_command_number(str);
 
+    if (!ret) {
+	ret = function_lookup(str);
+    }
+
     for (i=0; i<n && !ret; i++) {
-	if (!strcmp(str, reswords[i])) {
+	if (!strcmp(str, extra_reswords[i])) {
 	    ret = 1;
 	}
     }
 
     if (ret) {
-	gretl_errmsg_sprintf(_("'%s' may not be used as a "
-			       "variable name"), str);
+	gretl_errmsg_sprintf(_("'%s' is a reserved word"), str);
     }	
 
     return ret;

@@ -143,7 +143,9 @@ int gretl_function_recursing (void);
 void current_function_info (char const **funcname,
 			    char const **pkgname);
 
-int gretl_start_compiling_function (const char *line, PRN *prn);
+int gretl_start_compiling_function (const char *line,
+				    const DATASET *dset,
+				    PRN *prn);
 
 int gretl_function_append_line (const char *line);
 

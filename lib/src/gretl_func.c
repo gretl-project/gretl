@@ -5593,7 +5593,8 @@ static int skip_private_func (ufunc *ufun)
     return skip;
 }
 
-static int check_func_name (const char *name, ufunc **pfun, PRN *prn)
+static int check_func_name (const char *name, ufunc **pfun,
+			    const DATASET *dset, PRN *prn)
 {
     int i, err = 0;
 
@@ -5604,13 +5605,13 @@ static int check_func_name (const char *name, ufunc **pfun, PRN *prn)
     if (!isalpha((unsigned char) *name)) {
 	gretl_errmsg_set(_("Function names must start with a letter"));
 	err = 1;
-    } else if (gretl_command_number(name)) {
-	gretl_errmsg_sprintf(_("'%s' is the name of a gretl command"),
-			     name);
+    } else if (gretl_reserved_word(name)) {
 	err = 1;
-    } else if (function_lookup(name)) {
-	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
-			     name);
+    } else if (gretl_is_user_var(name)) {
+	gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
+	err = 1;
+    } else if (gretl_is_series(name, dset)) {
+	gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
 	err = 1;
     } else {
 	/* @name is OK, now check for existing function of the same name */
@@ -6242,7 +6243,9 @@ static int get_two_words (const char *s, char *w1, char *w2,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_start_compiling_function (const char *line, PRN *prn)
+int gretl_start_compiling_function (const char *line,
+				    const DATASET *dset,
+				    PRN *prn)
 {
     ufunc *fun = NULL;
     fn_param *params = NULL;
@@ -6280,7 +6283,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     if (!err) {
 	/* note: this handles a name collision */
-	err = check_func_name(name, &fun, prn);
+	err = check_func_name(name, &fun, dset, prn);
     }
 
     if (!err) {
