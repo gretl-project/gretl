@@ -348,6 +348,16 @@ static gint32 stata_date (int t, const DATASET *dset)
     return ed - STATA_DAY_OFFSET;
 }
 
+static void write_lower_case (char *targ, const char *src)
+{
+    int i, n = strlen(src);
+
+    for (i=0; i<n; i++) {
+	targ[i] = tolower(src[i]);
+    }
+    targ[i] = '\0';
+}
+
 int stata_export (const char *fname,
 		  const int *list,
 		  gretlopt opt,
@@ -415,7 +425,12 @@ int stata_export (const char *fname,
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
-	    strcat(buf, dset->varname[i]);
+	    if (opt & OPT_L) {
+		/* --lcnames */
+		write_lower_case(buf, dset->varname[i]);
+	    } else {
+		strcat(buf, dset->varname[i]);
+	    }
 	    w += write(fd, buf, 33);
 	}
     }    
