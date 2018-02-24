@@ -270,6 +270,8 @@ static const char *reswords[] = {
     "bundle",
     "array",
     "void",
+    /* control flow */
+    "for",
     /* debugging instructions, etc. */
     "continue",
     "next",
