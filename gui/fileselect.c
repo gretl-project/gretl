@@ -878,7 +878,6 @@ static struct filter_info data_filters[] = {
     { N_("Eviews files (*.wf1)"), "*.wf1" },
     { N_("SPSS files (*.sav)"), "*.sav" },
     { N_("SAS xport files (*.xpt)"), "*.xpt" },
-    { N_("Octave files (*.m)"), "*.m" },
     { N_("JMulTi files (*.dat)"), "*.dat" },
     { N_("all files (*.*)"), "*" }
 };
