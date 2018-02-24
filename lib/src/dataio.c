@@ -1113,10 +1113,7 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 		if (na(xx)) {
 		    fputs("NaN ", fp);
 		} else {
-		    fprintf(fp, "%.*g ", csv_digits, xx);
-		}
-		if (t == dset->t2 || t % 4 == 0) {
-		    fputc('\n', fp);
+		    fprintf(fp, "%.*g\n", csv_digits, xx);
 		}
 	    }
 	}
@@ -2695,6 +2692,11 @@ static int import_octave (const char *fname, DATASET *dset,
     int maxlen, got_type = 0, got_name = 0;
     int i, t, err = 0;
 
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
     pprintf(prn, "%s %s...\n", A_("parsing"), fname);
 
     maxlen = get_max_line_length(fp, prn);
@@ -2702,7 +2704,7 @@ static int import_octave (const char *fname, DATASET *dset,
 	err = E_DATA;
 	goto oct_bailout;
     }
- 
+
     line = malloc(maxlen);
     if (line == NULL) {
 	err = E_ALLOC;
