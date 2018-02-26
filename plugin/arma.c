@@ -1323,9 +1323,10 @@ static int kalman_arma (double *coeff, const DATASET *dset,
     }
 
 #if ARMA_DEBUG
-    fputs("kalman_arma: initial coefficients:\n", stderr);
+    fputs("# kalman_arma: initial coefficients:\n", stderr);
+    fprintf(stderr, "%d 1\n", ainfo->nc);
     for (i=0; i<ainfo->nc; i++) {
-	fprintf(stderr, " b[%d] = % .10E\n", i, b[i]);
+	fprintf(stderr, "%.15g\n", b[i]);
     }
 #endif
 
@@ -1436,7 +1437,7 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 			   NULL, K, NULL, opt, ainfo->prn);
 #if BFGS_TIME
 	    if (!err) {
-		pprintf(ainfo->prn, "BFGS time %g\n", gretl_stopwatch());
+		fprintf(stderr, "BFGS time %f\n", gretl_stopwatch());
 	    }
 #endif
 	    if (save_lbfgs == 0 && (opt & OPT_L)) {
