@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -1485,8 +1485,8 @@
 	  opcionais.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos no <guideref targ="chap:numerical"/>.
+	  Para máis detalles e exemplos, consulta
+	  <guideref targ="chap:numerical"/>.
 	  <seelist>
 	          <fncref targ="BFGScmax"/>
             <fncref targ="NRmax"/>
@@ -1557,8 +1557,8 @@
 	  opcionais.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos no <guideref targ="chap:numerical"/>.
+	  Para máis detalles e exemplos, consulta
+	  <guideref targ="chap:numerical"/>.
 	  <seelist>
 	          <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>
@@ -2133,34 +2133,44 @@
       </description>
     </function>
 
-
-    <function name="colname" section="strings" output="string">
+    <function name="cnameget" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="int">col</fnarg>
+	<fnarg type="int" optional="true">col</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha cadea co nome da columna <argname>col</argname> da
-	  matriz <argname>M</argname>. Se as columnas de <argname>M</argname>
+	  Se indicas o argumento <argname>col</argname>, devolve unha
+	  cadea co nome da columna <argname>col</argname> da matriz
+	  <argname>M</argname>. Se as columnas de <argname>M</argname>
 	  non teñen nome, entón devólvese unha cadea baleira; e se
 	  <argname>col</argname> está fóra dos límites do número de columnas
-	  desta matriz, amósase un fallo. Consulta tamén
-	  <fncref targ="colnames"/>.
+	  desta matriz, amósase un fallo.
+	</para>
+	<para>
+	  Se non indicas o segundo argumento, devolve un arranxo de cadeas
+	  de texto que contén os nomes das columnas de <argname>M</argname>,
+	  ou un arranxo baleiro se <argname>M</argname> non ten asignados
+	  nomes de columnas.
 	</para>
 	<para>
 	  Exemplo:
 	</para>
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
-	  colnames(A, "Col_A Col_B Col_C")
-	  string name = colname(A, 3)
+	  cnameset(A, "Col_A Col_B Col_C")
+	  string name = cnameget(A, 3)
 	  print name
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="cnameset"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
-    <function name="colnames" section="matbuild" output="scalar">
+    <function name="cnameset" section="matbuild" output="scalar">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -2179,7 +2189,7 @@
 	</para>
 	<para>
 	  Devolve o valor 0 se as columnas son nomeadas con éxito; noutro caso
-	  devolve un valor non nulo. Consulta tamén <fncref targ="rownames"/>.
+	  devolve un valor non nulo. Consulta tamén <fncref targ="rnameset"/>.
 	</para>
 	<para>
 	  Exemplo:
@@ -2189,7 +2199,7 @@
 	  strings S = array(2)
 	  S[1] = "Col1"
 	  S[2] = "Col2"
-	  colnames(M, S)
+	  cnameset(M, S)
 	  print M
 	</code>
       </description>
@@ -3241,8 +3251,8 @@
 	  o valor 0, 1 ou 2 para a variable <lit>fdjac_quality</lit>.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos no <guideref targ="chap:numerical"/>.
+	  Para máis detalles e exemplos, consulta
+	  <guideref targ="chap:numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -5357,16 +5367,15 @@
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-	<fnarg type="int">k</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un escalar coa varianza de longo prazo do argumento
-	  <argname>y</argname>, que se calcula utilizando un núcleo
-	  (<quote>kernel</quote>) de Bartlett con tamaño de xanela igual a
-	  <argname>k</argname>. Podes seleccionar o tamaño por defecto da
-	  xanela, é dicir a parte enteira da raíz cúbica do tamaño da mostra,
-	  se lle das un valor negativo a <argname>k</argname>.
+	  <argname>y</argname>, calculada usando un núcleo (<quote>kernel</quote>) de
+	  Bartlett con tamaño de xanela igual a <argname>k</argname>. Se omites o
+	  segundo argumento (ou lle asignas un valor menor ca 0), o tamaño da xanela
+	  establécese por defecto igual á parte enteira da raíz cúbica do tamaño da mostra.
 	</para>
 	<para context="tex">
 	  Fórmula:
@@ -6556,8 +6565,8 @@
 	  <lit>NMmax</lit>baixo o alcume <lit>NMmin</lit>..
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos no <guideref targ="chap:numerical"/>.
+	  Para máis detalles e exemplos, consulta
+	  <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="simann"/>
 	  </seelist>
@@ -6737,8 +6746,8 @@
 	  unha aproximación numérica.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta o capítulo sobre métodos
-	  numéricos no <guideref targ="chap:numerical"/>.
+	  Para máis detalles e exemplos, consulta
+	  <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="fdjac"/>
@@ -8331,7 +8340,44 @@
       </description>
     </function>
 
-    <function name="rownames" section="matbuild" output="int">
+    <function name="rnameget" section="strings" output="string-or-strings">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="int" optional="true">row</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se indicas o argumento <argname>row</argname>, devolve unha
+	  cadea co nome da fila <argname>row</argname> da matriz
+	  <argname>M</argname>. Se as filas de <argname>M</argname>
+	  non teñen nome, entón devólvese unha cadea baleira; e se
+	  <argname>row</argname> está fóra dos límites do número de filas
+	  desta matriz, amósase un fallo.
+	</para>
+	<para>
+	  Se non indicas o segundo argumento, devolve un arranxo de cadeas
+	  de texto que contén os nomes das filas de <argname>M</argname>,
+	  ou un arranxo baleiro se <argname>M</argname> non ten asignados
+	  nomes de filas.
+	</para>
+	<para>
+	  Exemplo:
+	</para>
+	<code>
+	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
+	  rnameset(A, "Primeira Segunda")
+	  string name = rnameget(A, 2)
+	  print name
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="rnameset"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+	  <function name="rnameset" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -8350,7 +8396,7 @@
 	</para>
 	<para>
 	  Devolve o valor enteiro 0 se as filas se nomean con éxito, e un valor
-	  non nulo en caso de fallo. Consulta tamén <fncref targ="colnames"/>.
+	  non nulo en caso de fallo. Consulta tamén <fncref targ="cnameset"/>.
 	</para>
 	<para>
 	  Exemplo:
@@ -8361,7 +8407,7 @@
 	  S[1] = "Fila1"
 	  S[2] = "Fila2"
 	  S[3] = "Fila3"
-	  rownames(M, S)
+	  rnameset(M, S)
 	  print M
 	</code>
       </description>
@@ -8606,8 +8652,8 @@
 	  <argname>b</argname> contén o vector de parámetros asociado.
 	</para>
 	<para>
-	  Para ter máis detalles e un exemplo, consulta o capítulo sobre
-	  métodos numéricos no <guideref targ="chap:numerical"/>.
+	  Para ter máis detalles e un exemplo, consulta
+	  <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
             <fncref targ="NRmax"/>
