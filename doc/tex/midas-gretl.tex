@@ -1327,20 +1327,20 @@ is given by
 \begin{equation}
 \label{eq:general}
   w_i = \frac{f(i,\theta)}
-  {\sum_{i=1}^pf(i,\theta)}
+  {\sum_{k=1}^pf(k,\theta)}
 \end{equation}
 such that the coefficients sum to unity.
 
-In the \textbf{normalized exponential Almon} case with $k$ parameters
+In the \textbf{normalized exponential Almon} case with $m$ parameters
 the function $f(\cdot)$ is
 \begin{equation}
-f(i,\theta) = \exp\left(\sum_{j=1}^k \theta_j i^j\right)
+f(i,\theta) = \exp\left(\sum_{j=1}^m \theta_j i^j\right)
 \end{equation}
 So in the usual two-parameter case we have
 \[
 w_i =
   \frac{\exp\left(\theta_1 i + \theta_2 i^2\right)}
-  {\sum_{i=1}^p \exp\left(\theta_1 i + \theta_2 i^2\right)}
+  {\sum_{k=1}^p \exp\left(\theta_1 k + \theta_2 k^2\right)}
 \]
 and equal weighting is obtained when $\theta_1 = \theta_2 = 0$.
 
@@ -1377,10 +1377,10 @@ parameter may be positive, negative or zero.
 
 \vspace{1ex}
 
-In the case of the plain \textbf{Almon polynomial}, coefficient $i$
-is given by
+In the case of the plain \textbf{Almon polynomial} of order $m$,
+coefficient $i$ is given by
 \[
-w_i = \sum_{j=1}^k \theta_j i^{j-1}
+w_i = \sum_{j=1}^m \theta_j i^{j-1}
 \]
 Note that no normalization is applied in this case, so no additional
 coefficient should be placed before the MIDAS lags term in the context
@@ -1392,34 +1392,35 @@ Here we set out the expressions for the analytical gradients produced
 by the \texttt{mgradient} function, and also used internally by the
 \texttt{midasreg} command. In these expressions $f(i,\theta)$ should
 be understood as referring back to the specific forms noted above
-for the exponential Almon and beta distributions. 
+for the exponential Almon and beta distributions. The summation
+$\sum_k$ should be understood as running from 1 to $p$.
 
 For the normalized exponential Almon case, the gradient is
 \begin{align*}
 \frac{dw_i}{d\theta_j} &= 
-\frac{f(i, \theta) i^j}{\sum_if(i, \theta)} - 
-\frac{f(i, \theta)}{\left[\sum_if(i, \theta)\right]^2}
-\, \sum_i\left[f(i, \theta) i^j\right] \\[4pt]
+\frac{f(i, \theta) i^j}{\sum_kf(k, \theta)} - 
+\frac{f(i, \theta)}{\left[\sum_kf(k, \theta)\right]^2}
+\, \sum_k\left[f(k, \theta) k^j\right] \\[4pt]
  &= w_i \left(i^j - 
-\frac{\sum_i\left[f(i,\theta)i^j\right]}{\sum_i f(i, \theta)}\right)
+\frac{\sum_k\left[f(k,\theta)k^j\right]}{\sum_k f(k, \theta)}\right)
 \end{align*}
 
 For the two-parameter normalized beta case it is
 \begin{align*}
 \frac{dw_i}{d\theta_1} &=
-\frac{f(i,\theta) \log(i^-/p^-)}{\sum_i f(i, \theta)} -
-\frac{f(i,\theta)}{\left[\sum_i f(i,\theta)\right]^2}
-\sum_i\left[f(i,\theta) \log(i^-/p^-)\right] \\[4pt]
+\frac{f(i,\theta) \log(i^-/p^-)}{\sum_k f(k, \theta)} -
+\frac{f(i,\theta)}{\left[\sum_k f(k,\theta)\right]^2}
+\sum_k\left[f(k,\theta) \log(k^-/p^-)\right] \\[4pt]
 &= w_i \left(\log(i^-/p^-) - 
-\frac{\sum_i\left[f(i,\theta) \log(i^-/p^-)\right]}{\sum_i 
- f(i,\theta)}\right) \\[8pt]
+\frac{\sum_k\left[f(k,\theta) \log(k^-/p^-)\right]}{\sum_k 
+ f(k,\theta)}\right) \\[8pt]
 \frac{dw_i}{d\theta_2} &=
-\frac{f(i,\theta) \log(1 - i^-/p^-)}{\sum_i f(i, \theta)} -
-\frac{f(i,\theta)}{\left[\sum_i f(i,\theta)\right]^2}
-\sum_i\left[f(i,\theta) \log(1 - i^-/p^-)\right] \\[4pt]
+\frac{f(i,\theta) \log(1 - i^-/p^-)}{\sum_k f(k, \theta)} -
+\frac{f(i,\theta)}{\left[\sum_k f(k,\theta)\right]^2}
+\sum_k\left[f(k,\theta) \log(1 - k^-/p^-)\right] \\[4pt]
 &= w_i \left(\log(1 - i^-/p^-) - 
-\frac{\sum_i\left[f(i,\theta) \log(1 - i^-/p^-)\right]}{\sum_i 
- f(i,\theta)}\right)
+\frac{\sum_k\left[f(k,\theta) \log(1 - k^-/p^-)\right]}{\sum_k 
+ f(k,\theta)}\right)
 \end{align*}
 
 And for the three-parameter beta, we have
