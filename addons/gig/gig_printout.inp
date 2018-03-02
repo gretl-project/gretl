@@ -39,7 +39,7 @@ function void gig_printHeader(bundle *mod)
     q    = mod.q
     t1   = mod.t1
     t2   = mod.t2
-    nobs = mod.nobs
+    T    = mod.nobs
 
     printf "\nModel: %s", s_modeltype(&mod)
 
@@ -64,7 +64,7 @@ function void gig_printHeader(bundle *mod)
     # OBS used
 
     printf "\nDependent variable: %s", mod.depvarname
-    printf "\nSample: %s -- %s (T = %d)", obslabel(t1), obslabel(t2), nobs
+    printf "\nSample: %s -- %s (T = %d)", obslabel(t1), obslabel(t2), T
 
     # VCV 
 
