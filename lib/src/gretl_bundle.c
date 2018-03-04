@@ -2103,6 +2103,39 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
     return b;
 }
 
+void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
+{
+    gretl_array *A = NULL;
+
+    if (b == NULL || b->ht == NULL) {
+	*err = E_DATA;
+    } else {
+	GList *keys = g_hash_table_get_keys(b->ht);
+	guint n;
+
+	if (keys != NULL && (n = g_list_length(keys)) > 0) {
+	    A = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
+	    if (!*err) {
+		GList *L = g_list_first(keys);
+		int i = 0;
+
+		while (L != NULL) {
+		    gretl_array_set_string(A, i, L->data, 1);
+		    i++;
+		    L = g_list_next(L);
+		}
+	    }
+	} else {
+	    A = gretl_array_new(GRETL_TYPE_STRINGS, 0, err);
+	}
+	if (keys != NULL) {
+	    g_list_free(keys);
+	}
+    }
+
+    return (void *) A;
+}
+
 gretl_bundle *get_sysinfo_bundle (int *err)
 {
     if (sysinfo_bundle == NULL) {
