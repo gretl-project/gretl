@@ -43,11 +43,13 @@ static int cli_parse_object_request (const char *line,
     err = gretl_get_object_and_type(word, pptr, type);
 
     if (err) {
-	/* no matching object (maybe OK in gui?) */
-	if (*param) {
+	/* no matching object */
+	if (*param != NULL && !strcmp(*param, "show")) {
+	    /* maybe OK in GUI, skip in CLI? */
 	    pprintf(prn, _("%s: no such object\n"), word);
+	    return OBJ_ACTION_NULL;
 	}
-	return OBJ_ACTION_NULL;
+	return OBJ_ACTION_NONE;
     }
 
     action = match_object_command(*param);
