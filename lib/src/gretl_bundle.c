@@ -2106,16 +2106,17 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 {
     gretl_array *A = NULL;
+    int myerr = 0;
 
     if (b == NULL || b->ht == NULL) {
-	*err = E_DATA;
+	myerr = E_DATA;
     } else {
 	GList *keys = g_hash_table_get_keys(b->ht);
 	guint n;
 
 	if (keys != NULL && (n = g_list_length(keys)) > 0) {
-	    A = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
-	    if (!*err) {
+	    A = gretl_array_new(GRETL_TYPE_STRINGS, n, &myerr);
+	    if (!myerr) {
 		GList *L = g_list_first(keys);
 		int i = 0;
 
@@ -2126,11 +2127,15 @@ void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 		}
 	    }
 	} else {
-	    A = gretl_array_new(GRETL_TYPE_STRINGS, 0, err);
+	    A = gretl_array_new(GRETL_TYPE_STRINGS, 0, &myerr);
 	}
 	if (keys != NULL) {
 	    g_list_free(keys);
 	}
+    }
+
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return (void *) A;
