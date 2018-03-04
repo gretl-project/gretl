@@ -55,7 +55,8 @@ enum {
     W_STDFMT  = 1 << 4,
     W_SVPARM  = 1 << 5,
     W_FOLDVAR = 1 << 6,
-    W_YSCALE  = 1 << 7
+    W_YSCALE  = 1 << 7,
+    W_CONSEC  = 1 << 8
 };
 
 struct sv_wrapper_ {
@@ -78,6 +79,7 @@ struct sv_wrapper_ {
     char *model_outfile;
     char *model_infile;
     char *data_outfile;
+    char foldname[VNAMELEN];
     sv_grid *grid;
     char *plot;
     gretl_matrix *xdata;
@@ -150,6 +152,7 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->model_outfile = NULL;
     w->model_infile = NULL;
     w->data_outfile = NULL;
+    w->foldname[0] = '\0';
     w->grid = NULL;
     w->plot = NULL;
     w->xdata = NULL;
@@ -1240,16 +1243,31 @@ static void print_xvalid_iter (sv_parm *parm,
     svm_flush(prn);
 }
 
-static int *get_fold_sizes (const sv_data *data, sv_wrapper *w)
+static int *get_fold_sizes (const sv_data *data,
+			    sv_wrapper *w,
+			    const DATASET *dset)
 {
     int *ret = gretl_list_new(w->nfold);
     int i, t;
 
-    for (i=1; i<=w->nfold; i++) {
-	ret[i] = 0;
-	for (t=0; t<data->l; t++) {
-	    if (w->flist[t+1] == i) {
-		ret[i] += 1;
+    if (w->flags & W_CONSEC) {
+	/* use equally sized consecutive blocks */
+	int t2 = w->t2_train > 0 ? w->t2_train : dset->t2;
+	int n = t2 - dset->t1 + 1;
+	int ni = n / w->nfold;
+
+	for (i=1; i<=w->nfold; i++) {
+	    ret[i] = ni;
+	}
+	ret[w->nfold] += n % w->nfold;
+    } else {
+	/* use the supplied folds series */
+	for (i=1; i<=w->nfold; i++) {
+	    ret[i] = 0;
+	    for (t=0; t<data->l; t++) {
+		if (w->flist[t+1] == i) {
+		    ret[i] += 1;
+		}
 	    }
 	}
     }
@@ -1257,9 +1275,9 @@ static int *get_fold_sizes (const sv_data *data, sv_wrapper *w)
     return ret;
 }
 
-/* carry out cross validation in the case where the user has provided
-   a series to specify the "folds," as opposed to the default random
-   subsetting
+/* Carry out cross validation in the case where the user has provided
+   a series to specify the "folds", or has specified a given number of
+   consecutive blocks, as opposed to the default random subsetting.
 */
 
 static void custom_xvalidate (const sv_data *prob,
@@ -1267,47 +1285,82 @@ static void custom_xvalidate (const sv_data *prob,
 			      const sv_wrapper *w,
 			      double *targ)
 {
+    int do_probs = 0;
     int i, vi, ni;
+
+    if (parm->probability &&
+	(parm->svm_type == C_SVC || parm->svm_type == NU_SVC)) {
+	do_probs = 1;
+    }
 
     for (i=0; i<w->nfold; i++) {
 	struct svm_problem subprob;
 	struct svm_model *submodel;
-	int j, k;
+	double *tmp = NULL;
+	int jmin = 0, jmax = 0;
+	int j, k, cond;
 
 	vi = i + 1;
-	ni = w->fsize[i+1];
+	ni = w->fsize[vi];
 	subprob.l = prob->l - ni;
 	subprob.x = malloc(subprob.l * sizeof *subprob.x);
 	subprob.y = malloc(subprob.l * sizeof *subprob.y);
 
+	if (w->flags & W_CONSEC) {
+	    /* find start and end points for fold */
+	    for (k=0; k<i; k++) {
+		jmin += w->fsize[k+1];
+	    }
+	    jmax = jmin + ni;
+	}
+
+	/* set the training subsample, excluding fold i */
 	k = 0;
 	for (j=0; j<prob->l; j++) {
-	    if (w->flist[j+1] != vi) {
+	    if (w->flags & W_CONSEC) {
+		cond = j < jmin || j >= jmax;
+	    } else {
+		cond = w->flist[j+1] != vi;
+	    }
+	    if (cond) {
 		subprob.x[k] = prob->x[j];
 		subprob.y[k] = prob->y[j];
 		k++;
 	    }
 	}
-
+	
+	/* train on the given subsample */
 	submodel = svm_train(&subprob, parm);
 
-	if (parm->probability &&
-	    (parm->svm_type == C_SVC || parm->svm_type == NU_SVC)) {
-	    double *tmp = malloc(svm_get_nr_class(submodel) * sizeof(double));
+	if (do_probs) {
+	    tmp = malloc(svm_get_nr_class(submodel) * sizeof(double));
+	}
 
-	    for (j=0; j<prob->l; j++) {
-		if (w->flist[j+1] == vi) {
+	/* predict on the complementary subsample (fold i only) */
+	if (w->flags & W_CONSEC) {
+	    for (j=jmin; j<jmax; j++) {
+		if (do_probs) {
 		    targ[j] = svm_predict_probability(submodel, prob->x[j], tmp);
-		}
-	    }
-	    free(tmp);
-	} else {
-	    for (j=0; j<prob->l; j++) {
-		if (w->flist[j+1] == vi) {
+		} else {
 		    targ[j] = svm_predict(submodel, prob->x[j]);
 		}
 	    }
+	} else {
+	    for (j=0; j<prob->l; j++) {
+		if (w->flist[j+1] == vi) {
+		    if (do_probs) {
+			targ[j] = svm_predict_probability(submodel, prob->x[j], tmp);
+		    } else {
+			targ[j] = svm_predict(submodel, prob->x[j]);
+		    }
+		}
+	    }
 	}
+
+	if (do_probs) {
+	    free(tmp);
+	}
+
 	svm_free_and_destroy_model(&submodel);
 	free(subprob.x);
 	free(subprob.y);
@@ -1604,6 +1657,7 @@ static int write_plot_file (sv_wrapper *w,
 static int do_search_prep (sv_data *data,
 			   sv_parm *parm,
 			   sv_wrapper *w,
+			   const DATASET *dset,
 			   PRN *prn)
 {
     int err = 0;
@@ -1616,8 +1670,8 @@ static int do_search_prep (sv_data *data,
 	sv_wrapper_add_grid(w, NULL);
     }
 
-    if (!err && (w->flags & W_FOLDVAR)) {
-	w->fsize = get_fold_sizes(data, w);
+    if (!err && (w->flags & (W_FOLDVAR | W_CONSEC))) {
+	w->fsize = get_fold_sizes(data, w, dset);
     }
 
     return err;
@@ -2014,7 +2068,15 @@ static int call_cross_validation (sv_data *data,
     double crit;
     int err = 0;
 
-    pputs(prn, "Calling cross-validation (this may take a while)\n");
+    pputs(prn, "Cross-validation ");
+    if (w->flags & W_CONSEC) {
+	pprintf(prn, "using %d consecutive blocks", w->nfold);
+    } else if (w->flags & W_FOLDVAR) {
+	pprintf(prn, "using %d values of %s", w->nfold, w->foldname);
+    } else {
+	pprintf(prn, "using %d random folds", w->nfold);
+    }
+    pputs(prn, " (may take a while)\n");
     svm_flush(prn);
 
     if (w->grid != NULL) {
@@ -2138,8 +2200,10 @@ static int check_folds_series (const int *list,
 
 	    pprintf(prn, "%s: found %d folds\n", dset->varname[v], nf);
 	    if (nf < 2 || (w->nfold > 0 && nf != w->nfold)) {
+		fprintf(stderr, "invalid number of folds %d\n", nf);
 		err = E_DATA;
 	    } else {
+		strcpy(w->foldname, dset->varname[v]);
 		w->nfold = nf;
 	    }
 	}
@@ -2221,7 +2285,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 		gretl_errmsg_sprintf("svm: n_train must be at least %d", list[0]);
 		err = E_INVARG;
 	    } else if (ival > nmax) {
-		gretl_errmsg_sprintf("svm: n_train cannot exceed arg %d", nmax);
+		gretl_errmsg_sprintf("svm: n_train cannot exceed %d", nmax);
 		err = E_INVARG;
 	    } else {
 		char obs1[OBSLEN], obs2[OBSLEN];
@@ -2259,6 +2323,10 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (get_optional_int(bparm, "foldvar", &ival, &err) && ival != 0) {
 	wrap->flags |= W_FOLDVAR;
     }
+
+    if (get_optional_int(bparm, "consecutive", &ival, &err) && ival != 0) {
+	wrap->flags |= W_CONSEC;
+    }    
 
     if (get_optional_int(bparm, "yscale", &ival, &err) && ival != 0) {
 	wrap->flags |= W_YSCALE;
@@ -2330,7 +2398,13 @@ static int read_params_bundle (gretl_bundle *bparm,
     }
 
     if (!err && (wrap->flags & W_FOLDVAR)) {
-	err = check_folds_series(list, dset, wrap, prn);
+	if (wrap->flags & W_CONSEC) {
+	    gretl_errmsg_set("The foldvar and consecutive options "
+			     "are incompatible");
+	    err = E_BADOPT;
+	} else {
+	    err = check_folds_series(list, dset, wrap, prn);
+	}
     }
 
     if (!err) {
@@ -2345,6 +2419,20 @@ static int read_params_bundle (gretl_bundle *bparm,
 			     "the RBF kernel at present");
 	    err = E_INVARG;
 	}
+    }
+
+    return err;
+}
+
+/* check in advance if the incoming list variable is supposed to
+   hold a fold variable in last place */
+
+static int peek_foldvar (gretl_bundle *bparm, int *fvar)
+{
+    int ival, err = 0;
+
+    if (get_optional_int(bparm, "foldvar", &ival, &err) && ival != 0) {
+	*fvar = 1;
     }
 
     return err;
@@ -2616,15 +2704,29 @@ static int svm_predict_main (const int *list,
     return err;
 }
 
-static int sv_trim_missing (const int *list, DATASET *dset)
+static int sv_trim_missing (int *list, int fvar, DATASET *dset)
 {
     int t1 = dset->t1;
     int t2 = dset->t2;
     int T, nmiss = 0;
     int err = 0;
 
+    if (fvar) {
+	/* Temporary adjustment, since we don't require that
+	   the folds variable (in last place) has valid values
+	   at _all_ observations, but only in the traning set;
+	   and we'll check for that later.
+	*/
+	list[0] -= 1;
+    }
+
     list_adjust_sample(list, &t1, &t2, dset, &nmiss);
     T = t2 - t1 + 1 - nmiss;
+
+    if (fvar) {
+	/* reset to the original value */
+	list[0] += 1;
+    }
 
     if (T < sample_size(dset)) {
 	/* we can't handle NAs for the dependent variable within the
@@ -2671,6 +2773,7 @@ int gretl_svm_predict (const int *list,
     PRN *prn = inprn;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int fvar = 0, lmin = 2;
     int T, err = 0;
 
 #ifdef HAVE_MPI
@@ -2679,12 +2782,19 @@ int gretl_svm_predict (const int *list,
     }
 #endif
 
+    err = peek_foldvar(bparams, &fvar);
+    if (err) {
+	return err;
+    } else if (fvar) {
+	lmin = 3;
+    }
+
     /* general checking and initialization */
-    if (list == NULL || list[0] < 2) {
+    if (list == NULL || list[0] < lmin) {
 	gretl_errmsg_set("svm: invalid list argument");
 	err = E_INVARG;
     } else {
-	err = sv_trim_missing(list, dset);
+	err = sv_trim_missing((int *) list, fvar, dset);
 	if (!err) {
 	    sv_wrapper_init(&wrap, dset);
 	    err = read_params_bundle(bparams, bmodel, &wrap, &parm,
@@ -2749,7 +2859,7 @@ int gretl_svm_predict (const int *list,
     }
 
     if (!err && (wrap.flags & W_SEARCH)) {
-	err = do_search_prep(prob, &parm, &wrap, prn);
+	err = do_search_prep(prob, &parm, &wrap, dset, prn);
     }
 
     if (err) {
