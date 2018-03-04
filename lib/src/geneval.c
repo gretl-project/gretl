@@ -8699,6 +8699,17 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *get_bundle_keys (NODE *n, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL) {
+	ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
+    }
+
+    return ret;
+}
+
 static const char *optional_bundle_get (gretl_bundle *b,
 					const char *key,
 					double *px,
@@ -14270,6 +14281,13 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, BUNDLE, l, p);
 	}
 	break;
+    case F_GETKEYS:
+	if (l->t == BUNDLE) {
+	    ret = get_bundle_keys(l, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
+	break;	
     case DBMEMB:
 	/* name of $ bundle plus string */
 	if ((l->t == DBUNDLE || l->t == BUNDLE) && r->t == STR) {

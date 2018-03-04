@@ -481,6 +481,7 @@ struct str_table funcs[] = {
     { F_GETINFO,   "getinfo" },
     { F_CDUMIFY,   "cdummify" },
     { F_SVM,       "svm" },
+    { F_GETKEYS,   "getkeys" },
     { 0,           NULL }
 };
 
