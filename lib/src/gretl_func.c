@@ -5607,6 +5607,9 @@ static int check_func_name (const char *name, ufunc **pfun,
 	err = 1;
     } else if (gretl_reserved_word(name)) {
 	err = 1;
+    } else if (function_lookup(name)) {
+	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"), name);
+	err = 1;
     } else if (gretl_is_user_var(name)) {
 	gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);
 	err = 1;
