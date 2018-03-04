@@ -218,26 +218,40 @@ static void set_sv_parm_defaults (sv_parm *parm)
     parm->probability = 0;     /* do probability estimates */
 }
 
+static struct sv_parm_info pinfo[N_PARMS] = {
+    { "svm_type",     GRETL_TYPE_INT },
+    { "kernel_type",  GRETL_TYPE_INT },
+    { "degree",       GRETL_TYPE_INT },
+    { "gamma",        GRETL_TYPE_DOUBLE },
+    { "coef0",        GRETL_TYPE_DOUBLE },
+    { "cachesize",    GRETL_TYPE_DOUBLE },
+    { "toler",        GRETL_TYPE_DOUBLE },
+    { "C",            GRETL_TYPE_DOUBLE },
+    { "nr_weight",    GRETL_TYPE_INT },
+    { "weight_label", GRETL_TYPE_SERIES },
+    { "weight",       GRETL_TYPE_SERIES },
+    { "nu",           GRETL_TYPE_DOUBLE },
+    { "epsilon",      GRETL_TYPE_DOUBLE },
+    { "shrinking",    GRETL_TYPE_BOOL },
+    { "probability",  GRETL_TYPE_BOOL }
+};
+
+static int is_sv_parm (const char *s)
+{
+    int i;
+
+    for (i=0; i<N_PARMS; i++) {
+	if (!strcmp(s, pinfo[i].key)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 				 int store, PRN *prn)
 {
-    struct sv_parm_info pinfo[N_PARMS] = {
-	{ "svm_type",     GRETL_TYPE_INT },
-	{ "kernel_type",  GRETL_TYPE_INT },
-	{ "degree",       GRETL_TYPE_INT },
-	{ "gamma",        GRETL_TYPE_DOUBLE },
-	{ "coef0",        GRETL_TYPE_DOUBLE },
-	{ "cachesize",    GRETL_TYPE_DOUBLE },
-	{ "toler",        GRETL_TYPE_DOUBLE },
-	{ "C",            GRETL_TYPE_DOUBLE },
-	{ "nr_weight",    GRETL_TYPE_INT },
-	{ "weight_label", GRETL_TYPE_SERIES },
-	{ "weight",       GRETL_TYPE_SERIES },
-	{ "nu",           GRETL_TYPE_DOUBLE },
-	{ "epsilon",      GRETL_TYPE_DOUBLE },
-	{ "shrinking",    GRETL_TYPE_BOOL },
-	{ "probability",  GRETL_TYPE_BOOL }
-    };
     void *elem[N_PARMS] = {
 	&parm->svm_type,
 	&parm->kernel_type,
@@ -1326,7 +1340,7 @@ static void custom_xvalidate (const sv_data *prob,
 		k++;
 	    }
 	}
-	
+
 	/* train on the given subsample */
 	submodel = svm_train(&subprob, parm);
 
@@ -2228,6 +2242,49 @@ static int get_optional_int (gretl_bundle *b, const char *key,
     }
 }
 
+static int is_w_parm (const char *s)
+{
+    const char *wparms[] = {
+	"loadmod", "scaling", "predict", "n_train",
+	"folds", "seed", "quiet", "search",
+	"foldvar", "consecutive", "yscale",
+	"search_only", "grid", "ranges_outfile",
+	"data_outfile", "ranges_infile", "model_outfile",
+	"model_infile", "plot", "range_format", NULL
+    };
+    int i;
+
+    for (i=0; wparms[i] != NULL; i++) {
+	if (!strcmp(s, wparms[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int check_user_params (gretl_array *A)
+{
+    char **pstrs;
+    int i, np, err = 0;
+
+    pstrs = gretl_array_get_strings(A, &np);
+    if (pstrs == NULL) {
+	return 0; /* ? */
+    }
+
+    for (i=0; i<np; i++) {
+	if (!is_w_parm(pstrs[i]) && !is_sv_parm(pstrs[i])) {
+	    gretl_errmsg_sprintf("Unrecognized parameter '%s'",
+				 pstrs[i]);
+	    err = E_BADOPT;
+	    break;
+	}
+    }
+
+    return err;
+}
+
 static int read_params_bundle (gretl_bundle *bparm,
 			       gretl_bundle *bmod,
 			       sv_wrapper *wrap,
@@ -2236,8 +2293,19 @@ static int read_params_bundle (gretl_bundle *bparm,
 			       const DATASET *dset,
 			       PRN *prn)
 {
+    gretl_array *A;
     int no_savemod = 0;
     int ival, err = 0;
+
+    /* got any bad keys in @bparm? */
+    A = gretl_bundle_get_keys(bparm, NULL);
+    if (A != NULL) {
+	err = check_user_params(A);
+	gretl_array_destroy(A);
+	if (err) {
+	    return err;
+	}
+    }
 
     /* start by reading some info that's not included in
        the libsvm @parm struct
@@ -2324,7 +2392,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "consecutive", &ival, &err) && ival != 0) {
 	wrap->flags |= W_CONSEC;
-    }    
+    }
 
     if (get_optional_int(bparm, "yscale", &ival, &err) && ival != 0) {
 	wrap->flags |= W_YSCALE;
@@ -2743,7 +2811,7 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
 		    t1+1, t2+1, sample_size(dset) - T);
 	}
     }
-    
+
     if (!err) {
 	if (T > list[0]) {
 	    dset->t1 = t1;
