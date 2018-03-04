@@ -1298,7 +1298,7 @@ static void custom_xvalidate (const sv_data *prob,
 	struct svm_model *submodel;
 	double *tmp = NULL;
 	int jmin = 0, jmax = 0;
-	int j, k, cond;
+	int j, k, useobs;
 
 	vi = i + 1;
 	ni = w->fsize[vi];
@@ -1308,9 +1308,7 @@ static void custom_xvalidate (const sv_data *prob,
 
 	if (w->flags & W_CONSEC) {
 	    /* find start and end points for fold */
-	    for (k=0; k<i; k++) {
-		jmin += w->fsize[k+1];
-	    }
+	    jmin = i * w->fsize[1];
 	    jmax = jmin + ni;
 	}
 
@@ -1318,11 +1316,11 @@ static void custom_xvalidate (const sv_data *prob,
 	k = 0;
 	for (j=0; j<prob->l; j++) {
 	    if (w->flags & W_CONSEC) {
-		cond = j < jmin || j >= jmax;
+		useobs = j < jmin || j >= jmax;
 	    } else {
-		cond = w->flist[j+1] != vi;
+		useobs = w->flist[j+1] != vi;
 	    }
-	    if (cond) {
+	    if (useobs) {
 		subprob.x[k] = prob->x[j];
 		subprob.y[k] = prob->y[j];
 		k++;
