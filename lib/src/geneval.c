@@ -15347,35 +15347,6 @@ int parser_char_index (parser *p, int c)
     return -1;
 }
 
-/* Look ahead to the next non-space character in the
-   parser stream and return it; if @skip then start at
-   offset 1 beyond the current p->point.
-*/
-
-int parser_next_nonspace_char (parser *p, int skip)
-{
-    int i, offset = skip ? 1 : 0;
-
-    if (*p->point == '\0') {
-	return 0;
-    }
-
-    for (i=offset; p->point[i] != '\0'; i++) {
-	if (!isspace(p->point[i])) {
-	    return p->point[i];
-	}
-    }
-
-    return 0;
-}
-
-/* gets the next character in the input stream */
-
-int parser_next_char (parser *p)
-{
-    return p->point[0];
-}
-
 /* For error reporting: print the input up to the current
    parse point, unless it's not valid UTF-8. Return 0
    if the input is printed OK, otherwise non-zero.

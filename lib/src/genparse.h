@@ -707,7 +707,6 @@ int parser_getc (parser *p);
 void parser_ungetc (parser *p);
 void parser_advance (parser *p, int n);
 int parser_char_index (parser *p, int c);
-int parser_next_nonspace_char (parser *p, int skip);
 int parser_print_input (parser *p);
 void lex (parser *s);
 NODE *powterm (parser *p, NODE *l);
