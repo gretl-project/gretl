@@ -1297,7 +1297,7 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
 }
 
 /* for comparison against alternative loglik algorithms */
-#define BFGS_TIME 0
+#define BFGS_TIME 1
 
 static int kalman_arma (double *coeff, const DATASET *dset,
 			arma_info *ainfo, MODEL *pmod,
