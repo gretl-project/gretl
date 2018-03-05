@@ -1300,6 +1300,7 @@ static void custom_xvalidate (const sv_data *prob,
 			      double *targ)
 {
     int do_probs = 0;
+    int nprob = 0;
     int i, vi, ni;
 
     if (parm->probability &&
@@ -1345,7 +1346,8 @@ static void custom_xvalidate (const sv_data *prob,
 	submodel = svm_train(&subprob, parm);
 
 	if (do_probs) {
-	    tmp = malloc(svm_get_nr_class(submodel) * sizeof(double));
+	    nprob = svm_get_nr_class(submodel);
+	    tmp = malloc(nprob * sizeof(double));
 	}
 
 	/* predict on the complementary subsample (fold i only) */
@@ -1370,6 +1372,9 @@ static void custom_xvalidate (const sv_data *prob,
 	}
 
 	if (do_probs) {
+	    /* The @tmp values seem to be per-class probabilities,
+	       which sum to 1.0. Now what do we do with them?
+	    */
 	    free(tmp);
 	}
 
