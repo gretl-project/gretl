@@ -1266,7 +1266,7 @@ static void look_up_word (const char *s, parser *p)
 	    s, p->ch, parser_next_char(p, 0));
 #endif
 
-    /* is the next non-space character left paren? */
+    /* is the next (or next non-space) character left paren? */
     lpnext = p->ch == '(' || (p->ch == ' ' && parser_next_char(p, 0) == '(');
 
     /* initialize */
@@ -1275,7 +1275,8 @@ static void look_up_word (const char *s, parser *p)
     /* In a function call the function identifier must be
        followed by left parenthesis, and there are few
        other cases where left-paren is OK following an
-       identifier.
+       identifier, so we favour function lookup if @lpnext
+       is non-zero.
     */
     if (lpnext) {
 	p->sym = function_lookup_with_alias(s, p);

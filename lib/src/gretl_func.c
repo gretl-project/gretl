@@ -1211,7 +1211,7 @@ ufunc *get_user_function_by_name (const char *name)
 
 /**
  * get_function_from_package:
- * @funname: name if fuction to retrieve.
+ * @funname: name of function to retrieve.
  * @pkg: function package.
  *
  * Returns: pointer to a user-function, if there exists a
