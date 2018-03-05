@@ -91,6 +91,27 @@ double get_date_x (int pd, const char *obs)
     return x;
 }
 
+static void namespace_check (const char *vname)
+{
+    const char *execname = NULL;
+    int warn = 1;
+
+    current_function_info(&execname, NULL);
+    if (execname != NULL && !strcmp(execname, vname)) {
+	/* We don't issue a warning if @vname is the name of
+	   a variable inside a function of the same name. That
+	   should be harmless unless the function is used
+	   recursively.
+	*/
+	warn = 0;
+    }
+
+    if (warn) {
+	gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
+			      vname);
+    }
+}
+
 /**
  * check_varname:
  * @varname: putative name for variable (or object).
@@ -120,8 +141,7 @@ int check_varname (const char *varname)
 	testchar = *varname;
         err = E_DATA;
     } else if (get_user_function_by_name(varname)) {
-	gretl_warnmsg_sprintf(_("'%s': masks a function of the same name"),
-			      varname);
+	namespace_check(varname);
     } else {
 	const char *p = varname;
 
