@@ -255,7 +255,7 @@ int function_from_string (const char *s)
     return 0;
 }
 
-static const char *extra_reswords[] = {
+static const char *reswords[] = {
     /* constants */
     "const",
     "NA",
@@ -288,17 +288,14 @@ static const char *extra_reswords[] = {
 
 int gretl_reserved_word (const char *str)
 {
-    static int n = sizeof extra_reswords / sizeof extra_reswords[0];
+    static int n = sizeof reswords / sizeof reswords[0];
     int i, ret = gretl_command_number(str);
 
-#if 0 /* don't reserve names of built-in functions? */
-    if (!ret) {
-	ret = function_lookup(str);
-    }
-#endif
+    /* the names of built-in functions are deliberately
+       not reserved */
 
     for (i=0; i<n && !ret; i++) {
-	if (!strcmp(str, extra_reswords[i])) {
+	if (!strcmp(str, reswords[i])) {
 	    ret = 1;
 	}
     }
