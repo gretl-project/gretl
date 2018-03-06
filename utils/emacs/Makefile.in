@@ -1,6 +1,6 @@
 topsrc = @top_srcdir@
 elsrc = $(topsrc)/utils/emacs
-MKLANG = ../../gui2/mklang
+MKLANG = ../../gui/mklang
 
 EMACS = $(shell which emacs)
 EPREFIX = $(shell dirname $(EMACS))
