@@ -2676,7 +2676,7 @@ static int svm_predict_main (const int *list,
 
     gui_mode = gretl_in_gui_mode();
 
-    if (!err && wrap->data_outfile != NULL && wrap->rank == 0) {
+    if (!err && wrap->data_outfile != NULL && wrap->rank <= 0) {
 	err = write_problem(prob1, wrap);
 	report_result(err, prn);
     }
