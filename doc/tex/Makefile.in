@@ -28,6 +28,7 @@ ALTPKGBOOK = pkgbook-a4.pdf
 ALTMPIDOC = gretl-mpi-a4.pdf
 ALTMIDASDOC = midas-gretl-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
+SVMDOC = gretl-svm.pdf
 
 TEXSRC = cli.tex \
 	criteria.tex \
@@ -98,7 +99,8 @@ TEXSRC = cli.tex \
 	hp-further.tex \
 	hp-reference.tex \
 	pkgbook.tex \
-	midas-gretl.tex
+	midas-gretl.tex \
+	gretl-svm.tex
 
 BIBSRC = gretl.bib gretl.bst
 
@@ -144,6 +146,12 @@ $(MPIDOC): gretl-mpi.tex links date.tex $(STYSRC)
 $(MIDASDOC): midas-gretl.tex links date.tex $(STYSRC)
 	pdflatex $<
 	bibtex midas-gretl
+	pdflatex $<
+	pdflatex $<
+
+$(SVMDOC): gretl-svm.tex links $(STYSRC)
+	pdflatex $<
+	bibtex gretl-svm
 	pdflatex $<
 	pdflatex $<
 
@@ -204,6 +212,9 @@ gretl-mpi.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 midas-gretl.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+
+gretl-svm.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
 gretl-keys.tex:
