@@ -84,6 +84,8 @@ struct sv_wrapper_ {
     sv_grid *grid;
     char *plot;
     gretl_matrix *xdata;
+    gretl_matrix *Ptrain;
+    gretl_matrix *Ptest;
     int *flist;
     int *fsize;
     unsigned seed;
@@ -158,6 +160,8 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->grid = NULL;
     w->plot = NULL;
     w->xdata = NULL;
+    w->Ptrain = NULL;
+    w->Ptest = NULL;
     w->flist = NULL;
     w->fsize = NULL;
     w->seed = time(NULL);
@@ -174,6 +178,8 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->grid);
     free(w->plot);
     gretl_matrix_free(w->xdata);
+    gretl_matrix_free(w->Ptrain);
+    gretl_matrix_free(w->Ptest);
     free(w->flist);
     free(w->fsize);
 }
@@ -553,6 +559,21 @@ static void save_results_to_bundle (const sv_parm *parm,
 	gretl_bundle_donate_data(b, "xvalid_results", w->xdata,
 				 GRETL_TYPE_MATRIX, 0);
 	w->xdata = NULL;
+    }
+}
+
+static void save_probs_to_bundle (sv_wrapper *w,
+				  gretl_bundle *b)
+{
+    if (w->Ptrain != NULL) {
+	gretl_bundle_donate_data(b, "Ptrain", w->Ptrain,
+				 GRETL_TYPE_MATRIX, 0);
+	w->Ptrain = NULL;
+    }
+    if (w->Ptest != NULL) {
+	gretl_bundle_donate_data(b, "Ptest", w->Ptest,
+				 GRETL_TYPE_MATRIX, 0);
+	w->Ptest = NULL;
     }
 }
 
@@ -1171,6 +1192,50 @@ static int sv_data_fill (sv_data *prob,
     return 0;
 }
 
+static gretl_matrix *get_probs_matrix (sv_wrapper *w,
+				       sv_model *model,
+				       int training)
+{
+    gretl_matrix **targ;
+    int nc = model->nr_class;
+    int T, pt1 = 0, pt2 = 0;
+
+    if (training) {
+	targ = &w->Ptrain;
+	pt1 = w->t1;
+	pt2 = w->t2_train;
+    } else {
+	targ = &w->Ptest;
+	pt1 = w->t2_train + 1;
+	pt2 = w->t2;
+    }
+
+    T = pt2 - pt1 + 1;
+    *targ = gretl_matrix_alloc(T, nc);
+    if (*targ == NULL) {
+	return NULL;
+    }
+
+    gretl_matrix_set_t1(*targ, pt1);
+    gretl_matrix_set_t2(*targ, pt2);
+
+    if (model->label != NULL) {
+	char **S = strings_array_new(nc);
+	char labnum[32];
+	int i;
+
+	if (S != NULL) {
+	    for (i=0; i<nc; i++) {
+		sprintf(labnum, "%d", model->label[i]);
+		S[i] = gretl_strdup(labnum);
+	    }
+	    gretl_matrix_set_colnames(*targ, S);
+	}
+    }
+
+    return *targ;
+}
+
 static int real_svm_predict (double *yhat,
 			     sv_data *prob,
 			     sv_wrapper *w,
@@ -1190,7 +1255,7 @@ static int real_svm_predict (double *yhat,
     double dev, yhi, yi;
     double *pi = NULL;
     sv_cell *x;
-    int i, j;
+    int i, j, err = 0;
 
     if (model->param.svm_type == EPSILON_SVR ||
 	model->param.svm_type == NU_SVR) {
@@ -1208,14 +1273,25 @@ static int real_svm_predict (double *yhat,
     if (model->param.probability) {
 	if (model->probA != NULL) {
 	    nr_class = svm_get_nr_class(model);
-	    P = gretl_matrix_alloc(prob->l, nr_class);
-	    pi = malloc(nr_class * sizeof *pi);
-	    fprintf(stderr, "*** real_svm_predict, doing probability\n");
-	    w->do_probs = 1;
+	    P = get_probs_matrix(w, model, training);
+	    if (P == NULL) {
+		err = E_ALLOC;
+	    } else {
+		pi = malloc(nr_class * sizeof *pi);
+		w->do_probs = 1;
+	    }
 	} else {
 	    fprintf(stderr, "probability requested but no probA!\n");
 	    w->do_probs = 0;
 	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (w->do_probs && w->seed != 0) {
+	srand(w->seed);
     }
 
     pprintf(prn, "Calling prediction function (this may take a while)\n");
@@ -1247,9 +1323,7 @@ static int real_svm_predict (double *yhat,
 	}
     }
 
-    if (P != NULL) {
-	gretl_matrix_print(P, "Probs, from svm_predict_probability");
-	gretl_matrix_free(P); /* FIXME return this to user */
+    if (pi != NULL) {
 	free(pi);
     }
 
@@ -2756,7 +2830,10 @@ static int svm_predict_main (const int *list,
 	int training = (wrap->t2_train > 0);
 	int T_os = -1;
 
-	real_svm_predict(yhat, prob1, wrap, model, training, dset, prn);
+	err = real_svm_predict(yhat, prob1, wrap, model, training, dset, prn);
+	if (err) {
+	    goto bailout;
+	}
 	*yhat_written = 1;
 	dset->t2 = wrap->t2;
 	if (training && wrap->predict > 1) {
@@ -2777,10 +2854,12 @@ static int svm_predict_main (const int *list,
 	    }
 	    if (!err) {
 		sv_data_fill(prob2, x_space2, wrap, list, dset, 2);
-		real_svm_predict(yhat, prob2, wrap, model, 0, dset, prn);
+		err = real_svm_predict(yhat, prob2, wrap, model, 0, dset, prn);
 	    }
 	}
     }
+
+ bailout:
 
     gretl_sv_data_destroy(prob2, x_space2);
     if (wrap->flags & W_LOADMOD) {
@@ -2850,6 +2929,7 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
 int gretl_svm_driver (const int *list,
 		      gretl_bundle *bparams,
 		      gretl_bundle *bmodel,
+		      gretl_bundle *bmats,
 		      double *yhat,
 		      int *yhat_written,
 		      DATASET *dset,
@@ -2987,6 +3067,10 @@ int gretl_svm_driver (const int *list,
 #endif
 
  getout:
+
+    if (!err && bmats != NULL) {
+	save_probs_to_bundle(&wrap, bmats);
+    }
 
     gretl_sv_data_destroy(prob, x_space);
     svm_destroy_param(&parm);

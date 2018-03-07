@@ -8797,52 +8797,89 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *svm_driver_node (NODE *l, NODE *m, NODE *r, parser *p)
+static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
-    NODE *ret = aux_series_node(p);
+    gretl_bundle *b = NULL;
+
+    if (n->t == BUNDLE) {
+	b = n->v.b;
+    } else if (n->t == U_ADDR) {
+	n = n->v.b1.b;
+	if (n->t != BUNDLE) {
+	    p->err = E_TYPES;
+	} else {
+	    b = n->v.b;
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+
+    return b;
+}
+
+static NODE *svm_driver_node (NODE *t, parser *p)
+{
+    NODE *save_aux = p->aux;
+    NODE *n = t->v.b1.b;
+    NODE *e, *ret = NULL;
+    int *list = NULL;
+    gretl_bundle *bparm = NULL;
+    gretl_bundle *bmod = NULL;
+    gretl_bundle *bmats = NULL;
+    int i, k = n->v.bn.n_nodes;
 
 #ifndef HAVE_LIBSVM
     gretl_errmsg_set(_("Libsvm is not supported"));
     p->err = E_DATA;
 #else
-    if (ret != NULL) {
-	gretl_bundle *rbundle = NULL;
+    if (k < 2 || k > 4) {
+	n_args_error(k, 2, F_SVM, p);
+    }
 
-	if (!null_or_empty(r)) {
-	    /* we should have a bundle pointer on the right */
-	    if (r->t == U_ADDR) {
-		r = r->v.b1.b;
-		if (r->t == BUNDLE) {
-		    rbundle = r->v.b;
-		} else {
-		    p->err = E_INVARG;
-		}
-	    } else {
-		p->err = E_INVARG;
+    for (i=0; i<k && !p->err; i++) {
+	e = eval(n->v.bn.n[i], p);
+	if (i == 0) {
+	    list = node_get_list(e, p);
+	} else if (i == 1) {
+	    bparm = node_get_bundle(e, p);
+	} else if (i == 2) {
+	    if (!null_or_empty(e)) {
+		bmod = node_get_bundle(e, p);
 	    }
-	}
-
-	if (!p->err) {
-	    int (*pfunc) (const int *, gretl_bundle *,
-			  gretl_bundle *, double *,
-			  int *, DATASET *, PRN *);
-	    int got_yhat = 0;
-
-	    pfunc = get_plugin_function("gretl_svm_driver");
-	    if (pfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		p->err = pfunc(l->v.ivec, m->v.b, rbundle, ret->v.xvec,
-			       &got_yhat, p->dset, p->prn);
-		if (!p->err && !got_yhat) {
-		    /* change the return type to scalar NA */
-		    free(ret->v.xvec);
-		    ret->t = NUM;
-		    ret->v.xval = NADBL;
-		}
+	} else {
+	    if (!null_or_empty(e)) {
+		bmats = node_get_bundle(e, p);
 	    }
 	}
     }
+
+    if (!p->err) {
+	reset_p_aux(p, save_aux);
+	ret = aux_series_node(p);
+    }
+
+    if (ret != NULL) {
+	int (*pfunc) (const int *, gretl_bundle *,
+		      gretl_bundle *, gretl_bundle *,
+		      double *, int *, DATASET *, PRN *);
+	int got_yhat = 0;
+
+	pfunc = get_plugin_function("gretl_svm_driver");
+	if (pfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    p->err = pfunc(list, bparm, bmod, bmats, ret->v.xvec,
+			   &got_yhat, p->dset, p->prn);
+	    if (!p->err && !got_yhat) {
+		/* change the return type to scalar NA */
+		free(ret->v.xvec);
+		ret->t = NUM;
+		ret->v.xval = NADBL;
+	    }
+	}
+    }
+
+    free(list);
 #endif
 
     return ret;
@@ -14302,13 +14339,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = curl_bundle_node(l, p);
 	break;
     case F_SVM:
-	if (l->t == LIST && m->t == BUNDLE) {
-	    ret = svm_driver_node(l, m, r, p);
-	} else if (l->t == LIST) {
-	    node_type_error(t->t, 1, BUNDLE, m, p);
-	} else {
-	    node_type_error(t->t, 0, LIST, l, p);
-	}
+	ret = svm_driver_node(t, p);
 	break;
     case F_TYPESTR:
 	/* numerical type code to string */

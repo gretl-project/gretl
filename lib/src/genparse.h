@@ -435,7 +435,6 @@ enum {
     F_NPCORR,
     F_DAYSPAN,
     F_SMPLSPAN,
-    F_SVM,
     F_FDJAC,
     F_NUMHESS,
     F_STRSPLIT,
@@ -464,6 +463,7 @@ enum {
     F_DEFLIST,
     F_KSETUP,
     F_BFGSCMAX,
+    F_SVM,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
