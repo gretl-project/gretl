@@ -71,6 +71,7 @@ struct sv_wrapper_ {
     int predict;
     int nproc;
     int rank;
+    int do_probs;
     double ymin;
     double ymax;
     gretl_matrix *ranges;
@@ -144,8 +145,9 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->predict = 2;
     w->nproc = 0;
     w->rank = -1;
-    w->ymin = 0;
-    w->ymax = 0;
+    w->do_probs = 0;
+    w->ymin = 0.0;
+    w->ymax = 0.0;
     w->ranges = NULL;
     w->ranges_outfile = NULL;
     w->ranges_infile = NULL;
@@ -1181,7 +1183,6 @@ static int real_svm_predict (double *yhat,
     gretl_matrix *P = NULL;
     int n_correct = 0;
     int regression = 0;
-    int do_probs = 0;
     int nr_class = 0;
     double ymean = 0.0;
     double TSS = 0.0;
@@ -1210,9 +1211,10 @@ static int real_svm_predict (double *yhat,
 	    P = gretl_matrix_alloc(prob->l, nr_class);
 	    pi = malloc(nr_class * sizeof *pi);
 	    fprintf(stderr, "*** real_svm_predict, doing probability\n");
-	    do_probs = 1;
+	    w->do_probs = 1;
 	} else {
 	    fprintf(stderr, "probability requested but no probA!\n");
+	    w->do_probs = 0;
 	}
     }
 
@@ -1220,7 +1222,7 @@ static int real_svm_predict (double *yhat,
     svm_flush(prn);
     for (i=0; i<prob->l; i++) {
 	x = prob->x[i];
-	if (do_probs) {
+	if (w->do_probs) {
 	    yhi = svm_predict_probability(model, x, pi);
 	    for (j=0; j<nr_class; j++) {
 		gretl_matrix_set(P, i, j, pi[j]);
@@ -1248,6 +1250,7 @@ static int real_svm_predict (double *yhat,
     if (P != NULL) {
 	gretl_matrix_print(P, "Probs, from svm_predict_probability");
 	gretl_matrix_free(P); /* FIXME return this to user */
+	free(pi);
     }
 
     datastr = training ? "Training data" : "Test data";
@@ -1399,7 +1402,9 @@ static int xvalidate_once (sv_data *prob,
     if (w->fsize != NULL) {
 	custom_xvalidate(prob, parm, w, targ);
     } else {
-	srand(w->seed);
+	if (w->seed != 0) {
+	    srand(w->seed);
+	}
 	svm_cross_validation(prob, parm, w->nfold, targ);
     }
 
@@ -2318,7 +2323,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "loadmod", &ival, &err)) {
 	if (ival != 0 && bmod == NULL) {
-	    fprintf(stderr, "invalid 'loadmod' arg %d\n", ival);
+	    gretl_errmsg_sprintf("svm: invalid 'loadmod' value %d\n", ival);
 	    err = E_INVARG;
 	} else if (ival != 0) {
 	    wrap->flags |= W_LOADMOD;
@@ -2328,7 +2333,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "scaling", &ival, &err)) {
 	if (ival < 0 || ival > 2) {
-	    fprintf(stderr, "invalid 'scaling' arg %d\n", ival);
+	    gretl_errmsg_sprintf("svm: invalid 'scaling' value %d\n", ival);
 	    err = E_INVARG;
 	} else {
 	    wrap->scaling = ival;
@@ -2337,7 +2342,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "predict", &ival, &err)) {
 	if (ival < 0 || ival > 2) {
-	    fprintf(stderr, "invalid 'predict' arg %d\n", ival);
+	    gretl_errmsg_sprintf("svm: invalid 'predict' value %d\n", ival);
 	    err = E_INVARG;
 	} else {
 	    wrap->predict = ival;
@@ -2347,7 +2352,7 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (get_optional_int(bparm, "n_train", &ival, &err)) {
 	/* number of training observations: this sets a range
 	   starting at the first complete observation in the
-	   incoming sample, which was recorded wrap->t1
+	   incoming sample, which was recorded as wrap->t1
 	*/
 	if (ival != 0) {
 	    int nmax = wrap->t2 - wrap->t1 + 1;
@@ -2365,7 +2370,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 		wrap->t2_train = wrap->t1 + ival - 1;
 		get_obs_string(obs1, wrap->t1, dset);
 		get_obs_string(obs2, wrap->t2_train, dset);
-		pprintf(prn, "n_train = %d; use obs %s to %s for training\n",
+		pprintf(prn, "n_train = %d; use observations %s to %s for training\n",
 			ival, obs1, obs2);
 	    }
 	}
@@ -2373,7 +2378,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "folds", &ival, &err)) {
 	if (ival < 2) {
-	    fprintf(stderr, "invalid 'folds' arg %d\n", ival);
+	    gretl_errmsg_sprintf("svm: invalid 'folds' value %d\n", ival);
 	    err = E_INVARG;
 	} else {
 	    wrap->nfold = ival;
@@ -2730,6 +2735,9 @@ static int svm_predict_main (const int *list,
     if (!err && do_training) {
 	pputs(prn, "Calling training function (this may take a while)\n");
 	svm_flush(prn);
+	if (wrap->do_probs && wrap->seed != 0) {
+	    srand(wrap->seed);
+	}
 	model = svm_train(prob1, parm);
 	if (model == NULL) {
 	    err = E_DATA;
@@ -2945,6 +2953,9 @@ int gretl_svm_driver (const int *list,
 	pputs(prn, "OK\n");
 	/* we're now ready to run a full check on @parm */
 	err = check_svm_params(prob, &parm, prn);
+	if (!err && parm.probability) {
+	    wrap.do_probs = 1;
+	}
     }
 
     if (!err && (wrap.flags & W_SEARCH)) {
