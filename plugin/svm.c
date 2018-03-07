@@ -63,8 +63,8 @@ struct sv_wrapper_ {
     int auto_type;
     int flags;
     int scaling;
-    int orig_t1;
-    int orig_t2;
+    int t1;
+    int t2;
     int t2_train;
     int k;
     int nfold;
@@ -136,14 +136,14 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->auto_type = EPSILON_SVR;
     w->flags = 0;
     w->scaling = 1;
-    w->orig_t1 = dset->t1;
-    w->orig_t2 = dset->t2;
+    w->t1 = dset->t1;
+    w->t2 = dset->t2;
     w->t2_train = 0;
     w->k = 0;
     w->nfold = 0;
     w->predict = 2;
     w->nproc = 0;
-    w->rank = 0;
+    w->rank = -1;
     w->ymin = 0;
     w->ymax = 0;
     w->ranges = NULL;
@@ -1177,15 +1177,19 @@ static int real_svm_predict (double *yhat,
 			     const DATASET *dset,
 			     PRN *prn)
 {
-    const char *label;
+    const char *datastr;
+    gretl_matrix *P = NULL;
     int n_correct = 0;
     int regression = 0;
+    int do_probs = 0;
+    int nr_class = 0;
     double ymean = 0.0;
     double TSS = 0.0;
     double SSR = 0.0;
     double dev, yhi, yi;
+    double *pi = NULL;
     sv_cell *x;
-    int i;
+    int i, j;
 
     if (model->param.svm_type == EPSILON_SVR ||
 	model->param.svm_type == NU_SVR) {
@@ -1200,11 +1204,30 @@ static int real_svm_predict (double *yhat,
 	}
     }
 
+    if (model->param.probability) {
+	if (model->probA != NULL) {
+	    nr_class = svm_get_nr_class(model);
+	    P = gretl_matrix_alloc(prob->l, nr_class);
+	    pi = malloc(nr_class * sizeof *pi);
+	    fprintf(stderr, "*** real_svm_predict, doing probability\n");
+	    do_probs = 1;
+	} else {
+	    fprintf(stderr, "probability requested but no probA!\n");
+	}
+    }
+
     pprintf(prn, "Calling prediction function (this may take a while)\n");
     svm_flush(prn);
     for (i=0; i<prob->l; i++) {
 	x = prob->x[i];
-	yhi = svm_predict(model, x);
+	if (do_probs) {
+	    yhi = svm_predict_probability(model, x, pi);
+	    for (j=0; j<nr_class; j++) {
+		gretl_matrix_set(P, i, j, pi[j]);
+	    }
+	} else {
+	    yhi = svm_predict(model, x);
+	}
 	yi = prob->y[i];
 	if (!regression) {
 	    n_correct += (yhi == yi);
@@ -1222,13 +1245,18 @@ static int real_svm_predict (double *yhat,
 	}
     }
 
-    label = training ? "Training data" : "Test data";
+    if (P != NULL) {
+	gretl_matrix_print(P, "Probs, from svm_predict_probability");
+	gretl_matrix_free(P); /* FIXME return this to user */
+    }
+
+    datastr = training ? "Training data" : "Test data";
 
     if (regression) {
-	pprintf(prn, "%s: MSE = %g, R^2 = %g\n", label,
+	pprintf(prn, "%s: MSE = %g, R^2 = %g\n", datastr,
 		SSR / prob->l, 1.0 - SSR / TSS);
     } else {
-	pprintf(prn, "%s: correct predictions = %d (%.1f percent)\n", label,
+	pprintf(prn, "%s: correct predictions = %d (%.1f percent)\n", datastr,
 		n_correct, 100 * n_correct / (double) prob->l);
     }
 
@@ -1299,19 +1327,11 @@ static void custom_xvalidate (const sv_data *prob,
 			      const sv_wrapper *w,
 			      double *targ)
 {
-    int do_probs = 0;
-    int nprob = 0;
     int i, vi, ni;
-
-    if (parm->probability &&
-	(parm->svm_type == C_SVC || parm->svm_type == NU_SVC)) {
-	do_probs = 1;
-    }
 
     for (i=0; i<w->nfold; i++) {
 	struct svm_problem subprob;
 	struct svm_model *submodel;
-	double *tmp = NULL;
 	int jmin = 0, jmax = 0;
 	int j, k, useobs;
 
@@ -1345,37 +1365,17 @@ static void custom_xvalidate (const sv_data *prob,
 	/* train on the given subsample */
 	submodel = svm_train(&subprob, parm);
 
-	if (do_probs) {
-	    nprob = svm_get_nr_class(submodel);
-	    tmp = malloc(nprob * sizeof(double));
-	}
-
 	/* predict on the complementary subsample (fold i only) */
 	if (w->flags & W_CONSEC) {
 	    for (j=jmin; j<jmax; j++) {
-		if (do_probs) {
-		    targ[j] = svm_predict_probability(submodel, prob->x[j], tmp);
-		} else {
-		    targ[j] = svm_predict(submodel, prob->x[j]);
-		}
+		targ[j] = svm_predict(submodel, prob->x[j]);
 	    }
 	} else {
 	    for (j=0; j<prob->l; j++) {
 		if (w->flist[j+1] == vi) {
-		    if (do_probs) {
-			targ[j] = svm_predict_probability(submodel, prob->x[j], tmp);
-		    } else {
-			targ[j] = svm_predict(submodel, prob->x[j]);
-		    }
+		    targ[j] = svm_predict(submodel, prob->x[j]);
 		}
 	    }
-	}
-
-	if (do_probs) {
-	    /* The @tmp values seem to be per-class probabilities,
-	       which sum to 1.0. Now what do we do with them?
-	    */
-	    free(tmp);
 	}
 
 	svm_free_and_destroy_model(&submodel);
@@ -2346,23 +2346,24 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "n_train", &ival, &err)) {
 	/* number of training observations: this sets a range
-	   starting at the incoming dset->t1, which was recorded
-	   as wrap->orig_t1
+	   starting at the first complete observation in the
+	   incoming sample, which was recorded wrap->t1
 	*/
 	if (ival != 0) {
-	    int nmax = wrap->orig_t2 - wrap->orig_t1 + 1;
+	    int nmax = wrap->t2 - wrap->t1 + 1;
 
 	    if (ival < list[0]) {
 		gretl_errmsg_sprintf("svm: n_train must be at least %d", list[0]);
 		err = E_INVARG;
 	    } else if (ival > nmax) {
-		gretl_errmsg_sprintf("svm: n_train cannot exceed %d", nmax);
+		gretl_errmsg_sprintf("svm: n_train cannot exceed the number of "
+				     "complete observations, %d", nmax);
 		err = E_INVARG;
 	    } else {
 		char obs1[OBSLEN], obs2[OBSLEN];
 
-		wrap->t2_train = wrap->orig_t1 + ival - 1;
-		get_obs_string(obs1, wrap->orig_t1, dset);
+		wrap->t2_train = wrap->t1 + ival - 1;
+		get_obs_string(obs1, wrap->t1, dset);
 		get_obs_string(obs2, wrap->t2_train, dset);
 		pprintf(prn, "n_train = %d; use obs %s to %s for training\n",
 			ival, obs1, obs2);
@@ -2633,12 +2634,21 @@ static int check_svm_params (sv_data *data,
 			     PRN *prn)
 {
     const char *msg = svm_check_parameter(data, parm);
+    int prob_ok;
     int err = 0;
+
+    /* more restrictive than libsvm, for now */
+    prob_ok = parm->svm_type == C_SVC || parm->svm_type == NU_SVC;
 
     pputs(prn, "Checking parameter values... ");
     if (msg != NULL) {
 	pputs(prn, "problem\n");
 	gretl_errmsg_sprintf("svm: %s", msg);
+	err = E_INVARG;
+    } else if (parm->probability && !prob_ok) {
+	pputs(prn, "problem\n");
+	gretl_errmsg_set("svm: probability estimates not supported "
+			 "for this specification");
 	err = E_INVARG;
     } else if (prn != NULL) {
 	pputs(prn, "OK\n");
@@ -2740,7 +2750,7 @@ static int svm_predict_main (const int *list,
 
 	real_svm_predict(yhat, prob1, wrap, model, training, dset, prn);
 	*yhat_written = 1;
-	dset->t2 = wrap->orig_t2;
+	dset->t2 = wrap->t2;
 	if (training && wrap->predict > 1) {
 	    T_os = dset->t2 - wrap->t2_train;
 	}
@@ -2785,7 +2795,7 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
     if (fvar) {
 	/* Temporary adjustment, since we don't require that
 	   the folds variable (in last place) has valid values
-	   at _all_ observations, but only in the traning set;
+	   at _all_ observations, but only in the training set;
 	   and we'll check for that later.
 	*/
 	list[0] -= 1;
@@ -2829,13 +2839,13 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
     return err;
 }
 
-int gretl_svm_predict (const int *list,
-		       gretl_bundle *bparams,
-		       gretl_bundle *bmodel,
-		       double *yhat,
-		       int *yhat_written,
-		       DATASET *dset,
-		       PRN *inprn)
+int gretl_svm_driver (const int *list,
+		      gretl_bundle *bparams,
+		      gretl_bundle *bmodel,
+		      double *yhat,
+		      int *yhat_written,
+		      DATASET *dset,
+		      PRN *inprn)
 {
     sv_parm parm;
     sv_wrapper wrap;
@@ -2853,6 +2863,8 @@ int gretl_svm_predict (const int *list,
     }
 #endif
 
+    /* look ahead to see if we're supposed to be getting
+       a "folds" variable at the end of @list */
     err = peek_foldvar(bparams, &fvar);
     if (err) {
 	return err;
@@ -2865,6 +2877,7 @@ int gretl_svm_predict (const int *list,
 	gretl_errmsg_set("svm: invalid list argument");
 	err = E_INVARG;
     } else {
+	/* adjust the sample range for any NAs fore or aft */
 	err = sv_trim_missing((int *) list, fvar, dset);
 	if (!err) {
 	    sv_wrapper_init(&wrap, dset);
@@ -2873,6 +2886,7 @@ int gretl_svm_predict (const int *list,
 	}
     }
     if (err) {
+	/* restore incoming sample and get out */
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
 	return err;
@@ -2880,13 +2894,16 @@ int gretl_svm_predict (const int *list,
 
 #ifdef HAVE_MPI
     wrap.nproc = gretl_mpi_n_processes();
-    wrap.rank = gretl_mpi_rank();
-    worker_prn = NULL;
-    if (wrap.rank > 0) {
-	/* let root do (almost) all the talking */
-	if (!(wrap.flags & W_QUIET)) {
-	    worker_prn = inprn;
-	    wrap.flags |= W_QUIET;
+    if (wrap.nproc > 1) {
+	/* we're actually in MPI mode */
+	wrap.rank = gretl_mpi_rank();
+	worker_prn = NULL;
+	if (wrap.rank > 0) {
+	    /* let rank 0 do (almost) all the talking */
+	    if (!(wrap.flags & W_QUIET)) {
+		worker_prn = inprn;
+		wrap.flags |= W_QUIET;
+	    }
 	}
     }
 #endif
@@ -2900,6 +2917,7 @@ int gretl_svm_predict (const int *list,
     }
 
     if (wrap.t2_train > 0) {
+	/* adjust sample temporarily */
 	dset->t2 = wrap.t2_train;
     }
     T = sample_size(dset);
@@ -2925,7 +2943,7 @@ int gretl_svm_predict (const int *list,
 	    parm.gamma = 1.0 / wrap.k;
 	}
 	pputs(prn, "OK\n");
-	/* we're now ready to run a check on @parm */
+	/* we're now ready to run a full check on @parm */
 	err = check_svm_params(prob, &parm, prn);
     }
 

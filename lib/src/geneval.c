@@ -8797,7 +8797,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
+static NODE *svm_driver_node (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
@@ -8828,7 +8828,7 @@ static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
 			  int *, DATASET *, PRN *);
 	    int got_yhat = 0;
 
-	    pfunc = get_plugin_function("gretl_svm_predict");
+	    pfunc = get_plugin_function("gretl_svm_driver");
 	    if (pfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
@@ -14303,7 +14303,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SVM:
 	if (l->t == LIST && m->t == BUNDLE) {
-	    ret = svm_predict_node(l, m, r, p);
+	    ret = svm_driver_node(l, m, r, p);
 	} else if (l->t == LIST) {
 	    node_type_error(t->t, 1, BUNDLE, m, p);
 	} else {

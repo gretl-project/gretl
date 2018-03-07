@@ -293,7 +293,7 @@ struct plugin_function_info plugin_functions[] = {
     { "stata_export", P_STATA_EXPORT},
 
     /* libsvm interface */
-    { "gretl_svm_predict", P_SVM},
+    { "gretl_svm_driver", P_SVM},
 
     /* sentinel */
     { NULL, 0 }
