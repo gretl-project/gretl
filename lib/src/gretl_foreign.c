@@ -2536,14 +2536,23 @@ int get_R_function_by_name (const char *name)
     return ret;
 }
 
-/* gretl_R_function_add... : these functions are used to convert from
-   gretl types to R constructs for passing to R functions
+/* gretl_R_function_add... : these functions are used in geneval.c
+   to convert from gretl types to R constructs for passing to R
+   functions
 */
 
 int gretl_R_function_add_scalar (double x)
 {
     current_arg = R_CDR(current_arg);
     R_SETCAR(current_arg, R_ScalarReal(x));
+
+    return 0;
+}
+
+int gretl_R_function_add_string (const char *s)
+{
+    current_arg = R_CDR(current_arg);
+    R_SETCAR(current_arg, R_mkString(s));
 
     return 0;
 }

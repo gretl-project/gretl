@@ -80,6 +80,8 @@ int gretl_R_get_call (const char *name, int argc);
 
 int gretl_R_function_add_scalar (double x);
 
+int gretl_R_function_add_string (const char *s);
+
 int gretl_R_function_add_vector (const double *x, int t1, int t2);
 
 int gretl_R_function_add_matrix (const gretl_matrix *m);

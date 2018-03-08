@@ -8509,6 +8509,8 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	    }
 	} else if (arg->t == MAT) {
 	    p->err = gretl_R_function_add_matrix(arg->v.m);
+	} else if (arg->t == STR) {
+	    p->err = gretl_R_function_add_string(arg->v.str);
 	} else {
 	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
 	    p->err = E_TYPES;
