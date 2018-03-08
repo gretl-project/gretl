@@ -86,6 +86,7 @@ struct sv_wrapper_ {
     gretl_matrix *xdata;
     gretl_matrix *Ptrain;
     gretl_matrix *Ptest;
+    double svr_sigma;
     int *flist;
     int *fsize;
     unsigned seed;
@@ -162,6 +163,7 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->xdata = NULL;
     w->Ptrain = NULL;
     w->Ptest = NULL;
+    w->svr_sigma = NADBL;
     w->flist = NULL;
     w->fsize = NULL;
     w->seed = time(NULL);
@@ -574,6 +576,9 @@ static void save_probs_to_bundle (sv_wrapper *w,
 	gretl_bundle_donate_data(b, "Ptest", w->Ptest,
 				 GRETL_TYPE_MATRIX, 0);
 	w->Ptest = NULL;
+    }
+    if (!na(w->svr_sigma)) {
+	gretl_bundle_set_scalar(b, "svr_sigma", w->svr_sigma);
     }
 }
 
@@ -1249,6 +1254,7 @@ static int real_svm_predict (double *yhat,
     int n_correct = 0;
     int regression = 0;
     int nr_class = 0;
+    int get_sigma = 0;
     double ymean = 0.0;
     double TSS = 0.0;
     double SSR = 0.0;
@@ -1271,7 +1277,13 @@ static int real_svm_predict (double *yhat,
     }
 
     if (model->param.probability) {
-	if (model->probA != NULL) {
+	if (model->probA == NULL) {
+	    fprintf(stderr, "probability requested but no probA!\n");
+	    w->do_probs = 0;
+	} else if (regression) {
+	    get_sigma = training;
+	} else {
+	    /* classification */
 	    nr_class = svm_get_nr_class(model);
 	    P = get_probs_matrix(w, model, training);
 	    if (P == NULL) {
@@ -1280,9 +1292,6 @@ static int real_svm_predict (double *yhat,
 		pi = malloc(nr_class * sizeof *pi);
 		w->do_probs = 1;
 	    }
-	} else {
-	    fprintf(stderr, "probability requested but no probA!\n");
-	    w->do_probs = 0;
 	}
     }
 
@@ -1325,6 +1334,8 @@ static int real_svm_predict (double *yhat,
 
     if (pi != NULL) {
 	free(pi);
+    } else if (get_sigma) {
+	w->svr_sigma = svm_get_svr_probability(model);
     }
 
     datastr = training ? "Training data" : "Test data";
@@ -2716,8 +2727,10 @@ static int check_svm_params (sv_data *data,
     int prob_ok;
     int err = 0;
 
-    /* more restrictive than libsvm, for now */
-    prob_ok = parm->svm_type == C_SVC || parm->svm_type == NU_SVC;
+    prob_ok = parm->svm_type == C_SVC ||
+	parm->svm_type == NU_SVC ||
+	parm->svm_type == EPSILON_SVR ||
+	parm->svm_type == NU_SVR;
 
     pputs(prn, "Checking parameter values... ");
     if (msg != NULL) {
@@ -2929,7 +2942,7 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
 int gretl_svm_driver (const int *list,
 		      gretl_bundle *bparams,
 		      gretl_bundle *bmodel,
-		      gretl_bundle *bmats,
+		      gretl_bundle *bprob,
 		      double *yhat,
 		      int *yhat_written,
 		      DATASET *dset,
@@ -3068,8 +3081,8 @@ int gretl_svm_driver (const int *list,
 
  getout:
 
-    if (!err && bmats != NULL) {
-	save_probs_to_bundle(&wrap, bmats);
+    if (!err && bprob != NULL) {
+	save_probs_to_bundle(&wrap, bprob);
     }
 
     gretl_sv_data_destroy(prob, x_space);
