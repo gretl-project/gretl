@@ -72,7 +72,7 @@ welcome reports from anyone who's willing to test.
 
 The signature of \texttt{svm} is as follows:
 \begin{code}
-series svm(list L, bundle bparms, bundle *bmod[null], bundle *bmats[null])
+series svm(list L, bundle bparms, bundle *bmod[null], bundle *bprob[null])
 \end{code}
 That is, this function returns a series (predictions) and it has two
 required arguments, a list (of series) and a bundle (containing zero
@@ -1121,8 +1121,8 @@ from the foot of the script) and replacing the line
 %
 \begin{code}
 parms.probability = 1
-bundle bmats = null
-yhat_svm = svm(All,parms,,&bmats)
+bundle bprob = null
+yhat_svm = svm(All,parms,,&bprob)
 \end{code}
 (The repeated commas in the argument list for \texttt{svm} indicate
 that we're skipping the optional third argument but supplying the
@@ -1130,9 +1130,18 @@ fourth.) Then, to inspect the probabilities for the testing
 data, one could append to the script:
 %
 \begin{code}
-matrix P = bmats.Ptest
+matrix P = bprob.Ptest
 print P
 \end{code}
+%
+We show below the first few lines output from this variant of
+Listing~\ref{listing:keane}:
+%
+\begin{code}
+matrix P = bprob.Ptest
+print P
+\end{code}
+%
 
 \section{What's missing?}
 \label{sec:missing}
