@@ -1855,7 +1855,12 @@
             <para>
               Weibull (w or W): shape; scale
             </para>
-	  </li> 
+	  </li>
+	  <li>
+            <para>
+              Laplace (l or L): mean; scale
+            </para>
+	  </li>	  
 	  <li>
             <para>
               Generalized Error (E): shape
@@ -1901,6 +1906,8 @@
 	  scale &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} or \texttt{W} &amp; 
 	  shape &amp; scale &amp; --\\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp; 
+	  mean &amp; scale &amp; --\\
 	  Generalized Error &amp; \texttt{E} &amp; 
 	  shape &amp; -- &amp; --\\
 	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp; 
@@ -2384,6 +2391,16 @@
               Poisson (p or P): mean
             </para>
 	  </li>
+	  <li>
+            <para>
+              Laplace (l or L): mean; scale
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Standardized GED (E): shape
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="llll">
 	  \textit{Distribution} &amp; \textsl{c} &amp;
@@ -2399,7 +2416,11 @@
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
 	  $p$ &amp; $n$ \\ 
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
-	  $\lambda$ &amp; -- \\ 
+	  $\lambda$ &amp; -- \\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp; 
+	  mean &amp; scale \\
+	  Standardized GED &amp; \texttt{E} &amp; 
+	  shape &amp; -- \\
 	</tabular>
 	<para>
 	  <seelist>
@@ -3642,7 +3663,20 @@
 	  saved under its own name).
 	</para>
       </description>
-    </function>    
+    </function>
+
+    <function name="getkeys" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns an array of strings holding the keys identifying the
+	  contents of <argname>b</argname>. If the bundle is empty an
+	  empty array is returned.
+	</para>
+      </description>
+    </function>
 
     <function name="getline" section="strings" output="scalar">
       <fnargs>
@@ -4361,6 +4395,11 @@
 	  </li>
 	  <li>
             <para>
+              Laplace (l or L): mean; scale
+            </para>
+	  </li>
+	  <li>
+            <para>
               Standardized GED (E): shape
             </para>
 	  </li>
@@ -4397,7 +4436,9 @@
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
 	  $p$ &amp; $n$  &amp; -- \\
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp;
-          $\lambda$ &amp; --  &amp; -- \\ 
+          $\lambda$ &amp; --  &amp; -- \\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
+          mean &amp; scale  &amp; -- \\
 	  Standardized GED &amp; \texttt{E} &amp; shape &amp; --
 	  &amp; -- \\
 	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp; 
@@ -7083,12 +7124,12 @@
 	  details of the required (scalar) arguments.  The
 	  distributions supported by the <lit>pdf</lit> function are
 	  the normal, Student's <math>t</math>, chi-square,
-	  <math>F</math>, Gamma, Exponential, Weibull, Generalized
-	  Error, Binomial and Poisson. Note that for the Binomial and
-	  the Poisson what's calculated is in fact the probability
-	  mass at the specified point. For Student's <math>t</math>,
-	  chi-square, <math>F</math> the noncentral variants are
-	  supported too.
+	  <math>F</math>, Gamma, Exponential, Weibull, Laplace,
+	  Generalized Error, Binomial and Poisson. Note that for the
+	  Binomial and the Poisson what's calculated is in fact the
+	  probability mass at the specified point. For Student's
+	  <math>t</math>, chi-square, <math>F</math> the noncentral
+	  variants are supported too.
 	</para>
 	<para>
 	  For the normal distribution, see also <fncref targ="dnorm"/>.
@@ -7553,7 +7594,7 @@
 	  The distributions supported by the <lit>pvalue</lit>
 	  function are the standard normal, <math>t</math>, Chi
 	  square, <math>F</math>, gamma, binomial, Poisson,
-	  Exponential, Weibull and Generalized Error.
+	  Exponential, Weibull, Laplace and Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -7965,7 +8006,12 @@
             <para>
               Weibull (w or W): shape, scale
             </para>
-	  </li> 
+	  </li>
+	  <li>
+            <para>
+              Laplace (l or L): mean, scale
+            </para>
+	  </li>	  
 	  <li>
             <para>
               Generalized Error (E): shape
@@ -7995,6 +8041,7 @@
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- &amp; --\\
 	  Exponential &amp; \texttt{exp} &amp; scale &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale &amp; --\\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp; mean &amp; scale &amp; --\\
 	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
 	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2

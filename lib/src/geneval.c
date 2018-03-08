@@ -1403,12 +1403,9 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    *np = 2; /* shape, scale */
 	}
     } else if (d == D_GED) {
-	/* GED: critical values not supported */
-	if (f == F_CRIT) {
-	    err = E_INVARG;
-	} else {
-	    *np = 1; /* shape */
-	}
+	*np = 1; /* shape */
+    } else if (d == D_LAPLACE) {
+	*np = 2; /* mean, scale */
     } else if (d == D_DW) {
 	/* Durbin-Watson: only critical value */
 	if (f == F_CRIT) {

@@ -1468,8 +1468,8 @@ static double poisson_cdf_inverse (int k, double p)
     return x;
 }
 
-static double 
-weibull_critval (double shape, double scale, double rtail)
+static double weibull_critval (double shape, double scale,
+			       double rtail)
 {
     double ret = NADBL;
 
@@ -1547,7 +1547,7 @@ static double weibull_cdf_comp (double shape, double scale, double x)
 /**
  * GED_pdf:
  * @nu: shape parameter.
- * @x: double.
+ * @x: reference value.
  * 
  * Returns: the density function of the Generalized Error distribution
  * with shape parameter @nu at @x, or #NADBL on failure.
@@ -1695,6 +1695,120 @@ double GED_cdf_inverse (double nu, double a)
 	return sgn * pow(x, p) / sd;
     } else {
 	return NADBL;
+    }
+}
+
+/**
+ * laplace_pdf:
+ * @mu: mean.
+ * @b: scale (greater than 0).
+ * @x: reference value.
+ *
+ * Returns: the density function of the Laplace distribution
+ * with mean @mu and scale @b evaluated at @x, or #NADBL on failure.
+ */
+
+double laplace_pdf (double mu, double b, double x)
+{
+    if (b > 0) {
+	return exp(-fabs(x - mu)/b) / (2*b);
+    } else {
+	return NADBL;
+    }
+}
+
+static int laplace_pdf_array (double mu, double b,
+			      double *x, int n)
+{
+    int i, err = 0;
+
+    if (b > 0) {
+	for (i=0; i<n; i++) {
+	    if (!na(x[i])) {
+		x[i] = exp(-fabs(x[i] - mu)/b) / (2*b);
+	    } else {
+		x[i] = NADBL;
+	    }
+	}
+    } else {
+	err = E_DATA;
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * laplace_cdf:
+ * @mu: mean.
+ * @b: scale (greater than 0).
+ * @x: reference value.
+ *
+ * Returns: the CDF of the Laplace distribution
+ * with mean @mu and scale @b evaluated at @x, or #NADBL on failure.
+ */
+
+double laplace_cdf (double mu, double b, double x)
+{
+    if (b > 0) {
+	if (x < mu) {
+	    return 0.5 * exp((x-mu)/b);
+	} else {
+	    return 1 - 0.5 * exp(-(x-mu)/b);
+	}
+    } else {
+	return NADBL;
+    }
+}
+
+/**
+ * laplace_cdf_comp:
+ * @mu: mean.
+ * @b: scale (greater than 0).
+ * @x: reference value.
+ *
+ * Returns: the complement of the CDF of the Laplace distribution
+ * with mean @mu and scale @b evaluated at @x, or #NADBL on failure.
+ */
+
+double laplace_cdf_comp (double mu, double b, double x)
+{
+    if (b > 0) {
+	if (x < mu) {
+	    return 1 - 0.5 * exp((x-mu)/b);
+	} else {
+	    return 0.5 * exp(-(x-mu)/b);
+	}
+    } else {
+	return NADBL;
+    }
+}
+
+/**
+ * laplace_cdf_inverse:
+ * @mu: mean.
+ * @b: scale (greater than 0).
+ * @a: probability.
+ *
+ * Returns: the argument x such that the integral from minus infinity
+ * to @x of the Laplace density with mean @mu and scale @b is
+ * equal to the given probability @a, or #NADBL on failure.
+ */
+
+double laplace_cdf_inverse (double mu, double b, double a)
+{
+    if (b <= 0 || a < 0 || a > 1) {
+	return NADBL;
+    } else if (a == 0.0) {
+	return -1.0 / 0.0;
+    } else if (a == 1.0) {
+	return 1.0 / 0.0;
+    } else {
+	int sgn = a - 0.5 < 0 ? -1 : 1;
+
+	return mu - b*sgn * log(1.0 - 2*fabs(a - 0.5));
     }
 }
 
@@ -2623,6 +2737,7 @@ int dist_code_from_string (const char *s)
 	{ D_WEIBULL,  "w" },
 	{ D_GAMMA,    "g" },
 	{ D_GED,      "e" },
+	{ D_LAPLACE,  "l" },
 	{ D_BETA,     "beta" },
 	{ D_DW,       "d" },
 	{ D_BINORM,   "D" },
@@ -2736,7 +2851,7 @@ static void remember_pvalue_args (const double *p, double x)
 static int pdist_check_input (int dist, const double *parm,
 			      double x)
 {
-    int i, np = 1;
+    int i, np = 1; /* default */
 
     if (na(x)) {
 	return E_MISSDATA;
@@ -2746,7 +2861,8 @@ static int pdist_check_input (int dist, const double *parm,
 	np = 0;
     } else if (dist == D_SNEDECOR || dist == D_GAMMA ||
 	       dist == D_BINOMIAL || dist == D_WEIBULL ||
-	       dist == D_NC_CHISQ || dist == D_NC_T) {
+	       dist == D_NC_CHISQ || dist == D_NC_T ||
+	       dist == D_LAPLACE) {
 	np = 2;
     } else if (dist == D_JOHANSEN || dist == D_BETABIN ||
 	       dist == D_NC_F) {
@@ -2800,6 +2916,8 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
 	y = poisson_cdf_inverse((int) parm[0], a);
     } else if (dist == D_GED) {
 	y = GED_cdf_inverse(parm[0], a);
+    } else if (dist == D_LAPLACE) {
+	y = laplace_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_NC_F) {
 	y = ncf_cdf_inverse(parm[0], parm[1], parm[2], a);
     } else if (dist == D_NC_CHISQ) {
@@ -2847,7 +2965,12 @@ double gretl_get_critval (int dist, const double *parm, double a)
     } else if (dist == D_WEIBULL) {
 	x = weibull_critval(parm[0], parm[1], a);
     } else if (dist == D_EXPON) {
+	/* special case of Weibull */
 	x = weibull_critval(1.0, parm[0], a);
+    } else if (dist == D_GED) {
+	x = GED_cdf_inverse(parm[0], 1-a);
+    } else if (dist == D_LAPLACE) {
+	x = laplace_cdf_inverse(parm[0], parm[1], 1-a);
     }
 
     return x;
@@ -2894,6 +3017,8 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 	y = weibull_cdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
 	y = GED_cdf(parm[0], x);
+    } else if (dist == D_LAPLACE) {
+	y = laplace_cdf(parm[0], parm[1], x);
     } else if (dist == D_NC_CHISQ) {
 	y = nc_chisq_cdf(parm[0], parm[1], x);
     } else if (dist == D_NC_F) {
@@ -2946,6 +3071,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 	y = weibull_pdf(parm[0], parm[1], x);
     } else if (dist == D_GED) {
 	y = GED_pdf(parm[0], x);
+    } else if (dist == D_LAPLACE) {
+	y = laplace_pdf(parm[0], parm[1], x);
     } else if (dist == D_NC_F) {
 	y = ncf_pdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
@@ -3001,6 +3128,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_GED) {
 	err = GED_pdf_array(parm[0], x, n);
+    } else if (dist == D_LAPLACE) {
+	err = laplace_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_NC_F) {
 	err = ncf_pdf_array(parm[0], parm[1], parm[2], x, n);
     } else if (dist == D_NC_T) {
@@ -3051,6 +3180,8 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
 	y = weibull_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_GED) {
 	y = GED_cdf_comp(parm[0], x);
+    } else if (dist == D_LAPLACE) {
+	y = laplace_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_JOHANSEN) {
 	y = johansen_trace_pval((int) parm[0], (int) parm[1], 
 				(int) parm[2], x);
@@ -3213,6 +3344,18 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	    }
 	} else {
 	    err = gretl_rand_GED(x, t1, t2, nu);
+	}
+    } else if (dist == D_LAPLACE) {
+	double mu = parm[0], b = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) mu = vecp1[t];
+		if (vecp2 != NULL) b = vecp1[t];
+		err = gretl_rand_laplace(x, t, t, mu, b);
+	    }
+	} else {
+	    err = gretl_rand_laplace(x, t1, t2, mu, b);
 	}
     } else if (dist == D_BETA) {
 	double shape1 = parm[0], shape2 = parm[1];
@@ -3446,6 +3589,14 @@ void print_pvalue (int dist, const double *parm, double x,
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	pc = GED_cdf(parm[0], x);
+	pprintf(prn, _("(to the left: %g)\n"), pc);
+	break;
+
+    case D_LAPLACE:
+	pprintf(prn, _("Laplace (mean = %g, shape = %g): "), parm[0], parm[1]);
+	err = print_pv_string(x, pv, prn);
+	if (err) return;
+	pc = laplace_cdf(parm[0], parm[1], x);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
