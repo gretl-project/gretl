@@ -8794,6 +8794,8 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+#ifdef HAVE_LIBSVM
+
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
     gretl_bundle *b = NULL;
@@ -8814,21 +8816,24 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
     return b;
 }
 
+#endif
+
 static NODE *svm_driver_node (NODE *t, parser *p)
 {
+#ifndef HAVE_LIBSVM
+    gretl_errmsg_set(_("Libsvm is not supported"));
+    p->err = E_DATA;
+    return NULL;
+#else
     NODE *save_aux = p->aux;
     NODE *n = t->v.b1.b;
     NODE *e, *ret = NULL;
     int *list = NULL;
     gretl_bundle *bparm = NULL;
     gretl_bundle *bmod = NULL;
-    gretl_bundle *bmats = NULL;
+    gretl_bundle *bprob = NULL;
     int i, k = n->v.bn.n_nodes;
-
-#ifndef HAVE_LIBSVM
-    gretl_errmsg_set(_("Libsvm is not supported"));
-    p->err = E_DATA;
-#else
+    
     if (k < 2 || k > 4) {
 	n_args_error(k, 2, F_SVM, p);
     }
@@ -8845,7 +8850,7 @@ static NODE *svm_driver_node (NODE *t, parser *p)
 	    }
 	} else {
 	    if (!null_or_empty(e)) {
-		bmats = node_get_bundle(e, p);
+		bprob = node_get_bundle(e, p);
 	    }
 	}
     }
@@ -8865,7 +8870,7 @@ static NODE *svm_driver_node (NODE *t, parser *p)
 	if (pfunc == NULL) {
 	    p->err = E_FOPEN;
 	} else {
-	    p->err = pfunc(list, bparm, bmod, bmats, ret->v.xvec,
+	    p->err = pfunc(list, bparm, bmod, bprob, ret->v.xvec,
 			   &got_yhat, p->dset, p->prn);
 	    if (!p->err && !got_yhat) {
 		/* change the return type to scalar NA */
@@ -8877,9 +8882,9 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     }
 
     free(list);
-#endif
 
     return ret;
+#endif    
 }
 
 static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
