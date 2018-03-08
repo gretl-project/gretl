@@ -72,15 +72,15 @@ welcome reports from anyone who's willing to test.
 
 The signature of \texttt{svm} is as follows:
 \begin{code}
-series svm(list L, bundle bparms, bundle *bmodel[null])
+series svm(list L, bundle bparms, bundle *bmod[null], bundle *bmats[null])
 \end{code}
 That is, this function returns a series (predictions) and it has two
 required arguments, a list (of series) and a bundle (containing zero
-or more parameter specifications). A third optional argument is a
-``pointer to bundle'': this can be set to \texttt{null} or omitted
-altogether; we illustrate its use below but for now we just note that
-it offers a means of ferrying additional information from
-\texttt{svm} to the user or vice versa.
+or more parameter specifications). The third and fourth arguments take
+the form of ``pointers to bundle''; they are optional, and may be set
+to \texttt{null} or omitted altogether; we illustrate their use below
+but for now we just note that they offer means of ferrying additional
+information from \texttt{svm} to the user or vice versa.
 
 The list argument to \texttt{svm} works like the list argument to
 regression commands in gretl: it should contain the dependent variable
@@ -89,7 +89,7 @@ point in including an intercept (the series \texttt{const} or
 \texttt{0}) in \texttt{L}; it will just be dropped by \textsf{libsvm}.
 
 The \texttt{bparms} bundle may contain quite a number of parameter
-specifications and other options, but most of these have default
+specifications and other options but most of these have default
 values which may be acceptable, in which case you can get by with a
 minimal set.  A listing is given in Table~\ref{tab:options} and usage
 is discussed in section~\ref{sec:options}.
@@ -99,7 +99,7 @@ The workflow for supervised machine learning goes like this:
 \item Gather suitable data and divide them into a training set and a
   testing set.
 \item Build a model using the training data and assess its fit.
-\item Using this model, generate predictions for the test data and
+\item Using this model, generate predictions for the testing data and
   assess the fit.
 \end{enumerate}
 
@@ -115,13 +115,13 @@ sort of basic usage in Scenario 1.
 \label{sec:s1}
 
 Suppose you have an ``integrated'' dataset, comprising $n$ training
-observations followed by $m$ test observations, and this
-dataset is loaded in gretl. You construct a list \texttt{L} as
-described above to pass as the first argument to \texttt{svm}. In the
-simplest case, the only parameter you need include in the bundle to
-pass as the second argument is \texttt{n\_train}, which sets the
-number of observations to use for training (assumed to be at the start
-of the dataset); for example, if you have 5000 training observations,
+observations followed by $m$ testing observations, and this dataset is
+loaded in gretl. You construct a list \texttt{L} as described above to
+pass as the first argument to \texttt{svm}. In the simplest case, the
+only parameter you need include in the bundle to pass as the second
+argument is \texttt{n\_train}, which sets the number of observations
+to use for training (assumed to be at the start of the dataset); for
+example, if you have 5000 training observations,
 \begin{code}
 bundle b = defbundle("n_train", 5000)
 series yhat = svm(L, b)
@@ -801,6 +801,11 @@ reproducible results you can override the execution-time based
 \texttt{rand} seed with an integer \texttt{seed} value specified in
 the parameter bundle passed to \texttt{svm}.
 
+If you wish to invoke the default \textsf{libsvm} handling of random
+folds as described above, specify a \texttt{seed} value of zero in the
+parameter bundle; in that case gretl will not intervene by calling
+\texttt{srand}.
+
 \subsection{More on SV regression}
 \label{sec:svr}
 
@@ -988,21 +993,32 @@ This has an effect only if a two-dimensional ($C, \gamma$) parameter
 search is performed. If \texttt{svm} catches on we have in mind to
 generalize this and make it more convenient.
 
-\section{A classification example}
+\section{Classification via SVM}
 \label{sec:SVC}
 
 The focus of this document has been on regression, but gretl's
-\texttt{svm} function also supports classification (although this is
-less tested). In this section we show a classification example, based
-on the script \texttt{keane.inp} which is supplied with the gretl
+\texttt{svm} function also supports classification. As mentioned
+above, the \texttt{svm} function automatically switches to
+classification mode---by default using $C$-SVC---if the dependent
+variable is marked as ``coded'' using the \texttt{setinfo} command.
+However, the \texttt{svm\_type} switch in the parameter bundle passed
+to \texttt{svm} can be used to force the issue in favor of
+classfication via $C$-SVC (\texttt{svm\_type = 0}) or via $\nu$-SVC
+(\texttt{svm\_type = 1}).
+
+\subsection{Classification example}
+\label{sec:SVC-example}
+
+Listing~\ref{listing:keane} shows an example of classification based
+on the script \texttt{keane.inp}, which is supplied with the gretl
 distribution. The data file is \texttt{keane.gdt} (also supplied), a
-subset of the data used in \cite{keane97}. The script exemplifies
-multinomial logit regression. The dependent variable, \texttt{status},
-encodes the jointly exhaustive states ``in school'' (1), ``at
-home'' (2) and ``in work'' (3); the explanatory variables are years of
-education (\texttt{educ}), years of work experience (\texttt{exper})
-and its square (\texttt{expersq}), and a \texttt{black} dummy
-variable.
+subset of the data used in \cite{keane97}. The original script
+exemplifies multinomial logit regression. The dependent variable,
+\texttt{status}, encodes the jointly exhaustive states ``in school''
+(1), ``at home'' (2) and ``in work'' (3); the explanatory variables
+are years of education (\texttt{educ}), years of work experience
+(\texttt{exper}) and its square (\texttt{expersq}), and a
+\texttt{black} dummy variable.
 
 Listing~\ref{listing:keane} plays $C$-SVC against standard Maximum
 Likelihood estimation. With only 4 covariates and 3 classes
@@ -1045,37 +1061,78 @@ ytest = 84  # test using data from 1984
 list All = status educ exper expersq black
 
 # (1) MLE: multinomial logit
+# restrict to complete observations in training year
 smpl year == ytrain && ok(All) --restrict
 logit status 0 educ exper expersq black --multinomial --quiet
 pcc = 100 * sum(status == $yhat) / $T
 printf "MLE: training percent correct = %.2f (n=%d)\n", pcc, $nobs
+# restrict to complete observations in testing year
 smpl year == ytest && ok(All) --restrict --replace
 matrix X = {const, educ, exper, expersq, black}
 pcc = mnlogit_pc_correct(status, X, $coeff)
 printf "MLE: testing percent correct  = %.2f (n=%d)\n", pcc, $nobs
 
 # (2) SVM: C-SVC
+# sample: all complete observations in the two selected years
 smpl (year==ytrain || year==ytest) && ok(All) --restrict --replace
-list L = status educ exper expersq black
 scalar ntrain = sum(year == ytrain)
 # start with cross validation search using default grid
 bundle parms = defbundle("n_train", ntrain, "search", 1)
 parms.seed = 3211765 # for reproducibility
 parms.quiet = 1
-yhat_svm = svm(L, parms)
+yhat_svm = svm(All, parms)
+# assess fit in training year
 smpl year == ytrain && ok(All) --restrict --replace
 pcc = 100 * sum(status == yhat_svm) / $nobs
 printf "SVM: training percent correct = %.2f (n=%d)\n", pcc, $nobs
+# assess fit in testing year
 smpl year == ytest && ok(All) --restrict --replace
 pcc = 100 * sum(status == yhat_svm) / $nobs
 printf "SVM: testing percent correct  = %.2f (n=%d)\n", pcc, $nobs
 \end{scode}
 \end{script}
 
-So we see a (very slim) predictive advantage for $C$-SVC over
-multinomial logit estimation. Given the paucity of the explanatory
-data it is perhaps surprising that the SVM even equals the MLE
-results.
+So we see a slim predictive advantage for $C$-SVC over multinomial
+logit estimation. Given the paucity of the explanatory data it is
+perhaps surprising that the SVM even equals the MLE results.
+
+\subsection{Obtaining probability estimates}
+\label{sec:SVC-probs}
+
+The default result from prediction via SVC is just the outcome judged
+to be most likely, conditional on the values of the covariates or
+``features'' at each observation. But one can also obtain estimates of
+the probability of each discrete outcome at each observation. This
+takes two moves: including the \texttt{probability} flag in the
+parameter bundle, with a nonzero value, and supplying a
+pointer-to-bundle as the fourth argument to \texttt{svm}: then on
+successful completion this bundle will include matrices
+\texttt{Ptrain} (if prediction over the training range is requested)
+and/or \texttt{Ptest} (if prediction over the testing range is called
+for). Each of these matrices has as many columns as there are
+outcomes, and as many rows as there are observations in the relevant
+range. The column headings identify the outcome values.
+
+In relation to Listing~\ref{listing:keane}, the following
+modifications could be made to generate and inspect the probability
+estimates. First, after the line ``\texttt{parms.quiet = 1}'' (9 lines
+from the foot of the script) and replacing the line
+``\texttt{yhat\_svm = svm(All, parms)}'', insert:
+%
+\begin{code}
+parms.probability = 1
+bundle bmats = null
+yhat_svm = svm(All,parms,,&bmats)
+\end{code}
+(The repeated commas in the argument list for \texttt{svm} indicate
+that we're skipping the optional third argument but supplying the
+fourth.) Then, to inspect the probabilities for the testing
+data, one could append to the script:
+%
+\begin{code}
+matrix P = bmats.Ptest
+print P
+\end{code}
 
 \section{What's missing?}
 \label{sec:missing}
