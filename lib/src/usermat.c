@@ -708,12 +708,26 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	}
     }
 
-    if (S != NULL && S->rows == M->rows && gretl_matrix_is_dated(M)) {
-	int mt1 = gretl_matrix_get_t1(M);
-	int mt2 = gretl_matrix_get_t2(M);
+    if (S != NULL) {
+	/* try transcribing metadata on @M if applicable */
+	if (S->rows == M->rows && gretl_matrix_is_dated(M)) {
+	    int mt1 = gretl_matrix_get_t1(M);
+	    int mt2 = gretl_matrix_get_t2(M);
 
-	gretl_matrix_set_t1(S, mt1);
-	gretl_matrix_set_t2(S, mt2);
+	    gretl_matrix_set_t1(S, mt1);
+	    gretl_matrix_set_t2(S, mt2);
+	}
+	if (S->cols == M->cols) {
+	    const char **cnames = gretl_matrix_get_colnames(M);
+
+	    if (cnames != NULL) {
+		char **cpy = strings_array_dup((char **) cnames, M->cols);
+
+		if (cpy != NULL) {
+		    gretl_matrix_set_colnames(S, cpy);
+		}
+	    }
+	}
     }
 
     return S;
