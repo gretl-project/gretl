@@ -763,13 +763,14 @@ illustrate the most important points covered in this chapter.
 
 Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter}.
 
-\app{Gretl} offers the standard version of the Hodrick-Prescott filter
-natively, via the \cmd{hpfilt()} function. As is well known, the HP
-filter is a two-sided filter: given a time series $x_t$, the estimate
-of the trend $\mu_t$ at some point $t$ uses the future values of $x_t$
-as well as data points from the past. In some cases (for example, for
-forecasting purposes) this is undesirable, and it may be preferable to
-construct $\hat{\mu}_t$ as a function of $x_t, x_{t-1}, \ldots$ only.
+\app{Gretl} offers the standard version of the Hodrick--Prescott
+filter natively, via the \cmd{hpfilt()} function. As is well known,
+the HP filter is a two-sided filter: given a time series $x_t$, the
+estimate of the trend $\mu_t$ at some point $t$ uses the future values
+of $x_t$ as well as data points from the past. In some cases (for
+example, for forecasting purposes) this is undesirable, and it may be
+preferable to construct $\hat{\mu}_t$ as a function of
+$x_t, x_{t-1}, \ldots$ only.
 
 This point was famously made by \cite{stock-watson1999}, who used the
 idea contained in \cite{harvey1993detrending} and defined the
@@ -799,14 +800,13 @@ Therefore, a possible space-state representation is
 \end{eqnarray*}
 and the corresponding code implementing the filter is shown in
 script~\ref{script:oshp}, which also shows an example with the
-``housing starts'' series from the St.~Louis FED database.
+``housing starts'' series from the St.~Louis Fed database.
 
 \begin{script}[htbp]
   \caption{1-sided HP filter}
   \label{script:oshp}
 \begin{scode}
 function series oshpfilt(series y, scalar lambda[0])
-    
     if lambda == 0
         lambda = 100 * $pd^2
     endif
@@ -838,9 +838,8 @@ y = log(houst)
 
 hp1 = oshpfilt(y)
 hp2 = hpfilt(y)
-
-t1 = y - hp1
-t2 = y - hp2
+trend1 = y - hp1
+trend2 = y - hp2
 \end{scode}
 %$
 \end{script}
