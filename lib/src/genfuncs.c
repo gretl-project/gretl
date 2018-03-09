@@ -27,6 +27,8 @@
 #include "gretl_typemap.h"
 #include "gretl_midas.h"
 #include "estim_private.h"
+#include "matrix_extra.h"
+#include "kalman.h"
 #include "../../cephes/cephes.h"
 
 #include <errno.h>
@@ -1335,7 +1337,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 /**
  * panel_shrink:
  * @x: panel-data source series.
- * @dset: data set information.
+ * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
  * Constructs a column vector holding the first non-missing 
@@ -1385,7 +1387,7 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
  * panel_expand:
  * @x: source vector.
  * @y target array.
- * @dset: data set information.
+ * @dset: pointer to dataset.
  * @opt: OPT_X to repeat across individuals instead
  * of across time.
  *
@@ -1442,7 +1444,7 @@ static double default_hp_lambda (const DATASET *dset)
  * hp_filter:
  * @x: array of original data.
  * @hp: array in which filtered series is computed.
- * @dset: data set information.
+ * @dset: pointer to dataset.
  * @lambda: smoothing parameter (or #NADBL to use the default
  * value).
  * @opt: if %OPT_T, return the trend rather than the cycle.
@@ -1477,7 +1479,7 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 
     T = t2 - t1 + 1;
     if (T < 4) {
-	err = E_DATA;
+	err = E_TOOFEW;
 	goto bailout;
     }
 
@@ -1596,6 +1598,144 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 	}
 	free(V);
     }
+
+    return err;
+}
+
+/**
+ * oshp_filter:
+ * @x: array of original data.
+ * @hp: array in which filtered series is computed.
+ * @dset: pointer to dataset.
+ * @lambda: smoothing parameter (or #NADBL to use the default
+ * value).
+ * @opt: if %OPT_T, return the trend rather than the cycle.
+ *
+ * Calculates the "cycle" component of the time series in
+ * array @x, using the a one-sided Hodrick-Prescott filter.
+ * The implementation uses the Kalman filter.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int oshp_filter (const double *x, double *hp, const DATASET *dset,
+		 double lambda, gretlopt opt)
+{
+    int t1 = dset->t1, t2 = dset->t2;
+    gretl_matrix *M[4] = {NULL};
+    gretl_matrix *Lambda = NULL;
+    gretl_matrix *a0 = NULL;
+    gretl_matrix *mu = NULL;
+    gretl_bundle *b = NULL;
+    int copy[4] = {0};
+    int T, t, err, kerr;
+    double mt;
+    
+    for (t=t1; t<=t2; t++) {
+	hp[t] = NADBL;
+    }
+
+    err = series_adjust_sample(x, &t1, &t2);
+    if (err) {
+	return err;
+    }
+
+    T = t2 - t1 + 1;
+    if (T < 4) {
+	return E_TOOFEW;
+    }
+
+    if (na(lambda)) {
+	lambda = default_hp_lambda(dset);
+    }
+
+    /* adjust starting points */
+    x += t1;
+    hp += t1;
+
+    /* begin Kalman filter setup */
+
+    /* obsy */
+    M[0] = gretl_matrix_alloc(T, 1);
+    for (t=0; t<T; t++) {
+	gretl_matrix_set(M[0], t, 0, x[t]);
+    }
+
+    /* obsymat */
+    M[1] = gretl_zero_matrix_new(2, 1);
+    gretl_matrix_set(M[1], 0, 0, 1);
+    
+    /* statemat */
+    M[2] = gretl_zero_matrix_new(2, 2);
+    gretl_matrix_set(M[2], 0, 0, 2);
+    gretl_matrix_set(M[2], 0, 1, -1);
+    gretl_matrix_set(M[2], 1, 0, 1);
+    
+    /* statevar */
+    M[3] = gretl_zero_matrix_new(2, 2);
+    gretl_matrix_set(M[3], 0, 0, 1);
+  
+    b = kalman_bundle_new(M, copy, 4, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    /* obsvar */
+    Lambda = gretl_matrix_from_scalar(lambda);
+    err = gretl_bundle_donate_data(b, "obsvar", Lambda,
+				   GRETL_TYPE_MATRIX, 0);
+    if (err) {
+	goto bailout;
+    }
+	
+    /* inistate */
+    a0 = gretl_matrix_alloc(2, 1);
+    gretl_matrix_set(a0, 0, 0, 2*x[0]-x[1]);
+    gretl_matrix_set(a0, 1, 0, 3*x[0]-2*x[1]);
+    err = gretl_bundle_donate_data(b, "inistate", a0,
+				   GRETL_TYPE_MATRIX, 0); 
+    if (err) {
+	goto bailout;
+    }
+
+#if DEBUG
+    gretl_matrix_print(M[0], "obsy");
+    gretl_matrix_print(M[1], "obsymat");
+    gretl_matrix_print(M[2], "statemat");
+    gretl_matrix_print(M[3], "statevar");
+    gretl_matrix_print(a0, "inistate");
+#endif
+    
+    kerr = kalman_bundle_run(b, NULL, &err);
+    if (err || kerr) {
+	goto bailout;
+    }
+    
+    mu = gretl_bundle_get_matrix(b, "state", &err);
+    if (err) {
+	goto bailout;
+    }
+    
+#if DEBUG
+    printf("kerr = %d, err = %d\n", kerr, err);
+    gretl_matrix_print(mu, "state");
+#endif
+
+    if (opt & OPT_T) {
+	for (t=0; t<T; t++) {
+	    mt = gretl_matrix_get(mu, t, 0);
+	    hp[t] = mt;
+	}
+    } else {
+	for (t=0; t<T; t++) {
+	    mt = gretl_matrix_get(mu, t, 0);
+	    hp[t] = x[t] - mt;
+	}
+    }
+    
+ bailout:
+
+    gretl_bundle_destroy(b);
 
     return err;
 }
