@@ -1197,8 +1197,32 @@ static int sv_data_fill (sv_data *prob,
     return 0;
 }
 
+/* apparatus for sorting labels into ascending order */
+
+struct lsort {
+    int val;
+    int pos;
+};
+
+static int ls_compare (const void *a, const void *b)
+{
+    const struct lsort *pa = a;
+    const struct lsort *pb = b;
+
+    return (pa->val > pb->val) - (pa->val < pb->val);
+}
+
+/* Allocate a matrix (either w->Ptrain or w->Ptest)
+   into which we'll write the per-outcome probabilities.
+   Set the sorted labels as column names for this
+   matrix, and return in location @pls the sorting
+   info that will enable us to write the probabilities
+   into the correct corresponding columns.
+*/
+
 static gretl_matrix *get_probs_matrix (sv_wrapper *w,
 				       sv_model *model,
+				       struct lsort **pls,
 				       int training)
 {
     gretl_matrix **targ;
@@ -1226,15 +1250,23 @@ static gretl_matrix *get_probs_matrix (sv_wrapper *w,
 
     if (model->label != NULL) {
 	char **S = strings_array_new(nc);
-	char labnum[32];
-	int i;
+	struct lsort *ls = malloc(nc * sizeof *ls);
 
-	if (S != NULL) {
+	if (S != NULL && ls != NULL) {
+	    char labnum[32];
+	    int i;
+
 	    for (i=0; i<nc; i++) {
-		sprintf(labnum, "%d", model->label[i]);
+		ls[i].val = model->label[i];
+		ls[i].pos = i;
+	    }
+	    qsort(ls, nc, sizeof *ls, ls_compare);
+	    for (i=0; i<nc; i++) {
+		sprintf(labnum, "%d", ls[i].val);
 		S[i] = gretl_strdup(labnum);
 	    }
 	    gretl_matrix_set_colnames(*targ, S);
+	    *pls = ls;
 	}
     }
 
@@ -1251,6 +1283,7 @@ static int real_svm_predict (double *yhat,
 {
     const char *datastr;
     gretl_matrix *P = NULL;
+    struct lsort *ls = NULL;
     int n_correct = 0;
     int regression = 0;
     int nr_class = 0;
@@ -1285,7 +1318,7 @@ static int real_svm_predict (double *yhat,
 	} else {
 	    /* classification */
 	    nr_class = svm_get_nr_class(model);
-	    P = get_probs_matrix(w, model, training);
+	    P = get_probs_matrix(w, model, &ls, training);
 	    if (P == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -1310,7 +1343,12 @@ static int real_svm_predict (double *yhat,
 	if (w->do_probs) {
 	    yhi = svm_predict_probability(model, x, pi);
 	    for (j=0; j<nr_class; j++) {
-		gretl_matrix_set(P, i, j, pi[j]);
+		if (ls != NULL) {
+		    /* re-order the columns */
+		    gretl_matrix_set(P, i, j, pi[ls[j].pos]);
+		} else {
+		    gretl_matrix_set(P, i, j, pi[j]);
+		}
 	    }
 	} else {
 	    yhi = svm_predict(model, x);
@@ -1334,6 +1372,7 @@ static int real_svm_predict (double *yhat,
 
     if (pi != NULL) {
 	free(pi);
+	free(ls);
     } else if (get_sigma) {
 	w->svr_sigma = svm_get_svr_probability(model);
     }
