@@ -4072,6 +4072,7 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar" optional="true">lambda</fnarg>
+	<fnarg type="bool" optional="true">one-sided</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4080,7 +4081,24 @@
 	  smoothing parameter, <argname>lambda</argname>, is not supplied then
 	  a data-based default is used, namely 100 times the square of the
 	  periodicity (100 for annual data, 1600 for quarterly data, and so
-	  on).  
+	  on).
+	</para>
+	<para>
+	  By default the filter is the usual two-sided version, but if
+	  the optional third argument is given with a non-zero
+	  value a one-sided variant (with no look-ahead) is computed
+	  in the manner of <cite key="stock-watson1999">Stock and
+	  Watson (1999)</cite>.
+	</para>
+	<para>
+	  The most common use of the HP filter is detrending, but if
+	  it's the trend you are interested in that is easily obtained
+	  by subtraction, as in
+	</para>
+	<code>
+	  series hptrend = y - hfilt(y)
+	</code>
+	<para>
 	  <seelist> 
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
