@@ -758,6 +758,93 @@ B.simstart = B.inistate + Z * mnormal(B.r, 1)
 This section presents a selection of short sample scripts to
 illustrate the most important points covered in this chapter.
 
+\subsection{The one-sided HP filter}
+\label{sec:example_oshp}
+
+Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter}.
+
+\app{Gretl} offers the standard version of the Hodrick-Prescott filter
+natively, via the \cmd{hpfilt()} function. As is well known, the HP
+filter is a two-sided filter: given a time series $x_t$, the estimate
+of the trend $\mu_t$ at some point $t$ uses the future values of $x_t$
+as well as data points from the past. In some cases (for example, for
+forecasting purposes) this is undesirable, and it may be preferable to
+construct $\hat{\mu}_t$ as a function of $x_t, x_{t-1}, \ldots$ only.
+
+This point was famously made by \cite{stock-watson1999}, who used the
+idea contained in \cite{harvey1993detrending} and defined the
+one-sided HP filter as the result of filtering a series via the
+following state-space model:
+\begin{eqnarray*}
+  x_t & = & \mu_t + \varepsilon_t \\
+  \Delta^2 \mu_t & = & \eta_t
+\end{eqnarray*}
+where $\varepsilon_t$ and $\eta_t$ are mutually uncorrelated white
+noise processes and the ratio between the two variances is the
+``smoothing'' parameter:
+$\lambda = \frac{V(\varepsilon_t)}{V(\eta_t)}$. This is normally
+calibrated rather than estimated, and a common choice for macro data
+is to make this a function of the data periodicity:
+$\lambda = 100 \cdot p^2$, where $p$ is the number of subperiods in a
+year.
+
+Therefore, a possible space-state representation is
+\begin{eqnarray*}
+  x_t & = & [1 \quad 0]
+            \left[ \begin{array}{c} \mu_t \\ \mu_{t-1}\end{array}\right]
+  + \varepsilon_t \\
+  \left[ \begin{array}{c} \mu_t \\ \mu_{t-1}\end{array}\right] & = & 
+  \left[ \begin{array}{rr} 2 & -1 \\ 1 & 0 \end{array}\right]
+  \left[ \begin{array}{c} \mu_{t-1} \\ \mu_{t-2}\end{array}\right] + \eta_t
+\end{eqnarray*}
+and the corresponding code implementing the filter is shown in
+script~\ref{script:oshp}, which also shows an example with the
+``housing starts'' series from the St.~Louis FED database.
+
+\begin{script}[htbp]
+  \caption{1-sided HP filter}
+  \label{script:oshp}
+\begin{scode}
+function series oshpfilt(series y, scalar lambda[0])
+    
+    if lambda == 0
+        lambda = 100 * $pd^2
+    endif
+    
+    # State transition matrix
+    matrix F = {2,-1;1,0}  
+    # Observation matrix
+    matrix H = {1;0}       
+    # Covariance matrix in the state equation
+    matrix Q = {1, 0; 0, 0} 
+
+    ssm = ksetup(y, H, F, Q)
+    ssm.obsvar = lambda
+    ssm.inistate = {2*y[1]-y[2] ; 3*y[1]-2*y[2]}
+    err = kfilter(&ssm)
+
+    series ret = err ? NA : y - ssm.state[,1]
+    string d = sprintf("1-sided HP-filtered %s (lambda = %g)", argname(y), lambda)
+    setinfo ret --description="@d"
+    return ret
+end function
+
+# --- example ----------------------------------------------
+
+clear
+open fedstl.bin 
+data houst
+y = log(houst)
+
+hp1 = oshpfilt(y)
+hp2 = hpfilt(y)
+
+t1 = y - hp1
+t2 = y - hp2
+\end{scode}
+%$
+\end{script}
+
 \subsection{ARMA estimation}
 \label{sec:example_arma}
 
@@ -1103,3 +1190,8 @@ end plot --output=display
     from disturbance smoother}
   \label{fig:nile}
 \end{figure}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
