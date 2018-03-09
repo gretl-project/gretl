@@ -300,7 +300,6 @@ enum {
     F_SORTBY,
     F_RUNIFORM,
     F_RNORMAL,
-    F_HPFILT,
     F_FRACDIFF,
     F_BOXCOX,
     F_ZEROS,
@@ -438,6 +437,7 @@ enum {
     F_FDJAC,
     F_NUMHESS,
     F_STRSPLIT,
+    F_HPFILT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

@@ -7803,7 +7803,8 @@ static int get_logtrans (const char *s)
    be a series.
 */
 
-static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
+				 int f, parser *p)
 {
     NODE *ret = NULL;
     int rtype = NUM; /* the optional right-node type */
@@ -7859,7 +7860,15 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_HPFILT:
-	    p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
+	    {
+		int oneside = node_get_bool(o, p, 0);
+
+		if (!p->err && oneside) {
+		    p->err = oshp_filter(x, y, p->dset, parm, OPT_NONE);
+		} else if (!p->err) {
+		    p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
+		}
+	    }
 	    break;
 	case F_FRACDIFF:
 	    p->err = fracdiff_series(x, y, parm, 1, (autoreg(p))? p->obs : -1, p->dset);
@@ -14412,7 +14421,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == SERIES && cast_series_to_list(p, l, t->t)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
-	    ret = series_series_func(l, r, t->t, p);
+	    ret = series_series_func(l, r, NULL, t->t, p);
 	} else if (ok_list_node(l, p)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
@@ -14444,7 +14453,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_TRAMOLIN:
 	/* series argument needed */
 	if (l->t == SERIES || l->t == MAT) {
-	    ret = series_series_func(l, r, t->t, p);
+	    if (t->t == F_HPFILT) {
+		ret = series_series_func(l, m, r, t->t, p);
+	    } else {
+		ret = series_series_func(l, r, NULL, t->t, p);
+	    }
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	}
@@ -14480,7 +14493,7 @@ static NODE *eval (NODE *t, parser *p)
 	    if (cast_series_to_list(p, l, t->t)) {
 		ret = apply_list_func(l, NULL, t->t, p);
 	    } else {
-		ret = series_series_func(l, r, t->t, p);
+		ret = series_series_func(l, r, NULL, t->t, p);
 	    }
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
