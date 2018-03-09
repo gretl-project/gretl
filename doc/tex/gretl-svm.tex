@@ -59,13 +59,11 @@ function as it stands and illustrate its usage via a few example
 scenarios; section~\ref{sec:options} goes into more detail on the
 supported options. Section~\ref{sec:xvalid} discusses
 cross-validation; section~\ref{sec:SVC} gives a classification
-example; section~\ref{sec:missing} notes features of \textsf{libsvm}
-that are not yet supported by gretl, and section~\ref{sec:linux}
-offers some comments on getting \textsf{libsvm} working on Linux.
+example; section~\ref{sec:SV-probs} discusses probability estimation;
+section~\ref{sec:missing} notes features of \textsf{libsvm} that are
+not yet supported by gretl, and section~\ref{sec:linux} offers some
+comments on getting \textsf{libsvm} working on Linux.
 
-\textit{Caveat}: some of the claims that we make below about what
-\texttt{svm} does are properly tested, but not all of them! We
-welcome reports from anyone who's willing to test.
 
 \section{The \texttt{svm} function}
 \label{sec:function}
@@ -402,7 +400,7 @@ svm(L, b)
 \texttt{epsilon} & the $\epsilon$ in loss function of $\epsilon$-SVR (default 0.1) \\
 \texttt{cachesize} & cache memory size in MB (default 1024) \\
 \texttt{shrinking} & use shrinking heuristics, 0 or 1 (default 1) \\
-\texttt{probability} & train SVC model for probability estimates, 0 or 1 (default 0)
+\texttt{probability} & produce probability estimates, 0 or 1 (default 0)
   \end{tabular}
   \end{center}
 
@@ -428,7 +426,7 @@ svm(L, b)
   \label{tab:options}
 \end{table}
 
-\section{Options, options}
+\section{Options}
 \label{sec:options}
 
 Table~\ref{tab:options} shows all the options that can be set via the
@@ -448,19 +446,29 @@ overridden by use of the \texttt{kernel\_type} key:
 parms.kernel_type = 3 # sigmoid, unlikely to be superior!
 \end{code}
 
+\subsection{Libsvm options}
+\label{sec:libsvm-options}
+
 Panel (c) of the options Table shows additional options for
-controlling the behavior of \textsf{libsvm}. For more detail on these
-we recommend consulting the \textsf{libsvm} documentation. All but one
-of the default values shown are as per \textsf{libsvm} itself, the
-exception being \texttt{cachesize} (the size of the memory cache for
-use in training, in megabytes). Training can take quite a while on a
-big dataset, and a large cache is likely to speed things up. The
-\textsf{libsvm} default value is 100\,MB, but many computers today can
-support a gigabyte of cache so we raised this to 1024. If your
-machine's memory is limited you may need to reduce this, for example
+controlling the behavior of \textsf{libsvm}. We discuss the
+\texttt{epsilon} option in section~\ref{sec:svr} and the
+\texttt{probability} option in section~\ref{sec:SV-probs}. For further
+details please see the \textsf{libsvm} documentation, \cite{HCL16}.
+
+All but one of the default values shown are as per \textsf{libsvm}
+itself, the exception being \texttt{cachesize} (the size of the memory
+cache for use in training, in megabytes). Training can take quite a
+while on a big dataset, and a large cache is likely to speed things
+up. The \textsf{libsvm} default value is 100\,MB, but many computers
+today can support a gigabyte of cache so we raised this to 1024. If
+your machine's memory is limited you may need to reduce this, for
+example
 \begin{code}
 parms.cachesize = 200
 \end{code}
+
+\subsection{Other options}
+\label{sec:gretl-options}
 
 That leaves the gretl-specific settings in panel (d) of the options
 Table, some of which may require more explanation.
@@ -493,13 +501,13 @@ to expect a model bundle on input instead (and not to overwrite it).
 
 \texttt{predict}: this governs how much prediction \texttt{svm} does.
 The default is 2, meaning that if a model is built then prediction
-should be done on both the data used to build the model (to get a
-measure of fit) and also on any ``out-of-sample'' data present. By
-setting \texttt{predict} = 1 you are requesting that prediction be
-done for (at most) only the model ``estimation'' sample. By setting it
-to 0 you are telling gretl not to make any calls to the
-\textsf{libsvm} prediction function (or none beyond those required
-by cross validation---see section~\ref{sec:xvalid}).
+should be done on both the training data used to build the model (to
+get a measure of fit) and also on any testing data present. By setting
+\texttt{predict} = 1 you are requesting that prediction be done for
+(at most) only the training. By setting it to 0 you are telling gretl
+not to make any calls to the \textsf{libsvm} prediction function (or
+none beyond those required by cross validation---see
+section~\ref{sec:xvalid}).
 
 The several \texttt{outfile} and \texttt{infile} keys can be used to
 supply filenames for writing or reading, respectively, certain sorts
@@ -930,7 +938,7 @@ OMP_NUM_THREADS=1 mpirun -N 6 gretlmpi ca_xvalid.inp
 The optimized result (the same on all runs) was a cross-validation MSE
 of 0.0581 at $C=2$ and $\gamma=2$.
 
-\clearpage
+% \clearpage
 
 \subsection{Mullainathan and Spiess revisited}
 \label{sec:ms-xvalid}
@@ -1096,52 +1104,99 @@ So we see a slim predictive advantage for $C$-SVC over multinomial
 logit estimation. Given the paucity of the explanatory data it is
 perhaps surprising that the SVM even equals the MLE results.
 
-\subsection{Obtaining probability estimates}
+\section{Probability estimation}
+\label{sec:SV-probs}
+
+By default the output of \texttt{svm} is just a series of
+point-predictions of the dependent variable conditional on the
+covariates or ``features''. It is possible, however, to obtain a
+measure of the uncertainty attaching to these predictions
+(``probability estimation''). The character of the probability
+information delivered by \textsf{libsvm} differs between SV regression
+and SV classification, but the mechanism for obtaining it via gretl
+is basically the same: you set \texttt{probability} to 1 in the
+parameter bundle, and supply a pointer-to-bundle as the fourth
+argument to the \texttt{svm} function, as in
+\begin{code}
+...
+params.probability = 1
+bundle bprob = null
+series yhat = svm(L, params, null, &bprob)
+\end{code}
+(where \texttt{null} indicates that we're skipping the optional third
+argument). On successful completion \texttt{bprob} will
+contain probability information.
+
+\subsection{Regression error distribution}
+\label{sec:SVR-probs}
+
+In the case of SV regression, the extra information takes the
+form of a scalar value under the key \texttt{svr\_sigma}: this is an
+estimate of the scale parameter, $\sigma$, for the Laplace density of
+the prediction errors, $\hat{y}_i - y_i$, based on the training data,
+namely
+\[
+\frac{1}{2\sigma} \exp \left(-\frac{|\hat{y}_i - y_i|}{\sigma}\right)
+\]
+Using this information one can, for example, calculate confidence
+intervals for the SVR predictions. The following code snippet shows
+how one could obtain a 90 percent interval, using the \texttt{invcdf}
+(inverse CDF) function with first argument \texttt{L} for the Laplace
+distribution:
+\begin{code}
+sigma = brob.svr_sigma
+maxerr90 = invcdf(L, 0, sigma, 0.95)
+series lo = yhat - maxerr90
+series hi = yhat + maxerr90
+print yhat lo hi --byobs
+\end{code}
+
+\subsection{Discrete outcome probabilities}
 \label{sec:SVC-probs}
 
-The default result from prediction via SVC is just the outcome judged
-to be most likely, conditional on the values of the covariates or
-``features'' at each observation. But one can also obtain estimates of
-the probability of each discrete outcome at each observation. This
-takes two moves: including the \texttt{probability} flag in the
-parameter bundle, with a nonzero value, and supplying a
-pointer-to-bundle as the fourth argument to \texttt{svm}: then on
-successful completion this bundle will include matrices
-\texttt{Ptrain} (if prediction over the training range is requested)
-and/or \texttt{Ptest} (if prediction over the testing range is called
-for). Each of these matrices has as many columns as there are
-outcomes, and as many rows as there are observations in the relevant
-range. The column headings identify the outcome values.
+In the classification case, the information supplied via the bundle
+passed as the fourth argument to \texttt{svm} takes the form of the
+matrices \texttt{Ptrain} (if prediction over the training range is
+requested) and/or \texttt{Ptest} (if prediction over the testing range
+is called for). Each of these matrices has as many columns as there
+are outcomes, and as many rows as there are observations in the
+relevant range. The column headings identify the outcome values.
 
-In relation to Listing~\ref{listing:keane}, the following
-modifications could be made to generate and inspect the probability
-estimates. First, after the line ``\texttt{parms.quiet = 1}'' (9 lines
-from the foot of the script) and replacing the line
+In relation to the example in Listing~\ref{listing:keane} above, the
+following modifications could be made to generate and inspect
+probability estimates. First, after the line ``\texttt{parms.quiet =
+  1}'' (9 lines from the foot of the script) and replacing the line
 ``\texttt{yhat\_svm = svm(All, parms)}'', insert:
 %
 \begin{code}
 parms.probability = 1
 bundle bprob = null
-yhat_svm = svm(All,parms,,&bprob)
+yhat_svm = svm(All, parms, null, &bprob)
 \end{code}
-(The repeated commas in the argument list for \texttt{svm} indicate
-that we're skipping the optional third argument but supplying the
-fourth.) Then, to inspect the probabilities for the testing
-data, one could append to the script:
+Then, to inspect the probabilities for the testing data, one could
+append to the script:
 %
 \begin{code}
 matrix P = bprob.Ptest
 print P
 \end{code}
 %
-We show below the first few lines output from this variant of
-Listing~\ref{listing:keane}:
+We show below the first few lines of output from this variant of
+the script.
 %
 \begin{code}
-matrix P = bprob.Ptest
-print P
+           1            2            3
+     0.17717      0.60506      0.21777
+    0.063540      0.23416      0.70230
+    0.098154      0.64375      0.25810
+    0.094531      0.36033      0.54514
 \end{code}
 %
+The columns are ordered by ascending value of numerical coding of the
+dependent variable. So, for example, we see that the model estimates a
+probability of 0.605 for an outcome of 2 (``at home'') for the first
+observation in the training set, and a probability of 0.702 for
+outcome 3 (``in work'') for the second observation.
 
 \section{What's missing?}
 \label{sec:missing}
