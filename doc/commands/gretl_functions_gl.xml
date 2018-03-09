@@ -739,7 +739,7 @@
 	  Cando se utiliza sen argumentos, <lit>$stderr</lit> devolve un vector
 	  columna que contén as desviacións padrón dos coeficientes do último
 	  modelo estimado. Co argumento opcional <lit>(nome dun regresor)</lit>
-	  devolve un escalar co valor do parámetro estimado dese regresor.
+	  devolve un escalar co valor do parámetro estimado dese regresor
 	  <argname>s</argname>.
 	</para>
 	<para>
@@ -1858,6 +1858,11 @@
 	  </li>
 	  <li>
             <para>
+              Laplace (l ou L): media; escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Erro Xeneralizado (E): forma
             </para>
 	  </li>
@@ -1901,6 +1906,8 @@
 	  escala &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp;
 	  forma &amp; escala &amp; --\\
+	  Laplace &amp; \texttt{l} ou \texttt{L} &amp;
+	  media &amp; escala &amp; --\\
 	  Erro Xeneralizado &amp; \texttt{E} &amp;
 	  forma &amp; -- &amp; --\\
 	  $\chi^2$ non central &amp; \texttt{ncX} &amp;
@@ -2384,6 +2391,16 @@
               Poisson (p ou P): media
             </para>
 	  </li>
+	  <li>
+            <para>
+              Laplace (l ou L): media; escala
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Erro Xeneralizado (E): forma
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="llll">
 	  \textit{Distribución} &amp; \textsl{c} &amp;
@@ -2400,6 +2417,10 @@
 	  $p$ &amp; $n$ \\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp;
 	  $\lambda$ &amp; -- \\
+	  Laplace &amp; \texttt{l} ou \texttt{L} &amp;
+	  media &amp; escala \\
+	  Erro Xeneralizado &amp; \texttt{E} &amp;
+	  forma &amp; -- \\
 	</tabular>
 	<para>
 	  <seelist>
@@ -3644,6 +3665,19 @@
       </description>
     </function>
 
+    <function name="getkeys" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve un arranxo de cadeas de texto que conteñen as chaves que
+	  identifican o contido de <argname>b</argname>. Se o paquete está
+	  baleiro, devólvese un arranxo baleiro.
+	</para>
+      </description>
+    </function>
+
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
@@ -4361,6 +4395,11 @@
 	  </li>
 	  <li>
             <para>
+              Laplace (l ou L): media, escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Erro Xeneralizado (E): forma
             </para>
 	  </li>
@@ -4397,7 +4436,9 @@
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp;
 	  $p$ &amp; $n$  &amp; --\\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp;
-          $\lambda$ &amp; --  &amp; --\\
+    $\lambda$ &amp; --  &amp; --\\
+	  Laplace &amp; \texttt{l} ou \texttt{L} &amp;
+    media &amp; escala  &amp; -- \\
 	  Erro Xeneralizado &amp; \texttt{E} &amp;
 	  forma &amp; -- &amp; --\\
 	  $\chi^2$ non central &amp; \texttt{ncX} &amp;
@@ -7084,8 +7125,8 @@
 	  detalles acerca dos argumentos (escalares) esixidos. Esta función
 	  <lit>pdf</lit> acepta as distribucións: Normal, <math>t</math> de
 	  Student, Khi-cadrado, <math>F</math>, Gamma, Exponencial, Weibull,
-	  Erro Xeneralizado, Binomial e Poisson. Cae na conta de que para a
-	  Binomial e a Poisson, o que se calcula de feito é a masa de
+	  Laplace, Erro Xeneralizado, Binomial e Poisson. Cae na conta de que
+	  para a Binomial e a Poisson, o que se calcula de feito é a masa de
 	  probabilidade no punto especificado. Para <math>t</math> de Student,
 	  Khi-cadrado e <math>F</math> tamén están dispoñibles as súas
 	  variantes non centrais.
@@ -7553,7 +7594,7 @@
 	  trate. Para máis detalles, consulta <fncref targ="cdf"/>. As
 	  distribucións soportadas pola función <lit>pvalue</lit> son:
 	  Normal estándar, <math>t</math>, Khi-cadrado, <math>F</math>, Gamma,
-	  Binomial, Poisson, Exponencial, Weibull e Erro Xeneralizado.
+	  Binomial, Poisson, Exponencial, Weibull, Laplace e Erro Xeneralizado.
 	</para>
 	<para>
 	  <seelist>
@@ -7968,6 +8009,11 @@
 	  </li>
 	  <li>
             <para>
+              Laplace (l ou L): media, escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Erro Xeneralizado (E): forma
             </para>
 	  </li>
@@ -7995,6 +8041,7 @@
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp; media &amp; --  &amp; --\\
 	  Exponencial &amp; \texttt{exp} &amp; escala &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp; forma &amp; escala &amp; --\\
+	  Laplace &amp; \texttt{l} ou \texttt{L} &amp; media &amp; escala &amp; --\\
 	  Erro Xeneralizado &amp; \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma2 &amp; --\\
 	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma2
