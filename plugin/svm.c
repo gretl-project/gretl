@@ -39,6 +39,8 @@ typedef struct sv_wrapper_ sv_wrapper;
 typedef struct sv_grid_ sv_grid;
 typedef struct grid_row_ grid_row;
 
+/* the following need to be in sync with libsvm/svm.h */
+
 static const char *svm_type_names[] = {
     "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR"
 };
@@ -48,15 +50,15 @@ static const char *kernel_type_names[] = {
 };
 
 enum {
-    W_SAVEMOD = 1 << 0,
-    W_LOADMOD = 1 << 1,
-    W_QUIET   = 1 << 2,
-    W_SEARCH  = 1 << 3,
-    W_STDFMT  = 1 << 4,
-    W_SVPARM  = 1 << 5,
-    W_FOLDVAR = 1 << 6,
-    W_YSCALE  = 1 << 7,
-    W_CONSEC  = 1 << 8
+    W_SAVEMOD = 1 << 0, /* saving a model? */
+    W_LOADMOD = 1 << 1, /* loading a model? */
+    W_QUIET   = 1 << 2, /* quiet operation? */
+    W_SEARCH  = 1 << 3, /* doing parameter search? */
+    W_STDFMT  = 1 << 4, /* use plain libsvm format for ranges? */
+    W_SVPARM  = 1 << 5, /* saving tuned params to bundle? */
+    W_FOLDVAR = 1 << 6, /* caller-supplied folds variable? */
+    W_YSCALE  = 1 << 7, /* scaling the dependent var? */
+    W_CONSEC  = 1 << 8  /* using consective folds? */
 };
 
 struct sv_wrapper_ {
@@ -67,13 +69,13 @@ struct sv_wrapper_ {
     int t2;
     int t2_train;
     int k;
-    int nfold;
-    int predict;
-    int nproc;
-    int rank;
-    int do_probs;
-    double ymin;
-    double ymax;
+    int nfold;    /* number of folds for x-validation */
+    int predict;  /* are we doing (how much) prediction? */
+    int nproc;    /* number of processes (MPI only ) */
+    int rank;     /* "this" MPI rank, if applicable */
+    int do_probs; /* are we doing probability estimation? */
+    double ymin;  /* min value of dependent variable */
+    double ymax;  /* max value of dependent variable */
     gretl_matrix *ranges;
     char *ranges_outfile;
     char *ranges_infile;
@@ -87,8 +89,8 @@ struct sv_wrapper_ {
     gretl_matrix *Ptrain;
     gretl_matrix *Ptest;
     double svr_sigma;
-    int *flist;
-    int *fsize;
+    int *flist;  /* array of folds IDs, if applicable */
+    int *fsize;  /* array of fold sizes, if applicable */
     unsigned seed;
 };
 
@@ -563,6 +565,13 @@ static void save_results_to_bundle (const sv_parm *parm,
 	w->xdata = NULL;
     }
 }
+
+/* If we did probability estimation we should have results
+   in w->Ptrain and/or w->Ptest (in the classification
+   case) or a single Laplace scale value in w->svr_sigma
+   (in the regression case). We now stuff this info into
+   the courier bundle supplied by the caller.
+*/
 
 static void save_probs_to_bundle (sv_wrapper *w,
 				  gretl_bundle *b)
@@ -1343,6 +1352,7 @@ static int real_svm_predict (double *yhat,
 	if (w->do_probs) {
 	    yhi = svm_predict_probability(model, x, pi);
 	    for (j=0; j<nr_class; j++) {
+		/* transcribe probability estimates */
 		if (ls != NULL) {
 		    /* re-order the columns */
 		    gretl_matrix_set(P, i, j, pi[ls[j].pos]);
@@ -1374,6 +1384,7 @@ static int real_svm_predict (double *yhat,
 	free(pi);
 	free(ls);
     } else if (get_sigma) {
+	/* retrieve estimate of Laplace scale */
 	w->svr_sigma = svm_get_svr_probability(model);
     }
 
@@ -1494,10 +1505,12 @@ static void custom_xvalidate (const sv_data *prob,
 
 	/* predict on the complementary subsample (fold i only) */
 	if (w->flags & W_CONSEC) {
+	    /* we don't have to scan the whole prob->x array */
 	    for (j=jmin; j<jmax; j++) {
 		targ[j] = svm_predict(submodel, prob->x[j]);
 	    }
 	} else {
+	    /* the values we want may be interspersed */
 	    for (j=0; j<prob->l; j++) {
 		if (w->flist[j+1] == vi) {
 		    targ[j] = svm_predict(submodel, prob->x[j]);
@@ -1799,6 +1812,8 @@ static int write_plot_file (sv_wrapper *w,
 
     return err;
 }
+
+/* get ready to do parameter search */
 
 static int do_search_prep (sv_data *data,
 			   sv_parm *parm,
@@ -2309,6 +2324,12 @@ static int call_cross_validation (sv_data *data,
     return err;
 }
 
+/* If the caller provided a "folds" series, check it for
+   validity: the values must be consecutive integers
+   starting at 1, and the number of folds must be within
+   bounds.
+*/
+
 static int check_folds_series (const int *list,
 			       const DATASET *dset,
 			       sv_wrapper *w,
@@ -2376,6 +2397,11 @@ static int get_optional_int (gretl_bundle *b, const char *key,
     }
 }
 
+/* determine if @s is a recognized parameter key: we
+   do this so we can flag anything that may be a
+   mistyped key
+*/
+
 static int is_w_parm (const char *s)
 {
     const char *wparms[] = {
@@ -2418,6 +2444,9 @@ static int check_user_params (gretl_array *A)
 
     return err;
 }
+
+/* process @bparm, which contains the parameters provided by
+   the caller */
 
 static int read_params_bundle (gretl_bundle *bparm,
 			       gretl_bundle *bmod,
@@ -2477,6 +2506,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 	/* number of training observations: this sets a range
 	   starting at the first complete observation in the
 	   incoming sample, which was recorded as wrap->t1
+	   after trimming any missing values
 	*/
 	if (ival != 0) {
 	    int nmax = wrap->t2 - wrap->t1 + 1;
@@ -2723,6 +2753,9 @@ static int get_svm_ranges (const int *list,
     return err;
 }
 
+/* load an svm model, either from a bundle in memory
+   or a text file in libsvm format */
+
 static sv_model *do_load_model (sv_wrapper *w,
 				gretl_bundle *b,
 				PRN *prn,
@@ -2741,6 +2774,9 @@ static sv_model *do_load_model (sv_wrapper *w,
     return model;
 }
 
+/* save an svm model, either to a bundle in memory
+   or a text file in libsvm format */
+
 static int do_save_model (sv_model *model, sv_wrapper *w,
 			  gretl_bundle *b, PRN *prn)
 {
@@ -2757,6 +2793,12 @@ static int do_save_model (sv_model *model, sv_wrapper *w,
 
     return err;
 }
+
+/* here we call the libsvm parameter-checking
+   function; if all is well and we're not in quiet
+   mode, we print some information on the primary
+   parameters
+*/
 
 static int check_svm_params (sv_data *data,
 			     sv_parm *parm,
@@ -3025,6 +3067,7 @@ int gretl_svm_driver (const int *list,
 				     list, dset, prn);
 	}
     }
+
     if (err) {
 	/* restore incoming sample and get out */
 	dset->t1 = save_t1;
