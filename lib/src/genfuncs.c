@@ -1666,6 +1666,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     for (t=0; t<T; t++) {
 	gretl_matrix_set(M[0], t, 0, x[t]);
     }
+    /* add a dummy trailing observation */
     gretl_matrix_set(M[0], T, 0, 0.0);
 #else
     M[0] = gretl_matrix_alloc(T, 1);
@@ -1743,6 +1744,8 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 #endif
 
 #if AS_MATLAB
+    /* take the "lead" of the second element of the
+       state estimate */
     if (opt & OPT_T) {
 	for (t=0; t<T; t++) {
 	    mt = gretl_matrix_get(mu, t+1, 1);
@@ -1755,6 +1758,8 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 	}
     }
 #else
+    /* take the current value of the first element of the
+       state estimate */
     if (opt & OPT_T) {
 	for (t=0; t<T; t++) {
 	    mt = gretl_matrix_get(mu, t, 0);
