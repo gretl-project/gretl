@@ -1,6 +1,6 @@
 version 2017e, in progress
-- "join" command: add --spread option for importing high
-  frequency data for use in MIDAS analysis
+- "join" command: add --aggr=spread option for importing
+  high frequency data for use in MIDAS analysis
 - strsplit() function: add optional third argument to choose
   the separator on which to split strings
 - mreverse() function: make this work for a list argument
