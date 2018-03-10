@@ -1735,6 +1735,10 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     
  bailout:
 
+    /* since all the matrices we've allocated above belong
+       to the Kalman bundle, the following will suffice to
+       free everything on exit
+    */
     gretl_bundle_destroy(b);
 
     return err;
