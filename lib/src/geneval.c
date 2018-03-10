@@ -5880,45 +5880,6 @@ static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *strnum_boolean (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
-	char lbool = 0, rbool = 0;
-
-	if (l->t == NUM) {
-	    if (na(l->v.xval)) {
-		p->err = E_MISSDATA;
-	    } else {
-		lbool = l->v.xval != 0;
-	    }
-	} else {
-	    lbool = strlen(l->v.str) > 0;
-	}
-
-	if (r->t == NUM) {
-	    if (na(r->v.xval)) {
-		p->err = E_MISSDATA;
-	    } else {
-		rbool = r->v.xval != 0;
-	    }
-	} else {
-	    rbool = strlen(r->v.str) > 0;
-	}
-
-	if (!p->err) {
-	    if (f == B_AND) {
-		ret->v.xval = lbool && rbool;
-	    } else {
-		ret->v.xval = lbool || rbool;
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /* argument is list; value returned is series */
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
@@ -6482,13 +6443,13 @@ static NODE *n_elements_node (NODE *n, parser *p)
 
 	    ret->v.xval = list[0];
 	} else if (n->t == STR) {
-	    /* backward compatibility: _name_ of list */
 	    int *list = get_list_by_name(n->v.str);
 
 	    if (list != NULL) {
+		/* backward compatibility (?): _name_ of list */
 		ret->v.xval = list[0];
 	    } else {
-		p->err = E_TYPES;
+		ret->v.xval = strlen(n->v.str);
 	    }
 	} else {
 	    p->err = E_TYPES;
@@ -12857,13 +12818,6 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
     return ret;
 }
 
-static NODE *query_eval_string (const char *s, NODE *n, parser *p)
-{
-    int b = strlen(s) > 0;
-
-    return query_eval_scalar((double) b, n, p);
-}
-
 /* the condition in the ternary query operator is a matrix */
 
 static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
@@ -12978,8 +12932,6 @@ static NODE *eval_query (NODE *t, parser *p)
 	    } else {
 		ret = query_eval_matrix(c->v.m, t, p);
 	    }
-	} else if (c->t == STR) {
-	    ret = query_eval_string(c->v.str, t, p);
 	} else {
 	    /* invalid type for boolean condition */
 	    p->err = E_TYPES;
@@ -14034,11 +13986,6 @@ static NODE *eval (NODE *t, parser *p)
 		ret = list_bool_comp(r, l, t->t, 1, p);
 	    } else if (ok_list_node(l, p) && ok_list_node(r, p)) {
 		ret = list_list_comp(r, l, t->t, p);
-	    } else if ((t->t == B_AND || t->t == B_OR) &&
-		       ((l->t == NUM && r->t == STR) ||
-			(l->t == STR && r->t == NUM) ||
-			(l->t == STR && r->t == STR))) {
-		ret = strnum_boolean(l, r, t->t, p);
 	    } else {
 		p->err = E_TYPES;
 	    }
