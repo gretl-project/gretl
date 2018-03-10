@@ -1602,6 +1602,8 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
     return err;
 }
 
+#define AS_MATLAB 0
+
 /**
  * oshp_filter:
  * @x: array of original data.
@@ -1625,6 +1627,9 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     gretl_matrix *M[4] = {NULL};
     gretl_matrix *Lambda = NULL;
     gretl_matrix *a0 = NULL;
+#if AS_MATLAB
+    gretl_matrix *p0 = NULL;
+#endif    
     gretl_matrix *mu = NULL;
     gretl_bundle *b = NULL;
     int copy[4] = {0};
@@ -1656,10 +1661,18 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     /* begin Kalman filter setup */
 
     /* obsy */
+#if AS_MATLAB
+    M[0] = gretl_matrix_alloc(T+1, 1);
+    for (t=0; t<T; t++) {
+	gretl_matrix_set(M[0], t, 0, x[t]);
+    }
+    gretl_matrix_set(M[0], T, 0, 0.0);
+#else    
     M[0] = gretl_matrix_alloc(T, 1);
     for (t=0; t<T; t++) {
 	gretl_matrix_set(M[0], t, 0, x[t]);
     }
+#endif    
 
     /* obsymat */
     M[1] = gretl_zero_matrix_new(2, 1);
@@ -1690,13 +1703,21 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 	
     /* inistate */
     a0 = gretl_matrix_alloc(2, 1);
-    gretl_matrix_set(a0, 0, 0, 2*x[0]-x[1]);
-    gretl_matrix_set(a0, 1, 0, 3*x[0]-2*x[1]);
+    gretl_matrix_set(a0, 0, 0, 2*x[0] - x[1]);
+    gretl_matrix_set(a0, 1, 0, 3*x[0] - 2*x[1]);
     err = gretl_bundle_donate_data(b, "inistate", a0,
 				   GRETL_TYPE_MATRIX, 0); 
     if (err) {
 	goto bailout;
     }
+
+#if AS_MATLAB
+    /* initial MSE as per Matlab: I(2) * 1e5 */
+    p0 = gretl_zero_matrix_new(2, 2);
+    p0->val[0] = p0->val[3] = 1.0e5;
+    gretl_bundle_donate_data(b, "inivar", p0,
+			     GRETL_TYPE_MATRIX, 0); 
+#endif
 
 #if DEBUG
     gretl_matrix_print(M[0], "obsy");
@@ -1727,10 +1748,17 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 	    hp[t] = mt;
 	}
     } else {
+#if AS_MATLAB
+	for (t=0; t<T; t++) {
+	    mt = gretl_matrix_get(mu, t+1, 1);
+	    hp[t] = x[t] - mt;
+	}
+#else
 	for (t=0; t<T; t++) {
 	    mt = gretl_matrix_get(mu, t, 0);
 	    hp[t] = x[t] - mt;
 	}
+#endif
     }
     
  bailout:
