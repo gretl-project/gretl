@@ -33,6 +33,8 @@ version 2017e, in progress
   data transfer via binary matrix files
 - CSV data reader: support date format YYYY-Qq for quarterly
   data
+- Kalman filter documentation: add an example, one-sided
+  Hodrick-Prescott filter in the manner of Stock and Watson
 - GUI: tabbed script editor option: make this the default
 - GUI convenience: add facility to generate 100-based indices
   of selected series
