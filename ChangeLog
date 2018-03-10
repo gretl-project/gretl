@@ -7,6 +7,8 @@ version 2017e, in progress
 - hpfilt() function: add option of one-sided filter
 - svm() function: better handling of missing values, and add
   support for probabiity estimation
+- cdf() function and friends: add support for Laplace
+  distribution
 - R-function support: handle string arguments
 - rename some functions: colnames becomes cnameset, rownames
   becomes rnameset, and colname becomes cnameget; the old
@@ -53,6 +55,7 @@ version 2017e, in progress
   MS Windows
 - Windows packages: update to gtk 2.24.32
 - OS X fix: intra-program drag-and-drop provoked crash
+- translations: add simplified Chinese
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for
