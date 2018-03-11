@@ -1602,8 +1602,6 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
     return err;
 }
 
-#define AS_MATLAB 0
-
 /**
  * oshp_filter:
  * @x: array of original data.
@@ -1627,9 +1625,6 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     gretl_matrix *M[4] = {NULL};
     gretl_matrix *Lambda = NULL;
     gretl_matrix *a0 = NULL;
-#if AS_MATLAB
-    gretl_matrix *p0 = NULL;
-#endif
     gretl_matrix *mu = NULL;
     gretl_bundle *b = NULL;
     int copy[4] = {0};
@@ -1653,7 +1648,8 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     if (na(lambda)) {
 	lambda = default_hp_lambda(dset);
     }
-
+    double sqrt_lam = sqrt(lambda);
+    
     /* adjust starting points */
     x += t1;
     hp += t1;
@@ -1661,19 +1657,12 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     /* begin Kalman filter setup */
 
     /* obsy */
-#if AS_MATLAB
     M[0] = gretl_matrix_alloc(T+1, 1);
     for (t=0; t<T; t++) {
 	gretl_matrix_set(M[0], t, 0, x[t]);
     }
     /* add a dummy trailing observation */
     gretl_matrix_set(M[0], T, 0, 0.0);
-#else
-    M[0] = gretl_matrix_alloc(T, 1);
-    for (t=0; t<T; t++) {
-	gretl_matrix_set(M[0], t, 0, x[t]);
-    }
-#endif
 
     /* obsymat */
     M[1] = gretl_zero_matrix_new(2, 1);
@@ -1687,7 +1676,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 
     /* statevar */
     M[3] = gretl_zero_matrix_new(2, 2);
-    gretl_matrix_set(M[3], 0, 0, 1);
+    gretl_matrix_set(M[3], 0, 0, 1/sqrt_lam);
 
     b = kalman_bundle_new(M, copy, 4, &err);
     if (err) {
@@ -1695,7 +1684,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     }
 
     /* obsvar */
-    Lambda = gretl_matrix_from_scalar(lambda);
+    Lambda = gretl_matrix_from_scalar(sqrt_lam);
     err = gretl_bundle_donate_data(b, "obsvar", Lambda,
 				   GRETL_TYPE_MATRIX, 0);
     if (err) {
@@ -1711,14 +1700,6 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     if (err) {
 	goto bailout;
     }
-
-#if AS_MATLAB
-    /* initial MSE as per matlab: I(2) * 1e5 */
-    p0 = gretl_zero_matrix_new(2, 2);
-    p0->val[0] = p0->val[3] = 1.0e5;
-    gretl_bundle_donate_data(b, "inivar", p0,
-			     GRETL_TYPE_MATRIX, 0);
-#endif
 
 #if DEBUG
     gretl_matrix_print(M[0], "obsy");
@@ -1743,7 +1724,6 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     gretl_matrix_print(mu, "state");
 #endif
 
-#if AS_MATLAB
     /* take the "lead" of the second element of the
        state estimate */
     if (opt & OPT_T) {
@@ -1757,21 +1737,6 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 	    hp[t] = x[t] - mt;
 	}
     }
-#else
-    /* take the current value of the first element of the
-       state estimate */
-    if (opt & OPT_T) {
-	for (t=0; t<T; t++) {
-	    mt = gretl_matrix_get(mu, t, 0);
-	    hp[t] = mt;
-	}
-    } else {
-	for (t=0; t<T; t++) {
-	    mt = gretl_matrix_get(mu, t, 0);
-	    hp[t] = x[t] - mt;
-	}
-    }
-#endif
 
  bailout:
 
