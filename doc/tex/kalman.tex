@@ -856,7 +856,7 @@ Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
 \cmd{ksmooth}.
 
 \begin{script}[htbp]
-  \caption{1-sided HP filter}
+  \caption{HP filter}
   \label{script:hp}
 \begin{scode}
 function series hp_via_kalman(series y, scalar lambda[0], scalar oneside[0])
@@ -880,6 +880,8 @@ function series hp_via_kalman(series y, scalar lambda[0], scalar oneside[0])
     ssm = ksetup(my, H, F, Q)
     ssm.obsvar = sqrt(lambda)
     ssm.inistate = {2*y[1]-y[2] ; 3*y[1]-2*y[2]}
+    ssm.diffuse = 1
+
     err = oneside ? kfilter(&ssm) : ksmooth(&ssm)
     
     if err
