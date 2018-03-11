@@ -883,7 +883,6 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
     ssm.diffuse = 1
 
     err = oneside ? kfilter(&ssm) : ksmooth(&ssm)
-    
     if err
         series ret = NA
     else
@@ -903,13 +902,15 @@ open fedstl.bin
 data houst
 y = log(houst)
 
-# one-sided
-n1c = hpfilt(y,1600,1)
+# one-sided, built-in then hansl
+n1c = hpfilt(y, 1600, 1)
 series h1c = hp_via_kalman(y, 1600, 1)
+ols n1c const h1c --simple-print
 
-# two-sided
-n2c = hpfilt(y,1600)
+# two-sided, built-in then hansl
+n2c = hpfilt(y, 1600)
 series h2c = hp_via_kalman(y, 1600)
+ols n2c const h2c --simple-print
 \end{scode}
 %$
 \end{script}
