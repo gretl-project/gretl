@@ -859,7 +859,7 @@ Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
   \caption{HP filter}
   \label{script:hp}
 \begin{scode}
-function series hp_via_kalman(series y, scalar lambda[0], scalar oneside[0])
+function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
     if lambda == 0
         lambda = 100 * $pd^2
     endif

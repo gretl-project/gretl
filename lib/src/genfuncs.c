@@ -1629,7 +1629,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     gretl_bundle *b = NULL;
     int copy[4] = {0};
     int T, t, err, kerr;
-    double mt;
+    double mt, sqrt_lam;
 
     for (t=t1; t<=t2; t++) {
 	hp[t] = NADBL;
@@ -1648,7 +1648,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     if (na(lambda)) {
 	lambda = default_hp_lambda(dset);
     }
-    double sqrt_lam = sqrt(lambda);
+    sqrt_lam = sqrt(lambda);
     
     /* adjust starting points */
     x += t1;
