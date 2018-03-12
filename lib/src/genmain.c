@@ -809,14 +809,10 @@ int generate (const char *line, DATASET *dset,
     return p.err;
 }
 
-/* 2018-03-12: slated for removal */
-#define STR_AS_BOOL 1
-
 /* retrieve a scalar result directly */
 
 static double real_generate_scalar (const char *s,
 				    DATASET *dset,
-				    int boolean,
 				    int *err)
 {
     parser p;
@@ -835,12 +831,6 @@ static double real_generate_scalar (const char *s,
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
-#if STR_AS_BOOL
-	} else if (boolean && p.ret->t == STR) {
-	    char *s = p.ret->v.str;
-
-	    x = (s != NULL && *s != '\0');
-#endif
 	} else if (p.ret->t == NUM) {
 	    x = p.ret->v.xval;
 	} else {
@@ -857,12 +847,41 @@ static double real_generate_scalar (const char *s,
 
 double generate_scalar (const char *s, DATASET *dset, int *err)
 {
-    return real_generate_scalar(s, dset, 0, err);
+    parser p;
+    double x = NADBL;
+
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, NUM);
+
+    if (!*err) {
+	if (p.ret->t == MAT) {
+	    gretl_matrix *m = p.ret->v.m;
+
+	    if (gretl_matrix_is_scalar(m)) {
+		x = p.ret->v.m->val[0];
+	    } else if (!gretl_is_null_matrix(m)) {
+		fprintf(stderr, "generate_scalar: got %d x %d matrix\n",
+			m->rows, m->cols);
+		*err = E_TYPES;
+	    }
+	} else if (p.ret->t == NUM) {
+	    x = p.ret->v.xval;
+	} else {
+	    *err = E_TYPES;
+	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
+    }
+
+    gen_cleanup(&p);
+
+    return x;
 }
 
 double generate_boolean (const char *s, DATASET *dset, int *err)
 {
-    return real_generate_scalar(s, dset, 1, err);
+    double x = generate_scalar(s, dset, err);
+
+    return *err ? x : (double) (x != 0.0);
 }
 
 /* retrieve an integer result directly */
@@ -1146,12 +1165,6 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
-#if STR_AS_BOOL
-	} else if (p->ret->t == STR) {
-	    char *s = p->ret->v.str;
-
-	    x = (s != NULL && *s != '\0');
-#endif
 	} else if (p->ret->t == NUM) {
 	    x = p->ret->v.xval;
 	} else {
@@ -1163,7 +1176,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 
     gen_cleanup(p);
 
-    return x;
+    return *err ? x : (double) (x != 0.0);
 }
 
 /* destroy a previously compiled generator */
