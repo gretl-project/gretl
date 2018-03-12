@@ -7,7 +7,7 @@ version 2017e, in progress
 - mreverse() function: make this work for a list argument
 - hpfilt() function: add option of one-sided filter
 - svm() function: better handling of missing values, and add
-  support for probabiity estimation
+  support for probability estimation
 - cdf() function and friends: add support for Laplace
   distribution
 - R-function support: handle string arguments
