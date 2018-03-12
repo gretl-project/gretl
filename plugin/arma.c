@@ -1296,9 +1296,6 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
     }
 }
 
-/* for comparison against alternative loglik algorithms */
-#define BFGS_TIME 0
-
 static int kalman_arma (double *coeff, const DATASET *dset,
 			arma_info *ainfo, MODEL *pmod,
 			gretlopt opt)
@@ -1429,17 +1426,11 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 		libset_set_bool(USE_LBFGS, 1);
 		ainfo->pflags |= ARMA_LBFGS;
 	    }
-#if BFGS_TIME
-	    gretl_stopwatch();
-#endif
+
 	    err = BFGS_max(b, ainfo->nc, maxit, toler,
 			   &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
 			   NULL, K, NULL, opt, ainfo->prn);
-#if BFGS_TIME
-	    if (!err) {
-		fprintf(stderr, "BFGS time %f\n", gretl_stopwatch());
-	    }
-#endif
+
 	    if (save_lbfgs == 0 && (opt & OPT_L)) {
 		libset_set_bool(USE_LBFGS, 0);
 	    }
