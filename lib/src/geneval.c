@@ -2375,11 +2375,11 @@ static NODE *compare_strings (NODE *l, NODE *r, int f, parser *p)
    a string on the right or vice versa.  This can work if the series
    in question is string-valued, as in
 
-     series foo = x=="strval"
+     Case 1: series foo = (x == "strval")
 
    It can also work if the string is an observation marker, as in
 
-     series foo = obs>="CA"
+     Case 2: series foo = (obs >= "CA")
 */
 
 static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
@@ -2388,7 +2388,7 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
     double *x = NULL, *y = NULL;
     double *alt;
     const char *strval;
-    int vnum, t, t1, t2;
+    int vnum, t;
     NODE *ret;
 
     if (r->t == STR) {
@@ -2403,12 +2403,25 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 	alt = &xt;
     }
 
-    if (vnum > 0 && is_string_valued(p->dset, vnum)) {
-	*alt = series_decode_string(p->dset, vnum, strval);
+    ret = aux_series_node(p);
+    if (p->err) {
+	return ret;
     }
 
-    if (na(*alt)) {
-	/* try for an observation string */
+    if (vnum > 0 && is_string_valued(p->dset, vnum)) {
+	/* we must be in Case 1 */
+	*alt = series_decode_string(p->dset, vnum, strval);
+	if (na(*alt)) {
+	    /* @strval is not a string value of the given series */
+	    double xval = (f == B_EQ)? 0 : (f == B_NEQ)? 1 : NADBL;
+
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		ret->v.xvec[t] = xval;
+	    }
+	    return ret; /* NA case handled */
+	}
+    } else {
+	/* try interpreting @strval as an observation string */
 	if (annual_data(p->dset)) {
 	    *alt = get_date_x(p->dset->pd, strval);
 	} else {
@@ -2425,21 +2438,18 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-    ret = aux_series_node(p);
-    if (ret == NULL) {
-	return NULL;
-    }
+    if (ret != NULL) {
+	int t1 = (autoreg(p))? p->obs : p->dset->t1;
+	int t2 = (autoreg(p))? p->obs : p->dset->t2;
 
-    t1 = (autoreg(p))? p->obs : p->dset->t1;
-    t2 = (autoreg(p))? p->obs : p->dset->t2;
-
-    for (t=t1; t<=t2; t++) {
-	if (x != NULL) {
-	    xt = x[t];
-	} else if (y != NULL) {
-	    yt = y[t];
+	for (t=t1; t<=t2; t++) {
+	    if (x != NULL) {
+		xt = x[t];
+	    } else if (y != NULL) {
+		yt = y[t];
+	    }
+	    ret->v.xvec[t] = xy_calc(xt, yt, f, SERIES, p);
 	}
-	ret->v.xvec[t] = xy_calc(xt, yt, f, SERIES, p);
     }
 
     return ret;
@@ -5852,34 +5862,6 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
-	NODE *xnode = l->t == NUM ? l : r;
-	NODE *snode = l->t == STR ? l : r;
-	const char *s = snode->v.str;
-	int v = xnode->vnum;
-
-	if (v <= 0 || !is_string_valued(p->dset, v)) {
-	    p->err = E_TYPES;
-	} else {
-	    double sx = series_decode_string(p->dset, v, s);
-
-	    if (na(sx)) {
-		ret->v.xval = NADBL;
-	    } else if (f == B_EQ) {
-		ret->v.xval = (sx == xnode->v.xval);
-	    } else {
-		ret->v.xval = (sx != xnode->v.xval);
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /* argument is list; value returned is series */
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
@@ -7531,7 +7513,6 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 		} else {
 		    ret->v.xval = l->v.xvec[t];
 		}
-		ret->vnum = l->vnum; /* added 2013-09-14 */
 	    } else if (strval) {
 		ret->v.str = gretl_strdup("");
 	    } else {
@@ -8849,7 +8830,7 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     gretl_bundle *bmod = NULL;
     gretl_bundle *bprob = NULL;
     int i, k = n->v.bn.n_nodes;
-    
+
     if (k < 2 || k > 4) {
 	n_args_error(k, 2, F_SVM, p);
     }
@@ -8900,7 +8881,7 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     free(list);
 
     return ret;
-#endif    
+#endif
 }
 
 static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
@@ -13980,10 +13961,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = list_list_op(l, r, t->t, p);
 	} else if (t->t == B_POW && ok_list_node(l, p) && ok_list_node(r, p)) {
 	    ret = list_list_op(l, r, t->t, p);
-	} else if ((t->t == B_EQ || t->t == B_NEQ) &&
-		   ((l->t == NUM && r->t == STR) ||
-		    (l->t == STR && r->t == NUM))) {
-	    ret = num_string_comp(l, r, t->t, p);
 	} else if (bool_comp(t->t)) {
 	    if (ok_list_node(l, p) && (r->t == NUM || r->t == SERIES)) {
 		ret = list_bool_comp(l, r, t->t, 0, p);
@@ -14342,7 +14319,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, BUNDLE, l, p);
 	}
-	break;	
+	break;
     case DBMEMB:
 	/* name of $ bundle plus string */
 	if ((l->t == DBUNDLE || l->t == BUNDLE) && r->t == STR) {
