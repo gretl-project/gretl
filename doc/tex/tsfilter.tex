@@ -51,7 +51,7 @@ genr Y = fracdiff(X,0.5)
 
 This filter is accessed using the \verb+hpfilt()+ function, which
 takes as its first argument the name of the variable to be processed.
-(A further optional argument is explained below.)
+(Further optional arguments are explained below.)
 
 A time series $y_t$ may be decomposed into a trend or growth
 component $g_t$ and a cyclical component $c_t$.  
@@ -93,6 +93,11 @@ second argument to \verb+hpfilt()+, as in
 \begin{code}
 genr ct = hpfilt(yt, 1300)
 \end{code}
+
+As of version 2018a, the \cmd{hpfilt()} function accepts a third,
+optional Boolean argument. If set to non-zero, what is performed is
+the so-called \emph{one-sided} version of the filter. See Section
+\ref{sec:example_hp} for further details.
 
 \section{The Baxter and King filter}
 \label{sec:baxter-king}
