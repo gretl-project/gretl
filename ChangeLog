@@ -1,4 +1,5 @@
 version 2017e, in progress
+- New function instring(): boolean variant of strstr()
 - "join" command: add --aggr=spread option for importing
   high frequency data for use in MIDAS analysis
 - strsplit() function: add optional third argument to choose
