@@ -146,10 +146,10 @@ Here's what happens by default.
   for a testing phase (that is, somewhat arbitrarily, there are at
   least 10 observations between \texttt{n\_train} and the end of the
   current sample range).\footnote{One would generally expect there to
-    be at least as many testing observations as training ones.} If
-  so, the independent variables in the test set are scaled using the
-  ranges saved from the training data, a second prediction call is
-  made, and the out-of-sample fit is shown.
+    be a good deal more testing observations.} If so, the independent
+  variables in the test set are scaled using the ranges saved from the
+  training data, a second prediction call is made, and the
+  out-of-sample fit is shown.
 \end{enumerate}
 
 For anyone familiar with the \textsf{libsvm} executables, the above is
@@ -793,9 +793,9 @@ This seems questionable on both counts. First, if the folds are
 advertised as random, one might expect to get non-identical results
 when running a given cross-validation program multiple times (unless
 one takes steps to ensure they are the same). Second, in the context
-of parameter search it would seem reasonable to suppress variation in
-outcome stemming from data-subsetting in order to focus on variation
-stemming from the differing parameter vectors.
+of parameter search one might wish to suppress variation in outcome
+stemming from data-subsetting in order to focus on variation stemming
+from the differing parameter vectors.
 
 Gretl's \texttt{svm} function addresses these points as follows. By
 default we obtain a seed derived from the time at which \texttt{svm}
@@ -1222,16 +1222,9 @@ are.
 There are \textsf{libsvm} packages for (at least) Debian, Fedora and
 Arch (AUR). However, we're not quite sure how functional they are. The
 computation involved in machine learning can be quite time-consuming
-and can be sped up by parallelization via \textsf{OpenMP},
-but this is not enabled by default in the source code for the library,
-nor is there any build-time switch to enable it.\footnote{While the
-  algorithms coded in \textsf{libsvm} seem to be sound and effective,
-  it has to be said that the packaging of this library by its authors
-  falls short of the standard one expects of modern open-source
-  software. There is no \texttt{configure} script---only a hard-wired
-  Makefile, with no \texttt{install} target---and various matters that
-  ought to be easily configurable require hacking on the source
-  files.}  The \textsf{libvsm} FAQ at
+and can be sped up by parallelization via \textsf{OpenMP}, but this is
+not enabled by default in the source code for the library, nor is
+there any build-time switch to enable it. The \textsf{libvsm} FAQ at
 
 \url{http://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f432}
 
@@ -1243,11 +1236,11 @@ so in this case; at any rate there's no \textsf{OpenMP} support in the
 \texttt{libsvm-3.21-1} package for Fedora 25 or the
 \texttt{libsvm3\_3.21} package for Debian.
 
-People with good coding skills may be able to follow the FAQ
-recipe---if they are aware of its existence and take the time to
-figure out its ambiguities---when building \textsf{libsvm} from
-source, but it will be a good deal easier to use this little package
-containing a modified \texttt{Makefile} and \texttt{svm.cpp}:
+People with good coding skills should be able to follow the FAQ
+recipe---if they notice its existence and take some time to figure it
+out---when building \textsf{libsvm} from source, but it will be a good
+deal easier to use this little package containing a modified
+\texttt{Makefile} and \texttt{svm.cpp}:
 
 \url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.22-openmp.tar.gz}
 
