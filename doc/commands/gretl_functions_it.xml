@@ -4315,6 +4315,32 @@
       </description>
     </function>
 
+    <function name="instring" section="strings" output="int">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Analogo booleano di <fncref targ="strstr"/>: ritorna 1 se
+	  <argname>s1</argname> contiene <argname>s2</argname> e 0
+	  altrimenti. L'espressione condizionale
+	</para>
+	<code>
+	  if instring("cattle", "cat")
+	</code>
+	<para>
+	  è logicamente equivalente a
+	</para>
+	<code>
+	  if strlen(strstr("cattle", "cat")) > 0
+	</code>
+	<para>
+	  ma più efficiente.
+	</para>
+      </description>
+    </function>
+    
     <function name="int" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -9297,6 +9323,10 @@
         string s2 = strstr(s1, "an")
         print s2
     </code>
+    <para>
+      Per un semplice controllo vero/falso se <argname>s1</argname>
+      contiene <argname>s2</argname>, vedi <fncref targ="instring"/>.
+    </para>
       </description>
     </function>
 
