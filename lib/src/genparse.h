@@ -323,6 +323,7 @@ enum {
     F_WVAR,
     F_WSD,
     F_STRSTR,
+    F_INSTRING,
     F_CNAMESET,
     F_RNAMESET,
     F_LJUNGBOX,

@@ -6747,7 +6747,8 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	if (!p->err) {
-	    ret = aux_string_node(p);
+	    ret = (f == F_INSTRING)? aux_scalar_node(p) :
+		aux_string_node(p);
 	}
 
 	if (p->err) {
@@ -6756,16 +6757,20 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 
 	sr = r->v.str;
 
-	if (f == F_STRSTR) {
+	if (f == F_STRSTR || f == F_INSTRING) {
 	    char *sret, *tmp = gretl_strdup(sr);
 
 	    if (tmp != NULL) {
 		strstr_escape(tmp);
 		sret = strstr(sl, tmp);
-		if (sret != NULL) {
-		    ret->v.str = gretl_strdup(sret);
+		if (f == F_INSTRING) {
+		    ret->v.xval = sret != NULL;
 		} else {
-		    ret->v.str = gretl_strdup("");
+		    if (sret != NULL) {
+			ret->v.str = gretl_strdup(sret);
+		    } else {
+			ret->v.str = gretl_strdup("");
+		    }
 		}
 		free(tmp);
 	    }
@@ -6809,7 +6814,7 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_DATA;
 	}
 
-	if (!p->err && ret->v.str == NULL) {
+	if (!p->err && f != F_INSTRING && ret->v.str == NULL) {
 	    p->err = E_ALLOC;
 	}
     } else {
@@ -15137,6 +15142,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSTR:
+    case F_INSTRING:
     case F_JSONGET:
     case F_XMLGET:
 	if (l->t == STR && r->t == STR) {
