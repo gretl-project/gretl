@@ -4301,7 +4301,31 @@
 	  named <lit>foo</lit> in <lit>L</lit> give me its position,
 	  otherwise return 0.</quote>
 	</para>
-	</description>
+      </description>
+    </function>
+
+    <function name="instring" section="strings" output="int">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This is a boolean relative of <fncref targ="strstr"/>: it
+	  returns 1 if <argname>s1</argname> contains
+	  <argname>s2</argname>, 0 otherwise. So the conditional
+	  expression
+	</para>
+	<code>
+	  if instring("cattle", "cat")
+	</code>
+	<para>
+	  is logically equivalent to, but more efficient than,
+	</para>
+	<code>
+	  if strlen(strstr("cattle", "cat")) > 0
+	</code>
+      </description>
     </function>
 
     <function name="int" section="math" output="asinput">
@@ -9245,14 +9269,19 @@
 	  portion of <argname>s1</argname> that starts with
 	  <argname>s2</argname>, otherwise returns an empty string.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s1 = "Gretl is an econometrics package"
-        string s2 = strstr(s1, "an")
-        print s2
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 = "Gretl is an econometrics package"
+          string s2 = strstr(s1, "an")
+          print s2
+	</code>
+	<para>
+	  If you just wish to find out if <argname>s1</argname>
+	  contains <argname>s2</argname> (boolean test), see
+	  <fncref targ="instring"/>.
+	</para>
       </description>
     </function>
 
@@ -9265,14 +9294,14 @@
 	  Returns a copy of the argument <argname>s</argname> from
 	  which leading and trailing white space have been removed.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s1 = "    A lot of white space.  "
-        string s2 = strstrip(s1)
-        print s1 s2
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 = "    A lot of white space.  "
+          string s2 = strstrip(s1)
+          print s1 s2
+	</code>
       </description>
     </function>
 
@@ -9289,14 +9318,14 @@
 	  <argname>subst</argname>. See also <fncref targ="regsub"/>
 	  for more complex string replacement via regular expressions.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s1 =  "Hello, Gretl!"
-        string s2 = strsub(s1, "Gretl", "Hansl")
-        print s2
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 =  "Hello, Gretl!"
+          string s2 = strsub(s1, "Gretl", "Hansl")
+          print s2
+	</code>
       </description>
     </function>
 
@@ -9330,46 +9359,46 @@
 	  character with (1-based) index <argname>start</argname> to
 	  that with index <argname>end</argname>, inclusive.
 	</para>
-    <para>
-        For example, the code below
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = substr(s1, 8, 12)
-        string s3 = substr("Hello, Gretl!", 8, 12)
-        print s2
-        print s3
-    </code>
-    <para>
-        gives:
-    </para>
-    <code>
-      ? print s2
-      Gretl
-      ? print s3
-      Gretl
-    </code>
-    <para>
-        It should be noted that in some cases you may be willing to
-        trade clarity for conciseness, and use slicing and increment
-	operators, as in
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = s1[8:12]
-        string s3 = s1 + 7
-        print s2
-        print s3
-    </code>
-    <para>
-    which would give you
-    </para>
-    <code>
-      ? print s2
-      Gretl
-      ? print s3
-      Gretl!
-    </code>
+	<para>
+          For example, the code below
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = substr(s1, 8, 12)
+          string s3 = substr("Hello, Gretl!", 8, 12)
+          print s2
+          print s3
+	</code>
+	<para>
+          gives:
+	</para>
+	<code>
+	  ? print s2
+	  Gretl
+	  ? print s3
+	  Gretl
+	</code>
+	<para>
+          It should be noted that in some cases you may be willing to
+          trade clarity for conciseness, and use slicing and increment
+          operators, as in
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = s1[8:12]
+          string s3 = s1 + 7
+          print s2
+          print s3
+	</code>
+	<para>
+	  which would give you
+	</para>
+	<code>
+	  ? print s2
+	  Gretl
+	  ? print s3
+	  Gretl!
+	</code>
       </description>
     </function>
 
