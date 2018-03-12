@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* filters.c : for gretl */
@@ -58,6 +58,7 @@ struct filter_info_ {
     int t2;               /* ending observation */
     int k;                /* no. of terms in MA, or no. of obs for mean */
     int center;           /* for simple MA: center or not */
+    int oneside;          /* for HP filter: one-sided variant? */
     double lambda;        /* general purpose parameter */
     double fx0;           /* pre-sample EMA value */
     int bkk;              /* Baxter-King parameter */
@@ -121,6 +122,7 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->t2 = t2;
     finfo->k = 0;
     finfo->center = 0;
+    finfo->oneside = 0;
     finfo->lambda = 0.0;
     finfo->fx0 = NADBL;
     finfo->bkk = 0;
@@ -200,20 +202,20 @@ static void filter_make_savename (filter_info *finfo, int i)
 
 static void filter_make_varlabel (filter_info *finfo, int v, int i)
 {
-    char *s = (i == FILTER_SAVE_TREND)? finfo->label_t : 
+    char *s = (i == FILTER_SAVE_TREND)? finfo->label_t :
 	finfo->label_c;
 
     if (finfo->ftype == FILTER_SMA) {
 	if (i == FILTER_SAVE_TREND) {
 	    if (finfo->center) {
-		sprintf(s, _("Centered %d-period moving average of %s"), 
+		sprintf(s, _("Centered %d-period moving average of %s"),
 			finfo->k, finfo->vname);
 	    } else {
-		sprintf(s, _("%d-period moving average of %s"), 
+		sprintf(s, _("%d-period moving average of %s"),
 			finfo->k, finfo->vname);
 	    }
 	} else {
-	    sprintf(s, _("Residual from %d-period MA of %s"), 
+	    sprintf(s, _("Residual from %d-period MA of %s"),
 		    finfo->k, finfo->vname);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
@@ -223,34 +225,44 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 	} else {
 	    sprintf(s, _("Residual from EMA of %s (current weight %g)"),
 		    finfo->vname, finfo->lambda);
-	}	    
+	}
     } else if (finfo->ftype == FILTER_HP) {
-	if (i == FILTER_SAVE_TREND) {
-	    sprintf(s, _("Filtered %s: Hodrick-Prescott trend (lambda = %g)"), 
-		    finfo->vname, finfo->lambda);
+	if (finfo->oneside) {
+	    if (i == FILTER_SAVE_TREND) {
+		sprintf(s, _("Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"),
+			finfo->vname, finfo->lambda);
+	    } else {
+		sprintf(s, _("Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"),
+			finfo->vname, finfo->lambda);
+	    }
 	} else {
-	    sprintf(s, _("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"), 
-		    finfo->vname, finfo->lambda);
-	}	    
+	    if (i == FILTER_SAVE_TREND) {
+		sprintf(s, _("Filtered %s: Hodrick-Prescott trend (lambda = %g)"),
+			finfo->vname, finfo->lambda);
+	    } else {
+		sprintf(s, _("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"),
+			finfo->vname, finfo->lambda);
+	    }
+	}
     } else if (finfo->ftype == FILTER_BK) {
-	sprintf(s, _("Filtered %s: Baxter-King, frequency %d to %d"), 
+	sprintf(s, _("Filtered %s: Baxter-King, frequency %d to %d"),
 		finfo->vname, finfo->bkl, finfo->bku);
     } else if (finfo->ftype == FILTER_BW) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(s, _("Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"), 
+	    sprintf(s, _("Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"),
 		    finfo->vname, finfo->order, finfo->cutoff);
 	} else {
-	    sprintf(s, _("Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"), 
+	    sprintf(s, _("Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"),
 		    finfo->vname, finfo->order, finfo->cutoff);
 	}
     } else if (finfo->ftype == FILTER_POLY) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(s, _("Filtered %s: polynomial of order %d"), 
+	    sprintf(s, _("Filtered %s: polynomial of order %d"),
 		    finfo->vname, finfo->order);
 	} else {
-	    sprintf(s, _("Filtered %s: residual from polynomial of order %d"), 
+	    sprintf(s, _("Filtered %s: residual from polynomial of order %d"),
 		    finfo->vname, finfo->order);
-	}	
+	}
     } else if (finfo->ftype == FILTER_FD) {
 	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
     }
@@ -282,12 +294,12 @@ static void check_bk_limits2 (GtkWidget *s2, GtkWidget *s1)
     }
 }
 
-static void sma_center_callback (GtkWidget *w, int *c)
+static void binary_option_callback (GtkWidget *w, int *o)
 {
-    *c = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    *o = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
-static int varname_error (filter_info *finfo, int i) 
+static int varname_error (filter_info *finfo, int i)
 {
     const char *s = (i == 1)? finfo->save_t : finfo->save_c;
 
@@ -310,7 +322,7 @@ static void filter_dialog_hsep (GtkWidget *dlg)
 {
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *hs = gtk_hseparator_new();
-    
+
     gtk_box_pack_start(GTK_BOX(vbox), hs, TRUE, TRUE, 0);
 }
 
@@ -323,7 +335,7 @@ static void filter_graph_check_button (GtkWidget *dlg, filter_info *finfo,
     hbox = gtk_hbox_new(FALSE, 5);
     w = gretl_option_check_button(txt, &finfo->graph_opt, g);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), finfo->graph_opt & g);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
@@ -344,15 +356,15 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
     for (i=0; i<imax; i++) {
 	if (finfo->ftype == FILTER_FD) {
 	    w = gretl_option_check_button(_("Save output as"),
-					  &finfo->save_opt, 
+					  &finfo->save_opt,
 					  FILTER_SAVE_TREND);
 	} else if (i == 0) {
 	    w = gretl_option_check_button(_("Save smoothed series as"),
-					  &finfo->save_opt, 
+					  &finfo->save_opt,
 					  FILTER_SAVE_TREND);
 	} else {
 	    w = gretl_option_check_button(_("Save cyclical component as"),
-					  &finfo->save_opt, 
+					  &finfo->save_opt,
 					  FILTER_SAVE_CYCLE);
 	}
 	gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, i, i+1);
@@ -362,7 +374,7 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
 	gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN + 3);
 	filter_make_savename(finfo, i);
 	gtk_entry_set_text(GTK_ENTRY(w), (i == 0)? finfo->save_t : finfo->save_c);
-	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);	
+	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, i, i+1);
 	if (i == 0) {
 	    finfo->entry1 = w;
@@ -371,7 +383,7 @@ static void filter_save_check_buttons (GtkWidget *dlg, filter_info *finfo)
 	}
     }
 
-    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 5);  
+    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
@@ -395,7 +407,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     g_signal_connect(G_OBJECT(s1), "value-changed",
 		     G_CALLBACK(set_int_from_spinner), &finfo->bkl);
     gtk_table_attach_defaults(GTK_TABLE(tab), s1, 1, 2, 0, 1);
-	
+
     /* upper limit */
     w = gtk_label_new(_("Upper frequency bound:"));
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 1, 2);
@@ -412,7 +424,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
 		     G_CALLBACK(check_bk_limits2), s1);
 
     /* pack everything */
-    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 5);  
+    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
@@ -430,12 +442,12 @@ static void set_ema_init (GtkWidget *b, filter_info *finfo)
     } else if (i == 3) {
 	gtk_widget_set_sensitive(finfo->kspin, !t);
 	gtk_widget_set_sensitive(finfo->fx0spin, t);
-    }	
+    }
 }
 
 static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
 {
-    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));    
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *tab, *hbox, *w;
     GtkWidget *r1, *r2, *r3;
     GSList *group;
@@ -480,7 +492,7 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     g_signal_connect(G_OBJECT(r3), "toggled", G_CALLBACK(set_ema_init), finfo);
 
     /* pack everything */
-    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 10);  
+    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 10);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
@@ -500,7 +512,7 @@ static void weight_scheme_changed (GtkComboBox *combo, filter_info *finfo)
 	finfo->wopt = OPT_B;
     } else {
 	finfo->wopt = OPT_C;
-    }	
+    }
 }
 
 static void add_poly_weights_options (GtkWidget *vbox, filter_info *finfo)
@@ -563,12 +575,12 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	strcpy(finfo->save_c, gtk_entry_get_text(GTK_ENTRY(finfo->entry2)));
 	if (varname_error(finfo, 2)) {
 	    return;
-	} 
-    } 
+	}
+    }
 
     if (finfo->kspin != NULL) {
 	if (gtk_widget_is_sensitive(finfo->kspin)) {
-	    finfo->k = (int) 
+	    finfo->k = (int)
 		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->kspin));
 	} else {
 	    finfo->k = 0;
@@ -584,7 +596,7 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	    finfo->lambda = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
 	    finfo->midfrac = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
 	}
-    }    
+    }
 
     if (finfo->graph_opt != FILTER_GRAPH_NONE ||
 	finfo->save_opt != FILTER_SAVE_NONE) {
@@ -592,12 +604,12 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 
 	if (err) {
 	    gui_errmsg(err);
-	} 
-    } 
+	}
+    }
 }
 
 #if 0
-static gboolean check_bw_feasibility (GtkSpinButton *b, 
+static gboolean check_bw_feasibility (GtkSpinButton *b,
 				      filter_info *finfo)
 {
     if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
@@ -622,7 +634,7 @@ static gboolean check_bw_feasibility (GtkSpinButton *b,
     return FALSE;
 }
 #else
-static gboolean check_bw_feasibility (GtkSpinButton *b, 
+static gboolean check_bw_feasibility (GtkSpinButton *b,
 				      filter_info *finfo)
 {
     if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
@@ -671,7 +683,7 @@ static void filter_dialog (filter_info *finfo)
     /* box title */
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_(filter_get_title(finfo->ftype)));
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);  
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
@@ -688,7 +700,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(kspin), (gdouble) finfo->k);
 	g_signal_connect(G_OBJECT(kspin), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->k);
-	gtk_box_pack_start(GTK_BOX(hbox), kspin, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), kspin, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	/* select centered or not */
@@ -697,9 +709,9 @@ static void filter_dialog (filter_info *finfo)
 	if (finfo->center) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
 	}
-	g_signal_connect(G_OBJECT(w), "toggled", 
-			 G_CALLBACK(sma_center_callback), &finfo->center);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	g_signal_connect(G_OBJECT(w), "toggled",
+			 G_CALLBACK(binary_option_callback), &finfo->center);
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* set weight on current observation */
@@ -710,7 +722,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set calculation of initial EMA value */
 	ema_obs_radios(dlg, finfo);
@@ -723,7 +735,18 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+	/* select one-sided or not */
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_check_button_new_with_label(_("One-sided"));
+	if (finfo->oneside) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+	}
+	g_signal_connect(G_OBJECT(w), "toggled",
+			 G_CALLBACK(binary_option_callback), &finfo->oneside);
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_BK) {
 	/* set Baxter-King "k" */
@@ -734,7 +757,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->bkk);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->bkk);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set periods */
 	bkbp_frequencies_table(dlg, finfo);
@@ -749,7 +772,7 @@ static void filter_dialog (filter_info *finfo)
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(check_bw_feasibility), finfo);
-	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set cutoff */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -761,7 +784,7 @@ static void filter_dialog (filter_info *finfo)
 			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(check_bw_feasibility), finfo);
-	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);	
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_button_new_with_label(_("show poles"));
@@ -781,7 +804,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
-	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* weights settings (optional) */
 	filter_dialog_hsep(dlg);
@@ -795,9 +818,9 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_double_from_spinner), &finfo->lambda);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    }	
+    }
 
     filter_dialog_hsep(dlg);
 
@@ -833,7 +856,7 @@ static void filter_dialog (filter_info *finfo)
 	if (finfo->ftype == FILTER_HP || finfo->ftype == FILTER_BW) {
 	    filter_graph_check_button(dlg, finfo, _("Graph frequency response"),
 				      FILTER_GRAPH_RESP);
-	} 
+	}
 	/* save to dataset? */
 	filter_dialog_hsep(dlg);
 	filter_save_check_buttons(dlg, finfo);
@@ -844,12 +867,12 @@ static void filter_dialog (filter_info *finfo)
 
     /* Close button */
     w = close_button(hbox);
-    g_signal_connect_swapped(G_OBJECT(w), "clicked", 
+    g_signal_connect_swapped(G_OBJECT(w), "clicked",
 			     G_CALLBACK(gtk_widget_destroy), dlg);
 
     /* "OK" button */
     w = ok_button(hbox);
-    g_signal_connect(G_OBJECT(w), "clicked", 
+    g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(filter_dialog_ok), finfo);
     gtk_widget_grab_default(w);
 
@@ -874,7 +897,7 @@ static void print_gp_filter_data (filter_info *finfo,
     int t;
 
     for (t=finfo->t1; t<=finfo->t2; t++) {
-	/* same print format as in function printvars() in 
+	/* same print format as in function printvars() in
 	   lib/src/graphing.c
 	*/
 	if (na(x[t])) {
@@ -885,7 +908,7 @@ static void print_gp_filter_data (filter_info *finfo,
     }
 }
 
-static int 
+static int
 do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 {
     gchar *xtitle = NULL;
@@ -912,7 +935,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     } else {
 	fp = open_plot_input_file(PLOT_REGULAR, GPT_LETTERBOX, &err);
     }
-    if (err) { 
+    if (err) {
 	return err;
     }
 
@@ -922,12 +945,12 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     if (dataset->pd == 4) {
 	if ((finfo->t2 - finfo->t1) / 4 < 8) {
-	    fputs("set xtics nomirror 0,1\n", fp); 
+	    fputs("set xtics nomirror 0,1\n", fp);
 	    fputs("set mxtics 4\n", fp);
 	}
     } else if (dataset->pd == 12) {
 	if ((finfo->t2 - finfo->t1) / 12 < 8) {
-	    fputs("set xtics nomirror 0,1\n", fp); 
+	    fputs("set xtics nomirror 0,1\n", fp);
 	    fputs("set mxtics 12\n", fp);
 	}
     }
@@ -942,7 +965,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "set xrange [%g:%g]\n", floor(obs[dataset->t1]), 
+    fprintf(fp, "set xrange [%g:%g]\n", floor(obs[dataset->t1]),
 	    ceil(obs[dataset->t2]));
 
     if (twoplot) {
@@ -989,17 +1012,17 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
 	if (finfo->ftype == FILTER_BK) {
 	    title =
-		g_strdup_printf(_("Baxter-King component of %s at frequency %d to %d"), 
+		g_strdup_printf(_("Baxter-King component of %s at frequency %d to %d"),
 				finfo->vname, finfo->bkl, finfo->bku);
 	} else {
 	    title = g_strdup_printf(_("Cyclical component of %s"), finfo->vname);
 	}
-	fprintf(fp, "set title '%s'\n", title); 
+	fprintf(fp, "set title '%s'\n", title);
 	fputs("set xzeroaxis\n", fp);
 	fprintf(fp, "plot '-' using 1:2 title '' w lines\n");
 	print_gp_filter_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
-    }	
+    }
 
     gretl_pop_c_numeric_locale();
 
@@ -1018,13 +1041,13 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     const char *fmt = N_("Butterworth poles (n = %d, cutoff = %d degrees)");
     gchar *title;
     FILE *fp;
-    double cut, theta, delta; 
+    double cut, theta, delta;
     double x, y, px, py;
     int i, n = finfo->order;
     int err = 0;
 
     fp = open_plot_input_file(PLOT_ROOTS, 0, &err);
-    if (err) { 
+    if (err) {
 	gui_errmsg(err);
 	return;
     }
@@ -1048,7 +1071,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
 	  "'-' w points pt 7\n", fp);
 
     gretl_push_c_numeric_locale();
-    
+
     for (i=1; i<=n; i++) {
 	theta = M_PI * (2 * i - 1) / (2 * n);
 	delta = 1 + cut * (2 * sin(theta) + cut);
@@ -1096,7 +1119,7 @@ static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 	    finfo->midfrac = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
 	    poly_weights(W->val, T, finfo->lambda, finfo->midfrac, finfo->wopt);
 	    gretl_push_c_numeric_locale();
-	    sprintf(rstr, "set xrange [0:%d] ; set yrange [0.8:%g] ;", T - 1, 
+	    sprintf(rstr, "set xrange [0:%d] ; set yrange [0.8:%g] ;", T - 1,
 		    1.1 * finfo->lambda);
 	    gretl_pop_c_numeric_locale();
 	    err = matrix_plot(W, list, rstr, OPT_O);
@@ -1131,7 +1154,7 @@ static int do_filter_response_graph (filter_info *finfo)
     }
 
     fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
-    if (err) { 
+    if (err) {
 	gui_errmsg(err);
 	gretl_matrix_free(G);
 	return err;
@@ -1141,12 +1164,12 @@ static int do_filter_response_graph (filter_info *finfo)
     fputs("set yrange [0:1.1]\n", fp);
 
     if (finfo->ftype == FILTER_BW) {
-	sprintf(title, "%s (n = %d, %s %.2fπ)", _("Gain for Butterworth filter"), 
+	sprintf(title, "%s (n = %d, %s %.2fπ)", _("Gain for Butterworth filter"),
 		finfo->order, _("nominal cutoff"),
 		(double) finfo->cutoff / 180);
     } else {
 	sprintf(title, _("Gain for H-P filter (lambda = %g)"), finfo->lambda);
-    }	
+    }
     fprintf(fp, "set title \"%s\"\n", title);
 
     fprintf(fp, "# literal lines = %d\n", nlit);
@@ -1156,7 +1179,7 @@ static int do_filter_response_graph (filter_info *finfo)
     gretl_push_c_numeric_locale();
 
     if (finfo->ftype == FILTER_BW) {
-	fprintf(fp, "set arrow from %g,0 to %g,1.1 nohead\n", 
+	fprintf(fp, "set arrow from %g,0 to %g,1.1 nohead\n",
 		omega_star, omega_star);
     }
 
@@ -1216,7 +1239,7 @@ static void record_filter_command (filter_info *finfo)
 	    sprintf(fcmd, "series %s = %s - ", finfo->save_t, finfo->vname);
 	} else if (cycle) {
 	    sprintf(fcmd, "series %s = ", finfo->save_c);
-	} 
+	}
     } else if (trend) {
 	sprintf(fcmd, "series %s = ", finfo->save_t);
     } else if (cycle) {
@@ -1234,7 +1257,8 @@ static void record_filter_command (filter_info *finfo)
 	sprintf(s, "movavg(%s, %g, %d)\n", finfo->vname,
 		finfo->lambda, finfo->k);
     } else if (finfo->ftype == FILTER_HP) {
-	sprintf(s, "hpfilt(%s, %g)\n", finfo->vname, finfo->lambda);
+	sprintf(s, "hpfilt(%s, %g, %d)\n", finfo->vname,
+		finfo->lambda, finfo->oneside);
     } else if (finfo->ftype == FILTER_BK) {
 	sprintf(s, "bkfilt(%s, %d, %d, %d)\n", finfo->vname,
 		finfo->bkl, finfo->bku, finfo->bkk);
@@ -1255,11 +1279,11 @@ static void record_filter_command (filter_info *finfo)
     } else if (cycle) {
 	s = fcmd + strlen(fcmd);
 	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
-    }	
+    }
 
     if (trend && cycle) {
 	s = fcmd + strlen(fcmd);
-	sprintf(s, "series %s = %s - %s\n", finfo->save_c, finfo->vname, 
+	sprintf(s, "series %s = %s - %s\n", finfo->save_c, finfo->vname,
 		finfo->save_t);
 	s = fcmd + strlen(fcmd);
 	sprintf(s, "setinfo %s --description=\"%s\"\n", finfo->save_c, finfo->label_c);
@@ -1309,7 +1333,11 @@ static int calculate_filter (filter_info *finfo)
 				  finfo->k, finfo->fx0);
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
-	err = hp_filter(x, fx, dataset, finfo->lambda, OPT_T);
+	if (finfo->oneside) {
+	    err = oshp_filter(x, fx, dataset, finfo->lambda, OPT_T);
+	} else {
+	    err = hp_filter(x, fx, dataset, finfo->lambda, OPT_T);
+	}
     } else if (finfo->ftype == FILTER_BK) {
 	/* Baxter and King bandpass */
 	err = bkbp_filter(x, u, dataset, finfo->bkl, finfo->bku, finfo->bkk);
@@ -1331,7 +1359,7 @@ static int calculate_filter (filter_info *finfo)
 
     dataset->t1 = save_t1;
     dataset->t2 = save_t2;
-	
+
     if (!err && fx != NULL && u != NULL) {
 	for (t=0; t<dataset->n; t++) {
 	    if (na(x[t]) || na(fx[t])) {
@@ -1361,7 +1389,7 @@ static int calculate_filter (filter_info *finfo)
 	err = save_filtered_var(finfo, u, FILTER_SAVE_CYCLE, &saved);
     } else {
 	free(u);
-    }  
+    }
 
     if (saved) {
 	populate_varlist();
@@ -1379,19 +1407,19 @@ static int filter_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    if (!strcmp(s, "FilterSMA")) 
+    if (!strcmp(s, "FilterSMA"))
 	return FILTER_SMA;
-    else if (!strcmp(s, "FilterEMA")) 
+    else if (!strcmp(s, "FilterEMA"))
 	return FILTER_EMA;
-    else if (!strcmp(s, "FilterHP")) 
+    else if (!strcmp(s, "FilterHP"))
 	return FILTER_HP;
-    else if (!strcmp(s, "FilterBK")) 
+    else if (!strcmp(s, "FilterBK"))
 	return FILTER_BK;
-    else if (!strcmp(s, "FilterBW")) 
+    else if (!strcmp(s, "FilterBW"))
 	return FILTER_BW;
-    else if (!strcmp(s, "FilterPoly")) 
+    else if (!strcmp(s, "FilterPoly"))
 	return FILTER_POLY;
-    else if (!strcmp(s, "FilterFD")) 
+    else if (!strcmp(s, "FilterFD"))
 	return FILTER_FD;
     else
 	return FILTER_SMA;
