@@ -30,6 +30,8 @@
 #define ARMA_MDEBUG 0
 #define CHK_FOR_ENV 0
 
+#define TEST_AS197 1
+
 #include "arma_common.c"
 
 #define KALMAN_ALL 999
@@ -1478,6 +1480,13 @@ static int kalman_arma (double *coeff, const DATASET *dset,
 
 /* end of Kalman-specific material */
 
+#if TEST_AS197 /* experimental!! */
+
+#include "as197.c"
+#include "as197_test.c"
+
+#endif
+
 static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 {
     PRN *prn = ainfo->prn;
@@ -1859,20 +1868,28 @@ MODEL arma_model (const int *list, const int *pqspec,
     if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
-	    kalman_arma(coeff, dset, ainfo, &armod, opt);
+#if TEST_AS197
+	    if ((opt & OPT_A) && as197_ok(ainfo)) {
+		err = as197_arma(coeff, dset, ainfo, &armod, opt);
+	    } else {
+		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
+	    }
+#else
+	    err = kalman_arma(coeff, dset, ainfo, &armod, opt);
+#endif
 	} else {
-	    bhhh_arma(coeff, dset, ainfo, &armod, opt);
+	    err = bhhh_arma(coeff, dset, ainfo, &armod, opt);
 	}
     }
 
  bailout:
 
-    if (!err) {
-	transcribe_extra_info(ainfo, &armod);
-    }
-
     if (err && !armod.errcode) {
 	armod.errcode = err;
+    }
+
+    if (!err) {
+	transcribe_extra_info(ainfo, &armod);
     }
 
     if (!armod.errcode) {
