@@ -5972,10 +5972,10 @@ void set_model_id (MODEL *pmod, gretlopt opt)
     */
     if (opt & OPT_A) {
 	/* An auxiliary model? Likely, but OPT_A has
-	   special meaning for a few estimators.
+	   special meaning for a few estimators
 	*/
 	if (pmod->ci != ARBOND && pmod->ci != DPANEL &&
-	    pmod->ci != GARCH) {
+	    pmod->ci != GARCH && pmod->ci != ARMA) {
 	    return;
 	}
     }
