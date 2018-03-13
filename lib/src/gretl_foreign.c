@@ -2669,7 +2669,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
     *rtype = R_type_to_gretl_type(res);
 
-#if 0
+#if FDEBUG
     printf("R return value: got type %d (%s)\n", *rtype,
 	   gretl_type_get_name(*rtype));
     printf("Calling R_PrintValue() on @res\n");
