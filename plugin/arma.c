@@ -30,7 +30,8 @@
 #define ARMA_MDEBUG 0
 #define CHK_FOR_ENV 0
 
-#define TEST_AS197 1
+/* for "live" testing of G. Melard's ARMA algorithm */
+#define TEST_AS197 0
 
 #include "arma_common.c"
 
