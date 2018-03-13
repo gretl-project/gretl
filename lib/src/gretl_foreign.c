@@ -22,6 +22,7 @@
 #include "gretl_func.h"
 #include "gretl_foreign.h"
 #include "matrix_extra.h"
+#include "gretl_typemap.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -2115,6 +2116,8 @@ SEXP VR_UnboundValue;
 /* renamed, pointerized versions of the R functions we need */
 
 static double *(*R_REAL) (SEXP);
+static const char *(*R_STRING) (SEXP);
+static SEXP *(*R_STRING_PTR) (SEXP);
 
 static SEXP (*R_CDR) (SEXP);
 static SEXP (*R_allocList) (int);
@@ -2187,6 +2190,8 @@ static int load_R_symbols (void)
 
     R_CDR           = dlget(Rhandle, "CDR", &err);
     R_REAL          = dlget(Rhandle, "REAL", &err);
+    R_STRING        = dlget(Rhandle, "R_CHAR", &err);
+    R_STRING_PTR    = dlget(Rhandle, "STRING_PTR", &err);
     R_allocList     = dlget(Rhandle, "Rf_allocList", &err);
     R_allocMatrix   = dlget(Rhandle, "Rf_allocMatrix", &err);
     R_allocVector   = dlget(Rhandle, "Rf_allocVector", &err);
@@ -2664,6 +2669,13 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
     *rtype = R_type_to_gretl_type(res);
 
+#if 0
+    printf("R return value: got type %d (%s)\n", *rtype,
+	   gretl_type_get_name(*rtype));
+    printf("Calling R_PrintValue() on @res\n");
+    R_PrintValue(res);
+#endif
+
     if (*rtype == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = NULL;
 	int nr = 0, nc = 0;
@@ -2707,8 +2719,11 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	*dret = *realres;
     	R_unprotect(1);
     } else if (*rtype == GRETL_TYPE_STRING) {
-	gretl_errmsg_set("R functions: string return values are not supported");
-	err = E_TYPES;
+	SEXP *rsp = R_STRING_PTR(res);
+	const char *s = R_STRING(*rsp);
+
+	*ret = gretl_strdup(s);
+	R_unprotect(1);
     } else {
 	err = E_TYPES;
     }

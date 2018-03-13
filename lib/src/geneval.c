@@ -8500,6 +8500,14 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 		    }
 		    ret->v.m = (gretl_matrix *) retp;
 		}
+	    } else if (rtype == GRETL_TYPE_STRING) {
+		ret = aux_string_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			free(ret->v.str);
+		    }
+		    ret->v.str = (char *) retp;
+		}
 	    }
 	}
     }
