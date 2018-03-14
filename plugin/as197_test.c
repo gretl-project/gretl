@@ -337,7 +337,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
 		       &fncount, &grcount, as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
-	    if (!as.loglik) {
+	    if (!as.use_loglik) {
 		as197_full_loglik(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
