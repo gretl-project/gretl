@@ -327,7 +327,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
 
 	if (as.n > 2000) {
 	    /* try to avoid slowdown on big samples */
-	    as.delta = 0.0001;
+	    as.toler = 0.0001;
 	    as.use_loglik = 1; /* ? */
 	}
 
@@ -337,7 +337,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
 		       &fncount, &grcount, as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
-	    if (!as->loglik) {
+	    if (!as.loglik) {
 		as197_full_loglik(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
