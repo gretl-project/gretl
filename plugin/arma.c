@@ -1049,7 +1049,8 @@ static void arma_add_ehat (MODEL *pmod, arma_info *ainfo,
     }
 }
 
-static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
+static int kalman_arma_finish (MODEL *pmod,
+			       arma_info *ainfo,
 			       const DATASET *dset,
 			       kalman *K, double *b,
 			       gretlopt opt, PRN *prn)
@@ -1070,7 +1071,6 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     /* in the Kalman case the basic model struct is empty, so we
        have to allocate for coefficients, residuals and so on
     */
-
     err = gretl_model_allocate_storage(pmod);
     if (err) {
 	return err;
@@ -1299,8 +1299,10 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
     }
 }
 
-static int kalman_arma (double *coeff, const DATASET *dset,
-			arma_info *ainfo, MODEL *pmod,
+static int kalman_arma (const double *coeff,
+			const DATASET *dset,
+			arma_info *ainfo,
+			MODEL *pmod,
 			gretlopt opt)
 {
     kalman *K = NULL;
@@ -1311,15 +1313,11 @@ static int kalman_arma (double *coeff, const DATASET *dset,
     int fncount = 0, grcount = 0;
     int use_newton = 0;
     double *b;
-    int i, err = 0;
+    int err = 0;
 
-    b = malloc(ainfo->nc * sizeof *b);
+    b = copyvec(coeff, ainfo->nc);
     if (b == NULL) {
 	return E_ALLOC;
-    }
-
-    for (i=0; i<ainfo->nc; i++) {
-	b[i] = coeff[i];
     }
 
 #if ARMA_DEBUG

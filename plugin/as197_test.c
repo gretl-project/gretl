@@ -21,6 +21,7 @@ struct as197_info {
     int verbose;
     int ncalls, nbad;
     int use_loglik;
+    arma_info *ai;
 };
 
 static void as197_info_init (struct as197_info *as,
@@ -142,6 +143,17 @@ static double as197_iteration (const double *b, void *data)
     int i;
 
     as->ncalls += 1;
+
+    if (as->q > 0 || as->Q > 0) {
+	/* check that MA term(s) are within bounds */
+	const double *theta = b + as->ifc + np;
+	const double *Theta = theta + as->q;
+
+	if (ma_out_of_bounds(as->ai, theta, Theta)) {
+	    as->nbad += 1;
+	    return crit;
+	}
+    }
 
     if (as->ifc) {
 	/* subtract the constant */
@@ -276,13 +288,47 @@ static int as197_arma_finish (MODEL *pmod,
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
 	gretl_model_set_int(pmod, "AS197", 1);
+	if (arima_ydiff_only(ainfo)) {
+	    pmod->opt |= OPT_Y;
+	}
     }
 
     return err;
 }
 
-static int as197_arma (double *coeff, const DATASET *dset,
-		       arma_info *ainfo, MODEL *pmod,
+static int as197_undo_y_scaling (arma_info *ainfo,
+				 gretl_matrix *y,
+				 double *b,
+				 struct as197_info *as)
+{
+    double *beta = b + 1 + ainfo->np + ainfo->P +
+	ainfo->nq + ainfo->Q;
+    int i, t, T = ainfo->t2 - ainfo->t1 + 1;
+    int err = 0;
+
+    /* adjust the constant */
+    b[0] /= ainfo->yscale;
+
+    for (i=0; i<ainfo->nexo; i++) {
+	beta[i] /= ainfo->yscale;
+    }
+
+    i = ainfo->t1;
+    for (t=0; t<T; t++) {
+	y->val[t] /= ainfo->yscale;
+    }
+
+    if (na(as197_iteration(b, as))) {
+	err = 1;
+    }
+
+    return err;
+}
+
+static int as197_arma (const double *coeff,
+		       const DATASET *dset,
+		       arma_info *ainfo,
+		       MODEL *pmod,
 		       gretlopt opt)
 {
     struct as197_info as;
@@ -290,20 +336,18 @@ static int as197_arma (double *coeff, const DATASET *dset,
     double *b = NULL;
     double delta = -1.0;
     int use_loglik = 0;
-    int verbose = 0;
-    int i, err = 0;
+    int verbose = 1;
+    int err = 0;
 
     as197_info_init(&as, ainfo, verbose, delta, use_loglik);
+    as.ai = ainfo; /* link */
 
-    b = malloc(ainfo->nc * sizeof *b);
+    b = copyvec(coeff, ainfo->nc);
     if (b == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<ainfo->nc; i++) {
-	b[i] = coeff[i];
-    }
-
+    /* FIXME scaling of y */
     y = form_arma_y_vector(ainfo, &err);
 
     if (!err) {
@@ -323,7 +367,6 @@ static int as197_arma (double *coeff, const DATASET *dset,
 	int fncount = 0;
 	int grcount = 0;
 	int nparam = as.p + as.q + as.P + as.Q + as.ifc;
-	int err;
 
 	if (as.n > 2000) {
 	    /* try to avoid slowdown on big samples */
@@ -337,7 +380,11 @@ static int as197_arma (double *coeff, const DATASET *dset,
 		       &fncount, &grcount, as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
-	    if (!as.use_loglik) {
+	    if (ainfo->yscale != 1.0) {
+		/* broken? */
+		as.use_loglik = 1;
+		as197_undo_y_scaling(ainfo, y, b, &as);
+	    } else if (!as.use_loglik) {
 		as197_full_loglik(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
@@ -347,7 +394,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
 	}
     }
 
-    if (err) {
+    if (err && !pmod->errcode) {
 	pmod->errcode = err;
     }
 
@@ -363,6 +410,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
    AR or MA specifications, or exogenous variables
    (ARMAX). So we need to screen out these conditions
    before saying OK to using the testing code.
+   Added: y-scaling doesn't work yet either?
 */
 
 static int as197_ok (arma_info *ainfo)
@@ -375,6 +423,9 @@ static int as197_ok (arma_info *ainfo)
 	return 0;
     } else if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	/* marker for "gappy" case */
+	return 0;
+    } else if (ainfo->yscale != 1.0) {
+	/* not working yet! */
 	return 0;
     } else {
 	return 1;
