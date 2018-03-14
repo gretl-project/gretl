@@ -1855,7 +1855,12 @@
             <para>
               Weibull (w or W): shape; scale
             </para>
-	  </li> 
+	  </li>
+	  <li>
+            <para>
+              Laplace (l or L): mean; scale
+            </para>
+	  </li>	  
 	  <li>
             <para>
               Generalized Error (E): shape
@@ -1901,6 +1906,8 @@
 	  scale &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} or \texttt{W} &amp; 
 	  shape &amp; scale &amp; --\\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp; 
+	  mean &amp; scale &amp; --\\
 	  Generalized Error &amp; \texttt{E} &amp; 
 	  shape &amp; -- &amp; --\\
 	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp; 
@@ -2384,6 +2391,16 @@
               Poisson (p or P): mean
             </para>
 	  </li>
+	  <li>
+            <para>
+              Laplace (l or L): mean; scale
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Standardized GED (E): shape
+            </para>
+	  </li>
 	</ilist>
 	<tabular colspec="llll">
 	  \textit{Distribution} &amp; \textsl{c} &amp;
@@ -2399,7 +2416,11 @@
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
 	  $p$ &amp; $n$ \\ 
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
-	  $\lambda$ &amp; -- \\ 
+	  $\lambda$ &amp; -- \\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp; 
+	  mean &amp; scale \\
+	  Standardized GED &amp; \texttt{E} &amp; 
+	  shape &amp; -- \\
 	</tabular>
 	<para>
 	  <seelist>
@@ -3642,7 +3663,20 @@
 	  saved under its own name).
 	</para>
       </description>
-    </function>    
+    </function>
+
+    <function name="getkeys" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns an array of strings holding the keys identifying the
+	  contents of <argname>b</argname>. If the bundle is empty an
+	  empty array is returned.
+	</para>
+      </description>
+    </function>
 
     <function name="getline" section="strings" output="scalar">
       <fnargs>
@@ -4038,6 +4072,7 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar" optional="true">lambda</fnarg>
+	<fnarg type="bool" optional="true">one-sided</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4046,7 +4081,24 @@
 	  smoothing parameter, <argname>lambda</argname>, is not supplied then
 	  a data-based default is used, namely 100 times the square of the
 	  periodicity (100 for annual data, 1600 for quarterly data, and so
-	  on).  
+	  on).
+	</para>
+	<para>
+	  By default the filter is the usual two-sided version, but if
+	  the optional third argument is given with a non-zero
+	  value a one-sided variant (with no look-ahead) is computed
+	  in the manner of <cite key="stock-watson1999">Stock and
+	  Watson (1999)</cite>.
+	</para>
+	<para>
+	  The most common use of the HP filter is detrending, but if
+	  it's the trend you are interested in that is easily obtained
+	  by subtraction, as in
+	</para>
+	<code>
+	  series hptrend = y - hfilt(y)
+	</code>
+	<para>
 	  <seelist> 
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
@@ -4249,7 +4301,31 @@
 	  named <lit>foo</lit> in <lit>L</lit> give me its position,
 	  otherwise return 0.</quote>
 	</para>
-	</description>
+      </description>
+    </function>
+
+    <function name="instring" section="strings" output="int">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This is a boolean relative of <fncref targ="strstr"/>: it
+	  returns 1 if <argname>s1</argname> contains
+	  <argname>s2</argname>, 0 otherwise. So the conditional
+	  expression
+	</para>
+	<code>
+	  if instring("cattle", "cat")
+	</code>
+	<para>
+	  is logically equivalent to, but more efficient than,
+	</para>
+	<code>
+	  if strlen(strstr("cattle", "cat")) > 0
+	</code>
+      </description>
     </function>
 
     <function name="int" section="math" output="asinput">
@@ -4361,6 +4437,11 @@
 	  </li>
 	  <li>
             <para>
+              Laplace (l or L): mean; scale
+            </para>
+	  </li>
+	  <li>
+            <para>
               Standardized GED (E): shape
             </para>
 	  </li>
@@ -4397,7 +4478,9 @@
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
 	  $p$ &amp; $n$  &amp; -- \\
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp;
-          $\lambda$ &amp; --  &amp; -- \\ 
+          $\lambda$ &amp; --  &amp; -- \\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
+          mean &amp; scale  &amp; -- \\
 	  Standardized GED &amp; \texttt{E} &amp; shape &amp; --
 	  &amp; -- \\
 	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp; 
@@ -7083,12 +7166,12 @@
 	  details of the required (scalar) arguments.  The
 	  distributions supported by the <lit>pdf</lit> function are
 	  the normal, Student's <math>t</math>, chi-square,
-	  <math>F</math>, Gamma, Exponential, Weibull, Generalized
-	  Error, Binomial and Poisson. Note that for the Binomial and
-	  the Poisson what's calculated is in fact the probability
-	  mass at the specified point. For Student's <math>t</math>,
-	  chi-square, <math>F</math> the noncentral variants are
-	  supported too.
+	  <math>F</math>, Gamma, Exponential, Weibull, Laplace,
+	  Generalized Error, Binomial and Poisson. Note that for the
+	  Binomial and the Poisson what's calculated is in fact the
+	  probability mass at the specified point. For Student's
+	  <math>t</math>, chi-square, <math>F</math> the noncentral
+	  variants are supported too.
 	</para>
 	<para>
 	  For the normal distribution, see also <fncref targ="dnorm"/>.
@@ -7553,7 +7636,7 @@
 	  The distributions supported by the <lit>pvalue</lit>
 	  function are the standard normal, <math>t</math>, Chi
 	  square, <math>F</math>, gamma, binomial, Poisson,
-	  Exponential, Weibull and Generalized Error.
+	  Exponential, Weibull, Laplace and Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -7965,7 +8048,12 @@
             <para>
               Weibull (w or W): shape, scale
             </para>
-	  </li> 
+	  </li>
+	  <li>
+            <para>
+              Laplace (l or L): mean, scale
+            </para>
+	  </li>	  
 	  <li>
             <para>
               Generalized Error (E): shape
@@ -7995,6 +8083,7 @@
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- &amp; --\\
 	  Exponential &amp; \texttt{exp} &amp; scale &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale &amp; --\\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp; mean &amp; scale &amp; --\\
 	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; shape1 &amp; shape2 &amp; --\\
 	  Beta-Binomial &amp; \texttt{bb} &amp; $n$ &amp; shape1 &amp; shape2
@@ -9180,14 +9269,19 @@
 	  portion of <argname>s1</argname> that starts with
 	  <argname>s2</argname>, otherwise returns an empty string.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s1 = "Gretl is an econometrics package"
-        string s2 = strstr(s1, "an")
-        print s2
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 = "Gretl is an econometrics package"
+          string s2 = strstr(s1, "an")
+          print s2
+	</code>
+	<para>
+	  If you just wish to find out if <argname>s1</argname>
+	  contains <argname>s2</argname> (boolean test), see
+	  <fncref targ="instring"/>.
+	</para>
       </description>
     </function>
 
@@ -9200,14 +9294,14 @@
 	  Returns a copy of the argument <argname>s</argname> from
 	  which leading and trailing white space have been removed.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s1 = "    A lot of white space.  "
-        string s2 = strstrip(s1)
-        print s1 s2
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 = "    A lot of white space.  "
+          string s2 = strstrip(s1)
+          print s1 s2
+	</code>
       </description>
     </function>
 
@@ -9224,14 +9318,14 @@
 	  <argname>subst</argname>. See also <fncref targ="regsub"/>
 	  for more complex string replacement via regular expressions.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s1 =  "Hello, Gretl!"
-        string s2 = strsub(s1, "Gretl", "Hansl")
-        print s2
-    </code>
+	<para>
+          Example:
+	</para>
+	<code>
+          string s1 =  "Hello, Gretl!"
+          string s2 = strsub(s1, "Gretl", "Hansl")
+          print s2
+	</code>
       </description>
     </function>
 
@@ -9265,46 +9359,46 @@
 	  character with (1-based) index <argname>start</argname> to
 	  that with index <argname>end</argname>, inclusive.
 	</para>
-    <para>
-        For example, the code below
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = substr(s1, 8, 12)
-        string s3 = substr("Hello, Gretl!", 8, 12)
-        print s2
-        print s3
-    </code>
-    <para>
-        gives:
-    </para>
-    <code>
-      ? print s2
-      Gretl
-      ? print s3
-      Gretl
-    </code>
-    <para>
-        It should be noted that in some cases you may be willing to
-        trade clarity for conciseness, and use slicing and increment
-	operators, as in
-    </para>
-    <code>
-        string s1 = "Hello, Gretl!"
-        string s2 = s1[8:12]
-        string s3 = s1 + 7
-        print s2
-        print s3
-    </code>
-    <para>
-    which would give you
-    </para>
-    <code>
-      ? print s2
-      Gretl
-      ? print s3
-      Gretl!
-    </code>
+	<para>
+          For example, the code below
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = substr(s1, 8, 12)
+          string s3 = substr("Hello, Gretl!", 8, 12)
+          print s2
+          print s3
+	</code>
+	<para>
+          gives:
+	</para>
+	<code>
+	  ? print s2
+	  Gretl
+	  ? print s3
+	  Gretl
+	</code>
+	<para>
+          It should be noted that in some cases you may be willing to
+          trade clarity for conciseness, and use slicing and increment
+          operators, as in
+	</para>
+	<code>
+          string s1 = "Hello, Gretl!"
+          string s2 = s1[8:12]
+          string s3 = s1 + 7
+          print s2
+          print s3
+	</code>
+	<para>
+	  which would give you
+	</para>
+	<code>
+	  ? print s2
+	  Gretl
+	  ? print s3
+	  Gretl!
+	</code>
       </description>
     </function>
 

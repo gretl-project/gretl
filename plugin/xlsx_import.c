@@ -1357,6 +1357,7 @@ static void xlsx_dates_check (DATASET *dset)
     int t, maybe_dates = 1;
     int date_min = 0, date_max = 0;
     int d, delta_min = 0, delta_max = 0;
+    int t_delta_max = 0;
 
 #if DATE_DEBUG
     fprintf(stderr, "xlsx_dates_check: starting\n");
@@ -1410,6 +1411,7 @@ static void xlsx_dates_check (DATASET *dset)
 #endif
 		delta_min = d;
 	    } else if (d > delta_max) {
+		t_delta_max = t+1;
 		delta_max = d;
 	    }
 	}
@@ -1451,13 +1453,17 @@ static void xlsx_dates_check (DATASET *dset)
 	    ; /* monthly? */
 	} else if (delta_min == 7 && delta_max == 7) {
 	    ; /* weekly? */
-	} else if (delta_min == 1 && delta_max <= 5) {
-	    ; /* daily? */
+	} else if (delta_min == 1 && delta_max <= 7) {
+	    /* daily? delta_max of 7 is high, but could be
+	       valid for (e.g.) US financial market data that
+	       includes "9/11" (2001-09-11)
+	    */
+	    ;
 	} else {
 	    /* unsupported frequency or nonsensical */
 #if DATE_DEBUG
-	    fprintf(stderr, " delta_max = %d, delta_min = %d, unsupported\n", 
-		    delta_max, delta_min);
+	    fprintf(stderr, " delta_min = %d, delta_max = %d (at obs %d), unsupported\n", 
+		    delta_min, delta_max, t_delta_max);
 #endif
 	    maybe_dates = 0;
 	} 

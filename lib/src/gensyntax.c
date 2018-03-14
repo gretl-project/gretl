@@ -808,78 +808,45 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 static NODE *get_bundle_member_name (parser *p)
 {
     NODE *ret = NULL;
-    const char *s = p->point;
-    int n_extra = 0;
-    int strvar = 0;
-    int i, n = 0;
 
 #if SDEBUG
     fprintf(stderr, "bundle_member_name: sym='%s', ch='%c', point='%s'\n",
 	    getsymb(p->sym), p->ch, p->point);
 #endif
 
-    if (p->ch == '.') {
-	/* using bundle dot notation */
-	n = gretl_namechar_spn(s);
-    } else if (p->ch == '[') {
+    if (p->ch == '[') {
 	/* using bracketed key notation */
-	if (*s == '"') {
-	    /* key is quoted string literal */
-	    parser_getc(p);
-	    s++;
-	    if (strchr(s, '"') == NULL) {
-		p->err = E_PARSE;
+	parser_getc(p); /* eat opening '[' */
+	if (!p->err) {
+	    lex(p); /* get next character */
+	    ret = expr(p);
+	}
+	if (!p->err) {
+	    if (p->sym != G_RBR) {
+		unmatched_symbol_error('[', p);
 	    } else {
-		n = strcspn(s, "\"");
-		n_extra = 2;
-		s += n + 1;
-	    }
-	} else {
-	    /* try for a string variable */
-	    n = gretl_namechar_spn(s);
-	    if (n == 0 || n >= VNAMELEN) {
-		p->err = E_PARSE;
-	    } else {
-		strvar = 1;
-		n_extra = 1;
-		s += n;
+		lex(p); /* eat closing ']' */
 	    }
 	}
-	if (!p->err && *s != ']') {
-	    unmatched_symbol_error('[', p);
-	}
-    }
-	
-    if (!p->err) {
-	p->idstr = gretl_strndup(p->point, n);
-	if (p->idstr == NULL) {
-	    p->err = E_ALLOC;
-	} else {
-	    n += n_extra;
-	    for (i=0; i<=n; i++) {
-		parser_getc(p);
-	    }
-	    lex(p);
-	}
-    }
+    } else if (p->ch == '.') {
+	/* using bundle dot notation */
+	int i, n = gretl_namechar_spn(p->point);
 
-#if SDEBUG
-    fprintf(stderr, " %s = '%s'\n", strvar ? "key-vname" : "key", p->idstr);
-#endif
-    
-    if (!p->err) {
-	if (strvar) {
-	    p->data = get_user_var_of_type_by_name(p->idstr, GRETL_TYPE_STRING);
-	    if (p->data == NULL) {
-		gretl_errmsg_sprintf(_("%s: not a string variable"), p->idstr);
-		p->err = E_DATA;
-	    } else {
-		ret = newref(p, STR);
-	    }
+	if (n == 0 || n >= VNAMELEN) {
+	    p->err = E_PARSE;
 	} else {
-	    ret = newstr(p->idstr);
+	    p->idstr = gretl_strndup(p->point, n);
+	    if (p->idstr == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		for (i=0; i<=n; i++) {
+		    parser_getc(p);
+		}
+		lex(p);
+		ret = newstr(p->idstr);
+	    }
 	}
-    }
+    }	
 
     return ret;
 }

@@ -1,9 +1,16 @@
 version 2017e, in progress
-- "join" command: add --spread option for importing high
-  frequency data for use in MIDAS analysis
+- New function instring(): boolean variant of strstr()
+- "join" command: add --aggr=spread option for importing
+  high frequency data for use in MIDAS analysis
 - strsplit() function: add optional third argument to choose
   the separator on which to split strings
 - mreverse() function: make this work for a list argument
+- hpfilt() function: add option of one-sided filter
+- svm() function: better handling of missing values, and add
+  support for probability estimation
+- cdf() function and friends: add support for Laplace
+  distribution
+- R-function support: handle string arguments
 - rename some functions: colnames becomes cnameset, rownames
   becomes rnameset, and colname becomes cnameget; the old
   names still work as aliases
@@ -27,6 +34,8 @@ version 2017e, in progress
   data transfer via binary matrix files
 - CSV data reader: support date format YYYY-Qq for quarterly
   data
+- Kalman filter documentation: add an example, one-sided
+  Hodrick-Prescott filter in the manner of Stock and Watson
 - GUI: tabbed script editor option: make this the default
 - GUI convenience: add facility to generate 100-based indices
   of selected series
@@ -49,6 +58,7 @@ version 2017e, in progress
   MS Windows
 - Windows packages: update to gtk 2.24.32
 - OS X fix: intra-program drag-and-drop provoked crash
+- translations: add simplified Chinese
 
 2017-11-07 version 2017d
 - New accessor, $tmax: gives the maximum legal setting for

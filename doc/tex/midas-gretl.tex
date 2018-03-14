@@ -1147,66 +1147,67 @@ above.
 
 \subsection*{Importation via \texttt{join}}
 
-Listing~\ref{midas-join} illustrates how \texttt{join} can be used to
-pull higher-frequency data (in this example, quarterly) into a lower
-frequency (annual) dataset. The example is artificial, in that we have
-no actual annual data in view; consider it just as ``proof of
-concept.''
+As of the \textsf{2018a} release of gretl, the \texttt{join} supports
+the ``spreading'' of high-frequency series (as wanted by our MIDAS
+apparatus) in a single operation. This requires use of the
+\verb|--aggr| option with parameter \texttt{spread}. There are two
+acceptable forms of usage, illustrated below. Note that \texttt{AWM}
+is a quarterly dataset while \texttt{hamilton} is monthly. First case:
+%
+\begin{code}
+open AWM.gdt
+join hamilton.gdt PC6IT --aggr=spread
+\end{code}
+and second case:
+\begin{code}
+open AWM.gdt
+join hamilton.gdt PCI --data=PC6IT --aggr=spread
+\end{code}
 
-We begin by opening the Area-Wide Model (\texttt{AWM}) quarterly
-dataset and writing three series to a CSV file: the year, the
-quarter, and the associated value of \texttt{STN} (short-term interest
-rate).
+In the first case MIDAS series \texttt{PC6IT\_m3}, \texttt{PC6IT\_m2}
+and \texttt{PC6IT\_m1} are added to the working dataset. In the second
+case ``\texttt{PCI}'' is used as the base name for the imports,
+giving \texttt{PCI\_m3}, \texttt{PCI\_m2} and \texttt{PCI\_m1}
+as the names of the per-month series.
 
-We then establish an annual dataset with the same temporal span as the
-\texttt{AWM} data, and use \texttt{join} to create four series from
-the CSV file, \texttt{Eurorate\_q4} to \texttt{Eurorate\_q1}, matching
-rows via \texttt{join}'s \texttt{tkey} apparatus and filtering on the
-respective quarters. Partial output is shown beneath the script.
+Note that only one high-frequency series can be imported in a given
+\texttt{join} invocation with the option \verb|--aggr=spread|, which
+already implies the writing of multiple series in the lower frequency
+dataset.
 
-At this point we'd be ready to append an actual annual series that's
-of interest as a dependent variable, and estimate a model in which the
-quarterly interest-rate series figure as high-frequency independent
-variables.
+An important point to note is that the \verb|--aggr=spread| mechanism
+(where we map from one higher-frequency series to a set of
+lower-frequency ones) relies on finding a known, reliable time-series
+structure in the ``outer'' data file. Native gretl time-series data
+files will have such a structure, and also well-formed gretl-friendly
+CSV files, but not arbitrary comma-separated files.  So if you have
+difficulty importing data MIDAS-style from a given CSV file using
+\verb|--aggr=spread| you might want to drop back to a more agnostic,
+piece-wise approach (agnostic in the sense of assuming less about
+gretl's ability to detect any time-series structure that might be
+present). Here's an example:
+%
+\begin{code}
+open hamilton.gdt
+# create month-of-quarter series for filtering
+series mofq = ($obsminor - 1) % 3 + 1
+# write example CSV file: the first column holds, e.g. "1973M01"
+store test.csv PC6IT mofq
+open AWM.gdt -q
+# import monthly components one at a time, using a filter
+join test.csv PCI_m3 --data=PC6IT --tkey=",%YM%m" --filter="mofq==3"
+join test.csv PCI_m2 --data=PC6IT --tkey=",%YM%m" --filter="mofq==2"
+join test.csv PCI_m1 --data=PC6IT --tkey=",%YM%m" --filter="mofq==1"
+list PCI = PCI_*
+setinfo PCI --midas
+print PCI_m* --byobs
+\end{code}
 
-\begin{script}[htbp]
-  \caption{Create a MIDAS dataset via \texttt{join}}
-  \label{midas-join}
-\begin{scode}
-open AWM --quiet
-series yr = $obsmajor
-series qtr = $obsminor
-# STN = short-term interest rate
-store @dotdir/tmp.csv yr qtr STN
-
-# 116 quarters = 29 annual observations
-nulldata 29
-# Annual data starting in 1970
-setobs 1 1970
-list ER = null
-loop for (q=4; q>0; q--) --quiet
-  vname = sprintf("Eurorate_q%d", q)
-  flt = sprintf("qtr==%d", q)
-  join "@dotdir/tmp.csv" @vname --data=STN --tkey=",%YQ%q" --filter="@flt"
-  ER += @vname
-endloop
-setinfo ER --midas
-print ER -o
-\end{scode}
-\end{script}
-
-{\small
-\begin{verbatim}
-      Eurorate_q4  Eurorate_q3  Eurorate_q2  Eurorate_q1
-
-1970       7.1892       7.5600       7.8705       7.9032
-1971       5.9811       6.2442       5.8679       6.2773
-1972       6.3387       4.6302       4.6883       4.9361
-1973      10.9720       9.9925       8.1424       6.7541
-1974      10.6747      11.3925      11.0187      11.1175
-...
-\end{verbatim}
-}
+The example is artificial in that a time-series CSV file of suitable
+frequency written by gretl itself should work without special
+treatment. But you may have to add ``helper'' columns (such as the
+\texttt{mofq} series above) to a third-party CSV file to enable a
+piece-wise MIDAS join via filtering.
 
 \clearpage
 
@@ -1327,20 +1328,20 @@ is given by
 \begin{equation}
 \label{eq:general}
   w_i = \frac{f(i,\theta)}
-  {\sum_{i=1}^pf(i,\theta)}
+  {\sum_{k=1}^pf(k,\theta)}
 \end{equation}
 such that the coefficients sum to unity.
 
-In the \textbf{normalized exponential Almon} case with $k$ parameters
+In the \textbf{normalized exponential Almon} case with $m$ parameters
 the function $f(\cdot)$ is
 \begin{equation}
-f(i,\theta) = \exp\left(\sum_{j=1}^k \theta_j i^j\right)
+f(i,\theta) = \exp\left(\sum_{j=1}^m \theta_j i^j\right)
 \end{equation}
 So in the usual two-parameter case we have
 \[
 w_i =
   \frac{\exp\left(\theta_1 i + \theta_2 i^2\right)}
-  {\sum_{i=1}^p \exp\left(\theta_1 i + \theta_2 i^2\right)}
+  {\sum_{k=1}^p \exp\left(\theta_1 k + \theta_2 k^2\right)}
 \]
 and equal weighting is obtained when $\theta_1 = \theta_2 = 0$.
 
@@ -1377,10 +1378,10 @@ parameter may be positive, negative or zero.
 
 \vspace{1ex}
 
-In the case of the plain \textbf{Almon polynomial}, coefficient $i$
-is given by
+In the case of the plain \textbf{Almon polynomial} of order $m$,
+coefficient $i$ is given by
 \[
-w_i = \sum_{j=1}^k \theta_j i^{j-1}
+w_i = \sum_{j=1}^m \theta_j i^{j-1}
 \]
 Note that no normalization is applied in this case, so no additional
 coefficient should be placed before the MIDAS lags term in the context
@@ -1392,34 +1393,35 @@ Here we set out the expressions for the analytical gradients produced
 by the \texttt{mgradient} function, and also used internally by the
 \texttt{midasreg} command. In these expressions $f(i,\theta)$ should
 be understood as referring back to the specific forms noted above
-for the exponential Almon and beta distributions. 
+for the exponential Almon and beta distributions. The summation
+$\sum_k$ should be understood as running from 1 to $p$.
 
 For the normalized exponential Almon case, the gradient is
 \begin{align*}
 \frac{dw_i}{d\theta_j} &= 
-\frac{f(i, \theta) i^j}{\sum_if(i, \theta)} - 
-\frac{f(i, \theta)}{\left[\sum_if(i, \theta)\right]^2}
-\, \sum_i\left[f(i, \theta) i^j\right] \\[4pt]
+\frac{f(i, \theta) i^j}{\sum_kf(k, \theta)} - 
+\frac{f(i, \theta)}{\left[\sum_kf(k, \theta)\right]^2}
+\, \sum_k\left[f(k, \theta) k^j\right] \\[4pt]
  &= w_i \left(i^j - 
-\frac{\sum_i\left[f(i,\theta)i^j\right]}{\sum_i f(i, \theta)}\right)
+\frac{\sum_k\left[f(k,\theta)k^j\right]}{\sum_k f(k, \theta)}\right)
 \end{align*}
 
 For the two-parameter normalized beta case it is
 \begin{align*}
 \frac{dw_i}{d\theta_1} &=
-\frac{f(i,\theta) \log(i^-/p^-)}{\sum_i f(i, \theta)} -
-\frac{f(i,\theta)}{\left[\sum_i f(i,\theta)\right]^2}
-\sum_i\left[f(i,\theta) \log(i^-/p^-)\right] \\[4pt]
+\frac{f(i,\theta) \log(i^-/p^-)}{\sum_k f(k, \theta)} -
+\frac{f(i,\theta)}{\left[\sum_k f(k,\theta)\right]^2}
+\sum_k\left[f(k,\theta) \log(k^-/p^-)\right] \\[4pt]
 &= w_i \left(\log(i^-/p^-) - 
-\frac{\sum_i\left[f(i,\theta) \log(i^-/p^-)\right]}{\sum_i 
- f(i,\theta)}\right) \\[8pt]
+\frac{\sum_k\left[f(k,\theta) \log(k^-/p^-)\right]}{\sum_k 
+ f(k,\theta)}\right) \\[8pt]
 \frac{dw_i}{d\theta_2} &=
-\frac{f(i,\theta) \log(1 - i^-/p^-)}{\sum_i f(i, \theta)} -
-\frac{f(i,\theta)}{\left[\sum_i f(i,\theta)\right]^2}
-\sum_i\left[f(i,\theta) \log(1 - i^-/p^-)\right] \\[4pt]
+\frac{f(i,\theta) \log(1 - i^-/p^-)}{\sum_k f(k, \theta)} -
+\frac{f(i,\theta)}{\left[\sum_k f(k,\theta)\right]^2}
+\sum_k\left[f(k,\theta) \log(1 - k^-/p^-)\right] \\[4pt]
 &= w_i \left(\log(1 - i^-/p^-) - 
-\frac{\sum_i\left[f(i,\theta) \log(1 - i^-/p^-)\right]}{\sum_i 
- f(i,\theta)}\right)
+\frac{\sum_k\left[f(k,\theta) \log(1 - k^-/p^-)\right]}{\sum_k 
+ f(k,\theta)}\right)
 \end{align*}
 
 And for the three-parameter beta, we have

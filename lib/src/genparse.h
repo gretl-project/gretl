@@ -289,6 +289,7 @@ enum {
     F_SLEEP,
     F_GETINFO,
     F_CDUMIFY,
+    F_GETKEYS,
     HF_CINV,
     HF_CTRAN,
     HF_CEXP,
@@ -299,7 +300,6 @@ enum {
     F_SORTBY,
     F_RUNIFORM,
     F_RNORMAL,
-    F_HPFILT,
     F_FRACDIFF,
     F_BOXCOX,
     F_ZEROS,
@@ -323,6 +323,7 @@ enum {
     F_WVAR,
     F_WSD,
     F_STRSTR,
+    F_INSTRING,
     F_CNAMESET,
     F_RNAMESET,
     F_LJUNGBOX,
@@ -434,10 +435,10 @@ enum {
     F_NPCORR,
     F_DAYSPAN,
     F_SMPLSPAN,
-    F_SVM,
     F_FDJAC,
     F_NUMHESS,
     F_STRSPLIT,
+    F_HPFILT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -463,6 +464,7 @@ enum {
     F_DEFLIST,
     F_KSETUP,
     F_BFGSCMAX,
+    F_SVM,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
@@ -706,7 +708,6 @@ int parser_getc (parser *p);
 void parser_ungetc (parser *p);
 void parser_advance (parser *p, int n);
 int parser_char_index (parser *p, int c);
-int parser_next_nonspace_char (parser *p, int skip);
 int parser_print_input (parser *p);
 void lex (parser *s);
 NODE *powterm (parser *p, NODE *l);

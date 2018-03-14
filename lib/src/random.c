@@ -1187,6 +1187,43 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
 }
 
 /**
+ * gretl_rand_laplace:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @mu: mean.
+ * @b: shape parameter > 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the Laplace distribution with mean @mu and scale @b.
+ *
+ * Returns: 0 on success, non-zero if @b is out of bounds.
+ */
+
+int gretl_rand_laplace (double *a, int t1, int t2,
+			double mu, double b)
+{
+    int t, sgn;
+    double U;
+
+    if (b < 0) {
+	return E_INVARG;
+    }
+
+    /* uniform on [0,1) */
+    gretl_rand_uniform(a, t1, t2);
+
+    for (t=t1; t<=t2; t++) {
+	/* convert to (-1/2,1/2] */
+	U = 0.5 - a[t];
+	sgn = U < 0 ? -1 : 1;
+	a[t] = mu - b*sgn * log(1 - 2*fabs(U));
+    }
+
+    return 0;
+}
+
+/**
  * gretl_rand_beta:
  * @x: target array.
  * @t1: start of the fill range.

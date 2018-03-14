@@ -669,10 +669,12 @@ static const char *lang_code_from_windows_name (char *s)
 
     if (strstr(s, "razil")) {
 	return "pt_BR";
-    } else if (!strncmp(s + 1, "hinese-t", 8)) {
+    } else if (!strncmp(s + 1, "hinese-t", 8) ||
+	       !strncmp(s + 1, "hinese (T", 9)) {
 	/* chinese-traditional */
 	return "zh_TW";
-    } else if (!strncmp(s + 1, "hinese-s", 8)) {
+    } else if (!strncmp(s + 1, "hinese-s", 8) ||
+	       !strncmp(s + 1, "hinese (S", 9)) {
 	/* chinese-simplified */
 	return "zh_CN";
     }

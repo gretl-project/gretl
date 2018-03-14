@@ -1,0 +1,1318 @@
+\documentclass{article}
+\usepackage[body={6.0in,9.1in},top=0.7in,left=1.25in,nohead]{geometry}
+\usepackage{url,verbatim,fancyvrb}
+% \usepackage{mathtime}
+\usepackage{color,gretl}
+\usepackage[authoryear]{natbib}
+\usepackage[pdftex]{graphicx}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={Gretl + libsvm},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{secnumdepth}{2}
+
+\title{Gretl + libsvm}
+\author{Allin Cottrell}
+%% \date{August 23, 2017}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+This is preliminary documentation for a gretl function named
+\texttt{svm}, which offers an interface to the machine-learning
+functionality provided by \textsf{libsvm} (SVM = Support Vector
+Machine). We assume that the reader knows at least a little about
+machine learning and how it relates to econometrics. If this
+assumption does not hold please take a look at \cite{mull-spiess17},
+or google the topic if you prefer, and come back when you're
+ready.\footnote{For a good account of the technical background on
+  SVMs, see \cite{smola04}.}
+
+Libsvm is an open-source library (see
+\url{https://www.csie.ntu.edu.tw/~cjlin/libsvm/}) and gretl (as we
+suppose you know) is an open-source, cross-platform econometrics
+package (\url{http://gretl.sourceforge.net/}). Support for
+\texttt{libsvm} in gretl was added in August, 2017, and is present in
+release \texttt{2017d}, dated 2017-11-07. Since then, however, some
+improvements have been made and at present you'll be better off using
+a current ``snapshot'' (for MS Windows or Mac OS), or gretl built from
+the current git source on Linux or similar OS, to experiment with
+this.
+
+In section~\ref{sec:function} we outline the gretl \texttt{svm}
+function as it stands and illustrate its usage via a few example
+scenarios; section~\ref{sec:options} goes into more detail on the
+supported options. Section~\ref{sec:xvalid} discusses
+cross-validation; section~\ref{sec:SVC} gives a classification
+example; section~\ref{sec:SV-probs} discusses probability estimation;
+section~\ref{sec:missing} notes features of \textsf{libsvm} that are
+not yet supported by gretl, and section~\ref{sec:linux} offers some
+comments on getting \textsf{libsvm} working on Linux.
+
+
+\section{The \texttt{svm} function}
+\label{sec:function}
+
+The signature of \texttt{svm} is as follows:
+\begin{code}
+series svm(list L, bundle bparms, bundle *bmod[null], bundle *bprob[null])
+\end{code}
+That is, this function returns a series (predictions) and it has two
+required arguments, a list (of series) and a bundle (containing zero
+or more parameter specifications). The third and fourth arguments take
+the form of ``pointers to bundle''; they are optional, and may be set
+to \texttt{null} or omitted altogether; we illustrate their use below
+but for now we just note that they offer means of ferrying additional
+information from \texttt{svm} to the user or vice versa.
+
+The list argument to \texttt{svm} works like the list argument to
+regression commands in gretl: it should contain the dependent variable
+first, followed by the independent variables. Note that there's no
+point in including an intercept (the series \texttt{const} or
+\texttt{0}) in \texttt{L}; it will just be dropped by \textsf{libsvm}.
+
+The \texttt{bparms} bundle may contain quite a number of parameter
+specifications and other options but most of these have default
+values which may be acceptable, in which case you can get by with a
+minimal set.  A listing is given in Table~\ref{tab:options} and usage
+is discussed in section~\ref{sec:options}.
+
+The workflow for supervised machine learning goes like this:
+\begin{enumerate}
+\item Gather suitable data and divide them into a training set and a
+  testing set.
+\item Build a model using the training data and assess its fit.
+\item Using this model, generate predictions for the testing data and
+  assess the fit.
+\end{enumerate}
+
+Then if the out-of-sample performance is deemed satisfactory, the
+model may be used to generate ``live'' predictions for additional
+data.
+
+Gretl's \texttt{svm} is set up to perform steps 2 and 3 above with
+ease (though it can also do other things). We'll walk through this
+sort of basic usage in Scenario 1.
+
+\subsection{First scenario}
+\label{sec:s1}
+
+Suppose you have an ``integrated'' dataset, comprising $n$ training
+observations followed by $m$ testing observations, and this dataset is
+loaded in gretl. You construct a list \texttt{L} as described above to
+pass as the first argument to \texttt{svm}. In the simplest case, the
+only parameter you need include in the bundle to pass as the second
+argument is \texttt{n\_train}, which sets the number of observations
+to use for training (assumed to be at the start of the dataset); for
+example, if you have 5000 training observations,
+\begin{code}
+bundle b = defbundle("n_train", 5000)
+series yhat = svm(L, b)
+\end{code}
+
+Here's what happens by default.
+\begin{enumerate}
+\item Gretl examines your dependent variable (the first member of
+  \texttt{L}): if this is a binary dummy, or its ``coded'' attribute
+  is set, the $C$-SVC SVM type is selected (classification), otherwise
+  $\epsilon$-SVR (regression) is selected. In both cases the default
+  kernel is RBF.
+\item Gretl finds the maxima and minima of the independent variables
+  in the sample range 1 to \texttt{n\_train} and scales them onto
+  [$-1,1$].
+\item The \textsf{libsvm} training function is called, with all
+  parameters at their default values as shown in
+  Table~\ref{tab:options}. The resulting model is stored in memory.
+\item The \textsf{libsvm} prediction function is called on the
+  training range, and the degree of fit is shown (for classification,
+  the count and percentage of correct predictions; for regression the
+  MSE and $R^2$).
+\item If all has gone OK, gretl checks if you have enough observations
+  for a testing phase (that is, somewhat arbitrarily, there are at
+  least 10 observations between \texttt{n\_train} and the end of the
+  current sample range).\footnote{One would generally expect there to
+    be a good deal more testing observations.} If so, the independent
+  variables in the test set are scaled using the ranges saved from the
+  training data, a second prediction call is made, and the
+  out-of-sample fit is shown.
+\end{enumerate}
+
+For anyone familiar with the \textsf{libsvm} executables, the above is
+basically equivalent to calling \texttt{svm-scale} on the training
+data (saving a data-ranges file and a scaled-data file), then
+\texttt{svm-train} to build a model (loading the scaled-data file and
+saving a model file), then \texttt{svm-predict} (loading the
+scaled-data and model files), then \texttt{svm-scale} on the test data
+(loading the data-ranges file and saving a second scaled-data file),
+then \texttt{svm-predict} again (loading the model file and the second
+scaled-data file). But with a lot less file I/O!
+
+We'll give a real example, replication of the Mullainathan and Spiess
+study referenced in the Introduction. It's not an exact replication
+since the authors used different machine-learning software (a
+collection of \textsf{R} tools), but we can replicate their baseline
+OLS results and the \textsf{libsvm} results are comparable to those
+shown in their article for machine learning.
+
+A hansl script for this purpose is shown in Listing~\ref{listing:MS}.
+We discuss it below.
+
+\begin{script}[htbp]
+  \caption{Mullainathan and Spiess replication script}
+  \label{listing:MS}
+\begin{scode}
+set verbose off
+
+# helper function: get R^2 and MSE
+function matrix get_stats (const series y, const series yhat)
+  scalar SSR = sum((y - yhat)^2)
+  return {1 - SSR/sst(y), SSR / $nobs} 
+end function
+
+# BLOCK 1: open and arrange data
+open ahs_jep.gdtb -q
+rename LOGVALUE y
+dataset sortby holdout
+list X = dataset
+list drop = y lassofolds holdout
+X -= drop
+X = cdummify(X)
+ntrain = 10000
+test1 = ntrain + 1
+
+# BLOCK 2: OLS baseline
+smpl 1 ntrain
+X = dropcoll(X)
+ols y 0 X --quiet
+printf "OLS: training R^2 = %.3f, MSE = %.3f\n", $rsq, $ess/$nobs
+smpl test1 $tmax
+yhat = lincomb($xlist, $coeff)
+m = get_stats(y, yhat)
+printf "OLS: holdout R^2 = %.3f, MSE = %.3f\n", m[1], m[2]
+
+# BLOCK 3: SVM training and testing
+smpl full
+bundle parms = defbundle("n_train", ntrain, "quiet", 1)
+list L = y X
+series svmpred = svm(L, parms)
+smpl 1 ntrain
+m = get_stats(y, svmpred)
+printf "SVM: training R^2 = %.3f, MSE = %.3f\n", m[1], m[2]
+smpl test1 $tmax
+m = get_stats(y, svmpred)
+printf "SVM: holdout R^2 = %.3f, MSE = %.3f\n", m[1], m[2]
+\end{scode}
+\end{script}
+
+In \texttt{BLOCK 1} of the Mullainathan--Spiess script we open a data
+file named \texttt{ahs\_jep.gdtb}. This is a native gretl version of
+the dataset used by the authors, which they created from ``raw''
+American Housing Survey data with the help of \textsf{R}. Our version
+is a translation of the \textsf{R} data; it is available for download
+as
+
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/ahs_jep.gdtb}
+
+The dataset contains the log-values of 51,808 housing units along with
+162 covariates, most of which are encodings of qualitative
+characteristics. 10,000 of the observations are designated for training,
+leaving 41,808 for testing.
+
+We begin by renaming, for the sake of brevity, the dependent variable
+\texttt{LOGVALUE} as \texttt{y}. The dummy variable \texttt{holdout}
+has value 1 for observations in the testing set, 0 for observations in
+the training set. In the original data these are interspersed, but for
+gretl's \texttt{svm} we want all the training observations to come
+first, hence the line
+\begin{code}
+dataset sortby holdout
+\end{code}
+Then, since many of the independent variables are encodings
+(``factors,'' in \textsf{R} parlance), we turn them into sets of 0/1
+dummies using the \texttt{cdummify} function: the list \texttt{X} then
+contains 338 series.
+
+In \texttt{BLOCK 2} of Listing~\ref{listing:MS} we first we set the
+sample to the training data only and purge the list \texttt{X} of
+perfectly collinear terms, leaving 274 series.\footnote{These terms
+  would have been dropped automatically by the \texttt{ols} command,
+  but we also want to remove them from the list passed to
+  \texttt{svm}.}  We then estimate the linear model via OLS. After
+switching to the ``holdout'' sample, we use the OLS parameter
+estimates (\texttt{\$coeff}) to generate fitted values using the
+\texttt{lincomb} function, and calculate the measures of fit employed
+by Mullainathan--Spiess (hereinafter M--S).
+
+In \texttt{BLOCK 3} we come to the SVM part. This is straightforward
+(though it takes a while to run). We tell \texttt{svm} how many
+observations to use for training, and (optionally) tell it to be
+quiet. The remainder of this block just uses the original \texttt{y}
+data and the predictions from \texttt{svm} (which we name
+\texttt{svmpred}) to calculate the measures of fit in the training and
+testing sub-samples.
+
+The output obtained from running this script should closely resemble
+the following (which was obtained in 70 seconds on a quad-core desktop
+with Intel i7 Haswell processors running Arch Linux):
+\begin{code}
+OLS: training R^2 = 0.473, MSE = 0.589
+OLS: holdout  R^2 = 0.417, MSE = 0.674
+SVM: training R^2 = 0.494, MSE = 0.565
+SVM: holdout  R^2 = 0.448, MSE = 0.639
+\end{code}
+The OLS $R^2$ values agree with those shown in Table 1 of M--S, which
+inspires confidence that we're really working with the same data. M--S
+show results from four machine-learning algorithms: (1) Regression
+tree tuned by depth, (2) LASSO, (3) Random forest (a linear
+combination of trees) and (4) Ensemble (a weighted combination of the
+first three methods). Our ``out of the box'' \textsf{libsvm} results
+are in the middle in terms of out-of-sample (or ``holdout'') fit:
+better than (1) and (2) but not quite as good as (3) or (4), which
+have $R^2$ values of 0.455 and 0.459 respectively as against our
+0.448.
+
+In section~\ref{sec:ms-xvalid} below we follow up on this in light of
+cross validation.
+
+\subsection{Second scenario}
+\label{sec:s2}
+
+Say you have separate data files for training and testing and you
+don't wish to combine them. You'd like to do training on the first
+dataset and testing on the second.
+
+In the first variant of this scenario we assume you're nonetheless
+willing to do the two operations in the context of a single hansl
+script. In that case your solution (or a bare-bones version of it) is
+shown in Listing~\ref{listing:two-in-one}. Note that in this script
+(and others to follow) we construct the list to pass to \texttt{svm}
+as simply
+\begin{code}
+list L = dataset
+\end{code}
+This works if (a) your dependent variable occupies position 1 in the
+dataset and (b) you wish to use all the other series in the dataset as
+supports. Otherwise you need to figure out \texttt{L} yourself.
+
+\begin{script}[htbp]
+  \caption{Scenario 2: using two data files in one script}
+  \label{listing:two-in-one}
+\begin{scode}
+open train.gdt
+list L = dataset
+bundle b = defbundle("ranges_outfile", "train.ranges")
+bundle savemod = null
+svm(L, b, &savemod)
+
+open test.gdt --preserve
+list L = dataset
+bundle b = defbundle("ranges_infile", "train.ranges", "loadmod", 1)
+svm(L, b, &savemod)
+\end{scode}
+\end{script}
+
+In Listing~\ref{listing:two-in-one} we save the ranges (for scaling)
+to file in the training run, and also use the third argument to
+\texttt{svm} to save the model as a bundle (namely
+\texttt{savemod}). After opening the test data file (with the
+\verb|--preserve| option to avoid destroying \texttt{savemod}) we then
+load the ranges from file, and also load the saved model bundle via
+\texttt{svm}'s third argument.\footnote{See section~\ref{sec:options}
+  for explanation of usage of this argument as well as other options
+  illustrated in these examples.}
+
+OK, but what if you want two separate scripts, to be run on distinct
+occasions? Then try Listing~\ref{listing:s2-separate}. In this case we
+save both the ranges and the model to file in the first script, then
+reload them in the second.
+
+\begin{script}[htbp]
+  \caption{Scenario 2: using two separate scripts}
+  \label{listing:s2-separate}
+\begin{scode}
+# script 1
+open train.gdt
+list L = dataset
+bundle b = defbundle("ranges_outfile", "my.ranges", "model_outfile", "my.model")
+svm(L, b)
+
+# script 2
+open test.gdt
+list L = dataset
+bundle b = defbundle("ranges_infile", "my.ranges", "model_infile", "my.model")
+svm(L, b)
+\end{scode}
+\end{script}
+
+%%% combined parameter/options table
+
+\begin{table}[p]
+  (a) Values for \texttt{svm\_type} (default automatic):
+  \begin{center}
+  \begin{tabular}{cll}
+\textit{value} & \textit{SVM} & \textit{comment} \\[2pt]
+0 & $C$-SVC & multi-class classification \\
+1 & $\nu$-SVC & multi-class classification \\
+2 & one-class SVM & \\
+3 & $\epsilon$-SVR & regression \\
+4 & $\nu$-SVR & regression   
+  \end{tabular}
+  \end{center}
+
+  (b) Values for \texttt{kernel\_type} (default 2, RBF):
+  \begin{center}
+  \begin{tabular}{cll}
+\textit{value} & \textit{kernel} & \textit{comment} \\[2pt]
+0 & linear & $u'v$ \\
+1 & polynomial & $(\gamma\, u'v + c_0)^d$ \\
+2 & radial basis function (RBF) & $\exp(-\gamma\, \lVert u-v \rVert^2)$ \\
+3 & sigmoid & $\mbox{tanh}(\gamma\, u'v + c_0)$ \\
+4 & precomputed kernel & not supported
+  \end{tabular}
+  \end{center}
+
+  (c) Additional \textsf{libsvm} parameters:
+  \begin{center}
+  \begin{tabular}{ll}
+    \textit{key} & \textit{parameter controlled} \\[2pt]
+\texttt{degree} & degree of polynomial ($d$) in kernel function (default 3) \\
+\texttt{gamma} & $\gamma$ in kernel function (default 1/\# of covariates) \\
+\texttt{coef0} & $c_0$ in kernel function (default 0) \\
+\texttt{C} & the cost parameter $C$ of $C$-SVC, $\epsilon$-SVR, and $\nu$-SVR (default 1) \\
+\texttt{nu} & the parameter $\nu$ of $\nu$-SVC, one-class SVM, and $\nu$-SVR (default
+     0.5) \\
+\texttt{toler} & tolerance of termination criterion (default 0.001) \\
+\texttt{epsilon} & the $\epsilon$ in loss function of $\epsilon$-SVR (default 0.1) \\
+\texttt{cachesize} & cache memory size in MB (default 1024) \\
+\texttt{shrinking} & use shrinking heuristics, 0 or 1 (default 1) \\
+\texttt{probability} & produce probability estimates, 0 or 1 (default 0)
+  \end{tabular}
+  \end{center}
+
+  (d) Additional gretl-specific parameters:
+  \begin{center}
+  \begin{tabular}{ll}
+    \textit{key} & \textit{comment} \\[2pt]
+    \texttt{n\_train} & integer: the number of training observations \\
+    \texttt{scaling} & 0 = none, 1 = [$-1,1$], 2 = [$0,1$] \\
+    \texttt{loadmod} & 0/1: load model from bundle-pointer \\
+    \texttt{predict} & 0, 1 or 2: do prediction if relevant (see text) \\
+    \texttt{quiet} & 0/1: suppress printed output from \texttt{svm} \\
+    \texttt{model\_outfile} & filename for writing model \\
+    \texttt{model\_infile} & filename for reading model \\
+    \texttt{ranges\_outfile} & filename for writing data ranges \\
+    \texttt{ranges\_infile} & filename for reading data ranges \\
+    \texttt{data\_outfile} & filename for writing data values \\
+    \texttt{range\_format} & string: \texttt{libsvm} or \texttt{gretl}
+  \end{tabular}
+  \end{center}
+  \caption{Parameters and options that may be set using the second
+    (bundle) argument to the \texttt{svm} function}
+  \label{tab:options}
+\end{table}
+
+\section{Options}
+\label{sec:options}
+
+Table~\ref{tab:options} shows all the options that can be set via the
+parameter bundle passed to \texttt{svm}.
+
+As mentioned above, gretl selects a default SVM type based on the
+character of the dependent variable. However, this can be overridden
+by including an appropriate integer code under the key
+\texttt{svm\_type}---see panel (a) of the table---as in
+\begin{code}
+bundle parms = null
+parms.svm_type = 4 # select nu-SVR
+\end{code}
+We also mentioned that gretl defaults to the RBF kernel; this can be
+overridden by use of the \texttt{kernel\_type} key:
+\begin{code}
+parms.kernel_type = 3 # sigmoid, unlikely to be superior!
+\end{code}
+
+\subsection{Libsvm options}
+\label{sec:libsvm-options}
+
+Panel (c) of the options Table shows additional options for
+controlling the behavior of \textsf{libsvm}. We discuss the
+\texttt{epsilon} option in section~\ref{sec:svr} and the
+\texttt{probability} option in section~\ref{sec:SV-probs}. For further
+details please see the \textsf{libsvm} documentation, \cite{HCL16}.
+
+All but one of the default values shown are as per \textsf{libsvm}
+itself, the exception being \texttt{cachesize} (the size of the memory
+cache for use in training, in megabytes). Training can take quite a
+while on a big dataset, and a large cache is likely to speed things
+up. The \textsf{libsvm} default value is 100\,MB, but many computers
+today can support a gigabyte of cache so we raised this to 1024. If
+your machine's memory is limited you may need to reduce this, for
+example
+\begin{code}
+parms.cachesize = 200
+\end{code}
+
+\subsection{Other options}
+\label{sec:gretl-options}
+
+That leaves the gretl-specific settings in panel (d) of the options
+Table, some of which may require more explanation.
+
+\texttt{n\_train}: has already been discussed: it simply tells gretl
+how many training observations can be found at the start of the
+dataset. But in this context ``the start'' means the first usable
+observation. If your dataset is complete (no missing observations)
+then specifying \texttt{n\_train} = 5000 will result in the use of
+observations 1 to 5000 for training. But if there are, say, 10 missing
+observations at the beginning of the data, the training range will
+then be 11 to 5010.
+
+\texttt{scaling}: is the data-scaling option: 0 means that no scaling
+should be done (not advisable unless the input data are already
+suitably scaled); 1 means to scale to a range from $-1$ to $+1$ (the
+default); and 2 means to use a range of 0 to 1. At present we do not
+support user-specified lower and upper limits, and neither do we
+support scaling of the dependent variable (the above applying only to
+the independent variables). Either or both of the latter facilities
+could be added if people reckon they are worthwhile.
+
+\texttt{loadmod}: this binary variable governs the interpretation of
+the optional third (pointer-to-bundle) argument to \texttt{svm}. By
+default it is assumed that this should be used to save an SVM model in
+the form of a bundle (an auxiliary ``return'' value, if you
+will). Note that this overwrites any prior content the bundle may have
+had. By giving \texttt{loadmod} a non-zero value you are telling gretl
+to expect a model bundle on input instead (and not to overwrite it).
+
+\texttt{predict}: this governs how much prediction \texttt{svm} does.
+The default is 2, meaning that if a model is built then prediction
+should be done on both the training data used to build the model (to
+get a measure of fit) and also on any testing data present. By setting
+\texttt{predict} = 1 you are requesting that prediction be done for
+(at most) only the training. By setting it to 0 you are telling gretl
+not to make any calls to the \textsf{libsvm} prediction function (or
+none beyond those required by cross validation---see
+section~\ref{sec:xvalid}).
+
+The several \texttt{outfile} and \texttt{infile} keys can be used to
+supply filenames for writing or reading, respectively, certain sorts
+of data. Only if such names are given does \texttt{svm} write or read
+any files; by default everything goes on in memory.
+
+\texttt{model\_infile} can be used to get gretl to read a third-party
+\textsf{libsvm} model file (which implies that \texttt{svm} will skip
+the training step), and \texttt{model\_outfile} can be used to produce
+a file readable by the \texttt{svm-predict} executable.  The
+\texttt{ranges} keys work in a similar manner, for files containing
+\textsf{libsvm} data-range information. However, gretl's own range
+files contain more information than standard \textsf{libsvm} ones and
+cannot be read by the \texttt{svm-} executables, so if you wish to
+output a ranges file readable by them you must in addition specify
+\begin{code}
+parms.range_format = "libsvm"
+\end{code}
+(substituting the name of your parameter bundle). There is at present
+no facility for the converse---getting \texttt{svm} to read a ranges
+file written by \texttt{svm-scale}. Attempting to do so will generate
+an error, regardless of the setting of \texttt{range\_format}.
+
+Finally, \texttt{data\_outfile} can be used to write data in the
+format required by \texttt{svm-train} and \texttt{svm-predict}. Note
+that there is no \texttt{data\_infile} key: \texttt{svm} only accepts
+data passed from a gretl dataset via its first (list) argument.
+
+\section{Cross validation}
+\label{sec:xvalid}
+
+\textsf{Libsvm} provides a cross-validation function that works as
+follows. Given a number, $v \geq 2$, of ``folds,'' the data are
+divided randomly into $v$ equally sized subsets,\footnote{That is by
+  default, but see also section~\ref{sec:user-folds} below.} then
+for each subset $i$ a sub-model is trained on the complementary subset
+of the data (the other $v-1$ folds) and predictions are generated for
+subset $i$. Once this process is complete we have ``pseudo out of
+sample'' predictions for all the data supplied (which should be either
+the full training dataset or perhaps a subset thereof), and suitable
+figures of merit can be calculated for these predictions.
+
+Here's the context in which this can be particularly useful: when
+\textsf{libsvm} trains a model it automatically adjusts a (possibly
+large) number of coefficients, but it takes certain parameters as
+given. For the recommended RBF kernel this includes $C$ and $\gamma$;
+for the SVM type $\epsilon$-SVR it also includes $\epsilon$; and for
+$\nu$-SVC, $\nu$-SVR and one-class classification it includes
+$\nu$. It may be that prediction can be improved by tuning these
+parameters. However, simply tuning on the full training dataset is
+likely to result in over-fitting, to the detriment of prediction on
+the testing data. So the recommended procedure is:
+\begin{enumerate}
+\item Run a line or grid search over ranges of values for one or more
+  of the above-mentioned parameters, on each iteration calculating a
+  suitable figure of merit via cross validation.
+\item Thereby identify the parameter value(s) that produce the
+  best cross-validation results (maximum percentage of correct
+  predictions for classification, minimum MSE for regression).
+\item Use the optimized parameters to train a model on the full
+  training dataset, and then use this model to generate predictions
+  for the testing set.
+\end{enumerate}
+
+It is still possible that this will result in over-fitting to the
+training data, but that risk should at least be lessened.\footnote{For
+  further discussion see section 3 of \cite{HCL16}.}
+
+Support for this via gretl's \texttt{svm} is at a more experimental
+stage than the other features described above, which is why the
+relevant options are not shown in Table~\ref{tab:options}.  But 
+we show them now in Table~\ref{tab:xvalid}.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lll}
+  & \textit{key} & \textit{type and effect} \\[2pt]
+   & \texttt{folds} & integer $\geq 2$: number of folds (default 5) \\
+  \textit{or} & \texttt{foldvar} & 0/1: flags inclusion of a folds variable
+    (see text) \\[2pt]
+   & \texttt{search} & 0/1: parameter search using default grid \\
+ \textit{or} & \texttt{grid} & matrix: user-specified grid \\[2pt]
+    & \texttt{search\_only} & 0/1: see text \\
+    & \texttt{seed} & integer: see section~\ref{sec:random-folds}
+  \end{tabular}
+  \caption{Cross-validation options in \texttt{svm} parameter bundle}
+  \label{tab:xvalid}
+\end{table}
+
+We say more about specification of the folds in
+section~\ref{sec:user-folds} below.
+
+Note that only one of \texttt{search} and \texttt{grid} should be
+given. And if either of these is given, the \texttt{folds} option
+need not be supplied: in its absence the number of folds defaults to
+5.
+
+By default grid ranges are specified in terms of the base-2 logs of
+the parameters.\footnote{But see section~\ref{sec:local-search}
+  below.}  The \texttt{svm} default grid is based on that used by the
+\texttt{grid.py} tool supplied with the \textsf{libsvm} distribution:
+\begin{center}
+\begin{tabular}{lrrr}
+ & \textit{start} & \textit{stop} & \textit{step} \\[2pt]
+$C$ & $-5$ & 9 & 2 \\
+$\gamma$ & 3 & $-15$ & $-2$ 
+\end{tabular}
+\end{center}
+
+This means that $C$ will range from $2^{-5}$ to $2^9$, quadrupling at
+each step, while $\gamma$ will range from $2^3$ down to $2^{-15}$,
+shrinking by a factor of 4 at each step. Note that implicitly
+$\epsilon$ or $\nu$ (where applicable) are clamped at their initial
+values (whether their defaults or user-specified).
+
+A user-defined matrix under the \texttt{grid} key should conform to
+this general pattern, but with some flexibility: it should have from 1
+to 3 rows and either 3 or 4 columns.\footnote{The use of a 4th column
+  is explained in section~\ref{sec:local-search}.} The first row is
+assumed to pertain to $C$; the second row, if present, to $\gamma$;
+and the third, if present, to $\epsilon$ or $\nu$. If you just want a
+line-search for $C$ a one-row matrix will suffice.  If you want to
+search for $C$ and $\epsilon$, with $\gamma$ clamped, you need a
+three-row matrix: a row of zeros (in this example, the second or
+$\gamma$ row) indicates a clamped value.
+
+The \texttt{search\_only} option has the effect of stopping
+\texttt{svm} from doing any training or prediction following parameter
+tuning.
+
+To be clear, the number of observations used in tuning---call this
+$T_0$---is either the size of the current sample range, as set by the
+\texttt{smpl} command prior to calling \texttt{svm}, or
+\texttt{n\_train} if that is specified in the parameter bundle. Once
+tuning is completed, by default \texttt{svm} trains a model on all
+$T_0$ observations using the optimized parameters, then performs
+prediction for any additional data (i.e., from $T_0 + 1$ to the end of
+the sample range).
+
+You should define \texttt{search\_only} if you just want to find and
+save the ``best'' parameter values. As an aid, setting this flag has
+an additional effect: if a pointer-to-bundle is supplied as the third
+argument to \texttt{svm}, a matrix named \texttt{xvalid\_results} is
+written into it. (Any other content of the bundle is not touched.)
+This matrix has either three or four columns and as many rows as there
+are parameter combinations. Columns 1 and 2 hold, respectively, the
+values of $C$ and $\gamma$.  If the model uses the parameter
+$\epsilon$ or $\nu$ this occupies the third column; the last column
+holds the associated value of the search criterion.  If
+\texttt{search\_only} is the only cross-validation option given, this
+implies use of the default grid and 5 folds.
+
+Note that grid search with cross validation can be very expensive on a
+big dataset. The default grid has $8 \times 10$ pairs of $(C, \gamma)$
+values; with 5 folds this means 400 training runs. Whatever timing you
+find for a single training run, you can expect a default grid search
+to take longer by two orders of magnitude. Moreover, training involves
+more computation the greater the value of the cost factor, $C$, so if
+your search space includes large values of $C$ the time taken by cross
+validation may be more like 3 orders of magnitude more than just
+training on a set of parameters in the neighborhood of the default
+values.
+
+Listing~\ref{listing:xvalid} illustrates usage of cross validation in
+\texttt{svm}.
+
+\begin{script}[htbp]
+  \caption{Grid search with cross validation}
+  \label{listing:xvalid}
+\begin{scode}
+# script 1: just get optimized parameters using 1000
+# training observations with custom grid
+open data.gdt
+list L = dataset
+matrix gmat = {-3,7,1; 1,-13,-2}
+smpl 1 1000
+bundle b = defbundle("grid", gmat, "search_only", 1)
+bundle bestparms = null
+svm(L, b, &bestparms)
+print bestparms
+
+# script 2: integrated search, training, prediction, with
+# default grid and 5 folds
+open data.gdt
+list L = dataset
+bundle b = defbundle("n_train", 2000, "search", 1)
+series yhat = svm(L, b)
+\end{scode}
+\end{script}
+
+\subsection{Local search, linear search}
+\label{sec:local-search}
+
+After doing a coarse-grained parameter search you may wish to do an
+additional search in the neighborhood of some values that look
+promising.  The $\log_2$ apparatus may not seem very convenient for
+that purpose, but a little thought reveals how it may be
+used. Listing~\ref{listing:log2} presents a function that takes as
+input a specific parameter value, \texttt{p0}, a specification of the
+lower limit of the search range expressed as a fraction
+(\texttt{frac}) of \texttt{p0}, and a number of steps. The return
+value is a suitable row for the grid matrix.
+
+\begin{script}[htbp]
+  \caption{Determining a local search specification}
+  \label{listing:log2}
+\begin{scode}
+# helper function
+function matrix make_grid_row (scalar p0, scalar frac, int nsteps)
+  if p0 <= 0 || frac <= 0 || frac >= 1
+    funcerr "Invalid input"
+  endif
+  if nsteps % 2 == 0
+    nsteps++
+  endif
+  k = nsteps - 1
+  start = log2(frac * p0)
+  step = (log2(p0) - start)/(k/2)
+  stop = start + k * step
+  return {start, stop, step}
+end function
+
+# sample usage of the above
+matrix r = make_grid_row(1, 0.8, 5)
+\end{scode}
+\end{script}
+
+The sample usage shown in Listing~\ref{listing:log2} produces
+\begin{code}
+r = {-0.32193, 0.32193, 0.16096}
+\end{code}
+which translates into the following values for the parameter itself:
+(0.8, 0.8944, 1, 1.1180, 1.25). This vector includes the \texttt{p0}
+value of 1.0, around which it is ``exponentially symmetrical.''
+
+Alternatively, you may specify that one or more rows of the grid
+matrix are to be taken as linear rather than log$_2$-based. In that
+case you must append a fourth column to the grid, with 1 on linear
+rows and 0 on log$_2$-based rows. Here's an example:
+\begin{code}
+params.svm_type = 4 # nu-SVR
+params.grid = {0, 3, 1, 0; 0, 0, 0, 0; 0.5, 0.7, 0.05, 1}
+\end{code}
+This specifies an exponential search for $C$ (from 1 to 8, doubling at
+each step), a clamped value for $\gamma$ and a linear search for
+$\nu$ (0.5, 0.55,\dots,0.7).
+
+\subsection{User-specified folds}
+\label{sec:user-folds}
+
+In some contexts there may be reason to divide the data into subsets
+for cross validation on some chosen criterion rather than at
+random. This is supported via the binary flag \texttt{foldvar} in the
+\texttt{svm} parameter bundle. If this is present and non-zero then
+\texttt{svm} will take the \textit{last} series in the incoming list
+as a ``folding index'' rather than a regressor. Such a series must
+contain only integer values from 1 to the desired number of folds,
+which form a consecutive sequence when sorted. Each observation is
+then assigned to fold $i$ if its value for the folding index is $i$.
+
+One more option is available: if the parameter bundle contains the key
+\texttt{consecutive} with a non-zero value this indicates that the
+folds should simply be blocks of consecutive observations, of equal
+size except that any remainder is assigned to the last fold. In this
+case the number of folds again defaults to 5 but can be adjusted via
+the \texttt{folds} key. This option is incompatible with the
+\texttt{foldvar} specification.
+
+\subsection{More on random cross-validation folds}
+\label{sec:random-folds}
+
+\textsf{Libsvm} calls the C-library function \texttt{rand} to produce
+its permutations, and it doesn't set a seed, so \texttt{rand} uses its
+default seed of 1 on each initialization. This means that each time a
+given \textsf{libsvm} program is executed it will generate the same
+set of ``random'' folds. However, it also means that if a given
+program calls the \textsf{libsvm} cross-validation function several
+times (as happens in the course of parameter search) it will get a
+different set of folds each time (since initialization of
+\texttt{rand} occurs only once per program invocation).
+
+This seems questionable on both counts. First, if the folds are
+advertised as random, one might expect to get non-identical results
+when running a given cross-validation program multiple times (unless
+one takes steps to ensure they are the same). Second, in the context
+of parameter search one might wish to suppress variation in outcome
+stemming from data-subsetting in order to focus on variation stemming
+from the differing parameter vectors.
+
+Gretl's \texttt{svm} function addresses these points as follows. By
+default we obtain a seed derived from the time at which \texttt{svm}
+execution starts, and we (re-)initialize \texttt{rand} with this seed
+immediately prior to each call to the \textsf{libsvm} cross-validation
+function. This means that each invocation of a gretl \texttt{svm}
+cross-validation program is likely to produce slightly different
+results, while each parameter combination will employ the same set of
+folds in the context of a given search. However, to support strictly
+reproducible results you can override the execution-time based
+\texttt{rand} seed with an integer \texttt{seed} value specified in
+the parameter bundle passed to \texttt{svm}.
+
+If you wish to invoke the default \textsf{libsvm} handling of random
+folds as described above, specify a \texttt{seed} value of zero in the
+parameter bundle; in that case gretl will not intervene by calling
+\texttt{srand}.
+
+\subsection{More on SV regression}
+\label{sec:svr}
+
+We noted above that libsvm supports two types of SV regression:
+$\epsilon$-SVR and $\nu$-SVR. These are alternative parameterizations
+of the regression problem. To understand this point one must know what
+$\epsilon$ and $\nu$ represent.
+\begin{itemize}
+\item $\epsilon \geq 0$ sets a margin within which prediction errors
+  are ignored (costed at zero). To enforce a tight fit---at the risk
+  of over-fitting---therefore, one would specify a small value of
+  $\epsilon$.
+\item $0 < \nu \leq 1$ controls the number of support vectors used by
+  the SVM, expressed as a fraction of the maximum (which equals the
+  number of observations in the training data). Use of more support
+  vectors will generally give a better fit---again at the risk of
+  over-fitting.
+\end{itemize}
+These values cannot be set independently of each other. In
+$\epsilon$-SVR $\epsilon$ is parametric and $\nu$ is adjusted
+endogenously; the converse holds for $\nu$-SVR.
+
+The literature on this topic suggests that if you want a quick fit at
+moderate computational cost you might choose $\nu$-SVR with a
+relatively low value of $\nu$. On the other hand, if you want to
+obtain the best possible prediction and are not too concerned about
+computational cost it would be common to use $\epsilon$-SVR.
+
+One point to note here is that $\epsilon$ is not scale-free: the
+implied ``tightness'' of setting, say, $\epsilon = 0.05$ will depend
+on the scale of the regressand. Experimentation may be useful.
+
+\subsection{Use of MPI in cross validation}
+\label{sec:mpi}
+
+As mentioned above, cross validation can be very expensive
+computationally if you have a big training dataset. Fortunately, it's
+also ``embarrassingly parallel'' (as the computer scientists say);
+that is, trivial to parallelize. The (potentially quite large) set of
+parameter combinations can be parceled out to separate processes,
+since each set of training runs (across the folds, for a given
+combination of parameters) is independent of the others. This is an
+obvious use-case for MPI.
+
+MPI is ``Message Passing Interface,'' a standard for running several
+distinct processes that execute the same program using different
+data. Support for MPI in gretl is documented in \cite{gretl-mpi}.  To
+date we have left it up to users of gretl to exploit MPI via scripting
+(which demands a certain proficiency in coding), but in the case of
+cross validation under \texttt{svm} we have implemented MPI support
+internally. All the user has to do is execute a call to \texttt{svm}
+that calls for cross validation, either via the command-line program
+\texttt{gretlmpi} or within an \texttt{mpi} block in a script that's
+run in the gretl GUI. For details of these options, please see
+\cite{gretl-mpi}.
+
+To make a serious dent in the time taken by a big cross validation
+problem using MPI one would want to exploit a high-performance cluster
+if possible. However, to illustrate the potential of MPI, even just on
+a single machine, we constructed a task that is big enough to produce
+meaningful differences in execution times but not so big as to waste a
+lot of time. We used one of the \textsf{libsvm} sample regression
+datasets,\footnote{See
+  \url{https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/}.}
+\texttt{cadata}, a native gretl version of which is available as
+
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/cadata.gdtb}
+
+Like the Mullainathan--Spiess dataset this concerns housing values,
+but it is smaller both in number of observations (20640) and number of
+covariates (8).  Listing~\ref{listing:cadata} shows a script which
+performs cross-validation using 3000 observations, with a grid for $C$
+and $\gamma$ which gives 32 parameter combinations. The times taken to
+produce the results matrix under different configurations on a Dell
+desktop with 4 Intel Haswell cores and up to 8 hyperthreads are shown
+in Table~\ref{tab:cadata}. In this example it turns out that
+multi-threading via \textsf{OpenMP} is not greatly advantageous, but
+MPI works quite nicely---for up to six MPI processes.
+
+\begin{script}[htbp]
+  \caption{Parameter search, script \texttt{ca\_xvalid.inp}}
+  \label{listing:cadata}
+\begin{scode}
+set verbose off
+open cadata.gdtb -q
+list X = dataset - median_value
+series lny = log(median_value)
+list L = lny X
+bundle b = defbundle("n_train", 3000, "shrinking", 0, "search_only", 1)
+b.grid = {-1, 5, 2; 3, -12, -2}
+b.seed = 1611771
+bundle res = null
+svm(L, b, &res)
+if $mpirank < 1 # just print once
+  matrix R = res.xvalid_results
+  print R
+endif
+\end{scode}
+\end{script}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{rcr}
+\textit{configuration} & \textit{wall time} & \textit{\%CPU} \\
+single-threaded & 1:17 & 99 \\
+OMP 4 & 1:00 & 274 \\
+OMP 8 & 1:04 & 515 \\
+MPI 4, OMP 2 & 0:27 & 535 \\
+MPI 4, OMP 1 & 0:27 & 357 \\
+MPI 6, OMP 1 & 0:23 & 478
+\end{tabular}
+\caption{Execution times (m:s) for \texttt{ca\_xvalid.inp} (OMP =
+  number of OpenMP threads, MPI = number of MPI processes)}
+\label{tab:cadata}
+\end{table}
+
+For reference, the command line for the fastest run represented in
+Table~\ref{tab:cadata} (MPI 6, OMP 1) was
+\begin{code}
+OMP_NUM_THREADS=1 mpirun -N 6 gretlmpi ca_xvalid.inp
+\end{code}
+The optimized result (the same on all runs) was a cross-validation MSE
+of 0.0581 at $C=2$ and $\gamma=2$.
+
+% \clearpage
+
+\subsection{Mullainathan and Spiess revisited}
+\label{sec:ms-xvalid}
+
+Having discussed cross validation we return to the replication of
+\cite{mull-spiess17} discussed in section~\ref{sec:s1}. How much
+can we improve on the results of $\epsilon$-SVR ``out of the
+box'' by means of parameter search?
+
+We began with some ``sighting shots''---small, coarse-grained
+cross-validation runs, performed on a standard desktop machine and
+using the \texttt{libsvm} default of 5 random folds---which gave us
+the idea that $C$ values between 2.5 and 3.0 could be helpful (as
+against the default of 1.0). It was also apparent that moderate
+variations in $\gamma$ and $\epsilon$ were worth exploring.
+
+On that basis we set up a finer (linear) grid with 80 parameter
+combinations and used \texttt{gretlmpi} on an HPC node with 32 Xeon
+cores, running 16 MPI processes with two threads each. In addition,
+rather than random folds we used the \texttt{lassofolds} variable in
+the M--S dataset, which specifies 10 subsets based on clusters in the
+data. Cross-validation took almost an hour and yielded minimum MSE at
+0.606208 for $C=2.8$, $\gamma=0.00365$, $\epsilon=0.09$. The selected
+$C$ was in the range we expected and $\epsilon$ was somewhat smaller
+than its default of 0.1; the selected $\gamma$ was equal to the
+default (the reciprocal of the number of covariates).
+
+We then trained a model on all 10,000 training observations using the
+selected parameters and produced predictions for all the data, giving
+\begin{code}
+SVM: training R^2 = 0.532, MSE = 0.522
+SVM: holdout  R^2 = 0.454, MSE = 0.633
+\end{code}
+as opposed to the results shown earlier
+\begin{code}
+SVM: training R^2 = 0.494, MSE = 0.565
+SVM: holdout  R^2 = 0.448, MSE = 0.639
+\end{code}
+The new ``holdout'' performance is practically indistinguishable from
+that obtained by M--S using the ``Random forest'' method; it still falls
+a little short of the ``Ensemble'' method but we're talking about the
+third digit of $R^2$. Perhaps we could do a little better with a
+fuller exploration of the parameter space but these results seem
+quite satisfactory.
+
+\subsection{Parameter tuning plot}
+\label{sec:plot}
+
+It may be helpful to get a visual fix on what's going on in the tuning
+of the RBF parameters via cross validation. There's an experimental
+(and so far, little tested) option for this: you can include in the
+parameter bundle under the \texttt{plot} key either
+``\texttt{display}'' or an output filename, as in
+\begin{code}
+parms.plot = "display"
+# or
+parms.plot = "tuning.pdf"
+\end{code}
+This has an effect only if a two-dimensional ($C, \gamma$) parameter
+search is performed. If \texttt{svm} catches on we have in mind to
+generalize this and make it more convenient.
+
+\section{Classification via SVM}
+\label{sec:SVC}
+
+The focus of this document has been on regression, but gretl's
+\texttt{svm} function also supports classification. As mentioned
+above, the \texttt{svm} function automatically switches to
+classification mode---by default using $C$-SVC---if the dependent
+variable is marked as ``coded'' using the \texttt{setinfo} command.
+However, the \texttt{svm\_type} switch in the parameter bundle passed
+to \texttt{svm} can be used to force the issue in favor of
+classfication via $C$-SVC (\texttt{svm\_type = 0}) or via $\nu$-SVC
+(\texttt{svm\_type = 1}).
+
+\subsection{Classification example}
+\label{sec:SVC-example}
+
+Listing~\ref{listing:keane} shows an example of classification based
+on the script \texttt{keane.inp}, which is supplied with the gretl
+distribution. The data file is \texttt{keane.gdt} (also supplied), a
+subset of the data used in \cite{keane97}. The original script
+exemplifies multinomial logit regression. The dependent variable,
+\texttt{status}, encodes the jointly exhaustive states ``in school''
+(1), ``at home'' (2) and ``in work'' (3); the explanatory variables
+are years of education (\texttt{educ}), years of work experience
+(\texttt{exper}) and its square (\texttt{expersq}), and a
+\texttt{black} dummy variable.
+
+Listing~\ref{listing:keane} plays $C$-SVC against standard Maximum
+Likelihood estimation. With only 4 covariates and 3 classes
+\texttt{svm} runs quite quickly so the script is integrated: parameter
+search using the default grid is followed by training and
+prediction. The dataset comprises several years of data; we estimate
+the respective models on the data from 1982 and test using the 1984
+data. The results (obtained in about half a minute on the desktop
+machine described earlier) are:
+\begin{code}
+MLE: training percent correct = 61.16 (n=1864)
+MLE: testing percent correct  = 69.76 (n=1802)
+SVM: training percent correct = 61.70 (n=1864)
+SVM: testing percent correct  = 70.20 (n=1802)
+\end{code}
+
+\begin{script}[p]
+  \caption{Parameter search and estimation: $C$-SVC vs multinomial logit}
+  \label{listing:keane}
+\begin{scode}
+set verbose off
+
+# helper function
+function scalar mnlogit_pc_correct (const series y,
+                                    const matrix X,
+                                    matrix b)
+  matrix yvals = values(y)
+  scalar n = rows(X)
+  b = mshape(b, cols(X), nelem(yvals) - 1)
+  matrix P = ones(n, 1) ~ exp(X * b)
+  return (100/n) * sumc({y} .= yvals[imaxr(P)])
+end function
+
+# open and organize data
+open keane.gdt -q
+dataset sortby year
+setinfo status --coded
+ytrain = 82 # train on data from 1982
+ytest = 84  # test using data from 1984
+list All = status educ exper expersq black
+
+# (1) MLE: multinomial logit
+# restrict to complete observations in training year
+smpl year == ytrain && ok(All) --restrict
+logit status 0 educ exper expersq black --multinomial --quiet
+pcc = 100 * sum(status == $yhat) / $T
+printf "MLE: training percent correct = %.2f (n=%d)\n", pcc, $nobs
+# restrict to complete observations in testing year
+smpl year == ytest && ok(All) --restrict --replace
+matrix X = {const, educ, exper, expersq, black}
+pcc = mnlogit_pc_correct(status, X, $coeff)
+printf "MLE: testing percent correct  = %.2f (n=%d)\n", pcc, $nobs
+
+# (2) SVM: C-SVC
+# sample: all complete observations in the two selected years
+smpl (year==ytrain || year==ytest) && ok(All) --restrict --replace
+scalar ntrain = sum(year == ytrain)
+# start with cross validation search using default grid
+bundle parms = defbundle("n_train", ntrain, "search", 1)
+parms.seed = 3211765 # for reproducibility
+parms.quiet = 1
+yhat_svm = svm(All, parms)
+# assess fit in training year
+smpl year == ytrain && ok(All) --restrict --replace
+pcc = 100 * sum(status == yhat_svm) / $nobs
+printf "SVM: training percent correct = %.2f (n=%d)\n", pcc, $nobs
+# assess fit in testing year
+smpl year == ytest && ok(All) --restrict --replace
+pcc = 100 * sum(status == yhat_svm) / $nobs
+printf "SVM: testing percent correct  = %.2f (n=%d)\n", pcc, $nobs
+\end{scode}
+\end{script}
+
+So we see a slim predictive advantage for $C$-SVC over multinomial
+logit estimation. Given the paucity of the explanatory data it is
+perhaps surprising that the SVM even equals the MLE results.
+
+\section{Probability estimation}
+\label{sec:SV-probs}
+
+By default the output of \texttt{svm} is just a series of
+point-predictions of the dependent variable conditional on the
+covariates or ``features''. It is possible, however, to obtain a
+measure of the uncertainty attaching to these predictions
+(``probability estimation''). The character of the probability
+information delivered by \textsf{libsvm} differs between SV regression
+and SV classification, but the mechanism for obtaining it via gretl
+is basically the same: you set \texttt{probability} to 1 in the
+parameter bundle, and supply a pointer-to-bundle as the fourth
+argument to the \texttt{svm} function, as in
+\begin{code}
+...
+params.probability = 1
+bundle bprob = null
+series yhat = svm(L, params, null, &bprob)
+\end{code}
+(where \texttt{null} indicates that we're skipping the optional third
+argument). On successful completion \texttt{bprob} will
+contain probability information.
+
+\subsection{Regression error distribution}
+\label{sec:SVR-probs}
+
+In the case of SV regression, the extra information takes the
+form of a scalar value under the key \texttt{svr\_sigma}: this is an
+estimate of the scale parameter, $\sigma$, for the Laplace density of
+the prediction errors, $\hat{y}_i - y_i$, based on the training data,
+namely
+\[
+\frac{1}{2\sigma} \exp \left(-\frac{|\hat{y}_i - y_i|}{\sigma}\right)
+\]
+Using this information one can, for example, calculate confidence
+intervals for the SVR predictions. The following code snippet shows
+how one could obtain a 90 percent interval, using the \texttt{invcdf}
+(inverse CDF) function with first argument \texttt{L} for the Laplace
+distribution:
+\begin{code}
+sigma = brob.svr_sigma
+maxerr90 = invcdf(L, 0, sigma, 0.95)
+series lo = yhat - maxerr90
+series hi = yhat + maxerr90
+print yhat lo hi --byobs
+\end{code}
+
+\subsection{Discrete outcome probabilities}
+\label{sec:SVC-probs}
+
+In the classification case, the information supplied via the bundle
+passed as the fourth argument to \texttt{svm} takes the form of the
+matrices \texttt{Ptrain} (if prediction over the training range is
+requested) and/or \texttt{Ptest} (if prediction over the testing range
+is called for). Each of these matrices has as many columns as there
+are outcomes, and as many rows as there are observations in the
+relevant range. The column headings identify the outcome values.
+
+In relation to the example in Listing~\ref{listing:keane} above, the
+following modifications could be made to generate and inspect
+probability estimates. First, after the line ``\texttt{parms.quiet =
+  1}'' (9 lines from the foot of the script) and replacing the line
+``\texttt{yhat\_svm = svm(All, parms)}'', insert:
+%
+\begin{code}
+parms.probability = 1
+bundle bprob = null
+yhat_svm = svm(All, parms, null, &bprob)
+\end{code}
+Then, to inspect the probabilities for the testing data, one could
+append to the script:
+%
+\begin{code}
+matrix P = bprob.Ptest
+print P
+\end{code}
+%
+We show below the first few lines of output from this variant of
+the script.
+%
+\begin{code}
+           1            2            3
+     0.17717      0.60506      0.21777
+    0.063540      0.23416      0.70230
+    0.098154      0.64375      0.25810
+    0.094531      0.36033      0.54514
+\end{code}
+%
+The columns are ordered by ascending value of numerical coding of the
+dependent variable. So, for example, we see that the model estimates a
+probability of 0.605 for an outcome of 2 (``at home'') for the first
+observation in the training set, and a probability of 0.702 for
+outcome 3 (``in work'') for the second observation.
+
+\section{What's missing?}
+\label{sec:missing}
+
+There are some features of \textsf{libsvm} that we don't fully
+understand at this point, and that are therefore not yet supported.
+
+Cases in point:
+
+\begin{itemize}
+\item Precomputed kernels: we're just hazy on this feature. Yes, it
+  may be explained in the \textsf{libsvm} doc, but we haven't read
+  enough---or closely enough---to get it.
+\item Use of weights: ditto.
+\end{itemize}
+
+We'd be interested to hear how important people reckon these points
+are.
+
+\section{Libsvm on Linux}
+\label{sec:linux}
+
+There are \textsf{libsvm} packages for (at least) Debian, Fedora and
+Arch (AUR). However, we're not quite sure how functional they are. The
+computation involved in machine learning can be quite time-consuming
+and can be sped up by parallelization via \textsf{OpenMP}, but this is
+not enabled by default in the source code for the library, nor is
+there any build-time switch to enable it. The \textsf{libvsm} FAQ at
+
+\url{http://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f432}
+
+has a recipe for adding \textsf{OpenMP} support, which involves
+editing the main source file, \texttt{svm.cpp}, as well as the
+project's \texttt{Makefile}. Linux packagers sometimes trouble to
+make that sort of enhancement but it doesn't seem that anyone has done
+so in this case; at any rate there's no \textsf{OpenMP} support in the
+\texttt{libsvm-3.21-1} package for Fedora 25 or the
+\texttt{libsvm3\_3.21} package for Debian.
+
+People with good coding skills should be able to follow the FAQ
+recipe---if they notice its existence and take some time to figure it
+out---when building \textsf{libsvm} from source, but it will be a good
+deal easier to use this little package containing a modified
+\texttt{Makefile} and \texttt{svm.cpp}:
+
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.22-openmp.tar.gz}
+
+We show below a shell script to build and install the software. But
+note that by default installation is under \texttt{/usr/local}; if
+that doesn't suit you, change the definition of \texttt{PREFIX} in the
+revised \texttt{Makefile} before installing.
+\begin{code}
+#!/bin/sh
+wget http://www.csie.ntu.edu.tw/~cjlin/libsvm/libsvm-3.22.tar.gz
+tar xvf libsvm-3.22.tar.gz
+wget http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.22-openmp.tar.gz
+cd libsvm-3.22
+mv Makefile Makefile.orig
+mv svm.cpp svm.cpp.orig
+# replace Makefile and svm.cpp
+tar xvf ../svm-3.22-openmp.tar.gz
+# may want to edit Makefile here?
+make && sudo make install
+\end{code}
+
+If you choose to install into a location other than \texttt{/usr} or
+\texttt{/usr/local} you should give gretl's \texttt{configure} script
+a heads-up regarding \texttt{libsvm-prefix}; for example
+\begin{code}
+--with-libsvm-prefix=/opt/libsvm
+\end{code}
+
+One more point on the shell script above: it installs the
+\texttt{libsvm} binary tools (\texttt{svm-scale}, \texttt{svm-train},
+\texttt{svm-predict}) by default. These are not used by gretl (we only
+want the library); you may or may not want them. To cut them out, edit
+the \texttt{install} target in the revised Makefile.
+
+\bibliographystyle{gretl}
+\bibliography{gretl}
+
+\section*{Post scriptum: some jottings}
+
+Here are a few observations and questions that I've not had time to
+write up properly; I'm recording them for future reference.
+
+A general point: you have to watch out for the fact that
+\textsf{libsvm} assumes the task is classification by
+default. Regression works quite nicely, but you have to be careful to
+invoke it correctly. The Python scripts under \texttt{tools} in the
+\textsf{libsvm} package are geared to classification: if you run
+regression data through \texttt{easy.py} or \texttt{grid.py} the
+results will be garbage!
+
+The time taken by training is an increasing function of the $C$
+parameter; this can be a limiting factor in grid search
+(section~\ref{sec:xvalid}). This seems to be because $C$ is actually a
+hyperparameter: it sets the maximum for a set of per-variable
+coefficients. I wonder if very big $C$ values are ever
+optimal. (Reminder: the default is $C=1$.)
+
+The grid-search plot (section~\ref{sec:xvalid}) with
+``\texttt{display}'' option: a 3D plot is opened directly in
+\textsf{gnuplot} when a script is run via \texttt{gretlcli} (so it's
+interactive, you can manipulate it) but in the gretl GUI you get a
+static (native gretl) plot window. In the GUI, can we set up a
+right-click menu item that opens an interactive plot window? (Right
+now you can get there via right-click, Save to session as icon,
+right-click on the icon, Edit plot commands; then the Execute icon in
+the plot commands window will open the plot in \textsf{gnuplot}
+itself.)
+
+Mac builds of gretl: at present only the (recommended) quartz snapshot
+contains a build of \texttt{libsvm.dylib}.  If SVM support is truly
+reckoned worthwhile, then I guess we should build the dylib for the
+older Mac packages, and also make a renewed attempt to get
+\textsf{OpenMP} multi-threading working in cross-builds for OS X.
+
+\end{document}

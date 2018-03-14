@@ -89,8 +89,8 @@
    const    (true|false) 'false'
    type (bool | boolean | int | obs | scalar | series | list |
          matrix | bundle | scalarref | seriesref | matrixref |
-         bundleref | string | strings | matrices | bundles |
-	 stringsref | matricesref | bundlesref) 'series'
+         bundleref | string | stringref | strings | matrices |
+	 bundles | stringsref | matricesref | bundlesref) 'series'
 >
 
 <!ELEMENT return EMPTY>

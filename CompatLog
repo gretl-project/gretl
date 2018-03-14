@@ -9,6 +9,12 @@ The command-form of "sprintf" is now deprecated in favor of the
 function of the same name; the command-form continues to work
 but should not be used in newly written hansl code.
 
+The (experimental and undocumented) facility of treating a
+string as a boolean variable (0 if string is empty, 1 if not)
+is now removed. But note that the new function instring() is
+intended for use as a boolean condition; it replaces the
+undocumented use of strstr() in that capacity.
+
 2017-11-07 version 2017d
 
 The deprecated aliases "pi" and "macheps", for $pi and $macheps

@@ -365,6 +365,7 @@ struct str_table funcs[] = {
     { F_READFILE, "readfile" },
     { F_BACKTICK, "grab" },
     { F_STRSTR,   "strstr" },
+    { F_INSTRING, "instring" },
     { F_STRSTRIP, "strstrip" },
     { F_STRNCMP,  "strncmp" },
     { F_STRLEN,   "strlen" },
@@ -481,6 +482,7 @@ struct str_table funcs[] = {
     { F_GETINFO,   "getinfo" },
     { F_CDUMIFY,   "cdummify" },
     { F_SVM,       "svm" },
+    { F_GETKEYS,   "getkeys" },
     { 0,           NULL }
 };
 
@@ -948,8 +950,10 @@ static void function_noargs_error (const char *s, parser *p)
 {
     parser_print_input(p);
 
+#if 0
     pprintf(p->prn, _("'%s': no argument was given"), s);
     pputc(p->prn, '\n');
+#endif
     gretl_errmsg_sprintf(_("'%s': no argument was given"), s);
 
     p->err = E_ARGS;
@@ -1224,15 +1228,72 @@ void set_doing_genseries (int s)
     doing_genseries = s;
 }
 
+/* Look ahead to the next non-space character in the
+   parser stream and return it; if @skip then start at
+   offset 1 beyond the current p->point.
+*/
+
+static int parser_next_char (parser *p, int skip)
+{
+    int i, offset = skip ? 1 : 0;
+
+    if (*p->point == '\0') {
+	return 0;
+    }
+
+    for (i=offset; p->point[i] != '\0'; i++) {
+	if (!isspace(p->point[i])) {
+	    return p->point[i];
+	}
+    }
+
+    return 0;
+}
+
+static int is_function_word (const char *s)
+{
+    return function_lookup_with_alias(s, NULL) != 0 ||
+	get_user_function_by_name(s) != NULL;
+}
+
 static void look_up_word (const char *s, parser *p)
 {
     int have_dset = (p->dset != NULL && p->dset->v > 0);
     int prevsym = p->sym;
-    int fsym, err = 0;
+    int lpnext, err = 0;
 
-    fsym = p->sym = function_lookup_with_alias(s, p);
+#if LDEBUG
+    fprintf(stderr, "look_up_word: s='%s', ch='%c', next='%c'\n",
+	    s, p->ch, parser_next_char(p, 0));
+#endif
 
-    if (p->sym == 0 || p->ch != '(') {
+    /* is the next (or next non-space) character left paren? */
+    lpnext = p->ch == '(' || (p->ch == ' ' && parser_next_char(p, 0) == '(');
+
+    /* initialize */
+    p->sym = 0;
+
+    /* In a function call the function identifier must be
+       followed by left parenthesis, and there are few
+       other cases where left-paren is OK following an
+       identifier, so we favour function lookup if @lpnext
+       is non-zero.
+    */
+    if (lpnext) {
+	p->sym = function_lookup_with_alias(s, p);
+	if (p->sym == 0) {
+	    /* could be user-function, or possibly series
+	       identifier plus lag specification: give
+	       first dibs to user-function?
+	    */
+	    if ((p->data = get_user_function_by_name(s)) != NULL) {
+		p->sym = UFUN;
+		p->idstr = gretl_strdup(s);
+	    }
+	}
+    }
+
+    if (p->sym == 0) {
 	p->idnum = const_lookup(s);
 	if (p->idnum > 0) {
 	    p->sym = CON;
@@ -1267,9 +1328,6 @@ static void look_up_word (const char *s, parser *p)
 	    } else if (gretl_get_object_by_name(s)) {
 		p->sym = UOBJ;
 		p->idstr = gretl_strdup(s);
-	    } else if ((p->data = get_user_function_by_name(s))) {
-		p->sym = UFUN;
-		p->idstr = gretl_strdup(s);
 	    } else if (defining_list(p) && varname_match_any(p->dset, s)) {
 		p->sym = WLIST;
 		p->idstr = gretl_strdup(s);
@@ -1300,7 +1358,9 @@ static void look_up_word (const char *s, parser *p)
     }
 
     if (err) {
-	if (fsym) {
+	/* @s could be a function identifier with no
+	   following left paren */
+	if (is_function_word(s)) {
 	    function_noargs_error(s, p);
 	} else {
 	    undefined_symbol_error(s, p);
@@ -1312,7 +1372,7 @@ static void maybe_treat_as_postfix (parser *p)
 {
     if (p->sym == NUM) {
 	const char *ok = ")]}+-*/%,:";
-	int c = parser_next_nonspace_char(p, 1);
+	int c = parser_next_char(p, 1);
 
 	/* Interpret as foo++ or foo-- ? Only if
 	   the following character is suitable.

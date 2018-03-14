@@ -1403,12 +1403,9 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    *np = 2; /* shape, scale */
 	}
     } else if (d == D_GED) {
-	/* GED: critical values not supported */
-	if (f == F_CRIT) {
-	    err = E_INVARG;
-	} else {
-	    *np = 1; /* shape */
-	}
+	*np = 1; /* shape */
+    } else if (d == D_LAPLACE) {
+	*np = 2; /* mean, scale */
     } else if (d == D_DW) {
 	/* Durbin-Watson: only critical value */
 	if (f == F_CRIT) {
@@ -2378,11 +2375,11 @@ static NODE *compare_strings (NODE *l, NODE *r, int f, parser *p)
    a string on the right or vice versa.  This can work if the series
    in question is string-valued, as in
 
-     series foo = x=="strval"
+     Case 1: series foo = (x == "strval")
 
    It can also work if the string is an observation marker, as in
 
-     series foo = obs>="CA"
+     Case 2: series foo = (obs >= "CA")
 */
 
 static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
@@ -2391,7 +2388,7 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
     double *x = NULL, *y = NULL;
     double *alt;
     const char *strval;
-    int vnum, t, t1, t2;
+    int vnum, t;
     NODE *ret;
 
     if (r->t == STR) {
@@ -2406,12 +2403,25 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 	alt = &xt;
     }
 
-    if (vnum > 0 && is_string_valued(p->dset, vnum)) {
-	*alt = series_decode_string(p->dset, vnum, strval);
+    ret = aux_series_node(p);
+    if (p->err) {
+	return ret;
     }
 
-    if (na(*alt)) {
-	/* try for an observation string */
+    if (vnum > 0 && is_string_valued(p->dset, vnum)) {
+	/* we must be in Case 1 */
+	*alt = series_decode_string(p->dset, vnum, strval);
+	if (na(*alt)) {
+	    /* @strval is not a string value of the given series */
+	    double xval = (f == B_EQ)? 0 : (f == B_NEQ)? 1 : NADBL;
+
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		ret->v.xvec[t] = xval;
+	    }
+	    return ret; /* NA case handled */
+	}
+    } else {
+	/* try interpreting @strval as an observation string */
 	if (annual_data(p->dset)) {
 	    *alt = get_date_x(p->dset->pd, strval);
 	} else {
@@ -2428,21 +2438,18 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-    ret = aux_series_node(p);
-    if (ret == NULL) {
-	return NULL;
-    }
+    if (ret != NULL) {
+	int t1 = (autoreg(p))? p->obs : p->dset->t1;
+	int t2 = (autoreg(p))? p->obs : p->dset->t2;
 
-    t1 = (autoreg(p))? p->obs : p->dset->t1;
-    t2 = (autoreg(p))? p->obs : p->dset->t2;
-
-    for (t=t1; t<=t2; t++) {
-	if (x != NULL) {
-	    xt = x[t];
-	} else if (y != NULL) {
-	    yt = y[t];
+	for (t=t1; t<=t2; t++) {
+	    if (x != NULL) {
+		xt = x[t];
+	    } else if (y != NULL) {
+		yt = y[t];
+	    }
+	    ret->v.xvec[t] = xy_calc(xt, yt, f, SERIES, p);
 	}
-	ret->v.xvec[t] = xy_calc(xt, yt, f, SERIES, p);
     }
 
     return ret;
@@ -5855,34 +5862,6 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *num_string_comp (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
-	NODE *xnode = l->t == NUM ? l : r;
-	NODE *snode = l->t == STR ? l : r;
-	const char *s = snode->v.str;
-	int v = xnode->vnum;
-
-	if (v <= 0 || !is_string_valued(p->dset, v)) {
-	    p->err = E_TYPES;
-	} else {
-	    double sx = series_decode_string(p->dset, v, s);
-
-	    if (na(sx)) {
-		ret->v.xval = NADBL;
-	    } else if (f == B_EQ) {
-		ret->v.xval = (sx == xnode->v.xval);
-	    } else {
-		ret->v.xval = (sx != xnode->v.xval);
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /* argument is list; value returned is series */
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
@@ -6446,13 +6425,13 @@ static NODE *n_elements_node (NODE *n, parser *p)
 
 	    ret->v.xval = list[0];
 	} else if (n->t == STR) {
-	    /* backward compatibility: _name_ of list */
 	    int *list = get_list_by_name(n->v.str);
 
 	    if (list != NULL) {
+		/* backward compatibility (?): _name_ of list */
 		ret->v.xval = list[0];
 	    } else {
-		p->err = E_TYPES;
+		ret->v.xval = strlen(n->v.str);
 	    }
 	} else {
 	    p->err = E_TYPES;
@@ -6750,7 +6729,8 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	if (!p->err) {
-	    ret = aux_string_node(p);
+	    ret = (f == F_INSTRING)? aux_scalar_node(p) :
+		aux_string_node(p);
 	}
 
 	if (p->err) {
@@ -6759,16 +6739,20 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 
 	sr = r->v.str;
 
-	if (f == F_STRSTR) {
+	if (f == F_STRSTR || f == F_INSTRING) {
 	    char *sret, *tmp = gretl_strdup(sr);
 
 	    if (tmp != NULL) {
 		strstr_escape(tmp);
 		sret = strstr(sl, tmp);
-		if (sret != NULL) {
-		    ret->v.str = gretl_strdup(sret);
+		if (f == F_INSTRING) {
+		    ret->v.xval = sret != NULL;
 		} else {
-		    ret->v.str = gretl_strdup("");
+		    if (sret != NULL) {
+			ret->v.str = gretl_strdup(sret);
+		    } else {
+			ret->v.str = gretl_strdup("");
+		    }
 		}
 		free(tmp);
 	    }
@@ -6812,7 +6796,7 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_DATA;
 	}
 
-	if (!p->err && ret->v.str == NULL) {
+	if (!p->err && f != F_INSTRING && ret->v.str == NULL) {
 	    p->err = E_ALLOC;
 	}
     } else {
@@ -7529,7 +7513,6 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 		} else {
 		    ret->v.xval = l->v.xvec[t];
 		}
-		ret->vnum = l->vnum; /* added 2013-09-14 */
 	    } else if (strval) {
 		ret->v.str = gretl_strdup("");
 	    } else {
@@ -7767,7 +7750,8 @@ static int get_logtrans (const char *s)
    be a series.
 */
 
-static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
+				 int f, parser *p)
 {
     NODE *ret = NULL;
     int rtype = NUM; /* the optional right-node type */
@@ -7823,7 +7807,15 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_HPFILT:
-	    p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
+	    {
+		int oneside = node_get_bool(o, p, 0);
+
+		if (!p->err && oneside) {
+		    p->err = oshp_filter(x, y, p->dset, parm, OPT_NONE);
+		} else if (!p->err) {
+		    p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
+		}
+	    }
 	    break;
 	case F_FRACDIFF:
 	    p->err = fracdiff_series(x, y, parm, 1, (autoreg(p))? p->obs : -1, p->dset);
@@ -8473,6 +8465,8 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	    }
 	} else if (arg->t == MAT) {
 	    p->err = gretl_R_function_add_matrix(arg->v.m);
+	} else if (arg->t == STR) {
+	    p->err = gretl_R_function_add_string(arg->v.str);
 	} else {
 	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
 	    p->err = E_TYPES;
@@ -8505,6 +8499,14 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 			gretl_matrix_free(ret->v.m);
 		    }
 		    ret->v.m = (gretl_matrix *) retp;
+		}
+	    } else if (rtype == GRETL_TYPE_STRING) {
+		ret = aux_string_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			free(ret->v.str);
+		    }
+		    ret->v.str = (char *) retp;
 		}
 	    }
 	}
@@ -8699,6 +8701,17 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *get_bundle_keys (NODE *n, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL) {
+	ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
+    }
+
+    return ret;
+}
+
 static const char *optional_bundle_get (gretl_bundle *b,
 					const char *key,
 					double *px,
@@ -8786,55 +8799,97 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *svm_predict_node (NODE *l, NODE *m, NODE *r, parser *p)
-{
-    NODE *ret = aux_series_node(p);
+#ifdef HAVE_LIBSVM
 
+static gretl_bundle *node_get_bundle (NODE *n, parser *p)
+{
+    gretl_bundle *b = NULL;
+
+    if (n->t == BUNDLE) {
+	b = n->v.b;
+    } else if (n->t == U_ADDR) {
+	n = n->v.b1.b;
+	if (n->t != BUNDLE) {
+	    p->err = E_TYPES;
+	} else {
+	    b = n->v.b;
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+
+    return b;
+}
+
+#endif
+
+static NODE *svm_driver_node (NODE *t, parser *p)
+{
 #ifndef HAVE_LIBSVM
     gretl_errmsg_set(_("Libsvm is not supported"));
     p->err = E_DATA;
+    return NULL;
 #else
-    if (ret != NULL) {
-	gretl_bundle *rbundle = NULL;
+    NODE *save_aux = p->aux;
+    NODE *n = t->v.b1.b;
+    NODE *e, *ret = NULL;
+    int *list = NULL;
+    gretl_bundle *bparm = NULL;
+    gretl_bundle *bmod = NULL;
+    gretl_bundle *bprob = NULL;
+    int i, k = n->v.bn.n_nodes;
 
-	if (!null_or_empty(r)) {
-	    /* we should have a bundle pointer on the right */
-	    if (r->t == U_ADDR) {
-		r = r->v.b1.b;
-		if (r->t == BUNDLE) {
-		    rbundle = r->v.b;
-		} else {
-		    p->err = E_INVARG;
-		}
-	    } else {
-		p->err = E_INVARG;
+    if (k < 2 || k > 4) {
+	n_args_error(k, 2, F_SVM, p);
+    }
+
+    for (i=0; i<k && !p->err; i++) {
+	e = eval(n->v.bn.n[i], p);
+	if (i == 0) {
+	    list = node_get_list(e, p);
+	} else if (i == 1) {
+	    bparm = node_get_bundle(e, p);
+	} else if (i == 2) {
+	    if (!null_or_empty(e)) {
+		bmod = node_get_bundle(e, p);
 	    }
-	}
-
-	if (!p->err) {
-	    int (*pfunc) (const int *, gretl_bundle *,
-			  gretl_bundle *, double *,
-			  int *, DATASET *, PRN *);
-	    int got_yhat = 0;
-
-	    pfunc = get_plugin_function("gretl_svm_predict");
-	    if (pfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		p->err = pfunc(l->v.ivec, m->v.b, rbundle, ret->v.xvec,
-			       &got_yhat, p->dset, p->prn);
-		if (!p->err && !got_yhat) {
-		    /* change the return type to scalar NA */
-		    free(ret->v.xvec);
-		    ret->t = NUM;
-		    ret->v.xval = NADBL;
-		}
+	} else {
+	    if (!null_or_empty(e)) {
+		bprob = node_get_bundle(e, p);
 	    }
 	}
     }
-#endif
+
+    if (!p->err) {
+	reset_p_aux(p, save_aux);
+	ret = aux_series_node(p);
+    }
+
+    if (ret != NULL) {
+	int (*pfunc) (const int *, gretl_bundle *,
+		      gretl_bundle *, gretl_bundle *,
+		      double *, int *, DATASET *, PRN *);
+	int got_yhat = 0;
+
+	pfunc = get_plugin_function("gretl_svm_driver");
+	if (pfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    p->err = pfunc(list, bparm, bmod, bprob, ret->v.xvec,
+			   &got_yhat, p->dset, p->prn);
+	    if (!p->err && !got_yhat) {
+		/* change the return type to scalar NA */
+		free(ret->v.xvec);
+		ret->t = NUM;
+		ret->v.xval = NADBL;
+	    }
+	}
+    }
+
+    free(list);
 
     return ret;
+#endif
 }
 
 static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
@@ -13914,10 +13969,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = list_list_op(l, r, t->t, p);
 	} else if (t->t == B_POW && ok_list_node(l, p) && ok_list_node(r, p)) {
 	    ret = list_list_op(l, r, t->t, p);
-	} else if ((t->t == B_EQ || t->t == B_NEQ) &&
-		   ((l->t == NUM && r->t == STR) ||
-		    (l->t == STR && r->t == NUM))) {
-	    ret = num_string_comp(l, r, t->t, p);
 	} else if (bool_comp(t->t)) {
 	    if (ok_list_node(l, p) && (r->t == NUM || r->t == SERIES)) {
 		ret = list_bool_comp(l, r, t->t, 0, p);
@@ -14270,6 +14321,13 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, BUNDLE, l, p);
 	}
 	break;
+    case F_GETKEYS:
+	if (l->t == BUNDLE) {
+	    ret = get_bundle_keys(l, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
+	break;
     case DBMEMB:
 	/* name of $ bundle plus string */
 	if ((l->t == DBUNDLE || l->t == BUNDLE) && r->t == STR) {
@@ -14284,13 +14342,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = curl_bundle_node(l, p);
 	break;
     case F_SVM:
-	if (l->t == LIST && m->t == BUNDLE) {
-	    ret = svm_predict_node(l, m, r, p);
-	} else if (l->t == LIST) {
-	    node_type_error(t->t, 1, BUNDLE, m, p);
-	} else {
-	    node_type_error(t->t, 0, LIST, l, p);
-	}
+	ret = svm_driver_node(t, p);
 	break;
     case F_TYPESTR:
 	/* numerical type code to string */
@@ -14306,7 +14358,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == SERIES && cast_series_to_list(p, l, t->t)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
-	    ret = series_series_func(l, r, t->t, p);
+	    ret = series_series_func(l, r, NULL, t->t, p);
 	} else if (ok_list_node(l, p)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
@@ -14338,7 +14390,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_TRAMOLIN:
 	/* series argument needed */
 	if (l->t == SERIES || l->t == MAT) {
-	    ret = series_series_func(l, r, t->t, p);
+	    if (t->t == F_HPFILT) {
+		ret = series_series_func(l, m, r, t->t, p);
+	    } else {
+		ret = series_series_func(l, r, NULL, t->t, p);
+	    }
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	}
@@ -14374,7 +14430,7 @@ static NODE *eval (NODE *t, parser *p)
 	    if (cast_series_to_list(p, l, t->t)) {
 		ret = apply_list_func(l, NULL, t->t, p);
 	    } else {
-		ret = series_series_func(l, r, t->t, p);
+		ret = series_series_func(l, r, NULL, t->t, p);
 	    }
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
@@ -15071,6 +15127,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSTR:
+    case F_INSTRING:
     case F_JSONGET:
     case F_XMLGET:
 	if (l->t == STR && r->t == STR) {
@@ -15327,35 +15384,6 @@ int parser_char_index (parser *p, int c)
     }
 
     return -1;
-}
-
-/* Look ahead to the next non-space character in the
-   parser stream and return it; if @skip then start at
-   offset 1 beyond the current p->point.
-*/
-
-int parser_next_nonspace_char (parser *p, int skip)
-{
-    int i, offset = skip ? 1 : 0;
-
-    if (*p->point == '\0') {
-	return 0;
-    }
-
-    for (i=offset; p->point[i] != '\0'; i++) {
-	if (!isspace(p->point[i])) {
-	    return p->point[i];
-	}
-    }
-
-    return 0;
-}
-
-/* gets the next character in the input stream */
-
-int parser_next_char (parser *p)
-{
-    return p->point[0];
 }
 
 /* For error reporting: print the input up to the current

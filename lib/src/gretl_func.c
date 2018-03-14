@@ -1166,27 +1166,33 @@ ufunc *get_user_function_by_name (const char *name)
     }
 #endif
 
-    /* First pass: if there's no active function package, match any
-       non-private function, but if there is an active package match
-       only its member functions.  Try to optimize by putting the
-       cheapest comparisons first.
-    */
-    for (i=0; i<n_ufuns; i++) {
-	if ((pkg == NULL && !function_is_private(ufuns[i])) || ufuns[i]->pkg == pkg) {
-	    if (!strcmp(name, ufuns[i]->name)) {
-		fun = ufuns[i];
+    if (pkg != NULL) {
+	/* There's an active function package: try first
+	   for functions that belong to the package.
+	*/
+	for (i=0; i<pkg->n_pub; i++) {
+	    /* public members */
+	    if (!strcmp(name, pkg->pub[i]->name)) {
+		fun = pkg->pub[i];
 		break;
+	    }
+	}
+	if (fun == NULL) {
+	    /* private members */
+	    for (i=0; i<pkg->n_priv; i++) {
+		if (!strcmp(name, pkg->priv[i]->name)) {
+		    fun = pkg->priv[i];
+		    break;
+		}
 	    }
 	}
     }
 
-    /* Second pass, if the first didn't work: match unpackaged
-       functions or functions from other packages, so long as they're
-       not private.
-    */
-    if (fun == NULL && pkg != NULL) {
+    if (fun == NULL) {
+	/* Match any non-private function */
 	for (i=0; i<n_ufuns; i++) {
-	    if (!function_is_private(ufuns[i]) && !strcmp(name, ufuns[i]->name)) {
+	    if (!function_is_private(ufuns[i]) &&
+		!strcmp(name, ufuns[i]->name)) {
 		fun = ufuns[i];
 		break;
 	    }
@@ -1205,7 +1211,7 @@ ufunc *get_user_function_by_name (const char *name)
 
 /**
  * get_function_from_package:
- * @funname: name if fuction to retrieve.
+ * @funname: name of function to retrieve.
  * @pkg: function package.
  *
  * Returns: pointer to a user-function, if there exists a
@@ -5606,6 +5612,9 @@ static int check_func_name (const char *name, ufunc **pfun,
 	gretl_errmsg_set(_("Function names must start with a letter"));
 	err = 1;
     } else if (gretl_reserved_word(name)) {
+	err = 1;
+    } else if (function_lookup(name)) {
+	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"), name);
 	err = 1;
     } else if (gretl_is_user_var(name)) {
 	gretl_errmsg_sprintf(_("'%s' is the name of a variable"), name);

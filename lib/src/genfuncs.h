@@ -84,6 +84,9 @@ int panel_expand (const gretl_matrix *x, double *y,
 int hp_filter (const double *x, double *hp, const DATASET *dset,
 	       double lambda, gretlopt opt);
 
+int oshp_filter (const double *x, double *hp, const DATASET *dset,
+		 double lambda, gretlopt opt);
+
 int bkbp_filter (const double *x, double *bk, const DATASET *dset, 
 		 int bkl, int bku, int k);
 

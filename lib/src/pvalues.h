@@ -34,6 +34,7 @@ typedef enum {
     D_WEIBULL,
     D_GAMMA,
     D_GED,
+    D_LAPLACE,
     D_BETA,
     D_DW,
     D_BINORM,
@@ -119,6 +120,14 @@ double GED_cdf (double nu, double x);
 double GED_cdf_comp (double nu, double x);
 
 double GED_cdf_inverse (double nu, double a);
+
+double laplace_pdf (double mu, double b, double x);
+
+double laplace_cdf (double mu, double b, double x);
+
+double laplace_cdf_comp (double mu, double b, double x);
+
+double laplace_cdf_inverse (double mu, double b, double a);
 
 double tcrit95 (int df);
 

@@ -2143,42 +2143,51 @@
       </description>
     </function>    
 
-    <function name="colname" section="strings" output="string">
+    <function name="cnameget" section="strings" output="string-or-strings">
       <fnargs>
-    <fnarg type="matrix">M</fnarg>
-    <fnarg type="int">col</fnarg>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="int" optional="true">col</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce il nome della colonna <argname>col</argname>
-	  della matrice <argname>M</argname>. Se <argname>M</argname>
-	  non ha nomi associati alle colonne, la funzione restituisce
-	  una stringa vuota; se <argname>col</argname> è fuori dai
-	  limiti per la matrice data, viene restituito un messaggio di
-	  errore. Si veda anche <fncref targ="colnames"/>.
+	  Se viene dato l'argomento <argname>col</argname>, ritorna il
+	  nome per quella colonna della matrice
+	  <argname>M</argname>. Se <argname>M</argname> non ha nomi di
+	  colonna viene restituita una stringa vuota; si ha errore se 
+	  <argname>col</argname> non è un numero di colonna.
 	</para>
-    	<para>
+	<para>
+	  Se il secondo argomento non viene fornito, il risultato è un
+	  array di stringhe coi nomi di colonna di
+	  <argname>M</argname> se ne ha, altrimenti un array vuoto.
+	</para>
+	<para>
 	  Esempio:
 	</para>
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
-	  colnames(A, "Col_A Col_B Col_C")
-	  string name = colname(A, 3)
+	  cnameset(A, "Col_A Col_B Col_C")
+	  string name = cnameget(A, 3)
 	  print name
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="cnameset"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
-    <function name="colnames" section="matbuild" output="scalar">
+    <function name="cnameset" section="matbuild" output="scalar">
       <fnargs>
-    <fnarg type="matrix">M</fnarg>
-    <fnarg type="list-or-string">S</fnarg>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="strings-or-list">S</fnarg>
       </fnargs>
       <description>
     <para>
       Attribuisce dei nomi alle colonne della matrice
-      <argname>M</argname> di dimensioni <by r="T" c="k"/>.  Se
-      <argname>S</argname> è una lista, i nomi sono copiati da quelli
+      <argname>M</argname> di dimensioni <by r="m" c="n"/>.  Se
+      <argname>s</argname> è una lista, i nomi sono copiati da quelli
       delle variabili; la lista deve avere tanti elementi quante sono
       le colonne di <argname>M</argname>. Se <argname>S</argname> è un
       array di stringhe, deve contenere <math>k</math> elementi; se
@@ -2187,19 +2196,22 @@
     </para>
     <para>
       Restituisce 0 se la funzione è andata a buon fine, non-zero
-      altrimenti. Si veda anche <fncref targ="rownames"/>.
+      altrimenti. Si veda anche <fncref targ="rnameset"/>.
     </para>
     <para>
       Esempio:
     </para>
-    <code>
-      matrix M = {1,2;2,1;4,1}
-      colnames(M, "Col1 Col2")
-      print M
-    </code>
+	<code>
+	  matrix M = {1, 2; 2, 1; 4, 1}
+	  strings S = array(2)
+	  S[1] = "Col1"
+	  S[2] = "Col2"
+	  cnameset(M, S)
+	  print M
+	</code>
       </description>
     </function>
-
+    
     <function name="cols" section="matshape" output="int">
       <fnargs>
     <fnarg type="matrix">X</fnarg>
@@ -3661,6 +3673,20 @@
       </description>
     </function>
     
+    <function name="getkeys" section="data-utils" output="strings">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Restituisce un array di stringhe con le chiavi
+	  identificative degli elementi del bundle
+	  <argname>b</argname>. Se il bundle è vuoto il risultato sarà
+	  a sua volta vuoto.
+	</para>
+      </description>
+    </function>
+    
     <function name="getline" section="strings" output="scalar">
       <fnargs>
     <fnarg type="string">source</fnarg>
@@ -4075,6 +4101,20 @@
       disposizione: viene posto uguale 100 volte il quadrato della
       periodicità dei dati (100 per dati annuali, 1600 per dati
       trimestrali, e così via).
+    </para>
+    <para>
+      Per default il filtro è ella sua versione solita a due lati, ma
+      se il terzo argomento (opzionale) è non-zero allora viene
+      calcolata la variante ad un lato (senza valori futuri) nel modo
+      illustrato in <cite key="stock-watson1999">Stock e Watson
+      (1999)</cite>.
+    </para>
+    <para>
+      Il filtro HP viene di soluto usato per detrendizzare una serie,
+      ma se invece quel che interessa è il trend, basta sottrarre il
+      risulattao dalla serie originale, come di seguito:
+    </para>
+    <para>
       <seelist> 
         <fncref targ="bkfilt"/>
         <fncref targ="bwfilt"/>
@@ -4275,6 +4315,32 @@
       </description>
     </function>
 
+    <function name="instring" section="strings" output="int">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Analogo booleano di <fncref targ="strstr"/>: ritorna 1 se
+	  <argname>s1</argname> contiene <argname>s2</argname> e 0
+	  altrimenti. L'espressione condizionale
+	</para>
+	<code>
+	  if instring("cattle", "cat")
+	</code>
+	<para>
+	  è logicamente equivalente a
+	</para>
+	<code>
+	  if strlen(strstr("cattle", "cat")) > 0
+	</code>
+	<para>
+	  ma più efficiente.
+	</para>
+      </description>
+    </function>
+    
     <function name="int" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -8406,10 +8472,45 @@
       </description>
     </function>
 
-    <function name="rownames" section="matbuild" output="int">
+    <function name="rnameget" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="list-or-string">S</fnarg>
+	<fnarg type="int" optional="true">r</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se viene dato l'argomento <argname>r</argname>, ritorna il
+	  nome per quella riga della matrice
+	  <argname>M</argname>. Se <argname>M</argname> non ha nomi di
+	  riga viene restituita una stringa vuota; si ha errore se 
+	  <argname>col</argname> non è un numero di riga.
+	</para>
+	<para>
+	  Se il secondo argomento non viene fornito, il risultato è un
+	  array di stringhe coi nomi di riga di
+	  <argname>M</argname> se ne ha, altrimenti un array vuoto.
+	</para>
+	<para>
+	  Esempio:
+	</para>
+	<code>
+	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
+	  rnameset(A, "Uno Due")
+	  string name = rnameget(A, 3)
+	  print name
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="rnameset"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="rnameset" section="matbuild" output="int">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="strings-or-list">S</fnarg>
       </fnargs>
       <description>
     <para>
@@ -9137,38 +9238,66 @@
     </para>
       </description>
     </function>
-    <function name="strsplit" section="strings" output="string">
+    
+    <function name="strsplit" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="int">i</fnarg>
+	<fnarg optional="true" type="int">i</fnarg>
+	<fnarg optional="true" type="string">sep</fnarg>
       </fnargs>  
       <description>
-    <para>
-      Restituisce l'elemento <argname>i</argname>-esimo della stringa
-      <argname>s</argname> separato da spazi. L'indice <argname>i</argname> è a base
-      1 e la funzione genera un errore se <argname>i</argname> è
-      minore di 1. Nel caso in cui <argname>s</argname> non
-      contenga spazi e <argname>i</argname> sia uguale ad 1, la
-      funzione restituisce una copia dell'intera stringa in
-      ingresso; in caso contrario, se <argname>i</argname> è maggiore del 
-      numero di elementi separati da spazio la funzione
-      restituisce una stringa vuota.
-    </para>
-    <para>
-        Esempi:
-    </para>
-    <code>
-        string basket = "banana apple jackfruit orange"
-        
-        strings fruits = strsplit(basket)
-        eval fruits[1]
-        eval fruits[2]
-        eval fruits[3]
-        eval fruits[4]
-        
-        string favorite = strsplit(basket, 3)
-        eval favorite
-    </code>
+	<para>
+	  Nel suo uso base, con un solo argomento, restituisce un
+	  array di stringhe rislutante dalla divisione di
+	  <argname>s</argname> per spazi bianche (ossia qualsiasi
+	  combinazione di spazi, tabulazioni e a capo).
+	</para>
+	<para>
+	  Se il secondo argomento è un intero positivo, viene
+	  ritornata una stringa singola, cioè
+	  l'<argname>i</argname>-esimo elemento della divisione di cui
+	  sopra. Se <argname>i</argname> è minore di 1 verrà segnalato
+	  un errore, ma se <argname>i</argname>
+	  è più grande del numero di elementi che risultetrebbe dalla
+	  divisione viene ritornata una stringa vuota.
+	</para>
+	<para>
+	  Il terzo argomento può essere usato per specificare il
+	  delimitatore col quale <argname>s</argname> verrà divisa. Ad
+	  esempio
+	</para>
+	<code>
+	  string basket = "banana,apple,jackfruit,orange"
+	  strings S = strsplit(basket,,",")
+	</code>
+	<para>
+	  dividerà l'input in un array di 4 stringhe in base alle
+	  virgole. la virgola <quote>extra</quote> nell'input indica
+	  che l'argomento <argname>i</argname> è omesso, ma non è
+	  strettamente necessario am meno che non si voglia estrarre
+	  un solo elemento; se il secondo argomento è una stringa e la
+	  funzione viene invocata con due soli argomenti si intende
+	  che il secondo argomento sia <argname>sep</argname> anziché
+	  <argname>i</argname>. Per cui
+	</para>
+	<code>
+	  strings S = strsplit(basket, ",")
+	</code>
+	<para>
+	  è altrettanto corretto.
+	</para>
+	<para>
+	  Le sequenze di escape <quote><lit>\n</lit></quote> e
+	  <quote><lit>\t</lit></quote> rappresentano l'a capo e la
+	  tabulazione nell'argomento
+	  <argname>sep</argname>. Per usare la barra rovesciata come
+	  separatore bisogna raddoppiarla, così:
+	  <quote><lit>\\</lit></quote>. Per esempio:
+	</para>
+	<code>
+	  string s = "c:\fiddle\sticks"
+	  strings S = strsplit(s, "\\")
+	</code>
       </description>
     </function>
 
@@ -9194,6 +9323,10 @@
         string s2 = strstr(s1, "an")
         print s2
     </code>
+    <para>
+      Per un semplice controllo vero/falso se <argname>s1</argname>
+      contiene <argname>s2</argname>, vedi <fncref targ="instring"/>.
+    </para>
       </description>
     </function>
 

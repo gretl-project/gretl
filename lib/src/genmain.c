@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* driver module for 'genr' and related commands */
@@ -100,7 +100,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
     } else if (targ == MAT) {
 	gretl_matrix *m = get_matrix_by_name(name);
-	
+
 	if (p->lhres != NULL) {
 	    pprintf(prn, _("Modified matrix %s"), name);
 	} else if (t == MAT) {
@@ -255,7 +255,7 @@ int function_from_string (const char *s)
     return 0;
 }
 
-static const char *extra_reswords[] = {
+static const char *reswords[] = {
     /* constants */
     "const",
     "NA",
@@ -282,28 +282,27 @@ static const char *extra_reswords[] = {
  * gretl_reserved_word:
  * @str: string to be tested.
  *
- * Returns: non-zero if @str is a reserved word that cannot 
+ * Returns: non-zero if @str is a reserved word that cannot
  * figure as the name of a user-defined variable, otherwise 0.
  */
 
 int gretl_reserved_word (const char *str)
 {
-    static int n = sizeof extra_reswords / sizeof extra_reswords[0];
+    static int n = sizeof reswords / sizeof reswords[0];
     int i, ret = gretl_command_number(str);
 
-    if (!ret) {
-	ret = function_lookup(str);
-    }
+    /* the names of built-in functions are deliberately
+       not reserved */
 
     for (i=0; i<n && !ret; i++) {
-	if (!strcmp(str, extra_reswords[i])) {
+	if (!strcmp(str, reswords[i])) {
 	    ret = 1;
 	}
     }
 
     if (ret) {
 	gretl_errmsg_sprintf(_("'%s' is a reserved word"), str);
-    }	
+    }
 
     return ret;
 }
@@ -313,9 +312,9 @@ int gretl_reserved_word (const char *str)
  * @targ: target string into which to write name.
  * @src: source string.
  * @len: location to receive the length of the extracted portion.
- * 
+ *
  * Writes up to #VNAMELEN - 1 characters from @s into @vname.
- * 
+ *
  * Returns: 0 on success, non-zero if the number of valid varname
  * characters in @s is greater than #VNAMELEN - 1.
  */
@@ -382,7 +381,7 @@ int series_index (const DATASET *dset, const char *varname)
 
     if (dset != NULL) {
 	int i;
-	
+
 	ret = dset->v;
 
 	if (s == NULL || *s == '\0' || isdigit(*s)) {
@@ -403,7 +402,7 @@ int series_index (const DATASET *dset, const char *varname)
 
 	if (fd == 0) {
 	    /* not inside a user function: easy */
-	    for (i=1; i<dset->v; i++) { 
+	    for (i=1; i<dset->v; i++) {
 		if (strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -418,7 +417,7 @@ int series_index (const DATASET *dset, const char *varname)
 	    */
 	    for (i=1; i<dset->v; i++) {
 		if (fd == series_get_stack_level(dset, i) &&
-		    !series_is_listarg(dset, i) && 
+		    !series_is_listarg(dset, i) &&
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -430,9 +429,9 @@ int series_index (const DATASET *dset, const char *varname)
  bailout:
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "series_index for '%s', fd = %d: got %d (dset->v = %d)\n", 
+    fprintf(stderr, "series_index for '%s', fd = %d: got %d (dset->v = %d)\n",
 	    s, fd, ret, dset->v);
-#endif 
+#endif
 
     return ret;
 }
@@ -455,7 +454,7 @@ int series_greatest_index (const DATASET *dset, const char *varname)
 
     if (dset != NULL) {
 	int i;
-	
+
 	ret = dset->v;
 
 	if (s == NULL || *s == '\0' || isdigit(*s)) {
@@ -476,7 +475,7 @@ int series_greatest_index (const DATASET *dset, const char *varname)
 
 	if (fd == 0) {
 	    /* not inside a user function: easy */
-	    for (i=dset->v-1; i>0; i--) { 
+	    for (i=dset->v-1; i>0; i--) {
 		if (strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -489,9 +488,9 @@ int series_greatest_index (const DATASET *dset, const char *varname)
 	       not just be the result of its being a member of a list
 	       that was passed as an argument.
 	    */
-	    for (i=dset->v-1; i>0; i--) { 
+	    for (i=dset->v-1; i>0; i--) {
 		if (fd == series_get_stack_level(dset, i) &&
-		    !series_is_listarg(dset, i) && 
+		    !series_is_listarg(dset, i) &&
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -507,9 +506,9 @@ int series_greatest_index (const DATASET *dset, const char *varname)
  bailout:
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "series_index for '%s', fd = %d: got %d (dset->v = %d)\n", 
+    fprintf(stderr, "series_index for '%s', fd = %d: got %d (dset->v = %d)\n",
 	    s, fd, ret, dset->v);
-#endif 
+#endif
 
     return ret;
 }
@@ -604,7 +603,7 @@ static int gen_special (const char *s, const char *line,
     } else if (!strcmp(s, "weekday")) {
 	err = gen_wkday(dset, &vnum);
 	write_label = 1;
-    } 
+    }
 
     if (msg != NULL && gretl_messages_on()) {
 	pputs(prn, _(msg));
@@ -632,7 +631,7 @@ static int gen_special (const char *s, const char *line,
     return err;
 }
 
-/* try for something of the form "genr x = stack(...)", 
+/* try for something of the form "genr x = stack(...)",
    a special for fixing up panel data */
 
 static int do_stack_vars (const char *s, char *vname, const char **rem)
@@ -711,7 +710,7 @@ static int maybe_unassigned_fncall (const char *s)
 #define gen_silent(f) (f & (P_DISCARD | P_PRIV | P_DECL))
 
 int generate (const char *line, DATASET *dset,
-	      GretlType gtype, gretlopt opt, 
+	      GretlType gtype, gretlopt opt,
 	      PRN *prn)
 {
     char vname[VNAMELEN];
@@ -814,7 +813,6 @@ int generate (const char *line, DATASET *dset,
 
 static double real_generate_scalar (const char *s,
 				    DATASET *dset,
-				    int boolean,
 				    int *err)
 {
     parser p;
@@ -833,10 +831,6 @@ static double real_generate_scalar (const char *s,
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
-	} else if (boolean && p.ret->t == STR) {
-	    char *s = p.ret->v.str;
-
-	    x = (s != NULL && *s != '\0');	    
 	} else if (p.ret->t == NUM) {
 	    x = p.ret->v.xval;
 	} else {
@@ -853,12 +847,41 @@ static double real_generate_scalar (const char *s,
 
 double generate_scalar (const char *s, DATASET *dset, int *err)
 {
-    return real_generate_scalar(s, dset, 0, err);
+    parser p;
+    double x = NADBL;
+
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, NUM);
+
+    if (!*err) {
+	if (p.ret->t == MAT) {
+	    gretl_matrix *m = p.ret->v.m;
+
+	    if (gretl_matrix_is_scalar(m)) {
+		x = p.ret->v.m->val[0];
+	    } else if (!gretl_is_null_matrix(m)) {
+		fprintf(stderr, "generate_scalar: got %d x %d matrix\n",
+			m->rows, m->cols);
+		*err = E_TYPES;
+	    }
+	} else if (p.ret->t == NUM) {
+	    x = p.ret->v.xval;
+	} else {
+	    *err = E_TYPES;
+	}
+    } else if (*err == 1) {
+	*err = E_PARSE;
+    }
+
+    gen_cleanup(&p);
+
+    return x;
 }
 
 double generate_boolean (const char *s, DATASET *dset, int *err)
 {
-    return real_generate_scalar(s, dset, 1, err);
+    double x = generate_scalar(s, dset, err);
+
+    return *err ? x : (double) (x != 0.0);
 }
 
 /* retrieve an integer result directly */
@@ -910,7 +933,7 @@ double *generate_series (const char *s, DATASET *dset, PRN *prn,
 
 /* retrieve a matrix result directly */
 
-gretl_matrix *generate_matrix (const char *s, DATASET *dset, 
+gretl_matrix *generate_matrix (const char *s, DATASET *dset,
 			       int *err)
 {
     gretl_matrix *m = NULL;
@@ -1011,10 +1034,10 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     return ret;
 }
 
-/* create a parsed tree that can be evaluated later, 
+/* create a parsed tree that can be evaluated later,
    probably multiple times */
 
-parser *genr_compile (const char *s, DATASET *dset, 
+parser *genr_compile (const char *s, DATASET *dset,
 		      GretlType gtype, gretlopt opt,
 		      PRN *prn, int *err)
 {
@@ -1057,7 +1080,7 @@ parser *genr_compile (const char *s, DATASET *dset,
         flags |= P_ANON;
     } else if (gretl_array_type(gtype)) {
 	targtype = gtype;
-    }    
+    }
 
     if (opt & OPT_P) {
 	/* internal use of generate() */
@@ -1073,7 +1096,7 @@ parser *genr_compile (const char *s, DATASET *dset,
     if (opt & OPT_N) {
 	/* "no exec": compile but don't run */
 	flags |= P_NOEXEC;
-    }    
+    }
 
     *err = realgen(s, p, dset, prn, flags, targtype);
 
@@ -1102,7 +1125,7 @@ parser *genr_compile (const char *s, DATASET *dset,
 int execute_genr (parser *p, DATASET *dset, PRN *prn)
 {
 #if GDEBUG
-    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p, prn=%p\n", 
+    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p, prn=%p\n",
 	    (void *) p, p->lh.expr ? p->lh.expr : p->lh.name,
 	    (void *) dset->Z, (void *) prn);
 #endif
@@ -1111,7 +1134,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 
     if (!p->err && p->targ != EMPTY) {
 	gen_save_or_print(p, prn);
-    } 
+    }
 
     if (p->err) {
 	gen_cleanup(p);
@@ -1128,7 +1151,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 {
     double x = NADBL;
 
-    *err = realgen(NULL, p, dset, NULL, P_EXEC | P_PRIV | P_ANON, 
+    *err = realgen(NULL, p, dset, NULL, P_EXEC | P_PRIV | P_ANON,
 		   NUM);
 
     if (!*err) {
@@ -1142,10 +1165,6 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 			m->rows, m->cols);
 		*err = E_TYPES;
 	    }
-	} else if (p->ret->t == STR) {
-	    char *s = p->ret->v.str;
-
-	    x = (s != NULL && *s != '\0');
 	} else if (p->ret->t == NUM) {
 	    x = p->ret->v.xval;
 	} else {
@@ -1157,7 +1176,7 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
 
     gen_cleanup(p);
 
-    return x;
+    return *err ? x : (double) (x != 0.0);
 }
 
 /* destroy a previously compiled generator */
@@ -1247,7 +1266,3 @@ void genr_unset_na_check (parser *p)
 {
     p->flags &= ~P_NATEST;
 }
-
-
-
-

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* various functions called by 'genr' */
@@ -27,11 +27,13 @@
 #include "gretl_typemap.h"
 #include "gretl_midas.h"
 #include "estim_private.h"
+#include "matrix_extra.h"
+#include "kalman.h"
 #include "../../cephes/cephes.h"
 
 #include <errno.h>
 
-int sort_series (const double *x, double *y, int f, 
+int sort_series (const double *x, double *y, int f,
 		 const DATASET *dset)
 {
     double *z = NULL;
@@ -78,7 +80,7 @@ struct pair_sorter {
 /* sort the series y by the values of x, putting the result
    into z */
 
-int gretl_sort_by (const double *x, const double *y, 
+int gretl_sort_by (const double *x, const double *y,
 		   double *z, const DATASET *dset)
 {
     struct pair_sorter *xy;
@@ -148,7 +150,7 @@ static void genrank (const double *sz, int m,
 		    rz[j] = avg;
 		}
 	    }
-	} 
+	}
 
 	r += cases;
     }
@@ -184,7 +186,7 @@ static int rank_array (const double *x, double *y, int f, int n)
 	    i++;
 	}
     }
-    
+
     if (f == F_DSORT) {
 	qsort(sx, m, sizeof *sx, gretl_inverse_compare_doubles);
     } else {
@@ -200,7 +202,7 @@ static int rank_array (const double *x, double *y, int f, int n)
 	} else {
 	    y[t] = rx[i++];
 	}
-    }    
+    }
 
     free(sx);
     free(rx);
@@ -208,14 +210,14 @@ static int rank_array (const double *x, double *y, int f, int n)
     return 0;
 }
 
-int rank_series (const double *x, double *y, int f, 
+int rank_series (const double *x, double *y, int f,
 		 const DATASET *dset)
 {
     return rank_array(x + dset->t1, y + dset->t1,
 		      f, sample_size(dset));
 }
 
-gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err) 
+gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err)
 {
     gretl_matrix *y = NULL;
     int n = gretl_vector_get_length(x);
@@ -247,7 +249,7 @@ gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err)
  * @f: function, F_DIFF, F_SDIFF or F_LDIFF.
  * @dset: data set information.
  *
- * Calculates the differenced counterpart to the input 
+ * Calculates the differenced counterpart to the input
  * series @x.  If @f = F_SDIFF, the seasonal difference is
  * computed; if @f = F_LDIFF, the log difference, and if
  * @f = F_DIFF, the ordinary first difference.
@@ -255,7 +257,7 @@ gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int diff_series (const double *x, double *y, int f, 
+int diff_series (const double *x, double *y, int f,
 		 const DATASET *dset)
 {
     int k = (f == F_SDIFF)? dset->pd : 1;
@@ -278,7 +280,7 @@ int diff_series (const double *x, double *y, int f,
 	} else if (f == F_LDIFF) {
 	    if (x[t] > 0.0 && x[t-k] > 0.0) {
 		y[t] = log(x[t]) - log(x[t-k]);
-	    } 
+	    }
 	}
     }
 
@@ -291,7 +293,7 @@ int diff_series (const double *x, double *y, int f,
  * @y: array into which to write the result.
  * @dset: data set information.
  *
- * Calculates in @y the forward orthogonal deviations of the input 
+ * Calculates in @y the forward orthogonal deviations of the input
  * series @x.  That is, y[t] is the scaled difference between x[t]
  * and the mean of the subsequent observations on x.
  *
@@ -344,13 +346,13 @@ int orthdev_series (const double *x, double *y, const DATASET *dset)
  * @y: array into which to write the result.
  * @d: fraction by which to difference.
  * @diff: boolean variable 1 for fracdiff, 0 for fraclag
- * @obs: used for autoreg calculation, -1 if whole series 
+ * @obs: used for autoreg calculation, -1 if whole series
  *	should be calculated otherwise just the observation for
- *	obs is calculated 
+ *	obs is calculated
  * @dset: data set information.
  *
- * Calculates the fractionally differenced or lagged 
- * counterpart to the input series @x. The fractional 
+ * Calculates the fractionally differenced or lagged
+ * counterpart to the input series @x. The fractional
  * difference operator is defined as (1-L)^d, while the
  * fractional lag operator 1-(1-L)^d.
  *
@@ -376,8 +378,8 @@ int fracdiff_series (const double *x, double *y, double d,
 	if (tmiss > 0 && tmiss < t2) {
 	    t2 = tmiss;
 	}
-    } 
- 
+    }
+
     if (obs >= 0) {
 	/* doing a specific observation */
 	T = obs - t1 + 1;
@@ -401,8 +403,8 @@ int fracdiff_series (const double *x, double *y, double d,
 		y[t] = (diff)? x[t] : 0;
 	    } else {
 		y[t] = NADBL;
-	    } 
-	}  
+	    }
+	}
 	for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
 	    for (t=t1+dd; t<=t2; t++) {
 		y[t] += phi * x[t - dd];
@@ -421,7 +423,7 @@ int fracdiff_series (const double *x, double *y, double d,
  * @d: lambda parameter.
  * @dset: data set information.
  *
- * Calculates in @y the Box-Cox transformation for the 
+ * Calculates in @y the Box-Cox transformation for the
  * input series @x.
  *
  * Returns: 0 on success, non-zero error code on failure.
@@ -436,12 +438,12 @@ int boxcox_series (const double *x, double *y, double d,
 	if (na(x[t])) {
 	    y[t] = NADBL;
 	} else if (d == 0) {
-	    y[t] = (x[t] > 0)? log(x[t]) : NADBL; 
+	    y[t] = (x[t] > 0)? log(x[t]) : NADBL;
 	} else {
 	    y[t] = (pow(x[t], d) - 1) / d;
 	}
-    } 
-    
+    }
+
     return 0;
 }
 
@@ -503,7 +505,7 @@ static int panel_resample_series (const double *x, double *y,
 
     if (n <= 1) {
 	return E_DATA;
-    }    
+    }
 
     z = malloc(n * sizeof *z);
     if (z == NULL) {
@@ -585,7 +587,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
 
     if (blocklen == 1) {
 	return resample_series(x, y, dset);
-    }    
+    }
 
     series_adjust_sample(x, &t1, &t2);
 
@@ -597,7 +599,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
     /* Let n now represent the number of blocks of @blocklen
        contiguous observations which we need to select; the
        last of these may not be fully used.
-    */     
+    */
     n = m + (rem > 0);
 
     /* the last selectable starting point for a block */
@@ -640,7 +642,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
 
 /* implements filter_series() and filter_matrix() */
 
-static int filter_vector (const double *x, double *y, int t1, int t2, 
+static int filter_vector (const double *x, double *y, int t1, int t2,
 			  gretl_vector *A, gretl_vector *C, double y0)
 {
     int t, s, i, n;
@@ -688,7 +690,7 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
 		    coef = gretl_vector_get(C, i);
 		    e[s] += xlag * coef;
 		}
-	    } 
+	    }
 	    s++;
 	}
     } else {
@@ -714,7 +716,7 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
 			coef = gretl_vector_get(A, i);
 			y[t] += coef * xlag;
 		    }
-		} 
+		}
 	    }
 	    s++;
 	}
@@ -739,16 +741,16 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
  * @y0: initial value of output series.
  *
  * Filters x according to y_t = C(L)/A(L) x_t.  If the intended
- * AR order is p, @A should be a vector of length p.  If the 
- * intended MA order is q, @C should be vector of length (q+1), 
- * the first entry giving the coefficient at lag 0.  However, if 
- * @C is NULL this is taken to mean that the lag-0 MA coefficient 
+ * AR order is p, @A should be a vector of length p.  If the
+ * intended MA order is q, @C should be vector of length (q+1),
+ * the first entry giving the coefficient at lag 0.  However, if
+ * @C is NULL this is taken to mean that the lag-0 MA coefficient
  * is unity (and all others are zero).
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int filter_series (const double *x, double *y, const DATASET *dset, 
+int filter_series (const double *x, double *y, const DATASET *dset,
 		   gretl_vector *A, gretl_vector *C, double y0)
 {
     int t1 = dset->t1;
@@ -782,7 +784,7 @@ int filter_series (const double *x, double *y, const DATASET *dset,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C, 
+gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C,
 			     double y0, int *err)
 {
     int r = X->rows;
@@ -841,7 +843,7 @@ static int series_goodobs (const double *x, int *t1, int *t2)
 	}
     }
 
-    *t1 = t1min; 
+    *t1 = t1min;
     *t2 = t2max;
 
     return T;
@@ -860,7 +862,7 @@ static int series_goodobs (const double *x, int *t1, int *t2)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int exponential_movavg_series (const double *x, double *y, 
+int exponential_movavg_series (const double *x, double *y,
 			       const DATASET *dset,
 			       double d, int n,
 			       double y0)
@@ -1005,18 +1007,18 @@ int movavg_series (const double *x, double *y, const DATASET *dset,
     return 0;
 }
 
-int seasonally_adjust_series (const double *x, double *y, 
+int seasonally_adjust_series (const double *x, double *y,
 			      DATASET *dset, int tramo,
 			      int use_log)
 {
-    int (*adjust_series) (const double *, double *, 
+    int (*adjust_series) (const double *, double *,
 			  const DATASET *, int, int);
     int t1 = dset->t1;
     int t2 = dset->t2;
     int T, err = 0;
 
     if (!quarterly_or_monthly(dset)) {
-	gretl_errmsg_set(_("Input must be a monthly or quarterly time series"));	
+	gretl_errmsg_set(_("Input must be a monthly or quarterly time series"));
 	return E_PDWRONG;
     }
 
@@ -1042,7 +1044,7 @@ int seasonally_adjust_series (const double *x, double *y,
     gretl_error_clear();
 
     adjust_series = get_plugin_function("adjust_series");
-    
+
     if (adjust_series == NULL) {
 	err = E_FOPEN;
     } else {
@@ -1061,10 +1063,10 @@ int seasonally_adjust_series (const double *x, double *y,
     return err;
 }
 
-int tramo_linearize_series (const double *x, double *y, 
+int tramo_linearize_series (const double *x, double *y,
 			    DATASET *dset)
 {
-    int (*linearize_series) (const double *, double *, 
+    int (*linearize_series) (const double *, double *,
 			     const DATASET *);
     int t1 = dset->t1;
     int t2 = dset->t2;
@@ -1084,7 +1086,7 @@ int tramo_linearize_series (const double *x, double *y,
     gretl_error_clear();
 
     linearize_series = get_plugin_function("linearize_series");
-    
+
     if (linearize_series == NULL) {
 	err = E_FOPEN;
     } else {
@@ -1103,7 +1105,7 @@ int tramo_linearize_series (const double *x, double *y,
     return err;
 }
 
-#define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t])) 
+#define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t]))
 #define panel_obs_masked(m,t) (m != NULL && m[t] == 0)
 
 #define PXSUM_SKIP_NA 1
@@ -1126,7 +1128,7 @@ int tramo_linearize_series (const double *x, double *y,
  * Returns: 0 on success, non-zero on error.
  */
 
-int panel_statistic (const double *x, double *y, const DATASET *dset, 
+int panel_statistic (const double *x, double *y, const DATASET *dset,
 		     int k, const double *mask)
 {
     int T, Ti;
@@ -1219,14 +1221,14 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		}
 		for (t=0; t<T; t++) {
 		    y[i*T + t] = xbar;
-		}		
+		}
 	    }
 	}
 
 	if (k == F_PSD && !TV) {
 	    /* s.d. with no time variation! */
 	    double sd;
-	    
+
 	    for (i=u1; i<=u2; i++) {
 		Ti = 0;
 		for (t=0; t<T; t++) {
@@ -1258,7 +1260,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 				ssx = dev * dev;
 			    } else {
 				ssx += dev * dev;
-			    }			
+			    }
 			    Ti++;
 			}
 		    }
@@ -1273,7 +1275,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		for (t=0; t<T; t++) {
 		    y[i*T + t] = sd;
 		}
-	    }	    
+	    }
 	}
     } else if (k == F_PXSUM) {
 	/* the sum of cross-sectional values for each period */
@@ -1290,10 +1292,10 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		} else if (na(x[s])) {
 #if PXSUM_SKIP_NA
 		    continue;
-#else			
+#else
 		    yt = NADBL;
 		    break;
-#endif			
+#endif
 		} else {
 		    yt += x[s];
 		    nt++;
@@ -1335,12 +1337,12 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 /**
  * panel_shrink:
  * @x: panel-data source series.
- * @dset: data set information.
+ * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
- * Constructs a column vector holding the first non-missing 
- * observation of @x for each panel unit within the current 
- * sample range. If a unit has no valid observations it is 
+ * Constructs a column vector holding the first non-missing
+ * observation of @x for each panel unit within the current
+ * sample range. If a unit has no valid observations it is
  * skipped.
  *
  * Returns: a new column vector, or NULL on error.
@@ -1385,7 +1387,7 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
  * panel_expand:
  * @x: source vector.
  * @y target array.
- * @dset: data set information.
+ * @dset: pointer to dataset.
  * @opt: OPT_X to repeat across individuals instead
  * of across time.
  *
@@ -1393,7 +1395,7 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
  * by default across time (in which case the source
  * vector must have as many values as there are
  * individuals in the current sample range).
- * 
+ *
  * Returns: zero on success, non-zero code on error.
  */
 
@@ -1407,7 +1409,7 @@ int panel_expand (const gretl_matrix *x, double *y,
     }
 
     n = (int) ceil((double) T / dset->pd);
-    
+
     if (gretl_vector_get_length(x) != n) {
 	return E_NONCONF;
     } else {
@@ -1425,8 +1427,8 @@ int panel_expand (const gretl_matrix *x, double *y,
 		y[t] = NADBL;
 	    } else {
 		y[t] = xi;
-	    }	    
-		
+	    }
+
 	}
     }
 
@@ -1442,14 +1444,14 @@ static double default_hp_lambda (const DATASET *dset)
  * hp_filter:
  * @x: array of original data.
  * @hp: array in which filtered series is computed.
- * @dset: data set information.
+ * @dset: pointer to dataset.
  * @lambda: smoothing parameter (or #NADBL to use the default
  * value).
  * @opt: if %OPT_T, return the trend rather than the cycle.
  *
  * Calculates the "cycle" component of the time series in
- * array @x, using the Hodrick-Prescott filter.  Adapted from the 
- * original FORTRAN code by E. Prescott. 
+ * array @x, using the Hodrick-Prescott filter.  Adapted from the
+ * original FORTRAN code by E. Prescott.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -1477,7 +1479,7 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 
     T = t2 - t1 + 1;
     if (T < 4) {
-	err = E_DATA;
+	err = E_TOOFEW;
 	goto bailout;
     }
 
@@ -1511,7 +1513,7 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 
 	tmp0 = v00 + 1.0;
 	tmp1 = v00;
-      
+
 	v00 -= v00 * v00 / tmp0;
 	v11 -= v01 * v01 / tmp0;
 	v01 -= (tmp1 / tmp0) * v01;
@@ -1528,12 +1530,12 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 
 	V[3][t-1] = V[0][t] * m[1] + V[1][t] * m[0];
 	hp[t-1]   = V[1][t] * m[1] + V[2][t] * m[0];
-	  
+
 	det = V[0][t] * V[2][t] - V[1][t] * V[1][t];
-	  
+
 	v00 =  V[2][t] / det;
 	v01 = -V[1][t] / det;
-	  
+
 	tmp[1] = (x[t] - m[1]) / (v00 + 1.0);
 	m[1] += v00 * tmp[1];
 	m[0] += v01 * tmp[1];
@@ -1548,7 +1550,7 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
     for (t=T-3; t>=0; t--) {
 	t1 = t+1;
 	tb = T - t - 1;
-      
+
 	tmp[0] = m[0];
 	m[0] = 2.0 * m[0] - m[1];
 	m[1] = tmp[0];
@@ -1560,12 +1562,12 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 	    b00 = V[2][tb] + V[0][t1];
 	    b01 = V[1][tb] + V[1][t1];
 	    b11 = V[0][tb] + V[2][t1];
-	      
+
 	    det = b00 * b11 - b01 * b01;
-	      
+
 	    V[3][t] = (b00 * e1 - b01 * e0) / det;
 	}
-	  
+
 	det = V[0][tb] * V[2][tb] - V[1][tb] * V[1][tb];
 	v00 =  V[2][tb] / det;
 	v01 = -V[1][tb] / det;
@@ -1596,6 +1598,157 @@ int hp_filter (const double *x, double *hp, const DATASET *dset,
 	}
 	free(V);
     }
+
+    return err;
+}
+
+/**
+ * oshp_filter:
+ * @x: array of original data.
+ * @hp: array in which filtered series is computed.
+ * @dset: pointer to dataset.
+ * @lambda: smoothing parameter (or #NADBL to use the default
+ * value).
+ * @opt: if %OPT_T, return the trend rather than the cycle.
+ *
+ * Calculates the "cycle" component of the time series in
+ * array @x, using the a one-sided Hodrick-Prescott filter.
+ * The implementation uses the Kalman filter.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int oshp_filter (const double *x, double *hp, const DATASET *dset,
+		 double lambda, gretlopt opt)
+{
+    int t1 = dset->t1, t2 = dset->t2;
+    gretl_matrix *M[4] = {NULL};
+    gretl_matrix *Lambda = NULL;
+    gretl_matrix *a0 = NULL;
+    gretl_matrix *mu = NULL;
+    gretl_bundle *b = NULL;
+    int copy[4] = {0};
+    int T, t, err, kerr;
+    double mt, sqrt_lam;
+
+    for (t=t1; t<=t2; t++) {
+	hp[t] = NADBL;
+    }
+
+    err = series_adjust_sample(x, &t1, &t2);
+    if (err) {
+	return err;
+    }
+
+    T = t2 - t1 + 1;
+    if (T < 4) {
+	return E_TOOFEW;
+    }
+
+    if (na(lambda)) {
+	lambda = default_hp_lambda(dset);
+    }
+    sqrt_lam = sqrt(lambda);
+    
+    /* adjust starting points */
+    x += t1;
+    hp += t1;
+
+    /* begin Kalman filter setup */
+
+    /* obsy */
+    M[0] = gretl_matrix_alloc(T+1, 1);
+    for (t=0; t<T; t++) {
+	gretl_matrix_set(M[0], t, 0, x[t]);
+    }
+    /* add a dummy trailing observation */
+    gretl_matrix_set(M[0], T, 0, 0.0);
+
+    /* obsymat */
+    M[1] = gretl_zero_matrix_new(2, 1);
+    gretl_matrix_set(M[1], 0, 0, 1);
+
+    /* statemat */
+    M[2] = gretl_zero_matrix_new(2, 2);
+    gretl_matrix_set(M[2], 0, 0, 2);
+    gretl_matrix_set(M[2], 0, 1, -1);
+    gretl_matrix_set(M[2], 1, 0, 1);
+
+    /* statevar */
+    M[3] = gretl_zero_matrix_new(2, 2);
+    gretl_matrix_set(M[3], 0, 0, 1/sqrt_lam);
+
+    b = kalman_bundle_new(M, copy, 4, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    /* obsvar */
+    Lambda = gretl_matrix_from_scalar(sqrt_lam);
+    err = gretl_bundle_donate_data(b, "obsvar", Lambda,
+				   GRETL_TYPE_MATRIX, 0);
+
+    /* diffuse prior */
+    err = gretl_bundle_set_scalar(b, "diffuse", 1);
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* inistate */
+    a0 = gretl_matrix_alloc(2, 1);
+    gretl_matrix_set(a0, 0, 0, 2*x[0] - x[1]);
+    gretl_matrix_set(a0, 1, 0, 3*x[0] - 2*x[1]);
+    err = gretl_bundle_donate_data(b, "inistate", a0,
+				   GRETL_TYPE_MATRIX, 0);
+    if (err) {
+	goto bailout;
+    }
+
+#if DEBUG
+    gretl_matrix_print(M[0], "obsy");
+    gretl_matrix_print(M[1], "obsymat");
+    gretl_matrix_print(M[2], "statemat");
+    gretl_matrix_print(M[3], "statevar");
+    gretl_matrix_print(a0, "inistate");
+#endif
+
+    kerr = kalman_bundle_run(b, NULL, &err);
+    if (err || kerr) {
+	goto bailout;
+    }
+
+    mu = gretl_bundle_get_matrix(b, "state", &err);
+    if (err) {
+	goto bailout;
+    }
+
+#if DEBUG
+    printf("kerr = %d, err = %d\n", kerr, err);
+    gretl_matrix_print(mu, "state");
+#endif
+
+    /* take the "lead" of the second element of the
+       state estimate */
+    if (opt & OPT_T) {
+	for (t=0; t<T; t++) {
+	    mt = gretl_matrix_get(mu, t+1, 1);
+	    hp[t] = mt;
+	}
+    } else {
+	for (t=0; t<T; t++) {
+	    mt = gretl_matrix_get(mu, t+1, 1);
+	    hp[t] = x[t] - mt;
+	}
+    }
+
+ bailout:
+
+    /* since all the matrices we've allocated above belong
+       to the Kalman bundle, the following will suffice to
+       free everything on exit
+    */
+    gretl_bundle_destroy(b);
 
     return err;
 }
@@ -1637,7 +1790,7 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
     }
 
 #if BK_DEBUG
-    fprintf(stderr, "lower limit = %d, upper limit = %d, \n", 
+    fprintf(stderr, "lower limit = %d, upper limit = %d, \n",
 	    bkl, bku);
 #endif
 
@@ -1649,7 +1802,7 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
-    } 
+    }
 
     if (2 * k >= t2 - t1 + 1) {
 	gretl_errmsg_set("Insufficient observations");
@@ -1659,15 +1812,15 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
     if (bku >= t2 - t1 + 1) {
 	lowpass = 1;
     }
-    
+
     a = malloc((k + 1) * sizeof *a);
     if (a == NULL) {
 	return E_ALLOC;
     }
-    
+
     omubar = M_2PI / bkl;
     omlbar = lowpass? 0 : M_2PI / bku;
-    
+
     /* first we compute the coefficients */
 
     avg_a = a[0] = (omubar - omlbar) / M_PI;
@@ -1737,13 +1890,13 @@ static double safe_pow (double x, int n)
 static double cotan (double theta)
 {
     double s = sin(theta);
-    
+
     if (fabs(s) < NEAR_ZERO) {
 	s = copysign(NEAR_ZERO, s);
     }
 
     return cos(theta) / s;
-} 
+}
 
 /**
  * hp_gain:
@@ -1765,7 +1918,7 @@ gretl_matrix *hp_gain (double lambda, int hipass)
     if (G == NULL) {
 	return NULL;
     }
-    
+
     for (i=0; i<=width; i++) {
 	x = 2 * sin(omega / 2);
 	gain = 1 / (1 + lambda * pow(x, 4));
@@ -1775,10 +1928,10 @@ gretl_matrix *hp_gain (double lambda, int hipass)
 	gretl_matrix_set(G, i, 0, omega);
 	gretl_matrix_set(G, i, 1, gain);
 	omega += inc;
-    } 
+    }
 
     return G;
-} 
+}
 
 /**
  * butterworth_gain:
@@ -1801,7 +1954,7 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
     if (G == NULL) {
 	return NULL;
     }
-    
+
     for (i=0; i<=width; i++) {
 	if (hipass) {
 	    x = cotan(omega / 2) * cotan((M_PI - cutoff) / 2);
@@ -1812,10 +1965,10 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
 	gretl_matrix_set(G, i, 0, omega);
 	gretl_matrix_set(G, i, 1, gain);
 	omega += inc;
-    } 
+    }
 
     return G;
-} 
+}
 
 /* Toeplitz methods:
 
@@ -1829,7 +1982,7 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
 
 #if (TOEPLITZ_METHOD == 3)
 
-/* form the complete Toeplitz matrix represented in compressed 
+/* form the complete Toeplitz matrix represented in compressed
    form by the coefficients in g
 */
 
@@ -1908,8 +2061,8 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
 
     fprintf(stderr, "netlib toeplitz solve...\n");
 
-    mg = gretl_vector_alloc(T); 
-    my = gretl_vector_alloc(T); 
+    mg = gretl_vector_alloc(T);
+    my = gretl_vector_alloc(T);
 
     if (mg == NULL || my == NULL) {
 	return E_ALLOC;
@@ -1967,7 +2120,7 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
     }
 
     /* factorize */
-    for (t=0; t<T; t++) { 
+    for (t=0; t<T; t++) {
 	for (k=Min(q, t); k>=0; k--) {
 	    mu[k][t] = g[k];
 	    jmax = q - k;
@@ -2009,13 +2162,13 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
 #endif /* alternate TOEPLITZ_METHODs */
 
 
-/* Premultiply vector y by a symmetric banded Toeplitz matrix 
-   Gamma with n nonzero sub-diagonal bands and n nonzero 
+/* Premultiply vector y by a symmetric banded Toeplitz matrix
+   Gamma with n nonzero sub-diagonal bands and n nonzero
    supra-diagonal bands. The elements of Gamma are contained
    in g; tmp is used as workspace.
 */
 
-static int GammaY (double *g, double *y, double *tmp, 
+static int GammaY (double *g, double *y, double *tmp,
 		   int T, int n)
 {
     double lx, rx;
@@ -2056,7 +2209,7 @@ static void form_gamma (double *g, double *mu, int q)
 {
     int j, k;
 
-    for (j=0; j<=q; j++) { 
+    for (j=0; j<=q; j++) {
 	g[j] = 0.0;
 	for (k=0; k<=q-j; k++) {
 	    g[j] += mu[k] * mu[k+j];
@@ -2064,7 +2217,7 @@ static void form_gamma (double *g, double *mu, int q)
     }
 }
 
-/* Find the coefficients of the nth power of the summation 
+/* Find the coefficients of the nth power of the summation
    operator (if sign = 1) or of the difference operator (if
    sign = -1).
 */
@@ -2075,13 +2228,13 @@ static void sum_or_diff (double *theta, int n, int sign)
 
     theta[0] = 1.0;
 
-    for (q=1; q<=n; q++) { 
+    for (q=1; q<=n; q++) {
 	theta[q] = 0.0;
 	for (j=q; j>0; j--) {
 	    theta[j] += sign * theta[j-1];
 	}
-    } 
-} 
+    }
+}
 
 /* g is the target, mu is used as workspace for the
    summation coefficients */
@@ -2093,7 +2246,7 @@ static void form_mvec (double *g, double *mu, int n)
 }
 
 /* g is the target, mu is used as workspace for the
-   differencing coefficients 
+   differencing coefficients
    svec = Q'SQ where Q is the 2nd-diff operator
 */
 
@@ -2122,8 +2275,8 @@ static void form_wvec (double *g, double *mu, double *tmp,
 }
 
 /* Find the second differences of the elements of a vector.
-   Notice that the first two elements of the vector are lost 
-   in the process. However, we index the leading element of 
+   Notice that the first two elements of the vector are lost
+   in the process. However, we index the leading element of
    the differenced vector by t = 0.
 */
 
@@ -2136,9 +2289,9 @@ static void QprimeY (double *y, int T)
     }
 }
 
-/* Multiply the vector y by matrix Q of order T x T-2, 
-   where Q' is the matrix which finds the second 
-   differences of a vector.  
+/* Multiply the vector y by matrix Q of order T x T-2,
+   where Q' is the matrix which finds the second
+   differences of a vector.
 */
 
 static void form_Qy (double *y, int T)
@@ -2146,7 +2299,7 @@ static void form_Qy (double *y, int T)
     double tmp, lag1 = 0.0, lag2 = 0.0;
     int t;
 
-    for (t=0; t<T-2; t++) { 
+    for (t=0; t<T-2; t++) {
 	tmp = y[t];
 	y[t] += lag2 - 2 * lag1;
 	lag2 = lag1;
@@ -2172,7 +2325,7 @@ static int mp_butterworth (const double *x, double *bw, int T,
     return (*mpfun) (x, bw, T, order, cutoff);
 }
 
-#if 0 
+#if 0
 
 /* note: cut should be in degrees */
 
@@ -2215,7 +2368,7 @@ static double bw_max_mod (double cut, int n)
    adequate approach.
 */
 
-static int 
+static int
 set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
 {
     int ret = 0;
@@ -2234,7 +2387,7 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
 	ret = 1;
     } else {
 	/* OK with regular double-precision? */
-	if (*lam1 > MAX_LAM) { 
+	if (*lam1 > MAX_LAM) {
 	    /* note: AC thinks the following doesn't help */
 	    *lam1 = sqrt(*lam1);
 	    *lam2 = 1 / *lam1;
@@ -2253,7 +2406,7 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
  * @cutoff: desired angular cutoff in degrees (0, 180).
  *
  * Calculates the Butterworth filter. The code that does this
- * is based on D.S.G. Pollock's IDEOLOG -- see 
+ * is based on D.S.G. Pollock's IDEOLOG -- see
  * http://www.le.ac.uk/users/dsgp1/
  *
  * Returns: 0 on success, non-zero error code on failure.
@@ -2272,7 +2425,7 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
-    } 
+    }
 
     if (2 * n >= t2 - t1) {
 	gretl_errmsg_set("Insufficient observations");
@@ -2300,7 +2453,7 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
 	return E_DATA;
     } else if (bad_lambda) {
 	return mp_butterworth(x, y, T, n, cutoff);
-    }	
+    }
 
     /* the workspace we need for everything except the
        Toeplitz solver */
@@ -2329,8 +2482,8 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
 	/* write the trend into y (low-pass) */
 	for (t=0; t<T; t++) {
 	    y[t] = x[t] - lam1 * y[t];
-	}	
-    }    
+	}
+    }
 
     free(g);
 
@@ -2354,7 +2507,7 @@ static int real_poly_trend (const double *x, double *fx, double *w,
     }
 
     philag = phi + T;
-     
+
     for (t=0; t<T; t++) {
 	phi[t] = 1;
 	philag[t] = 0;
@@ -2376,19 +2529,19 @@ static int real_poly_trend (const double *x, double *fx, double *w,
 	    xadd = phi[t] * phi[t];
 	    if (w != NULL) xadd *= w[t];
 	    denom += xadd;
-	}	
-          
+	}
+
 	alpha /= denom;
 	gamma /= denom;
 	delta = denom / lagdenom;
 	lagdenom = denom;
-       
+
 	for (t=0; t<T; t++) {
 	    fx[t] += alpha * phi[t];
 	    tmp = phi[t];
 	    phi[t] = (t - gamma) * phi[t] - delta * philag[t];
 	    philag[t] = tmp;
-	} 
+	}
     }
 
     free(phi);
@@ -2417,7 +2570,7 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
-    } 
+    }
 
     T = t2 - t1 + 1;
 
@@ -2426,7 +2579,7 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
     }
 
     return real_poly_trend(x + t1, fx + t1, NULL, T, order);
-} 
+}
 
 /**
  * poly_weights:
@@ -2442,7 +2595,7 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
  * trend fitting.
  */
 
-void poly_weights (double *w, int T, double wmax, 
+void poly_weights (double *w, int T, double wmax,
 		   double midfrac, gretlopt opt)
 {
     double wt, a = 0, b = 0;
@@ -2513,7 +2666,7 @@ void poly_weights (double *w, int T, double wmax,
  */
 
 int weighted_poly_trend (const double *x, double *fx, const DATASET *dset,
-			 int order, gretlopt opt, double wratio, 
+			 int order, gretlopt opt, double wratio,
 			 double midfrac)
 {
     double *w = NULL;
@@ -2523,7 +2676,7 @@ int weighted_poly_trend (const double *x, double *fx, const DATASET *dset,
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
-    } 
+    }
 
     T = t2 - t1 + 1;
 
@@ -2566,13 +2719,13 @@ static int n_new_dummies (const DATASET *dset,
     return nnew;
 }
 
-static void 
+static void
 seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
 		     char *vname, char *vlabel)
 {
     int pd = dataset_is_panel(dset) ? dset->panel_pd : dset->pd;
     int ts = dset->structure == TIME_SERIES || dset->panel_pd > 1;
-	
+
     if (opt & OPT_C) {
 	sprintf(vname, "S%d", k);
 	strcpy(vlabel, "centered periodic dummy");
@@ -2742,7 +2895,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 		dset->Z[vi][t] = (wkday == k)? 1 : 0;
 		k++;
 	    }
-	}	
+	}
     } else if (dataset_is_daily(dset)) {
 	int yy, mm = 10;
 	double xx;
@@ -2785,7 +2938,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[vi][t] -= cx;
 	    }
-	}	
+	}
     }
 
  finish:
@@ -2805,7 +2958,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
  * @center: if non-zero subtract the population mean from
  * each of the generated dummies.
  *
- * Adds to the data set (if these variables are not already 
+ * Adds to the data set (if these variables are not already
  * present) a set of seasonal dummy variables.
  *
  * Returns: 0 on success, non-zero on error.
@@ -2824,7 +2977,7 @@ int gen_seasonal_dummies (DATASET *dset, int center)
  * each of the generated dummies.
  * @err: location to receive error code.
  *
- * Adds to the data set (if these variables are not already 
+ * Adds to the data set (if these variables are not already
  * present) a set of seasonal dummy variables.
  *
  * Returns: list holding the ID numbers of the seasonal
@@ -2867,14 +3020,14 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 
     if (opt & OPT_T) {
 	ndum = n_timedum = dset->pd;
-    } else {	
+    } else {
 	n_unitdum = dset->n / dset->pd;
 	if (dset->n % dset->pd) {
 	    n_unitdum++;
 	}
 	ndum = n_unitdum;
     }
-    
+
     if (ndum == 1) {
 	return E_PDWRONG;
     }
@@ -2923,7 +3076,7 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	}
 
 	strcpy(dset->varname[dnum], vname);
-	sprintf(label, _("%s = 1 if %s is %d, 0 otherwise"), vname, 
+	sprintf(label, _("%s = 1 if %s is %d, 0 otherwise"), vname,
 		_("period"), vi);
 	series_set_label(dset, dnum, label);
 
@@ -2951,10 +3104,10 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 	    if (dnum >= orig_v) {
 		dnum = newvnum++;
 	    }
-	}	
+	}
 
 	strcpy(dset->varname[dnum], vname);
-	sprintf(label, _("%s = 1 if %s is %d, 0 otherwise"), vname, 
+	sprintf(label, _("%s = 1 if %s is %d, 0 otherwise"), vname,
 		_("unit"), vi);
 	series_set_label(dset, dnum, label);
 
@@ -2971,7 +3124,7 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
  * @dset: dataset struct.
  * @vnum: location to receive ID number of series, or NULL.
  *
- * (For panel data only) adds to the data set an index variable 
+ * (For panel data only) adds to the data set an index variable
  * that uniquely identifies the cross-sectional units.
  *
  * Returns: 0 on successful completion, error code on error.
@@ -3085,7 +3238,7 @@ int gen_time (DATASET *dset, int tm, int *vnum)
 	strcpy(dset->varname[v], "index");
 	series_set_label(dset, v, _("data index variable"));
     }
-    
+
     if (tm && dset->structure == STACKED_TIME_SERIES) {
 	make_panel_time_var(dset->Z[v], dset);
     } else {
@@ -3132,7 +3285,7 @@ int gen_wkday (DATASET *dset, int *vnum)
 
     strcpy(dset->varname[i], "weekday");
     series_set_label(dset, i, _("day of week (1 = Monday)"));
-    
+
     for (t=0; t<dset->n; t++) {
 	ntodate(datestr, t, dset);
 	dset->Z[i][t] = weekday_from_date(datestr);
@@ -3157,7 +3310,7 @@ typedef enum {
     PLOTVAR_HOURLY,
     PLOTVAR_PANEL,
     PLOTVAR_MAX
-} plotvar_type; 
+} plotvar_type;
 
 static int plotvar_code (const DATASET *dset, gretlopt opt)
 {
@@ -3242,7 +3395,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	return NULL;
     }
 
-    if (dataset_is_panel(dset) && ((opt & OPT_P) || 
+    if (dataset_is_panel(dset) && ((opt & OPT_P) ||
 				   sample_size(dset) == dset->pd)) {
 	/* we're plotting a single time-series from a panel */
 	new_ptype = panel_plotvar_code(dset);
@@ -3255,7 +3408,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	    } else {
 		new_ptype = PLOTVAR_INDEX;
 	    }
-	}		
+	}
 	T = dset->pd;
     }
 
@@ -3301,7 +3454,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     rm = sd0 - y1;
 
     switch (ptype) {
-    case PLOTVAR_ANNUAL: 
+    case PLOTVAR_ANNUAL:
 	for (t=0; t<T; t++) {
 	    x[t] = sd0 + t;
 	}
@@ -3335,7 +3488,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 		}
 	    } else {
 		char datestr[OBSLEN];
-		    
+
 		calendar_date_string(datestr, t, dset);
 		if (ptype == PLOTVAR_GPTIME) {
 		    x[t] = gnuplot_time_from_date(datestr, "%Y-%m-%d");
@@ -3355,7 +3508,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	}
 	break;
     case PLOTVAR_INDEX:
-    case PLOTVAR_TIME:	
+    case PLOTVAR_TIME:
 	for (t=0; t<T; t++) {
 	    x[t] = (double) (t + 1);
 	}
@@ -3387,12 +3540,12 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
  * Creates a full-length array holding the specified model
  * data, and writes name and description into the @vname and
  * @vlabel.
- * 
+ *
  * Returns: allocated array on success or NULL on failure.
  */
 
-double *get_fit_or_resid (const MODEL *pmod, DATASET *dset, 
-			  ModelDataIndex idx, char *vname, 
+double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
+			  ModelDataIndex idx, char *vname,
 			  char *vlabel, int *err)
 {
     const double *src = NULL;
@@ -3450,7 +3603,7 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
     } else if (idx == M_YHAT) {
 	sprintf(vname, "yhat%d", pmod->ID);
 	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
-    } else if (idx == M_UHAT2) { 
+    } else if (idx == M_UHAT2) {
 	/* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
@@ -3458,7 +3611,7 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 	} else {
 	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
 	}
-    } else if (idx == M_H) { 
+    } else if (idx == M_H) {
 	/* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
 	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
@@ -3479,10 +3632,10 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
  * @pmod: pointer to source model.
  * @dset: dataset struct.
  * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
- * 
+ *
  * Adds residuals or fitted values or squared residuals from a
  * given model to the data set.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -3609,7 +3762,7 @@ int get_t_from_obs_string (const char *s, const DATASET *dset)
     }
 
 #if OBS_DEBUG
-    fprintf(stderr, "\nget_t_from_obs_string: s ='%s', dateton gives t = %d\n", 
+    fprintf(stderr, "\nget_t_from_obs_string: s ='%s', dateton gives t = %d\n",
 	    s, t);
 #endif
 
@@ -3622,7 +3775,7 @@ int get_t_from_obs_string (const char *s, const DATASET *dset)
 	} else {
 	    if (gretl_is_scalar(s)) {
 		t = gretl_scalar_get_value(s, NULL);
-	    } 
+	    }
 
 	    if (t > dset->n) {
 		/* e.g. annual dates */
@@ -3703,7 +3856,7 @@ int check_declarations (char ***pS, parser *p)
 	    /* invalid name */
 	    badname = 1;
 	    p->err = E_DATA;
-	} 
+	}
     }
 
     if (p->err) {
@@ -3792,7 +3945,7 @@ static double weighted_mean_at_obs (const int *list, const int *wlist,
    unweighted mean if @wlist is NULL.
 */
 
-static int x_sectional_weighted_mean (double *x, const int *list, 
+static int x_sectional_weighted_mean (double *x, const int *list,
 				      const int *wlist,
 				      const DATASET *dset)
 {
@@ -3804,15 +3957,15 @@ static int x_sectional_weighted_mean (double *x, const int *list,
     } else if (n == 1) {
 	v = list[1];
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    x[t] = dset->Z[v][t]; 
+	    x[t] = dset->Z[v][t];
 	}
 	return 0;
     }
 
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (wlist != NULL) {
-	    x[t] = weighted_mean_at_obs(list, wlist, 
-					(const double **) dset->Z, 
+	    x[t] = weighted_mean_at_obs(list, wlist,
+					(const double **) dset->Z,
 					t, NULL, NULL);
 	} else {
 	    x[t] = mean_at_obs(list, (const double **) dset->Z, t);
@@ -3846,8 +3999,8 @@ static int x_sectional_wtd_variance (double *x, const int *list,
 
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (wlist != NULL) {
-	    xbar = weighted_mean_at_obs(list, wlist, 
-					(const double **) dset->Z, 
+	    xbar = weighted_mean_at_obs(list, wlist,
+					(const double **) dset->Z,
 					t, &wsum, &m);
 	} else {
 	    xbar = mean_at_obs(list, (const double **) dset->Z, t);
@@ -3880,7 +4033,7 @@ static int x_sectional_wtd_variance (double *x, const int *list,
     return 0;
 }
 
-static int x_sectional_wtd_stddev (double *x, const int *list, 
+static int x_sectional_wtd_stddev (double *x, const int *list,
 				   const int *wlist,
 				   const DATASET *dset)
 {
@@ -3899,7 +4052,7 @@ static int x_sectional_wtd_stddev (double *x, const int *list,
     return err;
 }
 
-static int x_sectional_extremum (int f, double *x, const int *list, 
+static int x_sectional_extremum (int f, double *x, const int *list,
 				 const DATASET *dset)
 {
     double xit, xx;
@@ -3909,7 +4062,7 @@ static int x_sectional_extremum (int f, double *x, const int *list,
 	xx = (f == F_MIN)? NADBL : -NADBL;
 	for (i=1; i<=list[0]; i++) {
 	    xit = dset->Z[list[i]][t];
-	    if (!na(xit)) { 
+	    if (!na(xit)) {
 		if (f == F_MAX && xit > xx) {
 		    xx = xit;
 		} else if (f == F_MIN && xit < xx) {
@@ -3927,7 +4080,7 @@ static int x_sectional_extremum (int f, double *x, const int *list,
     return err;
 }
 
-static int x_sectional_sum (double *x, const int *list, 
+static int x_sectional_sum (double *x, const int *list,
 			    const DATASET *dset)
 {
     double xit, xx;
@@ -3937,7 +4090,7 @@ static int x_sectional_sum (double *x, const int *list,
 	xx = 0.0;
 	for (i=1; i<=list[0]; i++) {
 	    xit = dset->Z[list[i]][t];
-	    if (na(xit)) { 
+	    if (na(xit)) {
 		xx = NADBL;
 		break;
 	    } else {
@@ -3950,7 +4103,7 @@ static int x_sectional_sum (double *x, const int *list,
     return err;
 }
 
-static int x_sectional_median (double *y, const int *list, 
+static int x_sectional_median (double *y, const int *list,
 			       const DATASET *dset)
 {
     int i, t, n = list[0];
@@ -3984,7 +4137,7 @@ static int x_sectional_median (double *y, const int *list,
     return 0;
 }
 
-int cross_sectional_stat (double *x, const int *list, 
+int cross_sectional_stat (double *x, const int *list,
 			  const DATASET *dset, int f)
 {
     if (f == F_MEAN) {
@@ -4004,7 +4157,7 @@ int cross_sectional_stat (double *x, const int *list,
     }
 }
 
-int x_sectional_weighted_stat (double *x, const int *list, 
+int x_sectional_weighted_stat (double *x, const int *list,
 			       const int *wlist,
 			       const DATASET *dset,
 			       int f)
@@ -4030,8 +4183,8 @@ int x_sectional_weighted_stat (double *x, const int *list,
    in @list, using the coefficients given in the vector @b.
 */
 
-int list_linear_combo (double *y, const int *list, 
-		       const gretl_vector *b, 
+int list_linear_combo (double *y, const int *list,
+		       const gretl_vector *b,
 		       const DATASET *dset)
 {
     int nb = gretl_vector_get_length(b);
@@ -4092,7 +4245,7 @@ static int try_mp_midas_weights (const double *theta, int k,
 	}
     }
 
-    return err;	
+    return err;
 }
 
 #define INF_CHECK_VERBOSE 0
@@ -4118,7 +4271,7 @@ static int check_beta_params (int method, double *theta,
 			      int k, double eps)
 {
     int err = 0;
-    
+
     if (method == MIDAS_BETA0 && k != 2) {
 	gretl_errmsg_set("theta must be a 2-vector");
 	err = E_INVARG;
@@ -4154,9 +4307,9 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
 #if MDEBUG
     gretl_matrix_print(m, "m, in midas_weights");
-#endif    
+#endif
 
-    /* @p = lag order 
+    /* @p = lag order
        @k = number of hyper-parameters
     */
 
@@ -4177,7 +4330,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	*err = check_beta_params(method, theta, k, eps);
 	if (*err) {
 	    return NULL;
-	}	
+	}
     }
 
     w = gretl_zero_matrix_new(p, 1);
@@ -4250,7 +4403,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	gretl_matrix_free(w);
 	errno = 0;
 	return NULL;
-    }    
+    }
 
     if (!using_mp && method != MIDAS_ALMONP) {
 	/* normalize the weights */
@@ -4272,7 +4425,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 #if MDEBUG
     gretl_matrix_print(w, "w: midas weights");
 #endif
-    
+
     return w;
 }
 
@@ -4289,9 +4442,9 @@ static int try_mp_midas_grad (const double *theta,
 	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
-    
+
     err = (*mpfun) (theta, G, method);
-    
+
     if (!err) {
 	int i, n = G->rows * G->cols;
 
@@ -4345,9 +4498,9 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	return NULL;
     }
 
-    /* @p = lag order 
+    /* @p = lag order
        @k = number of hyper-parameters
-    */    
+    */
 
     k = gretl_vector_get_length(m);
     if (k == 0) {
@@ -4378,7 +4531,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	gretl_matrix_free(w);
 	*err = E_ALLOC;
 	return NULL;
-    }    
+    }
 
     if (method == MIDAS_NEALMON) {
 	double *dsum = malloc(k * sizeof *dsum);
@@ -4397,7 +4550,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    if (errno && inf_check(wsum, m, "nealmon gradient", err)) {
 		free(dsum);
 		goto range_error;
-	    }	    
+	    }
 	}
 	for (i=0; i<p; i++) {
 	    for (j=0; j<k; j++) {
@@ -4434,7 +4587,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    wsum += w->val[i];
 	    if (errno && inf_check(wsum, m, "beta gradient", err)) {
 		goto range_error;
-	    }	    
+	    }
 	}
 	if (wsum <= eps) {
 	    /* should we just set G to zero in this case? */
@@ -4443,7 +4596,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 #endif
 	    *err = E_NAN;
 	    goto range_error;
-	}    
+	}
 	ws2 = wsum * wsum;
 	if (errno && inf_check(ws2, m, "beta gradient", err)) {
 	    goto range_error;
@@ -4456,7 +4609,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 		si += eps;
 	    } else if (i == p - 1) {
 		si -= eps;
-	    }	    
+	    }
 	    ai = w->val[i] * log(si);
 	    g1sum += ai;
 	    gretl_matrix_set(G, i, 0, ai/wsum);
@@ -4527,7 +4680,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 
 #if MDEBUG
     gretl_matrix_print(G, "G: midas gradient");
-#endif    
+#endif
 
     return G;
 }
@@ -4545,7 +4698,7 @@ int midas_linear_combo (double *y, const int *list,
     if ((method == MIDAS_BETA0 || method == MIDAS_BETAN) &&
 	!err && w == NULL) {
 	int t;
-	
+
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    y[t] = NADBL;
 	}
@@ -4555,7 +4708,7 @@ int midas_linear_combo (double *y, const int *list,
     if (!err) {
 	err = list_linear_combo(y, list, w, dset);
     }
-    
+
     gretl_matrix_free(w);
 
     return err;
@@ -4613,7 +4766,7 @@ int *vector_to_midas_list (const gretl_matrix *v,
 	    list[i+1] = k;
 	    k++;
 	}
-	
+
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    pos = pos0;
 	    for (k=origv; k<dset->v; k++) {
@@ -4621,9 +4774,9 @@ int *vector_to_midas_list (const gretl_matrix *v,
 	    }
 	    pos0 += f_ratio;
 	}
-	
+
 	gretl_list_set_midas(list, dset);
-    }    
+    }
 
     return list;
 }
@@ -4649,9 +4802,9 @@ int *vector_to_midas_list (const gretl_matrix *v,
 
 static double imhof_bound (const double *lambda, int k, int *err)
 {
-    double e1 = 0.0001; /* Max truncation error due to finite 
+    double e1 = 0.0001; /* Max truncation error due to finite
 			   upper bound on domain */
-    double e2 = 0.0001; /* Cutoff for deciding whether an 
+    double e2 = 0.0001; /* Cutoff for deciding whether an
 			   eigenvalue is effectively zero */
     double absl, bound;
     double nl = 0.0, sum = 0.0;
@@ -4671,8 +4824,8 @@ static double imhof_bound (const double *lambda, int k, int *err)
 	return NADBL;
     }
 
-    /* The key factor in the integrand is the product of 
-       (1+(lambda(i)*x)^2)^(1/4) across i. Since, for those 
+    /* The key factor in the integrand is the product of
+       (1+(lambda(i)*x)^2)^(1/4) across i. Since, for those
        factors with small |lambda(i)|, this won't go to zero very
        quickly, we count only the terms on the bigger eigenvalues.
     */
@@ -4862,7 +5015,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
    written to that location.
 */
 
-double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 
+double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
 		double *pDW, int *perr)
 {
     gretl_matrix *M = NULL;
@@ -4949,7 +5102,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
    column of the input matrix, @m, with lag order @p.
 */
 
-gretl_matrix *multi_acf (const gretl_matrix *m, 
+gretl_matrix *multi_acf (const gretl_matrix *m,
 			 const int *list,
 			 const DATASET *dset,
 			 int p, int *err)
@@ -4959,7 +5112,7 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
     double xa;
     int nv, T, acol, pcol;
     int i, j;
-    
+
     if (list == NULL && gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
@@ -5043,8 +5196,8 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	if (nx < 1) {
 	    *err = E_DATA;
 	    return NULL;
-	}	    
-	xvec = dset->Z[xlist[1]] + dset->t1; 
+	}
+	xvec = dset->Z[xlist[1]] + dset->t1;
     } else if (xtype == MAT) {
 	Xmat = px;
 	if (gretl_is_null_matrix(Xmat)) {
@@ -5066,7 +5219,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	if (ymat->cols != 1) {
 	    *err = E_NONCONF;
 	    return NULL;
-	}	  
+	}
 	yvec = ymat->val;
 	Ty = ymat->rows;
     } else {
@@ -5098,7 +5251,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	if (nx == 1) {
 	    XCF = xj;
 	    break;
-	} 
+	}
 
 	/* transcribe into big XCF matrix and free */
 	for (i=0; i<np; i++) {
@@ -5152,7 +5305,7 @@ static int theil_decomp (double *m, double MSE,
 	dp = f[t] - Pbar;
 	sp += dp * dp;
 	r += da * dp;
-    }    
+    }
 
     sa = sqrt(sa / T);
     sp = sqrt(sp / T);
@@ -5170,7 +5323,7 @@ static int theil_decomp (double *m, double MSE,
 	    /* U^M and U^R are just machine noise? */
 	    m[2] = 1.0;
 	    m[0] = m[1] = 0.0;
-	} 
+	}
     }
 
     return err;
@@ -5312,7 +5465,7 @@ static int fcstats_sample_check (const double *y,
     return err;
 }
 
-/* 
+/*
    Forecast evaluation statistics: @y is the data series, @f the
    forecast.
 
@@ -5502,7 +5655,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 
     r = n;
     ibak = -1;
-    
+
     for (i=0; i<n; i++) {
 	/* if not censored, increment d count */
 	d = gretl_matrix_get(M, i, 1) == 0;
@@ -5664,7 +5817,7 @@ double gretl_bessel (char type, double v, double x, int *err)
 /* Net Present Value: note that the first value is taken as
    occurring "now" and is not discounted */
 
-double gretl_npv (int t1, int t2, const double *x, double r, 
+double gretl_npv (int t1, int t2, const double *x, double r,
 		  int pd, int *err)
 {
     double d, PV = 0.0;
@@ -5745,7 +5898,7 @@ double gretl_irr (const double *x, int n, int pd, int *err)
 	}
 	r0 = r1;
 	r1 *= 2.0;
-    } 
+    }
 
 #if 0
     fprintf(stderr, "initial bracket for r: %g to %g\n", r0, r1);
@@ -5822,23 +5975,23 @@ double logistic_cdf (double x)
  *
  * Interpolate, from annual to quarterly or quarterly to monthly,
  * via the Chow-Lin method. See Gregory C. Chow and An-loh Lin,
- * "Best Linear Unbiased Interpolation, Distribution, and 
+ * "Best Linear Unbiased Interpolation, Distribution, and
  * Extrapolation of Time Series by Related Series", The
- * Review of Economics and Statistics, Vol. 53, No. 4 
+ * Review of Economics and Statistics, Vol. 53, No. 4
  * (November 1971) pp. 372-375.
  *
  * If @X is provided, it must have T * @f rows.
- * 
+ *
  * Returns: matrix containing the expanded series, or
  * NULL on failure.
  */
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *Y, 
-			      const gretl_matrix *X, 
+gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
+			      const gretl_matrix *X,
 			      int f, int *err)
 {
-    gretl_matrix *(*chowlin) (const gretl_matrix *, 
-			      const gretl_matrix *, 
+    gretl_matrix *(*chowlin) (const gretl_matrix *,
+			      const gretl_matrix *,
 			      int, int *);
     gretl_matrix *ret = NULL;
 
@@ -5853,13 +6006,13 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     }
 
     chowlin = get_plugin_function("chow_lin_interpolate");
-    
+
     if (chowlin == NULL) {
 	*err = E_FOPEN;
     } else {
 	ret = (*chowlin) (Y, X, f, err);
     }
-    
+
     return ret;
 }
 
@@ -5941,7 +6094,7 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 
 static double nw_kernel (double x)
 {
-    /* 
+    /*
        eventually, a libset variable will be used to choose among
        various kernels; for now, the Normal density will have to do.
     */
@@ -5978,7 +6131,7 @@ static double nw_kernel (double x)
  * The scalar @h holds the kernel bandwidth; if negative, it implies
  * that the leave-one-out estimator (essentially a jackknife
  * estimator; see Pagan and Ullah, Nonparametric Econometrics,
- * page 119) is wanted. A rudimentary form of trimming is implemented, 
+ * page 119) is wanted. A rudimentary form of trimming is implemented,
  * but it will have to be refined.
  *
  * Returns: 0 on successful completion, non-zero code on error.
@@ -6004,7 +6157,7 @@ int nadaraya_watson (const double *y, const double *x, double h,
 
     den = num + n;
 
-    /* 
+    /*
        here we initialize numerator and denominator; we use the
        "diagonal" in the standard case and 0 in the leave-one-out
        case.
@@ -6089,8 +6242,8 @@ static int xy_get_sample (const double *y, const double *x,
 	    *n += 1;
 	    if (!xna(y[t])) {
 		nxy++;
-	    } 
-	} 
+	    }
+	}
     }
 
     if (nxy < 16) {
@@ -6117,7 +6270,7 @@ static int get_dataset_t (const double *x, int pos, int t1)
 }
 
 int gretl_loess (const double *y, const double *x, int poly_order,
-		 double bandwidth, gretlopt opt, DATASET *dset, 
+		 double bandwidth, gretlopt opt, DATASET *dset,
 		 double *m)
 {
     gretl_matrix *my, *mx;
@@ -6128,7 +6281,7 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     int s, t, n;
     int err = 0;
 
-    if (poly_order < 0 || poly_order > 2 || 
+    if (poly_order < 0 || poly_order > 2 ||
 	bandwidth <= 0 || bandwidth >= 1) {
 	return E_DATA;
     }
@@ -6145,7 +6298,7 @@ int gretl_loess (const double *y, const double *x, int poly_order,
 
     my = gretl_column_vector_alloc(n);
     mx = gretl_column_vector_alloc(n);
- 
+
     if (my == NULL || mx == NULL) {
 	err = E_ALLOC;
     } else {
@@ -6260,7 +6413,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
     double fx;
     int i, j, k, t, ni, ii;
 
-    /* note: 
+    /* note:
        - to skip null cases in the output matrix, set skipnull = 1
        - to eliminate the case-count column, set countcol = 0
     */
@@ -6382,7 +6535,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
 	    }
 	    if (countcol) {
 		gretl_matrix_set(m, ii, ny, ni);
-	    }	    
+	    }
 	    ii++;
 	}
 
@@ -6399,7 +6552,7 @@ static gretl_matrix *real_aggregate_by (const double *x,
 		idx[j] = 0;
 		valvec[j] = yvals->val[0];
 	    } else {
-		/* increment the index at this level and 
+		/* increment the index at this level and
 		   we're done */
 		idx[j] += 1;
 		valvec[j] = yvals->val[idx[j]];
@@ -6466,7 +6619,7 @@ static void aggr_add_colnames (gretl_matrix *m,
     if (!err && j < n) {
 	if (xlist != NULL && xlist[0] > 0) {
 	    char **Sx = gretl_list_get_names_array(xlist, dset, &err);
-	    
+
 	    if (!err) {
 		for (i=0; i<xlist[0]; i++) {
 		    S[j++] = Sx[i];
@@ -6496,7 +6649,7 @@ static void aggr_add_colnames (gretl_matrix *m,
  * @dset: data set information.
  * @err: location to receive error code.
  *
- * Aggregates one or more data series (x) "by" the values of 
+ * Aggregates one or more data series (x) "by" the values of
  * one or more discrete series (y). In general either @x or
  * @xlist should be non-NULL, and one of @y or @ylist should
  * be non-NULL. (If @xlist is non-NULL then @x is ignored,
@@ -6507,7 +6660,7 @@ static void aggr_add_colnames (gretl_matrix *m,
  * Returns: allocated matrix, or NULL on failure.
  */
 
-gretl_matrix *aggregate_by (const double *x, 
+gretl_matrix *aggregate_by (const double *x,
 			    const double *y,
 			    const int *xlist,
 			    const int *ylist,
@@ -6557,13 +6710,13 @@ gretl_matrix *aggregate_by (const double *x,
 	    break;
 	case F_SKEWNESS:
 	    builtin = gretl_skewness;
-	    break;	    
+	    break;
 	case F_KURTOSIS:
 	    builtin = gretl_kurtosis;
-	    break;	    
+	    break;
 	case F_MIN:
 	    builtin = gretl_min;
-	    break;	    
+	    break;
 	case F_MAX:
 	    builtin = gretl_max;
 	    break;
@@ -6606,10 +6759,10 @@ gretl_matrix *aggregate_by (const double *x,
     if (!*err) {
 	x = (x == NULL)? NULL : x + dset->t1;
 	y = (y == NULL)? NULL : y + dset->t1;
-	m = real_aggregate_by(x, y, xlist, ylist, dset, tmp, 
-			      builtin, usercall, tmpset, 
+	m = real_aggregate_by(x, y, xlist, ylist, dset, tmp,
+			      builtin, usercall, tmpset,
 			      just_count, err);
-    }    
+    }
 
     if (m != NULL && *err) {
 	gretl_matrix_free(m);
@@ -6630,7 +6783,7 @@ gretl_matrix *aggregate_by (const double *x,
     return m;
 }
 
-static int monthly_or_quarterly_dates (const DATASET *dset, 
+static int monthly_or_quarterly_dates (const DATASET *dset,
 				       int pd, double sd0, int T,
 				       double *x)
 {
@@ -6663,12 +6816,12 @@ static int monthly_or_quarterly_dates (const DATASET *dset,
     return 0;
 }
 
-static int annual_or_decennial_dates (const DATASET *dset, 
+static int annual_or_decennial_dates (const DATASET *dset,
 				      int pd, double sd0, int T,
 				      double *x)
 {
     int t, yr = (int) sd0;
- 
+
     for (t=0; t<T; t++) {
 	x[t] = 10000*yr + 101;
 	yr += pd;
@@ -6710,9 +6863,9 @@ static int regular_daily_or_weekly (const DATASET *dset, double *x)
 
     for (t=0; t<dset->n && !err; t++) {
 	ntodate(datestr, t, dset);
-#if 0	
+#if 0
 	fprintf(stderr, "regular: datestr = '%s'\n", datestr);
-#endif	
+#endif
 	n = sscanf(datestr, "%d-%d-%d", &y, &m, &d);
 	if (n != 3) {
 	    err = E_DATA;
@@ -6777,7 +6930,7 @@ int fill_dataset_dates_series (const DATASET *dset, double *x)
 
 int fill_day_of_week_array (double *dow,
 			    const double *y,
-			    const double *m, 
+			    const double *m,
 			    const double *d,
 			    const DATASET *dset)
 {
@@ -6796,13 +6949,13 @@ int fill_day_of_week_array (double *dow,
 	dt = (int) d[t];
 	dow[t] = day_of_week(yt, mt, dt, julian, &err);
     }
-	
+
     return err;
 }
 
 static double real_clogit_fi (int T, int k, int r,
-			      gretl_matrix *z, 
-			      gretl_matrix *df, 
+			      gretl_matrix *z,
+			      gretl_matrix *df,
 			      int *err)
 {
     double x, ret = NADBL;
@@ -6875,7 +7028,7 @@ static double real_clogit_fi (int T, int k, int r,
 	}
     } else {
 	double x = exp(gretl_vector_get(z, T-1));
-	
+
 	if (do_score) {
 	    double f2 = real_clogit_fi(T-1, k-1, r, z, df, err);
 	    gretl_matrix *df1 = NULL;
@@ -6909,7 +7062,7 @@ static double real_clogit_fi (int T, int k, int r,
     return ret;
 }
 
-double clogit_fi (int T, int k, gretl_matrix *z, 
+double clogit_fi (int T, int k, gretl_matrix *z,
 		  const char *dfname, int *err)
 {
     gretl_matrix *df = NULL;
@@ -7104,7 +7257,7 @@ int sample_span (const char *stobs, const char *endobs,
 
     strcpy(obs1, stobs);
     strcpy(obs2, endobs);
-    
+
     if (n == 10) {
 	/* should be ISO 8601 dates */
 	nf = sscanf(obs1, "%d-%d-%d", &ymd1[0], &ymd1[1], &ymd1[2]);
