@@ -4594,16 +4594,11 @@ static NODE *string_range_node (const char *s, int r1, int r2, parser *p)
     if (starting(p)) {
 	int range[2] = {r1, r2};
 
-	p->err = check_range_spec(range, strlen(s));
+	p->err = check_range_spec(range, g_utf8_strlen(s, -1));
 	if (!p->err) {
-	    int n = r2 - r1 + 1;
-
 	    ret = aux_string_node(p);
 	    if (ret != NULL) {
-		ret->v.str = gretl_strndup(s + r1 - 1, n);
-		if (ret->v.str == NULL) {
-		    p->err = E_ALLOC;
-		}
+		ret->v.str = gretl_substring(s, r1, r2, &p->err);
 	    }
 	}
     } else {
